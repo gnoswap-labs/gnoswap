@@ -1,0 +1,34 @@
+package liquidity
+
+import (
+	"std"
+)
+
+// stdlibs
+// https://github.com/gnolang/gno/blob/master/stdlibs/stdlibs.go
+func GetHeight() int64 {
+	return std.GetHeight()
+}
+
+func GetTimestamp() int64 { // will be deprecate
+	return int64(std.GetTimestamp())
+}
+
+func GetChainID() string {
+	return std.GetChainID()
+}
+
+func GetOrigPkgAddr() std.Address {
+	return std.GetOrigPkgAddr()
+}
+
+// derive pkg addr
+
+
+// test
+// https://github.com/gnolang/gno/blob/master/tests/imports.go
+
+// XXX skip height
+// skip timestamp (WIP in PR)
+// XXX set orig caller
+// set last caller (WIP in PR)
