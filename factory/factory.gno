@@ -1,0 +1,100 @@
+package factory
+
+import (
+	"std"
+	"strconv"
+
+	"gno.land/p/demo/avl"
+)
+
+var (
+	owner std.Address
+	feeAmountTickSpacing avl.Tree
+	getPool avl.Tree
+)
+
+func Init() {
+	// can we init with parameters?
+	owner = std.GetOrigCaller()
+	feeAmountTickSpacing.Set("500", 10)
+	feeAmountTickSpacing.Set("3000", 60)
+	feeAmountTickSpacing.Set("10000", 200)
+}
+
+func CreatePool(
+	tokenA std.Address,
+	tokenB std.Address,
+	fee bigint,
+) (pool std.Address) {
+	require(tokenA != tokenB, "TokenA == TokenB")
+	requrie(owner == GetOrigCaller(), "Owner is not the origin caller!")
+
+	var token0 std.Address
+	var token1 std.Address
+	if tokenA < tokenB {
+		token0 = tokenA
+		token1 = tokenB
+	} else {
+		token0 = tokenB
+		token1 = tokenA
+	}
+	require(token0 != zeroAddress, "Token0 has not yet been deployed") // XXX check if zeroAddress is possible
+	
+	tickSpacing, _ := feeAmountTickSpacing.Get(string(fee))
+	require(tickSpacing != 0, "TickSpacing is 0")
+
+	// XXX
+	// check if nested avl.Tree is possible
+	// => if possible compare nested avl.Tree
+	// => if not, use map
+	// Create2 + Dynamic Import need
+	poolKey1 := getPoolKeyFromAddress(token0, token1)
+	poolKey2 := getPoolKeyFromAddress(token1, token0)
+	pool, ok := pools.Get(poolKey1)
+	if !ok {
+		pools.Set(poolKey1, avl.Tree) // XXX init avl set possible
+		pools.Set(poolKey2, avl.Tree)
+	}
+	// nested avl.Tree [pools[poolKey1][fee]
+	poolWithFee, ok := pool.Get(poolKey1)
+
+
+	_tmpAddr := string(tokenA) + string(tokenB) + strconv.Itoa(int(fee))
+	pool = std.Address(_tmpAddr)
+
+	// fix nested avl.Tree thing
+
+	return pool
+}
+
+
+func SetOwner(_owner std.Address) {
+	require(std.GetOrigCaller() == owner, "Owner is not the origin caller!")
+	owner = _owner
+}
+
+func EnableFeeAmount(fee, tickSpacing bigint) {
+	require(GetOrigCaller() == owner, "Owner is not the origin caller!")
+	require(fee < 1000000, "Fee too high")
+	require(tickSpacing > 0 && tickSpacing < 16384, "Tick spacing must be between 0 and 16384")
+	_fee, ok := feeAmountTickSpacing.Get(string(fee))
+	require(!ok, "Fee amount already enabled")
+	// require(_fee == 0, "Fee amount already enabled")
+	feeAmountTickSpacing.Set(string(fee), tickSpacing)
+}
+
+// helepr
+func require(cond bool, msg string) {
+	if !cond {
+		panic(msg)
+	}
+}
+
+// XXX
+func getPoolKeyFromAddress(token0, token1 std.Address) string { // XXX std.Address
+	if token0 < token1 {
+		return string(token0) + string(token1)
+	} else {
+		return string(token1) + string(token0)
+	}
+}
