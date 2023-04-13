@@ -1,12 +1,12 @@
 package gnoswap
 
 
-func mostSignificantBit(x bigint) bigint {
+func BitMathMostSignificantBit(x bigint) bigint {
 	if x <= 0 {
 		panic("x must be positive")
 	}
 
-	r := 0
+	r := bigint(0)
 
 	if x >= 0x100000000000000000000000000000000 {
 		x >>= 128
@@ -47,14 +47,14 @@ func mostSignificantBit(x bigint) bigint {
 		r += 1
 	}
 
-	return bigint(r)
+	return r
 }
 
-func leastSignificantBit(x bigint) bigint {
+func BitMathLeastSignificantBit(x bigint) bigint {
 	if x <= 0 {
 		panic("x must be positive")
 	}
-	r := 255
+	r := 63
 
 	if x & MAX_UINT128 > 0 {
 		r -= 128
@@ -62,7 +62,7 @@ func leastSignificantBit(x bigint) bigint {
 		x >>= 128
 	}
 
-	if x & MAX_UINT64 > 0 {
+	if x & MAX_bigint > 0 {
 		r -= 64
 	} else {
 		x >>= 64

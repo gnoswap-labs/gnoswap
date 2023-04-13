@@ -2,63 +2,46 @@ package gnoswap
 
 
 type TickInfo struct {
-	// the total position liquidity that references this tick
-	liquidityGross bigdec
+	liquidityGross bigint
+	liquidityNet bigint
 
-	// amount of net liquidity added (subtracted) when tick is crossed from left to right (right to left),
-	liquidityNet bigdec
+	feeGrowthOutside0 bigint
+	feeGrowthOutside1 bigint
 
-	// fee growth per unit of liquidity on the _other_ side of this tick (relative to the current tick)
-	// only has relative meaning, not absolute — the value depends on when the tick is initialized
-	feeGrowthOutside0 bigdec
-	feeGrowthOutside1 bigdec
+	tickCumulativeOutside bigint
 
-	// the cumulative tick value on the other side of the tick
-	tickCumulativeOutside bigdec
+	secondsPerLiquidityOutside bigint
+	secondsOutside bigint
 
-	// secondsPerLiquidityOutside bigdec
-	// secondsOutside bigdec
-
-	// true iff the tick is initialized, i.e. the value is exactly equivalent to the expression liquidityGross != 0
-	// these 8 bits are set to prevent fresh sstores when crossing newly initialized ticks
 	initialized bool
 }
-
-
-
 
 func TickTickSpacingToMaxLiquidityPerTick(tickSpacing bigint) bigint {
 	var minTick bigint = (MIN_TICK / tickSpacing) * tickSpacing
 	var maxTick bigint = (MAX_TICK / tickSpacing) * tickSpacing
-	var numTicks bigint = ((maxTick - minTick) / tickSpacing) + 1
+	var numTicks bigint = bigint(((maxTick - minTick) / tickSpacing) + 1)
 
-	return MAX_UINT128 / numTicks
+	return MAX_bigint / numTicks
 }
 
-func TicksUpdate(
+func TickUpdate(
 	tick bigint,
 	tickCurrent bigint,
-	liquidityDelta bigdec,
-	feeGrowthGlobal0 bigdec,
-	feeGrowthGlobal1 bigdec,
+	liquidityDelta bigint,
+	feeGrowthGlobal0 bigint,
+	feeGrowthGlobal1 bigint,
 	// secondsPerLiquidityCumulative bigdec,
-	// tickCumulative bigdec,
-	time int64,
+	// tickCumulative bigint,
+	time bigint,
 	upper bool,
 	maxLiquidity bigint,
 ) (flipped bool) {
-	var info TickInfo
-	var ok bool
-	info, ok = ticks.Get(string(tick))
-	if !ok {
-		info = TickInfo{0, 0, 0, 0, 0, false}
-		// panic("tick not found")
-	}
+	info := ticks[tick]
+	
+	liquidityGrossBefore := info.liquidityGross
 
-	var liquidityGrossBefore bigdec = info.liquidityGross
-	var liquidityGrossAfter bigdec = LiquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
-
-	require(liquidityGrossAfter <= bigdec(maxLiquidity), "L0")
+	liquidityGrossAfter := LiquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
+	require(liquidityGrossAfter <= maxLiquidity, "[X] liquidityGrossAfter <= maxLiquidity")
 
 	flipped = (liquidityGrossAfter == 0) != (liquidityGrossBefore == 0)
 
@@ -82,38 +65,27 @@ func TicksUpdate(
 		info.liquidityNet += liquidityDelta
 	}
 
-	// XXX remove??
-	ticks.Set(string(tick), info)
+	// // XXX remove??
+	ticks[tick] = info
 	return flipped
 }
 
-func TicksClear(tick bigint) {
-	ticks.Remove(string(tick))
+func TickClear(tick bigint) {
+	delete(ticks, tick)
 }
 
-func TicksGetFeeGrowthInside(
+func TickGetFeeGrowthInside(
 	tickLower bigint,
 	tickUpper bigint,
 	tickCurrent bigint,
-	feeGrowthGlobal0 bigdec,
-	feeGrowthGlobal1 bigdec,
-) (feeGrowthInside0, feeGrowthInside1 bigdec) {
-	var lower TickInfo
-	var upper TickInfo
-	var ok bool
-
-	lower, ok = ticks.Get(string(tickLower))
-	if !ok {
-		panic("tickLower not found")
-	}
-
-	upper, ok = ticks.Get(string(tickUpper))
-	if !ok {
-		panic("tickUpper not found")
-	}
+	feeGrowthGlobal0 bigint,
+	feeGrowthGlobal1 bigint,
+) (feeGrowthInside0, feeGrowthInside1 bigint) {
+	var lower TickInfo = ticks[tickLower]
+	var upper TickInfo = ticks[tickUpper]
 	
-	var feeGrowthBelow0 bigdec
-	var feeGrowthBelow1 bigdec
+	var feeGrowthBelow0 bigint
+	var feeGrowthBelow1 bigint
 	if (tickCurrent >= tickLower) {
 		feeGrowthBelow0 = lower.feeGrowthOutside0
 		feeGrowthBelow1 = lower.feeGrowthOutside1
@@ -122,8 +94,8 @@ func TicksGetFeeGrowthInside(
 		feeGrowthBelow1 = feeGrowthGlobal1 - lower.feeGrowthOutside1
 	}
 
-	var feeGrowthAbove0 bigdec
-	var feeGrowthAbove1 bigdec
+	var feeGrowthAbove0 bigint
+	var feeGrowthAbove1 bigint
 	if (tickCurrent < tickUpper) {
 		feeGrowthAbove0 = upper.feeGrowthOutside0
 		feeGrowthAbove1 = upper.feeGrowthOutside1
@@ -139,23 +111,18 @@ func TicksGetFeeGrowthInside(
 }
 
 
-
 func TickCross(
 	tick bigint,
 	feeGrowthGlobal0 bigint,
 	feeGrowthGlobal1 bigint,
-	time int64
+	time bigint,
 ) (bigint) {
-	info, _got := ticks.Get(string(tick))
-	if !_got {
-		panic("Tick Not Found")
-	}
+	info := ticks[tick]
 
-	info.feeGrowthOutSide0 = feeGrowthGlobal0 - info.feeGrowthOutside0
-	info.feeGrowthOutSide1 = feeGrowthGlobal1 - info.feeGrowthOutside1
+	info.feeGrowthOutside0 = feeGrowthGlobal0 - info.feeGrowthOutside0
+	info.feeGrowthOutside1 = feeGrowthGlobal1 - info.feeGrowthOutside1
 	// info.secondsOutside = time - info.secondsOutSide // XXX
-	ticks.set(string(tick), info)
+	ticks[tick] = info
 	liquidityNet := info.liquidityNet
-
 	return liquidityNet
 }

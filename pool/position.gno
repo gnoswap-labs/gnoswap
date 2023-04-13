@@ -2,82 +2,87 @@ package gnoswap
 
 import (
 	"std"
+	"crypto/sha256"
+	"encoding/hex"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 )
 
-var (
-	Position avl.Tree // bytes32 => Position.Info
-)
-
 
 // info stored for each user's position
 type PositionInfo struct {
-	// the amount of liquidity owned by this position
-	liquidity bigdec // XX bigint??
+	liquidity bigint
 
-	// fee grwoth per unit of liquidity as of the last update to liquidity or fees owed
-	feeGrowthInside0Last bigdec // XX bigint??
-	feeGrowthInside1Last bigdec // XX bigint??
+	feeGrowthInside0Last bigint
+	feeGrowthInside1Last bigint
 
-	// the fees owed to the position owner in token0/token1
-	tokensOwed0 bigdec // XX bigint??
-	tokensOwed1 bigdec // XX bigint??
+	tokensOwed0 bigint
+	tokensOwed1 bigint
 }
 
 
-func PositionGet(
-	// self *PositionInfo,
+func PositionGeyKey(
 	owner std.Address,
-	tickLower bigint, // int64
-	tickUpper bigint, // int64
+	tickLower bigint,
+	tickUpper bigint,
 ) (string) {
 	// position = self[keccak256(abi.encodePacked(owner, tickLower, tickUpper))];
-	// key := ufmt.Sprintf("+%v %d %d", owner, tickLower, tickUpper)
+
+	// if positions == nil || len(positions) == 0 || positions[key] == nil {
+	// 	return PositionInfo{}
+	// } else {
+	// 	return positions[key]
+	// }
 	// sum := sha3.Sum256([]byte(key))[:]
 
-	key := ufmt.Sprintf("%s_%d_%d", owner.String(), tickLower, tickUpper)
-	return key
+	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
+	sum256 := sha256.Sum256([]byte(key))[:]
+
+	return hex.EncodeToString(sum256)
+}
+
+func PositionUpdateWithKey(
+	key string,
+	liquidityDelta bigint,
+	feeGrowthInside0 bigint,
+	feeGrowthInside1 bigint,
+) (PositionInfo) {
+	position, _ := positions[key]
+	p := PositionUpdate(position, liquidityDelta, feeGrowthInside0, feeGrowthInside1)
+	positions[key] = p
+	return p
 }
 
 func PositionUpdate(
-	key string,
-	liquidityDelta bigdec,
-	feeGrowthInside0 bigdec,
-	feeGrowthInside1 bigdec,
+	self PositionInfo,
+	liquidityDelta bigint,
+	feeGrowthInside0 bigint,
+	feeGrowthInside1 bigint,
 ) (PositionInfo) {
-	var _self PositionInfo
-	var ok bool
-
-	_self, ok = positions.Get(key)
-	if !ok {
-		panic("position not found POSITION")
-	}
-
-	var liquidityNext bigdec
+	// var self PositionInfo = positions[key]
+	var liquidityNext bigint
 
 	if (liquidityDelta == 0) {
-		require(_self.liquidity > 0, "NP")
-		liquidityNext = _self.liquidity
+		require(self.liquidity > 0, "[X] NP")
+		liquidityNext = self.liquidity
 	} else {
-		liquidityNext = _self.liquidity + liquidityDelta
+		liquidityNext = LiquidityMathAddDelta(self.liquidity, liquidityDelta)
 	}
-
-	var tokensOwed0 bigdec = (feeGrowthInside0 - _self.feeGrowthInside0Last) * _self.liquidity
-	var tokensOwed1 bigdec = (feeGrowthInside1 - _self.feeGrowthInside1Last) * _self.liquidity
+	
+	tokensOwed0 := (feeGrowthInside0 - self.feeGrowthInside0Last) * self.liquidity
+	tokensOwed1 := (feeGrowthInside1 - self.feeGrowthInside1Last) * self.liquidity
 
 	if (liquidityDelta != 0) {
-		_self.liquidity = liquidityNext
+		self.liquidity = liquidityNext
 	}
 
-	_self.feeGrowthInside0Last = feeGrowthInside0
-	_self.feeGrowthInside1Last = feeGrowthInside1
+	self.feeGrowthInside0Last = feeGrowthInside0
+	self.feeGrowthInside1Last = feeGrowthInside1
 	if (tokensOwed0 > 0 || tokensOwed1 > 0) {
-		_self.tokensOwed0 += tokensOwed0
-		_self.tokensOwed1 += tokensOwed1
+		self.tokensOwed0 += tokensOwed0
+		self.tokensOwed1 += tokensOwed1
 	}
 
-	return _self
+	return self
 }
-
