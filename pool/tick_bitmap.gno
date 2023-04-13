@@ -1,70 +1,65 @@
 package gnoswap
 
 import (
+	"math"
 	"internal/big"
 )
 
 
+// bitPos should be unsigned
 func TickBitmapPosition(tick bigint) (bigint, bigint) {
-	wordPos := tick / 256
-	bitPos := tick % 256
+	wordPos := (tick / 256) // tick >> 8
+	bitPos := (tick % 256)
 	return wordPos, bitPos
 }
 
 
 func TickBitmapFlipTick(
-	tick bigint, // uint64
-	tickSpacing bigint, // uint8
-) {
-	require(tick % tickSpacing == 0, "BAD#7")
-	
-	wordPos, bitPos := TickBitmapPosition(tick / tickSpacing)
-	// 1 << bitPos == Pow(2, bitPos)
-	// mask := 1 << bitPos // panic: untyped Bigint conversion should not happen during interpretation
-	mask := big.Pow(2, bigdec(bitPos))
-	
-	// tickBitmap.Set(wordPos, tickBitmap.Get(wordPos) ^ mask)	
-	oldPos, ok := tickBitmap.Get(string(wordPos))
-
-	// XXX
-	// require(ok, "old WordPos not found")
-	if !ok {
-		tickBitmap.Set(string(wordPos), 0 ^ bigint(mask))
-	}
-}
-
-func TickNextInitializedTickWithInOneWord(
 	tick bigint,
 	tickSpacing bigint,
-	lte bool
+) {
+	require(tick % tickSpacing == 0, "TICK_SPACING")
+	wordPos, bitPos := TickBitmapPosition(tick)
+	// mask := big.Pow(2, bitPos)
+	var mask bigint = 1 << bitPos
+	
+	tickBitmaps[wordPos] ^= mask
+}
+
+func TickBitmapNextInitializedTickWithInOneWord(
+	tick bigint,
+	tickSpacing bigint,
+	zeroForOne bool,
 ) (bigint, bool) {
-	compress := tick / tickSpacing
-	if tick < 0 && tick & tickSpacing != 0 {
+	compress := bigint(tick / tickSpacing)
+	if tick < 0 && tick % tickSpacing != 0 {
 		compress--
 	}
 
-	if lte {
-		wordPos, bitPos := position(compress)
-		mask : = big.Pow(2, bitPos) - 1 + big.Pow(2, bitPos)
-		self, ok := tickBitmap.Get(string(wordPos))
-		masked := self & mask
+	if zeroForOne {
+		wordPos, bitPos := TickBitmapPosition(compress)
+		// mask := uint64(math.Pow(2, float64(bitPos))) - 1 + uint64(math.Pow(2, float64(bitPos)))
+		// mask := bigint( (1 << bitPos) - 1 + (1 << bitPos) )
+		mask := bigint(big.Pow(2, bigdec(bitPos)) - 1 + big.Pow(2, bigdec(bitPos)))
+		masked := tickBitmaps[wordPos] & mask // BITWISE
 
 		initialized := masked != 0
 		if initialized { 
-			return (compress - bitPos - mostSignificantBit(masked)) * tickSpacing, initialized
+			return (compress - bigint(bitPos - BitMathMostSignificantBit(masked))) * tickSpacing, initialized
 		}
-		return (compress - bitPos) * tickSpacing, initialized
+		return (compress - bigint(bitPos)) * tickSpacing, initialized
 	}
 
-	wordPos, bitPos := position(compress)
-	mask := big.Pow(2, bitPos) - 1
-	self, ok := tickBitmap.Get(string(wordPos))
-	masked := self & mask
+	wordPos, bitPos := TickBitmapPosition(compress + 1)	
+	// mask := ^(uint64(math.Pow(2, float64(bitPos))) - 1) // XXX ??
+	// mask := ^((1 << bitPos) - 1)
+	mask := big.Not(bigint(big.Pow(2, bigdec(bitPos)) - 1)) // NOT BITWISE
+	masked := tickBitmaps[wordPos] & bigint(mask) // AND BITWISE
 
 	initialized := masked != 0
 	if initialized {
-		return (compress + 1 + leastSignificantBit(masked) - bitPos) * tickSpacing, initialized
+		return compress + 1 + bigint(BitMathLeastSignificantBit(bigint(masked))) - bigint(bitPos) * tickSpacing, initialized
 	}
 
-	return (compress + 1 + MAX_UINT8 - bitPos) * tickSpacing, initialized
+	return compress + 1 + bigint(MAX_UINT8 - bitPos) * tickSpacing, initialized
 }

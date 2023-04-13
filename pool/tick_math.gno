@@ -1,35 +1,40 @@
 package gnoswap
 
 import (
+	// "math"
 	"internal/big"
 )
 
 const (
-	MIN_TICK bigint = -887272
-	MAX_TICK bigint = 887272
+	MIN_TICK bigint = -221818
+	MAX_TICK bigint = 221818
 
-	// MIN_SQRT_RATIO bigdec = 4295128739
-	MIN_SQRT_RATIO bigdec = 5.4212146321E-20
-	// MAX_SQRT_RATIO bigdec = 1461446703485210103287273052203988822378723970342
-	MAX_SQRT_RATIO bigdec = 18446050711097703530.3140340022
+	MIN_SQRT_RATIO bigint = 0
+	MAX_SQRT_RATIO bigint = 65535
+	// MIN_SQRT_RATIO bigint = 5.4212146321E-20
+	// MAX_SQRT_RATIO bigint = 18446050711097703530.3140340022
 
-	POINT bigdec = 1.001
+	POINT bigdec = 1.0001
 )
 
 
-func TickMathGetSqrtRatioAtTick(tick bigint) (bigdec) {
-	var absTick = big.Abs(tick)
-	require(absTick <= MAX_TICK, "T")
+func TickMathGetSqrtRatioAtTick(tick bigint) (bigint) {
+	// absTick := int64(math.Abs(float64(tick)))
+	absTick := bigint(big.Abs(bigdec(tick)))
+	require(absTick <= MAX_TICK, "Tick out of range")
 	
-	var tickPow bigdec = big.Pow(POINT, bigdec(tick))
+	tickPow := big.Pow(POINT, bigdec(absTick))
 	sqrtPrice := big.Sqrt(tickPow)
-	return bigdec(sqrtPrice)
+	
+	// XXX lost precision
+	return bigint(big.RoundToIntegralExact(bigdec(sqrtPrice)))
+	// return bigint(sqrtPrice) // orig
 }
 
-func TickMathGetTickAtSqrtRatio(sqrtPrice bigdec) (tick bigdec) {
-	require(sqrtPrice >= MIN_SQRT_RATIO && sqrtPrice < MAX_SQRT_RATIO, "R")
+func TickMathGetTickAtSqrtRatio(sqrtPrice bigint) (bigint) {
+	require(sqrtPrice >= MIN_SQRT_RATIO || sqrtPrice <= MAX_SQRT_RATIO, "Sqrt ratio out of range")
 
 	x := sqrtPrice * sqrtPrice
-	tick = big.Log10(x) / big.Log10(POINT)
-	return tick
+	tick := big.Log10(bigdec(x)) / big.Log10(POINT)
+	return bigint(tick)
 }

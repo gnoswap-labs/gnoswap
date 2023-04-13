@@ -10,8 +10,8 @@ func GetHeight() int64 {
 	return std.GetHeight()
 }
 
-func GetTimestamp() int64 { // will be deprecate
-	return int64(std.GetTimestamp())
+func GetTimestamp() bigint { // will be deprecate
+	return bigint(std.GetTimestamp())
 }
 
 func GetChainID() string {
@@ -20,6 +20,10 @@ func GetChainID() string {
 
 func GetOrigPkgAddr() std.Address {
 	return std.GetOrigPkgAddr()
+}
+
+func GetOrigCaller() std.Address {
+	return std.GetOrigCaller()
 }
 
 // derive pkg addr

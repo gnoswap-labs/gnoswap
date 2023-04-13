@@ -1,62 +1,63 @@
 package gnoswap
 
-
 func SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
-	sqrtPrice bigdec,
-	liquidity bigdec,
-	amount bigdec,
+	sqrtP bigint,
+	liquidity bigint,
+	amount bigint,
 	add bool,
-) (bigdec) {
+) (bigint) {
 	if (amount == 0) {
-		return sqrtPrice
+		return sqrtP
 	}
 
-	var numerator1 bigdec = liquidity
-	var denominator bigdec
-	var product bigdec = amount * sqrtPrice
+	numerator1 := liquidity
+
+	var denominator bigint
+	product := amount * sqrtP
 	
 	if add {
-		if product / amount == sqrtPrice {
+		if product / amount == sqrtP {
 			denominator = numerator1 + product
 
 			if denominator >= numerator1 {
-				return numerator1 * sqrtPrice / denominator
+				/// XXX round ?
+				return numerator1 * sqrtP / denominator
 			}
-
-			return numerator1 / ((numerator1 / sqrtPrice) + amount)
-		} else {
-			require(product / amount == sqrtPrice && numerator1 > product, "NOPE#25")
-			denominator = numerator1 - product
-			return numerator1 * sqrtPrice / denominator
 		}
-	}
+
+		// XXX round ?
+		return numerator1 / ((numerator1 / sqrtP) + amount)
+	}	
+	require(product / amount == sqrtP && numerator1 > product, "SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp")
+	denominator = numerator1 - product
+	return numerator1 * sqrtP / denominator
 }
 
 func SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
-	sqrtPrice bigdec,
-	liquidity bigdec,
-	amount bigdec,
+	sqrtPrice bigint,
+	liquidity bigint,
+	amount bigint,
 	add bool,
-) (bigdec) {
-	var quotient bigdec = amount / liquidity
+) (bigint) {
+	quotient := amount / liquidity
 
 	if add {
-		return sqrtPrice + quotient
+		return quotient
 	} else {
-		require(sqrtPrice > quotient, "NOPE#46")
+		require(sqrtPrice > quotient, "sqrtPrice > quotient")
 		return sqrtPrice - quotient
 	}
 
 }
 
 func SqrtPriceMathGetNextSqrtPriceFromInput(
-	sqrtPrice bigdec,
-	liquidity bigdec,
-	amountIn bigdec,
+	sqrtPrice bigint,
+	liquidity bigint,
+	amountIn bigint,
 	zeroForOne bool,
-) (sqrtQ bigdec) {
-	require(sqrtPrice > 0, "NOPE#58")
-	require(liquidity > 0, "NOPE#59")
+) (sqrtQ bigint) {
+	require(sqrtPrice > 0, "sqrtPrice > 0")
+	require(liquidity > 0, "liquidity > 0")
 
 	if zeroForOne {
 		return SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPrice, liquidity, amountIn, true)
@@ -66,13 +67,13 @@ func SqrtPriceMathGetNextSqrtPriceFromInput(
 }
 
 func SqrtPriceMathGetNextSqrtPriceFromOutput(
-	sqrtPrice bigdec,
-	liquidity bigdec,
-	amountOut bigdec,
+	sqrtPrice bigint,
+	liquidity bigint,
+	amountOut bigint,
 	zeroForOne bool,
-) (sqrtQ bigdec) {
-	require(sqrtPrice > 0, "NOPE#58")
-	require(liquidity > 0, "NOPE#59")
+) (sqrtQ bigint) {
+	require(sqrtPrice > 0, "sqrtPrice > 0")
+	require(liquidity > 0, "liquidity > 0")
 
 	if zeroForOne {
 		return SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPrice, liquidity, amountOut, false)
@@ -82,57 +83,69 @@ func SqrtPriceMathGetNextSqrtPriceFromOutput(
 }
 
 func SqrtPriceMathGetAmount0DeltaHelper(
-	sqrtRatioA bigdec,
-	sqrtRatioB bigdec,
-	liquidity bigdec,
-) (amount0 bigdec) {
+	sqrtRatioA bigint,
+	sqrtRatioB bigint,
+	liquidity bigint,
+	roundUp bool,
+) (bigint) {
 	if (sqrtRatioA > sqrtRatioB) {
 		tempValue := sqrtRatioA
 		sqrtRatioA = sqrtRatioB
 		sqrtRatioB = tempValue
 	}
 
-	var numerator1 bigdec = liquidity
-	var numerator2 bigdec = sqrtRatioB - sqrtRatioA
+	numerator1 := liquidity
+	numerator2 := sqrtRatioB - sqrtRatioA
 
-	require(sqrtRatioA > 0, "NOPE#98")
-	return ((numerator1 * numerator2) / (sqrtRatioB) / sqrtRatioA)
+	require(sqrtRatioA > 0, "[X] sqrtRatioA > 0")
+
+	if roundUp {
+		return (numerator1 * numerator2 / sqrtRatioB) / sqrtRatioA
+		// return liquidity / sqrtRatioA - liquidity / sqrtRatioB
+	}
+
+	return ((numerator1 * numerator2) / sqrtRatioB) / sqrtRatioA
 }
 
 func SqrtPriceMathGetAmount1DeltaHelper(
-	sqrtRatioA bigdec,
-	sqrtRatioB bigdec,
-	liquidity bigdec,
-) (amount1 bigdec) {
+	sqrtRatioA bigint,
+	sqrtRatioB bigint,
+	liquidity bigint,
+	roundUp bool,
+) (bigint) {
 	if (sqrtRatioA > sqrtRatioB) {
 		tempValue := sqrtRatioA
 		sqrtRatioA = sqrtRatioB
 		sqrtRatioB = tempValue
+	}
+
+	if roundUp {
+		return liquidity * (sqrtRatioB - sqrtRatioA)
 	}
 
 	return liquidity * (sqrtRatioB - sqrtRatioA)
 }
 
 func SqrtPriceMathGetAmount0Delta(
-	sqrtRatioAX96 bigdec,
-	sqrtRatioBX96 bigdec,
-	liquidity bigdec,
-) (amount0 bigdec) {
+	sqrtRatioA bigint,
+	sqrtRatioB bigint,
+	liquidity bigint,
+) (bigint) {
 	if liquidity < 0 {
-		return -(SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, -liquidity))
+		return bigint(-SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioA, sqrtRatioB, bigint(-liquidity), false))
 	} 
 	
-	return SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity)
+	return bigint(SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioA, sqrtRatioB, bigint(liquidity), true))
 }
 
 func SqrtPriceMathGetAmount1Delta(
-	sqrtRatioAX96 bigdec,
-	sqrtRatioBX96 bigdec,
-	liquidity bigdec,
-) (amount1 bigdec) {
+	sqrtRatioA bigint,
+	sqrtRatioB bigint,
+	liquidity bigint,
+) (bigint) {
 	if liquidity < 0 {
-		return -(SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, -liquidity))
+		return bigint(-SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioA, sqrtRatioB, bigint(-liquidity), false))
 	}
 
-	return SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity)
+	return bigint(SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioA, sqrtRatioB, bigint(liquidity), true))
 }
