@@ -21,15 +21,6 @@ var (
 	rv01 = testutils.TestAddress("rv01") // Receiver 01
 	rv02 = testutils.TestAddress("rv02") // Receiver 02
 	rv03 = testutils.TestAddress("rv03") // Receiver 03
-
-
-	// Common
-	test_tickLower bigint = 200
-	test_tickUpper bigint = 45000
-	test_liquidityExpect bigint = 1000
-
-	test_tickLower2 bigint = 50000
-	test_tickUpper2 bigint = 100000
 )
 
 
@@ -62,20 +53,34 @@ func init() {
 }
 
 
+var (
+	// Common
+	test_tickLower bigint = 200
+	test_tickUpper bigint = 45000
+	test_liquidityExpect bigint = 1000
+
+	test_tickLower2 bigint = 50000
+	test_tickUpper2 bigint = 100000
+)
+
+
 func TestInit(t *testing.T) {
-	/*
-		_fee bigint,
-		_tickSpacing bigint,
-		_sqrtPrice bigint,
-		_tick bigint,
-	*/
 	var (
-		test_fee bigint = 10000
+		// 1			= 0.0001% // XX
+		// 500		= 0.05% // USv3 default
+		// 3000		= 0.3% // USv3 default
+		// 10000	= 1% // USv3 default
+		test_fee bigint = 3000
 		test_tickSpacing bigint = 100
+		test_tick bigint = 43946
 		test_sqrtPrice bigint = 8
-		test_tick bigint = 4396
 	)
-	Init(test_fee, test_tickSpacing, test_sqrtPrice, test_tick)
+	Init(
+		test_fee, 
+		test_tickSpacing, 
+		test_sqrtPrice, 
+		test_tick,
+	)
 
 	std.TestSetOrigCaller(lp01)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
@@ -138,7 +143,6 @@ func TestMint(t *testing.T) {
 
 
 
-
 func TestBurn(t *testing.T) {
 	b1, b2 := Burn(test_tickLower, test_tickUpper, test_liquidityExpect)
 	b11, b12 := Burn(test_tickLower, test_tickUpper, test_liquidityExpect)
@@ -171,8 +175,6 @@ func TestBurn(t *testing.T) {
 
 
 
-
-
 func TestCollect(t *testing.T) {
 	// withdraw all token
 	Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
@@ -187,7 +189,6 @@ func TestCollect(t *testing.T) {
 
 	shouldEQ(t, c1, c3)
 	shouldEQ(t, c2, c4)
-
 
 	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
 	Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
@@ -215,19 +216,18 @@ func TestCollect(t *testing.T) {
 }
 
 
-func TestSwap(t *testing.T) {
-	// Swap token0 -> token1
 
-	var test_sqrtPriceExpect bigint = 8
+func TestSwap(t *testing.T) {
+	// 	Swap token0 -> token1
+	var test_sqrtPriceExpect bigint = 8 // shuold be same as test_sqrtPrice
 	test_slot0 := GetSlot0()
 
 	std.TestSetOrigCaller(lp01)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 150)
-
-	var test_price bigint = 7
+	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
 
 	std.TestSetOrigCaller(sp01)
-	s1, s2 := Swap(sp01, true, 20, test_price)
+	test_price := GetSqrtPrice() - 1
+	s1, s2 := Swap(sp01, true, 100000, test_price) // give enough amount to take fees away
 	// println("s1:", s1)
 	// println("s2:", s2)
 	shouldGTE(t, 0, s1 * s2) // token1 will be minus, so 0 shoule always GTE
@@ -240,13 +240,15 @@ func TestSwap(t *testing.T) {
 	shouldGTE(t, test_swapPrice1, test_minPrice)
 	shouldGTE(t, test_maxPrice, test_swapPrice1)
 
-	test_newPrice1 := GetSqrtPrice()
+	test_newPrice1 := GetSqrtPrice() - 1
 	shouldGTE(t, test_price, test_newPrice1)
 
-	s3, s4 := Swap(sp01, true, 40, test_newPrice1 - 1)
+	s3, s4 := Swap(sp01, true, 100000, test_newPrice1)
+	// println("s3:", s3)
+	// println("s4:", s4)
 	test_swapPrice2 := big.Abs(s4) / big.Abs(s3)
 
-	test_minPrice = (test_newPrice1 - 1) * (test_newPrice1 - 1)
+	test_minPrice = (test_newPrice1) * (test_newPrice1)
 	shouldGTE(t, test_swapPrice2, test_minPrice)
 	shouldGTE(t, test_maxPrice, test_swapPrice2)
 
@@ -255,7 +257,7 @@ func TestSwap(t *testing.T) {
 
 	// Swap token1 -> token0
 	std.TestSetOrigCaller(sp01)
-	ss1, ss2 := Swap(rv02, false, 20, 1000)
+	ss1, ss2 := Swap(sp01, false, 100000, test_newPrice2 + 1)
 	// println("ss1:", ss1)
 	// println("ss2:", ss2)
 	shouldGTE(t, 0, ss1 * ss2) // token0 will be minus, so 0 shoule always GTE
@@ -289,7 +291,7 @@ func TestSetFeeProtocol(t *testing.T) {
 
 
 
-func TestCollectFeeProtocl(t *testing.T) {
+func TestCollectFeeProtocol(t *testing.T) {
 	SetFeeProtocol(6, 8)
 	test_slot0 := GetSlot0()	
 	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
@@ -298,34 +300,52 @@ func TestCollectFeeProtocl(t *testing.T) {
 	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 150)
 
 	std.TestSetOrigCaller(sp01)
-	// Swap(sp01, true, 60, 2) // ??
-	Swap(sp01, true, 20, GetSqrtPrice() - 1) // swap token0 -> token1 // fee will only have token0
+	Swap(sp01, true, 100000, GetSqrtPrice() - 1) // swap token0 -> token1 => fee only in token0
+	Swap(sp01, true, 100000, GetSqrtPrice() - 1) // more protocol fees
 	test_fee := GetProtocolFees()
 
 	beforeToken0 := BalanceOf(token0, rv01)
 	beforeToken1 := BalanceOf(token1, rv01)
-	
+
 	std.TestSetOrigCaller(sp01)
 	CollectFeeProtocol(rv01, 10000, 10000)
-	
+
 	afterToken0 := BalanceOf(token0, rv01)
 	afterToken1 := BalanceOf(token1, rv01)
 
-	// println("beforeToken0:", beforeToken0)
-	// println("afterToken0:", afterToken0)
-	// println("beforeToken1:", beforeToken1)
-	// println("afterToken1:", afterToken1)
-
-	// no fee for token1
+	// no fee for token1 // 0 == before == after
 	shouldEQ(t, 0, beforeToken1)
 	shouldEQ(t, beforeToken1, afterToken1)
 
-	// som fee for token0
+	// some fee for token0
 	shouldEQ(t, 0, beforeToken0)
 	shouldNEQ(t, bigint(0), afterToken0)
 	shouldGTE(t, afterToken0, beforeToken0)
-	shouldEQ(t, test_fee.token0 -1, afterToken0)
+	shouldEQ(t, test_fee.token0 - 1, afterToken0)
+
+
+
+	// std.TestSetOrigCaller(sp01)
+	Swap(rv02, false, 20, GetSqrtPrice() + 9999) // swap token1 -> token0 // fee will only have token1
+	Swap(rv02, false, 20, GetSqrtPrice() + 9999) // more protocol fees
+	test_newFee := GetProtocolFees()
+	newBeforeToken0 := BalanceOf(token0, rv01)
+	newBeforeToken1 := BalanceOf(token1, rv01)
 
 	std.TestSetOrigCaller(sp01)
-	// Swap(rv02, false, 20, GetSqrtPrice() + 10) // swap token1 -> token0 // fee will only have token1
+	CollectFeeProtocol(rv01, 10000, 10000)
+
+	newAfterToken0 := BalanceOf(token0, rv01)
+	newAfterToken1 := BalanceOf(token1, rv01)
+
+	// no fee for token 0 
+	shouldEQ(t, afterToken0, newBeforeToken0)
+	shouldEQ(t, newBeforeToken0, newAfterToken0)
+
+	// some fee for token1
+	shouldEQ(t, afterToken1, newBeforeToken1)
+	shouldNEQ(t, bigint(0), newAfterToken1)
+	shouldGTE(t, newAfterToken1, newBeforeToken1)
+
+	shouldEQ(t, test_newFee.token1 - 1, newAfterToken1)
 }

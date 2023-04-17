@@ -22,20 +22,11 @@ type PositionInfo struct {
 }
 
 
-func PositionGeyKey(
+func PositionGetKey(
 	owner std.Address,
 	tickLower bigint,
 	tickUpper bigint,
 ) (string) {
-	// position = self[keccak256(abi.encodePacked(owner, tickLower, tickUpper))];
-
-	// if positions == nil || len(positions) == 0 || positions[key] == nil {
-	// 	return PositionInfo{}
-	// } else {
-	// 	return positions[key]
-	// }
-	// sum := sha3.Sum256([]byte(key))[:]
-
 	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
 	sum256 := sha256.Sum256([]byte(key))[:]
 
@@ -60,7 +51,6 @@ func PositionUpdate(
 	feeGrowthInside0 bigint,
 	feeGrowthInside1 bigint,
 ) (PositionInfo) {
-	// var self PositionInfo = positions[key]
 	var liquidityNext bigint
 
 	if (liquidityDelta == 0) {

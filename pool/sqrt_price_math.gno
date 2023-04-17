@@ -7,6 +7,7 @@ func SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
 	add bool,
 ) (bigint) {
 	if (amount == 0) {
+		require(sqrtP >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp")
 		return sqrtP
 	}
 
@@ -21,15 +22,18 @@ func SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
 
 			if denominator >= numerator1 {
 				/// XXX round ?
+				require(numerator1 * sqrtP / denominator >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp")
 				return numerator1 * sqrtP / denominator
 			}
 		}
 
 		// XXX round ?
+		require(numerator1 / ((numerator1 / sqrtP) + amount) >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp")
 		return numerator1 / ((numerator1 / sqrtP) + amount)
 	}	
 	require(product / amount == sqrtP && numerator1 > product, "SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp")
 	denominator = numerator1 - product
+	require(numerator1 * sqrtP / denominator >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp")
 	return numerator1 * sqrtP / denominator
 }
 
@@ -39,12 +43,18 @@ func SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
 	amount bigint,
 	add bool,
 ) (bigint) {
+	require(sqrtPrice > 0, "[X] sqrtPrice > 0 // SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown")
+	require(liquidity > 0, "[X] liquidity > 0 // SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown")
+	require(amount > 0, "[X] amount > 0 // SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown")
+
 	quotient := amount / liquidity
 
 	if add {
-		return quotient
+		require(quotient >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown")
+		return sqrtPrice + quotient
 	} else {
 		require(sqrtPrice > quotient, "sqrtPrice > quotient")
+		require(sqrtPrice - quotient >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown")
 		return sqrtPrice - quotient
 	}
 
@@ -56,13 +66,16 @@ func SqrtPriceMathGetNextSqrtPriceFromInput(
 	amountIn bigint,
 	zeroForOne bool,
 ) (sqrtQ bigint) {
-	require(sqrtPrice > 0, "sqrtPrice > 0")
-	require(liquidity > 0, "liquidity > 0")
+	require(sqrtPrice > 0, "[X] sqrtPrice > 0 // SqrtPriceMathGetNextSqrtPriceFromInput")
+	require(liquidity > 0, "[X] liquidity > 0// SqrtPriceMathGetNextSqrtPriceFromInput")
+	require(amountIn > 0, "[X] amountIn > 0 // SqrtPriceMathGetNextSqrtPriceFromInput")
 
 	if zeroForOne {
+		require(SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPrice, liquidity, amountIn, true) >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromInput")
 		return SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPrice, liquidity, amountIn, true)
 	} 
 
+	require(SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPrice, liquidity, amountIn, true) >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromInput")
 	return SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPrice, liquidity, amountIn, true)
 }
 
@@ -76,9 +89,11 @@ func SqrtPriceMathGetNextSqrtPriceFromOutput(
 	require(liquidity > 0, "liquidity > 0")
 
 	if zeroForOne {
+		require(SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPrice, liquidity, amountOut, false) >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromOutput #1")
 		return SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPrice, liquidity, amountOut, false)
 	} 
 
+	require(SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPrice, liquidity, amountOut, false) >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromOutput #2")
 	return SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPrice, liquidity, amountOut, false)
 }
 
@@ -100,10 +115,12 @@ func SqrtPriceMathGetAmount0DeltaHelper(
 	require(sqrtRatioA > 0, "[X] sqrtRatioA > 0")
 
 	if roundUp {
+		require((numerator1 * numerator2 / sqrtRatioB) / sqrtRatioA >= 0, "FIX MINUS // SqrtPriceMathGetAmount0DeltaHelper #1")
 		return (numerator1 * numerator2 / sqrtRatioB) / sqrtRatioA
 		// return liquidity / sqrtRatioA - liquidity / sqrtRatioB
 	}
 
+	require(((numerator1 * numerator2) / sqrtRatioB) / sqrtRatioA >= 0, "FIX MINUS // SqrtPriceMathGetAmount0DeltaHelper #2")
 	return ((numerator1 * numerator2) / sqrtRatioB) / sqrtRatioA
 }
 

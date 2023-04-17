@@ -94,7 +94,7 @@ func Init(
 	_sqrtPrice bigint,
 	_tick bigint,
 ) {
-	fee = _fee
+	fee = _fee // swap fee, not protocol fee
 	tickSpacing = _tickSpacing
 	maxLiquidityPerTick = TickTickSpacingToMaxLiquidityPerTick(_tickSpacing)
 
@@ -104,6 +104,8 @@ func Init(
 	cardinality := 0
 	cardinalityNext := 0
 
+	// _tick := TickMathGetTickAtSqrtRatio(_sqrtPrice)
+	// sqrtPrice := TickMathGetSqrtRatioAtTick(_sqrtPrice)
 
 	slot0 = Slot0 {
 		_sqrtPrice, // sqrtPrice
@@ -129,26 +131,31 @@ func Mint(
 			amount,
 		},
 	)
-	
 
 	amount0 := bigint(amount0Int)
 	amount1 := bigint(amount1Int)
+	require(amount0 >= 0, "FIX MINUS // Mint #1")
+	require(amount1 >= 0, "FIX MINUS // Mint #2")
 
 	var balance0Before, balance1Before bigint
 
-	// XXX Callback unavailable
 	if (amount0 > 0) {
 		balance0Before = BalanceOf(token0, GetOrigPkgAddr())
-		token0.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount0))
-		require(balance0Before + amount0 <= BalanceOf(token0, GetOrigPkgAddr()), "balance0")
+		err := token0.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount0))
+		if err != nil {
+			panic("token0.TransferFrom failed")
+		}
+		require(balance0Before + amount0 <= BalanceOf(token0, GetOrigPkgAddr()), "[X] balance0")
 	}
 
 	if (amount1 > 0) {
 		balance1Before = BalanceOf(token1, GetOrigPkgAddr())
-		token1.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount1))
-		require(balance1Before + amount1 <= BalanceOf(token1, GetOrigPkgAddr()), "balance1")
+		err := token1.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount1))
+		if err != nil {
+			panic("token1.TransferFrom failed")
+		}
+		require(balance1Before + amount1 <= BalanceOf(token1, GetOrigPkgAddr()), "[X] balance1")
 	}
-
 	return amount0, amount1
 }
 
@@ -176,7 +183,7 @@ func Burn(
 		position.tokensOwed1 = amount1 + position.tokensOwed1
 	}
 
-	key := PositionGeyKey(GetOrigCaller(), tickLower, tickUpper)
+	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
 	positions[key] = position
 	return amount0, amount1
 }
@@ -188,7 +195,7 @@ func Collect(
 	amount0Requested bigint, 
 	amount1Requested bigint,
 ) (bigint, bigint) {
-	key := PositionGeyKey(GetOrigCaller(), tickLower, tickUpper)
+	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
 	position := positions[key]
 
 	var amount0, amount1 bigint
@@ -233,13 +240,6 @@ func Swap(
 
 	var feeProtocol, feeGrowthGlobal bigint
 
-	// debug
-	// println("zeroForOne", zeroForOne)
-	// println("sqrtPriceLimit", sqrtPriceLimit)
-	// println("slot0Start.sqrtPrice", slot0Start.sqrtPrice)
-	// println("MIN_SQRT_RATIO", MIN_SQRT_RATIO)
-	// println("MAX_SQRT_RATIO", MAX_SQRT_RATIO)
-
 	if zeroForOne {
 		require(sqrtPriceLimit < slot0Start.sqrtPrice && sqrtPriceLimit > MIN_SQRT_RATIO, "SPL T")
 		feeProtocol = slot0Start.feeProtocol % 16
@@ -257,7 +257,7 @@ func Swap(
 		blockTimestamp: GetTimestamp(),
 		feeProtocol: feeProtocol,
 	}
-
+	
 	exactInput := amountSpecified > 0
 	
 	var state SwapState
@@ -281,13 +281,10 @@ func Swap(
 			protocolFee: 0,
 			liquidity: cache.liquidityStart,
 		}
-		println("==== 1 to 0 ====")
-		println("state:", state)
 	}
 
 	
 	for state.amountSpecifiedRemaining > 0 && state.sqrtPrice != sqrtPriceLimit {
-	// for state.amountSpecifiedRemaining != 0 && state.sqrtPrice != sqrtPriceLimit { // orig
 		var step StepComputations
 
 		step.sqrtPriceStart = state.sqrtPrice
@@ -321,14 +318,6 @@ func Swap(
 			}
 		}
 				
-		// XXX fix feeAmount overflow / underflow
-		println("state.sqrtPrice: ", state.sqrtPrice)
-		println("sqrtRatioTarget: ", sqrtRatioTarget)
-		println("state.liquidity: ", state.liquidity)
-		println("state.amountSpecifiedRemaining: ", state.amountSpecifiedRemaining)
-		println("fee: ", fee)
-		println("step.feeAmount: ", step.feeAmount)
-		println()
 		state.sqrtPrice, step.amountIn, step.amountOut, step.feeAmount = SwapMathComputeSwapStep(
 			state.sqrtPrice,
 			sqrtRatioTarget,
@@ -336,8 +325,7 @@ func Swap(
 			state.amountSpecifiedRemaining,
 			fee,
 		)
-		
-		// XXX fix feeAmount overflow / underflow => state.amountSpecifiedRemaining being negative L#287
+
 		if exactInput {
 			state.amountSpecifiedRemaining = state.amountSpecifiedRemaining - bigint(step.amountIn + step.feeAmount)
 			state.amountCalculated = state.amountCalculated - bigint(step.amountOut)
@@ -355,6 +343,7 @@ func Swap(
 		if state.liquidity > 0 {
 			state.feeGrowthGlobal = state.feeGrowthGlobal + step.feeAmount / state.liquidity
 		}
+		
 		if state.sqrtPrice == step.sqrtPriceNext {
 			if step.initialized {
 				var fee0, fee1 bigint
@@ -417,7 +406,6 @@ func Swap(
 		}
 	}
 
-	
 	var amount0, amount1 bigint
 	if zeroForOne == exactInput {
 		amount0 = bigint(amountSpecified - state.amountSpecifiedRemaining)
@@ -462,6 +450,7 @@ func CollectFeeProtocol(
 	amount0Requested bigint,
 	amount1Requested bigint,
 ) (bigint, bigint) {
+	// XXX check owner, IT IS PROTOCOL FEE NOT SWAP FEE
 	var amount0, amount1 bigint
 
 	if amount0Requested > protocolFees.token0 {
@@ -476,6 +465,7 @@ func CollectFeeProtocol(
 		amount1 = amount1Requested
 	}
 
+
 	if amount0 > 0 {
 		if amount0 == protocolFees.token0 {
 			amount0--
@@ -484,7 +474,11 @@ func CollectFeeProtocol(
 
 		// XXX
 		// Currently GRC20 expect uint for amount
-		token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
+		// token0.Transfer(recipient, uint64(amount0))
+		err := token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	if amount1 > 0 {
@@ -493,7 +487,11 @@ func CollectFeeProtocol(
 			amount1--
 		}
 		protocolFees.token1 -= amount1
-		token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
+
+		err := token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return amount0, amount1
@@ -502,6 +500,7 @@ func CollectFeeProtocol(
 
 func modifyPosition(params ModifyPositionParams) (PositionInfo, bigint, bigint) {
 	checkTicks(params.tickLower, params.tickUpper)
+
 	position := updatePosition(
 		params.owner,
 		params.tickLower,
@@ -522,8 +521,7 @@ func modifyPosition(params ModifyPositionParams) (PositionInfo, bigint, bigint) 
 		} else if (slot0.tick < params.tickUpper) {
 			liquidityBefore := liquidity
 
-			// XXX oracle
-
+			// XXX write oracle
 			amount0 = SqrtPriceMathGetAmount0Delta(
 				slot0.sqrtPrice,
 				TickMathGetSqrtRatioAtTick(params.tickUpper),
@@ -536,6 +534,7 @@ func modifyPosition(params ModifyPositionParams) (PositionInfo, bigint, bigint) 
 			)
 
 			liquidity = LiquidityMathAddDelta(liquidityBefore, params.liquidityDelta)
+
 		} else {
 			amount1 = SqrtPriceMathGetAmount1Delta(
 				TickMathGetSqrtRatioAtTick(params.tickLower),
@@ -555,8 +554,11 @@ func updatePosition(
 	liquidityDelta bigint,
 	tick bigint,
 ) (PositionInfo) {
-	var flippedLower bool
-	var flippedUpper bool
+	// key code is at L#615
+
+	var _feeGrowthGlobal0 bigint = feeGrowthGlobal0
+	var _feeGrowthGlobal1 bigint = feeGrowthGlobal1
+	var flippedLower, flippedUpper bool
 
 	if (liquidityDelta != 0) {
 		time := GetTimestamp()
@@ -565,8 +567,8 @@ func updatePosition(
 			tickLower,
 			tick,
 			liquidityDelta,
-			feeGrowthGlobal0,
-			feeGrowthGlobal1,
+			_feeGrowthGlobal0,
+			_feeGrowthGlobal1,
 			// secondsPerLiquidityCumulative,
 			time, 
 			false,
@@ -577,11 +579,11 @@ func updatePosition(
 			tickUpper,
 			tick,
 			liquidityDelta,
-			feeGrowthGlobal0,
-			feeGrowthGlobal1,
+			_feeGrowthGlobal0,
+			_feeGrowthGlobal1,
 			// secondsPerLiquidityCumulative,
 			time,
-			false,
+			true,
 			maxLiquidityPerTick,
 		)
 
@@ -598,11 +600,11 @@ func updatePosition(
 		tickLower,
 		tickUpper,
 		tick,
-		feeGrowthGlobal0,
-		feeGrowthGlobal1,
+		_feeGrowthGlobal0,
+		_feeGrowthGlobal1,
 	)
 
-	key := PositionGeyKey(owner, tickLower, tickUpper)
+	key := PositionGetKey(owner, tickLower, tickUpper)
 	position := PositionUpdateWithKey(
 		key, 
 		liquidityDelta,

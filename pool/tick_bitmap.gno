@@ -20,9 +20,8 @@ func TickBitmapFlipTick(
 ) {
 	require(tick % tickSpacing == 0, "TICK_SPACING")
 	wordPos, bitPos := TickBitmapPosition(tick)
-	// mask := big.Pow(2, bitPos)
-	var mask bigint = 1 << bitPos
-	
+	// mask := 1 << bitPos
+	mask := bigint(big.Pow(2, bigdec(bitPos)))
 	tickBitmaps[wordPos] ^= mask
 }
 
@@ -38,28 +37,41 @@ func TickBitmapNextInitializedTickWithInOneWord(
 
 	if zeroForOne {
 		wordPos, bitPos := TickBitmapPosition(compress)
-		// mask := uint64(math.Pow(2, float64(bitPos))) - 1 + uint64(math.Pow(2, float64(bitPos)))
-		// mask := bigint( (1 << bitPos) - 1 + (1 << bitPos) )
-		mask := bigint(big.Pow(2, bigdec(bitPos)) - 1 + big.Pow(2, bigdec(bitPos)))
-		masked := tickBitmaps[wordPos] & mask // BITWISE
+		// mask := (1 << bitPos) - 1 + (1 << bitPos)
+		mask := bigint( big.Pow(2, bigdec(bitPos)) - 1 + big.Pow(2, bigdec(bitPos)) )
+		masked := tickBitmaps[wordPos] & mask 
 
 		initialized := masked != 0
+
 		if initialized { 
-			return (compress - bigint(bitPos - BitMathMostSignificantBit(masked))) * tickSpacing, initialized
+			return (
+				compress - 
+				bigint(
+					bigint(bitPos - BitMathMostSignificantBit(masked)),
+				)) * tickSpacing, 
+				initialized
 		}
 		return (compress - bigint(bitPos)) * tickSpacing, initialized
 	}
 
 	wordPos, bitPos := TickBitmapPosition(compress + 1)	
-	// mask := ^(uint64(math.Pow(2, float64(bitPos))) - 1) // XXX ??
-	// mask := ^((1 << bitPos) - 1)
-	mask := big.Not(bigint(big.Pow(2, bigdec(bitPos)) - 1)) // NOT BITWISE
-	masked := tickBitmaps[wordPos] & bigint(mask) // AND BITWISE
+	// mask := ~((1 << bitPos) - 1)
+	mask := big.Not( bigint( (big.Pow(2, bigdec(bitPos))) - 1) )
+	masked := tickBitmaps[wordPos] & mask
 
 	initialized := masked != 0
 	if initialized {
-		return compress + 1 + bigint(BitMathLeastSignificantBit(bigint(masked))) - bigint(bitPos) * tickSpacing, initialized
+		return (
+			compress + 
+			1 + 
+			bigint(
+				bigint((BitMathLeastSignificantBit(masked) - bitPos)),
+			)) * tickSpacing, initialized
 	}
 
-	return compress + 1 + bigint(MAX_UINT8 - bitPos) * tickSpacing, initialized
+	return (
+		compress + 
+		1 + 
+		bigint(
+			bigint((MAX_UINT8 - bitPos)))) * tickSpacing, initialized
 }
