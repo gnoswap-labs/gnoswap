@@ -40,7 +40,8 @@ func shouldPanic(t *testing.T, f func()) {
 	f()
 }
 
-// SWAP Testing
+
+// Testing
 func GetMaxLiquidityPerTick() bigint {
 	return maxLiquidityPerTick
 }
@@ -88,4 +89,3 @@ func GetTickBitmap(key bigint) bigint {
 func GetSqrtPrice() bigint {
 	return slot0.sqrtPrice
 }
-

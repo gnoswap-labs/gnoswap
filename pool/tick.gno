@@ -21,7 +21,7 @@ func TickTickSpacingToMaxLiquidityPerTick(tickSpacing bigint) bigint {
 	var maxTick bigint = (MAX_TICK / tickSpacing) * tickSpacing
 	var numTicks bigint = bigint(((maxTick - minTick) / tickSpacing) + 1)
 
-	return MAX_bigint / numTicks
+	return MAX_UINT64 / numTicks
 }
 
 func TickUpdate(

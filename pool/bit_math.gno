@@ -2,9 +2,7 @@ package gnoswap
 
 
 func BitMathMostSignificantBit(x bigint) bigint {
-	if x <= 0 {
-		panic("x must be positive")
-	}
+	require(x > 0, "x must be positive")
 
 	r := bigint(0)
 
@@ -47,22 +45,22 @@ func BitMathMostSignificantBit(x bigint) bigint {
 		r += 1
 	}
 
+	require(r >= 0, "FIX MINUS // BitMathMostSignificantBit")
 	return r
 }
 
 func BitMathLeastSignificantBit(x bigint) bigint {
-	if x <= 0 {
-		panic("x must be positive")
-	}
-	r := 63
+	require(x > 0, "x must be positive")
 
+	r := bigint(255)
+	
 	if x & MAX_UINT128 > 0 {
 		r -= 128
 	} else {
 		x >>= 128
 	}
 
-	if x & MAX_bigint > 0 {
+	if x & MAX_UINT64 > 0 {
 		r -= 64
 	} else {
 		x >>= 64
@@ -102,5 +100,6 @@ func BitMathLeastSignificantBit(x bigint) bigint {
 		r -= 1
 	}
 
-	return bigint(r)
+	require(r >= 0, "FIX MINUS // BitMathLeastSignificantBit")
+	return r
 }
