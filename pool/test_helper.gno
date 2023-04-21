@@ -1,4 +1,3 @@
-// only for unit test
 package gnoswap
 
 import (
@@ -18,15 +17,15 @@ func shouldNEQ(t *testing.T, got, expected interface{}) {
 	}
 }
 
-func shouldGTE(t *testing.T, l, r interface{}) {
-	if !(l >= r) {
-		t.Errorf("expected %v >= %v", l, r)
+func shouldGT(t *testing.T, l, r interface{}) {
+	if !(l < r) {
+		t.Errorf("expected %v < %v", l, r)
 	}
 }
 
-func shouldLTE(t *testing.T, l, r interface{}) {
-	if !(l <= r) {
-		t.Errorf("expected %v <= %v", l, r)
+func shouldLT(t *testing.T, l, r interface{}) {
+	if !(l > r) {
+		t.Errorf("expected %v > %v", l, r)
 	}
 }
 
@@ -58,12 +57,12 @@ func GetTickSpacing() bigint {
 	return tickSpacing
 }
 
-func GetFeeGrowthGlobal0() bigint {
-	return feeGrowthGlobal0
+func GetFeeGrowthGlobal0X128() bigint {
+	return feeGrowthGlobal0X128
 }
 
-func GetFeeGrowthGlobal1() bigint {
-	return feeGrowthGlobal1
+func GetFeeGrowthGlobal1X128() bigint {
+	return feeGrowthGlobal1X128
 }
 
 func GetSlot0() Slot0 {
@@ -86,6 +85,13 @@ func GetTickBitmap(key bigint) bigint {
 	return tickBitmaps[key]
 }
 
-func GetSqrtPrice() bigint {
-	return slot0.sqrtPrice
+func GetSqrtPriceX96() bigint {
+	return slot0.sqrtPriceX96
+}
+
+func Abs(x bigint) bigint {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
