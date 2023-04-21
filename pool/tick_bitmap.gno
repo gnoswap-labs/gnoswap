@@ -2,14 +2,19 @@ package gnoswap
 
 import (
 	"math"
-	"internal/big"
 )
 
+const BigInt1 bigint = bigint(1)
 
-// bitPos should be unsigned
+
 func TickBitmapPosition(tick bigint) (bigint, bigint) {
 	wordPos := (tick / 256) // tick >> 8
 	bitPos := (tick % 256)
+	if bitPos < 0 {
+		bitPos = -bitPos
+	}
+	
+	isUnsigned(bitPos, "tick_bitmap.gno__TickBitmapPosition__bitPos")
 	return wordPos, bitPos
 }
 
@@ -20,8 +25,8 @@ func TickBitmapFlipTick(
 ) {
 	require(tick % tickSpacing == 0, "TICK_SPACING")
 	wordPos, bitPos := TickBitmapPosition(tick)
-	// mask := 1 << bitPos
-	mask := bigint(big.Pow(2, bigdec(bitPos)))
+	mask := BigInt1 << bitPos
+	isUnsigned(mask, "tick_bitmap.gno__TickBitmapFlipTick__mask")
 	tickBitmaps[wordPos] ^= mask
 }
 
@@ -37,9 +42,10 @@ func TickBitmapNextInitializedTickWithInOneWord(
 
 	if zeroForOne {
 		wordPos, bitPos := TickBitmapPosition(compress)
-		// mask := (1 << bitPos) - 1 + (1 << bitPos)
-		mask := bigint( big.Pow(2, bigdec(bitPos)) - 1 + big.Pow(2, bigdec(bitPos)) )
+		mask := (BigInt1 << bitPos) - BigInt1 + (BigInt1 << bitPos)
+		isUnsigned(mask, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__mask #1")
 		masked := tickBitmaps[wordPos] & mask 
+		isUnsigned(masked, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__masked #1")
 
 		initialized := masked != 0
 
@@ -55,9 +61,16 @@ func TickBitmapNextInitializedTickWithInOneWord(
 	}
 
 	wordPos, bitPos := TickBitmapPosition(compress + 1)	
-	// mask := ~((1 << bitPos) - 1)
-	mask := big.Not( bigint( (big.Pow(2, bigdec(bitPos))) - 1) )
+	mask := MAX_UINT256 - ( bigint(1) << bigint(bitPos) - bigint(1) ) 
+	// mask := ^((BigInt1 << bitPos) - BigInt1) // (2^256-1) - (2^bitPos-1)
+
+	if mask < 0 {
+		mask = -mask
+	}
+
+	isUnsigned(mask, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__mask #2")
 	masked := tickBitmaps[wordPos] & mask
+	isUnsigned(masked, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__masked #2")
 
 	initialized := masked != 0
 	if initialized {

@@ -1,168 +1,200 @@
 package gnoswap
 
 func SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
-	sqrtP bigint,
+	sqrtPX96 bigint,
 	liquidity bigint,
 	amount bigint,
 	add bool,
 ) (bigint) {
+	isUnsigned(sqrtPX96, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp__sqrtPX96")
+	isUnsigned(liquidity, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp__liquidity")
+	isUnsigned(amount, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp__amount")
 	if (amount == 0) {
-		require(sqrtP >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp")
-		return sqrtP
+		return sqrtPX96
 	}
 
-	numerator1 := liquidity
+	numerator1 := liquidity << 96
+	isUnsigned(numerator1, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp__numerator1")
+
+	product := amount * sqrtPX96
+	isUnsigned(product, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp__product")
 
 	var denominator bigint
-	product := amount * sqrtP
 	
 	if add {
-		if product / amount == sqrtP {
+		if product / amount == sqrtPX96 {
 			denominator = numerator1 + product
+			isUnsigned(denominator, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp__denominator")
 
 			if denominator >= numerator1 {
-				/// XXX round ?
-				require(numerator1 * sqrtP / denominator >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp")
-				return numerator1 * sqrtP / denominator
+				isUnsigned(numerator1 * sqrtPX96 / denominator, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp__numerator1 * sqrtPX96 / denominator")
+				return numerator1 * sqrtPX96 / denominator
 			}
 		}
-
-		// XXX round ?
-		require(numerator1 / ((numerator1 / sqrtP) + amount) >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp")
-		return numerator1 / ((numerator1 / sqrtP) + amount)
+		
+		isUnsigned(numerator1 / ( (numerator1 / sqrtPX96) + amount ), "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp__numerator1 / ( (numerator1 / sqrtPX96) + amount ")
+		return numerator1 / ( (numerator1 / sqrtPX96) + amount )
 	}	
-	require(product / amount == sqrtP && numerator1 > product, "SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp")
+	require(product / amount == sqrtPX96 && numerator1 > product, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp__COND")
+
 	denominator = numerator1 - product
-	require(numerator1 * sqrtP / denominator >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp")
-	return numerator1 * sqrtP / denominator
+	isUnsigned(denominator, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp__denominator")
+
+	isUnsigned(numerator1 * sqrtPX96 / denominator, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp__numerator1 * sqrtPX96 / denominator")
+	return numerator1 * sqrtPX96 / denominator
 }
 
 func SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
-	sqrtPrice bigint,
+	sqrtPX96 bigint,
 	liquidity bigint,
 	amount bigint,
 	add bool,
 ) (bigint) {
-	require(sqrtPrice > 0, "[X] sqrtPrice > 0 // SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown")
-	require(liquidity > 0, "[X] liquidity > 0 // SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown")
-	require(amount > 0, "[X] amount > 0 // SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown")
+	isUnsigned(sqrtPX96, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown__sqrtPX96")
+	isUnsigned(liquidity, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown__liquidity")
+	isUnsigned(amount, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown__amount")
 
-	quotient := amount / liquidity
 
+	var quotient bigint
 	if add {
-		require(quotient >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown")
-		return sqrtPrice + quotient
+		if amount <= MAX_UINT160 {
+			quotient = (amount << 96) / liquidity
+		} else {
+			quotient = amount * Q96 / liquidity
+		}
+		isUnsigned(quotient, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown__quotient")
+		return sqrtPX96 + quotient
 	} else {
-		require(sqrtPrice > quotient, "sqrtPrice > quotient")
-		require(sqrtPrice - quotient >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown")
-		return sqrtPrice - quotient
-	}
+		if amount <= MAX_UINT160 {
+			quotient = (amount << 96) / liquidity
+		} else {
+			quotient = amount * Q96 / liquidity
+		}
+		isUnsigned(quotient, "sqrt_price_math.gno__SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown__quotient")
 
+		require(sqrtPX96 > quotient, "SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown")
+		return sqrtPX96 - quotient
+	}
 }
 
 func SqrtPriceMathGetNextSqrtPriceFromInput(
-	sqrtPrice bigint,
+	sqrtPX96 bigint,
 	liquidity bigint,
 	amountIn bigint,
 	zeroForOne bool,
 ) (sqrtQ bigint) {
-	require(sqrtPrice > 0, "[X] sqrtPrice > 0 // SqrtPriceMathGetNextSqrtPriceFromInput")
-	require(liquidity > 0, "[X] liquidity > 0// SqrtPriceMathGetNextSqrtPriceFromInput")
-	require(amountIn > 0, "[X] amountIn > 0 // SqrtPriceMathGetNextSqrtPriceFromInput")
+	require(sqrtPX96 > 0, "SqrtPriceMathGetNextSqrtPriceFromInput sqrtPX96 > 0")
+	require(liquidity > 0, "SqrtPriceMathGetNextSqrtPriceFromInput liquidity > 0")
+	isUnsigned(amountIn, "SqrtPriceMathGetNextSqrtPriceFromInput amountIn")
 
 	if zeroForOne {
-		require(SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPrice, liquidity, amountIn, true) >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromInput")
-		return SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPrice, liquidity, amountIn, true)
+		isUnsigned(SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountIn, true), "SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountIn, true")
+		return SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountIn, true)
 	} 
 
-	require(SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPrice, liquidity, amountIn, true) >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromInput")
-	return SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPrice, liquidity, amountIn, true)
+	isUnsigned(SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountIn, true), "SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountIn, true")
+	return SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountIn, true)
 }
 
 func SqrtPriceMathGetNextSqrtPriceFromOutput(
-	sqrtPrice bigint,
+	sqrtPX96 bigint,
 	liquidity bigint,
 	amountOut bigint,
 	zeroForOne bool,
 ) (sqrtQ bigint) {
-	require(sqrtPrice > 0, "sqrtPrice > 0")
-	require(liquidity > 0, "liquidity > 0")
+	require(sqrtPX96 > 0, "SqrtPriceMathGetNextSqrtPriceFromInput sqrtPX96 > 0")
+	require(liquidity > 0, "SqrtPriceMathGetNextSqrtPriceFromInput liquidity > 0")
+	isUnsigned(amountOut, "SqrtPriceMathGetNextSqrtPriceFromInput amountOut")
 
 	if zeroForOne {
-		require(SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPrice, liquidity, amountOut, false) >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromOutput #1")
-		return SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPrice, liquidity, amountOut, false)
+		isUnsigned(SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountOut, false), "SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountOut, false")
+		return SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountOut, false)
 	} 
 
-	require(SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPrice, liquidity, amountOut, false) >= 0, "FIX MINUS // SqrtPriceMathGetNextSqrtPriceFromOutput #2")
-	return SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPrice, liquidity, amountOut, false)
+	isUnsigned(SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountOut, false), "SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountOut, false")
+	return SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountOut, false)
 }
 
 func SqrtPriceMathGetAmount0DeltaHelper(
-	sqrtRatioA bigint,
-	sqrtRatioB bigint,
+	sqrtRatioAX96 bigint,
+	sqrtRatioBX96 bigint,
 	liquidity bigint,
 	roundUp bool,
 ) (bigint) {
-	if (sqrtRatioA > sqrtRatioB) {
-		tempValue := sqrtRatioA
-		sqrtRatioA = sqrtRatioB
-		sqrtRatioB = tempValue
+	isUnsigned(sqrtRatioAX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount0DeltaHelper__sqrtRatioAX96")
+	isUnsigned(sqrtRatioBX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount0DeltaHelper__sqrtRatioBX96")
+	isUnsigned(liquidity, "sqrt_price_math.gno__SqrtPriceMathGetAmount0DeltaHelper__liquidity")
+
+	if (sqrtRatioAX96 > sqrtRatioBX96) {
+		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
 	}
 
-	numerator1 := liquidity
-	numerator2 := sqrtRatioB - sqrtRatioA
+	numerator1 := liquidity << 96
+	isUnsigned(numerator1, "sqrt_price_math.gno__SqrtPriceMathGetAmount0DeltaHelper__numerator1")
+	numerator2 := sqrtRatioBX96 - sqrtRatioAX96
+	isUnsigned(numerator2, "sqrt_price_math.gno__SqrtPriceMathGetAmount0DeltaHelper__numerator2")
 
-	require(sqrtRatioA > 0, "[X] sqrtRatioA > 0")
+	require(sqrtRatioAX96 > 0, "sqrt_price_math.gno__SqrtPriceMathGetAmount0DeltaHelper__sqrtRatioAX96")
 
+	// XXX remove roundUp??
 	if roundUp {
-		require((numerator1 * numerator2 / sqrtRatioB) / sqrtRatioA >= 0, "FIX MINUS // SqrtPriceMathGetAmount0DeltaHelper #1")
-		return (numerator1 * numerator2 / sqrtRatioB) / sqrtRatioA
-		// return liquidity / sqrtRatioA - liquidity / sqrtRatioB
+		isUnsigned((numerator1 * numerator2 / sqrtRatioBX96) / sqrtRatioAX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount0DeltaHelper__(numerator1 * numerator2 / sqrtRatioBX96) / sqrtRatioAX96")
+		return (numerator1 * numerator2 / sqrtRatioBX96) / sqrtRatioAX96
 	}
 
-	require(((numerator1 * numerator2) / sqrtRatioB) / sqrtRatioA >= 0, "FIX MINUS // SqrtPriceMathGetAmount0DeltaHelper #2")
-	return ((numerator1 * numerator2) / sqrtRatioB) / sqrtRatioA
+	isUnsigned((numerator1 * numerator2 / sqrtRatioBX96) / sqrtRatioAX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount0DeltaHelper__(numerator1 * numerator2 / sqrtRatioBX96) / sqrtRatioAX96")
+	return (numerator1 * numerator2 / sqrtRatioBX96) / sqrtRatioAX96
 }
 
 func SqrtPriceMathGetAmount1DeltaHelper(
-	sqrtRatioA bigint,
-	sqrtRatioB bigint,
+	sqrtRatioAX96 bigint,
+	sqrtRatioBX96 bigint,
 	liquidity bigint,
 	roundUp bool,
 ) (bigint) {
-	if (sqrtRatioA > sqrtRatioB) {
-		tempValue := sqrtRatioA
-		sqrtRatioA = sqrtRatioB
-		sqrtRatioB = tempValue
+	isUnsigned(sqrtRatioAX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount1DeltaHelper__sqrtRatioAX96")
+	isUnsigned(sqrtRatioBX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount1DeltaHelper__sqrtRatioBX96")
+	isUnsigned(liquidity, "sqrt_price_math.gno__SqrtPriceMathGetAmount1DeltaHelper__liquidity")
+
+	if (sqrtRatioAX96 > sqrtRatioBX96) {
+		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
 	}
 
+
+	// XXX remove roundUp?
 	if roundUp {
-		return liquidity * (sqrtRatioB - sqrtRatioA)
+		return liquidity * (sqrtRatioBX96 - sqrtRatioAX96) / Q96
 	}
 
-	return liquidity * (sqrtRatioB - sqrtRatioA)
+	return liquidity * (sqrtRatioBX96 - sqrtRatioAX96) / Q96
 }
 
 func SqrtPriceMathGetAmount0Delta(
-	sqrtRatioA bigint,
-	sqrtRatioB bigint,
+	sqrtRatioAX96 bigint,
+	sqrtRatioBX96 bigint,
 	liquidity bigint,
 ) (bigint) {
+	isUnsigned(sqrtRatioAX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount0Delta__sqrtRatioAX96")
+	isUnsigned(sqrtRatioBX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount0Delta__sqrtRatioBX96")
+	
 	if liquidity < 0 {
-		return bigint(-SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioA, sqrtRatioB, bigint(-liquidity), false))
+		return -SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, -liquidity, false)
 	} 
 	
-	return bigint(SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioA, sqrtRatioB, bigint(liquidity), true))
+	return SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, true)
 }
 
 func SqrtPriceMathGetAmount1Delta(
-	sqrtRatioA bigint,
-	sqrtRatioB bigint,
+	sqrtRatioAX96 bigint,
+	sqrtRatioBX96 bigint,
 	liquidity bigint,
 ) (bigint) {
+	isUnsigned(sqrtRatioAX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount1Delta__sqrtRatioAX96")
+	isUnsigned(sqrtRatioBX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount1Delta__sqrtRatioBX96")
+	
 	if liquidity < 0 {
-		return bigint(-SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioA, sqrtRatioB, bigint(-liquidity), false))
+		return -SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, -liquidity, false)
 	}
 
-	return bigint(SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioA, sqrtRatioB, bigint(liquidity), true))
+	return SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, true)
 }

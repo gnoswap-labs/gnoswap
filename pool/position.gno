@@ -10,12 +10,11 @@ import (
 )
 
 
-// info stored for each user's position
 type PositionInfo struct {
 	liquidity bigint
 
-	feeGrowthInside0Last bigint
-	feeGrowthInside1Last bigint
+	feeGrowthInside0LastX128 bigint
+	feeGrowthInside1LastX128 bigint
 
 	tokensOwed0 bigint
 	tokensOwed1 bigint
@@ -36,11 +35,14 @@ func PositionGetKey(
 func PositionUpdateWithKey(
 	key string,
 	liquidityDelta bigint,
-	feeGrowthInside0 bigint,
-	feeGrowthInside1 bigint,
+	feeGrowthInside0X128 bigint,
+	feeGrowthInside1X128 bigint,
 ) (PositionInfo) {
+	isUnsigned(feeGrowthInside0X128, "position.gno__PositionUpdateWithKey__feeGrowthInside0X128")
+	isUnsigned(feeGrowthInside1X128, "position.gno__PositionUpdateWithKey__feeGrowthInside1X128")
+
 	position, _ := positions[key]
-	p := PositionUpdate(position, liquidityDelta, feeGrowthInside0, feeGrowthInside1)
+	p := PositionUpdate(position, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
 	positions[key] = p
 	return p
 }
@@ -48,27 +50,32 @@ func PositionUpdateWithKey(
 func PositionUpdate(
 	self PositionInfo,
 	liquidityDelta bigint,
-	feeGrowthInside0 bigint,
-	feeGrowthInside1 bigint,
+	feeGrowthInside0X128 bigint,
+	feeGrowthInside1X128 bigint,
 ) (PositionInfo) {
+	isUnsigned(feeGrowthInside0X128, "position.gno__PositionUpdate__feeGrowthInside0X128")
+	isUnsigned(feeGrowthInside1X128, "position.gno__PositionUpdate__feeGrowthInside1X128")
+
 	var liquidityNext bigint
 
 	if (liquidityDelta == 0) {
-		require(self.liquidity > 0, "[X] NP")
+		require(self.liquidity > 0, "position.gno__PositionUpdate__self.liquidity")
 		liquidityNext = self.liquidity
 	} else {
 		liquidityNext = LiquidityMathAddDelta(self.liquidity, liquidityDelta)
 	}
 	
-	tokensOwed0 := (feeGrowthInside0 - self.feeGrowthInside0Last) * self.liquidity
-	tokensOwed1 := (feeGrowthInside1 - self.feeGrowthInside1Last) * self.liquidity
+	tokensOwed0 := (feeGrowthInside0X128 - self.feeGrowthInside0LastX128) * self.liquidity / Q128
+	tokensOwed1 := (feeGrowthInside1X128 - self.feeGrowthInside1LastX128) * self.liquidity / Q128
+	isUnsigned(tokensOwed0, "position.gno__PositionUpdate__tokensOwed0")
+	isUnsigned(tokensOwed1, "position.gno__PositionUpdate__tokensOwed1")
 
 	if (liquidityDelta != 0) {
 		self.liquidity = liquidityNext
 	}
 
-	self.feeGrowthInside0Last = feeGrowthInside0
-	self.feeGrowthInside1Last = feeGrowthInside1
+	self.feeGrowthInside0LastX128 = feeGrowthInside0X128
+	self.feeGrowthInside1LastX128 = feeGrowthInside1X128
 	if (tokensOwed0 > 0 || tokensOwed1 > 0) {
 		self.tokensOwed0 += tokensOwed0
 		self.tokensOwed1 += tokensOwed1
