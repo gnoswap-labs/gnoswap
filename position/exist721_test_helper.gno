@@ -37,3 +37,7 @@ func Token0Bal(addr std.Address) bigint {
 func Token1Bal(addr std.Address) bigint {
 	return bigint(bar.BalanceOf(a2u(addr)))
 }
+
+func Token1Bal(addr std.Address) bigint {
+	return bigint(bar.BalanceOf(a2u(addr)))
+}

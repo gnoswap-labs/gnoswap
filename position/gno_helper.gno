@@ -26,3 +26,7 @@ func GetOrigPkgAddr() std.Address {
 func GetOrigCaller() std.Address {
 	return std.GetOrigCaller()
 }
+
+func GetOrigCaller() std.Address {
+	return std.GetOrigCaller()
+}

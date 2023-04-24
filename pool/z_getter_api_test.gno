@@ -30,3 +30,8 @@ func TestGetUserInfo(t *testing.T) {
 	ui := GetUserInfo("g1d3crqv2lta047h6lta047h6lta047h6lnjw069")
 	// println(ui)
 }
+
+func TestGetUserInfo(t *testing.T) {
+	taui := ApiGetUserInfo("g1d3crqv2lta047h6lta047h6lta047h6lnjw069")
+	println(taui)
+}
