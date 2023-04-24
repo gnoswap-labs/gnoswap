@@ -132,7 +132,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) (bigint) {
 	}
 
 	if (msb >= 128) {
-		r = ratio >> (msb - 127)
+		r = ratio >> uint64(msb - 127)
 	} else {
 		r = ratio << (127 - msb)
 	}
@@ -143,7 +143,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) (bigint) {
 		r = r * r >> 127
 		f := r >> 128
 		log_2 = log_2 | (f << i)
-		r = r >> f
+		r = r >> uint64(f)
 	}
 	{
 		r = r * r >> 127
@@ -167,7 +167,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) (bigint) {
 }
 
 
-func gt(x, y bigint) uint {
+func gt(x, y bigint) uint64 {
 	if x > y {
 		return 1
 	} else {
