@@ -10,73 +10,72 @@ import (
 
 	"gno.land/r/demo/users"
 
-	"gno.land/r/foo"
 	"gno.land/r/bar"
+	"gno.land/r/foo"
 )
-
 
 type Slot0 struct {
 	sqrtPriceX96 bigint
-	tick bigint
-	feeProtocol bigint
-	unlocked bool
+	tick         bigint
+	feeProtocol  bigint
+	unlocked     bool
 }
 
 type ProtocolFees struct {
-	token0 bigint 
-	token1 bigint 
+	token0 bigint
+	token1 bigint
 }
 
 type ModifyPositionParams struct {
-	owner std.Address
-	tickLower bigint
-	tickUpper bigint
+	owner          std.Address
+	tickLower      bigint
+	tickUpper      bigint
 	liquidityDelta bigint
 }
 
 type SwapCache struct {
-	feeProtocol bigint
+	feeProtocol    bigint
 	liquidityStart bigint
 }
 
 type SwapState struct {
 	amountSpecifiedRemaining bigint
-	amountCalculated bigint
-	sqrtPriceX96 bigint
-	tick bigint
-	feeGrowthGlobalX128 bigint
-	protocolFee bigint
-	liquidity bigint
+	amountCalculated         bigint
+	sqrtPriceX96             bigint
+	tick                     bigint
+	feeGrowthGlobalX128      bigint
+	protocolFee              bigint
+	liquidity                bigint
 }
 
 type StepComputations struct {
 	sqrtPriceStartX96 bigint
-	tickNext bigint
-	initialized bool
-	sqrtPriceNextX96 bigint
-	amountIn bigint
-	amountOut bigint
-	feeAmount bigint
+	tickNext          bigint
+	initialized       bool
+	sqrtPriceNextX96  bigint
+	amountIn          bigint
+	amountOut         bigint
+	feeAmount         bigint
 }
 
 var (
-	token0 *grc20.AdminToken
-	token1 *grc20.AdminToken
-	fee bigint
-	tickSpacing bigint
+	token0              *grc20.AdminToken
+	token1              *grc20.AdminToken
+	fee                 bigint
+	tickSpacing         bigint
 	maxLiquidityPerTick bigint
-	
+
 	slot0 Slot0
-	
+
 	feeGrowthGlobal0X128 bigint
 	feeGrowthGlobal1X128 bigint
-	
-	protocolFees ProtocolFees
-	liquidity bigint
 
-	ticks map[bigint]TickInfo = make(map[bigint]TickInfo)
-	tickBitmaps map[bigint]bigint = make(map[bigint]bigint)
-	positions map[string]PositionInfo = make(map[string]PositionInfo)
+	protocolFees ProtocolFees
+	liquidity    bigint
+
+	ticks       map[bigint]TickInfo     = make(map[bigint]TickInfo)
+	tickBitmaps map[bigint]bigint       = make(map[bigint]bigint)
+	positions   map[string]PositionInfo = make(map[string]PositionInfo)
 )
 
 func Init(
@@ -95,11 +94,11 @@ func Init(
 
 	tick := TickMathGetTickAtSqrtRatio(_sqrtPriceX96)
 
-	slot0 = Slot0 {
+	slot0 = Slot0{
 		_sqrtPriceX96, // sqrtPriceX96
-		tick, // tick
-		0, // feeProtocol
-		true, // unlocked
+		tick,          // tick
+		0,             // feeProtocol
+		true,          // unlocked
 	}
 }
 
@@ -116,7 +115,7 @@ func Mint(
 			recipient, // owner
 			tickLower, // tickLower
 			tickUpper, // tickUpper
-			amount,		 // liquidityDelta
+			amount,    // liquidityDelta
 		},
 	)
 
@@ -128,36 +127,35 @@ func Mint(
 	var balance0Before, balance1Before bigint
 
 	// _orig := std.GetOrigCaller()
-	if (amount0 > 0) {
+	if amount0 > 0 {
 		balance0Before = BalanceOf(token0, GetOrigPkgAddr())
-		
 
 		_from := users.AddressOrName(GetOrigCaller())
 		_to := users.AddressOrName(GetOrigPkgAddr())
 		// std.TestSetOrigCaller(GetOrigPkgAddr())
 		foo.TransferFrom(_from, _to, uint64(amount0))
-		
+
 		// err := token0.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount0))
 		// if err != nil {
-			// 	panic("token0.TransferFrom failed")
-			// }
-			require(balance0Before + amount0 <= BalanceOf(token0, GetOrigPkgAddr()), "[X] balance0")
+		// 	panic("token0.TransferFrom failed")
+		// }
+		require(balance0Before+amount0 <= BalanceOf(token0, GetOrigPkgAddr()), "[X] balance0")
 	}
 
-	if (amount1 > 0) {
+	if amount1 > 0 {
 		balance1Before = BalanceOf(token1, GetOrigPkgAddr())
-		
+
 		// std.TestSetOrigCaller(_orig)
 		_from := users.AddressOrName(GetOrigCaller())
 		_to := users.AddressOrName(GetOrigPkgAddr())
 		// std.TestSetOrigCaller(GetOrigPkgAddr())
 		bar.TransferFrom(_from, _to, uint64(amount1))
-		
+
 		// err := token1.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount1))
 		// if err != nil {
 		// 	panic("token1.TransferFrom failed")
 		// }
-		require(balance1Before + amount1 <= BalanceOf(token1, GetOrigPkgAddr()), "[X] balance1")
+		require(balance1Before+amount1 <= BalanceOf(token1, GetOrigPkgAddr()), "[X] balance1")
 	}
 
 	// XXX tmp
@@ -165,7 +163,6 @@ func Mint(
 
 	return amount0, amount1
 }
-
 
 func Burn(
 	tickLower bigint,
@@ -196,10 +193,10 @@ func Burn(
 }
 
 func Collect(
-	recipient std.Address, 
-	tickLower bigint, 
-	tickUpper bigint, 
-	amount0Requested bigint, 
+	recipient std.Address,
+	tickLower bigint,
+	tickUpper bigint,
+	amount0Requested bigint,
 	amount1Requested bigint,
 ) (bigint, bigint) {
 	requireUnsigned(amount0Requested, "pool.gno__Collect__amount0Requested")
@@ -225,7 +222,7 @@ func Collect(
 	requireUnsigned(amount1, "pool.gno__Collect__amount1")
 
 	// _orig := std.GetOrigCaller()
-	if (amount0 > 0) {
+	if amount0 > 0 {
 		position.tokensOwed0 -= amount0
 
 		// std.TestSetOrigCaller(GetOrigPkgAddr())
@@ -234,7 +231,7 @@ func Collect(
 		// token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
 	}
 
-	if (amount1 > 0) {
+	if amount1 > 0 {
 		position.tokensOwed1 -= amount1
 
 		// std.TestSetOrigCaller(GetOrigPkgAddr())
@@ -275,31 +272,31 @@ func Swap(
 
 	cache := SwapCache{
 		liquidityStart: liquidity,
-		feeProtocol: feeProtocol,
+		feeProtocol:    feeProtocol,
 	}
-	
+
 	exactInput := amountSpecified > 0
-	
+
 	var state SwapState
 	if zeroForOne {
 		state = SwapState{
 			amountSpecifiedRemaining: amountSpecified,
-			amountCalculated: 0,
-			sqrtPriceX96: slot0Start.sqrtPriceX96,
-			tick: slot0Start.tick,
-			feeGrowthGlobalX128: feeGrowthGlobal0X128,
-			protocolFee: 0,
-			liquidity: cache.liquidityStart,
+			amountCalculated:         0,
+			sqrtPriceX96:             slot0Start.sqrtPriceX96,
+			tick:                     slot0Start.tick,
+			feeGrowthGlobalX128:      feeGrowthGlobal0X128,
+			protocolFee:              0,
+			liquidity:                cache.liquidityStart,
 		}
 	} else {
 		state = SwapState{
 			amountSpecifiedRemaining: amountSpecified,
-			amountCalculated: 0,
-			sqrtPriceX96: slot0Start.sqrtPriceX96,
-			tick: slot0Start.tick,
-			feeGrowthGlobalX128: feeGrowthGlobal1X128,
-			protocolFee: 0,
-			liquidity: cache.liquidityStart,
+			amountCalculated:         0,
+			sqrtPriceX96:             slot0Start.sqrtPriceX96,
+			tick:                     slot0Start.tick,
+			feeGrowthGlobalX128:      feeGrowthGlobal1X128,
+			protocolFee:              0,
+			liquidity:                cache.liquidityStart,
 		}
 	}
 
@@ -307,7 +304,7 @@ func Swap(
 		var step StepComputations
 
 		step.sqrtPriceStartX96 = state.sqrtPriceX96
-		
+
 		step.tickNext, step.initialized = TickBitmapNextInitializedTickWithInOneWord(
 			state.tick,
 			tickSpacing,
@@ -359,16 +356,16 @@ func Swap(
 			step.feeAmount -= delta
 			state.protocolFee += delta
 		}
-	
+
 		if state.liquidity > 0 {
 			state.feeGrowthGlobalX128 += (step.feeAmount * Q128 / state.liquidity)
 		}
-		
+
 		if state.sqrtPriceX96 == step.sqrtPriceNextX96 {
 			if step.initialized {
 				var fee0, fee1 bigint
-				
-				if (zeroForOne) {
+
+				if zeroForOne {
 					fee0 = state.feeGrowthGlobalX128
 					fee1 = feeGrowthGlobal1X128
 				} else {
@@ -390,7 +387,7 @@ func Swap(
 			}
 
 			if zeroForOne {
-				state.tick = step.tickNext -1 
+				state.tick = step.tickNext - 1
 			} else {
 				state.tick = step.tickNext
 			}
@@ -431,37 +428,46 @@ func Swap(
 		amount1 = amountSpecified - state.amountSpecifiedRemaining
 	}
 
-	_orig := std.GetOrigCaller()
+	// _orig := std.GetOrigCaller()
 	if zeroForOne {
 		if amount1 < 0 {
-			std.TestSetOrigCaller(GetOrigPkgAddr())
+			// std.TestSetOrigCaller(GetOrigPkgAddr())
 			bar.Transfer(users.AddressOrName(recipient), uint64(-amount1))
-			std.TestSetOrigCaller(_orig)
+			// std.TestSetOrigCaller(_orig)
+			// token1.Transfer(GetOrigPkgAddr(), recipient, uint64(-amount1))
 		}
 		balance0Before := BalanceOf(token0, GetOrigPkgAddr())
 
-
+		// std.TestSetOrigCaller(_orig)
 		_from := users.AddressOrName(GetOrigCaller())
 		_to := users.AddressOrName(GetOrigPkgAddr())
+		// std.TestSetOrigCaller(GetOrigPkgAddr())
 		foo.TransferFrom(_from, _to, uint64(amount0))
+		// std.TestSetOrigCaller(_orig)
+		// token0.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount0))
 
-		require(balance0Before + bigint(amount0) <= BalanceOf(token0, GetOrigPkgAddr()), "IIA0")
+		require(balance0Before+bigint(amount0) <= BalanceOf(token0, GetOrigPkgAddr()), "IIA0")
 	} else {
 		if amount0 < 0 {
-			std.TestSetOrigCaller(GetOrigPkgAddr())
-			foo.Transfer(users.AddressOrName(recipient), uint64(-amount0))
-			std.TestSetOrigCaller(_orig)
+			// std.TestSetOrigCaller(GetOrigPkgAddr())
+			foo.Transfer(users.AddressOrName(recipient), uint64(amount0))
+			// std.TestSetOrigCaller(_orig)
+			// token0.Transfer(GetOrigPkgAddr(), recipient, uint64(-amount0))
 		}
 		balance1Before := BalanceOf(token1, GetOrigPkgAddr())
 
+		// std.TestSetOrigCaller(_orig)
 		_from := users.AddressOrName(GetOrigCaller())
 		_to := users.AddressOrName(GetOrigPkgAddr())
+		// std.TestSetOrigCaller(GetOrigPkgAddr())
 		bar.TransferFrom(_from, _to, uint64(amount1))
+		// std.TestSetOrigCaller(_orig)
+		// token1.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount1))
 
-		require(balance1Before + bigint(amount1) <= BalanceOf(token1, GetOrigPkgAddr()), "IIA1")
+		require(balance1Before+bigint(amount1) <= BalanceOf(token1, GetOrigPkgAddr()), "IIA1")
 	}
 
-	slot0.unlocked = true;
+	slot0.unlocked = true
 
 	return amount0, amount1
 }
@@ -470,9 +476,9 @@ func SetFeeProtocol(feeProtocol0, feeProtocol1 bigint) {
 	requireUnsigned(feeProtocol0, "pool.gno__SetFeeProtocol__feeProtocol0")
 	requireUnsigned(feeProtocol1, "pool.gno__SetFeeProtocol__feeProtocol1")
 
-	require (
+	require(
 		(feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)) &&
-		(feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10)),
+			(feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10)),
 		"Invalid fee protocol",
 	)
 	slot0.feeProtocol = feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
@@ -541,28 +547,27 @@ func CollectProtocol(
 	return amount0, amount1
 }
 
-
 func modifyPosition(params ModifyPositionParams) (PositionInfo, bigint, bigint) {
 	checkTicks(params.tickLower, params.tickUpper)
-	
+
 	position := updatePosition(
 		params.owner,
 		params.tickLower,
 		params.tickUpper,
 		params.liquidityDelta,
 		slot0.tick,
-	)	
+	)
 
 	var amount0, amount1 bigint
 
 	if params.liquidityDelta != 0 {
-		if (slot0.tick < params.tickLower) {
+		if slot0.tick < params.tickLower {
 			amount0 = SqrtPriceMathGetAmount0Delta(
 				TickMathGetSqrtRatioAtTick(params.tickLower),
 				TickMathGetSqrtRatioAtTick(params.tickUpper),
 				params.liquidityDelta,
 			)
-		} else if (slot0.tick < params.tickUpper) {			
+		} else if slot0.tick < params.tickUpper {
 			liquidityBefore := liquidity
 
 			amount0 = SqrtPriceMathGetAmount0Delta(
@@ -576,9 +581,9 @@ func modifyPosition(params ModifyPositionParams) (PositionInfo, bigint, bigint) 
 				slot0.sqrtPriceX96,
 				params.liquidityDelta,
 			)
-			
+
 			liquidity = LiquidityMathAddDelta(liquidityBefore, params.liquidityDelta)
-		
+
 		} else {
 			amount1 = SqrtPriceMathGetAmount1Delta(
 				TickMathGetSqrtRatioAtTick(params.tickLower),
@@ -587,7 +592,7 @@ func modifyPosition(params ModifyPositionParams) (PositionInfo, bigint, bigint) 
 			)
 		}
 	}
-	
+
 	return position, amount0, amount1
 }
 
@@ -597,12 +602,12 @@ func updatePosition(
 	tickUpper bigint,
 	liquidityDelta bigint,
 	tick bigint,
-) (PositionInfo) {
+) PositionInfo {
 	var _feeGrowthGlobal0X128 bigint = feeGrowthGlobal0X128
 	var _feeGrowthGlobal1X128 bigint = feeGrowthGlobal1X128
 	var flippedLower, flippedUpper bool
 
-	if (liquidityDelta != 0) {
+	if liquidityDelta != 0 {
 		flippedLower = TickUpdate(
 			tickLower,
 			tick,
@@ -623,15 +628,15 @@ func updatePosition(
 			maxLiquidityPerTick,
 		)
 
-		if (flippedLower) {
+		if flippedLower {
 			TickBitmapFlipTick(tickLower, tickSpacing)
 		}
 
-		if (flippedUpper) {
+		if flippedUpper {
 			TickBitmapFlipTick(tickUpper, tickSpacing)
 		}
 	}
-	
+
 	feeGrowthInside0X128, feeGrowthInside1X128 := TickGetFeeGrowthInside(
 		tickLower,
 		tickUpper,
@@ -642,24 +647,23 @@ func updatePosition(
 
 	key := PositionGetKey(owner, tickLower, tickUpper)
 	position := PositionUpdateWithKey(
-		key, 
+		key,
 		liquidityDelta,
 		feeGrowthInside0X128,
 		feeGrowthInside1X128,
 	)
 
-	if (liquidityDelta < 0) {
-		if (flippedLower) {
+	if liquidityDelta < 0 {
+		if flippedLower {
 			TickClear(tickLower)
 		}
 
-		if (flippedUpper) {
+		if flippedUpper {
 			TickClear(tickUpper)
 		}
 	}
 	return position
 }
-
 
 func require(cond bool, msg string) {
 	if !cond {
