@@ -144,7 +144,6 @@ func Mint(
 
 	if amount1 > 0 {
 		balance1Before = BalanceOf(token1, GetOrigPkgAddr())
-
 		// std.TestSetOrigCaller(_orig)
 		_from := users.AddressOrName(GetOrigCaller())
 		_to := users.AddressOrName(GetOrigPkgAddr())
