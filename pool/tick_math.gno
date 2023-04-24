@@ -1,9 +1,5 @@
 package gnoswap
 
-import (
-	"testing"
-)
-
 const (
 	MIN_TICK bigint = -887272
 	MAX_TICK bigint = 887272
