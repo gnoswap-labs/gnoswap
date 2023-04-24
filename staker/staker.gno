@@ -2,22 +2,23 @@ package staker
 
 import (
 	"std"
-	"gno.land/p/demo/grc/grc20"
+	"gno.land/p/demo/avl"
 
-	"gno.land/r/gnos" // reward
+	rt "gno.land/r/reward" 	// GSR, Gnoswap Staking Reward
+	nft "gno.land/r/foo721" // GNFT, Gnoswap NFT 
 )
 
 
 type Incentive struct {
 	totalRewardUnclaimed bigint
-	totalSecondsClaimed bigint
+	totalSecondsClaimedX128 bigint
 	numberOfStakes bigint
 }
 
 type Stake struct {
-	secondsPerLiquidityInsideInitial bigint
+	secondsPerLiquidityInsideInitialX128 bigint
 	liquidityNoOverflow bigint
-	liquidityIfOverflow bigint // XXX remove
+	liquidityIfOverflow bigint
 }
 
 type Deposit struct {
@@ -27,257 +28,584 @@ type Deposit struct {
 	tickUpper bigint
 }
 
+
 var (
-	rewardToken *grc20.AdminToken
+	factory std.Address
+	// nonfungiblePositionManager interface{}
+	maxIncentiveStartLeadTime bigint
+	maxIncentiveDuration bigint
+
+	// incentives map[string]Incentive = make(map[string]Incentive)
+	// deposits map[string]Deposit = make(map[string]Deposit)
+	// stakes map[string]map[string]Stake = make(map[string]map[string]Stake)
+
+	// IncentiveKey with rewardsToken
+	// rewards map[interface{}]map[std.Address]bigint = make(map[interface{}]map[std.Address]bigint)
+
+	// IncentiveKey without rewardsToken
+	// rewards map[std.Address]bigint = make(map[std.Address]bigint)
+
+	incentives avl.Tree	// incentiveId => Incentive
+	deposits avl.Tree		// tokenId => Deposit
+	stakes avl.Tree			// tokenId => avl.Tree{incentiveId => Stake}
+	rewards avl.Tree 		// address => reward
+		
 	initialized bool = false
-	maxIncentiveStartLeadTime uint64
-	maxIncentiveDuration uint64
-	incentives avl.Tree{}
-	deposits avl.Tree{}
-	stakes avl.Tree{}
-	rewards avl.Tree{}
 )
 
 
 func Init(
-	_maxIncentiveStartLeadTime uint64,
-	_maxIncentiveDuration uint64,
+	// _factory std.Address, 
+	// _nonfungiblePositionManager interface{},
+	_maxIncentiveStartLeadTime bigint,
+	_maxIncentiveDuration bigint,
 ) {
+	// factory = _factory
+	// nonfungiblePositionManager = _nonfungiblePositionManager
+	
+	// manual init needs
 	require(!initialized, "Already initialized")
-
-	rewardToken = gnos.GetGRC20()
-	require(rewardToken != nil, "Reward token not found")
-	maxIncentiveDuration = _maxIncentiveDuration
 	maxIncentiveStartLeadTime = _maxIncentiveStartLeadTime
+	maxIncentiveDuration = _maxIncentiveDuration
+	initialized = true
 }
+
 
 func Stakes(
 	tokenId string,
-	incentiveId string
-) (secondsPerLiquidityInsideInitial, liquidity uint64) {
-	// XXX nested avl tree getter
+	incentiveId string,
+) (secondsPerLiquidityInsideInitialX128, liquidity bigint) {
 	// stake := stakes[tokenId][incentiveId]
-	secondsPerLiquidityInsideInitial = Stake.secondsPerLiquidityInsideInitial
-	liquidity = Stake.liquidityNoOverflow
+	_stakes1, ok := stakes.Get(tokenId)
+	var stake1 avl.Tree
+	var stake Stake
+	if ok {
+		stake1 = _stakes1.(avl.Tree)
+		_stake, _ok := stake1.Get(incentiveId)
+		if _ok {
+			stake = _stake.(Stake)
+		} else {
+			panic("GnoswapStaker::Stakes: incentiveId not found")
+		}
 
-	return secondsPerLiquidityInsideInitial. liquidity
+	} else {
+		panic("GnoswapStaker::Stakes: tokenId not found")
+	}
+
+
+	secondsPerLiquidityInsideInitialX128 = stake.secondsPerLiquidityInsideInitialX128
+	liquidity = stake.liquidityNoOverflow
+	if (liquidity == MAX_UINT96) {
+		liquidity = stake.liquidityIfOverflow
+	}
+
+	requireUnsigned(secondsPerLiquidityInsideInitialX128, "GnoswapStaker::Stakes: secondsPerLiquidityInsideInitialX128 is not unsigned")
+	requireUnsigned(liquidity, "GnoswapStaker::Stakes: liquidity is not unsigned")
+	return secondsPerLiquidityInsideInitialX128, liquidity
 }
 
 
-func CreateIncentive(key IncentiveKey, reward uint64) {
-	require(reward > 0, "Staker: reward must be positive")
+func CreateIncentive(key IncentiveKey, reward bigint) {
+	require(reward > 0, "GnoswapStaker::CreateIncnetive: reward must be positive")
+
 	require(
 		GetTimestamp() <= key.startTime,
-			"Staker: start time must be now or in the future",
+		"GnoswapStaker::CreateIncnetive: start time must be now or in the future",
 	)
 	require(
-			Sub(key.startTime, GetTimestamp()) <= maxIncentiveStartLeadTime,
-			"Staker: start time too far into future",
+		(key.startTime - GetTimestamp()) <= maxIncentiveStartLeadTime,
+		"GnoswapStaker::CreateIncnetive: start time too far into future",
 	)
-	require(key.startTime < key.endTime, "Staker: start time must be before end time")
+	require(key.startTime < key.endTime, "GnoswapStaker::CreateIncnetive: start time must be before end time")
 	require(
-			Sub(key.endTime, key.startTime) <= maxIncentiveDuration,
-			"Staker: incentive duration is too long",
+		(key.endTime - key.startTime) <= maxIncentiveDuration,
+		"GnoswapStaker::CreateIncnetive: incentive duration is too long",
 	)
+	
+	incentiveId := IncentiveIdCompute(key)
 
-	// XXX computeIncentiveKey is not implemented
-	incentiveId := computeIncentiveKey(key)
+	// _update := incentives[incentiveId]
+	_incentive, ok := incentives.Get(incentiveId)
+	var incentive Incentive
+	if ok {
+		incentive = _incentive.(Incentive)
+	} else {
+		incentive = Incentive{}
+	}
 
-	incentive := &incentives[incentiveId]
-	incentives[incentiveId].totalRewardUnclaimed = Add(incentives[incentiveId].totalRewardUnclaimed, reward)
+	incentive.totalRewardUnclaimed += reward
+	// incentives[incentiveId] = _update
+	incentives.Set(incentiveId, incentive)
 
-	// TODO: TransferHelperExtended.safeTransferFrom(address(key.rewardToken), std.GetOrigCaller(), address(this), reward)
-	rewardToken.Transfer(std.GetOrigCaller(), std.GetOrigPkgAddr(), reward)
+	// XXX
+	// TransferHelperExtended.safeTransferFrom(std.Address(key.rewardToken), GetOrigCaller(), GetOrigPkgAddr(), reward)
+	rt.Transfer(a2u(GetOrigPkgAddr()), uint64(reward))
 }
 
-func EndIncentive(key IncentiveKey) (refund uint64) {
-	require(GetTimestamp() >= key.endTime, "Staker: cannot end incentive before end time")
 
-	incentiveId := computeIncentiveKey(key)
-	incentive := &incentives[incentiveId]
+func EndIncentive(key IncentiveKey) (refund bigint) {
+	require(GetTimestamp() >= key.endTime, "GnoswapStaker::endIncentive: cannot end incentive before end time")
+
+	incentiveId := IncentiveIdCompute(key)
+	// incentive := incentives[incentiveId]
+	_incentive, ok := incentives.Get(incentiveId)
+	var incentive Incentive
+	if ok {
+		incentive = _incentive.(Incentive)
+	} else {
+		panic("GnoswapStaker::endIncentive: cannot end non-existent incentive")
+	}
 
 	refund = incentive.totalRewardUnclaimed
 
-	require(refund > 0, "Staker: no refund available")
+	require(refund > bigint(0), "GnoswapStaker::endIncentive: no refund available")
 	require(
 			incentive.numberOfStakes == 0,
-			"Staker: cannot end incentive while deposits are staked",
+			"GnoswapStaker::endIncentive: cannot end incentive while deposits are staked",
 	)
 
-	incentive.totalRewardUnclaimed = 0
-	rewardToken.Transfer(std.GetOrigPkgAddr(), deadAddress, refund) // TODO: deadAddress => key.refundee
+	// issue refund
+	// _updateIncentive := incentives[incentiveId]
+	_updateIncentive, ok := incentives.Get(incentiveId)
+	var updateIncentive Incentive
+	if ok {
+		updateIncentive = _updateIncentive.(Incentive)
+	} else {
+		panic("GnoswapStaker::endIncentive: cannot update non-existent incentive")
+	}
+
+	updateIncentive.totalRewardUnclaimed = 0
+
+	// incentives[incentiveId] = _updateIncentive
+	incentives.Set(incentiveId, updateIncentive)
+	
+	// XXX
+	// TransferHelperExtended.safeTransfer(std.Address(key.rewardToken), GetOrigCaller(), GetOrigPkgAddr(), refund)
+	_orig := GetOrigCaller()
+	std.TestSetOrigCaller(GetOrigPkgAddr())
+	rt.Transfer(a2u(key.refundee), uint64(refund))
+	std.TestSetOrigCaller(_orig)
+
+	requireUnsigned(refund, "GnoswapStaker::endIncentive: refund is not unsigned")
 	return refund
 }
 
 
-func TransferDeposit(tokenId string, to std.Address) {
-	_tmp, ok := deposits.Get(tokenId)
-	owner := _tmp.owner
-	require(owner == GetOrigCaller(), "Staker: can only be called by deposit owner")
-	_tmp.owner = to
+func transferDeposit(tokenId string, to std.Address) {
+	require(to != zeroAddress, "GnoswapStaker::transferDeposit: cannot transfer to zero address")
+
+	owner := nft.OwnerOf(tid(tokenId))
+	require(owner == GetOrigCaller(), "GnoswapStaker::transferDeposit: can only be called by deposit owner")
+
+	// deposits[tokenId].owner = owner
+	_deposit, ok := deposits.Get(tokenId)
+	var deposit Deposit
+	if ok {
+		deposit = _deposit.(Deposit)
+	} else {
+		deposit = Deposit{}
+	}
+	deposit.owner = owner
+	deposits.Set(tokenId, deposit)
+
+	// _update := deposits[tokenId]
+	// _update.owner = owner
+	// deposits[tokenId] = _update
+	_update, ok := deposits.Get(tokenId)
+	var update Deposit
+	if ok {
+		update = _update.(Deposit)
+	} else {
+		panic("GnoswapStaker::transferDeposit: cannot transfer non-existent deposit")
+	}
+	update.owner = owner
+	deposits.Set(tokenId, update)
+
+	// transfer actual NFT
+	nto := nft.TransferFrom(a2u(owner), a2u(to), tid(tokenId)) // Nft Transfer Ok
+	if !nto {
+		panic("NFT TransferFrom Failed #1")
+	}
 }
 
 func WithdrawToken(tokenId string, to std.Address) {
-	deposit, ok := deposits.Get(tokenId)
-	require(deposit.numberOfStakes == 0, "Staker: cannot withdraw token while staked")
-	require(deposit.owner == std.GetOrigCaller(), "Staker: only owner can withdraw token")
+	require(to != GetOrigPkgAddr(), "GnoswapStaker::withdrawToken: cannot withdraw to staker")
+	// deposit := deposits[tokenId]
+	_deposit, ok := deposits.Get(tokenId)
+	var deposit Deposit
+	if ok {
+		deposit = _deposit.(Deposit)
+	} else {
+		panic("GnoswapStaker::withdrawToken: cannot withdraw non-existent deposit")
+	}
 
-	delete(deposits, tokenId)
-	NftManagerSafeTransferFrom(GetOrigPkgAddr(), to, tokenId)
+	require(deposit.numberOfStakes == 0, "GnoswapStaker::withdrawToken: cannot withdraw token while staked")
+	require(deposit.owner == GetOrigCaller(), "GnoswapStaker::withdrawToken: only owner can withdraw token")
+
+	// delete(deposits, tokenId)
+	deposits.Remove(tokenId)
+
+	// nonfungiblePositionManager.safeTransferFrom(GetOrigPkgAddr(), to, tokenId)
+	// XXX GetRealmCaller()
+	_orig := std.GetOrigCaller()
+	std.TestSetOrigCaller(GetOrigPkgAddr())
+	nto := nft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(to), tid(tokenId))
+	if !nto {
+		panic("NFT TransferFrom Failed #2")
+	}
+	std.TestSetOrigCaller(_orig)
 }
 
 func StakeToken(key IncentiveKey, tokenId string) {
-	caller := GetOrigCaller()
-	NftManagerSafeTransferFrom(caller, std.GetOrigPkgAddr(), tokenId)
-	position, _ := nftManager.Positions(tokenId)
-	_deposit := Deposit{owner: caller, numberOfStakes: 0, tickLower: position.TickLower, tickUpper: position.TickUpper}
-	position.Set(tokenId), _deposit
+	require(nft.OwnerOf(tid(tokenId)) == GetOrigCaller(), "GnoswapStaker::stakeToken: only owner can stake token")
 	stakeToken(key, tokenId)
 }
 
 func UnstakeToken(key IncentiveKey, tokenId string) {
-	deposit, ok := deposits.Get(tokenId)
-	
-	if GetTimestamp() < key.endTime {
-			require(
-					deposit.owner == std.GetOrigCaller(),
-					"Staker: only owner can withdraw token before incentive end time",
-			)
+	// deposit := deposits[tokenId]
+	_deposit, ok := deposits.Get(tokenId)
+	var deposit Deposit
+	if ok {
+		deposit = _deposit.(Deposit)
+	} else {
+		deposit = Deposit{}
 	}
-	incentiveId := computeIncentiveKey(key)
-	secondsPerLiquidityInsideInitial, liquidity := Stakes(tokenId, incentiveId)
 
-	require(liquidity != 0, "Staker: stake does not exist")
+	// anyone can call unstakeToken if the block time is after the end time of the incentive
+	require(GetTimestamp() >= key.endTime, "GnoswapStaker::UnstakeToken: incentive not ended")
 
-	incentive, ok := incentives.Get(incentiveId)
+	incentiveId := IncentiveIdCompute(key)
+	secondsPerLiquidityInsideInitialX128, liquidity := Stakes(tokenId, incentiveId)
 
-	deposit.numberOfStakes = Sub(deposit.numberOfStakes, 1)
-	incentive.numberOfStakes = Sub(incentive.numberOfStakes, 1)
+	require(liquidity != 0, "GnoswapStaker::UnstakeToken: stake does not exist")
 
-	// XXX (, uint160 secondsPerLiquidityInside, ) = key.pool.snapshotCumulativesInside(deposit.tickLower, deposit.tickUpper)
-	secondsPerLiquidityInside := uint64(20)
-	reward, secondsInside :=
-			computeRewardAmount(
-					incentive.totalRewardUnclaimed,
-					incentive.totalSecondsClaimed,
-					key.startTime,
-					key.endTime,
-					liquidity,
-					secondsPerLiquidityInsideInitial,
-					secondsPerLiquidityInside,
-					GetTimestamp(),
-			)
-
-	// XXX nested avl
-	incentive.totalSecondsClaimed = incentive.totalSecondsClaimed + secondsInside
-
-	incentive.totalRewardUnclaimed = incentive.totalRewardUnclaimed - reward
-	
-	rewards[deposit.owner] = rewards[deposit.owner] + reward
-
-	stake, ok := &stakes[tokenId][incentiveId]
-	stake.secondsPerLiquidityInsideInitial = 0
-	stake.liquidityNoOverflow = 0
-	if liquidity >= MAX_UINT64 {
-		stake.liquidityIfOverflow = 0
+	// save for later
+	// incentive := incentives[incentiveId]
+	_incentive, ok := incentives.Get(incentiveId)
+	var incentive Incentive
+	if ok {
+		incentive = _incentive.(Incentive)
+	} else {
+		panic("GnoswapStaker::UnstakeToken: cannot unstake from non-existent incentive")
 	}
+
+	// _updateDeposit := deposits[tokenId]
+	_updateDeposit, ok := deposits.Get(tokenId)
+	var updateDeposit Deposit
+	if ok {
+		updateDeposit = _updateDeposit.(Deposit)
+	} else {
+		panic("GnoswapStaker::UnstakeToken: cannot update non-existent deposit #1")
+	}
+
+	updateDeposit.numberOfStakes--
+	// deposits[tokenId] = _updateDeposit
+	deposits.Set(tokenId, updateDeposit)
+	
+
+	// _updateIncentive := incentives[incentiveId]
+	_updateIncentive, ok := incentives.Get(incentiveId)
+	var updateIncentive Incentive
+	if ok {
+		updateIncentive = _updateIncentive.(Incentive)
+	} else {
+		panic("GnoswapStaker::UnstakeToken: cannot update non-existent deposit #2")
+	}
+
+	updateIncentive.numberOfStakes--
+	// incentives[incentiveId] = _updateIncentive
+	incentives.Set(incentiveId, updateIncentive)
+
+	// _, secondsPerLiquidityInsideX128, _ := key.pool.snapshotCumulativeInside(deposit.tickLower, deposit.tickUpper)
+	secondsPerLiquidityInsideX128 := bigint(20) * Q128 // TMP XXX
+	reward, secondsInsideX128 := RewardMathComputeRewardAmount(
+		incentive.totalRewardUnclaimed,
+		incentive.totalSecondsClaimedX128,
+		key.startTime,
+		key.endTime,
+		liquidity,
+		secondsPerLiquidityInsideInitialX128,
+		secondsPerLiquidityInsideX128,
+		GetTimestamp(),
+	)
+
+	// _updateIncentive = incentives[incentiveId]
+	_updateIncentive2, ok2 := incentives.Get(incentiveId)
+	var updateIncentive2 Incentive
+	if ok2 {
+		updateIncentive2 = _updateIncentive2.(Incentive)
+	} else {
+		panic("GnoswapStaker::UnstakeToken: cannot update non-existent deposit #3")
+	}
+
+	updateIncentive2.totalSecondsClaimedX128 += secondsInsideX128
+
+	if (reward > updateIncentive2.totalRewardUnclaimed) {
+		panic("GnoswapStaker::UnstakeToken: reward > incentive.totalRewardUnclaimed__too much reward")
+	}
+	updateIncentive2.totalRewardUnclaimed -= reward
+
+	// incentives[incentiveId] = _updateIncentive
+	incentives.Set(incentiveId, updateIncentive2)
+
+	// rewards[deposit.owner] += reward
+	_rewards2, ok := rewards.Get(string(deposit.owner))
+	var rewards2 bigint
+	if ok {
+		rewards2 = _rewards2.(bigint)
+	} else {
+		rewards2 = bigint(0)
+	}
+	rewards2 += reward
+	rewards.Set(string(deposit.owner), rewards2)
+
+
+	// _updateStake := stakes[tokenId][incentiveId]
+	_stakes1, ok := stakes.Get(tokenId)
+	var stake1 avl.Tree
+	var updateStake Stake
+	if ok {
+		stake1 = _stakes1.(avl.Tree)
+		_stake, _ok := stake1.Get(incentiveId)
+		if _ok {
+			updateStake = _stake.(Stake)
+		} else {
+			panic("GnoswapStaker::UnstakeToken: incentiveId not found")
+		}
+
+	} else {
+		panic("GnoswapStaker::UnstakeToken: tokenId not found")
+	}
+	
+	updateStake.secondsPerLiquidityInsideInitialX128 = bigint(0)
+	updateStake.liquidityNoOverflow = bigint(0)
+
+	if (liquidity >= MAX_UINT96) {
+		updateStake.liquidityIfOverflow = bigint(0)
+	}
+
+	// stakes[tokenId][incentiveId] = updateStake
+	_stakesUp, ok := stakes.Get(tokenId)
+	var _stake1 avl.Tree
+	if ok {
+		_stake1 = _stakesUp.(avl.Tree)
+		_stake1.Set(incentiveId, updateStake)
+		stakes.Set(tokenId, _stake1)
+	} else {
+		panic("GnoswapStaker::UnstakeToken: tokenId not found")
+	}
+	
 }
 
-func ClaimReward(to std.Address, amountRequested bigdec) (reward bigdec) {
-	caller := GetOrigCaller()
-	reward, _ = rewards.Get(caller)
-	if amountRequested != 0 && amountRequested < reward {
-			reward = amountRequested
+
+func claimReward(to std.Address, amountRequested bigint) (reward bigint) {
+	requireUnsigned(amountRequested, "GnoswapStaker::claimReward: amountRequested is not unsigned")
+
+	// reward = rewards[GetOrigCaller()]
+	_reward, ok := rewards.Get(string(GetOrigCaller()))
+	if ok {
+		reward = _reward.(bigint)
+	} else {
+		reward = bigint(0)
 	}
 
-	rewards[caller] = Sub(rewards[caller], reward)
-	rewardToken.Transfer(std.GetOrigPkgAddr(), to, reward)
-	return reward
+	if (amountRequested != 0 && amountRequested < reward) {
+		reward = amountRequested
+	}
+
+	// TransferHelperExtended.safeTransfer(rewardToken, GetOrigPkgAddr(), to, reward)
+	// XXX GetRealmCaller()
+	_orig := GetOrigCaller()
+	std.TestSetOrigCaller(GetOrigPkgAddr())
+	rto := rt.Transfer(a2u(to), uint64(reward))
+	if !rto {
+		panic("GnoswapStaker::claimReward: transfer failed")
+	}
+	std.TestSetOrigCaller(_orig)
+
+	// rewards[GetOrigCaller()] -= reward
+	_reward2, ok := rewards.Get(string(GetOrigCaller()))
+	var reward2 bigint
+	if ok {
+		reward2 = _reward2.(bigint)
+		reward2 -= reward
+		rewards.Set(string(GetOrigCaller()), reward2)
+	} else {
+		reward2 = bigint(0)
+	}
+	
+	requireUnsigned(reward, "GnoswapStaker::claimReward: reward is not unsigned")
 }
 
-func GetRewardInfo(key IncentiveKey, tokenId string) (reward bigdec, secondsInside bigdec) {
-		incentiveId := computeIncentiveKey(key)
+func getRewardInfo(key IncentiveKey, tokenId string) (reward, secondsInsideX128 bigint) {
+	incentiveId := IncentiveIdCompute(key)
+	
+	secondsPerLiquidityInsideInitialX128, liquidity := Stakes(tokenId, incentiveId)
+	require(liquidity > 0, "GnoswapStaker::getRewardInfo: stake does not exist")
+	
+	// deposit := deposits[tokenId]
 
-		secondsPerLiquidityInsideInitial, liquidity := Stakes(tokenId, incentiveId)
-		require(liquidity > 0, "Staker: stake does not exist")
+	// incentive := incentives[incentiveId]
+	_incentive, ok := incentives.Get(incentiveId)
+	var incentive Incentive
+	if ok {
+		incentive = _incentive.(Incentive)
+	} else {
+		panic("GnoswapStaker::getRewardInfo: incentive does not exist")
+	}
+	
+	// (_, secondsPerLiquidityInsideX128, _) := key.pool.snapshotCumulativeInside(deposit.tickLower, deposit.tickUpper)
+	// XXX how many seconds did liquidity was inside
+	secondsPerLiquidityInsideX128 := (bigint(GetTimestamp() + bigint(20))) * Q128
+	reward, secondsInsideX128 = RewardMathComputeRewardAmount(
+		incentive.totalRewardUnclaimed,
+		incentive.totalSecondsClaimedX128,
+		key.startTime,
+		key.endTime,
+		liquidity,
+		secondsPerLiquidityInsideInitialX128,
+		secondsPerLiquidityInsideX128,
+		GetTimestamp(),
+	)
 
-		deposit := deposits[tokenId]
-		incentive := incentives[incentiveId]
-
-		// TODO: Need oracle to get and need call cross contract but for now it doesn"t support 
-		// (, uint160 secondsPerLiquidityInside, ) = key.pool.snapshotCumulativesInside(deposit.tickLower, deposit.tickUpper)
-		var secondsPerLiquidityInside bigdec = 20
-
-		reward, secondsInside = computeRewardAmount(
-				incentive.totalRewardUnclaimed,
-				incentive.totalSecondsClaimed,
-				key.startTime,
-				key.endTime,
-				liquidity,
-				secondsPerLiquidityInsideInitial,
-				secondsPerLiquidityInside,
-				GetTimestamp(),
-		)
-
-		return reward, secondsInside
+	requireUnsigned(reward, "GnoswapStaker::getRewardInfo: reward is not unsigned")
+	requireUnsigned(secondsInsideX128, "GnoswapStaker::getRewardInfo: secondsInsideX128 is not unsigned")
+	return reward, secondsInsideX128
 }
 
 func stakeToken(key IncentiveKey, tokenId string) {
-	require(GetTimestamp() >= key.startTime, "Staker: incentive not started")
-	require(GetTimestamp() < key.endTime, "Staker: incentive ended")
-
-	incentiveId := computeIncentiveKey(key)
-
-	incentive, ok := incentives[incentiveId]
-	if !ok {
-		panic("Staker: incentive not found")
-	}
-	require(
-		incentive.totalRewardUnclaimed > 0,
-			"Staker: non-existent incentive",
-	)
-
-	tokenStakedIncentive, ok := stakes[tokenId][incentiveId]
-
-	if !ok {
-		stakes[tokenId] = make(map[string]Stake) // XXX check avl.Tree initing
-	}
-
-	require(
-		tokenStakedIncentive.liquidityNoOverflow == bigdec (0),
-		"Staker: token already staked",
-	)
-
-	// position, _ := nftManager.Positions(tokenId)
-	liquidity := bigdec (100) // TODO: position.Liquidity
-	// require(pool == key.pool, "Staker: token pool is not the incentive pool")
-	// require(liquidity > 0, "Staker: cannot stake token with 0 liquidity")
-
-	deposit, _ := deposits.Get(tokenId)
-	incentive, _ := incentives.Get(incentiveId)
-	deposit.numberOfStakes += 1
-	incentive.numberOfStakes += 1
-
-	// XXX (, uint160 secondsPerLiquidityInside, ) = pool.snapshotCumulativesInside(tickLower, tickUpper)
-	// nested avl.Tree
-	var secondsPerLiquidityInside bigdec = 10
-	if liquidity >= 5 {
-		stakes[tokenId][incentiveId] = Stake{
-					secondsPerLiquidityInsideInitial: secondsPerLiquidityInside,
-					liquidityNoOverflow: 5,
-					liquidityIfOverflow: liquidity,
-			}
+	require(GetTimestamp() >= key.startTime, "GnoswapStaker::stakeToken: incentive not started")
+	require(GetTimestamp() < key.endTime, "GnoswapStaker::stakeToken: incentive ended")
+	
+	incentiveId := IncentiveIdCompute(key)
+	
+	// require(incentives[incentiveId].totalRewardUnclaimed > 0, "GnoswapStaker::stakeToken: non-existent incentive")
+	_incentive, ok := incentives.Get(incentiveId)
+	var incentive Incentive
+	if ok {
+		incentive = _incentive.(Incentive)
 	} else {
-			stake := &stakes[tokenId][incentiveId]
-			stake.secondsPerLiquidityInsideInitial = secondsPerLiquidityInside
-			stake.liquidityNoOverflow = bigdec (liquidity)
+		incentive = Incentive{}
 	}
-}
+	require(incentive.totalRewardUnclaimed > 0, "GnoswapStaker::stakeToken: non-existent incentive")
 
-// helpers
-func require(cond bool, msg string) {
-	if !cond {
-		panic(msg)
+	
+	// if len(stakes) > 0 && stakes[tokenId] != nil && stakes[tokenId][incentiveId].liquidityNoOverflow != 0 {
+	// 	panic("GnoswapStaker::stakeToken: token already staked")
+	// }
+	nest1, ok1 := stakes.Get(tokenId)
+	if ok1 {
+		nest11 := nest1.(avl.Tree)
+		nest2, ok2 := nest11.Get(incentiveId)
+
+		if ok2 {
+			nest22 := nest2.(Stake)
+
+			if nest22.liquidityNoOverflow != 0 { 
+				panic("GnoswapStaker::stakeToken: token already staked") 
+			}
+		}
 	}
-}
+	
+	// pool, tickLower, tickUpper, liquidity := NFTPositionInfoGetPositionInfo(
+	// 	factory,
+	// 	nonfungiblePositionManager,
+	// 	tokenId,
+	// )
+	// require(pool == key.pool, "GnoswapStaker::stakeToken: token pool is not the incentive pool")
 
+	tickLower, tickUpper, liquidity := NFTPositionInfoGetPositionInfo(tokenId)
+	require(liquidity > 0, "GnoswapStaker::stakeToken: cannot stake token with 0 liquidity")
+
+	// _updateDeposits := deposits[tokenId]
+	// _updateDeposits.numberOfStakes++
+	// deposits[tokenId] = _updateDeposits
+	_deposit, ok := deposits.Get(tokenId)
+	var deposit Deposit
+	if ok {
+		deposit = _deposit.(Deposit)
+		deposit.numberOfStakes++
+		deposits.Set(tokenId, deposit)
+	} else {
+		deposit = Deposit{}
+		deposit.numberOfStakes++
+		deposits.Set(tokenId, deposit)
+	}
+
+	// _updateIncentives := incentives[incentiveId]
+	// _updateIncentives.numberOfStakes++
+	// incentives[incentiveId] = _updateIncentives
+	_incentive, ok = incentives.Get(incentiveId)
+	if ok {
+		incentive = _incentive.(Incentive)
+		incentive.numberOfStakes++
+		incentives.Set(incentiveId, incentive)
+	} else {
+		require(incentive.totalRewardUnclaimed > 0, "GnoswapStaker::stakeToken: cannot update non-existent incentive")
+	}
+	
+	// _, secondsPerLiquidityInsideX128, _ := pool.snapshotCumulativeInside(tickLower, tickUpper)
+	// XXX how many seconds did liquidity was inside initial ( don't add GetTimestamp() )
+	secondsPerLiquidityInsideX128 := bigint(1) * Q128
+
+	// var stake Stake
+	// if (liquidity >= MAX_UINT96) {
+	// 	stake.secondsPerLiquidityInsideInitialX128 = secondsPerLiquidityInsideX128
+	// 	stake.liquidityNoOverflow = MAX_UINT96
+	// 	stake.liquidityIfOverflow = liquidity
+
+	// 	if _, ok := stakes[tokenId]; !ok {
+	// 		stakes[tokenId] = map[string]Stake{}
+	// 		stakes[tokenId][incentiveId] = stake
+	// 	} else if _, ok := stakes[tokenId][incentiveId]; !ok {
+	// 		stakes[tokenId][incentiveId] = stake
+	// 	}
+	// } else {
+	// 	stake.secondsPerLiquidityInsideInitialX128 = secondsPerLiquidityInsideX128
+	// 	stake.liquidityNoOverflow = liquidity
+
+	// 	if _, ok := stakes[tokenId]; !ok {
+	// 		stakes[tokenId] = map[string]Stake{}
+	// 		stakes[tokenId][incentiveId] = stake
+	// 	} else if _, ok := stakes[tokenId][incentiveId]; !ok {
+	// 		stakes[tokenId][incentiveId] = stake
+	// 	}
+	// }
+
+	var stake Stake
+	if (liquidity >= MAX_UINT96) {
+		stake.secondsPerLiquidityInsideInitialX128 = secondsPerLiquidityInsideX128
+		stake.liquidityNoOverflow = MAX_UINT96
+		stake.liquidityIfOverflow = liquidity
+
+		_tmp1, _ok1 := stakes.Get(tokenId)
+		var tmp1 avl.Tree
+		if !_ok1 {
+			tmp1 = avl.Tree{}
+			tmp1.Set(incentiveId, stake)
+			stakes.Set(tokenId, tmp1)
+		} else {
+			tmp1 = _tmp1.(avl.Tree)
+			tmp1.Set(incentiveId, stake)
+			stakes.Set(tokenId, tmp1)
+		}
+	} else {
+		stake.secondsPerLiquidityInsideInitialX128 = secondsPerLiquidityInsideX128
+		stake.liquidityNoOverflow = liquidity
+
+		_tmp1, _ok1 := stakes.Get(tokenId)
+		var tmp1 avl.Tree
+		if !_ok1 {
+			tmp1 = avl.Tree{}
+			tmp1.Set(incentiveId, stake)
+			stakes.Set(tokenId, tmp1)
+		} else {
+			tmp1 = _tmp1.(avl.Tree)
+			tmp1.Set(incentiveId, stake)
+			stakes.Set(tokenId, tmp1)
+		}
+	}
+
+	// Transfer NFT
+	transferDeposit(tokenId, GetOrigPkgAddr())
+}

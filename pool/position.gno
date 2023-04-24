@@ -7,8 +7,9 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-)
 
+	"encoding/base64"
+)
 
 type PositionInfo struct {
 	liquidity bigint
@@ -27,9 +28,12 @@ func PositionGetKey(
 	tickUpper bigint,
 ) (string) {
 	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
-	sum256 := sha256.Sum256([]byte(key))[:]
+	
+	// sum256 := sha256.Sum256([]byte(key))[:]
+	// return hex.EncodeToString(sum256)
 
-	return hex.EncodeToString(sum256)
+	encoded := base64.StdEncoding.EncodeToString([]byte(key))
+	return encoded
 }
 
 func PositionUpdateWithKey(
@@ -41,9 +45,19 @@ func PositionUpdateWithKey(
 	requireUnsigned(feeGrowthInside0X128, "position.gno__PositionUpdateWithKey__feeGrowthInside0X128")
 	requireUnsigned(feeGrowthInside1X128, "position.gno__PositionUpdateWithKey__feeGrowthInside1X128")
 
-	position, _ := positions[key]
+	// position := positions[key]
+	_position, exists := positions.Get(key)
+	var position PositionInfo
+	if (!exists) {
+		position = PositionInfo{}
+		// panic("position does not exist #2")
+	} else {
+		position = _position.(PositionInfo)
+	}
+
 	p := PositionUpdate(position, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
-	positions[key] = p
+	// positions[key] = p
+	positions.Set(key, p)
 	return p
 }
 

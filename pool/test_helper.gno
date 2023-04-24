@@ -1,44 +1,8 @@
 package gnoswap
 
 import (
-	"testing"
+	"gno.land/p/demo/avl"
 )
-
-
-func shouldEQ(t *testing.T, got, expected interface{}) {
-	if got != expected {
-		t.Errorf("got %v, expected %v", got, expected)
-	}
-}
-
-func shouldNEQ(t *testing.T, got, expected interface{}) {
-	if got == expected {
-		t.Errorf("got %v, expected %v", got, expected)
-	}
-}
-
-func shouldGT(t *testing.T, l, r interface{}) {
-	if !(l < r) {
-		t.Errorf("expected %v < %v", l, r)
-	}
-}
-
-func shouldLT(t *testing.T, l, r interface{}) {
-	if !(l > r) {
-		t.Errorf("expected %v > %v", l, r)
-	}
-}
-
-
-func shouldPanic(t *testing.T, f func()) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("expected panic")
-		}
-	}()
-	f()
-}
-
 
 // Testing
 func GetMaxLiquidityPerTick() bigint {
@@ -74,15 +38,45 @@ func GetProtocolFees() ProtocolFees {
 }
 
 func GetPosition(key string) PositionInfo {
-	return positions[key]
+	// return positions[key]
+	position, exists := positions.Get(key).(PositionInfo)
+	if !exists {
+		panic("position does not exist #3")
+	}
+	return position
 }
 
-func GetTicks(key bigint) TickInfo {
-	return ticks[key]
+// func GetPositions() map[string]PositionInfo {
+func GetPositions() avl.Tree {
+	return positions
 }
 
-func GetTickBitmap(key bigint) bigint {
-	return tickBitmaps[key]
+func GetTick(key string) TickInfo {
+	// return ticks[key]
+	tick, exists := ticks.Get(key).(TickInfo)
+	if !exists {
+		panic("tick does not exist")
+	}
+	return tick
+}
+
+// func GetTicks() map[bigint]TickInfo {
+func GetTicks() avl.Tree {
+	return ticks
+}
+
+func GetTickBitmap(key string) bigint {
+	// return tickBitmaps[key]
+	tickBitmap, exists := tickBitmaps.Get(key).(bigint)
+	if !exists {
+		panic("tickBitmap does not exist")
+	}
+	return tickBitmap
+}
+
+// func GetTickBitmaps() map[bigint]bigint {
+func GetTickBitmaps() avl.Tree {
+	return tickBitmaps
 }
 
 func GetSqrtPriceX96() bigint {

@@ -8,6 +8,8 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/demo/users"
+
 	"gno.land/r/foo"
 	"gno.land/r/bar"
 )
@@ -72,9 +74,17 @@ var (
 	protocolFees ProtocolFees
 	liquidity bigint
 
-	ticks map[bigint]TickInfo = make(map[bigint]TickInfo)
-	tickBitmaps map[bigint]bigint = make(map[bigint]bigint)
-	positions map[string]PositionInfo = make(map[string]PositionInfo)
+	
+	// using map
+	// ticks map[bigint]TickInfo = make(map[bigint]TickInfo)
+	// tickBitmaps map[bigint]bigint = make(map[bigint]bigint)
+	// positions map[string]PositionInfo = make(map[string]PositionInfo)
+
+	// NEW
+	// using avl.Tree
+	ticks avl.Tree
+	tickBitmaps avl.Tree
+	positions avl.Tree
 )
 
 func Init(
@@ -87,6 +97,7 @@ func Init(
 	tickSpacing = _tickSpacing
 	maxLiquidityPerTick = TickTickSpacingToMaxLiquidityPerTick(_tickSpacing)
 
+	// XXX dynamic import
 	token0 = foo.GetGRC20()
 	token1 = bar.GetGRC20()
 
@@ -124,23 +135,42 @@ func Mint(
 
 	var balance0Before, balance1Before bigint
 
+	// _orig := std.GetOrigCaller()
 	if (amount0 > 0) {
 		balance0Before = BalanceOf(token0, GetOrigPkgAddr())
-		err := token0.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount0))
-		if err != nil {
-			panic("token0.TransferFrom failed")
-		}
-		require(balance0Before + amount0 <= BalanceOf(token0, GetOrigPkgAddr()), "[X] balance0")
+		
+
+		_from := users.AddressOrName(GetOrigCaller())
+		_to := users.AddressOrName(GetOrigPkgAddr())
+		// std.TestSetOrigCaller(GetOrigPkgAddr())
+		foo.TransferFrom(_from, _to, uint64(amount0))
+		
+		// err := token0.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount0))
+		// if err != nil {
+			// 	panic("token0.TransferFrom failed")
+			// }
+			require(balance0Before + amount0 <= BalanceOf(token0, GetOrigPkgAddr()), "[X] balance0")
 	}
 
 	if (amount1 > 0) {
 		balance1Before = BalanceOf(token1, GetOrigPkgAddr())
-		err := token1.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount1))
-		if err != nil {
-			panic("token1.TransferFrom failed")
-		}
+		
+		// std.TestSetOrigCaller(_orig)
+		_from := users.AddressOrName(GetOrigCaller())
+		_to := users.AddressOrName(GetOrigPkgAddr())
+		// std.TestSetOrigCaller(GetOrigPkgAddr())
+		bar.TransferFrom(_from, _to, uint64(amount1))
+		
+		// err := token1.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount1))
+		// if err != nil {
+		// 	panic("token1.TransferFrom failed")
+		// }
 		require(balance1Before + amount1 <= BalanceOf(token1, GetOrigPkgAddr()), "[X] balance1")
 	}
+
+	// XXX tmp
+	// std.TestSetOrigCaller(_orig)
+
 	return amount0, amount1
 }
 
@@ -150,8 +180,6 @@ func Burn(
 	tickUpper bigint,
 	amount bigint,
 ) (bigint, bigint) {
-	require(amount > 0, "must be amount > 0")
-
 	position, amount0Int, amount1Int := modifyPosition(
 		ModifyPositionParams{
 			GetOrigCaller(),
@@ -165,14 +193,14 @@ func Burn(
 	requireUnsigned(amount0, "pool.gno__Burn__amount0")
 	requireUnsigned(amount1, "pool.gno__Burn__amount1")
 
-
 	if amount0 > 0 || amount1 > 0 {
 		position.tokensOwed0 += amount0
 		position.tokensOwed1 += amount1
 	}
 
 	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
-	positions[key] = position
+	// positions[key] = position
+	positions.Set(key, position)
 	return amount0, amount1
 }
 
@@ -187,7 +215,14 @@ func Collect(
 	requireUnsigned(amount1Requested, "pool.gno__Collect__amount1Requested")
 
 	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
-	position := positions[key]
+	// position := positions[key]
+	_position, exists := positions.Get(key)
+	var position PositionInfo
+	if !exists {
+		panic("position does not exist #1")
+	} else {
+		position = _position.(PositionInfo)
+	}
 
 	var amount0, amount1 bigint
 
@@ -205,17 +240,27 @@ func Collect(
 	}
 	requireUnsigned(amount1, "pool.gno__Collect__amount1")
 
+	_orig := std.GetOrigCaller()
 	if (amount0 > 0) {
 		position.tokensOwed0 -= amount0
-		token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
+
+		std.TestSetOrigCaller(GetOrigPkgAddr())
+		foo.Transfer(users.AddressOrName(recipient), uint64(amount0))
+		std.TestSetOrigCaller(_orig)
+		// token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
 	}
 
 	if (amount1 > 0) {
 		position.tokensOwed1 -= amount1
-		token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
+
+		std.TestSetOrigCaller(GetOrigPkgAddr())
+		bar.Transfer(users.AddressOrName(recipient), uint64(amount1))
+		std.TestSetOrigCaller(_orig)
+		// token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
 	}
 
-	positions[key] = position
+	// positions[key] = position
+	positions.Set(key, position)
 
 	return amount0, amount1
 }
@@ -382,7 +427,6 @@ func Swap(
 		liquidity = state.liquidity
 	}
 
-
 	if zeroForOne {
 		feeGrowthGlobal0X128 = state.feeGrowthGlobalX128
 		if state.protocolFee > 0 {
@@ -404,19 +448,33 @@ func Swap(
 		amount1 = amountSpecified - state.amountSpecifiedRemaining
 	}
 
+	_orig := std.GetOrigCaller()
 	if zeroForOne {
 		if amount1 < 0 {
-			token1.Transfer(GetOrigPkgAddr(), recipient, uint64(-amount1))
+			std.TestSetOrigCaller(GetOrigPkgAddr()) // XXX remove std.*
+			bar.Transfer(users.AddressOrName(recipient), uint64(-amount1))
+			std.TestSetOrigCaller(_orig)
 		}
 		balance0Before := BalanceOf(token0, GetOrigPkgAddr())
-		token0.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount0))
+
+
+		_from := users.AddressOrName(GetOrigCaller())
+		_to := users.AddressOrName(GetOrigPkgAddr())
+		foo.TransferFrom(_from, _to, uint64(amount0))
+
 		require(balance0Before + bigint(amount0) <= BalanceOf(token0, GetOrigPkgAddr()), "IIA0")
 	} else {
 		if amount0 < 0 {
-			token0.Transfer(GetOrigPkgAddr(), recipient, uint64(-amount0))
+			std.TestSetOrigCaller(GetOrigPkgAddr()) // XXX remove std.*
+			foo.Transfer(users.AddressOrName(recipient), uint64(-amount0))
+			std.TestSetOrigCaller(_orig)
 		}
 		balance1Before := BalanceOf(token1, GetOrigPkgAddr())
-		token1.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount1))
+
+		_from := users.AddressOrName(GetOrigCaller())
+		_to := users.AddressOrName(GetOrigPkgAddr())
+		bar.TransferFrom(_from, _to, uint64(amount1))
+
 		require(balance1Before + bigint(amount1) <= BalanceOf(token1, GetOrigPkgAddr()), "IIA1")
 	}
 
@@ -466,16 +524,20 @@ func CollectProtocol(
 	}
 	requireUnsigned(amount1, "pool.gno__CollectProtocol__amount1")
 
+	// _orig := std.GetOrigCaller()
 	if amount0 > 0 {
 		if amount0 == protocolFees.token0 {
 			amount0--
 		}
 		protocolFees.token0 -= amount0
 
-		err := token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
-		if err != nil {
-			panic(err)
-		}
+		// std.TestSetOrigCaller(GetOrigPkgAddr())
+		foo.Transfer(users.AddressOrName(recipient), uint64(amount0))
+		// std.TestSetOrigCaller(_orig)
+		// err := token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
+		// if err != nil {
+		// 	panic(err)
+		// }
 	}
 
 	if amount1 > 0 {
@@ -484,10 +546,13 @@ func CollectProtocol(
 		}
 		protocolFees.token1 -= amount1
 
-		err := token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
-		if err != nil {
-			panic(err)
-		}
+		// std.TestSetOrigCaller(GetOrigPkgAddr())
+		bar.Transfer(users.AddressOrName(recipient), uint64(amount1))
+		// std.TestSetOrigCaller(_orig)
+		// err := token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
+		// if err != nil {
+		// 	panic(err)
+		// }
 	}
 
 	return amount0, amount1
@@ -503,7 +568,7 @@ func modifyPosition(params ModifyPositionParams) (PositionInfo, bigint, bigint) 
 		params.tickUpper,
 		params.liquidityDelta,
 		slot0.tick,
-	)
+	)	
 
 	var amount0, amount1 bigint
 
@@ -539,6 +604,7 @@ func modifyPosition(params ModifyPositionParams) (PositionInfo, bigint, bigint) 
 			)
 		}
 	}
+	
 	return position, amount0, amount1
 }
 
@@ -582,7 +648,7 @@ func updatePosition(
 			TickBitmapFlipTick(tickUpper, tickSpacing)
 		}
 	}
-
+	
 	feeGrowthInside0X128, feeGrowthInside1X128 := TickGetFeeGrowthInside(
 		tickLower,
 		tickUpper,
@@ -590,15 +656,14 @@ func updatePosition(
 		_feeGrowthGlobal0X128,
 		_feeGrowthGlobal1X128,
 	)
-
+	
 	key := PositionGetKey(owner, tickLower, tickUpper)
 	position := PositionUpdateWithKey(
 		key, 
 		liquidityDelta,
 		feeGrowthInside0X128,
 		feeGrowthInside1X128,
-	)
-
+	)	
 
 	if (liquidityDelta < 0) {
 		if (flippedLower) {
@@ -623,4 +688,8 @@ func checkTicks(tickLower, tickUpper bigint) {
 	require(tickLower < tickUpper, "TLU")
 	require(tickLower >= MIN_TICK, "TL")
 	require(tickUpper <= MAX_TICK, "TU")
+}
+
+func a2u(addr std.Address) users.AddressOrName {
+	return users.AddressOrName(addr)
 }
