@@ -2,6 +2,8 @@ package gnoswap
 
 import (
 	"testing"
+
+	"gno.land/p/demo/avl"
 )
 
 func shouldEQ(t *testing.T, got, expected interface{}) {
@@ -71,26 +73,44 @@ func GetProtocolFees() ProtocolFees {
 }
 
 func GetPosition(key string) PositionInfo {
-	return positions[key]
+	// return positions[key]
+	position, exists := positions.Get(key).(PositionInfo)
+	if !exists {
+		panic("position does not exist #3")
+	}
+	return position
 }
 
-func GetPositions() map[string]PositionInfo {
+// func GetPositions() map[string]PositionInfo {
+func GetPositions() avl.Tree {
 	return positions
 }
 
-func GetTick(key bigint) TickInfo {
-	return ticks[key]
+func GetTick(key string) TickInfo {
+	// return ticks[key]
+	tick, exists := ticks.Get(key).(TickInfo)
+	if !exists {
+		panic("tick does not exist")
+	}
+	return tick
 }
 
-func GetTicks() map[bigint]TickInfo {
+// func GetTicks() map[bigint]TickInfo {
+func GetTicks() avl.Tree {
 	return ticks
 }
 
-func GetTickBitmap(key bigint) bigint {
-	return tickBitmaps[key]
+func GetTickBitmap(key string) bigint {
+	// return tickBitmaps[key]
+	tickBitmap, exists := tickBitmaps.Get(key).(bigint)
+	if !exists {
+		panic("tickBitmap does not exist")
+	}
+	return tickBitmap
 }
 
-func GetTickBitmaps() map[bigint]bigint {
+// func GetTickBitmaps() map[bigint]bigint {
+func GetTickBitmaps() avl.Tree {
 	return tickBitmaps
 }
 
