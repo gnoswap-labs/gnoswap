@@ -2,20 +2,25 @@ package staker
 
 import (
 	"std"
-	"strconv"
-	
-	// "gno.land/p/demo/pool" 
+	"encoding/base64"
+
+	"gno.land/p/demo/ufmt"
 )
 
-type IncentiveKey {
-	rewardToken std.Address
-	// pool interface{}
-	startTime uint64
-	endTime uint64
-	refundee std.Addressß
+type IncentiveKey struct {
+	// rewardToken std.Address
+	// pool std.Address
+	startTime bigint
+	endTime bigint
+	refundee std.Address
 }
 
+
 func IncentiveIdCompute(incentive IncentiveKey) (string) {
-	key := incentive.rewardToken.String() + incentive.startTime.String() + incentive.endTime.String() + incentive.refundee.String()
-	return key
+	key := ufmt.Sprintf("%d__%d__%s", incentive.startTime, incentive.endTime, incentive.refundee.String())
+	// sum256 := sha256.Sum256([]byte(key))[:]
+	// return hex.EncodeToString(sum256)
+
+	encoded := base64.StdEncoding.EncodeToString([]byte(key))
+	return encoded
 }
