@@ -22,9 +22,9 @@ func SwapMathComputeSwapStep(
 		requireUnsigned(amountRemainingLessFee, "swap_math.gno__SwapMathComputeSwapStep__amountRemainingLessFee")
 		
 		if (zeroForOne) {
-			amountIn = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity, true)
+			amountIn = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity)
 		} else {
-			amountIn = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity, true)
+			amountIn = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity)
 		}
 		requireUnsigned(amountIn, "swap_math.gno__SwapMathComputeSwapStep__amountIn")
 		
@@ -42,9 +42,9 @@ func SwapMathComputeSwapStep(
 
 	} else {
 		if (zeroForOne) {
-			amountOut = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity, false)
+			amountOut = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity)
 		} else {
-			amountOut = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity, false)
+			amountOut = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity)
 		}
 		requireUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut")
 		
@@ -68,28 +68,28 @@ func SwapMathComputeSwapStep(
 		if (max && exactIn) {
 			amountIn = amountIn
 		} else {
-			amountIn = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioNextX96, sqrtRatioCurrentX96, liquidity, true)
+			amountIn = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioNextX96, sqrtRatioCurrentX96, liquidity)
 		}
 		requireUnsigned(amountIn, "swap_math.gno__SwapMathComputeSwapStep__amountIn #1")
 
 		if (max && !exactIn) {
 			amountOut = amountOut
 		} else {
-			amountOut = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioNextX96, sqrtRatioCurrentX96, liquidity, false)
+			amountOut = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioNextX96, sqrtRatioCurrentX96, liquidity)
 		}
 		requireUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut #1")
 	} else {
 		if (max && exactIn) {
 			amountIn = amountIn
 		} else {
-			amountIn = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrentX96, sqrtRatioNextX96, liquidity, true)
+			amountIn = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrentX96, sqrtRatioNextX96, liquidity)
 		}
 		requireUnsigned(amountIn, "swap_math.gno__SwapMathComputeSwapStep__amountIn #2")
 		
 		if (max && !exactIn) {
 			amountOut = amountOut
 		} else {
-			amountOut = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrentX96, sqrtRatioNextX96, liquidity, false)
+			amountOut = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrentX96, sqrtRatioNextX96, liquidity)
 		}
 		requireUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut #2")
 	}

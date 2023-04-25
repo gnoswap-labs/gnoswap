@@ -119,7 +119,6 @@ func SqrtPriceMathGetAmount0DeltaHelper(
 	sqrtRatioAX96 bigint,
 	sqrtRatioBX96 bigint,
 	liquidity bigint,
-	roundUp bool,
 ) (bigint) {
 	requireUnsigned(sqrtRatioAX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount0DeltaHelper__sqrtRatioAX96")
 	requireUnsigned(sqrtRatioBX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount0DeltaHelper__sqrtRatioBX96")
@@ -136,12 +135,6 @@ func SqrtPriceMathGetAmount0DeltaHelper(
 
 	require(sqrtRatioAX96 > 0, "sqrt_price_math.gno__SqrtPriceMathGetAmount0DeltaHelper__sqrtRatioAX96")
 
-	// XXX remove roundUp??
-	if roundUp {
-		requireUnsigned((numerator1 * numerator2 / sqrtRatioBX96) / sqrtRatioAX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount0DeltaHelper__(numerator1 * numerator2 / sqrtRatioBX96) / sqrtRatioAX96")
-		return (numerator1 * numerator2 / sqrtRatioBX96) / sqrtRatioAX96
-	}
-
 	requireUnsigned((numerator1 * numerator2 / sqrtRatioBX96) / sqrtRatioAX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount0DeltaHelper__(numerator1 * numerator2 / sqrtRatioBX96) / sqrtRatioAX96")
 	return (numerator1 * numerator2 / sqrtRatioBX96) / sqrtRatioAX96
 }
@@ -150,7 +143,6 @@ func SqrtPriceMathGetAmount1DeltaHelper(
 	sqrtRatioAX96 bigint,
 	sqrtRatioBX96 bigint,
 	liquidity bigint,
-	roundUp bool,
 ) (bigint) {
 	requireUnsigned(sqrtRatioAX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount1DeltaHelper__sqrtRatioAX96")
 	requireUnsigned(sqrtRatioBX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount1DeltaHelper__sqrtRatioBX96")
@@ -158,12 +150,6 @@ func SqrtPriceMathGetAmount1DeltaHelper(
 
 	if (sqrtRatioAX96 > sqrtRatioBX96) {
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
-	}
-
-
-	// XXX remove roundUp?
-	if roundUp {
-		return liquidity * (sqrtRatioBX96 - sqrtRatioAX96) / Q96
 	}
 
 	return liquidity * (sqrtRatioBX96 - sqrtRatioAX96) / Q96
@@ -178,10 +164,10 @@ func SqrtPriceMathGetAmount0Delta(
 	requireUnsigned(sqrtRatioBX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount0Delta__sqrtRatioBX96")
 	
 	if liquidity < 0 {
-		return -SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, -liquidity, false)
+		return -SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, -liquidity)
 	} 
 	
-	return SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, true)
+	return SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity)
 }
 
 func SqrtPriceMathGetAmount1Delta(
@@ -193,8 +179,8 @@ func SqrtPriceMathGetAmount1Delta(
 	requireUnsigned(sqrtRatioBX96, "sqrt_price_math.gno__SqrtPriceMathGetAmount1Delta__sqrtRatioBX96")
 	
 	if liquidity < 0 {
-		return -SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, -liquidity, false)
+		return -SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, -liquidity)
 	}
 
-	return SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, true)
+	return SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity)
 }
