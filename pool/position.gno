@@ -38,8 +38,8 @@ func PositionUpdateWithKey(
 	feeGrowthInside0X128 bigint,
 	feeGrowthInside1X128 bigint,
 ) (PositionInfo) {
-	isUnsigned(feeGrowthInside0X128, "position.gno__PositionUpdateWithKey__feeGrowthInside0X128")
-	isUnsigned(feeGrowthInside1X128, "position.gno__PositionUpdateWithKey__feeGrowthInside1X128")
+	requireUnsigned(feeGrowthInside0X128, "position.gno__PositionUpdateWithKey__feeGrowthInside0X128")
+	requireUnsigned(feeGrowthInside1X128, "position.gno__PositionUpdateWithKey__feeGrowthInside1X128")
 
 	position, _ := positions[key]
 	p := PositionUpdate(position, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
@@ -53,8 +53,8 @@ func PositionUpdate(
 	feeGrowthInside0X128 bigint,
 	feeGrowthInside1X128 bigint,
 ) (PositionInfo) {
-	isUnsigned(feeGrowthInside0X128, "position.gno__PositionUpdate__feeGrowthInside0X128")
-	isUnsigned(feeGrowthInside1X128, "position.gno__PositionUpdate__feeGrowthInside1X128")
+	requireUnsigned(feeGrowthInside0X128, "position.gno__PositionUpdate__feeGrowthInside0X128")
+	requireUnsigned(feeGrowthInside1X128, "position.gno__PositionUpdate__feeGrowthInside1X128")
 
 	var liquidityNext bigint
 
@@ -67,8 +67,8 @@ func PositionUpdate(
 	
 	tokensOwed0 := (feeGrowthInside0X128 - self.feeGrowthInside0LastX128) * self.liquidity / Q128
 	tokensOwed1 := (feeGrowthInside1X128 - self.feeGrowthInside1LastX128) * self.liquidity / Q128
-	isUnsigned(tokensOwed0, "position.gno__PositionUpdate__tokensOwed0")
-	isUnsigned(tokensOwed1, "position.gno__PositionUpdate__tokensOwed1")
+	requireUnsigned(tokensOwed0, "position.gno__PositionUpdate__tokensOwed0")
+	requireUnsigned(tokensOwed1, "position.gno__PositionUpdate__tokensOwed1")
 
 	if (liquidityDelta != 0) {
 		self.liquidity = liquidityNext

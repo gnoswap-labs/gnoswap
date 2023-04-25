@@ -25,7 +25,7 @@ func PrintUserBalance(name string, target std.Address) {
 	println(" ㄴToken1:", BalanceOf(token1, target))
 }
 
-func isUnsigned(x bigint, msg string) {
+func requireUnsigned(x bigint, msg string) {
 	if x < 0 {
 		panic(msg)
 	}

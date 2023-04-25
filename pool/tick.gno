@@ -20,9 +20,9 @@ func TickTickSpacingToMaxLiquidityPerTick(tickSpacing bigint) bigint {
 	var minTick bigint = (MIN_TICK / tickSpacing) * tickSpacing
 	var maxTick bigint = (MAX_TICK / tickSpacing) * tickSpacing
 	var numTicks bigint = ((maxTick - minTick) / tickSpacing) + 1
-	isUnsigned(numTicks, "tick.gno__TickTickSpacingToMaxLiquidityPerTick__numTicks")
+	requireUnsigned(numTicks, "tick.gno__TickTickSpacingToMaxLiquidityPerTick__numTicks")
 
-	isUnsigned(MAX_UINT64 / numTicks, "tick.gno__TickTickSpacingToMaxLiquidityPerTick__MAX_UINT64 / numTicks")
+	requireUnsigned(MAX_UINT64 / numTicks, "tick.gno__TickTickSpacingToMaxLiquidityPerTick__MAX_UINT64 / numTicks")
 	return  MAX_UINT64 / numTicks
 }
 
@@ -33,8 +33,8 @@ func TickGetFeeGrowthInside(
 	feeGrowthGlobal0X128 bigint,
 	feeGrowthGlobal1X128 bigint,
 ) (feeGrowthInside0X128, feeGrowthInside1X128 bigint) {
-	isUnsigned(feeGrowthGlobal0X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthGlobal0X128")
-	isUnsigned(feeGrowthGlobal1X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthGlobal1X128")
+	requireUnsigned(feeGrowthGlobal0X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthGlobal0X128")
+	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthGlobal1X128")
 
 	var lower TickInfo = ticks[tickLower]
 	var upper TickInfo = ticks[tickUpper]
@@ -62,8 +62,8 @@ func TickGetFeeGrowthInside(
 	feeGrowthInside0X128 = feeGrowthGlobal0X128 - feeGrowthBelow0X128 - feeGrowthAbove0X128
 	feeGrowthInside1X128 = feeGrowthGlobal1X128 - feeGrowthBelow1X128 - feeGrowthAbove1X128
 
-	isUnsigned(feeGrowthInside0X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthInside0X128")
-	isUnsigned(feeGrowthInside1X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthInside1X128")
+	requireUnsigned(feeGrowthInside0X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthInside0X128")
+	requireUnsigned(feeGrowthInside1X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthInside1X128")
 	return feeGrowthInside0X128, feeGrowthInside1X128
 }
 
@@ -76,9 +76,9 @@ func TickUpdate(
 	upper bool,
 	maxLiquidity bigint,
 ) (flipped bool) {
-	isUnsigned(feeGrowthGlobal0X128, "tick.gno__TickUpdate__feeGrowthGlobal0X128")
-	isUnsigned(feeGrowthGlobal1X128, "tick.gno__TickUpdate__feeGrowthGlobal1X128")
-	isUnsigned(maxLiquidity, "tick.gno__TickUpdate__maxLiquidity")
+	requireUnsigned(feeGrowthGlobal0X128, "tick.gno__TickUpdate__feeGrowthGlobal0X128")
+	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickUpdate__feeGrowthGlobal1X128")
+	requireUnsigned(maxLiquidity, "tick.gno__TickUpdate__maxLiquidity")
 
 	info := ticks[tick]
 	
@@ -120,8 +120,8 @@ func TickCross(
 	feeGrowthGlobal0X128 bigint,
 	feeGrowthGlobal1X128 bigint,
 ) (bigint) {
-	isUnsigned(feeGrowthGlobal0X128, "tick.gno__TickCross__feeGrowthGlobal0X128")
-	isUnsigned(feeGrowthGlobal1X128, "tick.gno__TickCross__feeGrowthGlobal1X128")
+	requireUnsigned(feeGrowthGlobal0X128, "tick.gno__TickCross__feeGrowthGlobal0X128")
+	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickCross__feeGrowthGlobal1X128")
 
 	info := ticks[tick]
 

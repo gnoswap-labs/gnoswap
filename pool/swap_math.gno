@@ -8,10 +8,10 @@ func SwapMathComputeSwapStep(
 	amountRemaining bigint,
 	feePips bigint,
 ) (bigint, bigint, bigint, bigint) {
-	isUnsigned(sqrtRatioCurrentX96, "swap_math.gno__SwapMathComputeSwapStep__sqrtRatioCurrentX96")
-	isUnsigned(sqrtRatioTargetX96, "swap_math.gno__SwapMathComputeSwapStep__sqrtRatioTargetX96")
-	isUnsigned(liquidity, "swap_math.gno__SwapMathComputeSwapStep__liquidity")
-	isUnsigned(feePips, "swap_math.gno__SwapMathComputeSwapStep__feePips")
+	requireUnsigned(sqrtRatioCurrentX96, "swap_math.gno__SwapMathComputeSwapStep__sqrtRatioCurrentX96")
+	requireUnsigned(sqrtRatioTargetX96, "swap_math.gno__SwapMathComputeSwapStep__sqrtRatioTargetX96")
+	requireUnsigned(liquidity, "swap_math.gno__SwapMathComputeSwapStep__liquidity")
+	requireUnsigned(feePips, "swap_math.gno__SwapMathComputeSwapStep__feePips")
 	var sqrtRatioNextX96, amountIn, amountOut, feeAmount bigint
 
 	zeroForOne := sqrtRatioCurrentX96 >= sqrtRatioTargetX96
@@ -19,14 +19,14 @@ func SwapMathComputeSwapStep(
 
 	if (exactIn) {
 		amountRemainingLessFee := amountRemaining * (1e6 - feePips) / 1e6
-		isUnsigned(amountRemainingLessFee, "swap_math.gno__SwapMathComputeSwapStep__amountRemainingLessFee")
+		requireUnsigned(amountRemainingLessFee, "swap_math.gno__SwapMathComputeSwapStep__amountRemainingLessFee")
 		
 		if (zeroForOne) {
 			amountIn = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity, true)
 		} else {
 			amountIn = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity, true)
 		}
-		isUnsigned(amountIn, "swap_math.gno__SwapMathComputeSwapStep__amountIn")
+		requireUnsigned(amountIn, "swap_math.gno__SwapMathComputeSwapStep__amountIn")
 		
 		if amountRemainingLessFee >= amountIn {
 			sqrtRatioNextX96 = sqrtRatioTargetX96
@@ -38,7 +38,7 @@ func SwapMathComputeSwapStep(
 				zeroForOne,
 			)
 		}
-		isUnsigned(sqrtRatioNextX96, "swap_math.gno__SwapMathComputeSwapStep__sqrtRatioNextX96")
+		requireUnsigned(sqrtRatioNextX96, "swap_math.gno__SwapMathComputeSwapStep__sqrtRatioNextX96")
 
 	} else {
 		if (zeroForOne) {
@@ -46,7 +46,7 @@ func SwapMathComputeSwapStep(
 		} else {
 			amountOut = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity, false)
 		}
-		isUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut")
+		requireUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut")
 		
 		if -amountRemaining >= amountOut {
 			sqrtRatioNextX96 = sqrtRatioTargetX96
@@ -58,7 +58,7 @@ func SwapMathComputeSwapStep(
 				zeroForOne,
 			)
 		}
-		isUnsigned(sqrtRatioNextX96, "swap_math.gno__SwapMathComputeSwapStep__sqrtRatioNextX96")
+		requireUnsigned(sqrtRatioNextX96, "swap_math.gno__SwapMathComputeSwapStep__sqrtRatioNextX96")
 	}
 
 	max := sqrtRatioTargetX96 == sqrtRatioNextX96
@@ -70,33 +70,33 @@ func SwapMathComputeSwapStep(
 		} else {
 			amountIn = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioNextX96, sqrtRatioCurrentX96, liquidity, true)
 		}
-		isUnsigned(amountIn, "swap_math.gno__SwapMathComputeSwapStep__amountIn #1")
+		requireUnsigned(amountIn, "swap_math.gno__SwapMathComputeSwapStep__amountIn #1")
 
 		if (max && !exactIn) {
 			amountOut = amountOut
 		} else {
 			amountOut = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioNextX96, sqrtRatioCurrentX96, liquidity, false)
 		}
-		isUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut #1")
+		requireUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut #1")
 	} else {
 		if (max && exactIn) {
 			amountIn = amountIn
 		} else {
 			amountIn = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrentX96, sqrtRatioNextX96, liquidity, true)
 		}
-		isUnsigned(amountIn, "swap_math.gno__SwapMathComputeSwapStep__amountIn #2")
+		requireUnsigned(amountIn, "swap_math.gno__SwapMathComputeSwapStep__amountIn #2")
 		
 		if (max && !exactIn) {
 			amountOut = amountOut
 		} else {
 			amountOut = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrentX96, sqrtRatioNextX96, liquidity, false)
 		}
-		isUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut #2")
+		requireUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut #2")
 	}
 
 	if !exactIn && amountOut > -amountRemaining {
 		amountOut = -amountRemaining
-		isUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut #3")
+		requireUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut #3")
 	}
 
 	if exactIn && sqrtRatioNextX96 != sqrtRatioTargetX96 {

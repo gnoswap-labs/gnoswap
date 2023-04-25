@@ -45,7 +45,7 @@ func BitMathMostSignificantBit(x bigint) bigint {
 		r += 1
 	}
 
-	isUnsigned(r, "bit_math.gno__BitMathMostSignificantBit__r")
+	requireUnsigned(r, "bit_math.gno__BitMathMostSignificantBit__r")
 	return r
 }
 
@@ -100,6 +100,6 @@ func BitMathLeastSignificantBit(x bigint) bigint {
 		r -= 1
 	}
 
-	isUnsigned(r, "bit_math.gno__BitMathLeastSignificantBit__r")
+	requireUnsigned(r, "bit_math.gno__BitMathLeastSignificantBit__r")
 	return r
 }
