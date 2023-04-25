@@ -119,8 +119,8 @@ func Mint(
 
 	amount0 := bigint(amount0Int)
 	amount1 := bigint(amount1Int)
-	isUnsigned(amount0, "pool.gno__Mint__amount0")
-	isUnsigned(amount1, "pool.gno__Mint__amount1")
+	requireUnsigned(amount0, "pool.gno__Mint__amount0")
+	requireUnsigned(amount1, "pool.gno__Mint__amount1")
 
 	var balance0Before, balance1Before bigint
 
@@ -162,8 +162,8 @@ func Burn(
 	)
 
 	amount0, amount1 := -amount0Int, -amount1Int
-	isUnsigned(amount0, "pool.gno__Burn__amount0")
-	isUnsigned(amount1, "pool.gno__Burn__amount1")
+	requireUnsigned(amount0, "pool.gno__Burn__amount0")
+	requireUnsigned(amount1, "pool.gno__Burn__amount1")
 
 
 	if amount0 > 0 || amount1 > 0 {
@@ -183,8 +183,8 @@ func Collect(
 	amount0Requested bigint, 
 	amount1Requested bigint,
 ) (bigint, bigint) {
-	isUnsigned(amount0Requested, "pool.gno__Collect__amount0Requested")
-	isUnsigned(amount1Requested, "pool.gno__Collect__amount1Requested")
+	requireUnsigned(amount0Requested, "pool.gno__Collect__amount0Requested")
+	requireUnsigned(amount1Requested, "pool.gno__Collect__amount1Requested")
 
 	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
 	position := positions[key]
@@ -196,14 +196,14 @@ func Collect(
 	} else {
 		amount0 = amount0Requested
 	}
-	isUnsigned(amount0, "pool.gno__Collect__amount0")
+	requireUnsigned(amount0, "pool.gno__Collect__amount0")
 
 	if amount1Requested > position.tokensOwed1 {
 		amount1 = position.tokensOwed1
 	} else {
 		amount1 = amount1Requested
 	}
-	isUnsigned(amount1, "pool.gno__Collect__amount1")
+	requireUnsigned(amount1, "pool.gno__Collect__amount1")
 
 	if (amount0 > 0) {
 		position.tokensOwed0 -= amount0
@@ -327,7 +327,7 @@ func Swap(
 
 		if cache.feeProtocol > 0 {
 			delta := step.feeAmount / cache.feeProtocol
-			isUnsigned(delta, "pool.gno__Swap__delta")
+			requireUnsigned(delta, "pool.gno__Swap__delta")
 			step.feeAmount -= delta
 			state.protocolFee += delta
 		}
@@ -426,8 +426,8 @@ func Swap(
 }
 
 func SetFeeProtocol(feeProtocol0, feeProtocol1 bigint) {
-	isUnsigned(feeProtocol0, "pool.gno__SetFeeProtocol__feeProtocol0")
-	isUnsigned(feeProtocol1, "pool.gno__SetFeeProtocol__feeProtocol1")
+	requireUnsigned(feeProtocol0, "pool.gno__SetFeeProtocol__feeProtocol0")
+	requireUnsigned(feeProtocol1, "pool.gno__SetFeeProtocol__feeProtocol1")
 
 	require (
 		(feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)) &&
@@ -442,8 +442,8 @@ func CollectProtocol(
 	amount0Requested bigint,
 	amount1Requested bigint,
 ) (bigint, bigint) {
-	isUnsigned(amount0Requested, "pool.gno__CollectProtocol__amount0Requested")
-	isUnsigned(amount1Requested, "pool.gno__CollectProtocol__amount1Requested")
+	requireUnsigned(amount0Requested, "pool.gno__CollectProtocol__amount0Requested")
+	requireUnsigned(amount1Requested, "pool.gno__CollectProtocol__amount1Requested")
 
 	// // XXX
 	// if (GetOrigCaller() != factoryOwner) {
@@ -457,14 +457,14 @@ func CollectProtocol(
 	} else {
 		amount0 = amount0Requested
 	}
-	isUnsigned(amount0, "pool.gno__CollectProtocol__amount0")
+	requireUnsigned(amount0, "pool.gno__CollectProtocol__amount0")
 
 	if amount1Requested > protocolFees.token1 {
 		amount1 = protocolFees.token1
 	} else {
 		amount1 = amount1Requested
 	}
-	isUnsigned(amount1, "pool.gno__CollectProtocol__amount1")
+	requireUnsigned(amount1, "pool.gno__CollectProtocol__amount1")
 
 	if amount0 > 0 {
 		if amount0 == protocolFees.token0 {
