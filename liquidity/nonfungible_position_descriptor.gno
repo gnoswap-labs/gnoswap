@@ -1,54 +1,54 @@
 package liquidity
 
 import (
-
+	"std"
+	pool "gno.land/r/pool"
 )
 
 const (
-	// DAI std.Address = "0x6b175474e89094c44da98b954eedeac495271d0f"
-	DAI std.Address = "gno.land/r/demo/dai"
-	USDC std.Address = "gno.land/r/demo/usdc"
-	USDT std.Address = "gno.land/r/demo/usdt"
-	TBTC std.Address = "gno.land/r/demo/tbtc"
-	WBTC std.Address = "gno.land/r/demo/wbtc"
+	// nativeCurrencyLabelBytes []byte
+	nativeCurrencyLabelBytes []byte = []byte("NativeCurrencyLabelBytesHere")
 
-	WET9 std.Address
-	nativeCurrencyLabelBytes []byte
+	WGNOT = std.Address("WGNOT")
+	WATOM = std.Address("WATOM")
+	USDC = std.Address("USDC")
+	WETH = std.Address("WETH")
+	WBTC = std.Address("WBTC")
 )
 
 
-func Init(
-	_WETH9 std.Address,
-	_nativeCurrencyLabelBytes []byte,
-) {
-	WETH9 = _WETH9
-	nativeCurrencyLabelBytes = _nativeCurrencyLabelBytes
-}
-
-
-func nativeCUrrencyLabel() string {
+func nativeCurrencyLabel() string {
 	string(nativeCurrencyLabelBytes[:])
 }
 
 
-func tokenURI(positionManager INonfungiblePositionManager, tokenId bigint) string {
-	var (
-		token0 std.Address
-		token1	std.Address
-		fee bigint
-		tickLower bigint
-		tickUpper bigint
-	)
-	(, , token0, token1, fee, tickLower, tickUpper, , , , ,) = positionManager.positions(tokenId)
+func tokenURI(tokenId string) string {
+	// _p := Positions(tokenId)	
+	// _token0 := _p.token0
+	// _token1 := _p.token1
+	// _fee := _p.fee
+	// _tickLower := _p.tickLower
+	// _tickUpper := _p.tickUpper
+	_, _, token0, token1, fee, tickLower, tickUpper, _, _, _, _, _ := Positions(tokenId)
+	
+	// pool := PoolAddressComputeAddress(factory(), PoolKey{token0: _token0, token1: _token1, fee: _fee})
 
-	// XXX test.DerivePakcageAddress deprecated
-	pool = std.Address("pool_address")
+	_flipRatio := flipRatio(token0, token1, GetChainID())
 
-	var _flipRatio bool = flipRatio(token0, token1, ChainId.get())
-	var quoteTokenAddress = !_flipRatio ? token1: token0;
-	var baseTokenAddress = !_flipRatio ? token0: token1;
-	(, tick bigint, , , , ,) = pool.slot0();
+	var quoteTokenAddress std.Address
+	var baseTokenAddress std.Address
+	if (!_flipRatio) {
+		quoteTokenAddress = token1
+		baseTokenAddress = token0
+	} else {
+		quoteTokenAddress = token0
+		baseTokenAddress = token1
+	}
 
+	_tick := pool.GetPoolSlot0Tick()
+
+	return("XXX_TOKEN_URI_HERE")
+	/*
 	return
 		NFTDescriptor.constructTokenURI(
 			NFTDescriptor.ConstructTokenURIParams({
@@ -72,34 +72,35 @@ func tokenURI(positionManager INonfungiblePositionManager, tokenId bigint) strin
 				poolAddress: pool
 			})
 		)
+	*/
 }
 
-
-func flipRatio {
+func flipRatio (
 	token0 std.Address,
 	token1 std.Address,
-	chainId bigint,
-} bool {
+	chainId string,
+ ) bool {
 	return tokenRatioPriority(token0, chainId) > tokenRatioPriority(token1, chainId)
 }
 
-func tokenRatioPriority(token std.Address, bigint chainId) bigint {
-	if (token == WETH9) {
-		return TokenRatioSortOrder.DENOMINATOR
+func tokenRatioPriority(token std.Address, chainId string) bigint {
+	if (token == WGNOT) {
+		return DENOMINATOR
 	}
 
-	if (chainId == 1) {
+	if (chainId == "test3") { // current gno latest chainid
+		// XXX which token will be in gno?
 		switch token {
+		case WGNOT:
+			return NUMERATOR_MOST;
+		case WATOM:
+			return NUMERATOR_MORE;
 		case USDC:
-			return TokenRatioSortOrder.NUMERATOR_MOST;
-		case USDT:
-			return TokenRatioSortOrder.NUMERATOR_MORE;
-		case DAI:
-			return TokenRatioSortOrder.NUMERATOR;
-		case TBTC:
-			return TokenRatioSortOrder.NUMERATOR_MORE;
+			return NUMERATOR;
+		case WETH:
+			return NUMERATOR_MORE;
 		case WBTC:
-			return TokenRatioSortOrder.NUMERATOR_MOST;
+			return NUMERATOR_MOST;
 		default:
 			return 0
 		}
