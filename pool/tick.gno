@@ -1,6 +1,5 @@
 package gnoswap
 
-
 type TickInfo struct {
 	liquidityGross bigint
 	liquidityNet bigint
@@ -35,8 +34,9 @@ func TickUpdate(
 	time bigint,
 	upper bool,
 	maxLiquidity bigint,
-) (flipped bool) {
-	info := ticks[tick]
+	info TickInfo,
+) (newInfo TickInfo, flipped bool) {
+	// info := ticks[tick]
 	
 	liquidityGrossBefore := info.liquidityGross
 
@@ -66,8 +66,8 @@ func TickUpdate(
 	}
 
 	// // XXX remove??
-	ticks[tick] = info
-	return flipped
+	// ticks[tick] = info
+	return (info, flipped)
 }
 
 func TickClear(tick bigint) {

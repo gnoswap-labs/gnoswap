@@ -13,6 +13,19 @@ var (
 	getPool avl.Tree
 )
 
+// pools manages the mapping from the pool key (token0, token1, fee) to the pool struct
+var pools map[string]*Pool
+
+// The argument token names should be gno package names
+// Tokens are sorted alphabetically and concatenated with a colon
+func getPoolKeyFromTokenNames(token0, token1 string) string {
+	if token0 < token1 {
+		return token0 + ":" + token1
+	} else {
+		return token1 + ":" + token0
+	}
+}
+
 func Init() {
 	// can we init with parameters?
 	owner = std.GetOrigCaller()
