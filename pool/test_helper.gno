@@ -77,8 +77,12 @@ func GetPosition(key string) PositionInfo {
 	return positions[key]
 }
 
-func GetTicks(key bigint) TickInfo {
+func GetTick(key bigint) TickInfo {
 	return ticks[key]
+}
+
+func GetTicks() map[bigint]TickInfo {
+	return ticks
 }
 
 func GetTickBitmap(key bigint) bigint {
