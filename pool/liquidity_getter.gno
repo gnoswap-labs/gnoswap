@@ -30,7 +30,8 @@ func GetPoolPositionFeeGrowthInside1LastX128(key string) bigint {
 }
 
 func GetPoolAddress() std.Address {
-	return std.GetOrigPkgAddr()
+	return std.Address("g17rgsdnfxzza0sdfsdma37sdwxagsz378833ca4")
+	// XXX return std.GetOrigPkgAddr()
 }
 
 func GetPoolSlot0Tick() (bigint) {
