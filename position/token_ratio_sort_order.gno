@@ -1,4 +1,4 @@
-package liquidity
+package position
 
 const (
 	NUMERATOR_MOST		= bigint(300)

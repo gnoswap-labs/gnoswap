@@ -1,10 +1,12 @@
-package liquidity
+package position
 
 import (
 	"std"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc721"
+
+	nft "gno.land/r/foo721"
 
 	pool "gno.land/r/pool"
 )
@@ -17,7 +19,6 @@ var (
 	positions       map[string]Position = make(map[string]Position)
 	nextId          bigint = 1
 	nextPoolId      bigint = 1
-	nft             = grc721.NewBasicNFT("Gnoswap V3 Positions NFT-V1", "GNO-V3-POS")
 )
 
 type Position struct {
@@ -85,16 +86,16 @@ func Mint(params MintParams) (string, bigint, bigint, bigint) {
 			amount1Min: params.amount1Min,
 		},
 	)
-	
 
 	tokenId := string(nextId)
 	nextId++ // nextId = nextId + 1
-
-	nft.Mint(GetOrigCaller(), grc721.TokenID(tokenId))
-	nft.Approve(GetOrigPkgAddr(), grc721.TokenID(tokenId)) // XXX for Burn
-
-	// nft.Mint(params.recipient, grc721.TokenID(tokenId))
-	// nft.Approve(GetOrigCaller(), grc721.TokenID(tokenId))
+	
+	// XXX GetRealmCaller PR is going on
+	// spoof orig caller
+	_orig := GetOrigCaller()
+	std.TestSetOrigCaller(GetOrigPkgAddr())
+	nft.Mint(a2u(_orig), grc721.TokenID(tokenId))
+	std.TestSetOrigCaller(_orig)
 
 	positionKey := PositionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
 	// _p := pool.positions[positionKey]
@@ -166,7 +167,6 @@ func IncreaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 func DecreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	isAuthorizedForToken(string(params.tokenId))
 	checkDeadline(params.deadline)
-
 	require(params.liquidity > 0, "Cannot remove 0 liquidity")
 
 	// verify tokenId
@@ -179,9 +179,15 @@ func DecreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	poolKey := poolIdToPoolKey[position.poolId]
 	// pool := PoolAddressComputeAddress(factory, poolKey)
 
+	// XXX GetRealmCaller PR is going on
+	// spoof orig caller
+	_orig := GetOrigCaller()
+	std.TestSetOrigCaller(GetOrigPkgAddr())
 	amount0, amount1 := pool.Burn(position.tickLower, position.tickUpper, params.liquidity)
-	require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, "PM_Price slippage check")
+	std.TestSetOrigCaller(_orig)
 
+	require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, "PM_Price slippage check")
+	
 	positionKey := PositionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	// _p := pool.positions[positionKey]
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
@@ -204,6 +210,7 @@ func DecreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 func Collect(params CollectParams) (bigint, bigint) {
 	// amount0, amount1
 
+	isAuthorizedForToken(string(params.tokenId))
 	require(params.amount0Max > 0 || params.amount1Max > 0, "At least one token should be collected")
 
 	var recipient std.Address
@@ -220,7 +227,12 @@ func Collect(params CollectParams) (bigint, bigint) {
 	tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
 
 	if (position.liquidity) > 0 {
+		// XXX GetRealmCaller PR is going on
+		// spoof orig caller
+		_orig := GetOrigCaller()
+		std.TestSetOrigCaller(GetOrigPkgAddr())
 		pool.Burn(position.tickLower, position.tickUpper, 0)
+		std.TestSetOrigCaller(_orig)
 
 		positionKey := PositionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 		// _p := pool.positions[positionKey]
@@ -247,6 +259,8 @@ func Collect(params CollectParams) (bigint, bigint) {
 		amount1Collect = params.amount1Max
 	}
 
+	_orig := GetOrigCaller()
+	std.TestSetOrigCaller(GetOrigPkgAddr())
 	amount0, amount1 := pool.Collect(
 		recipient,
 		position.tickLower,
@@ -254,16 +268,17 @@ func Collect(params CollectParams) (bigint, bigint) {
 		amount0Collect,
 		amount1Collect,
 	)
-	
+	std.TestSetOrigCaller(_orig)
+
 	position.tokensOwed0, position.tokensOwed1 = tokensOwed0 - amount0Collect, tokensOwed1 - amount1Collect
 
 	// update position
 	positions[string(params.tokenId)] = position
 
+	// burn nft if position is clear
 	if position.isClear() {
 		burn(string(params.tokenId))
 	}
-
 	return amount0, amount1
 }
 
@@ -274,7 +289,11 @@ func burn(tokenId string) {
 	require(position.isClear(), "Not cleared")
 	delete(positions, tokenId)
 
+	// XXX GetRealmCaller PR is going on
+	_orig := std.GetOrigCaller()
+	std.TestSetOrigCaller(std.GetOrigPkgAddr())
 	nft.Burn(grc721.TokenID(tokenId))
+	std.TestSetOrigCaller(_orig)
 }
 
 

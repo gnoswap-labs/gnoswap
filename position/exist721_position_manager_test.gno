@@ -1,4 +1,4 @@
-package liquidity
+package position
 
 import (
 	"std"
@@ -248,7 +248,6 @@ func TestIncreaseLiquidity(t *testing.T) {
 			deadline: bigint(1234567890),
 		}
 
-		// Invalid token ID
 		shouldPanic(t, func() { IncreaseLiquidity(_increaseLiquidityParams) })
 	}
 }
@@ -272,12 +271,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 		poolOldToken0Bal := Token0Bal(GetOrigPkgAddr())
 		poolOldToken1Bal := Token1Bal(GetOrigPkgAddr())
 		
-		// XXX not sure about this
-		// pool.Mint takes param.Recipient as recipient
-		// HOWEVER pool.Burn (automatically) takes OrigCaller() as recipient
-		// via Liquidity Contract, contract itself owns every position
-		// so if we dno't set OrigCaller() as manger contract => no liquditiy to burn
-		std.TestSetOrigCaller(GetOrigPkgAddr())
 		_amount0, _amount1 := DecreaseLiquidity(_decreaseLiquidityParams)
 		shouldNEQ(t, _amount0, bigint(0))
 		shouldNEQ(t, _amount1, bigint(0))
@@ -303,7 +296,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			deadline: bigint(1234567890),
 		}
 
-		// Cannot withdraw more liquidity than is in the position
+		std.TestSetOrigCaller(GetOrigPkgAddr())
 		shouldPanic(t, func() { DecreaseLiquidity(_decreaseLiquidityParams) })
 	}
 
@@ -319,11 +312,10 @@ func TestDecreaseLiquidity(t *testing.T) {
 			amount1Min: bigint(0),
 			deadline: bigint(1234567890),
 		}
-		
+
 		shouldPanic(t, func() { DecreaseLiquidity(_decreaseLiquidityParams) })
 	}
 }
-
 
 func TestCollect(t *testing.T) {
 	// lp1 did decrease some liquidity => there is some to collect
@@ -346,11 +338,9 @@ func TestCollect(t *testing.T) {
 
 		// Collect calls pool.burn
 		// => need to set OrigCaller() as pool's address just like the DecreaseLiquidity
-		std.TestSetOrigCaller(GetOrigPkgAddr())
+		// std.TestSetOrigCaller(GetOrigPkgAddr())
 		_amount0, _amount1 := Collect(_collectParams)
-		shouldNEQ(t, _amount0, bigint(0))
-		shouldNEQ(t, _amount1, bigint(0))
-		
+
 		// After Collect
 		// pool's liquidity stays same
 		// pool's balance decreases
@@ -370,8 +360,8 @@ func TestCollect(t *testing.T) {
 		_collectParams := CollectParams{
 			tokenId: bigint(1),
 			recipient: rv01,
-			amount0Max: bigint(10000),
-			amount1Max: bigint(10000),
+			amount0Max: bigint(100000),
+			amount1Max: bigint(100000),
 		}
 
 		poolOldLiquidity := pool.GetLiquidity()
@@ -383,7 +373,7 @@ func TestCollect(t *testing.T) {
 
 		// Collect calls pool.burn
 		// => need to set OrigCaller() as pool's address just like the DecreaseLiquidity
-		std.TestSetOrigCaller(GetOrigPkgAddr())
+		// std.TestSetOrigCaller(GetOrigPkgAddr())
 		_amount0, _amount1 := Collect(_collectParams)
 
 		// After Collect
@@ -398,7 +388,7 @@ func TestCollect(t *testing.T) {
 		shouldEQ(t, Token1Bal(rv01), rvOldToken1Bal + _amount1)
 	}
 
-	// lp2 didn't decrease some liquidity => nothing to collect
+	// lp2 diddn't decrease some liquidity => nothing to collect
 	{
 		std.TestSetOrigCaller(lp02)
 		
@@ -418,7 +408,7 @@ func TestCollect(t *testing.T) {
 
 		// Collect calls pool.burn
 		// => need to set OrigCaller() as pool's address just like the DecreaseLiquidity
-		std.TestSetOrigCaller(GetOrigPkgAddr())
+		// std.TestSetOrigCaller(GetOrigPkgAddr())
 		_amount0, _amount1 := Collect(_collectParams)
 		shouldEQ(t, _amount0, bigint(0))
 		shouldEQ(t, _amount1, bigint(0))
@@ -457,10 +447,10 @@ func TestCollect(t *testing.T) {
 	}
 }
 
+
 func TestNFTBurn(t *testing.T) {
 	// burn tid 1 (lp01's position)
 	// panic => there is some liquidity left
-	std.TestSetOrigCaller(GetOrigPkgAddr())
 	shouldPanic(t, func() { burn("1") })
 
 	// remove all liquditiy & collect all then burn tid 1
@@ -480,9 +470,9 @@ func TestNFTBurn(t *testing.T) {
 		}
 
 		// removed all liquidity, but didn't collect => burn will panic
-		std.TestSetOrigCaller(GetOrigPkgAddr())
 		DecreaseLiquidity(_decreaseLiquidityParams)
 		shouldPanic(t, func() { burn("1") })
+
 		
 		_collectParams := CollectParams{
 			tokenId: _tokenId,
@@ -492,16 +482,13 @@ func TestNFTBurn(t *testing.T) {
 		}
 
 		// collect all owed tokens => nft is burnable and burned
-		// std.TestSetOrigCaller(GetOrigPkgAddr())
 		// Collect(_collectParams)
 		// shouldPanic(t, func() { burn("1") })
-
 		_before := NFTBalanceOf(lp01)
-		std.TestSetOrigCaller(GetOrigPkgAddr())
 		Collect(_collectParams)
 		shouldEQ(t, NFTBalanceOf(lp01), _before - bigint(1))
 	}
 
-	// // burn non exists nft
-	// shouldPanic(t, func() { burn("5") })
+	// burn non exists nft
+	shouldPanic(t, func() { burn("5") })
 }

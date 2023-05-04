@@ -1,8 +1,10 @@
-package liquidity
+package position
 
 import (
 	"std"
 	"gno.land/p/demo/grc/grc721"
+
+	nft "gno.land/r/foo721"
 )
 
 func TokenURI(tokenId string) string {
@@ -12,20 +14,20 @@ func TokenURI(tokenId string) string {
 }
 
 func NFTBalanceOf(addr std.Address) bigint {
-	bal, err := nft.BalanceOf(addr)
-	if err != nil {
-		println("NFTBalanceOf")
-		panic(err)
-	}
-	
-	return bigint(bal)
+	return bigint(nft.BalanceOf(a2u(addr)))
 }
 
 func Exists(tokenId string) bool {
 	// exists method in grc721 is private
 	// we don't have much choice but to use ownerOf
-	owner, err := nft.OwnerOf(grc721.TokenID(tokenId))
-	if err != nil {
+	owner := nft.OwnerOf(grc721.TokenID(tokenId))
+	if owner == nil {
+		panic("NIL OWNER")
+		return false
+	}
+
+	if owner == zeroAddress {
+		panic("ZERO ADDRESS OWNER")
 		return false
 	}
 
@@ -34,20 +36,24 @@ func Exists(tokenId string) bool {
 
 
 // Error handling isn't necessary here
-func isApprovedOrOwner(addr std.Address, tokenId string) bool {
+func isApprovedOrOwner(addr std.Address, tokenId string) bool {	
 	tid := grc721.TokenID(tokenId)
 
 	// check owner first
-	owner, _ := nft.OwnerOf(tid)
-	if owner == addr {
+	owner := nft.OwnerOf(tid)
+	if addr == owner {
 		return true
 	}
-	
+		
 	// if not owner, check whether approved
-	operator, _ := nft.GetApproved(tid)
+	operator, err := nft.GetApproved(tid)
+	if err != nil {
+		return false
+	}
+
 	if addr == operator {
 		return true
 	}
-
+	
 	return false
 }

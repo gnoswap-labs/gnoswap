@@ -1,4 +1,4 @@
-package liquidity
+package position
 
 import (
 	pool "gno.land/r/pool"
