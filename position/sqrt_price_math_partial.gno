@@ -1,4 +1,4 @@
-package liquidity
+package position
 
 func SqrtPriceMathPartialGetAmount0Delta(
 	sqrtRatioAX96 bigint,

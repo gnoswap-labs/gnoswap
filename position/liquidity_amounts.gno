@@ -1,4 +1,4 @@
-package liquidity
+package position
 
 func LiquidityAmountsGetLiquidityForAmount0(
 	sqrtRatioAX96 bigint,
