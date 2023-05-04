@@ -140,12 +140,12 @@ func Mint(
 		_to := users.AddressOrName(GetOrigPkgAddr())
 		// std.TestSetOrigCaller(GetOrigPkgAddr())
 		foo.TransferFrom(_from, _to, uint64(amount0))
-
+		
 		// err := token0.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount0))
 		// if err != nil {
-		// 	panic("token0.TransferFrom failed")
-		// }
-		require(balance0Before + amount0 <= BalanceOf(token0, GetOrigPkgAddr()), "[X] balance0")
+			// 	panic("token0.TransferFrom failed")
+			// }
+			require(balance0Before + amount0 <= BalanceOf(token0, GetOrigPkgAddr()), "[X] balance0")
 	}
 
 	if (amount1 > 0) {
@@ -461,41 +461,33 @@ func Swap(
 		amount1 = amountSpecified - state.amountSpecifiedRemaining
 	}
 
-	// _orig := std.GetOrigCaller()
+	_orig := std.GetOrigCaller()
 	if zeroForOne {
 		if amount1 < 0 {
-			// std.TestSetOrigCaller(GetOrigPkgAddr())
+			std.TestSetOrigCaller(GetOrigPkgAddr())
 			bar.Transfer(users.AddressOrName(recipient), uint64(-amount1))
-			// std.TestSetOrigCaller(_orig)
-			// token1.Transfer(GetOrigPkgAddr(), recipient, uint64(-amount1))
+			std.TestSetOrigCaller(_orig)
 		}
 		balance0Before := BalanceOf(token0, GetOrigPkgAddr())
 
-		// std.TestSetOrigCaller(_orig)
+
 		_from := users.AddressOrName(GetOrigCaller())
 		_to := users.AddressOrName(GetOrigPkgAddr())
-		// std.TestSetOrigCaller(GetOrigPkgAddr())
 		foo.TransferFrom(_from, _to, uint64(amount0))
-		// std.TestSetOrigCaller(_orig)
-		// token0.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount0))
 
 		require(balance0Before + bigint(amount0) <= BalanceOf(token0, GetOrigPkgAddr()), "IIA0")
 	} else {
 		if amount0 < 0 {
-			// std.TestSetOrigCaller(GetOrigPkgAddr())
-			foo.Transfer(users.AddressOrName(recipient), uint64(amount0))
-			// std.TestSetOrigCaller(_orig)
-			// token0.Transfer(GetOrigPkgAddr(), recipient, uint64(-amount0))
+			std.TestSetOrigCaller(GetOrigPkgAddr())
+			foo.Transfer(users.AddressOrName(recipient), uint64(-amount0))
+			std.TestSetOrigCaller(_orig)
 		}
 		balance1Before := BalanceOf(token1, GetOrigPkgAddr())
 
-		// std.TestSetOrigCaller(_orig)
 		_from := users.AddressOrName(GetOrigCaller())
 		_to := users.AddressOrName(GetOrigPkgAddr())
-		// std.TestSetOrigCaller(GetOrigPkgAddr())
 		bar.TransferFrom(_from, _to, uint64(amount1))
-		// std.TestSetOrigCaller(_orig)
-		// token1.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount1))
+
 		require(balance1Before + bigint(amount1) <= BalanceOf(token1, GetOrigPkgAddr()), "IIA1")
 	}
 
