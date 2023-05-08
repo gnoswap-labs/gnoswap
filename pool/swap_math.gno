@@ -2,122 +2,108 @@ package gnoswap
 
 
 func SwapMathComputeSwapStep(
-	sqrtRatioCurrent bigint,
-	sqrtRatioTarget bigint,
+	sqrtRatioCurrentX96 bigint,
+	sqrtRatioTargetX96 bigint,
 	liquidity bigint,
 	amountRemaining bigint,
 	feePips bigint,
 ) (bigint, bigint, bigint, bigint) {
-	require(sqrtRatioCurrent > 0, "FIX MINUS // SwapMathComputeSwapStep #1")
-	require(sqrtRatioTarget > 0, "FIX MINUS // SwapMathComputeSwapStep #2")
-	require(liquidity > 0, "FIX MINUS // SwapMathComputeSwapStep #3")
-	require(feePips > 0, "FIX MINUS // SwapMathComputeSwapStep #4")
-	var sqrtRatioNext, amountIn, amountOut, feeAmount bigint
+	requireUnsigned(sqrtRatioCurrentX96, "swap_math.gno__SwapMathComputeSwapStep__sqrtRatioCurrentX96")
+	requireUnsigned(sqrtRatioTargetX96, "swap_math.gno__SwapMathComputeSwapStep__sqrtRatioTargetX96")
+	requireUnsigned(liquidity, "swap_math.gno__SwapMathComputeSwapStep__liquidity")
+	requireUnsigned(feePips, "swap_math.gno__SwapMathComputeSwapStep__feePips")
+	var sqrtRatioNextX96, amountIn, amountOut, feeAmount bigint
 
-	zeroForOne := sqrtRatioCurrent >= sqrtRatioTarget
+	zeroForOne := sqrtRatioCurrentX96 >= sqrtRatioTargetX96
 	exactIn := amountRemaining >= 0
 
-	// 1e6 == 10 ^ 6 == 1,000,000 
 	if (exactIn) {
 		amountRemainingLessFee := amountRemaining * (1e6 - feePips) / 1e6
-		require(amountRemainingLessFee >= 0, "FIX MINUS // SwapMathComputeSwapStep #5")
+		requireUnsigned(amountRemainingLessFee, "swap_math.gno__SwapMathComputeSwapStep__amountRemainingLessFee")
 		
 		if (zeroForOne) {
-			amountIn = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioTarget, sqrtRatioCurrent, liquidity, true)
+			amountIn = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity)
 		} else {
-			amountIn = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrent, sqrtRatioTarget, liquidity, true)
+			amountIn = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity)
 		}
-		require(amountIn >= 0, "FIX MINUS // SwapMathComputeSwapStep #6")
+		requireUnsigned(amountIn, "swap_math.gno__SwapMathComputeSwapStep__amountIn")
+		
 		if amountRemainingLessFee >= amountIn {
-			sqrtRatioNext = sqrtRatioTarget
+			sqrtRatioNextX96 = sqrtRatioTargetX96
 		} else {
-			sqrtRatioNext = SqrtPriceMathGetNextSqrtPriceFromInput(
-				sqrtRatioCurrent,
+			sqrtRatioNextX96 = SqrtPriceMathGetNextSqrtPriceFromInput(
+				sqrtRatioCurrentX96,
 				liquidity,
 				amountRemainingLessFee,
 				zeroForOne,
 			)
-			
-			if sqrtRatioNext == 0 { panic ("sqrtRatioNext is 0, WRONG") }
 		}
-		require(sqrtRatioNext >= 0, "FIX MINUS // SwapMathComputeSwapStep #7")
+		requireUnsigned(sqrtRatioNextX96, "swap_math.gno__SwapMathComputeSwapStep__sqrtRatioNextX96")
 
 	} else {
 		if (zeroForOne) {
-			amountOut = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioTarget, sqrtRatioCurrent, liquidity, false)
+			amountOut = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity)
 		} else {
-			amountOut = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrent, sqrtRatioTarget, liquidity, false)
+			amountOut = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity)
 		}
-		require(amountOut >= 0, "FIX MINUS // SwapMathComputeSwapStep #8")
+		requireUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut")
 		
 		if -amountRemaining >= amountOut {
-			sqrtRatioNext = sqrtRatioTarget
+			sqrtRatioNextX96 = sqrtRatioTargetX96
 		} else {
-			sqrtRatioNext = SqrtPriceMathGetNextSqrtPriceFromOutput(
-				sqrtRatioCurrent,
+			sqrtRatioNextX96 = SqrtPriceMathGetNextSqrtPriceFromOutput(
+				sqrtRatioCurrentX96,
 				liquidity,
 				-amountRemaining,
 				zeroForOne,
 			)
 		}
-		require(sqrtRatioNext >= 0, "FIX MINUS // SwapMathComputeSwapStep #9")
+		requireUnsigned(sqrtRatioNextX96, "swap_math.gno__SwapMathComputeSwapStep__sqrtRatioNextX96")
 	}
 
-	max := sqrtRatioTarget == sqrtRatioNext
+	max := sqrtRatioTargetX96 == sqrtRatioNextX96
 
 
 	if zeroForOne {
 		if (max && exactIn) {
 			amountIn = amountIn
 		} else {
-			amountIn = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioNext, sqrtRatioCurrent, liquidity, true)
+			amountIn = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioNextX96, sqrtRatioCurrentX96, liquidity)
 		}
+		requireUnsigned(amountIn, "swap_math.gno__SwapMathComputeSwapStep__amountIn #1")
 
 		if (max && !exactIn) {
 			amountOut = amountOut
 		} else {
-			amountOut = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioNext, sqrtRatioCurrent, liquidity, false)
+			amountOut = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioNextX96, sqrtRatioCurrentX96, liquidity)
 		}
-
-		require(amountIn >= 0, "FIX MINUS // SwapMathComputeSwapStep #10")
-		require(amountOut >= 0, "FIX MINUS // SwapMathComputeSwapStep #11")
+		requireUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut #1")
 	} else {
 		if (max && exactIn) {
 			amountIn = amountIn
 		} else {
-			amountIn = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrent, sqrtRatioNext, liquidity, true)
+			amountIn = SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrentX96, sqrtRatioNextX96, liquidity)
 		}
+		requireUnsigned(amountIn, "swap_math.gno__SwapMathComputeSwapStep__amountIn #2")
 		
 		if (max && !exactIn) {
 			amountOut = amountOut
 		} else {
-			amountOut = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrent, sqrtRatioNext, liquidity, false)
+			amountOut = SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrentX96, sqrtRatioNextX96, liquidity)
 		}
-
-		require(amountOut >= 0, "FIX MINUS // SwapMathComputeSwapStep #12")
+		requireUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut #2")
 	}
-
 
 	if !exactIn && amountOut > -amountRemaining {
 		amountOut = -amountRemaining
-		require(amountOut >= 0, "FIX MINUS // SwapMathComputeSwapStep #13")
+		requireUnsigned(amountOut, "swap_math.gno__SwapMathComputeSwapStep__amountOut #3")
 	}
 
-	
-
-	if exactIn && sqrtRatioNext != sqrtRatioTarget {
+	if exactIn && sqrtRatioNextX96 != sqrtRatioTargetX96 {
 		feeAmount = amountRemaining - amountIn
-		require(feeAmount >= 0, "FIX MINUS // SwapMathComputeSwapStep #14")
 	} else {
 		feeAmount = amountIn * feePips / (1e6 - feePips)
-		require(feeAmount >= 0, "FIX MINUS // SwapMathComputeSwapStep #15")
 	}
 	
-	
-	require(sqrtRatioNext >= 0, "FIX MINUS // SwapMathComputeSwapStep #16")
-	require(amountIn >= 0, "FIX MINUS // SwapMathComputeSwapStep #17")
-	require(amountOut >= 0, "FIX MINUS // SwapMathComputeSwapStep #18")
-	require(feeAmount >= 0, "FIX MINUS // SwapMathComputeSwapStep #29")
-
-	return sqrtRatioNext, amountIn, amountOut, feeAmount
+	return sqrtRatioNextX96, amountIn, amountOut, feeAmount
 }

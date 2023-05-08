@@ -1,7 +1,7 @@
 package liquidity
 
 import (
-
+	factory "gno.land/p/demo/factory" 
 )
 
 const (
@@ -42,7 +42,7 @@ func tokenURI(positionManager INonfungiblePositionManager, tokenId bigint) strin
 	(, , token0, token1, fee, tickLower, tickUpper, , , , ,) = positionManager.positions(tokenId)
 
 	// XXX test.DerivePakcageAddress deprecated
-	pool = std.Address("pool_address")
+	pool = factory.getPool(token0, token1, fee)
 
 	var _flipRatio bool = flipRatio(token0, token1, ChainId.get())
 	var quoteTokenAddress = !_flipRatio ? token1: token0;

@@ -3,7 +3,7 @@ package liquidity
 import (
 	"std"
 
-	pool "gno.land/p/demo/pool" //
+	factory "gno.land/p/demo/factory" 
 )
 
 func addLiquidity(
@@ -18,6 +18,8 @@ func addLiquidity(
 	amount0Min bigint, 
 	amount1Min bigint,
 ) {
+	pool := factory.GetPool(token0, token1, fee)
+
 	// PoolAddress.PoolKey memory poolKey =
 	//         PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
 	// pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));

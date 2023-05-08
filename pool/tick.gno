@@ -4,12 +4,12 @@ type TickInfo struct {
 	liquidityGross bigint
 	liquidityNet bigint
 
-	feeGrowthOutside0 bigint
-	feeGrowthOutside1 bigint
+	feeGrowthOutside0X128 bigint
+	feeGrowthOutside1X128 bigint
 
 	tickCumulativeOutside bigint
 
-	secondsPerLiquidityOutside bigint
+	secondsPerLiquidityOutsideX128 bigint
 	secondsOutside bigint
 
 	initialized bool
@@ -18,25 +18,68 @@ type TickInfo struct {
 func TickTickSpacingToMaxLiquidityPerTick(tickSpacing bigint) bigint {
 	var minTick bigint = (MIN_TICK / tickSpacing) * tickSpacing
 	var maxTick bigint = (MAX_TICK / tickSpacing) * tickSpacing
-	var numTicks bigint = bigint(((maxTick - minTick) / tickSpacing) + 1)
+	var numTicks bigint = ((maxTick - minTick) / tickSpacing) + 1
+	requireUnsigned(numTicks, "tick.gno__TickTickSpacingToMaxLiquidityPerTick__numTicks")
 
-	return MAX_UINT64 / numTicks
+	requireUnsigned(MAX_UINT64 / numTicks, "tick.gno__TickTickSpacingToMaxLiquidityPerTick__MAX_UINT64 / numTicks")
+	return  MAX_UINT64 / numTicks
 }
 
-func TickUpdate(
+func TickGetFeeGrowthInside(
+	tickLower bigint,
+	tickUpper bigint,
+	tickCurrent bigint,
+	feeGrowthGlobal0X128 bigint,
+	feeGrowthGlobal1X128 bigint,
+) (feeGrowthInside0X128, feeGrowthInside1X128 bigint) {
+	requireUnsigned(feeGrowthGlobal0X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthGlobal0X128")
+	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthGlobal1X128")
+
+	var lower TickInfo = ticks[tickLower]
+	var upper TickInfo = ticks[tickUpper]
+	
+	var feeGrowthBelow0X128 bigint
+	var feeGrowthBelow1X128 bigint
+	if (tickCurrent >= tickLower) {
+		feeGrowthBelow0X128 = lower.feeGrowthOutside0X128
+		feeGrowthBelow1X128 = lower.feeGrowthOutside1X128
+	} else {
+		feeGrowthBelow0X128 = feeGrowthGlobal0X128 - lower.feeGrowthOutside0X128
+		feeGrowthBelow1X128 = feeGrowthGlobal1X128 - lower.feeGrowthOutside1X128
+	}
+
+	var feeGrowthAbove0X128 bigint
+	var feeGrowthAbove1X128 bigint
+	if (tickCurrent < tickUpper) {
+		feeGrowthAbove0X128 = upper.feeGrowthOutside0X128
+		feeGrowthAbove1X128 = upper.feeGrowthOutside1X128
+	} else {
+		feeGrowthAbove0X128 = feeGrowthGlobal0X128 - upper.feeGrowthOutside0X128
+		feeGrowthAbove1X128 = feeGrowthGlobal1X128 - upper.feeGrowthOutside1X128
+	}
+
+	feeGrowthInside0X128 = feeGrowthGlobal0X128 - feeGrowthBelow0X128 - feeGrowthAbove0X128
+	feeGrowthInside1X128 = feeGrowthGlobal1X128 - feeGrowthBelow1X128 - feeGrowthAbove1X128
+
+	requireUnsigned(feeGrowthInside0X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthInside0X128")
+	requireUnsigned(feeGrowthInside1X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthInside1X128")
+	return feeGrowthInside0X128, feeGrowthInside1X128
+}
+
+func (pool *Pool) TickUpdate(
 	tick bigint,
 	tickCurrent bigint,
 	liquidityDelta bigint,
-	feeGrowthGlobal0 bigint,
-	feeGrowthGlobal1 bigint,
-	// secondsPerLiquidityCumulative bigdec,
-	// tickCumulative bigint,
-	time bigint,
+	feeGrowthGlobal0X128 bigint,
+	feeGrowthGlobal1X128 bigint,
 	upper bool,
 	maxLiquidity bigint,
-	info TickInfo,
-) (newInfo TickInfo, flipped bool) {
-	// info := ticks[tick]
+) (flipped bool) {
+	requireUnsigned(feeGrowthGlobal0X128, "tick.gno__TickUpdate__feeGrowthGlobal0X128")
+	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickUpdate__feeGrowthGlobal1X128")
+	requireUnsigned(maxLiquidity, "tick.gno__TickUpdate__maxLiquidity")
+
+	info := pool.ticks[tick]
 	
 	liquidityGrossBefore := info.liquidityGross
 
@@ -47,11 +90,8 @@ func TickUpdate(
 
 	if liquidityGrossBefore == 0 {
 		if tick <= tickCurrent {
-			info.feeGrowthOutside0 = feeGrowthGlobal0
-			info.feeGrowthOutside1 = feeGrowthGlobal1
-			// XXX secondsPerLiquidityCumulativeOutside = secondsPerLiquidityCumulative
-			// XXX tickCumulativeOutside = tickCumulative
-			// XXX info.secondsOutside = time
+			info.feeGrowthOutside0X128 = feeGrowthGlobal0X128
+			info.feeGrowthOutside1X128 = feeGrowthGlobal1X128
 		}
 
 		info.initialized = true;
@@ -65,63 +105,26 @@ func TickUpdate(
 		info.liquidityNet += liquidityDelta
 	}
 
-	// // XXX remove??
-	// ticks[tick] = info
-	return (info, flipped)
+	pool.ticks[tick] = info
+	return flipped
 }
 
 func (pool *Pool) TickClear(tick bigint) {
 	delete(pool.ticks, tick)
 }
 
-func (pool *Pool) TickGetFeeGrowthInside(
-	tickLower bigint,
-	tickUpper bigint,
-	tickCurrent bigint,
-	feeGrowthGlobal0 bigint,
-	feeGrowthGlobal1 bigint,
-) (feeGrowthInside0, feeGrowthInside1 bigint) {
-	var lower TickInfo = pool.ticks[tickLower]
-	var upper TickInfo = pool.ticks[tickUpper]
-	
-	var feeGrowthBelow0 bigint
-	var feeGrowthBelow1 bigint
-	if (tickCurrent >= tickLower) {
-		feeGrowthBelow0 = lower.feeGrowthOutside0
-		feeGrowthBelow1 = lower.feeGrowthOutside1
-	} else {
-		feeGrowthBelow0 = feeGrowthGlobal0 - lower.feeGrowthOutside0
-		feeGrowthBelow1 = feeGrowthGlobal1 - lower.feeGrowthOutside1
-	}
-
-	var feeGrowthAbove0 bigint
-	var feeGrowthAbove1 bigint
-	if (tickCurrent < tickUpper) {
-		feeGrowthAbove0 = upper.feeGrowthOutside0
-		feeGrowthAbove1 = upper.feeGrowthOutside1
-	} else {
-		feeGrowthAbove0 = feeGrowthGlobal0 - upper.feeGrowthOutside0
-		feeGrowthAbove1 = feeGrowthGlobal1 - upper.feeGrowthOutside1
-	}
-
-	feeGrowthInside0 = feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0
-	feeGrowthInside1 = feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1
-
-	return feeGrowthInside0, feeGrowthInside1
-}
-
-
 func (pool *Pool) TickCross(
 	tick bigint,
-	feeGrowthGlobal0 bigint,
-	feeGrowthGlobal1 bigint,
-	time bigint,
+	feeGrowthGlobal0X128 bigint,
+	feeGrowthGlobal1X128 bigint,
 ) (bigint) {
+	requireUnsigned(feeGrowthGlobal0X128, "tick.gno__TickCross__feeGrowthGlobal0X128")
+	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickCross__feeGrowthGlobal1X128")
+
 	info := pool.ticks[tick]
 
-	info.feeGrowthOutside0 = feeGrowthGlobal0 - info.feeGrowthOutside0
-	info.feeGrowthOutside1 = feeGrowthGlobal1 - info.feeGrowthOutside1
-	// info.secondsOutside = time - info.secondsOutSide // XXX
+	info.feeGrowthOutside0X128 = feeGrowthGlobal0X128 - info.feeGrowthOutside0X128
+	info.feeGrowthOutside1X128 = feeGrowthGlobal1X128 - info.feeGrowthOutside1X128
 	pool.ticks[tick] = info
 	liquidityNet := info.liquidityNet
 	return liquidityNet

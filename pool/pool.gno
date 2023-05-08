@@ -8,13 +8,11 @@ import (
 
 	"gno.land/r/foo"
 	"gno.land/r/bar"
-	// "gno.land/r/baz"
-	// "gno.land/r/qux"
 )
 
 
 type Slot0 struct {
-	sqrtPrice bigint
+	sqrtPriceX96 bigint
 	tick bigint
 	feeProtocol bigint
 	unlocked bool
@@ -26,53 +24,47 @@ type ProtocolFees struct {
 }
 
 type ModifyPositionParams struct {
-	// the address that owns the position
 	owner std.Address
-
-	// the lower and upper tick of the position
 	tickLower bigint
 	tickUpper bigint
-
-	// any change in liquidity
 	liquidityDelta bigint
 }
 
 type SwapCache struct {
 	feeProtocol bigint
 	liquidityStart bigint
-	blockTimestamp bigint
 }
 
 type SwapState struct {
 	amountSpecifiedRemaining bigint
 	amountCalculated bigint
-	sqrtPrice bigint
+	sqrtPriceX96 bigint
 	tick bigint
-	feeGrowthGlobal bigint
+	feeGrowthGlobalX128 bigint
 	protocolFee bigint
 	liquidity bigint
 }
 
 type StepComputations struct {
-	sqrtPriceStart bigint
+	sqrtPriceStartX96 bigint
 	tickNext bigint
 	initialized bool
-	sqrtPriceNext bigint
+	sqrtPriceNextX96 bigint
 	amountIn bigint
 	amountOut bigint
 	feeAmount bigint
 }
 
-
 // type Pool describes a single Pool's state
 // A pool is identified with a unique key (token0, token1, fee), where token0 < token1
 type Pool struct {
 	// token0 is the package name of the first token
-	token0 string
+	token0 *grc20.AdminToken
 	// token1 is the package name of the second token
-	token1 string
+	token1 *grc20.AdminToken
 
 	// fee is the fee tier of the pool
+
 	fee bigint
 	// tickSpacing is the spacing between ticks
 	tickSpacing bigint
@@ -82,8 +74,8 @@ type Pool struct {
 	// slot0 is the current tick and price of the pool
 	slot0 Slot0
 
-	feeGrowthGlobal0 bigint
-	feeGrowthGlobal1 bigint
+	feeGrowthGlobal0X128 bigint
+	feeGrowthGlobal1X128 bigint
 
 	// protocolFees is the amount of fees collected by the protocol
 	// collected by CollectFeeProtocol()
@@ -92,27 +84,29 @@ type Pool struct {
 	liquidity bigint
 
 	// ticks is a mapping from tick index to tick
-	ticks map[bigint]*Tick
+	ticks map[bigint]*TickInfo
 	// tickBitmaps is a mapping from tick index to tick bitmap
 	tickBitmaps map[bigint]*bigint
 	// positions maps the key (caller, lower tick, upper tick) to a unique position
-	positions map[string]*Position
+	positions map[string]*PositionInfo
 }
+
+
 
 func NewPool(
 	token0 string,
 	token1 string,
 	fee bigint,
 	tickSpacing bigint,
-	sqrtPrice bigint,
+	sqrtPriceX96 bigint,
 	tick bigint,
 ) *Pool {
 	maxLiquidityPerTick := TickTickSpacingToMaxLiquidityPerTick(tickSpacing)
-	// _tick := TickMathGetTickAtSqrtRatio(_sqrtPrice)
 	// sqrtPrice := TickMathGetSqrtRatioAtTick(_sqrtPrice)
+	tick := TickMathGetTickAtSqrtRatio(_sqrtPriceX96)
 
 	slot0 := Slot0 {
-		sqrtPrice, // sqrtPrice
+		sqrtPriceX96, // sqrtPrice
 		tick, // tick
 		0, // feeProtocol
 		true, // unlocked
@@ -146,17 +140,17 @@ func (pool *Pool) Mint(
 
 	_, amount0Int, amount1Int := pool.modifyPosition(
 		ModifyPositionParams{
-			recipient,
-			tickLower,
-			tickUpper,
-			amount,
+			recipient, // owner
+			tickLower, // tickLower
+			tickUpper, // tickUpper
+			amount,		 // liquidityDelta
 		},
 	)
 
 	amount0 := bigint(amount0Int)
 	amount1 := bigint(amount1Int)
-	require(amount0 >= 0, "FIX MINUS // Mint #1")
-	require(amount1 >= 0, "FIX MINUS // Mint #2")
+	requireUnsigned(amount0, "pool.gno__Mint__amount0")
+	requireUnsigned(amount1, "pool.gno__Mint__amount1")
 
 	var balance0Before, balance1Before bigint
 
@@ -197,10 +191,13 @@ func (pool *Pool) Burn(
 	)
 
 	amount0, amount1 := -amount0Int, -amount1Int
+	requireUnsigned(amount0, "pool.gno__Burn__amount0")
+	requireUnsigned(amount1, "pool.gno__Burn__amount1")
+
 
 	if amount0 > 0 || amount1 > 0 {
-		position.tokensOwed0 = amount0 + position.tokensOwed0
-		position.tokensOwed1 = amount1 + position.tokensOwed1
+		position.tokensOwed0 += amount0
+		position.tokensOwed1 += amount1
 	}
 
 	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
@@ -215,6 +212,9 @@ func (pool *Pool) Collect(
 	amount0Requested bigint, 
 	amount1Requested bigint,
 ) (bigint, bigint) {
+	requireUnsigned(amount0Requested, "pool.gno__Collect__amount0Requested")
+	requireUnsigned(amount1Requested, "pool.gno__Collect__amount1Requested")
+
 	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
 	position := pool.positions[key]
 
@@ -225,12 +225,14 @@ func (pool *Pool) Collect(
 	} else {
 		amount0 = amount0Requested
 	}
+	requireUnsigned(amount0, "pool.gno__Collect__amount0")
 
 	if amount1Requested > position.tokensOwed1 {
 		amount1 = position.tokensOwed1
 	} else {
 		amount1 = amount1Requested
 	}
+	requireUnsigned(amount1, "pool.gno__Collect__amount1")
 
 	if (amount0 > 0) {
 		position.tokensOwed0 -= amount0
@@ -251,30 +253,29 @@ func (pool *Pool) Swap(
 	recipient std.Address,
 	zeroForOne bool,
 	amountSpecified bigint,
-	sqrtPriceLimit bigint,
+	sqrtPriceLimitX96 bigint,
 ) (bigint, bigint) {
 	require(amountSpecified != 0, "must be amountSpecified > 0")
 
 	slot0Start := pool.slot0
 	require(slot0Start.unlocked, "LOK")
 
-	var feeProtocol, feeGrowthGlobal bigint
+	var feeProtocol, feeGrowthGlobalX128 bigint
 
 	if zeroForOne {
-		require(sqrtPriceLimit < slot0Start.sqrtPrice && sqrtPriceLimit > MIN_SQRT_RATIO, "SPL T")
+		require(sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > MIN_SQRT_RATIO, "SPL-T")
 		feeProtocol = slot0Start.feeProtocol % 16
-		feeGrowthGlobal = pool.feeGrowthGlobal0
+		feeGrowthGlobalX128 = pool.feeGrowthGlobal0X128
 	} else {
-		require(sqrtPriceLimit > slot0Start.sqrtPrice && sqrtPriceLimit < MAX_SQRT_RATIO, "SPL F")
-		feeProtocol = slot0Start.feeProtocol >> 4 // >> 4 is / 16
-		feeGrowthGlobal = pool.feeGrowthGlobal1
+		require(sqrtPriceLimitX96 > slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 < MAX_SQRT_RATIO, "SPL-F")
+		feeProtocol = slot0Start.feeProtocol >> 4 // ( >> 4 ) ==  ( / 16 )
+		feeGrowthGlobalX128 = feeGrowthGlobal1X128
 	}
 
 	pool.slot0.unlocked = false
 
 	cache := SwapCache{
 		liquidityStart: pool.liquidity,
-		blockTimestamp: GetTimestamp(),
 		feeProtocol: feeProtocol,
 	}
 	
@@ -285,9 +286,9 @@ func (pool *Pool) Swap(
 		state = SwapState{
 			amountSpecifiedRemaining: amountSpecified,
 			amountCalculated: 0,
-			sqrtPrice: slot0Start.sqrtPrice,
+			sqrtPriceX96: slot0Start.sqrtPriceX96,
 			tick: slot0Start.tick,
-			feeGrowthGlobal: pool.feeGrowthGlobal0,
+			feeGrowthGlobalX128: pool.feeGrowthGlobal0X128,
 			protocolFee: 0,
 			liquidity: cache.liquidityStart,
 		}
@@ -295,19 +296,18 @@ func (pool *Pool) Swap(
 		state = SwapState{
 			amountSpecifiedRemaining: amountSpecified,
 			amountCalculated: 0,
-			sqrtPrice: slot0Start.sqrtPrice,
+			sqrtPriceX96: slot0Start.sqrtPriceX96,
 			tick: slot0Start.tick,
-			feeGrowthGlobal: pool.feeGrowthGlobal1,
+			feeGrowthGlobalX128: pool.feeGrowthGlobal1X128,
 			protocolFee: 0,
 			liquidity: cache.liquidityStart,
 		}
 	}
 
-	
-	for state.amountSpecifiedRemaining > 0 && state.sqrtPrice != sqrtPriceLimit {
+	for state.amountSpecifiedRemaining > 0 && state.sqrtPriceX96 != sqrtPriceLimitX96 {
 		var step StepComputations
 
-		step.sqrtPriceStart = state.sqrtPrice
+		step.sqrtPriceStartX96 = state.sqrtPriceX96
 		
 		step.tickNext, step.initialized = TickBitmapNextInitializedTickWithInOneWord(
 			state.tick,
@@ -321,66 +321,66 @@ func (pool *Pool) Swap(
 			step.tickNext = MAX_TICK
 		}
 
-		step.sqrtPriceNext = TickMathGetSqrtRatioAtTick(step.tickNext)
+		step.sqrtPriceNextX96 = TickMathGetSqrtRatioAtTick(step.tickNext)
 
-		var sqrtRatioTarget bigint
+		var _sqrtRatioTarget bigint
 		if zeroForOne {
-			if step.sqrtPriceNext < sqrtPriceLimit {
-				sqrtRatioTarget = sqrtPriceLimit
+			if step.sqrtPriceNextX96 < sqrtPriceLimitX96 {
+				_sqrtRatioTarget = sqrtPriceLimitX96
 			} else {
-				sqrtRatioTarget = step.sqrtPriceNext
+				_sqrtRatioTarget = step.sqrtPriceNextX96
 			}
 		} else {
-			if step.sqrtPriceNext > sqrtPriceLimit {
-				sqrtRatioTarget = sqrtPriceLimit
+			if step.sqrtPriceNextX96 > sqrtPriceLimitX96 {
+				_sqrtRatioTarget = sqrtPriceLimitX96
 			} else {
-				sqrtRatioTarget = step.sqrtPriceNext
+				_sqrtRatioTarget = step.sqrtPriceNextX96
 			}
 		}
-				
-		state.sqrtPrice, step.amountIn, step.amountOut, step.feeAmount = SwapMathComputeSwapStep(
-			state.sqrtPrice,
-			sqrtRatioTarget,
+
+		state.sqrtPriceX96, step.amountIn, step.amountOut, step.feeAmount = SwapMathComputeSwapStep(
+			state.sqrtPriceX96,
+			_sqrtRatioTarget,
 			state.liquidity,
 			state.amountSpecifiedRemaining,
 			pool.fee,
 		)
 
 		if exactInput {
-			state.amountSpecifiedRemaining = state.amountSpecifiedRemaining - bigint(step.amountIn + step.feeAmount)
-			state.amountCalculated = state.amountCalculated - bigint(step.amountOut)
+			state.amountSpecifiedRemaining -= step.amountIn + step.feeAmount
+			state.amountCalculated -= step.amountOut
 		} else {
-			state.amountSpecifiedRemaining = state.amountSpecifiedRemaining + bigint(step.amountOut)
-			state.amountCalculated = state.amountCalculated + bigint(step.amountIn + step.feeAmount)
+			state.amountSpecifiedRemaining += step.amountOut
+			state.amountCalculated += (step.amountIn + step.feeAmount)
 		}
 
 		if cache.feeProtocol > 0 {
 			delta := step.feeAmount / cache.feeProtocol
-			step.feeAmount = step.feeAmount - delta
-			state.protocolFee = state.protocolFee + delta
+			requireUnsigned(delta, "pool.gno__Swap__delta")
+			step.feeAmount -= delta
+			state.protocolFee += delta
 		}
-
+	
 		if state.liquidity > 0 {
-			state.feeGrowthGlobal = state.feeGrowthGlobal + step.feeAmount / state.liquidity
+			state.feeGrowthGlobalX128 += (step.feeAmount * Q128 / state.liquidity)
 		}
 		
-		if state.sqrtPrice == step.sqrtPriceNext {
+		if state.sqrtPriceX96 == step.sqrtPriceNextX96 {
 			if step.initialized {
 				var fee0, fee1 bigint
 				
 				if (zeroForOne) {
-					fee0 = state.feeGrowthGlobal
-					fee1 = pool.feeGrowthGlobal1
+					fee0 = state.feeGrowthGlobalX128
+					fee1 = pool.feeGrowthGlobal1X128
 				} else {
-					fee0 = pool.feeGrowthGlobal0
-					fee1 = state.feeGrowthGlobal
+					fee0 = pool.feeGrowthGlobal0X128
+					fee1 = state.feeGrowthGlobalX128
 				}
 
 				liquidityNet := TickCross(
 					step.tickNext,
 					fee0,
 					fee1,
-					cache.blockTimestamp,
 				)
 
 				if zeroForOne {
@@ -395,18 +395,16 @@ func (pool *Pool) Swap(
 			} else {
 				state.tick = step.tickNext
 			}
-		} else if state.sqrtPrice != step.sqrtPriceStart {
-			state.tick = TickMathGetTickAtSqrtRatio(state.sqrtPrice)
+		} else if state.sqrtPriceX96 != step.sqrtPriceStartX96 {
+			state.tick = TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
 		}
 	}
 
 	if state.tick != slot0Start.tick {
-		pool.slot0.sqrtPrice = state.sqrtPrice
+		pool.slot0.sqrtPriceX96 = state.sqrtPriceX96
 		pool.slot0.tick = state.tick
-		// pool.slot0.observationIndex = obervationIndex
-		// pool.slot0.observationCardinality = observationCardinality
 	} else {
-		pool.slot0.sqrtPrice = state.sqrtPrice
+		pool.slot0.sqrtPriceX96 = state.sqrtPriceX96
 	}
 
 	if cache.liquidityStart != state.liquidity {
@@ -415,26 +413,26 @@ func (pool *Pool) Swap(
 
 
 	if zeroForOne {
-		pool.feeGrowthGlobal0 = state.feeGrowthGlobal
+		pool.feeGrowthGlobal0X128 = state.feeGrowthGlobalX128
 		if state.protocolFee > 0 {
-			pool.protocolFees.token0 = pool.protocolFees.token0 + state.protocolFee
+			pool.protocolFees.token0 += state.protocolFee
 		}
 	} else {
-		pool.feeGrowthGlobal1 = state.feeGrowthGlobal
+		pool.feeGrowthGlobal1X128 = state.feeGrowthGlobalX128
 		if state.protocolFee > 0 {
-			pool.protocolFees.token1 = pool.protocolFees.token1 + state.protocolFee
+			pool.protocolFees.token1 += state.protocolFee
 		}
 	}
 
 	var amount0, amount1 bigint
 	if zeroForOne == exactInput {
-		amount0 = bigint(amountSpecified - state.amountSpecifiedRemaining)
-		amount1 = bigint(state.amountCalculated)
+		amount0 = amountSpecified - state.amountSpecifiedRemaining
+		amount1 = state.amountCalculated
 	} else {
-		amount0 = bigint(state.amountCalculated)
-		amount1 = bigint(amountSpecified - state.amountSpecifiedRemaining)
+		amount0 = state.amountCalculated
+		amount1 = amountSpecified - state.amountSpecifiedRemaining
 	}
-	
+
 	if zeroForOne {
 		if amount1 < 0 {
 			Transfer(pool.token1, GetOrigPkgAddr(), recipient, uint64(-amount1))
@@ -458,12 +456,15 @@ func (pool *Pool) Swap(
 
 // TODO: is it safe to expose this?
 func (pool *Pool) SetFeeProtocol(feeProtocol0, feeProtocol1 bigint) {
+	requireUnsigned(feeProtocol0, "pool.gno__SetFeeProtocol__feeProtocol0")
+	requireUnsigned(feeProtocol1, "pool.gno__SetFeeProtocol__feeProtocol1")
+
 	require (
 		(feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)) &&
 		(feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10)),
 		"Invalid fee protocol",
 	)
-	pool.slot0.feeProtocol = feeProtocol0 + (feeProtocol1 << 4) // << 4 is * 16
+	pool.slot0.feeProtocol = feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
 }
 
 // TODO: is it safe to expose this?
@@ -472,7 +473,14 @@ func (pool *Pool) CollectFeeProtocol(
 	amount0Requested bigint,
 	amount1Requested bigint,
 ) (bigint, bigint) {
-	// XXX check owner, IT IS PROTOCOL FEE NOT SWAP FEE
+	requireUnsigned(amount0Requested, "pool.gno__CollectProtocol__amount0Requested")
+	requireUnsigned(amount1Requested, "pool.gno__CollectProtocol__amount1Requested")
+
+	// // XXX
+	// if (GetOrigCaller() != factoryOwner) {
+	// 	panic("NO OWNER")
+	// }
+
 	var amount0, amount1 bigint
 
 	if amount0Requested > pool.protocolFees.token0 {
@@ -480,13 +488,14 @@ func (pool *Pool) CollectFeeProtocol(
 	} else {
 		amount0 = amount0Requested
 	}
+	requireUnsigned(amount0, "pool.gno__CollectProtocol__amount0")
 
 	if amount1Requested > pool.protocolFees.token1 {
 		amount1 = pool.protocolFees.token1
 	} else {
 		amount1 = amount1Requested
 	}
-
+	requireUnsigned(amount1, "pool.gno__CollectProtocol__amount1")
 
 	if amount0 > 0 {
 		if amount0 == pool.protocolFees.token0 {
@@ -494,17 +503,13 @@ func (pool *Pool) CollectFeeProtocol(
 		}
 		pool.protocolFees.token0 -= amount0
 
-		// XXX
-		// Currently GRC20 expect uint for amount
-		// token0.Transfer(recipient, uint64(amount0))
-		err := Transfer(pool.token0, GetOrigPkgAddr(), recipient, uint64(amount0))
+		err := pool.token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	if amount1 > 0 {
-
 		if pool.amount1 == pool.protocolFees.token1 {
 			amount1--
 		}
@@ -542,15 +547,15 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, big
 		} else if (pool.slot0.tick < params.tickUpper) {
 			liquidityBefore := pool.liquidity
 
-			// XXX write oracle
 			amount0 = SqrtPriceMathGetAmount0Delta(
-				pool.slot0.sqrtPrice,
+				pool.slot0.sqrtPriceX96,
 				TickMathGetSqrtRatioAtTick(params.tickUpper),
 				params.liquidityDelta,
 			)
+
 			amount1 = SqrtPriceMathGetAmount1Delta(
 				TickMathGetSqrtRatioAtTick(params.tickLower),
-				pool.slot0.sqrtPrice,
+				pool.slot0.sqrtPriceX96,
 				params.liquidityDelta,
 			)
 
@@ -564,7 +569,6 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, big
 			)
 		}
 	}
-
 	return position, amount0, amount1
 }
 
@@ -575,23 +579,17 @@ func (pool *Pool) updatePosition(
 	liquidityDelta bigint,
 	tick bigint,
 ) (PositionInfo) {
-	// key code is at L#615
-
-	var _feeGrowthGlobal0 bigint = pool.feeGrowthGlobal0
-	var _feeGrowthGlobal1 bigint = pool.feeGrowthGlobal1
+	var _feeGrowthGlobal0X128 bigint = pool.feeGrowthGlobal0X128
+	var _feeGrowthGlobal1X128 bigint = pool.feeGrowthGlobal1X128
 	var flippedLower, flippedUpper bool
 
 	if (liquidityDelta != 0) {
-		time := GetTimestamp()
-		// XXX write oracle entry
-		(pool.ticks[tick], flippedLower) = TickUpdate(
+		flippedLower = TickUpdate(
 			tickLower,
 			tick,
 			liquidityDelta,
-			_feeGrowthGlobal0,
-			_feeGrowthGlobal1,
-			// secondsPerLiquidityCumulative,
-			time, 
+			_feeGrowthGlobal0X128,
+			_feeGrowthGlobal1X128,
 			false,
 			pool.maxLiquidityPerTick,
 			pool.ticks[tick],
@@ -601,10 +599,8 @@ func (pool *Pool) updatePosition(
 			tickUpper,
 			tick,
 			liquidityDelta,
-			_feeGrowthGlobal0,
-			_feeGrowthGlobal1,
-			// secondsPerLiquidityCumulative,
-			time,
+			_feeGrowthGlobal0X128,
+			_feeGrowthGlobal1X128,
 			true,
 			pool.maxLiquidityPerTick,
 			pool.ticks[tick],
@@ -619,20 +615,20 @@ func (pool *Pool) updatePosition(
 		}
 	}
 
-	feeGrowthInside0, feeGrowthInside1 := TickGetFeeGrowthInside(
+	feeGrowthInside0X128, feeGrowthInside1X128 := TickGetFeeGrowthInside(
 		tickLower,
 		tickUpper,
 		tick,
-		_feeGrowthGlobal0,
-		_feeGrowthGlobal1,
+		_feeGrowthGlobal0X128,
+		_feeGrowthGlobal1X128,
 	)
 
 	key := PositionGetKey(owner, tickLower, tickUpper)
 	position := PositionUpdateWithKey(
 		key, 
 		liquidityDelta,
-		feeGrowthInside0,
-		feeGrowthInside1,
+		feeGrowthInside0X128,
+		feeGrowthInside1X128,
 	)
 
 
@@ -658,10 +654,6 @@ func checkTicks(tickLower, tickUpper bigint) {
 	require(tickLower < tickUpper, "TLU")
 	require(tickLower >= MIN_TICK, "TL")
 	require(tickUpper <= MAX_TICK, "TU")
-}
-
-// XXX pubsub
-func emit(event interface{}) {}
 
 // GRC20 TransferFrom mockup. Replace with the actual one once inter-contract calls are supported
 func TransferFrom(token string, from std.Address, to std.Address, amount bigint, callback string, args []string) error {
@@ -673,4 +665,5 @@ func TransferFrom(token string, from std.Address, to std.Address, amount bigint,
 	callback := std.EncodeMsgCall(GetOrigPkgAddr(), callback, args)
 
 	std.Send(call, callback)
+
 }

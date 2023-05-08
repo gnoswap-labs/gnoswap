@@ -1,4 +1,3 @@
-// only for unit test
 package gnoswap
 
 import (
@@ -18,15 +17,15 @@ func shouldNEQ(t *testing.T, got, expected interface{}) {
 	}
 }
 
-func shouldGTE(t *testing.T, l, r interface{}) {
-	if !(l >= r) {
-		t.Errorf("expected %v >= %v", l, r)
+func shouldGT(t *testing.T, l, r interface{}) {
+	if !(l < r) {
+		t.Errorf("expected %v < %v", l, r)
 	}
 }
 
-func shouldLTE(t *testing.T, l, r interface{}) {
-	if !(l <= r) {
-		t.Errorf("expected %v <= %v", l, r)
+func shouldLT(t *testing.T, l, r interface{}) {
+	if !(l > r) {
+		t.Errorf("expected %v > %v", l, r)
 	}
 }
 
@@ -58,12 +57,12 @@ func (pool *Pool) GetTickSpacing() bigint {
 	return pool.tickSpacing
 }
 
-func (pool *Pool) GetFeeGrowthGlobal0() bigint {
-	return pool.feeGrowthGlobal0
+func (pool *Pool) GetFeeGrowthGlobal0X128() bigint {
+	return pool.feeGrowthGlobal0X128
 }
 
-func (pool *Pool) GetFeeGrowthGlobal1() bigint {
-	return pool.feeGrowthGlobal1
+func (pool *Pool) GetFeeGrowthGlobal1X128() bigint {
+	return pool.feeGrowthGlobal1X128
 }
 
 func (pool *Pool) GetSlot0() Slot0 {
@@ -78,14 +77,25 @@ func (pool *Pool) GetPosition(key string) PositionInfo {
 	return pool.positions[key]
 }
 
-func (pool *Pool) GetTicks(key bigint) TickInfo {
+func (pool *Pool) GetTick(key bigint) TickInfo {
 	return pool.ticks[key]
+}
+
+func (pool *Pool) GetTicks() map[bigint]TickInfo {
+	return pool.ticks
 }
 
 func (pool *Pool) GetTickBitmap(key bigint) bigint {
 	return pool.tickBitmaps[key]
 }
 
-func (pool *Pool) GetSqrtPrice() bigint {
-	return pool.slot0.sqrtPrice
+func (pool *Pool) GetSqrtPriceX96() bigint {
+	return pool.slot0.sqrtPriceX96
+}
+
+func Abs(x bigint) bigint {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
