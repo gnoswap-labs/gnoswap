@@ -115,8 +115,16 @@ var (
 	test_tickUpper2 bigint = 100000
 )
 
+func TestPoolMultiLP(t *testing.T) {
+	pool := testInit(t)
+	testMint(t, pool)
+	testBurn(t, pool)
+	testCollect(t, pool)
+	testSwap(t, pool)
+}
 
-func TestInit(t *testing.T) {
+
+func testInit(t *testing.T) *Pool {
 	var (
 		// 500		= 0.05% // USv3 default
 		// 3000		= 0.3% // USv3 default
@@ -126,11 +134,8 @@ func TestInit(t *testing.T) {
 		test_tickSpacing bigint = 10
 		test_sqrtPrice bigint = 130621891405341611593710811006 // tick = 10000
 	)
-	Init(
-		test_fee, 
-		test_tickSpacing, 
-		test_sqrtPrice, 
-	)
+
+	pool := NewPool("foo", "bar", test_fee, test_tickSpacing, test_sqrtPrice, bigint(0)) // XXX: is bigint(0) correct?	
 
 	std.TestSetOrigCaller(lp01)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
@@ -155,145 +160,147 @@ func TestInit(t *testing.T) {
 	std.TestSetOrigCaller(sp01)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
 	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
+
+	return pool
 }
 
 
-func TestMint(t *testing.T) {
+func testMint(t *testing.T, pool *Pool) {
 	std.TestSetOrigCaller(lp01)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
 
-	test_liquidity := GetLiquidity()
+	test_liquidity := pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect)
 
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	m1, m2 := Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	m11, m12 := Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	m1, m2 := pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	m11, m12 := pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
 
 	shouldNEQ(t, m1, bigint(0))
 	shouldNEQ(t, m2, bigint(0))
 	shouldEQ(t, m1, m11)
 	shouldEQ(t, m2, m12)
 
-	test_liquidity = GetLiquidity()
+	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
 	// tickLower > currentTick X
-	Mint(lp01, test_tickLower2, test_tickUpper2, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower2, test_tickUpper2, test_liquidityExpect)
 
 	// tickUpper < current tick
-	Mint(lp01, -test_tickUpper2, -test_tickLower2, test_liquidityExpect)
+	pool.Mint(lp01, -test_tickUpper2, -test_tickLower2, test_liquidityExpect)
 
 	// tickUpper < current_tick
-	Mint(lp01, -test_tickUpper, -test_tickLower, test_liquidityExpect)
+	pool.Mint(lp01, -test_tickUpper, -test_tickLower, test_liquidityExpect)
 
-	test_liquidity = GetLiquidity()
+	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	test_liquidity = GetLiquidity()
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect * 20)
 }
 
 
-func TestBurn(t *testing.T) {
-	b1, b2 := Burn(test_tickLower, test_tickUpper, test_liquidityExpect)
-	b11, b12 := Burn(test_tickLower, test_tickUpper, test_liquidityExpect)
+func testBurn(t *testing.T, pool *Pool) {
+	b1, b2 := pool.Burn(test_tickLower, test_tickUpper, test_liquidityExpect)
+	b11, b12 := pool.Burn(test_tickLower, test_tickUpper, test_liquidityExpect)
 	shouldEQ(t, b1, b11)
 	shouldEQ(t, b2, b12)
 
-	test_liquidity := GetLiquidity()
+	test_liquidity := pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*18)
 
-	Burn(test_tickLower, test_tickUpper, test_liquidityExpect*8)
-	test_liquidity = GetLiquidity()
+	pool.Burn(test_tickLower, test_tickUpper, test_liquidityExpect*8)
+	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
-	Burn(test_tickLower, test_tickUpper, 1)
-	test_liquidity = GetLiquidity()
+	pool.Burn(test_tickLower, test_tickUpper, 1)
+	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(9999))
 
-	Burn(test_tickLower, test_tickUpper, bigint(999))
-	test_liquidity = GetLiquidity()
+	pool.Burn(test_tickLower, test_tickUpper, bigint(999))
+	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect * 9)
 
-	Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 9)
-	test_liquidity = GetLiquidity()
+	pool.Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 9)
+	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	// can't burn when liq is 0
 	// (Burn(test_tickLower, test_tickUpper, test_liquidityExpect))
-	shouldPanic(t, func() { Burn(test_tickLower, test_tickUpper, test_liquidityExpect) })
+	shouldPanic(t, func() { pool.Burn(test_tickLower, test_tickUpper, test_liquidityExpect) })
 }
 
 
-func TestCollect(t *testing.T) {
+func testCollect(t *testing.T, pool *Pool) {
 	// withdraw all token
-	Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
+	pool.Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
-	Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
-	c1, c2 := Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
+	pool.Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
+	c1, c2 := pool.Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
-	Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
-	c3, c4 := Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
+	pool.Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
+	c3, c4 := pool.Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 
 	shouldEQ(t, c1, c3)
 	shouldEQ(t, c2, c4)
 
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
-	Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
+	pool.Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
 	c5, c6 := Collect(lp01, test_tickLower, test_tickUpper, 100, 100)
 	shouldEQ(t, c5, bigint(100))
 	shouldEQ(t, c6, bigint(100))
 	
-	c7, c8 := Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
+	c7, c8 := pool.Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 	shouldEQ(t, c7, c3 - bigint(100))
 	shouldEQ(t, c8, c4 - bigint(100))
 
 
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
+	pool.Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
 	// Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
 	// no burn => no collect
-	c9, c10 := Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
+	c9, c10 := Cpool.ollect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 	shouldEQ(t, c9, bigint(0))
 	shouldEQ(t, c10, bigint(0))
 
 	// burn => some collect
-	Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
-	c11, c12 := Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
+	pool.Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
+	c11, c12 := pool.Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 	shouldNEQ(t, c11, bigint(0))
 	shouldNEQ(t, c12, bigint(0))
 }
 
 
 
-func TestSwap(t *testing.T) {
+func testSwap(t *testing.T, pool *Pool) {
 	// 	Swap token0 -> token1
-	var test_sqrtPriceExpect bigint = GetSqrtPriceX96() // shuold be same as test_sqrtPrice
-	test_slot0 := GetSlot0()
+	var test_sqrtPriceExpect bigint = pool.GetSqrtPriceX96() // shuold be same as test_sqrtPrice
+	test_slot0 := pool.GetSlot0()
 
 
 	std.TestSetOrigCaller(lp02)
-	Mint(lp02, test_tickLower, test_tickUpper, test_liquidityExpect * 1000)
+	pool.Mint(lp02, test_tickLower, test_tickUpper, test_liquidityExpect * 1000)
 
 	std.TestSetOrigCaller(lp03)
-	Mint(lp03, test_tickLower, test_tickUpper, test_liquidityExpect * 1000)
+	pool.Mint(lp03, test_tickLower, test_tickUpper, test_liquidityExpect * 1000)
 
 	test_price := bigint(MIN_SQRT_RATIO + 1)
 
@@ -348,7 +355,7 @@ func TestSwap(t *testing.T) {
 		poolToken1Bal := BalanceOf(token1, GetOrigPkgAddr())
 
 		std.TestSetOrigCaller(sp01)
-		amount0, amount1 := Swap(sp01, true, 10000, test_price) // give enough amount to take fees away
+		amount0, amount1 := pool.Swap(sp01, true, 10000, test_price) // give enough amount to take fees away
 		
 		shouldEQ(t, userToken0Bal - amount0, BalanceOf(token0, sp01))
 		shouldEQ(t, userToken1Bal - amount1, BalanceOf(token1, sp01))
