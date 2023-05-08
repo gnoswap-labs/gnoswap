@@ -42,50 +42,50 @@ func shouldPanic(t *testing.T, f func()) {
 
 
 // Testing
-func GetMaxLiquidityPerTick() bigint {
-	return maxLiquidityPerTick
+func (pool *Pool) GetMaxLiquidityPerTick() bigint {
+	return pool.maxLiquidityPerTick
 }
 
-func GetLiquidity() bigint {
-	return liquidity
+func (pool *Pool) GetLiquidity() bigint {
+	return pool.liquidity
 }
 
-func GetFee() bigint {
-	return fee
+func (pool *Pool) GetFee() bigint {
+	return pool.fee
 }
 
-func GetTickSpacing() bigint {
-	return tickSpacing
+func (pool *Pool) GetTickSpacing() bigint {
+	return pool.tickSpacing
 }
 
-func GetFeeGrowthGlobal0() bigint {
-	return feeGrowthGlobal0
+func (pool *Pool) GetFeeGrowthGlobal0() bigint {
+	return pool.feeGrowthGlobal0
 }
 
-func GetFeeGrowthGlobal1() bigint {
-	return feeGrowthGlobal1
+func (pool *Pool) GetFeeGrowthGlobal1() bigint {
+	return pool.feeGrowthGlobal1
 }
 
-func GetSlot0() Slot0 {
-	return slot0
+func (pool *Pool) GetSlot0() Slot0 {
+	return pool.slot0
 }
 
-func GetProtocolFees() ProtocolFees {
-	return protocolFees
+func (pool *Pool) GetProtocolFees() ProtocolFees {
+	return pool.protocolFees
 }
 
-func GetPosition(key string) PositionInfo {
-	return positions[key]
+func (pool *Pool) GetPosition(key string) PositionInfo {
+	return pool.positions[key]
 }
 
-func GetTicks(key bigint) TickInfo {
-	return ticks[key]
+func (pool *Pool) GetTicks(key bigint) TickInfo {
+	return pool.ticks[key]
 }
 
-func GetTickBitmap(key bigint) bigint {
-	return tickBitmaps[key]
+func (pool *Pool) GetTickBitmap(key bigint) bigint {
+	return pool.tickBitmaps[key]
 }
 
-func GetSqrtPrice() bigint {
-	return slot0.sqrtPrice
+func (pool *Pool) GetSqrtPrice() bigint {
+	return pool.slot0.sqrtPrice
 }

@@ -1,3 +1,69 @@
+import (
+	"std"
+
+	"gno.land/p/demo/avl"
+	"gno.land/p/demo/grc/grc20"
+
+	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/foo"
+	"gno.land/r/bar"
+	// "gno.land/r/baz"
+	// "gno.land/r/qux"
+)
+
+
+type Slot0 struct {
+	sqrtPrice bigint
+	tick bigint
+	feeProtocol bigint
+	unlocked bool
+}
+
+type ProtocolFees struct {
+	token0 bigint 
+	token1 bigint 
+}
+
+type ModifyPositionParams struct {
+	// the address that owns the position
+	owner std.Address
+
+	// the lower and upper tick of the position
+	tickLower bigint
+	tickUpper bigint
+
+	// any change in liquidity
+	liquidityDelta bigint
+}
+
+type SwapCache struct {
+	feeProtocol bigint
+	liquidityStart bigint
+	blockTimestamp bigint
+}
+
+type SwapState struct {
+	amountSpecifiedRemaining bigint
+	amountCalculated bigint
+	sqrtPrice bigint
+	tick bigint
+	feeGrowthGlobal bigint
+	protocolFee bigint
+	liquidity bigint
+}
+
+type StepComputations struct {
+	sqrtPriceStart bigint
+	tickNext bigint
+	initialized bool
+	sqrtPriceNext bigint
+	amountIn bigint
+	amountOut bigint
+	feeAmount bigint
+}
+
+
 // type Pool describes a single Pool's state
 // A pool is identified with a unique key (token0, token1, fee), where token0 < token1
 type Pool struct {
