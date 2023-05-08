@@ -18,7 +18,7 @@ func BalanceOf(token *grc20.AdminToken, addr std.Address) bigint {
 	return bigint(balance)
 }
 
-func PrintUserBalance(name string, target std.Address) {
+func PrintUserBalance(token0 string, token1 string, name string, target std.Address) {
 	println()
 	println("User:", name)
 	println("Token0:", BalanceOf(token0, target))

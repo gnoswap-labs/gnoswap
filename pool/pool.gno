@@ -1,5 +1,5 @@
 // type Pool describes a single Pool's state
-// A pool is identified with a unique key (token0, token1, fee)
+// A pool is identified with a unique key (token0, token1, fee), where token0 < token1
 type Pool struct {
 	// token0 is the package name of the first token
 	token0 string
@@ -41,8 +41,6 @@ func NewPool(
 	sqrtPrice bigint,
 	tick bigint,
 ) *Pool {
-	fee = _fee // swap fee, not protocol fee
-	tickSpacing = _tickSpacing
 	maxLiquidityPerTick := TickTickSpacingToMaxLiquidityPerTick(tickSpacing)
 	// _tick := TickMathGetTickAtSqrtRatio(_sqrtPrice)
 	// sqrtPrice := TickMathGetSqrtRatioAtTick(_sqrtPrice)
@@ -102,7 +100,7 @@ func (pool *Pool) Mint(
 		if err != nil {
 			panic("token0.TransferFrom failed")
 		}
-		require(balance0Before + amount0 <= BalanceOf(ppool.token0, GetOrigPkgAddr()), "[X] balance0")
+		require(balance0Before + amount0 <= BalanceOf(pool.token0, GetOrigPkgAddr()), "[X] balance0")
 	}
 
 	if (amount1 > 0) {
@@ -183,7 +181,7 @@ func (pool *Pool) Collect(
 	return amount0, amount1
 }
 
-func Swap(
+func (pool *Pool) Swap(
 	recipient std.Address,
 	zeroForOne bool,
 	amountSpecified bigint,
@@ -206,7 +204,7 @@ func Swap(
 		feeGrowthGlobal = pool.feeGrowthGlobal1
 	}
 
-	slot0.unlocked = false
+	pool.slot0.unlocked = false
 
 	cache := SwapCache{
 		liquidityStart: pool.liquidity,
@@ -279,7 +277,7 @@ func Swap(
 			sqrtRatioTarget,
 			state.liquidity,
 			state.amountSpecifiedRemaining,
-			fee,
+			pool.fee,
 		)
 
 		if exactInput {
@@ -353,12 +351,12 @@ func Swap(
 	if zeroForOne {
 		pool.feeGrowthGlobal0 = state.feeGrowthGlobal
 		if state.protocolFee > 0 {
-			protocolFees.token0 = protocolFees.token0 + state.protocolFee
+			pool.protocolFees.token0 = pool.protocolFees.token0 + state.protocolFee
 		}
 	} else {
 		pool.feeGrowthGlobal1 = state.feeGrowthGlobal
 		if state.protocolFee > 0 {
-			protocolFees.token1 = protocolFees.token1 + state.protocolFee
+			pool.protocolFees.token1 = pool.protocolFees.token1 + state.protocolFee
 		}
 	}
 
@@ -377,7 +375,7 @@ func Swap(
 		}
 		balance0Before := BalanceOf(pool.token0, GetOrigPkgAddr())
 		TransferFrom(pool.token0, GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount0))
-		require(balance0Before + bigint(amount0) <= BalanceOf(token0, GetOrigPkgAddr()), "IIA0")
+		require(balance0Before + bigint(amount0) <= BalanceOf(pool.token0, GetOrigPkgAddr()), "IIA0")
 	} else {
 		if amount0 < 0 {
 			Transfer(pool.token0, GetOrigPkgAddr(), recipient, uint64(-amount0))
@@ -409,13 +407,13 @@ func (pool *Pool) CollectFeeProtocol(
 	// XXX check owner, IT IS PROTOCOL FEE NOT SWAP FEE
 	var amount0, amount1 bigint
 
-	if amount0Requested > protocolFees.token0 {
+	if amount0Requested > pool.protocolFees.token0 {
 		amount0 = pool.protocolFees.token0
 	} else {
 		amount0 = amount0Requested
 	}
 
-	if amount1Requested > protocolFees.token1 {
+	if amount1Requested > pool.protocolFees.token1 {
 		amount1 = pool.protocolFees.token1
 	} else {
 		amount1 = amount1Requested
@@ -527,7 +525,7 @@ func (pool *Pool) updatePosition(
 			// secondsPerLiquidityCumulative,
 			time, 
 			false,
-			maxLiquidityPerTick,
+			pool.maxLiquidityPerTick,
 			pool.ticks[tick],
 		)
 
@@ -540,16 +538,16 @@ func (pool *Pool) updatePosition(
 			// secondsPerLiquidityCumulative,
 			time,
 			true,
-			maxLiquidityPerTick,
+			pool.maxLiquidityPerTick,
 			pool.ticks[tick],
 		)
 
 		if (flippedLower) {
-			TickBitmapFlipTick(tickLower, tickSpacing)
+			TickBitmapFlipTick(tickLower, pool.tickSpacing)
 		}
 
 		if (flippedUpper) {
-			TickBitmapFlipTick(tickUpper, tickSpacing)
+			TickBitmapFlipTick(tickUpper, pool.tickSpacing)
 		}
 	}
 

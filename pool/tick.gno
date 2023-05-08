@@ -70,19 +70,19 @@ func TickUpdate(
 	return (info, flipped)
 }
 
-func TickClear(tick bigint) {
-	delete(ticks, tick)
+func (pool *Pool) TickClear(tick bigint) {
+	delete(pool.ticks, tick)
 }
 
-func TickGetFeeGrowthInside(
+func (pool *Pool) TickGetFeeGrowthInside(
 	tickLower bigint,
 	tickUpper bigint,
 	tickCurrent bigint,
 	feeGrowthGlobal0 bigint,
 	feeGrowthGlobal1 bigint,
 ) (feeGrowthInside0, feeGrowthInside1 bigint) {
-	var lower TickInfo = ticks[tickLower]
-	var upper TickInfo = ticks[tickUpper]
+	var lower TickInfo = pool.ticks[tickLower]
+	var upper TickInfo = pool.ticks[tickUpper]
 	
 	var feeGrowthBelow0 bigint
 	var feeGrowthBelow1 bigint
@@ -111,18 +111,18 @@ func TickGetFeeGrowthInside(
 }
 
 
-func TickCross(
+func (pool *Pool) TickCross(
 	tick bigint,
 	feeGrowthGlobal0 bigint,
 	feeGrowthGlobal1 bigint,
 	time bigint,
 ) (bigint) {
-	info := ticks[tick]
+	info := pool.ticks[tick]
 
 	info.feeGrowthOutside0 = feeGrowthGlobal0 - info.feeGrowthOutside0
 	info.feeGrowthOutside1 = feeGrowthGlobal1 - info.feeGrowthOutside1
 	// info.secondsOutside = time - info.secondsOutSide // XXX
-	ticks[tick] = info
+	pool.ticks[tick] = info
 	liquidityNet := info.liquidityNet
 	return liquidityNet
 }

@@ -14,7 +14,7 @@ func TickBitmapPosition(tick bigint) (bigint, bigint) {
 }
 
 
-func TickBitmapFlipTick(
+func (pool *Pool) TickBitmapFlipTick(
 	tick bigint,
 	tickSpacing bigint,
 ) {
@@ -22,10 +22,10 @@ func TickBitmapFlipTick(
 	wordPos, bitPos := TickBitmapPosition(tick)
 	// mask := 1 << bitPos
 	mask := bigint(big.Pow(2, bigdec(bitPos)))
-	tickBitmaps[wordPos] ^= mask
+	pool.tickBitmaps[wordPos] ^= mask
 }
 
-func TickBitmapNextInitializedTickWithInOneWord(
+func (pool *Pool) TickBitmapNextInitializedTickWithInOneWord(
 	tick bigint,
 	tickSpacing bigint,
 	zeroForOne bool,
@@ -39,7 +39,7 @@ func TickBitmapNextInitializedTickWithInOneWord(
 		wordPos, bitPos := TickBitmapPosition(compress)
 		// mask := (1 << bitPos) - 1 + (1 << bitPos)
 		mask := bigint( big.Pow(2, bigdec(bitPos)) - 1 + big.Pow(2, bigdec(bitPos)) )
-		masked := tickBitmaps[wordPos] & mask 
+		masked := pool.tickBitmaps[wordPos] & mask 
 
 		initialized := masked != 0
 
@@ -57,7 +57,7 @@ func TickBitmapNextInitializedTickWithInOneWord(
 	wordPos, bitPos := TickBitmapPosition(compress + 1)	
 	// mask := ~((1 << bitPos) - 1)
 	mask := big.Not( bigint( (big.Pow(2, bigdec(bitPos))) - 1) )
-	masked := tickBitmaps[wordPos] & mask
+	masked := pool.tickBitmaps[wordPos] & mask
 
 	initialized := masked != 0
 	if initialized {
