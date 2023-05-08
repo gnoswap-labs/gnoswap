@@ -456,6 +456,7 @@ func (pool *Pool) Swap(
 	return amount0, amount1
 }
 
+// TODO: is it safe to expose this?
 func (pool *Pool) SetFeeProtocol(feeProtocol0, feeProtocol1 bigint) {
 	require (
 		(feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)) &&
@@ -465,6 +466,7 @@ func (pool *Pool) SetFeeProtocol(feeProtocol0, feeProtocol1 bigint) {
 	pool.slot0.feeProtocol = feeProtocol0 + (feeProtocol1 << 4) // << 4 is * 16
 }
 
+// TODO: is it safe to expose this?
 func (pool *Pool) CollectFeeProtocol(
 	recipient std.Address,
 	amount0Requested bigint,
