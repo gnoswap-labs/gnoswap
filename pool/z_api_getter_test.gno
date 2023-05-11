@@ -13,9 +13,8 @@ import (
 
 func TestGetPoolInfo(t *testing.T) {
 	pi := GetPoolInfo()
-	println(pi)
+	// println(pi)
 }
-
 
 func TestGetTokenInfo(t *testing.T) {
 	ti0 := GetTokenInfo(token0)
@@ -27,8 +26,7 @@ func TestGetTokenInfo(t *testing.T) {
 	shouldEQ(t, ti1.Name, "Bar")
 }
 
-
 func TestGetUserInfo(t *testing.T) {
 	ui := GetUserInfo("g1d3crqv2lta047h6lta047h6lta047h6lnjw069")
-	println(ui)
+	// println(ui)
 }

@@ -135,26 +135,38 @@ func TestInit(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
 	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
+	foo.Approve(users.AddressOrName(lp01), 50000000)
+	bar.Approve(users.AddressOrName(lp01), 50000000)
 
 	std.TestSetOrigCaller(lp02)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
 	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
+	foo.Approve(users.AddressOrName(lp02), 50000000)
+	bar.Approve(users.AddressOrName(lp02), 50000000)
 
 	std.TestSetOrigCaller(lp03)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
 	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
+	foo.Approve(users.AddressOrName(lp03), 50000000)
+	bar.Approve(users.AddressOrName(lp03), 50000000)
 
 	std.TestSetOrigCaller(lp04)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
 	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
+	foo.Approve(users.AddressOrName(lp04), 50000000)
+	bar.Approve(users.AddressOrName(lp04), 50000000)
 
 	std.TestSetOrigCaller(lp05)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
 	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
+	foo.Approve(users.AddressOrName(lp05), 50000000)
+	bar.Approve(users.AddressOrName(lp05), 50000000)
 
 	std.TestSetOrigCaller(sp01)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
 	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
+	foo.Approve(users.AddressOrName(sp01), 50000000)
+	bar.Approve(users.AddressOrName(sp01), 50000000)
 }
 
 
@@ -373,162 +385,159 @@ func TestSwap(t *testing.T) {
 		// PrintUserBalance("lp03", lp03)
 	}
 
-	// {
-	// 	// println("SWAP 5000, FROM token0, TO token1")
-	// 	// println("====Before Balance====")
-	// 	// PrintUserBalance("sp01", sp01)
-	// 	// PrintUserBalance("pool", GetOrigPkgAddr())
-	// 	// println()
-	// 	userToken0Bal := BalanceOf(token0, sp01)
-	// 	userToken1Bal := BalanceOf(token1, sp01)
-	// 	poolToken0Bal := BalanceOf(token0, GetOrigPkgAddr())
-	// 	poolToken1Bal := BalanceOf(token1, GetOrigPkgAddr())
+	{
+		// println("SWAP 5000, FROM token0, TO token1")
+		// println("====Before Balance====")
+		// PrintUserBalance("sp01", sp01)
+		// PrintUserBalance("pool", GetOrigPkgAddr())
+		// println()
+		userToken0Bal := BalanceOf(token0, sp01)
+		userToken1Bal := BalanceOf(token1, sp01)
+		poolToken0Bal := BalanceOf(token0, GetOrigPkgAddr())
+		poolToken1Bal := BalanceOf(token1, GetOrigPkgAddr())
 
-	// 	amount0, amount1 := Swap(sp01, true, 5000, test_price) // give enough amount to take fees away
+		amount0, amount1 := Swap(sp01, true, 5000, test_price) // give enough amount to take fees away
 		
-	// 	shouldEQ(t, userToken0Bal - amount0, BalanceOf(token0, sp01))
-	// 	shouldEQ(t, userToken1Bal - amount1, BalanceOf(token1, sp01))
-	// 	shouldEQ(t, poolToken0Bal + amount0, BalanceOf(token0, GetOrigPkgAddr()))
-	// 	shouldEQ(t, poolToken1Bal + amount1, BalanceOf(token1, GetOrigPkgAddr()))
+		shouldEQ(t, userToken0Bal - amount0, BalanceOf(token0, sp01))
+		shouldEQ(t, userToken1Bal - amount1, BalanceOf(token1, sp01))
+		shouldEQ(t, poolToken0Bal + amount0, BalanceOf(token0, GetOrigPkgAddr()))
+		shouldEQ(t, poolToken1Bal + amount1, BalanceOf(token1, GetOrigPkgAddr()))
 
-	// 	// println("====After Balance====")
-	// 	// PrintUserBalance("sp01", sp01)
-	// 	// PrintUserBalance("pool", GetOrigPkgAddr())
-	// 	// println()
-	// 	// println()
-	// }
+		// println("====After Balance====")
+		// PrintUserBalance("sp01", sp01)
+		// PrintUserBalance("pool", GetOrigPkgAddr())
+		// println()
+		// println()
+	}
 
-	// {
-	// 	// println("SWAP 1000, FROM token0, TO token1")
-	// 	// println("====Before Balance====")
-	// 	// PrintUserBalance("sp01", sp01)
-	// 	// PrintUserBalance("pool", GetOrigPkgAddr())
-	// 	// println()
-	// 	userToken0Bal := BalanceOf(token0, sp01)
-	// 	userToken1Bal := BalanceOf(token1, sp01)
-	// 	poolToken0Bal := BalanceOf(token0, GetOrigPkgAddr())
-	// 	poolToken1Bal := BalanceOf(token1, GetOrigPkgAddr())
+	{
+		// println("SWAP 1000, FROM token0, TO token1")
+		// println("====Before Balance====")
+		// PrintUserBalance("sp01", sp01)
+		// PrintUserBalance("pool", GetOrigPkgAddr())
+		// println()
+		userToken0Bal := BalanceOf(token0, sp01)
+		userToken1Bal := BalanceOf(token1, sp01)
+		poolToken0Bal := BalanceOf(token0, GetOrigPkgAddr())
+		poolToken1Bal := BalanceOf(token1, GetOrigPkgAddr())
 
-	// 	amount0, amount1 := Swap(sp01, true, 1000, test_price) // give enough amount to take fees away
+		amount0, amount1 := Swap(sp01, true, 1000, test_price) // give enough amount to take fees away
 		
-	// 	shouldEQ(t, userToken0Bal - amount0, BalanceOf(token0, sp01))
-	// 	shouldEQ(t, userToken1Bal - amount1, BalanceOf(token1, sp01))
-	// 	shouldEQ(t, poolToken0Bal + amount0, BalanceOf(token0, GetOrigPkgAddr()))
-	// 	shouldEQ(t, poolToken1Bal + amount1, BalanceOf(token1, GetOrigPkgAddr()))
+		shouldEQ(t, userToken0Bal - amount0, BalanceOf(token0, sp01))
+		shouldEQ(t, userToken1Bal - amount1, BalanceOf(token1, sp01))
+		shouldEQ(t, poolToken0Bal + amount0, BalanceOf(token0, GetOrigPkgAddr()))
+		shouldEQ(t, poolToken1Bal + amount1, BalanceOf(token1, GetOrigPkgAddr()))
 
-	// 	// println("====After Balance====")
-	// 	// PrintUserBalance("sp01", sp01)
-	// 	// PrintUserBalance("pool", GetOrigPkgAddr())
-	// 	// println()
-	// 	// println()
-	// }
+		// println("====After Balance====")
+		// PrintUserBalance("sp01", sp01)
+		// PrintUserBalance("pool", GetOrigPkgAddr())
+		// println()
+		// println()
+	}
 	
 
-	// // Swap token1 -> token0
-	// {
-	// 	// println("SWAP 10000, FROM token1, TO token0")
-	// 	// println("====Before Balance====")
-	// 	// PrintUserBalance("sp01", sp01)
-	// 	// PrintUserBalance("pool", GetOrigPkgAddr())
-	// 	// println()
-	// 	userToken0Bal := BalanceOf(token0, sp01)
-	// 	userToken1Bal := BalanceOf(token1, sp01)
-	// 	poolToken0Bal := BalanceOf(token0, GetOrigPkgAddr())
-	// 	poolToken1Bal := BalanceOf(token1, GetOrigPkgAddr())
+	// Swap token1 -> token0
+	{
+		// println("SWAP 10000, FROM token1, TO token0")
+		// println("====Before Balance====")
+		// PrintUserBalance("sp01", sp01)
+		// PrintUserBalance("pool", GetOrigPkgAddr())
+		// println()
+		userToken0Bal := BalanceOf(token0, sp01)
+		userToken1Bal := BalanceOf(token1, sp01)
+		poolToken0Bal := BalanceOf(token0, GetOrigPkgAddr())
+		poolToken1Bal := BalanceOf(token1, GetOrigPkgAddr())
 
-	// 	amount0, amount1 := Swap(sp01, false, 10000, bigint(MAX_SQRT_RATIO - 1)) // give enough amount to take fees away
+		amount0, amount1 := Swap(sp01, false, 10000, bigint(MAX_SQRT_RATIO - 1)) // give enough amount to take fees away
 		
-	// 	shouldEQ(t, userToken0Bal - amount0, BalanceOf(token0, sp01))
-	// 	shouldEQ(t, userToken1Bal - amount1, BalanceOf(token1, sp01))
-	// 	shouldEQ(t, poolToken0Bal + amount0, BalanceOf(token0, GetOrigPkgAddr()))
-	// 	shouldEQ(t, poolToken1Bal + amount1, BalanceOf(token1, GetOrigPkgAddr()))
+		shouldEQ(t, userToken0Bal - amount0, BalanceOf(token0, sp01))
+		shouldEQ(t, userToken1Bal - amount1, BalanceOf(token1, sp01))
+		shouldEQ(t, poolToken0Bal + amount0, BalanceOf(token0, GetOrigPkgAddr()))
+		shouldEQ(t, poolToken1Bal + amount1, BalanceOf(token1, GetOrigPkgAddr()))
 
-	// 	// println("====After Balance====")
-	// 	// PrintUserBalance("sp01", sp01)
-	// 	// PrintUserBalance("pool", GetOrigPkgAddr())
-	// 	// println()
-	// 	// println()
-	// }
+		// println("====After Balance====")
+		// PrintUserBalance("sp01", sp01)
+		// PrintUserBalance("pool", GetOrigPkgAddr())
+		// println()
+		// println()
+	}
 }
 
 
 
-// func TestSetFeeProtocol(t *testing.T) {
-// 	test_slot0 := GetSlot0()
-// 	shouldEQ(t, test_slot0.feeProtocol, bigint(0))
+func TestSetFeeProtocol(t *testing.T) {
+	test_slot0 := GetSlot0()
+	shouldEQ(t, test_slot0.feeProtocol, bigint(0))
 
-// 	SetFeeProtocol(0, 0)
-// 	test_slot0 = GetSlot0()
-// 	shouldEQ(t, test_slot0.feeProtocol, bigint(0))
+	SetFeeProtocol(0, 0)
+	test_slot0 = GetSlot0()
+	shouldEQ(t, test_slot0.feeProtocol, bigint(0))
 
-// 	SetFeeProtocol(0, 4)
-// 	test_slot0 = GetSlot0()
-// 	shouldEQ(t, test_slot0.feeProtocol, bigint(64))
+	SetFeeProtocol(0, 4)
+	test_slot0 = GetSlot0()
+	shouldEQ(t, test_slot0.feeProtocol, bigint(64))
 
-// 	SetFeeProtocol(4, 0)
-// 	test_slot0 = GetSlot0()
-// 	shouldEQ(t, test_slot0.feeProtocol, bigint(4))
+	SetFeeProtocol(4, 0)
+	test_slot0 = GetSlot0()
+	shouldEQ(t, test_slot0.feeProtocol, bigint(4))
 
-// 	SetFeeProtocol(6, 8)
-// 	test_slot0 = GetSlot0()
-// 	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
+	SetFeeProtocol(6, 8)
+	test_slot0 = GetSlot0()
+	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
 
-// 	// out of pre-defined range
-// 	shouldPanic(t, func() { SetFeeProtocol(2, 2) })
-// }
-
-
-
-// func TestCollectProtocol(t *testing.T) {
-// 	SetFeeProtocol(6, 8)
-// 	test_slot0 := GetSlot0()	
-// 	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
-
-// 	std.TestSetOrigCaller(lp01)
-// 	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 150)
+	// out of pre-defined range
+	shouldPanic(t, func() { SetFeeProtocol(2, 2) })
+}
 
 
+func TestCollectProtocol(t *testing.T) {
+	SetFeeProtocol(6, 8)
+	test_slot0 := GetSlot0()	
+	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
 
-// 	{
-// 		// println("SWAP 1000000, FROM token0, TO token1")
-// 		// println("SWAP 1000000, FROM token0, TO token1")
-// 		// println("====Before Balance====")
-// 		// PrintUserBalance("rv01", rv01)
-// 		// println()
+	std.TestSetOrigCaller(lp01)
+	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 150)
 
-// 		recvToken0Bal := BalanceOf(token0, rv01)
-// 		recvToken1Bal := BalanceOf(token1, rv01)
+	{
+		// println("SWAP 1000000, FROM token0, TO token1")
+		// println("SWAP 1000000, FROM token0, TO token1")
+		// println("====Before Balance====")
+		// PrintUserBalance("rv01", rv01)
+		// println()
 
-// 		std.TestSetOrigCaller(sp01)
-// 		Swap(sp01, true, 100000, bigint(MIN_SQRT_RATIO + 1)) // swap token0 -> token1 => fee only in token0
-// 		Swap(sp01, true, 100000, bigint(MIN_SQRT_RATIO + 1)) // more protocol fees
+		recvToken0Bal := BalanceOf(token0, rv01)
+		recvToken1Bal := BalanceOf(token1, rv01)
 
-// 		amount0, amount1 := CollectProtocol(rv01, 100000, 100000)
-// 		// println("====After Balance====")
-// 		// PrintUserBalance("rv01", rv01)
+		std.TestSetOrigCaller(sp01)
+		Swap(sp01, true, 100000, bigint(MIN_SQRT_RATIO + 1)) // swap token0 -> token1 => fee only in token0
+		Swap(sp01, true, 100000, bigint(MIN_SQRT_RATIO + 1)) // more protocol fees
 
-// 		shouldEQ(t, recvToken0Bal + amount0, BalanceOf(token0, rv01))
-// 		shouldEQ(t, recvToken1Bal + amount1, BalanceOf(token1, rv01))
-// 	}
+		amount0, amount1 := CollectProtocol(rv01, 100000, 100000)
+		// println("====After Balance====")
+		// PrintUserBalance("rv01", rv01)
 
-// 	{
-// 		// println("SWAP 1000000, FROM token1, TO token0")
-// 		// println("====Before Balance====")
-// 		// PrintUserBalance("rv01", rv01)
-// 		// println()
+		shouldEQ(t, recvToken0Bal + amount0, BalanceOf(token0, rv01))
+		shouldEQ(t, recvToken1Bal + amount1, BalanceOf(token1, rv01))
+	}
 
-// 		recvToken0Bal := BalanceOf(token0, rv01)
-// 		recvToken1Bal := BalanceOf(token1, rv01)
+	{
+		// println("SWAP 1000000, FROM token1, TO token0")
+		// println("====Before Balance====")
+		// PrintUserBalance("rv01", rv01)
+		// println()
+
+		recvToken0Bal := BalanceOf(token0, rv01)
+		recvToken1Bal := BalanceOf(token1, rv01)
 		
 
-// 		std.TestSetOrigCaller(sp01)
-// 		Swap(sp01, false, 100000, bigint(MAX_SQRT_RATIO - 1)) // swap token0 -> token1 => fee only in token0
+		std.TestSetOrigCaller(sp01)
+		Swap(sp01, false, 100000, bigint(MAX_SQRT_RATIO - 1)) // swap token0 -> token1 => fee only in token0
 
-// 		amount0, amount1 := CollectProtocol(rv01, 100000, 100000)
-// 		// println("====After Balance====")
-// 		// PrintUserBalance("rv01", rv01)
+		amount0, amount1 := CollectProtocol(rv01, 100000, 100000)
+		// println("====After Balance====")
+		// PrintUserBalance("rv01", rv01)
 
-// 		shouldEQ(t, recvToken0Bal + amount0, BalanceOf(token0, rv01))
-// 		shouldEQ(t, recvToken1Bal + amount1, BalanceOf(token1, rv01))
-// 	}
-// }
+		shouldEQ(t, recvToken0Bal + amount0, BalanceOf(token0, rv01))
+		shouldEQ(t, recvToken1Bal + amount1, BalanceOf(token1, rv01))
+	}
+}
