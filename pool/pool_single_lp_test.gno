@@ -333,7 +333,6 @@ func TestSwap(t *testing.T) {
 		userToken1Bal := BalanceOf(token1, sp01)
 		poolToken0Bal := BalanceOf(token0, GetOrigPkgAddr())
 		poolToken1Bal := BalanceOf(token1, GetOrigPkgAddr())
-
 		amount0, amount1 := Swap(sp01, false, 16000, bigint(MAX_SQRT_RATIO - 1)) // give enough amount to take fees away
 		
 		shouldEQ(t, userToken0Bal - amount0, BalanceOf(token0, sp01))
@@ -412,7 +411,6 @@ func TestCollectProtocol(t *testing.T) {
 		recvToken0Bal := BalanceOf(token0, gso)
 		recvToken1Bal := BalanceOf(token1, gso)
 		
-
 		std.TestSetOrigCaller(sp01)
 		Swap(sp01, false, 100000, bigint(MAX_SQRT_RATIO - 1)) // swap token0 -> token1 => fee only in token0
 
