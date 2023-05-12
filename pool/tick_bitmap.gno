@@ -25,7 +25,7 @@ func TickBitmapFlipTick(
 ) {
 	require(tick % tickSpacing == 0, "TICK_SPACING")
 	wordPos, bitPos := TickBitmapPosition(tick)
-	mask := BigInt1 << bitPos
+	mask := BigInt1 << uint64(bitPos)
 	requireUnsigned(mask, "tick_bitmap.gno__TickBitmapFlipTick__mask")
 	tickBitmaps[wordPos] ^= mask
 }
@@ -42,7 +42,7 @@ func TickBitmapNextInitializedTickWithInOneWord(
 
 	if zeroForOne {
 		wordPos, bitPos := TickBitmapPosition(compress)
-		mask := (BigInt1 << bitPos) - BigInt1 + (BigInt1 << bitPos)
+		mask := (BigInt1 << uint64(bitPos)) - BigInt1 + (BigInt1 << uint64(bitPos))
 		requireUnsigned(mask, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__mask #1")
 		masked := tickBitmaps[wordPos] & mask 
 		requireUnsigned(masked, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__masked #1")
@@ -59,11 +59,18 @@ func TickBitmapNextInitializedTickWithInOneWord(
 		}
 		return (compress - bigint(bitPos)) * tickSpacing, initialized
 	}
-
+	
 	wordPos, bitPos := TickBitmapPosition(compress + 1)	
-	mask := MAX_UINT256 - ( bigint(1) << bigint(bitPos) - bigint(1) ) 
+	
+	// check zero
+	var mask bigint
+	if bitPos == 0 {
+		mask = MAX_UINT256 - bigint(1)
+	} else {
+		mask = MAX_UINT256 - ( bigint(1) << uint64(bigint(bitPos) - bigint(1) ))
+	}
+	
 	// mask := ^((BigInt1 << bitPos) - BigInt1) // (2^256-1) - (2^bitPos-1)
-
 	if mask < 0 {
 		mask = -mask
 	}
