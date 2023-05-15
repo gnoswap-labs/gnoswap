@@ -30,12 +30,12 @@ func PoolTicksCounterCountInitializedTicksCrossed(
 
 
 		tickAfterInitialized =
-			((pool.GetPoolTickBitmap(wordPosAfter) & (1 << bitPosAfter)) > 0) &&
+			((pool.GetPoolTickBitmap(string(wordPosAfter)) & (1 << bitPosAfter)) > 0) &&
 			((tickAfter % pool.GetPoolTickSpacing()) == 0) &&
 			(tickBefore > tickAfter)
 
 		tickBeforeInitialized =
-			((pool.GetPoolTickBitmap(wordPos) & (1 << bitPos)) > 0) &&
+			((pool.GetPoolTickBitmap(string(wordPos)) & (1 << bitPos)) > 0) &&
 			((tickBefore % pool.GetPoolTickSpacing()) == 0) &&
 			(tickBefore < tickAfter)
 
@@ -59,7 +59,7 @@ func PoolTicksCounterCountInitializedTicksCrossed(
 			mask = mask & (MAX_UINT256 >> (255 - bitPosHigher))
 		}
 
-		masked := pool.GetPoolTickBitmap(wordPosLower) & mask
+		masked := pool.GetPoolTickBitmap(string(wordPosLower)) & mask
 		initializedTicksCrossed += PoolTicksCounterCountOneBits(masked);
 		wordPosLower++
 
