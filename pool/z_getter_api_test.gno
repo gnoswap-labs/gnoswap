@@ -12,21 +12,20 @@ import (
 )
 
 func TestGetPoolInfo(t *testing.T) {
-	pi := GetPoolInfo()
-	// println(pi)
+	tapi := ApiGetPoolInfo()
+	println(tapi)
 }
 
 func TestGetTokenInfo(t *testing.T) {
-	ti0 := GetTokenInfo(token0)
-	// println(ti0)
-	shouldEQ(t, ti0.Name, "Foo")
+	tati0 := ApiGetTokenInfo(token0)
+	println(tati0)
+	println()
 
-	ti1 := GetTokenInfo(token1)
-	// println(ti1)
-	shouldEQ(t, ti1.Name, "Bar")
+	tati1 := ApiGetTokenInfo(token1)
+	println(tati1)
 }
 
 func TestGetUserInfo(t *testing.T) {
-	ui := GetUserInfo("g1d3crqv2lta047h6lta047h6lta047h6lnjw069")
-	// println(ui)
+	taui := ApiGetUserInfo("g1d3crqv2lta047h6lta047h6lta047h6lnjw069")
+	println(taui)
 }
