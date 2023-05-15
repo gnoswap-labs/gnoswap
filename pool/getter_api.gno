@@ -8,7 +8,6 @@ import (
 	"gno.land/p/demo/grc/grc20"
 )
 
-
 type PoolInfo struct {
 	Address				string
 	Path					string
@@ -52,8 +51,8 @@ func GetPoolInfo() PoolInfo {
 		// swapFeeAmount: 123,
 		protocolFees: GetSlot0().feeProtocol,
 		// protocolFeeAmount: 123,
-		minTick: findMin(),
-		maxTick: findMax(),
+		minTick: findMinTick(),
+		maxTick: findMaxTick(),
 	}
 }
 
@@ -68,7 +67,7 @@ func GetTokenInfo(gat *grc20.AdminToken) TokenInfo {
 
 func GetUserInfo(addr string) UserInfo {
 	return UserInfo{
-		OwedPosition: UserPosition(addr),
+		OwedPosition: userPosition(addr),
 		token0: token0.GetName(),
 		token0Amount: BalanceOf(token0, s2a(addr)),
 		token1: token1.GetName(),
@@ -77,28 +76,32 @@ func GetUserInfo(addr string) UserInfo {
 }
 
 
-
-func UserPosition(addr string) []PositionInfo {
+func userPosition(addr string) []PositionInfo {
 	userPos := []PositionInfo{}
 
-	for _, key := range PositionWithKeys() {		
+	for _, key := range positionWithKeys() {		
 		decoded, _ := base64.StdEncoding.DecodeString(key)
-		
+		// println("DECODED =>", string(decoded))
+	
 		if strings.Contains(string(decoded), addr) {
-			userPos = append(userPos, positions[key])
+			// userPos = append(userPos, positions[key])
+			
+			_userPos, exists := positions.Get(key)
+			if exists {
+				userPos = append(userPos, _userPos.(PositionInfo))
+			}
 		}
 	}
-
 	return userPos
 }
 
-func PositionWithKeys() []string {
-	keys := make([]string, len(positions))
-	i := 0
+func positionWithKeys() []string {
+	posSize := positions.Size()
+	keys := make([]string, posSize)
 
-	for key := range positions {
+	for i := 0; i < posSize; i++ {
+		key, value := positions.GetByIndex(0)
 		keys[i] = key
-		i++
 	}
 
 	return keys
@@ -106,33 +109,18 @@ func PositionWithKeys() []string {
 
 func tickRange() []bigint {
 	tickList := []bigint{}
-	for k, _ := range GetTicks() {
-		tickList = append(tickList, k)
+	ticks := GetTicks()
+	
+	for i := 0; i < ticks.Size(); i++ {
+		key, _ := ticks.GetByIndex(i)
+		tickList = append(tickList, bigint(key))
 	}
 
 	return tickList
 }
 
-func findMinMax() (bigint, bigint) {
+func findMinTick() bigint {
 	ticks := tickRange()
-
-	min, max := ticks[0], ticks[0]
-
-	for _, number := range ticks {
-		if number < min {
-			min = number
-		}
-		if number > max {
-			max = number
-		}
-	}
-
-	return min, max
-}
-
-func findMin() bigint {
-	ticks := tickRange()
-
 	min := ticks[0]
 
 	for _, number := range ticks {
@@ -144,9 +132,8 @@ func findMin() bigint {
 	return min
 }
 
-func findMax() bigint {
+func findMaxTick() bigint {
 	ticks := tickRange()
-
 	max := ticks[0]
 
 	for _, number := range ticks {

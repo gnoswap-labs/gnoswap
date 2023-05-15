@@ -45,9 +45,19 @@ func PositionUpdateWithKey(
 	requireUnsigned(feeGrowthInside0X128, "position.gno__PositionUpdateWithKey__feeGrowthInside0X128")
 	requireUnsigned(feeGrowthInside1X128, "position.gno__PositionUpdateWithKey__feeGrowthInside1X128")
 
-	position, _ := positions[key]
+	// position := positions[key]
+	_position, exists := positions.Get(key)
+	var position PositionInfo
+	if (!exists) {
+		position = PositionInfo{}
+		// panic("position does not exist #2")
+	} else {
+		position = _position.(PositionInfo)
+	}
+
 	p := PositionUpdate(position, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
-	positions[key] = p
+	// positions[key] = p
+	positions.Set(key, p)
 	return p
 }
 
