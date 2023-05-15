@@ -259,33 +259,22 @@ func Collect(
 	}
 	requireUnsigned(amount1, "pool.gno__Collect__amount1")
 
-	// _orig := std.GetOrigCaller()
-	// _orig := std.GetOrigCaller()
+	_orig := std.GetOrigCaller()
 	if (amount0 > 0) {
 		position.tokensOwed0 -= amount0
 
-		// std.TestSetOrigCaller(GetOrigPkgAddr())
+		std.TestSetOrigCaller(GetOrigPkgAddr())
 		foo.Transfer(users.AddressOrName(recipient), uint64(amount0))
-		// std.TestSetOrigCaller(_orig)
-		// token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
-
-		// std.TestSetOrigCaller(GetOrigPkgAddr())
-		foo.Transfer(users.AddressOrName(recipient), uint64(amount0))
-		// std.TestSetOrigCaller(_orig)
+		std.TestSetOrigCaller(_orig)
 		// token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
 	}
 
 	if (amount1 > 0) {
 		position.tokensOwed1 -= amount1
 
-		// std.TestSetOrigCaller(GetOrigPkgAddr())
+		std.TestSetOrigCaller(GetOrigPkgAddr())
 		bar.Transfer(users.AddressOrName(recipient), uint64(amount1))
-		// std.TestSetOrigCaller(_orig)
-		// token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
-
-		// std.TestSetOrigCaller(GetOrigPkgAddr())
-		bar.Transfer(users.AddressOrName(recipient), uint64(amount1))
-		// std.TestSetOrigCaller(_orig)
+		std.TestSetOrigCaller(_orig)
 		// token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
 	}
 

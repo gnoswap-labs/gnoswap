@@ -11,6 +11,7 @@ import (
 	"gno.land/r/foo"
 	"gno.land/r/bar"
 	pool "gno.land/r/pool"
+	nft "gno.land/r/foo721"
 )
 
 
@@ -47,18 +48,18 @@ func init() {
 	bar.Faucet()
 
 	// DEBUG ADDR
-	println("lp01:", lp01)
-	println("lp02:", lp02)
-	println("rv01:", rv01)
-	println("Pool:", PoolAddr)
-	println("Manger:", std.GetOrigPkgAddr())
+	// println(lp01, "// lp01")
+	// println(lp02, "// lp02")
+	// println(rv01, "// rv01")
+	// println(PoolAddr, "// pool")
+	// println(GetOrigPkgAddr(), "// position")
 }
 
 func TestPoolInit(t *testing.T) {
 	var (
 		_fee bigint = 3000
 		_tickSpacing bigint = 10
-		_sqrtPrice bigint = 130621891405341611593710811006 // tick 1000 ??
+		_sqrtPrice bigint = 130621891405341611593710811006
 	)
 
 	pool.Init(_fee, _tickSpacing, _sqrtPrice)
@@ -66,14 +67,12 @@ func TestPoolInit(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
 	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	// XXX self
 	foo.Approve(users.AddressOrName(lp01), 50000000)
 	bar.Approve(users.AddressOrName(lp01), 50000000)
 
 	std.TestSetOrigCaller(lp02)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
 	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	// XXX self
 	foo.Approve(users.AddressOrName(lp02), 50000000)
 	bar.Approve(users.AddressOrName(lp02), 50000000)
 }
@@ -81,8 +80,8 @@ func TestPoolInit(t *testing.T) {
 
 
 func TestMint(t *testing.T) {
-	shouldEQ(t, Token0Bal(GetOrigPkgAddr()), bigint(0))
-	shouldEQ(t, Token1Bal(GetOrigPkgAddr()), bigint(0))
+	shouldEQ(t, Token0Bal(PoolAddr), bigint(0))
+	shouldEQ(t, Token1Bal(PoolAddr), bigint(0))
 
 	// lp01 mints
 	// will get tid 1 nft
@@ -103,15 +102,15 @@ func TestMint(t *testing.T) {
 			deadline: bigint(1234567890),
 		}
 
-		poolOldToken0Bal := Token0Bal(GetOrigPkgAddr())
-		poolOldToken1Bal := Token1Bal(GetOrigPkgAddr())
+		poolOldToken0Bal := Token0Bal(PoolAddr)
+		poolOldToken1Bal := Token1Bal(PoolAddr)
 
 		_tokenId, _liquidity, _amount0, _amount1 := Mint(_mintParams)
 		isOwner(t, _tokenId, lp01)
 		shouldEQ(t, _tokenId, "1")
 		shouldEQ(t, GetNextId(), bigint(2))
-		shouldEQ(t, Token0Bal(GetOrigPkgAddr()), poolOldToken0Bal + _amount0)
-		shouldEQ(t, Token1Bal(GetOrigPkgAddr()), poolOldToken1Bal + _amount1)
+		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal + _amount0)
+		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal + _amount1)
 	}
 
 	// lp02 mints same tick position
@@ -134,17 +133,16 @@ func TestMint(t *testing.T) {
 			deadline: bigint(1234567890),
 		}
 
-		poolOldToken0Bal := Token0Bal(GetOrigPkgAddr())
-		poolOldToken1Bal := Token1Bal(GetOrigPkgAddr())
+		poolOldToken0Bal := Token0Bal(PoolAddr)
+		poolOldToken1Bal := Token1Bal(PoolAddr)
 		
 		_tokenId, _liquidity, _amount0, _amount1 := Mint(_mintParams)
 		isOwner(t, _tokenId, lp02)
 		shouldEQ(t, _tokenId, "2")
 		shouldEQ(t, GetNextId(), bigint(3))
-		shouldEQ(t, Token0Bal(GetOrigPkgAddr()), poolOldToken0Bal + _amount0)
-		shouldEQ(t, Token1Bal(GetOrigPkgAddr()), poolOldToken1Bal + _amount1)
+		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal + _amount0)
+		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal + _amount1)
 	}
-
 
 	// lp02 mints out of range => upper position (token1 will be 0)
 	// will get tid 3 nft
@@ -165,15 +163,15 @@ func TestMint(t *testing.T) {
 			deadline: bigint(1234567890),
 		}
 
-		poolOldToken0Bal := Token0Bal(GetOrigPkgAddr())
-		poolOldToken1Bal := Token1Bal(GetOrigPkgAddr())
+		poolOldToken0Bal := Token0Bal(PoolAddr)
+		poolOldToken1Bal := Token1Bal(PoolAddr)
 		
 		_tokenId, _liquidity, _amount0, _amount1 := Mint(_mintParams)		
 		isOwner(t, _tokenId, lp02)
 		shouldEQ(t, _tokenId, "3")
 		shouldEQ(t, GetNextId(), bigint(4))
-		shouldEQ(t, Token0Bal(GetOrigPkgAddr()), poolOldToken0Bal + _amount0)
-		shouldEQ(t, Token1Bal(GetOrigPkgAddr()), poolOldToken1Bal + _amount1)
+		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal + _amount0)
+		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal + _amount1)
 	}
 
 	// lp02 mints out of range => lower position (token0 will be 0)
@@ -195,19 +193,18 @@ func TestMint(t *testing.T) {
 			deadline: bigint(1234567890),
 		}
 
-		poolOldToken0Bal := Token0Bal(GetOrigPkgAddr())
-		poolOldToken1Bal := Token1Bal(GetOrigPkgAddr())
+		poolOldToken0Bal := Token0Bal(PoolAddr)
+		poolOldToken1Bal := Token1Bal(PoolAddr)
 		
 		_tokenId, _liquidity, _amount0, _amount1 := Mint(_mintParams)
 		isOwner(t, _tokenId, lp02)
 		shouldEQ(t, _tokenId, "4")
 		shouldEQ(t, GetNextId(), bigint(5))
-		shouldEQ(t, Token0Bal(GetOrigPkgAddr()), poolOldToken0Bal + _amount0)
-		shouldEQ(t, Token1Bal(GetOrigPkgAddr()), poolOldToken1Bal + _amount1)
-
-		// PrintBal("pool", GetOrigPkgAddr())
+		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal + _amount0)
+		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal + _amount1)
 	}
 }
+
 
 func TestIncreaseLiquidity(t *testing.T) {
 	// lp02 mints at lp01 position
@@ -223,16 +220,16 @@ func TestIncreaseLiquidity(t *testing.T) {
 			deadline: bigint(1234567890),
 		}
 
-		poolOldToken0Bal := Token0Bal(GetOrigPkgAddr())
-		poolOldToken1Bal := Token1Bal(GetOrigPkgAddr())
+		poolOldToken0Bal := Token0Bal(PoolAddr)
+		poolOldToken1Bal := Token1Bal(PoolAddr)
 
 		_liquidity, _amount0, _amount1 := IncreaseLiquidity(_increaseLiquidityParams)
 
 		// increase liquidity doesn't increase tid
 		shouldEQ(t, GetNextId(), bigint(5))
 
-		shouldEQ(t, Token0Bal(GetOrigPkgAddr()), poolOldToken0Bal + _amount0)
-		shouldEQ(t, Token1Bal(GetOrigPkgAddr()), poolOldToken1Bal + _amount1)
+		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal + _amount0)
+		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal + _amount1)
 	}
 
 	// lp02 mints at unknown position
@@ -296,7 +293,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 			deadline: bigint(1234567890),
 		}
 
-		std.TestSetOrigCaller(GetOrigPkgAddr())
 		shouldPanic(t, func() { DecreaseLiquidity(_decreaseLiquidityParams) })
 	}
 
@@ -317,6 +313,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 	}
 }
 
+
 func TestCollect(t *testing.T) {
 	// lp1 did decrease some liquidity => there is some to collect
 	{
@@ -330,8 +327,8 @@ func TestCollect(t *testing.T) {
 		}
 
 		poolOldLiquidity := pool.GetLiquidity()
-		poolOldToken0Bal := Token0Bal(GetOrigPkgAddr())
-		poolOldToken1Bal := Token1Bal(GetOrigPkgAddr())
+		poolOldToken0Bal := Token0Bal(PoolAddr)
+		poolOldToken1Bal := Token1Bal(PoolAddr)
 
 		rvOldToken0Bal := Token0Bal(rv01)
 		rvOldToken1Bal := Token1Bal(rv01)
@@ -344,8 +341,8 @@ func TestCollect(t *testing.T) {
 		// After Collect
 		// pool's liquidity stays same
 		// pool's balance decreases
-		shouldEQ(t, Token0Bal(GetOrigPkgAddr()), poolOldToken0Bal - _amount0)
-		shouldEQ(t, Token1Bal(GetOrigPkgAddr()), poolOldToken1Bal - _amount1)
+		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal - _amount0)
+		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal - _amount1)
 		shouldEQ(t, pool.GetLiquidity(), poolOldLiquidity)	
 
 		// Recipient balance increases
@@ -365,8 +362,8 @@ func TestCollect(t *testing.T) {
 		}
 
 		poolOldLiquidity := pool.GetLiquidity()
-		poolOldToken0Bal := Token0Bal(GetOrigPkgAddr())
-		poolOldToken1Bal := Token1Bal(GetOrigPkgAddr())
+		poolOldToken0Bal := Token0Bal(PoolAddr)
+		poolOldToken1Bal := Token1Bal(PoolAddr)
 
 		rvOldToken0Bal := Token0Bal(rv01)
 		rvOldToken1Bal := Token1Bal(rv01)
@@ -379,8 +376,8 @@ func TestCollect(t *testing.T) {
 		// After Collect
 		// pool's liquidity stays same
 		// pool's balance decreases
-		shouldEQ(t, Token0Bal(GetOrigPkgAddr()), poolOldToken0Bal - _amount0)
-		shouldEQ(t, Token1Bal(GetOrigPkgAddr()), poolOldToken1Bal - _amount1)
+		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal - _amount0)
+		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal - _amount1)
 		shouldEQ(t, pool.GetLiquidity(), poolOldLiquidity)	
 
 		// Recipient balance increases
@@ -400,8 +397,8 @@ func TestCollect(t *testing.T) {
 		}
 
 		poolOldLiquidity := pool.GetLiquidity()
-		poolOldToken0Bal := Token0Bal(GetOrigPkgAddr())
-		poolOldToken1Bal := Token1Bal(GetOrigPkgAddr())
+		poolOldToken0Bal := Token0Bal(PoolAddr)
+		poolOldToken1Bal := Token1Bal(PoolAddr)
 
 		rvOldToken0Bal := Token0Bal(rv01)
 		rvOldToken1Bal := Token1Bal(rv01)
@@ -416,8 +413,8 @@ func TestCollect(t *testing.T) {
 		// After Collect
 		// pool's liquidity stays same
 		// pool's balance decreases
-		shouldEQ(t, Token0Bal(GetOrigPkgAddr()), poolOldToken0Bal - _amount0)
-		shouldEQ(t, Token1Bal(GetOrigPkgAddr()), poolOldToken1Bal - _amount1)
+		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal - _amount0)
+		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal - _amount1)
 		shouldEQ(t, pool.GetLiquidity(), poolOldLiquidity)	
 
 		// Recipient balance increases
@@ -437,8 +434,8 @@ func TestCollect(t *testing.T) {
 		}
 
 		poolOldLiquidity := pool.GetLiquidity()
-		poolOldToken0Bal := Token0Bal(GetOrigPkgAddr())
-		poolOldToken1Bal := Token1Bal(GetOrigPkgAddr())
+		poolOldToken0Bal := Token0Bal(PoolAddr)
+		poolOldToken1Bal := Token1Bal(PoolAddr)
 
 		rvOldToken0Bal := Token0Bal(rv01)
 		rvOldToken1Bal := Token1Bal(rv01)
@@ -458,7 +455,15 @@ func TestNFTBurn(t *testing.T) {
 		std.TestSetOrigCaller(lp01)
 		
 		_tokenId := bigint(1)
-		_position := positions[string(_tokenId)]
+	
+		_pos, ok := positions.Get(string(_tokenId))
+		var _position Position
+		if ok {
+			_position = _pos.(Position)
+		} else {
+			_position = Position{}
+		}
+		
 		_positionLiquidity := _position.liquidity
 
 		_decreaseLiquidityParams := DecreaseLiquidityParams{
@@ -482,13 +487,57 @@ func TestNFTBurn(t *testing.T) {
 		}
 
 		// collect all owed tokens => nft is burnable and burned
-		// Collect(_collectParams)
-		// shouldPanic(t, func() { burn("1") })
-		_before := NFTBalanceOf(lp01)
-		Collect(_collectParams)
+		_before := NFTBalanceOf(lp01) 
+		Collect(_collectParams) // burn happens here as last step
 		shouldEQ(t, NFTBalanceOf(lp01), _before - bigint(1))
 	}
 
 	// burn non exists nft
 	shouldPanic(t, func() { burn("5") })
+}
+
+
+func shouldEQ(t *testing.T, got, expected interface{}) {
+	if got != expected {
+		t.Errorf("got %v, expected %v", got, expected)
+	}
+}
+
+func shouldNEQ(t *testing.T, got, expected interface{}) {
+	if got == expected {
+		t.Errorf("got %v, didn't expected %v", got, expected)
+	}
+}
+
+func shouldGT(t *testing.T, l, r interface{}) {
+	if !(l < r) {
+		t.Errorf("expected %v < %v", l, r)
+	}
+}
+
+func shouldLT(t *testing.T, l, r interface{}) {
+	if !(l > r) {
+		t.Errorf("expected %v > %v", l, r)
+	}
+}
+
+
+func shouldPanic(t *testing.T, f func()) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic")
+		}
+	}()
+	f()
+}
+
+func isOwner(t *testing.T, tokenId string, addr std.Address) bool {
+	owner := nft.OwnerOf(tid(tokenId))
+
+	if owner == addr {
+		return true
+	}
+
+	t.Errorf("expected owner %v, got %v", addr, owner)
+	return false
 }

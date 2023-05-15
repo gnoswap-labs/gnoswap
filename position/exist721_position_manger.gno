@@ -14,9 +14,13 @@ import (
 var (
 	PoolAddr = pool.GetPoolAddress()
 
-	poolIds         map[std.Address]bigint = make(map[std.Address]bigint)
-	poolIdToPoolKey map[bigint]PoolKey = make(map[bigint]PoolKey)
-	positions       map[string]Position = make(map[string]Position)
+	// poolIds         map[std.Address]bigint = make(map[std.Address]bigint)
+	// poolIdToPoolKey map[bigint]PoolKey = make(map[bigint]PoolKey)
+	// positions       map[string]Position = make(map[string]Position)
+	poolIds 				avl.Tree // poolAddr -> poolId
+	poolIdToPoolKey avl.Tree // poolId -> PoolKey
+	positions				avl.Tree // tokenId -> Position
+
 	nextId          bigint = 1
 	nextPoolId      bigint = 1
 )
@@ -39,32 +43,47 @@ type Position struct {
 	tokensOwed0 bigint
 	tokensOwed1 bigint
 }
-
 func (p Position) isClear() bool {
 	return p.liquidity == 0 && p.tokensOwed0 == 0 && p.tokensOwed1 == 0
 }
 
 
-
 func Positions(tokenId string) (
 	bigint, std.Address, std.Address, std.Address, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint,
 ) {
-	position := positions[tokenId]
+	// position := positions[tokenId]
+	_position, ok := positions.Get(tokenId)
+	var position Position
+	if ok {
+		position = _position.(Position)
+	} else {
+		position = Position{}
+	}
 	require(position.poolId != 0, "Invalid token ID")
-	poolKey := poolIdToPoolKey[position.poolId]
+	// poolKey := poolIdToPoolKey[position.poolId]
+	_poolKey, ok := poolIdToPoolKey.Get(string(position.poolId))
+	var poolKey PoolKey
+	if ok {
+		poolKey = _poolKey.(PoolKey)
+	} else {
+		poolKey = PoolKey{}
+	}
 
 	return position.nonce, position.operator,	poolKey.token0,	poolKey.token1,	poolKey.fee,	position.tickLower,	position.tickUpper,	position.liquidity,	position.feeGrowthInside0LastX128,	position.feeGrowthInside1LastX128,	position.tokensOwed0,	position.tokensOwed1
 }
 
 func CachePoolKey(pool std.Address, poolKey PoolKey) bigint {
-	poolId, ok := poolIds[pool]
-	if !ok {
+	// poolId, ok := poolIds[pool]
+	_poolId, ok := poolIds.Get(string(pool))
+	var poolId bigint
+	if ok {
+		poolId = _poolId.(bigint)
+	} else {
 		poolId = nextPoolId
 		nextPoolId++ // nextPoolId = nextPoolId + 1
-		poolIds[pool] = poolId
-		poolIdToPoolKey[poolId] = poolKey
+		poolIds.Set(string(pool), poolId)
+		poolIdToPoolKey.Set(string(poolId), poolKey)
 	}
-
 	return poolId
 }
 
@@ -94,7 +113,7 @@ func Mint(params MintParams) (string, bigint, bigint, bigint) {
 	// spoof orig caller
 	_orig := GetOrigCaller()
 	std.TestSetOrigCaller(GetOrigPkgAddr())
-	nft.Mint(a2u(_orig), grc721.TokenID(tokenId))
+	nft.Mint(a2u(_orig), grc721.TokenID(tokenId)) // owner, tokenId
 	std.TestSetOrigCaller(_orig)
 
 	positionKey := PositionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
@@ -107,7 +126,20 @@ func Mint(params MintParams) (string, bigint, bigint, bigint) {
 		PoolKey{token0: params.token0, token1: params.token1, fee: params.fee},
 	)
 
-	positions[tokenId] = Position{
+	// positions[tokenId] = Position{
+	// 	nonce: 0,
+	// 	operator: zeroAddress,
+	// 	poolId: poolId,
+	// 	tickLower: params.tickLower,
+	// 	tickUpper: params.tickUpper,
+	// 	liquidity: liquidity,
+	// 	feeGrowthInside0LastX128: feeGrowthInside0LastX128,
+	// 	feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+	// 	tokensOwed0: 0,
+	// 	tokensOwed1: 0,
+	// }
+
+	_pos := Position{
 		nonce: 0,
 		operator: zeroAddress,
 		poolId: poolId,
@@ -119,6 +151,7 @@ func Mint(params MintParams) (string, bigint, bigint, bigint) {
 		tokensOwed0: 0,
 		tokensOwed1: 0,
 	}
+	positions.Set(tokenId, _pos)
 
 	return tokenId, liquidity, amount0, amount1
 }
@@ -131,8 +164,23 @@ func IncreaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 	// verify tokenId
 	require(Exists(string(params.tokenId)), "Invalid token ID")
 
-	position := positions[string(params.tokenId)]
-	poolKey := poolIdToPoolKey[position.poolId]
+	// position := positions[string(params.tokenId)]
+	_position, ok := positions.Get(string(params.tokenId))
+	var position Position
+	if ok {
+		position = _position.(Position)
+	} else {
+		position = Position{}
+	}
+
+	// poolKey := poolIdToPoolKey[position.poolId]
+	_poolKey, ok := poolIdToPoolKey.Get(string(position.poolId))
+	var poolKey PoolKey
+	if ok {
+		poolKey = _poolKey.(PoolKey)
+	} else {
+		poolKey = PoolKey{}
+	}
 
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
@@ -172,12 +220,26 @@ func DecreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	// verify tokenId
 	require(Exists(string(params.tokenId)), "Invalid token ID")
 
-	position := positions[string(params.tokenId)]
+	// position := positions[string(params.tokenId)]
+	_position, ok := positions.Get(string(params.tokenId))
+	var position Position
+	if ok {
+		position = _position.(Position)
+	} else {
+		position = Position{}
+	}
+	
 	positionLiquidity := position.liquidity
 	require(positionLiquidity >= params.liquidity, "Cannot withdraw more liquidity than is in the position")
 
-	poolKey := poolIdToPoolKey[position.poolId]
-	// pool := PoolAddressComputeAddress(factory, poolKey)
+	// poolKey := poolIdToPoolKey[position.poolId]
+	_poolKey, ok := poolIdToPoolKey.Get(string(position.poolId))
+	var poolKey PoolKey
+	if ok {
+		poolKey = _poolKey.(PoolKey)
+	} else {
+		poolKey = PoolKey{}
+	}
 
 	// XXX GetRealmCaller PR is going on
 	// spoof orig caller
@@ -202,7 +264,8 @@ func DecreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	position.liquidity = positionLiquidity - params.liquidity
 	
 	// update position
-	positions[string(params.tokenId)] = position
+	// positions[string(params.tokenId)] = position
+	positions.Set(string(params.tokenId), position)
 
 	return amount0, amount1
 }
@@ -220,9 +283,23 @@ func Collect(params CollectParams) (bigint, bigint) {
 		recipient = params.recipient
 	}
 
-	position := positions[string(params.tokenId)]
-	poolKey := poolIdToPoolKey[position.poolId]
-	// pool := PoolAddressComputeAddress(factory, poolKey)
+	// position := positions[string(params.tokenId)]
+	_position, ok := positions.Get(string(params.tokenId))
+	var position Position
+	if ok {
+		position = _position.(Position)
+	} else {
+		position = Position{}
+	}
+
+	// poolKey := poolIdToPoolKey[position.poolId]
+	_poolKey, ok := poolIdToPoolKey.Get(string(position.poolId))
+	var poolKey PoolKey
+	if ok {
+		poolKey = _poolKey.(PoolKey)
+	} else {
+		poolKey = PoolKey{}
+	}
 
 	tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
 
@@ -273,7 +350,8 @@ func Collect(params CollectParams) (bigint, bigint) {
 	position.tokensOwed0, position.tokensOwed1 = tokensOwed0 - amount0Collect, tokensOwed1 - amount1Collect
 
 	// update position
-	positions[string(params.tokenId)] = position
+	// positions[string(params.tokenId)] = position
+	positions.Set(string(params.tokenId), position)
 
 	// burn nft if position is clear
 	if position.isClear() {
@@ -285,13 +363,23 @@ func Collect(params CollectParams) (bigint, bigint) {
 func burn(tokenId string) {
 	isAuthorizedForToken(tokenId)
 
-	position := positions[tokenId]
+	// position := positions[tokenId]
+	_position, ok := positions.Get(tokenId)
+	var position Position
+	if ok {
+		position = _position.(Position)
+	} else {
+		position = Position{}
+	}
+
 	require(position.isClear(), "Not cleared")
-	delete(positions, tokenId)
+
+	// delete(positions, tokenId)
+	positions.Remove(tokenId)
 
 	// XXX GetRealmCaller PR is going on
 	_orig := std.GetOrigCaller()
-	std.TestSetOrigCaller(std.GetOrigPkgAddr())
+	std.TestSetOrigCaller(GetOrigPkgAddr())
 	nft.Burn(grc721.TokenID(tokenId))
 	std.TestSetOrigCaller(_orig)
 }
