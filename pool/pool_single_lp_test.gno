@@ -111,7 +111,7 @@ func TestBeforeBalance(t* testing.T) {
 func TestMint(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-
+	
 	test_liquidity := GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect)
 
@@ -133,13 +133,13 @@ func TestMint(t *testing.T) {
 	test_liquidity = GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
-	// tickLower > currentTick X
+	// tickLower > currentTick || dont' add to current liquidity
 	Mint(lp01, test_tickLower2, test_tickUpper2, test_liquidityExpect)
 
-	// tickUpper < current tick
+	// tickUpper < current tick || dont' add to current liquidity
 	Mint(lp01, -test_tickUpper2, -test_tickLower2, test_liquidityExpect)
 
-	// tickUpper < current_tick
+	// tickUpper < current_tick || dont' add to current liquidity
 	Mint(lp01, -test_tickUpper, -test_tickLower, test_liquidityExpect)
 
 	test_liquidity = GetLiquidity()

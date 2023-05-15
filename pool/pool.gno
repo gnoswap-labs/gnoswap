@@ -76,9 +76,17 @@ var (
 	protocolFees ProtocolFees
 	liquidity bigint
 
-	ticks map[bigint]TickInfo = make(map[bigint]TickInfo)
-	tickBitmaps map[bigint]bigint = make(map[bigint]bigint)
-	positions map[string]PositionInfo = make(map[string]PositionInfo)
+	
+	// using map
+	// ticks map[bigint]TickInfo = make(map[bigint]TickInfo)
+	// tickBitmaps map[bigint]bigint = make(map[bigint]bigint)
+	// positions map[string]PositionInfo = make(map[string]PositionInfo)
+
+	// NEW
+	// using avl.Tree
+	ticks avl.Tree
+	tickBitmaps avl.Tree
+	positions avl.Tree
 )
 
 func Init(
@@ -210,7 +218,8 @@ func Burn(
 	}
 
 	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
-	positions[key] = position
+	// positions[key] = position
+	positions.Set(key, position)
 	return amount0, amount1
 }
 
@@ -225,7 +234,14 @@ func Collect(
 	requireUnsigned(amount1Requested, "pool.gno__Collect__amount1Requested")
 
 	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
-	position := positions[key]
+	// position := positions[key]
+	_position, exists := positions.Get(key)
+	var position PositionInfo
+	if !exists {
+		panic("position does not exist #1")
+	} else {
+		position = _position.(PositionInfo)
+	}
 
 	var amount0, amount1 bigint
 
@@ -273,7 +289,8 @@ func Collect(
 		// token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
 	}
 
-	positions[key] = position
+	// positions[key] = position
+	positions.Set(key, position)
 
 	return amount0, amount1
 }
@@ -464,7 +481,7 @@ func Swap(
 	_orig := std.GetOrigCaller()
 	if zeroForOne {
 		if amount1 < 0 {
-			std.TestSetOrigCaller(GetOrigPkgAddr())
+			std.TestSetOrigCaller(GetOrigPkgAddr()) // XXX remove std.*
 			bar.Transfer(users.AddressOrName(recipient), uint64(-amount1))
 			std.TestSetOrigCaller(_orig)
 		}
@@ -478,7 +495,7 @@ func Swap(
 		require(balance0Before + bigint(amount0) <= BalanceOf(token0, GetOrigPkgAddr()), "IIA0")
 	} else {
 		if amount0 < 0 {
-			std.TestSetOrigCaller(GetOrigPkgAddr())
+			std.TestSetOrigCaller(GetOrigPkgAddr()) // XXX remove std.*
 			foo.Transfer(users.AddressOrName(recipient), uint64(-amount0))
 			std.TestSetOrigCaller(_orig)
 		}
@@ -687,14 +704,14 @@ func updatePosition(
 		_feeGrowthGlobal0X128,
 		_feeGrowthGlobal1X128,
 	)
-
+	
 	key := PositionGetKey(owner, tickLower, tickUpper)
 	position := PositionUpdateWithKey(
 		key, 
 		liquidityDelta,
 		feeGrowthInside0X128,
 		feeGrowthInside1X128,
-	)
+	)	
 
 	if (liquidityDelta < 0) {
 		if (flippedLower) {
