@@ -77,7 +77,7 @@ func TestGoodScenario(t *testing.T) {
 	bar.Approve(a2u(GetOrigPkgAddr()), 50000000)
 	foo.Approve(a2u(lp), 50000000)
 	bar.Approve(a2u(lp), 50000000)
-
+	
 	// // 2. First Mint by lp
 	std.TestSetOrigCaller(lp)
 	_mintParams := position.MintParams{
@@ -94,6 +94,7 @@ func TestGoodScenario(t *testing.T) {
 		deadline: bigint(1234567890),
 	}
 	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)	
+	// tokenId == 1
 	std.TestSkipTimestamps(1)
 	
 	// 3. Init Incentive Program
@@ -161,7 +162,6 @@ func TestGoodScenario(t *testing.T) {
 	std.TestSetOrigCaller(lp)
 	WithdrawToken(_posTokenId, GetOrigCaller())
 
-
 	// 9. End Incentive Program
 	_refundeeOldBalance := rt.BalanceOf(a2u(rf))
 
@@ -205,6 +205,7 @@ func TestBadScenario(t *testing.T) {
 		deadline: bigint(2345678901),
 	}
 	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	// tokenId == 2
 	
 	// 3. Init Incentive Program
 	// Init(_maxIncentiveStartLeadTime, _maxIncentiveDuration)
