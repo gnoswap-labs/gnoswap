@@ -87,7 +87,36 @@ func CachePoolKey(pool std.Address, poolKey PoolKey) bigint {
 	return poolId
 }
 
-func Mint(params MintParams) (string, bigint, bigint, bigint) {
+func Mint(
+	token0 std.Address,
+	token1 std.Address,
+	fee bigint,
+	tickLower bigint,
+	tickUpper bigint,
+	amount0Desired bigint,
+	amount1Desired bigint,
+	amount0Min bigint,
+	amount1Min bigint,
+	deadline bigint,
+) (string, bigint, bigint, bigint) {
+	mintParams := MintParams{
+		token0: token0,
+		token1: token1,
+		fee: fee,
+		tickLower: tickLower,
+		tickUpper: tickUpper,
+		amount0Desired: amount0Desired,
+		amount1Desired: amount1Desired,
+		amount0Min: amount0Min,
+		amount1Min: amount1Min,
+		deadline: deadline,
+	}
+
+	return mint(mintParams)
+}
+
+
+func mint(params MintParams) (string, bigint, bigint, bigint) {
 	// tokenId, liquidity, amount0, amount1
 
 	checkDeadline(params.deadline);
@@ -157,8 +186,28 @@ func Mint(params MintParams) (string, bigint, bigint, bigint) {
 }
 
 
+func IncreaseLiquidity(
+	tokenId bigint,
+	amount0Desired bigint,
+	amount1Desired bigint,
+	amount0Min bigint,
+	amount1Min bigint,
+	deadline bigint,
+) (bigint, bigint, bigint) {
+	increaseLiquidityParams := IncreaseLiquidityParams{
+		tokenId: tokenId,
+		amount0Desired: amount0Desired,
+		amount1Desired: amount1Desired,
+		amount0Min: amount0Min,
+		amount1Min: amount1Min,
+		deadline: deadline,
+	}
+
+	return increaseLiquidity(increaseLiquidityParams)
+}
+
 // liquidity, amount0, amount1
-func IncreaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) {
+func increaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) {
 	checkDeadline(params.deadline)
 
 	// verify tokenId
@@ -212,7 +261,25 @@ func IncreaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 }
 
 
-func DecreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
+func DecreaseLiquidity(
+	tokenId bigint,
+	liquidity bigint,
+	amount0Min bigint,
+	amount1Min bigint,
+	deadline bigint,
+) (bigint, bigint) {
+	decreaseLiquidityParams := DecreaseLiquidityParams{
+		tokenId: tokenId,
+		liquidity: liquidity,
+		amount0Min: amount0Min,
+		amount1Min: amount1Min,
+		deadline: deadline,
+	}
+
+	return decreaseLiquidity(decreaseLiquidityParams)
+}
+
+func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	isAuthorizedForToken(string(params.tokenId))
 	checkDeadline(params.deadline)
 	require(params.liquidity > 0, "Cannot remove 0 liquidity")
@@ -270,7 +337,24 @@ func DecreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	return amount0, amount1
 }
 
-func Collect(params CollectParams) (bigint, bigint) {
+
+func Collect(
+	tokenId bigint,
+	recipient std.Address,
+	amount0Max bigint,
+	amount1Max bigint,
+) (bigint, bigint) {
+	collectParams := CollectParams{
+		tokenId: tokenId,
+		recipient: recipient,
+		amount0Max: amount0Max,
+		amount1Max: amount1Max,
+	}
+
+	return collect(collectParams)
+}
+
+func collect(params CollectParams) (bigint, bigint) {
 	// amount0, amount1
 
 	isAuthorizedForToken(string(params.tokenId))

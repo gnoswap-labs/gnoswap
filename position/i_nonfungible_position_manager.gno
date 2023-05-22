@@ -29,7 +29,7 @@ type MintParams struct {
 	amount1Desired bigint
 	amount0Min bigint
 	amount1Min bigint
-	recipient std.Address // XXX de facto: hardcoded to nft manager contract address
+	// recipient std.Address // XXX de facto: hardcoded to nft manager contract address
 	deadline bigint
 }
 
