@@ -71,7 +71,7 @@ func Init(
 }
 
 
-func Stakes(
+func findStakes(
 	tokenId string,
 	incentiveId string,
 ) (secondsPerLiquidityInsideInitialX128, liquidity bigint) {
@@ -338,7 +338,7 @@ func unstakeToken(key IncentiveKey, tokenId string) {
 	require(GetTimestamp() >= key.endTime, "GnoswapStaker::UnstakeToken: incentive not ended")
 
 	incentiveId := IncentiveIdCompute(key)
-	secondsPerLiquidityInsideInitialX128, liquidity := Stakes(tokenId, incentiveId)
+	secondsPerLiquidityInsideInitialX128, liquidity := findStakes(tokenId, incentiveId)
 
 	require(liquidity != 0, "GnoswapStaker::UnstakeToken: stake does not exist")
 
@@ -503,7 +503,7 @@ func ClaimReward(to std.Address, amountRequested bigint) (reward bigint) {
 func getRewardInfo(key IncentiveKey, tokenId string) (reward, secondsInsideX128 bigint) {
 	incentiveId := IncentiveIdCompute(key)
 	
-	secondsPerLiquidityInsideInitialX128, liquidity := Stakes(tokenId, incentiveId)
+	secondsPerLiquidityInsideInitialX128, liquidity := findStakes(tokenId, incentiveId)
 	require(liquidity > 0, "GnoswapStaker::getRewardInfo: stake does not exist")
 	
 	// deposit := deposits[tokenId]
@@ -519,7 +519,7 @@ func getRewardInfo(key IncentiveKey, tokenId string) (reward, secondsInsideX128 
 	
 	// (_, secondsPerLiquidityInsideX128, _) := key.pool.snapshotCumulativeInside(deposit.tickLower, deposit.tickUpper)
 	// XXX how many seconds did liquidity was inside
-	secondsPerLiquidityInsideX128 := (bigint(GetTimestamp() + bigint(20))) * Q128
+	secondsPerLiquidityInsideX128 := (bigint(GetTimestamp() + bigint(20))) * Q128 // TMP XXX
 	reward, secondsInsideX128 = RewardMathComputeRewardAmount(
 		incentive.totalRewardUnclaimed,
 		incentive.totalSecondsClaimedX128,
@@ -609,7 +609,7 @@ func stakeToken(key IncentiveKey, tokenId string) {
 	
 	// _, secondsPerLiquidityInsideX128, _ := pool.snapshotCumulativeInside(tickLower, tickUpper)
 	// XXX how many seconds did liquidity was inside initial ( don't add GetTimestamp() )
-	secondsPerLiquidityInsideX128 := bigint(1) * Q128
+	secondsPerLiquidityInsideX128 := bigint(1) * Q128 // TMP XXX
 
 	// var stake Stake
 	// if (liquidity >= MAX_UINT96) {
