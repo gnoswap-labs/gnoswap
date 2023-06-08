@@ -4,84 +4,77 @@ import (
 	"gno.land/p/demo/avl"
 )
 
-
 // Testing
-func GetMaxLiquidityPerTick() bigint {
-	return maxLiquidityPerTick
+func (pool *Pool) GetMaxLiquidityPerTick() bigint {
+	return pool.maxLiquidityPerTick
 }
 
-func GetLiquidity() bigint {
-	return liquidity
+func (pool *Pool) GetLiquidity() bigint {
+	return pool.liquidity
 }
 
-func GetFee() bigint {
-	return fee
+func (pool *Pool) GetFee() bigint {
+	return pool.fee
 }
 
-func GetTickSpacing() bigint {
-	return tickSpacing
+func (pool *Pool) GetTickSpacing() bigint {
+	return pool.tickSpacing
 }
 
-func GetFeeGrowthGlobal0X128() bigint {
-	return feeGrowthGlobal0X128
+func (pool *Pool) GetFeeGrowthGlobal0X128() bigint {
+	return pool.feeGrowthGlobal0X128
 }
 
-func GetFeeGrowthGlobal1X128() bigint {
-	return feeGrowthGlobal1X128
+func (pool *Pool) GetFeeGrowthGlobal1X128() bigint {
+	return pool.feeGrowthGlobal1X128
 }
 
-func GetSlot0() Slot0 {
-	return slot0
+func (pool *Pool) GetSlot0() Slot0 {
+	return pool.slot0
 }
 
-func GetProtocolFees() ProtocolFees {
-	return protocolFees
+func (pool *Pool) GetProtocolFees() ProtocolFees {
+	return pool.protocolFees
 }
 
-func GetPosition(key string) PositionInfo {
-	// return positions[key]
-	position, exists := positions.Get(key).(PositionInfo)
-	if (!exists) {
+func (pool *Pool) GetPosition(key string) PositionInfo {
+	position, exists := pool.positions.Get(key).(PositionInfo)
+	if !exists {
 		panic("position does not exist #3")
 	}
 	return position
 }
 
-// func GetPositions() map[string]PositionInfo {
-func GetPositions() avl.Tree {
-	return positions
+func (pool *Pool) GetPositions() avl.Tree {
+	return pool.positions
 }
 
-func GetTick(key string) TickInfo {
-	// return ticks[key]
-	tick, exists := ticks.Get(key).(TickInfo)
-	if (!exists) {
+func (pool *Pool) GetTick(key string) TickInfo {
+	tick, exists := pool.ticks.Get(key).(TickInfo)
+	if !exists {
 		panic("tick does not exist")
 	}
 	return tick
 }
 
-// func GetTicks() map[bigint]TickInfo {
-func GetTicks() avl.Tree {
-	return ticks
+func (pool *Pool) GetTicks() avl.Tree {
+	return pool.ticks
 }
 
-func GetTickBitmap(key string) bigint {
-	// return tickBitmaps[key]
-	tickBitmap, exists := tickBitmaps.Get(key).(bigint)
-	if (!exists) {
+func (pool *Pool) GetTickBitmap(key string) bigint {
+	tickBitmap, exists := pool.tickBitmaps.Get(key).(bigint)
+	if !exists {
 		panic("tickBitmap does not exist")
 	}
 	return tickBitmap
 }
 
-// func GetTickBitmaps() map[bigint]bigint {
-func GetTickBitmaps() avl.Tree {
-	return tickBitmaps
+func (pool *Pool) GetTickBitmaps() avl.Tree {
+	return pool.tickBitmaps
 }
 
-func GetSqrtPriceX96() bigint {
-	return slot0.sqrtPriceX96
+func (pool *Pool) GetSqrtPriceX96() bigint {
+	return pool.slot0.sqrtPriceX96
 }
 
 func Abs(x bigint) bigint {

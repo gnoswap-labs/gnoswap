@@ -4,12 +4,11 @@ const (
 	MIN_TICK bigint = -887272
 	MAX_TICK bigint = 887272
 
-	MIN_SQRT_RATIO bigint = 4295128739 // same as TickMathGetSqrtRatioAtTick(MIN_TICK)
+	MIN_SQRT_RATIO bigint = 4295128739                                        // same as TickMathGetSqrtRatioAtTick(MIN_TICK)
 	MAX_SQRT_RATIO bigint = 1461446703485210103287273052203988822378723970342 // same as TickMathGetSqrtRatioAtTick(MAX_TICK)
 )
 
-
-func TickMathGetSqrtRatioAtTick(tick bigint) (bigint) {
+func TickMathGetSqrtRatioAtTick(tick bigint) bigint {
 	var absTick bigint
 	if tick < 0 {
 		absTick = -tick
@@ -19,95 +18,93 @@ func TickMathGetSqrtRatioAtTick(tick bigint) (bigint) {
 	require(absTick <= MAX_TICK, "TickMathGetSqrtRatioAtTick__Tick out of range")
 
 	var ratio bigint
-	if absTick & 0x1 != 0 {
+	if absTick&0x1 != 0 {
 		ratio = 0xfffcb933bd6fad37aa2d162d1a594001
 	} else {
 		ratio = 0x100000000000000000000000000000000
 	}
 
-	if (absTick & 0x2 != 0) {
+	if absTick&0x2 != 0 {
 		ratio = (ratio * 0xfff97272373d413259a46990580e213a) >> 128
 	}
-	if (absTick & 0x4 != 0) {
+	if absTick&0x4 != 0 {
 		ratio = (ratio * 0xfff2e50f5f656932ef12357cf3c7fdcc) >> 128
 	}
-	if (absTick & 0x8 != 0) {
+	if absTick&0x8 != 0 {
 		ratio = (ratio * 0xffe5caca7e10e4e61c3624eaa0941cd0) >> 128
 	}
-	if (absTick & 0x10 != 0) {
+	if absTick&0x10 != 0 {
 		ratio = (ratio * 0xffcb9843d60f6159c9db58835c926644) >> 128
 	}
-	if (absTick & 0x20 != 0) {
+	if absTick&0x20 != 0 {
 		ratio = (ratio * 0xff973b41fa98c081472e6896dfb254c0) >> 128
 	}
-	if (absTick & 0x40 != 0) {
+	if absTick&0x40 != 0 {
 		ratio = (ratio * 0xff2ea16466c96a3843ec78b326b52861) >> 128
 	}
-	if (absTick & 0x80 != 0) {
+	if absTick&0x80 != 0 {
 		ratio = (ratio * 0xfe5dee046a99a2a811c461f1969c3053) >> 128
 	}
-	if (absTick & 0x100 != 0) {
+	if absTick&0x100 != 0 {
 		ratio = (ratio * 0xfcbe86c7900a88aedcffc83b479aa3a4) >> 128
 	}
-	if (absTick & 0x200 != 0) {
+	if absTick&0x200 != 0 {
 		ratio = (ratio * 0xf987a7253ac413176f2b074cf7815e54) >> 128
 	}
-	if (absTick & 0x400 != 0) {
+	if absTick&0x400 != 0 {
 		ratio = (ratio * 0xf3392b0822b70005940c7a398e4b70f3) >> 128
 	}
-	if (absTick & 0x800 != 0) {
+	if absTick&0x800 != 0 {
 		ratio = (ratio * 0xe7159475a2c29b7443b29c7fa6e889d9) >> 128
 	}
-	if (absTick & 0x1000 != 0) {
+	if absTick&0x1000 != 0 {
 		ratio = (ratio * 0xd097f3bdfd2022b8845ad8f792aa5825) >> 128
 	}
-	if (absTick & 0x2000 != 0) {
+	if absTick&0x2000 != 0 {
 		ratio = (ratio * 0xa9f746462d870fdf8a65dc1f90e061e5) >> 128
 	}
-	if (absTick & 0x4000 != 0) {
+	if absTick&0x4000 != 0 {
 		ratio = (ratio * 0x70d869a156d2a1b890bb3df62baf32f7) >> 128
 	}
-	if (absTick & 0x8000 != 0) {
+	if absTick&0x8000 != 0 {
 		ratio = (ratio * 0x31be135f97d08fd981231505542fcfa6) >> 128
 	}
-	if (absTick & 0x10000 != 0) {
+	if absTick&0x10000 != 0 {
 		ratio = (ratio * 0x9aa508b5b7a84e1c677de54f3e99bc9) >> 128
 	}
-	if (absTick & 0x20000 != 0) {
+	if absTick&0x20000 != 0 {
 		ratio = (ratio * 0x5d6af8dedb81196699c329225ee604) >> 128
 	}
-	if (absTick & 0x40000 != 0) {
+	if absTick&0x40000 != 0 {
 		ratio = (ratio * 0x2216e584f5fa1ea926041bedfe98) >> 128
 	}
-	if (absTick & 0x80000 != 0) {
+	if absTick&0x80000 != 0 {
 		ratio = (ratio * 0x48a170391f7dc42444e8fa2) >> 128
 	}
 
-	if (tick > 0) {
+	if tick > 0 {
 		ratio = MAX_UINT256 / ratio
 	}
 
 	shiftedRatio := ratio >> 32
 	remainder := ratio % (1 << 32)
-	if (remainder == 0) {
+	if remainder == 0 {
 		return shiftedRatio + 0
 	} else {
 		return shiftedRatio + 1
 	}
 }
 
-
-func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) (bigint) {
+func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) bigint {
 	require(sqrtPriceX96 >= MIN_SQRT_RATIO && sqrtPriceX96 < MAX_SQRT_RATIO, "TickMathGetTickAtSqrtRatio__SqrtRatio out of range")
 	ratio := sqrtPriceX96 << 32
 
 	r := ratio
 	msb := bigint(0)
 
-
 	// array
 	_tv := [8]bigint{
-		0x0, 
+		0x0,
 		0x3,
 		0xF,
 		0xFF,
@@ -116,7 +113,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) (bigint) {
 		0xFFFFFFFFFFFFFFFF,
 		0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
 	}
-	
+
 	for i := 7; i >= 1; i-- {
 		f := gt(r, _tv[i]) << i
 		msb = msb | bigint(f)
@@ -127,10 +124,10 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) (bigint) {
 		msb = msb | bigint(f)
 	}
 
-	if (msb >= 128) {
-		r = ratio >> uint64(msb - 127)
+	if msb >= 128 {
+		r = ratio >> uint64(msb-127)
 	} else {
-		r = ratio << (127 - msb)
+		r = ratio << uint64(127-msb)
 	}
 
 	log_2 := (msb - 128) << 64
@@ -147,7 +144,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) (bigint) {
 		log_2 = log_2 | (f << 50)
 	}
 
-	log_sqrt10001 := log_2 * 255738958999603826347141 
+	log_sqrt10001 := log_2 * 255738958999603826347141
 
 	tickLow := (log_sqrt10001 - 3402992956809132418596140100660247210) >> 128
 	tickHi := (log_sqrt10001 + 291339464771989622907027621153398088495) >> 128
@@ -161,7 +158,6 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) (bigint) {
 
 	return tick
 }
-
 
 func gt(x, y bigint) uint64 {
 	if x > y {

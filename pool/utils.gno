@@ -2,14 +2,10 @@ package gnoswap
 
 import (
 	"std"
+
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
 )
-
-type MapTicks  map[string]map[string]map[int]string
-type MapTickBitmap  map[string]map[string]map[int]string
-type MapPositions  map[string]map[string]map[int]string
-
 
 func BalanceOf(token *grc20.AdminToken, addr std.Address) bigint {
 	balance, err := token.BalanceOf(addr)
@@ -19,10 +15,10 @@ func BalanceOf(token *grc20.AdminToken, addr std.Address) bigint {
 	return bigint(balance)
 }
 
-func PrintUserBalance(name string, target std.Address) {
+func (pool *Pool) PrintUserBalance(name string, target std.Address) {
 	println(name)
-	println(" ㄴToken0:", BalanceOf(token0, target))
-	println(" ㄴToken1:", BalanceOf(token1, target))
+	println(" ㄴToken0:", BalanceOf(pool.token0, target))
+	println(" ㄴToken1:", BalanceOf(pool.token1, target))
 }
 
 func requireUnsigned(x bigint, msg string) {

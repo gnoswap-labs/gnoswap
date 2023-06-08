@@ -4,18 +4,17 @@ import (
 	"std"
 )
 
-
-func GetPoolSlot0SqrtPriceX96() (bigint) {
-	return slot0.sqrtPriceX96
+func (pool *Pool) GetPoolSlot0SqrtPriceX96() bigint {
+	return pool.slot0.sqrtPriceX96
 }
 
-func GetPoolTickSpacing() (bigint) {
-	return tickSpacing
+func (pool *Pool) GetPoolTickSpacing() bigint {
+	return pool.tickSpacing
 }
 
-func GetPoolTickBitmap(x string) bigint {
+func (pool *Pool) GetPoolTickBitmap(x string) bigint {
 	// return tickBitmaps[x]
-	_tb, exists := tickBitmaps.Get(x)
+	_tb, exists := pool.tickBitmaps.Get(x)
 	if exists {
 		return _tb.(bigint)
 	} else {
@@ -23,9 +22,9 @@ func GetPoolTickBitmap(x string) bigint {
 	}
 }
 
-func GetPoolPosition(key string) PositionInfo {
+func (pool *Pool) GetPoolPosition(key string) PositionInfo {
 	// return positions[key]
-	_pos, exists := positions.Get(key)
+	_pos, exists := pool.positions.Get(key)
 	if exists {
 		return _pos.(PositionInfo)
 	} else {
@@ -33,9 +32,9 @@ func GetPoolPosition(key string) PositionInfo {
 	}
 }
 
-func GetPoolPositionFeeGrowthInside0LastX128(key string) bigint {
+func (pool *Pool) GetPoolPositionFeeGrowthInside0LastX128(key string) bigint {
 	// return positions[key].feeGrowthInside0LastX128
-	_posfgi0lx128, exists := positions.Get(key)
+	_posfgi0lx128, exists := pool.positions.Get(key)
 	if exists {
 		return _posfgi0lx128.(PositionInfo).feeGrowthInside0LastX128
 	} else {
@@ -43,9 +42,9 @@ func GetPoolPositionFeeGrowthInside0LastX128(key string) bigint {
 	}
 }
 
-func GetPoolPositionFeeGrowthInside1LastX128(key string) bigint {
+func (pool *Pool) GetPoolPositionFeeGrowthInside1LastX128(key string) bigint {
 	// return positions[key].feeGrowthInside0LastX128
-	_posfgi1lx128, exists := positions.Get(key)
+	_posfgi1lx128, exists := pool.positions.Get(key)
 	if exists {
 		return _posfgi1lx128.(PositionInfo).feeGrowthInside1LastX128
 	} else {
@@ -59,13 +58,13 @@ func GetPoolAddress() std.Address {
 	// XXX return std.GetOrigPkgAddr()
 }
 
-func GetPoolSlot0Tick() (bigint) {
-	return slot0.tick
+func (pool *Pool) GetPoolSlot0Tick() bigint {
+	return pool.slot0.tick
 }
 
-func GetPoolTicks(x string) TickInfo {
+func (pool *Pool) GetPoolTicks(x string) TickInfo {
 	// return ticks[x]
-	_tick, exists := ticks.Get(x)
+	_tick, exists := pool.ticks.Get(x)
 	if exists {
 		return _tick.(TickInfo)
 	} else {
@@ -73,9 +72,9 @@ func GetPoolTicks(x string) TickInfo {
 	}
 }
 
-func GetPoolTickFeeGrowthOutside0X128(x string) bigint {
+func (pool *Pool) GetPoolTickFeeGrowthOutside0X128(x string) bigint {
 	// return ticks[x].feeGrowthOutside0X128
-	_pooltfg0x128, exists := ticks.Get(x)
+	_pooltfg0x128, exists := pool.ticks.Get(x)
 	if exists {
 		return _pooltfg0x128.(TickInfo).feeGrowthOutside0X128
 	} else {
@@ -83,9 +82,9 @@ func GetPoolTickFeeGrowthOutside0X128(x string) bigint {
 	}
 }
 
-func GetPoolTickFeeGrowthOutside1X128(x string) bigint {
+func (pool *Pool) GetPoolTickFeeGrowthOutside1X128(x string) bigint {
 	// return ticks[x].feeGrowthOutside1X128
-	_pooltfg1x128, exists := ticks.Get(x)
+	_pooltfg1x128, exists := pool.ticks.Get(x)
 	if exists {
 		return _pooltfg1x128.(TickInfo).feeGrowthOutside1X128
 	} else {
