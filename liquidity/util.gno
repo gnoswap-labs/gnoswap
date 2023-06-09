@@ -1,8 +1,8 @@
 package liquidity
 
 import (
-	"std"
 	"gno.land/r/demo/users"
+	"std"
 )
 
 func require(condition bool, message string) {
@@ -11,6 +11,6 @@ func require(condition bool, message string) {
 	}
 }
 
-func a2u(addr std.Address) users.AddressOrName {
+func a2aon(addr std.Address) users.AddressOrName {
 	return users.AddressOrName(addr)
 }
