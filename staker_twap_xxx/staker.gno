@@ -2,38 +2,37 @@ package staker
 
 import (
 	"std"
+
 	"gno.land/p/demo/avl"
 
-	rt "gno.land/r/reward" 	// GSR, Gnoswap Staking Reward
-	nft "gno.land/r/foo721" // GNFT, Gnoswap NFT 
+	nft "gno.land/r/foo721" // GNFT, Gnoswap NFT
+	rt "gno.land/r/reward"  // GSR, Gnoswap Staking Reward
 )
 
-
 type Incentive struct {
-	totalRewardUnclaimed bigint
+	totalRewardUnclaimed    bigint
 	totalSecondsClaimedX128 bigint
-	numberOfStakes bigint
+	numberOfStakes          bigint
 }
 
 type Stake struct {
 	secondsPerLiquidityInsideInitialX128 bigint
-	liquidityNoOverflow bigint
-	liquidityIfOverflow bigint
+	liquidityNoOverflow                  bigint
+	liquidityIfOverflow                  bigint
 }
 
 type Deposit struct {
-	owner std.Address
+	owner          std.Address
 	numberOfStakes bigint
-	tickLower bigint
-	tickUpper bigint
+	tickLower      bigint
+	tickUpper      bigint
 }
-
 
 var (
 	factory std.Address
 	// nonfungiblePositionManager interface{}
 	maxIncentiveStartLeadTime bigint
-	maxIncentiveDuration bigint
+	maxIncentiveDuration      bigint
 
 	// incentives map[string]Incentive = make(map[string]Incentive)
 	// deposits map[string]Deposit = make(map[string]Deposit)
@@ -45,31 +44,29 @@ var (
 	// IncentiveKey without rewardsToken
 	// rewards map[std.Address]bigint = make(map[std.Address]bigint)
 
-	incentives avl.Tree	// incentiveId => Incentive
-	deposits avl.Tree		// tokenId => Deposit
-	stakes avl.Tree			// tokenId => avl.Tree{incentiveId => Stake}
-	rewards avl.Tree 		// address => reward
-		
+	incentives avl.Tree // incentiveId => Incentive
+	deposits   avl.Tree // tokenId => Deposit
+	stakes     avl.Tree // tokenId => avl.Tree{incentiveId => Stake}
+	rewards    avl.Tree // address => reward
+
 	initialized bool = false
 )
 
-
 func Init(
-	// _factory std.Address, 
+	// _factory std.Address,
 	// _nonfungiblePositionManager interface{},
 	_maxIncentiveStartLeadTime bigint,
 	_maxIncentiveDuration bigint,
 ) {
 	// factory = _factory
 	// nonfungiblePositionManager = _nonfungiblePositionManager
-	
+
 	// manual init needs
 	require(!initialized, "Already initialized")
 	maxIncentiveStartLeadTime = _maxIncentiveStartLeadTime
 	maxIncentiveDuration = _maxIncentiveDuration
 	initialized = true
 }
-
 
 func findStakes(
 	tokenId string,
@@ -92,10 +89,9 @@ func findStakes(
 		panic("GnoswapStaker::Stakes: tokenId not found")
 	}
 
-
 	secondsPerLiquidityInsideInitialX128 = stake.secondsPerLiquidityInsideInitialX128
 	liquidity = stake.liquidityNoOverflow
-	if (liquidity == MAX_UINT96) {
+	if liquidity == MAX_UINT96 {
 		liquidity = stake.liquidityIfOverflow
 	}
 
@@ -103,7 +99,6 @@ func findStakes(
 	requireUnsigned(liquidity, "GnoswapStaker::Stakes: liquidity is not unsigned")
 	return secondsPerLiquidityInsideInitialX128, liquidity
 }
-
 
 func CreateIncentive(
 	// rewardToken std.Address,
@@ -115,10 +110,10 @@ func CreateIncentive(
 ) {
 	incentiveKey := IncentiveKey{
 		startTime: startTime,
-		endTime: endTime,
-		refundee: refundee,
+		endTime:   endTime,
+		refundee:  refundee,
 	}
-	
+
 	return createIncentive(incentiveKey, reward)
 }
 
@@ -130,15 +125,15 @@ func createIncentive(key IncentiveKey, reward bigint) {
 		"GnoswapStaker::createIncentive: start time must be now or in the future",
 	)
 	require(
-		(key.startTime - GetTimestamp()) <= maxIncentiveStartLeadTime,
+		(key.startTime-GetTimestamp()) <= maxIncentiveStartLeadTime,
 		"GnoswapStaker::createIncentive: start time too far into future",
 	)
 	require(key.startTime < key.endTime, "GnoswapStaker::createIncentive: start time must be before end time")
 	require(
-		(key.endTime - key.startTime) <= maxIncentiveDuration,
+		(key.endTime-key.startTime) <= maxIncentiveDuration,
 		"GnoswapStaker::createIncentive: incentive duration is too long",
 	)
-	
+
 	incentiveId := IncentiveIdCompute(key)
 
 	// _update := incentives[incentiveId]
@@ -159,18 +154,17 @@ func createIncentive(key IncentiveKey, reward bigint) {
 	rt.Transfer(a2u(GetOrigPkgAddr()), uint64(reward))
 }
 
-
 func EndIncentive(
 	// rewardToken std.Address,
 	// pool std.Address,
 	startTime bigint,
 	endTime bigint,
 	refundee std.Address,
-) (bigint) {
+) bigint {
 	incentiveKey := IncentiveKey{
 		startTime: startTime,
-		endTime: endTime,
-		refundee: refundee,
+		endTime:   endTime,
+		refundee:  refundee,
 	}
 
 	return endIncentive(incentiveKey)
@@ -193,8 +187,8 @@ func endIncentive(key IncentiveKey) (refund bigint) {
 
 	require(refund > bigint(0), "GnoswapStaker::endIncentive: no refund available")
 	require(
-			incentive.numberOfStakes == 0,
-			"GnoswapStaker::endIncentive: cannot end incentive while deposits are staked",
+		incentive.numberOfStakes == 0,
+		"GnoswapStaker::endIncentive: cannot end incentive while deposits are staked",
 	)
 
 	// issue refund
@@ -211,7 +205,7 @@ func endIncentive(key IncentiveKey) (refund bigint) {
 
 	// incentives[incentiveId] = _updateIncentive
 	incentives.Set(incentiveId, updateIncentive)
-	
+
 	// XXX
 	// TransferHelperExtended.safeTransfer(std.Address(key.rewardToken), GetOrigCaller(), GetOrigPkgAddr(), refund)
 	_orig := GetOrigCaller()
@@ -222,7 +216,6 @@ func endIncentive(key IncentiveKey) (refund bigint) {
 	requireUnsigned(refund, "GnoswapStaker::endIncentive: refund is not unsigned")
 	return refund
 }
-
 
 func transferDeposit(tokenId string, to std.Address) {
 	require(to != zeroAddress, "GnoswapStaker::transferDeposit: cannot transfer to zero address")
@@ -301,12 +294,11 @@ func StakeToken(
 
 	key := IncentiveKey{
 		startTime: startTime,
-		endTime: endTime,
-		refundee: refundee,
+		endTime:   endTime,
+		refundee:  refundee,
 	}
 	stakeToken(key, tokenId)
 }
-
 
 func UnstakeToken(
 	// rewardToken std.Address,
@@ -318,8 +310,8 @@ func UnstakeToken(
 ) {
 	key := IncentiveKey{
 		startTime: startTime,
-		endTime: endTime,
-		refundee: refundee,
+		endTime:   endTime,
+		refundee:  refundee,
 	}
 	unstakeToken(key, tokenId)
 }
@@ -364,7 +356,6 @@ func unstakeToken(key IncentiveKey, tokenId string) {
 	updateDeposit.numberOfStakes--
 	// deposits[tokenId] = _updateDeposit
 	deposits.Set(tokenId, updateDeposit)
-	
 
 	// _updateIncentive := incentives[incentiveId]
 	_updateIncentive, ok := incentives.Get(incentiveId)
@@ -403,7 +394,7 @@ func unstakeToken(key IncentiveKey, tokenId string) {
 
 	updateIncentive2.totalSecondsClaimedX128 += secondsInsideX128
 
-	if (reward > updateIncentive2.totalRewardUnclaimed) {
+	if reward > updateIncentive2.totalRewardUnclaimed {
 		panic("GnoswapStaker::UnstakeToken: reward > incentive.totalRewardUnclaimed__too much reward")
 	}
 	updateIncentive2.totalRewardUnclaimed -= reward
@@ -422,7 +413,6 @@ func unstakeToken(key IncentiveKey, tokenId string) {
 	rewards2 += reward
 	rewards.Set(string(deposit.owner), rewards2)
 
-
 	// _updateStake := stakes[tokenId][incentiveId]
 	_stakes1, ok := stakes.Get(tokenId)
 	var stake1 avl.Tree
@@ -439,11 +429,11 @@ func unstakeToken(key IncentiveKey, tokenId string) {
 	} else {
 		panic("GnoswapStaker::UnstakeToken: tokenId not found")
 	}
-	
+
 	updateStake.secondsPerLiquidityInsideInitialX128 = bigint(0)
 	updateStake.liquidityNoOverflow = bigint(0)
 
-	if (liquidity >= MAX_UINT96) {
+	if liquidity >= MAX_UINT96 {
 		updateStake.liquidityIfOverflow = bigint(0)
 	}
 
@@ -457,9 +447,7 @@ func unstakeToken(key IncentiveKey, tokenId string) {
 	} else {
 		panic("GnoswapStaker::UnstakeToken: tokenId not found")
 	}
-	
 }
-
 
 func ClaimReward(to std.Address, amountRequested bigint) (reward bigint) {
 	requireUnsigned(amountRequested, "GnoswapStaker::ClaimReward: amountRequested is not unsigned")
@@ -472,7 +460,7 @@ func ClaimReward(to std.Address, amountRequested bigint) (reward bigint) {
 		reward = bigint(0)
 	}
 
-	if (amountRequested != 0 && amountRequested < reward) {
+	if amountRequested != 0 && amountRequested < reward {
 		reward = amountRequested
 	}
 
@@ -496,16 +484,16 @@ func ClaimReward(to std.Address, amountRequested bigint) (reward bigint) {
 	} else {
 		reward2 = bigint(0)
 	}
-	
+
 	requireUnsigned(reward, "GnoswapStaker::ClaimReward: reward is not unsigned")
 }
 
 func getRewardInfo(key IncentiveKey, tokenId string) (reward, secondsInsideX128 bigint) {
 	incentiveId := IncentiveIdCompute(key)
-	
+
 	secondsPerLiquidityInsideInitialX128, liquidity := findStakes(tokenId, incentiveId)
 	require(liquidity > 0, "GnoswapStaker::getRewardInfo: stake does not exist")
-	
+
 	// deposit := deposits[tokenId]
 
 	// incentive := incentives[incentiveId]
@@ -516,7 +504,7 @@ func getRewardInfo(key IncentiveKey, tokenId string) (reward, secondsInsideX128 
 	} else {
 		panic("GnoswapStaker::getRewardInfo: incentive does not exist")
 	}
-	
+
 	// (_, secondsPerLiquidityInsideX128, _) := key.pool.snapshotCumulativeInside(deposit.tickLower, deposit.tickUpper)
 	// XXX how many seconds did liquidity was inside
 	secondsPerLiquidityInsideX128 := (bigint(GetTimestamp() + bigint(20))) * Q128 // TMP XXX
@@ -539,9 +527,9 @@ func getRewardInfo(key IncentiveKey, tokenId string) (reward, secondsInsideX128 
 func stakeToken(key IncentiveKey, tokenId string) {
 	require(GetTimestamp() >= key.startTime, "GnoswapStaker::stakeToken: incentive not started")
 	require(GetTimestamp() < key.endTime, "GnoswapStaker::stakeToken: incentive ended")
-	
+
 	incentiveId := IncentiveIdCompute(key)
-	
+
 	// require(incentives[incentiveId].totalRewardUnclaimed > 0, "GnoswapStaker::stakeToken: non-existent incentive")
 	_incentive, ok := incentives.Get(incentiveId)
 	var incentive Incentive
@@ -552,7 +540,6 @@ func stakeToken(key IncentiveKey, tokenId string) {
 	}
 	require(incentive.totalRewardUnclaimed > 0, "GnoswapStaker::stakeToken: non-existent incentive")
 
-	
 	// if len(stakes) > 0 && stakes[tokenId] != nil && stakes[tokenId][incentiveId].liquidityNoOverflow != 0 {
 	// 	panic("GnoswapStaker::stakeToken: token already staked")
 	// }
@@ -564,12 +551,12 @@ func stakeToken(key IncentiveKey, tokenId string) {
 		if ok2 {
 			nest22 := nest2.(Stake)
 
-			if nest22.liquidityNoOverflow != 0 { 
-				panic("GnoswapStaker::stakeToken: token already staked") 
+			if nest22.liquidityNoOverflow != 0 {
+				panic("GnoswapStaker::stakeToken: token already staked")
 			}
 		}
 	}
-	
+
 	// pool, tickLower, tickUpper, liquidity := NFTPositionInfoGetPositionInfo(
 	// 	factory,
 	// 	nonfungiblePositionManager,
@@ -606,7 +593,7 @@ func stakeToken(key IncentiveKey, tokenId string) {
 	} else {
 		require(incentive.totalRewardUnclaimed > 0, "GnoswapStaker::stakeToken: cannot update non-existent incentive")
 	}
-	
+
 	// _, secondsPerLiquidityInsideX128, _ := pool.snapshotCumulativeInside(tickLower, tickUpper)
 	// XXX how many seconds did liquidity was inside initial ( don't add GetTimestamp() )
 	secondsPerLiquidityInsideX128 := bigint(1) * Q128 // TMP XXX
@@ -636,7 +623,7 @@ func stakeToken(key IncentiveKey, tokenId string) {
 	// }
 
 	var stake Stake
-	if (liquidity >= MAX_UINT96) {
+	if liquidity >= MAX_UINT96 {
 		stake.secondsPerLiquidityInsideInitialX128 = secondsPerLiquidityInsideX128
 		stake.liquidityNoOverflow = MAX_UINT96
 		stake.liquidityIfOverflow = liquidity

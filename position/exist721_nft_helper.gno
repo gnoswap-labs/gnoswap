@@ -2,6 +2,7 @@ package position
 
 import (
 	"std"
+
 	"gno.land/p/demo/grc/grc721"
 
 	nft "gno.land/r/foo721"
@@ -34,9 +35,8 @@ func Exists(tokenId string) bool {
 	return true
 }
 
-
 // Error handling isn't necessary here
-func isApprovedOrOwner(addr std.Address, tokenId string) bool {	
+func isApprovedOrOwner(addr std.Address, tokenId string) bool {
 	tid := grc721.TokenID(tokenId)
 
 	// check owner first
@@ -44,7 +44,7 @@ func isApprovedOrOwner(addr std.Address, tokenId string) bool {
 	if addr == owner {
 		return true
 	}
-		
+
 	// if not owner, check whether approved
 	operator, err := nft.GetApproved(tid)
 	if err != nil {
@@ -54,6 +54,6 @@ func isApprovedOrOwner(addr std.Address, tokenId string) bool {
 	if addr == operator {
 		return true
 	}
-	
+
 	return false
 }

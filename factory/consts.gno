@@ -7,4 +7,3 @@ import (
 const (
 	zeroAddress = std.Address("")
 )
-

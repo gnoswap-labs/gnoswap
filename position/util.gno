@@ -2,6 +2,7 @@ package position
 
 import (
 	"std"
+
 	"gno.land/r/demo/users"
 )
 

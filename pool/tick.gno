@@ -1,9 +1,8 @@
 package gnoswap
 
-
 type TickInfo struct {
 	liquidityGross bigint
-	liquidityNet bigint
+	liquidityNet   bigint
 
 	feeGrowthOutside0X128 bigint
 	feeGrowthOutside1X128 bigint
@@ -11,7 +10,7 @@ type TickInfo struct {
 	tickCumulativeOutside bigint
 
 	secondsPerLiquidityOutsideX128 bigint
-	secondsOutside bigint
+	secondsOutside                 bigint
 
 	initialized bool
 }
@@ -22,8 +21,8 @@ func TickTickSpacingToMaxLiquidityPerTick(tickSpacing bigint) bigint {
 	var numTicks bigint = ((maxTick - minTick) / tickSpacing) + 1
 	requireUnsigned(numTicks, "tick.gno__TickTickSpacingToMaxLiquidityPerTick__numTicks")
 
-	requireUnsigned(MAX_UINT64 / numTicks, "tick.gno__TickTickSpacingToMaxLiquidityPerTick__MAX_UINT64 / numTicks")
-	return  MAX_UINT64 / numTicks
+	requireUnsigned(MAX_UINT64/numTicks, "tick.gno__TickTickSpacingToMaxLiquidityPerTick__MAX_UINT64 / numTicks")
+	return MAX_UINT64 / numTicks
 }
 
 func TickGetFeeGrowthInside(
@@ -39,26 +38,26 @@ func TickGetFeeGrowthInside(
 	// var lower TickInfo = ticks[tickLower]
 	var lower TickInfo
 	_lower, exists := ticks.Get(string(tickLower))
-	if (!exists) {
+	if !exists {
 		lower = TickInfo{}
 		// panic("lower tick does not exist")
 	} else {
 		lower = _lower.(TickInfo)
 	}
-	
+
 	// var upper TickInfo = ticks[tickUpper]
 	var upper TickInfo
 	_upper, exists := ticks.Get(string(tickUpper))
-	if (!exists) {
+	if !exists {
 		upper = TickInfo{}
 		// panic("upper tick does not exist")
 	} else {
 		upper = _upper.(TickInfo)
 	}
-	
+
 	var feeGrowthBelow0X128 bigint
 	var feeGrowthBelow1X128 bigint
-	if (tickCurrent >= tickLower) {
+	if tickCurrent >= tickLower {
 		feeGrowthBelow0X128 = lower.feeGrowthOutside0X128
 		feeGrowthBelow1X128 = lower.feeGrowthOutside1X128
 	} else {
@@ -68,7 +67,7 @@ func TickGetFeeGrowthInside(
 
 	var feeGrowthAbove0X128 bigint
 	var feeGrowthAbove1X128 bigint
-	if (tickCurrent < tickUpper) {
+	if tickCurrent < tickUpper {
 		feeGrowthAbove0X128 = upper.feeGrowthOutside0X128
 		feeGrowthAbove1X128 = upper.feeGrowthOutside1X128
 	} else {
@@ -100,7 +99,7 @@ func TickUpdate(
 	// info := ticks[tick]
 	var info TickInfo
 	_info, exists := ticks.Get(string(tick))
-	if (!exists) {
+	if !exists {
 		info = TickInfo{}
 	} else {
 		info = _info.(TickInfo)
@@ -118,7 +117,7 @@ func TickUpdate(
 			info.feeGrowthOutside1X128 = feeGrowthGlobal1X128
 		}
 
-		info.initialized = true;
+		info.initialized = true
 	}
 
 	info.liquidityGross = liquidityGrossAfter
@@ -139,19 +138,18 @@ func TickClear(tick bigint) {
 	ticks.Remove(string(tick))
 }
 
-
 func TickCross(
 	tick bigint,
 	feeGrowthGlobal0X128 bigint,
 	feeGrowthGlobal1X128 bigint,
-) (bigint) {
+) bigint {
 	requireUnsigned(feeGrowthGlobal0X128, "tick.gno__TickCross__feeGrowthGlobal0X128")
 	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickCross__feeGrowthGlobal1X128")
 
 	// info := ticks[tick]
 	var info TickInfo
 	_info, exists := ticks.Get(string(tick))
-	if (!exists) {
+	if !exists {
 		// XXX panic("tick does not exist")
 		info = TickInfo{}
 	} else {
@@ -162,7 +160,7 @@ func TickCross(
 	info.feeGrowthOutside1X128 = feeGrowthGlobal1X128 - info.feeGrowthOutside1X128
 	// ticks[tick] = info
 	ticks.Set(string(tick), info)
-	
+
 	liquidityNet := info.liquidityNet
 	return liquidityNet
 }

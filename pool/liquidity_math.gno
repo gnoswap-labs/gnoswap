@@ -1,7 +1,5 @@
 package gnoswap
 
-
-
 func LiquidityMathAddDelta(x bigint, y bigint) bigint {
 	if y < 0 {
 		z := x - (-y)

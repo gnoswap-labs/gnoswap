@@ -98,7 +98,6 @@ func TestPositionMint(t *testing.T) {
 	)
 
 	shouldEQ(t, _posTokenId, "1")
-
 }
 
 func TestIncentiveInit(t *testing.T) {

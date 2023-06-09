@@ -1,11 +1,10 @@
 package staker
 
 import (
-	"std"
-	"strings"
-
 	"encoding/base64"
 	"encoding/json"
+	"std"
+	"strings"
 
 	"gno.land/p/demo/avl"
 )

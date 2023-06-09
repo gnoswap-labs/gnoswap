@@ -1,6 +1,5 @@
 package staker
 
-
 func RewardMathComputeRewardAmount(
 	totalRewardUnclaimed bigint,
 	totalSecondsClaimedX128 bigint,
@@ -42,9 +41,9 @@ func RewardMathComputeRewardAmount(
 
 	println()
 	println("secondsInsideX128:", secondsInsideX128)
-	println("secondsInside:", secondsInsideX128 / Q128)
+	println("secondsInside:", secondsInsideX128/Q128)
 	println("totalSecondsUnclaimedX128:", totalSecondsUnclaimedX128)
-	println("totalSecondsUnclaimed:", totalSecondsUnclaimedX128 / Q128)
+	println("totalSecondsUnclaimed:", totalSecondsUnclaimedX128/Q128)
 	println("reward:", reward)
 
 	requireUnsigned(reward, "GnoswapStaker::computeRewardAmount: reward is not unsigned")

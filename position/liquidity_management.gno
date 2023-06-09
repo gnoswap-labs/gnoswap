@@ -2,26 +2,25 @@ package position
 
 import (
 	"std"
+
 	pool "gno.land/r/pool"
 )
 
-
 type AddLiquidityParams struct {
-	token0 std.Address
-	token1 std.Address
-	fee bigint
-	tickLower bigint
-	tickUpper bigint
+	token0         std.Address
+	token1         std.Address
+	fee            bigint
+	tickLower      bigint
+	tickUpper      bigint
 	amount0Desired bigint
 	amount1Desired bigint
-	amount0Min bigint
-	amount1Min bigint
-	recipient std.Address // XXX de facto: hardcoded to nft manager contract address
+	amount0Min     bigint
+	amount1Min     bigint
+	recipient      std.Address // XXX de facto: hardcoded to nft manager contract address
 }
 
-
 func addLiquidity(params AddLiquidityParams) (bigint, bigint, bigint) {
-	poolKey := PoolKey{token0: params.token0, token1: params.token1, fee: params.fee};
+	poolKey := PoolKey{token0: params.token0, token1: params.token1, fee: params.fee}
 	// pool := PoolAddressComputeAddress(factory, poolKey)
 
 	// _slot0 := pool.GetSlot0()
@@ -44,7 +43,7 @@ func addLiquidity(params AddLiquidityParams) (bigint, bigint, bigint) {
 		params.tickUpper,
 		liquidity,
 	)
-	
+
 	require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, "LM_Price Slippage Check")
 
 	return liquidity, amount0, amount1

@@ -1,8 +1,9 @@
 package staker
 
 import (
-	"gno.land/p/demo/avl"
 	"std"
+
+	"gno.land/p/demo/avl"
 
 	nft "gno.land/r/foo721" // GNFT, Gnoswap NFT
 	rt "gno.land/r/reward"  // GSR, Gnoswap Staking Reward

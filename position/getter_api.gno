@@ -1,43 +1,42 @@
 package position
 
 import (
-	"std"
 	"encoding/json"
-	
+	"std"
+
 	nft "gno.land/r/foo721"
 
 	"gno.land/p/demo/avl"
 
-	"gno.land/p/demo/grc/grc721"	
+	"gno.land/p/demo/grc/grc721"
 )
 
 type ApiPoolList struct {
 	Address std.Address
-	Id bigint
+	Id      bigint
 }
 
 type ApiPositionInfo struct {
-	Nonce bigint
-	Operator std.Address
-	PoolId bigint
-	TickLower bigint
-	TickUpper bigint
-	Liquidity bigint
+	Nonce                    bigint
+	Operator                 std.Address
+	PoolId                   bigint
+	TickLower                bigint
+	TickUpper                bigint
+	Liquidity                bigint
 	FeeGrowthInside0LastX128 bigint
 	FeeGrowthInside1LastX128 bigint
-	TokensOwed0 bigint
-	TokensOwed1 bigint
+	TokensOwed0              bigint
+	TokensOwed1              bigint
 }
 
 type ApiBasicInfo struct {
-	Height int64
+	Height    int64
 	Timestamp int64
 }
 
-
 func ApiGetPoolList() string {
 	abi := ApiBasicInfo{
-		Height: GetHeight(),
+		Height:    GetHeight(),
 		Timestamp: int64(GetTimestamp()),
 	}
 	apl := getPoolList()
@@ -45,7 +44,7 @@ func ApiGetPoolList() string {
 	r := struct {
 		ApiBasicInfo
 		PoolList []ApiPoolList
-	} {
+	}{
 		abi,
 		apl,
 	}
@@ -60,7 +59,7 @@ func ApiGetPoolList() string {
 
 func ApiGetPositionList() string {
 	abi := ApiBasicInfo{
-		Height: GetHeight(),
+		Height:    GetHeight(),
 		Timestamp: int64(GetTimestamp()),
 	}
 
@@ -73,7 +72,7 @@ func ApiGetPositionList() string {
 	r := struct {
 		ApiBasicInfo
 		PositionList map[string]ApiPositionInfo
-	} {
+	}{
 		abi,
 		apl,
 	}
@@ -86,16 +85,15 @@ func ApiGetPositionList() string {
 	return string(rr)
 }
 
-
 func getPoolList() []ApiPoolList {
 	poolSize := poolIds.Size()
 	poolList := make([]ApiPoolList, poolSize)
-	
+
 	for i := 0; i < poolSize; i++ {
 		key, value := poolIds.GetByIndex(i)
 		poolList[i] = ApiPoolList{
 			Address: std.Address(key),
-			Id: value.(bigint),
+			Id:      value.(bigint),
 		}
 	}
 
