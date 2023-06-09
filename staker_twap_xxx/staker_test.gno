@@ -4,10 +4,11 @@ import (
 	"std"
 	"testing"
 
+
 	"gno.land/p/demo/testutils"
 
-	"gno.land/r/bar"
 	"gno.land/r/foo"
+	"gno.land/r/bar"
 
 	rt "gno.land/r/reward" // reward Token
 
@@ -15,15 +16,16 @@ import (
 	position "gno.land/r/position"
 )
 
+
 var (
 	_maxIncentiveStartLeadTime bigint = 1000000
-	_maxIncentiveDuration      bigint = 1000000
+	_maxIncentiveDuration bigint = 1000000
 
-	ci = testutils.TestAddress("ci")   // Create Incentive Caller
-	rf = testutils.TestAddress("rf")   // Refundee
-	rc = testutils.TestAddress("rc")   // Recipient
+	ci = testutils.TestAddress("ci") // Create Incentive Caller
+	rf = testutils.TestAddress("rf") // Refundee
+	rc = testutils.TestAddress("rc") // Recipient
 	lp = testutils.TestAddress("lp01") // Liquidity Provider
-	oa = testutils.TestAddress("oa")   // Other Address
+	oa = testutils.TestAddress("oa") // Other Address
 )
 
 func init() {
@@ -61,12 +63,13 @@ func init() {
 // 	println(GetOrigPkgAddr(), "staker contract")
 // }
 
+
 func TestGoodScenario(t *testing.T) {
 	// 1. Pool Init
 	var (
-		_fee         bigint = 3000
+		_fee bigint = 3000
 		_tickSpacing bigint = 10
-		_sqrtPrice   bigint = 130621891405341611593710811006
+		_sqrtPrice bigint = 130621891405341611593710811006
 	)
 	pool.Init(_fee, _tickSpacing, _sqrtPrice)
 	std.TestSetOrigCaller(lp)
@@ -74,7 +77,7 @@ func TestGoodScenario(t *testing.T) {
 	bar.Approve(a2u(GetOrigPkgAddr()), 50000000)
 	foo.Approve(a2u(lp), 50000000)
 	bar.Approve(a2u(lp), 50000000)
-
+	
 	// // 2. First Mint by lp
 	std.TestSetOrigCaller(lp)
 	// _mintParams := position.MintParams{
@@ -90,7 +93,7 @@ func TestGoodScenario(t *testing.T) {
 	// 	recipient: GetOrigPkgAddr(), // always nft manager contract address
 	// 	deadline: bigint(1234567890),
 	// }
-	// _posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	// _posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)	
 	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(
 		std.Address("token0"),
 		std.Address("token1"),
@@ -106,7 +109,7 @@ func TestGoodScenario(t *testing.T) {
 
 	// tokenId == 1
 	std.TestSkipTimestamps(1)
-
+	
 	// 3. Init Incentive Program
 	Init(_maxIncentiveStartLeadTime, _maxIncentiveDuration)
 
@@ -136,10 +139,10 @@ func TestGoodScenario(t *testing.T) {
 		rf,
 		_posTokenId,
 	)
-
+	
 	// 6. Waiting until deadlien(99) and some extra time
 	std.TestSkipTimestamps(140)
-
+	
 	// // 6.1 debug progress
 	// {
 	// 	std.TestSkipTimestamps(20) // little
@@ -149,6 +152,7 @@ func TestGoodScenario(t *testing.T) {
 	// 	println("ㄴ reward:", _littleReward)
 	// 	println("ㄴ secondsInsideX128:", _littleSecondsInsideX128)
 	// 	println("ㄴ secondsInside:", _littleSecondsInsideX128 / Q128)
+		
 
 	// 	std.TestSkipTimestamps(30) // half
 	// 	_halfReward, _halfSecondsInsideX128 := getRewardInfo(_incentiveKey, _posTokenId)
@@ -157,7 +161,7 @@ func TestGoodScenario(t *testing.T) {
 	// 	println("ㄴ reward:", _halfReward)
 	// 	println("ㄴ secondsInsideX128:", _halfSecondsInsideX128)
 	// 	println("ㄴ secondsInside:", _halfSecondsInsideX128 / Q128)
-
+		
 	// 	std.TestSkipTimestamps(60) // after deadline
 	// 	_finReward, _finSecondsInsideX128 := getRewardInfo(_incentiveKey, _posTokenId)
 	// 	println()
@@ -166,6 +170,7 @@ func TestGoodScenario(t *testing.T) {
 	// 	println("ㄴ secondsInsideX128:", _finSecondsInsideX128)
 	// 	println("ㄴ secondsInside:", _finSecondsInsideX128 / Q128)
 	// }
+	
 
 	// 7. Unstake NFT from Incentive Program
 	// UnstakeToken(_incentiveKey, _posTokenId)
@@ -181,7 +186,7 @@ func TestGoodScenario(t *testing.T) {
 	ClaimReward(rf, 100)
 	_newBal := rt.BalanceOf(a2u(rf))
 	shouldEQ(t, _oldBal, bigint(0))
-	shouldEQ(t, _newBal-_oldBal, bigint(100))
+	shouldEQ(t, _newBal - _oldBal, bigint(100))
 
 	// (optional) send to other address
 	ClaimReward(oa, 123456)
@@ -207,6 +212,7 @@ func TestGoodScenario(t *testing.T) {
 	// println("ㄴ after end:", rt.BalanceOf(a2u(rf)))
 	// println()
 }
+
 
 func TestBadScenario(t *testing.T) {
 	// // 1. Pool Init
@@ -251,7 +257,7 @@ func TestBadScenario(t *testing.T) {
 		bigint(2345678901),
 	)
 	// tokenId == 2
-
+	
 	// 3. Init Incentive Program
 	// Init(_maxIncentiveStartLeadTime, _maxIncentiveDuration)
 
@@ -313,11 +319,13 @@ func TestBadScenario(t *testing.T) {
 	})
 }
 
+
 func TestBadInit(t *testing.T) {
 	// should panic Already initialized
 	// Init(_maxIncentiveStartLeadTime, _maxIncentiveDuration)
 	shouldPanic(t, func() { Init(_maxIncentiveStartLeadTime, _maxIncentiveDuration) })
 }
+
 
 func TestBadCreateIncentive(t *testing.T) {
 	{
@@ -333,8 +341,8 @@ func TestBadCreateIncentive(t *testing.T) {
 		// shouldPanic(t, func() { CreateIncentive(_incentiveKey, 0) })
 		shouldPanic(t, func() {
 			CreateIncentive(
-				GetTimestamp()+1,
-				GetTimestamp()+2,
+				GetTimestamp() + 1,
+				GetTimestamp() + 2,
 				rf,
 				0,
 			)
@@ -353,8 +361,8 @@ func TestBadCreateIncentive(t *testing.T) {
 		// shouldPanic(t, func() { CreateIncentive(_incentiveKey, 10000) })
 		shouldPanic(t, func() {
 			CreateIncentive(
-				GetTimestamp()-1,
-				GetTimestamp()+2,
+				GetTimestamp() - 1,
+				GetTimestamp() + 2,
 				rf,
 				10000,
 			)
@@ -373,8 +381,8 @@ func TestBadCreateIncentive(t *testing.T) {
 		// shouldPanic(t, func() { CreateIncentive(_incentiveKey, 10000) })
 		shouldPanic(t, func() {
 			CreateIncentive(
-				GetTimestamp()+1234567890,
-				GetTimestamp()+2345678901,
+				GetTimestamp() + 1234567890,
+				GetTimestamp() + 2345678901,
 				rf,
 				10000,
 			)
@@ -393,8 +401,8 @@ func TestBadCreateIncentive(t *testing.T) {
 		// shouldPanic(t, func() { CreateIncentive(_incentiveKey, 10000) })
 		shouldPanic(t, func() {
 			CreateIncentive(
-				GetTimestamp()+12345,
-				GetTimestamp()+12344,
+				GetTimestamp() + 12345,
+				GetTimestamp() + 12344,
 				rf,
 				10000,
 			)
@@ -413,14 +421,15 @@ func TestBadCreateIncentive(t *testing.T) {
 		// shouldPanic(t, func() { CreateIncentive(_incentiveKey, 10000) })
 		shouldPanic(t, func() {
 			CreateIncentive(
-				GetTimestamp()+1000000,
-				GetTimestamp()+2000001,
+				GetTimestamp() + 1000000,
+				GetTimestamp() + 2000001,
 				rf,
 				10000,
 			)
 		})
 	}
 }
+
 
 func TestBadStakeToken(t *testing.T) {
 	// ready
@@ -447,7 +456,7 @@ func TestBadStakeToken(t *testing.T) {
 	// CreateIncentive(_incentiveKey, 10000)
 	CreateIncentive(
 		GetTimestamp(),
-		GetTimestamp()+88,
+		GetTimestamp() + 88,
 		rf,
 		10000,
 	)
@@ -466,7 +475,7 @@ func TestBadStakeToken(t *testing.T) {
 		bigint(1),
 		bigint(2345678901),
 	)
-
+	
 	{
 		// should panic only owner can stake token
 		std.TestSetOrigCaller(oa)
@@ -475,7 +484,7 @@ func TestBadStakeToken(t *testing.T) {
 		shouldPanic(t, func() {
 			StakeToken(
 				GetTimestamp(),
-				GetTimestamp()+88,
+				GetTimestamp() + 88,
 				rf,
 				_posTokenId,
 			)
@@ -491,7 +500,7 @@ func TestBadStakeToken(t *testing.T) {
 		shouldPanic(t, func() {
 			StakeToken(
 				GetTimestamp(),
-				GetTimestamp()+88,
+				GetTimestamp() + 88,
 				rf,
 				_posTokenId,
 			)
@@ -507,7 +516,7 @@ func TestBadStakeToken(t *testing.T) {
 		shouldPanic(t, func() {
 			StakeToken(
 				GetTimestamp(),
-				GetTimestamp()+88,
+				GetTimestamp() + 88,
 				rf,
 				_posTokenId,
 			)
@@ -535,7 +544,7 @@ func TestBadStakeToken(t *testing.T) {
 		shouldPanic(t, func() {
 			StakeToken(
 				GetTimestamp(),
-				GetTimestamp()+88,
+				GetTimestamp() + 88,
 				rf,
 				_posTokenId,
 			)
@@ -556,7 +565,7 @@ func TestBadStakeToken(t *testing.T) {
 		// StakeToken(_incentiveKey, _posTokenId)
 		StakeToken(
 			GetTimestamp(),
-			GetTimestamp()+88,
+			GetTimestamp() + 88,
 			rf,
 			_posTokenId,
 		)
@@ -566,26 +575,27 @@ func TestBadStakeToken(t *testing.T) {
 		shouldPanic(t, func() {
 			StakeToken(
 				GetTimestamp(),
-				GetTimestamp()+88,
+				GetTimestamp() + 88,
 				rf,
 				_posTokenId,
 			)
 		})
 	}
-
+	
 	{
 		// should panic cannot stake token with 0 liquidity
-		// XXX
+		// XXX 
 	}
 }
+
 
 func TestBadUnstakeToken(t *testing.T) {
 	// tid 3 is staked with lp as owner
 	// ready
 	_incentiveKey := IncentiveKey{
 		startTime: GetTimestamp(),
-		endTime:   GetTimestamp() + 88,
-		refundee:  rf,
+		endTime: GetTimestamp() + 88,
+		refundee: rf,
 	}
 
 	{
@@ -596,7 +606,7 @@ func TestBadUnstakeToken(t *testing.T) {
 		shouldPanic(t, func() {
 			UnstakeToken(
 				GetTimestamp(),
-				GetTimestamp()+88,
+				GetTimestamp() + 88,
 				rf,
 				"3",
 			)
@@ -609,8 +619,8 @@ func TestBadUnstakeToken(t *testing.T) {
 		std.TestSkipTimestamps(100)
 		// UnstakeToken(_incentiveKey, "3")
 		UnstakeToken(
-			GetTimestamp()-100,
-			GetTimestamp()+88-100,
+			GetTimestamp() - 100,
+			GetTimestamp() + 88 - 100,
 			rf,
 			"3",
 		)
@@ -619,8 +629,8 @@ func TestBadUnstakeToken(t *testing.T) {
 		// shouldPanic(t, func() { UnstakeToken(_incentiveKey, "3") })
 		shouldPanic(t, func() {
 			UnstakeToken(
-				GetTimestamp()-100,
-				GetTimestamp()+88-100,
+				GetTimestamp() - 100,
+				GetTimestamp() + 88 - 100,
 				rf,
 				"3",
 			)
@@ -654,7 +664,7 @@ func TestBadWithdrawToken(t *testing.T) {
 	// CreateIncentive(_incentiveKey, 10000)
 	CreateIncentive(
 		GetTimestamp(),
-		GetTimestamp()+88,
+		GetTimestamp() + 88,
 		rf,
 		10000,
 	)
@@ -679,10 +689,11 @@ func TestBadWithdrawToken(t *testing.T) {
 	// StakeToken(_incentiveKey, _posTokenId)
 	StakeToken(
 		GetTimestamp(),
-		GetTimestamp()+88,
+		GetTimestamp() + 88,
 		rf,
 		_posTokenId,
 	)
+
 
 	{
 		// should panic cannot withdraw to staker
@@ -704,17 +715,18 @@ func TestBadWithdrawToken(t *testing.T) {
 		std.TestSkipTimestamps(100)
 		// UnstakeToken(_incentiveKey, "4")
 		UnstakeToken(
-			GetTimestamp()-100,
-			GetTimestamp()+88-100,
+			GetTimestamp() - 100,
+			GetTimestamp() + 88 - 100,
 			rf,
 			"4",
 		)
-
+		
 		std.TestSetOrigCaller(oa)
 		// WithdrawToken("4", oa)
 		shouldPanic(t, func() { WithdrawToken("4", oa) })
 	}
 }
+
 
 func TestBadEndIncentive(t *testing.T) {
 	// ready
@@ -742,7 +754,7 @@ func TestBadEndIncentive(t *testing.T) {
 	// CreateIncentive(_incentiveKey, 10000)
 	CreateIncentive(
 		GetTimestamp(),
-		GetTimestamp()+88,
+		GetTimestamp() + 88,
 		rf,
 		10000,
 	)
@@ -762,12 +774,13 @@ func TestBadEndIncentive(t *testing.T) {
 		bigint(2345678901),
 	)
 
+
 	// stake
 	std.TestSetOrigCaller(lp)
 	// StakeToken(_incentiveKey, _posTokenId)
 	StakeToken(
 		GetTimestamp(),
-		GetTimestamp()+88,
+		GetTimestamp() + 88,
 		rf,
 		_posTokenId,
 	)
@@ -779,11 +792,11 @@ func TestBadEndIncentive(t *testing.T) {
 		shouldPanic(t, func() {
 			EndIncentive(
 				GetTimestamp(),
-				GetTimestamp()+88,
+				GetTimestamp() + 88,
 				rf,
 			)
 		})
-
+		
 		std.TestSkipTimestamps(200)
 	}
 
@@ -794,15 +807,15 @@ func TestBadEndIncentive(t *testing.T) {
 		// shouldPanic(t, func() { EndIncentive(_incentiveKey) })
 		shouldPanic(t, func() {
 			EndIncentive(
-				GetTimestamp()-200,
-				GetTimestamp()+88-200,
+				GetTimestamp() - 200,
+				GetTimestamp() + 88 - 200,
 				rf,
 			)
 		})
 		// UnstakeToken(_incentiveKey, "5")
 		UnstakeToken(
-			GetTimestamp()-200,
-			GetTimestamp()+88-200,
+			GetTimestamp() - 200,
+			GetTimestamp() + 88 - 200,
 			rf,
 			"5",
 		)
@@ -813,15 +826,15 @@ func TestBadEndIncentive(t *testing.T) {
 		std.TestSetOrigCaller(GetOrigPkgAddr())
 		// EndIncentive(_incentiveKey)
 		EndIncentive(
-			GetTimestamp()-200,
-			GetTimestamp()+88-200,
+			GetTimestamp() - 200,
+			GetTimestamp() + 88 - 200,
 			rf,
 		)
 		// shouldPanic(t, func() { EndIncentive(_incentiveKey) })
 		shouldPanic(t, func() {
 			EndIncentive(
-				GetTimestamp()-200,
-				GetTimestamp()+88-200,
+				GetTimestamp() - 200,
+				GetTimestamp() + 88 - 200,
 				rf,
 			)
 		})
@@ -837,12 +850,14 @@ func TestBadEndIncentive(t *testing.T) {
 	// shouldPanic(t, func() { EndIncentive(_NonIncentiveKey) })
 	shouldPanic(t, func() {
 		EndIncentive(
-			GetTimestamp()+123,
-			GetTimestamp()+678,
+			GetTimestamp() + 123,
+			GetTimestamp() + 678,
 			oa,
 		)
 	})
 }
+
+
 
 // helper
 func shouldEQ(t *testing.T, got, expected interface{}) {
