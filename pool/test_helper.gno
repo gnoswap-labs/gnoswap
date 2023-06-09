@@ -4,7 +4,6 @@ import (
 	"testing"
 )
 
-
 func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {
 		t.Errorf("got %v, expected %v", got, expected)
@@ -29,7 +28,6 @@ func shouldLT(t *testing.T, l, r interface{}) {
 	}
 }
 
-
 func shouldPanic(t *testing.T, f func()) {
 	defer func() {
 		if r := recover(); r == nil {
@@ -38,7 +36,6 @@ func shouldPanic(t *testing.T, f func()) {
 	}()
 	f()
 }
-
 
 // Testing
 func GetMaxLiquidityPerTick() bigint {
