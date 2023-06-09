@@ -1,56 +1,58 @@
 package staker
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"std"
 	"strings"
+
+	"encoding/json"
+	"encoding/base64"
 
 	"gno.land/p/demo/avl"
 )
 
+
 type ApiIncentivesInfo struct {
-	Key                     string
-	StartTime               bigint
-	EndTime                 bigint
-	Refundee                std.Address
-	TotalRewardUnclaimed    bigint
+	Key string
+	StartTime bigint
+	EndTime bigint
+	Refundee std.Address
+	TotalRewardUnclaimed bigint
 	TotalSecondsClaimedX128 bigint
-	NumberOfStakes          bigint
+	NumberOfStakes bigint
 }
 
 type ApiDepositsInfo struct {
-	TokenId        string
-	Owner          std.Address
+	TokenId string
+	Owner std.Address
 	NumberOfStakes bigint
-	TickLower      bigint
-	TickUpper      bigint
+	TickLower bigint
+	TickUpper bigint
 }
 
 type ApiStakesInfo struct {
-	TokenID                              string
-	IncentiveID                          string
-	StartTime                            bigint
-	EndTime                              bigint
-	Refundee                             std.Address
+	TokenID string
+	IncentiveID string
+	StartTime bigint
+	EndTime bigint
+	Refundee std.Address
 	SecondsPerLiquidityInsideInitialX128 bigint
-	LiquidityNoOverflow                  bigint
-	LiquidityIfOverflow                  bigint
+	LiquidityNoOverflow bigint
+	LiquidityIfOverflow bigint
 }
 
 type ApiRewardInfo struct {
 	Address std.Address
-	Reward  bigint
+	Reward bigint
 }
 
 type ApiBasicInfo struct {
-	Height    int64
+	Height int64
 	Timestamp int64
 }
 
 func ApiGetIncentivesInfo() string {
 	abi := ApiBasicInfo{
-		Height:    GetHeight(),
+		Height: GetHeight(),
 		Timestamp: int64(GetTimestamp()),
 	}
 
@@ -59,7 +61,7 @@ func ApiGetIncentivesInfo() string {
 	r := struct {
 		ApiBasicInfo
 		IncentivesList []ApiIncentivesInfo
-	}{
+	} {
 		abi,
 		aii,
 	}
@@ -74,7 +76,7 @@ func ApiGetIncentivesInfo() string {
 
 func ApiGetDepositsInfo() string {
 	abi := ApiBasicInfo{
-		Height:    GetHeight(),
+		Height: GetHeight(),
 		Timestamp: int64(GetTimestamp()),
 	}
 
@@ -83,7 +85,7 @@ func ApiGetDepositsInfo() string {
 	r := struct {
 		ApiBasicInfo
 		DepositsList []ApiDepositsInfo
-	}{
+	} {
 		abi,
 		adi,
 	}
@@ -98,7 +100,7 @@ func ApiGetDepositsInfo() string {
 
 func ApiGetStakesInfo() string {
 	abi := ApiBasicInfo{
-		Height:    GetHeight(),
+		Height: GetHeight(),
 		Timestamp: int64(GetTimestamp()),
 	}
 
@@ -107,7 +109,7 @@ func ApiGetStakesInfo() string {
 	r := struct {
 		ApiBasicInfo
 		StakesList []ApiStakesInfo
-	}{
+	} {
 		abi,
 		asi,
 	}
@@ -122,7 +124,7 @@ func ApiGetStakesInfo() string {
 
 func ApiGetRewardInfo() string {
 	abi := ApiBasicInfo{
-		Height:    GetHeight(),
+		Height: GetHeight(),
 		Timestamp: int64(GetTimestamp()),
 	}
 
@@ -131,7 +133,7 @@ func ApiGetRewardInfo() string {
 	r := struct {
 		ApiBasicInfo
 		RewardList []ApiRewardInfo
-	}{
+	} {
 		abi,
 		ari,
 	}
@@ -143,6 +145,9 @@ func ApiGetRewardInfo() string {
 
 	return string(rr)
 }
+
+
+
 
 func getIncentivesList() []ApiIncentivesInfo {
 	incentivesSize := incentives.Size()
@@ -160,13 +165,13 @@ func getIncentivesList() []ApiIncentivesInfo {
 		splitKey := strings.Split(origKey, "__")
 
 		incentivesList[i] = ApiIncentivesInfo{
-			Key:                     key,
-			StartTime:               bigint(splitKey[0]),
-			EndTime:                 bigint(splitKey[1]),
-			Refundee:                std.Address(splitKey[2]),
-			TotalRewardUnclaimed:    value.(Incentive).totalRewardUnclaimed,
+			Key: key,
+			StartTime: bigint(splitKey[0]),
+			EndTime: bigint(splitKey[1]),
+			Refundee: std.Address(splitKey[2]),
+			TotalRewardUnclaimed: value.(Incentive).totalRewardUnclaimed,
 			TotalSecondsClaimedX128: value.(Incentive).totalSecondsClaimedX128,
-			NumberOfStakes:          value.(Incentive).numberOfStakes,
+			NumberOfStakes: value.(Incentive).numberOfStakes,
 		}
 	}
 
@@ -181,11 +186,11 @@ func getDepositsList() []ApiDepositsInfo {
 		key, value := deposits.GetByIndex(i)
 		val := value.(Deposit)
 		depositsList[i] = ApiDepositsInfo{
-			TokenId:        string(key),
-			Owner:          std.Address(val.owner),
+			TokenId: string(key),
+			Owner: std.Address(val.owner),
 			NumberOfStakes: val.numberOfStakes,
-			TickLower:      val.tickLower,
-			TickUpper:      val.tickUpper,
+			TickLower: val.tickLower,
+			TickUpper: val.tickUpper,
 		}
 	}
 
@@ -215,7 +220,7 @@ func getStakesList() []ApiStakesInfo {
 
 		for k := 0; k < inner.Size(); k++ {
 			fk, fv := inner.GetByIndex(k)
-
+			
 			// decode key
 			decoded, err := base64.StdEncoding.DecodeString(fk)
 			if err != nil {
@@ -228,14 +233,14 @@ func getStakesList() []ApiStakesInfo {
 			sfv := fv.(Stake)
 
 			stakesList[k] = ApiStakesInfo{
-				TokenID:                              string(tid),
-				IncentiveID:                          fk,
-				StartTime:                            bigint(splitKey[0]),
-				EndTime:                              bigint(splitKey[1]),
-				Refundee:                             std.Address(splitKey[2]),
+				TokenID: string(tid),
+				IncentiveID: fk,
+				StartTime: bigint(splitKey[0]),
+				EndTime: bigint(splitKey[1]),
+				Refundee: std.Address(splitKey[2]),
 				SecondsPerLiquidityInsideInitialX128: sfv.secondsPerLiquidityInsideInitialX128,
-				LiquidityNoOverflow:                  sfv.liquidityNoOverflow,
-				LiquidityIfOverflow:                  sfv.liquidityIfOverflow,
+				LiquidityNoOverflow: sfv.liquidityNoOverflow,
+				LiquidityIfOverflow: sfv.liquidityIfOverflow,
 			}
 		}
 	}
@@ -249,10 +254,10 @@ func getRewardList() []ApiRewardInfo {
 
 	for i := 0; i < rewardSize; i++ {
 		key, value := rewards.GetByIndex(i)
-
+		
 		rewardList[i] = ApiRewardInfo{
 			Address: std.Address(key),
-			Reward:  value.(bigint),
+			Reward: value.(bigint),
 		}
 	}
 
