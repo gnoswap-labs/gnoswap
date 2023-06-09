@@ -36,8 +36,25 @@ func TickGetFeeGrowthInside(
 	requireUnsigned(feeGrowthGlobal0X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthGlobal0X128")
 	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthGlobal1X128")
 
-	var lower TickInfo = ticks[tickLower]
-	var upper TickInfo = ticks[tickUpper]
+	// var lower TickInfo = ticks[tickLower]
+	var lower TickInfo
+	_lower, exists := ticks.Get(string(tickLower))
+	if (!exists) {
+		lower = TickInfo{}
+		// panic("lower tick does not exist")
+	} else {
+		lower = _lower.(TickInfo)
+	}
+	
+	// var upper TickInfo = ticks[tickUpper]
+	var upper TickInfo
+	_upper, exists := ticks.Get(string(tickUpper))
+	if (!exists) {
+		upper = TickInfo{}
+		// panic("upper tick does not exist")
+	} else {
+		upper = _upper.(TickInfo)
+	}
 	
 	var feeGrowthBelow0X128 bigint
 	var feeGrowthBelow1X128 bigint
@@ -80,8 +97,14 @@ func TickUpdate(
 	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickUpdate__feeGrowthGlobal1X128")
 	requireUnsigned(maxLiquidity, "tick.gno__TickUpdate__maxLiquidity")
 
-	info := ticks[tick]
-	
+	// info := ticks[tick]
+	var info TickInfo
+	_info, exists := ticks.Get(string(tick))
+	if (!exists) {
+		info = TickInfo{}
+	} else {
+		info = _info.(TickInfo)
+	}
 	liquidityGrossBefore := info.liquidityGross
 
 	liquidityGrossAfter := LiquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
@@ -106,12 +129,14 @@ func TickUpdate(
 		info.liquidityNet += liquidityDelta
 	}
 
-	ticks[tick] = info
+	// ticks[tick] = info
+	ticks.Set(string(tick), info)
 	return flipped
 }
 
 func TickClear(tick bigint) {
-	delete(ticks, tick)
+	// delete(ticks, tick)
+	ticks.Remove(string(tick))
 }
 
 
@@ -123,11 +148,21 @@ func TickCross(
 	requireUnsigned(feeGrowthGlobal0X128, "tick.gno__TickCross__feeGrowthGlobal0X128")
 	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickCross__feeGrowthGlobal1X128")
 
-	info := ticks[tick]
+	// info := ticks[tick]
+	var info TickInfo
+	_info, exists := ticks.Get(string(tick))
+	if (!exists) {
+		// XXX panic("tick does not exist")
+		info = TickInfo{}
+	} else {
+		info = _info.(TickInfo)
+	}
 
 	info.feeGrowthOutside0X128 = feeGrowthGlobal0X128 - info.feeGrowthOutside0X128
 	info.feeGrowthOutside1X128 = feeGrowthGlobal1X128 - info.feeGrowthOutside1X128
-	ticks[tick] = info
+	// ticks[tick] = info
+	ticks.Set(string(tick), info)
+	
 	liquidityNet := info.liquidityNet
 	return liquidityNet
 }

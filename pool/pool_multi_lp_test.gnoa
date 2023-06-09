@@ -124,7 +124,7 @@ func TestInit(t *testing.T) {
 		test_fee bigint = 3000
 
 		test_tickSpacing bigint = 10
-		test_sqrtPrice bigint = 130621891405341611593710811006 // tick = 10000
+		test_sqrtPrice bigint = 130621891405341611593710811006 // tick = 10_000
 	)
 	Init(
 		test_fee, 
@@ -193,18 +193,24 @@ func TestMint(t *testing.T) {
 	shouldEQ(t, m2, m12)
 
 	test_liquidity = GetLiquidity()
-	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
+	shouldEQ(t, test_liquidity, test_liquidityExpect * 10)
 
-	// tickLower > currentTick X
+	// tickLower > currentTick == don't add to current liquidity
+	// 50_000
+	// 100_000
 	Mint(lp01, test_tickLower2, test_tickUpper2, test_liquidityExpect)
 
-	// tickUpper < current tick
+	// tickUpper < current tick == don't add to current liquidity
+	// -100_000
+	// -50_000
 	Mint(lp01, -test_tickUpper2, -test_tickLower2, test_liquidityExpect)
 
-	// tickUpper < current_tick
+	// // tickUpper < tickLower == don't add to current liquidity
+	// // -11_000
+	// // -9_000
 	Mint(lp01, -test_tickUpper, -test_tickLower, test_liquidityExpect)
 
-	test_liquidity = GetLiquidity()
+	// test_liquidity = GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
 	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
