@@ -90,14 +90,14 @@ func _getFeeGrowthInside(
 	// tickCurrent := _pool.tickCurrent
 	tickCurrent := pool.GetPoolSlot0Tick()
 
-	_poolTickLower := pool.GetPoolTicks(tickLower)
-	_poolTickUpper := pool.GetPoolTicks(tickUpper)
+	_poolTickLower := pool.GetPoolTicks(string(tickLower))
+	_poolTickUpper := pool.GetPoolTicks(string(tickUpper))
 
 	// lowerFeeGrowthOutSide0X128, lowerFeeGrowthOutSide1X128 := pool.GetPoolTickFeeGrowthOutside0X128(tickLower), _poolTickLower.feeGrowthOutside1X128
 	// upperFeeGrowthOutSide0X128, upperFeeGrowthOutSide1X128 := _poolTickUpper.feeGrowthOutside0X128, _poolTickUpper.feeGrowthOutside1X128
 
-	lowerFeeGrowthOutSide0X128, lowerFeeGrowthOutSide1X128 := pool.GetPoolTickFeeGrowthOutside0X128(tickLower), pool.GetPoolTickFeeGrowthOutside1X128(tickLower)
-	upperFeeGrowthOutSide0X128, upperFeeGrowthOutSide1X128 := pool.GetPoolTickFeeGrowthOutside0X128(tickUpper), pool.GetPoolTickFeeGrowthOutside1X128(tickUpper)
+	lowerFeeGrowthOutSide0X128, lowerFeeGrowthOutSide1X128 := pool.GetPoolTickFeeGrowthOutside0X128(string(tickLower)), pool.GetPoolTickFeeGrowthOutside1X128(string(tickLower))
+	upperFeeGrowthOutSide0X128, upperFeeGrowthOutSide1X128 := pool.GetPoolTickFeeGrowthOutside0X128(string(tickUpper)), pool.GetPoolTickFeeGrowthOutside1X128(string(tickUpper))
 
 	var feeGrowthInside0X128, feeGrowthInside1X128 bigint
 	if (tickCurrent < tickLower) {
@@ -115,5 +115,7 @@ func _getFeeGrowthInside(
 		feeGrowthInside1X128 = upperFeeGrowthOutSide1X128 - lowerFeeGrowthOutSide1X128
 	}
 
+	return feeGrowthInside0X128, feeGrowthInside1X128
+}
 	return feeGrowthInside0X128, feeGrowthInside1X128
 }
