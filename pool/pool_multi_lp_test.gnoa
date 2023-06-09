@@ -1,15 +1,15 @@
 package gnoswap
 
 import (
-	"std"
 	"math"
-	
+	"std"
 	"testing"
+
 	"gno.land/p/demo/testutils"
 	"gno.land/r/demo/users"
 
-	"gno.land/r/foo"
 	"gno.land/r/bar"
+	"gno.land/r/foo"
 )
 
 var (
@@ -19,15 +19,14 @@ var (
 	lp04 = testutils.TestAddress("lp04") // Liquidity Provider 04
 	lp05 = testutils.TestAddress("lp05") // Liquidity Provider 05
 
-	sp01 = testutils.TestAddress("sp01") // Swap Executor 01
-	po01 = testutils.TestAddress("po01") // Pool Owner 01
+	sp01  = testutils.TestAddress("sp01")  // Swap Executor 01
+	po01  = testutils.TestAddress("po01")  // Pool Owner 01
 	admin = testutils.TestAddress("admin") // Admin
 
 	rv01 = testutils.TestAddress("rv01") // Receiver 01
 	rv02 = testutils.TestAddress("rv02") // Receiver 02
 	rv03 = testutils.TestAddress("rv03") // Receiver 03
 )
-
 
 func init() {
 	std.TestSetOrigCaller(lp01)
@@ -104,17 +103,15 @@ func init() {
 	std.TestSetOrigCaller(admin)
 }
 
-
 var (
 	// Common
-	test_tickLower bigint = 9000
-	test_tickUpper bigint = 11000
+	test_tickLower       bigint = 9000
+	test_tickUpper       bigint = 11000
 	test_liquidityExpect bigint = 1000
 
 	test_tickLower2 bigint = 50000
 	test_tickUpper2 bigint = 100000
 )
-
 
 func TestInit(t *testing.T) {
 	var (
@@ -124,12 +121,12 @@ func TestInit(t *testing.T) {
 		test_fee bigint = 3000
 
 		test_tickSpacing bigint = 10
-		test_sqrtPrice bigint = 130621891405341611593710811006 // tick = 10_000
+		test_sqrtPrice   bigint = 130621891405341611593710811006 // tick = 10_000
 	)
 	Init(
-		test_fee, 
-		test_tickSpacing, 
-		test_sqrtPrice, 
+		test_fee,
+		test_tickSpacing,
+		test_sqrtPrice,
 	)
 
 	std.TestSetOrigCaller(lp01)
@@ -169,7 +166,6 @@ func TestInit(t *testing.T) {
 	bar.Approve(users.AddressOrName(sp01), 50000000)
 }
 
-
 func TestMint(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
@@ -193,7 +189,7 @@ func TestMint(t *testing.T) {
 	shouldEQ(t, m2, m12)
 
 	test_liquidity = GetLiquidity()
-	shouldEQ(t, test_liquidity, test_liquidityExpect * 10)
+	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
 	// tickLower > currentTick == don't add to current liquidity
 	// 50_000
@@ -224,9 +220,8 @@ func TestMint(t *testing.T) {
 	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
 	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
 	test_liquidity = GetLiquidity()
-	shouldEQ(t, test_liquidity, test_liquidityExpect * 20)
+	shouldEQ(t, test_liquidity, test_liquidityExpect*20)
 }
-
 
 func TestBurn(t *testing.T) {
 	b1, b2 := Burn(test_tickLower, test_tickUpper, test_liquidityExpect)
@@ -247,9 +242,9 @@ func TestBurn(t *testing.T) {
 
 	Burn(test_tickLower, test_tickUpper, bigint(999))
 	test_liquidity = GetLiquidity()
-	shouldEQ(t, test_liquidity, test_liquidityExpect * 9)
+	shouldEQ(t, test_liquidity, test_liquidityExpect*9)
 
-	Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 9)
+	Burn(test_tickLower, test_tickUpper, test_liquidityExpect*9)
 	test_liquidity = GetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
@@ -258,34 +253,32 @@ func TestBurn(t *testing.T) {
 	shouldPanic(t, func() { Burn(test_tickLower, test_tickUpper, test_liquidityExpect) })
 }
 
-
 func TestCollect(t *testing.T) {
 	// withdraw all token
 	Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
-	Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
+	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Burn(test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	c1, c2 := Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
-	Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
+	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Burn(test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	c3, c4 := Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 
 	shouldEQ(t, c1, c3)
 	shouldEQ(t, c2, c4)
 
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
-	Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
+	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Burn(test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	c5, c6 := Collect(lp01, test_tickLower, test_tickUpper, 100, 100)
 	shouldEQ(t, c5, bigint(100))
 	shouldEQ(t, c6, bigint(100))
-	
+
 	c7, c8 := Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
-	shouldEQ(t, c7, c3 - bigint(100))
-	shouldEQ(t, c8, c4 - bigint(100))
+	shouldEQ(t, c7, c3-bigint(100))
+	shouldEQ(t, c8, c4-bigint(100))
 
-
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 15)
+	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	// Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
 	// no burn => no collect
 	c9, c10 := Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
@@ -293,25 +286,22 @@ func TestCollect(t *testing.T) {
 	shouldEQ(t, c10, bigint(0))
 
 	// burn => some collect
-	Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 15)
+	Burn(test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	c11, c12 := Collect(lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 	shouldNEQ(t, c11, bigint(0))
 	shouldNEQ(t, c12, bigint(0))
 }
-
-
 
 func TestSwap(t *testing.T) {
 	// 	Swap token0 -> token1
 	var test_sqrtPriceExpect bigint = GetSqrtPriceX96() // shuold be same as test_sqrtPrice
 	test_slot0 := GetSlot0()
 
-
 	std.TestSetOrigCaller(lp02)
-	Mint(lp02, test_tickLower, test_tickUpper, test_liquidityExpect * 1000)
+	Mint(lp02, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
 
 	std.TestSetOrigCaller(lp03)
-	Mint(lp03, test_tickLower, test_tickUpper, test_liquidityExpect * 1000)
+	Mint(lp03, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
 
 	test_price := bigint(MIN_SQRT_RATIO + 1)
 
@@ -323,7 +313,6 @@ func TestSwap(t *testing.T) {
 	// 	println("======================= After Mint lp04")
 	// 	Mint(lp04, test_tickLower, test_tickUpper, test_liquidityExpect * 1000)
 	// 	PrintUserBalance("lp04", lp04)
-
 
 	// 	println("======================= After Burn lp04")
 	// 	Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 1000)
@@ -342,7 +331,6 @@ func TestSwap(t *testing.T) {
 	// 	println("======================= After Mint lp05")
 	// 	Mint(lp05, test_tickLower, test_tickUpper, test_liquidityExpect * 1000)
 	// 	PrintUserBalance("lp05", lp05)
-
 
 	// 	println("======================= After Burn lp05")
 	// 	Burn(test_tickLower, test_tickUpper, test_liquidityExpect * 1000)
@@ -367,11 +355,11 @@ func TestSwap(t *testing.T) {
 
 		std.TestSetOrigCaller(sp01)
 		amount0, amount1 := Swap(sp01, true, 10000, test_price) // give enough amount to take fees away
-		
-		shouldEQ(t, userToken0Bal - amount0, BalanceOf(token0, sp01))
-		shouldEQ(t, userToken1Bal - amount1, BalanceOf(token1, sp01))
-		shouldEQ(t, poolToken0Bal + amount0, BalanceOf(token0, GetOrigPkgAddr()))
-		shouldEQ(t, poolToken1Bal + amount1, BalanceOf(token1, GetOrigPkgAddr()))
+
+		shouldEQ(t, userToken0Bal-amount0, BalanceOf(token0, sp01))
+		shouldEQ(t, userToken1Bal-amount1, BalanceOf(token1, sp01))
+		shouldEQ(t, poolToken0Bal+amount0, BalanceOf(token0, GetOrigPkgAddr()))
+		shouldEQ(t, poolToken1Bal+amount1, BalanceOf(token1, GetOrigPkgAddr()))
 
 		// println("====After Balance====")
 		// PrintUserBalance("sp01", sp01)
@@ -403,11 +391,11 @@ func TestSwap(t *testing.T) {
 		poolToken1Bal := BalanceOf(token1, GetOrigPkgAddr())
 
 		amount0, amount1 := Swap(sp01, true, 5000, test_price) // give enough amount to take fees away
-		
-		shouldEQ(t, userToken0Bal - amount0, BalanceOf(token0, sp01))
-		shouldEQ(t, userToken1Bal - amount1, BalanceOf(token1, sp01))
-		shouldEQ(t, poolToken0Bal + amount0, BalanceOf(token0, GetOrigPkgAddr()))
-		shouldEQ(t, poolToken1Bal + amount1, BalanceOf(token1, GetOrigPkgAddr()))
+
+		shouldEQ(t, userToken0Bal-amount0, BalanceOf(token0, sp01))
+		shouldEQ(t, userToken1Bal-amount1, BalanceOf(token1, sp01))
+		shouldEQ(t, poolToken0Bal+amount0, BalanceOf(token0, GetOrigPkgAddr()))
+		shouldEQ(t, poolToken1Bal+amount1, BalanceOf(token1, GetOrigPkgAddr()))
 
 		// println("====After Balance====")
 		// PrintUserBalance("sp01", sp01)
@@ -428,11 +416,11 @@ func TestSwap(t *testing.T) {
 		poolToken1Bal := BalanceOf(token1, GetOrigPkgAddr())
 
 		amount0, amount1 := Swap(sp01, true, 1000, test_price) // give enough amount to take fees away
-		
-		shouldEQ(t, userToken0Bal - amount0, BalanceOf(token0, sp01))
-		shouldEQ(t, userToken1Bal - amount1, BalanceOf(token1, sp01))
-		shouldEQ(t, poolToken0Bal + amount0, BalanceOf(token0, GetOrigPkgAddr()))
-		shouldEQ(t, poolToken1Bal + amount1, BalanceOf(token1, GetOrigPkgAddr()))
+
+		shouldEQ(t, userToken0Bal-amount0, BalanceOf(token0, sp01))
+		shouldEQ(t, userToken1Bal-amount1, BalanceOf(token1, sp01))
+		shouldEQ(t, poolToken0Bal+amount0, BalanceOf(token0, GetOrigPkgAddr()))
+		shouldEQ(t, poolToken1Bal+amount1, BalanceOf(token1, GetOrigPkgAddr()))
 
 		// println("====After Balance====")
 		// PrintUserBalance("sp01", sp01)
@@ -440,7 +428,6 @@ func TestSwap(t *testing.T) {
 		// println()
 		// println()
 	}
-	
 
 	// Swap token1 -> token0
 	{
@@ -454,12 +441,12 @@ func TestSwap(t *testing.T) {
 		poolToken0Bal := BalanceOf(token0, GetOrigPkgAddr())
 		poolToken1Bal := BalanceOf(token1, GetOrigPkgAddr())
 
-		amount0, amount1 := Swap(sp01, false, 10000, bigint(MAX_SQRT_RATIO - 1)) // give enough amount to take fees away
-		
-		shouldEQ(t, userToken0Bal - amount0, BalanceOf(token0, sp01))
-		shouldEQ(t, userToken1Bal - amount1, BalanceOf(token1, sp01))
-		shouldEQ(t, poolToken0Bal + amount0, BalanceOf(token0, GetOrigPkgAddr()))
-		shouldEQ(t, poolToken1Bal + amount1, BalanceOf(token1, GetOrigPkgAddr()))
+		amount0, amount1 := Swap(sp01, false, 10000, bigint(MAX_SQRT_RATIO-1)) // give enough amount to take fees away
+
+		shouldEQ(t, userToken0Bal-amount0, BalanceOf(token0, sp01))
+		shouldEQ(t, userToken1Bal-amount1, BalanceOf(token1, sp01))
+		shouldEQ(t, poolToken0Bal+amount0, BalanceOf(token0, GetOrigPkgAddr()))
+		shouldEQ(t, poolToken1Bal+amount1, BalanceOf(token1, GetOrigPkgAddr()))
 
 		// println("====After Balance====")
 		// PrintUserBalance("sp01", sp01)
@@ -468,8 +455,6 @@ func TestSwap(t *testing.T) {
 		// println()
 	}
 }
-
-
 
 func TestSetFeeProtocol(t *testing.T) {
 	test_slot0 := GetSlot0()
@@ -495,14 +480,13 @@ func TestSetFeeProtocol(t *testing.T) {
 	shouldPanic(t, func() { SetFeeProtocol(2, 2) })
 }
 
-
 func TestCollectProtocol(t *testing.T) {
 	SetFeeProtocol(6, 8)
-	test_slot0 := GetSlot0()	
+	test_slot0 := GetSlot0()
 	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
 
 	std.TestSetOrigCaller(lp01)
-	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect * 150)
+	Mint(lp01, test_tickLower, test_tickUpper, test_liquidityExpect*150)
 
 	{
 		// println("SWAP 1000000, FROM token0, TO token1")
@@ -515,15 +499,15 @@ func TestCollectProtocol(t *testing.T) {
 		recvToken1Bal := BalanceOf(token1, rv01)
 
 		std.TestSetOrigCaller(sp01)
-		Swap(sp01, true, 100000, bigint(MIN_SQRT_RATIO + 1)) // swap token0 -> token1 => fee only in token0
-		Swap(sp01, true, 100000, bigint(MIN_SQRT_RATIO + 1)) // more protocol fees
+		Swap(sp01, true, 100000, bigint(MIN_SQRT_RATIO+1)) // swap token0 -> token1 => fee only in token0
+		Swap(sp01, true, 100000, bigint(MIN_SQRT_RATIO+1)) // more protocol fees
 
 		amount0, amount1 := CollectProtocol(rv01, 100000, 100000)
 		// println("====After Balance====")
 		// PrintUserBalance("rv01", rv01)
 
-		shouldEQ(t, recvToken0Bal + amount0, BalanceOf(token0, rv01))
-		shouldEQ(t, recvToken1Bal + amount1, BalanceOf(token1, rv01))
+		shouldEQ(t, recvToken0Bal+amount0, BalanceOf(token0, rv01))
+		shouldEQ(t, recvToken1Bal+amount1, BalanceOf(token1, rv01))
 	}
 
 	{
@@ -534,17 +518,16 @@ func TestCollectProtocol(t *testing.T) {
 
 		recvToken0Bal := BalanceOf(token0, rv01)
 		recvToken1Bal := BalanceOf(token1, rv01)
-		
 
 		std.TestSetOrigCaller(sp01)
-		Swap(sp01, false, 100000, bigint(MAX_SQRT_RATIO - 1)) // swap token0 -> token1 => fee only in token0
+		Swap(sp01, false, 100000, bigint(MAX_SQRT_RATIO-1)) // swap token0 -> token1 => fee only in token0
 
 		amount0, amount1 := CollectProtocol(rv01, 100000, 100000)
 		// println("====After Balance====")
 		// PrintUserBalance("rv01", rv01)
 
-		shouldEQ(t, recvToken0Bal + amount0, BalanceOf(token0, rv01))
-		shouldEQ(t, recvToken1Bal + amount1, BalanceOf(token1, rv01))
+		shouldEQ(t, recvToken0Bal+amount0, BalanceOf(token0, rv01))
+		shouldEQ(t, recvToken1Bal+amount1, BalanceOf(token1, rv01))
 	}
 }
 
@@ -571,7 +554,6 @@ func shouldLT(t *testing.T, l, r interface{}) {
 		t.Errorf("expected %v > %v", l, r)
 	}
 }
-
 
 func shouldPanic(t *testing.T, f func()) {
 	defer func() {

@@ -83,7 +83,7 @@ func exactInputInternal(
 	amountIn bigint,
 	recipient std.Address,
 	sqrtPriceLimit bigint,
-	poolAddress std.Address
+	poolAddress std.Address,
 ) (amountOut bigint) {
 	if (recipient == ZeroAddress) {
 		recipient = routerAddress
@@ -108,7 +108,7 @@ func exactInputInternal(
 		recipient,
 		zeroForOne,
 		bigint(amountIn),
-		sqrtPriceLimit
+		sqrtPriceLimit,
 	)
 
 	if zeroForOne {

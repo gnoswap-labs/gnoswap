@@ -6,10 +6,9 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 
-	"gno.land/r/foo"
 	"gno.land/r/bar"
+	"gno.land/r/foo"
 )
-
 
 func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {
@@ -35,7 +34,6 @@ func shouldLT(t *testing.T, l, r interface{}) {
 	}
 }
 
-
 func shouldPanic(t *testing.T, f func()) {
 	defer func() {
 		if r := recover(); r == nil {
@@ -59,7 +57,6 @@ func isOwner(t *testing.T, tokenId string, addr std.Address) bool {
 	return false
 }
 
-
 // Testing
 func GetNextId() bigint {
 	return nextId
@@ -77,7 +74,6 @@ func PrintBal(name string, addr std.Address) {
 	println("Token1 Bar: ", bar.BalanceOf(_addr))
 	println()
 }
-
 
 func Token0Bal(addr std.Address) bigint {
 	return bigint(foo.BalanceOf(a2u(addr)))

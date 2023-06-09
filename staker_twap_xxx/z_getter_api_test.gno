@@ -1,17 +1,13 @@
 package staker
 
 import (
-	"std"
-
-	"strings"
 	"encoding/base64"
-
+	"std"
+	"strings"
 	"testing"
 
 	"gno.land/p/demo/avl"
 )
-
-
 
 func TestApiGetIncentivesInfo(t *testing.T) {
 	tagii := ApiGetIncentivesInfo()

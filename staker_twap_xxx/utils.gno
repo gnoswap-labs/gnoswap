@@ -2,8 +2,9 @@ package staker
 
 import (
 	"std"
-	"gno.land/r/demo/users"
+
 	"gno.land/p/demo/grc/grc721"
+	"gno.land/r/demo/users"
 )
 
 func require(condition bool, message string) {

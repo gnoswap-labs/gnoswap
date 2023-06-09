@@ -2,9 +2,9 @@ package position
 
 import (
 	"std"
+
 	pool "gno.land/r/pool" // XXX from pool, dynamic import
 )
-
 
 func PositionValueTotal(
 	positionManager INonfungiblePositionManager,
@@ -16,7 +16,6 @@ func PositionValueTotal(
 
 	return amount0Principal + amount0Fee, amount1Principal + amount1Fee
 }
-
 
 func PositionValuePrincipal(
 	positionManager INonfungiblePositionManager,
@@ -33,34 +32,33 @@ func PositionValuePrincipal(
 	)
 }
 
-
 type FeeParams struct {
-	token0 std.Address
-	token1 std.Address
-	fee bigint
-	tickLower bigint
-	tickUpper bigint
-	liquidity bigint
+	token0                           std.Address
+	token1                           std.Address
+	fee                              bigint
+	tickLower                        bigint
+	tickUpper                        bigint
+	liquidity                        bigint
 	positionFeeGrowthInside0LastX128 bigint
 	positionFeeGrowthInside1LastX128 bigint
-	tokensOwed0 bigint
-	tokensOwed1 bigint
+	tokensOwed0                      bigint
+	tokensOwed1                      bigint
 }
 
 func PositionValueFees(positionManager INonfungiblePositionManager, tokenId bigint) (bigint, bigint) {
 	_, _, token0, token1, fee, tickLower, tickUpper, liquidity, positionFeeGrowthInside0LastX128, positionFeeGrowthInside1LastX128, tokensOwed0, tokensOwed1 := Positions(string(tokenId))
 
 	return _fees(positionManager, FeeParams{
-		token0: token0,
-		token1: token1,
-		fee: fee,
-		tickLower: tickLower,
-		tickUpper: tickUpper,
-		liquidity: liquidity,
+		token0:                           token0,
+		token1:                           token1,
+		fee:                              fee,
+		tickLower:                        tickLower,
+		tickUpper:                        tickUpper,
+		liquidity:                        liquidity,
 		positionFeeGrowthInside0LastX128: positionFeeGrowthInside0LastX128,
 		positionFeeGrowthInside1LastX128: positionFeeGrowthInside1LastX128,
-		tokensOwed0: tokensOwed0,
-		tokensOwed1: tokensOwed1,
+		tokensOwed0:                      tokensOwed0,
+		tokensOwed1:                      tokensOwed1,
 	})
 }
 
@@ -76,10 +74,9 @@ func _fees(positionManager INonfungiblePositionManager, feeParams FeeParams) (bi
 		feeParams.tickUpper,
 	)
 
-	amount0 := ( (poolFeeGrowthInside0LastX128 - feeParams.positionFeeGrowthInside0LastX128) * feeParams.liquidity / Q128) + feeParams.tokensOwed0
-	amount1 := ( (poolFeeGrowthInside1LastX128 - feeParams.positionFeeGrowthInside1LastX128) * feeParams.liquidity / Q128) + feeParams.tokensOwed1
+	amount0 := ((poolFeeGrowthInside0LastX128 - feeParams.positionFeeGrowthInside0LastX128) * feeParams.liquidity / Q128) + feeParams.tokensOwed0
+	amount1 := ((poolFeeGrowthInside1LastX128 - feeParams.positionFeeGrowthInside1LastX128) * feeParams.liquidity / Q128) + feeParams.tokensOwed1
 }
-
 
 func _getFeeGrowthInside(
 	// pool IUniswapV3Pool, // XXX dynamic import
@@ -100,10 +97,10 @@ func _getFeeGrowthInside(
 	upperFeeGrowthOutSide0X128, upperFeeGrowthOutSide1X128 := pool.GetPoolTickFeeGrowthOutside0X128(string(tickUpper)), pool.GetPoolTickFeeGrowthOutside1X128(string(tickUpper))
 
 	var feeGrowthInside0X128, feeGrowthInside1X128 bigint
-	if (tickCurrent < tickLower) {
+	if tickCurrent < tickLower {
 		feeGrowthInside0X128 = lowerFeeGrowthOutSide0X128 - upperFeeGrowthOutSide0X128
 		feeGrowthInside1X128 = lowerFeeGrowthOutSide1X128 - upperFeeGrowthOutSide1X128
-	} else if (tickCurrent < tickUpper) {
+	} else if tickCurrent < tickUpper {
 		feeGrowthGlobal0X128 := pool.GetFeeGrowthGlobal0X128()
 		feeGrowthGlobal1X128 := pool.GetFeeGrowthGlobal1X128()
 
@@ -115,7 +112,5 @@ func _getFeeGrowthInside(
 		feeGrowthInside1X128 = upperFeeGrowthOutSide1X128 - lowerFeeGrowthOutSide1X128
 	}
 
-	return feeGrowthInside0X128, feeGrowthInside1X128
-}
 	return feeGrowthInside0X128, feeGrowthInside1X128
 }
