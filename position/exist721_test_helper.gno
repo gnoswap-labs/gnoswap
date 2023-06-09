@@ -2,7 +2,6 @@ package position
 
 import (
 	"std"
-	"testing"
 
 	"gno.land/p/demo/grc/grc721"
 
@@ -12,6 +11,7 @@ import (
 	nft "gno.land/r/foo721"
 )
 
+// Testing
 func GetNextId() bigint {
 	return nextId
 }
@@ -22,7 +22,6 @@ func tid(tokenId string) grc721.TokenID {
 
 func PrintBal(name string, addr std.Address) {
 	_addr := a2u(addr)
-
 	println("Name:", name)
 	println("Address:", addr)
 	println("> Token0 Foo: ", foo.BalanceOf(_addr))
