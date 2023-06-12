@@ -14,11 +14,6 @@ func TestApiGetIncentivesInfo(t *testing.T) {
 	// println(tagii)
 }
 
-func TestApiGetDepositsInfo(t *testing.T) {
-	tagdi := ApiGetDepositsInfo()
-	// println(tagdi)
-}
-
 func TestApiGetStakesInfo(t *testing.T) {
 	tagsi := ApiGetStakesInfo()
 	// println(tagsi)
