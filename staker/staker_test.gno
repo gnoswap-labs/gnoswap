@@ -77,20 +77,33 @@ func TestGoodScenario(t *testing.T) {
 
 	// // 2. First Mint by lp
 	std.TestSetOrigCaller(lp)
-	_mintParams := position.MintParams{
-		token0:         std.Address("token0"),
-		token1:         std.Address("token1"),
-		fee:            bigint(3000), // not used
-		tickLower:      bigint(9000),
-		tickUpper:      bigint(11000),
-		amount0Desired: bigint(1000),
-		amount1Desired: bigint(1000),
-		amount0Min:     bigint(1),
-		amount1Min:     bigint(1),
-		recipient:      GetOrigPkgAddr(), // always nft manager contract address
-		deadline:       bigint(1234567890),
-	}
-	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	// _mintParams := position.MintParams{
+	// 	token0: std.Address("token0"),
+	// 	token1: std.Address("token1"),
+	// 	fee: bigint(3000), // not used
+	// 	tickLower: bigint(9000),
+	// 	tickUpper: bigint(11000),
+	// 	amount0Desired: bigint(1000),
+	// 	amount1Desired: bigint(1000),
+	// 	amount0Min: bigint(1),
+	// 	amount1Min: bigint(1),
+	// 	recipient: GetOrigPkgAddr(), // always nft manager contract address
+	// 	deadline: bigint(1234567890),
+	// }
+	// _posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(
+		std.Address("token0"),
+		std.Address("token1"),
+		bigint(3000),
+		bigint(9000),
+		bigint(11000),
+		bigint(1000),
+		bigint(1000),
+		bigint(1),
+		bigint(1),
+		bigint(1234567890),
+	)
+
 	// tokenId == 1
 	std.TestSkipTimestamps(1)
 
@@ -98,17 +111,31 @@ func TestGoodScenario(t *testing.T) {
 	Init(_maxIncentiveStartLeadTime, _maxIncentiveDuration)
 
 	// 4. Create Incentive
-	_incentiveKey := IncentiveKey{
-		startTime: GetTimestamp(),
-		endTime:   GetTimestamp() + 99,
-		refundee:  rf,
-	}
 	std.TestSetOrigCaller(ci)
-	CreateIncentive(_incentiveKey, 50000000)
+	// _incentiveKey := IncentiveKey{
+	// 	startTime: GetTimestamp(),
+	// 	endTime: GetTimestamp() + 99,
+	// 	refundee: rf,
+	// }
+	// CreateIncentive(_incentiveKey, 50000000)
+	createTimestamp := GetTimestamp()
+	endTimestamp := createTimestamp + 99
+	CreateIncentive(
+		createTimestamp,
+		endTimestamp,
+		rf,
+		50000000,
+	)
 
 	// 5. Stake NFT to Incentive Program
 	std.TestSetOrigCaller(lp)
-	StakeToken(_incentiveKey, _posTokenId)
+	// StakeToken(_incentiveKey, _posTokenId)
+	StakeToken(
+		createTimestamp,
+		endTimestamp,
+		rf,
+		_posTokenId,
+	)
 
 	// 6. Waiting until deadlien(99) and some extra time
 	std.TestSkipTimestamps(140)
@@ -141,17 +168,23 @@ func TestGoodScenario(t *testing.T) {
 	// }
 
 	// 7. Unstake NFT from Incentive Program
-	UnstakeToken(_incentiveKey, _posTokenId)
+	// UnstakeToken(_incentiveKey, _posTokenId)
+	UnstakeToken(
+		createTimestamp,
+		endTimestamp,
+		rf,
+		_posTokenId,
+	)
 
 	// 7.5. claim bit of reward
 	_oldBal := rt.BalanceOf(a2u(rf))
-	claimReward(rf, 100)
+	ClaimReward(rf, 100)
 	_newBal := rt.BalanceOf(a2u(rf))
 	shouldEQ(t, _oldBal, bigint(0))
 	shouldEQ(t, _newBal-_oldBal, bigint(100))
 
 	// (optional) send to other address
-	claimReward(oa, 123456)
+	ClaimReward(oa, 123456)
 
 	// 8. Withdraw NFT from Incentive Program
 	std.TestSetOrigCaller(lp)
@@ -161,6 +194,12 @@ func TestGoodScenario(t *testing.T) {
 	_refundeeOldBalance := rt.BalanceOf(a2u(rf))
 
 	// _refund := EndIncentive(_incentiveKey)
+	_refund := EndIncentive(
+		createTimestamp,
+		endTimestamp,
+		rf,
+	)
+
 	// println("End Incentive with")
 	// println("ㄴ refund:", _refund)
 	// println("ㄴ refundee:", _incentiveKey.refundee)
@@ -185,44 +224,78 @@ func TestBadScenario(t *testing.T) {
 
 	// 2. Second Mint by lp
 	std.TestSetOrigCaller(lp)
-	_mintParams := position.MintParams{
-		token0:         std.Address("token0"),
-		token1:         std.Address("token1"),
-		fee:            bigint(3000), // not used
-		tickLower:      bigint(9000),
-		tickUpper:      bigint(11000),
-		amount0Desired: bigint(1000),
-		amount1Desired: bigint(1000),
-		amount0Min:     bigint(1),
-		amount1Min:     bigint(1),
-		recipient:      GetOrigPkgAddr(), // always nft manager contract address
-		deadline:       bigint(2345678901),
-	}
-	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	// _mintParams := position.MintParams{
+	// 	token0: std.Address("token0"),
+	// 	token1: std.Address("token1"),
+	// 	fee: bigint(3000), // not used
+	// 	tickLower: bigint(9000),
+	// 	tickUpper: bigint(11000),
+	// 	amount0Desired: bigint(1000),
+	// 	amount1Desired: bigint(1000),
+	// 	amount0Min: bigint(1),
+	// 	amount1Min: bigint(1),
+	// 	recipient: GetOrigPkgAddr(), // always nft manager contract address
+	// 	deadline: bigint(2345678901),
+	// }
+	// _posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(
+		std.Address("token0"),
+		std.Address("token1"),
+		bigint(3000), // not used
+		bigint(9000),
+		bigint(11000),
+		bigint(1000),
+		bigint(1000),
+		bigint(1),
+		bigint(1),
+		bigint(2345678901),
+	)
 	// tokenId == 2
 
 	// 3. Init Incentive Program
 	// Init(_maxIncentiveStartLeadTime, _maxIncentiveDuration)
 
 	// 4. Create Incentive
-	_incentiveKey := IncentiveKey{
-		startTime: GetTimestamp(),
-		endTime:   GetTimestamp() + 99,
-		refundee:  rf,
-	}
 	std.TestSetOrigCaller(ci)
-	CreateIncentive(_incentiveKey, 50000000)
+	// _incentiveKey := IncentiveKey{
+	// 	startTime: GetTimestamp(),
+	// 	endTime: GetTimestamp() + 99,
+	// 	refundee: rf,
+	// }
+	// CreateIncentive(_incentiveKey, 50000000)
+	createTimestamp := GetTimestamp()
+	endTimestamp := createTimestamp + 99
+	CreateIncentive(
+		createTimestamp,
+		endTimestamp,
+		rf,
+		50000000,
+	)
 
 	// 5. Stake NFT to Incentive Program
 	std.TestSetOrigCaller(lp)
-	StakeToken(_incentiveKey, _posTokenId)
+	// StakeToken(_incentiveKey, _posTokenId)
+	StakeToken(
+		createTimestamp,
+		endTimestamp,
+		rf,
+		_posTokenId,
+	)
 
 	// 6. Waiting - not enough
 	std.TestSkipTimestamps(97)
 
 	// 7. Unstake NFT from Incentive Program
 	// should panic incentive not ended
-	shouldPanic(t, func() { UnstakeToken(_incentiveKey, _posTokenId) })
+	// shouldPanic(t, func() { UnstakeToken(_incentiveKey, _posTokenId) })
+	shouldPanic(t, func() {
+		UnstakeToken(
+			createTimestamp,
+			endTimestamp,
+			rf,
+			_posTokenId,
+		)
+	})
 
 	// 8. Withdraw NFT from Incentive Program
 	// should panic cannot withdraw token while staked
@@ -230,7 +303,14 @@ func TestBadScenario(t *testing.T) {
 
 	// 9. End Incentive Program
 	// should panic cannot end incentive before end time
-	shouldPanic(t, func() { EndIncentive(_incentiveKey) })
+	// shouldPanic(t, func() { EndIncentive(_incentiveKey) })
+	shouldPanic(t, func() {
+		EndIncentive(
+			createTimestamp,
+			endTimestamp,
+			rf,
+		)
+	})
 }
 
 func TestBadInit(t *testing.T) {
@@ -242,98 +322,164 @@ func TestBadInit(t *testing.T) {
 func TestBadCreateIncentive(t *testing.T) {
 	{
 		// should panic reward must be positive
-		_incentiveKey := IncentiveKey{
-			startTime: GetTimestamp() + 1,
-			endTime:   GetTimestamp() + 2,
-			refundee:  rf,
-		}
+		// _incentiveKey := IncentiveKey{
+		// 	startTime: GetTimestamp() + 1,
+		// 	endTime: GetTimestamp() + 2,
+		// 	refundee: rf,
+		// }
+
 		std.TestSetOrigCaller(ci)
 		// CreateIncentive(_incentiveKey, 0)
-		shouldPanic(t, func() { CreateIncentive(_incentiveKey, 0) })
+		// shouldPanic(t, func() { CreateIncentive(_incentiveKey, 0) })
+		shouldPanic(t, func() {
+			CreateIncentive(
+				GetTimestamp()+1,
+				GetTimestamp()+2,
+				rf,
+				0,
+			)
+		})
 	}
 
 	{
 		// should panic start time must be now or in the future
-		_incentiveKey := IncentiveKey{
-			startTime: GetTimestamp() - 1,
-			endTime:   GetTimestamp() + 2,
-			refundee:  rf,
-		}
+		// _incentiveKey := IncentiveKey{
+		// 	startTime: GetTimestamp() - 1,
+		// 	endTime: GetTimestamp() + 2,
+		// 	refundee: rf,
+		// }
 		std.TestSetOrigCaller(ci)
 		// CreateIncentive(_incentiveKey, 10000)
-		shouldPanic(t, func() { CreateIncentive(_incentiveKey, 10000) })
+		// shouldPanic(t, func() { CreateIncentive(_incentiveKey, 10000) })
+		shouldPanic(t, func() {
+			CreateIncentive(
+				GetTimestamp()-1,
+				GetTimestamp()+2,
+				rf,
+				10000,
+			)
+		})
 	}
 
 	{
 		// should panic start time too far into future
-		_incentiveKey := IncentiveKey{
-			startTime: GetTimestamp() + 1234567890,
-			endTime:   GetTimestamp() + 2345678901,
-			refundee:  rf,
-		}
+		// _incentiveKey := IncentiveKey{
+		// 	startTime: GetTimestamp() + 1234567890,
+		// 	endTime: GetTimestamp() + 2345678901,
+		// 	refundee: rf,
+		// }
 		std.TestSetOrigCaller(ci)
 		// CreateIncentive(_incentiveKey, 10000)
-		shouldPanic(t, func() { CreateIncentive(_incentiveKey, 10000) })
+		// shouldPanic(t, func() { CreateIncentive(_incentiveKey, 10000) })
+		shouldPanic(t, func() {
+			CreateIncentive(
+				GetTimestamp()+1234567890,
+				GetTimestamp()+2345678901,
+				rf,
+				10000,
+			)
+		})
 	}
 
 	{
 		// should panic start time must be before end time
-		_incentiveKey := IncentiveKey{
-			startTime: GetTimestamp() + 12345,
-			endTime:   GetTimestamp() + 12344,
-			refundee:  rf,
-		}
+		// _incentiveKey := IncentiveKey{
+		// 	startTime: GetTimestamp() + 12345,
+		// 	endTime: GetTimestamp() + 12344,
+		// 	refundee: rf,
+		// }
 		std.TestSetOrigCaller(ci)
 		// CreateIncentive(_incentiveKey, 10000)
-		shouldPanic(t, func() { CreateIncentive(_incentiveKey, 10000) })
+		// shouldPanic(t, func() { CreateIncentive(_incentiveKey, 10000) })
+		shouldPanic(t, func() {
+			CreateIncentive(
+				GetTimestamp()+12345,
+				GetTimestamp()+12344,
+				rf,
+				10000,
+			)
+		})
 	}
 
 	{
 		// should panic incentive duration is too long
-		_incentiveKey := IncentiveKey{
-			startTime: GetTimestamp() + 1000000,
-			endTime:   GetTimestamp() + 2000001,
-			refundee:  rf,
-		}
+		// _incentiveKey := IncentiveKey{
+		// 	startTime: GetTimestamp() + 1000000,
+		// 	endTime: GetTimestamp() + 2000001,
+		// 	refundee: rf,
+		// }
 		std.TestSetOrigCaller(ci)
 		// CreateIncentive(_incentiveKey, 10000)
-		shouldPanic(t, func() { CreateIncentive(_incentiveKey, 10000) })
+		// shouldPanic(t, func() { CreateIncentive(_incentiveKey, 10000) })
+		shouldPanic(t, func() {
+			CreateIncentive(
+				GetTimestamp()+1000000,
+				GetTimestamp()+2000001,
+				rf,
+				10000,
+			)
+		})
 	}
 }
 
 func TestBadStakeToken(t *testing.T) {
 	// ready
-	std.TestSetOrigCaller(lp)
-	_mintParams := position.MintParams{
-		token0:         std.Address("token0"),
-		token1:         std.Address("token1"),
-		fee:            bigint(3000), // not used
-		tickLower:      bigint(9000),
-		tickUpper:      bigint(11000),
-		amount0Desired: bigint(1000),
-		amount1Desired: bigint(1000),
-		amount0Min:     bigint(1),
-		amount1Min:     bigint(1),
-		recipient:      GetOrigPkgAddr(), // always nft manager contract address
-		deadline:       bigint(2345678901),
-	}
+	// _mintParams := position.MintParams{
+	// 	token0: std.Address("token0"),
+	// 	token1: std.Address("token1"),
+	// 	fee: bigint(3000), // not used
+	// 	tickLower: bigint(9000),
+	// 	tickUpper: bigint(11000),
+	// 	amount0Desired: bigint(1000),
+	// 	amount1Desired: bigint(1000),
+	// 	amount0Min: bigint(1),
+	// 	amount1Min: bigint(1),
+	// 	recipient: GetOrigPkgAddr(), // always nft manager contract address
+	// 	deadline: bigint(2345678901),
+	// }
 
-	_incentiveKey := IncentiveKey{
-		startTime: GetTimestamp(),
-		endTime:   GetTimestamp() + 88,
-		refundee:  rf,
-	}
+	// _incentiveKey := IncentiveKey{
+	// 	startTime: GetTimestamp(),
+	// 	endTime: GetTimestamp() + 88,
+	// 	refundee: rf,
+	// }
 	std.TestSetOrigCaller(ci)
-	CreateIncentive(_incentiveKey, 10000)
+	// CreateIncentive(_incentiveKey, 10000)
+	CreateIncentive(
+		GetTimestamp(),
+		GetTimestamp()+88,
+		rf,
+		10000,
+	)
 
 	std.TestSetOrigCaller(lp)
-	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	// _posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(
+		std.Address("token0"),
+		std.Address("token1"),
+		bigint(3000),
+		bigint(9000),
+		bigint(11000),
+		bigint(1000),
+		bigint(1000),
+		bigint(1),
+		bigint(1),
+		bigint(2345678901),
+	)
 
 	{
 		// should panic only owner can stake token
 		std.TestSetOrigCaller(oa)
 		// StakeToken(_incentiveKey, _posTokenId)
-		shouldPanic(t, func() { StakeToken(_incentiveKey, _posTokenId) })
+		// shouldPanic(t, func() { StakeToken(_incentiveKey, _posTokenId) })
+		shouldPanic(t, func() {
+			StakeToken(
+				GetTimestamp(),
+				GetTimestamp()+88,
+				rf,
+				_posTokenId,
+			)
+		})
 	}
 
 	{
@@ -341,7 +487,15 @@ func TestBadStakeToken(t *testing.T) {
 		std.TestSetOrigCaller(lp)
 		std.TestSkipTimestamps(-1)
 		// StakeToken(_incentiveKey, _posTokenId)
-		shouldPanic(t, func() { StakeToken(_incentiveKey, _posTokenId) })
+		// shouldPanic(t, func() { StakeToken(_incentiveKey, _posTokenId) })
+		shouldPanic(t, func() {
+			StakeToken(
+				GetTimestamp(),
+				GetTimestamp()+88,
+				rf,
+				_posTokenId,
+			)
+		})
 		std.TestSkipTimestamps(1)
 	}
 
@@ -349,7 +503,15 @@ func TestBadStakeToken(t *testing.T) {
 		// should panic incentive ended
 		std.TestSetOrigCaller(lp)
 		std.TestSkipTimestamps(100)
-		shouldPanic(t, func() { StakeToken(_incentiveKey, _posTokenId) })
+		// shouldPanic(t, func() { StakeToken(_incentiveKey, _posTokenId) })
+		shouldPanic(t, func() {
+			StakeToken(
+				GetTimestamp(),
+				GetTimestamp()+88,
+				rf,
+				_posTokenId,
+			)
+		})
 		std.TestSkipTimestamps(-100)
 	}
 
@@ -369,7 +531,15 @@ func TestBadStakeToken(t *testing.T) {
 		incentives.Set(_tmpIncentiveId, tmp)
 
 		// StakeToken(_incentiveKey, _posTokenId)
-		shouldPanic(t, func() { StakeToken(_incentiveKey, _posTokenId) })
+		// shouldPanic(t, func() { StakeToken(_incentiveKey, _posTokenId) })
+		shouldPanic(t, func() {
+			StakeToken(
+				GetTimestamp(),
+				GetTimestamp()+88,
+				rf,
+				_posTokenId,
+			)
+		})
 
 		// set correct value for further test
 		// incentives[_tmpIncentiveId].totalRewardUnclaimed = 10000
@@ -383,10 +553,24 @@ func TestBadStakeToken(t *testing.T) {
 	{
 		// should panic token already staked
 		std.TestSetOrigCaller(lp)
-		StakeToken(_incentiveKey, _posTokenId)
+		// StakeToken(_incentiveKey, _posTokenId)
+		StakeToken(
+			GetTimestamp(),
+			GetTimestamp()+88,
+			rf,
+			_posTokenId,
+		)
 		std.TestSetOrigCaller(GetOrigPkgAddr())
 		// StakeToken(_incentiveKey, _posTokenId)
-		shouldPanic(t, func() { StakeToken(_incentiveKey, _posTokenId) })
+		// shouldPanic(t, func() { StakeToken(_incentiveKey, _posTokenId) })
+		shouldPanic(t, func() {
+			StakeToken(
+				GetTimestamp(),
+				GetTimestamp()+88,
+				rf,
+				_posTokenId,
+			)
+		})
 	}
 
 	{
@@ -408,50 +592,97 @@ func TestBadUnstakeToken(t *testing.T) {
 		// should panic incentive not ended
 		std.TestSetOrigCaller(lp)
 		// UnstakeToken(_incentiveKey, "3")
-		shouldPanic(t, func() { UnstakeToken(_incentiveKey, "3") })
+		// shouldPanic(t, func() { UnstakeToken(_incentiveKey, "3") })
+		shouldPanic(t, func() {
+			UnstakeToken(
+				GetTimestamp(),
+				GetTimestamp()+88,
+				rf,
+				"3",
+			)
+		})
 	}
 
 	{
 		// should panic stake does not exist
 		std.TestSetOrigCaller(lp)
 		std.TestSkipTimestamps(100)
-		UnstakeToken(_incentiveKey, "3")
 		// UnstakeToken(_incentiveKey, "3")
-		shouldPanic(t, func() { UnstakeToken(_incentiveKey, "3") })
+		UnstakeToken(
+			GetTimestamp()-100,
+			GetTimestamp()+88-100,
+			rf,
+			"3",
+		)
+
+		// UnstakeToken(_incentiveKey, "3")
+		// shouldPanic(t, func() { UnstakeToken(_incentiveKey, "3") })
+		shouldPanic(t, func() {
+			UnstakeToken(
+				GetTimestamp()-100,
+				GetTimestamp()+88-100,
+				rf,
+				"3",
+			)
+		})
 	}
 }
 
 func TestBadWithdrawToken(t *testing.T) {
 	// ready
 	std.TestSetOrigCaller(lp)
-	_mintParams := position.MintParams{
-		token0:         std.Address("token0"),
-		token1:         std.Address("token1"),
-		fee:            bigint(3000), // not used
-		tickLower:      bigint(9000),
-		tickUpper:      bigint(11000),
-		amount0Desired: bigint(1000),
-		amount1Desired: bigint(1000),
-		amount0Min:     bigint(1),
-		amount1Min:     bigint(1),
-		recipient:      GetOrigPkgAddr(), // always nft manager contract address
-		deadline:       bigint(2345678901),
-	}
+	// _mintParams := position.MintParams{
+	// 	token0: std.Address("token0"),
+	// 	token1: std.Address("token1"),
+	// 	fee: bigint(3000), // not used
+	// 	tickLower: bigint(9000),
+	// 	tickUpper: bigint(11000),
+	// 	amount0Desired: bigint(1000),
+	// 	amount1Desired: bigint(1000),
+	// 	amount0Min: bigint(1),
+	// 	amount1Min: bigint(1),
+	// 	recipient: GetOrigPkgAddr(), // always nft manager contract address
+	// 	deadline: bigint(2345678901),
+	// }
 
-	_incentiveKey := IncentiveKey{
-		startTime: GetTimestamp(),
-		endTime:   GetTimestamp() + 88,
-		refundee:  rf,
-	}
+	// _incentiveKey := IncentiveKey{
+	// 	startTime: GetTimestamp(),
+	// 	endTime: GetTimestamp() + 88,
+	// 	refundee: rf,
+	// }
 	std.TestSetOrigCaller(ci)
-	CreateIncentive(_incentiveKey, 10000)
+	// CreateIncentive(_incentiveKey, 10000)
+	CreateIncentive(
+		GetTimestamp(),
+		GetTimestamp()+88,
+		rf,
+		10000,
+	)
 
 	std.TestSetOrigCaller(lp)
-	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	// _posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	_posTokenId, _, _, _ := position.Mint(
+		std.Address("token0"),
+		std.Address("token1"),
+		bigint(3000), // not used
+		bigint(9000),
+		bigint(11000),
+		bigint(1000),
+		bigint(1000),
+		bigint(1),
+		bigint(1),
+		bigint(2345678901),
+	)
 
 	// stake
 	std.TestSetOrigCaller(lp)
-	stakeToken(_incentiveKey, _posTokenId)
+	// StakeToken(_incentiveKey, _posTokenId)
+	StakeToken(
+		GetTimestamp(),
+		GetTimestamp()+88,
+		rf,
+		_posTokenId,
+	)
 
 	{
 		// should panic cannot withdraw to staker
@@ -471,7 +702,13 @@ func TestBadWithdrawToken(t *testing.T) {
 		// should panic only owner can withdraw token
 		std.TestSetOrigCaller(lp)
 		std.TestSkipTimestamps(100)
-		UnstakeToken(_incentiveKey, "4")
+		// UnstakeToken(_incentiveKey, "4")
+		UnstakeToken(
+			GetTimestamp()-100,
+			GetTimestamp()+88-100,
+			rf,
+			"4",
+		)
 
 		std.TestSetOrigCaller(oa)
 		// WithdrawToken("4", oa)
@@ -482,39 +719,71 @@ func TestBadWithdrawToken(t *testing.T) {
 func TestBadEndIncentive(t *testing.T) {
 	// ready
 	std.TestSetOrigCaller(lp)
-	_mintParams := position.MintParams{
-		token0:         std.Address("token0"),
-		token1:         std.Address("token1"),
-		fee:            bigint(3000), // not used
-		tickLower:      bigint(9000),
-		tickUpper:      bigint(11000),
-		amount0Desired: bigint(1000),
-		amount1Desired: bigint(1000),
-		amount0Min:     bigint(1),
-		amount1Min:     bigint(1),
-		recipient:      GetOrigPkgAddr(), // always nft manager contract address
-		deadline:       bigint(2345678901),
-	}
+	// _mintParams := position.MintParams{
+	// 	token0: std.Address("token0"),
+	// 	token1: std.Address("token1"),
+	// 	fee: bigint(3000), // not used
+	// 	tickLower: bigint(9000),
+	// 	tickUpper: bigint(11000),
+	// 	amount0Desired: bigint(1000),
+	// 	amount1Desired: bigint(1000),
+	// 	amount0Min: bigint(1),
+	// 	amount1Min: bigint(1),
+	// 	recipient: GetOrigPkgAddr(), // always nft manager contract address
+	// 	deadline: bigint(2345678901),
+	// }
 
-	_incentiveKey := IncentiveKey{
-		startTime: GetTimestamp(),
-		endTime:   GetTimestamp() + 88,
-		refundee:  rf,
-	}
+	// _incentiveKey := IncentiveKey{
+	// 	startTime: GetTimestamp(),
+	// 	endTime: GetTimestamp() + 88,
+	// 	refundee: rf,
+	// }
 	std.TestSetOrigCaller(ci)
-	CreateIncentive(_incentiveKey, 10000)
+	// CreateIncentive(_incentiveKey, 10000)
+	CreateIncentive(
+		GetTimestamp(),
+		GetTimestamp()+88,
+		rf,
+		10000,
+	)
 
 	std.TestSetOrigCaller(lp)
-	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	// _posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	_posTokenId, _, _, _ := position.Mint(
+		std.Address("token0"),
+		std.Address("token1"),
+		bigint(3000), // not used
+		bigint(9000),
+		bigint(11000),
+		bigint(1000),
+		bigint(1000),
+		bigint(1),
+		bigint(1),
+		bigint(2345678901),
+	)
 
 	// stake
 	std.TestSetOrigCaller(lp)
-	stakeToken(_incentiveKey, _posTokenId)
+	// StakeToken(_incentiveKey, _posTokenId)
+	StakeToken(
+		GetTimestamp(),
+		GetTimestamp()+88,
+		rf,
+		_posTokenId,
+	)
 
 	{
 		// should panic cannot end incentive before end time
 		// EndIncentive(_incentiveKey)
-		shouldPanic(t, func() { EndIncentive(_incentiveKey) })
+		// shouldPanic(t, func() { EndIncentive(_incentiveKey) })
+		shouldPanic(t, func() {
+			EndIncentive(
+				GetTimestamp(),
+				GetTimestamp()+88,
+				rf,
+			)
+		})
+
 		std.TestSkipTimestamps(200)
 	}
 
@@ -522,24 +791,57 @@ func TestBadEndIncentive(t *testing.T) {
 		// should panic cannot end incentive while deposits are staked
 		std.TestSetOrigCaller(lp)
 		// EndIncentive(_incentiveKey)
-		shouldPanic(t, func() { EndIncentive(_incentiveKey) })
-		UnstakeToken(_incentiveKey, "5")
+		// shouldPanic(t, func() { EndIncentive(_incentiveKey) })
+		shouldPanic(t, func() {
+			EndIncentive(
+				GetTimestamp()-200,
+				GetTimestamp()+88-200,
+				rf,
+			)
+		})
+		// UnstakeToken(_incentiveKey, "5")
+		UnstakeToken(
+			GetTimestamp()-200,
+			GetTimestamp()+88-200,
+			rf,
+			"5",
+		)
 	}
 
 	{
 		// no refund available
 		std.TestSetOrigCaller(GetOrigPkgAddr())
 		// EndIncentive(_incentiveKey)
-		EndIncentive(_incentiveKey)
-		shouldPanic(t, func() { EndIncentive(_incentiveKey) })
+		EndIncentive(
+			GetTimestamp()-200,
+			GetTimestamp()+88-200,
+			rf,
+		)
+		// shouldPanic(t, func() { EndIncentive(_incentiveKey) })
+		shouldPanic(t, func() {
+			EndIncentive(
+				GetTimestamp()-200,
+				GetTimestamp()+88-200,
+				rf,
+			)
+		})
 	}
 
 	// end non exist incentive
-	_NonIncentiveKey := IncentiveKey{
-		startTime: GetTimestamp() + 123,
-		endTime:   GetTimestamp() + 678,
-		refundee:  oa,
-	}
+	// _NonIncentiveKey := IncentiveKey{
+	// 	startTime: GetTimestamp() + 123,
+	// 	endTime: GetTimestamp() + 678,
+	// 	refundee: oa,
+	// }
+	// EndIncentive(_NonIncentiveKey)
+	// shouldPanic(t, func() { EndIncentive(_NonIncentiveKey) })
+	shouldPanic(t, func() {
+		EndIncentive(
+			GetTimestamp()+123,
+			GetTimestamp()+678,
+			oa,
+		)
+	})
 }
 
 // helper

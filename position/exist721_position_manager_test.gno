@@ -9,9 +9,8 @@ import (
 
 	"gno.land/r/bar"
 	"gno.land/r/foo"
-	pool "gno.land/r/pool"
-
 	nft "gno.land/r/foo721"
+	pool "gno.land/r/pool"
 )
 
 var (
@@ -65,14 +64,12 @@ func TestPoolInit(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
 	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-
 	foo.Approve(users.AddressOrName(lp01), 50000000)
 	bar.Approve(users.AddressOrName(lp01), 50000000)
 
 	std.TestSetOrigCaller(lp02)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
 	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-
 	foo.Approve(users.AddressOrName(lp02), 50000000)
 	bar.Approve(users.AddressOrName(lp02), 50000000)
 }
@@ -86,24 +83,36 @@ func TestMint(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp01)
 
-		_mintParams := MintParams{
-			token0:         std.Address("token0"),
-			token1:         std.Address("token1"),
-			fee:            bigint(3000), // not used
-			tickLower:      bigint(9000),
-			tickUpper:      bigint(11000),
-			amount0Desired: bigint(1000),
-			amount1Desired: bigint(1000),
-			amount0Min:     bigint(1),
-			amount1Min:     bigint(1),
-			recipient:      GetOrigPkgAddr(), // always nft manager contract address
-			deadline:       bigint(1234567890),
-		}
+		// _mintParams := MintParams{
+		// 	token0: std.Address("token0"),
+		// 	token1: std.Address("token1"),
+		// 	fee: bigint(3000), // not used
+		// 	tickLower: bigint(9000),
+		// 	tickUpper: bigint(11000),
+		// 	amount0Desired: bigint(1000),
+		// 	amount1Desired: bigint(1000),
+		// 	amount0Min: bigint(1),
+		// 	amount1Min: bigint(1),
+		// 	deadline: bigint(1234567890),
+		// }
 
 		poolOldToken0Bal := Token0Bal(PoolAddr)
 		poolOldToken1Bal := Token1Bal(PoolAddr)
 
-		_tokenId, _liquidity, _amount0, _amount1 := Mint(_mintParams)
+		// _tokenId, _liquidity, _amount0, _amount1 := Mint(_mintParams)
+		_tokenId, _liquidity, _amount0, _amount1 := Mint(
+			std.Address("token0"),
+			std.Address("token1"),
+			bigint(3000), // not used
+			bigint(9000),
+			bigint(11000),
+			bigint(1000),
+			bigint(1000),
+			bigint(1),
+			bigint(1),
+			bigint(1234567890),
+		)
+
 		isOwner(t, _tokenId, lp01)
 		shouldEQ(t, _tokenId, "1")
 		shouldEQ(t, GetNextId(), bigint(2))
@@ -117,24 +126,36 @@ func TestMint(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp02)
 
-		_mintParams := MintParams{
-			token0:         std.Address("token0"),
-			token1:         std.Address("token1"),
-			fee:            bigint(3000), // not used
-			tickLower:      bigint(9000),
-			tickUpper:      bigint(11000),
-			amount0Desired: bigint(2000),
-			amount1Desired: bigint(2000),
-			amount0Min:     bigint(1),
-			amount1Min:     bigint(1),
-			recipient:      GetOrigPkgAddr(), // always nft manager contract address
-			deadline:       bigint(1234567890),
-		}
+		// _mintParams := MintParams{
+		// 	token0: std.Address("token0"),
+		// 	token1: std.Address("token1"),
+		// 	fee: bigint(3000), // not used
+		// 	tickLower: bigint(9000),
+		// 	tickUpper: bigint(11000),
+		// 	amount0Desired: bigint(2000),
+		// 	amount1Desired: bigint(2000),
+		// 	amount0Min: bigint(1),
+		// 	amount1Min: bigint(1),
+		// 	deadline: bigint(1234567890),
+		// }
 
 		poolOldToken0Bal := Token0Bal(PoolAddr)
 		poolOldToken1Bal := Token1Bal(PoolAddr)
 
-		_tokenId, _liquidity, _amount0, _amount1 := Mint(_mintParams)
+		// _tokenId, _liquidity, _amount0, _amount1 := Mint(_mintParams)
+		_tokenId, _liquidity, _amount0, _amount1 := Mint(
+			std.Address("token0"),
+			std.Address("token1"),
+			bigint(3000), // not used
+			bigint(9000),
+			bigint(11000),
+			bigint(2000),
+			bigint(2000),
+			bigint(1),
+			bigint(1),
+			bigint(1234567890),
+		)
+
 		isOwner(t, _tokenId, lp02)
 		shouldEQ(t, _tokenId, "2")
 		shouldEQ(t, GetNextId(), bigint(3))
@@ -147,24 +168,35 @@ func TestMint(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp02)
 
-		_mintParams := MintParams{
-			token0:         std.Address("token0"),
-			token1:         std.Address("token1"),
-			fee:            bigint(3000), // not used
-			tickLower:      bigint(14000),
-			tickUpper:      bigint(18000),
-			amount0Desired: bigint(1000),
-			amount1Desired: bigint(1000),
-			amount0Min:     bigint(0),
-			amount1Min:     bigint(0),
-			recipient:      GetOrigPkgAddr(), // always nft manager contract address
-			deadline:       bigint(1234567890),
-		}
+		// _mintParams := MintParams{
+		// 	token0: std.Address("token0"),
+		// 	token1: std.Address("token1"),
+		// 	fee: bigint(3000), // not used
+		// 	tickLower: bigint(14000),
+		// 	tickUpper: bigint(18000),
+		// 	amount0Desired: bigint(1000),
+		// 	amount1Desired: bigint(1000),
+		// 	amount0Min: bigint(0),
+		// 	amount1Min: bigint(0),
+		// 	deadline: bigint(1234567890),
+		// }
 
 		poolOldToken0Bal := Token0Bal(PoolAddr)
 		poolOldToken1Bal := Token1Bal(PoolAddr)
 
-		_tokenId, _liquidity, _amount0, _amount1 := Mint(_mintParams)
+		// _tokenId, _liquidity, _amount0, _amount1 := Mint(_mintParams)
+		_tokenId, _liquidity, _amount0, _amount1 := Mint(
+			std.Address("token0"),
+			std.Address("token1"),
+			bigint(3000), // not used
+			bigint(14000),
+			bigint(18000),
+			bigint(1000),
+			bigint(1000),
+			bigint(0),
+			bigint(0),
+			bigint(1234567890),
+		)
 		isOwner(t, _tokenId, lp02)
 		shouldEQ(t, _tokenId, "3")
 		shouldEQ(t, GetNextId(), bigint(4))
@@ -177,24 +209,36 @@ func TestMint(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp02)
 
-		_mintParams := MintParams{
-			token0:         std.Address("token0"),
-			token1:         std.Address("token1"),
-			fee:            bigint(3000), // not used
-			tickLower:      bigint(7000),
-			tickUpper:      bigint(9000),
-			amount0Desired: bigint(1000),
-			amount1Desired: bigint(1000),
-			amount0Min:     bigint(0),
-			amount1Min:     bigint(0),
-			recipient:      GetOrigPkgAddr(), // always nft manager contract address
-			deadline:       bigint(1234567890),
-		}
+		// _mintParams := MintParams{
+		// 	token0: std.Address("token0"),
+		// 	token1: std.Address("token1"),
+		// 	fee: bigint(3000), // not used
+		// 	tickLower: bigint(7000),
+		// 	tickUpper: bigint(9000),
+		// 	amount0Desired: bigint(1000),
+		// 	amount1Desired: bigint(1000),
+		// 	amount0Min: bigint(0),
+		// 	amount1Min: bigint(0),
+		// 	deadline: bigint(1234567890),
+		// }
 
 		poolOldToken0Bal := Token0Bal(PoolAddr)
 		poolOldToken1Bal := Token1Bal(PoolAddr)
 
-		_tokenId, _liquidity, _amount0, _amount1 := Mint(_mintParams)
+		// _tokenId, _liquidity, _amount0, _amount1 := Mint(_mintParams)
+		_tokenId, _liquidity, _amount0, _amount1 := Mint(
+			std.Address("token0"),
+			std.Address("token1"),
+			bigint(3000), // not used
+			bigint(7000),
+			bigint(9000),
+			bigint(1000),
+			bigint(1000),
+			bigint(0),
+			bigint(0),
+			bigint(1234567890),
+		)
+
 		isOwner(t, _tokenId, lp02)
 		shouldEQ(t, _tokenId, "4")
 		shouldEQ(t, GetNextId(), bigint(5))
@@ -208,22 +252,31 @@ func TestIncreaseLiquidity(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp02)
 
-		_increaseLiquidityParams := IncreaseLiquidityParams{
-			tokenId:        bigint(1), // lp01 owns tid 1
-			amount0Desired: bigint(2000),
-			amount1Desired: bigint(2000),
-			amount0Min:     bigint(1),
-			amount1Min:     bigint(1),
-			deadline:       bigint(1234567890),
-		}
+		// _increaseLiquidityParams := IncreaseLiquidityParams{
+		// 	tokenId: bigint(1), // lp01 owns tid 1
+		// 	amount0Desired: bigint(2000),
+		// 	amount1Desired: bigint(2000),
+		// 	amount0Min: bigint(1),
+		// 	amount1Min: bigint(1),
+		// 	deadline: bigint(1234567890),
+		// }
 
 		poolOldToken0Bal := Token0Bal(PoolAddr)
 		poolOldToken1Bal := Token1Bal(PoolAddr)
 
-		_liquidity, _amount0, _amount1 := IncreaseLiquidity(_increaseLiquidityParams)
+		// _liquidity, _amount0, _amount1 := IncreaseLiquidity(_increaseLiquidityParams)
+		_liquidity, _amount0, _amount1 := IncreaseLiquidity(
+			bigint(1), // lp01 owns tid 1
+			bigint(2000),
+			bigint(2000),
+			bigint(1),
+			bigint(1),
+			bigint(1234567890),
+		)
 
 		// increase liquidity doesn't increase tid
 		shouldEQ(t, GetNextId(), bigint(5))
+
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+_amount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+_amount1)
 	}
@@ -232,16 +285,27 @@ func TestIncreaseLiquidity(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp02)
 
-		_increaseLiquidityParams := IncreaseLiquidityParams{
-			tokenId:        bigint(123),
-			amount0Desired: bigint(2000),
-			amount1Desired: bigint(2000),
-			amount0Min:     bigint(1),
-			amount1Min:     bigint(1),
-			deadline:       bigint(1234567890),
-		}
+		// _increaseLiquidityParams := IncreaseLiquidityParams{
+		// 	tokenId: bigint(123),
+		// 	amount0Desired: bigint(2000),
+		// 	amount1Desired: bigint(2000),
+		// 	amount0Min: bigint(1),
+		// 	amount1Min: bigint(1),
+		// 	deadline: bigint(1234567890),
+		// }
 
-		shouldPanic(t, func() { IncreaseLiquidity(_increaseLiquidityParams) })
+		// shouldPanic(t, func() { IncreaseLiquidity(_increaseLiquidityParams) })
+
+		shouldPanic(t, func() {
+			_liquidity, _amount0, _amount1 := IncreaseLiquidity(
+				bigint(123), // lp01 owns tid 1
+				bigint(2000),
+				bigint(2000),
+				bigint(1),
+				bigint(1),
+				bigint(1234567890),
+			)
+		})
 	}
 }
 
@@ -251,19 +315,27 @@ func TestDecreaseLiquidity(t *testing.T) {
 		std.TestSetOrigCaller(lp01)
 
 		_targetLiquidity := bigint(1234)
-		_decreaseLiquidityParams := DecreaseLiquidityParams{
-			tokenId:    bigint(1),
-			liquidity:  _targetLiquidity,
-			amount0Min: bigint(1),
-			amount1Min: bigint(1),
-			deadline:   bigint(1234567890),
-		}
+		// _decreaseLiquidityParams := DecreaseLiquidityParams{
+		// 	tokenId: bigint(1),
+		// 	liquidity: _targetLiquidity,
+		// 	amount0Min: bigint(1),
+		// 	amount1Min: bigint(1),
+		// 	deadline: bigint(1234567890),
+		// }
 
 		poolOldLiquidity := pool.GetLiquidity()
 		poolOldToken0Bal := Token0Bal(GetOrigPkgAddr())
 		poolOldToken1Bal := Token1Bal(GetOrigPkgAddr())
 
-		_amount0, _amount1 := DecreaseLiquidity(_decreaseLiquidityParams)
+		// _amount0, _amount1 := DecreaseLiquidity(_decreaseLiquidityParams)
+		_amount0, _amount1 := DecreaseLiquidity(
+			bigint(1),
+			_targetLiquidity,
+			bigint(1),
+			bigint(1),
+			bigint(1234567890),
+		)
+
 		shouldNEQ(t, _amount0, bigint(0))
 		shouldNEQ(t, _amount1, bigint(0))
 
@@ -280,15 +352,24 @@ func TestDecreaseLiquidity(t *testing.T) {
 		std.TestSetOrigCaller(lp01)
 
 		_targetLiquidity := bigint(1234567890)
-		_decreaseLiquidityParams := DecreaseLiquidityParams{
-			tokenId:    bigint(1),
-			liquidity:  _targetLiquidity,
-			amount0Min: bigint(1),
-			amount1Min: bigint(1),
-			deadline:   bigint(1234567890),
-		}
+		// _decreaseLiquidityParams := DecreaseLiquidityParams{
+		// 	tokenId: bigint(1),
+		// 	liquidity: _targetLiquidity,
+		// 	amount0Min: bigint(1),
+		// 	amount1Min: bigint(1),
+		// 	deadline: bigint(1234567890),
+		// }
 
-		shouldPanic(t, func() { DecreaseLiquidity(_decreaseLiquidityParams) })
+		// shouldPanic(t, func() { DecreaseLiquidity(_decreaseLiquidityParams) })
+		shouldPanic(t, func() {
+			_amount0, _amount1 := DecreaseLiquidity(
+				bigint(1),
+				_targetLiquidity,
+				bigint(1),
+				bigint(1),
+				bigint(1234567890),
+			)
+		})
 	}
 
 	// lp01 decreases liquidity at tid 2 position ( out-of range )
@@ -296,15 +377,24 @@ func TestDecreaseLiquidity(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp01)
 
-		_decreaseLiquidityParams := DecreaseLiquidityParams{
-			tokenId:    bigint(2),
-			liquidity:  bigint(1000),
-			amount0Min: bigint(0),
-			amount1Min: bigint(0),
-			deadline:   bigint(1234567890),
-		}
+		// _decreaseLiquidityParams := DecreaseLiquidityParams{
+		// 	tokenId: bigint(2),
+		// 	liquidity: bigint(1000),
+		// 	amount0Min: bigint(0),
+		// 	amount1Min: bigint(0),
+		// 	deadline: bigint(1234567890),
+		// }
 
-		shouldPanic(t, func() { DecreaseLiquidity(_decreaseLiquidityParams) })
+		// shouldPanic(t, func() { DecreaseLiquidity(_decreaseLiquidityParams) })
+		shouldPanic(t, func() {
+			_amount0, _amount1 := DecreaseLiquidity(
+				bigint(2),
+				bigint(1000),
+				bigint(0),
+				bigint(0),
+				bigint(1234567890),
+			)
+		})
 	}
 }
 
@@ -313,12 +403,12 @@ func TestCollect(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp01)
 
-		_collectParams := CollectParams{
-			tokenId:    bigint(1),
-			recipient:  rv01,
-			amount0Max: bigint(10),
-			amount1Max: bigint(10),
-		}
+		// _collectParams := CollectParams{
+		// 	tokenId: bigint(1),
+		// 	recipient: rv01,
+		// 	amount0Max: bigint(10),
+		// 	amount1Max: bigint(10),
+		// }
 
 		poolOldLiquidity := pool.GetLiquidity()
 		poolOldToken0Bal := Token0Bal(PoolAddr)
@@ -330,7 +420,13 @@ func TestCollect(t *testing.T) {
 		// Collect calls pool.burn
 		// => need to set OrigCaller() as pool's address just like the DecreaseLiquidity
 		// std.TestSetOrigCaller(GetOrigPkgAddr())
-		_amount0, _amount1 := Collect(_collectParams)
+		// _amount0, _amount1 := Collect(_collectParams)
+		_amount0, _amount1 := Collect(
+			bigint(1),
+			rv01,
+			bigint(10),
+			bigint(10),
+		)
 
 		// After Collect
 		// pool's liquidity stays same
@@ -348,12 +444,12 @@ func TestCollect(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp01)
 
-		_collectParams := CollectParams{
-			tokenId:    bigint(1),
-			recipient:  rv01,
-			amount0Max: bigint(100000),
-			amount1Max: bigint(100000),
-		}
+		// _collectParams := CollectParams{
+		// 	tokenId: bigint(1),
+		// 	recipient: rv01,
+		// 	amount0Max: bigint(100000),
+		// 	amount1Max: bigint(100000),
+		// }
 
 		poolOldLiquidity := pool.GetLiquidity()
 		poolOldToken0Bal := Token0Bal(PoolAddr)
@@ -365,7 +461,13 @@ func TestCollect(t *testing.T) {
 		// Collect calls pool.burn
 		// => need to set OrigCaller() as pool's address just like the DecreaseLiquidity
 		// std.TestSetOrigCaller(GetOrigPkgAddr())
-		_amount0, _amount1 := Collect(_collectParams)
+		// _amount0, _amount1 := Collect(_collectParams)
+		_amount0, _amount1 := Collect(
+			bigint(1),
+			rv01,
+			bigint(100000),
+			bigint(100000),
+		)
 
 		// After Collect
 		// pool's liquidity stays same
@@ -383,12 +485,12 @@ func TestCollect(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp02)
 
-		_collectParams := CollectParams{
-			tokenId:    bigint(2),
-			recipient:  rv01,
-			amount0Max: bigint(10),
-			amount1Max: bigint(10),
-		}
+		// _collectParams := CollectParams{
+		// 	tokenId: bigint(2),
+		// 	recipient: rv01,
+		// 	amount0Max: bigint(10),
+		// 	amount1Max: bigint(10),
+		// }
 
 		poolOldLiquidity := pool.GetLiquidity()
 		poolOldToken0Bal := Token0Bal(PoolAddr)
@@ -400,7 +502,13 @@ func TestCollect(t *testing.T) {
 		// Collect calls pool.burn
 		// => need to set OrigCaller() as pool's address just like the DecreaseLiquidity
 		// std.TestSetOrigCaller(GetOrigPkgAddr())
-		_amount0, _amount1 := Collect(_collectParams)
+		// _amount0, _amount1 := Collect(_collectParams)
+		_amount0, _amount1 := Collect(
+			bigint(2),
+			rv01,
+			bigint(10),
+			bigint(10),
+		)
 		shouldEQ(t, _amount0, bigint(0))
 		shouldEQ(t, _amount1, bigint(0))
 
@@ -420,12 +528,12 @@ func TestCollect(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp02)
 
-		_collectParams := CollectParams{
-			tokenId:    bigint(1),
-			recipient:  rv01,
-			amount0Max: bigint(10),
-			amount1Max: bigint(10),
-		}
+		// _collectParams := CollectParams{
+		// 	tokenId: bigint(1),
+		// 	recipient: rv01,
+		// 	amount0Max: bigint(10),
+		// 	amount1Max: bigint(10),
+		// }
 
 		poolOldLiquidity := pool.GetLiquidity()
 		poolOldToken0Bal := Token0Bal(PoolAddr)
@@ -434,7 +542,15 @@ func TestCollect(t *testing.T) {
 		rvOldToken0Bal := Token0Bal(rv01)
 		rvOldToken1Bal := Token1Bal(rv01)
 
-		shouldPanic(t, func() { Collect(_collectParams) })
+		// shouldPanic(t, func() { Collect(_collectParams) })
+		shouldPanic(t, func() {
+			Collect(
+				bigint(1),
+				rv01,
+				bigint(10),
+				bigint(10),
+			)
+		})
 	}
 }
 
@@ -459,28 +575,41 @@ func TestNFTBurn(t *testing.T) {
 
 		_positionLiquidity := _position.liquidity
 
-		_decreaseLiquidityParams := DecreaseLiquidityParams{
-			tokenId:    _tokenId,
-			liquidity:  _positionLiquidity, // remove all liquidity
-			amount0Min: bigint(1),
-			amount1Min: bigint(1),
-			deadline:   bigint(1234567890),
-		}
+		// _decreaseLiquidityParams := DecreaseLiquidityParams{
+		// 	tokenId: _tokenId,
+		// 	liquidity: _positionLiquidity, // remove all liquidity
+		// 	amount0Min: bigint(1),
+		// 	amount1Min: bigint(1),
+		// 	deadline: bigint(1234567890),
+		// }
 
 		// removed all liquidity, but didn't collect => burn will panic
-		DecreaseLiquidity(_decreaseLiquidityParams)
+		// DecreaseLiquidity(_decreaseLiquidityParams)
+		DecreaseLiquidity(
+			_tokenId,
+			_positionLiquidity, // remove all liquidity
+			bigint(1),
+			bigint(1),
+			bigint(1234567890),
+		)
 		shouldPanic(t, func() { burn("1") })
 
-		_collectParams := CollectParams{
-			tokenId:    _tokenId,
-			recipient:  rv01,
-			amount0Max: bigint(10000), // collect all
-			amount1Max: bigint(10000), // collect all
-		}
+		// _collectParams := CollectParams{
+		// 	tokenId: _tokenId,
+		// 	recipient: rv01,
+		// 	amount0Max: bigint(10000), // collect all
+		// 	amount1Max: bigint(10000), // collect all
+		// }
 
 		// collect all owed tokens => nft is burnable and burned
 		_before := NFTBalanceOf(lp01)
-		Collect(_collectParams) // burn happens here as last step
+		// Collect(_collectParams) // burn happens here as last step
+		Collect(
+			_tokenId,
+			rv01,
+			bigint(10000), // collect all
+			bigint(10000), // collect all
+		)
 		shouldEQ(t, NFTBalanceOf(lp01), _before-bigint(1))
 	}
 

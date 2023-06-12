@@ -100,21 +100,38 @@ func Stakes(
 	return secondsPerLiquidityInsideInitialX128, liquidity
 }
 
-func CreateIncentive(key IncentiveKey, reward bigint) {
-	require(reward > 0, "GnoswapStaker::CreateIncnetive: reward must be positive")
+func CreateIncentive(
+	// rewardToken std.Address,
+	// pool std.Address,
+	startTime bigint,
+	endTime bigint,
+	refundee std.Address,
+	reward bigint,
+) {
+	incentiveKey := IncentiveKey{
+		startTime: startTime,
+		endTime:   endTime,
+		refundee:  refundee,
+	}
+
+	return createIncentive(incentiveKey, reward)
+}
+
+func createIncentive(key IncentiveKey, reward bigint) {
+	require(reward > 0, "GnoswapStaker::createIncentive: reward must be positive")
 
 	require(
 		GetTimestamp() <= key.startTime,
-		"GnoswapStaker::CreateIncnetive: start time must be now or in the future",
+		"GnoswapStaker::createIncentive: start time must be now or in the future",
 	)
 	require(
 		(key.startTime-GetTimestamp()) <= maxIncentiveStartLeadTime,
-		"GnoswapStaker::CreateIncnetive: start time too far into future",
+		"GnoswapStaker::createIncentive: start time too far into future",
 	)
-	require(key.startTime < key.endTime, "GnoswapStaker::CreateIncnetive: start time must be before end time")
+	require(key.startTime < key.endTime, "GnoswapStaker::createIncentive: start time must be before end time")
 	require(
 		(key.endTime-key.startTime) <= maxIncentiveDuration,
-		"GnoswapStaker::CreateIncnetive: incentive duration is too long",
+		"GnoswapStaker::createIncentive: incentive duration is too long",
 	)
 
 	incentiveId := IncentiveIdCompute(key)
@@ -137,7 +154,23 @@ func CreateIncentive(key IncentiveKey, reward bigint) {
 	rt.Transfer(a2u(GetOrigPkgAddr()), uint64(reward))
 }
 
-func EndIncentive(key IncentiveKey) (refund bigint) {
+func EndIncentive(
+	// rewardToken std.Address,
+	// pool std.Address,
+	startTime bigint,
+	endTime bigint,
+	refundee std.Address,
+) bigint {
+	incentiveKey := IncentiveKey{
+		startTime: startTime,
+		endTime:   endTime,
+		refundee:  refundee,
+	}
+
+	return endIncentive(incentiveKey)
+}
+
+func endIncentive(key IncentiveKey) (refund bigint) {
 	require(GetTimestamp() >= key.endTime, "GnoswapStaker::endIncentive: cannot end incentive before end time")
 
 	incentiveId := IncentiveIdCompute(key)
@@ -249,12 +282,41 @@ func WithdrawToken(tokenId string, to std.Address) {
 	std.TestSetOrigCaller(_orig)
 }
 
-func StakeToken(key IncentiveKey, tokenId string) {
+func StakeToken(
+	// rewardToken std.Address,
+	// pool std.Address,
+	startTime bigint,
+	endTime bigint,
+	refundee std.Address,
+	tokenId string,
+) {
 	require(nft.OwnerOf(tid(tokenId)) == GetOrigCaller(), "GnoswapStaker::stakeToken: only owner can stake token")
+
+	key := IncentiveKey{
+		startTime: startTime,
+		endTime:   endTime,
+		refundee:  refundee,
+	}
 	stakeToken(key, tokenId)
 }
 
-func UnstakeToken(key IncentiveKey, tokenId string) {
+func UnstakeToken(
+	// rewardToken std.Address,
+	// pool std.Address,
+	startTime bigint,
+	endTime bigint,
+	refundee std.Address,
+	tokenId string,
+) {
+	key := IncentiveKey{
+		startTime: startTime,
+		endTime:   endTime,
+		refundee:  refundee,
+	}
+	unstakeToken(key, tokenId)
+}
+
+func unstakeToken(key IncentiveKey, tokenId string) {
 	// deposit := deposits[tokenId]
 	_deposit, ok := deposits.Get(tokenId)
 	var deposit Deposit
@@ -387,8 +449,8 @@ func UnstakeToken(key IncentiveKey, tokenId string) {
 	}
 }
 
-func claimReward(to std.Address, amountRequested bigint) (reward bigint) {
-	requireUnsigned(amountRequested, "GnoswapStaker::claimReward: amountRequested is not unsigned")
+func ClaimReward(to std.Address, amountRequested bigint) (reward bigint) {
+	requireUnsigned(amountRequested, "GnoswapStaker::ClaimReward: amountRequested is not unsigned")
 
 	// reward = rewards[GetOrigCaller()]
 	_reward, ok := rewards.Get(string(GetOrigCaller()))
@@ -408,7 +470,7 @@ func claimReward(to std.Address, amountRequested bigint) (reward bigint) {
 	std.TestSetOrigCaller(GetOrigPkgAddr())
 	rto := rt.Transfer(a2u(to), uint64(reward))
 	if !rto {
-		panic("GnoswapStaker::claimReward: transfer failed")
+		panic("GnoswapStaker::ClaimReward: transfer failed")
 	}
 	std.TestSetOrigCaller(_orig)
 
@@ -423,7 +485,7 @@ func claimReward(to std.Address, amountRequested bigint) (reward bigint) {
 		reward2 = bigint(0)
 	}
 
-	requireUnsigned(reward, "GnoswapStaker::claimReward: reward is not unsigned")
+	requireUnsigned(reward, "GnoswapStaker::ClaimReward: reward is not unsigned")
 }
 
 func getRewardInfo(key IncentiveKey, tokenId string) (reward, secondsInsideX128 bigint) {
