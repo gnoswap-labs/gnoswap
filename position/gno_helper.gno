@@ -2,6 +2,7 @@ package position
 
 import (
 	"std"
+	"time"
 )
 
 // stdlibs
@@ -14,8 +15,8 @@ func GetHeight() int64 {
 	return std.GetHeight()
 }
 
-func GetTimestamp() bigint { // will be deprecate
-	return bigint(std.GetTimestamp())
+func GetTimestamp() bigint {
+	return bigint(time.Now().Unix())
 }
 
 func GetOrigPkgAddr() std.Address {

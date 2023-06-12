@@ -2,6 +2,7 @@ package factory
 
 import (
 	"std"
+	"time"
 )
 
 // stdlibs
@@ -10,8 +11,8 @@ func GetHeight() int64 {
 	return std.GetHeight()
 }
 
-func GetTimestamp() int64 { // will be deprecate
-	return int64(std.GetTimestamp())
+func GetTimestamp() int64 {
+	return time.Now().Unix()
 }
 
 func GetChainID() string {
