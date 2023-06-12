@@ -127,7 +127,7 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) bigint {
 	if msb >= 128 {
 		r = ratio >> uint64(msb-127)
 	} else {
-		r = ratio << (127 - msb)
+		r = ratio << uint64(127-msb)
 	}
 
 	log_2 := (msb - 128) << 64

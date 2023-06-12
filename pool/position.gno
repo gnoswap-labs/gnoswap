@@ -2,13 +2,12 @@ package gnoswap
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"std"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-
-	"encoding/base64"
 )
 
 type PositionInfo struct {
@@ -35,7 +34,7 @@ func PositionGetKey(
 	return encoded
 }
 
-func PositionUpdateWithKey(
+func (pool *Pool) PositionUpdateWithKey(
 	key string,
 	liquidityDelta bigint,
 	feeGrowthInside0X128 bigint,
@@ -45,7 +44,7 @@ func PositionUpdateWithKey(
 	requireUnsigned(feeGrowthInside1X128, "position.gno__PositionUpdateWithKey__feeGrowthInside1X128")
 
 	// position := positions[key]
-	_position, exists := positions.Get(key)
+	_position, exists := pool.positions.Get(key)
 	var position PositionInfo
 	if !exists {
 		position = PositionInfo{}
@@ -56,7 +55,7 @@ func PositionUpdateWithKey(
 
 	p := PositionUpdate(position, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
 	// positions[key] = p
-	positions.Set(key, p)
+	pool.positions.Set(key, p)
 	return p
 }
 

@@ -25,7 +25,7 @@ func TickTickSpacingToMaxLiquidityPerTick(tickSpacing bigint) bigint {
 	return MAX_UINT64 / numTicks
 }
 
-func TickGetFeeGrowthInside(
+func (pool *Pool) TickGetFeeGrowthInside(
 	tickLower bigint,
 	tickUpper bigint,
 	tickCurrent bigint,
@@ -37,7 +37,7 @@ func TickGetFeeGrowthInside(
 
 	// var lower TickInfo = ticks[tickLower]
 	var lower TickInfo
-	_lower, exists := ticks.Get(string(tickLower))
+	_lower, exists := pool.ticks.Get(string(tickLower))
 	if !exists {
 		lower = TickInfo{}
 		// panic("lower tick does not exist")
@@ -47,7 +47,7 @@ func TickGetFeeGrowthInside(
 
 	// var upper TickInfo = ticks[tickUpper]
 	var upper TickInfo
-	_upper, exists := ticks.Get(string(tickUpper))
+	_upper, exists := pool.ticks.Get(string(tickUpper))
 	if !exists {
 		upper = TickInfo{}
 		// panic("upper tick does not exist")
@@ -83,7 +83,7 @@ func TickGetFeeGrowthInside(
 	return feeGrowthInside0X128, feeGrowthInside1X128
 }
 
-func TickUpdate(
+func (pool *Pool) TickUpdate(
 	tick bigint,
 	tickCurrent bigint,
 	liquidityDelta bigint,
@@ -98,7 +98,7 @@ func TickUpdate(
 
 	// info := ticks[tick]
 	var info TickInfo
-	_info, exists := ticks.Get(string(tick))
+	_info, exists := pool.ticks.Get(string(tick))
 	if !exists {
 		info = TickInfo{}
 	} else {
@@ -129,16 +129,16 @@ func TickUpdate(
 	}
 
 	// ticks[tick] = info
-	ticks.Set(string(tick), info)
+	pool.ticks.Set(string(tick), info)
 	return flipped
 }
 
-func TickClear(tick bigint) {
+func (pool *Pool) TickClear(tick bigint) {
 	// delete(ticks, tick)
-	ticks.Remove(string(tick))
+	pool.ticks.Remove(string(tick))
 }
 
-func TickCross(
+func (pool *Pool) TickCross(
 	tick bigint,
 	feeGrowthGlobal0X128 bigint,
 	feeGrowthGlobal1X128 bigint,
@@ -148,7 +148,7 @@ func TickCross(
 
 	// info := ticks[tick]
 	var info TickInfo
-	_info, exists := ticks.Get(string(tick))
+	_info, exists := pool.ticks.Get(string(tick))
 	if !exists {
 		// XXX panic("tick does not exist")
 		info = TickInfo{}
@@ -159,7 +159,7 @@ func TickCross(
 	info.feeGrowthOutside0X128 = feeGrowthGlobal0X128 - info.feeGrowthOutside0X128
 	info.feeGrowthOutside1X128 = feeGrowthGlobal1X128 - info.feeGrowthOutside1X128
 	// ticks[tick] = info
-	ticks.Set(string(tick), info)
+	pool.ticks.Set(string(tick), info)
 
 	liquidityNet := info.liquidityNet
 	return liquidityNet
