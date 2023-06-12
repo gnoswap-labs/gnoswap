@@ -91,6 +91,7 @@ func TestGoodScenario(t *testing.T) {
 		deadline:       bigint(1234567890),
 	}
 	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	// tokenId == 1
 	std.TestSkipTimestamps(1)
 
 	// 3. Init Incentive Program
@@ -198,6 +199,7 @@ func TestBadScenario(t *testing.T) {
 		deadline:       bigint(2345678901),
 	}
 	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(_mintParams)
+	// tokenId == 2
 
 	// 3. Init Incentive Program
 	// Init(_maxIncentiveStartLeadTime, _maxIncentiveDuration)
