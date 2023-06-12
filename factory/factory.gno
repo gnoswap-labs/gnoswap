@@ -58,7 +58,8 @@ func CreatePool(
 	}
 	// require(token0 != zeroAddress, "Token0 has not yet been deployed") // XXX check if zeroAddress is possible
 
-	tickSpacing, _ := feeAmountTickSpacing.Get(string(fee))
+	tickSpacing, exist := feeAmountTickSpacing.Get(string(fee))
+	require(exist, "Fee amount not enabled")
 	require(tickSpacing != 0, "TickSpacing is 0")
 
 	poolKey := getPoolKeyFromTokenNames(token0, token1, fee)
