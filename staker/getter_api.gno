@@ -10,13 +10,13 @@ import (
 )
 
 type ApiIncentivesInfo struct {
-	Key                     string
-	StartTime               bigint
-	EndTime                 bigint
-	Refundee                std.Address
-	TotalRewardUnclaimed    bigint
-	TotalSecondsClaimedX128 bigint
-	NumberOfStakes          bigint
+	Key       string
+	StartTime bigint
+	EndTime   bigint
+	// Refundee std.Address
+	// TotalRewardUnclaimed bigint
+	// TotalSecondsClaimedX128 bigint
+	NumberOfStakes bigint
 }
 
 type ApiDepositsInfo struct {
@@ -62,30 +62,6 @@ func ApiGetIncentivesInfo() string {
 	}{
 		abi,
 		aii,
-	}
-
-	rr, err := json.Marshal(r)
-	if err != nil {
-		panic(err)
-	}
-
-	return string(rr)
-}
-
-func ApiGetDepositsInfo() string {
-	abi := ApiBasicInfo{
-		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
-	}
-
-	adi := getDepositsList()
-
-	r := struct {
-		ApiBasicInfo
-		DepositsList []ApiDepositsInfo
-	}{
-		abi,
-		adi,
 	}
 
 	rr, err := json.Marshal(r)
@@ -160,36 +136,17 @@ func getIncentivesList() []ApiIncentivesInfo {
 		splitKey := strings.Split(origKey, "__")
 
 		incentivesList[i] = ApiIncentivesInfo{
-			Key:                     key,
-			StartTime:               bigint(splitKey[0]),
-			EndTime:                 bigint(splitKey[1]),
-			Refundee:                std.Address(splitKey[2]),
-			TotalRewardUnclaimed:    value.(Incentive).totalRewardUnclaimed,
-			TotalSecondsClaimedX128: value.(Incentive).totalSecondsClaimedX128,
-			NumberOfStakes:          value.(Incentive).numberOfStakes,
+			Key:       key,
+			StartTime: bigint(splitKey[0]),
+			EndTime:   bigint(splitKey[1]),
+			// Refundee: std.Address(splitKey[2]),
+			// TotalRewardUnclaimed: value.(Incentive).totalRewardUnclaimed,
+			// TotalSecondsClaimedX128: value.(Incentive).totalSecondsClaimedX128,
+			NumberOfStakes: value.(Incentive).numberOfStakes,
 		}
 	}
 
 	return incentivesList
-}
-
-func getDepositsList() []ApiDepositsInfo {
-	depositsSize := deposits.Size()
-	depositsList := make([]ApiDepositsInfo, depositsSize)
-
-	for i := 0; i < depositsSize; i++ {
-		key, value := deposits.GetByIndex(i)
-		val := value.(Deposit)
-		depositsList[i] = ApiDepositsInfo{
-			TokenId:        string(key),
-			Owner:          std.Address(val.owner),
-			NumberOfStakes: val.numberOfStakes,
-			TickLower:      val.tickLower,
-			TickUpper:      val.tickUpper,
-		}
-	}
-
-	return depositsList
 }
 
 func getStakesList() []ApiStakesInfo {
