@@ -28,7 +28,6 @@ func GetOrigCaller() std.Address {
 
 // derive pkg addr
 
-
 // test
 // https://github.com/gnolang/gno/blob/master/tests/imports.go
 

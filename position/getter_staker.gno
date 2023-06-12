@@ -1,6 +1,5 @@
 package position
 
-
 func PositionGetPosition(tokenId string) Position {
 	// return positions[tokenId].(Position)
 	_position, ok := positions.Get(tokenId)

@@ -2,6 +2,7 @@ package position
 
 import (
 	"std"
+
 	"gno.land/p/demo/grc/grc721"
 )
 
@@ -17,7 +18,7 @@ func NFTBalanceOf(addr std.Address) bigint {
 		println("NFTBalanceOf")
 		panic(err)
 	}
-	
+
 	return bigint(bal)
 }
 
@@ -32,7 +33,6 @@ func Exists(tokenId string) bool {
 	return true
 }
 
-
 // Error handling isn't necessary here
 func isApprovedOrOwner(addr std.Address, tokenId string) bool {
 	tid := grc721.TokenID(tokenId)
@@ -42,7 +42,7 @@ func isApprovedOrOwner(addr std.Address, tokenId string) bool {
 	if owner == addr {
 		return true
 	}
-	
+
 	// if not owner, check whether approved
 	operator, _ := nft.GetApproved(tid)
 	if addr == operator {

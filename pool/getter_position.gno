@@ -4,12 +4,11 @@ import (
 	"std"
 )
 
-
-func GetPoolSlot0SqrtPriceX96() (bigint) {
+func GetPoolSlot0SqrtPriceX96() bigint {
 	return slot0.sqrtPriceX96
 }
 
-func GetPoolTickSpacing() (bigint) {
+func GetPoolTickSpacing() bigint {
 	return tickSpacing
 }
 
@@ -59,7 +58,7 @@ func GetPoolAddress() std.Address {
 	// XXX return std.GetOrigPkgAddr()
 }
 
-func GetPoolSlot0Tick() (bigint) {
+func GetPoolSlot0Tick() bigint {
 	return slot0.tick
 }
 

@@ -1,8 +1,8 @@
 package position
 
 import (
-	"std"
 	"gno.land/r/demo/users"
+	"std"
 )
 
 func require(condition bool, message string) {
