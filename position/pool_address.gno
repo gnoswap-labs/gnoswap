@@ -1,20 +1,19 @@
 package position
 
 import (
-	"std"
 	"crypto/sha256"
 	"encoding/hex"
+	"std"
 
 	"gno.land/p/demo/ufmt"
 )
 
 const POOL_INIT_CODE_HASH bigint = 0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54
 
-
 type PoolKey struct {
 	token0 std.Address
 	token1 std.Address
-	fee bigint
+	fee    bigint
 }
 
 func PoolAddressGetPoolKey(
@@ -26,14 +25,13 @@ func PoolAddressGetPoolKey(
 	if tokenA.String() > tokenB.String() {
 		tokenA, tokenB = tokenB, tokenA
 	}
-	
+
 	return PoolKey{
 		token0: tokenA,
 		token1: tokenB,
-		fee: fee,
+		fee:    fee,
 	}
 }
-
 
 func PoolAddressComputeAddress(
 	factory std.Address,

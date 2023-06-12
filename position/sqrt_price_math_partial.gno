@@ -4,8 +4,8 @@ func SqrtPriceMathPartialGetAmount0Delta(
 	sqrtRatioAX96 bigint,
 	sqrtRatioBX96 bigint,
 	liquidity bigint,
-) (bigint) {
-	if (sqrtRatioAX96 > sqrtRatioBX96) {
+) bigint {
+	if sqrtRatioAX96 > sqrtRatioBX96 {
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
 	}
 
@@ -17,13 +17,12 @@ func SqrtPriceMathPartialGetAmount0Delta(
 	return (numerator1 * numerator2 / sqrtRatioBX96) / sqrtRatioAX96
 }
 
-
 func SqrtPriceMathPartialGetAmount1Delta(
 	sqrtRatioAX96 bigint,
 	sqrtRatioBX96 bigint,
-	liquidity bigint,	
-) (bigint) {
-	if (sqrtRatioAX96 > sqrtRatioBX96) {
+	liquidity bigint,
+) bigint {
+	if sqrtRatioAX96 > sqrtRatioBX96 {
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
 	}
 

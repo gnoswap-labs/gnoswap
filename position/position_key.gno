@@ -1,10 +1,10 @@
 package position
 
 import (
-	"std"
 	"crypto/sha256"
-	"encoding/hex"
 	"encoding/base64"
+	"encoding/hex"
+	"std"
 
 	"gno.land/p/demo/ufmt"
 )

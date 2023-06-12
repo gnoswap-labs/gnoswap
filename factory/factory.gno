@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	owner std.Address
+	owner                std.Address
 	feeAmountTickSpacing avl.Tree
-	getPool avl.Tree
+	getPool              avl.Tree
 )
 
 func Init() {
@@ -39,7 +39,7 @@ func CreatePool(
 		token1 = tokenA
 	}
 	require(token0 != zeroAddress, "Token0 has not yet been deployed") // XXX check if zeroAddress is possible
-	
+
 	tickSpacing, _ := feeAmountTickSpacing.Get(string(fee))
 	require(tickSpacing != 0, "TickSpacing is 0")
 
@@ -58,7 +58,6 @@ func CreatePool(
 	// nested avl.Tree [pools[poolKey1][fee]
 	poolWithFee, ok := pool.Get(poolKey1)
 
-
 	_tmpAddr := string(tokenA) + string(tokenB) + strconv.Itoa(int(fee))
 	pool = std.Address(_tmpAddr)
 
@@ -66,7 +65,6 @@ func CreatePool(
 
 	return pool
 }
-
 
 func SetOwner(_owner std.Address) {
 	require(std.GetOrigCaller() == owner, "Owner is not the origin caller!")

@@ -1,9 +1,9 @@
 package gnoswap
 
 import (
-	"std"
 	"crypto/sha256"
 	"encoding/hex"
+	"std"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
@@ -21,14 +21,13 @@ type PositionInfo struct {
 	tokensOwed1 bigint
 }
 
-
 func PositionGetKey(
 	owner std.Address,
 	tickLower bigint,
 	tickUpper bigint,
-) (string) {
+) string {
 	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
-	
+
 	// sum256 := sha256.Sum256([]byte(key))[:]
 	// return hex.EncodeToString(sum256)
 
@@ -41,14 +40,14 @@ func PositionUpdateWithKey(
 	liquidityDelta bigint,
 	feeGrowthInside0X128 bigint,
 	feeGrowthInside1X128 bigint,
-) (PositionInfo) {
+) PositionInfo {
 	requireUnsigned(feeGrowthInside0X128, "position.gno__PositionUpdateWithKey__feeGrowthInside0X128")
 	requireUnsigned(feeGrowthInside1X128, "position.gno__PositionUpdateWithKey__feeGrowthInside1X128")
 
 	// position := positions[key]
 	_position, exists := positions.Get(key)
 	var position PositionInfo
-	if (!exists) {
+	if !exists {
 		position = PositionInfo{}
 		// panic("position does not exist #2")
 	} else {
@@ -66,31 +65,31 @@ func PositionUpdate(
 	liquidityDelta bigint,
 	feeGrowthInside0X128 bigint,
 	feeGrowthInside1X128 bigint,
-) (PositionInfo) {
+) PositionInfo {
 	requireUnsigned(feeGrowthInside0X128, "position.gno__PositionUpdate__feeGrowthInside0X128")
 	requireUnsigned(feeGrowthInside1X128, "position.gno__PositionUpdate__feeGrowthInside1X128")
 
 	var liquidityNext bigint
 
-	if (liquidityDelta == 0) {
+	if liquidityDelta == 0 {
 		require(self.liquidity > 0, "position.gno__PositionUpdate__self.liquidity")
 		liquidityNext = self.liquidity
 	} else {
 		liquidityNext = LiquidityMathAddDelta(self.liquidity, liquidityDelta)
 	}
-	
+
 	tokensOwed0 := (feeGrowthInside0X128 - self.feeGrowthInside0LastX128) * self.liquidity / Q128
 	tokensOwed1 := (feeGrowthInside1X128 - self.feeGrowthInside1LastX128) * self.liquidity / Q128
 	requireUnsigned(tokensOwed0, "position.gno__PositionUpdate__tokensOwed0")
 	requireUnsigned(tokensOwed1, "position.gno__PositionUpdate__tokensOwed1")
 
-	if (liquidityDelta != 0) {
+	if liquidityDelta != 0 {
 		self.liquidity = liquidityNext
 	}
 
 	self.feeGrowthInside0LastX128 = feeGrowthInside0X128
 	self.feeGrowthInside1LastX128 = feeGrowthInside1X128
-	if (tokensOwed0 > 0 || tokensOwed1 > 0) {
+	if tokensOwed0 > 0 || tokensOwed1 > 0 {
 		self.tokensOwed0 += tokensOwed0
 		self.tokensOwed1 += tokensOwed1
 	}
