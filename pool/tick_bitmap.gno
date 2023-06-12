@@ -17,7 +17,7 @@ func TickBitmapPosition(tick bigint) (bigint, bigint) {
 	return wordPos, bitPos
 }
 
-func TickBitmapFlipTick(
+func (pool *Pool) TickBitmapFlipTick(
 	tick bigint,
 	tickSpacing bigint,
 ) {
@@ -26,11 +26,11 @@ func TickBitmapFlipTick(
 	mask := BigInt1 << uint64(bitPos)
 	requireUnsigned(mask, "tick_bitmap.gno__TickBitmapFlipTick__mask")
 	// tickBitmaps[wordPos] ^= mask
-	_tw, exists := tickBitmaps.Get(string(wordPos)).(bigint)
-	tickBitmaps.Set(string(wordPos), _tw^mask)
+	_tw, exists := pool.tickBitmaps.Get(string(wordPos)).(bigint)
+	pool.tickBitmaps.Set(string(wordPos), _tw^mask)
 }
 
-func TickBitmapNextInitializedTickWithInOneWord(
+func (pool *Pool) TickBitmapNextInitializedTickWithInOneWord(
 	tick bigint,
 	tickSpacing bigint,
 	zeroForOne bool,
@@ -45,7 +45,7 @@ func TickBitmapNextInitializedTickWithInOneWord(
 		mask := (BigInt1 << uint64(bitPos)) - BigInt1 + (BigInt1 << uint64(bitPos))
 		requireUnsigned(mask, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__mask #1")
 		// masked := tickBitmaps[wordPos] & mask
-		_tw, exists := tickBitmaps.Get(string(wordPos)).(bigint)
+		_tw, exists := pool.tickBitmaps.Get(string(wordPos)).(bigint)
 		masked := _tw & mask
 		requireUnsigned(masked, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__masked #1")
 
@@ -78,7 +78,7 @@ func TickBitmapNextInitializedTickWithInOneWord(
 
 	requireUnsigned(mask, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__mask #2")
 	// masked := tickBitmaps[wordPos] & mask
-	_tw, exists := tickBitmaps.Get(string(wordPos)).(bigint)
+	_tw, exists := pool.tickBitmaps.Get(string(wordPos)).(bigint)
 	masked := _tw & mask
 	requireUnsigned(masked, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__masked #2")
 

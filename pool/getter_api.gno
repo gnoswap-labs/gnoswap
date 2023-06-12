@@ -56,25 +56,26 @@ type ApiBasicInfo struct {
 	Timestamp int64
 }
 
-func ApiGetPoolInfo() string {
+func (pool *Pool) ApiGetPoolInfo() string {
 	abi := ApiBasicInfo{
 		Height:    GetHeight(),
 		Timestamp: int64(GetTimestamp()),
 	}
+	minTick, maxTick := pool.findMinMaxTick()
 	api := ApiPoolInfo{
 		Address:      GetOrigPkgAddr().String(),
 		Path:         "d__gno.land/gnoswap/pool/91u24jfabj",
-		Token0:       token0.GetName(),
-		Token1:       token1.GetName(),
-		Liquidity:    GetLiquidity(),
-		Token0Amount: BalanceOf(token0, GetOrigPkgAddr()),
-		Token1Amount: BalanceOf(token1, GetOrigPkgAddr()),
-		SwapFee:      GetFee(),
+		Token0:       pool.token0.GetName(),
+		Token1:       pool.token1.GetName(),
+		Liquidity:    pool.GetLiquidity(),
+		Token0Amount: BalanceOf(pool.token0, GetOrigPkgAddr()),
+		Token1Amount: BalanceOf(pool.token1, GetOrigPkgAddr()),
+		SwapFee:      pool.GetFee(),
 		// swapFeeAmount: 123,
-		ProtocolFees: GetSlot0().feeProtocol,
+		ProtocolFees: pool.GetSlot0().feeProtocol,
 		// protocolFeeAmount: 123,
-		MinTick: findMinTick(),
-		MaxTick: findMaxTick(),
+		MinTick: minTick,
+		MaxTick: maxTick,
 	}
 
 	r := struct {
@@ -91,6 +92,33 @@ func ApiGetPoolInfo() string {
 	}
 
 	return string(rr)
+}
+
+func (pool *Pool) findMinMaxTick() (bigint, bigint) {
+	ticks := pool.tickRange()
+	min, max := ticks[0], ticks[0]
+
+	for _, number := range ticks {
+		if number < min {
+			min = number
+		}
+		if number > max {
+			max = number
+		}
+	}
+
+	return min, max
+}
+
+func (pool *Pool) tickRange() []bigint {
+	tickList := []bigint{}
+	ticks := pool.GetTicks()
+
+	for i := 0; i < ticks.Size(); i++ {
+		key, _ := ticks.GetByIndex(i)
+		tickList = append(tickList, bigint(key))
+	}
+	return tickList
 }
 
 func ApiGetTokenInfo(gat *grc20.AdminToken) string {
@@ -121,17 +149,17 @@ func ApiGetTokenInfo(gat *grc20.AdminToken) string {
 	return string(rr)
 }
 
-func ApiGetUserInfo(addr string) string {
+func (pool *Pool) ApiGetUserInfo(addr string) string {
 	abi := ApiBasicInfo{
 		Height:    GetHeight(),
 		Timestamp: int64(GetTimestamp()),
 	}
 	aui := ApiUserInfo{
-		OwedPosition: userPosition(addr),
-		Token0:       token0.GetName(),
-		Token0Amount: BalanceOf(token0, s2a(addr)),
-		Token1:       token1.GetName(),
-		Token1Amount: BalanceOf(token1, s2a(addr)),
+		OwedPosition: pool.userPosition(addr),
+		Token0:       pool.token0.GetName(),
+		Token0Amount: BalanceOf(pool.token0, s2a(addr)),
+		Token1:       pool.token1.GetName(),
+		Token1Amount: BalanceOf(pool.token1, s2a(addr)),
 	}
 
 	r := struct {
@@ -150,10 +178,10 @@ func ApiGetUserInfo(addr string) string {
 	return string(rr)
 }
 
-func userPosition(addr string) []ApiPositionInfo { // []PositionInfo
+func (pool *Pool) userPosition(addr string) []ApiPositionInfo { // []PositionInfo
 	userPos := []ApiPositionInfo{}
 
-	for _, key := range positionWithKeys() {
+	for _, key := range pool.positionWithKeys() {
 		decoded, _ := base64.StdEncoding.DecodeString(key)
 
 		if strings.Contains(string(decoded), addr) {
@@ -161,7 +189,7 @@ func userPosition(addr string) []ApiPositionInfo { // []PositionInfo
 			_tl := strings.Split(string(decoded), "__")[1]
 			_tu := strings.Split(string(decoded), "__")[2]
 
-			_userPos, exists := positions.Get(key) // return PositionInfo
+			_userPos, exists := pool.positions.Get(key) // return PositionInfo
 			if exists {
 				// userPos = append(userPos, _userPos.(ApiPositionInfo))
 				_withTickUserPos := ApiPositionInfo{
@@ -180,54 +208,16 @@ func userPosition(addr string) []ApiPositionInfo { // []PositionInfo
 	return userPos
 }
 
-func positionWithKeys() []string {
-	posSize := positions.Size()
+func (pool *Pool) positionWithKeys() []string {
+	posSize := pool.positions.Size()
 	keys := make([]string, posSize)
 
 	for i := 0; i < posSize; i++ {
-		key, value := positions.GetByIndex(i)
+		key, value := pool.positions.GetByIndex(i)
 		keys[i] = key
 	}
 
 	return keys
-}
-
-func tickRange() []bigint {
-	tickList := []bigint{}
-	ticks := GetTicks()
-
-	for i := 0; i < ticks.Size(); i++ {
-		key, _ := ticks.GetByIndex(i)
-		tickList = append(tickList, bigint(key))
-	}
-
-	return tickList
-}
-
-func findMinTick() bigint {
-	ticks := tickRange()
-	min := ticks[0]
-
-	for _, number := range ticks {
-		if number < min {
-			min = number
-		}
-	}
-
-	return min
-}
-
-func findMaxTick() bigint {
-	ticks := tickRange()
-	max := ticks[0]
-
-	for _, number := range ticks {
-		if number > max {
-			max = number
-		}
-	}
-
-	return max
 }
 
 func s2a(addr string) std.Address {
