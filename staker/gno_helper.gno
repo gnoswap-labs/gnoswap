@@ -2,12 +2,13 @@ package staker
 
 import (
 	"std"
+	"time"
 )
 
 // stdlibs
 // https://github.com/gnolang/gno/blob/master/stdlibs/stdlibs.go
-func GetTimestamp() bigint { // will be deprecate
-	return bigint(std.GetTimestamp())
+func GetTimestamp() bigint {
+	return bigint(time.Now().Unix())
 }
 
 func GetHeight() int64 {
