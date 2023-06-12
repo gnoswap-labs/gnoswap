@@ -5,32 +5,50 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/grc/grc20"
+
+	p "gno.land/r/pool"
 )
 
 var (
 	owner                std.Address
 	feeAmountTickSpacing avl.Tree
-	getPool              avl.Tree
+	initialized          bool = false
 )
 
+// pools manages the mapping from the pool key (token0, token1, fee) to the pool struct
+var pools avl.Tree // map[string]*Pool
+
+// The argument token names should be gno package names
+// Tokens are sorted alphabetically and concatenated with a colon
+func getPoolKeyFromTokenNames(token0, token1 string, fee bigint) string {
+	if token0 < token1 {
+		return token0 + "_" + token1 + "_" + string(fee)
+	} else {
+		return token1 + "_" + token0 + "_" + string(fee)
+	}
+}
+
+// not init, but Init
 func Init() {
-	// can we init with parameters?
+	require(initialized == false, "Already initialized")
 	owner = std.GetOrigCaller()
 	feeAmountTickSpacing.Set("500", 10)
 	feeAmountTickSpacing.Set("3000", 60)
 	feeAmountTickSpacing.Set("10000", 200)
+	initialized = true
 }
 
 func CreatePool(
-	tokenA std.Address,
-	tokenB std.Address,
+	tokenA string, // XXX inter-contract token0 pkg_path
+	tokenB string, // XXX inter-contract token1 pkg_path
 	fee bigint,
-) (pool std.Address) {
+	sqrtPrice bigint,
+) (pool *p.Pool) {
 	require(tokenA != tokenB, "TokenA == TokenB")
-	requrie(owner == GetOrigCaller(), "Owner is not the origin caller!")
+	require(owner == GetOrigCaller(), "Owner is not the origin caller!")
 
-	var token0 std.Address
-	var token1 std.Address
+	var token0, token1 string
 	if tokenA < tokenB {
 		token0 = tokenA
 		token1 = tokenB
@@ -38,30 +56,22 @@ func CreatePool(
 		token0 = tokenB
 		token1 = tokenA
 	}
-	require(token0 != zeroAddress, "Token0 has not yet been deployed") // XXX check if zeroAddress is possible
+	// require(token0 != zeroAddress, "Token0 has not yet been deployed") // XXX check if zeroAddress is possible
 
 	tickSpacing, _ := feeAmountTickSpacing.Get(string(fee))
 	require(tickSpacing != 0, "TickSpacing is 0")
 
-	// XXX
-	// check if nested avl.Tree is possible
-	// => if possible compare nested avl.Tree
-	// => if not, use map
-	// Create2 + Dynamic Import need
-	poolKey1 := getPoolKeyFromAddress(token0, token1)
-	poolKey2 := getPoolKeyFromAddress(token1, token0)
-	pool, ok := pools.Get(poolKey1)
-	if !ok {
-		pools.Set(poolKey1, avl.Tree) // XXX init avl set possible
-		pools.Set(poolKey2, avl.Tree)
+	poolKey := getPoolKeyFromTokenNames(token0, token1, fee)
+	// println("poolKey:", poolKey)
+
+	_pool, exists := pools.Get(poolKey)
+	if !exists {
+		pool = p.NewPool(token0, token1, fee, bigint(tickSpacing), sqrtPrice)
+		pools.Set(poolKey, pool)
+	} else {
+		panic("Pool already exists")
+		// pool = _pool.(*p.Pool)
 	}
-	// nested avl.Tree [pools[poolKey1][fee]
-	poolWithFee, ok := pool.Get(poolKey1)
-
-	_tmpAddr := string(tokenA) + string(tokenB) + strconv.Itoa(int(fee))
-	pool = std.Address(_tmpAddr)
-
-	// fix nested avl.Tree thing
 
 	return pool
 }
@@ -71,9 +81,11 @@ func SetOwner(_owner std.Address) {
 	owner = _owner
 }
 
+// WHO CALLS IT ?
 func EnableFeeAmount(fee, tickSpacing bigint) {
 	require(GetOrigCaller() == owner, "Owner is not the origin caller!")
-	require(fee < 1000000, "Fee too high")
+	require(fee >= bigint(0), "Fee too low")
+	require(fee < bigint(1000000), "Fee too high")
 	require(tickSpacing > 0 && tickSpacing < 16384, "Tick spacing must be between 0 and 16384")
 	_fee, ok := feeAmountTickSpacing.Get(string(fee))
 	require(!ok, "Fee amount already enabled")
@@ -81,18 +93,18 @@ func EnableFeeAmount(fee, tickSpacing bigint) {
 	feeAmountTickSpacing.Set(string(fee), tickSpacing)
 }
 
-// helepr
+func getPool(token0, token1 string, fee bigint) *p.Pool {
+	poolKey := getPoolKeyFromTokenNames(token0, token1, fee)
+	pool, exists := pools.Get(poolKey)
+	if !exists {
+		panic("Pool does not exist")
+	}
+	return pool.(*p.Pool)
+}
+
+// utils
 func require(cond bool, msg string) {
 	if !cond {
 		panic(msg)
-	}
-}
-
-// XXX
-func getPoolKeyFromAddress(token0, token1 std.Address) string { // XXX std.Address
-	if token0 < token1 {
-		return string(token0) + string(token1)
-	} else {
-		return string(token1) + string(token0)
 	}
 }
