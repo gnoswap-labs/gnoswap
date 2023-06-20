@@ -12,6 +12,8 @@ import (
 
 	"gno.land/r/bar"
 	"gno.land/r/foo"
+
+	f "gno.land/r/factory"
 )
 
 type Slot0 struct {
@@ -19,6 +21,11 @@ type Slot0 struct {
 	tick         bigint
 	feeProtocol  bigint
 	unlocked     bool
+}
+
+type Balances struct {
+	token0 bigint
+	token1 bigint
 }
 
 type ProtocolFees struct {
@@ -64,6 +71,8 @@ type Pool struct {
 	token0 *grc20.AdminToken // XXX inter-contract, => call {pkg_path}.GetGRC20()
 	token1 *grc20.AdminToken // XXX inter-contract, => call {pkg_path}.GetGRC20()
 
+	balances Balances
+
 	// fee is the fee tier of the pool
 	fee bigint
 
@@ -93,48 +102,26 @@ type Pool struct {
 	positions avl.Tree
 }
 
-func NewPool(
-	token0 string, // token0 pkg_path
-	token1 string, // token1 pkg_path
-	fee bigint,
-	tickSpacing bigint,
-	sqrtPriceX96 bigint,
+func GetPool(
+	pToken0 string, // pool Token0
+	pToken1 string, // pool Token1
+	pFee bigint, // pool Fee
 ) *Pool {
-	maxLiquidityPerTick := TickTickSpacingToMaxLiquidityPerTick(tickSpacing)
-	tick := TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+	return (*Pool)(f.GetPool(pToken0, pToken1, pFee))
 
-	slot0 := Slot0{
-		sqrtPriceX96,
-		tick,
-		0,
-		true,
-	}
-
-	tmpToken0 := foo.GetGRC20() // token0.GetGRC20() ~= gno.land/r/foo.GetGRC20()
-	tmpToken1 := bar.GetGRC20() // token1.GetGRC20() ~= gno.land/r/bar.GetGRC20()
-	protocolFees := ProtocolFees{
-		bigint(0),
-		bigint(0),
-	}
-
-	return &Pool{
-		token0:               tmpToken0, // XXX inter contract ==> gno.land/r/{coin}
-		token1:               tmpToken1, // XXX inter contract ==> gno.land/r/{coin}
-		fee:                  fee,
-		tickSpacing:          tickSpacing,
-		maxLiquidityPerTick:  maxLiquidityPerTick,
-		slot0:                slot0,
-		feeGrowthGlobal0X128: bigint(0),
-		feeGrowthGlobal1X128: bigint(0),
-		protocolFees:         protocolFees,
-		liquidity:            bigint(0),
-		ticks:                avl.Tree{}, // make(map[bigint]TickInfo)
-		tickBitmaps:          avl.Tree{}, // make(map[bigint]bigint)
-		positions:            avl.Tree{}, // make(map[string]PositionInfo)
-	}
+	// singlePool := f.GetPool(pToken0, pToken1, pFee)
+	// return (*Pool)(singlePool) // OO
+	// return singlePool.(*Pool) // XX
 }
 
-func (pool *Pool) Mint(
+func GetPoolFromKey(key string) *Pool {
+	return (*Pool)(f.GetPoolFromKey(key))
+}
+
+func Mint(
+	pToken0 string,
+	pToken1 string,
+	pFee bigint,
 	recipient std.Address,
 	tickLower bigint,
 	tickUpper bigint,
@@ -142,6 +129,7 @@ func (pool *Pool) Mint(
 ) (bigint, bigint) {
 	require(amount > 0, "must be amount > 0")
 
+	pool := GetPool(pToken0, pToken1, pFee)
 	_, amount0Int, amount1Int := pool.modifyPosition(
 		ModifyPositionParams{
 			recipient, // owner
@@ -194,17 +182,25 @@ func (pool *Pool) Mint(
 	// XXX tmp
 	// std.TestSetOrigCaller(_orig)
 
-	// XXX tmp
-	// std.TestSetOrigCaller(_orig)
+	f.UpdateBalances(pool, amount0, amount1)
+	// pool.balances.token0 += amount0
+	// pool.balances.token1 += amount1
 
 	return amount0, amount1
 }
 
-func (pool *Pool) Burn(
+func Burn(
+	pToken0 string,
+	pToken1 string,
+	pFee bigint,
 	tickLower bigint,
 	tickUpper bigint,
 	amount bigint,
 ) (bigint, bigint) {
+	require(amount >= 0, "must be amount >= 0")
+
+	pool := GetPool(pToken0, pToken1, pFee)
+
 	position, amount0Int, amount1Int := pool.modifyPosition(
 		ModifyPositionParams{
 			GetOrigCaller(),
@@ -224,12 +220,17 @@ func (pool *Pool) Burn(
 	}
 
 	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
-	pool.positions.Set(key, position)
+
+	// pool.positions.Set(key, position)
+	f.UpdateAvlTree(pool.positions, key, position)
 
 	return amount0, amount1
 }
 
-func (pool *Pool) Collect(
+func Collect(
+	pToken0 string,
+	pToken1 string,
+	pFee bigint,
 	recipient std.Address,
 	tickLower bigint,
 	tickUpper bigint,
@@ -238,6 +239,8 @@ func (pool *Pool) Collect(
 ) (bigint, bigint) {
 	requireUnsigned(amount0Requested, "pool.gno__Collect__amount0Requested")
 	requireUnsigned(amount1Requested, "pool.gno__Collect__amount1Requested")
+
+	pool := GetPool(pToken0, pToken1, pFee)
 
 	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
 	_position, exists := pool.positions.Get(key)
@@ -283,18 +286,30 @@ func (pool *Pool) Collect(
 		// token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
 	}
 
-	pool.positions.Set(key, position)
+	// pool.positions.Set(key, position)
+	f.UpdateAvlTree(pool.positions, key, position)
 
+	// pool.balances.token0 -= amount0
+	// pool.balances.token1 -= amount1
+	f.UpdateBalances(pool, -amount0, -amount1)
+
+	require(pool.balances.token0 >= 0, "pool.gno__Burn__pool.balances.token0")
+	require(pool.balances.token1 >= 0, "pool.gno__Burn__pool.balances.token1")
 	return amount0, amount1
 }
 
-func (pool *Pool) Swap(
+func Swap(
+	pToken0 string,
+	pToken1 string,
+	pFee bigint,
 	recipient std.Address,
 	zeroForOne bool,
 	amountSpecified bigint,
 	sqrtPriceLimitX96 bigint,
 ) (bigint, bigint) {
 	require(amountSpecified != 0, "must be amountSpecified > 0")
+
+	pool := GetPool(pToken0, pToken1, pFee)
 
 	slot0Start := pool.slot0
 	require(slot0Start.unlocked, "LOK")
@@ -474,37 +489,54 @@ func (pool *Pool) Swap(
 	if zeroForOne {
 		if amount1 < 0 {
 			std.TestSetOrigCaller(GetOrigPkgAddr()) // XXX remove std.*
-			bar.Transfer(users.AddressOrName(recipient), uint64(-amount1))
+			bar.Transfer(users.AddressOrName(recipient), uint64(-1*amount1))
+			pool.balances.token1 -= amount1
 			std.TestSetOrigCaller(_orig)
 		}
+
 		balance0Before := BalanceOf(pool.token0, GetOrigPkgAddr())
 
 		_from := users.AddressOrName(GetOrigCaller())
 		_to := users.AddressOrName(GetOrigPkgAddr())
 		foo.TransferFrom(_from, _to, uint64(amount0))
+		pool.balances.token0 += amount0
 
 		require(balance0Before+bigint(amount0) <= BalanceOf(pool.token0, GetOrigPkgAddr()), "IIA0")
+		require(pool.balances.token0 >= 0, "pool.gno__Burn__pool.balances.token0")
+		require(pool.balances.token1 >= 0, "pool.gno__Burn__pool.balances.token1")
+
 	} else {
 		if amount0 < 0 {
 			std.TestSetOrigCaller(GetOrigPkgAddr()) // XXX remove std.*
 			foo.Transfer(users.AddressOrName(recipient), uint64(-amount0))
+			pool.balances.token0 -= amount0
 			std.TestSetOrigCaller(_orig)
 		}
+
 		balance1Before := BalanceOf(pool.token1, GetOrigPkgAddr())
 
 		_from := users.AddressOrName(GetOrigCaller())
 		_to := users.AddressOrName(GetOrigPkgAddr())
 		bar.TransferFrom(_from, _to, uint64(amount1))
+		pool.balances.token1 += amount1
 
 		require(balance1Before+bigint(amount1) <= BalanceOf(pool.token1, GetOrigPkgAddr()), "IIA1")
+		require(pool.balances.token0 >= 0, "pool.gno__Burn__pool.balances.token0")
+		require(pool.balances.token1 >= 0, "pool.gno__Burn__pool.balances.token1")
 	}
 
 	pool.slot0.unlocked = true
-
 	return amount0, amount1
 }
 
-func (pool *Pool) SetFeeProtocol(feeProtocol0, feeProtocol1 bigint) {
+// XXX limit this func as admin only?
+func SetFeeProtocol(
+	pToken0 string,
+	pToken1 string,
+	pFee bigint,
+	feeProtocol0 bigint,
+	feeProtocol1 bigint,
+) {
 	requireUnsigned(feeProtocol0, "pool.gno__SetFeeProtocol__feeProtocol0")
 	requireUnsigned(feeProtocol1, "pool.gno__SetFeeProtocol__feeProtocol1")
 
@@ -513,10 +545,16 @@ func (pool *Pool) SetFeeProtocol(feeProtocol0, feeProtocol1 bigint) {
 			(feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10)),
 		"Invalid fee protocol",
 	)
+
+	pool := GetPool(pToken0, pToken1, pFee)
 	pool.slot0.feeProtocol = feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
 }
 
-func (pool *Pool) CollectProtocol(
+// XXX limit this func as admin only?
+func CollectProtocol(
+	pToken0 string,
+	pToken1 string,
+	pFee bigint,
 	recipient std.Address,
 	amount0Requested bigint,
 	amount1Requested bigint,
@@ -530,6 +568,8 @@ func (pool *Pool) CollectProtocol(
 	// }
 
 	var amount0, amount1 bigint
+
+	pool := GetPool(pToken0, pToken1, pFee)
 
 	if amount0Requested > pool.protocolFees.token0 {
 		amount0 = pool.protocolFees.token0
@@ -580,8 +620,6 @@ func (pool *Pool) CollectProtocol(
 }
 
 func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, bigint, bigint) {
-	checkTicks(params.tickLower, params.tickUpper)
-
 	position := pool.updatePosition(
 		params.owner,
 		params.tickLower,
@@ -614,7 +652,9 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, big
 				params.liquidityDelta,
 			)
 
-			pool.liquidity = LiquidityMathAddDelta(liquidityBefore, params.liquidityDelta)
+			tmpPoolLiquidity := LiquidityMathAddDelta(liquidityBefore, params.liquidityDelta)
+			// pool.liquidity = LiquidityMathAddDelta(liquidityBefore, params.liquidityDelta)
+			f.UpdateLiquidity(pool, tmpPoolLiquidity)
 
 		} else {
 			amount1 = SqrtPriceMathGetAmount1Delta(
@@ -638,7 +678,6 @@ func (pool *Pool) updatePosition(
 	var _feeGrowthGlobal0X128 bigint = pool.feeGrowthGlobal0X128
 	var _feeGrowthGlobal1X128 bigint = pool.feeGrowthGlobal1X128
 	var flippedLower, flippedUpper bool
-
 	if liquidityDelta != 0 {
 		flippedLower = pool.TickUpdate(
 			tickLower,

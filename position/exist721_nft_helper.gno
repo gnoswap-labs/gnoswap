@@ -1,10 +1,10 @@
 package position
 
 import (
-	"gno.land/p/demo/grc/grc721"
 	"std"
 
-	nft "gno.land/r/foo721"
+	"gno.land/p/demo/grc/grc721"
+	nft "gno.land/r/gnft"
 )
 
 func TokenURI(tokenId string) string {
@@ -18,6 +18,14 @@ func NFTBalanceOf(addr std.Address) bigint {
 }
 
 func Exists(tokenId string) bool {
+	// non exist tokenId will panic
+	// use defer to catch the panic
+	defer func() {
+		if err := recover(); err != nil {
+			panic("Invalid token ID")
+		}
+	}()
+
 	// exists method in grc721 is private
 	// we don't have much choice but to use ownerOf
 	owner := nft.OwnerOf(grc721.TokenID(tokenId))
@@ -37,6 +45,11 @@ func Exists(tokenId string) bool {
 // Error handling isn't necessary here
 func isApprovedOrOwner(addr std.Address, tokenId string) bool {
 	tid := grc721.TokenID(tokenId)
+
+	// check whether token exists
+	if !Exists(tokenId) {
+		panic("Invalid token ID")
+	}
 
 	// check owner first
 	owner := nft.OwnerOf(tid)

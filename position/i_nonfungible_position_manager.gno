@@ -19,8 +19,8 @@ type INonfungiblePositionManager interface {
 }
 
 type MintParams struct {
-	token0         std.Address
-	token1         std.Address
+	token0         string
+	token1         string
 	fee            bigint
 	tickLower      bigint
 	tickUpper      bigint

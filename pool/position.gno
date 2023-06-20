@@ -8,6 +8,8 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
+
+	f "gno.land/r/factory"
 )
 
 type PositionInfo struct {
@@ -55,7 +57,9 @@ func (pool *Pool) PositionUpdateWithKey(
 
 	p := PositionUpdate(position, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
 	// positions[key] = p
-	pool.positions.Set(key, p)
+	// pool.positions.Set(key, p)
+
+	f.UpdateAvlTree(pool.positions, key, p)
 	return p
 }
 

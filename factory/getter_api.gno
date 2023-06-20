@@ -2,9 +2,6 @@ package factory
 
 import (
 	"encoding/json"
-	"strings"
-
-	p "gno.land/r/pool"
 )
 
 type ApiBasicInfo struct {
@@ -12,11 +9,8 @@ type ApiBasicInfo struct {
 	Timestamp int64
 }
 
-type ApiPoolInfo struct {
-	Token0    string
-	Token1    string
-	Fee       bigint
-	Liquidity bigint
+type ApiPoolKeyList struct {
+	PoolKeys []string
 }
 
 func ApiGetPools() string {
@@ -25,14 +19,14 @@ func ApiGetPools() string {
 		Timestamp: GetTimestamp(),
 	}
 
-	apl := getPoolList()
+	apl := poolKeys
 
 	r := struct {
 		ApiBasicInfo
-		Pools []ApiPoolInfo
+		ApiPoolKeyList
 	}{
 		abi,
-		apl,
+		ApiPoolKeyList{apl},
 	}
 
 	rr, err := json.Marshal(r)
@@ -41,24 +35,4 @@ func ApiGetPools() string {
 	}
 
 	return string(rr)
-}
-
-func getPoolList() []ApiPoolInfo {
-	poolSize := pools.Size()
-	poolList := make([]ApiPoolInfo, poolSize)
-
-	for i := 0; i < poolSize; i++ {
-		key, value := pools.GetByIndex(i)
-		// single pool
-		sp := value.(*p.Pool)
-
-		poolList[i] = ApiPoolInfo{
-			Token0:    p.GetPoolToken0(sp).GetName(),
-			Token1:    p.GetPoolToken1(sp).GetName(),
-			Fee:       p.GetPoolFee(sp),
-			Liquidity: p.GetPoolLiquidity(sp),
-		}
-	}
-
-	return poolList
 }

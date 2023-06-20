@@ -3,91 +3,88 @@ package staker
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/r/demo/users"
 
 	"gno.land/r/bar"
 	"gno.land/r/foo"
 
-	rt "gno.land/r/reward" // reward Token
+	f "gno.land/r/factory"
+	p "gno.land/r/pool"
+	s "gno.land/r/position"
 
-	pool "gno.land/r/pool"
-	position "gno.land/r/position"
-
-	nft "gno.land/r/foo721" // GNOSWAP POSITION NFT
+	nft "gno.land/r/gnft"  // GNFT, Gnoswap NFT
+	gnos "gno.land/r/gnos" // GNOS, Gnoswap Share
 )
 
 var (
-	_maxIncentiveStartLeadTime bigint = 1000000
-	_maxIncentiveDuration      bigint = 1000000
+	tMaxIncentiveStartLeadTime bigint = 1000000
+	tMaxIncentiveDuration      bigint = 1000000
 
-	_startTime bigint = GetTimestamp()
-	_endTime   bigint = _startTime + 100
+	tStartTime bigint = GetTimestamp()
+	tEndTime   bigint = tStartTime + 301 // staker.gno #140 ( lockDuration is limited to 100, 200, 300 seconds)
 
-	ci = testutils.TestAddress("ci")   // Create Incentive Caller
-	rf = testutils.TestAddress("rf")   // Refundee
-	rc = testutils.TestAddress("rc")   // Recipient
-	lp = testutils.TestAddress("lp01") // Liquidity Provider
-	oa = testutils.TestAddress("oa")   // Other Address
+	poolAddr = p.GetOrigPkgAddr()
+
+	own  = testutils.TestAddress("own")  // Owner
+	ci01 = testutils.TestAddress("ci01") // Create Incentive Caller
+	rf01 = testutils.TestAddress("rf01") // Refundee
+	rc01 = testutils.TestAddress("rc01") // Recipient
+	lp01 = testutils.TestAddress("lp01") // Liquidity Provider
+	oa01 = testutils.TestAddress("oa01") // Other Address
 )
 
 func init() {
-	std.TestSetOrigCaller(ci)
-	rt.Faucet()
-	rt.Faucet()
-	rt.Faucet()
-	rt.Faucet()
-	rt.Faucet()
-	rt.Faucet()
-	rt.Faucet()
-	rt.Faucet()
-	rt.Faucet()
-	rt.Faucet()
-	rt.Faucet() // x11
+	std.TestSetOrigCaller(ci01)
 
-	std.TestSetOrigCaller(lp)
-	foo.Faucet()
-	foo.Faucet()
-	foo.Faucet()
-	foo.Faucet()
-	foo.Faucet() // foo x5
-	bar.Faucet()
-	bar.Faucet()
-	bar.Faucet()
-	bar.Faucet()
-	bar.Faucet() // bar x5
+	std.TestSetOrigCaller(lp01)
+	foo.FaucetL()
+	bar.FaucetL()
+
+	// debug - print addr
+	println(ci01, "// ci01")
+	println(rf01, "// rf01")
+	println(rc01, "// rc01")
+	println(lp01, "// lp01")
+	println(oa01, "// oa01")
+
+	println(f.GetOrigPkgAddr(), "// factory")
+	println(p.GetOrigPkgAddr(), "// pool")
+	println(s.GetOrigPkgAddr(), "// position")
+	println(GetOrigPkgAddr(), "// staker")
 }
 
-func TestDebug(t *testing.T) {
-	println(ci, "ci")
-	println(rf, "rf")
-	println(rc, "rc")
-	println(lp, "lp01")
-	println(GetOrigPkgAddr(), "staker contract")
-}
+// Init & CreatePool using Factiry Contracy by
+func TestFactoryCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(own)
+	f.Init()
+	f.CreatePool("foo", "bar", 500, 130621891405341611593710811006)
 
-func TestPoolInit(t *testing.T) {
-	std.TestSetOrigCaller(lp)
-	var (
-		_fee         bigint = 3000
-		_tickSpacing bigint = 10
-		_sqrtPrice   bigint = 130621891405341611593710811006
-	)
-	pool.Init(_fee, _tickSpacing, _sqrtPrice)
+	// fee
+	// 500		= 0.05% // USv3 default
+	// 3000		= 0.3% // USv3 default
+	// 10000	= 1% // USv3 default
 
-	foo.Approve(a2u(GetOrigPkgAddr()), 50000000) // approve foo to staker contract
-	bar.Approve(a2u(GetOrigPkgAddr()), 50000000) // approve bar to staker contract
+	// sqrtPrice
+	// 130621891405341611593710811006 // tick = 10000
+	shouldPanic(t, func() { f.CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
 
-	foo.Approve(a2u(lp), 50000000) // approve foo to self
-	bar.Approve(a2u(lp), 50000000) // approve bar to self
+	// Approve
+	std.TestSetOrigCaller(lp01)
+	foo.Approve(users.AddressOrName(poolAddr), 50000000000) // Pool Contract
+	bar.Approve(users.AddressOrName(poolAddr), 50000000000) // Pool Contract
+	foo.Approve(users.AddressOrName(lp01), 50000000000)
+	bar.Approve(users.AddressOrName(lp01), 50000000000)
 }
 
 func TestPositionMint(t *testing.T) {
-	std.TestSetOrigCaller(lp)
-	_posTokenId, _posLiquidity, _posAmount0, _posAmount1 := position.Mint(
-		std.Address("token0"),
-		std.Address("token1"),
-		bigint(3000),
+	std.TestSetOrigCaller(lp01)
+	tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := s.Mint(
+		std.Address("foo"),
+		std.Address("bar"),
+		bigint(500),
 		bigint(9000),
 		bigint(11000),
 		bigint(1000),
@@ -97,68 +94,66 @@ func TestPositionMint(t *testing.T) {
 		bigint(1234567890),
 	)
 
-	shouldEQ(t, _posTokenId, "1")
-}
-
-func TestIncentiveInit(t *testing.T) {
-	std.TestSetOrigCaller(ci)
-	Init(_maxIncentiveStartLeadTime, _maxIncentiveDuration)
-
-	shouldEQ(t, initialized, true)
+	shouldEQ(t, tPosTokenId, "1")
 }
 
 func TestCreateIncentive(t *testing.T) {
-	std.TestSetOrigCaller(ci)
+	std.TestSetOrigCaller(ci01)
 	CreateIncentive(
-		_startTime, // starTime
-		_endTime,   // endTime
-		rf,         // refundee
-		50000000,   // reward
+		tStartTime, // starTime
+		tEndTime,   // endTime
+		rf01,       // refundee
 	)
 }
 
 func TestStakeToken(t *testing.T) {
-	std.TestSetOrigCaller(lp)
+	std.TestSetOrigCaller(lp01)
 	StakeToken(
-		_startTime, // startTime => field of IncentiveKey
-		_endTime,   // endTime => field of IncentiveKey
-		rf,         // refundee => field of IncentiveKey
-		"1",        // tokenId
-		100,        // lockDuration
+		tStartTime,
+		tEndTime,
+		rf01,
+		"1",
+		100,
 	)
 }
 
 func TestGetRewardInfo(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
 	// XXX currently, amount of reward is exact same as amount of liquidity
-	std.TestSetOrigCaller(lp)
-	_reward, _secondsInsideX128 := GetRewardInfo(_startTime, _endTime, rf, "1")
+	tReward, tSecondsInsideX128 := GetRewardInfo(
+		tStartTime,
+		tEndTime,
+		rf01,
+		"1",
+	)
 }
 
 func TestClaimReward(t *testing.T) {
-	std.TestSetOrigCaller(lp)
+	std.TestSetOrigCaller(lp01)
 
-	_oldBal := rt.BalanceOf(a2u(lp))
-	ClaimReward(_startTime, _endTime, rf, "1")
-	_newBal := rt.BalanceOf(a2u(lp))
+	tOldRewardBal := gnos.BalanceOf(a2u(lp01))
+	ClaimReward(tStartTime, tEndTime, rf01, "1")
+	tNewRewardBal := gnos.BalanceOf(a2u(lp01))
 
-	shouldGT(t, _oldBal, _newBal)
+	shouldGT(t, tOldRewardBal, tNewRewardBal)
 }
 
 func TestUnstakeAndWithdraw(t *testing.T) {
-	// NFT was staked with lockDuration 100
+	// NFT was staked with lockDuration 100 L#116
 	// so, it can be withdrawl after 100 seconds since unstake requeset
-	std.TestSetOrigCaller(lp)
+	std.TestSetOrigCaller(lp01)
 
-	UnstakeToken(_startTime, _endTime, rf, "1")
+	UnstakeToken(tStartTime, tEndTime, rf01, "1")
 	shouldEQ(t, nft.OwnerOf("1"), GetOrigPkgAddr())
 
-	// WithdrawToken("1", GetOrigCaller())
+	shouldPanic(t, func() { WithdrawToken("1", GetOrigCaller()) })
 
 	std.TestSkipTimestamps(99)
-	// WithdrawToken("1", GetOrigCaller())
+	shouldPanic(t, func() { WithdrawToken("1", GetOrigCaller()) })
 
 	std.TestSkipTimestamps(1)
-	// WithdrawToken("1", GetOrigCaller())
+	shouldPanic(t, func() { WithdrawToken("1", GetOrigCaller()) })
 
 	std.TestSkipTimestamps(1)
 	WithdrawToken("1", GetOrigCaller())

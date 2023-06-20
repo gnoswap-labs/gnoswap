@@ -1,32 +1,28 @@
 package position
 
 import (
-	pool "gno.land/r/pool"
 	"std"
+
+	p "gno.land/r/pool"
 )
 
 type AddLiquidityParams struct {
-	token0         std.Address
-	token1         std.Address
-	fee            bigint
+	poolKey        string
+	recipient      std.Address // XXX de facto: hardcoded to nft manager contract address
 	tickLower      bigint
 	tickUpper      bigint
 	amount0Desired bigint
 	amount1Desired bigint
 	amount0Min     bigint
 	amount1Min     bigint
-	recipient      std.Address // XXX de facto: hardcoded to nft manager contract address
 }
 
 func addLiquidity(params AddLiquidityParams) (bigint, bigint, bigint) {
-	poolKey := PoolKey{token0: params.token0, token1: params.token1, fee: params.fee}
-	// pool := PoolAddressComputeAddress(factory, poolKey)
+	pool := p.GetPoolFromKey(params.poolKey)
 
-	// _slot0 := pool.GetSlot0()
-	// sqrtPriceX96 := _slot0.sqrtPriceX96
 	sqrtPriceX96 := pool.GetPoolSlot0SqrtPriceX96()
-	sqrtRatioAX96 := pool.TickMathGetSqrtRatioAtTick(params.tickLower)
-	sqrtRatioBX96 := pool.TickMathGetSqrtRatioAtTick(params.tickUpper)
+	sqrtRatioAX96 := p.TickMathGetSqrtRatioAtTick(params.tickLower)
+	sqrtRatioBX96 := p.TickMathGetSqrtRatioAtTick(params.tickUpper)
 
 	liquidity := LiquidityAmountsGetLiquidityForAmounts(
 		sqrtPriceX96,
@@ -36,7 +32,11 @@ func addLiquidity(params AddLiquidityParams) (bigint, bigint, bigint) {
 		params.amount1Desired,
 	)
 
-	amount0, amount1 := pool.Mint(
+	pToken0, pToken1, pFee := poolKeyDivide(params.poolKey)
+	amount0, amount1 := p.Mint(
+		pToken0,
+		pToken1,
+		pFee,
 		params.recipient,
 		params.tickLower,
 		params.tickUpper,

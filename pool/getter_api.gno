@@ -56,12 +56,16 @@ type ApiBasicInfo struct {
 	Timestamp int64
 }
 
-func (pool *Pool) ApiGetPoolInfo() string {
+func ApiGetPoolInfo(pToken0, pToken1 string, pFee bigint) string {
+	pool := GetPool(pToken0, pToken1, pFee)
+
 	abi := ApiBasicInfo{
 		Height:    GetHeight(),
 		Timestamp: int64(GetTimestamp()),
 	}
+
 	minTick, maxTick := pool.findMinMaxTick()
+
 	api := ApiPoolInfo{
 		Address:      GetOrigPkgAddr().String(),
 		Path:         "d__gno.land/gnoswap/pool/91u24jfabj",
@@ -121,15 +125,26 @@ func (pool *Pool) tickRange() []bigint {
 	return tickList
 }
 
-func ApiGetTokenInfo(gat *grc20.AdminToken) string {
+func ApiGetTokenInfo(pToken0, pToken1 string, pFee bigint, index uint) string {
+	pool := GetPool(pToken0, pToken1, pFee)
+
+	var token *grc20.AdminToken
+	if index == 0 {
+		token = pool.token0
+	} else if index == 1 {
+		token = pool.token1
+	} else {
+		panic("invalid token index")
+	}
+
 	abi := ApiBasicInfo{
 		Height:    GetHeight(),
 		Timestamp: int64(GetTimestamp()),
 	}
 	ati := ApiTokenInfo{
-		Name:     gat.GetName(),
-		Symbol:   gat.GetSymbol(),
-		Decimals: gat.GetDecimals(),
+		Name:     token.GetName(),
+		Symbol:   token.GetSymbol(),
+		Decimals: token.GetDecimals(),
 		Path:     "d__gno.land/gnoswap/token/91u24jfabj",
 	}
 
@@ -149,7 +164,9 @@ func ApiGetTokenInfo(gat *grc20.AdminToken) string {
 	return string(rr)
 }
 
-func (pool *Pool) ApiGetUserInfo(addr string) string {
+func ApiGetUserInfo(pToken0, pToken1 string, pFee bigint, addr string) string {
+	pool := GetPool(pToken0, pToken1, pFee)
+
 	abi := ApiBasicInfo{
 		Height:    GetHeight(),
 		Timestamp: int64(GetTimestamp()),

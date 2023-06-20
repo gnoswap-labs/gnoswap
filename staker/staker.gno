@@ -5,13 +5,11 @@ import (
 
 	"gno.land/p/demo/avl"
 
-	nft "gno.land/r/foo721" // GNFT, Gnoswap NFT
-	rt "gno.land/r/reward"  // GSR, Gnoswap Staking Reward
+	nft "gno.land/r/gnft"  // GNFT, Gnoswap NFT
+	gnos "gno.land/r/gnos" // GNOS, Gnoswap Share
 )
 
 type Incentive struct {
-	// totalRewardUnclaimed bigint
-	// totalSecondsClaimedX128 bigint
 	numberOfStakes bigint
 }
 
@@ -31,20 +29,9 @@ type Deposit struct {
 }
 
 var (
-	factory std.Address
-	// nonfungiblePositionManager interface{}
+	factory                   std.Address
 	maxIncentiveStartLeadTime bigint
 	maxIncentiveDuration      bigint
-
-	// incentives map[string]Incentive = make(map[string]Incentive)
-	// deposits map[string]Deposit = make(map[string]Deposit)
-	// stakes map[string]map[string]Stake = make(map[string]map[string]Stake)
-
-	// IncentiveKey with rewardsToken
-	// rewards map[interface{}]map[std.Address]bigint = make(map[interface{}]map[std.Address]bigint)
-
-	// IncentiveKey without rewardsToken
-	// rewards map[std.Address]bigint = make(map[std.Address]bigint)
 
 	incentives avl.Tree // incentiveId => Incentive
 	deposits   avl.Tree // tokenId => Deposit
@@ -54,29 +41,10 @@ var (
 	initialized bool = false
 )
 
-func Init(
-	// _factory std.Address,
-	// _nonfungiblePositionManager interface{},
-	_maxIncentiveStartLeadTime bigint,
-	_maxIncentiveDuration bigint,
-) {
-	// factory = _factory
-	// nonfungiblePositionManager = _nonfungiblePositionManager
-
-	// manual init needs
-	require(!initialized, "Already initialized")
-	maxIncentiveStartLeadTime = _maxIncentiveStartLeadTime
-	maxIncentiveDuration = _maxIncentiveDuration
-	initialized = true
-}
-
 func CreateIncentive(
-	// rewardToken std.Address,
-	// pool std.Address,
 	startTime bigint,
 	endTime bigint,
-	refundee std.Address,
-	reward bigint,
+	refundee std.Address, // XXX remove
 ) {
 	incentiveKey := IncentiveKey{
 		startTime: startTime,
@@ -84,12 +52,10 @@ func CreateIncentive(
 		refundee:  refundee,
 	}
 
-	return createIncentive(incentiveKey, reward)
+	return createIncentive(incentiveKey)
 }
 
-func createIncentive(key IncentiveKey, reward bigint) {
-	require(reward > 0, "GnoswapStaker::createIncentive: reward must be positive")
-
+func createIncentive(key IncentiveKey) {
 	require(
 		GetTimestamp() <= key.startTime,
 		"GnoswapStaker::createIncentive: start time must be now or in the future",
@@ -99,10 +65,10 @@ func createIncentive(key IncentiveKey, reward bigint) {
 		"GnoswapStaker::createIncentive: start time too far into future",
 	)
 	require(key.startTime < key.endTime, "GnoswapStaker::createIncentive: start time must be before end time")
-	require(
-		(key.endTime-key.startTime) <= maxIncentiveDuration,
-		"GnoswapStaker::createIncentive: incentive duration is too long",
-	)
+	// require(
+	// 	(key.endTime-key.startTime) <= maxIncentiveDuration,
+	// 	"GnoswapStaker::createIncentive: incentive duration is too long",
+	// )
 
 	incentiveId := IncentiveIdCompute(key)
 
@@ -115,18 +81,10 @@ func createIncentive(key IncentiveKey, reward bigint) {
 		incentive = Incentive{}
 	}
 
-	// incentive.totalRewardUnclaimed += reward
-	// incentives[incentiveId] = _update
 	incentives.Set(incentiveId, incentive)
-
-	// XXX
-	// TransferHelperExtended.safeTransferFrom(std.Address(key.rewardToken), GetOrigCaller(), GetOrigPkgAddr(), reward)
-	rt.Transfer(a2u(GetOrigPkgAddr()), uint64(reward))
 }
 
 func EndIncentive(
-	// rewardToken std.Address,
-	// pool std.Address,
 	startTime bigint,
 	endTime bigint,
 	refundee std.Address,
@@ -138,6 +96,41 @@ func EndIncentive(
 	}
 
 	return endIncentive(incentiveKey)
+}
+
+func StakeToken(
+	// rewardToken std.Address,
+	// pool std.Address,
+	startTime bigint,
+	endTime bigint,
+	refundee std.Address,
+	tokenId string,
+	lockDuration bigint,
+) {
+	require(nft.OwnerOf(tid(tokenId)) == GetOrigCaller(), "GnoswapStaker::stakeToken: only owner can stake token")
+	require(lockDuration == 100 || lockDuration == 200 || lockDuration == 300, "GnoswapStaker::stakeToken: lock duration must be 100, 200, 300 seconds")
+	// require(lockDuration == 604800 || lockDuration == 1209600  || lockDuration == 1814400, "GnoswapStaker::stakeToken: lock duration must be 1, 2, or 3 weeks")
+
+	key := IncentiveKey{
+		startTime: startTime,
+		endTime:   endTime,
+		refundee:  refundee,
+	}
+	stakeToken(key, tokenId, lockDuration)
+}
+
+func UnstakeToken(
+	startTime bigint,
+	endTime bigint,
+	refundee std.Address,
+	tokenId string,
+) {
+	key := IncentiveKey{
+		startTime: startTime,
+		endTime:   endTime,
+		refundee:  refundee,
+	}
+	unstakeToken(key, tokenId)
 }
 
 func WithdrawToken(tokenId string, to std.Address) {
@@ -169,43 +162,6 @@ func WithdrawToken(tokenId string, to std.Address) {
 	std.TestSetOrigCaller(_orig)
 }
 
-func StakeToken(
-	// rewardToken std.Address,
-	// pool std.Address,
-	startTime bigint,
-	endTime bigint,
-	refundee std.Address,
-	tokenId string,
-	lockDuration bigint,
-) {
-	require(nft.OwnerOf(tid(tokenId)) == GetOrigCaller(), "GnoswapStaker::stakeToken: only owner can stake token")
-	require(lockDuration == 100 || lockDuration == 200 || lockDuration == 300, "GnoswapStaker::stakeToken: lock duration must be 100, 200, 300 seconds")
-	// require(lockDuration == 604800 || lockDuration == 1209600  || lockDuration == 1814400, "GnoswapStaker::stakeToken: lock duration must be 1, 2, or 3 weeks")
-
-	key := IncentiveKey{
-		startTime: startTime,
-		endTime:   endTime,
-		refundee:  refundee,
-	}
-	stakeToken(key, tokenId, lockDuration)
-}
-
-func UnstakeToken(
-	// rewardToken std.Address,
-	// pool std.Address,
-	startTime bigint,
-	endTime bigint,
-	refundee std.Address,
-	tokenId string,
-) {
-	key := IncentiveKey{
-		startTime: startTime,
-		endTime:   endTime,
-		refundee:  refundee,
-	}
-	unstakeToken(key, tokenId)
-}
-
 func ClaimReward(
 	startTime bigint,
 	endTime bigint,
@@ -227,31 +183,9 @@ func ClaimReward(
 	std.TestSetOrigCaller(GetOrigPkgAddr())
 	// XXX
 	reward, _ := GetRewardInfo(startTime, endTime, refundee, tokenId)
-	rt.Mint(a2u(toAddr), uint64(reward))
+	gnos.Mint(a2u(toAddr), uint64(reward))
 	std.TestSetOrigCaller(_orig)
 
-	// // TransferHelperExtended.safeTransfer(rewardToken, GetOrigPkgAddr(), to, reward)
-	// // XXX GetRealmCaller()
-	// _orig := GetOrigCaller()
-	// std.TestSetOrigCaller(GetOrigPkgAddr())
-	// rto := rt.Transfer(a2u(to), uint64(reward))
-	// if !rto {
-	// 	panic("GnoswapStaker::ClaimReward: transfer failed")
-	// }
-	// std.TestSetOrigCaller(_orig)
-
-	// // rewards[GetOrigCaller()] -= reward
-	// _reward2, ok := rewards.Get(string(GetOrigCaller()))
-	// var reward2 bigint
-	// if ok {
-	// 	reward2 = _reward2.(bigint)
-	// 	reward2 -= reward
-	// 	rewards.Set(string(GetOrigCaller()), reward2)
-	// } else {
-	// 	reward2 = bigint(0)
-	// }
-
-	// requireUnsigned(reward, "GnoswapStaker::ClaimReward: reward is not unsigned")
 }
 
 func GetRewardInfo(
@@ -373,7 +307,7 @@ func endIncentive(key IncentiveKey) (refund bigint) {
 	// TransferHelperExtended.safeTransfer(std.Address(key.rewardToken), GetOrigCaller(), GetOrigPkgAddr(), refund)
 	_orig := GetOrigCaller()
 	std.TestSetOrigCaller(GetOrigPkgAddr())
-	rt.Transfer(a2u(key.refundee), uint64(refund))
+	gnos.Transfer(a2u(key.refundee), uint64(refund))
 	std.TestSetOrigCaller(_orig)
 
 	requireUnsigned(refund, "GnoswapStaker::endIncentive: refund is not unsigned")

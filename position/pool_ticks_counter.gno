@@ -1,92 +1,88 @@
 package position
 
-import (
-	pool "gno.land/r/pool"
-)
+// XXX
+// import (
+// 	p "gno.land/r/pool"
+// )
 
+// func PoolTicksCounterCountInitializedTicksCrossed(
+// 	tickBefore bigint,
+// 	tickAfter bigint,
+// ) bigint {
+// 	var (
+// 		wordPosLower          bigint
+// 		wordPosHigher         bigint
+// 		bitPosLower           bigint
+// 		bitPosHigher          bigint
+// 		tickBeforeInitialized bool
+// 		tickAfterInitialized  bool
 
-func PoolTicksCounterCountInitializedTicksCrossed(
-	tickBefore bigint,
-	tickAfter bigint,
-) (bigint) {
-	var (
-		wordPosLower bigint
-		wordPosHigher bigint
-		bitPosLower bigint
-		bitPosHigher bigint
-		tickBeforeInitialized bool
-		tickAfterInitialized bool
+// 		// return
+// 		initializedTicksCrossed bigint
+// 	)
 
-		// return 
-		initializedTicksCrossed bigint
-	)
+// 	{
+// 		wordPos := (tickBefore / p.GetPoolTickSpacing()) >> 8
+// 		bitPos := (tickBefore / p.GetPoolTickSpacing()) % 256
 
-	{
-		wordPos := (tickBefore / pool.GetPoolTickSpacing()) >> 8
-		bitPos := (tickBefore / pool.GetPoolTickSpacing()) % 256
+// 		wordPosAfter := (tickAfter / p.GetPoolTickSpacing()) >> 8
+// 		bitPosAfter := (tickAfter / p.GetPoolTickSpacing()) % 256
 
-		wordPosAfter := (tickAfter / pool.GetPoolTickSpacing()) >> 8
-		bitPosAfter := (tickAfter / pool.GetPoolTickSpacing()) % 256
+// 		tickAfterInitialized =
+// 			((p.GetPoolTickBitmap(string(wordPosAfter)) & (1 << bitPosAfter)) > 0) &&
+// 				((tickAfter % p.GetPoolTickSpacing()) == 0) &&
+// 				(tickBefore > tickAfter)
 
+// 		tickBeforeInitialized =
+// 			((p.GetPoolTickBitmap(string(wordPos)) & (1 << bitPos)) > 0) &&
+// 				((tickBefore % p.GetPoolTickSpacing()) == 0) &&
+// 				(tickBefore < tickAfter)
 
-		tickAfterInitialized =
-			((pool.GetPoolTickBitmap(string(wordPosAfter)) & (1 << bitPosAfter)) > 0) &&
-			((tickAfter % pool.GetPoolTickSpacing()) == 0) &&
-			(tickBefore > tickAfter)
+// 		if wordPos < wordPosAfter || (wordPos == wordPosAfter && bitPos <= bitPosAfter) {
+// 			wordPosLower = wordPos
+// 			bitPosLower = bitPos
+// 			wordPosHigher = wordPosAfter
+// 			bitPosHigher = bitPosAfter
+// 		} else {
+// 			wordPosLower = wordPosAfter
+// 			bitPosLower = bitPosAfter
+// 			wordPosHigher = wordPos
+// 			bitPosHigher = bitPos
+// 		}
+// 	}
 
-		tickBeforeInitialized =
-			((pool.GetPoolTickBitmap(string(wordPos)) & (1 << bitPos)) > 0) &&
-			((tickBefore % pool.GetPoolTickSpacing()) == 0) &&
-			(tickBefore < tickAfter)
+// 	mask := MAX_UINT256 << bitPosLower
 
-		if (wordPos < wordPosAfter || (wordPos == wordPosAfter && bitPos <= bitPosAfter)) {
-			wordPosLower = wordPos
-			bitPosLower = bitPos
-			wordPosHigher = wordPosAfter
-			bitPosHigher = bitPosAfter
-		} else {
-			wordPosLower = wordPosAfter
-			bitPosLower = bitPosAfter
-			wordPosHigher = wordPos
-			bitPosHigher = bitPos
-		}
-	}
+// 	for wordPosLower < wordPosHigher {
+// 		if wordPosLower == wordPosHigher {
+// 			mask = mask & (MAX_UINT256 >> (255 - bitPosHigher))
+// 		}
 
-	mask := MAX_UINT256 << bitPosLower
+// 		masked := p.GetPoolTickBitmap(string(wordPosLower)) & mask
+// 		initializedTicksCrossed += PoolTicksCounterCountOneBits(masked)
+// 		wordPosLower++
 
-	for wordPosLower < wordPosHigher {
-		if (wordPosLower == wordPosHigher) {
-			mask = mask & (MAX_UINT256 >> (255 - bitPosHigher))
-		}
+// 		mask = MAX_UINT256
+// 	}
 
-		masked := pool.GetPoolTickBitmap(string(wordPosLower)) & mask
-		initializedTicksCrossed += PoolTicksCounterCountOneBits(masked);
-		wordPosLower++
+// 	if tickAfterInitialized {
+// 		initializedTicksCrossed--
+// 	}
 
-		mask = MAX_UINT256
-	}
+// 	if tickBeforeInitialized {
+// 		initializedTicksCrossed--
+// 	}
 
-	if (tickAfterInitialized) {
-		initializedTicksCrossed--
-	}
+// 	return initializedTicksCrossed
+// }
 
-	if (tickBeforeInitialized) {
-		initializedTicksCrossed--
-	}
+// func PoolTicksCounterCountOneBits(x bigint) bigint {
+// 	bits := bigint(0)
 
-	return initializedTicksCrossed
-}
+// 	for x > 0 {
+// 		bits++
+// 		x &= x - 1
+// 	}
 
-
-func PoolTicksCounterCountOneBits(x bigint) (bigint) {
-	bits := bigint(0)
-
-	for x > 0 {
-		bits++
-		x &= x - 1
-	}
-
-	return bits
-}
-	return bits
-}
+// 	return bits
+// }
