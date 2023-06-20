@@ -1,6 +1,7 @@
 package gnoswap
 
 import (
+	f "gno.land/r/factory"
 	"math"
 )
 
@@ -21,13 +22,15 @@ func (pool *Pool) TickBitmapFlipTick(
 	tick bigint,
 	tickSpacing bigint,
 ) {
-	require(tick%tickSpacing == 0, "TICK_SPACING")
+	require(tick%tickSpacing == 0, "tick %% tickSpacing != 0")
 	wordPos, bitPos := TickBitmapPosition(tick)
 	mask := BigInt1 << uint64(bitPos)
 	requireUnsigned(mask, "tick_bitmap.gno__TickBitmapFlipTick__mask")
 	// tickBitmaps[wordPos] ^= mask
 	_tw, exists := pool.tickBitmaps.Get(string(wordPos)).(bigint)
-	pool.tickBitmaps.Set(string(wordPos), _tw^mask)
+
+	f.UpdateAvlTree(pool.tickBitmaps, string(wordPos), _tw^mask)
+	// pool.tickBitmaps.Set(string(wordPos), _tw^mask)
 }
 
 func (pool *Pool) TickBitmapNextInitializedTickWithInOneWord(

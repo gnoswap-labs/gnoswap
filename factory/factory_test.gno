@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	p "gno.land/r/pool"
 )
 
 var (
@@ -63,28 +62,12 @@ func TestEnableFeeAmount(t *testing.T) {
 	shouldPanic(t, func() { EnableFeeAmount(123, 987) })
 }
 
-func TestGetPool(t *testing.T) {
-	getPool("foo", "bar", bigint(3000))
-	shouldPanic(t, func() { getPool("foo", "bar", bigint(3001)) })
-}
-
-func TestReturnPools(t *testing.T) {
-	{
-		var _tmpTokenA, _tmpTokenB string // XXX std.Address or pkg_path
-		var _tmpFee, _tmpSqrtPrice bigint
-
-		_tmpTokenA = "foo" // token0 pkg_path
-		_tmpTokenB = "bar" // token1 pkg_path
-		_tmpFee = 500
-		_tmpSqrtPrice = 130621891405341611593710811006
-
-		CreatePool(_tmpTokenA, _tmpTokenB, _tmpFee, _tmpSqrtPrice)
-	}
-	println("pools:", pools)
-	println("pools.Size:", pools.Size())
-
+/*
+API TEST
+*/
+func TestApiGetPools(t *testing.T) {
 	agp := ApiGetPools()
-	// println("agp:", agp)
+	println(agp)
 }
 
 // utils

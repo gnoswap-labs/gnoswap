@@ -1,5 +1,9 @@
 package gnoswap
 
+import (
+	f "gno.land/r/factory"
+)
+
 type TickInfo struct {
 	liquidityGross bigint
 	liquidityNet   bigint
@@ -92,6 +96,7 @@ func (pool *Pool) TickUpdate(
 	upper bool,
 	maxLiquidity bigint,
 ) (flipped bool) {
+
 	requireUnsigned(feeGrowthGlobal0X128, "tick.gno__TickUpdate__feeGrowthGlobal0X128")
 	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickUpdate__feeGrowthGlobal1X128")
 	requireUnsigned(maxLiquidity, "tick.gno__TickUpdate__maxLiquidity")
@@ -128,14 +133,19 @@ func (pool *Pool) TickUpdate(
 		info.liquidityNet += liquidityDelta
 	}
 
-	// ticks[tick] = info
-	pool.ticks.Set(string(tick), info)
+	// if position called pool mint
+	// panic: cannot modify external-realm or non-realm object
+	// XXX do something
+	// pool.ticks.Set(string(tick), info) // ticks[tick] = info
+	f.UpdateAvlTree(pool.ticks, string(tick), info)
+
 	return flipped
 }
 
 func (pool *Pool) TickClear(tick bigint) {
 	// delete(ticks, tick)
-	pool.ticks.Remove(string(tick))
+	// pool.ticks.Remove(string(tick))
+	f.RemoveAvlTree(pool.ticks, string(tick))
 }
 
 func (pool *Pool) TickCross(
