@@ -7,16 +7,16 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/r/demo/users"
 
-	"gno.land/r/bar"
-	"gno.land/r/foo"
+	bar "gno.land/r/bar"
+	foo "gno.land/r/foo"
 
-	f "gno.land/r/factory"
-	nft "gno.land/r/gnft"
 	p "gno.land/r/pool"
+
+	nft "gno.land/r/gnft"
 )
 
 var (
-	poolAddr = p.GetOrigPkgAddr()
+	PoolAddr = p.GetOrigPkgAddr()
 
 	own  = testutils.TestAddress("own")  // Owner
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
@@ -43,12 +43,12 @@ func init() {
 	bar.FaucetL()
 
 	// debug - print addr
-	println(lp01, "// lp01")
-	println(lp02, "// lp02")
-	println(rv01, "// rv01")
-	println(tr01, "// tr01")
-	println(PoolAddr, "// pool")
-	println(GetOrigPkgAddr(), "// position")
+	// println(lp01, "// lp01")
+	// println(lp02, "// lp02")
+	// println(rv01, "// rv01")
+	// println(tr01, "// tr01")
+	// println(PoolAddr, "// pool")
+	// println(GetOrigPkgAddr(), "// position")
 }
 
 var (
@@ -62,11 +62,11 @@ var (
 	test_liquidityExpect bigint = 1000
 )
 
-// 1. Init & Create Pool using Factory Contract by own
-func TestFactoryCreatePool(t *testing.T) {
+// 1. Init & Create Pool
+func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(own)
-	f.Init()
-	f.CreatePool("foo", "bar", pFee, 130621891405341611593710811006)
+	p.Init()
+	p.CreatePool("foo", "bar", pFee, 130621891405341611593710811006)
 
 	// fee
 	// 500		= 0.05% // USv3 default
@@ -75,7 +75,7 @@ func TestFactoryCreatePool(t *testing.T) {
 
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { f.CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
+	shouldPanic(t, func() { p.CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
 
 	// Approve
 	std.TestSetOrigCaller(lp01)
@@ -193,7 +193,7 @@ func TestMint(t *testing.T) {
 	}
 
 	// lp02 mints out of range => lower position (token0 will be 0)
-	// will get tid 3 nft
+	// will get tid 4 nft
 	{
 		std.TestSetOrigCaller(lp02)
 
@@ -245,6 +245,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 	}
 
 	// lp02 mints at unknown position
+	// should panic
 	{
 		std.TestSetOrigCaller(lp02)
 

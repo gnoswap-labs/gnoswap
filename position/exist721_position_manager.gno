@@ -5,45 +5,22 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc721"
+	"gno.land/p/demo/ufmt"
+
+	p "gno.land/r/pool"
 
 	nft "gno.land/r/gnft"
-
-	f "gno.land/r/factory"
-	p "gno.land/r/pool"
 )
 
 var (
-	PoolAddr = p.GetPoolAddress()
-
 	// poolIds         map[std.Address]bigint = make(map[std.Address]bigint)
 	// poolIdToPoolKey map[bigint]PoolKey = make(map[bigint]PoolKey)
-	// poolIds         avl.Tree // poolAddr -> poolId
-	// poolIdToPoolKey avl.Tree // poolId -> PoolKey
 	// nextPoolId bigint = 1
 
 	// positions       map[string]Position = make(map[string]Position)
 	positions avl.Tree // tokenId -> Position
 	nextId    bigint   = 1
 )
-
-type Position struct {
-	nonce bigint
-
-	operator std.Address
-
-	poolKey string
-
-	tickLower bigint
-	tickUpper bigint
-
-	liquidity bigint
-
-	feeGrowthInside0LastX128 bigint
-	feeGrowthInside1LastX128 bigint
-
-	tokensOwed0 bigint
-	tokensOwed1 bigint
-}
 
 func (p Position) isClear() bool {
 	return p.liquidity == 0 && p.tokensOwed0 == 0 && p.tokensOwed1 == 0
@@ -84,7 +61,7 @@ func mint(params MintParams) (string, bigint, bigint, bigint) {
 	pool := p.GetPool(params.token0, params.token1, params.fee)
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
-			poolKey:        f.GetPoolKeyFromTokenNames(params.token0, params.token1, params.fee),
+			poolKey:        p.GetPoolKey(params.token0, params.token1, params.fee),
 			recipient:      GetOrigPkgAddr(),
 			tickLower:      params.tickLower,
 			tickUpper:      params.tickUpper,
@@ -111,7 +88,7 @@ func mint(params MintParams) (string, bigint, bigint, bigint) {
 	position := Position{
 		nonce:                    0,
 		operator:                 zeroAddress,
-		poolKey:                  f.GetPoolKeyFromTokenNames(params.token0, params.token1, params.fee),
+		poolKey:                  p.GetPoolKey(params.token0, params.token1, params.fee),
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
 		liquidity:                liquidity,
@@ -174,7 +151,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 		},
 	)
 
-	pool := p.GetPoolFromKey(position.poolKey)
+	pool := p.GetPoolFromPoolKey(position.poolKey)
 
 	positionKey := PositionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	// _p := p.positions[positionKey]
@@ -226,7 +203,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	}
 
 	positionLiquidity := position.liquidity
-	require(positionLiquidity >= params.liquidity, "Cannot withdraw more liquidity than is in the position")
+	require(positionLiquidity >= params.liquidity, ufmt.Sprintf("Cannot withdraw more liquidity(%s) than is in the position(%s)", params.liquidity, positionLiquidity))
 
 	// XXX GetRealmCaller PR is going on
 	// spoof orig caller
@@ -234,7 +211,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	std.TestSetOrigCaller(GetOrigPkgAddr())
 
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
-	pool := p.GetPoolFromKey(position.poolKey)
+	pool := p.GetPoolFromPoolKey(position.poolKey)
 
 	amount0, amount1 := p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, params.liquidity)
 	std.TestSetOrigCaller(_orig)
@@ -301,7 +278,7 @@ func collect(params CollectParams) (bigint, bigint) {
 
 	tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
-	pool := p.GetPoolFromKey(position.poolKey)
+	pool := p.GetPoolFromPoolKey(position.poolKey)
 
 	if (position.liquidity) > 0 {
 		// XXX GetRealmCaller PR is going on

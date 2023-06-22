@@ -8,10 +8,8 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/r/demo/users"
 
-	"gno.land/r/bar"
-	"gno.land/r/foo"
-
-	f "gno.land/r/factory"
+	bar "gno.land/r/bar"
+	foo "gno.land/r/foo"
 )
 
 var (
@@ -70,8 +68,8 @@ var (
 // 1. Init & Create Pool using Factory Contract by own
 func TestFactoryCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(own)
-	f.Init()
-	f.CreatePool("foo", "bar", pFee, 130621891405341611593710811006)
+	Init()
+	CreatePool("foo", "bar", pFee, 130621891405341611593710811006)
 
 	// fee
 	// 500		= 0.05% // USv3 default
@@ -80,7 +78,7 @@ func TestFactoryCreatePool(t *testing.T) {
 
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { f.CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
+	shouldPanic(t, func() { CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
 
 	// Approve
 	std.TestSetOrigCaller(lp01)
@@ -555,23 +553,23 @@ func TestCollectProtocol(t *testing.T) {
 }
 
 /* GETTER_API TEST */
-func TestGetPoolInfo(t *testing.T) {
-	tapi := ApiGetPoolInfo(pToken0, pToken1, pFee)
-	println(tapi)
-}
+// func TestGetPoolInfo(t *testing.T) {
+// 	tapi := ApiGetPoolInfo(pToken0, pToken1, pFee)
+// 	println(tapi)
+// }
 
-func TestGetTokenInfo(t *testing.T) {
-	tapi0 := ApiGetTokenInfo(pToken0, pToken1, pFee, 0)
-	println(tapi0)
+// func TestGetTokenInfo(t *testing.T) {
+// 	tapi0 := ApiGetTokenInfo(pToken0, pToken1, pFee, 0)
+// 	println(tapi0)
 
-	tapi1 := ApiGetTokenInfo(pToken0, pToken1, pFee, 1)
-	println(tapi1)
-}
+// 	tapi1 := ApiGetTokenInfo(pToken0, pToken1, pFee, 1)
+// 	println(tapi1)
+// }
 
-func TestGetUserInfo(t *testing.T) {
-	uapi := ApiGetUserInfo(pToken0, pToken1, pFee, "g1d3crqv2lta047h6lta047h6lta047h6lnjw069") // lp01
-	println(uapi)
-}
+// func TestGetUserInfo(t *testing.T) {
+// 	uapi := ApiGetUserInfo(pToken0, pToken1, pFee, "g1d3crqv2lta047h6lta047h6lta047h6lnjw069") // lp01
+// 	println(uapi)
+// }
 
 /* HELPER */
 func shouldEQ(t *testing.T, got, expected interface{}) {

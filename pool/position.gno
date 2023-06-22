@@ -1,26 +1,13 @@
 package gnoswap
 
 import (
-	"crypto/sha256"
 	"encoding/base64"
-	"encoding/hex"
 	"std"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-
-	f "gno.land/r/factory"
 )
 
-type PositionInfo struct {
-	liquidity bigint
 
-	feeGrowthInside0LastX128 bigint
-	feeGrowthInside1LastX128 bigint
-
-	tokensOwed0 bigint
-	tokensOwed1 bigint
-}
 
 func PositionGetKey(
 	owner std.Address,
@@ -57,9 +44,8 @@ func (pool *Pool) PositionUpdateWithKey(
 
 	p := PositionUpdate(position, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
 	// positions[key] = p
-	// pool.positions.Set(key, p)
+	pool.positions.Set(key, p)
 
-	f.UpdateAvlTree(pool.positions, key, p)
 	return p
 }
 

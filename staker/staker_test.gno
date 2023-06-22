@@ -8,10 +8,9 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/r/demo/users"
 
-	"gno.land/r/bar"
-	"gno.land/r/foo"
+	bar "gno.land/r/bar"
+	foo "gno.land/r/foo"
 
-	f "gno.land/r/factory"
 	p "gno.land/r/pool"
 	s "gno.land/r/position"
 
@@ -26,41 +25,33 @@ var (
 	tStartTime bigint = GetTimestamp()
 	tEndTime   bigint = tStartTime + 301 // staker.gno #140 ( lockDuration is limited to 100, 200, 300 seconds)
 
-	poolAddr = p.GetOrigPkgAddr()
-
-	own  = testutils.TestAddress("own")  // Owner
-	ci01 = testutils.TestAddress("ci01") // Create Incentive Caller
-	rf01 = testutils.TestAddress("rf01") // Refundee
-	rc01 = testutils.TestAddress("rc01") // Recipient
-	lp01 = testutils.TestAddress("lp01") // Liquidity Provider
-	oa01 = testutils.TestAddress("oa01") // Other Address
+	own      = testutils.TestAddress("own")  // Owner
+	ci01     = testutils.TestAddress("ci01") // Create Incentive Caller
+	rf01     = testutils.TestAddress("rf01") // Refundee
+	lp01     = testutils.TestAddress("lp01") // Liquidity Provider
+	poolAddr = p.GetOrigPkgAddr()            // Pool Contract
 )
 
 func init() {
-	std.TestSetOrigCaller(ci01)
-
 	std.TestSetOrigCaller(lp01)
 	foo.FaucetL()
 	bar.FaucetL()
 
 	// debug - print addr
-	println(ci01, "// ci01")
-	println(rf01, "// rf01")
-	println(rc01, "// rc01")
-	println(lp01, "// lp01")
-	println(oa01, "// oa01")
+	// println(ci01, "// ci01")
+	// println(rf01, "// rf01")
+	// println(lp01, "// lp01")
 
-	println(f.GetOrigPkgAddr(), "// factory")
-	println(p.GetOrigPkgAddr(), "// pool")
-	println(s.GetOrigPkgAddr(), "// position")
-	println(GetOrigPkgAddr(), "// staker")
+	// println(p.GetOrigPkgAddr(), "// pool")
+	// println(s.GetOrigPkgAddr(), "// position")
+	// println(GetOrigPkgAddr(), "// staker")
 }
 
-// Init & CreatePool using Factiry Contracy by
-func TestFactoryCreatePool(t *testing.T) {
+// Init & CreatePool using Pool Contract
+func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(own)
-	f.Init()
-	f.CreatePool("foo", "bar", 500, 130621891405341611593710811006)
+	p.Init()
+	p.CreatePool("foo", "bar", 500, 130621891405341611593710811006)
 
 	// fee
 	// 500		= 0.05% // USv3 default
@@ -69,7 +60,7 @@ func TestFactoryCreatePool(t *testing.T) {
 
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { f.CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
+	shouldPanic(t, func() { p.CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
 
 	// Approve
 	std.TestSetOrigCaller(lp01)
@@ -140,7 +131,7 @@ func TestClaimReward(t *testing.T) {
 }
 
 func TestUnstakeAndWithdraw(t *testing.T) {
-	// NFT was staked with lockDuration 100 L#116
+	// NFT was staked with lockDuration 100 L#107
 	// so, it can be withdrawl after 100 seconds since unstake requeset
 	std.TestSetOrigCaller(lp01)
 
@@ -160,7 +151,23 @@ func TestUnstakeAndWithdraw(t *testing.T) {
 	shouldEQ(t, nft.OwnerOf("1"), GetOrigCaller())
 }
 
-// helper
+/* API TEST */
+// func TestApiGetIncentivesInfo(t *testing.T) {
+// 	tagii := ApiGetIncentivesInfo()
+// 	// println(tagii)
+// }
+
+// func TestApiGetStakesInfo(t *testing.T) {
+// 	tagsi := ApiGetStakesInfo()
+// 	// println(tagsi)
+// }
+
+// func TestApiGetRewardInfo(t *testing.T) {
+// 	tagri := ApiGetRewardInfo()
+// 	// println(tagri)
+// }
+
+/* HELPERS */
 func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {
 		t.Errorf("got %v, expected %v", got, expected)
