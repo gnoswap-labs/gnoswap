@@ -4,33 +4,14 @@ import (
 	"std"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/ufmt"
 
 	nft "gno.land/r/gnft"  // GNFT, Gnoswap NFT
 	gnos "gno.land/r/gnos" // GNOS, Gnoswap Share
 )
 
-type Incentive struct {
-	numberOfStakes bigint
-}
-
-type Stake struct {
-	secondsPerLiquidityInsideInitialX128 bigint
-	liquidityNoOverflow                  bigint
-	liquidityIfOverflow                  bigint
-}
-
-type Deposit struct {
-	owner          std.Address
-	numberOfStakes bigint
-	tickLower      bigint
-	tickUpper      bigint
-	lockDuration   bigint
-	timeToWithdraw bigint
-}
-
 var (
-	factory                   std.Address
-	maxIncentiveStartLeadTime bigint
+	maxIncentiveStartLeadTime bigint = 600
 	maxIncentiveDuration      bigint
 
 	incentives avl.Tree // incentiveId => Incentive
@@ -58,13 +39,16 @@ func CreateIncentive(
 func createIncentive(key IncentiveKey) {
 	require(
 		GetTimestamp() <= key.startTime,
-		"GnoswapStaker::createIncentive: start time must be now or in the future",
+		ufmt.Sprintf("GnoswapStaker::createIncentive: start time(%s) must be now(%s) or in the future", key.startTime, GetTimestamp()),
 	)
 	require(
 		(key.startTime-GetTimestamp()) <= maxIncentiveStartLeadTime,
-		"GnoswapStaker::createIncentive: start time too far into future",
+		ufmt.Sprintf("GnoswapStaker::createIncentive: start time(%s) too far into future(%s)", key.startTime, key.startTime-GetTimestamp()),
 	)
-	require(key.startTime < key.endTime, "GnoswapStaker::createIncentive: start time must be before end time")
+	require(
+		key.startTime < key.endTime,
+		ufmt.Sprintf("GnoswapStaker::createIncentive: start time(%s) must be before end time(%s)", key.startTime, key.endTime),
+	)
 	// require(
 	// 	(key.endTime-key.startTime) <= maxIncentiveDuration,
 	// 	"GnoswapStaker::createIncentive: incentive duration is too long",
@@ -108,7 +92,7 @@ func StakeToken(
 	lockDuration bigint,
 ) {
 	require(nft.OwnerOf(tid(tokenId)) == GetOrigCaller(), "GnoswapStaker::stakeToken: only owner can stake token")
-	require(lockDuration == 100 || lockDuration == 200 || lockDuration == 300, "GnoswapStaker::stakeToken: lock duration must be 100, 200, 300 seconds")
+	require(lockDuration == 3 || lockDuration == 5 || lockDuration == 10, "GnoswapStaker::stakeToken: lock duration must be 3, 5, 10 seconds") // XXX dev
 	// require(lockDuration == 604800 || lockDuration == 1209600  || lockDuration == 1814400, "GnoswapStaker::stakeToken: lock duration must be 1, 2, or 3 weeks")
 
 	key := IncentiveKey{
@@ -185,7 +169,6 @@ func ClaimReward(
 	reward, _ := GetRewardInfo(startTime, endTime, refundee, tokenId)
 	gnos.Mint(a2u(toAddr), uint64(reward))
 	std.TestSetOrigCaller(_orig)
-
 }
 
 func GetRewardInfo(
@@ -315,7 +298,7 @@ func endIncentive(key IncentiveKey) (refund bigint) {
 }
 
 func stakeToken(key IncentiveKey, tokenId string, lockDuration bigint) {
-	require(GetTimestamp() >= key.startTime, "GnoswapStaker::stakeToken: incentive not started")
+	require(GetTimestamp() >= key.startTime, ufmt.Sprintf("GnoswapStaker::stakeToken: incentive not started(now:%s, start:%s)", GetTimestamp(), key.startTime))
 	require(GetTimestamp() < key.endTime, "GnoswapStaker::stakeToken: incentive ended")
 
 	incentiveId := IncentiveIdCompute(key)

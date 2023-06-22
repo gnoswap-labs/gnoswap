@@ -7,11 +7,11 @@ import (
 	nft "gno.land/r/gnft"
 )
 
-func TokenURI(tokenId string) string {
-	require(Exists(tokenId), "Invalid token ID")
-	return "TODO_THIS_IS_TOKEN_URI"
-	// return INonfungibleTokenPositionDescriptor(_tokenDescriptor).tokenURI(this, tokenId);
-}
+// func TokenURI(tokenId string) string {
+// 	require(Exists(tokenId), "Invalid token ID")
+// 	return "TODO_THIS_IS_TOKEN_URI"
+// 	// return INonfungibleTokenPositionDescriptor(_tokenDescriptor).tokenURI(this, tokenId);
+// }
 
 func NFTBalanceOf(addr std.Address) bigint {
 	return bigint(nft.BalanceOf(a2u(addr)))

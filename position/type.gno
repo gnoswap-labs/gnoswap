@@ -4,18 +4,23 @@ import (
 	"std"
 )
 
-type INonfungiblePositionManager interface {
-	Positions(bigint) (bigint, std.Address, std.Address, std.Address, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint)
+type Position struct {
+	nonce bigint
 
-	Mint(MintParams) (bigint, bigint, bigint, bigint)
+	operator std.Address
 
-	IncreaseLiquidity(IncreaseLiquidityParams) (bigint, bigint, bigint)
+	poolKey string
 
-	DecreaseLiquidity(DecreaseLiquidityParams) (bigint, bigint)
+	tickLower bigint
+	tickUpper bigint
 
-	Collect(CollectParams) (bigint, bigint)
+	liquidity bigint
 
-	Burn(tokenId bigint)
+	feeGrowthInside0LastX128 bigint
+	feeGrowthInside1LastX128 bigint
+
+	tokensOwed0 bigint
+	tokensOwed1 bigint
 }
 
 type MintParams struct {
@@ -30,6 +35,17 @@ type MintParams struct {
 	amount1Min     bigint
 	// recipient std.Address // XXX de facto: hardcoded to nft manager contract address
 	deadline bigint
+}
+
+type AddLiquidityParams struct {
+	poolKey        string
+	recipient      std.Address // XXX de facto: hardcoded to nft manager contract address
+	tickLower      bigint
+	tickUpper      bigint
+	amount0Desired bigint
+	amount1Desired bigint
+	amount0Min     bigint
+	amount1Min     bigint
 }
 
 type IncreaseLiquidityParams struct {

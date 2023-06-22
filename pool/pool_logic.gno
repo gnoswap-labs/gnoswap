@@ -6,117 +6,11 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc20"
 
-	"gno.land/p/demo/ufmt"
-
 	"gno.land/r/demo/users"
 
-	"gno.land/r/bar"
-	"gno.land/r/foo"
-
-	f "gno.land/r/factory"
+	bar "gno.land/r/bar"
+	foo "gno.land/r/foo"
 )
-
-type Slot0 struct {
-	sqrtPriceX96 bigint
-	tick         bigint
-	feeProtocol  bigint
-	unlocked     bool
-}
-
-type Balances struct {
-	token0 bigint
-	token1 bigint
-}
-
-type ProtocolFees struct {
-	token0 bigint
-	token1 bigint
-}
-
-type ModifyPositionParams struct {
-	owner          std.Address
-	tickLower      bigint
-	tickUpper      bigint
-	liquidityDelta bigint
-}
-
-type SwapCache struct {
-	feeProtocol    bigint
-	liquidityStart bigint
-}
-
-type SwapState struct {
-	amountSpecifiedRemaining bigint
-	amountCalculated         bigint
-	sqrtPriceX96             bigint
-	tick                     bigint
-	feeGrowthGlobalX128      bigint
-	protocolFee              bigint
-	liquidity                bigint
-}
-
-type StepComputations struct {
-	sqrtPriceStartX96 bigint
-	tickNext          bigint
-	initialized       bool
-	sqrtPriceNextX96  bigint
-	amountIn          bigint
-	amountOut         bigint
-	feeAmount         bigint
-}
-
-// type Pool describes a single Pool/s state
-// A pool is identificed with a unique key (token0, token1, fee), where token0 < token1
-type Pool struct {
-	token0 *grc20.AdminToken // XXX inter-contract, => call {pkg_path}.GetGRC20()
-	token1 *grc20.AdminToken // XXX inter-contract, => call {pkg_path}.GetGRC20()
-
-	balances Balances
-
-	// fee is the fee tier of the pool
-	fee bigint
-
-	// tickSpacing is the spacing between ticks
-	tickSpacing bigint
-
-	// maxLiquidityPerTick is the maximum amount of liquidity that can be added per tick
-	maxLiquidityPerTick bigint
-
-	// slot0 is the current tick and price of the pool
-	slot0 Slot0
-
-	feeGrowthGlobal0X128 bigint
-	feeGrowthGlobal1X128 bigint
-
-	// protocolFees is the amount of fees collected by the protocol
-	// collected by CollectFeeProtocol()
-	protocolFees ProtocolFees
-	// liquidity is the total amount of liquidity in the pool
-	liquidity bigint
-
-	// ticks is a mapping from tick index to tick
-	ticks avl.Tree
-	// tickBitmaps is a mapping from tick index to tick bitmap
-	tickBitmaps avl.Tree
-	// positions maps the key (caller, lower tick, upper tick) to a unique position
-	positions avl.Tree
-}
-
-func GetPool(
-	pToken0 string, // pool Token0
-	pToken1 string, // pool Token1
-	pFee bigint, // pool Fee
-) *Pool {
-	return (*Pool)(f.GetPool(pToken0, pToken1, pFee))
-
-	// singlePool := f.GetPool(pToken0, pToken1, pFee)
-	// return (*Pool)(singlePool) // OO
-	// return singlePool.(*Pool) // XX
-}
-
-func GetPoolFromKey(key string) *Pool {
-	return (*Pool)(f.GetPoolFromKey(key))
-}
 
 func Mint(
 	pToken0 string,
@@ -154,7 +48,9 @@ func Mint(
 		_from := users.AddressOrName(GetOrigCaller())
 		_to := users.AddressOrName(GetOrigPkgAddr())
 		// std.TestSetOrigCaller(GetOrigPkgAddr())
+
 		foo.TransferFrom(_from, _to, uint64(amount0))
+		// pool.token0.TransferFrom(_from, _to, uint64(amount0))
 
 		// err := TransferFrom(pool.token0, GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount0))
 		// if err != nil {
@@ -182,9 +78,8 @@ func Mint(
 	// XXX tmp
 	// std.TestSetOrigCaller(_orig)
 
-	f.UpdateBalances(pool, amount0, amount1)
-	// pool.balances.token0 += amount0
-	// pool.balances.token1 += amount1
+	pool.balances.token0 += amount0
+	pool.balances.token1 += amount1
 
 	return amount0, amount1
 }
@@ -221,8 +116,7 @@ func Burn(
 
 	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
 
-	// pool.positions.Set(key, position)
-	f.UpdateAvlTree(pool.positions, key, position)
+	pool.positions.Set(key, position)
 
 	return amount0, amount1
 }
@@ -286,12 +180,10 @@ func Collect(
 		// token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
 	}
 
-	// pool.positions.Set(key, position)
-	f.UpdateAvlTree(pool.positions, key, position)
+	pool.positions.Set(key, position)
 
-	// pool.balances.token0 -= amount0
-	// pool.balances.token1 -= amount1
-	f.UpdateBalances(pool, -amount0, -amount1)
+	pool.balances.token0 -= amount0
+	pool.balances.token1 -= amount1
 
 	require(pool.balances.token0 >= 0, "pool.gno__Burn__pool.balances.token0")
 	require(pool.balances.token1 >= 0, "pool.gno__Burn__pool.balances.token1")
@@ -652,9 +544,7 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, big
 				params.liquidityDelta,
 			)
 
-			tmpPoolLiquidity := LiquidityMathAddDelta(liquidityBefore, params.liquidityDelta)
-			// pool.liquidity = LiquidityMathAddDelta(liquidityBefore, params.liquidityDelta)
-			f.UpdateLiquidity(pool, tmpPoolLiquidity)
+			pool.liquidity = LiquidityMathAddDelta(liquidityBefore, params.liquidityDelta)
 
 		} else {
 			amount1 = SqrtPriceMathGetAmount1Delta(

@@ -1,6 +1,5 @@
 package position
 
-// XXX
 // import (
 // 	p "gno.land/r/pool"
 // )

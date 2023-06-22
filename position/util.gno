@@ -14,6 +14,10 @@ func require(condition bool, message string) {
 	}
 }
 
+func checkDeadline(deadline bigint) {
+	require(GetTimestamp() <= deadline, "Transaction too old")
+}
+
 func a2u(addr std.Address) users.AddressOrName {
 	return users.AddressOrName(addr)
 }

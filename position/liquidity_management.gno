@@ -6,19 +6,8 @@ import (
 	p "gno.land/r/pool"
 )
 
-type AddLiquidityParams struct {
-	poolKey        string
-	recipient      std.Address // XXX de facto: hardcoded to nft manager contract address
-	tickLower      bigint
-	tickUpper      bigint
-	amount0Desired bigint
-	amount1Desired bigint
-	amount0Min     bigint
-	amount1Min     bigint
-}
-
 func addLiquidity(params AddLiquidityParams) (bigint, bigint, bigint) {
-	pool := p.GetPoolFromKey(params.poolKey)
+	pool := p.GetPoolFromPoolKey(params.poolKey)
 
 	sqrtPriceX96 := pool.GetPoolSlot0SqrtPriceX96()
 	sqrtRatioAX96 := p.TickMathGetSqrtRatioAtTick(params.tickLower)

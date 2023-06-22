@@ -1,24 +1,5 @@
 package gnoswap
 
-import (
-	f "gno.land/r/factory"
-)
-
-type TickInfo struct {
-	liquidityGross bigint
-	liquidityNet   bigint
-
-	feeGrowthOutside0X128 bigint
-	feeGrowthOutside1X128 bigint
-
-	tickCumulativeOutside bigint
-
-	secondsPerLiquidityOutsideX128 bigint
-	secondsOutside                 bigint
-
-	initialized bool
-}
-
 func TickTickSpacingToMaxLiquidityPerTick(tickSpacing bigint) bigint {
 	var minTick bigint = (MIN_TICK / tickSpacing) * tickSpacing
 	var maxTick bigint = (MAX_TICK / tickSpacing) * tickSpacing
@@ -133,19 +114,15 @@ func (pool *Pool) TickUpdate(
 		info.liquidityNet += liquidityDelta
 	}
 
-	// if position called pool mint
-	// panic: cannot modify external-realm or non-realm object
-	// XXX do something
-	// pool.ticks.Set(string(tick), info) // ticks[tick] = info
-	f.UpdateAvlTree(pool.ticks, string(tick), info)
+	// ticks[tick] = info
+	pool.ticks.Set(string(tick), info)
 
 	return flipped
 }
 
 func (pool *Pool) TickClear(tick bigint) {
 	// delete(ticks, tick)
-	// pool.ticks.Remove(string(tick))
-	f.RemoveAvlTree(pool.ticks, string(tick))
+	pool.ticks.Remove(string(tick))
 }
 
 func (pool *Pool) TickCross(

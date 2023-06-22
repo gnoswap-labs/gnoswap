@@ -20,30 +20,10 @@ func RewardMathComputeRewardAmount(
 
 	require(currentTime >= startTime, "GnoswapStaker::computeRewardAmount: current time must be after start time")
 
-	// println()
-	// println("totalRewardUnclaimed:", totalRewardUnclaimed)
-	// println("totalSecondsClaimedX128:", totalSecondsClaimedX128 / Q128)
-	// println("startTime:", startTime)
-	// println("endTime:", endTime)
-	// println("liquidity:", liquidity)
-	// println("secondsPerLiquidityInsideInitialX128:", secondsPerLiquidityInsideInitialX128)
-	// println("secondsPerLiquidityInsideInitial:", secondsPerLiquidityInsideInitialX128 / Q128)
-	// println("secondsPerLiquidityInsideX128:", secondsPerLiquidityInsideX128)
-	// println("secondsPerLiquidityInside:", secondsPerLiquidityInsideX128 / Q128)
-	// println("currentTime:", currentTime)
-	// println("max(endTime, currentTime):", max(endTime, currentTime))
-
 	// XXX secondsInsideX128 = (secondsPerLiquidityInsideX128 - secondsPerLiquidityInsideInitialX128) * liquidity
 	secondsInsideX128 = (secondsPerLiquidityInsideX128 - secondsPerLiquidityInsideInitialX128)
 	// totalSecondsUnclaimedX128 := ((max(endTime, currentTime) - startTime) << 128) - totalSecondsClaimedX128
 	// reward = (totalRewardUnclaimed * secondsInsideX128) / totalSecondsUnclaimedX128
-	// println()
-	// println("secondsInsideX128:", secondsInsideX128 / Q128)
-	// println("secondsInside:", secondsInsideX128)
-	// println("totalSecondsUnclaimedX128:", totalSecondsUnclaimedX128 / Q128)
-	// println("totalSecondsUnclaimed:", totalSecondsUnclaimedX128)
-	// println("reward:", reward)
-	// println()
 
 	// requireUnsigned(reward, "GnoswapStaker::computeRewardAmount: reward is not unsigned")
 	// requireUnsigned(secondsInsideX128, "GnoswapStaker::computeRewardAmount: seconds inside is not unsigned")

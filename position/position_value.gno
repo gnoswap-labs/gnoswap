@@ -1,6 +1,5 @@
 package position
 
-// XXX
 // import (
 // 	"std"
 
