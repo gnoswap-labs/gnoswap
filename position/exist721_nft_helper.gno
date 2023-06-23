@@ -57,7 +57,16 @@ func isApprovedOrOwner(addr std.Address, tokenId string) bool {
 		return true
 	}
 
-	// if not owner, check whether approved
+	// if not owner, check whether approved in position contract
+	_position, ok := positions.Get(tokenId)
+	if ok {
+		position := _position.(Position)
+		if addr == position.operator {
+			return true
+		}
+	}
+
+	// if not owner, check whether approved in actual grc721 contract
 	operator, err := nft.GetApproved(tid)
 	if err != nil {
 		return false

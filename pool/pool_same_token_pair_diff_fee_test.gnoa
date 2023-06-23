@@ -79,7 +79,7 @@ func TestFirstPool(t *testing.T) {
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	std.TestSetOrigCaller(lp01)
-	Mint(pToken0, pToken1, pFee1, lp01, test_tickLower1, test_tickUpper1, test_liquidityExpect*1000)
+	Mint(pToken0, pToken1, pFee1, lp01, test_tickLower1, test_tickUpper1, test_liquidityExpect*10000)
 
 	// Swap several times
 	std.TestSetOrigCaller(tr01)

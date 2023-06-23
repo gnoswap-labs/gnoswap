@@ -2,6 +2,7 @@ package gnoswap
 
 import (
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/grc/grc20"
 )
 
 // Testing
@@ -11,6 +12,14 @@ func (pool *Pool) GetMaxLiquidityPerTick() bigint {
 
 func (pool *Pool) GetLiquidity() bigint {
 	return pool.liquidity
+}
+
+func (pool *Pool) GetToken0() *grc20.AdminToken {
+	return pool.token0
+}
+
+func (pool *Pool) GetToken1() *grc20.AdminToken {
+	return pool.token1
 }
 
 func (pool *Pool) GetFee() bigint {
@@ -31,6 +40,10 @@ func (pool *Pool) GetFeeGrowthGlobal1X128() bigint {
 
 func (pool *Pool) GetSlot0() Slot0 {
 	return pool.slot0
+}
+
+func (pool *Pool) GetFeeProtocol() bigint {
+	return pool.slot0.feeProtocol
 }
 
 func (pool *Pool) GetProtocolFees() ProtocolFees {

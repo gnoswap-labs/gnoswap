@@ -40,43 +40,29 @@ func Mint(
 
 	var balance0Before, balance1Before bigint
 
-	// _orig := std.GetOrigCaller()
 	if amount0 > 0 {
 		balance0Before = BalanceOf(pool.token0, GetOrigPkgAddr())
 
-		// std.TestSetOrigCaller(_orig)
-		_from := users.AddressOrName(GetOrigCaller())
-		_to := users.AddressOrName(GetOrigPkgAddr())
-		// std.TestSetOrigCaller(GetOrigPkgAddr())
+		from := users.AddressOrName(GetOrigCaller())
+		to := users.AddressOrName(GetOrigPkgAddr())
 
-		foo.TransferFrom(_from, _to, uint64(amount0))
-		// pool.token0.TransferFrom(_from, _to, uint64(amount0))
+		foo.TransferFrom(from, to, uint64(amount0))
+		// pool.token0.TransferFrom(from, to, uint64(amount0))
 
-		// err := TransferFrom(pool.token0, GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount0))
-		// if err != nil {
-		// 	panic("token0.TransferFrom failed")
-		// }
 		require(balance0Before+amount0 <= BalanceOf(pool.token0, GetOrigPkgAddr()), "[X] balance0")
 	}
 
 	if amount1 > 0 {
 		balance1Before = BalanceOf(pool.token1, GetOrigPkgAddr())
 
-		// std.TestSetOrigCaller(_orig)
-		_from := users.AddressOrName(GetOrigCaller())
-		_to := users.AddressOrName(GetOrigPkgAddr())
-		// std.TestSetOrigCaller(GetOrigPkgAddr())
-		bar.TransferFrom(_from, _to, uint64(amount1))
+		from := users.AddressOrName(GetOrigCaller())
+		to := users.AddressOrName(GetOrigPkgAddr())
 
-		// err := token1.TransferFrom(GetOrigPkgAddr(), GetOrigCaller(), GetOrigPkgAddr(), uint64(amount1))
-		// if err != nil {
-		// 	panic("token1.TransferFrom failed")
-		// }
+		bar.TransferFrom(from, to, uint64(amount1))
+		// pool.token1.TransferFrom(from, to, uint64(amount1))
+
 		require(balance1Before+amount1 <= BalanceOf(pool.token1, GetOrigPkgAddr()), "[X] balance1")
 	}
-
-	// XXX tmp
-	// std.TestSetOrigCaller(_orig)
 
 	pool.balances.token0 += amount0
 	pool.balances.token1 += amount1
@@ -165,10 +151,13 @@ func Collect(
 	if amount0 > 0 {
 		position.tokensOwed0 -= amount0
 
-		std.TestSetOrigCaller(GetOrigPkgAddr())
+		// XXX
+		// foo20 or grc20 need to use PrevRealm() to get caller
+		// until then, we use this workaround
+		std.TestSetOrigCaller(GetOrigPkgAddr()) // from pool to recipient
 		foo.Transfer(users.AddressOrName(recipient), uint64(amount0))
+		// pool.token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
 		std.TestSetOrigCaller(_orig)
-		// token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
 	}
 
 	if amount1 > 0 {
@@ -176,8 +165,8 @@ func Collect(
 
 		std.TestSetOrigCaller(GetOrigPkgAddr())
 		bar.Transfer(users.AddressOrName(recipient), uint64(amount1))
+		// pool.token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
 		std.TestSetOrigCaller(_orig)
-		// token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
 	}
 
 	pool.positions.Set(key, position)
@@ -308,6 +297,7 @@ func Swap(
 		}
 
 		if state.liquidity > 0 {
+			// save fee
 			state.feeGrowthGlobalX128 += (step.feeAmount * Q128 / state.liquidity)
 		}
 
@@ -346,6 +336,8 @@ func Swap(
 		}
 	}
 
+	// END LOOP
+
 	if state.tick != slot0Start.tick {
 		pool.slot0.sqrtPriceX96 = state.sqrtPriceX96
 		pool.slot0.tick = state.tick
@@ -377,11 +369,13 @@ func Swap(
 		amount0 = state.amountCalculated
 		amount1 = amountSpecified - state.amountSpecifiedRemaining
 	}
+
 	_orig := std.GetOrigCaller()
 	if zeroForOne {
 		if amount1 < 0 {
-			std.TestSetOrigCaller(GetOrigPkgAddr()) // XXX remove std.*
+			std.TestSetOrigCaller(GetOrigPkgAddr())
 			bar.Transfer(users.AddressOrName(recipient), uint64(-1*amount1))
+			// pool.token1.Transfer(users.AddressOrName(recipient), uint64(-1*amount1))
 			pool.balances.token1 -= amount1
 			std.TestSetOrigCaller(_orig)
 		}
@@ -391,6 +385,7 @@ func Swap(
 		_from := users.AddressOrName(GetOrigCaller())
 		_to := users.AddressOrName(GetOrigPkgAddr())
 		foo.TransferFrom(_from, _to, uint64(amount0))
+		// pool.token0.TransferFrom(_from, _to, uint64(amount0))
 		pool.balances.token0 += amount0
 
 		require(balance0Before+bigint(amount0) <= BalanceOf(pool.token0, GetOrigPkgAddr()), "IIA0")
@@ -399,8 +394,9 @@ func Swap(
 
 	} else {
 		if amount0 < 0 {
-			std.TestSetOrigCaller(GetOrigPkgAddr()) // XXX remove std.*
+			std.TestSetOrigCaller(GetOrigPkgAddr())
 			foo.Transfer(users.AddressOrName(recipient), uint64(-amount0))
+			// pool.token0.Transfer(users.AddressOrName(recipient), uint64(-amount0))
 			pool.balances.token0 -= amount0
 			std.TestSetOrigCaller(_orig)
 		}
@@ -410,6 +406,7 @@ func Swap(
 		_from := users.AddressOrName(GetOrigCaller())
 		_to := users.AddressOrName(GetOrigPkgAddr())
 		bar.TransferFrom(_from, _to, uint64(amount1))
+		// pool.token1.TransferFrom(_from, _to, uint64(amount1))
 		pool.balances.token1 += amount1
 
 		require(balance1Before+bigint(amount1) <= BalanceOf(pool.token1, GetOrigPkgAddr()), "IIA1")
@@ -486,11 +483,8 @@ func CollectProtocol(
 
 		std.TestSetOrigCaller(GetOrigPkgAddr())
 		foo.Transfer(users.AddressOrName(recipient), uint64(amount0))
+		// pool.token0.Transfer(users.AddressOrName(recipient), uint64(amount0))
 		std.TestSetOrigCaller(_orig)
-		// err := token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
-		// if err != nil {
-		// 	panic(err)
-		// }
 	}
 
 	if amount1 > 0 {
@@ -501,11 +495,8 @@ func CollectProtocol(
 
 		std.TestSetOrigCaller(GetOrigPkgAddr())
 		bar.Transfer(users.AddressOrName(recipient), uint64(amount1))
+		// pool.token1.Transfer(users.AddressOrName(recipient), uint64(amount1))
 		std.TestSetOrigCaller(_orig)
-		// err := token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
-		// if err != nil {
-		// 	panic(err)
-		// }
 	}
 
 	return amount0, amount1
@@ -567,6 +558,7 @@ func (pool *Pool) updatePosition(
 ) PositionInfo {
 	var _feeGrowthGlobal0X128 bigint = pool.feeGrowthGlobal0X128
 	var _feeGrowthGlobal1X128 bigint = pool.feeGrowthGlobal1X128
+
 	var flippedLower, flippedUpper bool
 	if liquidityDelta != 0 {
 		flippedLower = pool.TickUpdate(
@@ -607,6 +599,7 @@ func (pool *Pool) updatePosition(
 	)
 
 	key := PositionGetKey(owner, tickLower, tickUpper)
+
 	position := pool.PositionUpdateWithKey(
 		key,
 		liquidityDelta,
@@ -640,12 +633,4 @@ func checkTicks(tickLower, tickUpper bigint) {
 
 func a2u(addr std.Address) users.AddressOrName {
 	return users.AddressOrName(addr)
-}
-
-// GRC20 TransferFrom mockup. Replace with the actual one once inter-contract calls are supported
-func TransferFrom(token *grc20.AdminToken, from std.Address, to std.Address, amount bigint, callback string, args []string) error {
-	// call := std.EncodeMsgCall(token, "TransferFrom", []string{from.String(), to.String(), amount.String()})
-	// callback := std.EncodeMsgCall(GetOrigPkgAddr(), callback, args)
-
-	// std.Send(call, callback)
 }

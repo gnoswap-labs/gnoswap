@@ -253,10 +253,10 @@ func TestSwap(t *testing.T) {
 	pool := GetPool(pToken0, pToken1, pFee)
 
 	std.TestSetOrigCaller(lp02)
-	Mint(pToken0, pToken1, pFee, lp02, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
+	Mint(pToken0, pToken1, pFee, lp02, test_tickLower, test_tickUpper, test_liquidityExpect*10000)
 
 	std.TestSetOrigCaller(lp03)
-	Mint(pToken0, pToken1, pFee, lp03, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
+	Mint(pToken0, pToken1, pFee, lp03, test_tickLower, test_tickUpper, test_liquidityExpect*10000)
 
 	// Swap several times
 	test_price := bigint(MIN_SQRT_RATIO + 1) // maximum price
