@@ -178,6 +178,8 @@ func TestBurn(t *testing.T) {
 
 // 4. Collect
 func TestCollect(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
 	// withdraw all token before test `Collect`
 	Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 
@@ -228,7 +230,7 @@ func TestSwap(t *testing.T) {
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	std.TestSetOrigCaller(lp01)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
+	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect*10000)
 
 	// Swap several times
 	std.TestSetOrigCaller(tr01)
@@ -347,7 +349,7 @@ func TestSwap(t *testing.T) {
 		println()
 	}
 
-	// Swap toek1n -> token0
+	// Swap token1 -> token0
 	{
 		println("Swap #4")
 		println("ㄴ direction: token1 -> token0")
@@ -428,14 +430,13 @@ func TestCollectProtocol(t *testing.T) {
 	{
 		println("Swap #5 - with protocol fee enabled")
 		println("ㄴ direction: token0 -> token1")
-		println("ㄴ amount: 2000000")
+		println("ㄴ amount: 200000")
 
 		gsoOldToken0Bal := BalanceOf(pool.token0, gso)
 		gsoOldToken1Bal := BalanceOf(pool.token1, gso)
 
 		std.TestSetOrigCaller(tr01)
-		Swap(pToken0, pToken1, pFee, tr01, true, 100000, MIN_SQRT_RATIO+1) // swap token0 -> token1 => fee only in token0
-		Swap(pToken0, pToken1, pFee, tr01, true, 100000, MIN_SQRT_RATIO+1) // more protocol fee
+		Swap(pToken0, pToken1, pFee, tr01, true, 200000, MIN_SQRT_RATIO+1) // swap token0 -> token1 => fee only in token0
 
 		// Gnoswap Owner will collect protocol fee
 		std.TestSetOrigCaller(gso)
@@ -453,14 +454,13 @@ func TestCollectProtocol(t *testing.T) {
 	{
 		println("Swap #6 - with protocol fee enabled")
 		println("ㄴ direction: token1 -> token0")
-		println("ㄴ amount: 2000000")
+		println("ㄴ amount: 200000")
 
 		gsoOldToken0Bal := BalanceOf(pool.token0, gso)
 		gsoOldToken1Bal := BalanceOf(pool.token1, gso)
 
 		std.TestSetOrigCaller(tr01)
-		Swap(pToken0, pToken1, pFee, tr01, false, 100000, MAX_SQRT_RATIO-1) // swap token0 -> token1 => fee only in token0
-		Swap(pToken0, pToken1, pFee, tr01, false, 100000, MAX_SQRT_RATIO-1) // more protocol fee
+		Swap(pToken0, pToken1, pFee, tr01, false, 200000, MAX_SQRT_RATIO-1) // swap token0 -> token1 => fee only in token0
 
 		// Gnoswap Owner will collect protocol fee
 		std.TestSetOrigCaller(gso)

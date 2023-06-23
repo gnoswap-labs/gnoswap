@@ -75,8 +75,7 @@ func mint(params MintParams) (string, bigint, bigint, bigint) {
 	tokenId := string(nextId)
 	nextId++ // nextId = nextId + 1
 
-	// XXX GetRealmCaller PR is going on
-	// spoof orig caller
+	// XXX grc721 should use PrevRealm()
 	_orig := GetOrigCaller()
 	std.TestSetOrigCaller(GetOrigPkgAddr())
 	nft.Mint(a2u(_orig), grc721.TokenID(tokenId)) // owner, tokenId
@@ -87,7 +86,7 @@ func mint(params MintParams) (string, bigint, bigint, bigint) {
 
 	position := Position{
 		nonce:                    0,
-		operator:                 zeroAddress,
+		operator:                 GetOrigCaller(),
 		poolKey:                  p.GetPoolKey(params.token0, params.token1, params.fee),
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
@@ -122,7 +121,6 @@ func IncreaseLiquidity(
 	return increaseLiquidity(increaseLiquidityParams)
 }
 
-// liquidity, amount0, amount1
 func increaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) {
 	checkDeadline(params.deadline)
 
@@ -205,8 +203,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	positionLiquidity := position.liquidity
 	require(positionLiquidity >= params.liquidity, ufmt.Sprintf("Cannot withdraw more liquidity(%s) than is in the position(%s)", params.liquidity, positionLiquidity))
 
-	// XXX GetRealmCaller PR is going on
-	// spoof orig caller
+	// XXX grc20 should use PrevRealm()
 	_orig := GetOrigCaller()
 	std.TestSetOrigCaller(GetOrigPkgAddr())
 
@@ -281,8 +278,7 @@ func collect(params CollectParams) (bigint, bigint) {
 	pool := p.GetPoolFromPoolKey(position.poolKey)
 
 	if (position.liquidity) > 0 {
-		// XXX GetRealmCaller PR is going on
-		// spoof orig caller
+		// XXX grc20 should use PrevRealm()
 		_orig := GetOrigCaller()
 		std.TestSetOrigCaller(GetOrigPkgAddr())
 		p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, 0)
@@ -355,7 +351,7 @@ func burn(tokenId string) {
 	// delete(positions, tokenId)
 	positions.Remove(tokenId)
 
-	// XXX GetRealmCaller PR is going on
+	// XXX grc721 should use PrevRealm()
 	_orig := std.GetOrigCaller()
 	std.TestSetOrigCaller(GetOrigPkgAddr())
 	nft.Burn(grc721.TokenID(tokenId))
@@ -365,12 +361,3 @@ func burn(tokenId string) {
 func isAuthorizedForToken(tokenId string) {
 	require(isApprovedOrOwner(GetOrigCaller(), tokenId), "Not approved")
 }
-
-// XXX for grc721 permit
-// func _getAndIncrementNonce(tokenId string) bigint {
-// 	return positions[tokenId].nonce++
-// }
-
-// func _approve(to std.Address, tokenId string) {
-// 	positions[tokenId].operator = to
-// }

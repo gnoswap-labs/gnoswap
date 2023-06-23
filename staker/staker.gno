@@ -92,7 +92,7 @@ func StakeToken(
 	lockDuration bigint,
 ) {
 	require(nft.OwnerOf(tid(tokenId)) == GetOrigCaller(), "GnoswapStaker::stakeToken: only owner can stake token")
-	require(lockDuration == 3 || lockDuration == 5 || lockDuration == 10, "GnoswapStaker::stakeToken: lock duration must be 3, 5, 10 seconds") // XXX dev
+	require(lockDuration == 3 || lockDuration == 5 || lockDuration == 10 || lockDuration == 100, "GnoswapStaker::stakeToken: lock duration must be 3, 5, 10 seconds") // XXX dev
 	// require(lockDuration == 604800 || lockDuration == 1209600  || lockDuration == 1814400, "GnoswapStaker::stakeToken: lock duration must be 1, 2, or 3 weeks")
 
 	key := IncentiveKey{
@@ -135,8 +135,7 @@ func WithdrawToken(tokenId string, to std.Address) {
 	// delete(deposits, tokenId)
 	deposits.Remove(tokenId)
 
-	// nonfungiblePositionManager.safeTransferFrom(GetOrigPkgAddr(), to, tokenId)
-	// XXX GetRealmCaller()
+	// grc721 should use PrevRealm()
 	_orig := std.GetOrigCaller()
 	std.TestSetOrigCaller(GetOrigPkgAddr())
 	nto := nft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(to), tid(tokenId))
@@ -162,7 +161,7 @@ func ClaimReward(
 
 	toAddr := GetOrigCaller()
 
-	/// GetRealmCaller PR
+	// grc20 should use PrevRealm()
 	_orig := GetOrigCaller()
 	std.TestSetOrigCaller(GetOrigPkgAddr())
 	// XXX

@@ -7,8 +7,6 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-
-
 func PositionGetKey(
 	owner std.Address,
 	tickLower bigint,
@@ -35,6 +33,7 @@ func (pool *Pool) PositionUpdateWithKey(
 	// position := positions[key]
 	_position, exists := pool.positions.Get(key)
 	var position PositionInfo
+
 	if !exists {
 		position = PositionInfo{}
 		// panic("position does not exist #2")

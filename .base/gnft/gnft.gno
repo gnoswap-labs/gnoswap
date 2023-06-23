@@ -81,8 +81,6 @@ func SetApprovalForAll(user users.AddressOrName, approved bool) {
 func TransferFrom(from, to users.AddressOrName, tid grc721.TokenID) bool {
 	err := nft.TransferFrom(from.Resolve(), to.Resolve(), tid)
 	if err != nil {
-		println("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
-		println("NFT TransferFrom ERR", err.Error())
 		return false
 	}
 
@@ -144,7 +142,3 @@ func Exists(tid grc721.TokenID) bool {
 
 	return true
 }
-
-// func KnownAccount() uint64 {
-// 	return nft.balances.Size()
-// }

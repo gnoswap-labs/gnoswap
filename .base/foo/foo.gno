@@ -51,17 +51,26 @@ func Allowance(owner, spender users.AddressOrName) uint64 {
 
 func Transfer(to users.AddressOrName, amount uint64) {
 	caller := std.GetOrigCaller()
-	foo.Transfer(caller, to.Resolve(), amount)
+	err := foo.Transfer(caller, to.Resolve(), amount)
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 func Approve(spender users.AddressOrName, amount uint64) {
 	caller := std.GetOrigCaller()
-	foo.Approve(caller, spender.Resolve(), amount)
+	err := foo.Approve(caller, spender.Resolve(), amount)
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 func TransferFrom(from, to users.AddressOrName, amount uint64) {
 	caller := std.GetOrigCaller()
-	foo.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
+	err := foo.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 // faucet.
