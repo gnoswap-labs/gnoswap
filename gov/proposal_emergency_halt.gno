@@ -5,6 +5,12 @@ import (
 	"gno.land/r/staker"
 )
 
+var haltFlag bool
+
+func init() {
+	haltFlag = false
+}
+
 //////////////////////////
 // ProposalDataEmergencyHalt
 
@@ -29,14 +35,20 @@ func (p ProposalDataEmergencyHalt) isValid() bool {
 func (p ProposalDataEmergencyHalt) execute() error {
 	if p.HaltPool {
 		pool.Halt()
+	} else {
+		pool.Unhalt()
 	}
 
 	if p.HaltStaker {
 		staker.Halt()
+	} else {
+		staker.Unhalt()
 	}
 
 	if p.HaltGov {
-		halt()
+		haltFlag = true
+	} else {
+		haltFlag = false
 	}
 
 	return nil

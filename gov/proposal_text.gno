@@ -1,20 +1,20 @@
 package gov 
 
 //////////////////////////
-// ProposalDataText
+// ProposalText
 
-var _ ProposalData = (*ProposalDataText)(nil)
+var _ Proposal = (*ProposalText)(nil)
 
-type ProposalDataText struct {
+type ProposalText struct {
 	// (empty)
 }
 
-func (p ProposalDataText) ProposalType() ProposalType {
+func (p ProposalText) ProposalType() ProposalType {
 	return ProposalTypeText
 }
 
-func (p ProposalDataText) isProposalData() {}
+func (p ProposalText) isProposal() {}
 
-func (p ProposalDataText) execute() {
+func (p ProposalText) execute() {
 	// do nothing
 }

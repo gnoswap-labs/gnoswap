@@ -1,7 +1,8 @@
 package gov
 
+// processes a single prooposal. assumes that the proposal is at the front of the queue
 func (p *Proposal) process(currentTime uint64) {
-	if !p.isLive() {
+	if !p.isActive() {
 		return
 	}
 

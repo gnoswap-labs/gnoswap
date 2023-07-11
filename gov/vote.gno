@@ -14,12 +14,8 @@ type Vote struct {
 	Power    bigint
 }
 
-// returns true if vote was successful
-// returns false if proposal is not in voting period
-// if the vote type is the same with the existing vote, no-op.
-// otherwise, the {Yes, No, Abstain}Votes of the proposal is updated accordingly with the voter's power.
-func (p Proposal) vote(vote VoteOption) bool {
-	panic("unimplemented")
+func (p Proposal) isVotingPeriod() bool {
+	return p.Status == ProposalStatusVotingPeriod
 }
 
 // checks if the vote have met the pass condition
@@ -53,7 +49,7 @@ func (p Proposal) isVotingRejected() bool {
 
 // updates the proposal to reflect the voting power change of a voter.
 // assumes that the voting type has not been changed.
-func (p *Proposal) reflectVotingPowerUpdate(oldVotingPower, newVotingPower bigint) {
+func (p *Proposal) updateVotingPower(oldVotingPower, newVotingPower bigint) {
 	panic("unimplemented")
 }
 

@@ -1,61 +1,72 @@
 package gov
 
 import (
-	"gno.land/r/pool"
+	"gno.land/r/staker"
 )
 
 //////////////////////////
-// ProposalDataSwapParameterStakingRewards
+// ProposalDataStakerParameterStakingRewards
 
-var _ ProposalData = (*ProposalDataSwapParameterStakingRewards)(nil)
+var _ ProposalData = (*ProposalDataStakerParameterStakingRewards)(nil)
 
-type PoolStakingRewardChange struct {
-	PoolID uint64
-	NewStakingReward7 bigint
-	NewStakingReward14 bigint
-	NewStakingReward21 bigint
+
+type ProposalDataStakerParameterStakingRewards struct {
+	StakingRewardChanges []StakingRewardChange
 }
 
-type ProposalDataSwapParameterStakingRewards struct {
-	PoolStakingRewardChanges []PoolStakingRewardChange
+func (p ProposalDataStakerParameterInflationRate) ProposalType() ProposalType {
+	return ProposalTypeStakerParameterInflationRate
 }
 
-func (p ProposalDataSwapParameterInflationRate) ProposalType() ProposalType {
-	return ProposalTypeSwapParameterInflationRate
-}
+func (p ProposalDataStakerParameterInflationRate) isProposalData() {}
 
-func (p ProposalDataSwapParameterInflationRate) isProposalData() {}
-
-func (p ProposalDataSwapParameterStakingRewards) isValid() bool {
-	for _, poolStakingRewardChange := range p.PoolStakingRewardChanges {
-		if poolStakingRewardChange.PoolID == 0 {
+func (p ProposalDataStakerParameterStakingRewards) isValid() bool {
+	for _, change := range p.StakingRewardChanges {
+		if change.TokenA == "" {
 			return false
 		}
 
-		if poolStakingRewardChange.NewStakingReward7 == 0 {
+		if change.TokenB == "" {
 			return false
 		}
 
-		if poolStakingRewardChange.NewStakingReward14 == 0 {
+		if change.TokenA >= change.TokenB {
 			return false
 		}
 
-		if poolStakingRewardChange.NewStakingReward21 == 0 {
+		if change.Fee == 0 {
 			return false
 		}
 
-		if poolStakingRewardChange.NewStakingReward7 > poolStakingRewardChange.NewStakingReward14 {
+		if change.NewStakingReward7 == 0 {
 			return false
 		}
 
-		if poolStakingRewardChange.NewStakingReward14 > poolStakingRewardChange.NewStakingReward21 {
+		if change.NewStakingReward14 == 0 {
+			return false
+		}
+
+		if change.NewStakingReward21 == 0 {
+			return false
+		}
+
+		if change.NewStakingReward7 > change.NewStakingReward14 {
+			return false
+		}
+
+		if change.NewStakingReward14 > change.NewStakingReward21 {
 			return false
 		}
 	}
 }
 
-func (p ProposalDataSwapParameterStakingRewards) execute() error {
-	for _, poolStakingRewardChange := range p.PoolStakingRewardChanges {
-		pool.SetStakingReward(poolStakingRewardChange.PoolID, poolStakingRewardChange.NewStakingReward7, poolStakingRewardChange.NewStakingReward14, poolStakingRewardChange.NewStakingReward21)
+func (p ProposalDataStakerParameterStakingRewards) execute() error {
+	for _, chan := range p.StakingRewardChanges {
+		err := staker.SetStakingReward(change.TokenA, change.TokenB, change.Fee, change.NewStakingReward7, change.NewStakingReward14, change.NewStakingReward21)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }

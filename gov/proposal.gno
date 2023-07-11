@@ -1,5 +1,9 @@
 package gov
 
+import (
+	"time"
+)
+
 type ProposalType uint8
 
 const (
@@ -7,19 +11,21 @@ const (
 	ProposalTypeCommunityPoolSpend
 	ProposalTypeMint
 	ProposalTypeEmergencyHalt
+	ProposalTypeParameterChange
+	/*
 	ProposalTypeSwapParameterProtocolFee
-	ProposalTypeSwapParameterStakingRewards
-	ProposalTypeSwapParameterInflationRate
+	ProposalTypeStakerParameterInflationRate
+	ProposalTypeStakerParameterStakingRewards
 	ProposalTypeGovParameterDepositPeriod
 	ProposalTypeGovParameterDepositMinimum
 	ProposalTypeGovParameterVotingPeriod
 	ProposalTypeGovParameterVoteQuorum
+	*/
 )
 
-type ProposalData interface {
+type ProposalContent interface {
 	ProposalType() ProposalType
 	isProposalData()
-	isValid() bool
 
 	// execute() should not panic
 	// proposals are executed in order from the queue, so if one proposal panics, the whole governance module will be halted.
@@ -37,6 +43,11 @@ const (
 	ProposalStatusFailed
 )
 
+type Deposit struct {
+	Depositor string
+	Amount bigint
+}
+
 type Proposal struct {
 	// Proposal metadata
 	ProposalID  uint64
@@ -50,7 +61,8 @@ type Proposal struct {
 	Metadata   string
 
 	// Deposit data
-	TotalDeposit      bigint
+	TotalDeposit bigint
+	Deposits     []Deposit
 
 	// Voting data
 	Passed       bool
@@ -68,17 +80,72 @@ type Proposal struct {
 	// Cached gov parameters, set at proposal creation time
 	// Governance parameter changes are not retroactive
 	DepositPeriod uint64
-	DepositMinimumNumerator bigint
-	DepositMinimumDenominator bigint
+	DepositMinimum bigint
 	VotingPeriod uint64
-	VoteQuorumNumerator bigint
-	VoteQuorumDenominator bigint
+	VoteQuorum VoteQuorum
 
 	// Execution data
 	ProposalData ProposalData
 }
 
-func (p Proposal) isLive() bool {
+func newProposal(
+	proposalID uint64,
+	proposalType ProposalType,
+	proposer Address,
+
+	initialDeposit bigint,
+
+	title string,
+	summary string,
+	metadata string,
+
+	data ProposalData,
+) Proposal {
+	depositPeriod := getDepositPeriod()
+	depositMinimum := getDepositMinimum()
+	votingPeriod := getVotingPeriod()
+	voteQuorum := getVoteQuorum()
+	deposits := make([]Deposit, 0)
+	if initialDeposit > 0 {
+		deposits = append(deposits, Deposit{
+			Depositor: proposer,
+			Amount: initialDeposit,
+		})
+	}
+
+	return Proposal{
+		ProposalID: proposalID,
+		ProposalStatus: ProposalStatusDepositPeriod,
+		ProposalType: data.ProposalType(),
+		Proposer: proposer,
+
+		Title: title,
+		Summary: summary,
+		Metadata: metadata,
+
+		TotalDeposit: initialDeposit,
+		Deposits: deposits,
+
+		Passed: false,
+		YesVotes: 0,
+		NoVotes: 0,
+		AbstainVotes: 0,
+
+		SubmitTime: time.Now(),
+		DepositEndTime: time.Now().Add(depositPeriod),
+		VotingStartTime: 0,
+		VotingEndTime: 0,
+
+		DepositPeriod: depositPeriod,
+		DepositMinimum: depositMinimum,
+		VotingPeriod: votingPeriod,
+		VoteQuorum: voteQuorum,
+
+		ProposalData: data,
+	}
+}
+
+func (p Proposal) isActive() bool {
 	return p.ProposalStatus == ProposalStatusDepositPeriod || p.ProposalStatus == ProposalStatusVotingPeriod
 }
 

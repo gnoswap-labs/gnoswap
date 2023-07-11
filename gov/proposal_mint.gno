@@ -5,27 +5,21 @@ import (
 )
 
 //////////////////////////
-// ProposalDataMint
+// ProposalMint
 
-var _ ProposalData = (*ProposalDataMint)(nil)
+var _ ProposalContent = (*ProposalMint)(nil)
 
-type MintReceiver struct {
-	Token  Address
-	Address Address
-	Amount  bigint
+type ProposalMint struct {
+	Receiver 
 }
 
-type ProposalDataMint struct {
-	MintReceivers []MintReceiver
-}
-
-func (p ProposalDataMint) ProposalType() ProposalType {
+func (p ProposalMint) ProposalType() ProposalType {
 	return ProposalTypeMint
 }
 
-func (p ProposalDataMint) isProposalData() {}
+func (p ProposalMint) isProposal() {}
 
-func (p ProposalDataMint) isValid() bool {
+func (p ProposalMint) isValid() bool {
 	for _, receiver := range p.MintReceivers {
 		if receiver.Token != GNOS_TOKEN_ADDRESS {
 			return false
@@ -34,7 +28,7 @@ func (p ProposalDataMint) isValid() bool {
 	return true
 }
 
-func (p ProposalDataMint) execute() error {
+func (p ProposalMint) execute() error {
 	if !p.isValid() {
 		return errors.New("unimplemented: only GNOS token is supported")
 	}

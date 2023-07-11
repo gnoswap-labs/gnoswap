@@ -5,25 +5,66 @@ import (
 )
 
 //////////////////////////
-// ProposalDataSwapParameterProtocolFee
+// ProposalSwapParameterProtocolFee
 
-var _ ProposalData = (*ProposalDataSwapParameterProtocolFee)(nil)
+var _ Proposal = (*ProposalSwapParameterProtocolFee)(nil)
 
-type ProposalDataSwapParameterProtocolFee struct {
-	NewProtocolFee bigint
+type ProtocolFeeChange struct {
+	Token0 string
+	Token1 string
+	Fee bigint
+	NewProtocolFee0 bigint
+	NewProtocolFee1 bigint
 }
 
-func (p ProposalDataSwapParameterProtocolFee) ProposalType() ProposalType {
+type ProposalSwapParameterProtocolFee struct {
+	ProtocolFeeChanges []ProtocolFeeChange
+}
+
+func (p ProposalSwapParameterProtocolFee) ProposalType() ProposalType {
 	return ProposalTypeSwapParameterProtocolFee
 }
 
-func (p ProposalDataSwapParameterProtocolFee) isProposalData() {}
+func (p ProposalSwapParameterProtocolFee) isProposal() {}
 
-func (p ProposalDataSwapParameterProtocolFee) isValid() bool {
-	// TODO: we might need to set a hard limit on the protocol fee?
-	return true
+func (p ProposalSwapParameterProtocolFee) isValid() bool {
+	for _, change := range p.ProtocolFeeChanges {
+		if change.Token0 == "" {
+			return false
+		}
+
+		if change.Token1 == "" {
+			return false
+		}
+
+		if change.Token0 >= change.Token1 {
+			return false
+		}
+
+		if change.Fee == 0 {
+			return false
+		}
+
+		// TODO: do we want to allow 0 protocol fee?
+		/*
+		if change.NewProtocolFee0 == 0 {
+			return false
+		}
+
+		if change.NewProtocolFee1 == 0 {
+			return false
+		}
+		*/
+	}
 }
 
-func (p ProposalDataSwapParameterProtocolFee) execute() error {
-	return pool.SetProtocolFee(p.NewProtocolFee)
+func (p ProposalSwapParameterProtocolFee) execute() error {
+	for _, change := range p.ProtocolFeeChanges {
+		err := pool.SetFeeProtocol(change.TokenA, change.TokenB, change.Fee, change.NewProtocolFee)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

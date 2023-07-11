@@ -1,10 +1,12 @@
 package gov
 
-// returns true if deposit was successful
-// returns false if proposal is not in deposit period or the depositor does not have enough balance
-// this function is a no-op if it returns false.
+
 func (p *Proposal) deposit(depositor Address, amount bigint) bool {
 	panic("unimplemented")
+}
+
+func (p *Proposal) isDepositPeriod() bool {
+	return p.Status == ProposalStatusDepositPeriod
 }
 
 // checks if proposal has meet deposit minimum
