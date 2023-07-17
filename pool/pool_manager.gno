@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	owner                std.Address
+	admins               []std.Address
 	initialized          bool = false
 	feeAmountTickSpacing avl.Tree
 
@@ -20,11 +20,11 @@ var (
 // XXX can it be init ?
 func Init() {
 	require(!initialized, "already initialized")
-	owner = GetOrigCaller()
-	// feeAmountTickSpacing.Set("100", 2)     // fee 0.01% // for stable coin pair
+	feeAmountTickSpacing.Set("100", 2)     // fee 0.01% // for stable coin pair
 	feeAmountTickSpacing.Set("500", 10)    // fee 0.05%
 	feeAmountTickSpacing.Set("3000", 60)   // fee 0.3%
 	feeAmountTickSpacing.Set("10000", 200) // fee 1%
+	admins = append(admins, GetOrigCaller())
 	initialized = true
 }
 
@@ -36,9 +36,6 @@ func CreatePool(
 ) (pool *Pool) {
 	require(initialized, "not initialized")
 	require(tokenA != tokenB, "tokenA == tokenB")
-
-	// XXX remove pool creation limit ?
-	require(owner == GetOrigCaller(), "owner is not the origin caller!")
 
 	// XXX check if token0, 1 has ben deployed
 	// inter-contract call
@@ -140,4 +137,15 @@ func newPool(
 		tickBitmaps:          avl.Tree{},
 		positions:            avl.Tree{},
 	}
+}
+
+func IsAdmin(target std.Address) bool {
+	for _, admin := range admins {
+		if admin == target {
+			return true
+		}
+	}
+
+	// target isn't one of admins
+	return false
 }
