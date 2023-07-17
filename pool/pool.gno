@@ -418,16 +418,15 @@ func Swap(
 	return amount0, amount1
 }
 
-// XXX limit this func as admin only?
+// ADMIN
 func SetFeeProtocol(
-	pToken0 string,
-	pToken1 string,
-	pFee bigint,
 	feeProtocol0 bigint,
 	feeProtocol1 bigint,
 ) {
 	requireUnsigned(feeProtocol0, "pool.gno__SetFeeProtocol__feeProtocol0")
 	requireUnsigned(feeProtocol1, "pool.gno__SetFeeProtocol__feeProtocol1")
+
+	require(IsAdmin(GetOrigCaller()), "pool.gno__CollectProtocol__NOT_ADMIN")
 
 	require(
 		(feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)) &&
@@ -435,11 +434,17 @@ func SetFeeProtocol(
 		"Invalid fee protocol",
 	)
 
-	pool := GetPool(pToken0, pToken1, pFee)
-	pool.slot0.feeProtocol = feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
+	// iterate all pool
+	numPool := pools.Size()
+	for i := 0; i < numPool; i++ {
+		k, _ := pools.GetByIndex(i) // using v won't work
+		p := GetPoolFromPoolKey(k)
+
+		p.slot0.feeProtocol = feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
+	}
 }
 
-// XXX limit this func as admin only?
+// ADMIN
 func CollectProtocol(
 	pToken0 string,
 	pToken1 string,
@@ -451,10 +456,7 @@ func CollectProtocol(
 	requireUnsigned(amount0Requested, "pool.gno__CollectProtocol__amount0Requested")
 	requireUnsigned(amount1Requested, "pool.gno__CollectProtocol__amount1Requested")
 
-	// XXX Only owner can call this
-	// if (GetOrigCaller() != factoryOwner) {
-	// 	panic("NO OWNER")
-	// }
+	require(IsAdmin(GetOrigCaller()), "pool.gno__CollectProtocol__NOT_ADMIN")
 
 	var amount0, amount1 bigint
 

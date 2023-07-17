@@ -13,10 +13,9 @@ import (
 )
 
 var (
-	own  = testutils.TestAddress("own")  // Owner
+	gsa  = testutils.TestAddress("gsa")  // Gnoswap Admin
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
-	gso  = testutils.TestAddress("gso")  // GnoSwap Owner
 )
 
 func init() {
@@ -29,10 +28,9 @@ func init() {
 	bar.FaucetL()
 
 	// debug - print addr
-	// println(own, "// own")
+	// println(gsa, "// gsa")
 	// println(lp01, "// lp01")
 	// println(tr01, "// tr01")
-	// println(gso, "// gso")
 	// println(GetOrigPkgAddr(), "// pool")
 }
 
@@ -50,9 +48,9 @@ var (
 	test_tickUpper2 bigint = 100000
 )
 
-// 1. Init & Create Pool using Factory Contract by own
+// 1. Init & Create Pool using Factory Contract by Gnoswap Admin
 func TestInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(own)
+	std.TestSetOrigCaller(gsa)
 	Init()
 	CreatePool("foo", "bar", pFee, 130621891405341611593710811006)
 
@@ -238,8 +236,8 @@ func TestSwap(t *testing.T) {
 
 	{
 		println("Swap #1")
-		println("ㄴ direction: token0 -> token1")
-		println("ㄴ amount: 10000")
+		println("> direction: token0 -> token1")
+		println("> amount: 10000")
 
 		poolOldToken0Bal := BalanceOf(pool.token0, GetOrigPkgAddr())
 		poolOldToken1Bal := BalanceOf(pool.token1, GetOrigPkgAddr())
@@ -272,19 +270,19 @@ func TestSwap(t *testing.T) {
 		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
 
 		println("Pool")
-		println("ㄴ token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-		println("ㄴ token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
+		println("> token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
+		println("> token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
 
 		println("Trader tr01")
-		println("ㄴ token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-		println("ㄴ token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
+		println("> token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
+		println("> token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
 		println()
 	}
 
 	{
 		println("Swap #2")
-		println("ㄴ direction: token0 -> token1")
-		println("ㄴ amount: 5000")
+		println("> direction: token0 -> token1")
+		println("> amount: 5000")
 
 		poolOldToken0Bal := BalanceOf(pool.token0, GetOrigPkgAddr())
 		poolOldToken1Bal := BalanceOf(pool.token1, GetOrigPkgAddr())
@@ -306,19 +304,19 @@ func TestSwap(t *testing.T) {
 		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
 
 		println("Pool")
-		println("ㄴ token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-		println("ㄴ token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
+		println("> token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
+		println("> token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
 
 		println("Trader tr01")
-		println("ㄴ token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-		println("ㄴ token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
+		println("> token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
+		println("> token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
 		println()
 	}
 
 	{
 		println("Swap #3")
-		println("ㄴ direction: token0 -> token1")
-		println("ㄴ amount: 1000")
+		println("> direction: token0 -> token1")
+		println("> amount: 1000")
 
 		poolOldToken0Bal := BalanceOf(pool.token0, GetOrigPkgAddr())
 		poolOldToken1Bal := BalanceOf(pool.token1, GetOrigPkgAddr())
@@ -340,20 +338,20 @@ func TestSwap(t *testing.T) {
 		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
 
 		println("Pool")
-		println("ㄴ token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-		println("ㄴ token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
+		println("> token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
+		println("> token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
 
 		println("Trader tr01")
-		println("ㄴ token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-		println("ㄴ token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
+		println("> token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
+		println("> token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
 		println()
 	}
 
 	// Swap token1 -> token0
 	{
 		println("Swap #4")
-		println("ㄴ direction: token1 -> token0")
-		println("ㄴ amount: 16000")
+		println("> direction: token1 -> token0")
+		println("> amount: 16000")
 
 		poolOldToken0Bal := BalanceOf(pool.token0, GetOrigPkgAddr())
 		poolOldToken1Bal := BalanceOf(pool.token1, GetOrigPkgAddr())
@@ -375,53 +373,40 @@ func TestSwap(t *testing.T) {
 		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
 
 		println("Pool")
-		println("ㄴ token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-		println("ㄴ token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
+		println("> token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
+		println("> token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
 
 		println("Trader tr01")
-		println("ㄴ token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-		println("ㄴ token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
+		println("> token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
+		println("> token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
 		println()
 	}
 }
 
-// 6. SetFeeProtocol by owner
+// 6. SetFeeProtocol by Gnoswap Admin
 func TestSetFeeProtocol(t *testing.T) {
-	std.TestSetOrigCaller(own)
+	// non admin call
+	std.TestSetOrigCaller(lp01)
+	shouldPanic(t, func() { SetFeeProtocol(2, 2) })
 
-	pool := GetPool(pToken0, pToken1, pFee)
+	// admin call
+	std.TestSetOrigCaller(gsa)
+	SetFeeProtocol(6, 8)
 
-	test_slot0 := pool.GetSlot0()
-	shouldEQ(t, test_slot0.feeProtocol, bigint(0))
+	for i := 0; i < pools.Size(); i++ {
+		k, _ := pools.GetByIndex(i)
+		pool := GetPoolFromPoolKey(k)
 
-	SetFeeProtocol(pToken0, pToken1, pFee, 0, 0)
-	test_slot0 = pool.GetSlot0()
-	shouldEQ(t, test_slot0.feeProtocol, bigint(0))
-
-	SetFeeProtocol(pToken0, pToken1, pFee, 0, 4)
-	test_slot0 = pool.GetSlot0()
-	shouldEQ(t, test_slot0.feeProtocol, bigint(64))
-
-	SetFeeProtocol(pToken0, pToken1, pFee, 4, 0)
-	test_slot0 = pool.GetSlot0()
-	shouldEQ(t, test_slot0.feeProtocol, bigint(4))
-
-	SetFeeProtocol(pToken0, pToken1, pFee, 6, 8)
-	test_slot0 = pool.GetSlot0()
-	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
-
-	// out of pre-defined range
-	shouldPanic(t, func() {
-		SetFeeProtocol(pToken0, pToken1, pFee, 2, 2)
-	})
+		shouldEQ(t, pool.GetSlot0().feeProtocol, bigint(134))
+	}
 }
 
-// 7. CollectProtocol by owner
+// 7. CollectProtocol by Gnoswap Admin
 func TestCollectProtocol(t *testing.T) {
-	std.TestSetOrigCaller(own)
+	std.TestSetOrigCaller(gsa)
 
+	SetFeeProtocol(6, 8)
 	pool := GetPool(pToken0, pToken1, pFee)
-	SetFeeProtocol(pToken0, pToken1, pFee, 6, 8)
 	test_slot0 := pool.GetSlot0()
 	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
 
@@ -429,49 +414,49 @@ func TestCollectProtocol(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 	{
 		println("Swap #5 - with protocol fee enabled")
-		println("ㄴ direction: token0 -> token1")
-		println("ㄴ amount: 200000")
+		println("> direction: token0 -> token1")
+		println("> amount: 200000")
 
-		gsoOldToken0Bal := BalanceOf(pool.token0, gso)
-		gsoOldToken1Bal := BalanceOf(pool.token1, gso)
+		gsaOldToken0Bal := BalanceOf(pool.token0, gsa)
+		gsaOldToken1Bal := BalanceOf(pool.token1, gsa)
 
 		std.TestSetOrigCaller(tr01)
 		Swap(pToken0, pToken1, pFee, tr01, true, 200000, MIN_SQRT_RATIO+1) // swap token0 -> token1 => fee only in token0
 
-		// Gnoswap Owner will collect protocol fee
-		std.TestSetOrigCaller(gso)
-		amount0, amount1 := CollectProtocol(pToken0, pToken1, pFee, gso, 100000, 100000)
+		// Gnoswap Admin will collect protocol fee
+		std.TestSetOrigCaller(gsa)
+		amount0, amount1 := CollectProtocol(pToken0, pToken1, pFee, gsa, 100000, 100000)
 
-		gsoNewToken0Bal := BalanceOf(pool.token0, gso)
-		gsoNewToken1Bal := BalanceOf(pool.token1, gso)
+		gsaNewToken0Bal := BalanceOf(pool.token0, gsa)
+		gsaNewToken1Bal := BalanceOf(pool.token1, gsa)
 
-		println("Gnoswap Owner")
-		println("ㄴ token0:", gsoOldToken0Bal, "->", gsoNewToken0Bal, "( diff:", gsoNewToken0Bal-gsoOldToken0Bal, ")")
-		println("ㄴ token1:", gsoOldToken1Bal, "->", gsoNewToken1Bal, "( diff:", gsoNewToken1Bal-gsoOldToken1Bal, ")")
+		println("Gnoswap Admin")
+		println("> token0:", gsaOldToken0Bal, "->", gsaNewToken0Bal, "( diff:", gsaNewToken0Bal-gsaOldToken0Bal, ")")
+		println("> token1:", gsaOldToken1Bal, "->", gsaNewToken1Bal, "( diff:", gsaNewToken1Bal-gsaOldToken1Bal, ")")
 		println()
 	}
 
 	{
 		println("Swap #6 - with protocol fee enabled")
-		println("ㄴ direction: token1 -> token0")
-		println("ㄴ amount: 200000")
+		println("> direction: token1 -> token0")
+		println("> amount: 200000")
 
-		gsoOldToken0Bal := BalanceOf(pool.token0, gso)
-		gsoOldToken1Bal := BalanceOf(pool.token1, gso)
+		gsaOldToken0Bal := BalanceOf(pool.token0, gsa)
+		gsaOldToken1Bal := BalanceOf(pool.token1, gsa)
 
 		std.TestSetOrigCaller(tr01)
 		Swap(pToken0, pToken1, pFee, tr01, false, 200000, MAX_SQRT_RATIO-1) // swap token0 -> token1 => fee only in token0
 
-		// Gnoswap Owner will collect protocol fee
-		std.TestSetOrigCaller(gso)
-		amount0, amount1 := CollectProtocol(pToken0, pToken1, pFee, gso, 100000, 100000)
+		// Gnoswap Admin will collect protocol fee
+		std.TestSetOrigCaller(gsa)
+		amount0, amount1 := CollectProtocol(pToken0, pToken1, pFee, gsa, 100000, 100000)
 
-		gsoNewToken0Bal := BalanceOf(pool.token0, gso)
-		gsoNewToken1Bal := BalanceOf(pool.token1, gso)
+		gsaNewToken0Bal := BalanceOf(pool.token0, gsa)
+		gsaNewToken1Bal := BalanceOf(pool.token1, gsa)
 
-		println("Gnoswap Owner")
-		println("ㄴ token0:", gsoOldToken0Bal, "->", gsoNewToken0Bal, "( diff:", gsoNewToken0Bal-gsoOldToken0Bal, ")")
-		println("ㄴ token1:", gsoOldToken1Bal, "->", gsoNewToken1Bal, "( diff:", gsoNewToken1Bal-gsoOldToken1Bal, ")")
+		println("Gnoswap Admin")
+		println("> token0:", gsaOldToken0Bal, "->", gsaNewToken0Bal, "( diff:", gsaNewToken0Bal-gsaOldToken0Bal, ")")
+		println("> token1:", gsaOldToken1Bal, "->", gsaNewToken1Bal, "( diff:", gsaNewToken1Bal-gsaOldToken1Bal, ")")
 		println()
 	}
 }
