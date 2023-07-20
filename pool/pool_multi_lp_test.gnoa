@@ -457,7 +457,6 @@ func TestSwap(t *testing.T) {
 	}
 }
 
-// 
 func TestSetFeeProtocol(t *testing.T) {
 	// non admin call
 	std.TestSetOrigCaller(lp01)
@@ -475,7 +474,6 @@ func TestSetFeeProtocol(t *testing.T) {
 	}
 }
 
-// 
 func TestCollectProtocol(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 
@@ -498,14 +496,14 @@ func TestCollectProtocol(t *testing.T) {
 		Swap(pToken0, pToken1, pFee, tr01, true, 100000, MIN_SQRT_RATIO+1) // swap token0 -> token1 => fee only in token0
 		Swap(pToken0, pToken1, pFee, tr01, true, 100000, MIN_SQRT_RATIO+1) // more protocol fee
 
-		// Gnoswap Adm
+		// Gnoswap Admin
 		std.TestSetOrigCaller(gsa)
 		amount0, amount1 := CollectProtocol(pToken0, pToken1, pFee, gsa, 100000, 100000)
 
 		gsaNewToken0Bal := BalanceOf(pool.token0, gsa)
 		gsaNewToken1Bal := BalanceOf(pool.token1, gsa)
 
-		prin
+		println("Gnoswap Admin")
 		println("> token0:", gsaOldToken0Bal, "->", gsaNewToken0Bal, "( diff:", gsaNewToken0Bal-gsaOldToken0Bal, ")")
 		println("> token1:", gsaOldToken1Bal, "->", gsaNewToken1Bal, "( diff:", gsaNewToken1Bal-gsaOldToken1Bal, ")")
 		println()
@@ -523,14 +521,14 @@ func TestCollectProtocol(t *testing.T) {
 		Swap(pToken0, pToken1, pFee, tr01, false, 100000, MAX_SQRT_RATIO-1) // swap token0 -> token1 => fee only in token0
 		Swap(pToken0, pToken1, pFee, tr01, false, 100000, MAX_SQRT_RATIO-1) // more protocol fee
 
-		// Gnoswap Adm
+		// Gnoswap Admin
 		std.TestSetOrigCaller(gsa)
 		amount0, amount1 := CollectProtocol(pToken0, pToken1, pFee, gsa, 100000, 100000)
 
 		gsaNewToken0Bal := BalanceOf(pool.token0, gsa)
 		gsaNewToken1Bal := BalanceOf(pool.token1, gsa)
 
-		prin
+		println("Gnoswap Admin")
 		println("> token0:", gsaOldToken0Bal, "->", gsaNewToken0Bal, "( diff:", gsaNewToken0Bal-gsaOldToken0Bal, ")")
 		println("> token1:", gsaOldToken1Bal, "->", gsaNewToken1Bal, "( diff:", gsaNewToken1Bal-gsaOldToken1Bal, ")")
 		println()

@@ -43,7 +43,7 @@ func Mint(
 	if amount0 > 0 {
 		balance0Before = BalanceOf(pool.token0, GetOrigPkgAddr())
 
-		from := users.AddressOrName(GetOrigCaller())
+		from := users.AddressOrName(PrevRealmAddr())
 		to := users.AddressOrName(GetOrigPkgAddr())
 
 		foo.TransferFrom(from, to, uint64(amount0))
@@ -55,7 +55,7 @@ func Mint(
 	if amount1 > 0 {
 		balance1Before = BalanceOf(pool.token1, GetOrigPkgAddr())
 
-		from := users.AddressOrName(GetOrigCaller())
+		from := users.AddressOrName(PrevRealmAddr())
 		to := users.AddressOrName(GetOrigPkgAddr())
 
 		bar.TransferFrom(from, to, uint64(amount1))
@@ -84,7 +84,7 @@ func Burn(
 
 	position, amount0Int, amount1Int := pool.modifyPosition(
 		ModifyPositionParams{
-			GetOrigCaller(),
+			PrevRealmAddr(),
 			tickLower,
 			tickUpper,
 			-amount,
@@ -100,7 +100,7 @@ func Burn(
 		position.tokensOwed1 += amount1
 	}
 
-	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
+	key := PositionGetKey(PrevRealmAddr(), tickLower, tickUpper)
 
 	pool.positions.Set(key, position)
 
@@ -122,7 +122,7 @@ func Collect(
 
 	pool := GetPool(pToken0, pToken1, pFee)
 
-	key := PositionGetKey(GetOrigCaller(), tickLower, tickUpper)
+	key := PositionGetKey(PrevRealmAddr(), tickLower, tickUpper)
 	_position, exists := pool.positions.Get(key)
 	var position PositionInfo
 	if !exists {
@@ -147,26 +147,18 @@ func Collect(
 	}
 	requireUnsigned(amount1, "pool.gno__Collect__amount1")
 
-	_orig := std.GetOrigCaller()
 	if amount0 > 0 {
 		position.tokensOwed0 -= amount0
 
-		// XXX
-		// foo20 or grc20 need to use PrevRealm() to get caller
-		// until then, we use this workaround
-		std.TestSetOrigCaller(GetOrigPkgAddr()) // from pool to recipient
 		foo.Transfer(users.AddressOrName(recipient), uint64(amount0))
 		// pool.token0.Transfer(GetOrigPkgAddr(), recipient, uint64(amount0))
-		std.TestSetOrigCaller(_orig)
 	}
 
 	if amount1 > 0 {
 		position.tokensOwed1 -= amount1
 
-		std.TestSetOrigCaller(GetOrigPkgAddr())
 		bar.Transfer(users.AddressOrName(recipient), uint64(amount1))
 		// pool.token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
-		std.TestSetOrigCaller(_orig)
 	}
 
 	pool.positions.Set(key, position)
@@ -370,19 +362,16 @@ func Swap(
 		amount1 = amountSpecified - state.amountSpecifiedRemaining
 	}
 
-	_orig := std.GetOrigCaller()
 	if zeroForOne {
 		if amount1 < 0 {
-			std.TestSetOrigCaller(GetOrigPkgAddr())
 			bar.Transfer(users.AddressOrName(recipient), uint64(-1*amount1))
 			// pool.token1.Transfer(users.AddressOrName(recipient), uint64(-1*amount1))
 			pool.balances.token1 -= amount1
-			std.TestSetOrigCaller(_orig)
 		}
 
 		balance0Before := BalanceOf(pool.token0, GetOrigPkgAddr())
 
-		_from := users.AddressOrName(GetOrigCaller())
+		_from := users.AddressOrName(PrevRealmAddr())
 		_to := users.AddressOrName(GetOrigPkgAddr())
 		foo.TransferFrom(_from, _to, uint64(amount0))
 		// pool.token0.TransferFrom(_from, _to, uint64(amount0))
@@ -394,16 +383,14 @@ func Swap(
 
 	} else {
 		if amount0 < 0 {
-			std.TestSetOrigCaller(GetOrigPkgAddr())
 			foo.Transfer(users.AddressOrName(recipient), uint64(-amount0))
 			// pool.token0.Transfer(users.AddressOrName(recipient), uint64(-amount0))
 			pool.balances.token0 -= amount0
-			std.TestSetOrigCaller(_orig)
 		}
 
 		balance1Before := BalanceOf(pool.token1, GetOrigPkgAddr())
 
-		_from := users.AddressOrName(GetOrigCaller())
+		_from := users.AddressOrName(PrevRealmAddr())
 		_to := users.AddressOrName(GetOrigPkgAddr())
 		bar.TransferFrom(_from, _to, uint64(amount1))
 		// pool.token1.TransferFrom(_from, _to, uint64(amount1))
@@ -426,7 +413,7 @@ func SetFeeProtocol(
 	requireUnsigned(feeProtocol0, "pool.gno__SetFeeProtocol__feeProtocol0")
 	requireUnsigned(feeProtocol1, "pool.gno__SetFeeProtocol__feeProtocol1")
 
-	require(IsAdmin(GetOrigCaller()), "pool.gno__CollectProtocol__NOT_ADMIN")
+	require(IsAdmin(PrevRealmAddr()), "pool.gno__CollectProtocol__NOT_ADMIN")
 
 	require(
 		(feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)) &&
@@ -456,7 +443,7 @@ func CollectProtocol(
 	requireUnsigned(amount0Requested, "pool.gno__CollectProtocol__amount0Requested")
 	requireUnsigned(amount1Requested, "pool.gno__CollectProtocol__amount1Requested")
 
-	require(IsAdmin(GetOrigCaller()), "pool.gno__CollectProtocol__NOT_ADMIN")
+	require(IsAdmin(PrevRealmAddr()), "pool.gno__CollectProtocol__NOT_ADMIN")
 
 	var amount0, amount1 bigint
 
@@ -476,17 +463,14 @@ func CollectProtocol(
 	}
 	requireUnsigned(amount1, "pool.gno__CollectProtocol__amount1")
 
-	_orig := std.GetOrigCaller()
 	if amount0 > 0 {
 		if amount0 == pool.protocolFees.token0 {
 			amount0--
 		}
 		pool.protocolFees.token0 -= amount0
 
-		std.TestSetOrigCaller(GetOrigPkgAddr())
 		foo.Transfer(users.AddressOrName(recipient), uint64(amount0))
 		// pool.token0.Transfer(users.AddressOrName(recipient), uint64(amount0))
-		std.TestSetOrigCaller(_orig)
 	}
 
 	if amount1 > 0 {
@@ -495,10 +479,8 @@ func CollectProtocol(
 		}
 		pool.protocolFees.token1 -= amount1
 
-		std.TestSetOrigCaller(GetOrigPkgAddr())
 		bar.Transfer(users.AddressOrName(recipient), uint64(amount1))
 		// pool.token1.Transfer(users.AddressOrName(recipient), uint64(amount1))
-		std.TestSetOrigCaller(_orig)
 	}
 
 	return amount0, amount1

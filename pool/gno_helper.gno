@@ -28,7 +28,9 @@ func GetOrigCaller() std.Address {
 	return std.GetOrigCaller()
 }
 
-// derive pkg addr
+func PrevRealmAddr() std.Address {
+	return std.PrevRealm().Addr()
+}
 
 // test
 // https://github.com/gnolang/gno/blob/master/tests/imports.go

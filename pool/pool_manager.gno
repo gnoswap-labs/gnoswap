@@ -24,7 +24,7 @@ func Init() {
 	feeAmountTickSpacing.Set("500", 10)    // fee 0.05%
 	feeAmountTickSpacing.Set("3000", 60)   // fee 0.3%
 	feeAmountTickSpacing.Set("10000", 200) // fee 1%
-	admins = append(admins, GetOrigCaller())
+	admins = append(admins, PrevRealmAddr())
 	initialized = true
 }
 

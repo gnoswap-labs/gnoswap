@@ -16,22 +16,17 @@ var (
 	gsa  = testutils.TestAddress("gsa")  // Gnoswap Admin
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
+
+	poolPath = "gno.land/r/pool"
 )
 
 func init() {
-	std.TestSetOrigCaller(lp01)
-	foo.FaucetL()
-	bar.FaucetL()
-
-	std.TestSetOrigCaller(tr01)
-	foo.FaucetL()
-	bar.FaucetL()
-
 	// debug - print addr
-	// println(gsa, "// gsa")
-	// println(lp01, "// lp01")
-	// println(tr01, "// tr01")
-	// println(GetOrigPkgAddr(), "// pool")
+	println(gsa, "// gsa")
+	println(lp01, "// lp01")
+	println(tr01, "// tr01")
+	println(GetOrigPkgAddr(), "// pool")
+	// println(std.DerivePkgAddr(poolPath), "// PrevRealm // pool")
 }
 
 var (
@@ -62,24 +57,12 @@ func TestInitCreatePool(t *testing.T) {
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
 	shouldPanic(t, func() { CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
-
-	// Approve
-	std.TestSetOrigCaller(lp01)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	foo.Approve(users.AddressOrName(lp01), 50000000)
-	bar.Approve(users.AddressOrName(lp01), 50000000)
-
-	std.TestSetOrigCaller(tr01)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	foo.Approve(users.AddressOrName(tr01), 50000000)
-	bar.Approve(users.AddressOrName(tr01), 50000000)
 }
 
 // 2. Mint by lp01
 func TestMint(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
+
 	Mint(
 		pToken0,
 		pToken1,
