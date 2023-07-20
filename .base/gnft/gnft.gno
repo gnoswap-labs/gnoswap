@@ -90,7 +90,8 @@ func TransferFrom(from, to users.AddressOrName, tid grc721.TokenID) bool {
 // Admin
 
 func Mint(to users.AddressOrName, tid grc721.TokenID) {
-	caller := std.GetOrigCaller()
+	// caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 	err := nft.Mint(to.Resolve(), tid)
 	if err != nil {
@@ -99,7 +100,8 @@ func Mint(to users.AddressOrName, tid grc721.TokenID) {
 }
 
 func Burn(tid grc721.TokenID) {
-	caller := std.GetOrigCaller()
+	// caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 	err := nft.Burn(tid)
 	if err != nil {
@@ -108,7 +110,8 @@ func Burn(tid grc721.TokenID) {
 }
 
 func SetAdmin(newAdmin users.AddressOrName) {
-	caller := std.GetOrigCaller()
+	// caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 	admin = newAdmin.Resolve()
 }

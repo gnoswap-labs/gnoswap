@@ -52,7 +52,8 @@ func Allowance(owner, spender users.AddressOrName) uint64 {
 // setters.
 
 func Transfer(to users.AddressOrName, amount uint64) {
-	caller := std.GetOrigCaller()
+	// caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 	err := gnos.Transfer(caller, to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
@@ -60,7 +61,8 @@ func Transfer(to users.AddressOrName, amount uint64) {
 }
 
 func Approve(spender users.AddressOrName, amount uint64) {
-	caller := std.GetOrigCaller()
+	// caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 	err := gnos.Approve(caller, spender.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
@@ -68,7 +70,8 @@ func Approve(spender users.AddressOrName, amount uint64) {
 }
 
 func TransferFrom(from, to users.AddressOrName, amount uint64) {
-	caller := std.GetOrigCaller()
+	// caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 	err := gnos.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
@@ -80,39 +83,45 @@ func TransferFrom(from, to users.AddressOrName, amount uint64) {
 func Faucet() {
 	// FIXME: add limits?
 	// FIXME: add payment in gnot?
-	caller := std.GetOrigCaller()
+	// caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 	gnos.Mint(caller, 1000*10000) // 1k
 }
 
 func FaucetL() {
 	// FIXME: add limits?
 	// FIXME: add payment in gnot?
-	caller := std.GetOrigCaller()
+	// caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 	gnos.Mint(caller, 50000000000) // 50_000_000_000
 }
 
 // administration.
 
 func Mint(address users.AddressOrName, amount uint64) {
-	caller := std.GetOrigCaller()
+	// caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 	gnos.Mint(address.Resolve(), amount)
 }
 
 func Burn(address users.AddressOrName, amount uint64) {
-	caller := std.GetOrigCaller()
+	// caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 	gnos.Burn(address.Resolve(), amount)
 }
 
 func AppendAdmin(address users.AddressOrName) {
-	caller := std.GetOrigCaller()
+	// caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 	admin = append(admin, string(address.Resolve()))
 }
 
 func RemoveAdmin(address users.AddressOrName) {
-	caller := std.GetOrigCaller()
+	// caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 	for i, v := range admin {
 		if v == string(address.Resolve()) {
