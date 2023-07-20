@@ -19,14 +19,6 @@ var (
 )
 
 func init() {
-	std.TestSetOrigCaller(lp01)
-	foo.FaucetL()
-	bar.FaucetL()
-
-	std.TestSetOrigCaller(tr01)
-	foo.FaucetL()
-	bar.FaucetL()
-
 	// debug - print addr
 	// println(gsa, "// gsa")
 	// println(lp01, "// lp01")
@@ -57,19 +49,6 @@ func TestFirstPool(t *testing.T) {
 	CreatePool(pToken0, pToken1, pFee1, 130621891405341611593710811006)
 
 	shouldPanic(t, func() { CreatePool(pToken0, pToken1, pFee1, 130621891405341611593710811006) })
-
-	// Approve
-	std.TestSetOrigCaller(lp01)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	foo.Approve(users.AddressOrName(lp01), 50000000)
-	bar.Approve(users.AddressOrName(lp01), 50000000)
-
-	std.TestSetOrigCaller(tr01)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	foo.Approve(users.AddressOrName(tr01), 50000000)
-	bar.Approve(users.AddressOrName(tr01), 50000000)
 
 	// Test Only Swap
 	pool := GetPool(pToken0, pToken1, pFee1)
