@@ -62,7 +62,7 @@ func mint(params MintParams) (string, bigint, bigint, bigint) {
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
 			poolKey:        p.GetPoolKey(params.token0, params.token1, params.fee),
-			recipient:      GetOrigPkgAddr(),
+			recipient:      GetOrigPkgAddr(), // hardcoded
 			tickLower:      params.tickLower,
 			tickUpper:      params.tickUpper,
 			amount0Desired: params.amount0Desired,
@@ -75,18 +75,14 @@ func mint(params MintParams) (string, bigint, bigint, bigint) {
 	tokenId := string(nextId)
 	nextId++ // nextId = nextId + 1
 
-	// XXX grc721 should use PrevRealm()
-	_orig := GetOrigCaller()
-	std.TestSetOrigCaller(GetOrigPkgAddr())
-	nft.Mint(a2u(_orig), grc721.TokenID(tokenId)) // owner, tokenId
-	std.TestSetOrigCaller(_orig)
+	nft.Mint(a2u(PrevRealmAddr()), grc721.TokenID(tokenId)) // owner, tokenId
 
 	positionKey := PositionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
 
 	position := Position{
 		nonce:                    0,
-		operator:                 GetOrigCaller(),
+		operator:                 PrevRealmAddr(),
 		poolKey:                  p.GetPoolKey(params.token0, params.token1, params.fee),
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
@@ -203,15 +199,10 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	positionLiquidity := position.liquidity
 	require(positionLiquidity >= params.liquidity, ufmt.Sprintf("Cannot withdraw more liquidity(%s) than is in the position(%s)", params.liquidity, positionLiquidity))
 
-	// XXX grc20 should use PrevRealm()
-	_orig := GetOrigCaller()
-	std.TestSetOrigCaller(GetOrigPkgAddr())
-
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
 	pool := p.GetPoolFromPoolKey(position.poolKey)
 
 	amount0, amount1 := p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, params.liquidity)
-	std.TestSetOrigCaller(_orig)
 
 	require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, "PM_Price slippage check")
 
@@ -278,11 +269,7 @@ func collect(params CollectParams) (bigint, bigint) {
 	pool := p.GetPoolFromPoolKey(position.poolKey)
 
 	if (position.liquidity) > 0 {
-		// XXX grc20 should use PrevRealm()
-		_orig := GetOrigCaller()
-		std.TestSetOrigCaller(GetOrigPkgAddr())
 		p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, 0)
-		std.TestSetOrigCaller(_orig)
 
 		positionKey := PositionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 		feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
@@ -307,8 +294,6 @@ func collect(params CollectParams) (bigint, bigint) {
 		amount1Collect = params.amount1Max
 	}
 
-	_orig := GetOrigCaller()
-	std.TestSetOrigCaller(GetOrigPkgAddr())
 	amount0, amount1 := p.Collect(
 		pToken0,
 		pToken1,
@@ -319,8 +304,6 @@ func collect(params CollectParams) (bigint, bigint) {
 		amount0Collect,
 		amount1Collect,
 	)
-	std.TestSetOrigCaller(_orig)
-
 	position.tokensOwed0, position.tokensOwed1 = tokensOwed0-amount0Collect, tokensOwed1-amount1Collect
 
 	// update position
@@ -351,13 +334,9 @@ func burn(tokenId string) {
 	// delete(positions, tokenId)
 	positions.Remove(tokenId)
 
-	// XXX grc721 should use PrevRealm()
-	_orig := std.GetOrigCaller()
-	std.TestSetOrigCaller(GetOrigPkgAddr())
 	nft.Burn(grc721.TokenID(tokenId))
-	std.TestSetOrigCaller(_orig)
 }
 
 func isAuthorizedForToken(tokenId string) {
-	require(isApprovedOrOwner(GetOrigCaller(), tokenId), "Not approved")
+	require(isApprovedOrOwner(PrevRealmAddr(), tokenId), "Not approved")
 }

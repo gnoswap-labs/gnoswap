@@ -26,29 +26,13 @@ var (
 )
 
 func init() {
-	std.TestSetOrigCaller(lp01)
-	foo.FaucetL()
-	bar.FaucetL()
-
-	std.TestSetOrigCaller(lp02)
-	foo.FaucetL()
-	bar.FaucetL()
-
-	std.TestSetOrigCaller(rv01)
-	foo.FaucetL()
-	bar.FaucetL()
-
-	std.TestSetOrigCaller(tr01)
-	foo.FaucetL()
-	bar.FaucetL()
-
 	// debug - print addr
-	// println(lp01, "// lp01")
-	// println(lp02, "// lp02")
-	// println(rv01, "// rv01")
-	// println(tr01, "// tr01")
-	// println(PoolAddr, "// pool")
-	// println(GetOrigPkgAddr(), "// position")
+	println(lp01, "// lp01")
+	println(lp02, "// lp02")
+	println(rv01, "// rv01")
+	println(tr01, "// tr01")
+	println(PoolAddr, "// pool")
+	println(GetOrigPkgAddr(), "// position")
 }
 
 var (
@@ -76,37 +60,10 @@ func TestPoolInitCreatePool(t *testing.T) {
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
 	shouldPanic(t, func() { p.CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
-
-	// Approve
-	std.TestSetOrigCaller(lp01)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000000) // Position Contract
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000000) // Position Contract
-	foo.Approve(users.AddressOrName(PoolAddr), 50000000000)         // Pool Contract
-	bar.Approve(users.AddressOrName(PoolAddr), 50000000000)         // Pool Contract
-	foo.Approve(users.AddressOrName(lp01), 50000000000)
-	bar.Approve(users.AddressOrName(lp01), 50000000000)
-
-	std.TestSetOrigCaller(lp02)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000000) // Position Contract
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000000) // Position Contract
-	foo.Approve(users.AddressOrName(PoolAddr), 50000000000)         // Pool Contract
-	bar.Approve(users.AddressOrName(PoolAddr), 50000000000)         // Pool Contract
-	foo.Approve(users.AddressOrName(lp02), 50000000000)
-	bar.Approve(users.AddressOrName(lp02), 50000000000)
-
-	std.TestSetOrigCaller(tr01)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000000) // Position Contract
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000000) // Position Contract
-	foo.Approve(users.AddressOrName(PoolAddr), 50000000000)         // Pool Contract
-	bar.Approve(users.AddressOrName(PoolAddr), 50000000000)         // Pool Contract
-	foo.Approve(users.AddressOrName(tr01), 50000000000)
-	bar.Approve(users.AddressOrName(tr01), 50000000000)
 }
 
 // 2. Mint LP and Get GNFT
 func TestMint(t *testing.T) {
-	pool := p.GetPool(pToken0, pToken1, pFee)
-
 	// lp01 mints
 	// will get tid 1 nft
 	{
@@ -161,64 +118,64 @@ func TestMint(t *testing.T) {
 		shouldEQ(t, GetNextId(), bigint(3))
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
-	}
 
-	// lp02 mints out of range => upper position (token1 will be 0)
-	// will get tid 3 nft
-	{
-		std.TestSetOrigCaller(lp02)
+		// lp02 mints out of range => upper position (token1 will be 0)
+		// will get tid 3 nft
+		{
+			std.TestSetOrigCaller(lp02)
 
-		poolOldToken0Bal := Token0Bal(PoolAddr)
-		poolOldToken1Bal := Token1Bal(PoolAddr)
+			poolOldToken0Bal := Token0Bal(PoolAddr)
+			poolOldToken1Bal := Token1Bal(PoolAddr)
 
-		tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-			pToken0,
-			pToken1,
-			pFee,
-			bigint(14000),
-			bigint(18000),
-			bigint(1000),
-			bigint(1000),
-			bigint(0),
-			bigint(0),
-			bigint(1234567890),
-		)
-		shouldEQ(t, tAmount1, bigint(0))
+			tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
+				pToken0,
+				pToken1,
+				pFee,
+				bigint(14000),
+				bigint(18000),
+				bigint(1000),
+				bigint(1000),
+				bigint(0),
+				bigint(0),
+				bigint(1234567890),
+			)
+			shouldEQ(t, tAmount1, bigint(0))
 
-		isOwner(t, tTokenId, lp02)
-		shouldEQ(t, tTokenId, "3")
-		shouldEQ(t, GetNextId(), bigint(4))
-		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
-		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
-	}
+			isOwner(t, tTokenId, lp02)
+			shouldEQ(t, tTokenId, "3")
+			shouldEQ(t, GetNextId(), bigint(4))
+			shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
+			shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
+		}
 
-	// lp02 mints out of range => lower position (token0 will be 0)
-	// will get tid 4 nft
-	{
-		std.TestSetOrigCaller(lp02)
+		// lp02 mints out of range => lower position (token0 will be 0)
+		// will get tid 4 nft
+		{
+			std.TestSetOrigCaller(lp02)
 
-		poolOldToken0Bal := Token0Bal(PoolAddr)
-		poolOldToken1Bal := Token1Bal(PoolAddr)
+			poolOldToken0Bal := Token0Bal(PoolAddr)
+			poolOldToken1Bal := Token1Bal(PoolAddr)
 
-		tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-			pToken0,
-			pToken1,
-			pFee,
-			bigint(7000),
-			bigint(9000),
-			bigint(1000),
-			bigint(1000),
-			bigint(0),
-			bigint(0),
-			bigint(1234567890),
-		)
-		shouldEQ(t, tAmount0, bigint(0))
+			tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
+				pToken0,
+				pToken1,
+				pFee,
+				bigint(7000),
+				bigint(9000),
+				bigint(1000),
+				bigint(1000),
+				bigint(0),
+				bigint(0),
+				bigint(1234567890),
+			)
+			shouldEQ(t, tAmount0, bigint(0))
 
-		isOwner(t, tTokenId, lp02)
-		shouldEQ(t, tTokenId, "4")
-		shouldEQ(t, GetNextId(), bigint(5))
-		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
-		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
+			isOwner(t, tTokenId, lp02)
+			shouldEQ(t, tTokenId, "4")
+			shouldEQ(t, GetNextId(), bigint(5))
+			shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
+			shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
+		}
 	}
 }
 
@@ -251,7 +208,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 
 		shouldPanic(t, func() {
 			IncreaseLiquidity(
-				bigint(123), // lp01 owns tid 1
+				bigint(123),
 				bigint(2000),
 				bigint(2000),
 				bigint(1),
@@ -487,13 +444,10 @@ func TestNFTBurn(t *testing.T) {
 	}
 
 	// burn non exists nft
-	// shouldPanic(t, func() { burn("5") })
+	shouldPanic(t, func() { burn("5") })
 }
 
-// 	// burn non exists nft
-// 	shouldPanic(t, func() { burn("5") })
-// }
-
+/* UTILs */
 func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {
 		t.Errorf("got %v, expected %v", got, expected)

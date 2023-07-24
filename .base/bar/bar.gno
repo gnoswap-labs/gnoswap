@@ -28,6 +28,7 @@ func init() {
 		lp03     = testutils.TestAddress("lp03") // Liquidity Provider 03
 		tr01     = testutils.TestAddress("tr01") // Trader 01
 		poolAddr = std.DerivePkgAddr("gno.land/r/pool")
+		posAddr  = std.DerivePkgAddr("gno.land/r/position")
 	)
 
 	bar.Mint(lp01, 50000000)
@@ -44,6 +45,8 @@ func init() {
 	bar.Approve(lp02, lp02, 50000000)
 	bar.Approve(lp03, lp03, 50000000)
 	bar.Approve(tr01, tr01, 50000000)
+
+	bar.Approve(posAddr, poolAddr, 50000000)
 }
 
 // method proxies as public functions.
