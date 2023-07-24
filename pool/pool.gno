@@ -43,7 +43,7 @@ func Mint(
 	if amount0 > 0 {
 		balance0Before = BalanceOf(pool.token0, GetOrigPkgAddr())
 
-		from := users.AddressOrName(PrevRealmAddr())
+		from := users.AddressOrName(GetOrigCaller()) // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
 		to := users.AddressOrName(GetOrigPkgAddr())
 
 		foo.TransferFrom(from, to, uint64(amount0))
@@ -55,7 +55,7 @@ func Mint(
 	if amount1 > 0 {
 		balance1Before = BalanceOf(pool.token1, GetOrigPkgAddr())
 
-		from := users.AddressOrName(PrevRealmAddr())
+		from := users.AddressOrName(GetOrigCaller()) // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
 		to := users.AddressOrName(GetOrigPkgAddr())
 
 		bar.TransferFrom(from, to, uint64(amount1))
@@ -84,7 +84,7 @@ func Burn(
 
 	position, amount0Int, amount1Int := pool.modifyPosition(
 		ModifyPositionParams{
-			PrevRealmAddr(),
+			PrevRealmAddr(), // msg.sender
 			tickLower,
 			tickUpper,
 			-amount,
@@ -371,10 +371,11 @@ func Swap(
 
 		balance0Before := BalanceOf(pool.token0, GetOrigPkgAddr())
 
-		_from := users.AddressOrName(PrevRealmAddr())
-		_to := users.AddressOrName(GetOrigPkgAddr())
-		foo.TransferFrom(_from, _to, uint64(amount0))
-		// pool.token0.TransferFrom(_from, _to, uint64(amount0))
+		from := users.AddressOrName(GetOrigCaller()) // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
+		to := users.AddressOrName(GetOrigPkgAddr())
+
+		foo.TransferFrom(from, to, uint64(amount0))
+		// pool.token0.TransferFrom(from, to, uint64(amount0))
 		pool.balances.token0 += amount0
 
 		require(balance0Before+bigint(amount0) <= BalanceOf(pool.token0, GetOrigPkgAddr()), "IIA0")
@@ -390,10 +391,11 @@ func Swap(
 
 		balance1Before := BalanceOf(pool.token1, GetOrigPkgAddr())
 
-		_from := users.AddressOrName(PrevRealmAddr())
-		_to := users.AddressOrName(GetOrigPkgAddr())
-		bar.TransferFrom(_from, _to, uint64(amount1))
-		// pool.token1.TransferFrom(_from, _to, uint64(amount1))
+		from := users.AddressOrName(GetOrigCaller())
+		to := users.AddressOrName(GetOrigPkgAddr())
+
+		bar.TransferFrom(from, to, uint64(amount1)) // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
+		// pool.token1.TransferFrom(from, _to, uint64(amount1))
 		pool.balances.token1 += amount1
 
 		require(balance1Before+bigint(amount1) <= BalanceOf(pool.token1, GetOrigPkgAddr()), "IIA1")

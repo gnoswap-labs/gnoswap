@@ -188,7 +188,7 @@ swap-without-protocol-fee-1-0-16000:
 # SWAP WITH PROTOCOL FEE
 set-protocol-fee:
 	$(info ************ [SWAP] Set Protocol Fee ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func SetFeeProtocol -args foo -args bar -args 500 -args 6 -args 8 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" owner > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func SetFeeProtocol -args 6 -args 8 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" owner > /dev/null
 	@$(MAKE) -f $(MAKEFILE) print-owner-balance
 	@echo
 
@@ -206,7 +206,7 @@ swap-with-protocol-fee-1-0-200000:
 
 collect-protocol-fee:
 	$(info ************ [SWAP] Collect Protocol Fee ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CollectProtocol -args foo -args bar -args 500 -args $(ADDR_OWNER) -args 100000 -args 100000 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CollectProtocol -args foo -args bar -args 500 -args $(ADDR_OWNER) -args 100000 -args 100000 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" owner > /dev/null
 	@$(MAKE) -f $(MAKEFILE) print-owner-balance
 	@$(MAKE) -f $(MAKEFILE) print-all-balance
 	@echo
