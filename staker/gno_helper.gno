@@ -24,3 +24,7 @@ func GetOrigPkgAddr() std.Address {
 func GetOrigCaller() std.Address {
 	return std.GetOrigCaller()
 }
+
+func PrevRealmAddr() std.Address {
+	return std.PrevRealm().Addr()
+}

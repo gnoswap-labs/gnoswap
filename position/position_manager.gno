@@ -75,7 +75,8 @@ func mint(params MintParams) (string, bigint, bigint, bigint) {
 	tokenId := string(nextId)
 	nextId++ // nextId = nextId + 1
 
-	nft.Mint(a2u(PrevRealmAddr()), grc721.TokenID(tokenId)) // owner, tokenId
+	// nft.Mint(a2u(PrevRealmAddr()), grc721.TokenID(tokenId)) // owner, tokenId
+	nft.Mint(a2u(GetOrigCaller()), grc721.TokenID(tokenId)) // owner, tokenId
 
 	positionKey := PositionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)

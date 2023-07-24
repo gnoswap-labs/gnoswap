@@ -33,18 +33,13 @@ var (
 )
 
 func init() {
-	std.TestSetOrigCaller(lp01)
-	foo.FaucetL()
-	bar.FaucetL()
-
 	// debug - print addr
-	// println(ci01, "// ci01")
-	// println(rf01, "// rf01")
-	// println(lp01, "// lp01")
-
-	// println(p.GetOrigPkgAddr(), "// pool")
-	// println(s.GetOrigPkgAddr(), "// position")
-	// println(GetOrigPkgAddr(), "// staker")
+	println(ci01, "// ci01")
+	println(rf01, "// rf01")
+	println(lp01, "// lp01")
+	println(p.GetOrigPkgAddr(), "// pool")
+	println(s.GetOrigPkgAddr(), "// position")
+	println(GetOrigPkgAddr(), "// staker")
 }
 
 // Init & CreatePool using Pool Contract
@@ -61,13 +56,6 @@ func TestPoolInitCreatePool(t *testing.T) {
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
 	shouldPanic(t, func() { p.CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
-
-	// Approve
-	std.TestSetOrigCaller(lp01)
-	foo.Approve(users.AddressOrName(poolAddr), 50000000000) // Pool Contract
-	bar.Approve(users.AddressOrName(poolAddr), 50000000000) // Pool Contract
-	foo.Approve(users.AddressOrName(lp01), 50000000000)
-	bar.Approve(users.AddressOrName(lp01), 50000000000)
 }
 
 func TestPositionMint(t *testing.T) {
@@ -86,6 +74,7 @@ func TestPositionMint(t *testing.T) {
 	)
 
 	shouldEQ(t, tPosTokenId, "1")
+	shouldEQ(t, nft.OwnerOf("1"), GetOrigCaller()) // lp01
 }
 
 func TestCreateIncentive(t *testing.T) {
@@ -95,6 +84,9 @@ func TestCreateIncentive(t *testing.T) {
 		tEndTime,   // endTime
 		rf01,       // refundee
 	)
+
+	// nft owner doesn't change yet
+	shouldEQ(t, nft.OwnerOf("1"), lp01) // lp01
 }
 
 func TestStakeToken(t *testing.T) {
@@ -106,6 +98,9 @@ func TestStakeToken(t *testing.T) {
 		"1",
 		100,
 	)
+
+	// nft transfered from lp01 to staker
+	shouldEQ(t, nft.OwnerOf("1"), GetOrigPkgAddr())
 }
 
 func TestGetRewardInfo(t *testing.T) {
@@ -131,41 +126,25 @@ func TestClaimReward(t *testing.T) {
 }
 
 func TestUnstakeAndWithdraw(t *testing.T) {
-	// NFT was staked with lockDuration 100 L#107
+	// NFT was staked with lockDuration 100seconds from L#91-96
 	// so, it can be withdrawl after 100 seconds since unstake requeset
 	std.TestSetOrigCaller(lp01)
 
 	UnstakeToken(tStartTime, tEndTime, rf01, "1")
-	shouldEQ(t, nft.OwnerOf("1"), GetOrigPkgAddr())
+	shouldEQ(t, nft.OwnerOf("1"), GetOrigPkgAddr()) // staker owns nft tid 1
 
 	shouldPanic(t, func() { WithdrawToken("1", GetOrigCaller()) })
 
-	std.TestSkipTimestamps(99)
+	std.TestSkipHeights(15)
 	shouldPanic(t, func() { WithdrawToken("1", GetOrigCaller()) })
 
-	std.TestSkipTimestamps(1)
+	std.TestSkipHeights(5)
 	shouldPanic(t, func() { WithdrawToken("1", GetOrigCaller()) })
 
-	std.TestSkipTimestamps(1)
+	std.TestSkipHeights(1)
 	WithdrawToken("1", GetOrigCaller())
-	shouldEQ(t, nft.OwnerOf("1"), GetOrigCaller())
+	shouldEQ(t, nft.OwnerOf("1"), lp01)
 }
-
-/* API TEST */
-// func TestApiGetIncentivesInfo(t *testing.T) {
-// 	tagii := ApiGetIncentivesInfo()
-// 	// println(tagii)
-// }
-
-// func TestApiGetStakesInfo(t *testing.T) {
-// 	tagsi := ApiGetStakesInfo()
-// 	// println(tagsi)
-// }
-
-// func TestApiGetRewardInfo(t *testing.T) {
-// 	tagri := ApiGetRewardInfo()
-// 	// println(tagri)
-// }
 
 /* HELPERS */
 func shouldEQ(t *testing.T, got, expected interface{}) {
