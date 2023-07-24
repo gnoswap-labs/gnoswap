@@ -91,7 +91,8 @@ func StakeToken(
 	tokenId string,
 	lockDuration bigint,
 ) {
-	require(nft.OwnerOf(tid(tokenId)) == GetOrigCaller(), "GnoswapStaker::stakeToken: only owner can stake token")
+	// require(nft.OwnerOf(tid(tokenId)) == GetOrigCaller(), "GnoswapStaker::stakeToken: only owner can stake token")
+	require(nft.OwnerOf(tid(tokenId)) == PrevRealmAddr(), "GnoswapStaker::stakeToken: only owner can stake token")
 	require(lockDuration == 3 || lockDuration == 5 || lockDuration == 10 || lockDuration == 100, "GnoswapStaker::stakeToken: lock duration must be 3, 5, 10 seconds") // XXX dev
 	// require(lockDuration == 604800 || lockDuration == 1209600  || lockDuration == 1814400, "GnoswapStaker::stakeToken: lock duration must be 1, 2, or 3 weeks")
 
@@ -129,20 +130,21 @@ func WithdrawToken(tokenId string, to std.Address) {
 	}
 
 	require(deposit.numberOfStakes == 0, "GnoswapStaker::withdrawToken: cannot withdraw token while staked")
-	require(deposit.owner == GetOrigCaller(), "GnoswapStaker::withdrawToken: only owner can withdraw token")
+	// require(deposit.owner == GetOrigCaller(), "GnoswapStaker::withdrawToken: only owner can withdraw token")
+	require(deposit.owner == PrevRealmAddr(), "GnoswapStaker::withdrawToken: only owner can withdraw token")
 	require(deposit.timeToWithdraw < GetTimestamp(), "GnoswapStaker::withdrawToken: token cannot be withdrawn yet")
 
 	// delete(deposits, tokenId)
 	deposits.Remove(tokenId)
 
 	// grc721 should use PrevRealm()
-	_orig := std.GetOrigCaller()
-	std.TestSetOrigCaller(GetOrigPkgAddr())
-	nto := nft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(to), tid(tokenId))
+	_orig := std.GetOrigCaller()            // XXX
+	std.TestSetOrigCaller(GetOrigPkgAddr()) // XXX
+	nto := nft.TransferFrom(a2u(PrevRealmAddr()), a2u(to), tid(tokenId))
 	if !nto {
 		panic("NFT TransferFrom Failed #2")
 	}
-	std.TestSetOrigCaller(_orig)
+	std.TestSetOrigCaller(_orig) // XXX
 }
 
 func ClaimReward(
@@ -159,15 +161,10 @@ func ClaimReward(
 	// 	reward = bigint(0)
 	// }
 
-	toAddr := GetOrigCaller()
-
-	// grc20 should use PrevRealm()
-	_orig := GetOrigCaller()
-	std.TestSetOrigCaller(GetOrigPkgAddr())
-	// XXX
+	// toAddr := GetOrigCaller()
+	toAddr := PrevRealmAddr()
 	reward, _ := GetRewardInfo(startTime, endTime, refundee, tokenId)
 	gnos.Mint(a2u(toAddr), uint64(reward))
-	std.TestSetOrigCaller(_orig)
 }
 
 func GetRewardInfo(
@@ -285,12 +282,8 @@ func endIncentive(key IncentiveKey) (refund bigint) {
 	// incentives[incentiveId] = _updateIncentive
 	incentives.Set(incentiveId, updateIncentive)
 
-	// XXX
 	// TransferHelperExtended.safeTransfer(std.Address(key.rewardToken), GetOrigCaller(), GetOrigPkgAddr(), refund)
-	_orig := GetOrigCaller()
-	std.TestSetOrigCaller(GetOrigPkgAddr())
 	gnos.Transfer(a2u(key.refundee), uint64(refund))
-	std.TestSetOrigCaller(_orig)
 
 	requireUnsigned(refund, "GnoswapStaker::endIncentive: refund is not unsigned")
 	return refund
@@ -582,7 +575,7 @@ func transferDeposit(tokenId string, to std.Address) {
 	require(to != zeroAddress, "GnoswapStaker::transferDeposit: cannot transfer to zero address")
 
 	owner := nft.OwnerOf(tid(tokenId))
-	require(owner == GetOrigCaller(), "GnoswapStaker::transferDeposit: can only be called by deposit owner")
+	require(PrevRealmAddr() == owner, "GnoswapStaker::transferDeposit: can only be called by deposit owner")
 
 	// deposits[tokenId].owner = owner
 	_deposit, ok := deposits.Get(tokenId)
@@ -609,7 +602,7 @@ func transferDeposit(tokenId string, to std.Address) {
 	deposits.Set(tokenId, update)
 
 	// transfer actual NFT
-	nto := nft.TransferFrom(a2u(owner), a2u(to), tid(tokenId)) // Nft Transfer Ok
+	nto := nft.TransferFrom(a2u(owner), a2u(to), tid(tokenId)) // nft transfer ok
 	if !nto {
 		panic("NFT TransferFrom Failed #1")
 	}
