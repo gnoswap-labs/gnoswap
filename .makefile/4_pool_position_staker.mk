@@ -2,12 +2,12 @@
 # source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast
 
 # Test Accounts
-# gnokey add -recover=true -index 10 owner
+# gnokey add -recover=true -index 10 gsa
 # gnokey add -recover=true -index 11 lp01
 # gnokey add -recover=true -index 12 lp02
 # gnokey add -recover=true -index 13 tr01
 
-ADDR_OWNER := g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4
+ADDR_GSA := g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4
 ADDR_LP01 := g1jqpr8r5akez83kp7ers0sfjyv2kgx45qa9qygd
 ADDR_LP02 := g126yz2f34qdxaqxelmky40dym379q0vw3yzhyrq
 ADDR_TR01 := g1wgdjecn5lylgvujzyspfzvhjm6qn4z8xqyyxdn
@@ -34,7 +34,7 @@ help:
 all: gnot deploy faucet approve pool mint pps
 
 .PHONY: gnot
-gnot: gnot-owner gnot-lp01 gnot-tr01
+gnot: gnot-gsa gnot-lp01 gnot-tr01
 
 .PHONY: deploy
 deploy: deploy-foo deploy-bar deploy-pool deploy-gnft deploy-position deploy-gnos deploy-staker
@@ -55,9 +55,9 @@ mint: mint-01 own-01
 pps: staker-create-incentive staker-stake-token pool-set-protocol-fee pool-swap-fee-01 position-collect-01 pool-swap-fee-10 position-collect-10 pool-collect-protocol-fee staker-claim-reward staker-unstake-withdraw position-nft-burn chk-lp01
 
 ## GNOT
-gnot-owner:
-	$(info ************ [GNOT] transfer 100gnot to owner ************)
-	@echo "" | gnokey maketx send -send 100000000ugnot -to $(ADDR_OWNER) -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+gnot-gsa:
+	$(info ************ [GNOT] transfer 100gnot to gsa ************)
+	@echo "" | gnokey maketx send -send 100000000ugnot -to $(ADDR_GSA) -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 gnot-lp01:
@@ -143,12 +143,12 @@ approve-tr01:
 ## POOL
 pool-init: 
 	$(info ************ [POOL] init ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func Init -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" owner > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func Init -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@echo
 
 pool-create: 
 	$(info ************ [POOL] create ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args foo -args bar -args 500 -args 130621891405341611593710811006 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" owner > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args foo -args bar -args 500 -args 130621891405341611593710811006 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@$(MAKE) -f $(MAKEFILE) print-all-balance
 	@echo
 
@@ -168,8 +168,8 @@ own-01:
 
 ## PPS
 staker-create-incentive:
-	$(info ************ [STAKER] create incetnive ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/staker -func CreateIncentive -args $(INCENTIVE_START) -args $(INCENTIVE_END) -args $(ADDR_OWNER) -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" owner > /dev/null
+	$(info ************ [STAKER] create incentive ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/staker -func CreateIncentive -args $(INCENTIVE_START) -args $(INCENTIVE_END) -args $(ADDR_GSA) -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@echo
 
 staker-stake-token:
@@ -179,13 +179,13 @@ staker-stake-token:
 	@$(MAKE) -f $(MAKEFILE) skip-time
 	@$(MAKE) -f $(MAKEFILE) skip-time
 	@$(MAKE) -f $(MAKEFILE) skip-time
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/staker -func StakeToken -args $(INCENTIVE_START) -args $(INCENTIVE_END) -args $(ADDR_OWNER) -args 1 -args 3 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/staker -func StakeToken -args $(INCENTIVE_START) -args $(INCENTIVE_END) -args $(ADDR_GSA) -args 1 -args 3 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo NFT tokenId 1 Owner: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/gnft\nOwnerOf(\"1\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
 	@echo
 
 pool-set-protocol-fee:
 	$(info ************ [POOL] set protocol fee ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func SetFeeProtocol -args foo -args bar -args 500 -args 6 -args 8 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" owner > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func SetFeeProtocol -args 6 -args 8 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@echo
 
 pool-swap-fee-01:
@@ -214,22 +214,22 @@ position-collect-10:
 
 pool-collect-protocol-fee:
 	$(info ************ [POOL] collect protocol fee ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CollectProtocol -args foo -args bar -args 500 -args $(ADDR_OWNER) -args 100000 -args 100000 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
-	@$(MAKE) -f $(MAKEFILE) print-owner-balance
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CollectProtocol -args foo -args bar -args 500 -args $(ADDR_GSA) -args 100000 -args 100000 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@$(MAKE) -f $(MAKEFILE) print-gsa-balance
 	@$(MAKE) -f $(MAKEFILE) print-all-balance
 	@echo
 
 staker-claim-reward:
 	$(info ************ [STAKER] claim reward ************)
 	@$(MAKE) -f $(MAKEFILE) print-lp01-reward
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/staker -func ClaimReward -args $(INCENTIVE_START) -args $(INCENTIVE_END) -args $(ADDR_OWNER) -args 1 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/staker -func ClaimReward -args $(INCENTIVE_START) -args $(INCENTIVE_END) -args $(ADDR_GSA) -args 1 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo NFT tokenId 1 Owner: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/gnft\nOwnerOf(\"1\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
 	@$(MAKE) -f $(MAKEFILE) print-lp01-reward
 	@echo
 
 staker-unstake-withdraw:
 	$(info ************ [STAKER] unstake and withdraw nft 1 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/staker -func UnstakeToken -args $(INCENTIVE_START) -args $(INCENTIVE_END) -args $(ADDR_OWNER) -args 1 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/staker -func UnstakeToken -args $(INCENTIVE_START) -args $(INCENTIVE_END) -args $(ADDR_GSA) -args 1 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@$(MAKE) -f $(MAKEFILE) skip-time
 	@$(MAKE) -f $(MAKEFILE) skip-time
 	@echo
@@ -253,16 +253,16 @@ chk-lp01:
 
 ## ETC
 # gno time.Now returns last block time, not actual time
-# so to skip time, we need new block
+# so to skip time, we need to create a new block
 skip-time:
 	@echo "" | gnokey maketx send -send 1ugnot -to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo "" | gnokey maketx send -send 1ugnot -to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo "" | gnokey maketx send -send 1ugnot -to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 
-print-owner-balance:
-	$(info ************ [BALANCE] owner ************)
-	@echo Token0: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/foo\nBalanceOf(\"$(ADDR_OWNER)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
-	@echo Token1: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/bar\nBalanceOf(\"$(ADDR_OWNER)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
+print-gsa-balance:
+	$(info ************ [BALANCE] Gnoswam Admin ************)
+	@echo Token0: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/foo\nBalanceOf(\"$(ADDR_GSA)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
+	@echo Token1: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/bar\nBalanceOf(\"$(ADDR_GSA)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
 	@echo
 
 print-all-balance:

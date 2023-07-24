@@ -2,12 +2,12 @@
 # source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast
 
 # Test Accounts
-# gnokey add -recover=true -index 10 owner
+# gnokey add -recover=true -index 10 gsa
 # gnokey add -recover=true -index 11 lp01
 # gnokey add -recover=true -index 12 lp02
 # gnokey add -recover=true -index 13 tr01
 
-ADDR_OWNER := g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4
+ADDR_GSA := g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4
 ADDR_LP01 := g1jqpr8r5akez83kp7ers0sfjyv2kgx45qa9qygd
 ADDR_LP02 := g126yz2f34qdxaqxelmky40dym379q0vw3yzhyrq
 ADDR_TR01 := g1wgdjecn5lylgvujzyspfzvhjm6qn4z8xqyyxdn
@@ -28,7 +28,7 @@ help:
 all: gnot deploy faucet approve pool basic swap-without-protocol-fee swap-wit-protocol-fee
 
 .PHONY: gnot
-gnot: gnot-owner gnot-lp01 gnot-tr01
+gnot: gnot-gsa gnot-lp01 gnot-tr01
 
 .PHONY: deploy
 deploy: deploy-foo deploy-bar deploy-pool
@@ -52,9 +52,9 @@ swap-without-protocol-fee: swap-setup swap-without-protocol-fee-0-1-10000 swap-w
 swap-wit-protocol-fee: set-protocol-fee swap-with-protocol-fee-0-1-200000 swap-with-protocol-fee-1-0-200000 collect-protocol-fee burn-collect-after-swap
 
 ## GNOT
-gnot-owner:
-	$(info ************ [GNOT] transfer 100gnot to owner ************)
-	@echo "" | gnokey maketx send -send 100000000ugnot -to $(ADDR_OWNER) -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+gnot-gsa:
+	$(info ************ [GNOT] transfer 100gnot to Gnoswap Admin ************)
+	@echo "" | gnokey maketx send -send 100000000ugnot -to $(ADDR_GSA) -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 gnot-lp01:
@@ -123,12 +123,12 @@ approve-tr01:
 ## POOL
 pool-init: 
 	$(info ************ [POOL] init ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func Init -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" owner > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func Init -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@echo
 
 pool-create: 
 	$(info ************ [POOL] create ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args foo -args bar -args 500 -args 130621891405341611593710811006 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" owner > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args foo -args bar -args 500 -args 130621891405341611593710811006 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@$(MAKE) -f $(MAKEFILE) print-all-balance
 	@echo
 
@@ -188,8 +188,8 @@ swap-without-protocol-fee-1-0-16000:
 # SWAP WITH PROTOCOL FEE
 set-protocol-fee:
 	$(info ************ [SWAP] Set Protocol Fee ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func SetFeeProtocol -args 6 -args 8 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" owner > /dev/null
-	@$(MAKE) -f $(MAKEFILE) print-owner-balance
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func SetFeeProtocol -args 6 -args 8 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@$(MAKE) -f $(MAKEFILE) print-gsa-balance
 	@echo
 
 swap-with-protocol-fee-0-1-200000:
@@ -206,8 +206,8 @@ swap-with-protocol-fee-1-0-200000:
 
 collect-protocol-fee:
 	$(info ************ [SWAP] Collect Protocol Fee ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CollectProtocol -args foo -args bar -args 500 -args $(ADDR_OWNER) -args 100000 -args 100000 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" owner > /dev/null
-	@$(MAKE) -f $(MAKEFILE) print-owner-balance
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CollectProtocol -args foo -args bar -args 500 -args $(ADDR_GSA) -args 100000 -args 100000 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@$(MAKE) -f $(MAKEFILE) print-gsa-balance
 	@$(MAKE) -f $(MAKEFILE) print-all-balance
 	@echo
 
@@ -221,7 +221,7 @@ burn-collect-after-swap:
 
 ## ETC
 print-all-balance:
-	$(info ㄴ BALANCES)
+	$(info > ALL BALANCES)
 	@echo pool_token0: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/foo\nBalanceOf(\"$(ADDR_POOL)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
 	@echo pool_token1: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/bar\nBalanceOf(\"$(ADDR_POOL)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
 	@echo
@@ -239,10 +239,10 @@ print-pool-balance:
 	@echo Token1: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/bar\nBalanceOf(\"$(ADDR_POOL)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
 	@echo
 
-print-owner-balance:
-	$(info ************ [BALANCE] owner ************)
-	@echo Token0: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/foo\nBalanceOf(\"$(ADDR_OWNER)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
-	@echo Token1: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/bar\nBalanceOf(\"$(ADDR_OWNER)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
+print-gsa-balance:
+	$(info ************ [BALANCE] Gnoswap Admin ************)
+	@echo Token0: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/foo\nBalanceOf(\"$(ADDR_GSA)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
+	@echo Token1: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/bar\nBalanceOf(\"$(ADDR_GSA)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
 	@echo
 
 print-lp01-balance:
