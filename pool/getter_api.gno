@@ -4,10 +4,7 @@ package gnoswap
 import (
 	b64 "encoding/base64"
 	"encoding/json"
-	"std"
 	"strings"
-
-	"gno.land/p/demo/grc/grc20"
 )
 
 type ApiQueryBase struct {
@@ -18,8 +15,7 @@ type ApiQueryBase struct {
 type ResponseGetPools struct {
 	Stat     ApiQueryBase `json:"stat"`
 	Response struct {
-		Length int      `json:"length"`
-		Data   []string `json:"data"`
+		Data []string `json:"data"`
 	} `json:"response"`
 }
 
@@ -40,11 +36,9 @@ func ApiGetPools() string {
 	r := ResponseGetPools{
 		Stat: qb,
 		Response: struct {
-			Length int      `json:"length"`
-			Data   []string `json:"data"`
+			Data []string `json:"data"`
 		}{
-			Length: poolSize,
-			Data:   poolList,
+			Data: poolList,
 		},
 	}
 
@@ -94,7 +88,7 @@ func ApiGetPool(key string) string {
 	_p, exists := pools.Get(key) // value interface{}, exists bool
 	if !exists {
 		// that key does not exist
-		return ""
+		return "NO_POOL_FOUND" // r3v4_xxx should panic ?
 	}
 
 	p := _p.(*Pool)
