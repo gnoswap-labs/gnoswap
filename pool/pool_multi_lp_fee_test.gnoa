@@ -199,6 +199,18 @@ func TestSwap(t *testing.T) {
 	}
 }
 
+/* GETTER_API TEST */
+func TestApiGetPools(t *testing.T) {
+	gpls := ApiGetPools()
+	println(gpls)
+}
+
+func TestApiGetPool(t *testing.T) {
+	pk := "bar_foo_500"
+	gpl := ApiGetPool(pk)
+	println(gpl)
+}
+
 func printBalance() {
 	pool := GetPool(pToken0, pToken1, pFee)
 

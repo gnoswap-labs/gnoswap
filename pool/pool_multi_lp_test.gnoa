@@ -536,23 +536,16 @@ func TestCollectProtocol(t *testing.T) {
 }
 
 /* GETTER_API TEST */
-// func TestGetPoolInfo(t *testing.T) {
-// 	tapi := ApiGetPoolInfo(pToken0, pToken1, pFee)
-// 	println(tapi)
-// }
+func TestApiGetPools(t *testing.T) {
+	gpls := ApiGetPools()
+	println(gpls)
+}
 
-// func TestGetTokenInfo(t *testing.T) {
-// 	tapi0 := ApiGetTokenInfo(pToken0, pToken1, pFee, 0)
-// 	println(tapi0)
-
-// 	tapi1 := ApiGetTokenInfo(pToken0, pToken1, pFee, 1)
-// 	println(tapi1)
-// }
-
-// func TestGetUserInfo(t *testing.T) {
-// 	uapi := ApiGetUserInfo(pToken0, pToken1, pFee, "g1d3crqv2lta047h6lta047h6lta047h6lnjw069") // lp01
-// 	println(uapi)
-// }
+func TestApiGetPool(t *testing.T) {
+	pk := "bar_foo_500"
+	gpl := ApiGetPool(pk)
+	println(gpl)
+}
 
 /* HELPER */
 func shouldEQ(t *testing.T, got, expected interface{}) {

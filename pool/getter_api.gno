@@ -1,242 +1,166 @@
+// EXTERNAL API
 package gnoswap
 
-// import (
-// 	"encoding/base64"
-// 	"encoding/json"
-// 	"std"
-// 	"strings"
+import (
+	b64 "encoding/base64"
+	"encoding/json"
+	"std"
+	"strings"
 
-// 	"gno.land/p/demo/grc/grc20"
-// )
+	"gno.land/p/demo/grc/grc20"
+)
 
-// type ApiPoolInfo struct {
-// 	Address      string
-// 	Path         string
-// 	Token0       string
-// 	Token1       string
-// 	Liquidity    bigint
-// 	Token0Amount bigint
-// 	Token1Amount bigint
-// 	SwapFee      bigint
-// 	ProtocolFees bigint
-// 	MinTick      bigint
-// 	MaxTick      bigint
-// }
+type ApiQueryBase struct {
+	Height    int64 `json:"height"`
+	Timestamp int64 `json:"timestamp"`
+}
 
-// type ApiTokenInfo struct {
-// 	Name     string
-// 	Symbol   string
-// 	Decimals uint
-// 	Path     string
-// }
+type ResponseGetPools struct {
+	Stat     ApiQueryBase `json:"stat"`
+	Response struct {
+		Length int      `json:"length"`
+		Data   []string `json:"data"`
+	} `json:"response"`
+}
 
-// type ApiUserInfo struct {
-// 	OwedPosition []ApiPositionInfo
-// 	Token0       string
-// 	Token0Amount bigint
-// 	Token1       string
-// 	Token1Amount bigint
-// }
+func ApiGetPools() string {
+	poolSize := pools.Size()
+	poolList := []string{}
 
-// type ApiPositionInfo struct {
-// 	Liquidity bigint
+	for i := 0; i < poolSize; i++ {
+		pk, _ := pools.GetByIndex(i)
+		poolList = append(poolList, pk)
+	}
 
-// 	FeeGrowthInside0LastX128 bigint
-// 	FeeGrowthInside1LastX128 bigint
+	qb := ApiQueryBase{
+		Height:    GetHeight(),
+		Timestamp: int64(GetTimestamp()),
+	}
 
-// 	TokensOwed0 bigint
-// 	TokensOwed1 bigint
+	r := ResponseGetPools{
+		Stat: qb,
+		Response: struct {
+			Length int      `json:"length"`
+			Data   []string `json:"data"`
+		}{
+			Length: poolSize,
+			Data:   poolList,
+		},
+	}
 
-// 	TickLower bigint
-// 	TickUpper bigint
-// }
+	rr, err := json.Marshal(r)
+	if err != nil {
+		println("PANIC__ApiGetPools")
+		panic(err)
+	}
 
-// type ApiBasicInfo struct {
-// 	Height    int64
-// 	Timestamp int64
-// }
+	return string(rr)
+}
 
-// func ApiGetPoolInfo(pToken0, pToken1 string, pFee bigint) string {
-// 	pool := GetPool(pToken0, pToken1, pFee)
+type ApiPositionInfo struct {
+	Owner     string `json:"owner"`
+	TickLower bigint `json:"tick_lower"`
+	TickUpper bigint `json:"tick_upper"`
 
-// 	abi := ApiBasicInfo{
-// 		Height:    GetHeight(),
-// 		Timestamp: int64(GetTimestamp()),
-// 	}
+	Liquidity bigint `json:"liquidity"`
+	// FeeGrowthInside0LastX128 bigint
+	// FeeGrowthInside1LastX128 bigint
+	T0Owed bigint `json:"token0_owed"`
+	T1Owed bigint `json:"token1_owed"`
+}
 
-// 	minTick, maxTick := pool.findMinMaxTick()
+type SinglePool struct {
+	// T0Name string `json:"token0_name"`
+	// T1Name string `json:"token1_name"`
+	T0Bal bigint `json:"token0_balance"`
+	T1Bal bigint `json:"token1_balance"`
+	// Fee                 bigint `json:"fee"`
+	TickSpacing         bigint `json:"tick_spacing"`
+	MaxLiquidityPerTick bigint `json:"max_liquidity_per_tick"`
+	// slot0               Slot0  `json:"slot0"`
+	// protocolFees ProtocolFees `json:"protocol_fees"`
+	Liquidity bigint `json:"liquidity"`
+	Position  []ApiPositionInfo
+}
 
-// 	api := ApiPoolInfo{
-// 		Address:      GetOrigPkgAddr().String(),
-// 		Path:         "d__gno.land/gnoswap/pool/91u24jfabj",
-// 		Token0:       pool.token0.GetName(),
-// 		Token1:       pool.token1.GetName(),
-// 		Liquidity:    pool.GetLiquidity(),
-// 		Token0Amount: BalanceOf(pool.token0, GetOrigPkgAddr()),
-// 		Token1Amount: BalanceOf(pool.token1, GetOrigPkgAddr()),
-// 		SwapFee:      pool.GetFee(),
-// 		// swapFeeAmount: 123,
-// 		ProtocolFees: pool.GetSlot0().feeProtocol,
-// 		// protocolFeeAmount: 123,
-// 		MinTick: minTick,
-// 		MaxTick: maxTick,
-// 	}
+type ResponseGetPool struct {
+	Stat     ApiQueryBase `json:"stat"`
+	Response struct {
+		Data SinglePool `json:"data"`
+	} `json:"response"`
+}
 
-// 	r := struct {
-// 		ApiBasicInfo
-// 		ApiPoolInfo
-// 	}{
-// 		abi,
-// 		api,
-// 	}
+func ApiGetPool(key string) string {
+	_p, exists := pools.Get(key) // value interface{}, exists bool
+	if !exists {
+		// that key does not exist
+		return ""
+	}
 
-// 	rr, err := json.Marshal(r)
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	p := _p.(*Pool)
+	_positions := p.positions
+	posSize := _positions.Size()
+	posList := []ApiPositionInfo{}
 
-// 	return string(rr)
-// }
+	for i := 0; i < posSize; i++ {
+		posKey, _posValue := _positions.GetByIndex(i)
 
-// func (pool *Pool) findMinMaxTick() (bigint, bigint) {
-// 	ticks := pool.tickRange()
-// 	min, max := ticks[0], ticks[0]
+		posValue := _posValue.(PositionInfo)
+		owner, tl, th := posKeyDivide(posKey)
 
-// 	for _, number := range ticks {
-// 		if number < min {
-// 			min = number
-// 		}
-// 		if number > max {
-// 			max = number
-// 		}
-// 	}
+		posInfo := ApiPositionInfo{
+			Owner:     owner,
+			TickLower: tl,
+			TickUpper: th,
+			Liquidity: posValue.liquidity,
+			T0Owed:    posValue.tokensOwed0,
+			T1Owed:    posValue.tokensOwed1,
+		}
+		posList = append(posList, posInfo)
+	}
 
-// 	return min, max
-// }
+	qb := ApiQueryBase{
+		Height:    GetHeight(),
+		Timestamp: int64(GetTimestamp()),
+	}
 
-// func (pool *Pool) tickRange() []bigint {
-// 	tickList := []bigint{}
-// 	ticks := pool.GetTicks()
+	r := ResponseGetPool{
+		Stat: qb,
+		Response: struct {
+			Data SinglePool `json:"data"`
+		}{
+			Data: SinglePool{
+				T0Bal: p.balances.token0,
+				T1Bal: p.balances.token1,
+				// Fee:                 p.fee,
+				TickSpacing:         p.tickSpacing,
+				MaxLiquidityPerTick: p.maxLiquidityPerTick,
+				Liquidity:           p.liquidity,
+				Position:            posList,
+			},
+		},
+	}
 
-// 	for i := 0; i < ticks.Size(); i++ {
-// 		key, _ := ticks.GetByIndex(i)
-// 		tickList = append(tickList, bigint(key))
-// 	}
-// 	return tickList
-// }
+	rr, err := json.Marshal(r)
+	if err != nil {
+		println("PANIC__ApiGetPool")
+		panic(err)
+	}
 
-// func ApiGetTokenInfo(pToken0, pToken1 string, pFee bigint, index uint) string {
-// 	pool := GetPool(pToken0, pToken1, pFee)
+	return string(rr)
+}
 
-// 	var token *grc20.AdminToken
-// 	if index == 0 {
-// 		token = pool.token0
-// 	} else if index == 1 {
-// 		token = pool.token1
-// 	} else {
-// 		panic("invalid token index")
-// 	}
+func posKeyDivide(posKey string) (string, bigint, bigint) {
+	// base64 decode
+	kDec, _ := b64.StdEncoding.DecodeString(posKey)
+	posKey = string(kDec)
 
-// 	abi := ApiBasicInfo{
-// 		Height:    GetHeight(),
-// 		Timestamp: int64(GetTimestamp()),
-// 	}
-// 	ati := ApiTokenInfo{
-// 		Name:     token.GetName(),
-// 		Symbol:   token.GetSymbol(),
-// 		Decimals: token.GetDecimals(),
-// 		Path:     "d__gno.land/gnoswap/token/91u24jfabj",
-// 	}
+	res := strings.Split(posKey, "__")
+	if len(res) != 3 {
+		panic("posKeyDevidie: invalid posKey")
+	}
 
-// 	r := struct {
-// 		ApiBasicInfo
-// 		ApiTokenInfo
-// 	}{
-// 		abi,
-// 		ati,
-// 	}
+	owner, tickLower, tickUpper := res[0], res[1], res[2]
 
-// 	rr, err := json.Marshal(r)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	return string(rr)
-// }
-
-// func ApiGetUserInfo(pToken0, pToken1 string, pFee bigint, addr string) string {
-// 	pool := GetPool(pToken0, pToken1, pFee)
-
-// 	abi := ApiBasicInfo{
-// 		Height:    GetHeight(),
-// 		Timestamp: int64(GetTimestamp()),
-// 	}
-// 	aui := ApiUserInfo{
-// 		OwedPosition: pool.userPosition(addr),
-// 		Token0:       pool.token0.GetName(),
-// 		Token0Amount: BalanceOf(pool.token0, s2a(addr)),
-// 		Token1:       pool.token1.GetName(),
-// 		Token1Amount: BalanceOf(pool.token1, s2a(addr)),
-// 	}
-
-// 	r := struct {
-// 		ApiBasicInfo
-// 		ApiUserInfo
-// 	}{
-// 		abi,
-// 		aui,
-// 	}
-
-// 	rr, err := json.Marshal(r)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	return string(rr)
-// }
-
-// func (pool *Pool) userPosition(addr string) []ApiPositionInfo { // []PositionInfo
-// 	userPos := []ApiPositionInfo{}
-
-// 	for _, key := range pool.positionWithKeys() {
-// 		decoded, _ := base64.StdEncoding.DecodeString(key)
-
-// 		if strings.Contains(string(decoded), addr) {
-// 			// userPos = append(userPos, positions[key])
-// 			_tl := strings.Split(string(decoded), "__")[1]
-// 			_tu := strings.Split(string(decoded), "__")[2]
-
-// 			_userPos, exists := pool.positions.Get(key) // return PositionInfo
-// 			if exists {
-// 				// userPos = append(userPos, _userPos.(ApiPositionInfo))
-// 				_withTickUserPos := ApiPositionInfo{
-// 					Liquidity:                _userPos.(PositionInfo).liquidity,
-// 					FeeGrowthInside0LastX128: _userPos.(PositionInfo).feeGrowthInside0LastX128,
-// 					FeeGrowthInside1LastX128: _userPos.(PositionInfo).feeGrowthInside1LastX128,
-// 					TokensOwed0:              _userPos.(PositionInfo).tokensOwed0,
-// 					TokensOwed1:              _userPos.(PositionInfo).tokensOwed1,
-// 					TickLower:                bigint(_tl),
-// 					TickUpper:                bigint(_tu),
-// 				}
-// 				userPos = append(userPos, _withTickUserPos)
-// 			}
-// 		}
-// 	}
-// 	return userPos
-// }
-
-// func (pool *Pool) positionWithKeys() []string {
-// 	posSize := pool.positions.Size()
-// 	keys := make([]string, posSize)
-
-// 	for i := 0; i < posSize; i++ {
-// 		key, value := pool.positions.GetByIndex(i)
-// 		keys[i] = key
-// 	}
-
-// 	return keys
-// }
-
-// func s2a(addr string) std.Address {
-// 	return std.Address(addr)
-// }
+	return owner, bigint(tickLower), bigint(tickUpper)
+}

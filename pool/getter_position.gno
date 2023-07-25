@@ -1,3 +1,4 @@
+// POSITION CONTRACT USES BELOW FUNCTIONS IN ITS LOGIC
 package gnoswap
 
 import (
