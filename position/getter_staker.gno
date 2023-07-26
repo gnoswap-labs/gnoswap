@@ -1,3 +1,4 @@
+// STAKER CONTRACT USES BELOW FUNCTIONS IN ITS LOGIC
 package position
 
 func PositionGetPosition(tokenId string) Position {

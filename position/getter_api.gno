@@ -1,124 +1,179 @@
+// EXTERNAL API
 package position
 
-// import (
-// 	"encoding/json"
-// 	"std"
+import (
+	"encoding/json"
+)
 
-// 	nft "gno.land/r/gnft"
+type ApiQueryBase struct {
+	Height    int64 `json:"height"`
+	Timestamp int64 `json:"timestamp"`
+}
 
-// 	"gno.land/p/demo/avl"
+type ResponseGetPositions struct {
+	Stat     ApiQueryBase `json:"stat"`
+	Response struct {
+		Data []string `json:"data"`
+	} `json:"response"`
+}
 
-// 	"gno.land/p/demo/grc/grc721"
-// )
+func ApiGetPositions() string {
+	positionSize := positions.Size()
+	positionList := []string{}
 
-// type ApiPoolList struct {
-// 	Address std.Address
-// 	Id      bigint
-// }
+	for i := 0; i < positionSize; i++ {
+		pk, _ := positions.GetByIndex(i)
+		positionList = append(positionList, pk)
+	}
 
-// type ApiPositionInfo struct {
-// 	Nonce                    bigint
-// 	Operator                 std.Address
-// 	PoolId                   bigint
-// 	TickLower                bigint
-// 	TickUpper                bigint
-// 	Liquidity                bigint
-// 	FeeGrowthInside0LastX128 bigint
-// 	FeeGrowthInside1LastX128 bigint
-// 	TokensOwed0              bigint
-// 	TokensOwed1              bigint
-// }
+	qb := ApiQueryBase{
+		Height:    GetHeight(),
+		Timestamp: int64(GetTimestamp()),
+	}
 
-// type ApiBasicInfo struct {
-// 	Height    int64
-// 	Timestamp int64
-// }
+	r := ResponseGetPositions{
+		Stat: qb,
+		Response: struct {
+			Data []string `json:"data"`
+		}{
+			Data: positionList,
+		},
+	}
 
-// func ApiGetPoolList() string {
-// 	abi := ApiBasicInfo{
-// 		Height:    GetHeight(),
-// 		Timestamp: int64(GetTimestamp()),
-// 	}
-// 	apl := getPoolList()
+	rr, err := json.Marshal(r)
+	if err != nil {
+		println("PANIC__ApiGetPositions")
+		panic(err)
+	}
 
-// 	r := struct {
-// 		ApiBasicInfo
-// 		PoolList []ApiPoolList
-// 	}{
-// 		abi,
-// 		apl,
-// 	}
+	return string(rr)
+}
 
-// 	rr, err := json.Marshal(r)
-// 	if err != nil {
-// 		panic(err)
-// 	}
+type SinglePosition struct {
+	TokenID string `json:"token_id"`
+	// Nonce     bigint `json:"nonce"`
+	Operator  string `json:"operator"`
+	PoolKey   string `json:"pool_key"`
+	TickLower bigint `json:"tick_lower"`
+	TickUpper bigint `json:"tick_upper"`
+	Liquidity bigint `json:"liquidity"`
+	// FeeGrowthInside0LastX128 bigint `json:"fee_growth_inside_0_last_x128"`
+	// FeeGrowthInside1LastX128 bigint `json:"fee_growth_inside_1_last_x128"`
+	TokensOwed0 bigint `json:"tokens_owed_0"`
+	TokensOwed1 bigint `json:"tokens_owed_1"`
+}
 
-// 	return string(rr)
-// }
+type ResponseGetPosition struct {
+	Stat     ApiQueryBase `json:"stat"`
+	Response struct {
+		Data SinglePosition `json:"data"`
+	} `json:"response"`
+}
 
-// func ApiGetPositionList() string {
-// 	abi := ApiBasicInfo{
-// 		Height:    GetHeight(),
-// 		Timestamp: int64(GetTimestamp()),
-// 	}
+func ApiGetPosition(key string) string {
+	// key is tokenID
+	_p, exists := positions.Get(key)
+	if !exists {
+		return "NO_POOL_FOUND"
+	}
 
-// 	tids := getTokenIdList()
-// 	apl := make(map[string]ApiPositionInfo)
-// 	for _, tid := range tids {
-// 		apl[string(tid)] = getPositionInfo(string(tid))
-// 	}
+	p := _p.(Position)
 
-// 	r := struct {
-// 		ApiBasicInfo
-// 		PositionList map[string]ApiPositionInfo
-// 	}{
-// 		abi,
-// 		apl,
-// 	}
+	qb := ApiQueryBase{
+		Height:    GetHeight(),
+		Timestamp: int64(GetTimestamp()),
+	}
 
-// 	rr, err := json.Marshal(r)
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	r := ResponseGetPosition{
+		Stat: qb,
+		Response: struct {
+			Data SinglePosition `json:"data"`
+		}{
+			Data: SinglePosition{
+				TokenID:     key,
+				Operator:    p.operator.String(), // string(p.operator)
+				PoolKey:     p.poolKey,
+				TickLower:   p.tickLower,
+				TickUpper:   p.tickUpper,
+				Liquidity:   p.liquidity,
+				TokensOwed0: p.tokensOwed0,
+				TokensOwed1: p.tokensOwed1,
+			},
+		},
+	}
 
-// 	return string(rr)
-// }
+	rr, err := json.Marshal(r)
+	if err != nil {
+		println("PANIC__ApiGetPosition")
+		panic(err)
+	}
 
-// func getPoolList() []ApiPoolList {
-// 	poolSize := poolIds.Size()
-// 	poolList := make([]ApiPoolList, poolSize)
+	return string(rr)
+}
 
-// 	for i := 0; i < poolSize; i++ {
-// 		key, value := poolIds.GetByIndex(i)
-// 		poolList[i] = ApiPoolList{
-// 			Address: std.Address(key),
-// 			Id:      value.(bigint),
-// 		}
-// 	}
+type ApiPosition struct {
+	Address     string `json:"address"`
+	TokenID     string `json:"token_id"`
+	PoolKey     string `json:"pool_key"`
+	TickLower   bigint `json:"tick_lower"`
+	TickUpper   bigint `json:"tick_upper"`
+	Liquidity   bigint `json:"liquidity"`
+	TokensOwed0 bigint `json:"tokens_owed_0"`
+	TokensOwed1 bigint `json:"tokens_owed_1"`
+}
 
-// 	return poolList
-// }
+type ResponseGetUserPositions struct {
+	Stat     ApiQueryBase `json:"stat"`
+	Response struct {
+		Data []ApiPosition `json:"data"`
+	} `json:"response"`
+}
 
-// func getTokenIdList() []bigint {
-// 	tids := make([]bigint, 0)
+func ApiGetPositionByUser(addr string) string {
+	userPositions := []ApiPosition{}
+	for i := 0; i < positions.Size(); i++ {
+		psk, pv := positions.GetByIndex(i)
 
-// 	for i := bigint(1); i < nextId; i++ {
-// 		exist := nft.Exists(grc721.TokenID(i))
+		position := pv.(Position)
+		plo := position.operator.String()
+		if plo != addr {
+			continue
+		} else {
+			plk := position.poolKey
 
-// 		if exist {
-// 			fid := i // found token id
-// 			tids = append(tids, fid)
-// 		}
-// 	}
+			ap := ApiPosition{
+				Address:     addr,
+				TokenID:     psk,
+				PoolKey:     plk,
+				TickLower:   position.tickLower,
+				TickUpper:   position.tickUpper,
+				Liquidity:   position.liquidity,
+				TokensOwed0: position.tokensOwed0,
+				TokensOwed1: position.tokensOwed1,
+			}
+			userPositions = append(userPositions, ap)
+		}
+	}
 
-// 	return tids
-// }
+	qb := ApiQueryBase{
+		Height:    GetHeight(),
+		Timestamp: int64(GetTimestamp()),
+	}
 
-// func getPositionInfo(tid string) ApiPositionInfo {
-// 	pi, ok := positions.Get(tid)
-// 	if ok {
-// 		return ApiPositionInfo(pi.(Position))
-// 	}
-// 	return nil
-// }
+	r := ResponseGetUserPositions{
+		Stat: qb,
+		Response: struct {
+			Data []ApiPosition `json:"data"`
+		}{
+			Data: userPositions,
+		},
+	}
+
+	rr, err := json.Marshal(r)
+	if err != nil {
+		println("PANIC__ApiGetPositionByUser")
+		panic(err)
+	}
+
+	return string(rr)
+}

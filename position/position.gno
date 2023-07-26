@@ -13,10 +13,6 @@ import (
 )
 
 var (
-	// poolIds         map[std.Address]bigint = make(map[std.Address]bigint)
-	// poolIdToPoolKey map[bigint]PoolKey = make(map[bigint]PoolKey)
-	// nextPoolId bigint = 1
-
 	// positions       map[string]Position = make(map[string]Position)
 	positions avl.Tree // tokenId -> Position
 	nextId    bigint   = 1

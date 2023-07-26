@@ -447,7 +447,23 @@ func TestNFTBurn(t *testing.T) {
 	shouldPanic(t, func() { burn("5") })
 }
 
-/* UTILs */
+/* GETTER_API TEST */
+func TestApiGetPositions(t *testing.T) {
+	gpss := ApiGetPositions()
+	println(gpss)
+}
+
+func TestApiGetPosition(t *testing.T) {
+	gps := ApiGetPosition("2")
+	println(gps)
+}
+
+func TestApiGetPositionByUser(t *testing.T) {
+	gpu := ApiGetPositionByUser("g1d3crqvjlta047h6lta047h6lta047h6ljnm9km") // lp02
+	println(gpu)
+}
+
+/* HELPER */
 func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {
 		t.Errorf("got %v, expected %v", got, expected)
