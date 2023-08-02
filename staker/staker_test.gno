@@ -145,6 +145,17 @@ func TestUnstakeAndWithdraw(t *testing.T) {
 	shouldEQ(t, nft.OwnerOf("1"), lp01)
 }
 
+/* GETTER_API TEST */
+func TestApiGetIncentives(t *testing.T) {
+	gis := ApiGetIncentives()
+	println(gis)
+}
+
+func TestApiGetStakes(t *testing.T) {
+	gss := ApiGetStakes()
+	println(gss)
+}
+
 /* HELPERS */
 func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {

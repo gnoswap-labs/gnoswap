@@ -1,217 +1,164 @@
 package staker
 
-// import (
-// 	"encoding/base64"
-// 	"encoding/json"
-// 	"std"
-// 	"strings"
+import (
+	b64 "encoding/base64"
+	"encoding/json"
+	"std"
+	"strings"
 
-// 	"gno.land/p/demo/avl"
-// )
+	"gno.land/p/demo/avl"
+)
 
-// type ApiIncentivesInfo struct {
-// 	Key       string
-// 	StartTime bigint
-// 	EndTime   bigint
-// 	// Refundee std.Address
-// 	// TotalRewardUnclaimed bigint
-// 	// TotalSecondsClaimedX128 bigint
-// 	NumberOfStakes bigint
-// }
+type ApiQueryBase struct {
+	Height    int64 `json:"height"`
+	Timestamp int64 `json:"timestamp"`
+}
 
-// type ApiDepositsInfo struct {
-// 	TokenId        string
-// 	Owner          std.Address
-// 	NumberOfStakes bigint
-// 	TickLower      bigint
-// 	TickUpper      bigint
-// }
+type ApiIncentive struct {
+	Key       string `json:"key"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+	Refundee  string `json:"refundee"`
+	NumStakes string `json:"num_stakes"`
+}
 
-// type ApiStakesInfo struct {
-// 	TokenID                              string
-// 	IncentiveID                          string
-// 	StartTime                            bigint
-// 	EndTime                              bigint
-// 	Refundee                             std.Address
-// 	SecondsPerLiquidityInsideInitialX128 bigint
-// 	LiquidityNoOverflow                  bigint
-// 	LiquidityIfOverflow                  bigint
-// }
+type ResponseGetIncentives struct {
+	Stat     ApiQueryBase `json:"stat"`
+	Response struct {
+		Data []ApiIncentive `json:"data"`
+	} `json:"response"`
+}
 
-// type ApiRewardInfo struct {
-// 	Address std.Address
-// 	Reward  bigint
-// }
+func ApiGetIncentives() string {
+	incentiveList := []ApiIncentive{}
 
-// type ApiBasicInfo struct {
-// 	Height    int64
-// 	Timestamp int64
-// }
+	for i := 0; i < incentives.Size(); i++ {
+		ik, iv := incentives.GetByIndex(i)
 
-// func ApiGetIncentivesInfo() string {
-// 	abi := ApiBasicInfo{
-// 		Height:    GetHeight(),
-// 		Timestamp: int64(GetTimestamp()),
-// 	}
+		incen := iv.(Incentive)
+		st, et, rf := incentiveKeyDivide(ik)
 
-// 	aii := getIncentivesList()
+		si := ApiIncentive{
+			Key:       ik,
+			StartTime: st,
+			EndTime:   et,
+			Refundee:  rf,
+			NumStakes: string(incen.numberOfStakes),
+		}
 
-// 	r := struct {
-// 		ApiBasicInfo
-// 		IncentivesList []ApiIncentivesInfo
-// 	}{
-// 		abi,
-// 		aii,
-// 	}
+		incentiveList = append(incentiveList, si)
+	}
 
-// 	rr, err := json.Marshal(r)
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	qb := ApiQueryBase{
+		Height:    GetHeight(),
+		Timestamp: int64(GetTimestamp()),
+	}
 
-// 	return string(rr)
-// }
+	r := ResponseGetIncentives{
+		Stat: qb,
+		Response: struct {
+			Data []ApiIncentive `json:"data"`
+		}{
+			Data: incentiveList,
+		},
+	}
 
-// func ApiGetStakesInfo() string {
-// 	abi := ApiBasicInfo{
-// 		Height:    GetHeight(),
-// 		Timestamp: int64(GetTimestamp()),
-// 	}
+	rr, err := json.Marshal(r)
+	if err != nil {
+		println("PANIC__ApiGetIncentives")
+		panic(err)
+	}
 
-// 	asi := getStakesList()
+	return string(rr)
+}
 
-// 	r := struct {
-// 		ApiBasicInfo
-// 		StakesList []ApiStakesInfo
-// 	}{
-// 		abi,
-// 		asi,
-// 	}
+// since `stakes` var includes `incentives`
+// below api might be duplicated wit ApiGetIncentives
+// need further test, specially when relationships are N:N:N // r3v4_xxx
+type ApiStake struct {
+	TokenID     string `json:"token_id"`
+	IncentiveID string `json:"incentive_id"`
+	StartTime   string `json:"start_time"`
+	EndTime     string `json:"end_time"`
+	Refundee    string `json:"refundee"`
+	// SecondsPerLiquidityInsideInitialX128 string `json:"seconds_per_liquidity_inside_initial_x128"`
+	LiquidityNoOverflow string `json:"liquidity_no_overflow"`
+	LiquidityIfOverflow string `json:"liquidity_if_overflow"`
+}
 
-// 	rr, err := json.Marshal(r)
-// 	if err != nil {
-// 		panic(err)
-// 	}
+type ResponseGetStakes struct {
+	Stat     ApiQueryBase `json:"stat"`
+	Response struct {
+		Data []ApiStake `json:"data"`
+	} `json:"response"`
+}
 
-// 	return string(rr)
-// }
+func ApiGetStakes() string {
+	stakeList := []ApiStake{}
 
-// func ApiGetRewardInfo() string {
-// 	abi := ApiBasicInfo{
-// 		Height:    GetHeight(),
-// 		Timestamp: int64(GetTimestamp()),
-// 	}
+	for i := 0; i < stakes.Size(); i++ {
+		sk, sv := stakes.GetByIndex(i) // tokenId -> avl.Tree (incentiveId -> Stake)
 
-// 	ari := getRewardList()
+		incentive := sv.(avl.Tree) // size should be always 1, I think
 
-// 	r := struct {
-// 		ApiBasicInfo
-// 		RewardList []ApiRewardInfo
-// 	}{
-// 		abi,
-// 		ari,
-// 	}
+		for j := 0; j < incentive.Size(); j++ {
+			ik, iv := incentive.GetByIndex(j) // incentiveId -> Stake
+			st, et, rf := incentiveKeyDivide(ik)
 
-// 	rr, err := json.Marshal(r)
-// 	if err != nil {
-// 		panic(err)
-// 	}
+			stake := iv.(Stake)
 
-// 	return string(rr)
-// }
+			ss := ApiStake{
+				TokenID:             string(sk),
+				IncentiveID:         ik,
+				StartTime:           st,
+				EndTime:             et,
+				Refundee:            rf,
+				LiquidityNoOverflow: string(stake.liquidityNoOverflow),
+				LiquidityIfOverflow: string(stake.liquidityIfOverflow),
+			}
 
-// func getIncentivesList() []ApiIncentivesInfo {
-// 	incentivesSize := incentives.Size()
-// 	incentivesList := make([]ApiIncentivesInfo, incentivesSize)
+			stakeList = append(stakeList, ss)
+		}
+	}
 
-// 	for i := 0; i < incentivesSize; i++ {
-// 		key, value := incentives.GetByIndex(i)
+	qb := ApiQueryBase{
+		Height:    GetHeight(),
+		Timestamp: int64(GetTimestamp()),
+	}
 
-// 		// decode key
-// 		decoded, err := base64.StdEncoding.DecodeString(key)
-// 		if err != nil {
-// 			panic(err)
-// 		}
-// 		origKey := string(decoded)
-// 		splitKey := strings.Split(origKey, "__")
+	r := ResponseGetStakes{
+		Stat: qb,
+		Response: struct {
+			Data []ApiStake `json:"data"`
+		}{
+			Data: stakeList,
+		},
+	}
 
-// 		incentivesList[i] = ApiIncentivesInfo{
-// 			Key:       key,
-// 			StartTime: bigint(splitKey[0]),
-// 			EndTime:   bigint(splitKey[1]),
-// 			// Refundee: std.Address(splitKey[2]),
-// 			// TotalRewardUnclaimed: value.(Incentive).totalRewardUnclaimed,
-// 			// TotalSecondsClaimedX128: value.(Incentive).totalSecondsClaimedX128,
-// 			NumberOfStakes: value.(Incentive).numberOfStakes,
-// 		}
-// 	}
+	rr, err := json.Marshal(r)
+	if err != nil {
+		println("PANIC__ApiGetIncentives")
+		panic(err)
+	}
 
-// 	return incentivesList
-// }
+	return string(rr)
+}
 
-// func getStakesList() []ApiStakesInfo {
-// 	stakesOuterSize := stakes.Size()
-// 	var totalSize int
+// xxx TBD when detailed stake logic is implemented
+// func ApiGetDeposits() string {} // how lockDuartion will be handled
+// func ApiGetReward() string {} // how reward will be calculated
 
-// 	for i := 0; i < stakesOuterSize; i++ {
-// 		_, value := stakes.GetByIndex(i)
+func incentiveKeyDivide(incenKey string) (string, string, string) {
+	// b64d
+	kDec, _ := b64.StdEncoding.DecodeString(incenKey)
+	incenKey = string(kDec)
 
-// 		_inner := value.(avl.Tree)
-// 		inner := _inner.(avl.Tree)
-// 		totalSize += inner.Size()
-// 	}
+	res := strings.Split(incenKey, "__")
+	if len(res) != 3 {
+		panic("incentiveKeyDivide: invalid incentiveKey")
+	}
 
-// 	stakesSize := totalSize
-// 	stakesList := make([]ApiStakesInfo, stakesSize)
+	startTime, endTime, refundee := res[0], res[1], res[2]
 
-// 	for j := 0; j < stakesOuterSize; j++ {
-// 		tid, value := stakes.GetByIndex(j)
-
-// 		_inner := value.(avl.Tree)
-// 		inner := _inner.(avl.Tree)
-
-// 		for k := 0; k < inner.Size(); k++ {
-// 			fk, fv := inner.GetByIndex(k)
-
-// 			// decode key
-// 			decoded, err := base64.StdEncoding.DecodeString(fk)
-// 			if err != nil {
-// 				panic(err)
-// 			}
-
-// 			origKey := string(decoded)
-// 			splitKey := strings.Split(origKey, "__")
-
-// 			sfv := fv.(Stake)
-
-// 			stakesList[k] = ApiStakesInfo{
-// 				TokenID:                              string(tid),
-// 				IncentiveID:                          fk,
-// 				StartTime:                            bigint(splitKey[0]),
-// 				EndTime:                              bigint(splitKey[1]),
-// 				Refundee:                             std.Address(splitKey[2]),
-// 				SecondsPerLiquidityInsideInitialX128: sfv.secondsPerLiquidityInsideInitialX128,
-// 				LiquidityNoOverflow:                  sfv.liquidityNoOverflow,
-// 				LiquidityIfOverflow:                  sfv.liquidityIfOverflow,
-// 			}
-// 		}
-// 	}
-
-// 	return stakesList
-// }
-
-// func getRewardList() []ApiRewardInfo {
-// 	rewardSize := rewards.Size()
-// 	rewardList := make([]ApiRewardInfo, rewardSize)
-
-// 	for i := 0; i < rewardSize; i++ {
-// 		key, value := rewards.GetByIndex(i)
-
-// 		rewardList[i] = ApiRewardInfo{
-// 			Address: std.Address(key),
-// 			Reward:  value.(bigint),
-// 		}
-// 	}
-
-// 	return rewardList
-// }
+	return startTime, endTime, refundee
+}
