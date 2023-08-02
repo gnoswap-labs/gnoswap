@@ -3,9 +3,6 @@ package gnoswap
 import (
 	"std"
 
-	"gno.land/p/demo/avl"
-	"gno.land/p/demo/grc/grc20"
-
 	"gno.land/r/demo/users"
 
 	bar "gno.land/r/bar"
@@ -366,7 +363,7 @@ func Swap(
 		if amount1 < 0 {
 			bar.Transfer(users.AddressOrName(recipient), uint64(-1*amount1))
 			// pool.token1.Transfer(users.AddressOrName(recipient), uint64(-1*amount1))
-			pool.balances.token1 -= amount1
+			pool.balances.token1 += amount1
 		}
 
 		balance0Before := BalanceOf(pool.token0, GetOrigPkgAddr())
@@ -386,7 +383,7 @@ func Swap(
 		if amount0 < 0 {
 			foo.Transfer(users.AddressOrName(recipient), uint64(-amount0))
 			// pool.token0.Transfer(users.AddressOrName(recipient), uint64(-amount0))
-			pool.balances.token0 -= amount0
+			pool.balances.token0 += amount0
 		}
 
 		balance1Before := BalanceOf(pool.token1, GetOrigPkgAddr())

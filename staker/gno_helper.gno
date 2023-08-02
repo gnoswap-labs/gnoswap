@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-// stdlibs
-// https://github.com/gnolang/gno/blob/master/stdlibs/stdlibs.go
 func GetTimestamp() bigint {
 	return bigint(time.Now().Unix())
 }
