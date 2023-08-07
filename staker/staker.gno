@@ -137,14 +137,9 @@ func WithdrawToken(tokenId string, to std.Address) {
 	// delete(deposits, tokenId)
 	deposits.Remove(tokenId)
 
-	// grc721 should use PrevRealm()
-	_orig := std.GetOrigCaller()            // XXX
-	std.TestSetOrigCaller(GetOrigPkgAddr()) // XXX
-	nto := nft.TransferFrom(a2u(PrevRealmAddr()), a2u(to), tid(tokenId))
-	if !nto {
-		panic("NFT TransferFrom Failed #2")
-	}
-	std.TestSetOrigCaller(_orig) // XXX
+	// xxx grc721 should use PrevRealm()
+	// approve then transfer (approve in testcase)
+	nft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(to), tid(tokenId))
 }
 
 func ClaimReward(
@@ -602,8 +597,5 @@ func transferDeposit(tokenId string, to std.Address) {
 	deposits.Set(tokenId, update)
 
 	// transfer actual NFT
-	nto := nft.TransferFrom(a2u(owner), a2u(to), tid(tokenId)) // nft transfer ok
-	if !nto {
-		panic("NFT TransferFrom Failed #1")
-	}
+	nft.TransferFrom(a2u(owner), a2u(to), tid(tokenId)) // nft transfer ok
 }

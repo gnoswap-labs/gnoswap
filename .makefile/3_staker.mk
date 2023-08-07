@@ -19,8 +19,8 @@ ADDR_STAKER := g13h5s9utqcwg3a655njen0p89txusjpfrs3vxp8
 TX_EXPIRE := 9999999999
 
 NOW := $(shell date +%s)
-INCENTIVE_START := $(shell expr $(NOW) + 35)
-INCENTIVE_END := $(shell expr $(NOW) + 60)
+INCENTIVE_START := $(shell expr $(NOW) + 60)
+INCENTIVE_END := $(shell expr $(NOW) + 100)
 
 
 MAKEFILE := 3_staker.mk
@@ -49,7 +49,7 @@ approve: approve-lp01 approve-lp02 approve-tr01
 pool: pool-init pool-create
 
 .PHONY: mint
-mint: mint-01 own-01 
+mint: mint-01 own-01 approve-01
 
 .PHONY: staker
 staker: create-incentive stake-token claim-reward unstake-token withdraw-token 
@@ -184,6 +184,11 @@ own-01:
 	@echo NFT tokenId 1 Owner: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/gnft\nOwnerOf(\"1\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
 	@echo
 
+approve-01:
+	$(info ************ [Approve] approve staker contract to spend tokenId 1 ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnft -func Approve -args $(ADDR_STAKER) -args "1" -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+
+	
 
 ## STAKER
 create-incentive:

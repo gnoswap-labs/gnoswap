@@ -78,13 +78,11 @@ func SetApprovalForAll(user users.AddressOrName, approved bool) {
 	}
 }
 
-func TransferFrom(from, to users.AddressOrName, tid grc721.TokenID) bool {
+func TransferFrom(from, to users.AddressOrName, tid grc721.TokenID) {
 	err := nft.TransferFrom(from.Resolve(), to.Resolve(), tid)
 	if err != nil {
-		return false
+		panic(err)
 	}
-
-	return true
 }
 
 // Admin
