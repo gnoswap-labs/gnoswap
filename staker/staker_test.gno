@@ -3,13 +3,8 @@ package staker
 import (
 	"std"
 	"testing"
-	"time"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/r/demo/users"
-
-	bar "gno.land/r/bar"
-	foo "gno.land/r/foo"
 
 	p "gno.land/r/pool"
 	s "gno.land/r/position"
@@ -75,6 +70,10 @@ func TestPositionMint(t *testing.T) {
 
 	shouldEQ(t, tPosTokenId, "1")
 	shouldEQ(t, nft.OwnerOf("1"), GetOrigCaller()) // lp01
+
+	// approve nft to staker
+	std.TestSetPrevAddr(lp01)
+	nft.Approve(a2u(GetOrigPkgAddr()), "1")
 }
 
 func TestCreateIncentive(t *testing.T) {
@@ -86,7 +85,7 @@ func TestCreateIncentive(t *testing.T) {
 	)
 
 	// nft owner doesn't change yet
-	shouldEQ(t, nft.OwnerOf("1"), lp01) // lp01
+	shouldEQ(t, nft.OwnerOf("1"), lp01) // lp0
 }
 
 func TestStakeToken(t *testing.T) {
