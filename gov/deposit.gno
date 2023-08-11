@@ -1,13 +1,17 @@
 package gov
 
+import (
+	"std"
+	"time"
+)
 
 // entry point for deposit on a proposal
-func (p *Proposal) deposit(depositor Address, amount bigint) bool {
+func (p *Proposal) deposit(depositor std.Address, amount uint64) bool {
 	if !p.isDepositPeriod() {
 		return false
 	}
 	
-	if p.Status != ProposalStatusDepositPeriod {
+	if p.ProposalStatus != ProposalStatusDepositPeriod {
 		panic("Bug: Proposal.deposit() called on a proposal not in deposit period")
 	}
 
@@ -15,19 +19,36 @@ func (p *Proposal) deposit(depositor Address, amount bigint) bool {
 		return false
 	}
 
-	proposalDeposis, ok := proposalDepositsMap.Get(p.ID)
+	key := proposalKey(p.ProposalID)
+
+	proposalDepositsInterface, ok := proposalDepositsMap.Get(key)
 	if !ok {
-		proposalDeposits = []Deposit{}
+		proposalDepositsInterface = []Deposit{}
 	}
+	proposalDeposits := proposalDepositsInterface.([]Deposit)
 	proposalDeposits = append(proposalDeposits, Deposit{depositor, amount})
-	proposalDepositsMap.Set(p.ID, proposalDeposits)
+	proposalDepositsMap.Set(key, proposalDeposits)
 	p.TotalDeposit += amount
 
 	return true
 }
 
+func (p *Proposal) refundDeposits() {
+	depositsInterface, ok := proposalDepositsMap.Get(proposalKey(p.ProposalID))
+	if !ok {
+		return
+	}
+
+	deposits := depositsInterface.([]Deposit)
+	for _, deposit := range deposits {
+		transfer(deposit.Depositor, deposit.Amount)
+	}
+
+	proposalDepositsMap.Remove(proposalKey(p.ProposalID))
+}
+
 func (p *Proposal) isDepositPeriod() bool {
-	return p.Status == ProposalStatusDepositPeriod
+	return p.ProposalStatus == ProposalStatusDepositPeriod
 }
 
 // checks if proposal has meet deposit minimum
@@ -48,8 +69,8 @@ func (p Proposal) isDepositSuccessful() bool {
 // this function panics if called on an invalid proposal 
 func (p *Proposal) transitFromDepositToVoting() {
 	p.ProposalStatus = ProposalStatusVotingPeriod
-	p.VotingStartTime = std.GetBlockTime()
-	p.VotingEndTime = p.VotingStartTime + getVotingPeriod()
+	p.VotingStartTime = uint64(time.Now().Unix())
+	p.VotingEndTime = p.VotingStartTime + getVotePeriod()
 }
 
 // checks if proposal has failed to meet deposit minumum
@@ -58,7 +79,7 @@ func (p *Proposal) transitFromDepositToVoting() {
 // - proposal deposit end time has passed
 // - proposal has failed to meet deposit minimum
 func (p Proposal) isDepositFailed() bool {
-	return p.isDepositPeriod() && std.GetBlockTime() > p.DepositEndTime && p.TotalDeposit < getDepositMinimum()
+	return p.isDepositPeriod() && uint64(time.Now().Unix()) > p.DepositEndTime && p.TotalDeposit < getDepositMinimum()
 }
 
 // returns updated proposal to be in failed state

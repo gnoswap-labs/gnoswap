@@ -1,8 +1,8 @@
 package gov
 
 type VoteQuorum struct {
-	Numerator   bigint
-	Denominator bigint
+	Numerator   uint64
+	Denominator uint64
 }
 
 func getVoteQuorum() VoteQuorum {
@@ -44,16 +44,16 @@ func setDepositPeriod(period uint64) {
 	setGovParameter("deposit_period", period)
 }
 
-func getDepositMinimum() bigint {
+func getDepositMinimum() uint64 {
 	param, ok := getGovParameter("deposit_minimum")
 	if !ok {
 		panic("deposit_minimum parameter not set")	
 	}
 
-	return param.(bigint)
+	return param.(uint64)
 }
 
-func setDepositMinimum(minimum bigint) {
+func setDepositMinimum(minimum uint64) {
 	setGovParameter("deposit_minimum", minimum)
 }
 
@@ -65,14 +65,14 @@ func init() {
 	// 1 day initially
 	setDepositPeriod(86400)
 	// 10000000 GNOS initially
-	setDepositMinimum(bigint(10000000))
+	setDepositMinimum(uint64(10000000))
 }
 
 func SubmitProposalGovParameterDepositMinimum(
 	title string,
 	summary string,
 	metadata string,
-	initialDeposit bigint,
+	initialDeposit uint64,
 
 	newDepositMinimum uint64,
 ) uint64 {
@@ -83,11 +83,10 @@ func SubmitProposalGovParameterDepositMinimum(
 		initialDeposit,
 		[]ParameterChange{
 			ParameterChange{
-				"gov",
 				"deposit_minimum",
 				newDepositMinimum,
 			},
-		}
+		},
 	)
 }
 
@@ -95,7 +94,7 @@ func SubmitProposalGovParameterDepositPeriod(
 	title string,
 	summary string,
 	metadata string,
-	initialDeposit bigint,
+	initialDeposit uint64,
 
 	newDepositPeriod uint64,
 ) uint64 {
@@ -107,11 +106,10 @@ func SubmitProposalGovParameterDepositPeriod(
 
 		[]ParameterChange{
 			ParameterChange{
-				"gov",
 				"deposit_period",
 				newDepositPeriod,
 			},
-		}
+		},
 	)
 }
 
@@ -131,11 +129,10 @@ func SubmitProposalGovParameterVotingPeriod(
 
 		[]ParameterChange{
 			ParameterChange{
-				"gov",
 				"voting_period",
 				newVotingPeriod,
 			},
-		}
+		},
 	)
 }
 
@@ -156,13 +153,12 @@ func SubmitProposalGovParameterVoteQuorum(
 
 		[]ParameterChange{
 			ParameterChange{
-				"gov",
 				"vote_quorum",
 				VoteQuorum{
 					newVoteQuorumNumerator,
 					newVoteQuorumDenominator,
 				},
-			}
-		}
+			},
+		},
 	)
 }

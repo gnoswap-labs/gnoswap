@@ -1,4 +1,4 @@
-package pool
+package gnoswap
 
 var govRealm string
 

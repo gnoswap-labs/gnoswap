@@ -1,4 +1,4 @@
-package pool
+package gnoswap
 
 import (
 	"gno.land/r/gov"
@@ -20,7 +20,7 @@ func setProtocolFees(newFees ProtocolFees) {
 func SubmitProposalParameterProtocolFees(
 	title string,
 	summary string,
-	newFees ProtocolFees
+	newFees ProtocolFees,
 ) uint64 {
 	return gov.SubmitProposalParameterChange(
 		title,

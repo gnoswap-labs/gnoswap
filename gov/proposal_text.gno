@@ -3,7 +3,7 @@ package gov
 //////////////////////////
 // ProposalText
 
-var _ Proposal = (*ProposalText)(nil)
+var _ ProposalData = ProposalText{} 
 
 type ProposalText struct {
 	// (empty)
@@ -13,8 +13,8 @@ func (p ProposalText) ProposalType() ProposalType {
 	return ProposalTypeText
 }
 
-func (p ProposalText) isProposal() {}
+func (p ProposalText) isProposalData() {}
 
-func (p ProposalText) execute() {
-	// do nothing
+func (p ProposalText) execute() error {
+	return nil
 }

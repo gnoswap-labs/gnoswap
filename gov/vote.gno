@@ -1,5 +1,12 @@
 package gov
 
+import (
+	"std"
+	"time"
+
+	"gno.land/p/demo/avl"
+)
+
 type VoteOption uint8 
 
 const (
@@ -11,10 +18,10 @@ const (
 
 type Vote struct {
 	VoteOption VoteOption
-	Power    bigint
+	Power    uint64
 }
 
-func (p *Proposal) vote(caller Address, option VoteOption, amount bigint) {
+func (p *Proposal) vote(caller std.Address, option VoteOption, amount uint64) {
 	if p == nil {
 		panic("Proposal.vote() called on a nil proposal")
 	}
@@ -25,30 +32,35 @@ func (p *Proposal) vote(caller Address, option VoteOption, amount bigint) {
 
 	vote := Vote{option, amount}
 
-	oldVote, ok := p.Voters.Get(caller)
+	proposalVotesInterface, ok := proposalVotesMap.Get(proposalKey(p.ProposalID))
 	if !ok {
-		oldVote = Vote{VoteNil, bigint(0)}
+		proposalVotesInterface = avl.NewTree()
 	}
+
+	proposalVotes := proposalVotesInterface.(*avl.Tree)
+
+	oldVoteInterface, ok := proposalVotes.Get(string(caller))
+	if !ok {
+		oldVoteInterface = Vote{VoteNil, uint64(0)}
+	}
+
+	oldVote := oldVoteInterface.(Vote)
 
 	p.updateVote(oldVote, vote)
 
-	proposalVotes, ok := proposalVotesMap.Get(p.ID)
-	if !ok {
-		proposalVotes = avl.NewTree()
-	}
+	proposalVotes.Set(string(caller), vote)
+	proposalVotesMap.Set(proposalKey(p.ProposalID), proposalVotes)
 
-	proposalVotes.Put(caller, vote)
-	proposalVotersMap.Set(p.ID, proposalVotes)
-
-	votes, ok := votersMap.Get(newVote.Address)
+	votesInterface, ok := votersMap.Get(string(caller))
 	if !ok {
-		voters = avl.NewTree()
+		votesInterface = avl.NewTree()
 	}
-	votes.Put(p.ID, vote)
+	votes := votesInterface.(*avl.Tree)
+	votes.Set(proposalKey(p.ProposalID), vote)
 }
 
 func (p Proposal) isVotingPeriod() bool {
-	return p.Status == ProposalStatusVotingPeriod
+	return p.ProposalStatus == ProposalStatusVotingPeriod
 }
 
 // checks if the vote have met the pass condition
@@ -58,8 +70,9 @@ func (p Proposal) isVotingPeriod() bool {
 // - proposal is in voting period
 // - (YesVotes+NoVotes)/totalVotingPower >= VoteQuorumNumerator/VoteQuorumDenominator
 // - YesVotes > NoVotes
-func (p Proposal) isPassConditionMet(totalVotingPower bigint) bool {
-	return p.isVotingPeriod() && p.YesVotes > p.NoVotes && p.YesVotes+p.NoVotes >= getVoteQuorumNumerator()*totalVotingPower/getVoteQuorumDenominator()
+func (p Proposal) isPassConditionMet(totalVotingPower uint64) bool {
+	quorum := getVoteQuorum()
+	return p.isVotingPeriod() && p.YesVotes > p.NoVotes && p.YesVotes+p.NoVotes >= quorum.Numerator*totalVotingPower/quorum.Denominator
 }
 
 // checks if proposal has passed
@@ -68,7 +81,7 @@ func (p Proposal) isPassConditionMet(totalVotingPower bigint) bool {
 // - VotingEndTime has passed
 // - proposal.isPassConditionMet() returns true
 func (p Proposal) isVotingPassed() bool {
-	return p.isVotingPeriod() && std.GetBlockTime() > p.VotingEndTime && p.isPassConditionMet()	
+	return p.isVotingPeriod() && uint64(time.Now().Unix()) > p.VotingEndTime && p.isPassConditionMet(1 /*TODO*/)	
 }
 
 // checks if proposal has failed
@@ -77,10 +90,10 @@ func (p Proposal) isVotingPassed() bool {
 // - VotingEndTime has passed
 // - proposal.isPassConditionMet() returns false
 func (p Proposal) isVotingRejected() bool {
-	return p.isVotingPeriod() && std.GetBlockTime() > p.VotingEndTime && !p.isPassConditionMet()
+	return p.isVotingPeriod() && uint64(time.Now().Unix()) > p.VotingEndTime && !p.isPassConditionMet(1 /*TODO*/)
 }
 
-func (p *Proposal) updateVotingPower(oldPower bigint, newPower bigint) {
+func (p *Proposal) updateVotingPower(option VoteOption, oldPower uint64, newPower uint64) {
 	if p == nil {
 		panic("Bug: Proposal.updateVotingPower() called on a nil proposal")
 	}
@@ -89,7 +102,19 @@ func (p *Proposal) updateVotingPower(oldPower bigint, newPower bigint) {
 		panic("Bug: Proposal.updateVotingPower() called on a proposal not in voting period")
 	}
 
-	p.TotalVotingPower += newPower - oldPower
+	switch option {
+	case VoteNil:
+		break
+	case VoteAbstain:
+		p.AbstainVotes -= oldPower
+		p.AbstainVotes += newPower
+	case VoteNo:
+		p.NoVotes -= oldPower
+		p.NoVotes += newPower
+	case VoteYes:
+		p.YesVotes -= oldPower
+		p.YesVotes += newPower
+	}
 }
 
 func (p *Proposal) updateVote(oldVote Vote, newVote Vote) {

@@ -1,6 +1,11 @@
 package gov
 
-const govRealm = "gno.land/r/gov"
+import (
+	"std"
+	"fmt"
+)
+
+var govRealm = std.CurrentRealm() 
 
 var parameters map[string]interface{}
 
@@ -8,17 +13,18 @@ func init() {
 	parameters = make(map[string]interface{})
 }
 
-func parameterKey(realm string, key string) string {
-	return realm + ":" + key
+func parameterKey(realm std.Realm, key string) string {
+	return fmt.Sprintf("%s:%s", realm.Addr(), key)
 }
 
 // GetParameter returns the value of a parameter
-func getParameter(realm string, key string) (interface{}, bool) {
-	return parameters[parameterKey(realm, key)]
+func getParameter(realm std.Realm, key string) (interface{}, bool) {
+	res, ok := parameters[parameterKey(realm, key)]
+	return res, ok
 }
 
 // setParameter sets the value of a parameter
-func setParameter(realm string, key string, value interface{}) {
+func setParameter(realm std.Realm, key string, value interface{}) {
 	parameters[parameterKey(realm, key)] = value
 }
 
@@ -39,14 +45,16 @@ type ParameterChange struct {
 	Value interface{}
 }
 
-func setParameters(realm string, changes []ParameterChange) {
+func setParameters(realm std.Realm, changes []ParameterChange) {
 	for _, change := range changes {
 		setParameter(realm, change.Key, change.Value)
 	}
 }
 
+var _ ProposalData = ProposalParameterChange{}
+
 type ProposalParameterChange struct {
-	Realm string
+	Realm std.Realm
 	Changes []ParameterChange
 }
 
@@ -54,8 +62,10 @@ func (p ProposalParameterChange) ProposalType() ProposalType {
 	return ProposalTypeParameterChange
 }
 
-func (p ProposalParameterChange) isProposal() {}
+func (p ProposalParameterChange) isProposalData() {}
 
-func (p ProposalParameterChange) Execute() {
+func (p ProposalParameterChange) execute() error {
 	setParameters(p.Realm, p.Changes)
+
+	return nil
 }

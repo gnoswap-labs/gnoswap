@@ -1,6 +1,8 @@
 package gov
 
 import (
+	"std"
+
 	"time"
 )
 
@@ -23,7 +25,7 @@ const (
 	*/
 )
 
-type ProposalContent interface {
+type ProposalData interface {
 	ProposalType() ProposalType
 	isProposalData()
 
@@ -44,8 +46,8 @@ const (
 )
 
 type Deposit struct {
-	Depositor string
-	Amount bigint
+	Depositor std.Address
+	Amount uint64
 }
 
 type Proposal struct {
@@ -53,7 +55,7 @@ type Proposal struct {
 	ProposalID  uint64
 	ProposalStatus ProposalStatus
 	ProposalType ProposalType
-	Proposer     Address
+	Proposer     std.Address
 
 	// Proposal content
 	Title      string
@@ -61,13 +63,13 @@ type Proposal struct {
 	Metadata   string
 
 	// Deposit data
-	TotalDeposit bigint
+	TotalDeposit uint64
 
 	// Voting data
 	Passed       bool
-	YesVotes     bigint
-	NoVotes      bigint
-	AbstainVotes bigint // Explicitly abstained votes, excluding non-voters
+	YesVotes     uint64
+	NoVotes      uint64
+	AbstainVotes uint64 // Explicitly abstained votes, excluding non-voters
 	
 	// Internal timestamps
 	SubmitTime   uint64
@@ -79,7 +81,7 @@ type Proposal struct {
 	// Cached gov parameters, set at proposal creation time
 	// Governance parameter changes are not retroactive
 	DepositPeriod uint64
-	DepositMinimum bigint
+	DepositMinimum uint64
 	VotingPeriod uint64
 	VoteQuorum VoteQuorum
 
@@ -89,10 +91,9 @@ type Proposal struct {
 
 func newProposal(
 	proposalID uint64,
-	proposalType ProposalType,
-	proposer Address,
+	proposer std.Address,
 
-	initialDeposit bigint,
+	initialDeposit uint64,
 
 	title string,
 	summary string,
@@ -102,7 +103,7 @@ func newProposal(
 ) Proposal {
 	depositPeriod := getDepositPeriod()
 	depositMinimum := getDepositMinimum()
-	votingPeriod := getVotingPeriod()
+	votingPeriod := getVotePeriod()
 	voteQuorum := getVoteQuorum()
 	deposits := make([]Deposit, 0)
 	if initialDeposit > 0 {
@@ -111,6 +112,8 @@ func newProposal(
 			Amount: initialDeposit,
 		})
 	}
+
+	key := proposalKey(proposalID)
 
 	return Proposal{
 		ProposalID: proposalID,
@@ -123,15 +126,14 @@ func newProposal(
 		Metadata: metadata,
 
 		TotalDeposit: initialDeposit,
-		Deposits: deposits,
 
 		Passed: false,
 		YesVotes: 0,
 		NoVotes: 0,
 		AbstainVotes: 0,
 
-		SubmitTime: time.Now(),
-		DepositEndTime: time.Now().Add(depositPeriod),
+		SubmitTime: uint64(time.Now()),
+		DepositEndTime: uint64(time.Now().Add(time.Duration(depositPeriod))),
 		VotingStartTime: 0,
 		VotingEndTime: 0,
 

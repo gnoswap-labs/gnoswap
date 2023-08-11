@@ -1,60 +1,60 @@
 package gov
 
 import (
+	"std"
+
 	"gno.land/r/gnos"
+
+	"gno.land/p/demo/avl"
+
+
 )
 
-func UpdateVotingPower(address string, oldPower bigint, newPower bigint) {
-	proposals, ok := votersMap.Get(address)
+func UpdateVotingPower(address string, newPower uint64) {
+	votesInterface, ok := votersMap.Get(address)
 	if !ok {
 		return
 	}
 
-	for iter := proposals.Iterate(); iter != nil; iter = iter.Next() {
-		proposalIDKey := iter.Key()
-		proposalInterface, ok := proposals.Get(proposalIDKey)
+	votes := votesInterface.(*avl.Tree)
+	
+	votes.Iterate("", "", func(key string, value interface{}) bool {	
+		proposalInterface, ok := proposals.Get(key)
 		if !ok {
 			panic("Bug: proposal is not retrievable from proposalVotersMap")
 		}
 		proposal := proposalInterface.(*Proposal)
 		if !proposal.isActive() {
-			continue
+			return false
 		}
-		proposal.updateVotingPower(oldPower, newPower)
-		setProposal(proposalID, proposal)
-	}
+		vote := value.(Vote)
+		proposal.updateVotingPower(vote.VoteOption, vote.Power, newPower)
+		proposals.Set(key, proposal)
+
+		return false
+	})
 }
 
-func Vote(proposalID uint64, option VoteOption) {
+func MakeVote(proposalID uint64, option VoteOption) {
 	caller := std.GetOrigCaller()
-	amount := gnos.BalanceOf(caller)
+	amount := balanceOf(caller) 
 
 	proposal := GetProposal(proposalID)
 	proposal.vote(caller, option, amount)
-	if proposal.isVotingPassed() {
-		proposal.transitFromVotingToPassed()
-	}
-	if proposal.isVotingRejected() {
-		proposal.transitFromVotingToRejected()
-	}
 
 	setProposal(proposalID, proposal)
-
 }
 
-func Deposit(proposalID uint64, amount uint64) {
+func MakeDeposit(proposalID uint64, amount uint64) {
 	caller := std.GetOrigCaller()
-	gnos.Transfer(caller, gov, amount)
+	///////////// XX
+	// commented out, replace `gov` with the address of the gov contract
+	// gnos.Transfer(users.AddressOrName(caller), gov, amount)
 
 	proposal := GetProposal(proposalID)
 	proposal.deposit(caller, amount)
 
 	setProposal(proposalID, proposal)
-}
-
-func GetProposal(proposalID uint64) Proposal {
-	ps := getProposalState(proposalID)
-	return ps.Proposal
 }
 
 func GetActiveProposals() []Proposal {
@@ -66,7 +66,7 @@ func SubmitProposalText(
 	title string,
 	summary string,
 	metadata string,
-	initialDeposit bigint,
+	initialDeposit uint64,
 ) uint64 {
 	data := ProposalText{}
 
@@ -83,9 +83,9 @@ func SubmitProposalCommunityPoolSpend(
 	title string,
 	summary string,
 	metadata string,
-	initialDeposit bigint,
+	initialDeposit uint64,
 
-	recipient string,
+	recipient std.Address,
 	amount uint64,
 ) uint64 {
 	data := ProposalCommunityPoolSpend {
@@ -106,9 +106,9 @@ func SubmitProposalMint(
 	title string,
 	summary string,
 	metadata string,
-	initialDeposit bigint,
+	initialDeposit uint64,
 
-	recipient string,
+	recipient std.Address,
 	amount uint64,
 ) uint64 {
 	data := ProposalMint{
@@ -124,12 +124,12 @@ func SubmitProposalMint(
 		data,
 	)
 }
-
+/*
 func SubmitProposalEmergencyHalt(
 	title string,
 	summary string,
 	metadata string,
-	initialDeposit bigint,
+	initialDeposit uint64,
 
 	haltPool bool,
 	haltStaker bool,
@@ -149,26 +149,21 @@ func SubmitProposalEmergencyHalt(
 		data,
 	)
 }
-
+*/
 // Intended to be called by realms
 func SubmitProposalParameterChanges(
 	title string,
 	summary string,
 	metadata string,
-	initialDeposit bigint,
+	initialDeposit uint64,
 
 	changes []ParameterChange,
 ) uint64 {
-	realm := std.GetPrevRealm()
+	realm := std.PrevRealm()
 
 	data := ProposalParameterChange{
-		Changes: []ParameterChange{
-			ParameterChange{
-				Realm: realm,
-				Key: key,
-				Value: parameter,
-			}
-		}
+		Realm: realm,
+		Changes: changes, 
 	}
 
 	return submitProposal(
@@ -184,16 +179,18 @@ func submitProposal(
 	title string,
 	summary string,
 	metadata string,	
-	initialDeposit bigint,
+	initialDeposit uint64,
 	data ProposalData,
 ) uint64 {
 	origin := std.GetOrigCaller()
 
-	gnos.Transfer(origin, gov, initialDeposit)
+	// XXXXXXXX
+	// commented out, replace `gov` with the address of the gov contract
+	// gnos.Transfer(origin, gov, initialDeposit)
 
 	proposalID := getNextProposalID()
 
-	proposal := newProposal(
+	proposal := &newProposal(
 		proposalID,
 		origin,
 
@@ -206,8 +203,10 @@ func submitProposal(
 		data,
 	)
 
-	proposalDepositorsMap.Put(proposalID, avl.NewTree())
-	proposalVotersMap.Put(proposalID, avl.NewTree())
+	key := proposalKey(proposalID)
+
+	proposalDepositsMap.Set(key, []Deposit{})
+	proposalVotesMap.Set(key, avl.NewTree())
 
 	// initializes proposals and proposalQueue
 	setProposal(proposalID, proposal)

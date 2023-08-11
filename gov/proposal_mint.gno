@@ -1,30 +1,37 @@
 package gov 
 
 import (
+	"std"
+
+	"errors"
+
 	gnos "gno.land/r/gnos" // GNOS, Gnoswap Share
 )
 
 //////////////////////////
 // ProposalMint
 
-var _ ProposalContent = (*ProposalMint)(nil)
+var _ ProposalData = (*ProposalMint)(nil)
 
 type ProposalMint struct {
-	Receiver Address
+	Recipient std.Address
 	Amount   uint64
-	Token    Address
+	Token    std.Address
 }
 
 func (p ProposalMint) ProposalType() ProposalType {
 	return ProposalTypeMint
 }
 
-func (p ProposalMint) isProposal() {}
+func (p ProposalMint) isProposalData() {}
 
 func (p ProposalMint) isValid() bool {
+	// XXXXXX
+	/*
 	if p.Token != GNOS_TOKEN_ADDRESS {
 		return false
 	}
+	*/
 	return true
 }
 
@@ -33,7 +40,7 @@ func (p ProposalMint) execute() error {
 		return errors.New("unimplemented: only GNOS token is supported")
 	}
 
-	gnos.Mint(receiver.Address, receiver.Amount)
+	mint(p.Recipient, p.Amount)
 
 	return nil
 }
