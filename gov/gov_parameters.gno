@@ -58,6 +58,8 @@ func setDepositMinimum(minimum uint64) {
 }
 
 func init() {
+	parameters = make(map[string]interface{})
+
 	// 1/3 quorum initially
 	setVoteQuorum(VoteQuorum{1000, 3000})
 	// 3 day initially

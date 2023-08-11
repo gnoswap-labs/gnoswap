@@ -9,9 +9,6 @@ var govRealm = std.CurrentRealm()
 
 var parameters map[string]interface{}
 
-func init() {
-	parameters = make(map[string]interface{})
-}
 
 func parameterKey(realm std.Realm, key string) string {
 	return fmt.Sprintf("%s:%s", realm.Addr(), key)
