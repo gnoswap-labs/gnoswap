@@ -43,9 +43,9 @@ func GetProposal(proposalID uint64) *Proposal {
 		return nil
 	}
 
-	proposal := proposalInterface.(*Proposal)
+	proposal := proposalInterface.(Proposal)
 
-	return proposal
+	return &proposal
 }
 
 func proposalKey(proposalID uint64) string {

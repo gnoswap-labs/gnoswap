@@ -1,5 +1,0 @@
-package gov
-
-func asdf() {
-
-}

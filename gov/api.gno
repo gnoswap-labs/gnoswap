@@ -190,7 +190,7 @@ func submitProposal(
 
 	proposalID := getNextProposalID()
 
-	proposal := &newProposal(
+	proposal := newProposal(
 		proposalID,
 		origin,
 
@@ -202,7 +202,6 @@ func submitProposal(
 
 		data,
 	)
-
 	key := proposalKey(proposalID)
 
 	proposalDepositsMap.Set(key, []Deposit{})
@@ -210,6 +209,5 @@ func submitProposal(
 
 	// initializes proposals and proposalQueue
 	setProposal(proposalID, proposal)
-
 	return proposalID
 }

@@ -100,7 +100,7 @@ func newProposal(
 	metadata string,
 
 	data ProposalData,
-) Proposal {
+) *Proposal {
 	depositPeriod := getDepositPeriod()
 	depositMinimum := getDepositMinimum()
 	votingPeriod := getVotePeriod()
@@ -115,7 +115,7 @@ func newProposal(
 
 	key := proposalKey(proposalID)
 
-	return Proposal{
+	return &Proposal{
 		ProposalID: proposalID,
 		ProposalStatus: ProposalStatusDepositPeriod,
 		ProposalType: data.ProposalType(),
@@ -132,8 +132,8 @@ func newProposal(
 		NoVotes: 0,
 		AbstainVotes: 0,
 
-		SubmitTime: uint64(time.Now()),
-		DepositEndTime: uint64(time.Now().Add(time.Duration(depositPeriod))),
+		SubmitTime: uint64(time.Now().Unix()),
+		DepositEndTime: uint64(time.Now().Unix() + int64(depositPeriod)),
 		VotingStartTime: 0,
 		VotingEndTime: 0,
 
