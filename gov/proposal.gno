@@ -62,7 +62,6 @@ type Proposal struct {
 
 	// Deposit data
 	TotalDeposit bigint
-	Deposits     []Deposit
 
 	// Voting data
 	Passed       bool

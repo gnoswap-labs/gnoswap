@@ -4,17 +4,57 @@ import (
 	"gno.land/r/gnos"
 )
 
+func UpdateVotingPower(address string, oldPower bigint, newPower bigint) {
+	proposals, ok := votersMap.Get(address)
+	if !ok {
+		return
+	}
+
+	for iter := proposals.Iterate(); iter != nil; iter = iter.Next() {
+		proposalIDKey := iter.Key()
+		proposalInterface, ok := proposals.Get(proposalIDKey)
+		if !ok {
+			panic("Bug: proposal is not retrievable from proposalVotersMap")
+		}
+		proposal := proposalInterface.(*Proposal)
+		if !proposal.isActive() {
+			continue
+		}
+		proposal.updateVotingPower(oldPower, newPower)
+		setProposal(proposalID, proposal)
+	}
+}
+
 func Vote(proposalID uint64, option VoteOption) {
 	caller := std.GetOrigCaller()
-	gnos.
+	amount := gnos.BalanceOf(caller)
+
+	proposal := GetProposal(proposalID)
+	proposal.vote(caller, option, amount)
+	if proposal.isVotingPassed() {
+		proposal.transitFromVotingToPassed()
+	}
+	if proposal.isVotingRejected() {
+		proposal.transitFromVotingToRejected()
+	}
+
+	setProposal(proposalID, proposal)
+
 }
 
 func Deposit(proposalID uint64, amount uint64) {
-	// TODO
+	caller := std.GetOrigCaller()
+	gnos.Transfer(caller, gov, amount)
+
+	proposal := GetProposal(proposalID)
+	proposal.deposit(caller, amount)
+
+	setProposal(proposalID, proposal)
 }
 
 func GetProposal(proposalID uint64) Proposal {
-	// TODO
+	ps := getProposalState(proposalID)
+	return ps.Proposal
 }
 
 func GetActiveProposals() []Proposal {
@@ -166,6 +206,10 @@ func submitProposal(
 		data,
 	)
 
+	proposalDepositorsMap.Put(proposalID, avl.NewTree())
+	proposalVotersMap.Put(proposalID, avl.NewTree())
+
+	// initializes proposals and proposalQueue
 	setProposal(proposalID, proposal)
 
 	return proposalID

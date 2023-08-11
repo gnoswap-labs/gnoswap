@@ -71,11 +71,24 @@ func init() {
 func SubmitProposalGovParameterDepositMinimum(
 	title string,
 	summary string,
-	newDepositMinimumNumerator uint64,
-	newDepositMinimumDenominator uint64,
+	metadata string,
+	initialDeposit bigint,
+
+	newDepositMinimum uint64,
 ) uint64 {
-	// TODO
-	return 0
+	return SubmitProposalParameterChanges(
+		title,
+		summary,
+		metadata,
+		initialDeposit,
+		[]ParameterChange{
+			ParameterChange{
+				"gov",
+				"deposit_minimum",
+				newDepositMinimum,
+			},
+		}
+	)
 }
 
 func SubmitProposalGovParameterDepositPeriod(
@@ -86,24 +99,70 @@ func SubmitProposalGovParameterDepositPeriod(
 
 	newDepositPeriod uint64,
 ) uint64 {
-	
+	return SubmitProposalParameterChanges(
+		title,
+		summary,
+		metadata,
+		initialDeposit,
+
+		[]ParameterChange{
+			ParameterChange{
+				"gov",
+				"deposit_period",
+				newDepositPeriod,
+			},
+		}
+	)
 }
 
 func SubmitProposalGovParameterVotingPeriod(
 	title string,
 	summary string,
+	metadata string,
+	initialDeposit uint64, 
+
 	newVotingPeriod uint64,
 ) uint64 {
-	// TODO
-	return 0
+	return SubmitProposalParameterChanges(
+		title,
+		summary,
+		metadata,
+		initialDeposit,
+
+		[]ParameterChange{
+			ParameterChange{
+				"gov",
+				"voting_period",
+				newVotingPeriod,
+			},
+		}
+	)
 }
 
 func SubmitProposalGovParameterVoteQuorum(
 	title string,
 	summary string,
+	metadata string,
+	initialDeposit uint64,
+
 	newVoteQuorumNumerator uint64,
 	newVoteQuorumDenominator uint64,
 ) uint64 {
-	// TODO
-	return 0
+	return SubmitProposalParameterChanges(
+		title,
+		summary,
+		metadata,
+		initialDeposit,
+
+		[]ParameterChange{
+			ParameterChange{
+				"gov",
+				"vote_quorum",
+				VoteQuorum{
+					newVoteQuorumNumerator,
+					newVoteQuorumDenominator,
+				},
+			}
+		}
+	)
 }

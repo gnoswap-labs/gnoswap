@@ -1,13 +1,28 @@
 package gov
 
+func tally() {
+	currentTime := std.GetBlockTime()
+
+	for iter := proposalQueue.Iterate(); iter != nil; iter = iter.Next() {
+		proposalID := iter.Value()
+		proposal := getProposal(proposalID)
+		if proposal.process(currentTime) {
+			break
+		}
+
+		proposalQueue.Remove(iter.Key())
+		proposals.Set(proposalID, proposal)
+	}
+}
+
 // processes a single prooposal. assumes that the proposal is at the front of the queue
-func (p *Proposal) process(currentTime uint64) {
+func (p *Proposal) process(currentTime uint64) (stop bool) {
 	if !p.isActive() {
-		return
+		return true
 	}
 
 	if !p.hasMetEndTime(currentTime) {
-		return
+		return true
 	}
 
 	switch p.ProposalStatus {
@@ -18,6 +33,8 @@ func (p *Proposal) process(currentTime uint64) {
 	default: // ProposalStatusPassed, ProposalStatusRejected, ProposalStatusFailed
 		// do nothing
 	}
+
+	return false
 }
 
 func (p *Proposal) processDepositPeriod(currentTime uint64) {

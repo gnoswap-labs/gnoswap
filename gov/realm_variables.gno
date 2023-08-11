@@ -13,94 +13,69 @@ func getNextProposalID() uint64 {
 	return id
 }
 
-var proposals *avl.Tree // ProposalID => ProposalState
+var proposals *avl.Tree // ProposalID => Proposal
+
+var proposalDepositsMap *avl.Tree // ProposalID => []Deposit
+
+var proposalVotesMap *avl.Tree // ProposalID => Map[Address]Vote
 
 var proposalQueue *avl.Tree // ({Deposit, Voting}EndTime | ProposalID) => ProposalID
 
-var voters *avl.Tree // Address => Map[ProposalID]Vote
+var votersMap *avl.Tree // Address => Map[ProposalID]Vote
 
 // retrieves proposal state by ID
-func getProposalState(proposalID uint64) *ProposalState {
+func GetProposal(proposalID uint64) *Proposal {
 	if proposals == nil {
 		panic("Bug: gov.getProposal() called before gov.init()")
 	}
 
-	proposal, ok := proposals.Get(proposalID)
+	proposalInterface, ok := proposals.Get(proposalID)
 	if !ok {
 		return nil
 	}
 
-	return proposal.(*ProposalState)
+	proposal := proposalInterface.(*Proposal)
+
+	return proposal
 }
 
 func proposalQueueKey(endtime uint64, proposalID uint64) string {
 	return fmt.Sprintf("%020d:%020d", endtime, proposalID)
 }
 
-// peeks the earlist(either by deposit end time or voting end time, depending on the proposal status) proposal from the queue
-func peekProposalQueue() *uint64 {
-	if proposalQueue == nil {
-		panic("Bug: gov.peekProposalQueue() called before gov.init()")
-	}
-
-	if proposalQueue.Size() == 0 {
-		return nil
-	}
-
-	_, proposalID := proposalQueue.Iterate()
-	return &proposalID
-}
-
-func popProposalQueue(id uint64) {
-	if proposalQueue == nil {
-		panic("Bug: gov.popProposalQueue() called before gov.init()")
-	}
-
-	first := proposalQueue.Iterate()
-	if first == nil {
-		panic("Bug: gov.popProposalQueue() called on an empty queue")
-	}
-
-	_, proposalID := first.(string)
-	if proposalID != id {
-		panic("Bug: gov.popProposalQueue() called on a non-first proposal")
-	}
-
-	proposalQueue.Remove(first.Key)
-}
-
 // sets proposal by ID, and updates the queue accordingly
 func setProposal(proposalID uint64, proposalState ProposalState) {
+	proposals.Set(proposalID, proposalState)
 	
+	if proposalState.Proposal.Status == ProposalStatusDepositPeriod {
+		proposalQueue.Put(proposalQueueKey(proposalState.Proposal.DepositEndTime, proposalID), proposalID)
+		return
+	} 
+	
+	if proposalState.Proposal.Status == ProposalStatusVotingPeriod {
+		proposalQueue.Put(proposalQueueKey(proposalState.Proposal.VotingEndTime, proposalID), proposalID)
+		return
+	}	
+
+	// proposal is not in deposit or voting period, either rejected or failed to pass deposit period
+	// no need to update queue
 }
 
-
-type ProposalState struct {
-	Proposal Proposal
-	Voters *avl.Tree // Map[Address]Vote
-}
-
-func (p *ProposalState) createVote(address string, option VoteOption, power bigint) {
-	vote := Vote{option, power}
-	p.Voters.Put(address, vote)
-	p.Proposal.setVotingPower(vote.Power)
-	voters.Put(address, p.Proposal.ID)
-}
-
-func (p *ProposalState) updateVote(address string, option VoteOption, power bigint) {
+func updateVote(proposalID uint64, address string, option VoteOption, power bigint) {
 	vote := Vote{option, power}
 	oldVote, ok := p.Voters.Get(address)
 	if !ok {
-		panic("Bug: ProposalState.updateVote() called on a non-existent voter")
+		oldVote = Vote{VoteNil, bigint(0)}
 	}
 	p.Proposal.updateVotingPower(oldVote.Power, vote.Power)
 	p.Voters.Put(address, vote)
 }
 
+/*
 // panics if proposal is not in voting period
 // if the vote type is the same with the existing vote, no-op.
 // otherwise, the {Yes, No, Abstain}Votes of the proposal is updated accordingly with the voter's power.
-func (p *ProposalState) vote(address string, option VoteOption) {
+func vote(proposalID uint64, address string, option VoteOption) {	
 	if p == nil {
 		panic("ProposalState.vote() called on a nil proposal")
 	}
@@ -109,20 +84,17 @@ func (p *ProposalState) vote(address string, option VoteOption) {
 		panic("ProposalState.vote() called on a proposal not in voting period")
 	}
 
-	// p.Voters should never be nil
-	if p.voters == nil { 
+	proposalVoters, ok := proposalVotersMap.Get(proposalID)
+	if !ok {
 		panic("Bug: ProposalState.Voters is nil")
 	}
 
 	vote, ok := p.Voters.Get(address)
 	if !ok {
+		// new voter, add to voters map and increase the total voting power
+		p.updateVotingPower(bigint(0), power)
 
 	}
 
-
 }
-
-// panics if proposal is not in deposit period or the depositor does not have enough balance
-func (p *ProposalState) deposit(address string, amount uint64) {
-
-}
+*/
