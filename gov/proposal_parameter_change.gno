@@ -5,7 +5,6 @@ import (
 	"fmt"
 )
 
-var govRealm = std.CurrentRealm() 
 
 var parameters map[string]interface{}
 
@@ -26,6 +25,7 @@ func setParameter(realm std.Realm, key string, value interface{}) {
 }
 
 func setGovParameter(key string, value interface{}) {
+	govRealm := std.CurrentRealm() 
 	setParameter(govRealm, key, value)
 }
 
@@ -34,6 +34,7 @@ func GetParameter(key string) (interface{}, bool) {
 }
 
 func getGovParameter(key string) (interface{}, bool) {
+	govRealm := std.CurrentRealm() 
 	return getParameter(govRealm, key)
 }
 

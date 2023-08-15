@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/demo/avl"
 
-
+	"fmt"
 )
 
 func UpdateVotingPower(address string, newPower uint64) {
@@ -42,7 +42,7 @@ func MakeVote(proposalID uint64, option VoteOption) {
 	proposal := GetProposal(proposalID)
 	proposal.vote(caller, option, amount)
 
-	setProposal(proposalID, proposal)
+	setProposal(proposal)
 }
 
 func MakeDeposit(proposalID uint64, amount uint64) {
@@ -54,7 +54,7 @@ func MakeDeposit(proposalID uint64, amount uint64) {
 	proposal := GetProposal(proposalID)
 	proposal.deposit(caller, amount)
 
-	setProposal(proposalID, proposal)
+	setProposal(proposal)
 }
 
 func GetActiveProposals() []Proposal {
@@ -208,6 +208,6 @@ func submitProposal(
 	proposalVotesMap.Set(key, avl.NewTree())
 
 	// initializes proposals and proposalQueue
-	setProposal(proposalID, proposal)
+	setProposal(proposal)
 	return proposalID
 }

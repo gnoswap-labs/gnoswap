@@ -80,8 +80,8 @@ func (p Proposal) isPassConditionMet(totalVotingPower uint64) bool {
 // - proposal is in voting period
 // - VotingEndTime has passed
 // - proposal.isPassConditionMet() returns true
-func (p Proposal) isVotingPassed() bool {
-	return p.isVotingPeriod() && uint64(time.Now().Unix()) > p.VotingEndTime && p.isPassConditionMet(1 /*TODO*/)	
+func (p Proposal) isVotingPassed(currentTime uint64) bool {
+	return p.isVotingPeriod() && currentTime > p.VotingEndTime && p.isPassConditionMet(1 /*TODO*/)	
 }
 
 // checks if proposal has failed
@@ -89,8 +89,8 @@ func (p Proposal) isVotingPassed() bool {
 // - proposal is in voting period
 // - VotingEndTime has passed
 // - proposal.isPassConditionMet() returns false
-func (p Proposal) isVotingRejected() bool {
-	return p.isVotingPeriod() && uint64(time.Now().Unix()) > p.VotingEndTime && !p.isPassConditionMet(1 /*TODO*/)
+func (p Proposal) isVotingRejected(currentTime uint64) bool {
+	return p.isVotingPeriod() && currentTime > p.VotingEndTime && !p.isPassConditionMet(1 /*TODO*/)
 }
 
 func (p *Proposal) updateVotingPower(option VoteOption, oldPower uint64, newPower uint64) {

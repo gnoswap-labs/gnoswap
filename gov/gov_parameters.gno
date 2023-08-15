@@ -1,5 +1,9 @@
 package gov
 
+import (
+	"std"
+)
+
 type VoteQuorum struct {
 	Numerator   uint64
 	Denominator uint64
@@ -70,6 +74,32 @@ func init() {
 	setDepositMinimum(uint64(10000000))
 }
 
+// SubmitProposalParameterChanges uses std.PrevRealm() to know which realm to submit the proposal to.
+// For gov, two realms are the same, so the PrevRealm() is referring to the one before gov.
+// So we make a specialization for gov here, internally using std.CurrentRealm() instead.
+func submitProposalGovParameterChanges(
+	title string,
+	summary string,
+	metadata string,
+	initialDeposit uint64,
+
+	changes []ParameterChange,
+) uint64 {
+	govRealm := std.CurrentRealm()
+
+	data := ProposalParameterChange{
+		Realm: govRealm,
+		Changes: changes, 
+	}
+
+	return submitProposal(
+		title,
+		summary,
+		metadata,
+		initialDeposit,
+		data,
+	)
+}
 func SubmitProposalGovParameterDepositMinimum(
 	title string,
 	summary string,
@@ -78,7 +108,7 @@ func SubmitProposalGovParameterDepositMinimum(
 
 	newDepositMinimum uint64,
 ) uint64 {
-	return SubmitProposalParameterChanges(
+	return submitProposalGovParameterChanges(
 		title,
 		summary,
 		metadata,
@@ -100,7 +130,7 @@ func SubmitProposalGovParameterDepositPeriod(
 
 	newDepositPeriod uint64,
 ) uint64 {
-	return SubmitProposalParameterChanges(
+	return submitProposalGovParameterChanges(
 		title,
 		summary,
 		metadata,
@@ -123,7 +153,7 @@ func SubmitProposalGovParameterVotingPeriod(
 
 	newVotingPeriod uint64,
 ) uint64 {
-	return SubmitProposalParameterChanges(
+	return submitProposalGovParameterChanges(
 		title,
 		summary,
 		metadata,
@@ -147,7 +177,7 @@ func SubmitProposalGovParameterVoteQuorum(
 	newVoteQuorumNumerator uint64,
 	newVoteQuorumDenominator uint64,
 ) uint64 {
-	return SubmitProposalParameterChanges(
+	return submitProposalGovParameterChanges(
 		title,
 		summary,
 		metadata,

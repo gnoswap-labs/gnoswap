@@ -8,7 +8,6 @@ import (
 
 func init() {
 	proposals = avl.NewTree()
-	proposalQueue = avl.NewTree()
 	proposalDepositsMap = avl.NewTree()
 	proposalVotesMap = avl.NewTree()
 	votersMap = avl.NewTree()
@@ -27,8 +26,6 @@ var proposals *avl.Tree // ProposalID => Proposal
 var proposalDepositsMap *avl.Tree // ProposalID => []Deposit
 
 var proposalVotesMap *avl.Tree // ProposalID => Map[Address]Vote
-
-var proposalQueue *avl.Tree // ({Deposit, Voting}EndTime | ProposalID) => ProposalID
 
 var votersMap *avl.Tree // Address => Map[ProposalID]Vote
 
@@ -52,27 +49,9 @@ func proposalKey(proposalID uint64) string {
 	return fmt.Sprintf("%020d", proposalID)
 }
 
-func proposalQueueKey(endtime uint64, proposalID uint64) string {
-	return fmt.Sprintf("%020d:%020d", endtime, proposalID)
-}
-
 // sets proposal by ID, and updates the queue accordingly
-func setProposal(proposalID uint64, proposal *Proposal) {
-	proposals.Set(proposalKey(proposalID), *proposal)
-	/*
-	if proposal.Status == ProposalStatusDepositPeriod {
-		proposalQueue.Put(proposalQueueKey(proposalState.Proposal.DepositEndTime, proposalID), proposalID)
-		return
-	} 
-	
-	if proposal.Status == ProposalStatusVotingPeriod {
-		proposalQueue.Put(proposalQueueKey(proposalState.Proposal.VotingEndTime, proposalID), proposalID)
-		return
-	}	
-	*/
-
-	// proposal is not in deposit or voting period, either rejected or failed to pass deposit period
-	// no need to update queue
+func setProposal(proposal *Proposal) {
+	proposals.Set(proposalKey(proposal.ProposalID), *proposal)
 }
 
 func updateVote(proposalID uint64, address string, option VoteOption, power uint64) {

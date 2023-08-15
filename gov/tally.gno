@@ -3,11 +3,10 @@ package gov
 import (
 	"std"
 	"time"
+	"fmt"
 )
-
-func tally() {
-	currentTime := uint64(time.Now().Unix())
-
+/*
+func tally(currentTime uint64) {
 	proposalQueue.Iterate("", "", func(key string, value interface{}) bool {
 		proposalID := value.(uint64)
 		proposal := GetProposal(proposalID)
@@ -20,11 +19,20 @@ func tally() {
 		return false
 	})
 }
+*/
 
-// processes a single prooposal. assumes that the proposal is at the front of the queue
+// processes a single prooposal
 func (p *Proposal) process(currentTime uint64) (stop bool) {
 	if !p.isActive() {
 		return true
+	}
+
+	// deposit minimum met, transit even if it's not end time
+	if p.isDepositSuccessful() {
+		p.transitFromDepositToVoting(currentTime)
+		p.refundDeposits()
+		setProposal(p)
+		return false
 	}
 
 	if !p.hasMetEndTime(currentTime) {
@@ -34,37 +42,39 @@ func (p *Proposal) process(currentTime uint64) (stop bool) {
 	switch p.ProposalStatus {
 	case ProposalStatusDepositPeriod:
 		p.processDepositPeriod(currentTime)
-		return false
 	case ProposalStatusVotingPeriod:
 		p.processVotingPeriod(currentTime)
-		return false
 	default: // ProposalStatusPassed, ProposalStatusRejected, ProposalStatusFailed
 		// do nothing
 	}
+
+	setProposal(p)
 
 	return false
 }
 
 func (p *Proposal) processDepositPeriod(currentTime uint64) {
-	if p.isDepositFailed() {
+	if p.isDepositFailed(currentTime) {
 		p.transitFromDepositToFailed()
 		return
 	}
 
 	if p.isDepositSuccessful() {
-		p.transitFromDepositToVoting()
+		p.transitFromDepositToVoting(currentTime)
 		p.refundDeposits()
 		return
 	}
+
+	panic("unreachable: proposal should be either in failed or successful after met deposit end time")
 }
 
 func (p *Proposal) processVotingPeriod(currentTime uint64) {
-	if p.isVotingRejected() {
+	if p.isVotingRejected(currentTime) {
 		p.ProposalStatus = ProposalStatusRejected
 		return
 	}
 
-	if p.isVotingPassed() {
+	if p.isVotingPassed(currentTime) {
 		// be careful about reentrancy here
 		// (especially on community pool spend with untrusted tokens)
 		p.ProposalStatus = ProposalStatusPassed

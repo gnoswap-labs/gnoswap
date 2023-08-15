@@ -30,6 +30,10 @@ func (p *Proposal) deposit(depositor std.Address, amount uint64) bool {
 	proposalDepositsMap.Set(key, proposalDeposits)
 	p.TotalDeposit += amount
 
+	if p.isDepositSuccessful() {
+		p.transitFromDepositToVoting(uint64(time.Now().Unix()))
+	}
+
 	return true
 }
 
@@ -67,9 +71,9 @@ func (p Proposal) isDepositSuccessful() bool {
 // - VotingEndTime set to current block time + VotingPeriod
 // - Other fields are left unchanged
 // this function panics if called on an invalid proposal 
-func (p *Proposal) transitFromDepositToVoting() {
+func (p *Proposal) transitFromDepositToVoting(currentTime uint64) {
 	p.ProposalStatus = ProposalStatusVotingPeriod
-	p.VotingStartTime = uint64(time.Now().Unix())
+	p.VotingStartTime = currentTime
 	p.VotingEndTime = p.VotingStartTime + getVotePeriod()
 }
 
@@ -78,8 +82,8 @@ func (p *Proposal) transitFromDepositToVoting() {
 // - proposal is still in deposit period
 // - proposal deposit end time has passed
 // - proposal has failed to meet deposit minimum
-func (p Proposal) isDepositFailed() bool {
-	return p.isDepositPeriod() && uint64(time.Now().Unix()) > p.DepositEndTime && p.TotalDeposit < getDepositMinimum()
+func (p Proposal) isDepositFailed(currentTime uint64) bool {
+	return p.isDepositPeriod() && currentTime > p.DepositEndTime && p.TotalDeposit < getDepositMinimum()
 }
 
 // returns updated proposal to be in failed state
