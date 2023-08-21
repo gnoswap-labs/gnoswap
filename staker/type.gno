@@ -30,3 +30,9 @@ type IncentiveKey struct {
 	endTime   bigint
 	refundee  std.Address
 }
+
+type StakingRewards struct {
+	Reward7  bigint
+	Reward14 bigint
+	Reward21 bigint
+}
