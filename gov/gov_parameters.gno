@@ -19,7 +19,7 @@ func getVoteQuorum() VoteQuorum {
 }
 
 func setVoteQuorum(quorum VoteQuorum) {
-	setGovParameter("vote_quorum", quorum)
+	SetGovParameter("vote_quorum", quorum)
 }
 
 func getVotePeriod() uint64 {
@@ -32,7 +32,7 @@ func getVotePeriod() uint64 {
 }
 
 func setVotePeriod(period uint64) {
-	setGovParameter("vote_period", period)
+	SetGovParameter("vote_period", period)
 }
 
 func getDepositPeriod() uint64 {
@@ -45,7 +45,7 @@ func getDepositPeriod() uint64 {
 }
 
 func setDepositPeriod(period uint64) {
-	setGovParameter("deposit_period", period)
+	SetGovParameter("deposit_period", period)
 }
 
 func getDepositMinimum() uint64 {
@@ -58,7 +58,7 @@ func getDepositMinimum() uint64 {
 }
 
 func setDepositMinimum(minimum uint64) {
-	setGovParameter("deposit_minimum", minimum)
+	SetGovParameter("deposit_minimum", minimum)
 }
 
 func Init() {

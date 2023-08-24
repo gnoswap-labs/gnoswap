@@ -1,13 +1,13 @@
 package gov
 
 import (
-	"std"
 	"fmt"
+	"std"
 )
 
-
-var parameters map[string]interface{}
-
+var (
+	parameters map[string]interface{} = make(map[string]interface{})
+)
 
 func parameterKey(realm std.Realm, key string) string {
 	return fmt.Sprintf("%s:%s", realm.Addr(), key)
@@ -24,8 +24,8 @@ func setParameter(realm std.Realm, key string, value interface{}) {
 	parameters[parameterKey(realm, key)] = value
 }
 
-func setGovParameter(key string, value interface{}) {
-	govRealm := std.CurrentRealm() 
+func SetGovParameter(key string, value interface{}) {
+	govRealm := std.CurrentRealm()
 	setParameter(govRealm, key, value)
 }
 
@@ -34,12 +34,12 @@ func GetParameter(key string) (interface{}, bool) {
 }
 
 func getGovParameter(key string) (interface{}, bool) {
-	govRealm := std.CurrentRealm() 
+	govRealm := std.CurrentRealm()
 	return getParameter(govRealm, key)
 }
 
 type ParameterChange struct {
-	Key string
+	Key   string
 	Value interface{}
 }
 
@@ -52,7 +52,7 @@ func setParameters(realm std.Realm, changes []ParameterChange) {
 var _ ProposalData = ProposalParameterChange{}
 
 type ProposalParameterChange struct {
-	Realm std.Realm
+	Realm   std.Realm
 	Changes []ParameterChange
 }
 
