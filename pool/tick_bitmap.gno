@@ -1,9 +1,5 @@
 package gnoswap
 
-import (
-	"math"
-)
-
 const BigInt1 bigint = bigint(1)
 
 func TickBitmapPosition(tick bigint) (bigint, bigint) {
@@ -25,10 +21,8 @@ func (pool *Pool) TickBitmapFlipTick(
 	wordPos, bitPos := TickBitmapPosition(tick)
 	mask := BigInt1 << uint64(bitPos)
 	requireUnsigned(mask, "tick_bitmap.gno__TickBitmapFlipTick__mask")
-	// tickBitmaps[wordPos] ^= mask
-	_tw, exists := pool.tickBitmaps.Get(string(wordPos)).(bigint)
 
-	pool.tickBitmaps.Set(string(wordPos), _tw^mask)
+	pool.tickBitmaps[wordPos] ^= mask
 }
 
 func (pool *Pool) TickBitmapNextInitializedTickWithInOneWord(
@@ -43,11 +37,11 @@ func (pool *Pool) TickBitmapNextInitializedTickWithInOneWord(
 
 	if zeroForOne {
 		wordPos, bitPos := TickBitmapPosition(compress)
+
 		mask := (BigInt1 << uint64(bitPos)) - BigInt1 + (BigInt1 << uint64(bitPos))
 		requireUnsigned(mask, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__mask #1")
-		// masked := tickBitmaps[wordPos] & mask
-		_tw, exists := pool.tickBitmaps.Get(string(wordPos)).(bigint)
-		masked := _tw & mask
+
+		masked := pool.tickBitmaps[wordPos] & mask
 		requireUnsigned(masked, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__masked #1")
 
 		initialized := masked != 0
@@ -76,11 +70,9 @@ func (pool *Pool) TickBitmapNextInitializedTickWithInOneWord(
 	if mask < 0 {
 		mask = -mask
 	}
-
 	requireUnsigned(mask, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__mask #2")
-	// masked := tickBitmaps[wordPos] & mask
-	_tw, exists := pool.tickBitmaps.Get(string(wordPos)).(bigint)
-	masked := _tw & mask
+
+	masked := pool.tickBitmaps[wordPos] & mask
 	requireUnsigned(masked, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__masked #2")
 
 	initialized := masked != 0

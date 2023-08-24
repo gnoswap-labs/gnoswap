@@ -3,27 +3,25 @@ package gnoswap
 import (
 	"std"
 
-	"gno.land/p/demo/avl"
-
 	bar "gno.land/r/bar"
 	foo "gno.land/r/foo"
 )
 
 var (
-	admins               []std.Address
-	initialized          bool = false
-	feeAmountTickSpacing avl.Tree
+	admins      []std.Address
+	initialized bool = false
 
-	pools avl.Tree // map[string]*Pool
+	feeAmountTickSpacing map[bigint]bigint = make(map[bigint]bigint) // map[fee_amount]tick_spacing
+	pools                map[string]*Pool  = make(map[string]*Pool)  // map[pool_key]*Pool
 )
 
 // XXX can it be init ?
 func Init() {
 	require(!initialized, "already initialized")
-	feeAmountTickSpacing.Set("100", 2)     // fee 0.01% // for stable coin pair
-	feeAmountTickSpacing.Set("500", 10)    // fee 0.05%
-	feeAmountTickSpacing.Set("3000", 60)   // fee 0.3%
-	feeAmountTickSpacing.Set("10000", 200) // fee 1%
+	feeAmountTickSpacing[100] = 2
+	feeAmountTickSpacing[500] = 10
+	feeAmountTickSpacing[3000] = 60
+	feeAmountTickSpacing[10000] = 200
 	admins = append(admins, PrevRealmAddr())
 	initialized = true
 }
@@ -33,7 +31,7 @@ func CreatePool(
 	tokenB string, // XXX inter-contract token1 pkg_path
 	fee bigint,
 	sqrtPriceX96 bigint,
-) (pool *Pool) {
+) *Pool {
 	require(initialized, "not initialized")
 	require(tokenA != tokenB, "tokenA == tokenB")
 
@@ -50,38 +48,36 @@ func CreatePool(
 	}
 
 	// check tickSpacing for fee
-	tickSpacing, ok := feeAmountTickSpacing.Get(string(fee))
-	require(ok, "fee amount not enabled")
-	require(tickSpacing != 0, "tickSpacing is 0")
-	require(tickSpacing > 0, "tickSpacing is negative")
+	tickSpacing := feeAmountTickSpacing[fee]
+	require(tickSpacing > 0, "tickSpacing is not valid")
 
 	// calculate poolKey
 	poolKey := GetPoolKey(token0, token1, fee)
 
-	// check whether the pool already exists
-	_, ok = pools.Get(poolKey)
-	if ok {
-		panic("pool already exists")
-	} else {
-		pool := newPool(token0, token1, fee, bigint(tickSpacing), sqrtPriceX96)
-		pools.Set(poolKey, pool)
-		return pool
+	// check whether the pool already exist
+	pool, exist := pools[poolKey]
+	require(!exist, "pool already exist")
+	if !exist {
+		pool = newPool(token0, token1, fee, bigint(tickSpacing), sqrtPriceX96)
+		pools[poolKey] = pool
 	}
+
+	return pool
 }
 
 func GetPool(token0, token1 string, fee bigint) *Pool {
 	poolKey := GetPoolKey(token0, token1, fee)
-	pool, ok := pools.Get(poolKey)
-	require(ok, "pool not found")
-	return pool.(*Pool)
-	// return (*Pool)(pool)
+	pool, exist := pools[poolKey]
+	require(exist, "pool not found")
+
+	return pool
 }
 
 func GetPoolFromPoolKey(poolKey string) *Pool {
-	pool, ok := pools.Get(poolKey)
-	require(ok, "pool not found")
-	return pool.(*Pool)
-	// return (*Pool)(pool)
+	pool, exist := pools[poolKey]
+	require(exist, "pool not found")
+
+	return pool
 }
 
 func GetPoolKey(token0, token1 string, fee bigint) string {
@@ -133,9 +129,9 @@ func newPool(
 		feeGrowthGlobal1X128: 0,
 		protocolFees:         protocolFees,
 		liquidity:            0,
-		ticks:                avl.Tree{},
-		tickBitmaps:          avl.Tree{},
-		positions:            avl.Tree{},
+		ticks:                Ticks{},
+		tickBitmaps:          TickBitmaps{},
+		positions:            Positions{},
 	}
 }
 

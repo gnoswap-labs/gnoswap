@@ -1,7 +1,6 @@
 package gnoswap
 
 import (
-	"math"
 	"std"
 	"testing"
 

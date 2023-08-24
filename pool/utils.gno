@@ -4,7 +4,6 @@ import (
 	"std"
 
 	"gno.land/p/demo/grc/grc20"
-	"gno.land/p/demo/ufmt"
 )
 
 func BalanceOf(token *grc20.AdminToken, addr std.Address) bigint {
@@ -17,8 +16,8 @@ func BalanceOf(token *grc20.AdminToken, addr std.Address) bigint {
 
 func (pool *Pool) PrintUserBalance(name string, target std.Address) {
 	println(name)
-	println(" ㄴToken0:", BalanceOf(pool.token0, target))
-	println(" ㄴToken1:", BalanceOf(pool.token1, target))
+	println(" > Token0:", BalanceOf(pool.token0, target))
+	println(" > Token1:", BalanceOf(pool.token1, target))
 }
 
 func requireUnsigned(x bigint, msg string) {

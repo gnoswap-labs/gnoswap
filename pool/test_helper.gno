@@ -1,7 +1,6 @@
 package gnoswap
 
 import (
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc20"
 )
 
@@ -51,38 +50,35 @@ func (pool *Pool) GetProtocolFees() ProtocolFees {
 }
 
 func (pool *Pool) GetPosition(key string) PositionInfo {
-	position, exists := pool.positions.Get(key).(PositionInfo)
-	if !exists {
-		panic("position does not exist #3")
-	}
+	position, exist := pool.positions[key]
+	require(exist, "position does not exist")
+
 	return position
 }
 
-func (pool *Pool) GetPositions() avl.Tree {
+func (pool *Pool) GetPositions() Positions {
 	return pool.positions
 }
 
-func (pool *Pool) GetTick(key string) TickInfo {
-	tick, exists := pool.ticks.Get(key).(TickInfo)
-	if !exists {
-		panic("tick does not exist")
-	}
+func (pool *Pool) GetTick(key bigint) TickInfo {
+	tick, exist := pool.ticks[key]
+	require(exist, "tick does not exist")
+
 	return tick
 }
 
-func (pool *Pool) GetTicks() avl.Tree {
+func (pool *Pool) GetTicks() Ticks {
 	return pool.ticks
 }
 
-func (pool *Pool) GetTickBitmap(key string) bigint {
-	tickBitmap, exists := pool.tickBitmaps.Get(key).(bigint)
-	if !exists {
-		panic("tickBitmap does not exist")
-	}
+func (pool *Pool) GetTickBitmap(key bigint) bigint {
+	tickBitmap, exist := pool.tickBitmaps[key]
+	require(exist, "tickBitmap does not exist")
+
 	return tickBitmap
 }
 
-func (pool *Pool) GetTickBitmaps() avl.Tree {
+func (pool *Pool) GetTickBitmaps() TickBitmaps {
 	return pool.tickBitmaps
 }
 

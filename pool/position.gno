@@ -14,11 +14,11 @@ func PositionGetKey(
 ) string {
 	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
 
-	// sum256 := sha256.Sum256([]byte(key))[:]
-	// return hex.EncodeToString(sum256)
-
 	encoded := base64.StdEncoding.EncodeToString([]byte(key))
 	return encoded
+
+	// sum256 := sha256.Sum256([]byte(key))[:]
+	// return hex.EncodeToString(sum256)
 }
 
 func (pool *Pool) PositionUpdateWithKey(
@@ -30,20 +30,10 @@ func (pool *Pool) PositionUpdateWithKey(
 	requireUnsigned(feeGrowthInside0X128, "position.gno__PositionUpdateWithKey__feeGrowthInside0X128")
 	requireUnsigned(feeGrowthInside1X128, "position.gno__PositionUpdateWithKey__feeGrowthInside1X128")
 
-	// position := positions[key]
-	_position, exists := pool.positions.Get(key)
-	var position PositionInfo
-
-	if !exists {
-		position = PositionInfo{}
-		// panic("position does not exist #2")
-	} else {
-		position = _position.(PositionInfo)
-	}
+	position := pool.positions[key]
 
 	p := PositionUpdate(position, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
-	// positions[key] = p
-	pool.positions.Set(key, p)
+	pool.positions[key] = p
 
 	return p
 }

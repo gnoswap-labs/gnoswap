@@ -98,8 +98,7 @@ func Burn(
 	}
 
 	key := PositionGetKey(PrevRealmAddr(), tickLower, tickUpper)
-
-	pool.positions.Set(key, position)
+	pool.positions[key] = position
 
 	return amount0, amount1
 }
@@ -120,16 +119,11 @@ func Collect(
 	pool := GetPool(pToken0, pToken1, pFee)
 
 	key := PositionGetKey(PrevRealmAddr(), tickLower, tickUpper)
-	_position, exists := pool.positions.Get(key)
-	var position PositionInfo
-	if !exists {
-		panic("position does not exist #1")
-	} else {
-		position = _position.(PositionInfo)
-	}
+
+	position, exist := pool.positions[key]
+	require(exist, "position does not exist")
 
 	var amount0, amount1 bigint
-
 	if amount0Requested > position.tokensOwed0 {
 		amount0 = position.tokensOwed0
 	} else {
@@ -158,7 +152,7 @@ func Collect(
 		// pool.token1.Transfer(GetOrigPkgAddr(), recipient, uint64(amount1))
 	}
 
-	pool.positions.Set(key, position)
+	pool.positions[key] = position
 
 	pool.balances.token0 -= amount0
 	pool.balances.token1 -= amount1
@@ -421,12 +415,8 @@ func SetFeeProtocol(
 	)
 
 	// iterate all pool
-	numPool := pools.Size()
-	for i := 0; i < numPool; i++ {
-		k, _ := pools.GetByIndex(i) // using v won't work
-		p := GetPoolFromPoolKey(k)
-
-		p.slot0.feeProtocol = feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
+	for _, pool := range pools {
+		pool.slot0.feeProtocol = feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
 	}
 }
 

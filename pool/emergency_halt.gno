@@ -1,10 +1,16 @@
 package gnoswap
 
-var govRealm string
+import (
+	"std"
+)
 
-// flagHalt is set to true when the emergency halt proposal is passed
-// when this flag is set to true, all public functions in this package will panic
-var flagHalt bool
+var (
+	govRealm string
+
+	// flagHalt is set to true when the emergency halt proposal is passed
+	// when this flag is set to true, all public functions in this package will panic
+	flagHalt bool
+)
 
 func init() {
 	govRealm = "gno.land/r/gov"

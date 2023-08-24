@@ -4,7 +4,7 @@ import (
 	"gno.land/r/gov"
 )
 
-func getProtocolFees() (ProtocolFees) {
+func getProtocolFees() ProtocolFees {
 	param, ok := gov.GetParameter("protocol_fees")
 	if !ok {
 		panic("protocol fees not set")
@@ -13,6 +13,8 @@ func getProtocolFees() (ProtocolFees) {
 	return param.(ProtocolFees)
 }
 
+/*
+// @mconcat
 func setProtocolFees(newFees ProtocolFees) {
 	gov.SetParameter("protocol_fees", newFees)
 }
@@ -29,3 +31,4 @@ func SubmitProposalParameterProtocolFees(
 		newFees,
 	)
 }
+*/

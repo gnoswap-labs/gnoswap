@@ -3,6 +3,7 @@ package gnoswap
 
 import (
 	b64 "encoding/base64"
+
 	"encoding/json"
 	"strings"
 )
@@ -20,12 +21,10 @@ type ResponseGetPools struct {
 }
 
 func ApiGetPools() string {
-	poolSize := pools.Size()
-	poolList := []string{}
+	poolPathList := []string{}
 
-	for i := 0; i < poolSize; i++ {
-		pk, _ := pools.GetByIndex(i)
-		poolList = append(poolList, pk)
+	for k, _ := range pools {
+		poolPathList = append(poolPathList, k)
 	}
 
 	qb := ApiQueryBase{
@@ -38,7 +37,7 @@ func ApiGetPools() string {
 		Response: struct {
 			Data []string `json:"data"`
 		}{
-			Data: poolList,
+			Data: poolPathList,
 		},
 	}
 
@@ -85,32 +84,27 @@ type ResponseGetPool struct {
 }
 
 func ApiGetPool(key string) string {
-	_p, exists := pools.Get(key) // value interface{}, exists bool
-	if !exists {
-		// that key does not exist
-		return "NO_POOL_FOUND" // r3v4_xxx should panic ?
+	pool, exist := pools[key]
+	if !exist {
+		// r3v4_xxx should panic?
+		return "NO_POOL_FOUND"
 	}
 
-	p := _p.(*Pool)
-	_positions := p.positions
-	posSize := _positions.Size()
-	posList := []ApiPositionInfo{}
+	positions := pool.positions
+	positionList := []ApiPositionInfo{}
 
-	for i := 0; i < posSize; i++ {
-		posKey, _posValue := _positions.GetByIndex(i)
-
-		posValue := _posValue.(PositionInfo)
-		owner, tl, th := posKeyDivide(posKey)
+	for k, v := range positions {
+		owner, tl, th := posKeyDivide(k)
 
 		posInfo := ApiPositionInfo{
 			Owner:     owner,
 			TickLower: tl,
 			TickUpper: th,
-			Liquidity: posValue.liquidity,
-			T0Owed:    posValue.tokensOwed0,
-			T1Owed:    posValue.tokensOwed1,
+			Liquidity: v.liquidity,
+			T0Owed:    v.tokensOwed0,
+			T1Owed:    v.tokensOwed1,
 		}
-		posList = append(posList, posInfo)
+		positionList = append(positionList, posInfo)
 	}
 
 	qb := ApiQueryBase{
@@ -124,13 +118,13 @@ func ApiGetPool(key string) string {
 			Data SinglePool `json:"data"`
 		}{
 			Data: SinglePool{
-				T0Bal: p.balances.token0,
-				T1Bal: p.balances.token1,
-				// Fee:                 p.fee,
-				TickSpacing:         p.tickSpacing,
-				MaxLiquidityPerTick: p.maxLiquidityPerTick,
-				Liquidity:           p.liquidity,
-				Position:            posList,
+				T0Bal: pool.balances.token0,
+				T1Bal: pool.balances.token1,
+				// Fee:                 pool.fee,
+				TickSpacing:         pool.tickSpacing,
+				MaxLiquidityPerTick: pool.maxLiquidityPerTick,
+				Liquidity:           pool.liquidity,
+				Position:            positionList,
 			},
 		},
 	}

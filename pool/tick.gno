@@ -20,28 +20,10 @@ func (pool *Pool) TickGetFeeGrowthInside(
 	requireUnsigned(feeGrowthGlobal0X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthGlobal0X128")
 	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickGetFeeGrowthInside__feeGrowthGlobal1X128")
 
-	// var lower TickInfo = ticks[tickLower]
-	var lower TickInfo
-	_lower, exists := pool.ticks.Get(string(tickLower))
-	if !exists {
-		lower = TickInfo{}
-		// panic("lower tick does not exist")
-	} else {
-		lower = _lower.(TickInfo)
-	}
+	lower := pool.ticks[tickLower]
+	upper := pool.ticks[tickUpper]
 
-	// var upper TickInfo = ticks[tickUpper]
-	var upper TickInfo
-	_upper, exists := pool.ticks.Get(string(tickUpper))
-	if !exists {
-		upper = TickInfo{}
-		// panic("upper tick does not exist")
-	} else {
-		upper = _upper.(TickInfo)
-	}
-
-	var feeGrowthBelow0X128 bigint
-	var feeGrowthBelow1X128 bigint
+	var feeGrowthBelow0X128, feeGrowthBelow1X128 bigint
 	if tickCurrent >= tickLower {
 		feeGrowthBelow0X128 = lower.feeGrowthOutside0X128
 		feeGrowthBelow1X128 = lower.feeGrowthOutside1X128
@@ -50,8 +32,7 @@ func (pool *Pool) TickGetFeeGrowthInside(
 		feeGrowthBelow1X128 = feeGrowthGlobal1X128 - lower.feeGrowthOutside1X128
 	}
 
-	var feeGrowthAbove0X128 bigint
-	var feeGrowthAbove1X128 bigint
+	var feeGrowthAbove0X128, feeGrowthAbove1X128 bigint
 	if tickCurrent < tickUpper {
 		feeGrowthAbove0X128 = upper.feeGrowthOutside0X128
 		feeGrowthAbove1X128 = upper.feeGrowthOutside1X128
@@ -82,16 +63,8 @@ func (pool *Pool) TickUpdate(
 	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickUpdate__feeGrowthGlobal1X128")
 	requireUnsigned(maxLiquidity, "tick.gno__TickUpdate__maxLiquidity")
 
-	// info := ticks[tick]
-	var info TickInfo
-	_info, exists := pool.ticks.Get(string(tick))
-	if !exists {
-		info = TickInfo{}
-	} else {
-		info = _info.(TickInfo)
-	}
+	info := pool.ticks[tick]
 	liquidityGrossBefore := info.liquidityGross
-
 	liquidityGrossAfter := LiquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
 	require(liquidityGrossAfter <= maxLiquidity, "[X] liquidityGrossAfter <= maxLiquidity")
 
@@ -114,15 +87,13 @@ func (pool *Pool) TickUpdate(
 		info.liquidityNet += liquidityDelta
 	}
 
-	// ticks[tick] = info
-	pool.ticks.Set(string(tick), info)
+	pool.ticks[tick] = info
 
 	return flipped
 }
 
 func (pool *Pool) TickClear(tick bigint) {
-	// delete(ticks, tick)
-	pool.ticks.Remove(string(tick))
+	delete(pool.ticks, tick)
 }
 
 func (pool *Pool) TickCross(
@@ -133,20 +104,11 @@ func (pool *Pool) TickCross(
 	requireUnsigned(feeGrowthGlobal0X128, "tick.gno__TickCross__feeGrowthGlobal0X128")
 	requireUnsigned(feeGrowthGlobal1X128, "tick.gno__TickCross__feeGrowthGlobal1X128")
 
-	// info := ticks[tick]
-	var info TickInfo
-	_info, exists := pool.ticks.Get(string(tick))
-	if !exists {
-		// XXX panic("tick does not exist")
-		info = TickInfo{}
-	} else {
-		info = _info.(TickInfo)
-	}
-
+	info := pool.ticks[tick]
 	info.feeGrowthOutside0X128 = feeGrowthGlobal0X128 - info.feeGrowthOutside0X128
 	info.feeGrowthOutside1X128 = feeGrowthGlobal1X128 - info.feeGrowthOutside1X128
-	// ticks[tick] = info
-	pool.ticks.Set(string(tick), info)
+
+	pool.ticks[tick] = info
 
 	liquidityNet := info.liquidityNet
 	return liquidityNet
