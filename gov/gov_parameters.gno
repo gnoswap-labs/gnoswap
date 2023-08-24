@@ -12,9 +12,9 @@ type VoteQuorum struct {
 func getVoteQuorum() VoteQuorum {
 	param, ok := getGovParameter("vote_quorum")
 	if !ok {
-		panic("vote_quorum parameter not set")	
+		panic("vote_quorum parameter not set")
 	}
-	
+
 	return param.(VoteQuorum)
 }
 
@@ -25,7 +25,7 @@ func setVoteQuorum(quorum VoteQuorum) {
 func getVotePeriod() uint64 {
 	param, ok := getGovParameter("vote_period")
 	if !ok {
-		panic("vote_period parameter not set")	
+		panic("vote_period parameter not set")
 	}
 
 	return param.(uint64)
@@ -38,7 +38,7 @@ func setVotePeriod(period uint64) {
 func getDepositPeriod() uint64 {
 	param, ok := getGovParameter("deposit_period")
 	if !ok {
-		panic("deposit_period parameter not set")	
+		panic("deposit_period parameter not set")
 	}
 
 	return param.(uint64)
@@ -51,7 +51,7 @@ func setDepositPeriod(period uint64) {
 func getDepositMinimum() uint64 {
 	param, ok := getGovParameter("deposit_minimum")
 	if !ok {
-		panic("deposit_minimum parameter not set")	
+		panic("deposit_minimum parameter not set")
 	}
 
 	return param.(uint64)
@@ -61,7 +61,7 @@ func setDepositMinimum(minimum uint64) {
 	setGovParameter("deposit_minimum", minimum)
 }
 
-func init() {
+func Init() {
 	parameters = make(map[string]interface{})
 
 	// 1/3 quorum initially
@@ -88,8 +88,8 @@ func submitProposalGovParameterChanges(
 	govRealm := std.CurrentRealm()
 
 	data := ProposalParameterChange{
-		Realm: govRealm,
-		Changes: changes, 
+		Realm:   govRealm,
+		Changes: changes,
 	}
 
 	return submitProposal(
@@ -149,7 +149,7 @@ func SubmitProposalGovParameterVotingPeriod(
 	title string,
 	summary string,
 	metadata string,
-	initialDeposit uint64, 
+	initialDeposit uint64,
 
 	newVotingPeriod uint64,
 ) uint64 {

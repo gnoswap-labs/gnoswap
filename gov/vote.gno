@@ -2,12 +2,9 @@ package gov
 
 import (
 	"std"
-	"time"
-
-	"gno.land/p/demo/avl"
 )
 
-type VoteOption uint8 
+type VoteOption uint8
 
 const (
 	VoteNil VoteOption = iota
@@ -18,7 +15,7 @@ const (
 
 type Vote struct {
 	VoteOption VoteOption
-	Power    uint64
+	Power      uint64
 }
 
 func (p *Proposal) vote(caller std.Address, option VoteOption, amount uint64) {
@@ -32,31 +29,16 @@ func (p *Proposal) vote(caller std.Address, option VoteOption, amount uint64) {
 
 	vote := Vote{option, amount}
 
-	proposalVotesInterface, ok := proposalVotesMap.Get(proposalKey(p.ProposalID))
-	if !ok {
-		proposalVotesInterface = avl.NewTree()
-	}
-
-	proposalVotes := proposalVotesInterface.(*avl.Tree)
-
-	oldVoteInterface, ok := proposalVotes.Get(string(caller))
-	if !ok {
-		oldVoteInterface = Vote{VoteNil, uint64(0)}
-	}
-
-	oldVote := oldVoteInterface.(Vote)
+	proposalVotes := proposalVotesMap[p.ProposalID]
+	oldVote := proposalVotes[string(caller)]
 
 	p.updateVote(oldVote, vote)
 
-	proposalVotes.Set(string(caller), vote)
-	proposalVotesMap.Set(proposalKey(p.ProposalID), proposalVotes)
+	proposalVotes[string(caller)] = vote
+	proposalVotesMap[p.ProposalID] = proposalVotes
 
-	votesInterface, ok := votersMap.Get(string(caller))
-	if !ok {
-		votesInterface = avl.NewTree()
-	}
-	votes := votesInterface.(*avl.Tree)
-	votes.Set(proposalKey(p.ProposalID), vote)
+	votes := votersMap[string(caller)]
+	votes[p.ProposalID] = vote
 }
 
 func (p Proposal) isVotingPeriod() bool {
@@ -81,7 +63,7 @@ func (p Proposal) isPassConditionMet(totalVotingPower uint64) bool {
 // - VotingEndTime has passed
 // - proposal.isPassConditionMet() returns true
 func (p Proposal) isVotingPassed(currentTime uint64) bool {
-	return p.isVotingPeriod() && currentTime > p.VotingEndTime && p.isPassConditionMet(1 /*TODO*/)	
+	return p.isVotingPeriod() && currentTime > p.VotingEndTime && p.isPassConditionMet(1 /*TODO*/)
 }
 
 // checks if proposal has failed
@@ -149,4 +131,3 @@ func (p *Proposal) updateVote(oldVote Vote, newVote Vote) {
 	}
 
 }
-

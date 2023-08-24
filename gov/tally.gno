@@ -1,10 +1,5 @@
 package gov
 
-import (
-	"std"
-	"time"
-	"fmt"
-)
 /*
 func tally(currentTime uint64) {
 	proposalQueue.Iterate("", "", func(key string, value interface{}) bool {
@@ -31,7 +26,7 @@ func (p *Proposal) process(currentTime uint64) (stop bool) {
 	if p.isDepositSuccessful() {
 		p.transitFromDepositToVoting(currentTime)
 		p.refundDeposits()
-		setProposal(p)
+		proposalsMap[p.ProposalID] = *p
 		return false
 	}
 
@@ -48,7 +43,7 @@ func (p *Proposal) process(currentTime uint64) (stop bool) {
 		// do nothing
 	}
 
-	setProposal(p)
+	proposalsMap[p.ProposalID] = *p
 
 	return false
 }
@@ -80,6 +75,6 @@ func (p *Proposal) processVotingPeriod(currentTime uint64) {
 		p.ProposalStatus = ProposalStatusPassed
 		err := p.ProposalData.execute()
 		// TODO: handle error
-		return	
+		return
 	}
 }
