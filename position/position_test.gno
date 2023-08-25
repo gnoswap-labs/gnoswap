@@ -5,10 +5,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/r/demo/users"
-
-	bar "gno.land/r/bar"
-	foo "gno.land/r/foo"
 
 	p "gno.land/r/pool"
 
@@ -86,7 +82,7 @@ func TestMint(t *testing.T) {
 		)
 
 		isOwner(t, tTokenId, lp01)
-		shouldEQ(t, tTokenId, "1")
+		shouldEQ(t, tTokenId, bigint(1))
 		shouldEQ(t, GetNextId(), bigint(2))
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
@@ -114,7 +110,7 @@ func TestMint(t *testing.T) {
 		)
 
 		isOwner(t, tTokenId, lp02)
-		shouldEQ(t, tTokenId, "2")
+		shouldEQ(t, tTokenId, bigint(2))
 		shouldEQ(t, GetNextId(), bigint(3))
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
@@ -142,7 +138,7 @@ func TestMint(t *testing.T) {
 			shouldEQ(t, tAmount1, bigint(0))
 
 			isOwner(t, tTokenId, lp02)
-			shouldEQ(t, tTokenId, "3")
+			shouldEQ(t, tTokenId, bigint(3))
 			shouldEQ(t, GetNextId(), bigint(4))
 			shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 			shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
@@ -171,7 +167,7 @@ func TestMint(t *testing.T) {
 			shouldEQ(t, tAmount0, bigint(0))
 
 			isOwner(t, tTokenId, lp02)
-			shouldEQ(t, tTokenId, "4")
+			shouldEQ(t, tTokenId, bigint(4))
 			shouldEQ(t, GetNextId(), bigint(5))
 			shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 			shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
@@ -409,15 +405,9 @@ func TestNFTBurn(t *testing.T) {
 	// remove all liquditiy & collect all then burn tid 1
 	{
 		std.TestSetOrigCaller(lp01)
-		tTokenId := bigint(1)
 
-		tPos, ok := positions.Get(string(tTokenId))
-		var tPosition Position
-		if ok {
-			tPosition = tPos.(Position)
-		} else {
-			tPosition = Position{}
-		}
+		tTokenId := bigint(1)
+		tPosition := positions[tTokenId]
 
 		tPositionLiquidity := tPosition.liquidity
 

@@ -3,7 +3,6 @@ package position
 import (
 	"std"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
@@ -13,9 +12,8 @@ import (
 )
 
 var (
-	// positions       map[string]Position = make(map[string]Position)
-	positions avl.Tree // tokenId -> Position
-	nextId    bigint   = 1
+	positions map[bigint]Position = make(map[bigint]Position) // tokenId -> Position
+	nextId    bigint              = 1
 )
 
 func (p Position) isClear() bool {
@@ -50,8 +48,7 @@ func Mint(
 	return mint(mintParams)
 }
 
-// tokenId, liquidity, amount0, amount1
-func mint(params MintParams) (string, bigint, bigint, bigint) {
+func mint(params MintParams) (bigint, bigint, bigint, bigint) {
 	checkDeadline(params.deadline)
 
 	pool := p.GetPool(params.token0, params.token1, params.fee)
@@ -68,7 +65,7 @@ func mint(params MintParams) (string, bigint, bigint, bigint) {
 		},
 	)
 
-	tokenId := string(nextId)
+	tokenId := nextId
 	nextId++ // nextId = nextId + 1
 
 	// nft.Mint(a2u(PrevRealmAddr()), grc721.TokenID(tokenId)) // owner, tokenId
@@ -89,7 +86,7 @@ func mint(params MintParams) (string, bigint, bigint, bigint) {
 		tokensOwed0:              0,
 		tokensOwed1:              0,
 	}
-	positions.Set(tokenId, position)
+	positions[tokenId] = position
 
 	return tokenId, liquidity, amount0, amount1
 }
@@ -118,16 +115,9 @@ func increaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 	checkDeadline(params.deadline)
 
 	// verify tokenId
-	require(Exists(string(params.tokenId)), "Invalid token ID")
+	require(Exists(params.tokenId), "Invalid token ID")
 
-	// position := positions[string(params.tokenId)]
-	_position, ok := positions.Get(string(params.tokenId))
-	var position Position
-	if ok {
-		position = _position.(Position)
-	} else {
-		position = Position{}
-	}
+	position := positions[params.tokenId]
 
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
@@ -145,7 +135,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 	pool := p.GetPoolFromPoolKey(position.poolKey)
 
 	positionKey := PositionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	// _p := p.positions[positionKey]
+
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
 
 	position.tokensOwed0 += (feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / Q128
@@ -154,6 +144,8 @@ func increaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 	position.liquidity += liquidity
+
+	positions[params.tokenId] = position
 
 	return liquidity, amount0, amount1
 }
@@ -177,25 +169,20 @@ func DecreaseLiquidity(
 }
 
 func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
-	isAuthorizedForToken(string(params.tokenId))
+	isAuthorizedForToken(params.tokenId)
 	checkDeadline(params.deadline)
 	require(params.liquidity > 0, "Cannot remove 0 liquidity")
 
 	// verify tokenId
-	require(Exists(string(params.tokenId)), "Invalid token ID")
+	require(Exists(params.tokenId), "Invalid token ID")
 
-	// position := positions[string(params.tokenId)]
-	_position, ok := positions.Get(string(params.tokenId))
-	var position Position
-	if ok {
-		position = _position.(Position)
-	} else {
-		position = Position{}
-	}
+	position := positions[params.tokenId]
 
 	positionLiquidity := position.liquidity
 	require(positionLiquidity >= params.liquidity, ufmt.Sprintf("Cannot withdraw more liquidity(%s) than is in the position(%s)", params.liquidity, positionLiquidity))
 
+	// xxx_r3v4
+	// panic or remove entire liquidity
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
 	pool := p.GetPoolFromPoolKey(position.poolKey)
 
@@ -204,7 +191,6 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, "PM_Price slippage check")
 
 	positionKey := PositionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	// _p := p.positions[positionKey]
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
 
 	// XXX check priority ?
@@ -216,9 +202,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 
 	position.liquidity = positionLiquidity - params.liquidity
 
-	// update position
-	// positions[string(params.tokenId)] = position
-	positions.Set(string(params.tokenId), position)
+	positions[params.tokenId] = position
 
 	return amount0, amount1
 }
@@ -242,7 +226,7 @@ func Collect(
 func collect(params CollectParams) (bigint, bigint) {
 	// amount0, amount1
 
-	isAuthorizedForToken(string(params.tokenId))
+	isAuthorizedForToken(params.tokenId)
 	require(params.amount0Max > 0 || params.amount1Max > 0, "At least one token should be collected")
 
 	var recipient std.Address
@@ -252,14 +236,7 @@ func collect(params CollectParams) (bigint, bigint) {
 		recipient = params.recipient
 	}
 
-	// position := positions[string(params.tokenId)]
-	_position, ok := positions.Get(string(params.tokenId))
-	var position Position
-	if ok {
-		position = _position.(Position)
-	} else {
-		position = Position{}
-	}
+	position := positions[params.tokenId]
 
 	tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
@@ -303,37 +280,26 @@ func collect(params CollectParams) (bigint, bigint) {
 	)
 	position.tokensOwed0, position.tokensOwed1 = tokensOwed0-amount0Collect, tokensOwed1-amount1Collect
 
-	// update position
-	// positions[string(params.tokenId)] = position
-	positions.Set(string(params.tokenId), position)
+	positions[params.tokenId] = position
 
 	// burn nft if position is clear
 	if position.isClear() {
-		burn(string(params.tokenId))
+		burn(params.tokenId)
 	}
 	return amount0, amount1
 }
 
-func burn(tokenId string) {
+func burn(tokenId bigint) {
 	isAuthorizedForToken(tokenId)
 
-	// position := positions[tokenId]
-	_position, ok := positions.Get(tokenId)
-	var position Position
-	if ok {
-		position = _position.(Position)
-	} else {
-		position = Position{}
-	}
+	position := positions[tokenId]
 
 	require(position.isClear(), "Not cleared")
 
-	// delete(positions, tokenId)
-	positions.Remove(tokenId)
-
+	delete(positions, tokenId)
 	nft.Burn(grc721.TokenID(tokenId))
 }
 
-func isAuthorizedForToken(tokenId string) {
+func isAuthorizedForToken(tokenId bigint) {
 	require(isApprovedOrOwner(PrevRealmAddr(), tokenId), "Not approved")
 }

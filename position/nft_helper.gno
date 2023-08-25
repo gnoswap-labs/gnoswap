@@ -7,17 +7,11 @@ import (
 	nft "gno.land/r/gnft"
 )
 
-// func TokenURI(tokenId string) string {
-// 	require(Exists(tokenId), "Invalid token ID")
-// 	return "TODO_THIS_IS_TOKEN_URI"
-// 	// return INonfungibleTokenPositionDescriptor(_tokenDescriptor).tokenURI(this, tokenId);
-// }
-
 func NFTBalanceOf(addr std.Address) bigint {
 	return bigint(nft.BalanceOf(a2u(addr)))
 }
 
-func Exists(tokenId string) bool {
+func Exists(tokenId bigint) bool {
 	// non exist tokenId will panic
 	// use defer to catch the panic
 	defer func() {
@@ -28,7 +22,7 @@ func Exists(tokenId string) bool {
 
 	// exists method in grc721 is private
 	// we don't have much choice but to use ownerOf
-	owner := nft.OwnerOf(grc721.TokenID(tokenId))
+	owner := nft.OwnerOf(grc721.TokenID(string(tokenId)))
 	if owner == nil {
 		panic("NIL OWNER")
 		return false
@@ -43,7 +37,7 @@ func Exists(tokenId string) bool {
 }
 
 // Error handling isn't necessary here
-func isApprovedOrOwner(addr std.Address, tokenId string) bool {
+func isApprovedOrOwner(addr std.Address, tokenId bigint) bool {
 	tid := grc721.TokenID(tokenId)
 
 	// check whether token exists
@@ -58,9 +52,8 @@ func isApprovedOrOwner(addr std.Address, tokenId string) bool {
 	}
 
 	// if not owner, check whether approved in position contract
-	_position, ok := positions.Get(tokenId)
-	if ok {
-		position := _position.(Position)
+	position, exist := positions[tokenId]
+	if exist {
 		if addr == position.operator {
 			return true
 		}
