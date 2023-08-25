@@ -32,7 +32,7 @@ type IncentiveKey struct {
 }
 
 type StakingRewards struct {
-	Reward7  bigint
-	Reward14 bigint
-	Reward21 bigint
+	StakingReward7  bigint
+	StakingReward14 bigint
+	StakingReward21 bigint
 }

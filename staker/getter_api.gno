@@ -3,10 +3,7 @@ package staker
 import (
 	b64 "encoding/base64"
 	"encoding/json"
-	"std"
 	"strings"
-
-	"gno.land/p/demo/avl"
 )
 
 type ApiQueryBase struct {
@@ -32,18 +29,15 @@ type ResponseGetIncentives struct {
 func ApiGetIncentives() string {
 	incentiveList := []ApiIncentive{}
 
-	for i := 0; i < incentives.Size(); i++ {
-		ik, iv := incentives.GetByIndex(i)
-
-		incen := iv.(Incentive)
-		st, et, rf := incentiveKeyDivide(ik)
+	for k, v := range incentives {
+		st, et, rf := incentiveKeyDivide(k)
 
 		si := ApiIncentive{
-			Key:       ik,
+			Key:       k,
 			StartTime: st,
 			EndTime:   et,
 			Refundee:  rf,
-			NumStakes: string(incen.numberOfStakes),
+			NumStakes: string(v.numberOfStakes),
 		}
 
 		incentiveList = append(incentiveList, si)
@@ -96,25 +90,18 @@ type ResponseGetStakes struct {
 func ApiGetStakes() string {
 	stakeList := []ApiStake{}
 
-	for i := 0; i < stakes.Size(); i++ {
-		sk, sv := stakes.GetByIndex(i) // tokenId -> avl.Tree (incentiveId -> Stake)
-
-		incentive := sv.(avl.Tree) // size should be always 1, I think
-
-		for j := 0; j < incentive.Size(); j++ {
-			ik, iv := incentive.GetByIndex(j) // incentiveId -> Stake
-			st, et, rf := incentiveKeyDivide(ik)
-
-			stake := iv.(Stake)
+	for k, v := range stakes {
+		for k2, v2 := range v {
+			st, et, rf := incentiveKeyDivide(k2)
 
 			ss := ApiStake{
-				TokenID:             string(sk),
-				IncentiveID:         ik,
+				TokenID:             string(k),
+				IncentiveID:         k2,
 				StartTime:           st,
 				EndTime:             et,
 				Refundee:            rf,
-				LiquidityNoOverflow: string(stake.liquidityNoOverflow),
-				LiquidityIfOverflow: string(stake.liquidityIfOverflow),
+				LiquidityNoOverflow: string(v2.liquidityNoOverflow),
+				LiquidityIfOverflow: string(v2.liquidityIfOverflow),
 			}
 
 			stakeList = append(stakeList, ss)

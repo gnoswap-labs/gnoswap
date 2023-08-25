@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 
+	g "gno.land/r/gov"
 	p "gno.land/r/pool"
 	s "gno.land/r/position"
 
@@ -35,6 +36,7 @@ func init() {
 	println(p.GetOrigPkgAddr(), "// pool")
 	println(s.GetOrigPkgAddr(), "// position")
 	println(GetOrigPkgAddr(), "// staker")
+	println(g.GetOrigPkgAddr(), "// gov")
 }
 
 // Init & CreatePool using Pool Contract
@@ -68,8 +70,8 @@ func TestPositionMint(t *testing.T) {
 		bigint(1234567890),
 	)
 
-	shouldEQ(t, tPosTokenId, "1")
-	shouldEQ(t, nft.OwnerOf("1"), GetOrigCaller()) // lp01
+	shouldEQ(t, tPosTokenId, bigint(1))
+	shouldEQ(t, nft.OwnerOf(bigint(1)), GetOrigCaller()) // lp01
 
 	// approve nft to staker
 	std.TestSetPrevAddr(lp01)
@@ -78,6 +80,8 @@ func TestPositionMint(t *testing.T) {
 
 func TestCreateIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
+
+	Init()
 	CreateIncentive(
 		tStartTime, // starTime
 		tEndTime,   // endTime
@@ -85,7 +89,7 @@ func TestCreateIncentive(t *testing.T) {
 	)
 
 	// nft owner doesn't change yet
-	shouldEQ(t, nft.OwnerOf("1"), lp01) // lp0
+	shouldEQ(t, nft.OwnerOf(bigint(1)), lp01) // lp0
 }
 
 func TestStakeToken(t *testing.T) {
@@ -94,12 +98,12 @@ func TestStakeToken(t *testing.T) {
 		tStartTime,
 		tEndTime,
 		rf01,
-		"1",
+		bigint(1),
 		100,
 	)
 
 	// nft transfered from lp01 to staker
-	shouldEQ(t, nft.OwnerOf("1"), GetOrigPkgAddr())
+	shouldEQ(t, nft.OwnerOf(bigint(1)), GetOrigPkgAddr())
 }
 
 func TestGetRewardInfo(t *testing.T) {
@@ -125,11 +129,11 @@ func TestClaimReward(t *testing.T) {
 }
 
 func TestUnstakeAndWithdraw(t *testing.T) {
-	// NFT was staked with lockDuration 100seconds from L#91-96
+	// NFT was staked with lockDuration 100seconds from L#95-107
 	// so, it can be withdrawl after 100 seconds since unstake requeset
 	std.TestSetOrigCaller(lp01)
 
-	UnstakeToken(tStartTime, tEndTime, rf01, "1")
+	UnstakeToken(tStartTime, tEndTime, rf01, 1)
 	shouldEQ(t, nft.OwnerOf("1"), GetOrigPkgAddr()) // staker owns nft tid 1
 
 	shouldPanic(t, func() { WithdrawToken("1", GetOrigCaller()) })
