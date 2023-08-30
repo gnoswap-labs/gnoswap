@@ -1,6 +1,7 @@
 package staker
 
 import (
+	"gno.land/p/demo/ufmt"
 	"gno.land/r/gov"
 )
 
@@ -11,7 +12,7 @@ func DefaultInflationRate() bigint {
 func getInflationRate() bigint {
 	param, ok := gov.GetParameter("inflation_rate")
 	if !ok {
-		panic("inflation rate not set")
+		panic(ufmt.Sprintf("[STAKER] staker_parameters.gno__getInflationRate() || inflation(%s) rate not set"))
 	}
 
 	return param.(bigint)

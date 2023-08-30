@@ -19,7 +19,7 @@ func a2u(addr std.Address) users.AddressOrName {
 
 func tid(tokenId interface{}) grc721.TokenID {
 	if tokenId == nil {
-		panic("tokenId is nil")
+		panic("[STAKER] utils.gno__tid() || tokenId is nil")
 	}
 
 	switch tokenId.(type) {
@@ -30,7 +30,7 @@ func tid(tokenId interface{}) grc721.TokenID {
 	case grc721.TokenID:
 		return tokenId.(grc721.TokenID)
 	default:
-		panic("tokenId is not a string or TokenID")
+		panic("[STAKER] utils.gno__tid() || tokenId is not a type of string or grc721.TokenID")
 	}
 }
 

@@ -4,6 +4,8 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"strings"
+
+	"gno.land/p/demo/ufmt"
 )
 
 type ApiQueryBase struct {
@@ -124,8 +126,7 @@ func ApiGetStakes() string {
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		println("PANIC__ApiGetIncentives")
-		panic(err)
+		panic(ufmt.Sprintf("[STAKER] getter_api.ApiGetStakes() || %v", err))
 	}
 
 	return string(rr)
@@ -142,7 +143,7 @@ func incentiveKeyDivide(incenKey string) (string, string, string) {
 
 	res := strings.Split(incenKey, "__")
 	if len(res) != 3 {
-		panic("incentiveKeyDivide: invalid incentiveKey")
+		panic(ufmt.Sprintf("[STAKER] getter_api.gno__incentiveKeyDivide() || invalid incentiveKey(%s)", incenKey))
 	}
 
 	startTime, endTime, refundee := res[0], res[1], res[2]
