@@ -115,7 +115,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 	checkDeadline(params.deadline)
 
 	// verify tokenId
-	require(Exists(params.tokenId), "Invalid token ID")
+	require(Exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || tokenId(%s) doesn't exist", params.tokenId))
 
 	position := positions[params.tokenId]
 
@@ -171,15 +171,15 @@ func DecreaseLiquidity(
 func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	isAuthorizedForToken(params.tokenId)
 	checkDeadline(params.deadline)
-	require(params.liquidity > 0, "Cannot remove 0 liquidity")
+	require(params.liquidity > 0, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidity(%s) should be positive", params.liquidity))
 
 	// verify tokenId
-	require(Exists(params.tokenId), "Invalid token ID")
+	require(Exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%s) doesn't exist", params.tokenId))
 
 	position := positions[params.tokenId]
 
 	positionLiquidity := position.liquidity
-	require(positionLiquidity >= params.liquidity, ufmt.Sprintf("Cannot withdraw more liquidity(%s) than is in the position(%s)", params.liquidity, positionLiquidity))
+	require(positionLiquidity >= params.liquidity, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || positionLiquidity(%s) >= params.liquidity(%s)", positionLiquidity, params.liquidity))
 
 	// xxx_r3v4
 	// panic or remove entire liquidity
@@ -188,7 +188,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 
 	amount0, amount1 := p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, params.liquidity)
 
-	require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, "PM_Price slippage check")
+	require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || amount0(%s) >= params.amount0Min(%s) && amount1(%s) >= params.amount1Min(%s)", amount0, params.amount0Min, amount1, params.amount1Min))
 
 	positionKey := PositionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
@@ -227,7 +227,7 @@ func collect(params CollectParams) (bigint, bigint) {
 	// amount0, amount1
 
 	isAuthorizedForToken(params.tokenId)
-	require(params.amount0Max > 0 || params.amount1Max > 0, "At least one token should be collected")
+	require(params.amount0Max > 0 || params.amount1Max > 0, ufmt.Sprintf("[POSITION] position.gno__collect() || params.amount0Max(%s) > 0 || params.amount1Max(%s) > 0", params.amount0Max, params.amount1Max))
 
 	var recipient std.Address
 	if params.recipient == zeroAddress {
@@ -294,12 +294,12 @@ func burn(tokenId bigint) {
 
 	position := positions[tokenId]
 
-	require(position.isClear(), "Not cleared")
+	require(position.isClear(), ufmt.Sprintf("[POSITION] position.gno__burn() || position(tokenId:%s) isn't clear)", tokenId))
 
 	delete(positions, tokenId)
 	nft.Burn(grc721.TokenID(tokenId))
 }
 
 func isAuthorizedForToken(tokenId bigint) {
-	require(isApprovedOrOwner(PrevRealmAddr(), tokenId), "Not approved")
+	require(isApprovedOrOwner(PrevRealmAddr(), tokenId), ufmt.Sprintf("[POSITION] position.gno__isAuthorizedForToken() || caller(%s) is not approved or owner of tokenId(%s)", PrevRealmAddr(), tokenId))
 }

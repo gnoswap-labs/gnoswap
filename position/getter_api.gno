@@ -3,6 +3,8 @@ package position
 
 import (
 	"encoding/json"
+
+	"gno.land/p/demo/ufmt"
 )
 
 type ApiQueryBase struct {
@@ -40,8 +42,7 @@ func ApiGetPositions() string {
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		println("PANIC__ApiGetPositions")
-		panic(err)
+		panic(ufmt.Sprintf("[POSITION] getter_api.gno()__ApiGetPositions() || %v", err))
 	}
 
 	return string(rr)
@@ -69,8 +70,10 @@ type ResponseGetPosition struct {
 }
 
 func ApiGetPosition(key bigint) string { // key is tokenId
-	position, exists := positions[key]
-	require(exists, "NO_POOL_FOUND")
+	position, exist := positions[key]
+	if !exist {
+		return "NO_POSITION_FOUND"
+	}
 
 	qb := ApiQueryBase{
 		Height:    GetHeight(),
@@ -97,8 +100,7 @@ func ApiGetPosition(key bigint) string { // key is tokenId
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		println("PANIC__ApiGetPosition")
-		panic(err)
+		panic(ufmt.Sprintf("[POSITION] getter_api.gno()__ApiGetPosition() || %v", err))
 	}
 
 	return string(rr)
@@ -162,8 +164,7 @@ func ApiGetPositionByUser(addr string) string {
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		println("PANIC__ApiGetPositionByUser")
-		panic(err)
+		panic(ufmt.Sprintf("[POSITION] getter_api.gno()__ApiGetPositionByUser() || %v", err))
 	}
 
 	return string(rr)
