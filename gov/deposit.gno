@@ -3,6 +3,8 @@ package gov
 import (
 	"std"
 	"time"
+
+	"gno.land/p/demo/ufmt"
 )
 
 // entry point for deposit on a proposal
@@ -12,7 +14,7 @@ func (p *Proposal) deposit(depositor std.Address, amount uint64) bool {
 	}
 
 	if p.ProposalStatus != ProposalStatusDepositPeriod {
-		panic("Bug: Proposal.deposit() called on a proposal not in deposit period")
+		panic(ufmt.Sprintf("[GOV] deposit.gno__deposit() || called on a proposal not in deposit period__p.ProposalStatus(%s) != ProposalStatusDepositPeriod(%s)", p.ProposalStatus, ProposalStatusDepositPeriod))
 	}
 
 	if amount < getDepositMinimum() {

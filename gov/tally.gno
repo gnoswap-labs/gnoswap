@@ -60,7 +60,7 @@ func (p *Proposal) processDepositPeriod(currentTime uint64) {
 		return
 	}
 
-	panic("unreachable: proposal should be either in failed or successful after met deposit end time")
+	panic("[GOV] tally.gno__processDepositPeriod() || unreachable: proposal should be either in failed or successful after met deposit end time")
 }
 
 func (p *Proposal) processVotingPeriod(currentTime uint64) {

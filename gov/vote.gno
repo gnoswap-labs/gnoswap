@@ -20,11 +20,11 @@ type Vote struct {
 
 func (p *Proposal) vote(caller std.Address, option VoteOption, amount uint64) {
 	if p == nil {
-		panic("Proposal.vote() called on a nil proposal")
+		panic("[GOV] vote.gno__vote() || Proposal.vote() called on a nil proposal")
 	}
 
 	if !p.isVotingPeriod() {
-		panic("Proposal.vote() called on a proposal not in voting period")
+		panic("[GOV] vote.gno__vote() || Proposal.vote() called on a proposal not in voting period")
 	}
 
 	vote := Vote{option, amount}
@@ -77,11 +77,11 @@ func (p Proposal) isVotingRejected(currentTime uint64) bool {
 
 func (p *Proposal) updateVotingPower(option VoteOption, oldPower uint64, newPower uint64) {
 	if p == nil {
-		panic("Bug: Proposal.updateVotingPower() called on a nil proposal")
+		panic("[GOV] vote.gno__updateVotingPower() || Proposal.updateVotingPower() called on a nil proposal")
 	}
 
 	if !p.isVotingPeriod() {
-		panic("Bug: Proposal.updateVotingPower() called on a proposal not in voting period")
+		panic("[GOV] vote.gno__updateVotingPower() || Proposal.updateVotingPower() called on a proposal not in voting period")
 	}
 
 	switch option {
@@ -101,11 +101,11 @@ func (p *Proposal) updateVotingPower(option VoteOption, oldPower uint64, newPowe
 
 func (p *Proposal) updateVote(oldVote Vote, newVote Vote) {
 	if p == nil {
-		panic("Bug: Proposal.updateVotingPower() called on a nil proposal")
+		panic("[GOV] vote.gno__updateVote() || Proposal.updateVotingPower() called on a nil proposal")
 	}
 
 	if !p.isVotingPeriod() {
-		panic("Bug: Proposal.updateVotingPower() called on a proposal not in voting period")
+		panic("[GOV] vote.gno__updateVote() || Proposal.updateVotingPower() called on a proposal not in voting period")
 	}
 
 	switch oldVote.VoteOption {
@@ -121,7 +121,7 @@ func (p *Proposal) updateVote(oldVote Vote, newVote Vote) {
 
 	switch newVote.VoteOption {
 	case VoteNil:
-		panic("Bug: Proposal.updateVotingPower() called with a new vote of type VoteNil")
+		panic("[GOV] vote.gno__updateVote() || Proposal.updateVotingPower() called with a new vote of type VoteNil")
 	case VoteAbstain:
 		p.AbstainVotes += newVote.Power
 	case VoteNo:

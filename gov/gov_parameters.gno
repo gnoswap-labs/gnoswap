@@ -12,7 +12,7 @@ type VoteQuorum struct {
 func getVoteQuorum() VoteQuorum {
 	param, ok := getGovParameter("vote_quorum")
 	if !ok {
-		panic("vote_quorum parameter not set")
+		panic("[GOV] gov_parameters.gno__getVoteQuorum() || vote_quorum parameter not set")
 	}
 
 	return param.(VoteQuorum)
@@ -25,7 +25,7 @@ func setVoteQuorum(quorum VoteQuorum) {
 func getVotePeriod() uint64 {
 	param, ok := getGovParameter("vote_period")
 	if !ok {
-		panic("vote_period parameter not set")
+		panic("[GOV] gov_parameters.gno__getVotePeriod() || vote_period parameter not set")
 	}
 
 	return param.(uint64)
@@ -38,7 +38,7 @@ func setVotePeriod(period uint64) {
 func getDepositPeriod() uint64 {
 	param, ok := getGovParameter("deposit_period")
 	if !ok {
-		panic("deposit_period parameter not set")
+		panic("[GOV] gov_parameters.gno__getDepositPeriod() || deposit_period parameter not set")
 	}
 
 	return param.(uint64)
@@ -51,7 +51,7 @@ func setDepositPeriod(period uint64) {
 func getDepositMinimum() uint64 {
 	param, ok := getGovParameter("deposit_minimum")
 	if !ok {
-		panic("deposit_minimum parameter not set")
+		panic("[GOV] gov_parameters.gno__getDepositMinimum() || deposit_minimum parameter not set")
 	}
 
 	return param.(uint64)
