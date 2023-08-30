@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	zeroAddress = std.Address("")
+	ZERO_ADDRESS = std.Address("")
 
 	// some numbers
 	// calculated by https://mathiasbynens.be/demo/integer-range

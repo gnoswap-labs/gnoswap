@@ -1,15 +1,10 @@
 package gnoswap
 
 import (
-	"math"
 	"std"
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/r/demo/users"
-
-	bar "gno.land/r/bar"
-	foo "gno.land/r/foo"
 )
 
 var (
@@ -376,10 +371,7 @@ func TestSetFeeProtocol(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	SetFeeProtocol(6, 8)
 
-	for i := 0; i < pools.Size(); i++ {
-		k, _ := pools.GetByIndex(i)
-		pool := GetPoolFromPoolKey(k)
-
+	for _, pool := range pools {
 		shouldEQ(t, pool.GetSlot0().feeProtocol, bigint(134))
 	}
 }

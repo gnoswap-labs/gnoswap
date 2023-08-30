@@ -2,6 +2,7 @@ package gnoswap
 
 import (
 	"gno.land/p/demo/grc/grc20"
+	"gno.land/p/demo/ufmt"
 )
 
 // Testing
@@ -51,7 +52,7 @@ func (pool *Pool) GetProtocolFees() ProtocolFees {
 
 func (pool *Pool) GetPosition(key string) PositionInfo {
 	position, exist := pool.positions[key]
-	require(exist, "position does not exist")
+	require(exist, ufmt.Sprintf("[POOL] test_helper.gno__GetPosition() || position(%s) does not exist", key))
 
 	return position
 }
@@ -62,7 +63,7 @@ func (pool *Pool) GetPositions() Positions {
 
 func (pool *Pool) GetTick(key bigint) TickInfo {
 	tick, exist := pool.ticks[key]
-	require(exist, "tick does not exist")
+	require(exist, ufmt.Sprintf("[POOL] test_helper.gno__GetTick() || tick(%s) does not exist", key))
 
 	return tick
 }
@@ -73,7 +74,7 @@ func (pool *Pool) GetTicks() Ticks {
 
 func (pool *Pool) GetTickBitmap(key bigint) bigint {
 	tickBitmap, exist := pool.tickBitmaps[key]
-	require(exist, "tickBitmap does not exist")
+	require(exist, ufmt.Sprintf("[POOL] test_helper.gno__GetTickBitmap() || tickBitmap(%s) does not exist", key))
 
 	return tickBitmap
 }

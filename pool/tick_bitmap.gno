@@ -1,5 +1,7 @@
 package gnoswap
 
+import "gno.land/p/demo/ufmt"
+
 const BigInt1 bigint = bigint(1)
 
 func TickBitmapPosition(tick bigint) (bigint, bigint) {
@@ -9,7 +11,7 @@ func TickBitmapPosition(tick bigint) (bigint, bigint) {
 		bitPos = -bitPos
 	}
 
-	requireUnsigned(bitPos, "tick_bitmap.gno__TickBitmapPosition__bitPos")
+	requireUnsigned(bitPos, ufmt.Sprintf("[POOL] tick_bitmap.gno__TickBitmapPosition() || bitPos(%s) must be positive", bitPos))
 	return wordPos, bitPos
 }
 
@@ -17,10 +19,10 @@ func (pool *Pool) TickBitmapFlipTick(
 	tick bigint,
 	tickSpacing bigint,
 ) {
-	require(tick%tickSpacing == 0, "tick %% tickSpacing != 0")
+	require(tick%tickSpacing == 0, ufmt.Sprintf("[POOL] tick_bitmap.gno__TickBitmapFlipTick() || tick MOD tickSpacing(%s) != 0", tick%tickSpacing))
 	wordPos, bitPos := TickBitmapPosition(tick)
 	mask := BigInt1 << uint64(bitPos)
-	requireUnsigned(mask, "tick_bitmap.gno__TickBitmapFlipTick__mask")
+	requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__TickBitmapFlipTick() || mask(%s) must be positive", mask))
 
 	pool.tickBitmaps[wordPos] ^= mask
 }
@@ -39,10 +41,10 @@ func (pool *Pool) TickBitmapNextInitializedTickWithInOneWord(
 		wordPos, bitPos := TickBitmapPosition(compress)
 
 		mask := (BigInt1 << uint64(bitPos)) - BigInt1 + (BigInt1 << uint64(bitPos))
-		requireUnsigned(mask, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__mask #1")
+		requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__mask(%s) must be positive #1", mask))
 
 		masked := pool.tickBitmaps[wordPos] & mask
-		requireUnsigned(masked, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__masked #1")
+		requireUnsigned(masked, ufmt.Sprintf("[POOL] tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__masked(%s) must be positive #1", masked))
 
 		initialized := masked != 0
 
@@ -70,10 +72,10 @@ func (pool *Pool) TickBitmapNextInitializedTickWithInOneWord(
 	if mask < 0 {
 		mask = -mask
 	}
-	requireUnsigned(mask, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__mask #2")
+	requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__mask(%s) must be positive #2", mask))
 
 	masked := pool.tickBitmaps[wordPos] & mask
-	requireUnsigned(masked, "tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__masked #2")
+	requireUnsigned(masked, ufmt.Sprintf("[POOL] tick_bitmap.gno__TickBitmapNextInitializedTickWithInOneWord__masked(%s) must be positive #2", masked))
 
 	initialized := masked != 0
 	if initialized {

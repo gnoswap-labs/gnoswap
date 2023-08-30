@@ -104,8 +104,7 @@ func TestSwap(t *testing.T) {
 	test_price_10 := bigint(MAX_SQRT_RATIO - 1) // minimum price // swap 1 -> 0
 
 	{
-		println("> Swap #1")
-		println(">> direction: token0 -> token1")
+		println("> Swap")
 
 		// SWAP
 		std.TestSetOrigCaller(tr01)
@@ -136,6 +135,8 @@ func TestSwap(t *testing.T) {
 		println(ApiGetPool("bar_foo_500"))
 		println()
 	}
+
+	BitMathMostSignificantBit(bigint(5))
 }
 
 /* HELPER */

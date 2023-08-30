@@ -5,6 +5,8 @@ import (
 
 	bar "gno.land/r/bar"
 	foo "gno.land/r/foo"
+
+	"gno.land/p/demo/ufmt"
 )
 
 var (
@@ -15,9 +17,8 @@ var (
 	pools                map[string]*Pool  = make(map[string]*Pool)  // map[pool_key]*Pool
 )
 
-// XXX can it be init ?
 func Init() {
-	require(!initialized, "already initialized")
+	require(!initialized, "[POOl] pool_manager.gno__Init() || contract must not be initialized")
 	feeAmountTickSpacing[100] = 2
 	feeAmountTickSpacing[500] = 10
 	feeAmountTickSpacing[3000] = 60
@@ -32,12 +33,10 @@ func CreatePool(
 	fee bigint,
 	sqrtPriceX96 bigint,
 ) *Pool {
-	require(initialized, "not initialized")
-	require(tokenA != tokenB, "tokenA == tokenB")
+	require(initialized, "[POOl] pool_manager.gno__CreatePool() || contract must be initialized")
+	require(tokenA != tokenB, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || token pair cannot be the same(%s, %s)", tokenA, tokenB))
 
-	// XXX check if token0, 1 has ben deployed
-	// inter-contract call
-
+	// r3v4_xxx: check whether token pair has been deployed successfuly
 	var token0, token1 string
 	if tokenA < tokenB {
 		token0 = tokenA
@@ -49,14 +48,14 @@ func CreatePool(
 
 	// check tickSpacing for fee
 	tickSpacing := feeAmountTickSpacing[fee]
-	require(tickSpacing > 0, "tickSpacing is not valid")
+	require(tickSpacing > 0, ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || invalid fee(%s) (must be positive)", fee))
 
 	// calculate poolKey
 	poolKey := GetPoolKey(token0, token1, fee)
 
 	// check whether the pool already exist
 	pool, exist := pools[poolKey]
-	require(!exist, "pool already exist")
+	require(!exist, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || pool already exist(%s)", poolKey))
 	if !exist {
 		pool = newPool(token0, token1, fee, bigint(tickSpacing), sqrtPriceX96)
 		pools[poolKey] = pool
@@ -68,14 +67,14 @@ func CreatePool(
 func GetPool(token0, token1 string, fee bigint) *Pool {
 	poolKey := GetPoolKey(token0, token1, fee)
 	pool, exist := pools[poolKey]
-	require(exist, "pool not found")
+	require(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPool() || pool not found(%s)", poolKey))
 
 	return pool
 }
 
 func GetPoolFromPoolKey(poolKey string) *Pool {
 	pool, exist := pools[poolKey]
-	require(exist, "pool not found")
+	require(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPoolFromPoolKey() || pool not found(%s)", poolKey))
 
 	return pool
 }
@@ -115,8 +114,7 @@ func newPool(
 		token1: 0,
 	}
 
-	// XXX dynamic import
-	// inter-contract OR realm-banker...
+	// r3v4_xxx: dynamic import need to support multi token
 	return &Pool{
 		token0:               foo.GetGRC20(), // token0.GetGRC20() // gno.land/r/foo.GetGRC20()
 		token1:               bar.GetGRC20(), // token1.GetGRC20() // gno.land/r/bar.GetGRC20()

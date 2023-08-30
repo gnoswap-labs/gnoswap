@@ -6,6 +6,8 @@ import (
 
 	"encoding/json"
 	"strings"
+
+	"gno.land/p/demo/ufmt"
 )
 
 type ApiQueryBase struct {
@@ -43,8 +45,7 @@ func ApiGetPools() string {
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		println("PANIC__ApiGetPools")
-		panic(err)
+		panic(ufmt.Sprintf("[POOL] getter_api.gno__ApiGetPools() || %v", err))
 	}
 
 	return string(rr)
@@ -56,20 +57,16 @@ type ApiPositionInfo struct {
 	TickUpper bigint `json:"tick_upper"`
 
 	Liquidity bigint `json:"liquidity"`
-	// FeeGrowthInside0LastX128 bigint
-	// FeeGrowthInside1LastX128 bigint
-	T0Owed bigint `json:"token0_owed"`
-	T1Owed bigint `json:"token1_owed"`
+	T0Owed    bigint `json:"token0_owed"`
+	T1Owed    bigint `json:"token1_owed"`
 }
 
 type SinglePool struct {
-	// T0Name string `json:"token0_name"`
-	// T1Name string `json:"token1_name"`
-	T0Bal bigint `json:"token0_balance"`
-	T1Bal bigint `json:"token1_balance"`
-	// Fee                 bigint `json:"fee"`
+	T0Bal               bigint `json:"token0_balance"`
+	T1Bal               bigint `json:"token1_balance"`
 	TickSpacing         bigint `json:"tick_spacing"`
 	MaxLiquidityPerTick bigint `json:"max_liquidity_per_tick"`
+	// r3v4_xxx: add below datas or not
 	// slot0               Slot0  `json:"slot0"`
 	// protocolFees ProtocolFees `json:"protocol_fees"`
 	Liquidity bigint `json:"liquidity"`
@@ -86,7 +83,6 @@ type ResponseGetPool struct {
 func ApiGetPool(key string) string {
 	pool, exist := pools[key]
 	if !exist {
-		// r3v4_xxx should panic?
 		return "NO_POOL_FOUND"
 	}
 
@@ -118,9 +114,8 @@ func ApiGetPool(key string) string {
 			Data SinglePool `json:"data"`
 		}{
 			Data: SinglePool{
-				T0Bal: pool.balances.token0,
-				T1Bal: pool.balances.token1,
-				// Fee:                 pool.fee,
+				T0Bal:               pool.balances.token0,
+				T1Bal:               pool.balances.token1,
 				TickSpacing:         pool.tickSpacing,
 				MaxLiquidityPerTick: pool.maxLiquidityPerTick,
 				Liquidity:           pool.liquidity,
@@ -131,8 +126,7 @@ func ApiGetPool(key string) string {
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		println("PANIC__ApiGetPool")
-		panic(err)
+		panic(ufmt.Sprintf("[POOL] getter_api.gno__ApiGetPool() || %v", err))
 	}
 
 	return string(rr)
@@ -145,7 +139,7 @@ func posKeyDivide(posKey string) (string, bigint, bigint) {
 
 	res := strings.Split(posKey, "__")
 	if len(res) != 3 {
-		panic("posKeyDevidie: invalid posKey")
+		panic(ufmt.Sprintf("[POOL] getter_api.gno__posKeyDivide() || invalid posKey(%s)", posKey))
 	}
 
 	owner, tickLower, tickUpper := res[0], res[1], res[2]

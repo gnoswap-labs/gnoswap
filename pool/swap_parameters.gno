@@ -6,9 +6,7 @@ import (
 
 func getProtocolFees() ProtocolFees {
 	param, ok := gov.GetParameter("protocol_fees")
-	if !ok {
-		panic("protocol fees not set")
-	}
+	require(ok, "[POOL] swap_parameters.gno__getProtocolFees() || protocol fees not set")
 
 	return param.(ProtocolFees)
 }

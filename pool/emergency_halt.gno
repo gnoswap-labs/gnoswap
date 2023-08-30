@@ -2,6 +2,8 @@ package gnoswap
 
 import (
 	"std"
+
+	"gno.land/p/demo/ufmt"
 )
 
 var (
@@ -19,7 +21,7 @@ func init() {
 
 func assertCalledByGovRealm() {
 	if std.PrevRealm() != govRealm {
-		panic("function can only be called from gov realm")
+		panic(ufmt.Sprintf("[POOL] emergency_halt.gno__assertCalledByGovRealm() || function can only be called from gov realm(%s)", std.PrevRealm().PkgPath()))
 	}
 }
 
@@ -30,6 +32,6 @@ func halt() {
 
 func assertNotHalt() {
 	if flagHalt {
-		panic("emergency halt")
+		panic("[POOL] emergency_halt.gno__assertNotHalt() || emergency halt")
 	}
 }

@@ -1,7 +1,6 @@
 package gnoswap
 
 import (
-	"math"
 	"std"
 	"testing"
 
@@ -289,7 +288,7 @@ func TestSecondPool(t *testing.T) {
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	std.TestSetOrigCaller(lp01)
-	m1, m2 := Mint(pToken0, pToken1, pFee2, lp01, test_tickLower2, test_tickUpper2, test_liquidityExpect*1000)
+	m1, m2 := Mint(pToken0, pToken1, pFee2, lp01, test_tickLower2, test_tickUpper2, test_liquidityExpect*50000)
 
 	// Swap several times
 	std.TestSetOrigCaller(tr01)
