@@ -100,7 +100,7 @@ func ApiGetPosition(key bigint) string { // key is tokenId
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] getter_api.gno()__ApiGetPosition() || %v", err))
+		panic(ufmt.Sprintf("[POSITION] getter_api.gno__ApiGetPosition() || %v", err))
 	}
 
 	return string(rr)
@@ -164,7 +164,7 @@ func ApiGetPositionByUser(addr string) string {
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] getter_api.gno()__ApiGetPositionByUser() || %v", err))
+		panic(ufmt.Sprintf("[POSITION] getter_api.gno__ApiGetPositionByUser() || %v", err))
 	}
 
 	return string(rr)

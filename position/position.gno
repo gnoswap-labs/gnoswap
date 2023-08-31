@@ -171,7 +171,7 @@ func DecreaseLiquidity(
 func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	isAuthorizedForToken(params.tokenId)
 	checkDeadline(params.deadline)
-	require(params.liquidity > 0, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidity(%s) should be positive", params.liquidity))
+	require(params.liquidity > 0, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidity(%s) > 0", params.liquidity))
 
 	// verify tokenId
 	require(Exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%s) doesn't exist", params.tokenId))
@@ -181,7 +181,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	positionLiquidity := position.liquidity
 	require(positionLiquidity >= params.liquidity, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || positionLiquidity(%s) >= params.liquidity(%s)", positionLiquidity, params.liquidity))
 
-	// xxx_r3v4
+	// r3v4_xxx
 	// panic or remove entire liquidity
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
 	pool := p.GetPoolFromPoolKey(position.poolKey)
@@ -294,7 +294,7 @@ func burn(tokenId bigint) {
 
 	position := positions[tokenId]
 
-	require(position.isClear(), ufmt.Sprintf("[POSITION] position.gno__burn() || position(tokenId:%s) isn't clear)", tokenId))
+	require(position.isClear(), ufmt.Sprintf("[POSITION] position.gno__burn() || position(tokenId:%s) isn't clear(has something)", tokenId))
 
 	delete(positions, tokenId)
 	nft.Burn(grc721.TokenID(tokenId))

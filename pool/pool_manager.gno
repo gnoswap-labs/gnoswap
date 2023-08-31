@@ -34,7 +34,7 @@ func CreatePool(
 	sqrtPriceX96 bigint,
 ) *Pool {
 	require(initialized, "[POOl] pool_manager.gno__CreatePool() || contract must be initialized")
-	require(tokenA != tokenB, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || token pair cannot be the same(%s, %s)", tokenA, tokenB))
+	require(tokenA != tokenB, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || token pair cannot be the same__tokenA(%s) != tokenB(%s)", tokenA, tokenB))
 
 	// r3v4_xxx: check whether token pair has been deployed successfuly
 	var token0, token1 string
@@ -48,14 +48,14 @@ func CreatePool(
 
 	// check tickSpacing for fee
 	tickSpacing := feeAmountTickSpacing[fee]
-	require(tickSpacing > 0, ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || invalid fee(%s) (must be positive)", fee))
+	require(tickSpacing > 0, ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || invalid__tickSpacing(%s) > 0", fee))
 
 	// calculate poolKey
 	poolKey := GetPoolKey(token0, token1, fee)
 
 	// check whether the pool already exist
 	pool, exist := pools[poolKey]
-	require(!exist, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || pool already exist(%s)", poolKey))
+	require(!exist, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || pool(%s) already exist", poolKey))
 	if !exist {
 		pool = newPool(token0, token1, fee, bigint(tickSpacing), sqrtPriceX96)
 		pools[poolKey] = pool
@@ -67,14 +67,14 @@ func CreatePool(
 func GetPool(token0, token1 string, fee bigint) *Pool {
 	poolKey := GetPoolKey(token0, token1, fee)
 	pool, exist := pools[poolKey]
-	require(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPool() || pool not found(%s)", poolKey))
+	require(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPool() || pool(%s) not found", poolKey))
 
 	return pool
 }
 
 func GetPoolFromPoolKey(poolKey string) *Pool {
 	pool, exist := pools[poolKey]
-	require(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPoolFromPoolKey() || pool not found(%s)", poolKey))
+	require(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPoolFromPoolKey() || pool(%s) not found", poolKey))
 
 	return pool
 }

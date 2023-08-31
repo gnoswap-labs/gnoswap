@@ -12,13 +12,13 @@ func RewardMathComputeRewardAmount(
 	secondsPerLiquidityInsideX128 bigint,
 	currentTime bigint,
 ) (reward, secondsInsideX128 bigint) {
-	// requireUnsigned(totalRewardUnclaimed, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || totalRewardUnclaimed(%s) must be positive", totalRewardUnclaimed))
-	// requireUnsigned(totalSecondsClaimedX128, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || totalSecondsClaimedX128(%s) must be positive", totalSecondsClaimedX128))
-	requireUnsigned(startTime, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || startTime(%s) must be positive", startTime))
-	requireUnsigned(endTime, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || endTime(%s) must be positive", endTime))
-	requireUnsigned(liquidity, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || liquidity(%s) must be positive", liquidity))
-	requireUnsigned(secondsPerLiquidityInsideInitialX128, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || secondsPerLiquidityInsideInitialX128(%s) must be positive", secondsPerLiquidityInsideInitialX128))
-	requireUnsigned(secondsPerLiquidityInsideX128, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || secondsPerLiquidityInsideX128(%s) must be positive", secondsPerLiquidityInsideX128))
+	// requireUnsigned(totalRewardUnclaimed, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || totalRewardUnclaimed(%s) >= 0", totalRewardUnclaimed))
+	// requireUnsigned(totalSecondsClaimedX128, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || totalSecondsClaimedX128(%s) >= 0", totalSecondsClaimedX128))
+	requireUnsigned(startTime, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || startTime(%s) >= 0", startTime))
+	requireUnsigned(endTime, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || endTime(%s) >= 0", endTime))
+	requireUnsigned(liquidity, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || liquidity(%s) >= 0", liquidity))
+	requireUnsigned(secondsPerLiquidityInsideInitialX128, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || secondsPerLiquidityInsideInitialX128(%s) >= 0", secondsPerLiquidityInsideInitialX128))
+	requireUnsigned(secondsPerLiquidityInsideX128, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || secondsPerLiquidityInsideX128(%s) >= 0", secondsPerLiquidityInsideX128))
 
 	require(currentTime >= startTime, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || current time must be after start time__currentTime(%s) >= startTime(%s)", currentTime, startTime))
 
@@ -27,8 +27,8 @@ func RewardMathComputeRewardAmount(
 	// totalSecondsUnclaimedX128 := ((max(endTime, currentTime) - startTime) << 128) - totalSecondsClaimedX128
 	// reward = (totalRewardUnclaimed * secondsInsideX128) / totalSecondsUnclaimedX128
 
-	// requireUnsigned(reward, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || reward(%s) must be positive", reward))
-	// requireUnsigned(secondsInsideX128, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || secondsInsideX128(%s) must be positive", secondsInsideX128))
+	// requireUnsigned(reward, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || reward(%s) >= 0", reward))
+	// requireUnsigned(secondsInsideX128, ufmt.Sprintf("[STAKER] reward_math.gno__RewardMathComputeRewardAmount() || secondsInsideX128(%s) >= 0", secondsInsideX128))
 
 	// secondsInsideX128 not used here
 	reward = liquidity
