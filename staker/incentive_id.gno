@@ -6,8 +6,8 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-func incentiveIdCompute(incentive IncentiveKey) string {
-	key := ufmt.Sprintf("%d__%d__%s", incentive.startTime, incentive.endTime, incentive.refundee.String())
+func incentiveIdCompute(targetPoolPath, rewardToken string) string {
+	key := ufmt.Sprintf("%s_%s", targetPoolPath, rewardToken)
 
 	encoded := base64.StdEncoding.EncodeToString([]byte(key))
 	return encoded

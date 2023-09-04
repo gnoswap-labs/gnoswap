@@ -5,34 +5,18 @@ import (
 )
 
 type Incentive struct {
-	numberOfStakes bigint
-}
-
-type Stake struct {
-	secondsPerLiquidityInsideInitialX128 bigint
-	liquidityNoOverflow                  bigint
-	liquidityIfOverflow                  bigint
+	targetPoolPath string
+	// rewardToken std.Address
+	rewardToken    string
+	rewardAmount   bigint
+	startTimestamp bigint
+	endTimestamp   bigint
+	refundee       std.Address
 }
 
 type Deposit struct {
 	owner          std.Address
 	numberOfStakes bigint
-	tickLower      bigint
-	tickUpper      bigint
-	lockDuration   bigint
-	timeToWithdraw bigint
-}
-
-type IncentiveKey struct {
-	// rewardToken std.Address
-	// pool std.Address
-	startTime bigint
-	endTime   bigint
-	refundee  std.Address
-}
-
-type StakingRewards struct {
-	StakingReward7  bigint
-	StakingReward14 bigint
-	StakingReward21 bigint
+	stakeTimestamp bigint
+	targetPoolPath string
 }

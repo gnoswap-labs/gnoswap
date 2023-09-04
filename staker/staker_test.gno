@@ -1,163 +1,219 @@
 package staker
 
 import (
+	"encoding/json"
 	"std"
 	"testing"
 
 	"gno.land/p/demo/testutils"
 
-	g "gno.land/r/gov"
 	p "gno.land/r/pool"
 	s "gno.land/r/position"
 
-	nft "gno.land/r/gnft"  // GNFT, Gnoswap NFT
-	gnos "gno.land/r/gnos" // GNOS, Gnoswap Share
+	gnft "gno.land/r/gnft" // GNFT, Gnoswap NFT
+	gnos "gno.land/r/gnos" // GNOS, INTERNAL Reward Token
+	obl "gno.land/r/obl"   // OBL, EXTERNAL Reward Token
 )
 
 var (
-	tMaxIncentiveStartLeadTime bigint = 1000000
-	tMaxIncentiveDuration      bigint = 1000000
+	pc01 = testutils.TestAddress("pc01") // Pool Creator
+	ci01 = testutils.TestAddress("ci01") // Create Incentive Caller
+	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
+	lp02 = testutils.TestAddress("lp02") // Liquidity Provider 02
 
-	tStartTime bigint = GetTimestamp()
-	tEndTime   bigint = tStartTime + 301 // staker.gno #140 ( lockDuration is limited to 100, 200, 300 seconds)
-
-	own      = testutils.TestAddress("own")  // Owner
-	ci01     = testutils.TestAddress("ci01") // Create Incentive Caller
-	rf01     = testutils.TestAddress("rf01") // Refundee
-	lp01     = testutils.TestAddress("lp01") // Liquidity Provider
-	poolAddr = p.GetOrigPkgAddr()            // Pool Contract
+	ira = testutils.TestAddress("ira") // Internal Reward Account
 )
 
 func init() {
+	// init pool tiers
+	// tier 1
+	poolTiers["BAR/FOO_500"] = 1 // DEV
+
+	// tier 2
+	poolTiers["GNOS/USDT_500"] = 2
+	poolTiers["ATOM/GNOS_500"] = 2
+
+	// tier 3
+	poolTiers["ATOM/GNOT_500"] = 3
+	poolTiers["ATOM/USDT_500"] = 3
+	poolTiers["ATOM/WETH_500"] = 3
+
 	// debug - print addr
-	println(ci01, "// ci01")
-	println(rf01, "// rf01")
-	println(lp01, "// lp01")
-	println(p.GetOrigPkgAddr(), "// pool")
-	println(s.GetOrigPkgAddr(), "// position")
-	println(GetOrigPkgAddr(), "// staker")
-	println(g.GetOrigPkgAddr(), "// gov")
+	// println(pc01, "// pc01")
+	// println(ci01, "// ci01")
+	// println(lp01, "// lp01")
+	// println(lp02, "// lp02")
+	// println(ira, "// internal_reward_account")
+	// println(p.GetOrigPkgAddr(), "// pool")
+	// println(s.GetOrigPkgAddr(), "// position")
+	// println(GetOrigPkgAddr(), "// staker")
 }
 
-// Init & CreatePool using Pool Contract
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(own)
+	std.TestSetOrigCaller(pc01)
 	p.InitManual()
+	std.TestSkipHeights(1)
 	p.CreatePool("foo", "bar", 500, 130621891405341611593710811006)
-
-	// fee
-	// 500		= 0.05% // USv3 default
-	// 3000		= 0.3% // USv3 default
-	// 10000	= 1% // USv3 default
-
-	// sqrtPrice
-	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { p.CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
+	std.TestSkipHeights(1)
 }
 
 func TestPositionMint(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
-	tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := s.Mint(
-		std.Address("foo"),
-		std.Address("bar"),
-		bigint(500),
-		bigint(9000),
-		bigint(11000),
-		bigint(1000),
-		bigint(1000),
-		bigint(1),
-		bigint(1),
-		bigint(1234567890),
-	)
+	{
+		std.TestSetOrigCaller(lp01)
+		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := s.Mint(
+			std.Address("foo"), // token0
+			std.Address("bar"), // token1
+			bigint(500),        // fee
+			bigint(9000),       // tickLower
+			bigint(11000),      // tickUpper
+			bigint(1000),       // amount0Desired
+			bigint(1000),       // amount1Desired
+			bigint(1),          // amount0Min
+			bigint(1),          // amount1Min
+			bigint(2345678901), // deadline
+		)
+		std.TestSkipHeights(1)
 
-	shouldEQ(t, tPosTokenId, bigint(1))
-	shouldEQ(t, nft.OwnerOf(bigint(1)), GetOrigCaller()) // lp01
+		shouldEQ(t, tPosTokenId, bigint(1))
+		shouldEQ(t, gnft.OwnerOf(bigint(1)), GetOrigCaller()) // lp01
 
-	// approve nft to staker
-	std.TestSetPrevAddr(lp01)
-	nft.Approve(a2u(GetOrigPkgAddr()), "1")
+		// approve nft to staker
+		std.TestSetPrevAddr(lp01)
+		gnft.Approve(a2u(GetOrigPkgAddr()), "1")
+		std.TestSkipHeights(1)
+
+		// mint liquidity: 12437
+		// current pool liquidity: 12437
+		// lp01 has 100%
+	}
+
+	{
+		std.TestSetOrigCaller(lp02)
+		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := s.Mint(
+			std.Address("foo"), // token0
+			std.Address("bar"), // token1
+			bigint(500),        // fee
+			bigint(9100),       // tickLower
+			bigint(12000),      // tickUpper
+			bigint(5000),       // amount0Desired
+			bigint(5000),       // amount1Desired
+			bigint(1),          // amount0Min
+			bigint(1),          // amount1Min
+			bigint(2345678901), // deadline
+		)
+		std.TestSkipHeights(1)
+
+		shouldEQ(t, tPosTokenId, bigint(2))
+		shouldEQ(t, gnft.OwnerOf(bigint(2)), GetOrigCaller()) // lp02
+
+		// approve nft to staker
+		std.TestSetPrevAddr(lp02)
+		gnft.Approve(a2u(GetOrigPkgAddr()), "2")
+		std.TestSkipHeights(1)
+
+		// mint liquidity: 68925
+		// current pool liquidity: 81362
+		// lp01 has 15.28%
+		// lp02 has 84.72%
+	}
 }
 
-func TestCreateIncentive(t *testing.T) {
+func TestCreateExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
 
-	Init()
-	CreateIncentive(
-		tStartTime, // starTime
-		tEndTime,   // endTime
-		rf01,       // refundee
+	CreateExternalIncentive(
+		"bar_foo_500",  // targetPoolPath
+		"OBL",          // rewardToken
+		10_000_000_000, // rewardAmount
+		GetTimestamp(), // startTimestamp
+		GetTimestamp()+TIMESTAMP_30DAYS+TIMESTAMP_30DAYS, // endTimestamp
 	)
+	std.TestSkipHeights(5)
 
-	// nft owner doesn't change yet
-	shouldEQ(t, nft.OwnerOf(bigint(1)), lp01) // lp0
+	shouldPanic(t, func() {
+		CreateExternalIncentive("bar_foo_500", "OBL", 10_000_000_000, GetTimestamp(), GetTimestamp()+TIMESTAMP_30DAYS+TIMESTAMP_30DAYS)
+	})
 }
 
 func TestStakeToken(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
-	StakeToken(
-		tStartTime,
-		tEndTime,
-		rf01,
-		bigint(1),
-		100,
-	)
+	{
+		std.TestSetOrigCaller(lp01)
+		StakeToken(1) // GNFT tokenId
+		std.TestSkipHeights(2)
 
-	// nft transfered from lp01 to staker
-	shouldEQ(t, nft.OwnerOf(bigint(1)), GetOrigPkgAddr())
+		shouldEQ(t, gnft.OwnerOf(bigint(1)), GetOrigPkgAddr()) // staker
+		shouldEQ(t, len(deposits), 1)
+	}
+
+	{
+		std.TestSetOrigCaller(lp02)
+		StakeToken(2) // GNFT tokenId
+		std.TestSkipHeights(2)
+
+		shouldEQ(t, gnft.OwnerOf(bigint(2)), GetOrigPkgAddr()) // staker
+		shouldEQ(t, len(deposits), 2)
+	}
+
 }
 
-func TestGetRewardInfo(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
+func TestApiGetRewardsByAddress(t *testing.T) {
+	gra := ApiGetRewardByAddress(lp01)
+	result := ResponseGetRewardByAddress{
+		Stat: ApiQueryBase{
+			Height:    0,
+			Timestamp: 0,
+		},
+		Response: struct {
+			Data []ApiRewardByAddress `json:"data"`
+		}{
+			Data: []ApiRewardByAddress{
+				{
+					Type:   "",
+					Token:  "",
+					Reward: 0,
+				},
+				{
+					Type:   "",
+					Token:  "",
+					Reward: 0,
+				},
+			},
+		},
+	}
 
-	// XXX currently, amount of reward is exact same as amount of liquidity
-	tReward, tSecondsInsideX128 := GetRewardInfo(
-		tStartTime,
-		tEndTime,
-		rf01,
-		"1",
-	)
+	if err := json.Unmarshal([]byte(gra), &result); err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, result.Stat.Height, GetHeight())
+	shouldEQ(t, result.Response.Data[0].Type, "Internal")
+	shouldEQ(t, result.Response.Data[0].Token, "GNOS")
+	shouldEQ(t, result.Response.Data[0].Reward, bigint(229290))
+	shouldEQ(t, result.Response.Data[1].Type, "External")
+	shouldEQ(t, result.Response.Data[1].Token, "OBL")
+	shouldEQ(t, result.Response.Data[1].Reward, bigint(44))
 }
 
-func TestClaimReward(t *testing.T) {
+func TestUnstakeToken(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
-
-	tOldRewardBal := gnos.BalanceOf(a2u(lp01))
-	ClaimReward(tStartTime, tEndTime, rf01, "1")
-	tNewRewardBal := gnos.BalanceOf(a2u(lp01))
-
-	shouldGT(t, tOldRewardBal, tNewRewardBal)
-}
-
-func TestUnstakeAndWithdraw(t *testing.T) {
-	// NFT was staked with lockDuration 100seconds from L#95-107
-	// so, it can be withdrawl after 100 seconds since unstake requeset
-	std.TestSetOrigCaller(lp01)
-
-	UnstakeToken(tStartTime, tEndTime, rf01, 1)
-	shouldEQ(t, nft.OwnerOf("1"), GetOrigPkgAddr()) // staker owns nft tid 1
-
-	shouldPanic(t, func() { WithdrawToken("1", GetOrigCaller()) })
-
-	std.TestSkipHeights(15)
-	shouldPanic(t, func() { WithdrawToken("1", GetOrigCaller()) })
-
-	std.TestSkipHeights(5)
-	shouldPanic(t, func() { WithdrawToken("1", GetOrigCaller()) })
-
+	UnstakeToken(1) // GNFT tokenId
 	std.TestSkipHeights(1)
-	WithdrawToken("1", GetOrigCaller())
-	shouldEQ(t, nft.OwnerOf("1"), lp01)
+
+	shouldEQ(t, gnft.OwnerOf(bigint(1)), lp01) // lp01
+
+	// check reward
+	shouldEQ(t, gnos.BalanceOf(a2u(lp01)), bigint(229290)) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(lp01)), bigint(44))      // external
 }
 
-/* GETTER_API TEST */
-func TestApiGetIncentives(t *testing.T) {
-	gis := ApiGetIncentives()
-	println(gis)
-}
+func TestEndExternalIncentive(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+	std.TestSkipHeights(1036800)
+	EndExternalIncentive("bar_foo_500", "OBL") // use same parameter as CreateExternalIncentive()
+	std.TestSkipHeights(1)
 
-func TestApiGetStakes(t *testing.T) {
-	gss := ApiGetStakes()
-	println(gss)
+	shouldEQ(t, len(incentives), 0)
+	shouldEQ(t, len(poolIncentives["bar_foo_500"]), 0)
 }
 
 /* HELPERS */
