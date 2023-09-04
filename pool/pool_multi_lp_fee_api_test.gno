@@ -40,7 +40,7 @@ var (
 // 1. Init & Create Pool by gsa
 func TestCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
-	Init()
+	InitManual()
 	std.TestSkipHeights(1)
 
 	println("> Init")
@@ -135,8 +135,6 @@ func TestSwap(t *testing.T) {
 		println(ApiGetPool("bar_foo_500"))
 		println()
 	}
-
-	BitMathMostSignificantBit(bigint(5))
 }
 
 /* HELPER */

@@ -17,8 +17,8 @@ var (
 	pools                map[string]*Pool  = make(map[string]*Pool)  // map[pool_key]*Pool
 )
 
-func Init() {
-	require(!initialized, "[POOl] pool_manager.gno__Init() || contract must not be initialized")
+func InitManual() {
+	require(!initialized, "[POOl] pool_manager.gno__initManual() || contract must not be initialized")
 	feeAmountTickSpacing[100] = 2
 	feeAmountTickSpacing[500] = 10
 	feeAmountTickSpacing[3000] = 60
@@ -94,8 +94,8 @@ func newPool(
 	tickSpacing bigint,
 	sqrtPriceX96 bigint,
 ) *Pool {
-	maxLiquidityPerTick := TickTickSpacingToMaxLiquidityPerTick(tickSpacing)
-	tick := TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+	maxLiquidityPerTick := tickTickSpacingToMaxLiquidityPerTick(tickSpacing)
+	tick := tickMathGetTickAtSqrtRatio(sqrtPriceX96)
 
 	slot0 := Slot0{
 		sqrtPriceX96: sqrtPriceX96,
@@ -133,7 +133,7 @@ func newPool(
 	}
 }
 
-func IsAdmin(target std.Address) bool {
+func isAdmin(target std.Address) bool {
 	for _, admin := range admins {
 		if admin == target {
 			return true

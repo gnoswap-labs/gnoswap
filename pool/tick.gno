@@ -2,25 +2,25 @@ package gnoswap
 
 import "gno.land/p/demo/ufmt"
 
-func TickTickSpacingToMaxLiquidityPerTick(tickSpacing bigint) bigint {
+func tickTickSpacingToMaxLiquidityPerTick(tickSpacing bigint) bigint {
 	var minTick bigint = (MIN_TICK / tickSpacing) * tickSpacing
 	var maxTick bigint = (MAX_TICK / tickSpacing) * tickSpacing
 	var numTicks bigint = ((maxTick - minTick) / tickSpacing) + 1
-	requireUnsigned(numTicks, ufmt.Sprintf("[POOL] tick.gno__TickTickSpacingToMaxLiquidityPerTick() || numTicks(%s) >= 0", numTicks))
+	requireUnsigned(numTicks, ufmt.Sprintf("[POOL] tick.gno__tickTickSpacingToMaxLiquidityPerTick() || numTicks(%s) >= 0", numTicks))
 
-	requireUnsigned(MAX_UINT64/numTicks, ufmt.Sprintf("[POOL] tick.gno__TickTickSpacingToMaxLiquidityPerTick() || MAX_UINT64 / numTicks(%s) >= 0", MAX_UINT64/numTicks))
+	requireUnsigned(MAX_UINT64/numTicks, ufmt.Sprintf("[POOL] tick.gno__tickTickSpacingToMaxLiquidityPerTick() || MAX_UINT64 / numTicks(%s) >= 0", MAX_UINT64/numTicks))
 	return MAX_UINT64 / numTicks
 }
 
-func (pool *Pool) TickGetFeeGrowthInside(
+func (pool *Pool) tickGetFeeGrowthInside(
 	tickLower bigint,
 	tickUpper bigint,
 	tickCurrent bigint,
 	feeGrowthGlobal0X128 bigint,
 	feeGrowthGlobal1X128 bigint,
 ) (feeGrowthInside0X128, feeGrowthInside1X128 bigint) {
-	requireUnsigned(feeGrowthGlobal0X128, ufmt.Sprintf("[POOL] tick.gno__TickGetFeeGrowthInside() || feeGrowthGlobal0X128(%s) >= 0", feeGrowthGlobal0X128))
-	requireUnsigned(feeGrowthGlobal1X128, ufmt.Sprintf("[POOL] tick.gno__TickGetFeeGrowthInside() || feeGrowthGlobal1X128(%s) >= 0", feeGrowthGlobal1X128))
+	requireUnsigned(feeGrowthGlobal0X128, ufmt.Sprintf("[POOL] tick.gno__tickGetFeeGrowthInside() || feeGrowthGlobal0X128(%s) >= 0", feeGrowthGlobal0X128))
+	requireUnsigned(feeGrowthGlobal1X128, ufmt.Sprintf("[POOL] tick.gno__tickGetFeeGrowthInside() || feeGrowthGlobal1X128(%s) >= 0", feeGrowthGlobal1X128))
 
 	lower := pool.ticks[tickLower]
 	upper := pool.ticks[tickUpper]
@@ -46,12 +46,12 @@ func (pool *Pool) TickGetFeeGrowthInside(
 	feeGrowthInside0X128 = feeGrowthGlobal0X128 - feeGrowthBelow0X128 - feeGrowthAbove0X128
 	feeGrowthInside1X128 = feeGrowthGlobal1X128 - feeGrowthBelow1X128 - feeGrowthAbove1X128
 
-	requireUnsigned(feeGrowthInside0X128, ufmt.Sprintf("[POOL] tick.gno__TickGetFeeGrowthInside() || feeGrowthInside0X128(%s) >= 0", feeGrowthInside0X128))
-	requireUnsigned(feeGrowthInside1X128, ufmt.Sprintf("[POOL] tick.gno__TickGetFeeGrowthInside() || feeGrowthInside1X128(%s) >= 0", feeGrowthInside1X128))
+	requireUnsigned(feeGrowthInside0X128, ufmt.Sprintf("[POOL] tick.gno__tickGetFeeGrowthInside() || feeGrowthInside0X128(%s) >= 0", feeGrowthInside0X128))
+	requireUnsigned(feeGrowthInside1X128, ufmt.Sprintf("[POOL] tick.gno__tickGetFeeGrowthInside() || feeGrowthInside1X128(%s) >= 0", feeGrowthInside1X128))
 	return feeGrowthInside0X128, feeGrowthInside1X128
 }
 
-func (pool *Pool) TickUpdate(
+func (pool *Pool) tickUpdate(
 	tick bigint,
 	tickCurrent bigint,
 	liquidityDelta bigint,
@@ -61,14 +61,14 @@ func (pool *Pool) TickUpdate(
 	maxLiquidity bigint,
 ) (flipped bool) {
 
-	requireUnsigned(feeGrowthGlobal0X128, ufmt.Sprintf("[POOL] tick.gno__TickUpdate() || feeGrowthGlobal0X128(%s) >= 0", feeGrowthGlobal0X128))
-	requireUnsigned(feeGrowthGlobal1X128, ufmt.Sprintf("[POOL] tick.gno__TickUpdate() || feeGrowthGlobal1X128(%s) >= 0", feeGrowthGlobal1X128))
-	requireUnsigned(maxLiquidity, ufmt.Sprintf("[POOL] tick.gno__TickUpdate() || maxLiquidity(%s) >= 0", maxLiquidity))
+	requireUnsigned(feeGrowthGlobal0X128, ufmt.Sprintf("[POOL] tick.gno__tickUpdate() || feeGrowthGlobal0X128(%s) >= 0", feeGrowthGlobal0X128))
+	requireUnsigned(feeGrowthGlobal1X128, ufmt.Sprintf("[POOL] tick.gno__tickUpdate() || feeGrowthGlobal1X128(%s) >= 0", feeGrowthGlobal1X128))
+	requireUnsigned(maxLiquidity, ufmt.Sprintf("[POOL] tick.gno__tickUpdate() || maxLiquidity(%s) >= 0", maxLiquidity))
 
 	info := pool.ticks[tick]
 	liquidityGrossBefore := info.liquidityGross
-	liquidityGrossAfter := LiquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
-	require(liquidityGrossAfter <= maxLiquidity, ufmt.Sprintf("[POOL] tick.gno__TickUpdate() || liquidityGrossAfter(%s) <= maxLiquidity(%s)", liquidityGrossAfter, maxLiquidity))
+	liquidityGrossAfter := liquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
+	require(liquidityGrossAfter <= maxLiquidity, ufmt.Sprintf("[POOL] tick.gno__tickUpdate() || liquidityGrossAfter(%s) <= maxLiquidity(%s)", liquidityGrossAfter, maxLiquidity))
 
 	flipped = (liquidityGrossAfter == 0) != (liquidityGrossBefore == 0)
 
@@ -94,17 +94,17 @@ func (pool *Pool) TickUpdate(
 	return flipped
 }
 
-func (pool *Pool) TickClear(tick bigint) {
+func (pool *Pool) tickClear(tick bigint) {
 	delete(pool.ticks, tick)
 }
 
-func (pool *Pool) TickCross(
+func (pool *Pool) tickCross(
 	tick bigint,
 	feeGrowthGlobal0X128 bigint,
 	feeGrowthGlobal1X128 bigint,
 ) bigint {
-	requireUnsigned(feeGrowthGlobal0X128, ufmt.Sprintf("[POOL] tick.gno__TickCross() || feeGrowthGlobal0X128(%s) >= 0", feeGrowthGlobal0X128))
-	requireUnsigned(feeGrowthGlobal1X128, ufmt.Sprintf("[POOL] tick.gno__TickCross() || feeGrowthGlobal1X128(%s) >= 0", feeGrowthGlobal1X128))
+	requireUnsigned(feeGrowthGlobal0X128, ufmt.Sprintf("[POOL] tick.gno__tickCross() || feeGrowthGlobal0X128(%s) >= 0", feeGrowthGlobal0X128))
+	requireUnsigned(feeGrowthGlobal1X128, ufmt.Sprintf("[POOL] tick.gno__tickCross() || feeGrowthGlobal1X128(%s) >= 0", feeGrowthGlobal1X128))
 
 	info := pool.ticks[tick]
 	info.feeGrowthOutside0X128 = feeGrowthGlobal0X128 - info.feeGrowthOutside0X128

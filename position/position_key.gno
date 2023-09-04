@@ -7,7 +7,7 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-func PositionKeyCompute(
+func positionKeyCompute(
 	owner std.Address,
 	tickLower bigint,
 	tickUpper bigint,

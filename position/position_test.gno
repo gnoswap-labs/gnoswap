@@ -45,7 +45,7 @@ var (
 // 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(own)
-	p.Init()
+	p.InitManual()
 	p.CreatePool("foo", "bar", pFee, 130621891405341611593710811006)
 
 	// fee
@@ -83,7 +83,7 @@ func TestMint(t *testing.T) {
 
 		isOwner(t, tTokenId, lp01)
 		shouldEQ(t, tTokenId, bigint(1))
-		shouldEQ(t, GetNextId(), bigint(2))
+		shouldEQ(t, getNextId(), bigint(2))
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 	}
@@ -111,7 +111,7 @@ func TestMint(t *testing.T) {
 
 		isOwner(t, tTokenId, lp02)
 		shouldEQ(t, tTokenId, bigint(2))
-		shouldEQ(t, GetNextId(), bigint(3))
+		shouldEQ(t, getNextId(), bigint(3))
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 
@@ -139,7 +139,7 @@ func TestMint(t *testing.T) {
 
 			isOwner(t, tTokenId, lp02)
 			shouldEQ(t, tTokenId, bigint(3))
-			shouldEQ(t, GetNextId(), bigint(4))
+			shouldEQ(t, getNextId(), bigint(4))
 			shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 			shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 		}
@@ -168,7 +168,7 @@ func TestMint(t *testing.T) {
 
 			isOwner(t, tTokenId, lp02)
 			shouldEQ(t, tTokenId, bigint(4))
-			shouldEQ(t, GetNextId(), bigint(5))
+			shouldEQ(t, getNextId(), bigint(5))
 			shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 			shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 		}
@@ -192,7 +192,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			bigint(1234567890),
 		)
 
-		shouldEQ(t, GetNextId(), bigint(5))
+		shouldEQ(t, getNextId(), bigint(5))
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 	}
@@ -423,14 +423,14 @@ func TestNFTBurn(t *testing.T) {
 		shouldPanic(t, func() { burn("1") })
 
 		// collect all => nft is burnable and burned
-		tBefore := NFTBalanceOf(lp01)
+		tBefore := nftBalanceOf(lp01)
 		Collect( // burn happens here as last step
 			tTokenId,
 			rv01,
 			bigint(100000), // collect all
 			bigint(100000), // collect all
 		)
-		shouldEQ(t, NFTBalanceOf(lp01), tBefore-bigint(1))
+		shouldEQ(t, nftBalanceOf(lp01), tBefore-bigint(1))
 	}
 
 	// burn non exists nft

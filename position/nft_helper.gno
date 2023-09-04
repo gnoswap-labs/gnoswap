@@ -9,16 +9,16 @@ import (
 	nft "gno.land/r/gnft"
 )
 
-func NFTBalanceOf(addr std.Address) bigint {
+func nftBalanceOf(addr std.Address) bigint {
 	return bigint(nft.BalanceOf(a2u(addr)))
 }
 
-func Exists(tokenId bigint) bool {
+func exists(tokenId bigint) bool {
 	// non exist tokenId will panic
 	// use defer to catch the panic
 	defer func() {
 		if err := recover(); err != nil {
-			panic(ufmt.Sprintf("[POSITION] nft_helper.gno__Exists() || tokenId(%s) doesn't exist", tokenId))
+			panic(ufmt.Sprintf("[POSITION] nft_helper.gno__exists() || tokenId(%s) doesn't exist", tokenId))
 		}
 	}()
 
@@ -26,12 +26,12 @@ func Exists(tokenId bigint) bool {
 	// we don't have much choice but to use ownerOf
 	owner := nft.OwnerOf(grc721.TokenID(string(tokenId)))
 	if owner == nil {
-		panic(ufmt.Sprintf("[POSITION] nft_helper.gno__Exists() || tokenId(%s) doesn't exist__NilOwner", tokenId))
+		panic(ufmt.Sprintf("[POSITION] nft_helper.gno__exists() || tokenId(%s) doesn't exist__NilOwner", tokenId))
 		return false
 	}
 
-	if owner == zeroAddress {
-		panic(ufmt.Sprintf("[POSITION] nft_helper.gno__Exists() || tokenId(%s) doesn't exist__ZeroAddressOwner", tokenId))
+	if owner == ZERO_ADDRESS {
+		panic(ufmt.Sprintf("[POSITION] nft_helper.gno__exists() || tokenId(%s) doesn't exist__ZeroAddressOwner", tokenId))
 		return false
 	}
 
@@ -43,7 +43,7 @@ func isApprovedOrOwner(addr std.Address, tokenId bigint) bool {
 	tid := grc721.TokenID(tokenId)
 
 	// check whether token exists
-	if !Exists(tokenId) {
+	if !exists(tokenId) {
 		panic(ufmt.Sprintf("[POSITION] nft_helper.gno__isApprovedOrOwner() || tokenId(%s) doesn't exist", tokenId))
 	}
 

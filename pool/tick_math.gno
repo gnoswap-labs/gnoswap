@@ -97,7 +97,7 @@ func TickMathGetSqrtRatioAtTick(tick bigint) bigint {
 	}
 }
 
-func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) bigint {
+func tickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) bigint {
 	require(sqrtPriceX96 >= MIN_SQRT_RATIO && sqrtPriceX96 < MAX_SQRT_RATIO, ufmt.Sprintf("[POOL] tick_math.gno__TickMathGetSqrtRatioAtTick() || Tick out of range [sqrtPriceX96(%s) >= MIN_SQRT_RATIO(%s) && sqrtPriceX96(%s) < MAX_SQRT_RATIO(%s)]", sqrtPriceX96, MIN_SQRT_RATIO, sqrtPriceX96, MAX_SQRT_RATIO))
 	ratio := sqrtPriceX96 << 32
 

@@ -71,7 +71,7 @@ func mint(params MintParams) (bigint, bigint, bigint, bigint) {
 	// nft.Mint(a2u(PrevRealmAddr()), grc721.TokenID(tokenId)) // owner, tokenId
 	nft.Mint(a2u(GetOrigCaller()), grc721.TokenID(tokenId)) // owner, tokenId
 
-	positionKey := PositionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
+	positionKey := positionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
 
 	position := Position{
@@ -115,7 +115,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 	checkDeadline(params.deadline)
 
 	// verify tokenId
-	require(Exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || tokenId(%s) doesn't exist", params.tokenId))
+	require(exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || tokenId(%s) doesn't exist", params.tokenId))
 
 	position := positions[params.tokenId]
 
@@ -134,7 +134,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 
 	pool := p.GetPoolFromPoolKey(position.poolKey)
 
-	positionKey := PositionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
+	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
 
@@ -174,7 +174,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	require(params.liquidity > 0, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidity(%s) > 0", params.liquidity))
 
 	// verify tokenId
-	require(Exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%s) doesn't exist", params.tokenId))
+	require(exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%s) doesn't exist", params.tokenId))
 
 	position := positions[params.tokenId]
 
@@ -190,7 +190,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 
 	require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || amount0(%s) >= params.amount0Min(%s) && amount1(%s) >= params.amount1Min(%s)", amount0, params.amount0Min, amount1, params.amount1Min))
 
-	positionKey := PositionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
+	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
 
 	// XXX check priority ?
@@ -230,7 +230,7 @@ func collect(params CollectParams) (bigint, bigint) {
 	require(params.amount0Max > 0 || params.amount1Max > 0, ufmt.Sprintf("[POSITION] position.gno__collect() || params.amount0Max(%s) > 0 || params.amount1Max(%s) > 0", params.amount0Max, params.amount1Max))
 
 	var recipient std.Address
-	if params.recipient == zeroAddress {
+	if params.recipient == ZERO_ADDRESS {
 		recipient = GetOrigPkgAddr()
 	} else {
 		recipient = params.recipient
@@ -245,7 +245,7 @@ func collect(params CollectParams) (bigint, bigint) {
 	if (position.liquidity) > 0 {
 		p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, 0)
 
-		positionKey := PositionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
+		positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 		feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
 
 		tokensOwed0 += (feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / Q128

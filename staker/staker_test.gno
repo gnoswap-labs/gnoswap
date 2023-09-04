@@ -42,7 +42,7 @@ func init() {
 // Init & CreatePool using Pool Contract
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(own)
-	p.Init()
+	p.InitManual()
 	p.CreatePool("foo", "bar", 500, 130621891405341611593710811006)
 
 	// fee

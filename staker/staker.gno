@@ -53,7 +53,7 @@ func createIncentive(key IncentiveKey) {
 	// 	"[STAKER] staker.gno__createIncentive() || incentive duration is too long",
 	// )
 
-	incentiveId := IncentiveIdCompute(key)
+	incentiveId := incentiveIdCompute(key)
 
 	incentive, exist := incentives[incentiveId]
 	require(!exist, ufmt.Sprintf("[STAKER] staker.gno__createIncentive() || incentive(%s) already exists", incentiveId))
@@ -160,7 +160,7 @@ func GetRewardInfo(
 }
 
 func getRewardInfo(key IncentiveKey, tokenId bigint) (reward, secondsInsideX128 bigint) {
-	incentiveId := IncentiveIdCompute(key)
+	incentiveId := incentiveIdCompute(key)
 
 	secondsPerLiquidityInsideInitialX128, liquidity := findStakes(tokenId, incentiveId)
 	require(liquidity > 0, ufmt.Sprintf("[STAKER] staker.gno__getRewardInfo() || stake(tokenId:%s, incentiveId:%s) does not exist", tokenId, incentiveId))
@@ -169,7 +169,7 @@ func getRewardInfo(key IncentiveKey, tokenId bigint) (reward, secondsInsideX128 
 	require(ok, ufmt.Sprintf("[STAKER] staker.gno__getRewardInfo() || incentive(%s) does not exist", incentiveId))
 
 	secondsPerLiquidityInsideX128 := (bigint(GetTimestamp() + bigint(20))) * Q128
-	reward, secondsInsideX128 = RewardMathComputeRewardAmount(
+	reward, secondsInsideX128 = rewardMathComputeRewardAmount(
 		// incentive.totalRewardUnclaimed,
 		// incentive.totalSecondsClaimedX128,
 		key.startTime,
@@ -207,7 +207,7 @@ func findStakes(
 func endIncentive(key IncentiveKey) (refund bigint) {
 	require(GetTimestamp() >= key.endTime, ufmt.Sprintf("[STAKER] staker.gno__endIncentive() || cannot end incentive before end time__GetTimestamp()(%s) >= key.endTime(%s)", GetTimestamp(), key.endTime))
 
-	incentiveId := IncentiveIdCompute(key)
+	incentiveId := incentiveIdCompute(key)
 
 	incentive, exist := incentives[incentiveId]
 	require(exist, ufmt.Sprintf("[STAKER] staker.gno__endIncentive() || cannot end non-existent incentive(%s)", incentiveId))
@@ -235,21 +235,21 @@ func stakeToken(key IncentiveKey, tokenId bigint, lockDuration bigint) {
 	require(GetTimestamp() >= key.startTime, ufmt.Sprintf("[STAKER] staker.gno__stakeToken() || incentive not started__GetTimestamp()(%s) >= key.startTime(%s)", GetTimestamp(), key.startTime))
 	require(GetTimestamp() < key.endTime, ufmt.Sprintf("[STAKER] staker.gno__stakeToken() || incentive ended__GetTimestamp()(%s) < key.endTime(%s)", GetTimestamp(), key.endTime))
 
-	incentiveId := IncentiveIdCompute(key)
+	incentiveId := incentiveIdCompute(key)
 	// require(incentives[incentiveId].totalRewardUnclaimed > 0, "[STAKER] staker.gno__stakeToken() || non-existent incentive")
 
 	if len(stakes) > 0 && stakes[tokenId] != nil && stakes[tokenId][incentiveId].liquidityNoOverflow != 0 {
 		panic(ufmt.Sprintf("[STAKER] staker.gno__stakeToken() || token(tokenId:%s, incentiveId:%s) already staked", tokenId, incentiveId))
 	}
 
-	// pool, tickLower, tickUpper, liquidity := NFTPositionInfoGetPositionInfo(
+	// pool, tickLower, tickUpper, liquidity := nftPositionInfoGetPositionInfo(
 	// 	factory,
 	// 	nonfungiblePositionManager,
 	// 	tokenId,
 	// )
 	// require(pool == key.pool, "[STAKER] staker.gno__stakeToken() || token pool is not the incentive pool")
 
-	tickLower, tickUpper, liquidity := NFTPositionInfoGetPositionInfo(tokenId)
+	tickLower, tickUpper, liquidity := nftPositionInfoGetPositionInfo(tokenId)
 	require(liquidity > 0, ufmt.Sprintf("[STAKER] staker.gno__stakeToken() || cannot stake token with 0 liquidity__liquidity(%s) > 0", liquidity))
 
 	deposit := deposits[tokenId]
@@ -298,25 +298,23 @@ func unstakeToken(key IncentiveKey, tokenId bigint) {
 	// anyone can call unstakeToken if the block time is after the end time of the incentive
 	// require(GetTimestamp() >= key.endTime, ufmt.Sprintf("[STAKER] staker.gno__unstakeToken() || incentive not ended"))
 
-	incentiveId := IncentiveIdCompute(key)
+	incentiveId := incentiveIdCompute(key)
 	secondsPerLiquidityInsideInitialX128, liquidity := findStakes(tokenId, incentiveId)
 
 	require(liquidity != 0, ufmt.Sprintf("[STAKER] staker.gno__unstakeToken() || stake(tokenId:%s, incentiveId:%s) does not exist", tokenId, incentiveId))
 
 	deposit, exist := deposits[tokenId]
 	require(exist, ufmt.Sprintf("[STAKER] staker.gno__unstakeToken() || cannot unstake non-existent deposit(%s)", tokenId))
-
 	deposit.numberOfStakes--
 
-	incentive := incentives[incentiveId]
+	incentive, exist := incentives[incentiveId]
 	require(exist, ufmt.Sprintf("[STAKER] staker.gno__unstakeToken() || cannot unstake non-existent incetnvie(%s)", incentiveId))
-
 	incentive.numberOfStakes--
 	incentives[incentiveId] = incentive
 
 	// _, secondsPerLiquidityInsideX128, _ := key.pool.snapshotCumulativesInside(deposit.tickLower, deposit.tickUpper)
 	secondsPerLiquidityInsideX128 := bigint(20) * Q128 // TMP XXX
-	reward, secondsInsideX128 := RewardMathComputeRewardAmount(
+	reward, secondsInsideX128 := rewardMathComputeRewardAmount(
 		// incentive.totalRewardUnclaimed,
 		// incentive.totalSecondsClaimedX128,
 		key.startTime,
@@ -342,22 +340,19 @@ func unstakeToken(key IncentiveKey, tokenId bigint) {
 
 	// update timeToWithdraw
 	deposit.timeToWithdraw = GetTimestamp() + deposit.lockDuration
-
-	// xxx necessary ??
 	deposits[tokenId] = deposit
 }
 
 func transferDeposit(tokenId bigint, to std.Address) {
-	require(to != zeroAddress, ufmt.Sprintf("[STAKER] staker.gno__transferDeposit() || cannot transfer to zero address(%s)", to))
+	require(to != ZERO_ADDRESS, ufmt.Sprintf("[STAKER] staker.gno__transferDeposit() || cannot transfer to zero address(%s)", to))
 
 	owner := nft.OwnerOf(tid(tokenId))
 	require(PrevRealmAddr() == owner, ufmt.Sprintf("[STAKER] staker.gno__transferDeposit() || can only be called by deposit owner__PrevRealmAddr()(%s) == owner(%s)", PrevRealmAddr(), owner))
 
 	deposits[tokenId].owner = owner
-
-	deposit := deposits[tokenId]
-	deposit.owner = owner
-	deposits[tokenId] = deposit
+	// deposit := deposits[tokenId]
+	// deposit.owner = owner
+	// deposits[tokenId] = deposit
 
 	// transfer actual NFT
 	nft.TransferFrom(a2u(owner), a2u(to), tid(tokenId)) // nft transfer ok

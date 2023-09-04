@@ -1,7 +1,6 @@
 package gnoswap
 
 import (
-	"math"
 	"std"
 	"testing"
 
@@ -55,7 +54,7 @@ var (
 // 1. Init & Create Pool using Factory Contract by gsa
 func TestFactoryCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
-	Init()
+	InitManual()()
 	CreatePool("foo", "bar", pFee, 130622891405341611593710811006)
 	// 130621891405341611593710811006 // 9999
 	// 130622891405341611593710811006 // 10000
@@ -127,17 +126,17 @@ func TestSwap(t *testing.T) {
 		println()
 
 		// balance before swap
-		poolOldToken0Bal := BalanceOf(pool.token0, GetOrigPkgAddr())
-		poolOldToken1Bal := BalanceOf(pool.token1, GetOrigPkgAddr())
+		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
+		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
 
-		tr01OldToken0Bal := BalanceOf(pool.token0, tr01)
-		tr01OldToken1Bal := BalanceOf(pool.token1, tr01)
+		tr01OldToken0Bal := balanceOf(pool.token0, tr01)
+		tr01OldToken1Bal := balanceOf(pool.token1, tr01)
 
-		lp01OldToken0Bal := BalanceOf(pool.token0, lp01)
-		lp01OldToken1Bal := BalanceOf(pool.token1, lp01)
+		lp01OldToken0Bal := balanceOf(pool.token0, lp01)
+		lp01OldToken1Bal := balanceOf(pool.token1, lp01)
 
-		lp02OldToken0Bal := BalanceOf(pool.token0, lp02)
-		lp02OldToken1Bal := BalanceOf(pool.token1, lp02)
+		lp02OldToken0Bal := balanceOf(pool.token0, lp02)
+		lp02OldToken1Bal := balanceOf(pool.token1, lp02)
 
 		// SWAP
 		std.TestSetOrigCaller(tr01)
@@ -154,17 +153,17 @@ func TestSwap(t *testing.T) {
 		shouldNEQ(t, s1, bigint(0))
 
 		// balance after swap
-		poolNewToken0Bal := BalanceOf(pool.token0, GetOrigPkgAddr())
-		poolNewToken1Bal := BalanceOf(pool.token1, GetOrigPkgAddr())
+		poolNewToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
+		poolNewToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
 
-		tr01NewToken0Bal := BalanceOf(pool.token0, tr01)
-		tr01NewToken1Bal := BalanceOf(pool.token1, tr01)
+		tr01NewToken0Bal := balanceOf(pool.token0, tr01)
+		tr01NewToken1Bal := balanceOf(pool.token1, tr01)
 
-		lp01NewToken0Bal := BalanceOf(pool.token0, lp01)
-		lp01NewToken1Bal := BalanceOf(pool.token1, lp01)
+		lp01NewToken0Bal := balanceOf(pool.token0, lp01)
+		lp01NewToken1Bal := balanceOf(pool.token1, lp01)
 
-		lp02NewToken0Bal := BalanceOf(pool.token0, lp02)
-		lp02NewToken1Bal := BalanceOf(pool.token1, lp02)
+		lp02NewToken0Bal := balanceOf(pool.token0, lp02)
+		lp02NewToken1Bal := balanceOf(pool.token1, lp02)
 
 		println("Balance pool")
 		println("> token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
@@ -215,18 +214,18 @@ func printBalance() {
 	pool := GetPool(pToken0, pToken1, pFee)
 
 	println("Balance lp01")
-	println("> token0:", BalanceOf(pool.token0, lp01))
-	println("> token1:", BalanceOf(pool.token1, lp01))
+	println("> token0:", balanceOf(pool.token0, lp01))
+	println("> token1:", balanceOf(pool.token1, lp01))
 	println()
 
 	println("Balance lp02")
-	println("> token0:", BalanceOf(pool.token0, lp02))
-	println("> token1:", BalanceOf(pool.token1, lp02))
+	println("> token0:", balanceOf(pool.token0, lp02))
+	println("> token1:", balanceOf(pool.token1, lp02))
 	println()
 
 	println("Balance pool")
-	println("> token0:", BalanceOf(pool.token0, GetOrigPkgAddr()))
-	println("> token1:", BalanceOf(pool.token1, GetOrigPkgAddr()))
+	println("> token0:", balanceOf(pool.token0, GetOrigPkgAddr()))
+	println("> token1:", balanceOf(pool.token1, GetOrigPkgAddr()))
 	println()
 }
 

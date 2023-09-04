@@ -5,7 +5,7 @@ import (
 	"gno.land/r/gov"
 )
 
-func DefaultInflationRate() bigint {
+func defaultInflationRate() bigint {
 	return 0 // TODO
 }
 
@@ -22,7 +22,7 @@ func setInflationRate(newRate bigint) {
 	gov.SetGovParameter("inflation_rate", newRate)
 }
 
-func DefaultStakingRewards() StakingRewards {
+func defaultStakingRewards() StakingRewards {
 	// TODO
 	return StakingRewards{
 		StakingReward7:  1,
@@ -34,14 +34,14 @@ func DefaultStakingRewards() StakingRewards {
 func getStakingRewards(token0 string, token1 string, fee bigint) StakingRewards {
 	param, ok := gov.GetParameter("staking_rewards:" + token0 + ":" + token1 + ":" + string(fee))
 	if !ok {
-		return DefaultStakingRewards()
+		return defaultStakingRewards()
 	}
 
 	return param.(StakingRewards)
 }
 
 func Init() {
-	setInflationRate(DefaultInflationRate())
+	setInflationRate(defaultInflationRate())
 }
 
 type StakingRewardChange struct {
@@ -53,7 +53,7 @@ type StakingRewardChange struct {
 	NewStakingReward21 bigint
 }
 
-func SubmitProposalParameterStakingReward(
+func submitProposalParameterStakingReward(
 	title string,
 	summary string,
 	metadata string,

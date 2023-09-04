@@ -1,6 +1,8 @@
 package gnoswap
 
 import (
+	"std"
+
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
 )
@@ -87,9 +89,8 @@ func (pool *Pool) GetSqrtPriceX96() bigint {
 	return pool.slot0.sqrtPriceX96
 }
 
-func Abs(x bigint) bigint {
-	if x < 0 {
-		return -x
-	}
-	return x
+func (pool *Pool) PrintUserBalance(name string, target std.Address) {
+	println(name)
+	println(" > Token0:", balanceOf(pool.token0, target))
+	println(" > Token1:", balanceOf(pool.token1, target))
 }
