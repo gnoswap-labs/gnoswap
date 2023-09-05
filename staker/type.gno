@@ -20,3 +20,10 @@ type Deposit struct {
 	stakeTimestamp bigint
 	targetPoolPath string
 }
+
+type StakingRewards struct {
+	Tier1 bigint
+	Tier2 bigint
+	Tier3 bigint
+	Tier4 bigint
+}

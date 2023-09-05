@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 
+	g "gno.land/r/gov"
 	p "gno.land/r/pool"
 	s "gno.land/r/position"
 
@@ -214,6 +215,25 @@ func TestEndExternalIncentive(t *testing.T) {
 
 	shouldEQ(t, len(incentives), 0)
 	shouldEQ(t, len(poolIncentives["bar_foo_500"]), 0)
+}
+
+// GOV
+func TestSubmitProposalParameterStakingReward(t *testing.T) {
+	// Init GOV Contract
+	g.Init()
+
+	id := SubmitProposalParameterStakingReward(
+		"staking reward change",  // title
+		"change staking rewards", // summary
+		"",                       // metadata
+		0,                        // initialDeposit
+
+		10, // newStakingReward1
+		8,  // newStakingReward2
+		6,  // newStakingReward3
+		4,  // newStakingReward4
+	)
+	shouldEQ(t, id, uint64(1))
 }
 
 /* HELPERS */

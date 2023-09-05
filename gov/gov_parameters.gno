@@ -9,6 +9,19 @@ type VoteQuorum struct {
 	Denominator uint64
 }
 
+func Init() {
+	parameters = make(map[string]interface{})
+
+	// 1/3 quorum initially
+	setVoteQuorum(VoteQuorum{1000, 3000})
+	// 3 day initially
+	setVotePeriod(259200)
+	// 1 day initially
+	setDepositPeriod(86400)
+	// 10_000_000 GNOS initially
+	setDepositMinimum(uint64(10_000_000))
+}
+
 func getVoteQuorum() VoteQuorum {
 	param, ok := getGovParameter("vote_quorum")
 	if !ok {
@@ -59,19 +72,6 @@ func getDepositMinimum() uint64 {
 
 func setDepositMinimum(minimum uint64) {
 	SetGovParameter("deposit_minimum", minimum)
-}
-
-func Init() {
-	parameters = make(map[string]interface{})
-
-	// 1/3 quorum initially
-	setVoteQuorum(VoteQuorum{1000, 3000})
-	// 3 day initially
-	setVotePeriod(259200)
-	// 1 day initially
-	setDepositPeriod(86400)
-	// 10000000 GNOS initially
-	setDepositMinimum(uint64(10000000))
 }
 
 // SubmitProposalParameterChanges uses std.PrevRealm() to know which realm to submit the proposal to.

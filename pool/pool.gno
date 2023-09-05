@@ -7,6 +7,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/users"
 
+	g "gno.land/r/gov"
+
 	bar "gno.land/r/bar"
 	foo "gno.land/r/foo"
 )
@@ -451,6 +453,9 @@ func SetFeeProtocol(
 	for _, pool := range pools {
 		pool.slot0.feeProtocol = feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
 	}
+
+	// update governace value
+	g.SetGovParameter("protocoL_fees", feeProtocol0+(feeProtocol1<<4))
 }
 
 // ADMIN

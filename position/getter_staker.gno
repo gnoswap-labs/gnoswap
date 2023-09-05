@@ -13,6 +13,10 @@ func PositionGetPositionTickUpper(tokenId bigint) bigint {
 	return positions[tokenId].tickUpper
 }
 
-func PositionGetPositionTickLiquidity(tokenId bigint) bigint {
+func PositionGetPositionLiquidity(tokenId bigint) bigint {
 	return positions[tokenId].liquidity
+}
+
+func PositionGetPositionPoolKey(tokenId bigint) string {
+	return positions[tokenId].poolKey
 }

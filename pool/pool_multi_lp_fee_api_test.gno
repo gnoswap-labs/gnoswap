@@ -9,6 +9,8 @@ import (
 
 	bar "gno.land/r/bar"
 	foo "gno.land/r/foo"
+
+	g "gno.land/r/gov"
 )
 
 var (
@@ -135,6 +137,23 @@ func TestSwap(t *testing.T) {
 		println(ApiGetPool("bar_foo_500"))
 		println()
 	}
+}
+
+// GOV
+func TestSubmitProposalParameterProtocolFees(t *testing.T) {
+	// Init GOV Contract
+	g.Init()
+
+	id := SubmitProposalParameterProtocolFees(
+		"protocol fee change",  // title
+		"change protocol fees", // summary
+		"",                     // metadata
+		0,                      // initialDeposit
+
+		8,  // newFee0
+		10, // newFee1
+	)
+	shouldEQ(t, id, uint64(1))
 }
 
 /* HELPER */

@@ -7,7 +7,6 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// Testing
 func (pool *Pool) GetMaxLiquidityPerTick() bigint {
 	return pool.maxLiquidityPerTick
 }

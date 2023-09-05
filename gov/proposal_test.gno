@@ -13,10 +13,10 @@ func TestSubmitProposal(t *testing.T) {
 	Init()
 
 	id := SubmitProposalText(
-		"title",
-		"summary",
-		"metadata",
-		0,
+		"title",    // title
+		"summary",  // summary
+		"metadata", // metadata
+		0,          // initial deposit
 	)
 
 	now := uint64(time.Now().Unix())
@@ -291,41 +291,8 @@ func TestProposalParameterChange(t *testing.T) {
 	}
 }
 
-func testSubmitTextProposalCustomTime(
-	title string,
-	summary string,
-	metadata string,
-	initialDeposit uint64,
-	currentTime uint64,
-) uint64 {
-	// copied from api.gno/submitProposal
-
-	origin := std.GetOrigCaller()
-
-	proposalID := getNextProposalID()
-
-	proposal := newProposal(
-		proposalID,
-		origin,
-
-		initialDeposit,
-
-		title,
-		summary,
-		metadata,
-
-		ProposalText{},
-	)
-
-	proposal.SubmitTime = currentTime
-	proposal.DepositEndTime = currentTime + getDepositPeriod()
-
-	proposalDepositsMap[proposalID] = []Deposit{}
-	proposalVotesMap[proposalID] = map[string]Vote{}
-
-	// initializes proposals and proposalQueue
-	proposalsMap[proposal.ProposalID] = *proposal
-	return proposalID
+func TestSubmitProposalParameterProtocolFees(t *testing.T) {
+	SubmitProposalParameterProtocolFees
 }
 
 // Test scenario:
@@ -480,4 +447,41 @@ func TestProposalTally(t *testing.T) {
 			panic("120: proposal status should be passed")
 		}
 	}
+}
+
+func testSubmitTextProposalCustomTime(
+	title string,
+	summary string,
+	metadata string,
+	initialDeposit uint64,
+	currentTime uint64,
+) uint64 {
+	// copied from api.gno/submitProposal
+
+	origin := std.GetOrigCaller()
+
+	proposalID := getNextProposalID()
+
+	proposal := newProposal(
+		proposalID,
+		origin,
+
+		initialDeposit,
+
+		title,
+		summary,
+		metadata,
+
+		ProposalText{},
+	)
+
+	proposal.SubmitTime = currentTime
+	proposal.DepositEndTime = currentTime + getDepositPeriod()
+
+	proposalDepositsMap[proposalID] = []Deposit{}
+	proposalVotesMap[proposalID] = map[string]Vote{}
+
+	// initializes proposals and proposalQueue
+	proposalsMap[proposal.ProposalID] = *proposal
+	return proposalID
 }
