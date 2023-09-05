@@ -239,6 +239,7 @@ func collect(params CollectParams) (bigint, bigint) {
 	position := positions[params.tokenId]
 
 	tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
+
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
 	pool := p.GetPoolFromPoolKey(position.poolKey)
 
@@ -279,11 +280,16 @@ func collect(params CollectParams) (bigint, bigint) {
 		amount1Collect,
 	)
 	position.tokensOwed0, position.tokensOwed1 = tokensOwed0-amount0Collect, tokensOwed1-amount1Collect
+	// println("HERE #4")
+	// println("position.tokensOwed0:", position.tokensOwed0)
+	// println("position.tokensOwed1:", position.tokensOwed1)
+	// println()
 
 	positions[params.tokenId] = position
 
 	// burn nft if position is clear
 	if position.isClear() {
+		println("CLEAR ME")
 		burn(params.tokenId)
 	}
 	return amount0, amount1

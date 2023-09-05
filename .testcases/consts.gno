@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	zeroAddress = std.Address("")
+	ZERO_ADDRESS = std.Address("")
 
 	// some numbers
 	// calculated by https://mathiasbynens.be/demo/integer-range
@@ -47,4 +47,8 @@ const (
 	MAX_UINT96 bigint = 79228162514264337593543950335
 
 	MAX_UINT160 bigint = 1461501637330902918203684832716283019655932542975
+
+	// Timestamp
+	TIMESTAMP_1DAY   bigint = 86400
+	TIMESTAMP_30DAYS bigint = 2592000
 )

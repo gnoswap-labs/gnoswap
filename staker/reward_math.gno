@@ -9,17 +9,18 @@ import (
 func rewardMathComputeInternalRewardAmount(tokenId bigint, deposit Deposit) bigint {
 	// r3v4_xxx: calculate amount of `GNOS` to be minted by every block
 	// 1. get block creation time (5s for now)
-	// 2. calculate amount of `GNOS` to be minted by every block (10_000_000 for now)
+	// 2. calculate amount of `GNOS` to be minted by every block (10_000 for now)
 	// 3. above `GNOS amount`` is supposed to be minted to a separate wallet specified by onbloc
 	// 4. this logic is supposed to be included in GNOS token contract, not staker contract
-	blockReward := bigint(10_000_000)
+	blockReward := bigint(10_000)
 
 	// unlikely external, internal reward program is supposed to be started at the same time as gnoswap launch and never end
 	// so no need to consider start/end time of reward program
 	// start time is staked time, end time is current time
 	startTime := deposit.stakeTimestamp
 	endTime := GetTimestamp()
-	stakeDuration := endTime - startTime
+	stakedDuration := endTime - startTime
+	stakedBlocks := stakedDuration / 5
 
 	// get pool tier and ratio
 	poolPath := s.PositionGetPositionPoolKey(tokenId)
@@ -36,11 +37,13 @@ func rewardMathComputeInternalRewardAmount(tokenId bigint, deposit Deposit) bigi
 	myWholeRewardX96 := poolRewardPerBlockX96 * liqRatioX96
 
 	// calculate my actual reward amount based on staking duration
-	rewardRatio := getStakingTier(stakeDuration)
+	rewardRatio := getStakingTier(stakedDuration)
 	intRewardRatio := int(rewardRatio * 10)
 	rewardRatioX96 := bigint(intRewardRatio) * Q96
-	myActualReward := myWholeRewardX96 * (rewardRatioX96 / 10) / Q96 / Q96 / Q96 / Q96 / Q96
-	return myActualReward
+	myActualRewardPerBlock := myWholeRewardX96 * (rewardRatioX96 / 10) / Q96 / Q96 / Q96 / Q96 / Q96
+
+	myFinalReward := myActualRewardPerBlock * stakedBlocks
+	return myFinalReward
 }
 
 func rewardMathComputeExternalRewardAmount(tokenId bigint, deposit Deposit, incentive Incentive) bigint {
@@ -64,14 +67,15 @@ func rewardMathComputeExternalRewardAmount(tokenId bigint, deposit Deposit, ince
 	// (for now) block creation time = 5 seconds
 	// 518400(2592000/5) blocks ~= 1 month
 	// 1 month reward / 518400 = reward per block
-	blockReward := monthlyReward / 5184000
+	blockReward := monthlyReward / 518400
 
 	// stake start time ( largest value between incentive start time and deposit stake time )
 	// stake end time ( smallest value between incentive end time and current time)
 	startTime := max(incentive.startTimestamp, deposit.stakeTimestamp)
 	endTime := min(incentive.endTimestamp, GetTimestamp())
 	// staking duration
-	stakeDuration := endTime - startTime
+	stakedDuration := endTime - startTime
+	stakedBlocks := stakedDuration / 5
 
 	// reward per block in X96
 	blockRewardX96 := blockReward * Q96
@@ -79,15 +83,17 @@ func rewardMathComputeExternalRewardAmount(tokenId bigint, deposit Deposit, ince
 	// calculate my reward amount based on my liquidity ratio
 	// this reward is 31days or more staking reward
 	liqRatioX96 := getMyLiquidityRatio(incentive.targetPoolPath, tokenId)
+
 	myWholeRewardX96 := blockRewardX96 * liqRatioX96
 
 	// calculate my actual reward amount based on staking duration
-	rewardRatio := getStakingTier(stakeDuration)
+	rewardRatio := getStakingTier(stakedDuration)
 	intRewardRatio := int(rewardRatio * 10)
 	rewardRatioX96 := bigint(intRewardRatio) * Q96
-	myActualReward := myWholeRewardX96 * (rewardRatioX96 / 10) / Q96 / Q96 / Q96 / Q96
+	myActualRewardPerBlock := myWholeRewardX96 * (rewardRatioX96 / 10) / Q96 / Q96 / Q96 / Q96
 
-	return myActualReward
+	myFinalReward := myActualRewardPerBlock * stakedBlocks
+	return myFinalReward
 }
 
 func getMyLiquidityRatio(poolPath string, tokenId bigint) bigint {

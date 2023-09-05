@@ -291,10 +291,6 @@ func TestProposalParameterChange(t *testing.T) {
 	}
 }
 
-func TestSubmitProposalParameterProtocolFees(t *testing.T) {
-	SubmitProposalParameterProtocolFees
-}
-
 // Test scenario:
 // units in hours
 // 00: [p0 submit]

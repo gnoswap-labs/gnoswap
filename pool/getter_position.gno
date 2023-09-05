@@ -26,7 +26,7 @@ func (pool *Pool) GetPoolPositionFeeGrowthInside0LastX128(key string) bigint {
 }
 
 func (pool *Pool) GetPoolPositionFeeGrowthInside1LastX128(key string) bigint {
-	return pool.positions[key].feeGrowthInside0LastX128
+	return pool.positions[key].feeGrowthInside1LastX128
 }
 
 func GetPoolAddress() std.Address {

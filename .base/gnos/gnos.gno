@@ -17,7 +17,15 @@ var (
 func init() {
 	gnos = grc20.NewAdminToken("Gnoswap Shares", "GNOS", 4)
 
-	stakerAddr := std.DerivePkgAddr("gno.land/r/staker")
+	// for swap > staker
+	var (
+		stakerAddr = std.Address("g13h5s9utqcwg3a655njen0p89txusjpfrs3vxp8")
+		poolAddr   = std.Address("g1ee305k8yk0pjz443xpwtqdyep522f9g5r7d63w")
+		ira        = std.Address("g1d9exzh6lta047h6lta047h6lta047h6l8ylkpa") // INTERNAL REWARD ACCOUNT
+	)
+	gnos.Mint(ira, 50000000000)                // 50_000_000_000
+	gnos.Approve(ira, stakerAddr, 50000000000) // owner, spender, amount
+
 	admin = append(admin, string(stakerAddr))
 }
 

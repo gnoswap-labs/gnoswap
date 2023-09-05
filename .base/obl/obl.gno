@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/demo/users"
 	// for swap
 )
@@ -19,32 +20,16 @@ func init() {
 	obl = grc20.NewAdminToken("OnblocToken", "OBL", 4)
 	obl.Mint(admin, 50000000000) // 50_000_000_000
 
-	// // for swap > pool
-	// var (
-	// 	lp01     = testutils.TestAddress("lp01") // Liquidity Provider 01
-	// 	lp02     = testutils.TestAddress("lp02") // Liquidity Provider 02
-	// 	lp03     = testutils.TestAddress("lp03") // Liquidity Provider 03
-	// 	tr01     = testutils.TestAddress("tr01") // Trader 01
-	// 	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
-	// 	posAddr  = std.DerivePkgAddr("gno.land/r/position")
-	// )
+	// for swap > staker
+	var (
+		ci01       = std.Address("g1vd5nqv2lta047h6lta047h6lta047h6lk0whcd")
+		stakerAddr = std.Address("g13h5s9utqcwg3a655njen0p89txusjpfrs3vxp8")
+		poolAddr   = std.Address("g1ee305k8yk0pjz443xpwtqdyep522f9g5r7d63w")
+	)
+	obl.Mint(ci01, 50000000000)                // 50_000_000_000
+	obl.Approve(ci01, stakerAddr, 50000000000) // owner, spender, amount
 
-	// obl.Mint(lp01, 50000000)
-	// obl.Mint(lp02, 50000000)
-	// obl.Mint(lp03, 50000000)
-	// obl.Mint(tr01, 50000000)
-
-	// obl.Approve(lp01, poolAddr, 50000000)
-	// obl.Approve(lp02, poolAddr, 50000000)
-	// obl.Approve(lp03, poolAddr, 50000000)
-	// obl.Approve(tr01, poolAddr, 50000000)
-
-	// obl.Approve(lp01, lp01, 50000000)
-	// obl.Approve(lp02, lp02, 50000000)
-	// obl.Approve(lp03, lp03, 50000000)
-	// obl.Approve(tr01, tr01, 50000000)
-
-	// obl.Approve(posAddr, poolAddr, 50000000)
+	obl.Approve(poolAddr, stakerAddr, 50000000000) // owner, spender, amount
 }
 
 // method proxies as public functions.

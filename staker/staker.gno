@@ -24,6 +24,21 @@ var (
 	poolTiers map[string]bigint  = make(map[string]bigint)  // poolPath -> tier
 )
 
+func init() {
+	// init pool tiers
+	// tier 1
+	poolTiers["BAR/FOO_500"] = 1 // DEV
+
+	// tier 2
+	poolTiers["GNOS/USDT_500"] = 2
+	poolTiers["ATOM/GNOS_500"] = 2
+
+	// tier 3
+	poolTiers["ATOM/GNOT_500"] = 3
+	poolTiers["ATOM/USDT_500"] = 3
+	poolTiers["ATOM/WETH_500"] = 3
+}
+
 func CreateExternalIncentive(
 	targetPoolPath string,
 	// rewardToken *grc20.AdminToken, // FIXED TO OBL for now
@@ -44,11 +59,11 @@ func CreateExternalIncentive(
 		}
 	}
 
-	from := a2u(std.GetOrigCaller())
+	from := a2u(GetOrigCaller())
 	fromBalanceBefore := bigint(obl.BalanceOf(from))
 	require(fromBalanceBefore >= rewardAmount, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || not enough OBL(%s) to create incentive(%s)", fromBalanceBefore, rewardAmount))
 
-	to := a2u(std.GetOrigPkgAddr()) // staker contract
+	to := a2u(GetOrigPkgAddr()) // staker contract
 	poolRewardBalanceBefore := bigint(obl.BalanceOf(to))
 
 	obl.TransferFrom(from, to, uint64(rewardAmount))
@@ -61,7 +76,7 @@ func CreateExternalIncentive(
 		rewardAmount:   rewardAmount,
 		startTimestamp: startTimestamp,
 		endTimestamp:   endTimestamp,
-		refundee:       std.GetOrigCaller(),
+		refundee:       GetOrigCaller(),
 	}
 
 	poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath], incentiveId)
@@ -76,10 +91,10 @@ func StakeToken(
 
 	// check tokenId owner
 	require(
-		gnft.OwnerOf(tid(tokenId)) == PrevRealmAddr(),
+		gnft.OwnerOf(tid(tokenId)) == GetOrigCaller(),
 		ufmt.Sprintf(
-			"[STAKER] staker.gno__StakeToken() || only owner can stake their token__gnft.OwnerOf(tid(tokenId(%s)))(%s) == PrevRealmAddr()(%s)",
-			tokenId, gnft.OwnerOf(tid(tokenId)), PrevRealmAddr(),
+			"[STAKER] staker.gno__StakeToken() || only owner can stake their token__gnft.OwnerOf(tid(tokenId(%s)))(%s) == GetOrigCaller()(%s)",
+			tokenId, gnft.OwnerOf(tid(tokenId)), GetOrigCaller(),
 		),
 	)
 
@@ -121,6 +136,7 @@ func UnstakeToken(
 		// r3v4_xxx: get external token then call transfer
 		// r3v4_xxx: handle native coin(gnot) reward
 		obl.Transfer(a2u(deposit.owner), uint64(externalReward))
+
 		incentive.rewardAmount -= externalReward
 		incentives[incentiveId] = incentive
 	}
@@ -165,11 +181,10 @@ func EndExternalIncentive(targetPoolPath, rewardToken string) {
 
 func transferDeposit(tokenId bigint, to std.Address) {
 	owner := gnft.OwnerOf(tid(tokenId))
-	require(owner == PrevRealmAddr(), ufmt.Sprintf("[STAKER] staker.gno__transferDeposit() || only owner(%s) can transfer tokenId(%s), PrevRealmAddr()(%s)", owner, tokenId, PrevRealmAddr()))
+	require(owner == GetOrigCaller(), ufmt.Sprintf("[STAKER] staker.gno__transferDeposit() || only owner(%s) can transfer tokenId(%s), GetOrigCaller()(%s)", owner, tokenId, PrevRealmAddr()))
 
 	deposits[tokenId].owner = owner
 
 	// transfer NFT ownership
 	gnft.TransferFrom(a2u(owner), a2u(to), tid(tokenId))
 }
-

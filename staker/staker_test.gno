@@ -189,10 +189,10 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 	shouldEQ(t, result.Stat.Height, GetHeight())
 	shouldEQ(t, result.Response.Data[0].Type, "Internal")
 	shouldEQ(t, result.Response.Data[0].Token, "GNOS")
-	shouldEQ(t, result.Response.Data[0].Reward, bigint(229290))
+	shouldEQ(t, result.Response.Data[0].Reward, bigint(916))
 	shouldEQ(t, result.Response.Data[1].Type, "External")
 	shouldEQ(t, result.Response.Data[1].Token, "OBL")
-	shouldEQ(t, result.Response.Data[1].Reward, bigint(44))
+	shouldEQ(t, result.Response.Data[1].Reward, bigint(1768))
 }
 
 func TestUnstakeToken(t *testing.T) {
@@ -203,8 +203,8 @@ func TestUnstakeToken(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(bigint(1)), lp01) // lp01
 
 	// check reward
-	shouldEQ(t, gnos.BalanceOf(a2u(lp01)), bigint(229290)) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(lp01)), bigint(44))      // external
+	shouldEQ(t, gnos.BalanceOf(a2u(lp01)), bigint(916)) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(lp01)), bigint(1768)) // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {
