@@ -3,22 +3,25 @@ package tc
 import (
 	"std"
 	"testing"
-	"time"
 
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
+
 	"gno.land/r/demo/users"
 
-	bar "gno.land/r/bar"
-	foo "gno.land/r/foo"
-
+	// swap contract
+	gov "gno.land/r/gov"
 	pl "gno.land/r/pool"
-	ps "gno.land/r/position"
-	st "gno.land/r/staker"
+	pos "gno.land/r/position"
+	stk "gno.land/r/staker"
 
-	nft "gno.land/r/gnft"  // GNFT, Gnoswap NFT
-	gnos "gno.land/r/gnos" // GNOS, Gnoswap Share
+	// token
+	bar "gno.land/r/bar"   // token1
+	foo "gno.land/r/foo"   // token0
+	gnft "gno.land/r/gnft" // LP Token ( Gnoswap NFT )
+	gnos "gno.land/r/gnos" // Shares ( Gnoswap Shares ) & INTERNAL Reward Token
+	obl "gno.land/r/obl"   // EXTERNAL Reward Token
 )
 
 var (
@@ -36,15 +39,18 @@ var (
 	tStartTime bigint = GetTimestamp()
 	tEndTime   bigint = tStartTime + 301 // staker.gno #140 ( lockDuration is limited to 100, 200, 300 seconds)
 
-	own  = testutils.TestAddress("own")  // Owner
-	ci01 = testutils.TestAddress("ci01") // Create Incentive Caller
-	rf01 = testutils.TestAddress("rf01") // Refundee
-	lp01 = testutils.TestAddress("lp01") // Liquidity Provider
+	// test address
+	pc01 = testutils.TestAddress("pc01") // Pool Creator
+	ci01 = testutils.TestAddress("ci01") // Create Incentive Caller 01
+	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
+	lp02 = testutils.TestAddress("lp02") // Liquidity Provider 02
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 
-	poolAddr   = pl.GetOrigPkgAddr() // Pool Contract
-	posAddr    = ps.GetOrigPkgAddr() // Position Contract
-	stakerAddr = st.GetOrigPkgAddr() // Staker Contract
+	// contract address
+	poolAddr   = pl.GetOrigPkgAddr()  // Pool Contract
+	posAddr    = pos.GetOrigPkgAddr() // Position Contract
+	stakerAddr = stk.GetOrigPkgAddr() // Staker Contract
+	govAddr    = gov.GetOrigPkgAddr() // Gov Contract
 
 	MIN_TICK bigint = -887272
 	MAX_TICK bigint = 887272
@@ -54,362 +60,455 @@ var (
 )
 
 func init() {
-	std.TestSetOrigCaller(lp01)
-	foo.FaucetL()
-	bar.FaucetL()
-
-	std.TestSetOrigCaller(tr01)
-	foo.FaucetL()
-	bar.FaucetL()
-
-	// debug - print addr
-	println(ci01, "// ci01")
-	println(rf01, "// rf01")
-	println(lp01, "// lp01")
-	println(tr01, "// tr01")
-
-	println(poolAddr, "// pool")
-	println(posAddr, "// position")
-	println(stakerAddr, "// staker")
+	// debug addr
+	// println(pc01, "// pc01")
+	// println(ci01, "// ci01")
+	// println(lp01, "// lp01")
+	// println(lp02, "// lp02")
+	// println(tr01, "// tr01")
+	// println(poolAddr, "// pool")
+	// println(posAddr, "// pos")
+	// println(stakerAddr, "// staker")
+	// println(govAddr, "// gov")
 }
 
-// Init & CreatePool using Pool Contract
-func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(own)
-	pl.Init()
-	pl.CreatePool("foo", "bar", 500, 130621891405341611593710811006)
+// 1. [POOL] Init
+func TestPoolInitManual(t *testing.T) {
+	std.TestSetOrigCaller(pc01)
 
-	// fee
-	// 500		= 0.05% // USv3 default
-	// 3000		= 0.3% // USv3 default
-	// 10000	= 1% // USv3 default
+	pl.InitManual()
 
-	// Approve
-	std.TestSetOrigCaller(lp01)
-	foo.Approve(users.AddressOrName(poolAddr), 50000000000) // Pool Contract
-	bar.Approve(users.AddressOrName(poolAddr), 50000000000) // Pool Contract
-	foo.Approve(users.AddressOrName(lp01), 50000000000)
-	bar.Approve(users.AddressOrName(lp01), 50000000000)
-
-	std.TestSetOrigCaller(tr01)
-	foo.Approve(users.AddressOrName(poolAddr), 50000000000) // Pool Contract
-	bar.Approve(users.AddressOrName(poolAddr), 50000000000) // Pool Contract
-	foo.Approve(users.AddressOrName(tr01), 50000000000)
-	bar.Approve(users.AddressOrName(tr01), 50000000000)
+	shouldPanicWithMsg(t, func() { pl.InitManual() }, "[POOl] pool_manager.gno__initManual() || contract must not be initialized")
 }
 
+// 2. [POOL] CreatePool
+func TestPoolCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(pc01)
+
+	pl.CreatePool(
+		pToken0,                        // tokenA
+		pToken1,                        // tokenB
+		pFee,                           // fee
+		130621891405341611593710811006, // sqrtPriceX96 ( for tick 10_000 )
+	)
+	std.TestSkipHeights(10)
+
+	tmpPool := pl.GetPool(pToken0, pToken1, pFee)
+	shouldEQ(t, tmpPool.GetTickSpacing(), bigint(10))
+}
+
+// 3. [POSITION] Mint LP
 func TestPositionMint(t *testing.T) {
-	pool := pl.GetPool("foo", "bar", 500)
-	println("before position mint\tpool.liquidity:", pool.GetLiquidity())
+	tmpPool := pl.GetPool(pToken0, pToken1, pFee)
 
-	poolOldToken0Bal := BalanceOf(pool.GetToken0(), poolAddr)
-	poolOldToken1Bal := BalanceOf(pool.GetToken1(), poolAddr)
+	poolOldLiquidity := tmpPool.GetLiquidity()
+	poolOldToken0Balance := token0Balance(poolAddr)
+	poolOldToken1Balance := token1Balance(poolAddr)
 
-	userOldToken0Bal := BalanceOf(pool.GetToken0(), tr01)
-	userOldToken1Bal := BalanceOf(pool.GetToken1(), tr01)
+	shouldEQ(t, tmpPool.GetLiquidity(), bigint(0))
+	shouldEQ(t, poolOldToken0Balance, bigint(0))
+	shouldEQ(t, poolOldToken1Balance, bigint(0))
 
-	lpOldToken0Bal := BalanceOf(pool.GetToken0(), lp01)
-	lpOldToken1Bal := BalanceOf(pool.GetToken1(), lp01)
+	{
+		// 'lp01' mints some liquidity => will get LP Token(tokenId '1')
+		std.TestSetOrigCaller(lp01)
 
-	std.TestSetOrigCaller(lp01)
-	tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := ps.Mint(
-		std.Address("foo"),
-		std.Address("bar"),
-		bigint(500),
-		bigint(9000),
-		bigint(11000),
-		bigint(1000000),
-		bigint(1000000),
-		bigint(1),
-		bigint(1),
-		bigint(1234567890),
-	)
+		mTokenId, mLiquidity, mAmount0, mAmount1 := pos.Mint(
+			pToken0,    // token0
+			pToken1,    // token1
+			pFee,       // fee
+			9000,       // tickLower
+			11000,      // tickUpper
+			1000000,    // amount0Desired
+			1000000,    // amount1Desired
+			1,          // amount0Min
+			1,          // amount1Min
+			2345678901, // deadline
+		)
+		std.TestSkipHeights(10)
 
-	poolNewToken0Bal := BalanceOf(pool.GetToken0(), poolAddr)
-	poolNewToken1Bal := BalanceOf(pool.GetToken1(), poolAddr)
+		poolNewLiquidity := tmpPool.GetLiquidity()
+		poolNewToken0Balance := token0Balance(poolAddr)
+		poolNewToken1Balance := token1Balance(poolAddr)
 
-	userNewToken0Bal := BalanceOf(pool.GetToken0(), tr01)
-	userNewToken1Bal := BalanceOf(pool.GetToken1(), tr01)
+		shouldEQ(t, gnft.OwnerOf(bigint(1)), lp01)
+		shouldEQ(t, mTokenId, bigint(1))
+		shouldEQ(t, poolNewToken0Balance, poolOldToken0Balance+mAmount0)
+		shouldEQ(t, poolNewToken1Balance, poolOldToken1Balance+mAmount1)
+		shouldEQ(t, poolNewLiquidity, poolOldLiquidity+mLiquidity)
+	}
 
-	lpNewToken0Bal := BalanceOf(pool.GetToken0(), lp01)
-	lpNewToken1Bal := BalanceOf(pool.GetToken1(), lp01)
+	{
+		// 'lp02' mints some liquidity => will get LP Token(tokenId '2')
+		std.TestSetOrigCaller(lp02)
 
-	shouldEQ(t, tPosTokenId, "1")
-	println("after position mint\tpool.liquidity:", pool.GetLiquidity())
-	println()
+		poolOldToken0Balance = token0Balance(poolAddr)
+		poolOldToken1Balance = token1Balance(poolAddr)
 
-	println("owner of tokenId 1:", nft.OwnerOf(tid(tPosTokenId)))
-	println()
+		mTokenId, mLiquidity, mAmount0, mAmount1 := pos.Mint(
+			pToken0,    // token0
+			pToken1,    // token1
+			pFee,       // fee
+			9500,       // tickLower
+			10500,      // tickUpper
+			2000000,    // amount0Desired
+			2000000,    // amount1Desired
+			1,          // amount0Min
+			1,          // amount1Min
+			2345678901, // deadline
+		)
+		std.TestSkipHeights(10)
 
-	println("Liquidity Provider lp01")
-	println("ㄴ token0:", lpOldToken0Bal, "->", lpNewToken0Bal, "( diff:", lpNewToken0Bal-lpOldToken0Bal, ")")
-	println("ㄴ token1:", lpOldToken1Bal, "->", lpNewToken1Bal, "( diff:", lpNewToken1Bal-lpOldToken1Bal, ")")
+		poolNewToken0Balance := token0Balance(poolAddr)
+		poolNewToken1Balance := token1Balance(poolAddr)
 
-	println("Pool")
-	println("ㄴ token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-	println("ㄴ token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
-
-	println("Trader tr01")
-	println("ㄴ token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-	println("ㄴ token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
-	println()
+		shouldEQ(t, gnft.OwnerOf(bigint(2)), lp02)
+		shouldEQ(t, mTokenId, bigint(2))
+		shouldEQ(t, poolNewToken0Balance, poolOldToken0Balance+mAmount0)
+		shouldEQ(t, poolNewToken1Balance, poolOldToken1Balance+mAmount1)
+	}
 }
 
-func TestStakerCreateIncentive(t *testing.T) {
+// 4. [STAKER] CreateExternalIncentive
+// Internal incentive will automatcially created via init()
+func TestStakerCreateExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
-	st.CreateIncentive(
-		tStartTime, // starTime
-		tEndTime,   // endTime
-		rf01,       // refundee
+
+	stk.CreateExternalIncentive(
+		"bar_foo_500",                       // targetPoolPath
+		"OBL",                               // rewardToken
+		10_000_000_000,                      // rewardAmount
+		GetTimestamp(),                      // startTimestamp
+		GetTimestamp()+(TIMESTAMP_30DAYS*2), // endTimestamp
+	)
+	std.TestSkipHeights(1)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			stk.CreateExternalIncentive("bar_foo_500", "OBL", 10_000_000_000, GetTimestamp(), GetTimestamp()+(TIMESTAMP_30DAYS*2))
+		},
+		"[STAKER] staker.gno__CreateExternalIncentive() || incentive(YmFyX2Zvb181MDBfT0JM) already exists",
 	)
 }
 
+// 5. [STAKER] StakeToken
 func TestStakerStakeToken(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
-	st.StakeToken(
-		tStartTime,
-		tEndTime,
-		rf01,
-		"1",
-		100,
-	)
+	// lp01 stakes tokenId '1'
+	std.TestSetPrevAddr(lp01) // r3v4_xxx: only test code, we need to call gnft.Approve directly from user
+	gnft.Approve(a2u(stakerAddr), tid("1"))
 
-	println("owner of tokenId 1:", nft.OwnerOf(tid("1")))
-	println()
+	stk.StakeToken(1)
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, gnft.OwnerOf(bigint(1)), stakerAddr)
+
+	// lp02 stakes tokenId '2'
+	std.TestSetPrevAddr(lp02) // r3v4_xxx: only test code, we need to call gnft.Approve directly from user
+	gnft.Approve(a2u(stakerAddr), tid("2"))
+
+	stk.StakeToken(2)
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, gnft.OwnerOf(bigint(2)), stakerAddr)
 }
 
+// 6. [POOL] SetFeeProtocol
 func TestPoolSetFeeProtocol(t *testing.T) {
-	std.TestSetOrigCaller(own)
-	pl.SetFeeProtocol(pToken0, pToken1, pFee, 6, 8)
+	std.TestSetOrigCaller(pc01)
+
+	pl.SetFeeProtocol(6, 8)
+	std.TestSkipHeights(1)
+
+	tmpPool := pl.GetPool(pToken0, pToken1, pFee)
+	shouldEQ(t, tmpPool.GetFeeProtocol(), bigint(134))
 }
 
-func TestPoolSwapFee01(t *testing.T) {
-	pool := pl.GetPool("foo", "bar", 500)
-	test_price := bigint(MIN_SQRT_RATIO + 1)
+// 7. [POOL] Swap ( token0 -> token1 )
+func TestPoolSwap01(t *testing.T) {
+	tmpPool := pl.GetPool(pToken0, pToken1, pFee)
+	testPrice01 := bigint(MIN_SQRT_RATIO + 1)
 
-	println("Swap #1")
-	println("ㄴ direction: token0 -> token1")
-	println("ㄴ amountIn: 200000")
+	poolOldToken0Bal := token0Balance(poolAddr)
+	poolOldToken1Bal := token1Balance(poolAddr)
+	poolOldPrice := tmpPool.GetSqrtPriceX96()
 
-	poolOldToken0Bal := BalanceOf(pool.GetToken0(), poolAddr)
-	poolOldToken1Bal := BalanceOf(pool.GetToken1(), poolAddr)
-
-	userOldToken0Bal := BalanceOf(pool.GetToken0(), tr01)
-	userOldToken1Bal := BalanceOf(pool.GetToken1(), tr01)
-
-	ownerOldToken0Bal := BalanceOf(pool.GetToken0(), own)
-	ownerOldToken1Bal := BalanceOf(pool.GetToken1(), own)
+	userOldToken0Bal := token0Balance(tr01)
+	userOldToken1Bal := token1Balance(tr01)
 
 	std.TestSetOrigCaller(tr01)
-	pl.Swap(pToken0, pToken1, pFee, tr01, true, 200000, MIN_SQRT_RATIO+1)
-
-	std.TestSetOrigCaller(own)
-	pl.CollectProtocol(pToken0, pToken1, pFee, own, 100000, 100000)
-
-	poolNewToken0Bal := BalanceOf(pool.GetToken0(), poolAddr)
-	poolNewToken1Bal := BalanceOf(pool.GetToken1(), poolAddr)
-
-	userNewToken0Bal := BalanceOf(pool.GetToken0(), tr01)
-	userNewToken1Bal := BalanceOf(pool.GetToken1(), tr01)
-
-	ownerNewToken0Bal := BalanceOf(pool.GetToken0(), own)
-	ownerNewToken1Bal := BalanceOf(pool.GetToken1(), own)
-
-	println("Pool")
-	println("ㄴ token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-	println("ㄴ token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
-
-	println("Trader tr01")
-	println("ㄴ token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-	println("ㄴ token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
-	println()
-
-	println("Owner own")
-	println("ㄴ token0:", ownerOldToken0Bal, "->", ownerNewToken0Bal, "( diff:", ownerNewToken0Bal-ownerOldToken0Bal, ")")
-	println("ㄴ token1:", ownerOldToken1Bal, "->", ownerNewToken1Bal, "( diff:", ownerNewToken1Bal-ownerOldToken1Bal, ")")
-	println()
-}
-
-func TestPositionCollect01(t *testing.T) {
-	pool := pl.GetPool("foo", "bar", 500)
-
-	lpOldToken0Bal := BalanceOf(pool.GetToken0(), lp01)
-	lpOldToken1Bal := BalanceOf(pool.GetToken1(), lp01)
-
-	std.TestSetOrigCaller(lp01)
-	ps.Collect(1, lp01, 100000, 100000)
-
-	lpNewToken0Bal := BalanceOf(pool.GetToken0(), lp01)
-	lpNewToken1Bal := BalanceOf(pool.GetToken1(), lp01)
-
-	println("LP lp01")
-	println("ㄴ token0:", lpOldToken0Bal, "->", lpNewToken0Bal, "( diff:", lpNewToken0Bal-lpOldToken0Bal, ")")
-	println("ㄴ token1:", lpOldToken1Bal, "->", lpNewToken1Bal, "( diff:", lpNewToken1Bal-lpOldToken1Bal, ")")
-	println()
-}
-
-func TestPoolSwapFee10(t *testing.T) {
-	pool := pl.GetPool("foo", "bar", 500)
-	test_price := bigint(MAX_SQRT_RATIO - 1)
-
-	println("Swap #2")
-	println("ㄴ direction: token1 -> token0")
-	println("ㄴ amountIn: 200000")
-
-	poolOldToken0Bal := BalanceOf(pool.GetToken0(), poolAddr)
-	poolOldToken1Bal := BalanceOf(pool.GetToken1(), poolAddr)
-
-	userOldToken0Bal := BalanceOf(pool.GetToken0(), tr01)
-	userOldToken1Bal := BalanceOf(pool.GetToken1(), tr01)
-
-	ownerOldToken0Bal := BalanceOf(pool.GetToken0(), own)
-	ownerOldToken1Bal := BalanceOf(pool.GetToken1(), own)
-
-	std.TestSetOrigCaller(tr01)
-	pl.Swap(pToken0, pToken1, pFee, tr01, false, 200000, MAX_SQRT_RATIO-1)
-
-	std.TestSetOrigCaller(own)
-	pl.CollectProtocol(pToken0, pToken1, pFee, own, 100000, 100000)
-
-	poolNewToken0Bal := BalanceOf(pool.GetToken0(), poolAddr)
-	poolNewToken1Bal := BalanceOf(pool.GetToken1(), poolAddr)
-
-	userNewToken0Bal := BalanceOf(pool.GetToken0(), tr01)
-	userNewToken1Bal := BalanceOf(pool.GetToken1(), tr01)
-
-	ownerNewToken0Bal := BalanceOf(pool.GetToken0(), own)
-	ownerNewToken1Bal := BalanceOf(pool.GetToken1(), own)
-
-	println("Pool")
-	println("ㄴ token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-	println("ㄴ token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
-
-	println("Trader tr01")
-	println("ㄴ token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-	println("ㄴ token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
-	println()
-
-	println("Owner own")
-	println("ㄴ token0:", ownerOldToken0Bal, "->", ownerNewToken0Bal, "( diff:", ownerNewToken0Bal-ownerOldToken0Bal, ")")
-	println("ㄴ token1:", ownerOldToken1Bal, "->", ownerNewToken1Bal, "( diff:", ownerNewToken1Bal-ownerOldToken1Bal, ")")
-	println()
-}
-
-func TestPositionCollect10(t *testing.T) {
-	pool := pl.GetPool("foo", "bar", 500)
-
-	lpOldToken0Bal := BalanceOf(pool.GetToken0(), lp01)
-	lpOldToken1Bal := BalanceOf(pool.GetToken1(), lp01)
-
-	std.TestSetOrigCaller(lp01)
-	ps.Collect(1, lp01, 100000, 100000)
-
-	lpNewToken0Bal := BalanceOf(pool.GetToken0(), lp01)
-	lpNewToken1Bal := BalanceOf(pool.GetToken1(), lp01)
-
-	println("LP lp01")
-	println("ㄴ token0:", lpOldToken0Bal, "->", lpNewToken0Bal, "( diff:", lpNewToken0Bal-lpOldToken0Bal, ")")
-	println("ㄴ token1:", lpOldToken1Bal, "->", lpNewToken1Bal, "( diff:", lpNewToken1Bal-lpOldToken1Bal, ")")
-	println()
-}
-
-func TestStakerGetRewardInfo(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
-
-	// XXX currently, amount of reward is exact same as amount of liquidity
-	tReward, tSecondsInsideX128 := st.GetRewardInfo(
-		tStartTime,
-		tEndTime,
-		rf01,
-		"1",
+	sAmount0, sAmount1 := pl.Swap(
+		pToken0,     // pToken0 // tokenIn
+		pToken1,     // pToken1 // tokenOut
+		pFee,        // pFee
+		tr01,        // recipient
+		true,        // zeroForOne // token0 > token1
+		200000,      // amountSpecified
+		testPrice01, // sqrtPriceLimitX96
 	)
-	println("reward:", tReward)
-	println()
+	std.TestSkipHeights(1)
+
+	poolNewToken0Bal := token0Balance(poolAddr)
+	poolNewToken1Bal := token1Balance(poolAddr)
+	poolNewPrice := tmpPool.GetSqrtPriceX96()
+
+	userNewToken0Bal := token0Balance(tr01)
+	userNewToken1Bal := token1Balance(tr01)
+
+	shouldEQ(t, poolNewToken0Bal, poolOldToken0Bal+sAmount0)
+	shouldEQ(t, poolNewToken1Bal, poolOldToken1Bal+sAmount1)
+
+	shouldEQ(t, userNewToken0Bal, userOldToken0Bal-sAmount0)
+	shouldEQ(t, userNewToken1Bal, userOldToken1Bal-sAmount1)
+
+	shouldLT(t, poolNewPrice, poolOldPrice)
+
+	std.TestSetOrigCaller(pc01)
+	cAmount0, cAmount1 := pl.CollectProtocol(
+		pToken0, // token0
+		pToken1, // token1
+		pFee,    // fee
+		pc01,    // recipient
+		100000,  // amount0Requested
+		100000,  // amount1Requested
+	)
+	std.TestSkipHeights(1)
+
+	shouldGT(t, cAmount0, bigint(0))
+	shouldEQ(t, token0Balance(pc01), cAmount0)
+
+	shouldEQ(t, cAmount1, bigint(0)) // since swap is token0 -> token1, there is no fee for token1
+	shouldEQ(t, token1Balance(pc01), cAmount1)
 }
 
-func TestStakerClaimReward(t *testing.T) {
-	lpOldRewardBal := BalanceOf(gnos.GetGRC20(), lp01)
+// 8. [POSITION] Collect
+// * collect fee from (swap token0 > token1)
+func TestPositionCollect01(t *testing.T) {
+	{
+		// lp01 collects fee from tokenId '1'
+		std.TestSetOrigCaller(lp01)
 
-	std.TestSetOrigCaller(lp01)
-	st.ClaimReward(tStartTime, tEndTime, rf01, "1")
+		lp01OldToken0Bal := token0Balance(lp01)
+		lp01OldToken1Bal := token1Balance(lp01)
 
-	lpNewRewardBal := BalanceOf(gnos.GetGRC20(), lp01)
+		cAmount0, cAmount1 := pos.Collect(
+			1,      // tokenId
+			lp01,   // recipient
+			100000, // amount0Max
+			100000, // amount1Max
+		)
+		std.TestSkipHeights(1)
 
-	println("LP lp01")
-	println("ㄴ reward:", lpOldRewardBal, "->", lpNewRewardBal, "( diff:", lpNewRewardBal-lpOldRewardBal, ")")
-	println()
+		lp01NewToken0Bal := token0Balance(lp01)
+		lp01NewToken1Bal := token1Balance(lp01)
 
-	shouldGT(t, lpOldRewardBal, lpNewRewardBal)
+		shouldGT(t, cAmount0, bigint(0))
+		shouldEQ(t, cAmount1, bigint(0))
+
+		shouldEQ(t, lp01NewToken0Bal, lp01OldToken0Bal+cAmount0)
+		shouldEQ(t, lp01NewToken1Bal, lp01OldToken1Bal+cAmount1)
+	}
+
+	{
+		// lp02 collects fee from tokenId '1'
+		std.TestSetOrigCaller(lp02)
+
+		lp02OldToken0Bal := token0Balance(lp02)
+		lp02OldToken1Bal := token1Balance(lp02)
+
+		cAmount0, cAmount1 := pos.Collect(
+			2,      // tokenId
+			lp02,   // recipient
+			100000, // amount0Max
+			100000, // amount1Max
+		)
+		std.TestSkipHeights(1)
+
+		lp02NewToken0Bal := token0Balance(lp02)
+		lp02NewToken1Bal := token1Balance(lp02)
+
+		shouldGT(t, cAmount0, bigint(0))
+		shouldEQ(t, cAmount1, bigint(0))
+
+		shouldEQ(t, lp02NewToken0Bal, lp02OldToken0Bal+cAmount0)
+		shouldEQ(t, lp02NewToken1Bal, lp02OldToken1Bal+cAmount1)
+	}
 }
 
-func TestStakerUnstakeAndWithdraw(t *testing.T) {
-	// NFT was staked with lockDuration 100 L#171
-	// so, it can be withdrawl after 100 seconds since unstake requeset
-	std.TestSetOrigCaller(lp01)
+// 9. [POOL] Swap ( token1 -> token0 )
+func TestPoolSwap10(t *testing.T) {
+	tmpPool := pl.GetPool(pToken0, pToken1, pFee)
+	testPrice10 := bigint(MAX_SQRT_RATIO - 1)
 
-	st.UnstakeToken(tStartTime, tEndTime, rf01, "1")
-	shouldEQ(t, nft.OwnerOf("1"), stakerAddr)
+	poolOldToken0Bal := token0Balance(poolAddr)
+	poolOldToken1Bal := token1Balance(poolAddr)
+	poolOldPrice := tmpPool.GetSqrtPriceX96()
 
-	shouldPanic(t, func() { st.WithdrawToken("1", GetOrigCaller()) })
+	userOldToken0Bal := token0Balance(tr01)
+	userOldToken1Bal := token1Balance(tr01)
 
-	std.TestSkipTimestamps(99)
-	shouldPanic(t, func() { st.WithdrawToken("1", GetOrigCaller()) })
+	std.TestSetOrigCaller(tr01)
+	sAmount0, sAmount1 := pl.Swap(
+		pToken0,     // pToken0 // tokenIn
+		pToken1,     // pToken1 // tokenOut
+		pFee,        // pFee
+		tr01,        // recipient
+		false,       // zeroForOne // token1 > token0
+		200000,      // amountSpecified
+		testPrice10, // sqrtPriceLimitX96
+	)
+	std.TestSkipHeights(1)
 
-	std.TestSkipTimestamps(1)
-	shouldPanic(t, func() { st.WithdrawToken("1", GetOrigCaller()) })
+	poolNewToken0Bal := token0Balance(poolAddr)
+	poolNewToken1Bal := token1Balance(poolAddr)
+	poolNewPrice := tmpPool.GetSqrtPriceX96()
 
-	println("before nft 1 owner:", nft.OwnerOf("1"))
-	std.TestSkipTimestamps(1)
-	st.WithdrawToken("1", GetOrigCaller())
-	shouldEQ(t, nft.OwnerOf("1"), GetOrigCaller())
-	println("current nft 1 owner:", nft.OwnerOf("1"))
-	println()
+	userNewToken0Bal := token0Balance(tr01)
+	userNewToken1Bal := token1Balance(tr01)
+
+	shouldEQ(t, poolNewToken0Bal, poolOldToken0Bal+sAmount0)
+	shouldEQ(t, poolNewToken1Bal, poolOldToken1Bal+sAmount1)
+
+	shouldEQ(t, userNewToken0Bal, userOldToken0Bal-sAmount0)
+	shouldEQ(t, userNewToken1Bal, userOldToken1Bal-sAmount1)
+
+	shouldGT(t, poolNewPrice, poolOldPrice)
+
+	std.TestSetOrigCaller(pc01)
+	cAmount0, cAmount1 := pl.CollectProtocol(
+		pToken0, // token0
+		pToken1, // token1
+		pFee,    // fee
+		pc01,    // recipient
+		100000,  // amount0Requested
+		100000,  // amount1Requested
+	)
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, cAmount0, bigint(0)) // since swap is token1 -> token0, there is no fee for token0
+
+	shouldGT(t, cAmount1, bigint(0))
+	shouldEQ(t, token1Balance(pc01), cAmount1)
 }
 
-func TestPositionNFTBurn(t *testing.T) {
-	pool := pl.GetPool("foo", "bar", 500)
+// 10. [POSITION] Collect
+// * collect fee from (swap token1 > token0)
+func TestPositionCollect10(t *testing.T) {
+	{
+		// lp01 collects fee from tokenId '1'
+		std.TestSetOrigCaller(lp01)
 
-	poolOldToken0Bal := BalanceOf(pool.GetToken0(), poolAddr)
-	poolOldToken1Bal := BalanceOf(pool.GetToken1(), poolAddr)
+		lp01OldToken0Bal := token0Balance(lp01)
+		lp01OldToken1Bal := token1Balance(lp01)
 
-	lpOldToken0Bal := BalanceOf(pool.GetToken0(), lp01)
-	lpOldToken1Bal := BalanceOf(pool.GetToken1(), lp01)
+		cAmount0, cAmount1 := pos.Collect(
+			1,      // tokenId
+			lp01,   // recipient
+			100000, // amount0Max
+			100000, // amount1Max
+		)
+		std.TestSkipHeights(1)
 
-	lpOldNftBal := ps.NFTBalanceOf(lp01)
+		lp01NewToken0Bal := token0Balance(lp01)
+		lp01NewToken1Bal := token1Balance(lp01)
 
-	// remove all liquidity & collect
-	tokenId := "1"
-	position := ps.PositionGetPosition(tokenId)
-	positionLiquidity := ps.PositionGetPositionTickLiquidity(tokenId)
+		shouldEQ(t, cAmount0, bigint(0))
+		shouldGT(t, cAmount1, bigint(0))
 
-	std.TestSetOrigCaller(lp01)
-	ps.DecreaseLiquidity(bigint(tokenId), positionLiquidity, 0, 0, 2345678901)
-	ps.Collect(bigint(tokenId), lp01, 1000000, 1000000)
+		shouldEQ(t, lp01NewToken0Bal, lp01OldToken0Bal+cAmount0)
+		shouldEQ(t, lp01NewToken1Bal, lp01OldToken1Bal+cAmount1)
+	}
 
-	poolNewToken0Bal := BalanceOf(pool.GetToken0(), poolAddr)
-	poolNewToken1Bal := BalanceOf(pool.GetToken1(), poolAddr)
+	{
+		// lp02 collects fee from tokenId '1'
+		std.TestSetOrigCaller(lp02)
 
-	lpNewToken0Bal := BalanceOf(pool.GetToken0(), lp01)
-	lpNewToken1Bal := BalanceOf(pool.GetToken1(), lp01)
+		lp02OldToken0Bal := token0Balance(lp02)
+		lp02OldToken1Bal := token1Balance(lp02)
 
-	lpNewNftBal := ps.NFTBalanceOf(lp01)
+		cAmount0, cAmount1 := pos.Collect(
+			2,      // tokenId
+			lp02,   // recipient
+			100000, // amount0Max
+			100000, // amount1Max
+		)
+		std.TestSkipHeights(1)
 
-	println("Pool")
-	println("ㄴ token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-	println("ㄴ token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
-	println()
+		lp02NewToken0Bal := token0Balance(lp02)
+		lp02NewToken1Bal := token1Balance(lp02)
 
-	println("LP lp01")
-	println("ㄴ token0:", lpOldToken0Bal, "->", lpNewToken0Bal, "( diff:", lpNewToken0Bal-lpOldToken0Bal, ")")
-	println("ㄴ token1:", lpOldToken1Bal, "->", lpNewToken1Bal, "( diff:", lpNewToken1Bal-lpOldToken1Bal, ")")
-	println()
+		shouldEQ(t, cAmount0, bigint(0))
+		shouldGT(t, cAmount1, bigint(0))
 
-	println("LP lp01 NFT")
-	println("ㄴ Number of NFT(s):", lpOldNftBal, "->", lpNewNftBal, "( diff:", lpNewNftBal-lpOldNftBal, ")")
-	println()
+		shouldEQ(t, lp02NewToken0Bal, lp02OldToken0Bal+cAmount0)
+		shouldEQ(t, lp02NewToken1Bal, lp02OldToken1Bal+cAmount1)
+	}
+}
+
+// 11. [STAKER] UnstakeToken
+func TestStakerUnstakeToken(t *testing.T) {
+	{
+		// lp01 unstakes tokenId '1'
+		std.TestSetPrevAddr(lp01) // r3v4_xxx: only test code, we need to call gnft.UnstakeToken directly from user
+
+		// skip 15 days
+		std.TestSkipHeights(259200)
+		stk.UnstakeToken(1)
+		std.TestSkipHeights(1)
+
+		shouldEQ(t, gnft.OwnerOf(bigint(1)), lp01)
+		shouldEQ(t, gnos.BalanceOf(a2u(lp01)), bigint(183002966))
+		shouldEQ(t, obl.BalanceOf(a2u(lp01)), bigint(353304593))
+	}
+
+	{
+		// lp02 unstakes tokenId '2'
+		std.TestSetPrevAddr(lp02) // r3v4_xxx: only test code, we need to call gnft.UnstakeToken directly from user
+
+		// skip 20 days more
+		std.TestSkipHeights(345600)
+		stk.UnstakeToken(2)
+		std.TestSkipHeights(1)
+
+		shouldEQ(t, gnft.OwnerOf(bigint(2)), lp02)
+		shouldEQ(t, gnos.BalanceOf(a2u(lp02)), bigint(3024055000))
+		shouldEQ(t, obl.BalanceOf(a2u(lp02)), bigint(5624742300))
+	}
+}
+
+// 12. [STAKER] EndExternalIncentive
+func TestStakerEndExternalIncentive(t *testing.T) {
+	std.TestSetOrigCaller(ci01)
+	std.TestSkipHeights(1036800)
+
+	ci01OldRewardBal := obl.BalanceOf(a2u(ci01))
+
+	stk.EndExternalIncentive("bar_foo_500", "OBL")
+	std.TestSkipHeights(1)
+
+	ci01NewRewardBal := obl.BalanceOf(a2u(ci01))
+	shouldGT(t, ci01NewRewardBal, ci01OldRewardBal)
+
+	shouldPanicWithMsg(
+		t,
+		func() { stk.EndExternalIncentive("bar_foo_500", "OBL") },
+		"[STAKER] staker.gno__EndIncentive() || cannot end non existent incentive(YmFyX2Zvb181MDBfT0JM)",
+	)
 }
 
 /* UTILS */
+func token0Balance(addr std.Address) bigint {
+	return bigint(foo.BalanceOf(a2u(addr)))
+}
+
+func token1Balance(addr std.Address) bigint {
+	return bigint(bar.BalanceOf(a2u(addr)))
+}
+
+func a2u(addr std.Address) users.AddressOrName {
+	return users.AddressOrName(addr)
+}
+
 func tid(tokenId string) grc721.TokenID {
 	return grc721.TokenID(tokenId)
 }
@@ -436,21 +535,25 @@ func shouldNEQ(t *testing.T, got, expected interface{}) {
 }
 
 func shouldGT(t *testing.T, l, r interface{}) {
-	if !(l < r) {
+	if l <= r {
 		t.Errorf("expected %v < %v", l, r)
 	}
 }
 
 func shouldLT(t *testing.T, l, r interface{}) {
-	if !(l > r) {
+	if l >= r {
 		t.Errorf("expected %v > %v", l, r)
 	}
 }
 
-func shouldPanic(t *testing.T, f func()) {
+func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
 	defer func() {
 		if r := recover(); r == nil {
-			t.Errorf("expected panic")
+			t.Errorf("The code did not panic")
+		} else {
+			if r != msg {
+				t.Errorf("excepted panic(%v), got(%v)", msg, r)
+			}
 		}
 	}()
 	f()

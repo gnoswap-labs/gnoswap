@@ -15,7 +15,6 @@ func GetHeight() int64 {
 
 func GetOrigPkgAddr() std.Address {
 	return std.DerivePkgAddr("gno.land/r/staker")
-	// return std.Address("g17rgsdnfxzza0sdfsdma37sdwxagsz378833ca4")
 	// return std.GetOrigPkgAddr()
 }
 

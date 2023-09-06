@@ -9,59 +9,7 @@ type VoteQuorum struct {
 	Denominator uint64
 }
 
-func getVoteQuorum() VoteQuorum {
-	param, ok := getGovParameter("vote_quorum")
-	if !ok {
-		panic("vote_quorum parameter not set")	
-	}
-	
-	return param.(VoteQuorum)
-}
-
-func setVoteQuorum(quorum VoteQuorum) {
-	setGovParameter("vote_quorum", quorum)
-}
-
-func getVotePeriod() uint64 {
-	param, ok := getGovParameter("vote_period")
-	if !ok {
-		panic("vote_period parameter not set")	
-	}
-
-	return param.(uint64)
-}
-
-func setVotePeriod(period uint64) {
-	setGovParameter("vote_period", period)
-}
-
-func getDepositPeriod() uint64 {
-	param, ok := getGovParameter("deposit_period")
-	if !ok {
-		panic("deposit_period parameter not set")	
-	}
-
-	return param.(uint64)
-}
-
-func setDepositPeriod(period uint64) {
-	setGovParameter("deposit_period", period)
-}
-
-func getDepositMinimum() uint64 {
-	param, ok := getGovParameter("deposit_minimum")
-	if !ok {
-		panic("deposit_minimum parameter not set")	
-	}
-
-	return param.(uint64)
-}
-
-func setDepositMinimum(minimum uint64) {
-	setGovParameter("deposit_minimum", minimum)
-}
-
-func init() {
+func Init() {
 	parameters = make(map[string]interface{})
 
 	// 1/3 quorum initially
@@ -70,8 +18,60 @@ func init() {
 	setVotePeriod(259200)
 	// 1 day initially
 	setDepositPeriod(86400)
-	// 10000000 GNOS initially
-	setDepositMinimum(uint64(10000000))
+	// 10_000_000 GNOS initially
+	setDepositMinimum(uint64(10_000_000))
+}
+
+func getVoteQuorum() VoteQuorum {
+	param, ok := getGovParameter("vote_quorum")
+	if !ok {
+		panic("[GOV] gov_parameters.gno__getVoteQuorum() || vote_quorum parameter not set")
+	}
+
+	return param.(VoteQuorum)
+}
+
+func setVoteQuorum(quorum VoteQuorum) {
+	SetGovParameter("vote_quorum", quorum)
+}
+
+func getVotePeriod() uint64 {
+	param, ok := getGovParameter("vote_period")
+	if !ok {
+		panic("[GOV] gov_parameters.gno__getVotePeriod() || vote_period parameter not set")
+	}
+
+	return param.(uint64)
+}
+
+func setVotePeriod(period uint64) {
+	SetGovParameter("vote_period", period)
+}
+
+func getDepositPeriod() uint64 {
+	param, ok := getGovParameter("deposit_period")
+	if !ok {
+		panic("[GOV] gov_parameters.gno__getDepositPeriod() || deposit_period parameter not set")
+	}
+
+	return param.(uint64)
+}
+
+func setDepositPeriod(period uint64) {
+	SetGovParameter("deposit_period", period)
+}
+
+func getDepositMinimum() uint64 {
+	param, ok := getGovParameter("deposit_minimum")
+	if !ok {
+		panic("[GOV] gov_parameters.gno__getDepositMinimum() || deposit_minimum parameter not set")
+	}
+
+	return param.(uint64)
+}
+
+func setDepositMinimum(minimum uint64) {
+	SetGovParameter("deposit_minimum", minimum)
 }
 
 // SubmitProposalParameterChanges uses std.PrevRealm() to know which realm to submit the proposal to.
@@ -88,8 +88,8 @@ func submitProposalGovParameterChanges(
 	govRealm := std.CurrentRealm()
 
 	data := ProposalParameterChange{
-		Realm: govRealm,
-		Changes: changes, 
+		Realm:   govRealm,
+		Changes: changes,
 	}
 
 	return submitProposal(
@@ -149,7 +149,7 @@ func SubmitProposalGovParameterVotingPeriod(
 	title string,
 	summary string,
 	metadata string,
-	initialDeposit uint64, 
+	initialDeposit uint64,
 
 	newVotingPeriod uint64,
 ) uint64 {

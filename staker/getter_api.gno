@@ -1,12 +1,10 @@
 package staker
 
 import (
-	b64 "encoding/base64"
 	"encoding/json"
 	"std"
-	"strings"
 
-	"gno.land/p/demo/avl"
+	"gno.land/p/demo/ufmt"
 )
 
 type ApiQueryBase struct {
@@ -14,110 +12,44 @@ type ApiQueryBase struct {
 	Timestamp int64 `json:"timestamp"`
 }
 
-type ApiIncentive struct {
-	Key       string `json:"key"`
-	StartTime string `json:"start_time"`
-	EndTime   string `json:"end_time"`
-	Refundee  string `json:"refundee"`
-	NumStakes string `json:"num_stakes"`
+type ApiRewardByAddress struct {
+	Type   string `json:"type"`
+	Token  string `json:"token"`
+	Reward bigint `json:"bigint"`
 }
 
-type ResponseGetIncentives struct {
+type ResponseGetRewardByAddress struct {
 	Stat     ApiQueryBase `json:"stat"`
 	Response struct {
-		Data []ApiIncentive `json:"data"`
+		Data []ApiRewardByAddress `json:"data"`
 	} `json:"response"`
 }
 
-func ApiGetIncentives() string {
-	incentiveList := []ApiIncentive{}
+func ApiGetRewardByAddress(address std.Address) string {
+	rewardList := []ApiRewardByAddress{}
 
-	for i := 0; i < incentives.Size(); i++ {
-		ik, iv := incentives.GetByIndex(i)
+	// all staked token by address
+	for tokenId, deposit := range deposits {
+		if deposit.owner == address {
+			poolPath := deposit.targetPoolPath
 
-		incen := iv.(Incentive)
-		st, et, rf := incentiveKeyDivide(ik)
+			// get internal gnos reward
+			internalGNOS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
+			rewardList = append(rewardList, ApiRewardByAddress{
+				Type:   "Internal",
+				Token:  "GNOS",
+				Reward: internalGNOS,
+			})
 
-		si := ApiIncentive{
-			Key:       ik,
-			StartTime: st,
-			EndTime:   et,
-			Refundee:  rf,
-			NumStakes: string(incen.numberOfStakes),
-		}
-
-		incentiveList = append(incentiveList, si)
-	}
-
-	qb := ApiQueryBase{
-		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
-	}
-
-	r := ResponseGetIncentives{
-		Stat: qb,
-		Response: struct {
-			Data []ApiIncentive `json:"data"`
-		}{
-			Data: incentiveList,
-		},
-	}
-
-	rr, err := json.Marshal(r)
-	if err != nil {
-		println("PANIC__ApiGetIncentives")
-		panic(err)
-	}
-
-	return string(rr)
-}
-
-// since `stakes` var includes `incentives`
-// below api might be duplicated wit ApiGetIncentives
-// need further test, specially when relationships are N:N:N // r3v4_xxx
-type ApiStake struct {
-	TokenID     string `json:"token_id"`
-	IncentiveID string `json:"incentive_id"`
-	StartTime   string `json:"start_time"`
-	EndTime     string `json:"end_time"`
-	Refundee    string `json:"refundee"`
-	// SecondsPerLiquidityInsideInitialX128 string `json:"seconds_per_liquidity_inside_initial_x128"`
-	LiquidityNoOverflow string `json:"liquidity_no_overflow"`
-	LiquidityIfOverflow string `json:"liquidity_if_overflow"`
-}
-
-type ResponseGetStakes struct {
-	Stat     ApiQueryBase `json:"stat"`
-	Response struct {
-		Data []ApiStake `json:"data"`
-	} `json:"response"`
-}
-
-func ApiGetStakes() string {
-	stakeList := []ApiStake{}
-
-	for i := 0; i < stakes.Size(); i++ {
-		sk, sv := stakes.GetByIndex(i) // tokenId -> avl.Tree (incentiveId -> Stake)
-
-		incentive := sv.(avl.Tree) // size should be always 1, I think
-
-		for j := 0; j < incentive.Size(); j++ {
-			ik, iv := incentive.GetByIndex(j) // incentiveId -> Stake
-			st, et, rf := incentiveKeyDivide(ik)
-
-			stake := iv.(Stake)
-
-			ss := ApiStake{
-				TokenID:             string(sk),
-				IncentiveID:         ik,
-				StartTime:           st,
-				EndTime:             et,
-				Refundee:            rf,
-				LiquidityNoOverflow: string(stake.liquidityNoOverflow),
-				LiquidityIfOverflow: string(stake.liquidityIfOverflow),
+			// find all external reward list for this pool
+			for _, incentiveId := range poolIncentives[poolPath] {
+				externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentives[incentiveId])
+				rewardList = append(rewardList, ApiRewardByAddress{
+					Type:   "External",
+					Token:  incentives[incentiveId].rewardToken,
+					Reward: externalReward,
+				})
 			}
-
-			stakeList = append(stakeList, ss)
 		}
 	}
 
@@ -126,39 +58,19 @@ func ApiGetStakes() string {
 		Timestamp: int64(GetTimestamp()),
 	}
 
-	r := ResponseGetStakes{
+	r := ResponseGetRewardByAddress{
 		Stat: qb,
 		Response: struct {
-			Data []ApiStake `json:"data"`
+			Data []ApiRewardByAddress `json:"data"`
 		}{
-			Data: stakeList,
+			Data: rewardList,
 		},
 	}
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		println("PANIC__ApiGetIncentives")
-		panic(err)
+		panic(ufmt.Sprintf("[STAKER] getter_api.gno__ApiGetRewardByAddress() || %v", err))
 	}
 
 	return string(rr)
-}
-
-// xxx TBD when detailed stake logic is implemented
-// func ApiGetDeposits() string {} // how lockDuartion will be handled
-// func ApiGetReward() string {} // how reward will be calculated
-
-func incentiveKeyDivide(incenKey string) (string, string, string) {
-	// b64d
-	kDec, _ := b64.StdEncoding.DecodeString(incenKey)
-	incenKey = string(kDec)
-
-	res := strings.Split(incenKey, "__")
-	if len(res) != 3 {
-		panic("incentiveKeyDivide: invalid incentiveKey")
-	}
-
-	startTime, endTime, refundee := res[0], res[1], res[2]
-
-	return startTime, endTime, refundee
 }

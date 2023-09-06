@@ -4,7 +4,8 @@ import (
 	"std"
 	"strings"
 
-	"gno.land/p/demo/grc/grc20"
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/demo/users"
 )
 
@@ -15,7 +16,7 @@ func require(condition bool, message string) {
 }
 
 func checkDeadline(deadline bigint) {
-	require(GetTimestamp() <= deadline, "Transaction too old")
+	require(GetTimestamp() <= deadline, ufmt.Sprintf("[POSITION] util.gno__checkDeadline() || transaction too old__GetTimestamp()(%s) <= deadline(%s)", GetTimestamp(), deadline))
 }
 
 func a2u(addr std.Address) users.AddressOrName {
@@ -25,7 +26,7 @@ func a2u(addr std.Address) users.AddressOrName {
 func poolKeyDivide(poolKey string) (string, string, bigint) {
 	res := strings.Split(poolKey, "_")
 	if len(res) != 3 {
-		panic("poolKeyDivide: invalid poolKey")
+		panic(ufmt.Sprintf("[POSITION] util.gno__poolKeyDivide() || invalid poolKey(%s)", poolKey))
 	}
 
 	pToken0, pToken1, pFee := res[0], res[1], res[2]

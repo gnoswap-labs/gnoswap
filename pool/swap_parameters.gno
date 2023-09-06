@@ -1,31 +1,35 @@
 package gnoswap
 
 import (
-	"gno.land/r/gov"
+	gov "gno.land/r/gov"
 )
-
-func getProtocolFees() (ProtocolFees) {
-	param, ok := gov.GetParameter("protocol_fees")
-	if !ok {
-		panic("protocol fees not set")
-	}
-
-	return param.(ProtocolFees)
-}
-
-func setProtocolFees(newFees ProtocolFees) {
-	gov.SetParameter("protocol_fees", newFees)
-}
 
 func SubmitProposalParameterProtocolFees(
 	title string,
 	summary string,
-	newFees ProtocolFees,
+	metadata string,
+	initialDeposit uint64,
+
+	newFee0 bigint,
+	newFee1 bigint,
 ) uint64 {
-	return gov.SubmitProposalParameterChange(
+	require(
+		(newFee0 == 0 || (newFee0 >= 4 && newFee0 <= 10)) && (newFee1 == 0 || (newFee1 >= 4 && newFee1 <= 10)),
+		"Invalid fee protocol",
+	)
+
+	changes := []gov.ParameterChange{
+		{
+			Key:   "protocol_fees",
+			Value: newFee0 + (newFee1 << 4),
+		},
+	}
+
+	return gov.SubmitProposalParameterChanges(
 		title,
 		summary,
-		"protocol_fees",
-		newFees,
+		metadata,
+		initialDeposit,
+		changes,
 	)
 }

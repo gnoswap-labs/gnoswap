@@ -1,11 +1,12 @@
 package gnoswap
 
 import (
-	"gno.land/p/demo/avl"
+	"std"
+
 	"gno.land/p/demo/grc/grc20"
+	"gno.land/p/demo/ufmt"
 )
 
-// Testing
 func (pool *Pool) GetMaxLiquidityPerTick() bigint {
 	return pool.maxLiquidityPerTick
 }
@@ -51,38 +52,35 @@ func (pool *Pool) GetProtocolFees() ProtocolFees {
 }
 
 func (pool *Pool) GetPosition(key string) PositionInfo {
-	position, exists := pool.positions.Get(key).(PositionInfo)
-	if !exists {
-		panic("position does not exist #3")
-	}
+	position, exist := pool.positions[key]
+	require(exist, ufmt.Sprintf("[POOL] test_helper.gno__GetPosition() || position(%s) does not exist", key))
+
 	return position
 }
 
-func (pool *Pool) GetPositions() avl.Tree {
+func (pool *Pool) GetPositions() Positions {
 	return pool.positions
 }
 
-func (pool *Pool) GetTick(key string) TickInfo {
-	tick, exists := pool.ticks.Get(key).(TickInfo)
-	if !exists {
-		panic("tick does not exist")
-	}
+func (pool *Pool) GetTick(key bigint) TickInfo {
+	tick, exist := pool.ticks[key]
+	require(exist, ufmt.Sprintf("[POOL] test_helper.gno__GetTick() || tick(%s) does not exist", key))
+
 	return tick
 }
 
-func (pool *Pool) GetTicks() avl.Tree {
+func (pool *Pool) GetTicks() Ticks {
 	return pool.ticks
 }
 
-func (pool *Pool) GetTickBitmap(key string) bigint {
-	tickBitmap, exists := pool.tickBitmaps.Get(key).(bigint)
-	if !exists {
-		panic("tickBitmap does not exist")
-	}
+func (pool *Pool) GetTickBitmap(key bigint) bigint {
+	tickBitmap, exist := pool.tickBitmaps[key]
+	require(exist, ufmt.Sprintf("[POOL] test_helper.gno__GetTickBitmap() || tickBitmap(%s) does not exist", key))
+
 	return tickBitmap
 }
 
-func (pool *Pool) GetTickBitmaps() avl.Tree {
+func (pool *Pool) GetTickBitmaps() TickBitmaps {
 	return pool.tickBitmaps
 }
 
@@ -90,9 +88,8 @@ func (pool *Pool) GetSqrtPriceX96() bigint {
 	return pool.slot0.sqrtPriceX96
 }
 
-func Abs(x bigint) bigint {
-	if x < 0 {
-		return -x
-	}
-	return x
+func (pool *Pool) PrintUserBalance(name string, target std.Address) {
+	println(name)
+	println(" > Token0:", balanceOf(pool.token0, target))
+	println(" > Token1:", balanceOf(pool.token1, target))
 }

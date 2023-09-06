@@ -1,7 +1,6 @@
 package gnoswap
 
 import (
-	"math"
 	"std"
 	"testing"
 
@@ -10,6 +9,8 @@ import (
 
 	bar "gno.land/r/bar"
 	foo "gno.land/r/foo"
+
+	g "gno.land/r/gov"
 )
 
 var (
@@ -41,7 +42,7 @@ var (
 // 1. Init & Create Pool by gsa
 func TestCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
-	Init()
+	InitManual()
 	std.TestSkipHeights(1)
 
 	println("> Init")
@@ -105,8 +106,7 @@ func TestSwap(t *testing.T) {
 	test_price_10 := bigint(MAX_SQRT_RATIO - 1) // minimum price // swap 1 -> 0
 
 	{
-		println("> Swap #1")
-		println(">> direction: token0 -> token1")
+		println("> Swap")
 
 		// SWAP
 		std.TestSetOrigCaller(tr01)
@@ -137,6 +137,23 @@ func TestSwap(t *testing.T) {
 		println(ApiGetPool("bar_foo_500"))
 		println()
 	}
+}
+
+// GOV
+func TestSubmitProposalParameterProtocolFees(t *testing.T) {
+	// Init GOV Contract
+	g.Init()
+
+	id := SubmitProposalParameterProtocolFees(
+		"protocol fee change",  // title
+		"change protocol fees", // summary
+		"",                     // metadata
+		0,                      // initialDeposit
+
+		8,  // newFee0
+		10, // newFee1
+	)
+	shouldEQ(t, id, uint64(1))
 }
 
 /* HELPER */

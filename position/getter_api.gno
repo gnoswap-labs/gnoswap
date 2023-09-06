@@ -3,6 +3,8 @@ package position
 
 import (
 	"encoding/json"
+
+	"gno.land/p/demo/ufmt"
 )
 
 type ApiQueryBase struct {
@@ -18,12 +20,10 @@ type ResponseGetPositions struct {
 }
 
 func ApiGetPositions() string {
-	positionSize := positions.Size()
 	positionList := []string{}
 
-	for i := 0; i < positionSize; i++ {
-		pk, _ := positions.GetByIndex(i)
-		positionList = append(positionList, pk)
+	for k, _ := range positions {
+		positionList = append(positionList, string(k))
 	}
 
 	qb := ApiQueryBase{
@@ -42,15 +42,14 @@ func ApiGetPositions() string {
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		println("PANIC__ApiGetPositions")
-		panic(err)
+		panic(ufmt.Sprintf("[POSITION] getter_api.gno()__ApiGetPositions() || %v", err))
 	}
 
 	return string(rr)
 }
 
 type SinglePosition struct {
-	TokenID string `json:"token_id"`
+	TokenID bigint `json:"token_id"`
 	// Nonce     bigint `json:"nonce"`
 	Operator  string `json:"operator"`
 	PoolKey   string `json:"pool_key"`
@@ -70,14 +69,11 @@ type ResponseGetPosition struct {
 	} `json:"response"`
 }
 
-func ApiGetPosition(key string) string {
-	// key is tokenID
-	_p, exists := positions.Get(key)
-	if !exists {
-		return "NO_POOL_FOUND"
+func ApiGetPosition(key bigint) string { // key is tokenId
+	position, exist := positions[key]
+	if !exist {
+		return "NO_POSITION_FOUND"
 	}
-
-	p := _p.(Position)
 
 	qb := ApiQueryBase{
 		Height:    GetHeight(),
@@ -91,21 +87,20 @@ func ApiGetPosition(key string) string {
 		}{
 			Data: SinglePosition{
 				TokenID:     key,
-				Operator:    p.operator.String(), // string(p.operator)
-				PoolKey:     p.poolKey,
-				TickLower:   p.tickLower,
-				TickUpper:   p.tickUpper,
-				Liquidity:   p.liquidity,
-				TokensOwed0: p.tokensOwed0,
-				TokensOwed1: p.tokensOwed1,
+				Operator:    position.operator.String(),
+				PoolKey:     position.poolKey,
+				TickLower:   position.tickLower,
+				TickUpper:   position.tickUpper,
+				Liquidity:   position.liquidity,
+				TokensOwed0: position.tokensOwed0,
+				TokensOwed1: position.tokensOwed1,
 			},
 		},
 	}
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		println("PANIC__ApiGetPosition")
-		panic(err)
+		panic(ufmt.Sprintf("[POSITION] getter_api.gno__ApiGetPosition() || %v", err))
 	}
 
 	return string(rr)
@@ -113,7 +108,7 @@ func ApiGetPosition(key string) string {
 
 type ApiPosition struct {
 	Address     string `json:"address"`
-	TokenID     string `json:"token_id"`
+	TokenID     bigint `json:"token_id"`
 	PoolKey     string `json:"pool_key"`
 	TickLower   bigint `json:"tick_lower"`
 	TickUpper   bigint `json:"tick_upper"`
@@ -131,25 +126,23 @@ type ResponseGetUserPositions struct {
 
 func ApiGetPositionByUser(addr string) string {
 	userPositions := []ApiPosition{}
-	for i := 0; i < positions.Size(); i++ {
-		psk, pv := positions.GetByIndex(i)
 
-		position := pv.(Position)
-		plo := position.operator.String()
+	for k, v := range positions {
+		plo := v.operator.String()
 		if plo != addr {
 			continue
 		} else {
-			plk := position.poolKey
+			plk := v.poolKey
 
 			ap := ApiPosition{
 				Address:     addr,
-				TokenID:     psk,
+				TokenID:     k,
 				PoolKey:     plk,
-				TickLower:   position.tickLower,
-				TickUpper:   position.tickUpper,
-				Liquidity:   position.liquidity,
-				TokensOwed0: position.tokensOwed0,
-				TokensOwed1: position.tokensOwed1,
+				TickLower:   v.tickLower,
+				TickUpper:   v.tickUpper,
+				Liquidity:   v.liquidity,
+				TokensOwed0: v.tokensOwed0,
+				TokensOwed1: v.tokensOwed1,
 			}
 			userPositions = append(userPositions, ap)
 		}
@@ -171,8 +164,7 @@ func ApiGetPositionByUser(addr string) string {
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		println("PANIC__ApiGetPositionByUser")
-		panic(err)
+		panic(ufmt.Sprintf("[POSITION] getter_api.gno__ApiGetPositionByUser() || %v", err))
 	}
 
 	return string(rr)

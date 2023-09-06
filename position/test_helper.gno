@@ -7,12 +7,10 @@ import (
 
 	"gno.land/r/bar"
 	"gno.land/r/foo"
-
-	nft "gno.land/r/gnft"
 )
 
 // Testing
-func GetNextId() bigint {
+func getNextId() bigint {
 	return nextId
 }
 

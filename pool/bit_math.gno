@@ -1,7 +1,9 @@
 package gnoswap
 
-func BitMathMostSignificantBit(x bigint) bigint {
-	require(x > 0, "x must be positive")
+import "gno.land/p/demo/ufmt"
+
+func bitMathMostSignificantBit(x bigint) bigint {
+	require(x > 0, ufmt.Sprintf("[POOL] bit_math.gno__bitMathMostSignificantBit() || x(%s) > 0", x))
 
 	r := bigint(0)
 
@@ -44,12 +46,12 @@ func BitMathMostSignificantBit(x bigint) bigint {
 		r += 1
 	}
 
-	requireUnsigned(r, "bit_math.gno__BitMathMostSignificantBit__r")
+	requireUnsigned(r, ufmt.Sprintf("[POOL] bit_math.gno__bitMathMostSignificantBit() || r(%s) >= 0", r))
 	return r
 }
 
-func BitMathLeastSignificantBit(x bigint) bigint {
-	require(x > 0, "x must be positive")
+func bitMathLeastSignificantBit(x bigint) bigint {
+	require(x > 0, ufmt.Sprintf("[POOL] bit_math.gno__bitMathLeastSignificantBit() || x(%s) > 0", x))
 
 	r := bigint(255)
 
@@ -99,6 +101,6 @@ func BitMathLeastSignificantBit(x bigint) bigint {
 		r -= 1
 	}
 
-	requireUnsigned(r, "bit_math.gno__BitMathLeastSignificantBit__r")
+	requireUnsigned(r, ufmt.Sprintf("[POOL] bit_math.gno__bitMathLeastSignificantBit() || r(%s) >= 0", r))
 	return r
 }

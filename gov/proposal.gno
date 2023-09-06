@@ -9,19 +9,19 @@ import (
 type ProposalType uint8
 
 const (
-	ProposalTypeText ProposalType = iota	
+	ProposalTypeText ProposalType = iota
 	ProposalTypeCommunityPoolSpend
 	ProposalTypeMint
 	ProposalTypeEmergencyHalt
 	ProposalTypeParameterChange
 	/*
-	ProposalTypeSwapParameterProtocolFee
-	ProposalTypeStakerParameterInflationRate
-	ProposalTypeStakerParameterStakingRewards
-	ProposalTypeGovParameterDepositPeriod
-	ProposalTypeGovParameterDepositMinimum
-	ProposalTypeGovParameterVotingPeriod
-	ProposalTypeGovParameterVoteQuorum
+		ProposalTypeSwapParameterProtocolFee
+		ProposalTypeStakerParameterInflationRate
+		ProposalTypeStakerParameterStakingRewards
+		ProposalTypeGovParameterDepositPeriod
+		ProposalTypeGovParameterDepositMinimum
+		ProposalTypeGovParameterVotingPeriod
+		ProposalTypeGovParameterVoteQuorum
 	*/
 )
 
@@ -47,20 +47,20 @@ const (
 
 type Deposit struct {
 	Depositor std.Address
-	Amount uint64
+	Amount    uint64
 }
 
 type Proposal struct {
 	// Proposal metadata
-	ProposalID  uint64
+	ProposalID     uint64
 	ProposalStatus ProposalStatus
-	ProposalType ProposalType
-	Proposer     std.Address
+	ProposalType   ProposalType
+	Proposer       std.Address
 
 	// Proposal content
-	Title      string
-	Summary    string
-	Metadata   string
+	Title    string
+	Summary  string
+	Metadata string
 
 	// Deposit data
 	TotalDeposit uint64
@@ -70,20 +70,20 @@ type Proposal struct {
 	YesVotes     uint64
 	NoVotes      uint64
 	AbstainVotes uint64 // Explicitly abstained votes, excluding non-voters
-	
+
 	// Internal timestamps
-	SubmitTime   uint64
-	DepositEndTime uint64
+	SubmitTime      uint64
+	DepositEndTime  uint64
 	VotingStartTime uint64
-	VotingEndTime uint64
-	ExecutedTime uint64
+	VotingEndTime   uint64
+	ExecutedTime    uint64
 
 	// Cached gov parameters, set at proposal creation time
 	// Governance parameter changes are not retroactive
-	DepositPeriod uint64
+	DepositPeriod  uint64
 	DepositMinimum uint64
-	VotingPeriod uint64
-	VoteQuorum VoteQuorum
+	VotingPeriod   uint64
+	VoteQuorum     VoteQuorum
 
 	// Execution data
 	ProposalData ProposalData
@@ -109,38 +109,36 @@ func newProposal(
 	if initialDeposit > 0 {
 		deposits = append(deposits, Deposit{
 			Depositor: proposer,
-			Amount: initialDeposit,
+			Amount:    initialDeposit,
 		})
 	}
 
-	key := proposalKey(proposalID)
-
 	return &Proposal{
-		ProposalID: proposalID,
+		ProposalID:     proposalID,
 		ProposalStatus: ProposalStatusDepositPeriod,
-		ProposalType: data.ProposalType(),
-		Proposer: proposer,
+		ProposalType:   data.ProposalType(),
+		Proposer:       proposer,
 
-		Title: title,
-		Summary: summary,
+		Title:    title,
+		Summary:  summary,
 		Metadata: metadata,
 
 		TotalDeposit: initialDeposit,
 
-		Passed: false,
-		YesVotes: 0,
-		NoVotes: 0,
+		Passed:       false,
+		YesVotes:     0,
+		NoVotes:      0,
 		AbstainVotes: 0,
 
-		SubmitTime: uint64(time.Now().Unix()),
-		DepositEndTime: uint64(time.Now().Unix() + int64(depositPeriod)),
+		SubmitTime:      uint64(time.Now().Unix()),
+		DepositEndTime:  uint64(time.Now().Unix() + int64(depositPeriod)),
 		VotingStartTime: 0,
-		VotingEndTime: 0,
+		VotingEndTime:   0,
 
-		DepositPeriod: depositPeriod,
+		DepositPeriod:  depositPeriod,
 		DepositMinimum: depositMinimum,
-		VotingPeriod: votingPeriod,
-		VoteQuorum: voteQuorum,
+		VotingPeriod:   votingPeriod,
+		VoteQuorum:     voteQuorum,
 
 		ProposalData: data,
 	}

@@ -3,27 +3,26 @@ package gnoswap
 import (
 	"std"
 
-	"gno.land/p/demo/avl"
-
 	bar "gno.land/r/bar"
 	foo "gno.land/r/foo"
+
+	"gno.land/p/demo/ufmt"
 )
 
 var (
-	admins               []std.Address
-	initialized          bool = false
-	feeAmountTickSpacing avl.Tree
+	admins      []std.Address
+	initialized bool = false
 
-	pools avl.Tree // map[string]*Pool
+	feeAmountTickSpacing map[bigint]bigint = make(map[bigint]bigint) // map[fee_amount]tick_spacing
+	pools                map[string]*Pool  = make(map[string]*Pool)  // map[pool_key]*Pool
 )
 
-// XXX can it be init ?
-func Init() {
-	require(!initialized, "already initialized")
-	feeAmountTickSpacing.Set("100", 2)     // fee 0.01% // for stable coin pair
-	feeAmountTickSpacing.Set("500", 10)    // fee 0.05%
-	feeAmountTickSpacing.Set("3000", 60)   // fee 0.3%
-	feeAmountTickSpacing.Set("10000", 200) // fee 1%
+func InitManual() {
+	require(!initialized, "[POOl] pool_manager.gno__initManual() || contract must not be initialized")
+	feeAmountTickSpacing[100] = 2
+	feeAmountTickSpacing[500] = 10
+	feeAmountTickSpacing[3000] = 60
+	feeAmountTickSpacing[10000] = 200
 	admins = append(admins, PrevRealmAddr())
 	initialized = true
 }
@@ -33,13 +32,11 @@ func CreatePool(
 	tokenB string, // XXX inter-contract token1 pkg_path
 	fee bigint,
 	sqrtPriceX96 bigint,
-) (pool *Pool) {
-	require(initialized, "not initialized")
-	require(tokenA != tokenB, "tokenA == tokenB")
+) *Pool {
+	require(initialized, "[POOl] pool_manager.gno__CreatePool() || contract must be initialized")
+	require(tokenA != tokenB, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || token pair cannot be the same__tokenA(%s) != tokenB(%s)", tokenA, tokenB))
 
-	// XXX check if token0, 1 has ben deployed
-	// inter-contract call
-
+	// r3v4_xxx: check whether token pair has been deployed successfuly
 	var token0, token1 string
 	if tokenA < tokenB {
 		token0 = tokenA
@@ -50,38 +47,36 @@ func CreatePool(
 	}
 
 	// check tickSpacing for fee
-	tickSpacing, ok := feeAmountTickSpacing.Get(string(fee))
-	require(ok, "fee amount not enabled")
-	require(tickSpacing != 0, "tickSpacing is 0")
-	require(tickSpacing > 0, "tickSpacing is negative")
+	tickSpacing := feeAmountTickSpacing[fee]
+	require(tickSpacing > 0, ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || invalid__tickSpacing(%s) > 0", fee))
 
 	// calculate poolKey
 	poolKey := GetPoolKey(token0, token1, fee)
 
-	// check whether the pool already exists
-	_, ok = pools.Get(poolKey)
-	if ok {
-		panic("pool already exists")
-	} else {
-		pool := newPool(token0, token1, fee, bigint(tickSpacing), sqrtPriceX96)
-		pools.Set(poolKey, pool)
-		return pool
+	// check whether the pool already exist
+	pool, exist := pools[poolKey]
+	require(!exist, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || pool(%s) already exist", poolKey))
+	if !exist {
+		pool = newPool(token0, token1, fee, bigint(tickSpacing), sqrtPriceX96)
+		pools[poolKey] = pool
 	}
+
+	return pool
 }
 
 func GetPool(token0, token1 string, fee bigint) *Pool {
 	poolKey := GetPoolKey(token0, token1, fee)
-	pool, ok := pools.Get(poolKey)
-	require(ok, "pool not found")
-	return pool.(*Pool)
-	// return (*Pool)(pool)
+	pool, exist := pools[poolKey]
+	require(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPool() || pool(%s) not found", poolKey))
+
+	return pool
 }
 
 func GetPoolFromPoolKey(poolKey string) *Pool {
-	pool, ok := pools.Get(poolKey)
-	require(ok, "pool not found")
-	return pool.(*Pool)
-	// return (*Pool)(pool)
+	pool, exist := pools[poolKey]
+	require(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPoolFromPoolKey() || pool(%s) not found", poolKey))
+
+	return pool
 }
 
 func GetPoolKey(token0, token1 string, fee bigint) string {
@@ -99,8 +94,8 @@ func newPool(
 	tickSpacing bigint,
 	sqrtPriceX96 bigint,
 ) *Pool {
-	maxLiquidityPerTick := TickTickSpacingToMaxLiquidityPerTick(tickSpacing)
-	tick := TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+	maxLiquidityPerTick := tickTickSpacingToMaxLiquidityPerTick(tickSpacing)
+	tick := tickMathGetTickAtSqrtRatio(sqrtPriceX96)
 
 	slot0 := Slot0{
 		sqrtPriceX96: sqrtPriceX96,
@@ -119,8 +114,7 @@ func newPool(
 		token1: 0,
 	}
 
-	// XXX dynamic import
-	// inter-contract OR realm-banker...
+	// r3v4_xxx: dynamic import need to support multi token
 	return &Pool{
 		token0:               foo.GetGRC20(), // token0.GetGRC20() // gno.land/r/foo.GetGRC20()
 		token1:               bar.GetGRC20(), // token1.GetGRC20() // gno.land/r/bar.GetGRC20()
@@ -133,13 +127,13 @@ func newPool(
 		feeGrowthGlobal1X128: 0,
 		protocolFees:         protocolFees,
 		liquidity:            0,
-		ticks:                avl.Tree{},
-		tickBitmaps:          avl.Tree{},
-		positions:            avl.Tree{},
+		ticks:                Ticks{},
+		tickBitmaps:          TickBitmaps{},
+		positions:            Positions{},
 	}
 }
 
-func IsAdmin(target std.Address) bool {
+func isAdmin(target std.Address) bool {
 	for _, admin := range admins {
 		if admin == target {
 			return true

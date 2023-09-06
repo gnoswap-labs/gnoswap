@@ -4,10 +4,9 @@ import (
 	"std"
 
 	"gno.land/p/demo/grc/grc20"
-	"gno.land/p/demo/ufmt"
 )
 
-func BalanceOf(token *grc20.AdminToken, addr std.Address) bigint {
+func balanceOf(token *grc20.AdminToken, addr std.Address) bigint {
 	balance, err := token.BalanceOf(addr)
 	if err != nil {
 		panic(err)
@@ -15,14 +14,28 @@ func BalanceOf(token *grc20.AdminToken, addr std.Address) bigint {
 	return bigint(balance)
 }
 
-func (pool *Pool) PrintUserBalance(name string, target std.Address) {
-	println(name)
-	println(" ㄴToken0:", BalanceOf(pool.token0, target))
-	println(" ㄴToken1:", BalanceOf(pool.token1, target))
-}
-
 func requireUnsigned(x bigint, msg string) {
 	if x < 0 {
 		panic(msg)
 	}
+}
+
+func min(num1, num2 bigint) bigint {
+	if num1 < num2 {
+		return num1
+	}
+	return num2
+}
+
+func require(cond bool, msg string) {
+	if !cond {
+		panic(msg)
+	}
+}
+
+func abs(x bigint) bigint {
+	if x < 0 {
+		return -x
+	}
+	return x
 }

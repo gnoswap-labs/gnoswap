@@ -2,47 +2,28 @@ package gov
 
 import (
 	"std"
-
-	"gno.land/r/gnos"
-
-	"gno.land/p/demo/avl"
-
-	"fmt"
 )
 
 func UpdateVotingPower(address string, newPower uint64) {
-	votesInterface, ok := votersMap.Get(address)
-	if !ok {
-		return
+	votes := votersMap[address]
+
+	for proposalID, vote := range votes {
+		proposal := &proposalsMap[proposalID]
+
+		proposal.updateVotingPower(vote.VoteOption, vote.Power, newPower)
+		proposalsMap[proposal.ProposalID] = *proposal
 	}
 
-	votes := votesInterface.(*avl.Tree)
-	
-	votes.Iterate("", "", func(key string, value interface{}) bool {	
-		proposalInterface, ok := proposals.Get(key)
-		if !ok {
-			panic("Bug: proposal is not retrievable from proposalVotersMap")
-		}
-		proposal := proposalInterface.(*Proposal)
-		if !proposal.isActive() {
-			return false
-		}
-		vote := value.(Vote)
-		proposal.updateVotingPower(vote.VoteOption, vote.Power, newPower)
-		proposals.Set(key, proposal)
-
-		return false
-	})
 }
 
 func MakeVote(proposalID uint64, option VoteOption) {
 	caller := std.GetOrigCaller()
-	amount := balanceOf(caller) 
+	amount := balanceOf(caller)
 
-	proposal := GetProposal(proposalID)
+	proposal := &proposalsMap[proposalID]
 	proposal.vote(caller, option, amount)
 
-	setProposal(proposal)
+	proposalsMap[proposal.ProposalID] = *proposal
 }
 
 func MakeDeposit(proposalID uint64, amount uint64) {
@@ -51,10 +32,10 @@ func MakeDeposit(proposalID uint64, amount uint64) {
 	// commented out, replace `gov` with the address of the gov contract
 	// gnos.Transfer(users.AddressOrName(caller), gov, amount)
 
-	proposal := GetProposal(proposalID)
+	proposal := &proposalsMap[proposalID]
 	proposal.deposit(caller, amount)
 
-	setProposal(proposal)
+	proposalsMap[proposal.ProposalID] = *proposal
 }
 
 func GetActiveProposals() []Proposal {
@@ -88,9 +69,9 @@ func SubmitProposalCommunityPoolSpend(
 	recipient std.Address,
 	amount uint64,
 ) uint64 {
-	data := ProposalCommunityPoolSpend {
+	data := ProposalCommunityPoolSpend{
 		Recipient: recipient,
-		Amount: amount,
+		Amount:    amount,
 	}
 
 	return submitProposal(
@@ -113,7 +94,7 @@ func SubmitProposalMint(
 ) uint64 {
 	data := ProposalMint{
 		Recipient: recipient,
-		Amount: amount,
+		Amount:    amount,
 	}
 
 	return submitProposal(
@@ -124,6 +105,7 @@ func SubmitProposalMint(
 		data,
 	)
 }
+
 /*
 func SubmitProposalEmergencyHalt(
 	title string,
@@ -150,6 +132,7 @@ func SubmitProposalEmergencyHalt(
 	)
 }
 */
+
 // Intended to be called by realms
 func SubmitProposalParameterChanges(
 	title string,
@@ -162,8 +145,8 @@ func SubmitProposalParameterChanges(
 	realm := std.PrevRealm()
 
 	data := ProposalParameterChange{
-		Realm: realm,
-		Changes: changes, 
+		Realm:   realm,
+		Changes: changes,
 	}
 
 	return submitProposal(
@@ -178,18 +161,17 @@ func SubmitProposalParameterChanges(
 func submitProposal(
 	title string,
 	summary string,
-	metadata string,	
+	metadata string,
 	initialDeposit uint64,
 	data ProposalData,
 ) uint64 {
 	origin := std.GetOrigCaller()
 
+	proposalID := getNextProposalID()
+
 	// XXXXXXXX
 	// commented out, replace `gov` with the address of the gov contract
 	// gnos.Transfer(origin, gov, initialDeposit)
-
-	proposalID := getNextProposalID()
-
 	proposal := newProposal(
 		proposalID,
 		origin,
@@ -202,12 +184,11 @@ func submitProposal(
 
 		data,
 	)
-	key := proposalKey(proposalID)
 
-	proposalDepositsMap.Set(key, []Deposit{})
-	proposalVotesMap.Set(key, avl.NewTree())
+	proposalDepositsMap[proposalID] = []Deposit{}
+	proposalVotesMap[proposalID] = map[string]Vote{}
 
 	// initializes proposals and proposalQueue
-	setProposal(proposal)
+	proposalsMap[proposal.ProposalID] = *proposal
 	return proposalID
 }

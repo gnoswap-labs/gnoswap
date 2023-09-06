@@ -5,10 +5,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/r/demo/users"
-
-	bar "gno.land/r/bar"
-	foo "gno.land/r/foo"
 
 	p "gno.land/r/pool"
 
@@ -49,7 +45,7 @@ var (
 // 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(own)
-	p.Init()
+	p.InitManual()
 	p.CreatePool("foo", "bar", pFee, 130621891405341611593710811006)
 
 	// fee
@@ -86,8 +82,8 @@ func TestMint(t *testing.T) {
 		)
 
 		isOwner(t, tTokenId, lp01)
-		shouldEQ(t, tTokenId, "1")
-		shouldEQ(t, GetNextId(), bigint(2))
+		shouldEQ(t, tTokenId, bigint(1))
+		shouldEQ(t, getNextId(), bigint(2))
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 	}
@@ -114,8 +110,8 @@ func TestMint(t *testing.T) {
 		)
 
 		isOwner(t, tTokenId, lp02)
-		shouldEQ(t, tTokenId, "2")
-		shouldEQ(t, GetNextId(), bigint(3))
+		shouldEQ(t, tTokenId, bigint(2))
+		shouldEQ(t, getNextId(), bigint(3))
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 
@@ -142,8 +138,8 @@ func TestMint(t *testing.T) {
 			shouldEQ(t, tAmount1, bigint(0))
 
 			isOwner(t, tTokenId, lp02)
-			shouldEQ(t, tTokenId, "3")
-			shouldEQ(t, GetNextId(), bigint(4))
+			shouldEQ(t, tTokenId, bigint(3))
+			shouldEQ(t, getNextId(), bigint(4))
 			shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 			shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 		}
@@ -171,8 +167,8 @@ func TestMint(t *testing.T) {
 			shouldEQ(t, tAmount0, bigint(0))
 
 			isOwner(t, tTokenId, lp02)
-			shouldEQ(t, tTokenId, "4")
-			shouldEQ(t, GetNextId(), bigint(5))
+			shouldEQ(t, tTokenId, bigint(4))
+			shouldEQ(t, getNextId(), bigint(5))
 			shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 			shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 		}
@@ -196,7 +192,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			bigint(1234567890),
 		)
 
-		shouldEQ(t, GetNextId(), bigint(5))
+		shouldEQ(t, getNextId(), bigint(5))
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 	}
@@ -409,15 +405,9 @@ func TestNFTBurn(t *testing.T) {
 	// remove all liquditiy & collect all then burn tid 1
 	{
 		std.TestSetOrigCaller(lp01)
-		tTokenId := bigint(1)
 
-		tPos, ok := positions.Get(string(tTokenId))
-		var tPosition Position
-		if ok {
-			tPosition = tPos.(Position)
-		} else {
-			tPosition = Position{}
-		}
+		tTokenId := bigint(1)
+		tPosition := positions[tTokenId]
 
 		tPositionLiquidity := tPosition.liquidity
 
@@ -433,14 +423,14 @@ func TestNFTBurn(t *testing.T) {
 		shouldPanic(t, func() { burn("1") })
 
 		// collect all => nft is burnable and burned
-		tBefore := NFTBalanceOf(lp01)
+		tBefore := nftBalanceOf(lp01)
 		Collect( // burn happens here as last step
 			tTokenId,
 			rv01,
 			bigint(100000), // collect all
 			bigint(100000), // collect all
 		)
-		shouldEQ(t, NFTBalanceOf(lp01), tBefore-bigint(1))
+		shouldEQ(t, nftBalanceOf(lp01), tBefore-bigint(1))
 	}
 
 	// burn non exists nft

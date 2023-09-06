@@ -1,10 +1,18 @@
 package gnoswap
 
-var govRealm string
+import (
+	"std"
 
-// flagHalt is set to true when the emergency halt proposal is passed
-// when this flag is set to true, all public functions in this package will panic
-var flagHalt bool
+	"gno.land/p/demo/ufmt"
+)
+
+var (
+	govRealm string
+
+	// flagHalt is set to true when the emergency halt proposal is passed
+	// when this flag is set to true, all public functions in this package will panic
+	flagHalt bool
+)
 
 func init() {
 	govRealm = "gno.land/r/gov"
@@ -13,7 +21,7 @@ func init() {
 
 func assertCalledByGovRealm() {
 	if std.PrevRealm() != govRealm {
-		panic("function can only be called from gov realm")
+		panic(ufmt.Sprintf("[POOL] emergency_halt.gno__assertCalledByGovRealm() || function can only be called from gov realm(%s)", std.PrevRealm().PkgPath()))
 	}
 }
 
@@ -24,6 +32,6 @@ func halt() {
 
 func assertNotHalt() {
 	if flagHalt {
-		panic("emergency halt")
+		panic("[POOL] emergency_halt.gno__assertNotHalt() || emergency halt")
 	}
 }

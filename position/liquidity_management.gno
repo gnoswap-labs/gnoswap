@@ -1,8 +1,6 @@
 package position
 
 import (
-	"std"
-
 	p "gno.land/r/pool"
 )
 
@@ -13,7 +11,7 @@ func addLiquidity(params AddLiquidityParams) (bigint, bigint, bigint) {
 	sqrtRatioAX96 := p.TickMathGetSqrtRatioAtTick(params.tickLower)
 	sqrtRatioBX96 := p.TickMathGetSqrtRatioAtTick(params.tickUpper)
 
-	liquidity := LiquidityAmountsGetLiquidityForAmounts(
+	liquidity := liquidityAmountsGetLiquidityForAmounts(
 		sqrtPriceX96,
 		sqrtRatioAX96,
 		sqrtRatioBX96,

@@ -1,4 +1,4 @@
-package gnos
+package obl
 
 import (
 	"std"
@@ -6,27 +6,30 @@ import (
 
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/demo/users"
+	// for swap
 )
 
 var (
-	gnos  *grc20.AdminToken
-	admin []string
+	obl   *grc20.AdminToken
+	admin std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // TODO: helper to change admin
 )
 
 func init() {
-	gnos = grc20.NewAdminToken("Gnoswap Shares", "GNOS", 4)
+	obl = grc20.NewAdminToken("OnblocToken", "OBL", 4)
+	obl.Mint(admin, 50000000000) // 50_000_000_000
 
 	// for swap > staker
 	var (
+		ci01       = std.Address("g1vd5nqv2lta047h6lta047h6lta047h6lk0whcd")
 		stakerAddr = std.Address("g13h5s9utqcwg3a655njen0p89txusjpfrs3vxp8")
 		poolAddr   = std.Address("g1ee305k8yk0pjz443xpwtqdyep522f9g5r7d63w")
-		ira        = std.Address("g1d9exzh6lta047h6lta047h6lta047h6l8ylkpa") // INTERNAL REWARD ACCOUNT
 	)
-	gnos.Mint(ira, 50000000000)                // 50_000_000_000
-	gnos.Approve(ira, stakerAddr, 50000000000) // owner, spender, amount
+	obl.Mint(ci01, 50000000000)                // 50_000_000_000
+	obl.Approve(ci01, stakerAddr, 50000000000) // owner, spender, amount
 
-	admin = append(admin, string(stakerAddr))
+	obl.Approve(poolAddr, stakerAddr, 50000000000) // owner, spender, amount
 }
 
 // method proxies as public functions.
@@ -34,15 +37,15 @@ func init() {
 
 // getters.
 func GetGRC20() *grc20.AdminToken {
-	return gnos
+	return obl
 }
 
 func TotalSupply() uint64 {
-	return gnos.TotalSupply()
+	return obl.TotalSupply()
 }
 
 func BalanceOf(owner users.AddressOrName) uint64 {
-	balance, err := gnos.BalanceOf(owner.Resolve())
+	balance, err := obl.BalanceOf(owner.Resolve())
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +53,7 @@ func BalanceOf(owner users.AddressOrName) uint64 {
 }
 
 func Allowance(owner, spender users.AddressOrName) uint64 {
-	allowance, err := gnos.Allowance(owner.Resolve(), spender.Resolve())
+	allowance, err := obl.Allowance(owner.Resolve(), spender.Resolve())
 	if err != nil {
 		panic(err)
 	}
@@ -62,7 +65,7 @@ func Allowance(owner, spender users.AddressOrName) uint64 {
 func Transfer(to users.AddressOrName, amount uint64) {
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	err := gnos.Transfer(caller, to.Resolve(), amount)
+	err := obl.Transfer(caller, to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -71,7 +74,7 @@ func Transfer(to users.AddressOrName, amount uint64) {
 func Approve(spender users.AddressOrName, amount uint64) {
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	err := gnos.Approve(caller, spender.Resolve(), amount)
+	err := obl.Approve(caller, spender.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -80,7 +83,7 @@ func Approve(spender users.AddressOrName, amount uint64) {
 func TransferFrom(from, to users.AddressOrName, amount uint64) {
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	err := gnos.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
+	err := obl.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -93,7 +96,7 @@ func Faucet() {
 	// FIXME: add payment in gnot?
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	gnos.Mint(caller, 1000*10000) // 1k
+	obl.Mint(caller, 1000*10000) // 1k
 }
 
 func FaucetL() {
@@ -101,7 +104,7 @@ func FaucetL() {
 	// FIXME: add payment in gnot?
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	gnos.Mint(caller, 50000000000) // 50_000_000_000
+	obl.Mint(caller, 50000000000) // 50_000_000_000
 }
 
 // administration.
@@ -110,33 +113,14 @@ func Mint(address users.AddressOrName, amount uint64) {
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	gnos.Mint(address.Resolve(), amount)
+	obl.Mint(address.Resolve(), amount)
 }
 
 func Burn(address users.AddressOrName, amount uint64) {
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	gnos.Burn(address.Resolve(), amount)
-}
-
-func AppendAdmin(address users.AddressOrName) {
-	// caller := std.GetOrigCaller()
-	caller := std.PrevRealm().Addr()
-	assertIsAdmin(caller)
-	admin = append(admin, string(address.Resolve()))
-}
-
-func RemoveAdmin(address users.AddressOrName) {
-	// caller := std.GetOrigCaller()
-	caller := std.PrevRealm().Addr()
-	assertIsAdmin(caller)
-	for i, v := range admin {
-		if v == string(address.Resolve()) {
-			admin = append(admin[:i], admin[i+1:]...)
-			return
-		}
-	}
+	obl.Burn(address.Resolve(), amount)
 }
 
 // render.
@@ -148,10 +132,10 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return gnos.RenderHome()
+		return obl.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := users.AddressOrName(parts[1])
-		balance, _ := gnos.BalanceOf(owner.Resolve())
+		balance, _ := obl.BalanceOf(owner.Resolve())
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
@@ -159,16 +143,7 @@ func Render(path string) string {
 }
 
 func assertIsAdmin(address std.Address) {
-	if !continas(admin, string(address)) {
-		panic("not admin")
+	if address != admin {
+		panic("restricted access")
 	}
-}
-
-func continas(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
-	return false
 }

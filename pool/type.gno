@@ -3,7 +3,6 @@ package gnoswap
 import (
 	"std"
 
-	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc20"
 )
 
@@ -81,6 +80,10 @@ type TickInfo struct {
 	initialized bool
 }
 
+type Ticks map[bigint]TickInfo         // tick => TickInfo
+type TickBitmaps map[bigint]bigint     // tick(wordPos) =>bitmap(tickWord ^ mask)
+type Positions map[string]PositionInfo // positionKey => PositionInfo
+
 // type Pool describes a single Pool/s state
 // A pool is identificed with a unique key (token0, token1, fee), where token0 < token1
 type Pool struct {
@@ -112,11 +115,11 @@ type Pool struct {
 	liquidity bigint
 
 	// ticks is a mapping from tick index to tick
-	ticks avl.Tree
+	ticks Ticks
 
 	// tickBitmaps is a mapping from tick index to tick bitmap
-	tickBitmaps avl.Tree
+	tickBitmaps TickBitmaps
 
 	// positions maps the key (caller, lower tick, upper tick) to a unique position
-	positions avl.Tree
+	positions Positions
 }
