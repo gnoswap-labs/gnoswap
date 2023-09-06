@@ -48,6 +48,6 @@ $ cp -R _setup/* gov pool position staker $WORKDIR/gno-for-swap/examples/gno.lan
 ### 4. Run the Test Cases
 
 ```
-$ gno test -root-dir $WORKDIR/gno-for-swap -verbose=true $WORKDIR/gno-for-swap/examples/gno.land/r/staker
+$ gno test -root-dir $WORKDIR/gno-for-swap -verbose=true $WORKDIR/gnoswap/_test
 ```
 
