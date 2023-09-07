@@ -47,8 +47,8 @@ func CreateExternalIncentive(
 	startTimestamp bigint,
 	endTimestamp bigint,
 ) {
-	require(GetTimestamp() <= startTimestamp, "[STAKER] staker.gno__CreateExternalIncentive() || startTimestamp must be in the future")
-	require(endTimestamp-startTimestamp >= TIMESTAMP_30DAYS, "[STAKER] staker.gno__CreateExternalIncentive() || endTimestamp must be at least 30 days after startTimestamp")
+	require(GetTimestamp() <= startTimestamp, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || startTimestamp must be in the future__GetTimestamp(%s) <= startTimestamp(%s)", GetTimestamp(), startTimestamp))
+	require(endTimestamp-startTimestamp >= TIMESTAMP_30DAYS, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || endTimestamp must be at least 30 days after startTimestamp__endTimestamp-startTimestamp(%s) >= TIMESTAMP_30DAYS(%s)", endTimestamp-startTimestamp, TIMESTAMP_30DAYS))
 
 	incentiveId := incentiveIdCompute(targetPoolPath, rewardToken)
 
