@@ -31,7 +31,7 @@ all: gnot deploy faucet approve pool basic swap-without-protocol-fee swap-wit-pr
 gnot: gnot-gsa gnot-lp01 gnot-tr01
 
 .PHONY: deploy
-deploy: deploy-foo deploy-bar deploy-pool
+deploy: deploy-foo deploy-bar deploy-gnos deploy-gov deploy-pool
 
 .PHONY: faucet
 faucet: faucet-lp01 faucet-tr01
@@ -79,6 +79,16 @@ deploy-bar:
 	@echo "" | gnokey maketx addpkg -pkgdir ../.base/bar -pkgpath gno.land/r/bar -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
+deploy-gnos:
+	$(info ************ [DEPLOY] deploy grc20 gnos (STAKE TOKEN) ************)
+	@echo "" | gnokey maketx addpkg -pkgdir ../.base/gnos -pkgpath gno.land/r/gnos -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo
+
+deploy-gov:
+	$(info ************ [DEPLOY] deploy gov ************)
+	@echo "" | gnokey maketx addpkg -pkgdir ../gov -pkgpath gno.land/r/gov -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo
+
 deploy-pool:
 	$(info ************ [DEPLOY] deploy pool ************)
 	@echo "" | gnokey maketx addpkg -pkgdir ../pool -pkgpath gno.land/r/pool -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
@@ -123,7 +133,7 @@ approve-tr01:
 ## POOL
 pool-init: 
 	$(info ************ [POOL] init ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func Init -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func InitManual -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@echo
 
 pool-create: 
