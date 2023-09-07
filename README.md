@@ -2,10 +2,10 @@
 
 This repository contains smart contracts (realms) for Gnoswap. You can run unit tests, as guided below, to see how it operates.
 
-_Note: The contracts are currently in active development and are not yet in production. We will manage the code through release versions, and an official release of contracts will be announced before our launch._
+_Note: The contracts are currently in active development and are not yet in production. We will manage the code through release versions, and an official production version of the contracts will be released prior to the launch._
 
 
-## Running Unit Tests
+## Unit Tests
 
 To run unit tests, follow these steps:
 
