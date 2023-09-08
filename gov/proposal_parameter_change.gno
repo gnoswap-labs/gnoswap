@@ -1,8 +1,9 @@
 package gov
 
 import (
-	"fmt"
 	"std"
+
+	"gno.land/p/demo/ufmt"
 )
 
 var (
@@ -10,7 +11,7 @@ var (
 )
 
 func parameterKey(realm std.Realm, key string) string {
-	return fmt.Sprintf("%s:%s", realm.Addr(), key)
+	return ufmt.Sprintf("%s:%s", realm.Addr(), key)
 }
 
 // GetParameter returns the value of a parameter

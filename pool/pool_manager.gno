@@ -18,7 +18,7 @@ var (
 )
 
 func InitManual() {
-	require(!initialized, "[POOl] pool_manager.gno__initManual() || contract must not be initialized")
+	require(!initialized, "[POOl] pool_manager.gno__InitManual() || contract must not be initialized")
 	feeAmountTickSpacing[100] = 2
 	feeAmountTickSpacing[500] = 10
 	feeAmountTickSpacing[3000] = 60
@@ -48,7 +48,7 @@ func CreatePool(
 
 	// check tickSpacing for fee
 	tickSpacing := feeAmountTickSpacing[fee]
-	require(tickSpacing > 0, ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || invalid__tickSpacing(%s) > 0", fee))
+	require(tickSpacing > 0, ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || tickSpacing(%s) > 0", tickSpacing))
 
 	// calculate poolKey
 	poolKey := GetPoolKey(token0, token1, fee)

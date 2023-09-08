@@ -33,7 +33,7 @@ all: gnot deploy faucet approve pool mint increase decrease collect burn
 gnot: gnot-gsa gnot-lp01 gnot-lp02 gnot-tr01
 
 .PHONY: deploy
-deploy: deploy-foo deploy-bar deploy-pool deploy-gnft deploy-position
+deploy: deploy-foo deploy-bar deploy-gnos deploy-gnft deploy-gov deploy-pool deploy-position
 
 .PHONY: faucet
 faucet: faucet-lp01 faucet-lp02 faucet-tr01
@@ -92,15 +92,26 @@ deploy-bar:
 	@echo "" | gnokey maketx addpkg -pkgdir ../.base/bar -pkgpath gno.land/r/bar -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
-deploy-pool:
-	$(info ************ [DEPLOY] deploy pool ************)
-	@echo "" | gnokey maketx addpkg -pkgdir ../pool -pkgpath gno.land/r/pool -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+deploy-gnos:
+	$(info ************ [DEPLOY] deploy grc20 gnos (STAKE TOKEN) ************)
+	@echo "" | gnokey maketx addpkg -pkgdir ../.base/gnos -pkgpath gno.land/r/gnos -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-gnft:
 	$(info ************ [DEPLOY] deploy grc721 gnft (lp token) ************)
 	@echo "" | gnokey maketx addpkg -pkgdir ../.base/gnft -pkgpath gno.land/r/gnft -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
+
+deploy-gov:
+	$(info ************ [DEPLOY] deploy gov ************)
+	@echo "" | gnokey maketx addpkg -pkgdir ../gov -pkgpath gno.land/r/gov -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo
+
+deploy-pool:
+	$(info ************ [DEPLOY] deploy pool ************)
+	@echo "" | gnokey maketx addpkg -pkgdir ../pool -pkgpath gno.land/r/pool -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo
+
 
 deploy-position:
 	$(info ************ [DEPLOY] deploy position ************)
@@ -157,7 +168,7 @@ approve-tr01:
 ## POOL
 pool-init: 
 	$(info ************ [POOL] init ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func Init -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func InitManual -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@echo
 
 pool-create: 
@@ -234,7 +245,7 @@ decrease-01:
 ## COLLECT
 collect-bit:
 	$(info ************ [COLLECT] tokenId 1 (bit of) ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Collect -args 1 -args $(ADDR_LP01) -args 10 -args 10  -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Collect -args 1 -args $(ADDR_LP01) -args 10 -args 10  -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@$(MAKE) -f $(MAKEFILE) print-all-balance
 	@echo
 
@@ -242,7 +253,7 @@ collect-all:
 	$(info ************ [COLLECT] tokenId 1 (all) ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Collect -args 1 -args $(ADDR_LP01) -args 1000000 -args 1000000  -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@$(MAKE) -f $(MAKEFILE) print-all-balance
-	@echo lp01 has $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/position\nNFTBalanceOf(\"${ADDR_LP01}\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}') NFTs
+	@echo lp01 has $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/gnft\nBalanceOf(\"${ADDR_LP01}\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}') NFTs
 	@echo
 
 
@@ -250,13 +261,13 @@ collect-all:
 burn-01:
 	$(info ************ [BURN] tokenId 1 ************)
 	$(info ** 1. to burn NFT, you should decrease all of the liquidity left)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func DecreaseLiquidity -args 1 -args 11203 -args 1 -args 1 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func DecreaseLiquidity -args 1 -args 36077 -args 1 -args 1 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 
 	$(info ** 2. collect all of the liquidity (collect will automatically burn NFT if there is no liquidity left))
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Collect -args 1 -args $(ADDR_LP01) -args 1000000 -args 1000000  -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 
 chk-lp01:
-	@echo lp01 has $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/position\nNFTBalanceOf(\"${ADDR_LP01}\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}') NFTs
+	@echo lp01 has $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/gnft\nBalanceOf(\"${ADDR_LP01}\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}') NFTs
 	@echo
 	
 
