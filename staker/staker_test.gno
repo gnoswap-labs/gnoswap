@@ -222,7 +222,12 @@ func TestUnstakeToken(t *testing.T) {
 		std.TestSetOrigCaller(lp01)
 		UnstakeToken(1) // GNFT tokenId
 		std.TestSkipHeights(1)
+	{
+		std.TestSetOrigCaller(lp01)
+		UnstakeToken(1) // GNFT tokenId
+		std.TestSkipHeights(1)
 
+		shouldEQ(t, gnft.OwnerOf(bigint(1)), lp01) // lp01
 		shouldEQ(t, gnft.OwnerOf(bigint(1)), lp01) // lp01
 
 		// check reward

@@ -107,15 +107,21 @@ func rewardMathComputeExternalRewardAmount(tokenId bigint, deposit Deposit, ince
 	return finalReward
 }
 
-func getMyLiquidityRatio(poolPath string, tokenId bigint) bigint {
+func getPoolTotalStakedLiquidity(poolPath string) bigint {
 	poolStakedLiquidity := bigint(0)
 	// get all staked liquidity
-	for k, deposit := range deposits { // key is tokenId // used in this range loop only
+	for tokenId, deposit := range deposits { // key is tokenId // used in this range loop only
 		if deposit.targetPoolPath == poolPath {
-			tokenLiquidity := s.PositionGetPositionLiquidity(k)
+			tokenLiquidity := s.PositionGetPositionLiquidity(tokenId)
 			poolStakedLiquidity += tokenLiquidity
 		}
 	}
+
+	return poolStakedLiquidity
+}
+
+func getMyLiquidityRatio(poolPath string, tokenId bigint) bigint {
+	poolStakedLiquidity := getPoolTotalStakedLiquidity(poolPath)
 
 	// my(current tokenId) liquidity
 	myLiquidity := s.PositionGetPositionLiquidity(tokenId)
