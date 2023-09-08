@@ -154,11 +154,9 @@ func TestStakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(bigint(2)), GetOrigPkgAddr()) // staker
 		shouldEQ(t, len(deposits), 2)
 	}
-
 }
 
 func TestApiGetRewardsByAddress(t *testing.T) {
-	gra := ApiGetRewardByAddress(lp01)
 	result := ResponseGetRewardByAddress{
 		Stat: ApiQueryBase{
 			Height:    0,
@@ -182,29 +180,69 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 		},
 	}
 
-	if err := json.Unmarshal([]byte(gra), &result); err != nil {
-		panic(err)
+	// lp01 reward check
+	{
+		lp01Result := result
+		gra := ApiGetRewardByAddress(lp01)
+
+		if err := json.Unmarshal([]byte(gra), &lp01Result); err != nil {
+			panic(err)
+		}
+
+		shouldEQ(t, lp01Result.Stat.Height, GetHeight())
+		shouldEQ(t, lp01Result.Response.Data[0].Type, "Internal")
+		shouldEQ(t, lp01Result.Response.Data[0].Token, "GNOS")
+		shouldEQ(t, lp01Result.Response.Data[0].Reward, bigint(764))
+		shouldEQ(t, lp01Result.Response.Data[1].Type, "External")
+		shouldEQ(t, lp01Result.Response.Data[1].Token, "OBL")
+		shouldEQ(t, lp01Result.Response.Data[1].Reward, bigint(1474))
 	}
 
-	shouldEQ(t, result.Stat.Height, GetHeight())
-	shouldEQ(t, result.Response.Data[0].Type, "Internal")
-	shouldEQ(t, result.Response.Data[0].Token, "GNOS")
-	shouldEQ(t, result.Response.Data[0].Reward, bigint(916))
-	shouldEQ(t, result.Response.Data[1].Type, "External")
-	shouldEQ(t, result.Response.Data[1].Token, "OBL")
-	shouldEQ(t, result.Response.Data[1].Reward, bigint(1768))
+	// lp02 reward check
+	{
+		std.TestSkipHeights(2)
+
+		lp02Result := result
+		gra := ApiGetRewardByAddress(lp02)
+
+		if err := json.Unmarshal([]byte(gra), &lp02Result); err != nil {
+			panic(err)
+		}
+
+		shouldEQ(t, lp02Result.Stat.Height, GetHeight())
+		shouldEQ(t, lp02Result.Response.Data[0].Type, "Internal")
+		shouldEQ(t, lp02Result.Response.Data[0].Token, "GNOS")
+		shouldEQ(t, lp02Result.Response.Data[0].Reward, bigint(4235))
+		shouldEQ(t, lp02Result.Response.Data[1].Type, "External")
+		shouldEQ(t, lp02Result.Response.Data[1].Token, "OBL")
+		shouldEQ(t, lp02Result.Response.Data[1].Reward, bigint(8170))
+	}
 }
 
 func TestUnstakeToken(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
-	UnstakeToken(1) // GNFT tokenId
-	std.TestSkipHeights(1)
+	{
+		std.TestSetOrigCaller(lp01)
+		UnstakeToken(1) // GNFT tokenId
+		std.TestSkipHeights(1)
 
-	shouldEQ(t, gnft.OwnerOf(bigint(1)), lp01) // lp01
+		shouldEQ(t, gnft.OwnerOf(bigint(1)), lp01) // lp01
 
-	// check reward
-	shouldEQ(t, gnos.BalanceOf(a2u(lp01)), bigint(916)) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(lp01)), bigint(1768)) // external
+		// check reward
+		shouldEQ(t, gnos.BalanceOf(a2u(lp01)), bigint(764)) // internal
+		shouldEQ(t, obl.BalanceOf(a2u(lp01)), bigint(1474)) // external
+	}
+
+	{
+		std.TestSetOrigCaller(lp02)
+		UnstakeToken(2) // GNFT tokenId
+		std.TestSkipHeights(1)
+
+		shouldEQ(t, gnft.OwnerOf(bigint(2)), lp02) // lp01
+
+		// check reward
+		shouldEQ(t, gnos.BalanceOf(a2u(lp02)), bigint(5000)) // internal (tokenId 1 is unstaked, and new block have been created, so 5000(~= internl reward gnos amount per block) is expected)
+		shouldEQ(t, obl.BalanceOf(a2u(lp02)), bigint(9645))  // external (tokenId 1 is unstaked, and new block have been created, so 9645(~= external reward obl amount per block) is expected)
+	}
 }
 
 func TestEndExternalIncentive(t *testing.T) {
