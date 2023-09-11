@@ -71,17 +71,17 @@ gnot-tr01:
 ## DEPLOY
 deploy-foo:
 	$(info ************ [DEPLOY] deploy grc20 foo (token0) ************)
-	@echo "" | gnokey maketx addpkg -pkgdir ../.base/foo -pkgpath gno.land/r/foo -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir ../_setup/foo -pkgpath gno.land/r/foo -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-bar:
 	$(info ************ [DEPLOY] deploy grc20 bar (token1) ************)
-	@echo "" | gnokey maketx addpkg -pkgdir ../.base/bar -pkgpath gno.land/r/bar -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir ../_setup/bar -pkgpath gno.land/r/bar -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-gnos:
 	$(info ************ [DEPLOY] deploy grc20 gnos (STAKE TOKEN) ************)
-	@echo "" | gnokey maketx addpkg -pkgdir ../.base/gnos -pkgpath gno.land/r/gnos -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir ../_setup/gnos -pkgpath gno.land/r/gnos -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-gov:
@@ -131,12 +131,12 @@ approve-tr01:
 
 
 ## POOL
-pool-init: 
+pool-init:
 	$(info ************ [POOL] init ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func InitManual -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@echo
 
-pool-create: 
+pool-create:
 	$(info ************ [POOL] create ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args foo -args bar -args 500 -args 130621891405341611593710811006 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@$(MAKE) -f $(MAKEFILE) print-all-balance

@@ -84,22 +84,22 @@ gnot-tr01:
 ## DEPLOY
 deploy-foo:
 	$(info ************ [DEPLOY] deploy grc20 foo (token0) ************)
-	@echo "" | gnokey maketx addpkg -pkgdir ../.base/foo -pkgpath gno.land/r/foo -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir ../_setup/foo -pkgpath gno.land/r/foo -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-bar:
 	$(info ************ [DEPLOY] deploy grc20 bar (token1) ************)
-	@echo "" | gnokey maketx addpkg -pkgdir ../.base/bar -pkgpath gno.land/r/bar -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir ../_setup/bar -pkgpath gno.land/r/bar -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-gnos:
 	$(info ************ [DEPLOY] deploy grc20 gnos (STAKE TOKEN) ************)
-	@echo "" | gnokey maketx addpkg -pkgdir ../.base/gnos -pkgpath gno.land/r/gnos -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir ../_setup/gnos -pkgpath gno.land/r/gnos -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-gnft:
 	$(info ************ [DEPLOY] deploy grc721 gnft (lp token) ************)
-	@echo "" | gnokey maketx addpkg -pkgdir ../.base/gnft -pkgpath gno.land/r/gnft -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir ../_setup/gnft -pkgpath gno.land/r/gnft -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-gov:
@@ -166,12 +166,12 @@ approve-tr01:
 
 
 ## POOL
-pool-init: 
+pool-init:
 	$(info ************ [POOL] init ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func InitManual -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@echo
 
-pool-create: 
+pool-create:
 	$(info ************ [POOL] create ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args foo -args bar -args 500 -args 130621891405341611593710811006 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@$(MAKE) -f $(MAKEFILE) print-all-balance
@@ -269,7 +269,7 @@ burn-01:
 chk-lp01:
 	@echo lp01 has $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/gnft\nBalanceOf(\"${ADDR_LP01}\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}') NFTs
 	@echo
-	
+
 
 ## ETC
 print-all-balance:
