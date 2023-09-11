@@ -1,5 +1,5 @@
 // EXTERNAL API
-package gnoswap
+package pool
 
 import (
 	b64 "encoding/base64"
@@ -11,8 +11,8 @@ import (
 )
 
 type ApiQueryBase struct {
-	Height    uint64 `json:"height"`
-	Timestamp uint64 `json:"timestamp"`
+	Height    int64 `json:"height"`
+	Timestamp int64 `json:"timestamp"`
 }
 
 type ResponseGetPools struct {

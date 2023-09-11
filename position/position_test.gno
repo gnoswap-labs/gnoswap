@@ -33,13 +33,13 @@ func init() {
 
 var (
 	// Common
-	pToken0        = "foo"
-	pToken1        = "bar"
-	pFee    bigint = 500
+	pToken0 = "foo"
+	pToken1 = "bar"
+	pFee    = uint16(500)
 
-	test_tickLower       bigint = 9000
-	test_tickUpper       bigint = 11000
-	test_liquidityExpect bigint = 1000
+	test_tickLower       = int32(9000)
+	test_tickUpper       = int32(11000)
+	test_liquidityExpect = bigint(1000)
 )
 
 // 1. Init & Create Pool
@@ -127,8 +127,8 @@ func TestMint(t *testing.T) {
 				pToken0,
 				pToken1,
 				pFee,
-				bigint(14000),
-				bigint(18000),
+				int32(14000),
+				int32(18000),
 				bigint(1000),
 				bigint(1000),
 				bigint(0),
@@ -156,8 +156,8 @@ func TestMint(t *testing.T) {
 				pToken0,
 				pToken1,
 				pFee,
-				bigint(7000),
-				bigint(9000),
+				int32(7000),
+				int32(9000),
 				bigint(1000),
 				bigint(1000),
 				bigint(0),
@@ -406,7 +406,7 @@ func TestNFTBurn(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp01)
 
-		tTokenId := bigint(1)
+		tTokenId := uint64(1)
 		tPosition := positions[tTokenId]
 
 		tPositionLiquidity := tPosition.liquidity
@@ -444,7 +444,7 @@ func TestApiGetPositions(t *testing.T) {
 }
 
 func TestApiGetPosition(t *testing.T) {
-	gps := ApiGetPosition("2")
+	gps := ApiGetPosition(uint64(2))
 	println(gps)
 }
 
@@ -487,7 +487,7 @@ func shouldPanic(t *testing.T, f func()) {
 	f()
 }
 
-func isOwner(t *testing.T, tokenId string, addr std.Address) bool {
+func isOwner(t *testing.T, tokenId uint64, addr std.Address) bool {
 	owner := nft.OwnerOf(tid(tokenId))
 
 	if owner == addr {

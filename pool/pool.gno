@@ -1,4 +1,4 @@
-package gnoswap
+package pool
 
 import (
 	"std"
@@ -146,15 +146,6 @@ func Collect(
 
 	amount1 := min(amount1Requested, position.tokensOwed1)
 	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__Collect() || amount1(%s) >= 0", amount1))
-
-	println("amount0Requested:", amount0Requested)
-	println("position.tokensOwed0:", position.tokensOwed0)
-	println("amount0:", amount0)
-	println()
-	println("amount1Requested:", amount1Requested)
-	println("position.tokensOwed1:", position.tokensOwed1)
-	println("amount1:", amount1)
-	println()
 
 	// collect(pool.token0, pool.balances.token0, amount0, recipient)
 	require(pool.balances.token0 >= amount0, ufmt.Sprintf("[POOL] pool.gno__Collect() || pool.balances.token0(%s) >= amount0(%s)", pool.balances.token0, amount0))

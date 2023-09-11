@@ -13,7 +13,7 @@ func nftBalanceOf(addr std.Address) bigint {
 	return bigint(nft.BalanceOf(a2u(addr)))
 }
 
-func exists(tokenId bigint) bool {
+func exists(tokenId uint64) bool {
 	// non exist tokenId will panic
 	// use defer to catch the panic
 	defer func() {
@@ -39,7 +39,7 @@ func exists(tokenId bigint) bool {
 }
 
 // Error handling isn't necessary here
-func isApprovedOrOwner(addr std.Address, tokenId bigint) bool {
+func isApprovedOrOwner(addr std.Address, tokenId uint64) bool {
 	tid := grc721.TokenID(tokenId)
 
 	// check whether token exists

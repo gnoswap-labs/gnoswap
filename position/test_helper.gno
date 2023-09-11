@@ -10,11 +10,11 @@ import (
 )
 
 // Testing
-func getNextId() bigint {
+func getNextId() uint64 {
 	return nextId
 }
 
-func tid(tokenId string) grc721.TokenID {
+func tid(tokenId uint64) grc721.TokenID {
 	return grc721.TokenID(tokenId)
 }
 

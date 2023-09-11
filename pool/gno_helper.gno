@@ -1,16 +1,16 @@
-package gnoswap
+package pool
 
 import (
 	"std"
 	"time"
 )
 
-func GetHeight() uint64 {
-	return uint64(std.GetHeight()) // origin return int64
+func GetHeight() int64 {
+	return std.GetHeight()
 }
 
-func GetTimestamp() uint64 {
-	return uint64(time.Now().Unix()) // origin return int64
+func GetTimestamp() int64 {
+	return time.Now().Unix()
 }
 
 func GetChainID() string {

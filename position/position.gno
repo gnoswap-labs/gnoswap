@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	positions map[bigint]Position = make(map[bigint]Position) // tokenId -> Position
-	nextId    bigint              = 1
+	positions map[uint64]Position = make(map[uint64]Position) // tokenId -> Position
+	nextId    uint64              = 1
 )
 
 func (p Position) isClear() bool {
@@ -23,15 +23,15 @@ func (p Position) isClear() bool {
 func Mint(
 	token0 string,
 	token1 string,
-	fee bigint,
-	tickLower bigint,
-	tickUpper bigint,
+	fee uint16,
+	tickLower int32,
+	tickUpper int32,
 	amount0Desired bigint,
 	amount1Desired bigint,
 	amount0Min bigint,
 	amount1Min bigint,
 	deadline bigint,
-) (string, bigint, bigint, bigint) {
+) (uint64, bigint, bigint, bigint) {
 	mintParams := MintParams{
 		token0:         token0,
 		token1:         token1,
@@ -48,7 +48,7 @@ func Mint(
 	return mint(mintParams)
 }
 
-func mint(params MintParams) (bigint, bigint, bigint, bigint) {
+func mint(params MintParams) (uint64, bigint, bigint, bigint) {
 	checkDeadline(params.deadline)
 
 	pool := p.GetPool(params.token0, params.token1, params.fee)
@@ -92,7 +92,7 @@ func mint(params MintParams) (bigint, bigint, bigint, bigint) {
 }
 
 func IncreaseLiquidity(
-	tokenId bigint,
+	tokenId uint64,
 	amount0Desired bigint,
 	amount1Desired bigint,
 	amount0Min bigint,
@@ -115,7 +115,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 	checkDeadline(params.deadline)
 
 	// verify tokenId
-	require(exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || tokenId(%s) doesn't exist", params.tokenId))
+	require(exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
 
 	position := positions[params.tokenId]
 
@@ -151,7 +151,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 }
 
 func DecreaseLiquidity(
-	tokenId bigint,
+	tokenId uint64,
 	liquidity bigint,
 	amount0Min bigint,
 	amount1Min bigint,
@@ -174,7 +174,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	require(params.liquidity > 0, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidity(%s) > 0", params.liquidity))
 
 	// verify tokenId
-	require(exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%s) doesn't exist", params.tokenId))
+	require(exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
 
 	position := positions[params.tokenId]
 
@@ -208,7 +208,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 }
 
 func Collect(
-	tokenId bigint,
+	tokenId uint64,
 	recipient std.Address,
 	amount0Max bigint,
 	amount1Max bigint,
@@ -280,32 +280,27 @@ func collect(params CollectParams) (bigint, bigint) {
 		amount1Collect,
 	)
 	position.tokensOwed0, position.tokensOwed1 = tokensOwed0-amount0Collect, tokensOwed1-amount1Collect
-	// println("HERE #4")
-	// println("position.tokensOwed0:", position.tokensOwed0)
-	// println("position.tokensOwed1:", position.tokensOwed1)
-	// println()
 
 	positions[params.tokenId] = position
 
 	// burn nft if position is clear
 	if position.isClear() {
-		println("CLEAR ME")
 		burn(params.tokenId)
 	}
 	return amount0, amount1
 }
 
-func burn(tokenId bigint) {
+func burn(tokenId uint64) {
 	isAuthorizedForToken(tokenId)
 
 	position := positions[tokenId]
 
-	require(position.isClear(), ufmt.Sprintf("[POSITION] position.gno__burn() || position(tokenId:%s) isn't clear(has something)", tokenId))
+	require(position.isClear(), ufmt.Sprintf("[POSITION] position.gno__burn() || position(tokenId:%d) isn't clear(has something)", tokenId))
 
 	delete(positions, tokenId)
 	nft.Burn(grc721.TokenID(tokenId))
 }
 
-func isAuthorizedForToken(tokenId bigint) {
+func isAuthorizedForToken(tokenId uint64) {
 	require(isApprovedOrOwner(PrevRealmAddr(), tokenId), ufmt.Sprintf("[POSITION] position.gno__isAuthorizedForToken() || caller(%s) is not approved or owner of tokenId(%s)", PrevRealmAddr(), tokenId))
 }
