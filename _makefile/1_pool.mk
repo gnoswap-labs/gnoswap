@@ -25,7 +25,7 @@ help:
 
 
 .PHONY: all
-all: gnot deploy faucet approve pool basic swap-without-protocol-fee swap-wit-protocol-fee
+all: gnot deploy faucet approve pool basic swap-without-protocol-fee swap-with-protocol-fee
 
 .PHONY: gnot
 gnot: gnot-gsa gnot-lp01 gnot-tr01
@@ -48,8 +48,8 @@ basic: basic-mint basic-burn basic-collect
 .PHONY: swap-without-protocol-fee
 swap-without-protocol-fee: swap-setup swap-without-protocol-fee-0-1-10000 swap-without-protocol-fee-0-1-5000 swap-without-protocol-fee-0-1-1000 swap-without-protocol-fee-1-0-16000
 
-.PHONY: swap-wit-protocol-fee
-swap-wit-protocol-fee: set-protocol-fee swap-with-protocol-fee-0-1-200000 swap-with-protocol-fee-1-0-200000 collect-protocol-fee burn-collect-after-swap
+.PHONY: swap-with-protocol-fee
+swap-with-protocol-fee: set-protocol-fee swap-with-protocol-fee-0-1-200000 swap-with-protocol-fee-1-0-200000 collect-protocol-fee burn-collect-after-swap
 
 ## GNOT
 gnot-gsa:
@@ -165,8 +165,8 @@ basic-collect:
 
 ## SWAP WITHOUT PROTOCOL FEE
 swap-setup:
-	$(info ************ [SWAP] Setup - Mint 9000 ~ 11000 // 50000000 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func Mint -args foo -args bar -args 500 -args $(ADDR_LP01) -args 9000 -args 11000 -args 50000000 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	$(info ************ [SWAP] Setup - Mint 9000 ~ 11000 // 100000000 ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func Mint -args foo -args bar -args 500 -args $(ADDR_LP01) -args 9000 -args 11000 -args 100000000 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@$(MAKE) -f $(MAKEFILE) print-all-balance
 	@echo
 

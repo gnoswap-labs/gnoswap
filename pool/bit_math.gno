@@ -2,10 +2,10 @@ package gnoswap
 
 import "gno.land/p/demo/ufmt"
 
-func bitMathMostSignificantBit(x bigint) bigint {
+func bitMathMostSignificantBit(x bigint) uint8 {
 	require(x > 0, ufmt.Sprintf("[POOL] bit_math.gno__bitMathMostSignificantBit() || x(%s) > 0", x))
 
-	r := bigint(0)
+	r := uint8(0)
 
 	if x >= 0x100000000000000000000000000000000 {
 		x >>= 128
@@ -46,14 +46,13 @@ func bitMathMostSignificantBit(x bigint) bigint {
 		r += 1
 	}
 
-	requireUnsigned(r, ufmt.Sprintf("[POOL] bit_math.gno__bitMathMostSignificantBit() || r(%s) >= 0", r))
 	return r
 }
 
-func bitMathLeastSignificantBit(x bigint) bigint {
+func bitMathLeastSignificantBit(x bigint) uint8 {
 	require(x > 0, ufmt.Sprintf("[POOL] bit_math.gno__bitMathLeastSignificantBit() || x(%s) > 0", x))
 
-	r := bigint(255)
+	r := uint8(255)
 
 	if x&MAX_UINT128 > 0 {
 		r -= 128
@@ -101,6 +100,5 @@ func bitMathLeastSignificantBit(x bigint) bigint {
 		r -= 1
 	}
 
-	requireUnsigned(r, ufmt.Sprintf("[POOL] bit_math.gno__bitMathLeastSignificantBit() || r(%s) >= 0", r))
 	return r
 }

@@ -26,16 +26,16 @@ func init() {
 
 var (
 	// Common
-	pToken0        = "foo"
-	pToken1        = "bar"
-	pFee    bigint = 500
+	pToken0 = "foo"
+	pToken1 = "bar"
+	pFee    = uint16(500)
 
-	test_tickLower       bigint = 9000
-	test_tickUpper       bigint = 11000
-	test_liquidityExpect bigint = 1000
+	test_tickLower       = int32(9000)
+	test_tickUpper       = int32(11000)
+	test_liquidityExpect = bigint(1000)
 
-	test_tickLower2 bigint = 50000
-	test_tickUpper2 bigint = 100000
+	test_tickLower2 = int32(50000)
+	test_tickUpper2 = int32(100000)
 )
 
 // 1. Init & Create Pool using Factory Contract by Gnoswap Admin
@@ -206,7 +206,7 @@ func TestSwap(t *testing.T) {
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	std.TestSetOrigCaller(lp01)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect*10000)
+	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect*20000)
 
 	// Swap several times
 	std.TestSetOrigCaller(tr01)

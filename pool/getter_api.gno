@@ -11,8 +11,8 @@ import (
 )
 
 type ApiQueryBase struct {
-	Height    int64 `json:"height"`
-	Timestamp int64 `json:"timestamp"`
+	Height    uint64 `json:"height"`
+	Timestamp uint64 `json:"timestamp"`
 }
 
 type ResponseGetPools struct {
@@ -31,7 +31,7 @@ func ApiGetPools() string {
 
 	qb := ApiQueryBase{
 		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
+		Timestamp: GetTimestamp(),
 	}
 
 	r := ResponseGetPools{
@@ -64,7 +64,7 @@ type ApiPositionInfo struct {
 type SinglePool struct {
 	T0Bal               bigint `json:"token0_balance"`
 	T1Bal               bigint `json:"token1_balance"`
-	TickSpacing         bigint `json:"tick_spacing"`
+	TickSpacing         int32  `json:"tick_spacing"`
 	MaxLiquidityPerTick bigint `json:"max_liquidity_per_tick"`
 	// r3v4_xxx: add below datas or not
 	// slot0               Slot0  `json:"slot0"`
@@ -105,7 +105,7 @@ func ApiGetPool(key string) string {
 
 	qb := ApiQueryBase{
 		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
+		Timestamp: GetTimestamp(),
 	}
 
 	r := ResponseGetPool{

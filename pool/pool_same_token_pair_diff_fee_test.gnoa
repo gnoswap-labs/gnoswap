@@ -30,15 +30,15 @@ var (
 	pToken0 = "foo"
 	pToken1 = "bar"
 
-	pFee1           bigint = 500
-	test_tickLower1 bigint = 9000
-	test_tickUpper1 bigint = 11000
+	pFee1           = uint16(500)
+	test_tickLower1 = int32(9000)
+	test_tickUpper1 = int32(11000)
 
-	pFee2           bigint = 3000
-	test_tickLower2 bigint = 9600
-	test_tickUpper2 bigint = 12000
+	pFee2           = uint16(3000)
+	test_tickLower2 = int32(9600)
+	test_tickUpper2 = int32(12000)
 
-	test_liquidityExpect bigint = 1000
+	test_liquidityExpect = bigint(1000)
 )
 
 // foo & bar & 500
@@ -55,7 +55,7 @@ func TestFirstPool(t *testing.T) {
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	std.TestSetOrigCaller(lp01)
-	Mint(pToken0, pToken1, pFee1, lp01, test_tickLower1, test_tickUpper1, test_liquidityExpect*10000)
+	Mint(pToken0, pToken1, pFee1, lp01, test_tickLower1, test_tickUpper1, test_liquidityExpect*20000)
 
 	// Swap several times
 	std.TestSetOrigCaller(tr01)

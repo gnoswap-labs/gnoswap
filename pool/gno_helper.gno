@@ -5,12 +5,12 @@ import (
 	"time"
 )
 
-func GetHeight() int64 {
-	return std.GetHeight()
+func GetHeight() uint64 {
+	return uint64(std.GetHeight()) // origin return int64
 }
 
-func GetTimestamp() bigint {
-	return bigint(time.Now().Unix())
+func GetTimestamp() uint64 {
+	return uint64(time.Now().Unix()) // origin return int64
 }
 
 func GetChainID() string {

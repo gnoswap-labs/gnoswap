@@ -42,19 +42,19 @@ func init() {
 
 var (
 	// Common
-	pToken0        = "foo"
-	pToken1        = "bar"
-	pFee    bigint = 500
+	pToken0 = "foo"
+	pToken1 = "bar"
+	pFee    = uint16(500)
 
-	test_tickLower       bigint = 9000
-	test_tickUpper       bigint = 11000
-	test_liquidityExpect bigint = 1000
+	test_tickLower       = int32(9000)
+	test_tickUpper       = int32(11000)
+	test_liquidityExpect = bigint(1000)
 )
 
 // 1. Init & Create Pool using Factory Contract by gsa
 func TestFactoryCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
-	InitManual()()
+	InitManual()
 	CreatePool("foo", "bar", pFee, 130622891405341611593710811006)
 	// 130621891405341611593710811006 // 9999
 	// 130622891405341611593710811006 // 10000

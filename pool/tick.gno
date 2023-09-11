@@ -2,20 +2,19 @@ package gnoswap
 
 import "gno.land/p/demo/ufmt"
 
-func tickTickSpacingToMaxLiquidityPerTick(tickSpacing bigint) bigint {
-	var minTick bigint = (MIN_TICK / tickSpacing) * tickSpacing
-	var maxTick bigint = (MAX_TICK / tickSpacing) * tickSpacing
-	var numTicks bigint = ((maxTick - minTick) / tickSpacing) + 1
-	requireUnsigned(numTicks, ufmt.Sprintf("[POOL] tick.gno__tickTickSpacingToMaxLiquidityPerTick() || numTicks(%s) >= 0", numTicks))
+func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) bigint {
+	minTick := (MIN_TICK / tickSpacing) * tickSpacing
+	maxTick := (MAX_TICK / tickSpacing) * tickSpacing
+	numTicks := bigint((maxTick-minTick)/tickSpacing) + 1
 
 	requireUnsigned(MAX_UINT64/numTicks, ufmt.Sprintf("[POOL] tick.gno__tickTickSpacingToMaxLiquidityPerTick() || MAX_UINT64 / numTicks(%s) >= 0", MAX_UINT64/numTicks))
 	return MAX_UINT64 / numTicks
 }
 
 func (pool *Pool) tickGetFeeGrowthInside(
-	tickLower bigint,
-	tickUpper bigint,
-	tickCurrent bigint,
+	tickLower int32,
+	tickUpper int32,
+	tickCurrent int32,
 	feeGrowthGlobal0X128 bigint,
 	feeGrowthGlobal1X128 bigint,
 ) (feeGrowthInside0X128, feeGrowthInside1X128 bigint) {
@@ -52,8 +51,8 @@ func (pool *Pool) tickGetFeeGrowthInside(
 }
 
 func (pool *Pool) tickUpdate(
-	tick bigint,
-	tickCurrent bigint,
+	tick int32,
+	tickCurrent int32,
 	liquidityDelta bigint,
 	feeGrowthGlobal0X128 bigint,
 	feeGrowthGlobal1X128 bigint,
@@ -94,12 +93,12 @@ func (pool *Pool) tickUpdate(
 	return flipped
 }
 
-func (pool *Pool) tickClear(tick bigint) {
+func (pool *Pool) tickClear(tick int32) {
 	delete(pool.ticks, tick)
 }
 
 func (pool *Pool) tickCross(
-	tick bigint,
+	tick int32,
 	feeGrowthGlobal0X128 bigint,
 	feeGrowthGlobal1X128 bigint,
 ) bigint {
