@@ -53,10 +53,10 @@ func SubmitProposalParameterStakingReward(
 
 	// gno does not support array of structs for parameters of external functions
 	// implement it once that is supported
-	newStakingReward1 bigint,
-	newStakingReward2 bigint,
-	newStakingReward3 bigint,
-	newStakingReward4 bigint,
+	newStakingReward1 uint8,
+	newStakingReward2 uint8,
+	newStakingReward3 uint8,
+	newStakingReward4 uint8,
 ) uint64 {
 
 	if newStakingReward1 == 0 {

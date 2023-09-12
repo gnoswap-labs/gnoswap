@@ -20,8 +20,8 @@ var (
 	poolIncentives map[string][]string  = make(map[string][]string)  // poolPath => []incentiveId
 	incentives     map[string]Incentive = make(map[string]Incentive) // incentiveId => Incentive
 
-	deposits  map[bigint]Deposit = make(map[bigint]Deposit) // tokenId => Deposit
-	poolTiers map[string]bigint  = make(map[string]bigint)  // poolPath -> tier
+	deposits  map[uint64]Deposit = make(map[uint64]Deposit) // tokenId => Deposit
+	poolTiers map[string]uint8   = make(map[string]uint8)   // poolPath -> tier
 )
 
 func init() {
@@ -43,12 +43,12 @@ func CreateExternalIncentive(
 	targetPoolPath string,
 	// rewardToken *grc20.AdminToken, // FIXED TO OBL for now
 	rewardToken string,
-	rewardAmount bigint,
-	startTimestamp bigint,
-	endTimestamp bigint,
+	rewardAmount uint64,
+	startTimestamp int64,
+	endTimestamp int64,
 ) {
-	require(GetTimestamp() <= startTimestamp, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || startTimestamp must be in the future__GetTimestamp(%s) <= startTimestamp(%s)", GetTimestamp(), startTimestamp))
-	require(endTimestamp-startTimestamp >= TIMESTAMP_30DAYS, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || endTimestamp must be at least 30 days after startTimestamp__endTimestamp-startTimestamp(%s) >= TIMESTAMP_30DAYS(%s)", endTimestamp-startTimestamp, TIMESTAMP_30DAYS))
+	require(GetTimestamp() <= startTimestamp, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || startTimestamp must be in the future__GetTimestamp(%d) <= startTimestamp(%d)", GetTimestamp(), startTimestamp))
+	require(endTimestamp-startTimestamp >= TIMESTAMP_30DAYS, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || endTimestamp must be at least 30 days after startTimestamp__endTimestamp-startTimestamp(%d) >= TIMESTAMP_30DAYS(%d)", endTimestamp-startTimestamp, TIMESTAMP_30DAYS))
 
 	incentiveId := incentiveIdCompute(targetPoolPath, rewardToken)
 
@@ -60,14 +60,14 @@ func CreateExternalIncentive(
 	}
 
 	from := a2u(GetOrigCaller())
-	fromBalanceBefore := bigint(obl.BalanceOf(from))
+	fromBalanceBefore := obl.BalanceOf(from)
 	require(fromBalanceBefore >= rewardAmount, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || not enough OBL(%s) to create incentive(%s)", fromBalanceBefore, rewardAmount))
 
 	to := a2u(GetOrigPkgAddr()) // staker contract
-	poolRewardBalanceBefore := bigint(obl.BalanceOf(to))
+	poolRewardBalanceBefore := obl.BalanceOf(to)
 
-	obl.TransferFrom(from, to, uint64(rewardAmount))
-	poolRewardBalanceAfter := bigint(obl.BalanceOf(to))
+	obl.TransferFrom(from, to, rewardAmount)
+	poolRewardBalanceAfter := obl.BalanceOf(to)
 	require(poolRewardBalanceAfter-poolRewardBalanceBefore == rewardAmount, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || pool reward balance not updated correctly"))
 
 	incentives[incentiveId] = Incentive{
@@ -83,7 +83,7 @@ func CreateExternalIncentive(
 }
 
 func StakeToken(
-	tokenId bigint, // GNFT ID
+	tokenId uint64, // GNFT ID
 ) {
 	// check whether tokenId already staked or not
 	_, exist := deposits[tokenId]
@@ -117,7 +117,7 @@ func StakeToken(
 }
 
 func UnstakeToken(
-	tokenId bigint, // GNFT TokenID
+	tokenId uint64, // GNFT TokenID
 ) {
 	deposit, exist := deposits[tokenId]
 	require(exist, ufmt.Sprintf("[STAKER] staker.gno__UnstakeToken() || tokenId(%s) not staked", tokenId))
@@ -164,9 +164,8 @@ func EndExternalIncentive(targetPoolPath, rewardToken string) {
 	// require(incentive.refundee == std.GetOrigCaller(), "[STAKER] staker.gno__EndIncentive() || only refundee can end incentive")
 
 	refund := incentive.rewardAmount
-	requireUnsigned(refund, ufmt.Sprintf("[STAKER] staker.gno__EndIncentive() || refund(%s) >= 0", refund))
 
-	poolOBL := bigint(obl.BalanceOf(a2u(GetOrigPkgAddr())))
+	poolOBL := obl.BalanceOf(a2u(GetOrigPkgAddr()))
 	require(poolOBL >= refund, ufmt.Sprintf("[STAKER] staker.gno__EndIncentive() || not enough OBL(%s) to refund(%s)", poolOBL, refund))
 
 	obl.Transfer(a2u(incentive.refundee), uint64(refund))
@@ -179,7 +178,7 @@ func EndExternalIncentive(targetPoolPath, rewardToken string) {
 	}
 }
 
-func transferDeposit(tokenId bigint, to std.Address) {
+func transferDeposit(tokenId uint64, to std.Address) {
 	owner := gnft.OwnerOf(tid(tokenId))
 	require(owner == GetOrigCaller(), ufmt.Sprintf("[STAKER] staker.gno__transferDeposit() || only owner(%s) can transfer tokenId(%s), GetOrigCaller()(%s)", owner, tokenId, PrevRealmAddr()))
 

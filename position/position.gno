@@ -3,7 +3,6 @@ package position
 import (
 	"std"
 
-	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
 	p "gno.land/r/pool"
@@ -68,8 +67,7 @@ func mint(params MintParams) (uint64, bigint, bigint, bigint) {
 	tokenId := nextId
 	nextId++ // nextId = nextId + 1
 
-	// nft.Mint(a2u(PrevRealmAddr()), grc721.TokenID(tokenId)) // owner, tokenId
-	nft.Mint(a2u(GetOrigCaller()), grc721.TokenID(tokenId)) // owner, tokenId
+	nft.Mint(a2u(GetOrigCaller()), tid(tokenId)) // owner, tokenId
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
@@ -298,7 +296,7 @@ func burn(tokenId uint64) {
 	require(position.isClear(), ufmt.Sprintf("[POSITION] position.gno__burn() || position(tokenId:%d) isn't clear(has something)", tokenId))
 
 	delete(positions, tokenId)
-	nft.Burn(grc721.TokenID(tokenId))
+	nft.Burn(tid(tokenId))
 }
 
 func isAuthorizedForToken(tokenId uint64) {

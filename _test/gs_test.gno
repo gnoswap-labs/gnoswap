@@ -2,6 +2,7 @@ package tc
 
 import (
 	"std"
+	"strconv"
 	"testing"
 
 	"gno.land/p/demo/grc/grc20"
@@ -24,20 +25,21 @@ import (
 	obl "gno.land/r/obl"   // EXTERNAL Reward Token
 )
 
+const (
+	TIMESTAMP_30DAYS int64 = 2592000
+)
+
 var (
 	// Common
-	pToken0        = "foo"
-	pToken1        = "bar"
-	pFee    bigint = 500
+	pToken0 = "foo"
+	pToken1 = "bar"
+	pFee    = uint16(500)
 
-	test_tickLower bigint = 9000
-	test_tickUpper bigint = 11000
+	test_tickLower = int32(9000)
+	test_tickUpper = int32(11000)
 
-	tMaxIncentiveStartLeadTime bigint = 1000000
-	tMaxIncentiveDuration      bigint = 1000000
-
-	tStartTime bigint = GetTimestamp()
-	tEndTime   bigint = tStartTime + 301 // staker.gno #140 ( lockDuration is limited to 100, 200, 300 seconds)
+	tStartTime = GetTimestamp()
+	tEndTime   = tStartTime + 301 // staker.gno #140 ( lockDuration is limited to 100, 200, 300 seconds)
 
 	// test address
 	pc01 = testutils.TestAddress("pc01") // Pool Creator
@@ -78,7 +80,7 @@ func TestPoolInitManual(t *testing.T) {
 
 	pl.InitManual()
 
-	shouldPanicWithMsg(t, func() { pl.InitManual() }, "[POOl] pool_manager.gno__initManual() || contract must not be initialized")
+	shouldPanicWithMsg(t, func() { pl.InitManual() }, "[POOl] pool_manager.gno__InitManual() || contract must not be initialized")
 }
 
 // 2. [POOL] CreatePool
@@ -131,8 +133,8 @@ func TestPositionMint(t *testing.T) {
 		poolNewToken0Balance := token0Balance(poolAddr)
 		poolNewToken1Balance := token1Balance(poolAddr)
 
-		shouldEQ(t, gnft.OwnerOf(bigint(1)), lp01)
-		shouldEQ(t, mTokenId, bigint(1))
+		shouldEQ(t, gnft.OwnerOf(tid(1)), lp01)
+		shouldEQ(t, mTokenId, 1)
 		shouldEQ(t, poolNewToken0Balance, poolOldToken0Balance+mAmount0)
 		shouldEQ(t, poolNewToken1Balance, poolOldToken1Balance+mAmount1)
 		shouldEQ(t, poolNewLiquidity, poolOldLiquidity+mLiquidity)
@@ -354,7 +356,7 @@ func TestPoolSwap10(t *testing.T) {
 		pFee,        // pFee
 		tr01,        // recipient
 		false,       // zeroForOne // token1 > token0
-		200000,      // amountSpecified
+		300000,      // amountSpecified
 		testPrice10, // sqrtPriceLimitX96
 	)
 	std.TestSkipHeights(1)
@@ -372,7 +374,7 @@ func TestPoolSwap10(t *testing.T) {
 	shouldEQ(t, userNewToken0Bal, userOldToken0Bal-sAmount0)
 	shouldEQ(t, userNewToken1Bal, userOldToken1Bal-sAmount1)
 
-	shouldGT(t, poolNewPrice, poolOldPrice)
+	shouldLT(t, poolNewPrice, poolOldPrice)
 
 	std.TestSetOrigCaller(pc01)
 	cAmount0, cAmount1 := pl.CollectProtocol(
@@ -457,8 +459,8 @@ func TestStakerUnstakeToken(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		shouldEQ(t, gnft.OwnerOf(bigint(1)), lp01)
-		shouldEQ(t, gnos.BalanceOf(a2u(lp01)), bigint(183002966))
-		shouldEQ(t, obl.BalanceOf(a2u(lp01)), bigint(353304593))
+		shouldEQ(t, gnos.BalanceOf(a2u(lp01)), bigint(777))
+		shouldEQ(t, obl.BalanceOf(a2u(lp01)), bigint(1500))
 	}
 
 	{
@@ -471,8 +473,8 @@ func TestStakerUnstakeToken(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		shouldEQ(t, gnft.OwnerOf(bigint(2)), lp02)
-		shouldEQ(t, gnos.BalanceOf(a2u(lp02)), bigint(3024055000))
-		shouldEQ(t, obl.BalanceOf(a2u(lp02)), bigint(5624742300))
+		shouldEQ(t, gnos.BalanceOf(a2u(lp02)), bigint(5500))
+		shouldEQ(t, obl.BalanceOf(a2u(lp02)), bigint(10609))
 	}
 }
 
@@ -509,8 +511,25 @@ func a2u(addr std.Address) users.AddressOrName {
 	return users.AddressOrName(addr)
 }
 
-func tid(tokenId string) grc721.TokenID {
-	return grc721.TokenID(tokenId)
+func tid(tokenId interface{}) grc721.TokenID {
+	if tokenId == nil {
+		panic("[POSITION] test_helper.gno__tid() || tokenId is nil")
+	}
+
+	switch tokenId.(type) {
+	case bigint:
+		return grc721.TokenID(string(tokenId.(bigint)))
+	case string:
+		return grc721.TokenID(tokenId.(string))
+	case int:
+		return grc721.TokenID(strconv.Itoa(tokenId.(int)))
+	case uint64:
+		return grc721.TokenID(strconv.Itoa(int(tokenId.(uint64))))
+	case grc721.TokenID:
+		return tokenId.(grc721.TokenID)
+	default:
+		panic("[STAKER] utils.gno__tid() || unsupported tokenId type")
+	}
 }
 
 func BalanceOf(token *grc20.AdminToken, addr std.Address) bigint {
@@ -536,13 +555,13 @@ func shouldNEQ(t *testing.T, got, expected interface{}) {
 
 func shouldGT(t *testing.T, l, r interface{}) {
 	if l <= r {
-		t.Errorf("expected %v < %v", l, r)
+		t.Errorf("expected %v > %v", l, r)
 	}
 }
 
 func shouldLT(t *testing.T, l, r interface{}) {
 	if l >= r {
-		t.Errorf("expected %v > %v", l, r)
+		t.Errorf("expected %v < %v", l, r)
 	}
 }
 

@@ -15,7 +15,7 @@ type ApiQueryBase struct {
 type ApiRewardByAddress struct {
 	Type   string `json:"type"`
 	Token  string `json:"token"`
-	Reward bigint `json:"bigint"`
+	Reward uint64 `json:"bigint"`
 }
 
 type ResponseGetRewardByAddress struct {

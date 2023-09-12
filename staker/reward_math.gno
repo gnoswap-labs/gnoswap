@@ -6,23 +6,23 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-func rewardMathComputeInternalRewardAmount(tokenId bigint, deposit Deposit) bigint {
+func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) uint64 {
 	// r3v4_xxx: calculate amount of `GNOS` to be minted by every block
 	// 1. get block creation time (5s for now)
 	// 2. calculate amount of `GNOS` to be minted by every block (10_000 for now)
 	// 3. above `GNOS amount`` is supposed to be minted to a separate wallet specified by onbloc
 	// 4. this logic is supposed to be included in GNOS token contract, not staker contract
-	blockRewardInit := bigint(10_000)
+	blockRewardInit := 10_000
 	// because of `~ 10 days` staking duration, certain block GNOS amount won't be distribute 100% as reward)
 	blockRewardLeft := blockRewardInit / 10 // gnos.BalanceOf(INTERNAL_REWARD_ACCOUNT) - blockRewardInit
 	blockReward := blockRewardInit + blockRewardLeft
 
 	// get pool tier and ratio
 	poolPath := s.PositionGetPositionPoolKey(tokenId)
-	poolTier, poolRatioX96 := getPoolTierAndRatio(poolPath)
+	_, poolRatioX96 := getPoolTierAndRatio(poolPath)
 
 	// get pool reward per block
-	poolRewardPerBlockX96 := (blockReward * Q96) * poolRatioX96
+	poolRewardPerBlockX96 := (bigint(blockReward) * Q96) * poolRatioX96
 
 	// calculate my reward amount based on my liquidity ratio
 	// this reward is 31days or more staking reward
@@ -40,7 +40,7 @@ func rewardMathComputeInternalRewardAmount(tokenId bigint, deposit Deposit) bigi
 	stakedDuration := endTime - startTime
 	rewardRatio := getRewardRatio(stakedDuration)
 
-	finalRewardQ := myWholeRewardX96 * rewardRatio
+	finalRewardQ := myWholeRewardX96 * bigint(rewardRatio)
 	finalReward := finalRewardQ / Q96 / Q96 / Q96 / Q96 / Q96 / 100 / 100
 	// why do we need to divide by (Q96 ^ 5)
 	// #1 ~ 2: used by getPoolTierAndRatio()
@@ -51,20 +51,20 @@ func rewardMathComputeInternalRewardAmount(tokenId bigint, deposit Deposit) bigi
 	// #1: to convert `listTierRatio()` return value to percentage
 	// #2: to convert `getRewardRatio()` return value to percentage
 
-	return finalReward
+	return uint64(finalReward)
 }
 
-func rewardMathComputeExternalRewardAmount(tokenId bigint, deposit Deposit, incentive Incentive) bigint {
+func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, incentive Incentive) uint64 {
 	// 1 month reward amount
 	incentiveDuration := incentive.endTimestamp - incentive.startTimestamp
-	monthlyReward := bigint(0)
+	monthlyReward := uint64(0)
 
 	switch {
 	case incentiveDuration == TIMESTAMP_30DAYS:
 		monthlyReward = incentive.rewardAmount
 	case incentiveDuration > TIMESTAMP_30DAYS:
 		// 1 second reward == total reward amount / reward duration
-		monthlyReward = incentive.rewardAmount / incentiveDuration * TIMESTAMP_30DAYS
+		monthlyReward = incentive.rewardAmount / uint64(incentiveDuration) * uint64(TIMESTAMP_30DAYS)
 	default:
 		panic(ufmt.Sprintf("[STAKER] reward_math.gno || incentiveDuration(%s) at least 30 days", incentiveDuration))
 	}
@@ -78,7 +78,7 @@ func rewardMathComputeExternalRewardAmount(tokenId bigint, deposit Deposit, ince
 	// because of `~ 10 days` staking duration, certain block ONBLOC amount won't be distribute 100% as reward)
 	blockRewardLeft := blockRewardInit / 10 // obl.BalanceOf(INTERNAL_REWARD_ACCOUNT) - blockRewardInit
 	blockReward := blockRewardInit + blockRewardLeft
-	blockRewardX96 := blockReward * Q96
+	blockRewardX96 := bigint(blockReward) * Q96
 
 	// calculate my reward amount based on my liquidity ratio
 	// this reward is 31days or more staking reward
@@ -95,7 +95,7 @@ func rewardMathComputeExternalRewardAmount(tokenId bigint, deposit Deposit, ince
 	stakedDuration := endTime - startTime
 	rewardRatio := getRewardRatio(stakedDuration)
 
-	finalRewardQ := myWholeRewardX96 * rewardRatio
+	finalRewardQ := myWholeRewardX96 * bigint(rewardRatio)
 	finalReward := finalRewardQ / Q96 / Q96 / Q96 / 100
 	// why do we need to divide by (96 ^ 3)
 	// #1    : used by blockRewardX96
@@ -104,7 +104,7 @@ func rewardMathComputeExternalRewardAmount(tokenId bigint, deposit Deposit, ince
 	// why do we need to divide by 100
 	// to convert `getRewardRatio()` return value to percentage
 
-	return finalReward
+	return uint64(finalReward)
 }
 
 func getPoolTotalStakedLiquidity(poolPath string) bigint {
@@ -120,7 +120,7 @@ func getPoolTotalStakedLiquidity(poolPath string) bigint {
 	return poolStakedLiquidity
 }
 
-func getMyLiquidityRatio(poolPath string, tokenId bigint) bigint {
+func getMyLiquidityRatio(poolPath string, tokenId uint64) bigint {
 	poolStakedLiquidity := getPoolTotalStakedLiquidity(poolPath)
 
 	// my(current tokenId) liquidity
@@ -133,7 +133,7 @@ func getMyLiquidityRatio(poolPath string, tokenId bigint) bigint {
 }
 
 // get current pool tier and reward ratio
-func getPoolTierAndRatio(poolPath string) (bigint, bigint) {
+func getPoolTierAndRatio(poolPath string) (uint8, bigint) {
 	poolPath = poolKeyDivide(poolPath)
 
 	// current pool's tier
@@ -144,7 +144,7 @@ func getPoolTierAndRatio(poolPath string) (bigint, bigint) {
 
 	// that tiers ratio
 	ratio := getTierRatio(tier)
-	ratioX96 := bigint(ratio * Q96) // first Q96
+	ratioX96 := bigint(uint64(ratio)) * Q96 // first Q96
 
 	// finally current pools ratio
 	numTier1, numTier2, numTier3 := getNumPoolTiers()
@@ -152,21 +152,21 @@ func getPoolTierAndRatio(poolPath string) (bigint, bigint) {
 	var weight bigint
 	switch tier {
 	case 1:
-		weight = ratioX96 / numTier1 * Q96 // second Q96
+		weight = ratioX96 / bigint(numTier1) * Q96 // second Q96
 	case 2:
-		weight = ratioX96 / numTier2 * Q96
+		weight = ratioX96 / bigint(numTier2) * Q96
 	case 3:
-		weight = ratioX96 / numTier3 * Q96
+		weight = ratioX96 / bigint(numTier3) * Q96
 	default:
-		panic(ufmt.Sprintf("[STAKER] reward_math.gno__getPoolTierAndRatio() || invalid tier(%s)", tier))
+		panic(ufmt.Sprintf("[STAKER] reward_math.gno__getPoolTierAndRatio() || invalid tier(%d)", tier))
 	}
 
 	return tier, weight
 }
 
 // get number of pools for each tier
-func getNumPoolTiers() (bigint, bigint, bigint) {
-	var tier1, tier2, tier3 bigint
+func getNumPoolTiers() (uint64, uint64, uint64) {
+	var tier1, tier2, tier3 uint64
 
 	for _, v := range poolTiers {
 		switch v {
@@ -177,7 +177,7 @@ func getNumPoolTiers() (bigint, bigint, bigint) {
 		case 3:
 			tier3++
 		default:
-			panic(ufmt.Sprintf("[STAKER] reward_math.gno__getNumPoolTiers() || invalid tier(%s)", v))
+			panic(ufmt.Sprintf("[STAKER] reward_math.gno__getNumPoolTiers() || invalid tier(%d)", v))
 		}
 	}
 
@@ -185,7 +185,7 @@ func getNumPoolTiers() (bigint, bigint, bigint) {
 }
 
 // get staking tier
-func getRewardRatio(timestamp bigint) bigint {
+func getRewardRatio(timestamp int64) uint64 {
 	// since `float` type has determinisim issue, we use `int` instead
 	// so instead of return 50%, we return 50
 	// we'll divide by 100 later
@@ -209,11 +209,11 @@ func getRewardRatio(timestamp bigint) bigint {
 		break
 	}
 
-	return bigint(ratio)
+	return ratio
 }
 
-func getTierRatio(tier bigint) bigint {
-	require(tier >= 1 && tier <= 3, ufmt.Sprintf("[STAKER] staker.gno__getTierRatio() || tier(%s) >= 1 && tier(%s) <= 3", tier, tier))
+func getTierRatio(tier uint8) uint8 {
+	require(tier >= 1 && tier <= 3, ufmt.Sprintf("[STAKER] staker.gno__getTierRatio() || tier(%d) >= 1 && tier(%d) <= 3", tier, tier))
 
 	ratio1, ratio2, ratio3 := listTierRatio()
 	switch tier {
@@ -229,7 +229,7 @@ func getTierRatio(tier bigint) bigint {
 }
 
 // return all ratio for each tier
-func listTierRatio() (bigint, bigint, bigint) {
+func listTierRatio() (uint8, uint8, uint8) {
 	// basic
 	// tier1 50%
 	// tier2 30%
@@ -240,7 +240,7 @@ func listTierRatio() (bigint, bigint, bigint) {
 	// we'll divide by 100 later
 
 	numTier1, numTier2, numTier3 := getNumPoolTiers()
-	require(numTier1 > 0, ufmt.Sprintf("[STAKER] staker.gno__listTierRatio() || numTier1(%s) > 0 (numTier2:(%s), numTier3:(%s))", numTier1, numTier2, numTier3))
+	require(numTier1 > 0, ufmt.Sprintf("[STAKER] staker.gno__listTierRatio() || numTier1(%d) > 0 (numTier2:(%d), numTier3:(%d))", numTier1, numTier2, numTier3))
 
 	if numTier2 == 0 && numTier3 == 0 { // only tier 1 exists
 		return 100, 0, 0

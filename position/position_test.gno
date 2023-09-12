@@ -82,8 +82,8 @@ func TestMint(t *testing.T) {
 		)
 
 		isOwner(t, tTokenId, lp01)
-		shouldEQ(t, tTokenId, bigint(1))
-		shouldEQ(t, getNextId(), bigint(2))
+		shouldEQ(t, tTokenId, 1)
+		shouldEQ(t, getNextId(), 2)
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 	}
@@ -110,8 +110,8 @@ func TestMint(t *testing.T) {
 		)
 
 		isOwner(t, tTokenId, lp02)
-		shouldEQ(t, tTokenId, bigint(2))
-		shouldEQ(t, getNextId(), bigint(3))
+		shouldEQ(t, tTokenId, 2)
+		shouldEQ(t, getNextId(), 3)
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 
@@ -138,8 +138,8 @@ func TestMint(t *testing.T) {
 			shouldEQ(t, tAmount1, bigint(0))
 
 			isOwner(t, tTokenId, lp02)
-			shouldEQ(t, tTokenId, bigint(3))
-			shouldEQ(t, getNextId(), bigint(4))
+			shouldEQ(t, tTokenId, 3)
+			shouldEQ(t, getNextId(), 4)
 			shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 			shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 		}
@@ -167,8 +167,8 @@ func TestMint(t *testing.T) {
 			shouldEQ(t, tAmount0, bigint(0))
 
 			isOwner(t, tTokenId, lp02)
-			shouldEQ(t, tTokenId, bigint(4))
-			shouldEQ(t, getNextId(), bigint(5))
+			shouldEQ(t, tTokenId, 4)
+			shouldEQ(t, getNextId(), 5)
 			shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 			shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 		}
@@ -192,7 +192,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 			bigint(1234567890),
 		)
 
-		shouldEQ(t, getNextId(), bigint(5))
+		shouldEQ(t, getNextId(), 5)
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 	}

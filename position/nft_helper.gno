@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/p/demo/grc/grc721"
 	nft "gno.land/r/gnft"
 )
 
@@ -24,7 +23,7 @@ func exists(tokenId uint64) bool {
 
 	// exists method in grc721 is private
 	// we don't have much choice but to use ownerOf
-	owner := nft.OwnerOf(grc721.TokenID(string(tokenId)))
+	owner := nft.OwnerOf(tid(tokenId))
 	if owner == nil {
 		panic(ufmt.Sprintf("[POSITION] nft_helper.gno__exists() || tokenId(%s) doesn't exist__NilOwner", tokenId))
 		return false
@@ -40,7 +39,7 @@ func exists(tokenId uint64) bool {
 
 // Error handling isn't necessary here
 func isApprovedOrOwner(addr std.Address, tokenId uint64) bool {
-	tid := grc721.TokenID(tokenId)
+	tid := tid(tokenId)
 
 	// check whether token exists
 	if !exists(tokenId) {
