@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func GetTimestamp() bigint {
-	return bigint(time.Now().Unix())
+func GetTimestamp() int64 {
+	return time.Now().Unix()
 }
 
 func GetHeight() int64 {

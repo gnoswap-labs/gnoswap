@@ -1,4 +1,4 @@
-package gnoswap
+package pool
 
 import (
 	"std"
@@ -30,13 +30,13 @@ func init() {
 
 var (
 	// Common
-	pToken0        = "foo"
-	pToken1        = "bar"
-	pFee    bigint = 500
+	pToken0 = "foo"
+	pToken1 = "bar"
+	pFee    = uint16(500)
 
-	test_tickLower       bigint = 9000
-	test_tickUpper       bigint = 11000
-	test_liquidityExpect bigint = 1000
+	test_tickLower       = int32(9000)
+	test_tickUpper       = int32(11000)
+	test_liquidityExpect = bigint(1000)
 )
 
 // 1. Init & Create Pool by gsa
@@ -96,7 +96,8 @@ func TestSwap(t *testing.T) {
 	// lp01 mint 9000 ~ 11000 tick range
 	std.TestSetOrigCaller(lp01)
 	println("> Mint foo, bar, 500, lp01, 9000, 11000, 10000000")
-	m11, m12 := Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect*10000)
+	m11, m12 := Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect*100000)
+
 	std.TestSkipHeights(1)
 	println(ApiGetPools())
 	println(ApiGetPool("bar_foo_500"))

@@ -1,4 +1,4 @@
-package gnoswap
+package pool
 
 import (
 	"std"
@@ -8,8 +8,8 @@ import (
 
 type Slot0 struct {
 	sqrtPriceX96 bigint
-	tick         bigint
-	feeProtocol  bigint
+	tick         int32
+	feeProtocol  uint8
 	unlocked     bool
 }
 
@@ -25,13 +25,13 @@ type ProtocolFees struct {
 
 type ModifyPositionParams struct {
 	owner          std.Address
-	tickLower      bigint
-	tickUpper      bigint
+	tickLower      int32
+	tickUpper      int32
 	liquidityDelta bigint
 }
 
 type SwapCache struct {
-	feeProtocol    bigint
+	feeProtocol    uint8
 	liquidityStart bigint
 }
 
@@ -39,7 +39,7 @@ type SwapState struct {
 	amountSpecifiedRemaining bigint
 	amountCalculated         bigint
 	sqrtPriceX96             bigint
-	tick                     bigint
+	tick                     int32
 	feeGrowthGlobalX128      bigint
 	protocolFee              bigint
 	liquidity                bigint
@@ -47,7 +47,7 @@ type SwapState struct {
 
 type StepComputations struct {
 	sqrtPriceStartX96 bigint
-	tickNext          bigint
+	tickNext          int32
 	initialized       bool
 	sqrtPriceNextX96  bigint
 	amountIn          bigint
@@ -80,8 +80,8 @@ type TickInfo struct {
 	initialized bool
 }
 
-type Ticks map[bigint]TickInfo         // tick => TickInfo
-type TickBitmaps map[bigint]bigint     // tick(wordPos) =>bitmap(tickWord ^ mask)
+type Ticks map[int32]TickInfo          // tick => TickInfo
+type TickBitmaps map[int16]bigint      // tick(wordPos) => bitmap(tickWord ^ mask)
 type Positions map[string]PositionInfo // positionKey => PositionInfo
 
 // type Pool describes a single Pool/s state
@@ -93,10 +93,10 @@ type Pool struct {
 	balances Balances
 
 	// fee is the fee tier of the pool
-	fee bigint
+	fee uint16
 
 	// tickSpacing is the spacing between ticks
-	tickSpacing bigint
+	tickSpacing int32
 
 	// maxLiquidityPerTick is the maximum amount of liquidity that can be added per tick
 	maxLiquidityPerTick bigint

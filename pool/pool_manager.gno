@@ -1,7 +1,8 @@
-package gnoswap
+package pool
 
 import (
 	"std"
+	"strconv"
 
 	bar "gno.land/r/bar"
 	foo "gno.land/r/foo"
@@ -13,8 +14,8 @@ var (
 	admins      []std.Address
 	initialized bool = false
 
-	feeAmountTickSpacing map[bigint]bigint = make(map[bigint]bigint) // map[fee_amount]tick_spacing
-	pools                map[string]*Pool  = make(map[string]*Pool)  // map[pool_key]*Pool
+	feeAmountTickSpacing map[uint16]int32 = make(map[uint16]int32) // map[fee_amount]tick_spacing
+	pools                map[string]*Pool = make(map[string]*Pool) // map[pool_key]*Pool
 )
 
 func InitManual() {
@@ -30,7 +31,7 @@ func InitManual() {
 func CreatePool(
 	tokenA string, // XXX inter-contract token0 pkg_path
 	tokenB string, // XXX inter-contract token1 pkg_path
-	fee bigint,
+	fee uint16,
 	sqrtPriceX96 bigint,
 ) *Pool {
 	require(initialized, "[POOl] pool_manager.gno__CreatePool() || contract must be initialized")
@@ -56,15 +57,16 @@ func CreatePool(
 	// check whether the pool already exist
 	pool, exist := pools[poolKey]
 	require(!exist, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || pool(%s) already exist", poolKey))
+
 	if !exist {
-		pool = newPool(token0, token1, fee, bigint(tickSpacing), sqrtPriceX96)
+		pool = newPool(token0, token1, fee, tickSpacing, sqrtPriceX96)
 		pools[poolKey] = pool
 	}
 
 	return pool
 }
 
-func GetPool(token0, token1 string, fee bigint) *Pool {
+func GetPool(token0, token1 string, fee uint16) *Pool {
 	poolKey := GetPoolKey(token0, token1, fee)
 	pool, exist := pools[poolKey]
 	require(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPool() || pool(%s) not found", poolKey))
@@ -79,19 +81,19 @@ func GetPoolFromPoolKey(poolKey string) *Pool {
 	return pool
 }
 
-func GetPoolKey(token0, token1 string, fee bigint) string {
+func GetPoolKey(token0, token1 string, fee uint16) string {
 	if token0 < token1 {
-		return token0 + "_" + token1 + "_" + string(fee)
+		return token0 + "_" + token1 + "_" + strconv.Itoa(int(fee))
 	} else {
-		return token1 + "_" + token0 + "_" + string(fee)
+		return token1 + "_" + token0 + "_" + strconv.Itoa(int(fee))
 	}
 }
 
 func newPool(
 	token0 string,
 	token1 string,
-	fee bigint,
-	tickSpacing bigint,
+	fee uint16,
+	tickSpacing int32,
 	sqrtPriceX96 bigint,
 ) *Pool {
 	maxLiquidityPerTick := tickTickSpacingToMaxLiquidityPerTick(tickSpacing)

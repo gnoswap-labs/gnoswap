@@ -1,23 +1,15 @@
-package gnoswap
+package pool
 
 import "gno.land/p/demo/ufmt"
 
-const (
-	MIN_TICK bigint = -887272
-	MAX_TICK bigint = 887272
-
-	MIN_SQRT_RATIO bigint = 4295128739                                        // same as TickMathGetSqrtRatioAtTick(MIN_TICK)
-	MAX_SQRT_RATIO bigint = 1461446703485210103287273052203988822378723970342 // same as TickMathGetSqrtRatioAtTick(MAX_TICK)
-)
-
-func TickMathGetSqrtRatioAtTick(tick bigint) bigint {
+func TickMathGetSqrtRatioAtTick(tick int32) bigint {
 	var absTick bigint
 	if tick < 0 {
-		absTick = -tick
+		absTick = -1 * bigint(tick)
 	} else {
-		absTick = tick
+		absTick = bigint(tick)
 	}
-	require(absTick <= MAX_TICK, ufmt.Sprintf("[POOL] tick_math.gno__TickMathGetSqrtRatioAtTick() || Tick out of range [absTick(%s) <= MAX_TICK(%s)]", absTick, MAX_TICK))
+	require(absTick <= bigint(MAX_TICK), ufmt.Sprintf("[POOL] tick_math.gno__TickMathGetSqrtRatioAtTick() || Tick out of range [absTick(%d) <= MAX_TICK(%d)]", absTick, MAX_TICK))
 
 	var ratio bigint
 	if absTick&0x1 != 0 {
@@ -97,8 +89,8 @@ func TickMathGetSqrtRatioAtTick(tick bigint) bigint {
 	}
 }
 
-func tickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) bigint {
-	require(sqrtPriceX96 >= MIN_SQRT_RATIO && sqrtPriceX96 < MAX_SQRT_RATIO, ufmt.Sprintf("[POOL] tick_math.gno__TickMathGetSqrtRatioAtTick() || Tick out of range [sqrtPriceX96(%s) >= MIN_SQRT_RATIO(%s) && sqrtPriceX96(%s) < MAX_SQRT_RATIO(%s)]", sqrtPriceX96, MIN_SQRT_RATIO, sqrtPriceX96, MAX_SQRT_RATIO))
+func tickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) int32 {
+	require(sqrtPriceX96 >= MIN_SQRT_RATIO && sqrtPriceX96 < MAX_SQRT_RATIO, ufmt.Sprintf("[POOL] tick_math.gno__tickMathGetTickAtSqrtRatio() || Tick out of range [sqrtPriceX96(%s) >= MIN_SQRT_RATIO(%s) && sqrtPriceX96(%s) < MAX_SQRT_RATIO(%s)]", sqrtPriceX96, MIN_SQRT_RATIO, sqrtPriceX96, MAX_SQRT_RATIO))
 	ratio := sqrtPriceX96 << 32
 
 	r := ratio
@@ -148,8 +140,8 @@ func tickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) bigint {
 
 	log_sqrt10001 := log_2 * 255738958999603826347141
 
-	tickLow := (log_sqrt10001 - 3402992956809132418596140100660247210) >> 128
-	tickHi := (log_sqrt10001 + 291339464771989622907027621153398088495) >> 128
+	tickLow := int32(int64((log_sqrt10001 - 3402992956809132418596140100660247210) >> 128))
+	tickHi := int32(int64((log_sqrt10001 + 291339464771989622907027621153398088495) >> 128))
 
 	tick := tickLow
 	if tickLow == tickHi {

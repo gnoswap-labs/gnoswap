@@ -1,4 +1,4 @@
-package gnoswap
+package pool
 
 import (
 	"std"
@@ -23,11 +23,11 @@ func (pool *Pool) GetToken1() *grc20.AdminToken {
 	return pool.token1
 }
 
-func (pool *Pool) GetFee() bigint {
+func (pool *Pool) GetFee() uint16 {
 	return pool.fee
 }
 
-func (pool *Pool) GetTickSpacing() bigint {
+func (pool *Pool) GetTickSpacing() int32 {
 	return pool.tickSpacing
 }
 
@@ -43,7 +43,7 @@ func (pool *Pool) GetSlot0() Slot0 {
 	return pool.slot0
 }
 
-func (pool *Pool) GetFeeProtocol() bigint {
+func (pool *Pool) GetFeeProtocol() uint8 {
 	return pool.slot0.feeProtocol
 }
 
@@ -62,7 +62,7 @@ func (pool *Pool) GetPositions() Positions {
 	return pool.positions
 }
 
-func (pool *Pool) GetTick(key bigint) TickInfo {
+func (pool *Pool) GetTick(key int32) TickInfo {
 	tick, exist := pool.ticks[key]
 	require(exist, ufmt.Sprintf("[POOL] test_helper.gno__GetTick() || tick(%s) does not exist", key))
 
@@ -73,7 +73,7 @@ func (pool *Pool) GetTicks() Ticks {
 	return pool.ticks
 }
 
-func (pool *Pool) GetTickBitmap(key bigint) bigint {
+func (pool *Pool) GetTickBitmap(key int16) bigint {
 	tickBitmap, exist := pool.tickBitmaps[key]
 	require(exist, ufmt.Sprintf("[POOL] test_helper.gno__GetTickBitmap() || tickBitmap(%s) does not exist", key))
 

@@ -11,8 +11,8 @@ func GetHeight() int64 {
 	return std.GetHeight()
 }
 
-func GetTimestamp() bigint {
-	return bigint(time.Now().Unix())
+func GetTimestamp() int64 {
+	return time.Now().Unix()
 }
 
 func GetChainID() string {

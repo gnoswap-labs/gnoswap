@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"strconv"
 	"strings"
 
 	"gno.land/p/demo/grc/grc721"
@@ -45,21 +46,25 @@ func tid(tokenId interface{}) grc721.TokenID {
 		return grc721.TokenID(string(tokenId.(bigint)))
 	case string:
 		return grc721.TokenID(tokenId.(string))
+	case int:
+		return grc721.TokenID(strconv.Itoa(tokenId.(int)))
+	case uint64:
+		return grc721.TokenID(strconv.Itoa(int(tokenId.(uint64))))
 	case grc721.TokenID:
 		return tokenId.(grc721.TokenID)
 	default:
-		panic("[STAKER] utils.gno__tid() || tokenId is not a type of string or grc721.TokenID")
+		panic("[STAKER] utils.gno__tid() || unsupported tokenId type")
 	}
 }
 
-func max(x, y bigint) bigint {
+func max(x, y int64) int64 {
 	if x > y {
 		return x
 	}
 	return y
 }
 
-func min(x, y bigint) bigint {
+func min(x, y int64) int64 {
 	if x < y {
 		return x
 	}

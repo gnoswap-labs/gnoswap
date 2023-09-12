@@ -15,26 +15,26 @@ type ApiQueryBase struct {
 type ResponseGetPositions struct {
 	Stat     ApiQueryBase `json:"stat"`
 	Response struct {
-		Data []string `json:"data"`
+		Data []uint64 `json:"data"`
 	} `json:"response"`
 }
 
 func ApiGetPositions() string {
-	positionList := []string{}
+	positionList := []uint64{}
 
 	for k, _ := range positions {
-		positionList = append(positionList, string(k))
+		positionList = append(positionList, k)
 	}
 
 	qb := ApiQueryBase{
 		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
+		Timestamp: GetTimestamp(),
 	}
 
 	r := ResponseGetPositions{
 		Stat: qb,
 		Response: struct {
-			Data []string `json:"data"`
+			Data []uint64 `json:"data"`
 		}{
 			Data: positionList,
 		},
@@ -49,12 +49,12 @@ func ApiGetPositions() string {
 }
 
 type SinglePosition struct {
-	TokenID bigint `json:"token_id"`
+	TokenID uint64 `json:"token_id"`
 	// Nonce     bigint `json:"nonce"`
 	Operator  string `json:"operator"`
 	PoolKey   string `json:"pool_key"`
-	TickLower bigint `json:"tick_lower"`
-	TickUpper bigint `json:"tick_upper"`
+	TickLower int32  `json:"tick_lower"`
+	TickUpper int32  `json:"tick_upper"`
 	Liquidity bigint `json:"liquidity"`
 	// FeeGrowthInside0LastX128 bigint `json:"fee_growth_inside_0_last_x128"`
 	// FeeGrowthInside1LastX128 bigint `json:"fee_growth_inside_1_last_x128"`
@@ -69,7 +69,7 @@ type ResponseGetPosition struct {
 	} `json:"response"`
 }
 
-func ApiGetPosition(key bigint) string { // key is tokenId
+func ApiGetPosition(key uint64) string { // key is tokenId
 	position, exist := positions[key]
 	if !exist {
 		return "NO_POSITION_FOUND"
@@ -77,7 +77,7 @@ func ApiGetPosition(key bigint) string { // key is tokenId
 
 	qb := ApiQueryBase{
 		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
+		Timestamp: GetTimestamp(),
 	}
 
 	r := ResponseGetPosition{
@@ -108,10 +108,10 @@ func ApiGetPosition(key bigint) string { // key is tokenId
 
 type ApiPosition struct {
 	Address     string `json:"address"`
-	TokenID     bigint `json:"token_id"`
+	TokenID     uint64 `json:"token_id"`
 	PoolKey     string `json:"pool_key"`
-	TickLower   bigint `json:"tick_lower"`
-	TickUpper   bigint `json:"tick_upper"`
+	TickLower   int32  `json:"tick_lower"`
+	TickUpper   int32  `json:"tick_upper"`
 	Liquidity   bigint `json:"liquidity"`
 	TokensOwed0 bigint `json:"tokens_owed_0"`
 	TokensOwed1 bigint `json:"tokens_owed_1"`
@@ -150,7 +150,7 @@ func ApiGetPositionByUser(addr string) string {
 
 	qb := ApiQueryBase{
 		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
+		Timestamp: GetTimestamp(),
 	}
 
 	r := ResponseGetUserPositions{

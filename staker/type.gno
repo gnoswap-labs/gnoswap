@@ -8,22 +8,22 @@ type Incentive struct {
 	targetPoolPath string
 	// rewardToken std.Address
 	rewardToken    string
-	rewardAmount   bigint
-	startTimestamp bigint
-	endTimestamp   bigint
+	rewardAmount   uint64
+	startTimestamp int64
+	endTimestamp   int64
 	refundee       std.Address
 }
 
 type Deposit struct {
 	owner          std.Address
-	numberOfStakes bigint
-	stakeTimestamp bigint
+	numberOfStakes uint64
+	stakeTimestamp int64
 	targetPoolPath string
 }
 
 type StakingRewards struct {
-	Tier1 bigint
-	Tier2 bigint
-	Tier3 bigint
-	Tier4 bigint
+	Tier1 uint8
+	Tier2 uint8
+	Tier3 uint8
+	Tier4 uint8
 }

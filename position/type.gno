@@ -11,8 +11,8 @@ type Position struct {
 
 	poolKey string
 
-	tickLower bigint
-	tickUpper bigint
+	tickLower int32
+	tickUpper int32
 
 	liquidity bigint
 
@@ -26,9 +26,9 @@ type Position struct {
 type MintParams struct {
 	token0         string
 	token1         string
-	fee            bigint
-	tickLower      bigint
-	tickUpper      bigint
+	fee            uint16
+	tickLower      int32
+	tickUpper      int32
 	amount0Desired bigint
 	amount1Desired bigint
 	amount0Min     bigint
@@ -40,8 +40,8 @@ type MintParams struct {
 type AddLiquidityParams struct {
 	poolKey        string
 	recipient      std.Address // XXX de facto: hardcoded to nft manager contract address
-	tickLower      bigint
-	tickUpper      bigint
+	tickLower      int32
+	tickUpper      int32
 	amount0Desired bigint
 	amount1Desired bigint
 	amount0Min     bigint
@@ -49,7 +49,7 @@ type AddLiquidityParams struct {
 }
 
 type IncreaseLiquidityParams struct {
-	tokenId        bigint
+	tokenId        uint64
 	amount0Desired bigint
 	amount1Desired bigint
 	amount0Min     bigint
@@ -58,7 +58,7 @@ type IncreaseLiquidityParams struct {
 }
 
 type DecreaseLiquidityParams struct {
-	tokenId    bigint
+	tokenId    uint64
 	liquidity  bigint
 	amount0Min bigint
 	amount1Min bigint
@@ -66,7 +66,7 @@ type DecreaseLiquidityParams struct {
 }
 
 type CollectParams struct {
-	tokenId    bigint
+	tokenId    uint64
 	recipient  std.Address
 	amount0Max bigint
 	amount1Max bigint

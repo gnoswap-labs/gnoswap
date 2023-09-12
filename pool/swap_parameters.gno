@@ -1,4 +1,4 @@
-package gnoswap
+package pool
 
 import (
 	gov "gno.land/r/gov"

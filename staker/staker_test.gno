@@ -64,9 +64,9 @@ func TestPositionMint(t *testing.T) {
 		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := s.Mint(
 			std.Address("foo"), // token0
 			std.Address("bar"), // token1
-			bigint(500),        // fee
-			bigint(9000),       // tickLower
-			bigint(11000),      // tickUpper
+			uint16(500),        // fee
+			int32(9000),        // tickLower
+			int32(11000),       // tickUpper
 			bigint(1000),       // amount0Desired
 			bigint(1000),       // amount1Desired
 			bigint(1),          // amount0Min
@@ -75,17 +75,13 @@ func TestPositionMint(t *testing.T) {
 		)
 		std.TestSkipHeights(1)
 
-		shouldEQ(t, tPosTokenId, bigint(1))
-		shouldEQ(t, gnft.OwnerOf(bigint(1)), GetOrigCaller()) // lp01
+		shouldEQ(t, tPosTokenId, 1)
+		shouldEQ(t, gnft.OwnerOf(tid(tPosTokenId)), GetOrigCaller()) // lp01
 
 		// approve nft to staker
 		std.TestSetPrevAddr(lp01)
-		gnft.Approve(a2u(GetOrigPkgAddr()), "1")
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(tPosTokenId))
 		std.TestSkipHeights(1)
-
-		// mint liquidity: 12437
-		// current pool liquidity: 12437
-		// lp01 has 100%
 	}
 
 	{
@@ -93,9 +89,9 @@ func TestPositionMint(t *testing.T) {
 		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := s.Mint(
 			std.Address("foo"), // token0
 			std.Address("bar"), // token1
-			bigint(500),        // fee
-			bigint(9100),       // tickLower
-			bigint(12000),      // tickUpper
+			uint16(500),        // fee
+			int32(9100),        // tickLower
+			int32(12000),       // tickUpper
 			bigint(5000),       // amount0Desired
 			bigint(5000),       // amount1Desired
 			bigint(1),          // amount0Min
@@ -104,18 +100,13 @@ func TestPositionMint(t *testing.T) {
 		)
 		std.TestSkipHeights(1)
 
-		shouldEQ(t, tPosTokenId, bigint(2))
-		shouldEQ(t, gnft.OwnerOf(bigint(2)), GetOrigCaller()) // lp02
+		shouldEQ(t, tPosTokenId, 2)
+		shouldEQ(t, gnft.OwnerOf(tid(tPosTokenId)), GetOrigCaller()) // lp02
 
 		// approve nft to staker
 		std.TestSetPrevAddr(lp02)
-		gnft.Approve(a2u(GetOrigPkgAddr()), "2")
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(tPosTokenId))
 		std.TestSkipHeights(1)
-
-		// mint liquidity: 68925
-		// current pool liquidity: 81362
-		// lp01 has 15.28%
-		// lp02 has 84.72%
 	}
 }
 
@@ -142,7 +133,7 @@ func TestStakeToken(t *testing.T) {
 		StakeToken(1) // GNFT tokenId
 		std.TestSkipHeights(2)
 
-		shouldEQ(t, gnft.OwnerOf(bigint(1)), GetOrigPkgAddr()) // staker
+		shouldEQ(t, gnft.OwnerOf(tid(1)), GetOrigPkgAddr()) // staker
 		shouldEQ(t, len(deposits), 1)
 	}
 
@@ -151,7 +142,7 @@ func TestStakeToken(t *testing.T) {
 		StakeToken(2) // GNFT tokenId
 		std.TestSkipHeights(2)
 
-		shouldEQ(t, gnft.OwnerOf(bigint(2)), GetOrigPkgAddr()) // staker
+		shouldEQ(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr()) // staker
 		shouldEQ(t, len(deposits), 2)
 	}
 }
@@ -222,17 +213,12 @@ func TestUnstakeToken(t *testing.T) {
 		std.TestSetOrigCaller(lp01)
 		UnstakeToken(1) // GNFT tokenId
 		std.TestSkipHeights(1)
-	{
-		std.TestSetOrigCaller(lp01)
-		UnstakeToken(1) // GNFT tokenId
-		std.TestSkipHeights(1)
 
-		shouldEQ(t, gnft.OwnerOf(bigint(1)), lp01) // lp01
-		shouldEQ(t, gnft.OwnerOf(bigint(1)), lp01) // lp01
+		shouldEQ(t, gnft.OwnerOf(tid(1)), lp01) // lp01
 
 		// check reward
-		shouldEQ(t, gnos.BalanceOf(a2u(lp01)), bigint(252)) // internal
-		shouldEQ(t, obl.BalanceOf(a2u(lp01)), bigint(486))  // external
+		shouldEQ(t, gnos.BalanceOf(a2u(lp01)), 252) // internal
+		shouldEQ(t, obl.BalanceOf(a2u(lp01)), 486)  // external
 	}
 
 	{
@@ -240,11 +226,11 @@ func TestUnstakeToken(t *testing.T) {
 		UnstakeToken(2) // GNFT tokenId
 		std.TestSkipHeights(1)
 
-		shouldEQ(t, gnft.OwnerOf(bigint(2)), lp02) // lp02
+		shouldEQ(t, gnft.OwnerOf(tid(2)), lp02) // lp02
 
 		// check reward
-		shouldEQ(t, gnos.BalanceOf(a2u(lp02)), bigint(1650)) // internal
-		shouldEQ(t, obl.BalanceOf(a2u(lp02)), bigint(3182))  // external
+		shouldEQ(t, gnos.BalanceOf(a2u(lp02)), 1650) // internal
+		shouldEQ(t, obl.BalanceOf(a2u(lp02)), 3182)  // external
 	}
 }
 

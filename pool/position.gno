@@ -1,4 +1,4 @@
-package gnoswap
+package pool
 
 import (
 	"encoding/base64"
@@ -9,8 +9,8 @@ import (
 
 func positionGetKey(
 	owner std.Address,
-	tickLower bigint,
-	tickUpper bigint,
+	tickLower int32,
+	tickUpper int32,
 ) string {
 	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
 

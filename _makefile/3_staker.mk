@@ -143,7 +143,7 @@ faucet-tr01:
 	@echo
 
 faucet-gsa:
-	$(info ************ [FAUCET] obcl to gsa ************)
+	$(info ************ [FAUCET] obl to gsa ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/obl -func FaucetL -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@echo
 

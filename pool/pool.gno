@@ -1,4 +1,4 @@
-package gnoswap
+package pool
 
 import (
 	"std"
@@ -16,10 +16,10 @@ import (
 func Mint(
 	pToken0 string,
 	pToken1 string,
-	pFee bigint,
+	pFee uint16,
 	recipient std.Address,
-	tickLower bigint,
-	tickUpper bigint,
+	tickLower int32,
+	tickUpper int32,
 	liquidityAmount bigint,
 ) (bigint, bigint) {
 	require(liquidityAmount > 0, ufmt.Sprintf("[POOL] pool.gno__Mint() || liquidityAmount(%s) > 0", liquidityAmount))
@@ -89,9 +89,9 @@ func Mint(
 func Burn(
 	pToken0 string,
 	pToken1 string,
-	pFee bigint,
-	tickLower bigint,
-	tickUpper bigint,
+	pFee uint16,
+	tickLower int32,
+	tickUpper int32,
 	amount bigint,
 ) (bigint, bigint) {
 	requireUnsigned(amount, ufmt.Sprintf("[POOL] pool.gno__Burn() || amount(%s) >= 0", amount))
@@ -125,10 +125,10 @@ func Burn(
 func Collect(
 	pToken0 string,
 	pToken1 string,
-	pFee bigint,
+	pFee uint16,
 	recipient std.Address,
-	tickLower bigint,
-	tickUpper bigint,
+	tickLower int32,
+	tickUpper int32,
 	amount0Requested bigint,
 	amount1Requested bigint,
 ) (bigint, bigint) {
@@ -173,7 +173,7 @@ func Collect(
 func Swap(
 	pToken0 string,
 	pToken1 string,
-	pFee bigint,
+	pFee uint16,
 	recipient std.Address,
 	zeroForOne bool,
 	amountSpecified bigint,
@@ -186,7 +186,9 @@ func Swap(
 	slot0Start := pool.slot0
 	require(slot0Start.unlocked, "[POOL] pool.gno__Swap() || slot0 must be unlocked")
 
-	var feeProtocol, feeGrowthGlobalX128 bigint
+	var feeProtocol uint8
+	var feeGrowthGlobalX128 bigint
+
 	if zeroForOne {
 		require(
 			sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > MIN_SQRT_RATIO,
@@ -276,7 +278,7 @@ func Swap(
 			_sqrtRatioTarget,
 			state.liquidity,
 			state.amountSpecifiedRemaining,
-			pool.fee,
+			uint32(pool.fee),
 		)
 
 		if exactInput {
@@ -288,7 +290,7 @@ func Swap(
 		}
 
 		if cache.feeProtocol > 0 {
-			delta := step.feeAmount / cache.feeProtocol
+			delta := step.feeAmount / bigint(uint64(cache.feeProtocol))
 			requireUnsigned(delta, ufmt.Sprintf("[POOL] pool.gno__Swap() || delta(%s) >= 0", delta))
 			step.feeAmount -= delta
 			state.protocolFee += delta
@@ -436,12 +438,9 @@ func Swap(
 
 // ADMIN
 func SetFeeProtocol(
-	feeProtocol0 bigint,
-	feeProtocol1 bigint,
+	feeProtocol0 uint8,
+	feeProtocol1 uint8,
 ) {
-	requireUnsigned(feeProtocol0, ufmt.Sprintf("[POOL] pool.gno__SetFeeProtocol() || feeProtocol0(%s) >= 0", feeProtocol0))
-	requireUnsigned(feeProtocol1, ufmt.Sprintf("[POOL] pool.gno__SetFeeProtocol() || feeProtocol1(%s) >= 0", feeProtocol1))
-
 	require(isAdmin(PrevRealmAddr()), ufmt.Sprintf("[POOL] pool.gno__SetFeeProtocol() || caller(%s) must be admin", PrevRealmAddr()))
 
 	require(
@@ -462,7 +461,7 @@ func SetFeeProtocol(
 func CollectProtocol(
 	pToken0 string,
 	pToken1 string,
-	pFee bigint,
+	pFee uint16,
 	recipient std.Address,
 	amount0Requested bigint,
 	amount1Requested bigint,
@@ -540,10 +539,10 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, big
 
 func (pool *Pool) updatePosition(
 	owner std.Address,
-	tickLower bigint,
-	tickUpper bigint,
+	tickLower int32,
+	tickUpper int32,
 	liquidityDelta bigint,
-	tick bigint,
+	tick int32,
 ) PositionInfo {
 	var _feeGrowthGlobal0X128 bigint = pool.feeGrowthGlobal0X128
 	var _feeGrowthGlobal1X128 bigint = pool.feeGrowthGlobal1X128
