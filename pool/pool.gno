@@ -13,6 +13,7 @@ import (
 	foo "gno.land/r/foo"
 )
 
+// only position contract can call this function
 func Mint(
 	pToken0 string,
 	pToken1 string,
@@ -22,6 +23,8 @@ func Mint(
 	tickUpper int32,
 	liquidityAmount bigint,
 ) (bigint, bigint) {
+	require(PrevRealmPath() == "gno.land/r/position", ufmt.Sprintf("[POOL] pool.gno__Mint() || PrevRealmPath(%s) == \"gno.land/r/position\"", PrevRealmPath()))
+
 	require(liquidityAmount > 0, ufmt.Sprintf("[POOL] pool.gno__Mint() || liquidityAmount(%s) > 0", liquidityAmount))
 
 	pool := GetPool(pToken0, pToken1, pFee)
@@ -86,6 +89,7 @@ func Mint(
 	return amount0, amount1
 }
 
+// only position contract can call this function
 func Burn(
 	pToken0 string,
 	pToken1 string,
@@ -94,6 +98,8 @@ func Burn(
 	tickUpper int32,
 	amount bigint,
 ) (bigint, bigint) {
+	require(PrevRealmPath() == "gno.land/r/position", ufmt.Sprintf("[POOL] pool.gno__Burn() || caller(%s) must be position contract", PrevRealmPath()))
+
 	requireUnsigned(amount, ufmt.Sprintf("[POOL] pool.gno__Burn() || amount(%s) >= 0", amount))
 
 	pool := GetPool(pToken0, pToken1, pFee)
@@ -122,6 +128,7 @@ func Burn(
 	return amount0, amount1
 }
 
+// only position contract can call this function
 func Collect(
 	pToken0 string,
 	pToken1 string,
@@ -132,6 +139,8 @@ func Collect(
 	amount0Requested bigint,
 	amount1Requested bigint,
 ) (bigint, bigint) {
+	require(PrevRealmPath() == "gno.land/r/position", ufmt.Sprintf("[POOL] pool.gno__Collect() || caller(%s) must be position contract(gno.land/r/position)", PrevRealmPath()))
+
 	requireUnsigned(amount0Requested, ufmt.Sprintf("pool.gno__Collect() || amount0Requested(%s) >= 0", amount0Requested))
 	requireUnsigned(amount1Requested, ufmt.Sprintf("pool.gno__Collect() || amount1Requested(%s) >= 0", amount1Requested))
 

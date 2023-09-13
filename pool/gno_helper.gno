@@ -29,3 +29,11 @@ func GetOrigCaller() std.Address {
 func PrevRealmAddr() std.Address {
 	return std.PrevRealm().Addr()
 }
+
+func PrevRealmPath() string {
+	return std.PrevRealm().PkgPath()
+}
+
+func PrevRealm() std.Realm {
+	return std.PrevRealm()
+}

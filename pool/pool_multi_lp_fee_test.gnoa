@@ -18,6 +18,8 @@ var (
 	lp02 = testutils.TestAddress("lp02") // Liquidity Provider 02
 
 	tr01 = testutils.TestAddress("tr01") // Trader 01
+
+	posAddr = std.DerivePkgAddr("gno.land/r/position")
 )
 
 func init() {
@@ -93,8 +95,9 @@ func TestSwap(t *testing.T) {
 	pool := GetPool(pToken0, pToken1, pFee)
 
 	// lp01 mint 9000 ~ 11000 tick range
+	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
-	m11, m12 := Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect*10000)
+	m11, m12 := Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*10000)
 
 	// lp02 mint (almost) full range
 	// fee 500 will use tickSpacing 10
@@ -102,7 +105,7 @@ func TestSwap(t *testing.T) {
 	// MAX_TICK bigint = 887272
 
 	std.TestSetOrigCaller(lp02)
-	m21, m22 := Mint(pToken0, pToken1, pFee, lp02, MIN_TICK+2, MAX_TICK-2, test_liquidityExpect*10000)
+	m21, m22 := Mint(pToken0, pToken1, pFee, posAddr, MIN_TICK+2, MAX_TICK-2, test_liquidityExpect*10000)
 
 	println("Concentrated Mint")
 	println("> lp01 mint", m11, m12)
@@ -145,7 +148,7 @@ func TestSwap(t *testing.T) {
 		// println("Current Tick:", pool.GetPoolSlot0Tick())
 
 		// s0, s1 := Swap(pToken0, pToken1, pFee, tr01, true, bigint(620000), test_price_01) // one iteration - yes fee
-		s0, s1 := Swap(pToken0, pToken1, pFee, tr01, true, bigint(630000), test_price_01) // one iteration - no fee
+		s0, s1 := Swap(pToken0, pToken1, pFee, tr01, true, bigint(630000), test_price_01) // one iteration - yes fee(only lp02)
 
 		// s0, s1 := Swap(pToken0, pToken1, pFee, tr01, true, bigint(1400000), test_price_01) // one iteration - no fee
 		// s0, s1 := Swap(pToken0, pToken1, pFee, tr01, true, bigint(1500000), test_price_01) // two iteration
@@ -182,6 +185,7 @@ func TestSwap(t *testing.T) {
 		std.TestSetOrigCaller(lp01)
 		Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, 0)
 		c1, c2 := Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 100000000, 100000000)
+
 		println("Fee lp01")
 		println("> token0:", c1)
 		println("> token1:", c2)
@@ -190,6 +194,7 @@ func TestSwap(t *testing.T) {
 		std.TestSetOrigCaller(lp02)
 		Burn(pToken0, pToken1, pFee, MIN_TICK+2, MAX_TICK-2, 0)
 		c3, c4 := Collect(pToken0, pToken1, pFee, lp02, MIN_TICK+2, MAX_TICK-2, 100000000, 100000000)
+
 		println("Fee lp02")
 		println("> token0:", c3)
 		println("> token1:", c4)

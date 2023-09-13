@@ -45,9 +45,7 @@ func positionUpdate(
 	requireUnsigned(feeGrowthInside1X128, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || feeGrowthInside1X128(%s) >= 0", feeGrowthInside1X128))
 
 	var liquidityNext bigint
-
 	if liquidityDelta == 0 {
-		require(self.liquidity > 0, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || self.liquidity(%s)", self.liquidity))
 		liquidityNext = self.liquidity
 	} else {
 		liquidityNext = liquidityMathAddDelta(self.liquidity, liquidityDelta)
