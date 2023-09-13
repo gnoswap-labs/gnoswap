@@ -12,15 +12,17 @@ var (
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 
+	posAddr = std.DerivePkgAddr("gno.land/r/position")
+
 	poolPath = "gno.land/r/pool"
 )
 
 func init() {
 	// debug - print addr
-	println(gsa, "// gsa")
-	println(lp01, "// lp01")
-	println(tr01, "// tr01")
-	println(GetOrigPkgAddr(), "// pool")
+	// println(gsa, "// gsa")
+	// println(lp01, "// lp01")
+	// println(tr01, "// tr01")
+	// println(GetOrigPkgAddr(), "// pool")
 	// println(std.DerivePkgAddr(poolPath), "// PrevRealm // pool")
 }
 
@@ -56,13 +58,14 @@ func TestInitCreatePool(t *testing.T) {
 
 // 2. Mint by lp01
 func TestMint(t *testing.T) {
+	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
 
 	Mint(
 		pToken0,
 		pToken1,
 		pFee,
-		lp01,
+		posAddr,
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpect,
@@ -72,16 +75,16 @@ func TestMint(t *testing.T) {
 	test_liquidity := pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect)
 
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
 
-	m81, m82 := Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	m101, m102 := Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	m81, m82 := Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	m101, m102 := Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
 
 	shouldNEQ(t, m81, bigint(0))
 	shouldNEQ(t, m82, bigint(0))
@@ -92,27 +95,27 @@ func TestMint(t *testing.T) {
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
 	// tickLower > currentTick == don't add to current liquidity
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower2, test_tickUpper2, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower2, test_tickUpper2, test_liquidityExpect)
 
 	// tickUpper < current tick == don't add to current liquidity
-	Mint(pToken0, pToken1, pFee, lp01, -test_tickUpper2, -test_tickLower2, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, -test_tickUpper2, -test_tickLower2, test_liquidityExpect)
 
 	// tickUpper < tickLower == don't add to current liquidity
-	Mint(pToken0, pToken1, pFee, lp01, -test_tickUpper, -test_tickLower, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, -test_tickUpper, -test_tickLower, test_liquidityExpect)
 
 	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
 
 	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*20)
@@ -120,6 +123,7 @@ func TestMint(t *testing.T) {
 
 // 3. Burn by lp01
 func TestBurn(t *testing.T) {
+	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
 
 	b11, b12 := Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect)
@@ -154,6 +158,7 @@ func TestBurn(t *testing.T) {
 
 // 4. Collect
 func TestCollect(t *testing.T) {
+	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
 
 	// withdraw all token before test `Collect`
@@ -164,18 +169,18 @@ func TestCollect(t *testing.T) {
 	test_liquidity := pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	c11, c12 := Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	c21, c22 := Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 
 	shouldEQ(t, c11, c21)
 	shouldEQ(t, c12, c22)
 
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	c31, c32 := Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 100, 100)
 	shouldEQ(t, c31, bigint(100))
@@ -186,7 +191,7 @@ func TestCollect(t *testing.T) {
 	shouldEQ(t, c42, c22-bigint(100))
 
 	// Mint > No Burn => nothing to collect
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	// Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	c51, c52 := Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 	shouldEQ(t, c51, bigint(0))
@@ -205,8 +210,9 @@ func TestSwap(t *testing.T) {
 	test_liquidity := pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
+	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
-	Mint(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, test_liquidityExpect*20000)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*20000)
 
 	// Swap several times
 	std.TestSetOrigCaller(tr01)

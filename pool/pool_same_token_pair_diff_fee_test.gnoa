@@ -15,6 +15,8 @@ var (
 	gsa  = testutils.TestAddress("gsa")  // Gnoswap Admin
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
+
+	posAddr = std.DerivePkgAddr("gno.land/r/position")
 )
 
 func init() {
@@ -54,8 +56,10 @@ func TestFirstPool(t *testing.T) {
 	test_liquidity := pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
+	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
-	Mint(pToken0, pToken1, pFee1, lp01, test_tickLower1, test_tickUpper1, test_liquidityExpect*20000)
+	Mint(pToken0, pToken1, pFee1, posAddr, test_tickLower1, test_tickUpper1, test_liquidityExpect*20000)
+	std.TestSetPrevRealm("")
 
 	// Swap several times
 	std.TestSetOrigCaller(tr01)
@@ -288,7 +292,9 @@ func TestSecondPool(t *testing.T) {
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	std.TestSetOrigCaller(lp01)
-	m1, m2 := Mint(pToken0, pToken1, pFee2, lp01, test_tickLower2, test_tickUpper2, test_liquidityExpect*50000)
+	std.TestSetPrevRealm("gno.land/r/position")
+	m1, m2 := Mint(pToken0, pToken1, pFee2, posAddr, test_tickLower2, test_tickUpper2, test_liquidityExpect*50000)
+	std.TestSetPrevRealm("")
 
 	// Swap several times
 	std.TestSetOrigCaller(tr01)
