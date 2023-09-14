@@ -312,7 +312,7 @@ func TestPositionCollect01(t *testing.T) {
 	}
 
 	{
-		// lp02 collects fee from tokenId '1'
+		// lp02 collects fee from tokenId '2'
 		std.TestSetOrigCaller(lp02)
 
 		lp02OldToken0Bal := token0Balance(lp02)

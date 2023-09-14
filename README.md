@@ -14,8 +14,7 @@ $ export WORKDIR=~/work
 
 ### Build Gno.land for Gnoswap
 
-Clone the `gno` repository from `gnoswap-labs`. And switch to the `gs/base_clean` branch.
-You will be able to clone the repository and build it after running the following commands:
+Clone the `gno` repository from `gnoswap-labs`. And switch to the `gs/base_clean` branch. You will be able to clone the repository and build it after running the following commands:
 
 ```
 $ cd $WORKDIR
@@ -33,17 +32,17 @@ To run unit tests, follow these steps:
 
 1. Clone the `gnoswap` contracts repository:
 
-	```
-	$ cd $WORKDIR
-	$ git clone https://github.com/gnoswap-labs/gnoswap.git
-	$ cd gnoswap
-	```
+   ```
+   $ cd $WORKDIR
+   $ git clone https://github.com/gnoswap-labs/gnoswap.git
+   $ cd gnoswap
+   ```
 
 2. Copy the `gnoswap` contracts into the Gno core:
 
-	```
-	$ cp -R _setup/* gov pool position staker $WORKDIR/gno-for-swap/examples/gno.land/r/
-	```
+   ```
+   $ cp -R _setup/* gov pool position staker $WORKDIR/gno-for-swap/examples/gno.land/r/
+   ```
 
 ### Run the Test Cases
 
@@ -57,7 +56,7 @@ The contracts can be tested by deploying and executing the contract directly thr
 
 ### Create accounts for testing
 
-You can pass this step if you already created the accounts.
+You can pass this step if you already created the accounts with same mnemonic shown below.
 
 ```
 gnokey add test1 --recover
@@ -79,26 +78,11 @@ The Gno.land blockchain must be cleaned up and run before each tests.
 
 ```
 $ cd $WORKDIR/gno-for-swap/gno.land
-$ rm -r testdir && gnoland start -skip-failing-genesis-txs=true
+$ make install
+$ rm -r testdir && gnoland start
 ```
 
-#### Pool
-
 ```
-$ cd $WORKDIR/gnoswap/_makefile
-$ make -f 1_pool.mk all
-```
-
-#### Position
-
-```
-$ cd $WORKDIR/gnoswap/_makefile
-$ make -f 2_position.mk all
-```
-
-#### staker
-
-```
-$ cd $WORKDIR/gnoswap/_makefile
-$ make -f 3_staker.mk all
+$ cd $WORKDIR/gnoswap/_test
+$ make -f live_test.mk all
 ```
