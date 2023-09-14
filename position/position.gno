@@ -300,5 +300,5 @@ func burn(tokenId uint64) {
 }
 
 func isAuthorizedForToken(tokenId uint64) {
-	require(isApprovedOrOwner(PrevRealmAddr(), tokenId), ufmt.Sprintf("[POSITION] position.gno__isAuthorizedForToken() || caller(%s) is not approved or owner of tokenId(%s)", PrevRealmAddr(), tokenId))
+	require(isApprovedOrOwner(PrevRealmAddr(), tokenId), ufmt.Sprintf("[POSITION] position.gno__isAuthorizedForToken() || caller(%s) is not approved or owner of tokenId(%d)", PrevRealmAddr(), tokenId))
 }
