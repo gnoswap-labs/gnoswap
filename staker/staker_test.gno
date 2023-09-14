@@ -1,7 +1,7 @@
 package staker
 
 import (
-	"encoding/json"
+	"gjson"
 	"std"
 	"testing"
 
@@ -148,63 +148,28 @@ func TestStakeToken(t *testing.T) {
 }
 
 func TestApiGetRewardsByAddress(t *testing.T) {
-	result := ResponseGetRewardByAddress{
-		Stat: ApiQueryBase{
-			Height:    0,
-			Timestamp: 0,
-		},
-		Response: struct {
-			Data []ApiRewardByAddress `json:"data"`
-		}{
-			Data: []ApiRewardByAddress{
-				{
-					Type:   "",
-					Token:  "",
-					Reward: 0,
-				},
-				{
-					Type:   "",
-					Token:  "",
-					Reward: 0,
-				},
-			},
-		},
-	}
-
 	{
 		// lp01 reward check
-		lp01Result := result
 		gra := ApiGetRewardByAddress(lp01)
-
-		if err := json.Unmarshal([]byte(gra), &lp01Result); err != nil {
-			panic(err)
-		}
-
-		shouldEQ(t, lp01Result.Stat.Height, GetHeight())
-		shouldEQ(t, lp01Result.Response.Data[0].Type, "Internal")
-		shouldEQ(t, lp01Result.Response.Data[0].Token, "GNOS")
-		shouldEQ(t, lp01Result.Response.Data[0].Reward, bigint(252))
-		shouldEQ(t, lp01Result.Response.Data[1].Type, "External")
-		shouldEQ(t, lp01Result.Response.Data[1].Token, "OBL")
-		shouldEQ(t, lp01Result.Response.Data[1].Reward, bigint(486))
+		jsonStr := gjson.Parse(gra)
+		shouldEQ(t, jsonStr.Get("response.data.0.type").String(), "Internal")
+		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNOS")
+		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 252)
+		shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
+		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "OBL")
+		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 486)
 	}
 
 	{
 		// lp02 reward check
-		lp02Result := result
 		gra := ApiGetRewardByAddress(lp02)
-
-		if err := json.Unmarshal([]byte(gra), &lp02Result); err != nil {
-			panic(err)
-		}
-
-		shouldEQ(t, lp02Result.Stat.Height, GetHeight())
-		shouldEQ(t, lp02Result.Response.Data[0].Type, "Internal")
-		shouldEQ(t, lp02Result.Response.Data[0].Token, "GNOS")
-		shouldEQ(t, lp02Result.Response.Data[0].Reward, bigint(1397))
-		shouldEQ(t, lp02Result.Response.Data[1].Type, "External")
-		shouldEQ(t, lp02Result.Response.Data[1].Token, "OBL")
-		shouldEQ(t, lp02Result.Response.Data[1].Reward, bigint(2696))
+		jsonStr := gjson.Parse(gra)
+		shouldEQ(t, jsonStr.Get("response.data.0.type").String(), "Internal")
+		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNOS")
+		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 1397)
+		shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
+		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "OBL")
+		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 2696)
 	}
 }
 

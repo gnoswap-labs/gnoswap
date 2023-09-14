@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"gjson"
 	"std"
 	"testing"
 
@@ -22,32 +23,6 @@ var (
 
 	posAddr = std.DerivePkgAddr("gno.land/r/position")
 )
-
-func init() {
-	std.TestSetOrigCaller(lp01)
-	foo.FaucetL()
-	bar.FaucetL()
-
-	std.TestSetOrigCaller(lp02)
-	foo.FaucetL()
-	bar.FaucetL()
-
-	std.TestSetOrigCaller(lp03)
-	foo.FaucetL()
-	bar.FaucetL()
-
-	std.TestSetOrigCaller(tr01)
-	foo.FaucetL()
-	bar.FaucetL()
-
-	// debug - print addr
-	// println(gsa, "// gsa")
-	// println(lp01, "// lp01")
-	// println(lp02, "// lp03")
-	// println(lp02, "// lp03")
-	// println(tr01, "// tr01")
-	// println(GetOrigPkgAddr(), "// pool")
-}
 
 var (
 	// Common
@@ -266,10 +241,6 @@ func TestSwap(t *testing.T) {
 	test_price := bigint(MIN_SQRT_RATIO + 1) // maximum price
 
 	{
-		println("Swap #1")
-		println("> direction: token0 -> token1")
-		println("> amount: 10000")
-
 		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
 		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
 
@@ -307,15 +278,6 @@ func TestSwap(t *testing.T) {
 		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
 		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
 
-		println("Pool")
-		println("> token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-		println("> token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
-
-		println("Trader tr01")
-		println("> token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-		println("> token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
-		println()
-
 		std.TestSetOrigCaller(lp02)
 		Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
 		Collect(pToken0, pToken1, pFee, lp02, test_tickLower, test_tickUpper, 50000000, 50000000)
@@ -323,22 +285,12 @@ func TestSwap(t *testing.T) {
 		lp02NewToken0Bal := balanceOf(pool.token0, lp02)
 		lp02NewToken1Bal := balanceOf(pool.token1, lp02)
 
-		println("Liquidity Provider lp02")
-		println("> token0:", lp02OldToken0Bal, "->", lp02NewToken0Bal, "( diff:", lp02NewToken0Bal-lp02OldToken0Bal, ")")
-		println("> token1:", lp02OldToken1Bal, "->", lp02NewToken1Bal, "( diff:", lp02NewToken1Bal-lp02OldToken1Bal, ")")
-		println()
-
 		std.TestSetOrigCaller(lp03)
 		Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
 		Collect(pToken0, pToken1, pFee, lp03, test_tickLower, test_tickUpper, 50000000, 50000000)
 
 		lp03NewToken0Bal := balanceOf(pool.token0, lp03)
 		lp03NewToken1Bal := balanceOf(pool.token1, lp03)
-
-		println("Liquidity Provider lp03")
-		println("> token0:", lp03OldToken0Bal, "->", lp03NewToken0Bal, "( diff:", lp03NewToken0Bal-lp03OldToken0Bal, ")")
-		println("> token1:", lp03OldToken1Bal, "->", lp03NewToken1Bal, "( diff:", lp03NewToken1Bal-lp03OldToken1Bal, ")")
-		println()
 	}
 
 	// Mint again
@@ -349,10 +301,6 @@ func TestSwap(t *testing.T) {
 	Mint(pToken0, pToken1, pFee, lp03, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
 
 	{
-		println("Swap #2")
-		println("> direction: token0 -> token1")
-		println("> amount: 5000")
-
 		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
 		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
 
@@ -375,22 +323,9 @@ func TestSwap(t *testing.T) {
 		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
 		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
 		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
-
-		println("Pool")
-		println("> token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-		println("> token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
-
-		println("Trader tr01")
-		println("> token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-		println("> token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
-		println()
 	}
 
 	{
-		println("Swap #3")
-		println("> direction: token0 -> token1")
-		println("> amount: 1000")
-
 		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
 		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
 
@@ -413,22 +348,9 @@ func TestSwap(t *testing.T) {
 		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
 		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
 		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
-
-		println("Pool")
-		println("> token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-		println("> token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
-
-		println("Trader tr01")
-		println("> token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-		println("> token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
-		println()
 	}
 
 	{
-		println("Swap #4")
-		println("> direction: token1 -> token0")
-		println("> amount: 16000")
-
 		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
 		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
 
@@ -451,15 +373,6 @@ func TestSwap(t *testing.T) {
 		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
 		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
 		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
-
-		println("Pool")
-		println("> token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-		println("> token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
-
-		println("Trader tr01")
-		println("> token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-		println("> token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
-		println()
 	}
 }
 
@@ -488,10 +401,6 @@ func TestCollectProtocol(t *testing.T) {
 	// Make ProtocolFee via Swap by tr01 ( Mint by lp01 )
 	std.TestSetOrigCaller(lp01)
 	{
-		println("Swap #5 - with protocol fee enabled")
-		println("> direction: token0 -> token1")
-		println("> amount: 2000000")
-
 		gsaOldToken0Bal := balanceOf(pool.token0, gsa)
 		gsaOldToken1Bal := balanceOf(pool.token1, gsa)
 
@@ -505,18 +414,9 @@ func TestCollectProtocol(t *testing.T) {
 
 		gsaNewToken0Bal := balanceOf(pool.token0, gsa)
 		gsaNewToken1Bal := balanceOf(pool.token1, gsa)
-
-		println("Gnoswap Admin")
-		println("> token0:", gsaOldToken0Bal, "->", gsaNewToken0Bal, "( diff:", gsaNewToken0Bal-gsaOldToken0Bal, ")")
-		println("> token1:", gsaOldToken1Bal, "->", gsaNewToken1Bal, "( diff:", gsaNewToken1Bal-gsaOldToken1Bal, ")")
-		println()
 	}
 
 	{
-		println("Swap #6 - with protocol fee enabled")
-		println("> direction: token1 -> token0")
-		println("> amount: 2000000")
-
 		gsaOldToken0Bal := balanceOf(pool.token0, gsa)
 		gsaOldToken1Bal := balanceOf(pool.token1, gsa)
 
@@ -530,25 +430,20 @@ func TestCollectProtocol(t *testing.T) {
 
 		gsaNewToken0Bal := balanceOf(pool.token0, gsa)
 		gsaNewToken1Bal := balanceOf(pool.token1, gsa)
-
-		println("Gnoswap Admin")
-		println("> token0:", gsaOldToken0Bal, "->", gsaNewToken0Bal, "( diff:", gsaNewToken0Bal-gsaOldToken0Bal, ")")
-		println("> token1:", gsaOldToken1Bal, "->", gsaNewToken1Bal, "( diff:", gsaNewToken1Bal-gsaOldToken1Bal, ")")
-		println()
 	}
 }
 
-// /* GETTER_API TEST */
-// func TestApiGetPools(t *testing.T) {
-// 	gpls := ApiGetPools()
-// 	println(gpls)
-// }
+/* GETTER_API TEST */
+func TestApiGetPools(t *testing.T) {
+	gpls := ApiGetPools()
+	jsonStr := gjson.Parse(gpls)
 
-// func TestApiGetPool(t *testing.T) {
-// 	pk := "bar_foo_500"
-// 	gpl := ApiGetPool(pk)
-// 	println(gpl)
-// }
+	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())
+	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
+
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
+	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "bar_foo_500")
+}
 
 /* HELPER */
 func shouldEQ(t *testing.T, got, expected interface{}) {

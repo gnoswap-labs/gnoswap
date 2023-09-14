@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"gjson"
 	"std"
 	"testing"
 
@@ -21,13 +22,6 @@ var (
 	posAddr = std.DerivePkgAddr("gno.land/r/position")
 )
 
-func init() {
-	// debug - print addr
-	// println(lp01, "// lp01")
-	// println(tr01, "// tr01")
-	// println(GetOrigPkgAddr(), "// pool")
-}
-
 var (
 	// Common
 	pToken0 = "foo"
@@ -45,12 +39,9 @@ func TestCreatePool(t *testing.T) {
 	InitManual()
 	std.TestSkipHeights(1)
 
-	println("> Init")
-	println(ApiGetPools())
-	println(ApiGetPool("bar_foo_500"))
-	println()
+	jsonStr := gjson.Parse(ApiGetPools())
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 0)
 
-	println("> CreatePool")
 	CreatePool("foo", "bar", pFee, 130622891405341611593710811006)
 	std.TestSkipHeights(1)
 	// 130621891405341611593710811006 // 9999
@@ -59,9 +50,13 @@ func TestCreatePool(t *testing.T) {
 	// 500		= 0.05% // USv3 default
 	// 3000		= 0.3% // USv3 default
 	// 10000	= 1% // USv3 default
-	println(ApiGetPools())
-	println(ApiGetPool("bar_foo_500"))
-	println()
+	jsonStr = gjson.Parse(ApiGetPools())
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
+	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "bar_foo_500")
+
+	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
+	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 0)
+	shouldEQ(t, len(jsonStr.Get("response.data.Position").Array()), 0)
 
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
@@ -69,7 +64,6 @@ func TestCreatePool(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	// Approve
-	println("> Approve")
 	std.TestSetOrigCaller(lp01)
 	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
 	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
@@ -83,10 +77,6 @@ func TestCreatePool(t *testing.T) {
 	foo.Approve(users.AddressOrName(tr01), 50000000)
 	bar.Approve(users.AddressOrName(tr01), 50000000)
 	std.TestSkipHeights(4)
-
-	println(ApiGetPools())
-	println(ApiGetPool("bar_foo_500"))
-	println()
 }
 
 // Swap by tr01, Mint by lp01 ~ 02
@@ -94,52 +84,58 @@ func TestSwap(t *testing.T) {
 	pool := GetPool(pToken0, pToken1, pFee)
 
 	// lp01 mint 9000 ~ 11000 tick range
-	println("> Mint foo, bar, 500, lp01, 9000, 11000, 10000000")
-
 	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
-	m11, m12 := Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*100000)
+	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*100000)
 	std.TestSkipHeights(1)
 
-	println(ApiGetPools())
-	println(ApiGetPool("bar_foo_500"))
-	println()
+	jsonStr := gjson.Parse(ApiGetPools())
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
+	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "bar_foo_500")
+
+	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
+	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 2957550)
+	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8041577)
+	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
+	shouldEQ(t, len(jsonStr.Get("response.data.Position").Array()), 1)
 
 	test_price_01 := bigint(MIN_SQRT_RATIO + 1) // maximum price // swap 0 -> 1
 	test_price_10 := bigint(MAX_SQRT_RATIO - 1) // minimum price // swap 1 -> 0
-
-	println("> Swap")
 
 	// SWAP
 	std.TestSetOrigCaller(tr01)
 
 	Swap(pToken0, pToken1, pFee, tr01, true, bigint(150000), test_price_01)
+	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
+	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
+	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 3107550)
+	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8448096)
+	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
+	shouldEQ(t, len(jsonStr.Get("response.data.Position").Array()), 1)
+
 	Swap(pToken0, pToken1, pFee, tr01, false, bigint(601851), test_price_10)
 	// Swap(pToken0, pToken1, pFee, tr01, true, bigint(1500000), test_price_01) // two iteration // s0: 1_500_000 // s1: -3_626_984 // currentTick: 7668
 	std.TestSkipHeights(1)
-	println(ApiGetPools())
-	println(ApiGetPool("bar_foo_500"))
-	println()
+	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
+	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 4718682)
+	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 9049947)
+	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
+	shouldEQ(t, len(jsonStr.Get("response.data.Position").Array()), 1)
 
 	// To collect fee without removing liquidity
 	// burn 0 => collect
-
-	println("> Burn foo, bar, 500, 9000, 11000, 0")
 	std.TestSetOrigCaller(lp01)
 	Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, 0)
 	std.TestSkipHeights(1)
-	println(ApiGetPools())
-	println(ApiGetPool("bar_foo_500"))
-	println()
 
-	println("> Collect foo, bar, 500, lp01, 9000, 11000, 100000000, 100000000")
 	std.TestSetOrigCaller(lp01)
 	Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 100000000, 100000000)
 	std.TestSkipHeights(1)
-	println(ApiGetPools())
-	println(ApiGetPool("bar_foo_500"))
-	println()
-
+	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
+	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 4718608)
+	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 9049647)
+	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
+	shouldEQ(t, len(jsonStr.Get("response.data.Position").Array()), 1)
 }
 
 // GOV

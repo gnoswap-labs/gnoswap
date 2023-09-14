@@ -1,6 +1,7 @@
 package position
 
 import (
+	"gjson"
 	"std"
 	"testing"
 
@@ -20,16 +21,6 @@ var (
 	rv01 = testutils.TestAddress("rv01") // Receiver 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 )
-
-func init() {
-	// debug - print addr
-	println(lp01, "// lp01")
-	println(lp02, "// lp02")
-	println(rv01, "// rv01")
-	println(tr01, "// tr01")
-	println(PoolAddr, "// pool")
-	println(GetOrigPkgAddr(), "// position")
-}
 
 var (
 	// Common
@@ -440,17 +431,58 @@ func TestNFTBurn(t *testing.T) {
 /* GETTER_API TEST */
 func TestApiGetPositions(t *testing.T) {
 	gpss := ApiGetPositions()
-	println(gpss)
+	jsonStr := gjson.Parse(gpss)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 3)
 }
 
 func TestApiGetPosition(t *testing.T) {
-	gps := ApiGetPosition(uint64(2))
-	println(gps)
+	{
+		gps := ApiGetPosition(uint64(2))
+		jsonStr := gjson.Parse(gps)
+		shouldEQ(t, jsonStr.Get("response.data.token_id").Int(), 2)
+		shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), 9000)
+		shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), 11000)
+	}
+
+	{
+		gps := ApiGetPosition(uint64(3))
+		jsonStr := gjson.Parse(gps)
+		shouldEQ(t, jsonStr.Get("response.data.token_id").Int(), 3)
+		shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), 14000)
+		shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), 18000)
+	}
+
+	{
+		gps := ApiGetPosition(uint64(4))
+		jsonStr := gjson.Parse(gps)
+		shouldEQ(t, jsonStr.Get("response.data.token_id").Int(), 4)
+		shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), 7000)
+		shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), 9000)
+	}
+
 }
 
 func TestApiGetPositionByUser(t *testing.T) {
 	gpu := ApiGetPositionByUser("g1d3crqvjlta047h6lta047h6lta047h6ljnm9km") // lp02
-	println(gpu)
+	jsonStr := gjson.Parse(gpu)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 3)
+
+	shouldEQ(t, jsonStr.Get("response.data.0.token_id").Int(), 2)
+	shouldEQ(t, jsonStr.Get("response.data.0.pool_key").String(), "bar_foo_500")
+	shouldEQ(t, jsonStr.Get("response.data.0.tick_lower").Int(), 9000)
+	shouldEQ(t, jsonStr.Get("response.data.0.tick_upper").Int(), 11000)
+	shouldEQ(t, jsonStr.Get("response.data.0.liquidity").Int(), 24874)
+
+	shouldEQ(t, jsonStr.Get("response.data.1.token_id").Int(), 3)
+	shouldEQ(t, jsonStr.Get("response.data.1.tick_lower").Int(), 14000)
+	shouldEQ(t, jsonStr.Get("response.data.1.tick_upper").Int(), 18000)
+	shouldEQ(t, jsonStr.Get("response.data.1.liquidity").Int(), 11109)
+
+	shouldEQ(t, jsonStr.Get("response.data.2.token_id").Int(), 4)
+	shouldEQ(t, jsonStr.Get("response.data.2.tick_lower").Int(), 7000)
+	shouldEQ(t, jsonStr.Get("response.data.2.tick_upper").Int(), 9000)
+	shouldEQ(t, jsonStr.Get("response.data.2.liquidity").Int(), 6700)
+
 }
 
 /* HELPER */
