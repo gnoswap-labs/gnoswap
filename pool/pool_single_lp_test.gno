@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"gjson"
 	"std"
 	"testing"
 
@@ -16,15 +17,6 @@ var (
 
 	poolPath = "gno.land/r/pool"
 )
-
-func init() {
-	// debug - print addr
-	// println(gsa, "// gsa")
-	// println(lp01, "// lp01")
-	// println(tr01, "// tr01")
-	// println(GetOrigPkgAddr(), "// pool")
-	// println(std.DerivePkgAddr(poolPath), "// PrevRealm // pool")
-}
 
 var (
 	// Common
@@ -219,10 +211,6 @@ func TestSwap(t *testing.T) {
 	test_price := bigint(MIN_SQRT_RATIO + 1) // maximum price
 
 	{
-		println("Swap #1")
-		println("> direction: token0 -> token1")
-		println("> amount: 10000")
-
 		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
 		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
 
@@ -252,22 +240,9 @@ func TestSwap(t *testing.T) {
 		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
 		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
 		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
-
-		println("Pool")
-		println("> token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-		println("> token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
-
-		println("Trader tr01")
-		println("> token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-		println("> token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
-		println()
 	}
 
 	{
-		println("Swap #2")
-		println("> direction: token0 -> token1")
-		println("> amount: 5000")
-
 		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
 		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
 
@@ -286,22 +261,9 @@ func TestSwap(t *testing.T) {
 		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
 		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
 		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
-
-		println("Pool")
-		println("> token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-		println("> token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
-
-		println("Trader tr01")
-		println("> token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-		println("> token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
-		println()
 	}
 
 	{
-		println("Swap #3")
-		println("> direction: token0 -> token1")
-		println("> amount: 1000")
-
 		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
 		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
 
@@ -320,23 +282,10 @@ func TestSwap(t *testing.T) {
 		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
 		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
 		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
-
-		println("Pool")
-		println("> token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-		println("> token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
-
-		println("Trader tr01")
-		println("> token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-		println("> token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
-		println()
 	}
 
 	// Swap token1 -> token0
 	{
-		println("Swap #4")
-		println("> direction: token1 -> token0")
-		println("> amount: 16000")
-
 		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
 		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
 
@@ -355,15 +304,6 @@ func TestSwap(t *testing.T) {
 		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
 		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
 		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
-
-		println("Pool")
-		println("> token0:", poolOldToken0Bal, "->", poolNewToken0Bal, "( diff:", poolNewToken0Bal-poolOldToken0Bal, ")")
-		println("> token1:", poolOldToken1Bal, "->", poolNewToken1Bal, "( diff:", poolNewToken1Bal-poolOldToken1Bal, ")")
-
-		println("Trader tr01")
-		println("> token0:", userOldToken0Bal, "->", userNewToken0Bal, "( diff:", userNewToken0Bal-userOldToken0Bal, ")")
-		println("> token1:", userOldToken1Bal, "->", userNewToken1Bal, "( diff:", userNewToken1Bal-userOldToken1Bal, ")")
-		println()
 	}
 }
 
@@ -394,10 +334,6 @@ func TestCollectProtocol(t *testing.T) {
 	// Make ProtocolFee via Swap by tr01 ( Mint by lp01 )
 	std.TestSetOrigCaller(lp01)
 	{
-		println("Swap #5 - with protocol fee enabled")
-		println("> direction: token0 -> token1")
-		println("> amount: 200000")
-
 		gsaOldToken0Bal := balanceOf(pool.token0, gsa)
 		gsaOldToken1Bal := balanceOf(pool.token1, gsa)
 
@@ -410,18 +346,9 @@ func TestCollectProtocol(t *testing.T) {
 
 		gsaNewToken0Bal := balanceOf(pool.token0, gsa)
 		gsaNewToken1Bal := balanceOf(pool.token1, gsa)
-
-		println("Gnoswap Admin")
-		println("> token0:", gsaOldToken0Bal, "->", gsaNewToken0Bal, "( diff:", gsaNewToken0Bal-gsaOldToken0Bal, ")")
-		println("> token1:", gsaOldToken1Bal, "->", gsaNewToken1Bal, "( diff:", gsaNewToken1Bal-gsaOldToken1Bal, ")")
-		println()
 	}
 
 	{
-		println("Swap #6 - with protocol fee enabled")
-		println("> direction: token1 -> token0")
-		println("> amount: 200000")
-
 		gsaOldToken0Bal := balanceOf(pool.token0, gsa)
 		gsaOldToken1Bal := balanceOf(pool.token1, gsa)
 
@@ -434,24 +361,29 @@ func TestCollectProtocol(t *testing.T) {
 
 		gsaNewToken0Bal := balanceOf(pool.token0, gsa)
 		gsaNewToken1Bal := balanceOf(pool.token1, gsa)
-
-		println("Gnoswap Admin")
-		println("> token0:", gsaOldToken0Bal, "->", gsaNewToken0Bal, "( diff:", gsaNewToken0Bal-gsaOldToken0Bal, ")")
-		println("> token1:", gsaOldToken1Bal, "->", gsaNewToken1Bal, "( diff:", gsaNewToken1Bal-gsaOldToken1Bal, ")")
-		println()
 	}
 }
 
 /* GETTER_API TEST */
 func TestApiGetPools(t *testing.T) {
 	gpls := ApiGetPools()
-	println(gpls)
+	jsonStr := gjson.Parse(gpls)
+
+	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())
+	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
+
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
+	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "bar_foo_500")
 }
 
 func TestApiGetPool(t *testing.T) {
-	pk := "bar_foo_500"
-	gpl := ApiGetPool(pk)
-	println(gpl)
+	gpl := ApiGetPool("bar_foo_500")
+	jsonStr := gjson.Parse(gpl)
+
+	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())
+	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
+
+	shouldEQ(t, len(jsonStr.Get("response.data.Position").Array()), 4)
 }
 
 /* HELPER */
