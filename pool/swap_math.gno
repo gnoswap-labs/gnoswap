@@ -1,6 +1,8 @@
 package pool
 
-import "gno.land/p/demo/ufmt"
+import (
+	"gno.land/p/demo/ufmt"
+)
 
 func swapMathComputeSwapStep(
 	sqrtRatioCurrentX96 bigint,

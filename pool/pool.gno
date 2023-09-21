@@ -341,7 +341,7 @@ func Swap(
 				state.tick = step.tickNext
 			}
 		} else if state.sqrtPriceX96 != step.sqrtPriceStartX96 {
-			state.tick = tickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
+			state.tick = TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
 		}
 	}
 
