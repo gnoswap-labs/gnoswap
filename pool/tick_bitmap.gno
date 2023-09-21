@@ -1,6 +1,8 @@
 package pool
 
-import "gno.land/p/demo/ufmt"
+import (
+	"gno.land/p/demo/ufmt"
+)
 
 func tickBitmapPosition(tick int32) (int16, uint8) {
 	wordPos := int16(tick / 256) // tick >> 8
@@ -75,7 +77,7 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 		next := compress + 1 + int32((bitMathLeastSignificantBit(masked)-bitPos))*tickSpacing
 		return next, initialized
 	} else {
-		next := compress + 1 + int32(int64(MAX_UINT8-bitPos))*tickSpacing
+		next := compress + 1 + int32(int64(MAX_UINT8-bigint(uint64(bitPos))))*tickSpacing
 		return next, initialized
 	}
 }

@@ -1,6 +1,8 @@
 package pool
 
-import "gno.land/p/demo/ufmt"
+import (
+	"gno.land/p/demo/ufmt"
+)
 
 func TickMathGetSqrtRatioAtTick(tick int32) bigint {
 	var absTick bigint
@@ -89,7 +91,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) bigint {
 	}
 }
 
-func tickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) int32 {
+func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) int32 {
 	require(sqrtPriceX96 >= MIN_SQRT_RATIO && sqrtPriceX96 < MAX_SQRT_RATIO, ufmt.Sprintf("[POOL] tick_math.gno__tickMathGetTickAtSqrtRatio() || Tick out of range [sqrtPriceX96(%s) >= MIN_SQRT_RATIO(%s) && sqrtPriceX96(%s) < MAX_SQRT_RATIO(%s)]", sqrtPriceX96, MIN_SQRT_RATIO, sqrtPriceX96, MAX_SQRT_RATIO))
 	ratio := sqrtPriceX96 << 32
 

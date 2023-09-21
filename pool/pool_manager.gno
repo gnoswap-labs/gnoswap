@@ -97,7 +97,7 @@ func newPool(
 	sqrtPriceX96 bigint,
 ) *Pool {
 	maxLiquidityPerTick := tickTickSpacingToMaxLiquidityPerTick(tickSpacing)
-	tick := tickMathGetTickAtSqrtRatio(sqrtPriceX96)
+	tick := TickMathGetTickAtSqrtRatio(sqrtPriceX96)
 
 	slot0 := Slot0{
 		sqrtPriceX96: sqrtPriceX96,
