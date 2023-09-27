@@ -66,11 +66,10 @@ type SinglePool struct {
 	T1Bal               bigint `json:"token1_balance"`
 	TickSpacing         int32  `json:"tick_spacing"`
 	MaxLiquidityPerTick bigint `json:"max_liquidity_per_tick"`
-	// r3v4_xxx: add below datas or not
-	// slot0               Slot0  `json:"slot0"`
-	// protocolFees ProtocolFees `json:"protocol_fees"`
-	Liquidity bigint `json:"liquidity"`
-	Position  []ApiPositionInfo
+	SqrtPriceX96        bigint `json:"sqrt_price_x96"`
+	Tick                int32  `json:"tick"`
+	Liquidity           bigint `json:"liquidity"`
+	Position            []ApiPositionInfo
 }
 
 type ResponseGetPool struct {
@@ -118,6 +117,8 @@ func ApiGetPool(key string) string {
 				T1Bal:               pool.balances.token1,
 				TickSpacing:         pool.tickSpacing,
 				MaxLiquidityPerTick: pool.maxLiquidityPerTick,
+				SqrtPriceX96:        pool.slot0.sqrtPriceX96,
+				Tick:                pool.slot0.tick,
 				Liquidity:           pool.liquidity,
 				Position:            positionList,
 			},
