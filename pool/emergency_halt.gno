@@ -16,7 +16,7 @@ var (
 
 func init() {
 	govRealm = "gno.land/r/gov"
-	halt = false
+	flagHalt = false
 }
 
 func assertCalledByGovRealm() {
