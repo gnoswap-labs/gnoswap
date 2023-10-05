@@ -76,7 +76,9 @@ type SinglePool struct {
 	Liquidity            bigint  `json:"liquidity"`
 	Ticks                []int32 `json:"ticks"`
 	TickBitmaps          []int16 `json:"tick_bitmaps"`
-	Position             []ApiPositionInfo
+	// Ticks       Ticks       `json:"ticks"`
+	// TickBitmaps TickBitmaps `json:"tick_bitmaps"`
+	Position []ApiPositionInfo
 }
 
 type ResponseGetPool struct {
@@ -92,9 +94,20 @@ func ApiGetPool(key string) string {
 		return "NO_POOL_FOUND"
 	}
 
+	ticks := pool.ticks
+	tickList := []int32{}
+	for k, _ := range ticks {
+		tickList = append(tickList, k)
+	}
+
+	tickBitmaps := pool.tickBitmaps
+	tickBitmapList := []int16{}
+	for k, _ := range tickBitmaps {
+		tickBitmapList = append(tickBitmapList, k)
+	}
+
 	positions := pool.positions
 	positionList := []ApiPositionInfo{}
-
 	for k, v := range positions {
 		owner, tl, th := posKeyDivide(k)
 
@@ -120,14 +133,21 @@ func ApiGetPool(key string) string {
 			Data SinglePool `json:"data"`
 		}{
 			Data: SinglePool{
-				T0Bal:               pool.balances.token0,
-				T1Bal:               pool.balances.token1,
-				TickSpacing:         pool.tickSpacing,
-				MaxLiquidityPerTick: pool.maxLiquidityPerTick,
-				SqrtPriceX96:        pool.slot0.sqrtPriceX96,
-				Tick:                pool.slot0.tick,
-				Liquidity:           pool.liquidity,
-				Position:            positionList,
+				T0Balance:            pool.balances.token0,
+				T1Balance:            pool.balances.token1,
+				TickSpacing:          pool.tickSpacing,
+				MaxLiquidityPerTick:  pool.maxLiquidityPerTick,
+				SqrtPriceX96:         pool.slot0.sqrtPriceX96,
+				Tick:                 pool.slot0.tick,
+				FeeProtocol:          pool.slot0.feeProtocol,
+				FeeGrowthGlobal0X128: pool.feeGrowthGlobal0X128,
+				FeeGrowthGlobal1X128: pool.feeGrowthGlobal1X128,
+				T0ProtocolFee:        pool.protocolFees.token0,
+				T1ProtocolFee:        pool.protocolFees.token1,
+				Liquidity:            pool.liquidity,
+				Ticks:                tickList,
+				TickBitmaps:          tickBitmapList,
+				Position:             positionList,
 			},
 		},
 	}

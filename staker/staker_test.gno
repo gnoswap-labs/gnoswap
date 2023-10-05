@@ -1,7 +1,7 @@
 package staker
 
 import (
-	"gjson"
+	"encoding/gjson"
 	"std"
 	"testing"
 

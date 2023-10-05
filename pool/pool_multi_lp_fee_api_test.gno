@@ -1,7 +1,8 @@
 package pool
 
 import (
-	"gjson"
+	"encoding/gjson"
+	"fmt"
 	"std"
 	"testing"
 
@@ -136,6 +137,8 @@ func TestSwap(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 9049647)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
 	shouldEQ(t, len(jsonStr.Get("response.data.Position").Array()), 1)
+
+	fmt.Printf("%+v\n", jsonStr.Get("response.data").String())
 }
 
 // GOV
