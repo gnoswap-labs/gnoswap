@@ -59,30 +59,19 @@ The contracts can be tested by deploying and executing the contract directly thr
 You can pass this step if you already created the accounts with same mnemonic shown below.
 
 ```
-gnokey add test1 --recover
-gnokey add -recover=true -index 10 gsa
-gnokey add -recover=true -index 11 lp01
-gnokey add -recover=true -index 12 lp02
-gnokey add -recover=true -index 13 tr01
-```
-
-Create testing accounts using the next mnemonic code.
-
-```
-source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast
+$ cd $WORKDIR/gnoswap
+$ _test/init_test_accounts.sh
 ```
 
 ### Testing
 
-The Gno.land blockchain must be cleaned up and run before each tests.
+The Gno.land blockchain can be run using docker.
 
 ```
-$ cd $WORKDIR/gno-for-swap/gno.land
-$ make install
-$ rm -r testdir && gnoland start
+$ docker run --rm -p 26657:26657 --platform linux/amd64 gnoswap/gnoland
 ```
 
 ```
-$ cd $WORKDIR/gnoswap/_test
-$ make -f live_test.mk all
+$ cd $WORKDIR/gnoswap
+$ make -f _test/live_test.mk all
 ```
