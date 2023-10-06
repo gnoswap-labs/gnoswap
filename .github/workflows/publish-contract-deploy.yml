@@ -1,5 +1,5 @@
 
-name: Public gnowatp contract deploy
+name: Public gnoswap contract deploy
 on:
   push:
     branches: [ "main" ]
