@@ -145,7 +145,7 @@ func ApiGetPool(key string) string {
 				Liquidity:            pool.liquidity,
 				Ticks:                tickList,
 				TickBitmaps:          tickBitmapList,
-				Position:             positionList,
+				Positions:            positionList,
 			},
 		},
 	}
