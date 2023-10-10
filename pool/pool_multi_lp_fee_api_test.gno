@@ -57,7 +57,7 @@ func TestCreatePool(t *testing.T) {
 
 	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 0)
-	shouldEQ(t, len(jsonStr.Get("response.data.Position").Array()), 0)
+	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 0)
 
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
@@ -98,7 +98,7 @@ func TestSwap(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 2957550)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8041577)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
-	shouldEQ(t, len(jsonStr.Get("response.data.Position").Array()), 1)
+	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 1)
 
 	test_price_01 := bigint(MIN_SQRT_RATIO + 1) // maximum price // swap 0 -> 1
 	test_price_10 := bigint(MAX_SQRT_RATIO - 1) // minimum price // swap 1 -> 0
@@ -112,7 +112,7 @@ func TestSwap(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 3107550)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8448096)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
-	shouldEQ(t, len(jsonStr.Get("response.data.Position").Array()), 1)
+	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 1)
 
 	Swap(pToken0, pToken1, pFee, tr01, false, bigint(601851), test_price_10)
 	// Swap(pToken0, pToken1, pFee, tr01, true, bigint(1500000), test_price_01) // two iteration // s0: 1_500_000 // s1: -3_626_984 // currentTick: 7668
@@ -121,7 +121,7 @@ func TestSwap(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 4718682)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 9049947)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
-	shouldEQ(t, len(jsonStr.Get("response.data.Position").Array()), 1)
+	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 1)
 
 	// To collect fee without removing liquidity
 	// burn 0 => collect
@@ -136,7 +136,7 @@ func TestSwap(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 4718608)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 9049647)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
-	shouldEQ(t, len(jsonStr.Get("response.data.Position").Array()), 1)
+	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 1)
 
 	fmt.Printf("%+v\n", jsonStr.Get("response.data").String())
 }

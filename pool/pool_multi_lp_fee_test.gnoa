@@ -165,7 +165,7 @@ func TestApiGetPool(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())
 	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
 
-	shouldEQ(t, len(jsonStr.Get("response.data.Position").Array()), 2)
+	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 2)
 }
 
 /* HELPER */
