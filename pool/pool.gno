@@ -382,7 +382,7 @@ func Swap(
 
 			// pool.token1.Transfer(recipient, uint64(-1*amount1))
 			bar.Transfer(a2u(recipient), uint64(-1*amount1))
-			pool.balances.token1 -= amount1
+			pool.balances.token1 += amount1
 		}
 
 		// r3v4_xxx
@@ -414,7 +414,7 @@ func Swap(
 
 			// pool.token0.Transfer(a2u(recipient), uint64(-amount0))
 			foo.Transfer(a2u(recipient), uint64(-amount0))
-			pool.balances.token0 -= amount0
+			pool.balances.token0 += amount0
 		}
 
 		// r3v4_xxx
