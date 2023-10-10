@@ -4,17 +4,14 @@
 # Test Accounts
 # gnokey add -recover=true -index 10 gsa
 # gnokey add -recover=true -index 11 lp01
-# gnokey add -recover=true -index 12 lp02
 # gnokey add -recover=true -index 13 tr01
 
 ADDR_GSA := g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4
 ADDR_LP01 := g1jqpr8r5akez83kp7ers0sfjyv2kgx45qa9qygd
-ADDR_LP02 := g126yz2f34qdxaqxelmky40dym379q0vw3yzhyrq
 ADDR_TR01 := g1wgdjecn5lylgvujzyspfzvhjm6qn4z8xqyyxdn
 
 ADDR_POOL := g1ee305k8yk0pjz443xpwtqdyep522f9g5r7d63w
 ADDR_POS := g1htpxzv2dkplvzg50nd8fswrneaxmdpwn459thx
-ADDR_STAKER := g13h5s9utqcwg3a655njen0p89txusjpfrs3vxp8
 
 TX_EXPIRE := 9999999999
 
@@ -32,20 +29,23 @@ help:
 .PHONY: all
 all: deploy faucet approve pool-setup position-mint pool-swap
 
+.PHONY: before-swap
+before-swap: deploy faucet approve pool-setup position-mint
+
 .PHONY: deploy
 deploy: deploy-foo deploy-bar deploy-gnos deploy-gnft deploy-gov deploy-pool deploy-position
 
 .PHONY: faucet
-faucet: faucet-lp01 faucet-lp02 faucet-tr01
+faucet: faucet-lp01 faucet-tr01
 
 .PHONY: approve
-approve: approve-lp01 approve-lp02 approve-tr01
+approve: approve-lp01 approve-tr01
 
 .PHONY: pool-setup
 pool-setup: pool-init pool-create
 
 .PHONY: position-mint
-position-mint: mint-01  mint-02
+position-mint: mint-01
 
 .PHONY: pool-swap-zero-to-one
 pool-swap: set-protocol-fee swap-01-200000 collect-protocol-fee
@@ -103,12 +103,6 @@ faucet-lp01:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/bar -func FaucetL -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo
 
-faucet-lp02:
-	$(info ************ [FAUCET] foo & bar to lp02 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/foo -func FaucetL -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/bar -func FaucetL -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
-	@echo
-
 faucet-tr01:
 	$(info ************ [FAUCET] foo & bar to tr01 ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/foo -func FaucetL -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
@@ -124,12 +118,6 @@ approve-lp01:
 	
 	@echo
 
-approve-lp02:
-	$(info ************ [APPROVE] foo & bar from lp02 to pool ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/foo -func Approve -args $(ADDR_POOL) -args 50000000000 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/bar -func Approve -args $(ADDR_POOL) -args 50000000000 -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
-	
-	@echo
 
 approve-tr01:
 	$(info ************ [APPROVE] foo & bar from tr01 to pool ************)
@@ -155,17 +143,9 @@ pool-create:
 # Position
 mint-01:
 	$(info ************ [POSITION] mint foo & bar // tick range 9000 ~ 11000 // by lp01   ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args foo -args bar -args 500 -args 9000 -args 11000 -args 1000000 -args 1000000 -args 1 -args 1 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args foo -args bar -args 500 -args 5000 -args 15000 -args 3000000 -args 3000000 -args 1 -args 1 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote localhost:26657 -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@$(MAKE) -f $(MAKEFILE) print-all-balance
 	@echo
-
-
-mint-02:
-	$(info ************ [POSITION] mint foo & bar // tick range 9100 ~ 12000 // by lp02   ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args foo -args bar -args 500 -args 9100 -args 12000 -args 2000000 -args 2000000 -args 1 -args 1 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
-	@$(MAKE) -f $(MAKEFILE) print-all-balance
-	@echo
-
 
 # Pool // Swap
 set-protocol-fee:
@@ -192,41 +172,16 @@ collect-protocol-fee:
 	@$(MAKE) -f $(MAKEFILE) print-all-balance
 	@echo
 
-## ETC
-# gno time.Now returns last block time, not actual time
-# so to skip time, we need new block
-# currently test3 creates new block every 5 seconds
-skip-time:
-	$(info > SKIP 3 BLOCKS)
-	@echo "" | gnokey maketx send -send 1ugnot -to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx send -send 1ugnot -to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx send -send 1ugnot -to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
 print-all-balance:
 	$(info > BALANCES)
 	@echo pool_token0: $(shell curl -s 'http://$(GNOLAND_RPC_URL)/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/foo\nBalanceOf(\"$(ADDR_POOL)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
 	@echo pool_token1: $(shell curl -s 'http://$(GNOLAND_RPC_URL)/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/bar\nBalanceOf(\"$(ADDR_POOL)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
 	@echo
-	@echo lp01_token0: $(shell curl -s 'http://$(GNOLAND_RPC_URL)/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/foo\nBalanceOf(\"$(ADDR_LP01)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
-	@echo lp01_token1: $(shell curl -s 'http://$(GNOLAND_RPC_URL)/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/bar\nBalanceOf(\"$(ADDR_LP01)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
-	@echo
-	@echo lp02_token0: $(shell curl -s 'http://$(GNOLAND_RPC_URL)/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/foo\nBalanceOf(\"$(ADDR_LP02)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
-	@echo lp02_token1: $(shell curl -s 'http://$(GNOLAND_RPC_URL)/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/bar\nBalanceOf(\"$(ADDR_LP02)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
+	@echo lp01_token0: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/foo\nBalanceOf(\"$(ADDR_LP01)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
+	@echo lp01_token1: $(shell curl -s 'http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/bar\nBalanceOf(\"$(ADDR_LP01)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
 	@echo
 	@echo tr01_token0: $(shell curl -s 'http://$(GNOLAND_RPC_URL)/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/foo\nBalanceOf(\"$(ADDR_TR01)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
 	@echo tr01_token1: $(shell curl -s 'http://$(GNOLAND_RPC_URL)/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/bar\nBalanceOf(\"$(ADDR_TR01)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
-	@echo
-
-print-lp01-reward:
-	$(info ************ [REWARD] lp01 ************)
-	@echo GNOS: $(shell curl -s 'http://$(GNOLAND_RPC_URL)/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/gnos\nBalanceOf(\"$(ADDR_LP01)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
-	@echo OBL: $(shell curl -s 'http://$(GNOLAND_RPC_URL)/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/obl\nBalanceOf(\"$(ADDR_LP01)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
-	@echo
-
-print-lp02-reward:
-	$(info ************ [REWARD] lp02 ************)
-	@echo GNOS: $(shell curl -s 'http://$(GNOLAND_RPC_URL)/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/gnos\nBalanceOf(\"$(ADDR_LP02)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
-	@echo OBL: $(shell curl -s 'http://$(GNOLAND_RPC_URL)/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/obl\nBalanceOf(\"$(ADDR_LP02)\")%22' | jq -r ".result.response.ResponseBase.Data" | base64 -d | awk -F'[ ()]' '{print $$2}')
 	@echo
 
 print-gsa-balance:
