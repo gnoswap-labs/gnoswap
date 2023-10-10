@@ -30,7 +30,7 @@ help:
 	@cat $(MAKEFILE) | grep '^[a-z][^:]*:' | cut -d: -f1 | sort | sed 's/^/  /'
 
 .PHONY: all
-all: deploy faucet approve pool-setup position-mint pool-swap
+all: deploy faucet approve pool-setup position-mint pool-swap done
 
 .PHONY: deploy
 deploy: deploy-foo deploy-bar deploy-gnos deploy-gnft deploy-gov deploy-pool deploy-position
@@ -204,6 +204,9 @@ skip-time:
 	@echo "" | gnokey maketx send -send 1ugnot -to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo "" | gnokey maketx send -send 1ugnot -to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo "" | gnokey maketx send -send 1ugnot -to g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+
+done:
+	@echo "" | gnokey maketx send -send 1ugnot -to $(ADDR_POOL) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 
 print-all-balance:
 	$(info > BALANCES)
