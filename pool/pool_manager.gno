@@ -49,7 +49,7 @@ func CreatePool(
 
 	// check tickSpacing for fee
 	tickSpacing := feeAmountTickSpacing[fee]
-	require(tickSpacing > 0, ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || tickSpacing(%s) > 0", tickSpacing))
+	require(tickSpacing > 0, ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || tickSpacing(%d) > 0", tickSpacing))
 
 	// calculate poolKey
 	poolKey := GetPoolKey(token0, token1, fee)
