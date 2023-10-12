@@ -28,7 +28,7 @@ help:
 	@cat $(MAKEFILE) | grep '^[a-z][^:]*:' | cut -d: -f1 | sort | sed 's/^/  /'
 
 .PHONY: all
-all: deploy faucet approve pool-setup position-mint pool-swap
+all: deploy faucet approve pool-setup position-mint pool-swap done
 
 .PHONY: before-swap
 before-swap: deploy faucet approve pool-setup position-mint
@@ -170,6 +170,9 @@ collect-protocol-fee:
 	@$(MAKE) -f $(MAKEFILE) print-gsa-balance
 	@$(MAKE) -f $(MAKEFILE) print-all-balance
 	@echo
+
+done:
+	@echo "" | gnokey maketx send -send 1ugnot -to $(ADDR_POOL) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid dev -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 
 print-all-balance:
 	$(info > BALANCES)
