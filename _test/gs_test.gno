@@ -74,16 +74,16 @@ func init() {
 	// println(govAddr, "// gov")
 }
 
-// 1. [POOL] Init
+// 1. [TC - POOL] Init
 func TestPoolInitManual(t *testing.T) {
 	std.TestSetOrigCaller(pc01)
 
 	pl.InitManual()
 
-	shouldPanicWithMsg(t, func() { pl.InitManual() }, "[POOl] pool_manager.gno__InitManual() || contract must not be initialized")
+	shouldPanicWithMsg(t, func() { pl.InitManual() }, "[TC - POOl] pool_manager.gno__InitManual() || contract must not be initialized")
 }
 
-// 2. [POOL] CreatePool
+// 2. [TC - POOL] CreatePool
 func TestPoolCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(pc01)
 
@@ -99,7 +99,7 @@ func TestPoolCreatePool(t *testing.T) {
 	shouldEQ(t, tmpPool.GetTickSpacing(), bigint(10))
 }
 
-// 3. [POSITION] Mint LP
+// 3. [TC - POSITION] Mint LP
 func TestPositionMint(t *testing.T) {
 	tmpPool := pl.GetPool(pToken0, pToken1, pFee)
 
@@ -171,7 +171,7 @@ func TestPositionMint(t *testing.T) {
 	}
 }
 
-// 4. [STAKER] CreateExternalIncentive
+// 4. [TC - STAKER] CreateExternalIncentive
 // Internal incentive will automatcially created via init()
 func TestStakerCreateExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
@@ -190,11 +190,11 @@ func TestStakerCreateExternalIncentive(t *testing.T) {
 		func() {
 			stk.CreateExternalIncentive("bar_foo_500", "OBL", 10_000_000_000, GetTimestamp(), GetTimestamp()+(TIMESTAMP_30DAYS*2))
 		},
-		"[STAKER] staker.gno__CreateExternalIncentive() || incentive(YmFyX2Zvb181MDBfT0JM) already exists",
+		"[TC - STAKER] staker.gno__CreateExternalIncentive() || incentive(YmFyX2Zvb181MDBfT0JM) already exists",
 	)
 }
 
-// 5. [STAKER] StakeToken
+// 5. [TC - STAKER] StakeToken
 func TestStakerStakeToken(t *testing.T) {
 	// lp01 stakes tokenId '1'
 	std.TestSetPrevAddr(lp01) // r3v4_xxx: only test code, we need to call gnft.Approve directly from user
@@ -215,7 +215,7 @@ func TestStakerStakeToken(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(bigint(2)), stakerAddr)
 }
 
-// 6. [POOL] SetFeeProtocol
+// 6. [TC - POOL] SetFeeProtocol
 func TestPoolSetFeeProtocol(t *testing.T) {
 	std.TestSetOrigCaller(pc01)
 
@@ -226,7 +226,7 @@ func TestPoolSetFeeProtocol(t *testing.T) {
 	shouldEQ(t, tmpPool.GetFeeProtocol(), bigint(134))
 }
 
-// 7. [POOL] Swap ( token0 -> token1 )
+// 7. [TC - POOL] Swap ( token0 -> token1 )
 func TestPoolSwap01(t *testing.T) {
 	tmpPool := pl.GetPool(pToken0, pToken1, pFee)
 	testPrice01 := bigint(MIN_SQRT_RATIO + 1)
@@ -283,7 +283,7 @@ func TestPoolSwap01(t *testing.T) {
 	shouldEQ(t, token1Balance(pc01), cAmount1)
 }
 
-// 8. [POSITION] Collect
+// 8. [TC - POSITION] Collect
 // * collect fee from (swap token0 > token1)
 func TestPositionCollect01(t *testing.T) {
 	{
@@ -337,7 +337,7 @@ func TestPositionCollect01(t *testing.T) {
 	}
 }
 
-// 9. [POOL] Swap ( token1 -> token0 )
+// 9. [TC - POOL] Swap ( token1 -> token0 )
 func TestPoolSwap10(t *testing.T) {
 	tmpPool := pl.GetPool(pToken0, pToken1, pFee)
 	testPrice10 := bigint(MAX_SQRT_RATIO - 1)
@@ -393,7 +393,7 @@ func TestPoolSwap10(t *testing.T) {
 	shouldEQ(t, token1Balance(pc01), cAmount1)
 }
 
-// 10. [POSITION] Collect
+// 10. [TC - POSITION] Collect
 // * collect fee from (swap token1 > token0)
 func TestPositionCollect10(t *testing.T) {
 	{
@@ -447,7 +447,7 @@ func TestPositionCollect10(t *testing.T) {
 	}
 }
 
-// 11. [STAKER] UnstakeToken
+// 11. [TC - STAKER] UnstakeToken
 func TestStakerUnstakeToken(t *testing.T) {
 	{
 		// lp01 unstakes tokenId '1'
@@ -478,7 +478,7 @@ func TestStakerUnstakeToken(t *testing.T) {
 	}
 }
 
-// 12. [STAKER] EndExternalIncentive
+// 12. [TC - STAKER] EndExternalIncentive
 func TestStakerEndExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
 	std.TestSkipHeights(1036800)
@@ -494,7 +494,7 @@ func TestStakerEndExternalIncentive(t *testing.T) {
 	shouldPanicWithMsg(
 		t,
 		func() { stk.EndExternalIncentive("bar_foo_500", "OBL") },
-		"[STAKER] staker.gno__EndIncentive() || cannot end non existent incentive(YmFyX2Zvb181MDBfT0JM)",
+		"[TC - STAKER] staker.gno__EndIncentive() || cannot end non existent incentive(YmFyX2Zvb181MDBfT0JM)",
 	)
 }
 
@@ -513,7 +513,7 @@ func a2u(addr std.Address) users.AddressOrName {
 
 func tid(tokenId interface{}) grc721.TokenID {
 	if tokenId == nil {
-		panic("[POSITION] test_helper.gno__tid() || tokenId is nil")
+		panic("[TC - POSITION] test_helper.gno__tid() || tokenId is nil")
 	}
 
 	switch tokenId.(type) {
@@ -528,7 +528,7 @@ func tid(tokenId interface{}) grc721.TokenID {
 	case grc721.TokenID:
 		return tokenId.(grc721.TokenID)
 	default:
-		panic("[STAKER] utils.gno__tid() || unsupported tokenId type")
+		panic("[TC - STAKER] utils.gno__tid() || unsupported tokenId type")
 	}
 }
 
