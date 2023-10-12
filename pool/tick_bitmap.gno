@@ -15,7 +15,7 @@ func (pool *Pool) tickBitmapFlipTick(
 	tick int32,
 	tickSpacing int32,
 ) {
-	require(tick%tickSpacing == 0, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || tick MOD tickSpacing(%s) != 0", tick%tickSpacing))
+	require(tick%tickSpacing == 0, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || tick MOD tickSpacing(%d) != 0", tick%tickSpacing))
 	wordPos, bitPos := tickBitmapPosition(tick)
 	mask := bigint(1) << uint64(bitPos)
 	requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || mask(%s) > 0", mask))

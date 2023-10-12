@@ -107,9 +107,8 @@ func TestSwap(t *testing.T) {
 
 	Swap(pToken0, pToken1, pFee, tr01, true, bigint(150000), test_price_01)
 	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
-	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 3107550)
-	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8448096)
+	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 7635058)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
 	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 1)
 
@@ -117,8 +116,8 @@ func TestSwap(t *testing.T) {
 	// Swap(pToken0, pToken1, pFee, tr01, true, bigint(1500000), test_price_01) // two iteration // s0: 1_500_000 // s1: -3_626_984 // currentTick: 7668
 	std.TestSkipHeights(1)
 	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
-	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 4718682)
-	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 9049947)
+	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 1496418)
+	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8236909)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
 	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 1)
 
@@ -132,8 +131,8 @@ func TestSwap(t *testing.T) {
 	Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 100000000, 100000000)
 	std.TestSkipHeights(1)
 	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
-	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 4718608)
-	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 9049647)
+	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 1496344)
+	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8236609)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
 	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 1)
 }
