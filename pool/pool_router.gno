@@ -115,7 +115,7 @@ func poolPathDivide(poolPath string) (string, string, uint16) {
 		panic(ufmt.Sprintf("[POOL] pool_router.gno__poolPathDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath))
 	}
 
-	feeInt, err := strconv.ParseInt(poolPathSplit[2], 10, 16)
+	feeInt, err := strconv.Atoi(poolPathSplit[2])
 	if err != nil {
 		panic(ufmt.Sprintf("[POOL] pool_router.gno__poolPathDivide() || cannot convert fee(%s) to uint16", poolPathSplit[2]))
 	}

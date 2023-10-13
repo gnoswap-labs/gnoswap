@@ -191,6 +191,7 @@ func Swap(
 	require(amountSpecified != 0, "[POOL] pool.gno__Swap() || amountSpecified can't be zero")
 
 	pool := GetPool(pToken0, pToken1, pFee)
+	require(pool.liquidity > 0, ufmt.Sprintf("[POOL] math_logic.gno__swapAmount() || pool.liquidity(%d) must be > 0", pool.liquidity))
 
 	slot0Start := pool.slot0
 	require(slot0Start.unlocked, "[POOL] pool.gno__Swap() || slot0 must be unlocked")
@@ -297,6 +298,8 @@ func Swap(
 			state.amountSpecifiedRemaining += step.amountOut
 			state.amountCalculated += (step.amountIn + step.feeAmount)
 		}
+
+		require(step.amountIn != 0 && step.amountOut != 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || step.amountIn(%d) != 0 && step.amountOut(%d) != 0", step.amountIn, step.amountOut))
 
 		if cache.feeProtocol > 0 {
 			delta := step.feeAmount / bigint(uint64(cache.feeProtocol))
