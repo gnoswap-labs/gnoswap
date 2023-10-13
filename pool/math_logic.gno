@@ -6,46 +6,21 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// calc amount0, amount1 from liquidity
-func getAmountsFromLiquidity(
-	pToken0 string,
-	pToken1 string,
-	pFee uint16,
-	tickLower int32,
-	tickUpper int32,
-	liquidityAmount bigint,
-	tick int32,
-) (bigint, bigint) {
-	require(liquidityAmount > 0, "[POOL] math_logic.gno__Calc01() || liquidityAmount must be > 0")
-
-	pool := GetPool(pToken0, pToken1, pFee)
-	_, amount0, amount1 := pool.modifyPosition(
-		ModifyPositionParams{
-			"_",
-			tickLower,
-			tickUpper,
-			liquidityAmount,
-		},
-	)
-
-	return amount0, amount1
-}
-
 // get sqrtX96 from tick
-func getSqrtRatioFromTick(
+func GetSqrtRatioFromTick(
 	tick int32,
 ) bigint {
 	return TickMathGetSqrtRatioAtTick(tick)
 }
 
 // get tick from sqrtX96
-func getTickFromSqrtRatio(
+func GetTickFromSqrtRatio(
 	sqrtX96 bigint,
 ) int32 {
 	return TickMathGetTickAtSqrtRatio(sqrtX96)
 }
 
-func swapAmount(
+func DrySwap(
 	pToken0 string,
 	pToken1 string,
 	pFee uint16,
@@ -54,28 +29,26 @@ func swapAmount(
 	amountSpecified bigint,
 	sqrtPriceLimitX96 bigint,
 ) (bigint, bigint) {
-	require(amountSpecified != 0, "[POOL] pool.gno__Swap() || amountSpecified can't be zero")
+	require(amountSpecified != 0, "[POOL] math_logic.gno__DrySwap() || amountSpecified can't be zero")
 
 	pool := GetPool(pToken0, pToken1, pFee)
+	require(pool.liquidity > 0, ufmt.Sprintf("[POOL] math_logic.gno__DrySwap() || pool.liquidity(%d) must be > 0", pool.liquidity))
 
 	slot0Start := pool.slot0
-	require(slot0Start.unlocked, "[POOL] pool.gno__Swap() || slot0 must be unlocked")
 
 	if zeroForOne {
 		require(
 			sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > MIN_SQRT_RATIO,
-			ufmt.Sprintf("[POOL] pool.gno__Swap() || SPL-zeroForOne(T)__sqrtPriceLimitX96(%s) < slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) > MIN_SQRT_RATIO(%s)",
+			ufmt.Sprintf("[POOL] math_logic.gno__DrySwap() || SPL-zeroForOne(T)__sqrtPriceLimitX96(%s) < slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) > MIN_SQRT_RATIO(%s)",
 				sqrtPriceLimitX96, slot0Start.sqrtPriceX96, sqrtPriceLimitX96, MIN_SQRT_RATIO),
 		)
 	} else {
 		require(
 			sqrtPriceLimitX96 > slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 < MAX_SQRT_RATIO,
-			ufmt.Sprintf("[POOL] pool.gno__Swap() || SPL-zeroForOne(F)__sqrtPriceLimitX96(%s) > slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) < MAX_SQRT_RATIO(%s)",
+			ufmt.Sprintf("[POOL] math_logic.gno__DrySwap() || SPL-zeroForOne(F)__sqrtPriceLimitX96(%s) > slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) < MAX_SQRT_RATIO(%s)",
 				sqrtPriceLimitX96, slot0Start.sqrtPriceX96, sqrtPriceLimitX96, MAX_SQRT_RATIO),
 		)
 	}
-
-	pool.slot0.unlocked = false
 
 	cache := SwapCache{
 		liquidityStart: pool.liquidity,
@@ -149,6 +122,8 @@ func swapAmount(
 			uint32(pool.fee),
 		)
 
+		require(step.amountIn != 0 && step.amountOut != 0, ufmt.Sprintf("[POOL] math_logic.gno__DrySwap() || step.amountIn(%d) != 0 && step.amountOut(%d) != 0", step.amountIn, step.amountOut))
+
 		if exactInput {
 			state.amountSpecifiedRemaining -= step.amountIn + step.feeAmount
 			state.amountCalculated -= step.amountOut
@@ -157,7 +132,6 @@ func swapAmount(
 			state.amountCalculated += (step.amountIn + step.feeAmount)
 		}
 	}
-
 	// END LOOP
 
 	var amount0, amount1 bigint
@@ -169,6 +143,11 @@ func swapAmount(
 		amount1 = amountSpecified - state.amountSpecifiedRemaining
 	}
 
-	pool.slot0.unlocked = true
+	if zeroForOne {
+		require(pool.balances.token0 > amount0, ufmt.Sprintf("[POOL] math_logic.gno__DrySwap() || pool.balances.token0(%s) > amount0(%s)", pool.balances.token0, amount0))
+	} else {
+		require(pool.balances.token1 > amount1, ufmt.Sprintf("[POOL] math_logic.gno__DrySwap() || pool.balances.token1(%s) > amount1(%s)", pool.balances.token1, amount1))
+	}
+
 	return amount0, amount1
 }
