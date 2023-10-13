@@ -1,0 +1,160 @@
+package pool
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/testutils"
+	"gno.land/r/demo/users"
+
+	bar "gno.land/r/bar"
+	foo "gno.land/r/foo"
+
+	pos "gno.land/r/position"
+)
+
+var (
+	gsa  = testutils.TestAddress("gsa")  // Gnoswap Admin
+	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
+
+	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
+)
+
+// 1. Init
+func TestInitManual(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	InitManual()
+	std.TestSkipHeights(1)
+}
+
+func TestCreatePool(t *testing.T) {
+	CreatePool("foo", "bar", uint16(500), 5602223755577321903022134995689) // 85_176 == x4999.904
+	std.TestSkipHeights(1)
+	// fee = 500
+	// tickSpacing = 10
+
+	// sqrtPriceX96 = 130621891405341611593710811006
+	// tick = 10_000
+	// ratio = 1.648%
+
+	CreatePool("foo", "bar", uint16(3000), 255973311431586396528129062412) // 23456 == 3.23%
+	std.TestSkipHeights(1)
+	// fee = 3000
+	// tickSpacing = 60
+
+	// sqrtPriceX96 = 255973311431586396528129062412
+	// tick = 23_456
+	// ratio = 3.23%
+}
+
+func TestPositionMint500(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	_, _, m0, m1 := pos.Mint(
+		"foo",       // token0
+		"bar",       // token1
+		uint16(500), // fee 500 ~= tickSpacing 10
+		84220,       // tickLower // x4544
+		86130,       // tickUpper // x5500
+		30000000,    // amount0Desired
+		30000000,    // amount1Desired
+		0,           // amount0Min
+		0,           // amount1Min
+		9999999999,  // deadline
+	)
+
+	shouldEQ(t, m0, bigint(5987)) // x5010.8565224653
+	shouldEQ(t, m1, bigint(29999998))
+
+	shouldEQ(t, bigint(fooBalance(poolAddr)), m0)
+	shouldEQ(t, bigint(barBalance(poolAddr)), m1)
+}
+
+func TestPositionMint3000(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	_, _, m0, m1 := pos.Mint(
+		"foo",        // token0
+		"bar",        // token1
+		uint16(3000), // fee 3000 ~= tickSpacing  60
+		22800,        // tickLower
+		24000,        // tickUpper
+		1000,         // amount0Desired
+		1000,         // amount1Desired
+		0,            // amount0Min
+		0,            // amount1Min
+		9999999999,   // deadline
+	)
+	shouldEQ(t, m0, bigint(79))
+	shouldEQ(t, m1, bigint(999))
+}
+
+func TestFindBestPoolTruePositive(t *testing.T) {
+	bestPath := FindBestPool(
+		"foo", // tokenA
+		"bar", // tokenB
+		true,  // zeroForOne
+		500,   // amountSpecified
+	)
+	shouldEQ(t, bestPath, "bar_foo_500")
+}
+
+func TestFindBestPoolTrueNegative(t *testing.T) {
+	bestPath := FindBestPool(
+		"foo", // tokenA
+		"bar", // tokenB
+		true,  // zeroForOne
+		-5000, // amountSpecified
+	)
+	shouldEQ(t, bestPath, "bar_foo_500")
+}
+
+func TestFindBestPoolFalsePositive(t *testing.T) {
+	bestPath := FindBestPool(
+		"foo", // tokenA
+		"bar", // tokenB
+		false, // zeroForOne
+		50,    // amountSpecified
+	)
+	shouldEQ(t, bestPath, "bar_foo_3000")
+}
+
+func TestFindBestPoolFalseNegative(t *testing.T) {
+	bestPath := FindBestPool(
+		"foo", // tokenA
+		"bar", // tokenB
+		false, // zeroForOne
+		-1234, // amountSpecified
+	)
+	shouldEQ(t, bestPath, "bar_foo_500")
+}
+
+func TestFindBestPoolWrong(t *testing.T) {
+	shouldPanic(t, func() { FindBestPool("foo", "bar", true, 0) })
+}
+
+/* HELPER */
+func shouldEQ(t *testing.T, got, expected interface{}) {
+	if got != expected {
+		t.Errorf("got %v, expected %v", got, expected)
+	}
+}
+
+func shouldPanic(t *testing.T, f func()) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic")
+		}
+	}()
+	f()
+}
+
+func fooBalance(addr std.Address) uint64 {
+	user := users.AddressOrName(addr)
+	return foo.BalanceOf(user)
+}
+
+func barBalance(addr std.Address) uint64 {
+	user := users.AddressOrName(addr)
+	return bar.BalanceOf(user)
+}
