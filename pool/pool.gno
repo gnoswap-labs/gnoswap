@@ -249,7 +249,7 @@ func Swap(
 		}
 	}
 
-	for state.amountSpecifiedRemaining != 0 && state.sqrtPriceX96 != sqrtPriceLimitX96 {
+	for state.amountSpecifiedRemaining != 0 && state.amountSpecifiedRemaining != -1 && state.sqrtPriceX96 != sqrtPriceLimitX96 {
 		var step StepComputations
 
 		step.sqrtPriceStartX96 = state.sqrtPriceX96
