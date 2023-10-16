@@ -98,7 +98,7 @@ func TestFindBestPoolTruePositive(t *testing.T) {
 		500,   // amountSpecified
 	)
 	jsonStr := gjson.Parse(bestPoolPathDetail)
-	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 5987)
+	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_500")
 }
 
 func TestFindBestPoolTrueNegative(t *testing.T) {
@@ -109,7 +109,7 @@ func TestFindBestPoolTrueNegative(t *testing.T) {
 		-5000, // amountSpecified
 	)
 	jsonStr := gjson.Parse(bestPoolPathDetail)
-	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 5987)
+	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_500")
 }
 
 func TestFindBestPoolFalsePositive(t *testing.T) {
@@ -120,7 +120,7 @@ func TestFindBestPoolFalsePositive(t *testing.T) {
 		50,    // amountSpecified
 	)
 	jsonStr := gjson.Parse(bestPoolPathDetail)
-	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 79)
+	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_3000")
 }
 
 func TestFindBestPoolFalseNegative(t *testing.T) {
@@ -131,7 +131,7 @@ func TestFindBestPoolFalseNegative(t *testing.T) {
 		-1234, // amountSpecified
 	)
 	jsonStr := gjson.Parse(bestPoolPathDetail)
-	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 5987)
+	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_500")
 }
 
 func TestFindBestPoolWrong(t *testing.T) {
