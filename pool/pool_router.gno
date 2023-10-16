@@ -101,10 +101,10 @@ func FindBestPool(
 	}
 
 	if zeroForOne == true { // if token0 is being sold to buy token1, then we want to find the pool with the largest tick (more token1 can be bought)
-		return poolWithTick[maxTick]
+		return ApiGetPool(poolWithTick[maxTick])
 
 	} else { // if token1 is being sold to buy token0, then we want to find the pool with the smallest tick (more token0 can be bought)
-		return poolWithTick[minTick]
+		return ApiGetPool(poolWithTick[minTick])
 	}
 }
 

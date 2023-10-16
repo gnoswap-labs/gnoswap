@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"encoding/gjson"
 	"std"
 	"testing"
 
@@ -90,43 +91,47 @@ func TestPositionMint3000(t *testing.T) {
 }
 
 func TestFindBestPoolTruePositive(t *testing.T) {
-	bestPath := FindBestPool(
+	bestPoolPathDetail := FindBestPool(
 		"foo", // tokenA
 		"bar", // tokenB
 		true,  // zeroForOne
 		500,   // amountSpecified
 	)
-	shouldEQ(t, bestPath, "bar_foo_500")
+	jsonStr := gjson.Parse(bestPoolPathDetail)
+	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_500")
 }
 
 func TestFindBestPoolTrueNegative(t *testing.T) {
-	bestPath := FindBestPool(
+	bestPoolPathDetail := FindBestPool(
 		"foo", // tokenA
 		"bar", // tokenB
 		true,  // zeroForOne
 		-5000, // amountSpecified
 	)
-	shouldEQ(t, bestPath, "bar_foo_500")
+	jsonStr := gjson.Parse(bestPoolPathDetail)
+	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_500")
 }
 
 func TestFindBestPoolFalsePositive(t *testing.T) {
-	bestPath := FindBestPool(
+	bestPoolPathDetail := FindBestPool(
 		"foo", // tokenA
 		"bar", // tokenB
 		false, // zeroForOne
 		50,    // amountSpecified
 	)
-	shouldEQ(t, bestPath, "bar_foo_3000")
+	jsonStr := gjson.Parse(bestPoolPathDetail)
+	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_3000")
 }
 
 func TestFindBestPoolFalseNegative(t *testing.T) {
-	bestPath := FindBestPool(
+	bestPoolPathDetail := FindBestPool(
 		"foo", // tokenA
 		"bar", // tokenB
 		false, // zeroForOne
 		-1234, // amountSpecified
 	)
-	shouldEQ(t, bestPath, "bar_foo_500")
+	jsonStr := gjson.Parse(bestPoolPathDetail)
+	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_500")
 }
 
 func TestFindBestPoolWrong(t *testing.T) {

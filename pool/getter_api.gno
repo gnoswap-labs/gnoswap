@@ -62,6 +62,7 @@ type ApiPositionInfo struct {
 }
 
 type SinglePool struct {
+	PoolPath             string            `json:"pool_path"`
 	T0Balance            bigint            `json:"token0_balance"`
 	T1Balance            bigint            `json:"token1_balance"`
 	TickSpacing          int32             `json:"tick_spacing"`
@@ -131,6 +132,7 @@ func ApiGetPool(key string) string {
 			Data SinglePool `json:"data"`
 		}{
 			Data: SinglePool{
+				PoolPath:             key,
 				T0Balance:            pool.balances.token0,
 				T1Balance:            pool.balances.token1,
 				TickSpacing:          pool.tickSpacing,
