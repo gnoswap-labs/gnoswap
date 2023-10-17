@@ -144,9 +144,9 @@ func DrySwap(
 	}
 
 	if zeroForOne {
-		require(pool.balances.token0 > amount0, ufmt.Sprintf("[POOL] math_logic.gno__DrySwap() || pool.balances.token0(%s) > amount0(%s)", pool.balances.token0, amount0))
+		require(pool.balances.token1 > amount1, ufmt.Sprintf("[POOL] math_logic.gno__DrySwap()_ZFO_T || pool.balances.token1(%s) > amount1(%s)", pool.balances.token1, amount1))
 	} else {
-		require(pool.balances.token1 > amount1, ufmt.Sprintf("[POOL] math_logic.gno__DrySwap() || pool.balances.token1(%s) > amount1(%s)", pool.balances.token1, amount1))
+		require(pool.balances.token0 > amount0, ufmt.Sprintf("[POOL] math_logic.gno__DrySwap()_ZFO_F || pool.balances.token0(%s) > amount0(%s)", pool.balances.token0, amount0))
 	}
 
 	return amount0, amount1
