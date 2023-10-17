@@ -36,19 +36,35 @@ func FindBestPool(
 		continue
 	} else if zeroForOne == true && amountSpecified > 0 {
 		for _, singlePool := range foundPool {
-			p := GetPoolFromPoolKey(singlePool)
-			poolSqrtX96 := p.slot0.sqrtPriceX96
-			poolPrice := poolSqrtX96 * poolSqrtX96 / Q96 / Q96
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						continue
+					}
+				}()
 
-			pool := GetPoolFromPoolKey(singlePool)
-			if pool.balances.token1 > amountSpecified*poolPrice { // must be bigger (can't be equal due to fee)
-				firstSelectedPool = append(firstSelectedPool, singlePool)
-			}
+				_, _, fee := poolPathDivide(singlePool)
+				es0, es1 := DrySwap(
+					tokenA,
+					tokenB,
+					fee,
+					"",
+					true,
+					amountSpecified,
+					MIN_PRICE,
+				)
+
+				pool := GetPoolFromPoolKey(singlePool)
+				if pool.balances.token1 > (-1 * es1) { // must be bigger (can't be equal due to fee)
+					firstSelectedPool = append(firstSelectedPool, singlePool)
+				}
+			}()
 		}
 
 	} else if zeroForOne == true && amountSpecified < 0 {
 		for _, singlePool := range foundPool {
 			pool := GetPoolFromPoolKey(singlePool)
+
 			if pool.balances.token1 > (-1 * amountSpecified) { // must be bigger (can't be equal due to fee)
 				firstSelectedPool = append(firstSelectedPool, singlePool)
 			}
@@ -56,14 +72,29 @@ func FindBestPool(
 
 	} else if zeroForOne == false && amountSpecified > 0 {
 		for _, singlePool := range foundPool {
-			p := GetPoolFromPoolKey(singlePool)
-			poolSqrtX96 := p.slot0.sqrtPriceX96
-			poolPrice := poolSqrtX96 * poolSqrtX96 / Q96 / Q96
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						continue
+					}
+				}()
 
-			pool := GetPoolFromPoolKey(singlePool)
-			if pool.balances.token0 > amountSpecified/poolPrice { // must be bigger (can't be equal due to fee)
-				firstSelectedPool = append(firstSelectedPool, singlePool)
-			}
+				_, _, fee := poolPathDivide(singlePool)
+				es0, es1 := DrySwap(
+					tokenA,
+					tokenB,
+					fee,
+					"",
+					false,
+					amountSpecified,
+					MAX_PRICE,
+				)
+
+				pool := GetPoolFromPoolKey(singlePool)
+				if pool.balances.token1 > (-1 * es0) { // must be bigger (can't be equal due to fee)
+					firstSelectedPool = append(firstSelectedPool, singlePool)
+				}
+			}()
 		}
 
 	} else if zeroForOne == false && amountSpecified < 0 {
