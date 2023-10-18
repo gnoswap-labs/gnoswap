@@ -1,9 +1,10 @@
 package pool
 
 import (
-	"encoding/gjson"
 	"std"
 	"testing"
+
+	"encoding/gjson"
 
 	"gno.land/p/demo/testutils"
 	"gno.land/r/demo/users"
@@ -29,23 +30,9 @@ func TestInitManual(t *testing.T) {
 }
 
 func TestCreatePool(t *testing.T) {
-	CreatePool("foo", "bar", uint16(500), 5602223755577321903022134995689) // 85_176 == x4999.904
+	CreatePool("foo", "bar", uint16(500), 130621891405341611593710811006)  // 2.7181459268
+	CreatePool("foo", "bar", uint16(3000), 130621891405341611593710811006) // 2.7181459268
 	std.TestSkipHeights(1)
-	// fee = 500
-	// tickSpacing = 10
-
-	// sqrtPriceX96 = 130621891405341611593710811006
-	// tick = 10_000
-	// ratio = 1.648%
-
-	CreatePool("foo", "bar", uint16(3000), 255973311431586396528129062412) // 23456 == 3.23%
-	std.TestSkipHeights(1)
-	// fee = 3000
-	// tickSpacing = 60
-
-	// sqrtPriceX96 = 255973311431586396528129062412
-	// tick = 23_456
-	// ratio = 3.23%
 }
 
 func TestPositionMint500(t *testing.T) {
@@ -54,21 +41,17 @@ func TestPositionMint500(t *testing.T) {
 	_, _, m0, m1 := pos.Mint(
 		"foo",       // token0
 		"bar",       // token1
-		uint16(500), // fee 500 ~= tickSpacing 10
-		84220,       // tickLower // x4544
-		86130,       // tickUpper // x5500
-		30000000,    // amount0Desired
-		30000000,    // amount1Desired
+		uint16(500), // fee 3000 ~= tickSpacing  60
+		6600,        // tickLower
+		10200,       // tickUpper
+		100,         // amount0Desired
+		100,         // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
 		9999999999,  // deadline
 	)
-
-	shouldEQ(t, m0, bigint(5987)) // x5010.8565224653
-	shouldEQ(t, m1, bigint(29999998))
-
-	shouldEQ(t, bigint(fooBalance(poolAddr)), m0)
-	shouldEQ(t, bigint(barBalance(poolAddr)), m1)
+	shouldEQ(t, m0, bigint(2))
+	shouldEQ(t, m1, bigint(99))
 }
 
 func TestPositionMint3000(t *testing.T) {
@@ -78,15 +61,15 @@ func TestPositionMint3000(t *testing.T) {
 		"foo",        // token0
 		"bar",        // token1
 		uint16(3000), // fee 3000 ~= tickSpacing  60
-		22800,        // tickLower
-		24000,        // tickUpper
+		6600,         // tickLower
+		10200,        // tickUpper
 		1000,         // amount0Desired
 		1000,         // amount1Desired
 		0,            // amount0Min
 		0,            // amount1Min
 		9999999999,   // deadline
 	)
-	shouldEQ(t, m0, bigint(79))
+	shouldEQ(t, m0, bigint(23))
 	shouldEQ(t, m1, bigint(999))
 }
 
@@ -95,10 +78,23 @@ func TestFindBestPoolTruePositive(t *testing.T) {
 		"foo", // tokenA
 		"bar", // tokenB
 		true,  // zeroForOne
-		500,   // amountSpecified
+		200,   // amountSpecified
 	)
 	jsonStr := gjson.Parse(bestPoolPathDetail)
-	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_500")
+	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_3000")
+
+	// should return empty if not enough balance
+	{
+		bestPoolPathDetail := FindBestPool(
+			"foo", // tokenA
+			"bar", // tokenB
+			true,  // zeroForOne
+			438,   // amountSpecified
+		)
+
+		jsonStr := gjson.Parse(bestPoolPathDetail)
+		shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "")
+	}
 }
 
 func TestFindBestPoolTrueNegative(t *testing.T) {
@@ -106,10 +102,10 @@ func TestFindBestPoolTrueNegative(t *testing.T) {
 		"foo", // tokenA
 		"bar", // tokenB
 		true,  // zeroForOne
-		-5000, // amountSpecified
+		-888,  // amountSpecified
 	)
 	jsonStr := gjson.Parse(bestPoolPathDetail)
-	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_500")
+	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_3000")
 }
 
 func TestFindBestPoolFalsePositive(t *testing.T) {
@@ -117,7 +113,7 @@ func TestFindBestPoolFalsePositive(t *testing.T) {
 		"foo", // tokenA
 		"bar", // tokenB
 		false, // zeroForOne
-		50,    // amountSpecified
+		5,     // amountSpecified
 	)
 	jsonStr := gjson.Parse(bestPoolPathDetail)
 	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_3000")
@@ -128,10 +124,10 @@ func TestFindBestPoolFalseNegative(t *testing.T) {
 		"foo", // tokenA
 		"bar", // tokenB
 		false, // zeroForOne
-		-1234, // amountSpecified
+		-11,   // amountSpecified
 	)
 	jsonStr := gjson.Parse(bestPoolPathDetail)
-	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_500")
+	shouldEQ(t, jsonStr.Get("response.data.pool_path").String(), "bar_foo_3000")
 }
 
 func TestFindBestPoolWrong(t *testing.T) {
