@@ -37,16 +37,16 @@ func init() {
 	bar.Mint(tr01, 50000000)
 
 	bar.Approve(lp01, poolAddr, 50000000)
-	bar.Approve(lp02, poolAddr, 50000000)
-	bar.Approve(lp03, poolAddr, 50000000)
+	// bar.Approve(lp02, poolAddr, 50000000)
+	// bar.Approve(lp03, poolAddr, 50000000)
 	bar.Approve(tr01, poolAddr, 50000000)
 
-	bar.Approve(lp01, lp01, 50000000)
-	bar.Approve(lp02, lp02, 50000000)
-	bar.Approve(lp03, lp03, 50000000)
-	bar.Approve(tr01, tr01, 50000000)
+	// bar.Approve(lp01, lp01, 50000000)
+	// bar.Approve(lp02, lp02, 50000000)
+	// bar.Approve(lp03, lp03, 50000000)
+	// bar.Approve(tr01, tr01, 50000000)
 
-	bar.Approve(posAddr, poolAddr, 50000000)
+	// bar.Approve(poolAddr, registryAddr, 50000000)
 }
 
 // method proxies as public functions.
@@ -80,7 +80,6 @@ func Allowance(owner, spender users.AddressOrName) uint64 {
 // setters.
 
 func Transfer(to users.AddressOrName, amount uint64) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	err := bar.Transfer(caller, to.Resolve(), amount)
 	if err != nil {
@@ -89,7 +88,6 @@ func Transfer(to users.AddressOrName, amount uint64) {
 }
 
 func Approve(spender users.AddressOrName, amount uint64) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	err := bar.Approve(caller, spender.Resolve(), amount)
 	if err != nil {
@@ -98,8 +96,8 @@ func Approve(spender users.AddressOrName, amount uint64) {
 }
 
 func TransferFrom(from, to users.AddressOrName, amount uint64) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
+
 	err := bar.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
@@ -111,7 +109,6 @@ func TransferFrom(from, to users.AddressOrName, amount uint64) {
 func Faucet() {
 	// FIXME: add limits?
 	// FIXME: add payment in gnot?
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	bar.Mint(caller, 1000*10000) // 1k
 }
@@ -119,7 +116,6 @@ func Faucet() {
 func FaucetL() {
 	// FIXME: add limits?
 	// FIXME: add payment in gnot?
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	bar.Mint(caller, 50000000000) // 50_000_000_000
 }
@@ -127,14 +123,12 @@ func FaucetL() {
 // administration.
 
 func Mint(address users.AddressOrName, amount uint64) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 	bar.Mint(address.Resolve(), amount)
 }
 
 func Burn(address users.AddressOrName, amount uint64) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 	bar.Burn(address.Resolve(), amount)
