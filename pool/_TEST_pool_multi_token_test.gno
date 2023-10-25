@@ -152,11 +152,102 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, bigint(43457))
 }
 
-// 8. Burn Foo:Bar Liquidity by lp01
+// 8. Collect Foo:Bar Fees by lp01
+func TestCollectFooBarFees(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+	std.TestSetPrevRealm("gno.land/r/position")
+
+	oldLp01FooBalance := balanceOfByRegisterCall(fooPath, lp01)
+	oldLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	oldPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
+	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+
+	// burn 0 to collect swap fees
+	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, 0)
+
+	c0, c1 := Collect(
+		fooPath,
+		barPath,
+		pFee,
+		lp01,
+		test_tickLower,
+		test_tickUpper,
+		100_000,
+		100_000,
+	)
+
+	shouldNEQ(t, c0, bigint(0)) // swap was foo > bar, so only foo has fees
+	shouldEQ(t, c1, bigint(0))  // swap was foo > bar, so bar has no fees
+
+	newLp01FooBalance := balanceOfByRegisterCall(fooPath, lp01)
+	newLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	newPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
+	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+
+	shouldEQ(t, newLp01FooBalance-oldLp01FooBalance, uint64(c0))
+	shouldEQ(t, newLp01BarBalance-oldLp01BarBalance, uint64(c1))
+	shouldEQ(t, oldPoolFooBalance-newPoolFooBalance, uint64(c0))
+	shouldEQ(t, oldPoolBarBalance-newPoolBarBalance, uint64(c1))
+}
+
+// 9. Burn Foo:Bar Liquidity by lp01
 func TestBurnFooBarLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
+	std.TestSetPrevRealm("gno.land/r/position")
 
-	
+	pool := GetPool(fooPath, barPath, pFee)
+	poolOldLiquidity := pool.GetLiquidity()
+
+	b0, b1 := Burn(
+		fooPath,
+		barPath,
+		pFee,
+		test_tickLower,
+		test_tickUpper,
+		test_liquidityExpect,
+	)
+
+	shouldNEQ(t, b0, bigint(0))
+	shouldNEQ(t, b1, bigint(0))
+
+	poolNewLiquidity := pool.GetLiquidity()
+
+	shouldEQ(t, poolOldLiquidity-poolNewLiquidity, test_liquidityExpect)
+}
+
+// 10. Collect Foo:Bar burned Liquidity by lp01
+func TestCollectFooBarLiquidity(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+	std.TestSetPrevRealm("gno.land/r/position")
+
+	oldLp01FooBalance := balanceOfByRegisterCall(fooPath, lp01)
+	oldLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	oldPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
+	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+
+	c0, c1 := Collect(
+		fooPath,
+		barPath,
+		pFee,
+		lp01,
+		test_tickLower,
+		test_tickUpper,
+		100_000,
+		100_000,
+	)
+
+	shouldNEQ(t, c0, bigint(0))
+	shouldNEQ(t, c1, bigint(0))
+
+	newLp01FooBalance := balanceOfByRegisterCall(fooPath, lp01)
+	newLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	newPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
+	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+
+	shouldEQ(t, newLp01FooBalance-oldLp01FooBalance, uint64(c0))
+	shouldEQ(t, newLp01BarBalance-oldLp01BarBalance, uint64(c1))
+	shouldEQ(t, oldPoolFooBalance-newPoolFooBalance, uint64(c0))
+	shouldEQ(t, oldPoolBarBalance-newPoolBarBalance, uint64(c1))
 }
 
 /* HELPER */

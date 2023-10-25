@@ -125,7 +125,7 @@ func Burn(
 	return amount0, amount1
 }
 
-// // only position contract can call this function
+// only position contract can call this function
 func Collect(
 	pToken0Path string,
 	pToken1Path string,
@@ -154,10 +154,10 @@ func Collect(
 	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__Collect() || amount1(%s) >= 0", amount1))
 
 	require(pool.balances.token0 >= amount0, ufmt.Sprintf("[POOL] pool.gno__Collect() || pool.balances.token0(%s) >= amount0(%s)", pool.balances.token0, amount0))
-	transferFromByRegisterCall(pToken0Path, GetOrigPkgAddr(), recipient, uint64(amount0))
+	transferByRegisterCall(pToken0Path, recipient, uint64(amount0))
 
 	require(pool.balances.token1 >= amount1, ufmt.Sprintf("[POOL] pool.gno__Collect() || pool.balances.token1(%s) >= amount1(%s)", pool.balances.token1, amount1))
-	transferFromByRegisterCall(pToken1Path, GetOrigPkgAddr(), recipient, uint64(amount1))
+	transferByRegisterCall(pToken1Path, recipient, uint64(amount1))
 
 	// adjust position
 	position.tokensOwed0 -= amount0
