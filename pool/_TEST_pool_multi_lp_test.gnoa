@@ -6,10 +6,8 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/r/demo/users"
 
-	bar "gno.land/r/bar"
-	foo "gno.land/r/foo"
+	_ "gno.land/r/grc20_wrapper"
 )
 
 var (
@@ -21,13 +19,14 @@ var (
 
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 
-	posAddr = std.DerivePkgAddr("gno.land/r/position")
+	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
+	posAddr  = std.DerivePkgAddr("gno.land/r/position")
 )
 
 var (
 	// Common
-	pToken0 = "foo"
-	pToken1 = "bar"
+	fooPath = "gno.land/r/foo" // token1
+	barPath = "gno.land/r/bar" // token2
 	pFee    = uint16(500)
 
 	test_tickLower       = int32(9000)
@@ -42,50 +41,21 @@ var (
 func TestFactoryCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	InitManual()
-	CreatePool("foo", "bar", pFee, 130621891405341611593710811006)
-
-	// fee
-	// 500		= 0.05% // USv3 default
-	// 3000		= 0.3% // USv3 default
-	// 10000	= 1% // USv3 default
+	CreatePool(fooPath, barPath, pFee, 130621891405341611593710811006)
 
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
-
-	// Approve
-	std.TestSetOrigCaller(lp01)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	foo.Approve(users.AddressOrName(lp01), 50000000)
-	bar.Approve(users.AddressOrName(lp01), 50000000)
-
-	std.TestSetOrigCaller(lp02)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	foo.Approve(users.AddressOrName(lp02), 50000000)
-	bar.Approve(users.AddressOrName(lp02), 50000000)
-
-	std.TestSetOrigCaller(lp03)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	foo.Approve(users.AddressOrName(lp03), 50000000)
-	bar.Approve(users.AddressOrName(lp03), 50000000)
-
-	std.TestSetOrigCaller(tr01)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	foo.Approve(users.AddressOrName(tr01), 50000000)
-	bar.Approve(users.AddressOrName(tr01), 50000000)
+	shouldPanic(t, func() { CreatePool(fooPath, barPath, 500, 130621891405341611593710811006) })
 }
 
 // 2. Mint by lp01
 func TestMint(t *testing.T) {
 	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
+
 	Mint(
-		pToken0,
-		pToken1,
+		fooPath,
+		barPath,
 		pFee,
 		posAddr,
 		test_tickLower,
@@ -93,20 +63,20 @@ func TestMint(t *testing.T) {
 		test_liquidityExpect,
 	)
 
-	pool := GetPool(pToken0, pToken1, pFee)
+	pool := GetPool(fooPath, barPath, pFee)
 	test_liquidity := pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect)
 
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
 
-	m81, m82 := Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	m101, m102 := Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	m81, m82 := Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	m101, m102 := Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
 
 	shouldNEQ(t, m81, bigint(0))
 	shouldNEQ(t, m82, bigint(0))
@@ -117,27 +87,27 @@ func TestMint(t *testing.T) {
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
 	// tickLower > currentTick == don't add to current liquidity
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower2, test_tickUpper2, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower2, test_tickUpper2, test_liquidityExpect)
 
 	// tickUpper < current tick == don't add to current liquidity
-	Mint(pToken0, pToken1, pFee, posAddr, -test_tickUpper2, -test_tickLower2, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, -test_tickUpper2, -test_tickLower2, test_liquidityExpect)
 
 	// tickUpper < tickLower == don't add to current liquidity
-	Mint(pToken0, pToken1, pFee, posAddr, -test_tickUpper, -test_tickLower, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, -test_tickUpper, -test_tickLower, test_liquidityExpect)
 
 	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
 
 	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*20)
@@ -148,34 +118,34 @@ func TestBurn(t *testing.T) {
 	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
 
-	b11, b12 := Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect)
-	b21, b22 := Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect)
+	b11, b12 := Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect)
+	b21, b22 := Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect)
 	shouldEQ(t, b11, b21)
 	shouldEQ(t, b12, b22)
 
-	pool := GetPool(pToken0, pToken1, pFee)
+	pool := GetPool(fooPath, barPath, pFee)
 	test_liquidity := pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*18)
 
-	Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*8)
+	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*8)
 	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
-	Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, 1)
+	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, 1)
 	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(9999))
 
-	Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, 999)
+	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, 999)
 	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*9)
 
-	Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*9)
+	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*9)
 	test_liquidity = pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	// can't burn when liq is 0
-	// Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect)
-	shouldPanic(t, func() { Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect) })
+	// Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect)
+	shouldPanic(t, func() { Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect) })
 }
 
 // 4. Collect
@@ -184,44 +154,44 @@ func TestCollect(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// withdraw all token before test `Collect`
-	Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
+	Collect(fooPath, barPath, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 
 	// pool should have zero liquidity
-	pool := GetPool(pToken0, pToken1, pFee)
+	pool := GetPool(fooPath, barPath, pFee)
 	test_liquidity := pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
-	Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
-	c11, c12 := Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	c11, c12 := Collect(fooPath, barPath, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
-	Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
-	c21, c22 := Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	c21, c22 := Collect(fooPath, barPath, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 
 	shouldEQ(t, c11, c21)
 	shouldEQ(t, c12, c22)
 
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
-	Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
-	c31, c32 := Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 100, 100)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	c31, c32 := Collect(fooPath, barPath, pFee, lp01, test_tickLower, test_tickUpper, 100, 100)
 	shouldEQ(t, c31, bigint(100))
 	shouldEQ(t, c32, bigint(100))
 
-	c41, c42 := Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
+	c41, c42 := Collect(fooPath, barPath, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 	shouldEQ(t, c41, c21-bigint(100))
 	shouldEQ(t, c42, c22-bigint(100))
 
 	// Mint > No Burn => nothing to collect
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
-	// Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
-	c51, c52 := Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	// Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	c51, c52 := Collect(fooPath, barPath, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 	shouldEQ(t, c51, bigint(0))
 	shouldEQ(t, c52, bigint(0))
 
 	// Burn Now => something to collect
-	Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
-	c61, c62 := Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
+	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	c61, c62 := Collect(fooPath, barPath, pFee, lp01, test_tickLower, test_tickUpper, 50000000, 50000000)
 	shouldNEQ(t, c61, bigint(0))
 	shouldNEQ(t, c62, bigint(0))
 }
@@ -229,150 +199,147 @@ func TestCollect(t *testing.T) {
 // 5. Swap by tr01, Mint by lp02 ~ lp03
 func TestSwap(t *testing.T) {
 	std.TestSetPrevRealm("gno.land/r/position")
-	pool := GetPool(pToken0, pToken1, pFee)
+	pool := GetPool(fooPath, barPath, pFee)
 
 	std.TestSetOrigCaller(lp02)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*10000)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*10000)
 
 	std.TestSetOrigCaller(lp03)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*10000)
-
-	// Swap several times
-	test_price := bigint(MIN_SQRT_RATIO + 1) // maximum price
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*10000)
 
 	{
-		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolOldToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userOldToken0Bal := balanceOf(pool.token0, tr01)
-		userOldToken1Bal := balanceOf(pool.token1, tr01)
+		userOldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userOldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		lp02OldToken0Bal := balanceOf(pool.token0, lp02)
-		lp02OldToken1Bal := balanceOf(pool.token1, lp02)
+		lp02OldToken0Bal := balanceOfByRegisterCall(fooPath, lp02)
+		lp02OldToken1Bal := balanceOfByRegisterCall(barPath, lp02)
 
-		lp03OldToken0Bal := balanceOf(pool.token0, lp03)
-		lp03OldToken1Bal := balanceOf(pool.token1, lp03)
+		lp03OldToken0Bal := balanceOfByRegisterCall(fooPath, lp03)
+		lp03OldToken1Bal := balanceOfByRegisterCall(barPath, lp03)
 
 		std.TestSetOrigCaller(tr01)
 		amount0, amount1 := Swap(
-			pToken0,
-			pToken1,
+			fooPath,
+			barPath,
 			pFee,
 			tr01,
 			true,
 			bigint(10000),
-			test_price,
+			MIN_PRICE,
 		)
 
 		shouldNEQ(t, amount0, bigint(0))
 		shouldNEQ(t, amount1, bigint(0))
 
-		poolNewToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolNewToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolNewToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userNewToken0Bal := balanceOf(pool.token0, tr01)
-		userNewToken1Bal := balanceOf(pool.token1, tr01)
+		userNewToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userNewToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		shouldEQ(t, userOldToken0Bal-amount0, userNewToken0Bal)
-		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
-		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
-		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(amount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-amount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(amount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-amount1))
 
 		std.TestSetOrigCaller(lp02)
-		Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
-		Collect(pToken0, pToken1, pFee, lp02, test_tickLower, test_tickUpper, 50000000, 50000000)
+		Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
+		Collect(fooPath, barPath, pFee, lp02, test_tickLower, test_tickUpper, 50000000, 50000000)
 
-		lp02NewToken0Bal := balanceOf(pool.token0, lp02)
-		lp02NewToken1Bal := balanceOf(pool.token1, lp02)
+		lp02NewToken0Bal := balanceOfByRegisterCall(fooPath, lp02)
+		lp02NewToken1Bal := balanceOfByRegisterCall(barPath, lp02)
 
 		std.TestSetOrigCaller(lp03)
-		Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
-		Collect(pToken0, pToken1, pFee, lp03, test_tickLower, test_tickUpper, 50000000, 50000000)
+		Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
+		Collect(fooPath, barPath, pFee, lp03, test_tickLower, test_tickUpper, 50000000, 50000000)
 
-		lp03NewToken0Bal := balanceOf(pool.token0, lp03)
-		lp03NewToken1Bal := balanceOf(pool.token1, lp03)
+		lp03NewToken0Bal := balanceOfByRegisterCall(fooPath, lp03)
+		lp03NewToken1Bal := balanceOfByRegisterCall(barPath, lp03)
 	}
 
 	// Mint again
 	std.TestSetOrigCaller(lp02)
-	Mint(pToken0, pToken1, pFee, lp02, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
+	Mint(fooPath, barPath, pFee, lp02, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
 
 	std.TestSetOrigCaller(lp03)
-	Mint(pToken0, pToken1, pFee, lp03, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
+	Mint(fooPath, barPath, pFee, lp03, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
 
 	{
-		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolOldToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userOldToken0Bal := balanceOf(pool.token0, tr01)
-		userOldToken1Bal := balanceOf(pool.token1, tr01)
+		userOldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userOldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
 		std.TestSetOrigCaller(tr01)
-		amount0, amount1 := Swap(pToken0, pToken1, pFee, tr01, true, bigint(5000), test_price)
+		amount0, amount1 := Swap(fooPath, barPath, pFee, tr01, true, bigint(5000), MIN_PRICE)
 
 		shouldNEQ(t, amount0, bigint(0))
 		shouldNEQ(t, amount1, bigint(0))
 
-		poolNewToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolNewToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolNewToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userNewToken0Bal := balanceOf(pool.token0, tr01)
-		userNewToken1Bal := balanceOf(pool.token1, tr01)
+		userNewToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userNewToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		shouldEQ(t, userOldToken0Bal-amount0, userNewToken0Bal)
-		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
-		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
-		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(amount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-amount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(amount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-amount1))
 	}
 
 	{
-		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolOldToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userOldToken0Bal := balanceOf(pool.token0, tr01)
-		userOldToken1Bal := balanceOf(pool.token1, tr01)
+		userOldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userOldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
 		std.TestSetOrigCaller(tr01)
-		amount0, amount1 := Swap(pToken0, pToken1, pFee, tr01, true, bigint(1000), test_price)
+		amount0, amount1 := Swap(fooPath, barPath, pFee, tr01, true, bigint(1000), MIN_PRICE)
 
 		shouldNEQ(t, amount0, bigint(0))
 		shouldNEQ(t, amount1, bigint(0))
 
-		poolNewToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolNewToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolNewToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userNewToken0Bal := balanceOf(pool.token0, tr01)
-		userNewToken1Bal := balanceOf(pool.token1, tr01)
+		userNewToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userNewToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		shouldEQ(t, userOldToken0Bal-amount0, userNewToken0Bal)
-		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
-		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
-		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(amount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-amount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(amount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-amount1))
 	}
 
 	{
-		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolOldToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userOldToken0Bal := balanceOf(pool.token0, tr01)
-		userOldToken1Bal := balanceOf(pool.token1, tr01)
+		userOldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userOldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
 		std.TestSetOrigCaller(tr01)
-		amount0, amount1 := Swap(pToken0, pToken1, pFee, tr01, false, bigint(16000), (MAX_SQRT_RATIO - 1))
+		amount0, amount1 := Swap(fooPath, barPath, pFee, tr01, false, bigint(16000), (MAX_SQRT_RATIO - 1))
 
 		shouldNEQ(t, amount0, bigint(0))
 		shouldNEQ(t, amount1, bigint(0))
 
-		poolNewToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolNewToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolNewToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userNewToken0Bal := balanceOf(pool.token0, tr01)
-		userNewToken1Bal := balanceOf(pool.token1, tr01)
+		userNewToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userNewToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		shouldEQ(t, userOldToken0Bal-amount0, userNewToken0Bal)
-		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
-		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
-		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(amount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-amount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(amount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-amount1))
 	}
 }
 
@@ -394,42 +361,48 @@ func TestCollectProtocol(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 
 	SetFeeProtocol(6, 8)
-	pool := GetPool(pToken0, pToken1, pFee)
+	pool := GetPool(fooPath, barPath, pFee)
 	test_slot0 := pool.GetSlot0()
 	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
 
 	// Make ProtocolFee via Swap by tr01 ( Mint by lp01 )
 	std.TestSetOrigCaller(lp01)
 	{
-		gsaOldToken0Bal := balanceOf(pool.token0, gsa)
-		gsaOldToken1Bal := balanceOf(pool.token1, gsa)
+		gsaOldToken0Bal := balanceOfByRegisterCall(fooPath, gsa)
+		gsaOldToken1Bal := balanceOfByRegisterCall(barPath, gsa)
 
 		std.TestSetOrigCaller(tr01)
-		Swap(pToken0, pToken1, pFee, tr01, true, 100000, MIN_SQRT_RATIO+1) // swap token0 -> token1 => fee only in token0
-		Swap(pToken0, pToken1, pFee, tr01, true, 100000, MIN_SQRT_RATIO+1) // more protocol fee
+		Swap(fooPath, barPath, pFee, tr01, true, 100000, MIN_PRICE) // swap token0 -> token1 => fee only in token0
+		Swap(fooPath, barPath, pFee, tr01, true, 100000, MIN_PRICE) // more protocol fee
 
 		// Gnoswap Admin
 		std.TestSetOrigCaller(gsa)
-		amount0, amount1 := CollectProtocol(pToken0, pToken1, pFee, gsa, 100000, 100000)
+		amount0, amount1 := CollectProtocol(fooPath, barPath, pFee, gsa, 100000, 100000)
 
-		gsaNewToken0Bal := balanceOf(pool.token0, gsa)
-		gsaNewToken1Bal := balanceOf(pool.token1, gsa)
+		gsaNewToken0Bal := balanceOfByRegisterCall(fooPath, gsa)
+		gsaNewToken1Bal := balanceOfByRegisterCall(barPath, gsa)
+
+		shouldEQ(t, gsaNewToken0Bal-gsaOldToken0Bal, int64(amount0))
+		shouldEQ(t, gsaNewToken1Bal-gsaOldToken1Bal, int64(amount1))
 	}
 
 	{
-		gsaOldToken0Bal := balanceOf(pool.token0, gsa)
-		gsaOldToken1Bal := balanceOf(pool.token1, gsa)
+		gsaOldToken0Bal := balanceOfByRegisterCall(fooPath, gsa)
+		gsaOldToken1Bal := balanceOfByRegisterCall(barPath, gsa)
 
 		std.TestSetOrigCaller(tr01)
-		Swap(pToken0, pToken1, pFee, tr01, false, 100000, MAX_SQRT_RATIO-1) // swap token0 -> token1 => fee only in token0
-		Swap(pToken0, pToken1, pFee, tr01, false, 100000, MAX_SQRT_RATIO-1) // more protocol fee
+		Swap(fooPath, barPath, pFee, tr01, false, 100000, MAX_PRICE) // swap token0 -> token1 => fee only in token0
+		Swap(fooPath, barPath, pFee, tr01, false, 100000, MAX_PRICE) // more protocol fee
 
 		// Gnoswap Admin
 		std.TestSetOrigCaller(gsa)
-		amount0, amount1 := CollectProtocol(pToken0, pToken1, pFee, gsa, 100000, 100000)
+		amount0, amount1 := CollectProtocol(fooPath, barPath, pFee, gsa, 100000, 100000)
 
-		gsaNewToken0Bal := balanceOf(pool.token0, gsa)
-		gsaNewToken1Bal := balanceOf(pool.token1, gsa)
+		gsaNewToken0Bal := balanceOfByRegisterCall(fooPath, gsa)
+		gsaNewToken1Bal := balanceOfByRegisterCall(barPath, gsa)
+
+		shouldEQ(t, gsaNewToken0Bal-gsaOldToken0Bal, int64(amount0))
+		shouldEQ(t, gsaNewToken1Bal-gsaOldToken1Bal, int64(amount1))
 	}
 }
 
@@ -442,7 +415,7 @@ func TestApiGetPools(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
 
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
-	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "bar_foo_500")
+	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "gno.land/r/bar:gno.land/r/foo:500")
 }
 
 /* HELPER */

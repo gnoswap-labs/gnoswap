@@ -6,10 +6,8 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/r/demo/users"
 
-	bar "gno.land/r/bar"
-	foo "gno.land/r/foo"
+	_ "gno.land/r/grc20_wrapper"
 
 	g "gno.land/r/gov"
 )
@@ -19,13 +17,14 @@ var (
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 
-	posAddr = std.DerivePkgAddr("gno.land/r/position")
+	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
+	posAddr  = std.DerivePkgAddr("gno.land/r/position")
 )
 
 var (
 	// Common
-	pToken0 = "foo"
-	pToken1 = "bar"
+	fooPath = "gno.land/r/foo" // token1
+	barPath = "gno.land/r/bar" // token2
 	pFee    = uint16(500)
 
 	test_tickLower       = int32(9000)
@@ -42,7 +41,7 @@ func TestCreatePool(t *testing.T) {
 	jsonStr := gjson.Parse(ApiGetPools())
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 0)
 
-	CreatePool("foo", "bar", pFee, 130622891405341611593710811006)
+	CreatePool(fooPath, barPath, pFee, 130622891405341611593710811006)
 	std.TestSkipHeights(1)
 	// 130621891405341611593710811006 // 9999
 	// 130622891405341611593710811006 // 10000
@@ -52,48 +51,33 @@ func TestCreatePool(t *testing.T) {
 	// 10000	= 1% // USv3 default
 	jsonStr = gjson.Parse(ApiGetPools())
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
-	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "bar_foo_500")
+	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "gno.land/r/bar:gno.land/r/foo:500")
 
-	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
+	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/bar:gno.land/r/foo:500"))
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 0)
 	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 0)
 
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
+	shouldPanic(t, func() { CreatePool(fooPath, barPath, 500, 130621891405341611593710811006) })
 	std.TestSkipHeights(1)
-
-	// Approve
-	std.TestSetOrigCaller(lp01)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	foo.Approve(users.AddressOrName(lp01), 50000000)
-	bar.Approve(users.AddressOrName(lp01), 50000000)
-	std.TestSkipHeights(4)
-
-	std.TestSetOrigCaller(tr01)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	foo.Approve(users.AddressOrName(tr01), 50000000)
-	bar.Approve(users.AddressOrName(tr01), 50000000)
-	std.TestSkipHeights(4)
 }
 
 // Swap by tr01, Mint by lp01 ~ 02
 func TestSwap(t *testing.T) {
-	pool := GetPool(pToken0, pToken1, pFee)
+	pool := GetPool(fooPath, barPath, pFee)
 
 	// lp01 mint 9000 ~ 11000 tick range
 	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
-	Mint(pToken0, pToken1, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*100000)
+	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*100000)
 	std.TestSkipHeights(1)
 
 	jsonStr := gjson.Parse(ApiGetPools())
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
-	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "bar_foo_500")
+	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "gno.land/r/bar:gno.land/r/foo:500")
 
-	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
+	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/bar:gno.land/r/foo:500"))
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 2957550)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8041577)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
@@ -105,17 +89,17 @@ func TestSwap(t *testing.T) {
 	// SWAP
 	std.TestSetOrigCaller(tr01)
 
-	Swap(pToken0, pToken1, pFee, tr01, true, bigint(150000), test_price_01)
-	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
+	Swap(fooPath, barPath, pFee, tr01, true, bigint(150000), test_price_01)
+	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/bar:gno.land/r/foo:500"))
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 3107550)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 7635058)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
 	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 1)
 
-	Swap(pToken0, pToken1, pFee, tr01, false, bigint(601851), test_price_10)
-	// Swap(pToken0, pToken1, pFee, tr01, true, bigint(1500000), test_price_01) // two iteration // s0: 1_500_000 // s1: -3_626_984 // currentTick: 7668
+	Swap(fooPath, barPath, pFee, tr01, false, bigint(601851), test_price_10)
+	// Swap(fooPath, barPath, pFee, tr01, true, bigint(1500000), test_price_01) // two iteration // s0: 1_500_000 // s1: -3_626_984 // currentTick: 7668
 	std.TestSkipHeights(1)
-	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
+	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/bar:gno.land/r/foo:500"))
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 1496418)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8236909)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
@@ -124,13 +108,13 @@ func TestSwap(t *testing.T) {
 	// To collect fee without removing liquidity
 	// burn 0 => collect
 	std.TestSetOrigCaller(lp01)
-	Burn(pToken0, pToken1, pFee, test_tickLower, test_tickUpper, 0)
+	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, 0)
 	std.TestSkipHeights(1)
 
 	std.TestSetOrigCaller(lp01)
-	Collect(pToken0, pToken1, pFee, lp01, test_tickLower, test_tickUpper, 100000000, 100000000)
+	Collect(fooPath, barPath, pFee, lp01, test_tickLower, test_tickUpper, 100000000, 100000000)
 	std.TestSkipHeights(1)
-	jsonStr = gjson.Parse(ApiGetPool("bar_foo_500"))
+	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/bar:gno.land/r/foo:500"))
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 1496344)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8236609)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
@@ -158,12 +142,6 @@ func TestSubmitProposalParameterProtocolFees(t *testing.T) {
 func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {
 		t.Errorf("got %v, expected %v", got, expected)
-	}
-}
-
-func shouldNEQ(t *testing.T, got, expected interface{}) {
-	if got == expected {
-		t.Errorf("got %v, didn't expected %v", got, expected)
 	}
 }
 
