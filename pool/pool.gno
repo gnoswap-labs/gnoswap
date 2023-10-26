@@ -469,38 +469,42 @@ func SetFeeProtocol(
 	g.SetGovParameter("protocoL_fees", feeProtocol0+(feeProtocol1<<4))
 }
 
-// // ADMIN
-// func CollectProtocol(
-// 	pToken0 string,
-// 	pToken1 string,
-// 	pFee uint16,
-// 	recipient std.Address,
-// 	amount0Requested bigint,
-// 	amount1Requested bigint,
-// ) (bigint, bigint) {
-// 	requireUnsigned(amount0Requested, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount0Requested(%s) >= 0", amount0Requested))
-// 	requireUnsigned(amount1Requested, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount1Requested(%s) >= 0", amount1Requested))
-// 	require(isAdmin(PrevRealmAddr()), ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || caller(%s) must be admin", PrevRealmAddr()))
+// ADMIN
+func CollectProtocol(
+	pToken0Path string,
+	pToken1Path string,
+	pFee uint16,
+	recipient std.Address,
+	amount0Requested bigint,
+	amount1Requested bigint,
+) (bigint, bigint) {
+	requireUnsigned(amount0Requested, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount0Requested(%s) >= 0", amount0Requested))
+	requireUnsigned(amount1Requested, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount1Requested(%s) >= 0", amount1Requested))
+	require(isAdmin(PrevRealmAddr()), ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || caller(%s) must be admin", PrevRealmAddr()))
 
-// 	pool := GetPool(pToken0, pToken1, pFee)
+	pool := GetPool(pToken0Path, pToken1Path, pFee)
 
-// 	amount0 := min(amount0Requested, pool.protocolFees.token0)
-// 	requireUnsigned(amount0, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount0(%s) >= 0", amount0))
+	amount0 := min(amount0Requested, pool.protocolFees.token0)
+	requireUnsigned(amount0, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount0(%s) >= 0", amount0))
 
-// 	amount1 := min(amount1Requested, pool.protocolFees.token1)
-// 	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount1(%s) >= 0", amount1))
+	amount1 := min(amount1Requested, pool.protocolFees.token1)
+	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount1(%s) >= 0", amount1))
 
-// 	// without procotol fee
-// 	amount0, amount1 = pool.saveProtocolFees(amount0, amount1)
+	// without procotol fee
+	amount0, amount1 = pool.saveProtocolFees(amount0, amount1)
 
-// 	// pool.token0.Transfer(a2u(recipient), uint64(amount0))
-// 	foo.Transfer(a2u(recipient), uint64(amount0))
+	ok := transferByRegisterCall(pToken0Path, recipient, uint64(amount0))
+	if !ok {
+		panic("[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pToken0Path, recipient, uint64(amount0)) failed")
+	}
 
-// 	// pool.token1.Transfer(a2u(recipient), uint64(amount1))
-// 	bar.Transfer(a2u(recipient), uint64(amount1))
+	ok = transferByRegisterCall(pToken1Path, recipient, uint64(amount1))
+	if !ok {
+		panic("[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pToken1Path, recipient, uint64(amount1)) failed")
+	}
 
-// 	return amount0, amount1
-// }
+	return amount0, amount1
+}
 
 func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, bigint, bigint) {
 	position := pool.updatePosition(
