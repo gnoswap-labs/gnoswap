@@ -37,14 +37,9 @@ func init() {
 	bar.Mint(tr01, 50000000)
 
 	bar.Approve(lp01, poolAddr, 50000000)
-	// bar.Approve(lp02, poolAddr, 50000000)
-	// bar.Approve(lp03, poolAddr, 50000000)
+	bar.Approve(lp02, poolAddr, 50000000)
+	bar.Approve(lp03, poolAddr, 50000000)
 	bar.Approve(tr01, poolAddr, 50000000)
-
-	// bar.Approve(lp01, lp01, 50000000)
-	// bar.Approve(lp02, lp02, 50000000)
-	// bar.Approve(lp03, lp03, 50000000)
-	// bar.Approve(tr01, tr01, 50000000)
 
 	// bar.Approve(poolAddr, registryAddr, 50000000)
 }

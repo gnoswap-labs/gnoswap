@@ -37,16 +37,11 @@ func init() {
 	baz.Mint(tr01, 50000000)
 
 	baz.Approve(lp01, poolAddr, 50000000)
-	// baz.Approve(lp02, poolAddr, 50000000)
-	// baz.Approve(lp03, poolAddr, 50000000)
+	baz.Approve(lp02, poolAddr, 50000000)
+	baz.Approve(lp03, poolAddr, 50000000)
 	baz.Approve(tr01, poolAddr, 50000000)
 
-	// baz.Approve(lp01, lp01, 50000000)
-	// baz.Approve(lp02, lp02, 50000000)
-	// baz.Approve(lp03, lp03, 50000000)
-	// baz.Approve(tr01, tr01, 50000000)
-
-	// baz.Approve(posAddr, poolAddr, 50000000)
+	baz.Approve(posAddr, poolAddr, 50000000)
 }
 
 // method proxies as public functions.

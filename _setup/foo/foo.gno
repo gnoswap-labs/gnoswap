@@ -38,14 +38,9 @@ func init() {
 	foo.Mint(tr01, 50000000)
 
 	foo.Approve(lp01, poolAddr, 50000000)
-	// foo.Approve(lp02, poolAddr, 50000000)
-	// foo.Approve(lp03, poolAddr, 50000000)
+	foo.Approve(lp02, poolAddr, 50000000)
+	foo.Approve(lp03, poolAddr, 50000000)
 	foo.Approve(tr01, poolAddr, 50000000)
-
-	// foo.Approve(lp01, lp01, 50000000)
-	// foo.Approve(lp02, lp02, 50000000)
-	// foo.Approve(lp03, lp03, 50000000)
-	// foo.Approve(tr01, tr01, 50000000)
 
 	// foo.Approve(posAddr, poolAddr, 50000000)
 }
