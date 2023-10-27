@@ -48,7 +48,7 @@ func Mint(
 
 		ok := transferFromByRegisterCall(pToken0Path, from, to, uint64(amount0))
 		if !ok {
-			panic("[POOL] pool.gno__Mint() ||  transferFromByRegisterCall(pToken0Path, from, to, uint64(amount0)) failed")
+			panic("[POOL] pool.gno__Mint() || transferFromByRegisterCall(pToken0Path, from, to, uint64(amount0)) failed")
 		}
 
 		require(
