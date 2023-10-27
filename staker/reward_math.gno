@@ -1,24 +1,24 @@
 package staker
 
 import (
-	s "gno.land/r/position"
-
 	"gno.land/p/demo/ufmt"
+
+	pos "gno.land/r/position"
 )
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) uint64 {
-	// r3v4_xxx: calculate amount of `GNOS` to be minted by every block
+	// r3v4_xxx: calculate amount of `GNS` to be minted by every block
 	// 1. get block creation time (5s for now)
-	// 2. calculate amount of `GNOS` to be minted by every block (10_000 for now)
-	// 3. above `GNOS amount`` is supposed to be minted to a separate wallet specified by onbloc
-	// 4. this logic is supposed to be included in GNOS token contract, not staker contract
+	// 2. calculate amount of `GNS` to be minted by every block (10_000 for now)
+	// 3. above `GNS amount`` is supposed to be minted to a separate wallet specified by onbloc
+	// 4. this logic is supposed to be included in GNS token contract, not staker contract
 	blockRewardInit := 10_000
-	// because of `~ 10 days` staking duration, certain block GNOS amount won't be distribute 100% as reward)
-	blockRewardLeft := blockRewardInit / 10 // gnos.BalanceOf(INTERNAL_REWARD_ACCOUNT) - blockRewardInit
+	// because of `~ 10 days` staking duration, certain block GNS amount won't be distribute 100% as reward)
+	blockRewardLeft := blockRewardInit / 10 // gns.BalanceOf(INTERNAL_REWARD_ACCOUNT) - blockRewardInit
 	blockReward := blockRewardInit + blockRewardLeft
 
 	// get pool tier and ratio
-	poolPath := s.PositionGetPositionPoolKey(tokenId)
+	poolPath := pos.PositionGetPositionPoolKey(tokenId)
 	_, poolRatioX96 := getPoolTierAndRatio(poolPath)
 
 	// get pool reward per block
@@ -66,7 +66,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 		// 1 second reward == total reward amount / reward duration
 		monthlyReward = incentive.rewardAmount / uint64(incentiveDuration) * uint64(TIMESTAMP_30DAYS)
 	default:
-		panic(ufmt.Sprintf("[STAKER] reward_math.gno || incentiveDuration(%s) at least 30 days", incentiveDuration))
+		panic(ufmt.Sprintf("[STAKER] reward_math.gno || incentiveDuration(%d) at least 30 days", incentiveDuration))
 	}
 
 	// calculate reward amount per block
@@ -112,7 +112,7 @@ func getPoolTotalStakedLiquidity(poolPath string) bigint {
 	// get all staked liquidity
 	for tokenId, deposit := range deposits { // key is tokenId // used in this range loop only
 		if deposit.targetPoolPath == poolPath {
-			tokenLiquidity := s.PositionGetPositionLiquidity(tokenId)
+			tokenLiquidity := pos.PositionGetPositionLiquidity(tokenId)
 			poolStakedLiquidity += tokenLiquidity
 		}
 	}
@@ -124,7 +124,7 @@ func getMyLiquidityRatio(poolPath string, tokenId uint64) bigint {
 	poolStakedLiquidity := getPoolTotalStakedLiquidity(poolPath)
 
 	// my(current tokenId) liquidity
-	myLiquidity := s.PositionGetPositionLiquidity(tokenId)
+	myLiquidity := pos.PositionGetPositionLiquidity(tokenId)
 
 	// my liquidity ratio
 	liqRatioX96 := (myLiquidity * Q96 / poolStakedLiquidity * Q96) // 2 times Q96 because of Q96 / Q96

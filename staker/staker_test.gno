@@ -1,19 +1,20 @@
 package staker
 
 import (
-	"encoding/gjson"
 	"std"
 	"testing"
 
+	"encoding/gjson"
+
 	"gno.land/p/demo/testutils"
 
-	g "gno.land/r/gov"
 	p "gno.land/r/pool"
-	s "gno.land/r/position"
+	pos "gno.land/r/position"
 
 	gnft "gno.land/r/gnft" // GNFT, Gnoswap NFT
-	gnos "gno.land/r/gnos" // GNOS, INTERNAL Reward Token
-	obl "gno.land/r/obl"   // OBL, EXTERNAL Reward Token
+	gns "gno.land/r/gns"   // GNS, Gnoswap Share
+
+	_ "gno.land/r/grc20_wrapper"
 )
 
 var (
@@ -25,45 +26,42 @@ var (
 	ira = testutils.TestAddress("ira") // Internal Reward Account
 )
 
+var (
+	fooPath = "gno.land/r/foo"
+	barPath = "gno.land/r/bar"
+)
+
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["BAR/FOO_500"] = 1 // DEV
+	poolTiers["gno.land/r/bar:gno.land/r/foo:500"] = 1 // DEV
 
 	// tier 2
-	poolTiers["GNOS/USDT_500"] = 2
-	poolTiers["ATOM/GNOS_500"] = 2
+	poolTiers["GNS/USDT_500"] = 2
+	poolTiers["ATOM/GNS_500"] = 2
 
 	// tier 3
 	poolTiers["ATOM/GNOT_500"] = 3
 	poolTiers["ATOM/USDT_500"] = 3
 	poolTiers["ATOM/WETH_500"] = 3
-
-	// debug - print addr
-	// println(pc01, "// pc01")
-	// println(ci01, "// ci01")
-	// println(lp01, "// lp01")
-	// println(lp02, "// lp02")
-	// println(ira, "// internal_reward_account")
-	// println(p.GetOrigPkgAddr(), "// pool")
-	// println(s.GetOrigPkgAddr(), "// position")
-	// println(GetOrigPkgAddr(), "// staker")
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(pc01)
+
 	p.InitManual()
 	std.TestSkipHeights(1)
-	p.CreatePool("foo", "bar", 500, 130621891405341611593710811006)
+
+	p.CreatePool(fooPath, barPath, 500, 130621891405341611593710811006)
 	std.TestSkipHeights(1)
 }
 
 func TestPositionMint(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp01)
-		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := s.Mint(
-			std.Address("foo"), // token0
-			std.Address("bar"), // token1
+		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
+			fooPath,            // token0
+			barPath,            // token1
 			uint16(500),        // fee
 			int32(9000),        // tickLower
 			int32(11000),       // tickUpper
@@ -86,9 +84,9 @@ func TestPositionMint(t *testing.T) {
 
 	{
 		std.TestSetOrigCaller(lp02)
-		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := s.Mint(
-			std.Address("foo"), // token0
-			std.Address("bar"), // token1
+		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
+			fooPath,            // token0
+			barPath,            // token1
 			uint16(500),        // fee
 			int32(9100),        // tickLower
 			int32(12000),       // tickUpper
@@ -114,16 +112,16 @@ func TestCreateExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
 
 	CreateExternalIncentive(
-		"bar_foo_500",  // targetPoolPath
-		"OBL",          // rewardToken
-		10_000_000_000, // rewardAmount
-		GetTimestamp(), // startTimestamp
+		"gno.land/r/bar:gno.land/r/foo:500", // targetPoolPath
+		"OBL",                               // rewardToken
+		10_000_000_000,                      // rewardAmount
+		GetTimestamp(),                      // startTimestamp
 		GetTimestamp()+TIMESTAMP_30DAYS+TIMESTAMP_30DAYS, // endTimestamp
 	)
 	std.TestSkipHeights(5)
 
 	shouldPanic(t, func() {
-		CreateExternalIncentive("bar_foo_500", "OBL", 10_000_000_000, GetTimestamp(), GetTimestamp()+TIMESTAMP_30DAYS+TIMESTAMP_30DAYS)
+		CreateExternalIncentive("gno.land/r/bar:gno.land/r/foo:500", "OBL", 10_000_000_000, GetTimestamp(), GetTimestamp()+TIMESTAMP_30DAYS+TIMESTAMP_30DAYS)
 	})
 }
 
@@ -153,8 +151,8 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 		gra := ApiGetRewardByAddress(lp01)
 		jsonStr := gjson.Parse(gra)
 		shouldEQ(t, jsonStr.Get("response.data.0.type").String(), "Internal")
-		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNOS")
-		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 252)
+		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNS")
+		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 126)
 		shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
 		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "OBL")
 		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 486)
@@ -165,8 +163,8 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 		gra := ApiGetRewardByAddress(lp02)
 		jsonStr := gjson.Parse(gra)
 		shouldEQ(t, jsonStr.Get("response.data.0.type").String(), "Internal")
-		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNOS")
-		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 1397)
+		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNS")
+		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 698)
 		shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
 		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "OBL")
 		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 2696)
@@ -182,8 +180,8 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(1)), lp01) // lp01
 
 		// check reward
-		shouldEQ(t, gnos.BalanceOf(a2u(lp01)), 252) // internal
-		shouldEQ(t, obl.BalanceOf(a2u(lp01)), 486)  // external
+		shouldEQ(t, gns.BalanceOf(a2u(lp01)), 252) // internal
+		shouldEQ(t, obl.BalanceOf(a2u(lp01)), 486) // external
 	}
 
 	{
@@ -194,8 +192,8 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(2)), lp02) // lp02
 
 		// check reward
-		shouldEQ(t, gnos.BalanceOf(a2u(lp02)), 1650) // internal
-		shouldEQ(t, obl.BalanceOf(a2u(lp02)), 3182)  // external
+		shouldEQ(t, gns.BalanceOf(a2u(lp02)), 1650) // internal
+		shouldEQ(t, obl.BalanceOf(a2u(lp02)), 3182) // external
 	}
 }
 

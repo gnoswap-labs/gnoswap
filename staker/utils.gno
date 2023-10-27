@@ -12,18 +12,21 @@ import (
 )
 
 func poolKeyDivide(poolKey string) string {
-	res := strings.Split(poolKey, "_")
+
+	res := strings.Split(poolKey, ":")
 	if len(res) != 3 {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__poolKeyDivide() || invalid poolKey(%s)", poolKey))
+		panic(ufmt.Sprintf("[STAKER] utils.gno__poolKeyDivide() || invalid poolKey(%s)", poolKey))
 	}
 
 	pToken0, pToken1, fee := res[0], res[1], res[2]
 
 	if pToken0 < pToken1 {
-		return ufmt.Sprintf("%s/%s_%s", strings.ToUpper(pToken0), strings.ToUpper(pToken1), fee)
+		zz := ufmt.Sprintf("%s:%s:%s", pToken0, pToken1, fee)
+		return ufmt.Sprintf("%s:%s:%s", pToken0, pToken1, fee)
 	}
 
-	return ufmt.Sprintf("%s/%s_%s", strings.ToUpper(pToken1), strings.ToUpper(pToken0), fee)
+	zz := ufmt.Sprintf("%s:%s:%s", pToken1, pToken0, fee)
+	return ufmt.Sprintf("%s:%s:%s", pToken1, pToken0, fee)
 }
 
 func require(condition bool, message string) {

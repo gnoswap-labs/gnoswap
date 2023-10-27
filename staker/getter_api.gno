@@ -33,12 +33,12 @@ func ApiGetRewardByAddress(address std.Address) string {
 		if deposit.owner == address {
 			poolPath := deposit.targetPoolPath
 
-			// get internal gnos reward
-			internalGNOS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
+			// get internal gns reward
+			internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
 			rewardList = append(rewardList, ApiRewardByAddress{
 				Type:   "Internal",
-				Token:  "GNOS",
-				Reward: internalGNOS,
+				Token:  "GNS",
+				Reward: internalGNS,
 			})
 
 			// find all external reward list for this pool
