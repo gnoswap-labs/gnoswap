@@ -1,19 +1,5 @@
 package pool
 
-import (
-	"std"
-
-	"gno.land/p/demo/grc/grc20"
-)
-
-func balanceOf(token *grc20.AdminToken, addr std.Address) bigint {
-	balance, err := token.BalanceOf(addr)
-	if err != nil {
-		panic(err)
-	}
-	return bigint(balance)
-}
-
 func requireUnsigned(x bigint, msg string) {
 	if x < 0 {
 		panic(msg)
@@ -38,4 +24,26 @@ func abs(x bigint) bigint {
 		return -x
 	}
 	return x
+}
+
+func removeDuplicateString(strSlice []string) []string {
+	// map to store unique keys
+	keys := make(map[string]bool)
+	returnSlice := []string{}
+	for _, item := range strSlice {
+		if _, value := keys[item]; !value {
+			keys[item] = true
+			returnSlice = append(returnSlice, item)
+		}
+	}
+	return returnSlice
+}
+
+func remove(s []string, r string) []string {
+	for i, v := range s {
+		if v == r {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
 }
