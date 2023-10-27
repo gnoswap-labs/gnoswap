@@ -56,10 +56,9 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	// }
 
 	_, found := findGRC20(pkgPath)
-	if found {
+	if !found {
+		appendGRC20Interface(pkgPath, igrc20)
 	}
-
-	appendGRC20Interface(pkgPath, igrc20)
 }
 
 func UnregisterGRC20Interface(pkgPath string) {
