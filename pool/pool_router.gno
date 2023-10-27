@@ -7,149 +7,129 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-func FindBestPool(
-	tokenA string,
-	tokenB string,
-	zeroForOne bool,
-	amountSpecified bigint,
-) string {
-	if tokenA == tokenB {
-		panic("token pair cannot be the same")
-	}
+type POSSIBLE_PATHS map[int][]string
 
-	if tokenA > tokenB {
-		tokenA, tokenB = tokenB, tokenA
-	}
+func FindAllPoolPath(
+	inputTokenPath string,
+	outputTokenPath string,
+	maxDepths int,
+) POSSIBLE_PATHS {
 
-	partialPath := tokenA + "_" + tokenB + "_"
-	foundPool := []string{}
+	tokenPairs := make(map[string][]string)
 
 	for poolPath, _ := range pools {
-		if strings.HasPrefix(poolPath, partialPath) {
-			foundPool = append(foundPool, poolPath)
-		}
+		token0Path, token1Path, pFee := poolPathWithFeeDivide(poolPath)
+
+		k := token0Path
+		v := token1Path + ":" + strconv.Itoa(int(pFee))
+
+		tokenPairs[k] = append(tokenPairs[k], v)
 	}
 
-	// check if amount is enough
-	firstSelectedPool := []string{}
-	if false {
-		continue
-	} else if zeroForOne == true && amountSpecified > 0 {
-		for _, singlePool := range foundPool {
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						continue
-					}
-				}()
+	// r3v4_xx: pass max_depth
+	possiblePaths := getSwapPaths(tokenPairs, inputTokenPath, outputTokenPath)
 
-				_, _, fee := poolPathDivide(singlePool)
-				es0, es1 := DrySwap(
-					tokenA,
-					tokenB,
-					fee,
-					"",
-					true,
-					amountSpecified,
-					MIN_PRICE,
-				)
-
-				pool := GetPoolFromPoolKey(singlePool)
-				if pool.balances.token1 > (-1 * es1) { // must be bigger (can't be equal due to fee)
-					firstSelectedPool = append(firstSelectedPool, singlePool)
-				}
-			}()
-		}
-
-	} else if zeroForOne == true && amountSpecified < 0 {
-		for _, singlePool := range foundPool {
-			pool := GetPoolFromPoolKey(singlePool)
-
-			if pool.balances.token1 > (-1 * amountSpecified) { // must be bigger (can't be equal due to fee)
-				firstSelectedPool = append(firstSelectedPool, singlePool)
-			}
-		}
-
-	} else if zeroForOne == false && amountSpecified > 0 {
-		for _, singlePool := range foundPool {
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						continue
-					}
-				}()
-
-				_, _, fee := poolPathDivide(singlePool)
-				es0, es1 := DrySwap(
-					tokenA,
-					tokenB,
-					fee,
-					"",
-					false,
-					amountSpecified,
-					MAX_PRICE,
-				)
-
-				pool := GetPoolFromPoolKey(singlePool)
-				if pool.balances.token1 > (-1 * es0) { // must be bigger (can't be equal due to fee)
-					firstSelectedPool = append(firstSelectedPool, singlePool)
-				}
-			}()
-		}
-
-	} else if zeroForOne == false && amountSpecified < 0 {
-		for _, singlePool := range foundPool {
-			pool := GetPoolFromPoolKey(singlePool)
-			if pool.balances.token0 > (-1 * amountSpecified) { // must be bigger (can't be equal due to fee)
-				firstSelectedPool = append(firstSelectedPool, singlePool)
-			}
-		}
-	} else {
-		panic(ufmt.Sprintf("[POOL] pool_router.gno__FindBestPool() || unknown swap condition, zeroForOne: %t, amountSpecified: %d", zeroForOne, amountSpecified))
-	}
-
-	// check tick and return
-	var poolWithTick map[int32]string = make(map[int32]string)
-
-	minTick := int32(887272)
-	maxTick := int32(-887272)
-	for _, singlePool := range firstSelectedPool {
-		// save tick with poolPath
-		pool := GetPoolFromPoolKey(singlePool)
-		poolTick := pool.slot0.tick
-
-		poolWithTick[poolTick] = singlePool
-
-		// find min
-		if poolTick < minTick {
-			minTick = poolTick
-		}
-
-		// find max
-		if poolTick > maxTick {
-			maxTick = poolTick
-		}
-	}
-
-	if zeroForOne == true { // if token0 is being sold to buy token1, then we want to find the pool with the largest tick (more token1 can be bought)
-		return ApiGetPool(poolWithTick[maxTick])
-
-	} else { // if token1 is being sold to buy token0, then we want to find the pool with the smallest tick (more token0 can be bought)
-		return ApiGetPool(poolWithTick[minTick])
-	}
+	return possiblePaths
 }
 
-func poolPathDivide(poolPath string) (string, string, uint16) {
-	poolPathSplit := strings.Split(poolPath, "_")
+func getSwapPaths(
+	tokenPairs map[string][]string,
+	inputTokenPath string,
+	outputTokenPath string,
+) POSSIBLE_PATHS {
+	// r3v4_xx: handle max_depth
+
+	possiblePaths := make(POSSIBLE_PATHS, 0)
+
+	for firstPath, secondPaths := range tokenPairs {
+		if firstPath == inputTokenPath { // find if direct path exists
+			for _, secondPath := range secondPaths {
+				if strings.HasPrefix(secondPath, outputTokenPath) {
+					fullPath := inputTokenPath + " > " + secondPath
+					possiblePaths[len(possiblePaths)] = []string{fullPath}
+				}
+			}
+		} else { // no direct path
+			for _, secondPathWithFee := range secondPaths {
+				secondPath, sFee := singlePoolPathWithFeeDivide(secondPathWithFee)
+
+				if secondPath == inputTokenPath {
+					// l2 go
+					for i, thirdPathWithFee := range tokenPairs[secondPath] {
+						thirdPath, tFee := singlePoolPathWithFeeDivide(thirdPathWithFee)
+
+						if strings.HasPrefix(thirdPathWithFee, outputTokenPath) {
+							fullPath := inputTokenPath + " > " + firstPath + ":" + strconv.Itoa(int(sFee)) + " > " + thirdPathWithFee
+							possiblePaths[len(possiblePaths)] = []string{fullPath}
+						}
+					}
+				} else {
+					// l3 go
+					for i, secondPathWithFee := range tokenPairs[firstPath] {
+						secondPath, sFee := singlePoolPathWithFeeDivide(secondPathWithFee)
+
+						if strings.HasPrefix(secondPathWithFee, inputTokenPath) {
+							partialPath := ""
+							partialPath += inputTokenPath + " > " + firstPath + ":" + strconv.Itoa(int(sFee))
+							// println("F PARTIAL:", partialPath)
+
+							for _, thirdPathWithFee := range tokenPairs[firstPath] {
+								thirdPath, tFee := singlePoolPathWithFeeDivide(thirdPathWithFee)
+
+								if thirdPath != inputTokenPath && thirdPath != outputTokenPath {
+									partialPath += " > " + thirdPathWithFee
+
+									for i, fourthPathWithFee := range tokenPairs[thirdPath] {
+										if strings.HasPrefix(fourthPathWithFee, outputTokenPath) {
+											fourthPath, _ := singlePoolPathWithFeeDivide(fourthPathWithFee)
+
+											// THIS IS FULL PATH
+											partialPath += " > " + fourthPathWithFee
+											possiblePaths[len(possiblePaths)] = []string{partialPath}
+
+											firstToSecond := tokenPairs[firstPath]
+											toDel := secondPath + ":" + strconv.Itoa(int(sFee))
+											remove(firstToSecond, toDel)
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return possiblePaths
+}
+
+func poolPathWithFeeDivide(poolPath string) (string, string, uint16) {
+	poolPathSplit := strings.Split(poolPath, ":")
 
 	if len(poolPathSplit) != 3 {
-		panic(ufmt.Sprintf("[POOL] pool_router.gno__poolPathDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath))
+		panic(ufmt.Sprintf("[POOL] pool_router.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath))
 	}
 
 	feeInt, err := strconv.Atoi(poolPathSplit[2])
 	if err != nil {
-		panic(ufmt.Sprintf("[POOL] pool_router.gno__poolPathDivide() || cannot convert fee(%s) to uint16", poolPathSplit[2]))
+		panic(ufmt.Sprintf("[POOL] pool_router.gno__poolPathWithFeeDivide() || cannot convert fee(%s) to uint16", poolPathSplit[2]))
 	}
 
 	return poolPathSplit[0], poolPathSplit[1], uint16(feeInt)
+}
+
+func singlePoolPathWithFeeDivide(poolPath string) (string, uint16) {
+	singlePoolPathSplit := strings.Split(poolPath, ":")
+
+	if len(singlePoolPathSplit) != 2 {
+		panic(ufmt.Sprintf("[POOL] pool_router.gno__singlePoolPathWithFeeDivide || len(singlePoolPathSplit) != 2, poolPath: %s", poolPath))
+	}
+
+	feeInt, err := strconv.Atoi(singlePoolPathSplit[1])
+	if err != nil {
+		panic(ufmt.Sprintf("[POOL] pool_router.gno__singlePoolPathWithFeeDivide() || cannot convert fee(%s) to uint16", singlePoolPathSplit[1]))
+	}
+
+	return singlePoolPathSplit[0], uint16(feeInt)
 }
