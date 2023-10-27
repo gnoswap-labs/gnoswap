@@ -37,9 +37,9 @@ func tid(tokenId interface{}) grc721.TokenID {
 }
 
 func Token0Bal(addr std.Address) bigint {
-	return bigint(foo.BalanceOf(a2u(addr)))
+	return bigint(bar.BalanceOf(a2u(addr)))
 }
 
 func Token1Bal(addr std.Address) bigint {
-	return bigint(bar.BalanceOf(a2u(addr)))
+	return bigint(foo.BalanceOf(a2u(addr)))
 }
