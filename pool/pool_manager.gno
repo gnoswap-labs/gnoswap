@@ -4,9 +4,6 @@ import (
 	"std"
 	"strconv"
 
-	bar "gno.land/r/bar"
-	foo "gno.land/r/foo"
-
 	"gno.land/p/demo/ufmt"
 )
 
@@ -20,31 +17,31 @@ var (
 
 func InitManual() {
 	require(!initialized, "[POOl] pool_manager.gno__InitManual() || contract must not be initialized")
-	feeAmountTickSpacing[100] = 2
-	feeAmountTickSpacing[500] = 10
-	feeAmountTickSpacing[3000] = 60
-	feeAmountTickSpacing[10000] = 200
+	feeAmountTickSpacing[100] = 2     // 0.01%
+	feeAmountTickSpacing[500] = 10    // 0.05%
+	feeAmountTickSpacing[3000] = 60   // 0.3%
+	feeAmountTickSpacing[10000] = 200 // 1%
 	admins = append(admins, PrevRealmAddr())
 	initialized = true
 }
 
 func CreatePool(
-	tokenA string, // XXX inter-contract token0 pkg_path
-	tokenB string, // XXX inter-contract token1 pkg_path
+	tokenAPath string,
+	tokenBPath string,
 	fee uint16,
 	sqrtPriceX96 bigint,
 ) *Pool {
 	require(initialized, "[POOl] pool_manager.gno__CreatePool() || contract must be initialized")
-	require(tokenA != tokenB, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || token pair cannot be the same__tokenA(%s) != tokenB(%s)", tokenA, tokenB))
+	require(tokenAPath != tokenBPath, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || token pair cannot be the same__tokenAPath(%s) != tokenBPath(%s)", tokenAPath, tokenBPath))
 
 	// r3v4_xxx: check whether token pair has been deployed successfuly
-	var token0, token1 string
-	if tokenA < tokenB {
-		token0 = tokenA
-		token1 = tokenB
+	var token0Path, token1Path string
+	if tokenAPath < tokenBPath {
+		token0Path = tokenAPath
+		token1Path = tokenBPath
 	} else {
-		token0 = tokenB
-		token1 = tokenA
+		token0Path = tokenBPath
+		token1Path = tokenAPath
 	}
 
 	// check tickSpacing for fee
@@ -52,14 +49,14 @@ func CreatePool(
 	require(tickSpacing > 0, ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || tickSpacing(%d) > 0", tickSpacing))
 
 	// calculate poolKey
-	poolKey := GetPoolKey(token0, token1, fee)
+	poolKey := GetPoolKey(token0Path, token1Path, fee)
 
 	// check whether the pool already exist
 	pool, exist := pools[poolKey]
 	require(!exist, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || pool(%s) already exist", poolKey))
 
 	if !exist {
-		pool = newPool(token0, token1, fee, tickSpacing, sqrtPriceX96)
+		pool = newPool(token0Path, token1Path, fee, tickSpacing, sqrtPriceX96)
 		pools[poolKey] = pool
 	}
 
@@ -81,17 +78,17 @@ func GetPoolFromPoolKey(poolKey string) *Pool {
 	return pool
 }
 
-func GetPoolKey(token0, token1 string, fee uint16) string {
-	if token0 < token1 {
-		return token0 + "_" + token1 + "_" + strconv.Itoa(int(fee))
+func GetPoolKey(token0Path, token1Path string, fee uint16) string {
+	if token0Path < token1Path {
+		return token0Path + ":" + token1Path + ":" + strconv.Itoa(int(fee))
 	} else {
-		return token1 + "_" + token0 + "_" + strconv.Itoa(int(fee))
+		return token1Path + ":" + token0Path + ":" + strconv.Itoa(int(fee))
 	}
 }
 
 func newPool(
-	token0 string,
-	token1 string,
+	token0Path string,
+	token1Path string,
 	fee uint16,
 	tickSpacing int32,
 	sqrtPriceX96 bigint,
@@ -116,10 +113,9 @@ func newPool(
 		token1: 0,
 	}
 
-	// r3v4_xxx: dynamic import need to support multi token
 	return &Pool{
-		token0:               foo.GetGRC20(), // token0.GetGRC20() // gno.land/r/foo.GetGRC20()
-		token1:               bar.GetGRC20(), // token1.GetGRC20() // gno.land/r/bar.GetGRC20()
+		token0Path:           token0Path,
+		token1Path:           token1Path,
 		balances:             balances,
 		fee:                  fee,
 		tickSpacing:          tickSpacing,

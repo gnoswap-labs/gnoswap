@@ -2,8 +2,6 @@ package pool
 
 import (
 	"std"
-
-	"gno.land/p/demo/grc/grc20"
 )
 
 type Slot0 struct {
@@ -87,8 +85,8 @@ type Positions map[string]PositionInfo // positionKey => PositionInfo
 // type Pool describes a single Pool/s state
 // A pool is identificed with a unique key (token0, token1, fee), where token0 < token1
 type Pool struct {
-	token0 *grc20.AdminToken // XXX inter-contract, => call {pkg_path}.GetGRC20()
-	token1 *grc20.AdminToken // XXX inter-contract, => call {pkg_path}.GetGRC20()
+	token0Path string
+	token1Path string
 
 	balances Balances
 
