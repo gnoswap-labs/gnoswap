@@ -1,5 +1,23 @@
 package pool
 
+import (
+	"std"
+
+	"gno.land/r/demo/users"
+
+	"gno.land/p/demo/ufmt"
+)
+
+func checkTicks(tickLower, tickUpper bigint) {
+	require(tickLower < tickUpper, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickLower(%s) < tickUpper(%s)", tickLower, tickUpper))
+	require(tickLower >= MIN_TICK, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickLower(%s) >= MIN_TICK(%s)", tickLower, MIN_TICK))
+	require(tickUpper <= MAX_TICK, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickUpper(%s) <= MAX_TICK(%s)", tickUpper, MAX_TICK))
+}
+
+func a2u(addr std.Address) users.AddressOrName {
+	return users.AddressOrName(addr)
+}
+
 func requireUnsigned(x bigint, msg string) {
 	if x < 0 {
 		panic(msg)

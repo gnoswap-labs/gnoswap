@@ -1,9 +1,14 @@
 // POSITION CONTRACT USES BELOW FUNCTIONS IN ITS LOGIC
 package pool
 
-import (
-	"std"
-)
+func GetPoolList() []string {
+	poolPaths := []string{}
+	for poolPath, _ := range pools {
+		poolPaths = append(poolPaths, poolPath)
+	}
+
+	return poolPaths
+}
 
 func (pool *Pool) GetPoolSlot0SqrtPriceX96() bigint {
 	return pool.slot0.sqrtPriceX96
@@ -27,11 +32,6 @@ func (pool *Pool) GetPoolPositionFeeGrowthInside0LastX128(key string) bigint {
 
 func (pool *Pool) GetPoolPositionFeeGrowthInside1LastX128(key string) bigint {
 	return pool.positions[key].feeGrowthInside1LastX128
-}
-
-func GetPoolAddress() std.Address {
-	return std.DerivePkgAddr("gno.land/r/pool")
-	// XXX return std.GetOrigPkgAddr()
 }
 
 func (pool *Pool) GetPoolSlot0Tick() int32 {

@@ -81,6 +81,10 @@ func (pool *Pool) GetTickBitmaps() TickBitmaps {
 	return pool.tickBitmaps
 }
 
-func (pool *Pool) GetSqrtPriceX96() bigint {
+func (pool *Pool) GetSlotSqrtPriceX96() bigint {
 	return pool.slot0.sqrtPriceX96
+}
+
+func (pool *Pool) GetSlotTick() int32 {
+	return pool.slot0.tick
 }

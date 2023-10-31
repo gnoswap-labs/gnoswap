@@ -58,7 +58,7 @@ func TestSwap(t *testing.T) {
 	// lp01 mint 9000 ~ 11000 tick range
 	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
-	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*10000)
+	Mint(fooPath, barPath, pFee, posAddr, int32(-887270), int32(887270), test_liquidityExpect*10000)
 
 	// lp02 mint (almost) full range
 	// fee 500 will use tickSpacing 10
@@ -66,7 +66,7 @@ func TestSwap(t *testing.T) {
 	// MAX_TICK bigint = 887272
 
 	std.TestSetOrigCaller(lp02)
-	Mint(fooPath, barPath, pFee, posAddr, MIN_TICK+2, MAX_TICK-2, test_liquidityExpect*10000)
+	Mint(fooPath, barPath, pFee, posAddr, int32(9990), int32(10010), test_liquidityExpect*10000)
 
 	{
 		// balance before swap
@@ -86,8 +86,9 @@ func TestSwap(t *testing.T) {
 		lp02OldToken1Bal := balanceOfByRegisterCall(barPath, lp02)
 
 		// SWAP
+
 		std.TestSetOrigCaller(tr01)
-		s0, s1 := Swap(fooPath, barPath, pFee, tr01, true, bigint(630000), MIN_PRICE) // one iteration - yes fee(only lp02)
+		s0, s1 := Swap(fooPath, barPath, pFee, tr01, true, bigint(100000), MIN_PRICE) // one iteration - yes fee(only lp02)
 		shouldNEQ(t, s0, bigint(0))
 		shouldNEQ(t, s1, bigint(0))
 
@@ -108,12 +109,12 @@ func TestSwap(t *testing.T) {
 		// burn 0
 		// then collect
 		std.TestSetOrigCaller(lp01)
-		Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, 0)
-		Collect(fooPath, barPath, pFee, lp01, test_tickLower, test_tickUpper, 100000000, 100000000)
+		Burn(fooPath, barPath, pFee, int32(-887270), int32(887270), 0)
+		lp01f0, lp01f1 := Collect(fooPath, barPath, pFee, lp01, int32(-887270), int32(887270), 100000000, 100000000)
 
 		std.TestSetOrigCaller(lp02)
-		Burn(fooPath, barPath, pFee, MIN_TICK+2, MAX_TICK-2, 0)
-		Collect(fooPath, barPath, pFee, lp02, MIN_TICK+2, MAX_TICK-2, 100000000, 100000000)
+		Burn(fooPath, barPath, pFee, int32(9990), int32(10010), 0)
+		lp02f0, lp02f1 := Collect(fooPath, barPath, pFee, lp02, int32(9990), int32(10010), 100000000, 100000000)
 	}
 }
 
