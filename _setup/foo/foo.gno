@@ -32,17 +32,17 @@ func init() {
 		posAddr  = std.DerivePkgAddr("gno.land/r/position")
 	)
 
-	foo.Mint(lp01, 50000000)
-	foo.Mint(lp02, 50000000)
-	foo.Mint(lp03, 50000000)
-	foo.Mint(tr01, 50000000)
+	foo.Mint(lp01, 50000000000)
+	foo.Mint(lp02, 50000000000)
+	foo.Mint(lp03, 50000000000)
+	foo.Mint(tr01, 50000000000)
 
-	foo.Approve(lp01, poolAddr, 50000000)
-	foo.Approve(lp02, poolAddr, 50000000)
-	foo.Approve(lp03, poolAddr, 50000000)
-	foo.Approve(tr01, poolAddr, 50000000)
+	foo.Approve(lp01, poolAddr, 50000000000)
+	foo.Approve(lp02, poolAddr, 50000000000)
+	foo.Approve(lp03, poolAddr, 50000000000)
+	foo.Approve(tr01, poolAddr, 50000000000)
 
-	// foo.Approve(posAddr, poolAddr, 50000000)
+	// foo.Approve(posAddr, poolAddr, 50000000000)
 }
 
 // method proxies as public functions.
