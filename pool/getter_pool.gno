@@ -1,9 +1,6 @@
 package pool
 
 import (
-	"std"
-
-	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
 )
 
@@ -15,12 +12,12 @@ func (pool *Pool) GetLiquidity() bigint {
 	return pool.liquidity
 }
 
-func (pool *Pool) GetToken0() *grc20.AdminToken {
-	return pool.token0
+func (pool *Pool) GetToken0Path() string {
+	return pool.token0Path
 }
 
-func (pool *Pool) GetToken1() *grc20.AdminToken {
-	return pool.token1
+func (pool *Pool) GetToken1Path() string {
+	return pool.token1Path
 }
 
 func (pool *Pool) GetFee() uint16 {
@@ -86,10 +83,4 @@ func (pool *Pool) GetTickBitmaps() TickBitmaps {
 
 func (pool *Pool) GetSqrtPriceX96() bigint {
 	return pool.slot0.sqrtPriceX96
-}
-
-func (pool *Pool) PrintUserBalance(name string, target std.Address) {
-	println(name)
-	println(" > Token0:", balanceOf(pool.token0, target))
-	println(" > Token1:", balanceOf(pool.token1, target))
 }

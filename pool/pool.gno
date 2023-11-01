@@ -8,15 +8,12 @@ import (
 	"gno.land/r/demo/users"
 
 	g "gno.land/r/gov"
-
-	bar "gno.land/r/bar"
-	foo "gno.land/r/foo"
 )
 
 // only position contract can call this function
 func Mint(
-	pToken0 string,
-	pToken1 string,
+	pToken0Path string,
+	pToken1Path string,
 	pFee uint16,
 	recipient std.Address,
 	tickLower int32,
@@ -27,7 +24,7 @@ func Mint(
 
 	require(liquidityAmount > 0, ufmt.Sprintf("[POOL] pool.gno__Mint() || liquidityAmount(%s) > 0", liquidityAmount))
 
-	pool := GetPool(pToken0, pToken1, pFee)
+	pool := GetPool(pToken0Path, pToken1Path, pFee)
 	_, amount0Int, amount1Int := pool.modifyPosition(
 		ModifyPositionParams{
 			recipient,       // owner
@@ -38,50 +35,50 @@ func Mint(
 	)
 
 	amount0 := bigint(amount0Int)
-	requireUnsigned(amount0, ufmt.Sprintf("[POOL] pool.gno__Mint() || amount0(%s) >= 0", amount0))
+	requireUnsigned(amount0, ufmt.Sprintf("[POOL] pool.gno__Mint() || amount0(%d) >= 0", amount0))
 	amount1 := bigint(amount1Int)
-	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__Mint() || amount1(%s) >= 0", amount1))
+	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__Mint() || amount1(%d) >= 0", amount1))
 
 	var balance0Before, balance1Before bigint
 	if amount0 > 0 {
-		// r3v4_xxx
-		// when dynamic import is supported, we can use transfer()
-		// ~~ FROM HERE
-		balance0Before = balanceOf(pool.token0, GetOrigPkgAddr())
+		balance0Before := bigint(balanceOfByRegisterCall(pToken0Path, GetOrigPkgAddr()))
 
-		from := a2u(GetOrigCaller()) // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
-		to := a2u(GetOrigPkgAddr())
+		from := GetOrigCaller() // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
+		to := GetOrigPkgAddr()
 
-		foo.TransferFrom(from, to, uint64(amount0))
+		ok := transferFromByRegisterCall(pToken0Path, from, to, uint64(amount0))
+		if !ok {
+			panic("[POOL] pool.gno__Mint() ||  transferFromByRegisterCall(pToken0Path, from, to, uint64(amount0)) failed")
+		}
 
 		require(
-			balance0Before+amount0 <= balanceOf(pool.token0, GetOrigPkgAddr()),
+			balance0Before+amount0 <= bigint(balanceOfByRegisterCall(pToken0Path, GetOrigPkgAddr())),
 			ufmt.Sprintf(
-				"[POOL] pool.gno__Mint() || balance0Before(%s) + amount0(%s) <= balanceOf(pool.token0, GetOrigPkgAddr())(%s)",
-				balance0Before, amount0, balanceOf(pool.token0, GetOrigPkgAddr()),
+				"[POOL] pool.gno__Mint() || balance0Before(%d) + amount0(%d) <= balanceOfByRegisterCall(pToken0Path, GetOrigPkgAddr())(%d)",
+				balance0Before, amount0, balanceOfByRegisterCall(pToken0Path, GetOrigPkgAddr()),
 			),
 		)
-	} // ~~ TO HERE
+	}
 
 	if amount1 > 0 {
-		// r3v4_xxx
-		// when dynamic import is supported, we can use transfer()
-		// ~~ FROM HERE
-		balance1Before = balanceOf(pool.token1, GetOrigPkgAddr())
+		balance1Before = bigint(balanceOfByRegisterCall(pToken1Path, GetOrigPkgAddr()))
 
-		from := a2u(GetOrigCaller()) // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
-		to := a2u(GetOrigPkgAddr())
+		from := GetOrigCaller() // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
+		to := GetOrigPkgAddr()
 
-		bar.TransferFrom(from, to, uint64(amount1))
+		ok := transferFromByRegisterCall(pToken1Path, from, to, uint64(amount1))
+		if !ok {
+			panic("[POOL] pool.gno__Mint() ||  transferFromByRegisterCall(pToken1Path, from, to, uint64(amount1)) failed")
+		}
 
 		require(
-			balance1Before+amount1 <= balanceOf(pool.token1, GetOrigPkgAddr()),
+			balance1Before+amount1 <= bigint(balanceOfByRegisterCall(pToken1Path, GetOrigPkgAddr())),
 			ufmt.Sprintf(
-				"[POOL] pool.gno__Mint() || balance1Before(%s) + amount1(%s) <= balanceOf(pool.token1, GetOrigPkgAddr())(%s)",
-				balance1Before, amount1, balanceOf(pool.token1, GetOrigPkgAddr()),
+				"[POOL] pool.gno__Mint() || balance1Before(%d) + amount1(%d) <= balanceOfByRegisterCall(pToken1Path, GetOrigPkgAddr())(%d)",
+				balance1Before, amount1, balanceOfByRegisterCall(pToken1Path, GetOrigPkgAddr()),
 			),
 		)
-	} // ~~ TO HERE
+	}
 
 	pool.balances.token0 += amount0
 	pool.balances.token1 += amount1
@@ -91,8 +88,8 @@ func Mint(
 
 // only position contract can call this function
 func Burn(
-	pToken0 string,
-	pToken1 string,
+	pToken0Path string,
+	pToken1Path string,
 	pFee uint16,
 	tickLower int32,
 	tickUpper int32,
@@ -102,7 +99,7 @@ func Burn(
 
 	requireUnsigned(amount, ufmt.Sprintf("[POOL] pool.gno__Burn() || amount(%s) >= 0", amount))
 
-	pool := GetPool(pToken0, pToken1, pFee)
+	pool := GetPool(pToken0Path, pToken1Path, pFee)
 
 	position, amount0Int, amount1Int := pool.modifyPosition(
 		ModifyPositionParams{
@@ -128,10 +125,10 @@ func Burn(
 	return amount0, amount1
 }
 
-// only position contract can call this function
+// // only position contract can call this function
 func Collect(
-	pToken0 string,
-	pToken1 string,
+	pToken0Path string,
+	pToken1Path string,
 	pFee uint16,
 	recipient std.Address,
 	tickLower int32,
@@ -144,7 +141,7 @@ func Collect(
 	requireUnsigned(amount0Requested, ufmt.Sprintf("pool.gno__Collect() || amount0Requested(%s) >= 0", amount0Requested))
 	requireUnsigned(amount1Requested, ufmt.Sprintf("pool.gno__Collect() || amount1Requested(%s) >= 0", amount1Requested))
 
-	pool := GetPool(pToken0, pToken1, pFee)
+	pool := GetPool(pToken0Path, pToken1Path, pFee)
 
 	key := positionGetKey(PrevRealmAddr(), tickLower, tickUpper)
 	position, exist := pool.positions[key]
@@ -156,13 +153,11 @@ func Collect(
 	amount1 := min(amount1Requested, position.tokensOwed1)
 	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__Collect() || amount1(%s) >= 0", amount1))
 
-	// collect(pool.token0, pool.balances.token0, amount0, recipient)
 	require(pool.balances.token0 >= amount0, ufmt.Sprintf("[POOL] pool.gno__Collect() || pool.balances.token0(%s) >= amount0(%s)", pool.balances.token0, amount0))
-	foo.Transfer(a2u(recipient), uint64(amount0))
+	transferFromByRegisterCall(pToken0Path, GetOrigPkgAddr(), recipient, uint64(amount0))
 
-	// collect(pool.token1, pool.balances.token1, amount1, recipient)
 	require(pool.balances.token1 >= amount1, ufmt.Sprintf("[POOL] pool.gno__Collect() || pool.balances.token1(%s) >= amount1(%s)", pool.balances.token1, amount1))
-	bar.Transfer(a2u(recipient), uint64(amount1))
+	transferFromByRegisterCall(pToken1Path, GetOrigPkgAddr(), recipient, uint64(amount1))
 
 	// adjust position
 	position.tokensOwed0 -= amount0
@@ -180,8 +175,8 @@ func Collect(
 }
 
 func Swap(
-	pToken0 string,
-	pToken1 string,
+	pToken0Path string,
+	pToken1Path string,
 	pFee uint16,
 	recipient std.Address,
 	zeroForOne bool,
@@ -190,7 +185,7 @@ func Swap(
 ) (bigint, bigint) {
 	require(amountSpecified != 0, "[POOL] pool.gno__Swap() || amountSpecified can't be zero")
 
-	pool := GetPool(pToken0, pToken1, pFee)
+	pool := GetPool(pToken0Path, pToken1Path, pFee)
 	require(pool.liquidity > 0, ufmt.Sprintf("[POOL] math_logic.gno__swapAmount() || pool.liquidity(%d) must be > 0", pool.liquidity))
 
 	slot0Start := pool.slot0
@@ -381,31 +376,33 @@ func Swap(
 
 	if zeroForOne {
 		if amount1 < 0 {
-			require(pool.balances.token1 > (-1*amount1), ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token1(%s) > (-1 * amount1)(%s)", pool.balances.token1, (-1*amount1)))
+			require(pool.balances.token1 > (-amount1), ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token1(%s) > (-1 * amount1)(%s)", pool.balances.token1, (-amount1)))
 
-			// pool.token1.Transfer(recipient, uint64(-1*amount1))
-			bar.Transfer(a2u(recipient), uint64(-1*amount1))
+			ok := transferByRegisterCall(pToken1Path, recipient, uint64(-amount1))
+			if !ok {
+				panic("[POOL] pool.gno__Swap() || transferByRegisterCall(pToken1Path, recipient, uint64(-amount1)) failed")
+			}
+
 			pool.balances.token1 += amount1
 		}
 
-		// r3v4_xxx
-		// transfer(pool.token0, amount0)
-		// ~~ FROM HERE
-		balance0Before := balanceOf(pool.token0, GetOrigPkgAddr())
+		balance0Before := bigint(balanceOfByRegisterCall(pToken0Path, GetOrigPkgAddr()))
 
-		from := a2u(GetOrigCaller()) // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
-		to := a2u(GetOrigPkgAddr())
+		txOrigin := GetOrigCaller() // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
+		poolPkg := GetOrigPkgAddr()
 
-		foo.TransferFrom(from, to, uint64(amount0))
+		ok := transferFromByRegisterCall(pToken0Path, txOrigin, poolPkg, uint64(amount0))
+		if !ok {
+			panic("[POOL] pool.gno__Swap() ||  transferFromByRegisterCall(pToken0Path, from, to, uint64(amount0)) failed")
+		}
 
 		require(
-			balance0Before+bigint(amount0) <= balanceOf(pool.token0, GetOrigPkgAddr()),
+			balance0Before+amount0 <= bigint(balanceOfByRegisterCall(pToken0Path, GetOrigPkgAddr())),
 			ufmt.Sprintf(
-				"[POOL] pool.gno__Swap() || balance0Before(%s) + amount0(%s) <= balanceOf(pool.token0, GetOrigPkgAddr())(%s)",
-				balance0Before, amount0, balanceOf(pool.token0, GetOrigPkgAddr()),
+				"[POOL] pool.gno__Swap() || balance0Before(%d) + amount0(%d) <= balanceOfByRegisterCall(pToken0Path, GetOrigPkgAddr())(%d)",
+				balance0Before, amount0, balanceOfByRegisterCall(pToken0Path, GetOrigPkgAddr()),
 			),
 		)
-		// TO HERE ~~
 
 		pool.balances.token0 += amount0
 		require(pool.balances.token0 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%s) >= 0__#1", pool.balances.token0))
@@ -413,33 +410,36 @@ func Swap(
 
 	} else {
 		if amount0 < 0 {
-			require(pool.balances.token0 > (-1*amount0), ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%s) > (-1 * amount0)(%s)", pool.balances.token0, (-1*amount0)))
+			require(pool.balances.token0 > (-amount0), ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%s) > (-1 * amount0)(%s)", pool.balances.token0, (-amount0)))
 
-			// pool.token0.Transfer(a2u(recipient), uint64(-amount0))
-			foo.Transfer(a2u(recipient), uint64(-amount0))
+			ok := transferByRegisterCall(pToken0Path, recipient, uint64(-amount0))
+			if !ok {
+				panic("[POOL] pool.gno__Swap() || transferByRegisterCall(pToken0Path, recipient, uint64(-amount0)) failed")
+			}
+
 			pool.balances.token0 += amount0
 		}
 
-		// r3v4_xxx
-		// transfer(pool.token1, amount1)
-		// ~~ FROM HERE
-		balance1Before := balanceOf(pool.token1, GetOrigPkgAddr())
+		balance1Before := bigint(balanceOfByRegisterCall(pToken1Path, GetOrigPkgAddr()))
 
-		from := a2u(GetOrigCaller())
-		to := a2u(GetOrigPkgAddr())
+		txOrigin := GetOrigCaller() // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
+		poolPkg := GetOrigPkgAddr()
 
-		bar.TransferFrom(from, to, uint64(amount1)) // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
+		ok := transferFromByRegisterCall(pToken1Path, txOrigin, poolPkg, uint64(amount1))
+		if !ok {
+			panic("[POOL] pool.gno__Swap() ||  transferFromByRegisterCall(pToken1Path, from, to, uint64(amount1)) failed")
+		}
 
 		require(
-			balance1Before+bigint(amount1) <= balanceOf(pool.token1, GetOrigPkgAddr()),
+			balance1Before+amount1 <= bigint(balanceOfByRegisterCall(pToken1Path, GetOrigPkgAddr())),
 			ufmt.Sprintf(
-				"[POOL] pool.gno__Swap() || balance1Before(%s) + amount1(%s) <= balanceOf(pool.token1, GetOrigPkgAddr())(%s)",
-				balance1Before, amount1, balanceOf(pool.token1, GetOrigPkgAddr()),
+				"[POOL] pool.gno__Mint() || balance1Before(%d) + amount1(%d) <= balanceOfByRegisterCall(pToken1Path, GetOrigPkgAddr())(%d)",
+				balance1Before, amount1, balanceOfByRegisterCall(pToken1Path, GetOrigPkgAddr()),
 			),
 		)
-		// TO HERE ~~
 
 		pool.balances.token1 += amount1
+
 		require(pool.balances.token0 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%s) >= 0__#2", pool.balances.token0))
 		require(pool.balances.token1 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token1(%s) >= 0__#2", pool.balances.token1))
 	}
@@ -469,38 +469,38 @@ func SetFeeProtocol(
 	g.SetGovParameter("protocoL_fees", feeProtocol0+(feeProtocol1<<4))
 }
 
-// ADMIN
-func CollectProtocol(
-	pToken0 string,
-	pToken1 string,
-	pFee uint16,
-	recipient std.Address,
-	amount0Requested bigint,
-	amount1Requested bigint,
-) (bigint, bigint) {
-	requireUnsigned(amount0Requested, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount0Requested(%s) >= 0", amount0Requested))
-	requireUnsigned(amount1Requested, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount1Requested(%s) >= 0", amount1Requested))
-	require(isAdmin(PrevRealmAddr()), ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || caller(%s) must be admin", PrevRealmAddr()))
+// // ADMIN
+// func CollectProtocol(
+// 	pToken0 string,
+// 	pToken1 string,
+// 	pFee uint16,
+// 	recipient std.Address,
+// 	amount0Requested bigint,
+// 	amount1Requested bigint,
+// ) (bigint, bigint) {
+// 	requireUnsigned(amount0Requested, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount0Requested(%s) >= 0", amount0Requested))
+// 	requireUnsigned(amount1Requested, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount1Requested(%s) >= 0", amount1Requested))
+// 	require(isAdmin(PrevRealmAddr()), ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || caller(%s) must be admin", PrevRealmAddr()))
 
-	pool := GetPool(pToken0, pToken1, pFee)
+// 	pool := GetPool(pToken0, pToken1, pFee)
 
-	amount0 := min(amount0Requested, pool.protocolFees.token0)
-	requireUnsigned(amount0, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount0(%s) >= 0", amount0))
+// 	amount0 := min(amount0Requested, pool.protocolFees.token0)
+// 	requireUnsigned(amount0, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount0(%s) >= 0", amount0))
 
-	amount1 := min(amount1Requested, pool.protocolFees.token1)
-	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount1(%s) >= 0", amount1))
+// 	amount1 := min(amount1Requested, pool.protocolFees.token1)
+// 	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount1(%s) >= 0", amount1))
 
-	// without procotol fee
-	amount0, amount1 = pool.saveProtocolFees(amount0, amount1)
+// 	// without procotol fee
+// 	amount0, amount1 = pool.saveProtocolFees(amount0, amount1)
 
-	// pool.token0.Transfer(a2u(recipient), uint64(amount0))
-	foo.Transfer(a2u(recipient), uint64(amount0))
+// 	// pool.token0.Transfer(a2u(recipient), uint64(amount0))
+// 	foo.Transfer(a2u(recipient), uint64(amount0))
 
-	// pool.token1.Transfer(a2u(recipient), uint64(amount1))
-	bar.Transfer(a2u(recipient), uint64(amount1))
+// 	// pool.token1.Transfer(a2u(recipient), uint64(amount1))
+// 	bar.Transfer(a2u(recipient), uint64(amount1))
 
-	return amount0, amount1
-}
+// 	return amount0, amount1
+// }
 
 func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, bigint, bigint) {
 	position := pool.updatePosition(

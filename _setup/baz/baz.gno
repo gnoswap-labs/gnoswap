@@ -1,4 +1,4 @@
-package bar
+package baz
 
 import (
 	"std"
@@ -13,13 +13,13 @@ import (
 )
 
 var (
-	bar   *grc20.AdminToken
+	baz   *grc20.AdminToken
 	admin std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // TODO: helper to change admin
 )
 
 func init() {
-	bar = grc20.NewAdminToken("Bar", "BAR", 4)
-	bar.Mint(admin, 1000000*10000) // @administrator (1M)
+	baz = grc20.NewAdminToken("Baz", "BAZ", 4)
+	baz.Mint(admin, 1000000*10000) // @administrator (1M)
 
 	// for swap > pool
 	var (
@@ -31,22 +31,22 @@ func init() {
 		posAddr  = std.DerivePkgAddr("gno.land/r/position")
 	)
 
-	bar.Mint(lp01, 50000000)
-	bar.Mint(lp02, 50000000)
-	bar.Mint(lp03, 50000000)
-	bar.Mint(tr01, 50000000)
+	baz.Mint(lp01, 50000000)
+	baz.Mint(lp02, 50000000)
+	baz.Mint(lp03, 50000000)
+	baz.Mint(tr01, 50000000)
 
-	bar.Approve(lp01, poolAddr, 50000000)
-	// bar.Approve(lp02, poolAddr, 50000000)
-	// bar.Approve(lp03, poolAddr, 50000000)
-	bar.Approve(tr01, poolAddr, 50000000)
+	baz.Approve(lp01, poolAddr, 50000000)
+	// baz.Approve(lp02, poolAddr, 50000000)
+	// baz.Approve(lp03, poolAddr, 50000000)
+	baz.Approve(tr01, poolAddr, 50000000)
 
-	// bar.Approve(lp01, lp01, 50000000)
-	// bar.Approve(lp02, lp02, 50000000)
-	// bar.Approve(lp03, lp03, 50000000)
-	// bar.Approve(tr01, tr01, 50000000)
+	// baz.Approve(lp01, lp01, 50000000)
+	// baz.Approve(lp02, lp02, 50000000)
+	// baz.Approve(lp03, lp03, 50000000)
+	// baz.Approve(tr01, tr01, 50000000)
 
-	// bar.Approve(poolAddr, registryAddr, 50000000)
+	// baz.Approve(posAddr, poolAddr, 50000000)
 }
 
 // method proxies as public functions.
@@ -54,15 +54,15 @@ func init() {
 
 // getters.
 func GetGRC20() *grc20.AdminToken {
-	return bar
+	return baz
 }
 
 func TotalSupply() uint64 {
-	return bar.TotalSupply()
+	return baz.TotalSupply()
 }
 
 func BalanceOf(owner users.AddressOrName) uint64 {
-	balance, err := bar.BalanceOf(owner.Resolve())
+	balance, err := baz.BalanceOf(owner.Resolve())
 	if err != nil {
 		panic(err)
 	}
@@ -70,7 +70,7 @@ func BalanceOf(owner users.AddressOrName) uint64 {
 }
 
 func Allowance(owner, spender users.AddressOrName) uint64 {
-	allowance, err := bar.Allowance(owner.Resolve(), spender.Resolve())
+	allowance, err := baz.Allowance(owner.Resolve(), spender.Resolve())
 	if err != nil {
 		panic(err)
 	}
@@ -80,25 +80,27 @@ func Allowance(owner, spender users.AddressOrName) uint64 {
 // setters.
 
 func Transfer(to users.AddressOrName, amount uint64) {
+	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	err := bar.Transfer(caller, to.Resolve(), amount)
+	err := baz.Transfer(caller, to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
 func Approve(spender users.AddressOrName, amount uint64) {
+	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	err := bar.Approve(caller, spender.Resolve(), amount)
+	err := baz.Approve(caller, spender.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
 func TransferFrom(from, to users.AddressOrName, amount uint64) {
+	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-
-	err := bar.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
+	err := baz.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -109,29 +111,33 @@ func TransferFrom(from, to users.AddressOrName, amount uint64) {
 func Faucet() {
 	// FIXME: add limits?
 	// FIXME: add payment in gnot?
+	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	bar.Mint(caller, 1000*10000) // 1k
+	baz.Mint(caller, 1000*10000) // 1k
 }
 
 func FaucetL() {
 	// FIXME: add limits?
 	// FIXME: add payment in gnot?
+	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	bar.Mint(caller, 50000000000) // 50_000_000_000
+	baz.Mint(caller, 50000000000) // 50_000_000_000
 }
 
 // administration.
 
 func Mint(address users.AddressOrName, amount uint64) {
+	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	bar.Mint(address.Resolve(), amount)
+	baz.Mint(address.Resolve(), amount)
 }
 
 func Burn(address users.AddressOrName, amount uint64) {
+	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	bar.Burn(address.Resolve(), amount)
+	baz.Burn(address.Resolve(), amount)
 }
 
 // render.
@@ -143,10 +149,10 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return bar.RenderHome()
+		return baz.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := users.AddressOrName(parts[1])
-		balance, _ := bar.BalanceOf(owner.Resolve())
+		balance, _ := baz.BalanceOf(owner.Resolve())
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"

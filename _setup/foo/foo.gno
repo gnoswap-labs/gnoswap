@@ -10,6 +10,7 @@ import (
 
 	// for swap
 	"gno.land/p/demo/testutils"
+	// for registry call
 )
 
 var (
@@ -37,16 +38,16 @@ func init() {
 	foo.Mint(tr01, 50000000)
 
 	foo.Approve(lp01, poolAddr, 50000000)
-	foo.Approve(lp02, poolAddr, 50000000)
-	foo.Approve(lp03, poolAddr, 50000000)
+	// foo.Approve(lp02, poolAddr, 50000000)
+	// foo.Approve(lp03, poolAddr, 50000000)
 	foo.Approve(tr01, poolAddr, 50000000)
 
-	foo.Approve(lp01, lp01, 50000000)
-	foo.Approve(lp02, lp02, 50000000)
-	foo.Approve(lp03, lp03, 50000000)
-	foo.Approve(tr01, tr01, 50000000)
+	// foo.Approve(lp01, lp01, 50000000)
+	// foo.Approve(lp02, lp02, 50000000)
+	// foo.Approve(lp03, lp03, 50000000)
+	// foo.Approve(tr01, tr01, 50000000)
 
-	foo.Approve(posAddr, poolAddr, 50000000)
+	// foo.Approve(posAddr, poolAddr, 50000000)
 }
 
 // method proxies as public functions.
@@ -80,7 +81,6 @@ func Allowance(owner, spender users.AddressOrName) uint64 {
 // setters.
 
 func Transfer(to users.AddressOrName, amount uint64) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	err := foo.Transfer(caller, to.Resolve(), amount)
 	if err != nil {
@@ -89,7 +89,6 @@ func Transfer(to users.AddressOrName, amount uint64) {
 }
 
 func Approve(spender users.AddressOrName, amount uint64) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	err := foo.Approve(caller, spender.Resolve(), amount)
 	if err != nil {
@@ -98,7 +97,6 @@ func Approve(spender users.AddressOrName, amount uint64) {
 }
 
 func TransferFrom(from, to users.AddressOrName, amount uint64) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	err := foo.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {
@@ -111,7 +109,6 @@ func TransferFrom(from, to users.AddressOrName, amount uint64) {
 func Faucet() {
 	// FIXME: add limits?
 	// FIXME: add payment in gnot?
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	foo.Mint(caller, 1000*10000) // 1k
 }
@@ -119,7 +116,6 @@ func Faucet() {
 func FaucetL() {
 	// FIXME: add limits?
 	// FIXME: add payment in gnot?
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	foo.Mint(caller, 50000000000) // 50_000_000_000
 }
@@ -127,14 +123,12 @@ func FaucetL() {
 // administration.
 
 func Mint(address users.AddressOrName, amount uint64) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 	foo.Mint(address.Resolve(), amount)
 }
 
 func Burn(address users.AddressOrName, amount uint64) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 	foo.Burn(address.Resolve(), amount)
