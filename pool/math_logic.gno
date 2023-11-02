@@ -121,11 +121,12 @@ func DrySwap(
 		)
 
 		if !(step.amountIn != 0 && step.amountOut != 0) {
+			// NOT ENOUGH MINTED
 			return 0, 0, false
 		}
 
 		if exactInput {
-			state.amountSpecifiedRemaining -= step.amountIn + step.feeAmount
+			state.amountSpecifiedRemaining -= (step.amountIn + step.feeAmount)
 			state.amountCalculated -= step.amountOut
 		} else {
 			state.amountSpecifiedRemaining += step.amountOut
@@ -145,11 +146,13 @@ func DrySwap(
 
 	if zeroForOne {
 		if !(pool.balances.token1 > (-1 * amount1)) {
+			// NOT ENOUGH BALANCE for token1
 			return 0, 0, false
 		}
 
 	} else {
 		if !(pool.balances.token0 > (-1 * amount0)) {
+			// NOT ENOUGH BALANCE for token0
 			return 0, 0, false
 		}
 	}

@@ -2,118 +2,100 @@ package router
 
 import (
 	"std"
-	"strconv"
 	"strings"
-
-	p "gno.land/r/pool"
 )
 
-func SwapRoute(
-	inputTokenPath string,
+func BestSwap(
+	inputToken string,
 	outputTokenPath string,
 
 	amountIn bigint,
-	recipient std.Address,
 	sqrtPriceLimitX96 bigint,
-) (amountOut bigint) {
-	numSwaps := findSwapPaths(inputTokenPath, outputTokenPath)
+) {
+	// get quotes
+	quotes := quoteForAllPath( // sored by Ratio DESC
+		inputToken,        // inputToken
+		outputTokenPath,   // outputToken
+		amountIn,          // amountIn
+		sqrtPriceLimitX96, // sqrtPriceLimitX96
+	)
+	if len(quotes) == 0 {
+		panic("router.gno__THERE IS NO QUOTE")
+	}
 
-	for i, swapPath := range numSwaps {
-		numPools := strings.Count(swapPath, ",") / 2
+	bestSwaps := []QuoterTarget{}
+	totalPct := 100
 
-		for j := i; j < numPools; j++ {
-			if numPools < 1 {
-				panic("CAN NOT FIND SWAP PATH")
-			} else if numPools == 1 {
-				// single Swap
-				input, output, fee := getSwapData(swapPath, j)
+	for i, quote := range quotes {
+		quotePct := quote.pct
+		outputRatioX96 := quote.outputRatioX96
 
-				singleParams := SingleSwapParams{
-					tokenIn:           input,
-					tokenOut:          output,
-					fee:               fee,
-					amountIn:          amountIn,
-					sqrtPriceLimitX96: sqrtPriceLimitX96,
-				}
+		totalPct -= quotePct
+		bestSwaps = append(bestSwaps, quote)
 
-				amountOut = singleSwap(singleParams)
-			} else {
-				// multiple Swap
-				input, output, fee := getSwapData(swapPath, j-1)
-				swapParams := SwapParams{
-					tokenIn:  input,
-					tokenOut: output,
-					fee:      fee,
+		if totalPct <= 0 {
+			break
+		}
+	}
 
-					recipient:    std.GetOrigCaller(),
-					amountIn:     amountIn,
-					minAmountOut: amountIn * 5, // r3v4_xxx: need usd price I think
-				}
+	if len(bestSwaps) == 0 {
+		panic("router.gno__CAN'T MAKE BestSwapRoute")
+	}
 
-				amountOut = multiSwap(swapParams, i, numPools, swapPath)
+	// DEBUG
+	println("DEBUG router.gno__len(bestSwaps):", len(bestSwaps))
+
+	remainingAmount := amountIn
+	for i, bestSwap := range bestSwaps {
+		numPools := strings.Count(bestSwap.targetPath, ",") / 2
+
+		if numPools < 1 {
+			panic("router.gno__CAN NOT FIND SWAP PATH")
+		}
+
+		if numPools > 3 {
+			panic("router.gno__TOO MANY SWAP PATH")
+		}
+
+		// SINGLE
+		if numPools == 1 {
+			input, output, fee := getSwapData(bestSwap.targetPath, 0)
+
+			singleParams := SingleSwapParams{
+				tokenIn:           input,
+				tokenOut:          output,
+				fee:               fee,
+				amountIn:          bestSwap.pctAmount,
+				sqrtPriceLimitX96: sqrtPriceLimitX96,
 			}
-		}
-	}
-
-	return amountOut
-}
-
-func findSwapPaths(
-	inputTokenPath string,
-	outputTokenPath string,
-) (swapPaths SwapPaths) {
-	tokenPairs := TokenPairs{}
-	poolList := p.GetPoolList()
-
-	for i, poolPath := range poolList {
-		token0Path, token1Path, pFee := poolPathWithFeeDivide(poolPath)
-
-		{
-			k := token0Path
-			v := token1Path + ":" + strconv.Itoa(pFee)
-
-			tokenPairs[k] = append(tokenPairs[k], v)
+			amountOut := singleSwap(singleParams)
+			remainingAmount -= bestSwap.pctAmount
 		}
 
-		{
-			k := token1Path
-			v := token0Path + ":" + strconv.Itoa(pFee)
+		// MULTI
+		if numPools > 1 && numPools <= 3 {
+			toSwap := bigint(0)
 
-			tokenPairs[k] = append(tokenPairs[k], v)
+			// isFinal
+			if i == len(bestSwaps)-1 { // last swap routes
+				toSwap = remainingAmount
+			} else {
+				remainingAmount -= bestSwap.pctAmount
+				toSwap = bestSwap.pctAmount
+			}
+
+			input, output, fee := getSwapData(bestSwap.targetPath, 0)
+
+			swapParams := SwapParams{
+				tokenIn:  input,
+				tokenOut: output,
+				fee:      fee,
+
+				recipient:    std.GetOrigCaller(),
+				amountIn:     toSwap,
+				minAmountOut: 1, // r3v4_xx: sqrtPriceLimitX96
+			}
+			amountOut := multiSwap(swapParams, 0, numPools, bestSwap.targetPath) // iterate here
 		}
 	}
-
-	swapPaths = getSwapPaths(tokenPairs, inputTokenPath, outputTokenPath)
-	return swapPaths
-}
-
-func getSwapPaths(
-	tokenPairs TokenPairs,
-	inputTokenPath string,
-	outputTokenPath string,
-) (swapPaths SwapPaths) {
-	swapPaths = make(SwapPaths, 0)
-
-	// check if there is path that starts with input
-	if len(tokenPairs[inputTokenPath]) == 0 {
-		panic("NO POOL")
-	}
-
-	// find direct path
-	for _, output := range tokenPairs[inputTokenPath] {
-		if strings.HasPrefix(output, outputTokenPath) {
-			outputPath, outputFee := singlePoolPathWithFeeDivide(output)
-			directPath := inputTokenPath + "," + outputFee + "," + outputPath
-			swapPaths[len(swapPaths)] = directPath
-
-			tokenPairs[inputTokenPath] = removeItemFromStringArray(tokenPairs[inputTokenPath], output)
-		}
-	}
-
-	// find nested path
-	// r3v4_xx: handle more than three time swap ??
-	swapPaths = findTwicePath(tokenPairs, inputTokenPath, outputTokenPath, swapPaths)
-	swapPaths = findThreeTimePath(tokenPairs, inputTokenPath, outputTokenPath, swapPaths)
-
-	return
 }

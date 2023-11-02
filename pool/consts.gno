@@ -57,4 +57,7 @@ const (
 	MAX_UINT96 bigint = 79228162514264337593543950335
 
 	MAX_UINT160 bigint = 1461501637330902918203684832716283019655932542975
+
+	ADDR_ROUTER std.Address = std.DerivePkgAddr("gno.land/r/router")
+	ADDR_POOL   std.Address = std.DerivePkgAddr("gno.land/r/pool")
 )

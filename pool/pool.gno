@@ -180,6 +180,7 @@ func Swap(
 	zeroForOne bool,
 	amountSpecified bigint,
 	sqrtPriceLimitX96 bigint,
+	payer std.Address, // router
 ) (bigint, bigint) {
 	// r3v4_xxx: ONLY ROUTER CAN CALL THIS
 	require(amountSpecified != 0, "[POOL] pool.gno__Swap() || amountSpecified can't be zero")
@@ -373,6 +374,7 @@ func Swap(
 		amount1 = amountSpecified - state.amountSpecifiedRemaining
 	}
 
+	// TOKEN TRANFSER
 	if zeroForOne {
 		if amount1 < 0 {
 			require(pool.balances.token1 > (-amount1), ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token1(%s) > (-1 * amount1)(%s)", pool.balances.token1, (-amount1)))
@@ -387,12 +389,9 @@ func Swap(
 
 		balance0Before := bigint(balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr()))
 
-		txOrigin := GetOrigCaller() // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
-		poolPkg := GetOrigPkgAddr()
-
-		ok := transferFromByRegisterCall(pool.token0Path, txOrigin, poolPkg, uint64(amount0))
+		ok := transferFromByRegisterCall(pool.token0Path, payer, ADDR_POOL, uint64(amount0))
 		if !ok {
-			panic("[POOL] pool.gno__Swap() ||  transferFromByRegisterCall(pool.token0Path, from, to, uint64(amount0)) failed")
+			panic("[POOL] pool.gno__Swap() || transferFromByRegisterCall(pool.token0Path, payer, ADDR_POOL, uint64(amount0)) failed")
 		}
 
 		require(
@@ -406,7 +405,6 @@ func Swap(
 		pool.balances.token0 += amount0
 		require(pool.balances.token0 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%s) >= 0__#1", pool.balances.token0))
 		require(pool.balances.token1 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token1(%s) >= 0__#1", pool.balances.token1))
-
 	} else {
 		if amount0 < 0 {
 			require(pool.balances.token0 > (-amount0), ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%s) > (-1 * amount0)(%s)", pool.balances.token0, (-amount0)))
@@ -421,18 +419,15 @@ func Swap(
 
 		balance1Before := bigint(balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr()))
 
-		txOrigin := GetOrigCaller() // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
-		poolPkg := GetOrigPkgAddr()
-
-		ok := transferFromByRegisterCall(pool.token1Path, txOrigin, poolPkg, uint64(amount1))
+		ok := transferFromByRegisterCall(pool.token1Path, payer, ADDR_POOL, uint64(amount1))
 		if !ok {
-			panic("[POOL] pool.gno__Swap() ||  transferFromByRegisterCall(pool.token1Path, from, to, uint64(amount1)) failed")
+			panic("[POOL] pool.gno__Swap() || transferFromByRegisterCall(pool.token1Path, payer, ADDR_POOL, uint64(amount1)) failed")
 		}
 
 		require(
 			balance1Before+amount1 <= bigint(balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr())),
 			ufmt.Sprintf(
-				"[POOL] pool.gno__Mint() || balance1Before(%d) + amount1(%d) <= balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr())(%d)",
+				"[POOL] pool.gno__Swap() || balance1Before(%d) + amount1(%d) <= balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr())(%d)",
 				balance1Before, amount1, balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr()),
 			),
 		)
