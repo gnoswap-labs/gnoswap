@@ -76,7 +76,7 @@ func getSwapData(path string, poolIdx int) (string, string, uint16) {
 		fee, _ := strconv.Atoi(datas[5])
 		return datas[4], datas[6], uint16(fee)
 	default:
-		panic("NOT SUPPORTED #2")
+		return "", "", 0
 	}
 }
 

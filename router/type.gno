@@ -4,27 +4,6 @@ import (
 	"std"
 )
 
-/* NOT USED CURRENTLY
-type SwapRoutes []SwapRoute // RETURN THIS
-
-type SwapRoute struct {
-	inputTokenPath  string
-	outputTokenPath string
-	swapAmount      bigint
-	swapAmountRatio int // 최소 5%
-	pools           []Pool
-}
-
-type Pool struct {
-	poolPath        string
-	token0Path      string
-	token1Path      string
-	fee             int
-	currentPriceX96 bigint
-	currentTick     int32
-}
-*/
-
 type SwapCallbackData struct {
 	// poolPath string
 	tokenIn  string
@@ -36,3 +15,17 @@ type SwapCallbackData struct {
 
 type SwapPaths map[int]string
 type TokenPairs map[string][]string
+
+type QuoterTarget struct {
+	// totalAmount int    // 100 // neee this?
+	pct            int    // 5%
+	pctAmount      bigint // 5%
+	targetPath     string // gno.land/r/foo,500,gno.land/r/qux
+	outputRatioX96 bigint // 121324894654
+}
+
+type ByOutputRatioDesc []QuoterTarget
+
+func (a ByOutputRatioDesc) Len() int           { return len(a) }
+func (a ByOutputRatioDesc) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByOutputRatioDesc) Less(i, j int) bool { return a[i].outputRatioX96 > a[j].outputRatioX96 }
