@@ -1,10 +1,12 @@
 package router
 
 import (
+	"std"
 	"strconv"
 	"strings"
 
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/demo/users"
 )
 
 /* UTIL */
@@ -86,4 +88,8 @@ func sortItems(tokenAPath, tokenBPath, fee string) string {
 	} else {
 		return tokenBPath + ":" + tokenAPath + ":" + fee
 	}
+}
+
+func a2u(addr std.Address) users.AddressOrName {
+	return users.AddressOrName(addr)
 }

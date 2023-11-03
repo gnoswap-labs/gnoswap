@@ -105,3 +105,61 @@ func calculatePercentages(amount bigint) map[int]bigint { // map[pct][value]
 
 	return percentages
 }
+
+func findBestPaths(quotes []QuoterTarget) (bestSwaps []QuoterTarget) {
+	bestSwaps = make([]QuoterTarget, 0)
+
+	totalPct := 100
+	for _, quote := range quotes {
+		quotePct := quote.pct
+		outputRatioX96 := quote.outputRatioX96
+
+		totalPct -= quotePct
+
+		bestSwaps = append(bestSwaps, quote)
+
+		if totalPct <= 0 {
+			break
+		}
+	}
+
+	return bestSwaps
+}
+
+func removeDuplication(bestSwaps []QuoterTarget) (finalSwaps []QuoterTarget) {
+	finalSwaps = make([]QuoterTarget, 0) // return
+	insertedPath := []string{}           // tmp
+	pctToSwap := 0
+	for _, bestSwap := range bestSwaps {
+		pctToSwap += bestSwap.pct
+		if !containsString(insertedPath, bestSwap.targetPath) {
+			insertedPath = append(insertedPath, bestSwap.targetPath)
+			finalSwaps = append(finalSwaps, bestSwap)
+		} else {
+			for i, finalSwap := range finalSwaps {
+				if finalSwap.targetPath == bestSwap.targetPath {
+					finalSwap.pctAmount += bestSwap.pctAmount // can be exceed
+
+					if pctToSwap > 100 {
+						finalSwap.pct += (bestSwap.pct - (pctToSwap - 100))
+					} else {
+						finalSwap.pct += bestSwap.pct
+					}
+
+					finalSwaps[i] = finalSwap
+				}
+			}
+		}
+	}
+
+	return finalSwaps
+}
+
+func containsString(slice []string, target string) bool {
+	for _, s := range slice {
+		if s == target {
+			return true
+		}
+	}
+	return false
+}

@@ -17,9 +17,8 @@ type SwapPaths map[int]string
 type TokenPairs map[string][]string
 
 type QuoterTarget struct {
-	// totalAmount int    // 100 // neee this?
 	pct            int    // 5%
-	pctAmount      bigint // 5%
+	pctAmount      bigint // 
 	targetPath     string // gno.land/r/foo,500,gno.land/r/qux
 	outputRatioX96 bigint // 121324894654
 }
