@@ -9,9 +9,9 @@ type SwapParams struct {
 	tokenOut string
 	fee      uint16
 
-	recipient    std.Address
-	amountIn     bigint
-	minAmountOut bigint
+	recipient       std.Address
+	amountSpecified bigint
+	minAmountOut    bigint
 }
 
 func multiSwap(params SwapParams, currentPoolIndex, numPool int, swapPath string) (amountOut bigint) {
@@ -27,10 +27,10 @@ func multiSwap(params SwapParams, currentPoolIndex, numPool int, swapPath string
 			recipient = params.recipient // user ~= std.GetOrigCaller()
 		}
 
-		params.amountIn = _swap(
-			params.amountIn, // amountIn
-			recipient,       // recipient
-			0,               // sqrtPriceLimitX96
+		params.amountSpecified = _swap(
+			params.amountSpecified, // amountSpecified
+			recipient,              // recipient
+			0,                      // sqrtPriceLimitX96
 			SwapCallbackData{
 				params.tokenIn,  // tokenIn
 				params.tokenOut, // tokenOut
@@ -47,14 +47,14 @@ func multiSwap(params SwapParams, currentPoolIndex, numPool int, swapPath string
 			params.tokenOut = nextOutput
 			params.fee = nextFee
 		} else {
-			amountOut = params.amountIn
+			amountOut = params.amountSpecified
 			return amountOut
 		}
 	}
 
 	if amountOut < params.minAmountOut {
 		panic("Too few receive")
-}
+	}
 }
 
 func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath string) (amountOut bigint) {
@@ -70,10 +70,10 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 			recipient = params.recipient // user ~= std.GetOrigCaller()
 		}
 
-		params.amountIn = _swapDry(
-			params.amountIn, // amountIn
-			recipient,       // recipient
-			0,               // sqrtPriceLimitX96
+		params.amountSpecified = _swapDry(
+			params.amountSpecified, // amountSpecified
+			recipient,              // recipient
+			0,                      // sqrtPriceLimitX96
 			SwapCallbackData{
 				params.tokenIn,  // tokenIn
 				params.tokenOut, // tokenOut
@@ -90,7 +90,7 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 			params.tokenOut = nextOutput
 			params.fee = nextFee
 		} else {
-			amountOut = params.amountIn
+			amountOut = params.amountSpecified
 			return amountOut
 		}
 	}

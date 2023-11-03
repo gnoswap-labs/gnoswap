@@ -9,14 +9,14 @@ func BestSwap(
 	inputToken string,
 	outputTokenPath string,
 
-	amountIn bigint,
+	amountSpecified bigint,
 	sqrtPriceLimitX96 bigint,
 ) {
 	// get quotes
 	quotes := quoteForAllPath( // sorted by ratio DESC
 		inputToken,
 		outputTokenPath,
-		amountIn,
+		amountSpecified,
 		sqrtPriceLimitX96,
 	)
 	if len(quotes) == 0 {
@@ -28,7 +28,12 @@ func BestSwap(
 		panic("router.gno__CAN'T MAKE BestSwapRoute")
 	}
 
-	remainingAmount := amountIn
+	finalSwaps := removeDuplication(bestSwaps)
+	if len(bestSwaps) == 0 {
+		panic("router.gno__CAN'T MAKE FinalSwapRoute")
+	}
+
+	remainingAmount := amountSpecified
 	for i, bestSwap := range bestSwaps {
 		numPools := strings.Count(bestSwap.targetPath, ",") / 2
 
@@ -48,7 +53,7 @@ func BestSwap(
 				tokenIn:           input,
 				tokenOut:          output,
 				fee:               fee,
-				amountIn:          bestSwap.pctAmount,
+				amountSpecified:   bestSwap.pctAmount,
 				sqrtPriceLimitX96: sqrtPriceLimitX96,
 			}
 			amountOut := singleSwap(singleParams)
@@ -74,9 +79,9 @@ func BestSwap(
 				tokenOut: output,
 				fee:      fee,
 
-				recipient:    std.GetOrigCaller(),
-				amountIn:     toSwap,
-				minAmountOut: 1,
+				recipient:       std.GetOrigCaller(),
+				amountSpecified: toSwap,
+				minAmountOut:    1,
 			}
 			amountOut := multiSwap(swapParams, 0, numPools, bestSwap.targetPath) // iterate here
 		}

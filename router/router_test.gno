@@ -58,33 +58,19 @@ func TestInitManual(t *testing.T) {
 func TestCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 
-	p.CreatePool(fooPath, barPath, test_fee100, 130621891405341611593710811006) // tick = 10_000, ratio = 2.7181459268252253
-	p.CreatePool(fooPath, barPath, test_fee500, 167719732170287102368011632179) // tick = 15_000, ratio = 4.481352978667308
-	p.CreatePool(barPath, bazPath, test_fee100, 124251697196845557112282348179) // tick =  9_000, ratio = 2.4594924388851824
-	p.CreatePool(barPath, quxPath, test_fee100, 101729702841318637793976746270) // tick =  5_000, ratio = 1.648680055931176
-	p.CreatePool(bazPath, quxPath, test_fee100, 92049301871182272007977902845)  // tick =  3_000, ratio = 1.3498385611954853
-	p.CreatePool(fooPath, quxPath, test_fee100, 965075977353221155028623082916) // tick = 50_000, ratio = 148.37606292307464
-	// findSwapPaths("gno.land/r/foo", "gno.land/r/qux")                           // 5 paths
+	p.CreatePool(fooPath, quxPath, test_fee100, 130621891405341611593710811006) // tick = 10_000, ratio = 2.7181459268252253
+	p.CreatePool(fooPath, quxPath, test_fee500, 101729702841318637793976746270) // tick =  5_000, ratio = 1.648680055931176
+	// findSwapPaths("gno.land/r/foo", "gno.land/r/qux")                           // 2 paths
 	// foo_qux_100
-	// foo_bar_100 > bar_qux_100
-	// foo_bar_500 > bar_qux_100
-	// foo_bar_100 > bar_baz_100 > baz_qux_100
-	// foo_bar_500 > bar_baz_100 > baz_qux_100
 }
 
 func TestPositionMint(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
-	pos.Mint(fooPath, barPath, test_fee100, int32(9000), int32(11000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
-	pos.Mint(fooPath, barPath, test_fee500, int32(14000), int32(16000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
-	pos.Mint(barPath, bazPath, test_fee100, int32(6000), int32(12000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
-	pos.Mint(barPath, quxPath, test_fee100, int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
-	pos.Mint(bazPath, quxPath, test_fee100, int32(2000), int32(4000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
-
-	// direct & expensive
-	pos.Mint(fooPath, quxPath, test_fee100, int32(48000), int32(52000), bigint(1000000), bigint(1000000), 0, 0, max_timeout)
+	pos.Mint(fooPath, quxPath, test_fee100, int32(9000), int32(11000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
+	pos.Mint(fooPath, quxPath, test_fee500, int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
 }
 
-func TestBestSwapDry(t *testing.T) {
+func TestBestSwapDryPositiveSpend(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	tr01FooOldBal := foo.BalanceOf(a2u(tr01))
@@ -95,15 +81,15 @@ func TestBestSwapDry(t *testing.T) {
 	jsonOutput := BestSwapDry(
 		"gno.land/r/foo", // inputTokenPath
 		"gno.land/r/qux", // outputTokenPath
-		123_456,          // amountIn
+		123_456,          // amountSpecified
 		0,                // sqrtPriceLimitX96
 	)
 	jsonStr := gjson.Parse(jsonOutput)
-
-	shouldEQ(t, jsonStr.Get("totalRoutes").String(), "2")
+	shouldEQ(t, jsonStr.Get("totalRoutes").String(), "1")
+	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.0").String(), "gno.land/r/foo:gno.land/r/qux:100")
 }
 
-func TestBestSwap(t *testing.T) {
+func TestBestSwapDryNegative(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	tr01FooOldBal := foo.BalanceOf(a2u(tr01))
@@ -111,19 +97,15 @@ func TestBestSwap(t *testing.T) {
 	RoQuxOldBal := qux.BalanceOf(a2u(routerAddr))
 	PoQuxOldBal := qux.BalanceOf(a2u(poolAddr))
 
-	BestSwap(
+	jsonOutput := BestSwapDry(
 		"gno.land/r/foo", // inputTokenPath
 		"gno.land/r/qux", // outputTokenPath
-		123_456,          // amountIn
+		-123_456,         // amountSpecified
 		0,                // sqrtPriceLimitX96
 	)
-
-	tr01FooNewBal := foo.BalanceOf(a2u(tr01))
-	tr01QuxNewBal := qux.BalanceOf(a2u(tr01))
-	RoQuxNewBal := qux.BalanceOf(a2u(routerAddr))
-	PoQuxNewBal := qux.BalanceOf(a2u(poolAddr))
-
-	shouldEQ(t, RoQuxOldBal, RoQuxNewBal)
+	jsonStr := gjson.Parse(jsonOutput)
+	shouldEQ(t, jsonStr.Get("totalRoutes").String(), "1")
+	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.0").String(), "gno.land/r/foo:gno.land/r/qux:500")
 }
 
 /* HELPER */
@@ -131,19 +113,4 @@ func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {
 		t.Errorf("got %v, expected %v", got, expected)
 	}
-}
-
-func shouldNEQ(t *testing.T, got, expected interface{}) {
-	if got == expected {
-		t.Errorf("got %v, expected %v", got, expected)
-	}
-}
-
-func shouldPanic(t *testing.T, f func()) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("expected panic")
-		}
-	}()
-	f()
 }

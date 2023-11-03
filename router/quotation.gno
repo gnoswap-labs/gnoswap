@@ -10,11 +10,11 @@ func quoteForAllPath(
 	inputTokenPath string,
 	outputTokenPath string,
 
-	amountIn bigint,
+	amountSpecified bigint,
 	sqrtPriceLimitX96 bigint,
 ) (quoterTargets []QuoterTarget) {
 	swapPaths := findSwapPaths(inputTokenPath, outputTokenPath)
-	swapPcts := calculatePercentages(amountIn) // 5% - 100, 10% - 200, ...., 100% - 2000
+	swapPcts := calculatePercentages(amountSpecified) // 5% - 100, 10% - 200, ...., 100% - 2000
 
 	for _, swapPath := range swapPaths {
 		for pct, pctAmount := range swapPcts {
@@ -22,7 +22,7 @@ func quoteForAllPath(
 				pct:            pct,
 				pctAmount:      pctAmount,
 				targetPath:     swapPath,
-				outputRatioX96: bigint(0), // will update later
+				resultRatioX96: bigint(0), // will update later
 			}
 			quoterTargets = append(quoterTargets, quoterTarget)
 		}
@@ -47,15 +47,23 @@ func quoteForAllPath(
 				tokenIn:           input,
 				tokenOut:          output,
 				fee:               fee,
-				amountIn:          quoterTarget.pctAmount, // 5%, 10%, ... 100%
+				amountSpecified:   quoterTarget.pctAmount,
 				sqrtPriceLimitX96: sqrtPriceLimitX96,
 			}
 
-			estimatedOut := singleSwapDry(singleParams)
-			if estimatedOut > 0 {
-				outputRatioX96 := estimatedOut * Q96 / quoterTarget.pctAmount * Q96 / Q96 // divide this value by Q96 => will get float ratio
-				quoterTarget.outputRatioX96 = outputRatioX96
-				quoterTargets[i] = quoterTarget
+			estimatedResult := singleSwapDry(singleParams)
+			if estimatedResult > 0 {
+				if amountSpecified > 0 {
+					resultRatioX96 := estimatedResult * Q96 / quoterTarget.pctAmount * Q96 / Q96 // divide this value by Q96 => will get float ratio
+					quoterTarget.resultRatioX96 = resultRatioX96
+					quoterTargets[i] = quoterTarget
+				} else {
+					resultRatioX96 := -quoterTarget.pctAmount * Q96 / estimatedResult * Q96 / Q96 // divide this value by Q96 => will get float ratio
+					quoterTarget.resultRatioX96 = resultRatioX96
+					quoterTargets[i] = quoterTarget
+				}
+			} else {
+				panic("quotation.gno__CAN NOT HAPPEN")
 			}
 		}
 
@@ -67,15 +75,15 @@ func quoteForAllPath(
 				tokenOut: output,
 				fee:      fee,
 
-				recipient:    std.GetOrigCaller(),
-				amountIn:     quoterTarget.pctAmount, // 5%, 10%, ... 100%
-				minAmountOut: 1,                      // r3v4_xx: sqrtPriceLimitX96
+				recipient:       std.GetOrigCaller(),
+				amountSpecified: quoterTarget.pctAmount,
+				minAmountOut:    1, // r3v4_xx: sqrtPriceLimitX96
 			}
 
-			estimatedOut := multiSwapDry(swapParams, 0, numPools, quoterTarget.targetPath) // will iterate here to cover multi pools
-			if estimatedOut > 0 {
-				outputRatioX96 := estimatedOut * Q96 / quoterTarget.pctAmount * Q96 / Q96
-				quoterTarget.outputRatioX96 = outputRatioX96
+			estimatedResult := multiSwapDry(swapParams, 0, numPools, quoterTarget.targetPath) // will iterate here to cover multi pools
+			if estimatedResult > 0 {
+				resultRatioX96 := estimatedResult * Q96 / quoterTarget.pctAmount * Q96 / Q96
+				quoterTarget.resultRatioX96 = resultRatioX96
 				quoterTargets[i] = quoterTarget
 			}
 		}
@@ -83,15 +91,21 @@ func quoteForAllPath(
 
 	// it contains outputRatio with 0 which is impossible path
 	// remove path with 0 ratio
+	// positive ratio => amountSpecified > 0
+	// negative ratio => amountSpecified < 0
 	var finalTargets []QuoterTarget
 	for _, quote := range quoterTargets {
-		if quote.outputRatioX96 > 0 {
+		if quote.resultRatioX96 != 0 {
 			finalTargets = append(finalTargets, quote)
 		}
 	}
 
-	// sort this struct descending by ratio then return
-	sort.Sort(ByOutputRatioDesc(finalTargets))
+	if amountSpecified > 0 {
+		sort.Sort(ByOutputRatioDesc(finalTargets))
+	} else {
+		sort.Sort(ByOutputRatioAsc(finalTargets))
+	}
+
 	return finalTargets
 }
 
@@ -112,7 +126,7 @@ func findBestPaths(quotes []QuoterTarget) (bestSwaps []QuoterTarget) {
 	totalPct := 100
 	for _, quote := range quotes {
 		quotePct := quote.pct
-		outputRatioX96 := quote.outputRatioX96
+		resultRatioX96 := quote.resultRatioX96
 
 		totalPct -= quotePct
 

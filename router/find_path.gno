@@ -45,7 +45,7 @@ func getSwapPaths(
 
 	// check if there is path that starts with input
 	if len(tokenPairs[inputTokenPath]) == 0 {
-		panic("NO POOL")
+		panic("find_path.gno__NO POOL")
 	}
 
 	// find direct path

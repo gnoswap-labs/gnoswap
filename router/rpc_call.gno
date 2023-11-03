@@ -11,28 +11,28 @@ func BestSwapDry(
 	inputToken string,
 	outputToken string,
 
-	amountIn bigint,
+	amountSpecified bigint,
 	sqrtPriceLimitX96 bigint,
 ) string {
 	// get quotes
 	quotes := quoteForAllPath( // sored by Ratio DESC
 		inputToken,        // inputToken
 		outputToken,       // outputToken
-		amountIn,          // amountIn
+		amountSpecified,   // amountIn
 		sqrtPriceLimitX96, // sqrtPriceLimitX96
 	)
 	if len(quotes) == 0 {
-		panic("router.gno__THERE IS NO QUOTE")
+		panic("rpc_call.gno__THERE IS NO QUOTE")
 	}
 
 	bestSwaps := findBestPaths(quotes)
 	if len(bestSwaps) == 0 {
-		panic("router.gno__CAN'T MAKE BestSwapRoute")
+		panic("rpc_call.gno__CAN'T MAKE BestSwapRoute")
 	}
 
 	finalSwaps := removeDuplication(bestSwaps)
 	if len(bestSwaps) == 0 {
-		panic("router.gno__CAN'T MAKE FinalSwapRoute")
+		panic("rpc_call.gno__CAN'T MAKE FinalSwapRoute")
 	}
 
 	rpcReturnBestSwap := RpcReturnBestSwap{}
@@ -77,8 +77,8 @@ type RpcReturnBestSwap struct {
 	TotalRoutes int        `json:"totalRoutes"`
 	TotalPct    int        `json:"totalPct"`
 	Possible    bool       `json:"possible"`
-	AmountIn    bigint     `json:'amountIn"`
-	AmountOut   bigint     `json:'amountOut"`
+	AmountIn    bigint     `json:"amountIn"`
+	AmountOut   bigint     `json:"amountOut"`
 	RpcRoutes   []RpcRoute `json:"rpcRoutes"`
 }
 

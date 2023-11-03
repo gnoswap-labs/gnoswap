@@ -8,13 +8,13 @@ type SingleSwapParams struct {
 	tokenIn           string
 	tokenOut          string
 	fee               uint16
-	amountIn          bigint
+	amountSpecified   bigint
 	sqrtPriceLimitX96 bigint
 }
 
 func singleSwap(params SingleSwapParams) (amountOut bigint) {
 	amountOut = _swap(
-		params.amountIn,
+		params.amountSpecified,
 		std.GetOrigCaller(), // if single swap => user will recieve
 		params.sqrtPriceLimitX96,
 		SwapCallbackData{
@@ -29,7 +29,7 @@ func singleSwap(params SingleSwapParams) (amountOut bigint) {
 
 func singleSwapDry(params SingleSwapParams) (amountOut bigint) {
 	amountOut = _swapDry(
-		params.amountIn,
+		params.amountSpecified,
 		std.GetOrigCaller(), // if single swap => user will recieve
 		params.sqrtPriceLimitX96,
 		SwapCallbackData{

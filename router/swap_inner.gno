@@ -7,11 +7,11 @@ import (
 )
 
 func _swap(
-	amountIn bigint,
+	amountSpecified bigint,
 	recipient std.Address,
 	sqrtPriceLimitX96 bigint,
 	data SwapCallbackData,
-) (amountOut bigint) {
+) (amountResult bigint) {
 	// prepare
 	zeroForOne := data.tokenIn < data.tokenOut
 
@@ -24,7 +24,6 @@ func _swap(
 	}
 
 	// dry swap -> esteimate amount -> approve exact amount
-	// r3v4_xx: or little bit more
 	approveAmount0, approveAmount1, _ := p.DrySwap(
 		data.tokenIn,
 		data.tokenOut,
@@ -32,13 +31,13 @@ func _swap(
 
 		recipient,
 		zeroForOne,
-		amountIn,
+		amountSpecified,
 		sqrtPriceLimitX96,
 	)
 
 	// ROUTER approves POOL as spender
-	approveByRegisterCall(data.tokenIn, ADDR_POOL, abs(approveAmount0))  // r3v4_xxx
-	approveByRegisterCall(data.tokenOut, ADDR_POOL, abs(approveAmount1)) // r3v4_xxx
+	approveByRegisterCall(data.tokenIn, ADDR_POOL, abs(approveAmount0))
+	approveByRegisterCall(data.tokenOut, ADDR_POOL, abs(approveAmount1))
 
 	amount0, amount1 := p.Swap(
 		data.tokenIn,
@@ -47,27 +46,35 @@ func _swap(
 
 		recipient,
 		zeroForOne,
-		amountIn,
+		amountSpecified,
 		sqrtPriceLimitX96,
 
 		data.payer,
 	)
 
-	if zeroForOne {
-		amountOut = -amount1
+	if amountSpecified > 0 {
+		if zeroForOne {
+			amountResult = -amount1
+		} else {
+			amountResult = -amount0
+		}
 	} else {
-		amountOut = -amount0
+		if zeroForOne {
+			amountResult = amount0
+		} else {
+			amountResult = amount1
+		}
 	}
 
-	return amountOut
+	return amountResult
 }
 
 func _swapDry(
-	amountIn bigint,
+	amountSpecified bigint,
 	recipient std.Address,
 	sqrtPriceLimitX96 bigint,
 	data SwapCallbackData,
-) (amountOut bigint) {
+) (amountResult bigint) {
 	zeroForOne := data.tokenIn < data.tokenOut
 
 	if sqrtPriceLimitX96 == 0 {
@@ -86,21 +93,28 @@ func _swapDry(
 
 		recipient,
 		zeroForOne,
-		amountIn,
+		amountSpecified,
 		sqrtPriceLimitX96,
 	)
 	if !ok {
 		return 0
 	}
 
-	// if success
-	if zeroForOne {
-		amountOut = -amount1
+	if amountSpecified > 0 {
+		if zeroForOne {
+			amountResult = -amount1
+		} else {
+			amountResult = -amount0
+		}
 	} else {
-		amountOut = -amount0
+		if zeroForOne {
+			amountResult = amount0
+		} else {
+			amountResult = amount1
+		}
 	}
 
-	return amountOut
+	return amountResult
 }
 
 func abs(x bigint) uint64 {
