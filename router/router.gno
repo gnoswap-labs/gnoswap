@@ -3,11 +3,13 @@ package router
 import (
 	"std"
 	"strings"
+
+	"gno.land/p/demo/ufmt"
 )
 
 func BestSwap(
 	inputToken string,
-	outputTokenPath string,
+	outputToken string,
 
 	amountSpecified bigint,
 	sqrtPriceLimitX96 bigint,
@@ -15,49 +17,44 @@ func BestSwap(
 	// get quotes
 	quotes := quoteForAllPath( // sorted by ratio DESC
 		inputToken,
-		outputTokenPath,
+		outputToken,
 		amountSpecified,
 		sqrtPriceLimitX96,
 	)
-	if len(quotes) == 0 {
-		panic("router.gno__THERE IS NO QUOTE")
-	}
+	require(len(quotes) != 0, ufmt.Sprintf("[ROUTER] router.gno__BestSwap() || len(quotes) == 0, inputToken:%s, outputToken:%s", inputToken, outputToken))
 
 	bestSwaps := findBestPaths(quotes)
-	if len(bestSwaps) == 0 {
-		panic("router.gno__CAN'T MAKE BestSwapRoute")
-	}
+	require(len(bestSwaps) != 0, "[ROUTER] router.gno__BestSwap() || len(bestSwaps) == 0")
 
 	finalSwaps := removeDuplication(bestSwaps)
-	if len(bestSwaps) == 0 {
-		panic("router.gno__CAN'T MAKE FinalSwapRoute")
-	}
+	require(len(finalSwaps) != 0, "[ROUTER] router.gno__BestSwap() || len(finalSwaps) == 0")
 
 	remainingAmount := amountSpecified
-	for i, bestSwap := range bestSwaps {
-		numPools := strings.Count(bestSwap.targetPath, ",") / 2
-
-		if numPools < 1 {
-			panic("router.gno__CAN NOT FIND SWAP PATH")
-		}
-
-		if numPools > 3 {
-			panic("router.gno__TOO MANY SWAP PATH")
-		}
+	for i, finalSwap := range finalSwaps {
+		numPools := strings.Count(finalSwap.targetPath, ",") / 2
+		require(numPools > 1 && numPools < 3, ufmt.Sprintf("[ROUTER] router.gno__BestSwap() || numPools should 1 ~ 3, but found %d", numPools))
 
 		// SINGLE
 		if numPools == 1 {
-			input, output, fee := getSwapData(bestSwap.targetPath, 0)
+			toSwap := bigint(0)
 
+			// isFinal
+			if i == len(finalSwaps)-1 { // last swap routes
+				toSwap = remainingAmount
+			} else {
+				remainingAmount -= finalSwap.pctAmount
+				toSwap = finalSwap.pctAmount
+			}
+
+			input, output, fee := getSwapData(finalSwap.targetPath, 0)
 			singleParams := SingleSwapParams{
 				tokenIn:           input,
 				tokenOut:          output,
 				fee:               fee,
-				amountSpecified:   bestSwap.pctAmount,
+				amountSpecified:   toSwap,
 				sqrtPriceLimitX96: sqrtPriceLimitX96,
 			}
 			amountOut := singleSwap(singleParams)
-			remainingAmount -= bestSwap.pctAmount
 		}
 
 		// MULTI
@@ -65,25 +62,23 @@ func BestSwap(
 			toSwap := bigint(0)
 
 			// isFinal
-			if i == len(bestSwaps)-1 { // last swap routes
+			if i == len(finalSwaps)-1 { // last swap routes
 				toSwap = remainingAmount
 			} else {
-				remainingAmount -= bestSwap.pctAmount
-				toSwap = bestSwap.pctAmount
+				remainingAmount -= finalSwap.pctAmount
+				toSwap = finalSwap.pctAmount
 			}
 
-			input, output, fee := getSwapData(bestSwap.targetPath, 0)
-
+			input, output, fee := getSwapData(finalSwap.targetPath, 0)
 			swapParams := SwapParams{
-				tokenIn:  input,
-				tokenOut: output,
-				fee:      fee,
-
+				tokenIn:         input,
+				tokenOut:        output,
+				fee:             fee,
 				recipient:       std.GetOrigCaller(),
 				amountSpecified: toSwap,
 				minAmountOut:    1,
 			}
-			amountOut := multiSwap(swapParams, 0, numPools, bestSwap.targetPath) // iterate here
+			amountOut := multiSwap(swapParams, 0, numPools, finalSwap.targetPath) // iterate here
 		}
 	}
 }

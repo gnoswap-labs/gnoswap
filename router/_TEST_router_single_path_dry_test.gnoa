@@ -10,11 +10,6 @@ import (
 	_ "gno.land/r/grc20_wrapper"
 	p "gno.land/r/pool"
 	pos "gno.land/r/position"
-
-	_ "gno.land/r/bar"
-	_ "gno.land/r/baz"
-	foo "gno.land/r/foo"
-	qux "gno.land/r/qux"
 )
 
 var (
@@ -70,13 +65,8 @@ func TestPositionMint(t *testing.T) {
 	pos.Mint(fooPath, quxPath, test_fee500, int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
 }
 
-func TestBestSwapDryPositiveSpend(t *testing.T) {
+func TestBestSwapDryPositive(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
-
-	tr01FooOldBal := foo.BalanceOf(a2u(tr01))
-	tr01QuxOldBal := qux.BalanceOf(a2u(tr01))
-	RoQuxOldBal := qux.BalanceOf(a2u(routerAddr))
-	PoQuxOldBal := qux.BalanceOf(a2u(poolAddr))
 
 	jsonOutput := BestSwapDry(
 		"gno.land/r/foo", // inputTokenPath
@@ -92,11 +82,6 @@ func TestBestSwapDryPositiveSpend(t *testing.T) {
 func TestBestSwapDryNegative(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
-	tr01FooOldBal := foo.BalanceOf(a2u(tr01))
-	tr01QuxOldBal := qux.BalanceOf(a2u(tr01))
-	RoQuxOldBal := qux.BalanceOf(a2u(routerAddr))
-	PoQuxOldBal := qux.BalanceOf(a2u(poolAddr))
-
 	jsonOutput := BestSwapDry(
 		"gno.land/r/foo", // inputTokenPath
 		"gno.land/r/qux", // outputTokenPath
@@ -105,7 +90,7 @@ func TestBestSwapDryNegative(t *testing.T) {
 	)
 	jsonStr := gjson.Parse(jsonOutput)
 	shouldEQ(t, jsonStr.Get("totalRoutes").String(), "1")
-	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.0").String(), "gno.land/r/foo:gno.land/r/qux:500")
+	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.0").String(), "gno.land/r/foo:gno.land/r/qux:100")
 }
 
 /* HELPER */
