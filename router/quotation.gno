@@ -4,6 +4,8 @@ import (
 	"sort"
 	"std"
 	"strings"
+
+	"gno.land/p/demo/ufmt"
 )
 
 func quoteForAllPath(
@@ -31,14 +33,7 @@ func quoteForAllPath(
 	// DrySwap to calculate
 	for i, quoterTarget := range quoterTargets {
 		numPools := strings.Count(quoterTarget.targetPath, ",") / 2
-
-		if numPools < 1 {
-			panic("quotation.gno__CAN NOT FIND SWAP PATH")
-		}
-
-		if numPools > 3 {
-			panic("quotation.gno__TOO MANY SWAP PATH")
-		}
+		require(numPools > 1 && numPools < 3, ufmt.Sprintf("[ROUTER] router.gno__quoteForAllPath() || numPools should 1 ~ 3, but found %d", numPools))
 
 		if numPools == 1 {
 			input, output, fee := getSwapData(quoterTarget.targetPath, 0)
@@ -54,16 +49,16 @@ func quoteForAllPath(
 			estimatedResult := singleSwapDry(singleParams)
 			if estimatedResult > 0 {
 				if amountSpecified > 0 {
-					resultRatioX96 := estimatedResult * Q96 / quoterTarget.pctAmount * Q96 / Q96 // divide this value by Q96 => will get float ratio
+					resultRatioX96 := estimatedResult * Q96 / quoterTarget.pctAmount * Q96 / Q96
 					quoterTarget.resultRatioX96 = resultRatioX96
 					quoterTargets[i] = quoterTarget
 				} else {
-					resultRatioX96 := -quoterTarget.pctAmount * Q96 / estimatedResult * Q96 / Q96 // divide this value by Q96 => will get float ratio
+					resultRatioX96 := -quoterTarget.pctAmount * Q96 / estimatedResult * Q96 / Q96
 					quoterTarget.resultRatioX96 = resultRatioX96
 					quoterTargets[i] = quoterTarget
 				}
 			} else {
-				panic("quotation.gno__CAN NOT HAPPEN")
+				panic("[ROUTER] quotation.gno__quoteForAllPath() || SINGLE__estimateResult < 0")
 			}
 		}
 
@@ -80,19 +75,34 @@ func quoteForAllPath(
 				minAmountOut:    1, // r3v4_xx: sqrtPriceLimitX96
 			}
 
-			estimatedResult := multiSwapDry(swapParams, 0, numPools, quoterTarget.targetPath) // will iterate here to cover multi pools
-			if estimatedResult > 0 {
-				resultRatioX96 := estimatedResult * Q96 / quoterTarget.pctAmount * Q96 / Q96
-				quoterTarget.resultRatioX96 = resultRatioX96
-				quoterTargets[i] = quoterTarget
+			// if amountSpecified > 0, proceed forward
+			// if not, proceed with backward
+			if amountSpecified > 0 {
+				estimatedResult := multiSwapDry(swapParams, 0, numPools, quoterTarget.targetPath) // will iterate here to cover multi pools
+				if estimatedResult > 0 {
+					resultRatioX96 := estimatedResult * Q96 / quoterTarget.pctAmount * Q96 / Q96
+					quoterTarget.resultRatioX96 = resultRatioX96
+					quoterTargets[i] = quoterTarget
+				} else {
+					panic("[ROUTER] quotation.gno__quoteForAllPath() || MULTI__PositiveAmountSpecified__estimateResult < 0")
+				}
+			} else {
+				estimatedResult := multiSwapNegativeDry(swapParams, numPools-1, quoterTarget.targetPath) // will iterate here to cover multi pools
+				if estimatedResult > 0 {
+					resultRatioX96 := -quoterTarget.pctAmount * Q96 / estimatedResult * Q96 / Q96
+
+					quoterTarget.resultRatioX96 = resultRatioX96
+					quoterTargets[i] = quoterTarget
+				} else {
+					panic("[ROUTER] quotation.gno__quoteForAllPath() || MULTI__NegativeAmountSpecified__estimateResult < 0")
+				}
 			}
+
 		}
 	}
 
 	// it contains outputRatio with 0 which is impossible path
-	// remove path with 0 ratio
-	// positive ratio => amountSpecified > 0
-	// negative ratio => amountSpecified < 0
+	// > remove path with 0 ratio
 	var finalTargets []QuoterTarget
 	for _, quote := range quoterTargets {
 		if quote.resultRatioX96 != 0 {
@@ -100,12 +110,7 @@ func quoteForAllPath(
 		}
 	}
 
-	if amountSpecified > 0 {
-		sort.Sort(ByOutputRatioDesc(finalTargets))
-	} else {
-		sort.Sort(ByOutputRatioAsc(finalTargets))
-	}
-
+	sort.Sort(ByOutputRatioDesc(finalTargets))
 	return finalTargets
 }
 

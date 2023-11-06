@@ -53,13 +53,13 @@ func _swap(
 	)
 
 	if amountSpecified > 0 {
-		if zeroForOne {
+		if zeroForOne { // return amount, user recvs ~= pool sends
 			amountResult = -amount1
 		} else {
 			amountResult = -amount0
 		}
 	} else {
-		if zeroForOne {
+		if zeroForOne { // return amount, user sends ~= pool recvs
 			amountResult = amount0
 		} else {
 			amountResult = amount1
@@ -101,12 +101,12 @@ func _swapDry(
 	}
 
 	if amountSpecified > 0 {
-		if zeroForOne {
+		if zeroForOne { // return amount, user recvs ~= pool sends
 			amountResult = -amount1
 		} else {
 			amountResult = -amount0
 		}
-	} else {
+	} else { // return amount, user sends ~= pool recvs
 		if zeroForOne {
 			amountResult = amount0
 		} else {

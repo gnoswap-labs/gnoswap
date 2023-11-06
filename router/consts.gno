@@ -8,5 +8,6 @@ const (
 
 	Q96 bigint = 79228162514264337593543950336 // 2 ** 96
 
-	ADDR_POOL std.Address = std.DerivePkgAddr("gno.land/r/pool")
+	ADDR_POOL   std.Address = std.DerivePkgAddr("gno.land/r/pool")
+	ADDR_ROUTER std.Address = std.DerivePkgAddr("gno.land/r/router")
 )

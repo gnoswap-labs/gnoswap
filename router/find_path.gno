@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	p "gno.land/r/pool"
+
+	"gno.land/p/demo/ufmt"
 )
 
 func findSwapPaths(
@@ -44,9 +46,7 @@ func getSwapPaths(
 	swapPaths = make(SwapPaths, 0)
 
 	// check if there is path that starts with input
-	if len(tokenPairs[inputTokenPath]) == 0 {
-		panic("find_path.gno__NO POOL")
-	}
+	require(len(tokenPairs[inputTokenPath]) != 0, ufmt.Sprintf("[ROUTER] find_path.gno__getSwapPaths() || len(tokenPairs[inputTokenPath]) == 0, inputTokenPath: %s", inputTokenPath))
 
 	// find direct path
 	for _, output := range tokenPairs[inputTokenPath] {
@@ -60,7 +60,6 @@ func getSwapPaths(
 	}
 
 	// find nested path
-	// r3v4_xx: handle more than three time swap ??
 	swapPaths = findTwicePath(tokenPairs, inputTokenPath, outputTokenPath, swapPaths)
 	swapPaths = findThreeTimePath(tokenPairs, inputTokenPath, outputTokenPath, swapPaths)
 
@@ -75,16 +74,11 @@ func findTwicePath(
 ) SwapPaths {
 	for _, second := range tokenPairs[inputTokenPath] {
 		secondPath, secondFee := singlePoolPathWithFeeDivide(second)
-		// tokenPairs[inputTokenPath] = removeItemFromStringArray(tokenPairs[inputTokenPath], second)
-		// tokenPairs[secondPath] = removeItemFromStringArray(tokenPairs[secondPath], (inputTokenPath + ":" + secondFee))
 
 		for _, third := range tokenPairs[secondPath] {
 			thirdPath, thirdFee := singlePoolPathWithFeeDivide(third)
-			// tokenPairs[secondPath] = removeItemFromStringArray(tokenPairs[secondPath], third)
-			// tokenPairs[thirdPath] = removeItemFromStringArray(tokenPairs[thirdPath], (secondPath + ":" + thirdFee))
 
 			if strings.HasPrefix(third, outputTokenPath) {
-				// twice
 				nestedPath := inputTokenPath + "," + secondFee + "," + secondPath + "," + thirdFee + "," + outputTokenPath
 				swapPaths[len(swapPaths)] = nestedPath
 			}
@@ -102,11 +96,9 @@ func findThreeTimePath(
 ) SwapPaths {
 	for _, second := range tokenPairs[inputTokenPath] {
 		secondPath, secondFee := singlePoolPathWithFeeDivide(second)
-		// tokenPairs[secondPath] = removeItemFromStringArray(tokenPairs[secondPath], (inputTokenPath + ":" + secondFee))
 
 		for _, third := range tokenPairs[secondPath] { // bar > bz
 			thirdPath, thirdFee := singlePoolPathWithFeeDivide(third)
-			// tokenPairs[secondPath] = removeItemFromStringArray(tokenPairs[thirdPath], (secondPath + ":" + thirdFee))
 
 			for _, fourth := range tokenPairs[thirdPath] {
 				fourthPath, fourthFee := singlePoolPathWithFeeDivide(fourth)
