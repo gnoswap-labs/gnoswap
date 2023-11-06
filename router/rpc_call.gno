@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"std"
 	"strings"
 
 	"gno.land/p/demo/ufmt"
@@ -10,16 +11,26 @@ import (
 func BestSwapDry(
 	inputToken string,
 	outputToken string,
-
+	swapType string,
 	amountSpecified bigint,
 	sqrtPriceLimitX96 bigint,
 ) string {
+
+	switch swapType {
+	case "EXACT_IN":
+		amountSpecified = amountSpecified
+	case "EXACT_OUT":
+		amountSpecified = -amountSpecified
+	default:
+		panic("UNKNOWN TYPE")
+	}
+
 	// get quotes
 	quotes := quoteForAllPath( // sored by Ratio DESC
-		inputToken,        // inputToken
-		outputToken,       // outputToken
-		amountSpecified,   // amountIn
-		sqrtPriceLimitX96, // sqrtPriceLimitX96
+		inputToken,
+		outputToken,
+		amountSpecified,
+		sqrtPriceLimitX96,
 	)
 	if len(quotes) == 0 {
 		panic("rpc_call.gno__THERE IS NO QUOTE")
@@ -36,17 +47,20 @@ func BestSwapDry(
 	}
 
 	rpcReturnBestSwap := RpcReturnBestSwap{}
+	rpcReturnBestSwap.SwapType = swapType
 	rpcReturnBestSwap.TotalRoutes = len(finalSwaps)
 
 	rpcRoutes := []RpcRoute{}
 
+	remainingAmount := amountSpecified
+	outputEstimated := bigint(0)
 	for i, finalSwap := range finalSwaps {
-		numSwaps := strings.Count(finalSwap.targetPath, ",") / 2
+		numPools := strings.Count(finalSwap.targetPath, ",") / 2
 		splitPaths := multiTargetPathToList(finalSwap.targetPath)
 
 		rpcRoute := RpcRoute{
 			SwapPct:   finalSwap.pct,
-			NumSwaps:  numSwaps,
+			NumPools:  numPools,
 			SwapPaths: splitPaths,
 		}
 		rpcRoutes = append(rpcRoutes, rpcRoute)
@@ -56,12 +70,72 @@ func BestSwapDry(
 		if rpcReturnBestSwap.TotalPct == 100 {
 			rpcReturnBestSwap.Possible = true
 		}
+
+		// ESTIMATE Amount
+		// SINGLE
+		if numPools == 1 {
+			toSwap := bigint(0)
+
+			// isFinal
+			if i == len(finalSwaps)-1 { // last swap routes
+				toSwap = remainingAmount
+			} else {
+				remainingAmount -= finalSwap.pctAmount
+				toSwap = finalSwap.pctAmount
+			}
+
+			input, output, fee := getSwapData(finalSwap.targetPath, 0)
+			singleParams := SingleSwapParams{
+				tokenIn:           input,
+				tokenOut:          output,
+				fee:               fee,
+				amountSpecified:   toSwap,
+				sqrtPriceLimitX96: sqrtPriceLimitX96,
+			}
+			amountOut := singleSwap(singleParams)
+			outputEstimated += amountOut
+		}
+
+		// MULTI
+		if numPools > 1 && numPools <= 3 {
+			toSwap := bigint(0)
+
+			// isFinal
+			if i == len(finalSwaps)-1 { // last swap routes
+				toSwap = remainingAmount
+			} else {
+				remainingAmount -= finalSwap.pctAmount
+				toSwap = finalSwap.pctAmount
+			}
+
+			input, output, fee := getSwapData(finalSwap.targetPath, 0)
+			swapParams := SwapParams{
+				tokenIn:         input,
+				tokenOut:        output,
+				fee:             fee,
+				recipient:       std.GetOrigCaller(),
+				amountSpecified: toSwap,
+				minAmountOut:    1,
+			}
+			amountOut := multiSwap(swapParams, 0, numPools, finalSwap.targetPath) // iterate here
+			outputEstimated += amountOut
+		}
 	}
 	rpcReturnBestSwap.RpcRoutes = rpcRoutes
 
+	if rpcReturnBestSwap.Possible == true {
+		rpcReturnBestSwap.AmountResult = outputEstimated
+
+		if rpcReturnBestSwap.SwapType == "EXACT_IN" {
+			rpcReturnBestSwap.AmountSpecified = amountSpecified
+		} else {
+			rpcReturnBestSwap.AmountSpecified = -amountSpecified
+		}
+	}
+
 	rr, err := json.Marshal(rpcReturnBestSwap)
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] rpc_call.gno__BestSwapDry() || %v", err))
+		panic(ufmt.Sprintf("[ROUTER] rpc_call.gno__BestSwapDry() || json.Marshal error with %v", err))
 	}
 
 	return string(rr)
@@ -69,25 +143,26 @@ func BestSwapDry(
 
 type RpcRoute struct {
 	SwapPct   int      `json:"swapPct"`
-	NumSwaps  int      `json:"numSwaps"`
+	NumPools  int      `json:"numPools"`
 	SwapPaths []string `json:"swapPaths"`
 }
 
 type RpcReturnBestSwap struct {
-	TotalRoutes int        `json:"totalRoutes"`
-	TotalPct    int        `json:"totalPct"`
-	Possible    bool       `json:"possible"`
-	AmountIn    bigint     `json:"amountIn"`
-	AmountOut   bigint     `json:"amountOut"`
-	RpcRoutes   []RpcRoute `json:"rpcRoutes"`
+	TotalRoutes     int        `json:"totalRoutes"`
+	TotalPct        int        `json:"totalPct"`
+	Possible        bool       `json:"possible"`
+	SwapType        string     `json:"swapType"`
+	AmountSpecified bigint     `json:"amountSpecified"`
+	AmountResult    bigint     `json:"amountResult"`
+	RpcRoutes       []RpcRoute `json:"rpcRoutes"`
 }
 
 func multiTargetPathToList(path string) []string {
-	numSwaps := strings.Count(path, ",") / 2
+	numPools := strings.Count(path, ",") / 2
 	splitData := strings.Split(path, ",")
 
 	fullPaths := []string{}
-	for i := 0; i < numSwaps; i++ {
+	for i := 0; i < numPools; i++ {
 		j := 0
 		if i == 0 {
 			j = i

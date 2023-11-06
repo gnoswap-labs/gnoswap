@@ -10,10 +10,19 @@ import (
 func BestSwap(
 	inputToken string,
 	outputToken string,
-
+	swapType string,
 	amountSpecified bigint,
 	sqrtPriceLimitX96 bigint,
 ) {
+	switch swapType {
+	case "EXACT_IN":
+		amountSpecified = amountSpecified
+	case "EXACT_OUT":
+		amountSpecified = -amountSpecified
+	default:
+		panic("UNKNOWN TYPE")
+	}
+
 	// get quotes
 	quotes := quoteForAllPath( // sorted by ratio DESC
 		inputToken,
@@ -30,9 +39,10 @@ func BestSwap(
 	require(len(finalSwaps) != 0, "[ROUTER] router.gno__BestSwap() || len(finalSwaps) == 0")
 
 	remainingAmount := amountSpecified
+
 	for i, finalSwap := range finalSwaps {
 		numPools := strings.Count(finalSwap.targetPath, ",") / 2
-		require(numPools > 1 && numPools < 3, ufmt.Sprintf("[ROUTER] router.gno__BestSwap() || numPools should 1 ~ 3, but found %d", numPools))
+		require(numPools >= 1 && numPools < 3, ufmt.Sprintf("[ROUTER] router.gno__BestSwap() || numPools should 1 ~ 3, but found %d", numPools))
 
 		// SINGLE
 		if numPools == 1 {
@@ -58,7 +68,7 @@ func BestSwap(
 		}
 
 		// MULTI
-		if numPools > 1 && numPools <= 3 {
+		if numPools >= 2 && numPools <= 3 {
 			toSwap := bigint(0)
 
 			// isFinal

@@ -145,7 +145,7 @@ func TestPositionMint(t *testing.T) {
 	}
 }
 
-func TestBestSwapPositivieMultiPath(t *testing.T) {
+func TestBestSwapExactInMultiPath(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	userOldFooBalance := foo.BalanceOf(a2u(tr01))
@@ -157,6 +157,7 @@ func TestBestSwapPositivieMultiPath(t *testing.T) {
 	BestSwap(
 		fooPath,            // inputToken
 		quxPath,            // outputToken
+		"EXACT_IN",         // swapType
 		bigint(swapAmount), // amountSpecified
 		0,                  // sqrtPriceLimitX96
 	)
@@ -175,7 +176,7 @@ func TestBestSwapPositivieMultiPath(t *testing.T) {
 	shouldLTE(t, userOldFooBalance-userNewFooBalance, swapAmount)
 }
 
-func TestBestSwapNegativeMultiPath(t *testing.T) {
+func TestBestSwapExactOutMultiPath(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	userOldFooBalance := foo.BalanceOf(a2u(tr01))
@@ -183,10 +184,11 @@ func TestBestSwapNegativeMultiPath(t *testing.T) {
 	poolOldFooBalance := foo.BalanceOf(a2u(poolAddr))
 	poolOldQuxBalance := qux.BalanceOf(a2u(poolAddr))
 
-	swapAmount := -987_654
+	swapAmount := 987_654
 	BestSwap(
 		fooPath,            // inputToken
 		quxPath,            // outputToken
+		"EXACT_OUT",        // swapType
 		bigint(swapAmount), // amountSpecified
 		0,                  // sqrtPriceLimitX96
 	)

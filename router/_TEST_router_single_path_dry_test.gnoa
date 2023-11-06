@@ -65,12 +65,13 @@ func TestPositionMint(t *testing.T) {
 	pos.Mint(fooPath, quxPath, test_fee500, int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
 }
 
-func TestBestSwapDryPositive(t *testing.T) {
+func TestBestSwapDryExactIn(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	jsonOutput := BestSwapDry(
 		"gno.land/r/foo", // inputTokenPath
 		"gno.land/r/qux", // outputTokenPath
+		"EXACT_IN",       // swapType
 		123_456,          // amountSpecified
 		0,                // sqrtPriceLimitX96
 	)
@@ -79,13 +80,14 @@ func TestBestSwapDryPositive(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.0").String(), "gno.land/r/foo:gno.land/r/qux:100")
 }
 
-func TestBestSwapDryNegative(t *testing.T) {
+func TestBestSwapDryExactOut(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	jsonOutput := BestSwapDry(
 		"gno.land/r/foo", // inputTokenPath
 		"gno.land/r/qux", // outputTokenPath
-		-123_456,         // amountSpecified
+		"EXACT_OUT",      // swapType
+		123_456,          // amountSpecified
 		0,                // sqrtPriceLimitX96
 	)
 	jsonStr := gjson.Parse(jsonOutput)

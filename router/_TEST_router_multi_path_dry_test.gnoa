@@ -35,15 +35,6 @@ var (
 	max_timeout = bigint(9999999999)
 )
 
-// func init() {
-// 	println(gsa, "// gsa")
-// 	println(lp01, "// lp01")
-// 	println(tr01, "// tr01")
-// 	println(poolAddr, "// poolAddr")
-// 	println(posAddr, "// posAddr")
-// 	println(routerAddr, "// routerAddr")
-// }
-
 func TestInitManual(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	p.InitManual()
@@ -71,32 +62,34 @@ func TestPositionMint(t *testing.T) {
 	pos.Mint(barPath, quxPath, test_fee500, int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
 }
 
-func TestBestSwapDryPositive(t *testing.T) {
+func TestBestSwapDryExactIn(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	jsonOutput := BestSwapDry(
 		"gno.land/r/foo", // inputTokenPath
 		"gno.land/r/qux", // outputTokenPath
+		"EXACT_IN",       // swapType
 		123_456,          // amountSpecified
 		0,                // sqrtPriceLimitX96
 	)
 	jsonStr := gjson.Parse(jsonOutput)
-	shouldEQ(t, jsonStr.Get("rpcRoutes.0.numSwaps").String(), "2")
+	shouldEQ(t, jsonStr.Get("rpcRoutes.0.numPools").String(), "2")
 	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.0").String(), "gno.land/r/foo:gno.land/r/bar:100")
 	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.1").String(), "gno.land/r/bar:gno.land/r/qux:100")
 }
 
-func TestBestSwapDryNegative(t *testing.T) {
+func TestBestSwapDryExactOut(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	jsonOutput := BestSwapDry(
 		"gno.land/r/foo", // inputTokenPath
 		"gno.land/r/qux", // outputTokenPath
-		-123_456,         // amountSpecified
+		"EXACT_OUT",      // swapType
+		123_456,          // amountSpecified
 		0,                // sqrtPriceLimitX96
 	)
 	jsonStr := gjson.Parse(jsonOutput)
-	shouldEQ(t, jsonStr.Get("rpcRoutes.0.numSwaps").String(), "2")
+	shouldEQ(t, jsonStr.Get("rpcRoutes.0.numPools").String(), "2")
 	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.0").String(), "gno.land/r/foo:gno.land/r/bar:100")
 	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.1").String(), "gno.land/r/bar:gno.land/r/qux:100")
 }

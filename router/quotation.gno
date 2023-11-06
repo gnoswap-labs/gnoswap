@@ -33,7 +33,7 @@ func quoteForAllPath(
 	// DrySwap to calculate
 	for i, quoterTarget := range quoterTargets {
 		numPools := strings.Count(quoterTarget.targetPath, ",") / 2
-		require(numPools > 1 && numPools < 3, ufmt.Sprintf("[ROUTER] router.gno__quoteForAllPath() || numPools should 1 ~ 3, but found %d", numPools))
+		require(numPools >= 1 && numPools <= 3, ufmt.Sprintf("[ROUTER] quotation.gno__quoteForAllPath() || numPools should 1 ~ 3, but found %d", numPools))
 
 		if numPools == 1 {
 			input, output, fee := getSwapData(quoterTarget.targetPath, 0)
