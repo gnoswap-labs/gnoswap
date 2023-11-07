@@ -1,11 +1,9 @@
-package gov 
+package gov
 
 import (
 	"std"
 
 	"errors"
-
-	gnos "gno.land/r/gnos" // GNOS, Gnoswap Share
 )
 
 //////////////////////////
@@ -15,8 +13,8 @@ var _ ProposalData = (*ProposalMint)(nil)
 
 type ProposalMint struct {
 	Recipient std.Address
-	Amount   uint64
-	Token    std.Address
+	Amount    uint64
+	Token     std.Address
 }
 
 func (p ProposalMint) ProposalType() ProposalType {
@@ -26,12 +24,11 @@ func (p ProposalMint) ProposalType() ProposalType {
 func (p ProposalMint) isProposalData() {}
 
 func (p ProposalMint) isValid() bool {
-	// XXXXXX
-	/*
-	if p.Token != GNOS_TOKEN_ADDRESS {
+
+	if p.Token != GNS_TOKEN_ADDRESS {
 		return false
 	}
-	*/
+
 	return true
 }
 
