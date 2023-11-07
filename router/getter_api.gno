@@ -62,7 +62,7 @@ func getRatiosFromBase() []map[string]bigint {
 			numSwapPaths := len(swapPaths)
 
 			thisTokenPriceX96 := bigint(0)
-			if numSwapPaths < 1 {
+			if numSwapPaths < 1 { // NO CONNECTION TO BASE
 				tokenPrice[token] = 0
 			} else {
 				for _, swapPath := range swapPaths {
@@ -72,13 +72,13 @@ func getRatiosFromBase() []map[string]bigint {
 					case 0:
 						thisTokenPriceX96 = 0
 					case 1:
-						priceRatio := calculateSinglePoolPrice(token, swapPath)
+						priceRatio := calculateTokenPrice(token, swapPath, numPools, 0, 1)
 						thisTokenPriceX96 += priceRatio
 					case 2:
-						priceRatio := calculateTwoPoolPrice(token, swapPath, numPools)
+						priceRatio := calculateTokenPrice(token, swapPath, numPools, 0, 1)
 						thisTokenPriceX96 += priceRatio
 					case 3:
-						priceRatio := calculateThreePoolPrice(token, swapPath, numPools)
+						priceRatio := calculateTokenPrice(token, swapPath, numPools, 0, 1)
 						thisTokenPriceX96 += priceRatio
 					default:
 						thisTokenPriceX96 = 0
@@ -104,165 +104,74 @@ func getRatiosFromBase() []map[string]bigint {
 }
 
 func getTokenList() []string {
-    seen := make(map[string]bool)
-    uniqueTokenList := []string{}
-    poolList := p.GetPoolList()
+	seen := make(map[string]bool)
+	uniqueTokenList := []string{}
+	poolList := p.GetPoolList()
 
-    for _, poolPath := range poolList {
-        token0Path, token1Path, _ := poolPathWithFeeDivide(poolPath)
-        if _, exists := seen[token0Path]; !exists {
-            seen[token0Path] = true
-            uniqueTokenList = append(uniqueTokenList, token0Path)
-        }
-        if _, exists := seen[token1Path]; !exists {
-            seen[token1Path] = true
-            uniqueTokenList = append(uniqueTokenList, token1Path)
-        }
-    }
+	for _, poolPath := range poolList {
+		token0Path, token1Path, _ := poolPathWithFeeDivide(poolPath)
+		if _, exists := seen[token0Path]; !exists {
+			seen[token0Path] = true
+			uniqueTokenList = append(uniqueTokenList, token0Path)
+		}
+		if _, exists := seen[token1Path]; !exists {
+			seen[token1Path] = true
+			uniqueTokenList = append(uniqueTokenList, token1Path)
+		}
+	}
 
-    return uniqueTokenList
+	return uniqueTokenList
 }
-
 
 func makePoolPath(poolPath string, poolIndex int) string {
-    poolDatas := strings.Split(poolPath, ",")
-    // Calculate the indices for token paths and fee based on poolIndex.
-    baseIndex := poolIndex * 3
-    if baseIndex+2 >= len(poolDatas) {
-        panic(ufmt.Sprintf("[ROUTER] getter_api.gno__makePoolPath() || index out of range for pool index: %d", poolIndex))
-    }
+	poolDatas := strings.Split(poolPath, ",")
+	// Calculate the indices for token paths and fee based on poolIndex.
+	baseIndex := poolIndex * 2
+	if baseIndex+2 >= len(poolDatas) {
+		panic(ufmt.Sprintf("[ROUTER] getter_api.gno__makePoolPath() || index out of range for pool index: %d", poolIndex))
+	}
 
-    token0Path := poolDatas[baseIndex]
-    token1Path := poolDatas[baseIndex+2]
-    fee := poolDatas[baseIndex+1]
+	token0Path := poolDatas[baseIndex]
+	token1Path := poolDatas[baseIndex+2]
+	fee := poolDatas[baseIndex+1]
 
-    // Ensure the tokens are in a consistent order.
-    if token0Path > token1Path {
-        token0Path, token1Path = token1Path, token0Path
-    }
+	// Ensure the tokens are in a consistent order.
+	if token0Path > token1Path {
+		token0Path, token1Path = token1Path, token0Path
+	}
 
-    return token0Path + ":" + token1Path + ":" + fee
+	return token0Path + ":" + token1Path + ":" + fee
 }
 
-func calculateSinglePoolPrice(token, swapPath string) bigint {
-	poolPathKey := makePoolPath(swapPath, 0)
-	pool := p.GetPoolFromPoolKey(poolPathKey)
+func calculateTokenPrice(token, swapPath string, numPools, proceed int, currentPrice bigint) bigint {
+	currentPoolPathKey := makePoolPath(swapPath, proceed)
+	currentPool := p.GetPoolFromPoolKey(currentPoolPathKey)
 
-	token0 := pool.GetToken0Path()
-	token1 := pool.GetToken1Path()
-	sqrtPriceX96 := pool.GetSlotSqrtPriceX96()
+	currentToken0 := currentPool.GetToken0Path()
+	currentToken1 := currentPool.GetToken1Path()
+	currentSqrtPriceX96 := currentPool.GetSlotSqrtPriceX96()
 
-	if token0 == token && BASE_TOKEN == token1 { // token0 is token
-		ratio := Q96 * Q96 / (sqrtPriceX96 * sqrtPriceX96 / Q96)
-		return ratio
-	} else if token1 == token && BASE_TOKEN == token0 { // token1 is token
-		return sqrtPriceX96 * sqrtPriceX96 / Q96
+	if currentToken0 == token {
+		currentPrice *= (Q96 * Q96 / (currentSqrtPriceX96 * currentSqrtPriceX96 / Q96))
+		token = currentToken1
+	} else if currentToken1 == token {
+		currentPrice *= (currentSqrtPriceX96 * currentSqrtPriceX96 / Q96)
+		token = currentToken0
 	} else {
-		panic("[ROUTER] getter_api.gno__calculateSinglePoolPrice() || wrong condition")
+		panic("[ROUTER] getter_api.gno__calculateTokenPrice() || wrong condition")
 	}
+
+	if proceed == numPools-1 {
+		return currentPrice / sqrt(Q96, proceed)
+	}
+
+	return calculateTokenPrice(token, swapPath, numPools, proceed+1, currentPrice)
 }
 
-func calculateTwoPoolPrice(token, swapPath string, numPools int) bigint {
-	// first
-	firstPoolPathKey := makePoolPath(swapPath, 0)
-	firstPool := p.GetPoolFromPoolKey(firstPoolPathKey)
-
-	firstToken0 := firstPool.GetToken0Path()
-	firstToken1 := firstPool.GetToken1Path()
-	firstSqrtPriceX96 := firstPool.GetSlotSqrtPriceX96()
-
-	firstPrice := bigint(0)
-	useNext := ""
-	if firstToken0 == token {
-		firstPrice = Q96 * Q96 / (firstSqrtPriceX96 * firstSqrtPriceX96 / Q96)
-		useNext = firstToken1
-	} else if firstToken1 == token {
-		firstPrice = firstSqrtPriceX96 * firstSqrtPriceX96 / Q96
-		useNext = firstToken0
-	} else {
-		panic("[ROUTER] getter_api.gno__calculateTwoPoolPrice() || wrong condition #1")
+func sqrt(x bigint, n int) bigint {
+	result := bigint(1)
+	for i := 0; i < n; i++ {
+		result *= x
 	}
-
-	// second && last
-	secondPoolPathKey := makePoolPath(swapPath, 1)
-	secondPool := p.GetPoolFromPoolKey(secondPoolPathKey)
-
-	secondToken0 := secondPool.GetToken0Path()
-	secondToken1 := secondPool.GetToken1Path()
-	secondSqrtPriceX96 := secondPool.GetSlotSqrtPriceX96()
-
-	secondPrice := bigint(0)
-	if secondToken0 == useNext && BASE_TOKEN == secondToken1 {
-		secondPrice = Q96 * Q96 / (secondSqrtPriceX96 * secondSqrtPriceX96 / Q96)
-	} else if secondToken1 == useNext && BASE_TOKEN == secondToken0 {
-		secondPrice = secondSqrtPriceX96 * secondSqrtPriceX96 / Q96
-	} else {
-		panic("[ROUTER] getter_api.gno__calculateTwoPoolPrice() || wrong condition #2")
-	}
-
-	twoNestedPrice := firstPrice * secondPrice
-	return twoNestedPrice / Q96
-}
-
-func calculateThreePoolPrice(token, swapPath string, numPools int) bigint {
-	// first
-	firstPoolPathKey := makePoolPath(swapPath, 0)
-	firstPool := p.GetPoolFromPoolKey(firstPoolPathKey)
-
-	firstToken0 := firstPool.GetToken0Path()
-	firstToken1 := firstPool.GetToken1Path()
-	firstSqrtPriceX96 := firstPool.GetSlotSqrtPriceX96()
-
-	firstPrice := bigint(0)
-	restFirst := ""
-	if firstToken0 == token {
-		firstPrice = Q96 * Q96 / (firstSqrtPriceX96 * firstSqrtPriceX96 / Q96)
-		restFirst = firstToken1
-	} else if firstToken1 == token {
-		firstPrice = firstSqrtPriceX96 * firstSqrtPriceX96 / Q96
-		restFirst = firstToken0
-	} else {
-		panic("[ROUTER] getter_api.gno__calculateThreePoolPrice() || wrong condition #1")
-	}
-
-	// second
-	secondPoolPathKey := makePoolPath(swapPath, 1)
-	secondPool := p.GetPoolFromPoolKey(secondPoolPathKey)
-
-	secondToken0 := secondPool.GetToken0Path()
-	secondToken1 := secondPool.GetToken1Path()
-	secondSqrtPriceX96 := secondPool.GetSlotSqrtPriceX96()
-
-	secondPrice := bigint(0)
-	restSecond := ""
-	if secondToken0 == restFirst {
-		secondPrice = Q96 * Q96 / (secondSqrtPriceX96 * secondSqrtPriceX96 / Q96)
-		restSecond = secondToken1
-	} else if secondToken1 == restFirst {
-		secondPrice = secondSqrtPriceX96 * secondSqrtPriceX96 / Q96
-		restSecond = secondToken0
-	} else {
-		panic("[ROUTER] getter_api.gno__calculateThreePoolPrice() || wrong condition #2")
-	}
-
-	// third && last
-	thirdPoolPathKey := makePoolPath(swapPath, 2)
-	thirdPool := p.GetPoolFromPoolKey(thirdPoolPathKey)
-
-	thirdToken0 := thirdPool.GetToken0Path()
-	thirdToken1 := thirdPool.GetToken1Path()
-	thirdSqrtPriceX96 := thirdPool.GetSlotSqrtPriceX96()
-
-	thirdPrice := bigint(0)
-
-	if thirdToken0 == restSecond && BASE_TOKEN == thirdToken1 {
-		thirdPrice = Q96 * Q96 / (thirdSqrtPriceX96 * thirdSqrtPriceX96 / Q96)
-	} else if thirdToken1 == restSecond && BASE_TOKEN == thirdToken0 {
-		thirdPrice = thirdSqrtPriceX96 * thirdSqrtPriceX96 / Q96
-	} else {
-		panic("[ROUTER] getter_api.gno__calculateThreePoolPrice() || wrong condition #3")
-	}
-
-	threeNestedPrice := firstPrice * secondPrice * thirdPrice
-	return threeNestedPrice / Q96 / Q96
+	return result
 }

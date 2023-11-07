@@ -53,63 +53,46 @@ func getSwapPaths(
 		if strings.HasPrefix(output, outputTokenPath) {
 			outputPath, outputFee := singlePoolPathWithFeeDivide(output)
 			directPath := inputTokenPath + "," + outputFee + "," + outputPath
-			swapPaths = append(swapPaths, directPath)
+			swapPaths[len(swapPaths)] = directPath // swapPaths = append(swapPaths, directPath)
 
 			tokenPairs[inputTokenPath] = removeItemFromStringArray(tokenPairs[inputTokenPath], output)
 		}
 	}
 
-	// find nested path
-	swapPaths = findTwicePath(tokenPairs, inputTokenPath, outputTokenPath, swapPaths)
-	swapPaths = findThreeTimePath(tokenPairs, inputTokenPath, outputTokenPath, swapPaths)
+	firstToken := ""
+	findPath(tokenPairs, inputTokenPath, outputTokenPath, "", 2, &swapPaths, &firstToken)
+	findPath(tokenPairs, inputTokenPath, outputTokenPath, "", 3, &swapPaths, &firstToken)
 
 	return swapPaths
 }
 
-func findTwicePath(
+func findPath(
 	tokenPairs TokenPairs,
-	inputTokenPath string,
+	currentTokenPath string,
 	outputTokenPath string,
-	swapPaths SwapPaths,
-) SwapPaths {
-	for _, second := range tokenPairs[inputTokenPath] {
-		secondPath, secondFee := singlePoolPathWithFeeDivide(second)
-
-		for _, third := range tokenPairs[secondPath] {
-			thirdPath, thirdFee := singlePoolPathWithFeeDivide(third)
-
-			if strings.HasPrefix(third, outputTokenPath) {
-				nestedPath := inputTokenPath + "," + secondFee + "," + secondPath + "," + thirdFee + "," + outputTokenPath
-				swapPaths[len(swapPaths)] = nestedPath
-			}
-		}
+	currentPath string,
+	remainingHops int,
+	swapPaths *SwapPaths,
+	firstToken *string,
+) {
+	if *firstToken == "" {
+		*firstToken = currentTokenPath
 	}
 
-	return swapPaths
-}
-
-func findThreeTimePath(
-	tokenPairs TokenPairs,
-	inputTokenPath string,
-	outputTokenPath string,
-	swapPaths SwapPaths,
-) SwapPaths {
-	for _, second := range tokenPairs[inputTokenPath] {
-		secondPath, secondFee := singlePoolPathWithFeeDivide(second)
-
-		for _, third := range tokenPairs[secondPath] { // bar > bz
-			thirdPath, thirdFee := singlePoolPathWithFeeDivide(third)
-
-			for _, fourth := range tokenPairs[thirdPath] {
-				fourthPath, fourthFee := singlePoolPathWithFeeDivide(fourth)
-
-				if strings.HasPrefix(fourth, outputTokenPath) {
-					// three times
-					nestedPath := inputTokenPath + "," + secondFee + "," + secondPath + "," + thirdFee + "," + thirdPath + "," + fourthFee + "," + fourthPath
-					swapPaths[len(swapPaths)] = nestedPath
-				}
-			}
+	if remainingHops == 0 {
+		if strings.HasPrefix(currentTokenPath, outputTokenPath) {
+			swapPaths[len(*swapPaths)] = (*firstToken + "," + currentPath)
 		}
+		return
 	}
-	return swapPaths
+
+	for _, next := range tokenPairs[currentTokenPath] {
+		nextPath, nextFee := singlePoolPathWithFeeDivide(next)
+		newPath := currentPath
+		if currentPath != "" {
+			newPath += ","
+		}
+		newPath += nextFee + "," + nextPath
+		findPath(tokenPairs, nextPath, outputTokenPath, newPath, remainingHops-1, swapPaths, firstToken)
+	}
 }
