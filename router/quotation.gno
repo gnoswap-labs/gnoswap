@@ -72,7 +72,7 @@ func quoteForAllPath(
 
 				recipient:       std.GetOrigCaller(),
 				amountSpecified: quoterTarget.pctAmount,
-				minAmountOut:    1, // r3v4_xx: sqrtPriceLimitX96
+				minAmountOut:    1,
 			}
 
 			// if amountSpecified > 0, proceed forward
