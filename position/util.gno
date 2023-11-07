@@ -25,7 +25,7 @@ func a2u(addr std.Address) users.AddressOrName {
 }
 
 func poolKeyDivide(poolKey string) (string, string, uint16) {
-	res := strings.Split(poolKey, "_")
+	res := strings.Split(poolKey, ":")
 	if len(res) != 3 {
 		panic(ufmt.Sprintf("[POSITION] util.gno__poolKeyDivide() || invalid poolKey(%s)", poolKey))
 	}

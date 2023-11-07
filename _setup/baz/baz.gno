@@ -31,22 +31,17 @@ func init() {
 		posAddr  = std.DerivePkgAddr("gno.land/r/position")
 	)
 
-	baz.Mint(lp01, 50000000)
-	baz.Mint(lp02, 50000000)
-	baz.Mint(lp03, 50000000)
-	baz.Mint(tr01, 50000000)
+	baz.Mint(lp01, 50000000000)
+	baz.Mint(lp02, 50000000000)
+	baz.Mint(lp03, 50000000000)
+	baz.Mint(tr01, 50000000000)
 
-	baz.Approve(lp01, poolAddr, 50000000)
-	// baz.Approve(lp02, poolAddr, 50000000)
-	// baz.Approve(lp03, poolAddr, 50000000)
-	baz.Approve(tr01, poolAddr, 50000000)
+	baz.Approve(lp01, poolAddr, 50000000000)
+	baz.Approve(lp02, poolAddr, 50000000000)
+	baz.Approve(lp03, poolAddr, 50000000000)
+	baz.Approve(tr01, poolAddr, 50000000000)
 
-	// baz.Approve(lp01, lp01, 50000000)
-	// baz.Approve(lp02, lp02, 50000000)
-	// baz.Approve(lp03, lp03, 50000000)
-	// baz.Approve(tr01, tr01, 50000000)
-
-	// baz.Approve(posAddr, poolAddr, 50000000)
+	baz.Approve(posAddr, poolAddr, 50000000000)
 }
 
 // method proxies as public functions.
@@ -121,7 +116,7 @@ func FaucetL() {
 	// FIXME: add payment in gnot?
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	baz.Mint(caller, 50000000000) // 50_000_000_000
+	baz.Mint(caller, 50000000000000) // 50_000_000_000
 }
 
 // administration.

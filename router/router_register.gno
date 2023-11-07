@@ -1,4 +1,4 @@
-package pool
+package router
 
 import (
 	"std"
@@ -67,9 +67,7 @@ func UnregisterGRC20Interface(pkgPath string) {
 
 	// only admin can unregister
 	caller := std.GetOrigCaller()
-	if caller != APPROVED_CALLER {
-		panic("unauthorized address to unregister")
-	}
+	require(caller == APPROVED_CALLER, "[ROUTER] router_register.gno__UnregisterGRC20Interface() || nauthorized address to unregister")
 
 	_, found := findGRC20(pkgPath)
 	if found {

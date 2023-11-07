@@ -10,11 +10,10 @@ func swapMathComputeSwapStep(
 	liquidity bigint,
 	amountRemaining bigint,
 	feePips uint32,
-) (bigint, bigint, bigint, bigint) {
+) (sqrtRatioNextX96, amountIn, amountOut, feeAmount bigint) {
 	requireUnsigned(sqrtRatioCurrentX96, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || sqrtRatioCurrentX96(%s) >= 0", sqrtRatioCurrentX96))
 	requireUnsigned(sqrtRatioTargetX96, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || sqrtRatioTargetX96(%s) >= 0", sqrtRatioTargetX96))
 	requireUnsigned(liquidity, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || liquidity(%s) >= 0", liquidity))
-	var sqrtRatioNextX96, amountIn, amountOut, feeAmount bigint
 
 	zeroForOne := sqrtRatioCurrentX96 >= sqrtRatioTargetX96
 	exactIn := amountRemaining >= 0
@@ -94,7 +93,7 @@ func swapMathComputeSwapStep(
 		requireUnsigned(amountOut, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || amountOut(%s) >= 0__#2", amountOut))
 	}
 
-	if !exactIn && amountOut > -amountRemaining {
+	if !exactIn && amountOut > amountRemaining {
 		amountOut = -amountRemaining
 		requireUnsigned(amountOut, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || amountOut(%s) >= 0__#3", amountOut))
 	}

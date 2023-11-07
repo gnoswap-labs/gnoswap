@@ -6,28 +6,34 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	pos "gno.land/r/position"
+	_ "gno.land/r/grc20_wrapper"
 )
 
 var (
 	gsa  = testutils.TestAddress("gsa")
 	lp01 = testutils.TestAddress("lp01")
 
-	pToken0          = "foo"
-	pToken1          = "bar"
-	pFee      uint16 = 500
+	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
+	posAddr  = std.DerivePkgAddr("gno.land/r/position")
+)
+
+var (
+	fooPath          = "gno.land/r/foo" // token1
+	barPath          = "gno.land/r/bar" // token2
+	pFee             = uint16(500)
 	sqrtPrice bigint = 130621891405341611593710811006
 
-	tickLower       int32  = 9000
-	tickUpper       int32  = 11000
-	liquidityAmount bigint = 123456789
-	currentTick     int32  = 10000
+	tickLower       = int32(9000)
+	tickUpper       = int32(11000)
+	liquidityExpect = bigint(100_000_000)
+
+	currentTick = int32(10000)
 )
 
 func init() {
 	std.TestSetOrigCaller(gsa)
 	InitManual()
-	CreatePool(pToken0, pToken1, pFee, sqrtPrice)
+	CreatePool(fooPath, barPath, pFee, sqrtPrice)
 }
 
 func TestGetSqrtRatioFromTick(t *testing.T) {
@@ -41,22 +47,23 @@ func TestGetTickFromSqrtRatio(t *testing.T) {
 }
 
 func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
+	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
 
 	// no mint == no liquidity => swap will fail
-	shouldPanic(t, func() { DrySwap(pToken0, pToken1, pFee, "_", true, 16000, MIN_PRICE) })
+	shouldPanic(t, func() { DrySwap(fooPath, barPath, pFee, "_", true, 16000, MIN_PRICE) })
 
 	// not enough mint == swap will fail
-	pos.Mint(pToken0, pToken1, pFee, tickLower, tickUpper, 1000, 1000, 0, 0, 9999999999)
-	shouldPanic(t, func() { DrySwap(pToken0, pToken1, pFee, "_", true, 16000, MIN_PRICE) })
+	Mint(fooPath, barPath, pFee, posAddr, tickLower, tickUpper, 1000)
+	shouldPanic(t, func() { DrySwap(fooPath, barPath, pFee, "_", true, 16000, MIN_PRICE) })
 
-	pos.Mint(pToken0, pToken1, pFee, tickLower, tickUpper, 100000, 100000, 0, 0, 9999999999)
+	Mint(fooPath, barPath, pFee, posAddr, tickLower, tickUpper, liquidityExpect)
 
 	// zeroForOne true
 	// amountSpecified 16000
 	input, output := DrySwap(
-		pToken0,   // pToken0
-		pToken1,   // pToken1
+		fooPath,   // fooPath
+		barPath,   // barPath
 		pFee,      // pFee
 		"_",       // recipient
 		true,      // zeroForOne
@@ -64,7 +71,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 		MIN_PRICE, // sqrtPriceLimitX96
 	)
 	shouldEQ(t, input, bigint(16000))
-	shouldEQ(t, output, bigint(-42574))
+	shouldEQ(t, output, bigint(-43457))
 }
 
 func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
@@ -72,8 +79,8 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 	// amountSpecified -16000
 
 	input, output := DrySwap(
-		pToken0,          // pToken0
-		pToken1,          // pToken1
+		fooPath,          // fooPath
+		barPath,          // barPath
 		pFee,             // pFee
 		"_",              // recipient
 		true,             // zeroForOne
@@ -81,7 +88,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 		MIN_SQRT_RATIO+1, // sqrtPriceLimitX96
 	)
 
-	shouldEQ(t, input, bigint(5934))
+	shouldEQ(t, input, bigint(5888))
 	shouldEQ(t, output, bigint(-15999))
 }
 
@@ -90,15 +97,15 @@ func TestDrySwap_ZeroForOneFalse_AmountSpecified_Positive_16000(t *testing.T) {
 	// amountSpecified 16000
 
 	input, output := DrySwap(
-		pToken0,          // pToken0
-		pToken1,          // pToken1
+		fooPath,          // fooPath
+		barPath,          // barPath
 		pFee,             // pFee
 		"_",              // recipient
 		false,            // zeroForOne
 		16000,            // amountSpecified
 		MAX_SQRT_RATIO-1, // sqrtPriceLimitX96
 	)
-	shouldEQ(t, input, bigint(-42574))
+	shouldEQ(t, input, bigint(-43457))
 	shouldEQ(t, output, bigint(16000))
 }
 
@@ -107,8 +114,8 @@ func TestDrySwap_ZeroForOneFalse_AmountSpecified_Negative_16000(t *testing.T) {
 	// amountSpecified -16000
 
 	input, output := DrySwap(
-		pToken0,          // pToken0
-		pToken1,          // pToken1
+		fooPath,          // fooPath
+		barPath,          // barPath
 		pFee,             // pFee
 		"_",              // recipient
 		false,            // zeroForOne
@@ -116,7 +123,7 @@ func TestDrySwap_ZeroForOneFalse_AmountSpecified_Negative_16000(t *testing.T) {
 		MAX_SQRT_RATIO-1, // sqrtPriceLimitX96
 	)
 	shouldEQ(t, input, bigint(-15999))
-	shouldEQ(t, output, bigint(5934))
+	shouldEQ(t, output, bigint(5888))
 }
 
 /* HELPER */

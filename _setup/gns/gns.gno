@@ -1,4 +1,4 @@
-package gnos
+package gns
 
 import (
 	"std"
@@ -10,12 +10,12 @@ import (
 )
 
 var (
-	gnos  *grc20.AdminToken
+	gns   *grc20.AdminToken
 	admin []string
 )
 
 func init() {
-	gnos = grc20.NewAdminToken("Gnoswap Shares", "GNOS", 4)
+	gns = grc20.NewAdminToken("Gnoswap Shares", "GNOS", 4)
 
 	// for swap > staker
 	var (
@@ -23,8 +23,8 @@ func init() {
 		poolAddr   = std.Address("g1ee305k8yk0pjz443xpwtqdyep522f9g5r7d63w")
 		ira        = std.Address("g1d9exzh6lta047h6lta047h6lta047h6l8ylkpa") // INTERNAL REWARD ACCOUNT
 	)
-	gnos.Mint(ira, 50000000000)                // 50_000_000_000
-	gnos.Approve(ira, stakerAddr, 50000000000) // owner, spender, amount
+	gns.Mint(ira, 50000000000)                // 50_000_000_000
+	gns.Approve(ira, stakerAddr, 50000000000) // owner, spender, amount
 
 	admin = append(admin, string(stakerAddr))
 }
@@ -34,15 +34,15 @@ func init() {
 
 // getters.
 func GetGRC20() *grc20.AdminToken {
-	return gnos
+	return gns
 }
 
 func TotalSupply() uint64 {
-	return gnos.TotalSupply()
+	return gns.TotalSupply()
 }
 
 func BalanceOf(owner users.AddressOrName) uint64 {
-	balance, err := gnos.BalanceOf(owner.Resolve())
+	balance, err := gns.BalanceOf(owner.Resolve())
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +50,7 @@ func BalanceOf(owner users.AddressOrName) uint64 {
 }
 
 func Allowance(owner, spender users.AddressOrName) uint64 {
-	allowance, err := gnos.Allowance(owner.Resolve(), spender.Resolve())
+	allowance, err := gns.Allowance(owner.Resolve(), spender.Resolve())
 	if err != nil {
 		panic(err)
 	}
@@ -62,7 +62,7 @@ func Allowance(owner, spender users.AddressOrName) uint64 {
 func Transfer(to users.AddressOrName, amount uint64) {
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	err := gnos.Transfer(caller, to.Resolve(), amount)
+	err := gns.Transfer(caller, to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -71,7 +71,7 @@ func Transfer(to users.AddressOrName, amount uint64) {
 func Approve(spender users.AddressOrName, amount uint64) {
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	err := gnos.Approve(caller, spender.Resolve(), amount)
+	err := gns.Approve(caller, spender.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -80,7 +80,7 @@ func Approve(spender users.AddressOrName, amount uint64) {
 func TransferFrom(from, to users.AddressOrName, amount uint64) {
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	err := gnos.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
+	err := gns.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -93,7 +93,7 @@ func Faucet() {
 	// FIXME: add payment in gnot?
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	gnos.Mint(caller, 1000*10000) // 1k
+	gns.Mint(caller, 1000*10000) // 1k
 }
 
 func FaucetL() {
@@ -101,7 +101,7 @@ func FaucetL() {
 	// FIXME: add payment in gnot?
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
-	gnos.Mint(caller, 50000000000) // 50_000_000_000
+	gns.Mint(caller, 50000000000) // 50_000_000_000
 }
 
 // administration.
@@ -110,14 +110,14 @@ func Mint(address users.AddressOrName, amount uint64) {
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	gnos.Mint(address.Resolve(), amount)
+	gns.Mint(address.Resolve(), amount)
 }
 
 func Burn(address users.AddressOrName, amount uint64) {
 	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	gnos.Burn(address.Resolve(), amount)
+	gns.Burn(address.Resolve(), amount)
 }
 
 func AppendAdmin(address users.AddressOrName) {
@@ -148,10 +148,10 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return gnos.RenderHome()
+		return gns.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := users.AddressOrName(parts[1])
-		balance, _ := gnos.BalanceOf(owner.Resolve())
+		balance, _ := gns.BalanceOf(owner.Resolve())
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"

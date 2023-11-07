@@ -1,4 +1,4 @@
-package foo
+package qux
 
 import (
 	"std"
@@ -10,17 +10,16 @@ import (
 
 	// for swap
 	"gno.land/p/demo/testutils"
-	// for registry call
 )
 
 var (
-	foo   *grc20.AdminToken
+	qux   *grc20.AdminToken
 	admin std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // TODO: helper to change admin
 )
 
 func init() {
-	foo = grc20.NewAdminToken("Foo", "FOO", 4)
-	foo.Mint(admin, 1000000*10000) // @administrator (1M)
+	qux = grc20.NewAdminToken("Qux", "QUX", 4)
+	qux.Mint(admin, 1000000*10000) // @administrator (1M)
 
 	// for swap > pool
 	var (
@@ -32,17 +31,17 @@ func init() {
 		posAddr  = std.DerivePkgAddr("gno.land/r/position")
 	)
 
-	foo.Mint(lp01, 50000000000)
-	foo.Mint(lp02, 50000000000)
-	foo.Mint(lp03, 50000000000)
-	foo.Mint(tr01, 50000000000)
+	qux.Mint(lp01, 50000000000)
+	qux.Mint(lp02, 50000000000)
+	qux.Mint(lp03, 50000000000)
+	qux.Mint(tr01, 50000000000)
 
-	foo.Approve(lp01, poolAddr, 50000000000)
-	foo.Approve(lp02, poolAddr, 50000000000)
-	foo.Approve(lp03, poolAddr, 50000000000)
-	foo.Approve(tr01, poolAddr, 50000000000)
+	qux.Approve(lp01, poolAddr, 50000000000)
+	qux.Approve(lp02, poolAddr, 50000000000)
+	qux.Approve(lp03, poolAddr, 50000000000)
+	qux.Approve(tr01, poolAddr, 50000000000)
 
-	// foo.Approve(posAddr, poolAddr, 50000000000)
+	// qux.Approve(posAddr, poolAddr, 50000000000)
 }
 
 // method proxies as public functions.
@@ -50,15 +49,15 @@ func init() {
 
 // getters.
 func GetGRC20() *grc20.AdminToken {
-	return foo
+	return qux
 }
 
 func TotalSupply() uint64 {
-	return foo.TotalSupply()
+	return qux.TotalSupply()
 }
 
 func BalanceOf(owner users.AddressOrName) uint64 {
-	balance, err := foo.BalanceOf(owner.Resolve())
+	balance, err := qux.BalanceOf(owner.Resolve())
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +65,7 @@ func BalanceOf(owner users.AddressOrName) uint64 {
 }
 
 func Allowance(owner, spender users.AddressOrName) uint64 {
-	allowance, err := foo.Allowance(owner.Resolve(), spender.Resolve())
+	allowance, err := qux.Allowance(owner.Resolve(), spender.Resolve())
 	if err != nil {
 		panic(err)
 	}
@@ -77,7 +76,7 @@ func Allowance(owner, spender users.AddressOrName) uint64 {
 
 func Transfer(to users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := foo.Transfer(caller, to.Resolve(), amount)
+	err := qux.Transfer(caller, to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -85,7 +84,7 @@ func Transfer(to users.AddressOrName, amount uint64) {
 
 func Approve(spender users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := foo.Approve(caller, spender.Resolve(), amount)
+	err := qux.Approve(caller, spender.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -93,7 +92,7 @@ func Approve(spender users.AddressOrName, amount uint64) {
 
 func TransferFrom(from, to users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := foo.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
+	err := qux.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -105,14 +104,14 @@ func Faucet() {
 	// FIXME: add limits?
 	// FIXME: add payment in gnot?
 	caller := std.PrevRealm().Addr()
-	foo.Mint(caller, 1000*10000) // 1k
+	qux.Mint(caller, 1000*10000) // 1k
 }
 
 func FaucetL() {
 	// FIXME: add limits?
 	// FIXME: add payment in gnot?
 	caller := std.PrevRealm().Addr()
-	foo.Mint(caller, 50000000000) // 50_000_000_000
+	qux.Mint(caller, 50000000000000) // 50_000_000_000
 }
 
 // administration.
@@ -120,13 +119,13 @@ func FaucetL() {
 func Mint(address users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	foo.Mint(address.Resolve(), amount)
+	qux.Mint(address.Resolve(), amount)
 }
 
 func Burn(address users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	foo.Burn(address.Resolve(), amount)
+	qux.Burn(address.Resolve(), amount)
 }
 
 // render.
@@ -138,10 +137,10 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return foo.RenderHome()
+		return qux.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := users.AddressOrName(parts[1])
-		balance, _ := foo.BalanceOf(owner.Resolve())
+		balance, _ := qux.BalanceOf(owner.Resolve())
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"

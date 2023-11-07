@@ -1,4 +1,4 @@
-package gnos
+package gns
 
 import (
 	"std"

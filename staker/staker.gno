@@ -6,7 +6,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	gnft "gno.land/r/gnft" // GNFT, Gnoswap NFT
-	gnos "gno.land/r/gnos" // GNOS, INTERNAL Reward Token
+	gns "gno.land/r/gns"   // GNS, INTERNAL Reward Token
 	obl "gno.land/r/obl"   // OBL, EXTERNAL Reward Token
 
 	s "gno.land/r/position"
@@ -30,8 +30,8 @@ func init() {
 	poolTiers["BAR/FOO_500"] = 1 // DEV
 
 	// tier 2
-	poolTiers["GNOS/USDT_500"] = 2
-	poolTiers["ATOM/GNOS_500"] = 2
+	poolTiers["GNS/USDT_500"] = 2
+	poolTiers["ATOM/GNS_500"] = 2
 
 	// tier 3
 	poolTiers["ATOM/GNOT_500"] = 3
@@ -142,10 +142,10 @@ func UnstakeToken(
 	}
 
 	// default `Internal` reward
-	internalGNOS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
+	internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
 
 	// transfer it
-	gnos.TransferFrom(a2u(INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(internalGNOS))
+	gns.TransferFrom(a2u(INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(internalGNS))
 
 	// unstaked status
 	delete(deposits, tokenId)

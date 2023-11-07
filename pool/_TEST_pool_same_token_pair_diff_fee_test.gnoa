@@ -6,10 +6,8 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/r/demo/users"
 
-	bar "gno.land/r/bar"
-	foo "gno.land/r/foo"
+	_ "gno.land/r/grc20_wrapper"
 )
 
 var (
@@ -17,13 +15,14 @@ var (
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 
-	posAddr = std.DerivePkgAddr("gno.land/r/position")
+	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
+	posAddr  = std.DerivePkgAddr("gno.land/r/position")
 )
 
 var (
 	// Common
-	pToken0 = "foo"
-	pToken1 = "bar"
+	fooPath = "gno.land/r/foo" // token1
+	barPath = "gno.land/r/bar" // token2
 
 	pFee1           = uint16(500)
 	test_tickLower1 = int32(9000)
@@ -36,155 +35,169 @@ var (
 	test_liquidityExpect = bigint(1000)
 )
 
-// foo & bar & 500
 func TestFirstPool(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	InitManual()
-	CreatePool(pToken0, pToken1, pFee1, 130621891405341611593710811006)
+	CreatePool(fooPath, barPath, pFee1, 130621891405341611593710811006)
 
-	shouldPanic(t, func() { CreatePool(pToken0, pToken1, pFee1, 130621891405341611593710811006) })
+	shouldPanic(t, func() { CreatePool(fooPath, barPath, pFee1, 130621891405341611593710811006) })
 
 	// Test Only Swap
-	pool := GetPool(pToken0, pToken1, pFee1)
+	pool := GetPool(fooPath, barPath, pFee1)
 	test_liquidity := pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
-	Mint(pToken0, pToken1, pFee1, posAddr, test_tickLower1, test_tickUpper1, test_liquidityExpect*20000)
+	Mint(fooPath, barPath, pFee1, posAddr, test_tickLower1, test_tickUpper1, test_liquidityExpect*100000)
+
+	// clear prev realm
 	std.TestSetPrevRealm("")
 
 	// Swap several times
 	std.TestSetOrigCaller(tr01)
-	test_price := bigint(MIN_SQRT_RATIO + 1) // maximum price
-
 	{
-		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolOldToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userOldToken0Bal := balanceOf(pool.token0, tr01)
-		userOldToken1Bal := balanceOf(pool.token1, tr01)
+		userOldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userOldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		amount0, amount1 := Swap(pToken0, pToken1, pFee1, tr01, true, bigint(10000), test_price)
+		amount0, amount1 := Swap(fooPath, barPath, pFee1, tr01, true, bigint(10000), MIN_PRICE)
 
 		shouldNEQ(t, amount0, bigint(0))
 		shouldNEQ(t, amount1, bigint(0))
 
-		poolNewToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolNewToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolNewToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userNewToken0Bal := balanceOf(pool.token0, tr01)
-		userNewToken1Bal := balanceOf(pool.token1, tr01)
+		userNewToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userNewToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		shouldEQ(t, userOldToken0Bal-amount0, userNewToken0Bal)
-		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
-		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
-		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(amount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-amount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(amount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-amount1))
 	}
 
 	{
-		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolOldToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userOldToken0Bal := balanceOf(pool.token0, tr01)
-		userOldToken1Bal := balanceOf(pool.token1, tr01)
+		userOldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userOldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		amount0, amount1 := Swap(pToken0, pToken1, pFee1, tr01, true, 5000, test_price) // give enough amount to take fees away
+		amount0, amount1 := Swap(fooPath, barPath, pFee1, tr01, true, bigint(5000), MIN_PRICE)
 
-		poolNewToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolNewToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		shouldNEQ(t, amount0, bigint(0))
+		shouldNEQ(t, amount1, bigint(0))
 
-		userNewToken0Bal := balanceOf(pool.token0, tr01)
-		userNewToken1Bal := balanceOf(pool.token1, tr01)
+		poolNewToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		shouldEQ(t, userOldToken0Bal-amount0, userNewToken0Bal)
-		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
-		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
-		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
+		userNewToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userNewToken1Bal := balanceOfByRegisterCall(barPath, tr01)
+
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(amount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-amount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(amount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-amount1))
 	}
 
 	{
-		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolOldToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userOldToken0Bal := balanceOf(pool.token0, tr01)
-		userOldToken1Bal := balanceOf(pool.token1, tr01)
+		userOldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userOldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		amount0, amount1 := Swap(pToken0, pToken1, pFee1, tr01, true, 1000, test_price) // give enough amount to take fees away
+		amount0, amount1 := Swap(fooPath, barPath, pFee1, tr01, true, bigint(1000), MIN_PRICE)
 
-		poolNewToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolNewToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		shouldNEQ(t, amount0, bigint(0))
+		shouldNEQ(t, amount1, bigint(0))
 
-		userNewToken0Bal := balanceOf(pool.token0, tr01)
-		userNewToken1Bal := balanceOf(pool.token1, tr01)
+		poolNewToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		shouldEQ(t, userOldToken0Bal-amount0, userNewToken0Bal)
-		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
-		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
-		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
+		userNewToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userNewToken1Bal := balanceOfByRegisterCall(barPath, tr01)
+
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(amount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-amount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(amount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-amount1))
 	}
 
-	// Swap toek1n -> token0
+	// Swap token1 -> token0
 	{
-		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolOldToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userOldToken0Bal := balanceOf(pool.token0, tr01)
-		userOldToken1Bal := balanceOf(pool.token1, tr01)
+		userOldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userOldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		amount0, amount1 := Swap(pToken0, pToken1, pFee1, tr01, false, 16000, (MAX_SQRT_RATIO - 1)) // give enough amount to take fees away
+		amount0, amount1 := Swap(fooPath, barPath, pFee1, tr01, false, bigint(160000), MAX_PRICE)
 
-		poolNewToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolNewToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		shouldNEQ(t, amount0, bigint(0))
+		shouldNEQ(t, amount1, bigint(0))
 
-		userNewToken0Bal := balanceOf(pool.token0, tr01)
-		userNewToken1Bal := balanceOf(pool.token1, tr01)
+		poolNewToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		shouldEQ(t, userOldToken0Bal-amount0, userNewToken0Bal)
-		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
-		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
-		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
+		userNewToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userNewToken1Bal := balanceOfByRegisterCall(barPath, tr01)
+
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(amount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-amount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(amount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-amount1))
 	}
 
 	// Swap with Protocol
 	std.TestSetOrigCaller(gsa)
-
 	SetFeeProtocol(6, 8)
+
 	test_slot0 := pool.GetSlot0()
 	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
 
 	// Make ProtocolFee via Swap by tr01 ( Mint by lp01 )
 	std.TestSetOrigCaller(lp01)
 	{
-		gsaOldToken0Bal := balanceOf(pool.token0, gsa)
-		gsaOldToken1Bal := balanceOf(pool.token1, gsa)
+		gsaOldToken0Bal := balanceOfByRegisterCall(fooPath, gsa)
+		gsaOldToken1Bal := balanceOfByRegisterCall(barPath, gsa)
 
 		std.TestSetOrigCaller(tr01)
-		Swap(pToken0, pToken1, pFee1, tr01, true, 100000, MIN_SQRT_RATIO+1) // swap token0 -> token1 => fee only in token0
-		Swap(pToken0, pToken1, pFee1, tr01, true, 100000, MIN_SQRT_RATIO+1) // more protocol fee
+		Swap(fooPath, barPath, pFee1, tr01, true, 100000, MIN_PRICE) // swap token0 -> token1 => fee only in token0
+		Swap(fooPath, barPath, pFee1, tr01, true, 100000, MIN_PRICE) // more protocol fee
 
 		// Gnoswap Admin will collect protocol fee
 		std.TestSetOrigCaller(gsa)
-		amount0, amount1 := CollectProtocol(pToken0, pToken1, pFee1, gsa, 100000, 100000)
+		amount0, amount1 := CollectProtocol(fooPath, barPath, pFee1, gsa, 100000, 100000)
 
-		gsaNewToken0Bal := balanceOf(pool.token0, gsa)
-		gsaNewToken1Bal := balanceOf(pool.token1, gsa)
+		gsaNewToken0Bal := balanceOfByRegisterCall(fooPath, gsa)
+		gsaNewToken1Bal := balanceOfByRegisterCall(barPath, gsa)
+
+		shouldEQ(t, gsaNewToken0Bal-gsaOldToken0Bal, int64(amount0))
+		shouldEQ(t, gsaNewToken1Bal-gsaOldToken1Bal, int64(amount1))
 	}
 
 	{
-		gsaOldToken0Bal := balanceOf(pool.token0, gsa)
-		gsaOldToken1Bal := balanceOf(pool.token1, gsa)
+		gsaOldToken0Bal := balanceOfByRegisterCall(fooPath, gsa)
+		gsaOldToken1Bal := balanceOfByRegisterCall(barPath, gsa)
 
 		std.TestSetOrigCaller(tr01)
-		Swap(pToken0, pToken1, pFee1, tr01, false, 100000, MAX_SQRT_RATIO-1) // swap token0 -> token1 => fee only in token0
-		Swap(pToken0, pToken1, pFee1, tr01, false, 100000, MAX_SQRT_RATIO-1) // more protocol fee
+		Swap(fooPath, barPath, pFee1, tr01, false, 100000, MAX_PRICE) // swap token0 -> token1 => fee only in token0
+		Swap(fooPath, barPath, pFee1, tr01, false, 100000, MAX_PRICE) // more protocol fee
 
 		// Gnoswap Admin will collect protocol fee
 		std.TestSetOrigCaller(gsa)
-		amount0, amount1 := CollectProtocol(pToken0, pToken1, pFee1, gsa, 100000, 100000)
+		amount0, amount1 := CollectProtocol(fooPath, barPath, pFee1, gsa, 100000, 100000)
 
-		gsaNewToken0Bal := balanceOf(pool.token0, gsa)
-		gsaNewToken1Bal := balanceOf(pool.token1, gsa)
+		gsaNewToken0Bal := balanceOfByRegisterCall(fooPath, gsa)
+		gsaNewToken1Bal := balanceOfByRegisterCall(barPath, gsa)
+
+		shouldEQ(t, gsaNewToken0Bal-gsaOldToken0Bal, int64(amount0))
+		shouldEQ(t, gsaNewToken1Bal-gsaOldToken1Bal, int64(amount1))
 	}
 }
 
@@ -192,164 +205,166 @@ func TestFirstPool(t *testing.T) {
 func TestSecondPool(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	// Init()
-	CreatePool(pToken0, pToken1, pFee2, 130621891405341611593710811006)
+	CreatePool(fooPath, barPath, pFee2, 130621891405341611593710811006)
 
-	shouldPanic(t, func() { CreatePool(pToken0, pToken1, pFee2, 130621891405341611593710811006) })
-
-	// Approve
-	std.TestSetOrigCaller(lp01)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	foo.Approve(users.AddressOrName(lp01), 50000000)
-	bar.Approve(users.AddressOrName(lp01), 50000000)
-
-	std.TestSetOrigCaller(tr01)
-	foo.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	bar.Approve(users.AddressOrName(GetOrigPkgAddr()), 50000000)
-	foo.Approve(users.AddressOrName(tr01), 50000000)
-	bar.Approve(users.AddressOrName(tr01), 50000000)
+	shouldPanic(t, func() { CreatePool(fooPath, barPath, pFee2, 130621891405341611593710811006) })
 
 	// Test Only Swap
-	pool := GetPool(pToken0, pToken1, pFee2)
+	pool := GetPool(fooPath, barPath, pFee2)
 	test_liquidity := pool.GetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
-	std.TestSetOrigCaller(lp01)
 	std.TestSetPrevRealm("gno.land/r/position")
-	m1, m2 := Mint(pToken0, pToken1, pFee2, posAddr, test_tickLower2, test_tickUpper2, test_liquidityExpect*50000)
+	std.TestSetOrigCaller(lp01)
+	Mint(fooPath, barPath, pFee2, posAddr, test_tickLower2, test_tickUpper2, test_liquidityExpect*50000)
+
+	// clear prev realm
 	std.TestSetPrevRealm("")
 
 	// Swap several times
 	std.TestSetOrigCaller(tr01)
-	test_price := bigint(MIN_SQRT_RATIO + 1) // maximum price
-
 	{
-		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolOldToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userOldToken0Bal := balanceOf(pool.token0, tr01)
-		userOldToken1Bal := balanceOf(pool.token1, tr01)
+		userOldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userOldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		amount0, amount1 := Swap(pToken0, pToken1, pFee2, tr01, true, 50000, test_price)
+		amount0, amount1 := Swap(fooPath, barPath, pFee2, tr01, true, bigint(10000), MIN_PRICE)
 
 		shouldNEQ(t, amount0, bigint(0))
 		shouldNEQ(t, amount1, bigint(0))
 
-		poolNewToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolNewToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolNewToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userNewToken0Bal := balanceOf(pool.token0, tr01)
-		userNewToken1Bal := balanceOf(pool.token1, tr01)
+		userNewToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userNewToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		shouldEQ(t, userOldToken0Bal-amount0, userNewToken0Bal)
-		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
-		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
-		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(amount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-amount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(amount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-amount1))
 	}
 
 	{
-		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolOldToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userOldToken0Bal := balanceOf(pool.token0, tr01)
-		userOldToken1Bal := balanceOf(pool.token1, tr01)
+		userOldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userOldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		amount0, amount1 := Swap(pToken0, pToken1, pFee2, tr01, true, 5000, test_price) // give enough amount to take fees away
+		amount0, amount1 := Swap(fooPath, barPath, pFee2, tr01, true, bigint(5000), MIN_PRICE)
 
-		poolNewToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolNewToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		shouldNEQ(t, amount0, bigint(0))
+		shouldNEQ(t, amount1, bigint(0))
 
-		userNewToken0Bal := balanceOf(pool.token0, tr01)
-		userNewToken1Bal := balanceOf(pool.token1, tr01)
+		poolNewToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		shouldEQ(t, userOldToken0Bal-amount0, userNewToken0Bal)
-		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
-		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
-		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
+		userNewToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userNewToken1Bal := balanceOfByRegisterCall(barPath, tr01)
+
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(amount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-amount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(amount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-amount1))
 	}
 
 	{
-		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolOldToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userOldToken0Bal := balanceOf(pool.token0, tr01)
-		userOldToken1Bal := balanceOf(pool.token1, tr01)
+		userOldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userOldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		amount0, amount1 := Swap(pToken0, pToken1, pFee2, tr01, true, 1000, test_price) // give enough amount to take fees away
+		amount0, amount1 := Swap(fooPath, barPath, pFee2, tr01, true, bigint(1000), MIN_PRICE)
 
-		poolNewToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolNewToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		shouldNEQ(t, amount0, bigint(0))
+		shouldNEQ(t, amount1, bigint(0))
 
-		userNewToken0Bal := balanceOf(pool.token0, tr01)
-		userNewToken1Bal := balanceOf(pool.token1, tr01)
+		poolNewToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		shouldEQ(t, userOldToken0Bal-amount0, userNewToken0Bal)
-		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
-		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
-		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
+		userNewToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userNewToken1Bal := balanceOfByRegisterCall(barPath, tr01)
+
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(amount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-amount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(amount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-amount1))
 	}
 
-	// Swap toek1n -> token0
+	// Swap token1 -> token0
 	{
-		poolOldToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolOldToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		poolOldToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		userOldToken0Bal := balanceOf(pool.token0, tr01)
-		userOldToken1Bal := balanceOf(pool.token1, tr01)
+		userOldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userOldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
 
-		amount0, amount1 := Swap(pToken0, pToken1, pFee2, tr01, false, 16000, (MAX_SQRT_RATIO - 1)) // give enough amount to take fees away
+		amount0, amount1 := Swap(fooPath, barPath, pFee2, tr01, false, bigint(160000), MAX_PRICE)
 
-		poolNewToken0Bal := balanceOf(pool.token0, GetOrigPkgAddr())
-		poolNewToken1Bal := balanceOf(pool.token1, GetOrigPkgAddr())
+		shouldNEQ(t, amount0, bigint(0))
+		shouldNEQ(t, amount1, bigint(0))
 
-		userNewToken0Bal := balanceOf(pool.token0, tr01)
-		userNewToken1Bal := balanceOf(pool.token1, tr01)
+		poolNewToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
 
-		shouldEQ(t, userOldToken0Bal-amount0, userNewToken0Bal)
-		shouldEQ(t, userOldToken1Bal-amount1, userNewToken1Bal)
-		shouldEQ(t, poolOldToken0Bal+amount0, poolNewToken0Bal)
-		shouldEQ(t, poolOldToken1Bal+amount1, poolNewToken1Bal)
+		userNewToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
+		userNewToken1Bal := balanceOfByRegisterCall(barPath, tr01)
+
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(amount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-amount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(amount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-amount1))
 	}
 
 	// Swap with Protocol
 	std.TestSetOrigCaller(gsa)
-
 	SetFeeProtocol(6, 8)
+
 	test_slot0 := pool.GetSlot0()
 	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
 
 	// Make ProtocolFee via Swap by tr01 ( Mint by lp01 )
 	std.TestSetOrigCaller(lp01)
 	{
-		gsaOldToken0Bal := balanceOf(pool.token0, gsa)
-		gsaOldToken1Bal := balanceOf(pool.token1, gsa)
+		gsaOldToken0Bal := balanceOfByRegisterCall(fooPath, gsa)
+		gsaOldToken1Bal := balanceOfByRegisterCall(barPath, gsa)
 
 		std.TestSetOrigCaller(tr01)
-		Swap(pToken0, pToken1, pFee2, tr01, true, 100000, MIN_SQRT_RATIO+1) // swap token0 -> token1 => fee only in token0
-		Swap(pToken0, pToken1, pFee2, tr01, true, 100000, MIN_SQRT_RATIO+1) // more protocol fee
+		Swap(fooPath, barPath, pFee2, tr01, true, 100000, MIN_PRICE) // swap token0 -> token1 => fee only in token0
+		Swap(fooPath, barPath, pFee2, tr01, true, 100000, MIN_PRICE) // more protocol fee
 
 		// Gnoswap Admin will collect protocol fee
 		std.TestSetOrigCaller(gsa)
-		amount0, amount1 := CollectProtocol(pToken0, pToken1, pFee2, gsa, 100000, 100000)
+		amount0, amount1 := CollectProtocol(fooPath, barPath, pFee1, gsa, 100000, 100000)
 
-		gsaNewToken0Bal := balanceOf(pool.token0, gsa)
-		gsaNewToken1Bal := balanceOf(pool.token1, gsa)
+		gsaNewToken0Bal := balanceOfByRegisterCall(fooPath, gsa)
+		gsaNewToken1Bal := balanceOfByRegisterCall(barPath, gsa)
+
+		shouldEQ(t, gsaNewToken0Bal-gsaOldToken0Bal, int64(amount0))
+		shouldEQ(t, gsaNewToken1Bal-gsaOldToken1Bal, int64(amount1))
 	}
 
 	{
-		gsaOldToken0Bal := balanceOf(pool.token0, gsa)
-		gsaOldToken1Bal := balanceOf(pool.token1, gsa)
+		gsaOldToken0Bal := balanceOfByRegisterCall(fooPath, gsa)
+		gsaOldToken1Bal := balanceOfByRegisterCall(barPath, gsa)
 
 		std.TestSetOrigCaller(tr01)
-		Swap(pToken0, pToken1, pFee2, tr01, false, 100000, MAX_SQRT_RATIO-1) // swap token0 -> token1 => fee only in token0
-		Swap(pToken0, pToken1, pFee2, tr01, false, 100000, MAX_SQRT_RATIO-1) // more protocol fee
+		Swap(fooPath, barPath, pFee2, tr01, false, 100000, MAX_PRICE) // swap token0 -> token1 => fee only in token0
+		Swap(fooPath, barPath, pFee2, tr01, false, 100000, MAX_PRICE) // more protocol fee
 
 		// Gnoswap Admin will collect protocol fee
 		std.TestSetOrigCaller(gsa)
-		amount0, amount1 := CollectProtocol(pToken0, pToken1, pFee2, gsa, 100000, 100000)
+		amount0, amount1 := CollectProtocol(fooPath, barPath, pFee2, gsa, 100000, 100000)
 
-		gsaNewToken0Bal := balanceOf(pool.token0, gsa)
-		gsaNewToken1Bal := balanceOf(pool.token1, gsa)
+		gsaNewToken0Bal := balanceOfByRegisterCall(fooPath, gsa)
+		gsaNewToken1Bal := balanceOfByRegisterCall(barPath, gsa)
+
+		shouldEQ(t, gsaNewToken0Bal-gsaOldToken0Bal, int64(amount0))
+		shouldEQ(t, gsaNewToken1Bal-gsaOldToken1Bal, int64(amount1))
 	}
 }
 
@@ -362,12 +377,12 @@ func TestApiGetPools(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
 
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 2)
-	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "bar_foo_500")
-	shouldEQ(t, jsonStr.Get("response.data").Array()[1].String(), "bar_foo_3000")
+	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "gno.land/r/bar:gno.land/r/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data").Array()[1].String(), "gno.land/r/bar:gno.land/r/foo:3000")
 }
 
 func TestApiGetPool(t *testing.T) {
-	gpl := ApiGetPool("bar_foo_500")
+	gpl := ApiGetPool("gno.land/r/bar:gno.land/r/foo:500")
 	jsonStr := gjson.Parse(gpl)
 
 	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())

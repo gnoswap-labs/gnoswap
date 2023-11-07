@@ -1,0 +1,358 @@
+package pool
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/testutils"
+
+	_ "gno.land/r/grc20_wrapper"
+)
+
+var (
+	gsa  = testutils.TestAddress("gsa")  // Gnoswap Admin
+	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
+	tr01 = testutils.TestAddress("tr01") // Trader 01
+
+	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
+	posAddr  = std.DerivePkgAddr("gno.land/r/position")
+)
+
+var (
+	// Common
+	fooPath = "gno.land/r/foo" // token1
+	barPath = "gno.land/r/bar" // token2
+	bazPath = "gno.land/r/baz" // token3
+
+	pFee = uint16(500)
+
+	test_tickLower       = int32(9000)
+	test_tickUpper       = int32(11000)
+	test_liquidityExpect = bigint(100000000)
+
+	test_tickLower2 = int32(50000)
+	test_tickUpper2 = int32(100000)
+)
+
+// 1. Init Pool
+func TestInit(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	InitManual()
+}
+
+// 2. Create Foo:Bar Pool
+func TestCreateFooBarPool(t *testing.T) {
+	CreatePool(fooPath, barPath, pFee, 130621891405341611593710811006)
+	shouldEQ(t, len(pools), 1)
+}
+
+// 3. Create Bar:Baz Pool
+func TestCreateBarBazPool(t *testing.T) {
+	CreatePool(barPath, bazPath, pFee, 130621891405341611593710811006)
+	shouldEQ(t, len(pools), 2)
+}
+
+// 4. Mint Foo:Bar Liquidity by lp01
+func TestMintFooBarLiquidity(t *testing.T) {
+	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetOrigCaller(lp01)
+
+	Mint(
+		fooPath,
+		barPath,
+		pFee,
+		posAddr,
+		test_tickLower,
+		test_tickUpper,
+		test_liquidityExpect,
+	)
+}
+
+// 5. Mint Bar:Baz Liquidity by lp01
+func TestMintBarBazLiquidity(t *testing.T) {
+	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetOrigCaller(lp01)
+
+	Mint(
+		barPath,
+		bazPath,
+		pFee,
+		posAddr,
+		test_tickLower,
+		test_tickUpper,
+		test_liquidityExpect,
+	)
+}
+
+// 6. Swap Foo:Bar Foo > Bar by tr01
+func TestSwapFooBarFooToBar(t *testing.T) {
+	std.TestSetOrigCaller(tr01)
+
+	oldTr01FooBalance := balanceOfByRegisterCall(fooPath, tr01)
+	oldTr01BarBalance := balanceOfByRegisterCall(barPath, tr01)
+	oldPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
+	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+
+	poolIn, poolOut := Swap(
+		fooPath,
+		barPath,
+		pFee,
+		tr01,
+		true,
+		bigint(16000),
+		MIN_PRICE,
+	)
+	shouldEQ(t, poolIn, bigint(16000))
+	shouldEQ(t, poolOut, bigint(-43457))
+
+	newTr01FooBalance := balanceOfByRegisterCall(fooPath, tr01)
+	newTr01BarBalance := balanceOfByRegisterCall(barPath, tr01)
+	newPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
+	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+
+	shouldEQ(t, oldTr01FooBalance-newTr01FooBalance, bigint(16000))
+	shouldEQ(t, newTr01BarBalance-oldTr01BarBalance, bigint(43457))
+	shouldEQ(t, newPoolFooBalance-oldPoolFooBalance, bigint(16000))
+	shouldEQ(t, oldPoolBarBalance-newPoolBarBalance, bigint(43457))
+}
+
+// 7. Swap Bar:Baz Bar > Baz by tr01
+func TestSwapBarBazBarToBaz(t *testing.T) {
+	std.TestSetOrigCaller(tr01)
+
+	oldTr01BarBalance := balanceOfByRegisterCall(barPath, tr01)
+	oldTr01BazBalance := balanceOfByRegisterCall(bazPath, tr01)
+	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	oldPoolBazBalance := balanceOfByRegisterCall(bazPath, poolAddr)
+
+	poolIn, poolOut := Swap(
+		barPath,
+		bazPath,
+		pFee,
+		tr01,
+		true,
+		bigint(16000),
+		MIN_PRICE,
+	)
+	shouldEQ(t, poolIn, bigint(16000))
+	shouldEQ(t, poolOut, bigint(-43457))
+
+	newTr01BarBalance := balanceOfByRegisterCall(barPath, tr01)
+	newTr01BazBalance := balanceOfByRegisterCall(bazPath, tr01)
+	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	newPoolBazBalance := balanceOfByRegisterCall(bazPath, poolAddr)
+
+	shouldEQ(t, oldTr01BarBalance-newTr01BarBalance, bigint(16000))
+	shouldEQ(t, newTr01BazBalance-oldTr01BazBalance, bigint(43457))
+	shouldEQ(t, newPoolBarBalance-oldPoolBarBalance, bigint(16000))
+	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, bigint(43457))
+}
+
+// 8. Collect Foo:Bar Fees by lp01
+func TestCollectFooBarFees(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+	std.TestSetPrevRealm("gno.land/r/position")
+
+	oldLp01FooBalance := balanceOfByRegisterCall(fooPath, lp01)
+	oldLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	oldPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
+	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+
+	// burn 0 to collect swap fees
+	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, 0)
+
+	c0, c1 := Collect(
+		fooPath,
+		barPath,
+		pFee,
+		lp01,
+		test_tickLower,
+		test_tickUpper,
+		100_000,
+		100_000,
+	)
+
+	shouldNEQ(t, c0, bigint(0)) // swap was foo > bar, so only foo has fees
+	shouldEQ(t, c1, bigint(0))  // swap was foo > bar, so bar has no fees
+
+	newLp01FooBalance := balanceOfByRegisterCall(fooPath, lp01)
+	newLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	newPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
+	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+
+	shouldEQ(t, newLp01FooBalance-oldLp01FooBalance, uint64(c0))
+	shouldEQ(t, newLp01BarBalance-oldLp01BarBalance, uint64(c1))
+	shouldEQ(t, oldPoolFooBalance-newPoolFooBalance, uint64(c0))
+	shouldEQ(t, oldPoolBarBalance-newPoolBarBalance, uint64(c1))
+}
+
+// 9. Collect Bar:Baz Fees by lp01
+func TestCollectBarBazFees(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+	std.TestSetPrevRealm("gno.land/r/position")
+
+	oldLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	oldLp01BazBalance := balanceOfByRegisterCall(bazPath, lp01)
+	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	oldPoolBazBalance := balanceOfByRegisterCall(bazPath, poolAddr)
+
+	// burn 0 to collect swap fees
+	Burn(barPath, bazPath, pFee, test_tickLower, test_tickUpper, 0)
+
+	c0, c1 := Collect(
+		barPath,
+		bazPath,
+		pFee,
+		lp01,
+		test_tickLower,
+		test_tickUpper,
+		100_000,
+		100_000,
+	)
+
+	shouldNEQ(t, c0, bigint(0)) // swap was foo > bar, so only foo has fees
+	shouldEQ(t, c1, bigint(0))  // swap was foo > bar, so bar has no fees
+
+	newLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	newLp01BazBalance := balanceOfByRegisterCall(bazPath, lp01)
+	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	newPoolBazBalance := balanceOfByRegisterCall(bazPath, poolAddr)
+
+	shouldEQ(t, newLp01BarBalance-oldLp01BarBalance, uint64(c0))
+	shouldEQ(t, newLp01BazBalance-oldLp01BazBalance, uint64(c1))
+	shouldEQ(t, oldPoolBarBalance-newPoolBarBalance, uint64(c0))
+	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, uint64(c1))
+}
+
+// 10. Burn Foo:Bar Liquidity by lp01
+func TestBurnFooBarLiquidity(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+	std.TestSetPrevRealm("gno.land/r/position")
+
+	pool := GetPool(fooPath, barPath, pFee)
+	poolOldLiquidity := pool.GetLiquidity()
+
+	b0, b1 := Burn(
+		fooPath,
+		barPath,
+		pFee,
+		test_tickLower,
+		test_tickUpper,
+		test_liquidityExpect,
+	)
+
+	shouldNEQ(t, b0, bigint(0))
+	shouldNEQ(t, b1, bigint(0))
+
+	poolNewLiquidity := pool.GetLiquidity()
+
+	shouldEQ(t, poolOldLiquidity-poolNewLiquidity, test_liquidityExpect)
+}
+
+// 11. Burn Bar:Baz Liquidity by lp01
+func TestBurnBarBazLiquidity(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+	std.TestSetPrevRealm("gno.land/r/position")
+
+	pool := GetPool(barPath, bazPath, pFee)
+	poolOldLiquidity := pool.GetLiquidity()
+
+	b0, b1 := Burn(
+		barPath,
+		bazPath,
+		pFee,
+		test_tickLower,
+		test_tickUpper,
+		test_liquidityExpect,
+	)
+
+	shouldNEQ(t, b0, bigint(0))
+	shouldNEQ(t, b1, bigint(0))
+
+	poolNewLiquidity := pool.GetLiquidity()
+
+	shouldEQ(t, poolOldLiquidity-poolNewLiquidity, test_liquidityExpect)
+}
+
+// 12. Collect Foo:Bar burned Liquidity by lp01
+func TestCollectFooBarLiquidity(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+	std.TestSetPrevRealm("gno.land/r/position")
+
+	oldLp01FooBalance := balanceOfByRegisterCall(fooPath, lp01)
+	oldLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	oldPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
+	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+
+	c0, c1 := Collect(
+		fooPath,
+		barPath,
+		pFee,
+		lp01,
+		test_tickLower,
+		test_tickUpper,
+		100_000,
+		100_000,
+	)
+
+	shouldNEQ(t, c0, bigint(0))
+	shouldNEQ(t, c1, bigint(0))
+
+	newLp01FooBalance := balanceOfByRegisterCall(fooPath, lp01)
+	newLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	newPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
+	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+
+	shouldEQ(t, newLp01FooBalance-oldLp01FooBalance, uint64(c0))
+	shouldEQ(t, newLp01BarBalance-oldLp01BarBalance, uint64(c1))
+	shouldEQ(t, oldPoolFooBalance-newPoolFooBalance, uint64(c0))
+	shouldEQ(t, oldPoolBarBalance-newPoolBarBalance, uint64(c1))
+}
+
+// 13. Collect Bar:Baz burned Liquidity by lp01
+func TestCollectBarBazLiquidity(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+	std.TestSetPrevRealm("gno.land/r/position")
+
+	oldLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	oldLp01BazBalance := balanceOfByRegisterCall(bazPath, lp01)
+	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	oldPoolBazBalance := balanceOfByRegisterCall(bazPath, poolAddr)
+
+	c0, c1 := Collect(
+		barPath,
+		bazPath,
+		pFee,
+		lp01,
+		test_tickLower,
+		test_tickUpper,
+		100_000,
+		100_000,
+	)
+
+	shouldNEQ(t, c0, bigint(0))
+	shouldNEQ(t, c1, bigint(0))
+
+	newLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	newLp01BazBalance := balanceOfByRegisterCall(bazPath, lp01)
+	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	newPoolBazBalance := balanceOfByRegisterCall(bazPath, poolAddr)
+
+	shouldEQ(t, newLp01BarBalance-oldLp01BarBalance, uint64(c0))
+	shouldEQ(t, newLp01BazBalance-oldLp01BazBalance, uint64(c1))
+	shouldEQ(t, oldPoolBarBalance-newPoolBarBalance, uint64(c0))
+	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, uint64(c1))
+}
+
+/* HELPER */
+func shouldEQ(t *testing.T, got, expected interface{}) {
+	if got != expected {
+		t.Errorf("got %v, expected %v", got, expected)
+	}
+}
+
+func shouldNEQ(t *testing.T, got, expected interface{}) {
+	if got == expected {
+		t.Errorf("got %v, didn't expected %v", got, expected)
+	}
+}

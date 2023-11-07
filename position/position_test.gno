@@ -1,15 +1,17 @@
 package position
 
 import (
-	"encoding/gjson"
 	"std"
 	"testing"
 
+	"encoding/gjson"
+
 	"gno.land/p/demo/testutils"
 
-	p "gno.land/r/pool"
-
 	nft "gno.land/r/gnft"
+
+	_ "gno.land/r/grc20_wrapper"
+	p "gno.land/r/pool"
 )
 
 var (
@@ -24,8 +26,8 @@ var (
 
 var (
 	// Common
-	pToken0 = "foo"
-	pToken1 = "bar"
+	fooPath = "gno.land/r/foo"
+	barPath = "gno.land/r/bar"
 	pFee    = uint16(500)
 
 	test_tickLower       = int32(9000)
@@ -37,7 +39,7 @@ var (
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(own)
 	p.InitManual()
-	p.CreatePool("foo", "bar", pFee, 130621891405341611593710811006)
+	p.CreatePool(fooPath, barPath, pFee, 130621891405341611593710811006)
 
 	// fee
 	// 500		= 0.05% // USv3 default
@@ -46,7 +48,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { p.CreatePool("foo", "bar", 500, 130621891405341611593710811006) })
+	shouldPanic(t, func() { p.CreatePool(fooPath, barPath, 500, 130621891405341611593710811006) })
 }
 
 // 2. Mint LP and Get GNFT
@@ -60,8 +62,8 @@ func TestMint(t *testing.T) {
 		poolOldToken1Bal := Token1Bal(PoolAddr)
 
 		tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-			pToken0,
-			pToken1,
+			fooPath,
+			barPath,
 			pFee,
 			test_tickLower,
 			test_tickUpper,
@@ -75,6 +77,7 @@ func TestMint(t *testing.T) {
 		isOwner(t, tTokenId, lp01)
 		shouldEQ(t, tTokenId, 1)
 		shouldEQ(t, getNextId(), 2)
+
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 	}
@@ -88,8 +91,8 @@ func TestMint(t *testing.T) {
 		poolOldToken1Bal := Token1Bal(PoolAddr)
 
 		tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-			pToken0,
-			pToken1,
+			fooPath,
+			barPath,
 			pFee,
 			test_tickLower,
 			test_tickUpper,
@@ -115,8 +118,8 @@ func TestMint(t *testing.T) {
 			poolOldToken1Bal := Token1Bal(PoolAddr)
 
 			tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-				pToken0,
-				pToken1,
+				fooPath,
+				barPath,
 				pFee,
 				int32(14000),
 				int32(18000),
@@ -144,8 +147,8 @@ func TestMint(t *testing.T) {
 			poolOldToken1Bal := Token1Bal(PoolAddr)
 
 			tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-				pToken0,
-				pToken1,
+				fooPath,
+				barPath,
 				pFee,
 				int32(7000),
 				int32(9000),
@@ -210,7 +213,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 	// lp01 decreases liquidity at tid 1 position ( in range )
 	{
 		std.TestSetOrigCaller(lp01)
-		pool := p.GetPool(pToken0, pToken1, pFee)
+		pool := p.GetPool(fooPath, barPath, pFee)
 
 		tTargetLiquidity := bigint(1234)
 
@@ -273,7 +276,7 @@ func TestCollect(t *testing.T) {
 	// lp01 did decrease some liquidity => there are some to collect
 	{
 		std.TestSetOrigCaller(lp01)
-		pool := p.GetPool(pToken0, pToken1, pFee)
+		pool := p.GetPool(fooPath, barPath, pFee)
 
 		poolOldLiquidity := pool.GetLiquidity()
 		poolOldToken0Bal := Token0Bal(PoolAddr)
@@ -308,7 +311,7 @@ func TestCollect(t *testing.T) {
 	// lp01 collect all
 	{
 		std.TestSetOrigCaller(lp01)
-		pool := p.GetPool(pToken0, pToken1, pFee)
+		pool := p.GetPool(fooPath, barPath, pFee)
 
 		poolOldLiquidity := pool.GetLiquidity()
 		poolOldToken0Bal := Token0Bal(PoolAddr)
@@ -342,7 +345,7 @@ func TestCollect(t *testing.T) {
 	// lp02 didn't decrease any liquidity => nothing to collect
 	{
 		std.TestSetOrigCaller(lp02)
-		pool := p.GetPool(pToken0, pToken1, pFee)
+		pool := p.GetPool(fooPath, barPath, pFee)
 
 		poolOldLiquidity := pool.GetLiquidity()
 		poolOldToken0Bal := Token0Bal(PoolAddr)
@@ -468,7 +471,7 @@ func TestApiGetPositionByUser(t *testing.T) {
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 3)
 
 	shouldEQ(t, jsonStr.Get("response.data.0.token_id").Int(), 2)
-	shouldEQ(t, jsonStr.Get("response.data.0.pool_key").String(), "bar_foo_500")
+	shouldEQ(t, jsonStr.Get("response.data.0.pool_key").String(), "gno.land/r/bar:gno.land/r/foo:500")
 	shouldEQ(t, jsonStr.Get("response.data.0.tick_lower").Int(), 9000)
 	shouldEQ(t, jsonStr.Get("response.data.0.tick_upper").Int(), 11000)
 	shouldEQ(t, jsonStr.Get("response.data.0.liquidity").Int(), 24874)
@@ -482,7 +485,6 @@ func TestApiGetPositionByUser(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.2.tick_lower").Int(), 7000)
 	shouldEQ(t, jsonStr.Get("response.data.2.tick_upper").Int(), 9000)
 	shouldEQ(t, jsonStr.Get("response.data.2.liquidity").Int(), 6700)
-
 }
 
 /* HELPER */
