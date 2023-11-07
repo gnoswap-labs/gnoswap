@@ -117,19 +117,6 @@ func getTokenList() []string {
 	return uniqueTokenList
 }
 
-func removeDuplicates(input []string) []string {
-	seen := make(map[string]struct{})
-	result := []string{}
-
-	for _, item := range input {
-		if _, ok := seen[item]; !ok {
-			seen[item] = struct{}{}
-			result = append(result, item)
-		}
-	}
-
-	return result
-}
 
 func makePoolPath(poolPath string, poolIndex int) string {
 	poolDatas := strings.Split(poolPath, ",")
