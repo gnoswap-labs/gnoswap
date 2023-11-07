@@ -125,39 +125,23 @@ func getTokenList() []string {
 
 
 func makePoolPath(poolPath string, poolIndex int) string {
-	poolDatas := strings.Split(poolPath, ",")
+    poolDatas := strings.Split(poolPath, ",")
+    // Calculate the indices for token paths and fee based on poolIndex.
+    baseIndex := poolIndex * 3
+    if baseIndex+2 >= len(poolDatas) {
+        panic(ufmt.Sprintf("[ROUTER] getter_api.gno__makePoolPath() || index out of range for pool index: %d", poolIndex))
+    }
 
-	switch poolIndex {
-	case 0:
-		token0Path := poolDatas[0]
-		token1Path := poolDatas[2]
-		fee := poolDatas[1]
-		if token0Path < token1Path {
-			return token0Path + ":" + token1Path + ":" + fee
-		} else {
-			return token1Path + ":" + token0Path + ":" + fee
-		}
-	case 1:
-		token0Path := poolDatas[2]
-		token1Path := poolDatas[4]
-		fee := poolDatas[3]
-		if token0Path < token1Path {
-			return token0Path + ":" + token1Path + ":" + fee
-		} else {
-			return token1Path + ":" + token0Path + ":" + fee
-		}
-	case 2:
-		token0Path := poolDatas[4]
-		token1Path := poolDatas[6]
-		fee := poolDatas[5]
-		if token0Path < token1Path {
-			return token0Path + ":" + token1Path + ":" + fee
-		} else {
-			return token1Path + ":" + token0Path + ":" + fee
-		}
-	default:
-		panic(ufmt.Sprintf("[ROUTER] getter_api.gno__makePoolPath() || unknown pool index: %d", poolIndex))
-	}
+    token0Path := poolDatas[baseIndex]
+    token1Path := poolDatas[baseIndex+2]
+    fee := poolDatas[baseIndex+1]
+
+    // Ensure the tokens are in a consistent order.
+    if token0Path > token1Path {
+        token0Path, token1Path = token1Path, token0Path
+    }
+
+    return token0Path + ":" + token1Path + ":" + fee
 }
 
 func calculateSinglePoolPrice(token, swapPath string) bigint {
