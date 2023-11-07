@@ -32,19 +32,13 @@ func BestSwapDry(
 		amountSpecified,
 		sqrtPriceLimitX96,
 	)
-	if len(quotes) == 0 {
-		panic("rpc_call.gno__THERE IS NO QUOTE")
-	}
+	require(len(quotes) > 0, ufmt.Sprintf("[ROUTER] rpc_call.gno__gno__BestSwapDry() || len(quotes) == 0, inputToken:%s, outputToken:%s", inputToken, outputToken))
 
 	bestSwaps := findBestPaths(quotes)
-	if len(bestSwaps) == 0 {
-		panic("rpc_call.gno__CAN'T MAKE BestSwapRoute")
-	}
+	require(len(bestSwaps) > 0, "[ROUTER] rpc_call.gno__BestSwapDry() || len(bestSwaps) == 0")
 
 	finalSwaps := removeDuplication(bestSwaps)
-	if len(bestSwaps) == 0 {
-		panic("rpc_call.gno__CAN'T MAKE FinalSwapRoute")
-	}
+	require(len(finalSwaps) > 0, "[ROUTER] rpc_call.gno__BestSwapDry() || len(finalSwaps) == 0")
 
 	rpcReturnBestSwap := RpcReturnBestSwap{}
 	rpcReturnBestSwap.SwapType = swapType

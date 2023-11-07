@@ -55,7 +55,10 @@ func TestApiGetRatiosFromBase(t *testing.T) {
 	jsonOutput := gjson.Parse(jsonStr)
 
 	shouldEQ(t, len(jsonOutput.Get("response.data").Array()), 4)
+	shouldEQ(t, jsonOutput.Get("response.data.0").String(), "{\"gno.land/r/foo\":79228162514264337593543950336}")
 	shouldEQ(t, jsonOutput.Get("response.data.1").String(), "{\"gno.land/r/bar\":29147869410676662479573841822}")
+	shouldEQ(t, jsonOutput.Get("response.data.2").String(), "{\"gno.land/r/baz\":79228162514264337593543950333}")
+	shouldEQ(t, jsonOutput.Get("response.data.3").String(), "{\"gno.land/r/qux\":215353707227994575755767921538}")
 	/*
 		len(tokenPrice): 4
 

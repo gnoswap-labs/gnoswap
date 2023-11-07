@@ -38,14 +38,14 @@ var (
 	max_timeout = bigint(9999999999)
 )
 
-func init() {
-	println(gsa, "// gsa")
-	println(lp01, "// lp01")
-	println(tr01, "// tr01")
-	println(poolAddr, "// poolAddr")
-	println(posAddr, "// posAddr")
-	println(routerAddr, "// routerAddr")
-}
+// func init() {
+// 	println(gsa, "// gsa")
+// 	println(lp01, "// lp01")
+// 	println(tr01, "// tr01")
+// 	println(poolAddr, "// poolAddr")
+// 	println(posAddr, "// posAddr")
+// 	println(routerAddr, "// routerAddr")
+// }
 
 func TestInitManual(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
