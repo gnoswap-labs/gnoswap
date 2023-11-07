@@ -104,17 +104,23 @@ func getRatiosFromBase() []map[string]bigint {
 }
 
 func getTokenList() []string {
-	tokenList := []string{}
-	poolList := p.GetPoolList()
+    seen := make(map[string]bool)
+    uniqueTokenList := []string{}
+    poolList := p.GetPoolList()
 
-	for _, poolPath := range poolList {
-		token0Path, token1Path, fee := poolPathWithFeeDivide(poolPath)
-		tokenList = append(tokenList, token0Path)
-		tokenList = append(tokenList, token1Path)
-	}
+    for _, poolPath := range poolList {
+        token0Path, token1Path, _ := poolPathWithFeeDivide(poolPath)
+        if _, exists := seen[token0Path]; !exists {
+            seen[token0Path] = true
+            uniqueTokenList = append(uniqueTokenList, token0Path)
+        }
+        if _, exists := seen[token1Path]; !exists {
+            seen[token1Path] = true
+            uniqueTokenList = append(uniqueTokenList, token1Path)
+        }
+    }
 
-	uniqueTokenList := removeDuplicates(tokenList)
-	return uniqueTokenList
+    return uniqueTokenList
 }
 
 
