@@ -80,7 +80,7 @@ func quoteForAllPath(
 			if amountSpecified > 0 {
 				estimatedResult := multiSwapDry(swapParams, 0, numPools, quoterTarget.targetPath) // will iterate here to cover multi pools
 				if estimatedResult > 0 {
-					resultRatioX96 := estimatedResult * Q96 / quoterTarget.pctAmount * Q96 / Q96
+					resultRatioX96 := estimatedResult * Q96 / quoterTarget.pctAmount
 					quoterTarget.resultRatioX96 = resultRatioX96
 					quoterTargets[i] = quoterTarget
 				} else {
