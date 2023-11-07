@@ -51,17 +51,19 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// no mint == no liquidity => swap will fail
-	shouldPanic(t, func() { DrySwap(fooPath, barPath, pFee, "_", true, 16000, MIN_PRICE) })
+	_, _, ok := DrySwap(fooPath, barPath, pFee, "_", true, 16000, MIN_PRICE)
+	shouldEQ(t, ok, false)
 
 	// not enough mint == swap will fail
 	Mint(fooPath, barPath, pFee, posAddr, tickLower, tickUpper, 1000)
-	shouldPanic(t, func() { DrySwap(fooPath, barPath, pFee, "_", true, 16000, MIN_PRICE) })
+	_, _, ok = DrySwap(fooPath, barPath, pFee, "_", true, 16000, MIN_PRICE)
+	shouldEQ(t, ok, false)
 
 	Mint(fooPath, barPath, pFee, posAddr, tickLower, tickUpper, liquidityExpect)
 
 	// zeroForOne true
 	// amountSpecified 16000
-	input, output := DrySwap(
+	input, output, _ := DrySwap(
 		fooPath,   // fooPath
 		barPath,   // barPath
 		pFee,      // pFee
@@ -78,7 +80,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 	// zeroForOne true
 	// amountSpecified -16000
 
-	input, output := DrySwap(
+	input, output, _ := DrySwap(
 		fooPath,          // fooPath
 		barPath,          // barPath
 		pFee,             // pFee
@@ -89,14 +91,14 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 	)
 
 	shouldEQ(t, input, bigint(5888))
-	shouldEQ(t, output, bigint(-15999))
+	shouldEQ(t, output, bigint(-16000))
 }
 
 func TestDrySwap_ZeroForOneFalse_AmountSpecified_Positive_16000(t *testing.T) {
 	// zeroForOne false
 	// amountSpecified 16000
 
-	input, output := DrySwap(
+	input, output, _ := DrySwap(
 		fooPath,          // fooPath
 		barPath,          // barPath
 		pFee,             // pFee
@@ -113,7 +115,7 @@ func TestDrySwap_ZeroForOneFalse_AmountSpecified_Negative_16000(t *testing.T) {
 	// zeroForOne false
 	// amountSpecified -16000
 
-	input, output := DrySwap(
+	input, output, _ := DrySwap(
 		fooPath,          // fooPath
 		barPath,          // barPath
 		pFee,             // pFee
@@ -122,7 +124,7 @@ func TestDrySwap_ZeroForOneFalse_AmountSpecified_Negative_16000(t *testing.T) {
 		-16000,           // amountSpecified
 		MAX_SQRT_RATIO-1, // sqrtPriceLimitX96
 	)
-	shouldEQ(t, input, bigint(-15999))
+	shouldEQ(t, input, bigint(-16000))
 	shouldEQ(t, output, bigint(5888))
 }
 

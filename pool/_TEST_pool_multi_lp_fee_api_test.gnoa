@@ -83,22 +83,22 @@ func TestSwap(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
 	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 1)
 
-	test_price_01 := bigint(MIN_SQRT_RATIO + 1) // maximum price // swap 0 -> 1
-	test_price_10 := bigint(MAX_SQRT_RATIO - 1) // minimum price // swap 1 -> 0
-
 	// SWAP
 	std.TestSetOrigCaller(tr01)
 
-	Swap(fooPath, barPath, pFee, tr01, true, bigint(150000), test_price_01)
+	Swap(fooPath, barPath, pFee, tr01, true, bigint(150000), MIN_PRICE, std.GetOrigCaller())
+	std.TestSkipHeights(1)
+
+	// Swap(fooPath, barPath, pFee, tr01, true, bigint(1500000), MIN_PRICE, std.GetOrigCaller()) // two iteration // s0: 1_500_000 // s1: -3_626_984 // currentTick: 7668
 	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/bar:gno.land/r/foo:500"))
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 3107550)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 7635058)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
 	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 1)
 
-	Swap(fooPath, barPath, pFee, tr01, false, bigint(601851), test_price_10)
-	// Swap(fooPath, barPath, pFee, tr01, true, bigint(1500000), test_price_01) // two iteration // s0: 1_500_000 // s1: -3_626_984 // currentTick: 7668
+	Swap(fooPath, barPath, pFee, tr01, false, bigint(601851), MAX_PRICE, std.GetOrigCaller())
 	std.TestSkipHeights(1)
+
 	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/bar:gno.land/r/foo:500"))
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 1496418)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8236909)

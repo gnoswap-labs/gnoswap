@@ -88,10 +88,10 @@ func TestMintBarBazLiquidity(t *testing.T) {
 func TestSwapFooBarFooToBar(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
-	oldTr01FooBalance := balanceOfByRegisterCall(fooPath, tr01)
-	oldTr01BarBalance := balanceOfByRegisterCall(barPath, tr01)
-	oldPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
-	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	oldTr01Token1Balance := balanceOfByRegisterCall(fooPath, tr01)
+	oldTr01Token0Balance := balanceOfByRegisterCall(barPath, tr01)
+	oldPoolToken1Balance := balanceOfByRegisterCall(fooPath, poolAddr)
+	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 
 	poolIn, poolOut := Swap(
 		fooPath,
@@ -101,28 +101,29 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 		true,
 		bigint(16000),
 		MIN_PRICE,
+		std.GetOrigCaller(),
 	)
 	shouldEQ(t, poolIn, bigint(16000))
 	shouldEQ(t, poolOut, bigint(-43457))
 
-	newTr01FooBalance := balanceOfByRegisterCall(fooPath, tr01)
-	newTr01BarBalance := balanceOfByRegisterCall(barPath, tr01)
-	newPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
-	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	newTr01Token1Balance := balanceOfByRegisterCall(fooPath, tr01)
+	newTr01Token0Balance := balanceOfByRegisterCall(barPath, tr01)
+	newPoolToken1Balance := balanceOfByRegisterCall(fooPath, poolAddr)
+	newPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 
-	shouldEQ(t, oldTr01FooBalance-newTr01FooBalance, bigint(16000))
-	shouldEQ(t, newTr01BarBalance-oldTr01BarBalance, bigint(43457))
-	shouldEQ(t, newPoolFooBalance-oldPoolFooBalance, bigint(16000))
-	shouldEQ(t, oldPoolBarBalance-newPoolBarBalance, bigint(43457))
+	shouldEQ(t, oldTr01Token0Balance-newTr01Token0Balance, bigint(16000))
+	shouldEQ(t, newTr01Token1Balance-oldTr01Token1Balance, bigint(43457))
+	shouldEQ(t, newPoolToken0Balance-oldPoolToken0Balance, bigint(16000))
+	shouldEQ(t, oldPoolToken1Balance-newPoolToken1Balance, bigint(43457))
 }
 
 // 7. Swap Bar:Baz Bar > Baz by tr01
 func TestSwapBarBazBarToBaz(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
-	oldTr01BarBalance := balanceOfByRegisterCall(barPath, tr01)
+	oldTr01Token0Balance := balanceOfByRegisterCall(barPath, tr01)
 	oldTr01BazBalance := balanceOfByRegisterCall(bazPath, tr01)
-	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 	oldPoolBazBalance := balanceOfByRegisterCall(bazPath, poolAddr)
 
 	poolIn, poolOut := Swap(
@@ -133,18 +134,19 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 		true,
 		bigint(16000),
 		MIN_PRICE,
+		std.GetOrigCaller(),
 	)
 	shouldEQ(t, poolIn, bigint(16000))
 	shouldEQ(t, poolOut, bigint(-43457))
 
-	newTr01BarBalance := balanceOfByRegisterCall(barPath, tr01)
+	newTr01Token0Balance := balanceOfByRegisterCall(barPath, tr01)
 	newTr01BazBalance := balanceOfByRegisterCall(bazPath, tr01)
-	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	newPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 	newPoolBazBalance := balanceOfByRegisterCall(bazPath, poolAddr)
 
-	shouldEQ(t, oldTr01BarBalance-newTr01BarBalance, bigint(16000))
+	shouldEQ(t, oldTr01Token0Balance-newTr01Token0Balance, bigint(16000))
 	shouldEQ(t, newTr01BazBalance-oldTr01BazBalance, bigint(43457))
-	shouldEQ(t, newPoolBarBalance-oldPoolBarBalance, bigint(16000))
+	shouldEQ(t, newPoolToken0Balance-oldPoolToken0Balance, bigint(16000))
 	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, bigint(43457))
 }
 
@@ -153,10 +155,10 @@ func TestCollectFooBarFees(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 	std.TestSetPrevRealm("gno.land/r/position")
 
-	oldLp01FooBalance := balanceOfByRegisterCall(fooPath, lp01)
-	oldLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
-	oldPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
-	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	oldLp01Token1Balance := balanceOfByRegisterCall(fooPath, lp01)
+	oldLp01Token0Balance := balanceOfByRegisterCall(barPath, lp01)
+	oldPoolToken1Balance := balanceOfByRegisterCall(fooPath, poolAddr)
+	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 
 	// burn 0 to collect swap fees
 	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, 0)
@@ -175,15 +177,15 @@ func TestCollectFooBarFees(t *testing.T) {
 	shouldNEQ(t, c0, bigint(0)) // swap was foo > bar, so only foo has fees
 	shouldEQ(t, c1, bigint(0))  // swap was foo > bar, so bar has no fees
 
-	newLp01FooBalance := balanceOfByRegisterCall(fooPath, lp01)
-	newLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
-	newPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
-	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	newLp01Token1Balance := balanceOfByRegisterCall(fooPath, lp01)
+	newLp01Token0Balance := balanceOfByRegisterCall(barPath, lp01)
+	newPoolToken1Balance := balanceOfByRegisterCall(fooPath, poolAddr)
+	newPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 
-	shouldEQ(t, newLp01FooBalance-oldLp01FooBalance, uint64(c0))
-	shouldEQ(t, newLp01BarBalance-oldLp01BarBalance, uint64(c1))
-	shouldEQ(t, oldPoolFooBalance-newPoolFooBalance, uint64(c0))
-	shouldEQ(t, oldPoolBarBalance-newPoolBarBalance, uint64(c1))
+	shouldEQ(t, newLp01Token1Balance-oldLp01Token1Balance, uint64(c0))
+	shouldEQ(t, newLp01Token0Balance-oldLp01Token0Balance, uint64(c1))
+	shouldEQ(t, oldPoolToken1Balance-newPoolToken1Balance, uint64(c0))
+	shouldEQ(t, oldPoolToken0Balance-newPoolToken0Balance, uint64(c1))
 }
 
 // 9. Collect Bar:Baz Fees by lp01
@@ -191,9 +193,9 @@ func TestCollectBarBazFees(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 	std.TestSetPrevRealm("gno.land/r/position")
 
-	oldLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	oldLp01Token0Balance := balanceOfByRegisterCall(barPath, lp01)
 	oldLp01BazBalance := balanceOfByRegisterCall(bazPath, lp01)
-	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 	oldPoolBazBalance := balanceOfByRegisterCall(bazPath, poolAddr)
 
 	// burn 0 to collect swap fees
@@ -213,14 +215,14 @@ func TestCollectBarBazFees(t *testing.T) {
 	shouldNEQ(t, c0, bigint(0)) // swap was foo > bar, so only foo has fees
 	shouldEQ(t, c1, bigint(0))  // swap was foo > bar, so bar has no fees
 
-	newLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	newLp01Token0Balance := balanceOfByRegisterCall(barPath, lp01)
 	newLp01BazBalance := balanceOfByRegisterCall(bazPath, lp01)
-	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	newPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 	newPoolBazBalance := balanceOfByRegisterCall(bazPath, poolAddr)
 
-	shouldEQ(t, newLp01BarBalance-oldLp01BarBalance, uint64(c0))
+	shouldEQ(t, newLp01Token0Balance-oldLp01Token0Balance, uint64(c0))
 	shouldEQ(t, newLp01BazBalance-oldLp01BazBalance, uint64(c1))
-	shouldEQ(t, oldPoolBarBalance-newPoolBarBalance, uint64(c0))
+	shouldEQ(t, oldPoolToken0Balance-newPoolToken0Balance, uint64(c0))
 	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, uint64(c1))
 }
 
@@ -279,10 +281,10 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 	std.TestSetPrevRealm("gno.land/r/position")
 
-	oldLp01FooBalance := balanceOfByRegisterCall(fooPath, lp01)
-	oldLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
-	oldPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
-	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	oldLp01Token1Balance := balanceOfByRegisterCall(fooPath, lp01)
+	oldLp01Token0Balance := balanceOfByRegisterCall(barPath, lp01)
+	oldPoolToken1Balance := balanceOfByRegisterCall(fooPath, poolAddr)
+	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 
 	c0, c1 := Collect(
 		fooPath,
@@ -298,15 +300,15 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 	shouldNEQ(t, c0, bigint(0))
 	shouldNEQ(t, c1, bigint(0))
 
-	newLp01FooBalance := balanceOfByRegisterCall(fooPath, lp01)
-	newLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
-	newPoolFooBalance := balanceOfByRegisterCall(fooPath, poolAddr)
-	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	newLp01Token1Balance := balanceOfByRegisterCall(fooPath, lp01)
+	newLp01Token0Balance := balanceOfByRegisterCall(barPath, lp01)
+	newPoolToken1Balance := balanceOfByRegisterCall(fooPath, poolAddr)
+	newPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 
-	shouldEQ(t, newLp01FooBalance-oldLp01FooBalance, uint64(c0))
-	shouldEQ(t, newLp01BarBalance-oldLp01BarBalance, uint64(c1))
-	shouldEQ(t, oldPoolFooBalance-newPoolFooBalance, uint64(c0))
-	shouldEQ(t, oldPoolBarBalance-newPoolBarBalance, uint64(c1))
+	shouldEQ(t, newLp01Token1Balance-oldLp01Token1Balance, uint64(c0))
+	shouldEQ(t, newLp01Token0Balance-oldLp01Token0Balance, uint64(c1))
+	shouldEQ(t, oldPoolToken1Balance-newPoolToken1Balance, uint64(c0))
+	shouldEQ(t, oldPoolToken0Balance-newPoolToken0Balance, uint64(c1))
 }
 
 // 13. Collect Bar:Baz burned Liquidity by lp01
@@ -314,9 +316,9 @@ func TestCollectBarBazLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 	std.TestSetPrevRealm("gno.land/r/position")
 
-	oldLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	oldLp01Token0Balance := balanceOfByRegisterCall(barPath, lp01)
 	oldLp01BazBalance := balanceOfByRegisterCall(bazPath, lp01)
-	oldPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 	oldPoolBazBalance := balanceOfByRegisterCall(bazPath, poolAddr)
 
 	c0, c1 := Collect(
@@ -333,14 +335,14 @@ func TestCollectBarBazLiquidity(t *testing.T) {
 	shouldNEQ(t, c0, bigint(0))
 	shouldNEQ(t, c1, bigint(0))
 
-	newLp01BarBalance := balanceOfByRegisterCall(barPath, lp01)
+	newLp01Token0Balance := balanceOfByRegisterCall(barPath, lp01)
 	newLp01BazBalance := balanceOfByRegisterCall(bazPath, lp01)
-	newPoolBarBalance := balanceOfByRegisterCall(barPath, poolAddr)
+	newPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 	newPoolBazBalance := balanceOfByRegisterCall(bazPath, poolAddr)
 
-	shouldEQ(t, newLp01BarBalance-oldLp01BarBalance, uint64(c0))
+	shouldEQ(t, newLp01Token0Balance-oldLp01Token0Balance, uint64(c0))
 	shouldEQ(t, newLp01BazBalance-oldLp01BazBalance, uint64(c1))
-	shouldEQ(t, oldPoolBarBalance-newPoolBarBalance, uint64(c0))
+	shouldEQ(t, oldPoolToken0Balance-newPoolToken0Balance, uint64(c0))
 	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, uint64(c1))
 }
 

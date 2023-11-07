@@ -70,40 +70,40 @@ func TestSwap(t *testing.T) {
 
 	{
 		// balance before swap
-		poolOldToken0Bal := balanceOfByRegisterCall(fooPath, poolAddr)
-		poolOldToken1Bal := balanceOfByRegisterCall(barPath, poolAddr)
+		poolOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
 
-		userOldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
-		userOldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
+		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
+		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
-		tr01OldToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
-		tr01OldToken1Bal := balanceOfByRegisterCall(barPath, tr01)
+		tr01OldToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
+		tr01OldToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
-		lp01OldToken0Bal := balanceOfByRegisterCall(fooPath, lp01)
-		lp01OldToken1Bal := balanceOfByRegisterCall(barPath, lp01)
+		lp01OldToken0Bal := balanceOfByRegisterCall(pool.token0Path, lp01)
+		lp01OldToken1Bal := balanceOfByRegisterCall(pool.token1Path, lp01)
 
-		lp02OldToken0Bal := balanceOfByRegisterCall(fooPath, lp02)
-		lp02OldToken1Bal := balanceOfByRegisterCall(barPath, lp02)
+		lp02OldToken0Bal := balanceOfByRegisterCall(pool.token0Path, lp02)
+		lp02OldToken1Bal := balanceOfByRegisterCall(pool.token1Path, lp02)
 
 		// SWAP
 
 		std.TestSetOrigCaller(tr01)
-		s0, s1 := Swap(fooPath, barPath, pFee, tr01, true, bigint(100000), MIN_PRICE) // one iteration - yes fee(only lp02)
+		s0, s1 := Swap(fooPath, barPath, pFee, tr01, true, bigint(100000), MIN_PRICE, std.GetOrigCaller()) // one iteration - yes fee(only lp02)
 		shouldNEQ(t, s0, bigint(0))
 		shouldNEQ(t, s1, bigint(0))
 
 		// balance after swap
-		poolNewToken0Bal := balanceOfByRegisterCall(fooPath, GetOrigPkgAddr())
-		poolNewToken1Bal := balanceOfByRegisterCall(barPath, GetOrigPkgAddr())
+		poolNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr())
+		poolNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr())
 
-		tr01NewToken0Bal := balanceOfByRegisterCall(fooPath, tr01)
-		tr01NewToken1Bal := balanceOfByRegisterCall(barPath, tr01)
+		tr01NewToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
+		tr01NewToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
-		lp01NewToken0Bal := balanceOfByRegisterCall(fooPath, lp01)
-		lp01NewToken1Bal := balanceOfByRegisterCall(barPath, lp01)
+		lp01NewToken0Bal := balanceOfByRegisterCall(pool.token0Path, lp01)
+		lp01NewToken1Bal := balanceOfByRegisterCall(pool.token1Path, lp01)
 
-		lp02NewToken0Bal := balanceOfByRegisterCall(fooPath, lp02)
-		lp02NewToken1Bal := balanceOfByRegisterCall(barPath, lp02)
+		lp02NewToken0Bal := balanceOfByRegisterCall(pool.token0Path, lp02)
+		lp02NewToken1Bal := balanceOfByRegisterCall(pool.token1Path, lp02)
 
 		// To collect fee wihout removing liquidity
 		// burn 0
