@@ -53,7 +53,7 @@ func getSwapPaths(
 		if strings.HasPrefix(output, outputTokenPath) {
 			outputPath, outputFee := singlePoolPathWithFeeDivide(output)
 			directPath := inputTokenPath + "," + outputFee + "," + outputPath
-			swapPaths[len(swapPaths)] = directPath
+			swapPaths = append(swapPaths, directPath)
 
 			tokenPairs[inputTokenPath] = removeItemFromStringArray(tokenPairs[inputTokenPath], output)
 		}
