@@ -19,6 +19,8 @@ var (
 
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 
+	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
+
 	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
 	posAddr  = std.DerivePkgAddr("gno.land/r/position")
 )
@@ -41,6 +43,8 @@ var (
 func TestFactoryCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	InitManual()
+
+	std.TestSetOrigCaller(pc01)
 	CreatePool(fooPath, barPath, pFee, 130621891405341611593710811006)
 
 	// sqrtPrice

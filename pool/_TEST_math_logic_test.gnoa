@@ -12,6 +12,7 @@ import (
 var (
 	gsa  = testutils.TestAddress("gsa")
 	lp01 = testutils.TestAddress("lp01")
+	pc01 = testutils.TestAddress("pc01")
 
 	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
 	posAddr  = std.DerivePkgAddr("gno.land/r/position")
@@ -33,6 +34,8 @@ var (
 func init() {
 	std.TestSetOrigCaller(gsa)
 	InitManual()
+
+	std.TestSetOrigCaller(pc01)
 	CreatePool(fooPath, barPath, pFee, sqrtPrice)
 }
 
