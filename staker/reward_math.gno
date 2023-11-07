@@ -60,13 +60,13 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 	monthlyReward := uint64(0)
 
 	switch {
-	case incentiveDuration == TIMESTAMP_30DAYS:
-		monthlyReward = incentive.rewardAmount
-	case incentiveDuration > TIMESTAMP_30DAYS:
+	case incentiveDuration == TIMESTAMP_90DAYS:
+		monthlyReward = incentive.rewardAmount / 3
+	case incentiveDuration > TIMESTAMP_90DAYS:
 		// 1 second reward == total reward amount / reward duration
-		monthlyReward = incentive.rewardAmount / uint64(incentiveDuration) * uint64(TIMESTAMP_30DAYS)
+		monthlyReward = incentive.rewardAmount / uint64(incentiveDuration)
 	default:
-		panic(ufmt.Sprintf("[STAKER] reward_math.gno || incentiveDuration(%d) at least 30 days", incentiveDuration))
+		panic(ufmt.Sprintf("[STAKER] reward_math.gno || incentiveDuration(%d) should be at least 90 days", incentiveDuration))
 	}
 
 	// calculate reward amount per block

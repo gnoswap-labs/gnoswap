@@ -8,11 +8,13 @@ import (
 
 	"gno.land/p/demo/testutils"
 
+	g "gno.land/r/gov"
 	p "gno.land/r/pool"
 	pos "gno.land/r/position"
 
 	gnft "gno.land/r/gnft" // GNFT, Gnoswap NFT
 	gns "gno.land/r/gns"   // GNS, Gnoswap Share
+	obl "gno.land/r/obl"
 
 	_ "gno.land/r/grc20_wrapper"
 )
@@ -113,15 +115,15 @@ func TestCreateExternalIncentive(t *testing.T) {
 
 	CreateExternalIncentive(
 		"gno.land/r/bar:gno.land/r/foo:500", // targetPoolPath
-		"OBL",                               // rewardToken
+		"gno.land/r/obl",                    // rewardToken
 		10_000_000_000,                      // rewardAmount
 		GetTimestamp(),                      // startTimestamp
-		GetTimestamp()+TIMESTAMP_30DAYS+TIMESTAMP_30DAYS, // endTimestamp
+		GetTimestamp()+TIMESTAMP_90DAYS,     // endTimestamp
 	)
 	std.TestSkipHeights(5)
 
 	shouldPanic(t, func() {
-		CreateExternalIncentive("gno.land/r/bar:gno.land/r/foo:500", "OBL", 10_000_000_000, GetTimestamp(), GetTimestamp()+TIMESTAMP_30DAYS+TIMESTAMP_30DAYS)
+		CreateExternalIncentive("gno.land/r/bar:gno.land/r/foo:500", "OBL", 10_000_000_000, GetTimestamp(), GetTimestamp()+TIMESTAMP_90DAYS)
 	})
 }
 
@@ -152,10 +154,10 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 		jsonStr := gjson.Parse(gra)
 		shouldEQ(t, jsonStr.Get("response.data.0.type").String(), "Internal")
 		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNS")
-		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 126)
+		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 252)
 		shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
-		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "OBL")
-		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 486)
+		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/obl")
+		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 324)
 	}
 
 	{
@@ -164,10 +166,10 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 		jsonStr := gjson.Parse(gra)
 		shouldEQ(t, jsonStr.Get("response.data.0.type").String(), "Internal")
 		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNS")
-		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 698)
+		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 1397)
 		shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
-		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "OBL")
-		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 2696)
+		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/obl")
+		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 1797)
 	}
 }
 
@@ -177,11 +179,11 @@ func TestUnstakeToken(t *testing.T) {
 		UnstakeToken(1) // GNFT tokenId
 		std.TestSkipHeights(1)
 
-		shouldEQ(t, gnft.OwnerOf(tid(1)), lp01) // lp01
+		shouldEQ(t, gnft.OwnerOf(tid(1)), lp01)
 
 		// check reward
 		shouldEQ(t, gns.BalanceOf(a2u(lp01)), 252) // internal
-		shouldEQ(t, obl.BalanceOf(a2u(lp01)), 486) // external
+		shouldEQ(t, obl.BalanceOf(a2u(lp01)), 324) // external
 	}
 
 	{
@@ -189,22 +191,22 @@ func TestUnstakeToken(t *testing.T) {
 		UnstakeToken(2) // GNFT tokenId
 		std.TestSkipHeights(1)
 
-		shouldEQ(t, gnft.OwnerOf(tid(2)), lp02) // lp02
+		shouldEQ(t, gnft.OwnerOf(tid(2)), lp02)
 
 		// check reward
 		shouldEQ(t, gns.BalanceOf(a2u(lp02)), 1650) // internal
-		shouldEQ(t, obl.BalanceOf(a2u(lp02)), 3182) // external
+		shouldEQ(t, obl.BalanceOf(a2u(lp02)), 2121) // external
 	}
 }
 
 func TestEndExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
-	std.TestSkipHeights(1036800)
-	EndExternalIncentive("bar_foo_500", "OBL") // use same parameter as CreateExternalIncentive()
+	std.TestSkipHeights(9999999)
+	EndExternalIncentive("gno.land/r/bar:gno.land/r/foo:500", "gno.land/r/obl") // use same parameter as CreateExternalIncentive()
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, len(incentives), 0)
-	shouldEQ(t, len(poolIncentives["bar_foo_500"]), 0)
+	shouldEQ(t, len(poolIncentives["gno.land/r/bar:gno.land/r/foo:500"]), 0)
 }
 
 // GOV
