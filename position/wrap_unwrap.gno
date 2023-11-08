@@ -3,6 +3,8 @@ package position
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/wugnot"
 )
 
@@ -15,7 +17,7 @@ func wrap(tokenPath string) {
 	sentCoins := std.GetOrigSend()
 
 	if len(sentCoins) != 1 {
-		panic("[POSITION] wrap_unwrap.gno__wrap() || NEED TO SEND ONLY ONE COIN")
+		panic(ufmt.Sprintf("[POSITION] wrap_unwrap.gno__wrap() || NEED TO SEND ONLY ONE COIN, BUT %d", len(sentCoins)))
 	}
 	sentCoin := sentCoins[0]
 

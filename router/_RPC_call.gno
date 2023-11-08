@@ -135,22 +135,6 @@ func BestSwapDry(
 	return string(rr)
 }
 
-type RpcRoute struct {
-	SwapPct   int      `json:"swapPct"`
-	NumPools  int      `json:"numPools"`
-	SwapPaths []string `json:"swapPaths"`
-}
-
-type RpcReturnBestSwap struct {
-	TotalRoutes     int        `json:"totalRoutes"`
-	TotalPct        int        `json:"totalPct"`
-	Possible        bool       `json:"possible"`
-	SwapType        string     `json:"swapType"`
-	AmountSpecified bigint     `json:"amountSpecified"`
-	AmountResult    bigint     `json:"amountResult"`
-	RpcRoutes       []RpcRoute `json:"rpcRoutes"`
-}
-
 func multiTargetPathToList(path string) []string {
 	numPools := strings.Count(path, ",") / 2
 	splitData := strings.Split(path, ",")
