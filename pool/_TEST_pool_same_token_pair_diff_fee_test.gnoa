@@ -47,7 +47,7 @@ func TestFirstPool(t *testing.T) {
 
 	// Test Only Swap
 	pool := GetPool(fooPath, barPath, pFee1)
-	test_liquidity := pool.GetLiquidity()
+	test_liquidity := pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	std.TestSetPrevRealm("gno.land/r/position")
@@ -165,7 +165,7 @@ func TestFirstPool(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	SetFeeProtocol(6, 8)
 
-	test_slot0 := pool.GetSlot0()
+	test_slot0 := pool.PoolGetSlot0()
 	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
 
 	// Make ProtocolFee via Swap by tr01 ( Mint by lp01 )
@@ -224,7 +224,7 @@ func TestSecondPool(t *testing.T) {
 
 	// Test Only Swap
 	pool := GetPool(fooPath, barPath, pFee2)
-	test_liquidity := pool.GetLiquidity()
+	test_liquidity := pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	std.TestSetPrevRealm("gno.land/r/position")
@@ -340,7 +340,7 @@ func TestSecondPool(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	SetFeeProtocol(6, 8)
 
-	test_slot0 := pool.GetSlot0()
+	test_slot0 := pool.PoolGetSlot0()
 	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
 
 	// Make ProtocolFee via Swap by tr01 ( Mint by lp01 )

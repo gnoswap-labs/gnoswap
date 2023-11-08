@@ -7,7 +7,7 @@ import (
 func addLiquidity(params AddLiquidityParams) (bigint, bigint, bigint) {
 	pool := p.GetPoolFromPoolKey(params.poolKey)
 
-	sqrtPriceX96 := pool.GetPoolSlot0SqrtPriceX96()
+	sqrtPriceX96 := pool.PoolGetSlot0SqrtPriceX96()
 	sqrtRatioAX96 := p.TickMathGetSqrtRatioAtTick(params.tickLower)
 	sqrtRatioBX96 := p.TickMathGetSqrtRatioAtTick(params.tickUpper)
 
