@@ -6,7 +6,6 @@ import (
 
 type Incentive struct {
 	targetPoolPath string
-	// rewardToken std.Address
 	rewardToken    string
 	rewardAmount   uint64
 	startTimestamp int64
