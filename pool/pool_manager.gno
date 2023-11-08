@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/ufmt"
+
+	gns "gno.land/r/gns"
 )
 
 var (
@@ -56,6 +58,11 @@ func CreatePool(
 	require(!exist, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || pool(%s) already exist", poolKey))
 
 	if !exist {
+		// 500 GNS as creation fee
+		// recipent is same address that receives protocol fee
+		// r3v4_xxx: change address when publish
+		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(std.Address("g1vaekzh6lta047h6lta047h6lta047h6lutmjdk")), 500)
+
 		pool = newPool(token0Path, token1Path, fee, tickSpacing, sqrtPriceX96)
 		pools[poolKey] = pool
 	}

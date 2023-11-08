@@ -31,7 +31,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) uint
 
 	// calculate my actual reward amount based on staking duration
 	// !IMPORTANT
-	// r3v4_xx: assume block calcution will happen every 1 block
+	// r3v4_xxx: assume block calcution will happen every 1 block
 	// unlikely external, internal reward program is supposed to be started at the same time as gnoswap launch and never end
 	// so there is no need to consider start/end time of reward program
 	// start time is staked time, end time is current time
@@ -87,7 +87,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 
 	// calculate my actual reward amount based on staking duration
 	// !IMPORTANT
-	// r3v4_xx: assume block calcution will happen every 1 block
+	// r3v4_xxx: assume block calcution will happen every 1 block
 	// stake start time ( largest value between incentive start time and deposit stake time )
 	// stake end time ( smallest value between incentive end time and current time)
 	startTime := max(incentive.startTimestamp, deposit.stakeTimestamp)

@@ -47,8 +47,8 @@ func removeGRC20Interface(pkgPath string) {
 
 func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	// only admin can register
-	// r3v4_xx: below logic can't be used in test case
-	// r3v4_xx: however must be used in production
+	// r3v4_xxx: below logic can't be used in test case
+	// r3v4_xxx: however must be used in production
 
 	// caller := std.GetOrigCaller()
 	// if caller != APPROVED_CALLER {

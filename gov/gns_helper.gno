@@ -3,19 +3,19 @@ package gov
 import (
 	"std"
 
-	gnos "gno.land/r/gnos"
+	gns "gno.land/r/gns"
 
 	"gno.land/r/demo/users"
 )
 
 func balanceOf(address std.Address) uint64 {
-	return gnos.BalanceOf(users.AddressOrName(address))
+	return gns.BalanceOf(users.AddressOrName(address))
 }
 
 func transfer(to std.Address, amount uint64) {
-	gnos.Transfer(users.AddressOrName(to), amount)
+	gns.Transfer(users.AddressOrName(to), amount)
 }
 
 func mint(recipient std.Address, amount uint64) {
-	gnos.Mint(users.AddressOrName(recipient), amount)
+	gns.Mint(users.AddressOrName(recipient), amount)
 }
