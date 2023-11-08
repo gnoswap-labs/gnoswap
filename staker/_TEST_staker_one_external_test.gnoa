@@ -200,9 +200,9 @@ func TestUnstakeToken(t *testing.T) {
 }
 
 func TestEndExternalIncentive(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
+	std.TestSetOrigCaller(ci01)
 	std.TestSkipHeights(9999999)
-	EndExternalIncentive("gno.land/r/bar:gno.land/r/foo:500", "gno.land/r/obl") // use same parameter as CreateExternalIncentive()
+	EndExternalIncentive(GetOrigCaller().String(), "gno.land/r/bar:gno.land/r/foo:500", "gno.land/r/obl") // use same parameter as CreateExternalIncentive()
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, len(incentives), 0)

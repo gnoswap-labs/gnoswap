@@ -6,8 +6,8 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-func incentiveIdCompute(targetPoolPath, rewardToken string) string {
-	key := ufmt.Sprintf("%s_%s", targetPoolPath, rewardToken)
+func incentiveIdCompute(caller, targetPoolPath, rewardToken string) string {
+	key := ufmt.Sprintf("%s:%s:%s", caller, targetPoolPath, rewardToken)
 
 	encoded := base64.StdEncoding.EncodeToString([]byte(key))
 	return encoded
