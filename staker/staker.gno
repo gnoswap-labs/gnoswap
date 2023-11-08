@@ -49,24 +49,24 @@ func CreateExternalIncentive(
 
 	externalDuration := uint64(endTimestamp - startTimestamp)
 	if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_360DAYS) {
-		println("externalDuration:", externalDuration)
-		println("TIMESTAMP_90DAYS:", TIMESTAMP_90DAYS)
 		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 360 days)", externalDuration))
-	}
-
-	incentiveId := incentiveIdCompute(targetPoolPath, rewardToken)
-
-	// check whether incentive already exists or not
-	for _, v := range poolIncentives[targetPoolPath] {
-		if v == incentiveId {
-			panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || incentive(%s) already exists", incentiveId))
-		}
 	}
 
 	fromBalanceBefore := balanceOfByRegisterCall(rewardToken, GetOrigCaller())
 	require(fromBalanceBefore >= rewardAmount, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || not enough rewardAmount(%d) to create incentive(%d)", fromBalanceBefore, rewardAmount))
 
 	poolRewardBalanceBefore := balanceOfByRegisterCall(rewardToken, GetOrigPkgAddr())
+
+	incentiveId := incentiveIdCompute(GetOrigCaller().String(), targetPoolPath, rewardToken)
+
+	// if same incentiveId exists => increase rewardTokenAmount
+	for _, v := range poolIncentives[targetPoolPath] {
+		if v == incentiveId {
+			transferFromByRegisterCall(rewardToken, GetOrigCaller(), GetOrigPkgAddr(), rewardAmount)
+			incentives[v].rewardAmount += rewardAmount
+			return
+		}
+	}
 
 	transferFromByRegisterCall(rewardToken, GetOrigCaller(), GetOrigPkgAddr(), rewardAmount)
 
@@ -156,14 +156,13 @@ func UnstakeToken(
 	gnft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(deposit.owner), tid(tokenId))
 }
 
-func EndExternalIncentive(targetPoolPath, rewardToken string) {
-	incentiveId := incentiveIdCompute(targetPoolPath, rewardToken)
+func EndExternalIncentive(refundee, targetPoolPath, rewardToken string) {
+	incentiveId := incentiveIdCompute(refundee, targetPoolPath, rewardToken)
 	incentive, exist := incentives[incentiveId]
 	require(exist, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || cannot end non existent incentive(%s)", incentiveId))
 	require(GetTimestamp() >= incentive.endTimestamp, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(%d), current(%d)", incentive.endTimestamp, GetTimestamp()))
 
-	// r3v4_xxx: who can end incentive ??
-	// require(incentive.refundee == std.GetOrigCaller(), "[STAKER] staker.gno__EndExternalIncentive() || only refundee can end incentive")
+	require(incentive.refundee == std.GetOrigCaller(), "[STAKER] staker.gno__EndExternalIncentive() || only refundee can end incentive")
 
 	refund := incentive.rewardAmount
 
