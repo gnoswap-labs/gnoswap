@@ -31,6 +31,10 @@ func Mint(
 	amount1Min bigint,
 	deadline bigint,
 ) (uint64, bigint, bigint, bigint) {
+	// WRAP if native(ugnot) is being mint
+	wrap(token0)
+	wrap(token1)
+
 	mintParams := MintParams{
 		token0:         token0,
 		token1:         token1,
@@ -211,6 +215,9 @@ func Collect(
 	amount0Max bigint,
 	amount1Max bigint,
 ) (bigint, bigint) {
+	isAuthorizedForToken(tokenId)
+	require(amount0Max > 0 || amount1Max > 0, ufmt.Sprintf("[POSITION] position.gno__Collect() || amount0Max(%s) > 0 || amount1Max(%s) > 0", amount0Max, amount1Max))
+
 	collectParams := CollectParams{
 		tokenId:    tokenId,
 		recipient:  recipient,
@@ -222,11 +229,6 @@ func Collect(
 }
 
 func collect(params CollectParams) (bigint, bigint) {
-	// amount0, amount1
-
-	isAuthorizedForToken(params.tokenId)
-	require(params.amount0Max > 0 || params.amount1Max > 0, ufmt.Sprintf("[POSITION] position.gno__collect() || params.amount0Max(%s) > 0 || params.amount1Max(%s) > 0", params.amount0Max, params.amount1Max))
-
 	var recipient std.Address
 	if params.recipient == ZERO_ADDRESS {
 		recipient = GetOrigPkgAddr()
@@ -235,7 +237,6 @@ func collect(params CollectParams) (bigint, bigint) {
 	}
 
 	position := positions[params.tokenId]
-
 	tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
 
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
@@ -266,6 +267,10 @@ func collect(params CollectParams) (bigint, bigint) {
 	} else {
 		amount1Collect = params.amount1Max
 	}
+
+	// UNWRAP if native(ugnot) is being collect
+	unWrap(pToken0, uint64(amount0Collect))
+	unWrap(pToken1, uint64(amount1Collect))
 
 	amount0, amount1 := p.Collect(
 		pToken0,

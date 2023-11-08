@@ -1,16 +1,11 @@
 package position
 
 import (
-	"std"
 	"strconv"
 
 	"gno.land/p/demo/grc/grc721"
-
-	"gno.land/r/bar"
-	"gno.land/r/foo"
 )
 
-// Testing
 func getNextId() uint64 {
 	return nextId
 }
@@ -34,12 +29,4 @@ func tid(tokenId interface{}) grc721.TokenID {
 	default:
 		panic("[STAKER] utils.gno__tid() || unsupported tokenId type")
 	}
-}
-
-func Token0Bal(addr std.Address) bigint {
-	return bigint(bar.BalanceOf(a2u(addr)))
-}
-
-func Token1Bal(addr std.Address) bigint {
-	return bigint(foo.BalanceOf(a2u(addr)))
 }

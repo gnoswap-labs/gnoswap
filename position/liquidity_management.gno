@@ -30,7 +30,7 @@ func addLiquidity(params AddLiquidityParams) (bigint, bigint, bigint) {
 		liquidity,
 	)
 
-	require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, "LM_Price Slippage Check")
+	require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, "[POSITION] liquidity_management.gno__LM_Price Slippage Check")
 
 	return liquidity, amount0, amount1
 }

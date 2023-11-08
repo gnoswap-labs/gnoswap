@@ -22,6 +22,7 @@ var (
 	lp02 = testutils.TestAddress("lp02") // Liquidity Provider 02
 	rv01 = testutils.TestAddress("rv01") // Receiver 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
+	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
 )
 
 var (
@@ -39,6 +40,8 @@ var (
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(own)
 	p.InitManual()
+
+	std.TestSetOrigCaller(pc01)
 	p.CreatePool(fooPath, barPath, pFee, 130621891405341611593710811006)
 
 	// fee
