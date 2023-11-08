@@ -90,7 +90,7 @@ func TestSwap(t *testing.T) {
 		lp02OldToken1Bal := balanceOfByRegisterCall(pool.token1Path, lp02)
 
 		// SWAP
-
+		std.TestSetPrevRealm("gno.land/r/router")
 		std.TestSetOrigCaller(tr01)
 		s0, s1 := Swap(fooPath, barPath, pFee, tr01, true, bigint(100000), MIN_PRICE, std.GetOrigCaller()) // one iteration - yes fee(only lp02)
 		shouldNEQ(t, s0, bigint(0))
@@ -112,6 +112,7 @@ func TestSwap(t *testing.T) {
 		// To collect fee wihout removing liquidity
 		// burn 0
 		// then collect
+		std.TestSetPrevRealm("gno.land/r/position")
 		std.TestSetOrigCaller(lp01)
 		Burn(fooPath, barPath, pFee, int32(-887270), int32(887270), 0)
 		lp01f0, lp01f1 := Collect(fooPath, barPath, pFee, lp01, int32(-887270), int32(887270), 100000000, 100000000)
