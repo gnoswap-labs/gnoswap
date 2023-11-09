@@ -448,6 +448,7 @@ func TestApiGetPosition(t *testing.T) {
 	{
 		gps := ApiGetPosition(uint64(2))
 		jsonStr := gjson.Parse(gps)
+		println(jsonStr)
 		shouldEQ(t, jsonStr.Get("response.data.token_id").Int(), 2)
 		shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), 9000)
 		shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), 11000)

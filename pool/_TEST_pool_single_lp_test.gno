@@ -386,6 +386,7 @@ func TestApiGetPools(t *testing.T) {
 func TestApiGetPool(t *testing.T) {
 	gpl := ApiGetPool("gno.land/r/bar:gno.land/r/foo:500")
 	jsonStr := gjson.Parse(gpl)
+	// println("jsonStr:", jsonStr)
 
 	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())
 	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
