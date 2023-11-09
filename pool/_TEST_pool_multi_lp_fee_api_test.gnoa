@@ -88,6 +88,7 @@ func TestSwap(t *testing.T) {
 	// SWAP
 	std.TestSetOrigCaller(tr01)
 
+	std.TestSetPrevRealm("gno.land/r/router")
 	Swap(fooPath, barPath, pFee, tr01, true, bigint(150000), MIN_PRICE, std.GetOrigCaller())
 	std.TestSkipHeights(1)
 
@@ -109,6 +110,7 @@ func TestSwap(t *testing.T) {
 
 	// To collect fee without removing liquidity
 	// burn 0 => collect
+	std.TestSetPrevRealm("gno.land/r/position")
 	std.TestSetOrigCaller(lp01)
 	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, 0)
 	std.TestSkipHeights(1)

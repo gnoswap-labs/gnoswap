@@ -66,6 +66,7 @@ func TestFirstPool(t *testing.T) {
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
+		std.TestSetPrevRealm("gno.land/r/router")
 		amount0, amount1 := Swap(fooPath, barPath, pFee1, tr01, true, bigint(10000), MIN_PRICE, std.GetOrigCaller())
 
 		shouldNEQ(t, amount0, bigint(0))
@@ -90,6 +91,7 @@ func TestFirstPool(t *testing.T) {
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
+		std.TestSetPrevRealm("gno.land/r/router")
 		amount0, amount1 := Swap(fooPath, barPath, pFee1, tr01, true, bigint(5000), MIN_PRICE, std.GetOrigCaller())
 
 		shouldNEQ(t, amount0, bigint(0))
@@ -114,6 +116,7 @@ func TestFirstPool(t *testing.T) {
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
+		std.TestSetPrevRealm("gno.land/r/router")
 		amount0, amount1 := Swap(fooPath, barPath, pFee1, tr01, true, bigint(1000), MIN_PRICE, std.GetOrigCaller())
 
 		shouldNEQ(t, amount0, bigint(0))
@@ -139,6 +142,7 @@ func TestFirstPool(t *testing.T) {
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
+		std.TestSetPrevRealm("gno.land/r/router")
 		amount0, amount1 := Swap(fooPath, barPath, pFee1, tr01, false, bigint(160000), MAX_PRICE, std.GetOrigCaller())
 
 		shouldNEQ(t, amount0, bigint(0))
@@ -157,6 +161,7 @@ func TestFirstPool(t *testing.T) {
 	}
 
 	// Swap with Protocol
+	std.TestSetPrevRealm("")
 	std.TestSetOrigCaller(gsa)
 	SetFeeProtocol(6, 8)
 
@@ -164,16 +169,18 @@ func TestFirstPool(t *testing.T) {
 	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
 
 	// Make ProtocolFee via Swap by tr01 ( Mint by lp01 )
-	std.TestSetOrigCaller(lp01)
+
 	{
 		gsaOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 		gsaOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
+		std.TestSetPrevRealm("gno.land/r/router")
 		std.TestSetOrigCaller(tr01)
 		Swap(fooPath, barPath, pFee1, tr01, true, 100000, MIN_PRICE, std.GetOrigCaller()) // swap token0 -> token1 => fee only in token0
 		Swap(fooPath, barPath, pFee1, tr01, true, 100000, MIN_PRICE, std.GetOrigCaller()) // more protocol fee
 
 		// Gnoswap Admin will collect protocol fee
+		std.TestSetPrevRealm("")
 		std.TestSetOrigCaller(gsa)
 		amount0, amount1 := CollectProtocol(fooPath, barPath, pFee1, gsa, 100000, 100000)
 
@@ -188,11 +195,13 @@ func TestFirstPool(t *testing.T) {
 		gsaOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 		gsaOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
+		std.TestSetPrevRealm("gno.land/r/router")
 		std.TestSetOrigCaller(tr01)
 		Swap(fooPath, barPath, pFee1, tr01, false, 100000, MAX_PRICE, std.GetOrigCaller()) // swap token0 -> token1 => fee only in token0
 		Swap(fooPath, barPath, pFee1, tr01, false, 100000, MAX_PRICE, std.GetOrigCaller()) // more protocol fee
 
 		// Gnoswap Admin will collect protocol fee
+		std.TestSetPrevRealm("")
 		std.TestSetOrigCaller(gsa)
 		amount0, amount1 := CollectProtocol(fooPath, barPath, pFee1, gsa, 100000, 100000)
 
@@ -222,10 +231,8 @@ func TestSecondPool(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 	Mint(fooPath, barPath, pFee2, posAddr, test_tickLower2, test_tickUpper2, test_liquidityExpect*50000)
 
-	// clear prev realm
-	std.TestSetPrevRealm("")
-
 	// Swap several times
+	std.TestSetPrevRealm("gno.land/r/router")
 	std.TestSetOrigCaller(tr01)
 	{
 		poolOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
@@ -234,6 +241,7 @@ func TestSecondPool(t *testing.T) {
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
+		std.TestSetPrevRealm("gno.land/r/router")
 		amount0, amount1 := Swap(fooPath, barPath, pFee2, tr01, true, bigint(10000), MIN_PRICE, std.GetOrigCaller())
 
 		shouldNEQ(t, amount0, bigint(0))
@@ -258,6 +266,7 @@ func TestSecondPool(t *testing.T) {
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
+		std.TestSetPrevRealm("gno.land/r/router")
 		amount0, amount1 := Swap(fooPath, barPath, pFee2, tr01, true, bigint(5000), MIN_PRICE, std.GetOrigCaller())
 
 		shouldNEQ(t, amount0, bigint(0))
@@ -282,6 +291,7 @@ func TestSecondPool(t *testing.T) {
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
+		std.TestSetPrevRealm("gno.land/r/router")
 		amount0, amount1 := Swap(fooPath, barPath, pFee2, tr01, true, bigint(1000), MIN_PRICE, std.GetOrigCaller())
 
 		shouldNEQ(t, amount0, bigint(0))
@@ -307,6 +317,7 @@ func TestSecondPool(t *testing.T) {
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
+		std.TestSetPrevRealm("gno.land/r/router")
 		amount0, amount1 := Swap(fooPath, barPath, pFee2, tr01, false, bigint(160000), MAX_PRICE, std.GetOrigCaller())
 
 		shouldNEQ(t, amount0, bigint(0))
@@ -325,6 +336,7 @@ func TestSecondPool(t *testing.T) {
 	}
 
 	// Swap with Protocol
+	std.TestSetPrevRealm("")
 	std.TestSetOrigCaller(gsa)
 	SetFeeProtocol(6, 8)
 
@@ -337,11 +349,13 @@ func TestSecondPool(t *testing.T) {
 		gsaOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 		gsaOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
+		std.TestSetPrevRealm("gno.land/r/router")
 		std.TestSetOrigCaller(tr01)
 		Swap(fooPath, barPath, pFee2, tr01, true, 100000, MIN_PRICE, std.GetOrigCaller()) // swap token0 -> token1 => fee only in token0
 		Swap(fooPath, barPath, pFee2, tr01, true, 100000, MIN_PRICE, std.GetOrigCaller()) // more protocol fee
 
 		// Gnoswap Admin will collect protocol fee
+		std.TestSetPrevRealm("")
 		std.TestSetOrigCaller(gsa)
 		amount0, amount1 := CollectProtocol(fooPath, barPath, pFee1, gsa, 100000, 100000)
 
@@ -356,11 +370,13 @@ func TestSecondPool(t *testing.T) {
 		gsaOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 		gsaOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
+		std.TestSetPrevRealm("gno.land/r/router")
 		std.TestSetOrigCaller(tr01)
 		Swap(fooPath, barPath, pFee2, tr01, false, 100000, MAX_PRICE, std.GetOrigCaller()) // swap token0 -> token1 => fee only in token0
 		Swap(fooPath, barPath, pFee2, tr01, false, 100000, MAX_PRICE, std.GetOrigCaller()) // more protocol fee
 
 		// Gnoswap Admin will collect protocol fee
+		std.TestSetPrevRealm("")
 		std.TestSetOrigCaller(gsa)
 		amount0, amount1 := CollectProtocol(fooPath, barPath, pFee2, gsa, 100000, 100000)
 

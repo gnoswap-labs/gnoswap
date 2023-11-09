@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	gsa  = testutils.TestAddress("gsa")  // Gnoswap Admin
+	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 
@@ -24,10 +24,10 @@ var (
 
 var (
 	// Common
-	fooPath = "gno.land/r/foo" // token1
-	barPath = "gno.land/r/bar" // token2
-	bazPath = "gno.land/r/baz" // token3
-	quxPath = "gno.land/r/qux" // token4
+	wugnotPath = "gno.land/r/wugnot" // token1
+	barPath    = "gno.land/r/bar"    // token2
+	bazPath    = "gno.land/r/baz"    // token3
+	quxPath    = "gno.land/r/qux"    // token4
 
 	test_fee100 = uint16(100)
 	test_fee500 = uint16(500)
@@ -36,29 +36,37 @@ var (
 )
 
 func TestInitManual(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetOrigCaller(pc01)
 	p.InitManual()
 	std.TestSkipHeights(1)
 }
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetOrigCaller(pc01)
 
-	p.CreatePool(fooPath, barPath, test_fee100, 130621891405341611593710811006) // tick = 10_000, ratio = 2.7181459268252253
-	p.CreatePool(barPath, quxPath, test_fee100, 130621891405341611593710811006) // tick = 10_000, ratio = 2.7181459268252253
+	p.CreatePool(wugnotPath, barPath, test_fee100, 130621891405341611593710811006) // tick = 10_000, ratio = 2.7181459268252253
+	p.CreatePool(barPath, quxPath, test_fee100, 130621891405341611593710811006)    // tick = 10_000, ratio = 2.7181459268252253
 
-	p.CreatePool(fooPath, barPath, test_fee500, 101729702841318637793976746270) // tick =  5_000, ratio = 1.648680055931176
-	p.CreatePool(barPath, quxPath, test_fee500, 101729702841318637793976746270) // tick =  5_000, ratio = 1.648680055931176
+	p.CreatePool(wugnotPath, barPath, test_fee500, 101729702841318637793976746270) // tick =  5_000, ratio = 1.648680055931176
+	p.CreatePool(barPath, quxPath, test_fee500, 101729702841318637793976746270)    // tick =  5_000, ratio = 1.648680055931176
 	// findSwapPaths("gno.land/r/foo", "gno.land/r/qux")                           // 2 paths
 	// foo_qux_100
 }
 
 func TestPositionMint(t *testing.T) {
+	// prepare ugnot
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	testBanker.IssueCoin(std.GetOrigCaller(), "ugnot", 20000001)
+
+	// simulate transfer & decrase
+	std.TestSetOrigSend(std.Coins{{"ugnot", 20000000}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 20000000)
+
 	std.TestSetOrigCaller(lp01)
-	pos.Mint(fooPath, barPath, test_fee100, int32(9000), int32(11000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
+	pos.Mint(wugnotPath, barPath, test_fee100, int32(9000), int32(11000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
 	pos.Mint(barPath, quxPath, test_fee100, int32(9000), int32(11000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
 
-	pos.Mint(fooPath, barPath, test_fee500, int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
+	pos.Mint(wugnotPath, barPath, test_fee500, int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
 	pos.Mint(barPath, quxPath, test_fee500, int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
 }
 
@@ -66,15 +74,15 @@ func TestBestSwapDryExactIn(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	jsonOutput := BestSwapDry(
-		"gno.land/r/foo", // inputTokenPath
-		"gno.land/r/qux", // outputTokenPath
-		"EXACT_IN",       // swapType
-		123_456,          // amountSpecified
-		0,                // sqrtPriceLimitX96
+		"gno.land/r/wugnot", // inputTokenPath
+		"gno.land/r/qux",    // outputTokenPath
+		"EXACT_IN",          // swapType
+		123_456,             // amountSpecified
+		0,                   // sqrtPriceLimitX96
 	)
 	jsonStr := gjson.Parse(jsonOutput)
 	shouldEQ(t, jsonStr.Get("rpcRoutes.0.numPools").String(), "2")
-	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.0").String(), "gno.land/r/foo:gno.land/r/bar:100")
+	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.0").String(), "gno.land/r/wugnot:gno.land/r/bar:100")
 	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.1").String(), "gno.land/r/bar:gno.land/r/qux:100")
 }
 
@@ -82,15 +90,15 @@ func TestBestSwapDryExactOut(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	jsonOutput := BestSwapDry(
-		"gno.land/r/foo", // inputTokenPath
-		"gno.land/r/qux", // outputTokenPath
-		"EXACT_OUT",      // swapType
-		123_456,          // amountSpecified
-		0,                // sqrtPriceLimitX96
+		"gno.land/r/wugnot", // inputTokenPath
+		"gno.land/r/qux",    // outputTokenPath
+		"EXACT_OUT",         // swapType
+		123_456,             // amountSpecified
+		0,                   // sqrtPriceLimitX96
 	)
 	jsonStr := gjson.Parse(jsonOutput)
 	shouldEQ(t, jsonStr.Get("rpcRoutes.0.numPools").String(), "2")
-	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.0").String(), "gno.land/r/foo:gno.land/r/bar:100")
+	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.0").String(), "gno.land/r/wugnot:gno.land/r/bar:100")
 	shouldEQ(t, jsonStr.Get("rpcRoutes.0.swapPaths.1").String(), "gno.land/r/bar:gno.land/r/qux:100")
 }
 

@@ -1,0 +1,252 @@
+package pool
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/testutils"
+
+	_ "gno.land/r/grc20_wrapper"
+
+	pos "gno.land/r/position"
+
+	"gno.land/r/foo"
+	"gno.land/r/wugnot"
+)
+
+var (
+	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
+	posAddr  = std.DerivePkgAddr("gno.land/r/position")
+
+	own  = testutils.TestAddress("own")  // Owner
+	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
+
+	tr01 = testutils.TestAddress("tr01") // Trader 01
+	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
+)
+
+var (
+	// Common
+	fooPath    = "gno.land/r/foo"
+	wugnotPath = "gno.land/r/wugnot"
+	pFee       = uint16(500)
+
+	test_tickLower       = int32(9000)
+	test_tickUpper       = int32(11000)
+	test_liquidityExpect = bigint(1000)
+)
+
+// func init() {
+// 	println(own, "// own")
+// 	println(lp01, "// lp01")
+// 	println(tr01, "// tr01")
+// 	println(pc01, "// pc01")
+// 	println(poolAddr, "// poolAddr")
+// 	println(posAddr, "// posAddr")
+// }
+
+// 1. Init & Create Pool
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(own)
+	InitManual()
+
+	std.TestSetOrigCaller(pc01)
+	CreatePool(fooPath, wugnotPath, pFee, 130621891405341611593710811006) // x2.7
+
+	shouldPanic(t, func() { CreatePool(fooPath, wugnotPath, pFee, 130621891405341611593710811006) })
+}
+
+// 2. Mint LP and Get GNFT
+func TestMint(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	// prepare ugnot
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	testBanker.IssueCoin(std.GetOrigCaller(), "ugnot", 1_000_000)
+
+	token0, token1 := fooPath, wugnotPath
+	if token1 < token0 {
+		token0, token1 = token1, token0
+	}
+
+	poolOldToken0Bal := Token0Bal(poolAddr)
+	poolOldToken1Bal := Token1Bal(poolAddr)
+
+	{
+		// before mint
+		// 1_000_000 ugnot
+		// 0 wugnot
+		coins := testBanker.GetCoins(lp01)
+		coin := coins[0]
+		shouldEQ(t, coin, std.Coin{Amount: 1000000, Denom: "ugnot"})
+		shouldEQ(t, Token1Bal(lp01), bigint(0))
+	}
+
+	// simulate transfer & decrase
+	std.TestSetOrigSend(std.Coins{{"ugnot", 1000000}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1000000)
+
+	// Mint
+	std.TestSetPrevRealm("gno.land/r/position")
+	tTokenId, tLiquidity, tAmount0, tAmount1 := pos.Mint(
+		fooPath,
+		wugnotPath,
+		pFee,
+		test_tickLower,
+		test_tickUpper,
+		bigint(1000000),
+		bigint(1000000),
+		bigint(1),
+		bigint(1),
+		bigint(1234567890),
+	)
+
+	{
+		// after mint
+		// 0 ugnot
+		// 1000000 => 1 wugnot // after wrap, sent 999 wugnot to pool ( little error range due to decimals )
+		coins := testBanker.GetCoins(lp01)
+		shouldEQ(t, len(coins), 0)
+		shouldEQ(t, Token1Bal(lp01), bigint(1))
+	}
+
+	shouldEQ(t, tAmount0, bigint(367897))
+	shouldEQ(t, tAmount1, bigint(999999))
+	shouldEQ(t, Token0Bal(poolAddr), poolOldToken0Bal+tAmount0)
+	shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal+tAmount1)
+}
+
+func TestSwapBuyNative(t *testing.T) {
+	pool := GetPool(fooPath, wugnotPath, pFee)
+
+	tr01OldT0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
+	tr01OldT1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
+	shouldEQ(t, tr01OldT0Bal, bigint(50000000000)) // foo
+	shouldEQ(t, tr01OldT1Bal, bigint(0))           // wugnot
+
+	poolOldT0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
+	poolOldT1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
+	shouldEQ(t, poolOldT0Bal, bigint(367897)) // foo
+	shouldEQ(t, poolOldT1Bal, bigint(999999)) // wugnot
+
+	std.TestSetPrevRealm("gno.land/r/router")
+	std.TestSetOrigCaller(tr01)
+	amount0, amount1 := Swap( // foo 10_000 > wugnot ??
+		fooPath,    // token0
+		wugnotPath, // token1
+		pFee,
+		tr01,
+		true,
+		bigint(10000),
+		MIN_PRICE,
+		std.GetOrigCaller(),
+	)
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+
+	tr01NewT0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
+	tr01NewT1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
+	shouldEQ(t, tr01NewT0Bal, bigint(49999990000)) // - 10_000 // user sells 10_000
+	shouldEQ(t, tr01NewT1Bal, bigint(0))           // UNWRAP // because of unwrap, wugnot is 0
+	coins := testBanker.GetCoins(tr01)
+	coin := coins[0]
+	shouldEQ(t, coin, std.Coin{Amount: 27131, Denom: "ugnot"}) // by selling 10_000 foo, got 27131 ugnot
+
+	poolNewT0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
+	poolNewT1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
+	shouldEQ(t, poolNewT0Bal, bigint(377897)) // foo, + 10_000
+	shouldEQ(t, poolNewT1Bal, bigint(972868)) // wugnot, - 27_131 // pool's wugnot balance decrease (give user after unwrap)
+
+	shouldEQ(t, amount0, bigint(10000))
+	shouldEQ(t, amount1, bigint(-27131))
+}
+
+func TestSwapSellNative(t *testing.T) {
+	pool := GetPool(fooPath, wugnotPath, pFee)
+
+	poolOldT0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
+	poolOldT1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
+	shouldEQ(t, poolOldT0Bal, bigint(377897))
+	shouldEQ(t, poolOldT1Bal, bigint(972868))
+
+	tr01OldT0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
+	tr01OldT1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
+	shouldEQ(t, tr01OldT0Bal, bigint(49999990000))
+	shouldEQ(t, tr01OldT1Bal, bigint(0))
+
+	// tr01 has 27131 ugnot from previous swap
+	std.TestSetOrigCaller(tr01)
+	// simulate transfer & decrase
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	std.TestSetOrigSend(std.Coins{{"ugnot", 10000}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 10000)
+
+	std.TestSetPrevRealm("gno.land/r/router")
+	amount0, amount1 := Swap( // ugnot 10_000 > foo ??
+		fooPath,    // token0
+		wugnotPath, // token1
+		pFee,
+		tr01,
+		false,
+		bigint(10000),
+		MAX_PRICE,
+		std.GetOrigCaller(),
+	)
+
+	tr01NewT0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
+	tr01NewT1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
+	shouldEQ(t, tr01NewT0Bal, bigint(50000017060)) // + 27_060
+	shouldEQ(t, tr01NewT1Bal, bigint(0))
+	coins := testBanker.GetCoins(tr01)
+	coin := coins[0]
+	shouldEQ(t, coin, std.Coin{Amount: 17131, Denom: "ugnot"})
+
+	poolNewT0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
+	poolNewT1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
+	shouldEQ(t, poolNewT0Bal, bigint(350837)) // - 27_060
+	shouldEQ(t, poolNewT1Bal, bigint(982868)) // + 10_000 // pool recv users native 10000 ugnot as wrapped 10000 wugnot
+
+	shouldEQ(t, amount0, bigint(-27060))
+	shouldEQ(t, amount1, bigint(10000))
+}
+
+/* HELPER */
+func shouldEQ(t *testing.T, got, expected interface{}) {
+	if got != expected {
+		t.Errorf("got %v, expected %v", got, expected)
+	}
+}
+
+func shouldNEQ(t *testing.T, got, expected interface{}) {
+	if got == expected {
+		t.Errorf("got %v, didn't expected %v", got, expected)
+	}
+}
+
+func shouldGT(t *testing.T, l, r interface{}) {
+	if !(l < r) {
+		t.Errorf("expected %v < %v", l, r)
+	}
+}
+
+func shouldLT(t *testing.T, l, r interface{}) {
+	if !(l > r) {
+		t.Errorf("expected %v > %v", l, r)
+	}
+}
+
+func shouldPanic(t *testing.T, f func()) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic")
+		}
+	}()
+	f()
+}
+
+func Token0Bal(addr std.Address) bigint {
+	return bigint(foo.BalanceOf(a2u(addr)))
+}
+
+func Token1Bal(addr std.Address) bigint {
+	return bigint(wugnot.BalanceOf(a2u(addr)))
+}

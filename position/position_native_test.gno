@@ -1,0 +1,289 @@
+package position
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/testutils"
+
+	nft "gno.land/r/gnft"
+
+	_ "gno.land/r/grc20_wrapper"
+	p "gno.land/r/pool"
+
+	"gno.land/r/foo"
+	"gno.land/r/wugnot"
+)
+
+var (
+	poolAddr = p.GetOrigPkgAddr()
+	posAddr  = std.DerivePkgAddr("gno.land/r/position")
+
+	own  = testutils.TestAddress("own")  // Owner
+	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
+	rv01 = testutils.TestAddress("rv01") // Receiver 01
+	tr01 = testutils.TestAddress("tr01") // Trader 01
+	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
+)
+
+var (
+	// Common
+	fooPath    = "gno.land/r/foo"
+	wugnotPath = "gno.land/r/wugnot"
+	pFee       = uint16(500)
+
+	test_tickLower       = int32(9000)
+	test_tickUpper       = int32(11000)
+	test_liquidityExpect = bigint(1000)
+)
+
+func init() {
+	println(own, "// own")
+	println(lp01, "// lp01")
+	println(rv01, "// rv01")
+	println(tr01, "// tr01")
+	println(pc01, "// pc01")
+	println(poolAddr, "// poolAddr")
+	println(posAddr, "// posAddr")
+}
+
+// 1. Init & Create Pool
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(own)
+	p.InitManual()
+
+	std.TestSetOrigCaller(pc01)
+	p.CreatePool(fooPath, wugnotPath, pFee, 130621891405341611593710811006)
+
+	shouldPanic(t, func() { p.CreatePool(fooPath, wugnotPath, 500, 130621891405341611593710811006) })
+}
+
+// 2. Mint LP and Get GNFT
+func TestMint(t *testing.T) {
+	// lp01 mints, will get tid 1 nft
+	std.TestSetOrigCaller(lp01)
+
+	// prepare ugnot
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	testBanker.IssueCoin(std.GetOrigCaller(), "ugnot", 1000)
+
+	token0, token1 := fooPath, wugnotPath
+	if token1 < token0 {
+		token0, token1 = token1, token0
+	}
+
+	poolOldToken0Bal := Token0Bal(poolAddr)
+	poolOldToken1Bal := Token1Bal(poolAddr)
+
+	{
+		// before mint
+		// 1000 ugnot
+		// 0 wugnot
+		coins := testBanker.GetCoins(lp01)
+		coin := coins[0]
+		shouldEQ(t, coin, std.Coin{Amount: 1000, Denom: "ugnot"})
+		shouldEQ(t, Token1Bal(lp01), bigint(0))
+	}
+
+	// simulate transfer & decrase
+	std.TestSetOrigSend(std.Coins{{"ugnot", 1000}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1000)
+
+	// Mint
+	tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
+		fooPath,
+		wugnotPath,
+		pFee,
+		test_tickLower,
+		test_tickUpper,
+		bigint(1000),
+		bigint(1000),
+		bigint(1),
+		bigint(1),
+		bigint(1234567890),
+	)
+
+	{
+		// after mint
+		// 0 ugnot
+		// 1000 => 1 wugnot // after wrap, sent 999 wugnot to pool ( little error range due to decimals )
+		coins := testBanker.GetCoins(lp01)
+		shouldEQ(t, len(coins), 0)
+		shouldEQ(t, Token1Bal(lp01), bigint(1))
+	}
+
+	shouldEQ(t, tAmount0, bigint(367))
+	shouldEQ(t, tAmount1, bigint(999))
+
+	isOwner(t, tTokenId, lp01)
+	shouldEQ(t, tTokenId, 1)
+	shouldEQ(t, getNextId(), 2)
+
+	shouldEQ(t, Token0Bal(poolAddr), poolOldToken0Bal+tAmount0)
+	shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal+tAmount1)
+}
+
+func TestDecreaseLiquidity(t *testing.T) {
+	// lp01 decreases liquidity at tid 1 position ( in range )
+	std.TestSetOrigCaller(lp01)
+	pool := p.GetPool(fooPath, wugnotPath, pFee)
+
+	tTargetLiquidity := bigint(1234)
+
+	poolOldLiquidity := pool.GetLiquidity()
+	poolOldToken0Bal := Token0Bal(poolAddr) // or PositionAddr
+	poolOldToken1Bal := Token1Bal(poolAddr)
+
+	tAmount0, tAmount1 := DecreaseLiquidity(
+		bigint(1),
+		tTargetLiquidity,
+		bigint(1),
+		bigint(1),
+		bigint(1234567890),
+	)
+
+	shouldNEQ(t, tAmount0, bigint(0))
+	shouldNEQ(t, tAmount1, bigint(0))
+
+	// decreasing liquidity doesn't decrease tid
+	// Decreaseliquitiy() => Burn() doesn't decrease pool's balance
+	// Collect() will decrease pool's balance
+	shouldEQ(t, Token0Bal(poolAddr), poolOldToken0Bal)
+	shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal)
+	shouldEQ(t, pool.GetLiquidity(), poolOldLiquidity-tTargetLiquidity)
+}
+
+func TestCollect(t *testing.T) {
+	// lp01 did decrease some liquidity => there are some to collect
+	{
+		std.TestSetOrigCaller(lp01)
+		pool := p.GetPool(fooPath, wugnotPath, pFee)
+
+		poolOldLiquidity := pool.GetLiquidity()
+		poolOldToken0Bal := Token0Bal(poolAddr)
+		poolOldToken1Bal := Token1Bal(poolAddr)
+
+		rvOldToken0Bal := Token0Bal(rv01)
+		rvOldToken1Bal := Token1Bal(rv01)
+
+		// Collect => pool.Burn()
+		tAmount0, tAmount1 := Collect(
+			bigint(1),
+			rv01,
+			bigint(10),
+			bigint(10),
+		)
+
+		shouldEQ(t, tAmount0, bigint(10))
+		shouldEQ(t, tAmount1, bigint(10))
+
+		// After Collect
+		// pool's liquidity stays same
+		// pool's balance decreases
+		shouldEQ(t, Token0Bal(poolAddr), poolOldToken0Bal-tAmount0)
+		shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal-tAmount1)
+		shouldEQ(t, pool.GetLiquidity(), poolOldLiquidity)
+
+		// Recipient balance increases
+		shouldEQ(t, Token0Bal(rv01), rvOldToken0Bal+tAmount0)
+		shouldEQ(t, Token1Bal(rv01), rvOldToken1Bal+tAmount1)
+	}
+
+	// lp01 collect all
+	{
+		std.TestSetOrigCaller(lp01)
+		pool := p.GetPool(fooPath, wugnotPath, pFee)
+
+		poolOldLiquidity := pool.GetLiquidity()
+		poolOldToken0Bal := Token0Bal(poolAddr)
+		poolOldToken1Bal := Token1Bal(poolAddr)
+
+		rvOldToken0Bal := Token0Bal(rv01)
+		rvOldToken1Bal := Token1Bal(rv01)
+
+		tAmount0, tAmount1 := Collect(
+			bigint(1),
+			rv01,
+			bigint(100000),
+			bigint(100000),
+		)
+
+		shouldEQ(t, tAmount0, bigint(26))
+		shouldEQ(t, tAmount1, bigint(89))
+
+		// After Collect
+		// pool's liquidity stays same
+		// pool's balance decreases
+		shouldEQ(t, Token0Bal(poolAddr), poolOldToken0Bal-tAmount0)
+		shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal-tAmount1)
+		shouldEQ(t, pool.GetLiquidity(), poolOldLiquidity)
+
+		// Recipient balance increases
+		shouldEQ(t, Token0Bal(rv01), rvOldToken0Bal+tAmount0)
+		shouldEQ(t, Token1Bal(rv01), rvOldToken1Bal+tAmount1)
+	}
+
+	{
+		testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+		// after collects all
+		// 0 ugnot => 1099
+		// 1 wugnot // stay same
+		coins := testBanker.GetCoins(lp01)
+		coin := coins[0]
+		shouldEQ(t, coin, std.Coin{Amount: 99, Denom: "ugnot"})
+		shouldEQ(t, Token1Bal(lp01), bigint(1))
+	}
+}
+
+/* HELPER */
+func shouldEQ(t *testing.T, got, expected interface{}) {
+	if got != expected {
+		t.Errorf("got %v, expected %v", got, expected)
+	}
+}
+
+func shouldNEQ(t *testing.T, got, expected interface{}) {
+	if got == expected {
+		t.Errorf("got %v, didn't expected %v", got, expected)
+	}
+}
+
+func shouldGT(t *testing.T, l, r interface{}) {
+	if !(l < r) {
+		t.Errorf("expected %v < %v", l, r)
+	}
+}
+
+func shouldLT(t *testing.T, l, r interface{}) {
+	if !(l > r) {
+		t.Errorf("expected %v > %v", l, r)
+	}
+}
+
+func shouldPanic(t *testing.T, f func()) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic")
+		}
+	}()
+	f()
+}
+
+func isOwner(t *testing.T, tokenId uint64, addr std.Address) bool {
+	owner := nft.OwnerOf(tid(tokenId))
+
+	if owner == addr {
+		return true
+	}
+
+	t.Errorf("expected owner %v, got %v", addr, owner)
+	return false
+}
+
+func Token0Bal(addr std.Address) bigint {
+	return bigint(foo.BalanceOf(a2u(addr)))
+}
+
+func Token1Bal(addr std.Address) bigint {
+	return bigint(wugnot.BalanceOf(a2u(addr)))
+}

@@ -37,13 +37,6 @@ func require(cond bool, msg string) {
 	}
 }
 
-func abs(x bigint) bigint {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
 func removeDuplicateString(strSlice []string) []string {
 	// map to store unique keys
 	keys := make(map[string]bool)

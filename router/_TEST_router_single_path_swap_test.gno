@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	gsa  = testutils.TestAddress("gsa")  // Gnoswap Admin
+	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 
@@ -39,7 +39,7 @@ var (
 )
 
 // func init() {
-// 	println(gsa, "// gsa")
+// 	println(pc01, "// pc01")
 // 	println(lp01, "// lp01")
 // 	println(tr01, "// tr01")
 // 	println(poolAddr, "// poolAddr")
@@ -48,13 +48,13 @@ var (
 // }
 
 func TestInitManual(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetOrigCaller(pc01)
 	p.InitManual()
 	std.TestSkipHeights(1)
 }
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetOrigCaller(pc01)
 
 	p.CreatePool(fooPath, quxPath, test_fee100, 130621891405341611593710811006) // tick = 10_000, ratio = 2.7181459268252253
 	p.CreatePool(fooPath, quxPath, test_fee500, 101729702841318637793976746270) // tick =  5_000, ratio = 1.648680055931176

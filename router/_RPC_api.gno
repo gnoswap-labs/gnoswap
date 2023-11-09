@@ -10,8 +10,6 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-const BASE_TOKEN = "gno.land/r/foo"
-
 type ApiQueryBase struct {
 	Height    int64 `json:"height"`
 	Timestamp int64 `json:"timestamp"`
