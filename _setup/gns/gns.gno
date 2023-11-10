@@ -19,12 +19,19 @@ func init() {
 
 	// for swap > staker
 	var (
+		poolAddr = std.Address("g1ee305k8yk0pjz443xpwtqdyep522f9g5r7d63w")
+		pc01     = std.Address("g1wp3nqv2lta047h6lta047h6lta047h6ltup4ax") // Pool Creator 01
+
 		stakerAddr = std.Address("g13h5s9utqcwg3a655njen0p89txusjpfrs3vxp8")
-		poolAddr   = std.Address("g1ee305k8yk0pjz443xpwtqdyep522f9g5r7d63w")
 		ira        = std.Address("g1d9exzh6lta047h6lta047h6lta047h6l8ylkpa") // INTERNAL REWARD ACCOUNT
 	)
-	gns.Mint(ira, 50000000000)                // 50_000_000_000
-	gns.Approve(ira, stakerAddr, 50000000000) // owner, spender, amount
+
+	// CreatePool needs 500 GNS
+	gns.Mint(pc01, 50000000000)
+	gns.Approve(pc01, poolAddr, 50000000000) // owner, spender, amount
+
+	gns.Mint(ira, 50000000000)
+	gns.Approve(ira, stakerAddr, 50000000000)
 
 	admin = append(admin, string(stakerAddr))
 }

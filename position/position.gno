@@ -285,6 +285,7 @@ func collect(params CollectParams) (bigint, bigint) {
 		amount0Collect,
 		amount1Collect,
 	)
+
 	position.tokensOwed0, position.tokensOwed1 = tokensOwed0-amount0Collect, tokensOwed1-amount1Collect
 
 	positions[params.tokenId] = position

@@ -31,6 +31,10 @@ func init() {
 	)
 
 	wugnot.Approve(lp01, poolAddr, 50000000000)
+	wugnot.Approve(lp02, poolAddr, 50000000000)
+	wugnot.Approve(lp03, poolAddr, 50000000000)
+	wugnot.Approve(tr01, poolAddr, 50000000000)
+
 }
 
 // method proxies as public functions.
@@ -157,8 +161,6 @@ func Approve(spender users.AddressOrName, amount uint64) {
 
 func TransferFrom(from, to users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	// println("std.PrevRealm():", std.PrevRealm())
-	// println("from:", from.Resolve())
 	err := wugnot.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())

@@ -1,1 +1,1 @@
-module gno.land/r/tc
+module "gno.land/p/tc"

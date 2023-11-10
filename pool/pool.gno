@@ -152,10 +152,20 @@ func Collect(
 	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__Collect() || amount1(%s) >= 0", amount1))
 
 	require(pool.balances.token0 >= amount0, ufmt.Sprintf("[POOL] pool.gno__Collect() || pool.balances.token0(%s) >= amount0(%s)", pool.balances.token0, amount0))
-	transferByRegisterCall(pool.token0Path, recipient, uint64(amount0))
+	if pool.token0Path == "gno.land/r/wugnot" {
+		// UNWRAP if native(ugnot) is being collect
+		unWrap(pool.token0Path, uint64(amount0))
+	} else {
+		transferByRegisterCall(pool.token0Path, recipient, uint64(amount0))
+	}
 
 	require(pool.balances.token1 >= amount1, ufmt.Sprintf("[POOL] pool.gno__Collect() || pool.balances.token1(%s) >= amount1(%s)", pool.balances.token1, amount1))
-	transferByRegisterCall(pool.token1Path, recipient, uint64(amount1))
+	if pool.token1Path == "gno.land/r/wugnot" {
+		// UNWRAP if native(ugnot) is being collect
+		unWrap(pool.token1Path, uint64(amount1))
+	} else {
+		transferByRegisterCall(pool.token1Path, recipient, uint64(amount1))
+	}
 
 	// adjust position
 	position.tokensOwed0 -= amount0

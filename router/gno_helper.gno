@@ -12,3 +12,7 @@ func GetHeight() int64 {
 func GetTimestamp() int64 {
 	return time.Now().Unix()
 }
+
+func GetOrigPkgAddr() std.Address {
+	return std.DerivePkgAddr("gno.land/r/router")
+}
