@@ -27,6 +27,22 @@ func BestSwap(
 		panic("[ROUTER] router.gno__BestSwap() || unknown swapType")
 	}
 
+	// maxRoutes maximum is capped to 7
+	if maxRoutes > 7 {
+		maxRoutes = 7
+	}
+	if maxRoutes < 1 {
+		maxRoutes = 1
+	}
+
+	// maxHops maximum is capped to 3
+	if maxHops > 3 {
+		maxHops = 3
+	}
+	if maxHops < 1 {
+		maxHops = 1
+	}
+
 	// get quotes
 	quotes := quoteForAllPath( // sorted by ratio DESC
 		inputToken,

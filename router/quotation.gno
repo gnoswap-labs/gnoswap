@@ -65,7 +65,7 @@ func quoteForAllPath(
 			}
 		}
 
-		if numPools >= 2 && numPools <= 3 {
+		if 2 <= numPools && numPools <= 3 {
 			input, output, fee := getSwapData(quoterTarget.targetPath, 0)
 
 			swapParams := SwapParams{

@@ -96,6 +96,11 @@ func findPath(
 			newPath += ","
 		}
 		newPath += nextFee + "," + nextPath
+		// remove found path
+		tokenPairs[currentTokenPath] = removeItemFromStringArray(tokenPairs[currentTokenPath], newPath)
+		// remove opposite path
+		tokenPairs[nextPath] = removeItemFromStringArray(tokenPairs[nextPath], (currentTokenPath + ":" + nextFee))
+
 		findPath(tokenPairs, nextPath, outputTokenPath, newPath, remainingHops-1, swapPaths, firstToken)
 	}
 }

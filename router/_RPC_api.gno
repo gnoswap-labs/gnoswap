@@ -22,13 +22,13 @@ type ResponseGetRatiosFromBase struct {
 	} `json:"response"`
 }
 
-func ApiGetRatiosFromBase(maxHops int) string {
+func ApiGetRatiosFromBase() string {
 	qb := ApiQueryBase{
 		Height:    GetHeight(),
 		Timestamp: GetTimestamp(),
 	}
 
-	ratios := getRatiosFromBase(maxHops)
+	ratios := getRatiosFromBase(3)
 	r := ResponseGetRatiosFromBase{
 		Stat: qb,
 		Response: struct {
@@ -40,7 +40,7 @@ func ApiGetRatiosFromBase(maxHops int) string {
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] getter_api.gno()__ApiGetRatioFromBase || json.Marshal error with %v", err))
+		panic(ufmt.Sprintf("[ROUTER] _RPC_api.gno()__ApiGetRatioFromBase || json.Marshal error with %v", err))
 	}
 
 	return string(rr)
@@ -126,7 +126,7 @@ func makePoolPath(poolPath string, poolIndex int) string {
 	// Calculate the indices for token paths and fee based on poolIndex.
 	baseIndex := poolIndex * 2
 	if baseIndex+2 >= len(poolDatas) {
-		panic(ufmt.Sprintf("[ROUTER] getter_api.gno__makePoolPath() || index out of range for pool index: %d", poolIndex))
+		panic(ufmt.Sprintf("[ROUTER] _RPC_api.gno__makePoolPath() || index out of range for pool index: %d", poolIndex))
 	}
 
 	token0Path := poolDatas[baseIndex]
@@ -156,7 +156,7 @@ func calculateTokenPrice(token, swapPath string, numPools, proceed int, currentP
 		currentPrice *= (currentSqrtPriceX96 * currentSqrtPriceX96 / Q96)
 		token = currentToken0
 	} else {
-		panic("[ROUTER] getter_api.gno__calculateTokenPrice() || wrong condition")
+		panic("[ROUTER] _RPC_api.gno__calculateTokenPrice() || wrong condition")
 	}
 
 	if proceed == numPools-1 {

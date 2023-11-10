@@ -29,6 +29,22 @@ func BestSwapDry(
 		panic("[ROUTER] _RPC_call.gno__BestSwapDry() || unknown swapType")
 	}
 
+	// maxRoutes maximum is capped to 7
+	if maxRoutes > 7 {
+		maxRoutes = 7
+	}
+	if maxRoutes < 1 {
+		maxRoutes = 1
+	}
+
+	// maxHops maximum is capped to 3
+	if maxHops > 3 {
+		maxHops = 3
+	}
+	if maxHops < 1 {
+		maxHops = 1
+	}
+
 	// get quotes
 	quotes := quoteForAllPath( // sored by Ratio DESC
 		inputToken,
@@ -55,7 +71,10 @@ func BestSwapDry(
 
 	remainingAmount := amountSpecified
 	outputEstimated := bigint(0)
+
 	for i, finalSwap := range finalSwaps {
+		maxRoutes -= 1
+
 		numPools := strings.Count(finalSwap.targetPath, ",") / 2
 		splitPaths := multiTargetPathToList(finalSwap.targetPath)
 
@@ -125,8 +144,6 @@ func BestSwapDry(
 		if maxRoutes == 0 {
 			break
 		}
-
-		maxRoutes -= 1
 	}
 
 	rpcReturnBestSwap.RpcRoutes = rpcRoutes
