@@ -22,13 +22,13 @@ type ResponseGetRatiosFromBase struct {
 	} `json:"response"`
 }
 
-func ApiGetRatiosFromBase() string {
+func ApiGetRatiosFromBase(maxHops int) string {
 	qb := ApiQueryBase{
 		Height:    GetHeight(),
 		Timestamp: GetTimestamp(),
 	}
 
-	ratios := getRatiosFromBase()
+	ratios := getRatiosFromBase(maxHops)
 	r := ResponseGetRatiosFromBase{
 		Stat: qb,
 		Response: struct {
@@ -46,7 +46,7 @@ func ApiGetRatiosFromBase() string {
 	return string(rr)
 }
 
-func getRatiosFromBase() []map[string]bigint {
+func getRatiosFromBase(maxHops int) []map[string]bigint {
 	tokenPrice := make(map[string]bigint, 0)
 
 	// BASE
@@ -56,7 +56,7 @@ func getRatiosFromBase() []map[string]bigint {
 	tokenList := getTokenList()
 	for _, token := range tokenList {
 		if token != BASE_TOKEN {
-			swapPaths := findSwapPaths(token, BASE_TOKEN)
+			swapPaths := findSwapPaths(token, BASE_TOKEN, maxHops)
 			numSwapPaths := len(swapPaths)
 
 			thisTokenPriceX96 := bigint(0)
