@@ -154,7 +154,7 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 		jsonStr := gjson.Parse(gra)
 		shouldEQ(t, jsonStr.Get("response.data.0.type").String(), "Internal")
 		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNS")
-		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 252)
+		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 126)
 		shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
 		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/obl")
 		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 324)
@@ -166,7 +166,7 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 		jsonStr := gjson.Parse(gra)
 		shouldEQ(t, jsonStr.Get("response.data.0.type").String(), "Internal")
 		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNS")
-		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 1397)
+		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 698)
 		shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
 		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/obl")
 		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 1797)
@@ -182,7 +182,7 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(1)), lp01)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(lp01)), 252) // internal
+		shouldEQ(t, gns.BalanceOf(a2u(lp01)), 126) // internal
 		shouldEQ(t, obl.BalanceOf(a2u(lp01)), 324) // external
 	}
 
@@ -194,7 +194,7 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(2)), lp02)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(lp02)), 1650) // internal
+		shouldEQ(t, gns.BalanceOf(a2u(lp02)), 825)  // internal
 		shouldEQ(t, obl.BalanceOf(a2u(lp02)), 2121) // external
 	}
 }

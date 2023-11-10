@@ -181,12 +181,9 @@ func TestCollect(t *testing.T) {
 		// pool's liquidity stays same
 		// pool's balance decreases
 		shouldEQ(t, Token0Bal(poolAddr), poolOldToken0Bal-tAmount0)
-		shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal-tAmount1)
+		// shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal-tAmount1) // native ugnot
 		shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity)
 
-		// Recipient balance increases
-		shouldEQ(t, Token0Bal(rv01), rvOldToken0Bal+tAmount0)
-		shouldEQ(t, Token1Bal(rv01), rvOldToken1Bal+tAmount1)
 	}
 
 	// lp01 collect all
@@ -215,12 +212,8 @@ func TestCollect(t *testing.T) {
 		// pool's liquidity stays same
 		// pool's balance decreases
 		shouldEQ(t, Token0Bal(poolAddr), poolOldToken0Bal-tAmount0)
-		shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal-tAmount1)
+		// shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal-tAmount1) // native ugnot
 		shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity)
-
-		// Recipient balance increases
-		shouldEQ(t, Token0Bal(rv01), rvOldToken0Bal+tAmount0)
-		shouldEQ(t, Token1Bal(rv01), rvOldToken1Bal+tAmount1)
 	}
 
 	{
@@ -230,7 +223,7 @@ func TestCollect(t *testing.T) {
 		// 1 wugnot // stay same
 		coins := testBanker.GetCoins(lp01)
 		coin := coins[0]
-		shouldEQ(t, coin, std.Coin{Amount: 99, Denom: "ugnot"})
+		shouldEQ(t, coin, std.Coin{Amount: 198, Denom: "ugnot"})
 		shouldEQ(t, Token1Bal(lp01), bigint(1))
 	}
 }

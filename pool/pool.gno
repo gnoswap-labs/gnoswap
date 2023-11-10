@@ -155,7 +155,6 @@ func Collect(
 	if pool.token0Path == "gno.land/r/wugnot" {
 		// UNWRAP if native(ugnot) is being collect
 		unWrap(pool.token0Path, uint64(amount0))
-		// r3v4_xxx: burn pool's wugnot balance ?
 	} else {
 		transferByRegisterCall(pool.token0Path, recipient, uint64(amount0))
 	}
@@ -164,7 +163,6 @@ func Collect(
 	if pool.token1Path == "gno.land/r/wugnot" {
 		// UNWRAP if native(ugnot) is being collect
 		unWrap(pool.token1Path, uint64(amount1))
-		// r3v4_xxx: burn pool's wugnot balance ?
 	} else {
 		transferByRegisterCall(pool.token1Path, recipient, uint64(amount1))
 	}
