@@ -15,34 +15,32 @@ import (
 	gov "gno.land/r/gov"
 	pl "gno.land/r/pool"
 	pos "gno.land/r/position"
+	rou "gno.land/r/router"
 	stk "gno.land/r/staker"
 
 	// token
-	bar "gno.land/r/bar"   // token1
-	foo "gno.land/r/foo"   // token0
-	gnft "gno.land/r/gnft" // LP Token ( Gnoswap NFT )
-	gnos "gno.land/r/gnos" // Shares ( Gnoswap Shares ) & INTERNAL Reward Token
-	obl "gno.land/r/obl"   // EXTERNAL Reward Token
+	_ "gno.land/r/grc20_wrapper"
+
+	bar "gno.land/r/bar"
+	baz "gno.land/r/baz"
+	foo "gno.land/r/foo"
+	gns "gno.land/r/gns"
+	obl "gno.land/r/obl" // external reward
+	qux "gno.land/r/qux"
+
+	wugnot "gno.land/r/wugnot"
+
+	gnft "gno.land/r/gnft" // GRC721 LP Token
 )
 
 const (
-	TIMESTAMP_30DAYS int64 = 2592000
+	TIMESTAMP_90DAYS int64 = 7776000
 )
 
 var (
-	// Common
-	pToken0 = "foo"
-	pToken1 = "bar"
-	pFee    = uint16(500)
-
-	test_tickLower = int32(9000)
-	test_tickUpper = int32(11000)
-
-	tStartTime = GetTimestamp()
-	tEndTime   = tStartTime + 301 // staker.gno #140 ( lockDuration is limited to 100, 200, 300 seconds)
-
 	// test address
-	pc01 = testutils.TestAddress("pc01") // Pool Creator
+	gsa  = testutils.TestAddress("gsa")  // Gnswap Admin
+	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
 	ci01 = testutils.TestAddress("ci01") // Create Incentive Caller 01
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
 	lp02 = testutils.TestAddress("lp02") // Liquidity Provider 02
@@ -53,25 +51,39 @@ var (
 	posAddr    = pos.GetOrigPkgAddr() // Position Contract
 	stakerAddr = stk.GetOrigPkgAddr() // Staker Contract
 	govAddr    = gov.GetOrigPkgAddr() // Gov Contract
+	rouAddr    = rou.GetOrigPkgAddr() // Router Contract
+
+	// token path
+	fooPath    = "gno.land/r/foo"
+	barPath    = "gno.land/r/bar"
+	bazPath    = "gno.land/r/baz"
+	quxPath    = "gno.land/r/qux"
+	wugnotPath = "gno.land/r/wugnot"
+	gnsPath    = "gno.land/r/gns"
+	oblPath    = "gno.land/r/obl"
 
 	MIN_TICK bigint = -887272
 	MAX_TICK bigint = 887272
 
 	MIN_SQRT_RATIO bigint = 4295128739                                        // same as TickMathGetSqrtRatioAtTick(MIN_TICK)
 	MAX_SQRT_RATIO bigint = 1461446703485210103287273052203988822378723970342 // same as TickMathGetSqrtRatioAtTick(MAX_TICK)
+
+	MAX_TIMEOUT bigint = 9999999999
 )
 
 func init() {
 	// debug addr
-	// println(pc01, "// pc01")
-	// println(ci01, "// ci01")
-	// println(lp01, "// lp01")
-	// println(lp02, "// lp02")
-	// println(tr01, "// tr01")
-	// println(poolAddr, "// pool")
-	// println(posAddr, "// pos")
-	// println(stakerAddr, "// staker")
-	// println(govAddr, "// gov")
+	println(gsa, "// gsa")
+	println(pc01, "// pc01")
+	println(ci01, "// ci01")
+	println(lp01, "// lp01")
+	println(lp02, "// lp02")
+	println(tr01, "// tr01")
+	println(poolAddr, "// pool")
+	println(posAddr, "// pos")
+	println(rouAddr, "// router")
+	println(stakerAddr, "// staker")
+	println(govAddr, "// gov")
 }
 
 // 1. [TC - POOL] Init
@@ -79,95 +91,156 @@ func TestPoolInitManual(t *testing.T) {
 	std.TestSetOrigCaller(pc01)
 
 	pl.InitManual()
+	std.TestSkipHeights(1)
 
-	shouldPanicWithMsg(t, func() { pl.InitManual() }, "[TC - POOl] pool_manager.gno__InitManual() || contract must not be initialized")
+	shouldPanicWithMsg(t, func() { pl.InitManual() }, "[POOl] pool_manager.gno__InitManual() || contract must not be initialized")
 }
 
-// 2. [TC - POOL] CreatePool
+// 2. [TC - POOL] Create(Multi)Pool
 func TestPoolCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(pc01)
 
-	pl.CreatePool(
-		pToken0,                        // tokenA
-		pToken1,                        // tokenB
-		pFee,                           // fee
-		130621891405341611593710811006, // sqrtPriceX96 ( for tick 10_000 )
-	)
-	std.TestSkipHeights(10)
+	gsaOldGnsBalance := gns.BalanceOf(a2u(gsa))
 
-	tmpPool := pl.GetPool(pToken0, pToken1, pFee)
-	shouldEQ(t, tmpPool.GetTickSpacing(), bigint(10))
+	pl.CreatePool(wugnotPath, barPath, uint16(100), 101729702841318637793976746270) // tick =  5_000, ratio = 1.648680055931176
+	pl.CreatePool(barPath, bazPath, uint16(100), 101729702841318637793976746270)    // tick =  5_000, ratio = 1.648680055931176
+	pl.CreatePool(bazPath, quxPath, uint16(100), 101729702841318637793976746270)    // tick =  5_000, ratio = 1.648680055931176
+
+	pl.CreatePool(wugnotPath, barPath, uint16(500), 101729702841318637793976746270) // tick =  5_000, ratio = 1.648680055931176
+	pl.CreatePool(barPath, bazPath, uint16(500), 101729702841318637793976746270)    // tick =  5_000, ratio = 1.648680055931176
+	pl.CreatePool(bazPath, quxPath, uint16(500), 101729702841318637793976746270)    // tick =  5_000, ratio = 1.648680055931176
+	std.TestSkipHeights(7)
+
+	gsaNewGnsBalance := gns.BalanceOf(a2u(gsa))
+
+	shouldEQ(t, len(pl.PoolGetPoolList()), 6)
+	shouldEQ(t, gsaNewGnsBalance-gsaOldGnsBalance, 3000)
 }
 
 // 3. [TC - POSITION] Mint LP
 func TestPositionMint(t *testing.T) {
-	tmpPool := pl.GetPool(pToken0, pToken1, pFee)
-
-	poolOldLiquidity := tmpPool.GetLiquidity()
-	poolOldToken0Balance := token0Balance(poolAddr)
-	poolOldToken1Balance := token1Balance(poolAddr)
-
-	shouldEQ(t, tmpPool.GetLiquidity(), bigint(0))
-	shouldEQ(t, poolOldToken0Balance, bigint(0))
-	shouldEQ(t, poolOldToken1Balance, bigint(0))
-
+	// bar_wugnot_100 by lp01
 	{
-		// 'lp01' mints some liquidity => will get LP Token(tokenId '1')
 		std.TestSetOrigCaller(lp01)
 
-		mTokenId, mLiquidity, mAmount0, mAmount1 := pos.Mint(
-			pToken0,    // token0
-			pToken1,    // token1
-			pFee,       // fee
-			9000,       // tickLower
-			11000,      // tickUpper
-			1000000,    // amount0Desired
-			1000000,    // amount1Desired
-			1,          // amount0Min
-			1,          // amount1Min
-			2345678901, // deadline
-		)
-		std.TestSkipHeights(10)
+		// prepare ugnot
+		testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+		testBanker.IssueCoin(std.GetOrigCaller(), "ugnot", 500_000_000)
 
-		poolNewLiquidity := tmpPool.GetLiquidity()
-		poolNewToken0Balance := token0Balance(poolAddr)
-		poolNewToken1Balance := token1Balance(poolAddr)
+		poolOldBarBalance := bar.BalanceOf(a2u(poolAddr))
+		poolOldWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
+		shouldEQ(t, poolOldBarBalance, 0)
+		shouldEQ(t, poolOldWugnotBalance, 0)
+
+		lp01OldBarBalance := bar.BalanceOf(a2u(lp01))
+		lp01OldWugnotBalance := wugnot.BalanceOf(a2u(lp01))
+
+		// simulate transfer & decrase
+		std.TestSetOrigSend(std.Coins{{"ugnot", 10000000}}, nil)
+		testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 10000000)
+
+		// Mint
+		tokenId, liquidity, amount0, amount1 := pos.Mint(barPath, wugnotPath, uint16(100), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
+		std.TestSkipHeights(1)
 
 		shouldEQ(t, gnft.OwnerOf(tid(1)), lp01)
-		shouldEQ(t, mTokenId, 1)
-		shouldEQ(t, poolNewToken0Balance, poolOldToken0Balance+mAmount0)
-		shouldEQ(t, poolNewToken1Balance, poolOldToken1Balance+mAmount1)
-		shouldEQ(t, poolNewLiquidity, poolOldLiquidity+mLiquidity)
+		shouldEQ(t, tokenId, 1)
+		shouldEQ(t, amount0 > 0, true)
+		shouldEQ(t, amount1 > 0, true)
+
+		poolNewBarBalance := bar.BalanceOf(a2u(poolAddr))
+		poolNewWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
+		lp01NewBarBalance := bar.BalanceOf(a2u(lp01))
+		lp01NewWugnotBalance := wugnot.BalanceOf(a2u(lp01))
+
+		shouldEQ(t, poolOldBarBalance+uint64(amount0), poolNewBarBalance)
+		shouldEQ(t, poolOldWugnotBalance+uint64(amount1), poolNewWugnotBalance)
+		shouldEQ(t, lp01OldBarBalance-uint64(amount0), lp01NewBarBalance)
+	}
+
+	// bar_baz_100 by lp02
+	{
+		std.TestSetOrigCaller(lp02)
+
+		poolOldBarBalance := bar.BalanceOf(a2u(poolAddr))
+		poolOldBazBalance := baz.BalanceOf(a2u(poolAddr))
+		shouldEQ(t, poolOldBarBalance, 6065458)
+		shouldEQ(t, poolOldBazBalance, 0)
+
+		lp02OldBarBalance := bar.BalanceOf(a2u(lp02))
+		lp02OldBazBalance := baz.BalanceOf(a2u(lp02))
+
+		// Mint
+		tokenId, liquidity, amount0, amount1 := pos.Mint(barPath, bazPath, uint16(100), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
+		std.TestSkipHeights(1)
+
+		shouldEQ(t, gnft.OwnerOf(tid(2)), lp02)
+		shouldEQ(t, tokenId, 2)
+		shouldEQ(t, amount0 > 0, true)
+		shouldEQ(t, amount1 > 0, true)
+
+		poolNewBarBalance := bar.BalanceOf(a2u(poolAddr))
+		poolNewBazBalance := baz.BalanceOf(a2u(poolAddr))
+		lp02NewBarBalance := bar.BalanceOf(a2u(lp02))
+		lp02NewBazBalance := baz.BalanceOf(a2u(lp02))
+
+		shouldEQ(t, poolOldBarBalance+uint64(amount0), poolNewBarBalance)
+		shouldEQ(t, poolOldBazBalance+uint64(amount1), poolNewBazBalance)
+		shouldEQ(t, lp02OldBarBalance-uint64(amount0), lp02NewBarBalance)
+		shouldEQ(t, lp02OldBazBalance-uint64(amount1), lp02NewBazBalance)
+	}
+
+	// baz_qux_100 by lp02
+	{
+		std.TestSetOrigCaller(lp02)
+
+		poolOldBazBalance := baz.BalanceOf(a2u(poolAddr))
+		poolOldQuxBalance := qux.BalanceOf(a2u(poolAddr))
+		shouldEQ(t, poolOldBazBalance, 9999999)
+		shouldEQ(t, poolOldQuxBalance, 0)
+
+		lp02OldBazBalance := baz.BalanceOf(a2u(lp02))
+		lp02OldQuxBalance := qux.BalanceOf(a2u(lp02))
+
+		// Mint
+		tokenId, liquidity, amount0, amount1 := pos.Mint(bazPath, quxPath, uint16(100), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
+		std.TestSkipHeights(1)
+
+		shouldEQ(t, gnft.OwnerOf(tid(3)), lp02)
+		shouldEQ(t, tokenId, 3)
+		shouldEQ(t, amount0 > 0, true)
+		shouldEQ(t, amount1 > 0, true)
+
+		poolNewBazBalance := baz.BalanceOf(a2u(poolAddr))
+		poolNewQuxBalance := qux.BalanceOf(a2u(poolAddr))
+		lp02NewBazBalance := baz.BalanceOf(a2u(lp02))
+		lp02NewQuxBalance := qux.BalanceOf(a2u(lp02))
+
+		shouldEQ(t, poolOldBazBalance+uint64(amount0), poolNewBazBalance)
+		shouldEQ(t, poolOldQuxBalance+uint64(amount1), poolNewQuxBalance)
+		shouldEQ(t, lp02OldBazBalance-uint64(amount0), lp02NewBazBalance)
+		shouldEQ(t, lp02OldQuxBalance-uint64(amount1), lp02NewQuxBalance)
 	}
 
 	{
-		// 'lp02' mints some liquidity => will get LP Token(tokenId '2')
+		// bar_wugnot_500 by lp01
+		// simulate transfer & decrase
+		std.TestSetOrigCaller(lp01)
+		std.TestSetOrigSend(std.Coins{{"ugnot", 10000000}}, nil)
+		testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+		testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 10000000)
+		pos.Mint(barPath, wugnotPath, uint16(500), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
+
+		// bar_baz_500 by lp02
 		std.TestSetOrigCaller(lp02)
+		pos.Mint(barPath, bazPath, uint16(100), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
 
-		poolOldToken0Balance = token0Balance(poolAddr)
-		poolOldToken1Balance = token1Balance(poolAddr)
+		// baz_qux_500 by lp02
+		std.TestSetOrigCaller(lp02)
+		pos.Mint(bazPath, quxPath, uint16(100), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
 
-		mTokenId, mLiquidity, mAmount0, mAmount1 := pos.Mint(
-			pToken0,    // token0
-			pToken1,    // token1
-			pFee,       // fee
-			9500,       // tickLower
-			10500,      // tickUpper
-			2000000,    // amount0Desired
-			2000000,    // amount1Desired
-			1,          // amount0Min
-			1,          // amount1Min
-			2345678901, // deadline
-		)
-		std.TestSkipHeights(10)
+		std.TestSkipHeights(3)
 
-		poolNewToken0Balance := token0Balance(poolAddr)
-		poolNewToken1Balance := token1Balance(poolAddr)
-
-		shouldEQ(t, gnft.OwnerOf(bigint(2)), lp02)
-		shouldEQ(t, mTokenId, bigint(2))
-		shouldEQ(t, poolNewToken0Balance, poolOldToken0Balance+mAmount0)
-		shouldEQ(t, poolNewToken1Balance, poolOldToken1Balance+mAmount1)
 	}
 }
 
@@ -177,21 +250,13 @@ func TestStakerCreateExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
 
 	stk.CreateExternalIncentive(
-		"bar_foo_500",                       // targetPoolPath
-		"OBL",                               // rewardToken
-		10_000_000_000,                      // rewardAmount
-		GetTimestamp(),                      // startTimestamp
-		GetTimestamp()+(TIMESTAMP_30DAYS*2), // endTimestamp
+		"gno.land/r/bar:gno.land/r/wugnot:100", // targetPoolPath
+		"gno.land/r/obl",                       // rewardToken
+		10_000_000_000,                         // rewardAmount
+		GetTimestamp(),                         // startTimestamp
+		GetTimestamp()+TIMESTAMP_90DAYS,        // endTimestamp
 	)
 	std.TestSkipHeights(1)
-
-	shouldPanicWithMsg(
-		t,
-		func() {
-			stk.CreateExternalIncentive("bar_foo_500", "OBL", 10_000_000_000, GetTimestamp(), GetTimestamp()+(TIMESTAMP_30DAYS*2))
-		},
-		"[TC - STAKER] staker.gno__CreateExternalIncentive() || incentive(YmFyX2Zvb181MDBfT0JM) already exists",
-	)
 }
 
 // 5. [TC - STAKER] StakeToken
@@ -222,77 +287,93 @@ func TestPoolSetFeeProtocol(t *testing.T) {
 	pl.SetFeeProtocol(6, 8)
 	std.TestSkipHeights(1)
 
-	tmpPool := pl.GetPool(pToken0, pToken1, pFee)
-	shouldEQ(t, tmpPool.GetFeeProtocol(), bigint(134))
+	tmpPool := pl.GetPool(barPath, wugnotPath, uint16(100))
+	shouldEQ(t, tmpPool.PoolGetSlot0FeeProtocol(), bigint(134))
 }
 
-// 7. [TC - POOL] Swap ( token0 -> token1 )
-func TestPoolSwap01(t *testing.T) {
-	tmpPool := pl.GetPool(pToken0, pToken1, pFee)
-	testPrice01 := bigint(MIN_SQRT_RATIO + 1)
-
-	poolOldToken0Bal := token0Balance(poolAddr)
-	poolOldToken1Bal := token1Balance(poolAddr)
-	poolOldPrice := tmpPool.GetSqrtPriceX96()
-
-	userOldToken0Bal := token0Balance(tr01)
-	userOldToken1Bal := token1Balance(tr01)
-
+// 7. [TC - ROUTER] BestSwap ExactIn Single ( bar -> baz )
+func TestRotuerBestSwapExactInSinglePath(t *testing.T) {
+	std.TestSetPrevRealm("gno.land/r/router")
 	std.TestSetOrigCaller(tr01)
-	sAmount0, sAmount1 := pl.Swap(
-		pToken0,     // pToken0 // tokenIn
-		pToken1,     // pToken1 // tokenOut
-		pFee,        // pFee
-		tr01,        // recipient
-		true,        // zeroForOne // token0 > token1
-		200000,      // amountSpecified
-		testPrice01, // sqrtPriceLimitX96
+
+	tr01OldBarBalance := bar.BalanceOf(a2u(tr01))
+	tr01OldBazBalance := baz.BalanceOf(a2u(tr01))
+	poolOldBarBalance := bar.BalanceOf(a2u(poolAddr))
+	poolOldBazBalance := baz.BalanceOf(a2u(poolAddr))
+
+	swapAmount := 123_456
+	rou.BestSwap(
+		barPath,
+		bazPath,
+		"EXACT_IN",
+		bigint(swapAmount),
+		0,
+		5,
+		10,
+		1,
 	)
-	std.TestSkipHeights(1)
 
-	poolNewToken0Bal := token0Balance(poolAddr)
-	poolNewToken1Bal := token1Balance(poolAddr)
-	poolNewPrice := tmpPool.GetSqrtPriceX96()
+	tr01NewBarBalance := bar.BalanceOf(a2u(tr01))
+	tr01NewBazBalance := baz.BalanceOf(a2u(tr01))
+	poolNewBarBalance := bar.BalanceOf(a2u(poolAddr))
+	poolNewBazBalance := baz.BalanceOf(a2u(poolAddr))
 
-	userNewToken0Bal := token0Balance(tr01)
-	userNewToken1Bal := token1Balance(tr01)
-
-	shouldEQ(t, poolNewToken0Bal, poolOldToken0Bal+sAmount0)
-	shouldEQ(t, poolNewToken1Bal, poolOldToken1Bal+sAmount1)
-
-	shouldEQ(t, userNewToken0Bal, userOldToken0Bal-sAmount0)
-	shouldEQ(t, userNewToken1Bal, userOldToken1Bal-sAmount1)
-
-	shouldLT(t, poolNewPrice, poolOldPrice)
-
-	std.TestSetOrigCaller(pc01)
-	cAmount0, cAmount1 := pl.CollectProtocol(
-		pToken0, // token0
-		pToken1, // token1
-		pFee,    // fee
-		pc01,    // recipient
-		100000,  // amount0Requested
-		100000,  // amount1Requested
-	)
-	std.TestSkipHeights(1)
-
-	shouldGT(t, cAmount0, bigint(0))
-	shouldEQ(t, token0Balance(pc01), cAmount0)
-
-	shouldEQ(t, cAmount1, bigint(0)) // since swap is token0 -> token1, there is no fee for token1
-	shouldEQ(t, token1Balance(pc01), cAmount1)
+	shouldEQ(t, tr01OldBarBalance-uint64(swapAmount), tr01NewBarBalance)
+	shouldEQ(t, tr01NewBazBalance > tr01OldBazBalance, true)
+	shouldEQ(t, poolNewBarBalance-uint64(swapAmount), poolOldBarBalance)
+	shouldEQ(t, poolNewBazBalance < poolOldBazBalance, true)
 }
 
-// 8. [TC - POSITION] Collect
-// * collect fee from (swap token0 > token1)
+// 8. [TC - ROUTER] BestSwap ExactOut Multi ( wugnot -> qux )
+func TestRotuerBestSwapExactOutputMultiPath(t *testing.T) {
+	std.TestSetPrevRealm("gno.land/r/router")
+	std.TestSetOrigCaller(tr01)
+
+	// prepare ugnot
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	testBanker.IssueCoin(std.GetOrigCaller(), "ugnot", 500_000_000)
+
+	tr01OldWugnotBalance := wugnot.BalanceOf(a2u(tr01))
+	tr01OldQuxBalance := qux.BalanceOf(a2u(tr01))
+	poolOldWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
+	poolOldQuxBalance := qux.BalanceOf(a2u(poolAddr))
+
+	std.TestSetOrigSend(std.Coins{{"ugnot", 366350}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 366350)
+
+	swapAmount := 987_654
+	rou.BestSwap(
+		wugnotPath,
+		quxPath,
+		"EXACT_OUT",
+		bigint(swapAmount),
+		0,
+		5,
+		10,
+		5,
+	)
+
+	tr01NewWugnotBalance := wugnot.BalanceOf(a2u(tr01))
+	tr01NewQuxBalance := qux.BalanceOf(a2u(tr01))
+	poolNewWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
+	poolNewQuxBalance := qux.BalanceOf(a2u(poolAddr))
+
+	shouldEQ(t, poolOldQuxBalance-987654, poolNewQuxBalance)
+	shouldEQ(t, poolNewWugnotBalance > poolOldWugnotBalance, true)
+}
+
+// 9. [TC - POSITION] Collect
 func TestPositionCollect01(t *testing.T) {
 	{
 		// lp01 collects fee from tokenId '1'
 		std.TestSetOrigCaller(lp01)
 
-		lp01OldToken0Bal := token0Balance(lp01)
-		lp01OldToken1Bal := token1Balance(lp01)
+		// minted at bar_wugnot_500
+		poolOldNativeBalance := ugnotBalance(poolAddr)
+		poolOldWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 
+		std.TestSetPrevRealm("gno.land/r/position")
+		std.TestSetOrigCaller(lp01)
 		cAmount0, cAmount1 := pos.Collect(
 			1,      // tokenId
 			lp01,   // recipient
@@ -301,22 +382,19 @@ func TestPositionCollect01(t *testing.T) {
 		)
 		std.TestSkipHeights(1)
 
-		lp01NewToken0Bal := token0Balance(lp01)
-		lp01NewToken1Bal := token1Balance(lp01)
+		shouldEQ(t, cAmount0, bigint(0))  // bar
+		shouldEQ(t, cAmount1, bigint(13)) // wugnot
 
-		shouldGT(t, cAmount0, bigint(0))
-		shouldEQ(t, cAmount1, bigint(0))
-
-		shouldEQ(t, lp01NewToken0Bal, lp01OldToken0Bal+cAmount0)
-		shouldEQ(t, lp01NewToken1Bal, lp01OldToken1Bal+cAmount1)
+		poolNewNativeBalance := ugnotBalance(poolAddr)
+		poolNewWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 	}
 
 	{
 		// lp02 collects fee from tokenId '2'
 		std.TestSetOrigCaller(lp02)
 
-		lp02OldToken0Bal := token0Balance(lp02)
-		lp02OldToken1Bal := token1Balance(lp02)
+		lp02OldBarBalance := bar.BalanceOf(a2u(lp02))
+		lp02OldBazBalance := baz.BalanceOf(a2u(lp02))
 
 		cAmount0, cAmount1 := pos.Collect(
 			2,      // tokenId
@@ -326,132 +404,22 @@ func TestPositionCollect01(t *testing.T) {
 		)
 		std.TestSkipHeights(1)
 
-		lp02NewToken0Bal := token0Balance(lp02)
-		lp02NewToken1Bal := token1Balance(lp02)
+		lp02NewBarBalance := bar.BalanceOf(a2u(lp02))
+		lp02NewBazBalance := baz.BalanceOf(a2u(lp02))
 
-		shouldGT(t, cAmount0, bigint(0))
-		shouldEQ(t, cAmount1, bigint(0))
+		shouldEQ(t, cAmount0 > 0, true)
+		shouldEQ(t, cAmount1 == 0, true)
 
-		shouldEQ(t, lp02NewToken0Bal, lp02OldToken0Bal+cAmount0)
-		shouldEQ(t, lp02NewToken1Bal, lp02OldToken1Bal+cAmount1)
+		shouldEQ(t, lp02NewBarBalance-uint64(cAmount0), lp02OldBarBalance)
+		shouldEQ(t, lp02OldBazBalance, lp02OldBazBalance)
 	}
 }
 
-// 9. [TC - POOL] Swap ( token1 -> token0 )
-func TestPoolSwap10(t *testing.T) {
-	tmpPool := pl.GetPool(pToken0, pToken1, pFee)
-	testPrice10 := bigint(MAX_SQRT_RATIO - 1)
-
-	poolOldToken0Bal := token0Balance(poolAddr)
-	poolOldToken1Bal := token1Balance(poolAddr)
-	poolOldPrice := tmpPool.GetSqrtPriceX96()
-
-	userOldToken0Bal := token0Balance(tr01)
-	userOldToken1Bal := token1Balance(tr01)
-
-	std.TestSetOrigCaller(tr01)
-	sAmount0, sAmount1 := pl.Swap(
-		pToken0,     // pToken0 // tokenIn
-		pToken1,     // pToken1 // tokenOut
-		pFee,        // pFee
-		tr01,        // recipient
-		false,       // zeroForOne // token1 > token0
-		300000,      // amountSpecified
-		testPrice10, // sqrtPriceLimitX96
-	)
-	std.TestSkipHeights(1)
-
-	poolNewToken0Bal := token0Balance(poolAddr)
-	poolNewToken1Bal := token1Balance(poolAddr)
-	poolNewPrice := tmpPool.GetSqrtPriceX96()
-
-	userNewToken0Bal := token0Balance(tr01)
-	userNewToken1Bal := token1Balance(tr01)
-
-	shouldEQ(t, poolNewToken0Bal, poolOldToken0Bal+sAmount0)
-	shouldEQ(t, poolNewToken1Bal, poolOldToken1Bal+sAmount1)
-
-	shouldEQ(t, userNewToken0Bal, userOldToken0Bal-sAmount0)
-	shouldEQ(t, userNewToken1Bal, userOldToken1Bal-sAmount1)
-
-	shouldLT(t, poolNewPrice, poolOldPrice)
-
-	std.TestSetOrigCaller(pc01)
-	cAmount0, cAmount1 := pl.CollectProtocol(
-		pToken0, // token0
-		pToken1, // token1
-		pFee,    // fee
-		pc01,    // recipient
-		100000,  // amount0Requested
-		100000,  // amount1Requested
-	)
-	std.TestSkipHeights(1)
-
-	shouldEQ(t, cAmount0, bigint(0)) // since swap is token1 -> token0, there is no fee for token0
-
-	shouldGT(t, cAmount1, bigint(0))
-	shouldEQ(t, token1Balance(pc01), cAmount1)
-}
-
-// 10. [TC - POSITION] Collect
-// * collect fee from (swap token1 > token0)
-func TestPositionCollect10(t *testing.T) {
-	{
-		// lp01 collects fee from tokenId '1'
-		std.TestSetOrigCaller(lp01)
-
-		lp01OldToken0Bal := token0Balance(lp01)
-		lp01OldToken1Bal := token1Balance(lp01)
-
-		cAmount0, cAmount1 := pos.Collect(
-			1,      // tokenId
-			lp01,   // recipient
-			100000, // amount0Max
-			100000, // amount1Max
-		)
-		std.TestSkipHeights(1)
-
-		lp01NewToken0Bal := token0Balance(lp01)
-		lp01NewToken1Bal := token1Balance(lp01)
-
-		shouldEQ(t, cAmount0, bigint(0))
-		shouldGT(t, cAmount1, bigint(0))
-
-		shouldEQ(t, lp01NewToken0Bal, lp01OldToken0Bal+cAmount0)
-		shouldEQ(t, lp01NewToken1Bal, lp01OldToken1Bal+cAmount1)
-	}
-
-	{
-		// lp02 collects fee from tokenId '1'
-		std.TestSetOrigCaller(lp02)
-
-		lp02OldToken0Bal := token0Balance(lp02)
-		lp02OldToken1Bal := token1Balance(lp02)
-
-		cAmount0, cAmount1 := pos.Collect(
-			2,      // tokenId
-			lp02,   // recipient
-			100000, // amount0Max
-			100000, // amount1Max
-		)
-		std.TestSkipHeights(1)
-
-		lp02NewToken0Bal := token0Balance(lp02)
-		lp02NewToken1Bal := token1Balance(lp02)
-
-		shouldEQ(t, cAmount0, bigint(0))
-		shouldGT(t, cAmount1, bigint(0))
-
-		shouldEQ(t, lp02NewToken0Bal, lp02OldToken0Bal+cAmount0)
-		shouldEQ(t, lp02NewToken1Bal, lp02OldToken1Bal+cAmount1)
-	}
-}
-
-// 11. [TC - STAKER] UnstakeToken
+// 10. [TC - STAKER] UnstakeToken
 func TestStakerUnstakeToken(t *testing.T) {
 	{
 		// lp01 unstakes tokenId '1'
-		std.TestSetPrevAddr(lp01) // r3v4_xxx: only test code, we need to call gnft.UnstakeToken directly from user
+		std.TestSetPrevAddr(lp01) // r3v4_xxx: only test code, we need to call stk.UnstakeToken directly from user
 
 		// skip 15 days
 		std.TestSkipHeights(259200)
@@ -459,13 +427,13 @@ func TestStakerUnstakeToken(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		shouldEQ(t, gnft.OwnerOf(bigint(1)), lp01)
-		shouldEQ(t, gnos.BalanceOf(a2u(lp01)), bigint(777))
-		shouldEQ(t, obl.BalanceOf(a2u(lp01)), bigint(1500))
+		shouldEQ(t, gns.BalanceOf(a2u(lp01)), bigint(3850))
+		shouldEQ(t, obl.BalanceOf(a2u(lp01)), bigint(4951))
 	}
 
 	{
 		// lp02 unstakes tokenId '2'
-		std.TestSetPrevAddr(lp02) // r3v4_xxx: only test code, we need to call gnft.UnstakeToken directly from user
+		std.TestSetPrevAddr(lp02) // r3v4_xxx: only test code, we need to stk gnft.UnstakeToken directly from user
 
 		// skip 20 days more
 		std.TestSkipHeights(345600)
@@ -473,19 +441,19 @@ func TestStakerUnstakeToken(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		shouldEQ(t, gnft.OwnerOf(bigint(2)), lp02)
-		shouldEQ(t, gnos.BalanceOf(a2u(lp02)), bigint(5500))
-		shouldEQ(t, obl.BalanceOf(a2u(lp02)), bigint(10609))
+		shouldEQ(t, gns.BalanceOf(a2u(lp02)), bigint(0)) // pool for tokenId '2' isn't reward target
+		shouldEQ(t, obl.BalanceOf(a2u(lp02)), bigint(0)) // pool for tokenId '2' isn't reward target
 	}
 }
 
-// 12. [TC - STAKER] EndExternalIncentive
+// 11. [TC - STAKER] EndExternalIncentive
 func TestStakerEndExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
 	std.TestSkipHeights(1036800)
 
 	ci01OldRewardBal := obl.BalanceOf(a2u(ci01))
 
-	stk.EndExternalIncentive("bar_foo_500", "OBL")
+	stk.EndExternalIncentive(ci01.String(), "gno.land/r/bar:gno.land/r/wugnot:100", "gno.land/r/obl") // use same parameter as CreateExternalIncentive
 	std.TestSkipHeights(1)
 
 	ci01NewRewardBal := obl.BalanceOf(a2u(ci01))
@@ -493,8 +461,10 @@ func TestStakerEndExternalIncentive(t *testing.T) {
 
 	shouldPanicWithMsg(
 		t,
-		func() { stk.EndExternalIncentive("bar_foo_500", "OBL") },
-		"[TC - STAKER] staker.gno__EndIncentive() || cannot end non existent incentive(YmFyX2Zvb181MDBfT0JM)",
+		func() {
+			stk.EndExternalIncentive(ci01.String(), "gno.land/r/bar:gno.land/r/wugnot:100", "gno.land/r/obl")
+		},
+		"[STAKER] staker.gno__EndExternalIncentive() || cannot end non existent incentive(ZzF2ZDVucXYybHRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bGswd2hjZDpnbm8ubGFuZC9yL2Jhcjpnbm8ubGFuZC9yL3d1Z25vdDoxMDA6Z25vLmxhbmQvci9vYmw=)",
 	)
 }
 
@@ -576,4 +546,18 @@ func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
 		}
 	}()
 	f()
+}
+
+func ugnotBalance(addr std.Address) std.Coin {
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	coins := testBanker.GetCoins(tr01)
+
+	if len(coins) == 0 {
+		return nil
+	}
+
+	if len(coins) == 1 {
+		coin := coins[0]
+		return coin
+	}
 }
