@@ -74,6 +74,9 @@ func TestBestSwapDryExactIn(t *testing.T) {
 		"EXACT_IN",       // swapType
 		123_456,          // amountSpecified
 		0,                // sqrtPriceLimitX96
+		5,                // distributionPercent
+		10,               // maxRoutes
+		5,                // maxHops
 	)
 	jsonStr := gjson.Parse(jsonOutput)
 	shouldEQ(t, jsonStr.Get("totalRoutes").String(), "1")
@@ -89,6 +92,9 @@ func TestBestSwapDryExactOut(t *testing.T) {
 		"EXACT_OUT",      // swapType
 		123_456,          // amountSpecified
 		0,                // sqrtPriceLimitX96
+		5,                // distributionPercent
+		10,               // maxRoutes
+		5,                // maxHops
 	)
 	jsonStr := gjson.Parse(jsonOutput)
 	shouldEQ(t, jsonStr.Get("totalRoutes").String(), "1")

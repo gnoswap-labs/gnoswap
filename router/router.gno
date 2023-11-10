@@ -13,6 +13,10 @@ func BestSwap(
 	swapType string,
 	amountSpecified bigint,
 	sqrtPriceLimitX96 bigint,
+
+	distributionPercent int,
+	maxRoutes int,
+	maxHops int,
 ) {
 	switch swapType {
 	case "EXACT_IN":
@@ -20,7 +24,23 @@ func BestSwap(
 	case "EXACT_OUT":
 		amountSpecified = -amountSpecified
 	default:
-		panic("UNKNOWN TYPE")
+		panic("[ROUTER] router.gno__BestSwap() || unknown swapType")
+	}
+
+	// maxRoutes maximum is capped to 7
+	if maxRoutes > 7 {
+		maxRoutes = 7
+	}
+	if maxRoutes < 1 {
+		maxRoutes = 1
+	}
+
+	// maxHops maximum is capped to 3
+	if maxHops > 3 {
+		maxHops = 3
+	}
+	if maxHops < 1 {
+		maxHops = 1
 	}
 
 	// get quotes
@@ -29,6 +49,10 @@ func BestSwap(
 		outputToken,
 		amountSpecified,
 		sqrtPriceLimitX96,
+
+		distributionPercent,
+		maxRoutes,
+		maxHops,
 	)
 	require(len(quotes) != 0, ufmt.Sprintf("[ROUTER] router.gno__BestSwap() || len(quotes) == 0, inputToken:%s, outputToken:%s", inputToken, outputToken))
 
@@ -42,7 +66,7 @@ func BestSwap(
 
 	for i, finalSwap := range finalSwaps {
 		numPools := strings.Count(finalSwap.targetPath, ",") / 2
-		require(numPools >= 1 && numPools < 3, ufmt.Sprintf("[ROUTER] router.gno__BestSwap() || numPools should 1 ~ 3, but found %d", numPools))
+		require(numPools >= 1 && numPools <= 3, ufmt.Sprintf("[ROUTER] router.gno__BestSwap() || numPools should 1 ~ 3, but found %d", numPools))
 
 		// SINGLE
 		if numPools == 1 {
@@ -79,16 +103,38 @@ func BestSwap(
 				toSwap = finalSwap.pctAmount
 			}
 
-			input, output, fee := getSwapData(finalSwap.targetPath, 0)
-			swapParams := SwapParams{
-				tokenIn:         input,
-				tokenOut:        output,
-				fee:             fee,
-				recipient:       std.GetOrigCaller(),
-				amountSpecified: toSwap,
-				minAmountOut:    1,
+			if amountSpecified > 0 {
+				input, output, fee := getSwapData(finalSwap.targetPath, 0)
+				swapParams := SwapParams{
+					tokenIn:         input,
+					tokenOut:        output,
+					fee:             fee,
+					recipient:       std.GetOrigCaller(),
+					amountSpecified: toSwap,
+					minAmountOut:    1,
+				}
+
+				amountOut := multiSwap(swapParams, 0, numPools, finalSwap.targetPath) // iterate here
+				// return amountOut
+			} else {
+				input, output, fee := getSwapData(finalSwap.targetPath, 0)
+				swapParams := SwapParams{
+					tokenIn:         input,
+					tokenOut:        output,
+					fee:             fee,
+					recipient:       std.GetOrigCaller(),
+					amountSpecified: toSwap,
+					minAmountOut:    1,
+				}
+
+				amountOut := multiSwapNegative(swapParams, numPools, finalSwap.targetPath) // iterate here
+				// return amountOut
 			}
-			amountOut := multiSwap(swapParams, 0, numPools, finalSwap.targetPath) // iterate here
 		}
+
+		if maxRoutes == 0 && remainingAmount > 0 {
+			panic(ufmt.Sprintf("[ROUTER] router.gno__BestSwap() || couldn't finish swap while reaching maximum length of routes"))
+		}
+		maxRoutes -= 1
 	}
 }

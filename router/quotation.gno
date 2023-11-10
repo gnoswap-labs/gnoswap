@@ -14,9 +14,13 @@ func quoteForAllPath(
 
 	amountSpecified bigint,
 	sqrtPriceLimitX96 bigint,
+
+	distributionPercent int,
+	maxRoutes int,
+	maxHops int,
 ) (quoterTargets []QuoterTarget) {
-	swapPaths := findSwapPaths(inputTokenPath, outputTokenPath)
-	swapPcts := calculatePercentages(amountSpecified) // 5% - 100, 10% - 200, ...., 100% - 2000
+	swapPaths := findSwapPaths(inputTokenPath, outputTokenPath, maxHops)
+	swapPcts := calculatePercentages(amountSpecified, distributionPercent) // 5% - 100, 10% - 200, ...., 100% - 2000
 
 	for _, swapPath := range swapPaths {
 		for pct, pctAmount := range swapPcts {
@@ -47,6 +51,7 @@ func quoteForAllPath(
 			}
 
 			estimatedResult := singleSwapDry(singleParams)
+
 			if estimatedResult > 0 {
 				if amountSpecified > 0 {
 					resultRatioX96 := estimatedResult * Q96 / quoterTarget.pctAmount * Q96 / Q96
@@ -57,12 +62,10 @@ func quoteForAllPath(
 					quoterTarget.resultRatioX96 = resultRatioX96
 					quoterTargets[i] = quoterTarget
 				}
-			} else {
-				panic("[ROUTER] quotation.gno__quoteForAllPath() || SINGLE__estimateResult < 0")
 			}
 		}
 
-		if numPools > 1 && numPools <= 3 {
+		if 2 <= numPools && numPools <= 3 {
 			input, output, fee := getSwapData(quoterTarget.targetPath, 0)
 
 			swapParams := SwapParams{
@@ -83,18 +86,13 @@ func quoteForAllPath(
 					resultRatioX96 := estimatedResult * Q96 / quoterTarget.pctAmount
 					quoterTarget.resultRatioX96 = resultRatioX96
 					quoterTargets[i] = quoterTarget
-				} else {
-					panic("[ROUTER] quotation.gno__quoteForAllPath() || MULTI__PositiveAmountSpecified__estimateResult < 0")
 				}
 			} else {
 				estimatedResult := multiSwapNegativeDry(swapParams, numPools-1, quoterTarget.targetPath) // will iterate here to cover multi pools
 				if estimatedResult > 0 {
 					resultRatioX96 := -quoterTarget.pctAmount * Q96 / estimatedResult * Q96 / Q96
-
 					quoterTarget.resultRatioX96 = resultRatioX96
 					quoterTargets[i] = quoterTarget
-				} else {
-					panic("[ROUTER] quotation.gno__quoteForAllPath() || MULTI__NegativeAmountSpecified__estimateResult < 0")
 				}
 			}
 
@@ -102,7 +100,7 @@ func quoteForAllPath(
 	}
 
 	// it contains outputRatio with 0 which is impossible path
-	// > remove path with 0 ratio
+	// >> remove path with 0 ratio
 	var finalTargets []QuoterTarget
 	for _, quote := range quoterTargets {
 		if quote.resultRatioX96 != 0 {
@@ -114,10 +112,22 @@ func quoteForAllPath(
 	return finalTargets
 }
 
-func calculatePercentages(amount bigint) map[int]bigint { // map[pct][value]
+func calculatePercentages(amount bigint, distributionPercent int) map[int]bigint { // map[pct][value]
+	if distributionPercent > 100 {
+		distributionPercent = 5
+	}
+
+	if distributionPercent < 5 {
+		distributionPercent = 5
+	}
+
+	if !(100%distributionPercent == 0 && distributionPercent%5 == 0) {
+		panic("[ROUTER] quotation.gno__calculatePercentages() || distributionPercent should be [ 100 %% distributionPercent == 0 && distributionPercent %% 5 == 0]")
+	}
+
 	percentages := make(map[int]bigint)
 
-	for i := 5; i <= 100; i += 5 {
+	for i := distributionPercent; i <= 100; i += distributionPercent {
 		percentage := (bigint(i) * amount) / 100
 		percentages[i] = percentage
 	}

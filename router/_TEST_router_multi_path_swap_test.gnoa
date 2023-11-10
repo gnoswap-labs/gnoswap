@@ -178,6 +178,9 @@ func TestBestSwapExactInMultiPath(t *testing.T) {
 		"EXACT_IN",         // swapType
 		bigint(swapAmount), // amountSpecified
 		0,                  // sqrtPriceLimitX96
+		5,                  // distributionPercent
+		10,                 // maxRoutes
+		5,                  // maxHops
 	)
 
 	userNewWugnotBalance := wugnot.BalanceOf(a2u(tr01))
@@ -215,6 +218,9 @@ func TestBestSwapExactOutMultiPath(t *testing.T) {
 		"EXACT_OUT",        // swapType
 		bigint(swapAmount), // amountSpecified
 		0,                  // sqrtPriceLimitX96
+		5,                  // distributionPercent
+		10,                 // maxRoutes
+		5,                  // maxHops
 	)
 
 	userNewWugnotBalance := wugnot.BalanceOf(a2u(tr01))
@@ -222,7 +228,7 @@ func TestBestSwapExactOutMultiPath(t *testing.T) {
 	poolNewWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 	poolNewQuxBalance := qux.BalanceOf(a2u(poolAddr))
 
-	shouldEQ(t, poolNewWugnotBalance-poolOldWugnotBalance, 366349)
+	shouldEQ(t, poolOldQuxBalance-987654, poolNewQuxBalance)
 }
 
 /* HELPER */

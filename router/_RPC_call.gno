@@ -14,6 +14,10 @@ func BestSwapDry(
 	swapType string,
 	amountSpecified bigint,
 	sqrtPriceLimitX96 bigint,
+
+	distributionPercent int,
+	maxRoutes int,
+	maxHops int,
 ) string {
 
 	switch swapType {
@@ -22,7 +26,23 @@ func BestSwapDry(
 	case "EXACT_OUT":
 		amountSpecified = -amountSpecified
 	default:
-		panic("UNKNOWN TYPE")
+		panic("[ROUTER] _RPC_call.gno__BestSwapDry() || unknown swapType")
+	}
+
+	// maxRoutes maximum is capped to 7
+	if maxRoutes > 7 {
+		maxRoutes = 7
+	}
+	if maxRoutes < 1 {
+		maxRoutes = 1
+	}
+
+	// maxHops maximum is capped to 3
+	if maxHops > 3 {
+		maxHops = 3
+	}
+	if maxHops < 1 {
+		maxHops = 1
 	}
 
 	// get quotes
@@ -31,24 +51,30 @@ func BestSwapDry(
 		outputToken,
 		amountSpecified,
 		sqrtPriceLimitX96,
+
+		distributionPercent,
+		maxRoutes,
+		maxHops,
 	)
-	require(len(quotes) > 0, ufmt.Sprintf("[ROUTER] rpc_call.gno__gno__BestSwapDry() || len(quotes) == 0, inputToken:%s, outputToken:%s", inputToken, outputToken))
+	require(len(quotes) > 0, ufmt.Sprintf("[ROUTER] _RPC_call.gno__gno__BestSwapDry() || len(quotes) == 0, inputToken:%s, outputToken:%s", inputToken, outputToken))
 
 	bestSwaps := findBestPaths(quotes)
-	require(len(bestSwaps) > 0, "[ROUTER] rpc_call.gno__BestSwapDry() || len(bestSwaps) == 0")
+	require(len(bestSwaps) > 0, "[ROUTER] _RPC_call.gno__BestSwapDry() || len(bestSwaps) == 0")
 
 	finalSwaps := removeDuplication(bestSwaps)
-	require(len(finalSwaps) > 0, "[ROUTER] rpc_call.gno__BestSwapDry() || len(finalSwaps) == 0")
+	require(len(finalSwaps) > 0, "[ROUTER] _RPC_call.gno__BestSwapDry() || len(finalSwaps) == 0")
 
 	rpcReturnBestSwap := RpcReturnBestSwap{}
 	rpcReturnBestSwap.SwapType = swapType
-	rpcReturnBestSwap.TotalRoutes = len(finalSwaps)
 
 	rpcRoutes := []RpcRoute{}
 
 	remainingAmount := amountSpecified
 	outputEstimated := bigint(0)
+
 	for i, finalSwap := range finalSwaps {
+		maxRoutes -= 1
+
 		numPools := strings.Count(finalSwap.targetPath, ",") / 2
 		splitPaths := multiTargetPathToList(finalSwap.targetPath)
 
@@ -86,12 +112,12 @@ func BestSwapDry(
 				amountSpecified:   toSwap,
 				sqrtPriceLimitX96: sqrtPriceLimitX96,
 			}
-			amountOut := singleSwap(singleParams)
+			amountOut := singleSwapDry(singleParams)
 			outputEstimated += amountOut
 		}
 
 		// MULTI
-		if numPools > 1 && numPools <= 3 {
+		if numPools >= 1 && numPools <= 3 {
 			toSwap := bigint(0)
 
 			// isFinal
@@ -111,11 +137,17 @@ func BestSwapDry(
 				amountSpecified: toSwap,
 				minAmountOut:    1,
 			}
-			amountOut := multiSwap(swapParams, 0, numPools, finalSwap.targetPath) // iterate here
+			amountOut := multiSwapDry(swapParams, 0, numPools, finalSwap.targetPath) // iterate here
 			outputEstimated += amountOut
 		}
+
+		if maxRoutes == 0 {
+			break
+		}
 	}
+
 	rpcReturnBestSwap.RpcRoutes = rpcRoutes
+	rpcReturnBestSwap.TotalRoutes = len(rpcRoutes)
 
 	if rpcReturnBestSwap.Possible == true {
 		rpcReturnBestSwap.AmountResult = outputEstimated
@@ -129,7 +161,7 @@ func BestSwapDry(
 
 	rr, err := json.Marshal(rpcReturnBestSwap)
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] rpc_call.gno__BestSwapDry() || json.Marshal error with %v", err))
+		panic(ufmt.Sprintf("[ROUTER] _RPC_call.gno__BestSwapDry() || json.Marshal error with %v", err))
 	}
 
 	return string(rr)

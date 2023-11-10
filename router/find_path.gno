@@ -12,6 +12,7 @@ import (
 func findSwapPaths(
 	inputTokenPath string,
 	outputTokenPath string,
+	maxHops int,
 ) (swapPaths SwapPaths) {
 	tokenPairs := TokenPairs{}
 	poolList := p.PoolGetPoolList()
@@ -34,7 +35,7 @@ func findSwapPaths(
 		}
 	}
 
-	swapPaths = getSwapPaths(tokenPairs, inputTokenPath, outputTokenPath)
+	swapPaths = getSwapPaths(tokenPairs, inputTokenPath, outputTokenPath, maxHops)
 	return swapPaths
 }
 
@@ -42,6 +43,7 @@ func getSwapPaths(
 	tokenPairs TokenPairs,
 	inputTokenPath string,
 	outputTokenPath string,
+	maxHops int,
 ) (swapPaths SwapPaths) {
 	swapPaths = make(SwapPaths, 0)
 
@@ -60,8 +62,9 @@ func getSwapPaths(
 	}
 
 	firstToken := ""
-	findPath(tokenPairs, inputTokenPath, outputTokenPath, "", 2, &swapPaths, &firstToken)
-	findPath(tokenPairs, inputTokenPath, outputTokenPath, "", 3, &swapPaths, &firstToken)
+	for i := 1; i <= maxHops; i++ {
+		findPath(tokenPairs, inputTokenPath, outputTokenPath, "", i, &swapPaths, &firstToken)
+	}
 
 	return swapPaths
 }
@@ -93,6 +96,11 @@ func findPath(
 			newPath += ","
 		}
 		newPath += nextFee + "," + nextPath
+		// remove found path
+		tokenPairs[currentTokenPath] = removeItemFromStringArray(tokenPairs[currentTokenPath], newPath)
+		// remove opposite path
+		tokenPairs[nextPath] = removeItemFromStringArray(tokenPairs[nextPath], (currentTokenPath + ":" + nextFee))
+
 		findPath(tokenPairs, nextPath, outputTokenPath, newPath, remainingHops-1, swapPaths, firstToken)
 	}
 }

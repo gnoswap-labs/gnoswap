@@ -122,6 +122,9 @@ func TestBestSwapExactInSinglePath(t *testing.T) {
 		"EXACT_IN",         // swapType
 		bigint(swapAmount), // amountSpecified
 		0,                  // sqrtPriceLimitX96
+		5,                  // distributionPercent
+		10,                 // maxRoutes
+		5,                  // maxHops
 	)
 
 	userNewFooBalance := foo.BalanceOf(a2u(tr01))
@@ -153,6 +156,9 @@ func TestBestSwapExactOutSinglePath(t *testing.T) {
 		"EXACT_OUT",        // swapType
 		bigint(swapAmount), // amountSpecified
 		0,                  // sqrtPriceLimitX96
+		5,                  // distributionPercent
+		10,                 // maxRoutes
+		5,                  // maxHops
 	)
 
 	userNewFooBalance := foo.BalanceOf(a2u(tr01))
