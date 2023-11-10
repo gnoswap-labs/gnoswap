@@ -46,7 +46,5 @@ func unWrap(tokenPath string, amount uint64) {
 	wugnot.Unwrap(a2u(caller), amount)
 
 	banker := std.GetBanker(std.BankerTypeRealmSend)
-	coins := banker.GetCoins(std.DerivePkgAddr("gno.land/r/position"))
-
 	banker.SendCoins(std.GetOrigPkgAddr(), caller, refund)
 }
