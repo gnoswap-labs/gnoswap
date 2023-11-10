@@ -49,17 +49,16 @@ func ApiGetPositions() string {
 }
 
 type SinglePosition struct {
-	TokenID uint64 `json:"token_id"`
-	// Nonce     bigint `json:"nonce"`
-	Operator  string `json:"operator"`
-	PoolKey   string `json:"pool_key"`
-	TickLower int32  `json:"tick_lower"`
-	TickUpper int32  `json:"tick_upper"`
-	Liquidity bigint `json:"liquidity"`
-	// FeeGrowthInside0LastX128 bigint `json:"fee_growth_inside_0_last_x128"`
-	// FeeGrowthInside1LastX128 bigint `json:"fee_growth_inside_1_last_x128"`
-	TokensOwed0 bigint `json:"tokens_owed_0"`
-	TokensOwed1 bigint `json:"tokens_owed_1"`
+	TokenID                  uint64 `json:"token_id"`
+	Operator                 string `json:"operator"`
+	PoolKey                  string `json:"pool_key"`
+	TickLower                int32  `json:"tick_lower"`
+	TickUpper                int32  `json:"tick_upper"`
+	Liquidity                bigint `json:"liquidity"`
+	FeeGrowthInside0LastX128 bigint `json:"fee_growth_inside_0_last_x128"`
+	FeeGrowthInside1LastX128 bigint `json:"fee_growth_inside_1_last_x128"`
+	TokensOwed0              bigint `json:"tokens_owed_0"`
+	TokensOwed1              bigint `json:"tokens_owed_1"`
 }
 
 type ResponseGetPosition struct {
@@ -86,14 +85,16 @@ func ApiGetPosition(key uint64) string { // key is tokenId
 			Data SinglePosition `json:"data"`
 		}{
 			Data: SinglePosition{
-				TokenID:     key,
-				Operator:    position.operator.String(),
-				PoolKey:     position.poolKey,
-				TickLower:   position.tickLower,
-				TickUpper:   position.tickUpper,
-				Liquidity:   position.liquidity,
-				TokensOwed0: position.tokensOwed0,
-				TokensOwed1: position.tokensOwed1,
+				TokenID:                  key,
+				Operator:                 position.operator.String(),
+				PoolKey:                  position.poolKey,
+				TickLower:                position.tickLower,
+				TickUpper:                position.tickUpper,
+				Liquidity:                position.liquidity,
+				FeeGrowthInside0LastX128: position.feeGrowthInside0LastX128,
+				FeeGrowthInside1LastX128: position.feeGrowthInside1LastX128,
+				TokensOwed0:              position.tokensOwed0,
+				TokensOwed1:              position.tokensOwed1,
 			},
 		},
 	}

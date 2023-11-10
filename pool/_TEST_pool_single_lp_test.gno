@@ -63,7 +63,7 @@ func TestMint(t *testing.T) {
 	)
 
 	pool := GetPool(fooPath, barPath, pFee)
-	test_liquidity := pool.GetLiquidity()
+	test_liquidity := pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect)
 
 	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
@@ -82,7 +82,7 @@ func TestMint(t *testing.T) {
 	shouldEQ(t, m81, m101)
 	shouldEQ(t, m82, m102)
 
-	test_liquidity = pool.GetLiquidity()
+	test_liquidity = pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
 	// tickLower > currentTick == don't add to current liquidity
@@ -94,7 +94,7 @@ func TestMint(t *testing.T) {
 	// tickUpper < tickLower == don't add to current liquidity
 	Mint(fooPath, barPath, pFee, posAddr, -test_tickUpper, -test_tickLower, test_liquidityExpect)
 
-	test_liquidity = pool.GetLiquidity()
+	test_liquidity = pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
 	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
@@ -108,7 +108,7 @@ func TestMint(t *testing.T) {
 	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
 	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
 
-	test_liquidity = pool.GetLiquidity()
+	test_liquidity = pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*20)
 }
 
@@ -123,23 +123,23 @@ func TestBurn(t *testing.T) {
 	shouldEQ(t, b12, b22)
 
 	pool := GetPool(fooPath, barPath, pFee)
-	test_liquidity := pool.GetLiquidity()
+	test_liquidity := pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*18)
 
 	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*8)
-	test_liquidity = pool.GetLiquidity()
+	test_liquidity = pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
 	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, 1)
-	test_liquidity = pool.GetLiquidity()
+	test_liquidity = pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(9999))
 
 	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, 999)
-	test_liquidity = pool.GetLiquidity()
+	test_liquidity = pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*9)
 
 	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*9)
-	test_liquidity = pool.GetLiquidity()
+	test_liquidity = pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	// can't burn when liq is 0
@@ -157,7 +157,7 @@ func TestCollect(t *testing.T) {
 
 	// pool should have zero liquidity
 	pool := GetPool(fooPath, barPath, pFee)
-	test_liquidity := pool.GetLiquidity()
+	test_liquidity := pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
@@ -198,7 +198,7 @@ func TestCollect(t *testing.T) {
 // 5. Swap by tr01
 func TestSwap(t *testing.T) {
 	pool := GetPool(fooPath, barPath, pFee)
-	test_liquidity := pool.GetLiquidity()
+	test_liquidity := pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
 	std.TestSetPrevRealm("gno.land/r/position")
@@ -318,7 +318,7 @@ func TestSetFeeProtocol(t *testing.T) {
 	SetFeeProtocol(6, 8)
 
 	for _, pool := range pools {
-		shouldEQ(t, pool.GetSlot0().feeProtocol, bigint(134))
+		shouldEQ(t, pool.PoolGetSlot0().feeProtocol, bigint(134))
 	}
 }
 
@@ -328,7 +328,7 @@ func TestCollectProtocol(t *testing.T) {
 
 	SetFeeProtocol(6, 8)
 	pool := GetPool(fooPath, barPath, pFee)
-	test_slot0 := pool.GetSlot0()
+	test_slot0 := pool.PoolGetSlot0()
 	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
 
 	// Make ProtocolFee via Swap by tr01 ( Mint by lp01 )
@@ -386,6 +386,7 @@ func TestApiGetPools(t *testing.T) {
 func TestApiGetPool(t *testing.T) {
 	gpl := ApiGetPool("gno.land/r/bar:gno.land/r/foo:500")
 	jsonStr := gjson.Parse(gpl)
+	// println("jsonStr:", jsonStr)
 
 	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())
 	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())

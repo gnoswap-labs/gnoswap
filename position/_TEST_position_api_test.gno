@@ -1,0 +1,203 @@
+package position
+
+import (
+	"std"
+	"testing"
+
+	"encoding/gjson"
+
+	"gno.land/p/demo/testutils"
+
+	nft "gno.land/r/gnft"
+
+	_ "gno.land/r/grc20_wrapper"
+	p "gno.land/r/pool"
+
+	"gno.land/r/bar"
+	"gno.land/r/foo"
+)
+
+var (
+	poolAddr = p.GetOrigPkgAddr()
+	posAddr  = std.DerivePkgAddr("gno.land/r/position")
+
+	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
+	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
+	lp02 = testutils.TestAddress("lp02") // Liquidity Provider 02
+	rv01 = testutils.TestAddress("rv01") // Receiver 01
+	tr01 = testutils.TestAddress("tr01") // Trader 01
+)
+
+var (
+	// Common
+	fooPath = "gno.land/r/foo"
+	barPath = "gno.land/r/bar"
+	pFee    = uint16(500)
+
+	test_tickLower       = int32(9000)
+	test_tickUpper       = int32(11000)
+	test_liquidityExpect = bigint(1000)
+)
+
+// func init() {
+// 	// debug addr
+// 	println(pc01, "// pc01")
+// 	println(lp01, "// lp01")
+// 	println(lp02, "// lp02")
+// 	println(tr01, "// tr01")
+// 	println(poolAddr, "// pool")
+// 	println(posAddr, "// pos")
+// }
+
+// 1. Init & Create Pool
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(pc01)
+	p.InitManual()
+
+	std.TestSetOrigCaller(pc01)
+	p.CreatePool(fooPath, barPath, pFee, 130621891405341611593710811006)
+
+	// fee
+	// 500		= 0.05% // USv3 default
+	// 3000		= 0.3% // USv3 default
+	// 10000	= 1% // USv3 default
+
+	// sqrtPrice
+	// 130621891405341611593710811006 // tick = 10000
+	shouldPanic(t, func() { p.CreatePool(fooPath, barPath, 500, 130621891405341611593710811006) })
+}
+
+// 2. Mint LP and Get GNFT
+func TestMint(t *testing.T) {
+	// lp01 mints
+	// will get tid 1 nft
+
+	std.TestSetOrigCaller(lp01)
+
+	poolOldToken0Bal := Token0Bal(poolAddr)
+	poolOldToken1Bal := Token1Bal(poolAddr)
+
+	tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
+		fooPath,
+		barPath,
+		pFee,
+		test_tickLower,
+		test_tickUpper,
+		bigint(1_000_000),
+		bigint(1_000_000),
+		bigint(1),
+		bigint(1),
+		bigint(1234567890),
+	)
+
+	isOwner(t, tTokenId, lp01)
+	shouldEQ(t, tTokenId, 1)
+	shouldEQ(t, getNextId(), 2)
+
+	shouldEQ(t, Token0Bal(poolAddr), poolOldToken0Bal+tAmount0)
+	shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal+tAmount1)
+
+}
+
+func TestSwap(t *testing.T) {
+	std.TestSetPrevRealm("gno.land/r/router")
+	std.TestSetOrigCaller(tr01)
+	p.Swap(
+		fooPath,
+		barPath,
+		pFee,
+		tr01,
+		true,
+		bigint(123_456),
+		MIN_PRICE,
+		tr01,
+	)
+
+}
+
+/* GETTER_API TEST */
+func TestApiGetPositions(t *testing.T) {
+	gpss := ApiGetPositions()
+	jsonStr := gjson.Parse(gpss)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
+}
+
+func TestApiGetMintedPosition(t *testing.T) {
+	// burn 0 to collect swap fee
+	std.TestSetOrigCaller(lp01)
+	DecreaseLiquidity(1, 0, 0, 0, 99999999999)
+
+	gps := ApiGetPosition(uint64(1))
+	jsonStr := gjson.Parse(gps)
+
+	shouldEQ(t, jsonStr.Get("response.data.token_id").Int(), 1)
+	shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), 9000)
+	shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), 11000)
+	shouldEQ(t, jsonStr.Get("response.data.fee_growth_inside_0_last_x128").String(), "1696306226460823699404841786742325")
+	shouldEQ(t, jsonStr.Get("response.data.fee_growth_inside_1_last_x128").String(), "0")
+	shouldEQ(t, jsonStr.Get("response.data.tokens_owed_0").Int(), 61)
+	shouldEQ(t, jsonStr.Get("response.data.tokens_owed_1").Int(), 0)
+}
+
+func TestApiGetPositionByUser(t *testing.T) {
+	gpu := ApiGetPositionByUser(lp01.String())
+	jsonStr := gjson.Parse(gpu)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
+
+	shouldEQ(t, jsonStr.Get("response.data.0.token_id").Int(), 1)
+	shouldEQ(t, jsonStr.Get("response.data.0.pool_key").String(), "gno.land/r/bar:gno.land/r/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data.0.address").String(), lp01.String())
+}
+
+/* HELPER */
+func shouldEQ(t *testing.T, got, expected interface{}) {
+	if got != expected {
+		t.Errorf("got %v, expected %v", got, expected)
+	}
+}
+
+func shouldNEQ(t *testing.T, got, expected interface{}) {
+	if got == expected {
+		t.Errorf("got %v, didn't expected %v", got, expected)
+	}
+}
+
+func shouldGT(t *testing.T, l, r interface{}) {
+	if !(l < r) {
+		t.Errorf("expected %v < %v", l, r)
+	}
+}
+
+func shouldLT(t *testing.T, l, r interface{}) {
+	if !(l > r) {
+		t.Errorf("expected %v > %v", l, r)
+	}
+}
+
+func shouldPanic(t *testing.T, f func()) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic")
+		}
+	}()
+	f()
+}
+
+func isOwner(t *testing.T, tokenId uint64, addr std.Address) bool {
+	owner := nft.OwnerOf(tid(tokenId))
+
+	if owner == addr {
+		return true
+	}
+
+	t.Errorf("expected owner %v, got %v", addr, owner)
+	return false
+}
+
+func Token0Bal(addr std.Address) bigint {
+	return bigint(bar.BalanceOf(a2u(addr)))
+}
+
+func Token1Bal(addr std.Address) bigint {
+	return bigint(foo.BalanceOf(a2u(addr)))
+}

@@ -1,4 +1,3 @@
-// EXTERNAL API
 package pool
 
 import (
@@ -63,8 +62,10 @@ type ApiPositionInfo struct {
 
 type SinglePool struct {
 	PoolPath             string            `json:"pool_path"`
-	T0Balance            bigint            `json:"token0_balance"`
-	T1Balance            bigint            `json:"token1_balance"`
+	Token0Path           string            `json:"token0_path"`
+	Token1Path           string            `json:"token1_path"`
+	Token0Balance        bigint            `json:"token0_balance"`
+	Token1Balance        bigint            `json:"token1_balance"`
 	TickSpacing          int32             `json:"tick_spacing"`
 	MaxLiquidityPerTick  bigint            `json:"max_liquidity_per_tick"`
 	SqrtPriceX96         bigint            `json:"sqrt_price_x96"` // slot0
@@ -133,8 +134,10 @@ func ApiGetPool(key string) string {
 		}{
 			Data: SinglePool{
 				PoolPath:             key,
-				T0Balance:            pool.balances.token0,
-				T1Balance:            pool.balances.token1,
+				Token0Path:           pool.token0Path,
+				Token1Path:           pool.token1Path,
+				Token0Balance:        pool.balances.token0,
+				Token1Balance:        pool.balances.token1,
 				TickSpacing:          pool.tickSpacing,
 				MaxLiquidityPerTick:  pool.maxLiquidityPerTick,
 				SqrtPriceX96:         pool.slot0.sqrtPriceX96,

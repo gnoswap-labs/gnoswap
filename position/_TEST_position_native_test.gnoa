@@ -37,15 +37,15 @@ var (
 	test_liquidityExpect = bigint(1000)
 )
 
-func init() {
-	println(own, "// own")
-	println(lp01, "// lp01")
-	println(rv01, "// rv01")
-	println(tr01, "// tr01")
-	println(pc01, "// pc01")
-	println(poolAddr, "// poolAddr")
-	println(posAddr, "// posAddr")
-}
+// func init() {
+// 	println(own, "// own")
+// 	println(lp01, "// lp01")
+// 	println(rv01, "// rv01")
+// 	println(tr01, "// tr01")
+// 	println(pc01, "// pc01")
+// 	println(poolAddr, "// poolAddr")
+// 	println(posAddr, "// posAddr")
+// }
 
 // 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
@@ -130,7 +130,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 
 	tTargetLiquidity := bigint(1234)
 
-	poolOldLiquidity := pool.GetLiquidity()
+	poolOldLiquidity := pool.PoolGetLiquidity()
 	poolOldToken0Bal := Token0Bal(poolAddr) // or PositionAddr
 	poolOldToken1Bal := Token1Bal(poolAddr)
 
@@ -150,7 +150,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 	// Collect() will decrease pool's balance
 	shouldEQ(t, Token0Bal(poolAddr), poolOldToken0Bal)
 	shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal)
-	shouldEQ(t, pool.GetLiquidity(), poolOldLiquidity-tTargetLiquidity)
+	shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity-tTargetLiquidity)
 }
 
 func TestCollect(t *testing.T) {
@@ -159,7 +159,7 @@ func TestCollect(t *testing.T) {
 		std.TestSetOrigCaller(lp01)
 		pool := p.GetPool(fooPath, wugnotPath, pFee)
 
-		poolOldLiquidity := pool.GetLiquidity()
+		poolOldLiquidity := pool.PoolGetLiquidity()
 		poolOldToken0Bal := Token0Bal(poolAddr)
 		poolOldToken1Bal := Token1Bal(poolAddr)
 
@@ -182,7 +182,7 @@ func TestCollect(t *testing.T) {
 		// pool's balance decreases
 		shouldEQ(t, Token0Bal(poolAddr), poolOldToken0Bal-tAmount0)
 		shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal-tAmount1)
-		shouldEQ(t, pool.GetLiquidity(), poolOldLiquidity)
+		shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity)
 
 		// Recipient balance increases
 		shouldEQ(t, Token0Bal(rv01), rvOldToken0Bal+tAmount0)
@@ -194,7 +194,7 @@ func TestCollect(t *testing.T) {
 		std.TestSetOrigCaller(lp01)
 		pool := p.GetPool(fooPath, wugnotPath, pFee)
 
-		poolOldLiquidity := pool.GetLiquidity()
+		poolOldLiquidity := pool.PoolGetLiquidity()
 		poolOldToken0Bal := Token0Bal(poolAddr)
 		poolOldToken1Bal := Token1Bal(poolAddr)
 
@@ -216,7 +216,7 @@ func TestCollect(t *testing.T) {
 		// pool's balance decreases
 		shouldEQ(t, Token0Bal(poolAddr), poolOldToken0Bal-tAmount0)
 		shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal-tAmount1)
-		shouldEQ(t, pool.GetLiquidity(), poolOldLiquidity)
+		shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity)
 
 		// Recipient balance increases
 		shouldEQ(t, Token0Bal(rv01), rvOldToken0Bal+tAmount0)

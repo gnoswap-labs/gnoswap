@@ -237,7 +237,7 @@ func TestBurnFooBarLiquidity(t *testing.T) {
 	std.TestSetPrevRealm("gno.land/r/position")
 
 	pool := GetPool(fooPath, barPath, pFee)
-	poolOldLiquidity := pool.GetLiquidity()
+	poolOldLiquidity := pool.PoolGetLiquidity()
 
 	b0, b1 := Burn(
 		fooPath,
@@ -251,7 +251,7 @@ func TestBurnFooBarLiquidity(t *testing.T) {
 	shouldNEQ(t, b0, bigint(0))
 	shouldNEQ(t, b1, bigint(0))
 
-	poolNewLiquidity := pool.GetLiquidity()
+	poolNewLiquidity := pool.PoolGetLiquidity()
 
 	shouldEQ(t, poolOldLiquidity-poolNewLiquidity, test_liquidityExpect)
 }
@@ -262,7 +262,7 @@ func TestBurnBarBazLiquidity(t *testing.T) {
 	std.TestSetPrevRealm("gno.land/r/position")
 
 	pool := GetPool(barPath, bazPath, pFee)
-	poolOldLiquidity := pool.GetLiquidity()
+	poolOldLiquidity := pool.PoolGetLiquidity()
 
 	b0, b1 := Burn(
 		barPath,
@@ -276,7 +276,7 @@ func TestBurnBarBazLiquidity(t *testing.T) {
 	shouldNEQ(t, b0, bigint(0))
 	shouldNEQ(t, b1, bigint(0))
 
-	poolNewLiquidity := pool.GetLiquidity()
+	poolNewLiquidity := pool.PoolGetLiquidity()
 
 	shouldEQ(t, poolOldLiquidity-poolNewLiquidity, test_liquidityExpect)
 }

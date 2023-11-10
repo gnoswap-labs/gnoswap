@@ -14,7 +14,7 @@ func findSwapPaths(
 	outputTokenPath string,
 ) (swapPaths SwapPaths) {
 	tokenPairs := TokenPairs{}
-	poolList := p.GetPoolList()
+	poolList := p.PoolGetPoolList()
 
 	for i, poolPath := range poolList {
 		token0Path, token1Path, pFee := poolPathWithFeeDivide(poolPath)

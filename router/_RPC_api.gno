@@ -104,7 +104,7 @@ func getRatiosFromBase() []map[string]bigint {
 func getTokenList() []string {
 	seen := make(map[string]bool)
 	uniqueTokenList := []string{}
-	poolList := p.GetPoolList()
+	poolList := p.PoolGetPoolList()
 
 	for _, poolPath := range poolList {
 		token0Path, token1Path, _ := poolPathWithFeeDivide(poolPath)
@@ -145,9 +145,9 @@ func calculateTokenPrice(token, swapPath string, numPools, proceed int, currentP
 	currentPoolPathKey := makePoolPath(swapPath, proceed)
 	currentPool := p.GetPoolFromPoolKey(currentPoolPathKey)
 
-	currentToken0 := currentPool.GetToken0Path()
-	currentToken1 := currentPool.GetToken1Path()
-	currentSqrtPriceX96 := currentPool.GetSlotSqrtPriceX96()
+	currentToken0 := currentPool.PoolGetToken0Path()
+	currentToken1 := currentPool.PoolGetToken1Path()
+	currentSqrtPriceX96 := currentPool.PoolGetSlot0SqrtPriceX96()
 
 	if currentToken0 == token {
 		currentPrice *= (Q96 * Q96 / (currentSqrtPriceX96 * currentSqrtPriceX96 / Q96))

@@ -74,7 +74,7 @@ func mint(params MintParams) (uint64, bigint, bigint, bigint) {
 	nft.Mint(a2u(GetOrigCaller()), tid(tokenId)) // owner, tokenId
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 
 	position := Position{
 		nonce:                    0,
@@ -138,7 +138,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 
 	position.tokensOwed0 += (feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / Q128
 	position.tokensOwed1 += (feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128) * position.liquidity / Q128
@@ -173,7 +173,7 @@ func DecreaseLiquidity(
 func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	isAuthorizedForToken(params.tokenId)
 	checkDeadline(params.deadline)
-	require(params.liquidity > 0, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidity(%s) > 0", params.liquidity))
+	require(params.liquidity >= 0, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidity(%d) >= 0", params.liquidity))
 
 	// verify tokenId
 	require(exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
@@ -181,10 +181,14 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	position := positions[params.tokenId]
 
 	positionLiquidity := position.liquidity
-	require(positionLiquidity >= params.liquidity, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || positionLiquidity(%s) >= params.liquidity(%s)", positionLiquidity, params.liquidity))
-
 	// r3v4_xxx
-	// panic or remove entire liquidity
+	// panic or remove entire liquidity(for now)
+	// require(positionLiquidity >= params.liquidity, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || positionLiquidity(%s) >= params.liquidity(%s)", positionLiquidity, params.liquidity))
+	if positionLiquidity < params.liquidity {
+		// remove entire liquidity
+		params.liquidity = positionLiquidity
+	}
+
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
 	pool := p.GetPoolFromPoolKey(position.poolKey)
 
@@ -193,11 +197,10 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || amount0(%s) >= params.amount0Min(%s) && amount1(%s) >= params.amount1Min(%s)", amount0, params.amount0Min, amount1, params.amount1Min))
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 
-	// XXX check priority ?
-	position.tokensOwed0 += (amount0 + (feeGrowthInside0LastX128-position.feeGrowthInside0LastX128)*position.liquidity/Q128)
-	position.tokensOwed1 += (amount1 + (feeGrowthInside1LastX128-position.feeGrowthInside1LastX128)*position.liquidity/Q128)
+	position.tokensOwed0 += amount0 + ((feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / Q128)
+	position.tokensOwed1 += amount1 + ((feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128) * position.liquidity / Q128)
 
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
@@ -246,7 +249,7 @@ func collect(params CollectParams) (bigint, bigint) {
 		p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, 0)
 
 		positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-		feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.GetPoolPositionFeeGrowthInside0LastX128(positionKey), pool.GetPoolPositionFeeGrowthInside1LastX128(positionKey)
+		feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 
 		tokensOwed0 += (feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / Q128
 		tokensOwed1 += (feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128) * position.liquidity / Q128

@@ -12,6 +12,9 @@ import (
 
 	_ "gno.land/r/grc20_wrapper"
 	p "gno.land/r/pool"
+
+	"gno.land/r/bar"
+	"gno.land/r/foo"
 )
 
 var (
@@ -220,7 +223,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 
 		tTargetLiquidity := bigint(1234)
 
-		poolOldLiquidity := pool.GetLiquidity()
+		poolOldLiquidity := pool.PoolGetLiquidity()
 		poolOldToken0Bal := Token0Bal(PoolAddr) // or PositionAddr
 		poolOldToken1Bal := Token1Bal(PoolAddr)
 
@@ -240,7 +243,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 		// Collect() will decrease pool's balance
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal)
-		shouldEQ(t, pool.GetLiquidity(), poolOldLiquidity-tTargetLiquidity)
+		shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity-tTargetLiquidity)
 	}
 
 	// lp01 decreases liquidity too much => should panic
@@ -281,7 +284,7 @@ func TestCollect(t *testing.T) {
 		std.TestSetOrigCaller(lp01)
 		pool := p.GetPool(fooPath, barPath, pFee)
 
-		poolOldLiquidity := pool.GetLiquidity()
+		poolOldLiquidity := pool.PoolGetLiquidity()
 		poolOldToken0Bal := Token0Bal(PoolAddr)
 		poolOldToken1Bal := Token1Bal(PoolAddr)
 
@@ -304,7 +307,7 @@ func TestCollect(t *testing.T) {
 		// pool's balance decreases
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal-tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal-tAmount1)
-		shouldEQ(t, pool.GetLiquidity(), poolOldLiquidity)
+		shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity)
 
 		// Recipient balance increases
 		shouldEQ(t, Token0Bal(rv01), rvOldToken0Bal+tAmount0)
@@ -316,7 +319,7 @@ func TestCollect(t *testing.T) {
 		std.TestSetOrigCaller(lp01)
 		pool := p.GetPool(fooPath, barPath, pFee)
 
-		poolOldLiquidity := pool.GetLiquidity()
+		poolOldLiquidity := pool.PoolGetLiquidity()
 		poolOldToken0Bal := Token0Bal(PoolAddr)
 		poolOldToken1Bal := Token1Bal(PoolAddr)
 
@@ -338,7 +341,7 @@ func TestCollect(t *testing.T) {
 		// pool's balance decreases
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal-tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal-tAmount1)
-		shouldEQ(t, pool.GetLiquidity(), poolOldLiquidity)
+		shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity)
 
 		// Recipient balance increases
 		shouldEQ(t, Token0Bal(rv01), rvOldToken0Bal+tAmount0)
@@ -350,7 +353,7 @@ func TestCollect(t *testing.T) {
 		std.TestSetOrigCaller(lp02)
 		pool := p.GetPool(fooPath, barPath, pFee)
 
-		poolOldLiquidity := pool.GetLiquidity()
+		poolOldLiquidity := pool.PoolGetLiquidity()
 		poolOldToken0Bal := Token0Bal(PoolAddr)
 		poolOldToken1Bal := Token1Bal(PoolAddr)
 
@@ -372,7 +375,7 @@ func TestCollect(t *testing.T) {
 		// pool's balance decreases
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal-tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal-tAmount1)
-		shouldEQ(t, pool.GetLiquidity(), poolOldLiquidity)
+		shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity)
 
 		// Recipient balance increases
 		shouldEQ(t, Token0Bal(rv01), rvOldToken0Bal+tAmount0)
@@ -445,6 +448,7 @@ func TestApiGetPosition(t *testing.T) {
 	{
 		gps := ApiGetPosition(uint64(2))
 		jsonStr := gjson.Parse(gps)
+		println(jsonStr)
 		shouldEQ(t, jsonStr.Get("response.data.token_id").Int(), 2)
 		shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), 9000)
 		shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), 11000)
@@ -533,4 +537,12 @@ func isOwner(t *testing.T, tokenId uint64, addr std.Address) bool {
 
 	t.Errorf("expected owner %v, got %v", addr, owner)
 	return false
+}
+
+func Token0Bal(addr std.Address) bigint {
+	return bigint(bar.BalanceOf(a2u(addr)))
+}
+
+func Token1Bal(addr std.Address) bigint {
+	return bigint(foo.BalanceOf(a2u(addr)))
 }
