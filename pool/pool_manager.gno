@@ -36,14 +36,10 @@ func CreatePool(
 	require(initialized, "[POOl] pool_manager.gno__CreatePool() || contract must be initialized")
 	require(tokenAPath != tokenBPath, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || token pair cannot be the same__tokenAPath(%s) != tokenBPath(%s)", tokenAPath, tokenBPath))
 
-	// r3v4_xxx: check whether token pair has been deployed successfuly
-	var token0Path, token1Path string
-	if tokenAPath < tokenBPath {
-		token0Path = tokenAPath
-		token1Path = tokenBPath
-	} else {
-		token0Path = tokenBPath
-		token1Path = tokenAPath
+	if tokenBPath < tokenAPath {
+		tokenAPath, tokenBPath = tokenBPath, tokenAPath
+		tick := -(TickMathGetTickAtSqrtRatio(sqrtPriceX96))
+		sqrtPriceX96 = TickMathGetSqrtRatioAtTick(tick)
 	}
 
 	// check tickSpacing for fee
@@ -51,7 +47,7 @@ func CreatePool(
 	require(tickSpacing > 0, ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || tickSpacing(%d) > 0", tickSpacing))
 
 	// calculate poolKey
-	poolKey := GetPoolKey(token0Path, token1Path, fee)
+	poolKey := GetPoolKey(tokenAPath, tokenBPath, fee)
 
 	// check whether the pool already exist
 	pool, exist := pools[poolKey]
@@ -63,7 +59,7 @@ func CreatePool(
 		// r3v4_xxx: change address when publish
 		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(std.Address("g1vaekzh6lta047h6lta047h6lta047h6lutmjdk")), 500)
 
-		pool = newPool(token0Path, token1Path, fee, tickSpacing, sqrtPriceX96)
+		pool = newPool(tokenAPath, tokenBPath, fee, tickSpacing, sqrtPriceX96)
 		pools[poolKey] = pool
 	}
 

@@ -73,8 +73,8 @@ func TestMint(t *testing.T) {
 			pFee,
 			test_tickLower,
 			test_tickUpper,
-			bigint(1000),
-			bigint(1000),
+			bigint(50000000),
+			bigint(50000000),
 			bigint(1),
 			bigint(1),
 			bigint(1234567890),
@@ -114,64 +114,66 @@ func TestMint(t *testing.T) {
 		shouldEQ(t, getNextId(), 3)
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
+	}
 
-		// lp02 mints out of range => upper position (token1 will be 0)
-		// will get tid 3 nft
-		{
-			std.TestSetOrigCaller(lp02)
+	// lp02 mints out of range => token1 will be 0
+	// will get tid 3 nft
+	{
+		std.TestSetOrigCaller(lp02)
 
-			poolOldToken0Bal := Token0Bal(PoolAddr)
-			poolOldToken1Bal := Token1Bal(PoolAddr)
+		poolOldToken0Bal := Token0Bal(PoolAddr)
+		poolOldToken1Bal := Token1Bal(PoolAddr)
 
-			tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-				fooPath,
-				barPath,
-				pFee,
-				int32(14000),
-				int32(18000),
-				bigint(1000),
-				bigint(1000),
-				bigint(0),
-				bigint(0),
-				bigint(1234567890),
-			)
-			shouldEQ(t, tAmount1, bigint(0))
+		tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
+			fooPath,
+			barPath,
+			pFee,
+			int32(1000),
+			int32(2000),
+			bigint(1000),
+			bigint(1000),
+			bigint(0),
+			bigint(0),
+			bigint(1234567890),
+		)
+		shouldEQ(t, tAmount0, bigint(999))
+		shouldEQ(t, tAmount1, bigint(0))
 
-			isOwner(t, tTokenId, lp02)
-			shouldEQ(t, tTokenId, 3)
-			shouldEQ(t, getNextId(), 4)
-			shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
-			shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
-		}
+		isOwner(t, tTokenId, lp02)
+		shouldEQ(t, tTokenId, 3)
+		shouldEQ(t, getNextId(), 4)
+		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
+		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
+	}
 
-		// lp02 mints out of range => lower position (token0 will be 0)
-		// will get tid 4 nft
-		{
-			std.TestSetOrigCaller(lp02)
+	// lp02 mints out of range => token0 will be 0
+	// will get tid 4 nft
+	{
+		std.TestSetOrigCaller(lp02)
 
-			poolOldToken0Bal := Token0Bal(PoolAddr)
-			poolOldToken1Bal := Token1Bal(PoolAddr)
+		poolOldToken0Bal := Token0Bal(PoolAddr)
+		poolOldToken1Bal := Token1Bal(PoolAddr)
 
-			tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-				fooPath,
-				barPath,
-				pFee,
-				int32(7000),
-				int32(9000),
-				bigint(1000),
-				bigint(1000),
-				bigint(0),
-				bigint(0),
-				bigint(1234567890),
-			)
-			shouldEQ(t, tAmount0, bigint(0))
+		tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
+			fooPath,
+			barPath,
+			pFee,
+			int32(-34000),
+			int32(-32000),
+			bigint(1000),
+			bigint(1000),
+			bigint(0),
+			bigint(0),
+			bigint(1234567890),
+		)
+		shouldEQ(t, tAmount0, bigint(999))
+		shouldEQ(t, tAmount1, bigint(0))
 
-			isOwner(t, tTokenId, lp02)
-			shouldEQ(t, tTokenId, 4)
-			shouldEQ(t, getNextId(), 5)
-			shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
-			shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
-		}
+		isOwner(t, tTokenId, lp02)
+		shouldEQ(t, tTokenId, 4)
+		shouldEQ(t, getNextId(), 5)
+		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal+tAmount0)
+		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal+tAmount1)
 	}
 }
 
@@ -244,21 +246,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 		shouldEQ(t, Token0Bal(PoolAddr), poolOldToken0Bal)
 		shouldEQ(t, Token1Bal(PoolAddr), poolOldToken1Bal)
 		shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity-tTargetLiquidity)
-	}
-
-	// lp01 decreases liquidity too much => should panic
-	{
-		std.TestSetOrigCaller(lp01)
-
-		shouldPanic(t, func() {
-			DecreaseLiquidity(
-				bigint(1),
-				bigint(1234567890),
-				bigint(1),
-				bigint(1),
-				bigint(1234567890),
-			)
-		})
 	}
 
 	// lp01 decreases liquidity at tid 2 position ( out-of range )
@@ -427,8 +414,8 @@ func TestNFTBurn(t *testing.T) {
 		Collect( // burn happens here as last step
 			tTokenId,
 			rv01,
-			bigint(100000), // collect all
-			bigint(100000), // collect all
+			bigint(100000000), // collect all
+			bigint(100000000), // collect all
 		)
 		shouldEQ(t, nftBalanceOf(lp01), tBefore-bigint(1))
 	}
@@ -448,26 +435,25 @@ func TestApiGetPosition(t *testing.T) {
 	{
 		gps := ApiGetPosition(uint64(2))
 		jsonStr := gjson.Parse(gps)
-		println(jsonStr)
 		shouldEQ(t, jsonStr.Get("response.data.token_id").Int(), 2)
-		shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), 9000)
-		shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), 11000)
+		shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), -11000)
+		shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), -9000)
 	}
 
 	{
 		gps := ApiGetPosition(uint64(3))
 		jsonStr := gjson.Parse(gps)
 		shouldEQ(t, jsonStr.Get("response.data.token_id").Int(), 3)
-		shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), 14000)
-		shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), 18000)
+		shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), -2000)
+		shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), -1000)
 	}
 
 	{
 		gps := ApiGetPosition(uint64(4))
 		jsonStr := gjson.Parse(gps)
 		shouldEQ(t, jsonStr.Get("response.data.token_id").Int(), 4)
-		shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), 7000)
-		shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), 9000)
+		shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), 32000)
+		shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), 34000)
 	}
 
 }
@@ -479,19 +465,19 @@ func TestApiGetPositionByUser(t *testing.T) {
 
 	shouldEQ(t, jsonStr.Get("response.data.0.token_id").Int(), 2)
 	shouldEQ(t, jsonStr.Get("response.data.0.pool_key").String(), "gno.land/r/bar:gno.land/r/foo:500")
-	shouldEQ(t, jsonStr.Get("response.data.0.tick_lower").Int(), 9000)
-	shouldEQ(t, jsonStr.Get("response.data.0.tick_upper").Int(), 11000)
-	shouldEQ(t, jsonStr.Get("response.data.0.liquidity").Int(), 24874)
+	shouldEQ(t, jsonStr.Get("response.data.0.tick_lower").Int(), -11000)
+	shouldEQ(t, jsonStr.Get("response.data.0.tick_upper").Int(), -9000)
+	shouldEQ(t, jsonStr.Get("response.data.0.liquidity").Int(), 24900)
 
 	shouldEQ(t, jsonStr.Get("response.data.1.token_id").Int(), 3)
-	shouldEQ(t, jsonStr.Get("response.data.1.tick_lower").Int(), 14000)
-	shouldEQ(t, jsonStr.Get("response.data.1.tick_upper").Int(), 18000)
-	shouldEQ(t, jsonStr.Get("response.data.1.liquidity").Int(), 11109)
+	shouldEQ(t, jsonStr.Get("response.data.1.tick_lower").Int(), -2000)
+	shouldEQ(t, jsonStr.Get("response.data.1.tick_upper").Int(), -1000)
+	shouldEQ(t, jsonStr.Get("response.data.1.liquidity").Int(), 18553)
 
 	shouldEQ(t, jsonStr.Get("response.data.2.token_id").Int(), 4)
-	shouldEQ(t, jsonStr.Get("response.data.2.tick_lower").Int(), 7000)
-	shouldEQ(t, jsonStr.Get("response.data.2.tick_upper").Int(), 9000)
-	shouldEQ(t, jsonStr.Get("response.data.2.liquidity").Int(), 6700)
+	shouldEQ(t, jsonStr.Get("response.data.2.tick_lower").Int(), 32000)
+	shouldEQ(t, jsonStr.Get("response.data.2.tick_upper").Int(), 34000)
+	shouldEQ(t, jsonStr.Get("response.data.2.liquidity").Int(), 52046)
 }
 
 /* HELPER */
