@@ -8,7 +8,6 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/users"
 
-	// for swap
 	"gno.land/p/demo/testutils"
 )
 
