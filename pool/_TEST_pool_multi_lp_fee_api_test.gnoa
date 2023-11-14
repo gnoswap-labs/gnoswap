@@ -24,8 +24,8 @@ var (
 
 var (
 	// Common
-	fooPath = "gno.land/r/foo" // token1
-	barPath = "gno.land/r/bar" // token2
+	barPath = "gno.land/r/bar" // token1
+	fooPath = "gno.land/r/foo" // token2
 	pFee    = uint16(500)
 
 	test_tickLower       = int32(9000)
@@ -43,7 +43,7 @@ func TestCreatePool(t *testing.T) {
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 0)
 
 	std.TestSetOrigCaller(pc01)
-	CreatePool(fooPath, barPath, pFee, 130622891405341611593710811006)
+	CreatePool(barPath, fooPath, pFee, 130622891405341611593710811006)
 	std.TestSkipHeights(1)
 	// 130621891405341611593710811006 // 9999
 	// 130622891405341611593710811006 // 10000
@@ -61,7 +61,7 @@ func TestCreatePool(t *testing.T) {
 
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { CreatePool(fooPath, barPath, 500, 130621891405341611593710811006) })
+	shouldPanic(t, func() { CreatePool(barPath, fooPath, 500, 130621891405341611593710811006) })
 	std.TestSkipHeights(1)
 }
 

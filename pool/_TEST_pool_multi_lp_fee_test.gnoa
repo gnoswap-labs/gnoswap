@@ -26,8 +26,8 @@ var (
 
 var (
 	// Common
-	fooPath = "gno.land/r/foo" // token1
-	barPath = "gno.land/r/bar" // token2
+	barPath = "gno.land/r/bar" // token1
+	fooPath = "gno.land/r/foo" // token2
 	pFee    = uint16(500)
 
 	test_tickLower       = int32(9000)

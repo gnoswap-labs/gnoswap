@@ -29,7 +29,7 @@ var (
 
 	test_tickLower       = int32(9000)
 	test_tickUpper       = int32(11000)
-	test_liquidityExpect = bigint(100000000)
+	test_liquidityExpect = bigint(100_000_000)
 
 	test_tickLower2 = int32(50000)
 	test_tickUpper2 = int32(100000)
@@ -65,8 +65,8 @@ func TestMintFooBarLiquidity(t *testing.T) {
 		barPath,
 		pFee,
 		posAddr,
-		test_tickLower,
-		test_tickUpper,
+		-test_tickUpper,
+		-test_tickLower,
 		test_liquidityExpect,
 	)
 }
@@ -108,7 +108,7 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 		std.GetOrigCaller(),
 	)
 	shouldEQ(t, poolIn, bigint(16000))
-	shouldEQ(t, poolOut, bigint(-43457))
+	shouldEQ(t, poolOut, bigint(-43452))
 
 	newTr01Token1Balance := balanceOfByRegisterCall(fooPath, tr01)
 	newTr01Token0Balance := balanceOfByRegisterCall(barPath, tr01)
@@ -116,9 +116,9 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 	newPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 
 	shouldEQ(t, oldTr01Token0Balance-newTr01Token0Balance, bigint(16000))
-	shouldEQ(t, newTr01Token1Balance-oldTr01Token1Balance, bigint(43457))
+	shouldEQ(t, newTr01Token1Balance-oldTr01Token1Balance, bigint(43452))
 	shouldEQ(t, newPoolToken0Balance-oldPoolToken0Balance, bigint(16000))
-	shouldEQ(t, oldPoolToken1Balance-newPoolToken1Balance, bigint(43457))
+	shouldEQ(t, oldPoolToken1Balance-newPoolToken1Balance, bigint(43452))
 }
 
 // 7. Swap Bar:Baz Bar > Baz by tr01
@@ -166,15 +166,15 @@ func TestCollectFooBarFees(t *testing.T) {
 	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 
 	// burn 0 to collect swap fees
-	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, 0)
+	Burn(fooPath, barPath, pFee, -test_tickUpper, -test_tickLower, 0)
 
 	c0, c1 := Collect(
 		fooPath,
 		barPath,
 		pFee,
 		lp01,
-		test_tickLower,
-		test_tickUpper,
+		-test_tickUpper,
+		-test_tickLower,
 		100_000,
 		100_000,
 	)
@@ -243,8 +243,8 @@ func TestBurnFooBarLiquidity(t *testing.T) {
 		fooPath,
 		barPath,
 		pFee,
-		test_tickLower,
-		test_tickUpper,
+		-test_tickUpper,
+		-test_tickLower,
 		test_liquidityExpect,
 	)
 
@@ -296,8 +296,8 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 		barPath,
 		pFee,
 		lp01,
-		test_tickLower,
-		test_tickUpper,
+		-test_tickUpper,
+		-test_tickLower,
 		100_000,
 		100_000,
 	)

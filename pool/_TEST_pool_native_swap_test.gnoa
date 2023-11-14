@@ -36,14 +36,15 @@ var (
 	test_liquidityExpect = bigint(1000)
 )
 
-func init() {
-	println(own, "// own")
-	println(lp01, "// lp01")
-	println(tr01, "// tr01")
-	println(pc01, "// pc01")
-	println(poolAddr, "// poolAddr")
-	println(posAddr, "// posAddr")
-}
+// DEBUG - print addr
+// func init() {
+// 	println(own, "// own")
+// 	println(lp01, "// lp01")
+// 	println(tr01, "// tr01")
+// 	println(pc01, "// pc01")
+// 	println(poolAddr, "// poolAddr")
+// 	println(posAddr, "// posAddr")
+// }
 
 // 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {

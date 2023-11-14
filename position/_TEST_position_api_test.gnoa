@@ -30,8 +30,8 @@ var (
 
 var (
 	// Common
-	fooPath = "gno.land/r/foo"
 	barPath = "gno.land/r/bar"
+	fooPath = "gno.land/r/foo"
 	pFee    = uint16(500)
 
 	test_tickLower       = int32(9000)
@@ -55,7 +55,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	p.InitManual()
 
 	std.TestSetOrigCaller(pc01)
-	p.CreatePool(fooPath, barPath, pFee, 130621891405341611593710811006)
+	p.CreatePool(barPath, fooPath, pFee, 130621891405341611593710811006)
 
 	// fee
 	// 500		= 0.05% // USv3 default
@@ -64,7 +64,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { p.CreatePool(fooPath, barPath, 500, 130621891405341611593710811006) })
+	shouldPanic(t, func() { p.CreatePool(barPath, fooPath, 500, 130621891405341611593710811006) })
 }
 
 // 2. Mint LP and Get GNFT
@@ -78,8 +78,8 @@ func TestMint(t *testing.T) {
 	poolOldToken1Bal := Token1Bal(poolAddr)
 
 	tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-		fooPath,
 		barPath,
+		fooPath,
 		pFee,
 		test_tickLower,
 		test_tickUpper,

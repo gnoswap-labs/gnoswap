@@ -31,12 +31,11 @@ func Mint(
 	amount1Min bigint,
 	deadline bigint,
 ) (uint64, bigint, bigint, bigint) {
-	if token1 > token0 {
+	if token1 < token0 {
 		token0, token1 = token1, token0
 		amount0Desired, amount1Desired = amount1Desired, amount0Desired
 		amount0Min, amount1Min = amount1Min, amount0Min
-		tickLower = -tickUpper
-		tickUpper = -tickLower
+		tickLower, tickUpper = -tickUpper, -tickLower
 	}
 	// WRAP if native(ugnot) is being mint
 	wrap(token0)
