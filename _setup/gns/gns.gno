@@ -15,7 +15,7 @@ var (
 )
 
 func init() {
-	gns = grc20.NewAdminToken("Gnoswap Shares", "GNOS", 4)
+	gns = grc20.NewAdminToken("Gnoswap Token", "GNS", 4)
 
 	// for swap > staker
 	var (
@@ -32,6 +32,9 @@ func init() {
 
 	gns.Mint(ira, 50000000000)
 	gns.Approve(ira, stakerAddr, 50000000000)
+
+	// default minter
+	gns.Mint(std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"), 1000000*10000)
 
 	admin = append(admin, string(stakerAddr))
 }
