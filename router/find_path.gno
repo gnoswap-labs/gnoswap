@@ -13,7 +13,7 @@ func findSwapPaths(
 	inputTokenPath string,
 	outputTokenPath string,
 	maxHops int,
-) (swapPaths SwapPaths) {
+) string {
 	tokenPairs := TokenPairs{}
 	poolList := p.PoolGetPoolList()
 
@@ -35,7 +35,7 @@ func findSwapPaths(
 		}
 	}
 
-	swapPaths = getSwapPaths(tokenPairs, inputTokenPath, outputTokenPath, maxHops)
+	swapPaths := getSwapPaths(tokenPairs, inputTokenPath, outputTokenPath, maxHops)
 	return swapPaths
 }
 
@@ -44,8 +44,9 @@ func getSwapPaths(
 	inputTokenPath string,
 	outputTokenPath string,
 	maxHops int,
-) (swapPaths SwapPaths) {
-	swapPaths = make(SwapPaths, 0)
+) string {
+
+	swapPaths := ""
 
 	// check if there is path that starts with input
 	require(len(tokenPairs[inputTokenPath]) != 0, ufmt.Sprintf("[ROUTER] find_path.gno__getSwapPaths() || len(tokenPairs[inputTokenPath]) == 0, inputTokenPath: %s", inputTokenPath))
@@ -55,7 +56,7 @@ func getSwapPaths(
 		if strings.HasPrefix(output, outputTokenPath) {
 			outputPath, outputFee := singlePoolPathWithFeeDivide(output)
 			directPath := inputTokenPath + "," + outputFee + "," + outputPath
-			swapPaths[len(swapPaths)] = directPath // swapPaths = append(swapPaths, directPath)
+			swapPaths += directPath + "_FIN_"
 
 			tokenPairs[inputTokenPath] = removeItemFromStringArray(tokenPairs[inputTokenPath], output)
 		}
@@ -75,7 +76,7 @@ func findPath(
 	outputTokenPath string,
 	currentPath string,
 	remainingHops int,
-	swapPaths *SwapPaths,
+	swapPaths *string,
 	firstToken *string,
 ) {
 	if *firstToken == "" {
@@ -84,7 +85,7 @@ func findPath(
 
 	if remainingHops == 0 {
 		if strings.HasPrefix(currentTokenPath, outputTokenPath) {
-			swapPaths[len(*swapPaths)] = (*firstToken + "," + currentPath)
+			*swapPaths += (*firstToken + "," + currentPath) + "_FIN_"
 		}
 		return
 	}

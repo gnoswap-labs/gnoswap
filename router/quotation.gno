@@ -19,7 +19,10 @@ func quoteForAllPath(
 	maxRoutes int,
 	maxHops int,
 ) (quoterTargets []QuoterTarget) {
-	swapPaths := findSwapPaths(inputTokenPath, outputTokenPath, maxHops)
+	_swapPaths := findSwapPaths(inputTokenPath, outputTokenPath, maxHops)
+	swapPaths := strings.Split(_swapPaths, "_FIN_")
+	swapPaths = swapPaths[:len(swapPaths)-1]
+
 	swapPcts := calculatePercentages(amountSpecified, distributionPercent) // 5% - 100, 10% - 200, ...., 100% - 2000
 
 	for _, swapPath := range swapPaths {
@@ -75,7 +78,6 @@ func quoteForAllPath(
 
 				recipient:       std.GetOrigCaller(),
 				amountSpecified: quoterTarget.pctAmount,
-				minAmountOut:    1,
 			}
 
 			// if amountSpecified > 0, proceed forward
@@ -114,11 +116,11 @@ func quoteForAllPath(
 
 func calculatePercentages(amount bigint, distributionPercent int) map[int]bigint { // map[pct][value]
 	if distributionPercent > 100 {
-		distributionPercent = 5
+		panic("[ROUTER] quotation.gno__calculatePercentages() || max distributionPercent is 100")
 	}
 
 	if distributionPercent < 5 {
-		distributionPercent = 5
+		panic("[ROUTER] quotation.gno__calculatePercentages() || min distributionPercent is 5")
 	}
 
 	if !(100%distributionPercent == 0 && distributionPercent%5 == 0) {

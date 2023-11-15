@@ -56,7 +56,8 @@ func getRatiosFromBase(maxHops int) []map[string]bigint {
 	tokenList := getTokenList()
 	for _, token := range tokenList {
 		if token != BASE_TOKEN {
-			swapPaths := findSwapPaths(token, BASE_TOKEN, maxHops)
+			_swapPaths := findSwapPaths(token, BASE_TOKEN, maxHops)
+			swapPaths := strings.Split(_swapPaths, "_FIN_")
 			numSwapPaths := len(swapPaths)
 
 			thisTokenPriceX96 := bigint(0)
