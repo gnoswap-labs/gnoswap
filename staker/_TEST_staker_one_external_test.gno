@@ -46,6 +46,13 @@ func init() {
 	poolTiers["ATOM/GNOT_500"] = 3
 	poolTiers["ATOM/USDT_500"] = 3
 	poolTiers["ATOM/WETH_500"] = 3
+
+	// // DEUBG
+	// println(pc01, "// pc01")
+	// println(ci01, "// ci01")
+	// println(lp01, "// lp01")
+	// println(lp02, "// lp02")
+	// println(ira, "// ira")
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
@@ -171,6 +178,25 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/obl")
 		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 1797)
 	}
+}
+
+func TestApiGetStakes(t *testing.T) {
+	gss := ApiGetStakes()
+	jsonStr := gjson.Parse(gss)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 2)
+}
+
+func TestApiGetStakeByPool(t *testing.T) {
+	gsbp := ApiGetStakeByPool()
+	jsonStr := gjson.Parse(gsbp)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
+}
+
+func TestApiGetStakeByAddress(t *testing.T) {
+	gsba := ApiGetStakeByAddress()
+	jsonStr := gjson.Parse(gsba)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 2)
+	println(jsonStr.Get("response.data.0.g1d3crqv2lta047h6lta047h6lta047h6lnjw069"))
 }
 
 func TestUnstakeToken(t *testing.T) {
