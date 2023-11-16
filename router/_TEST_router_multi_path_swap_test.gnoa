@@ -11,9 +11,9 @@ import (
 	p "gno.land/r/pool"
 	pos "gno.land/r/position"
 
-	"gno.land/r/bar"
-	"gno.land/r/qux"
-	"gno.land/r/wugnot"
+	bar "gno.land/r/bar"
+	qux "gno.land/r/qux"
+	wugnot "gno.land/r/wugnot"
 )
 
 var (
@@ -57,11 +57,11 @@ func TestInitManual(t *testing.T) {
 func TestCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(pc01)
 
-	p.CreatePool(wugnotPath, barPath, test_fee100, 130621891405341611593710811006) // tick = 10_000, ratio = 2.7181459268252253
-	p.CreatePool(barPath, quxPath, test_fee100, 130621891405341611593710811006)    // tick = 10_000, ratio = 2.7181459268252253
+	p.CreatePool(wugnotPath, barPath, test_fee100, 130621891405341611593710811006) // tick = -9999,  ratio = x0.3679346241605614 ( 1 bar = 0.37 wugnot)
+	p.CreatePool(barPath, quxPath, test_fee100, 130621891405341611593710811006)    // tick = 10_000, ratio = x2.7181459268252253
 
-	p.CreatePool(wugnotPath, barPath, test_fee500, 101729702841318637793976746270) // tick =  5_000, ratio = 1.648680055931176
-	p.CreatePool(barPath, quxPath, test_fee500, 101729702841318637793976746270)    // tick =  5_000, ratio = 1.648680055931176
+	p.CreatePool(wugnotPath, barPath, test_fee500, 101729702841318637793976746270) // tick =  -4999, ratio = x0.6066064767400504 ( 1 bar = 0.60 wugnot)
+	p.CreatePool(barPath, quxPath, test_fee500, 101729702841318637793976746270)    // tick =  5_000, ratio = x1.648680055931176
 	// findSwapPaths("gno.land/r/wugnot", "gno.land/r/qux")                           // 2 paths
 	// wugnot_qux_100
 
@@ -77,10 +77,10 @@ func TestPositionMint(t *testing.T) {
 	testBanker.IssueCoin(std.GetOrigCaller(), "ugnot", 20000001)
 
 	{
-		oldWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 		oldBarBalance := bar.BalanceOf(a2u(poolAddr))
-		shouldEQ(t, oldWugnotBalance, 0)
+		oldWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 		shouldEQ(t, oldBarBalance, 0)
+		shouldEQ(t, oldWugnotBalance, 0)
 
 		// simulate transfer & decrase
 		std.TestSetOrigSend(std.Coins{{"ugnot", 10000000}}, nil)
@@ -92,16 +92,16 @@ func TestPositionMint(t *testing.T) {
 		shouldNEQ(t, amount0, bigint(0))
 		shouldNEQ(t, amount1, bigint(0))
 
-		newWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 		newBarBalance := bar.BalanceOf(a2u(poolAddr))
-		shouldEQ(t, newBarBalance, uint64(amount0))    // 3678978
-		shouldEQ(t, newWugnotBalance, uint64(amount1)) // 9999999
+		newWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
+		shouldEQ(t, newBarBalance, uint64(amount0))
+		shouldEQ(t, newWugnotBalance, uint64(amount1))
 	}
 
 	{
 		oldBarBalance := bar.BalanceOf(a2u(poolAddr))
 		oldQuxBalance := qux.BalanceOf(a2u(poolAddr))
-		shouldEQ(t, oldBarBalance, 3678978)
+		shouldEQ(t, oldBarBalance, 9999999)
 		shouldEQ(t, oldQuxBalance, 0)
 
 		tokenId, liquidity, amount0, amount1 := pos.Mint(barPath, quxPath, test_fee100, int32(9000), int32(11000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
@@ -112,15 +112,15 @@ func TestPositionMint(t *testing.T) {
 
 		newBarBalance := bar.BalanceOf(a2u(poolAddr))
 		newQuxBalance := qux.BalanceOf(a2u(poolAddr))
-		shouldEQ(t, newBarBalance, uint64(amount0)+3678978) // 7357956
-		shouldEQ(t, newQuxBalance, uint64(amount1))         // 9999999
+		shouldEQ(t, newBarBalance, uint64(amount0+9999999))
+		shouldEQ(t, newQuxBalance, uint64(amount1))
 	}
 
 	{
-		oldWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 		oldBarBalance := bar.BalanceOf(a2u(poolAddr))
-		shouldEQ(t, oldWugnotBalance, 9999999)
-		shouldEQ(t, oldBarBalance, 7357956)
+		oldWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
+		shouldEQ(t, oldBarBalance, 13678977)
+		shouldEQ(t, oldWugnotBalance, 3686529)
 
 		// simulate transfer & decrase
 		std.TestSetOrigSend(std.Coins{{"ugnot", 10000000}}, nil)
@@ -132,16 +132,16 @@ func TestPositionMint(t *testing.T) {
 		shouldNEQ(t, amount0, bigint(0))
 		shouldNEQ(t, amount1, bigint(0))
 
-		newWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 		newBarBalance := bar.BalanceOf(a2u(poolAddr))
-		shouldEQ(t, newBarBalance, uint64(amount0)+7357956)    // 13423414
-		shouldEQ(t, newWugnotBalance, uint64(amount1)+9999999) // 19999998
+		newWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
+		shouldEQ(t, newBarBalance, uint64(amount0+13678977))
+		shouldEQ(t, newWugnotBalance, uint64(amount1+3686529))
 	}
 
 	{
 		oldBarBalance := bar.BalanceOf(a2u(poolAddr))
 		oldQuxBalance := qux.BalanceOf(a2u(poolAddr))
-		shouldEQ(t, oldBarBalance, 13423414)
+		shouldEQ(t, oldBarBalance, 23678976)
 		shouldEQ(t, oldQuxBalance, 9999999)
 
 		tokenId, liquidity, amount0, amount1 := pos.Mint(barPath, quxPath, test_fee500, int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
@@ -152,8 +152,8 @@ func TestPositionMint(t *testing.T) {
 
 		newBarBalance := bar.BalanceOf(a2u(poolAddr))
 		newQuxBalance := qux.BalanceOf(a2u(poolAddr))
-		shouldEQ(t, newBarBalance, uint64(amount0)+13423414) // 19488872
-		shouldEQ(t, newQuxBalance, uint64(amount1)+9999999)  // 19999998
+		shouldEQ(t, newBarBalance, uint64(amount0)+23678976)
+		shouldEQ(t, newQuxBalance, uint64(amount1)+9999999)
 	}
 }
 
@@ -177,6 +177,7 @@ func TestBestSwapExactInMultiPath(t *testing.T) {
 		quxPath,            // outputToken
 		"EXACT_IN",         // swapType
 		bigint(swapAmount), // amountSpecified
+		906300,             // minOrMax ~ minReceived
 		0,                  // sqrtPriceLimitX96
 		5,                  // distributionPercent
 		10,                 // maxRoutes
@@ -211,12 +212,13 @@ func TestBestSwapExactOutMultiPath(t *testing.T) {
 	std.TestSetOrigSend(std.Coins{{"ugnot", 366350}}, nil)
 	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 366350)
 
-	swapAmount := 987_654
+	swapAmount := 654_321
 	BestSwap(
 		wugnotPath,         // inputToken
 		quxPath,            // outputToken
 		"EXACT_OUT",        // swapType
 		bigint(swapAmount), // amountSpecified
+		243700,             // minOrMax ~ maxSent
 		0,                  // sqrtPriceLimitX96
 		5,                  // distributionPercent
 		10,                 // maxRoutes
@@ -228,7 +230,7 @@ func TestBestSwapExactOutMultiPath(t *testing.T) {
 	poolNewWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 	poolNewQuxBalance := qux.BalanceOf(a2u(poolAddr))
 
-	shouldEQ(t, poolOldQuxBalance-987654, poolNewQuxBalance)
+	shouldEQ(t, poolOldQuxBalance-654321, poolNewQuxBalance)
 }
 
 /* HELPER */

@@ -34,7 +34,7 @@ func (p ProposalMint) isValid() bool {
 
 func (p ProposalMint) execute() error {
 	if !p.isValid() {
-		return errors.New("unimplemented: only GNOS token is supported")
+		return errors.New("unimplemented: only GNS token is supported")
 	}
 
 	mint(p.Recipient, p.Amount)

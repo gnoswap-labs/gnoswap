@@ -74,8 +74,10 @@ func _swapDry(
 	recipient std.Address,
 	sqrtPriceLimitX96 bigint,
 	data SwapCallbackData,
-) (amountResult bigint) {
+) (amountOut bigint) {
 	zeroForOne := data.tokenIn < data.tokenOut
+
+	amountIn := bigint(0)
 
 	if sqrtPriceLimitX96 == 0 {
 		if zeroForOne {
@@ -102,19 +104,23 @@ func _swapDry(
 
 	if amountSpecified > 0 {
 		if zeroForOne { // return amount, user recvs ~= pool sends
-			amountResult = -amount1
+			amountIn = amount0
+			amountOut = -amount1
 		} else {
-			amountResult = -amount0
+			amountIn = amount1
+			amountOut = -amount0
 		}
 	} else { // return amount, user sends ~= pool recvs
 		if zeroForOne {
-			amountResult = amount0
+			amountIn = amount0
+			amountOut = -amount1
 		} else {
-			amountResult = amount1
+			amountIn = amount1
+			amountOut = -amount0
 		}
 	}
 
-	return amountResult
+	return amountOut
 }
 
 func abs(x bigint) uint64 {

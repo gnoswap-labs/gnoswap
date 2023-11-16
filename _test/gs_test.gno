@@ -140,7 +140,7 @@ func TestPositionMint(t *testing.T) {
 		testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 10000000)
 
 		// Mint
-		tokenId, liquidity, amount0, amount1 := pos.Mint(barPath, wugnotPath, uint16(100), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
+		tokenId, liquidity, amount0, amount1 := pos.Mint(wugnotPath, barPath, uint16(100), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
 		std.TestSkipHeights(1)
 
 		shouldEQ(t, gnft.OwnerOf(tid(1)), lp01)
@@ -164,7 +164,7 @@ func TestPositionMint(t *testing.T) {
 
 		poolOldBarBalance := bar.BalanceOf(a2u(poolAddr))
 		poolOldBazBalance := baz.BalanceOf(a2u(poolAddr))
-		shouldEQ(t, poolOldBarBalance, 6065458)
+		shouldEQ(t, poolOldBarBalance, 9999999)
 		shouldEQ(t, poolOldBazBalance, 0)
 
 		lp02OldBarBalance := bar.BalanceOf(a2u(lp02))
@@ -307,6 +307,7 @@ func TestRotuerBestSwapExactInSinglePath(t *testing.T) {
 		bazPath,
 		"EXACT_IN",
 		bigint(swapAmount),
+		100,
 		0,
 		5,
 		10,
@@ -338,8 +339,8 @@ func TestRotuerBestSwapExactOutputMultiPath(t *testing.T) {
 	poolOldWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 	poolOldQuxBalance := qux.BalanceOf(a2u(poolAddr))
 
-	std.TestSetOrigSend(std.Coins{{"ugnot", 366350}}, nil)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 366350)
+	std.TestSetOrigSend(std.Coins{{"ugnot", 1000000}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1000000)
 
 	swapAmount := 987_654
 	rou.BestSwap(
@@ -347,8 +348,9 @@ func TestRotuerBestSwapExactOutputMultiPath(t *testing.T) {
 		quxPath,
 		"EXACT_OUT",
 		bigint(swapAmount),
+		1000000,
 		0,
-		5,
+		20,
 		10,
 		5,
 	)
@@ -358,7 +360,7 @@ func TestRotuerBestSwapExactOutputMultiPath(t *testing.T) {
 	poolNewWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 	poolNewQuxBalance := qux.BalanceOf(a2u(poolAddr))
 
-	shouldEQ(t, poolOldQuxBalance-987654, poolNewQuxBalance)
+	shouldEQ(t, poolOldQuxBalance-987_654, poolNewQuxBalance)
 	shouldEQ(t, poolNewWugnotBalance > poolOldWugnotBalance, true)
 }
 
@@ -383,7 +385,7 @@ func TestPositionCollect01(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		shouldEQ(t, cAmount0, bigint(0))  // bar
-		shouldEQ(t, cAmount1, bigint(13)) // wugnot
+		shouldEQ(t, cAmount1, bigint(52)) // wugnot
 
 		poolNewNativeBalance := ugnotBalance(poolAddr)
 		poolNewWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))

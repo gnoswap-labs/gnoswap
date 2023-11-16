@@ -230,7 +230,7 @@ pool-create:
 # Position
 mint-01:
 	$(info ************ [POSITION - 1] mint bar & ugnot // tick range 4000 ~ 6000 // by lp01 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/bar" -args "gno.land/r/wugnot" -args 100 -args 4000 -args 6000 -args 10000000 -args 10000000 -args 0 -args 0 -args $(TX_EXPIRE) -send "10000000ugnot" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/wugnot" -args "gno.land/r/bar" -args 100 -args 4000 -args 6000 -args 10000000 -args 10000000 -args 0 -args 0 -args $(TX_EXPIRE) -send "10000000ugnot" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo
 
 mint-02:
@@ -282,12 +282,12 @@ set-protocol-fee:
 
 swap-exact-in-single:
 	$(info ************ [ROUTER] Swap 123_456 BAR to BAZ // singlePath  ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/router -func BestSwap -args "gno.land/r/bar" -args "gno.land/r/baz" -args "EXACT_IN" -args 123456 -args 0 -args 5 -args 10 -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/router -func BestSwap -args "gno.land/r/bar" -args "gno.land/r/baz" -args "EXACT_IN" -args 123456 -args 0 -args 0 -args 5 -args 10 -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
 	@echo
 
 swap-exact-out-multi:
 	$(info ************ [ROUTER] Swap NATIVE ugnot to 987_654 QUX // multiPath ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/router -func BestSwap -args "gno.land/r/wugnot" -args "gno.land/r/qux" -args "EXACT_OUT" -args 987654 -args 0 -args 20 -args 10 -args 5 -send "366350ugnot" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/router -func BestSwap -args "gno.land/r/wugnot" -args "gno.land/r/qux" -args "EXACT_OUT" -args 987654 -args 1000000 -args 0 -args 20 -args 10 -args 5 -send "1000000ugnot" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
 	@echo
 
 collect-lp01:

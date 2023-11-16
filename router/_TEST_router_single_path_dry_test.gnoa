@@ -73,6 +73,7 @@ func TestBestSwapDryExactIn(t *testing.T) {
 		"gno.land/r/qux", // outputTokenPath
 		"EXACT_IN",       // swapType
 		123_456,          // amountSpecified
+		0,                // minOrMax
 		0,                // sqrtPriceLimitX96
 		5,                // distributionPercent
 		10,               // maxRoutes
@@ -91,6 +92,7 @@ func TestBestSwapDryExactOut(t *testing.T) {
 		"gno.land/r/qux", // outputTokenPath
 		"EXACT_OUT",      // swapType
 		123_456,          // amountSpecified
+		0,                // minOrMax
 		0,                // sqrtPriceLimitX96
 		5,                // distributionPercent
 		10,               // maxRoutes
