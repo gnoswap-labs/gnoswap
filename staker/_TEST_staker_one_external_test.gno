@@ -199,6 +199,25 @@ func TestApiGetStakeByAddress(t *testing.T) {
 	println(jsonStr.Get("response.data.0.g1d3crqv2lta047h6lta047h6lta047h6lnjw069"))
 }
 
+func TestApiGetStakes(t *testing.T) {
+	gss := ApiGetStakes()
+	jsonStr := gjson.Parse(gss)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 2)
+}
+
+func TestApiGetStakeByPool(t *testing.T) {
+	gsbp := ApiGetStakeByPool()
+	jsonStr := gjson.Parse(gsbp)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
+}
+
+func TestApiGetStakeByAddress(t *testing.T) {
+	gsba := ApiGetStakeByAddress()
+	jsonStr := gjson.Parse(gsba)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 2)
+	println(jsonStr.Get("response.data.0.g1d3crqv2lta047h6lta047h6lta047h6lnjw069"))
+}
+
 func TestUnstakeToken(t *testing.T) {
 	{
 		std.TestSetOrigCaller(lp01)

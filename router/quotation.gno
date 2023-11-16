@@ -78,6 +78,7 @@ func quoteForAllPath(
 
 				recipient:       std.GetOrigCaller(),
 				amountSpecified: quoterTarget.pctAmount,
+				minOrMax:        0,
 			}
 
 			// if amountSpecified > 0, proceed forward

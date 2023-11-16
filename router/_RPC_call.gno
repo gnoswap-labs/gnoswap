@@ -13,8 +13,8 @@ func BestSwapDry(
 	outputToken string,
 	swapType string,
 	amountSpecified bigint,
+	minOrMax bigint,
 	sqrtPriceLimitX96 bigint,
-
 	distributionPercent int,
 	maxRoutes int,
 	maxHops int,
@@ -46,7 +46,7 @@ func BestSwapDry(
 	}
 
 	// get quotes
-	quotes := quoteForAllPath( // sored by Ratio DESC
+	quotes := quoteForAllPath( // sorted by Ratio DESC
 		inputToken,
 		outputToken,
 		amountSpecified,
@@ -110,6 +110,7 @@ func BestSwapDry(
 				tokenOut:          output,
 				fee:               fee,
 				amountSpecified:   toSwap,
+				minOrMax:          0, // dry swap => no need to check slippage
 				sqrtPriceLimitX96: sqrtPriceLimitX96,
 			}
 			amountOut := singleSwapDry(singleParams)
@@ -135,7 +136,7 @@ func BestSwapDry(
 				fee:             fee,
 				recipient:       std.GetOrigCaller(),
 				amountSpecified: toSwap,
-				minAmountOut:    1,
+				minOrMax:        0, // dry swap => no need to check slippage
 			}
 			amountOut := multiSwapDry(swapParams, 0, numPools, finalSwap.targetPath) // iterate here
 			outputEstimated += amountOut

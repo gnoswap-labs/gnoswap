@@ -12,8 +12,8 @@ func BestSwap(
 	outputToken string,
 	swapType string,
 	amountSpecified bigint,
+	minOrMax bigint,
 	sqrtPriceLimitX96 bigint,
-
 	distributionPercent int,
 	maxRoutes int,
 	maxHops int,
@@ -49,7 +49,6 @@ func BestSwap(
 		outputToken,
 		amountSpecified,
 		sqrtPriceLimitX96,
-
 		distributionPercent,
 		maxRoutes,
 		maxHops,
@@ -86,6 +85,7 @@ func BestSwap(
 				tokenOut:          output,
 				fee:               fee,
 				amountSpecified:   toSwap,
+				minOrMax:          minOrMax,
 				sqrtPriceLimitX96: sqrtPriceLimitX96,
 			}
 			amountOut := singleSwap(singleParams)
@@ -105,13 +105,14 @@ func BestSwap(
 
 			if amountSpecified > 0 {
 				input, output, fee := getSwapData(finalSwap.targetPath, 0)
+
 				swapParams := SwapParams{
 					tokenIn:         input,
 					tokenOut:        output,
 					fee:             fee,
 					recipient:       std.GetOrigCaller(),
 					amountSpecified: toSwap,
-					minAmountOut:    1,
+					minOrMax:        minOrMax,
 				}
 
 				amountOut := multiSwap(swapParams, 0, numPools, finalSwap.targetPath) // iterate here
@@ -124,7 +125,7 @@ func BestSwap(
 					fee:             fee,
 					recipient:       std.GetOrigCaller(),
 					amountSpecified: toSwap,
-					minAmountOut:    1,
+					minOrMax:        minOrMax,
 				}
 
 				amountOut := multiSwapNegative(swapParams, numPools, finalSwap.targetPath) // iterate here

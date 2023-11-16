@@ -2,6 +2,8 @@ package router
 
 import (
 	"std"
+
+	"gno.land/p/demo/ufmt"
 )
 
 type SwapParams struct {
@@ -11,7 +13,7 @@ type SwapParams struct {
 
 	recipient       std.Address
 	amountSpecified bigint
-	minAmountOut    bigint
+	minOrMax        bigint
 }
 
 func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath string) (amountOut bigint) {
@@ -48,12 +50,12 @@ func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath strin
 			params.fee = nextFee
 		} else {
 			amountOut = params.amountSpecified
+			if amountOut < params.minOrMax {
+				panic(ufmt.Sprintf("[ROUTER] multiSwap() || Too few receive(expectedMin:%d, actual:%d)", params.minOrMax, amountOut))
+			}
+
 			return amountOut
 		}
-	}
-
-	if amountOut < params.minAmountOut {
-		panic("Too few receive")
 	}
 }
 
@@ -118,14 +120,14 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (amount
 
 		if currentPoolIndex == 0 {
 			amountOut = resultAmount
+
+			if amountOut > params.minOrMax {
+				panic(ufmt.Sprintf("[ROUTER] multiSwapNegative() || Too many request(expectedMax:%d, actual:%d)", params.minOrMax, amountOut))
+			}
 			return amountOut
 		} else {
 			payer = std.DerivePkgAddr("gno.land/r/router")
 		}
-	}
-
-	if amountOut < params.minAmountOut {
-		panic("Too few receive")
 	}
 }
 
@@ -163,13 +165,11 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 			params.fee = nextFee
 		} else {
 			amountOut = params.amountSpecified
+			// it is dry swap => no need to check slippage
 			return amountOut
 		}
 	}
 
-	if amountOut < params.minAmountOut {
-		panic("Too few receive")
-	}
 }
 
 func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath string) (amountOut bigint) {
@@ -212,11 +212,8 @@ func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath stri
 			params.amountSpecified = -params.amountSpecified
 		} else {
 			amountOut = params.amountSpecified
+			// it is dry swap => no need to check slippage
 			return amountOut
 		}
-	}
-
-	if amountOut < params.minAmountOut {
-		panic("Too few receive")
 	}
 }

@@ -121,6 +121,7 @@ func TestBestSwapExactInSinglePath(t *testing.T) {
 		quxPath,            // outputToken
 		"EXACT_IN",         // swapType
 		bigint(swapAmount), // amountSpecified
+		334500,             // minOrMax
 		0,                  // sqrtPriceLimitX96
 		5,                  // distributionPercent
 		10,                 // maxRoutes
@@ -155,6 +156,7 @@ func TestBestSwapExactOutSinglePath(t *testing.T) {
 		quxPath,            // outputToken
 		"EXACT_OUT",        // swapType
 		bigint(swapAmount), // amountSpecified
+		400000,             // minOrMax
 		0,                  // sqrtPriceLimitX96
 		5,                  // distributionPercent
 		10,                 // maxRoutes
