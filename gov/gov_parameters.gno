@@ -18,7 +18,7 @@ func Init() {
 	setVotePeriod(259200)
 	// 1 day initially
 	setDepositPeriod(86400)
-	// 10_000_000 GNOS initially
+	// 10_000_000 GNS initially
 	setDepositMinimum(uint64(10_000_000))
 }
 

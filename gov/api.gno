@@ -30,7 +30,7 @@ func MakeDeposit(proposalID uint64, amount uint64) {
 	caller := std.GetOrigCaller()
 	///////////// XX
 	// commented out, replace `gov` with the address of the gov contract
-	// gnos.Transfer(users.AddressOrName(caller), gov, amount)
+	// gns.Transfer(users.AddressOrName(caller), gov, amount)
 
 	proposal := &proposalsMap[proposalID]
 	proposal.deposit(caller, amount)
@@ -171,7 +171,7 @@ func submitProposal(
 
 	// XXXXXXXX
 	// commented out, replace `gov` with the address of the gov contract
-	// gnos.Transfer(origin, gov, initialDeposit)
+	// gns.Transfer(origin, gov, initialDeposit)
 	proposal := newProposal(
 		proposalID,
 		origin,
