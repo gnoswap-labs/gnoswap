@@ -8,17 +8,15 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-func BestSwapDry(
+func EstimateRouteQuotes(
 	inputToken string,
 	outputToken string,
-	swapType string,
 	amountSpecified bigint,
-	minOrMax bigint,
-	sqrtPriceLimitX96 bigint,
-	distributionPercent int,
-	maxRoutes int,
-	maxHops int,
+	swapType string,
+	strPoolArr string,
+	divideBy int,
 ) string {
+	require(amountSpecified != 0, "[ROUTER] _RPC_call.gno__EstimateRouteQuotes() || amountSpecified == 0")
 
 	switch swapType {
 	case "EXACT_IN":
@@ -26,169 +24,87 @@ func BestSwapDry(
 	case "EXACT_OUT":
 		amountSpecified = -amountSpecified
 	default:
-		panic("[ROUTER] _RPC_call.gno__BestSwapDry() || unknown swapType")
+		panic("[ROUTER] _RPC_call.gno__EstimateRouteQuotes() || unknown swapType")
 	}
 
-	// maxRoutes maximum is capped to 7
-	if maxRoutes > 7 {
-		maxRoutes = 7
-	}
-	if maxRoutes < 1 {
-		maxRoutes = 1
+	if 100%divideBy != 0 && divideBy%5 == 0 {
+		panic("[ROUTER] _RPC_call.gno__EstimateRouteQuotes() || divideBy should be 5, 10, 20, 25, 50, 100")
 	}
 
-	// maxHops maximum is capped to 3
-	if maxHops > 3 {
-		maxHops = 3
-	}
-	if maxHops < 1 {
-		maxHops = 1
-	}
+	estimatedRoutes := []EstimatedRoute{}
 
-	// get quotes
-	quotes := quoteForAllPath( // sorted by Ratio DESC
-		inputToken,
-		outputToken,
-		amountSpecified,
-		sqrtPriceLimitX96,
+	possiblePaths := strings.Split(strPoolArr, ",")
+	for _, possiblePath := range possiblePaths {
+		numHops := strings.Count(possiblePath, "*POOL*") + 1
 
-		distributionPercent,
-		maxRoutes,
-		maxHops,
-	)
-	require(len(quotes) > 0, ufmt.Sprintf("[ROUTER] _RPC_call.gno__gno__BestSwapDry() || len(quotes) == 0, inputToken:%s, outputToken:%s", inputToken, outputToken))
+		outputEstimated := bigint(0)
+		estimatedRoute := EstimatedRoute{}
+		for i := divideBy; i <= 100; i += divideBy { // 5%, 10%, 15%, ... 100%
+			if numHops == 1 {
+				// SINGLE
+				input, output, fee := getDataForSinglePath(possiblePath)
+				singleParams := SingleSwapParams{
+					tokenIn:         input,
+					tokenOut:        output,
+					fee:             fee,
+					amountSpecified: amountSpecified / bigint(100) * bigint(i),
+				}
+				amountResult := singleSwapDry(singleParams)
+				outputEstimated = amountResult
+			} else if 2 <= numHops && numHops <= 3 {
+				// MULTI
+				if swapType == "EXACT_IN" { // EXACT_IN
+					input, output, fee := getDataForMultiPath(possiblePath, 0) // first data
+					swapParams := SwapParams{
+						tokenIn:         input,
+						tokenOut:        output,
+						fee:             fee,
+						recipient:       std.GetOrigCaller(),
+						amountSpecified: amountSpecified / bigint(100) * bigint(i),
+					}
+					amountResult := multiSwapDry( // iterate here
+						swapParams,   // SwapParams
+						0,            // currentPoolIndex
+						numHops,      // numPools
+						possiblePath, // swapPath
+					)
+					outputEstimated = amountResult
 
-	bestSwaps := findBestPaths(quotes)
-	require(len(bestSwaps) > 0, "[ROUTER] _RPC_call.gno__BestSwapDry() || len(bestSwaps) == 0")
-
-	finalSwaps := removeDuplication(bestSwaps)
-	require(len(finalSwaps) > 0, "[ROUTER] _RPC_call.gno__BestSwapDry() || len(finalSwaps) == 0")
-
-	rpcReturnBestSwap := RpcReturnBestSwap{}
-	rpcReturnBestSwap.SwapType = swapType
-
-	rpcRoutes := []RpcRoute{}
-
-	remainingAmount := amountSpecified
-	outputEstimated := bigint(0)
-
-	for i, finalSwap := range finalSwaps {
-		maxRoutes -= 1
-
-		numPools := strings.Count(finalSwap.targetPath, ",") / 2
-		splitPaths := multiTargetPathToList(finalSwap.targetPath)
-
-		rpcRoute := RpcRoute{
-			SwapPct:   finalSwap.pct,
-			NumPools:  numPools,
-			SwapPaths: splitPaths,
-		}
-		rpcRoutes = append(rpcRoutes, rpcRoute)
-
-		rpcReturnBestSwap.TotalPct += finalSwap.pct
-
-		if rpcReturnBestSwap.TotalPct == 100 {
-			rpcReturnBestSwap.Possible = true
-		}
-
-		// ESTIMATE Amount
-		// SINGLE
-		if numPools == 1 {
-			toSwap := bigint(0)
-
-			// isFinal
-			if i == len(finalSwaps)-1 { // last swap routes
-				toSwap = remainingAmount
+				} else { // EXACT_OUT
+					input, output, fee := getDataForMultiPath(possiblePath, numHops-1) // last data
+					swapParams := SwapParams{
+						tokenIn:         input,
+						tokenOut:        output,
+						fee:             fee,
+						recipient:       std.GetOrigCaller(),
+						amountSpecified: amountSpecified / bigint(100) * bigint(i),
+					}
+					amountResult := multiSwapNegativeDry( // iterate here
+						swapParams,   // SwapParams
+						numHops-1,    // currentPoolIndex (backward)
+						possiblePath, // swapPath
+					)
+					outputEstimated = amountResult
+				}
 			} else {
-				remainingAmount -= finalSwap.pctAmount
-				toSwap = finalSwap.pctAmount
+				// more than 4 hops
+				// do nothing
 			}
 
-			input, output, fee := getSwapData(finalSwap.targetPath, 0)
-			singleParams := SingleSwapParams{
-				tokenIn:           input,
-				tokenOut:          output,
-				fee:               fee,
-				amountSpecified:   toSwap,
-				minOrMax:          0, // dry swap => no need to check slippage
-				sqrtPriceLimitX96: sqrtPriceLimitX96,
+			estimatedRoute = EstimatedRoute{
+				Pools:        possiblePath,
+				Quote:        i,
+				InputAmount:  amountSpecified / bigint(100) * bigint(i),
+				OutputAmount: outputEstimated,
 			}
-			amountOut := singleSwapDry(singleParams)
-			outputEstimated += amountOut
-		}
-
-		// MULTI
-		if numPools >= 1 && numPools <= 3 {
-			toSwap := bigint(0)
-
-			// isFinal
-			if i == len(finalSwaps)-1 { // last swap routes
-				toSwap = remainingAmount
-			} else {
-				remainingAmount -= finalSwap.pctAmount
-				toSwap = finalSwap.pctAmount
-			}
-
-			input, output, fee := getSwapData(finalSwap.targetPath, 0)
-			swapParams := SwapParams{
-				tokenIn:         input,
-				tokenOut:        output,
-				fee:             fee,
-				recipient:       std.GetOrigCaller(),
-				amountSpecified: toSwap,
-				minOrMax:        0, // dry swap => no need to check slippage
-			}
-			amountOut := multiSwapDry(swapParams, 0, numPools, finalSwap.targetPath) // iterate here
-			outputEstimated += amountOut
-		}
-
-		if maxRoutes == 0 {
-			break
+			estimatedRoutes = append(estimatedRoutes, estimatedRoute)
 		}
 	}
 
-	rpcReturnBestSwap.RpcRoutes = rpcRoutes
-	rpcReturnBestSwap.TotalRoutes = len(rpcRoutes)
-
-	if rpcReturnBestSwap.Possible == true {
-		rpcReturnBestSwap.AmountResult = outputEstimated
-
-		if rpcReturnBestSwap.SwapType == "EXACT_IN" {
-			rpcReturnBestSwap.AmountSpecified = amountSpecified
-		} else {
-			rpcReturnBestSwap.AmountSpecified = -amountSpecified
-		}
-	}
-
-	rr, err := json.Marshal(rpcReturnBestSwap)
+	rr, err := json.Marshal(estimatedRoutes)
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] _RPC_call.gno__BestSwapDry() || json.Marshal error with %v", err))
+		panic(ufmt.Sprintf("[ROUTER] _RPC_call.gno__EstimateRouteQuotes() || json.Marshal error with %v", err))
 	}
 
 	return string(rr)
-}
-
-func multiTargetPathToList(path string) []string {
-	numPools := strings.Count(path, ",") / 2
-	splitData := strings.Split(path, ",")
-
-	fullPaths := []string{}
-	for i := 0; i < numPools; i++ {
-		j := 0
-		if i == 0 {
-			j = i
-		} else {
-			j = i * 2
-		}
-
-		token0Path := splitData[j]   // 0 > 2 > 4
-		fee := splitData[j+1]        // 1 > 3 > 5
-		token1Path := splitData[j+2] // 2 > 4 > 6
-
-		fullPath := token0Path + ":" + token1Path + ":" + fee
-
-		fullPaths = append(fullPaths, fullPath)
-	}
-
-	return fullPaths
 }

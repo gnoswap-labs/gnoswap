@@ -7,135 +7,209 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-func BestSwap(
+func DrySwapRoute(
 	inputToken string,
 	outputToken string,
-	swapType string,
 	amountSpecified bigint,
-	minOrMax bigint,
-	sqrtPriceLimitX96 bigint,
-	distributionPercent int,
-	maxRoutes int,
-	maxHops int,
-) {
+	swapType string,
+	strRouteArr string,
+	quotes []int,
+) bigint {
+	require(amountSpecified != 0, "[ROUTER] router.gno__DrySwapRoute() || amountSpecified == 0")
+
 	switch swapType {
 	case "EXACT_IN":
 		amountSpecified = amountSpecified
 	case "EXACT_OUT":
 		amountSpecified = -amountSpecified
 	default:
-		panic("[ROUTER] router.gno__BestSwap() || unknown swapType")
+		panic("[ROUTER] router.gno__DrySwapRoute() || unknown swapType")
 	}
 
-	// maxRoutes maximum is capped to 7
-	if maxRoutes > 7 {
-		maxRoutes = 7
+	// check route length
+	routes := strings.Split(strRouteArr, ",")
+	require(len(routes) != 0, "[ROUTER] router.gno__DrySwapRoute() || len(routes) == 0")
+
+	// check if routes are up to 7
+	require(len(routes) <= 7, "[ROUTER] router.gno__DrySwapRoute() || len(routes) > 7")
+
+	// check quotes length
+	require(len(quotes) != 0, "[ROUTER] router.gno__DrySwapRoute() || len(quotes) == 0")
+
+	// check if routes length and quotes length are same
+	require(len(routes) == len(quotes), "[ROUTER] router.gno__DrySwapRoute() || len(routes) != len(quotes)")
+
+	// check if quotes are up to 100%
+	quotesSum := 0
+	for _, quote := range quotes {
+		quotesSum += quote
 	}
-	if maxRoutes < 1 {
-		maxRoutes = 1
-	}
+	require(quotesSum == 100, "[ROUTER] router.gno__DrySwapRoute() || quotesSum != 100")
 
-	// maxHops maximum is capped to 3
-	if maxHops > 3 {
-		maxHops = 3
-	}
-	if maxHops < 1 {
-		maxHops = 1
-	}
+	resultAmount := bigint(0)
+	for i, route := range routes {
+		numHops := strings.Count(route, "*POOL*") + 1
 
-	// get quotes
-	quotes := quoteForAllPath( // sorted by ratio DESC
-		inputToken,
-		outputToken,
-		amountSpecified,
-		sqrtPriceLimitX96,
-		distributionPercent,
-		maxRoutes,
-		maxHops,
-	)
-	require(len(quotes) != 0, ufmt.Sprintf("[ROUTER] router.gno__BestSwap() || len(quotes) == 0, inputToken:%s, outputToken:%s", inputToken, outputToken))
+		// check if route hop is up to 3
+		require(numHops <= 3, "[ROUTER] router.gno__DrySwapRoute() || numHops > 3")
 
-	bestSwaps := findBestPaths(quotes)
-	require(len(bestSwaps) != 0, "[ROUTER] router.gno__BestSwap() || len(bestSwaps) == 0")
+		toSwap := amountSpecified / bigint(100) * bigint(quotes[i])
 
-	finalSwaps := removeDuplication(bestSwaps)
-	require(len(finalSwaps) != 0, "[ROUTER] router.gno__BestSwap() || len(finalSwaps) == 0")
-
-	remainingAmount := amountSpecified
-
-	for i, finalSwap := range finalSwaps {
-		numPools := strings.Count(finalSwap.targetPath, ",") / 2
-		require(numPools >= 1 && numPools <= 3, ufmt.Sprintf("[ROUTER] router.gno__BestSwap() || numPools should 1 ~ 3, but found %d", numPools))
-
-		// SINGLE
-		if numPools == 1 {
-			toSwap := bigint(0)
-
-			// isFinal
-			if i == len(finalSwaps)-1 { // last swap routes
-				toSwap = remainingAmount
-			} else {
-				remainingAmount -= finalSwap.pctAmount
-				toSwap = finalSwap.pctAmount
-			}
-
-			input, output, fee := getSwapData(finalSwap.targetPath, 0)
+		if numHops == 1 {
+			// SINGLE
+			input, output, fee := getDataForSinglePath(route)
 			singleParams := SingleSwapParams{
-				tokenIn:           input,
-				tokenOut:          output,
-				fee:               fee,
-				amountSpecified:   toSwap,
-				minOrMax:          minOrMax,
-				sqrtPriceLimitX96: sqrtPriceLimitX96,
+				tokenIn:         input,
+				tokenOut:        output,
+				fee:             fee,
+				amountSpecified: toSwap,
 			}
-			amountOut := singleSwap(singleParams)
-		}
-
-		// MULTI
-		if numPools >= 2 && numPools <= 3 {
-			toSwap := bigint(0)
-
-			// isFinal
-			if i == len(finalSwaps)-1 { // last swap routes
-				toSwap = remainingAmount
-			} else {
-				remainingAmount -= finalSwap.pctAmount
-				toSwap = finalSwap.pctAmount
-			}
-
-			if amountSpecified > 0 {
-				input, output, fee := getSwapData(finalSwap.targetPath, 0)
-
+			amountResult := singleSwapDry(singleParams)
+			resultAmount += amountResult
+		} else if 2 <= numHops && numHops <= 3 {
+			// MULTI
+			if swapType == "EXACT_IN" { // EXACT_IN
+				input, output, fee := getDataForMultiPath(route, 0) // first data
 				swapParams := SwapParams{
 					tokenIn:         input,
 					tokenOut:        output,
 					fee:             fee,
 					recipient:       std.GetOrigCaller(),
 					amountSpecified: toSwap,
-					minOrMax:        minOrMax,
 				}
-
-				amountOut := multiSwap(swapParams, 0, numPools, finalSwap.targetPath) // iterate here
-				// return amountOut
+				amountResult := multiSwapDry( // iterate here
+					swapParams, // SwapParams
+					0,          // currentPoolIndex
+					numHops,    // numPools
+					route,      // swapPath
+				)
+				resultAmount += amountResult
 			} else {
-				input, output, fee := getSwapData(finalSwap.targetPath, 0)
+				input, output, fee := getDataForMultiPath(route, numHops-1) // last data
 				swapParams := SwapParams{
 					tokenIn:         input,
 					tokenOut:        output,
 					fee:             fee,
 					recipient:       std.GetOrigCaller(),
 					amountSpecified: toSwap,
-					minOrMax:        minOrMax,
 				}
-
-				amountOut := multiSwapNegative(swapParams, numPools, finalSwap.targetPath) // iterate here
-				// return amountOut
+				amountResult := multiSwapNegativeDry( // iterate here
+					swapParams, // SwapParams
+					numHops-1,  // currentPoolIndex (backward)
+					route,      // swapPath
+				)
+				resultAmount += amountResult
 			}
+		} else {
+			panic("[ROUTER] router.gno__DrySwapRoute() || numHops should be 1 ~ 3")
 		}
-
-		if maxRoutes == 0 && remainingAmount > 0 {
-			panic(ufmt.Sprintf("[ROUTER] router.gno__BestSwap() || couldn't finish swap while reaching maximum length of routes"))
-		}
-		maxRoutes -= 1
 	}
+	return resultAmount
+}
+
+func SwapRoute(
+	inputToken string,
+	outputToken string,
+	amountSpecified bigint,
+	swapType string,
+	strRouteArr string,
+	quotes []int,
+	tokenAmountLimit bigint,
+) bigint {
+	require(amountSpecified != 0, "[ROUTER] router.gno__SwapRoute() || amountSpecified == 0")
+
+	switch swapType {
+	case "EXACT_IN":
+		amountSpecified = amountSpecified
+	case "EXACT_OUT":
+		amountSpecified = -amountSpecified
+	default:
+		panic("[ROUTER] router.gno__SwapRoute() || unknown swapType")
+	}
+
+	// check route length
+	routes := strings.Split(strRouteArr, ",")
+	require(len(routes) != 0, "[ROUTER] router.gno__SwapRoute() || len(routes) == 0")
+
+	// check if routes are up to 7
+	require(len(routes) <= 7, "[ROUTER] router.gno__SwapRoute() || len(routes) > 7")
+
+	// check quotes length
+	require(len(quotes) != 0, "[ROUTER] router.gno__SwapRoute() || len(quotes) == 0")
+
+	// check if routes length and quotes length are same
+	require(len(routes) == len(quotes), "[ROUTER] router.gno__SwapRoute() || len(routes) != len(quotes)")
+
+	// check if quotes are up to 100%
+	quotesSum := 0
+	for _, quote := range quotes {
+		quotesSum += quote
+	}
+	require(quotesSum == 100, "[ROUTER] router.gno__SwapRoute() || quotesSum != 100")
+
+	resultAmount := bigint(0)
+	for i, route := range routes {
+		numHops := strings.Count(route, "*POOL*") + 1
+
+		// check if route hop is up to 3
+		require(numHops <= 3, "[ROUTER] router.gno__SwapRoute() || numHops > 3")
+
+		toSwap := amountSpecified / bigint(100) * bigint(quotes[i])
+
+		if numHops == 1 {
+			// SINGLE
+			input, output, fee := getDataForSinglePath(route)
+			singleParams := SingleSwapParams{
+				tokenIn:         input,
+				tokenOut:        output,
+				fee:             fee,
+				amountSpecified: toSwap,
+			}
+			amountResult := singleSwap(singleParams)
+			resultAmount += amountResult
+		} else if 2 <= numHops && numHops <= 3 {
+			// MULTI
+			if swapType == "EXACT_IN" { // EXACT_IN
+				input, output, fee := getDataForMultiPath(route, 0) // first data
+				swapParams := SwapParams{
+					tokenIn:         input,
+					tokenOut:        output,
+					fee:             fee,
+					recipient:       std.GetOrigCaller(),
+					amountSpecified: toSwap,
+				}
+				amountResult := multiSwap( // iterate here
+					swapParams, // SwapParams
+					0,          // currentPoolIndex
+					numHops,    // numPools
+					route,      // swapPath
+				)
+				resultAmount += amountResult
+			} else {
+				input, output, fee := getDataForMultiPath(route, numHops-1) // last data
+				swapParams := SwapParams{
+					tokenIn:         input,
+					tokenOut:        output,
+					fee:             fee,
+					recipient:       std.GetOrigCaller(),
+					amountSpecified: toSwap,
+				}
+				amountResult := multiSwapNegative( // iterate here
+					swapParams, // SwapParams
+					numHops-1,  // currentPoolIndex (backward)
+					route,      // swapPath
+				)
+				resultAmount += amountResult
+			}
+		} else {
+			panic("[ROUTER] router.gno__SwapRoute() || numHops should be 1 ~ 3")
+		}
+	}
+
+	if swapType == "EXACT_IN" {
+		require(tokenAmountLimit <= resultAmount, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received (expected minimum output:%d, actual output:%d)", tokenAmountLimit, resultAmount))
+	} else { // EXACT_OUT
+		require(resultAmount <= tokenAmountLimit, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too much spend (expected maximum input:%d, actual input:%d)", tokenAmountLimit, resultAmount))
+	}
+	return resultAmount
 }

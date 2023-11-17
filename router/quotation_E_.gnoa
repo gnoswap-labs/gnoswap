@@ -19,23 +19,23 @@ func quoteForAllPath(
 	maxRoutes int,
 	maxHops int,
 ) (quoterTargets []QuoterTarget) {
-	_swapPaths := findSwapPaths(inputTokenPath, outputTokenPath, maxHops)
-	swapPaths := strings.Split(_swapPaths, "_FIN_")
-	swapPaths = swapPaths[:len(swapPaths)-1]
+	// _swapPaths := findSwapPaths(inputTokenPath, outputTokenPath, maxHops)
+	// swapPaths := strings.Split(_swapPaths, "_FIN_")
+	// swapPaths = swapPaths[:len(swapPaths)-1]
 
-	swapPcts := calculatePercentages(amountSpecified, distributionPercent) // 5% - 100, 10% - 200, ...., 100% - 2000
+	// swapPcts := calculatePercentages(amountSpecified, distributionPercent) // 5% - 100, 10% - 200, ...., 100% - 2000
 
-	for _, swapPath := range swapPaths {
-		for pct, pctAmount := range swapPcts {
-			quoterTarget := QuoterTarget{
-				pct:            pct,
-				pctAmount:      pctAmount,
-				targetPath:     swapPath,
-				resultRatioX96: bigint(0), // will update later
-			}
-			quoterTargets = append(quoterTargets, quoterTarget)
-		}
-	}
+	// for _, swapPath := range swapPaths {
+	// 	for pct, pctAmount := range swapPcts {
+	// 		quoterTarget := QuoterTarget{
+	// 			pct:            pct,
+	// 			pctAmount:      pctAmount,
+	// 			targetPath:     swapPath,
+	// 			resultRatioX96: bigint(0), // will update later
+	// 		}
+	// 		quoterTargets = append(quoterTargets, quoterTarget)
+	// 	}
+	// }
 
 	// DrySwap to calculate
 	for i, quoterTarget := range quoterTargets {

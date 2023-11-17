@@ -33,12 +33,9 @@ type RpcRoute struct {
 	SwapPaths []string `json:"swapPaths"`
 }
 
-type RpcReturnBestSwap struct {
-	TotalRoutes     int        `json:"totalRoutes"`
-	TotalPct        int        `json:"totalPct"`
-	Possible        bool       `json:"possible"`
-	SwapType        string     `json:"swapType"`
-	AmountSpecified bigint     `json:"amountSpecified"`
-	AmountResult    bigint     `json:"amountResult"`
-	RpcRoutes       []RpcRoute `json:"rpcRoutes"`
+type EstimatedRoute struct {
+	Pools        string
+	Quote        int
+	InputAmount  bigint
+	OutputAmount bigint
 }

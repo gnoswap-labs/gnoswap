@@ -2,19 +2,7 @@ package router
 
 import (
 	"std"
-
-	"gno.land/p/demo/ufmt"
 )
-
-type SwapParams struct {
-	tokenIn  string
-	tokenOut string
-	fee      uint16
-
-	recipient       std.Address
-	amountSpecified bigint
-	minOrMax        bigint
-}
 
 func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath string) (amountOut bigint) {
 	payer := std.GetOrigCaller() // user
@@ -44,16 +32,12 @@ func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath strin
 		if currentPoolIndex < numPools {
 			payer = std.DerivePkgAddr("gno.land/r/router")
 
-			nextInput, nextOutput, nextFee := getSwapData(swapPath, currentPoolIndex)
+			nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
 			params.tokenIn = nextInput
 			params.tokenOut = nextOutput
 			params.fee = nextFee
 		} else {
 			amountOut = params.amountSpecified
-			if amountOut < params.minOrMax {
-				panic(ufmt.Sprintf("[ROUTER] multiSwap() || Too few receive(expectedMin:%d, actual:%d)", params.minOrMax, amountOut))
-			}
-
 			return amountOut
 		}
 	}
@@ -65,32 +49,33 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (amount
 
 	// CALCULATE BACKWARD INFO
 	for {
-		currentPoolIndex++
-		backIn, backOut, backFee := getSwapData(swapPath, numPools-currentPoolIndex)
+		// currentPoolIndex++
 		wantedSingle := singleSwapDry(
 			SingleSwapParams{
-				tokenIn:           backIn,
-				tokenOut:          backOut,
-				fee:               backFee,
-				amountSpecified:   params.amountSpecified,
-				sqrtPriceLimitX96: 0,
+				tokenIn:         params.tokenIn,
+				tokenOut:        params.tokenOut,
+				fee:             params.fee,
+				amountSpecified: params.amountSpecified,
 			},
 		)
 
 		thisSwap := SingleSwapParams{
-			tokenIn:           backIn,
-			tokenOut:          backOut,
-			fee:               backFee,
-			amountSpecified:   params.amountSpecified,
-			sqrtPriceLimitX96: 0,
+			tokenIn:         params.tokenIn,
+			tokenOut:        params.tokenOut,
+			fee:             params.fee,
+			amountSpecified: params.amountSpecified,
 		}
 		swapInfo = append(swapInfo, thisSwap)
 
 		if currentPoolIndex == numPools {
 			break
-			// return
 		} else {
+			nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
+			params.tokenIn = nextInput
+			params.tokenOut = nextOutput
+			params.fee = nextFee
 			params.amountSpecified = -wantedSingle
+			currentPoolIndex++
 		}
 	}
 
@@ -119,14 +104,10 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (amount
 		)
 
 		if currentPoolIndex == 0 {
-			amountOut = resultAmount
-
-			if amountOut > params.minOrMax {
-				panic(ufmt.Sprintf("[ROUTER] multiSwapNegative() || Too many request(expectedMax:%d, actual:%d)", params.minOrMax, amountOut))
-			}
 			return amountOut
 		} else {
 			payer = std.DerivePkgAddr("gno.land/r/router")
+			amountOut = resultAmount // return first swap input amount
 		}
 	}
 }
@@ -159,13 +140,12 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 		if currentPoolIndex < numPool {
 			payer = std.DerivePkgAddr("gno.land/r/router")
 
-			nextInput, nextOutput, nextFee := getSwapData(swapPath, currentPoolIndex)
+			nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
 			params.tokenIn = nextInput
 			params.tokenOut = nextOutput
 			params.fee = nextFee
 		} else {
 			amountOut = params.amountSpecified
-			// it is dry swap => no need to check slippage
 			return amountOut
 		}
 	}
@@ -174,14 +154,10 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 
 func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath string) (amountOut bigint) {
 	payer := std.DerivePkgAddr("gno.land/r/router")
-
-	params.tokenIn, params.tokenOut, params.fee = getSwapData(swapPath, currentPoolIndex)
-
 	numPools := currentPoolIndex
 
 	for {
 		var recipient std.Address
-		currentPoolIndex--
 
 		if currentPoolIndex == numPools-1 {
 			recipient = params.recipient
@@ -200,9 +176,10 @@ func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath stri
 				payer,           // payer
 			},
 		)
+		currentPoolIndex--
 
 		if currentPoolIndex != -1 {
-			nextInput, nextOutput, nextFee := getSwapData(swapPath, currentPoolIndex)
+			nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
 			params.tokenIn = nextInput
 			params.tokenOut = nextOutput
 			params.fee = nextFee
@@ -212,7 +189,6 @@ func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath stri
 			params.amountSpecified = -params.amountSpecified
 		} else {
 			amountOut = params.amountSpecified
-			// it is dry swap => no need to check slippage
 			return amountOut
 		}
 	}
