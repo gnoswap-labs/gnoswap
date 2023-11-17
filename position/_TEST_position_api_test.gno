@@ -30,8 +30,8 @@ var (
 
 var (
 	// Common
-	barPath = "gno.land/r/bar"
 	fooPath = "gno.land/r/foo"
+	barPath = "gno.land/r/bar"
 	pFee    = uint16(500)
 
 	test_tickLower       = int32(9000)
@@ -55,7 +55,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	p.InitManual()
 
 	std.TestSetOrigCaller(pc01)
-	p.CreatePool(barPath, fooPath, pFee, 130621891405341611593710811006)
+	p.CreatePool(fooPath, barPath, pFee, 130621891405341611593710811006)
 
 	// fee
 	// 500		= 0.05% // USv3 default
@@ -64,39 +64,18 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { p.CreatePool(barPath, fooPath, 500, 130621891405341611593710811006) })
+	shouldPanic(t, func() { p.CreatePool(fooPath, barPath, 500, 130621891405341611593710811006) })
 }
 
 // 2. Mint LP and Get GNFT
 func TestMint(t *testing.T) {
-	// lp01 mints
-	// will get tid 1 nft
-
+	// lp01 mints => will get tid 1 nft
 	std.TestSetOrigCaller(lp01)
+	Mint(fooPath, barPath, pFee, int32(9000), int32(11000), bigint(1_000_000), bigint(1_000_000), bigint(1), bigint(1), bigint(1234567890))
 
-	poolOldToken0Bal := Token0Bal(poolAddr)
-	poolOldToken1Bal := Token1Bal(poolAddr)
-
-	tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-		barPath,
-		fooPath,
-		pFee,
-		test_tickLower,
-		test_tickUpper,
-		bigint(1_000_000),
-		bigint(1_000_000),
-		bigint(1),
-		bigint(1),
-		bigint(1234567890),
-	)
-
-	isOwner(t, tTokenId, lp01)
-	shouldEQ(t, tTokenId, 1)
-	shouldEQ(t, getNextId(), 2)
-
-	shouldEQ(t, Token0Bal(poolAddr), poolOldToken0Bal+tAmount0)
-	shouldEQ(t, Token1Bal(poolAddr), poolOldToken1Bal+tAmount1)
-
+	// lp01 mints => will get tid 2 nft
+	std.TestSetOrigCaller(lp01)
+	Mint(fooPath, barPath, pFee, int32(4000), int32(6000), bigint(1_000_000), bigint(1_000_000), bigint(0), bigint(0), bigint(1234567890))
 }
 
 func TestSwap(t *testing.T) {
@@ -119,10 +98,10 @@ func TestSwap(t *testing.T) {
 func TestApiGetPositions(t *testing.T) {
 	gpss := ApiGetPositions()
 	jsonStr := gjson.Parse(gpss)
-	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 2)
 }
 
-func TestApiGetMintedPosition(t *testing.T) {
+func TestApiGetPosition(t *testing.T) {
 	// burn 0 to collect swap fee
 	std.TestSetOrigCaller(lp01)
 	DecreaseLiquidity(1, 0, 0, 0, 99999999999)
@@ -131,22 +110,36 @@ func TestApiGetMintedPosition(t *testing.T) {
 	jsonStr := gjson.Parse(gps)
 
 	shouldEQ(t, jsonStr.Get("response.data.token_id").Int(), 1)
-	shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), 9000)
-	shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), 11000)
-	shouldEQ(t, jsonStr.Get("response.data.fee_growth_inside_0_last_x128").String(), "1696306226460823699404841786742325")
-	shouldEQ(t, jsonStr.Get("response.data.fee_growth_inside_1_last_x128").String(), "0")
-	shouldEQ(t, jsonStr.Get("response.data.tokens_owed_0").Int(), 61)
+	shouldEQ(t, jsonStr.Get("response.data.pool_key").String(), "gno.land/r/bar:gno.land/r/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), -11000)
+	shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), -9000)
+	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 12450086)
+	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 670022)
+	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 492046)
+	shouldEQ(t, jsonStr.Get("response.data.tokens_owed_0").Int(), 62)
 	shouldEQ(t, jsonStr.Get("response.data.tokens_owed_1").Int(), 0)
+	shouldEQ(t, jsonStr.Get("response.data.fee_growth_inside_0_last_x128").String(), "1721898878129767392626251759883537")
+	shouldEQ(t, jsonStr.Get("response.data.fee_growth_inside_1_last_x128").String(), "0")
 }
 
 func TestApiGetPositionByUser(t *testing.T) {
 	gpu := ApiGetPositionByUser(lp01.String())
 	jsonStr := gjson.Parse(gpu)
-	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 2)
 
 	shouldEQ(t, jsonStr.Get("response.data.0.token_id").Int(), 1)
-	shouldEQ(t, jsonStr.Get("response.data.0.pool_key").String(), "gno.land/r/bar:gno.land/r/foo:500")
-	shouldEQ(t, jsonStr.Get("response.data.0.address").String(), lp01.String())
+
+	shouldEQ(t, jsonStr.Get("response.data.1.token_id").Int(), 2)
+	shouldEQ(t, jsonStr.Get("response.data.1.pool_key").String(), "gno.land/r/bar:gno.land/r/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data.1.tick_lower").Int(), -6000)
+	shouldEQ(t, jsonStr.Get("response.data.1.tick_upper").Int(), -4000)
+	shouldEQ(t, jsonStr.Get("response.data.1.liquidity").Int(), 7785250)
+	shouldEQ(t, jsonStr.Get("response.data.1.token0_balance").Int(), 999999)
+	shouldEQ(t, jsonStr.Get("response.data.1.token1_balance").Int(), 0)
+	shouldEQ(t, jsonStr.Get("response.data.1.tokens_owed_0").Int(), 0)
+	shouldEQ(t, jsonStr.Get("response.data.1.tokens_owed_1").Int(), 0)
+	shouldEQ(t, jsonStr.Get("response.data.1.fee_growth_inside_0_last_x128").String(), "0")
+	shouldEQ(t, jsonStr.Get("response.data.1.fee_growth_inside_1_last_x128").String(), "0")
 }
 
 /* HELPER */

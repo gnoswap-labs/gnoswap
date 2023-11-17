@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 
 	"gno.land/p/demo/ufmt"
+
+	p "gno.land/r/pool"
 )
 
 type ApiQueryBase struct {
@@ -55,10 +57,12 @@ type SinglePosition struct {
 	TickLower                int32  `json:"tick_lower"`
 	TickUpper                int32  `json:"tick_upper"`
 	Liquidity                bigint `json:"liquidity"`
-	FeeGrowthInside0LastX128 bigint `json:"fee_growth_inside_0_last_x128"`
-	FeeGrowthInside1LastX128 bigint `json:"fee_growth_inside_1_last_x128"`
+	Token0Balance            bigint `json:"token0_balance"`
+	Token1Balance            bigint `json:"token1_balance"`
 	TokensOwed0              bigint `json:"tokens_owed_0"`
 	TokensOwed1              bigint `json:"tokens_owed_1"`
+	FeeGrowthInside0LastX128 bigint `json:"fee_growth_inside_0_last_x128"`
+	FeeGrowthInside1LastX128 bigint `json:"fee_growth_inside_1_last_x128"`
 }
 
 type ResponseGetPosition struct {
@@ -79,6 +83,18 @@ func ApiGetPosition(key uint64) string { // key is tokenId
 		Timestamp: GetTimestamp(),
 	}
 
+	pool := p.GetPoolFromPoolKey(position.poolKey)
+	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
+	lowerX96 := p.TickMathGetSqrtRatioAtTick(position.tickLower)
+	upperX96 := p.TickMathGetSqrtRatioAtTick(position.tickUpper)
+
+	token0Balance, token1Balance := liquidityAmountsGetAmountsForLiquidity(
+		currentX96,
+		lowerX96,
+		upperX96,
+		position.liquidity,
+	)
+
 	r := ResponseGetPosition{
 		Stat: qb,
 		Response: struct {
@@ -91,10 +107,12 @@ func ApiGetPosition(key uint64) string { // key is tokenId
 				TickLower:                position.tickLower,
 				TickUpper:                position.tickUpper,
 				Liquidity:                position.liquidity,
-				FeeGrowthInside0LastX128: position.feeGrowthInside0LastX128,
-				FeeGrowthInside1LastX128: position.feeGrowthInside1LastX128,
+				Token0Balance:            token0Balance,
+				Token1Balance:            token1Balance,
 				TokensOwed0:              position.tokensOwed0,
 				TokensOwed1:              position.tokensOwed1,
+				FeeGrowthInside0LastX128: position.feeGrowthInside0LastX128,
+				FeeGrowthInside1LastX128: position.feeGrowthInside1LastX128,
 			},
 		},
 	}
@@ -107,45 +125,49 @@ func ApiGetPosition(key uint64) string { // key is tokenId
 	return string(rr)
 }
 
-type ApiPosition struct {
-	Address     string `json:"address"`
-	TokenID     uint64 `json:"token_id"`
-	PoolKey     string `json:"pool_key"`
-	TickLower   int32  `json:"tick_lower"`
-	TickUpper   int32  `json:"tick_upper"`
-	Liquidity   bigint `json:"liquidity"`
-	TokensOwed0 bigint `json:"tokens_owed_0"`
-	TokensOwed1 bigint `json:"tokens_owed_1"`
-}
-
 type ResponseGetUserPositions struct {
 	Stat     ApiQueryBase `json:"stat"`
 	Response struct {
-		Data []ApiPosition `json:"data"`
+		Data []SinglePosition `json:"data"`
 	} `json:"response"`
 }
 
 func ApiGetPositionByUser(addr string) string {
-	userPositions := []ApiPosition{}
+	userPositions := []SinglePosition{}
 
-	for k, v := range positions {
-		plo := v.operator.String()
-		if plo != addr {
+	for token_id, position := range positions {
+		po := position.operator.String() // position owner
+		if po != addr {
 			continue
 		} else {
-			plk := v.poolKey
+			pool := p.GetPoolFromPoolKey(position.poolKey)
+			currentX96 := pool.PoolGetSlot0SqrtPriceX96()
+			lowerX96 := p.TickMathGetSqrtRatioAtTick(position.tickLower)
+			upperX96 := p.TickMathGetSqrtRatioAtTick(position.tickUpper)
 
-			ap := ApiPosition{
-				Address:     addr,
-				TokenID:     k,
-				PoolKey:     plk,
-				TickLower:   v.tickLower,
-				TickUpper:   v.tickUpper,
-				Liquidity:   v.liquidity,
-				TokensOwed0: v.tokensOwed0,
-				TokensOwed1: v.tokensOwed1,
+			token0Balance, token1Balance := liquidityAmountsGetAmountsForLiquidity(
+				currentX96,
+				lowerX96,
+				upperX96,
+				position.liquidity,
+			)
+
+			userPosition := SinglePosition{
+				Operator:      addr,
+				TokenID:       token_id,
+				PoolKey:       position.poolKey,
+				TickLower:     position.tickLower,
+				TickUpper:     position.tickUpper,
+				Liquidity:     position.liquidity,
+				Token0Balance: token0Balance,
+				Token1Balance: token1Balance,
+				TokensOwed0:   position.tokensOwed0,
+				TokensOwed1:   position.tokensOwed1,
+
+				FeeGrowthInside0LastX128: position.feeGrowthInside0LastX128,
+				FeeGrowthInside1LastX128: position.feeGrowthInside1LastX128,
 			}
-			userPositions = append(userPositions, ap)
+			userPositions = append(userPositions, userPosition)
 		}
 	}
 
@@ -157,7 +179,7 @@ func ApiGetPositionByUser(addr string) string {
 	r := ResponseGetUserPositions{
 		Stat: qb,
 		Response: struct {
-			Data []ApiPosition `json:"data"`
+			Data []SinglePosition `json:"data"`
 		}{
 			Data: userPositions,
 		},
