@@ -20,6 +20,8 @@ type EstimatedRoute struct {
 	OutputAmount bigint
 }
 
+type SwapType string
+
 // SINGLE SWAP
 type SingleSwapParams struct {
 	tokenIn         string
