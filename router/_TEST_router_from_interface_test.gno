@@ -116,7 +116,7 @@ func TestDrySwapRouteExactIn(t *testing.T) {
 		bigint(10000000), // amountSpecified
 		"EXACT_IN",       // swapType
 		"gno.land/r/bar:gno.land/r/qux:100,gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100", // strRouteArr
-		[]int{10, 90}, // quotes
+		"10,90", // quotes
 	)
 	shouldEQ(t, resultAmount, bigint(69377564))
 }
@@ -129,7 +129,7 @@ func TestDrySwapRouteExactOut(t *testing.T) {
 		bigint(888888), // amountSpecified
 		"EXACT_OUT",    // swapType
 		"gno.land/r/bar:gno.land/r/qux:100,gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100", // strRouteArr
-		[]int{70, 30}, // quotes
+		"70,30", // quotes
 	)
 	shouldEQ(t, resultAmount, bigint(139576))
 }
@@ -154,8 +154,8 @@ func TestSwapRouteExactIn(t *testing.T) {
 		bigint(10000000), // amountSpecified
 		"EXACT_IN",       // swapType
 		"gno.land/r/bar:gno.land/r/qux:100,gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100", // strRouteArr
-		[]int{10, 90}, // quotes
-		123_456,       // tokenAmountLimit
+		"10,90", // quotes
+		123_456, // tokenAmountLimit
 	)
 
 	tr01NewBar := bar.BalanceOf(a2u(tr01))
@@ -193,8 +193,8 @@ func TestSwapRouteExactOut(t *testing.T) {
 		bigint(888888), // amountSpecified
 		"EXACT_OUT",    // swapType
 		"gno.land/r/bar:gno.land/r/qux:100,gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100", // strRouteArr
-		[]int{70, 30}, // quotes
-		300000,        // tokenAmountLimit
+		"70,30", // quotes
+		300000,  // tokenAmountLimit
 	)
 
 	tr01NewBar := bar.BalanceOf(a2u(tr01))

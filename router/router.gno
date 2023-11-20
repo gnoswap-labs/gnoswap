@@ -2,6 +2,7 @@ package router
 
 import (
 	"std"
+	"strconv"
 	"strings"
 
 	"gno.land/p/demo/ufmt"
@@ -12,8 +13,8 @@ func DrySwapRoute(
 	outputToken string,
 	amountSpecified bigint,
 	swapType string,
-	strRouteArr string,
-	quotes []int,
+	strRouteArr string, // []string
+	quoteArr string, // []int
 ) bigint {
 	require(amountSpecified != 0, "[ROUTER] router.gno__DrySwapRoute() || amountSpecified == 0")
 
@@ -26,34 +27,31 @@ func DrySwapRoute(
 		panic("[ROUTER] router.gno__DrySwapRoute() || unknown swapType")
 	}
 
-	// check route length
+	// check route length ( should be 1 ~ 7 )
 	routes := strings.Split(strRouteArr, ",")
-	require(len(routes) != 0, "[ROUTER] router.gno__DrySwapRoute() || len(routes) == 0")
-
-	// check if routes are up to 7
-	require(len(routes) <= 7, "[ROUTER] router.gno__DrySwapRoute() || len(routes) > 7")
-
-	// check quotes length
-	require(len(quotes) != 0, "[ROUTER] router.gno__DrySwapRoute() || len(quotes) == 0")
+	require(1 <= len(routes) && len(routes) <= 7, ufmt.Sprintf("[ROUTER] router.gno__DrySwapRoute() || len(routes) should be 1 ~ 7 (len(routes):%d)", len(routes)))
 
 	// check if routes length and quotes length are same
+	quotes := strings.Split(quoteArr, ",")
 	require(len(routes) == len(quotes), "[ROUTER] router.gno__DrySwapRoute() || len(routes) != len(quotes)")
 
 	// check if quotes are up to 100%
 	quotesSum := 0
 	for _, quote := range quotes {
-		quotesSum += quote
+		intQuote, _ := strconv.Atoi(quote)
+		quotesSum += intQuote
 	}
 	require(quotesSum == 100, "[ROUTER] router.gno__DrySwapRoute() || quotesSum != 100")
 
 	resultAmount := bigint(0)
 	for i, route := range routes {
 		numHops := strings.Count(route, "*POOL*") + 1
+		quote, _ := strconv.Atoi(quotes[i])
 
 		// check if route hop is up to 3
 		require(numHops <= 3, "[ROUTER] router.gno__DrySwapRoute() || numHops > 3")
 
-		toSwap := amountSpecified / bigint(100) * bigint(quotes[i])
+		toSwap := amountSpecified / bigint(100) * bigint(quote)
 
 		if numHops == 1 {
 			// SINGLE
@@ -112,8 +110,8 @@ func SwapRoute(
 	outputToken string,
 	amountSpecified bigint,
 	swapType string,
-	strRouteArr string,
-	quotes []int,
+	strRouteArr string, // []string
+	quoteArr string, // []int
 	tokenAmountLimit bigint,
 ) bigint {
 	require(amountSpecified != 0, "[ROUTER] router.gno__SwapRoute() || amountSpecified == 0")
@@ -132,23 +130,26 @@ func SwapRoute(
 	require(1 <= len(routes) && len(routes) <= 7, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || len(routes) should be 1 ~ 7 (len(routes):%d)", len(routes)))
 
 	// check if routes length and quotes length are same
+	quotes := strings.Split(quoteArr, ",")
 	require(len(routes) == len(quotes), "[ROUTER] router.gno__SwapRoute() || len(routes) != len(quotes)")
 
 	// check if quotes are up to 100%
 	quotesSum := 0
 	for _, quote := range quotes {
-		quotesSum += quote
+		intQuote, _ := strconv.Atoi(quote)
+		quotesSum += intQuote
 	}
 	require(quotesSum == 100, "[ROUTER] router.gno__SwapRoute() || quotesSum != 100")
 
 	resultAmount := bigint(0)
 	for i, route := range routes {
 		numHops := strings.Count(route, "*POOL*") + 1
+		quote, _ := strconv.Atoi(quotes[i])
 
 		// check if route hop is up to 3
 		require(numHops <= 3, "[ROUTER] router.gno__SwapRoute() || numHops > 3")
 
-		toSwap := amountSpecified / bigint(100) * bigint(quotes[i])
+		toSwap := amountSpecified / bigint(100) * bigint(quote)
 
 		if numHops == 1 {
 			// SINGLE

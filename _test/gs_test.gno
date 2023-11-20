@@ -291,8 +291,8 @@ func TestPoolSetFeeProtocol(t *testing.T) {
 	shouldEQ(t, tmpPool.PoolGetSlot0FeeProtocol(), bigint(134))
 }
 
-// 7. [TC - ROUTER] BestSwap ExactIn Single ( bar -> baz )
-func TestRotuerBestSwapExactInSinglePath(t *testing.T) {
+// 7. [TC - ROUTER] SwapRoute ExactIn Single ( bar -> baz )
+func TestRotuerSwapRouteExactInSinglePath(t *testing.T) {
 	std.TestSetPrevRealm("gno.land/r/router")
 	std.TestSetOrigCaller(tr01)
 
@@ -302,16 +302,14 @@ func TestRotuerBestSwapExactInSinglePath(t *testing.T) {
 	poolOldBazBalance := baz.BalanceOf(a2u(poolAddr))
 
 	swapAmount := 123_456
-	rou.BestSwap(
+	rou.SwapRoute(
 		barPath,
 		bazPath,
-		"EXACT_IN",
 		bigint(swapAmount),
-		100,
-		0,
-		5,
-		10,
-		1,
+		"EXACT_IN",
+		"gno.land/r/bar:gno.land/r/baz:100",
+		"100",
+		234_567,
 	)
 
 	tr01NewBarBalance := bar.BalanceOf(a2u(tr01))
@@ -325,8 +323,8 @@ func TestRotuerBestSwapExactInSinglePath(t *testing.T) {
 	shouldEQ(t, poolNewBazBalance < poolOldBazBalance, true)
 }
 
-// 8. [TC - ROUTER] BestSwap ExactOut Multi ( wugnot -> qux )
-func TestRotuerBestSwapExactOutputMultiPath(t *testing.T) {
+// 8. [TC - ROUTER] SwapRoute ExactOut Multi ( wugnot -> qux )
+func TestRotuerSwapRouteExactOutputMultiPath(t *testing.T) {
 	std.TestSetPrevRealm("gno.land/r/router")
 	std.TestSetOrigCaller(tr01)
 
@@ -343,7 +341,7 @@ func TestRotuerBestSwapExactOutputMultiPath(t *testing.T) {
 	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1000000)
 
 	swapAmount := 987_654
-	rou.BestSwap(
+	rou.SwapRoute(
 		wugnotPath,
 		quxPath,
 		"EXACT_OUT",
