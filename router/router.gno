@@ -127,15 +127,9 @@ func SwapRoute(
 		panic("[ROUTER] router.gno__SwapRoute() || unknown swapType")
 	}
 
-	// check route length
+	// check route length ( should be 1 ~ 7 )
 	routes := strings.Split(strRouteArr, ",")
-	require(len(routes) != 0, "[ROUTER] router.gno__SwapRoute() || len(routes) == 0")
-
-	// check if routes are up to 7
-	require(len(routes) <= 7, "[ROUTER] router.gno__SwapRoute() || len(routes) > 7")
-
-	// check quotes length
-	require(len(quotes) != 0, "[ROUTER] router.gno__SwapRoute() || len(quotes) == 0")
+	require(1 <= len(routes) && len(routes) <= 7, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || len(routes) should be 1 ~ 7 (len(routes):%d)", len(routes)))
 
 	// check if routes length and quotes length are same
 	require(len(routes) == len(quotes), "[ROUTER] router.gno__SwapRoute() || len(routes) != len(quotes)")
@@ -179,10 +173,10 @@ func SwapRoute(
 					amountSpecified: toSwap,
 				}
 				amountResult := multiSwap( // iterate here
-					swapParams, // SwapParams
-					0,          // currentPoolIndex
-					numHops,    // numPools
-					route,      // swapPath
+					swapParams,
+					0,
+					numHops,
+					route,
 				)
 				resultAmount += amountResult
 			} else {

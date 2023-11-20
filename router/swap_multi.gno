@@ -18,14 +18,14 @@ func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath strin
 		}
 
 		params.amountSpecified = _swap(
-			params.amountSpecified, // amountSpecified
-			recipient,              // recipient
-			0,                      // sqrtPriceLimitX96
+			params.amountSpecified,
+			recipient,
+			0,
 			SwapCallbackData{
-				params.tokenIn,  // tokenIn
-				params.tokenOut, // tokenOut
-				params.fee,      // fee
-				payer,           // payer
+				params.tokenIn,
+				params.tokenOut,
+				params.fee,
+				payer,
 			},
 		)
 
@@ -49,7 +49,6 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (amount
 
 	// CALCULATE BACKWARD INFO
 	for {
-		// currentPoolIndex++
 		wantedSingle := singleSwapDry(
 			SingleSwapParams{
 				tokenIn:         params.tokenIn,
@@ -92,14 +91,14 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (amount
 		}
 
 		resultAmount := _swap(
-			swapInfo[currentPoolIndex].amountSpecified, // amountSpecified
-			recipient, // recipient
-			0,         // sqrtPriceLimitX96
+			swapInfo[currentPoolIndex].amountSpecified,
+			recipient,
+			0,
 			SwapCallbackData{
-				swapInfo[currentPoolIndex].tokenIn,  // tokenIn
-				swapInfo[currentPoolIndex].tokenOut, // tokenOut
-				swapInfo[currentPoolIndex].fee,      // fee
-				payer,                               // payer
+				swapInfo[currentPoolIndex].tokenIn,
+				swapInfo[currentPoolIndex].tokenOut,
+				swapInfo[currentPoolIndex].fee,
+				payer,
 			},
 		)
 
@@ -126,14 +125,14 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 		}
 
 		params.amountSpecified = _swapDry(
-			params.amountSpecified, // amountSpecified
-			recipient,              // recipient
-			0,                      // sqrtPriceLimitX96
+			params.amountSpecified,
+			recipient,
+			0,
 			SwapCallbackData{
-				params.tokenIn,  // tokenIn
-				params.tokenOut, // tokenOut
-				params.fee,      // fee
-				payer,           // payer
+				params.tokenIn,
+				params.tokenOut,
+				params.fee,
+				payer,
 			},
 		)
 
@@ -166,14 +165,14 @@ func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath stri
 		}
 
 		params.amountSpecified = _swapDry(
-			params.amountSpecified, // amountSpecified
-			recipient,              // recipient
-			0,                      // sqrtPriceLimitX96
+			params.amountSpecified,
+			recipient,
+			0,
 			SwapCallbackData{
-				params.tokenIn,  // tokenIn
-				params.tokenOut, // tokenOut
-				params.fee,      // fee
-				payer,           // payer
+				params.tokenIn,
+				params.tokenOut,
+				params.fee,
+				payer,
 			},
 		)
 		currentPoolIndex--

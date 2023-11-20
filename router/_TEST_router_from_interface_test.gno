@@ -10,6 +10,9 @@ import (
 	_ "gno.land/r/grc20_wrapper"
 	p "gno.land/r/pool"
 	pos "gno.land/r/position"
+
+	"gno.land/r/bar"
+	"gno.land/r/qux"
 )
 
 var (
@@ -24,13 +27,10 @@ var (
 
 var (
 	// Common
-	fooPath = "gno.land/r/foo" // token1
-	barPath = "gno.land/r/bar" // token2
-	bazPath = "gno.land/r/baz" // token3
-	quxPath = "gno.land/r/qux" // token4
-
+	barPath     = "gno.land/r/bar"
+	bazPath     = "gno.land/r/baz"
+	quxPath     = "gno.land/r/qux"
 	test_fee100 = uint16(100)
-	test_fee500 = uint16(500)
 
 	max_timeout = bigint(9999999999)
 )
@@ -73,11 +73,12 @@ func TestPositionMint(t *testing.T) {
 	pos.Mint(barPath, bazPath, test_fee100, int32(9000), int32(11000), bigint(100000000), bigint(100000000), 0, 0, max_timeout)
 	pos.Mint(bazPath, quxPath, test_fee100, int32(9000), int32(11000), bigint(100000000), bigint(100000000), 0, 0, max_timeout)
 
-	pos.Mint(barPath, quxPath, test_fee100, int32(16000), int32(20000), bigint(100000), bigint(100000), 0, 0, max_timeout)
+	pos.Mint(barPath, quxPath, test_fee100, int32(16000), int32(20000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
 }
 
 func TestEstimateRouteQuotesExactIn(t *testing.T) {
-	zz := EstimateRouteQuotes(
+	std.TestSetOrigCaller(tr01)
+	exactInQuotesJsonStr := EstimateRouteQuotes(
 		barPath,          // inputToken
 		quxPath,          // outputToken
 		bigint(10000000), // amountSpecified
@@ -85,11 +86,15 @@ func TestEstimateRouteQuotesExactIn(t *testing.T) {
 		"gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100,gno.land/r/bar:gno.land/r/qux:100", // strPool
 		5, // divideBy
 	)
-	// println(zz)
+	shouldEQ(t, gjson.Get(exactInQuotesJsonStr, "0.Pools").String(), "gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100")
+	shouldEQ(t, gjson.Get(exactInQuotesJsonStr, "0.Quote").Int(), 5)
+	shouldEQ(t, gjson.Get(exactInQuotesJsonStr, "0.InputAmount").Int(), 500000)
+	shouldEQ(t, gjson.Get(exactInQuotesJsonStr, "0.OutputAmount").Int(), 3684341)
 }
 
 func TestEstimateRouteQuotesExactOut(t *testing.T) {
-	zz := EstimateRouteQuotes(
+	std.TestSetOrigCaller(tr01)
+	exactOutQuotesJsonStr := EstimateRouteQuotes(
 		barPath,        // inputToken
 		quxPath,        // outputToken
 		bigint(888888), // amountSpecified
@@ -97,42 +102,119 @@ func TestEstimateRouteQuotesExactOut(t *testing.T) {
 		"gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100,gno.land/r/bar:gno.land/r/qux:100", // strPool
 		10, // divideBy
 	)
-	println(zz)
+	shouldEQ(t, gjson.Get(exactOutQuotesJsonStr, "0.Pools").String(), "gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100")
+	shouldEQ(t, gjson.Get(exactOutQuotesJsonStr, "0.Quote").Int(), 10)
+	shouldEQ(t, gjson.Get(exactOutQuotesJsonStr, "0.InputAmount").Int(), -88880)
+	shouldEQ(t, gjson.Get(exactOutQuotesJsonStr, "0.OutputAmount").Int(), 12032)
+}
+
+func TestDrySwapRouteExactIn(t *testing.T) {
+	std.TestSetOrigCaller(tr01)
+	resultAmount := DrySwapRoute(
+		barPath,          // inputToken
+		quxPath,          // outputToken
+		bigint(10000000), // amountSpecified
+		"EXACT_IN",       // swapType
+		"gno.land/r/bar:gno.land/r/qux:100,gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100", // strRouteArr
+		[]int{10, 90}, // quotes
+	)
+	shouldEQ(t, resultAmount, bigint(69377564))
+}
+
+func TestDrySwapRouteExactOut(t *testing.T) {
+	std.TestSetOrigCaller(tr01)
+	resultAmount := DrySwapRoute(
+		barPath,        // inputToken
+		quxPath,        // outputToken
+		bigint(888888), // amountSpecified
+		"EXACT_OUT",    // swapType
+		"gno.land/r/bar:gno.land/r/qux:100,gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100", // strRouteArr
+		[]int{70, 30}, // quotes
+	)
+	shouldEQ(t, resultAmount, bigint(139576))
+}
+
+func TestSwapRouteExactIn(t *testing.T) {
+	tr01OldBar := bar.BalanceOf(a2u(tr01))
+	tr01OldQux := qux.BalanceOf(a2u(tr01))
+	poolOldBar := bar.BalanceOf(a2u(poolAddr))
+	poolOldQux := qux.BalanceOf(a2u(poolAddr))
+	routerOldBar := bar.BalanceOf(a2u(routerAddr))
+	routerOldQux := qux.BalanceOf(a2u(routerAddr))
+
+	shouldEQ(t, tr01OldBar, bigint(50000000000))
+	shouldEQ(t, tr01OldQux, bigint(50000000000))
+	shouldEQ(t, routerOldBar, bigint(0))
+	shouldEQ(t, routerOldQux, bigint(0))
+
+	std.TestSetOrigCaller(tr01)
+	recv := SwapRoute(
+		barPath,          // inputToken
+		quxPath,          // outputToken
+		bigint(10000000), // amountSpecified
+		"EXACT_IN",       // swapType
+		"gno.land/r/bar:gno.land/r/qux:100,gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100", // strRouteArr
+		[]int{10, 90}, // quotes
+		123_456,       // tokenAmountLimit
+	)
+
+	tr01NewBar := bar.BalanceOf(a2u(tr01))
+	tr01NewQux := qux.BalanceOf(a2u(tr01))
+	poolNewBar := bar.BalanceOf(a2u(poolAddr))
+	poolNewQux := qux.BalanceOf(a2u(poolAddr))
+	routerNewBar := bar.BalanceOf(a2u(routerAddr))
+	routerNewQux := qux.BalanceOf(a2u(routerAddr))
+
+	shouldEQ(t, routerOldBar, bigint(0))
+	shouldEQ(t, routerOldQux, bigint(0))
+	shouldEQ(t, tr01OldBar-tr01NewBar, uint64(10000000))
+	shouldEQ(t, tr01NewQux-tr01OldQux, uint64(recv))
+	shouldEQ(t, poolNewBar-poolOldBar, uint64(10000000))
+	shouldEQ(t, poolOldQux-poolNewQux, uint64(recv))
+}
+
+func TestSwapRouteExactOut(t *testing.T) {
+	tr01OldBar := bar.BalanceOf(a2u(tr01))
+	tr01OldQux := qux.BalanceOf(a2u(tr01))
+	poolOldBar := bar.BalanceOf(a2u(poolAddr))
+	poolOldQux := qux.BalanceOf(a2u(poolAddr))
+	routerOldBar := bar.BalanceOf(a2u(routerAddr))
+	routerOldQux := qux.BalanceOf(a2u(routerAddr))
+
+	shouldEQ(t, tr01OldBar, bigint(49990000000))
+	shouldEQ(t, tr01OldQux, bigint(50069377564))
+	shouldEQ(t, routerOldBar, bigint(0))
+	shouldEQ(t, routerOldQux, bigint(0))
+
+	std.TestSetOrigCaller(tr01)
+	sent := SwapRoute(
+		barPath,        // inputToken
+		quxPath,        // outputToken
+		bigint(888888), // amountSpecified
+		"EXACT_OUT",    // swapType
+		"gno.land/r/bar:gno.land/r/qux:100,gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100", // strRouteArr
+		[]int{70, 30}, // quotes
+		300000,        // tokenAmountLimit
+	)
+
+	tr01NewBar := bar.BalanceOf(a2u(tr01))
+	tr01NewQux := qux.BalanceOf(a2u(tr01))
+	poolNewBar := bar.BalanceOf(a2u(poolAddr))
+	poolNewQux := qux.BalanceOf(a2u(poolAddr))
+	routerNewBar := bar.BalanceOf(a2u(routerAddr))
+	routerNewQux := qux.BalanceOf(a2u(routerAddr))
+
+	shouldEQ(t, routerOldBar, bigint(0))
+	shouldEQ(t, routerOldQux, bigint(0))
+	shouldEQ(t, tr01OldBar-tr01NewBar, uint64(sent))
+	shouldEQ(t, tr01NewQux-tr01OldQux, uint64(888800))
+	shouldEQ(t, poolNewBar-poolOldBar, uint64(sent))
+	shouldEQ(t, poolOldQux-poolNewQux, uint64(888800))
 }
 
 /* HELPER */
 func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {
 		t.Errorf("got %v, expected %v", got, expected)
-	}
-}
-
-func shouldNEQ(t *testing.T, got, expected interface{}) {
-	if got == expected {
-		t.Errorf("got %v, didn't expected %v", got, expected)
-	}
-}
-
-func shouldGT(t *testing.T, l, r interface{}) {
-	if !(l > r) {
-		t.Errorf("expected %v > %v", l, r)
-	}
-}
-
-func shouldGTE(t *testing.T, l, r interface{}) {
-	if !(l >= r) {
-		t.Errorf("expected %v > %v", l, r)
-	}
-}
-
-func shouldLT(t *testing.T, l, r interface{}) {
-	if !(l < r) {
-		t.Errorf("expected %v < %v", l, r)
-	}
-}
-
-func shouldLTE(t *testing.T, l, r interface{}) {
-	if !(l <= r) {
-		t.Errorf("expected %v < %v", l, r)
 	}
 }
