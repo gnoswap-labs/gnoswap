@@ -71,20 +71,20 @@ var (
 	MAX_TIMEOUT bigint = 9999999999
 )
 
-func init() {
-	// debug addr
-	println(gsa, "// gsa")
-	println(pc01, "// pc01")
-	println(ci01, "// ci01")
-	println(lp01, "// lp01")
-	println(lp02, "// lp02")
-	println(tr01, "// tr01")
-	println(poolAddr, "// pool")
-	println(posAddr, "// pos")
-	println(rouAddr, "// router")
-	println(stakerAddr, "// staker")
-	println(govAddr, "// gov")
-}
+// func init() {
+// 	// debug addr
+// 	println(gsa, "// gsa")
+// 	println(pc01, "// pc01")
+// 	println(ci01, "// ci01")
+// 	println(lp01, "// lp01")
+// 	println(lp02, "// lp02")
+// 	println(tr01, "// tr01")
+// 	println(poolAddr, "// pool")
+// 	println(posAddr, "// pos")
+// 	println(rouAddr, "// router")
+// 	println(stakerAddr, "// staker")
+// 	println(govAddr, "// gov")
+// }
 
 // 1. [TC - POOL] Init
 func TestPoolInitManual(t *testing.T) {
@@ -229,15 +229,16 @@ func TestPositionMint(t *testing.T) {
 		std.TestSetOrigSend(std.Coins{{"ugnot", 10000000}}, nil)
 		testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 		testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 10000000)
-		pos.Mint(barPath, wugnotPath, uint16(500), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
+		// pos.Mint(wugnotPath, barPath, uint16(500), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
+		pos.Mint(barPath, wugnotPath, uint16(500), int32(-6000), int32(-4000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
 
 		// bar_baz_500 by lp02
 		std.TestSetOrigCaller(lp02)
-		pos.Mint(barPath, bazPath, uint16(100), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
+		pos.Mint(barPath, bazPath, uint16(500), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
 
 		// baz_qux_500 by lp02
 		std.TestSetOrigCaller(lp02)
-		pos.Mint(bazPath, quxPath, uint16(100), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
+		pos.Mint(bazPath, quxPath, uint16(500), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
 
 		std.TestSkipHeights(3)
 
@@ -309,7 +310,7 @@ func TestRotuerSwapRouteExactInSinglePath(t *testing.T) {
 		"EXACT_IN",
 		"gno.land/r/bar:gno.land/r/baz:100",
 		"100",
-		234_567,
+		200_000,
 	)
 
 	tr01NewBarBalance := bar.BalanceOf(a2u(tr01))
@@ -317,9 +318,9 @@ func TestRotuerSwapRouteExactInSinglePath(t *testing.T) {
 	poolNewBarBalance := bar.BalanceOf(a2u(poolAddr))
 	poolNewBazBalance := baz.BalanceOf(a2u(poolAddr))
 
-	shouldEQ(t, tr01OldBarBalance-uint64(swapAmount), tr01NewBarBalance)
+	shouldEQ(t, tr01OldBarBalance-tr01NewBarBalance, bigint(123400))
 	shouldEQ(t, tr01NewBazBalance > tr01OldBazBalance, true)
-	shouldEQ(t, poolNewBarBalance-uint64(swapAmount), poolOldBarBalance)
+	shouldEQ(t, poolNewBarBalance-poolOldBarBalance, bigint(123400))
 	shouldEQ(t, poolNewBazBalance < poolOldBazBalance, true)
 }
 
@@ -344,13 +345,13 @@ func TestRotuerSwapRouteExactOutputMultiPath(t *testing.T) {
 	rou.SwapRoute(
 		wugnotPath,
 		quxPath,
-		"EXACT_OUT",
 		bigint(swapAmount),
-		1000000,
-		0,
-		20,
-		10,
-		5,
+		"EXACT_OUT",
+		// "gno.land/r/wugnot:gno.land/r/bar:100*POOL*gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100",
+		// "100",
+		"gno.land/r/wugnot:gno.land/r/bar:100*POOL*gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100,gno.land/r/wugnot:gno.land/r/bar:500*POOL*gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500",
+		"40,60",
+		654_321,
 	)
 
 	tr01NewWugnotBalance := wugnot.BalanceOf(a2u(tr01))
@@ -358,7 +359,7 @@ func TestRotuerSwapRouteExactOutputMultiPath(t *testing.T) {
 	poolNewWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 	poolNewQuxBalance := qux.BalanceOf(a2u(poolAddr))
 
-	shouldEQ(t, poolOldQuxBalance-987_654, poolNewQuxBalance)
+	shouldEQ(t, poolOldQuxBalance-987_600, poolNewQuxBalance)
 	shouldEQ(t, poolNewWugnotBalance > poolOldWugnotBalance, true)
 }
 
@@ -382,8 +383,8 @@ func TestPositionCollect01(t *testing.T) {
 		)
 		std.TestSkipHeights(1)
 
-		shouldEQ(t, cAmount0, bigint(0))  // bar
-		shouldEQ(t, cAmount1, bigint(52)) // wugnot
+		shouldEQ(t, cAmount0, bigint(0)) // bar
+		shouldEQ(t, cAmount1, bigint(6)) // wugnot
 
 		poolNewNativeBalance := ugnotBalance(poolAddr)
 		poolNewWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
