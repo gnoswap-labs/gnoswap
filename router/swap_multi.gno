@@ -45,7 +45,7 @@ func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath strin
 
 func multiSwapNegative(params SwapParams, numPools int, swapPath string) (amountOut bigint) {
 	swapInfo := []SingleSwapParams{}
-	currentPoolIndex := 0
+	currentPoolIndex := numPools
 
 	// CALCULATE BACKWARD INFO
 	for {
@@ -66,15 +66,15 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (amount
 		}
 		swapInfo = append(swapInfo, thisSwap)
 
-		if currentPoolIndex == numPools {
+		if currentPoolIndex == 0 {
 			break
 		} else {
+			currentPoolIndex--
 			nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
 			params.tokenIn = nextInput
 			params.tokenOut = nextOutput
 			params.fee = nextFee
 			params.amountSpecified = -wantedSingle
-			currentPoolIndex++
 		}
 	}
 

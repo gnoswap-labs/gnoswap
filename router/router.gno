@@ -180,7 +180,7 @@ func SwapRoute(
 					route,
 				)
 				resultAmount += amountResult
-			} else {
+			} else { // EXACT_OUT
 				input, output, fee := getDataForMultiPath(route, numHops-1) // last data
 				swapParams := SwapParams{
 					tokenIn:         input,
