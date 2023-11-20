@@ -245,7 +245,7 @@ mint-03:
 
 mint-rest:
 	$(info ************ [POSITION - 4,5,6] ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/bar" -args "gno.land/r/wugnot" -args 500 -args 4000 -args 6000 -args 10000000 -args 10000000 -args 0 -args 0 -args $(TX_EXPIRE) -send "10000000ugnot" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/bar" -args "gno.land/r/wugnot" -args 500 -args -6000 -args -4000 -args 10000000 -args 10000000 -args 0 -args 0 -args $(TX_EXPIRE) -send "10000000ugnot" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/bar" -args "gno.land/r/baz" -args 500 -args 4000 -args 6000 -args 10000000 -args 10000000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/baz" -args "gno.land/r/qux" -args 500 -args 4000 -args 6000 -args 10000000 -args 10000000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
 	@echo
@@ -260,14 +260,12 @@ create-external-incentive:
 stake-token-1:
 	$(info ************ [STAKER] stake gnft tokenId 1)
 	@$(MAKE) -f $(MAKEFILE) skip-time
-	@$(MAKE) -f $(MAKEFILE) skip-time
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnft -func Approve -args $(ADDR_STAKER) -args "1" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/staker -func StakeToken -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo
 
 stake-token-2:
 	$(info ************ [STAKER] stake gnft tokenId 2)
-	@$(MAKE) -f $(MAKEFILE) skip-time
 	@$(MAKE) -f $(MAKEFILE) skip-time
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnft -func Approve -args $(ADDR_STAKER) -args "2" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/staker -func StakeToken -args 2 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
@@ -282,12 +280,12 @@ set-protocol-fee:
 
 swap-exact-in-single:
 	$(info ************ [ROUTER] Swap 123_456 BAR to BAZ // singlePath  ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/router -func BestSwap -args "gno.land/r/bar" -args "gno.land/r/baz" -args "EXACT_IN" -args 123456 -args 0 -args 0 -args 5 -args 10 -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/router -func SwapRoute -args "gno.land/r/bar" -args "gno.land/r/baz" -args 123456  -args "EXACT_IN" -args "gno.land/r/bar:gno.land/r/baz:100" -args "100" -args 200000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
 	@echo
 
 swap-exact-out-multi:
 	$(info ************ [ROUTER] Swap NATIVE ugnot to 987_654 QUX // multiPath ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/router -func BestSwap -args "gno.land/r/wugnot" -args "gno.land/r/qux" -args "EXACT_OUT" -args 987654 -args 1000000 -args 0 -args 20 -args 10 -args 5 -send "1000000ugnot" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/router -func SwapRoute -args "gno.land/r/wugnot" -args "gno.land/r/qux" -args 987654  -args "EXACT_OUT" -args "gno.land/r/wugnot:gno.land/r/bar:100*POOL*gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100,gno.land/r/wugnot:gno.land/r/bar:500*POOL*gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500" -args "40,60" -args 654321 -send 100000000ugnot -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
 	@echo
 
 collect-lp01:
@@ -305,13 +303,11 @@ collect-lp02:
 unstake-token-1:
 	$(info ************ [STAKER] unstake gnft tokenId 1 ************)
 	@$(MAKE) -f $(MAKEFILE) skip-time
-	@$(MAKE) -f $(MAKEFILE) skip-time
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/staker -func UnstakeToken -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo
 
 unstake-token-2:
 	$(info ************ [STAKER] unstake gnft tokenId 2 ************)
-	@$(MAKE) -f $(MAKEFILE) skip-time
 	@$(MAKE) -f $(MAKEFILE) skip-time
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/staker -func UnstakeToken -args 2 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
 	@echo
