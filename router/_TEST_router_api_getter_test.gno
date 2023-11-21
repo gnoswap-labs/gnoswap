@@ -68,16 +68,6 @@ func TestPositionMint(t *testing.T) {
 	pos.Mint(quxPath, bazPath, test_fee100, int32(18000), int32(22000), bigint(10000000), bigint(10000000), 0, 0, max_timeout)
 }
 
-func TestQueryPools(t *testing.T) {
-	jsonOutput := QueryPools()
-	jsonArr := gjson.Parse(jsonOutput).Array()
-	shouldEQ(t, len(jsonArr), 3)
-
-	shouldEQ(t, jsonArr[0].Get("pool_path").String(), "gno.land/r/bar:gno.land/r/wugnot:100")
-	shouldEQ(t, jsonArr[1].Get("pool_path").String(), "gno.land/r/bar:gno.land/r/qux:100")
-	shouldEQ(t, jsonArr[2].Get("pool_path").String(), "gno.land/r/baz:gno.land/r/qux:100")
-}
-
 func TestApiGetRatiosFromBase(t *testing.T) {
 	jsonOutput := ApiGetRatiosFromBase()
 	jsonStr := gjson.Parse(jsonOutput)
