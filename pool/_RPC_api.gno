@@ -89,9 +89,49 @@ type ResponseGetPool struct {
 }
 
 func ApiGetPool(key string) string {
-	pool, exist := pools[key]
+	singlePool := handleSinglePool(key)
+
+	qb := ApiQueryBase{
+		Height:    GetHeight(),
+		Timestamp: GetTimestamp(),
+	}
+
+	r := ResponseGetPool{
+		Stat: qb,
+		Response: struct {
+			Data SinglePool `json:"data"`
+		}{
+			Data: singlePool,
+		},
+	}
+
+	rr, err := json.Marshal(r)
+	if err != nil {
+		panic(ufmt.Sprintf("[POOL] getter_api.gno__ApiGetPool() || %v", err))
+	}
+
+	return string(rr)
+}
+
+func posKeyDivide(posKey string) (string, bigint, bigint) {
+	// base64 decode
+	kDec, _ := b64.StdEncoding.DecodeString(posKey)
+	posKey = string(kDec)
+
+	res := strings.Split(posKey, "__")
+	if len(res) != 3 {
+		panic(ufmt.Sprintf("[POOL] getter_api.gno__posKeyDivide() || invalid posKey(%s)", posKey))
+	}
+
+	owner, tickLower, tickUpper := res[0], res[1], res[2]
+
+	return owner, bigint(tickLower), bigint(tickUpper)
+}
+
+func handleSinglePool(poolPath string) SinglePool {
+	pool, exist := pools[poolPath]
 	if !exist {
-		return "NO_POOL_FOUND"
+		return SinglePool{}
 	}
 
 	ticks := pool.ticks
@@ -122,58 +162,24 @@ func ApiGetPool(key string) string {
 		positionList = append(positionList, posInfo)
 	}
 
-	qb := ApiQueryBase{
-		Height:    GetHeight(),
-		Timestamp: GetTimestamp(),
+	return SinglePool{
+		PoolPath:             poolPath,
+		Token0Path:           pool.token0Path,
+		Token1Path:           pool.token1Path,
+		Token0Balance:        pool.balances.token0,
+		Token1Balance:        pool.balances.token1,
+		TickSpacing:          pool.tickSpacing,
+		MaxLiquidityPerTick:  pool.maxLiquidityPerTick,
+		SqrtPriceX96:         pool.slot0.sqrtPriceX96,
+		Tick:                 pool.slot0.tick,
+		FeeProtocol:          pool.slot0.feeProtocol,
+		FeeGrowthGlobal0X128: pool.feeGrowthGlobal0X128,
+		FeeGrowthGlobal1X128: pool.feeGrowthGlobal1X128,
+		T0ProtocolFee:        pool.protocolFees.token0,
+		T1ProtocolFee:        pool.protocolFees.token1,
+		Liquidity:            pool.liquidity,
+		Ticks:                tickList,
+		TickBitmaps:          tickBitmapList,
+		Positions:            positionList,
 	}
-
-	r := ResponseGetPool{
-		Stat: qb,
-		Response: struct {
-			Data SinglePool `json:"data"`
-		}{
-			Data: SinglePool{
-				PoolPath:             key,
-				Token0Path:           pool.token0Path,
-				Token1Path:           pool.token1Path,
-				Token0Balance:        pool.balances.token0,
-				Token1Balance:        pool.balances.token1,
-				TickSpacing:          pool.tickSpacing,
-				MaxLiquidityPerTick:  pool.maxLiquidityPerTick,
-				SqrtPriceX96:         pool.slot0.sqrtPriceX96,
-				Tick:                 pool.slot0.tick,
-				FeeProtocol:          pool.slot0.feeProtocol,
-				FeeGrowthGlobal0X128: pool.feeGrowthGlobal0X128,
-				FeeGrowthGlobal1X128: pool.feeGrowthGlobal1X128,
-				T0ProtocolFee:        pool.protocolFees.token0,
-				T1ProtocolFee:        pool.protocolFees.token1,
-				Liquidity:            pool.liquidity,
-				Ticks:                tickList,
-				TickBitmaps:          tickBitmapList,
-				Positions:            positionList,
-			},
-		},
-	}
-
-	rr, err := json.Marshal(r)
-	if err != nil {
-		panic(ufmt.Sprintf("[POOL] getter_api.gno__ApiGetPool() || %v", err))
-	}
-
-	return string(rr)
-}
-
-func posKeyDivide(posKey string) (string, bigint, bigint) {
-	// base64 decode
-	kDec, _ := b64.StdEncoding.DecodeString(posKey)
-	posKey = string(kDec)
-
-	res := strings.Split(posKey, "__")
-	if len(res) != 3 {
-		panic(ufmt.Sprintf("[POOL] getter_api.gno__posKeyDivide() || invalid posKey(%s)", posKey))
-	}
-
-	owner, tickLower, tickUpper := res[0], res[1], res[2]
-
-	return owner, bigint(tickLower), bigint(tickUpper)
 }
