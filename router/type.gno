@@ -12,6 +12,7 @@ type QuoterTarget struct {
 	resultRatioX96 bigint
 }
 
+// TBD: Deprecated
 // RPC
 type EstimatedRoute struct {
 	Pools        string
@@ -46,4 +47,20 @@ type SwapCallbackData struct {
 	fee      uint16
 
 	payer std.Address
+}
+
+// QueryPool
+type QueryPool struct {
+	PoolPath             string `json:"pool_path"`
+	Token0Path           string `json:"token0_path"`
+	Token1Path           string `json:"token1_path"`
+	Token0Balance        bigint `json:"token0_balance"`
+	Token1Balance        bigint `json:"token1_balance"`
+	Fee                  uint16 `json:"fee"`
+	TickSpacing          int32  `json:"tick_spacing"`
+	CurrentTick          int32  `json:"current_tick"`
+	FeeGrowthGlobal0X128 bigint `json:"fee_growth_global0_x128"`
+	FeeGrowthGlobal1X128 bigint `json:"fee_growth_global1_x128"`
+	SqrtPriceX96         bigint `json:"sqrt_price_x96"`
+	Liquidity            bigint `json:"liquidity"`
 }

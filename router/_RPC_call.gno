@@ -5,9 +5,43 @@ import (
 	"std"
 	"strings"
 
+	p "gno.land/r/pool"
+
 	"gno.land/p/demo/ufmt"
 )
 
+func QueryPools() string {
+	poolList := p.PoolGetPoolList()
+	jsonData := []QueryPool{}
+	for _, poolPath := range poolList {
+		pool := p.GetPoolFromPoolKey(poolPath)
+
+		thisPool := QueryPool{
+			PoolPath:             poolPath,
+			Token0Path:           pool.PoolGetToken0Path(),
+			Token1Path:           pool.PoolGetToken1Path(),
+			Token0Balance:        pool.PoolGetToken0Balance(),
+			Token1Balance:        pool.PoolGetToken1Balance(),
+			Fee:                  pool.PoolGetFee(),
+			TickSpacing:          pool.PoolGetTickSpacing(),
+			CurrentTick:          pool.PoolGetSlot0Tick(),
+			SqrtPriceX96:         pool.PoolGetSlot0SqrtPriceX96(),
+			FeeGrowthGlobal0X128: pool.PoolGetFeeGrowthGlobal0X128(),
+			FeeGrowthGlobal1X128: pool.PoolGetFeeGrowthGlobal1X128(),
+			Liquidity:            pool.PoolGetLiquidity(),
+		}
+		jsonData = append(jsonData, thisPool)
+	}
+
+	rr, err := json.Marshal(jsonData)
+	if err != nil {
+		panic(ufmt.Sprintf("[ROUTER] _RPC_call.gno__QueryPools() || json.Marshal error with %v", err))
+	}
+
+	return string(rr)
+}
+
+// TBD: Deprecated
 func EstimateRouteQuotes(
 	inputToken string,
 	outputToken string,
