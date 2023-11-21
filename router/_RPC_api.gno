@@ -3,6 +3,7 @@ package router
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	p "gno.land/r/pool"
@@ -174,4 +175,32 @@ func sqrt(x bigint, n int) bigint {
 		result *= x
 	}
 	return result
+}
+
+func poolPathWithFeeDivide(poolPath string) (string, string, int) {
+	poolPathSplit := strings.Split(poolPath, ":")
+	require(len(poolPathSplit) == 3, ufmt.Sprintf("[ROUTER] util.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath))
+
+	feeInt, err := strconv.Atoi(poolPathSplit[2])
+	if err != nil {
+		panic(ufmt.Sprintf("[ROUTER] util.gno__poolPathWithFeeDivide() || cannot convert fee(%s) to int", poolPathSplit[2]))
+	}
+
+	return poolPathSplit[0], poolPathSplit[1], feeInt
+}
+
+func singlePoolPathWithFeeDivide(poolPath string) (string, string) {
+	singlePoolPathSplit := strings.Split(poolPath, ":")
+	require(len(singlePoolPathSplit) == 2, ufmt.Sprintf("[ROUTER] util.gno__singlePoolPathWithFeeDivide || len(singlePoolPathSplit) != 2, poolPath: %s", poolPath))
+
+	return singlePoolPathSplit[0], singlePoolPathSplit[1]
+}
+
+func removeItemFromStringArray(s []string, r string) []string {
+	for i, v := range s {
+		if v == r {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
 }

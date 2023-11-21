@@ -12,4 +12,8 @@ const (
 
 	ADDR_POOL   std.Address = std.DerivePkgAddr("gno.land/r/pool")
 	ADDR_ROUTER std.Address = std.DerivePkgAddr("gno.land/r/router")
+
+	// SwapType
+	ExactIn  SwapType = "EXACT_IN"
+	ExactOut SwapType = "EXACT_OUT"
 )
