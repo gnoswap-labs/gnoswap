@@ -9,7 +9,7 @@ func liquidityAmountsGetLiquidityForAmount0(
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
 	}
 
-	intermediate := sqrtRatioAX96 * sqrtRatioBX96 / Q96
+	intermediate := (sqrtRatioAX96 * sqrtRatioBX96) / Q96
 
 	return amount0 * intermediate / (sqrtRatioBX96 - sqrtRatioAX96)
 }

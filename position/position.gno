@@ -30,7 +30,7 @@ func Mint(
 	amount0Min bigint,
 	amount1Min bigint,
 	deadline bigint,
-) (uint64, bigint, bigint, bigint) {
+) (uint64, bigint, bigint, bigint) { // tokenId, liquidity, amount0, amount1
 	if token1 < token0 {
 		token0, token1 = token1, token0
 		amount0Desired, amount1Desired = amount1Desired, amount0Desired

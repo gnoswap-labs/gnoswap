@@ -91,7 +91,6 @@ func Approve(spender users.AddressOrName, amount uint64) {
 
 func TransferFrom(from, to users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-
 	err := bar.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())

@@ -27,7 +27,8 @@ func DrySwap(
 	amountSpecified bigint,
 	sqrtPriceLimitX96 bigint,
 ) (bigint, bigint, bool) {
-	if !(amountSpecified != 0) {
+
+	if amountSpecified == 0 {
 		return 0, 0, false
 	}
 
@@ -48,9 +49,15 @@ func DrySwap(
 		}
 	}
 
-	cache := SwapCache{
-		liquidityStart: pool.liquidity,
-		feeProtocol:    0,
+	var cache SwapCache
+	if zeroForOne {
+		cache = SwapCache{
+			liquidityStart: pool.liquidity,
+		}
+	} else {
+		cache = SwapCache{
+			liquidityStart: pool.liquidity,
+		}
 	}
 
 	exactInput := amountSpecified > 0
@@ -96,33 +103,32 @@ func DrySwap(
 		}
 
 		step.sqrtPriceNextX96 = TickMathGetSqrtRatioAtTick(step.tickNext)
-		var _sqrtRatioTarget bigint
+		isLower := step.sqrtPriceNextX96 < sqrtPriceLimitX96
+		isHiger := step.sqrtPriceNextX96 > sqrtPriceLimitX96
 
-		if zeroForOne {
-			if step.sqrtPriceNextX96 < sqrtPriceLimitX96 {
-				_sqrtRatioTarget = sqrtPriceLimitX96
-			} else {
-				_sqrtRatioTarget = step.sqrtPriceNextX96
-			}
+		var sqrtPriceX96Target bigint
+		if (zeroForOne && isLower) || (!zeroForOne && isHigher) {
+			sqrtPriceX96Target = sqrtPriceLimitX96
 		} else {
-			if step.sqrtPriceNextX96 > sqrtPriceLimitX96 {
-				_sqrtRatioTarget = sqrtPriceLimitX96
-			} else {
-				_sqrtRatioTarget = step.sqrtPriceNextX96
-			}
+			sqrtPriceX96Target = step.sqrtPriceNextX96
 		}
 
 		state.sqrtPriceX96, step.amountIn, step.amountOut, step.feeAmount = swapMathComputeSwapStep(
 			state.sqrtPriceX96,
-			_sqrtRatioTarget,
+			sqrtPriceX96Target,
 			state.liquidity,
 			state.amountSpecifiedRemaining,
 			uint32(pool.fee),
 		)
 
-		if !(step.amountIn != 0 && step.amountOut != 0) {
-			// NOT ENOUGH MINTED
-			return 0, 0, false
+		if state.sqrtPriceX96 == step.sqrtPriceNextX96 {
+			if zeroForOne {
+				state.tick = step.tickNext - 1
+			} else {
+				state.tick = step.tickNext
+			}
+		} else if state.sqrtPriceX96 != step.sqrtPriceStartX96 {
+			state.tick = TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
 		}
 
 		if exactInput {

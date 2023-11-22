@@ -42,3 +42,10 @@ func TestDryMintUpperRange(t *testing.T) {
 	shouldEQ(t, m0, bigint(9999))
 	shouldEQ(t, m1, bigint(0))
 }
+
+/* HELPER */
+func shouldEQ(t *testing.T, got, expected interface{}) {
+	if got != expected {
+		t.Errorf("got %v, expected %v", got, expected)
+	}
+}
