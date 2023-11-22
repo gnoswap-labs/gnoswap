@@ -24,8 +24,8 @@ func (pool *Pool) positionUpdateWithKey(
 	feeGrowthInside0X128 bigint,
 	feeGrowthInside1X128 bigint,
 ) PositionInfo {
-	requireUnsigned(feeGrowthInside0X128, ufmt.Sprintf("[POOL] position.gno__positionUpdateWithKey() || feeGrowthInside0X128(%s) >= 0", feeGrowthInside0X128))
-	requireUnsigned(feeGrowthInside1X128, ufmt.Sprintf("[POOL] position.gno__positionUpdateWithKey() || feeGrowthInside1X128(%s) >= 0", feeGrowthInside1X128))
+	requireUnsigned(feeGrowthInside0X128, ufmt.Sprintf("[POOL] position.gno__positionUpdateWithKey() || feeGrowthInside0X128(%d) >= 0", feeGrowthInside0X128))
+	requireUnsigned(feeGrowthInside1X128, ufmt.Sprintf("[POOL] position.gno__positionUpdateWithKey() || feeGrowthInside1X128(%d) >= 0", feeGrowthInside1X128))
 
 	position := pool.positions[key]
 
@@ -41,8 +41,8 @@ func positionUpdate(
 	feeGrowthInside0X128 bigint,
 	feeGrowthInside1X128 bigint,
 ) PositionInfo {
-	requireUnsigned(feeGrowthInside0X128, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || feeGrowthInside0X128(%s) >= 0", feeGrowthInside0X128))
-	requireUnsigned(feeGrowthInside1X128, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || feeGrowthInside1X128(%s) >= 0", feeGrowthInside1X128))
+	requireUnsigned(feeGrowthInside0X128, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || feeGrowthInside0X128(%d) >= 0", feeGrowthInside0X128))
+	requireUnsigned(feeGrowthInside1X128, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || feeGrowthInside1X128(%d) >= 0", feeGrowthInside1X128))
 
 	var liquidityNext bigint
 	if liquidityDelta == 0 {
@@ -54,8 +54,8 @@ func positionUpdate(
 	tokensOwed0 := (feeGrowthInside0X128 - self.feeGrowthInside0LastX128) * self.liquidity / Q128
 	tokensOwed1 := (feeGrowthInside1X128 - self.feeGrowthInside1LastX128) * self.liquidity / Q128
 
-	requireUnsigned(tokensOwed0, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || tokensOwed0(%s) >= 0", tokensOwed0))
-	requireUnsigned(tokensOwed1, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || tokensOwed1(%s) >= 0", tokensOwed1))
+	requireUnsigned(tokensOwed0, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || tokensOwed0(%d) >= 0", tokensOwed0))
+	requireUnsigned(tokensOwed1, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || tokensOwed1(%d) >= 0", tokensOwed1))
 
 	if liquidityDelta != 0 {
 		self.liquidity = liquidityNext
