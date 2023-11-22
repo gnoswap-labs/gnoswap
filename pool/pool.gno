@@ -281,20 +281,14 @@ func Swap(
 		}
 
 		step.sqrtPriceNextX96 = TickMathGetSqrtRatioAtTick(step.tickNext)
-		var sqrtRatioTargetX96 bigint
+		isLower := step.sqrtPriceNextX96 < sqrtPriceLimitX96
+		isHiger := step.sqrtPriceNextX96 > sqrtPriceLimitX96
 
-		if zeroForOne {
-			if step.sqrtPriceNextX96 < sqrtPriceLimitX96 {
-				sqrtRatioTargetX96 = sqrtPriceLimitX96
-			} else {
-				sqrtRatioTargetX96 = step.sqrtPriceNextX96
-			}
+		var sqrtPriceX96Target bigint
+		if (zeroForOne && isLower) || (!zeroForOne && isHigher) {
+			sqrtPriceX96Target = sqrtPriceLimitX96
 		} else {
-			if step.sqrtPriceNextX96 > sqrtPriceLimitX96 {
-				sqrtRatioTargetX96 = sqrtPriceLimitX96
-			} else {
-				sqrtRatioTargetX96 = step.sqrtPriceNextX96
-			}
+			sqrtPriceX96Target = step.sqrtPriceNextX96
 		}
 
 		state.sqrtPriceX96, step.amountIn, step.amountOut, step.feeAmount = swapMathComputeSwapStep(
