@@ -306,7 +306,7 @@ func Swap(
 		)
 
 		if exactInput {
-			state.amountSpecifiedRemaining -= step.amountIn + step.feeAmount
+			state.amountSpecifiedRemaining -= (step.amountIn + step.feeAmount)
 			state.amountCalculated -= step.amountOut
 		} else {
 			state.amountSpecifiedRemaining += step.amountOut

@@ -74,7 +74,7 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (amount
 			params.tokenIn = nextInput
 			params.tokenOut = nextOutput
 			params.fee = nextFee
-			params.amountSpecified = -wantedSingle
+			params.amountSpecified = -wantedSingle - 1
 		}
 	}
 
