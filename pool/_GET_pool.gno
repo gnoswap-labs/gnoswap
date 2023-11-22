@@ -25,6 +25,26 @@ func (pool *Pool) PoolGetToken1Path() string {
 	return pool.token1Path
 }
 
+func (pool *Pool) PoolGetToken0Balance() bigint {
+	return pool.balances.token0
+}
+
+func (pool *Pool) PoolGetFee() uint16 {
+	return pool.fee
+}
+
+func (pool *Pool) PoolGetFeeGrowthGlobal0X128() bigint {
+	return pool.feeGrowthGlobal0X128
+}
+
+func (pool *Pool) PoolGetFeeGrowthGlobal1X128() bigint {
+	return pool.feeGrowthGlobal1X128
+}
+
+func (pool *Pool) PoolGetToken1Balance() bigint {
+	return pool.balances.token1
+}
+
 func (pool *Pool) PoolGetTickSpacing() int32 {
 	return pool.tickSpacing
 }

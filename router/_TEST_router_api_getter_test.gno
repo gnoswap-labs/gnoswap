@@ -69,13 +69,15 @@ func TestPositionMint(t *testing.T) {
 }
 
 func TestApiGetRatiosFromBase(t *testing.T) {
-	std.TestSetOrigCaller(tr01)
 	jsonOutput := ApiGetRatiosFromBase()
 	jsonStr := gjson.Parse(jsonOutput)
-	shouldEQ(t, jsonStr.Get("response.data.0").String(), "{\"gno.land/r/wugnot\":79228162514264337593543950336}") // 1
-	shouldEQ(t, jsonStr.Get("response.data.1").String(), "{\"gno.land/r/bar\":215332174010593516404127508794}")   // 2.7178741394
-	shouldEQ(t, jsonStr.Get("response.data.2").String(), "{\"gno.land/r/qux\":585304271701315311476720143083}")   // 7.3875785217
-	shouldEQ(t, jsonStr.Get("response.data.3").String(), "{\"gno.land/r/baz\":4323981266259057910270272221253}")  // 54.5763164138
+	jsonArr := jsonStr.Get("response.data").Array()
+	shouldEQ(t, len(jsonArr), 4)
+
+	shouldEQ(t, jsonArr[0].String(), "{\"gno.land/r/wugnot\":79228162514264337593543950336}") // 1
+	shouldEQ(t, jsonArr[1].String(), "{\"gno.land/r/bar\":215332174010593516404127508794}")   // 2.7178741394
+	shouldEQ(t, jsonArr[2].String(), "{\"gno.land/r/qux\":585304271701315311476720143083}")   // 7.3875785217
+	shouldEQ(t, jsonArr[3].String(), "{\"gno.land/r/baz\":4323981266259057910270272221253}")  // 54.5763164138
 }
 
 /* HELPER */
