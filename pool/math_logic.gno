@@ -104,18 +104,18 @@ func DrySwap(
 
 		step.sqrtPriceNextX96 = TickMathGetSqrtRatioAtTick(step.tickNext)
 		isLower := step.sqrtPriceNextX96 < sqrtPriceLimitX96
-		isHiger := step.sqrtPriceNextX96 > sqrtPriceLimitX96
+		isHigher := step.sqrtPriceNextX96 > sqrtPriceLimitX96
 
-		var sqrtPriceX96Target bigint
+		var sqrtRatioTargetX96 bigint
 		if (zeroForOne && isLower) || (!zeroForOne && isHigher) {
-			sqrtPriceX96Target = sqrtPriceLimitX96
+			sqrtRatioTargetX96 = sqrtPriceLimitX96
 		} else {
-			sqrtPriceX96Target = step.sqrtPriceNextX96
+			sqrtRatioTargetX96 = step.sqrtPriceNextX96
 		}
 
 		state.sqrtPriceX96, step.amountIn, step.amountOut, step.feeAmount = swapMathComputeSwapStep(
 			state.sqrtPriceX96,
-			sqrtPriceX96Target,
+			sqrtRatioTargetX96,
 			state.liquidity,
 			state.amountSpecifiedRemaining,
 			uint32(pool.fee),
