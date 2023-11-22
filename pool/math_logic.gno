@@ -53,12 +53,10 @@ func DrySwap(
 	if zeroForOne {
 		cache = SwapCache{
 			liquidityStart: pool.liquidity,
-			feeProtocol:    slot0Start.feeProtocol % 16,
 		}
 	} else {
 		cache = SwapCache{
 			liquidityStart: pool.liquidity,
-			feeProtocol:    slot0Start.feeProtocol >> 4,
 		}
 	}
 
@@ -129,9 +127,14 @@ func DrySwap(
 			uint32(pool.fee),
 		)
 
-		if !(step.amountIn != 0 && step.amountOut != 0) {
-			// NOT ENOUGH MINTED
-			return 0, 0, false
+		if state.sqrtPriceX96 == step.sqrtPriceNextX96 {
+			if zeroForOne {
+				state.tick = step.tickNext - 1
+			} else {
+				state.tick = step.tickNext
+			}
+		} else if state.sqrtPriceX96 != step.sqrtPriceStartX96 {
+			state.tick = TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
 		}
 
 		if exactInput {
