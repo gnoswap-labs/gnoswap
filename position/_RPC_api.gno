@@ -51,18 +51,18 @@ func ApiGetPositions() string {
 }
 
 type SinglePosition struct {
-	TokenID                  uint64 `json:"token_id"`
-	Operator                 string `json:"operator"`
-	PoolKey                  string `json:"pool_key"`
-	TickLower                int32  `json:"tick_lower"`
-	TickUpper                int32  `json:"tick_upper"`
-	Liquidity                bigint `json:"liquidity"`
-	Token0Balance            bigint `json:"token0_balance"`
-	Token1Balance            bigint `json:"token1_balance"`
-	TokensOwed0              bigint `json:"tokens_owed_0"`
-	TokensOwed1              bigint `json:"tokens_owed_1"`
-	FeeGrowthInside0LastX128 bigint `json:"fee_growth_inside_0_last_x128"`
-	FeeGrowthInside1LastX128 bigint `json:"fee_growth_inside_1_last_x128"`
+	TokenID       uint64 `json:"token_id"`
+	Operator      string `json:"operator"`
+	PoolKey       string `json:"pool_key"`
+	TickLower     int32  `json:"tick_lower"`
+	TickUpper     int32  `json:"tick_upper"`
+	Liquidity     bigint `json:"liquidity"`
+	Token0Balance bigint `json:"token0_balance"`
+	Token1Balance bigint `json:"token1_balance"`
+	UnclaimedFee0 bigint `json:"unclaimed_fee0"` // only unclaimed fee
+	UnclaimedFee1 bigint `json:"unclaimed_fee1"`
+	TokensOwed0   bigint `json:"tokens_owed_0"` // unclaimed fee + burned liquidity
+	TokensOwed1   bigint `json:"tokens_owed_1"`
 }
 
 type ResponseGetPosition struct {
@@ -95,24 +95,26 @@ func ApiGetPosition(key uint64) string { // key is tokenId
 		position.liquidity,
 	)
 
+	unclaimedFee0, unclaimedFee1 := unclaimedFee(key)
+
 	r := ResponseGetPosition{
 		Stat: qb,
 		Response: struct {
 			Data SinglePosition `json:"data"`
 		}{
 			Data: SinglePosition{
-				TokenID:                  key,
-				Operator:                 position.operator.String(),
-				PoolKey:                  position.poolKey,
-				TickLower:                position.tickLower,
-				TickUpper:                position.tickUpper,
-				Liquidity:                position.liquidity,
-				Token0Balance:            token0Balance,
-				Token1Balance:            token1Balance,
-				TokensOwed0:              position.tokensOwed0,
-				TokensOwed1:              position.tokensOwed1,
-				FeeGrowthInside0LastX128: position.feeGrowthInside0LastX128,
-				FeeGrowthInside1LastX128: position.feeGrowthInside1LastX128,
+				TokenID:       key,
+				Operator:      position.operator.String(),
+				PoolKey:       position.poolKey,
+				TickLower:     position.tickLower,
+				TickUpper:     position.tickUpper,
+				Liquidity:     position.liquidity,
+				Token0Balance: token0Balance,
+				Token1Balance: token1Balance,
+				UnclaimedFee0: unclaimedFee0,
+				UnclaimedFee1: unclaimedFee1,
+				TokensOwed0:   position.tokensOwed0,
+				TokensOwed1:   position.tokensOwed1,
 			},
 		},
 	}
@@ -152,6 +154,8 @@ func ApiGetPositionByUser(addr string) string {
 				position.liquidity,
 			)
 
+			unclaimedFee0, unclaimedFee1 := unclaimedFee(token_id)
+
 			userPosition := SinglePosition{
 				Operator:      addr,
 				TokenID:       token_id,
@@ -161,11 +165,10 @@ func ApiGetPositionByUser(addr string) string {
 				Liquidity:     position.liquidity,
 				Token0Balance: token0Balance,
 				Token1Balance: token1Balance,
+				UnclaimedFee0: unclaimedFee0,
+				UnclaimedFee1: unclaimedFee1,
 				TokensOwed0:   position.tokensOwed0,
 				TokensOwed1:   position.tokensOwed1,
-
-				FeeGrowthInside0LastX128: position.feeGrowthInside0LastX128,
-				FeeGrowthInside1LastX128: position.feeGrowthInside1LastX128,
 			}
 			userPositions = append(userPositions, userPosition)
 		}
@@ -191,4 +194,54 @@ func ApiGetPositionByUser(addr string) string {
 	}
 
 	return string(rr)
+}
+
+func unclaimedFee(tokenId uint64) (bigint, bigint) {
+	// preapre all data
+	liquidity := positions[tokenId].liquidity
+	tickLower := positions[tokenId].tickLower
+	tickUpper := positions[tokenId].tickUpper
+
+	poolKey := positions[tokenId].poolKey
+	pool := p.GetPoolFromPoolKey(poolKey)
+
+	currentTick := pool.PoolGetSlot0Tick()
+
+	feeGrowthGlobal0X128 := pool.PoolGetFeeGrowthGlobal0X128()
+	feeGrowthGlobal1X128 := pool.PoolGetFeeGrowthGlobal1X128()
+
+	tickUpperFeeGrowthOutside0X128 := pool.PoolGetTickFeeGrowthOutside0X128(tickUpper)
+	tickUpperFeeGrowthOutside1X128 := pool.PoolGetTickFeeGrowthOutside1X128(tickUpper)
+
+	tickLowerFeeGrowthOutside0X128 := pool.PoolGetTickFeeGrowthOutside0X128(tickLower)
+	tickLowerFeeGrowthOutside1X128 := pool.PoolGetTickFeeGrowthOutside1X128(tickLower)
+
+	feeGrowthInside0LastX128 := positions[tokenId].feeGrowthInside0LastX128
+	feeGrowthInside1LastX128 := positions[tokenId].feeGrowthInside1LastX128
+
+	var tickLowerFeeGrowthBelow0, tickLowerFeeGrowthBelow1, tickUpperFeeGrowthAbove0, tickUpperFeeGrowthAbove1 bigint
+
+	if currentTick >= tickUpper {
+		tickUpperFeeGrowthAbove0 = feeGrowthGlobal0X128 - tickUpperFeeGrowthOutside0X128
+		tickUpperFeeGrowthAbove1 = feeGrowthGlobal1X128 - tickUpperFeeGrowthOutside1X128
+	} else {
+		tickUpperFeeGrowthAbove0 = tickUpperFeeGrowthOutside0X128
+		tickUpperFeeGrowthAbove1 = tickUpperFeeGrowthOutside1X128
+	}
+
+	if currentTick >= tickLower {
+		tickLowerFeeGrowthBelow0 = tickLowerFeeGrowthOutside0X128
+		tickLowerFeeGrowthBelow1 = tickLowerFeeGrowthOutside1X128
+	} else {
+		tickLowerFeeGrowthBelow0 = feeGrowthGlobal0X128 - tickLowerFeeGrowthOutside0X128
+		tickLowerFeeGrowthBelow1 = feeGrowthGlobal1X128 - tickLowerFeeGrowthOutside1X128
+	}
+
+	feeGrowthInside0X128 := (feeGrowthGlobal0X128 - tickLowerFeeGrowthBelow0 - tickUpperFeeGrowthAbove0)
+	feeGrowthInside1X128 := (feeGrowthGlobal1X128 - tickLowerFeeGrowthBelow1 - tickUpperFeeGrowthAbove1)
+
+	unclaimedFee0 := (liquidity * (feeGrowthInside0X128 - feeGrowthInside0LastX128)) / Q128
+	unclaimedFee1 := (liquidity * (feeGrowthInside1X128 - feeGrowthInside1LastX128)) / Q128
+
+	return unclaimedFee0, unclaimedFee1
 }
