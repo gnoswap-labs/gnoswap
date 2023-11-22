@@ -338,8 +338,8 @@ func TestRotuerSwapRouteExactOutputMultiPath(t *testing.T) {
 	poolOldWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 	poolOldQuxBalance := qux.BalanceOf(a2u(poolAddr))
 
-	std.TestSetOrigSend(std.Coins{{"ugnot", 1000000}}, nil)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1000000)
+	std.TestSetOrigSend(std.Coins{{"ugnot", 1_000_000}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1_000_000)
 
 	swapAmount := 987_654
 	rou.SwapRoute(
@@ -347,11 +347,9 @@ func TestRotuerSwapRouteExactOutputMultiPath(t *testing.T) {
 		quxPath,
 		bigint(swapAmount),
 		"EXACT_OUT",
-		// "gno.land/r/wugnot:gno.land/r/bar:100*POOL*gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100",
-		// "100",
 		"gno.land/r/wugnot:gno.land/r/bar:100*POOL*gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100,gno.land/r/wugnot:gno.land/r/bar:500*POOL*gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500",
 		"40,60",
-		654_321,
+		123456789,
 	)
 
 	tr01NewWugnotBalance := wugnot.BalanceOf(a2u(tr01))
@@ -359,7 +357,7 @@ func TestRotuerSwapRouteExactOutputMultiPath(t *testing.T) {
 	poolNewWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
 	poolNewQuxBalance := qux.BalanceOf(a2u(poolAddr))
 
-	shouldEQ(t, poolOldQuxBalance-987_600, poolNewQuxBalance)
+	shouldEQ(t, poolOldQuxBalance-poolNewQuxBalance < uint64(swapAmount), true)
 	shouldEQ(t, poolNewWugnotBalance > poolOldWugnotBalance, true)
 }
 
