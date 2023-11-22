@@ -76,7 +76,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 		MIN_PRICE, // sqrtPriceLimitX96
 	)
 	shouldEQ(t, poolIn, bigint(16000))
-	shouldEQ(t, poolOut, bigint(-43464))
+	shouldEQ(t, poolOut, bigint(-5884))
 }
 
 func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
@@ -93,8 +93,8 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 		MIN_PRICE, // sqrtPriceLimitX96
 	)
 
-	shouldEQ(t, poolIn, bigint(5888))
-	shouldEQ(t, poolOut, bigint(-16000))
+	shouldEQ(t, poolIn, bigint(43506))
+	shouldEQ(t, poolOut, bigint(-15999))
 }
 
 func TestDrySwap_ZeroForOneFalse_AmountSpecified_Positive_16000(t *testing.T) {
@@ -127,7 +127,7 @@ func TestDrySwap_ZeroForOneFalse_AmountSpecified_Negative_16000(t *testing.T) {
 		-16000,    // amountSpecified
 		MAX_PRICE, // sqrtPriceLimitX96
 	)
-	shouldEQ(t, poolOut, bigint(-16000))
+	shouldEQ(t, poolOut, bigint(-15999))
 	shouldEQ(t, poolIn, bigint(5888))
 }
 

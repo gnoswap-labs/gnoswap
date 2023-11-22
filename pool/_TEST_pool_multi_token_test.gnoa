@@ -108,7 +108,7 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 		std.GetOrigCaller(),
 	)
 	shouldEQ(t, poolIn, bigint(16000))
-	shouldEQ(t, poolOut, bigint(-43452))
+	shouldEQ(t, poolOut, bigint(-5883))
 
 	newTr01Token1Balance := balanceOfByRegisterCall(fooPath, tr01)
 	newTr01Token0Balance := balanceOfByRegisterCall(barPath, tr01)
@@ -116,9 +116,9 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 	newPoolToken0Balance := balanceOfByRegisterCall(barPath, poolAddr)
 
 	shouldEQ(t, oldTr01Token0Balance-newTr01Token0Balance, bigint(16000))
-	shouldEQ(t, newTr01Token1Balance-oldTr01Token1Balance, bigint(43452))
+	shouldEQ(t, newTr01Token1Balance-oldTr01Token1Balance, bigint(5883))
 	shouldEQ(t, newPoolToken0Balance-oldPoolToken0Balance, bigint(16000))
-	shouldEQ(t, oldPoolToken1Balance-newPoolToken1Balance, bigint(43452))
+	shouldEQ(t, oldPoolToken1Balance-newPoolToken1Balance, bigint(5883))
 }
 
 // 7. Swap Bar:Baz Bar > Baz by tr01

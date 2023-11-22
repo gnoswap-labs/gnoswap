@@ -195,7 +195,7 @@ func TestSwapSellNative(t *testing.T) {
 
 	tr01NewT0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
 	tr01NewT1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
-	shouldEQ(t, tr01NewT0Bal, bigint(50000017060)) // + 27_060
+	shouldEQ(t, tr01NewT0Bal, bigint(49999993685))
 	shouldEQ(t, tr01NewT1Bal, bigint(0))
 	coins := testBanker.GetCoins(tr01)
 	coin := coins[0]
@@ -203,10 +203,10 @@ func TestSwapSellNative(t *testing.T) {
 
 	poolNewT0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
 	poolNewT1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
-	shouldEQ(t, poolNewT0Bal, bigint(350837)) // - 27_060
-	shouldEQ(t, poolNewT1Bal, bigint(982868)) // + 10_000 // pool recv users native 10000 ugnot as wrapped 10000 wugnot
+	shouldEQ(t, poolNewT0Bal, bigint(374212))
+	shouldEQ(t, poolNewT1Bal, bigint(982868))
 
-	shouldEQ(t, amount0, bigint(-27060))
+	shouldEQ(t, amount0, bigint(-3685))
 	shouldEQ(t, amount1, bigint(10000))
 }
 

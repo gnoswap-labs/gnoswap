@@ -5,7 +5,7 @@ import (
 )
 
 func tickBitmapPosition(tick int32) (int16, uint8) {
-	wordPos := int16(tick / 256) // tick >> 8
+	wordPos := int16(tick >> 8) // tick / 256
 	bitPos := uint8(tick % 256)
 
 	return wordPos, bitPos
