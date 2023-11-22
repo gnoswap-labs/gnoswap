@@ -64,6 +64,7 @@ type SinglePool struct {
 	PoolPath             string            `json:"pool_path"`
 	Token0Path           string            `json:"token0_path"`
 	Token1Path           string            `json:"token1_path"`
+	Fee                  uint16            `json:"fee"`
 	Token0Balance        bigint            `json:"token0_balance"`
 	Token1Balance        bigint            `json:"token1_balance"`
 	TickSpacing          int32             `json:"tick_spacing"`
@@ -166,6 +167,7 @@ func handleSinglePool(poolPath string) SinglePool {
 		PoolPath:             poolPath,
 		Token0Path:           pool.token0Path,
 		Token1Path:           pool.token1Path,
+		Fee:                  pool.fee,
 		Token0Balance:        pool.balances.token0,
 		Token1Balance:        pool.balances.token1,
 		TickSpacing:          pool.tickSpacing,
