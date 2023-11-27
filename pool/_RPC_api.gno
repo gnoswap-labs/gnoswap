@@ -61,25 +61,23 @@ type ApiPositionInfo struct {
 }
 
 type SinglePool struct {
-	PoolPath             string            `json:"pool_path"`
-	Token0Path           string            `json:"token0_path"`
-	Token1Path           string            `json:"token1_path"`
-	Fee                  uint16            `json:"fee"`
-	Token0Balance        bigint            `json:"token0_balance"`
-	Token1Balance        bigint            `json:"token1_balance"`
-	TickSpacing          int32             `json:"tick_spacing"`
-	MaxLiquidityPerTick  bigint            `json:"max_liquidity_per_tick"`
-	SqrtPriceX96         bigint            `json:"sqrt_price_x96"` // slot0
-	Tick                 int32             `json:"tick"`           // slot0
-	FeeProtocol          uint8             `json:"fee_protocol"`   // slot0
-	FeeGrowthGlobal0X128 bigint            `json:"fee_growth_global0_x128"`
-	FeeGrowthGlobal1X128 bigint            `json:"fee_growth_global1_x128"`
-	T0ProtocolFee        bigint            `json:"token0_protocol_fee"`
-	T1ProtocolFee        bigint            `json:"token1_protocol_fee"`
-	Liquidity            bigint            `json:"liquidity"`
-	Ticks                []int32           `json:"ticks"`
-	TickBitmaps          []int16           `json:"tick_bitmaps"`
-	Positions            []ApiPositionInfo `json:"positions"`
+	PoolPath            string            `json:"pool_path"`
+	Token0Path          string            `json:"token0_path"`
+	Token1Path          string            `json:"token1_path"`
+	Fee                 uint16            `json:"fee"`
+	Token0Balance       bigint            `json:"token0_balance"`
+	Token1Balance       bigint            `json:"token1_balance"`
+	TickSpacing         int32             `json:"tick_spacing"`
+	MaxLiquidityPerTick bigint            `json:"max_liquidity_per_tick"`
+	SqrtPriceX96        bigint            `json:"sqrt_price_x96"` // slot0
+	Tick                int32             `json:"tick"`           // slot0
+	FeeProtocol         uint8             `json:"fee_protocol"`   // slot0
+	T0ProtocolFee       bigint            `json:"token0_protocol_fee"`
+	T1ProtocolFee       bigint            `json:"token1_protocol_fee"`
+	Liquidity           bigint            `json:"liquidity"`
+	Ticks               []int32           `json:"ticks"`
+	TickBitmaps         map[int16]bigint  `json:"tick_bitmaps"`
+	Positions           []ApiPositionInfo `json:"positions"`
 }
 
 type ResponseGetPool struct {
@@ -141,12 +139,6 @@ func handleSinglePool(poolPath string) SinglePool {
 		tickList = append(tickList, k)
 	}
 
-	tickBitmaps := pool.tickBitmaps
-	tickBitmapList := []int16{}
-	for k, _ := range tickBitmaps {
-		tickBitmapList = append(tickBitmapList, k)
-	}
-
 	positions := pool.positions
 	positionList := []ApiPositionInfo{}
 	for k, v := range positions {
@@ -164,24 +156,22 @@ func handleSinglePool(poolPath string) SinglePool {
 	}
 
 	return SinglePool{
-		PoolPath:             poolPath,
-		Token0Path:           pool.token0Path,
-		Token1Path:           pool.token1Path,
-		Fee:                  pool.fee,
-		Token0Balance:        pool.balances.token0,
-		Token1Balance:        pool.balances.token1,
-		TickSpacing:          pool.tickSpacing,
-		MaxLiquidityPerTick:  pool.maxLiquidityPerTick,
-		SqrtPriceX96:         pool.slot0.sqrtPriceX96,
-		Tick:                 pool.slot0.tick,
-		FeeProtocol:          pool.slot0.feeProtocol,
-		FeeGrowthGlobal0X128: pool.feeGrowthGlobal0X128,
-		FeeGrowthGlobal1X128: pool.feeGrowthGlobal1X128,
-		T0ProtocolFee:        pool.protocolFees.token0,
-		T1ProtocolFee:        pool.protocolFees.token1,
-		Liquidity:            pool.liquidity,
-		Ticks:                tickList,
-		TickBitmaps:          tickBitmapList,
-		Positions:            positionList,
+		PoolPath:            poolPath,
+		Token0Path:          pool.token0Path,
+		Token1Path:          pool.token1Path,
+		Fee:                 pool.fee,
+		Token0Balance:       pool.balances.token0,
+		Token1Balance:       pool.balances.token1,
+		TickSpacing:         pool.tickSpacing,
+		MaxLiquidityPerTick: pool.maxLiquidityPerTick,
+		SqrtPriceX96:        pool.slot0.sqrtPriceX96,
+		Tick:                pool.slot0.tick,
+		FeeProtocol:         pool.slot0.feeProtocol,
+		T0ProtocolFee:       pool.protocolFees.token0,
+		T1ProtocolFee:       pool.protocolFees.token1,
+		Liquidity:           pool.liquidity,
+		Ticks:               tickList,
+		TickBitmaps:         pool.tickBitmaps,
+		Positions:           positionList,
 	}
 }
