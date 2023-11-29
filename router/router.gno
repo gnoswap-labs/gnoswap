@@ -44,10 +44,6 @@ func DrySwapRoute(
 ) bigint {
 	var routerKind RouterKind = DrySwap
 
-	if amountSpecified == 0 {
-		panic(errorf(routerKind, amountNotBeZero))
-	}
-
 	amountSpecified, err := setAmountSepcified(routerKind, amountSpecified, swapType)
 	if err != nil {
 		panic(err)
@@ -61,10 +57,6 @@ func DrySwapRoute(
 	isValidQuoteSum, err := validateQuoteSum(routerKind, quoteListStr)
 	if err != nil {
 		panic(err)
-	}
-
-	if !isValidQuoteSum {
-		panic(errorf(routerKind, quoteSumMustBe100))
 	}
 
 	resultAmount, err := calculateAmount(routerKind, routes, swapType)
@@ -86,10 +78,6 @@ func SwapRoute(
 ) bigint {
 	var routerKind RouterKind = Swap
 
-	if amountSpecified == 0 {
-		panic(errorf(routerKind, amountNotBeZero))
-	}
-
 	amountSpecified, err := setAmountSepcified(routerKind, amountSpecified, swapType)
 	if err != nil {
 		panic(err)
@@ -105,10 +93,6 @@ func SwapRoute(
 		panic(err)
 	}
 
-	if !isValidQuoteSum {
-		panic(errorf(routerKind, quoteSumMustBe100))
-	}
-
 	resultAmount, err := calculateAmount(routerKind, routes, swapType)
 	if err != nil {
 		panic(err)
@@ -122,6 +106,10 @@ func setAmountSepcified(
 	amount bigint,
 	swapType SwapType
 ) (bigInt, error) {
+	if amount == 0 {
+		return errorf(kind, amountNotBeZero)
+	}
+
 	swtich swapType {
 	case ExactIn:
 		return amount
@@ -145,7 +133,7 @@ func validateQuoteSum(kind RouterKind, quoteListStr string) (bool, error) {
 	return checkQuoteSum(kind, quotes)
 }
 
-func checkQuoteSum(kind RouterKind, quotes []string) bool {
+func checkQuoteSum(kind RouterKind, quotes []string) error {
 	quoteSum := 0
 
 	for _, quote := range quotes {
@@ -153,7 +141,11 @@ func checkQuoteSum(kind RouterKind, quotes []string) bool {
 		quoteSum += intQuote
 	}
 
-	return quoteSum == 100
+	if quoteSum != 100 {
+		return errorf(kind, quoteSumMustBe100)
+	}
+
+	return nil
 }
 
 func calculateAmount(kind RouterKind, routes string, swapTyp SwapType) (bigInt, error) {
