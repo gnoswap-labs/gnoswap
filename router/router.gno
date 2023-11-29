@@ -8,59 +8,70 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+var errMsg string
+
+const (
+    unknown                          errMsg = "An unknown error has occurred."
+    quoteSumMustBe100                errMsg = "The sum of the quotes must be 100."
+    quotesAndRoutesLengthNotMatch    errMsg = "The length of quotes and routes do not match."
+    numHopsMustInRange               errMsg = "The number of hops should be within the range of 1 to 3."
+    amountNotBeZero                  errMsg = "The specified amount should not be zero." 
+)
+
+type errorType struct {
+	router 	RouterKind
+	msg   	errMsg
+}
+
+func (e *errorType) Error() string {
+	return ufmt.Sprintf("%s || %s", e.router, e.msg)
+}
+
+func errorf(kind routerKind, msg errMsg) error {
+	return &errorType{
+		router: kind,
+		msg:    msg,
+	}
+}
+
 func DrySwapRoute(
 	inputToken string,
 	outputToken string,
 	amountSpecified bigint,
 	swapType SwapType,
-	strRouteArr string, // []string
-	quoteArr string, // []int
+	routeListStr string, // []string
+	quoteListStr string, // []int
 ) bigint {
-	require(amountSpecified != 0, "[ROUTER] router.gno__DrySwapRoute() || amountSpecified == 0")
+	var routerKind RouterKind = DrySwap
 
-	switch swapType {
-	case ExactIn:
-		amountSpecified = amountSpecified
-	case ExactOut:
-		amountSpecified = -amountSpecified
-	default:
-		panic("[ROUTER] router.gno__DrySwapRoute() || unknown swapType")
+	if amountSpecified == 0 {
+		panic(errorf(routerKind, amountNotBeZero))
 	}
 
-	// check route length ( should be 1 ~ 7 )
-	routes := strings.Split(strRouteArr, ",")
-	require(1 <= len(routes) && len(routes) <= 7, ufmt.Sprintf("[ROUTER] router.gno__DrySwapRoute() || len(routes) should be 1 ~ 7 (len(routes):%d)", len(routes)))
-
-	// check if routes length and quotes length are same
-	quotes := strings.Split(quoteArr, ",")
-	require(len(routes) == len(quotes), "[ROUTER] router.gno__DrySwapRoute() || len(routes) != len(quotes)")
-
-	// check if quotes are up to 100%
-	quotesSum := 0
-	for _, quote := range quotes {
-		intQuote, _ := strconv.Atoi(quote)
-		quotesSum += intQuote
+	amountSpecified, err := setAmountSepcified(routerKind, amountSpecified, swapType)
+	if err != nil {
+		panic(err)
 	}
-	require(quotesSum == 100, "[ROUTER] router.gno__DrySwapRoute() || quotesSum != 100")
 
-	resultAmount := bigint(0)
-	for i, route := range routes {
-		numHops := strings.Count(route, "*POOL*") + 1
-		quote, _ := strconv.Atoi(quotes[i])
-
-		// check if route hop is up to 3
-		require(numHops <= 3, "[ROUTER] router.gno__DrySwapRoute() || numHops > 3")
-
-		toSwap := amountSpecified / bigint(100) * bigint(quote)
-
-		if numHops == 1 { // SINGLE
-			resultAmount += handleSingleSwap(route, toSwap, true)
-		} else if 2 <= numHops && numHops <= 3 { // MULTI
-			resultAmount += handleMultiSwap(swapType, route, numHops, toSwap, true)
-		} else {
-			panic("[ROUTER] router.gno__DrySwapRoute() || numHops should be 1 ~ 3")
-		}
+	routes := strings.Split(routeListStr, ",")
+	if !(1 <= len(routes) && len(routes) <= 7) {
+		panic(ufmt.Sprintf("%s || %s. got %d", routerKind, routesLengthNotInRange, len(routes)))
 	}
+
+	isValidQuoteSum, err := validateQuoteSum(routerKind, quoteListStr)
+	if err != nil {
+		panic(err)
+	}
+
+	if !isValidQuoteSum {
+		panic(errorf(routerKind, quoteSumMustBe100))
+	}
+
+	resultAmount, err := calculateAmount(routerKind, routes, swapType)
+	if err != nil {
+		panic(err)
+	}
+
 	return resultAmount
 }
 
@@ -69,62 +80,129 @@ func SwapRoute(
 	outputToken string,
 	amountSpecified bigint,
 	swapType SwapType,
-	strRouteArr string, // []string
-	quoteArr string, // []int
+	routeListStr string, // []string
+	quoteListStr string, // []int
 	tokenAmountLimit bigint,
 ) bigint {
-	require(amountSpecified != 0, "[ROUTER] router.gno__SwapRoute() || amountSpecified == 0")
+	var routerKind RouterKind = Swap
 
-	switch swapType {
-	case ExactIn:
-		amountSpecified = amountSpecified
-	case ExactOut:
-		amountSpecified = -amountSpecified
-	default:
-		panic("[ROUTER] router.gno__SwapRoute() || unknown swapType")
+	if amountSpecified == 0 {
+		panic(errorf(routerKind, amountNotBeZero))
 	}
 
-	// check route length ( should be 1 ~ 7 )
-	routes := strings.Split(strRouteArr, ",")
-	require(1 <= len(routes) && len(routes) <= 7, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || len(routes) should be 1 ~ 7 (len(routes):%d)", len(routes)))
+	amountSpecified, err := setAmountSepcified(routerKind, amountSpecified, swapType)
+	if err != nil {
+		panic(err)
+	}
 
-	// check if routes length and quotes length are same
-	quotes := strings.Split(quoteArr, ",")
-	require(len(routes) == len(quotes), "[ROUTER] router.gno__SwapRoute() || len(routes) != len(quotes)")
+	routes := strings.Split(routeListStr, ",")
+	if !(1 <= len(routes) && len(routes) <= 7) {
+		panic(ufmt.Sprintf("%s || %s. got %d", routerKind, routesLengthNotInRange, len(routes)))
+	}
 
-	// check if quotes are up to 100%
-	quotesSum := 0
+	isValidQuoteSum, err := validateQuoteSum(routerKind, quoteListStr)
+	if err != nil {
+		panic(err)
+	}
+
+	if !isValidQuoteSum {
+		panic(errorf(routerKind, quoteSumMustBe100))
+	}
+
+	resultAmount, err := calculateAmount(routerKind, routes, swapType)
+	if err != nil {
+		panic(err)
+	}
+
+	return validateAmount(swapType, tokenAmountLimit, resultAmount, routerKind)
+}
+
+func setAmountSepcified(
+	kind routerKind,
+	amount bigint,
+	swapType SwapType
+) (bigInt, error) {
+	swtich swapType {
+	case ExactIn:
+		return amount
+	case ExactOut:
+		return -amount
+	default:
+		return errorf(kind, unknown)
+	}
+
+	return amount, nil
+}
+
+func validateQuoteSum(kind RouterKind, quoteListStr string) (bool, error) {
+	quoteSum := 0
+
+	quotes := strings.Split(quoteListStr, ",") // []string
+	if len(quotes) != len(routes) {
+		return errorf(kind, quotesAndRoutesLengthNotMatch)
+	}
+
+	return checkQuoteSum(kind, quotes)
+}
+
+func checkQuoteSum(kind RouterKind, quotes []string) bool {
+	quoteSum := 0
+
 	for _, quote := range quotes {
 		intQuote, _ := strconv.Atoi(quote)
-		quotesSum += intQuote
+		quoteSum += intQuote
 	}
-	require(quotesSum == 100, "[ROUTER] router.gno__SwapRoute() || quotesSum != 100")
 
-	resultAmount := bigint(0)
+	return quoteSum == 100
+}
+
+func calculateAmount(kind RouterKind, routes string, swapTyp SwapType) (bigInt, error) {
+	result := bigInt(0)
+
 	for i, route := range routes {
-		numHops := strings.Count(route, "*POOL*") + 1
+		hops := strings.Count(route, "*POOL*") + 1
 		quote, _ := strconv.Atoi(quotes[i])
 
-		// check if route hop is up to 3
-		require(numHops <= 3, "[ROUTER] router.gno__SwapRoute() || numHops > 3")
+		if hops > 3 {
+			return errorf(kind, numHopsMustInRange)
+		}
 
-		toSwap := amountSpecified / bigint(100) * bigint(quote)
+		toSwap := amountSpecified / bigInt(100) * bigInt(quote)
 
-		if numHops == 1 { // SINGLE
-			resultAmount += handleSingleSwap(route, toSwap, false)
-		} else if 2 <= numHops && numHops <= 3 { // MULTI
-			resultAmount += handleMultiSwap(swapType, route, numHops, toSwap, false)
+		if hops == 1 {
+			result += handleSingleSwap(route, toSwap, true)
 		} else {
-			panic("[ROUTER] router.gno__SwapRoute() || numHops should be 1 ~ 3")
+			result += handleMultiSwap(swapTyp, route, hops, toSwap, true)
 		}
 	}
 
-	if swapType == ExactIn {
-		require(tokenAmountLimit <= resultAmount, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received (expected minimum output:%d, actual output:%d)", tokenAmountLimit, resultAmount))
-	} else { // EXACT_OUT
-		require(resultAmount <= tokenAmountLimit, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too much spend (expected maximum input:%d, actual input:%d)", tokenAmountLimit, resultAmount))
-	}
-	return resultAmount
+	return result, nil
+}
+
+func validateAmount(swapType SwapType, tokenAmountLimit, resultAmount int, routerKind RouterKind) int {
+    if swapType == ExactIn {
+        require(
+            tokenAmountLimit <= resultAmount, 
+            ufmt.Sprintf(
+                "%s || Received fewer outputs than expected (expected minimum outputs: %d, got: %d)",
+                routerKind,
+                tokenAmountLimit, 
+                resultAmount
+            ),
+        )
+    } else { // EXACT_OUT
+        require(
+            resultAmount <= tokenAmountLimit, 
+            ufmt.Sprintf(
+                "%s || Input exceeded the expected maximum (expected maximum input: %d, got: %d)",
+                routerKind,
+                tokenAmountLimit, 
+                resultAmount
+            )
+        )
+    }
+
+    return resultAmount
 }
 
 func handleSingleSwap(route string, amountSpecified bigint, isDry bool) bigint {
@@ -139,10 +217,17 @@ func handleSingleSwap(route string, amountSpecified bigint, isDry bool) bigint {
 	if isDry {
 		return singleSwapDry(singleParams)
 	}
+
 	return singleSwap(singleParams)
 }
 
-func handleMultiSwap(swapType SwapType, route string, numHops int, amountSpecified bigint, isDry bool) bigint {
+func handleMultiSwap(
+	swapType SwapType,
+	route string,
+	numHops int,
+	amountSpecified bigint,
+	isDry bool
+) bigint {
 	switch swapType {
 	case ExactIn:
 		input, output, fee := getDataForMultiPath(route, 0) // first data
@@ -175,6 +260,6 @@ func handleMultiSwap(swapType SwapType, route string, numHops int, amountSpecifi
 		return multiSwapNegative(swapParams, numHops-1, route) // iterate here
 
 	default:
-		panic("[ROUTER] router.gno__handleMultiSwap() || unknown swapType")
+		return errorf(multiSwap, unknown)
 	}
 }

@@ -64,3 +64,11 @@ type QueryPool struct {
 	SqrtPriceX96         bigint `json:"sqrt_price_x96"`
 	Liquidity            bigint `json:"liquidity"`
 }
+
+type RouterKind string
+
+const (
+	DrySwap 	RouterKind = "[ROUTER] router.gno__DrySwapRoute()"
+	Swap    	RouterKind = "[ROUTER] router.gno__SwapRoute()"
+	MultiSwap 	RouterKind = "[ROUTER] router.gno__handleMultiSwap()"
+)
