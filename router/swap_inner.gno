@@ -52,21 +52,25 @@ func _swap(
 		data.payer,
 	)
 
-	if amountSpecified > 0 {
-		if zeroForOne { // return amount, user recvs ~= pool sends
-			amountResult = -amount1
+	if amountSpecified > 0 { // EXACT_IN,
+		// input from user: tokenIn, tokenInAmount, tokenOut
+		// return: tokenOutAmount(in positive) ≈ pool sends ≈ user recvs
+		if zeroForOne {
+			return absBigint(amount1)
 		} else {
-			amountResult = -amount0
+			return absBigint(amount0)
 		}
-	} else {
-		if zeroForOne { // return amount, user sends ~= pool recvs
-			amountResult = amount0
+	} else { // EXACT_OUT
+		// input from user: tokenIn, tokenOut, tokenOutAmount
+		// return: tokenInAmount(in positive) ≈ user sends ≈ pool recvs
+		if zeroForOne {
+			return absBigint(amount0)
 		} else {
-			amountResult = amount1
+			return absBigint(amount1)
 		}
 	}
 
-	return amountResult
+	// return amountResult
 }
 
 func _swapDry(
@@ -100,27 +104,23 @@ func _swapDry(
 		return 0
 	}
 
-	if amountSpecified > 0 {
-		if zeroForOne { // return amount, user recvs ~= pool sends
-			amountResult = -amount1
-		} else {
-			amountResult = -amount0
-		}
-	} else { // return amount, user sends ~= pool recvs
+	if amountSpecified > 0 { // EXACT_IN,
+		// input from user: tokenIn, tokenInAmount, tokenOut
+		// return: tokenOutAmount(in positive) ≈ pool sends ≈ user recvs
 		if zeroForOne {
-			amountResult = amount0
+			return absBigint(amount1)
 		} else {
-			amountResult = amount1
+			return absBigint(amount0)
+		}
+	} else { // EXACT_OUT
+		// input from user: tokenIn, tokenOut, tokenOutAmount
+		// return: tokenInAmount(in positive) ≈ user sends ≈ pool recvs
+		if zeroForOne {
+			return absBigint(amount0)
+		} else {
+			return absBigint(amount1)
 		}
 	}
 
-	return amountResult
-}
-
-func abs(x bigint) uint64 {
-	if x < 0 {
-		return uint64(-x)
-	}
-
-	return uint64(x)
+	// return amountResult
 }

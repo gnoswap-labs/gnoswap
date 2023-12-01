@@ -47,3 +47,19 @@ func require(cond bool, msg string) {
 		panic(msg)
 	}
 }
+
+func abs(x bigint) uint64 {
+	if x < 0 {
+		return uint64(-x)
+	}
+
+	return uint64(x)
+}
+
+func absBigint(x bigint) bigint {
+	if x < 0 {
+		return -x
+	}
+
+	return x
+}
