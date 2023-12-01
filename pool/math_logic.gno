@@ -151,14 +151,14 @@ func DrySwap(
 	}
 
 	if zeroForOne {
-		if !(pool.balances.token1 > (-1 * amount1)) {
-			// NOT ENOUGH BALANCE for token1
+		if !(pool.balances.token1 >= absBigint(amount1)) {
+			// NOT ENOUGH BALANCE for output token1
 			return 0, 0, false
 		}
 
 	} else {
-		if !(pool.balances.token0 > (-1 * amount0)) {
-			// NOT ENOUGH BALANCE for token0
+		if !(pool.balances.token0 >= absBigint(amount0)) {
+			// NOT ENOUGH BALANCE for output token0
 			return 0, 0, false
 		}
 	}

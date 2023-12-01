@@ -34,10 +34,11 @@ func _swap(
 		amountSpecified,
 		sqrtPriceLimitX96,
 	)
+	toApproveAmount := max(abs(approveAmount0), abs(approveAmount1))
 
 	// ROUTER approves POOL as spender
-	approveByRegisterCall(data.tokenIn, ADDR_POOL, abs(approveAmount0))
-	approveByRegisterCall(data.tokenOut, ADDR_POOL, abs(approveAmount1))
+	approveByRegisterCall(data.tokenIn, ADDR_POOL, toApproveAmount)
+	approveByRegisterCall(data.tokenOut, ADDR_POOL, toApproveAmount)
 
 	amount0, amount1 := p.Swap(
 		data.tokenIn,
@@ -100,27 +101,30 @@ func _swapDry(
 		return 0
 	}
 
-	if amountSpecified > 0 {
-		if zeroForOne { // return amount, user recvs ~= pool sends
-			amountResult = -amount1
-		} else {
-			amountResult = -amount0
-		}
-	} else { // return amount, user sends ~= pool recvs
+	if amountSpecified > 0 { // EXACT_IN,
+		// input from user: tokenIn, tokenInAmount, tokenOut
+		// return: return tokenOutAmount(in positive) ≈ pool sends ≈ user recvs
 		if zeroForOne {
-			amountResult = amount0
+			return absBigint(amount1)
 		} else {
-			amountResult = amount1
+			return absBigint(amount0)
+		}
+	} else { // EXACT_OUT
+		// input from user: tokenIn, tokenOut, tokenOutAmount
+		// return: return tokenInAmount(in positive) ≈ user sends ≈ pool recvs
+		if zeroForOne {
+			return absBigint(amount0)
+		} else {
+			return absBigint(amount1)
 		}
 	}
 
 	return amountResult
 }
 
-func abs(x bigint) uint64 {
-	if x < 0 {
-		return uint64(-x)
+func max(a, b uint64) uint64 {
+	if a > b {
+		return a
 	}
-
-	return uint64(x)
+	return b
 }
