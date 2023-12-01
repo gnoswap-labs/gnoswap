@@ -26,6 +26,8 @@ var (
 	// Common
 	barPath = "gno.land/r/bar"
 	bazPath = "gno.land/r/baz"
+	fooPath = "gno.land/r/foo"
+	quxPath = "gno.land/r/qux"
 
 	MAX_TIMEOUT bigint = 9999999999
 )
@@ -69,6 +71,21 @@ func TestDrySwapRouteBarBazExactIn(t *testing.T) {
 	shouldEQ(t, dryResult, bigint(2711))
 }
 
+func TestSwapRouteBarBazExactIn(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	swapResult := SwapRoute(
+		barPath,                             // inputToken
+		bazPath,                             // outputToken
+		bigint(1000),                        // amountSpecified
+		"EXACT_IN",                          // swapType
+		"gno.land/r/bar:gno.land/r/baz:500", // strRouteArr
+		"100",                               // quoteArr
+		2710,                                // tokenAmountLimit
+	)
+	shouldEQ(t, swapResult, bigint(2711))
+}
+
 func TestDrySwapRouteBarBazExactOut(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
@@ -81,7 +98,23 @@ func TestDrySwapRouteBarBazExactOut(t *testing.T) {
 		"100",                               // quoteArr
 	)
 
-	shouldEQ(t, dryResult, bigint(368))
+	shouldEQ(t, dryResult, bigint(369))
+}
+
+func TestSwapRouteBarBazExactOut(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	swapResult := SwapRoute(
+		barPath,                             // inputToken
+		bazPath,                             // outputToken
+		bigint(1000),                        // amountSpecified
+		"EXACT_OUT",                         // swapType
+		"gno.land/r/bar:gno.land/r/baz:500", // strRouteArr
+		"100",                               // quoteArr
+		370,                                 // tokenAmountLimit
+	)
+
+	shouldEQ(t, swapResult, bigint(369))
 }
 
 func TestDrySwapRouteBazBarExactIn(t *testing.T) {
@@ -96,7 +129,23 @@ func TestDrySwapRouteBazBarExactIn(t *testing.T) {
 		"100",                               // quoteArr
 	)
 
-	shouldEQ(t, dryResult, bigint(367))
+	shouldEQ(t, dryResult, bigint(368))
+}
+
+func TestSwapRouteBazBarExactIn(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	swapResult := SwapRoute(
+		bazPath,                             // inputToken
+		barPath,                             // outputToken
+		bigint(1000),                        // amountSpecified
+		"EXACT_IN",                          // swapType
+		"gno.land/r/baz:gno.land/r/bar:500", // strRouteArr
+		"100",                               // quoteArr
+		360,                                 // tokenAmountLimit
+	)
+
+	shouldEQ(t, swapResult, bigint(368))
 }
 
 func TestDrySwapRouteBazBarExactOut(t *testing.T) {
@@ -111,7 +160,23 @@ func TestDrySwapRouteBazBarExactOut(t *testing.T) {
 		"100",                               // quoteArr
 	)
 
-	shouldEQ(t, dryResult, bigint(1101))
+	shouldEQ(t, dryResult, bigint(1104))
+}
+
+func TestSwapRouteBazBarExactOut(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	swapResult := SwapRoute(
+		bazPath,                             // inputToken
+		barPath,                             // outputToken
+		bigint(3000),                        // amountSpecified
+		"EXACT_IN",                          // swapType
+		"gno.land/r/baz:gno.land/r/bar:500", // strRouteArr
+		"100",                               // quoteArr
+		1100,                                // tokenAmountLimit
+	)
+
+	shouldEQ(t, swapResult, bigint(1104))
 }
 
 /* HELPER */
