@@ -10,7 +10,7 @@ create_account(){
     exit 1
   fi
 
-  gnokey add $username -recover=true -insecure-password-stdin=true &> /dev/null<<EOM
+  gnokey add $username -recover=true -index $index -insecure-password-stdin=true &> /dev/null<<EOM
 
 
   ${test_mnemonic}
