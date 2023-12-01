@@ -17,7 +17,7 @@ var (
 )
 
 func init() {
-	wugnot = grc20.NewAdminToken("WrappedUGNOT", "WUGNOT", 4)
+	wugnot = grc20.NewAdminToken("WrappedUGNOT", "WUGNOT", 6)
 
 	// for swap
 	var (
