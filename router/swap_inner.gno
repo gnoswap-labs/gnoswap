@@ -34,10 +34,11 @@ func _swap(
 		amountSpecified,
 		sqrtPriceLimitX96,
 	)
+	toApproveAmount := max(abs(approveAmount0), abs(approveAmount1))
 
 	// ROUTER approves POOL as spender
-	approveByRegisterCall(data.tokenIn, ADDR_POOL, abs(approveAmount0))
-	approveByRegisterCall(data.tokenOut, ADDR_POOL, abs(approveAmount1))
+	approveByRegisterCall(data.tokenIn, ADDR_POOL, toApproveAmount)
+	approveByRegisterCall(data.tokenOut, ADDR_POOL, toApproveAmount)
 
 	amount0, amount1 := p.Swap(
 		data.tokenIn,
@@ -52,25 +53,21 @@ func _swap(
 		data.payer,
 	)
 
-	if amountSpecified > 0 { // EXACT_IN,
-		// input from user: tokenIn, tokenInAmount, tokenOut
-		// return: tokenOutAmount(in positive) ≈ pool sends ≈ user recvs
-		if zeroForOne {
-			return absBigint(amount1)
+	if amountSpecified > 0 {
+		if zeroForOne { // return amount, user recvs ~= pool sends
+			amountResult = -amount1
 		} else {
-			return absBigint(amount0)
+			amountResult = -amount0
 		}
-	} else { // EXACT_OUT
-		// input from user: tokenIn, tokenOut, tokenOutAmount
-		// return: tokenInAmount(in positive) ≈ user sends ≈ pool recvs
-		if zeroForOne {
-			return absBigint(amount0)
+	} else {
+		if zeroForOne { // return amount, user sends ~= pool recvs
+			amountResult = amount0
 		} else {
-			return absBigint(amount1)
+			amountResult = amount1
 		}
 	}
 
-	// return amountResult
+	return amountResult
 }
 
 func _swapDry(
@@ -106,7 +103,7 @@ func _swapDry(
 
 	if amountSpecified > 0 { // EXACT_IN,
 		// input from user: tokenIn, tokenInAmount, tokenOut
-		// return: tokenOutAmount(in positive) ≈ pool sends ≈ user recvs
+		// return: return tokenOutAmount(in positive) ≈ pool sends ≈ user recvs
 		if zeroForOne {
 			return absBigint(amount1)
 		} else {
@@ -114,7 +111,7 @@ func _swapDry(
 		}
 	} else { // EXACT_OUT
 		// input from user: tokenIn, tokenOut, tokenOutAmount
-		// return: tokenInAmount(in positive) ≈ user sends ≈ pool recvs
+		// return: return tokenInAmount(in positive) ≈ user sends ≈ pool recvs
 		if zeroForOne {
 			return absBigint(amount0)
 		} else {
@@ -122,5 +119,12 @@ func _swapDry(
 		}
 	}
 
-	// return amountResult
+	return amountResult
+}
+
+func max(a, b uint64) uint64 {
+	if a > b {
+		return a
+	}
+	return b
 }
