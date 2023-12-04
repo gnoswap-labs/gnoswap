@@ -26,7 +26,7 @@ var (
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/bar:gno.land/r/wugnot:100"] = 1 // DEV
+	poolTiers["gno.land/r/bar:gnot:100"] = 1 // DEV
 
 	// tier 2
 	poolTiers["GNS/USDT_500"] = 2
