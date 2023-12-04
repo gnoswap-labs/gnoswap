@@ -1,0 +1,161 @@
+package router
+
+import (
+	"encoding/gjson"
+	"std"
+	"testing"
+
+	"gno.land/p/demo/testutils"
+
+	_ "gno.land/r/grc20_wrapper"
+	pl "gno.land/r/pool"
+	pos "gno.land/r/position"
+)
+
+var (
+	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
+	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
+	tr01 = testutils.TestAddress("tr01") // Trader 01
+
+	poolAddr   = std.DerivePkgAddr("gno.land/r/pool")
+	posAddr    = std.DerivePkgAddr("gno.land/r/position")
+	routerAddr = std.DerivePkgAddr("gno.land/r/router")
+)
+
+var (
+	// Common
+	barPath  = "gno.land/r/bar"
+	bazPath  = "gno.land/r/baz"
+	fooPath  = "gno.land/r/foo"
+	quxPath  = "gno.land/r/qux"
+	gnotPath = "gnot"
+
+	MAX_TIMEOUT bigint = 9999999999
+)
+
+// // debug addr
+// func init() {
+// 	println(pc01, "// pc01")
+// 	println(lp01, "// lp01")
+// 	println(tr01, "// tr01")
+// 	println(poolAddr, "// pool")
+// 	println(posAddr, "// pos")
+// 	println(routerAddr, "// router")
+// }
+
+func TestInitManual(t *testing.T) {
+	std.TestSetOrigCaller(pc01)
+	pl.InitManual()
+	std.TestSkipHeights(1)
+}
+
+func TestCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(pc01)
+
+	pl.CreatePool(barPath, bazPath, uint16(500), 130621891405341611593710811006)  // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(bazPath, quxPath, uint16(500), 130621891405341611593710811006)  // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(quxPath, gnotPath, uint16(500), 130621891405341611593710811006) // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	// 1 bar ≈ 19.683 gnot
+
+	jsonOutput := pl.ApiGetPools()
+	jsonStr := gjson.Parse(jsonOutput)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 3)
+}
+
+func TestPositionMintBarBaz(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(barPath, bazPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, MAX_TIMEOUT)
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, amount0 > 0, true) // 36789 bar
+	shouldEQ(t, amount1 > 0, true) // 99999 baz
+}
+
+func TestPositionMintBazQux(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(bazPath, quxPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, MAX_TIMEOUT)
+	shouldEQ(t, tokenId, uint64(2))
+	shouldEQ(t, amount0 > 0, true) // 36789 baz
+	shouldEQ(t, amount1 > 0, true) // 99999 qux
+}
+
+func TestPositionMintQuxGnot(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	// prepare ugnot
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	testBanker.IssueCoin(std.GetOrigCaller(), "ugnot", 99999)
+
+	// send
+	std.TestSetOrigSend(std.Coins{{"ugnot", 99999}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 99999)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(quxPath, gnotPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, MAX_TIMEOUT)
+	shouldEQ(t, tokenId, uint64(3))
+	shouldEQ(t, amount0 > 0, true) // 36789 qux
+	shouldEQ(t, amount1 > 0, true) // 99999 gnot
+}
+
+func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	dryResult := DrySwapRoute(
+		barPath,      // inputToken
+		gnotPath,     // outputToken
+		bigint(1000), // amountSpecified
+		"EXACT_IN",   // swapType
+		"gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500*POOL*gno.land/r/qux:gnot:500", // strRouteArr
+		"100", // quoteArr
+	)
+	shouldEQ(t, dryResult, bigint(19740))
+}
+
+func TestDrySwapRouteBarGnotExactOut(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	dryResult := DrySwapRoute(
+		barPath,       // inputToken
+		gnotPath,      // outputToken
+		bigint(20000), // amountSpecified
+		"EXACT_OUT",   // swapType
+		"gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500*POOL*gno.land/r/qux:gnot:500", // strRouteArr
+		"100", // quoteArr
+	)
+	shouldEQ(t, dryResult, bigint(1011))
+}
+
+func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	dryResult := DrySwapRoute(
+		gnotPath,     // intputToken
+		barPath,      // outputToken
+		bigint(5000), // amountSpecified
+		"EXACT_IN",   // swapType
+		"gnot:gno.land/r/qux:500*POOL*gno.land/r/qux:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/bar:500", // strRouteArr
+		"100", // quoteArr
+	)
+	shouldEQ(t, dryResult, bigint(247))
+}
+
+func TestDrySwapRouteGnotBarExactOut(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	dryResult := DrySwapRoute(
+		gnotPath,    // intputToken
+		barPath,     // outputToken
+		bigint(100), // amountSpecified
+		"EXACT_OUT", // swapType
+		"gnot:gno.land/r/qux:500*POOL*gno.land/r/qux:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/bar:500", // strRouteArr
+		"100", // quoteArr
+	)
+	shouldEQ(t, dryResult, bigint(2003))
+}
+
+/* HELPER */
+func shouldEQ(t *testing.T, got, expected interface{}) {
+	if got != expected {
+		t.Errorf("got %v, expected %v", got, expected)
+	}
+}

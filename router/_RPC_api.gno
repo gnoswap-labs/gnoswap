@@ -51,13 +51,13 @@ func getRatiosFromBase(maxHops int) []map[string]bigint {
 	tokenPrice := make(map[string]bigint, 0)
 
 	// BASE
-	tokenPrice[BASE_TOKEN] = Q96 // ~= 1
+	tokenPrice[GNOT] = Q96 // ~= 1
 
 	// ELSE
 	tokenList := getTokenList()
 	for _, token := range tokenList {
-		if token != BASE_TOKEN {
-			_swapPaths := findSwapPaths(token, BASE_TOKEN, maxHops)
+		if token != GNOT {
+			_swapPaths := findSwapPaths(token, GNOT, maxHops)
 			swapPaths := strings.Split(_swapPaths, "_FIN_")
 			swapPaths = swapPaths[:len(swapPaths)-1]
 			numSwapPaths := len(swapPaths)
