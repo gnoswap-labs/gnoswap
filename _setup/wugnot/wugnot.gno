@@ -1,3 +1,12 @@
+// ** IMPORTANT **
+/*
+This realm is meant to be support swapping between GRC20 tokens and native coins.
+It is not meant to be used as a standalone token.
+User can not call transfer not transferFrom only gnoswap can.
+
+All of admin related funcitons and Facuet() will be removed in the future.
+*/
+
 package wugnot
 
 import (
@@ -14,19 +23,21 @@ import (
 var (
 	wugnot *grc20.AdminToken
 	admin  std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // TODO: helper to change admin
+
+	poolAddr   = std.DerivePkgAddr("gno.land/r/pool")
+	posAddr    = std.DerivePkgAddr("gno.land/r/position")
+	routerAddr = std.DerivePkgAddr("gno.land/r/router")
 )
 
 func init() {
-	wugnot = grc20.NewAdminToken("WrappedUGNOT", "WUGNOT", 4)
+	wugnot = grc20.NewAdminToken("WrappedUGNOT", "WUGNOT", 6)
 
 	// for swap
 	var (
-		lp01     = testutils.TestAddress("lp01") // Liquidity Provider 01
-		lp02     = testutils.TestAddress("lp02") // Liquidity Provider 02
-		lp03     = testutils.TestAddress("lp03") // Liquidity Provider 03
-		tr01     = testutils.TestAddress("tr01") // Trader 01
-		poolAddr = std.DerivePkgAddr("gno.land/r/pool")
-		posAddr  = std.DerivePkgAddr("gno.land/r/position")
+		lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
+		lp02 = testutils.TestAddress("lp02") // Liquidity Provider 02
+		lp03 = testutils.TestAddress("lp03") // Liquidity Provider 03
+		tr01 = testutils.TestAddress("tr01") // Trader 01
 	)
 
 	wugnot.Approve(lp01, poolAddr, 50000000000)
@@ -124,27 +135,39 @@ func assertIsAdmin(address std.Address) {
 // WRAP & UNWRAP
 func Wrap(address users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	if !(caller == std.DerivePkgAddr("gno.land/r/pool") || caller == std.DerivePkgAddr("gno.land/r/position")) {
-		panic("only pool, position contract can wrap")
+	if !(caller == poolAddr || caller == posAddr || caller == routerAddr) {
+		panic("only pool, position, router contract can wrap")
 	}
 
 	wugnot.Mint(address.Resolve(), amount) // mint to user
-	// wugnot.Mint(std.PrevRealm().Addr(), amount) // mint to contract
 }
 
 func Unwrap(address users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	if !(caller == std.DerivePkgAddr("gno.land/r/pool") || caller == std.DerivePkgAddr("gno.land/r/position")) {
-		panic("only pool, position contract can unwrap")
+	if !(caller == poolAddr || caller == posAddr || caller == routerAddr) {
+		panic("only pool, position, router contract can unwrap")
 	}
 
 	wugnot.Burn(address.Resolve(), amount) // burn from user
-	// wugnot.Burn(std.PrevRealm().Addr(), amount) // burn from contract
 }
 
 func Transfer(to users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
+	if !(caller == poolAddr || caller == posAddr || caller == routerAddr) {
+		panic("only pool, position, router contract can transfer")
+	}
 	err := wugnot.Transfer(caller, to.Resolve(), amount)
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
+func TransferFrom(from, to users.AddressOrName, amount uint64) {
+	caller := std.PrevRealm().Addr()
+	if !(caller == poolAddr || caller == posAddr || caller == routerAddr) {
+		panic("only pool, position, router contract can transferFrom")
+	}
+	err := wugnot.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -153,14 +176,6 @@ func Transfer(to users.AddressOrName, amount uint64) {
 func Approve(spender users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	err := wugnot.Approve(caller, spender.Resolve(), amount)
-	if err != nil {
-		panic(err.Error())
-	}
-}
-
-func TransferFrom(from, to users.AddressOrName, amount uint64) {
-	caller := std.PrevRealm().Addr()
-	err := wugnot.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}

@@ -1,0 +1,200 @@
+package router
+
+import (
+	"encoding/gjson"
+	"std"
+	"testing"
+
+	"gno.land/p/demo/testutils"
+
+	_ "gno.land/r/grc20_wrapper"
+	pl "gno.land/r/pool"
+	pos "gno.land/r/position"
+)
+
+var (
+	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
+	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
+	tr01 = testutils.TestAddress("tr01") // Trader 01
+
+	poolAddr   = std.DerivePkgAddr("gno.land/r/pool")
+	posAddr    = std.DerivePkgAddr("gno.land/r/position")
+	routerAddr = std.DerivePkgAddr("gno.land/r/router")
+)
+
+var (
+	// Common
+	barPath = "gno.land/r/bar"
+	bazPath = "gno.land/r/baz"
+	fooPath = "gno.land/r/foo"
+	quxPath = "gno.land/r/qux"
+
+	MAX_TIMEOUT bigint = 9999999999
+)
+
+// debug addr
+func init() {
+	println(pc01, "// pc01")
+	println(lp01, "// lp01")
+	println(tr01, "// tr01")
+	println(poolAddr, "// pool")
+	println(posAddr, "// pos")
+	println(routerAddr, "// router")
+}
+
+func TestInitManual(t *testing.T) {
+	std.TestSetOrigCaller(pc01)
+	pl.InitManual()
+	std.TestSkipHeights(1)
+}
+
+func TestCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(pc01)
+
+	pl.CreatePool(barPath, bazPath, uint16(500), 130621891405341611593710811006) // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(bazPath, quxPath, uint16(500), 130621891405341611593710811006) // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+
+	jsonOutput := pl.ApiGetPools()
+	jsonStr := gjson.Parse(jsonOutput)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 2)
+}
+
+func TestPositionMint(t *testing.T) {
+	// bar_baz_500 by lp01
+	std.TestSetOrigCaller(lp01)
+
+	// Mint
+	pos.Mint(barPath, bazPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, MAX_TIMEOUT)
+	pos.Mint(bazPath, quxPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, MAX_TIMEOUT)
+}
+
+func TestDrySwapRouteBarQuxExactIn(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	dryResult := DrySwapRoute(
+		barPath,      // inputToken
+		quxPath,      // outputToken
+		bigint(1000), // amountSpecified
+		"EXACT_IN",   // swapType
+		"gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500,gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500", // strRouteArr
+		"50,50", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(7346))
+}
+
+func TestSwapRouteBarQuxExactIn(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	swapResult := SwapRoute(
+		barPath,      // inputToken
+		quxPath,      // outputToken
+		bigint(1000), // amountSpecified
+		"EXACT_IN",   // swapType
+		"gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500,gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500", // strRouteArr
+		"50,50", // quoteArr
+		1,       // tokenAmountLimit
+	)
+
+	shouldEQ(t, swapResult, bigint(7328))
+}
+
+func TestDrySwapRouteBarQuxExactOut(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	dryResult := DrySwapRoute(
+		barPath,      // inputToken
+		quxPath,      // outputToken
+		bigint(1000), // amountSpecified
+		"EXACT_OUT",  // swapType
+		"gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500,gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500", // strRouteArr
+		"50,50", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(136))
+}
+
+func TestSwapRouteBarQuxExactOut(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	swapResult := SwapRoute(
+		barPath,      // inputToken
+		quxPath,      // outputToken
+		bigint(1000), // amountSpecified
+		"EXACT_OUT",  // swapType
+		"gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500,gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500", // strRouteArr
+		"50,50", // quoteArr
+		99999,   // tokenAmountLimit
+	)
+
+	shouldEQ(t, swapResult, bigint(136))
+}
+
+func TestDrySwapRouteQuxBarExactIn(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	dryResult := DrySwapRoute(
+		quxPath,      // inputToken
+		barPath,      // outputToken
+		bigint(1000), // amountSpecified
+		"EXACT_IN",   // swapType
+		"gno.land/r/qux:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/bar:500,gno.land/r/qux:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/bar:500", // strRouteArr
+		"30,70", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(135))
+}
+
+func TestSwapRouteQuxBarExactIn(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	swapResult := SwapRoute(
+		quxPath,      // inputToken
+		barPath,      // outputToken
+		bigint(1000), // amountSpecified
+		"EXACT_IN",   // swapType
+		"gno.land/r/qux:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/bar:500,gno.land/r/qux:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/bar:500", // strRouteArr
+		"30,70", // quoteArr
+		1,       // tokenAmountLimit
+	)
+
+	shouldEQ(t, swapResult, bigint(135))
+}
+
+func TestDrySwapRouteQuxBarExactOut(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	dryResult := DrySwapRoute(
+		quxPath,      // inputToken
+		barPath,      // outputToken
+		bigint(1000), // amountSpecified
+		"EXACT_OUT",  // swapType
+		"gno.land/r/qux:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/bar:500,gno.land/r/qux:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/bar:500", // strRouteArr
+		"30,70", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(7336))
+}
+
+func TestwapRouteQuxBarExactOut(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	swapResult := SwapRoute(
+		quxPath,      // inputToken
+		barPath,      // outputToken
+		bigint(1000), // amountSpecified
+		"EXACT_OUT",  // swapType
+		"gno.land/r/qux:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/bar:500,gno.land/r/qux:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/bar:500", // strRouteArr
+		"30,70", // quoteArr
+		99999,   // tokenAmountLimit
+	)
+
+	shouldEQ(t, swapResult, bigint(7356))
+}
+
+/* HELPER */
+func shouldEQ(t *testing.T, got, expected interface{}) {
+	if got != expected {
+		t.Errorf("got %v, expected %v", got, expected)
+	}
+}
