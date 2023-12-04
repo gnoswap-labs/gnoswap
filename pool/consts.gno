@@ -61,3 +61,9 @@ const (
 	ADDR_ROUTER std.Address = std.DerivePkgAddr("gno.land/r/router")
 	ADDR_POOL   std.Address = std.DerivePkgAddr("gno.land/r/pool")
 )
+
+// WRAP & UNWRAP
+const (
+	GNOT           = "gnot"
+	WRAPPED_WUGNOT = "gno.land/r/wugnot"
+)

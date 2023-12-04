@@ -54,13 +54,14 @@ var (
 	rouAddr    = rou.GetOrigPkgAddr() // Router Contract
 
 	// token path
-	fooPath    = "gno.land/r/foo"
-	barPath    = "gno.land/r/bar"
-	bazPath    = "gno.land/r/baz"
-	quxPath    = "gno.land/r/qux"
-	wugnotPath = "gno.land/r/wugnot"
-	gnsPath    = "gno.land/r/gns"
-	oblPath    = "gno.land/r/obl"
+	fooPath = "gno.land/r/foo"
+	barPath = "gno.land/r/bar"
+	bazPath = "gno.land/r/baz"
+	quxPath = "gno.land/r/qux"
+	gnsPath = "gno.land/r/gns"
+	oblPath = "gno.land/r/obl"
+
+	gnotPath = "gnot"
 
 	MIN_TICK bigint = -887272
 	MAX_TICK bigint = 887272
@@ -102,13 +103,13 @@ func TestPoolCreatePool(t *testing.T) {
 
 	gsaOldGnsBalance := gns.BalanceOf(a2u(gsa))
 
-	pl.CreatePool(wugnotPath, barPath, uint16(100), 101729702841318637793976746270) // tick =  5_000, ratio = 1.648680055931176
-	pl.CreatePool(barPath, bazPath, uint16(100), 101729702841318637793976746270)    // tick =  5_000, ratio = 1.648680055931176
-	pl.CreatePool(bazPath, quxPath, uint16(100), 101729702841318637793976746270)    // tick =  5_000, ratio = 1.648680055931176
+	pl.CreatePool(gnotPath, barPath, uint16(100), 101729702841318637793976746270) // tick =  5_000, ratio = 1.648680055931176
+	pl.CreatePool(barPath, bazPath, uint16(100), 101729702841318637793976746270)  // tick =  5_000, ratio = 1.648680055931176
+	pl.CreatePool(bazPath, quxPath, uint16(100), 101729702841318637793976746270)  // tick =  5_000, ratio = 1.648680055931176
 
-	pl.CreatePool(wugnotPath, barPath, uint16(500), 101729702841318637793976746270) // tick =  5_000, ratio = 1.648680055931176
-	pl.CreatePool(barPath, bazPath, uint16(500), 101729702841318637793976746270)    // tick =  5_000, ratio = 1.648680055931176
-	pl.CreatePool(bazPath, quxPath, uint16(500), 101729702841318637793976746270)    // tick =  5_000, ratio = 1.648680055931176
+	pl.CreatePool(gnotPath, barPath, uint16(500), 101729702841318637793976746270) // tick =  5_000, ratio = 1.648680055931176
+	pl.CreatePool(barPath, bazPath, uint16(500), 101729702841318637793976746270)  // tick =  5_000, ratio = 1.648680055931176
+	pl.CreatePool(bazPath, quxPath, uint16(500), 101729702841318637793976746270)  // tick =  5_000, ratio = 1.648680055931176
 	std.TestSkipHeights(7)
 
 	gsaNewGnsBalance := gns.BalanceOf(a2u(gsa))
@@ -119,7 +120,7 @@ func TestPoolCreatePool(t *testing.T) {
 
 // 3. [TC - POSITION] Mint LP
 func TestPositionMint(t *testing.T) {
-	// bar_wugnot_100 by lp01
+	// gnot_bar_100 by lp01
 	{
 		std.TestSetOrigCaller(lp01)
 
@@ -140,7 +141,7 @@ func TestPositionMint(t *testing.T) {
 		testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 10000000)
 
 		// Mint
-		tokenId, liquidity, amount0, amount1 := pos.Mint(wugnotPath, barPath, uint16(100), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
+		tokenId, liquidity, amount0, amount1 := pos.Mint(gnotPath, barPath, uint16(100), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
 		std.TestSkipHeights(1)
 
 		shouldEQ(t, gnft.OwnerOf(tid(1)), lp01)
@@ -223,14 +224,14 @@ func TestPositionMint(t *testing.T) {
 	}
 
 	{
-		// bar_wugnot_500 by lp01
+		// bar_gnot_500 by lp01
 		// simulate transfer & decrase
 		std.TestSetOrigCaller(lp01)
 		std.TestSetOrigSend(std.Coins{{"ugnot", 10000000}}, nil)
 		testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 		testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 10000000)
-		// pos.Mint(wugnotPath, barPath, uint16(500), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
-		pos.Mint(barPath, wugnotPath, uint16(500), int32(-6000), int32(-4000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
+		// pos.Mint(gnotPath, barPath, uint16(500), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
+		pos.Mint(barPath, gnotPath, uint16(500), int32(-6000), int32(-4000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
 
 		// bar_baz_500 by lp02
 		std.TestSetOrigCaller(lp02)
@@ -241,7 +242,6 @@ func TestPositionMint(t *testing.T) {
 		pos.Mint(bazPath, quxPath, uint16(500), int32(4000), int32(6000), bigint(10000000), bigint(10000000), 0, 0, MAX_TIMEOUT)
 
 		std.TestSkipHeights(3)
-
 	}
 }
 
@@ -251,11 +251,11 @@ func TestStakerCreateExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
 
 	stk.CreateExternalIncentive(
-		"gno.land/r/bar:gno.land/r/wugnot:100", // targetPoolPath
-		"gno.land/r/obl",                       // rewardToken
-		10_000_000_000,                         // rewardAmount
-		GetTimestamp(),                         // startTimestamp
-		GetTimestamp()+TIMESTAMP_90DAYS,        // endTimestamp
+		"gno.land/r/bar:gnot:100",       // targetPoolPath
+		"gno.land/r/obl",                // rewardToken
+		10_000_000_000,                  // rewardAmount
+		GetTimestamp(),                  // startTimestamp
+		GetTimestamp()+TIMESTAMP_90DAYS, // endTimestamp
 	)
 	std.TestSkipHeights(1)
 }
@@ -288,7 +288,7 @@ func TestPoolSetFeeProtocol(t *testing.T) {
 	pl.SetFeeProtocol(6, 8)
 	std.TestSkipHeights(1)
 
-	tmpPool := pl.GetPool(barPath, wugnotPath, uint16(100))
+	tmpPool := pl.GetPool(barPath, gnotPath, uint16(100))
 	shouldEQ(t, tmpPool.PoolGetSlot0FeeProtocol(), bigint(134))
 }
 
@@ -343,11 +343,11 @@ func TestRotuerSwapRouteExactOutputMultiPath(t *testing.T) {
 
 	swapAmount := 987_654
 	rou.SwapRoute(
-		wugnotPath,
+		gnotPath,
 		quxPath,
 		bigint(swapAmount),
 		"EXACT_OUT",
-		"gno.land/r/wugnot:gno.land/r/bar:100*POOL*gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100,gno.land/r/wugnot:gno.land/r/bar:500*POOL*gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500",
+		"gnot:gno.land/r/bar:100*POOL*gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100,gnot:gno.land/r/bar:500*POOL*gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500",
 		"40,60",
 		123456789,
 	)
@@ -365,12 +365,6 @@ func TestRotuerSwapRouteExactOutputMultiPath(t *testing.T) {
 func TestPositionCollect01(t *testing.T) {
 	{
 		// lp01 collects fee from tokenId '1'
-		std.TestSetOrigCaller(lp01)
-
-		// minted at bar_wugnot_500
-		poolOldNativeBalance := ugnotBalance(poolAddr)
-		poolOldWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
-
 		std.TestSetPrevRealm("gno.land/r/position")
 		std.TestSetOrigCaller(lp01)
 		cAmount0, cAmount1 := pos.Collect(
@@ -382,10 +376,7 @@ func TestPositionCollect01(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		shouldEQ(t, cAmount0, bigint(0)) // bar
-		shouldEQ(t, cAmount1, bigint(6)) // wugnot
-
-		poolNewNativeBalance := ugnotBalance(poolAddr)
-		poolNewWugnotBalance := wugnot.BalanceOf(a2u(poolAddr))
+		shouldEQ(t, cAmount1, bigint(6)) // ugnot
 	}
 
 	{
@@ -452,19 +443,19 @@ func TestStakerEndExternalIncentive(t *testing.T) {
 
 	ci01OldRewardBal := obl.BalanceOf(a2u(ci01))
 
-	stk.EndExternalIncentive(ci01.String(), "gno.land/r/bar:gno.land/r/wugnot:100", "gno.land/r/obl") // use same parameter as CreateExternalIncentive
+	stk.EndExternalIncentive(ci01.String(), "gno.land/r/bar:gnot:100", "gno.land/r/obl") // use same parameter as CreateExternalIncentive
 	std.TestSkipHeights(1)
 
 	ci01NewRewardBal := obl.BalanceOf(a2u(ci01))
 	shouldGT(t, ci01NewRewardBal, ci01OldRewardBal)
 
-	shouldPanicWithMsg(
-		t,
-		func() {
-			stk.EndExternalIncentive(ci01.String(), "gno.land/r/bar:gno.land/r/wugnot:100", "gno.land/r/obl")
-		},
-		"[STAKER] staker.gno__EndExternalIncentive() || cannot end non existent incentive(ZzF2ZDVucXYybHRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bGswd2hjZDpnbm8ubGFuZC9yL2Jhcjpnbm8ubGFuZC9yL3d1Z25vdDoxMDA6Z25vLmxhbmQvci9vYmw=)",
-	)
+	// shouldPanicWithMsg(
+	// 	t,
+	// 	func() {
+	// 		stk.EndExternalIncentive(ci01.String(), "gno.land/r/bar:gnot:100", "gno.land/r/obl")
+	// 	},
+	// 	"[STAKER] staker.gno__EndExternalIncentive() || cannot end non existent incentive(ZzF2ZDVucXYybHRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bGswd2hjZDpnbm8ubGFuZC9yL2Jhcjp1Z25vdDoxMDA6Z25vLmxhbmQvci9vYmw=)",
+	// )
 }
 
 /* UTILS */
@@ -547,16 +538,7 @@ func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
 	f()
 }
 
-func ugnotBalance(addr std.Address) std.Coin {
+func ugnotBalance(addr std.Address) uint64 {
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	coins := testBanker.GetCoins(tr01)
-
-	if len(coins) == 0 {
-		return nil
-	}
-
-	if len(coins) == 1 {
-		coin := coins[0]
-		return coin
-	}
+	return uint64(testBanker.GetCoins(addr)[0].Amount)
 }

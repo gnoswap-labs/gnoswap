@@ -189,7 +189,7 @@ func init() {
 	rRegistry.RegisterGRC20Interface("gno.land/r/gns", GnsTokenInterface{})
 
 	// staker register
-	// sRegistry.RegisterGRC20Interface("gno.land/r/wugnot", WugnotTokenInterface{})
+	sRegistry.RegisterGRC20Interface("gno.land/r/wugnot", WugnotTokenInterface{})
 	sRegistry.RegisterGRC20Interface("gno.land/r/obl", OblTokenInterface{})
 	sRegistry.RegisterGRC20Interface("gno.land/r/gns", GnsTokenInterface{})
 }

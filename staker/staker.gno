@@ -26,7 +26,7 @@ var (
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/bar:gno.land/r/wugnot:100"] = 1 // DEV
+	poolTiers["gno.land/r/bar:gnot:100"] = 1 // DEV
 
 	// tier 2
 	poolTiers["GNS/USDT_500"] = 2
@@ -51,6 +51,9 @@ func CreateExternalIncentive(
 	if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_360DAYS) {
 		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 360 days)", externalDuration))
 	}
+
+	// handle native coin(gnot)
+	wrap(rewardToken, rewardAmount)
 
 	fromBalanceBefore := balanceOfByRegisterCall(rewardToken, GetOrigCaller())
 	require(fromBalanceBefore >= rewardAmount, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || not enough rewardAmount(%d) to create incentive(%d)", fromBalanceBefore, rewardAmount))
@@ -138,6 +141,7 @@ func UnstakeToken(
 
 		// r3v4_xxx: handle native coin(gnot) reward
 		transferByRegisterCall(incentive.rewardToken, deposit.owner, uint64(externalReward))
+		unWrap(incentive.rewardToken, uint64(externalReward))
 
 		incentive.rewardAmount -= externalReward
 		incentives[incentiveId] = incentive
@@ -170,6 +174,7 @@ func EndExternalIncentive(refundee, targetPoolPath, rewardToken string) {
 	require(poolExternalReward >= refund, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || not enough poolExternalReward(%d) to refund(%d)", poolExternalReward, refund))
 
 	transferByRegisterCall(incentive.rewardToken, incentive.refundee, uint64(refund))
+	unWrap(incentive.rewardToken, uint64(refund))
 
 	delete(incentives, incentiveId)
 	for i, v := range poolIncentives[targetPoolPath] {

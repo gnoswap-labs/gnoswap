@@ -8,7 +8,7 @@ import (
 )
 
 func wrap(tokenPath string) {
-	if tokenPath != "gno.land/r/wugnot" {
+	if tokenPath != GNOT {
 		return
 	}
 
@@ -29,7 +29,7 @@ func wrap(tokenPath string) {
 }
 
 func unWrap(tokenPath string, amount uint64) {
-	if tokenPath != "gno.land/r/wugnot" {
+	if tokenPath != GNOT {
 		return
 	}
 

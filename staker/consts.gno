@@ -15,3 +15,9 @@ const (
 	TIMESTAMP_180DAYS uint64 = 15552000
 	TIMESTAMP_360DAYS uint64 = 31104000
 )
+
+// WRAP & UNWRAP
+const (
+	GNOT           = "gnot"
+	WRAPPED_WUGNOT = "gno.land/r/wugnot"
+)

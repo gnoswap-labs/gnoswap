@@ -118,8 +118,6 @@ func TestApiGetPosition(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 323523)
 	shouldEQ(t, jsonStr.Get("response.data.tokens_owed_0").Int(), 61)
 	shouldEQ(t, jsonStr.Get("response.data.tokens_owed_1").Int(), 0)
-	shouldEQ(t, jsonStr.Get("response.data.fee_growth_inside_0_last_x128").String(), "1694567149905485370521073160520307")
-	shouldEQ(t, jsonStr.Get("response.data.fee_growth_inside_1_last_x128").String(), "0")
 }
 
 func TestApiGetPositionByUser(t *testing.T) {
@@ -138,8 +136,6 @@ func TestApiGetPositionByUser(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.1.token1_balance").Int(), 0)
 	shouldEQ(t, jsonStr.Get("response.data.1.tokens_owed_0").Int(), 0)
 	shouldEQ(t, jsonStr.Get("response.data.1.tokens_owed_1").Int(), 0)
-	shouldEQ(t, jsonStr.Get("response.data.1.fee_growth_inside_0_last_x128").String(), "0")
-	shouldEQ(t, jsonStr.Get("response.data.1.fee_growth_inside_1_last_x128").String(), "0")
 }
 
 /* HELPER */

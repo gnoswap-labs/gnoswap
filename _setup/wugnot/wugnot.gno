@@ -27,6 +27,7 @@ var (
 	poolAddr   = std.DerivePkgAddr("gno.land/r/pool")
 	posAddr    = std.DerivePkgAddr("gno.land/r/position")
 	routerAddr = std.DerivePkgAddr("gno.land/r/router")
+	stakerAddr = std.DerivePkgAddr("gno.land/r/staker")
 )
 
 func init() {
@@ -38,6 +39,7 @@ func init() {
 		lp02 = testutils.TestAddress("lp02") // Liquidity Provider 02
 		lp03 = testutils.TestAddress("lp03") // Liquidity Provider 03
 		tr01 = testutils.TestAddress("tr01") // Trader 01
+		ci01 = testutils.TestAddress("ci01") // Create Incentive Caller
 	)
 
 	wugnot.Approve(lp01, poolAddr, 50000000000)
@@ -45,6 +47,7 @@ func init() {
 	wugnot.Approve(lp03, poolAddr, 50000000000)
 	wugnot.Approve(tr01, poolAddr, 50000000000)
 
+	wugnot.Approve(ci01, stakerAddr, 50000000000)
 }
 
 // method proxies as public functions.
@@ -135,8 +138,8 @@ func assertIsAdmin(address std.Address) {
 // WRAP & UNWRAP
 func Wrap(address users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	if !(caller == poolAddr || caller == posAddr || caller == routerAddr) {
-		panic("only pool, position, router contract can wrap")
+	if !(caller == poolAddr || caller == posAddr || caller == routerAddr || caller == stakerAddr) {
+		panic("only pool, position, router, staker contract can wrap")
 	}
 
 	wugnot.Mint(address.Resolve(), amount) // mint to user
@@ -144,8 +147,8 @@ func Wrap(address users.AddressOrName, amount uint64) {
 
 func Unwrap(address users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	if !(caller == poolAddr || caller == posAddr || caller == routerAddr) {
-		panic("only pool, position, router contract can unwrap")
+	if !(caller == poolAddr || caller == posAddr || caller == routerAddr || caller == stakerAddr) {
+		panic("only pool, position, router, staker contract can unwrap")
 	}
 
 	wugnot.Burn(address.Resolve(), amount) // burn from user
@@ -153,8 +156,8 @@ func Unwrap(address users.AddressOrName, amount uint64) {
 
 func Transfer(to users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	if !(caller == poolAddr || caller == posAddr || caller == routerAddr) {
-		panic("only pool, position, router contract can transfer")
+	if !(caller == poolAddr || caller == posAddr || caller == routerAddr || caller == stakerAddr) {
+		panic("only pool, position, router, staker contract can transfer")
 	}
 	err := wugnot.Transfer(caller, to.Resolve(), amount)
 	if err != nil {
@@ -164,8 +167,8 @@ func Transfer(to users.AddressOrName, amount uint64) {
 
 func TransferFrom(from, to users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	if !(caller == poolAddr || caller == posAddr || caller == routerAddr) {
-		panic("only pool, position, router contract can transferFrom")
+	if !(caller == poolAddr || caller == posAddr || caller == routerAddr || caller == stakerAddr) {
+		panic("only pool, position, router, staker contract can transferFrom")
 	}
 	err := wugnot.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {
