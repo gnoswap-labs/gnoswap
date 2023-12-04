@@ -4,12 +4,18 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/wugnot"
 )
 
-func wrap(tokenPath string) {
-	if tokenPath != "gno.land/r/wugnot" {
-		return
+const (
+	GNOT           = "gnot"
+	WRAPPED_WUGNOT = "gno.land/r/wugnot"
+)
+
+func wrap(tokenPath string) string {
+	if tokenPath != GNOT {
+		return tokenPath
 	}
 
 	caller := std.GetOrigCaller() // GOTTA BE USER for POSITION.MINT
@@ -26,11 +32,14 @@ func wrap(tokenPath string) {
 
 	// println("[DEBUG__POSITION] wrap_unwrap.gno__wrap() || WRAP AMOUNT:", sentCoin.Amount)
 	wugnot.Wrap(a2u(caller), uint64(sentCoin.Amount))
+
+	// return wrapepd ugnot path
+	return WRAPPED_WUGNOT
 }
 
-func unWrap(tokenPath string, amount uint64) {
-	if tokenPath != "gno.land/r/wugnot" {
-		return
+func unWrap(tokenPath string, amount uint64) string {
+	if tokenPath != GNOT {
+		return tokenPath
 	}
 
 	caller := std.GetOrigCaller() // GOTTA BE USER for POSITION.MINT
@@ -47,4 +56,7 @@ func unWrap(tokenPath string, amount uint64) {
 
 	banker := std.GetBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(std.GetOrigPkgAddr(), caller, refund)
+
+	// return wrapepd ugnot path
+	return WRAPPED_WUGNOT
 }

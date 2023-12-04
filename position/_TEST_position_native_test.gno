@@ -28,9 +28,9 @@ var (
 
 var (
 	// Common
-	fooPath    = "gno.land/r/foo"
-	wugnotPath = "gno.land/r/wugnot"
-	pFee       = uint16(500)
+	fooPath  = "gno.land/r/foo"
+	gnotPath = "gnot"
+	pFee     = uint16(500)
 
 	test_tickLower       = int32(9000)
 	test_tickUpper       = int32(11000)
@@ -53,9 +53,9 @@ func TestPoolInitCreatePool(t *testing.T) {
 	p.InitManual()
 
 	std.TestSetOrigCaller(pc01)
-	p.CreatePool(fooPath, wugnotPath, pFee, 130621891405341611593710811006)
+	p.CreatePool(fooPath, gnotPath, pFee, 130621891405341611593710811006) // tick 10_000 ≈ ratio x2.718145
 
-	shouldPanic(t, func() { p.CreatePool(fooPath, wugnotPath, 500, 130621891405341611593710811006) })
+	shouldPanic(t, func() { p.CreatePool(fooPath, gnotPath, 500, 130621891405341611593710811006) })
 }
 
 // 2. Mint LP and Get GNFT
@@ -67,7 +67,7 @@ func TestMint(t *testing.T) {
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 	testBanker.IssueCoin(std.GetOrigCaller(), "ugnot", 1000)
 
-	token0, token1 := fooPath, wugnotPath
+	token0, token1 := fooPath, gnotPath
 	if token1 < token0 {
 		token0, token1 = token1, token0
 	}
@@ -92,7 +92,7 @@ func TestMint(t *testing.T) {
 	// Mint
 	tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
 		fooPath,
-		wugnotPath,
+		gnotPath,
 		pFee,
 		test_tickLower,
 		test_tickUpper,
@@ -109,7 +109,7 @@ func TestMint(t *testing.T) {
 		// 1000 => 1 wugnot // after wrap, sent 999 wugnot to pool ( little error range due to decimals )
 		coins := testBanker.GetCoins(lp01)
 		shouldEQ(t, len(coins), 0)
-		shouldEQ(t, Token1Bal(lp01), bigint(1))
+		shouldEQ(t, Token1Bal(lp01), bigint(1)) // send 999, 1 left
 	}
 
 	shouldEQ(t, tAmount0, bigint(367))
@@ -126,7 +126,7 @@ func TestMint(t *testing.T) {
 func TestDecreaseLiquidity(t *testing.T) {
 	// lp01 decreases liquidity at tid 1 position ( in range )
 	std.TestSetOrigCaller(lp01)
-	pool := p.GetPool(fooPath, wugnotPath, pFee)
+	pool := p.GetPool(fooPath, gnotPath, pFee)
 
 	tTargetLiquidity := bigint(1234)
 
@@ -157,9 +157,9 @@ func TestCollect(t *testing.T) {
 	// lp01 did decrease some liquidity => there are some to collect
 	{
 		std.TestSetOrigCaller(lp01)
-		pool := p.GetPool(fooPath, wugnotPath, pFee)
+		pool := p.GetPool(fooPath, gnotPath, pFee)
 
-		poolOldLiquidity := pool.PoolGetLiquidity()
+		poolOldLiquidity := pool.PoolGetLiquidity() // == position[1] liquidity
 		poolOldToken0Bal := Token0Bal(poolAddr)
 		poolOldToken1Bal := Token1Bal(poolAddr)
 
@@ -189,7 +189,7 @@ func TestCollect(t *testing.T) {
 	// lp01 collect all
 	{
 		std.TestSetOrigCaller(lp01)
-		pool := p.GetPool(fooPath, wugnotPath, pFee)
+		pool := p.GetPool(fooPath, gnotPath, pFee)
 
 		poolOldLiquidity := pool.PoolGetLiquidity()
 		poolOldToken0Bal := Token0Bal(poolAddr)
@@ -219,11 +219,11 @@ func TestCollect(t *testing.T) {
 	{
 		testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 		// after collects all
-		// 0 ugnot => 1099
+		// 0 ugnot => 99 // didn't burn all liquidity
 		// 1 wugnot // stay same
 		coins := testBanker.GetCoins(lp01)
 		coin := coins[0]
-		shouldEQ(t, coin, std.Coin{Amount: 198, Denom: "ugnot"})
+		shouldEQ(t, coin, std.Coin{Amount: 99, Denom: "ugnot"})
 		shouldEQ(t, Token1Bal(lp01), bigint(1))
 	}
 }

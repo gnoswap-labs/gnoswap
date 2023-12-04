@@ -23,6 +23,8 @@ type GRC20Pair struct {
 }
 
 func findGRC20(pkgPath string) (int, bool) {
+	pkgPath = handleNative(pkgPath)
+
 	for i, pair := range registered {
 		if pair.pkgPath == pkgPath {
 			return i, true
@@ -33,10 +35,14 @@ func findGRC20(pkgPath string) (int, bool) {
 }
 
 func appendGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
+	pkgPath = handleNative(pkgPath)
+
 	registered = append(registered, GRC20Pair{pkgPath: pkgPath, igrc20: igrc20})
 }
 
 func removeGRC20Interface(pkgPath string) {
+	pkgPath = handleNative(pkgPath)
+
 	i, found := findGRC20(pkgPath)
 	if !found {
 		return
@@ -55,6 +61,8 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	// 	panic("unauthorized address to register")
 	// }
 
+	pkgPath = handleNative(pkgPath)
+
 	_, found := findGRC20(pkgPath)
 	if !found {
 		appendGRC20Interface(pkgPath, igrc20)
@@ -62,12 +70,16 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 }
 
 func UnregisterGRC20Interface(pkgPath string) {
+	pkgPath = handleNative(pkgPath)
+
 	// do not allow realm to unregister
 	std.AssertOriginCall()
 
 	// only admin can unregister
 	caller := std.GetOrigCaller()
-	require(caller == APPROVED_CALLER, "[ROUTER] router_register.gno__UnregisterGRC20Interface() || nauthorized address to unregister")
+	if caller != APPROVED_CALLER {
+		panic("unauthorized address to unregister")
+	}
 
 	_, found := findGRC20(pkgPath)
 	if found {
@@ -76,6 +88,8 @@ func UnregisterGRC20Interface(pkgPath string) {
 }
 
 func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool {
+	pkgPath = handleNative(pkgPath)
+
 	i, found := findGRC20(pkgPath)
 	if !found {
 		return false
@@ -87,6 +101,8 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 }
 
 func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uint64) bool {
+	pkgPath = handleNative(pkgPath)
+
 	i, found := findGRC20(pkgPath)
 	if !found {
 		return false
@@ -98,6 +114,8 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 }
 
 func balanceOfByRegisterCall(pkgPath string, owner std.Address) uint64 {
+	pkgPath = handleNative(pkgPath)
+
 	i, found := findGRC20(pkgPath)
 	if !found {
 		return 0
@@ -108,6 +126,8 @@ func balanceOfByRegisterCall(pkgPath string, owner std.Address) uint64 {
 }
 
 func approveByRegisterCall(pkgPath string, spender std.Address, amount uint64) bool {
+	pkgPath = handleNative(pkgPath)
+
 	i, found := findGRC20(pkgPath)
 	if !found {
 		return false
@@ -116,4 +136,12 @@ func approveByRegisterCall(pkgPath string, spender std.Address, amount uint64) b
 	registered[i].igrc20.Approve()(users.AddressOrName(spender), amount)
 
 	return true
+}
+
+func handleNative(pkgPath string) string {
+	if pkgPath == GNOT {
+		return WRAPPED_WUGNOT
+	}
+
+	return pkgPath
 }

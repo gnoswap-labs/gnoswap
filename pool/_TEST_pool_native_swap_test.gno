@@ -27,9 +27,9 @@ var (
 
 var (
 	// Common
-	fooPath    = "gno.land/r/foo"
-	wugnotPath = "gno.land/r/wugnot"
-	pFee       = uint16(500)
+	fooPath  = "gno.land/r/foo"
+	gnotPath = "gnot"
+	pFee     = uint16(500)
 
 	test_tickLower       = int32(9000)
 	test_tickUpper       = int32(11000)
@@ -52,9 +52,9 @@ func TestPoolInitCreatePool(t *testing.T) {
 	InitManual()
 
 	std.TestSetOrigCaller(pc01)
-	CreatePool(fooPath, wugnotPath, pFee, 130621891405341611593710811006) // x2.7
+	CreatePool(fooPath, gnotPath, pFee, 130621891405341611593710811006) // x2.7
 
-	shouldPanic(t, func() { CreatePool(fooPath, wugnotPath, pFee, 130621891405341611593710811006) })
+	shouldPanic(t, func() { CreatePool(fooPath, gnotPath, pFee, 130621891405341611593710811006) })
 }
 
 // 2. Mint LP and Get GNFT
@@ -65,7 +65,7 @@ func TestMint(t *testing.T) {
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 	testBanker.IssueCoin(std.GetOrigCaller(), "ugnot", 1_000_000)
 
-	token0, token1 := fooPath, wugnotPath
+	token0, token1 := fooPath, gnotPath
 	if token1 < token0 {
 		token0, token1 = token1, token0
 	}
@@ -91,7 +91,7 @@ func TestMint(t *testing.T) {
 	std.TestSetPrevRealm("gno.land/r/position")
 	tTokenId, tLiquidity, tAmount0, tAmount1 := pos.Mint(
 		fooPath,
-		wugnotPath,
+		gnotPath,
 		pFee,
 		test_tickLower,
 		test_tickUpper,
@@ -118,7 +118,7 @@ func TestMint(t *testing.T) {
 }
 
 func TestSwapBuyNative(t *testing.T) {
-	pool := GetPool(fooPath, wugnotPath, pFee)
+	pool := GetPool(fooPath, gnotPath, pFee)
 
 	tr01OldT0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
 	tr01OldT1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
@@ -133,8 +133,8 @@ func TestSwapBuyNative(t *testing.T) {
 	std.TestSetPrevRealm("gno.land/r/router")
 	std.TestSetOrigCaller(tr01)
 	amount0, amount1 := Swap( // foo 10_000 > wugnot ??
-		fooPath,    // token0
-		wugnotPath, // token1
+		fooPath,  // token0
+		gnotPath, // token1
 		pFee,
 		tr01,
 		true,
@@ -162,7 +162,7 @@ func TestSwapBuyNative(t *testing.T) {
 }
 
 func TestSwapSellNative(t *testing.T) {
-	pool := GetPool(fooPath, wugnotPath, pFee)
+	pool := GetPool(fooPath, gnotPath, pFee)
 
 	poolOldT0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
 	poolOldT1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
@@ -183,8 +183,8 @@ func TestSwapSellNative(t *testing.T) {
 
 	std.TestSetPrevRealm("gno.land/r/router")
 	amount0, amount1 := Swap( // ugnot 10_000 > foo ??
-		fooPath,    // token0
-		wugnotPath, // token1
+		fooPath,  // token0
+		gnotPath, // token1
 		pFee,
 		tr01,
 		false,
