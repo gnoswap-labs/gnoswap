@@ -50,7 +50,7 @@ approve: approve-lp01 approve-lp02 approve-tr01 approve-gsa
 pool-setup: pool-init pool-create
 
 .PHONY: position-mint
-position-mint: mint-01 mint-02 mint-03 mint-rest
+position-mint: mint-01 mint-02 mint-03 mint-04 mint-05
 
 # Deploy Tokens
 # [GRC20] FOO, BAR, BAZ, QUX: Token Pair for Pool
@@ -244,5 +244,5 @@ mint-05:
 	@echo
 
 done:
-1	@echo "" | gnokey maketx send -send 1ugnot -to $(ADDR_POS) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+1	@echo "" | gnokey maketx send -send 1ugnot -to $(ADDR_GOV) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 
