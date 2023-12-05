@@ -244,5 +244,5 @@ mint-05:
 	@echo
 
 done:
-	@echo "" | gnokey maketx send -send 1ugnot -to $(ADDR_POSITION) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+1	@echo "" | gnokey maketx send -send 1ugnot -to $(ADDR_POS) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 
