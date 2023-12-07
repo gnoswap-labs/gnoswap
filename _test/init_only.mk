@@ -29,7 +29,7 @@ help:
 all: deploy faucet approve pool-setup position-mint done
 
 .PHONY: deploy
-deploy: deploy-foo deploy-bar deploy-baz deploy-qux deploy-wugnot deploy-gns deploy-obl deploy-gnft deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-grc20_wrapper 
+deploy: deploy-foo deploy-bar deploy-baz deploy-qux deploy-fred deploy-thud deploy-wugnot deploy-gns deploy-obl deploy-gnft deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-grc20_wrapper 
 
 .PHONY: faucet
 faucet: faucet-lp01 faucet-gsa
@@ -45,6 +45,7 @@ position-mint: mint-01 mint-02 mint-03 mint-04 mint-05
 
 # Deploy Tokens
 # [GRC20] FOO, BAR, BAZ, QUX: Token Pair for Pool
+# [GRC20] FRED, THUD: Dummy Token
 # [GRC20] WUGNOT: Wrapped GRC20 for native ugnot
 # [GRC20] GNS: Default Staking Reward
 # [GRC20] OBL: External Staking Reward
@@ -67,6 +68,16 @@ deploy-baz:
 deploy-qux:
 	$(info ************ [QUX] deploy qux ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/qux -pkgpath gno.land/r/qux -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo
+
+deploy-fred:
+	$(info ************ [QUX] deploy fred ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/fred -pkgpath gno.land/r/fred -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo
+
+deploy-thud:
+	$(info ************ [QUX] deploy thud ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/thud -pkgpath gno.land/r/thud -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-wugnot:
