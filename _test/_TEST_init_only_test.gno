@@ -96,11 +96,17 @@ func TestPoolCreatePool(t *testing.T) {
 
 	gsaOldGnsBalance := gns.BalanceOf(a2u(gsa))
 
-	pl.CreatePool(gnotPath, barPath, uint16(100), 112040957517951813098925484553) // tick =  6_931, ratio = x1.99983634019692790850797337043331936001777648925781
-	pl.CreatePool(barPath, bazPath, uint16(100), 112040957517951813098925484553)  // tick =  6_931, ratio = x1.99983634019692790850797337043331936001777648925781
-	pl.CreatePool(bazPath, fooPath, uint16(100), 177157928842132501967358423881)  // tick =  16_095, ratio = x4.99990809049723150536692628520540893077850341796875
-	pl.CreatePool(gnsPath, gnotPath, uint16(100), 79228162514264337593543950337)  // tick =  0, ratio = x1.00000000000000000000000000000000000000000000000000
-	pl.CreatePool(gnsPath, quxPath, uint16(100), 250541420775534450580036817218)  // tick =  23_027, ratio = x9.99999779681069611569910193793475627899169921875000
+	/*
+
+		1 GNOT = 1_000_000 UGNOT = 2 BAR
+
+	*/
+
+	pl.CreatePool(gnotPath, barPath, uint16(100), 112046633483750523682330982)   // tick = 131_230, ratio = x0.00000200003896770816773820374223635809585175593384
+	pl.CreatePool(barPath, bazPath, uint16(100), 112040957517951813098925484553) // tick = 6_931, ratio = x1.99983634019692790850797337043331936001777648925781
+	pl.CreatePool(bazPath, fooPath, uint16(100), 177157928842132501967358423881) // tick = 16_095, ratio = x4.99990809049723150536692628520540893077850341796875
+	pl.CreatePool(gnsPath, gnotPath, uint16(100), 79228214880679474632347256)    // tick = -138_162, ratio = x0.00000100000132191460138283848127493946833510563010
+	pl.CreatePool(gnsPath, quxPath, uint16(100), 250541420775534450580036817218) // tick = 23_027, ratio = x9.99999779681069611569910193793475627899169921875000
 
 	gsaNewGnsBalance := gns.BalanceOf(a2u(gsa))
 
@@ -113,23 +119,23 @@ func TestPositionMintGnotBar(t *testing.T) {
 
 	// prepare ugnot
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.IssueCoin(std.GetOrigCaller(), "ugnot", 1000)
+	testBanker.IssueCoin(std.GetOrigCaller(), "ugnot", 1000000000)
 
 	// simulate transfer & decrase
-	std.TestSetOrigSend(std.Coins{{"ugnot", 1000}}, nil)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1000)
+	std.TestSetOrigSend(std.Coins{{"ugnot", 1000000000}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1000000000)
 
 	tokenId, liquidity, amount0, amount1 := pos.Mint(
-		gnotPath,       // token0 ( will be token1 )
-		barPath,        // token1 ( will be token0 )
-		uint16(100),    // fee
-		int32(5932),    // tickLower
-		int32(7932),    // tickUpper
-		bigint(1000),   // amount0Desired
-		bigint(999999), // amount1Desired
-		0,              // amount0Min
-		0,              // amount1Min
-		MAX_TIMEOUT,    // deadline
+		gnotPath,           // token0 ( will be token1 )
+		barPath,            // token1 ( will be token0 )
+		uint16(100),        // fee
+		int32(-132230),     // tickLower
+		int32(-130230),     // tickUpper
+		bigint(1000000000), // amount0Desired
+		bigint(1000000000), // amount1Desired
+		0,                  // amount0Min
+		0,                  // amount1Min
+		MAX_TIMEOUT,        // deadline
 	)
 	std.TestSetOrigSend(std.Coins{}, nil)
 	std.TestSkipHeights(1)
@@ -191,31 +197,31 @@ func TestPositionMintGnsGnot(t *testing.T) {
 
 	// prepare ugnot
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.IssueCoin(std.GetOrigCaller(), "ugnot", 1000)
+	testBanker.IssueCoin(std.GetOrigCaller(), "ugnot", 1000000000)
 
 	// simulate transfer & decrase
-	std.TestSetOrigSend(std.Coins{{"ugnot", 1000}}, nil)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1000)
+	std.TestSetOrigSend(std.Coins{{"ugnot", 1000000000}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1000000000)
 
 	tokenId, liquidity, amount0, amount1 := pos.Mint(
-		gnsPath,      // token0
-		gnotPath,     // token1
-		uint16(100),  // fee
-		int32(-1000), // tickLower
-		int32(1000),  // tickUpper
-		bigint(1000), // amount0Desired
-		bigint(1000), // amount1Desired
-		0,            // amount0Min
-		0,            // amount1Min
-		MAX_TIMEOUT,  // deadline
+		gnsPath,            // token0
+		gnotPath,           // token1
+		uint16(100),        // fee
+		int32(-139162),     // tickLower
+		int32(-137162),     // tickUpper
+		bigint(1000000000), // amount0Desired // gns
+		bigint(1000000000), // amount1Desired // 1000000000 ugnot ≈ 1000 GNOT
+		0,                  // amount0Min
+		0,                  // amount1Min
+		MAX_TIMEOUT,        // deadline
 	)
 	std.TestSetOrigSend(std.Coins{}, nil)
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, tokenId, 4)
 	println("liquidity\t", liquidity)
-	println("amount0(gns)\t", amount0)
-	println("amount1(gnot)\t", amount1)
+	println("amount0(gnot)\t", amount0)
+	println("amount1(gns)\t", amount1)
 }
 
 func TestPositionMintGnsQux(t *testing.T) {
@@ -246,12 +252,12 @@ func TestRouterApiGetRatiosFromBase(t *testing.T) {
 	jsonStr := gjson.Parse(rou.ApiGetRatiosFromBase())
 	jsonArr := jsonStr.Get("response.data").Array()
 
-	shouldEQ(t, jsonArr[0].String(), "{\"gnot\":79228162514264337593543950336}")             // 1
-	shouldEQ(t, jsonArr[1].String(), "{\"gno.land/r/bar\":158427515811472657639193234591}")  // 1.9996363766
-	shouldEQ(t, jsonArr[2].String(), "{\"gno.land/r/baz\":316829103406906364771139440526}")  // 3.998945493
-	shouldEQ(t, jsonArr[3].String(), "{\"gno.land/r/foo\":1584116397429175401616934621999}") // 19.994359924
-	shouldEQ(t, jsonArr[4].String(), "{\"gno.land/r/gns\":79228162514264337593543950334}")   // 1
-	shouldEQ(t, jsonArr[5].String(), "{\"gno.land/r/qux\":792281450588003167884250659067}")  // 9.9999977968
+	shouldEQ(t, jsonArr[0].String(), "{\"gnot\":79228162514264337593543950336}")                  // 1
+	shouldEQ(t, jsonArr[1].String(), "{\"gno.land/r/bar\":158443568011643016923643}")             // 0.0000019998
+	shouldEQ(t, jsonArr[2].String(), "{\"gno.land/r/baz\":316861205180147164580763}")             // 0.0000039994
+	shouldEQ(t, jsonArr[3].String(), "{\"gno.land/r/foo\":1584276903344921384146016}")            // 0.0000199964
+	shouldEQ(t, jsonArr[4].String(), "{\"gno.land/r/gns\":79228057781537899283319724790391326}")  // 999998.6780871458
+	shouldEQ(t, jsonArr[5].String(), "{\"gno.land/r/qux\":792280403260969530804650996818393284}") // 9999984.5776850672
 }
 
 /* UTILS */
