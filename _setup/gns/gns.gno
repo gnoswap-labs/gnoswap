@@ -15,7 +15,7 @@ var (
 )
 
 func init() {
-	gns = grc20.NewAdminToken("Gnoswap Token", "GNS", 4)
+	gns = grc20.NewAdminToken("Gnoswap Token", "GNS", 6)
 
 	// for swap > staker
 	var (

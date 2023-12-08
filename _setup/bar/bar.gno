@@ -17,7 +17,7 @@ var (
 )
 
 func init() {
-	bar = grc20.NewAdminToken("Bar", "BAR", 4)
+	bar = grc20.NewAdminToken("Bar", "BAR", 6)
 	bar.Mint(admin, 1000000*10000) // @administrator (1M)
 
 	// for swap > pool
