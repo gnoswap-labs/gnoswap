@@ -16,7 +16,7 @@ var (
 )
 
 func init() {
-	obl = grc20.NewAdminToken("OnblocToken", "OBL", 4)
+	obl = grc20.NewAdminToken("OnblocToken", "OBL", 6)
 	obl.Mint(admin, 50000000000) // 50_000_000_000
 
 	// for swap > staker

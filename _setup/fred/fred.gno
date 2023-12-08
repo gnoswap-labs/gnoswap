@@ -15,7 +15,7 @@ var (
 )
 
 func init() {
-	fred = grc20.NewAdminToken("Fred", "FRED", 4)
+	fred = grc20.NewAdminToken("Fred", "FRED", 6)
 	fred.Mint(admin, 1000000*10000) // @administrator (1M)
 }
 
