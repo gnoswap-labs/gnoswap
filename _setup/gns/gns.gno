@@ -24,6 +24,8 @@ func init() {
 
 		lp01 = std.Address("g1d3crqv2lta047h6lta047h6lta047h6lnjw069") // Liquidity Provider 01
 
+		tr01 = std.Address("g1w3erqv2lta047h6lta047h6lta047h6lfmmdyv") // Trader 01
+
 		stakerAddr = std.Address("g13h5s9utqcwg3a655njen0p89txusjpfrs3vxp8")
 		ira        = std.Address("g1d9exzh6lta047h6lta047h6lta047h6l8ylkpa") // INTERNAL REWARD ACCOUNT
 	)
@@ -38,6 +40,10 @@ func init() {
 	// PoolCreate & Mint
 	gns.Mint(lp01, 50000000000)
 	gns.Approve(lp01, poolAddr, 50000000000)
+
+	// Swap
+	gns.Mint(tr01, 50000000000)
+	gns.Approve(tr01, poolAddr, 50000000000)
 
 	// default minter
 	gns.Mint(std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"), 1000000*10000)
