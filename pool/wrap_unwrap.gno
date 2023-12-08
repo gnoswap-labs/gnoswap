@@ -12,7 +12,12 @@ func wrap(tokenPath string) {
 		return
 	}
 
-	caller := std.GetOrigCaller() // GOTTA BE USER for POOL.MINT
+	prev := std.PrevRealm().PkgPath()
+	if tokenPath == GNOT && prev == "gno.land/r/router" {
+		return
+	}
+
+	caller := std.GetOrigCaller()
 	sentCoins := std.GetOrigSend()
 
 	if len(sentCoins) != 1 {
@@ -28,12 +33,17 @@ func wrap(tokenPath string) {
 	wugnot.Wrap(a2u(caller), uint64(sentCoin.Amount))
 }
 
-func unWrap(tokenPath string, amount uint64) {
+func unWrap(tokenPath string, recipient std.Address, amount uint64) {
 	if tokenPath != GNOT {
 		return
 	}
 
-	caller := std.GetOrigCaller() // GOTTA BE USER for POOL.MINT
+	if tokenPath == GNOT && recipient == ADDR_ROUTER {
+		return
+	}
+
+	// Collect
+	caller := std.GetOrigCaller()
 
 	refund := std.Coins{
 		std.Coin{
