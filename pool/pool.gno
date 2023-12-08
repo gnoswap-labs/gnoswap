@@ -152,17 +152,17 @@ func Collect(
 	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__Collect() || amount1(%d) >= 0", amount1))
 
 	require(pool.balances.token0 >= amount0, ufmt.Sprintf("[POOL] pool.gno__Collect() || pool.balances.token0(%d) >= amount0(%d)", pool.balances.token0, amount0))
-	if pool.token0Path == "gno.land/r/wugnot" {
+	if pool.token0Path == GNOT {
 		// UNWRAP if native(ugnot) is being collect
-		unWrap(pool.token0Path, uint64(amount0))
+		unWrap(pool.token0Path, recipient, uint64(amount0))
 	} else {
 		transferByRegisterCall(pool.token0Path, recipient, uint64(amount0))
 	}
 
 	require(pool.balances.token1 >= amount1, ufmt.Sprintf("[POOL] pool.gno__Collect() || pool.balances.token1(%d) >= amount1(%d)", pool.balances.token1, amount1))
-	if pool.token1Path == "gno.land/r/wugnot" {
+	if pool.token1Path == GNOT {
 		// UNWRAP if native(ugnot) is being collect
-		unWrap(pool.token1Path, uint64(amount1))
+		unWrap(pool.token1Path, recipient, uint64(amount1))
 	} else {
 		transferByRegisterCall(pool.token1Path, recipient, uint64(amount1))
 	}
@@ -415,7 +415,8 @@ func Swap(
 				panic("[POOL] pool.gno__Swap() || transferByRegisterCall(pool.token1Path, recipient, uint64(-amount1)) failed")
 			}
 			pool.balances.token1 += amount1
-			unWrap(pool.token1Path, uint64(-amount1))
+
+			unWrap(pool.token1Path, recipient, uint64(-amount1))
 		}
 		require(pool.balances.token1 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token1(%d) >= 0__#1", pool.balances.token1))
 
@@ -445,7 +446,7 @@ func Swap(
 			if !ok {
 				panic("[POOL] pool.gno__Swap() || transferByRegisterCall(pool.token0Path, recipient, uint64(-amount0)) failed")
 			}
-			unWrap(pool.token0Path, uint64(-amount0))
+			unWrap(pool.token0Path, recipient, uint64(-amount0))
 			pool.balances.token0 += amount0
 		}
 		require(pool.balances.token0 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%d) >= 0__#2", pool.balances.token0))
