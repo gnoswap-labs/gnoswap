@@ -254,7 +254,6 @@ func (z *Int) Div(x, y *Int) *Int {
 	return z.Set(&quot)
 }
 
-
 // udivrem divides u by d and produces both quotient and remainder.
 // The quotient is stored in provided quot - len(u)-len(d)+1 words.
 // It loosely follows the Knuth's division algorithm (sometimes referenced as "schoolbook" division) using 64-bit words.
@@ -315,7 +314,6 @@ func udivrem(quot, u []uint64, d *Int) (rem Int) {
 
 	return rem
 }
-
 
 // udivremBy1 divides u by single normalized word d and produces both quotient and remainder.
 // The quotient is stored in provided quot.
@@ -382,7 +380,6 @@ func addTo(x, y []uint64) uint64 {
 	return carry
 }
 
-
 // subMulTo computes x -= y * multiplier.
 // Requires len(x) >= len(y).
 func subMulTo(x, y []uint64, multiplier uint64) uint64 {
@@ -427,7 +424,6 @@ func udivrem2by1(uh, ul, d, reciprocal uint64) (quot, rem uint64) {
 
 	return qh, r
 }
-
 
 // Lsh sets z = x << n and returns z.
 func (z *Int) Lsh(x *Int, n uint) *Int {
@@ -487,7 +483,6 @@ sh192:
 
 	return z
 }
-
 
 // Rsh sets z = x >> n and returns z.
 func (z *Int) Rsh(x *Int, n uint) *Int {
@@ -672,7 +667,7 @@ func (z *Int) Xor(x, y *Int) *Int {
 	z[3] = x[3] ^ y[3]
 	return z
 }
-/*
+
 // MarshalJSON implements json.Marshaler.
 // MarshalJSON marshals using the 'decimal string' representation. This is _not_ compatible
 // with big.Int: big.Int marshals into JSON 'native' numeric format.
@@ -695,11 +690,13 @@ func (z *Int) UnmarshalJSON(input []byte) error {
 	return z.UnmarshalText(input[1 : len(input)-1])
 }
 
+
 // MarshalText implements encoding.TextMarshaler
 // MarshalText marshals using the decimal representation (compatible with big.Int)
 func (z *Int) MarshalText() ([]byte, error) {
 	return []byte(z.Dec()), nil
 }
+
 
 // UnmarshalText implements encoding.TextUnmarshaler. This method
 // can unmarshal either hexadecimal or decimal.
@@ -754,9 +751,9 @@ func FromDecimal(decimal string) (*Int, error) {
 	}
 	return &z, nil
 }
-*/
+
 const twoPow256Sub1 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-/*
+
 // SetFromDecimal sets z from the given string, interpreted as a decimal number.
 // OBS! This method is _not_ strictly identical to the (*big.Int).SetString(..., 10) method.
 // Notable differences:
@@ -790,7 +787,6 @@ func (z *Int) SetFromDecimal(s string) (err error) {
 	}
 	return ErrBig256Range
 }
-*/
 
 var (
 	ErrEmptyString      = errors.New("empty hex string")
@@ -802,7 +798,6 @@ var (
 	ErrBadBufferLength  = errors.New("bad ssz buffer length")
 	ErrBadEncodedLength = errors.New("bad ssz encoded length")
 )
-/*
 
 func checkNumberS(input string) error {
 	l := len(input)
@@ -994,7 +989,6 @@ func parseUint(s string, base int, bitSize int) (uint64, error) {
 	return n, nil
 }
 
-
 // underscoreOK reports whether the underscores in s are allowed.
 // Checking them in this one function lets all the parsers skip over them simply.
 // Underscore must appear only between digits or between a base prefix and a digit.
@@ -1083,7 +1077,7 @@ func (z *Int) Dec() string {
 		rem := udivrem(quot[:], y[:], divisor)
 		y.Set(&quot) // Set Q for next loop
 		// Convert the R to ascii representation
-		buf = strconv.AppendUint(buf[:0], rem.Uint64(), 10)
+		buf = AppendUint(buf[:0], rem.Uint64(), 10)
 		// Copy in the ascii digits
 		copy(out[pos-len(buf):], buf)
 		if y.IsZero() {
@@ -1095,4 +1089,3 @@ func (z *Int) Dec() string {
 	// skip leading zeroes by only using the 'used size' of buf
 	return string(out[pos-len(buf):])
 }
-*/
