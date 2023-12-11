@@ -16,8 +16,7 @@ type Int struct {
 
 // NewInt returns a new initialized Int.
 func NewInt(val uint64) *Int {
-	z := &Int{}
-	z.SetUint64(val)
+	z := &Int{arr: [4]uint64{val, 0, 0, 0}}
 	return z
 }
 
