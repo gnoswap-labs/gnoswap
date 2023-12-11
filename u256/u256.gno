@@ -4,7 +4,6 @@ package u256
 
 import (
 	"errors"
-	"strconv"
 )
 
 const MaxUint64 = 1<<64 - 1
@@ -1047,7 +1046,7 @@ func (z *Int) Dec() string {
 		return "0"
 	}
 	if z.IsUint64() {
-		return strconv.FormatUint(z.Uint64(), 10)
+		return FormatUint(z.Uint64(), 10)
 	}
 	// The max uint64 value being 18446744073709551615, the largest
 	// power-of-ten below that is 10000000000000000000.
