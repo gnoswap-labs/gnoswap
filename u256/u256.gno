@@ -672,7 +672,7 @@ func (z *Int) Xor(x, y *Int) *Int {
 	z[3] = x[3] ^ y[3]
 	return z
 }
-
+/*
 // MarshalJSON implements json.Marshaler.
 // MarshalJSON marshals using the 'decimal string' representation. This is _not_ compatible
 // with big.Int: big.Int marshals into JSON 'native' numeric format.
@@ -754,9 +754,9 @@ func FromDecimal(decimal string) (*Int, error) {
 	}
 	return &z, nil
 }
-
+*/
 const twoPow256Sub1 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-
+/*
 // SetFromDecimal sets z from the given string, interpreted as a decimal number.
 // OBS! This method is _not_ strictly identical to the (*big.Int).SetString(..., 10) method.
 // Notable differences:
@@ -790,6 +790,7 @@ func (z *Int) SetFromDecimal(s string) (err error) {
 	}
 	return ErrBig256Range
 }
+*/
 
 var (
 	ErrEmptyString      = errors.New("empty hex string")
@@ -801,7 +802,7 @@ var (
 	ErrBadBufferLength  = errors.New("bad ssz buffer length")
 	ErrBadEncodedLength = errors.New("bad ssz encoded length")
 )
-
+/*
 
 func checkNumberS(input string) error {
 	l := len(input)
@@ -1094,3 +1095,4 @@ func (z *Int) Dec() string {
 	// skip leading zeroes by only using the 'used size' of buf
 	return string(out[pos-len(buf):])
 }
+*/
