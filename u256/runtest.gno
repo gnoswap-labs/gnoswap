@@ -1,6 +1,6 @@
 package u256
 
-func Hello() {
+func Hello() string {
 	q96 := "79228162514264337593543950336"
 	println("1111")
 	bigStr := "833325865908927437441174649481942846"
@@ -36,4 +36,6 @@ func Hello() {
 	println(zero.Dec())
 
 	println("8888")
+
+	return zero.Dec()
 }
