@@ -11,7 +11,9 @@ const MaxUint64 = 1<<64 - 1
 
 // Int is represented as an array of 4 uint64, in little-endian order,
 // so that Int[3] is the most significant, and Int[0] is the least significant
-type Int [4]uint64
+type Int struct {
+	arr [4]uint64
+}
 
 // NewInt returns a new initialized Int.
 func NewInt(val uint64) *Int {
@@ -22,40 +24,40 @@ func NewInt(val uint64) *Int {
 
 // Uint64 returns the lower 64-bits of z
 func (z *Int) Uint64() uint64 {
-	return z[0]
+	return z.arr[0]
 }
 
 // SetUint64 sets z to the value x
 func (z *Int) SetUint64(x uint64) *Int {
-	z[3], z[2], z[1], z[0] = 0, 0, 0, x
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, x
 	return z
 }
 
 // IsUint64 reports whether z can be represented as a uint64.
 func (z *Int) IsUint64() bool {
-	return (z[1] | z[2] | z[3]) == 0
+	return (z.arr[1] | z.arr[2] | z.arr[3]) == 0
 }
 
 // IsZero returns true if z == 0
 func (z *Int) IsZero() bool {
-	return (z[0] | z[1] | z[2] | z[3]) == 0
+	return (z.arr[0] | z.arr[1] | z.arr[2] | z.arr[3]) == 0
 }
 
 // Clear sets z to 0
 func (z *Int) Clear() *Int {
-	z[3], z[2], z[1], z[0] = 0, 0, 0, 0
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, 0
 	return z
 }
 
 // SetAllOne sets all the bits of z to 1
 func (z *Int) SetAllOne() *Int {
-	z[3], z[2], z[1], z[0] = MaxUint64, MaxUint64, MaxUint64, MaxUint64
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, MaxUint64, MaxUint64, MaxUint64
 	return z
 }
 
 // Not sets z = ^x and returns z.
 func (z *Int) Not(x *Int) *Int {
-	z[3], z[2], z[1], z[0] = ^x[3], ^x[2], ^x[1], ^x[0]
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = ^x.arr[3], ^x.arr[2], ^x.arr[1], ^x.arr[0]
 	return z
 }
 
@@ -67,16 +69,16 @@ func (z *Int) Gt(x *Int) bool {
 // Lt returns true if z < x
 func (z *Int) Lt(x *Int) bool {
 	// z < x <=> z - x < 0 i.e. when subtraction overflows.
-	_, carry := Sub64(z[0], x[0], 0)
-	_, carry = Sub64(z[1], x[1], carry)
-	_, carry = Sub64(z[2], x[2], carry)
-	_, carry = Sub64(z[3], x[3], carry)
+	_, carry := Sub64(z.arr[0], x.arr[0], 0)
+	_, carry = Sub64(z.arr[1], x.arr[1], carry)
+	_, carry = Sub64(z.arr[2], x.arr[2], carry)
+	_, carry = Sub64(z.arr[3], x.arr[3], carry)
 	return carry != 0
 }
 
 // Eq returns true if z == x
 func (z *Int) Eq(x *Int) bool {
-	return (z[0] == x[0]) && (z[1] == x[1]) && (z[2] == x[2]) && (z[3] == x[3])
+	return (z.arr[0] == x.arr[0]) && (z.arr[1] == x.arr[1]) && (z.arr[2] == x.arr[2]) && (z.arr[3] == x.arr[3])
 }
 
 // Cmp compares z and x and returns:
@@ -86,10 +88,10 @@ func (z *Int) Eq(x *Int) bool {
 //	+1 if z >  x
 func (z *Int) Cmp(x *Int) (r int) {
 	// z < x <=> z - x < 0 i.e. when subtraction overflows.
-	d0, carry := Sub64(z[0], x[0], 0)
-	d1, carry := Sub64(z[1], x[1], carry)
-	d2, carry := Sub64(z[2], x[2], carry)
-	d3, carry := Sub64(z[3], x[3], carry)
+	d0, carry := Sub64(z.arr[0], x.arr[0], 0)
+	d1, carry := Sub64(z.arr[1], x.arr[1], carry)
+	d2, carry := Sub64(z.arr[2], x.arr[2], carry)
+	d3, carry := Sub64(z.arr[3], x.arr[3], carry)
 	if carry == 1 {
 		return -1
 	}
@@ -107,47 +109,47 @@ func (z *Int) Set(x *Int) *Int {
 
 // SetOne sets z to 1
 func (z *Int) SetOne() *Int {
-	z[3], z[2], z[1], z[0] = 0, 0, 0, 1
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, 1
 	return z
 }
 
 // Add sets z to the sum x+y
 func (z *Int) Add(x, y *Int) *Int {
 	var carry uint64
-	z[0], carry = Add64(x[0], y[0], 0)
-	z[1], carry = Add64(x[1], y[1], carry)
-	z[2], carry = Add64(x[2], y[2], carry)
-	z[3], _ = Add64(x[3], y[3], carry)
+	z.arr[0], carry = Add64(x.arr[0], y.arr[0], 0)
+	z.arr[1], carry = Add64(x.arr[1], y.arr[1], carry)
+	z.arr[2], carry = Add64(x.arr[2], y.arr[2], carry)
+	z.arr[3], _ = Add64(x.arr[3], y.arr[3], carry)
 	return z
 }
 
 // AddOverflow sets z to the sum x+y, and returns z and whether overflow occurred
 func (z *Int) AddOverflow(x, y *Int) (*Int, bool) {
 	var carry uint64
-	z[0], carry = Add64(x[0], y[0], 0)
-	z[1], carry = Add64(x[1], y[1], carry)
-	z[2], carry = Add64(x[2], y[2], carry)
-	z[3], carry = Add64(x[3], y[3], carry)
+	z.arr[0], carry = Add64(x.arr[0], y.arr[0], 0)
+	z.arr[1], carry = Add64(x.arr[1], y.arr[1], carry)
+	z.arr[2], carry = Add64(x.arr[2], y.arr[2], carry)
+	z.arr[3], carry = Add64(x.arr[3], y.arr[3], carry)
 	return z, carry != 0
 }
 
 // SubOverflow sets z to the difference x-y and returns z and true if the operation underflowed
 func (z *Int) SubOverflow(x, y *Int) (*Int, bool) {
 	var carry uint64
-	z[0], carry = Sub64(x[0], y[0], 0)
-	z[1], carry = Sub64(x[1], y[1], carry)
-	z[2], carry = Sub64(x[2], y[2], carry)
-	z[3], carry = Sub64(x[3], y[3], carry)
+	z.arr[0], carry = Sub64(x.arr[0], y.arr[0], 0)
+	z.arr[1], carry = Sub64(x.arr[1], y.arr[1], carry)
+	z.arr[2], carry = Sub64(x.arr[2], y.arr[2], carry)
+	z.arr[3], carry = Sub64(x.arr[3], y.arr[3], carry)
 	return z, carry != 0
 }
 
 // Sub sets z to the difference x-y
 func (z *Int) Sub(x, y *Int) *Int {
 	var carry uint64
-	z[0], carry = Sub64(x[0], y[0], 0)
-	z[1], carry = Sub64(x[1], y[1], carry)
-	z[2], carry = Sub64(x[2], y[2], carry)
-	z[3], _ = Sub64(x[3], y[3], carry)
+	z.arr[0], carry = Sub64(x.arr[0], y.arr[0], 0)
+	z.arr[1], carry = Sub64(x.arr[1], y.arr[1], carry)
+	z.arr[2], carry = Sub64(x.arr[2], y.arr[2], carry)
+	z.arr[3], _ = Sub64(x.arr[3], y.arr[3], carry)
 	return z
 }
 
@@ -159,19 +161,19 @@ func (z *Int) Mul(x, y *Int) *Int {
 		res1, res2, res3 uint64
 	)
 
-	carry, res[0] = Mul64(x[0], y[0])
-	carry, res1 = umulHop(carry, x[1], y[0])
-	carry, res2 = umulHop(carry, x[2], y[0])
-	res3 = x[3]*y[0] + carry
+	carry, res.arr[0] = Mul64(x.arr[0], y.arr[0])
+	carry, res1 = umulHop(carry, x.arr[1], y.arr[0])
+	carry, res2 = umulHop(carry, x.arr[2], y.arr[0])
+	res3 = x.arr[3]*y.arr[0] + carry
 
-	carry, res[1] = umulHop(res1, x[0], y[1])
-	carry, res2 = umulStep(res2, x[1], y[1], carry)
-	res3 = res3 + x[2]*y[1] + carry
+	carry, res.arr[1] = umulHop(res1, x.arr[0], y.arr[1])
+	carry, res2 = umulStep(res2, x.arr[1], y.arr[1], carry)
+	res3 = res3 + x.arr[2]*y.arr[1] + carry
 
-	carry, res[2] = umulHop(res2, x[0], y[2])
-	res3 = res3 + x[1]*y[2] + carry
+	carry, res.arr[2] = umulHop(res2, x.arr[0], y.arr[2])
+	res3 = res3 + x.arr[1]*y.arr[2] + carry
 
-	res[3] = res3 + x[0]*y[3]
+	res.arr[3] = res3 + x.arr[0]*y.arr[3]
 
 	return z.Set(&res)
 }
@@ -179,7 +181,7 @@ func (z *Int) Mul(x, y *Int) *Int {
 // MulOverflow sets z to the product x*y, and returns z and  whether overflow occurred
 func (z *Int) MulOverflow(x, y *Int) (*Int, bool) {
 	p := umul(x, y)
-	copy(z[:], p[:4])
+	copy(z.arr[:], p[:4])
 	return z, (p[4] | p[5] | p[6] | p[7]) != 0
 }
 
@@ -209,25 +211,25 @@ func umul(x, y *Int) [8]uint64 {
 		res1, res2, res3, res4, res5  uint64
 	)
 
-	carry, res[0] = Mul64(x[0], y[0])
-	carry, res1 = umulHop(carry, x[1], y[0])
-	carry, res2 = umulHop(carry, x[2], y[0])
-	carry4, res3 = umulHop(carry, x[3], y[0])
+	carry, res[0] = Mul64(x.arr[0], y.arr[0])
+	carry, res1 = umulHop(carry, x.arr[1], y.arr[0])
+	carry, res2 = umulHop(carry, x.arr[2], y.arr[0])
+	carry4, res3 = umulHop(carry, x.arr[3], y.arr[0])
 
-	carry, res[1] = umulHop(res1, x[0], y[1])
-	carry, res2 = umulStep(res2, x[1], y[1], carry)
-	carry, res3 = umulStep(res3, x[2], y[1], carry)
-	carry5, res4 = umulStep(carry4, x[3], y[1], carry)
+	carry, res[1] = umulHop(res1, x.arr[0], y.arr[1])
+	carry, res2 = umulStep(res2, x.arr[1], y.arr[1], carry)
+	carry, res3 = umulStep(res3, x.arr[2], y.arr[1], carry)
+	carry5, res4 = umulStep(carry4, x.arr[3], y.arr[1], carry)
 
-	carry, res[2] = umulHop(res2, x[0], y[2])
-	carry, res3 = umulStep(res3, x[1], y[2], carry)
-	carry, res4 = umulStep(res4, x[2], y[2], carry)
-	carry6, res5 = umulStep(carry5, x[3], y[2], carry)
+	carry, res[2] = umulHop(res2, x.arr[0], y.arr[2])
+	carry, res3 = umulStep(res3, x.arr[1], y.arr[2], carry)
+	carry, res4 = umulStep(res4, x.arr[2], y.arr[2], carry)
+	carry6, res5 = umulStep(carry5, x.arr[3], y.arr[2], carry)
 
-	carry, res[3] = umulHop(res3, x[0], y[3])
-	carry, res[4] = umulStep(res4, x[1], y[3], carry)
-	carry, res[5] = umulStep(res5, x[2], y[3], carry)
-	res[7], res[6] = umulStep(carry6, x[3], y[3], carry)
+	carry, res[3] = umulHop(res3, x.arr[0], y.arr[3])
+	carry, res[4] = umulStep(res4, x.arr[1], y.arr[3], carry)
+	carry, res[5] = umulStep(res5, x.arr[2], y.arr[3], carry)
+	res[7], res[6] = umulStep(carry6, x.arr[3], y.arr[3], carry)
 
 	return res
 }
@@ -250,7 +252,7 @@ func (z *Int) Div(x, y *Int) *Int {
 	// x/y ; x > y > 0
 
 	var quot Int
-	udivrem(quot[:], x[:], y)
+	udivrem(quot.arr[:], x.arr[:], y)
 	return z.Set(&quot)
 }
 
@@ -260,21 +262,21 @@ func (z *Int) Div(x, y *Int) *Int {
 // See Knuth, Volume 2, section 4.3.1, Algorithm D.
 func udivrem(quot, u []uint64, d *Int) (rem Int) {
 	var dLen int
-	for i := len(d) - 1; i >= 0; i-- {
-		if d[i] != 0 {
+	for i := len(d.arr) - 1; i >= 0; i-- {
+		if d.arr[i] != 0 {
 			dLen = i + 1
 			break
 		}
 	}
 
-	shift := uint(LeadingZeros64(d[dLen-1]))
+	shift := uint(LeadingZeros64(d.arr[dLen-1]))
 
 	var dnStorage Int
-	dn := dnStorage[:dLen]
+	dn := dnStorage.arr[:dLen]
 	for i := dLen - 1; i > 0; i-- {
-		dn[i] = (d[i] << shift) | (d[i-1] >> (64 - shift))
+		dn[i] = (d.arr[i] << shift) | (d.arr[i-1] >> (64 - shift))
 	}
-	dn[0] = d[0] << shift
+	dn[0] = d.arr[0] << shift
 
 	var uLen int
 	for i := len(u) - 1; i >= 0; i-- {
@@ -285,7 +287,7 @@ func udivrem(quot, u []uint64, d *Int) (rem Int) {
 	}
 
 	if uLen < dLen {
-		copy(rem[:], u)
+		copy(rem.arr[:], u)
 		return rem
 	}
 
@@ -308,9 +310,9 @@ func udivrem(quot, u []uint64, d *Int) (rem Int) {
 	udivremKnuth(quot, un, dn)
 
 	for i := 0; i < dLen-1; i++ {
-		rem[i] = (un[i] >> shift) | (un[i+1] << (64 - shift))
+		rem.arr[i] = (un[i] >> shift) | (un[i+1] << (64 - shift))
 	}
-	rem[dLen-1] = un[dLen-1] >> shift
+	rem.arr[dLen-1] = un[dLen-1] >> shift
 
 	return rem
 }
@@ -367,7 +369,7 @@ func udivremKnuth(quot, u, d []uint64) {
 // isBitSet returns true if bit n-th is set, where n = 0 is LSB.
 // The n must be <= 255.
 func (z *Int) isBitSet(n uint) bool {
-	return (z[n/64] & (1 << (n % 64))) != 0
+	return (z.arr[n/64] & (1 << (n % 64))) != 0
 }
 
 // addTo computes x += y.
@@ -467,19 +469,19 @@ func (z *Int) Lsh(x *Int, n uint) *Int {
 	}
 
 	// remaining shifts
-	a = z[0] >> (64 - n)
-	z[0] = z[0] << n
+	a = z.arr[0] >> (64 - n)
+	z.arr[0] = z.arr[0] << n
 
 sh64:
-	b = z[1] >> (64 - n)
-	z[1] = (z[1] << n) | a
+	b = z.arr[1] >> (64 - n)
+	z.arr[1] = (z.arr[1] << n) | a
 
 sh128:
-	a = z[2] >> (64 - n)
-	z[2] = (z[2] << n) | b
+	a = z.arr[2] >> (64 - n)
+	z.arr[2] = (z.arr[2] << n) | b
 
 sh192:
-	z[3] = (z[3] << n) | a
+	z.arr[3] = (z.arr[3] << n) | a
 
 	return z
 }
@@ -526,19 +528,19 @@ func (z *Int) Rsh(x *Int, n uint) *Int {
 	}
 
 	// remaining shifts
-	a = z[3] << (64 - n)
-	z[3] = z[3] >> n
+	a = z.arr[3] << (64 - n)
+	z.arr[3] = z.arr[3] >> n
 
 sh64:
-	b = z[2] << (64 - n)
-	z[2] = (z[2] >> n) | a
+	b = z.arr[2] << (64 - n)
+	z.arr[2] = (z.arr[2] >> n) | a
 
 sh128:
-	a = z[1] << (64 - n)
-	z[1] = (z[1] >> n) | b
+	a = z.arr[1] << (64 - n)
+	z.arr[1] = (z.arr[1] >> n) | b
 
 sh192:
-	z[0] = (z[0] >> n) | a
+	z.arr[0] = (z.arr[0] >> n) | a
 
 	return z
 }
@@ -590,81 +592,81 @@ func (z *Int) SRsh(x *Int, n uint) *Int {
 	}
 
 	// remaining shifts
-	z[3], a = (z[3]>>n)|a, z[3]<<(64-n)
+	z.arr[3], a = (z.arr[3]>>n)|a, z.arr[3]<<(64-n)
 
 sh64:
-	z[2], a = (z[2]>>n)|a, z[2]<<(64-n)
+	z.arr[2], a = (z.arr[2]>>n)|a, z.arr[2]<<(64-n)
 
 sh128:
-	z[1], a = (z[1]>>n)|a, z[1]<<(64-n)
+	z.arr[1], a = (z.arr[1]>>n)|a, z.arr[1]<<(64-n)
 
 sh192:
-	z[0] = (z[0] >> n) | a
+	z.arr[0] = (z.arr[0] >> n) | a
 
 	return z
 }
 
 func (z *Int) lsh64(x *Int) *Int {
-	z[3], z[2], z[1], z[0] = x[2], x[1], x[0], 0
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = x.arr[2], x.arr[1], x.arr[0], 0
 	return z
 }
 func (z *Int) lsh128(x *Int) *Int {
-	z[3], z[2], z[1], z[0] = x[1], x[0], 0, 0
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = x.arr[1], x.arr[0], 0, 0
 	return z
 }
 func (z *Int) lsh192(x *Int) *Int {
-	z[3], z[2], z[1], z[0] = x[0], 0, 0, 0
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = x.arr[0], 0, 0, 0
 	return z
 }
 func (z *Int) rsh64(x *Int) *Int {
-	z[3], z[2], z[1], z[0] = 0, x[3], x[2], x[1]
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, x.arr[3], x.arr[2], x.arr[1]
 	return z
 }
 func (z *Int) rsh128(x *Int) *Int {
-	z[3], z[2], z[1], z[0] = 0, 0, x[3], x[2]
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, x.arr[3], x.arr[2]
 	return z
 }
 func (z *Int) rsh192(x *Int) *Int {
-	z[3], z[2], z[1], z[0] = 0, 0, 0, x[3]
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, x.arr[3]
 	return z
 }
 func (z *Int) srsh64(x *Int) *Int {
-	z[3], z[2], z[1], z[0] = MaxUint64, x[3], x[2], x[1]
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, x.arr[3], x.arr[2], x.arr[1]
 	return z
 }
 func (z *Int) srsh128(x *Int) *Int {
-	z[3], z[2], z[1], z[0] = MaxUint64, MaxUint64, x[3], x[2]
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, MaxUint64, x.arr[3], x.arr[2]
 	return z
 }
 func (z *Int) srsh192(x *Int) *Int {
-	z[3], z[2], z[1], z[0] = MaxUint64, MaxUint64, MaxUint64, x[3]
+	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, MaxUint64, MaxUint64, x.arr[3]
 	return z
 }
 
 // Or sets z = x | y and returns z.
 func (z *Int) Or(x, y *Int) *Int {
-	z[0] = x[0] | y[0]
-	z[1] = x[1] | y[1]
-	z[2] = x[2] | y[2]
-	z[3] = x[3] | y[3]
+	z.arr[0] = x.arr[0] | y.arr[0]
+	z.arr[1] = x.arr[1] | y.arr[1]
+	z.arr[2] = x.arr[2] | y.arr[2]
+	z.arr[3] = x.arr[3] | y.arr[3]
 	return z
 }
 
 // And sets z = x & y and returns z.
 func (z *Int) And(x, y *Int) *Int {
-	z[0] = x[0] & y[0]
-	z[1] = x[1] & y[1]
-	z[2] = x[2] & y[2]
-	z[3] = x[3] & y[3]
+	z.arr[0] = x.arr[0] & y.arr[0]
+	z.arr[1] = x.arr[1] & y.arr[1]
+	z.arr[2] = x.arr[2] & y.arr[2]
+	z.arr[3] = x.arr[3] & y.arr[3]
 	return z
 }
 
 // Xor sets z = x ^ y and returns z.
 func (z *Int) Xor(x, y *Int) *Int {
-	z[0] = x[0] ^ y[0]
-	z[1] = x[1] ^ y[1]
-	z[2] = x[2] ^ y[2]
-	z[3] = x[3] ^ y[3]
+	z.arr[0] = x.arr[0] ^ y.arr[0]
+	z.arr[1] = x.arr[1] ^ y.arr[1]
+	z.arr[2] = x.arr[2] ^ y.arr[2]
+	z.arr[3] = x.arr[3] ^ y.arr[3]
 	return z
 }
 
@@ -734,8 +736,8 @@ func (z *Int) fromHex(hex string) error {
 			if nib == badNibble {
 				return ErrSyntax
 			}
-			z[i] = z[i] << 4
-			z[i] += uint64(nib)
+			z.arr[i] = z.arr[i] << 4
+			z.arr[i] += uint64(nib)
 		}
 		end = start
 	}
@@ -820,10 +822,10 @@ func checkNumberS(input string) error {
 // multipliers holds the values that are needed for fromDecimal
 var multipliers = [5]*Int{
 	nil,                             // represents first round, no multiplication needed
-	{10000000000000000000, 0, 0, 0}, // 10 ^ 19
-	{687399551400673280, 5421010862427522170, 0, 0},                     // 10 ^ 38
-	{5332261958806667264, 17004971331911604867, 2938735877055718769, 0}, // 10 ^ 57
-	{0, 8607968719199866880, 532749306367912313, 1593091911132452277},   // 10 ^ 76
+	&Int{[4]uint64{10000000000000000000, 0, 0, 0}}, // 10 ^ 19
+	&Int{[4]uint64{687399551400673280, 5421010862427522170, 0, 0}},                     // 10 ^ 38
+	&Int{[4]uint64{5332261958806667264, 17004971331911604867, 2938735877055718769, 0}}, // 10 ^ 57
+	&Int{[4]uint64{0, 8607968719199866880, 532749306367912313, 1593091911132452277}},   // 10 ^ 76
 }
 
 // fromDecimal is a helper function to only ever be called via SetFromDecimal
@@ -1074,7 +1076,7 @@ func (z *Int) Dec() string {
 	for {
 		// Obtain Q and R for divisor
 		var quot Int
-		rem := udivrem(quot[:], y[:], divisor)
+		rem := udivrem(quot.arr[:], y.arr[:], divisor)
 		y.Set(&quot) // Set Q for next loop
 		// Convert the R to ascii representation
 		buf = AppendUint(buf[:0], rem.Uint64(), 10)
