@@ -92,15 +92,25 @@ func TestPoolInitManual(t *testing.T) {
 }
 
 func TestPoolCreatePool(t *testing.T) {
+	/*
+		wanted swap ratio
+
+		1 ugnot = 2 ubar (1gnot=2bar)
+		1 ubar = 2 ubaz (1gnot = 4baz)
+		1 ubaz = 5 ufoo (1gnot = 20foo)
+		1 ugnot = 1 ugns (1gnot = 1gns)
+		1 ugns = 10 uqux (1gnot = 10qux)
+
+	*/
 	std.TestSetOrigCaller(pc01)
 
 	gsaOldGnsBalance := gns.BalanceOf(a2u(gsa))
 
-	pl.CreatePool(gnotPath, barPath, uint16(100), 112046633483750523682330982)      // tick = 131_230, ratio = x0.00000200003896770816773820374223635809585175593384
-	pl.CreatePool(barPath, bazPath, uint16(100), 112040957517951813098925484553)    // tick = 6_931, ratio = x1.99983634019692790850797337043331936001777648925781
-	pl.CreatePool(bazPath, fooPath, uint16(100), 177157928842132501967358423881)    // tick = 16_095, ratio = x4.99990809049723150536692628520540893077850341796875
-	pl.CreatePool(gnsPath, gnotPath, uint16(100), 79228110147883812484826847210100) // tick = 138_162, ratio = x999998.67808714578859508037567138671875000000000000000000
-	pl.CreatePool(gnsPath, quxPath, uint16(100), 250541420775534450580036817218)    // tick = 23_027, ratio = x9.99999779681069611569910193793475627899169921875000
+	pl.CreatePool(gnotPath, barPath, uint16(100), 112046559425783515914356180039) // tick = 6_932, ratio = x2.00003632383094753777186269871890544891357421875000
+	pl.CreatePool(barPath, bazPath, uint16(100), 112046559425783515914356180039)  // tick = 6_932, ratio = x2.00003632383094753777186269871890544891357421875000
+	pl.CreatePool(bazPath, fooPath, uint16(100), 177166786517138269218369076073)  // tick = 16_096, ratio = x5.00040808130628189331901012337766587734222412109375
+	pl.CreatePool(gnsPath, gnotPath, uint16(100), 79228162514264337593543950337)  // tick = 0, ratio = x1.00000000000000000000000000000000000000000000000000
+	pl.CreatePool(gnsPath, quxPath, uint16(100), 250553947533412109193337304115)  // tick = 23_028, ratio = x10.00099779659037757539863378042355179786682128906250
 
 	gsaNewGnsBalance := gns.BalanceOf(a2u(gsa))
 
@@ -120,16 +130,16 @@ func TestPositionMintGnotBar(t *testing.T) {
 	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1000000000)
 
 	tokenId, liquidity, amount0, amount1 := pos.Mint(
-		gnotPath,           // token0 ( will be token1 )
-		barPath,            // token1 ( will be token0 )
-		uint16(100),        // fee
-		int32(-132230),     // tickLower
-		int32(-130230),     // tickUpper
-		bigint(1000000000), // amount0Desired
-		bigint(1000000000), // amount1Desired
-		0,                  // amount0Min
-		0,                  // amount1Min
-		MAX_TIMEOUT,        // deadline
+		gnotPath,            // token0 ( will be token1 )
+		barPath,             // token1 ( will be token0 )
+		uint16(100),         // fee
+		int32(5932),         // tickLower
+		int32(7932),         // tickUpper
+		bigint(1000000000),  // amount0Desired
+		bigint(10000000000), // amount1Desired
+		0,                   // amount0Min
+		0,                   // amount1Min
+		MAX_TIMEOUT,         // deadline
 	)
 	std.TestSetOrigSend(std.Coins{}, nil)
 	std.TestSkipHeights(1)
@@ -144,16 +154,16 @@ func TestPositionMintBarBaz(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	tokenId, liquidity, amount0, amount1 := pos.Mint(
-		barPath,        // token0
-		bazPath,        // token1
-		uint16(100),    // fee
-		int32(5932),    // tickLower
-		int32(7932),    // tickUpper
-		bigint(1000),   // amount0Desired
-		bigint(999999), // amount1Desired
-		0,              // amount0Min
-		0,              // amount1Min
-		MAX_TIMEOUT,    // deadline
+		barPath,             // token0
+		bazPath,             // token1
+		uint16(100),         // fee
+		int32(5932),         // tickLower
+		int32(7932),         // tickUpper
+		bigint(1000000000),  // amount0Desired
+		bigint(10000000000), // amount1Desired
+		0,                   // amount0Min
+		0,                   // amount1Min
+		MAX_TIMEOUT,         // deadline
 	)
 	std.TestSkipHeights(1)
 
@@ -167,16 +177,16 @@ func TestPositionMintBazFoo(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	tokenId, liquidity, amount0, amount1 := pos.Mint(
-		bazPath,        // token0
-		fooPath,        // token1
-		uint16(100),    // fee
-		int32(15096),   // tickLower
-		int32(17096),   // tickUpper
-		bigint(1000),   // amount0Desired
-		bigint(999999), // amount1Desired
-		0,              // amount0Min
-		0,              // amount1Min
-		MAX_TIMEOUT,    // deadline
+		bazPath,             // token0
+		fooPath,             // token1
+		uint16(100),         // fee
+		int32(15096),        // tickLower
+		int32(17096),        // tickUpper
+		bigint(1000000000),  // amount0Desired
+		bigint(10000000000), // amount1Desired
+		0,                   // amount0Min
+		0,                   // amount1Min
+		MAX_TIMEOUT,         // deadline
 	)
 	std.TestSkipHeights(1)
 
@@ -201,8 +211,8 @@ func TestPositionMintGnsGnot(t *testing.T) {
 		gnsPath,            // token0
 		gnotPath,           // token1
 		uint16(100),        // fee
-		int32(137162),      // tickLower
-		int32(139162),      // tickUpper
+		int32(-1000),       // tickLower
+		int32(1000),        // tickUpper
 		bigint(1000000000), // amount0Desired // gns
 		bigint(1000000000), // amount1Desired // 1000000000 ugnot ≈ 1000 GNOT
 		0,                  // amount0Min
@@ -222,16 +232,16 @@ func TestPositionMintGnsQux(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	tokenId, liquidity, amount0, amount1 := pos.Mint(
-		gnsPath,        // token0
-		quxPath,        // token1
-		uint16(100),    // fee
-		int32(22028),   // tickLower
-		int32(24028),   // tickUpper
-		bigint(1000),   // amount0Desired
-		bigint(999999), // amount1Desired
-		0,              // amount0Min
-		0,              // amount1Min
-		MAX_TIMEOUT,    // deadline
+		gnsPath,               // token0
+		quxPath,               // token1
+		uint16(100),           // fee
+		int32(22028),          // tickLower
+		int32(24028),          // tickUpper
+		bigint(1000000000),    // amount0Desired
+		bigint(1000000000000), // amount1Desired
+		0,                     // amount0Min
+		0,                     // amount1Min
+		MAX_TIMEOUT,           // deadline
 	)
 	std.TestSkipHeights(1)
 
@@ -246,12 +256,12 @@ func TestRouterApiGetRatiosFromBase(t *testing.T) {
 	jsonStr := gjson.Parse(rou.ApiGetRatiosFromBase())
 	jsonArr := jsonStr.Get("response.data").Array()
 
-	shouldEQ(t, jsonArr[0].String(), "{\"gnot\":79228162514264337593543950336}")       // 1
-	shouldEQ(t, jsonArr[1].String(), "{\"gno.land/r/bar\":158443568011643016923643}")  // 0.0000019998 ≈ 1.9998
-	shouldEQ(t, jsonArr[2].String(), "{\"gno.land/r/baz\":316861205180147164580763}")  // 0.0000039994 ≈ 3.9994
-	shouldEQ(t, jsonArr[3].String(), "{\"gno.land/r/foo\":1584276903344921384146016}") // 0.0000199964 ≈ 19.9964
-	shouldEQ(t, jsonArr[4].String(), "{\"gno.land/r/gns\":79228267247129223624113}")   // 0.000001 ≈ 1
-	shouldEQ(t, jsonArr[5].String(), "{\"gno.land/r/qux\":792282497916421281862272}")  // 0.00001 ≈ 10
+	shouldEQ(t, jsonArr[0].String(), "{\"gnot\":79228162514264337593543950336}")             // 1
+	shouldEQ(t, jsonArr[1].String(), "{\"gno.land/r/bar\":158443358563053804904957153915}")  // 1.9998363402
+	shouldEQ(t, jsonArr[2].String(), "{\"gno.land/r/baz\":316892472395878780113157316126}")  // 3.9997453221
+	shouldEQ(t, jsonArr[3].String(), "{\"gno.land/r/foo\":1584591679873480193510110926297}") // 20.0003588319
+	shouldEQ(t, jsonArr[4].String(), "{\"gno.land/r/gns\":79228162514264337593543950334}")   // 1
+	shouldEQ(t, jsonArr[5].String(), "{\"gno.land/r/qux\":792360678733061968201039084134}")  // 10.0009977966
 }
 
 /* UTILS */

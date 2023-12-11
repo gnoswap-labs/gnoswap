@@ -181,38 +181,38 @@ pool-init:
 
 pool-create:
 	$(info ************ [POOL] create pools ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gnot" -args "gno.land/r/bar" -args 100 -args 112046633483750523682330982 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/bar" -args "gno.land/r/baz" -args 100 -args 112040957517951813098925484553 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/baz" -args "gno.land/r/foo" -args 100 -args 177157928842132501967358423881 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/gns" -args "gnot" -args 100 -args 79228110147883812484826847210100 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/gns" -args "gno.land/r/qux" -args 100 -args 250541420775534450580036817218 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gnot" -args "gno.land/r/bar" -args 100 -args 112046559425783515914356180039 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/bar" -args "gno.land/r/baz" -args 100 -args 112046559425783515914356180039 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/baz" -args "gno.land/r/foo" -args 100 -args 177166786517138269218369076073 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/gns" -args "gnot" -args 100 -args 79228162514264337593543950337 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/gns" -args "gno.land/r/qux" -args 100 -args 250553947533412109193337304115 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@echo
 
 
 # Position
 mint-01:
-	$(info ************ [POSITION - 1] mint gnot & bar // tick range -132230 ~ -130230 // by lp01 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gnot" -args "gno.land/r/bar" -args 100 -args -132230 -args -130230 -args 1000000000 -args 1000000000 -args 0 -args 0 -args $(TX_EXPIRE) -send "1000000000ugnot" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	$(info ************ [POSITION - 1] mint gnot & bar // tick range 5932 ~ 7932 // by lp01 ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gnot" -args "gno.land/r/bar" -args 100 -args 5932 -args 7932 -args 1000000000 -args 10000000000 -args 0 -args 0 -args $(TX_EXPIRE) -send "1000000000ugnot" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo
 
 mint-02:
 	$(info ************ [POSITION - 2] mint bar & baz // tick range 5932 ~ 7932 // by lp01 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/bar" -args "gno.land/r/baz" -args 100 -args 5932 -args 7932 -args 1000 -args 999999 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/bar" -args "gno.land/r/baz" -args 100 -args 5932 -args 7932 -args 1000000000 -args 10000000000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo
 
 mint-03:
 	$(info ************ [POSITION - 3] mint baz & foo // tick range 15096 ~ 17096 // by lp01 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/baz" -args "gno.land/r/foo" -args 100 -args 15096 -args 17096 -args 1000 -args 999999 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/baz" -args "gno.land/r/foo" -args 100 -args 15096 -args 17096 -args 1000000000 -args 10000000000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo
 
 mint-04:
-	$(info ************ [POSITION - 4] mint gns & gnot // tick range 137162 ~ 139162 // by lp01 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/gns" -args "gnot" -args 100 -args 137162 -args 139162 -args 1000000000 -args 1000000000 -args 0 -args 0 -args $(TX_EXPIRE) -send "1000000000ugnot" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	$(info ************ [POSITION - 4] mint gns & gnot // tick range -1000 ~ 1000 // by lp01 ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/gns" -args "gnot" -args 100 -args -1000 -args 1000 -args 1000000000 -args 1000000000 -args 0 -args 0 -args $(TX_EXPIRE) -send "1000000000ugnot" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo
 
 mint-05:
 	$(info ************ [POSITION - 5] mint gns & qux // tick range 22028 ~ 24028 // by lp01 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/gns" -args "gno.land/r/qux" -args 100 -args 22028 -args 24028 -args 1000 -args 999999 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/gns" -args "gno.land/r/qux" -args 100 -args 22028 -args 24028 -args 1000000000 -args 1000000000000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo
 
 done:
