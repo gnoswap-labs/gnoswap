@@ -43,7 +43,7 @@ func init() {
 	poolTiers["ATOM/GNS_500"] = 2
 
 	// tier 3
-	poolTiers["ATOM/GNOT_500"] = 3
+poolTiers["ATOM/GNOT_500"] = 3
 	poolTiers["ATOM/USDT_500"] = 3
 	poolTiers["ATOM/WETH_500"] = 3
 }
