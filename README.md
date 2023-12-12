@@ -41,7 +41,7 @@ To run unit tests, follow these steps:
 2. Copy the `gnoswap` contracts into the Gno core:
 
    ```
-   $ cp -R _setup/* gov pool position staker $WORKDIR/gno-for-swap/examples/gno.land/r/
+   $ cp -R _setup/* gov pool position router staker $WORKDIR/gno-for-swap/examples/gno.land/r/
    ```
 
 ### Run the Test Cases
