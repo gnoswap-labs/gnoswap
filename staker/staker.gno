@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	INTERNAL_REWARD_ACCOUNT = std.Address("g1d9exzh6lta047h6lta047h6lta047h6l8ylkpa") // hardcoded
+	INTERNAL_REWARD_ACCOUNT = std.Address("g1d9exzh6lta047h6lta047h6lta047h6l8ylkpa") // hardcoded at gns.gno
 )
 
 var (
@@ -89,7 +89,7 @@ func CreateExternalIncentive(
 }
 
 func StakeToken(
-	tokenId uint64, // GNFT ID
+	tokenId uint64, // LP TokenID
 ) {
 	// check whether tokenId already staked or not
 	_, exist := deposits[tokenId]
@@ -122,8 +122,25 @@ func StakeToken(
 	transferDeposit(tokenId, GetOrigPkgAddr())
 }
 
+func CollectReward(
+	tokenId uint64, // LP TokenID
+) {
+	// check whether tokenId is staked or not
+	_, exist := deposits[tokenId]
+	require(exist, ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || tokenId(%d) not staked", tokenId))
+
+	// check tokenId owner
+	require(
+		gnft.OwnerOf(tid(tokenId)) == GetOrigCaller(),
+		ufmt.Sprintf(
+			"[STAKER] staker.gno__CollectReward() || only owner can collect reward__gnft.OwnerOf(tid(tokenId(%d)))(%s) == GetOrigCaller()(%s)",
+			tokenId, gnft.OwnerOf(tid(tokenId)), GetOrigCaller(),
+		),
+	)
+}
+
 func UnstakeToken(
-	tokenId uint64, // GNFT TokenID
+	tokenId uint64, // LP TokenID
 ) {
 	deposit, exist := deposits[tokenId]
 	require(exist, ufmt.Sprintf("[STAKER] staker.gno__UnstakeToken() || tokenId(%d) not staked", tokenId))
