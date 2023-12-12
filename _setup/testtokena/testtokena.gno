@@ -1,4 +1,4 @@
-package obl
+package testtokena
 
 import (
 	"std"
@@ -6,17 +6,17 @@ import (
 
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
-
 	"gno.land/r/demo/users"
 )
 
 var (
-	obl   *grc20.AdminToken
-	admin std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // TODO: helper to change admin
+	testtokena *grc20.AdminToken
+	admin      std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // TODO: helper to change admin
 )
 
 func init() {
-	obl = grc20.NewAdminToken("OnblocToken", "OBL", 6)
+	testtokena = grc20.NewAdminToken("Test Token A", "TEA", 6)
+	testtokena.Mint(admin, 500_000_000_000_000) // @administrator (1M)
 }
 
 // method proxies as public functions.
@@ -24,15 +24,15 @@ func init() {
 
 // getters.
 func GetGRC20() *grc20.AdminToken {
-	return obl
+	return testtokena
 }
 
 func TotalSupply() uint64 {
-	return obl.TotalSupply()
+	return testtokena.TotalSupply()
 }
 
 func BalanceOf(owner users.AddressOrName) uint64 {
-	balance, err := obl.BalanceOf(owner.Resolve())
+	balance, err := testtokena.BalanceOf(owner.Resolve())
 	if err != nil {
 		panic(err)
 	}
@@ -40,7 +40,7 @@ func BalanceOf(owner users.AddressOrName) uint64 {
 }
 
 func Allowance(owner, spender users.AddressOrName) uint64 {
-	allowance, err := obl.Allowance(owner.Resolve(), spender.Resolve())
+	allowance, err := testtokena.Allowance(owner.Resolve(), spender.Resolve())
 	if err != nil {
 		panic(err)
 	}
@@ -51,7 +51,7 @@ func Allowance(owner, spender users.AddressOrName) uint64 {
 
 func Transfer(to users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := obl.Transfer(caller, to.Resolve(), amount)
+	err := testtokena.Transfer(caller, to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -59,7 +59,7 @@ func Transfer(to users.AddressOrName, amount uint64) {
 
 func Approve(spender users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := obl.Approve(caller, spender.Resolve(), amount)
+	err := testtokena.Approve(caller, spender.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -67,7 +67,7 @@ func Approve(spender users.AddressOrName, amount uint64) {
 
 func TransferFrom(from, to users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := obl.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
+	err := testtokena.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -76,20 +76,20 @@ func TransferFrom(from, to users.AddressOrName, amount uint64) {
 // faucet.
 func Faucet() {
 	caller := std.PrevRealm().Addr()
-	obl.Mint(caller, 1000*10000) // 1k
+	testtokena.Mint(caller, 1_000_000_000)
 }
 
 // administration.
 func Mint(address users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	obl.Mint(address.Resolve(), amount)
+	testtokena.Mint(address.Resolve(), amount)
 }
 
 func Burn(address users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	obl.Burn(address.Resolve(), amount)
+	testtokena.Burn(address.Resolve(), amount)
 }
 
 // render.
@@ -101,10 +101,10 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return obl.RenderHome()
+		return testtokena.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := users.AddressOrName(parts[1])
-		balance, _ := obl.BalanceOf(owner.Resolve())
+		balance, _ := testtokena.BalanceOf(owner.Resolve())
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"

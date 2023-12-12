@@ -139,22 +139,22 @@ deploy-grc20_wrapper:
 
 # Facuet Tokens & Approve Tokens
 faucet-approve-lp01:
-	$(info ************ [Faucet & Approve ] lp01 ************)
+	$(info ************ [Faucet & Approve] lp01 ************)
 	@echo "" | gnokey sign -txpath multi_msg_01.txt -insecure-password-stdin=true -chainid $(CHAINID) -number 1 -sequence 0 lp01 > signed01.tx
 	gnokey broadcast -remote $(GNOLAND_RPC_URL) signed01.tx > /dev/null
 
 faucet-approve-lp02:
-	$(info ************ [Faucet & Approve ] lp02 ************)
+	$(info ************ [Faucet & Approve] lp02 ************)
 	@echo "" | gnokey sign -txpath multi_msg_02.txt -insecure-password-stdin=true -chainid $(CHAINID) -number 2 -sequence 0 lp02 > signed02.tx
 	gnokey broadcast -remote $(GNOLAND_RPC_URL) signed02.tx > /dev/null
 
 faucet-approve-tr01:
-	$(info ************ [Faucet & Approve ] tr01 ************)
+	$(info ************ [Faucet & Approve] tr01 ************)
 	@echo "" | gnokey sign -txpath multi_msg_03.txt -insecure-password-stdin=true -chainid $(CHAINID) -number 3 -sequence 0 tr01 > signed03.tx
 	gnokey broadcast -remote $(GNOLAND_RPC_URL) signed03.tx > /dev/null
 
 faucet-approve-gsa:
-	$(info ************ [Faucet & Approve ] gsa ************)
+	$(info ************ [Faucet & Approve] gsa ************)
 	@echo "" | gnokey sign -txpath multi_msg_04.txt -insecure-password-stdin=true -chainid $(CHAINID) -number 0 -sequence 0 gsa > signed04.tx
 	gnokey broadcast -remote $(GNOLAND_RPC_URL) signed04.tx > /dev/null
 
