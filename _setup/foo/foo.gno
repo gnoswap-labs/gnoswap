@@ -7,8 +7,6 @@ import (
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/users"
-
-	"gno.land/p/demo/testutils"
 )
 
 var (
@@ -18,29 +16,7 @@ var (
 
 func init() {
 	foo = grc20.NewAdminToken("Foo", "FOO", 6)
-	foo.Mint(admin, 1000000*10000) // @administrator (1M)
-
-	// for swap > pool
-	var (
-		lp01     = testutils.TestAddress("lp01") // Liquidity Provider 01
-		lp02     = testutils.TestAddress("lp02") // Liquidity Provider 02
-		lp03     = testutils.TestAddress("lp03") // Liquidity Provider 03
-		tr01     = testutils.TestAddress("tr01") // Trader 01
-		poolAddr = std.DerivePkgAddr("gno.land/r/pool")
-		posAddr  = std.DerivePkgAddr("gno.land/r/position")
-	)
-
-	foo.Mint(lp01, 50000000000)
-	foo.Mint(lp02, 50000000000)
-	foo.Mint(lp03, 50000000000)
-	foo.Mint(tr01, 50000000000)
-
-	foo.Approve(lp01, poolAddr, 50000000000)
-	foo.Approve(lp02, poolAddr, 50000000000)
-	foo.Approve(lp03, poolAddr, 50000000000)
-	foo.Approve(tr01, poolAddr, 50000000000)
-
-	// foo.Approve(posAddr, poolAddr, 50000000000)
+	foo.Mint(admin, 500_000_000_000_000) // @administrator (1M)
 }
 
 // method proxies as public functions.
@@ -98,23 +74,12 @@ func TransferFrom(from, to users.AddressOrName, amount uint64) {
 }
 
 // faucet.
-
 func Faucet() {
-	// FIXME: add limits?
-	// FIXME: add payment in gnot?
 	caller := std.PrevRealm().Addr()
-	foo.Mint(caller, 1000*10000) // 1k
-}
-
-func FaucetL() {
-	// FIXME: add limits?
-	// FIXME: add payment in gnot?
-	caller := std.PrevRealm().Addr()
-	foo.Mint(caller, 50000000000) // 50_000_000_000
+	foo.Mint(caller, 1_000_000_000)
 }
 
 // administration.
-
 func Mint(address users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
@@ -128,8 +93,6 @@ func Burn(address users.AddressOrName, amount uint64) {
 }
 
 // render.
-//
-
 func Render(path string) string {
 	parts := strings.Split(path, "/")
 	c := len(parts)

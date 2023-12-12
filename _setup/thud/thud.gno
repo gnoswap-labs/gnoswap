@@ -16,7 +16,6 @@ var (
 
 func init() {
 	thud = grc20.NewAdminToken("Thud", "THUD", 6)
-	thud.Mint(admin, 1000000*10000) // @administrator (1M)
 }
 
 // method proxies as public functions.
@@ -82,15 +81,7 @@ func Faucet() {
 	thud.Mint(caller, 1000*10000) // 1k
 }
 
-func FaucetL() {
-	// FIXME: add limits?
-	// FIXME: add payment in gnot?
-	caller := std.PrevRealm().Addr()
-	thud.Mint(caller, 50000000000000) // 50_000_000_000
-}
-
 // administration.
-
 func Mint(address users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
