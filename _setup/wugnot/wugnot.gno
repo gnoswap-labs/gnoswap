@@ -1,12 +1,3 @@
-// ** IMPORTANT **
-/*
-This realm is meant to be support swapping between GRC20 tokens and native coins.
-It is not meant to be used as a standalone token.
-User can not call transfer not transferFrom only gnoswap can.
-
-All of admin related funcitons and Facuet() will be removed in the future.
-*/
-
 package wugnot
 
 import (
@@ -15,48 +6,78 @@ import (
 
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/users"
 
-	"gno.land/p/demo/testutils"
+	"gno.land/r/demo/users"
 )
 
 var (
-	wugnot *grc20.AdminToken
-	admin  std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // TODO: helper to change admin
+	// wugnot is the admin token, able to mint and burn.
+	// wugnot *grc20.AdminToken = grc20.NewAdminToken("wrapped GNOT", "wugnot", 0) // orig
+	wugnot *grc20.AdminToken = grc20.NewAdminToken("Wrapped GNOT", "wugnot", 6)
 
-	poolAddr   = std.DerivePkgAddr("gno.land/r/demo/pool")
-	posAddr    = std.DerivePkgAddr("gno.land/r/demo/position")
-	routerAddr = std.DerivePkgAddr("gno.land/r/demo/router")
-	stakerAddr = std.DerivePkgAddr("gno.land/r/demo/staker")
+	// WUGNOT is the banker usable by users directly.
+	WUGNOT = wugnot.GRC20()
 )
 
-func init() {
-	wugnot = grc20.NewAdminToken("WrappedUGNOT", "WUGNOT", 6)
+const (
+	ugnotMinDeposit  uint64 = 1
+	wugnotMinDeposit uint64 = 1
+)
 
-	// for swap
-	var (
-		lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
-		lp02 = testutils.TestAddress("lp02") // Liquidity Provider 02
-		lp03 = testutils.TestAddress("lp03") // Liquidity Provider 03
-		tr01 = testutils.TestAddress("tr01") // Trader 01
-		ci01 = testutils.TestAddress("ci01") // Create Incentive Caller
-	)
+func Deposit() { // wrap
+	caller := std.PrevRealm().Addr()
+	sent := std.GetOrigSend()
+	amount := sent.AmountOf("ugnot")
 
-	wugnot.Approve(lp01, poolAddr, 50000000000)
-	wugnot.Approve(lp02, poolAddr, 50000000000)
-	wugnot.Approve(lp03, poolAddr, 50000000000)
-	wugnot.Approve(tr01, poolAddr, 50000000000)
-
-	wugnot.Approve(ci01, stakerAddr, 50000000000)
+	if uint64(amount) < ugnotMinDeposit {
+		panic(ufmt.Sprintf("Deposit below minimum: %d/%d ugnot.", amount, ugnotMinDeposit))
+	}
+	wugnot.Mint(caller, uint64(amount))
 }
 
-// method proxies as public functions.
+func Withdraw(amount uint64) { // unwrap
+	if amount < wugnotMinDeposit {
+		panic(ufmt.Sprintf("Deposit below minimum: %d/%d wugnot.", amount, wugnotMinDeposit))
+	}
+
+	caller := std.PrevRealm().Addr()
+	pkgaddr := std.GetOrigPkgAddr()
+
+	callerBal, _ := wugnot.BalanceOf(caller)
+	if callerBal < amount {
+		panic(ufmt.Sprintf("Insufficient balance: %d available, %d needed.", callerBal, amount))
+	}
+
+	// send swapped ugnots to caller
+	banker := std.GetBanker(std.BankerTypeRealmSend)
+	send := std.Coins{{"ugnot", int64(amount)}}
+	banker.SendCoins(pkgaddr, caller, send)
+	wugnot.Burn(caller, amount)
+}
+
+// render.
 //
 
-// getters.
-func GetGRC20() *grc20.AdminToken {
-	return wugnot
+func Render(path string) string {
+	parts := strings.Split(path, "/")
+	c := len(parts)
+
+	switch {
+	case path == "":
+		return wugnot.RenderHome()
+	case c == 2 && parts[0] == "balance":
+		owner := users.AddressOrName(parts[1])
+		balance, _ := wugnot.BalanceOf(owner.Resolve())
+		return ufmt.Sprintf("%d\n", balance)
+	default:
+		return "404\n"
+	}
 }
+
+// XXX: if we could call WUGNOT.XXX instead of XXX from gnokey, then, all the following lines would not be needed.
+
+// direct getters.
+// XXX: remove them in favor of q_call wugnot.XXX
 
 func TotalSupply() uint64 {
 	return wugnot.TotalSupply()
@@ -79,100 +100,13 @@ func Allowance(owner, spender users.AddressOrName) uint64 {
 }
 
 // setters.
-
-// faucet.
-
-func Faucet() {
-	// FIXME: add limits?
-	// FIXME: add payment in gnot?
-	caller := std.PrevRealm().Addr()
-	wugnot.Mint(caller, 1000*10000) // 1k
-}
-
-func FaucetL() {
-	// FIXME: add limits?
-	// FIXME: add payment in gnot?
-	caller := std.PrevRealm().Addr()
-	wugnot.Mint(caller, 50000000000000) // 50_000_000_000
-}
-
-// administration.
-
-func Mint(address users.AddressOrName, amount uint64) {
-	caller := std.PrevRealm().Addr()
-	assertIsAdmin(caller)
-	wugnot.Mint(address.Resolve(), amount)
-}
-
-func Burn(address users.AddressOrName, amount uint64) {
-	caller := std.PrevRealm().Addr()
-	assertIsAdmin(caller)
-	wugnot.Burn(address.Resolve(), amount)
-}
-
-// render.
 //
-
-func Render(path string) string {
-	parts := strings.Split(path, "/")
-	c := len(parts)
-
-	switch {
-	case path == "":
-		return wugnot.RenderHome()
-	case c == 2 && parts[0] == "balance":
-		owner := users.AddressOrName(parts[1])
-		balance, _ := wugnot.BalanceOf(owner.Resolve())
-		return ufmt.Sprintf("%d\n", balance)
-	default:
-		return "404\n"
-	}
-}
-
-func assertIsAdmin(address std.Address) {
-	if address != admin {
-		panic("restricted access")
-	}
-}
-
-// WRAP & UNWRAP
-func Wrap(address users.AddressOrName, amount uint64) {
-	caller := std.PrevRealm().Addr()
-	if !(caller == poolAddr || caller == posAddr || caller == routerAddr || caller == stakerAddr) {
-		panic("only pool, position, router, staker contract can wrap")
-	}
-
-	wugnot.Mint(address.Resolve(), amount) // mint to user
-}
-
-func Unwrap(address users.AddressOrName, amount uint64) {
-	caller := std.PrevRealm().Addr()
-	if !(caller == poolAddr || caller == posAddr || caller == routerAddr || caller == stakerAddr) {
-		panic("only pool, position, router, staker contract can unwrap")
-	}
-
-	wugnot.Burn(address.Resolve(), amount) // burn from user
-}
 
 func Transfer(to users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	if !(caller == poolAddr || caller == posAddr || caller == routerAddr || caller == stakerAddr) {
-		panic("only pool, position, router, staker contract can transfer")
-	}
 	err := wugnot.Transfer(caller, to.Resolve(), amount)
 	if err != nil {
-		panic(err.Error())
-	}
-}
-
-func TransferFrom(from, to users.AddressOrName, amount uint64) {
-	caller := std.PrevRealm().Addr()
-	if !(caller == poolAddr || caller == posAddr || caller == routerAddr || caller == stakerAddr) {
-		panic("only pool, position, router, staker contract can transferFrom")
-	}
-	err := wugnot.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
-	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
@@ -180,6 +114,14 @@ func Approve(spender users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	err := wugnot.Approve(caller, spender.Resolve(), amount)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
+	}
+}
+
+func TransferFrom(from, to users.AddressOrName, amount uint64) {
+	caller := std.PrevRealm().Addr()
+	err := wugnot.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
+	if err != nil {
+		panic(err)
 	}
 }

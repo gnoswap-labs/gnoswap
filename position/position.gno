@@ -37,9 +37,6 @@ func Mint(
 		amount0Min, amount1Min = amount1Min, amount0Min
 		tickLower, tickUpper = -tickUpper, -tickLower
 	}
-	// WRAP if native(ugnot) is being mint
-	wrap(token0)
-	wrap(token1)
 
 	mintParams := MintParams{
 		token0:         token0,
@@ -276,10 +273,6 @@ func collect(params CollectParams) (bigint, bigint) {
 	} else {
 		amount1Collect = params.amount1Max
 	}
-
-	// UNWRAP if native(ugnot) is being collect
-	unWrap(pToken0, uint64(amount0Collect))
-	unWrap(pToken1, uint64(amount1Collect))
 
 	amount0, amount1 := p.Collect(
 		pToken0,
