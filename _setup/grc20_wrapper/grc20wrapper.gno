@@ -51,35 +51,16 @@ func init() {
 	rRegistry.RegisterGRC20Interface("gno.land/r/st5", SwapTest5TokenCTokenInterface{})
 	sRegistry.RegisterGRC20Interface("gno.land/r/st5", SwapTest5TokenCTokenInterface{})
 
-	pRegistry.RegisterGRC20Interface("gno.land/r/st11", SwapTest11TokenCTokenInterface{})
-	rRegistry.RegisterGRC20Interface("gno.land/r/st11", SwapTest11TokenCTokenInterface{})
-	sRegistry.RegisterGRC20Interface("gno.land/r/st11", SwapTest11TokenCTokenInterface{})
+	// TO BE USED
+	// pRegistry.RegisterGRC20Interface("gno.land/r/testtokena", TestTokenATokenInterface{})
+	// rRegistry.RegisterGRC20Interface("gno.land/r/testtokena", TestTokenATokenInterface{})
+	// sRegistry.RegisterGRC20Interface("gno.land/r/testtokena", TestTokenATokenInterface{})
 
-	pRegistry.RegisterGRC20Interface("gno.land/r/st22", SwapTest22TokenCTokenInterface{})
-	rRegistry.RegisterGRC20Interface("gno.land/r/st22", SwapTest22TokenCTokenInterface{})
-	sRegistry.RegisterGRC20Interface("gno.land/r/st22", SwapTest22TokenCTokenInterface{})
+	// pRegistry.RegisterGRC20Interface("gno.land/r/testtokenb", TestTokenBTokenInterface{})
+	// rRegistry.RegisterGRC20Interface("gno.land/r/testtokenb", TestTokenBTokenInterface{})
+	// sRegistry.RegisterGRC20Interface("gno.land/r/testtokenb", TestTokenBTokenInterface{})
 
-	pRegistry.RegisterGRC20Interface("gno.land/r/st33", SwapTest33TokenCTokenInterface{})
-	rRegistry.RegisterGRC20Interface("gno.land/r/st33", SwapTest33TokenCTokenInterface{})
-	sRegistry.RegisterGRC20Interface("gno.land/r/st33", SwapTest33TokenCTokenInterface{})
-
-	pRegistry.RegisterGRC20Interface("gno.land/r/st44", SwapTest44TokenCTokenInterface{})
-	rRegistry.RegisterGRC20Interface("gno.land/r/st44", SwapTest44TokenCTokenInterface{})
-	sRegistry.RegisterGRC20Interface("gno.land/r/st44", SwapTest44TokenCTokenInterface{})
-
-	pRegistry.RegisterGRC20Interface("gno.land/r/st55", SwapTest55TokenCTokenInterface{})
-	rRegistry.RegisterGRC20Interface("gno.land/r/st55", SwapTest55TokenCTokenInterface{})
-	sRegistry.RegisterGRC20Interface("gno.land/r/st55", SwapTest55TokenCTokenInterface{})
-
-	pRegistry.RegisterGRC20Interface("gno.land/r/testtokena", TestTokenATokenInterface{})
-	rRegistry.RegisterGRC20Interface("gno.land/r/testtokena", TestTokenATokenInterface{})
-	sRegistry.RegisterGRC20Interface("gno.land/r/testtokena", TestTokenATokenInterface{})
-
-	pRegistry.RegisterGRC20Interface("gno.land/r/testtokenb", TestTokenBTokenInterface{})
-	rRegistry.RegisterGRC20Interface("gno.land/r/testtokenb", TestTokenBTokenInterface{})
-	sRegistry.RegisterGRC20Interface("gno.land/r/testtokenb", TestTokenBTokenInterface{})
-
-	pRegistry.RegisterGRC20Interface("gno.land/r/testtokenc", TestTokenCTokenInterface{})
-	rRegistry.RegisterGRC20Interface("gno.land/r/testtokenc", TestTokenCTokenInterface{})
-	sRegistry.RegisterGRC20Interface("gno.land/r/testtokenc", TestTokenCTokenInterface{})
+	// pRegistry.RegisterGRC20Interface("gno.land/r/testtokenc", TestTokenCTokenInterface{})
+	// rRegistry.RegisterGRC20Interface("gno.land/r/testtokenc", TestTokenCTokenInterface{})
+	// sRegistry.RegisterGRC20Interface("gno.land/r/testtokenc", TestTokenCTokenInterface{})
 }

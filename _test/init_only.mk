@@ -56,14 +56,7 @@ deploy-grc20s:
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/st3 -pkgpath gno.land/r/st3 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/st4 -pkgpath gno.land/r/st4 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/st5 -pkgpath gno.land/r/st5 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/st11 -pkgpath gno.land/r/st11 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/st22 -pkgpath gno.land/r/st22 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/st33 -pkgpath gno.land/r/st33 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/st44 -pkgpath gno.land/r/st44 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/st55 -pkgpath gno.land/r/st55 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/testtokena -pkgpath gno.land/r/testtokena -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/testtokenb -pkgpath gno.land/r/testtokenb -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/testtokenc -pkgpath gno.land/r/testtokenc -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo
 	
 deploy-gnft:
 	$(info ************ [GNFT] deploy lp token ************)
@@ -119,14 +112,7 @@ approve-test1:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/st3 -func Approve -args $(ADDR_POOL) -args 500000000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/st4 -func Approve -args $(ADDR_POOL) -args 500000000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/st5 -func Approve -args $(ADDR_POOL) -args 500000000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/st11 -func Approve -args $(ADDR_POOL) -args 500000000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/st22 -func Approve -args $(ADDR_POOL) -args 500000000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/st33 -func Approve -args $(ADDR_POOL) -args 500000000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/st44 -func Approve -args $(ADDR_POOL) -args 500000000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/st55 -func Approve -args $(ADDR_POOL) -args 500000000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/testtokena -func Approve -args $(ADDR_POOL) -args 500000000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/testtokenb -func Approve -args $(ADDR_POOL) -args 500000000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/testtokenc -func Approve -args $(ADDR_POOL) -args 500000000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null	
+
 	@echo
 
 
@@ -173,37 +159,6 @@ pool-create:
 
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st4" -args "gno.land/r/st5" -args 500 -args 87350341247483919659585300674 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st4" -args "gno.land/r/st5" -args 10000 -args 86446650220495278410339891092 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st11" -args "gno.land/r/st22" -args 100 -args 78632271998467896963137734028 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st11" -args "gno.land/r/st22" -args 3000 -args 79816596014554786537349811406 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st11" -args "gno.land/r/st33" -args 500 -args 114951834955391683882956380297 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st11" -args "gno.land/r/st33" -args 10000 -args 114127195240248353140234912719 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st11" -args "gno.land/r/st44" -args 100 -args 96223355229883343171379415442 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st11" -args "gno.land/r/st44" -args 3000 -args 94577818186581255193903899028 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st11" -args "gno.land/r/st55" -args 500 -args 105553452024597856248239970211 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st11" -args "gno.land/r/st55" -args 10000 -args 104060055720203537188615070492 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st22" -args "gno.land/r/st33" -args 100 -args 105553452024597856248239970211 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st22" -args "gno.land/r/st33" -args 3000 -args 113575045994529217799398739318 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st22" -args "gno.land/r/st44" -args 500 -args 93744538858360434067702382727 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st22" -args "gno.land/r/st44" -args 10000 -args 98639408880844237329631226990 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st22" -args "gno.land/r/st55" -args 100 -args 107036166435155529528362134687 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st22" -args "gno.land/r/st55" -args 3000 -args 103303220962225903261255492424 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st33" -args "gno.land/r/st44" -args 500 -args 65597741190543616110355062640 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st33" -args "gno.land/r/st44" -args 10000 -args 64634091399937790156998403932 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st33" -args "gno.land/r/st55" -args 100 -args 71936706074190924971728256808 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st33" -args "gno.land/r/st55" -args 3000 -args 71238766072602061195894228565 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st44" -args "gno.land/r/st55" -args 500 -args 87350341247483919659585300674 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/pool -func CreatePool -args "gno.land/r/st44" -args "gno.land/r/st55" -args 10000 -args 86446650220495278410339891092 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 
@@ -246,37 +201,8 @@ position-mint:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st4" -args "gno.land/r/st5" -args 500 -args -11910 -args 4180 -args 5000000000 -args 28808800000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st4" -args "gno.land/r/st5" -args 10000 -args 3200 -args 16200 -args 195000000000 -args 0 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st11" -args "gno.land/r/st22" -args 100 -args -14014 -args 2080 -args 20000000000 -args 93281000000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st11" -args "gno.land/r/st22" -args 3000 -args 1560 -args 14640 -args 16000000000 -args 0 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st11" -args "gno.land/r/st33" -args 500 -args -6420 -args 9670 -args 15000000000 -args 149269000000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st11" -args "gno.land/r/st33" -args 10000 -args 8600 -args 21800 -args 85000000000 -args 0 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st11" -args "gno.land/r/st44" -args 100 -args -9978 -args 6114 -args 2000000000 -args 13968500000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st11" -args "gno.land/r/st44" -args 3000 -args 4920 -args 18000 -args 18000000000 -args 0 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st11" -args "gno.land/r/st55" -args 500 -args -8130 -args 7970 -args 35000000000 -args 294396000000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st11" -args "gno.land/r/st55" -args 10000 -args 6800 -args 20000 -args 65000000000 -args 0 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st22" -args "gno.land/r/st33" -args 100 -args -6420 -args 9674 -args 8000000000 -args 79745300000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st22" -args "gno.land/r/st33" -args 3000 -args 8580 -args 21660 -args 12000000000 -args 0 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st22" -args "gno.land/r/st44" -args 500 -args -10500 -args 5600 -args 900000000000 -args 5959200000000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st22" -args "gno.land/r/st44" -args 10000 -args 5800 -args 18800 -args 1100000000000 -args 0 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st22" -args "gno.land/r/st55" -args 100 -args -7848 -args 8248 -args 17000000000 -args 146986000000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st22" -args "gno.land/r/st55" -args 3000 -args 6720 -args 19800 -args 30000000000 -args 0 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st33" -args "gno.land/r/st44" -args 500 -args -17640 -args -1550 -args 10000000000 -args 32406000000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st33" -args "gno.land/r/st44" -args 10000 -args -2600 -args 10400 -args 19000000000 -args 0 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st33" -args "gno.land/r/st55" -args 100 -args -15794 -args 300 -args 25000000000 -args 97589400000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st33" -args "gno.land/r/st55" -args 3000 -args -720 -args 12360 -args 75000000000 -args 0 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st44" -args "gno.land/r/st55" -args 500 -args -11910 -args 4180 -args 15000000000 -args 86476200000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/position -func Mint -args "gno.land/r/st44" -args "gno.land/r/st55" -args 10000 -args 3200 -args 16200 -args 17500000000 -args 0 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
+
 
 
 done:
