@@ -19,6 +19,7 @@ var (
 	WUGNOT = wugnot.GRC20()
 )
 
+
 const (
 	ugnotMinDeposit  uint64 = 1
 	wugnotMinDeposit uint64 = 1
