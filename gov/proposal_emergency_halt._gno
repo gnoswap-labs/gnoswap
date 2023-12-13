@@ -1,8 +1,8 @@
 package gov 
 
 import (
-	"gno.land/r/pool"
-	"gno.land/r/staker"
+	"gno.land/r/demo/pool"
+	"gno.land/r/demo/staker"
 )
 
 var haltFlag bool

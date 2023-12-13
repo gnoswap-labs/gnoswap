@@ -5,7 +5,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	nft "gno.land/r/gnft"
+	nft "gno.land/r/demo/gnft"
 )
 
 func nftBalanceOf(addr std.Address) bigint {

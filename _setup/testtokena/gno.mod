@@ -1,1 +1,1 @@
-module gno.land/r/testtokena
+module gno.land/r/demo/testtokena

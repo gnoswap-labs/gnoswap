@@ -7,9 +7,9 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	_ "gno.land/r/grc20_wrapper"
+	_ "gno.land/r/demo/grc20_wrapper"
 
-	g "gno.land/r/gov"
+	g "gno.land/r/demo/gov"
 )
 
 var (
@@ -18,14 +18,14 @@ var (
 	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 
-	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
-	posAddr  = std.DerivePkgAddr("gno.land/r/position")
+	poolAddr = std.DerivePkgAddr("gno.land/r/demo/pool")
+	posAddr  = std.DerivePkgAddr("gno.land/r/demo/position")
 )
 
 var (
 	// Common
-	barPath = "gno.land/r/bar" // token1
-	fooPath = "gno.land/r/foo" // token2
+	barPath = "gno.land/r/demo/bar" // token1
+	fooPath = "gno.land/r/demo/foo" // token2
 	pFee    = uint16(500)
 
 	test_tickLower       = int32(9000)
@@ -53,9 +53,9 @@ func TestCreatePool(t *testing.T) {
 	// 10000	= 1% // USv3 default
 	jsonStr = gjson.Parse(ApiGetPools())
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
-	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "gno.land/r/bar:gno.land/r/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 
-	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/bar:gno.land/r/foo:500"))
+	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/demo/bar:gno.land/r/demo/foo:500"))
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 0)
 	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 0)
 
@@ -70,16 +70,16 @@ func TestSwap(t *testing.T) {
 	pool := GetPool(fooPath, barPath, pFee)
 
 	// lp01 mint 9000 ~ 11000 tick range
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(lp01)
 	Mint(fooPath, barPath, pFee, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*100000)
 	std.TestSkipHeights(1)
 
 	jsonStr := gjson.Parse(ApiGetPools())
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
-	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "gno.land/r/bar:gno.land/r/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 
-	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/bar:gno.land/r/foo:500"))
+	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/demo/bar:gno.land/r/demo/foo:500"))
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 2957550)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8041577)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
@@ -88,12 +88,12 @@ func TestSwap(t *testing.T) {
 	// SWAP
 	std.TestSetOrigCaller(tr01)
 
-	std.TestSetPrevRealm("gno.land/r/router")
+	std.TestSetPrevRealm("gno.land/r/demo/router")
 	Swap(fooPath, barPath, pFee, tr01, true, bigint(150000), MIN_PRICE, std.GetOrigCaller())
 	std.TestSkipHeights(1)
 
 	// Swap(fooPath, barPath, pFee, tr01, true, bigint(1500000), MIN_PRICE, std.GetOrigCaller()) // two iteration // s0: 1_500_000 // s1: -3_626_984 // currentTick: 7668
-	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/bar:gno.land/r/foo:500"))
+	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/demo/bar:gno.land/r/demo/foo:500"))
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 3107550)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 7635058)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
@@ -102,7 +102,7 @@ func TestSwap(t *testing.T) {
 	Swap(fooPath, barPath, pFee, tr01, false, bigint(601851), MAX_PRICE, std.GetOrigCaller())
 	std.TestSkipHeights(1)
 
-	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/bar:gno.land/r/foo:500"))
+	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/demo/bar:gno.land/r/demo/foo:500"))
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 2885960)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8236909)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)
@@ -110,7 +110,7 @@ func TestSwap(t *testing.T) {
 
 	// To collect fee without removing liquidity
 	// burn 0 => collect
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(lp01)
 	Burn(fooPath, barPath, pFee, test_tickLower, test_tickUpper, 0)
 	std.TestSkipHeights(1)
@@ -118,7 +118,7 @@ func TestSwap(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 	Collect(fooPath, barPath, pFee, lp01, test_tickLower, test_tickUpper, 100000000, 100000000)
 	std.TestSkipHeights(1)
-	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/bar:gno.land/r/foo:500"))
+	jsonStr = gjson.Parse(ApiGetPool("gno.land/r/demo/bar:gno.land/r/demo/foo:500"))
 	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 2885886)
 	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 8236608)
 	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 100000000)

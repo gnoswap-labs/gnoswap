@@ -1,1 +1,1 @@
-module gno.land/r/staker
+module gno.land/r/demo/staker

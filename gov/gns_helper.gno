@@ -3,7 +3,7 @@ package gov
 import (
 	"std"
 
-	gns "gno.land/r/gns"
+	gns "gno.land/r/demo/gns"
 
 	"gno.land/r/demo/users"
 )

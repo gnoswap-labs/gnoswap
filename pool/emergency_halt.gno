@@ -15,7 +15,7 @@ var (
 )
 
 func init() {
-	govRealm = "gno.land/r/gov"
+	govRealm = "gno.land/r/demo/gov"
 	flagHalt = false
 }
 

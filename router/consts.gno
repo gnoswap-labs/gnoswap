@@ -8,8 +8,8 @@ const (
 
 	Q96 bigint = 79228162514264337593543950336 // 2 ** 96
 
-	ADDR_POOL   std.Address = std.DerivePkgAddr("gno.land/r/pool")
-	ADDR_ROUTER std.Address = std.DerivePkgAddr("gno.land/r/router")
+	ADDR_POOL   std.Address = std.DerivePkgAddr("gno.land/r/demo/pool")
+	ADDR_ROUTER std.Address = std.DerivePkgAddr("gno.land/r/demo/router")
 
 	// SwapType
 	ExactIn  SwapType = "EXACT_IN"
@@ -19,5 +19,5 @@ const (
 // WRAP & UNWRAP
 const (
 	GNOT           = "gnot"
-	WRAPPED_WUGNOT = "gno.land/r/wugnot"
+	WRAPPED_WUGNOT = "gno.land/r/demo/wugnot"
 )

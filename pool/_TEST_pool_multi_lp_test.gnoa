@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	_ "gno.land/r/grc20_wrapper"
+	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 var (
@@ -21,14 +21,14 @@ var (
 
 	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
 
-	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
-	posAddr  = std.DerivePkgAddr("gno.land/r/position")
+	poolAddr = std.DerivePkgAddr("gno.land/r/demo/pool")
+	posAddr  = std.DerivePkgAddr("gno.land/r/demo/position")
 )
 
 var (
 	// Common
-	barPath = "gno.land/r/bar" // token1
-	fooPath = "gno.land/r/foo" // token2
+	barPath = "gno.land/r/demo/bar" // token1
+	fooPath = "gno.land/r/demo/foo" // token2
 	pFee    = uint16(500)
 
 	test_tickLower       = int32(9000)
@@ -54,7 +54,7 @@ func TestFactoryCreatePool(t *testing.T) {
 
 // 2. Mint by lp01
 func TestMint(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(lp01)
 
 	Mint(
@@ -119,7 +119,7 @@ func TestMint(t *testing.T) {
 
 // 3. Burn by lp01
 func TestBurn(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(lp01)
 
 	b11, b12 := Burn(barPath, fooPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect)
@@ -154,7 +154,7 @@ func TestBurn(t *testing.T) {
 
 // 4. Collect
 func TestCollect(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(lp01)
 
 	// withdraw all token before test `Collect`
@@ -202,7 +202,7 @@ func TestCollect(t *testing.T) {
 
 // 5. Swap by tr01, Mint by lp02 ~ lp03
 func TestSwap(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	pool := GetPool(barPath, fooPath, pFee)
 
 	std.TestSetOrigCaller(lp02)
@@ -224,7 +224,7 @@ func TestSwap(t *testing.T) {
 		lp03OldToken0Bal := balanceOfByRegisterCall(pool.token0Path, lp03)
 		lp03OldToken1Bal := balanceOfByRegisterCall(pool.token1Path, lp03)
 
-		std.TestSetPrevRealm("gno.land/r/router")
+		std.TestSetPrevRealm("gno.land/r/demo/router")
 		std.TestSetOrigCaller(tr01)
 		amount0, amount1 := Swap(
 			fooPath,
@@ -251,7 +251,7 @@ func TestSwap(t *testing.T) {
 		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(amount0))
 		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-amount1))
 
-		std.TestSetPrevRealm("gno.land/r/position")
+		std.TestSetPrevRealm("gno.land/r/demo/position")
 		std.TestSetOrigCaller(lp02)
 		Burn(barPath, fooPath, pFee, test_tickLower, test_tickUpper, test_liquidityExpect*1000)
 		Collect(barPath, fooPath, pFee, lp02, test_tickLower, test_tickUpper, 50000000, 50000000)
@@ -281,7 +281,7 @@ func TestSwap(t *testing.T) {
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
-		std.TestSetPrevRealm("gno.land/r/router")
+		std.TestSetPrevRealm("gno.land/r/demo/router")
 		std.TestSetOrigCaller(tr01)
 		amount0, amount1 := Swap(barPath, fooPath, pFee, tr01, true, bigint(5000), MIN_PRICE, std.GetOrigCaller())
 
@@ -307,7 +307,7 @@ func TestSwap(t *testing.T) {
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
-		std.TestSetPrevRealm("gno.land/r/router")
+		std.TestSetPrevRealm("gno.land/r/demo/router")
 		std.TestSetOrigCaller(tr01)
 		amount0, amount1 := Swap(barPath, fooPath, pFee, tr01, true, bigint(1000), MIN_PRICE, std.GetOrigCaller())
 
@@ -333,7 +333,7 @@ func TestSwap(t *testing.T) {
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, tr01)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, tr01)
 
-		std.TestSetPrevRealm("gno.land/r/router")
+		std.TestSetPrevRealm("gno.land/r/demo/router")
 		std.TestSetOrigCaller(tr01)
 		amount0, amount1 := Swap(barPath, fooPath, pFee, tr01, false, bigint(16000), MAX_PRICE, std.GetOrigCaller())
 
@@ -381,7 +381,7 @@ func TestCollectProtocol(t *testing.T) {
 		gsaOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 		gsaOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
-		std.TestSetPrevRealm("gno.land/r/router")
+		std.TestSetPrevRealm("gno.land/r/demo/router")
 		std.TestSetOrigCaller(tr01)
 		Swap(barPath, fooPath, pFee, tr01, true, 100000, MIN_PRICE, std.GetOrigCaller()) // swap token0 -> token1 => fee only in token0
 		Swap(barPath, fooPath, pFee, tr01, true, 100000, MIN_PRICE, std.GetOrigCaller()) // more protocol fee
@@ -402,7 +402,7 @@ func TestCollectProtocol(t *testing.T) {
 		gsaOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 		gsaOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
-		std.TestSetPrevRealm("gno.land/r/router")
+		std.TestSetPrevRealm("gno.land/r/demo/router")
 		std.TestSetOrigCaller(tr01)
 		Swap(barPath, fooPath, pFee, tr01, false, 100000, MAX_PRICE, std.GetOrigCaller()) // swap token0 -> token1 => fee only in token0
 		Swap(barPath, fooPath, pFee, tr01, false, 100000, MAX_PRICE, std.GetOrigCaller()) // more protocol fee
@@ -429,7 +429,7 @@ func TestApiGetPools(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
 
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
-	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "gno.land/r/bar:gno.land/r/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
 
 /* HELPER */

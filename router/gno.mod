@@ -1,1 +1,1 @@
-module gno.land/r/router
+module gno.land/r/demo/router

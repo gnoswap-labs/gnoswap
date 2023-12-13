@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/r/gns"
+	"gno.land/r/demo/gns"
 )
 
 func TestSubmitProposal(t *testing.T) {

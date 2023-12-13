@@ -6,11 +6,11 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	gnft "gno.land/r/gnft" // GNFT, Gnoswap NFT
-	p "gno.land/r/pool"
-	pos "gno.land/r/position"
+	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
+	p "gno.land/r/demo/pool"
+	pos "gno.land/r/demo/position"
 
-	_ "gno.land/r/grc20_wrapper"
+	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 var (
@@ -23,8 +23,8 @@ var (
 )
 
 var (
-	fooPath = "gno.land/r/foo"
-	barPath = "gno.land/r/bar"
+	fooPath = "gno.land/r/demo/foo"
+	barPath = "gno.land/r/demo/bar"
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
@@ -93,8 +93,8 @@ func TestCreateExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
 
 	CreateExternalIncentive(
-		"gno.land/r/bar:gno.land/r/foo:500", // targetPoolPath
-		"gno.land/r/obl",                    // rewardToken
+		"gno.land/r/demo/bar:gno.land/r/demo/foo:500", // targetPoolPath
+		"gno.land/r/demo/obl",                    // rewardToken
 		10_000_000_000,                      // rewardAmount
 		GetTimestamp(),                      // startTimestamp
 		GetTimestamp()+TIMESTAMP_90DAYS,     // endTimestamp
@@ -102,7 +102,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	std.TestSkipHeights(5)
 
 	shouldPanic(t, func() {
-		CreateExternalIncentive("gno.land/r/bar:gno.land/r/foo:500", "OBL", 10_000_000_000, GetTimestamp(), GetTimestamp()+TIMESTAMP_90DAYS)
+		CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/foo:500", "OBL", 10_000_000_000, GetTimestamp(), GetTimestamp()+TIMESTAMP_90DAYS)
 	})
 }
 

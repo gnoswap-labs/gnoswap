@@ -5,12 +5,12 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/wugnot"
+	"gno.land/r/demo/wugnot"
 )
 
 const (
 	GNOT           = "gnot"
-	WRAPPED_WUGNOT = "gno.land/r/wugnot"
+	WRAPPED_WUGNOT = "gno.land/r/demo/wugnot"
 )
 
 func wrap(tokenPath string) string {

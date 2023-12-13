@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	_ "gno.land/r/grc20_wrapper"
+	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 var (
@@ -14,13 +14,13 @@ var (
 	lp01 = testutils.TestAddress("lp01")
 	pc01 = testutils.TestAddress("pc01")
 
-	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
-	posAddr  = std.DerivePkgAddr("gno.land/r/position")
+	poolAddr = std.DerivePkgAddr("gno.land/r/demo/pool")
+	posAddr  = std.DerivePkgAddr("gno.land/r/demo/position")
 )
 
 var (
-	fooPath          = "gno.land/r/foo" // token1
-	barPath          = "gno.land/r/bar" // token2
+	fooPath          = "gno.land/r/demo/foo" // token1
+	barPath          = "gno.land/r/demo/bar" // token2
 	pFee             = uint16(500)
 	sqrtPrice bigint = 130621891405341611593710811006
 
@@ -50,7 +50,7 @@ func TestGetTickFromSqrtRatio(t *testing.T) {
 }
 
 func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(lp01)
 
 	// no mint == no liquidity => swap will fail

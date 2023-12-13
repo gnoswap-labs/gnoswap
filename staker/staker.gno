@@ -5,10 +5,10 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	gnft "gno.land/r/gnft" // GNFT, Gnoswap NFT
-	gns "gno.land/r/gns"   // INTERAL REWARD FIXED
+	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
+	gns "gno.land/r/demo/gns"   // INTERAL REWARD FIXED
 
-	s "gno.land/r/position"
+	s "gno.land/r/demo/position"
 )
 
 const (
@@ -26,7 +26,7 @@ var (
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/bar:gnot:100"] = 1 // DEV
+	poolTiers["gno.land/r/demo/bar:gnot:100"] = 1 // DEV
 
 	// tier 2
 	poolTiers["GNS/USDT_500"] = 2

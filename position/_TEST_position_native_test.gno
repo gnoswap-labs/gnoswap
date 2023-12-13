@@ -6,18 +6,18 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	nft "gno.land/r/gnft"
+	nft "gno.land/r/demo/gnft"
 
-	_ "gno.land/r/grc20_wrapper"
-	p "gno.land/r/pool"
+	_ "gno.land/r/demo/grc20_wrapper"
+	p "gno.land/r/demo/pool"
 
-	"gno.land/r/foo"
-	"gno.land/r/wugnot"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/wugnot"
 )
 
 var (
 	poolAddr = p.GetOrigPkgAddr()
-	posAddr  = std.DerivePkgAddr("gno.land/r/position")
+	posAddr  = std.DerivePkgAddr("gno.land/r/demo/position")
 
 	own  = testutils.TestAddress("own")  // Owner
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
@@ -28,7 +28,7 @@ var (
 
 var (
 	// Common
-	fooPath  = "gno.land/r/foo"
+	fooPath  = "gno.land/r/demo/foo"
 	gnotPath = "gnot"
 	pFee     = uint16(500)
 

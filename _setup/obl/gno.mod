@@ -1,1 +1,1 @@
-module gno.land/r/obl
+module gno.land/r/demo/obl

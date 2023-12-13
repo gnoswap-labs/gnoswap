@@ -47,7 +47,7 @@ To run unit tests, follow these steps:
 ### Run the Test Cases
 
 ```
-$ gno test -root-dir $WORKDIR/gno-for-swap -verbose=true $WORKDIR/gno-for-swap/examples/gno.land/r/staker
+$ gno test -root-dir $WORKDIR/gno-for-swap -verbose=true $WORKDIR/gno-for-swap/examples/gno.land/r/demo/staker
 ```
 
 ## Integration Tests

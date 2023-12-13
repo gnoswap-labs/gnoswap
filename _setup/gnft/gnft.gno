@@ -10,8 +10,8 @@ import (
 
 var (
 	// position deployed
-	// std.DerivePkgAddr("gno.land/r/position")
-	admin std.Address = "g1htpxzv2dkplvzg50nd8fswrneaxmdpwn459thx"
+	// std.DerivePkgAddr("gno.land/r/demo/position")
+	admin std.Address = "g10wwa53xgu4397kvzz7akxar9370zjdpwux5th9"
 	nft               = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
 )
 

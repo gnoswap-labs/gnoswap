@@ -58,12 +58,12 @@ const (
 
 	MAX_UINT160 bigint = 1461501637330902918203684832716283019655932542975
 
-	ADDR_ROUTER std.Address = std.DerivePkgAddr("gno.land/r/router")
-	ADDR_POOL   std.Address = std.DerivePkgAddr("gno.land/r/pool")
+	ADDR_ROUTER std.Address = std.DerivePkgAddr("gno.land/r/demo/router")
+	ADDR_POOL   std.Address = std.DerivePkgAddr("gno.land/r/demo/pool")
 )
 
 // WRAP & UNWRAP
 const (
 	GNOT           = "gnot"
-	WRAPPED_WUGNOT = "gno.land/r/wugnot"
+	WRAPPED_WUGNOT = "gno.land/r/demo/wugnot"
 )

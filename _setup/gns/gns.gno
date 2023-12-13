@@ -19,7 +19,7 @@ func init() {
 	gns = grc20.NewAdminToken("Gnoswap", "GNS", 6)
 	gns.Mint(admin, 500_000_000_000_000) // @administrator (1M)
 
-	stakerAddr := std.DerivePkgAddr("gno.land/r/staker")
+	stakerAddr := std.DerivePkgAddr("gno.land/r/demo/staker")
 	admins = append(admins, string(stakerAddr))
 	admins = append(admins, string(admin))
 }

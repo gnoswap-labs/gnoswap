@@ -18,7 +18,7 @@ func GetChainID() string {
 }
 
 func GetOrigPkgAddr() std.Address {
-	return std.DerivePkgAddr("gno.land/r/pool")
+	return std.DerivePkgAddr("gno.land/r/demo/pool")
 	// return std.GetOrigPkgAddr()
 }
 

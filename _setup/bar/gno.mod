@@ -1,1 +1,1 @@
-module gno.land/r/bar
+module gno.land/r/demo/bar

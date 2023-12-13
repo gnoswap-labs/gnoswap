@@ -1,1 +1,1 @@
-module gno.land/r/qux
+module gno.land/r/demo/qux

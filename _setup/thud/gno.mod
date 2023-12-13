@@ -1,1 +1,1 @@
-module gno.land/r/thud
+module gno.land/r/demo/thud

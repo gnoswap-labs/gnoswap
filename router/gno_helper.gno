@@ -14,5 +14,5 @@ func GetTimestamp() int64 {
 }
 
 func GetOrigPkgAddr() std.Address {
-	return std.DerivePkgAddr("gno.land/r/router")
+	return std.DerivePkgAddr("gno.land/r/demo/router")
 }

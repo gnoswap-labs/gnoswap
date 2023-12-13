@@ -24,10 +24,10 @@ var (
 	wugnot *grc20.AdminToken
 	admin  std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // TODO: helper to change admin
 
-	poolAddr   = std.DerivePkgAddr("gno.land/r/pool")
-	posAddr    = std.DerivePkgAddr("gno.land/r/position")
-	routerAddr = std.DerivePkgAddr("gno.land/r/router")
-	stakerAddr = std.DerivePkgAddr("gno.land/r/staker")
+	poolAddr   = std.DerivePkgAddr("gno.land/r/demo/pool")
+	posAddr    = std.DerivePkgAddr("gno.land/r/demo/position")
+	routerAddr = std.DerivePkgAddr("gno.land/r/demo/router")
+	stakerAddr = std.DerivePkgAddr("gno.land/r/demo/staker")
 )
 
 func init() {

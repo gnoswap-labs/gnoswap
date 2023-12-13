@@ -6,17 +6,17 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	_ "gno.land/r/grc20_wrapper"
+	_ "gno.land/r/demo/grc20_wrapper"
 
-	pos "gno.land/r/position"
+	pos "gno.land/r/demo/position"
 
-	"gno.land/r/foo"
-	"gno.land/r/wugnot"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/wugnot"
 )
 
 var (
-	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
-	posAddr  = std.DerivePkgAddr("gno.land/r/position")
+	poolAddr = std.DerivePkgAddr("gno.land/r/demo/pool")
+	posAddr  = std.DerivePkgAddr("gno.land/r/demo/position")
 
 	own  = testutils.TestAddress("own")  // Owner
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
@@ -27,7 +27,7 @@ var (
 
 var (
 	// Common
-	fooPath  = "gno.land/r/foo"
+	fooPath  = "gno.land/r/demo/foo"
 	gnotPath = "gnot"
 	pFee     = uint16(500)
 
@@ -88,7 +88,7 @@ func TestMint(t *testing.T) {
 	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1000000)
 
 	// Mint
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	tTokenId, tLiquidity, tAmount0, tAmount1 := pos.Mint(
 		fooPath,
 		gnotPath,
@@ -130,7 +130,7 @@ func TestSwapBuyNative(t *testing.T) {
 	shouldEQ(t, poolOldT0Bal, bigint(367897)) // foo
 	shouldEQ(t, poolOldT1Bal, bigint(999999)) // wugnot
 
-	std.TestSetPrevRealm("gno.land/r/router")
+	std.TestSetPrevRealm("gno.land/r/demo/router")
 	std.TestSetOrigCaller(tr01)
 	amount0, amount1 := Swap( // foo 10_000 > wugnot ??
 		fooPath,  // token0
@@ -181,7 +181,7 @@ func TestSwapSellNative(t *testing.T) {
 	std.TestSetOrigSend(std.Coins{{"ugnot", 10000}}, nil)
 	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 10000)
 
-	std.TestSetPrevRealm("gno.land/r/router")
+	std.TestSetPrevRealm("gno.land/r/demo/router")
 	amount0, amount1 := Swap( // ugnot 10_000 > foo ??
 		fooPath,  // token0
 		gnotPath, // token1

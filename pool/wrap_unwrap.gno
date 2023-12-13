@@ -4,7 +4,7 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/wugnot"
+	"gno.land/r/demo/wugnot"
 )
 
 func wrap(tokenPath string) {
@@ -13,7 +13,7 @@ func wrap(tokenPath string) {
 	}
 
 	prev := std.PrevRealm().PkgPath()
-	if tokenPath == GNOT && prev == "gno.land/r/router" {
+	if tokenPath == GNOT && prev == "gno.land/r/demo/router" {
 		return
 	}
 

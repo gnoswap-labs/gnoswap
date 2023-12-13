@@ -1,7 +1,7 @@
 package position
 
 import (
-	p "gno.land/r/pool"
+	p "gno.land/r/demo/pool"
 )
 
 func addLiquidity(params AddLiquidityParams) (bigint, bigint, bigint) {

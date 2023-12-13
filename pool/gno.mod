@@ -1,1 +1,1 @@
-module gno.land/r/pool
+module gno.land/r/demo/pool

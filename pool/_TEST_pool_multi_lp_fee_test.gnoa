@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	_ "gno.land/r/grc20_wrapper"
+	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 var (
@@ -20,14 +20,14 @@ var (
 
 	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
 
-	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
-	posAddr  = std.DerivePkgAddr("gno.land/r/position")
+	poolAddr = std.DerivePkgAddr("gno.land/r/demo/pool")
+	posAddr  = std.DerivePkgAddr("gno.land/r/demo/position")
 )
 
 var (
 	// Common
-	barPath = "gno.land/r/bar" // token1
-	fooPath = "gno.land/r/foo" // token2
+	barPath = "gno.land/r/demo/bar" // token1
+	fooPath = "gno.land/r/demo/foo" // token2
 	pFee    = uint16(500)
 
 	test_tickLower       = int32(9000)
@@ -60,7 +60,7 @@ func TestSwap(t *testing.T) {
 	pool := GetPool(fooPath, barPath, pFee)
 
 	// lp01 mint 9000 ~ 11000 tick range
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(lp01)
 	Mint(fooPath, barPath, pFee, posAddr, int32(-887270), int32(887270), test_liquidityExpect*10000)
 
@@ -90,7 +90,7 @@ func TestSwap(t *testing.T) {
 		lp02OldToken1Bal := balanceOfByRegisterCall(pool.token1Path, lp02)
 
 		// SWAP
-		std.TestSetPrevRealm("gno.land/r/router")
+		std.TestSetPrevRealm("gno.land/r/demo/router")
 		std.TestSetOrigCaller(tr01)
 		s0, s1 := Swap(fooPath, barPath, pFee, tr01, true, bigint(100000), MIN_PRICE, std.GetOrigCaller()) // one iteration - yes fee(only lp02)
 		shouldNEQ(t, s0, bigint(0))
@@ -112,7 +112,7 @@ func TestSwap(t *testing.T) {
 		// To collect fee wihout removing liquidity
 		// burn 0
 		// then collect
-		std.TestSetPrevRealm("gno.land/r/position")
+		std.TestSetPrevRealm("gno.land/r/demo/position")
 		std.TestSetOrigCaller(lp01)
 		Burn(fooPath, barPath, pFee, int32(-887270), int32(887270), 0)
 		lp01f0, lp01f1 := Collect(fooPath, barPath, pFee, lp01, int32(-887270), int32(887270), 100000000, 100000000)
@@ -132,11 +132,11 @@ func TestApiGetPools(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
 
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
-	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "gno.land/r/bar:gno.land/r/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
 
 func TestApiGetPool(t *testing.T) {
-	gpl := ApiGetPool("gno.land/r/bar:gno.land/r/foo:500")
+	gpl := ApiGetPool("gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 	jsonStr := gjson.Parse(gpl)
 
 	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())

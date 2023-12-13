@@ -1,1 +1,1 @@
-module gno.land/r/testtokenb
+module gno.land/r/demo/testtokenb

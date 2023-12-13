@@ -1,1 +1,1 @@
-module gno.land/r/gov
+module gno.land/r/demo/gov
