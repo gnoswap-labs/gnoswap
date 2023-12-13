@@ -17,6 +17,7 @@ var (
 
 func init() {
 	obl = grc20.NewAdminToken("OnblocToken", "OBL", 6)
+	obl.Mint(admin, 500_000_000_000_000) // @administrator (1M)
 }
 
 // method proxies as public functions.
