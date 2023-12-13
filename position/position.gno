@@ -158,16 +158,12 @@ func increaseLiquidity(params IncreaseLiquidityParams) (bigint, bigint, bigint) 
 func DecreaseLiquidity(
 	tokenId uint64,
 	liquidity bigint,
-	amount0Min bigint,
-	amount1Min bigint,
 	deadline bigint,
 ) (bigint, bigint) {
 	decreaseLiquidityParams := DecreaseLiquidityParams{
-		tokenId:    tokenId,
-		liquidity:  liquidity,
-		amount0Min: amount0Min,
-		amount1Min: amount1Min,
-		deadline:   deadline,
+		tokenId:   tokenId,
+		liquidity: liquidity,
+		deadline:  deadline,
 	}
 
 	return decreaseLiquidity(decreaseLiquidityParams)
@@ -184,9 +180,6 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	position := positions[params.tokenId]
 
 	positionLiquidity := position.liquidity
-	// r3v4_xxx
-	// panic or remove entire liquidity(for now)
-	// require(positionLiquidity >= params.liquidity, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || positionLiquidity(%s) >= params.liquidity(%s)", positionLiquidity, params.liquidity))
 	if positionLiquidity < params.liquidity {
 		// remove entire liquidity
 		params.liquidity = positionLiquidity
@@ -196,8 +189,6 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
 	pool := p.GetPoolFromPoolKey(position.poolKey)
 
 	amount0, amount1 := p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, params.liquidity)
-
-	require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || amount0(%s) >= params.amount0Min(%s) && amount1(%s) >= params.amount1Min(%s)", amount0, params.amount0Min, amount1, params.amount1Min))
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)

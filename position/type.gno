@@ -58,11 +58,9 @@ type IncreaseLiquidityParams struct {
 }
 
 type DecreaseLiquidityParams struct {
-	tokenId    uint64
-	liquidity  bigint
-	amount0Min bigint
-	amount1Min bigint
-	deadline   bigint
+	tokenId   uint64
+	liquidity bigint
+	deadline  bigint
 }
 
 type CollectParams struct {
