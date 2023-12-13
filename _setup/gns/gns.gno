@@ -12,12 +12,14 @@ import (
 var (
 	gns    *grc20.AdminToken
 	admin  std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // TODO: helper to change admin
+	ira    std.Address = "g1d9exzh6lta047h6lta047h6lta047h6l8ylkpa" // ToBeChanged: account for gnoswap staker's internal reward
 	admins []string
 )
 
 func init() {
 	gns = grc20.NewAdminToken("Gnoswap", "GNS", 6)
-	gns.Mint(admin, 500_000_000_000_000) // @administrator (1M)
+	gns.Mint(admin, 500_000_000_000_000) // @administrator
+	gns.Mint(ira, 500_000_000_000_000)   // @ira
 
 	stakerAddr := std.DerivePkgAddr("gno.land/r/demo/staker")
 	admins = append(admins, string(stakerAddr))
@@ -55,7 +57,6 @@ func Allowance(owner, spender users.AddressOrName) uint64 {
 // setters.
 
 func Transfer(to users.AddressOrName, amount uint64) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	err := gns.Transfer(caller, to.Resolve(), amount)
 	if err != nil {
@@ -64,7 +65,6 @@ func Transfer(to users.AddressOrName, amount uint64) {
 }
 
 func Approve(spender users.AddressOrName, amount uint64) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	err := gns.Approve(caller, spender.Resolve(), amount)
 	if err != nil {
@@ -73,7 +73,6 @@ func Approve(spender users.AddressOrName, amount uint64) {
 }
 
 func TransferFrom(from, to users.AddressOrName, amount uint64) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	err := gns.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
 	if err != nil {

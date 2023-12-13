@@ -14,10 +14,6 @@ const (
 	// SwapType
 	ExactIn  SwapType = "EXACT_IN"
 	ExactOut SwapType = "EXACT_OUT"
-)
 
-// WRAP & UNWRAP
-const (
-	GNOT           = "gnot"
-	WRAPPED_WUGNOT = "gno.land/r/demo/wugnot"
+	WGNOT_PATH = "gno.land/r/demo/wugnot"
 )

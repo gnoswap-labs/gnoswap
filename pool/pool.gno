@@ -152,20 +152,10 @@ func Collect(
 	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__Collect() || amount1(%d) >= 0", amount1))
 
 	require(pool.balances.token0 >= amount0, ufmt.Sprintf("[POOL] pool.gno__Collect() || pool.balances.token0(%d) >= amount0(%d)", pool.balances.token0, amount0))
-	if pool.token0Path == GNOT {
-		// UNWRAP if native(ugnot) is being collect
-		unWrap(pool.token0Path, recipient, uint64(amount0))
-	} else {
-		transferByRegisterCall(pool.token0Path, recipient, uint64(amount0))
-	}
+	transferByRegisterCall(pool.token0Path, recipient, uint64(amount0))
 
 	require(pool.balances.token1 >= amount1, ufmt.Sprintf("[POOL] pool.gno__Collect() || pool.balances.token1(%d) >= amount1(%d)", pool.balances.token1, amount1))
-	if pool.token1Path == GNOT {
-		// UNWRAP if native(ugnot) is being collect
-		unWrap(pool.token1Path, recipient, uint64(amount1))
-	} else {
-		transferByRegisterCall(pool.token1Path, recipient, uint64(amount1))
-	}
+	transferByRegisterCall(pool.token1Path, recipient, uint64(amount1))
 
 	// adjust position
 	position.tokensOwed0 -= amount0
@@ -387,10 +377,9 @@ func Swap(
 		amount1 = amountSpecified - state.amountSpecifiedRemaining
 	}
 
-	// WRAP && TOKEN TRANFSER
+
 	if zeroForOne {
 		// payer > pool
-		wrap(pool.token0Path)
 		balance0Before := bigint(balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr()))
 		ok := transferFromByRegisterCall(pool.token0Path, payer, ADDR_POOL, uint64(amount0))
 		if !ok {
@@ -416,13 +405,11 @@ func Swap(
 			}
 			pool.balances.token1 += amount1
 
-			unWrap(pool.token1Path, recipient, uint64(-amount1))
 		}
 		require(pool.balances.token1 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token1(%d) >= 0__#1", pool.balances.token1))
 
 	} else {
 		// payer > pool
-		wrap(pool.token1Path)
 		balance1Before := bigint(balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr()))
 		ok := transferFromByRegisterCall(pool.token1Path, payer, ADDR_POOL, uint64(amount1))
 		if !ok {
@@ -446,7 +433,6 @@ func Swap(
 			if !ok {
 				panic("[POOL] pool.gno__Swap() || transferByRegisterCall(pool.token0Path, recipient, uint64(-amount0)) failed")
 			}
-			unWrap(pool.token0Path, recipient, uint64(-amount0))
 			pool.balances.token0 += amount0
 		}
 		require(pool.balances.token0 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%d) >= 0__#2", pool.balances.token0))

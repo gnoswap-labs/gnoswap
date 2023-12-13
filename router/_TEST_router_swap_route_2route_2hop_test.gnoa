@@ -5,51 +5,19 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-
 	_ "gno.land/r/demo/grc20_wrapper"
 	pl "gno.land/r/demo/pool"
 	pos "gno.land/r/demo/position"
 )
 
-var (
-	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
-	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
-	tr01 = testutils.TestAddress("tr01") // Trader 01
-
-	poolAddr   = std.DerivePkgAddr("gno.land/r/demo/pool")
-	posAddr    = std.DerivePkgAddr("gno.land/r/demo/position")
-	routerAddr = std.DerivePkgAddr("gno.land/r/demo/router")
-)
-
-var (
-	// Common
-	barPath = "gno.land/r/demo/bar"
-	bazPath = "gno.land/r/demo/baz"
-	fooPath = "gno.land/r/demo/foo"
-	quxPath = "gno.land/r/demo/qux"
-
-	MAX_TIMEOUT bigint = 9999999999
-)
-
-// // debug addr
-// func init() {
-// 	println(pc01, "// pc01")
-// 	println(lp01, "// lp01")
-// 	println(tr01, "// tr01")
-// 	println(poolAddr, "// pool")
-// 	println(posAddr, "// pos")
-// 	println(routerAddr, "// router")
-// }
-
 func TestInitManual(t *testing.T) {
-	std.TestSetOrigCaller(pc01)
+	std.TestSetOrigCaller(test1)
 	pl.InitManual()
 	std.TestSkipHeights(1)
 }
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(pc01)
+	std.TestSetOrigCaller(test1)
 
 	pl.CreatePool(barPath, bazPath, uint16(500), 130621891405341611593710811006) // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 	pl.CreatePool(bazPath, quxPath, uint16(500), 130621891405341611593710811006) // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
@@ -60,16 +28,16 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestPositionMint(t *testing.T) {
-	// bar_baz_500 by lp01
-	std.TestSetOrigCaller(lp01)
+	// bar_baz_500 by test1
+	std.TestSetOrigCaller(test1)
 
 	// Mint
-	pos.Mint(barPath, bazPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, MAX_TIMEOUT)
-	pos.Mint(bazPath, quxPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, MAX_TIMEOUT)
+	pos.Mint(barPath, bazPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
+	pos.Mint(bazPath, quxPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
 }
 
 func TestDrySwapRouteBarQuxExactIn(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
+	std.TestSetOrigCaller(test1)
 
 	dryResult := DrySwapRoute(
 		barPath,      // inputToken
@@ -84,7 +52,7 @@ func TestDrySwapRouteBarQuxExactIn(t *testing.T) {
 }
 
 func TestSwapRouteBarQuxExactIn(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
+	std.TestSetOrigCaller(test1)
 
 	swapResult := SwapRoute(
 		barPath,      // inputToken
@@ -100,7 +68,7 @@ func TestSwapRouteBarQuxExactIn(t *testing.T) {
 }
 
 func TestDrySwapRouteBarQuxExactOut(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
+	std.TestSetOrigCaller(test1)
 
 	dryResult := DrySwapRoute(
 		barPath,      // inputToken
@@ -115,7 +83,7 @@ func TestDrySwapRouteBarQuxExactOut(t *testing.T) {
 }
 
 func TestSwapRouteBarQuxExactOut(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
+	std.TestSetOrigCaller(test1)
 
 	swapResult := SwapRoute(
 		barPath,      // inputToken
@@ -131,7 +99,7 @@ func TestSwapRouteBarQuxExactOut(t *testing.T) {
 }
 
 func TestDrySwapRouteQuxBarExactIn(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
+	std.TestSetOrigCaller(test1)
 
 	dryResult := DrySwapRoute(
 		quxPath,      // inputToken
@@ -146,7 +114,7 @@ func TestDrySwapRouteQuxBarExactIn(t *testing.T) {
 }
 
 func TestSwapRouteQuxBarExactIn(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
+	std.TestSetOrigCaller(test1)
 
 	swapResult := SwapRoute(
 		quxPath,      // inputToken
@@ -162,7 +130,7 @@ func TestSwapRouteQuxBarExactIn(t *testing.T) {
 }
 
 func TestDrySwapRouteQuxBarExactOut(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
+	std.TestSetOrigCaller(test1)
 
 	dryResult := DrySwapRoute(
 		quxPath,      // inputToken
@@ -177,7 +145,7 @@ func TestDrySwapRouteQuxBarExactOut(t *testing.T) {
 }
 
 func TestwapRouteQuxBarExactOut(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
+	std.TestSetOrigCaller(test1)
 
 	swapResult := SwapRoute(
 		quxPath,      // inputToken
@@ -190,11 +158,4 @@ func TestwapRouteQuxBarExactOut(t *testing.T) {
 	)
 
 	shouldEQ(t, swapResult, bigint(7356))
-}
-
-/* HELPER */
-func shouldEQ(t *testing.T, got, expected interface{}) {
-	if got != expected {
-		t.Errorf("got %v, expected %v", got, expected)
-	}
 }

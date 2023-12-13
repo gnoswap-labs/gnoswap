@@ -1,0 +1,72 @@
+package router
+
+import (
+	"encoding/gjson"
+	"std"
+	"testing"
+
+	_ "gno.land/r/demo/grc20_wrapper"
+	pl "gno.land/r/demo/pool"
+	pos "gno.land/r/demo/position"
+)
+
+func TestInitManual(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+	pl.InitManual()
+	std.TestSkipHeights(1)
+}
+
+func TestCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	pl.CreatePool(barPath, bazPath, fee500, 130621891405341611593710811006) // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+
+	jsonOutput := pl.ApiGetPools()
+	jsonStr := gjson.Parse(jsonOutput)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
+}
+
+func TestPositionMint(t *testing.T) {
+	// bar_baz_500 by test1
+	std.TestSetOrigCaller(test1)
+
+	// Mint
+	tokenId, liquidity, amount0, amount1 := pos.Mint(barPath, bazPath, fee500, int32(12000), int32(15000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, liquidity, bigint(1308149))
+	shouldEQ(t, amount0, bigint(99999)) // ONLY BAR
+	shouldEQ(t, amount1, bigint(0))     // NO BAZ
+}
+
+func TestDrySwapRouteBarBazExactIn(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := DrySwapRoute(
+		barPath,      // inputToken
+		bazPath,      // outputToken
+		bigint(1000), // amountSpecified
+		"EXACT_IN",   // swapType
+		"gno.land/r/demo/bar:gno.land/r/demo/baz:500", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(0))
+}
+
+func TestSwapRouteBarBazExactIn(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	shouldPanic(
+		t,
+		func() {
+			SwapRoute(
+				barPath,      // inputToken
+				bazPath,      // outputToken
+				bigint(1000), // amountSpecified
+				"EXACT_IN",   // swapType
+				"gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
+				"100", // quoteArr
+				2710,  // tokenAmountLimit
+			)
+		})
+}
