@@ -6,30 +6,15 @@ import (
 
 	"encoding/gjson"
 
-	"gno.land/p/demo/testutils"
-
 	p "gno.land/r/demo/pool"
 	pos "gno.land/r/demo/position"
 
 	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
 	gns "gno.land/r/demo/gns"   // GNS, Gnoswap Share
-	obl "gno.land/r/demo/obl"
+
+	obl "gno.land/r/demo/obl" // OBL, External Reward Token
 
 	_ "gno.land/r/demo/grc20_wrapper"
-)
-
-var (
-	pc01 = testutils.TestAddress("pc01") // Pool Creator
-	ci01 = testutils.TestAddress("ci01") // Create Incentive Caller
-	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
-	lp02 = testutils.TestAddress("lp02") // Liquidity Provider 02
-
-	ira = testutils.TestAddress("ira") // Internal Reward Account
-)
-
-var (
-	barPath = "gno.land/r/demo/bar"
-	quxPath = "gno.land/r/demo/qux"
 )
 
 func init() {
@@ -48,7 +33,7 @@ func init() {
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(pc01)
+	std.TestSetOrigCaller(test1)
 
 	p.InitManual()
 	std.TestSkipHeights(1)
@@ -59,7 +44,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 func TestPositionMint(t *testing.T) {
 	{
-		std.TestSetOrigCaller(lp01)
+		std.TestSetOrigCaller(test1)
 		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
 			barPath,            // token0
 			quxPath,            // token1
@@ -75,16 +60,16 @@ func TestPositionMint(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		shouldEQ(t, tPosTokenId, 1)
-		shouldEQ(t, gnft.OwnerOf(tid(tPosTokenId)), GetOrigCaller()) // lp01
+		shouldEQ(t, gnft.OwnerOf(tid(tPosTokenId)), GetOrigCaller()) // test1
 
 		// approve nft to staker
-		std.TestSetPrevAddr(lp01)
+		std.TestSetPrevAddr(test1)
 		gnft.Approve(a2u(GetOrigPkgAddr()), tid(tPosTokenId))
 		std.TestSkipHeights(1)
 	}
 
 	{
-		std.TestSetOrigCaller(lp02)
+		std.TestSetOrigCaller(test1)
 		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
 			barPath,            // token0
 			quxPath,            // token1
@@ -100,17 +85,17 @@ func TestPositionMint(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		shouldEQ(t, tPosTokenId, 2)
-		shouldEQ(t, gnft.OwnerOf(tid(tPosTokenId)), GetOrigCaller()) // lp02
+		shouldEQ(t, gnft.OwnerOf(tid(tPosTokenId)), GetOrigCaller()) // test1
 
 		// approve nft to staker
-		std.TestSetPrevAddr(lp02)
+		std.TestSetPrevAddr(test1)
 		gnft.Approve(a2u(GetOrigPkgAddr()), tid(tPosTokenId))
 		std.TestSkipHeights(1)
 	}
 }
 
 func TestCreateExternalIncentive(t *testing.T) {
-	std.TestSetOrigCaller(ci01)
+	std.TestSetOrigCaller(test1)
 
 	CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/qux:500", // targetPoolPath
@@ -125,7 +110,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 
 func TestStakeToken(t *testing.T) {
 	{
-		std.TestSetOrigCaller(lp01)
+		std.TestSetOrigCaller(test1)
 		StakeToken(1) // GNFT tokenId
 		std.TestSkipHeights(2)
 
@@ -134,7 +119,7 @@ func TestStakeToken(t *testing.T) {
 	}
 
 	{
-		std.TestSetOrigCaller(lp02)
+		std.TestSetOrigCaller(test1)
 		StakeToken(2) // GNFT tokenId
 		std.TestSkipHeights(2)
 
@@ -144,97 +129,50 @@ func TestStakeToken(t *testing.T) {
 }
 
 func TestApiGetRewardsByAddress(t *testing.T) {
-	{
-		// lp01 reward check
-		gra := ApiGetRewardByAddress(lp01)
-		jsonStr := gjson.Parse(gra)
-		shouldEQ(t, jsonStr.Get("response.data.0.type").String(), "Internal")
-		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNS")
-		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 126)
-		shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
-		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/demo/obl")
-		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 648)
-	}
+	// test1 reward check
+	gra := ApiGetRewardByAddress(test1)
+	jsonStr := gjson.Parse(gra)
+	shouldEQ(t, jsonStr.Get("response.data.0.type").String(), "Internal")
+	shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNS")
+	shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 126)
+	shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
+	shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/demo/obl")
+	shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 648)
 
-	{
-		// lp02 reward check
-		gra := ApiGetRewardByAddress(lp02)
-		jsonStr := gjson.Parse(gra)
-		shouldEQ(t, jsonStr.Get("response.data.0.type").String(), "Internal")
-		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNS")
-		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 698)
-		shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
-		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/demo/obl")
-		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 3595)
-	}
 }
 
 func TestUnstakeToken(t *testing.T) {
 	{
-		std.TestSetOrigCaller(lp01)
+		std.TestSetOrigCaller(test1)
 		UnstakeToken(1) // GNFT tokenId
 		std.TestSkipHeights(1)
 
-		shouldEQ(t, gnft.OwnerOf(tid(1)), lp01)
+		shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(lp01)), 126) // internal
-		shouldEQ(t, obl.BalanceOf(a2u(lp01)), 648) // external
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 499999999999626) // internal
+		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000000648) // external
 	}
 
 	{
-		std.TestSetOrigCaller(lp02)
+		std.TestSetOrigCaller(test1)
 		UnstakeToken(2) // GNFT tokenId
 		std.TestSkipHeights(1)
 
-		shouldEQ(t, gnft.OwnerOf(tid(2)), lp02)
+		shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(lp02)), 825)  // internal
-		shouldEQ(t, obl.BalanceOf(a2u(lp02)), 4243) // external
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 500000000000451) // internal
+		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000004891) // external
 	}
 }
 
 func TestEndExternalIncentive(t *testing.T) {
-	std.TestSetOrigCaller(ci01)
+	std.TestSetOrigCaller(test1)
 	std.TestSkipHeights(9999999)
 	EndExternalIncentive(GetOrigCaller().String(), "gno.land/r/demo/bar:gno.land/r/demo/qux:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, len(incentives), 0)
 	shouldEQ(t, len(poolIncentives["gno.land/r/demo/bar:gno.land/r/demo/qux:500"]), 0)
-}
-
-/* HELPERS */
-func shouldEQ(t *testing.T, got, expected interface{}) {
-	if got != expected {
-		t.Errorf("got %v, expected %v", got, expected)
-	}
-}
-
-func shouldNEQ(t *testing.T, got, expected interface{}) {
-	if got == expected {
-		t.Errorf("got %v, expected %v", got, expected)
-	}
-}
-
-func shouldGT(t *testing.T, l, r interface{}) {
-	if !(l < r) {
-		t.Errorf("expected %v < %v", l, r)
-	}
-}
-
-func shouldLT(t *testing.T, l, r interface{}) {
-	if !(l > r) {
-		t.Errorf("expected %v > %v", l, r)
-	}
-}
-
-func shouldPanic(t *testing.T, f func()) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("expected panic")
-		}
-	}()
-	f()
 }

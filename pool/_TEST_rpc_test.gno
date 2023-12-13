@@ -6,29 +6,10 @@ import (
 
 	"encoding/gjson"
 
-	"gno.land/p/demo/testutils"
-
 	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 var (
-	gsa  = testutils.TestAddress("gsa")  // Gnoswap Admin
-	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
-	tr01 = testutils.TestAddress("tr01") // Trader 01
-	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
-
-	poolAddr = std.DerivePkgAddr("gno.land/r/demo/pool")
-	posAddr  = std.DerivePkgAddr("gno.land/r/demo/position")
-)
-
-var (
-	// Common
-	fooPath = "gno.land/r/demo/foo" // token1
-	barPath = "gno.land/r/demo/bar" // token2
-	bazPath = "gno.land/r/demo/baz" // token3
-
-	pFee = uint16(500)
-
 	test_tickLower       = int32(9000)
 	test_tickUpper       = int32(11000)
 	test_liquidityExpect = bigint(100_000_000)
@@ -39,33 +20,33 @@ var (
 
 // 1. Init Pool
 func TestInit(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetOrigCaller(test1)
 	InitManual()
 }
 
 // 2. Create Foo:Bar Pool
 func TestCreateFooBarPool(t *testing.T) {
-	std.TestSetOrigCaller(pc01)
-	CreatePool(fooPath, barPath, pFee, 130621891405341611593710811006)
+	std.TestSetOrigCaller(test1)
+	CreatePool(fooPath, barPath, fee500, 130621891405341611593710811006)
 	shouldEQ(t, len(pools), 1)
 }
 
 // 3. Create Bar:Baz Pool
 func TestCreateBarBazPool(t *testing.T) {
-	std.TestSetOrigCaller(pc01)
-	CreatePool(barPath, bazPath, pFee, 130621891405341611593710811006)
+	std.TestSetOrigCaller(test1)
+	CreatePool(barPath, bazPath, fee500, 130621891405341611593710811006)
 	shouldEQ(t, len(pools), 2)
 }
 
-// 4. Mint Foo:Bar Liquidity by lp01
+// 4. Mint Foo:Bar Liquidity by test1
 func TestMintFooBarLiquidity(t *testing.T) {
 	std.TestSetPrevRealm("gno.land/r/demo/position")
-	std.TestSetOrigCaller(lp01)
+	std.TestSetOrigCaller(test1)
 
 	Mint(
 		fooPath,
 		barPath,
-		pFee,
+		fee500,
 		posAddr,
 		-test_tickUpper,
 		-test_tickLower,
@@ -73,15 +54,15 @@ func TestMintFooBarLiquidity(t *testing.T) {
 	)
 }
 
-// 5. Mint Bar:Baz Liquidity by lp01
+// 5. Mint Bar:Baz Liquidity by test1
 func TestMintBarBazLiquidity(t *testing.T) {
 	std.TestSetPrevRealm("gno.land/r/demo/position")
-	std.TestSetOrigCaller(lp01)
+	std.TestSetOrigCaller(test1)
 
 	Mint(
 		barPath,
 		bazPath,
-		pFee,
+		fee500,
 		posAddr,
 		test_tickLower,
 		test_tickUpper,
@@ -105,17 +86,4 @@ func TestApiGetPool(t *testing.T) {
 // RPC TESTS
 func TestRpcGetPools(t *testing.T) {
 	RpcGetPools()
-}
-
-/* HELPER */
-func shouldEQ(t *testing.T, got, expected interface{}) {
-	if got != expected {
-		t.Errorf("got %v, expected %v", got, expected)
-	}
-}
-
-func shouldNEQ(t *testing.T, got, expected interface{}) {
-	if got == expected {
-		t.Errorf("got %v, didn't expected %v", got, expected)
-	}
 }

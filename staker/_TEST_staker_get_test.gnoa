@@ -4,8 +4,6 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
-
 	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
 	p "gno.land/r/demo/pool"
 	pos "gno.land/r/demo/position"
@@ -13,22 +11,8 @@ import (
 	_ "gno.land/r/demo/grc20_wrapper"
 )
 
-var (
-	pc01 = testutils.TestAddress("pc01") // Pool Creator
-	ci01 = testutils.TestAddress("ci01") // Create Incentive Caller
-	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
-	lp02 = testutils.TestAddress("lp02") // Liquidity Provider 02
-
-	ira = testutils.TestAddress("ira") // Internal Reward Account
-)
-
-var (
-	fooPath = "gno.land/r/demo/foo"
-	barPath = "gno.land/r/demo/bar"
-)
-
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(pc01)
+	std.TestSetOrigCaller(test1)
 
 	p.InitManual()
 	std.TestSkipHeights(1)
@@ -39,7 +23,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 func TestPositionMint(t *testing.T) {
 	{
-		std.TestSetOrigCaller(lp01)
+		std.TestSetOrigCaller(test1)
 		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
 			fooPath,            // token0
 			barPath,            // token1
@@ -55,16 +39,16 @@ func TestPositionMint(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		shouldEQ(t, tPosTokenId, 1)
-		shouldEQ(t, gnft.OwnerOf(tid(tPosTokenId)), GetOrigCaller()) // lp01
+		shouldEQ(t, gnft.OwnerOf(tid(tPosTokenId)), GetOrigCaller()) // test1
 
 		// approve nft to staker
-		std.TestSetPrevAddr(lp01)
+		std.TestSetPrevAddr(test1)
 		gnft.Approve(a2u(GetOrigPkgAddr()), tid(tPosTokenId))
 		std.TestSkipHeights(1)
 	}
 
 	{
-		std.TestSetOrigCaller(lp02)
+		std.TestSetOrigCaller(test1)
 		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
 			fooPath,            // token0
 			barPath,            // token1
@@ -80,24 +64,24 @@ func TestPositionMint(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		shouldEQ(t, tPosTokenId, 2)
-		shouldEQ(t, gnft.OwnerOf(tid(tPosTokenId)), GetOrigCaller()) // lp02
+		shouldEQ(t, gnft.OwnerOf(tid(tPosTokenId)), GetOrigCaller()) // test1
 
 		// approve nft to staker
-		std.TestSetPrevAddr(lp02)
+		std.TestSetPrevAddr(test1)
 		gnft.Approve(a2u(GetOrigPkgAddr()), tid(tPosTokenId))
 		std.TestSkipHeights(1)
 	}
 }
 
 func TestCreateExternalIncentive(t *testing.T) {
-	std.TestSetOrigCaller(ci01)
+	std.TestSetOrigCaller(test1)
 
 	CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/foo:500", // targetPoolPath
-		"gno.land/r/demo/obl",                    // rewardToken
-		10_000_000_000,                      // rewardAmount
-		GetTimestamp(),                      // startTimestamp
-		GetTimestamp()+TIMESTAMP_90DAYS,     // endTimestamp
+		"gno.land/r/demo/obl",                         // rewardToken
+		10_000_000_000,                                // rewardAmount
+		GetTimestamp(),                                // startTimestamp
+		GetTimestamp()+TIMESTAMP_90DAYS,               // endTimestamp
 	)
 	std.TestSkipHeights(5)
 
@@ -107,30 +91,15 @@ func TestCreateExternalIncentive(t *testing.T) {
 }
 
 func TestStakeToken(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
+	std.TestSetOrigCaller(test1)
 	StakeToken(1)
 
 	// don't stake
-	// std.TestSetOrigCaller(lp02)
+	// std.TestSetOrigCaller(test1)
 	// StakeToken(2)
 }
 
-func TestisStaked(t *testing.T) {
+func TestIsStaked(t *testing.T) {
 	shouldEQ(t, IsStaked(1), true)
 	shouldEQ(t, IsStaked(2), false)
-}
-
-func shouldEQ(t *testing.T, got, expected interface{}) {
-	if got != expected {
-		t.Errorf("got %v, expected %v", got, expected)
-	}
-}
-
-func shouldPanic(t *testing.T, f func()) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("expected panic")
-		}
-	}()
-	f()
 }

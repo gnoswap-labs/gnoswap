@@ -6,56 +6,23 @@ import (
 
 	"encoding/gjson"
 
-	"gno.land/p/demo/testutils"
-
-	nft "gno.land/r/demo/gnft"
-
 	_ "gno.land/r/demo/grc20_wrapper"
 	p "gno.land/r/demo/pool"
-
-	"gno.land/r/demo/bar"
-	"gno.land/r/demo/foo"
 )
 
 var (
-	poolAddr = p.GetOrigPkgAddr()
-	posAddr  = std.DerivePkgAddr("gno.land/r/demo/position")
-
-	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
-	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
-	lp02 = testutils.TestAddress("lp02") // Liquidity Provider 02
-	rv01 = testutils.TestAddress("rv01") // Receiver 01
-	tr01 = testutils.TestAddress("tr01") // Trader 01
-)
-
-var (
-	// Common
-	fooPath = "gno.land/r/demo/foo"
-	barPath = "gno.land/r/demo/bar"
-	pFee    = uint16(500)
-
 	test_tickLower       = int32(9000)
 	test_tickUpper       = int32(11000)
 	test_liquidityExpect = bigint(1000)
 )
 
-// func init() {
-// 	// debug addr
-// 	println(pc01, "// pc01")
-// 	println(lp01, "// lp01")
-// 	println(lp02, "// lp02")
-// 	println(tr01, "// tr01")
-// 	println(poolAddr, "// pool")
-// 	println(posAddr, "// pos")
-// }
-
 // 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(pc01)
+	std.TestSetOrigCaller(test1)
 	p.InitManual()
 
-	std.TestSetOrigCaller(pc01)
-	p.CreatePool(fooPath, barPath, pFee, 130621891405341611593710811006)
+	std.TestSetOrigCaller(test1)
+	p.CreatePool(fooPath, barPath, fee500, 130621891405341611593710811006)
 
 	// fee
 	// 500		= 0.05% // USv3 default
@@ -69,27 +36,27 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 // 2. Mint LP and Get GNFT
 func TestMint(t *testing.T) {
-	// lp01 mints => will get tid 1 nft
-	std.TestSetOrigCaller(lp01)
-	Mint(fooPath, barPath, pFee, int32(9000), int32(11000), bigint(1_000_000), bigint(1_000_000), bigint(1), bigint(1), bigint(1234567890))
+	// test1 mints => will get tid 1 nft
+	std.TestSetOrigCaller(test1)
+	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), bigint(1_000_000), bigint(1_000_000), bigint(1), bigint(1), bigint(1234567890))
 
-	// lp01 mints => will get tid 2 nft
-	std.TestSetOrigCaller(lp01)
-	Mint(fooPath, barPath, pFee, int32(4000), int32(6000), bigint(1_000_000), bigint(1_000_000), bigint(0), bigint(0), bigint(1234567890))
+	// test1 mints => will get tid 2 nft
+	std.TestSetOrigCaller(test1)
+	Mint(fooPath, barPath, fee500, int32(4000), int32(6000), bigint(1_000_000), bigint(1_000_000), bigint(0), bigint(0), bigint(1234567890))
 }
 
 func TestSwap(t *testing.T) {
 	std.TestSetPrevRealm("gno.land/r/demo/router")
-	std.TestSetOrigCaller(tr01)
+	std.TestSetOrigCaller(test1)
 	p.Swap(
 		fooPath,
 		barPath,
-		pFee,
-		tr01,
+		fee500,
+		test1,
 		true,
 		bigint(123_456),
 		MIN_PRICE,
-		tr01,
+		test1,
 	)
 
 }
@@ -103,7 +70,7 @@ func TestApiGetPositions(t *testing.T) {
 
 func TestApiGetPosition(t *testing.T) {
 	// burn 0 to collect swap fee
-	std.TestSetOrigCaller(lp01)
+	std.TestSetOrigCaller(test1)
 	DecreaseLiquidity(1, 0, 0, 0, 99999999999)
 
 	gps := ApiGetPosition(uint64(1))
@@ -121,7 +88,7 @@ func TestApiGetPosition(t *testing.T) {
 }
 
 func TestApiGetPositionByUser(t *testing.T) {
-	gpu := ApiGetPositionByUser(lp01.String())
+	gpu := ApiGetPositionByUser(test1.String())
 	jsonStr := gjson.Parse(gpu)
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 2)
 
@@ -136,57 +103,4 @@ func TestApiGetPositionByUser(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.1.token1_balance").Int(), 0)
 	shouldEQ(t, jsonStr.Get("response.data.1.tokens_owed_0").Int(), 0)
 	shouldEQ(t, jsonStr.Get("response.data.1.tokens_owed_1").Int(), 0)
-}
-
-/* HELPER */
-func shouldEQ(t *testing.T, got, expected interface{}) {
-	if got != expected {
-		t.Errorf("got %v, expected %v", got, expected)
-	}
-}
-
-func shouldNEQ(t *testing.T, got, expected interface{}) {
-	if got == expected {
-		t.Errorf("got %v, didn't expected %v", got, expected)
-	}
-}
-
-func shouldGT(t *testing.T, l, r interface{}) {
-	if !(l < r) {
-		t.Errorf("expected %v < %v", l, r)
-	}
-}
-
-func shouldLT(t *testing.T, l, r interface{}) {
-	if !(l > r) {
-		t.Errorf("expected %v > %v", l, r)
-	}
-}
-
-func shouldPanic(t *testing.T, f func()) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("expected panic")
-		}
-	}()
-	f()
-}
-
-func isOwner(t *testing.T, tokenId uint64, addr std.Address) bool {
-	owner := nft.OwnerOf(tid(tokenId))
-
-	if owner == addr {
-		return true
-	}
-
-	t.Errorf("expected owner %v, got %v", addr, owner)
-	return false
-}
-
-func Token0Bal(addr std.Address) bigint {
-	return bigint(bar.BalanceOf(a2u(addr)))
-}
-
-func Token1Bal(addr std.Address) bigint {
-	return bigint(foo.BalanceOf(a2u(addr)))
 }

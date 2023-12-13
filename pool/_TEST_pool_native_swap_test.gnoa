@@ -1,0 +1,122 @@
+package pool
+
+import (
+	"std"
+	"testing"
+
+	_ "gno.land/r/demo/grc20_wrapper"
+	"gno.land/r/demo/wugnot"
+
+	pos "gno.land/r/demo/position"
+)
+
+var (
+	test_tickLower       = int32(9000)
+	test_tickUpper       = int32(11000)
+	test_liquidityExpect = bigint(1000)
+)
+
+// 1. Init & Create Pool
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+	InitManual()
+
+	CreatePool(fooPath, wgnotPath, fee500, 130621891405341611593710811006) // x2.7
+
+	shouldPanic(t, func() { CreatePool(fooPath, wgnotPath, fee500, 130621891405341611593710811006) })
+}
+
+// 2. Mint LP and Get GNFT
+func TestMint(t *testing.T) {
+	token0, token1 := fooPath, wgnotPath
+	if token1 < token0 {
+		token0, token1 = token1, token0
+	}
+
+	// simulate transfer & decrase
+	std.TestSetOrigSend(std.Coins{{"ugnot", 1_000_000}}, nil)
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1_000_000)
+
+	// Deposit(wrap)
+	std.TestSetPrevAddr(test1)
+	wugnot.Deposit()
+
+	// Mint
+	std.TestSetPrevRealm("gno.land/r/demo/position")
+	tTokenId, tLiquidity, tAmount0, tAmount1 := pos.Mint(
+		fooPath,
+		wgnotPath,
+		fee500,
+		test_tickLower,
+		test_tickUpper,
+		bigint(1000000),
+		bigint(1000000),
+		bigint(1),
+		bigint(1),
+		bigint(1234567890),
+	)
+
+	shouldEQ(t, tAmount0, bigint(367897))
+	shouldEQ(t, tAmount1, bigint(999999))
+}
+
+func TestSwapBuyNative(t *testing.T) {
+	pool := GetPool(fooPath, wgnotPath, fee500)
+
+	test1OldT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
+	test1OldT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
+	shouldEQ(t, test1OldT0Bal, bigint(499999999632103)) // foo
+	shouldEQ(t, test1OldT1Bal, bigint(1))               // wugnot
+
+	std.TestSetPrevRealm("gno.land/r/demo/router")
+	std.TestSetOrigCaller(test1)
+	amount0, amount1 := Swap(
+		fooPath,   // token0
+		wgnotPath, // token1
+		fee500,
+		test1,
+		true,
+		bigint(10000),
+		MIN_PRICE,
+		std.GetOrigCaller(),
+	)
+	shouldEQ(t, amount0, bigint(10000))
+	shouldEQ(t, amount1, bigint(-27131))
+
+	test1NewT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
+	test1NewT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
+	shouldEQ(t, test1NewT0Bal, bigint(499999999622103)) // - 10_000 // user sells 10_000
+	shouldEQ(t, test1NewT1Bal, bigint(27132))           // gets WGNOT
+}
+
+func TestSwapSellNative(t *testing.T) {
+	pool := GetPool(fooPath, wgnotPath, fee500)
+
+	test1OldT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
+	test1OldT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
+	shouldEQ(t, test1OldT0Bal, bigint(499999999622103))
+	shouldEQ(t, test1OldT1Bal, bigint(27132))
+
+	// test1 has 27131 wugnot from previous swap
+	std.TestSetOrigCaller(test1)
+
+	std.TestSetPrevRealm("gno.land/r/demo/router")
+	amount0, amount1 := Swap( // ugnot 10_000 > foo ??
+		fooPath,   // token0
+		wgnotPath, // token1
+		fee500,
+		test1,
+		false,
+		bigint(10000),
+		MAX_PRICE,
+		std.GetOrigCaller(),
+	)
+	shouldEQ(t, amount0, bigint(-3685))
+	shouldEQ(t, amount1, bigint(10000))
+
+	test1NewT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
+	test1NewT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
+	shouldEQ(t, test1NewT0Bal, bigint(499999999625788)) // foo
+	shouldEQ(t, test1NewT1Bal, bigint(17132))           // wugnot
+}

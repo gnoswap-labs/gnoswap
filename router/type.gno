@@ -12,15 +12,6 @@ type QuoterTarget struct {
 	resultRatioX96 bigint
 }
 
-// TBD: Deprecated
-// RPC
-type EstimatedRoute struct {
-	Pools        string
-	Quote        int
-	InputAmount  bigint
-	OutputAmount bigint
-}
-
 type SwapType string
 
 // SINGLE SWAP

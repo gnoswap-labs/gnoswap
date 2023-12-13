@@ -11,8 +11,7 @@ import (
 
 	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
 	gns "gno.land/r/demo/gns"   // GNS, Gnoswap Share
-
-	wugnot "gno.land/r/demo/wugnot"
+	obl "gno.land/r/demo/obl"
 
 	_ "gno.land/r/demo/grc20_wrapper"
 )
@@ -30,7 +29,6 @@ func init() {
 	poolTiers["ATOM/GNOT_500"] = 3
 	poolTiers["ATOM/USDT_500"] = 3
 	poolTiers["ATOM/WETH_500"] = 3
-
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
@@ -39,7 +37,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	p.InitManual()
 	std.TestSkipHeights(1)
 
-	p.CreatePool(barPath, fooPath, 500, 130621891405341611593710811006)
+	p.CreatePool(fooPath, barPath, 500, 130621891405341611593710811006)
 	std.TestSkipHeights(1)
 }
 
@@ -47,8 +45,8 @@ func TestPositionMint(t *testing.T) {
 	{
 		std.TestSetOrigCaller(test1)
 		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
-			barPath,            // token0
-			fooPath,            // token1
+			fooPath,            // token0
+			barPath,            // token1
 			uint16(500),        // fee
 			int32(9000),        // tickLower
 			int32(11000),       // tickUpper
@@ -72,8 +70,8 @@ func TestPositionMint(t *testing.T) {
 	{
 		std.TestSetOrigCaller(test1)
 		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
-			barPath,            // token10
-			fooPath,            // token1
+			fooPath,            // token0
+			barPath,            // token1
 			uint16(500),        // fee
 			int32(9100),        // tickLower
 			int32(12000),       // tickUpper
@@ -98,23 +96,15 @@ func TestPositionMint(t *testing.T) {
 func TestCreateExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
-	// send
-	std.TestSetOrigSend(std.Coins{{"ugnot", 10_000_000_000}}, nil)
-	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 10_000_000_000)
-
-	// Deposit(wrap)
-	std.TestSetPrevAddr(test1)
-	wugnot.Deposit()
-
 	CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/foo:500", // targetPoolPath
-		wgnotPath,                       // rewardToken
-		10_000_000_000,                  // rewardAmount
-		GetTimestamp(),                  // startTimestamp
-		GetTimestamp()+TIMESTAMP_90DAYS, // endTimestamp
+		"gno.land/r/demo/obl",                         // rewardToken
+		10_000_000_000,                                // rewardAmount
+		GetTimestamp(),                                // startTimestamp
+		GetTimestamp()+TIMESTAMP_90DAYS,               // endTimestamp
 	)
-	std.TestSkipHeights(1)
+	CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl", 10_000_000_000, GetTimestamp(), GetTimestamp()+TIMESTAMP_90DAYS)
+	std.TestSkipHeights(5)
 }
 
 func TestStakeToken(t *testing.T) {
@@ -145,9 +135,8 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNS")
 	shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 126)
 	shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
-	shouldEQ(t, jsonStr.Get("response.data.1.token").String(), wgnotPath)
-	shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 324)
-
+	shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/demo/obl")
+	shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 648)
 }
 
 func TestUnstakeToken(t *testing.T) {
@@ -160,7 +149,7 @@ func TestUnstakeToken(t *testing.T) {
 
 		// check reward
 		shouldEQ(t, gns.BalanceOf(a2u(test1)), 499999999999626) // internal
-		shouldEQ(t, wugnot.BalanceOf(a2u(test1)), 324)          // external
+		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000000648) // external
 	}
 
 	{
@@ -172,14 +161,14 @@ func TestUnstakeToken(t *testing.T) {
 
 		// check reward
 		shouldEQ(t, gns.BalanceOf(a2u(test1)), 500000000000451) // internal
-		shouldEQ(t, wugnot.BalanceOf(a2u(test1)), 2445)         // external
+		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000004891) // external
 	}
 }
 
 func TestEndExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 	std.TestSkipHeights(9999999)
-	EndExternalIncentive(GetOrigCaller().String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", wgnotPath) // use same parameter as CreateExternalIncentive()
+	EndExternalIncentive(GetOrigCaller().String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, len(incentives), 0)
