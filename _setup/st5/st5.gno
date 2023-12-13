@@ -15,7 +15,7 @@ var (
 )
 
 func init() {
-	st5 = grc20.NewAdminToken("Swap Test 5", "ST5", 6)
+	st5 = grc20.NewAdminToken("SwapTest5", "ST5", 6)
 	st5.Mint(admin, 10_000_000_000_000) // @administrator (1M)
 }
 
