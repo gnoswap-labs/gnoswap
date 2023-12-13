@@ -1,1 +1,1 @@
-module gno.land/r/gns
+module gno.land/r/demo/gns

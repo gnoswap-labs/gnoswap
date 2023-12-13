@@ -19,5 +19,5 @@ const (
 // WRAP & UNWRAP
 const (
 	GNOT           = "gnot"
-	WRAPPED_WUGNOT = "gno.land/r/wugnot"
+	WRAPPED_WUGNOT = "gno.land/r/demo/wugnot"
 )

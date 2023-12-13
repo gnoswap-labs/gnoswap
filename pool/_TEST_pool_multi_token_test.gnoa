@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	_ "gno.land/r/grc20_wrapper"
+	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 var (
@@ -15,15 +15,15 @@ var (
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
 
-	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
-	posAddr  = std.DerivePkgAddr("gno.land/r/position")
+	poolAddr = std.DerivePkgAddr("gno.land/r/demo/pool")
+	posAddr  = std.DerivePkgAddr("gno.land/r/demo/position")
 )
 
 var (
 	// Common
-	fooPath = "gno.land/r/foo" // token1
-	barPath = "gno.land/r/bar" // token2
-	bazPath = "gno.land/r/baz" // token3
+	fooPath = "gno.land/r/demo/foo" // token1
+	barPath = "gno.land/r/demo/bar" // token2
+	bazPath = "gno.land/r/demo/baz" // token3
 
 	pFee = uint16(500)
 
@@ -57,7 +57,7 @@ func TestCreateBarBazPool(t *testing.T) {
 
 // 4. Mint Foo:Bar Liquidity by lp01
 func TestMintFooBarLiquidity(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(lp01)
 
 	Mint(
@@ -73,7 +73,7 @@ func TestMintFooBarLiquidity(t *testing.T) {
 
 // 5. Mint Bar:Baz Liquidity by lp01
 func TestMintBarBazLiquidity(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(lp01)
 
 	Mint(
@@ -89,7 +89,7 @@ func TestMintBarBazLiquidity(t *testing.T) {
 
 // 6. Swap Foo:Bar Foo > Bar by tr01
 func TestSwapFooBarFooToBar(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/router")
+	std.TestSetPrevRealm("gno.land/r/demo/router")
 	std.TestSetOrigCaller(tr01)
 
 	oldTr01Token1Balance := balanceOfByRegisterCall(fooPath, tr01)
@@ -123,7 +123,7 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 
 // 7. Swap Bar:Baz Bar > Baz by tr01
 func TestSwapBarBazBarToBaz(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/router")
+	std.TestSetPrevRealm("gno.land/r/demo/router")
 	std.TestSetOrigCaller(tr01)
 
 	oldTr01Token0Balance := balanceOfByRegisterCall(barPath, tr01)
@@ -157,7 +157,7 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 
 // 8. Collect Foo:Bar Fees by lp01
 func TestCollectFooBarFees(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(lp01)
 
 	oldLp01Token1Balance := balanceOfByRegisterCall(fooPath, lp01)
@@ -195,7 +195,7 @@ func TestCollectFooBarFees(t *testing.T) {
 
 // 9. Collect Bar:Baz Fees by lp01
 func TestCollectBarBazFees(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(lp01)
 
 	oldLp01Token0Balance := balanceOfByRegisterCall(barPath, lp01)
@@ -234,7 +234,7 @@ func TestCollectBarBazFees(t *testing.T) {
 // 10. Burn Foo:Bar Liquidity by lp01
 func TestBurnFooBarLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 
 	pool := GetPool(fooPath, barPath, pFee)
 	poolOldLiquidity := pool.PoolGetLiquidity()
@@ -259,7 +259,7 @@ func TestBurnFooBarLiquidity(t *testing.T) {
 // 11. Burn Bar:Baz Liquidity by lp01
 func TestBurnBarBazLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 
 	pool := GetPool(barPath, bazPath, pFee)
 	poolOldLiquidity := pool.PoolGetLiquidity()
@@ -284,7 +284,7 @@ func TestBurnBarBazLiquidity(t *testing.T) {
 // 12. Collect Foo:Bar burned Liquidity by lp01
 func TestCollectFooBarLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 
 	oldLp01Token1Balance := balanceOfByRegisterCall(fooPath, lp01)
 	oldLp01Token0Balance := balanceOfByRegisterCall(barPath, lp01)
@@ -319,7 +319,7 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 // 13. Collect Bar:Baz burned Liquidity by lp01
 func TestCollectBarBazLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 
 	oldLp01Token0Balance := balanceOfByRegisterCall(barPath, lp01)
 	oldLp01BazBalance := balanceOfByRegisterCall(bazPath, lp01)

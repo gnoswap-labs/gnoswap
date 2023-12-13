@@ -5,9 +5,9 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	p "gno.land/r/pool"
+	p "gno.land/r/demo/pool"
 
-	nft "gno.land/r/gnft"
+	nft "gno.land/r/demo/gnft"
 )
 
 var (

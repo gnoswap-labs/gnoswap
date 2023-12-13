@@ -3,7 +3,7 @@ package staker
 import (
 	"gno.land/p/demo/ufmt"
 
-	pos "gno.land/r/position"
+	pos "gno.land/r/demo/position"
 )
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) uint64 {

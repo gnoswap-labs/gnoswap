@@ -3,7 +3,7 @@ package router
 import (
 	"std"
 
-	p "gno.land/r/pool"
+	p "gno.land/r/demo/pool"
 )
 
 func _swap(

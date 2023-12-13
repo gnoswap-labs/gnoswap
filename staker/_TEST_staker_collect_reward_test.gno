@@ -8,14 +8,14 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	p "gno.land/r/pool"
-	pos "gno.land/r/position"
+	p "gno.land/r/demo/pool"
+	pos "gno.land/r/demo/position"
 
-	gnft "gno.land/r/gnft" // GNFT, Gnoswap NFT
-	gns "gno.land/r/gns"   // GNS, Gnoswap Share
-	obl "gno.land/r/obl"
+	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
+	gns "gno.land/r/demo/gns"   // GNS, Gnoswap Share
+	obl "gno.land/r/demo/obl"
 
-	_ "gno.land/r/grc20_wrapper"
+	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 var (
@@ -28,14 +28,14 @@ var (
 )
 
 var (
-	barPath = "gno.land/r/bar"
-	quxPath = "gno.land/r/qux"
+	barPath = "gno.land/r/demo/bar"
+	quxPath = "gno.land/r/demo/qux"
 )
 
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/bar:gno.land/r/qux:500"] = 1 // DEV
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = 1 // DEV
 
 	// tier 2
 	poolTiers["GNS/USDT_500"] = 2
@@ -113,13 +113,13 @@ func TestCreateExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
 
 	CreateExternalIncentive(
-		"gno.land/r/bar:gno.land/r/qux:500", // targetPoolPath
-		"gno.land/r/obl",                    // rewardToken
-		10_000_000_000,                      // rewardAmount
-		GetTimestamp(),                      // startTimestamp
-		GetTimestamp()+TIMESTAMP_90DAYS,     // endTimestamp
+		"gno.land/r/demo/bar:gno.land/r/demo/qux:500", // targetPoolPath
+		"gno.land/r/demo/obl",                         // rewardToken
+		10_000_000_000,                                // rewardAmount
+		GetTimestamp(),                                // startTimestamp
+		GetTimestamp()+TIMESTAMP_90DAYS,               // endTimestamp
 	)
-	CreateExternalIncentive("gno.land/r/bar:gno.land/r/qux:500", "gno.land/r/obl", 10_000_000_000, GetTimestamp(), GetTimestamp()+TIMESTAMP_90DAYS)
+	CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/qux:500", "gno.land/r/demo/obl", 10_000_000_000, GetTimestamp(), GetTimestamp()+TIMESTAMP_90DAYS)
 	std.TestSkipHeights(5)
 }
 
@@ -152,7 +152,7 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNS")
 		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 126)
 		shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
-		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/obl")
+		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/demo/obl")
 		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 648)
 	}
 
@@ -164,7 +164,7 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 		shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNS")
 		shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 698)
 		shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
-		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/obl")
+		shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/demo/obl")
 		shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 3595)
 	}
 }
@@ -198,11 +198,11 @@ func TestUnstakeToken(t *testing.T) {
 func TestEndExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
 	std.TestSkipHeights(9999999)
-	EndExternalIncentive(GetOrigCaller().String(), "gno.land/r/bar:gno.land/r/qux:500", "gno.land/r/obl") // use same parameter as CreateExternalIncentive()
+	EndExternalIncentive(GetOrigCaller().String(), "gno.land/r/demo/bar:gno.land/r/demo/qux:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, len(incentives), 0)
-	shouldEQ(t, len(poolIncentives["gno.land/r/bar:gno.land/r/qux:500"]), 0)
+	shouldEQ(t, len(poolIncentives["gno.land/r/demo/bar:gno.land/r/demo/qux:500"]), 0)
 }
 
 /* HELPERS */

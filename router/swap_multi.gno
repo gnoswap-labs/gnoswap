@@ -12,7 +12,7 @@ func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath strin
 		currentPoolIndex++
 
 		if currentPoolIndex < numPools {
-			recipient = std.DerivePkgAddr("gno.land/r/router")
+			recipient = std.DerivePkgAddr("gno.land/r/demo/router")
 		} else {
 			recipient = params.recipient // user ~= std.GetOrigCaller()
 		}
@@ -30,7 +30,7 @@ func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath strin
 		)
 
 		if currentPoolIndex < numPools {
-			payer = std.DerivePkgAddr("gno.land/r/router")
+			payer = std.DerivePkgAddr("gno.land/r/demo/router")
 
 			nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
 			params.tokenIn = nextInput
@@ -87,7 +87,7 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (amount
 		if currentPoolIndex == 0 {
 			recipient = std.GetOrigCaller() // params.recipient // user ~= std.GetOrigCaller()
 		} else {
-			recipient = std.DerivePkgAddr("gno.land/r/router")
+			recipient = std.DerivePkgAddr("gno.land/r/demo/router")
 		}
 
 		resultAmount := _swap(
@@ -105,7 +105,7 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (amount
 		if currentPoolIndex == 0 {
 			return amountOut
 		} else {
-			payer = std.DerivePkgAddr("gno.land/r/router")
+			payer = std.DerivePkgAddr("gno.land/r/demo/router")
 			amountOut = resultAmount // return first swap input amount
 		}
 	}
@@ -119,7 +119,7 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 		currentPoolIndex++
 
 		if currentPoolIndex < numPool {
-			recipient = std.DerivePkgAddr("gno.land/r/router")
+			recipient = std.DerivePkgAddr("gno.land/r/demo/router")
 		} else {
 			recipient = params.recipient // user ~= std.GetOrigCaller()
 		}
@@ -137,7 +137,7 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 		)
 
 		if currentPoolIndex < numPool {
-			payer = std.DerivePkgAddr("gno.land/r/router")
+			payer = std.DerivePkgAddr("gno.land/r/demo/router")
 
 			nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
 			params.tokenIn = nextInput
@@ -152,7 +152,7 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 }
 
 func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath string) (amountOut bigint) {
-	payer := std.DerivePkgAddr("gno.land/r/router")
+	payer := std.DerivePkgAddr("gno.land/r/demo/router")
 	numPools := currentPoolIndex
 
 	for {
@@ -161,7 +161,7 @@ func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath stri
 		if currentPoolIndex == numPools-1 {
 			recipient = params.recipient
 		} else {
-			recipient = std.DerivePkgAddr("gno.land/r/router")
+			recipient = std.DerivePkgAddr("gno.land/r/demo/router")
 		}
 
 		params.amountSpecified = _swapDry(

@@ -8,7 +8,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	_ "gno.land/r/grc20_wrapper"
+	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 var (
@@ -17,15 +17,15 @@ var (
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 	pc01 = testutils.TestAddress("pc01") // Pool Creator 01
 
-	poolAddr = std.DerivePkgAddr("gno.land/r/pool")
-	posAddr  = std.DerivePkgAddr("gno.land/r/position")
+	poolAddr = std.DerivePkgAddr("gno.land/r/demo/pool")
+	posAddr  = std.DerivePkgAddr("gno.land/r/demo/position")
 )
 
 var (
 	// Common
-	fooPath = "gno.land/r/foo" // token1
-	barPath = "gno.land/r/bar" // token2
-	bazPath = "gno.land/r/baz" // token3
+	fooPath = "gno.land/r/demo/foo" // token1
+	barPath = "gno.land/r/demo/bar" // token2
+	bazPath = "gno.land/r/demo/baz" // token3
 
 	pFee = uint16(500)
 
@@ -59,7 +59,7 @@ func TestCreateBarBazPool(t *testing.T) {
 
 // 4. Mint Foo:Bar Liquidity by lp01
 func TestMintFooBarLiquidity(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(lp01)
 
 	Mint(
@@ -75,7 +75,7 @@ func TestMintFooBarLiquidity(t *testing.T) {
 
 // 5. Mint Bar:Baz Liquidity by lp01
 func TestMintBarBazLiquidity(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/position")
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(lp01)
 
 	Mint(
@@ -97,9 +97,9 @@ func TestApiGetPools(t *testing.T) {
 }
 
 func TestApiGetPool(t *testing.T) {
-	jsonStr := ApiGetPool("gno.land/r/bar:gno.land/r/baz:500")
+	jsonStr := ApiGetPool("gno.land/r/demo/bar:gno.land/r/demo/baz:500")
 	jsonOutput := gjson.Parse(jsonStr).Get("response.data")
-	shouldEQ(t, jsonOutput.Get("pool_path").String(), "gno.land/r/bar:gno.land/r/baz:500")
+	shouldEQ(t, jsonOutput.Get("pool_path").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:500")
 }
 
 // RPC TESTS

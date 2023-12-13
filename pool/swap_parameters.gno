@@ -1,7 +1,7 @@
 package pool
 
 import (
-	gov "gno.land/r/gov"
+	gov "gno.land/r/demo/gov"
 )
 
 func SubmitProposalParameterProtocolFees(

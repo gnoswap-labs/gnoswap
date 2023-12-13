@@ -5,6 +5,5 @@ import (
 )
 
 func GetOrigPkgAddr() std.Address {
-	return std.DerivePkgAddr("gno.land/r/gov")
-	// return std.GetOrigPkgAddr()
+	return std.DerivePkgAddr("gno.land/r/demo/gov")
 }

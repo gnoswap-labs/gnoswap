@@ -8,15 +8,15 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	g "gno.land/r/gov"
-	p "gno.land/r/pool"
-	pos "gno.land/r/position"
+	g "gno.land/r/demo/gov"
+	p "gno.land/r/demo/pool"
+	pos "gno.land/r/demo/position"
 
-	gnft "gno.land/r/gnft" // GNFT, Gnoswap NFT
-	gns "gno.land/r/gns"   // GNS, Gnoswap Share
+	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
+	gns "gno.land/r/demo/gns"   // GNS, Gnoswap Share
 
 	// WUGNOT, Wrapped UGNOT
-	_ "gno.land/r/grc20_wrapper"
+	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 var (
@@ -27,19 +27,19 @@ var (
 
 	ira = testutils.TestAddress("ira") // Internal Reward Account
 
-	stakerAddr = std.DerivePkgAddr("gno.land/r/staker")
+	stakerAddr = std.DerivePkgAddr("gno.land/r/demo/staker")
 )
 
 var (
-	fooPath  = "gno.land/r/foo"
-	barPath  = "gno.land/r/bar"
+	fooPath  = "gno.land/r/demo/foo"
+	barPath  = "gno.land/r/demo/bar"
 	gnotPath = "gnotPath"
 )
 
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/bar:gno.land/r/foo:500"] = 1 // DEV
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/foo:500"] = 1 // DEV
 
 	// tier 2
 	poolTiers["GNS/USDT_500"] = 2
@@ -133,7 +133,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	testBanker.IssueCoin(stakerAddr, "ugnot", 10_000_000_000)
 
 	CreateExternalIncentive(
-		"gno.land/r/bar:gno.land/r/foo:500", // targetPoolPath
+		"gno.land/r/demo/bar:gno.land/r/demo/foo:500", // targetPoolPath
 		GNOT,                                // rewardToken
 		10_000_000_000,                      // rewardAmount
 		GetTimestamp(),                      // startTimestamp
@@ -217,11 +217,11 @@ func TestUnstakeToken(t *testing.T) {
 func TestEndExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
 	std.TestSkipHeights(9999999)
-	EndExternalIncentive(GetOrigCaller().String(), "gno.land/r/bar:gno.land/r/foo:500", GNOT) // use same parameter as CreateExternalIncentive()
+	EndExternalIncentive(GetOrigCaller().String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", GNOT) // use same parameter as CreateExternalIncentive()
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, len(incentives), 0)
-	shouldEQ(t, len(poolIncentives["gno.land/r/bar:gno.land/r/foo:500"]), 0)
+	shouldEQ(t, len(poolIncentives["gno.land/r/demo/bar:gno.land/r/demo/foo:500"]), 0)
 }
 
 // GOV

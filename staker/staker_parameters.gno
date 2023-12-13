@@ -2,7 +2,7 @@ package staker
 
 import (
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gov"
+	"gno.land/r/demo/gov"
 )
 
 func Init() {

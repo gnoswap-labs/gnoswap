@@ -12,25 +12,25 @@ import (
 	"gno.land/r/demo/users"
 
 	// swap contract
-	gov "gno.land/r/gov"
-	pl "gno.land/r/pool"
-	pos "gno.land/r/position"
-	rou "gno.land/r/router"
-	stk "gno.land/r/staker"
+	gov "gno.land/r/demo/gov"
+	pl "gno.land/r/demo/pool"
+	pos "gno.land/r/demo/position"
+	rou "gno.land/r/demo/router"
+	stk "gno.land/r/demo/staker"
 
 	// token
-	_ "gno.land/r/grc20_wrapper"
+	_ "gno.land/r/demo/grc20_wrapper"
 
-	bar "gno.land/r/bar"
-	baz "gno.land/r/baz"
-	foo "gno.land/r/foo"
-	gns "gno.land/r/gns"
-	obl "gno.land/r/obl" // external reward
-	qux "gno.land/r/qux"
+	bar "gno.land/r/demo/bar"
+	baz "gno.land/r/demo/baz"
+	foo "gno.land/r/demo/foo"
+	gns "gno.land/r/demo/gns"
+	obl "gno.land/r/demo/obl" // external reward
+	qux "gno.land/r/demo/qux"
 
-	wugnot "gno.land/r/wugnot"
+	wugnot "gno.land/r/demo/wugnot"
 
-	gnft "gno.land/r/gnft" // GRC721 LP Token
+	gnft "gno.land/r/demo/gnft" // GRC721 LP Token
 )
 
 const (
@@ -54,12 +54,12 @@ var (
 	rouAddr    = rou.GetOrigPkgAddr() // Router Contract
 
 	// token path
-	fooPath = "gno.land/r/foo"
-	barPath = "gno.land/r/bar"
-	bazPath = "gno.land/r/baz"
-	quxPath = "gno.land/r/qux"
-	gnsPath = "gno.land/r/gns"
-	oblPath = "gno.land/r/obl"
+	fooPath = "gno.land/r/demo/foo"
+	barPath = "gno.land/r/demo/bar"
+	bazPath = "gno.land/r/demo/baz"
+	quxPath = "gno.land/r/demo/qux"
+	gnsPath = "gno.land/r/demo/gns"
+	oblPath = "gno.land/r/demo/obl"
 
 	gnotPath = "gnot"
 
@@ -251,8 +251,8 @@ func TestStakerCreateExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(ci01)
 
 	stk.CreateExternalIncentive(
-		"gno.land/r/bar:gnot:100",       // targetPoolPath
-		"gno.land/r/obl",                // rewardToken
+		"gno.land/r/demo/bar:gnot:100",       // targetPoolPath
+		"gno.land/r/demo/obl",                // rewardToken
 		10_000_000_000,                  // rewardAmount
 		GetTimestamp(),                  // startTimestamp
 		GetTimestamp()+TIMESTAMP_90DAYS, // endTimestamp
@@ -294,7 +294,7 @@ func TestPoolSetFeeProtocol(t *testing.T) {
 
 // 7. [TC - ROUTER] SwapRoute ExactIn Single ( bar -> baz )
 func TestRotuerSwapRouteExactInSinglePath(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/router")
+	std.TestSetPrevRealm("gno.land/r/demo/router")
 	std.TestSetOrigCaller(tr01)
 
 	tr01OldBarBalance := bar.BalanceOf(a2u(tr01))
@@ -308,7 +308,7 @@ func TestRotuerSwapRouteExactInSinglePath(t *testing.T) {
 		bazPath,
 		bigint(swapAmount),
 		"EXACT_IN",
-		"gno.land/r/bar:gno.land/r/baz:100",
+		"gno.land/r/demo/bar:gno.land/r/demo/baz:100",
 		"100",
 		200_000,
 	)
@@ -326,7 +326,7 @@ func TestRotuerSwapRouteExactInSinglePath(t *testing.T) {
 
 // 8. [TC - ROUTER] SwapRoute ExactOut Multi ( wugnot -> qux )
 func TestRotuerSwapRouteExactOutputMultiPath(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/router")
+	std.TestSetPrevRealm("gno.land/r/demo/router")
 	std.TestSetOrigCaller(tr01)
 
 	// prepare ugnot
@@ -347,7 +347,7 @@ func TestRotuerSwapRouteExactOutputMultiPath(t *testing.T) {
 		quxPath,
 		bigint(swapAmount),
 		"EXACT_OUT",
-		"gnot:gno.land/r/bar:100*POOL*gno.land/r/bar:gno.land/r/baz:100*POOL*gno.land/r/baz:gno.land/r/qux:100,gnot:gno.land/r/bar:500*POOL*gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500",
+		"gnot:gno.land/r/demo/bar:100*POOL*gno.land/r/demo/bar:gno.land/r/demo/baz:100*POOL*gno.land/r/demo/baz:gno.land/r/demo/qux:100,gnot:gno.land/r/demo/bar:500*POOL*gno.land/r/demo/bar:gno.land/r/demo/baz:500*POOL*gno.land/r/demo/baz:gno.land/r/demo/qux:500",
 		"40,60",
 		123456789,
 	)
@@ -365,7 +365,7 @@ func TestRotuerSwapRouteExactOutputMultiPath(t *testing.T) {
 func TestPositionCollect01(t *testing.T) {
 	{
 		// lp01 collects fee from tokenId '1'
-		std.TestSetPrevRealm("gno.land/r/position")
+		std.TestSetPrevRealm("gno.land/r/demo/position")
 		std.TestSetOrigCaller(lp01)
 		cAmount0, cAmount1 := pos.Collect(
 			1,      // tokenId
@@ -443,7 +443,7 @@ func TestStakerEndExternalIncentive(t *testing.T) {
 
 	ci01OldRewardBal := obl.BalanceOf(a2u(ci01))
 
-	stk.EndExternalIncentive(ci01.String(), "gno.land/r/bar:gnot:100", "gno.land/r/obl") // use same parameter as CreateExternalIncentive
+	stk.EndExternalIncentive(ci01.String(), "gno.land/r/demo/bar:gnot:100", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive
 	std.TestSkipHeights(1)
 
 	ci01NewRewardBal := obl.BalanceOf(a2u(ci01))
@@ -452,7 +452,7 @@ func TestStakerEndExternalIncentive(t *testing.T) {
 	// shouldPanicWithMsg(
 	// 	t,
 	// 	func() {
-	// 		stk.EndExternalIncentive(ci01.String(), "gno.land/r/bar:gnot:100", "gno.land/r/obl")
+	// 		stk.EndExternalIncentive(ci01.String(), "gno.land/r/demo/bar:gnot:100", "gno.land/r/demo/obl")
 	// 	},
 	// 	"[STAKER] staker.gno__EndExternalIncentive() || cannot end non existent incentive(ZzF2ZDVucXYybHRhMDQ3aDZsdGEwNDdoNmx0YTA0N2g2bGswd2hjZDpnbm8ubGFuZC9yL2Jhcjp1Z25vdDoxMDA6Z25vLmxhbmQvci9vYmw=)",
 	// )

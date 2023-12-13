@@ -1,1 +1,1 @@
-module gno.land/r/wugnot
+module gno.land/r/demo/wugnot

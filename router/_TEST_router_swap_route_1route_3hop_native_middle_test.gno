@@ -7,9 +7,9 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	_ "gno.land/r/grc20_wrapper"
-	pl "gno.land/r/pool"
-	pos "gno.land/r/position"
+	_ "gno.land/r/demo/grc20_wrapper"
+	pl "gno.land/r/demo/pool"
+	pos "gno.land/r/demo/position"
 )
 
 var (
@@ -17,15 +17,15 @@ var (
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 
-	poolAddr   = std.DerivePkgAddr("gno.land/r/pool")
-	posAddr    = std.DerivePkgAddr("gno.land/r/position")
-	routerAddr = std.DerivePkgAddr("gno.land/r/router")
+	poolAddr   = std.DerivePkgAddr("gno.land/r/demo/pool")
+	posAddr    = std.DerivePkgAddr("gno.land/r/demo/position")
+	routerAddr = std.DerivePkgAddr("gno.land/r/demo/router")
 )
 
 var (
 	// Common
-	barPath  = "gno.land/r/bar"
-	gnsPath  = "gno.land/r/gns"
+	barPath  = "gno.land/r/demo/bar"
+	gnsPath  = "gno.land/r/demo/gns"
 	gnotPath = "gnot"
 
 	MAX_TIMEOUT bigint = 9999999999
@@ -106,7 +106,7 @@ func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
 		barPath,      // outputToken
 		bigint(1000), // amountSpecified
 		"EXACT_IN",   // swapType
-		"gno.land/r/gns:gnot:100*POOL*gnot:gno.land/r/bar:100", // strRouteArr
+		"gno.land/r/demo/gns:gnot:100*POOL*gnot:gno.land/r/demo/bar:100", // strRouteArr
 		"100", // quoteArr
 	)
 	shouldEQ(t, dryResult, bigint(7339))
@@ -121,7 +121,7 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 		barPath,      // outputToken
 		bigint(1000), // amountSpecified
 		"EXACT_IN",   // swapType
-		"gno.land/r/gns:gnot:100*POOL*gnot:gno.land/r/bar:100", // strRouteArr
+		"gno.land/r/demo/gns:gnot:100*POOL*gnot:gno.land/r/demo/bar:100", // strRouteArr
 		"100", // quoteArr
 		"0",   // tokenAmountLimit
 	)

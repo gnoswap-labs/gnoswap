@@ -1,1 +1,1 @@
-module gno.land/r/st2
+module gno.land/r/demo/st2

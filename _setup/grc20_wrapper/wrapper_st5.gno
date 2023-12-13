@@ -3,11 +3,11 @@ package grc20wrapper
 import (
 	"gno.land/r/demo/users"
 
-	"gno.land/r/st5"
+	"gno.land/r/demo/st5"
 
-	pRegistry "gno.land/r/pool"
-	rRegistry "gno.land/r/router"
-	sRegistry "gno.land/r/staker"
+	pRegistry "gno.land/r/demo/pool"
+	rRegistry "gno.land/r/demo/router"
+	sRegistry "gno.land/r/demo/staker"
 )
 
 type SwapTest5TokenCTokenInterface struct{}

@@ -1,1 +1,1 @@
-module gno.land/r/baz
+module gno.land/r/demo/baz

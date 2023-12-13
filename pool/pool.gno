@@ -5,7 +5,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	g "gno.land/r/gov"
+	g "gno.land/r/demo/gov"
 )
 
 // only position contract can call this function
@@ -18,7 +18,7 @@ func Mint(
 	tickUpper int32,
 	liquidityAmount bigint,
 ) (bigint, bigint) {
-	require(PrevRealmPath() == "gno.land/r/position", ufmt.Sprintf("[POOL] pool.gno__Mint() || PrevRealmPath(%s) == \"gno.land/r/position\"", PrevRealmPath()))
+	require(PrevRealmPath() == "gno.land/r/demo/position", ufmt.Sprintf("[POOL] pool.gno__Mint() || PrevRealmPath(%s) == \"gno.land/r/demo/position\"", PrevRealmPath()))
 
 	require(liquidityAmount > 0, ufmt.Sprintf("[POOL] pool.gno__Mint() || liquidityAmount(%d) > 0", liquidityAmount))
 
@@ -93,7 +93,7 @@ func Burn(
 	tickUpper int32,
 	amount bigint,
 ) (bigint, bigint) {
-	require(PrevRealmPath() == "gno.land/r/position", ufmt.Sprintf("[POOL] pool.gno__Burn() || caller(%s) must be position contract", PrevRealmPath()))
+	require(PrevRealmPath() == "gno.land/r/demo/position", ufmt.Sprintf("[POOL] pool.gno__Burn() || caller(%s) must be position contract", PrevRealmPath()))
 
 	requireUnsigned(amount, ufmt.Sprintf("[POOL] pool.gno__Burn() || amount(%d) >= 0", amount))
 
@@ -134,7 +134,7 @@ func Collect(
 	amount0Requested bigint,
 	amount1Requested bigint,
 ) (bigint, bigint) {
-	require(PrevRealmPath() == "gno.land/r/position", ufmt.Sprintf("[POOL] pool.gno__Collect() || caller(%s) must be position contract(gno.land/r/position)", PrevRealmPath()))
+	require(PrevRealmPath() == "gno.land/r/demo/position", ufmt.Sprintf("[POOL] pool.gno__Collect() || caller(%s) must be position contract(gno.land/r/demo/position)", PrevRealmPath()))
 
 	requireUnsigned(amount0Requested, ufmt.Sprintf("pool.gno__Collect() || amount0Requested(%d) >= 0", amount0Requested))
 	requireUnsigned(amount1Requested, ufmt.Sprintf("pool.gno__Collect() || amount1Requested(%d) >= 0", amount1Requested))
@@ -192,7 +192,7 @@ func Swap(
 	sqrtPriceLimitX96 bigint,
 	payer std.Address, // router
 ) (bigint, bigint) {
-	require(PrevRealmPath() == "gno.land/r/router", ufmt.Sprintf("[POOL] pool.gno__Swap() || caller(%s) must be router contract(gno.land/r/router)", PrevRealmPath()))
+	require(PrevRealmPath() == "gno.land/r/demo/router", ufmt.Sprintf("[POOL] pool.gno__Swap() || caller(%s) must be router contract(gno.land/r/demo/router)", PrevRealmPath()))
 
 	require(amountSpecified != 0, "[POOL] pool.gno__Swap() || amountSpecified can't be zero")
 

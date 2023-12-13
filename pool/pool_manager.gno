@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	gns "gno.land/r/gns"
+	gns "gno.land/r/demo/gns"
 )
 
 var (

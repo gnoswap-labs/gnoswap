@@ -1,1 +1,1 @@
-module gno.land/r/gnft
+module gno.land/r/demo/gnft

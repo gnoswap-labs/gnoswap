@@ -8,13 +8,13 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	nft "gno.land/r/gnft"
+	nft "gno.land/r/demo/gnft"
 
-	_ "gno.land/r/grc20_wrapper"
-	p "gno.land/r/pool"
+	_ "gno.land/r/demo/grc20_wrapper"
+	p "gno.land/r/demo/pool"
 
-	"gno.land/r/bar"
-	"gno.land/r/foo"
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/foo"
 )
 
 var (
@@ -30,8 +30,8 @@ var (
 
 var (
 	// Common
-	fooPath = "gno.land/r/foo"
-	barPath = "gno.land/r/bar"
+	fooPath = "gno.land/r/demo/foo"
+	barPath = "gno.land/r/demo/bar"
 	pFee    = uint16(500)
 
 	test_tickLower       = int32(9000)
@@ -464,7 +464,7 @@ func TestApiGetPositionByUser(t *testing.T) {
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 3)
 
 	shouldEQ(t, jsonStr.Get("response.data.0.token_id").Int(), 2)
-	shouldEQ(t, jsonStr.Get("response.data.0.pool_key").String(), "gno.land/r/bar:gno.land/r/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data.0.pool_key").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 	shouldEQ(t, jsonStr.Get("response.data.0.tick_lower").Int(), -11000)
 	shouldEQ(t, jsonStr.Get("response.data.0.tick_upper").Int(), -9000)
 	shouldEQ(t, jsonStr.Get("response.data.0.liquidity").Int(), 24900)

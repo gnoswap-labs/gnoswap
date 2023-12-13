@@ -7,9 +7,9 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	_ "gno.land/r/grc20_wrapper"
-	pl "gno.land/r/pool"
-	pos "gno.land/r/position"
+	_ "gno.land/r/demo/grc20_wrapper"
+	pl "gno.land/r/demo/pool"
+	pos "gno.land/r/demo/position"
 )
 
 var (
@@ -17,17 +17,17 @@ var (
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 
-	poolAddr   = std.DerivePkgAddr("gno.land/r/pool")
-	posAddr    = std.DerivePkgAddr("gno.land/r/position")
-	routerAddr = std.DerivePkgAddr("gno.land/r/router")
+	poolAddr   = std.DerivePkgAddr("gno.land/r/demo/pool")
+	posAddr    = std.DerivePkgAddr("gno.land/r/demo/position")
+	routerAddr = std.DerivePkgAddr("gno.land/r/demo/router")
 )
 
 var (
 	// Common
-	barPath  = "gno.land/r/bar"
-	bazPath  = "gno.land/r/baz"
-	fooPath  = "gno.land/r/foo"
-	quxPath  = "gno.land/r/qux"
+	barPath  = "gno.land/r/demo/bar"
+	bazPath  = "gno.land/r/demo/baz"
+	fooPath  = "gno.land/r/demo/foo"
+	quxPath  = "gno.land/r/demo/qux"
 	gnotPath = "gnot"
 
 	MAX_TIMEOUT bigint = 9999999999
@@ -105,7 +105,7 @@ func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
 		gnotPath,     // outputToken
 		bigint(1000), // amountSpecified
 		"EXACT_IN",   // swapType
-		"gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500*POOL*gno.land/r/qux:gnot:500", // strRouteArr
+		"gno.land/r/demo/bar:gno.land/r/demo/baz:500*POOL*gno.land/r/demo/baz:gno.land/r/demo/qux:500*POOL*gno.land/r/demo/qux:gnot:500", // strRouteArr
 		"100", // quoteArr
 	)
 	shouldEQ(t, dryResult, bigint(19740))
@@ -119,7 +119,7 @@ func TestDrySwapRouteBarGnotExactOut(t *testing.T) {
 		gnotPath,      // outputToken
 		bigint(20000), // amountSpecified
 		"EXACT_OUT",   // swapType
-		"gno.land/r/bar:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/qux:500*POOL*gno.land/r/qux:gnot:500", // strRouteArr
+		"gno.land/r/demo/bar:gno.land/r/demo/baz:500*POOL*gno.land/r/demo/baz:gno.land/r/demo/qux:500*POOL*gno.land/r/demo/qux:gnot:500", // strRouteArr
 		"100", // quoteArr
 	)
 	shouldEQ(t, dryResult, bigint(1011))
@@ -133,7 +133,7 @@ func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
 		barPath,      // outputToken
 		bigint(5000), // amountSpecified
 		"EXACT_IN",   // swapType
-		"gnot:gno.land/r/qux:500*POOL*gno.land/r/qux:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/bar:500", // strRouteArr
+		"gnot:gno.land/r/demo/qux:500*POOL*gno.land/r/demo/qux:gno.land/r/demo/baz:500*POOL*gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
 		"100", // quoteArr
 	)
 	shouldEQ(t, dryResult, bigint(247))
@@ -147,7 +147,7 @@ func TestDrySwapRouteGnotBarExactOut(t *testing.T) {
 		barPath,     // outputToken
 		bigint(100), // amountSpecified
 		"EXACT_OUT", // swapType
-		"gnot:gno.land/r/qux:500*POOL*gno.land/r/qux:gno.land/r/baz:500*POOL*gno.land/r/baz:gno.land/r/bar:500", // strRouteArr
+		"gnot:gno.land/r/demo/qux:500*POOL*gno.land/r/demo/qux:gno.land/r/demo/baz:500*POOL*gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
 		"100", // quoteArr
 	)
 	shouldEQ(t, dryResult, bigint(2003))

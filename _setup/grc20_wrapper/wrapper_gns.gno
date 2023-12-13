@@ -3,11 +3,11 @@ package grc20wrapper
 import (
 	"gno.land/r/demo/users"
 
-	"gno.land/r/gns"
+	"gno.land/r/demo/gns"
 
-	pRegistry "gno.land/r/pool"
-	rRegistry "gno.land/r/router"
-	sRegistry "gno.land/r/staker"
+	pRegistry "gno.land/r/demo/pool"
+	rRegistry "gno.land/r/demo/router"
+	sRegistry "gno.land/r/demo/staker"
 )
 
 type GnsTokenInterface struct{}

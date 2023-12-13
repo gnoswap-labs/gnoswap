@@ -1,1 +1,1 @@
-module gno.land/r/grc20_wrapper
+module gno.land/r/demo/grc20_wrapper

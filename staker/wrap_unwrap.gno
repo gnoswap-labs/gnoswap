@@ -4,7 +4,7 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/wugnot"
+	"gno.land/r/demo/wugnot"
 )
 
 func wrap(tokenPath string, amount uint64) {

@@ -7,9 +7,9 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	_ "gno.land/r/grc20_wrapper"
-	p "gno.land/r/pool"
-	pos "gno.land/r/position"
+	_ "gno.land/r/demo/grc20_wrapper"
+	p "gno.land/r/demo/pool"
+	pos "gno.land/r/demo/position"
 )
 
 var (
@@ -17,17 +17,17 @@ var (
 	lp01 = testutils.TestAddress("lp01") // Liquidity Provider 01
 	tr01 = testutils.TestAddress("tr01") // Trader 01
 
-	poolAddr   = std.DerivePkgAddr("gno.land/r/pool")
-	posAddr    = std.DerivePkgAddr("gno.land/r/position")
-	routerAddr = std.DerivePkgAddr("gno.land/r/router")
+	poolAddr   = std.DerivePkgAddr("gno.land/r/demo/pool")
+	posAddr    = std.DerivePkgAddr("gno.land/r/demo/position")
+	routerAddr = std.DerivePkgAddr("gno.land/r/demo/router")
 )
 
 var (
 	// Common
 	gnotPath = "gnot"           // token1
-	barPath  = "gno.land/r/bar" // token2
-	bazPath  = "gno.land/r/baz" // token3
-	quxPath  = "gno.land/r/qux" // token4
+	barPath  = "gno.land/r/demo/bar" // token2
+	bazPath  = "gno.land/r/demo/baz" // token3
+	quxPath  = "gno.land/r/demo/qux" // token4
 
 	test_fee100 = uint16(100)
 
@@ -75,9 +75,9 @@ func TestApiGetRatiosFromBase(t *testing.T) {
 	shouldEQ(t, len(jsonArr), 4)
 
 	shouldEQ(t, jsonArr[0].String(), "{\"gnot\":79228162514264337593543950336}")             // 1
-	shouldEQ(t, jsonArr[1].String(), "{\"gno.land/r/bar\":215332174010593516404127508794}")  // 2.7178741394
-	shouldEQ(t, jsonArr[2].String(), "{\"gno.land/r/qux\":585304271701315311476720143083}")  // 7.3875785217
-	shouldEQ(t, jsonArr[3].String(), "{\"gno.land/r/baz\":4323981266259057910270272221253}") // 54.5763164138
+	shouldEQ(t, jsonArr[1].String(), "{\"gno.land/r/demo/bar\":215332174010593516404127508794}")  // 2.7178741394
+	shouldEQ(t, jsonArr[2].String(), "{\"gno.land/r/demo/qux\":585304271701315311476720143083}")  // 7.3875785217
+	shouldEQ(t, jsonArr[3].String(), "{\"gno.land/r/demo/baz\":4323981266259057910270272221253}") // 54.5763164138
 }
 
 /* HELPER */

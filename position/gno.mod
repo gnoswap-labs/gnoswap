@@ -1,1 +1,1 @@
-module gno.land/r/position
+module gno.land/r/demo/position
