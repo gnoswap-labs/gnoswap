@@ -180,8 +180,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 	tAmount0, tAmount1 := DecreaseLiquidity(
 		bigint(1),
 		tTargetLiquidity,
-		bigint(1),
-		bigint(1),
 		bigint(1234567890),
 	)
 
@@ -290,8 +288,6 @@ func TestNFTBurn(t *testing.T) {
 		DecreaseLiquidity(
 			tTokenId,
 			tPositionLiquidity, // remove all liquidity
-			bigint(1),
-			bigint(1),
 			bigint(1234567890),
 		)
 		// didn't collect yet => burn will panic

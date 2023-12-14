@@ -94,7 +94,7 @@ func (pool *Pool) tickUpdate(
 }
 
 func (pool *Pool) tickClear(tick int32) {
-	delete(pool.ticks, tick)
+	pool.ticks = deleteFromPoolTicks(pool.ticks, tick)
 }
 
 func (pool *Pool) tickCross(
@@ -113,4 +113,19 @@ func (pool *Pool) tickCross(
 
 	liquidityNet := info.liquidityNet
 	return liquidityNet
+}
+
+func deleteFromPoolTicks(m map[int32]TickInfo, key int32) map[int32]TickInfo {
+	if _, ok := m[key]; ok {
+		newMap := make(map[int32]TickInfo)
+		for k, v := range m {
+			if k != key {
+				newMap[k] = v
+			}
+		}
+
+		return newMap
+	}
+
+	return m
 }
