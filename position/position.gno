@@ -7,7 +7,7 @@ import (
 
 	p "gno.land/r/demo/pool"
 
-	nft "gno.land/r/demo/gnft"
+	"gno.land/r/demo/gnft"
 )
 
 var (
@@ -74,7 +74,7 @@ func mint(params MintParams) (uint64, bigint, bigint, bigint) {
 	tokenId := nextId
 	nextId++ // nextId = nextId + 1
 
-	nft.Mint(a2u(GetOrigCaller()), tid(tokenId)) // owner, tokenId
+	gnft.Mint(a2u(GetOrigCaller()), tid(tokenId)) // owner, tokenId
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
@@ -170,7 +170,10 @@ func DecreaseLiquidity(
 }
 
 func decreaseLiquidity(params DecreaseLiquidityParams) (bigint, bigint) {
-	isAuthorizedForToken(params.tokenId)
+	// MUST BE OWNER TO DECREASE LIQUIDITY ( can not be approved address )
+	owner := gnft.OwnerOf(tid(params.tokenId))
+	require(owner == GetOrigCaller(), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || only owner can decrease liquidity__owner(%s) == GetOrigCaller(%s)", owner, GetOrigCaller()))
+
 	checkDeadline(params.deadline)
 	require(params.liquidity >= 0, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidity(%d) >= 0", params.liquidity))
 
@@ -295,7 +298,7 @@ func burn(tokenId uint64) {
 	require(position.isClear(), ufmt.Sprintf("[POSITION] position.gno__burn() || position(tokenId:%d) isn't clear(has something)", tokenId))
 
 	delete(positions, tokenId)
-	nft.Burn(tid(tokenId))
+	gnft.Burn(tid(tokenId))
 }
 
 func isAuthorizedForToken(tokenId uint64) {
