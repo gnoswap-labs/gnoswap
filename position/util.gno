@@ -17,7 +17,7 @@ func require(condition bool, message string) {
 }
 
 func checkDeadline(deadline bigint) {
-	require(bigint(GetTimestamp()) <= deadline, ufmt.Sprintf("[POSITION] util.gno__checkDeadline() || transaction too old__GetTimestamp()(%d) <= deadline(%s)", GetTimestamp(), deadline))
+	require(bigint(GetTimestamp()) <= deadline, ufmt.Sprintf("[POSITION] util.gno__checkDeadline() || transaction too old__GetTimestamp()(%d) <= deadline(%d)", GetTimestamp(), deadline))
 }
 
 func a2u(addr std.Address) users.AddressOrName {
