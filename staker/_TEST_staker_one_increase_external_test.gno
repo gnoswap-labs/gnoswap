@@ -131,12 +131,15 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 	// test1 reward check
 	gra := ApiGetRewardByAddress(test1)
 	jsonStr := gjson.Parse(gra)
-	shouldEQ(t, jsonStr.Get("response.data.0.type").String(), "Internal")
-	shouldEQ(t, jsonStr.Get("response.data.0.token").String(), "GNS")
-	shouldEQ(t, jsonStr.Get("response.data.0.reward").Int(), 126)
-	shouldEQ(t, jsonStr.Get("response.data.1.type").String(), "External")
-	shouldEQ(t, jsonStr.Get("response.data.1.token").String(), "gno.land/r/demo/obl")
-	shouldEQ(t, jsonStr.Get("response.data.1.reward").Int(), 648)
+	shouldEQ(t, jsonStr.Get("response.data.0.incentiveType").String(), "INTERNAL")
+	shouldEQ(t, jsonStr.Get("response.data.0.targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data.0.rewardTokenPath").String(), INTERNAL_REWARD_TOKEN_PATH)
+	shouldEQ(t, jsonStr.Get("response.data.0.rewardTokenAmount").Int(), 252)
+
+	shouldEQ(t, jsonStr.Get("response.data.1.incentiveType").String(), "EXTERNAL")
+	shouldEQ(t, jsonStr.Get("response.data.0.targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data.1.rewardTokenPath").String(), "gno.land/r/demo/obl")
+	shouldEQ(t, jsonStr.Get("response.data.1.rewardTokenAmount").Int(), 648)
 }
 
 func TestUnstakeToken(t *testing.T) {
@@ -148,7 +151,7 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 499999999999626) // internal
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 499999999999752) // internal
 		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000000648) // external
 	}
 
@@ -160,7 +163,7 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 500000000000451) // internal
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 500000000001402) // internal
 		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000004891) // external
 	}
 }

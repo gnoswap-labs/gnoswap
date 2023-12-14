@@ -23,20 +23,21 @@ var (
 	poolTiers map[string]uint8   = make(map[string]uint8)   // poolPath -> tier
 )
 
-// func init() {
-// 	// init pool tiers
-// 	// tier 1
-// 	poolTiers["GNS/GNOT"] = 1
+func init() {
+	// init pool tiers
+	// tier 1
+	poolTiers["gno.land/r/demo/gns:gno.land/r/demo/wugnot:500"] = 1
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = 1 // dev
 
-// 	// tier 2
-// 	poolTiers["GNS/USDT_500"] = 2
-// 	poolTiers["ATOM/GNS_500"] = 2
+	// tier 2
+	// poolTiers["GNS/USDT_500"] = 2
+	// poolTiers["ATOM/GNS_500"] = 2
 
-// 	// tier 3
-// 	poolTiers["ATOM/GNOT_500"] = 3
-// 	poolTiers["ATOM/USDT_500"] = 3
-// 	poolTiers["ATOM/WETH_500"] = 3
-// }
+	// tier 3
+	// poolTiers["ATOM/GNOT_500"] = 3
+	// poolTiers["ATOM/USDT_500"] = 3
+	// poolTiers["ATOM/WETH_500"] = 3
+}
 
 func CreateExternalIncentive(
 	targetPoolPath string,

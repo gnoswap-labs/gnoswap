@@ -12,13 +12,94 @@ type ApiQueryBase struct {
 	Timestamp int64 `json:"timestamp"`
 }
 
-type ApiRewardByAddress struct {
-	Type   string `json:"type"`
-	Token  string `json:"token"`
-	Reward uint64 `json:"reward"`
+type Reward struct {
+	IncentiveType     string `json:"incentiveType"`
+	TargetPoolPath    string `json:"targetPoolPath"`
+	RewardTokenPath   string `json:"rewardTokenPath"`
+	RewardTokenAmount uint64 `json:"rewardTokenAmount"`
 }
 
-type ResponseGetRewardByAddress struct {
+type LpTokenReward struct {
+	LpTokenId uint64   `json:"lpTokenId"`
+	Address   string   `json:"address"`
+	Rewards   []Reward `json:"rewards"`
+}
+
+type ResponseApiGetRewards struct {
+	Stat     ApiQueryBase `json:"stat"`
+	Response struct {
+		Data []LpTokenReward `json:"data"`
+	} `json:"response"`
+}
+
+func ApiGetRewards() string {
+	lpTokenRewards := []LpTokenReward{}
+
+	for tokenId, deposit := range deposits {
+		rewards := []Reward{}
+
+		// get internal gns reward
+		internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
+		if internalGNS > 0 {
+			rewards = append(rewards, Reward{
+				IncentiveType:     "INTERNAL",
+				TargetPoolPath:    deposit.targetPoolPath,
+				RewardTokenPath:   INTERNAL_REWARD_TOKEN_PATH,
+				RewardTokenAmount: internalGNS,
+			})
+		}
+
+		// find all external reward list for poolPath which lpTokenId is staked
+		for _, incentiveId := range poolIncentives[deposit.targetPoolPath] {
+			externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentives[incentiveId])
+			rewards = append(rewards, Reward{
+				IncentiveType:     "EXTERNAL",
+				TargetPoolPath:    deposit.targetPoolPath,
+				RewardTokenPath:   incentives[incentiveId].rewardToken,
+				RewardTokenAmount: externalReward,
+			})
+		}
+
+		lpTokenReward := LpTokenReward{
+			LpTokenId: tokenId,
+			Address:   deposit.owner.String(),
+			Rewards:   rewards,
+		}
+		lpTokenRewards = append(lpTokenRewards, lpTokenReward)
+	}
+
+	qb := ApiQueryBase{
+		Height:    GetHeight(),
+		Timestamp: int64(GetTimestamp()),
+	}
+
+	r := ResponseApiGetRewards{
+		Stat: qb,
+		Response: struct {
+			Data []LpTokenReward `json:"data"`
+		}{
+			Data: lpTokenRewards,
+		},
+	}
+
+	rr, err := json.Marshal(r)
+	if err != nil {
+		panic(ufmt.Sprintf("[STAKER] _RPC_api.gno__ApiGetRewards() || json marshal error: %v", err))
+	}
+
+	return string(rr)
+}
+
+type ApiRewardByAddress struct {
+	Address           string `json:"address"`
+	LpTokenId         uint64 `json:"lpTokenId"`
+	IncentiveType     string `json:"incentiveType"`
+	TargetPoolPath    string `json:"targetPoolPath"`
+	RewardTokenPath   string `json:"rewardTokenPath"`
+	RewardTokenAmount uint64 `json:"rewardTokenAmount"`
+}
+
+type ResponseGetApiRewardByAddress struct {
 	Stat     ApiQueryBase `json:"stat"`
 	Response struct {
 		Data []ApiRewardByAddress `json:"data"`
@@ -35,19 +116,28 @@ func ApiGetRewardByAddress(address std.Address) string {
 
 			// get internal gns reward
 			internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-			rewardList = append(rewardList, ApiRewardByAddress{
-				Type:   "Internal",
-				Token:  "GNS",
-				Reward: internalGNS,
-			})
+
+			if internalGNS > 0 {
+				rewardList = append(rewardList, ApiRewardByAddress{
+					Address:           address.String(),
+					LpTokenId:         tokenId,
+					IncentiveType:     "INTERNAL",
+					TargetPoolPath:    poolPath,
+					RewardTokenPath:   INTERNAL_REWARD_TOKEN_PATH,
+					RewardTokenAmount: internalGNS,
+				})
+			}
 
 			// find all external reward list for this pool
 			for _, incentiveId := range poolIncentives[poolPath] {
 				externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentives[incentiveId])
 				rewardList = append(rewardList, ApiRewardByAddress{
-					Type:   "External",
-					Token:  incentives[incentiveId].rewardToken,
-					Reward: externalReward,
+					Address:           address.String(),
+					LpTokenId:         tokenId,
+					IncentiveType:     "EXTERNAL",
+					TargetPoolPath:    poolPath,
+					RewardTokenPath:   incentives[incentiveId].rewardToken,
+					RewardTokenAmount: externalReward,
 				})
 			}
 		}
@@ -58,7 +148,7 @@ func ApiGetRewardByAddress(address std.Address) string {
 		Timestamp: int64(GetTimestamp()),
 	}
 
-	r := ResponseGetRewardByAddress{
+	r := ResponseGetApiRewardByAddress{
 		Stat: qb,
 		Response: struct {
 			Data []ApiRewardByAddress `json:"data"`
@@ -69,7 +159,7 @@ func ApiGetRewardByAddress(address std.Address) string {
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api.gno__ApiGetRewardByAddress() || json marshal error: %v", err))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api.gno__ApiGetApiRewardByAddress() || json marshal error: %v", err))
 	}
 
 	return string(rr)
@@ -98,6 +188,7 @@ func ApiGetStakes() string {
 
 	stakes := []ApiStakes{}
 	for tokenId, deposit := range deposits {
+
 		stakes = append(stakes, ApiStakes{
 			TokenId:        tokenId,
 			Owner:          deposit.owner,
