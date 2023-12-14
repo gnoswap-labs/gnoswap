@@ -297,10 +297,25 @@ func burn(tokenId uint64) {
 
 	require(position.isClear(), ufmt.Sprintf("[POSITION] position.gno__burn() || position(tokenId:%d) isn't clear(has something)", tokenId))
 
-	delete(positions, tokenId)
+	positions = deleteFromPositions(positions, tokenId)
 	gnft.Burn(tid(tokenId))
 }
 
 func isAuthorizedForToken(tokenId uint64) {
 	require(isApprovedOrOwner(PrevRealmAddr(), tokenId), ufmt.Sprintf("[POSITION] position.gno__isAuthorizedForToken() || caller(%s) is not approved or owner of tokenId(%d)", PrevRealmAddr(), tokenId))
+}
+
+func deleteFromPositions(m map[uint64]Position, key uint64) map[uint64]Position {
+	if _, ok := m[key]; ok {
+		newMap := make(map[uint64]Position)
+		for k, v := range m {
+			if k != key {
+				newMap[k] = v
+			}
+		}
+
+		return newMap
+	}
+
+	return m
 }

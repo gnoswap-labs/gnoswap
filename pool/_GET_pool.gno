@@ -74,14 +74,20 @@ func (pool *Pool) PoolGetTick(x int32) TickInfo {
 
 func (pool *Pool) PoolGetTickFeeGrowthOutside0X128(x int32) bigint {
 	tick, exist := pool.ticks[x]
-	require(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetTick() || tick(%d) does not exist", x))
+	require(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetTickFeeGrowthOutside0X128() || tick(%d) does not exist", x))
+	// if !exist {
+	// 	return 0
+	// }
 
 	return tick.feeGrowthOutside0X128
 }
 
 func (pool *Pool) PoolGetTickFeeGrowthOutside1X128(x int32) bigint {
 	tick, exist := pool.ticks[x]
-	require(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetTick() || tick(%d) does not exist", x))
+	require(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetTickFeeGrowthOutside1X128() || tick(%d) does not exist", x))
+	// if !exist {
+	// 	return 0
+	// }
 
 	return tick.feeGrowthOutside1X128
 }
@@ -89,6 +95,9 @@ func (pool *Pool) PoolGetTickFeeGrowthOutside1X128(x int32) bigint {
 func (pool *Pool) PoolGetTickBitmap(x int16) bigint {
 	tickBitmap, exist := pool.tickBitmaps[x]
 	require(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetTickBitmap() || tickBitmap(%d) does not exist", x))
+	// if !exist {
+	// 	return 0
+	// }
 
 	return tickBitmap
 }

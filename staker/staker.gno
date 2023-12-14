@@ -23,20 +23,20 @@ var (
 	poolTiers map[string]uint8   = make(map[string]uint8)   // poolPath -> tier
 )
 
-func init() {
-	// init pool tiers
-	// tier 1
-	poolTiers["gno.land/r/demo/bar:gnot:100"] = 1 // DEV
+// func init() {
+// 	// init pool tiers
+// 	// tier 1
+// 	poolTiers["GNS/GNOT"] = 1
 
-	// tier 2
-	poolTiers["GNS/USDT_500"] = 2
-	poolTiers["ATOM/GNS_500"] = 2
+// 	// tier 2
+// 	poolTiers["GNS/USDT_500"] = 2
+// 	poolTiers["ATOM/GNS_500"] = 2
 
-	// tier 3
-	poolTiers["ATOM/GNOT_500"] = 3
-	poolTiers["ATOM/USDT_500"] = 3
-	poolTiers["ATOM/WETH_500"] = 3
-}
+// 	// tier 3
+// 	poolTiers["ATOM/GNOT_500"] = 3
+// 	poolTiers["ATOM/USDT_500"] = 3
+// 	poolTiers["ATOM/WETH_500"] = 3
+// }
 
 func CreateExternalIncentive(
 	targetPoolPath string,
@@ -166,9 +166,9 @@ func UnstakeToken(
 	gns.TransferFrom(a2u(INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(internalGNS))
 
 	// unstaked status
-	delete(deposits, tokenId)
+	deposits = deleteFromDeposits(deposits, tokenId)
 
-	// transfer NFT ownership to unstaker
+	// transfer NFT ownership to origin owner
 	gnft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(deposit.owner), tid(tokenId))
 }
 
@@ -187,7 +187,7 @@ func EndExternalIncentive(refundee, targetPoolPath, rewardToken string) {
 
 	transferByRegisterCall(incentive.rewardToken, incentive.refundee, uint64(refund))
 
-	delete(incentives, incentiveId)
+	incentives = deleteFromIncentives(incentives, incentiveId)
 	for i, v := range poolIncentives[targetPoolPath] {
 		if v == incentiveId {
 			poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
@@ -203,4 +203,34 @@ func transferDeposit(tokenId uint64, to std.Address) {
 
 	// transfer NFT ownership
 	gnft.TransferFrom(a2u(owner), a2u(to), tid(tokenId))
+}
+
+func deleteFromDeposits(m map[uint64]Deposit, key uint64) map[uint64]Deposit {
+	if _, ok := m[key]; ok {
+		newMap := make(map[uint64]Deposit)
+		for k, v := range m {
+			if k != key {
+				newMap[k] = v
+			}
+		}
+
+		return newMap
+	}
+
+	return m
+}
+
+func deleteFromIncentives(m map[string]Incentive, key string) map[string]Incentive {
+	if _, ok := m[key]; ok {
+		newMap := make(map[string]Incentive)
+		for k, v := range m {
+			if k != key {
+				newMap[k] = v
+			}
+		}
+
+		return newMap
+	}
+
+	return m
 }

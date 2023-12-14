@@ -71,7 +71,7 @@ func TestApiGetPositions(t *testing.T) {
 func TestApiGetPosition(t *testing.T) {
 	// burn 0 to collect swap fee
 	std.TestSetOrigCaller(test1)
-	DecreaseLiquidity(1, 0, 0, 0, 99999999999)
+	DecreaseLiquidity(1, 0, 99999999999)
 
 	gps := ApiGetPosition(uint64(1))
 	jsonStr := gjson.Parse(gps)
