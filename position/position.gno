@@ -1,8 +1,6 @@
 package position
 
 import (
-	"std"
-
 	"gno.land/p/demo/ufmt"
 
 	p "gno.land/r/demo/pool"
@@ -96,64 +94,12 @@ func mint(params MintParams) (uint64, bigint, bigint, bigint) {
 	return tokenId, liquidity, amount0, amount1
 }
 
-func Burn(tokenId uint64) {
-} (bigint, bigint, string) {
-	// verify tokenId
-	require(exists(tokenId), ufmt.Sprintf("[POSITION] position.gno__Burn() || tokenId(%d) doesn't exist", tokenId))
-
-	// MUST BE OWNER TO BURN ( can not be approved address )
-	owner := gnft.OwnerOf(tid(tokenId))
-	require(owner == GetOrigCaller(), ufmt.Sprintf("[POSITION] position.gno__Burn() || only owner(%s) can burn tokenId(%d), caller(%s)", owner, tokenId, GetOrigCaller()))
-
-	position := positions[tokenId]
-	positionLiquidity := position.liquidity
-
-	pool := p.GetPoolFromPoolKey(position.poolKey) // poolKey == poolPath
-
-	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
-	burnAmount0, burnAmount1 := p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, positionLiquidity)
-
-	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
-
-	position.tokensOwed0 += burnAmount0 + ((feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / Q128)
-	position.tokensOwed1 += burnAmount1 + ((feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128) * position.liquidity / Q128)
-
-	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
-	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
-
-	position.liquidity = 0
-	positions[tokenId] = position
-
-
-	collectAmount0, collectAmount1 := p.Collect(
-		pToken0,
-		pToken1,
-		pFee,
-		GetOrigCaller(),
-		position.tickLower,
-		position.tickUpper,
-		position.tokensOwed0,
-		position.tokensOwed1,
-	)
-
-	position.tokensOwed0 = 0
-	position.tokensOwed1 = 0
-
-	positions[tokenId] = position
-
-	// MUST BE BURN NFT
-	burnNFT(tokenId)
-
-}
-
-
-func CollectFee(tokenId uint64) {
-	// verify tokenId
+func CollectFee(tokenId uint64) (uint64, bigint, bigint, string) { // tokenId, tokensOwed0, tokensOwed1, poolPath
+	// verify tokenId exists
 	require(exists(tokenId), ufmt.Sprintf("[POSITION] position.gno__CollectFee() || tokenId(%d) doesn't exist", tokenId))
 
+	// verify owner or approved
 	isAuthorizedForToken(tokenId)
-	require(owner == GetOrigCaller(), ufmt.Sprintf("[POSITION] position.gno__CollectFee() || only owner(%s) can collect fee of tokenId(%d), caller(%s)", owner, tokenId, GetOrigCaller()))
 
 	position := positions[tokenId]
 	tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
@@ -182,90 +128,60 @@ func CollectFee(tokenId uint64) {
 		tokensOwed1,
 	)
 
-	position.tokensOwed0, position.tokensOwed1 = tokensOwed-amount0, tokensOwed1-amount1
+	position.tokensOwed0, position.tokensOwed1 = tokensOwed0-amount0, tokensOwed1-amount1
 	positions[tokenId] = position
+
+	return tokenId, tokensOwed0, tokensOwed1, position.poolKey
 }
 
+func Burn(tokenId uint64) (uint64, bigint, bigint, bigint, string) { // tokenId, liquidity, amount0, amount1, poolPath
+	// verify tokenId exists
+	require(exists(tokenId), ufmt.Sprintf("[POSITION] position.gno__Burn() || tokenId(%d) doesn't exist", tokenId))
 
-func Collect(
-	tokenId uint64,
-	recipient std.Address,
-	amount0Max bigint,
-	amount1Max bigint,
-) (bigint, bigint) {
-	isAuthorizedForToken(tokenId)
-	require(amount0Max > 0 || amount1Max > 0, ufmt.Sprintf("[POSITION] position.gno__Collect() || amount0Max(%s) > 0 || amount1Max(%s) > 0", amount0Max, amount1Max))
+	// MUST BE OWNER TO BURN ( can not be approved address )
+	owner := gnft.OwnerOf(tid(tokenId))
+	require(owner == GetOrigCaller(), ufmt.Sprintf("[POSITION] position.gno__Burn() || only owner(%s) can burn tokenId(%d), caller(%s)", owner, tokenId, GetOrigCaller()))
 
-	collectParams := CollectParams{
-		tokenId:    tokenId,
-		recipient:  recipient,
-		amount0Max: amount0Max,
-		amount1Max: amount1Max,
-	}
+	position := positions[tokenId]
+	positionLiquidity := position.liquidity
 
-	return collect(collectParams)
-}
-
-func collect(params CollectParams) (bigint, bigint) {
-	var recipient std.Address
-	if params.recipient == ZERO_ADDRESS {
-		recipient = GetOrigPkgAddr()
-	} else {
-		recipient = params.recipient
-	}
-
-	position := positions[params.tokenId]
-	tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
+	pool := p.GetPoolFromPoolKey(position.poolKey) // poolKey == poolPath
 
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
-	pool := p.GetPoolFromPoolKey(position.poolKey)
+	burnAmount0, burnAmount1 := p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, positionLiquidity)
 
-	if (position.liquidity) > 0 {
-		p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, 0)
+	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 
-		positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-		feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	position.tokensOwed0 += burnAmount0 + ((feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / Q128)
+	position.tokensOwed1 += burnAmount1 + ((feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128) * position.liquidity / Q128)
 
-		tokensOwed0 += (feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / Q128
-		tokensOwed1 += (feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128) * position.liquidity / Q128
+	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
+	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 
-		position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
-		position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
-	}
+	position.liquidity = 0
+	positions[tokenId] = position
 
-	var amount0Collect, amount1Collect bigint
-	if params.amount0Max > tokensOwed0 {
-		amount0Collect = tokensOwed0
-	} else {
-		amount0Collect = params.amount0Max
-	}
-
-	if params.amount1Max > tokensOwed1 {
-		amount1Collect = tokensOwed1
-	} else {
-		amount1Collect = params.amount1Max
-	}
-
-	amount0, amount1 := p.Collect(
+	collectAmount0, collectAmount1 := p.Collect(
 		pToken0,
 		pToken1,
 		pFee,
-		recipient,
+		GetOrigCaller(),
 		position.tickLower,
 		position.tickUpper,
-		amount0Collect,
-		amount1Collect,
+		position.tokensOwed0,
+		position.tokensOwed1,
 	)
 
-	position.tokensOwed0, position.tokensOwed1 = tokensOwed0-amount0Collect, tokensOwed1-amount1Collect
+	position.tokensOwed0 = 0
+	position.tokensOwed1 = 0
 
-	positions[params.tokenId] = position
+	positions[tokenId] = position
 
-	// burn nft if position is clear
-	if position.isClear() {
-		burn(params.tokenId)
-	}
-	return amount0, amount1
+	// MUST BE BURN NFT
+	burnNFT(tokenId)
+
+	return tokenId, positionLiquidity, collectAmount0, collectAmount1, position.poolKey
 }
 
 func burnNFT(tokenId uint64) {
@@ -273,7 +189,7 @@ func burnNFT(tokenId uint64) {
 
 	position := positions[tokenId]
 
-	require(position.isClear(), ufmt.Sprintf("[POSITION] position.gno__burnNFT() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1))
+	require(position.isClear(), ufmt.Sprintf("[POSITION] position.gno__burnNFT() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1))
 
 	positions = deleteFromPositions(positions, tokenId)
 	gnft.Burn(tid(tokenId))
