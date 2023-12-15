@@ -35,7 +35,7 @@ var (
 )
 
 func init() {
-	test1 = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+	test1 = std.Address("g16kvq0mra3atvr07lkdwc2x6jqmna8a4kt0e85d")
 	// prepare ugnot
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 	testBanker.IssueCoin(test1, "ugnot", 500_000_000_000_000)
@@ -58,7 +58,7 @@ func init() {
 
 	wugnot.Approve(a2u(poolAddr), 500_000_000_000_000)
 
-	std.TestSetPrevAddr(std.Address("g1d9exzh6lta047h6lta047h6lta047h6l8ylkpa"))
+	std.TestSetPrevAddr(std.Address("g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm"))
 	gns.Approve(a2u(stakerAddr), 500_000_000_000_000) // to create internal incentive
 }
 

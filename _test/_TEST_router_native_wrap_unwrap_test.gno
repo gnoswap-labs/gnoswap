@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	test1 = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5") // Pool Creator 01
+	test1 = std.Address("g16kvq0mra3atvr07lkdwc2x6jqmna8a4kt0e85d") // Pool Creator 01
 	lp01  = testutils.TestAddress("lp01")                           // Liquidity Provider 01
 	tr01  = testutils.TestAddress("tr01")                           // Trader 01
 

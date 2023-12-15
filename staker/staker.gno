@@ -6,13 +6,14 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
-	gns "gno.land/r/demo/gns"   // INTERAL REWARD FIXED
+	gns "gno.land/r/demo/gns"   // GNS, Gnoswap Share
 
-	s "gno.land/r/demo/position"
+	pl "gno.land/r/demo/pool"
+	pos "gno.land/r/demo/position"
 )
 
 const (
-	INTERNAL_REWARD_ACCOUNT = std.Address("g1d9exzh6lta047h6lta047h6lta047h6l8ylkpa") // hardcoded at gns.gno
+	INTERNAL_REWARD_ACCOUNT = std.Address("g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm") // hardcoded at gns.gno
 )
 
 var (
@@ -86,9 +87,10 @@ func CreateExternalIncentive(
 	poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath], incentiveId)
 }
 
-func StakeToken(
-	tokenId uint64, // LP TokenID
-) {
+func StakeToken(tokenId uint64) (string, bigint, bigint) {
+	// token0Path, token1Path (≈ poolPath)
+	// token1AMount, token0Amount
+
 	// check whether tokenId already staked or not
 	_, exist := deposits[tokenId]
 	require(!exist, ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) already staked", tokenId))
@@ -103,11 +105,11 @@ func StakeToken(
 	)
 
 	// check tokenId has liquidity or not
-	liquidity := s.PositionGetPositionLiquidity(tokenId)
+	liquidity := pos.PositionGetPositionLiquidity(tokenId)
 	require(liquidity > 0, ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) has no liquidity", tokenId))
 
 	// check pool path from tokenid
-	poolKey := s.PositionGetPositionPoolKey(tokenId)
+	poolKey := pos.PositionGetPositionPoolKey(tokenId)
 
 	// staked status
 	deposit := deposits[tokenId]
@@ -118,6 +120,9 @@ func StakeToken(
 
 	// transfer NFT ownership to staker contract
 	transferDeposit(tokenId, GetOrigPkgAddr())
+
+	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
+	return poolKey, token0Amount, token1Amount
 }
 
 func CollectReward(
@@ -137,9 +142,7 @@ func CollectReward(
 	)
 }
 
-func UnstakeToken(
-	tokenId uint64, // LP TokenID
-) {
+func UnstakeToken(tokenId uint64) (string, bigint, bigint) {
 	deposit, exist := deposits[tokenId]
 	require(exist, ufmt.Sprintf("[STAKER] staker.gno__UnstakeToken() || tokenId(%d) not staked", tokenId))
 
@@ -147,7 +150,7 @@ func UnstakeToken(
 	require(PrevRealmAddr() == deposit.owner, ufmt.Sprintf("[STAKER] staker.gno__UnstakeToken() || only owner(%s) can unstake their token(%d), PrevRealmAddr()(%s)", deposit.owner, tokenId, PrevRealmAddr()))
 
 	// poolPath to unstake lp token
-	poolPath := s.PositionGetPositionPoolKey(tokenId)
+	poolPath := pos.PositionGetPositionPoolKey(tokenId)
 
 	// get all external reward list for this pool
 	for _, incentiveId := range poolIncentives[poolPath] {
@@ -171,6 +174,9 @@ func UnstakeToken(
 
 	// transfer NFT ownership to origin owner
 	gnft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(deposit.owner), tid(tokenId))
+
+	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
+	return poolPath, token0Amount, token1Amount
 }
 
 func EndExternalIncentive(refundee, targetPoolPath, rewardToken string) {
@@ -234,4 +240,22 @@ func deleteFromIncentives(m map[string]Incentive, key string) map[string]Incenti
 	}
 
 	return m
+}
+
+func getTokenPairBalanceFromPosition(tokenId uint64) (bigint, bigint) {
+	poolKey := pos.PositionGetPositionPoolKey(tokenId)
+
+	pool := pl.GetPoolFromPoolKey(poolKey)
+	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
+	lowerX96 := pl.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickLower(tokenId))
+	upperX96 := pl.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickUpper(tokenId))
+
+	token0Balance, token1Balance := liquidityAmountsGetAmountsForLiquidity(
+		currentX96,
+		lowerX96,
+		upperX96,
+		pos.PositionGetPositionLiquidity(tokenId),
+	)
+
+	return token0Balance, token1Balance
 }
