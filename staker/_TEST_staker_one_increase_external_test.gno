@@ -134,7 +134,7 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.0.incentiveType").String(), "INTERNAL")
 	shouldEQ(t, jsonStr.Get("response.data.0.targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 	shouldEQ(t, jsonStr.Get("response.data.0.rewardTokenPath").String(), INTERNAL_REWARD_TOKEN_PATH)
-	shouldEQ(t, jsonStr.Get("response.data.0.rewardTokenAmount").Int(), 252)
+	shouldEQ(t, jsonStr.Get("response.data.0.rewardTokenAmount").Int(), 84)
 
 	shouldEQ(t, jsonStr.Get("response.data.1.incentiveType").String(), "EXTERNAL")
 	shouldEQ(t, jsonStr.Get("response.data.0.targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
@@ -151,7 +151,7 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 499999999999752) // internal
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 499999999999584) // internal
 		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000000648) // external
 	}
 
@@ -163,15 +163,25 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 500000000001402) // internal
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 500000000000133) // internal
 		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000004891) // external
 	}
 }
 
 func TestEndExternalIncentive(t *testing.T) {
+	shouldEQ(t, len(incentives), 1)
+
 	std.TestSetOrigCaller(test1)
-	std.TestSkipHeights(9999999)
-	EndExternalIncentive(GetOrigCaller().String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
+
+	// incentive time isn't over yet
+	shouldPanicWithMsg(t, func() {
+		EndExternalIncentive(string(test1), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl")
+	}, "[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(1242343920), current(1234567975)")
+
+	std.TestSkipHeights(1555188) // not yet, one more should be good to end incentive
+	std.TestSkipHeights(1)
+
+	EndExternalIncentive(string(test1), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, len(incentives), 0)
