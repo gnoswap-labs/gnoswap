@@ -45,8 +45,7 @@ func getSwapPaths(
 	outputTokenPath string,
 	maxHops int,
 ) string {
-
-	swapPaths := ""
+	var builder strings.Builder
 
 	// check if there is path that starts with input
 	require(len(tokenPairs[inputTokenPath]) != 0, ufmt.Sprintf("[ROUTER] find_path.gno__getSwapPaths() || len(tokenPairs[inputTokenPath]) == 0, inputTokenPath: %s", inputTokenPath))
@@ -55,19 +54,17 @@ func getSwapPaths(
 	for _, output := range tokenPairs[inputTokenPath] {
 		if strings.HasPrefix(output, outputTokenPath) {
 			outputPath, outputFee := singlePoolPathWithFeeDivide(output)
-			directPath := inputTokenPath + "," + outputFee + "," + outputPath
-			swapPaths += directPath + "_FIN_"
-
+			appendToBuilder(&builder, inputTokenPath, ",", outputFee, ",", outputPath, "_FIN_")
 			tokenPairs[inputTokenPath] = removeItemFromStringArray(tokenPairs[inputTokenPath], output)
 		}
 	}
 
 	firstToken := ""
 	for i := 1; i <= maxHops; i++ {
-		findPath(tokenPairs, inputTokenPath, outputTokenPath, "", i, &swapPaths, &firstToken)
+		findPath(tokenPairs, inputTokenPath, outputTokenPath, "", i, &firstToken, &builder)
 	}
 
-	return swapPaths
+	return builder.String()
 }
 
 func findPath(
@@ -76,8 +73,8 @@ func findPath(
 	outputTokenPath string,
 	currentPath string,
 	remainingHops int,
-	swapPaths *string,
 	firstToken *string,
+	builder *strings.Builder,
 ) {
 	if *firstToken == "" {
 		*firstToken = currentTokenPath
@@ -85,7 +82,7 @@ func findPath(
 
 	if remainingHops == 0 {
 		if strings.HasPrefix(currentTokenPath, outputTokenPath) {
-			*swapPaths += (*firstToken + "," + currentPath) + "_FIN_"
+			appendToBuilder(builder, *firstToken, ",", currentPath, "_FIN_")
 		}
 		return
 	}
@@ -102,6 +99,15 @@ func findPath(
 		// remove opposite path
 		tokenPairs[nextPath] = removeItemFromStringArray(tokenPairs[nextPath], (currentTokenPath + ":" + nextFee))
 
-		findPath(tokenPairs, nextPath, outputTokenPath, newPath, remainingHops-1, swapPaths, firstToken)
+		findPath(tokenPairs, nextPath, outputTokenPath, newPath, remainingHops-1, firstToken, builder)
+	}
+}
+
+// appendToBuilder appends the given elements to the strings.Builder.
+// It takes a pointer to a strings.Builder and a variadic parameter of strings.
+// The elements are appended to the builder in the order they are provided.
+func appendToBuilder(builder *strings.Builder, elements ...string) {
+	for _, element := range elements {
+		builder.WriteString(element)
 	}
 }
