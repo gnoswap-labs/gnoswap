@@ -24,6 +24,8 @@ func init() {
 	stakerAddr := std.DerivePkgAddr("gno.land/r/demo/staker")
 	admins = append(admins, string(stakerAddr))
 	admins = append(admins, string(admin))
+
+	gns.Approve(ira, stakerAddr, 9_223_372_036_854_775_807) // max uint64
 }
 
 // method proxies as public functions.
