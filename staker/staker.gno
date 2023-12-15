@@ -185,20 +185,33 @@ func EndExternalIncentive(refundee, targetPoolPath, rewardToken string) {
 	require(exist, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || cannot end non existent incentive(%s)", incentiveId))
 	require(GetTimestamp() >= incentive.endTimestamp, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(%d), current(%d)", incentive.endTimestamp, GetTimestamp()))
 
-	require(incentive.refundee == std.GetOrigCaller(), "[STAKER] staker.gno__EndExternalIncentive() || only refundee can end incentive")
-
-	refund := incentive.rewardAmount
-
-	poolExternalReward := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
-	require(poolExternalReward >= refund, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || not enough poolExternalReward(%d) to refund(%d)", poolExternalReward, refund))
-
-	transferByRegisterCall(incentive.rewardToken, incentive.refundee, uint64(refund))
-
-	incentives = deleteFromIncentives(incentives, incentiveId)
-	for i, v := range poolIncentives[targetPoolPath] {
-		if v == incentiveId {
-			poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
+	// when incentive is ended
+	// 1. admin can end incentive without refund
+	// 2. refundee can end incentive with refund
+	switch GetOrigCaller() {
+	case std.Address("g16kvq0mra3atvr07lkdwc2x6jqmna8a4kt0e85d"): // ADMIN
+		// admin can end incentive without refund
+		incentives = deleteFromIncentives(incentives, incentiveId)
+		for i, v := range poolIncentives[targetPoolPath] {
+			if v == incentiveId {
+				poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
+			}
 		}
+	case incentive.refundee:
+		// refundee can end incentive with refund
+		refund := incentive.rewardAmount
+		poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
+		require(poolLeftExternalRewardAmount >= refund, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || not enough poolLeftExternalRewardAmount(%s_%d) to refund(%d)", incentive.rewardToken, poolLeftExternalRewardAmount, refund))
+		transferByRegisterCall(incentive.rewardToken, incentive.refundee, uint64(refund))
+
+		incentives = deleteFromIncentives(incentives, incentiveId)
+		for i, v := range poolIncentives[targetPoolPath] {
+			if v == incentiveId {
+				poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
+			}
+		}
+	default:
+		require(false, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || only refundee or admin can end incentive"))
 	}
 }
 
