@@ -133,186 +133,19 @@ func TestMint(t *testing.T) {
 	}
 }
 
-func TestIncreaseLiquidity(t *testing.T) {
-	// test1 mints at test1 position
-	{
-		std.TestSetOrigCaller(test1)
-
-		tLiquidity, tAmount0, tAmount1 := IncreaseLiquidity(
-			bigint(1), // test1 test1s tid 1
-			bigint(2000),
-			bigint(2000),
-			bigint(1),
-			bigint(1),
-			bigint(1234567890),
-		)
-
-		shouldEQ(t, getNextId(), 5)
-	}
-
-	// test1 mints at unkntest1 position
-	// should panic
-	{
-		std.TestSetOrigCaller(test1)
-
-		shouldPanic(t, func() {
-			IncreaseLiquidity(
-				bigint(123),
-				bigint(2000),
-				bigint(2000),
-				bigint(1),
-				bigint(1),
-				bigint(1234567890),
-			)
-		})
-	}
+func TestCollectFee(t *testing.T) {
+	// collect fee from tid 1 ( no swap, no fee)
+	tokenId, fee0, fee1, poolPath := CollectFee(1)
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, fee0, bigint(0))
+	shouldEQ(t, fee1, bigint(0))
+	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
 
-func TestDecreaseLiquidity(t *testing.T) {
-	// test1 decreases liquidity at tid 1 position ( in range )
-	std.TestSetOrigCaller(test1)
-	pool := p.GetPool(fooPath, barPath, fee500)
-
-	tTargetLiquidity := bigint(1234)
-
-	poolOldLiquidity := pool.PoolGetLiquidity()
-
-	tAmount0, tAmount1 := DecreaseLiquidity(
-		bigint(1),
-		tTargetLiquidity,
-		bigint(1234567890),
-	)
-
-	shouldNEQ(t, tAmount0, bigint(0))
-	shouldNEQ(t, tAmount1, bigint(0))
-
-	// decreasing liquidity doesn't decrease tid
-	// Decreaseliquitiy() => Burn() doesn't decrease pool's balance
-	// Collect() will decrease pool's balance
-	shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity-tTargetLiquidity)
-}
-
-func TestCollect(t *testing.T) {
-	// test1 did decrease some liquidity => there are some to collect
-	{
-		std.TestSetOrigCaller(test1)
-		pool := p.GetPool(fooPath, barPath, fee500)
-
-		poolOldLiquidity := pool.PoolGetLiquidity()
-
-		// Collect => pool.Burn()
-		tAmount0, tAmount1 := Collect(
-			bigint(1),
-			test1,
-			bigint(10),
-			bigint(10),
-		)
-
-		shouldNEQ(t, tAmount0, bigint(0))
-		shouldNEQ(t, tAmount1, bigint(0))
-
-		// After Collect
-		// pool's liquidity stays same
-		// pool's balance decreases
-		shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity)
-
-		// Recipient balance increases
-	}
-
-	// test1 collect all
-	{
-		std.TestSetOrigCaller(test1)
-		pool := p.GetPool(fooPath, barPath, fee500)
-
-		poolOldLiquidity := pool.PoolGetLiquidity()
-
-		tAmount0, tAmount1 := Collect(
-			bigint(1),
-			test1,
-			bigint(100000),
-			bigint(100000),
-		)
-
-		shouldNEQ(t, tAmount0, bigint(0))
-		shouldNEQ(t, tAmount1, bigint(0))
-
-		// After Collect
-		// pool's liquidity stays same
-		// pool's balance decreases
-		shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity)
-
-		// Recipient balance increases
-	}
-
-	// test1 didn't decrease any liquidity => nothing to collect
-	{
-		std.TestSetOrigCaller(test1)
-		pool := p.GetPool(fooPath, barPath, fee500)
-
-		poolOldLiquidity := pool.PoolGetLiquidity()
-
-		tAmount0, tAmount1 := Collect(
-			bigint(2),
-			test1,
-			bigint(10),
-			bigint(10),
-		)
-
-		shouldEQ(t, tAmount0, bigint(0))
-		shouldEQ(t, tAmount1, bigint(0))
-
-		// After Collect
-		// pool's liquidity stays same
-		// pool's balance decreases
-		shouldEQ(t, pool.PoolGetLiquidity(), poolOldLiquidity)
-
-		// Recipient balance increases
-	}
-}
-
-func TestNFTBurn(t *testing.T) {
-	// burn tid 1 (test1's position) will panic => there are some liquidity left
-	std.TestSetOrigCaller(test1)
-	shouldPanic(t, func() { burn("1") })
-
-	// remove all liquditiy & collect all then burn tid 1
-	{
-		std.TestSetOrigCaller(test1)
-
-		tTokenId := uint64(1)
-		tPosition := positions[tTokenId]
-
-		tPositionLiquidity := tPosition.liquidity
-
-		// remove all liquidity
-		DecreaseLiquidity(
-			tTokenId,
-			tPositionLiquidity, // remove all liquidity
-			bigint(1234567890),
-		)
-		// didn't collect yet => burn will panic
-		shouldPanic(t, func() { burn("1") })
-
-		// collect all => nft is burnable and burned
-		tBefore := nftBalanceOf(test1)
-		Collect( // burn happens here as last step
-			tTokenId,
-			test1,
-			bigint(100000000), // collect all
-			bigint(100000000), // collect all
-		)
-		shouldEQ(t, nftBalanceOf(test1), tBefore-bigint(1))
-	}
-
-	// burn non exists nft
-	shouldPanic(t, func() { burn("5") })
-}
-
-/* GETTER_API TEST */
 func TestApiGetPositions(t *testing.T) {
 	gpss := ApiGetPositions()
 	jsonStr := gjson.Parse(gpss)
-	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 3)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 4)
 }
 
 func TestApiGetPosition(t *testing.T) {
@@ -344,6 +177,43 @@ func TestApiGetPosition(t *testing.T) {
 
 func TestApiGetPositionByUser(t *testing.T) {
 	gpu := ApiGetPositionByUser("g16kvq0mra3atvr07lkdwc2x6jqmna8a4kt0e85d") // test1
+	jsonStr := gjson.Parse(gpu)
+	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 4)
+
+	shouldEQ(t, jsonStr.Get("response.data.0.token_id").Int(), 1)
+	shouldEQ(t, jsonStr.Get("response.data.0.pool_key").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data.0.tick_lower").Int(), -11000)
+	shouldEQ(t, jsonStr.Get("response.data.0.tick_upper").Int(), -9000)
+	shouldEQ(t, jsonStr.Get("response.data.0.liquidity").Int(), 622504326)
+
+	shouldEQ(t, jsonStr.Get("response.data.1.token_id").Int(), 2)
+	shouldEQ(t, jsonStr.Get("response.data.1.pool_key").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data.1.tick_lower").Int(), -11000)
+	shouldEQ(t, jsonStr.Get("response.data.1.tick_upper").Int(), -9000)
+	shouldEQ(t, jsonStr.Get("response.data.1.liquidity").Int(), 24900)
+
+	shouldEQ(t, jsonStr.Get("response.data.2.token_id").Int(), 3)
+	shouldEQ(t, jsonStr.Get("response.data.2.tick_lower").Int(), -2000)
+	shouldEQ(t, jsonStr.Get("response.data.2.tick_upper").Int(), -1000)
+	shouldEQ(t, jsonStr.Get("response.data.2.liquidity").Int(), 18553)
+
+	shouldEQ(t, jsonStr.Get("response.data.3.token_id").Int(), 4)
+	shouldEQ(t, jsonStr.Get("response.data.3.tick_lower").Int(), 32000)
+	shouldEQ(t, jsonStr.Get("response.data.3.tick_upper").Int(), 34000)
+	shouldEQ(t, jsonStr.Get("response.data.3.liquidity").Int(), 52046)
+}
+
+func TestBurn(t *testing.T) {
+	tokenId, liquidity, amount0, amount1, poolPath := Burn(1)
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, liquidity, bigint(622504326))
+	shouldEQ(t, amount0, bigint(49999999))
+	shouldEQ(t, amount1, bigint(18432647))
+	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+}
+
+func TestApiGetPositionByUserAfterBurn(t *testing.T) {
+	gpu := ApiGetPositionByUser("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5") // test1
 	jsonStr := gjson.Parse(gpu)
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 3)
 

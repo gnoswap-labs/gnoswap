@@ -45,6 +45,7 @@ func TestMint(t *testing.T) {
 	Mint(fooPath, barPath, fee500, int32(4000), int32(6000), bigint(1_000_000), bigint(1_000_000), bigint(0), bigint(0), bigint(1234567890))
 }
 
+// 3. Swap to make position fee
 func TestSwap(t *testing.T) {
 	std.TestSetPrevRealm("gno.land/r/demo/router")
 	std.TestSetOrigCaller(test1)
@@ -58,33 +59,22 @@ func TestSwap(t *testing.T) {
 		MIN_PRICE,
 		test1,
 	)
-
 }
 
-/* GETTER_API TEST */
 func TestApiGetPositions(t *testing.T) {
 	gpss := ApiGetPositions()
 	jsonStr := gjson.Parse(gpss)
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 2)
 }
 
-func TestApiGetPosition(t *testing.T) {
+func TestCollectFeeAfterSwap(t *testing.T) {
 	// burn 0 to collect swap fee
 	std.TestSetOrigCaller(test1)
-	DecreaseLiquidity(1, 0, 99999999999)
-
-	gps := ApiGetPosition(uint64(1))
-	jsonStr := gjson.Parse(gps)
-
-	shouldEQ(t, jsonStr.Get("response.data.token_id").Int(), 1)
-	shouldEQ(t, jsonStr.Get("response.data.pool_key").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
-	shouldEQ(t, jsonStr.Get("response.data.tick_lower").Int(), -11000)
-	shouldEQ(t, jsonStr.Get("response.data.tick_upper").Int(), -9000)
-	shouldEQ(t, jsonStr.Get("response.data.liquidity").Int(), 12450086)
-	shouldEQ(t, jsonStr.Get("response.data.token0_balance").Int(), 1123393)
-	shouldEQ(t, jsonStr.Get("response.data.token1_balance").Int(), 323523)
-	shouldEQ(t, jsonStr.Get("response.data.tokens_owed_0").Int(), 61)
-	shouldEQ(t, jsonStr.Get("response.data.tokens_owed_1").Int(), 0)
+	tokneId, fee0, fee1, fromPath := CollectFee(1)
+	shouldEQ(t, tokneId, uint64(1))
+	shouldEQ(t, fee0, bigint(61))
+	shouldEQ(t, fee1, bigint(0))
+	shouldEQ(t, fromPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
 
 func TestApiGetPositionByUser(t *testing.T) {
