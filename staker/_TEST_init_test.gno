@@ -96,6 +96,19 @@ func shouldPanic(t *testing.T, f func()) {
 	f()
 }
 
+func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		} else {
+			if r != msg {
+				t.Errorf("excepted panic(%v), got(%v)", msg, r)
+			}
+		}
+	}()
+	f()
+}
+
 func ugnotBalanceOf(addr std.Address) uint64 {
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 
