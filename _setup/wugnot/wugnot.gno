@@ -12,13 +12,11 @@ import (
 
 var (
 	// wugnot is the admin token, able to mint and burn.
-	// wugnot *grc20.AdminToken = grc20.NewAdminToken("wrapped GNOT", "wugnot", 0) // orig
-	wugnot *grc20.AdminToken = grc20.NewAdminToken("Wrapped GNOT", "wugnot", 6)
+	wugnot *grc20.AdminToken = grc20.NewAdminToken("WrappedGNOT", "WGNOT", 6)
 
 	// WUGNOT is the banker usable by users directly.
 	WUGNOT = wugnot.GRC20()
 )
-
 
 const (
 	ugnotMinDeposit  uint64 = 1
