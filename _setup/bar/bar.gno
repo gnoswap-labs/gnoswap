@@ -79,6 +79,11 @@ func Faucet() {
 	bar.Mint(caller, 1_000_000_000)
 }
 
+func FaucetL() {
+	caller := std.PrevRealm().Addr()
+	bar.Mint(caller, 1_000_000_000_000)
+}
+
 // administration.
 func Mint(address users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()

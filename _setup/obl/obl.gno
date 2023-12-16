@@ -77,7 +77,12 @@ func TransferFrom(from, to users.AddressOrName, amount uint64) {
 // faucet.
 func Faucet() {
 	caller := std.PrevRealm().Addr()
-	obl.Mint(caller, 1000*10000) // 1k
+	obl.Mint(caller, 1_000_000_000)
+}
+
+func FaucetL() {
+	caller := std.PrevRealm().Addr()
+	obl.Mint(caller, 1_000_000_000_000)
 }
 
 // administration.

@@ -78,7 +78,14 @@ func Faucet() {
 	// FIXME: add limits?
 	// FIXME: add payment in gnot?
 	caller := std.PrevRealm().Addr()
-	fred.Mint(caller, 1000*10000) // 1k
+	fred.Mint(caller, 1_000_000_000)
+}
+
+func FaucetL() {
+	// FIXME: add limits?
+	// FIXME: add payment in gnot?
+	caller := std.PrevRealm().Addr()
+	fred.Mint(caller, 1_000_000_000_000)
 }
 
 // administration.
