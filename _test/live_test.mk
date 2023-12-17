@@ -35,7 +35,7 @@ help:
 	@cat $(MAKEFILE) | grep '^[a-z][^:]*:' | cut -d: -f1 | sort | sed 's/^/  /'
 
 .PHONY: all
-all: deploy faucet approve pool-setup position-mint staker-stake router-swap staker-unstake done
+all: wait deploy faucet approve pool-setup position-mint staker-stake router-swap staker-unstake done
 
 .PHONY: deploy
 deploy: deploy-foo deploy-bar deploy-baz deploy-qux deploy-wugnot deploy-gns deploy-obl deploy-gnft deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-grc20_wrapper 
@@ -63,6 +63,9 @@ staker-unstake: unstake-token-1 burn-token-1 # burn-token-2
 
 .PHONY: stake-test
 stake-test: deploy faucet-gsa approve-gsa pool-setup create-external-incentive faucet-lp01 approve-lp01 faucet-lp02 approve-lp02 wrap mint-01 mint-02 stake-token-1 stake-token-2
+
+wait:
+	$(shell sleep 10)
 
 # Deploy Tokens
 deploy-foo:
