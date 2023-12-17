@@ -26,7 +26,7 @@ help:
 	@cat $(MAKEFILE) | grep '^[a-z][^:]*:' | cut -d: -f1 | sort | sed 's/^/  /'
 
 .PHONY: all
-all: deploy faucet approve pool-setup position-setup done
+all: wait deploy faucet approve pool-setup position-setup done
 
 .PHONY: deploy
 deploy: deploy-grc20s deploy-gnft deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-grc20_wrapper 
@@ -39,6 +39,9 @@ pool-setup: pool-init pool-create
 
 .PHONY: position-setup
 position-setup: position-mint
+
+wait:
+	$(shell sleep 10)
 
 # Deploy Tokens
 deploy-grc20s:
