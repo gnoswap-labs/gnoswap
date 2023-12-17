@@ -132,6 +132,7 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 	// test1 reward check
 	gra := ApiGetRewardByAddress(test1)
 	jsonStr := gjson.Parse(gra)
+
 	shouldEQ(t, jsonStr.Get("response.data.0.incentiveType").String(), "INTERNAL")
 	shouldEQ(t, jsonStr.Get("response.data.0.targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/qux:500")
 	shouldEQ(t, jsonStr.Get("response.data.0.rewardTokenPath").String(), INTERNAL_REWARD_TOKEN_PATH)
@@ -141,6 +142,18 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.0.targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/qux:500")
 	shouldEQ(t, jsonStr.Get("response.data.1.rewardTokenPath").String(), "gno.land/r/demo/obl")
 	shouldEQ(t, jsonStr.Get("response.data.1.rewardTokenAmount").Int(), 648)
+}
+
+func TestCollectReward(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	// before claim
+	gnsOld := gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsOld, 499999999999500)
+
+	CollectReward(1) // GNFT tokenId
+	gnsNew := gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsNew, 499999999999584)
 
 }
 
@@ -153,8 +166,8 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 499999999999584) // internal
-		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000000648) // external
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 499999999999668) // internal
+		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000001296) // external
 	}
 
 	{
@@ -165,8 +178,8 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 500000000000133) // internal
-		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000004891) // external
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 500000000000217) // internal
+		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000005539) // external
 	}
 }
 

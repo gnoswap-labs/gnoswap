@@ -1,10 +1,38 @@
 package staker
 
 import (
+	"std"
+
 	"gno.land/p/demo/ufmt"
 
 	pos "gno.land/r/demo/position"
 )
+
+type claimedReward struct {
+	rewardTokenPath   string
+	rewardTokenAmount bigint
+}
+
+type userClaimedReward map[std.Address][]claimedReward // address -> claimedReward{}
+var userClaimedRewards = make(userClaimedReward)
+
+func userClaimedRewardAmount(address std.Address, rewardTokenPath string, rewardAmount bigint) bigint {
+	claimedRewards, ok := userClaimedRewards[address]
+	if !ok {
+		return rewardAmount
+	}
+
+	var claimableAmount bigint
+	for _, claimedReward := range claimedRewards {
+		if claimedReward.rewardTokenPath == rewardTokenPath {
+			claimableAmount = rewardAmount - claimedReward.rewardTokenAmount
+			claimedReward.rewardTokenAmount += claimableAmount
+		}
+	}
+
+	userClaimedRewards[address] = claimedRewards
+	return claimableAmount
+}
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) uint64 {
 	// r3v4_xxx: calculate amount of `GNS` to be minted by every block
@@ -51,7 +79,8 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) uint
 	// #1: to convert `listTierRatio()` return value to percentage
 	// #2: to convert `getRewardRatio()` return value to percentage
 
-	return uint64(finalReward)
+	claimableReward := userClaimedRewardAmount(deposit.owner, INTERNAL_REWARD_TOKEN_PATH, finalReward)
+	return uint64(claimableReward)
 }
 
 func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, incentive Incentive) uint64 {
@@ -104,7 +133,8 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 	// why do we need to divide by 100
 	// to convert `getRewardRatio()` return value to percentage
 
-	return uint64(finalReward)
+	claimableReward := userClaimedRewardAmount(deposit.owner, incentive.rewardToken, finalReward)
+	return uint64(claimableReward)
 }
 
 func getPoolTotalStakedLiquidity(poolPath string) bigint {
