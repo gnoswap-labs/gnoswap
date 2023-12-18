@@ -116,6 +116,7 @@ func ApiGetRewardByAddress(address std.Address) string {
 
 			// get internal gns reward
 			internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
+			internalGNS = userClaimedRewardAmount(deposit.owner, "gno.land/r/demo/gns", bigint(internalGNS), false)
 
 			if internalGNS > 0 {
 				rewardList = append(rewardList, ApiRewardByAddress{
@@ -131,14 +132,18 @@ func ApiGetRewardByAddress(address std.Address) string {
 			// find all external reward list for this pool
 			for _, incentiveId := range poolIncentives[poolPath] {
 				externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentives[incentiveId])
-				rewardList = append(rewardList, ApiRewardByAddress{
-					Address:           address.String(),
-					LpTokenId:         tokenId,
-					IncentiveType:     "EXTERNAL",
-					TargetPoolPath:    poolPath,
-					RewardTokenPath:   incentives[incentiveId].rewardToken,
-					RewardTokenAmount: externalReward,
-				})
+				externalReward = userClaimedRewardAmount(deposit.owner, incentives[incentiveId].rewardToken, bigint(externalReward), false)
+
+				if externalReward > 0 {
+					rewardList = append(rewardList, ApiRewardByAddress{
+						Address:           address.String(),
+						LpTokenId:         tokenId,
+						IncentiveType:     "EXTERNAL",
+						TargetPoolPath:    poolPath,
+						RewardTokenPath:   incentives[incentiveId].rewardToken,
+						RewardTokenAmount: externalReward,
+					})
+				}
 			}
 		}
 	}
