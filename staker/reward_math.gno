@@ -8,30 +8,35 @@ import (
 	pos "gno.land/r/demo/position"
 )
 
-type claimedReward struct {
-	rewardTokenPath   string
-	rewardTokenAmount bigint
-}
-
-type userClaimedReward map[std.Address][]claimedReward // address -> claimedReward{}
+type userClaimedReward map[std.Address]map[string]bigint // address -> rewardTokenPath -> rewardTokenAmount
 var userClaimedRewards = make(userClaimedReward)
 
-func userClaimedRewardAmount(address std.Address, rewardTokenPath string, rewardAmount bigint) bigint {
-	claimedRewards, ok := userClaimedRewards[address]
+func userClaimedRewardAmount(address std.Address, rewardTokenPath string, rewardAmount bigint, claimeRequest bool) uint64 {
+	userClaimed, ok := userClaimedRewards[address] // if user(address) ever claimed reward
 	if !ok {
-		return rewardAmount
+		userClaimedRewards[address] = make(map[string]bigint)
 	}
 
-	var claimableAmount bigint
-	for _, claimedReward := range claimedRewards {
-		if claimedReward.rewardTokenPath == rewardTokenPath {
-			claimableAmount = rewardAmount - claimedReward.rewardTokenAmount
-			claimedReward.rewardTokenAmount += claimableAmount
+	claimedReward, ok := userClaimedRewards[address][rewardTokenPath] // if user(address) ever claimed rewardTokenPath
+	if !ok {
+		if claimeRequest { // if user is claiming rewardTokenPath
+			userClaimedRewards[address][rewardTokenPath] = rewardAmount // add rewardTokenPath to userClaimedRewards
+			return uint64(rewardAmount)
+		} else { // if user is not claiming rewardTokenPath
+			return uint64(rewardAmount)
 		}
 	}
 
-	userClaimedRewards[address] = claimedRewards
-	return claimableAmount
+	// user ever claimed rewardTokenPath
+	var claimableAmount bigint
+	if claimeRequest { // if user is claiming rewardTokenPath
+		claimableAmount = rewardAmount - claimedReward
+		userClaimedRewards[address][rewardTokenPath] += claimableAmount
+		return uint64(claimableAmount)
+	} else { // if user is not claiming rewardTokenPath
+		claimableAmount = rewardAmount - claimedReward
+		return uint64(claimableAmount)
+	}
 }
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) uint64 {
@@ -79,8 +84,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) uint
 	// #1: to convert `listTierRatio()` return value to percentage
 	// #2: to convert `getRewardRatio()` return value to percentage
 
-	claimableReward := userClaimedRewardAmount(deposit.owner, INTERNAL_REWARD_TOKEN_PATH, finalReward)
-	return uint64(claimableReward)
+	return uint64(finalReward)
 }
 
 func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, incentive Incentive) uint64 {
@@ -133,8 +137,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 	// why do we need to divide by 100
 	// to convert `getRewardRatio()` return value to percentage
 
-	claimableReward := userClaimedRewardAmount(deposit.owner, incentive.rewardToken, finalReward)
-	return uint64(claimableReward)
+	return uint64(finalReward)
 }
 
 func getPoolTotalStakedLiquidity(poolPath string) bigint {

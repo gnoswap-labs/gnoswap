@@ -140,8 +140,11 @@ func CollectReward(
 	for _, incentiveId := range poolIncentives[poolPath] {
 		incentive := incentives[incentiveId]
 		externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentive) // external reward
+		externalReward = userClaimedRewardAmount(deposit.owner, incentive.rewardToken, bigint(externalReward), true)
 
-		transferByRegisterCall(incentive.rewardToken, deposit.owner, uint64(externalReward))
+		if externalReward > 0 {
+			transferByRegisterCall(incentive.rewardToken, deposit.owner, uint64(externalReward))
+		}
 
 		incentive.rewardAmount -= externalReward
 		incentives[incentiveId] = incentive
@@ -149,9 +152,13 @@ func CollectReward(
 
 	// default `Internal` reward
 	internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
+	internalGNS = userClaimedRewardAmount(deposit.owner, "gno.land/r/demo/gns", bigint(internalGNS), true)
 
-	// transfer it
-	gns.TransferFrom(a2u(INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(internalGNS))
+	if internalGNS > 0 {
+		// transfer it
+		gns.TransferFrom(a2u(INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(internalGNS))
+	}
+
 }
 
 func UnstakeToken(tokenId uint64) (string, bigint, bigint) {
@@ -168,8 +175,11 @@ func UnstakeToken(tokenId uint64) (string, bigint, bigint) {
 	for _, incentiveId := range poolIncentives[poolPath] {
 		incentive := incentives[incentiveId]
 		externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentive) // external reward
+		externalReward = userClaimedRewardAmount(deposit.owner, incentive.rewardToken, bigint(externalReward), true)
 
-		transferByRegisterCall(incentive.rewardToken, deposit.owner, uint64(externalReward))
+		if externalReward > 0 {
+			transferByRegisterCall(incentive.rewardToken, deposit.owner, uint64(externalReward))
+		}
 
 		incentive.rewardAmount -= externalReward
 		incentives[incentiveId] = incentive
@@ -177,9 +187,11 @@ func UnstakeToken(tokenId uint64) (string, bigint, bigint) {
 
 	// default `Internal` reward
 	internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-
-	// transfer it
-	gns.TransferFrom(a2u(INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(internalGNS))
+	internalGNS = userClaimedRewardAmount(deposit.owner, "gno.land/r/demo/gns", bigint(internalGNS), true)
+	if internalGNS > 0 {
+		// transfer it
+		gns.TransferFrom(a2u(INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(internalGNS))
+	}
 
 	// unstaked status
 	deposits = deleteFromDeposits(deposits, tokenId)
