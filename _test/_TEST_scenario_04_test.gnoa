@@ -1,0 +1,159 @@
+// single lp, single swap, large amount of tokens
+
+package swap_scneraio
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/testutils"
+
+	_ "gno.land/r/demo/grc20_wrapper"
+
+	pl "gno.land/r/demo/pool"
+	pos "gno.land/r/demo/position"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/qux"
+
+	"gno.land/r/demo/gns"
+	"gno.land/r/demo/obl"
+)
+
+var (
+	test1 = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+	lp01  = testutils.TestAddress("lp01")
+
+	tr01 = testutils.TestAddress("tr01")
+
+	poolAddr     = std.DerivePkgAddr("gno.land/r/demo/pool")
+	positionAddr = std.DerivePkgAddr("gno.land/r/demo/position")
+	stakerAddr   = std.DerivePkgAddr("gno.land/r/demo/staker")
+	routerAddr   = std.DerivePkgAddr("gno.land/r/demo/router")
+
+	barPath = "gno.land/r/demo/bar"
+	bazPath = "gno.land/r/demo/baz"
+	fooPath = "gno.land/r/demo/foo"
+	quxPath = "gno.land/r/demo/qux"
+
+	wugnotPath = "gno.land/r/demo/wugnot"
+
+	gnsPath = "gno.land/r/demo/gns"
+	oblPath = "gno.land/r/demo/obl"
+
+	barObj = bar.GetGRC20()
+	bazObj = baz.GetGRC20()
+	fooObj = foo.GetGRC20()
+	quxObj = qux.GetGRC20()
+
+	gnsObj = gns.GetGRC20()
+	oblObj = obl.GetGRC20()
+
+	max_timeout = bigint(9999999999)
+)
+
+func TestPoolInitByAdmin(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	pl.InitManual()
+	std.TestSkipHeights(1)
+}
+
+func TestFaucetTEST1(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	shouldEQ(t, balanceOf(barObj, test1), 0)
+	shouldEQ(t, balanceOf(bazObj, test1), 0)
+	shouldEQ(t, balanceOf(fooObj, test1), 0)
+	shouldEQ(t, balanceOf(quxObj, test1), 0)
+	shouldEQ(t, balanceOf(gnsObj, test1), 0)
+
+	bar.Faucet()
+	baz.Faucet()
+	foo.Faucet()
+	qux.Faucet()
+
+	gns.Faucet()
+
+	shouldEQ(t, balanceOf(barObj, test1), 1000000000)
+	shouldEQ(t, balanceOf(bazObj, test1), 1000000000)
+	shouldEQ(t, balanceOf(fooObj, test1), 1000000000)
+	shouldEQ(t, balanceOf(quxObj, test1), 1000000000)
+	shouldEQ(t, balanceOf(gnsObj, test1), 1000000000)
+
+	std.TestSkipHeights(5)
+}
+
+func TestPoolCreatePools(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	// approve gns to CreatePool ( 500 gns for 1 pool)
+	gns.Approve(a2u(poolAddr), 5000)
+
+	// bar-baz
+	pl.CreatePool(barPath, bazPath, 100, 354340008410679467268648495215) // tick 29960 ≈ 1:20
+
+	// baz-foo
+	pl.CreatePool(bazPath, fooPath, 100, 25050389945027294416741547334) // tick -23030 ≈ 1:0.1
+
+	// foo-wugnot
+	pl.CreatePool(fooPath, wugnotPath, 100, 17714911063927984461157312042) // tick -29960 ≈ 1:0.05
+
+	std.TestSkipHeights(4)
+}
+
+func TestFaucetLP01(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	shouldEQ(t, balanceOf(barObj, lp01), 0)
+	shouldEQ(t, balanceOf(bazObj, lp01), 0)
+	shouldEQ(t, balanceOf(fooObj, lp01), 0)
+	shouldEQ(t, balanceOf(quxObj, lp01), 0)
+
+	bar.Faucet()
+	baz.Faucet()
+	foo.Faucet()
+	qux.Faucet()
+
+	bar.Faucet()
+	baz.Faucet()
+	foo.Faucet()
+	qux.Faucet()
+
+	shouldEQ(t, balanceOf(barObj, lp01), 2000000000)
+	shouldEQ(t, balanceOf(bazObj, lp01), 2000000000)
+	shouldEQ(t, balanceOf(fooObj, lp01), 2000000000)
+	shouldEQ(t, balanceOf(quxObj, lp01), 2000000000)
+
+	std.TestSkipHeights(10)
+}
+
+func TestPositionMintBarBazInRangeLP01(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	// approve bar, baz to pool ( position.Mint() calls pool.Mint() ≈ so approve to pool )
+	bar.Approve(a2u(poolAddr), 1000000000)
+	baz.Approve(a2u(poolAddr), 1000000000)
+
+	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+		barPath,     // token0
+		bazPath,     // token1
+		100,         // fee
+		29950,       // tickLower
+		29970,       // tickUpper
+		100000000,   // amount0Desired
+		100000000,   // amount1Desired
+		0,           // amount0Min
+		0,           // amount1Min
+		max_timeout, // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(1))
+	shouldEQ(t, liquidity, bigint(44732139001))
+	shouldEQ(t, amount0, bigint(4999410))
+	shouldEQ(t, amoutn1, bigint(100000000))
+
+	std.TestSkipHeights(3)
+}
