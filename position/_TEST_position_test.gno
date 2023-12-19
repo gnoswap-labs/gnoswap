@@ -176,7 +176,7 @@ func TestApiGetPosition(t *testing.T) {
 }
 
 func TestApiGetPositionByUser(t *testing.T) {
-	gpu := ApiGetPositionByUser("g16kvq0mra3atvr07lkdwc2x6jqmna8a4kt0e85d") // test1
+	gpu := ApiGetPositionByUser("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5") // test1
 	jsonStr := gjson.Parse(gpu)
 	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 4)
 
