@@ -89,6 +89,33 @@ func GetPoolKey(token0Path, token1Path string, fee uint16) string {
 	}
 }
 
+func AddAdmin(addr std.Address) {
+	caller := PrevRealmAddr()
+	if isAdmin(caller) {
+		admins = append(admins, addr)
+	} else {
+		panic("[POOL] pool_manager.gno__AddAdmin() || caller is not admin") // r3v4_xx: detailed error message ??
+	}
+}
+
+func RemoveAdmin(addr std.Address) {
+	caller := PrevRealmAddr()
+
+	if isAdmin(caller) {
+		if len(admins) == 1 {
+			panic("[POOL] pool_manager.gno__RemoveAdmin() || cannot remove last admin")
+		}
+		for i, v := range admins {
+			if v == addr {
+				admins = append(admins[:i], admins[i+1:]...)
+				return
+			}
+		}
+	} else {
+		panic("[POOL] pool_manager.gno__RemoveAdmin() || caller is not admin") // r3v4_xx: detailed error message ??
+	}
+}
+
 func newPool(
 	token0Path string,
 	token1Path string,

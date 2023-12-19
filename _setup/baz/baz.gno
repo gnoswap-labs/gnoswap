@@ -11,7 +11,7 @@ import (
 
 var (
 	baz   *grc20.AdminToken
-	admin std.Address = "g16kvq0mra3atvr07lkdwc2x6jqmna8a4kt0e85d" // TODO: helper to change admin
+	admin std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // TODO: helper to change admin
 )
 
 func init() {
@@ -74,9 +74,8 @@ func TransferFrom(from, to users.AddressOrName, amount uint64) {
 }
 
 // faucet.
-func Faucet() {
-	caller := std.PrevRealm().Addr()
-	baz.Mint(caller, 1_000_000_000)
+func Faucet(addr std.Address) {
+	baz.Mint(addr, 100_000_000)
 }
 
 func FaucetL() {

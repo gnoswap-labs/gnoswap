@@ -11,15 +11,15 @@ import (
 
 var (
 	gns    *grc20.AdminToken
-	admin  std.Address = "g16kvq0mra3atvr07lkdwc2x6jqmna8a4kt0e85d" // TODO: helper to change admin
+	admin  std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // TODO: helper to change admin
 	ira    std.Address = "g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm" // ToBeChanged: account for gnoswap staker's internal reward
 	admins []string
 )
 
 func init() {
 	gns = grc20.NewAdminToken("Gnoswap", "GNS", 6)
-	gns.Mint(admin, 500_000_000_000_000) // @administrator
-	gns.Mint(ira, 500_000_000_000_000)   // @ira
+	gns.Mint(admin, 100_000_000_000_000) // @administrator
+	gns.Mint(ira, 400_000_000_000_000)   // @ira
 
 	stakerAddr := std.DerivePkgAddr("gno.land/r/demo/staker")
 	admins = append(admins, string(stakerAddr))
@@ -83,9 +83,8 @@ func TransferFrom(from, to users.AddressOrName, amount uint64) {
 }
 
 // faucet.
-func Faucet() {
-	caller := std.PrevRealm().Addr()
-	gns.Mint(caller, 1_000_000_000)
+func Faucet(addr std.Address) {
+	gns.Mint(addr, 100_000_000)
 }
 
 func FaucetL() {
