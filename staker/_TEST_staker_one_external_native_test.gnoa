@@ -162,8 +162,8 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 499999999999584) // internal
-		shouldEQ(t, wugnot.BalanceOf(a2u(test1)), 324)          // external
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 99999999999584) // internal
+		shouldEQ(t, wugnot.BalanceOf(a2u(test1)), 324)         // external
 	}
 
 	{
@@ -174,8 +174,8 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 500000000000133) // internal
-		shouldEQ(t, wugnot.BalanceOf(a2u(test1)), 2445)         // external
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 100000000000049) // internal
+		shouldEQ(t, wugnot.BalanceOf(a2u(test1)), 2121)         // external
 	}
 }
 
