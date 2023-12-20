@@ -7,7 +7,7 @@ import (
 type Incentive struct {
 	targetPoolPath string
 	rewardToken    string
-	rewardAmount   uint64
+	rewardAmount   bigint
 	startTimestamp int64
 	endTimestamp   int64
 	refundee       std.Address

@@ -43,7 +43,7 @@ func init() {
 func CreateExternalIncentive(
 	targetPoolPath string,
 	rewardToken string, // token path should be registered
-	rewardAmount uint64,
+	rewardAmount bigint,
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
@@ -55,7 +55,7 @@ func CreateExternalIncentive(
 	}
 
 	fromBalanceBefore := balanceOfByRegisterCall(rewardToken, GetOrigCaller())
-	require(fromBalanceBefore >= rewardAmount, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || not enough rewardAmount(%d) to create incentive(%d)", fromBalanceBefore, rewardAmount))
+	require(fromBalanceBefore >= uint64(rewardAmount), ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || not enough rewardAmount(%d) to create incentive(%d)", fromBalanceBefore, rewardAmount))
 
 	poolRewardBalanceBefore := balanceOfByRegisterCall(rewardToken, GetOrigPkgAddr())
 
@@ -64,16 +64,16 @@ func CreateExternalIncentive(
 	// if same incentiveId exists => increase rewardTokenAmount
 	for _, v := range poolIncentives[targetPoolPath] {
 		if v == incentiveId {
-			transferFromByRegisterCall(rewardToken, GetOrigCaller(), GetOrigPkgAddr(), rewardAmount)
+			transferFromByRegisterCall(rewardToken, GetOrigCaller(), GetOrigPkgAddr(), uint64(rewardAmount))
 			incentives[v].rewardAmount += rewardAmount
 			return
 		}
 	}
 
-	transferFromByRegisterCall(rewardToken, GetOrigCaller(), GetOrigPkgAddr(), rewardAmount)
+	transferFromByRegisterCall(rewardToken, GetOrigCaller(), GetOrigPkgAddr(), uint64(rewardAmount))
 
 	poolRewardBalanceAfter := balanceOfByRegisterCall(rewardToken, GetOrigPkgAddr())
-	require(poolRewardBalanceAfter-poolRewardBalanceBefore == rewardAmount, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || pool reward balance not updated correctly"))
+	require(poolRewardBalanceAfter-poolRewardBalanceBefore == uint64(rewardAmount), ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || pool reward balance not updated correctly(before:%d, added:%d, final:%d)", poolRewardBalanceBefore, rewardAmount, poolRewardBalanceAfter))
 
 	incentives[incentiveId] = Incentive{
 		targetPoolPath: targetPoolPath,
@@ -175,7 +175,7 @@ func UnstakeToken(tokenId uint64) (string, bigint, bigint) {
 	for _, incentiveId := range poolIncentives[poolPath] {
 		incentive := incentives[incentiveId]
 		externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentive) // external reward
-		externalReward = userClaimedRewardAmount(deposit.owner, incentive.rewardToken, bigint(externalReward), true)
+		externalReward = userClaimedRewardAmount(deposit.owner, incentive.rewardToken, externalReward, true)
 
 		if externalReward > 0 {
 			transferByRegisterCall(incentive.rewardToken, deposit.owner, uint64(externalReward))
@@ -187,7 +187,7 @@ func UnstakeToken(tokenId uint64) (string, bigint, bigint) {
 
 	// default `Internal` reward
 	internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-	internalGNS = userClaimedRewardAmount(deposit.owner, "gno.land/r/demo/gns", bigint(internalGNS), true)
+	internalGNS = userClaimedRewardAmount(deposit.owner, "gno.land/r/demo/gns", internalGNS, true)
 	if internalGNS > 0 {
 		// transfer it
 		gns.TransferFrom(a2u(INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(internalGNS))
@@ -225,7 +225,7 @@ func EndExternalIncentive(refundee, targetPoolPath, rewardToken string) {
 		// refundee can end incentive with refund
 		refund := incentive.rewardAmount
 		poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
-		require(poolLeftExternalRewardAmount >= refund, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || not enough poolLeftExternalRewardAmount(%s_%d) to refund(%d)", incentive.rewardToken, poolLeftExternalRewardAmount, refund))
+		require(poolLeftExternalRewardAmount >= uint64(refund), ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || not enough poolLeftExternalRewardAmount(%s_%d) to refund(%d)", incentive.rewardToken, poolLeftExternalRewardAmount, refund))
 		transferByRegisterCall(incentive.rewardToken, incentive.refundee, uint64(refund))
 
 		incentives = deleteFromIncentives(incentives, incentiveId)

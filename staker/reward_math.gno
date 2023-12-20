@@ -11,7 +11,7 @@ import (
 type userClaimedReward map[std.Address]map[string]bigint // address -> rewardTokenPath -> rewardTokenAmount
 var userClaimedRewards = make(userClaimedReward)
 
-func userClaimedRewardAmount(address std.Address, rewardTokenPath string, rewardAmount bigint, claimeRequest bool) uint64 {
+func userClaimedRewardAmount(address std.Address, rewardTokenPath string, rewardAmount bigint, claimeRequest bool) bigint {
 	userClaimed, ok := userClaimedRewards[address] // if user(address) ever claimed reward
 	if !ok {
 		userClaimedRewards[address] = make(map[string]bigint)
@@ -21,9 +21,9 @@ func userClaimedRewardAmount(address std.Address, rewardTokenPath string, reward
 	if !ok {
 		if claimeRequest { // if user is claiming rewardTokenPath
 			userClaimedRewards[address][rewardTokenPath] = rewardAmount // add rewardTokenPath to userClaimedRewards
-			return uint64(rewardAmount)
+			return rewardAmount
 		} else { // if user is not claiming rewardTokenPath
-			return uint64(rewardAmount)
+			return rewardAmount
 		}
 	}
 
@@ -32,14 +32,14 @@ func userClaimedRewardAmount(address std.Address, rewardTokenPath string, reward
 	if claimeRequest { // if user is claiming rewardTokenPath
 		claimableAmount = rewardAmount - claimedReward
 		userClaimedRewards[address][rewardTokenPath] += claimableAmount
-		return uint64(claimableAmount)
+		return claimableAmount
 	} else { // if user is not claiming rewardTokenPath
 		claimableAmount = rewardAmount - claimedReward
-		return uint64(claimableAmount)
+		return claimableAmount
 	}
 }
 
-func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) uint64 {
+func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) bigint {
 	// r3v4_xxx: calculate amount of `GNS` to be minted by every block
 	// 1. get block creation time (5s for now)
 	// 2. calculate amount of `GNS` to be minted by every block (10_000 for now)
@@ -84,20 +84,20 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) uint
 	// #1: to convert `listTierRatio()` return value to percentage
 	// #2: to convert `getRewardRatio()` return value to percentage
 
-	return uint64(finalReward)
+	return finalReward
 }
 
-func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, incentive Incentive) uint64 {
+func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, incentive Incentive) bigint {
 	// 1 month reward amount
 	incentiveDuration := incentive.endTimestamp - incentive.startTimestamp
-	monthlyReward := uint64(0)
+	monthlyReward := bigint(0)
 
 	switch {
 	case incentiveDuration == TIMESTAMP_90DAYS:
 		monthlyReward = incentive.rewardAmount / 3
 	case incentiveDuration > TIMESTAMP_90DAYS:
 		// 1 second reward == total reward amount / reward duration
-		monthlyReward = incentive.rewardAmount / uint64(incentiveDuration)
+		monthlyReward = incentive.rewardAmount / bigint(incentiveDuration)
 	default:
 		panic(ufmt.Sprintf("[STAKER] reward_math.gno || incentiveDuration(%d) should be at least 90 days", incentiveDuration))
 	}
@@ -137,7 +137,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 	// why do we need to divide by 100
 	// to convert `getRewardRatio()` return value to percentage
 
-	return uint64(finalReward)
+	return finalReward
 }
 
 func getPoolTotalStakedLiquidity(poolPath string) bigint {
