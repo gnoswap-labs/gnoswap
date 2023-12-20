@@ -58,7 +58,7 @@ func TestMint(t *testing.T) {
 	)
 
 	shouldEQ(t, tAmount0, bigint(367897))
-	shouldEQ(t, tAmount1, bigint(999999))
+	shouldEQ(t, tAmount1, bigint(1000000))
 }
 
 func TestSwapBuyNative(t *testing.T) {
@@ -67,7 +67,7 @@ func TestSwapBuyNative(t *testing.T) {
 	test1OldT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 	test1OldT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
 	shouldEQ(t, test1OldT0Bal, bigint(499999999632103)) // foo
-	shouldEQ(t, test1OldT1Bal, bigint(1))               // wugnot
+	shouldEQ(t, test1OldT1Bal, bigint(0))               // wugnot
 
 	std.TestSetPrevRealm("gno.land/r/demo/router")
 	std.TestSetOrigCaller(test1)
@@ -87,7 +87,7 @@ func TestSwapBuyNative(t *testing.T) {
 	test1NewT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 	test1NewT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
 	shouldEQ(t, test1NewT0Bal, bigint(499999999622103)) // - 10_000 // user sells 10_000
-	shouldEQ(t, test1NewT1Bal, bigint(27132))           // gets WGNOT
+	shouldEQ(t, test1NewT1Bal, bigint(27131))           // gets WGNOT
 }
 
 func TestSwapSellNative(t *testing.T) {
@@ -96,7 +96,7 @@ func TestSwapSellNative(t *testing.T) {
 	test1OldT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 	test1OldT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
 	shouldEQ(t, test1OldT0Bal, bigint(499999999622103))
-	shouldEQ(t, test1OldT1Bal, bigint(27132))
+	shouldEQ(t, test1OldT1Bal, bigint(27131))
 
 	// test1 has 27131 wugnot from previous swap
 	std.TestSetOrigCaller(test1)
@@ -118,5 +118,5 @@ func TestSwapSellNative(t *testing.T) {
 	test1NewT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 	test1NewT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
 	shouldEQ(t, test1NewT0Bal, bigint(499999999625788)) // foo
-	shouldEQ(t, test1NewT1Bal, bigint(17132))           // wugnot
+	shouldEQ(t, test1NewT1Bal, bigint(17131))           // wugnot
 }
