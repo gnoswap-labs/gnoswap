@@ -23,7 +23,7 @@ help:
 all: wait deploy approve pool-setup position-setup admin-change done
 
 .PHONY: deploy
-deploy: deploy-grc20s deploy-gnft deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-grc20_wrapper 
+deploy: deploy-grc20s deploy-gnft deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-grc20_wrapper deploy-faucet
 
 .PHONY: approve
 approve: approve-test1
@@ -94,6 +94,12 @@ deploy-grc20_wrapper:
 	$(info ************ [GRC20 Wrapper] deploy grc20_wrapper ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/grc20_wrapper_init -pkgpath gno.land/r/demo/grc20_wrapper -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
+
+deploy-faucet:
+	$(info ************ [FAUCET] deploy faucet ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/faucet -pkgpath gno.land/r/demo/faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo
+
 
 # Approve Tokens
 approve-test1:
