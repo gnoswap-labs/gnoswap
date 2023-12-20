@@ -108,7 +108,7 @@ func SwapRoute(
 		// check if route hop is up to 3
 		require(numHops <= 3, "[ROUTER] router.gno__SwapRoute() || numHops > 3")
 
-		toSwap := amountSpecified / bigint(100) * bigint(quote)
+		toSwap := amountSpecified * bigint(quote) / bigint(100)
 
 		if numHops == 1 { // SINGLE
 			resultAmount += handleSingleSwap(route, toSwap, false)
