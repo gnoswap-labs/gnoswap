@@ -16,7 +16,7 @@ type Reward struct {
 	IncentiveType     string `json:"incentiveType"`
 	TargetPoolPath    string `json:"targetPoolPath"`
 	RewardTokenPath   string `json:"rewardTokenPath"`
-	RewardTokenAmount uint64 `json:"rewardTokenAmount"`
+	RewardTokenAmount bigint `json:"rewardTokenAmount"`
 }
 
 type LpTokenReward struct {
@@ -96,7 +96,7 @@ type ApiRewardByAddress struct {
 	IncentiveType     string `json:"incentiveType"`
 	TargetPoolPath    string `json:"targetPoolPath"`
 	RewardTokenPath   string `json:"rewardTokenPath"`
-	RewardTokenAmount uint64 `json:"rewardTokenAmount"`
+	RewardTokenAmount bigint `json:"rewardTokenAmount"`
 }
 
 type ResponseGetApiRewardByAddress struct {
@@ -132,7 +132,7 @@ func ApiGetRewardByAddress(address std.Address) string {
 			// find all external reward list for this pool
 			for _, incentiveId := range poolIncentives[poolPath] {
 				externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentives[incentiveId])
-				externalReward = userClaimedRewardAmount(deposit.owner, incentives[incentiveId].rewardToken, bigint(externalReward), false)
+				externalReward = userClaimedRewardAmount(deposit.owner, incentives[incentiveId].rewardToken, externalReward, false)
 
 				if externalReward > 0 {
 					rewardList = append(rewardList, ApiRewardByAddress{

@@ -66,31 +66,6 @@ func TestPoolInitByAdmin(t *testing.T) {
 	std.TestSkipHeights(1)
 }
 
-func TestFaucetTEST1(t *testing.T) {
-	std.TestSetOrigCaller(test1)
-
-	shouldEQ(t, balanceOf(barObj, test1), 0)
-	shouldEQ(t, balanceOf(bazObj, test1), 0)
-	shouldEQ(t, balanceOf(fooObj, test1), 0)
-	shouldEQ(t, balanceOf(quxObj, test1), 0)
-	shouldEQ(t, balanceOf(gnsObj, test1), 0)
-
-	bar.Faucet()
-	baz.Faucet()
-	foo.Faucet()
-	qux.Faucet()
-
-	gns.Faucet()
-
-	shouldEQ(t, balanceOf(barObj, test1), 1000000000)
-	shouldEQ(t, balanceOf(bazObj, test1), 1000000000)
-	shouldEQ(t, balanceOf(fooObj, test1), 1000000000)
-	shouldEQ(t, balanceOf(quxObj, test1), 1000000000)
-	shouldEQ(t, balanceOf(gnsObj, test1), 1000000000)
-
-	std.TestSkipHeights(5)
-}
-
 func TestPoolCreatePools(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
@@ -117,15 +92,15 @@ func TestFaucetLP01(t *testing.T) {
 	shouldEQ(t, balanceOf(fooObj, lp01), 0)
 	shouldEQ(t, balanceOf(quxObj, lp01), 0)
 
-	bar.Faucet()
-	baz.Faucet()
-	foo.Faucet()
-	qux.Faucet()
+	bar.Faucet(lp01)
+	baz.Faucet(lp01)
+	foo.Faucet(lp01)
+	qux.Faucet(lp01)
 
-	shouldEQ(t, balanceOf(barObj, lp01), 1000000000)
-	shouldEQ(t, balanceOf(bazObj, lp01), 1000000000)
-	shouldEQ(t, balanceOf(fooObj, lp01), 1000000000)
-	shouldEQ(t, balanceOf(quxObj, lp01), 1000000000)
+	shouldEQ(t, balanceOf(barObj, lp01), 100000000)
+	shouldEQ(t, balanceOf(bazObj, lp01), 100000000)
+	shouldEQ(t, balanceOf(fooObj, lp01), 100000000)
+	shouldEQ(t, balanceOf(quxObj, lp01), 100000000)
 
 	std.TestSkipHeights(5)
 }
@@ -290,17 +265,14 @@ func TestStakerCreateExternalIncentive(t *testing.T) {
 
 	// get some obl to create external incentive
 	std.TestSetOrigCaller(test1)
-	shouldEQ(t, balanceOf(oblObj, test1), 0)
-	obl.Faucet()
-	shouldEQ(t, balanceOf(oblObj, test1), 1000000000)
 
 	// approve obl to staker
-	obl.Approve(a2u(stakerAddr), 1000000000)
+	obl.Approve(a2u(stakerAddr), 100000000)
 
 	stk.CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100", // targetPoolPath
 		oblPath,            // rewardTokenPath
-		1000000000,         // rewardAmount
+		100000000,          // rewardAmount
 		1234568045,         // startTimestamp
 		1234568045+7776000, // endTimestamp ( 90 days )
 	)
@@ -337,7 +309,7 @@ func TestStakerApiGetRewardsByAddress(t *testing.T) {
 	shouldEQ(t, responseArr[1].Get("incentiveType").String(), "EXTERNAL")
 	shouldEQ(t, responseArr[1].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
 	shouldEQ(t, responseArr[1].Get("rewardTokenPath").String(), "gno.land/r/demo/obl")
-	shouldEQ(t, responseArr[1].Get("rewardTokenAmount").Int(), 212)
+	shouldEQ(t, responseArr[1].Get("rewardTokenAmount").Int(), 21)
 }
 
 func TestStakerCollectReward(t *testing.T) {
@@ -349,7 +321,7 @@ func TestStakerCollectReward(t *testing.T) {
 	stk.CollectReward(1)
 
 	shouldEQ(t, balanceOf(gnsObj, lp01), 1650)
-	shouldEQ(t, balanceOf(oblObj, lp01), 212)
+	shouldEQ(t, balanceOf(oblObj, lp01), 21)
 }
 
 func TestStakerApiGetRewardsByAddressAfterCollectReward(t *testing.T) {
@@ -385,7 +357,7 @@ func TestStakerApiGetRewardsByAddressAfterBunchOfTime(t *testing.T) {
 	shouldEQ(t, responseArr[1].Get("incentiveType").String(), "EXTERNAL")
 	shouldEQ(t, responseArr[1].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
 	shouldEQ(t, responseArr[1].Get("rewardTokenPath").String(), "gno.land/r/demo/obl")
-	shouldEQ(t, responseArr[1].Get("rewardTokenAmount").Int(), 282)
+	shouldEQ(t, responseArr[1].Get("rewardTokenAmount").Int(), 28)
 
 	std.TestSkipHeights(1)
 }
@@ -398,15 +370,15 @@ func TestFaucetTR01(t *testing.T) {
 	shouldEQ(t, balanceOf(fooObj, tr01), 0)
 	shouldEQ(t, balanceOf(quxObj, tr01), 0)
 
-	bar.Faucet()
-	baz.Faucet()
-	foo.Faucet()
-	qux.Faucet()
+	bar.Faucet(tr01)
+	baz.Faucet(tr01)
+	foo.Faucet(tr01)
+	qux.Faucet(tr01)
 
-	shouldEQ(t, balanceOf(barObj, tr01), 1000000000)
-	shouldEQ(t, balanceOf(bazObj, tr01), 1000000000)
-	shouldEQ(t, balanceOf(fooObj, tr01), 1000000000)
-	shouldEQ(t, balanceOf(quxObj, tr01), 1000000000)
+	shouldEQ(t, balanceOf(barObj, tr01), 100000000)
+	shouldEQ(t, balanceOf(bazObj, tr01), 100000000)
+	shouldEQ(t, balanceOf(fooObj, tr01), 100000000)
+	shouldEQ(t, balanceOf(quxObj, tr01), 100000000)
 
 	std.TestSkipHeights(5)
 }
@@ -417,8 +389,8 @@ func TestRouterSwapRouteBarBazExactIn(t *testing.T) {
 	// approve bar to pool
 	bar.Approve(a2u(poolAddr), 100000)
 
-	shouldEQ(t, balanceOf(barObj, tr01), 1000000000)
-	shouldEQ(t, balanceOf(bazObj, tr01), 1000000000)
+	shouldEQ(t, balanceOf(barObj, tr01), 100000000)
+	shouldEQ(t, balanceOf(bazObj, tr01), 100000000)
 
 	swapResult := rou.SwapRoute(
 		barPath,    // inputToken
@@ -431,8 +403,8 @@ func TestRouterSwapRouteBarBazExactIn(t *testing.T) {
 	)
 	shouldEQ(t, swapResult, bigint(1999835))
 
-	shouldEQ(t, balanceOf(barObj, tr01), 999900000)
-	shouldEQ(t, balanceOf(bazObj, tr01), 1001999835)
+	shouldEQ(t, balanceOf(barObj, tr01), 99900000)
+	shouldEQ(t, balanceOf(bazObj, tr01), 101999835)
 
 	std.TestSkipHeights(2)
 }
@@ -443,8 +415,8 @@ func TestRouterSwapRouteBarBazExactOut(t *testing.T) {
 	// approve bar to pool
 	bar.Approve(a2u(poolAddr), 100000)
 
-	shouldEQ(t, balanceOf(barObj, tr01), 999900000)
-	shouldEQ(t, balanceOf(bazObj, tr01), 1001999835)
+	shouldEQ(t, balanceOf(barObj, tr01), 99900000)
+	shouldEQ(t, balanceOf(bazObj, tr01), 101999835)
 
 	swapResult := rou.SwapRoute(
 		barPath,     // inputToken
@@ -457,8 +429,8 @@ func TestRouterSwapRouteBarBazExactOut(t *testing.T) {
 	)
 	shouldEQ(t, swapResult, bigint(5000))
 
-	shouldEQ(t, balanceOf(barObj, tr01), 999895000)
-	shouldEQ(t, balanceOf(bazObj, tr01), 1002099834)
+	shouldEQ(t, balanceOf(barObj, tr01), 99895000)
+	shouldEQ(t, balanceOf(bazObj, tr01), 102099834)
 
 	std.TestSkipHeights(2)
 }
@@ -469,7 +441,7 @@ func TestRouterSwapRouteBarBazFooWgnotExactIn(t *testing.T) {
 	// approve bar to pool
 	bar.Approve(a2u(poolAddr), 100000)
 
-	shouldEQ(t, balanceOf(barObj, tr01), 999895000)
+	shouldEQ(t, balanceOf(barObj, tr01), 99895000)
 	shouldEQ(t, wugnotBalanceOf(tr01), 0)
 
 	swapResult := rou.SwapRoute(
@@ -483,7 +455,7 @@ func TestRouterSwapRouteBarBazFooWgnotExactIn(t *testing.T) {
 	)
 	shouldEQ(t, swapResult, bigint(9979))
 
-	shouldEQ(t, balanceOf(barObj, tr01), 999795000)
+	shouldEQ(t, balanceOf(barObj, tr01), 99795000)
 	shouldEQ(t, wugnotBalanceOf(tr01), 9979)
 
 	std.TestSkipHeights(2)
@@ -505,7 +477,7 @@ func TestRouterSwapRouteWgnotFooBazBarExactIn(t *testing.T) {
 	wugnot.Approve(a2u(poolAddr), 100000)
 
 	shouldEQ(t, wugnotBalanceOf(tr01), 109979)
-	shouldEQ(t, balanceOf(barObj, tr01), 999795000)
+	shouldEQ(t, balanceOf(barObj, tr01), 99795000)
 
 	swapResult := rou.SwapRoute(
 		wugnotPath,  // inputToken
@@ -518,7 +490,7 @@ func TestRouterSwapRouteWgnotFooBazBarExactIn(t *testing.T) {
 	)
 	shouldEQ(t, swapResult, bigint(199900))
 
-	shouldEQ(t, balanceOf(barObj, tr01), 999894999)
+	shouldEQ(t, balanceOf(barObj, tr01), 99894999)
 	shouldEQ(t, wugnotBalanceOf(tr01), 99995)
 
 	std.TestSkipHeights(3)
@@ -597,16 +569,16 @@ func TestStakerEndExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 	std.TestSkipHeights(1382371)
 
-	shouldEQ(t, balanceOf(oblObj, test1), 0)
+	shouldEQ(t, balanceOf(oblObj, test1), 499999900000000)
 
 	shouldPanic(t,
 		func() {
 			stk.EndExternalIncentive(string(test1), "gno.land/r/demo/bar:gno.land/r/demo/baz:100", "gno.land/r/demo/obl")
 		})
-	std.TestSkipHeights(1)
+	std.TestSkipHeights(1234)
 
 	stk.EndExternalIncentive(string(test1), "gno.land/r/demo/bar:gno.land/r/demo/baz:100", "gno.land/r/demo/obl")
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, balanceOf(oblObj, test1), 999999506)
+	shouldEQ(t, balanceOf(oblObj, test1), 499999999999951)
 }

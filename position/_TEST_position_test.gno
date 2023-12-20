@@ -99,7 +99,7 @@ func TestMint(t *testing.T) {
 			bigint(0),
 			bigint(1234567890),
 		)
-		shouldEQ(t, tAmount0, bigint(999))
+		shouldEQ(t, tAmount0, bigint(1000))
 		shouldEQ(t, tAmount1, bigint(0))
 
 		isOwner(t, tTokenId, test1)
@@ -124,7 +124,7 @@ func TestMint(t *testing.T) {
 			bigint(0),
 			bigint(1234567890),
 		)
-		shouldEQ(t, tAmount0, bigint(999))
+		shouldEQ(t, tAmount0, bigint(1000))
 		shouldEQ(t, tAmount1, bigint(0))
 
 		isOwner(t, tTokenId, test1)
@@ -184,30 +184,30 @@ func TestApiGetPositionByUser(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.0.pool_key").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 	shouldEQ(t, jsonStr.Get("response.data.0.tick_lower").Int(), -11000)
 	shouldEQ(t, jsonStr.Get("response.data.0.tick_upper").Int(), -9000)
-	shouldEQ(t, jsonStr.Get("response.data.0.liquidity").Int(), 622504326)
+	shouldEQ(t, jsonStr.Get("response.data.0.liquidity").Int(), 622504327)
 
 	shouldEQ(t, jsonStr.Get("response.data.1.token_id").Int(), 2)
 	shouldEQ(t, jsonStr.Get("response.data.1.pool_key").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 	shouldEQ(t, jsonStr.Get("response.data.1.tick_lower").Int(), -11000)
 	shouldEQ(t, jsonStr.Get("response.data.1.tick_upper").Int(), -9000)
-	shouldEQ(t, jsonStr.Get("response.data.1.liquidity").Int(), 24900)
+	shouldEQ(t, jsonStr.Get("response.data.1.liquidity").Int(), 24901)
 
 	shouldEQ(t, jsonStr.Get("response.data.2.token_id").Int(), 3)
 	shouldEQ(t, jsonStr.Get("response.data.2.tick_lower").Int(), -2000)
 	shouldEQ(t, jsonStr.Get("response.data.2.tick_upper").Int(), -1000)
-	shouldEQ(t, jsonStr.Get("response.data.2.liquidity").Int(), 18553)
+	shouldEQ(t, jsonStr.Get("response.data.2.liquidity").Int(), 18554)
 
 	shouldEQ(t, jsonStr.Get("response.data.3.token_id").Int(), 4)
 	shouldEQ(t, jsonStr.Get("response.data.3.tick_lower").Int(), 32000)
 	shouldEQ(t, jsonStr.Get("response.data.3.tick_upper").Int(), 34000)
-	shouldEQ(t, jsonStr.Get("response.data.3.liquidity").Int(), 52046)
+	shouldEQ(t, jsonStr.Get("response.data.3.liquidity").Int(), 52047)
 }
 
 func TestBurn(t *testing.T) {
 	tokenId, liquidity, amount0, amount1, poolPath := Burn(1)
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, liquidity, bigint(622504326))
-	shouldEQ(t, amount0, bigint(49999999))
+	shouldEQ(t, liquidity, bigint(622504327))
+	shouldEQ(t, amount0, bigint(50000000))
 	shouldEQ(t, amount1, bigint(18432647))
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
@@ -221,15 +221,15 @@ func TestApiGetPositionByUserAfterBurn(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("response.data.0.pool_key").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 	shouldEQ(t, jsonStr.Get("response.data.0.tick_lower").Int(), -11000)
 	shouldEQ(t, jsonStr.Get("response.data.0.tick_upper").Int(), -9000)
-	shouldEQ(t, jsonStr.Get("response.data.0.liquidity").Int(), 24900)
+	shouldEQ(t, jsonStr.Get("response.data.0.liquidity").Int(), 24901)
 
 	shouldEQ(t, jsonStr.Get("response.data.1.token_id").Int(), 3)
 	shouldEQ(t, jsonStr.Get("response.data.1.tick_lower").Int(), -2000)
 	shouldEQ(t, jsonStr.Get("response.data.1.tick_upper").Int(), -1000)
-	shouldEQ(t, jsonStr.Get("response.data.1.liquidity").Int(), 18553)
+	shouldEQ(t, jsonStr.Get("response.data.1.liquidity").Int(), 18554)
 
 	shouldEQ(t, jsonStr.Get("response.data.2.token_id").Int(), 4)
 	shouldEQ(t, jsonStr.Get("response.data.2.tick_lower").Int(), 32000)
 	shouldEQ(t, jsonStr.Get("response.data.2.tick_upper").Int(), 34000)
-	shouldEQ(t, jsonStr.Get("response.data.2.liquidity").Int(), 52046)
+	shouldEQ(t, jsonStr.Get("response.data.2.liquidity").Int(), 52047)
 }

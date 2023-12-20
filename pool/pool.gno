@@ -377,7 +377,6 @@ func Swap(
 		amount1 = amountSpecified - state.amountSpecifiedRemaining
 	}
 
-
 	if zeroForOne {
 		// payer > pool
 		balance0Before := bigint(balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr()))

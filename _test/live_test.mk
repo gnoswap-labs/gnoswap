@@ -61,8 +61,6 @@ router-swap: set-protocol-fee swap-exact-in-single swap-exact-out-multi collect-
 .PHONY: staker-unstake
 staker-unstake: unstake-token-1 burn-token-1 # burn-token-2
 
-.PHONY: stake-test
-stake-test: deploy faucet-gsa approve-gsa pool-setup create-external-incentive faucet-lp01 approve-lp01 faucet-lp02 approve-lp02 wrap mint-01 mint-02 stake-token-1 stake-token-2
 
 wait:
 	$(shell sleep 10)
@@ -144,36 +142,36 @@ deploy-grc20_wrapper:
 # Facuet Tokens
 faucet-lp01:
 	$(info ************ [FAUCET] foo & bar & baz & qux to lp01 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/bar -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/baz -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/qux -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Faucet -args $(ADDR_LP01) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/bar -func Faucet -args $(ADDR_LP01) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/baz -func Faucet -args $(ADDR_LP01) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/qux -func Faucet -args $(ADDR_LP01) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
 	@echo
 
 faucet-lp02:
 	$(info ************ [FAUCET] foo & bar & baz & qux to lp02 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/bar -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/baz -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/qux -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Faucet -args $(ADDR_LP02) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/bar -func Faucet -args $(ADDR_LP02) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/baz -func Faucet -args $(ADDR_LP02) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/qux -func Faucet -args $(ADDR_LP02) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
 	@echo
 
 faucet-tr01:
 	$(info ************ [FAUCET] foo & bar & baz & qux to tr01 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/bar -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/baz -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/qux -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Faucet -args $(ADDR_TR01) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/bar -func Faucet -args $(ADDR_TR01) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/baz -func Faucet -args $(ADDR_TR01) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/qux -func Faucet -args $(ADDR_TR01) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" tr01 > /dev/null
 	@echo
 
 faucet-gsa:
 	$(info ************ [FAUCET] foo & bar & baz & qux & gns & obl to gsa ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/bar -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/baz -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/qux -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/gns -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/obl -func Faucet -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Faucet -args $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/bar -func Faucet -args $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/baz -func Faucet -args $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/qux -func Faucet -args $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/gns -func Faucet -args $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/obl -func Faucet -args $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
 	@echo
 
 

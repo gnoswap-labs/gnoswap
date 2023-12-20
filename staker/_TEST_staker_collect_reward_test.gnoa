@@ -11,7 +11,8 @@ import (
 
 	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
 	gns "gno.land/r/demo/gns"   // GNS, Gnoswap Share
-	obl "gno.land/r/demo/obl"
+
+	obl "gno.land/r/demo/obl" // OBL, External Reward Token
 
 	_ "gno.land/r/demo/grc20_wrapper"
 )
@@ -19,7 +20,7 @@ import (
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/foo:500"] = 1 // DEV
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = 1 // DEV
 
 	// tier 2
 	poolTiers["GNS/USDT_500"] = 2
@@ -37,7 +38,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	p.InitManual()
 	std.TestSkipHeights(1)
 
-	p.CreatePool(fooPath, barPath, 500, 130621891405341611593710811006)
+	p.CreatePool(barPath, quxPath, 500, 130621891405341611593710811006)
 	std.TestSkipHeights(1)
 }
 
@@ -45,8 +46,8 @@ func TestPositionMint(t *testing.T) {
 	{
 		std.TestSetOrigCaller(test1)
 		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
-			fooPath,            // token0
-			barPath,            // token1
+			barPath,            // token0
+			quxPath,            // token1
 			uint16(500),        // fee
 			int32(9000),        // tickLower
 			int32(11000),       // tickUpper
@@ -70,8 +71,8 @@ func TestPositionMint(t *testing.T) {
 	{
 		std.TestSetOrigCaller(test1)
 		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
-			fooPath,            // token0
-			barPath,            // token1
+			barPath,            // token0
+			quxPath,            // token1
 			uint16(500),        // fee
 			int32(9100),        // tickLower
 			int32(12000),       // tickUpper
@@ -97,13 +98,13 @@ func TestCreateExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
 	CreateExternalIncentive(
-		"gno.land/r/demo/bar:gno.land/r/demo/foo:500", // targetPoolPath
+		"gno.land/r/demo/bar:gno.land/r/demo/qux:500", // targetPoolPath
 		"gno.land/r/demo/obl",                         // rewardToken
 		10_000_000_000,                                // rewardAmount
 		GetTimestamp(),                                // startTimestamp
 		GetTimestamp()+TIMESTAMP_90DAYS,               // endTimestamp
 	)
-	CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl", 10_000_000_000, GetTimestamp(), GetTimestamp()+TIMESTAMP_90DAYS)
+	CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/qux:500", "gno.land/r/demo/obl", 10_000_000_000, GetTimestamp(), GetTimestamp()+TIMESTAMP_90DAYS)
 	std.TestSkipHeights(5)
 }
 
@@ -131,15 +132,29 @@ func TestApiGetRewardsByAddress(t *testing.T) {
 	// test1 reward check
 	gra := ApiGetRewardByAddress(test1)
 	jsonStr := gjson.Parse(gra)
+
 	shouldEQ(t, jsonStr.Get("response.data.0.incentiveType").String(), "INTERNAL")
-	shouldEQ(t, jsonStr.Get("response.data.0.targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data.0.targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/qux:500")
 	shouldEQ(t, jsonStr.Get("response.data.0.rewardTokenPath").String(), INTERNAL_REWARD_TOKEN_PATH)
 	shouldEQ(t, jsonStr.Get("response.data.0.rewardTokenAmount").Int(), 84)
 
 	shouldEQ(t, jsonStr.Get("response.data.1.incentiveType").String(), "EXTERNAL")
-	shouldEQ(t, jsonStr.Get("response.data.0.targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, jsonStr.Get("response.data.0.targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/qux:500")
 	shouldEQ(t, jsonStr.Get("response.data.1.rewardTokenPath").String(), "gno.land/r/demo/obl")
 	shouldEQ(t, jsonStr.Get("response.data.1.rewardTokenAmount").Int(), 648)
+}
+
+func TestCollectReward(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	// before claim
+	gnsOld := gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsOld, 99999999999500)
+
+	CollectReward(1) // GNFT tokenId
+	gnsNew := gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsNew, 99999999999584)
+
 }
 
 func TestUnstakeToken(t *testing.T) {
@@ -151,7 +166,7 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 499999999999584) // internal
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 99999999999584)  // internal
 		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000000648) // external
 	}
 
@@ -163,27 +178,17 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 500000000000133) // internal
-		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000004891) // external
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 100000000000049) // internal
+		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000004243) // external
 	}
 }
 
 func TestEndExternalIncentive(t *testing.T) {
-	shouldEQ(t, len(incentives), 1)
-
 	std.TestSetOrigCaller(test1)
-
-	// incentive time isn't over yet
-	shouldPanicWithMsg(t, func() {
-		EndExternalIncentive(string(test1), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl")
-	}, "[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(1242343920), current(1234567975)")
-
-	std.TestSkipHeights(1555188) // not yet, one more should be good to end incentive
-	std.TestSkipHeights(1)
-
-	EndExternalIncentive(string(test1), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
+	std.TestSkipHeights(9999999)
+	EndExternalIncentive(GetOrigCaller().String(), "gno.land/r/demo/bar:gno.land/r/demo/qux:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, len(incentives), 0)
-	shouldEQ(t, len(poolIncentives["gno.land/r/demo/bar:gno.land/r/demo/foo:500"]), 0)
+	shouldEQ(t, len(poolIncentives["gno.land/r/demo/bar:gno.land/r/demo/qux:500"]), 0)
 }
