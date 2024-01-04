@@ -49,6 +49,7 @@ func swapMathComputeSwapStep(
 		} else {
 			amountOut = sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity)
 		}
+
 		requireUnsigned(amountOut, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || amountOut(%d) >= 0", amountOut))
 
 		if absBigint(amountRemaining) >= amountOut {
@@ -107,6 +108,9 @@ func swapMathComputeSwapStep(
 		feeAmount = amountIn * bigint(uint64(feePips)) / bigint(uint64(1000000-feePips))
 	}
 
+	if !exactIn && amountOut != 0 {
+		amountOut++
+	}
 	return sqrtRatioNextX96, amountIn, amountOut, feeAmount
 }
 

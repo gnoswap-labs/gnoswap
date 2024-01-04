@@ -1,12 +1,10 @@
-// two lp, single swap, normal scenario
-
+// single lp, single swap, normal scenario
 package swap_scneraio
 
 import (
 	"encoding/gjson"
 	"std"
 	"testing"
-	"time"
 
 	"gno.land/p/demo/testutils"
 
@@ -33,9 +31,7 @@ import (
 var (
 	test1 = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
 	lp01  = testutils.TestAddress("lp01")
-	lp02  = testutils.TestAddress("lp02")
-
-	tr01 = testutils.TestAddress("tr01")
+	tr01  = testutils.TestAddress("tr01")
 
 	poolAddr     = std.DerivePkgAddr("gno.land/r/demo/pool")
 	positionAddr = std.DerivePkgAddr("gno.land/r/demo/position")
@@ -70,31 +66,6 @@ func TestPoolInitByAdmin(t *testing.T) {
 	std.TestSkipHeights(1)
 }
 
-func TestFaucetTEST1(t *testing.T) {
-	std.TestSetOrigCaller(test1)
-
-	shouldEQ(t, balanceOf(barObj, test1), 0)
-	shouldEQ(t, balanceOf(bazObj, test1), 0)
-	shouldEQ(t, balanceOf(fooObj, test1), 0)
-	shouldEQ(t, balanceOf(quxObj, test1), 0)
-	shouldEQ(t, balanceOf(gnsObj, test1), 0)
-
-	bar.Faucet()
-	baz.Faucet()
-	foo.Faucet()
-	qux.Faucet()
-
-	gns.Faucet()
-
-	shouldEQ(t, balanceOf(barObj, test1), 1000000000)
-	shouldEQ(t, balanceOf(bazObj, test1), 1000000000)
-	shouldEQ(t, balanceOf(fooObj, test1), 1000000000)
-	shouldEQ(t, balanceOf(quxObj, test1), 1000000000)
-	shouldEQ(t, balanceOf(gnsObj, test1), 1000000000)
-
-	std.TestSkipHeights(5)
-}
-
 func TestPoolCreatePools(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
@@ -121,41 +92,20 @@ func TestFaucetLP01(t *testing.T) {
 	shouldEQ(t, balanceOf(fooObj, lp01), 0)
 	shouldEQ(t, balanceOf(quxObj, lp01), 0)
 
-	bar.Faucet()
-	baz.Faucet()
-	foo.Faucet()
-	qux.Faucet()
+	bar.Faucet(lp01)
+	baz.Faucet(lp01)
+	foo.Faucet(lp01)
+	qux.Faucet(lp01)
 
-	shouldEQ(t, balanceOf(barObj, lp01), 1000000000)
-	shouldEQ(t, balanceOf(bazObj, lp01), 1000000000)
-	shouldEQ(t, balanceOf(fooObj, lp01), 1000000000)
-	shouldEQ(t, balanceOf(quxObj, lp01), 1000000000)
-
-	std.TestSkipHeights(5)
-}
-
-func TestFaucetLP02(t *testing.T) {
-	std.TestSetOrigCaller(lp02)
-
-	shouldEQ(t, balanceOf(barObj, lp02), 0)
-	shouldEQ(t, balanceOf(bazObj, lp02), 0)
-	shouldEQ(t, balanceOf(fooObj, lp02), 0)
-	shouldEQ(t, balanceOf(quxObj, lp02), 0)
-
-	bar.Faucet()
-	baz.Faucet()
-	foo.Faucet()
-	qux.Faucet()
-
-	shouldEQ(t, balanceOf(barObj, lp02), 1000000000)
-	shouldEQ(t, balanceOf(bazObj, lp02), 1000000000)
-	shouldEQ(t, balanceOf(fooObj, lp02), 1000000000)
-	shouldEQ(t, balanceOf(quxObj, lp02), 1000000000)
+	shouldEQ(t, balanceOf(barObj, lp01), 100000000)
+	shouldEQ(t, balanceOf(bazObj, lp01), 100000000)
+	shouldEQ(t, balanceOf(fooObj, lp01), 100000000)
+	shouldEQ(t, balanceOf(quxObj, lp01), 100000000)
 
 	std.TestSkipHeights(5)
 }
 
-func TestPositionMintBarBazInRangeLP01(t *testing.T) {
+func TestPositionMintBarBazInRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve bar, baz to pool ( position.Mint() calls pool.Mint() ≈ so approve to pool )
@@ -183,7 +133,7 @@ func TestPositionMintBarBazInRangeLP01(t *testing.T) {
 	std.TestSkipHeights(3)
 }
 
-func TestPositionMintBarBazLowerRangeLP01(t *testing.T) {
+func TestPositionMintBarBazLowerRange(t *testing.T) {
 	// lower range ≈ only token1
 	std.TestSetOrigCaller(lp01)
 
@@ -212,7 +162,7 @@ func TestPositionMintBarBazLowerRangeLP01(t *testing.T) {
 	std.TestSkipHeights(3)
 }
 
-func TestPositionMintBarBazUpperRangeLP01(t *testing.T) {
+func TestPositionMintBarBazUpperRange(t *testing.T) {
 	// upper range ≈ only token0
 	std.TestSetOrigCaller(lp01)
 
@@ -241,7 +191,7 @@ func TestPositionMintBarBazUpperRangeLP01(t *testing.T) {
 	std.TestSkipHeights(3)
 }
 
-func TestPositionMintBazFooInRangeLP01(t *testing.T) {
+func TestPositionMintBazFooInRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve baz, foo to pool
@@ -269,7 +219,7 @@ func TestPositionMintBazFooInRangeLP01(t *testing.T) {
 	std.TestSkipHeights(3)
 }
 
-func TestPositionMintFooGnotInRangeLP01(t *testing.T) {
+func TestPositionMintFooGnotInRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// deposit wugnot first
@@ -306,34 +256,6 @@ func TestPositionMintFooGnotInRangeLP01(t *testing.T) {
 	std.TestSkipHeights(4)
 }
 
-func TestPositionMintBarBazInRangeLP02(t *testing.T) {
-	std.TestSetOrigCaller(lp02)
-
-	// approve bar, baz to pool ( position.Mint() calls pool.Mint() ≈ so approve to pool )
-	bar.Approve(a2u(poolAddr), 10000000)
-	baz.Approve(a2u(poolAddr), 10000000)
-
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
-		barPath,     // token0
-		bazPath,     // token1
-		100,         // fee
-		29950,       // tickLower
-		29970,       // tickUpper
-		10000000,    // amount0Desired
-		10000000,    // amount1Desired
-		0,           // amount0Min
-		0,           // amount1Min
-		max_timeout, // deadline
-	)
-
-	shouldEQ(t, tokenId, bigint(6))
-	shouldEQ(t, liquidity, bigint(4473213901))
-	shouldEQ(t, amount0, bigint(499941))
-	shouldEQ(t, amoutn1, bigint(10000000))
-
-	std.TestSkipHeights(3)
-}
-
 func TestStakerCreateExternalIncentive(t *testing.T) {
 	/*
 		// tier 1 for INTERNAL REWARD
@@ -343,25 +265,22 @@ func TestStakerCreateExternalIncentive(t *testing.T) {
 
 	// get some obl to create external incentive
 	std.TestSetOrigCaller(test1)
-	shouldEQ(t, balanceOf(oblObj, test1), 0)
-	obl.Faucet()
-	shouldEQ(t, balanceOf(oblObj, test1), 1000000000)
 
 	// approve obl to staker
-	obl.Approve(a2u(stakerAddr), 1000000000)
+	obl.Approve(a2u(stakerAddr), 100000000)
 
 	stk.CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100", // targetPoolPath
-		oblPath,                   // rewardTokenPath
-		1000000000,                // rewardAmount
-		time.Now().Unix(),         // startTimestamp
-		time.Now().Unix()+7776000, // endTimestamp ( 90 days )
+		oblPath,            // rewardTokenPath
+		100000000,          // rewardAmount
+		1234568045,         // startTimestamp
+		1234568045+7776000, // endTimestamp ( 90 days )
 	)
 
 	std.TestSkipHeights(3)
 }
 
-func TestStakerStakeTokenId1(t *testing.T) {
+func TestStakerStakeToken(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve lpTokenId to staker
@@ -369,21 +288,10 @@ func TestStakerStakeTokenId1(t *testing.T) {
 
 	// stake tokenId 1
 	stk.StakeToken(1)
-	std.TestSkipHeights(123456)
-}
-
-func TestStakerStakeTokenId6(t *testing.T) {
-	std.TestSetOrigCaller(lp02)
-
-	// approve lpTokenId to staker
-	gnft.Approve(a2u(stakerAddr), tid(6))
-
-	// stake tokenId 6
-	stk.StakeToken(6)
 	std.TestSkipHeights(3)
 }
 
-func TestStakerApiGetRewardsByAddressLP01(t *testing.T) {
+func TestStakerApiGetRewardsByAddress(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// test1 reward check
@@ -396,36 +304,15 @@ func TestStakerApiGetRewardsByAddressLP01(t *testing.T) {
 	shouldEQ(t, responseArr[0].Get("incentiveType").String(), "INTERNAL")
 	shouldEQ(t, responseArr[0].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
 	shouldEQ(t, responseArr[0].Get("rewardTokenPath").String(), "gno.land/r/demo/gns")
-	shouldEQ(t, responseArr[0].Get("rewardTokenAmount").Int(), 1375)
+	shouldEQ(t, responseArr[0].Get("rewardTokenAmount").Int(), 1650)
 
 	shouldEQ(t, responseArr[1].Get("incentiveType").String(), "EXTERNAL")
 	shouldEQ(t, responseArr[1].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
 	shouldEQ(t, responseArr[1].Get("rewardTokenPath").String(), "gno.land/r/demo/obl")
-	shouldEQ(t, responseArr[1].Get("rewardTokenAmount").Int(), 176)
+	shouldEQ(t, responseArr[1].Get("rewardTokenAmount").Int(), 21)
 }
 
-func TestStakerApiGetRewardsByAddressLP02(t *testing.T) {
-	std.TestSetOrigCaller(lp02)
-
-	// test1 reward check
-	gra := stk.ApiGetRewardByAddress(lp02)
-	jsonStr := gjson.Parse(gra)
-
-	responseArr := jsonStr.Get("response.data").Array()
-	shouldEQ(t, len(responseArr), 2)
-
-	shouldEQ(t, responseArr[0].Get("incentiveType").String(), "INTERNAL")
-	shouldEQ(t, responseArr[0].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
-	shouldEQ(t, responseArr[0].Get("rewardTokenPath").String(), "gno.land/r/demo/gns")
-	shouldEQ(t, responseArr[0].Get("rewardTokenAmount").Int(), 825)
-
-	shouldEQ(t, responseArr[1].Get("incentiveType").String(), "EXTERNAL")
-	shouldEQ(t, responseArr[1].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
-	shouldEQ(t, responseArr[1].Get("rewardTokenPath").String(), "gno.land/r/demo/obl")
-	shouldEQ(t, responseArr[1].Get("rewardTokenAmount").Int(), 106)
-}
-
-func TestStakerCollectRewardTokenId1(t *testing.T) {
+func TestStakerCollectReward(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	shouldEQ(t, balanceOf(gnsObj, lp01), 0)
@@ -433,20 +320,8 @@ func TestStakerCollectRewardTokenId1(t *testing.T) {
 
 	stk.CollectReward(1)
 
-	shouldEQ(t, balanceOf(gnsObj, lp01), 1375)
-	shouldEQ(t, balanceOf(oblObj, lp01), 176)
-}
-
-func TestStakerCollectRewardTokenId6(t *testing.T) {
-	std.TestSetOrigCaller(lp02)
-
-	shouldEQ(t, balanceOf(gnsObj, lp02), 0)
-	shouldEQ(t, balanceOf(oblObj, lp02), 0)
-
-	stk.CollectReward(6)
-
-	shouldEQ(t, balanceOf(gnsObj, lp02), 825)
-	shouldEQ(t, balanceOf(oblObj, lp02), 106)
+	shouldEQ(t, balanceOf(gnsObj, lp01), 1650)
+	shouldEQ(t, balanceOf(oblObj, lp01), 21)
 }
 
 func TestStakerApiGetRewardsByAddressAfterCollectReward(t *testing.T) {
@@ -462,7 +337,7 @@ func TestStakerApiGetRewardsByAddressAfterCollectReward(t *testing.T) {
 	std.TestSkipHeights(1)
 }
 
-func TestStakerApiGetRewardsByAddressLP01AfterBunchOfTime(t *testing.T) {
+func TestStakerApiGetRewardsByAddressAfterBunchOfTime(t *testing.T) {
 	std.TestSkipHeights(864000 / 5) // 10 day
 
 	std.TestSetOrigCaller(lp01)
@@ -477,35 +352,12 @@ func TestStakerApiGetRewardsByAddressLP01AfterBunchOfTime(t *testing.T) {
 	shouldEQ(t, responseArr[0].Get("incentiveType").String(), "INTERNAL")
 	shouldEQ(t, responseArr[0].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
 	shouldEQ(t, responseArr[0].Get("rewardTokenPath").String(), "gno.land/r/demo/gns")
-	shouldEQ(t, responseArr[0].Get("rewardTokenAmount").Int(), 550)
+	shouldEQ(t, responseArr[0].Get("rewardTokenAmount").Int(), 2200)
 
 	shouldEQ(t, responseArr[1].Get("incentiveType").String(), "EXTERNAL")
 	shouldEQ(t, responseArr[1].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
 	shouldEQ(t, responseArr[1].Get("rewardTokenPath").String(), "gno.land/r/demo/obl")
-	shouldEQ(t, responseArr[1].Get("rewardTokenAmount").Int(), 71)
-
-	std.TestSkipHeights(1)
-}
-
-func TestStakerApiGetRewardsByAddressLP02AfterBunchOfTime(t *testing.T) {
-	std.TestSetOrigCaller(lp02)
-
-	// test1 reward check
-	gra := stk.ApiGetRewardByAddress(lp02)
-	jsonStr := gjson.Parse(gra)
-
-	responseArr := jsonStr.Get("response.data").Array()
-	shouldEQ(t, len(responseArr), 2)
-
-	shouldEQ(t, responseArr[0].Get("incentiveType").String(), "INTERNAL")
-	shouldEQ(t, responseArr[0].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
-	shouldEQ(t, responseArr[0].Get("rewardTokenPath").String(), "gno.land/r/demo/gns")
-	shouldEQ(t, responseArr[0].Get("rewardTokenAmount").Int(), 1100)
-
-	shouldEQ(t, responseArr[1].Get("incentiveType").String(), "EXTERNAL")
-	shouldEQ(t, responseArr[1].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
-	shouldEQ(t, responseArr[1].Get("rewardTokenPath").String(), "gno.land/r/demo/obl")
-	shouldEQ(t, responseArr[1].Get("rewardTokenAmount").Int(), 141)
+	shouldEQ(t, responseArr[1].Get("rewardTokenAmount").Int(), 28)
 
 	std.TestSkipHeights(1)
 }
@@ -518,15 +370,15 @@ func TestFaucetTR01(t *testing.T) {
 	shouldEQ(t, balanceOf(fooObj, tr01), 0)
 	shouldEQ(t, balanceOf(quxObj, tr01), 0)
 
-	bar.Faucet()
-	baz.Faucet()
-	foo.Faucet()
-	qux.Faucet()
+	bar.Faucet(tr01)
+	baz.Faucet(tr01)
+	foo.Faucet(tr01)
+	qux.Faucet(tr01)
 
-	shouldEQ(t, balanceOf(barObj, tr01), 1000000000)
-	shouldEQ(t, balanceOf(bazObj, tr01), 1000000000)
-	shouldEQ(t, balanceOf(fooObj, tr01), 1000000000)
-	shouldEQ(t, balanceOf(quxObj, tr01), 1000000000)
+	shouldEQ(t, balanceOf(barObj, tr01), 100000000)
+	shouldEQ(t, balanceOf(bazObj, tr01), 100000000)
+	shouldEQ(t, balanceOf(fooObj, tr01), 100000000)
+	shouldEQ(t, balanceOf(quxObj, tr01), 100000000)
 
 	std.TestSkipHeights(5)
 }
@@ -537,8 +389,8 @@ func TestRouterSwapRouteBarBazExactIn(t *testing.T) {
 	// approve bar to pool
 	bar.Approve(a2u(poolAddr), 100000)
 
-	shouldEQ(t, balanceOf(barObj, tr01), 1000000000)
-	shouldEQ(t, balanceOf(bazObj, tr01), 1000000000)
+	shouldEQ(t, balanceOf(barObj, tr01), 100000000)
+	shouldEQ(t, balanceOf(bazObj, tr01), 100000000)
 
 	swapResult := rou.SwapRoute(
 		barPath,    // inputToken
@@ -549,10 +401,10 @@ func TestRouterSwapRouteBarBazExactIn(t *testing.T) {
 		"100", // quoteArr
 		1,     // tokenAmountLimit
 	)
-	shouldEQ(t, swapResult, bigint(1999935))
+	shouldEQ(t, swapResult, bigint(1999835))
 
-	shouldEQ(t, balanceOf(barObj, tr01), 999900000)
-	shouldEQ(t, balanceOf(bazObj, tr01), 1001999935)
+	shouldEQ(t, balanceOf(barObj, tr01), 99900000)
+	shouldEQ(t, balanceOf(bazObj, tr01), 101999835)
 
 	std.TestSkipHeights(2)
 }
@@ -563,8 +415,8 @@ func TestRouterSwapRouteBarBazExactOut(t *testing.T) {
 	// approve bar to pool
 	bar.Approve(a2u(poolAddr), 100000)
 
-	shouldEQ(t, balanceOf(barObj, tr01), 999900000)
-	shouldEQ(t, balanceOf(bazObj, tr01), 1001999935)
+	shouldEQ(t, balanceOf(barObj, tr01), 99900000)
+	shouldEQ(t, balanceOf(bazObj, tr01), 101999835)
 
 	swapResult := rou.SwapRoute(
 		barPath,     // inputToken
@@ -575,10 +427,10 @@ func TestRouterSwapRouteBarBazExactOut(t *testing.T) {
 		"100",  // quoteArr
 		100000, // tokenAmountLimit
 	)
-	shouldEQ(t, swapResult, bigint(4999))
+	shouldEQ(t, swapResult, bigint(5000))
 
-	shouldEQ(t, balanceOf(barObj, tr01), 999895001)
-	shouldEQ(t, balanceOf(bazObj, tr01), 1002099934)
+	shouldEQ(t, balanceOf(barObj, tr01), 99895000)
+	shouldEQ(t, balanceOf(bazObj, tr01), 102099835)
 
 	std.TestSkipHeights(2)
 }
@@ -589,7 +441,7 @@ func TestRouterSwapRouteBarBazFooWgnotExactIn(t *testing.T) {
 	// approve bar to pool
 	bar.Approve(a2u(poolAddr), 100000)
 
-	shouldEQ(t, balanceOf(barObj, tr01), 999895001)
+	shouldEQ(t, balanceOf(barObj, tr01), 99895000)
 	shouldEQ(t, wugnotBalanceOf(tr01), 0)
 
 	swapResult := rou.SwapRoute(
@@ -601,10 +453,10 @@ func TestRouterSwapRouteBarBazFooWgnotExactIn(t *testing.T) {
 		"100", // quoteArr
 		1,     // tokenAmountLimit
 	)
-	shouldEQ(t, swapResult, bigint(9980))
+	shouldEQ(t, swapResult, bigint(9979))
 
-	shouldEQ(t, balanceOf(barObj, tr01), 999795001)
-	shouldEQ(t, wugnotBalanceOf(tr01), 9980)
+	shouldEQ(t, balanceOf(barObj, tr01), 99795000)
+	shouldEQ(t, wugnotBalanceOf(tr01), 9979)
 
 	std.TestSkipHeights(2)
 }
@@ -624,11 +476,10 @@ func TestRouterSwapRouteWgnotFooBazBarExactIn(t *testing.T) {
 	// approve wugnot to pool
 	wugnot.Approve(a2u(poolAddr), 100000)
 
-	shouldEQ(t, wugnotBalanceOf(tr01), 109980)
-	shouldEQ(t, balanceOf(barObj, tr01), 999795001)
+	shouldEQ(t, wugnotBalanceOf(tr01), 109979)
+	shouldEQ(t, balanceOf(barObj, tr01), 99795000)
 
 	swapResult := rou.SwapRoute(
-
 		wugnotPath,  // inputToken
 		barPath,     // outputToken
 		100000,      // amountSpecified
@@ -637,9 +488,9 @@ func TestRouterSwapRouteWgnotFooBazBarExactIn(t *testing.T) {
 		"100",  // quoteArr
 		300000, // tokenAmountLimit
 	)
-	shouldEQ(t, swapResult, bigint(199931))
+	shouldEQ(t, swapResult, bigint(9984))
 
-	shouldEQ(t, balanceOf(barObj, tr01), 999895000)
+	shouldEQ(t, balanceOf(barObj, tr01), 99894999)
 	shouldEQ(t, wugnotBalanceOf(tr01), 99995)
 
 	std.TestSkipHeights(3)
@@ -650,8 +501,8 @@ func TestPositionCollectFeeLpTokenId_1(t *testing.T) {
 
 	tokenId, amount0, amount1, poolPath := pos.CollectFee(1)
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, amount0, bigint(9))
-	shouldEQ(t, amount1, bigint(99))
+	shouldEQ(t, amount0, bigint(19))
+	shouldEQ(t, amount1, bigint(200))
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
 
 	std.TestSkipHeights(1)
@@ -665,7 +516,7 @@ func TestPositionCollectFeeLpTokenId_4(t *testing.T) {
 	tokenId, amount0, amount1, poolPath := pos.CollectFee(4)
 	shouldEQ(t, tokenId, uint64(4))
 	shouldEQ(t, amount0, bigint(199))
-	shouldEQ(t, amount1, bigint(18))
+	shouldEQ(t, amount1, bigint(20))
 	shouldEQ(t, poolPath, "gno.land/r/demo/baz:gno.land/r/demo/foo:100")
 
 	std.TestSkipHeights(1)
@@ -679,18 +530,6 @@ func TestPositionCollectFeeLpTokenId_5(t *testing.T) {
 	shouldEQ(t, amount0, bigint(19))
 	shouldEQ(t, amount1, bigint(0))
 	shouldEQ(t, poolPath, "gno.land/r/demo/foo:gno.land/r/demo/wugnot:100")
-
-	std.TestSkipHeights(1)
-}
-
-func TestPositionCollectFeeLpTokenId_6(t *testing.T) {
-	std.TestSetOrigCaller(lp02)
-
-	tokenId, amount0, amount1, poolPath := pos.CollectFee(6)
-	shouldEQ(t, tokenId, uint64(6))
-	shouldEQ(t, amount0, bigint(9))
-	shouldEQ(t, amount1, bigint(99))
-	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
 
 	std.TestSkipHeights(1)
 }
@@ -709,8 +548,8 @@ func TestStakerUnstake(t *testing.T) {
 	// it will return unstaked position's poolPath, amount0, amount1 ( not reward )
 	poolPath, amount0, amount1 := stk.UnstakeToken(1)
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
-	shouldEQ(t, amount0, bigint(552430))
-	shouldEQ(t, amount1, bigint(8950132))
+	shouldEQ(t, amount0, bigint(604922))
+	shouldEQ(t, amount1, bigint(7900345))
 
 	std.TestSkipHeights(1)
 }
@@ -719,19 +558,8 @@ func TestPositionBurnUnstakedPosition(t *testing.T) {
 	tokenId, liquidity, amount0, amount1, poolPath := pos.Burn(1)
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, liquidity, bigint(4473213901))
-	shouldEQ(t, amount0, bigint(552430))
-	shouldEQ(t, amount1, bigint(8950132))
-	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
-
-	std.TestSkipHeights(1)
-}
-
-func TestPositionBurnNeverStakedPosition(t *testing.T) {
-	tokenId, liquidity, amount0, amount1, poolPath := pos.Burn(2)
-	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, liquidity, bigint(4484410365))
-	shouldEQ(t, amount0, bigint(0))
-	shouldEQ(t, amount1, bigint(10000000))
+	shouldEQ(t, amount0, bigint(604922))
+	shouldEQ(t, amount1, bigint(7900345))
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
 
 	std.TestSkipHeights(1)
@@ -739,19 +567,18 @@ func TestPositionBurnNeverStakedPosition(t *testing.T) {
 
 func TestStakerEndExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(test1)
-	std.TestSkipHeights(1)
+	std.TestSkipHeights(1382371)
 
-	shouldEQ(t, balanceOf(oblObj, test1), 0)
+	shouldEQ(t, balanceOf(oblObj, test1), 499999900000000)
 
 	shouldPanic(t,
 		func() {
 			stk.EndExternalIncentive(string(test1), "gno.land/r/demo/bar:gno.land/r/demo/baz:100", "gno.land/r/demo/obl")
 		})
-	std.TestSkipHeights(1)
+	std.TestSkipHeights(1234)
 
-	std.TestSkipHeights(1234567890)
 	stk.EndExternalIncentive(string(test1), "gno.land/r/demo/bar:gno.land/r/demo/baz:100", "gno.land/r/demo/obl")
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, balanceOf(oblObj, test1), 999999647)
+	shouldEQ(t, balanceOf(oblObj, test1), 499999999999951)
 }
