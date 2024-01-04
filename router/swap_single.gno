@@ -4,8 +4,8 @@ import (
 	"std"
 )
 
-func singleSwap(params SingleSwapParams) (amountOut bigint) {
-	amountOut = _swap(
+func singleSwap(params SingleSwapParams) (amountIn, amountOut bigint) {
+	amountIn, amountOut = _swap(
 		params.amountSpecified,
 		std.GetOrigCaller(), // if single swap => user will recieve
 		0,                   // sqrtPriceLimitX96
@@ -17,11 +17,11 @@ func singleSwap(params SingleSwapParams) (amountOut bigint) {
 		},
 	)
 
-	return amountOut
+	return amountIn, amountOut
 }
 
-func singleSwapDry(params SingleSwapParams) (amountOut bigint) {
-	amountOut = _swapDry(
+func singleSwapDry(params SingleSwapParams) (amountIn, amountOut bigint) {
+	amountIn, amountOut = _swapDry(
 		params.amountSpecified,
 		std.GetOrigCaller(), // if single swap => user will recieve
 		0,                   // sqrtPriceLimitX96
@@ -33,5 +33,5 @@ func singleSwapDry(params SingleSwapParams) (amountOut bigint) {
 		},
 	)
 
-	return amountOut
+	return amountIn, amountOut
 }

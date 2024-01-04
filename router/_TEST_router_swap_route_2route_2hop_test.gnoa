@@ -157,5 +157,5 @@ func TestwapRouteQuxBarExactOut(t *testing.T) {
 		99999,   // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, bigint(7356))
+	shouldEQ(t, swapResult, bigint(7350))
 }
