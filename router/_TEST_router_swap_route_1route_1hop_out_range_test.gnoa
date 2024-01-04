@@ -33,9 +33,9 @@ func TestPositionMint(t *testing.T) {
 	// Mint
 	tokenId, liquidity, amount0, amount1 := pos.Mint(barPath, bazPath, fee500, int32(12000), int32(15000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, liquidity, bigint(1308149))
-	shouldEQ(t, amount0, bigint(99999)) // ONLY BAR
-	shouldEQ(t, amount1, bigint(0))     // NO BAZ
+	shouldEQ(t, liquidity, bigint(1308150))
+	shouldEQ(t, amount0, bigint(100000)) // ONLY BAR
+	shouldEQ(t, amount1, bigint(0))      // NO BAZ
 }
 
 func TestDrySwapRouteBarBazExactIn(t *testing.T) {
@@ -50,7 +50,7 @@ func TestDrySwapRouteBarBazExactIn(t *testing.T) {
 		"100", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, bigint(0))
+	shouldEQ(t, dryResult, bigint(-1))
 }
 
 func TestSwapRouteBarBazExactIn(t *testing.T) {

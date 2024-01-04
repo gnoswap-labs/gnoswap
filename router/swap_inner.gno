@@ -11,7 +11,7 @@ func _swap(
 	recipient std.Address,
 	sqrtPriceLimitX96 bigint,
 	data SwapCallbackData,
-) (amountResult bigint) {
+) (amountPoolRecv, amountPoolOut bigint) {
 	// prepare
 	zeroForOne := data.tokenIn < data.tokenOut
 
@@ -23,20 +23,8 @@ func _swap(
 		}
 	}
 
-	// dry swap -> esteimate amount -> approve exact amount
-	approveAmount0, approveAmount1, _ := p.DrySwap(
-		data.tokenIn,
-		data.tokenOut,
-		data.fee,
-
-		recipient,
-		zeroForOne,
-		amountSpecified,
-		sqrtPriceLimitX96,
-	)
-	toApproveAmount := max(abs(approveAmount0), abs(approveAmount1))
-
 	// ROUTER approves POOL as spender
+	toApproveAmount := MAX_UINT64
 	approveByRegisterCall(data.tokenIn, ADDR_POOL, toApproveAmount)
 	approveByRegisterCall(data.tokenOut, ADDR_POOL, toApproveAmount)
 
@@ -53,21 +41,7 @@ func _swap(
 		data.payer,
 	)
 
-	if amountSpecified > 0 {
-		if zeroForOne { // return amount, user recvs ~= pool sends
-			amountResult = -amount1
-		} else {
-			amountResult = -amount0
-		}
-	} else {
-		if zeroForOne { // return amount, user sends ~= pool recvs
-			amountResult = amount0
-		} else {
-			amountResult = amount1
-		}
-	}
-
-	return amountResult
+	return absBigint(maxBigint(amount0, amount1)), absBigint(minBigint(amount0, amount1))
 }
 
 func _swapDry(
@@ -75,7 +49,7 @@ func _swapDry(
 	recipient std.Address,
 	sqrtPriceLimitX96 bigint,
 	data SwapCallbackData,
-) (amountResult bigint) {
+) (amountPoolRecv, amountPoolOut bigint) {
 	zeroForOne := data.tokenIn < data.tokenOut
 
 	if sqrtPriceLimitX96 == 0 {
@@ -98,31 +72,27 @@ func _swapDry(
 		sqrtPriceLimitX96,
 	)
 	if !ok {
-		return 0
+		return 0, 0
 	}
 
-	if amountSpecified > 0 { // EXACT_IN,
-		// input from user: tokenIn, tokenInAmount, tokenOut
-		// return: return tokenOutAmount(in positive) ≈ pool sends ≈ user recvs
-		if zeroForOne {
-			return absBigint(amount1)
-		} else {
-			return absBigint(amount0)
-		}
-	} else { // EXACT_OUT
-		// input from user: tokenIn, tokenOut, tokenOutAmount
-		// return: return tokenInAmount(in positive) ≈ user sends ≈ pool recvs
-		if zeroForOne {
-			return absBigint(amount0)
-		} else {
-			return absBigint(amount1)
-		}
-	}
-
-	return amountResult
+	return absBigint(maxBigint(amount0, amount1)), absBigint(minBigint(amount0, amount1))
 }
 
 func max(a, b uint64) uint64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func minBigint(a, b bigint) bigint {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxBigint(a, b bigint) bigint {
 	if a > b {
 		return a
 	}

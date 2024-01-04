@@ -29,11 +29,11 @@ func DrySwapRoute(
 
 	// check route length ( should be 1 ~ 7 )
 	routes := strings.Split(strRouteArr, ",")
-	require(1 <= len(routes) && len(routes) <= 7, ufmt.Sprintf("[ROUTER] router.gno__DrySwapRoute() || len(routes) should be 1 ~ 7 (len(routes):%d)", len(routes)))
+	require(1 <= len(routes) && len(routes) <= 7, ufmt.Sprintf("[ROUTER] router.gno__DrySwapRoute() || len(routes) should be 1 ~ 7 (len(routes)[%d])", len(routes)))
 
 	// check if routes length and quotes length are same
 	quotes := strings.Split(quoteArr, ",")
-	require(len(routes) == len(quotes), "[ROUTER] router.gno__DrySwapRoute() || len(routes) != len(quotes)")
+	require(len(routes) == len(quotes), ufmt.Sprintf("[ROUTER] router.gno__DrySwapRoute() || len(routes[%d]) != len(quotes[%d])", len(routes), len(quotes)))
 
 	// check if quotes are up to 100%
 	quotesSum := 0
@@ -43,7 +43,7 @@ func DrySwapRoute(
 	}
 	require(quotesSum == 100, "[ROUTER] router.gno__DrySwapRoute() || quotesSum != 100")
 
-	resultAmount := bigint(0)
+	var resultAmountIn, resultAmountOut bigint
 	for i, route := range routes {
 		numHops := strings.Count(route, "*POOL*") + 1
 		quote, _ := strconv.Atoi(quotes[i])
@@ -54,14 +54,31 @@ func DrySwapRoute(
 		toSwap := amountSpecified * bigint(quote) / bigint(100)
 
 		if numHops == 1 { // SINGLE
-			resultAmount += handleSingleSwap(route, toSwap, true)
+			amountIn, amountOut := handleSingleSwap(route, toSwap, true)
+			resultAmountIn += amountIn
+			resultAmountOut += amountOut
 		} else if 2 <= numHops && numHops <= 3 { // MULTI
-			resultAmount += handleMultiSwap(swapType, route, numHops, toSwap, true)
+			amountIn, amountOut := handleMultiSwap(swapType, route, numHops, toSwap, true)
+			resultAmountIn += amountIn
+			resultAmountOut += amountOut
 		} else {
 			panic("[ROUTER] router.gno__DrySwapRoute() || numHops should be 1 ~ 3")
 		}
 	}
-	return resultAmount
+
+	if swapType == ExactIn {
+		if resultAmountIn != amountSpecified {
+			return -1 // if pool doesn't have enough output token amount to swap against input token amount
+		}
+		return resultAmountOut
+	}
+
+	if swapType == ExactOut {
+		if resultAmountOut < amountSpecified { // if pool doesn't user wanted amount of output token
+			return -1
+		}
+		return resultAmountIn
+	}
 }
 
 func SwapRoute(
@@ -100,7 +117,7 @@ func SwapRoute(
 	}
 	require(quotesSum == 100, "[ROUTER] router.gno__SwapRoute() || quotesSum != 100")
 
-	resultAmount := bigint(0)
+	var resultAmountIn, resultAmountOut bigint
 	for i, route := range routes {
 		numHops := strings.Count(route, "*POOL*") + 1
 		quote, _ := strconv.Atoi(quotes[i])
@@ -111,23 +128,28 @@ func SwapRoute(
 		toSwap := amountSpecified * bigint(quote) / bigint(100)
 
 		if numHops == 1 { // SINGLE
-			resultAmount += handleSingleSwap(route, toSwap, false)
+			amountIn, amountOut := handleSingleSwap(route, toSwap, false)
+			resultAmountIn += amountIn
+			resultAmountOut += amountOut
 		} else if 2 <= numHops && numHops <= 3 { // MULTI
-			resultAmount += handleMultiSwap(swapType, route, numHops, toSwap, false)
+			amountIn, amountOut := handleMultiSwap(swapType, route, numHops, toSwap, false)
+			resultAmountIn += amountIn
+			resultAmountOut += amountOut
 		} else {
 			panic("[ROUTER] router.gno__SwapRoute() || numHops should be 1 ~ 3")
 		}
 	}
 
 	if swapType == ExactIn {
-		require(tokenAmountLimit <= resultAmount, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received (expected minimum output:%d, actual output:%d)", tokenAmountLimit, resultAmount))
+		require(tokenAmountLimit <= resultAmountOut, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received (expected minimum output:%d, actual output:%d)", tokenAmountLimit, resultAmountOut))
+		return resultAmountOut
 	} else { // EXACT_OUT
-		require(resultAmount <= tokenAmountLimit, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too much spend (expected maximum input:%d, actual input:%d)", tokenAmountLimit, resultAmount))
+		require(resultAmountIn <= tokenAmountLimit, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too much spend (expected maximum input:%d, actual input:%d)", tokenAmountLimit, resultAmountIn))
+		return resultAmountIn
 	}
-	return resultAmount
 }
 
-func handleSingleSwap(route string, amountSpecified bigint, isDry bool) bigint {
+func handleSingleSwap(route string, amountSpecified bigint, isDry bool) (amountIn, amountOut bigint) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
 		tokenIn:         input,
@@ -142,7 +164,7 @@ func handleSingleSwap(route string, amountSpecified bigint, isDry bool) bigint {
 	return singleSwap(singleParams)
 }
 
-func handleMultiSwap(swapType SwapType, route string, numHops int, amountSpecified bigint, isDry bool) bigint {
+func handleMultiSwap(swapType SwapType, route string, numHops int, amountSpecified bigint, isDry bool) (amountIn, amountOut bigint) {
 	switch swapType {
 	case ExactIn:
 		input, output, fee := getDataForMultiPath(route, 0) // first data
