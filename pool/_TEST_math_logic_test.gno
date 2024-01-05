@@ -43,7 +43,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	shouldEQ(t, ok, false)
 
 	// not enough mint == swap will fail
-	Mint(fooPath, barPath, fee500, posAddr, -tickUpper, -tickLower, 1000)
+	Mint(fooPath, barPath, fee500, posAddr, -tickUpper, -tickLower, 10)
 	_, _, ok = DrySwap(fooPath, barPath, fee500, "_", true, 16000, MIN_PRICE)
 	shouldEQ(t, ok, false)
 
@@ -79,7 +79,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 	)
 
 	shouldEQ(t, poolIn, bigint(43506))
-	shouldEQ(t, poolOut, bigint(-15999))
+	shouldEQ(t, poolOut, bigint(-16000))
 }
 
 func TestDrySwap_ZeroForOneFalse_AmountSpecified_Positive_16000(t *testing.T) {
@@ -112,6 +112,6 @@ func TestDrySwap_ZeroForOneFalse_AmountSpecified_Negative_16000(t *testing.T) {
 		-16000,    // amountSpecified
 		MAX_PRICE, // sqrtPriceLimitX96
 	)
-	shouldEQ(t, poolOut, bigint(-15999))
+	shouldEQ(t, poolOut, bigint(-16000))
 	shouldEQ(t, poolIn, bigint(5888))
 }

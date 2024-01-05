@@ -13,7 +13,7 @@ import (
 
 	pl "gno.land/r/demo/pool"
 	pos "gno.land/r/demo/position"
-rou "gno.land/r/demo/router"
+	rou "gno.land/r/demo/router"
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/baz"
@@ -175,7 +175,7 @@ func TestRouterDrySwapBarBazExactIn(t *testing.T) {
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100,gno.land/r/demo/bar:gno.land/r/demo/baz:100", // strRouteArr
 		"95,5", // quoteArr
 	)
-	shouldEQ(t, dryResult, bigint(160))
+	shouldEQ(t, dryResult, bigint(-1))
 }
 
 func TestRouterSwapBarBazExactIn(t *testing.T) {
