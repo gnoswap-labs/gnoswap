@@ -1,0 +1,1101 @@
+package swap_scneraio
+
+import (
+	"std"
+	"testing"
+
+	_ "gno.land/r/demo/grc20_wrapper"
+
+	pl "gno.land/r/demo/pool"
+	pos "gno.land/r/demo/position"
+	rou "gno.land/r/demo/router"
+
+	"gno.land/r/demo/gns"
+	"gno.land/r/demo/token01"
+	"gno.land/r/demo/token02"
+	"gno.land/r/demo/token03"
+	"gno.land/r/demo/token04"
+	"gno.land/r/demo/token05"
+	"gno.land/r/demo/token06"
+	"gno.land/r/demo/token07"
+	"gno.land/r/demo/token08"
+	"gno.land/r/demo/token09"
+	"gno.land/r/demo/token10"
+)
+
+var (
+	test1 = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+
+	poolAddr     = std.DerivePkgAddr("gno.land/r/demo/pool")
+	positionAddr = std.DerivePkgAddr("gno.land/r/demo/position")
+	stakerAddr   = std.DerivePkgAddr("gno.land/r/demo/staker")
+	routerAddr   = std.DerivePkgAddr("gno.land/r/demo/router")
+
+	token01Path = "gno.land/r/demo/token01"
+	token02Path = "gno.land/r/demo/token02"
+	token03Path = "gno.land/r/demo/token03"
+	token04Path = "gno.land/r/demo/token04"
+	token05Path = "gno.land/r/demo/token05"
+	token06Path = "gno.land/r/demo/token06"
+	token07Path = "gno.land/r/demo/token07"
+	token08Path = "gno.land/r/demo/token08"
+	token09Path = "gno.land/r/demo/token09"
+	token10Path = "gno.land/r/demo/token10"
+
+	max_timeout = bigint(9999999999)
+)
+
+func TestPoolInitByAdmin(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	pl.InitManual()
+	std.TestSkipHeights(1)
+}
+
+func TestPoolCreatePools(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	// approve gns to CreatePool ( 500 gns for 1 pool)
+	gns.Approve(a2u(poolAddr), 500*13)
+
+	pl.CreatePool(token01Path, token02Path, 100, 79228162514264337593543950337)    // tick 0 ≈ x1
+	pl.CreatePool(token02Path, token03Path, 100, 177166786517138269218369076073)   // tick 16096 ≈ x5
+	pl.CreatePool(token01Path, token02Path, 10000, 79228162514264337593543950337)  // tick 0 ≈ x1
+	pl.CreatePool(token02Path, token03Path, 10000, 194073514576992249379660408880) // tick 17979 ≈ x6
+	pl.CreatePool(token04Path, token05Path, 100, 25054147597456445214093764435)    // tick -23027 ≈ x0.1
+	pl.CreatePool(token05Path, token06Path, 100, 17716682555034377259603427773)    // tick -9958 ≈ x0.5
+	pl.CreatePool(token04Path, token05Path, 10000, 25054147597456445214093764435)  // tick -23027 ≈ x0.1
+	pl.CreatePool(token05Path, token06Path, 10000, 19407355733507081572369655227)  // tick -28135 ≈ x0.6
+	pl.CreatePool(token03Path, token08Path, 3000, 5602503859762671191748202504234) // tick 85176 ≈ x5000
+	pl.CreatePool(token06Path, token10Path, 3000, 5602507562777276312411137859)    // tick -25985 ≈ x0.005
+
+	pl.CreatePool(token07Path, token08Path, 100, 112046559425783515914356180039)   // 6932 ≈ x2
+	pl.CreatePool(token07Path, token08Path, 10000, 250541420775534450580036817218) // 23027 ≈ x10
+	pl.CreatePool(token08Path, token09Path, 100, 177166786517138269218369076073)   // 16096 ≈x5
+
+	std.TestSkipHeights(4)
+}
+
+func TestApproveAll(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	token01.Approve(a2u(poolAddr), 10_000_000_000_000_000)
+	token02.Approve(a2u(poolAddr), 10_000_000_000_000_000)
+	token03.Approve(a2u(poolAddr), 10_000_000_000_000_000)
+	token04.Approve(a2u(poolAddr), 10_000_000_000_000_000)
+	token05.Approve(a2u(poolAddr), 10_000_000_000_000_000)
+	token06.Approve(a2u(poolAddr), 10_000_000_000_000_000)
+	token07.Approve(a2u(poolAddr), 10_000_000_000_000_000)
+	token08.Approve(a2u(poolAddr), 10_000_000_000_000_000)
+	token09.Approve(a2u(poolAddr), 10_000_000_000_000_000)
+	token10.Approve(a2u(poolAddr), 10_000_000_000_000_000)
+}
+
+func TestPosition1InRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token01Path,       // token0
+		token02Path,       // token1
+		100,               // fee
+		-500,              // tickLower
+		500,               // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(1))
+	shouldEQ(t, amount0, bigint(999_999_999_999))
+	shouldEQ(t, amount1, bigint(999_999_999_999))
+
+	std.TestSkipHeights(3)
+}
+
+func TestPosition2Lower(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token01Path,       // token0
+		token02Path,       // token1
+		100,               // fee
+		-1000,             // tickLower
+		-500,              // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(2))
+	shouldEQ(t, amount0, bigint(0))
+	shouldEQ(t, amount1, bigint(999_999_999_999))
+
+	std.TestSkipHeights(3)
+}
+
+func TestPosition3InRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token02Path,       // token0
+		token03Path,       // token1
+		100,               // fee
+		15096,             // tickLower
+		17096,             // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(3))
+	shouldEQ(t, amount0, bigint(199_983_678_079))
+	shouldEQ(t, amount1, bigint(999_999_999_999))
+
+	std.TestSkipHeights(3)
+}
+
+func TestPosition4Lower(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token02Path,       // token0
+		token03Path,       // token1
+		100,               // fee
+		15000,             // tickLower
+		16000,             // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(4))
+	shouldEQ(t, amount0, bigint(0))
+	shouldEQ(t, amount1, bigint(999_999_999_999))
+
+	std.TestSkipHeights(4)
+}
+
+func TestPosition5InRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token01Path,       // token0
+		token02Path,       // token1
+		10000,             // fee
+		-600,              // tickLower
+		600,               // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(5))
+	shouldEQ(t, amount0, bigint(999_999_999_999))
+	shouldEQ(t, amount1, bigint(999_999_999_999))
+
+	std.TestSkipHeights(3)
+}
+
+func TestPosition6Upper(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token01Path,       // token0
+		token02Path,       // token1
+		10000,             // fee
+		600,               // tickLower
+		1200,              // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(6))
+	shouldEQ(t, amount0, bigint(999_999_999_999))
+	shouldEQ(t, amount1, bigint(0))
+
+	std.TestSkipHeights(4)
+}
+
+func TestPosition7InRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token02Path,       // token0
+		token03Path,       // token1
+		10000,             // fee
+		16800,             // tickLower
+		18800,             // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(7))
+	shouldEQ(t, amount0, bigint(131_988_119_120))
+	shouldEQ(t, amount1, bigint(999_999_999_999))
+
+	std.TestSkipHeights(3)
+}
+
+func TestPosition8Upper(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token02Path,       // token0
+		token03Path,       // token1
+		10000,             // fee
+		19000,             // tickLower
+		20000,             // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(8))
+	shouldEQ(t, amount0, bigint(999_999_999_999))
+	shouldEQ(t, amount1, bigint(0))
+
+	std.TestSkipHeights(4)
+}
+
+func TestPosition9InRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token04Path,       // token0
+		token05Path,       // token1
+		100,               // fee
+		-24028,            // tickLower
+		-22028,            // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(9))
+	shouldEQ(t, amount0, bigint(999_999_999_999))
+	shouldEQ(t, amount1, bigint(100_195_254_382))
+
+	std.TestSkipHeights(3)
+}
+
+func TestPosition10Lower(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token04Path,       // token0
+		token05Path,       // token1
+		100,               // fee
+		-26028,            // tickLower
+		-24028,            // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(10))
+	shouldEQ(t, amount0, bigint(0))
+	shouldEQ(t, amount1, bigint(999_999_999_999))
+
+	std.TestSkipHeights(4)
+}
+
+func TestPosition11InRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token05Path,       // token0
+		token06Path,       // token1
+		100,               // fee
+		-30958,            // tickLower
+		-28858,            // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(11))
+	shouldEQ(t, amount0, bigint(999_999_999_999))
+	shouldEQ(t, amount1, bigint(45_571_060_750))
+
+	std.TestSkipHeights(3)
+}
+
+func TestPosition12Lower(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token05Path,       // token0
+		token06Path,       // token1
+		100,               // fee
+		-31958,            // tickLower
+		-30958,            // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(12))
+	shouldEQ(t, amount0, bigint(0))
+	shouldEQ(t, amount1, bigint(999_999_999_999))
+
+	std.TestSkipHeights(4)
+}
+
+func TestPosition13InRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token04Path,       // token0
+		token05Path,       // token1
+		10000,             // fee
+		-24000,            // tickLower
+		-22000,            // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(13))
+	shouldEQ(t, amount0, bigint(999_999_999_999))
+	shouldEQ(t, amount1, bigint(94_868_902_290))
+
+	std.TestSkipHeights(3)
+}
+
+func TestPosition14LUpper(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token04Path,       // token0
+		token05Path,       // token1
+		10000,             // fee
+		-21000,            // tickLower
+		-20000,            // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(14))
+	shouldEQ(t, amount0, bigint(999_999_999_999))
+	shouldEQ(t, amount1, bigint(0))
+
+	std.TestSkipHeights(4)
+}
+
+func TestPosition15InRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token05Path,       // token0
+		token06Path,       // token1
+		10000,             // fee
+		-29000,            // tickLower
+		-27000,            // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(15))
+	shouldEQ(t, amount0, bigint(999_999_999_999))
+	shouldEQ(t, amount1, bigint(46_036_333_442))
+
+	std.TestSkipHeights(3)
+}
+
+func TestPosition16LUpper(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token05Path,       // token0
+		token06Path,       // token1
+		10000,             // fee
+		-26000,            // tickLower
+		-25000,            // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(16))
+	shouldEQ(t, amount0, bigint(999_999_999_999))
+	shouldEQ(t, amount1, bigint(0))
+
+	std.TestSkipHeights(4)
+}
+
+func TestPosition17InRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token03Path,       // token0
+		token08Path,       // token1
+		3000,              // fee
+		84180,             // tickLower
+		86160,             // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(17))
+	shouldEQ(t, amount0, bigint(197_244_062))
+	shouldEQ(t, amount1, bigint(999_999_999_998))
+
+	std.TestSkipHeights(3)
+}
+
+func TestPosition18Lower(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token03Path,       // token0
+		token08Path,       // token1
+		3000,              // fee
+		82140,             // tickLower
+		83160,             // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(18))
+	shouldEQ(t, amount0, bigint(0))
+	shouldEQ(t, amount1, bigint(999_999_999_998))
+
+	std.TestSkipHeights(4)
+}
+
+func TestPosition19InRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token06Path,       // token0
+		token10Path,       // token1
+		3000,              // fee
+		-53940,            // tickLower
+		-51960,            // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(19))
+	shouldEQ(t, amount0, bigint(999_999_999_999))
+	shouldEQ(t, amount1, bigint(4_667_012_345))
+
+	std.TestSkipHeights(3)
+}
+
+func TestPosition20Upper(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token06Path,       // token0
+		token10Path,       // token1
+		3000,              // fee
+		-50940,            // tickLower
+		-49980,            // tickUpper
+		1_000_000_000_000, // amount0Desired
+		1_000_000_000_000, // amount1Desired
+		0,                 // amount0Min
+		0,                 // amount1Min
+		max_timeout,       // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(20))
+	shouldEQ(t, amount0, bigint(999_999_999_999))
+	shouldEQ(t, amount1, bigint(0))
+
+	std.TestSkipHeights(4)
+}
+
+func TestPosition21InRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token07Path,   // token0
+		token08Path,   // token1
+		100,           // fee
+		5932,          // tickLower
+		7932,          // tickUpper
+		1_000_000_000, // amount0Desired
+		1_000_000_000, // amount1Desired
+		0,             // amount0Min
+		0,             // amount1Min
+		max_timeout,   // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(21))
+	shouldEQ(t, amount0, bigint(499_990_919))
+	shouldEQ(t, amount1, bigint(999_999_999))
+
+	std.TestSkipHeights(4)
+}
+
+func TestPosition22LowerRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token07Path,   // token0
+		token08Path,   // token1
+		10000,         // fee
+		21000,         // tickLower
+		22000,         // tickUpper
+		1_000_000_000, // amount0Desired
+		1_000_000_000, // amount1Desired
+		0,             // amount0Min
+		0,             // amount1Min
+		max_timeout,   // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(22))
+	shouldEQ(t, amount0, bigint(0))
+	shouldEQ(t, amount1, bigint(999_999_999))
+
+	std.TestSkipHeights(4)
+}
+
+func TestPosition23LowerRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := pos.Mint(
+		token08Path,   // token0
+		token09Path,   // token1
+		100,           // fee
+		14096,         // tickLower
+		15096,         // tickUpper
+		1_000_000_000, // amount0Desired
+		1_000_000_000, // amount1Desired
+		0,             // amount0Min
+		0,             // amount1Min
+		max_timeout,   // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(23))
+	shouldEQ(t, amount0, bigint(0))
+	shouldEQ(t, amount1, bigint(999_999_999))
+
+	std.TestSkipHeights(4)
+}
+
+// 1 hop
+// t1:t2:100
+func TestDrySwapRouteSingleHopToken1Token2LowFee(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token01Path,         // inputToken
+		token02Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token01:gno.land/r/demo/token02:100", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(99_989_753))
+}
+
+// 1 hop
+// t1:t2:10000
+func TestDrySwapRouteSingleHopToken1Token2HighFee(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token01Path,         // inputToken
+		token02Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token01:gno.land/r/demo/token02:10000", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(98_999_710))
+}
+
+// 1 hop
+// t2:t3:100
+func TestDrySwapRouteSingleHopToken2Token3LowFee(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token02Path,         // inputToken
+		token03Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token02:gno.land/r/demo/token03:100", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(499_978_612))
+}
+
+// 1 hop
+// t2:t3:10000
+func TestDrySwapRouteSingleHopToken2Token3HighFee(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token02Path,         // inputToken
+		token03Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token02:gno.land/r/demo/token03:10000", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(594_011_060))
+}
+
+// 1 hop
+// t4:t5:100
+func TestDrySwapRouteSingleHopToken4Token5LowFee(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token04Path,         // inputToken
+		token05Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token04:gno.land/r/demo/token05:100", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(9_998_953))
+}
+
+// 1 hop
+// t4:t5:10000
+func TestDrySwapRouteSingleHopToken4Token5HighFee(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token04Path,         // inputToken
+		token05Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token04:gno.land/r/demo/token05:10000", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(9_899_953))
+}
+
+// 1 hop
+// t5:t6:100
+func TestDrySwapRouteSingleHopToken5Token6LowFee(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token05Path,         // inputToken
+		token06Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token05:gno.land/r/demo/token06:100", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(4_999_883))
+}
+
+// 1 hop
+// t5:t6:10000
+func TestDrySwapRouteTwoHopToken5Token6HighFee(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token05Path,         // inputToken
+		token06Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token05:gno.land/r/demo/token06:10000", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(5_940_272))
+}
+
+// 2 hop
+// t1:t2:100_t2:t3:100
+func TestDrySwapRouteTwoHopToken1Token3Quorter1(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token01Path,         // inputToken
+		token03Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token01:gno.land/r/demo/token02:100*POOL*gno.land/r/demo/token02:gno.land/r/demo/token03:100", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(499_927_381))
+}
+
+// 2 hop
+// t1:t2:100_t2:t3:10000
+func TestDrySwapRouteTwoHopToken1Token3Quorter2(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token01Path,         // inputToken
+		token03Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token01:gno.land/r/demo/token02:100*POOL*gno.land/r/demo/token02:gno.land/r/demo/token03:10000", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(593_950_191))
+}
+
+// 2 hop
+// t1:t2:10000_t2:t3:100
+func TestDrySwapRouteTwoHopToken1Token3Quorter3(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token01Path,         // inputToken
+		token03Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token01:gno.land/r/demo/token02:10000*POOL*gno.land/r/demo/token02:gno.land/r/demo/token03:100", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(494_977_497))
+}
+
+// 2 hop
+// t1:t2:10000_t2:t3:10000
+func TestDrySwapRouteTwoHopToken1Token3Quorter4(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token01Path,         // inputToken
+		token03Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token01:gno.land/r/demo/token02:10000*POOL*gno.land/r/demo/token02:gno.land/r/demo/token03:10000", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(588_069_412))
+}
+
+// 2 hop
+// t4:t5:100_t5:t6:100
+func TestDrySwapRouteTwoHopToken4Token6Quorter1(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token04Path,         // inputToken
+		token06Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token04:gno.land/r/demo/token05:100*POOL*gno.land/r/demo/token05:gno.land/r/demo/token06:100", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(499_938))
+}
+
+// 2 hop
+// t4:t5:100_t5:t6:10000
+func TestDrySwapRouteTwoHopToken4Token6Quorter2(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token04Path,         // inputToken
+		token06Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token04:gno.land/r/demo/token05:100*POOL*gno.land/r/demo/token05:gno.land/r/demo/token06:10000", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(593_967))
+}
+
+// 2 hop
+// t4:t5:10000_t5:t6:100
+func TestDrySwapRouteTwoHopToken4Token6Quorter3(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token04Path,         // inputToken
+		token06Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token04:gno.land/r/demo/token05:10000*POOL*gno.land/r/demo/token05:gno.land/r/demo/token06:100", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(494_988))
+}
+
+// 2 hop
+// t4:t5:10000_t5:t6:10000
+func TestDrySwapRouteTwoHopToken4Token6Quorter4(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token04Path,         // inputToken
+		token06Path,         // outputToken
+		bigint(100_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token04:gno.land/r/demo/token05:10000*POOL*gno.land/r/demo/token05:gno.land/r/demo/token06:10000", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(588_087))
+}
+
+// 3 hop
+// t1:t2:100_t2:t3:100_t3:t8:3000
+func TestDrySwapRouteThreeHopToken1Token8Quorter1(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token01Path,        // inputToken
+		token08Path,        // outputToken
+		bigint(10_000_000), // amountSpecified
+		"EXACT_IN",         // swapType
+		"gno.land/r/demo/token01:gno.land/r/demo/token02:100*POOL*gno.land/r/demo/token02:gno.land/r/demo/token03:100*POOL*gno.land/r/demo/token03:gno.land/r/demo/token08:3000", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(246_255_506_499))
+}
+
+// 3 hop
+// t1:t2:100_t2:t3:10000_t3:t8:3000
+func TestDrySwapRouteThreeHopToken1Token8Quorter2(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token01Path,        // inputToken
+		token08Path,        // outputToken
+		bigint(10_000_000), // amountSpecified
+		"EXACT_IN",         // swapType
+		"gno.land/r/demo/token01:gno.land/r/demo/token02:100*POOL*gno.land/r/demo/token02:gno.land/r/demo/token03:10000*POOL*gno.land/r/demo/token03:gno.land/r/demo/token08:3000", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(291_914_159_523))
+}
+
+// 3 hop
+// t1:t2:10000_t2:t3:100_t3:t8:3000
+func TestDrySwapRouteThreeHopToken1Token8Quorter3(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token01Path,        // inputToken
+		token08Path,        // outputToken
+		bigint(10_000_000), // amountSpecified
+		"EXACT_IN",         // swapType
+		"gno.land/r/demo/token01:gno.land/r/demo/token02:10000*POOL*gno.land/r/demo/token02:gno.land/r/demo/token03:100*POOL*gno.land/r/demo/token03:gno.land/r/demo/token08:3000", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(243_846_250_586))
+}
+
+// 3 hop
+// t1:t2:10000_t2:t3:10000_t3:t8:3000
+func TestDrySwapRouteThreeHopToken1Token8Quorter4(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token01Path,        // inputToken
+		token08Path,        // outputToken
+		bigint(10_000_000), // amountSpecified
+		"EXACT_IN",         // swapType
+		"gno.land/r/demo/token01:gno.land/r/demo/token02:10000*POOL*gno.land/r/demo/token02:gno.land/r/demo/token03:10000*POOL*gno.land/r/demo/token03:gno.land/r/demo/token08:3000", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, bigint(289_064_553_060))
+}
+
+// ADVANCED
+// 1 hop 2 route
+// t7:t8:100
+/*
+1_500_000_000
+
+100%	1_500_000_000
+95% 	1_425_000_000
+90% 	1_350_000_000
+85% 	1_275_000_000
+80% 	1_200_000_000
+75% 	1_125_000_000
+70% 	1_050_000_000
+65% 	975_000_000
+60% 	900_000_000
+55% 	825_000_000
+50% 	750_000_000
+45% 	675_000_000
+40% 	600_000_000
+35% 	525_000_000
+30% 	450_000_000
+25% 	375_000_000
+20% 	300_000_000
+15% 	225_000_000
+10% 	150_000_000
+5% 		75_000_000
+*/
+func TestDrySwapRouteSingleHopTwoRouteToken7Token8Cond1(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token07Path,           // inputToken
+		token08Path,           // outputToken
+		bigint(1_500_000_000), // amountSpecified
+		"EXACT_OUT",           // swapType
+		"gno.land/r/demo/token07:gno.land/r/demo/token08:10000,gno.land/r/demo/token07:gno.land/r/demo/token08:100", // strRouteArr
+		"65,35", // quoteArr
+	)
+	shouldEQ(t, dryResult, bigint(384_004_226))
+}
+
+// 1 hop 1 route
+// t7:t8:100
+func TestDrySwapRouteSingleHopSingleRouteToken7Token8HighFee(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token07Path,         // inputToken
+		token08Path,         // outputToken
+		bigint(975_000_000), // amountSpecified > 65% of 1_500_000_000
+		"EXACT_OUT",         // swapType
+		"gno.land/r/demo/token07:gno.land/r/demo/token08:10000", // strRouteArr
+		"100", // quoteArr
+	)
+	shouldEQ(t, dryResult, bigint(114_584_713))
+}
+
+func TestDrySwapRouteSingleHopSingleRouteToken7Token8LowFee(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	dryResult := rou.DrySwapRoute(
+		token07Path,         // inputToken
+		token08Path,         // outputToken
+		bigint(525_000_000), // amountSpecified 35% of 1_500_000_000
+		"EXACT_OUT",         // swapType
+		"gno.land/r/demo/token07:gno.land/r/demo/token08:100", // strRouteArr
+		"100", // quoteArr
+	)
+	shouldEQ(t, dryResult, bigint(269_419_513))
+}
+
+// RPC OK
+// http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/demo/router\nDrySwapRoute(\"gno.land/r/demo/token07\", \"gno.land/r/demo/token08\", \"520000000\", \"EXACT_IN\", \"gno.land/r/demo/token07:gno.land/r/demo/token08:100\", \"100\")%22
+func TestDrySwapRouteSingleHopSingleRouteToken7Token8RpcSuccess(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	// 
+	dryResult := rou.DrySwapRoute(
+		token07Path,         // inputToken
+		token08Path,         // outputToken
+		bigint(520_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token07:gno.land/r/demo/token08:100", // strRouteArr
+		"100", // quoteArr
+	)
+	println("dryResult:", dryResult) // 989721389
+	// RPC
+	/*
+			{
+		    "jsonrpc": "2.0",
+		    "id": "",
+		    "result": {
+		        "response": {
+		            "ResponseBase": {
+		                "Error": null,
+		                "Data": "KDk4OTcyMTM4OSBiaWdpbnQp", // (989721389 bigint)
+		                "Events": null,
+		                "Log": "",
+		                "Info": ""
+		            },
+		            "Key": null,
+		            "Value": null,
+		            "Proof": null,
+		            "Height": "0"
+		        }
+		    }
+		}
+	*/
+}
+
+// RPC ERROR
+// http://localhost:26657/abci_query?path=%22vm/qeval%22&data=%22gno.land/r/demo/router\nDrySwapRoute(\"gno.land/r/demo/token07\", \"gno.land/r/demo/token08\", \"530000000\", \"EXACT_IN\", \"gno.land/r/demo/token07:gno.land/r/demo/token08:100\", \"100\")%22
+func TestDrySwapRouteSingleHopSingleRouteToken7Token8RpcFail(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	// test => 1748 iteration => return -1
+	// land => 1325 iteration => panic("allocation limit")
+	dryResult := rou.DrySwapRoute(
+		token07Path,         // inputToken
+		token08Path,         // outputToken
+		bigint(530_000_000), // amountSpecified
+		"EXACT_IN",          // swapType
+		"gno.land/r/demo/token07:gno.land/r/demo/token08:100", // strRouteArr
+		"100", // quoteArr
+	)
+	println("dryResult:", dryResult) // -1
+	// RPC
+	/*
+			{
+		    "jsonrpc": "2.0",
+		    "id": "",
+		    "error": {
+		        "code": -32603,
+		        "message": "Internal error",
+		        "data": "allocation limit exceeded"
+		    }
+		}
+	*/
+}
