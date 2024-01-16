@@ -447,6 +447,7 @@ func DrySwap(
 ) (bigint, bigint, bool) {
 
 	if amountSpecified == 0 {
+		println("# 1")
 		return 0, 0, false
 	}
 
@@ -455,10 +456,12 @@ func DrySwap(
 
 	if zeroForOne {
 		if !(sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > MIN_SQRT_RATIO) {
+			println("# 2")
 			return 0, 0, false
 		}
 	} else {
 		if !(sqrtPriceLimitX96 > slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 < MAX_SQRT_RATIO) {
+			println("# 3")
 			return 0, 0, false
 		}
 	}
@@ -615,18 +618,21 @@ func DrySwap(
 	if zeroForOne {
 		if !(pool.balances.token1 >= absBigint(amount1)) {
 			// NOT ENOUGH BALANCE for output token1
+			println("# 4")
 			return 0, 0, false
 		}
 
 	} else {
 		if !(pool.balances.token0 >= absBigint(amount0)) {
 			// NOT ENOUGH BALANCE for output token0
+			println("# 5")
 			return 0, 0, false
 		}
 	}
 
 	// just not enough balance
 	if amount0 == 0 && amount1 == 0 {
+		println("# 6")
 		return 0, 0, false
 	}
 
