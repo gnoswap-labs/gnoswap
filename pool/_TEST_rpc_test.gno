@@ -87,3 +87,7 @@ func TestApiGetPool(t *testing.T) {
 func TestRpcGetPools(t *testing.T) {
 	RpcGetPools()
 }
+
+func TestRpcMakePool(t *testing.T) {
+	RpcMakePool("gno.land/r/demo/bar:gno.land/r/demo/baz:500")
+}
