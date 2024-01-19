@@ -20,7 +20,7 @@ help:
 	@cat $(MAKEFILE) | grep '^[a-z][^:]*:' | cut -d: -f1 | sort | sed 's/^/  /'
 
 .PHONY: all
-all: wait deploy setup
+all: wait deploy setup done
 
 .PHONY: deploy
 deploy: deploy-grc20s deploy-gnft deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-grc20_wrapper
@@ -94,6 +94,7 @@ multi-msg-01:
 	$(info ************ [MULTI-MSG UNTIL CREATE_POOL] ************)
 	@echo "" | gnokey sign -txpath $(ROOT_DIR)/_test/multi_msg_test1.txt -insecure-password-stdin=true -chainid $(CHAINID) -number 5 -sequence 19 test1 > signed_test1.tx
 	gnokey broadcast -remote $(GNOLAND_RPC_URL) signed_test1.tx > /dev/null
+	@echo
 
 
 # MULTI MSG FOR MINT
@@ -101,3 +102,10 @@ multi-msg-02:
 	$(info ************ [MULTI-MSG MINT] ************)
 	@echo "" | gnokey sign -txpath $(ROOT_DIR)/_test/multi_msg_test1_2.txt -insecure-password-stdin=true -chainid $(CHAINID) -number 5 -sequence 20 test1 > signed_test2.tx
 	gnokey broadcast -remote $(GNOLAND_RPC_URL) signed_test2.tx > /dev/null
+	@echo
+
+
+done:
+	$(info ************ [DONE] send 1ugnot to gov ************)
+	@echo "" | gnokey maketx send -send 1ugnot -to $(ADDR_GOV) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo
