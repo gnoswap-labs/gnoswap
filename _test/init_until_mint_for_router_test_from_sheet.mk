@@ -92,12 +92,12 @@ deploy-grc20_wrapper:
 # MULTI MSG UNTIL CREATE_POOL
 multi-msg-01:
 	$(info ************ [MULTI-MSG UNTIL CREATE_POOL] ************)
-	@echo "" | gnokey sign -txpath multi_msg_test1.txt -insecure-password-stdin=true -chainid $(CHAINID) -number 5 -sequence 19 test1 > signed_test1.tx
+	@echo "" | gnokey sign -txpath $(ROOT_DIR)/_test/multi_msg_test1.txt -insecure-password-stdin=true -chainid $(CHAINID) -number 5 -sequence 19 test1 > signed_test1.tx
 	gnokey broadcast -remote $(GNOLAND_RPC_URL) signed_test1.tx > /dev/null
 
 
 # MULTI MSG FOR MINT
 multi-msg-02:
 	$(info ************ [MULTI-MSG MINT] ************)
-	@echo "" | gnokey sign -txpath multi_msg_test1_2.txt -insecure-password-stdin=true -chainid $(CHAINID) -number 5 -sequence 20 test1 > signed_test2.tx
+	@echo "" | gnokey sign -txpath $(ROOT_DIR)/_test/multi_msg_test1_2.txt -insecure-password-stdin=true -chainid $(CHAINID) -number 5 -sequence 20 test1 > signed_test2.tx
 	gnokey broadcast -remote $(GNOLAND_RPC_URL) signed_test2.tx > /dev/null
