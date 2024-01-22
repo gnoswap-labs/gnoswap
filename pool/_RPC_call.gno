@@ -22,9 +22,76 @@ func RpcGetPools() string {
 	return string(rr)
 }
 
+func RpcMakePools() string {
+	rpcPools := []RpcPool{}
+
+	for poolPath, pool := range pools {
+		singlePool := RpcMakePoolStruct(poolPath)
+		rpcPools = append(rpcPools, singlePool)
+	}
+
+	rr, err := json.Marshal(rpcPools)
+	if err != nil {
+		panic(ufmt.Sprintf("[POOL] getter_api.gno__RpcMakePools() || %v", err))
+	}
+
+	return string(rr)
+}
+
+func RpcMakePoolStruct(poolKey string) RpcPool {
+	rpcPool := RpcPool{}
+	pool := GetPoolFromPoolKey(poolKey)
+
+	rpcPool.PoolPath = poolKey
+
+	rpcPool.Token0Path = pool.token0Path
+	rpcPool.Token1Path = pool.token1Path
+
+	rpcPool.BalancesToken0 = pool.balances.token0
+	rpcPool.BalancesToken1 = pool.balances.token1
+
+	rpcPool.Fee = pool.fee
+
+	rpcPool.TickSpacing = pool.tickSpacing
+
+	rpcPool.MaxLiquidityPerTick = pool.maxLiquidityPerTick
+
+	rpcPool.Slot0SqrtPriceX96 = pool.slot0.sqrtPriceX96
+	rpcPool.Slot0Tick = pool.slot0.tick
+	rpcPool.Slot0FeeProtocol = pool.slot0.feeProtocol
+	rpcPool.Slot0Unlocked = pool.slot0.unlocked
+
+	rpcPool.FeeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128
+	rpcPool.FeeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128
+
+	rpcPool.ProtocolFeesToken0 = pool.protocolFees.token0
+	rpcPool.ProtocolFeesToken1 = pool.protocolFees.token1
+
+	rpcPool.Liquidity = pool.liquidity
+
+	rpcPool.Ticks = RpcTicks{}
+	for tick, tickInfo := range pool.ticks {
+		rpcPool.Ticks[tick] = RpcTickInfo{
+			LiquidityGross:              tickInfo.liquidityGross,
+			LiquidityNet:                tickInfo.liquidityNet,
+			FeeGrowthOutside0X128:       tickInfo.feeGrowthOutside0X128,
+			FeeGrowthOutside1X128:       tickInfo.feeGrowthOutside1X128,
+			TickCumulativeOutside:       tickInfo.tickCumulativeOutside,
+			SecondsPerLiquidityOutsideX: tickInfo.secondsPerLiquidityOutsideX128,
+			SecondsOutside:              tickInfo.secondsOutside,
+			Initialized:                 tickInfo.initialized,
+		}
+	}
+
+	rpcPool.TickBitmaps = pool.tickBitmaps
+	return rpcPool
+}
+
 func RpcMakePool(poolKey string) string {
 	rpcPool := RpcPool{}
 	pool := GetPoolFromPoolKey(poolKey)
+
+	rpcPool.PoolPath = poolKey
 
 	rpcPool.Token0Path = pool.token0Path
 	rpcPool.Token1Path = pool.token1Path
@@ -76,6 +143,8 @@ func RpcMakePool(poolKey string) string {
 }
 
 type RpcPool struct {
+	PoolPath string `json:"pool_path"`
+
 	Token0Path string `json:"token0_path"`
 	Token1Path string `json:"token1_path"`
 

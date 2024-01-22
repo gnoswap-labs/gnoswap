@@ -7,7 +7,7 @@ import (
 func TickMathGetSqrtRatioAtTick(tick int32) bigint {
 	var absTick bigint
 	if tick < 0 {
-		absTick = -1 * bigint(tick)
+		absTick = -bigint(tick)
 	} else {
 		absTick = bigint(tick)
 	}
@@ -84,11 +84,12 @@ func TickMathGetSqrtRatioAtTick(tick int32) bigint {
 
 	shiftedRatio := ratio >> 32
 	remainder := ratio % (1 << 32)
-	if remainder == 0 {
+	if shiftedRatio+remainder == 0 {
 		return shiftedRatio + 0
 	} else {
 		return shiftedRatio + 1
 	}
+
 }
 
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) int32 {
@@ -145,11 +146,13 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) int32 {
 	tickLow := int32(int64((log_sqrt10001 - 3402992956809132418596140100660247210) >> 128))
 	tickHi := int32(int64((log_sqrt10001 + 291339464771989622907027621153398088495) >> 128))
 
-	tick := tickLow
+	var tick int32
 	if tickLow == tickHi {
-		if TickMathGetSqrtRatioAtTick(tickHi) <= sqrtPriceX96 {
-			tick = tickHi
-		}
+		tick = tickLow
+	} else if TickMathGetSqrtRatioAtTick(tickHi) <= sqrtPriceX96 {
+		tick = tickHi
+	} else {
+		tick = tickLow
 	}
 
 	return tick
