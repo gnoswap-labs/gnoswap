@@ -95,13 +95,52 @@ func getRatiosFromBase(maxHops int) []map[string]bigint {
 	var tokenPrices []map[string]bigint
 	for token, price := range tokenPrice {
 		tokenPrices = append(tokenPrices, map[string]bigint{token: price})
-		// DEBUG
-		// println("token:", token)
-		// println("price:", price)
-		// println()
 	}
 
 	return tokenPrices
+}
+
+func calculateTokenPrice(currentToken, swapPath string, numPools, proceed int, currentPriceX96 bigint) bigint {
+	currentPoolPathKey := makePoolPath(swapPath, proceed)
+	currentPool := p.GetPoolFromPoolKey(currentPoolPathKey)
+
+	poolToken0 := currentPool.PoolGetToken0Path()
+	poolToken1 := currentPool.PoolGetToken1Path()
+
+	if poolToken0 == currentToken {
+		currentSqrtPriceX96 := currentPool.PoolGetSlot0SqrtPriceX96()
+
+		currentPriceX96 *= currentSqrtPriceX96 * currentSqrtPriceX96
+		currentToken = poolToken1
+	} else if poolToken1 == currentToken {
+		currentTick := currentPool.PoolGetSlot0Tick()
+		oppositeTick := -currentTick
+		oppositeSqrtPriceX96 := p.TickMathGetSqrtRatioAtTick(oppositeTick)
+
+		currentPriceX96 *= oppositeSqrtPriceX96 * oppositeSqrtPriceX96
+		currentToken = poolToken0
+	} else {
+		panic("[ROUTER] _RPC_api.gno__calculateTokenPrice() || wrong condition")
+	}
+
+	if proceed == numPools-1 {
+		for {
+			if currentPriceX96 < (Q96 * 2) {
+				return currentPriceX96
+			}
+			currentPriceX96 /= Q96
+		}
+	}
+
+	return calculateTokenPrice(currentToken, swapPath, numPools, proceed+1, currentPriceX96)
+}
+
+func sqrt(x bigint, n int) bigint {
+	result := bigint(1)
+	for i := 0; i < n; i++ {
+		result *= x
+	}
+	return result
 }
 
 func getTokenList() []string {
@@ -142,39 +181,6 @@ func makePoolPath(poolPath string, poolIndex int) string {
 	}
 
 	return token0Path + ":" + token1Path + ":" + fee
-}
-
-func calculateTokenPrice(token, swapPath string, numPools, proceed int, currentPrice bigint) bigint {
-	currentPoolPathKey := makePoolPath(swapPath, proceed)
-	currentPool := p.GetPoolFromPoolKey(currentPoolPathKey)
-
-	currentToken0 := currentPool.PoolGetToken0Path()
-	currentToken1 := currentPool.PoolGetToken1Path()
-	currentSqrtPriceX96 := currentPool.PoolGetSlot0SqrtPriceX96()
-
-	if currentToken0 == token {
-		currentPrice *= (Q96 * Q96 / (currentSqrtPriceX96 * currentSqrtPriceX96 / Q96))
-		token = currentToken1
-	} else if currentToken1 == token {
-		currentPrice *= (currentSqrtPriceX96 * currentSqrtPriceX96 / Q96)
-		token = currentToken0
-	} else {
-		panic("[ROUTER] _RPC_api.gno__calculateTokenPrice() || wrong condition")
-	}
-
-	if proceed == numPools-1 {
-		return currentPrice / sqrt(Q96, proceed)
-	}
-
-	return calculateTokenPrice(token, swapPath, numPools, proceed+1, currentPrice)
-}
-
-func sqrt(x bigint, n int) bigint {
-	result := bigint(1)
-	for i := 0; i < n; i++ {
-		result *= x
-	}
-	return result
 }
 
 func poolPathWithFeeDivide(poolPath string) (string, string, int) {
