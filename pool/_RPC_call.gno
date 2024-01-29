@@ -84,6 +84,23 @@ func RpcMakePoolStruct(poolKey string) RpcPool {
 	}
 
 	rpcPool.TickBitmaps = pool.tickBitmaps
+
+	_positions := pool.positions
+	rpcPositions := []RpcPosition{}
+	for posKey, posInfo := range _positions {
+		owner, tickLower, tickUpper := posKeyDivide(posKey)
+
+		rpcPositions = append(rpcPositions, RpcPosition{
+			Owner:      owner,
+			TickLower:  tickLower,
+			TickUpper:  tickUpper,
+			Liquidity:  posInfo.liquidity,
+			Token0Owed: posInfo.tokensOwed0,
+			Token1Owed: posInfo.tokensOwed1,
+		})
+	}
+	rpcPool.Positions = rpcPositions
+
 	return rpcPool
 }
 
@@ -134,6 +151,22 @@ func RpcMakePool(poolKey string) string {
 
 	rpcPool.TickBitmaps = pool.tickBitmaps
 
+	_positions := pool.positions
+	rpcPositions := []RpcPosition{}
+	for posKey, posInfo := range _positions {
+		owner, tickLower, tickUpper := posKeyDivide(posKey)
+
+		rpcPositions = append(rpcPositions, RpcPosition{
+			Owner:      owner,
+			TickLower:  tickLower,
+			TickUpper:  tickUpper,
+			Liquidity:  posInfo.liquidity,
+			Token0Owed: posInfo.tokensOwed0,
+			Token1Owed: posInfo.tokensOwed1,
+		})
+	}
+	rpcPool.Positions = rpcPositions
+
 	rr, err := json.Marshal(rpcPool)
 	if err != nil {
 		panic(ufmt.Sprintf("[POOL] getter_api.gno__RpcMakePool() || %v", err))
@@ -142,6 +175,7 @@ func RpcMakePool(poolKey string) string {
 	return string(rr)
 }
 
+// TYPEs
 type RpcPool struct {
 	PoolPath string `json:"pool_path"`
 
@@ -180,6 +214,8 @@ type RpcPool struct {
 
 	// tickBitmaps is a mapping from tick index to tick bitmap
 	TickBitmaps TickBitmaps `json:"tick_bitmaps"`
+
+	Positions []RpcPosition
 }
 
 type RpcTicks map[int32]RpcTickInfo // tick => RpcTickInfo
@@ -196,4 +232,16 @@ type RpcTickInfo struct {
 	SecondsOutside              bigint `json:"seconds_outside"`
 
 	Initialized bool `json:"initialized"`
+}
+
+type RpcPosition struct {
+	Owner string `json:"owner"`
+
+	TickLower bigint `json:"tick_lower"`
+	TickUpper bigint `json:"tick_upper"`
+
+	Liquidity bigint `json:"liquidity"`
+
+	Token0Owed bigint `json:"token0_owed"`
+	Token1Owed bigint `json:"token1_owed"`
 }
