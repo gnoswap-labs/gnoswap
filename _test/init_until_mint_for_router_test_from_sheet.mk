@@ -31,7 +31,7 @@ setup: multi-msg-01 multi-msg-02
 
 wait:
 	$(info ************ [ETC] wait 10 seconds for chain to start ************)
-	$(shell sleep 2)
+	$(shell sleep 10)
 
 # Deploy Tokens
 deploy-grc20s:
