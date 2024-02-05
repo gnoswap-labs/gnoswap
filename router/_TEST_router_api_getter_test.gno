@@ -51,7 +51,7 @@ func TestPositionMint(t *testing.T) {
 func TestApiGetRatiosFromBase(t *testing.T) {
 	jsonOutput := ApiGetRatiosFromBase()
 	jsonStr := gjson.Parse(jsonOutput)
-	jsonArr := jsonStr.Get("response.data").Array()
+	jsonArr := jsonStr.Get("response").Array()
 	shouldEQ(t, len(jsonArr), 4)
 
 	shouldEQ(t, jsonArr[0].String(), "{\"gno.land/r/demo/wugnot\":79228162514264337593543950336}") // 1
