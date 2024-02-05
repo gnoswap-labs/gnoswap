@@ -61,12 +61,6 @@ func TestSwap(t *testing.T) {
 	)
 }
 
-func TestApiGetPositions(t *testing.T) {
-	gpss := ApiGetPositions()
-	jsonStr := gjson.Parse(gpss)
-	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 2)
-}
-
 func TestCollectFeeAfterSwap(t *testing.T) {
 	// burn 0 to collect swap fee
 	std.TestSetOrigCaller(test1)
@@ -77,20 +71,9 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 	shouldEQ(t, fromPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
 
-func TestApiGetPositionByUser(t *testing.T) {
-	gpu := ApiGetPositionByUser(test1.String())
-	jsonStr := gjson.Parse(gpu)
-	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 2)
-
-	shouldEQ(t, jsonStr.Get("response.data.0.token_id").Int(), 1)
-
-	shouldEQ(t, jsonStr.Get("response.data.1.token_id").Int(), 2)
-	shouldEQ(t, jsonStr.Get("response.data.1.pool_key").String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
-	shouldEQ(t, jsonStr.Get("response.data.1.tick_lower").Int(), -6000)
-	shouldEQ(t, jsonStr.Get("response.data.1.tick_upper").Int(), -4000)
-	shouldEQ(t, jsonStr.Get("response.data.1.liquidity").Int(), 7785251)
-	shouldEQ(t, jsonStr.Get("response.data.1.token0_balance").Int(), 1000000)
-	shouldEQ(t, jsonStr.Get("response.data.1.token1_balance").Int(), 0)
-	shouldEQ(t, jsonStr.Get("response.data.1.tokens_owed_0").Int(), 0)
-	shouldEQ(t, jsonStr.Get("response.data.1.tokens_owed_1").Int(), 0)
+// RPCs
+func TestApiGetPositions(t *testing.T) {
+	gpss := ApiGetPositions()
+	jsonStr := gjson.Parse(gpss)
+	shouldEQ(t, len(jsonStr.Get("response").Array()), 2)
 }

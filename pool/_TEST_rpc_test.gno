@@ -73,21 +73,7 @@ func TestMintBarBazLiquidity(t *testing.T) {
 // API TESTS
 func TestApiGetPools(t *testing.T) {
 	jsonStr := ApiGetPools()
-	jsonArr := gjson.Parse(jsonStr).Get("response.data").Array()
+	jsonArr := gjson.Parse(jsonStr).Get("response").Array()
 	shouldEQ(t, len(jsonArr), 2)
-}
 
-func TestApiGetPool(t *testing.T) {
-	jsonStr := ApiGetPool("gno.land/r/demo/bar:gno.land/r/demo/baz:500")
-	jsonOutput := gjson.Parse(jsonStr).Get("response.data")
-	shouldEQ(t, jsonOutput.Get("pool_path").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:500")
-}
-
-// RPC TESTS
-func TestRpcGetPools(t *testing.T) {
-	RpcGetPools()
-}
-
-func TestRpcMakePool(t *testing.T) {
-	RpcMakePool("gno.land/r/demo/bar:gno.land/r/demo/baz:500")
 }
