@@ -1,4 +1,3 @@
-// EXTERNAL API
 package position
 
 import (
@@ -9,78 +8,61 @@ import (
 	p "gno.land/r/demo/pool"
 )
 
-type ApiQueryBase struct {
+type RpcPosition struct {
+	LpTokenId                uint64 `json:"lpTokenId"`
+	Operator                 string `json:"operator"`
+	PoolKey                  string `json:"poolKey"`
+	TickLower                int32  `json:"tickLower"`
+	TickUpper                int32  `json:"tickUpper"`
+	Liquidity                bigint `json:"liquidity"`
+	FeeGrowthInside0LastX128 bigint `json:"feeGrowthInside0LastX128"`
+	FeeGrowthInside1LastX128 bigint `json:"feeGrowthInside1LastX128"`
+	TokensOwed0              bigint `json:"tokensOwed0"`
+	TokensOwed1              bigint `json:"tokensOwed1"`
+
+	Token0Balance bigint `json:"token0Balance"`
+	Token1Balance bigint `json:"token1Balance"`
+	FeeUnclaimed0 bigint `json:"feeUnclaimed0"`
+	FeeUnclaimed1 bigint `json:"feeUnclaimed1"`
+}
+
+type ResponseQueryBase struct {
 	Height    int64 `json:"height"`
 	Timestamp int64 `json:"timestamp"`
 }
 
-type ResponseGetPositions struct {
-	Stat     ApiQueryBase `json:"stat"`
-	Response struct {
-		Data []uint64 `json:"data"`
-	} `json:"response"`
+type ResponseApiGetPositions struct {
+	Stat     ResponseQueryBase `json:"stat"`
+	Response []RpcPosition     `json:"response"`
 }
 
 func ApiGetPositions() string {
-	positionList := []uint64{}
-
-	for k, _ := range positions {
-		positionList = append(positionList, k)
+	rpcPositions := []RpcPosition{}
+	for lpTokenId, _ := range positions {
+		rpcPosition := rpcMakePosition(lpTokenId)
+		rpcPositions = append(rpcPositions, rpcPosition)
 	}
 
-	qb := ApiQueryBase{
-		Height:    GetHeight(),
-		Timestamp: GetTimestamp(),
-	}
-
-	r := ResponseGetPositions{
-		Stat: qb,
-		Response: struct {
-			Data []uint64 `json:"data"`
-		}{
-			Data: positionList,
+	r := ResponseApiGetPositions{
+		Stat: ResponseQueryBase{
+			Height:    GetHeight(),
+			Timestamp: GetTimestamp(),
 		},
+		Response: rpcPositions,
 	}
 
 	rr, err := json.Marshal(r)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] getter_api.gno()__ApiGetPositions() || %v", err))
+		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno()__ApiGetPositions() || %v", err))
 	}
 
 	return string(rr)
 }
 
-type SinglePosition struct {
-	TokenID       uint64 `json:"token_id"`
-	Operator      string `json:"operator"`
-	PoolKey       string `json:"pool_key"`
-	TickLower     int32  `json:"tick_lower"`
-	TickUpper     int32  `json:"tick_upper"`
-	Liquidity     bigint `json:"liquidity"`
-	Token0Balance bigint `json:"token0_balance"`
-	Token1Balance bigint `json:"token1_balance"`
-	UnclaimedFee0 bigint `json:"unclaimed_fee0"` // only unclaimed fee
-	UnclaimedFee1 bigint `json:"unclaimed_fee1"`
-	TokensOwed0   bigint `json:"tokens_owed_0"` // unclaimed fee + burned liquidity
-	TokensOwed1   bigint `json:"tokens_owed_1"`
-}
-
-type ResponseGetPosition struct {
-	Stat     ApiQueryBase `json:"stat"`
-	Response struct {
-		Data SinglePosition `json:"data"`
-	} `json:"response"`
-}
-
-func ApiGetPosition(key uint64) string { // key is tokenId
-	position, exist := positions[key]
+func rpcMakePosition(lpTokenId uint64) RpcPosition {
+	position, exist := positions[lpTokenId]
 	if !exist {
-		return "NO_POSITION_FOUND"
-	}
-
-	qb := ApiQueryBase{
-		Height:    GetHeight(),
-		Timestamp: GetTimestamp(),
+		panic(ufmt.Sprintf("[POSITION] getter_api.gno__rpcMakePosition() || position not found for lpTokenId(%d)", lpTokenId))
 	}
 
 	pool := p.GetPoolFromPoolKey(position.poolKey)
@@ -95,109 +77,29 @@ func ApiGetPosition(key uint64) string { // key is tokenId
 		position.liquidity,
 	)
 
-	unclaimedFee0, unclaimedFee1 := unclaimedFee(key)
+	unclaimedFee0, unclaimedFee1 := unclaimedFee(lpTokenId)
 
-	r := ResponseGetPosition{
-		Stat: qb,
-		Response: struct {
-			Data SinglePosition `json:"data"`
-		}{
-			Data: SinglePosition{
-				TokenID:       key,
-				Operator:      position.operator.String(),
-				PoolKey:       position.poolKey,
-				TickLower:     position.tickLower,
-				TickUpper:     position.tickUpper,
-				Liquidity:     position.liquidity,
-				Token0Balance: token0Balance,
-				Token1Balance: token1Balance,
-				UnclaimedFee0: unclaimedFee0,
-				UnclaimedFee1: unclaimedFee1,
-				TokensOwed0:   position.tokensOwed0,
-				TokensOwed1:   position.tokensOwed1,
-			},
-		},
+	return RpcPosition{
+		LpTokenId:                lpTokenId,
+		Operator:                 position.operator.String(),
+		PoolKey:                  position.poolKey,
+		TickLower:                position.tickLower,
+		TickUpper:                position.tickUpper,
+		Liquidity:                position.liquidity,
+		FeeGrowthInside0LastX128: position.feeGrowthInside0LastX128,
+		FeeGrowthInside1LastX128: position.feeGrowthInside1LastX128,
+		TokensOwed0:              position.tokensOwed0,
+		TokensOwed1:              position.tokensOwed1,
+		Token0Balance:            token0Balance,
+		Token1Balance:            token1Balance,
+		FeeUnclaimed0:            unclaimedFee0,
+		FeeUnclaimed1:            unclaimedFee1,
 	}
-
-	rr, err := json.Marshal(r)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] getter_api.gno__ApiGetPosition() || %v", err))
-	}
-
-	return string(rr)
-}
-
-type ResponseGetUserPositions struct {
-	Stat     ApiQueryBase `json:"stat"`
-	Response struct {
-		Data []SinglePosition `json:"data"`
-	} `json:"response"`
-}
-
-func ApiGetPositionByUser(addr string) string {
-	userPositions := []SinglePosition{}
-
-	for token_id, position := range positions {
-		po := position.operator.String() // position owner
-		if po != addr {
-			continue
-		} else {
-			pool := p.GetPoolFromPoolKey(position.poolKey)
-			currentX96 := pool.PoolGetSlot0SqrtPriceX96()
-			lowerX96 := p.TickMathGetSqrtRatioAtTick(position.tickLower)
-			upperX96 := p.TickMathGetSqrtRatioAtTick(position.tickUpper)
-
-			token0Balance, token1Balance := liquidityAmountsGetAmountsForLiquidity(
-				currentX96,
-				lowerX96,
-				upperX96,
-				position.liquidity,
-			)
-
-			unclaimedFee0, unclaimedFee1 := unclaimedFee(token_id)
-
-			userPosition := SinglePosition{
-				Operator:      addr,
-				TokenID:       token_id,
-				PoolKey:       position.poolKey,
-				TickLower:     position.tickLower,
-				TickUpper:     position.tickUpper,
-				Liquidity:     position.liquidity,
-				Token0Balance: token0Balance,
-				Token1Balance: token1Balance,
-				UnclaimedFee0: unclaimedFee0,
-				UnclaimedFee1: unclaimedFee1,
-				TokensOwed0:   position.tokensOwed0,
-				TokensOwed1:   position.tokensOwed1,
-			}
-			userPositions = append(userPositions, userPosition)
-		}
-	}
-
-	qb := ApiQueryBase{
-		Height:    GetHeight(),
-		Timestamp: GetTimestamp(),
-	}
-
-	r := ResponseGetUserPositions{
-		Stat: qb,
-		Response: struct {
-			Data []SinglePosition `json:"data"`
-		}{
-			Data: userPositions,
-		},
-	}
-
-	rr, err := json.Marshal(r)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] getter_api.gno__ApiGetPositionByUser() || %v", err))
-	}
-
-	return string(rr)
 }
 
 func unclaimedFee(tokenId uint64) (bigint, bigint) {
-	// preapre all data
+	// ref: https://blog.uniswap.org/uniswap-v3-math-primer-2#calculating-uncollected-fees
+
 	liquidity := positions[tokenId].liquidity
 	tickLower := positions[tokenId].tickLower
 	tickUpper := positions[tokenId].tickUpper
