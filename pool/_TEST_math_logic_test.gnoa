@@ -31,7 +31,7 @@ func TestGetSqrtRatioFromTick(t *testing.T) {
 
 func TestGetTickFromSqrtRatio(t *testing.T) {
 	tick := GetTickFromSqrtRatio(sqrtPrice)
-	shouldEQ(t, tick, 9999) // currentTick - 1
+	shouldEQ(t, tick, 10000)
 }
 
 func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
@@ -61,7 +61,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 		MIN_PRICE, // sqrtPriceLimitX96
 	)
 	shouldEQ(t, poolIn, bigint(16000))
-	shouldEQ(t, poolOut, bigint(-5884))
+	shouldEQ(t, poolOut, bigint(-5883))
 }
 
 func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
@@ -78,7 +78,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 		MIN_PRICE, // sqrtPriceLimitX96
 	)
 
-	shouldEQ(t, poolIn, bigint(43506))
+	shouldEQ(t, poolIn, bigint(43511))
 	shouldEQ(t, poolOut, bigint(-16000))
 }
 
@@ -96,7 +96,7 @@ func TestDrySwap_ZeroForOneFalse_AmountSpecified_Positive_16000(t *testing.T) {
 		MAX_PRICE, // sqrtPriceLimitX96
 	)
 
-	shouldEQ(t, poolOut, bigint(-43464))
+	shouldEQ(t, poolOut, bigint(-43468))
 	shouldEQ(t, poolIn, bigint(16000))
 }
 

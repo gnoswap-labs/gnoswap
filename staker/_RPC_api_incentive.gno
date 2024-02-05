@@ -10,7 +10,7 @@ import (
 
 const INTERNAL_REWARD_TOKEN_PATH = "gno.land/r/demo/gns"
 
-// type ApiQueryBase struct {
+// type ResponseQueryBase struct {
 // 	Height    int64 `json:"height"`
 // 	Timestamp int64 `json:"timestamp"`
 // }
@@ -21,7 +21,7 @@ type RewardToken struct {
 }
 
 type ResponseRewardTokens struct {
-	Stat     ApiQueryBase `json:"stat"`
+	Stat     ResponseQueryBase `json:"stat"`
 	Response struct {
 		Data []RewardToken `json:"data"`
 	} `json:"response"`
@@ -52,7 +52,7 @@ func ApiGetRewardTokens() string {
 	}
 
 	// JSON
-	qb := ApiQueryBase{
+	qb := ResponseQueryBase{
 		Height:    GetHeight(),
 		Timestamp: int64(GetTimestamp()),
 	}

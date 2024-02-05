@@ -50,5 +50,5 @@ func DryMint(
 			)
 		}
 	}
-	return
+	return amount0, amount1
 }

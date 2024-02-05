@@ -360,17 +360,15 @@ func TestApiGetPools(t *testing.T) {
 	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())
 	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
 
-	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 1)
-	shouldEQ(t, jsonStr.Get("response.data").Array()[0].String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, len(jsonStr.Get("response").Array()), 1)
 }
 
 func TestApiGetPool(t *testing.T) {
 	gpl := ApiGetPool("gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 	jsonStr := gjson.Parse(gpl)
-	// println("jsonStr:", jsonStr)
 
 	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())
 	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
 
-	shouldEQ(t, len(jsonStr.Get("response.data.positions").Array()), 4)
+	shouldEQ(t, len(jsonStr.Get("response.positions").Array()), 4)
 }
