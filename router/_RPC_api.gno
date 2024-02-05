@@ -1,4 +1,3 @@
-// EXTERNAL API
 package router
 
 import (
@@ -11,32 +10,31 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-type ApiQueryBase struct {
+type TokenPathPrice struct {
+	Path  string `json:"path"`
+	Price bigint `json:"price"`
+}
+
+type ResponseQueryBase struct {
 	Height    int64 `json:"height"`
 	Timestamp int64 `json:"timestamp"`
 }
 
 type ResponseGetRatiosFromBase struct {
-	Stat     ApiQueryBase `json:"stat"`
-	Response struct {
-		Data []map[string]bigint `json:"data"`
-	} `json:"response"`
+	Stat     ResponseQueryBase `json:"stat"`
+	Response []TokenPathPrice  `json:"response"`
 }
 
 func ApiGetRatiosFromBase() string {
-	qb := ApiQueryBase{
+	qb := ResponseQueryBase{
 		Height:    GetHeight(),
 		Timestamp: GetTimestamp(),
 	}
 
 	ratios := getRatiosFromBase(3)
 	r := ResponseGetRatiosFromBase{
-		Stat: qb,
-		Response: struct {
-			Data []map[string]bigint `json:"data"`
-		}{
-			Data: ratios,
-		},
+		Stat:     qb,
+		Response: ratios,
 	}
 
 	rr, err := json.Marshal(r)
@@ -47,7 +45,7 @@ func ApiGetRatiosFromBase() string {
 	return string(rr)
 }
 
-func getRatiosFromBase(maxHops int) []map[string]bigint {
+func getRatiosFromBase(maxHops int) []TokenPathPrice {
 	tokenPrice := make(map[string]bigint, 0)
 
 	// BASE
@@ -92,9 +90,12 @@ func getRatiosFromBase(maxHops int) []map[string]bigint {
 		// TOKEN ENDS
 	}
 
-	var tokenPrices []map[string]bigint
+	tokenPrices := []TokenPathPrice{}
 	for token, price := range tokenPrice {
-		tokenPrices = append(tokenPrices, map[string]bigint{token: price})
+		tokenPrices = append(tokenPrices, TokenPathPrice{
+			Path:  token,
+			Price: price,
+		})
 	}
 
 	return tokenPrices
@@ -185,11 +186,11 @@ func makePoolPath(poolPath string, poolIndex int) string {
 
 func poolPathWithFeeDivide(poolPath string) (string, string, int) {
 	poolPathSplit := strings.Split(poolPath, ":")
-	require(len(poolPathSplit) == 3, ufmt.Sprintf("[ROUTER] util.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath))
+	require(len(poolPathSplit) == 3, ufmt.Sprintf("[ROUTER] _RPC_api.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath))
 
 	feeInt, err := strconv.Atoi(poolPathSplit[2])
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] util.gno__poolPathWithFeeDivide() || cannot convert fee(%s) to int", poolPathSplit[2]))
+		panic(ufmt.Sprintf("[ROUTER] _RPC_api.gno__poolPathWithFeeDivide() || cannot convert fee(%s) to int", poolPathSplit[2]))
 	}
 
 	return poolPathSplit[0], poolPathSplit[1], feeInt
@@ -197,7 +198,7 @@ func poolPathWithFeeDivide(poolPath string) (string, string, int) {
 
 func singlePoolPathWithFeeDivide(poolPath string) (string, string) {
 	singlePoolPathSplit := strings.Split(poolPath, ":")
-	require(len(singlePoolPathSplit) == 2, ufmt.Sprintf("[ROUTER] util.gno__singlePoolPathWithFeeDivide || len(singlePoolPathSplit) != 2, poolPath: %s", poolPath))
+	require(len(singlePoolPathSplit) == 2, ufmt.Sprintf("[ROUTER] _RPC_api.gno__singlePoolPathWithFeeDivide || len(singlePoolPathSplit) != 2, poolPath: %s", poolPath))
 
 	return singlePoolPathSplit[0], singlePoolPathSplit[1]
 }
