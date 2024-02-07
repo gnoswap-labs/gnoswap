@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/u256"
 )
 
 type RpcPool struct {
@@ -17,8 +18,8 @@ type RpcPool struct {
 	Token0Path string `json:"token0Path"`
 	Token1Path string `json:"token1Path"`
 
-	BalancesToken0 bigint `json:"balanceToken0"`
-	BalancesToken1 bigint `json:"balanceToken1"`
+	BalancesToken0 *u256.Uint `json:"balanceToken0"`
+	BalancesToken1 *u256.Uint `json:"balanceToken1"`
 
 	// fee is the fee tier of the pool
 	Fee uint16 `json:"fee"`
@@ -27,22 +28,22 @@ type RpcPool struct {
 	TickSpacing int32 `json:"tickSpacing"`
 
 	// maxLiquidityPerTick is the maximum amount of liquidity that can be added per tick
-	MaxLiquidityPerTick bigint `json:"maxLiquidityPerTick"`
+	MaxLiquidityPerTick *u256.Uint `json:"maxLiquidityPerTick"`
 
 	// slot0 is the current tick and price of the pool
-	Slot0SqrtPriceX96 bigint `json:"sqrtPriceX96"`
+	Slot0SqrtPriceX96 *u256.Uint `json:"sqrtPriceX96"`
 	Slot0Tick         int32  `json:"tick"`
 	Slot0FeeProtocol  uint8  `json:"feeProtocol"`
 	Slot0Unlocked     bool   `json:"unlocked"`
 
-	FeeGrowthGlobal0X128 bigint `json:"feeGrowthGlobal0X128"`
-	FeeGrowthGlobal1X128 bigint `json:"feeGrowthGlobal1X128"`
+	FeeGrowthGlobal0X128 *u256.Uint `json:"feeGrowthGlobal0X128"`
+	FeeGrowthGlobal1X128 *u256.Uint `json:"feeGrowthGlobal1X128"`
 
-	ProtocolFeesToken0 bigint `json:"protocolFeeToken0"`
-	ProtocolFeesToken1 bigint `json:"protocolFeeToken1"`
+	ProtocolFeesToken0 *u256.Uint `json:"protocolFeeToken0"`
+	ProtocolFeesToken1 *u256.Uint `json:"protocolFeeToken1"`
 
 	// liquidity is the total amount of liquidity in the pool
-	Liquidity bigint `json:"liquidity"`
+	Liquidity *u256.Uint `json:"liquidity"`
 
 	// ticks is a mapping from tick index to tick
 	Ticks RpcTicks `json:"ticks"`
@@ -56,16 +57,16 @@ type RpcPool struct {
 type RpcTicks map[int32]RpcTickInfo // tick => RpcTickInfo
 
 type RpcTickInfo struct {
-	LiquidityGross bigint `json:"liquidityGross"`
-	LiquidityNet   bigint `json:"liquidityNet"`
+	LiquidityGross *u256.Uint `json:"liquidityGross"`
+	LiquidityNet   *u256.Int `json:"liquidityNet"`
 
-	FeeGrowthOutside0X128 bigint `json:"feeGrowthOutside0X128"`
-	FeeGrowthOutside1X128 bigint `json:"feeGrowthOutside1X128"`
+	FeeGrowthOutside0X128 *u256.Uint `json:"feeGrowthOutside0X128"`
+	FeeGrowthOutside1X128 *u256.Uint `json:"feeGrowthOutside1X128"`
 
-	TickCumulativeOutside bigint `json:"tickCumulativeOutside"`
+	//TickCumulativeOutside bigint `json:"tickCumulativeOutside"`
 
-	SecondsPerLiquidityOutsideX bigint `json:"secondsPerLiquidityOutsideX"`
-	SecondsOutside              bigint `json:"secondsOutside"`
+	//SecondsPerLiquidityOutsideX bigint `json:"secondsPerLiquidityOutsideX"`
+	//SecondsOutside              bigint `json:"secondsOutside"`
 
 	Initialized bool `json:"initialized"`
 }
@@ -76,10 +77,10 @@ type RpcPosition struct {
 	TickLower bigint `json:"tickLower"`
 	TickUpper bigint `json:"tickUpper"`
 
-	Liquidity bigint `json:"liquidity"`
+	Liquidity *u256.Uint `json:"liquidity"`
 
-	Token0Owed bigint `json:"token0Owed"`
-	Token1Owed bigint `json:"token1Owed"`
+	Token0Owed *u256.Uint `json:"token0Owed"`
+	Token1Owed *u256.Uint `json:"token1Owed"`
 }
 
 type ResponseQueryBase struct {
@@ -153,9 +154,9 @@ func rpcMakePool(poolPath string) RpcPool {
 			LiquidityNet:                tickInfo.liquidityNet,
 			FeeGrowthOutside0X128:       tickInfo.feeGrowthOutside0X128,
 			FeeGrowthOutside1X128:       tickInfo.feeGrowthOutside1X128,
-			TickCumulativeOutside:       tickInfo.tickCumulativeOutside,
-			SecondsPerLiquidityOutsideX: tickInfo.secondsPerLiquidityOutsideX128,
-			SecondsOutside:              tickInfo.secondsOutside,
+			//TickCumulativeOutside:       tickInfo.tickCumulativeOutside,
+			//SecondsPerLiquidityOutsideX: tickInfo.secondsPerLiquidityOutsideX128,
+			//SecondsOutside:              tickInfo.secondsOutside,
 			Initialized:                 tickInfo.initialized,
 		}
 	}

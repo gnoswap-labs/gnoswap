@@ -5,8 +5,7 @@ import (
 
 	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/r/demo/consts"
+	"gno.land/p/demo/u256"
 )
 
 func DrySwap(
@@ -15,23 +14,26 @@ func DrySwap(
 	pFee uint16,
 	recipient std.Address,
 	zeroForOne bool,
-	amountSpecified bigint,
-	sqrtPriceLimitX96 bigint,
+	amountSpecified_ bigint,
+	sqrtPriceLimitX96_ bigint,
 ) (bigint, bigint, bool) {
 
-	if amountSpecified == 0 {
+	if amountSpecified_ == 0 {
 		return 0, 0, false
 	}
 
 	pool := GetPool(token0Path, token1Path, pFee)
 	slot0Start := pool.slot0
 
+	amountSpecified := u256.FromBigint(amountSpecified_)
+	sqrtPriceLimitX96 := u256.FromBigint(sqrtPriceLimitX96_)
+
 	if zeroForOne {
-		if !(sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > consts.MIN_SQRT_RATIO) {
+		if !(sqrtPriceLimitX96.Lt(slot0Start.sqrtPriceX96) && sqrtPriceLimitX96.Gt(u256.FromBigint(MIN_SQRT_RATIO))) {
 			return 0, 0, false
 		}
 	} else {
-		if !(sqrtPriceLimitX96 > slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 < consts.MAX_SQRT_RATIO) {
+		if !(sqrtPriceLimitX96.Gt(slot0Start.sqrtPriceX96) && sqrtPriceLimitX96.Lt(u256.FromBigint(MAX_SQRT_RATIO))) {
 			return 0, 0, false
 		}
 	}
@@ -51,12 +53,12 @@ func DrySwap(
 		}
 	}
 
-	exactInput := amountSpecified > 0
+	exactInput := amountSpecified.Gt(u256.Zero())
 
 	var state SwapState
 	if zeroForOne {
 		state = SwapState{
-			amountSpecifiedRemaining: amountSpecified,
+			amountSpecifiedRemaining: amountSpecified.Int(),
 			amountCalculated:         0,
 			sqrtPriceX96:             slot0Start.sqrtPriceX96,
 			tick:                     slot0Start.tick,
@@ -66,7 +68,7 @@ func DrySwap(
 		}
 	} else {
 		state = SwapState{
-			amountSpecifiedRemaining: amountSpecified,
+			amountSpecifiedRemaining: amountSpecified.Int(),
 			amountCalculated:         0,
 			sqrtPriceX96:             slot0Start.sqrtPriceX96,
 			tick:                     slot0Start.tick,
@@ -77,7 +79,7 @@ func DrySwap(
 	}
 
 	// continue swapping as long as we haven't used the entire input/output and haven't reached the price limit
-	for state.amountSpecifiedRemaining != 0 && state.sqrtPriceX96 != sqrtPriceLimitX96 {
+	for state.amountSpecifiedRemaining.NotZero() && !state.sqrtPriceX96.Eq(sqrtPriceLimitX96) {
 		var step StepComputations
 
 		step.sqrtPriceStartX96 = state.sqrtPriceX96

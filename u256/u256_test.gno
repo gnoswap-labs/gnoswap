@@ -5,7 +5,7 @@ import (
 )
 
 func TestArithmetic(t *testing.T) {
-	x := NewInt(1)
-	y := NewInt(2)
-	z := NewInt(0).Add(x, y)
+	x := NewUint(1)
+	y := NewUint(2)
+	NewUint(0).Add(x, y)
 }

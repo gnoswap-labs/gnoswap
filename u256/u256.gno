@@ -11,18 +11,36 @@ const MaxUint64 = 1<<64 - 1
 // TODO: remove
 const MaxUint256 bigint = 115792089237316195423570985008687907853269984665640564039457584007913129639935
 
-// Int is represented as an array of 4 uint64, in little-endian order,
-// so that Int[3] is the most significant, and Int[0] is the least significant
-type Int struct {
+func Zero() *Uint {
+	return NewUint(0)
+}
+
+func One() *Uint {
+	return NewUint(1)
+}
+
+// Uint is represented as an array of 4 uint64, in little-endian order,
+// so that Uint[3] is the most significant, and Uint[0] is the least significant
+type Uint struct {
 	arr [4]uint64
 }
+
+func (x *Uint) Int() *Int {
+	// panic if x > MaxInt64
+	if x.arr[3] > 0x7fffffffffffffff {
+		panic("overflow")
+	}
+
+	return &Int{v: *x}
+}
+
 // TODO: to be removed
-func FromBigint(x bigint) *Int {
+func FromBigint(x bigint) *Uint {
 	if x > MaxUint256 {
 		panic("overflow")
 	}
 
-	var z Int
+	var z Uint
 	z.arr[0] = uint64(x)
 	z.arr[1] = uint64(x >> 64)
 	z.arr[2] = uint64(x >> 128)
@@ -31,66 +49,66 @@ func FromBigint(x bigint) *Int {
 	return &z
 }
 
-// NewInt returns a new initialized Int.
-func NewInt(val uint64) *Int {
-	z := &Int{arr: [4]uint64{val, 0, 0, 0}}
+// NewUint returns a new initialized Uint.
+func NewUint(val uint64) *Uint {
+	z := &Uint{arr: [4]uint64{val, 0, 0, 0}}
 	return z
 }
 /*
-func ToString(x *Int) string {
+func ToString(x *Uint) string {
 	return "tostring not implemented"
 }
 */
 // Uint64 returns the lower 64-bits of z
-func (z *Int) Uint64() uint64 {
+func (z *Uint) Uint64() uint64 {
 	return z.arr[0]
 }
 
 // SetUint64 sets z to the value x
-func (z *Int) SetUint64(x uint64) *Int {
+func (z *Uint) SetUint64(x uint64) *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, x
 	return z
 }
 
 // IsUint64 reports whether z can be represented as a uint64.
-func (z *Int) IsUint64() bool {
+func (z *Uint) IsUint64() bool {
 	return (z.arr[1] | z.arr[2] | z.arr[3]) == 0
 }
 
 // IsZero returns true if z == 0
-func (z *Int) IsZero() bool {
+func (z *Uint) IsZero() bool {
 	return (z.arr[0] | z.arr[1] | z.arr[2] | z.arr[3]) == 0
 }
 
 // Clear sets z to 0
-func (z *Int) Clear() *Int {
+func (z *Uint) Clear() *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, 0
 	return z
 }
 
 // SetAllOne sets all the bits of z to 1
-func (z *Int) SetAllOne() *Int {
+func (z *Uint) SetAllOne() *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, MaxUint64, MaxUint64, MaxUint64
 	return z
 }
 
 // Not sets z = ^x and returns z.
-func (z *Int) Not(x *Int) *Int {
+func (z *Uint) Not(x *Uint) *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = ^x.arr[3], ^x.arr[2], ^x.arr[1], ^x.arr[0]
 	return z
 }
 
 // Gt returns true if z > x
-func (z *Int) Gt(x *Int) bool {
+func (z *Uint) Gt(x *Uint) bool {
 	return x.Lt(z)
 }
 
-func (z *Int) Gte(x *Int) bool {
+func (z *Uint) Gte(x *Uint) bool {
 	return !z.Lt(x)
 }
 
 // Lt returns true if z < x
-func (z *Int) Lt(x *Int) bool {
+func (z *Uint) Lt(x *Uint) bool {
 	// z < x <=> z - x < 0 i.e. when subtraction overflows.
 	_, carry := Sub64(z.arr[0], x.arr[0], 0)
 	_, carry = Sub64(z.arr[1], x.arr[1], carry)
@@ -100,7 +118,7 @@ func (z *Int) Lt(x *Int) bool {
 }
 
 // Eq returns true if z == x
-func (z *Int) Eq(x *Int) bool {
+func (z *Uint) Eq(x *Uint) bool {
 	return (z.arr[0] == x.arr[0]) && (z.arr[1] == x.arr[1]) && (z.arr[2] == x.arr[2]) && (z.arr[3] == x.arr[3])
 }
 
@@ -109,7 +127,7 @@ func (z *Int) Eq(x *Int) bool {
 //	-1 if z <  x
 //	 0 if z == x
 //	+1 if z >  x
-func (z *Int) Cmp(x *Int) (r int) {
+func (z *Uint) Cmp(x *Uint) (r int) {
 	// z < x <=> z - x < 0 i.e. when subtraction overflows.
 	d0, carry := Sub64(z.arr[0], x.arr[0], 0)
 	d1, carry := Sub64(z.arr[1], x.arr[1], carry)
@@ -125,29 +143,36 @@ func (z *Int) Cmp(x *Int) (r int) {
 }
 
 // Set sets z to x and returns z.
-func (z *Int) Set(x *Int) *Int {
+func (z *Uint) Set(x *Uint) *Uint {
 	*z = *x
 	return z
 }
 
 // SetOne sets z to 1
-func (z *Int) SetOne() *Int {
+func (z *Uint) SetOne() *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, 1
 	return z
 }
 
 // Add sets z to the sum x+y
-func (z *Int) Add(x, y *Int) *Int {
+func (z *Uint) Add(x, y *Uint) *Uint {
 	var carry uint64
 	z.arr[0], carry = Add64(x.arr[0], y.arr[0], 0)
 	z.arr[1], carry = Add64(x.arr[1], y.arr[1], carry)
 	z.arr[2], carry = Add64(x.arr[2], y.arr[2], carry)
 	z.arr[3], _ = Add64(x.arr[3], y.arr[3], carry)
+	// Different from the original implementation!
+	// We panic on overflow
+	/*
+	if carry != 0 {
+		panic("overflow")
+	}
+	*/
 	return z
 }
 
 // AddOverflow sets z to the sum x+y, and returns z and whether overflow occurred
-func (z *Int) AddOverflow(x, y *Int) (*Int, bool) {
+func (z *Uint) AddOverflow(x, y *Uint) (*Uint, bool) {
 	var carry uint64
 	z.arr[0], carry = Add64(x.arr[0], y.arr[0], 0)
 	z.arr[1], carry = Add64(x.arr[1], y.arr[1], carry)
@@ -157,7 +182,7 @@ func (z *Int) AddOverflow(x, y *Int) (*Int, bool) {
 }
 
 // SubOverflow sets z to the difference x-y and returns z and true if the operation underflowed
-func (z *Int) SubOverflow(x, y *Int) (*Int, bool) {
+func (z *Uint) SubOverflow(x, y *Uint) (*Uint, bool) {
 	var carry uint64
 	z.arr[0], carry = Sub64(x.arr[0], y.arr[0], 0)
 	z.arr[1], carry = Sub64(x.arr[1], y.arr[1], carry)
@@ -167,19 +192,27 @@ func (z *Int) SubOverflow(x, y *Int) (*Int, bool) {
 }
 
 // Sub sets z to the difference x-y
-func (z *Int) Sub(x, y *Int) *Int {
+func (z *Uint) Sub(x, y *Uint) *Uint {
 	var carry uint64
 	z.arr[0], carry = Sub64(x.arr[0], y.arr[0], 0)
 	z.arr[1], carry = Sub64(x.arr[1], y.arr[1], carry)
 	z.arr[2], carry = Sub64(x.arr[2], y.arr[2], carry)
 	z.arr[3], _ = Sub64(x.arr[3], y.arr[3], carry)
+	// Different from the original implementation!
+	// We panic on underflow
+	/*
+	if carry != 0 {
+		panic("underflow")
+	}
+	*/
 	return z
 }
 
+// commented out for possible overflow
 // Mul sets z to the product x*y
-func (z *Int) Mul(x, y *Int) *Int {
+func (z *Uint) Mul(x, y *Uint) *Uint {
 	var (
-		res              Int
+		res              Uint
 		carry            uint64
 		res1, res2, res3 uint64
 	)
@@ -202,7 +235,7 @@ func (z *Int) Mul(x, y *Int) *Int {
 }
 
 // MulOverflow sets z to the product x*y, and returns z and  whether overflow occurred
-func (z *Int) MulOverflow(x, y *Int) (*Int, bool) {
+func (z *Uint) MulOverflow(x, y *Uint) (*Uint, bool) {
 	p := umul(x, y)
 	copy(z.arr[:], p[:4])
 	return z, (p[4] | p[5] | p[6] | p[7]) != 0
@@ -227,7 +260,7 @@ func umulHop(z, x, y uint64) (hi, lo uint64) {
 }
 
 // umul computes full 256 x 256 -> 512 multiplication.
-func umul(x, y *Int) [8]uint64 {
+func umul(x, y *Uint) [8]uint64 {
 	var (
 		res                           [8]uint64
 		carry, carry4, carry5, carry6 uint64
@@ -257,9 +290,10 @@ func umul(x, y *Int) [8]uint64 {
 	return res
 }
 
+// commented out for possible overflow
 // Div sets z to the quotient x/y for returns z.
 // If y == 0, z is set to 0
-func (z *Int) Div(x, y *Int) *Int {
+func (z *Uint) Div(x, y *Uint) *Uint {
 	if y.IsZero() || y.Gt(x) {
 		return z.Clear()
 	}
@@ -274,7 +308,7 @@ func (z *Int) Div(x, y *Int) *Int {
 	// At this point, we know
 	// x/y ; x > y > 0
 
-	var quot Int
+	var quot Uint
 	udivrem(quot.arr[:], x.arr[:], y)
 	return z.Set(&quot)
 }
@@ -283,7 +317,7 @@ func (z *Int) Div(x, y *Int) *Int {
 // The quotient is stored in provided quot - len(u)-len(d)+1 words.
 // It loosely follows the Knuth's division algorithm (sometimes referenced as "schoolbook" division) using 64-bit words.
 // See Knuth, Volume 2, section 4.3.1, Algorithm D.
-func udivrem(quot, u []uint64, d *Int) (rem Int) {
+func udivrem(quot, u []uint64, d *Uint) (rem Uint) {
 	var dLen int
 	for i := len(d.arr) - 1; i >= 0; i-- {
 		if d.arr[i] != 0 {
@@ -294,7 +328,7 @@ func udivrem(quot, u []uint64, d *Int) (rem Int) {
 
 	shift := uint(LeadingZeros64(d.arr[dLen-1]))
 
-	var dnStorage Int
+	var dnStorage Uint
 	dn := dnStorage.arr[:dLen]
 	for i := dLen - 1; i > 0; i-- {
 		dn[i] = (d.arr[i] << shift) | (d.arr[i-1] >> (64 - shift))
@@ -391,7 +425,7 @@ func udivremKnuth(quot, u, d []uint64) {
 
 // isBitSet returns true if bit n-th is set, where n = 0 is LSB.
 // The n must be <= 255.
-func (z *Int) isBitSet(n uint) bool {
+func (z *Uint) isBitSet(n uint) bool {
 	return (z.arr[n/64] & (1 << (n % 64))) != 0
 }
 
@@ -451,7 +485,7 @@ func udivrem2by1(uh, ul, d, reciprocal uint64) (quot, rem uint64) {
 }
 
 // Lsh sets z = x << n and returns z.
-func (z *Int) Lsh(x *Int, n uint) *Int {
+func (z *Uint) Lsh(x *Uint, n uint) *Uint {
 	// n % 64 == 0
 	if n&0x3f == 0 {
 		switch n {
@@ -510,7 +544,7 @@ sh192:
 }
 
 // Rsh sets z = x >> n and returns z.
-func (z *Int) Rsh(x *Int, n uint) *Int {
+func (z *Uint) Rsh(x *Uint, n uint) *Uint {
 	// n % 64 == 0
 	if n&0x3f == 0 {
 		switch n {
@@ -571,7 +605,7 @@ sh192:
 // SRsh (Signed/Arithmetic right shift)
 // considers z to be a signed integer, during right-shift
 // and sets z = x >> n and returns z.
-func (z *Int) SRsh(x *Int, n uint) *Int {
+func (z *Uint) SRsh(x *Uint, n uint) *Uint {
 	// If the MSB is 0, SRsh is same as Rsh.
 	if !x.isBitSet(255) {
 		return z.Rsh(x, n)
@@ -629,45 +663,45 @@ sh192:
 	return z
 }
 
-func (z *Int) lsh64(x *Int) *Int {
+func (z *Uint) lsh64(x *Uint) *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = x.arr[2], x.arr[1], x.arr[0], 0
 	return z
 }
-func (z *Int) lsh128(x *Int) *Int {
+func (z *Uint) lsh128(x *Uint) *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = x.arr[1], x.arr[0], 0, 0
 	return z
 }
-func (z *Int) lsh192(x *Int) *Int {
+func (z *Uint) lsh192(x *Uint) *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = x.arr[0], 0, 0, 0
 	return z
 }
-func (z *Int) rsh64(x *Int) *Int {
+func (z *Uint) rsh64(x *Uint) *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, x.arr[3], x.arr[2], x.arr[1]
 	return z
 }
-func (z *Int) rsh128(x *Int) *Int {
+func (z *Uint) rsh128(x *Uint) *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, x.arr[3], x.arr[2]
 	return z
 }
-func (z *Int) rsh192(x *Int) *Int {
+func (z *Uint) rsh192(x *Uint) *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, x.arr[3]
 	return z
 }
-func (z *Int) srsh64(x *Int) *Int {
+func (z *Uint) srsh64(x *Uint) *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, x.arr[3], x.arr[2], x.arr[1]
 	return z
 }
-func (z *Int) srsh128(x *Int) *Int {
+func (z *Uint) srsh128(x *Uint) *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, MaxUint64, x.arr[3], x.arr[2]
 	return z
 }
-func (z *Int) srsh192(x *Int) *Int {
+func (z *Uint) srsh192(x *Uint) *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = MaxUint64, MaxUint64, MaxUint64, x.arr[3]
 	return z
 }
 
 // Or sets z = x | y and returns z.
-func (z *Int) Or(x, y *Int) *Int {
+func (z *Uint) Or(x, y *Uint) *Uint {
 	z.arr[0] = x.arr[0] | y.arr[0]
 	z.arr[1] = x.arr[1] | y.arr[1]
 	z.arr[2] = x.arr[2] | y.arr[2]
@@ -676,7 +710,7 @@ func (z *Int) Or(x, y *Int) *Int {
 }
 
 // And sets z = x & y and returns z.
-func (z *Int) And(x, y *Int) *Int {
+func (z *Uint) And(x, y *Uint) *Uint {
 	z.arr[0] = x.arr[0] & y.arr[0]
 	z.arr[1] = x.arr[1] & y.arr[1]
 	z.arr[2] = x.arr[2] & y.arr[2]
@@ -685,7 +719,7 @@ func (z *Int) And(x, y *Int) *Int {
 }
 
 // Xor sets z = x ^ y and returns z.
-func (z *Int) Xor(x, y *Int) *Int {
+func (z *Uint) Xor(x, y *Uint) *Uint {
 	z.arr[0] = x.arr[0] ^ y.arr[0]
 	z.arr[1] = x.arr[1] ^ y.arr[1]
 	z.arr[2] = x.arr[2] ^ y.arr[2]
@@ -695,19 +729,19 @@ func (z *Int) Xor(x, y *Int) *Int {
 
 // MarshalJSON implements json.Marshaler.
 // MarshalJSON marshals using the 'decimal string' representation. This is _not_ compatible
-// with big.Int: big.Int marshals into JSON 'native' numeric format.
+// with big.Uint: big.Uint marshals into JSON 'native' numeric format.
 //
 // The JSON  native format is, on some platforms, (e.g. javascript), limited to 53-bit large
 // integer space. Thus, U256 uses string-format, which is not compatible with
-// big.int (big.Int refuses to unmarshal a string representation).
-func (z *Int) MarshalJSON() ([]byte, error) {
+// big.int (big.Uint refuses to unmarshal a string representation).
+func (z *Uint) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + z.Dec() + `"`), nil
 }
 
 // UnmarshalJSON implements json.Unmarshaler. UnmarshalJSON accepts either
 // - Quoted string: either hexadecimal OR decimal
 // - Not quoted string: only decimal
-func (z *Int) UnmarshalJSON(input []byte) error {
+func (z *Uint) UnmarshalJSON(input []byte) error {
 	if len(input) < 2 || input[0] != '"' || input[len(input)-1] != '"' {
 		// if not quoted, it must be decimal
 		return z.fromDecimal(string(input))
@@ -717,8 +751,8 @@ func (z *Int) UnmarshalJSON(input []byte) error {
 
 
 // MarshalText implements encoding.TextMarshaler
-// MarshalText marshals using the decimal representation (compatible with big.Int)
-func (z *Int) MarshalText() ([]byte, error) {
+// MarshalText marshals using the decimal representation (compatible with big.Uint)
+func (z *Uint) MarshalText() ([]byte, error) {
 	return []byte(z.Dec()), nil
 }
 
@@ -726,7 +760,7 @@ func (z *Int) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler. This method
 // can unmarshal either hexadecimal or decimal.
 // - For hexadecimal, the input _must_ be prefixed with 0x or 0X
-func (z *Int) UnmarshalText(input []byte) error {
+func (z *Uint) UnmarshalText(input []byte) error {
 	if len(input) >= 2 && input[0] == '0' && (input[1] == 'x' || input[1] == 'X') {
 		return z.fromHex(string(input))
 	}
@@ -740,7 +774,7 @@ const (
 )
 
 // fromHex is the internal implementation of parsing a hex-string.
-func (z *Int) fromHex(hex string) error {
+func (z *Uint) fromHex(hex string) error {
 	if err := checkNumberS(hex); err != nil {
 		return err
 	}
@@ -767,10 +801,10 @@ func (z *Int) fromHex(hex string) error {
 	return nil
 }
 
-// FromDecimal is a convenience-constructor to create an Int from a
+// FromDecimal is a convenience-constructor to create an Uint from a
 // decimal (base 10) string. Numbers larger than 256 bits are not accepted.
-func FromDecimal(decimal string) (*Int, error) {
-	var z Int
+func FromDecimal(decimal string) (*Uint, error) {
+	var z Uint
 	if err := z.SetFromDecimal(decimal); err != nil {
 		return nil, err
 	}
@@ -780,12 +814,12 @@ func FromDecimal(decimal string) (*Int, error) {
 const twoPow256Sub1 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 
 // SetFromDecimal sets z from the given string, interpreted as a decimal number.
-// OBS! This method is _not_ strictly identical to the (*big.Int).SetString(..., 10) method.
+// OBS! This method is _not_ strictly identical to the (*big.Uint).SetString(..., 10) method.
 // Notable differences:
 // - This method does not accept underscore input, e.g. "100_000",
 // - This method does not accept negative zero as valid, e.g "-0",
 //   - (this method does not accept any negative input as valid))
-func (z *Int) SetFromDecimal(s string) (err error) {
+func (z *Uint) SetFromDecimal(s string) (err error) {
 	// Remove max one leading +
 	if len(s) > 0 && s[0] == '+' {
 		s = s[1:]
@@ -843,18 +877,18 @@ func checkNumberS(input string) error {
 }
 
 // multipliers holds the values that are needed for fromDecimal
-var multipliers = [5]*Int{
+var multipliers = [5]*Uint{
 	nil,                             // represents first round, no multiplication needed
-	&Int{[4]uint64{10000000000000000000, 0, 0, 0}}, // 10 ^ 19
-	&Int{[4]uint64{687399551400673280, 5421010862427522170, 0, 0}},                     // 10 ^ 38
-	&Int{[4]uint64{5332261958806667264, 17004971331911604867, 2938735877055718769, 0}}, // 10 ^ 57
-	&Int{[4]uint64{0, 8607968719199866880, 532749306367912313, 1593091911132452277}},   // 10 ^ 76
+	&Uint{[4]uint64{10000000000000000000, 0, 0, 0}}, // 10 ^ 19
+	&Uint{[4]uint64{687399551400673280, 5421010862427522170, 0, 0}},                     // 10 ^ 38
+	&Uint{[4]uint64{5332261958806667264, 17004971331911604867, 2938735877055718769, 0}}, // 10 ^ 57
+	&Uint{[4]uint64{0, 8607968719199866880, 532749306367912313, 1593091911132452277}},   // 10 ^ 76
 }
 
 // fromDecimal is a helper function to only ever be called via SetFromDecimal
 // this function takes a string and chunks it up, calling ParseUint on it up to 5 times
 // these chunks are then multiplied by the proper power of 10, then added together.
-func (z *Int) fromDecimal(bs string) error {
+func (z *Uint) fromDecimal(bs string) error {
 	// first clear the input
 	z.Clear()
 	// the maximum value of uint64 is 18446744073709551615, which is 20 characters
@@ -887,7 +921,7 @@ func (z *Int) fromDecimal(bs string) error {
 		if i == 0 {
 			z.SetUint64(num)
 		} else {
-			base := NewInt(num)
+			base := NewUint(num)
 			z.Add(z, base.Mul(base, mult))
 		}
 		// Chop off another 19 characters
@@ -907,12 +941,7 @@ func lower(c byte) byte {
 	return c | ('x' - 'X')
 }
 
-const intSize = 32 << (^uint(0) >> 63)
-
-// IntSize is the size in bits of an int or uint value.
-const IntSize = intSize
-
-// ParseUint is like ParseInt but for unsigned numbers.
+// ParseUint is like ParseUint but for unsigned numbers.
 //
 // A sign prefix is not permitted.
 func parseUint(s string, base int, bitSize int) (uint64, error) {
@@ -954,7 +983,7 @@ func parseUint(s string, base int, bitSize int) (uint64, error) {
 	}
 
 	if bitSize == 0 {
-		bitSize = IntSize
+		bitSize = UintSize
 	} else if bitSize < 0 || bitSize > 64 {
 		return 0, errors.New("invalid bit size")
 	}
@@ -1065,7 +1094,7 @@ func underscoreOK(s string) bool {
 }
 
 // Dec returns the decimal representation of z.
-func (z *Int) Dec() string {
+func (z *Uint) Dec() string {
 	if z.IsZero() {
 		return "0"
 	}
@@ -1091,14 +1120,14 @@ func (z *Int) Dec() string {
 		// We init it with zeroes, because when strconv appends the ascii representations,
 		// it will omit leading zeroes.
 		out     = []byte("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
-		divisor = NewInt(10000000000000000000) // 20 digits
-		y       = new(Int).Set(z)              // copy to avoid modifying z
+		divisor = NewUint(10000000000000000000) // 20 digits
+		y       = new(Uint).Set(z)              // copy to avoid modifying z
 		pos     = len(out)                     // position to write to
 		buf     = make([]byte, 0, 19)          // buffer to write uint64:s to
 	)
 	for {
 		// Obtain Q and R for divisor
-		var quot Int
+		var quot Uint
 		rem := udivrem(quot.arr[:], y.arr[:], divisor)
 		y.Set(&quot) // Set Q for next loop
 		// Convert the R to ascii representation

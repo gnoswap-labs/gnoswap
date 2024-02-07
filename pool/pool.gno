@@ -6,9 +6,7 @@ import (
 	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/demo/consts"
-
-	gv "gno.land/r/demo/gov"
+	"gno.land/p/demo/u256"
 )
 
 // only position contract can call this function
@@ -19,13 +17,15 @@ func Mint(
 	recipient std.Address,
 	tickLower int32,
 	tickUpper int32,
-	liquidityAmount bigint,
-) (bigint, bigint) {
-	requirePrevRealmPath(consts.POSITION_PATH, ufmt.Sprintf("[POOL] pool.gno__Mint() || expected std.PrevRealm().PkgPath()(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
+	liquidityAmount_ bigint,
+) (bigint, bigint /* *u256.Int, *u256.Int */) {
+	require(PrevRealmPath() == "gno.land/r/demo/position", ufmt.Sprintf("[POOL] pool.gno__Mint() || PrevRealmPath(%s) == \"gno.land/r/demo/position\"", PrevRealmPath()))
 
 	requirePositive(liquidityAmount, ufmt.Sprintf("[POOL] pool.gno__Mint() || expected liquidityAmount(%d) > 0", liquidityAmount))
 
-	pool := GetPool(token0Path, token1Path, fee)
+	liquidityAmount := u256.FromBigint(liquidityAmount_)
+
+	pool := GetPool(pToken0Path, pToken1Path, pFee)
 	_, amount0Int, amount1Int := pool.modifyPosition(
 		ModifyPositionParams{
 			recipient,       // owner
@@ -40,7 +40,7 @@ func Mint(
 	amount1 := bigint(amount1Int)
 	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__Mint() || expected amount1(%d) >= 0", amount1))
 
-	var balance0Before, balance1Before bigint
+	var balance0Before, balance1Before u256.Int
 	if amount0 > 0 {
 		balance0Before := bigint(balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr()))
 
@@ -496,12 +496,10 @@ func CollectProtocol(
 	token1Path string,
 	fee uint16,
 	recipient std.Address,
-	amount0Requested bigint,
-	amount1Requested bigint,
+	amount0Requested *u256.Uint,
+	amount1Requested *u256.Uint,
 ) (bigint, bigint) {
-	requireUnsigned(amount0Requested, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount0Requested(%d) >= 0", amount0Requested))
-	requireUnsigned(amount1Requested, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount1Requested(%d) >= 0", amount1Requested))
-	require(isAdmin(std.PrevRealm().Addr()), ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || caller(%s) must be admin", std.PrevRealm().Addr()))
+	require(isAdmin(PrevRealmAddr()), ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || caller(%s) must be admin", PrevRealmAddr()))
 
 	pool := GetPool(token0Path, token1Path, fee)
 
@@ -533,6 +531,127 @@ func CollectProtocol(
 	)
 
 	return amount0, amount1
+}
+
+// XXXXX: i made some mistake on int/uint while refactoring this part, please double check it before merge
+func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.Int, *u256.Int) {
+	position := pool.updatePosition(
+		params.owner,
+		params.tickLower,
+		params.tickUpper,
+		params.liquidityDelta,
+		pool.slot0.tick,
+	)
+
+	amount0 := u256.Zero()
+	amount1 := u256.Zero()
+
+	if params.liquidityDelta != 0 {
+		if pool.slot0.tick < params.tickLower {
+			amount0 = sqrtPriceMathGetAmount0Delta(
+				TickMathGetSqrtRatioAtTick(params.tickLower),
+				TickMathGetSqrtRatioAtTick(params.tickUpper),
+				params.liquidityDelta,
+			)
+		} else if pool.slot0.tick < params.tickUpper {
+			liquidityBefore := pool.liquidity
+
+			amount0 = sqrtPriceMathGetAmount0Delta(
+				pool.slot0.sqrtPriceX96,
+				TickMathGetSqrtRatioAtTick(params.tickUpper),
+				params.liquidityDelta,
+			)
+
+			amount1 = sqrtPriceMathGetAmount1Delta(
+				TickMathGetSqrtRatioAtTick(params.tickLower),
+				pool.slot0.sqrtPriceX96,
+				params.liquidityDelta,
+			)
+
+			pool.liquidity = liquidityMathAddDelta(liquidityBefore, params.liquidityDelta)
+
+		} else {
+			amount1 = sqrtPriceMathGetAmount1Delta(
+				TickMathGetSqrtRatioAtTick(params.tickLower),
+				TickMathGetSqrtRatioAtTick(params.tickUpper),
+				params.liquidityDelta,
+			)
+		}
+	}
+
+	return position, amount0, amount1
+}
+
+func (pool *Pool) updatePosition(
+	owner std.Address,
+	tickLower int32,
+	tickUpper int32,
+	liquidityDelta *u256.Int,
+	tick int32,
+) PositionInfo {
+	var _feeGrowthGlobal0X128 bigint = pool.feeGrowthGlobal0X128
+	var _feeGrowthGlobal1X128 bigint = pool.feeGrowthGlobal1X128
+
+	var flippedLower, flippedUpper bool
+	if liquidityDelta != 0 {
+		flippedLower = pool.tickUpdate(
+			tickLower,
+			tick,
+			liquidityDelta,
+			_feeGrowthGlobal0X128,
+			_feeGrowthGlobal1X128,
+			false,
+			pool.maxLiquidityPerTick,
+		)
+
+		flippedUpper = pool.tickUpdate(
+			tickUpper,
+			tick,
+			liquidityDelta,
+			_feeGrowthGlobal0X128,
+			_feeGrowthGlobal1X128,
+			true,
+			pool.maxLiquidityPerTick,
+		)
+
+		if flippedLower {
+			pool.tickBitmapFlipTick(tickLower, pool.tickSpacing)
+		}
+
+		if flippedUpper {
+			pool.tickBitmapFlipTick(tickUpper, pool.tickSpacing)
+		}
+	}
+
+	// NO LIQ, ONLY BURN 0
+
+	feeGrowthInside0X128, feeGrowthInside1X128 := pool.tickGetFeeGrowthInside(
+		tickLower,
+		tickUpper,
+		tick,
+		_feeGrowthGlobal0X128,
+		_feeGrowthGlobal1X128,
+	)
+
+	key := positionGetKey(owner, tickLower, tickUpper)
+
+	position := pool.positionUpdateWithKey(
+		key,
+		liquidityDelta,
+		feeGrowthInside0X128,
+		feeGrowthInside1X128,
+	)
+
+	if liquidityDelta < 0 {
+		if flippedLower {
+			pool.tickClear(tickLower)
+		}
+
+		if flippedUpper {
+			pool.tickClear(tickUpper)
+		}
+	}
+	return position
 }
 
 func (pool *Pool) saveProtocolFees(amount0, amount1 bigint) (bigint, bigint) {

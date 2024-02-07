@@ -4,8 +4,8 @@ import (
 	"encoding/base64"
 	"std"
 
+	"gno.land/p/demo/u256"
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/consts"
 )
 
 func positionGetKey(
@@ -20,15 +20,12 @@ func positionGetKey(
 }
 
 func (pool *Pool) positionUpdateWithKey(
-	positionKey string,
-	liquidityDelta bigint,
-	feeGrowthInside0X128 bigint,
-	feeGrowthInside1X128 bigint,
+	key string,
+	liquidityDelta *u256.Int,
+	feeGrowthInside0X128 *u256.Uint,
+	feeGrowthInside1X128 *u256.Uint,
 ) PositionInfo {
-	requireUnsigned(feeGrowthInside0X128, ufmt.Sprintf("[POOL] position.gno__positionUpdateWithKey() || feeGrowthInside0X128(%d) >= 0", feeGrowthInside0X128))
-	requireUnsigned(feeGrowthInside1X128, ufmt.Sprintf("[POOL] position.gno__positionUpdateWithKey() || feeGrowthInside1X128(%d) >= 0", feeGrowthInside1X128))
-
-	position := pool.positions[positionKey]
+	position := pool.positions[key]
 
 	p := positionUpdate(position, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
 	pool.positions[positionKey] = p
@@ -38,14 +35,11 @@ func (pool *Pool) positionUpdateWithKey(
 
 func positionUpdate(
 	self PositionInfo,
-	liquidityDelta bigint,
-	feeGrowthInside0X128 bigint,
-	feeGrowthInside1X128 bigint,
+	liquidityDelta *u256.Int,
+	feeGrowthInside0X128 *u256.Uint,
+	feeGrowthInside1X128 *u256.Uint,
 ) PositionInfo {
-	requireUnsigned(feeGrowthInside0X128, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || feeGrowthInside0X128(%d) >= 0", feeGrowthInside0X128))
-	requireUnsigned(feeGrowthInside1X128, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || feeGrowthInside1X128(%d) >= 0", feeGrowthInside1X128))
-
-	var liquidityNext bigint
+	var liquidityNext *u256.Int
 	if liquidityDelta == 0 {
 		liquidityNext = self.liquidity
 	} else {

@@ -5,11 +5,10 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/common"
+	"gno.land/p/demo/u256"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/demo/consts"
-
-	"gno.land/r/demo/gns"
+	gns "gno.land/r/demo/gns"
 )
 
 var (
@@ -37,15 +36,17 @@ func CreatePool(
 	token0Path string,
 	token1Path string,
 	fee uint16,
-	sqrtPriceX96 bigint,
+	sqrtPriceX96_ bigint,
 ) *Pool {
 	require(initialized, ufmt.Sprintf("[POOl] pool_manager.gno__gno__CreatePool() || expected initialized(%t) == true", initialized))
 	require(token0Path != token1Path, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
 
-	if token1Path < token0Path {
-		token0Path, token1Path = token1Path, token0Path
-		tick := -(common.TickMathGetTickAtSqrtRatio(sqrtPriceX96))
-		sqrtPriceX96 = common.TickMathGetSqrtRatioAtTick(tick)
+	sqrtPriceX96 := u256.FromBigint(sqrtPriceX96_)
+
+	if tokenBPath < tokenAPath {
+		tokenAPath, tokenBPath = tokenBPath, tokenAPath
+		tick := -(TickMathGetTickAtSqrtRatio(sqrtPriceX96))
+		sqrtPriceX96 = TickMathGetSqrtRatioAtTick(tick)
 	}
 
 	// check tickSpacing for fee
@@ -124,7 +125,7 @@ func newPool(
 	token1Path string,
 	fee uint16,
 	tickSpacing int32,
-	sqrtPriceX96 bigint,
+	sqrtPriceX96 *u256.Uint,
 ) *Pool {
 	maxLiquidityPerTick := tickTickSpacingToMaxLiquidityPerTick(tickSpacing)
 	tick := common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)

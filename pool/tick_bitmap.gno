@@ -17,18 +17,12 @@ func (pool *Pool) tickBitmapFlipTick(
 	tick int32,
 	tickSpacing int32,
 ) {
-	require(
-		tick%tickSpacing == 0,
-		ufmt.Sprintf(
-			"[POOL] tick_bitmap.gno__tickBitmapFlipTick() || tick(%d) %% tickSpacing(%d) == 0(%d)",
-			tick, tickSpacing, tick%tickSpacing,
-		),
-	)
-
+	require(tick%tickSpacing == 0, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || tick(%d) MOD tickSpacing(%d) != 0 (got:%d)", tick, tickSpacing, tick%tickSpacing))
 	wordPos, bitPos := tickBitmapPosition(tick / tickSpacing)
 	mask :=
 		bigint(1) <<
 			uint64(bitPos) // 2 ** bitPos
+	mask := bigint(int64(1)) << uint64(bitPos) // 2 ** bitPos
 
 	requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || mask(%d) >= 0", mask))
 

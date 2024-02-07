@@ -2,24 +2,22 @@ package pool
 
 import (
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/p/demo/u256"
 )
 
 func swapMathComputeSwapStep(
-	sqrtRatioCurrentX96 bigint,
-	sqrtRatioTargetX96 bigint,
-	liquidity bigint,
-	amountRemaining bigint,
+	sqrtRatioCurrentX96 *u256.Uint,
+	sqrtRatioTargetX96 *u256.Uint,
+	liquidity *u256.Uint,
+	amountRemaining *u256.Int,
 	feePips uint32,
-) (sqrtRatioNextX96, amountIn, amountOut, feeAmount bigint) {
-	requireUnsigned(sqrtRatioCurrentX96, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || sqrtRatioCurrentX96(%d) >= 0", sqrtRatioCurrentX96))
-	requireUnsigned(sqrtRatioTargetX96, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || sqrtRatioTargetX96(%d) >= 0", sqrtRatioTargetX96))
-	requireUnsigned(liquidity, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || liquidity(%d) >= 0", liquidity))
-
-	isToken1Expensive := sqrtRatioCurrentX96 >= sqrtRatioTargetX96
+) (sqrtRatioNextX96, amountIn, amountOut, feeAmount *u256.Uint) {
+	isToken1Expensive := sqrtRatioCurrentX96.Gte(sqrtRatioTargetX96)
 
 	// POSTIVIE == EXACT_IN => Estimated AmountOut
 	// NEGATIVE == EXACT_OUT => Estimated AmountIn
-	exactIn := amountRemaining >= 0
+	exactIn := amountRemaining.Gte(u256.Zero())
 
 	if exactIn {
 		amountRemainingLessFee := amountRemaining * bigint(uint64(1000000-feePips)) / 1000000
