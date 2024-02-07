@@ -10,6 +10,8 @@ import (
 
 var registered = []GRC20Pair{}
 
+var locked bool // mutex flag
+
 type GRC20Interface interface {
 	Transfer() func(to users.AddressOrName, amount uint64)
 	TransferFrom() func(from, to users.AddressOrName, amount uint64)
@@ -95,8 +97,16 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 		return false
 	}
 
-	registered[i].igrc20.Transfer()(users.AddressOrName(to), amount)
+	if !locked {
+		locked = true
+		registered[i].igrc20.Transfer()(users.AddressOrName(to), amount)
 
+		defer func() {
+			locked = false
+		}()
+	} else {
+		panic("[POOl] pool_register.gno transferByRegisterCall: locked")
+	}
 	return true
 }
 
@@ -108,8 +118,16 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 		return false
 	}
 
-	registered[i].igrc20.TransferFrom()(users.AddressOrName(from), users.AddressOrName(to), amount)
+	if !locked {
+		locked = true
+		registered[i].igrc20.TransferFrom()(users.AddressOrName(from), users.AddressOrName(to), amount)
 
+		defer func() {
+			locked = false
+		}()
+	} else {
+		panic("[POOl] pool_register.gno transferFromByRegisterCall: locked")
+	}
 	return true
 }
 

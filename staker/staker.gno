@@ -282,7 +282,7 @@ func deleteFromIncentives(m map[string]Incentive, key string) map[string]Incenti
 func getTokenPairBalanceFromPosition(tokenId uint64) (bigint, bigint) {
 	poolKey := pos.PositionGetPositionPoolKey(tokenId)
 
-	pool := pl.GetPoolFromPoolKey(poolKey)
+	pool := pl.GetPoolFromPoolPath(poolKey)
 	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
 	lowerX96 := pl.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickLower(tokenId))
 	upperX96 := pl.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickUpper(tokenId))

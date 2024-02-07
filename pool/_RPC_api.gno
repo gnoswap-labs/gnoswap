@@ -112,11 +112,11 @@ func ApiGetPools() string {
 	return string(rr)
 }
 
-func rpcMakePool(poolKey string) RpcPool {
+func rpcMakePool(poolPath string) RpcPool {
 	rpcPool := RpcPool{}
-	pool := GetPoolFromPoolKey(poolKey)
+	pool := GetPoolFromPoolPath(poolPath)
 
-	rpcPool.PoolPath = poolKey
+	rpcPool.PoolPath = poolPath
 
 	rpcPool.Token0Path = pool.token0Path
 	rpcPool.Token1Path = pool.token1Path

@@ -9,8 +9,8 @@ import (
 )
 
 func DrySwap(
-	pToken0Path string,
-	pToken1Path string,
+	token0Path string,
+	token1Path string,
 	pFee uint16,
 	recipient std.Address,
 	zeroForOne bool,
@@ -22,7 +22,7 @@ func DrySwap(
 		return 0, 0, false
 	}
 
-	pool := GetPool(pToken0Path, pToken1Path, pFee)
+	pool := GetPool(token0Path, token1Path, pFee)
 	slot0Start := pool.slot0
 
 	if zeroForOne {
