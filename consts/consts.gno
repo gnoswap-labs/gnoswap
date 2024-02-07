@@ -1,4 +1,4 @@
-package pool
+package consts
 
 import (
 	"std"
@@ -66,4 +66,26 @@ const (
 const (
 	GNOT           = "gnot"
 	WRAPPED_WUGNOT = "gno.land/r/demo/wugnot"
+
+	GNOSWAP_ADMIN = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4"
 )
+
+// CONTRACT PATH
+const (
+	POOL_PATH     = "gno.land/r/demo/pool"
+	POSITION_PATH = "gno.land/r/demo/position"
+	STAKER_PATH   = "gno.land/r/demo/staker"
+	ROUTER_PATH   = "gno.land/r/demo/router"
+	GOV_PATH      = "gno.land/r/demo/gov"
+)
+
+// CONTRACT ADDRESS
+var (
+	POOL_ADDR     = std.Address("")
+	POSITION_ADDR = std.Address("")
+)
+
+func init() {
+	POOL_ADDR = std.DerivePkgAddr(POOL_PATH)
+	POSITION_ADDR = std.DerivePkgAddr(POSITION_PATH)
+}

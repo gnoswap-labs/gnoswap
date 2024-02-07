@@ -1,6 +1,10 @@
 package pool
 
-import "gno.land/p/demo/ufmt"
+import (
+	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/demo/consts"
+)
 
 func bitMathMostSignificantBit(x bigint) uint8 {
 	require(x > 0, ufmt.Sprintf("[POOL] bit_math.gno__bitMathMostSignificantBit() || x(%s) > 0", x))
@@ -54,31 +58,31 @@ func bitMathLeastSignificantBit(x bigint) uint8 {
 
 	r := uint8(255)
 
-	if x&MAX_UINT128 > 0 {
+	if x&consts.MAX_UINT128 > 0 {
 		r -= 128
 	} else {
 		x >>= 128
 	}
 
-	if x&MAX_UINT64 > 0 {
+	if x&consts.MAX_UINT64 > 0 {
 		r -= 64
 	} else {
 		x >>= 64
 	}
 
-	if x&MAX_UINT32 > 0 {
+	if x&consts.MAX_UINT32 > 0 {
 		r -= 32
 	} else {
 		x >>= 32
 	}
 
-	if x&MAX_UINT16 > 0 {
+	if x&consts.MAX_UINT16 > 0 {
 		r -= 16
 	} else {
 		x >>= 16
 	}
 
-	if x&MAX_UINT8 > 0 {
+	if x&consts.MAX_UINT8 > 0 {
 		r -= 8
 	} else {
 		x >>= 8

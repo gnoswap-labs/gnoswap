@@ -1,14 +1,18 @@
 package pool
 
-import "gno.land/p/demo/ufmt"
+import (
+	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/demo/consts"
+)
 
 func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) bigint {
-	minTick := (MIN_TICK / tickSpacing) * tickSpacing
-	maxTick := (MAX_TICK / tickSpacing) * tickSpacing
+	minTick := (consts.MIN_TICK / tickSpacing) * tickSpacing
+	maxTick := (consts.MAX_TICK / tickSpacing) * tickSpacing
 	numTicks := bigint((maxTick-minTick)/tickSpacing) + 1
 
-	requireUnsigned(MAX_UINT128/numTicks, ufmt.Sprintf("[POOL] tick.gno__tickTickSpacingToMaxLiquidityPerTick() || MAX_UINT128 / numTicks(%d) >= 0", MAX_UINT128/numTicks))
-	return MAX_UINT128 / numTicks
+	requireUnsigned(consts.MAX_UINT128/numTicks, ufmt.Sprintf("[POOL] tick.gno__tickTickSpacingToMaxLiquidityPerTick() || consts.MAX_UINT128 / numTicks(%d) >= 0", consts.MAX_UINT128/numTicks))
+	return consts.MAX_UINT128 / numTicks
 }
 
 func (pool *Pool) tickGetFeeGrowthInside(

@@ -4,6 +4,8 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/demo/consts"
 )
 
 func DrySwap(
@@ -24,11 +26,11 @@ func DrySwap(
 	slot0Start := pool.slot0
 
 	if zeroForOne {
-		if !(sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > MIN_SQRT_RATIO) {
+		if !(sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > consts.MIN_SQRT_RATIO) {
 			return 0, 0, false
 		}
 	} else {
-		if !(sqrtPriceLimitX96 > slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 < MAX_SQRT_RATIO) {
+		if !(sqrtPriceLimitX96 > slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 < consts.MAX_SQRT_RATIO) {
 			return 0, 0, false
 		}
 	}
@@ -86,10 +88,10 @@ func DrySwap(
 		)
 
 		// ensure that we do not overshoot the min/max tick, as the tick bitmap is not aware of these bounds
-		if step.tickNext < MIN_TICK {
-			step.tickNext = MIN_TICK
-		} else if step.tickNext > MAX_TICK {
-			step.tickNext = MAX_TICK
+		if step.tickNext < consts.MIN_TICK {
+			step.tickNext = consts.MIN_TICK
+		} else if step.tickNext > consts.MAX_TICK {
+			step.tickNext = consts.MAX_TICK
 		}
 
 		// get the price for the next tick
@@ -130,7 +132,7 @@ func DrySwap(
 
 		// update global fee tracker
 		if state.liquidity > 0 {
-			state.feeGrowthGlobalX128 += (step.feeAmount * Q128 / state.liquidity)
+			state.feeGrowthGlobalX128 += (step.feeAmount * consts.Q128 / state.liquidity)
 		}
 
 		// shift tick if we reached the next price

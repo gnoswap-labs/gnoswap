@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/demo/consts"
 	g "gno.land/r/demo/gov"
 )
 
@@ -195,17 +196,17 @@ func Swap(
 
 	if zeroForOne {
 		require(
-			sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > MIN_SQRT_RATIO,
+			sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > consts.MIN_SQRT_RATIO,
 			ufmt.Sprintf("[POOL] pool.gno__Swap() || SPL-zeroForOne(T)__sqrtPriceLimitX96(%d) < slot0Start.sqrtPriceX96(%d) && sqrtPriceLimitX96(%d) > MIN_SQRT_RATIO(%d)",
-				sqrtPriceLimitX96, slot0Start.sqrtPriceX96, sqrtPriceLimitX96, MIN_SQRT_RATIO),
+				sqrtPriceLimitX96, slot0Start.sqrtPriceX96, sqrtPriceLimitX96, consts.MIN_SQRT_RATIO),
 		)
 		feeProtocol = slot0Start.feeProtocol % 16
 		feeGrowthGlobalX128 = pool.feeGrowthGlobal0X128
 	} else {
 		require(
-			sqrtPriceLimitX96 > slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 < MAX_SQRT_RATIO,
+			sqrtPriceLimitX96 > slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 < consts.MAX_SQRT_RATIO,
 			ufmt.Sprintf("[POOL] pool.gno__Swap() || SPL-zeroForOne(F)__sqrtPriceLimitX96(%d) > slot0Start.sqrtPriceX96(%d) && sqrtPriceLimitX96(%d) < MAX_SQRT_RATIO(%d)",
-				sqrtPriceLimitX96, slot0Start.sqrtPriceX96, sqrtPriceLimitX96, MAX_SQRT_RATIO),
+				sqrtPriceLimitX96, slot0Start.sqrtPriceX96, sqrtPriceLimitX96, consts.MAX_SQRT_RATIO),
 		)
 		feeProtocol = slot0Start.feeProtocol / 16
 		feeGrowthGlobalX128 = pool.feeGrowthGlobal1X128
@@ -262,10 +263,10 @@ func Swap(
 			zeroForOne,
 		)
 
-		if step.tickNext < MIN_TICK {
-			step.tickNext = MIN_TICK
-		} else if step.tickNext > MAX_TICK {
-			step.tickNext = MAX_TICK
+		if step.tickNext < consts.MIN_TICK {
+			step.tickNext = consts.MIN_TICK
+		} else if step.tickNext > consts.MAX_TICK {
+			step.tickNext = consts.MAX_TICK
 		}
 
 		step.sqrtPriceNextX96 = TickMathGetSqrtRatioAtTick(step.tickNext)
@@ -304,7 +305,7 @@ func Swap(
 
 		if state.liquidity > 0 {
 			// save fee
-			state.feeGrowthGlobalX128 += (step.feeAmount * Q128 / state.liquidity)
+			state.feeGrowthGlobalX128 += (step.feeAmount * consts.Q128 / state.liquidity)
 		}
 
 		if state.sqrtPriceX96 == step.sqrtPriceNextX96 {
@@ -376,7 +377,7 @@ func Swap(
 	if zeroForOne {
 		// payer > pool
 		balance0Before := bigint(balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr()))
-		ok := transferFromByRegisterCall(pool.token0Path, payer, ADDR_POOL, uint64(amount0))
+		ok := transferFromByRegisterCall(pool.token0Path, payer, consts.ADDR_POOL, uint64(amount0))
 		if !ok {
 			panic("[POOL] pool.gno__Swap() || transferFromByRegisterCall(pool.token0Path, payer, ADDR_POOL, uint64(amount0)) failed")
 		}
@@ -405,7 +406,7 @@ func Swap(
 	} else {
 		// payer > pool
 		balance1Before := bigint(balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr()))
-		ok := transferFromByRegisterCall(pool.token1Path, payer, ADDR_POOL, uint64(amount1))
+		ok := transferFromByRegisterCall(pool.token1Path, payer, consts.ADDR_POOL, uint64(amount1))
 		if !ok {
 			panic("[POOL] pool.gno__Swap() || transferFromByRegisterCall(pool.token1Path, payer, ADDR_POOL, uint64(amount1)) failed")
 		}

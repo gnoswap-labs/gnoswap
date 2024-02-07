@@ -1,6 +1,10 @@
 package pool
 
-import "gno.land/p/demo/ufmt"
+import (
+	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/demo/consts"
+)
 
 func sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
 	sqrtPX96 bigint,
@@ -58,18 +62,18 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
 
 	var quotient bigint
 	if add {
-		if amount <= MAX_UINT160 {
+		if amount <= consts.MAX_UINT160 {
 			quotient = (amount << 96) / liquidity
 		} else {
-			quotient = amount * Q96 / liquidity
+			quotient = amount * consts.Q96 / liquidity
 		}
 		requireUnsigned(quotient, ufmt.Sprintf("[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown() || quotient(%d) >= 0", quotient))
 		return sqrtPX96 + quotient
 	} else {
-		if amount <= MAX_UINT160 {
+		if amount <= consts.MAX_UINT160 {
 			quotient = (amount << 96) / liquidity
 		} else {
-			quotient = amount * Q96 / liquidity
+			quotient = amount * consts.Q96 / liquidity
 		}
 		requireUnsigned(quotient, ufmt.Sprintf("[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown() || quotient(%d) >= 0", quotient))
 
@@ -151,7 +155,7 @@ func sqrtPriceMathGetAmount1DeltaHelper(
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
 	}
 
-	return liquidity * (sqrtRatioBX96 - sqrtRatioAX96) / Q96
+	return liquidity * (sqrtRatioBX96 - sqrtRatioAX96) / consts.Q96
 }
 
 func sqrtPriceMathGetAmount0Delta(
