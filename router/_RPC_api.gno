@@ -103,7 +103,7 @@ func getRatiosFromBase(maxHops int) []TokenPathPrice {
 
 func calculateTokenPrice(currentToken, swapPath string, numPools, proceed int, currentPriceX96 bigint) bigint {
 	currentPoolPathKey := makePoolPath(swapPath, proceed)
-	currentPool := p.GetPoolFromPoolKey(currentPoolPathKey)
+	currentPool := p.GetPoolFromPoolPath(currentPoolPathKey)
 
 	poolToken0 := currentPool.PoolGetToken0Path()
 	poolToken1 := currentPool.PoolGetToken1Path()

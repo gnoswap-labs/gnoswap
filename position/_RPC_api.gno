@@ -65,7 +65,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 		panic(ufmt.Sprintf("[POSITION] getter_api.gno__rpcMakePosition() || position not found for lpTokenId(%d)", lpTokenId))
 	}
 
-	pool := p.GetPoolFromPoolKey(position.poolKey)
+	pool := p.GetPoolFromPoolPath(position.poolKey)
 	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
 	lowerX96 := p.TickMathGetSqrtRatioAtTick(position.tickLower)
 	upperX96 := p.TickMathGetSqrtRatioAtTick(position.tickUpper)
@@ -105,7 +105,7 @@ func unclaimedFee(tokenId uint64) (bigint, bigint) {
 	tickUpper := positions[tokenId].tickUpper
 
 	poolKey := positions[tokenId].poolKey
-	pool := p.GetPoolFromPoolKey(poolKey)
+	pool := p.GetPoolFromPoolPath(poolKey)
 
 	currentTick := pool.PoolGetSlot0Tick()
 

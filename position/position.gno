@@ -58,7 +58,7 @@ func mint(params MintParams) (uint64, bigint, bigint, bigint) {
 	pool := p.GetPool(params.token0, params.token1, params.fee)
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
-			poolKey:        p.GetPoolKey(params.token0, params.token1, params.fee),
+			poolKey:        p.GetPoolPath(params.token0, params.token1, params.fee),
 			recipient:      GetOrigPkgAddr(), // hardcoded
 			tickLower:      params.tickLower,
 			tickUpper:      params.tickUpper,
@@ -80,7 +80,7 @@ func mint(params MintParams) (uint64, bigint, bigint, bigint) {
 	position := Position{
 		nonce:                    0,
 		operator:                 PrevRealmAddr(),
-		poolKey:                  p.GetPoolKey(params.token0, params.token1, params.fee),
+		poolKey:                  p.GetPoolPath(params.token0, params.token1, params.fee),
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
 		liquidity:                liquidity,
@@ -108,7 +108,7 @@ func CollectFee(tokenId uint64) (uint64, bigint, bigint, string) { // tokenId, t
 	p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, 0) // burn '0' liquidity to collect fee
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	pool := p.GetPoolFromPoolKey(position.poolKey)
+	pool := p.GetPoolFromPoolPath(position.poolKey)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 
 	tokensOwed0 += (feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / Q128
@@ -145,7 +145,7 @@ func Burn(tokenId uint64) (uint64, bigint, bigint, bigint, string) { // tokenId,
 	position := positions[tokenId]
 	positionLiquidity := position.liquidity
 
-	pool := p.GetPoolFromPoolKey(position.poolKey) // poolKey == poolPath
+	pool := p.GetPoolFromPoolPath(position.poolKey) // poolKey == poolPath
 
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
 	burnAmount0, burnAmount1 := p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, positionLiquidity)
