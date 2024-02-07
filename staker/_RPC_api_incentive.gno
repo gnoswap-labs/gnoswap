@@ -10,11 +10,6 @@ import (
 
 const INTERNAL_REWARD_TOKEN_PATH = "gno.land/r/demo/gns"
 
-// type ResponseQueryBase struct {
-// 	Height    int64 `json:"height"`
-// 	Timestamp int64 `json:"timestamp"`
-// }
-
 type RewardToken struct {
 	PoolPath         string   `json:"poolPath"`
 	RewardsTokenList []string `json:"rewardsTokenList"`
@@ -22,9 +17,7 @@ type RewardToken struct {
 
 type ResponseRewardTokens struct {
 	Stat     ResponseQueryBase `json:"stat"`
-	Response struct {
-		Data []RewardToken `json:"data"`
-	} `json:"response"`
+	Response []RewardToken     `json:"response"`
 }
 
 func ApiGetRewardTokens() string {
@@ -58,12 +51,8 @@ func ApiGetRewardTokens() string {
 	}
 
 	r := ResponseRewardTokens{
-		Stat: qb,
-		Response: struct {
-			Data []RewardToken `json:"data"`
-		}{
-			Data: rewardTokens,
-		},
+		Stat:     qb,
+		Response: rewardTokens,
 	}
 
 	rr, err := json.Marshal(r)
