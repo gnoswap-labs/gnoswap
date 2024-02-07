@@ -2,6 +2,8 @@ package pool
 
 import (
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/demo/consts"
 )
 
 func tickBitmapPosition(tick int32) (int16, uint8) {
@@ -70,15 +72,14 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 		next := (compress + 1 + int32(bitMathLeastSignificantBit(masked)-bitPos)) * tickSpacing
 		return next, initialized
 	} else {
-		next := (compress + 1 + int32(int64(MAX_UINT8-bigint(uint64(bitPos))))) * tickSpacing
+		next := (compress + 1 + int32(int64(consts.MAX_UINT8-bigint(uint64(bitPos))))) * tickSpacing
 		return next, initialized
 	}
 }
 
-
 func bigintBitwiseNotForUint256BitmapIndexing(x bigint) bigint {
 	// Create a mask with all bits set to 1
-	mask := MAX_UINT256
+	mask := consts.MAX_UINT256
 	mask -= bigint(1)
 
 	// XOR with mask to perform bitwise NOT

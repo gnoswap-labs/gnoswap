@@ -2,6 +2,8 @@ package pool
 
 import (
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/demo/consts"
 )
 
 func TickMathGetSqrtRatioAtTick(tick int32) bigint {
@@ -11,7 +13,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) bigint {
 	} else {
 		absTick = bigint(tick)
 	}
-	require(absTick <= bigint(MAX_TICK), ufmt.Sprintf("[POOL] tick_math.gno__TickMathGetSqrtRatioAtTick() || Tick out of range [absTick(%d) <= MAX_TICK(%d)]", absTick, MAX_TICK))
+	require(absTick <= bigint(consts.MAX_TICK), ufmt.Sprintf("[POOL] tick_math.gno__TickMathGetSqrtRatioAtTick() || Tick out of range [absTick(%d) <= consts.MAX_TICK(%d)]", absTick, consts.MAX_TICK))
 
 	var ratio bigint
 	if absTick&0x1 != 0 {
@@ -79,7 +81,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) bigint {
 	}
 
 	if tick > 0 {
-		ratio = MAX_UINT256 / ratio
+		ratio = consts.MAX_UINT256 / ratio
 	}
 
 	shiftedRatio := ratio >> 32
@@ -93,7 +95,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) bigint {
 }
 
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) int32 {
-	require(sqrtPriceX96 >= MIN_SQRT_RATIO && sqrtPriceX96 < MAX_SQRT_RATIO, ufmt.Sprintf("[POOL] tick_math.gno__tickMathGetTickAtSqrtRatio() || Tick out of range [sqrtPriceX96(%s) >= MIN_SQRT_RATIO(%s) && sqrtPriceX96(%s) < MAX_SQRT_RATIO(%s)]", sqrtPriceX96, MIN_SQRT_RATIO, sqrtPriceX96, MAX_SQRT_RATIO))
+	require(sqrtPriceX96 >= consts.MIN_SQRT_RATIO && sqrtPriceX96 < consts.MAX_SQRT_RATIO, ufmt.Sprintf("[POOL] tick_math.gno__tickMathGetTickAtSqrtRatio() || Tick out of range [sqrtPriceX96(%s) >= consts.MIN_SQRT_RATIO(%s) && sqrtPriceX96(%s) < consts.MAX_SQRT_RATIO(%s)]", sqrtPriceX96, consts.MIN_SQRT_RATIO, sqrtPriceX96, consts.MAX_SQRT_RATIO))
 	ratio := sqrtPriceX96 << 32
 
 	r := ratio

@@ -4,6 +4,8 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/demo/consts"
 )
 
 var (
@@ -15,7 +17,7 @@ var (
 )
 
 func init() {
-	govRealm = "gno.land/r/demo/gov"
+	govRealm = consts.GOV_PATH
 	flagHalt = false
 }
 

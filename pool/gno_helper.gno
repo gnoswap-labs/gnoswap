@@ -3,6 +3,8 @@ package pool
 import (
 	"std"
 	"time"
+
+	"gno.land/r/demo/consts"
 )
 
 func GetHeight() int64 {
@@ -18,7 +20,7 @@ func GetChainID() string {
 }
 
 func GetOrigPkgAddr() std.Address {
-	return std.DerivePkgAddr("gno.land/r/demo/pool")
+	return consts.POOL_ADDR
 	// return std.GetOrigPkgAddr()
 }
 

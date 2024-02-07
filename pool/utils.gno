@@ -3,15 +3,16 @@ package pool
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/users"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/r/demo/consts"
 )
 
-func checkTicks(tickLower, tickUpper bigint) {
+func checkTicks(tickLower, tickUpper int32) {
 	require(tickLower < tickUpper, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickLower(%d) < tickUpper(%d)", tickLower, tickUpper))
-	require(tickLower >= MIN_TICK, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickLower(%d) >= MIN_TICK(%d)", tickLower, MIN_TICK))
-	require(tickUpper <= MAX_TICK, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickUpper(%d) <= MAX_TICK(%d)", tickUpper, MAX_TICK))
+	require(tickLower >= consts.MIN_TICK, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickLower(%d) >= consts.MIN_TICK(%d)", tickLower, consts.MIN_TICK))
+	require(tickUpper <= consts.MAX_TICK, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickUpper(%d) <= consts.MAX_TICK(%d)", tickUpper, consts.MAX_TICK))
 }
 
 func a2u(addr std.Address) users.AddressOrName {
