@@ -2,7 +2,8 @@ package pool
 
 import (
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/consts"
+
+	"gno.land/p/demo/u256"
 )
 
 func tickBitmapPosition(tick int32) (int16, uint8) {
@@ -25,7 +26,9 @@ func (pool *Pool) tickBitmapFlipTick(
 	)
 
 	wordPos, bitPos := tickBitmapPosition(tick / tickSpacing)
-	mask := bigint(1) << uint64(bitPos) // 2 ** bitPos
+	mask :=
+		bigint(1) <<
+			uint64(bitPos) // 2 ** bitPos
 
 	requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || mask(%d) >= 0", mask))
 
@@ -54,7 +57,7 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 		initialized := masked != 0
 
 		if initialized {
-			next := (compress - int32(bitPos-bitMathMostSignificantBit(masked))) * tickSpacing
+			next := (compress - int32(bitPos-bitMathMostSignificantBit(u256.FromBigint(mask)))) * tickSpacing
 			return next, initialized
 		}
 
@@ -74,7 +77,7 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 
 	initialized := masked != 0
 	if initialized {
-		next := (compress + 1 + int32(bitMathLeastSignificantBit(masked)-bitPos)) * tickSpacing
+		next := (compress + 1 + int32(bitMathLeastSignificantBit(u256.FromBigint(masked))-bitPos)) * tickSpacing
 		return next, initialized
 	} else {
 		next := (compress + 1 + int32(int64(consts.MAX_UINT8-bigint(uint64(bitPos))))) * tickSpacing

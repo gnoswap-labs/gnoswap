@@ -8,10 +8,27 @@ import (
 
 const MaxUint64 = 1<<64 - 1
 
+// TODO: remove
+const MaxUint256 bigint = 115792089237316195423570985008687907853269984665640564039457584007913129639935
+
 // Int is represented as an array of 4 uint64, in little-endian order,
 // so that Int[3] is the most significant, and Int[0] is the least significant
 type Int struct {
 	arr [4]uint64
+}
+// TODO: to be removed
+func FromBigint(x bigint) *Int {
+	if x > MaxUint256 {
+		panic("overflow")
+	}
+
+	var z Int
+	z.arr[0] = uint64(x)
+	z.arr[1] = uint64(x >> 64)
+	z.arr[2] = uint64(x >> 128)
+	z.arr[3] = uint64(x >> 192)
+
+	return &z
 }
 
 // NewInt returns a new initialized Int.
@@ -19,7 +36,11 @@ func NewInt(val uint64) *Int {
 	z := &Int{arr: [4]uint64{val, 0, 0, 0}}
 	return z
 }
-
+/*
+func ToString(x *Int) string {
+	return "tostring not implemented"
+}
+*/
 // Uint64 returns the lower 64-bits of z
 func (z *Int) Uint64() uint64 {
 	return z.arr[0]
@@ -62,6 +83,10 @@ func (z *Int) Not(x *Int) *Int {
 // Gt returns true if z > x
 func (z *Int) Gt(x *Int) bool {
 	return x.Lt(z)
+}
+
+func (z *Int) Gte(x *Int) bool {
+	return !z.Lt(x)
 }
 
 // Lt returns true if z < x
