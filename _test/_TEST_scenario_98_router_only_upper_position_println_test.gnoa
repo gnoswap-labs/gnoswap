@@ -200,10 +200,10 @@ func TestRouterDrySwapRouteBazBarExactInTooMuch(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	dryResult := rou.DrySwapRoute(
-		bazPath,       // inputToken
-		barPath,       // outputToken
-		1000000000000, // amountSpecified
-		"EXACT_IN",    // swapType
+		bazPath,    // inputToken
+		barPath,    // outputToken
+		100000000,  // amountSpecified
+		"EXACT_IN", // swapType
 		"gno.land/r/demo/baz:gno.land/r/demo/bar:100", // strRouteArr
 		"100", // quoteArr
 	)
