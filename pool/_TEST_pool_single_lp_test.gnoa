@@ -5,6 +5,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/r/demo/consts"
+
 	_ "gno.land/r/demo/grc20_wrapper"
 )
 
@@ -191,7 +193,7 @@ func TestSwap(t *testing.T) {
 	// Swap several times
 	std.TestSetPrevRealm("gno.land/r/demo/router")
 	std.TestSetOrigCaller(test1)
-	test_price := bigint(MIN_PRICE)
+	test_price := bigint(consts.MIN_PRICE)
 	{
 		poolOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
 		poolOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
@@ -320,7 +322,7 @@ func TestCollectProtocol(t *testing.T) {
 
 		std.TestSetPrevRealm("gno.land/r/demo/router")
 		std.TestSetOrigCaller(test1)
-		Swap(barPath, fooPath, fee500, test1, true, 200000, MIN_PRICE, std.GetOrigCaller()) // swap token0 -> token1 => fee only in token0
+		Swap(barPath, fooPath, fee500, test1, true, 200000, consts.MIN_PRICE, std.GetOrigCaller()) // swap token0 -> token1 => fee only in token0
 
 		test1OldToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		test1OldToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)

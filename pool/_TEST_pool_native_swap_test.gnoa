@@ -4,10 +4,11 @@ import (
 	"std"
 	"testing"
 
-	_ "gno.land/r/demo/grc20_wrapper"
+	"gno.land/r/demo/consts"
 	"gno.land/r/demo/wugnot"
-
 	pos "gno.land/r/demo/position"
+
+	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 var (
@@ -78,7 +79,7 @@ func TestSwapBuyNative(t *testing.T) {
 		test1,
 		true,
 		bigint(10000),
-		MIN_PRICE,
+		consts.MIN_PRICE,
 		std.GetOrigCaller(),
 	)
 	shouldEQ(t, amount0, bigint(10000))
