@@ -21,7 +21,7 @@ ADDR_GOV := g1kmat25auuqf0h5qvd4q7s707r8let5sky4tr76
 TX_EXPIRE := 9999999999
 
 NOW := $(shell date +%s)
-INCENTIVE_START := $(shell expr $(NOW) + 140) # GIVE ENOUTH TIME TO EXECUTE PREVIOUS TXS
+INCENTIVE_START := $(shell expr $(NOW) + 140) # GIVE ENOUGH TIME TO EXECUTE PREVIOUS TXS
 INCENTIVE_END := $(shell expr $(NOW) + 140 + 7776000) # 7776000 SECONDS = 90 DAY
 
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
