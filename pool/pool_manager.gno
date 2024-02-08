@@ -20,7 +20,7 @@ var (
 )
 
 func InitManual() {
-	require(!initialized, "[POOl] pool_manager.gno__InitManual() || contract must not be initialized")
+	require(!initialized, ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || expected initialized(%t) == false", initialized))
 	feeAmountTickSpacing[100] = 2     // 0.01%
 	feeAmountTickSpacing[500] = 10    // 0.05%
 	feeAmountTickSpacing[3000] = 60   // 0.3%
@@ -35,8 +35,8 @@ func CreatePool(
 	fee uint16,
 	sqrtPriceX96 bigint,
 ) *Pool {
-	require(initialized, "[POOl] pool_manager.gno__CreatePool() || contract must be initialized")
-	require(token0Path != token1Path, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || token pair cannot be the same__token0Path(%s) != token1Path(%s)", token0Path, token1Path))
+	require(initialized, ufmt.Sprintf("[POOl] pool_manager.gno__gno__CreatePool() || expected initialized(%t) == true", initialized))
+	require(token0Path != token1Path, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
 
 	if token1Path < token0Path {
 		token0Path, token1Path = token1Path, token0Path
@@ -46,14 +46,14 @@ func CreatePool(
 
 	// check tickSpacing for fee
 	tickSpacing := feeAmountTickSpacing[fee]
-	require(tickSpacing > 0, ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || tickSpacing(%d) > 0", tickSpacing))
+	requirePositive(bigint(tickSpacing), ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || expected tickSpacing(%d) > 0", tickSpacing))
 
 	// calculate poolPath
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 
 	// check whether the pool already exist
 	pool, exist := pools[poolPath]
-	require(!exist, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || pool(%s) already exist", poolPath))
+	requireExist(!exist, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected poolPath(%s) not to exist", poolPath))
 
 	if !exist {
 		// recipient is same address that receives protocol fee
@@ -70,14 +70,14 @@ func CreatePool(
 func GetPool(token0Path, token1Path string, fee uint16) *Pool {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	pool, exist := pools[poolPath]
-	require(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPool() || pool(%s) not found", poolPath))
+	requireExist(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPool() || expected poolPath(%s) to exist", poolPath))
 
 	return pool
 }
 
 func GetPoolFromPoolPath(poolPath string) *Pool {
 	pool, exist := pools[poolPath]
-	require(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPoolFromPoolPath() || pool(%s) not found", poolPath))
+	requireExist(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPoolFromPoolPath() || expected poolPath(%s) to exist", poolPath))
 
 	return pool
 }
@@ -95,7 +95,7 @@ func AddAdmin(addr std.Address) {
 	if isAdmin(caller) {
 		admins = append(admins, addr)
 	} else {
-		panic("[POOL] pool_manager.gno__AddAdmin() || caller is not admin")
+		panic(ufmt.Sprintf("[POOL] pool_manager.gno__AddAdmin() || caller(%s) is not admin", caller.String()))
 	}
 }
 
@@ -113,7 +113,7 @@ func RemoveAdmin(addr std.Address) {
 			}
 		}
 	} else {
-		panic("[POOL] pool_manager.gno__RemoveAdmin() || caller is not admin")
+		panic(ufmt.Sprintf("[POOL] pool_manager.gno__RemoveAdmin() || caller(%s) is not admin", caller.String()))
 	}
 }
 

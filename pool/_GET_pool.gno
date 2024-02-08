@@ -67,14 +67,14 @@ func (pool *Pool) PoolGetLiquidity() bigint {
 
 func (pool *Pool) PoolGetTick(x int32) TickInfo {
 	tick, exist := pool.ticks[x]
-	require(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetTick() || tick(%d) does not exist", x))
+	requireExist(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetTick() || tick(%d) does not exist", x))
 
 	return tick
 }
 
 func (pool *Pool) PoolGetTickFeeGrowthOutside0X128(x int32) bigint {
 	tick, exist := pool.ticks[x]
-	require(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetTickFeeGrowthOutside0X128() || tick(%d) does not exist", x))
+	requireExist(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetTickFeeGrowthOutside0X128() || tick(%d) does not exist", x))
 	// if !exist {
 	// 	return 0
 	// }
@@ -84,7 +84,7 @@ func (pool *Pool) PoolGetTickFeeGrowthOutside0X128(x int32) bigint {
 
 func (pool *Pool) PoolGetTickFeeGrowthOutside1X128(x int32) bigint {
 	tick, exist := pool.ticks[x]
-	require(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetTickFeeGrowthOutside1X128() || tick(%d) does not exist", x))
+	requireExist(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetTickFeeGrowthOutside1X128() || tick(%d) does not exist", x))
 	// if !exist {
 	// 	return 0
 	// }
@@ -94,7 +94,7 @@ func (pool *Pool) PoolGetTickFeeGrowthOutside1X128(x int32) bigint {
 
 func (pool *Pool) PoolGetTickBitmap(x int16) bigint {
 	tickBitmap, exist := pool.tickBitmaps[x]
-	require(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetTickBitmap() || tickBitmap(%d) does not exist", x))
+	requireExist(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetTickBitmap() || tickBitmap(%d) does not exist", x))
 	// if !exist {
 	// 	return 0
 	// }
@@ -108,21 +108,21 @@ func (pool *Pool) PoolGetPositions() Positions {
 
 func (pool *Pool) PoolGetPosition(key string) PositionInfo {
 	position, exist := pool.positions[key]
-	require(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetPosition() || position(%s) does not exist", key))
+	requireExist(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetPosition() || position(%s) does not exist", key))
 
 	return position
 }
 
 func (pool *Pool) PoolGetPositionFeeGrowthInside0LastX128(key string) bigint {
 	position, exist := pool.positions[key]
-	require(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetPosition() || position(%s) does not exist", key))
+	requireExist(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetPositionFeeGrowthInside0LastX128) || position(%s) does not exist", key))
 
 	return position.feeGrowthInside0LastX128
 }
 
 func (pool *Pool) PoolGetPositionFeeGrowthInside1LastX128(key string) bigint {
 	position, exist := pool.positions[key]
-	require(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetPosition() || position(%s) does not exist", key))
+	requireExist(exist, ufmt.Sprintf("[POOL] _GET_pool.gno__PoolGetPositionFeeGrowthInside1LastX128() || position(%s) does not exist", key))
 
 	return position.feeGrowthInside1LastX128
 }

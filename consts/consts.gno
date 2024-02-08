@@ -4,8 +4,50 @@ import (
 	"std"
 )
 
+// GNOSWAP SERVICE
 const (
-	ZERO_ADDRESS = std.Address("")
+	GNOSWAP_ADMIN std.Address = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4"
+
+	// 500 GNS as creation fee (r3v4_xxx: 500 or 500_000_000)
+	POOL_CREATION_FEE uint64 = 500
+	// POOL_CREATION_FEE uint64 = 500_000_000
+)
+
+// WRAP & UNWRAP
+const (
+	GNOT           = "gnot"
+	WRAPPED_WUGNOT = "gno.land/r/demo/wugnot"
+)
+
+// CONTRACT PATH
+const (
+	POOL_PATH     = "gno.land/r/demo/pool"
+	POSITION_PATH = "gno.land/r/demo/position"
+	STAKER_PATH   = "gno.land/r/demo/staker"
+	ROUTER_PATH   = "gno.land/r/demo/router"
+	GOV_PATH      = "gno.land/r/demo/gov"
+)
+
+// CONTRACT ADDRESS
+var (
+	POOL_ADDR     std.Address = ""
+	POSITION_ADDR std.Address = ""
+	STAKER_ADDR   std.Address = ""
+	ROUTER_ADDR   std.Address = ""
+	GOV_ADDR      std.Address = ""
+)
+
+func init() {
+	POOL_ADDR = std.DerivePkgAddr(POOL_PATH)
+	POSITION_ADDR = std.DerivePkgAddr(POSITION_PATH)
+	STAKER_ADDR = std.DerivePkgAddr(STAKER_PATH)
+	ROUTER_ADDR = std.DerivePkgAddr(ROUTER_PATH)
+	GOV_ADDR = std.DerivePkgAddr(GOV_PATH)
+}
+
+// NUMBER
+const (
+	ZERO_ADDRESS std.Address = ""
 
 	// some numbers
 	// calculated by https://mathiasbynens.be/demo/integer-range
@@ -57,35 +99,4 @@ const (
 	MAX_UINT96 bigint = 79228162514264337593543950335
 
 	MAX_UINT160 bigint = 1461501637330902918203684832716283019655932542975
-
-	ADDR_ROUTER std.Address = std.DerivePkgAddr("gno.land/r/demo/router")
-	ADDR_POOL   std.Address = std.DerivePkgAddr("gno.land/r/demo/pool")
 )
-
-// WRAP & UNWRAP
-const (
-	GNOT           = "gnot"
-	WRAPPED_WUGNOT = "gno.land/r/demo/wugnot"
-
-	GNOSWAP_ADMIN = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4"
-)
-
-// CONTRACT PATH
-const (
-	POOL_PATH     = "gno.land/r/demo/pool"
-	POSITION_PATH = "gno.land/r/demo/position"
-	STAKER_PATH   = "gno.land/r/demo/staker"
-	ROUTER_PATH   = "gno.land/r/demo/router"
-	GOV_PATH      = "gno.land/r/demo/gov"
-)
-
-// CONTRACT ADDRESS
-var (
-	POOL_ADDR     = std.Address("")
-	POSITION_ADDR = std.Address("")
-)
-
-func init() {
-	POOL_ADDR = std.DerivePkgAddr(POOL_PATH)
-	POSITION_ADDR = std.DerivePkgAddr(POSITION_PATH)
-}
