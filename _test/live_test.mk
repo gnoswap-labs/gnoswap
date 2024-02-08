@@ -21,8 +21,8 @@ ADDR_GOV := g1kmat25auuqf0h5qvd4q7s707r8let5sky4tr76
 TX_EXPIRE := 9999999999
 
 NOW := $(shell date +%s)
-INCENTIVE_START := $(shell expr $(NOW) + 140)
-INCENTIVE_END := $(shell expr $(NOW) + 140 + 7776000) # 90 DAY
+INCENTIVE_START := $(shell expr $(NOW) + 140) # GIVE ENOUTH TIME TO EXECUTE PREVIOUS TXS
+INCENTIVE_END := $(shell expr $(NOW) + 140 + 7776000) # 7776000 SECONDS = 90 DAY
 
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 GNOLAND_RPC_URL ?= localhost:26657
@@ -38,13 +38,13 @@ help:
 all: wait deploy faucet approve pool-setup position-mint staker-stake router-swap staker-unstake done
 
 .PHONY: deploy
-deploy: deploy-foo deploy-bar deploy-baz deploy-qux deploy-wugnot deploy-gns deploy-obl deploy-gnft deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-grc20_wrapper 
+deploy: deploy-foo deploy-bar deploy-baz deploy-qux deploy-wugnot deploy-gns deploy-obl deploy-gnft deploy-const deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-grc20_wrapper 
 
 .PHONY: faucet
 faucet: faucet-lp01 faucet-lp02 faucet-tr01 faucet-gsa
 
 .PHONY: approve
-approve: approve-lp01 approve-lp02 approve-tr01 approve-gsa
+approve: approve-test1 approve-lp01 approve-lp02 approve-tr01 approve-gsa
 
 .PHONY: pool-setup
 pool-setup: pool-init pool-create
@@ -108,6 +108,11 @@ deploy-gnft:
 
 
 # Deploy Contracts
+deploy-const:
+	$(info ************ [CONST] deploy consts ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/consts -pkgpath gno.land/r/demo/consts -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo
+
 deploy-gov:
 	$(info ************ [GOV] deploy governance ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/gov -pkgpath gno.land/r/demo/gov -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
@@ -176,6 +181,16 @@ faucet-gsa:
 
 
 # Approve Tokens
+approve-test1:
+	$(info ************ [APPROVE] foo & bar & baz & qux & wugnot & gns from test1 to pool ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Approve -args $(ADDR_POOL) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/bar -func Approve -args $(ADDR_POOL) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/baz -func Approve -args $(ADDR_POOL) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/qux -func Approve -args $(ADDR_POOL) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/gns -func Approve -args $(ADDR_POOL) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/wugnot -func Approve -args $(ADDR_POOL) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo
+
 approve-lp01:
 	$(info ************ [APPROVE] foo & bar & baz & qux & wugnot from lp01 to pool ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Approve -args $(ADDR_POOL) -args 1000000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
@@ -219,9 +234,9 @@ pool-init:
 
 pool-create:
 	$(info ************ [POOL] create pools ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/pool -func CreatePool -args "gno.land/r/demo/wugnot" -args "gno.land/r/demo/bar" -args 100 -args 101729702841318637793976746270 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/pool -func CreatePool -args "gno.land/r/demo/bar" -args "gno.land/r/demo/baz" -args 100 -args 101729702841318637793976746270 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/pool -func CreatePool -args "gno.land/r/demo/baz" -args "gno.land/r/demo/qux" -args 100 -args 101729702841318637793976746270 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gsa > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/pool -func CreatePool -args "gno.land/r/demo/wugnot" -args "gno.land/r/demo/bar" -args 100 -args 101729702841318637793976746270 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/pool -func CreatePool -args "gno.land/r/demo/bar" -args "gno.land/r/demo/baz" -args 100 -args 101729702841318637793976746270 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/pool -func CreatePool -args "gno.land/r/demo/baz" -args "gno.land/r/demo/qux" -args 100 -args 101729702841318637793976746270 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 
@@ -254,6 +269,7 @@ mint-04:
 	$(info ************ [POSITION - 4] mint bar & baz // tick range 7000 ~ 8000 [ UPPER RANGE ] // by lp02 ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func Mint -args "gno.land/r/demo/bar" -args "gno.land/r/demo/baz" -args 100 -args 7000 -args 8000 -args 10000000 -args 10000000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
 	@echo
+
 
 # Staker
 create-external-incentive:
@@ -316,8 +332,6 @@ unstake-token-2:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/staker -func UnstakeToken -args 2 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp02 > /dev/null
 	@echo
 
-
-## EXTRA
 burn-token-1:
 	$(info ************ [POSITION] Burn tokenId 1 ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func Burn -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid  $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" lp01 > /dev/null
@@ -332,6 +346,8 @@ burn-token-2:
 
 done:
 	@echo "" | gnokey maketx send -send 1ugnot -to $(ADDR_GOV) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+
+
 
 ## ETC
 # gno time.Now returns last block time, not actual time
