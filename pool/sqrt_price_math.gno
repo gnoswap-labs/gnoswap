@@ -61,7 +61,7 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
 			denominator,
 	))
 
-	return numerator1 / ((sqrtPX96 / denominator) + amount)
+	return numerator1 / ((numerator1 / sqrtPX96) + amount)
 }
 
 func sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
