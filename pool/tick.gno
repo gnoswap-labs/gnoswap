@@ -10,7 +10,7 @@ func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) bigint {
 	maxTick := (consts.MAX_TICK / tickSpacing) * tickSpacing
 	numTicks := bigint((maxTick-minTick)/tickSpacing) + 1
 
-	requireUnsigned(consts.MAX_UINT128/numTicks, ufmt.Sprintf("[POOL] tick.gno__tickTickSpacingToMaxLiquidityPerTick() || consts.MAX_UINT128 / numTicks(%d) >= 0", consts.MAX_UINT128/numTicks))
+	requireUnsigned(consts.MAX_UINT128/numTicks, ufmt.Sprintf("[POOL] tick.gno__tickTickSpacingToMaxLiquidityPerTick() || consts.MAX_UINT128(%d) / numTicks(%d) >= 0(%d)", consts.MAX_UINT128, numTicks, consts.MAX_UINT128/numTicks))
 	return consts.MAX_UINT128 / numTicks
 }
 

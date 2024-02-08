@@ -125,7 +125,7 @@ func DrySwap(
 		// if the protocol fee is on, calculate how much is owed, decrement feeAmount, and increment protocolFee
 		if cache.feeProtocol > 0 {
 			delta := step.feeAmount / bigint(uint64(cache.feeProtocol))
-			requireUnsigned(delta, ufmt.Sprintf("[POOL] _RPC_dry.gno__DrySwap() || delta(%d) >= 0", delta))
+			requireUnsigned(delta, ufmt.Sprintf("[POOL] _RPC_dry.gno__DrySwap() || expected x(%d) > 0", delta))
 			step.feeAmount -= delta
 			state.protocolFee += delta
 		}

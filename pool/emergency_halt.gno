@@ -1,8 +1,6 @@
 package pool
 
 import (
-	"std"
-
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/consts"
 )
@@ -21,9 +19,13 @@ func init() {
 }
 
 func assertCalledByGovRealm() {
-	if std.PrevRealm() != govRealm {
-		panic(ufmt.Sprintf("[POOL] emergency_halt.gno__assertCalledByGovRealm() || function can only be called from gov realm(%s)", std.PrevRealm().PkgPath()))
-	}
+	requirePrevRealmPath(
+		consts.GOV_PATH,
+		ufmt.Sprintf(
+			"[POOL] emergency_halt.gno__assertCalledByGovRealm() || only gov(%s) can call, but called from(%s)",
+			consts.GOV_PATH, PrevRealmPath(),
+		),
+	)
 }
 
 func halt() {

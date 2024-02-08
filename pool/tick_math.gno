@@ -12,7 +12,13 @@ func TickMathGetSqrtRatioAtTick(tick int32) bigint {
 	} else {
 		absTick = bigint(tick)
 	}
-	require(absTick <= bigint(consts.MAX_TICK), ufmt.Sprintf("[POOL] tick_math.gno__TickMathGetSqrtRatioAtTick() || Tick out of range [absTick(%d) <= consts.MAX_TICK(%d)]", absTick, consts.MAX_TICK))
+	require(
+		absTick <= bigint(consts.MAX_TICK),
+		ufmt.Sprintf(
+			"[POOL] tick_math.gno__TickMathGetSqrtRatioAtTick() || absTick(%d) <= consts.MAX_TICK(%d)",
+			absTick, consts.MAX_TICK,
+		),
+	)
 
 	var ratio bigint
 	if absTick&0x1 != 0 {
@@ -94,7 +100,13 @@ func TickMathGetSqrtRatioAtTick(tick int32) bigint {
 }
 
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 bigint) int32 {
-	require(sqrtPriceX96 >= consts.MIN_SQRT_RATIO && sqrtPriceX96 < consts.MAX_SQRT_RATIO, ufmt.Sprintf("[POOL] tick_math.gno__tickMathGetTickAtSqrtRatio() || Tick out of range [sqrtPriceX96(%s) >= consts.MIN_SQRT_RATIO(%s) && sqrtPriceX96(%s) < consts.MAX_SQRT_RATIO(%s)]", sqrtPriceX96, consts.MIN_SQRT_RATIO, sqrtPriceX96, consts.MAX_SQRT_RATIO))
+	require(
+		sqrtPriceX96 >= consts.MIN_SQRT_RATIO && sqrtPriceX96 < consts.MAX_SQRT_RATIO,
+		ufmt.Sprintf(
+			"[POOL] tick_math.gno__tickMathGetTickAtSqrtRatio() || sqrtPriceX96(%d) >= consts.MIN_SQRT_RATIO(%d) && sqrtPriceX96(%d) < consts.MAX_SQRT_RATIO(%d)",
+			sqrtPriceX96, consts.MIN_SQRT_RATIO, sqrtPriceX96, consts.MAX_SQRT_RATIO,
+		),
+	)
 	ratio := sqrtPriceX96 << 32
 
 	r := ratio

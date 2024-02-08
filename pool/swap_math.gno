@@ -73,33 +73,33 @@ func swapMathComputeSwapStep(
 		} else {
 			amountIn = sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioNextX96, sqrtRatioCurrentX96, liquidity)
 		}
-		requireUnsigned(amountIn, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || amountIn(%d) >= 0__#1", amountIn))
+		requireUnsigned(amountIn, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() #1 || amountIn(%d) >= 0", amountIn))
 
 		if max && !exactIn {
 			amountOut = amountOut
 		} else {
 			amountOut = sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioNextX96, sqrtRatioCurrentX96, liquidity)
 		}
-		requireUnsigned(amountOut, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || amountOut(%d) >= 0__#1", amountOut))
+		requireUnsigned(amountOut, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() #1 || amountOut(%d) >= 0", amountOut))
 	} else {
 		if max && exactIn {
 			amountIn = amountIn
 		} else {
 			amountIn = sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrentX96, sqrtRatioNextX96, liquidity)
 		}
-		requireUnsigned(amountIn, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || amountIn(%d) >= 0__#2", amountIn))
+		requireUnsigned(amountIn, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() #2 || amountIn(%d) >= 0", amountIn))
 
 		if max && !exactIn {
 			amountOut = amountOut
 		} else {
 			amountOut = sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrentX96, sqrtRatioNextX96, liquidity)
 		}
-		requireUnsigned(amountOut, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || amountOut(%d) >= 0__#2", amountOut))
+		requireUnsigned(amountOut, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() #2 || amountOut(%d) >= 0", amountOut))
 	}
 
 	if !exactIn && amountOut > absBigint(-amountRemaining) {
 		amountOut = absBigint(-amountRemaining)
-		requireUnsigned(amountOut, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || amountOut(%d) >= 0__#3", amountOut))
+		requireUnsigned(amountOut, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() #3 || amountOut(%d) >= 0", amountOut))
 	}
 
 	if exactIn && sqrtRatioNextX96 != sqrtRatioTargetX96 {

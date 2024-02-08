@@ -13,14 +13,14 @@ func positionGetKey(
 	tickLower int32,
 	tickUpper int32,
 ) string {
-	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
+	positionKey := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
 
-	encoded := base64.StdEncoding.EncodeToString([]byte(key))
+	encoded := base64.StdEncoding.EncodeToString([]byte(positionKey))
 	return encoded
 }
 
 func (pool *Pool) positionUpdateWithKey(
-	key string,
+	positionKey string,
 	liquidityDelta bigint,
 	feeGrowthInside0X128 bigint,
 	feeGrowthInside1X128 bigint,
@@ -28,10 +28,10 @@ func (pool *Pool) positionUpdateWithKey(
 	requireUnsigned(feeGrowthInside0X128, ufmt.Sprintf("[POOL] position.gno__positionUpdateWithKey() || feeGrowthInside0X128(%d) >= 0", feeGrowthInside0X128))
 	requireUnsigned(feeGrowthInside1X128, ufmt.Sprintf("[POOL] position.gno__positionUpdateWithKey() || feeGrowthInside1X128(%d) >= 0", feeGrowthInside1X128))
 
-	position := pool.positions[key]
+	position := pool.positions[positionKey]
 
 	p := positionUpdate(position, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
-	pool.positions[key] = p
+	pool.positions[positionKey] = p
 
 	return p
 }

@@ -19,23 +19,11 @@ func a2u(addr std.Address) users.AddressOrName {
 	return users.AddressOrName(addr)
 }
 
-func requireUnsigned(x bigint, msg string) {
-	if x < 0 {
-		panic(msg)
-	}
-}
-
 func min(num1, num2 bigint) bigint {
 	if num1 < num2 {
 		return num1
 	}
 	return num2
-}
-
-func require(cond bool, msg string) {
-	if !cond {
-		panic(msg)
-	}
 }
 
 func removeDuplicateString(strSlice []string) []string {
@@ -58,4 +46,35 @@ func remove(s []string, r string) []string {
 		}
 	}
 	return s
+}
+
+// REQUIREs
+func require(cond bool, msg string) {
+	if !(cond) {
+		panic(msg)
+	}
+}
+
+func requireUnsigned(x bigint, msg string) {
+	if !(x >= 0) {
+		panic(msg)
+	}
+}
+
+func requirePositive(x bigint, msg string) {
+	if !(x > 0) {
+		panic(msg)
+	}
+}
+
+func requireExist(exist bool, msg string) {
+	if !exist {
+		panic(msg)
+	}
+}
+
+func requirePrevRealmPath(prevRealmPath, msg string) {
+	if PrevRealmPath() != prevRealmPath {
+		panic(msg)
+	}
 }

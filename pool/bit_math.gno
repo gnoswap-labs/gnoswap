@@ -6,7 +6,7 @@ import (
 )
 
 func bitMathMostSignificantBit(x bigint) uint8 {
-	require(x > 0, ufmt.Sprintf("[POOL] bit_math.gno__bitMathMostSignificantBit() || x(%s) > 0", x))
+	requirePositive(x, ufmt.Sprintf("[POOL] bit_math.gno__bitMathMostSignificantBit() || expected x(%d) > 0", x))
 
 	r := uint8(0)
 
@@ -53,7 +53,7 @@ func bitMathMostSignificantBit(x bigint) uint8 {
 }
 
 func bitMathLeastSignificantBit(x bigint) uint8 {
-	require(x > 0, ufmt.Sprintf("[POOL] bit_math.gno__bitMathLeastSignificantBit() || x(%s) > 0", x))
+	requirePositive(x, ufmt.Sprintf("[POOL] bit_math.gno__bitMathLeastSignificantBit() || expected x(%d) > 0", x))
 
 	r := uint8(255)
 

@@ -19,9 +19,9 @@ func Mint(
 	tickUpper int32,
 	liquidityAmount bigint,
 ) (bigint, bigint) {
-	require(PrevRealmPath() == consts.POSITION_PATH, ufmt.Sprintf("[POOL] pool.gno__Mint() || PrevRealmPath(%s) == \"gno.land/r/demo/position\"", PrevRealmPath()))
+	requirePrevRealmPath(consts.POSITION_PATH, ufmt.Sprintf("[POOL] pool.gno__Mint() || expected PrevRealmPath(%s), got %s", consts.POSITION_PATH, PrevRealmPath()))
 
-	require(liquidityAmount > 0, ufmt.Sprintf("[POOL] pool.gno__Mint() || liquidityAmount(%d) > 0", liquidityAmount))
+	requirePositive(liquidityAmount, ufmt.Sprintf("[POOL] pool.gno__Mint() || expected liquidityAmount(%d) > 0", liquidityAmount))
 
 	pool := GetPool(token0Path, token1Path, fee)
 	_, amount0Int, amount1Int := pool.modifyPosition(
@@ -34,9 +34,9 @@ func Mint(
 	)
 
 	amount0 := bigint(amount0Int)
-	requireUnsigned(amount0, ufmt.Sprintf("[POOL] pool.gno__Mint() || amount0(%d) >= 0", amount0))
+	requireUnsigned(amount0, ufmt.Sprintf("[POOL] pool.gno__Mint() || expected amount0(%d) >= 0", amount0))
 	amount1 := bigint(amount1Int)
-	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__Mint() || amount1(%d) >= 0", amount1))
+	requireUnsigned(amount1, ufmt.Sprintf("[POOL] pool.gno__Mint() || expected amount1(%d) >= 0", amount1))
 
 	var balance0Before, balance1Before bigint
 	if amount0 > 0 {
@@ -46,15 +46,19 @@ func Mint(
 		to := GetOrigPkgAddr()
 
 		ok := transferFromByRegisterCall(pool.token0Path, from, to, uint64(amount0))
-		if !ok {
-			panic("[POOL] pool.gno__Mint() || transferFromByRegisterCall(pool.token0Path, from, to, uint64(amount0)) failed")
-		}
+		require(
+			ok,
+			ufmt.Sprintf(
+				"[POOL] pool.gno__Mint() || transferFromByRegisterCall(pool.token0Path(%s), from(%s), to(%s), uint64(amount0))(%d) failed",
+				pool.token0Path, from.String(), to.String(), uint64(amount0),
+			),
+		)
 
 		require(
 			balance0Before+amount0 <= bigint(balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr())),
 			ufmt.Sprintf(
-				"[POOL] pool.gno__Mint() || balance0Before(%d) + amount0(%d) <= balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr())(%d)",
-				balance0Before, amount0, balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr()),
+				"[POOL] pool.gno__Mint() || balance0Before(%d) + amount0(%d) <= balanceOfByRegisterCall(pool.token0Path(%s), GetOrigPkgAddr()(%s))(%d)",
+				balance0Before, amount0, pool.token0Path, GetOrigPkgAddr().String(), balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr()),
 			),
 		)
 	}
@@ -66,15 +70,19 @@ func Mint(
 		to := GetOrigPkgAddr()
 
 		ok := transferFromByRegisterCall(pool.token1Path, from, to, uint64(amount1))
-		if !ok {
-			panic("[POOL] pool.gno__Mint() ||  transferFromByRegisterCall(pool.token1Path, from, to, uint64(amount1)) failed")
-		}
+		require(
+			ok,
+			ufmt.Sprintf(
+				"[POOL] pool.gno__Mint() || transferFromByRegisterCall(pool.token1Path(%s), from(%s), to(%s), uint64(amount1))(%d) failed",
+				pool.token1Path, from.String(), to.String(), uint64(amount1),
+			),
+		)
 
 		require(
 			balance1Before+amount1 <= bigint(balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr())),
 			ufmt.Sprintf(
-				"[POOL] pool.gno__Mint() || balance1Before(%d) + amount1(%d) <= balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr())(%d)",
-				balance1Before, amount1, balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr()),
+				"[POOL] pool.gno__Mint() || balance1Before(%d) + amount1(%d) <= balanceOfByRegisterCall(pool.token1Path(%s), GetOrigPkgAddr()(%s))(%d)",
+				balance1Before, amount1, pool.token1Path, GetOrigPkgAddr().String(), balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr()),
 			),
 		)
 	}
@@ -94,7 +102,7 @@ func Burn(
 	tickUpper int32,
 	amount bigint,
 ) (bigint, bigint) {
-	require(PrevRealmPath() == consts.POSITION_PATH, ufmt.Sprintf("[POOL] pool.gno__Burn() || caller(%s) must be position contract", PrevRealmPath()))
+	requirePrevRealmPath(consts.POSITION_PATH, ufmt.Sprintf("[POOL] pool.gno__Burn() || expected PrevRealmPath(%s), got %s", consts.POSITION_PATH, PrevRealmPath()))
 
 	requireUnsigned(amount, ufmt.Sprintf("[POOL] pool.gno__Burn() || amount(%d) >= 0", amount))
 
@@ -118,8 +126,8 @@ func Burn(
 		position.tokensOwed1 += amount1
 	}
 
-	key := positionGetKey(PrevRealmAddr(), tickLower, tickUpper)
-	pool.positions[key] = position
+	positionKey := positionGetKey(PrevRealmAddr(), tickLower, tickUpper)
+	pool.positions[positionKey] = position
 
 	// actual token transfer happens in Collect()
 	return amount0, amount1
@@ -136,16 +144,16 @@ func Collect(
 	amount0Requested bigint,
 	amount1Requested bigint,
 ) (bigint, bigint) {
-	require(PrevRealmPath() == consts.POSITION_PATH, ufmt.Sprintf("[POOL] pool.gno__Collect() || caller(%s) must be position contract(gno.land/r/demo/position)", PrevRealmPath()))
+	requirePrevRealmPath(consts.POSITION_PATH, ufmt.Sprintf("[POOL] pool.gno__Collect() || expected PrevRealmPath(%s), got %s", consts.POSITION_PATH, PrevRealmPath()))
 
-	requireUnsigned(amount0Requested, ufmt.Sprintf("pool.gno__Collect() || amount0Requested(%d) >= 0", amount0Requested))
-	requireUnsigned(amount1Requested, ufmt.Sprintf("pool.gno__Collect() || amount1Requested(%d) >= 0", amount1Requested))
+	requireUnsigned(amount0Requested, ufmt.Sprintf("[POOL] pool.gno__Collect() || amount0Requested(%d) >= 0", amount0Requested))
+	requireUnsigned(amount1Requested, ufmt.Sprintf("[POOL] pool.gno__Collect() || amount1Requested(%d) >= 0", amount1Requested))
 
 	pool := GetPool(token0Path, token1Path, fee)
 
-	key := positionGetKey(PrevRealmAddr(), tickLower, tickUpper)
-	position, exist := pool.positions[key]
-	require(exist, ufmt.Sprintf("[POOL] pool.gno__Collect() || position(%s) does not exist", key))
+	positionKey := positionGetKey(PrevRealmAddr(), tickLower, tickUpper)
+	position, exist := pool.positions[positionKey]
+	requireExist(exist, ufmt.Sprintf("[POOL] pool.gno__Collect() || position(%s) does not exist", positionKey))
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
 	amount0 := min(amount0Requested, position.tokensOwed0)
@@ -169,7 +177,7 @@ func Collect(
 	transferByRegisterCall(pool.token1Path, recipient, uint64(amount1))
 	requireUnsigned(pool.balances.token1, ufmt.Sprintf("[POOL] pool.gno__Burn() || pool.balances.token1(%d) >= 0", pool.balances.token1))
 
-	pool.positions[key] = position
+	pool.positions[positionKey] = position
 
 	return amount0, amount1
 }
@@ -184,14 +192,14 @@ func Swap(
 	sqrtPriceLimitX96 bigint,
 	payer std.Address, // router
 ) (bigint, bigint) {
-	require(PrevRealmPath() == consts.ROUTER_PATH, ufmt.Sprintf("[POOL] pool.gno__Swap() || caller(%s) must be router contract(gno.land/r/demo/router)", PrevRealmPath()))
+	requirePrevRealmPath(consts.ROUTER_PATH, ufmt.Sprintf("[POOL] pool.gno__Swap() || expected PrevRealmPath(%s), got %s", consts.ROUTER_PATH, PrevRealmPath()))
 
 	// early panic
-	require(amountSpecified != 0, "[POOL] pool.gno__Swap() || amountSpecified can't be zero")
+	require(amountSpecified != 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || amountSpecified(%d) != 0", amountSpecified))
 
 	pool := GetPool(token0Path, token1Path, fee)
 	slot0Start := pool.slot0
-	require(slot0Start.unlocked, "[POOL] pool.gno__Swap() || slot0 must be unlocked")
+	require(slot0Start.unlocked, ufmt.Sprintf("[POOL] pool.gno__Swap() || slot0 must be unlocked"))
 
 	var feeProtocol uint8
 	var feeGrowthGlobalX128 bigint
@@ -199,7 +207,7 @@ func Swap(
 	if zeroForOne {
 		require(
 			sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > consts.MIN_SQRT_RATIO,
-			ufmt.Sprintf("[POOL] pool.gno__Swap() || SPL-zeroForOne(T)__sqrtPriceLimitX96(%d) < slot0Start.sqrtPriceX96(%d) && sqrtPriceLimitX96(%d) > MIN_SQRT_RATIO(%d)",
+			ufmt.Sprintf("[POOL] pool.gno__Swap() || sqrtPriceLimitX96(%d) < slot0Start.sqrtPriceX96(%d) && sqrtPriceLimitX96(%d) > consts.MIN_SQRT_RATIO(%d)",
 				sqrtPriceLimitX96, slot0Start.sqrtPriceX96, sqrtPriceLimitX96, consts.MIN_SQRT_RATIO),
 		)
 		feeProtocol = slot0Start.feeProtocol % 16
@@ -207,7 +215,7 @@ func Swap(
 	} else {
 		require(
 			sqrtPriceLimitX96 > slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 < consts.MAX_SQRT_RATIO,
-			ufmt.Sprintf("[POOL] pool.gno__Swap() || SPL-zeroForOne(F)__sqrtPriceLimitX96(%d) > slot0Start.sqrtPriceX96(%d) && sqrtPriceLimitX96(%d) < MAX_SQRT_RATIO(%d)",
+			ufmt.Sprintf("[POOL] pool.gno__Swap() || sqrtPriceLimitX96(%d) > slot0Start.sqrtPriceX96(%d) && sqrtPriceLimitX96(%d) < consts.MAX_SQRT_RATIO(%d)",
 				sqrtPriceLimitX96, slot0Start.sqrtPriceX96, sqrtPriceLimitX96, consts.MAX_SQRT_RATIO),
 		)
 		feeProtocol = slot0Start.feeProtocol / 16
@@ -380,59 +388,76 @@ func Swap(
 		// payer > pool
 		balance0Before := bigint(balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr()))
 		ok := transferFromByRegisterCall(pool.token0Path, payer, consts.POOL_ADDR, uint64(amount0))
-		if !ok {
-			panic("[POOL] pool.gno__Swap() || transferFromByRegisterCall(pool.token0Path, payer, POOL_ADDR, uint64(amount0)) failed")
-		}
+		require(
+			ok,
+			ufmt.Sprintf(
+				"[POOL] pool.gno__Swap() || transferFromByRegisterCall(pool.token0Path(%s), payer(%s), consts.POOL_ADDR(%s), uint64(amount0))(%d) failed",
+				pool.token0Path, payer.String(), consts.POOL_ADDR.String(), uint64(amount0),
+			),
+		)
 
 		require(
 			balance0Before+amount0 <= bigint(balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr())),
 			ufmt.Sprintf(
-				"[POOL] pool.gno__Swap() || balance0Before(%d) + amount0(%d) <= balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr())(%d)",
-				balance0Before, amount0, balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr()),
+				"[POOL] pool.gno__Swap() || balance0Before(%d) + amount0(%d) <= balanceOfByRegisterCall(pool.token0Path(%s), GetOrigPkgAddr()(%s))(%d)",
+				balance0Before, amount0, pool.token0Path, GetOrigPkgAddr().String(), balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr()),
 			),
 		)
 		pool.balances.token0 += amount0
-		require(pool.balances.token0 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%d) >= 0__#1", pool.balances.token0))
+		require(pool.balances.token0 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%d) >= 0", pool.balances.token0))
 
 		if amount1 < 0 { // pool > recipient
-			require(pool.balances.token1 > -amount1, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token1(%d) > (-1 * amount1)(%d)", pool.balances.token1, (-amount1)))
+			require(pool.balances.token1 > -amount1, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token1(%d) > -amount1(%d)", pool.balances.token1, -amount1))
+
 			ok := transferByRegisterCall(pool.token1Path, recipient, uint64(-amount1))
-			if !ok {
-				panic("[POOL] pool.gno__Swap() || transferByRegisterCall(pool.token1Path, recipient, uint64(-amount1)) failed")
-			}
+			require(
+				ok,
+				ufmt.Sprintf(
+					"[POOL] pool.gno__Swap() || transferByRegisterCall(pool.token1Path(%s), recipient(%s), uint64(-amount1))(%d) failed",
+					pool.token1Path, recipient.String(), uint64(-amount1),
+				),
+			)
 			pool.balances.token1 += amount1
 
 		}
-		require(pool.balances.token1 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token1(%d) >= 0__#1", pool.balances.token1))
+		require(pool.balances.token1 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() #1 || pool.balances.token1(%d) >= 0", pool.balances.token1))
 
 	} else {
 		// payer > pool
 		balance1Before := bigint(balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr()))
 		ok := transferFromByRegisterCall(pool.token1Path, payer, consts.POOL_ADDR, uint64(amount1))
-		if !ok {
-			panic("[POOL] pool.gno__Swap() || transferFromByRegisterCall(pool.token1Path, payer, POOL_ADDR, uint64(amount1)) failed")
-		}
+		require(
+			ok,
+			ufmt.Sprintf(
+				"[POOL] pool.gno__Swap() || transferFromByRegisterCall(pool.token1Path(%s), payer(%s), consts.POOL_ADDR(%s), uint64(amount1))(%d) failed",
+				pool.token1Path, payer.String(), consts.POOL_ADDR.String(), uint64(amount1),
+			),
+		)
 
 		require(
 			balance1Before+amount1 <= bigint(balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr())),
 			ufmt.Sprintf(
-				"[POOL] pool.gno__Swap() || balance1Before(%d) + amount1(%d) <= balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr())(%d)",
-				balance1Before, amount1, balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr()),
+				"[POOL] pool.gno__Swap() || balance1Before(%d) + amount1(%d) <= balanceOfByRegisterCall(pool.token1Path(%s), GetOrigPkgAddr()(%s))(%d)",
+				balance1Before, amount1, pool.token1Path, GetOrigPkgAddr().String(), balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr()),
 			),
 		)
 		pool.balances.token1 += amount1
-		require(pool.balances.token1 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token1(%d) >= 0__#2", pool.balances.token1))
+		require(pool.balances.token1 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() #2 || pool.balances.token1(%d) >= 0", pool.balances.token1))
 
 		if amount0 < 0 { // pool > recipient
-			require(pool.balances.token0 > (-amount0), ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%d) > (-1 * amount0)(%d)", pool.balances.token0, (-amount0)))
+			require(pool.balances.token0 > -amount0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%d) > -amount0(%d)", pool.balances.token0, -amount0))
 
 			ok := transferByRegisterCall(pool.token0Path, recipient, uint64(-amount0))
-			if !ok {
-				panic("[POOL] pool.gno__Swap() || transferByRegisterCall(pool.token0Path, recipient, uint64(-amount0)) failed")
-			}
+			require(
+				ok,
+				ufmt.Sprintf(
+					"[POOL] pool.gno__Swap() || transferByRegisterCall(pool.token0Path(%s), recipient(%s), uint64(-amount0))(%d) failed",
+					pool.token0Path, recipient.String(), uint64(-amount0),
+				),
+			)
 			pool.balances.token0 += amount0
 		}
-		require(pool.balances.token0 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%d) >= 0__#2", pool.balances.token0))
+		require(pool.balances.token0 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() #2 || pool.balances.token0(%d) >= 0", pool.balances.token0))
 	}
 
 	pool.slot0.unlocked = true
@@ -448,7 +473,10 @@ func SetFeeProtocol(
 
 	require(
 		(feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)) && (feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10)),
-		"Invalid fee protocol",
+		ufmt.Sprintf(
+			"[POOL] pool.gno__SetFeeProtocol() || expected (feeProtocol0(%d) == 0 || (feeProtocol0(%d) >= 4 && feeProtocol0(%d) <= 10)) && (feeProtocol1(%d) == 0 || (feeProtocol1(%d) >= 4 && feeProtocol1(%d) <= 10))",
+			feeProtocol0, feeProtocol0, feeProtocol0, feeProtocol1, feeProtocol1, feeProtocol1,
+		),
 	)
 
 	// iterate all pool
@@ -485,14 +513,22 @@ func CollectProtocol(
 	amount0, amount1 = pool.saveProtocolFees(amount0, amount1)
 
 	ok := transferByRegisterCall(pool.token0Path, recipient, uint64(amount0))
-	if !ok {
-		panic("[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pool.token0Path, recipient, uint64(amount0)) failed")
-	}
+	require(
+		ok,
+		ufmt.Sprintf(
+			"[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pool.token0Path(%s), recipient(%s), uint64(amount0))(%d) failed",
+			pool.token0Path, recipient.String(), uint64(amount0),
+		),
+	)
 
 	ok = transferByRegisterCall(pool.token1Path, recipient, uint64(amount1))
-	if !ok {
-		panic("[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pool.token1Path, recipient, uint64(amount1)) failed")
-	}
+	require(
+		ok,
+		ufmt.Sprintf(
+			"[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pool.token1Path(%s), recipient(%s), uint64(amount1))(%d) failed",
+			pool.token1Path, recipient.String(), uint64(amount1),
+		),
+	)
 
 	return amount0, amount1
 }
@@ -595,10 +631,10 @@ func (pool *Pool) updatePosition(
 		_feeGrowthGlobal1X128,
 	)
 
-	key := positionGetKey(owner, tickLower, tickUpper)
+	positionKey := positionGetKey(owner, tickLower, tickUpper)
 
 	position := pool.positionUpdateWithKey(
-		key,
+		positionKey,
 		liquidityDelta,
 		feeGrowthInside0X128,
 		feeGrowthInside1X128,

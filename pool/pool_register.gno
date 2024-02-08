@@ -3,6 +3,7 @@ package pool
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/users"
 
 	"gno.land/r/demo/consts"
@@ -80,7 +81,7 @@ func UnregisterGRC20Interface(pkgPath string) {
 	// only admin can unregister
 	caller := std.GetOrigCaller()
 	if caller != consts.GNOSWAP_ADMIN {
-		panic("unauthorized address to unregister")
+		panic(ufmt.Sprintf("[POOL] pool_register.gno__UnregisterGRC20Interface() || unauthorized address(%s) to unregister", caller.String()))
 	}
 
 	_, found := findGRC20(pkgPath)
@@ -105,7 +106,7 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 			locked = false
 		}()
 	} else {
-		panic("[POOl] pool_register.gno transferByRegisterCall: locked")
+		panic("[POOl] pool_register.gno__transferByRegisterCall() || expected locked to be false")
 	}
 	return true
 }
@@ -126,7 +127,7 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 			locked = false
 		}()
 	} else {
-		panic("[POOl] pool_register.gno transferFromByRegisterCall: locked")
+		panic("[POOl] pool_register.gno__transferFromByRegisterCall() || expected locked to be false")
 	}
 	return true
 }
