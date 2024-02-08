@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/r/demo/consts"
+
 	_ "gno.land/r/demo/grc20_wrapper"
 )
 
@@ -85,7 +87,7 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 		test1,
 		true,
 		bigint(16000),
-		MIN_PRICE,
+		consts.MIN_PRICE,
 		std.GetOrigCaller(),
 	)
 	shouldEQ(t, poolIn, bigint(16000))
@@ -119,7 +121,7 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 		test1,
 		true,
 		bigint(16000),
-		MIN_PRICE,
+		consts.MIN_PRICE,
 		std.GetOrigCaller(),
 	)
 	shouldEQ(t, poolIn, bigint(16000))

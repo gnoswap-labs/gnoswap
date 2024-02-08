@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/r/demo/consts"
+
 	_ "gno.land/r/demo/grc20_wrapper"
 )
 
@@ -39,12 +41,12 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
 	// no mint == no liquidity => swap will fail
-	_, _, ok := DrySwap(fooPath, barPath, fee500, "_", true, 16000, MIN_PRICE)
+	_, _, ok := DrySwap(fooPath, barPath, fee500, "_", true, 16000, consts.MIN_PRICE)
 	shouldEQ(t, ok, false)
 
 	// not enough mint == swap will fail
 	Mint(fooPath, barPath, fee500, posAddr, -tickUpper, -tickLower, 10)
-	_, _, ok = DrySwap(fooPath, barPath, fee500, "_", true, 16000, MIN_PRICE)
+	_, _, ok = DrySwap(fooPath, barPath, fee500, "_", true, 16000, consts.MIN_PRICE)
 	shouldEQ(t, ok, false)
 
 	Mint(fooPath, barPath, fee500, posAddr, -tickUpper, -tickLower, liquidityExpect) // -11000  ~ -9000
@@ -58,7 +60,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 		"_",       // recipient
 		true,      // zeroForOne
 		16000,     // amountSpecified
-		MIN_PRICE, // sqrtPriceLimitX96
+		consts.MIN_PRICE, // sqrtPriceLimitX96
 	)
 	shouldEQ(t, poolIn, bigint(16000))
 	shouldEQ(t, poolOut, bigint(-5883))
@@ -75,7 +77,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 		"_",       // recipient
 		true,      // zeroForOne
 		-16000,    // amountSpecified
-		MIN_PRICE, // sqrtPriceLimitX96
+		consts.MIN_PRICE, // sqrtPriceLimitX96
 	)
 
 	shouldEQ(t, poolIn, bigint(43511))
