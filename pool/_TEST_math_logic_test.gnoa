@@ -95,7 +95,7 @@ func TestDrySwap_ZeroForOneFalse_AmountSpecified_Positive_16000(t *testing.T) {
 		"_",       // recipient
 		false,     // zeroForOne
 		16000,     // amountSpecified
-		MAX_PRICE, // sqrtPriceLimitX96
+		consts.MAX_PRICE, // sqrtPriceLimitX96
 	)
 
 	shouldEQ(t, poolOut, bigint(-43468))
@@ -112,7 +112,7 @@ func TestDrySwap_ZeroForOneFalse_AmountSpecified_Negative_16000(t *testing.T) {
 		"_",       // recipient
 		false,     // zeroForOne
 		-16000,    // amountSpecified
-		MAX_PRICE, // sqrtPriceLimitX96
+		consts.MAX_PRICE, // sqrtPriceLimitX96
 	)
 	shouldEQ(t, poolOut, bigint(-16000))
 	shouldEQ(t, poolIn, bigint(5888))

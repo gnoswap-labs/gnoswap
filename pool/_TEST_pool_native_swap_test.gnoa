@@ -110,7 +110,7 @@ func TestSwapSellNative(t *testing.T) {
 		test1,
 		false,
 		bigint(10000),
-		MAX_PRICE,
+		consts.MAX_PRICE,
 		std.GetOrigCaller(),
 	)
 	shouldEQ(t, amount0, bigint(-3685))
