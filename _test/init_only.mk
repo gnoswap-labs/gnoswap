@@ -23,7 +23,7 @@ help:
 all: wait deploy approve pool-setup position-setup admin-change done
 
 .PHONY: deploy
-deploy: deploy-grc20s deploy-gnft deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-grc20_wrapper deploy-faucet
+deploy: deploy-grc20s deploy-gnft deploy-const  deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-grc20_wrapper deploy-faucet
 
 .PHONY: approve
 approve: approve-test1
@@ -65,6 +65,11 @@ deploy-gnft:
 	@echo
 
 # Deploy Contracts
+deploy-const:
+	$(info ************ [CONST] deploy consts ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/consts -pkgpath gno.land/r/demo/consts -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo
+	
 deploy-gov:
 	$(info ************ [GOV] deploy governance ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/gov -pkgpath gno.land/r/demo/gov -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null

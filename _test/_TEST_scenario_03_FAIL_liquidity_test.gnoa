@@ -1,6 +1,5 @@
-// single lp, small amount swap
-// XXX: SHOULD FAIL DUE TO TOO SMALL AMOUNT
-// > if swap uses mutli routes, smallest amount should be larger than 0, else it will panic
+// single lp, small amount liquidity
+// XXX: SHOULD FAIL DUE TO TOO SMALL LIQUIDITY
 package swap_scneraio
 
 import (

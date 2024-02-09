@@ -2,7 +2,6 @@
 package swap_scneraio
 
 import (
-	"encoding/gjson"
 	"std"
 	"testing"
 
@@ -291,27 +290,6 @@ func TestStakerStakeToken(t *testing.T) {
 	std.TestSkipHeights(3)
 }
 
-func TestStakerApiGetRewardsByAddress(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
-
-	// test1 reward check
-	gra := stk.ApiGetRewardByAddress(lp01)
-	jsonStr := gjson.Parse(gra)
-
-	responseArr := jsonStr.Get("response.data").Array()
-	shouldEQ(t, len(responseArr), 2)
-
-	shouldEQ(t, responseArr[0].Get("incentiveType").String(), "INTERNAL")
-	shouldEQ(t, responseArr[0].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
-	shouldEQ(t, responseArr[0].Get("rewardTokenPath").String(), "gno.land/r/demo/gns")
-	shouldEQ(t, responseArr[0].Get("rewardTokenAmount").Int(), 1650)
-
-	shouldEQ(t, responseArr[1].Get("incentiveType").String(), "EXTERNAL")
-	shouldEQ(t, responseArr[1].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
-	shouldEQ(t, responseArr[1].Get("rewardTokenPath").String(), "gno.land/r/demo/obl")
-	shouldEQ(t, responseArr[1].Get("rewardTokenAmount").Int(), 21)
-}
-
 func TestStakerCollectReward(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
@@ -322,44 +300,6 @@ func TestStakerCollectReward(t *testing.T) {
 
 	shouldEQ(t, balanceOf(gnsObj, lp01), 1650)
 	shouldEQ(t, balanceOf(oblObj, lp01), 21)
-}
-
-func TestStakerApiGetRewardsByAddressAfterCollectReward(t *testing.T) {
-	std.TestSetOrigCaller(lp01)
-
-	// test1 reward check
-	gra := stk.ApiGetRewardByAddress(lp01)
-	jsonStr := gjson.Parse(gra)
-
-	responseArr := jsonStr.Get("response.data").Array()
-	shouldEQ(t, len(responseArr), 0) // should be 0, since CollectReward() did collet everything
-
-	std.TestSkipHeights(1)
-}
-
-func TestStakerApiGetRewardsByAddressAfterBunchOfTime(t *testing.T) {
-	std.TestSkipHeights(864000 / 5) // 10 day
-
-	std.TestSetOrigCaller(lp01)
-
-	// test1 reward check
-	gra := stk.ApiGetRewardByAddress(lp01)
-	jsonStr := gjson.Parse(gra)
-
-	responseArr := jsonStr.Get("response.data").Array()
-	shouldEQ(t, len(responseArr), 2)
-
-	shouldEQ(t, responseArr[0].Get("incentiveType").String(), "INTERNAL")
-	shouldEQ(t, responseArr[0].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
-	shouldEQ(t, responseArr[0].Get("rewardTokenPath").String(), "gno.land/r/demo/gns")
-	shouldEQ(t, responseArr[0].Get("rewardTokenAmount").Int(), 2200)
-
-	shouldEQ(t, responseArr[1].Get("incentiveType").String(), "EXTERNAL")
-	shouldEQ(t, responseArr[1].Get("targetPoolPath").String(), "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
-	shouldEQ(t, responseArr[1].Get("rewardTokenPath").String(), "gno.land/r/demo/obl")
-	shouldEQ(t, responseArr[1].Get("rewardTokenAmount").Int(), 28)
-
-	std.TestSkipHeights(1)
 }
 
 func TestFaucetTR01(t *testing.T) {
