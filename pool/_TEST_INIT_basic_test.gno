@@ -11,17 +11,16 @@ import (
 	"gno.land/r/demo/foo"
 
 	"gno.land/r/demo/wugnot"
+
+	"gno.land/r/demo/consts"
 )
 
 var (
-	test1             std.Address
-	poolAddr, posAddr std.Address
+	test1 std.Address
 
 	barPath = "gno.land/r/demo/bar"
 	bazPath = "gno.land/r/demo/baz"
 	fooPath = "gno.land/r/demo/foo"
-
-	wgnotPath = "gno.land/r/demo/wugnot"
 
 	fee100  = uint16(100)
 	fee500  = uint16(500)
@@ -34,18 +33,15 @@ func init() {
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 	testBanker.IssueCoin(test1, "ugnot", 500_000_000_000_000)
 
-	poolAddr = std.DerivePkgAddr("gno.land/r/demo/pool")
-	posAddr = std.DerivePkgAddr("gno.land/r/demo/position")
-
 	std.TestSetPrevAddr(test1)
 
-	gns.Approve(a2u(poolAddr), 500_000_000_000_000)
+	gns.Approve(a2u(consts.POOL_ADDR), 500_000_000_000_000)
 
-	bar.Approve(a2u(poolAddr), 500_000_000_000_000)
-	baz.Approve(a2u(poolAddr), 500_000_000_000_000)
-	foo.Approve(a2u(poolAddr), 500_000_000_000_000)
+	bar.Approve(a2u(consts.POOL_ADDR), 500_000_000_000_000)
+	baz.Approve(a2u(consts.POOL_ADDR), 500_000_000_000_000)
+	foo.Approve(a2u(consts.POOL_ADDR), 500_000_000_000_000)
 
-	wugnot.Approve(a2u(poolAddr), 500_000_000_000_000)
+	wugnot.Approve(a2u(consts.POOL_ADDR), 500_000_000_000_000)
 
 }
 

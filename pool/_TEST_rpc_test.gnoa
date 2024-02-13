@@ -6,7 +6,7 @@ import (
 
 	"encoding/gjson"
 
-	_ "gno.land/r/demo/grc20_wrapper"
+	"gno.land/r/demo/consts"
 )
 
 var (
@@ -40,14 +40,14 @@ func TestCreateBarBazPool(t *testing.T) {
 
 // 4. Mint Foo:Bar Liquidity by test1
 func TestMintFooBarLiquidity(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/demo/position")
+	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
 
 	Mint(
 		fooPath,
 		barPath,
 		fee500,
-		posAddr,
+		consts.POSITION_ADDR,
 		-test_tickUpper,
 		-test_tickLower,
 		test_liquidityExpect,
@@ -56,14 +56,14 @@ func TestMintFooBarLiquidity(t *testing.T) {
 
 // 5. Mint Bar:Baz Liquidity by test1
 func TestMintBarBazLiquidity(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/demo/position")
+	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
 
 	Mint(
 		barPath,
 		bazPath,
 		fee500,
-		posAddr,
+		consts.POSITION_ADDR,
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpect,
@@ -75,5 +75,4 @@ func TestApiGetPools(t *testing.T) {
 	jsonStr := ApiGetPools()
 	jsonArr := gjson.Parse(jsonStr).Get("response").Array()
 	shouldEQ(t, len(jsonArr), 2)
-
 }

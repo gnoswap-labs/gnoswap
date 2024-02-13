@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"gno.land/r/demo/consts"
-
-	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 var (
@@ -37,7 +35,7 @@ func TestGetTickFromSqrtRatio(t *testing.T) {
 }
 
 func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/demo/position")
+	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
 
 	// no mint == no liquidity => swap will fail
@@ -45,21 +43,21 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	shouldEQ(t, ok, false)
 
 	// not enough mint == swap will fail
-	Mint(fooPath, barPath, fee500, posAddr, -tickUpper, -tickLower, 10)
+	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR, -tickUpper, -tickLower, 10)
 	_, _, ok = DrySwap(fooPath, barPath, fee500, "_", true, 16000, consts.MIN_PRICE)
 	shouldEQ(t, ok, false)
 
-	Mint(fooPath, barPath, fee500, posAddr, -tickUpper, -tickLower, liquidityExpect) // -11000  ~ -9000
+	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR, -tickUpper, -tickLower, liquidityExpect) // -11000  ~ -9000
 
 	// zeroForOne true
 	// amountSpecified 16000
 	poolIn, poolOut, _ := DrySwap(
-		fooPath,   // fooPath
-		barPath,   // barPath
-		fee500,    // fee500
-		"_",       // recipient
-		true,      // zeroForOne
-		16000,     // amountSpecified
+		fooPath,          // fooPath
+		barPath,          // barPath
+		fee500,           // fee500
+		"_",              // recipient
+		true,             // zeroForOne
+		16000,            // amountSpecified
 		consts.MIN_PRICE, // sqrtPriceLimitX96
 	)
 	shouldEQ(t, poolIn, bigint(16000))
@@ -71,12 +69,12 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 	// amountSpecified -16000
 
 	poolIn, poolOut, _ := DrySwap(
-		fooPath,   // fooPath
-		barPath,   // barPath
-		fee500,    // fee500
-		"_",       // recipient
-		true,      // zeroForOne
-		-16000,    // amountSpecified
+		fooPath,          // fooPath
+		barPath,          // barPath
+		fee500,           // fee500
+		"_",              // recipient
+		true,             // zeroForOne
+		-16000,           // amountSpecified
 		consts.MIN_PRICE, // sqrtPriceLimitX96
 	)
 
@@ -89,12 +87,12 @@ func TestDrySwap_ZeroForOneFalse_AmountSpecified_Positive_16000(t *testing.T) {
 	// amountSpecified 16000
 
 	poolOut, poolIn, _ := DrySwap(
-		fooPath,   // fooPath
-		barPath,   // barPath
-		fee500,    // fee500
-		"_",       // recipient
-		false,     // zeroForOne
-		16000,     // amountSpecified
+		fooPath,          // fooPath
+		barPath,          // barPath
+		fee500,           // fee500
+		"_",              // recipient
+		false,            // zeroForOne
+		16000,            // amountSpecified
 		consts.MAX_PRICE, // sqrtPriceLimitX96
 	)
 
@@ -106,12 +104,12 @@ func TestDrySwap_ZeroForOneFalse_AmountSpecified_Negative_16000(t *testing.T) {
 	// zeroForOne false
 	// amountSpecified -16000
 	poolOut, poolIn, _ := DrySwap(
-		fooPath,   // fooPath
-		barPath,   // barPath
-		fee500,    // fee500
-		"_",       // recipient
-		false,     // zeroForOne
-		-16000,    // amountSpecified
+		fooPath,          // fooPath
+		barPath,          // barPath
+		fee500,           // fee500
+		"_",              // recipient
+		false,            // zeroForOne
+		-16000,           // amountSpecified
 		consts.MAX_PRICE, // sqrtPriceLimitX96
 	)
 	shouldEQ(t, poolOut, bigint(-16000))
