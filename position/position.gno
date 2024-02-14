@@ -83,8 +83,8 @@ func mint(params MintParams) (uint64, bigint, bigint, bigint) {
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
 		liquidity:                liquidity,
-		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
-		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+		feeGrowthInside0LastX128: feeGrowthInside0LastX128.Bigint(),
+		feeGrowthInside1LastX128: feeGrowthInside1LastX128.Bigint(),
 		tokensOwed0:              0,
 		tokensOwed1:              0,
 	}
@@ -208,18 +208,13 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, bigint, bigint, 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 
-	position.tokensOwed0 += burnedAmount0 + ((feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / consts.Q128)
-	position.tokensOwed1 += burnedAmount1 + ((feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128) * position.liquidity / consts.Q128)
+	tokensOwed0 += (feeGrowthInside0LastX128.Bigint() - position.feeGrowthInside0LastX128) * position.liquidity / Q128
+	tokensOwed1 += (feeGrowthInside1LastX128.Bigint() - position.feeGrowthInside1LastX128) * position.liquidity / Q128
 
-	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
-	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
+	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128.Bigint()
+	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128.Bigint()
 
-	position.liquidity = positionLiquidity - params.liquidity
-
-	positions[params.tokenId] = position
-
-	// GIVE BACK TO USER
-	amount0, amount1 := pl.Collect(
+	amount0, amount1 := p.Collect(
 		pToken0,
 		pToken1,
 		pFee,
@@ -267,17 +262,20 @@ func CollectFee(tokenId uint64) (uint64, bigint, bigint, string) { // tokenId, t
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 
-	tokensOwed0 += (feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / consts.Q128
-	tokensOwed1 += (feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128) * position.liquidity / consts.Q128
+	position.tokensOwed0 += burnAmount0 + ((feeGrowthInside0LastX128.Bigint() - position.feeGrowthInside0LastX128) * position.liquidity / Q128)
+	position.tokensOwed1 += burnAmount1 + ((feeGrowthInside1LastX128.Bigint() - position.feeGrowthInside1LastX128) * position.liquidity / Q128)
 
-	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
-	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
+	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128.Bigint()
+	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128.Bigint()
 
-	amount0, amount1 := pl.Collect(
-		token0,
-		token1,
-		fee,
-		std.GetOrigCaller(),
+	position.liquidity = 0
+	positions[tokenId] = position
+
+	collectAmount0, collectAmount1 := p.Collect(
+		pToken0,
+		pToken1,
+		pFee,
+		GetOrigCaller(),
 		position.tickLower,
 		position.tickUpper,
 		consts.MAX_UINT64, // r3v4_xxx: current grc20 handles amount by `uint64`

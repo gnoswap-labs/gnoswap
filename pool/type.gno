@@ -81,7 +81,7 @@ type TickInfo struct {
 }
 
 type Ticks map[int32]TickInfo          // tick => TickInfo
-type TickBitmaps map[int16]bigint      // tick(wordPos) => bitmap(tickWord ^ mask)
+type TickBitmaps map[int16]*u256.Uint      // tick(wordPos) => bitmap(tickWord ^ mask)
 type Positions map[string]PositionInfo // positionKey => PositionInfo
 
 // type Pool describes a single Pool/s state

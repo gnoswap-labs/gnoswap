@@ -138,13 +138,13 @@ func newPool(
 	}
 
 	balances := Balances{
-		token0: 0,
-		token1: 0,
+		token0: u256.Zero(),
+		token1: u256.Zero(),
 	}
 
 	protocolFees := ProtocolFees{
-		token0: 0,
-		token1: 0,
+		token0: u256.Zero(),
+		token1: u256.Zero(),
 	}
 
 	return &Pool{
@@ -155,10 +155,10 @@ func newPool(
 		tickSpacing:          tickSpacing,
 		maxLiquidityPerTick:  maxLiquidityPerTick,
 		slot0:                slot0,
-		feeGrowthGlobal0X128: 0,
-		feeGrowthGlobal1X128: 0,
+		feeGrowthGlobal0X128: u256.Zero(),
+		feeGrowthGlobal1X128: u256.Zero(),
 		protocolFees:         protocolFees,
-		liquidity:            0,
+		liquidity:            u256.Zero(),
 		ticks:                Ticks{},
 		tickBitmaps:          TickBitmaps{},
 		positions:            Positions{},

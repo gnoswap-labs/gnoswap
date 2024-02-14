@@ -10,23 +10,25 @@ import (
 
 	"gno.land/p/demo/u256"
 )
-
-func checkTicks(tickLower, tickUpper u256.Int) {
+/*
+func checkTicks(tickLower, tickUpper *u256.Int) {
 	require(tickLower.Lt(tickUpper), ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickLower(%d) < tickUpper(%d)", tickLower, tickUpper))
 	require(tickLower.Gte(MIN_TICK), ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickLower(%d) >= MIN_TICK(%d)", tickLower, MIN_TICK))
 	require(tickUpper.Lte(MAX_TICK), ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickUpper(%d) <= MAX_TICK(%d)", tickUpper, MAX_TICK))
 }
-
+*/
 func a2u(addr std.Address) users.AddressOrName {
 	return users.AddressOrName(addr)
 }
 
+/*
 func min(num1, num2 bigint) bigint {
 	if num1 < num2 {
 		return num1
 	}
 	return num2
 }
+*/
 
 func removeDuplicateString(strSlice []string) []string {
 	// map to store unique keys

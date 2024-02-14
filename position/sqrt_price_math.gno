@@ -119,9 +119,9 @@ func sqrtPriceMathGetNextSqrtPriceFromOutput(
 }
 
 func sqrtPriceMathGetAmount0DeltaHelper(
-	sqrtRatioAX96 *u256.Uint,
-	sqrtRatioBX96 *u256.Uint,
-	liquidity *u256.Uint,
+	sqrtRatioAX96 bigint,
+	sqrtRatioBX96 bigint,
+	liquidity bigint,
 ) bigint {
 	if sqrtRatioAX96 > sqrtRatioBX96 {
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96

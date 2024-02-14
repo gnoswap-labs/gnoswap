@@ -6,11 +6,11 @@ import (
 )
 
 func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
-	minTick := (MIN_TICK / tickSpacing) * tickSpacing
-	maxTick := (MAX_TICK / tickSpacing) * tickSpacing
-	numTicks := bigint((maxTick-minTick)/tickSpacing) + 1
+	minTick := (consts.MIN_TICK / tickSpacing) * tickSpacing
+	maxTick := (consts.MAX_TICK / tickSpacing) * tickSpacing
+	numTicks := u256.NewUint(uint64(((maxTick - minTick) / tickSpacing) + 1))
 
-	return new(u256.Uint).Div(MAX_UINT128, numTicks)
+	return new(u256.Uint).Div(u256.FromBigint(consts.MAX_UINT128), numTicks)
 }
 
 func (pool *Pool) tickGetFeeGrowthInside(
@@ -64,9 +64,9 @@ func (pool *Pool) tickUpdate(
 	liquidityGrossAfter := liquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
 	require(liquidityGrossAfter.Lte(maxLiquidity), ufmt.Sprintf("[POOL] tick.gno__tickUpdate() || liquidityGrossAfter(%d) <= maxLiquidity(%d)", liquidityGrossAfter, maxLiquidity))
 
-	flipped = (liquidityGrossAfter == 0) != (liquidityGrossBefore == 0)
+	flipped = (liquidityGrossAfter.IsZero()) != (liquidityGrossBefore.IsZero())
 
-	if liquidityGrossBefore == 0 {
+	if liquidityGrossBefore.IsZero() {
 		if tick <= tickCurrent {
 			info.feeGrowthOutside0X128 = feeGrowthGlobal0X128
 			info.feeGrowthOutside1X128 = feeGrowthGlobal1X128
@@ -78,9 +78,9 @@ func (pool *Pool) tickUpdate(
 	info.liquidityGross = liquidityGrossAfter
 
 	if upper {
-		info.liquidityNet -= liquidityDelta
+		info.liquidityNet.Sub(info.liquidityNet, liquidityDelta)
 	} else {
-		info.liquidityNet += liquidityDelta
+		info.liquidityNet.Add(info.liquidityNet, liquidityDelta)
 	}
 
 	pool.ticks[tick] = info

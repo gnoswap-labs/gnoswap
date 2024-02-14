@@ -40,28 +40,30 @@ func positionUpdate(
 	feeGrowthInside1X128 *u256.Uint,
 ) PositionInfo {
 	var liquidityNext *u256.Int
-	if liquidityDelta == 0 {
-		liquidityNext = self.liquidity
+	if liquidityDelta.IsZero() {
+		liquidityNext = self.liquidity.Int()
 	} else {
-		liquidityNext = liquidityMathAddDelta(self.liquidity, liquidityDelta)
+		liquidityNext = liquidityMathAddDelta(self.liquidity, liquidityDelta).Int()
 	}
 
-	tokensOwed0 := (feeGrowthInside0X128 - self.feeGrowthInside0LastX128) * self.liquidity / consts.Q128
-	tokensOwed1 := (feeGrowthInside1X128 - self.feeGrowthInside1LastX128) * self.liquidity / consts.Q128
 
-	requireUnsigned(tokensOwed0, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || tokensOwed0(%d) >= 0", tokensOwed0))
-	requireUnsigned(tokensOwed1, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || tokensOwed1(%d) >= 0", tokensOwed1))
+	tokensOwed0 := new(u256.Uint).Sub(feeGrowthInside0X128, self.feeGrowthInside0LastX128)
+	tokensOwed0 = tokensOwed0.Mul(tokensOwed0, self.liquidity)
+	tokensOwed0 = tokensOwed0.Div(tokensOwed0, u256.FromBigint(consts.Q128))
 
-	if liquidityDelta != 0 {
-		self.liquidity = liquidityNext
+	tokensOwed1 := new(u256.Uint).Sub(feeGrowthInside1X128, self.feeGrowthInside1LastX128)
+	tokensOwed1 = tokensOwed1.Mul(tokensOwed1, self.liquidity)
+	tokensOwed1 = tokensOwed1.Div(tokensOwed1, u256.FromBigint(consts.Q128))
+
+	if !liquidityDelta.IsZero() {
+		self.liquidity = liquidityNext.Uint()
 	}
 
 	self.feeGrowthInside0LastX128 = feeGrowthInside0X128
 	self.feeGrowthInside1LastX128 = feeGrowthInside1X128
-	if tokensOwed0 > 0 || tokensOwed1 > 0 {
-		self.tokensOwed0 += tokensOwed0
-		self.tokensOwed1 += tokensOwed1
-	}
+	self.tokensOwed0.Add(self.tokensOwed0, tokensOwed0)
+	self.tokensOwed1.Add(self.tokensOwed1, tokensOwed1)
+
 
 	return self
 }

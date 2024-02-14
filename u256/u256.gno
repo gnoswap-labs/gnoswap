@@ -19,6 +19,13 @@ func One() *Uint {
 	return NewUint(1)
 }
 
+func (x *Uint) Min(y *Uint) *Uint {
+	if x.Lt(y) {
+		return x
+	}
+	return y
+}
+
 // Uint is represented as an array of 4 uint64, in little-endian order,
 // so that Uint[3] is the most significant, and Uint[0] is the least significant
 type Uint struct {
@@ -40,6 +47,10 @@ func FromBigint(x bigint) *Uint {
 		panic("overflow")
 	}
 
+	if x < 0 {
+		panic("underflow")
+	}
+
 	var z Uint
 	z.arr[0] = uint64(x)
 	z.arr[1] = uint64(x >> 64)
@@ -47,6 +58,10 @@ func FromBigint(x bigint) *Uint {
 	z.arr[3] = uint64(x >> 192)
 
 	return &z
+}
+
+func (x *Uint) Bigint() bigint {
+	return (bigint(x.arr[3]) << 192) + (bigint(x.arr[2]) << 128) + (bigint(x.arr[1]) << 64) + bigint(x.arr[0])
 }
 
 // NewUint returns a new initialized Uint.
@@ -107,6 +122,10 @@ func (z *Uint) Gte(x *Uint) bool {
 	return !z.Lt(x)
 }
 
+func (z *Uint) Lte(x *Uint) bool {
+	return !x.Gt(z)
+}
+
 // Lt returns true if z < x
 func (z *Uint) Lt(x *Uint) bool {
 	// z < x <=> z - x < 0 i.e. when subtraction overflows.
@@ -154,6 +173,13 @@ func (z *Uint) SetOne() *Uint {
 	return z
 }
 
+func (z *Uint) AddInt(x *Uint, y *Int) *Uint {
+	if y.IsNeg() {
+		return z.Sub(x, y.Abs())
+	}
+	return z.Add(x, y.Uint())
+}
+
 // Add sets z to the sum x+y
 func (z *Uint) Add(x, y *Uint) *Uint {
 	var carry uint64
@@ -163,11 +189,9 @@ func (z *Uint) Add(x, y *Uint) *Uint {
 	z.arr[3], _ = Add64(x.arr[3], y.arr[3], carry)
 	// Different from the original implementation!
 	// We panic on overflow
-	/*
 	if carry != 0 {
 		panic("overflow")
 	}
-	*/
 	return z
 }
 
@@ -200,11 +224,9 @@ func (z *Uint) Sub(x, y *Uint) *Uint {
 	z.arr[3], _ = Sub64(x.arr[3], y.arr[3], carry)
 	// Different from the original implementation!
 	// We panic on underflow
-	/*
 	if carry != 0 {
 		panic("underflow")
 	}
-	*/
 	return z
 }
 
@@ -1142,4 +1164,35 @@ func (z *Uint) Dec() string {
 	}
 	// skip leading zeroes by only using the 'used size' of buf
 	return string(out[pos-len(buf):])
+}
+
+/// Mod sets z to the modulus x%y for y != 0 and returns z.
+// If y == 0, z is set to 0 (OBS: differs from the big.Uint)
+func (z *Uint) Mod(x, y *Uint) *Uint {
+	if x.IsZero() || y.IsZero() {
+		return z.Clear()
+	}
+	switch x.Cmp(y) {
+	case -1:
+		// x < y
+		copy(z.arr[:], x.arr[:])
+		return z
+	case 0:
+		// x == y
+		return z.Clear() // They are equal
+	}
+
+	// At this point:
+	// x != 0
+	// y != 0
+	// x > y
+
+	// Shortcut trivial case
+	if x.IsUint64() {
+		return z.SetUint64(x.Uint64() % y.Uint64())
+	}
+
+	var quot Uint
+	*z = udivrem(quot.arr[:], x.arr[:], y)
+	return z
 }
