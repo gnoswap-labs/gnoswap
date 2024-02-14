@@ -15,7 +15,7 @@ func DryMint(
 	sqrtLowerX96 := p.TickMathGetSqrtRatioAtTick(tickLower)
 	sqrtUpperX96 := p.TickMathGetSqrtRatioAtTick(tickUpper)
 
-	liquidity := liquidityAmountsGetLiquidityForAmounts(
+	liquidity := GetLiquidityForAmounts(
 		sqrtRatioX96,
 		sqrtLowerX96,
 		sqrtUpperX96,

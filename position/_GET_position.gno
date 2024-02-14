@@ -37,5 +37,5 @@ func PositionGetPositionTokensOwed1(tokenId uint64) bigint {
 }
 
 func PositionGetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity bigint) (bigint, bigint) {
-	return liquidityAmountsGetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity)
+	return GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity)
 }

@@ -70,7 +70,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 	lowerX96 := p.TickMathGetSqrtRatioAtTick(position.tickLower)
 	upperX96 := p.TickMathGetSqrtRatioAtTick(position.tickUpper)
 
-	token0Balance, token1Balance := liquidityAmountsGetAmountsForLiquidity(
+	token0Balance, token1Balance := GetAmountsForLiquidity(
 		currentX96,
 		lowerX96,
 		upperX96,
