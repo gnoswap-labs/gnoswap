@@ -148,9 +148,11 @@ func getTickValue(log2, sqrtPriceX96 bigint) int32 {
 	// 2^64 / log2 (√1.0001) = 255738958999603826347141
 	log_sqrt10001 := log2 * 255738958999603826347141
 
+	// ref: https://ethereum.stackexchange.com/questions/113844/how-does-uniswap-v3s-logarithm-library-tickmath-sol-work/113912#113912
 	// 0.010000497 x 2^128 = 3402992956809132418596140100660247210
 	tickLow := int32(int64((log_sqrt10001 - 3402992956809132418596140100660247210) >> 128))
 
+	// ref: https://ethereum.stackexchange.com/questions/113844/how-does-uniswap-v3s-logarithm-library-tickmath-sol-work/113912#113912
 	// 0.856 x 2^128 = 291339464771989622907027621153398088495
 	tickHi := int32(int64((log_sqrt10001 + 291339464771989622907027621153398088495) >> 128))
 
