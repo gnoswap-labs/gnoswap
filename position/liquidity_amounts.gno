@@ -4,9 +4,9 @@ import (
 	"gno.land/r/demo/consts"
 )
 
-// swapIfGreater checkes if the first value is greater than
+// toAscendingOrder checkes if the first value is greater than
 // the second then swaps two values.
-func swapIfGreater(a, b bigint) (bigint, bigint) {
+func toAscendingOrder(a, b bigint) (bigint, bigint) {
 	if a > b {
 		return b, a
 	}
@@ -22,7 +22,7 @@ func calcIntermediateValue(sqrtRatioA, sqrtRatioB bigint) bigint {
 
 // GetLiquidityForAmount0 calculates liquidity for a given amount of token 0.
 func computeLiquidityForAmount0(sqrtRatioA, sqrtRatioB, amount0 bigint) bigint {
-	sqrtRatioA, sqrtRatioB = swapIfGreater(sqrtRatioA, sqrtRatioB)
+	sqrtRatioA, sqrtRatioB = toAscendingOrder(sqrtRatioA, sqrtRatioB)
 	intermediate := calcIntermediateValue(sqrtRatioA, sqrtRatioB)
 	diff := sqrtRatioB - sqrtRatioA
 
@@ -32,7 +32,7 @@ func computeLiquidityForAmount0(sqrtRatioA, sqrtRatioB, amount0 bigint) bigint {
 
 // computeLiquidityForAmount1 calculates liquidity for a given amount of token 1.
 func computeLiquidityForAmount1(sqrtRatioA, sqrtRatioB, amount1 bigint) bigint {
-	sqrtRatioA, sqrtRatioB = swapIfGreater(sqrtRatioA, sqrtRatioB)
+	sqrtRatioA, sqrtRatioB = toAscendingOrder(sqrtRatioA, sqrtRatioB)
 	diff := sqrtRatioB - sqrtRatioA
 
 	return (amount1 * consts.Q96) / diff
@@ -40,7 +40,7 @@ func computeLiquidityForAmount1(sqrtRatioA, sqrtRatioB, amount1 bigint) bigint {
 
 // GetLiquidityForAmounts calculates the liquidity for given amounts od token 0 and token 1.
 func GetLiquidityForAmounts(sqrtRatioX, sqrtRatioA, sqrtRatioB, amount0, amount1 bigint) bigint {
-	sqrtRatioA, sqrtRatioB = swapIfGreater(sqrtRatioA, sqrtRatioB)
+	sqrtRatioA, sqrtRatioB = toAscendingOrder(sqrtRatioA, sqrtRatioB)
 	var liquidity bigint
 
 	if sqrtRatioX <= sqrtRatioA {
@@ -64,7 +64,7 @@ func GetLiquidityForAmounts(sqrtRatioX, sqrtRatioA, sqrtRatioB, amount0, amount1
 
 // computeAmount0ForLiquidity calculates the amount of token 0 for a given liquidity.
 func computeAmount0ForLiquidity(sqrtRatioA, sqrtRatioB, liquidity bigint) bigint {
-	sqrtRatioA, sqrtRatioB = swapIfGreater(sqrtRatioA, sqrtRatioB)
+	sqrtRatioA, sqrtRatioB = toAscendingOrder(sqrtRatioA, sqrtRatioB)
 	diff := sqrtRatioB - sqrtRatioA
 
 	return (liquidity << 96) * diff / (sqrtRatioB * sqrtRatioA)
@@ -72,7 +72,7 @@ func computeAmount0ForLiquidity(sqrtRatioA, sqrtRatioB, liquidity bigint) bigint
 
 // computeAmount1ForLiquidity calculates the amount of token 1 for a given liquidity.
 func computeAmount1ForLiquidity(sqrtRatioA, sqrtRatioB, liquidity bigint) bigint {
-	sqrtRatioA, sqrtRatioB = swapIfGreater(sqrtRatioA, sqrtRatioB)
+	sqrtRatioA, sqrtRatioB = toAscendingOrder(sqrtRatioA, sqrtRatioB)
 	diff := sqrtRatioB - sqrtRatioA
 
 	return liquidity * diff / consts.Q96
