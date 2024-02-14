@@ -16,38 +16,38 @@ func toAscendingOrder(a, b bigint) (bigint, bigint) {
 
 // calcIntermediateValue computes the intermediate value
 // used in liquidity calculations.
-func calcIntermediateValue(sqrtRatioA, sqrtRatioB bigint) bigint {
-	return (sqrtRatioA * sqrtRatioB) / consts.Q96
+func calcIntermediateValue(sqrtRatioAX96, sqrtRatioBX96 bigint) bigint {
+	return (sqrtRatioAX96 * sqrtRatioBX96) / consts.Q96
 }
 
-// GetLiquidityForAmount0 calculates liquidity for a given amount of token 0.
-func computeLiquidityForAmount0(sqrtRatioA, sqrtRatioB, amount0 bigint) bigint {
-	sqrtRatioA, sqrtRatioB = toAscendingOrder(sqrtRatioA, sqrtRatioB)
-	intermediate := calcIntermediateValue(sqrtRatioA, sqrtRatioB)
-	diff := sqrtRatioB - sqrtRatioA
+// computeLiquidityForAmount0 calculates liquidity for a given amount of token 0.
+func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 bigint) bigint {
+	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
+	intermediate := calcIntermediateValue(sqrtRatioAX96, sqrtRatioBX96)
+	diff := sqrtRatioBX96 - sqrtRatioAX96
 
 	// we don't need to care about division by zero here.
 	return amount0 * intermediate / diff
 }
 
 // computeLiquidityForAmount1 calculates liquidity for a given amount of token 1.
-func computeLiquidityForAmount1(sqrtRatioA, sqrtRatioB, amount1 bigint) bigint {
-	sqrtRatioA, sqrtRatioB = toAscendingOrder(sqrtRatioA, sqrtRatioB)
-	diff := sqrtRatioB - sqrtRatioA
+func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 bigint) bigint {
+	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
+	diff := sqrtRatioBX96 - sqrtRatioAX96
 
 	return (amount1 * consts.Q96) / diff
 }
 
 // GetLiquidityForAmounts calculates the liquidity for given amounts od token 0 and token 1.
-func GetLiquidityForAmounts(sqrtRatioX, sqrtRatioA, sqrtRatioB, amount0, amount1 bigint) bigint {
-	sqrtRatioA, sqrtRatioB = toAscendingOrder(sqrtRatioA, sqrtRatioB)
+func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1 bigint) bigint {
+	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	var liquidity bigint
 
-	if sqrtRatioX <= sqrtRatioA {
-		liquidity = computeLiquidityForAmount0(sqrtRatioA, sqrtRatioB, amount0)
-	} else if sqrtRatioX < sqrtRatioB {
-		liquidity0 := computeLiquidityForAmount0(sqrtRatioX, sqrtRatioB, amount0)
-		liquidity1 := computeLiquidityForAmount1(sqrtRatioA, sqrtRatioX, amount1)
+	if sqrtRatioX96 <= sqrtRatioAX96 {
+		liquidity = computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0)
+	} else if sqrtRatioX96 < sqrtRatioBX96 {
+		liquidity0 := computeLiquidityForAmount0(sqrtRatioX96, sqrtRatioBX96, amount0)
+		liquidity1 := computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioX96, amount1)
 
 		if liquidity0 < liquidity1 {
 			liquidity = liquidity0
@@ -56,24 +56,24 @@ func GetLiquidityForAmounts(sqrtRatioX, sqrtRatioA, sqrtRatioB, amount0, amount1
 		}
 
 	} else {
-		liquidity = computeLiquidityForAmount1(sqrtRatioA, sqrtRatioB, amount1)
+		liquidity = computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1)
 	}
 
 	return liquidity
 }
 
 // computeAmount0ForLiquidity calculates the amount of token 0 for a given liquidity.
-func computeAmount0ForLiquidity(sqrtRatioA, sqrtRatioB, liquidity bigint) bigint {
-	sqrtRatioA, sqrtRatioB = toAscendingOrder(sqrtRatioA, sqrtRatioB)
-	diff := sqrtRatioB - sqrtRatioA
+func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity bigint) bigint {
+	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
+	diff := sqrtRatioBX96 - sqrtRatioAX96
 
-	return (liquidity << 96) * diff / (sqrtRatioB * sqrtRatioA)
+	return (liquidity << 96) * diff / (sqrtRatioBX96 * sqrtRatioAX96)
 }
 
 // computeAmount1ForLiquidity calculates the amount of token 1 for a given liquidity.
-func computeAmount1ForLiquidity(sqrtRatioA, sqrtRatioB, liquidity bigint) bigint {
-	sqrtRatioA, sqrtRatioB = toAscendingOrder(sqrtRatioA, sqrtRatioB)
-	diff := sqrtRatioB - sqrtRatioA
+func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity bigint) bigint {
+	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
+	diff := sqrtRatioBX96 - sqrtRatioAX96
 
 	return liquidity * diff / consts.Q96
 }
