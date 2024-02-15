@@ -3,6 +3,7 @@ package staker
 import (
 	"std"
 
+	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
 
 	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	INTERNAL_REWARD_ACCOUNT = std.Address("g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm") // hardcoded at gns.gno
+	INTERNAL_REWARD_ACCOUNT = std.Address("g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm") // r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
 )
 
 var (
@@ -27,8 +28,8 @@ var (
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/demo/gns:gno.land/r/demo/wugnot:500"] = 1
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = 1 // dev
+	poolTiers["gno.land/r/demo/gns:gno.land/r/demo/wugnot:500"] = 1 // r3v4_xxx:
+	// poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = 1 // dev
 
 	// tier 2
 	// poolTiers["GNS/USDT_500"] = 2
@@ -284,10 +285,10 @@ func getTokenPairBalanceFromPosition(tokenId uint64) (bigint, bigint) {
 
 	pool := pl.GetPoolFromPoolPath(poolKey)
 	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
-	lowerX96 := pl.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickLower(tokenId))
-	upperX96 := pl.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickUpper(tokenId))
+	lowerX96 := common.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickLower(tokenId))
+	upperX96 := common.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickUpper(tokenId))
 
-	token0Balance, token1Balance := liquidityAmountsGetAmountsForLiquidity(
+	token0Balance, token1Balance := common.LiquidityAmountsGetAmountsForLiquidity(
 		currentX96,
 		lowerX96,
 		upperX96,

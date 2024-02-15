@@ -3,6 +3,7 @@ package pool
 import (
 	"std"
 
+	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/consts"
@@ -95,7 +96,7 @@ func DrySwap(
 		}
 
 		// get the price for the next tick
-		step.sqrtPriceNextX96 = TickMathGetSqrtRatioAtTick(step.tickNext)
+		step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
 		var sqrtRatioTargetX96 bigint
 
 		isLower := step.sqrtPriceNextX96 < sqrtPriceLimitX96
@@ -170,7 +171,7 @@ func DrySwap(
 			}
 		} else if state.sqrtPriceX96 != step.sqrtPriceStartX96 {
 			// recompute unless we're on a lower tick boundary (i.e. already transitioned ticks), and haven't moved
-			state.tick = TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
+			state.tick = common.TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
 		}
 	}
 	// END LOOP

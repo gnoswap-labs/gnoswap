@@ -5,9 +5,11 @@ import (
 	"strconv"
 	"strings"
 
-	p "gno.land/r/demo/pool"
-
+	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/demo/consts"
+	p "gno.land/r/demo/pool"
 )
 
 type TokenPathPrice struct {
@@ -49,13 +51,13 @@ func getRatiosFromBase(maxHops int) []TokenPathPrice {
 	tokenPrice := make(map[string]bigint, 0)
 
 	// BASE
-	tokenPrice[WGNOT_PATH] = Q96 // ~= 1
+	tokenPrice[consts.WRAPPED_WUGNOT] = consts.Q96 // ~= 1
 
 	// ELSE
 	tokenList := getTokenList()
 	for _, token := range tokenList {
-		if token != WGNOT_PATH {
-			_swapPaths := findSwapPaths(token, WGNOT_PATH, maxHops)
+		if token != consts.WRAPPED_WUGNOT {
+			_swapPaths := findSwapPaths(token, consts.WRAPPED_WUGNOT, maxHops)
 			swapPaths := strings.Split(_swapPaths, "_FIN_")
 			swapPaths = swapPaths[:len(swapPaths)-1]
 			numSwapPaths := len(swapPaths)
@@ -116,7 +118,7 @@ func calculateTokenPrice(currentToken, swapPath string, numPools, proceed int, c
 	} else if poolToken1 == currentToken {
 		currentTick := currentPool.PoolGetSlot0Tick()
 		oppositeTick := -currentTick
-		oppositeSqrtPriceX96 := p.TickMathGetSqrtRatioAtTick(oppositeTick)
+		oppositeSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(oppositeTick)
 
 		currentPriceX96 *= oppositeSqrtPriceX96 * oppositeSqrtPriceX96
 		currentToken = poolToken0
@@ -126,10 +128,10 @@ func calculateTokenPrice(currentToken, swapPath string, numPools, proceed int, c
 
 	if proceed == numPools-1 {
 		for {
-			if currentPriceX96 < (Q96 * 2) {
+			if currentPriceX96 < (consts.Q96 * 2) {
 				return currentPriceX96
 			}
-			currentPriceX96 /= Q96
+			currentPriceX96 /= consts.Q96
 		}
 	}
 

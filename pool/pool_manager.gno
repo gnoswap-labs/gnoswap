@@ -4,6 +4,7 @@ import (
 	"std"
 	"strconv"
 
+	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/consts"
@@ -40,8 +41,8 @@ func CreatePool(
 
 	if token1Path < token0Path {
 		token0Path, token1Path = token1Path, token0Path
-		tick := -(TickMathGetTickAtSqrtRatio(sqrtPriceX96))
-		sqrtPriceX96 = TickMathGetSqrtRatioAtTick(tick)
+		tick := -(common.TickMathGetTickAtSqrtRatio(sqrtPriceX96))
+		sqrtPriceX96 = common.TickMathGetSqrtRatioAtTick(tick)
 	}
 
 	// check tickSpacing for fee
@@ -125,7 +126,7 @@ func newPool(
 	sqrtPriceX96 bigint,
 ) *Pool {
 	maxLiquidityPerTick := tickTickSpacingToMaxLiquidityPerTick(tickSpacing)
-	tick := TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+	tick := common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
 
 	slot0 := Slot0{
 		sqrtPriceX96: sqrtPriceX96,

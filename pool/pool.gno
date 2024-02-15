@@ -3,7 +3,9 @@ package pool
 import (
 	"std"
 
+	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/demo/consts"
 
 	g "gno.land/r/demo/gov"
@@ -279,7 +281,7 @@ func Swap(
 			step.tickNext = consts.MAX_TICK
 		}
 
-		step.sqrtPriceNextX96 = TickMathGetSqrtRatioAtTick(step.tickNext)
+		step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
 		isLower := step.sqrtPriceNextX96 < sqrtPriceLimitX96
 		isHigher := step.sqrtPriceNextX96 > sqrtPriceLimitX96
 
@@ -349,7 +351,7 @@ func Swap(
 				state.tick = step.tickNext
 			}
 		} else if state.sqrtPriceX96 != step.sqrtPriceStartX96 {
-			state.tick = TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
+			state.tick = common.TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
 		}
 	}
 
@@ -547,8 +549,8 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, big
 	if params.liquidityDelta != 0 {
 		if pool.slot0.tick < params.tickLower {
 			amount0 = sqrtPriceMathGetAmount0Delta(
-				TickMathGetSqrtRatioAtTick(params.tickLower),
-				TickMathGetSqrtRatioAtTick(params.tickUpper),
+				common.TickMathGetSqrtRatioAtTick(params.tickLower),
+				common.TickMathGetSqrtRatioAtTick(params.tickUpper),
 				params.liquidityDelta,
 			)
 		} else if pool.slot0.tick < params.tickUpper {
@@ -556,12 +558,12 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, big
 
 			amount0 = sqrtPriceMathGetAmount0Delta(
 				pool.slot0.sqrtPriceX96,
-				TickMathGetSqrtRatioAtTick(params.tickUpper),
+				common.TickMathGetSqrtRatioAtTick(params.tickUpper),
 				params.liquidityDelta,
 			)
 
 			amount1 = sqrtPriceMathGetAmount1Delta(
-				TickMathGetSqrtRatioAtTick(params.tickLower),
+				common.TickMathGetSqrtRatioAtTick(params.tickLower),
 				pool.slot0.sqrtPriceX96,
 				params.liquidityDelta,
 			)
@@ -570,8 +572,8 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, big
 
 		} else {
 			amount1 = sqrtPriceMathGetAmount1Delta(
-				TickMathGetSqrtRatioAtTick(params.tickLower),
-				TickMathGetSqrtRatioAtTick(params.tickUpper),
+				common.TickMathGetSqrtRatioAtTick(params.tickLower),
+				common.TickMathGetSqrtRatioAtTick(params.tickUpper),
 				params.liquidityDelta,
 			)
 		}

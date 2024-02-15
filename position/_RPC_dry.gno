@@ -1,7 +1,7 @@
 package position
 
 import (
-	p "gno.land/r/demo/pool"
+	"gno.land/p/demo/common"
 )
 
 func DryMint(
@@ -11,11 +11,11 @@ func DryMint(
 	amount0Desired bigint,
 	amount1Desired bigint,
 ) (amount0, amount1 bigint) {
-	sqrtRatioX96 := p.TickMathGetSqrtRatioAtTick(tickCurrent)
-	sqrtLowerX96 := p.TickMathGetSqrtRatioAtTick(tickLower)
-	sqrtUpperX96 := p.TickMathGetSqrtRatioAtTick(tickUpper)
+	sqrtRatioX96 := common.TickMathGetSqrtRatioAtTick(tickCurrent)
+	sqrtLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
+	sqrtUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
 
-	liquidity := GetLiquidityForAmounts(
+	liquidity := common.GetLiquidityForAmounts(
 		sqrtRatioX96,
 		sqrtLowerX96,
 		sqrtUpperX96,
