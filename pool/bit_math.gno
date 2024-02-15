@@ -5,103 +5,64 @@ import (
 	"gno.land/r/demo/consts"
 )
 
+type bitShift struct {
+	bitPattern bigint	// mask or limit
+	shift      uint
+}
+
 func bitMathMostSignificantBit(x bigint) uint8 {
-	requirePositive(x, ufmt.Sprintf("[POOL] bit_math.gno__bitMathMostSignificantBit() || expected x(%d) > 0", x))
+    requirePositive(
+		x,
+		ufmt.Sprintf("[POOL] bit_math.gno__bitMathMostSignificantBit() || expected x(%d) > 0", x),
+	)
 
-	r := uint8(0)
+    shifts := []bitShift{
+        {0x100000000000000000000000000000000, 128},
+        {0x10000000000000000, 64},
+        {0x100000000, 32},
+        {0x10000, 16},
+        {0x100, 8},
+        {0x10, 4},
+        {0x4, 2},
+        {0x2, 1},
+    }
 
-	if x >= 0x100000000000000000000000000000000 {
-		x >>= 128
-		r += 128
+    r := uint8(0)
+    for _, s := range shifts {
+		if x >= s.bitPattern {
+			x >>= s.shift
+			r += uint8(s.shift)
+		}
 	}
 
-	if x >= 0x10000000000000000 {
-		x >>= 64
-		r += 64
-	}
-
-	if x >= 0x100000000 {
-		x >>= 32
-		r += 32
-	}
-
-	if x >= 0x10000 {
-		x >>= 16
-		r += 16
-	}
-
-	if x >= 0x100 {
-		x >>= 8
-		r += 8
-	}
-
-	if x >= 0x10 {
-		x >>= 4
-		r += 4
-	}
-
-	if x >= 0x4 {
-		x >>= 2
-		r += 2
-	}
-
-	if x >= 0x2 {
-		r += 1
-	}
-
-	return r
+    return r
 }
 
 func bitMathLeastSignificantBit(x bigint) uint8 {
-	requirePositive(x, ufmt.Sprintf("[POOL] bit_math.gno__bitMathLeastSignificantBit() || expected x(%d) > 0", x))
+    requirePositive(
+		x,
+		ufmt.Sprintf("[POOL] bit_math.gno__bitMathLeastSignificantBit() || expected x(%d) > 0", x),
+	)
 
-	r := uint8(255)
+    shifts := []bitShift{
+        {consts.MAX_UINT128, 128},
+        {consts.MAX_UINT64, 64},
+        {consts.MAX_UINT32, 32},
+        {consts.MAX_UINT16, 16},
+        {consts.MAX_UINT8, 8},
+        {0xf, 4},
+        {0x3, 2},
+        {0x1, 1},
+    }
 
-	if x&consts.MAX_UINT128 > 0 {
-		r -= 128
-	} else {
-		x >>= 128
+    r := uint8(255)
+    for _, s := range shifts {
+		if x&s.bitPattern > 0 {
+			r -= uint8(s.shift)
+		} else {
+			x >>= s.shift
+		}
 	}
 
-	if x&consts.MAX_UINT64 > 0 {
-		r -= 64
-	} else {
-		x >>= 64
-	}
-
-	if x&consts.MAX_UINT32 > 0 {
-		r -= 32
-	} else {
-		x >>= 32
-	}
-
-	if x&consts.MAX_UINT16 > 0 {
-		r -= 16
-	} else {
-		x >>= 16
-	}
-
-	if x&consts.MAX_UINT8 > 0 {
-		r -= 8
-	} else {
-		x >>= 8
-	}
-
-	if x&0xf > 0 {
-		r -= 4
-	} else {
-		x >>= 4
-	}
-
-	if x&0x3 > 0 {
-		r -= 2
-	} else {
-		x >>= 2
-	}
-
-	if x&0x1 > 0 {
-		r -= 1
-	}
-
-	return r
+    return r
 }
