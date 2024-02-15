@@ -2,6 +2,14 @@ package router
 
 import "std"
 
+// SWAP TYPE
+type SwapType string
+
+const (
+	ExactIn  SwapType = "EXACT_IN"
+	ExactOut SwapType = "EXACT_OUT"
+)
+
 // PRICE
 type SwapPaths map[int]string
 type TokenPairs map[string][]string
@@ -11,8 +19,6 @@ type QuoterTarget struct {
 	targetPath     string
 	resultRatioX96 bigint
 }
-
-type SwapType string
 
 // SINGLE SWAP
 type SingleSwapParams struct {
