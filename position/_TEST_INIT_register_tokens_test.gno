@@ -21,7 +21,7 @@ import (
 
 	"gno.land/r/demo/users"
 
-	"gno.land/r/demo/pool" // only for position `testcase`` to call grc20 by register
+	pl "gno.land/r/demo/pool" // only for position `testcase`` to call grc20 by register
 )
 
 type FooToken struct{}
@@ -163,13 +163,13 @@ func (GNSToken) Approve() func(spender users.AddressOrName, amount uint64) {
 }
 
 func init() {
-	pool.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/fred", FredToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/thud", ThudToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/fred", FredToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/thud", ThudToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
 }

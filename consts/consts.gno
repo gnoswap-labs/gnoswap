@@ -15,64 +15,43 @@ const (
 
 // WRAP & UNWRAP
 const (
-	GNOT           = "gnot"
-	WRAPPED_WUGNOT = "gno.land/r/demo/wugnot"
+	GNOT           string = "gnot"
+	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
 )
 
-// CONTRACT PATH
+// CONTRACT PATH & ADDRESS
 const (
-	POOL_PATH     = "gno.land/r/demo/pool"
-	POSITION_PATH = "gno.land/r/demo/position"
-	STAKER_PATH   = "gno.land/r/demo/staker"
-	ROUTER_PATH   = "gno.land/r/demo/router"
-	GOV_PATH      = "gno.land/r/demo/gov"
-)
+	POOL_PATH string      = "gno.land/r/demo/pool"
+	POOL_ADDR std.Address = std.DerivePkgAddr(POOL_PATH)
 
-// CONTRACT ADDRESS
-var (
-	POOL_ADDR     std.Address = ""
-	POSITION_ADDR std.Address = ""
-	STAKER_ADDR   std.Address = ""
-	ROUTER_ADDR   std.Address = ""
-	GOV_ADDR      std.Address = ""
-)
+	POSITION_PATH string      = "gno.land/r/demo/position"
+	POSITION_ADDR std.Address = std.DerivePkgAddr(POSITION_PATH)
 
-func init() {
-	POOL_ADDR = std.DerivePkgAddr(POOL_PATH)
-	POSITION_ADDR = std.DerivePkgAddr(POSITION_PATH)
-	STAKER_ADDR = std.DerivePkgAddr(STAKER_PATH)
-	ROUTER_ADDR = std.DerivePkgAddr(ROUTER_PATH)
-	GOV_ADDR = std.DerivePkgAddr(GOV_PATH)
-}
+	STAKER_PATH string      = "gno.land/r/demo/staker"
+	STAKER_ADDR std.Address = std.DerivePkgAddr(STAKER_PATH)
+
+	ROUTER_ADDR std.Address = std.DerivePkgAddr(ROUTER_PATH)
+	ROUTER_PATH string      = "gno.land/r/demo/router"
+
+	GOV_PATH string      = "gno.land/r/demo/gov"
+	GOV_ADDR std.Address = std.DerivePkgAddr(GOV_PATH)
+)
 
 // NUMBER
 const (
-	ZERO_ADDRESS std.Address = ""
-
-	// some numbers
 	// calculated by https://mathiasbynens.be/demo/integer-range
-	MIN_INT8  bigint = -128
-	MAX_INT8  bigint = 127
 	MAX_UINT8 bigint = 255
 
-	MIN_INT16  bigint = -32768
-	MAX_INT16  bigint = 32767
 	MAX_UINT16 bigint = 65535
 
-	MIN_INT32  bigint = -2147483648
-	MAX_INT32  bigint = 2147483647
 	MAX_UINT32 bigint = 4294967295
 
-	MIN_INT64  bigint = -9223372036854775808
-	MAX_INT64  bigint = 9223372036854775807
 	MAX_UINT64 bigint = 18446744073709551615
 
-	MIN_INT128  bigint = -170141183460469231731687303715884105728
-	MAX_INT128  bigint = 170141183460469231731687303715884105727
 	MAX_UINT128 bigint = 340282366920938463463374607431768211455
 
-	MIN_INT256  bigint = -57896044618658097711785492504343953926634992332820282019728792003956564819968
-	MAX_INT256  bigint = 57896044618658097711785492504343953926634992332820282019728792003956564819967
+	MAX_UINT160 bigint = 1461501637330902918203684832716283019655932542975
+
 	MAX_UINT256 bigint = 115792089237316195423570985008687907853269984665640564039457584007913129639935
 
 	// Tick Related
@@ -89,14 +68,9 @@ const (
 	Q96  bigint = 79228162514264337593543950336           // 2 ** 96
 	Q128 bigint = 340282366920938463463374607431768211456 // 2 ** 128
 
-	// Extra
-	MIN_INT24  bigint = -8388608
-	MAX_INT24  bigint = 8388607
-	MAX_UINT24 bigint = 16777215
+)
 
-	MIN_INT96  bigint = -39614081257132168796771975168
-	MAX_INT96  bigint = 39614081257132168796771975167
-	MAX_UINT96 bigint = 79228162514264337593543950335
-
-	MAX_UINT160 bigint = 1461501637330902918203684832716283019655932542975
+// ETCs
+const (
+	ZERO_ADDRESS std.Address = ""
 )

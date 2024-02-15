@@ -3,11 +3,11 @@ package position
 import (
 	"gno.land/p/demo/common"
 
-	p "gno.land/r/demo/pool"
+	pl "gno.land/r/demo/pool"
 )
 
 func addLiquidity(params AddLiquidityParams) (bigint, bigint, bigint) {
-	pool := p.GetPoolFromPoolPath(params.poolKey)
+	pool := pl.GetPoolFromPoolPath(params.poolKey)
 
 	sqrtPriceX96 := pool.PoolGetSlot0SqrtPriceX96()
 	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(params.tickLower)
@@ -23,7 +23,7 @@ func addLiquidity(params AddLiquidityParams) (bigint, bigint, bigint) {
 	liquidity += 1 // adjust for rounding errors
 
 	pToken0, pToken1, pFee := poolKeyDivide(params.poolKey)
-	amount0, amount1 := p.Mint(
+	amount0, amount1 := pl.Mint(
 		pToken0,
 		pToken1,
 		pFee,

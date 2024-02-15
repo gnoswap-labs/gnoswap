@@ -5,7 +5,7 @@ import (
 
 	"gno.land/r/demo/consts"
 
-	p "gno.land/r/demo/pool"
+	pl "gno.land/r/demo/pool"
 
 	"gno.land/r/demo/gnft"
 )
@@ -57,10 +57,10 @@ func Mint(
 func mint(params MintParams) (uint64, bigint, bigint, bigint) {
 	checkDeadline(params.deadline)
 
-	pool := p.GetPool(params.token0, params.token1, params.fee)
+	pool := pl.GetPool(params.token0, params.token1, params.fee)
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
-			poolKey:        p.GetPoolPath(params.token0, params.token1, params.fee),
+			poolKey:        pl.GetPoolPath(params.token0, params.token1, params.fee),
 			recipient:      GetOrigPkgAddr(), // hardcoded
 			tickLower:      params.tickLower,
 			tickUpper:      params.tickUpper,
@@ -82,7 +82,7 @@ func mint(params MintParams) (uint64, bigint, bigint, bigint) {
 	position := Position{
 		nonce:                    0,
 		operator:                 PrevRealmAddr(),
-		poolKey:                  p.GetPoolPath(params.token0, params.token1, params.fee),
+		poolKey:                  pl.GetPoolPath(params.token0, params.token1, params.fee),
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
 		liquidity:                liquidity,
@@ -107,10 +107,10 @@ func CollectFee(tokenId uint64) (uint64, bigint, bigint, string) { // tokenId, t
 	tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
 
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
-	p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, 0) // burn '0' liquidity to collect fee
+	pl.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, 0) // burn '0' liquidity to collect fee
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	pool := p.GetPoolFromPoolPath(position.poolKey)
+	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 
 	tokensOwed0 += (feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / consts.Q128
@@ -119,7 +119,7 @@ func CollectFee(tokenId uint64) (uint64, bigint, bigint, string) { // tokenId, t
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 
-	amount0, amount1 := p.Collect(
+	amount0, amount1 := pl.Collect(
 		pToken0,
 		pToken1,
 		pFee,
@@ -147,10 +147,10 @@ func Burn(tokenId uint64) (uint64, bigint, bigint, bigint, string) { // tokenId,
 	position := positions[tokenId]
 	positionLiquidity := position.liquidity
 
-	pool := p.GetPoolFromPoolPath(position.poolKey) // poolKey == poolPath
+	pool := pl.GetPoolFromPoolPath(position.poolKey) // poolKey == poolPath
 
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
-	burnAmount0, burnAmount1 := p.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, positionLiquidity)
+	burnAmount0, burnAmount1 := pl.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, positionLiquidity)
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
@@ -164,7 +164,7 @@ func Burn(tokenId uint64) (uint64, bigint, bigint, bigint, string) { // tokenId,
 	position.liquidity = 0
 	positions[tokenId] = position
 
-	collectAmount0, collectAmount1 := p.Collect(
+	collectAmount0, collectAmount1 := pl.Collect(
 		pToken0,
 		pToken1,
 		pFee,

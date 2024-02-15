@@ -6,7 +6,7 @@ import (
 
 	"encoding/gjson"
 
-	p "gno.land/r/demo/pool"
+	pl "gno.land/r/demo/pool"
 )
 
 var (
@@ -18,10 +18,10 @@ var (
 // 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(test1)
-	p.InitManual()
+	pl.InitManual()
 
 	std.TestSetOrigCaller(test1)
-	p.CreatePool(fooPath, barPath, fee500, 130621891405341611593710811006)
+	pl.CreatePool(fooPath, barPath, fee500, 130621891405341611593710811006)
 
 	// fee
 	// 500		= 0.05% // USv3 default
@@ -30,7 +30,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 	// sqrtPrice
 	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { p.CreatePool(fooPath, barPath, fee500, 130621891405341611593710811006) })
+	shouldPanic(t, func() { pl.CreatePool(fooPath, barPath, fee500, 130621891405341611593710811006) })
 }
 
 // 2. Mint LP and Get GNFT
