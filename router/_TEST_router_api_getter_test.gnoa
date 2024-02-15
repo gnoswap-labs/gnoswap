@@ -5,7 +5,6 @@ import (
 	"std"
 	"testing"
 
-	_ "gno.land/r/demo/grc20_wrapper"
 	p "gno.land/r/demo/pool"
 	pos "gno.land/r/demo/position"
 
@@ -27,7 +26,7 @@ func TestCreatePool(t *testing.T) {
 
 	jsonOutput := p.ApiGetPools()
 	jsonStr := gjson.Parse(jsonOutput)
-	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 3)
+	shouldEQ(t, len(jsonStr.Get("response").Array()), 3)
 }
 
 func TestPositionMint(t *testing.T) {
@@ -54,8 +53,8 @@ func TestApiGetRatiosFromBase(t *testing.T) {
 	jsonArr := jsonStr.Get("response").Array()
 	shouldEQ(t, len(jsonArr), 4)
 
-	shouldEQ(t, jsonArr[0].String(), "{\"gno.land/r/demo/wugnot\":79228162514264337593543950336}") // 1
-	shouldEQ(t, jsonArr[1].String(), "{\"gno.land/r/demo/bar\":215332174010593516404127508794}")   // 2.7178741394
-	shouldEQ(t, jsonArr[2].String(), "{\"gno.land/r/demo/qux\":585304271701315311476720143083}")   // 7.3875785217
-	shouldEQ(t, jsonArr[3].String(), "{\"gno.land/r/demo/baz\":4323981266259057910270272221253}")  // 54.5763164138
+	shouldEQ(t, jsonArr[0].String(), "{\"path\":\"gno.land/r/demo/wugnot\",\"price\":79228162514264337593543950336}") // 1
+	shouldEQ(t, jsonArr[1].String(), "{\"path\":\"gno.land/r/demo/bar\",\"price\":29147869410676662479573841823}")    // 0.3678978344
+	shouldEQ(t, jsonArr[2].String(), "{\"path\":\"gno.land/r/demo/qux\",\"price\":10723438032895153248244559718}")    // 0.1353488165
+	shouldEQ(t, jsonArr[3].String(), "{\"path\":\"gno.land/r/demo/baz\",\"price\":1451404646985709758556457134}")     // 0.0183193021
 }

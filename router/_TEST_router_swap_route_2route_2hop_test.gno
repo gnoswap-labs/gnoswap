@@ -5,7 +5,6 @@ import (
 	"std"
 	"testing"
 
-	_ "gno.land/r/demo/grc20_wrapper"
 	pl "gno.land/r/demo/pool"
 	pos "gno.land/r/demo/position"
 )
@@ -24,7 +23,7 @@ func TestCreatePool(t *testing.T) {
 
 	jsonOutput := pl.ApiGetPools()
 	jsonStr := gjson.Parse(jsonOutput)
-	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 2)
+	shouldEQ(t, len(jsonStr.Get("response").Array()), 2)
 }
 
 func TestPositionMint(t *testing.T) {
@@ -141,7 +140,7 @@ func TestDrySwapRouteQuxBarExactOut(t *testing.T) {
 		"30,70", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, bigint(7336))
+	shouldEQ(t, dryResult, bigint(7292))
 }
 
 func TestwapRouteQuxBarExactOut(t *testing.T) {
@@ -157,5 +156,5 @@ func TestwapRouteQuxBarExactOut(t *testing.T) {
 		99999,   // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, bigint(7350))
+	shouldEQ(t, swapResult, bigint(7286))
 }
