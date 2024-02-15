@@ -6,7 +6,7 @@ import (
 	"gno.land/r/demo/users"
 )
 
-const APPROVED_CALLER = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4" // gsa
+const APPROVED_CALLER = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4" // r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
 
 var registered = []GRC20Pair{}
 
