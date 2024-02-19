@@ -33,7 +33,7 @@ func mintNNFT(owner std.Address, n uint64) {
 func BalanceOf(user users.AddressOrName) uint64 {
 	balance, err := nft.BalanceOf(user.Resolve())
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	return balance
@@ -42,7 +42,7 @@ func BalanceOf(user users.AddressOrName) uint64 {
 func OwnerOf(tid grc721.TokenID) std.Address {
 	owner, err := nft.OwnerOf(tid)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	return owner
@@ -56,7 +56,7 @@ func GetApproved(tid grc721.TokenID) (std.Address, bool) {
 	addr, err := nft.GetApproved(tid)
 	if err != nil {
 		return "", false
-		// panic(err)
+		// panic(err.Error())
 	}
 
 	return addr, true
@@ -67,21 +67,21 @@ func GetApproved(tid grc721.TokenID) (std.Address, bool) {
 func Approve(user users.AddressOrName, tid grc721.TokenID) {
 	err := nft.Approve(user.Resolve(), tid)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
 func SetApprovalForAll(user users.AddressOrName, approved bool) {
 	err := nft.SetApprovalForAll(user.Resolve(), approved)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
 func TransferFrom(from, to users.AddressOrName, tid grc721.TokenID) {
 	err := nft.TransferFrom(from.Resolve(), to.Resolve(), tid)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
@@ -93,7 +93,7 @@ func Mint(to users.AddressOrName, tid grc721.TokenID) {
 	assertIsAdmin(caller)
 	err := nft.Mint(to.Resolve(), tid)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
@@ -103,7 +103,7 @@ func Burn(tid grc721.TokenID) {
 	assertIsAdmin(caller)
 	err := nft.Burn(tid)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 

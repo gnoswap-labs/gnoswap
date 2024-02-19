@@ -4,9 +4,9 @@ import (
 	"std"
 
 	"gno.land/r/demo/users"
-)
 
-const APPROVED_CALLER = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4" // r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
+	"gno.land/r/demo/consts"
+)
 
 var registered = []GRC20Pair{}
 
@@ -51,7 +51,7 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	// r3v4_xxx: however must be used in production
 
 	// caller := std.GetOrigCaller()
-	// if caller != APPROVED_CALLER {
+	// if caller != consts.GNOSWAP_ADMIN {
 	// 	panic("unauthorized address to register")
 	// }
 
@@ -67,7 +67,7 @@ func UnregisterGRC20Interface(pkgPath string) {
 
 	// only admin can unregister
 	caller := std.GetOrigCaller()
-	if caller != APPROVED_CALLER {
+	if caller != consts.GNOSWAP_ADMIN {
 		panic("unauthorized address to unregister")
 	}
 

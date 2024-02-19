@@ -58,7 +58,7 @@ func init() {
 
 	wugnot.Approve(a2u(poolAddr), 500_000_000_000_000)
 
-	std.TestSetPrevAddr(std.Address("g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm")) // r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
+	std.TestSetPrevAddr(std.Address("g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm")) // IRA, r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
 	gns.Approve(a2u(stakerAddr), 500_000_000_000_000)                            // to create internal incentive
 }
 

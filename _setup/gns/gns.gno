@@ -15,8 +15,8 @@ var (
 )
 
 const (
-	admin                   std.Address = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4" // r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
-	INTERNAL_REWARD_ACCOUNT std.Address = "g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm" // r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
+	admin                   std.Address = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4" // GSA, r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
+	INTERNAL_REWARD_ACCOUNT std.Address = "g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm" // IRA, r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
 )
 
 func init() {
@@ -27,7 +27,7 @@ func init() {
 	gns.Mint(INTERNAL_REWARD_ACCOUNT, 400_000_000_000_000)                             // @INTERNAL_REWARD_ACCOUNT
 	gns.Mint(std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"), 100_000_000_000) // default test1
 
-	stakerAddr := std.DerivePkgAddr("gno.land/r/demo/staker")
+	stakerAddr := std.DerivePkgAddr("gno.land/r/demo/staker") // r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
 	admins = append(admins, string(stakerAddr))
 	admins = append(admins, string(admin))
 
