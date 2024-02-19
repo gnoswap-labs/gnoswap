@@ -4,25 +4,26 @@ import (
 	"std"
 	"testing"
 
-	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
-	p "gno.land/r/demo/pool"
-	pos "gno.land/r/demo/position"
+	pl "gno.land/r/demo/pool"
+	pn "gno.land/r/demo/position"
+
+	"gno.land/r/demo/gnft"
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
-	p.InitManual()
+	pl.InitManual()
 	std.TestSkipHeights(1)
 
-	p.CreatePool(fooPath, barPath, 500, 130621891405341611593710811006)
+	pl.CreatePool(fooPath, barPath, 500, 130621891405341611593710811006)
 	std.TestSkipHeights(1)
 }
 
 func TestPositionMint(t *testing.T) {
 	{
 		std.TestSetOrigCaller(test1)
-		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
+		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pn.Mint(
 			fooPath,            // token0
 			barPath,            // token1
 			uint16(500),        // fee
@@ -47,7 +48,7 @@ func TestPositionMint(t *testing.T) {
 
 	{
 		std.TestSetOrigCaller(test1)
-		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
+		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pn.Mint(
 			fooPath,            // token0
 			barPath,            // token1
 			uint16(500),        // fee

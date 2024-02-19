@@ -1,0 +1,239 @@
+package staker
+
+import (
+	"std"
+
+	"testing"
+
+	pl "gno.land/r/demo/pool"
+	pn "gno.land/r/demo/position"
+
+	"gno.land/r/demo/gnft"
+
+	"gno.land/r/demo/gns"
+	"gno.land/r/demo/obl"
+)
+
+func init() {
+	// init pool tiers
+	// tier 1
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = 1
+
+	// tier 2
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = 2
+	poolTiers["ATOM/GNS_500"] = 2
+
+	// tier 3
+	poolTiers["ATOM/GNOT_500"] = 3
+	poolTiers["ATOM/USDT_500"] = 3
+	poolTiers["ATOM/WETH_500"] = 3
+}
+
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	pl.InitManual()
+	std.TestSkipHeights(1)
+
+	pl.CreatePool(barPath, quxPath, 500, 130621891405341611593710811006) // internal, tier 1
+	pl.CreatePool(barPath, bazPath, 100, 79228162514264337593543950337)  // internal, tier 2
+	pl.CreatePool(fooPath, quxPath, 500, 79228162514264337593543950337)  // external
+	std.TestSkipHeights(3)
+}
+
+func TestMintBarQux500(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(
+		barPath,        // token0
+		quxPath,        // token1
+		fee500,         // fee
+		int32(9000),    // tickLower
+		int32(11000),   // tickUpper
+		bigint(100000), // amount0Desired
+		bigint(100000), // amount1Desired
+		bigint(1),      // amount0Min
+		bigint(1),      // amount1Min
+		max_timeout,
+	)
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), GetOrigCaller()) // test1
+}
+
+func TestMintBarBaz100(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(
+		barPath,        // token0
+		bazPath,        // token1
+		fee100,         // fee
+		int32(-1000),   // tickLower
+		int32(1000),    // tickUpper
+		bigint(100000), // amount0Desired
+		bigint(100000), // amount1Desired
+		bigint(1),      // amount0Min
+		bigint(1),      // amount1Min
+		max_timeout,
+	)
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), GetOrigCaller()) // test1
+}
+
+func TestMintFooQux500(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(
+		fooPath,        // token0
+		quxPath,        // token1
+		fee500,         // fee
+		int32(-1000),   // tickLower
+		int32(1000),    // tickUpper
+		bigint(100000), // amount0Desired
+		bigint(100000), // amount1Desired
+		bigint(1),      // amount0Min
+		bigint(1),      // amount1Min
+		max_timeout,
+	)
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, tokenId, 3)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), GetOrigCaller()) // test1
+}
+
+func TestCreateExternalIncentive(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	CreateExternalIncentive(
+		"gno.land/r/demo/foo:gno.land/r/demo/qux:500", // targetPoolPath
+		"gno.land/r/demo/obl",                         // rewardToken
+		100_000_000,                                   // rewardAmount
+		GetTimestamp(),                                // startTimestamp
+		GetTimestamp()+TIMESTAMP_90DAYS,               // endTimestamp
+	)
+
+	std.TestSkipHeights(1)
+}
+
+func TestStakeInternalTier1(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
+	StakeToken(1)
+	std.TestSkipHeights(2)
+
+	shouldEQ(t, gnft.OwnerOf(tid(1)), GetOrigPkgAddr())
+	shouldEQ(t, len(deposits), 1)
+}
+
+func TestStakeInternalTier2(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
+	StakeToken(2)
+	std.TestSkipHeights(2)
+
+	shouldEQ(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr())
+	shouldEQ(t, len(deposits), 2)
+}
+
+func TestStakeExternal(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(3))
+	StakeToken(3)
+	std.TestSkipHeights(2)
+
+	shouldEQ(t, gnft.OwnerOf(tid(3)), GetOrigPkgAddr())
+	shouldEQ(t, len(deposits), 3)
+}
+
+func TestCollectRewardToken1(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+
+	// before claim
+	gnsOld := gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsOld, 99999998500)
+
+	CollectReward(1)
+	std.TestSkipHeights(1)
+
+	gnsNew := gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsNew, 99999999325)
+}
+
+func TestCollectRewardToken2(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+
+	// before claim
+	gnsOld := gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsOld, 99999999325)
+
+	CollectReward(2)
+	std.TestSkipHeights(1)
+
+	gnsNew := gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsNew, 99999999820)
+}
+
+func TestCollectRewardToken1Again(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+
+	// before claim
+	gnsOld := gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsOld, 99999999820)
+
+	// ACCELERATE TIME
+	std.TestSkipHeights(100000)
+
+	CollectReward(1)
+	std.TestSkipHeights(1)
+
+	gnsNew := gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsNew, 100000000370)
+}
+
+func TestCollectExternalReward(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+
+	// before claim
+	oblOld := obl.BalanceOf(a2u(test1))
+	shouldEQ(t, oblOld, 499999900000000)
+
+	CollectReward(3)
+	std.TestSkipHeights(1)
+
+	oblNew := obl.BalanceOf(a2u(test1))
+	shouldEQ(t, oblNew, 499999900000035)
+}
+
+func TestCollectAll(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+
+	CollectReward(1)
+	CollectReward(2)
+	CollectReward(3)
+	std.TestSkipHeights(3)
+
+	// claimed all remaining reward
+}
+
+func TestUnstakeToken1(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	gnsOld := gns.BalanceOf(a2u(test1))
+	oblOld := obl.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsOld, 100000000700)
+	shouldEQ(t, oblOld, 499999900000035)
+
+	std.TestSkipHeights(100000)
+	UnstakeToken(1)
+	gnsNew := gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsNew, 100000001250)
+
+	UnstakeToken(2)
+	gnsNew = gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsNew, 100000001580)
+
+	UnstakeToken(3)
+	oblNew := obl.BalanceOf(a2u(test1))
+	shouldEQ(t, oblNew, 499999900000049)
+
+	std.TestSkipHeights(1)
+}
