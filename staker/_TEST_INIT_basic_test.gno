@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/r/demo/consts"
+
 	"gno.land/r/demo/gns"
 
 	"gno.land/r/demo/bar"
@@ -19,8 +21,7 @@ import (
 )
 
 var (
-	test1                         std.Address
-	poolAddr, posAddr, stakerAddr std.Address
+	test1 std.Address
 
 	barPath = "gno.land/r/demo/bar"
 	bazPath = "gno.land/r/demo/baz"
@@ -32,6 +33,8 @@ var (
 	fee100  = uint16(100)
 	fee500  = uint16(500)
 	fee3000 = uint16(3000)
+
+	max_timeout = bigint(9999999999)
 )
 
 func init() {
@@ -40,26 +43,22 @@ func init() {
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 	testBanker.IssueCoin(test1, "ugnot", 500_000_000_000_000)
 
-	poolAddr = std.DerivePkgAddr("gno.land/r/demo/pool")
-	posAddr = std.DerivePkgAddr("gno.land/r/demo/position")
-	stakerAddr = std.DerivePkgAddr("gno.land/r/demo/staker")
-
 	std.TestSetPrevAddr(test1)
 
-	gns.Approve(a2u(poolAddr), 500_000_000_000_000)
+	gns.Approve(a2u(consts.POOL_ADDR), 500_000_000_000_000)
 
-	bar.Approve(a2u(poolAddr), 500_000_000_000_000)
-	baz.Approve(a2u(poolAddr), 500_000_000_000_000)
-	foo.Approve(a2u(poolAddr), 500_000_000_000_000)
-	qux.Approve(a2u(poolAddr), 500_000_000_000_000)
+	bar.Approve(a2u(consts.POOL_ADDR), 500_000_000_000_000)
+	baz.Approve(a2u(consts.POOL_ADDR), 500_000_000_000_000)
+	foo.Approve(a2u(consts.POOL_ADDR), 500_000_000_000_000)
+	qux.Approve(a2u(consts.POOL_ADDR), 500_000_000_000_000)
 
-	obl.Approve(a2u(stakerAddr), 500_000_000_000_000)    // to create external incentive
-	wugnot.Approve(a2u(stakerAddr), 500_000_000_000_000) // to create (native) external incentive
+	obl.Approve(a2u(consts.STAKER_ADDR), 500_000_000_000_000)    // to create external incentive
+	wugnot.Approve(a2u(consts.STAKER_ADDR), 500_000_000_000_000) // to create (native) external incentive
 
-	wugnot.Approve(a2u(poolAddr), 500_000_000_000_000)
+	wugnot.Approve(a2u(consts.POOL_ADDR), 500_000_000_000_000)
 
-	std.TestSetPrevAddr(std.Address("g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm"))
-	gns.Approve(a2u(stakerAddr), 500_000_000_000_000) // to create internal incentive
+	std.TestSetPrevAddr(std.Address("g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm")) // IRA, r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
+	gns.Approve(a2u(consts.STAKER_ADDR), 500_000_000_000_000)                    // to create internal incentive
 }
 
 /* HELPER */

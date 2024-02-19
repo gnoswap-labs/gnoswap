@@ -6,15 +6,13 @@ import (
 	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
 
-	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
-	gns "gno.land/r/demo/gns"   // GNS, Gnoswap Share
+	"gno.land/r/demo/consts"
+
+	"gno.land/r/demo/gnft"
+	"gno.land/r/demo/gns"
 
 	pl "gno.land/r/demo/pool"
-	pos "gno.land/r/demo/position"
-)
-
-const (
-	INTERNAL_REWARD_ACCOUNT = std.Address("g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm") // r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
+	pn "gno.land/r/demo/position"
 )
 
 var (
@@ -106,11 +104,11 @@ func StakeToken(tokenId uint64) (string, bigint, bigint) {
 	)
 
 	// check tokenId has liquidity or not
-	liquidity := pos.PositionGetPositionLiquidity(tokenId)
+	liquidity := pn.PositionGetPositionLiquidity(tokenId)
 	require(liquidity > 0, ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) has no liquidity", tokenId))
 
 	// check pool path from tokenid
-	poolKey := pos.PositionGetPositionPoolKey(tokenId)
+	poolKey := pn.PositionGetPositionPoolKey(tokenId)
 
 	// staked status
 	deposit := deposits[tokenId]
@@ -135,13 +133,13 @@ func CollectReward(
 	require(PrevRealmAddr() == deposit.owner, ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || only owner(%s) can collect reward from tokenId(%d), PrevRealmAddr()(%s)", deposit.owner, tokenId, PrevRealmAddr()))
 
 	// poolPath to collect reward
-	poolPath := pos.PositionGetPositionPoolKey(tokenId)
+	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 
 	// get all external reward list for this pool
 	for _, incentiveId := range poolIncentives[poolPath] {
 		incentive := incentives[incentiveId]
 		externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentive) // external reward
-		externalReward = userClaimedRewardAmount(deposit.owner, incentive.rewardToken, bigint(externalReward), true)
+		externalReward = userClaimedRewardAmount(deposit.owner, tokenId, incentive.rewardToken, bigint(externalReward), true)
 
 		if externalReward > 0 {
 			transferByRegisterCall(incentive.rewardToken, deposit.owner, uint64(externalReward))
@@ -153,11 +151,11 @@ func CollectReward(
 
 	// default `Internal` reward
 	internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-	internalGNS = userClaimedRewardAmount(deposit.owner, "gno.land/r/demo/gns", bigint(internalGNS), true)
+	internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, bigint(internalGNS), true)
 
 	if internalGNS > 0 {
 		// transfer it
-		gns.TransferFrom(a2u(INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(internalGNS))
+		gns.TransferFrom(a2u(consts.INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(internalGNS))
 	}
 
 }
@@ -170,13 +168,13 @@ func UnstakeToken(tokenId uint64) (string, bigint, bigint) {
 	require(PrevRealmAddr() == deposit.owner, ufmt.Sprintf("[STAKER] staker.gno__UnstakeToken() || only owner(%s) can unstake their token(%d), PrevRealmAddr()(%s)", deposit.owner, tokenId, PrevRealmAddr()))
 
 	// poolPath to unstake lp token
-	poolPath := pos.PositionGetPositionPoolKey(tokenId)
+	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 
 	// get all external reward list for this pool
 	for _, incentiveId := range poolIncentives[poolPath] {
 		incentive := incentives[incentiveId]
 		externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentive) // external reward
-		externalReward = userClaimedRewardAmount(deposit.owner, incentive.rewardToken, externalReward, true)
+		externalReward = userClaimedRewardAmount(deposit.owner, tokenId, incentive.rewardToken, externalReward, true)
 
 		if externalReward > 0 {
 			transferByRegisterCall(incentive.rewardToken, deposit.owner, uint64(externalReward))
@@ -188,10 +186,10 @@ func UnstakeToken(tokenId uint64) (string, bigint, bigint) {
 
 	// default `Internal` reward
 	internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-	internalGNS = userClaimedRewardAmount(deposit.owner, "gno.land/r/demo/gns", internalGNS, true)
+	internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, true)
 	if internalGNS > 0 {
 		// transfer it
-		gns.TransferFrom(a2u(INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(internalGNS))
+		gns.TransferFrom(a2u(consts.INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(internalGNS))
 	}
 
 	// unstaked status
@@ -214,7 +212,7 @@ func EndExternalIncentive(refundee, targetPoolPath, rewardToken string) {
 	// 1. admin can end incentive without refund
 	// 2. refundee can end incentive with refund
 	switch GetOrigCaller() {
-	case std.Address("g16kvq0mra3atvr07lkdwc2x6jqmna8a4kt0e85d"): // ADMIN
+	case consts.GNOSWAP_ADMIN: // r3v4_xxx:
 		// admin can end incentive without refund
 		incentives = deleteFromIncentives(incentives, incentiveId)
 		for i, v := range poolIncentives[targetPoolPath] {
@@ -281,18 +279,18 @@ func deleteFromIncentives(m map[string]Incentive, key string) map[string]Incenti
 }
 
 func getTokenPairBalanceFromPosition(tokenId uint64) (bigint, bigint) {
-	poolKey := pos.PositionGetPositionPoolKey(tokenId)
+	poolKey := pn.PositionGetPositionPoolKey(tokenId)
 
 	pool := pl.GetPoolFromPoolPath(poolKey)
 	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
-	lowerX96 := common.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickLower(tokenId))
-	upperX96 := common.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickUpper(tokenId))
+	lowerX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickLower(tokenId))
+	upperX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickUpper(tokenId))
 
 	token0Balance, token1Balance := common.LiquidityAmountsGetAmountsForLiquidity(
 		currentX96,
 		lowerX96,
 		upperX96,
-		pos.PositionGetPositionLiquidity(tokenId),
+		pn.PositionGetPositionLiquidity(tokenId),
 	)
 
 	return token0Balance, token1Balance

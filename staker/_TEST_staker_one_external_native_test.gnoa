@@ -4,13 +4,13 @@ import (
 	"std"
 	"testing"
 
-	p "gno.land/r/demo/pool"
-	pos "gno.land/r/demo/position"
+	pl "gno.land/r/demo/pool"
+	pn "gno.land/r/demo/position"
 
-	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
-	gns "gno.land/r/demo/gns"   // GNS, Gnoswap Share
+	"gno.land/r/demo/gnft"
+	"gno.land/r/demo/gns"
 
-	wugnot "gno.land/r/demo/wugnot"
+	"gno.land/r/demo/wugnot"
 )
 
 func init() {
@@ -32,17 +32,17 @@ func init() {
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
-	p.InitManual()
+	pl.InitManual()
 	std.TestSkipHeights(1)
 
-	p.CreatePool(barPath, fooPath, 500, 130621891405341611593710811006)
+	pl.CreatePool(barPath, fooPath, 500, 130621891405341611593710811006)
 	std.TestSkipHeights(1)
 }
 
 func TestPositionMint(t *testing.T) {
 	{
 		std.TestSetOrigCaller(test1)
-		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
+		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pn.Mint(
 			barPath,            // token0
 			fooPath,            // token1
 			uint16(500),        // fee
@@ -67,7 +67,7 @@ func TestPositionMint(t *testing.T) {
 
 	{
 		std.TestSetOrigCaller(test1)
-		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pos.Mint(
+		tPosTokenId, tPosLiquidity, tPosAmount0, tPosAmount1 := pn.Mint(
 			barPath,            // token10
 			fooPath,            // token1
 			uint16(500),        // fee
@@ -154,8 +154,8 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 100000000325) // internal
-		shouldEQ(t, wugnot.BalanceOf(a2u(test1)), 2121)      // external
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 100000000451) // internal
+		shouldEQ(t, wugnot.BalanceOf(a2u(test1)), 2445)      // external
 	}
 }
 

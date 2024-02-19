@@ -16,19 +16,24 @@ const (
 	TIMESTAMP_360DAYS = 31104000
 )
 
-type userClaimedReward map[std.Address]map[string]bigint // address -> rewardTokenPath -> rewardTokenAmount
+type userClaimedReward map[std.Address]map[uint64]map[string]bigint // address -> lpTokenId -> rewardTokenPath -> rewardTokenAmount
 var userClaimedRewards = make(userClaimedReward)
 
-func userClaimedRewardAmount(address std.Address, rewardTokenPath string, rewardAmount bigint, claimeRequest bool) bigint {
+func userClaimedRewardAmount(address std.Address, tokenId uint64, rewardTokenPath string, rewardAmount bigint, claimeRequest bool) bigint {
 	userClaimed, ok := userClaimedRewards[address] // if user(address) ever claimed reward
 	if !ok {
-		userClaimedRewards[address] = make(map[string]bigint)
+		userClaimedRewards[address] = make(map[uint64]map[string]bigint)
 	}
 
-	claimedReward, ok := userClaimedRewards[address][rewardTokenPath] // if user(address) ever claimed rewardTokenPath
+	claimedPosition, ok := userClaimedRewards[address][tokenId] // if user(address) ever claimed reward from tokenId
+	if !ok {
+		userClaimedRewards[address][tokenId] = make(map[string]bigint)
+	}
+
+	claimedReward, ok := userClaimedRewards[address][tokenId][rewardTokenPath] // if user(address) ever claimed rewardTokenPath
 	if !ok {
 		if claimeRequest { // if user is claiming rewardTokenPath
-			userClaimedRewards[address][rewardTokenPath] = rewardAmount // add rewardTokenPath to userClaimedRewards
+			userClaimedRewards[address][tokenId][rewardTokenPath] = rewardAmount // add rewardTokenPath to userClaimedRewards
 			return rewardAmount
 		} else { // if user is not claiming rewardTokenPath
 			return rewardAmount
@@ -39,7 +44,7 @@ func userClaimedRewardAmount(address std.Address, rewardTokenPath string, reward
 	var claimableAmount bigint
 	if claimeRequest { // if user is claiming rewardTokenPath
 		claimableAmount = rewardAmount - claimedReward
-		userClaimedRewards[address][rewardTokenPath] += claimableAmount
+		userClaimedRewards[address][tokenId][rewardTokenPath] += claimableAmount
 		return claimableAmount
 	} else { // if user is not claiming rewardTokenPath
 		claimableAmount = rewardAmount - claimedReward
@@ -83,12 +88,12 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) bigi
 
 	finalRewardQ := myWholeRewardX96 * bigint(rewardRatio)
 	finalReward := finalRewardQ / consts.Q96 / consts.Q96 / consts.Q96 / consts.Q96 / consts.Q96 / 100 / 100
-	// why do we need to divide by (Q96 ^ 5)
+	// divide by (Q96 ^ 5)
 	// #1 ~ 2: used by getPoolTierAndRatio()
 	// #3    : used by poolRewardPerBlockX96
 	// #4 ~ 5: used by getMyLiquidityRatio()
 
-	// why do we need to divide by (100 ^ 2)
+	// divide by (100 ^ 2)
 	// #1: to convert `listTierRatio()` return value to percentage
 	// #2: to convert `getRewardRatio()` return value to percentage
 
@@ -105,7 +110,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 		monthlyReward = incentive.rewardAmount / 3
 	case incentiveDuration > TIMESTAMP_90DAYS:
 		// 1 second reward == total reward amount / reward duration
-		monthlyReward = incentive.rewardAmount / bigint(incentiveDuration)
+		monthlyReward = incentive.rewardAmount / bigint(incentiveDuration) * 2592000 // 30 days
 	default:
 		panic(ufmt.Sprintf("[STAKER] reward_math.gno || incentiveDuration(%d) should be at least 90 days", incentiveDuration))
 	}

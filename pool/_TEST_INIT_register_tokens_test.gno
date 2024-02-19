@@ -9,10 +9,6 @@ import (
 
 	"gno.land/r/demo/qux"
 
-	"gno.land/r/demo/fred"
-
-	"gno.land/r/demo/thud"
-
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/demo/obl"
@@ -82,36 +78,6 @@ func (QuxToken) Approve() func(spender users.AddressOrName, amount uint64) {
 	return qux.Approve
 }
 
-type FredToken struct{}
-
-func (FredToken) Transfer() func(to users.AddressOrName, amount uint64) {
-	return fred.Transfer
-}
-func (FredToken) TransferFrom() func(from, to users.AddressOrName, amount uint64) {
-	return fred.TransferFrom
-}
-func (FredToken) BalanceOf() func(owner users.AddressOrName) uint64 {
-	return fred.BalanceOf
-}
-func (FredToken) Approve() func(spender users.AddressOrName, amount uint64) {
-	return fred.Approve
-}
-
-type ThudToken struct{}
-
-func (ThudToken) Transfer() func(to users.AddressOrName, amount uint64) {
-	return thud.Transfer
-}
-func (ThudToken) TransferFrom() func(from, to users.AddressOrName, amount uint64) {
-	return thud.TransferFrom
-}
-func (ThudToken) BalanceOf() func(owner users.AddressOrName) uint64 {
-	return thud.BalanceOf
-}
-func (ThudToken) Approve() func(spender users.AddressOrName, amount uint64) {
-	return thud.Approve
-}
-
 type WugnotToken struct{}
 
 func (WugnotToken) Transfer() func(to users.AddressOrName, amount uint64) {
@@ -165,8 +131,6 @@ func init() {
 	RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
 	RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
-	RegisterGRC20Interface("gno.land/r/demo/fred", FredToken{})
-	RegisterGRC20Interface("gno.land/r/demo/thud", ThudToken{})
 	RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
 	RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
