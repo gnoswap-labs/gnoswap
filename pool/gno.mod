@@ -1,6 +1,7 @@
 module gno.land/r/demo/pool
 
 require (
+	gno.land/p/demo/common v0.0.0-latest
 	gno.land/p/demo/ufmt v0.0.0-latest
 	gno.land/r/demo/bar v0.0.0-latest
 	gno.land/r/demo/baz v0.0.0-latest

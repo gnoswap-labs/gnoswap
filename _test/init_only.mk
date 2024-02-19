@@ -11,7 +11,7 @@ help:
 	@cat $(MAKEFILE) | grep '^[a-z][^:]*:' | cut -d: -f1 | sort | sed 's/^/  /'
 
 .PHONY: all
-all: wait deploy done
+all: wait format deploy done
 
 .PHONY: deploy
 deploy: deploy-foo deploy-bar deploy-baz deploy-qux deploy-wugnot deploy-gns deploy-obl deploy-gnft deploy-const deploy-common deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-wrapper 
@@ -20,6 +20,16 @@ wait:
 	$(info ************ [ETC] wait 5 seconds for chain to start ************)
 	$(shell sleep 5)
 	@echo
+
+
+# REMOVE TESTCASE THEN GNO MOD TIDY
+format:
+	$(info ************ [FORMAT] remove testcases then gno mod tidy ************)
+	mkdir -p $(ROOT_DIR)/_upload
+	cp -R $(ROOT_DIR)/gov $(ROOT_DIR)/pool $(ROOT_DIR)/position $(ROOT_DIR)/router $(ROOT_DIR)/staker $(ROOT_DIR)/_upload
+	cd $(ROOT_DIR)/_upload
+	cd $(ROOT_DIR)/_upload && find . -name "*_test.gno*" -exec rm {} \;
+	cd $(ROOT_DIR)/_upload && find . -name "gno.mod" -execdir gno mod tidy \;
 
 # Deploy Tokens
 deploy-foo:
@@ -76,27 +86,27 @@ deploy-common:
 
 deploy-gov:
 	$(info ************ [GOV] deploy governance ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/gov -pkgpath gno.land/r/demo/gov -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_upload/gov -pkgpath gno.land/r/demo/gov -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-pool:
 	$(info ************ [POOL] deploy pool ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/pool -pkgpath gno.land/r/demo/pool -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_upload/pool -pkgpath gno.land/r/demo/pool -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-position:
 	$(info ************ [POSITION] deploy position ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/position -pkgpath gno.land/r/demo/position -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_upload/position -pkgpath gno.land/r/demo/position -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-staker:
 	$(info ************ [STAKER] deploy staker ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/staker -pkgpath gno.land/r/demo/staker -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_upload/staker -pkgpath gno.land/r/demo/staker -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-router:
 	$(info ************ [ROUTER] deploy router ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/router -pkgpath gno.land/r/demo/router -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_upload/router -pkgpath gno.land/r/demo/router -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 deploy-wrapper:
@@ -107,4 +117,5 @@ deploy-wrapper:
 
 done:
 	@echo "" | gnokey maketx send -send 1ugnot -to $(ADDR_GOV) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	rm -rf $(ROOT_DIR)/_upload > /dev/null
 	@echo
