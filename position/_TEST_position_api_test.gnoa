@@ -6,7 +6,8 @@ import (
 
 	"encoding/gjson"
 
-	_ "gno.land/r/demo/grc20_wrapper"
+	"gno.land/r/demo/consts"
+
 	p "gno.land/r/demo/pool"
 )
 
@@ -56,7 +57,7 @@ func TestSwap(t *testing.T) {
 		test1,
 		true,
 		bigint(123_456),
-		MIN_PRICE,
+		consts.MIN_PRICE,
 		test1,
 	)
 }

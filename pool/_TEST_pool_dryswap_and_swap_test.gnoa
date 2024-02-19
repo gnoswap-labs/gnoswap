@@ -24,16 +24,6 @@ func TestInitManual(t *testing.T) {
 	CreatePool(fooPath, barPath, fee500, sqrtPrice)
 }
 
-func TestGetSqrtRatioFromTick(t *testing.T) {
-	sqrtX96 := GetSqrtRatioFromTick(currentTick)
-	shouldEQ(t, sqrtX96, sqrtPrice)
-}
-
-func TestGetTickFromSqrtRatio(t *testing.T) {
-	tick := GetTickFromSqrtRatio(sqrtPrice)
-	shouldEQ(t, tick, 10000)
-}
-
 func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)

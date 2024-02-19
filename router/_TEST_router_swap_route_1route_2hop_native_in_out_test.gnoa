@@ -5,7 +5,6 @@ import (
 	"std"
 	"testing"
 
-	_ "gno.land/r/demo/grc20_wrapper"
 	pl "gno.land/r/demo/pool"
 	pos "gno.land/r/demo/position"
 
@@ -28,7 +27,7 @@ func TestCreatePool(t *testing.T) {
 
 	jsonOutput := pl.ApiGetPools()
 	jsonStr := gjson.Parse(jsonOutput)
-	shouldEQ(t, len(jsonStr.Get("response.data").Array()), 3)
+	shouldEQ(t, len(jsonStr.Get("response").Array()), 3)
 }
 
 func TestPositionMintBarBaz(t *testing.T) {
@@ -120,5 +119,5 @@ func TestDrySwapRouteGnotBarExactOut(t *testing.T) {
 		"gno.land/r/demo/wugnot:gno.land/r/demo/qux:500*POOL*gno.land/r/demo/qux:gno.land/r/demo/baz:500*POOL*gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
 		"100", // quoteArr
 	)
-	shouldEQ(t, dryResult, bigint(2003))
+	shouldEQ(t, dryResult, bigint(1998))
 }

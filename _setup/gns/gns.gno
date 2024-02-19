@@ -11,21 +11,27 @@ import (
 
 var (
 	gns    *grc20.AdminToken
-	admin  std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // TODO: helper to change admin
-	ira    std.Address = "g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm" // ToBeChanged: account for gnoswap staker's internal reward
 	admins []string
 )
 
+const (
+	admin                   std.Address = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4" // r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
+	INTERNAL_REWARD_ACCOUNT std.Address = "g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm" // r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
+)
+
 func init() {
+	// r3v4_xxx: SET MAXIMUM SUPLLY
+
 	gns = grc20.NewAdminToken("Gnoswap", "GNS", 6)
-	gns.Mint(admin, 100_000_000_000_000) // @administrator
-	gns.Mint(ira, 400_000_000_000_000)   // @ira
+	// gns.Mint(admin, 100_000_000_000_000)                                               // @administrator
+	gns.Mint(INTERNAL_REWARD_ACCOUNT, 400_000_000_000_000)                             // @INTERNAL_REWARD_ACCOUNT
+	gns.Mint(std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"), 100_000_000_000) // default test1
 
 	stakerAddr := std.DerivePkgAddr("gno.land/r/demo/staker")
 	admins = append(admins, string(stakerAddr))
 	admins = append(admins, string(admin))
 
-	gns.Approve(ira, stakerAddr, 9_223_372_036_854_775_807) // max uint64
+	gns.Approve(INTERNAL_REWARD_ACCOUNT, stakerAddr, 9_223_372_036_854_775_807) // max uint64
 }
 
 // method proxies as public functions.
@@ -83,11 +89,11 @@ func TransferFrom(from, to users.AddressOrName, amount uint64) {
 }
 
 // faucet.
-func Faucet(addr std.Address) {
+func Faucet(addr std.Address) { // r3v4_xxx: REMOVE FAUCET WHEN DEPLOYING TO OFFICIAL NETWORK
 	gns.Mint(addr, 100_000_000)
 }
 
-func FaucetL() {
+func FaucetL() { // r3v4_xxx: REMOVE FAUCET WHEN DEPLOYING TO OFFICIAL NETWORK
 	caller := std.PrevRealm().Addr()
 	gns.Mint(caller, 1_000_000_000_000)
 }

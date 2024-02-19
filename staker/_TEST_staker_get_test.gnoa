@@ -7,8 +7,6 @@ import (
 	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
 	p "gno.land/r/demo/pool"
 	pos "gno.land/r/demo/position"
-
-	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 func TestPoolInitCreatePool(t *testing.T) {

@@ -3,7 +3,10 @@ package position
 import (
 	"encoding/json"
 
+	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/demo/consts"
 
 	p "gno.land/r/demo/pool"
 )
@@ -67,10 +70,10 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 
 	pool := p.GetPoolFromPoolPath(position.poolKey)
 	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
-	lowerX96 := p.TickMathGetSqrtRatioAtTick(position.tickLower)
-	upperX96 := p.TickMathGetSqrtRatioAtTick(position.tickUpper)
+	lowerX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
+	upperX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)
 
-	token0Balance, token1Balance := GetAmountsForLiquidity(
+	token0Balance, token1Balance := common.GetAmountsForLiquidity(
 		currentX96,
 		lowerX96,
 		upperX96,
@@ -142,8 +145,8 @@ func unclaimedFee(tokenId uint64) (bigint, bigint) {
 	feeGrowthInside0X128 := (feeGrowthGlobal0X128 - tickLowerFeeGrowthBelow0 - tickUpperFeeGrowthAbove0)
 	feeGrowthInside1X128 := (feeGrowthGlobal1X128 - tickLowerFeeGrowthBelow1 - tickUpperFeeGrowthAbove1)
 
-	unclaimedFee0 := (liquidity * (feeGrowthInside0X128 - feeGrowthInside0LastX128)) / Q128
-	unclaimedFee1 := (liquidity * (feeGrowthInside1X128 - feeGrowthInside1LastX128)) / Q128
+	unclaimedFee0 := (liquidity * (feeGrowthInside0X128 - feeGrowthInside0LastX128)) / consts.Q128
+	unclaimedFee1 := (liquidity * (feeGrowthInside1X128 - feeGrowthInside1LastX128)) / consts.Q128
 
 	return unclaimedFee0, unclaimedFee1
 }

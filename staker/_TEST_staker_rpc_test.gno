@@ -12,8 +12,6 @@ import (
 	gnft "gno.land/r/demo/gnft" // GNFT, Gnoswap NFT
 	gns "gno.land/r/demo/gns"   // GNS, Gnoswap Share
 	obl "gno.land/r/demo/obl"   // OBL, External Reward Token
-
-	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 func init() {
@@ -146,11 +144,11 @@ func TestCollectReward(t *testing.T) {
 
 	// before claim
 	gnsOld := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsOld, 99999999999500)
+	shouldEQ(t, gnsOld, 99999999500)
 
 	CollectReward(1) // GNFT tokenId
 	gnsNew := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 99999999999584)
+	shouldEQ(t, gnsNew, 99999999626)
 
 }
 
@@ -163,7 +161,7 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 99999999999584)  // internal
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 99999999626)     // internal
 		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000000648) // external
 	}
 
@@ -175,7 +173,7 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 100000000000049) // internal
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 100000000325)    // internal
 		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000004243) // external
 	}
 }

@@ -4,6 +4,8 @@ import (
 	"std"
 
 	p "gno.land/r/demo/pool"
+
+	"gno.land/r/demo/consts"
 )
 
 func _swap(
@@ -17,16 +19,16 @@ func _swap(
 
 	if sqrtPriceLimitX96 == 0 {
 		if zeroForOne {
-			sqrtPriceLimitX96 = MIN_PRICE
+			sqrtPriceLimitX96 = consts.MIN_PRICE
 		} else {
-			sqrtPriceLimitX96 = MAX_PRICE
+			sqrtPriceLimitX96 = consts.MAX_PRICE
 		}
 	}
 
 	// ROUTER approves POOL as spender
-	toApproveAmount := MAX_UINT64
-	approveByRegisterCall(data.tokenIn, ADDR_POOL, toApproveAmount)
-	approveByRegisterCall(data.tokenOut, ADDR_POOL, toApproveAmount)
+	toApproveAmount := consts.MAX_UINT64
+	approveByRegisterCall(data.tokenIn, consts.POOL_ADDR, uint64(toApproveAmount))
+	approveByRegisterCall(data.tokenOut, consts.POOL_ADDR, uint64(toApproveAmount))
 
 	amount0, amount1 := p.Swap(
 		data.tokenIn,
@@ -54,9 +56,9 @@ func _swapDry(
 
 	if sqrtPriceLimitX96 == 0 {
 		if zeroForOne {
-			sqrtPriceLimitX96 = MIN_PRICE
+			sqrtPriceLimitX96 = consts.MIN_PRICE
 		} else {
-			sqrtPriceLimitX96 = MAX_PRICE
+			sqrtPriceLimitX96 = consts.MAX_PRICE
 		}
 	}
 

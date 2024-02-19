@@ -3,9 +3,17 @@ package staker
 import (
 	"std"
 
+	"gno.land/r/demo/consts"
+
 	"gno.land/p/demo/ufmt"
 
 	pos "gno.land/r/demo/position"
+)
+
+const (
+	TIMESTAMP_90DAYS  = 7776000
+	TIMESTAMP_180DAYS = 15552000
+	TIMESTAMP_360DAYS = 31104000
 )
 
 type userClaimedReward map[std.Address]map[string]bigint // address -> rewardTokenPath -> rewardTokenAmount
@@ -55,7 +63,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) bigi
 	_, poolRatioX96 := getPoolTierAndRatio(poolPath)
 
 	// get pool reward per block
-	poolRewardPerBlockX96 := (bigint(blockReward) * Q96) * poolRatioX96
+	poolRewardPerBlockX96 := (bigint(blockReward) * consts.Q96) * poolRatioX96
 
 	// calculate my reward amount based on my liquidity ratio
 	// this reward is 31days or more staking reward
@@ -74,7 +82,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) bigi
 	rewardRatio := getRewardRatio(stakedDuration)
 
 	finalRewardQ := myWholeRewardX96 * bigint(rewardRatio)
-	finalReward := finalRewardQ / Q96 / Q96 / Q96 / Q96 / Q96 / 100 / 100
+	finalReward := finalRewardQ / consts.Q96 / consts.Q96 / consts.Q96 / consts.Q96 / consts.Q96 / 100 / 100
 	// why do we need to divide by (Q96 ^ 5)
 	// #1 ~ 2: used by getPoolTierAndRatio()
 	// #3    : used by poolRewardPerBlockX96
@@ -111,7 +119,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 	// because of `~ 10 days` staking duration, certain block ONBLOC amount won't be distribute 100% as reward)
 	blockRewardLeft := blockRewardInit / 10 // obl.BalanceOf(INTERNAL_REWARD_ACCOUNT) - blockRewardInit
 	blockReward := blockRewardInit + blockRewardLeft
-	blockRewardX96 := bigint(blockReward) * Q96
+	blockRewardX96 := bigint(blockReward) * consts.Q96
 
 	// calculate my reward amount based on my liquidity ratio
 	// this reward is 31days or more staking reward
@@ -129,7 +137,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 	rewardRatio := getRewardRatio(stakedDuration)
 
 	finalRewardQ := myWholeRewardX96 * bigint(rewardRatio)
-	finalReward := finalRewardQ / Q96 / Q96 / Q96 / 100
+	finalReward := finalRewardQ / consts.Q96 / consts.Q96 / consts.Q96 / 100
 	// why do we need to divide by (96 ^ 3)
 	// #1    : used by blockRewardX96
 	// #2 ~ 3: used by func getMyLiquidityRatio()
@@ -160,7 +168,7 @@ func getMyLiquidityRatio(poolPath string, tokenId uint64) bigint {
 	myLiquidity := pos.PositionGetPositionLiquidity(tokenId)
 
 	// my liquidity ratio
-	liqRatioX96 := (myLiquidity * Q96 / poolStakedLiquidity * Q96) // 2 times Q96 because of Q96 / Q96
+	liqRatioX96 := (myLiquidity * consts.Q96 / poolStakedLiquidity * consts.Q96) // 2 times consts.Q96 because of consts.Q96 / consts.Q96
 
 	return liqRatioX96
 }
@@ -177,7 +185,7 @@ func getPoolTierAndRatio(poolPath string) (uint8, bigint) {
 
 	// that tiers ratio
 	ratio := getTierRatio(tier)
-	ratioX96 := bigint(uint64(ratio)) * Q96 // first Q96
+	ratioX96 := bigint(uint64(ratio)) * consts.Q96 // first consts.Q96
 
 	// finally current pools ratio
 	numTier1, numTier2, numTier3 := getNumPoolTiers()
@@ -185,11 +193,11 @@ func getPoolTierAndRatio(poolPath string) (uint8, bigint) {
 	var weight bigint
 	switch tier {
 	case 1:
-		weight = ratioX96 / bigint(numTier1) * Q96 // second Q96
+		weight = ratioX96 / bigint(numTier1) * consts.Q96 // second consts.Q96
 	case 2:
-		weight = ratioX96 / bigint(numTier2) * Q96
+		weight = ratioX96 / bigint(numTier2) * consts.Q96
 	case 3:
-		weight = ratioX96 / bigint(numTier3) * Q96
+		weight = ratioX96 / bigint(numTier3) * consts.Q96
 	default:
 		panic(ufmt.Sprintf("[STAKER] reward_math.gno__getPoolTierAndRatio() || invalid tier(%d)", tier))
 	}

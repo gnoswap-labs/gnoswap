@@ -1,5 +1,9 @@
 package position
 
+import (
+	"gno.land/p/demo/common"
+)
+
 func PositionGetPosition(tokenId uint64) Position {
 	return positions[tokenId]
 }
@@ -37,5 +41,5 @@ func PositionGetPositionTokensOwed1(tokenId uint64) bigint {
 }
 
 func PositionGetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity bigint) (bigint, bigint) {
-	return GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity)
+	return common.GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity)
 }

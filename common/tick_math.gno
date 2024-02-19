@@ -1,4 +1,4 @@
-package pool
+package common
 
 import (
 	"gno.land/p/demo/ufmt"
@@ -182,4 +182,10 @@ func absTick(n int32) bigint {
 	}
 
 	return bigint(n)
+}
+
+func require(condition bool, message string) {
+	if !condition {
+		panic(message)
+	}
 }
