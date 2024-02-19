@@ -52,16 +52,20 @@ func FromBigint(x bigint) *Uint {
 	}
 
 	var z Uint
-	z.arr[0] = uint64(x)
-	z.arr[1] = uint64(x >> 64)
-	z.arr[2] = uint64(x >> 128)
-	z.arr[3] = uint64(x >> 192)
+	z.arr[0] = uint64(x % (1 << 64))
+	z.arr[1] = uint64((x >> 64) % (1 << 64))
+	z.arr[2] = uint64((x >> 128) % (1 << 64))
+	z.arr[3] = uint64((x >> 192) % (1 << 64))
 
 	return &z
 }
 
 func (x *Uint) Bigint() bigint {
-	return (bigint(x.arr[3]) << 192) + (bigint(x.arr[2]) << 128) + (bigint(x.arr[1]) << 64) + bigint(x.arr[0])
+	return (
+		bigint(x.arr[0]) +
+		bigint(x.arr[1]) * (1 << 64) +
+		bigint(x.arr[2]) * (1 << 128) +
+		bigint(x.arr[3]) * (1 << 192))
 }
 
 // NewUint returns a new initialized Uint.
@@ -77,6 +81,14 @@ func ToString(x *Uint) string {
 // Uint64 returns the lower 64-bits of z
 func (z *Uint) Uint64() uint64 {
 	return z.arr[0]
+}
+
+func (z *Uint) Int32() int32 {
+	x := z.arr[0]
+	if x > 0x7fffffff {
+		panic("overflow")
+	}
+	return int32(x)
 }
 
 // SetUint64 sets z to the value x
