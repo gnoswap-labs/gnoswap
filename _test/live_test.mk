@@ -21,8 +21,8 @@ ADDR_GOV := g1kmat25auuqf0h5qvd4q7s707r8let5sky4tr76
 TX_EXPIRE := 9999999999
 
 NOW := $(shell date +%s)
-INCENTIVE_START := $(shell expr $(NOW) + 140) # GIVE ENOUGH TIME TO EXECUTE PREVIOUS TXS
-INCENTIVE_END := $(shell expr $(NOW) + 140 + 7776000) # 7776000 SECONDS = 90 DAY
+INCENTIVE_START := $(shell expr $(NOW) + 160) # GIVE ENOUGH TIME TO EXECUTE PREVIOUS TXS
+INCENTIVE_END := $(shell expr $(NOW) + 160 + 7776000) # 7776000 SECONDS = 90 DAY
 
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 GNOLAND_RPC_URL ?= localhost:26657
@@ -38,7 +38,7 @@ help:
 all: wait deploy faucet approve pool-setup position-mint staker-stake router-swap staker-unstake done
 
 .PHONY: deploy
-deploy: deploy-foo deploy-bar deploy-baz deploy-qux deploy-wugnot deploy-gns deploy-obl deploy-gnft deploy-const deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-grc20_wrapper 
+deploy: deploy-foo deploy-bar deploy-baz deploy-qux deploy-wugnot deploy-gns deploy-obl deploy-gnft deploy-const deploy-common deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-wrapper 
 
 .PHONY: faucet
 faucet: faucet-lp01 faucet-lp02 faucet-tr01 faucet-gsa
@@ -63,7 +63,9 @@ staker-unstake: unstake-token-1 burn-token-1 # burn-token-2
 
 
 wait:
-	$(shell sleep 10)
+	$(info ************ [ETC] wait 5 seconds for chain to start ************)
+	$(shell sleep 5)
+	@echo
 
 # Deploy Tokens
 deploy-foo:
@@ -112,6 +114,11 @@ deploy-const:
 	$(info ************ [CONST] deploy consts ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/consts -pkgpath gno.land/r/demo/consts -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
+	
+deploy-common:
+	$(info ************ [COMMON] deploy common ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/common -pkgpath gno.land/p/demo/common -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+	@echo
 
 deploy-gov:
 	$(info ************ [GOV] deploy governance ************)
@@ -138,9 +145,9 @@ deploy-router:
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/router -pkgpath gno.land/r/demo/router -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
-deploy-grc20_wrapper:
-	$(info ************ [GRC20 Wrapper] deploy grc20_wrapper ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/grc20_wrapper_test -pkgpath gno.land/r/demo/grc20_wrapper -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
+deploy-wrapper:
+	$(info ************ [GRC20_WRAPPER] deploy grc20 wrappers ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_setup/grc20_wrapper -pkgpath gno.land/r/demo/grc20_wrapper -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" test1 > /dev/null
 	@echo
 
 
