@@ -3,6 +3,8 @@ package position
 import (
 	"std"
 	"time"
+
+	"gno.land/r/demo/consts"
 )
 
 func GetChainID() string {
@@ -18,7 +20,7 @@ func GetTimestamp() int64 {
 }
 
 func GetOrigPkgAddr() std.Address {
-	return std.DerivePkgAddr("gno.land/r/demo/position")
+	return consts.POSITION_ADDR
 	// return std.GetOrigPkgAddr()
 }
 

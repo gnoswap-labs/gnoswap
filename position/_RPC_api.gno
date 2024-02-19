@@ -8,7 +8,7 @@ import (
 
 	"gno.land/r/demo/consts"
 
-	p "gno.land/r/demo/pool"
+	pl "gno.land/r/demo/pool"
 )
 
 type RpcPosition struct {
@@ -68,7 +68,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 		panic(ufmt.Sprintf("[POSITION] getter_api.gno__rpcMakePosition() || position not found for lpTokenId(%d)", lpTokenId))
 	}
 
-	pool := p.GetPoolFromPoolPath(position.poolKey)
+	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
 	lowerX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
 	upperX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)
@@ -108,7 +108,7 @@ func unclaimedFee(tokenId uint64) (bigint, bigint) {
 	tickUpper := positions[tokenId].tickUpper
 
 	poolKey := positions[tokenId].poolKey
-	pool := p.GetPoolFromPoolPath(poolKey)
+	pool := pl.GetPoolFromPoolPath(poolKey)
 
 	currentTick := pool.PoolGetSlot0Tick()
 

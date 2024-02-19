@@ -27,6 +27,6 @@ func tid(tokenId interface{}) grc721.TokenID {
 	case grc721.TokenID:
 		return tokenId.(grc721.TokenID)
 	default:
-		panic("[STAKER] utils.gno__tid() || unsupported tokenId type")
+		panic("[POSITION] utils.gno__tid() || unsupported tokenId type")
 	}
 }
