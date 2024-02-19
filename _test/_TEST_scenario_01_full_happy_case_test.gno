@@ -7,55 +7,30 @@ import (
 
 	"gno.land/p/demo/testutils"
 
+	"gno.land/p/demo/common"
+	"gno.land/r/demo/consts"
+
 	_ "gno.land/r/demo/grc20_wrapper"
 
 	pl "gno.land/r/demo/pool"
-	pos "gno.land/r/demo/position"
-	rou "gno.land/r/demo/router"
-	stk "gno.land/r/demo/staker"
+	pn "gno.land/r/demo/position"
+	rr "gno.land/r/demo/router"
+	sr "gno.land/r/demo/staker"
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/baz"
 	"gno.land/r/demo/foo"
-	"gno.land/r/demo/qux"
-
-	"gno.land/r/demo/wugnot"
-
 	"gno.land/r/demo/gns"
 	"gno.land/r/demo/obl"
+	"gno.land/r/demo/qux"
+	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/demo/gnft"
 )
 
 var (
-	test1 = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
-	lp01  = testutils.TestAddress("lp01")
-	tr01  = testutils.TestAddress("tr01")
-
-	poolAddr     = std.DerivePkgAddr("gno.land/r/demo/pool")
-	positionAddr = std.DerivePkgAddr("gno.land/r/demo/position")
-	stakerAddr   = std.DerivePkgAddr("gno.land/r/demo/staker")
-	routerAddr   = std.DerivePkgAddr("gno.land/r/demo/router")
-
-	barPath = "gno.land/r/demo/bar"
-	bazPath = "gno.land/r/demo/baz"
-	fooPath = "gno.land/r/demo/foo"
-	quxPath = "gno.land/r/demo/qux"
-
-	wugnotPath = "gno.land/r/demo/wugnot"
-
-	gnsPath = "gno.land/r/demo/gns"
-	oblPath = "gno.land/r/demo/obl"
-
-	barObj = bar.GetGRC20()
-	bazObj = baz.GetGRC20()
-	fooObj = foo.GetGRC20()
-	quxObj = qux.GetGRC20()
-
-	gnsObj = gns.GetGRC20()
-	oblObj = obl.GetGRC20()
-
-	max_timeout = bigint(9999999999)
+	lp01 = testutils.TestAddress("lp01")
+	tr01 = testutils.TestAddress("tr01")
 )
 
 func TestPoolInitByAdmin(t *testing.T) {
@@ -68,19 +43,22 @@ func TestPoolInitByAdmin(t *testing.T) {
 func TestPoolCreatePools(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
-	// approve gns to CreatePool ( 500 gns for 1 pool)
-	gns.Approve(a2u(poolAddr), 5000)
+	// approve gns to CreatePool (500 gns for 1 pool)
+	gns.Approve(a2u(consts.POOL_ADDR), 500*10) // x10 pools
 
 	// bar-baz
-	pl.CreatePool(barPath, bazPath, 100, 354340008410679467268648495215) // tick 29960 ≈ 1:20
+	pl.CreatePool(barPath, bazPath, 100, common.TickMathGetSqrtRatioAtTick(29960)) // 1:20
 
 	// baz-foo
-	pl.CreatePool(bazPath, fooPath, 100, 25050389945027294416741547334) // tick -23030 ≈ 1:0.1
+	pl.CreatePool(bazPath, fooPath, 100, common.TickMathGetSqrtRatioAtTick(-23030)) // 1:0.1
 
 	// foo-wugnot
-	pl.CreatePool(fooPath, wugnotPath, 100, 17714911063927984461157312042) // tick -29960 ≈ 1:0.05
+	pl.CreatePool(fooPath, wugnotPath, 100, common.TickMathGetSqrtRatioAtTick(-29960)) // 1:0.05
 
-	std.TestSkipHeights(4)
+	// gns-wugnot
+	pl.CreatePool(gnsPath, wugnotPath, 500, common.TickMathGetSqrtRatioAtTick(0)) // 1:1
+
+	std.TestSkipHeights(5)
 }
 
 func TestFaucetLP01(t *testing.T) {
@@ -90,16 +68,19 @@ func TestFaucetLP01(t *testing.T) {
 	shouldEQ(t, balanceOf(bazObj, lp01), 0)
 	shouldEQ(t, balanceOf(fooObj, lp01), 0)
 	shouldEQ(t, balanceOf(quxObj, lp01), 0)
+	shouldEQ(t, balanceOf(gnsObj, lp01), 0)
 
 	bar.Faucet(lp01)
 	baz.Faucet(lp01)
 	foo.Faucet(lp01)
 	qux.Faucet(lp01)
+	gns.Faucet(lp01)
 
 	shouldEQ(t, balanceOf(barObj, lp01), 100000000)
 	shouldEQ(t, balanceOf(bazObj, lp01), 100000000)
 	shouldEQ(t, balanceOf(fooObj, lp01), 100000000)
 	shouldEQ(t, balanceOf(quxObj, lp01), 100000000)
+	shouldEQ(t, balanceOf(gnsObj, lp01), 100000000)
 
 	std.TestSkipHeights(5)
 }
@@ -108,10 +89,10 @@ func TestPositionMintBarBazInRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve bar, baz to pool ( position.Mint() calls pool.Mint() ≈ so approve to pool )
-	bar.Approve(a2u(poolAddr), 10000000)
-	baz.Approve(a2u(poolAddr), 10000000)
+	bar.Approve(a2u(consts.POOL_ADDR), 10000000)
+	baz.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		barPath,     // token0
 		bazPath,     // token1
 		100,         // fee
@@ -121,7 +102,7 @@ func TestPositionMintBarBazInRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(1))
@@ -137,10 +118,10 @@ func TestPositionMintBarBazLowerRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve bar, baz to pool ( position.Mint() calls pool.Mint() ≈ so approve to pool )
-	bar.Approve(a2u(poolAddr), 10000000)
-	baz.Approve(a2u(poolAddr), 10000000)
+	bar.Approve(a2u(consts.POOL_ADDR), 10000000)
+	baz.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		barPath,     // token0
 		bazPath,     // token1
 		100,         // fee
@@ -150,7 +131,7 @@ func TestPositionMintBarBazLowerRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(2))
@@ -166,10 +147,10 @@ func TestPositionMintBarBazUpperRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve bar, baz to pool ( position.Mint() calls pool.Mint() ≈ so approve to pool )
-	bar.Approve(a2u(poolAddr), 10000000)
-	baz.Approve(a2u(poolAddr), 10000000)
+	bar.Approve(a2u(consts.POOL_ADDR), 10000000)
+	baz.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		barPath,     // token0
 		bazPath,     // token1
 		100,         // fee
@@ -179,7 +160,7 @@ func TestPositionMintBarBazUpperRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(3))
@@ -194,10 +175,10 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve baz, foo to pool
-	baz.Approve(a2u(poolAddr), 10000000)
-	foo.Approve(a2u(poolAddr), 10000000)
+	baz.Approve(a2u(consts.POOL_ADDR), 10000000)
+	foo.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		bazPath,     // token0
 		fooPath,     // token1
 		100,         // fee
@@ -207,7 +188,7 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(4))
@@ -231,10 +212,10 @@ func TestPositionMintFooGnotInRange(t *testing.T) {
 	wugnot.Deposit()
 
 	// approve foo, wugnot to pool
-	foo.Approve(a2u(poolAddr), 10000000)
-	wugnot.Approve(a2u(poolAddr), 10000000)
+	foo.Approve(a2u(consts.POOL_ADDR), 10000000)
+	wugnot.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		fooPath,     // token0
 		wugnotPath,  // token1
 		100,         // fee
@@ -244,7 +225,7 @@ func TestPositionMintFooGnotInRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(5))
@@ -255,23 +236,55 @@ func TestPositionMintFooGnotInRange(t *testing.T) {
 	std.TestSkipHeights(4)
 }
 
-func TestStakerCreateExternalIncentive(t *testing.T) {
-	/*
-		// tier 1 for INTERNAL REWARD
-		poolTiers["gno.land/r/demo/gns:gno.land/r/demo/wugnot:500"] = 1
-		poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = 1 // dev
-	*/
+func TestPositionMintGnsGnotInRange(t *testing.T) {
+	// INTERNAL INCENTIVE POOL ( gns:gnot:500 staking )
+	std.TestSetOrigCaller(lp01)
 
+	// deposit wugnot first
+	std.TestIssueCoins(lp01, std.Coins{{"ugnot", 10000000}})
+	std.TestSetOrigSend(std.Coins{{"ugnot", 10000000}}, nil)
+
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 10000000)
+
+	wugnot.Deposit()
+
+	// approve gns, wugnot to pool
+	gns.Approve(a2u(consts.POOL_ADDR), 10000000)
+	wugnot.Approve(a2u(consts.POOL_ADDR), 10000000)
+
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
+		gnsPath,     // token0
+		wugnotPath,  // token1
+		500,         // fee
+		-1000,       // tickLower
+		1000,        // tickUpper
+		10000000,    // amount0Desired
+		10000000,    // amount1Desired
+		0,           // amount0Min
+		0,           // amount1Min
+		MAX_TIMEOUT, // deadline
+	)
+
+	shouldEQ(t, tokenId, bigint(6))
+	shouldEQ(t, liquidity, bigint(205051663))
+	shouldEQ(t, amount0, bigint(10000000))
+	shouldEQ(t, amoutn1, bigint(10000000))
+
+	std.TestSkipHeights(4)
+}
+
+func TestStakerCreateExternalIncentive(t *testing.T) {
 	// get some obl to create external incentive
 	std.TestSetOrigCaller(test1)
 
 	// approve obl to staker
-	obl.Approve(a2u(stakerAddr), 100000000)
+	obl.Approve(a2u(consts.STAKER_ADDR), 100000000)
 
-	stk.CreateExternalIncentive(
+	sr.CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100", // targetPoolPath
 		oblPath,            // rewardTokenPath
-		100000000,          // rewardAmount
+		100_000_000,        // rewardAmount
 		1234568045,         // startTimestamp
 		1234568045+7776000, // endTimestamp ( 90 days )
 	)
@@ -279,27 +292,54 @@ func TestStakerCreateExternalIncentive(t *testing.T) {
 	std.TestSkipHeights(3)
 }
 
-func TestStakerStakeToken(t *testing.T) {
+func TestStakerStakeTokenForInternalReward(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve lpTokenId to staker
-	gnft.Approve(a2u(stakerAddr), tid(1))
+	gnft.Approve(a2u(consts.STAKER_ADDR), tid(6))
 
-	// stake tokenId 1
-	stk.StakeToken(1)
-	std.TestSkipHeights(3)
+	// stake tokenId 6
+	sr.StakeToken(6)
+	std.TestSkipHeights(2)
 }
 
-func TestStakerCollectReward(t *testing.T) {
+func TestStakerStakeTokenForExternalReward(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
-	shouldEQ(t, balanceOf(gnsObj, lp01), 0)
+	// approve lpTokenId to staker
+	gnft.Approve(a2u(consts.STAKER_ADDR), tid(1))
+
+	// stake tokenId 1
+	sr.StakeToken(1)
+	std.TestSkipHeights(2)
+}
+
+func TestStakerCollectInternalReward(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	shouldEQ(t, balanceOf(gnsObj, lp01), 90000000)
 	shouldEQ(t, balanceOf(oblObj, lp01), 0)
 
-	stk.CollectReward(1)
+	sr.CollectReward(6)
 
-	shouldEQ(t, balanceOf(gnsObj, lp01), 1650)
+	shouldEQ(t, balanceOf(gnsObj, lp01), 90003300)
+	shouldEQ(t, balanceOf(oblObj, lp01), 0)
+
+	std.TestSkipHeights(1)
+}
+
+func TestStakerCollectExternalReward(t *testing.T) {
+	std.TestSetOrigCaller(lp01)
+
+	shouldEQ(t, balanceOf(gnsObj, lp01), 90003300)
+	shouldEQ(t, balanceOf(oblObj, lp01), 0)
+
+	sr.CollectReward(1)
+
+	shouldEQ(t, balanceOf(gnsObj, lp01), 90003300)
 	shouldEQ(t, balanceOf(oblObj, lp01), 21)
+
+	std.TestSkipHeights(1)
 }
 
 func TestFaucetTR01(t *testing.T) {
@@ -327,12 +367,12 @@ func TestRouterSwapRouteBarBazExactIn(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	// approve bar to pool
-	bar.Approve(a2u(poolAddr), 100000)
+	bar.Approve(a2u(consts.POOL_ADDR), 100000)
 
 	shouldEQ(t, balanceOf(barObj, tr01), 100000000)
 	shouldEQ(t, balanceOf(bazObj, tr01), 100000000)
 
-	swapResult := rou.SwapRoute(
+	swapResult := rr.SwapRoute(
 		barPath,    // inputToken
 		bazPath,    // outputToken
 		100000,     // amountSpecified
@@ -353,12 +393,12 @@ func TestRouterSwapRouteBarBazExactOut(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	// approve bar to pool
-	bar.Approve(a2u(poolAddr), 100000)
+	bar.Approve(a2u(consts.POOL_ADDR), 100000)
 
 	shouldEQ(t, balanceOf(barObj, tr01), 99900000)
 	shouldEQ(t, balanceOf(bazObj, tr01), 101999835)
 
-	swapResult := rou.SwapRoute(
+	swapResult := rr.SwapRoute(
 		barPath,     // inputToken
 		bazPath,     // outputToken
 		100000,      // amountSpecified
@@ -379,12 +419,12 @@ func TestRouterSwapRouteBarBazFooWgnotExactIn(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	// approve bar to pool
-	bar.Approve(a2u(poolAddr), 100000)
+	bar.Approve(a2u(consts.POOL_ADDR), 100000)
 
 	shouldEQ(t, balanceOf(barObj, tr01), 99895000)
 	shouldEQ(t, wugnotBalanceOf(tr01), 0)
 
-	swapResult := rou.SwapRoute(
+	swapResult := rr.SwapRoute(
 		barPath,    // inputToken
 		wugnotPath, // outputToken
 		100000,     // amountSpecified
@@ -414,12 +454,12 @@ func TestRouterSwapRouteWgnotFooBazBarExactIn(t *testing.T) {
 	wugnot.Deposit()
 
 	// approve wugnot to pool
-	wugnot.Approve(a2u(poolAddr), 100000)
+	wugnot.Approve(a2u(consts.POOL_ADDR), 100000)
 
 	shouldEQ(t, wugnotBalanceOf(tr01), 109979)
 	shouldEQ(t, balanceOf(barObj, tr01), 99795000)
 
-	swapResult := rou.SwapRoute(
+	swapResult := rr.SwapRoute(
 		wugnotPath,  // inputToken
 		barPath,     // outputToken
 		100000,      // amountSpecified
@@ -428,10 +468,10 @@ func TestRouterSwapRouteWgnotFooBazBarExactIn(t *testing.T) {
 		"100",  // quoteArr
 		300000, // tokenAmountLimit
 	)
-	shouldEQ(t, swapResult, bigint(9984))
+	shouldEQ(t, swapResult, bigint(9958))
 
-	shouldEQ(t, balanceOf(barObj, tr01), 99894999)
-	shouldEQ(t, wugnotBalanceOf(tr01), 99995)
+	shouldEQ(t, balanceOf(barObj, tr01), 99894938)
+	shouldEQ(t, wugnotBalanceOf(tr01), 100021)
 
 	std.TestSkipHeights(3)
 }
@@ -439,7 +479,7 @@ func TestRouterSwapRouteWgnotFooBazBarExactIn(t *testing.T) {
 func TestPositionCollectFeeLpTokenId_1(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
-	tokenId, amount0, amount1, poolPath := pos.CollectFee(1)
+	tokenId, amount0, amount1, poolPath := pn.CollectFee(1)
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, amount0, bigint(19))
 	shouldEQ(t, amount1, bigint(200))
@@ -453,7 +493,7 @@ func TestPositionCollectFeeLpTokenId_1(t *testing.T) {
 func TestPositionCollectFeeLpTokenId_4(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
-	tokenId, amount0, amount1, poolPath := pos.CollectFee(4)
+	tokenId, amount0, amount1, poolPath := pn.CollectFee(4)
 	shouldEQ(t, tokenId, uint64(4))
 	shouldEQ(t, amount0, bigint(199))
 	shouldEQ(t, amount1, bigint(20))
@@ -465,7 +505,7 @@ func TestPositionCollectFeeLpTokenId_4(t *testing.T) {
 func TestPositionCollectFeeLpTokenId_5(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
-	tokenId, amount0, amount1, poolPath := pos.CollectFee(5)
+	tokenId, amount0, amount1, poolPath := pn.CollectFee(5)
 	shouldEQ(t, tokenId, uint64(5))
 	shouldEQ(t, amount0, bigint(19))
 	shouldEQ(t, amount1, bigint(0))
@@ -476,7 +516,7 @@ func TestPositionCollectFeeLpTokenId_5(t *testing.T) {
 
 func TestPositionBurnStakedPosition(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
-	shouldPanic(t, func() { pos.Burn(1) })
+	shouldPanic(t, func() { pn.Burn(1) })
 	// can not burn staked position ( unstake first)
 
 	std.TestSkipHeights(1)
@@ -486,20 +526,20 @@ func TestStakerUnstake(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// it will return unstaked position's poolPath, amount0, amount1 ( not reward )
-	poolPath, amount0, amount1 := stk.UnstakeToken(1)
+	poolPath, amount0, amount1 := sr.UnstakeToken(1)
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
-	shouldEQ(t, amount0, bigint(604922))
-	shouldEQ(t, amount1, bigint(7900345))
+	shouldEQ(t, amount0, bigint(604982))
+	shouldEQ(t, amount1, bigint(7899135))
 
 	std.TestSkipHeights(1)
 }
 
 func TestPositionBurnUnstakedPosition(t *testing.T) {
-	tokenId, liquidity, amount0, amount1, poolPath := pos.Burn(1)
+	tokenId, liquidity, amount0, amount1, poolPath := pn.Burn(1)
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, liquidity, bigint(4473213901))
-	shouldEQ(t, amount0, bigint(604922))
-	shouldEQ(t, amount1, bigint(7900345))
+	shouldEQ(t, amount0, bigint(604982))
+	shouldEQ(t, amount1, bigint(7899135))
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
 
 	std.TestSkipHeights(1)
@@ -513,11 +553,11 @@ func TestStakerEndExternalIncentive(t *testing.T) {
 
 	shouldPanic(t,
 		func() {
-			stk.EndExternalIncentive(string(test1), "gno.land/r/demo/bar:gno.land/r/demo/baz:100", "gno.land/r/demo/obl")
+			sr.EndExternalIncentive(string(test1), "gno.land/r/demo/bar:gno.land/r/demo/baz:100", "gno.land/r/demo/obl")
 		})
 	std.TestSkipHeights(1234567)
 
-	stk.EndExternalIncentive(string(test1), "gno.land/r/demo/bar:gno.land/r/demo/baz:100", "gno.land/r/demo/obl")
+	sr.EndExternalIncentive(string(test1), "gno.land/r/demo/bar:gno.land/r/demo/baz:100", "gno.land/r/demo/obl")
 
 	shouldEQ(t, balanceOf(oblObj, test1), 499999999999979)
 }

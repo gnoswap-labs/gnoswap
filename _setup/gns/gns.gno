@@ -20,10 +20,10 @@ const (
 )
 
 func init() {
-	// r3v4_xxx: SET MAXIMUM SUPLLY
+	// r3v4_xxx: SET MAXIMUM SUPPLY
 
 	gns = grc20.NewAdminToken("Gnoswap", "GNS", 6)
-	// gns.Mint(admin, 100_000_000_000_000)                                               // @administrator
+	// gns.Mint(admin, 100_000_000_000_000)                                            // @administrator
 	gns.Mint(INTERNAL_REWARD_ACCOUNT, 400_000_000_000_000)                             // @INTERNAL_REWARD_ACCOUNT
 	gns.Mint(std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"), 100_000_000_000) // default test1
 

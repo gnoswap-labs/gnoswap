@@ -1,4 +1,4 @@
-package position
+package common
 
 import (
 	"gno.land/r/demo/consts"

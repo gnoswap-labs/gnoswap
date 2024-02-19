@@ -4,6 +4,8 @@ import (
 	"std"
 
 	"gno.land/r/demo/users"
+
+	"gno.land/p/demo/ufmt"
 )
 
 const APPROVED_CALLER = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4" // r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
@@ -80,7 +82,8 @@ func UnregisterGRC20Interface(pkgPath string) {
 func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool {
 	i, found := findGRC20(pkgPath)
 	if !found {
-		return false
+		panic(ufmt.Sprintf("[STAKER] staker_register.gno__transferByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		// return false
 	}
 
 	registered[i].igrc20.Transfer()(users.AddressOrName(to), amount)
@@ -91,7 +94,8 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uint64) bool {
 	i, found := findGRC20(pkgPath)
 	if !found {
-		return false
+		panic(ufmt.Sprintf("[STAKER] staker_register.gno__transferFromByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		// return false
 	}
 
 	registered[i].igrc20.TransferFrom()(users.AddressOrName(from), users.AddressOrName(to), amount)
@@ -102,7 +106,8 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 func balanceOfByRegisterCall(pkgPath string, owner std.Address) uint64 {
 	i, found := findGRC20(pkgPath)
 	if !found {
-		return 0
+		panic(ufmt.Sprintf("[STAKER] staker_register.gno__balanceOfByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		// return false
 	}
 
 	balance := registered[i].igrc20.BalanceOf()(users.AddressOrName(owner))
@@ -112,7 +117,8 @@ func balanceOfByRegisterCall(pkgPath string, owner std.Address) uint64 {
 func approveByRegisterCall(pkgPath string, spender std.Address, amount uint64) bool {
 	i, found := findGRC20(pkgPath)
 	if !found {
-		return false
+		panic(ufmt.Sprintf("[STAKER] staker_register.gno__approveByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		// return false
 	}
 
 	registered[i].igrc20.Approve()(users.AddressOrName(spender), amount)

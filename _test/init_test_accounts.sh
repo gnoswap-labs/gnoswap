@@ -24,8 +24,9 @@ EOM
   fi
 }
 
-create_account test1
-create_account gsa 10
-create_account lp01 11
-create_account lp02 12
-create_account tr01 13
+create_account test1   # g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+create_account gsa 10  # g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4
+create_account lp01 11 # g1jqpr8r5akez83kp7ers0sfjyv2kgx45qa9qygd
+create_account lp02 12 # g126yz2f34qdxaqxelmky40dym379q0vw3yzhyrq
+create_account tr01 13 # g1wgdjecn5lylgvujzyspfzvhjm6qn4z8xqyyxdn
+# ira // g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm

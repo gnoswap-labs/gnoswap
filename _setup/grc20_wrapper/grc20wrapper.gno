@@ -31,15 +31,7 @@ func init() {
 	rRegistry.RegisterGRC20Interface("gno.land/r/demo/qux", QuxTokenInterface{})
 	sRegistry.RegisterGRC20Interface("gno.land/r/demo/qux", QuxTokenInterface{})
 
-	pRegistry.RegisterGRC20Interface("gno.land/r/demo/fred", FredTokenInterface{})
-	rRegistry.RegisterGRC20Interface("gno.land/r/demo/fred", FredTokenInterface{})
-	sRegistry.RegisterGRC20Interface("gno.land/r/demo/fred", FredTokenInterface{})
-
 	pRegistry.RegisterGRC20Interface("gno.land/r/demo/obl", OblTokenInterface{})
 	rRegistry.RegisterGRC20Interface("gno.land/r/demo/obl", OblTokenInterface{})
 	sRegistry.RegisterGRC20Interface("gno.land/r/demo/obl", OblTokenInterface{})
-
-	pRegistry.RegisterGRC20Interface("gno.land/r/demo/thud", ThudTokenInterface{})
-	rRegistry.RegisterGRC20Interface("gno.land/r/demo/thud", ThudTokenInterface{})
-	sRegistry.RegisterGRC20Interface("gno.land/r/demo/thud", ThudTokenInterface{})
 }
