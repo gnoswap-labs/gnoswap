@@ -95,7 +95,8 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 
 	i, found := findGRC20(pkgPath)
 	if !found {
-		return false
+		panic(ufmt.Sprintf("[POOL] pool_register.gno__transferByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		// return false
 	}
 
 	if !locked {
@@ -116,7 +117,8 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 
 	i, found := findGRC20(pkgPath)
 	if !found {
-		return false
+		panic(ufmt.Sprintf("[POOL] pool_register.gno__transferFromByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		// return false
 	}
 
 	if !locked {
@@ -137,7 +139,8 @@ func balanceOfByRegisterCall(pkgPath string, owner std.Address) uint64 {
 
 	i, found := findGRC20(pkgPath)
 	if !found {
-		return 0
+		panic(ufmt.Sprintf("[POOL] pool_register.gno__balanceOfByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		// return 0
 	}
 
 	balance := registered[i].igrc20.BalanceOf()(users.AddressOrName(owner))
@@ -149,7 +152,8 @@ func approveByRegisterCall(pkgPath string, spender std.Address, amount uint64) b
 
 	i, found := findGRC20(pkgPath)
 	if !found {
-		return false
+		panic(ufmt.Sprintf("[POOL] pool_register.gno__approveByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		// return false
 	}
 
 	registered[i].igrc20.Approve()(users.AddressOrName(spender), amount)
