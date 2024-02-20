@@ -35,21 +35,19 @@ func userClaimedRewardAmount(address std.Address, tokenId uint64, rewardTokenPat
 		if claimeRequest { // if user is claiming rewardTokenPath
 			userClaimedRewards[address][tokenId][rewardTokenPath] = rewardAmount // add rewardTokenPath to userClaimedRewards
 			return rewardAmount
-		} else { // if user is not claiming rewardTokenPath
-			return rewardAmount
 		}
+
+		return rewardAmount
 	}
 
-	// user ever claimed rewardTokenPath
-	var claimableAmount bigint
-	if claimeRequest { // if user is claiming rewardTokenPath
-		claimableAmount = rewardAmount - claimedReward
+	claimableAmount := rewardAmount - claimedReward
+	if claimeRequest {
 		userClaimedRewards[address][tokenId][rewardTokenPath] += claimableAmount
-		return claimableAmount
-	} else { // if user is not claiming rewardTokenPath
-		claimableAmount = rewardAmount - claimedReward
+
 		return claimableAmount
 	}
+
+	return claimableAmount
 }
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) bigint {
@@ -174,7 +172,6 @@ func getMyLiquidityRatio(poolPath string, tokenId uint64) bigint {
 
 	// my liquidity ratio
 	liqRatioX96 := (myLiquidity * consts.Q96 / poolStakedLiquidity * consts.Q96) // 2 times consts.Q96 because of consts.Q96 / consts.Q96
-
 	return liqRatioX96
 }
 
