@@ -126,3 +126,9 @@ func ApiGetStakes() string {
 
 	return string(rr)
 }
+
+// for off chain to check if lpTokenId is staked via RPC
+func IsStaked(tokenId uint64) bool {
+	_, exist := deposits[tokenId]
+	return exist
+}
