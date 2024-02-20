@@ -1,5 +1,5 @@
 // single lp, single swap, normal scenario
-package swap_scneraio
+package swap_scenario
 
 import (
 	"std"
@@ -9,8 +9,6 @@ import (
 
 	"gno.land/p/demo/common"
 	"gno.land/r/demo/consts"
-
-	_ "gno.land/r/demo/grc20_wrapper"
 
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"

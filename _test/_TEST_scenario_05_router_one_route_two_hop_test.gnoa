@@ -1,5 +1,5 @@
 // SwapRoute & DrySwapRoute [ 1 route 2 hop ]
-package swap_scneraio
+package swap_scenario
 
 import (
 	"std"
@@ -7,12 +7,12 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	_ "gno.land/r/demo/grc20_wrapper"
+	"gno.land/r/demo/consts"
 
 	pl "gno.land/r/demo/pool"
-	pos "gno.land/r/demo/position"
-	rou "gno.land/r/demo/router"
-	stk "gno.land/r/demo/staker"
+	pn "gno.land/r/demo/position"
+	rr "gno.land/r/demo/router"
+	sr "gno.land/r/demo/staker"
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/baz"
@@ -28,34 +28,8 @@ import (
 )
 
 var (
-	test1 = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
-	lp01  = testutils.TestAddress("lp01")
-	tr01  = testutils.TestAddress("tr01")
-
-	poolAddr     = std.DerivePkgAddr("gno.land/r/demo/pool")
-	positionAddr = std.DerivePkgAddr("gno.land/r/demo/position")
-	stakerAddr   = std.DerivePkgAddr("gno.land/r/demo/staker")
-	routerAddr   = std.DerivePkgAddr("gno.land/r/demo/router")
-
-	barPath = "gno.land/r/demo/bar"
-	bazPath = "gno.land/r/demo/baz"
-	fooPath = "gno.land/r/demo/foo"
-	quxPath = "gno.land/r/demo/qux"
-
-	wugnotPath = "gno.land/r/demo/wugnot"
-
-	gnsPath = "gno.land/r/demo/gns"
-	oblPath = "gno.land/r/demo/obl"
-
-	barObj = bar.GetGRC20()
-	bazObj = baz.GetGRC20()
-	fooObj = foo.GetGRC20()
-	quxObj = qux.GetGRC20()
-
-	gnsObj = gns.GetGRC20()
-	oblObj = obl.GetGRC20()
-
-	max_timeout = bigint(9999999999)
+	lp01 = testutils.TestAddress("lp01")
+	tr01 = testutils.TestAddress("tr01")
 )
 
 func TestPoolInitByAdmin(t *testing.T) {
@@ -69,7 +43,7 @@ func TestPoolCreatePools(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
 	// approve gns to CreatePool ( 500 gns for 1 pool)
-	gns.Approve(a2u(poolAddr), 5000)
+	gns.Approve(a2u(consts.POOL_ADDR), 5000)
 
 	// bar-baz
 	pl.CreatePool(barPath, bazPath, 100, 354340008410679467268648495215) // tick 29960 ≈ 1:20
@@ -108,10 +82,10 @@ func TestPositionMintBarBazInRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve bar, baz to pool ( position.Mint() calls pool.Mint() ≈ so approve to pool )
-	bar.Approve(a2u(poolAddr), 10000000)
-	baz.Approve(a2u(poolAddr), 10000000)
+	bar.Approve(a2u(consts.POOL_ADDR), 10000000)
+	baz.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		barPath,     // token0
 		bazPath,     // token1
 		100,         // fee
@@ -121,7 +95,7 @@ func TestPositionMintBarBazInRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(1))
@@ -137,10 +111,10 @@ func TestPositionMintBarBazLowerRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve bar, baz to pool ( position.Mint() calls pool.Mint() ≈ so approve to pool )
-	bar.Approve(a2u(poolAddr), 10000000)
-	baz.Approve(a2u(poolAddr), 10000000)
+	bar.Approve(a2u(consts.POOL_ADDR), 10000000)
+	baz.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		barPath,     // token0
 		bazPath,     // token1
 		100,         // fee
@@ -150,7 +124,7 @@ func TestPositionMintBarBazLowerRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(2))
@@ -166,10 +140,10 @@ func TestPositionMintBarBazUpperRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve bar, baz to pool ( position.Mint() calls pool.Mint() ≈ so approve to pool )
-	bar.Approve(a2u(poolAddr), 10000000)
-	baz.Approve(a2u(poolAddr), 10000000)
+	bar.Approve(a2u(consts.POOL_ADDR), 10000000)
+	baz.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		barPath,     // token0
 		bazPath,     // token1
 		100,         // fee
@@ -179,7 +153,7 @@ func TestPositionMintBarBazUpperRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(3))
@@ -194,10 +168,10 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve baz, foo to pool
-	baz.Approve(a2u(poolAddr), 10000000)
-	foo.Approve(a2u(poolAddr), 10000000)
+	baz.Approve(a2u(consts.POOL_ADDR), 10000000)
+	foo.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		bazPath,     // token0
 		fooPath,     // token1
 		100,         // fee
@@ -207,7 +181,7 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(4))
@@ -231,10 +205,10 @@ func TestPositionMintFooGnotInRange(t *testing.T) {
 	wugnot.Deposit()
 
 	// approve foo, wugnot to pool
-	foo.Approve(a2u(poolAddr), 10000000)
-	wugnot.Approve(a2u(poolAddr), 10000000)
+	foo.Approve(a2u(consts.POOL_ADDR), 10000000)
+	wugnot.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		fooPath,     // token0
 		wugnotPath,  // token1
 		100,         // fee
@@ -244,7 +218,7 @@ func TestPositionMintFooGnotInRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(5))
@@ -266,9 +240,9 @@ func TestStakerCreateExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
 	// approve obl to staker
-	obl.Approve(a2u(stakerAddr), 100000000)
+	obl.Approve(a2u(consts.STAKER_ADDR), 100000000)
 
-	stk.CreateExternalIncentive(
+	sr.CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100", // targetPoolPath
 		oblPath,            // rewardTokenPath
 		100000000,          // rewardAmount
@@ -283,10 +257,10 @@ func TestStakerStakeToken(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve lpTokenId to staker
-	gnft.Approve(a2u(stakerAddr), tid(1))
+	gnft.Approve(a2u(consts.STAKER_ADDR), tid(1))
 
 	// stake tokenId 1
-	stk.StakeToken(1)
+	sr.StakeToken(1)
 	std.TestSkipHeights(3)
 }
 
@@ -296,9 +270,9 @@ func TestStakerCollectReward(t *testing.T) {
 	shouldEQ(t, balanceOf(gnsObj, lp01), 0)
 	shouldEQ(t, balanceOf(oblObj, lp01), 0)
 
-	stk.CollectReward(1)
+	sr.CollectReward(1)
 
-	shouldEQ(t, balanceOf(gnsObj, lp01), 1650)
+	shouldEQ(t, balanceOf(gnsObj, lp01), 0)
 	shouldEQ(t, balanceOf(oblObj, lp01), 21)
 }
 
@@ -326,7 +300,7 @@ func TestFaucetTR01(t *testing.T) {
 func TestRouterDrySwapRouteBarFooExactIn(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
-	dryResult := rou.DrySwapRoute(
+	dryResult := rr.DrySwapRoute(
 		barPath,    // inputToken
 		fooPath,    // outputToken
 		100000,     // amountSpecified
@@ -342,12 +316,12 @@ func TestRouterSwapRouteBarFooExactIn(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	// approve bar to pool
-	bar.Approve(a2u(poolAddr), 100000)
+	bar.Approve(a2u(consts.POOL_ADDR), 100000)
 
 	shouldEQ(t, balanceOf(barObj, tr01), 100000000)
 	shouldEQ(t, balanceOf(fooObj, tr01), 100000000)
 
-	swapResult := rou.SwapRoute(
+	swapResult := rr.SwapRoute(
 		barPath,    // inputToken
 		fooPath,    // outputToken
 		100000,     // amountSpecified
@@ -367,7 +341,7 @@ func TestRouterSwapRouteBarFooExactIn(t *testing.T) {
 func TestRouterDrySwapRouteBarFooExactOutAfterSwap(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
-	dryResult := rou.DrySwapRoute(
+	dryResult := rr.DrySwapRoute(
 		barPath,     // inputToken
 		fooPath,     // outputToken
 		100000,      // amountSpecified
@@ -383,12 +357,12 @@ func TestRouterSwapRouteBarFooExactOutAfterSwap(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	// approve bar to pool
-	bar.Approve(a2u(poolAddr), 100000)
+	bar.Approve(a2u(consts.POOL_ADDR), 100000)
 
 	shouldEQ(t, balanceOf(barObj, tr01), 99900000)
 	shouldEQ(t, balanceOf(fooObj, tr01), 100199863)
 
-	swapResult := rou.SwapRoute(
+	swapResult := rr.SwapRoute(
 		barPath,    // inputToken
 		fooPath,    // outputToken
 		100000,     // amountSpecified

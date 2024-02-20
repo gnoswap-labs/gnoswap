@@ -1,6 +1,6 @@
 // single lp, small amount liquidity
 // XXX: SHOULD FAIL DUE TO TOO SMALL LIQUIDITY
-package swap_scneraio
+package swap_scenario
 
 import (
 	"std"
@@ -8,50 +8,22 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	_ "gno.land/r/demo/grc20_wrapper"
+	"gno.land/r/demo/consts"
 
 	pl "gno.land/r/demo/pool"
-	pos "gno.land/r/demo/position"
-	rou "gno.land/r/demo/router"
+	pn "gno.land/r/demo/position"
+	rr "gno.land/r/demo/router"
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/baz"
 	"gno.land/r/demo/foo"
-	"gno.land/r/demo/qux"
 
 	"gno.land/r/demo/gns"
-	"gno.land/r/demo/obl"
 )
 
 var (
-	test1 = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
-	lp01  = testutils.TestAddress("lp01")
-	tr01  = testutils.TestAddress("tr01")
-
-	poolAddr     = std.DerivePkgAddr("gno.land/r/demo/pool")
-	positionAddr = std.DerivePkgAddr("gno.land/r/demo/position")
-	stakerAddr   = std.DerivePkgAddr("gno.land/r/demo/staker")
-	routerAddr   = std.DerivePkgAddr("gno.land/r/demo/router")
-
-	barPath = "gno.land/r/demo/bar"
-	bazPath = "gno.land/r/demo/baz"
-	fooPath = "gno.land/r/demo/foo"
-	quxPath = "gno.land/r/demo/qux"
-
-	wugnotPath = "gno.land/r/demo/wugnot"
-
-	gnsPath = "gno.land/r/demo/gns"
-	oblPath = "gno.land/r/demo/obl"
-
-	barObj = bar.GetGRC20()
-	bazObj = baz.GetGRC20()
-	fooObj = foo.GetGRC20()
-	quxObj = qux.GetGRC20()
-
-	gnsObj = gns.GetGRC20()
-	oblObj = obl.GetGRC20()
-
-	max_timeout = bigint(9999999999)
+	lp01 = testutils.TestAddress("lp01")
+	tr01 = testutils.TestAddress("tr01")
 )
 
 func TestPoolInitByAdmin(t *testing.T) {
@@ -65,7 +37,7 @@ func TestPoolCreatePools(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
 	// approve gns to CreatePool ( 500 gns for 1 pool)
-	gns.Approve(a2u(poolAddr), 5000)
+	gns.Approve(a2u(consts.POOL_ADDR), 5000)
 
 	// bar-baz
 	pl.CreatePool(barPath, bazPath, 100, 354340008410679467268648495215) // tick 29960 ≈ 1:20
@@ -98,10 +70,10 @@ func TestPositionMintBarBazInRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve bar, baz to pool ( position.Mint() calls pool.Mint() ≈ so approve to pool )
-	bar.Approve(a2u(poolAddr), 10000000)
-	baz.Approve(a2u(poolAddr), 10000000)
+	bar.Approve(a2u(consts.POOL_ADDR), 10000000)
+	baz.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		barPath,     // token0
 		bazPath,     // token1
 		100,         // fee
@@ -111,7 +83,7 @@ func TestPositionMintBarBazInRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(1))
@@ -126,10 +98,10 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve baz, foo to pool
-	baz.Approve(a2u(poolAddr), 10000000)
-	foo.Approve(a2u(poolAddr), 10000000)
+	baz.Approve(a2u(consts.POOL_ADDR), 10000000)
+	foo.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		bazPath,     // token0
 		fooPath,     // token1
 		100,         // fee
@@ -139,7 +111,7 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(2))
@@ -166,7 +138,7 @@ func TestFaucetTR01(t *testing.T) {
 }
 
 func TestRouterDrySwapBarBazExactIn(t *testing.T) {
-	dryResult := rou.DrySwapRoute(
+	dryResult := rr.DrySwapRoute(
 		barPath,    // inputToken
 		bazPath,    // outputToken
 		10,         // amountSpecified
@@ -178,16 +150,19 @@ func TestRouterDrySwapBarBazExactIn(t *testing.T) {
 }
 
 func TestRouterSwapBarBazExactIn(t *testing.T) {
-	bar.Approve(a2u(poolAddr), 100000)
+	bar.Approve(a2u(consts.POOL_ADDR), 100000)
 
-	swapResult := rou.SwapRoute(
-		barPath,    // inputToken
-		bazPath,    // outputToken
-		10,         // amountSpecified
-		"EXACT_IN", // swapType
-		"gno.land/r/demo/bar:gno.land/r/demo/baz:100,gno.land/r/demo/bar:gno.land/r/demo/baz:100", // strRouteArr
-		"95,5", // quoteArr
-		"1",    // tokenAmountLimit
+	shouldPanicWithMsg(t, func() {
+		rr.SwapRoute(
+			barPath,    // inputToken
+			bazPath,    // outputToken
+			10,         // amountSpecified
+			"EXACT_IN", // swapType
+			"gno.land/r/demo/bar:gno.land/r/demo/baz:100,gno.land/r/demo/bar:gno.land/r/demo/baz:100", // strRouteArr
+			"95,5", // quoteArr
+			"1",    // tokenAmountLimit
+		)
+	},
+		"[POOL] pool.gno__Swap() || amountSpecified(0) != 0",
 	)
-	shouldEQ(t, swapResult, bigint(19962))
 }
