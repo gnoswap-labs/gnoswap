@@ -3,17 +3,17 @@ package router
 import "std"
 
 // SWAP TYPE
-type SwapType string
+type SwapType string // r3v4_xxx: private?
 
 const (
-	ExactIn  SwapType = "EXACT_IN"
-	ExactOut SwapType = "EXACT_OUT"
+	ExactIn  SwapType = "EXACT_IN"  // r3v4_xxx: private?
+	ExactOut SwapType = "EXACT_OUT" // r3v4_xxx: private?
 )
 
 // PRICE
-type SwapPaths map[int]string
-type TokenPairs map[string][]string
-type QuoterTarget struct {
+type SwapPaths map[int]string       // r3v4_xxx: private?
+type TokenPairs map[string][]string // r3v4_xxx: private?
+type QuoterTarget struct {          // r3v4_xxx: private?
 	pct            int
 	pctAmount      bigint
 	targetPath     string
@@ -21,7 +21,7 @@ type QuoterTarget struct {
 }
 
 // SINGLE SWAP
-type SingleSwapParams struct {
+type SingleSwapParams struct { // r3v4_xxx: private?
 	tokenIn         string
 	tokenOut        string
 	fee             uint16
@@ -29,7 +29,7 @@ type SingleSwapParams struct {
 }
 
 // MUTLI SWAP
-type SwapParams struct {
+type SwapParams struct { // r3v4_xxx: private?
 	tokenIn         string
 	tokenOut        string
 	fee             uint16
@@ -38,7 +38,7 @@ type SwapParams struct {
 }
 
 // SWAP DATA
-type SwapCallbackData struct {
+type SwapCallbackData struct { // r3v4_xxx: private?
 	tokenIn  string
 	tokenOut string
 	fee      uint16
