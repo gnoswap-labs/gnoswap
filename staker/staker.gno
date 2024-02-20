@@ -286,7 +286,7 @@ func getTokenPairBalanceFromPosition(tokenId uint64) (bigint, bigint) {
 	lowerX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickLower(tokenId))
 	upperX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickUpper(tokenId))
 
-	token0Balance, token1Balance := common.LiquidityAmountsGetAmountsForLiquidity(
+	token0Balance, token1Balance := common.GetAmountsForLiquidity(
 		currentX96,
 		lowerX96,
 		upperX96,
