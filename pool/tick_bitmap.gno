@@ -22,13 +22,17 @@ func (pool *Pool) tickBitmapFlipTick(
 	mask := u256.NewUint(1)
 	mask.Lsh(mask, uint(bitPos)) // 2 ** bitPos
 
-	//XXXXXXXXXXXXXXXX
+	// XXXXXXXXXXXXXXXX
 	// mask.Lsh is exptected to check overflow with the signed integer type.
 	// Lets add an overflow proteced shift method for Uint so we dont have to make it a signed integer.
 	// not implemented, should be done in a separate pr
 
 	//requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || mask(%d) > 0", mask))
 
+	// check init value
+	if pool.tickBitmaps[wordPos] == nil {
+		pool.tickBitmaps[wordPos] = u256.Zero()
+	}
 	pool.tickBitmaps[wordPos].Xor(pool.tickBitmaps[wordPos], mask)
 }
 

@@ -37,12 +37,12 @@ type SwapCache struct {
 
 type SwapState struct {
 	amountSpecifiedRemaining *u256.Int
-	amountCalculated         *u256.Int 
+	amountCalculated         *u256.Int
 	sqrtPriceX96             *u256.Uint
 	tick                     int32
-	feeGrowthGlobalX128      *u256.Uint 
+	feeGrowthGlobalX128      *u256.Uint
 	protocolFee              *u256.Uint
-	liquidity                *u256.Uint 
+	liquidity                *u256.Uint
 }
 
 type StepComputations struct {
@@ -58,7 +58,7 @@ type StepComputations struct {
 type PositionInfo struct {
 	liquidity *u256.Uint
 
-	feeGrowthInside0LastX128 *u256.Uint 
+	feeGrowthInside0LastX128 *u256.Uint
 	feeGrowthInside1LastX128 *u256.Uint
 
 	tokensOwed0 *u256.Uint
@@ -81,7 +81,7 @@ type TickInfo struct {
 }
 
 type Ticks map[int32]TickInfo          // tick => TickInfo
-type TickBitmaps map[int16]*u256.Uint      // tick(wordPos) => bitmap(tickWord ^ mask)
+type TickBitmaps map[int16]*u256.Uint  // tick(wordPos) => bitmap(tickWord ^ mask)
 type Positions map[string]PositionInfo // positionKey => PositionInfo
 
 // type Pool describes a single Pool/s state

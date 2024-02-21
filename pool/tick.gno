@@ -3,6 +3,7 @@ package pool
 import (
 	"gno.land/p/demo/u256"
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/demo/consts"
 )
 
 func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
@@ -20,25 +21,30 @@ func (pool *Pool) tickGetFeeGrowthInside(
 	feeGrowthGlobal0X128 *u256.Uint,
 	feeGrowthGlobal1X128 *u256.Uint,
 ) (feeGrowthInside0X128, feeGrowthInside1X128 *u256.Uint) {
+	// init return values
+	feeGrowthInside0X128 = u256.Zero()
+	feeGrowthInside1X128 = u256.Zero()
+	//
+
 	lower := pool.ticks[tickLower]
 	upper := pool.ticks[tickUpper]
 
 	var feeGrowthBelow0X128, feeGrowthBelow1X128 *u256.Uint
 	if tickCurrent >= tickLower {
-		feeGrowthBelow0X128 = lower.feeGrowthOutside0X128
-		feeGrowthBelow1X128 = lower.feeGrowthOutside1X128
+		feeGrowthBelow0X128 = lower.feeGrowthOutside0X128.NilToZero()
+		feeGrowthBelow1X128 = lower.feeGrowthOutside1X128.NilToZero()
 	} else {
-		feeGrowthBelow0X128.Sub(feeGrowthGlobal0X128, lower.feeGrowthOutside0X128)
-		feeGrowthBelow1X128.Sub(feeGrowthGlobal1X128, lower.feeGrowthOutside1X128)
+		feeGrowthBelow0X128.Sub(feeGrowthGlobal0X128, lower.feeGrowthOutside0X128.NilToZero())
+		feeGrowthBelow1X128.Sub(feeGrowthGlobal1X128, lower.feeGrowthOutside1X128.NilToZero())
 	}
 
 	var feeGrowthAbove0X128, feeGrowthAbove1X128 *u256.Uint
 	if tickCurrent < tickUpper {
-		feeGrowthAbove0X128 = upper.feeGrowthOutside0X128
-		feeGrowthAbove1X128 = upper.feeGrowthOutside1X128
+		feeGrowthAbove0X128 = upper.feeGrowthOutside0X128.NilToZero()
+		feeGrowthAbove1X128 = upper.feeGrowthOutside1X128.NilToZero()
 	} else {
-		feeGrowthAbove0X128.Sub(feeGrowthGlobal0X128, upper.feeGrowthOutside0X128)
-		feeGrowthAbove1X128.Sub(feeGrowthGlobal1X128, upper.feeGrowthOutside1X128)
+		feeGrowthAbove0X128.Sub(feeGrowthGlobal0X128, upper.feeGrowthOutside0X128.NilToZero())
+		feeGrowthAbove1X128.Sub(feeGrowthGlobal1X128, upper.feeGrowthOutside1X128.NilToZero())
 	}
 
 	feeGrowthInside0X128.Sub(feeGrowthGlobal0X128, feeGrowthBelow0X128)
@@ -61,8 +67,13 @@ func (pool *Pool) tickUpdate(
 ) (flipped bool) {
 	info := pool.ticks[tick]
 	liquidityGrossBefore := info.liquidityGross
+
+	if liquidityGrossBefore == nil {
+		liquidityGrossBefore = u256.Zero()
+	}
+
 	liquidityGrossAfter := liquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
-	require(liquidityGrossAfter.Lte(maxLiquidity), ufmt.Sprintf("[POOL] tick.gno__tickUpdate() || liquidityGrossAfter(%d) <= maxLiquidity(%d)", liquidityGrossAfter, maxLiquidity))
+	require(!liquidityGrossAfter.Lte(maxLiquidity), ufmt.Sprintf("[POOL] tick.gno__tickUpdate() || liquidityGrossAfter(%s) <= maxLiquidity(%s)", liquidityGrossAfter.Dec(), maxLiquidity.Dec()))
 
 	flipped = (liquidityGrossAfter.IsZero()) != (liquidityGrossBefore.IsZero())
 
@@ -76,6 +87,10 @@ func (pool *Pool) tickUpdate(
 	}
 
 	info.liquidityGross = liquidityGrossAfter
+
+	if info.liquidityNet == nil {
+		info.liquidityNet = u256.NewInt(0)
+	}
 
 	if upper {
 		info.liquidityNet.Sub(info.liquidityNet, liquidityDelta)
