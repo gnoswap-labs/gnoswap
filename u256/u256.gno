@@ -35,7 +35,7 @@ type Uint struct {
 func (x *Uint) Int() *Int {
 	// panic if x > MaxInt64
 	if x.arr[3] > 0x7fffffffffffffff {
-		panic("overflow")
+		panic("Int overflow")
 	}
 
 	return &Int{v: *x}
@@ -44,11 +44,11 @@ func (x *Uint) Int() *Int {
 // TODO: to be removed
 func FromBigint(x bigint) *Uint {
 	if x > MaxUint256 {
-		panic("overflow")
+		panic("FromBigint overflow")
 	}
 
 	if x < 0 {
-		panic("underflow")
+		panic("FromBigint underflow")
 	}
 
 	var z Uint
@@ -81,7 +81,7 @@ func (z *Uint) Uint64() uint64 {
 func (z *Uint) Int32() int32 {
 	x := z.arr[0]
 	if x > 0x7fffffff {
-		panic("overflow")
+		panic("Int32 overflow")
 	}
 	return int32(x)
 }
@@ -197,7 +197,7 @@ func (z *Uint) Add(x, y *Uint) *Uint {
 	// Different from the original implementation!
 	// We panic on overflow
 	if carry != 0 {
-		panic("overflow")
+		panic("Add overflow")
 	}
 	return z
 }
@@ -232,7 +232,7 @@ func (z *Uint) Sub(x, y *Uint) *Uint {
 	// Different from the original implementation!
 	// We panic on underflow
 	if carry != 0 {
-		panic("underflow")
+		panic("Sub underflow")
 	}
 	return z
 }

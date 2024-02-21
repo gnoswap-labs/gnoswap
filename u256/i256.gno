@@ -34,7 +34,7 @@ func IntFromBigint(v bigint) *Int {
 		return &Int{v: *FromBigint(v)}
 	}
 
-	panic("not implemented")
+	panic("IntFromBigint not implemented")
 }
 
 func (x *Int) IsNeg() bool {
@@ -43,18 +43,18 @@ func (x *Int) IsNeg() bool {
 
 func (x *Int) Add(y *Int, z *Int) *Int {
 	x.v.Add(&y.v, &z.v)
-	
+
 	ys := y.Signum()
 	zs := z.Signum()
 
 	if ys > 0 && zs > 0 && x.Signum() < 0 {
 		panic("overflow")
 	}
-	
+
 	if ys < 0 && zs < 0 && x.Signum() > 0 {
 		panic("underflow")
 	}
-	
+
 	return x
 }
 
@@ -65,13 +65,48 @@ func (x *Int) Sub(y *Int, z *Int) *Int {
 	zs := z.Signum()
 
 	if ys > 0 && zs < 0 && x.Signum() < 0 {
-		panic("overflow")
+		panic("Sub overflow")
 	}
 
 	if ys < 0 && zs > 0 && x.Signum() > 0 {
-		panic("underflow")
+		panic("Sub underflow")
 	}
 
+	return x
+}
+
+func (x *Int) Mul(y *Int, z *Int) *Int {
+	x.v.Mul(&y.v, &z.v)
+
+	ys := y.Signum()
+	zs := z.Signum()
+
+	if ys > 0 && zs > 0 && x.Signum() < 0 {
+		panic("Mul overflow #1")
+	}
+
+	if ys < 0 && zs < 0 && x.Signum() < 0 {
+		panic("Mul overflow #2")
+	}
+
+	if ys > 0 && zs < 0 && x.Signum() > 0 {
+		panic("Mul underflow #1")
+	}
+
+	if ys < 0 && zs > 0 && x.Signum() > 0 {
+		panic("Mul underflow #2")
+	}
+
+	return x
+}
+
+func (x *Int) Lsh(y *Int, n uint) *Int {
+	x.v.Lsh(&y.v, n)
+	return x
+}
+
+func (x *Int) Rsh(y *Int, n uint) *Int {
+	x.v.Rsh(&y.v, n)
 	return x
 }
 
@@ -113,7 +148,6 @@ func (x *Int) Lte(y *Int) bool {
 	return !x.Gt(y)
 }
 
-
 func (x *Int) Gte(y *Int) bool {
 	xs := x.Signum()
 	ys := y.Signum()
@@ -154,13 +188,26 @@ func (x *Int) Neg() *Int {
 	return x
 }
 
+func (x *Int) Dec() string {
+	if x.Signum() < 0 {
+		return "-" + x.Abs().Dec()
+	}
+	return x.Abs().Dec()
+}
+
 func (x *Int) Bigint() bigint {
-	panic("not implemented")
+	panic("Bigint not implemented")
 }
 
 func (x *Int) Uint() *Uint {
 	if x.Signum() < 0 {
-		panic("negative")
+		// panic("Uint negative")
+		return &x.Neg().v // r3v4_xxx: safe ??
 	}
 	return &x.v
+}
+
+func (z *Int) Or(x, y *Int) *Int {
+	z.v.Or(&x.v, &y.v)
+	return z
 }
