@@ -61,11 +61,10 @@ func FromBigint(x bigint) *Uint {
 }
 
 func (x *Uint) Bigint() bigint {
-	return (
-		bigint(x.arr[0]) +
-		bigint(x.arr[1]) * (1 << 64) +
-		bigint(x.arr[2]) * (1 << 128) +
-		bigint(x.arr[3]) * (1 << 192))
+	return (bigint(x.arr[0]) +
+		bigint(x.arr[1])*(1<<64) +
+		bigint(x.arr[2])*(1<<128) +
+		bigint(x.arr[3])*(1<<192))
 }
 
 // NewUint returns a new initialized Uint.
@@ -73,11 +72,7 @@ func NewUint(val uint64) *Uint {
 	z := &Uint{arr: [4]uint64{val, 0, 0, 0}}
 	return z
 }
-/*
-func ToString(x *Uint) string {
-	return "tostring not implemented"
-}
-*/
+
 // Uint64 returns the lower 64-bits of z
 func (z *Uint) Uint64() uint64 {
 	return z.arr[0]
@@ -135,7 +130,7 @@ func (z *Uint) Gte(x *Uint) bool {
 }
 
 func (z *Uint) Lte(x *Uint) bool {
-	return !x.Gt(z)
+	return x.Gt(z)
 }
 
 // Lt returns true if z < x
@@ -783,13 +778,11 @@ func (z *Uint) UnmarshalJSON(input []byte) error {
 	return z.UnmarshalText(input[1 : len(input)-1])
 }
 
-
 // MarshalText implements encoding.TextMarshaler
 // MarshalText marshals using the decimal representation (compatible with big.Uint)
 func (z *Uint) MarshalText() ([]byte, error) {
 	return []byte(z.Dec()), nil
 }
-
 
 // UnmarshalText implements encoding.TextUnmarshaler. This method
 // can unmarshal either hexadecimal or decimal.
@@ -912,8 +905,8 @@ func checkNumberS(input string) error {
 
 // multipliers holds the values that are needed for fromDecimal
 var multipliers = [5]*Uint{
-	nil,                             // represents first round, no multiplication needed
-	&Uint{[4]uint64{10000000000000000000, 0, 0, 0}}, // 10 ^ 19
+	nil, // represents first round, no multiplication needed
+	&Uint{[4]uint64{10000000000000000000, 0, 0, 0}},                                     // 10 ^ 19
 	&Uint{[4]uint64{687399551400673280, 5421010862427522170, 0, 0}},                     // 10 ^ 38
 	&Uint{[4]uint64{5332261958806667264, 17004971331911604867, 2938735877055718769, 0}}, // 10 ^ 57
 	&Uint{[4]uint64{0, 8607968719199866880, 532749306367912313, 1593091911132452277}},   // 10 ^ 76
@@ -1128,7 +1121,7 @@ func underscoreOK(s string) bool {
 }
 
 // Dec returns the decimal representation of z.
-func (z *Uint) Dec() string {
+func (z *Uint) Dec() string { // toString()
 	if z.IsZero() {
 		return "0"
 	}
@@ -1156,8 +1149,8 @@ func (z *Uint) Dec() string {
 		out     = []byte("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
 		divisor = NewUint(10000000000000000000) // 20 digits
 		y       = new(Uint).Set(z)              // copy to avoid modifying z
-		pos     = len(out)                     // position to write to
-		buf     = make([]byte, 0, 19)          // buffer to write uint64:s to
+		pos     = len(out)                      // position to write to
+		buf     = make([]byte, 0, 19)           // buffer to write uint64:s to
 	)
 	for {
 		// Obtain Q and R for divisor
@@ -1178,7 +1171,7 @@ func (z *Uint) Dec() string {
 	return string(out[pos-len(buf):])
 }
 
-/// Mod sets z to the modulus x%y for y != 0 and returns z.
+// Mod sets z to the modulus x%y for y != 0 and returns z.
 // If y == 0, z is set to 0 (OBS: differs from the big.Uint)
 func (z *Uint) Mod(x, y *Uint) *Uint {
 	if x.IsZero() || y.IsZero() {
@@ -1207,4 +1200,15 @@ func (z *Uint) Mod(x, y *Uint) *Uint {
 	var quot Uint
 	*z = udivrem(quot.arr[:], x.arr[:], y)
 	return z
+}
+
+// Clone creates a new Int identical to z
+func (z *Uint) Clone() *Uint {
+	var x Uint
+	x.arr[0] = z.arr[0]
+	x.arr[1] = z.arr[1]
+	x.arr[2] = z.arr[2]
+	x.arr[3] = z.arr[3]
+
+	return &x
 }
