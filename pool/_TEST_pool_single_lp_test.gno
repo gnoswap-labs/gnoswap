@@ -1,17 +1,13 @@
 package pool
 
 import (
+	"encoding/gjson"
 	"std"
 	"testing"
-	"time"
-
-	"encoding/gjson"
-
-	"gno.land/r/demo/bar"
-	"gno.land/r/demo/foo"
-	"gno.land/r/demo/gns"
 
 	"gno.land/r/demo/consts"
+
+	_ "gno.land/r/demo/grc20_wrapper"
 )
 
 var (
@@ -25,48 +21,46 @@ var (
 
 // 1. Init & Create Pool using Factory Contract by Gnoswap Admin
 func TestInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetOrigCaller(test1)
 	InitManual()
 
-	std.TestSetPrevAddr(test1)
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
-	CreatePool(barPath, fooPath, fee500, 130621891405341611593710811006) // x2.7
+	std.TestSetOrigCaller(test1)
+	CreatePool(barPath, fooPath, fee500, 130621891405341611593710811006)
+
+	// sqrtPrice
+	// 130621891405341611593710811006 // tick = 10000
+	shouldPanic(t, func() { CreatePool(barPath, fooPath, 500, 130621891405341611593710811006) })
 }
 
 // 2. Mint by test1
 func TestMint(t *testing.T) {
-	std.TestSetPrevAddr(test1)
-	bar.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64))
-	foo.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64))
-
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(test1)
-	amount0, amount1 := Mint(
+
+	Mint(
 		fooPath,
 		barPath,
 		fee500,
-		consts.POSITION_ADDR,
+		posAddr,
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpect,
 	)
-	shouldEQ(t, amount0, bigint(29))
-	shouldEQ(t, amount1, bigint(80))
 
 	pool := GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect)
 
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
 
-	m81, m82 := Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	m101, m102 := Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
+	m81, m82 := Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	m101, m102 := Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
 
 	shouldNEQ(t, m81, bigint(0))
 	shouldNEQ(t, m82, bigint(0))
@@ -77,27 +71,27 @@ func TestMint(t *testing.T) {
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
 	// tickLower > currentTick == don't add to current liquidity
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower2, test_tickUpper2, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower2, test_tickUpper2, test_liquidityExpect)
 
 	// tickUpper < current tick == don't add to current liquidity
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, -test_tickUpper2, -test_tickLower2, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, -test_tickUpper2, -test_tickLower2, test_liquidityExpect)
 
 	// tickUpper < tickLower == don't add to current liquidity
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, -test_tickUpper, -test_tickLower, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, -test_tickUpper, -test_tickLower, test_liquidityExpect)
 
 	test_liquidity = pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*10)
 
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect)
 
 	test_liquidity = pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, test_liquidityExpect*20)
@@ -105,7 +99,7 @@ func TestMint(t *testing.T) {
 
 // 3. Burn by test1
 func TestBurn(t *testing.T) {
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(test1)
 
 	b11, b12 := Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpect)
@@ -132,11 +126,15 @@ func TestBurn(t *testing.T) {
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpect*9)
 	test_liquidity = pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
+
+	// can't burn when liq is 0
+	// Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpect)
+	shouldPanic(t, func() { Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpect) })
 }
 
 // 4. Collect
 func TestCollect(t *testing.T) {
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(test1)
 
 	// withdraw all token before test `Collect`
@@ -147,18 +145,18 @@ func TestCollect(t *testing.T) {
 	test_liquidity := pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	c11, c12 := Collect(barPath, fooPath, fee500, test1, test_tickLower, test_tickUpper, 50000000, 50000000)
 
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	c21, c22 := Collect(barPath, fooPath, fee500, test1, test_tickLower, test_tickUpper, 50000000, 50000000)
 
 	shouldEQ(t, c11, c21)
 	shouldEQ(t, c12, c22)
 
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	c31, c32 := Collect(barPath, fooPath, fee500, test1, test_tickLower, test_tickUpper, 100, 100)
 	shouldEQ(t, c31, bigint(100))
@@ -169,7 +167,7 @@ func TestCollect(t *testing.T) {
 	shouldEQ(t, c42, c22-bigint(100))
 
 	// Mint > No Burn => nothing to collect
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect*15)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	// Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpect*15)
 	c51, c52 := Collect(barPath, fooPath, fee500, test1, test_tickLower, test_tickUpper, 50000000, 50000000)
 	shouldEQ(t, c51, bigint(0))
@@ -188,17 +186,17 @@ func TestSwap(t *testing.T) {
 	test_liquidity := pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity, bigint(0))
 
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetPrevRealm("gno.land/r/demo/position")
 	std.TestSetOrigCaller(test1)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect*20000)
+	Mint(barPath, fooPath, fee500, posAddr, test_tickLower, test_tickUpper, test_liquidityExpect*20000)
 
 	// Swap several times
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetPrevRealm("gno.land/r/demo/router")
 	std.TestSetOrigCaller(test1)
 	test_price := bigint(consts.MIN_PRICE)
 	{
-		poolOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, consts.POOL_ADDR)
-		poolOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, consts.POOL_ADDR)
+		poolOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
 
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
@@ -217,8 +215,8 @@ func TestSwap(t *testing.T) {
 		shouldNEQ(t, amount0, bigint(0))
 		shouldNEQ(t, amount1, bigint(0))
 
-		poolNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, consts.POOL_ADDR)
-		poolNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, consts.POOL_ADDR)
+		poolNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
 
 		userNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		userNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
@@ -230,16 +228,16 @@ func TestSwap(t *testing.T) {
 	}
 
 	{
-		poolOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, consts.POOL_ADDR)
-		poolOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, consts.POOL_ADDR)
+		poolOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
 
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
 
 		amount0, amount1 := Swap(barPath, fooPath, fee500, test1, true, 5000, test_price, std.GetOrigCaller()) // give enough amount to take fees away
 
-		poolNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, consts.POOL_ADDR)
-		poolNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, consts.POOL_ADDR)
+		poolNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
 
 		userNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		userNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
@@ -251,16 +249,16 @@ func TestSwap(t *testing.T) {
 	}
 
 	{
-		poolOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, consts.POOL_ADDR)
-		poolOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, consts.POOL_ADDR)
+		poolOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
 
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
 
 		amount0, amount1 := Swap(barPath, fooPath, fee500, test1, true, 1000, test_price, std.GetOrigCaller()) // give enough amount to take fees away
 
-		poolNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, consts.POOL_ADDR)
-		poolNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, consts.POOL_ADDR)
+		poolNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
 
 		userNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		userNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
@@ -273,16 +271,16 @@ func TestSwap(t *testing.T) {
 
 	// Swap token1 -> token0
 	{
-		poolOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, consts.POOL_ADDR)
-		poolOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, consts.POOL_ADDR)
+		poolOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
+		poolOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
 
 		userOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
 
 		amount0, amount1 := Swap(barPath, fooPath, fee500, test1, false, 16000, consts.MAX_PRICE, std.GetOrigCaller()) // give enough amount to take fees away
 
-		poolNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, consts.POOL_ADDR)
-		poolNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, consts.POOL_ADDR)
+		poolNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, poolAddr)
+		poolNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, poolAddr)
 
 		userNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		userNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
@@ -297,38 +295,39 @@ func TestSwap(t *testing.T) {
 // 6. SetFeeProtocol by Gnoswap Admin
 func TestSetFeeProtocol(t *testing.T) {
 	// non admin call
-	std.TestSetOrigCaller(gsa)
+	std.TestSetOrigCaller(test1)
 	shouldPanic(t, func() { SetFeeProtocol(2, 2) })
 
 	// admin call
-	std.TestSetOrigCaller(gsa)
+	std.TestSetOrigCaller(test1)
 	SetFeeProtocol(6, 8)
 
 	for _, pool := range pools {
-		shouldEQ(t, pool.PoolGetSlot0().feeProtocol, 134)
+		shouldEQ(t, pool.PoolGetSlot0().feeProtocol, bigint(134))
 	}
 }
 
 // 7. CollectProtocol by Gnoswap Admin
 func TestCollectProtocol(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetOrigCaller(test1)
+
 	SetFeeProtocol(6, 8)
 	pool := GetPool(barPath, fooPath, fee500)
 	test_slot0 := pool.PoolGetSlot0()
-	shouldEQ(t, test_slot0.feeProtocol, 134)
+	shouldEQ(t, test_slot0.feeProtocol, bigint(134))
 
 	// Make ProtocolFee via Swap by test1 ( Mint by test1 )
 	std.TestSetOrigCaller(test1)
 	{
 
-		std.TestSetPrevRealm(consts.ROUTER_PATH)
+		std.TestSetPrevRealm("gno.land/r/demo/router")
 		std.TestSetOrigCaller(test1)
 		Swap(barPath, fooPath, fee500, test1, true, 200000, consts.MIN_PRICE, std.GetOrigCaller()) // swap token0 -> token1 => fee only in token0
 
 		test1OldToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		test1OldToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
 
-		std.TestSetPrevAddr(gsa)
+		std.TestSetPrevAddr(test1)
 		amount0, amount1 := CollectProtocol(barPath, fooPath, fee500, test1, 100000, 100000)
 
 		test1NewToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
@@ -340,14 +339,14 @@ func TestCollectProtocol(t *testing.T) {
 
 	{
 
-		std.TestSetPrevRealm(consts.ROUTER_PATH)
+		std.TestSetPrevRealm("gno.land/r/demo/router")
 		std.TestSetOrigCaller(test1)
-		Swap(barPath, fooPath, fee500, test1, false, 200000, consts.MAX_SQRT_RATIO-1, std.GetOrigCaller()) // swap token0 -> token1 => fee only in token0
+		Swap(barPath, fooPath, fee500, test1, false, 200000, MAX_SQRT_RATIO-1, std.GetOrigCaller()) // swap token0 -> token1 => fee only in token0
 
 		test1OldToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		test1OldToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
 
-		std.TestSetPrevAddr(gsa)
+		std.TestSetPrevAddr(test1)
 		amount0, amount1 := CollectProtocol(barPath, fooPath, fee500, test1, 100000, 100000)
 
 		test1NewToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
@@ -360,8 +359,18 @@ func TestApiGetPools(t *testing.T) {
 	gpls := ApiGetPools()
 	jsonStr := gjson.Parse(gpls)
 
-	shouldEQ(t, jsonStr.Get("stat.height").Int(), std.GetHeight())
-	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), time.Now().Unix())
+	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())
+	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
 
 	shouldEQ(t, len(jsonStr.Get("response").Array()), 1)
+}
+
+func TestApiGetPool(t *testing.T) {
+	gpl := ApiGetPool("gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	jsonStr := gjson.Parse(gpl)
+
+	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())
+	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
+
+	shouldEQ(t, len(jsonStr.Get("response.positions").Array()), 4)
 }
