@@ -35,7 +35,7 @@ type Uint struct {
 func (x *Uint) Int() *Int {
 	// panic if x > MaxInt64
 	if x.arr[3] > 0x7fffffffffffffff {
-		panic("Int overflow")
+		panic("U256 Int overflow")
 	}
 
 	return &Int{v: *x}
@@ -44,11 +44,11 @@ func (x *Uint) Int() *Int {
 // TODO: to be removed
 func FromBigint(x bigint) *Uint {
 	if x > MaxUint256 {
-		panic("FromBigint overflow")
+		panic("U256 FromBigint overflow")
 	}
 
 	if x < 0 {
-		panic("FromBigint underflow")
+		panic("U256 FromBigint underflow")
 	}
 
 	var z Uint
@@ -81,7 +81,7 @@ func (z *Uint) Uint64() uint64 {
 func (z *Uint) Int32() int32 {
 	x := z.arr[0]
 	if x > 0x7fffffff {
-		panic("Int32 overflow")
+		panic("U256 Int32 overflow")
 	}
 	return int32(x)
 }
@@ -171,6 +171,7 @@ func (z *Uint) Cmp(x *Uint) (r int) {
 // Set sets z to x and returns z.
 func (z *Uint) Set(x *Uint) *Uint {
 	*z = *x
+
 	return z
 }
 
@@ -197,7 +198,7 @@ func (z *Uint) Add(x, y *Uint) *Uint {
 	// Different from the original implementation!
 	// We panic on overflow
 	if carry != 0 {
-		panic("Add overflow")
+		panic("U256 Add overflow")
 	}
 	return z
 }
@@ -232,8 +233,19 @@ func (z *Uint) Sub(x, y *Uint) *Uint {
 	// Different from the original implementation!
 	// We panic on underflow
 	if carry != 0 {
-		panic("Sub underflow")
+		panic("U256 Sub underflow")
 	}
+	return z
+}
+
+// Sub sets z to the difference x-y
+func (z *Uint) unsafeSub(x, y *Uint) *Uint {
+	var carry uint64
+	z.arr[0], carry = Sub64(x.arr[0], y.arr[0], 0)
+	z.arr[1], carry = Sub64(x.arr[1], y.arr[1], carry)
+	z.arr[2], carry = Sub64(x.arr[2], y.arr[2], carry)
+	z.arr[3], _ = Sub64(x.arr[3], y.arr[3], carry)
+
 	return z
 }
 
@@ -1128,6 +1140,7 @@ func (z *Uint) Dec() string { // toString()
 	if z.IsUint64() {
 		return FormatUint(z.Uint64(), 10)
 	}
+
 	// The max uint64 value being 18446744073709551615, the largest
 	// power-of-ten below that is 10000000000000000000.
 	// When we do a DivMod using that number, the remainder that we
@@ -1211,4 +1224,16 @@ func (z *Uint) Clone() *Uint {
 	x.arr[3] = z.arr[3]
 
 	return &x
+}
+
+func (z *Uint) IsNil() bool {
+	return z == nil
+}
+
+func (z *Uint) NilToZero() *Uint {
+	if z == nil {
+		z = NewUint(0)
+	}
+
+	return z
 }

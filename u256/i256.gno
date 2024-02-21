@@ -24,17 +24,25 @@ func NewInt(v int64) *Int {
 
 func IntFromBigint(v bigint) *Int {
 	if v > MaxUint256/2-1 {
-		panic("overflow")
+		panic("I256 IntFromBigint overflow")
 	}
 	if v < -MaxUint256/2 {
-		panic("underflow")
+		panic("I256 IntFromBigint underflow")
 	}
 
 	if v >= 0 {
 		return &Int{v: *FromBigint(v)}
 	}
 
-	panic("IntFromBigint not implemented")
+	panic("I256 IntFromBigint not implemented")
+}
+
+func (x *Int) Bigint() bigint {
+	if x.Signum() < 0 {
+		panic("I256 Bigint negative")
+	}
+	return x.v.Bigint()
+
 }
 
 func (x *Int) IsNeg() bool {
@@ -48,28 +56,28 @@ func (x *Int) Add(y *Int, z *Int) *Int {
 	zs := z.Signum()
 
 	if ys > 0 && zs > 0 && x.Signum() < 0 {
-		panic("overflow")
+		panic("I256 Add overflow")
 	}
 
 	if ys < 0 && zs < 0 && x.Signum() > 0 {
-		panic("underflow")
+		panic("I256 Add underflow")
 	}
 
 	return x
 }
 
 func (x *Int) Sub(y *Int, z *Int) *Int {
-	x.v.Sub(&y.v, &z.v)
+	x.v.unsafeSub(&y.v, &z.v)
 
 	ys := y.Signum()
 	zs := z.Signum()
 
 	if ys > 0 && zs < 0 && x.Signum() < 0 {
-		panic("Sub overflow")
+		panic("I256 Sub overflow")
 	}
 
 	if ys < 0 && zs > 0 && x.Signum() > 0 {
-		panic("Sub underflow")
+		panic("I256 Sub underflow")
 	}
 
 	return x
@@ -82,19 +90,19 @@ func (x *Int) Mul(y *Int, z *Int) *Int {
 	zs := z.Signum()
 
 	if ys > 0 && zs > 0 && x.Signum() < 0 {
-		panic("Mul overflow #1")
+		panic("I256 Mul overflow #1")
 	}
 
 	if ys < 0 && zs < 0 && x.Signum() < 0 {
-		panic("Mul overflow #2")
+		panic("I256 Mul overflow #2")
 	}
 
 	if ys > 0 && zs < 0 && x.Signum() > 0 {
-		panic("Mul underflow #1")
+		panic("I256 Mul underflow #1")
 	}
 
 	if ys < 0 && zs > 0 && x.Signum() > 0 {
-		panic("Mul underflow #2")
+		panic("I256 Mul underflow #2")
 	}
 
 	return x
@@ -196,12 +204,12 @@ func (x *Int) Dec() string {
 }
 
 func (x *Int) Bigint() bigint {
-	panic("Bigint not implemented")
+	panic("I256 Bigint not implemented")
 }
 
 func (x *Int) Uint() *Uint {
 	if x.Signum() < 0 {
-		// panic("Uint negative")
+		// panic("I256 Uint negative")
 		return &x.Neg().v // r3v4_xxx: safe ??
 	}
 	return &x.v
@@ -209,5 +217,13 @@ func (x *Int) Uint() *Uint {
 
 func (z *Int) Or(x, y *Int) *Int {
 	z.v.Or(&x.v, &y.v)
+	return z
+}
+
+func (z *Int) NilToZero() *Int {
+	if z == nil {
+		z = NewInt(0)
+	}
+
 	return z
 }
