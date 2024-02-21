@@ -130,7 +130,7 @@ func (z *Uint) Gte(x *Uint) bool {
 }
 
 func (z *Uint) Lte(x *Uint) bool {
-	return x.Gt(z)
+	return !x.Gt(z)
 }
 
 // Lt returns true if z < x
