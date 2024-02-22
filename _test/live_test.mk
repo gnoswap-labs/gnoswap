@@ -21,8 +21,8 @@ ADDR_GOV := g1kmat25auuqf0h5qvd4q7s707r8let5sky4tr76
 TX_EXPIRE := 9999999999
 
 NOW := $(shell date +%s)
-INCENTIVE_START := $(shell expr $(NOW) + 160) # GIVE ENOUGH TIME TO EXECUTE PREVIOUS TXS
-INCENTIVE_END := $(shell expr $(NOW) + 160 + 7776000) # 7776000 SECONDS = 90 DAY
+INCENTIVE_START := $(shell expr $(NOW) + 360) # GIVE ENOUGH TIME TO EXECUTE PREVIOUS TXS
+INCENTIVE_END := $(shell expr $(NOW) + 360 + 7776000) # 7776000 SECONDS = 90 DAY
 
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 GNOLAND_RPC_URL ?= localhost:26657
@@ -38,6 +38,7 @@ help:
 all: wait deploy faucet approve pool-setup position-mint staker-stake router-swap staker-unstake done
 
 .PHONY: deploy
+# deploy: deploy-foo deploy-bar deploy-baz deploy-qux deploy-gns deploy-obl deploy-gnft deploy-const deploy-common deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-wrapper 
 deploy: deploy-foo deploy-bar deploy-baz deploy-qux deploy-wugnot deploy-gns deploy-obl deploy-gnft deploy-const deploy-common deploy-gov deploy-pool deploy-position deploy-staker deploy-router deploy-wrapper 
 
 .PHONY: faucet
