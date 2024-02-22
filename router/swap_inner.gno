@@ -3,7 +3,7 @@ package router
 import (
 	"std"
 
-	p "gno.land/r/demo/pool"
+	pl "gno.land/r/demo/pool"
 
 	"gno.land/r/demo/consts"
 )
@@ -30,7 +30,7 @@ func _swap(
 	approveByRegisterCall(data.tokenIn, consts.POOL_ADDR, uint64(toApproveAmount))
 	approveByRegisterCall(data.tokenOut, consts.POOL_ADDR, uint64(toApproveAmount))
 
-	amount0, amount1 := p.Swap(
+	amount0, amount1 := pl.Swap(
 		data.tokenIn,
 		data.tokenOut,
 		data.fee,
@@ -63,7 +63,7 @@ func _swapDry(
 	}
 
 	// check possible
-	amount0, amount1, ok := p.DrySwap(
+	amount0, amount1, ok := pl.DrySwap(
 		data.tokenIn,
 		data.tokenOut,
 		data.fee,

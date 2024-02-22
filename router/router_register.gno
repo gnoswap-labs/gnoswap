@@ -3,9 +3,8 @@ package router
 import (
 	"std"
 
-	"gno.land/r/demo/users"
-
 	"gno.land/r/demo/consts"
+	"gno.land/r/demo/users"
 )
 
 var registered = []GRC20Pair{}
