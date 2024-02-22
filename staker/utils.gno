@@ -29,12 +29,6 @@ func poolKeyDivide(poolKey string) string {
 	return ufmt.Sprintf("%s:%s:%s", pToken1, pToken0, fee)
 }
 
-func require(condition bool, message string) {
-	if !condition {
-		panic(message)
-	}
-}
-
 func a2u(addr std.Address) users.AddressOrName {
 	return users.AddressOrName(addr)
 }
@@ -76,6 +70,18 @@ func min(x, y int64) int64 {
 
 func requireUnsigned(x bigint, msg string) {
 	if x < 0 {
+		panic(msg)
+	}
+}
+
+func require(condition bool, message string) {
+	if !condition {
+		panic(message)
+	}
+}
+
+func requireExist(exist bool, msg string) {
+	if !exist {
 		panic(msg)
 	}
 }
