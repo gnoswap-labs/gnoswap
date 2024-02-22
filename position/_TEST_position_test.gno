@@ -1,18 +1,15 @@
 package position
 
 import (
+	"encoding/gjson"
 	"std"
 	"testing"
 
-	"encoding/gjson"
+	"gno.land/p/demo/common"
 
 	pl "gno.land/r/demo/pool"
-)
 
-var (
-	test_tickLower       = int32(9000)
-	test_tickUpper       = int32(11000)
-	test_liquidityExpect = bigint(1000)
+	"gno.land/r/demo/gnft"
 )
 
 // 1. Init & Create Pool
@@ -21,119 +18,76 @@ func TestPoolInitCreatePool(t *testing.T) {
 	pl.InitManual()
 
 	std.TestSetOrigCaller(test1)
-	pl.CreatePool(fooPath, barPath, fee500, 130621891405341611593710811006)
-
-	// fee
-	// 500		= 0.05% // USv3 default
-	// 3000		= 0.3% // USv3 default
-	// 10000	= 1% // USv3 default
+	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(10000)) // x2.71814592682522526700950038502924144268035888671875
 
 	// sqrtPrice
-	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { pl.CreatePool(fooPath, barPath, fee500, 130621891405341611593710811006) })
+	shouldPanic(t, func() { pl.CreatePool(fooPath, barPath, fee500, common.TickMathGetSqrtRatioAtTick(10000)) })
 }
 
-// 2. Mint LP and Get GNFT
-func TestMint(t *testing.T) {
-	// test1 mints
-	// will get tid 1 nft
-	{
-		std.TestSetOrigCaller(test1)
+func TestMintPosition01InRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
 
-		tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-			fooPath,
-			barPath,
-			fee500,
-			test_tickLower,
-			test_tickUpper,
-			bigint(50000000),
-			bigint(50000000),
-			bigint(1),
-			bigint(1),
-			bigint(1234567890),
-		)
-
-		isOwner(t, tTokenId, test1)
-		shouldEQ(t, tTokenId, 1)
-		shouldEQ(t, getNextId(), 2)
-	}
-
-	// test1 mints
-	// will get tid 2 nft
-	{
-		std.TestSetOrigCaller(test1)
-
-		tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-			fooPath,
-			barPath,
-			fee500,
-			test_tickLower,
-			test_tickUpper,
-			bigint(2000),
-			bigint(2000),
-			bigint(1),
-			bigint(1),
-			bigint(1234567890),
-		)
-
-		isOwner(t, tTokenId, test1)
-		shouldEQ(t, tTokenId, 2)
-		shouldEQ(t, getNextId(), 3)
-	}
-
-	// test1 mints out of range => token1 will be 0
-	// will get tid 3 nft
-	{
-		std.TestSetOrigCaller(test1)
-
-		tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-			fooPath,
-			barPath,
-			fee500,
-			int32(1000),
-			int32(2000),
-			bigint(1000),
-			bigint(1000),
-			bigint(0),
-			bigint(0),
-			bigint(1234567890),
-		)
-		shouldEQ(t, tAmount0, bigint(1000))
-		shouldEQ(t, tAmount1, bigint(0))
-
-		isOwner(t, tTokenId, test1)
-		shouldEQ(t, tTokenId, 3)
-		shouldEQ(t, getNextId(), 4)
-	}
-
-	// test1 mints out of range => token0 will be 0
-	// will get tid 4 nft
-	{
-		std.TestSetOrigCaller(test1)
-
-		tTokenId, tLiquidity, tAmount0, tAmount1 := Mint(
-			fooPath,
-			barPath,
-			fee500,
-			int32(-34000),
-			int32(-32000),
-			bigint(1000),
-			bigint(1000),
-			bigint(0),
-			bigint(0),
-			bigint(1234567890),
-		)
-		shouldEQ(t, tAmount0, bigint(1000))
-		shouldEQ(t, tAmount1, bigint(0))
-
-		isOwner(t, tTokenId, test1)
-		shouldEQ(t, tTokenId, 4)
-		shouldEQ(t, getNextId(), 5)
-	}
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		8000,
+		12000,
+		bigint(50000000),
+		bigint(50000000),
+		bigint(0),
+		bigint(0),
+		max_timeout,
+	)
+	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, getNextId(), 2)
+	shouldEQ(t, amount0, bigint(18394891))
+	shouldEQ(t, amount1, bigint(50000000))
 }
 
-func TestCollectFee(t *testing.T) {
-	// collect fee from tid 1 ( no swap, no fee)
+func TestMintPosition02LowerRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		5000,
+		8000,
+		bigint(50000000),
+		bigint(50000000),
+		bigint(0),
+		bigint(0),
+		max_timeout,
+	)
+	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, getNextId(), 3)
+	shouldEQ(t, amount0, bigint(0))
+	shouldEQ(t, amount1, bigint(50000000))
+}
+
+func TestMintPosition03UpperRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		12000,
+		14000,
+		bigint(50000000),
+		bigint(50000000),
+		bigint(0),
+		bigint(0),
+		max_timeout,
+	)
+	shouldEQ(t, tokenId, 3)
+	shouldEQ(t, getNextId(), 4)
+	shouldEQ(t, amount0, bigint(50000000))
+	shouldEQ(t, amount1, bigint(0))
+}
+
+func TestCollectFeeBeforeSwap(t *testing.T) {
 	tokenId, fee0, fee1, poolPath := CollectFee(1)
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, fee0, bigint(0))
@@ -141,8 +95,27 @@ func TestCollectFee(t *testing.T) {
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
 
+func TestBurnUpperPosition(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	ownerOfPosition := gnft.OwnerOf(tid(3))
+	shouldEQ(t, ownerOfPosition, GetOrigCaller())
+
+	tokenId, liquidity, amount0, amount1, poolPath := Burn(3)
+	shouldEQ(t, tokenId, uint64(3))
+	shouldEQ(t, amount0, bigint(50000000))
+	shouldEQ(t, amount1, bigint(0))
+
+	ownerOfPosition = gnft.OwnerOf(tid(3))
+	shouldEQ(t, ownerOfPosition, GetOrigCaller())
+}
+
 func TestApiGetPositions(t *testing.T) {
 	gpss := ApiGetPositions()
 	jsonStr := gjson.Parse(gpss)
-	shouldEQ(t, len(jsonStr.Get("response").Array()), 4)
+	jsonArr := jsonStr.Get("response").Array()
+	shouldEQ(t, len(jsonArr), 3)
+
+	shouldEQ(t, jsonArr[0].Get("burned").Bool(), false)
+	shouldEQ(t, jsonArr[2].Get("burned").Bool(), true)
 }

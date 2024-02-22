@@ -12,7 +12,7 @@ import (
 
 	"gno.land/r/demo/wugnot"
 
-	nft "gno.land/r/demo/gnft"
+	"gno.land/r/demo/gnft"
 )
 
 var (
@@ -28,6 +28,8 @@ var (
 	fee100  = uint16(100)
 	fee500  = uint16(500)
 	fee3000 = uint16(3000)
+
+	max_timeout = bigint(9999999999)
 )
 
 func init() {
@@ -97,7 +99,7 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func isOwner(t *testing.T, tokenId uint64, addr std.Address) bool {
-	owner := nft.OwnerOf(tid(tokenId))
+	owner := gnft.OwnerOf(tid(tokenId))
 
 	if owner == addr {
 		return true
