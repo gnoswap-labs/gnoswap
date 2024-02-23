@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/common"
+	"gno.land/r/demo/consts"
 
 	pl "gno.land/r/demo/pool"
 
@@ -93,6 +94,30 @@ func TestCollectFeeBeforeSwap(t *testing.T) {
 	shouldEQ(t, fee0, bigint(0))
 	shouldEQ(t, fee1, bigint(0))
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+}
+
+func TestSwap(t *testing.T) {
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(test1)
+	amount0, amount1 := pl.Swap(
+		barPath,
+		fooPath,
+		fee500,
+		test1,
+		true,
+		bigint(1_234_567),
+		consts.MIN_PRICE,
+		test1,
+	)
+}
+
+func TestCollectFeeAfterSwap(t *testing.T) {
+	tokenId, fee0, fee1, poolPath := CollectFee(1)
+	shouldEQ(t, tokenId, uint64(1))
+	shouldNEQ(t, fee0, bigint(0)) // this is input token
+	shouldEQ(t, fee1, bigint(0))  // this it output token
+	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+
 }
 
 func TestBurnUpperPosition(t *testing.T) {
