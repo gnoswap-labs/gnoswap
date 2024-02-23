@@ -9,10 +9,6 @@ import (
 	"gno.land/r/demo/consts"
 )
 
-var registered = []GRC20Pair{}
-
-var locked bool // mutex flag
-
 type GRC20Interface interface {
 	Transfer() func(to users.AddressOrName, amount uint64)
 	TransferFrom() func(from, to users.AddressOrName, amount uint64)
@@ -20,88 +16,61 @@ type GRC20Interface interface {
 	Approve() func(spender users.AddressOrName, amount uint64)
 }
 
-type GRC20Pair struct {
-	pkgPath string
-	igrc20  GRC20Interface
-}
+var (
+	registered = make(map[string]GRC20Interface)
+	locked     = false // mutex
+)
 
-func findGRC20(pkgPath string) (int, bool) {
-	pkgPath = handleNative(pkgPath)
-
-	for i, pair := range registered {
-		if pair.pkgPath == pkgPath {
-			return i, true
-		}
+func GetRegisteredTokens() []string {
+	tokens := make([]string, 0, len(registered))
+	for k := range registered {
+		tokens = append(tokens, k)
 	}
-
-	return -1, false
-}
-
-func appendGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
-	pkgPath = handleNative(pkgPath)
-
-	registered = append(registered, GRC20Pair{pkgPath: pkgPath, igrc20: igrc20})
-}
-
-func removeGRC20Interface(pkgPath string) {
-	pkgPath = handleNative(pkgPath)
-
-	i, found := findGRC20(pkgPath)
-	if !found {
-		return
-	}
-
-	registered = append(registered[:i], registered[i+1:]...)
+	return tokens
 }
 
 func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
-	// only admin can register
-	// r3v4_xxx: below logic can't be used in test case
-	// r3v4_xxx: however must be used in production
-
-	// caller := std.GetOrigCaller()
-	// if caller != consts.GNOSWAP_ADMIN {
-	// 	panic("unauthorized address to register")
-	// }
+	caller := std.GetOrigCaller()
+	if caller != consts.GNOSWAP_ADMIN {
+		panic(ufmt.Sprintf("[POOL] pool_register.gno__RegisterGRC20Interface() || unauthorized address(%s) to register", caller.String()))
+	}
 
 	pkgPath = handleNative(pkgPath)
 
-	_, found := findGRC20(pkgPath)
-	if !found {
-		appendGRC20Interface(pkgPath, igrc20)
+	_, found := registered[pkgPath]
+	if found {
+		panic(ufmt.Sprintf("[POOL] pool_register.gno__RegisterGRC20Interface() || pkgPath(%s) already registered", pkgPath))
 	}
+
+	registered[pkgPath] = igrc20
 }
 
 func UnregisterGRC20Interface(pkgPath string) {
-	pkgPath = handleNative(pkgPath)
-
-	// do not allow realm to unregister
-	std.AssertOriginCall()
-
 	// only admin can unregister
 	caller := std.GetOrigCaller()
 	if caller != consts.GNOSWAP_ADMIN {
 		panic(ufmt.Sprintf("[POOL] pool_register.gno__UnregisterGRC20Interface() || unauthorized address(%s) to unregister", caller.String()))
 	}
 
-	_, found := findGRC20(pkgPath)
+	pkgPath = handleNative(pkgPath)
+
+	_, found := registered[pkgPath]
 	if found {
-		removeGRC20Interface(pkgPath)
+		delete(registered, pkgPath)
 	}
 }
 
 func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool {
 	pkgPath = handleNative(pkgPath)
 
-	i, found := findGRC20(pkgPath)
+	_, found := registered[pkgPath]
 	if !found {
 		panic(ufmt.Sprintf("[POOL] pool_register.gno__transferByRegisterCall() || pkgPath(%s) not found", pkgPath))
-		// return false
 	}
 
 	if !locked {
 		locked = true
-		registered[i].igrc20.Transfer()(users.AddressOrName(to), amount)
+		registered[pkgPath].Transfer()(users.AddressOrName(to), amount)
 
 		defer func() {
 			locked = false
@@ -115,15 +84,14 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uint64) bool {
 	pkgPath = handleNative(pkgPath)
 
-	i, found := findGRC20(pkgPath)
+	_, found := registered[pkgPath]
 	if !found {
 		panic(ufmt.Sprintf("[POOL] pool_register.gno__transferFromByRegisterCall() || pkgPath(%s) not found", pkgPath))
-		// return false
 	}
 
 	if !locked {
 		locked = true
-		registered[i].igrc20.TransferFrom()(users.AddressOrName(from), users.AddressOrName(to), amount)
+		registered[pkgPath].TransferFrom()(users.AddressOrName(from), users.AddressOrName(to), amount)
 
 		defer func() {
 			locked = false
@@ -137,26 +105,24 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 func balanceOfByRegisterCall(pkgPath string, owner std.Address) uint64 {
 	pkgPath = handleNative(pkgPath)
 
-	i, found := findGRC20(pkgPath)
+	_, found := registered[pkgPath]
 	if !found {
 		panic(ufmt.Sprintf("[POOL] pool_register.gno__balanceOfByRegisterCall() || pkgPath(%s) not found", pkgPath))
-		// return 0
 	}
 
-	balance := registered[i].igrc20.BalanceOf()(users.AddressOrName(owner))
+	balance := registered[pkgPath].BalanceOf()(users.AddressOrName(owner))
 	return balance
 }
 
 func approveByRegisterCall(pkgPath string, spender std.Address, amount uint64) bool {
 	pkgPath = handleNative(pkgPath)
 
-	i, found := findGRC20(pkgPath)
+	_, found := registered[pkgPath]
 	if !found {
 		panic(ufmt.Sprintf("[POOL] pool_register.gno__approveByRegisterCall() || pkgPath(%s) not found", pkgPath))
-		// return false
 	}
 
-	registered[i].igrc20.Approve()(users.AddressOrName(spender), amount)
+	registered[pkgPath].Approve()(users.AddressOrName(spender), amount)
 
 	return true
 }
