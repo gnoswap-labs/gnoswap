@@ -57,8 +57,6 @@ func CreatePool(
 	requireExist(!exist, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected poolPath(%s) not to exist", poolPath))
 
 	if !exist {
-		// recipient is same address that receives protocol fee
-		// r3v4_xxx: change admin address when publish
 		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.GNOSWAP_ADMIN), consts.POOL_CREATION_FEE)
 
 		pool = newPool(token0Path, token1Path, fee, tickSpacing, sqrtPriceX96)

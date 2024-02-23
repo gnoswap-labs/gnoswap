@@ -3,6 +3,8 @@ package position
 import (
 	"gno.land/p/demo/common"
 
+	"gno.land/r/demo/consts"
+
 	pl "gno.land/r/demo/pool"
 )
 
@@ -27,7 +29,7 @@ func addLiquidity(params AddLiquidityParams) (bigint, bigint, bigint) {
 		pToken0,
 		pToken1,
 		pFee,
-		params.recipient,
+		consts.POSITION_ADDR,
 		params.tickLower,
 		params.tickUpper,
 		liquidity,

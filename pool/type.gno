@@ -21,19 +21,19 @@ type ProtocolFees struct {
 	token1 bigint
 }
 
-type ModifyPositionParams struct { // r3v4_xxx: private?
+type ModifyPositionParams struct {
 	owner          std.Address
 	tickLower      int32
 	tickUpper      int32
 	liquidityDelta bigint
 }
 
-type SwapCache struct { // r3v4_xxx: private?
+type SwapCache struct {
 	feeProtocol    uint8
 	liquidityStart bigint
 }
 
-type SwapState struct { // r3v4_xxx: private?
+type SwapState struct {
 	amountSpecifiedRemaining bigint
 	amountCalculated         bigint
 	sqrtPriceX96             bigint
@@ -43,7 +43,7 @@ type SwapState struct { // r3v4_xxx: private?
 	liquidity                bigint
 }
 
-type StepComputations struct { // r3v4_xxx: private?
+type StepComputations struct {
 	sqrtPriceStartX96 bigint
 	tickNext          int32
 	initialized       bool

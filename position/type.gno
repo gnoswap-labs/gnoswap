@@ -35,13 +35,11 @@ type MintParams struct {
 	amount1Desired bigint
 	amount0Min     bigint
 	amount1Min     bigint
-	// recipient std.Address // XXX de facto: hardcoded to nft manager contract address
-	deadline bigint
+	deadline       bigint
 }
 
 type AddLiquidityParams struct {
 	poolKey        string
-	recipient      std.Address // XXX de facto: hardcoded to nft manager contract address
 	tickLower      int32
 	tickUpper      int32
 	amount0Desired bigint
