@@ -4,7 +4,7 @@ import (
 	"std"
 )
 
-type Incentive struct { // r3v4_xxx: private?
+type Incentive struct {
 	targetPoolPath string
 	rewardToken    string
 	rewardAmount   bigint
@@ -13,14 +13,14 @@ type Incentive struct { // r3v4_xxx: private?
 	refundee       std.Address
 }
 
-type Deposit struct { // r3v4_xxx: private?
+type Deposit struct {
 	owner          std.Address
 	numberOfStakes uint64
 	stakeTimestamp int64
 	targetPoolPath string
 }
 
-type StakingRewards struct { // r3v4_xxx: private? or is it for gov?
+type StakingRewards struct {
 	Tier1 uint8
 	Tier2 uint8
 	Tier3 uint8

@@ -56,7 +56,7 @@ func init() {
 
 	wugnot.Approve(a2u(consts.POOL_ADDR), 500_000_000_000_000)
 
-	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)       // r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
+	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
 	gns.Approve(a2u(consts.STAKER_ADDR), 500_000_000_000_000) // to create internal incentive
 }
 

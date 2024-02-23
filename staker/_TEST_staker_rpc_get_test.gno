@@ -4,10 +4,14 @@ import (
 	"std"
 	"testing"
 
+	"encoding/gjson"
+
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
 
 	"gno.land/r/demo/gnft"
+	"gno.land/r/demo/gns"
+	"gno.land/r/demo/obl"
 )
 
 func init() {
@@ -121,66 +125,65 @@ func TestStakeToken(t *testing.T) {
 	}
 }
 
-var poolPath = "gno.land/r/demo/bar:gno.land/r/demo/qux:500"
-var incentiveId = "ZzFqZzhtdHV0dTlraGhmd2M0bnhtdWhjcGZ0ZjBwYWpkaGZ2c3FmNTpnbm8ubGFuZC9yL2RlbW8vYmFyOmduby5sYW5kL3IvZGVtby9xdXg6NTAwOmduby5sYW5kL3IvZGVtby9vYmw="
-var lpTokenId = uint64(1)
-
-func TestStakerPoolIncentives(t *testing.T) {
-	incentives := StakerPoolIncentives(poolPath)
-	shouldEQ(t, incentives[0], incentiveId)
+func TestApiGetRewards(t *testing.T) {
+	agrs := ApiGetRewards()
+	jsonStr := gjson.Parse(agrs)
+	jsonArr := jsonStr.Get("response").Array()
+	shouldEQ(t, len(jsonArr), 2) // lpTokenId 1, 2
 }
 
-func TestStakerIncentiveTargetPoolPath(t *testing.T) {
-	targetPoolPath := StakerIncentiveTargetPoolPath(incentiveId)
-	shouldEQ(t, targetPoolPath, poolPath)
+func TestApiGetStakes(t *testing.T) {
+	ags := ApiGetStakes()
+	jsonStr := gjson.Parse(ags)
+	jsonArr := jsonStr.Get("response").Array()
+	shouldEQ(t, len(jsonArr), 2) // lpTokenId 1, 2
 }
 
-func TestStakerIncentiveRewardToken(t *testing.T) {
-	rewardToken := StakerIncentiveRewardToken(incentiveId)
-	shouldEQ(t, rewardToken, "gno.land/r/demo/obl")
+func TestCollectReward(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	// before claim
+	gnsOld := gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsOld, 99999999500)
+
+	CollectReward(1) // GNFT tokenId
+	gnsNew := gns.BalanceOf(a2u(test1))
+	shouldEQ(t, gnsNew, 99999999626)
+
 }
 
-func TestStakerIncentiveRewardAmount(t *testing.T) {
-	rewardAmount := StakerIncentiveRewardAmount(incentiveId)
-	shouldEQ(t, rewardAmount, bigint(20_000_000_000))
+func TestUnstakeToken(t *testing.T) {
+	{
+		std.TestSetOrigCaller(test1)
+		UnstakeToken(1) // GNFT tokenId
+		std.TestSkipHeights(1)
+
+		shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
+
+		// check reward
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 99999999626)     // internal
+		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000000648) // external
+	}
+
+	{
+		std.TestSetOrigCaller(test1)
+		UnstakeToken(2) // GNFT tokenId
+		std.TestSkipHeights(1)
+
+		shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
+
+		// check reward
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 100000000451)    // internal
+		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000004891) // external
+	}
 }
 
-func TestStakerIncentiveStartTimestamp(t *testing.T) {
-	startTimestamp := StakerIncentiveStartTimestamp(incentiveId)
-	shouldEQ(t, startTimestamp, 1234567920)
-}
+func TestEndExternalIncentive(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+	std.TestSkipHeights(9999999)
+	EndExternalIncentive(GetOrigCaller().String(), "gno.land/r/demo/bar:gno.land/r/demo/qux:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
+	std.TestSkipHeights(1)
 
-func TestStakerIncentiveEndTimestamp(t *testing.T) {
-	endTimestamp := StakerIncentiveEndTimestamp(incentiveId)
-	shouldEQ(t, endTimestamp, 1242343920)
-}
-
-func TestStakerIncentiveRefundee(t *testing.T) {
-	refundee := StakerIncentiveRefundee(incentiveId)
-	shouldEQ(t, refundee, a2u(test1))
-}
-
-func TestStakerDepositOwner(t *testing.T) {
-	owner := StakerDepositOwner(lpTokenId)
-	shouldEQ(t, owner, a2u(test1))
-}
-
-func TestStakerDepositNumberOfStakes(t *testing.T) {
-	numberOfStakes := StakerDepositNumberOfStakes(lpTokenId)
-	shouldEQ(t, numberOfStakes, 1)
-}
-
-func TestStakerDepositStakeTimestamp(t *testing.T) {
-	stakeTimestamp := StakerDepositStakeTimestamp(lpTokenId)
-	shouldEQ(t, stakeTimestamp, 1234567945)
-}
-
-func TestStakerDepositTargetPoolPath(t *testing.T) {
-	targetPoolPath := StakerDepositTargetPoolPath(lpTokenId)
-	shouldEQ(t, targetPoolPath, poolPath)
-}
-
-func TestStakerPoolTier(t *testing.T) {
-	tier := StakerPoolTier(poolPath)
-	shouldEQ(t, tier, 1)
+	shouldEQ(t, len(incentives), 0)
+	shouldEQ(t, len(poolIncentives["gno.land/r/demo/bar:gno.land/r/demo/qux:500"]), 0)
 }
