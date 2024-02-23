@@ -247,7 +247,7 @@ func CollectFee(tokenId uint64) (uint64, bigint, bigint, string) { // tokenId, t
 	position := positions[tokenId]
 
 	token0, token1, fee := poolKeyDivide(position.poolKey)
-	burnedAmount0, burnedAmount1 := pl.Burn(
+	pl.Burn(
 		token0,
 		token1,
 		fee,
@@ -256,9 +256,8 @@ func CollectFee(tokenId uint64) (uint64, bigint, bigint, string) { // tokenId, t
 		0, // burn '0' liquidity to collect fee
 	)
 
-	tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
-
 	// r3v4_xxx: DOES THIS NEED FOR COLLECT FEE
+	// tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
 	// positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	// pool := pl.GetPoolFromPoolPath(position.poolKey)
 	// feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
@@ -276,13 +275,13 @@ func CollectFee(tokenId uint64) (uint64, bigint, bigint, string) { // tokenId, t
 		GetOrigCaller(),
 		position.tickLower,
 		position.tickUpper,
-		burnedAmount0,
-		burnedAmount1,
+		consts.MAX_UINT64, // r3v4_xxx: current grc20 handles amount by `unit64`
+		consts.MAX_UINT64, // r3v4_xxx: current grc20 handles amount by `unit64`
 	)
 
 	// r3v4_xxx: DOES THIS NEED FOR COLLECT FEE
-	position.tokensOwed0, position.tokensOwed1 = tokensOwed0-amount0, tokensOwed1-amount1
-	positions[tokenId] = position
+	// position.tokensOwed0, position.tokensOwed1 = tokensOwed0-amount0, tokensOwed1-amount1
+	// positions[tokenId] = position
 
 	return tokenId, amount0, amount1, position.poolKey
 }
