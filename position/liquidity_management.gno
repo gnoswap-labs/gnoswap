@@ -20,7 +20,7 @@ func addLiquidity(params AddLiquidityParams) (bigint, bigint, bigint) {
 		params.amount0Desired,
 		params.amount1Desired,
 	)
-	liquidity += 1 // adjust for rounding errors
+	liquidity += 2 // r3v4_xxx: adjust for rounding errors
 
 	pToken0, pToken1, pFee := poolKeyDivide(params.poolKey)
 	amount0, amount1 := pl.Mint(
