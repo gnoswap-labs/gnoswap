@@ -55,13 +55,16 @@ func _computeAllRoutes(
 
 	routes := []BuildRoute{}
 
+	tokenVisited := make(map[string]bool, 0)
+	tokenVisited[inputTokenPath] = true
+
 	computeRoutes(
 		inputTokenPath,
 		outputTokenPath,
 		[]PoolWithMeta{}, // currentRoute
 		poolUsed,
-		[]string{inputTokenPath}, // tokenVisited
-		"",                       // _previousTokenOut
+		tokenVisited, // tokenVisited
+		"",           // _previousTokenOut
 		//
 		maxHops,
 		pools,
@@ -77,9 +80,8 @@ func computeRoutes(
 	outputTokenPath string,
 	currentRoute []PoolWithMeta,
 	poolsUsed []bool,
-	tokenVisited []string, // r3v4_xxx: could be map
+	tokenVisited map[string]bool,
 	_previousTokenOut string,
-	//
 	maxHops int,
 	pools []PoolWithMeta,
 	routes *[]BuildRoute,
@@ -125,11 +127,11 @@ func computeRoutes(
 			currentTokenOut = curPool.token0Path
 		}
 
-		if isStringInStringArr(tokenVisited, currentTokenOut) {
+		if tokenVisited[currentTokenOut] {
 			continue
 		}
 
-		tokenVisited = append(tokenVisited, currentTokenOut)
+		tokenVisited[currentTokenOut] = true
 		currentRoute = append(currentRoute, curPool)
 		poolsUsed[i] = true
 
@@ -149,7 +151,8 @@ func computeRoutes(
 
 		poolsUsed[i] = false
 		currentRoute = currentRoute[:len(currentRoute)-1]
-		tokenVisited = removeStringFromStringArr(tokenVisited, currentTokenOut)
+
+		delete(tokenVisited, currentTokenOut)
 	}
 
 	return routes
