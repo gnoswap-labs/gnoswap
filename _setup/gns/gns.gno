@@ -7,31 +7,28 @@ import (
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/users"
+
+	"gno.land/r/demo/consts"
 )
+
+const MAXIMUM_SUPPLY = uint64(1_000_000_000_000_000)
 
 var (
 	gns    *grc20.AdminToken
 	admins []string
 )
 
-const (
-	admin                   std.Address = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4" // GSA, r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
-	INTERNAL_REWARD_ACCOUNT std.Address = "g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm" // IRA, r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
-)
-
 func init() {
-	// r3v4_xxx: SET MAXIMUM SUPPLY
-
 	gns = grc20.NewAdminToken("Gnoswap", "GNS", 6)
-	// gns.Mint(admin, 100_000_000_000_000)                                            // @administrator
-	gns.Mint(INTERNAL_REWARD_ACCOUNT, 400_000_000_000_000)                             // @INTERNAL_REWARD_ACCOUNT
-	gns.Mint(std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"), 100_000_000_000) // default test1
+	gns.Mint(consts.INTERNAL_REWARD_ACCOUNT, 500_000_000_000_000)
 
-	stakerAddr := std.DerivePkgAddr("gno.land/r/demo/staker") // r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
+	gns.Mint(std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"), 100_000_000_000) // r3v4_xxx: default test1
+
+	stakerAddr := consts.GOV_ADDR
 	admins = append(admins, string(stakerAddr))
-	admins = append(admins, string(admin))
+	admins = append(admins, string(consts.GNOSWAP_ADMIN))
 
-	gns.Approve(INTERNAL_REWARD_ACCOUNT, stakerAddr, 9_223_372_036_854_775_807) // max uint64
+	gns.Approve(consts.INTERNAL_REWARD_ACCOUNT, stakerAddr, uint64(consts.MAX_UINT64))
 }
 
 // method proxies as public functions.
@@ -90,19 +87,29 @@ func TransferFrom(from, to users.AddressOrName, amount uint64) {
 
 // faucet.
 func Faucet(addr std.Address) { // r3v4_xxx: REMOVE FAUCET WHEN DEPLOYING TO OFFICIAL NETWORK
-	gns.Mint(addr, 100_000_000)
+	toGive := uint64(100 * 1_000_000)
+	if gns.TotalSupply()+toGive <= MAXIMUM_SUPPLY {
+		gns.Mint(addr, toGive)
+	}
 }
 
 func FaucetL() { // r3v4_xxx: REMOVE FAUCET WHEN DEPLOYING TO OFFICIAL NETWORK
+	toGive := uint64(1_000_000 * 1_000_000) // 1M
 	caller := std.PrevRealm().Addr()
-	gns.Mint(caller, 1_000_000_000_000)
+
+	if gns.TotalSupply()+toGive <= MAXIMUM_SUPPLY {
+		gns.Mint(caller, 1_000_000_000_000)
+	}
 }
 
 // administration.
 func Mint(address users.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	gns.Mint(address.Resolve(), amount)
+
+	if gns.TotalSupply()+amount <= MAXIMUM_SUPPLY {
+		gns.Mint(address.Resolve(), amount)
+	}
 }
 
 func Burn(address users.AddressOrName, amount uint64) {

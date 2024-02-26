@@ -7,7 +7,7 @@ import (
 // GNOSWAP SERVICE
 const (
 	GNOSWAP_ADMIN           std.Address = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4" // GSA, r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
-	INTERNAL_REWARD_ACCOUNT std.Address = "g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm"
+	INTERNAL_REWARD_ACCOUNT std.Address = "g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm" // IRA, r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
 
 	// 500 GNS as creation fee (r3v4_xxx: 500 or 500_000_000)
 	POOL_CREATION_FEE uint64 = 500

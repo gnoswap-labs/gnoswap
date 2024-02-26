@@ -212,7 +212,7 @@ func EndExternalIncentive(refundee, targetPoolPath, rewardToken string) {
 	// 1. admin can end incentive without refund
 	// 2. refundee can end incentive with refund
 	switch GetOrigCaller() {
-	case consts.GNOSWAP_ADMIN: // r3v4_xxx:
+	case consts.GNOSWAP_ADMIN:
 		// admin can end incentive without refund
 		incentives = deleteFromIncentives(incentives, incentiveId)
 		for i, v := range poolIncentives[targetPoolPath] {

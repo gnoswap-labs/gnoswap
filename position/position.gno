@@ -57,7 +57,6 @@ func mint(params MintParams) (uint64, bigint, bigint, bigint) {
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
 			poolKey:        pl.GetPoolPath(params.token0, params.token1, params.fee),
-			recipient:      GetOrigPkgAddr(), // hardcoded
 			tickLower:      params.tickLower,
 			tickUpper:      params.tickUpper,
 			amount0Desired: params.amount0Desired,
@@ -127,7 +126,6 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, bigint, bigint, 
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
 			poolKey:        position.poolKey,
-			recipient:      GetOrigPkgAddr(), // MUST BE POSITION
 			tickLower:      position.tickLower,
 			tickUpper:      position.tickUpper,
 			amount0Desired: params.amount0Desired,
@@ -275,8 +273,8 @@ func CollectFee(tokenId uint64) (uint64, bigint, bigint, string) { // tokenId, t
 		GetOrigCaller(),
 		position.tickLower,
 		position.tickUpper,
-		consts.MAX_UINT64, // r3v4_xxx: current grc20 handles amount by `unit64`
-		consts.MAX_UINT64, // r3v4_xxx: current grc20 handles amount by `unit64`
+		consts.MAX_UINT64, // r3v4_xxx: current grc20 handles amount by `uint64`
+		consts.MAX_UINT64, // r3v4_xxx: current grc20 handles amount by `uint64`
 	)
 
 	// r3v4_xxx: DOES THIS NEED FOR COLLECT FEE
