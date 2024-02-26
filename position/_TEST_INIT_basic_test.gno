@@ -13,6 +13,8 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/demo/gnft"
+
+	pl "gno.land/r/demo/pool"
 )
 
 var (
@@ -107,4 +109,10 @@ func isOwner(t *testing.T, tokenId uint64, addr std.Address) bool {
 
 	t.Errorf("expected owner %v, got %v", addr, owner)
 	return false
+}
+
+func getPoolFromLpTokenId(lpTokenId uint64) *pl.Pool {
+	position := positions[lpTokenId]
+
+	return pl.GetPoolFromPoolPath(position.poolKey)
 }
