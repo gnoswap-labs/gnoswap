@@ -17,11 +17,11 @@ $ export WORKDIR=~/work
 Clone the `gno` repository from `gnoswap-labs`. And switch to the `gs/base_clean` branch. You will be able to clone the repository and build it after running the following commands:
 
 ```
-$ cd $WORKDIR
-$ git clone https://github.com/gnoswap-labs/gno.git gno-for-swap
-$ cd gno-for-swap
-$ git checkout gs/base_clean
-$ make install
+cd $WORKDIR
+git clone https://github.com/gnoswap-labs/gno.git gno-for-swap
+cd gno-for-swap
+git checkout gs/base_clean
+make install
 ```
 
 ## Unit Tests
@@ -32,23 +32,23 @@ To run unit tests, follow these steps:
 
 1. Clone the `gnoswap` contracts repository:
 
-   ```
-   $ cd $WORKDIR
-   $ git clone https://github.com/gnoswap-labs/gnoswap.git
-   $ cd gnoswap
+   ```plain
+   cd $WORKDIR
+   git clone https://github.com/gnoswap-labs/gnoswap.git
+   cd gnoswap
    ```
 
 2. Copy the `gnoswap` contracts into the Gno core:
 
-   ```
-   $ cp -R _setup/* consts gov pool position router staker $WORKDIR/gno-for-swap/examples/gno.land/r/demo/
-   $ cp -R common $WORKDIR/gno-for-swap/examples/gno.land/p/demo/
+   ```plain
+   cp -R _setup/* consts gov pool position router staker $WORKDIR/gno-for-swap/examples/gno.land/r/demo/
+   cp -R common $WORKDIR/gno-for-swap/examples/gno.land/p/demo/
    ```
 
 ### Run the Test Cases
 
-```
-$ gno test -root-dir $WORKDIR/gno-for-swap -verbose=true $WORKDIR/gno-for-swap/examples/gno.land/r/demo/staker
+```plain
+gno test -root-dir $WORKDIR/gno-for-swap -verbose=true $WORKDIR/gno-for-swap/examples/gno.land/r/demo/staker
 ```
 
 ## Integration Tests
@@ -59,20 +59,20 @@ The contracts can be tested by deploying and executing the contract directly thr
 
 You can pass this step if you already created the accounts with same mnemonic shown below.
 
-```
-$ cd $WORKDIR/gnoswap
-$ _test/init_test_accounts.sh
+```plain
+cd $WORKDIR/gnoswap
+_test/init_test_accounts.sh
 ```
 
 ### Testing
 
 The Gno.land blockchain can be run using docker.
 
-```
-$ docker run --rm -p 26657:26657 --platform linux/amd64 gnoswap/gnoland
+```plain
+docker run --rm -p 26657:26657 --platform linux/amd64 gnoswap/gnoland
 ```
 
-```
-$ cd $WORKDIR/gnoswap
-$ make -f _test/live_test.mk all
+```plain
+cd $WORKDIR/gnoswap
+make -f _test/live_test.mk all
 ```
