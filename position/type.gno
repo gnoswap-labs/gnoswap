@@ -25,7 +25,7 @@ type Position struct {
 	burned bool
 }
 
-type MintParams struct { // r3v4_xxx: private?
+type MintParams struct {
 	token0         string
 	token1         string
 	fee            uint16
@@ -39,7 +39,7 @@ type MintParams struct { // r3v4_xxx: private?
 	deadline bigint
 }
 
-type AddLiquidityParams struct { // r3v4_xxx: private?
+type AddLiquidityParams struct {
 	poolKey        string
 	recipient      std.Address // XXX de facto: hardcoded to nft manager contract address
 	tickLower      int32
@@ -50,7 +50,7 @@ type AddLiquidityParams struct { // r3v4_xxx: private?
 	amount1Min     bigint
 }
 
-type IncreaseLiquidityParams struct { // r3v4_xxx: private?
+type IncreaseLiquidityParams struct {
 	tokenId        uint64
 	amount0Desired bigint
 	amount1Desired bigint
@@ -59,8 +59,17 @@ type IncreaseLiquidityParams struct { // r3v4_xxx: private?
 	deadline       bigint
 }
 
-type DecreaseLiquidityParams struct { // r3v4_xxx: private?
-	tokenId   uint64
-	liquidity bigint
-	deadline  bigint
+type DecreaseLiquidityParams struct {
+	tokenId    uint64
+	liquidity  bigint
+	amount0Min bigint
+	amount1Min bigint
+	deadline   bigint
+}
+
+type CollectParams struct {
+	tokenId    uint64
+	recipient  std.Address
+	amount0Max bigint
+	amount1Max bigint
 }
