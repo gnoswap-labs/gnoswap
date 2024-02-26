@@ -3,6 +3,8 @@ package router
 import (
 	"std"
 	"time"
+
+	"gno.land/r/demo/consts"
 )
 
 func GetHeight() int64 {
@@ -14,5 +16,5 @@ func GetTimestamp() int64 {
 }
 
 func GetOrigPkgAddr() std.Address {
-	return std.DerivePkgAddr("gno.land/r/demo/router")
+	return consts.ROUTER_ADDR
 }

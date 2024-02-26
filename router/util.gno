@@ -38,6 +38,24 @@ func getDataForMultiPath(possiblePath string, poolIdx int) (token0, token1 strin
 	return token0, token1, fee
 }
 
+func isStringInStringArr(arr []string, str string) bool {
+	for _, a := range arr {
+		if a == str {
+			return true
+		}
+	}
+	return false
+}
+
+func removeStringFromStringArr(arr []string, str string) []string {
+	for i, a := range arr {
+		if a == str {
+			return append(arr[:i], arr[i+1:]...)
+		}
+	}
+	return arr
+}
+
 func a2u(addr std.Address) users.AddressOrName {
 	return users.AddressOrName(addr)
 }
@@ -54,6 +72,13 @@ func abs(x bigint) uint64 {
 	}
 
 	return uint64(x)
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 func absBigint(x bigint) bigint {

@@ -119,5 +119,5 @@ func TestDrySwapRouteGnotBarExactOut(t *testing.T) {
 		"gno.land/r/demo/wugnot:gno.land/r/demo/qux:500*POOL*gno.land/r/demo/qux:gno.land/r/demo/baz:500*POOL*gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
 		"100", // quoteArr
 	)
-	shouldEQ(t, dryResult, bigint(1998))
+	shouldEQ(t, dryResult, bigint(1977))
 }

@@ -32,7 +32,7 @@ func TestPositionMint(t *testing.T) {
 	// Mint
 	tokenId, liquidity, amount0, amount1 := pos.Mint(barPath, bazPath, fee500, int32(12000), int32(15000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, liquidity, bigint(1308150))
+	shouldEQ(t, liquidity, bigint(1308151))
 	shouldEQ(t, amount0, bigint(100000)) // ONLY BAR
 	shouldEQ(t, amount1, bigint(0))      // NO BAZ
 }

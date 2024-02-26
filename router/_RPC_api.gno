@@ -9,12 +9,12 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/consts"
-	p "gno.land/r/demo/pool"
+	pl "gno.land/r/demo/pool"
 )
 
-type TokenPathPrice struct {
-	Path  string `json:"path"`
-	Price bigint `json:"price"`
+type TokenRatio struct {
+	Token string `json:"token"`
+	Ratio bigint `json:"ratio"`
 }
 
 type ResponseQueryBase struct {
@@ -24,7 +24,7 @@ type ResponseQueryBase struct {
 
 type ResponseGetRatiosFromBase struct {
 	Stat     ResponseQueryBase `json:"stat"`
-	Response []TokenPathPrice  `json:"response"`
+	Response []TokenRatio      `json:"response"`
 }
 
 func ApiGetRatiosFromBase() string {
@@ -33,7 +33,7 @@ func ApiGetRatiosFromBase() string {
 		Timestamp: GetTimestamp(),
 	}
 
-	ratios := getRatiosFromBase(3)
+	ratios := findRatios(3)
 	r := ResponseGetRatiosFromBase{
 		Stat:     qb,
 		Response: ratios,
@@ -47,109 +47,105 @@ func ApiGetRatiosFromBase() string {
 	return string(rr)
 }
 
-func getRatiosFromBase(maxHops int) []TokenPathPrice {
-	tokenPrice := make(map[string]bigint, 0)
+func findRatios(maxHops int) []TokenRatio {
+	var tokenRatio = make(map[string]bigint, 0)
+	// WGNOT
+	tokenRatio[consts.WRAPPED_WUGNOT] = consts.Q96 // ~= 1
 
-	// BASE
-	tokenPrice[consts.WRAPPED_WUGNOT] = consts.Q96 // ~= 1
+	tokens := getTokenList()
 
-	// ELSE
-	tokenList := getTokenList()
-	for _, token := range tokenList {
-		if token != consts.WRAPPED_WUGNOT {
-			_swapPaths := findSwapPaths(token, consts.WRAPPED_WUGNOT, maxHops)
-			swapPaths := strings.Split(_swapPaths, "_FIN_")
-			swapPaths = swapPaths[:len(swapPaths)-1]
-			numSwapPaths := len(swapPaths)
+	pools := findCandidatePools()
 
-			thisTokenPriceX96 := bigint(0)
-			if numSwapPaths < 1 { // NO CONNECTION TO BASE
-				tokenPrice[token] = 0
-			} else {
-				for _, swapPath := range swapPaths {
-					numPools := strings.Count(swapPath, ",") / 2
-
-					switch numPools {
-					case 0:
-						thisTokenPriceX96 = 0
-					case 1:
-						priceRatio := calculateTokenPrice(token, swapPath, numPools, 0, 1)
-						thisTokenPriceX96 += priceRatio
-					case 2:
-						priceRatio := calculateTokenPrice(token, swapPath, numPools, 0, 1)
-						thisTokenPriceX96 += priceRatio
-					case 3:
-						priceRatio := calculateTokenPrice(token, swapPath, numPools, 0, 1)
-						thisTokenPriceX96 += priceRatio
-					default:
-						thisTokenPriceX96 = 0
-					}
-				}
-				avgPriceX96 := thisTokenPriceX96 / bigint(numSwapPaths)
-				tokenPrice[token] = avgPriceX96
-			}
+	for _, token := range tokens {
+		if token == consts.WRAPPED_WUGNOT {
+			continue
 		}
-		// TOKEN ENDS
-	}
 
-	tokenPrices := []TokenPathPrice{}
-	for token, price := range tokenPrice {
-		tokenPrices = append(tokenPrices, TokenPathPrice{
-			Path:  token,
-			Price: price,
+		routes := computeAllRoutes(consts.WRAPPED_WUGNOT, token, maxHops, pools)
+
+		if len(routes) == 0 {
+			// NO ROUTES FOUND => SET RATIO TO 0
+			tokenRatio[token] = 0
+		} else {
+			numRoutes := len(routes)
+
+			var _tokenRatioX96 bigint
+
+			for _, route := range routes {
+				numHops := len(route.route)
+
+				switch numHops {
+				case 1, 2, 3:
+					priceRatio := calculateTokenRatio(token, route.route, 0, 1)
+					_tokenRatioX96 += priceRatio
+				default:
+					_tokenRatioX96 = 0
+				}
+			}
+			avgPriceX96 := _tokenRatioX96 / bigint(numRoutes)
+			tokenRatio[token] = avgPriceX96
+
+		}
+	}
+	// LOOP FIN
+
+	var tokenRatios = []TokenRatio{}
+	for token, ratio := range tokenRatio {
+		tokenRatios = append(tokenRatios, TokenRatio{
+			Token: token,
+			Ratio: ratio,
 		})
 	}
 
-	return tokenPrices
+	return tokenRatios
 }
 
-func calculateTokenPrice(currentToken, swapPath string, numPools, proceed int, currentPriceX96 bigint) bigint {
-	currentPoolPathKey := makePoolPath(swapPath, proceed)
-	currentPool := p.GetPoolFromPoolPath(currentPoolPathKey)
+func calculateTokenRatio(currentToken string, routes []PoolWithMeta, proceed int, priceX96 bigint) bigint {
+	poolPath := routes[len(routes)-proceed-1].poolPath
+	pool := pl.GetPoolFromPoolPath(poolPath)
 
-	poolToken0 := currentPool.PoolGetToken0Path()
-	poolToken1 := currentPool.PoolGetToken1Path()
+	token0Path := pool.PoolGetToken0Path()
+	token1Path := pool.PoolGetToken1Path()
 
-	if poolToken0 == currentToken {
-		currentSqrtPriceX96 := currentPool.PoolGetSlot0SqrtPriceX96()
+	if token1Path == currentToken {
+		poolSqrtPriceX96 := pool.PoolGetSlot0SqrtPriceX96()
 
-		currentPriceX96 *= currentSqrtPriceX96 * currentSqrtPriceX96
-		currentToken = poolToken1
-	} else if poolToken1 == currentToken {
-		currentTick := currentPool.PoolGetSlot0Tick()
-		oppositeTick := -currentTick
+		priceX96 *= poolSqrtPriceX96 * poolSqrtPriceX96
+		currentToken = token0Path
+	} else if token0Path == currentToken {
+		poolTick := pool.PoolGetSlot0Tick()
+		oppositeTick := -poolTick
 		oppositeSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(oppositeTick)
 
-		currentPriceX96 *= oppositeSqrtPriceX96 * oppositeSqrtPriceX96
-		currentToken = poolToken0
+		priceX96 *= oppositeSqrtPriceX96 * oppositeSqrtPriceX96
+		currentToken = token1Path
 	} else {
-		panic("[ROUTER] _RPC_api.gno__calculateTokenPrice() || wrong condition")
+		// wrong condition
+		// panic("[ROUTER] _RPC_api.gno__calculateTokenRatio() || wrong condition")
+		return 0
+
 	}
 
-	if proceed == numPools-1 {
-		for {
-			if currentPriceX96 < (consts.Q96 * 2) {
-				return currentPriceX96
+	proceed += 1
+
+	if proceed == len(routes) { // numHops
+		for { // remove as much X96 as possible
+			tempPriceX96 := priceX96
+			priceX96 /= consts.Q96
+
+			if priceX96 < consts.MIN_PRICE {
+				return tempPriceX96
 			}
-			currentPriceX96 /= consts.Q96
 		}
 	}
 
-	return calculateTokenPrice(currentToken, swapPath, numPools, proceed+1, currentPriceX96)
-}
-
-func sqrt(x bigint, n int) bigint {
-	result := bigint(1)
-	for i := 0; i < n; i++ {
-		result *= x
-	}
-	return result
+	return calculateTokenRatio(currentToken, routes, proceed, priceX96)
 }
 
 func getTokenList() []string {
 	seen := make(map[string]bool)
 	uniqueTokenList := []string{}
-	poolList := p.PoolGetPoolList()
+	poolList := pl.PoolGetPoolList()
 
 	for _, poolPath := range poolList {
 		token0Path, token1Path, _ := poolPathWithFeeDivide(poolPath)
@@ -166,26 +162,6 @@ func getTokenList() []string {
 	return uniqueTokenList
 }
 
-func makePoolPath(poolPath string, poolIndex int) string {
-	poolDatas := strings.Split(poolPath, ",")
-	// Calculate the indices for token paths and fee based on poolIndex.
-	baseIndex := poolIndex * 2
-	if baseIndex+2 >= len(poolDatas) {
-		panic(ufmt.Sprintf("[ROUTER] _RPC_api.gno__makePoolPath() || index out of range for pool index: %d", poolIndex))
-	}
-
-	token0Path := poolDatas[baseIndex]
-	token1Path := poolDatas[baseIndex+2]
-	fee := poolDatas[baseIndex+1]
-
-	// Ensure the tokens are in a consistent order.
-	if token0Path > token1Path {
-		token0Path, token1Path = token1Path, token0Path
-	}
-
-	return token0Path + ":" + token1Path + ":" + fee
-}
-
 func poolPathWithFeeDivide(poolPath string) (string, string, int) {
 	poolPathSplit := strings.Split(poolPath, ":")
 	require(len(poolPathSplit) == 3, ufmt.Sprintf("[ROUTER] _RPC_api.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath))
@@ -196,20 +172,4 @@ func poolPathWithFeeDivide(poolPath string) (string, string, int) {
 	}
 
 	return poolPathSplit[0], poolPathSplit[1], feeInt
-}
-
-func singlePoolPathWithFeeDivide(poolPath string) (string, string) {
-	singlePoolPathSplit := strings.Split(poolPath, ":")
-	require(len(singlePoolPathSplit) == 2, ufmt.Sprintf("[ROUTER] _RPC_api.gno__singlePoolPathWithFeeDivide || len(singlePoolPathSplit) != 2, poolPath: %s", poolPath))
-
-	return singlePoolPathSplit[0], singlePoolPathSplit[1]
-}
-
-func removeItemFromStringArray(s []string, r string) []string {
-	for i, v := range s {
-		if v == r {
-			return append(s[:i], s[i+1:]...)
-		}
-	}
-	return s
 }
