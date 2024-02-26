@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/demo/consts"
 )
 
 func DrySwapRoute(
@@ -65,6 +67,9 @@ func DrySwapRoute(
 			panic("[ROUTER] router.gno__DrySwapRoute() || numHops should be 1 ~ 3")
 		}
 	}
+
+	// PROTOCOL FEE
+	resultAmountOut = handleProtocolFee(outputToken, resultAmountOut, true)
 
 	if swapType == ExactIn {
 		if resultAmountIn != amountSpecified {
@@ -140,6 +145,9 @@ func SwapRoute(
 		}
 	}
 
+	// PROTOCOL FEE
+	resultAmountOut = handleProtocolFee(outputToken, resultAmountOut, false)
+
 	if swapType == ExactIn {
 		require(tokenAmountLimit <= resultAmountOut, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received (expected minimum output:%d, actual output:%d)", tokenAmountLimit, resultAmountOut))
 		return resultAmountOut
@@ -199,4 +207,19 @@ func handleMultiSwap(swapType SwapType, route string, numHops int, amountSpecifi
 	default:
 		panic("[ROUTER] router.gno__handleMultiSwap() || unknown swapType")
 	}
+}
+
+func handleProtocolFee(outputToken string, amount bigint, isDry bool) bigint {
+	if consts.PROTOCOL_FEE_ROUTER <= 0 { // r3v4_xxx: CHANGABLE BY GOV
+		return amount
+	}
+
+	feeAmount := amount * bigint(consts.PROTOCOL_FEE_ROUTER) / 1e4
+	if !isDry {
+		ok := transferFromByRegisterCall(outputToken, std.GetOrigCaller(), consts.FEE_COLLECTOR, uint64(feeAmount))
+		require(ok, "[ROUTER] router.gno__handleProtocolFee() || transferFromByRegisterCall failed")
+	}
+
+	amount -= feeAmount
+	return amount
 }
