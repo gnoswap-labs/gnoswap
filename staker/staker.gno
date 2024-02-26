@@ -128,8 +128,8 @@ func CollectReward(
 	tokenId uint64, // LP TokenID
 ) {
 	deposit, exist := deposits[tokenId]
-	require(exist, ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || tokenId(%d) not staked", tokenId))
 
+	require(exist, ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || tokenId(%d) not staked", tokenId))
 	require(PrevRealmAddr() == deposit.owner, ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || only owner(%s) can collect reward from tokenId(%d), PrevRealmAddr()(%s)", deposit.owner, tokenId, PrevRealmAddr()))
 
 	// poolPath to collect reward
@@ -157,7 +157,6 @@ func CollectReward(
 		// transfer it
 		gns.TransferFrom(a2u(consts.INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(internalGNS))
 	}
-
 }
 
 func UnstakeToken(tokenId uint64) (string, bigint, bigint) {
@@ -193,46 +192,48 @@ func UnstakeToken(tokenId uint64) (string, bigint, bigint) {
 	}
 
 	// unstaked status
-	deposits = deleteFromDeposits(deposits, tokenId)
+	delete(deposits, tokenId)
 
 	// transfer NFT ownership to origin owner
 	gnft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(deposit.owner), tid(tokenId))
 
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
+
 	return poolPath, token0Amount, token1Amount
 }
 
+// EndExternalIncentive ends an external incentive, checking for existence and timing.
+// It allows termination by admin (GNOSWAP_ADMIN) without refund or by refundee with a refund if funds suffice.
+//
+// Notes:
+// - Errors if the incentive is non-existent, not yet ended, or if the caller is unauthorized.
+// - Refund errors if insufficient reward token balance.
+// - Caller must be GNOSWAP_ADMIN or the incentive's refundee.
 func EndExternalIncentive(refundee, targetPoolPath, rewardToken string) {
 	incentiveId := incentiveIdCompute(refundee, targetPoolPath, rewardToken)
 	incentive, exist := incentives[incentiveId]
+
 	require(exist, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || cannot end non existent incentive(%s)", incentiveId))
 	require(GetTimestamp() >= incentive.endTimestamp, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(%d), current(%d)", incentive.endTimestamp, GetTimestamp()))
 
-	// when incentive is ended
-	// 1. admin can end incentive without refund
-	// 2. refundee can end incentive with refund
 	switch GetOrigCaller() {
-	case consts.GNOSWAP_ADMIN: // r3v4_xxx:
-		// admin can end incentive without refund
-		incentives = deleteFromIncentives(incentives, incentiveId)
-		for i, v := range poolIncentives[targetPoolPath] {
-			if v == incentiveId {
-				poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
-			}
-		}
-	case incentive.refundee:
-		// refundee can end incentive with refund
-		refund := incentive.rewardAmount
-		poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
-		require(poolLeftExternalRewardAmount >= uint64(refund), ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || not enough poolLeftExternalRewardAmount(%s_%d) to refund(%d)", incentive.rewardToken, poolLeftExternalRewardAmount, refund))
-		transferByRegisterCall(incentive.rewardToken, incentive.refundee, uint64(refund))
+	case consts.GNOSWAP_ADMIN, incentive.refundee:
+		delete(incentives, incentiveId)
 
-		incentives = deleteFromIncentives(incentives, incentiveId)
 		for i, v := range poolIncentives[targetPoolPath] {
 			if v == incentiveId {
 				poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
+				break
 			}
 		}
+
+		if GetOrigCaller() == incentive.refundee {
+			refund := incentive.rewardAmount
+			poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
+			require(poolLeftExternalRewardAmount >= uint64(refund), ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || not enough poolLeftExternalRewardAmount(%s_%d) to refund(%d)", incentive.rewardToken, poolLeftExternalRewardAmount, refund))
+			transferByRegisterCall(incentive.rewardToken, incentive.refundee, uint64(refund))
+		}
+
 	default:
 		require(false, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || only refundee or admin can end incentive"))
 	}
@@ -246,36 +247,6 @@ func transferDeposit(tokenId uint64, to std.Address) {
 
 	// transfer NFT ownership
 	gnft.TransferFrom(a2u(owner), a2u(to), tid(tokenId))
-}
-
-func deleteFromDeposits(m map[uint64]Deposit, key uint64) map[uint64]Deposit {
-	if _, ok := m[key]; ok {
-		newMap := make(map[uint64]Deposit)
-		for k, v := range m {
-			if k != key {
-				newMap[k] = v
-			}
-		}
-
-		return newMap
-	}
-
-	return m
-}
-
-func deleteFromIncentives(m map[string]Incentive, key string) map[string]Incentive {
-	if _, ok := m[key]; ok {
-		newMap := make(map[string]Incentive)
-		for k, v := range m {
-			if k != key {
-				newMap[k] = v
-			}
-		}
-
-		return newMap
-	}
-
-	return m
 }
 
 func getTokenPairBalanceFromPosition(tokenId uint64) (bigint, bigint) {
