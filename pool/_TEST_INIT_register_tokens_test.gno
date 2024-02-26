@@ -1,6 +1,11 @@
 package pool
 
 import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/testutils"
+
 	"gno.land/r/demo/foo"
 
 	"gno.land/r/demo/bar"
@@ -14,6 +19,8 @@ import (
 	"gno.land/r/demo/obl"
 
 	"gno.land/r/demo/gns"
+
+	"gno.land/r/demo/consts"
 
 	"gno.land/r/demo/users"
 )
@@ -127,6 +134,8 @@ func (GNSToken) Approve() func(spender users.AddressOrName, amount uint64) {
 }
 
 func init() {
+	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
+
 	RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
@@ -134,4 +143,36 @@ func init() {
 	RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
 	RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+}
+
+func TestGetRegisteredTokens(t *testing.T) {
+	shouldEQ(t, len(GetRegisteredTokens()), 7)
+}
+
+func TestRegisterGRC20Interface(t *testing.T) {
+	shouldPanic(t,
+		func() {
+			RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+		},
+	)
+}
+
+func TestUnregisterGRC20Interface(t *testing.T) {
+	dummy := testutils.TestAddress("dummy")
+	std.TestSetOrigCaller(dummy)
+
+	shouldPanic(t,
+		func() {
+			UnregisterGRC20Interface("gno.land/r/demo/bar")
+		},
+	)
+
+	shouldEQ(t, len(GetRegisteredTokens()), 7)
+
+	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
+	UnregisterGRC20Interface("gno.land/r/demo/bar")
+	shouldEQ(t, len(GetRegisteredTokens()), 6)
+
+	// re-register to avoid panic in other tests
+	RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 }

@@ -1,6 +1,8 @@
 package position
 
 import (
+	"std"
+
 	"gno.land/r/demo/foo"
 
 	"gno.land/r/demo/bar"
@@ -15,6 +17,7 @@ import (
 
 	"gno.land/r/demo/gns"
 
+	"gno.land/r/demo/consts"
 	"gno.land/r/demo/users"
 
 	pl "gno.land/r/demo/pool" // only for position `testcase`` to call grc20 by register
@@ -129,6 +132,8 @@ func (GNSToken) Approve() func(spender users.AddressOrName, amount uint64) {
 }
 
 func init() {
+	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
+
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})

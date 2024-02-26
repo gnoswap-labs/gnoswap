@@ -1,6 +1,8 @@
 package staker
 
 import (
+	"std"
+
 	"gno.land/r/demo/foo"
 
 	"gno.land/r/demo/bar"
@@ -15,9 +17,10 @@ import (
 
 	"gno.land/r/demo/gns"
 
+	"gno.land/r/demo/consts"
 	"gno.land/r/demo/users"
 
-	"gno.land/r/demo/pool" // only for position `testcase`` to call grc20 by register
+	pl "gno.land/r/demo/pool" // only for position `testcase`` to call grc20 by register
 )
 
 type FooToken struct{}
@@ -129,14 +132,16 @@ func (GNSToken) Approve() func(spender users.AddressOrName, amount uint64) {
 }
 
 func init() {
+	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
+
 	// POOL
-	pool.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
-	pool.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
 
 	// STAKER
 	RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})

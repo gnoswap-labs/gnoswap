@@ -1,0 +1,116 @@
+package position
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/common"
+	"gno.land/r/demo/consts"
+
+	pl "gno.land/r/demo/pool"
+)
+
+// 1. Init & Create Pool
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+	pl.InitManual()
+
+	std.TestSetOrigCaller(test1)
+	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(10000)) // x2.71814592682522526700950038502924144268035888671875
+
+	// sqrtPrice
+	shouldPanic(t, func() { pl.CreatePool(fooPath, barPath, fee500, common.TickMathGetSqrtRatioAtTick(10000)) })
+}
+
+func TestMintPosition01WideInRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		8000,
+		12000,
+		bigint(50000000),
+		bigint(50000000),
+		bigint(0),
+		bigint(0),
+		max_timeout,
+	)
+	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, getNextId(), 2)
+	shouldEQ(t, liquidity, bigint(318704394))
+	shouldEQ(t, amount0, bigint(18394891))
+	shouldEQ(t, amount1, bigint(50000000))
+}
+
+func TestMintPositionTightInRange(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		9500,
+		10500,
+		bigint(50000000),
+		bigint(50000000),
+		bigint(0),
+		bigint(0),
+		max_timeout,
+	)
+	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, getNextId(), 3)
+	shouldEQ(t, liquidity, bigint(1228379123))
+	shouldEQ(t, amount0, bigint(18394891))
+	shouldEQ(t, amount1, bigint(50000000))
+}
+
+func TestCollectFeeBeforeSwapPos1(t *testing.T) {
+	tokenId, fee0, fee1, poolPath := CollectFee(1)
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, fee0, bigint(0))
+	shouldEQ(t, fee1, bigint(0))
+	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+}
+
+func TestCollectFeeBeforeSwapPos2(t *testing.T) {
+	tokenId, fee0, fee1, poolPath := CollectFee(2)
+	shouldEQ(t, tokenId, uint64(2))
+	shouldEQ(t, fee0, bigint(0))
+	shouldEQ(t, fee1, bigint(0))
+	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+}
+
+func TestSwap(t *testing.T) {
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(test1)
+	amount0, amount1 := pl.Swap(
+		barPath,
+		fooPath,
+		fee500,
+		test1,
+		true,
+		bigint(1_234_567),
+		consts.MIN_PRICE,
+		test1,
+	)
+}
+
+// IF POSITION 2 DOESN'T EXIST, POSITION 1 WILL EARN '617' as fee
+func TestCollectFeeAfterSwapPos1(t *testing.T) {
+	tokenId, fee0, fee1, poolPath := CollectFee(1)
+	shouldEQ(t, tokenId, uint64(1))
+	// shouldEQ(t, fee0, bigint(617))
+	shouldEQ(t, fee0, bigint(127))
+	shouldEQ(t, fee1, bigint(0))
+	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+}
+
+func TestCollectFeeAfterSwapPos2(t *testing.T) {
+	tokenId, fee0, fee1, poolPath := CollectFee(2)
+	shouldEQ(t, tokenId, uint64(2))
+	shouldEQ(t, fee0, bigint(490))
+	shouldEQ(t, fee1, bigint(0))
+	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+}
