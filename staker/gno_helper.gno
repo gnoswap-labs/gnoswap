@@ -3,6 +3,8 @@ package staker
 import (
 	"std"
 	"time"
+
+	"gno.land/r/demo/consts"
 )
 
 func GetTimestamp() int64 {
@@ -14,7 +16,7 @@ func GetHeight() int64 {
 }
 
 func GetOrigPkgAddr() std.Address {
-	return std.DerivePkgAddr("gno.land/r/demo/staker")
+	return consts.STAKER_ADDR
 	// return std.GetOrigPkgAddr()
 }
 
@@ -24,4 +26,12 @@ func GetOrigCaller() std.Address {
 
 func PrevRealmAddr() std.Address {
 	return std.PrevRealm().Addr()
+}
+
+func PrevRealmPath() string {
+	return std.PrevRealm().PkgPath()
+}
+
+func PrevRealm() std.Realm {
+	return std.PrevRealm()
 }

@@ -4,12 +4,14 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/r/demo/consts"
+
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
 
 	"gno.land/r/demo/gnft"
-	"gno.land/r/demo/gns"
 
+	"gno.land/r/demo/gns"
 	"gno.land/r/demo/obl"
 )
 
@@ -125,15 +127,19 @@ func TestStakeToken(t *testing.T) {
 }
 
 func TestCollectReward(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+
+	// CALLING ApiGetRewardByLpTokenId(1) will return token_path list to approve
+	gns.Approve(a2u(consts.STAKER_ADDR), uint64(consts.MAX_UINT64))
+	obl.Approve(a2u(consts.STAKER_ADDR), uint64(consts.MAX_UINT64))
 
 	// before claim
 	gnsOld := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsOld, 99999999500)
+	shouldEQ(t, gnsOld, 99500000000)
 
 	CollectReward(1) // GNFT tokenId
 	gnsNew := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 99999999626)
+	shouldEQ(t, gnsNew, 99500000124)
 
 }
 
@@ -146,8 +152,8 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 99999999626)     // internal
-		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000000648) // external
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500000124)     // internal
+		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000000636) // external
 	}
 
 	{
@@ -158,8 +164,8 @@ func TestUnstakeToken(t *testing.T) {
 		shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 		// check reward
-		shouldEQ(t, gns.BalanceOf(a2u(test1)), 100000000451)    // internal
-		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000004891) // external
+		shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500000933)     // internal
+		shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000004795) // external
 	}
 }
 

@@ -102,7 +102,7 @@ func TestCollectFeeAfterSwapPos1(t *testing.T) {
 	tokenId, fee0, fee1, poolPath := CollectFee(1)
 	shouldEQ(t, tokenId, uint64(1))
 	// shouldEQ(t, fee0, bigint(617))
-	shouldEQ(t, fee0, bigint(127))
+	shouldEQ(t, fee0, bigint(126))
 	shouldEQ(t, fee1, bigint(0))
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
@@ -110,7 +110,7 @@ func TestCollectFeeAfterSwapPos1(t *testing.T) {
 func TestCollectFeeAfterSwapPos2(t *testing.T) {
 	tokenId, fee0, fee1, poolPath := CollectFee(2)
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, fee0, bigint(490))
+	shouldEQ(t, fee0, bigint(486))
 	shouldEQ(t, fee1, bigint(0))
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }

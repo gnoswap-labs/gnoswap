@@ -85,3 +85,9 @@ func requireExist(exist bool, msg string) {
 		panic(msg)
 	}
 }
+
+func requirePrevRealmPath(prevRealmPath, msg string) {
+	if PrevRealmPath() != prevRealmPath {
+		panic(msg)
+	}
+}

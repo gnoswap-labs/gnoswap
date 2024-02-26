@@ -9,7 +9,7 @@ import (
 
 	"gno.land/r/demo/consts"
 
-	gns "gno.land/r/demo/gns"
+	"gno.land/r/demo/gns"
 )
 
 var (

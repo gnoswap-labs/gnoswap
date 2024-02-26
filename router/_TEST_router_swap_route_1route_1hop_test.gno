@@ -5,8 +5,13 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/r/demo/consts"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
+
 	pl "gno.land/r/demo/pool"
-	pos "gno.land/r/demo/position"
+	pn "gno.land/r/demo/position"
 )
 
 func TestInitManual(t *testing.T) {
@@ -30,7 +35,7 @@ func TestPositionMint(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
 	// Mint
-	pos.Mint(barPath, bazPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
+	pn.Mint(barPath, bazPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
 }
 
 func TestDrySwapRouteBarBazExactIn(t *testing.T) {
@@ -45,11 +50,12 @@ func TestDrySwapRouteBarBazExactIn(t *testing.T) {
 		"100", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, bigint(2711))
+	shouldEQ(t, dryResult, bigint(2707))
 }
 
 func TestSwapRouteBarBazExactIn(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	baz.Approve(a2u(consts.ROUTER_ADDR), uint64(consts.MAX_UINT64))
 
 	swapResult := SwapRoute(
 		barPath,      // inputToken
@@ -58,9 +64,9 @@ func TestSwapRouteBarBazExactIn(t *testing.T) {
 		"EXACT_IN",   // swapType
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:500", // strRouteArr
 		"100", // quoteArr
-		2710,  // tokenAmountLimit
+		2700,  // tokenAmountLimit
 	)
-	shouldEQ(t, swapResult, bigint(2711))
+	shouldEQ(t, swapResult, bigint(2707))
 }
 
 func TestDrySwapRouteBarBazExactOut(t *testing.T) {
@@ -79,7 +85,8 @@ func TestDrySwapRouteBarBazExactOut(t *testing.T) {
 }
 
 func TestSwapRouteBarBazExactOut(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	baz.Approve(a2u(consts.ROUTER_ADDR), uint64(consts.MAX_UINT64))
 
 	swapResult := SwapRoute(
 		barPath,      // inputToken
@@ -137,11 +144,12 @@ func TestDrySwapRouteBazBarExactOut(t *testing.T) {
 		"100", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, bigint(1104))
+	shouldEQ(t, dryResult, bigint(1103))
 }
 
 func TestSwapRouteBazBarExactOut(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.ROUTER_ADDR), uint64(consts.MAX_UINT64))
 
 	swapResult := SwapRoute(
 		bazPath,      // inputToken
@@ -153,5 +161,5 @@ func TestSwapRouteBazBarExactOut(t *testing.T) {
 		1100,  // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, bigint(1104))
+	shouldEQ(t, swapResult, bigint(1103))
 }

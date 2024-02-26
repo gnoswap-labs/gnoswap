@@ -153,6 +153,9 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, bigint, bigint, 
 	return params.tokenId, liquidity, amount0, amount1
 }
 
+// *IMPORTANT*
+// DecreaseLiquidity() will return DECREASED amonut0, amount1
+// HOWEVER, internally it also execute CollectFee() to collect fee which DOES NOT INCLUDE IN RETURN VALUE
 func DecreaseLiquidity(
 	tokenId uint64,
 	liquidity bigint,
@@ -182,6 +185,9 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, bigint, bigint, 
 	checkDeadline(params.deadline)
 
 	require(params.liquidity >= 0, ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidity(%d) >= 0", params.liquidity))
+
+	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
+	CollectFee(params.tokenId)
 
 	position := positions[params.tokenId]
 
@@ -254,17 +260,16 @@ func CollectFee(tokenId uint64) (uint64, bigint, bigint, string) { // tokenId, t
 		0, // burn '0' liquidity to collect fee
 	)
 
-	// r3v4_xxx: DOES THIS NEED FOR COLLECT FEE
-	// tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
-	// positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	// pool := pl.GetPoolFromPoolPath(position.poolKey)
-	// feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
+	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
+	pool := pl.GetPoolFromPoolPath(position.poolKey)
+	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 
-	// tokensOwed0 += (feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / consts.Q128
-	// tokensOwed1 += (feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128) * position.liquidity / consts.Q128
+	tokensOwed0 += (feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / consts.Q128
+	tokensOwed1 += (feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128) * position.liquidity / consts.Q128
 
-	// position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
-	// position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
+	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
+	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 
 	amount0, amount1 := pl.Collect(
 		token0,
@@ -277,68 +282,13 @@ func CollectFee(tokenId uint64) (uint64, bigint, bigint, string) { // tokenId, t
 		consts.MAX_UINT64, // r3v4_xxx: current grc20 handles amount by `uint64`
 	)
 
-	// r3v4_xxx: DOES THIS NEED FOR COLLECT FEE
-	// position.tokensOwed0, position.tokensOwed1 = tokensOwed0-amount0, tokensOwed1-amount1
-	// positions[tokenId] = position
-
-	return tokenId, amount0, amount1, position.poolKey
-}
-
-func Burn(tokenId uint64) (uint64, bigint, bigint, bigint, string) { // tokenId, liquidity, amount0, amount1, poolPath
-	// verify tokenId exists
-	require(exists(tokenId), ufmt.Sprintf("[POSITION] position.gno__Burn() || tokenId(%d) doesn't exist", tokenId))
-
-	// MUST BE OWNER TO BURN ( can not be approved address )
-	owner := gnft.OwnerOf(tid(tokenId))
-	require(owner == GetOrigCaller(), ufmt.Sprintf("[POSITION] position.gno__Burn() || only owner(%s) can burn tokenId(%d), caller(%s)", owner, tokenId, GetOrigCaller()))
-
-	position := positions[tokenId]
-	positionLiquidity := position.liquidity
-
-	pool := pl.GetPoolFromPoolPath(position.poolKey) // poolKey == poolPath
-
-	token0, token1, fee := poolKeyDivide(position.poolKey)
-	burnAmount0, burnAmount1 := pl.Burn(
-		token0,
-		token1,
-		fee,
-		position.tickLower,
-		position.tickUpper,
-		positionLiquidity,
-	)
-
-	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
-
-	position.tokensOwed0 += burnAmount0 + ((feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / consts.Q128)
-	position.tokensOwed1 += burnAmount1 + ((feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128) * position.liquidity / consts.Q128)
-
-	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
-	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
-
-	position.liquidity = 0
+	position.tokensOwed0, position.tokensOwed1 = tokensOwed0-amount0, tokensOwed1-amount1
 	positions[tokenId] = position
 
-	collectAmount0, collectAmount1 := pl.Collect(
-		token0,
-		token1,
-		fee,
-		GetOrigCaller(),
-		position.tickLower,
-		position.tickUpper,
-		position.tokensOwed0,
-		position.tokensOwed1,
-	)
+	// handle withdrawal fee
+	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(tokenId, token0, amount0, token1, amount1)
 
-	position.tokensOwed0 = 0
-	position.tokensOwed1 = 0
-
-	positions[tokenId] = position
-
-	// burnNFT(tokenId) // DO NOT BURN TO SHOW CLOSED POSITION
-	burnPosition(tokenId) // JUST UPDATE FLAG
-
-	return tokenId, positionLiquidity, collectAmount0, collectAmount1, position.poolKey
+	return tokenId, withoutFee0, withoutFee1, position.poolKey
 }
 
 func burnNFT(tokenId uint64) {
