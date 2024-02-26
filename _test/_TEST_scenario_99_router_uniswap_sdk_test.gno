@@ -4,7 +4,7 @@ UNISWAP TEST REF
   - https://github.com/Uniswap/v3-core/blob/main/test/UniswapV3Router.spec.ts
   - https://github.com/Uniswap/router-sdk/blob/main/src/swapRouter.test.ts
 */
-package swap_scneraio
+package swap_scenario
 
 import (
 	"std"
@@ -12,11 +12,11 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	_ "gno.land/r/demo/grc20_wrapper"
+	"gno.land/r/demo/consts"
 
 	pl "gno.land/r/demo/pool"
-	pos "gno.land/r/demo/position"
-	rou "gno.land/r/demo/router"
+	pn "gno.land/r/demo/position"
+	rr "gno.land/r/demo/router"
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/baz"
@@ -26,24 +26,8 @@ import (
 )
 
 var (
-	test1 = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
-	lp01  = testutils.TestAddress("lp01")
-	tr01  = testutils.TestAddress("tr01")
-
-	poolAddr     = std.DerivePkgAddr("gno.land/r/demo/pool")
-	positionAddr = std.DerivePkgAddr("gno.land/r/demo/position")
-	stakerAddr   = std.DerivePkgAddr("gno.land/r/demo/staker")
-	routerAddr   = std.DerivePkgAddr("gno.land/r/demo/router")
-
-	barPath = "gno.land/r/demo/bar"
-	bazPath = "gno.land/r/demo/baz"
-	fooPath = "gno.land/r/demo/foo"
-
-	barObj = bar.GetGRC20()
-	bazObj = baz.GetGRC20()
-	fooObj = foo.GetGRC20()
-
-	max_timeout = bigint(9999999999)
+	lp01 = testutils.TestAddress("lp01")
+	tr01 = testutils.TestAddress("tr01")
 
 	// vars from Uniswap TEST
 	feeAmount = 3000
@@ -70,7 +54,7 @@ func TestPoolCreatePools(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
 	// approve gns to CreatePool ( 500 gns for 1 pool)
-	gns.Approve(a2u(poolAddr), 5000)
+	gns.Approve(a2u(consts.POOL_ADDR), 5000)
 
 	// bar-baz
 	pl.CreatePool(barPath, bazPath, 100, 79228162514264337593543950337) // tick 0 ≈ 1:1
@@ -103,10 +87,10 @@ func TestPositionMintBarBazInRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve bar, baz to pool ( position.Mint() calls pool.Mint() ≈ so approve to pool )
-	bar.Approve(a2u(poolAddr), 10000000)
-	baz.Approve(a2u(poolAddr), 10000000)
+	bar.Approve(a2u(consts.POOL_ADDR), 10000000)
+	baz.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		barPath,     // token0
 		bazPath,     // token1
 		100,         // fee
@@ -116,7 +100,7 @@ func TestPositionMintBarBazInRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(1))
@@ -132,10 +116,10 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
 	// approve bar, baz to pool ( position.Mint() calls pool.Mint() ≈ so approve to pool )
-	baz.Approve(a2u(poolAddr), 10000000)
-	foo.Approve(a2u(poolAddr), 10000000)
+	baz.Approve(a2u(consts.POOL_ADDR), 10000000)
+	foo.Approve(a2u(consts.POOL_ADDR), 10000000)
 
-	tokenId, liquidity, amount0, amoutn1 := pos.Mint(
+	tokenId, liquidity, amount0, amoutn1 := pn.Mint(
 		bazPath,     // token0
 		fooPath,     // token1
 		100,         // fee
@@ -145,7 +129,7 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		max_timeout, // deadline
+		MAX_TIMEOUT, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(2))
@@ -171,7 +155,7 @@ func TestFaucetTR01(t *testing.T) {
 func TestRouterDrySwapRouteBarFooExactIn(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
-	dryResult := rou.DrySwapRoute(
+	dryResult := rr.DrySwapRoute(
 		barPath,    // inputToken
 		fooPath,    // outputToken
 		100000,     // amountSpecified
@@ -187,14 +171,14 @@ func TestRouterSwapRouteBarFooExactIn(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	// approve bar to pool
-	bar.Approve(a2u(poolAddr), 100000)
+	bar.Approve(a2u(consts.POOL_ADDR), 100000)
 
 	barOld := balanceOf(barObj, tr01)
 	fooOld := balanceOf(fooObj, tr01)
 	shouldEQ(t, barOld, 100000000)
 	shouldEQ(t, fooOld, 0)
 
-	swapResult := rou.SwapRoute(
+	swapResult := rr.SwapRoute(
 		barPath,    // inputToken
 		fooPath,    // outputToken
 		100000,     // amountSpecified
@@ -217,7 +201,7 @@ func TestRouterSwapRouteBarFooExactIn(t *testing.T) {
 func TestRouterDrySwapRouteBarFooExactOutAfterSwap(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
-	dryResult := rou.DrySwapRoute(
+	dryResult := rr.DrySwapRoute(
 		barPath,     // inputToken
 		fooPath,     // outputToken
 		100000,      // amountSpecified
@@ -233,14 +217,14 @@ func TestRouterSwapRouteBarFooExactOutAfterSwap(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	// approve bar to pool
-	bar.Approve(a2u(poolAddr), 106226)
+	bar.Approve(a2u(consts.POOL_ADDR), 106226)
 
 	barOld := balanceOf(barObj, tr01)
 	fooOld := balanceOf(fooObj, tr01)
 	shouldEQ(t, barOld, 99900000)
 	shouldEQ(t, fooOld, 98019)
 
-	swapResult := rou.SwapRoute(
+	swapResult := rr.SwapRoute(
 		barPath,     // inputToken
 		fooPath,     // outputToken
 		100000,      // amountSpecified

@@ -1,4 +1,4 @@
-package swap_scneraio
+package swap_scenario
 
 import (
 	"std"
@@ -101,6 +101,19 @@ func shouldPanic(t *testing.T, f func()) {
 	defer func() {
 		if r := recover(); r == nil {
 			t.Errorf("expected panic")
+		}
+	}()
+	f()
+}
+
+func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic")
+		} else {
+			if r != msg {
+				t.Errorf("excepted panic(%v), got(%v)", msg, r)
+			}
 		}
 	}()
 	f()
