@@ -38,6 +38,11 @@ type ResponseApiGetRewards struct {
 	Response []LpTokenReward   `json:"response"`
 }
 
+type ResponseApiGetRewardByLpTokenId struct {
+	Stat     ResponseQueryBase `json:"stat"`
+	Response LpTokenReward     `json:"response"`
+}
+
 type ResponseApiGetStakes struct {
 	Stat     ResponseQueryBase `json:"stat"`
 	Response []Stake           `json:"response"`
@@ -92,6 +97,58 @@ func ApiGetRewards() string {
 	rr, err := json.Marshal(r)
 	if err != nil {
 		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewards() || json marshal error: %v", err))
+	}
+
+	return string(rr)
+}
+
+func ApiGetRewardByLpTokenId(lpTokenId uint64) string {
+	deposit, exist := deposits[lpTokenId]
+	require(exist, ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardByLpTokenId() || lpTokenId(%d) deposit does not exist", lpTokenId))
+
+	rewards := []Reward{}
+
+	// get internal gns reward
+	internalGNS := rewardMathComputeInternalRewardAmount(lpTokenId, deposit)
+	if internalGNS > 0 {
+		rewards = append(rewards, Reward{
+			IncentiveType:     "INTERNAL",
+			TargetPoolPath:    deposit.targetPoolPath,
+			RewardTokenPath:   INTERNAL_REWARD_TOKEN_PATH,
+			RewardTokenAmount: internalGNS,
+		})
+	}
+
+	// find all external reward list for poolPath which lpTokenId is staked
+	for _, incentiveId := range poolIncentives[deposit.targetPoolPath] {
+		externalReward := rewardMathComputeExternalRewardAmount(lpTokenId, deposit, incentives[incentiveId])
+		rewards = append(rewards, Reward{
+			IncentiveType:     "EXTERNAL",
+			TargetPoolPath:    deposit.targetPoolPath,
+			RewardTokenPath:   incentives[incentiveId].rewardToken,
+			RewardTokenAmount: externalReward,
+		})
+	}
+
+	lpTokenReward := LpTokenReward{
+		LpTokenId: lpTokenId,
+		Address:   deposit.owner.String(),
+		Rewards:   rewards,
+	}
+
+	qb := ResponseQueryBase{
+		Height:    GetHeight(),
+		Timestamp: int64(GetTimestamp()),
+	}
+
+	r := ResponseApiGetRewardByLpTokenId{
+		Stat:     qb,
+		Response: lpTokenReward,
+	}
+
+	rr, err := json.Marshal(r)
+	if err != nil {
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardByLpTokenId() || json marshal error: %v", err))
 	}
 
 	return string(rr)
