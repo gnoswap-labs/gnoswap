@@ -6,11 +6,11 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/consts"
 
-	nft "gno.land/r/demo/gnft"
+	"gno.land/r/demo/gnft"
 )
 
 func nftBalanceOf(addr std.Address) bigint {
-	return bigint(nft.BalanceOf(a2u(addr)))
+	return bigint(gnft.BalanceOf(a2u(addr)))
 }
 
 func exists(tokenId uint64) bool {
@@ -24,7 +24,7 @@ func exists(tokenId uint64) bool {
 
 	// exists method in grc721 is private
 	// we don't have much choice but to use ownerOf
-	owner := nft.OwnerOf(tid(tokenId))
+	owner := gnft.OwnerOf(tid(tokenId))
 	if owner == consts.ZERO_ADDRESS {
 		panic(ufmt.Sprintf("[POSITION] nft_helper.gno__exists() || tokenId(%s) doesn't exist__ZeroAddressOwner", tokenId))
 		return false
@@ -43,7 +43,7 @@ func isApprovedOrOwner(addr std.Address, tokenId uint64) bool {
 	}
 
 	// check owner first
-	owner := nft.OwnerOf(tid)
+	owner := gnft.OwnerOf(tid)
 	if addr == owner {
 		return true
 	}
@@ -57,7 +57,7 @@ func isApprovedOrOwner(addr std.Address, tokenId uint64) bool {
 	}
 
 	// if not owner, check whether approved in actual grc721 contract
-	operator, ok := nft.GetApproved(tid)
+	operator, ok := gnft.GetApproved(tid)
 	if ok && addr == operator {
 		return true
 	}

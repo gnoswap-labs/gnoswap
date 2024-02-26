@@ -180,8 +180,8 @@ func Burn(tokenId uint64) (uint64, bigint, bigint, bigint, string) { // tokenId,
 
 	positions[tokenId] = position
 
-	// MUST BE BURN NFT
-	burnNFT(tokenId)
+	// burnNFT(tokenId) // DO NOT BURN NFT
+	burnPosition(tokenId) // JUST UPDATE FLAG
 
 	return tokenId, positionLiquidity, collectAmount0, collectAmount1, position.poolKey
 }
@@ -195,6 +195,14 @@ func burnNFT(tokenId uint64) {
 
 	positions = deleteFromPositions(positions, tokenId)
 	gnft.Burn(tid(tokenId))
+}
+
+func burnPosition(tokenId uint64) {
+	position := positions[tokenId]
+	require(position.isClear(), ufmt.Sprintf("[POSITION] position.gno__burnPosition() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1))
+
+	position.burned = true
+	positions[tokenId] = position
 }
 
 func isAuthorizedForToken(tokenId uint64) {

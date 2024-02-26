@@ -13,6 +13,7 @@ import (
 
 type RpcPosition struct {
 	LpTokenId                uint64 `json:"lpTokenId"`
+	Burned                   bool   `json:"burned"`
 	Operator                 string `json:"operator"`
 	PoolKey                  string `json:"poolKey"`
 	TickLower                int32  `json:"tickLower"`
@@ -68,6 +69,8 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 		panic(ufmt.Sprintf("[POSITION] getter_api.gno__rpcMakePosition() || position not found for lpTokenId(%d)", lpTokenId))
 	}
 
+	burned := isBurned(lpTokenId)
+
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
 	lowerX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
@@ -80,10 +83,14 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 		position.liquidity,
 	)
 
-	unclaimedFee0, unclaimedFee1 := unclaimedFee(lpTokenId)
+	var unclaimedFee0, unclaimedFee1 bigint // if position is burned, unclaimedFee0 and unclaimedFee1 will be 0
+	if !burned {
+		unclaimedFee0, unclaimedFee1 := unclaimedFee(lpTokenId)
+	}
 
 	return RpcPosition{
 		LpTokenId:                lpTokenId,
+		Burned:                   burned,
 		Operator:                 position.operator.String(),
 		PoolKey:                  position.poolKey,
 		TickLower:                position.tickLower,
@@ -149,4 +156,8 @@ func unclaimedFee(tokenId uint64) (bigint, bigint) {
 	unclaimedFee1 := (liquidity * (feeGrowthInside1X128 - feeGrowthInside1LastX128)) / consts.Q128
 
 	return unclaimedFee0, unclaimedFee1
+}
+
+func isBurned(tokenId uint64) bool {
+	return positions[tokenId].burned
 }

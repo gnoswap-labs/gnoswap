@@ -21,6 +21,8 @@ type Position struct {
 
 	tokensOwed0 bigint
 	tokensOwed1 bigint
+
+	burned bool
 }
 
 type MintParams struct { // r3v4_xxx: private?
