@@ -1,15 +1,20 @@
 package position
 
 import (
-	"gno.land/p/demo/common"
+	"std"
 )
 
+// type Position
 func PositionGetPosition(tokenId uint64) Position {
 	return positions[tokenId]
 }
 
-func PositionGetPositionLiquidity(tokenId uint64) bigint {
-	return positions[tokenId].liquidity
+func PositionGetPositionNonce(tokenId uint64) bigint {
+	return positions[tokenId].nonce
+}
+
+func PositionGetPositionOperator(tokenId uint64) std.Address {
+	return positions[tokenId].operator
 }
 
 func PositionGetPositionPoolKey(tokenId uint64) string {
@@ -22,6 +27,10 @@ func PositionGetPositionTickLower(tokenId uint64) int32 {
 
 func PositionGetPositionTickUpper(tokenId uint64) int32 {
 	return positions[tokenId].tickUpper
+}
+
+func PositionGetPositionLiquidity(tokenId uint64) bigint {
+	return positions[tokenId].liquidity
 }
 
 func PositionGetPositionFeeGrowthInside0LastX128(tokenId uint64) bigint {
@@ -38,8 +47,4 @@ func PositionGetPositionTokensOwed0(tokenId uint64) bigint {
 
 func PositionGetPositionTokensOwed1(tokenId uint64) bigint {
 	return positions[tokenId].tokensOwed1
-}
-
-func PositionGetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity bigint) (bigint, bigint) {
-	return common.GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity)
 }
