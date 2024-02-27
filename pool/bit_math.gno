@@ -2,105 +2,68 @@ package pool
 
 import (
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/demo/consts"
 
 	"gno.land/p/demo/u256"
 )
 
+type bitShift struct {
+	bitPattern *u256.Uint // mask or limit
+	shift      uint
+}
+
 func bitMathMostSignificantBit(x *u256.Uint) uint8 {
-	require(x.Gt(u256.NewUint(0)), ufmt.Sprintf("[POOL] bit_math.gno__bitMathMostSignificantBit() || x(%s) > 0", x))
+	require(
+		!x.IsZero(),
+		ufmt.Sprintf("[POOL] bit_math.gno__bitMathMostSignificantBit() || expected x(%d) != 0", x),
+	)
+
+	shifts := []bitShift{
+		{u256.FromBigint(0x100000000000000000000000000000000), 128},
+		{u256.FromBigint(0x10000000000000000), 64},
+		{u256.FromBigint(0x100000000), 32},
+		{u256.FromBigint(0x10000), 16},
+		{u256.FromBigint(0x100), 8},
+		{u256.FromBigint(0x10), 4},
+		{u256.FromBigint(0x4), 2},
+		{u256.FromBigint(0x2), 1},
+	}
 
 	r := uint8(0)
-	if x.Gte(u256.FromBigint(0x100000000000000000000000000000000)) {
-		x.Rsh(x, 128)
-		r += 128
-	}
-
-	if x.Gte(u256.FromBigint(0x10000000000000000)) {
-		x.Rsh(x, 64)
-		r += 64
-	}
-
-	if x.Gte(u256.NewUint(0x100000000)) {
-		x.Rsh(x, 32)
-		r += 32
-	}
-
-	if x.Gte(u256.NewUint(0x10000)) {
-		x.Rsh(x, 16)
-		r += 16
-	}
-
-	if x.Gte(u256.NewUint(0x100)) {
-		x.Rsh(x, 8)
-		r += 8
-	}
-
-	if x.Gte(u256.NewUint(0x10)) {
-		x.Rsh(x, 4)
-		r += 4
-	}
-
-	if x.Gte(u256.NewUint(0x4)) {
-		x.Rsh(x, 2)
-		r += 2
-	}
-
-	if x.Gte(u256.NewUint(0x2)) {
-		r += 1
+	for _, s := range shifts {
+		if x.Gte(s.bitPattern) {
+			x.Rsh(x, s.shift)
+			r += uint8(s.shift)
+		}
 	}
 
 	return r
 }
 
 func bitMathLeastSignificantBit(x *u256.Uint) uint8 {
-	require(x.Gt(u256.NewUint(0)), ufmt.Sprintf("[POOL] bit_math.gno__bitMathLeastSignificantBit() || x(%s) > 0", x))
+	require(
+		!x.IsZero(),
+		ufmt.Sprintf("[POOL] bit_math.gno__bitMathLeastSignificantBit() || expected x(%d) != 0", x),
+	)
+
+	shifts := []bitShift{
+		{u256.FromBigint(consts.MAX_UINT128), 128},
+		{u256.FromBigint(consts.MAX_UINT64), 64},
+		{u256.FromBigint(consts.MAX_UINT32), 32},
+		{u256.FromBigint(consts.MAX_UINT16), 16},
+		{u256.FromBigint(consts.MAX_UINT8), 8},
+		{u256.FromBigint(0xf), 4},
+		{u256.FromBigint(0x3), 2},
+		{u256.FromBigint(0x1), 1},
+	}
 
 	r := uint8(255)
-
-	if u256.NewUint(0).And(x, u256.FromBigint(MAX_UINT128)).Gt(u256.NewUint(0)) {
-		r -= 128
-	} else {
-		x.Rsh(x, 128)
-	}
-
-	if u256.NewUint(0).And(x, u256.FromBigint(MAX_UINT64)).Gt(u256.NewUint(0)) {
-		r -= 64
-	} else {
-		x.Rsh(x, 64)
-	}
-
-	if u256.NewUint(0).And(x, u256.FromBigint(MAX_UINT32)).Gt(u256.NewUint(0)) {
-		r -= 32
-	} else {
-		x.Rsh(x, 32)
-	}
-
-	if u256.NewUint(0).And(x, u256.FromBigint(MAX_UINT16)).Gt(u256.NewUint(0)) {
-		r -= 16
-	} else {
-		x.Rsh(x, 16)
-	}
-
-	if u256.NewUint(0).And(x, u256.FromBigint(MAX_UINT8)).Gt(u256.NewUint(0)) {
-		r -= 8
-	} else {
-		x.Rsh(x, 8)
-	}
-
-	if u256.NewUint(0).And(x, u256.FromBigint(0xf)).Gt(u256.NewUint(0)) {
-		r -= 4
-	} else {
-		x.Rsh(x, 4)
-	}
-
-	if u256.NewUint(0).And(x, u256.FromBigint(0x3)).Gt(u256.NewUint(0)) {
-		r -= 2
-	} else {
-		x.Rsh(x, 2)
-	}
-
-	if u256.NewUint(0).And(x, u256.FromBigint(0x1)).Gt(u256.NewUint(0)) {
-		r -= 1
+	for _, s := range shifts {
+		if !new(u256.Uint).And(x, s.bitPattern).IsZero() {
+			r -= uint8(s.shift)
+		} else {
+			x.Rsh(x, s.shift)
+		}
 	}
 
 	return r

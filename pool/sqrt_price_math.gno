@@ -1,8 +1,16 @@
 package pool
 
+// XXXXXXXXX
+// u256 Add/Sub are overflow protected, but Bitwise operations are not.
+// Functions in this file are supposed to be overflow protected.
+// swap_math.gno is assuming that these functions are overflow protected.
+// XXXXXXXXX
+
 import (
 	"gno.land/p/demo/u256"
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/demo/consts"
 )
 
 func sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
@@ -72,6 +80,26 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
 		require(sqrtPX96.Gt(quotient), ufmt.Sprintf("[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown() || sqrtPX96(%d) must be greater than quotient(%d)", sqrtPX96, quotient))
 		return new(u256.Uint).Sub(sqrtPX96, quotient)
 	}
+
+	// quotient mutst be positive when amount and liquidity are positive
+
+	if add {
+		result := new(u256.Uint).Add(sqrtPX96, quotient)
+
+		require(
+			result.Gte(sqrtPX96),
+			ufmt.Sprintf(
+				"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown() || expected result >= sqrtPX96, got: %d",
+				result,
+			),
+		)
+
+		return result
+	}
+
+	result := new(u256.Uint).Sub(sqrtPX96, quotient)
+
+	return result
 }
 
 func sqrtPriceMathGetNextSqrtPriceFromInput(
