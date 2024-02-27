@@ -300,80 +300,99 @@ func TestExecuteSwapStep(t *testing.T) {
 	}
 }
 
-// func TestApplySwapStep(t *testing.T) {
-// 	tests := []struct {
-// 		name string
-// 		state       SwapState
-// 		cache       SwapCache
-// 		step        StepComputations
-// 		exactInput  bool
-// 		expected    SwapState
-// 	}{
-// 		{
-// 			name: "Exact input, fee protocol > 0",
-// 			state: SwapState{
-// 				amountSpecifiedRemaining: bigint(1000),
-// 				amountCalculated:         bigint(0),
-// 				protocolFee:              bigint(0),
-// 				feeGrowthGlobalX128:      bigint(0),
-// 				liquidity:                bigint(10000),
-// 			},
-// 			cache: SwapCache{
-// 				feeProtocol:    10,
-// 				liquidityStart: bigint(10000),
-// 			},
-// 			step: StepComputations{
-// 				amountIn:         bigint(100),
-// 				amountOut:        bigint(50),
-// 				feeAmount:        bigint(5),
-// 				sqrtPriceNextX96: bigint(1000000),
-// 			},
-// 			exactInput: true,
-// 			expected: SwapState{
-// 				amountSpecifiedRemaining: bigint(895), // 1000 - (100 + 5)
-// 				amountCalculated:         bigint(-50),
-// 				protocolFee:              bigint(1), // 5 / 10
-// 				feeGrowthGlobalX128:      bigint(0),   // Updated based on feeAmount and liquidity
-// 				liquidity:                bigint(10000),
-// 			},
-// 		},
-// 		{
-// 			name: "Not exact input, fee protocol = 0",
-// 			state: SwapState{
-// 				amountSpecifiedRemaining: bigint(1000),
-// 				amountCalculated:         bigint(0),
-// 				protocolFee:              bigint(0),
-// 				feeGrowthGlobalX128:      bigint(0),
-// 				liquidity:                bigint(10000),
-// 			},
-// 			cache: SwapCache{
-// 				feeProtocol:    0,
-// 				liquidityStart: bigint(10000),
-// 			},
-// 			step: StepComputations{
-// 				amountIn:         bigint(100),
-// 				amountOut:        bigint(50),
-// 				feeAmount:        bigint(5),
-// 				sqrtPriceNextX96: bigint(1000000),
-// 			},
-// 			exactInput: false,
-// 			expected: SwapState{
-// 				amountSpecifiedRemaining: bigint(1050), // 1000 + 50
-// 				amountCalculated:         bigint(105),  // 100 + 5
-// 				protocolFee:              bigint(0),
-// 				feeGrowthGlobalX128:      bigint(0),    // Updated based on feeAmount and liquidity
-// 				liquidity:                bigint(10000),
-// 			},
-// 		},
-// 	}
+func TestApplySwapStep(t *testing.T) {
+	tests := []struct {
+		name string
+		state       SwapState
+		cache       SwapCache
+		step        StepComputations
+		exactInput  bool
+		expected    SwapState
+	}{
+		{
+			name: "Exact input, fee protocol > 0",
+			state: SwapState{
+				amountSpecifiedRemaining: 1000,
+				amountCalculated:         0,
+				protocolFee:              0,
+				feeGrowthGlobalX128:      0,
+				liquidity:                1000,
+			},
+			cache: SwapCache{
+				feeProtocol:    10,
+				liquidityStart: 1000,
+			},
+			step: StepComputations{
+				sqrtPriceStartX96: 1000000,
+				tickNext:		 1,
+				initialized:	 true,
+				sqrtPriceNextX96: 10000,
+				amountIn:		 100,
+				amountOut:		 50,
+				feeAmount:		 5,
+			},
+			exactInput: true,
+			expected: SwapState{
+				amountSpecifiedRemaining: 895, // 1000 - (100 + 5)
+				amountCalculated:         -50,
+				protocolFee:              0,   // 5 / 10
+				feeGrowthGlobalX128:      1_7014_1183_4604_6923_1731_6873_0371_5884_1055,
+				liquidity:                1000,
+			},
+		},
+		{
+			name: "Not exact input, fee protocol = 0",
+			state: SwapState{
+				amountSpecifiedRemaining: 1000,
+				amountCalculated:         0,
+				protocolFee:              0,
+				feeGrowthGlobalX128:      0,
+				liquidity:                1000,
+			},
+			cache: SwapCache{
+				feeProtocol:    0,
+				liquidityStart: 10000,
+			},
+			step: StepComputations{
+				amountIn:         100,
+				amountOut:        50,
+				feeAmount:        5,
+				sqrtPriceNextX96: 1000000,
+			},
+			exactInput: false,
+			expected: SwapState{
+				amountSpecifiedRemaining: 1050, // 1000 + 50
+				amountCalculated:         105,  // 100 + 5
+				protocolFee:              0,
+				feeGrowthGlobalX128:      1_7014_1183_4604_6923_1731_6873_0371_5884_1055,
+				liquidity:                1000,
+			},
+		},
+	}
 
-// 	for _, tc := range tests {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			applySwapStep(&tc.state, &tc.cache, &tc.step, tc.exactInput)
-// 		})
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			applySwapStep(&tc.state, &tc.cache, tc.step, tc.exactInput)
+		})
 
-// 		if tc.expected.amountSpecifiedRemaining != tc.state.amountSpecifiedRemaining {
-// 			t.Errorf("`%s` expected amountSpecifiedRemaining to be %d, got %d", tc.name, tc.expected.amountSpecifiedRemaining, tc.state.amountSpecifiedRemaining)
-// 		}
-// 	}
-// }
+		if tc.expected.amountSpecifiedRemaining != tc.state.amountSpecifiedRemaining {
+			t.Errorf("`%s` expected amountSpecifiedRemaining to be %d, got %d", tc.name, tc.expected.amountSpecifiedRemaining, tc.state.amountSpecifiedRemaining)
+		}
+
+		if tc.expected.amountCalculated != tc.state.amountCalculated {
+			t.Errorf("`%s` expected amountCalculated to be %d, got %d", tc.name, tc.expected.amountCalculated, tc.state.amountCalculated)
+		}
+
+		if tc.expected.protocolFee != tc.state.protocolFee {
+			t.Errorf("`%s` expected protocolFee to be %d, got %d", tc.name, tc.expected.protocolFee, tc.state.protocolFee)
+		}
+
+		if tc.expected.feeGrowthGlobalX128 != tc.state.feeGrowthGlobalX128 {
+			t.Errorf("`%s` expected feeGrowthGlobalX128 to be %d, got %d", tc.name, tc.expected.feeGrowthGlobalX128, tc.state.feeGrowthGlobalX128)
+		}
+
+		if tc.expected.liquidity != tc.state.liquidity {
+			t.Errorf("`%s` expected liquidity to be %d, got %d", tc.name, tc.expected.liquidity, tc.state.liquidity)
+		}
+	}
+}

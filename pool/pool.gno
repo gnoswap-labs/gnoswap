@@ -407,7 +407,8 @@ func executeSwapStep(
 	return step
 }
 
-func applySwapStep(	state *SwapState,
+func applySwapStep(
+	state *SwapState,
 	cache *SwapCache,
 	step  StepComputations,
 	exactInput bool,
