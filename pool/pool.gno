@@ -245,79 +245,25 @@ func Swap(
 	amount0, amount1 := updatePoolState(pool, &state, &cache, &slot0Start, zeroForOne, amountSpecified, exactInput)
 
 	if zeroForOne {
-		// payer > pool
-		balance0Before := bigint(balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr()))
-		ok := transferFromByRegisterCall(pool.token0Path, payer, consts.POOL_ADDR, uint64(amount0))
-		require(
-			ok,
-			ufmt.Sprintf(
-				"[POOL] pool.gno__Swap() || transferFromByRegisterCall(pool.token0Path(%s), payer(%s), consts.POOL_ADDR(%s), uint64(amount0))(%d) failed",
-				pool.token0Path, payer.String(), consts.POOL_ADDR.String(), uint64(amount0),
-			),
-		)
-
-		require(
-			balance0Before+amount0 <= bigint(balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr())),
-			ufmt.Sprintf(
-				"[POOL] pool.gno__Swap() || balance0Before(%d) + amount0(%d) <= balanceOfByRegisterCall(pool.token0Path(%s), GetOrigPkgAddr()(%s))(%d)",
-				balance0Before, amount0, pool.token0Path, GetOrigPkgAddr().String(), balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr()),
-			),
-		)
+		// payer > pool for token0
+		transferTokenAndVerify(pool.token0Path, payer, consts.POOL_ADDR, amount0, true)
 		pool.balances.token0 += amount0
-		require(pool.balances.token0 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%d) >= 0", pool.balances.token0))
 
-		if amount1 < 0 { // pool > recipient
-			require(pool.balances.token1 > -amount1, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token1(%d) > -amount1(%d)", pool.balances.token1, -amount1))
-
-			ok := transferByRegisterCall(pool.token1Path, recipient, uint64(-amount1))
-			require(
-				ok,
-				ufmt.Sprintf(
-					"[POOL] pool.gno__Swap() || transferByRegisterCall(pool.token1Path(%s), recipient(%s), uint64(-amount1))(%d) failed",
-					pool.token1Path, recipient.String(), uint64(-amount1),
-				),
-			)
+		// pool > recipient for token1 (if amount1 is negative)
+		if amount1 < 0 {
+			transferTokenAndVerify(pool.token1Path, consts.POOL_ADDR, recipient, -amount1, false)
 			pool.balances.token1 += amount1
-
 		}
-		require(pool.balances.token1 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() #1 || pool.balances.token1(%d) >= 0", pool.balances.token1))
-
 	} else {
 		// payer > pool
-		balance1Before := bigint(balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr()))
-		ok := transferFromByRegisterCall(pool.token1Path, payer, consts.POOL_ADDR, uint64(amount1))
-		require(
-			ok,
-			ufmt.Sprintf(
-				"[POOL] pool.gno__Swap() || transferFromByRegisterCall(pool.token1Path(%s), payer(%s), consts.POOL_ADDR(%s), uint64(amount1))(%d) failed",
-				pool.token1Path, payer.String(), consts.POOL_ADDR.String(), uint64(amount1),
-			),
-		)
-
-		require(
-			balance1Before+amount1 <= bigint(balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr())),
-			ufmt.Sprintf(
-				"[POOL] pool.gno__Swap() || balance1Before(%d) + amount1(%d) <= balanceOfByRegisterCall(pool.token1Path(%s), GetOrigPkgAddr()(%s))(%d)",
-				balance1Before, amount1, pool.token1Path, GetOrigPkgAddr().String(), balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr()),
-			),
-		)
+		transferTokenAndVerify(pool.token1Path, payer, consts.POOL_ADDR, amount1, true)
 		pool.balances.token1 += amount1
-		require(pool.balances.token1 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() #2 || pool.balances.token1(%d) >= 0", pool.balances.token1))
 
-		if amount0 < 0 { // pool > recipient
-			require(pool.balances.token0 > -amount0, ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%d) > -amount0(%d)", pool.balances.token0, -amount0))
-
-			ok := transferByRegisterCall(pool.token0Path, recipient, uint64(-amount0))
-			require(
-				ok,
-				ufmt.Sprintf(
-					"[POOL] pool.gno__Swap() || transferByRegisterCall(pool.token0Path(%s), recipient(%s), uint64(-amount0))(%d) failed",
-					pool.token0Path, recipient.String(), uint64(-amount0),
-				),
-			)
+		// pool > recipient for token0 (if amount0 is negative)
+		if amount0 < 0 {
+			transferTokenAndVerify(pool.token0Path, consts.POOL_ADDR, recipient, -amount0, false)
 			pool.balances.token0 += amount0
 		}
-		require(pool.balances.token0 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() #2 || pool.balances.token0(%d) >= 0", pool.balances.token0))
 	}
 
 	return amount0, amount1
@@ -406,6 +352,7 @@ func applySwapStep(
 	}
 }
 
+// updatePoolState updates the pool's state after the swap.
 func updatePoolState(
 	pool *Pool,
     state *SwapState,
@@ -450,6 +397,41 @@ func updatePoolState(
 	}
 
 	return amount0, amount1
+}
+
+// transferTokenAndVerify is a helper function to transfer tokens and verify the transfer result.
+func transferTokenAndVerify(
+    tokenPath string,
+    from, to std.Address,
+    amount bigint,
+    isTransferFrom bool,
+) {
+	var (
+		ok bool
+		balanceBefore, balanceAfter bigint
+	)
+
+	// get balance before transfer
+	balanceBefore = bigint(balanceOfByRegisterCall(tokenPath, GetOrigPkgAddr()))
+
+	// transfer
+	if isTransferFrom {
+		ok = transferFromByRegisterCall(tokenPath, from, to, uint64(amount))
+	} else {
+		ok = transferByRegisterCall(tokenPath, to, uint64(amount))
+	}
+
+	require(ok, ufmt.Sprintf("[POOL] pool.gno__Swap() || Token transfer failed: %s -> %s, amount: %d", from.String(), to.String(), amount))
+
+	// get balance after transfer
+	balanceAfter = bigint(balanceOfByRegisterCall(tokenPath, to))
+	require(
+		balanceBefore+amount <= balanceAfter,
+		ufmt.Sprintf(
+			"[POOL] pool.gno__Swap() || Invalid balance after transfer: before %d + amount %d, after %d",
+			balanceBefore, amount, balanceAfter,
+		),
+	)
 }
 
 // ADMIN
