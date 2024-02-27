@@ -33,6 +33,13 @@ type SwapCache struct {
 	liquidityStart bigint
 }
 
+func newSwapCache(feeProtocol uint8, liquidityStart bigint) SwapCache {
+	return SwapCache{
+		feeProtocol:    feeProtocol,
+		liquidityStart: liquidityStart,
+	}
+}
+
 type SwapState struct {
 	amountSpecifiedRemaining bigint
 	amountCalculated         bigint
@@ -41,6 +48,25 @@ type SwapState struct {
 	feeGrowthGlobalX128      bigint
 	protocolFee              bigint
 	liquidity                bigint
+}
+
+func newSwapState(
+	pool *Pool,
+	remaining bigint,
+	feeGrowthGlobalX128 bigint,
+	liquidity bigint,
+) SwapState {
+	slot0 := pool.slot0
+
+	return SwapState{
+		amountSpecifiedRemaining: remaining,
+		amountCalculated:         0,
+		sqrtPriceX96:             slot0.sqrtPriceX96,
+		tick:                     slot0.tick,
+		feeGrowthGlobalX128:      feeGrowthGlobalX128,
+		protocolFee:              0,
+		liquidity:                liquidity,
+	}
 }
 
 type StepComputations struct {

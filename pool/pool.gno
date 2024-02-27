@@ -203,8 +203,10 @@ func Swap(
 	slot0Start := pool.slot0
 	require(slot0Start.unlocked, ufmt.Sprintf("[POOL] pool.gno__Swap() || slot0 must be unlocked"))
 
-	var feeProtocol uint8
-	var feeGrowthGlobalX128 bigint
+	var (
+		feeProtocol uint8
+		feeGrowthGlobalX128 bigint
+	)
 
 	if zeroForOne {
 		require(
@@ -224,59 +226,23 @@ func Swap(
 		feeGrowthGlobalX128 = pool.feeGrowthGlobal1X128
 	}
 
+	defer func() {
+		pool.slot0.unlocked = true
+	}()
+
 	pool.slot0.unlocked = false
 
-	cache := SwapCache{
-		liquidityStart: pool.liquidity,
-		feeProtocol:    feeProtocol,
-	}
-
-	state := SwapState{
-		amountSpecifiedRemaining: amountSpecified,
-		amountCalculated:         0,
-		sqrtPriceX96:             slot0Start.sqrtPriceX96,
-		tick:                     slot0Start.tick,
-		feeGrowthGlobalX128:      feeGrowthGlobalX128,
-		protocolFee:              0,
-		liquidity:                cache.liquidityStart,
-	}
+	cache := newSwapCache(feeProtocol, pool.liquidity)
+	state := newSwapState(pool, amountSpecified, feeGrowthGlobalX128, cache.liquidityStart)
 
 	exactInput := amountSpecified > 0
+
 	for state.amountSpecifiedRemaining != 0 && state.sqrtPriceX96 != sqrtPriceLimitX96 {
 		step := executeSwapStep(pool, &state, sqrtPriceLimitX96, zeroForOne)
 		applySwapStep(&state, &cache, step, exactInput)
 	}
 
-	// END LOOP
-	pool.slot0.sqrtPriceX96 = state.sqrtPriceX96
-	if state.tick != slot0Start.tick {
-		pool.slot0.tick = state.tick
-	}
-
-	if cache.liquidityStart != state.liquidity {
-		pool.liquidity = state.liquidity
-	}
-
-	if zeroForOne {
-		pool.feeGrowthGlobal0X128 = state.feeGrowthGlobalX128
-		if state.protocolFee > 0 {
-			pool.protocolFees.token0 += state.protocolFee
-		}
-	} else {
-		pool.feeGrowthGlobal1X128 = state.feeGrowthGlobalX128
-		if state.protocolFee > 0 {
-			pool.protocolFees.token1 += state.protocolFee
-		}
-	}
-
-	var amount0, amount1 bigint
-	if zeroForOne == exactInput {
-		amount0 = amountSpecified - state.amountSpecifiedRemaining
-		amount1 = state.amountCalculated
-	} else {
-		amount0 = state.amountCalculated
-		amount1 = amountSpecified - state.amountSpecifiedRemaining
-	}
+	amount0, amount1 := updatePoolState(pool, &state, &cache, &slot0Start, zeroForOne, amountSpecified, exactInput)
 
 	if zeroForOne {
 		// payer > pool
@@ -354,7 +320,6 @@ func Swap(
 		require(pool.balances.token0 >= 0, ufmt.Sprintf("[POOL] pool.gno__Swap() #2 || pool.balances.token0(%d) >= 0", pool.balances.token0))
 	}
 
-	pool.slot0.unlocked = true
 	return amount0, amount1
 }
 
@@ -429,8 +394,8 @@ func applySwapStep(
 		state.protocolFee += delta
 	}
 
-	normalized := consts.Q128 / state.liquidity
 	if state.liquidity > 0 {
+		normalized := consts.Q128 / state.liquidity
 		state.feeGrowthGlobalX128 += (step.feeAmount * normalized) // check here if test fails
 	}
 
@@ -439,6 +404,52 @@ func applySwapStep(
 		// crossed tick
 		state.tick = common.TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
 	}
+}
+
+func updatePoolState(
+	pool *Pool,
+    state *SwapState,
+    cache *SwapCache,
+    slot0Start *Slot0,
+    zeroForOne bool,
+	amountSpecified bigint,
+	exactInput bool,
+) (bigint, bigint) {
+	// update the pool's price and tick based on the final swap state
+	pool.slot0.sqrtPriceX96 = state.sqrtPriceX96
+	if state.tick != slot0Start.tick {
+		pool.slot0.tick = state.tick
+	}
+
+	// update the global fee growth based on the final swap state
+	// this depends on the direction of the swap
+	if zeroForOne {
+		pool.feeGrowthGlobal0X128 = state.feeGrowthGlobalX128
+		if state.protocolFee > 0 {
+			pool.protocolFees.token0 += state.protocolFee
+		}
+	} else {
+		pool.feeGrowthGlobal1X128 = state.feeGrowthGlobalX128
+		if state.protocolFee > 0 {
+			pool.protocolFees.token1 += state.protocolFee
+		}
+	}
+
+	if state.liquidity != cache.liquidityStart {
+		pool.liquidity = state.liquidity
+	}
+
+	var amount0, amount1 bigint
+	amountUsed := amountSpecified - state.amountSpecifiedRemaining
+	if zeroForOne == exactInput {
+		amount0 = amountUsed
+		amount1 = state.amountCalculated
+	} else {
+		amount0 = state.amountCalculated
+		amount1 = amountUsed
+	}
+
+	return amount0, amount1
 }
 
 // ADMIN

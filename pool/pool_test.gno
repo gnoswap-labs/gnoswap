@@ -8,21 +8,6 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-type IPool interface {
-    GetSlot0() Slot0
-    GetBalances() Balances
-    GetFee() uint16
-    GetTickSpacing() int32
-    GetMaxLiquidityPerTick() bigint
-    GetFeeGrowthGlobal0X128() bigint
-    GetFeeGrowthGlobal1X128() bigint
-    GetProtocolFees() ProtocolFees
-    GetLiquidity() bigint
-    GetTicks() Ticks
-    GetTickBitmaps() TickBitmaps
-    GetPositions() Positions
-}
-
 type MockPool struct {
 	slot0                Slot0
     balances             Balances
@@ -38,14 +23,6 @@ type MockPool struct {
     positions            Positions
 }
 
-func (m *MockPool) GetSlot0() Slot0 {
-    return m.slot0
-}
-
-func (m *MockPool) GetBalances() Balances {
-    return m.balances
-}
-
 func (m *MockPool) GetFee() uint16 {
     return m.fee
 }
@@ -54,36 +31,8 @@ func (m *MockPool) GetTickSpacing() int32 {
     return m.tickSpacing
 }
 
-func (m *MockPool) GetMaxLiquidityPerTick() bigint {
-    return m.maxLiquidityPerTick
-}
-
 func (m *MockPool) GetFeeGrowthGlobal0X128() bigint {
     return m.feeGrowthGlobal0X128
-}
-
-func (m *MockPool) GetFeeGrowthGlobal1X128() bigint {
-    return m.feeGrowthGlobal1X128
-}
-
-func (m *MockPool) GetProtocolFees() ProtocolFees {
-    return m.protocolFees
-}
-
-func (m *MockPool) GetLiquidity() bigint {
-    return m.liquidity
-}
-
-func (m *MockPool) GetTicks() Ticks {
-    return m.ticks
-}
-
-func (m *MockPool) GetTickBitmaps() TickBitmaps {
-    return m.tickBitmaps
-}
-
-func (m *MockPool) GetPositions() Positions {
-    return m.positions
 }
 
 func (pool *MockPool) tickBitmapNextInitializedTickWithInOneWord(
@@ -130,10 +79,11 @@ func (pool *MockPool) tickBitmapNextInitializedTickWithInOneWord(
 	if initialized {
 		next := (compress + 1 + int32(bitMathLeastSignificantBit(masked)-bitPos)) * tickSpacing
 		return next, initialized
-	} else {
-		next := (compress + 1 + int32(int64(consts.MAX_UINT8-bigint(uint64(bitPos))))) * tickSpacing
-		return next, initialized
 	}
+
+	next := (compress + 1 + int32(int64(consts.MAX_UINT8-bigint(uint64(bitPos))))) * tickSpacing
+
+	return next, initialized
 }
 
 // it takes the MockPool as a type which cannot convert to Pool. So I have to copy the function from the original code
