@@ -1,6 +1,8 @@
 package position
 
 import (
+	"std"
+
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/consts"
@@ -69,14 +71,14 @@ func mint(params MintParams) (uint64, bigint, bigint, bigint) {
 	tokenId := nextId
 	nextId++ // nextId = nextId + 1
 
-	gnft.Mint(a2u(GetOrigCaller()), tid(tokenId)) // owner, tokenId
+	gnft.Mint(a2u(std.GetOrigCaller()), tid(tokenId)) // owner, tokenId
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 
 	position := Position{
 		nonce:                    0,
-		operator:                 PrevRealmAddr(),
+		operator:                 std.PrevRealm().Addr(),
 		poolKey:                  pl.GetPoolPath(params.token0, params.token1, params.fee),
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
@@ -115,10 +117,10 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, bigint, bigint, 
 	// verify tokenId exists
 	require(exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
 
-	// MUST BE OWNER TO DECREASE LIQUIDITY
+	// MUST BE OWNER TO INCREASE LIQUIDITY
 	// can not be approved address > staked position can be modified
 	owner := gnft.OwnerOf(tid(params.tokenId))
-	require(owner == GetOrigCaller(), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || only owner can decrease liquidity__owner(%s) == GetOrigCaller(%s)", owner, GetOrigCaller()))
+	require(owner == std.GetOrigCaller(), ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || only owner can increase liquidity__owner(%s) == std.GetOrigCaller(%s)", owner, std.GetOrigCaller()))
 
 	checkDeadline(params.deadline)
 
@@ -162,7 +164,7 @@ func DecreaseLiquidity(
 	amount0Min bigint,
 	amount1Min bigint,
 	deadline bigint,
-) (uint64, bigint, bigint, bigint) { // tokenId, liquidity, amount0, amount1
+) (uint64, bigint, bigint, bigint, string) { // tokenId, liquidity, amount0, amount1, poolPath
 	decreaseLiquidityParams := DecreaseLiquidityParams{
 		tokenId:    tokenId,
 		liquidity:  liquidity,
@@ -174,13 +176,13 @@ func DecreaseLiquidity(
 	return decreaseLiquidity(decreaseLiquidityParams)
 }
 
-func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, bigint, bigint, bigint) {
+func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, bigint, bigint, bigint, string) {
 	// verify tokenId
 	require(exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
 
 	// MUST BE OWNER TO DECREASE LIQUIDITY ( can not be approved address )
 	owner := gnft.OwnerOf(tid(params.tokenId))
-	require(owner == GetOrigCaller(), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || only owner can decrease liquidity__owner(%s) == GetOrigCaller(%s)", owner, GetOrigCaller()))
+	require(owner == std.GetOrigCaller(), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || only owner can decrease liquidity__owner(%s) == std.GetOrigCaller(%s)", owner, std.GetOrigCaller()))
 
 	checkDeadline(params.deadline)
 
@@ -221,7 +223,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, bigint, bigint, 
 		pToken0,
 		pToken1,
 		pFee,
-		GetOrigCaller(),
+		std.GetOrigCaller(),
 		position.tickLower,
 		position.tickUpper,
 		burnedAmount0,
@@ -238,7 +240,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, bigint, bigint, 
 		burnPosition(params.tokenId) // just update flag
 	}
 
-	return params.tokenId, params.liquidity, amount0, amount1
+	return params.tokenId, params.liquidity, amount0, amount1, position.poolKey
 }
 
 func CollectFee(tokenId uint64) (uint64, bigint, bigint, string) { // tokenId, tokensOwed0, tokensOwed1, poolPath
@@ -275,7 +277,7 @@ func CollectFee(tokenId uint64) (uint64, bigint, bigint, string) { // tokenId, t
 		token0,
 		token1,
 		fee,
-		GetOrigCaller(),
+		std.GetOrigCaller(),
 		position.tickLower,
 		position.tickUpper,
 		consts.MAX_UINT64, // r3v4_xxx: current grc20 handles amount by `uint64`
@@ -311,7 +313,7 @@ func burnPosition(tokenId uint64) {
 }
 
 func isAuthorizedForToken(tokenId uint64) {
-	require(isApprovedOrOwner(PrevRealmAddr(), tokenId), ufmt.Sprintf("[POSITION] position.gno__isAuthorizedForToken() || caller(%s) is not approved or owner of tokenId(%d)", PrevRealmAddr(), tokenId))
+	require(isApprovedOrOwner(std.PrevRealm().Addr(), tokenId), ufmt.Sprintf("[POSITION] position.gno__isAuthorizedForToken() || caller(%s) is not approved or owner of tokenId(%d)", std.PrevRealm().Addr(), tokenId))
 }
 
 func deleteFromPositions(m map[uint64]Position, key uint64) map[uint64]Position {

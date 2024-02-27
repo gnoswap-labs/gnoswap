@@ -1,4 +1,4 @@
-package staker
+package router
 
 import (
 	"std"
@@ -18,6 +18,7 @@ import (
 	"gno.land/r/demo/gns"
 
 	"gno.land/r/demo/consts"
+
 	"gno.land/r/demo/users"
 
 	pl "gno.land/r/demo/pool" // only for position `testcase`` to call grc20 by register
@@ -143,7 +144,7 @@ func init() {
 	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
 
-	// STAKER
+	// ROUTER
 	RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})

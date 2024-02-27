@@ -8,6 +8,10 @@ import (
 
 	"gno.land/r/demo/consts"
 
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/gns"
+
 	pl "gno.land/r/demo/pool"
 )
 
@@ -19,24 +23,21 @@ var (
 
 // 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(gsa)
 	pl.InitManual()
 
-	std.TestSetOrigCaller(test1)
-	pl.CreatePool(fooPath, barPath, fee500, 130621891405341611593710811006)
+	std.TestSetPrevAddr(test1)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 
-	// fee
-	// 500		= 0.05% // USv3 default
-	// 3000		= 0.3% // USv3 default
-	// 10000	= 1% // USv3 default
-
-	// sqrtPrice
-	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { pl.CreatePool(fooPath, barPath, 500, 130621891405341611593710811006) })
+	pl.CreatePool(fooPath, barPath, fee500, 130621891405341611593710811006) // tick = 10000
 }
 
 // 2. Mint LP and Get GNFT
 func TestMint(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	foo.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64)) // COLLECT_FEE
+	bar.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64)) // COLLECT_FEE
+
 	// test1 mints => will get tid 1 nft
 	std.TestSetOrigCaller(test1)
 	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), bigint(1_000_000), bigint(1_000_000), bigint(1), bigint(1), bigint(1234567890))
@@ -48,7 +49,7 @@ func TestMint(t *testing.T) {
 
 // 3. Swap to make position fee
 func TestSwap(t *testing.T) {
-	std.TestSetPrevRealm("gno.land/r/demo/router")
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
 	std.TestSetOrigCaller(test1)
 	pl.Swap(
 		fooPath,

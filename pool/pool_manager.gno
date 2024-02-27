@@ -21,12 +21,15 @@ var (
 )
 
 func InitManual() {
+	// MUST BE ORIGIN CALLER
+	std.AssertOriginCall()
 	require(!initialized, ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || expected initialized(%t) == false", initialized))
+	require(std.GetOrigCaller() == consts.GNOSWAP_ADMIN, ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || expected std.GetOrigCaller(%s) == consts.GNOSWAP_ADMIN(%s)", std.GetOrigCaller().String(), consts.GNOSWAP_ADMIN.String()))
 	feeAmountTickSpacing[100] = 2     // 0.01%
 	feeAmountTickSpacing[500] = 10    // 0.05%
 	feeAmountTickSpacing[3000] = 60   // 0.3%
 	feeAmountTickSpacing[10000] = 200 // 1%
-	admins = append(admins, PrevRealmAddr())
+	admins = append(admins, std.PrevRealm().Addr())
 	initialized = true
 }
 
@@ -90,7 +93,7 @@ func GetPoolPath(token0Path, token1Path string, fee uint16) string {
 }
 
 func AddAdmin(addr std.Address) {
-	caller := PrevRealmAddr()
+	caller := std.PrevRealm().Addr()
 	if isAdmin(caller) {
 		admins = append(admins, addr)
 	} else {
@@ -99,7 +102,7 @@ func AddAdmin(addr std.Address) {
 }
 
 func RemoveAdmin(addr std.Address) {
-	caller := PrevRealmAddr()
+	caller := std.PrevRealm().Addr()
 
 	if isAdmin(caller) {
 		if len(admins) == 1 {

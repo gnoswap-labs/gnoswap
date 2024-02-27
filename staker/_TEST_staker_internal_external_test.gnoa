@@ -2,16 +2,22 @@ package staker
 
 import (
 	"std"
-
 	"testing"
+	"time"
+
+	"gno.land/r/demo/consts"
 
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
 
 	"gno.land/r/demo/gnft"
 
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
+	"gno.land/r/demo/foo"
 	"gno.land/r/demo/gns"
 	"gno.land/r/demo/obl"
+	"gno.land/r/demo/qux"
 )
 
 func init() {
@@ -30,19 +36,26 @@ func init() {
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(test1)
-
+	std.TestSetPrevAddr(gsa)
 	pl.InitManual()
 	std.TestSkipHeights(1)
 
-	pl.CreatePool(barPath, quxPath, 500, 130621891405341611593710811006) // internal, tier 1
-	pl.CreatePool(barPath, bazPath, 100, 79228162514264337593543950337)  // internal, tier 2
-	pl.CreatePool(fooPath, quxPath, 500, 79228162514264337593543950337)  // external
+	std.TestSetPrevAddr(test1)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*3)
+	std.TestSkipHeights(1)
+
+	pl.CreatePool(barPath, quxPath, 500, 130621891405341611593710811006) // internal, tier 1 // tick 10_000 ≈ x2.7
+	pl.CreatePool(barPath, bazPath, 100, 79228162514264337593543950337)  // internal, tier 2 // tick 0 ≈ x1
+	pl.CreatePool(fooPath, quxPath, 500, 79228162514264337593543950337)  // external // tick 0 ≈ x1
 	std.TestSkipHeights(3)
 }
 
 func TestMintBarQux500(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 36789)
+	qux.Approve(a2u(consts.POOL_ADDR), 99999)
+	std.TestSkipHeights(2)
+
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		barPath,        // token0
 		quxPath,        // token1
@@ -58,11 +71,17 @@ func TestMintBarQux500(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, tokenId, 1)
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), GetOrigCaller()) // test1
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // test1
+	shouldEQ(t, amount0, bigint(36789))
+	shouldEQ(t, amount1, bigint(99999))
 }
 
 func TestMintBarBaz100(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 99999)
+	baz.Approve(a2u(consts.POOL_ADDR), 99999)
+	std.TestSkipHeights(2)
+
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		barPath,        // token0
 		bazPath,        // token1
@@ -78,11 +97,17 @@ func TestMintBarBaz100(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, tokenId, 2)
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), GetOrigCaller()) // test1
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // test1
+	shouldEQ(t, amount0, bigint(99999))
+	shouldEQ(t, amount1, bigint(99999))
 }
 
 func TestMintFooQux500(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	foo.Approve(a2u(consts.POOL_ADDR), 99999)
+	qux.Approve(a2u(consts.POOL_ADDR), 99999)
+	std.TestSkipHeights(2)
+
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		fooPath,        // token0
 		quxPath,        // token1
@@ -98,20 +123,23 @@ func TestMintFooQux500(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, tokenId, 3)
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), GetOrigCaller()) // test1
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // test1
+	shouldEQ(t, amount0, bigint(99999))
+	shouldEQ(t, amount1, bigint(99999))
 }
 
 func TestCreateExternalIncentive(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	obl.Approve(a2u(consts.STAKER_ADDR), uint64(100_000_000))
+	std.TestSkipHeights(1)
 
 	CreateExternalIncentive(
 		"gno.land/r/demo/foo:gno.land/r/demo/qux:500", // targetPoolPath
 		"gno.land/r/demo/obl",                         // rewardToken
 		100_000_000,                                   // rewardAmount
-		GetTimestamp(),                                // startTimestamp
-		GetTimestamp()+TIMESTAMP_90DAYS,               // endTimestamp
+		time.Now().Unix(),                             // startTimestamp
+		time.Now().Unix()+TIMESTAMP_90DAYS,            // endTimestamp
 	)
-
 	std.TestSkipHeights(1)
 }
 
@@ -146,17 +174,20 @@ func TestStakeExternal(t *testing.T) {
 }
 
 func TestCollectRewardToken1(t *testing.T) {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
+	gns.Approve(a2u(consts.STAKER_ADDR), uint64(consts.MAX_UINT64)) // internal reward distribution
+	std.TestSkipHeights(1)
 
 	// before claim
 	gnsOld := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsOld, 99999998500)
+	shouldEQ(t, gnsOld, 98500000000)
 
+	std.TestSetPrevAddr(test1)
 	CollectReward(1)
 	std.TestSkipHeights(1)
 
 	gnsNew := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 99999999325)
+	shouldEQ(t, gnsNew, 98500000817)
 }
 
 func TestCollectRewardToken2(t *testing.T) {
@@ -164,13 +195,13 @@ func TestCollectRewardToken2(t *testing.T) {
 
 	// before claim
 	gnsOld := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsOld, 99999999325)
+	shouldEQ(t, gnsOld, 98500000817)
 
 	CollectReward(2)
 	std.TestSkipHeights(1)
 
 	gnsNew := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 99999999820)
+	shouldEQ(t, gnsNew, 98500001308)
 }
 
 func TestCollectRewardToken1Again(t *testing.T) {
@@ -178,7 +209,7 @@ func TestCollectRewardToken1Again(t *testing.T) {
 
 	// before claim
 	gnsOld := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsOld, 99999999820)
+	shouldEQ(t, gnsOld, 98500001308)
 
 	// ACCELERATE TIME
 	std.TestSkipHeights(100000)
@@ -187,7 +218,7 @@ func TestCollectRewardToken1Again(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	gnsNew := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 100000000370)
+	shouldEQ(t, gnsNew, 98500001853)
 }
 
 func TestCollectExternalReward(t *testing.T) {
@@ -219,17 +250,17 @@ func TestUnstakeToken1(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	gnsOld := gns.BalanceOf(a2u(test1))
 	oblOld := obl.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsOld, 100000000700)
+	shouldEQ(t, gnsOld, 98500002180)
 	shouldEQ(t, oblOld, 499999900000035)
 
 	std.TestSkipHeights(100000)
 	UnstakeToken(1)
 	gnsNew := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 100000001250)
+	shouldEQ(t, gnsNew, 98500002725)
 
 	UnstakeToken(2)
 	gnsNew = gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 100000001580)
+	shouldEQ(t, gnsNew, 98500003052)
 
 	UnstakeToken(3)
 	oblNew := obl.BalanceOf(a2u(test1))

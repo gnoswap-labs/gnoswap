@@ -1,9 +1,15 @@
 package pool
 
 import (
-	"encoding/gjson"
 	"std"
 	"testing"
+	"time"
+
+	"encoding/gjson"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/gns"
 
 	"gno.land/r/demo/consts"
 )
@@ -19,23 +25,23 @@ var (
 
 // 1. Init & Create Pool using Factory Contract by Gnoswap Admin
 func TestInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(gsa)
 	InitManual()
 
-	std.TestSetOrigCaller(test1)
-	CreatePool(barPath, fooPath, fee500, 130621891405341611593710811006)
-
-	// sqrtPrice
-	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { CreatePool(barPath, fooPath, 500, 130621891405341611593710811006) })
+	std.TestSetPrevAddr(test1)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	CreatePool(barPath, fooPath, fee500, 130621891405341611593710811006) // x2.7
 }
 
 // 2. Mint by test1
 func TestMint(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64))
+	foo.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64))
+
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
-
-	Mint(
+	amount0, amount1 := Mint(
 		fooPath,
 		barPath,
 		fee500,
@@ -44,6 +50,8 @@ func TestMint(t *testing.T) {
 		test_tickUpper,
 		test_liquidityExpect,
 	)
+	shouldEQ(t, amount0, bigint(29))
+	shouldEQ(t, amount1, bigint(80))
 
 	pool := GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.PoolGetLiquidity()
@@ -289,11 +297,11 @@ func TestSwap(t *testing.T) {
 // 6. SetFeeProtocol by Gnoswap Admin
 func TestSetFeeProtocol(t *testing.T) {
 	// non admin call
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	shouldPanic(t, func() { SetFeeProtocol(2, 2) })
 
 	// admin call
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	SetFeeProtocol(6, 8)
 
 	for _, pool := range pools {
@@ -303,8 +311,7 @@ func TestSetFeeProtocol(t *testing.T) {
 
 // 7. CollectProtocol by Gnoswap Admin
 func TestCollectProtocol(t *testing.T) {
-	std.TestSetOrigCaller(test1)
-
+	std.TestSetOrigCaller(gsa)
 	SetFeeProtocol(6, 8)
 	pool := GetPool(barPath, fooPath, fee500)
 	test_slot0 := pool.PoolGetSlot0()
@@ -321,7 +328,7 @@ func TestCollectProtocol(t *testing.T) {
 		test1OldToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		test1OldToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
 
-		std.TestSetPrevAddr(test1)
+		std.TestSetPrevAddr(gsa)
 		amount0, amount1 := CollectProtocol(barPath, fooPath, fee500, test1, 100000, 100000)
 
 		test1NewToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
@@ -340,7 +347,7 @@ func TestCollectProtocol(t *testing.T) {
 		test1OldToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		test1OldToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
 
-		std.TestSetPrevAddr(test1)
+		std.TestSetPrevAddr(gsa)
 		amount0, amount1 := CollectProtocol(barPath, fooPath, fee500, test1, 100000, 100000)
 
 		test1NewToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
@@ -353,8 +360,8 @@ func TestApiGetPools(t *testing.T) {
 	gpls := ApiGetPools()
 	jsonStr := gjson.Parse(gpls)
 
-	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())
-	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
+	shouldEQ(t, jsonStr.Get("stat.height").Int(), std.GetHeight())
+	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), time.Now().Unix())
 
 	shouldEQ(t, len(jsonStr.Get("response").Array()), 1)
 }

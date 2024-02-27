@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"time"
 
 	"gno.land/r/demo/consts"
 
@@ -82,7 +83,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) bigi
 	// so there is no need to consider start/end time of reward program
 	// start time is staked time, end time is current time
 	startTime := deposit.stakeTimestamp
-	endTime := GetTimestamp()
+	endTime := time.Now().Unix()
 	stakedDuration := endTime - startTime
 	rewardRatio := getRewardRatio(stakedDuration)
 
@@ -137,7 +138,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 	// stake start time ( largest value between incentive start time and deposit stake time )
 	// stake end time ( smallest value between incentive end time and current time)
 	startTime := max(incentive.startTimestamp, deposit.stakeTimestamp)
-	endTime := min(incentive.endTimestamp, GetTimestamp())
+	endTime := min(incentive.endTimestamp, time.Now().Unix())
 	stakedDuration := endTime - startTime
 	rewardRatio := getRewardRatio(stakedDuration)
 

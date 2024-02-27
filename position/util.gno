@@ -4,6 +4,7 @@ import (
 	"std"
 	"strconv"
 	"strings"
+	"time"
 
 	"gno.land/p/demo/ufmt"
 
@@ -17,7 +18,7 @@ func require(condition bool, message string) {
 }
 
 func checkDeadline(deadline bigint) {
-	require(bigint(GetTimestamp()) <= deadline, ufmt.Sprintf("[POSITION] util.gno__checkDeadline() || transaction too old__GetTimestamp()(%d) <= deadline(%d)", GetTimestamp(), deadline))
+	require(bigint(time.Now().Unix()) <= deadline, ufmt.Sprintf("[POSITION] util.gno__checkDeadline() || transaction too old__time.Now().Unix()(%d) <= deadline(%d)", time.Now().Unix(), deadline))
 }
 
 func a2u(addr std.Address) users.AddressOrName {

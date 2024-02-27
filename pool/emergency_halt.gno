@@ -1,6 +1,8 @@
 package pool
 
 import (
+	"std"
+
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/consts"
 )
@@ -23,7 +25,7 @@ func assertCalledByGovRealm() {
 		consts.GOV_PATH,
 		ufmt.Sprintf(
 			"[POOL] emergency_halt.gno__assertCalledByGovRealm() || only gov(%s) can call, but called from(%s)",
-			consts.GOV_PATH, PrevRealmPath(),
+			consts.GOV_PATH, std.PrevRealm().PkgPath(),
 		),
 	)
 }

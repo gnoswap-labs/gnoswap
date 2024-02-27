@@ -5,18 +5,25 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/r/demo/consts"
+
 	pl "gno.land/r/demo/pool"
-	pos "gno.land/r/demo/position"
+	pn "gno.land/r/demo/position"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
+	"gno.land/r/demo/gns"
+	"gno.land/r/demo/qux"
 )
 
 func TestInitManual(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	pl.InitManual()
-	std.TestSkipHeights(1)
 }
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*2)
 
 	pl.CreatePool(barPath, bazPath, uint16(500), 130621891405341611593710811006) // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 	pl.CreatePool(bazPath, quxPath, uint16(500), 130621891405341611593710811006) // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
@@ -28,11 +35,15 @@ func TestCreatePool(t *testing.T) {
 
 func TestPositionMint(t *testing.T) {
 	// bar_baz_500 by test1
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+
+	bar.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64))
+	baz.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64))
+	qux.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64))
 
 	// Mint
-	pos.Mint(barPath, bazPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
-	pos.Mint(bazPath, quxPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
+	pn.Mint(barPath, bazPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
+	pn.Mint(bazPath, quxPath, uint16(500), int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
 }
 
 func TestDrySwapRouteBarQuxExactIn(t *testing.T) {
@@ -51,7 +62,10 @@ func TestDrySwapRouteBarQuxExactIn(t *testing.T) {
 }
 
 func TestSwapRouteBarQuxExactIn(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+
+	bar.Approve(a2u(consts.POOL_ADDR), 10000)
+	qux.Approve(a2u(consts.ROUTER_ADDR), 10000)
 
 	swapResult := SwapRoute(
 		barPath,      // inputToken
@@ -63,11 +77,11 @@ func TestSwapRouteBarQuxExactIn(t *testing.T) {
 		1,       // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, bigint(7328))
+	shouldEQ(t, swapResult, bigint(7318))
 }
 
 func TestDrySwapRouteBarQuxExactOut(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
 
 	dryResult := DrySwapRoute(
 		barPath,      // inputToken
@@ -82,7 +96,7 @@ func TestDrySwapRouteBarQuxExactOut(t *testing.T) {
 }
 
 func TestSwapRouteBarQuxExactOut(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
 
 	swapResult := SwapRoute(
 		barPath,      // inputToken
@@ -98,7 +112,7 @@ func TestSwapRouteBarQuxExactOut(t *testing.T) {
 }
 
 func TestDrySwapRouteQuxBarExactIn(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
 
 	dryResult := DrySwapRoute(
 		quxPath,      // inputToken
@@ -113,7 +127,7 @@ func TestDrySwapRouteQuxBarExactIn(t *testing.T) {
 }
 
 func TestSwapRouteQuxBarExactIn(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
 
 	swapResult := SwapRoute(
 		quxPath,      // inputToken
@@ -129,7 +143,7 @@ func TestSwapRouteQuxBarExactIn(t *testing.T) {
 }
 
 func TestDrySwapRouteQuxBarExactOut(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
 
 	dryResult := DrySwapRoute(
 		quxPath,      // inputToken
@@ -140,11 +154,14 @@ func TestDrySwapRouteQuxBarExactOut(t *testing.T) {
 		"30,70", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, bigint(7278))
+	shouldEQ(t, dryResult, bigint(7285))
 }
 
 func TestwapRouteQuxBarExactOut(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+
+	qux.Approve(a2u(consts.POOL_ADDR), 10000)
+	bar.Approve(a2u(consts.ROUTER_ADDR), 10000)
 
 	swapResult := SwapRoute(
 		quxPath,      // inputToken
@@ -156,5 +173,5 @@ func TestwapRouteQuxBarExactOut(t *testing.T) {
 		99999,   // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, bigint(7277))
+	shouldEQ(t, swapResult, bigint(7278))
 }

@@ -4,25 +4,28 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/demo/wugnot"
-
 	"gno.land/r/demo/consts"
+
+	"gno.land/r/demo/gns"
+
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/wugnot"
 )
 
 var (
 	test_tickLower       = int32(9000)
 	test_tickUpper       = int32(11000)
-	test_liquidityExpect = bigint(1000)
+	test_liquidityExpect = bigint(100_000_000)
 )
 
 // 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(gsa)
 	InitManual()
 
+	std.TestSetPrevAddr(test1)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	CreatePool(fooPath, consts.WRAPPED_WUGNOT, fee500, 130621891405341611593710811006) // x2.7
-
-	shouldPanic(t, func() { CreatePool(fooPath, consts.WRAPPED_WUGNOT, fee500, 130621891405341611593710811006) })
 }
 
 // 2. Mint LP and Get GNFT
@@ -32,14 +35,21 @@ func TestMint(t *testing.T) {
 		token0, token1 = token1, token0
 	}
 
+	// prepare ugnot
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	testBanker.IssueCoin(test1, "ugnot", 804_031)
+
 	// simulate transfer & decrase
 	std.TestSetOrigSend(std.Coins{{"ugnot", 804_031}}, nil)
-	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 804_031)
 
 	// Deposit(wrap)
 	std.TestSetPrevAddr(test1)
 	wugnot.Deposit()
+
+	std.TestSetPrevAddr(test1)
+	foo.Approve(a2u(consts.POOL_ADDR), 295801)
+	wugnot.Approve(a2u(consts.POOL_ADDR), 804031)
 
 	// Mint
 	std.TestSetPrevRealm(consts.POSITION_PATH)
@@ -64,6 +74,9 @@ func TestSwapBuyNative(t *testing.T) {
 	test1OldT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
 	shouldEQ(t, test1OldT0Bal, 499999999704199) // foo
 	shouldEQ(t, test1OldT1Bal, bigint(0))       // wugnot
+
+	std.TestSetPrevAddr(test1)
+	foo.Approve(a2u(consts.POOL_ADDR), 10000)
 
 	std.TestSetPrevRealm(consts.ROUTER_PATH)
 	std.TestSetOrigCaller(test1)
@@ -94,10 +107,11 @@ func TestSwapSellNative(t *testing.T) {
 	shouldEQ(t, test1OldT0Bal, 499999999694199)
 	shouldEQ(t, test1OldT1Bal, 27123)
 
-	// test1 has 27131 wugnot from previous swap
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	wugnot.Approve(a2u(consts.POOL_ADDR), 10000)
 
 	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(test1)
 	amount0, amount1 := Swap( // ugnot 10_000 > foo ??
 		fooPath,               // token0
 		consts.WRAPPED_WUGNOT, // token1

@@ -27,17 +27,15 @@ var (
 )
 
 func TestPoolInitByAdmin(t *testing.T) {
-	std.TestSetOrigCaller(test1)
-
+	std.TestSetOrigCaller(gsa)
 	pl.InitManual()
+
 	std.TestSkipHeights(1)
 }
 
 func TestPoolCreatePools(t *testing.T) {
-	std.TestSetOrigCaller(test1)
-
-	// approve gns to CreatePool ( 500 gns for 1 pool)
-	gns.Approve(a2u(consts.POOL_ADDR), 5000)
+	std.TestSetPrevAddr(test1)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*2)
 
 	// bar-baz
 	pl.CreatePool(barPath, bazPath, 100, 354340008410679467268648495215) // tick 29960 ≈ 1:20
@@ -45,23 +43,23 @@ func TestPoolCreatePools(t *testing.T) {
 	// baz-foo
 	pl.CreatePool(bazPath, fooPath, 100, 79228162514264337593543950337) // tick 0 ≈ 1:1
 
-	std.TestSkipHeights(4)
+	std.TestSkipHeights(2)
 }
 
 func TestFaucetLP01(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
-	shouldEQ(t, balanceOf(barObj, lp01), 0)
-	shouldEQ(t, balanceOf(bazObj, lp01), 0)
-	shouldEQ(t, balanceOf(fooObj, lp01), 0)
+	shouldEQ(t, bar.BalanceOf(a2u(lp01)), 0)
+	shouldEQ(t, baz.BalanceOf(a2u(lp01)), 0)
+	shouldEQ(t, foo.BalanceOf(a2u(lp01)), 0)
 
 	bar.Faucet(lp01)
 	baz.Faucet(lp01)
 	foo.Faucet(lp01)
 
-	shouldEQ(t, balanceOf(barObj, lp01), 100000000)
-	shouldEQ(t, balanceOf(bazObj, lp01), 100000000)
-	shouldEQ(t, balanceOf(fooObj, lp01), 100000000)
+	shouldEQ(t, bar.BalanceOf(a2u(lp01)), 100000000)
+	shouldEQ(t, baz.BalanceOf(a2u(lp01)), 100000000)
+	shouldEQ(t, foo.BalanceOf(a2u(lp01)), 100000000)
 
 	std.TestSkipHeights(5)
 }
@@ -83,13 +81,13 @@ func TestPositionMintBarBazInRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		MAX_TIMEOUT, // deadline
+		max_timeout, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(1))
-	shouldEQ(t, liquidity, bigint(4473213901))
+	shouldEQ(t, liquidity, bigint(4473213900))
 	shouldEQ(t, amount0, bigint(499941))
-	shouldEQ(t, amoutn1, bigint(10000000))
+	shouldEQ(t, amoutn1, bigint(9999999))
 
 	std.TestSkipHeights(3)
 }
@@ -111,13 +109,13 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 		10000000,    // amount1Desired
 		0,           // amount0Min
 		0,           // amount1Min
-		MAX_TIMEOUT, // deadline
+		max_timeout, // deadline
 	)
 
 	shouldEQ(t, tokenId, bigint(2))
-	shouldEQ(t, liquidity, bigint(205051663))
-	shouldEQ(t, amount0, bigint(10000000))
-	shouldEQ(t, amoutn1, bigint(10000000))
+	shouldEQ(t, liquidity, bigint(205051662))
+	shouldEQ(t, amount0, bigint(9999999))
+	shouldEQ(t, amoutn1, bigint(9999999))
 
 	std.TestSkipHeights(3)
 }
@@ -125,16 +123,16 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 func TestFaucetTR01(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
-	shouldEQ(t, balanceOf(barObj, tr01), 0)
-	shouldEQ(t, balanceOf(bazObj, tr01), 0)
+	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 0)
+	shouldEQ(t, baz.BalanceOf(a2u(tr01)), 0)
 
 	bar.Faucet(tr01)
 	baz.Faucet(tr01)
 
-	shouldEQ(t, balanceOf(barObj, tr01), 100000000)
-	shouldEQ(t, balanceOf(bazObj, tr01), 100000000)
+	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 100000000)
+	shouldEQ(t, baz.BalanceOf(a2u(tr01)), 100000000)
 
-	std.TestSkipHeights(5)
+	std.TestSkipHeights(2)
 }
 
 func TestRouterDrySwapBarBazExactIn(t *testing.T) {
