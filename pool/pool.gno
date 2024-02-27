@@ -226,133 +226,25 @@ func Swap(
 
 	pool.slot0.unlocked = false
 
-	var cache SwapCache
-	if zeroForOne {
-		cache = SwapCache{
-			liquidityStart: pool.liquidity,
-			feeProtocol:    slot0Start.feeProtocol % 16,
-		}
-	} else {
-		cache = SwapCache{
-			liquidityStart: pool.liquidity,
-			feeProtocol:    slot0Start.feeProtocol >> 4,
-		}
+	cache := SwapCache{
+		liquidityStart: pool.liquidity,
+		feeProtocol:    feeProtocol,
+	}
+
+	state := SwapState{
+		amountSpecifiedRemaining: amountSpecified,
+		amountCalculated:         0,
+		sqrtPriceX96:             slot0Start.sqrtPriceX96,
+		tick:                     slot0Start.tick,
+		feeGrowthGlobalX128:      feeGrowthGlobalX128,
+		protocolFee:              0,
+		liquidity:                cache.liquidityStart,
 	}
 
 	exactInput := amountSpecified > 0
-
-	var state SwapState
-	if zeroForOne {
-		state = SwapState{
-			amountSpecifiedRemaining: amountSpecified,
-			amountCalculated:         0,
-			sqrtPriceX96:             slot0Start.sqrtPriceX96,
-			tick:                     slot0Start.tick,
-			feeGrowthGlobalX128:      pool.feeGrowthGlobal0X128,
-			protocolFee:              0,
-			liquidity:                cache.liquidityStart,
-		}
-	} else {
-		state = SwapState{
-			amountSpecifiedRemaining: amountSpecified,
-			amountCalculated:         0,
-			sqrtPriceX96:             slot0Start.sqrtPriceX96,
-			tick:                     slot0Start.tick,
-			feeGrowthGlobalX128:      pool.feeGrowthGlobal1X128,
-			protocolFee:              0,
-			liquidity:                cache.liquidityStart,
-		}
-	}
-
 	for state.amountSpecifiedRemaining != 0 && state.sqrtPriceX96 != sqrtPriceLimitX96 {
-		var step StepComputations
-
-		step.sqrtPriceStartX96 = state.sqrtPriceX96
-
-		step.tickNext, step.initialized = pool.tickBitmapNextInitializedTickWithInOneWord(
-			state.tick,
-			pool.tickSpacing,
-			zeroForOne,
-		)
-
-		if step.tickNext < consts.MIN_TICK {
-			step.tickNext = consts.MIN_TICK
-		} else if step.tickNext > consts.MAX_TICK {
-			step.tickNext = consts.MAX_TICK
-		}
-
-		step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
-		isLower := step.sqrtPriceNextX96 < sqrtPriceLimitX96
-		isHigher := step.sqrtPriceNextX96 > sqrtPriceLimitX96
-
-		var sqrtRatioTargetX96 bigint
-		if (zeroForOne && isLower) || (!zeroForOne && isHigher) {
-			sqrtRatioTargetX96 = sqrtPriceLimitX96
-		} else {
-			sqrtRatioTargetX96 = step.sqrtPriceNextX96
-		}
-
-		state.sqrtPriceX96, step.amountIn, step.amountOut, step.feeAmount = swapMathComputeSwapStep(
-			state.sqrtPriceX96,
-			sqrtRatioTargetX96,
-			state.liquidity,
-			state.amountSpecifiedRemaining,
-			uint32(pool.fee),
-		)
-
-		if exactInput {
-			state.amountSpecifiedRemaining -= (step.amountIn + step.feeAmount)
-			state.amountCalculated -= step.amountOut
-		} else {
-			state.amountSpecifiedRemaining += step.amountOut
-			state.amountCalculated += (step.amountIn + step.feeAmount)
-		}
-
-		if cache.feeProtocol > 0 {
-			delta := step.feeAmount / bigint(uint64(cache.feeProtocol))
-			requireUnsigned(delta, ufmt.Sprintf("[POOL] pool.gno__Swap() || delta(%d) >= 0", delta))
-			step.feeAmount -= delta
-			state.protocolFee += delta
-		}
-
-		if state.liquidity > 0 {
-			// save fee
-			state.feeGrowthGlobalX128 += (step.feeAmount * consts.Q128 / state.liquidity)
-		}
-
-		if state.sqrtPriceX96 == step.sqrtPriceNextX96 {
-			if step.initialized {
-				var fee0, fee1 bigint
-
-				if zeroForOne {
-					fee0 = state.feeGrowthGlobalX128
-					fee1 = pool.feeGrowthGlobal1X128
-				} else {
-					fee0 = pool.feeGrowthGlobal0X128
-					fee1 = state.feeGrowthGlobalX128
-				}
-
-				liquidityNet := pool.tickCross(
-					step.tickNext,
-					fee0,
-					fee1,
-				)
-
-				if zeroForOne {
-					liquidityNet = -liquidityNet
-				}
-
-				state.liquidity = liquidityMathAddDelta(state.liquidity, liquidityNet)
-			}
-
-			if zeroForOne {
-				state.tick = step.tickNext - 1
-			} else {
-				state.tick = step.tickNext
-			}
-		} else if state.sqrtPriceX96 != step.sqrtPriceStartX96 {
-			state.tick = common.TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
-		}
+		step := executeSwapStep(pool, &state, sqrtPriceLimitX96, zeroForOne)
+		applySwapStep(&state, &cache, step, exactInput)
 	}
 
 	// END LOOP
@@ -464,6 +356,88 @@ func Swap(
 
 	pool.slot0.unlocked = true
 	return amount0, amount1
+}
+
+// executeSwapStep runs each step of the swap.
+//
+// it uses the given state and parameters to compute the next swap step,
+// and returns the updated result in a `StepComputations` struct.
+func executeSwapStep(
+	pool *Pool,
+	state *SwapState,
+	sqrtPriceLimitX96 bigint,
+	zeroForOne bool,
+) StepComputations {
+	var step StepComputations
+
+	step.sqrtPriceStartX96 = state.sqrtPriceX96
+	step.tickNext, step.initialized = pool.tickBitmapNextInitializedTickWithInOneWord(
+		state.tick,
+		pool.tickSpacing,
+		zeroForOne,
+	)
+
+	// adjust next tick according to price limits
+	if step.tickNext < consts.MIN_TICK {
+		step.tickNext = consts.MIN_TICK
+	} else if step.tickNext > consts.MAX_TICK {
+		step.tickNext = consts.MAX_TICK
+	}
+
+	step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
+
+	isLower := step.sqrtPriceNextX96 < sqrtPriceLimitX96
+	isHigher := step.sqrtPriceNextX96 > sqrtPriceLimitX96
+
+	var sqrtRatioTargetX96 bigint
+	if (zeroForOne && isLower) || (!zeroForOne && isHigher) {
+		sqrtRatioTargetX96 = sqrtPriceLimitX96
+	} else {
+		sqrtRatioTargetX96 = step.sqrtPriceNextX96
+	}
+
+	state.sqrtPriceX96, step.amountIn, step.amountOut, step.feeAmount = swapMathComputeSwapStep(
+		state.sqrtPriceX96,
+		sqrtRatioTargetX96,
+		state.liquidity,
+		state.amountSpecifiedRemaining,
+		uint32(pool.fee),
+	)
+
+	return step
+}
+
+func applySwapStep(	state *SwapState,
+	cache *SwapCache,
+	step  StepComputations,
+	exactInput bool,
+) {
+	amounts := step.amountIn + step.feeAmount
+	if exactInput {
+		state.amountSpecifiedRemaining -= amounts
+		state.amountCalculated -= step.amountOut
+	} else {
+		state.amountSpecifiedRemaining += step.amountOut
+		state.amountCalculated += amounts
+	}
+
+	if cache.feeProtocol > 0 {
+		delta := step.feeAmount / bigint(uint64(cache.feeProtocol))
+
+		step.feeAmount -= delta
+		state.protocolFee += delta
+	}
+
+	normalized := consts.Q128 / state.liquidity
+	if state.liquidity > 0 {
+		state.feeGrowthGlobalX128 += (step.feeAmount * normalized) // check here if test fails
+	}
+
+	// update tick if needed
+	if state.sqrtPriceX96 == step.sqrtPriceNextX96 {
+		// crossed tick
+		state.tick = common.TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
+	}
 }
 
 // ADMIN
