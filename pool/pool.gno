@@ -8,7 +8,7 @@ import (
 
 	"gno.land/r/demo/consts"
 
-	g "gno.land/r/demo/gov"
+	gv "gno.land/r/demo/gov"
 )
 
 // only position contract can call this function
@@ -21,7 +21,7 @@ func Mint(
 	tickUpper int32,
 	liquidityAmount bigint,
 ) (bigint, bigint) {
-	requirePrevRealmPath(consts.POSITION_PATH, ufmt.Sprintf("[POOL] pool.gno__Mint() || expected PrevRealmPath(%s), got %s", consts.POSITION_PATH, PrevRealmPath()))
+	requirePrevRealmPath(consts.POSITION_PATH, ufmt.Sprintf("[POOL] pool.gno__Mint() || expected std.PrevRealm().PkgPath()(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
 
 	requirePositive(liquidityAmount, ufmt.Sprintf("[POOL] pool.gno__Mint() || expected liquidityAmount(%d) > 0", liquidityAmount))
 
@@ -44,7 +44,7 @@ func Mint(
 	if amount0 > 0 {
 		balance0Before := bigint(balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr()))
 
-		from := GetOrigCaller() // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
+		from := std.GetOrigCaller() // token should be transferred from actual user(std.GetOrigCaller), not from the realm(PrevRealm)
 		to := GetOrigPkgAddr()
 
 		ok := transferFromByRegisterCall(pool.token0Path, from, to, uint64(amount0))
@@ -68,7 +68,7 @@ func Mint(
 	if amount1 > 0 {
 		balance1Before = bigint(balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr()))
 
-		from := GetOrigCaller() // token should be transferred from actual user(GetOrigCaller), not from the realm(PrevRealm)
+		from := std.GetOrigCaller() // token should be transferred from actual user(std.GetOrigCaller), not from the realm(PrevRealm)
 		to := GetOrigPkgAddr()
 
 		ok := transferFromByRegisterCall(pool.token1Path, from, to, uint64(amount1))
@@ -104,7 +104,7 @@ func Burn(
 	tickUpper int32,
 	amount bigint,
 ) (bigint, bigint) {
-	requirePrevRealmPath(consts.POSITION_PATH, ufmt.Sprintf("[POOL] pool.gno__Burn() || expected PrevRealmPath(%s), got %s", consts.POSITION_PATH, PrevRealmPath()))
+	requirePrevRealmPath(consts.POSITION_PATH, ufmt.Sprintf("[POOL] pool.gno__Burn() || expected PrevRealmPath(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
 
 	requireUnsigned(amount, ufmt.Sprintf("[POOL] pool.gno__Burn() || amount(%d) >= 0", amount))
 
@@ -112,7 +112,7 @@ func Burn(
 
 	position, amount0Int, amount1Int := pool.modifyPosition(
 		ModifyPositionParams{
-			PrevRealmAddr(), // msg.sender
+			std.PrevRealm().Addr(), // msg.sender
 			tickLower,
 			tickUpper,
 			-amount,
@@ -128,7 +128,7 @@ func Burn(
 		position.tokensOwed1 += amount1
 	}
 
-	positionKey := positionGetKey(PrevRealmAddr(), tickLower, tickUpper)
+	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
 	pool.positions[positionKey] = position
 
 	// actual token transfer happens in Collect()
@@ -146,14 +146,14 @@ func Collect(
 	amount0Requested bigint,
 	amount1Requested bigint,
 ) (bigint, bigint) {
-	requirePrevRealmPath(consts.POSITION_PATH, ufmt.Sprintf("[POOL] pool.gno__Collect() || expected PrevRealmPath(%s), got %s", consts.POSITION_PATH, PrevRealmPath()))
+	requirePrevRealmPath(consts.POSITION_PATH, ufmt.Sprintf("[POOL] pool.gno__Collect() || expected PrevRealmPath(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
 
 	requireUnsigned(amount0Requested, ufmt.Sprintf("[POOL] pool.gno__Collect() || amount0Requested(%d) >= 0", amount0Requested))
 	requireUnsigned(amount1Requested, ufmt.Sprintf("[POOL] pool.gno__Collect() || amount1Requested(%d) >= 0", amount1Requested))
 
 	pool := GetPool(token0Path, token1Path, fee)
 
-	positionKey := positionGetKey(PrevRealmAddr(), tickLower, tickUpper)
+	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
 	position, exist := pool.positions[positionKey]
 	requireExist(exist, ufmt.Sprintf("[POOL] pool.gno__Collect() || position(%s) does not exist", positionKey))
 
@@ -194,7 +194,7 @@ func Swap(
 	sqrtPriceLimitX96 bigint,
 	payer std.Address, // router
 ) (bigint, bigint) {
-	requirePrevRealmPath(consts.ROUTER_PATH, ufmt.Sprintf("[POOL] pool.gno__Swap() || expected PrevRealmPath(%s), got %s", consts.ROUTER_PATH, PrevRealmPath()))
+	requirePrevRealmPath(consts.ROUTER_PATH, ufmt.Sprintf("[POOL] pool.gno__Swap() || expected PrevRealmPath(%s), got %s", consts.ROUTER_PATH, std.PrevRealm().PkgPath()))
 
 	// early panic
 	require(amountSpecified != 0, ufmt.Sprintf("[POOL] pool.gno__Swap() || amountSpecified(%d) != 0", amountSpecified))
@@ -471,7 +471,7 @@ func SetFeeProtocol(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
 ) {
-	require(isAdmin(PrevRealmAddr()), ufmt.Sprintf("[POOL] pool.gno__SetFeeProtocol() || caller(%s) must be admin", PrevRealmAddr()))
+	require(isAdmin(std.PrevRealm().Addr()), ufmt.Sprintf("[POOL] pool.gno__SetFeeProtocol() || caller(%s) must be admin", std.PrevRealm().Addr()))
 
 	require(
 		(feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)) && (feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10)),
@@ -487,7 +487,7 @@ func SetFeeProtocol(
 	}
 
 	// update governace value
-	g.SetGovParameter("protocoL_fees", feeProtocol0+(feeProtocol1<<4))
+	gv.SetGovParameter("protocoL_fees", feeProtocol0+(feeProtocol1<<4))
 }
 
 // ADMIN
@@ -501,7 +501,7 @@ func CollectProtocol(
 ) (bigint, bigint) {
 	requireUnsigned(amount0Requested, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount0Requested(%d) >= 0", amount0Requested))
 	requireUnsigned(amount1Requested, ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || amount1Requested(%d) >= 0", amount1Requested))
-	require(isAdmin(PrevRealmAddr()), ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || caller(%s) must be admin", PrevRealmAddr()))
+	require(isAdmin(std.PrevRealm().Addr()), ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || caller(%s) must be admin", std.PrevRealm().Addr()))
 
 	pool := GetPool(token0Path, token1Path, fee)
 

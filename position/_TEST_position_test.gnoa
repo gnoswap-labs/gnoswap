@@ -1,32 +1,37 @@
 package position
 
 import (
-	"encoding/gjson"
 	"std"
 	"testing"
 
-	"gno.land/p/demo/common"
+	"encoding/gjson"
+
 	"gno.land/r/demo/consts"
 
 	pl "gno.land/r/demo/pool"
 
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/foo"
+
+	"gno.land/r/demo/gns"
+
 	"gno.land/r/demo/gnft"
 )
 
-// 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	pl.InitManual()
 
-	std.TestSetOrigCaller(test1)
-	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(10000)) // x2.71814592682522526700950038502924144268035888671875
+	std.TestSetPrevAddr(test1)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 
-	// sqrtPrice
-	shouldPanic(t, func() { pl.CreatePool(fooPath, barPath, fee500, common.TickMathGetSqrtRatioAtTick(10000)) })
+	pl.CreatePool(barPath, fooPath, fee500, 130621891405341611593710811006) // tick = 10000
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 18394891)
+	foo.Approve(a2u(consts.POOL_ADDR), 49999999)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -43,11 +48,13 @@ func TestMintPosition01InRange(t *testing.T) {
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, getNextId(), 2)
 	shouldEQ(t, amount0, bigint(18394891))
-	shouldEQ(t, amount1, bigint(50000000))
+	shouldEQ(t, amount1, bigint(49999999))
 }
 
 func TestMintPosition02LowerRange(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 0)
+	foo.Approve(a2u(consts.POOL_ADDR), 49999999)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -64,11 +71,13 @@ func TestMintPosition02LowerRange(t *testing.T) {
 	shouldEQ(t, tokenId, 2)
 	shouldEQ(t, getNextId(), 3)
 	shouldEQ(t, amount0, bigint(0))
-	shouldEQ(t, amount1, bigint(50000000))
+	shouldEQ(t, amount1, bigint(49999999))
 }
 
 func TestMintPosition03UpperRange(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 49999999)
+	foo.Approve(a2u(consts.POOL_ADDR), 0)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -84,7 +93,7 @@ func TestMintPosition03UpperRange(t *testing.T) {
 	)
 	shouldEQ(t, tokenId, 3)
 	shouldEQ(t, getNextId(), 4)
-	shouldEQ(t, amount0, bigint(50000000))
+	shouldEQ(t, amount0, bigint(49999999))
 	shouldEQ(t, amount1, bigint(0))
 }
 
@@ -97,6 +106,9 @@ func TestCollectFeeBeforeSwap(t *testing.T) {
 }
 
 func TestSwap(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
+
 	std.TestSetPrevRealm(consts.ROUTER_PATH)
 	std.TestSetOrigCaller(test1)
 	amount0, amount1 := pl.Swap(
@@ -112,6 +124,10 @@ func TestSwap(t *testing.T) {
 }
 
 func TestCollectFeeAfterSwap(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	foo.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64)) // COLLECT_FEE
+	bar.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64)) // COLLECT_FEE
+
 	tokenId, fee0, fee1, poolPath := CollectFee(1)
 	shouldEQ(t, tokenId, uint64(1))
 	shouldNEQ(t, fee0, bigint(0)) // this is input token
@@ -120,19 +136,19 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 
 }
 
-func TestBurnUpperPosition(t *testing.T) {
+func TestDecreaseLiquidityUpperPosition(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
 	ownerOfPosition := gnft.OwnerOf(tid(3))
-	shouldEQ(t, ownerOfPosition, GetOrigCaller())
+	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())
 
-	tokenId, liquidity, amount0, amount1, poolPath := Burn(3)
+	tokenId, liquidity, amount0, amount1, poolPath := DecreaseLiquidity(uint64(3), consts.MAX_UINT256, 0, 0, max_timeout)
 	shouldEQ(t, tokenId, uint64(3))
-	shouldEQ(t, amount0, bigint(50000000))
+	shouldEQ(t, amount0, bigint(49999999))
 	shouldEQ(t, amount1, bigint(0))
 
 	ownerOfPosition = gnft.OwnerOf(tid(3))
-	shouldEQ(t, ownerOfPosition, GetOrigCaller())
+	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())
 }
 
 func TestApiGetPositions(t *testing.T) {

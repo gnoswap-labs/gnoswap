@@ -74,7 +74,7 @@ func requireExist(exist bool, msg string) {
 }
 
 func requirePrevRealmPath(prevRealmPath, msg string) {
-	if PrevRealmPath() != prevRealmPath {
+	if std.PrevRealm().PkgPath() != prevRealmPath {
 		panic(msg)
 	}
 }

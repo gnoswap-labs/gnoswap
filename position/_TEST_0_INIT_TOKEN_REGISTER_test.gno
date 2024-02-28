@@ -18,6 +18,7 @@ import (
 	"gno.land/r/demo/gns"
 
 	"gno.land/r/demo/consts"
+
 	"gno.land/r/demo/users"
 
 	pl "gno.land/r/demo/pool" // only for position `testcase`` to call grc20 by register

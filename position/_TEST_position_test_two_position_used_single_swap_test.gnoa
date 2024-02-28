@@ -4,26 +4,30 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/common"
 	"gno.land/r/demo/consts"
 
 	pl "gno.land/r/demo/pool"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/gns"
 )
 
-// 1. Init & Create Pool
+
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	pl.InitManual()
 
-	std.TestSetOrigCaller(test1)
-	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(10000)) // x2.71814592682522526700950038502924144268035888671875
+	std.TestSetPrevAddr(test1)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 
-	// sqrtPrice
-	shouldPanic(t, func() { pl.CreatePool(fooPath, barPath, fee500, common.TickMathGetSqrtRatioAtTick(10000)) })
+	pl.CreatePool(barPath, fooPath, fee500, 130621891405341611593710811006) // tick = 10000
 }
 
 func TestMintPosition01WideInRange(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 18394891)
+	foo.Approve(a2u(consts.POOL_ADDR), 49999999)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -39,13 +43,15 @@ func TestMintPosition01WideInRange(t *testing.T) {
 	)
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, getNextId(), 2)
-	shouldEQ(t, liquidity, bigint(318704394))
+	shouldEQ(t, liquidity, bigint(318704392))
 	shouldEQ(t, amount0, bigint(18394891))
-	shouldEQ(t, amount1, bigint(50000000))
+	shouldEQ(t, amount1, bigint(49999999))
 }
 
 func TestMintPositionTightInRange(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 18394891)
+	foo.Approve(a2u(consts.POOL_ADDR), 49999999)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -61,9 +67,9 @@ func TestMintPositionTightInRange(t *testing.T) {
 	)
 	shouldEQ(t, tokenId, 2)
 	shouldEQ(t, getNextId(), 3)
-	shouldEQ(t, liquidity, bigint(1228379123))
+	shouldEQ(t, liquidity, bigint(1228379121))
 	shouldEQ(t, amount0, bigint(18394891))
-	shouldEQ(t, amount1, bigint(50000000))
+	shouldEQ(t, amount1, bigint(49999999))
 }
 
 func TestCollectFeeBeforeSwapPos1(t *testing.T) {
@@ -83,6 +89,9 @@ func TestCollectFeeBeforeSwapPos2(t *testing.T) {
 }
 
 func TestSwap(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
+
 	std.TestSetPrevRealm(consts.ROUTER_PATH)
 	std.TestSetOrigCaller(test1)
 	amount0, amount1 := pl.Swap(
@@ -99,6 +108,10 @@ func TestSwap(t *testing.T) {
 
 // IF POSITION 2 DOESN'T EXIST, POSITION 1 WILL EARN '617' as fee
 func TestCollectFeeAfterSwapPos1(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	foo.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64)) // COLLECT_FEE
+	bar.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64)) // COLLECT_FEE
+
 	tokenId, fee0, fee1, poolPath := CollectFee(1)
 	shouldEQ(t, tokenId, uint64(1))
 	// shouldEQ(t, fee0, bigint(617))

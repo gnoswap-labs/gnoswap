@@ -5,24 +5,30 @@ import (
 	"std"
 	"testing"
 
-	pl "gno.land/r/demo/pool"
-	pos "gno.land/r/demo/position"
+	"gno.land/r/demo/consts"
 
+	pl "gno.land/r/demo/pool"
+	pn "gno.land/r/demo/position"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
+	"gno.land/r/demo/gns"
+	"gno.land/r/demo/qux"
 	"gno.land/r/demo/wugnot"
 )
 
 func TestInitManual(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(gsa)
 	pl.InitManual()
-	std.TestSkipHeights(1)
 }
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*3)
 
-	pl.CreatePool(barPath, bazPath, fee500, 130621891405341611593710811006)   // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
-	pl.CreatePool(bazPath, quxPath, fee500, 130621891405341611593710811006)   // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
-	pl.CreatePool(quxPath, wgnotPath, fee500, 130621891405341611593710811006) // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(barPath, bazPath, fee500, 130621891405341611593710811006)               // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(bazPath, quxPath, fee500, 130621891405341611593710811006)               // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(quxPath, consts.WRAPPED_WUGNOT, fee500, 130621891405341611593710811006) // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 	// 1 bar ≈ 19.683 gnot
 
 	jsonOutput := pl.ApiGetPools()
@@ -31,27 +37,33 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestPositionMintBarBaz(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 36789)
+	baz.Approve(a2u(consts.POOL_ADDR), 99999)
 
-	tokenId, liquidity, amount0, amount1 := pos.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, amount0 > 0, true) // 36789 bar
-	shouldEQ(t, amount1 > 0, true) // 99999 baz
+	shouldEQ(t, amount0, bigint(36789)) // bar
+	shouldEQ(t, amount1, bigint(99999)) // baz
 }
 
 func TestPositionMintBazQux(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	baz.Approve(a2u(consts.POOL_ADDR), 36789)
+	qux.Approve(a2u(consts.POOL_ADDR), 99999)
 
-	tokenId, liquidity, amount0, amount1 := pos.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, amount0 > 0, true) // 36789 baz
-	shouldEQ(t, amount1 > 0, true) // 99999 qux
+	shouldEQ(t, amount0, bigint(36789))
+	shouldEQ(t, amount1, bigint(99999))
+
 }
 
 func TestPositionMintQuxGnot(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
 
 	// send
+	std.TestIssueCoins(test1, std.Coins{{"ugnot", 999999}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 999999}}, nil)
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 999999)
@@ -60,20 +72,23 @@ func TestPositionMintQuxGnot(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	wugnot.Deposit()
 
-	tokenId, liquidity, amount0, amount1 := pos.Mint(quxPath, wgnotPath, fee500, int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
+	qux.Approve(a2u(consts.POOL_ADDR), 36789)
+	wugnot.Approve(a2u(consts.POOL_ADDR), 99999)
+
+	tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
 	shouldEQ(t, tokenId, uint64(3))
-	shouldEQ(t, amount0 > 0, true) // 36789 qux
-	shouldEQ(t, amount1 > 0, true) // 99999 gnot
+	shouldEQ(t, amount0, bigint(36789))
+	shouldEQ(t, amount1, bigint(99999))
 }
 
 func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
 	dryResult := DrySwapRoute(
-		barPath,      // inputToken
-		wgnotPath,    // outputToken
-		bigint(1000), // amountSpecified
-		"EXACT_IN",   // swapType
+		barPath,               // inputToken
+		consts.WRAPPED_WUGNOT, // outputToken
+		bigint(1000),          // amountSpecified
+		"EXACT_IN",            // swapType
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:500*POOL*gno.land/r/demo/baz:gno.land/r/demo/qux:500*POOL*gno.land/r/demo/qux:gno.land/r/demo/wugnot:500", // strRouteArr
 		"100", // quoteArr
 	)
@@ -84,10 +99,10 @@ func TestDrySwapRouteBarGnotExactOut(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
 	dryResult := DrySwapRoute(
-		barPath,       // inputToken
-		wgnotPath,     // outputToken
-		bigint(20000), // amountSpecified
-		"EXACT_OUT",   // swapType
+		barPath,               // inputToken
+		consts.WRAPPED_WUGNOT, // outputToken
+		bigint(20000),         // amountSpecified
+		"EXACT_OUT",           // swapType
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:500*POOL*gno.land/r/demo/baz:gno.land/r/demo/qux:500*POOL*gno.land/r/demo/qux:gno.land/r/demo/wugnot:500", // strRouteArr
 		"100", // quoteArr
 	)
@@ -98,10 +113,10 @@ func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
 	dryResult := DrySwapRoute(
-		wgnotPath,    // intputToken
-		barPath,      // outputToken
-		bigint(5000), // amountSpecified
-		"EXACT_IN",   // swapType
+		consts.WRAPPED_WUGNOT, // intputToken
+		barPath,               // outputToken
+		bigint(5000),          // amountSpecified
+		"EXACT_IN",            // swapType
 		"gno.land/r/demo/wugnot:gno.land/r/demo/qux:500*POOL*gno.land/r/demo/qux:gno.land/r/demo/baz:500*POOL*gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
 		"100", // quoteArr
 	)
@@ -112,12 +127,12 @@ func TestDrySwapRouteGnotBarExactOut(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
 	dryResult := DrySwapRoute(
-		wgnotPath,   // intputToken
-		barPath,     // outputToken
-		bigint(100), // amountSpecified
-		"EXACT_OUT", // swapType
+		consts.WRAPPED_WUGNOT, // intputToken
+		barPath,               // outputToken
+		bigint(100),           // amountSpecified
+		"EXACT_OUT",           // swapType
 		"gno.land/r/demo/wugnot:gno.land/r/demo/qux:500*POOL*gno.land/r/demo/qux:gno.land/r/demo/baz:500*POOL*gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
 		"100", // quoteArr
 	)
-	shouldEQ(t, dryResult, bigint(1977))
+	shouldEQ(t, dryResult, bigint(1986))
 }

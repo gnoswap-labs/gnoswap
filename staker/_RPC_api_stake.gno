@@ -3,6 +3,7 @@ package staker
 import (
 	"encoding/json"
 	"std"
+	"time"
 
 	"gno.land/p/demo/ufmt"
 )
@@ -85,8 +86,8 @@ func ApiGetRewards() string {
 	}
 
 	qb := ResponseQueryBase{
-		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
+		Height:    std.GetHeight(),
+		Timestamp: time.Now().Unix(),
 	}
 
 	r := ResponseApiGetRewards{
@@ -137,8 +138,8 @@ func ApiGetRewardByLpTokenId(lpTokenId uint64) string {
 	}
 
 	qb := ResponseQueryBase{
-		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
+		Height:    std.GetHeight(),
+		Timestamp: time.Now().Unix(),
 	}
 
 	r := ResponseApiGetRewardByLpTokenId{
@@ -167,8 +168,8 @@ func ApiGetStakes() string {
 	}
 
 	qb := ResponseQueryBase{
-		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
+		Height:    std.GetHeight(),
+		Timestamp: time.Now().Unix(),
 	}
 
 	r := ResponseApiGetStakes{

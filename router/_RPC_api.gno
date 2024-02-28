@@ -2,8 +2,10 @@ package router
 
 import (
 	"encoding/json"
+	"std"
 	"strconv"
 	"strings"
+	"time"
 
 	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
@@ -29,8 +31,8 @@ type ResponseGetRatiosFromBase struct {
 
 func ApiGetRatiosFromBase() string {
 	qb := ResponseQueryBase{
-		Height:    GetHeight(),
-		Timestamp: GetTimestamp(),
+		Height:    std.GetHeight(),
+		Timestamp: time.Now().Unix(),
 	}
 
 	ratios := findRatios(3)

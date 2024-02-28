@@ -2,6 +2,9 @@ package staker
 
 import (
 	"encoding/json"
+	"time"
+
+	"std"
 
 	pl "gno.land/r/demo/pool"
 
@@ -46,8 +49,8 @@ func ApiGetRewardTokens() string {
 
 	// JSON
 	qb := ResponseQueryBase{
-		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
+		Height:    std.GetHeight(),
+		Timestamp: time.Now().Unix(),
 	}
 
 	r := ResponseRewardTokens{

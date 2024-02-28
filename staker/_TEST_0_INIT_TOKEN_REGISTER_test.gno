@@ -1,6 +1,8 @@
-package swap_scenario
+package staker
 
 import (
+	"std"
+
 	"gno.land/r/demo/foo"
 
 	"gno.land/r/demo/bar"
@@ -15,11 +17,11 @@ import (
 
 	"gno.land/r/demo/gns"
 
+	"gno.land/r/demo/consts"
+
 	"gno.land/r/demo/users"
 
-	pl "gno.land/r/demo/pool"
-	rr "gno.land/r/demo/router"
-	sr "gno.land/r/demo/staker"
+	pl "gno.land/r/demo/pool" // only for position `testcase`` to call grc20 by register
 )
 
 type FooToken struct{}
@@ -131,6 +133,8 @@ func (GNSToken) Approve() func(spender users.AddressOrName, amount uint64) {
 }
 
 func init() {
+	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
+
 	// POOL
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
@@ -141,20 +145,11 @@ func init() {
 	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
 
 	// STAKER
-	sr.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
-	sr.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
-	sr.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
-	sr.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
-	sr.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	sr.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
-	sr.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
-
-	// ROUTER
-	rr.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+	RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+	RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
+	RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
+	RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
+	RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
+	RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
 }

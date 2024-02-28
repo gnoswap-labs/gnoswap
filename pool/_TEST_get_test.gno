@@ -5,43 +5,53 @@ import (
 	"testing"
 
 	"gno.land/r/demo/consts"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
+	"gno.land/r/demo/foo"
+
+	"gno.land/r/demo/gns"
 )
 
 var (
 	test_tickLower       = int32(9000)
 	test_tickUpper       = int32(11000)
 	test_liquidityExpect = bigint(100_000_000)
-
-	test_tickLower2 = int32(50000)
-	test_tickUpper2 = int32(100000)
 )
 
 // 1. Init Pool
 func TestInit(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(gsa)
 	InitManual()
 }
 
 // 2. Create Foo:Bar Pool
 func TestCreateFooBarPool(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+
 	CreatePool(fooPath, barPath, fee500, 130621891405341611593710811006)
 	shouldEQ(t, len(pools), 1)
 }
 
 // 3. Create Bar:Baz Pool
 func TestCreateBarBazPool(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+
 	CreatePool(barPath, bazPath, fee500, 130621891405341611593710811006)
 	shouldEQ(t, len(pools), 2)
 }
 
 // 4. Mint Foo:Bar Liquidity by test1
 func TestMintFooBarLiquidity(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	foo.Approve(a2u(consts.POOL_ADDR), 2958014)
+	bar.Approve(a2u(consts.POOL_ADDR), 8040315)
+
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
-
-	Mint(
+	amount0, amount1 := Mint(
 		fooPath,
 		barPath,
 		fee500,
@@ -50,14 +60,19 @@ func TestMintFooBarLiquidity(t *testing.T) {
 		-test_tickLower,
 		test_liquidityExpect,
 	)
+	shouldEQ(t, amount0, bigint(8040315))
+	shouldEQ(t, amount1, bigint(2958014))
 }
 
 // 5. Mint Bar:Baz Liquidity by test1
 func TestMintBarBazLiquidity(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 2958014)
+	baz.Approve(a2u(consts.POOL_ADDR), 8040315)
+
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
-
-	Mint(
+	amount0, amount1 := Mint(
 		barPath,
 		bazPath,
 		fee500,
@@ -66,6 +81,8 @@ func TestMintBarBazLiquidity(t *testing.T) {
 		test_tickUpper,
 		test_liquidityExpect,
 	)
+	shouldEQ(t, amount0, bigint(2958014))
+	shouldEQ(t, amount1, bigint(8040315))
 }
 
 // RPC GET TESTS

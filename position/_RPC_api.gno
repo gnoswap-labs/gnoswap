@@ -2,6 +2,8 @@ package position
 
 import (
 	"encoding/json"
+	"std"
+	"time"
 
 	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
@@ -49,8 +51,8 @@ func ApiGetPositions() string {
 
 	r := ResponseApiGetPositions{
 		Stat: ResponseQueryBase{
-			Height:    GetHeight(),
-			Timestamp: GetTimestamp(),
+			Height:    std.GetHeight(),
+			Timestamp: time.Now().Unix(),
 		},
 		Response: rpcPositions,
 	}

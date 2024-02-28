@@ -4,13 +4,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/demo/gns"
-
-	"gno.land/r/demo/bar"
-	"gno.land/r/demo/baz"
-	"gno.land/r/demo/foo"
-
-	"gno.land/r/demo/wugnot"
+	"gno.land/r/demo/consts"
 
 	"gno.land/r/demo/gnft"
 
@@ -18,42 +12,24 @@ import (
 )
 
 var (
-	test1             std.Address
-	poolAddr, posAddr std.Address
+	gsa   std.Address = consts.GNOSWAP_ADMIN
+	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
 
-	barPath = "gno.land/r/demo/bar"
-	bazPath = "gno.land/r/demo/baz"
-	fooPath = "gno.land/r/demo/foo"
+	fooPath string = "gno.land/r/demo/foo"
+	barPath string = "gno.land/r/demo/bar"
+	bazPath string = "gno.land/r/demo/baz"
+	quxPath string = "gno.land/r/demo/qux"
 
-	wgnotPath = "gno.land/r/demo/wugnot"
+	oblPath string = "gno.land/r/demo/obl"
+	// wugnotPath string = "gno.land/r/demo/wugnot" // from consts
+	// gnsPath string = "gno.land/r/demo/gns" // from consts
 
-	fee100  = uint16(100)
-	fee500  = uint16(500)
-	fee3000 = uint16(3000)
+	fee100  uint16 = 100
+	fee500  uint16 = 500
+	fee3000 uint16 = 3000
 
-	max_timeout = bigint(9999999999)
+	max_timeout bigint = 9999999999
 )
-
-func init() {
-	test1 = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
-	// prepare ugnot
-	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.IssueCoin(test1, "ugnot", 500_000_000_000_000)
-
-	poolAddr = std.DerivePkgAddr("gno.land/r/demo/pool")
-	posAddr = std.DerivePkgAddr("gno.land/r/demo/position")
-
-	std.TestSetPrevAddr(test1)
-
-	gns.Approve(a2u(poolAddr), 500_000_000_000_000)
-
-	bar.Approve(a2u(poolAddr), 500_000_000_000_000)
-	baz.Approve(a2u(poolAddr), 500_000_000_000_000)
-	foo.Approve(a2u(poolAddr), 500_000_000_000_000)
-
-	wugnot.Approve(a2u(poolAddr), 500_000_000_000_000)
-
-}
 
 /* HELPER */
 func shouldEQ(t *testing.T, got, expected interface{}) {

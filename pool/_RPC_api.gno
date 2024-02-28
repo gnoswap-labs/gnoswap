@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"strings"
 
+	"std"
+	"time"
+
 	"gno.land/p/demo/ufmt"
 )
 
@@ -98,8 +101,8 @@ func ApiGetPools() string {
 
 	r := ResponseApiGetPools{
 		Stat: ResponseQueryBase{
-			Height:    GetHeight(),
-			Timestamp: GetTimestamp(),
+			Height:    std.GetHeight(),
+			Timestamp: time.Now().Unix(),
 		},
 		Response: rpcPools,
 	}
