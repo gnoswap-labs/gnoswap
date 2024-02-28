@@ -46,7 +46,6 @@ func TestTickBitmapPosition(t *testing.T) {
 }
 
 func TestPool_tickBitmapFlipTick(t *testing.T) {
-	// Initialize a Pool instance for testing
 	pool := &Pool{
 		tickBitmaps: make(TickBitmaps),
 	}
@@ -136,30 +135,30 @@ func TestPool_tickBitmapNextInitializedTickWithInOneWord(t *testing.T) {
 		},
 		{
 			name: "Find next initialized tick, lte false, tick before first initialized",
-			tick: 2, // Tick before the first initialized tick
+			tick: 2,
 			lte:  false,
 			expected: struct {
 				nextTick    int32
 				initialized bool
-			}{3, true}, // The next initialized tick is 3
+			}{3, true},
 		},
 		{
 			name: "Find next initialized tick, lte true, tick after last initialized",
-			tick: 9, // Tick after the last initialized tick
+			tick: 9,
 			lte:  true,
 			expected: struct {
 				nextTick    int32
 				initialized bool
-			}{8, true}, // The last initialized tick is 8
+			}{8, true},
 		},
 		{
 			name: "No next initialized tick, lte false, tick after last initialized",
-			tick: 9, // Tick after the last initialized tick
+			tick: 9,
 			lte:  false,
 			expected: struct {
 				nextTick    int32
 				initialized bool
-			}{255, false}, // No next initialized tick
+			}{255, false},
 		},
 	}
 
