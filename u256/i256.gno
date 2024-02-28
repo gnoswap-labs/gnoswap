@@ -32,6 +32,11 @@ func IntFromBigint(v bigint) *Int {
 
 	if v >= 0 {
 		return &Int{v: *FromBigint(v)}
+	} else {
+		var tmp Int
+		tmp.v = *FromBigint(-v)
+		tmp.Neg()
+		return &tmp
 	}
 
 	panic("I256 IntFromBigint not implemented")

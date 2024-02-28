@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/u256"
 	"gno.land/p/demo/ufmt"
-
 	"gno.land/r/demo/consts"
 )
 
@@ -15,22 +14,23 @@ func positionGetKey(
 	tickLower int32,
 	tickUpper int32,
 ) string {
-	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
+	positionKey := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
 
-	encoded := base64.StdEncoding.EncodeToString([]byte(key))
+	encoded := base64.StdEncoding.EncodeToString([]byte(positionKey))
 	return encoded
 }
 
 func (pool *Pool) positionUpdateWithKey(
-	key string,
+	positionKey string,
 	liquidityDelta *u256.Int,
 	feeGrowthInside0X128 *u256.Uint,
 	feeGrowthInside1X128 *u256.Uint,
 ) PositionInfo {
-	position := pool.positions[key]
+
+	position := pool.positions[positionKey]
 
 	p := positionUpdate(position, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
-	pool.positions[key] = p
+	pool.positions[positionKey] = p
 
 	return p
 }

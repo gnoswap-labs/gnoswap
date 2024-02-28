@@ -24,13 +24,25 @@ func (pool *Pool) tickGetFeeGrowthInside(
 	// init return values
 	feeGrowthInside0X128 = u256.Zero()
 	feeGrowthInside1X128 = u256.Zero()
-	//
+
+	// println("tickLower", tickLower)
+	// println("tickUpper", tickUpper)
+	// println("tickCurrent", tickCurrent)
+	// println("feeGrowthGlobal0X128", feeGrowthGlobal0X128.Dec())
+	// println("feeGrowthGlobal1X128", feeGrowthGlobal1X128.Dec())
+	// println()
+
+	// END INIT
 
 	lower := pool.ticks[tickLower]
 	upper := pool.ticks[tickUpper]
 
 	feeGrowthBelow0X128 := u256.Zero()
 	feeGrowthBelow1X128 := u256.Zero()
+
+	// println("CHK", tickLower)
+	// println("0x", lower.feeGrowthOutside0X128.Dec())
+	// println("1x", lower.feeGrowthOutside1X128.Dec())
 	if tickCurrent >= tickLower {
 		feeGrowthBelow0X128 = lower.feeGrowthOutside0X128.NilToZero()
 		feeGrowthBelow1X128 = lower.feeGrowthOutside1X128.NilToZero()
@@ -38,6 +50,9 @@ func (pool *Pool) tickGetFeeGrowthInside(
 		feeGrowthBelow0X128.Sub(feeGrowthGlobal0X128, lower.feeGrowthOutside0X128.NilToZero())
 		feeGrowthBelow1X128.Sub(feeGrowthGlobal1X128, lower.feeGrowthOutside1X128.NilToZero())
 	}
+
+	// println("feeGrowthBelow0X128", feeGrowthBelow0X128.Dec())
+	// println("feeGrowthBelow1X128", feeGrowthBelow1X128.Dec())
 
 	feeGrowthAbove0X128 := u256.Zero()
 	feeGrowthAbove1X128 := u256.Zero()
@@ -69,14 +84,21 @@ func (pool *Pool) tickUpdate(
 	maxLiquidity *u256.Uint,
 ) (flipped bool) {
 	info := pool.ticks[tick]
+	info.feeGrowthOutside0X128 = info.feeGrowthOutside0X128.NilToZero()
+	info.feeGrowthOutside1X128 = info.feeGrowthOutside1X128.NilToZero()
+	info.liquidityNet = info.liquidityNet.NilToZero()
+
 	liquidityGrossBefore := info.liquidityGross
 
 	if liquidityGrossBefore == nil {
 		liquidityGrossBefore = u256.Zero()
 	}
 
+	// println("liquidityGrossBefore", liquidityGrossBefore.Dec())
+
 	liquidityGrossAfter := liquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
 	require(!liquidityGrossAfter.Lte(maxLiquidity), ufmt.Sprintf("[POOL] tick.gno__tickUpdate() || liquidityGrossAfter(%s) <= maxLiquidity(%s)", liquidityGrossAfter.Dec(), maxLiquidity.Dec()))
+	// println("liquidityGrossAfter", liquidityGrossAfter.Dec())
 
 	flipped = (liquidityGrossAfter.IsZero()) != (liquidityGrossBefore.IsZero())
 
@@ -89,17 +111,23 @@ func (pool *Pool) tickUpdate(
 		info.initialized = true
 	}
 
+	// println("info.feeGrowthOutside0X128", info.feeGrowthOutside0X128.Dec())
+	// println("info.feeGrowthOutside1X128", info.feeGrowthOutside1X128.Dec())
+
 	info.liquidityGross = liquidityGrossAfter
 
-	if info.liquidityNet == nil {
-		info.liquidityNet = u256.NewInt(0)
-	}
-
 	if upper {
+		// println("11")
+		// println("info.liquidityNet", info.liquidityNet.Dec())
+		// println("liquidityDelta", liquidityDelta.Dec())
 		info.liquidityNet.Sub(info.liquidityNet, liquidityDelta)
 	} else {
+		// println("22")
+		// println("info.liquidityNet", info.liquidityNet.Dec())
+		// println("liquidityDelta", liquidityDelta.Dec())
 		info.liquidityNet.Add(info.liquidityNet, liquidityDelta)
 	}
+	// println("info.liquidityNet", info.liquidityNet.Dec())
 
 	pool.ticks[tick] = info
 

@@ -5,6 +5,8 @@ import (
 
 	"gno.land/p/demo/common"
 	"gno.land/p/demo/u256"
+
+	"gno.land/r/demo/consts"
 )
 
 func DrySwap(
@@ -24,15 +26,15 @@ func DrySwap(
 	pool := GetPool(token0Path, token1Path, pFee)
 	slot0Start := pool.slot0
 
-	amountSpecified := u256.FromBigint(amountSpecified_)
-	sqrtPriceLimitX96 := u256.FromBigint(sqrtPriceLimitX96_)
+	amountSpecified := u256.IntFromBigint(amountSpecified_)
+	sqrtPriceLimitX96 := u256.FromDecimal(string(sqrtPriceLimitX96_))
 
 	if zeroForOne {
-		if !(sqrtPriceLimitX96.Lt(slot0Start.sqrtPriceX96) && sqrtPriceLimitX96.Gt(u256.FromBigint(MIN_SQRT_RATIO))) {
+		if !(sqrtPriceLimitX96.Lt(slot0Start.sqrtPriceX96) && sqrtPriceLimitX96.Gt(u256.FromBigint(consts.MIN_SQRT_RATIO))) {
 			return 0, 0, false
 		}
 	} else {
-		if !(sqrtPriceLimitX96.Gt(slot0Start.sqrtPriceX96) && sqrtPriceLimitX96.Lt(u256.FromBigint(MAX_SQRT_RATIO))) {
+		if !(sqrtPriceLimitX96.Gt(slot0Start.sqrtPriceX96) && sqrtPriceLimitX96.Lt(u256.FromBigint(consts.MAX_SQRT_RATIO))) {
 			return 0, 0, false
 		}
 	}
@@ -52,33 +54,35 @@ func DrySwap(
 		}
 	}
 
-	exactInput := amountSpecified.Gt(u256.Zero())
+	exactInput := amountSpecified.Gt(u256.Zero().Int())
 
 	var state SwapState
 	if zeroForOne {
 		state = SwapState{
-			amountSpecifiedRemaining: amountSpecified.Int(),
+			amountSpecifiedRemaining: amountSpecified,
 			amountCalculated:         u256.Zero().Int(),
 			sqrtPriceX96:             slot0Start.sqrtPriceX96,
 			tick:                     slot0Start.tick,
-			feeGrowthGlobalX128:      pool.feeGrowthGlobal0X128,
+			feeGrowthGlobalX128:      pool.feeGrowthGlobal0X128.Clone(),
 			protocolFee:              u256.Zero(),
 			liquidity:                cache.liquidityStart,
 		}
 	} else {
 		state = SwapState{
-			amountSpecifiedRemaining: amountSpecified.Int(),
+			amountSpecifiedRemaining: amountSpecified,
 			amountCalculated:         u256.Zero().Int(),
 			sqrtPriceX96:             slot0Start.sqrtPriceX96,
 			tick:                     slot0Start.tick,
-			feeGrowthGlobalX128:      pool.feeGrowthGlobal1X128,
+			feeGrowthGlobalX128:      pool.feeGrowthGlobal1X128.Clone(),
 			protocolFee:              u256.Zero(),
 			liquidity:                cache.liquidityStart,
 		}
 	}
 
 	// continue swapping as long as we haven't used the entire input/output and haven't reached the price limit
+	origAmountSpecified := amountSpecified.Clone()
 	for !state.amountSpecifiedRemaining.IsZero() && !state.sqrtPriceX96.Eq(sqrtPriceLimitX96) {
+
 		var step StepComputations
 
 		step.sqrtPriceStartX96 = state.sqrtPriceX96
@@ -97,11 +101,11 @@ func DrySwap(
 		}
 
 		// get the price for the next tick
-		step.sqrtPriceNextX96 = TickMathGetSqrtRatioAtTick(step.tickNext)
-		var sqrtRatioTargetX96 *u256.Uint
+		step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
+		isLower := step.sqrtPriceNextX96.Lt(sqrtPriceLimitX96)
+		isHigher := step.sqrtPriceNextX96.Gt(sqrtPriceLimitX96)
 
-		isLower := step.sqrtPriceNextX96 < sqrtPriceLimitX96
-		isHigher := step.sqrtPriceNextX96 > sqrtPriceLimitX96
+		var sqrtRatioTargetX96 *u256.Uint
 		if (zeroForOne && isLower) || (!zeroForOne && isHigher) {
 			sqrtRatioTargetX96 = sqrtPriceLimitX96
 		} else {
@@ -127,15 +131,16 @@ func DrySwap(
 		// if the protocol fee is on, calculate how much is owed, decrement feeAmount, and increment protocolFee
 		if cache.feeProtocol > 0 {
 			delta := new(u256.Uint).Div(step.feeAmount, u256.NewUint(uint64(cache.feeProtocol)))
-			step.feeAmount -= delta
-			state.protocolFee += delta
+			step.feeAmount.Sub(step.feeAmount, delta)
+			state.protocolFee.Add(state.protocolFee, delta)
 		}
 
 		// update global fee tracker
 		if state.liquidity.Gt(u256.Zero()) {
-			update := new(u256.Uint).Mul(step.feeAmount, u256.FromBigint(consts.Q128))
+			// save fee
+			update := new(u256.Uint).Mul(step.feeAmount, u256.FromDecimal(string(consts.Q128)))
 			update.Div(update, state.liquidity)
-			state.feeGrowthGlobalX128.Add(state.feeGrowthGlobalX128, update)
+			state.feeGrowthGlobalX128.Add(state.feeGrowthGlobalX128.Clone(), update)
 		}
 
 		// shift tick if we reached the next price
@@ -160,7 +165,7 @@ func DrySwap(
 
 				// if we're moving leftward, we interpret liquidityNet as the opposite sign
 				if zeroForOne {
-					liquidityNet = -liquidityNet
+					liquidityNet = liquidityNet.Neg()
 				}
 
 				state.liquidity = liquidityMathAddDelta(state.liquidity, liquidityNet)
@@ -180,12 +185,16 @@ func DrySwap(
 
 	var amount0, amount1 *u256.Int
 	if zeroForOne == exactInput {
-		amount0 = new(u256.Int).Sub(amountSpecified.Int(), state.amountSpecifiedRemaining)
+		amount0 = new(u256.Int).Sub(origAmountSpecified, state.amountSpecifiedRemaining)
 		amount1 = state.amountCalculated
 	} else {
 		amount0 = state.amountCalculated
-		amount1 = new(u256.Int).Sub(amountSpecified.Int(), state.amountSpecifiedRemaining)
+		amount1 = new(u256.Int).Sub(origAmountSpecified, state.amountSpecifiedRemaining)
 	}
+
+	// backUP
+	resAmount0 := amount0.Clone()
+	resAmount1 := amount1.Clone()
 
 	if zeroForOne {
 		if !(pool.balances.token1.Gte(amount1.Abs())) {
@@ -205,5 +214,5 @@ func DrySwap(
 		return 0, 0, false
 	}
 
-	return amount0.Bigint(), amount1.Bigint(), true
+	return resAmount0.Bigint(), resAmount1.Bigint(), true
 }

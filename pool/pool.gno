@@ -164,6 +164,11 @@ func Collect(
 	requireExist(exist, ufmt.Sprintf("[POOL] pool.gno__Collect() || position(%s) does not exist", positionKey))
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
+	// println("amount0Requested:", amount0Requested.Dec())
+	// println("position.tokensOwed0:", position.tokensOwed0.Dec())
+	// println("pool.balances.token0:", pool.balances.token0.Dec())
+	// println()
+
 	amount0 := amount0Requested.Min(position.tokensOwed0)
 	amount0 = amount0.Min(pool.balances.token0)
 	amount1 := amount1Requested.Min(position.tokensOwed1)
@@ -265,7 +270,7 @@ func Swap(
 			amountCalculated:         u256.Zero().Int(),
 			sqrtPriceX96:             slot0Start.sqrtPriceX96,
 			tick:                     slot0Start.tick,
-			feeGrowthGlobalX128:      pool.feeGrowthGlobal0X128,
+			feeGrowthGlobalX128:      pool.feeGrowthGlobal0X128.Clone(),
 			protocolFee:              u256.Zero(),
 			liquidity:                cache.liquidityStart,
 		}
@@ -275,12 +280,13 @@ func Swap(
 			amountCalculated:         u256.Zero().Int(),
 			sqrtPriceX96:             slot0Start.sqrtPriceX96,
 			tick:                     slot0Start.tick,
-			feeGrowthGlobalX128:      pool.feeGrowthGlobal1X128,
+			feeGrowthGlobalX128:      pool.feeGrowthGlobal1X128.Clone(),
 			protocolFee:              u256.Zero(),
 			liquidity:                cache.liquidityStart,
 		}
 	}
 
+	// continue swapping as long as we haven't used the entire input/output and haven't reached the price limit
 	origAmountSpecified := amountSpecified.Clone()
 	for !state.amountSpecifiedRemaining.IsZero() && !state.sqrtPriceX96.Eq(sqrtPriceLimitX96) {
 		var step StepComputations
@@ -293,6 +299,7 @@ func Swap(
 			zeroForOne,
 		)
 
+		// ensure that we do not overshoot the min/max tick, as the tick bitmap is not aware of these bounds
 		if step.tickNext < consts.MIN_TICK {
 			step.tickNext = consts.MIN_TICK
 		} else if step.tickNext > consts.MAX_TICK {
@@ -303,6 +310,7 @@ func Swap(
 		isLower := step.sqrtPriceNextX96.Lt(sqrtPriceLimitX96)
 		isHigher := step.sqrtPriceNextX96.Gt(sqrtPriceLimitX96)
 
+		// get the price for the next tick
 		var sqrtRatioTargetX96 *u256.Uint
 		if (zeroForOne && isLower) || (!zeroForOne && isHigher) {
 			sqrtRatioTargetX96 = sqrtPriceLimitX96
@@ -326,23 +334,28 @@ func Swap(
 			state.amountCalculated.Add(state.amountCalculated, new(u256.Uint).Add(step.amountIn, step.feeAmount).Int())
 		}
 
+		// if the protocol fee is on, calculate how much is owed, decrement feeAmount, and increment protocolFee
 		if cache.feeProtocol > 0 {
 			delta := new(u256.Uint).Div(step.feeAmount, u256.NewUint(uint64(cache.feeProtocol)))
 			step.feeAmount.Sub(step.feeAmount, delta)
 			state.protocolFee.Add(state.protocolFee, delta)
 		}
 
+		// update global fee tracker
 		if state.liquidity.Gt(u256.Zero()) {
 			// save fee
-			update := new(u256.Uint).Mul(step.feeAmount, u256.FromBigint(consts.Q128))
+			update := new(u256.Uint).Mul(step.feeAmount, u256.FromDecimal(string(consts.Q128)))
 			update.Div(update, state.liquidity)
-			state.feeGrowthGlobalX128.Add(state.feeGrowthGlobalX128, update)
+			state.feeGrowthGlobalX128.Add(state.feeGrowthGlobalX128.Clone(), update)
 		}
 
+		// shift tick if we reached the next price
 		if state.sqrtPriceX96 == step.sqrtPriceNextX96 {
+			// if the tick is initialized, run the tick transition
 			if step.initialized {
 				var fee0, fee1 *u256.Uint
 
+				// check for the placeholder value, which we replace with the actual value the first time the swap crosses an initialized tick
 				if zeroForOne {
 					fee0 = state.feeGrowthGlobalX128
 					fee1 = pool.feeGrowthGlobal1X128
@@ -357,8 +370,9 @@ func Swap(
 					fee1,
 				)
 
+				// if we're moving leftward, we interpret liquidityNet as the opposite sign
 				if zeroForOne {
-					liquidityNet = -liquidityNet
+					liquidityNet = liquidityNet.Neg()
 				}
 
 				state.liquidity = liquidityMathAddDelta(state.liquidity, liquidityNet)
@@ -370,10 +384,12 @@ func Swap(
 				state.tick = step.tickNext
 			}
 		} else if state.sqrtPriceX96 != step.sqrtPriceStartX96 {
+			// recompute unless we're on a lower tick boundary (i.e. already transitioned ticks), and haven't moved
 			state.tick = common.TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
 		}
 	}
 	// END LOOP
+	println("END")
 
 	pool.slot0.sqrtPriceX96 = state.sqrtPriceX96
 	if state.tick != slot0Start.tick {
@@ -556,6 +572,9 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u2
 		params.liquidityDelta,
 		pool.slot0.tick,
 	)
+	// println("MODI_position.tokensOwed0", position.tokensOwed0.Dec())
+	// println("MODI_position.tokensOwed1", position.tokensOwed1.Dec())
+	// println()
 
 	amount0 := u256.Zero().Int()
 	amount1 := u256.Zero().Int()
@@ -603,6 +622,8 @@ func (pool *Pool) updatePosition(
 	_liquidityDelta *u256.Int,
 	tick int32,
 ) PositionInfo {
+	// println(">> liquidityDelta", _liquidityDelta.Dec())
+	// println(">> tick:", tick)
 	liquidityDelta := _liquidityDelta.Clone()
 
 	var _feeGrowthGlobal0X128 *u256.Uint = pool.feeGrowthGlobal0X128
@@ -611,6 +632,12 @@ func (pool *Pool) updatePosition(
 	var flippedLower, flippedUpper bool
 
 	if !liquidityDelta.IsZero() {
+		// println("tickLower", tickLower)
+		// println("tick", tick)
+		// println("liquidityDelta", liquidityDelta.Dec())
+		// println("_feeGrowthGlobal0X128", _feeGrowthGlobal0X128.Dec())
+		// println("_feeGrowthGlobal1X128", _feeGrowthGlobal1X128.Dec())
+		// println("pool.maxLiquidityPerTick", pool.maxLiquidityPerTick.Dec())
 		flippedLower = pool.tickUpdate(
 			tickLower,
 			tick,
@@ -621,6 +648,12 @@ func (pool *Pool) updatePosition(
 			pool.maxLiquidityPerTick,
 		)
 
+		// println("tickUpper", tickUpper)
+		// println("tick", tick)
+		// println("liquidityDelta", liquidityDelta.Dec())
+		// println("_feeGrowthGlobal0X128", _feeGrowthGlobal0X128.Dec())
+		// println("_feeGrowthGlobal1X128", _feeGrowthGlobal1X128.Dec())
+		// println("pool.maxLiquidityPerTick", pool.maxLiquidityPerTick.Dec())
 		flippedUpper = pool.tickUpdate(
 			tickUpper,
 			tick,
@@ -632,15 +665,24 @@ func (pool *Pool) updatePosition(
 		)
 
 		if flippedLower {
+			// println("3")
+			// println("tickLower:", tickLower)
+			// println("pool.tickSpacing:", pool.tickSpacing)
 			pool.tickBitmapFlipTick(tickLower, pool.tickSpacing)
 		}
 
 		if flippedUpper {
+			// println("4")
 			pool.tickBitmapFlipTick(tickUpper, pool.tickSpacing)
 		}
 	}
 	// NO LIQ, ONLY BURN 0
 
+	// println("tickLower", tickLower)
+	// println("tickUpper", tickUpper)
+	// println("tick", tick)
+	// println("_feeGrowthGlobal0X128", _feeGrowthGlobal0X128.Dec())
+	// println("_feeGrowthGlobal1X128", _feeGrowthGlobal1X128.Dec())
 	feeGrowthInside0X128, feeGrowthInside1X128 := pool.tickGetFeeGrowthInside(
 		tickLower,
 		tickUpper,
@@ -651,12 +693,17 @@ func (pool *Pool) updatePosition(
 
 	positionKey := positionGetKey(owner, tickLower, tickUpper)
 
+	// println("positionKey", positionKey)
+	// println("liquidityDelta", liquidityDelta.Dec())
+	// println("feeGrowthInside0X128", feeGrowthInside0X128.Dec()) // XXX
+	// println("feeGrowthInside1X128", feeGrowthInside1X128.Dec())
 	position := pool.positionUpdateWithKey(
 		positionKey,
 		liquidityDelta,
 		feeGrowthInside0X128,
 		feeGrowthInside1X128,
 	)
+	// println(">> position.tokensOwed0", position.tokensOwed0.Dec())
 
 	if liquidityDelta.IsNeg() {
 		if flippedLower {

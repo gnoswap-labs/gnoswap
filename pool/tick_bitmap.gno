@@ -21,6 +21,9 @@ func (pool *Pool) tickBitmapFlipTick(
 	wordPos, bitPos := tickBitmapPosition(tick / tickSpacing)
 	mask := u256.NewUint(1)
 	mask.Lsh(mask, uint(bitPos)) // 2 ** bitPos
+	// println("wordPos", wordPos)
+	// println("bitPos", bitPos)
+	// println("mask", mask.Dec())
 
 	// XXXXXXXXXXXXXXXX
 	// mask.Lsh is exptected to check overflow with the signed integer type.
@@ -30,10 +33,11 @@ func (pool *Pool) tickBitmapFlipTick(
 	//requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || mask(%d) > 0", mask))
 
 	// check init value
-	if pool.tickBitmaps[wordPos] == nil {
-		pool.tickBitmaps[wordPos] = u256.Zero()
-	}
+	pool.tickBitmaps[wordPos] = pool.tickBitmaps[wordPos].NilToZero()
+
+	// println("pool.tickBitmaps[wordPos]:", pool.tickBitmaps[wordPos].Dec())
 	pool.tickBitmaps[wordPos].Xor(pool.tickBitmaps[wordPos], mask)
+	// println("pool.tickBitmaps[wordPos]:", pool.tickBitmaps[wordPos].Dec())
 }
 
 func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
@@ -56,6 +60,7 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 		// XXXXXXXX overflow check Lsh!
 		// requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapNextInitializedTickWithInOneWord__mask(%d) >= 0__#1", mask))
 
+		pool.tickBitmaps[wordPos] = pool.tickBitmaps[wordPos].NilToZero()
 		masked := new(u256.Uint).And(pool.tickBitmaps[wordPos], mask)
 
 		initialized := !masked.IsZero()

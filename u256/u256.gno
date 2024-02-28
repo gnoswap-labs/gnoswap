@@ -844,12 +844,12 @@ func (z *Uint) fromHex(hex string) error {
 
 // FromDecimal is a convenience-constructor to create an Uint from a
 // decimal (base 10) string. Numbers larger than 256 bits are not accepted.
-func FromDecimal(decimal string) (*Uint, error) {
+func FromDecimal(decimal string) *Uint {
 	var z Uint
 	if err := z.SetFromDecimal(decimal); err != nil {
-		return nil, err
+		panic(err.Error())
 	}
-	return &z, nil
+	return &z
 }
 
 const twoPow256Sub1 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
