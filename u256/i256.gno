@@ -39,7 +39,7 @@ func IntFromBigint(v bigint) *Int {
 
 func (x *Int) Bigint() bigint {
 	if x.Signum() < 0 {
-		panic("I256 Bigint negative")
+		return -x.Neg().v.Bigint()
 	}
 	return x.v.Bigint()
 
@@ -67,7 +67,7 @@ func (x *Int) Add(y *Int, z *Int) *Int {
 }
 
 func (x *Int) Sub(y *Int, z *Int) *Int {
-	x.v.unsafeSub(&y.v, &z.v)
+	x.v.UnsafeSub(&y.v, &z.v)
 
 	ys := y.Signum()
 	zs := z.Signum()
@@ -190,6 +190,10 @@ func (x *Int) Abs() *Uint {
 }
 
 func (x *Int) Neg() *Int {
+	if x.Signum() == 0 {
+		return x
+	}
+
 	// twos complement
 	x.v.Not(&x.v)
 	x.v.Add(&x.v, &Uint{arr: [4]uint64{1, 0, 0, 0}})
@@ -201,10 +205,6 @@ func (x *Int) Dec() string {
 		return "-" + x.Abs().Dec()
 	}
 	return x.Abs().Dec()
-}
-
-func (x *Int) Bigint() bigint {
-	panic("I256 Bigint not implemented")
 }
 
 func (x *Int) Uint() *Uint {
@@ -227,3 +227,22 @@ func (z *Int) NilToZero() *Int {
 
 	return z
 }
+
+// Clone creates a new Int identical to z
+func (z *Int) Clone() *Int {
+	var x Int
+
+	x.Sub(z, NewInt(0))
+	return &x
+}
+
+// // Clone creates a new Int identical to z
+// func (z *Uint) Clone() *Uint {
+// 	var x Uint
+// 	x.arr[0] = z.arr[0]
+// 	x.arr[1] = z.arr[1]
+// 	x.arr[2] = z.arr[2]
+// 	x.arr[3] = z.arr[3]
+
+// 	return &x
+// }

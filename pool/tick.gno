@@ -29,7 +29,8 @@ func (pool *Pool) tickGetFeeGrowthInside(
 	lower := pool.ticks[tickLower]
 	upper := pool.ticks[tickUpper]
 
-	var feeGrowthBelow0X128, feeGrowthBelow1X128 *u256.Uint
+	feeGrowthBelow0X128 := u256.Zero()
+	feeGrowthBelow1X128 := u256.Zero()
 	if tickCurrent >= tickLower {
 		feeGrowthBelow0X128 = lower.feeGrowthOutside0X128.NilToZero()
 		feeGrowthBelow1X128 = lower.feeGrowthOutside1X128.NilToZero()
@@ -38,7 +39,9 @@ func (pool *Pool) tickGetFeeGrowthInside(
 		feeGrowthBelow1X128.Sub(feeGrowthGlobal1X128, lower.feeGrowthOutside1X128.NilToZero())
 	}
 
-	var feeGrowthAbove0X128, feeGrowthAbove1X128 *u256.Uint
+	feeGrowthAbove0X128 := u256.Zero()
+	feeGrowthAbove1X128 := u256.Zero()
+
 	if tickCurrent < tickUpper {
 		feeGrowthAbove0X128 = upper.feeGrowthOutside0X128.NilToZero()
 		feeGrowthAbove1X128 = upper.feeGrowthOutside1X128.NilToZero()
@@ -113,8 +116,12 @@ func (pool *Pool) tickCross(
 	feeGrowthGlobal1X128 *u256.Uint,
 ) *u256.Int {
 	info := pool.ticks[tick]
-	info.feeGrowthOutside0X128 = feeGrowthGlobal0X128 - info.feeGrowthOutside0X128
-	info.feeGrowthOutside1X128 = feeGrowthGlobal1X128 - info.feeGrowthOutside1X128
+
+	info.feeGrowthOutside0X128 = info.feeGrowthOutside0X128.NilToZero()
+	info.feeGrowthOutside1X128 = info.feeGrowthOutside1X128.NilToZero()
+
+	info.feeGrowthOutside0X128 = new(u256.Uint).Sub(feeGrowthGlobal0X128, info.feeGrowthOutside0X128)
+	info.feeGrowthOutside1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, info.feeGrowthOutside1X128)
 
 	pool.ticks[tick] = info
 

@@ -50,8 +50,9 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 		wordPos, bitPos := tickBitmapPosition(compress)
 
 		mask := new(u256.Uint).Lsh(u256.One(), uint(bitPos))
-		mask.Sub(mask, u256.One())
+		mask.UnsafeSub(mask, u256.One())
 		mask.Add(mask, (new(u256.Uint).Lsh(u256.One(), uint(bitPos))))
+
 		// XXXXXXXX overflow check Lsh!
 		// requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapNextInitializedTickWithInOneWord__mask(%d) >= 0__#1", mask))
 
@@ -60,7 +61,8 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 		initialized := !masked.IsZero()
 
 		if initialized {
-			next := (compress - int32(bitPos-bitMathMostSignificantBit(mask))) * tickSpacing
+			next := (compress - int32(bitPos-bitMathMostSignificantBit(masked))) * tickSpacing
+
 			return next, initialized
 		}
 
@@ -71,7 +73,7 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 	wordPos, bitPos := tickBitmapPosition(compress + 1)
 
 	_mask := new(u256.Uint).Lsh(u256.One(), uint(bitPos))
-	_mask.Sub(_mask, u256.One())
+	_mask.UnsafeSub(_mask, u256.One())
 	mask := bigintBitwiseNotForUint256BitmapIndexing(_mask)
 
 	// XXXXXXXX overflow check Lsh!

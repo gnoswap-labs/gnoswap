@@ -27,7 +27,7 @@ func swapMathComputeSwapStep(
 			amountIn = sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity)
 		}
 
-		if amountRemainingLessFee >= amountIn {
+		if amountRemainingLessFee.Gte(amountIn) {
 			sqrtRatioNextX96 = sqrtRatioTargetX96
 		} else {
 			sqrtRatioNextX96 = sqrtPriceMathGetNextSqrtPriceFromInput(
@@ -89,10 +89,7 @@ func swapMathComputeSwapStep(
 	}
 
 	if exactIn && !sqrtRatioNextX96.Eq(sqrtRatioTargetX96) {
-		///XXXXXXXXXXXXXXXXXXXXXXXX
-		// I was not able to understand this line, commented out for now
-		// resolve this before merge!!!
-		// feeAmount = new(u256.Uint).Sub(amountRemaining, amountIn)
+		feeAmount = new(u256.Uint).Sub(amountRemaining.Uint(), amountIn)
 	} else {
 		feeAmount = new(u256.Uint).Mul(amountIn, u256.NewUint(uint64(feePips)))
 		feeAmount.Div(feeAmount, u256.NewUint(uint64(1000000-feePips)))

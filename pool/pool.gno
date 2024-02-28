@@ -85,7 +85,7 @@ func Mint(
 			ok,
 			ufmt.Sprintf(
 				"[POOL] pool.gno__Mint() || transferFromByRegisterCall(pool.token1Path(%s), from(%s), to(%s), uint64(amount1))(%d) failed",
-				pool.token1Path, from.String(), to.String(), uint64(amount1),
+				pool.token1Path, from.String(), to.String(), uint64(amount1.Int64()),
 			),
 		)
 
@@ -169,20 +169,31 @@ func Collect(
 	amount1 := amount1Requested.Min(position.tokensOwed1)
 	amount1 = amount1.Min(pool.balances.token1)
 
+	// backup calculated amount
+	resAmount0 := amount0.Clone()
+	resAmount1 := amount1.Clone()
+
 	// adjust position
-	position.tokensOwed0.Sub(position.tokensOwed0, amount0)
-	position.tokensOwed1.Sub(position.tokensOwed1, amount1)
+	_amount0 := resAmount0.Clone()
+	_amount1 := resAmount1.Clone()
+	position.tokensOwed0.Sub(position.tokensOwed0, _amount0)
+	position.tokensOwed1.Sub(position.tokensOwed1, _amount1)
 
 	// adjust pool
-	pool.balances.token0.Sub(pool.balances.token0, amount0)
-	pool.balances.token1.Sub(pool.balances.token0, amount1)
+	_amount0 = resAmount0.Clone()
+	_amount1 = resAmount1.Clone()
+	pool.balances.token0.Sub(pool.balances.token0, _amount0)
+	pool.balances.token1.Sub(pool.balances.token1, _amount1)
 
-	transferByRegisterCall(pool.token0Path, recipient, uint64(amount0))
-	transferByRegisterCall(pool.token1Path, recipient, uint64(amount1))
+	// tranfer
+	_amount0 = resAmount0.Clone()
+	_amount1 = resAmount1.Clone()
+	transferByRegisterCall(pool.token0Path, recipient, _amount0.Uint64())
+	transferByRegisterCall(pool.token1Path, recipient, _amount1.Uint64())
 
 	pool.positions[positionKey] = position
 
-	return amount0.Bigint(), amount1.Bigint()
+	return resAmount0.Bigint(), resAmount1.Bigint()
 }
 
 func Swap(
@@ -206,6 +217,8 @@ func Swap(
 	pool := GetPool(token0Path, token1Path, fee)
 	slot0Start := pool.slot0
 	require(slot0Start.unlocked, ufmt.Sprintf("[POOL] pool.gno__Swap() || slot0 must be unlocked"))
+
+	// println("SQRT:", slot0Start.sqrtPriceX96.Dec())
 
 	var feeProtocol uint8
 	var feeGrowthGlobalX128 *u256.Uint
@@ -268,6 +281,7 @@ func Swap(
 		}
 	}
 
+	origAmountSpecified := amountSpecified.Clone()
 	for !state.amountSpecifiedRemaining.IsZero() && !state.sqrtPriceX96.Eq(sqrtPriceLimitX96) {
 		var step StepComputations
 
@@ -286,8 +300,8 @@ func Swap(
 		}
 
 		step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
-		isLower := step.sqrtPriceNextX96 < sqrtPriceLimitX96
-		isHigher := step.sqrtPriceNextX96 > sqrtPriceLimitX96
+		isLower := step.sqrtPriceNextX96.Lt(sqrtPriceLimitX96)
+		isHigher := step.sqrtPriceNextX96.Gt(sqrtPriceLimitX96)
 
 		var sqrtRatioTargetX96 *u256.Uint
 		if (zeroForOne && isLower) || (!zeroForOne && isHigher) {
@@ -359,8 +373,8 @@ func Swap(
 			state.tick = common.TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
 		}
 	}
-
 	// END LOOP
+
 	pool.slot0.sqrtPriceX96 = state.sqrtPriceX96
 	if state.tick != slot0Start.tick {
 		pool.slot0.tick = state.tick
@@ -373,33 +387,37 @@ func Swap(
 	if zeroForOne {
 		pool.feeGrowthGlobal0X128 = state.feeGrowthGlobalX128
 		if state.protocolFee.Gt(u256.Zero()) {
-			pool.protocolFees.token0 += state.protocolFee
+			pool.protocolFees.token0.Add(pool.protocolFees.token0, state.protocolFee)
 		}
 	} else {
 		pool.feeGrowthGlobal1X128 = state.feeGrowthGlobalX128
 		if state.protocolFee.Gt(u256.Zero()) {
-			pool.protocolFees.token1 += state.protocolFee
+			pool.protocolFees.token1.Add(pool.protocolFees.token1, state.protocolFee)
 		}
 	}
 
 	var amount0, amount1 *u256.Int
 	if zeroForOne == exactInput {
-		amount0 = new(u256.Int).Sub(amountSpecified, state.amountSpecifiedRemaining)
+		amount0 = new(u256.Int).Sub(origAmountSpecified, state.amountSpecifiedRemaining)
 		amount1 = state.amountCalculated
 	} else {
 		amount0 = state.amountCalculated
-		amount1 = new(u256.Int).Sub(amountSpecified, state.amountSpecifiedRemaining)
+		amount1 = new(u256.Int).Sub(origAmountSpecified, state.amountSpecifiedRemaining)
 	}
+
+	// backUP
+	resAmount0 := amount0.Clone()
+	resAmount1 := amount1.Clone()
 
 	if zeroForOne {
 		// payer > pool
 		balance0Before := balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr())
-		ok := transferFromByRegisterCall(pool.token0Path, payer, consts.POOL_ADDR, uint64(amount0))
+		ok := transferFromByRegisterCall(pool.token0Path, payer, consts.POOL_ADDR, uint64(amount0.Int64()))
 		require(
 			ok,
 			ufmt.Sprintf(
 				"[POOL] pool.gno__Swap() || transferFromByRegisterCall(pool.token0Path(%s), payer(%s), consts.POOL_ADDR(%s), uint64(amount0))(%d) failed",
-				pool.token0Path, payer.String(), consts.POOL_ADDR.String(), uint64(amount0),
+				pool.token0Path, payer.String(), consts.POOL_ADDR.String(), uint64(amount0.Int64()),
 			),
 		)
 
@@ -414,27 +432,25 @@ func Swap(
 
 		if amount1.IsNeg() { // pool > recipient
 			require(pool.balances.token1.Gt(amount1.Abs()), ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token1(%d) > -amount1(%d)", pool.balances.token1, amount1.Neg()))
-			ok := transferByRegisterCall(pool.token1Path, recipient, uint64(-amount1))
+			ok := transferByRegisterCall(pool.token1Path, recipient, amount1.Abs().Uint64())
 			require(
 				ok,
 				ufmt.Sprintf(
 					"[POOL] pool.gno__Swap() || transferByRegisterCall(pool.token1Path(%s), recipient(%s), uint64(-amount1))(%d) failed",
-					pool.token1Path, recipient.String(), uint64(-amount1),
+					pool.token1Path, recipient.String(), amount1.Abs().Uint64(),
 				),
 			)
 			pool.balances.token1.AddInt(pool.balances.token1, amount1)
-
 		}
-
 	} else {
 		// payer > pool
 		balance1Before := balanceOfByRegisterCall(pool.token1Path, GetOrigPkgAddr())
-		ok := transferFromByRegisterCall(pool.token1Path, payer, consts.POOL_ADDR, uint64(amount1))
+		ok := transferFromByRegisterCall(pool.token1Path, payer, consts.POOL_ADDR, uint64(amount1.Int64()))
 		require(
 			ok,
 			ufmt.Sprintf(
 				"[POOL] pool.gno__Swap() || transferFromByRegisterCall(pool.token1Path(%s), payer(%s), consts.POOL_ADDR(%s), uint64(amount1))(%d) failed",
-				pool.token1Path, payer.String(), consts.POOL_ADDR.String(), uint64(amount1),
+				pool.token1Path, payer.String(), consts.POOL_ADDR.String(), uint64(amount1.Int64()),
 			),
 		)
 
@@ -450,12 +466,12 @@ func Swap(
 		if amount0.IsNeg() { // pool > recipient
 			require(pool.balances.token0.Gt(amount0.Abs()), ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%d) > -amount0(%d)", pool.balances.token0, amount0.Neg()))
 
-			ok := transferByRegisterCall(pool.token0Path, recipient, uint64(-amount0))
+			ok := transferByRegisterCall(pool.token0Path, recipient, amount0.Abs().Uint64())
 			require(
 				ok,
 				ufmt.Sprintf(
 					"[POOL] pool.gno__Swap() || transferByRegisterCall(pool.token0Path(%s), recipient(%s), uint64(-amount0))(%d) failed",
-					pool.token0Path, recipient.String(), uint64(-amount0),
+					pool.token0Path, recipient.String(), amount0.Abs().Uint64(),
 				),
 			)
 			pool.balances.token0.AddInt(pool.balances.token0, amount0)
@@ -463,7 +479,8 @@ func Swap(
 	}
 
 	pool.slot0.unlocked = true
-	return amount0.Bigint(), amount1.Bigint()
+
+	return resAmount0.Bigint(), resAmount1.Bigint()
 }
 
 // ADMIN
@@ -506,24 +523,24 @@ func CollectProtocol(
 	amount0 := amount0Requested.Min(pool.protocolFees.token0)
 	amount1 := amount1Requested.Min(pool.protocolFees.token1)
 
-	// without procotol fee
-	amount0, amount1 = pool.saveProtocolFees(amount0, amount1)
+	// after
+	amount0, amount1 = pool.saveProtocolFees(amount0.Clone(), amount1.Clone())
 
-	ok := transferByRegisterCall(pool.token0Path, recipient, uint64(amount0))
+	ok := transferByRegisterCall(pool.token0Path, recipient, uint64(amount0.Uint64()))
 	require(
 		ok,
 		ufmt.Sprintf(
 			"[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pool.token0Path(%s), recipient(%s), uint64(amount0))(%d) failed",
-			pool.token0Path, recipient.String(), uint64(amount0),
+			pool.token0Path, recipient.String(), uint64(amount0.Uint64()),
 		),
 	)
 
-	ok = transferByRegisterCall(pool.token1Path, recipient, uint64(amount1))
+	ok = transferByRegisterCall(pool.token1Path, recipient, uint64(amount1.Uint64()))
 	require(
 		ok,
 		ufmt.Sprintf(
 			"[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pool.token1Path(%s), recipient(%s), uint64(amount1))(%d) failed",
-			pool.token1Path, recipient.String(), uint64(amount1),
+			pool.token1Path, recipient.String(), uint64(amount1.Uint64()),
 		),
 	)
 
@@ -548,7 +565,7 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u2
 			amount0 = sqrtPriceMathGetAmount0Delta(
 				common.TickMathGetSqrtRatioAtTick(params.tickLower),
 				common.TickMathGetSqrtRatioAtTick(params.tickUpper),
-				params.liquidityDelta,
+				params.liquidityDelta.Clone(),
 			)
 		} else if pool.slot0.tick < params.tickUpper {
 			liquidityBefore := pool.liquidity
@@ -556,22 +573,22 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u2
 			amount0 = sqrtPriceMathGetAmount0Delta(
 				pool.slot0.sqrtPriceX96,
 				common.TickMathGetSqrtRatioAtTick(params.tickUpper),
-				params.liquidityDelta,
+				params.liquidityDelta.Clone(),
 			)
 
 			amount1 = sqrtPriceMathGetAmount1Delta(
 				common.TickMathGetSqrtRatioAtTick(params.tickLower),
 				pool.slot0.sqrtPriceX96,
-				params.liquidityDelta,
+				params.liquidityDelta.Clone(),
 			)
 
-			pool.liquidity = liquidityMathAddDelta(liquidityBefore, params.liquidityDelta)
+			pool.liquidity = liquidityMathAddDelta(liquidityBefore, params.liquidityDelta.Clone())
 
 		} else {
 			amount1 = sqrtPriceMathGetAmount1Delta(
 				common.TickMathGetSqrtRatioAtTick(params.tickLower),
 				common.TickMathGetSqrtRatioAtTick(params.tickUpper),
-				params.liquidityDelta,
+				params.liquidityDelta.Clone(),
 			)
 		}
 	}
@@ -583,9 +600,11 @@ func (pool *Pool) updatePosition(
 	owner std.Address,
 	tickLower int32,
 	tickUpper int32,
-	liquidityDelta *u256.Int,
+	_liquidityDelta *u256.Int,
 	tick int32,
 ) PositionInfo {
+	liquidityDelta := _liquidityDelta.Clone()
+
 	var _feeGrowthGlobal0X128 *u256.Uint = pool.feeGrowthGlobal0X128
 	var _feeGrowthGlobal1X128 *u256.Uint = pool.feeGrowthGlobal1X128
 
@@ -648,16 +667,17 @@ func (pool *Pool) updatePosition(
 			pool.tickClear(tickUpper)
 		}
 	}
+
 	return position
 }
 
 func (pool *Pool) saveProtocolFees(amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
 	if !amount0.IsZero() && amount0.Eq(pool.protocolFees.token0) {
-		amount0--
+		amount0.Sub(amount0, u256.One())
 	}
 
 	if !amount1.IsZero() && amount1.Eq(pool.protocolFees.token1) {
-		amount1--
+		amount1.Sub(amount1, u256.One())
 	}
 
 	pool.protocolFees.token0.Sub(pool.protocolFees.token0, amount0)

@@ -230,8 +230,10 @@ func (z *Uint) Sub(x, y *Uint) *Uint {
 	z.arr[1], carry = Sub64(x.arr[1], y.arr[1], carry)
 	z.arr[2], carry = Sub64(x.arr[2], y.arr[2], carry)
 	z.arr[3], _ = Sub64(x.arr[3], y.arr[3], carry)
+
 	// Different from the original implementation!
 	// We panic on underflow
+	// r3v4 -> mconcat : why do we panic?
 	if carry != 0 {
 		panic("U256 Sub underflow")
 	}
@@ -239,7 +241,7 @@ func (z *Uint) Sub(x, y *Uint) *Uint {
 }
 
 // Sub sets z to the difference x-y
-func (z *Uint) unsafeSub(x, y *Uint) *Uint {
+func (z *Uint) UnsafeSub(x, y *Uint) *Uint {
 	var carry uint64
 	z.arr[0], carry = Sub64(x.arr[0], y.arr[0], 0)
 	z.arr[1], carry = Sub64(x.arr[1], y.arr[1], carry)
