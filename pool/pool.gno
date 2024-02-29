@@ -256,9 +256,9 @@ func determineSwapDirection(
 ) SwapDirection {
 	if zeroForOne {
 		require(
-            sqrtPriceLimitX96 < slot0.sqrtPriceX96 && sqrtPriceLimitX96 > consts.MIN_SQRT_RATIO,
-            ufmt.Sprintf("[POOL] pool.gno__Swap() || Invalid price limit"),
-        )
+			sqrtPriceLimitX96 < slot0.sqrtPriceX96 && sqrtPriceLimitX96 > consts.MIN_SQRT_RATIO,
+			ufmt.Sprintf("[POOL] pool.gno__Swap() || Invalid price limit"),
+		)
 
 		protocol := slot0.feeProtocol % 16
 		feeGrowth := pool.feeGrowthGlobal0X128
@@ -396,17 +396,13 @@ func updatePoolState(
 		pool.liquidity = state.liquidity
 	}
 
-	var amount0, amount1 bigint
+	// determine amount0, amount1
 	amountUsed := amountSpecified - state.amountSpecifiedRemaining
 	if zeroForOne == exactInput {
-		amount0 = amountUsed
-		amount1 = state.amountCalculated
-	} else {
-		amount0 = state.amountCalculated
-		amount1 = amountUsed
+		return amountUsed, state.amountCalculated
 	}
 
-	return amount0, amount1
+	return state.amountCalculated, amountUsed
 }
 
 // verifyTransfer is a helper function to verify the transfer result.
@@ -640,6 +636,7 @@ func (pool *Pool) updatePosition(
 			pool.tickClear(tickUpper)
 		}
 	}
+
 	return position
 }
 
@@ -663,5 +660,6 @@ func abs(x bigint) uint64 {
 	if x < 0 {
 		return uint64(-x)
 	}
+
 	return uint64(x)
 }
