@@ -40,6 +40,18 @@ func newSwapCache(feeProtocol uint8, liquidityStart bigint) SwapCache {
 	}
 }
 
+type SwapDirection struct {
+	feeProtocol          uint8
+	feeGrowthGlobalX128 bigint
+}
+
+func newSwapDirection(feeProtocol uint8, feeGrowthGlobalX128 bigint) SwapDirection {
+	return SwapDirection{
+		feeProtocol:          feeProtocol,
+		feeGrowthGlobalX128: feeGrowthGlobalX128,
+	}
+}
+
 type SwapState struct {
 	amountSpecifiedRemaining bigint
 	amountCalculated         bigint
@@ -104,9 +116,11 @@ type TickInfo struct {
 	initialized bool
 }
 
-type Ticks map[int32]TickInfo          // tick => TickInfo
-type TickBitmaps map[int16]bigint      // tick(wordPos) => bitmap(tickWord ^ mask)
-type Positions map[string]PositionInfo // positionKey => PositionInfo
+type (
+	Ticks       map[int32]TickInfo // tick => TickInfo
+	TickBitmaps map[int16]bigint   // tick(wordPos) => bitmap(tickWord ^ mask)
+	Positions   map[string]PositionInfo // positionKey => PositionInfo
+)
 
 // type Pool describes a single Pool/s state
 // A pool is identificed with a unique key (token0, token1, fee), where token0 < token1

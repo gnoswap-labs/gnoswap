@@ -203,28 +203,7 @@ func Swap(
 	slot0Start := pool.slot0
 	require(slot0Start.unlocked, ufmt.Sprintf("[POOL] pool.gno__Swap() || slot0 must be unlocked"))
 
-	var (
-		feeProtocol uint8
-		feeGrowthGlobalX128 bigint
-	)
-
-	if zeroForOne {
-		require(
-			sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > consts.MIN_SQRT_RATIO,
-			ufmt.Sprintf("[POOL] pool.gno__Swap() || sqrtPriceLimitX96(%d) < slot0Start.sqrtPriceX96(%d) && sqrtPriceLimitX96(%d) > consts.MIN_SQRT_RATIO(%d)",
-				sqrtPriceLimitX96, slot0Start.sqrtPriceX96, sqrtPriceLimitX96, consts.MIN_SQRT_RATIO),
-		)
-		feeProtocol = slot0Start.feeProtocol % 16
-		feeGrowthGlobalX128 = pool.feeGrowthGlobal0X128
-	} else {
-		require(
-			sqrtPriceLimitX96 > slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 < consts.MAX_SQRT_RATIO,
-			ufmt.Sprintf("[POOL] pool.gno__Swap() || sqrtPriceLimitX96(%d) > slot0Start.sqrtPriceX96(%d) && sqrtPriceLimitX96(%d) < consts.MAX_SQRT_RATIO(%d)",
-				sqrtPriceLimitX96, slot0Start.sqrtPriceX96, sqrtPriceLimitX96, consts.MAX_SQRT_RATIO),
-		)
-		feeProtocol = slot0Start.feeProtocol / 16
-		feeGrowthGlobalX128 = pool.feeGrowthGlobal1X128
-	}
+	sd := determineSwapDirection(pool, zeroForOne, slot0Start, sqrtPriceLimitX96)
 
 	defer func() {
 		pool.slot0.unlocked = true
@@ -232,11 +211,10 @@ func Swap(
 
 	pool.slot0.unlocked = false
 
-	cache := newSwapCache(feeProtocol, pool.liquidity)
-	state := newSwapState(pool, amountSpecified, feeGrowthGlobalX128, cache.liquidityStart)
+	cache := newSwapCache(sd.feeProtocol, pool.liquidity)
+	state := newSwapState(pool, amountSpecified, sd.feeGrowthGlobalX128, cache.liquidityStart)
 
 	exactInput := amountSpecified > 0
-
 	for state.amountSpecifiedRemaining != 0 && state.sqrtPriceX96 != sqrtPriceLimitX96 {
 		step := executeSwapStep(pool, &state, sqrtPriceLimitX96, zeroForOne)
 		applySwapStep(&state, &cache, step, exactInput)
@@ -246,27 +224,57 @@ func Swap(
 
 	if zeroForOne {
 		// payer > pool for token0
-		transferTokenAndVerify(pool.token0Path, payer, consts.POOL_ADDR, amount0, true)
+		transferFrom(pool.token0Path, payer, consts.POOL_ADDR, amount0)
 		pool.balances.token0 += amount0
 
 		// pool > recipient for token1 (if amount1 is negative)
 		if amount1 < 0 {
-			transferTokenAndVerify(pool.token1Path, consts.POOL_ADDR, recipient, -amount1, false)
+			transfer(pool.token1Path, consts.POOL_ADDR, recipient, -amount1)
 			pool.balances.token1 += amount1
 		}
 	} else {
 		// payer > pool
-		transferTokenAndVerify(pool.token1Path, payer, consts.POOL_ADDR, amount1, true)
+		transferFrom(pool.token1Path, payer, consts.POOL_ADDR, amount1)
 		pool.balances.token1 += amount1
 
 		// pool > recipient for token0 (if amount0 is negative)
 		if amount0 < 0 {
-			transferTokenAndVerify(pool.token0Path, consts.POOL_ADDR, recipient, -amount0, false)
+			transfer(pool.token0Path, consts.POOL_ADDR, recipient, -amount0)
 			pool.balances.token0 += amount0
 		}
 	}
 
 	return amount0, amount1
+}
+
+// determineSwapDirection determines the direction of the swap and initializes related parameters.
+func determineSwapDirection(
+	pool *Pool,
+	zeroForOne bool,
+	slot0 Slot0,
+	sqrtPriceLimitX96 bigint,
+) SwapDirection {
+	if zeroForOne {
+		require(
+            sqrtPriceLimitX96 < slot0.sqrtPriceX96 && sqrtPriceLimitX96 > consts.MIN_SQRT_RATIO,
+            ufmt.Sprintf("[POOL] pool.gno__Swap() || Invalid price limit"),
+        )
+
+		protocol := slot0.feeProtocol % 16
+		feeGrowth := pool.feeGrowthGlobal0X128
+
+		return newSwapDirection(protocol, feeGrowth)
+	}
+
+	require(
+		sqrtPriceLimitX96 > slot0.sqrtPriceX96 && sqrtPriceLimitX96 < consts.MAX_SQRT_RATIO,
+		ufmt.Sprintf("[POOL] pool.gno__Swap() || Invalid price limit"),
+	)
+
+	protocol := slot0.feeProtocol / 16
+	feeGrowth := pool.feeGrowthGlobal1X128
+
+	return newSwapDirection(protocol, feeGrowth)
 }
 
 // executeSwapStep runs each step of the swap.
@@ -301,7 +309,9 @@ func executeSwapStep(
 	isHigher := step.sqrtPriceNextX96 > sqrtPriceLimitX96
 
 	var sqrtRatioTargetX96 bigint
-	if (zeroForOne && isLower) || (!zeroForOne && isHigher) {
+
+	isValidSwap := (zeroForOne && isLower) || (!zeroForOne && isHigher)
+	if isValidSwap {
 		sqrtRatioTargetX96 = sqrtPriceLimitX96
 	} else {
 		sqrtRatioTargetX96 = step.sqrtPriceNextX96
@@ -321,7 +331,7 @@ func executeSwapStep(
 func applySwapStep(
 	state *SwapState,
 	cache *SwapCache,
-	step  StepComputations,
+	step StepComputations,
 	exactInput bool,
 ) {
 	amounts := step.amountIn + step.feeAmount
@@ -355,10 +365,10 @@ func applySwapStep(
 // updatePoolState updates the pool's state after the swap.
 func updatePoolState(
 	pool *Pool,
-    state *SwapState,
-    cache *SwapCache,
-    slot0Start *Slot0,
-    zeroForOne bool,
+	state *SwapState,
+	cache *SwapCache,
+	slot0Start *Slot0,
+	zeroForOne bool,
 	amountSpecified bigint,
 	exactInput bool,
 ) (bigint, bigint) {
@@ -399,32 +409,9 @@ func updatePoolState(
 	return amount0, amount1
 }
 
-// transferTokenAndVerify is a helper function to transfer tokens and verify the transfer result.
-func transferTokenAndVerify(
-    tokenPath string,
-    from, to std.Address,
-    amount bigint,
-    isTransferFrom bool,
-) {
-	var (
-		ok bool
-		balanceBefore, balanceAfter bigint
-	)
-
-	// get balance before transfer
-	balanceBefore = bigint(balanceOfByRegisterCall(tokenPath, GetOrigPkgAddr()))
-
-	// transfer
-	if isTransferFrom {
-		ok = transferFromByRegisterCall(tokenPath, from, to, uint64(amount))
-	} else {
-		ok = transferByRegisterCall(tokenPath, to, uint64(amount))
-	}
-
-	require(ok, ufmt.Sprintf("[POOL] pool.gno__Swap() || Token transfer failed: %s -> %s, amount: %d", from.String(), to.String(), amount))
-
-	// get balance after transfer
-	balanceAfter = bigint(balanceOfByRegisterCall(tokenPath, to))
+// verifyTransfer is a helper function to verify the transfer result.
+func verifyTransfer(tokenPath string, from, to std.Address, amount, balanceBefore bigint) bigint {
+	balanceAfter := bigint(balanceOfByRegisterCall(tokenPath, to))
 	require(
 		balanceBefore+amount <= balanceAfter,
 		ufmt.Sprintf(
@@ -432,6 +419,40 @@ func transferTokenAndVerify(
 			balanceBefore, amount, balanceAfter,
 		),
 	)
+
+	return balanceAfter
+}
+
+// transfer is a function to transfer tokens.
+func transfer(tokenPath string, from, to std.Address, amount bigint) {
+	balanceBefore := bigint(balanceOfByRegisterCall(tokenPath, from))
+
+	ok := transferByRegisterCall(tokenPath, to, uint64(amount))
+	require(
+		ok,
+		ufmt.Sprintf(
+			"[POOL] pool.gno__Swap() || transferByRegisterCall(tokenPath(%s), to(%s), uint64(amount))(%d) failed",
+			tokenPath, to.String(), uint64(amount),
+		),
+	)
+
+	verifyTransfer(tokenPath, from, to, amount, balanceBefore)
+}
+
+// transferFrom is a function to transfer tokens on behalf of another address.
+func transferFrom(tokenPath string, from, to std.Address, amount bigint) bool {
+	balanceBefore := bigint(balanceOfByRegisterCall(tokenPath, from))
+
+	ok := transferFromByRegisterCall(tokenPath, from, to, uint64(amount))
+	require(
+		ok,
+		ufmt.Sprintf(
+			"[POOL] pool.gno__Swap() || transferFromByRegisterCall(tokenPath(%s), from(%s), to(%s), uint64(amount))(%d) failed",
+			tokenPath, from.String(), to.String(), uint64(amount),
+		),
+	)
+
+	verifyTransfer(tokenPath, from, to, amount, balanceBefore)
 }
 
 // ADMIN
