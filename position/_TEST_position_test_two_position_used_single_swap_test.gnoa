@@ -13,7 +13,6 @@ import (
 	"gno.land/r/demo/gns"
 )
 
-
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	pl.InitManual()
@@ -21,7 +20,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 
-	pl.CreatePool(barPath, fooPath, fee500, 130621891405341611593710811006) // tick = 10000
+	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01WideInRange(t *testing.T) {
@@ -35,17 +34,17 @@ func TestMintPosition01WideInRange(t *testing.T) {
 		fee500,
 		8000,
 		12000,
-		bigint(50000000),
-		bigint(50000000),
-		bigint(0),
-		bigint(0),
+		"50000000",
+		"50000000",
+		"0",
+		"0",
 		max_timeout,
 	)
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, getNextId(), 2)
-	shouldEQ(t, liquidity, bigint(318704392))
-	shouldEQ(t, amount0, bigint(18394891))
-	shouldEQ(t, amount1, bigint(49999999))
+	shouldEQ(t, liquidity, "318704392")
+	shouldEQ(t, amount0, "18394891")
+	shouldEQ(t, amount1, "49999999")
 }
 
 func TestMintPositionTightInRange(t *testing.T) {
@@ -59,32 +58,32 @@ func TestMintPositionTightInRange(t *testing.T) {
 		fee500,
 		9500,
 		10500,
-		bigint(50000000),
-		bigint(50000000),
-		bigint(0),
-		bigint(0),
+		"50000000",
+		"50000000",
+		"0",
+		"0",
 		max_timeout,
 	)
 	shouldEQ(t, tokenId, 2)
 	shouldEQ(t, getNextId(), 3)
-	shouldEQ(t, liquidity, bigint(1228379121))
-	shouldEQ(t, amount0, bigint(18394891))
-	shouldEQ(t, amount1, bigint(49999999))
+	shouldEQ(t, liquidity, "1228379121")
+	shouldEQ(t, amount0, "18394891")
+	shouldEQ(t, amount1, "49999999")
 }
 
 func TestCollectFeeBeforeSwapPos1(t *testing.T) {
 	tokenId, fee0, fee1, poolPath := CollectFee(1)
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, fee0, bigint(0))
-	shouldEQ(t, fee1, bigint(0))
+	shouldEQ(t, fee0, "0")
+	shouldEQ(t, fee1, "0")
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
 
 func TestCollectFeeBeforeSwapPos2(t *testing.T) {
 	tokenId, fee0, fee1, poolPath := CollectFee(2)
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, fee0, bigint(0))
-	shouldEQ(t, fee1, bigint(0))
+	shouldEQ(t, fee0, "0")
+	shouldEQ(t, fee1, "0")
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
 
@@ -100,30 +99,30 @@ func TestSwap(t *testing.T) {
 		fee500,
 		test1,
 		true,
-		bigint(1_234_567),
+		"1234567",
 		consts.MIN_PRICE,
 		test1,
 	)
 }
 
-// IF POSITION 2 DOESN'T EXIST, POSITION 1 WILL EARN '617' as fee
+// FYI, IF POSITION 2 DOESN'T EXIST, POSITION 1 WILL EARN '617' as fee
 func TestCollectFeeAfterSwapPos1(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	foo.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64)) // COLLECT_FEE
-	bar.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64)) // COLLECT_FEE
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 
 	tokenId, fee0, fee1, poolPath := CollectFee(1)
 	shouldEQ(t, tokenId, uint64(1))
 	// shouldEQ(t, fee0, bigint(617))
-	shouldEQ(t, fee0, bigint(126))
-	shouldEQ(t, fee1, bigint(0))
+	shouldEQ(t, fee0, "126")
+	shouldEQ(t, fee1, "0")
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
 
 func TestCollectFeeAfterSwapPos2(t *testing.T) {
 	tokenId, fee0, fee1, poolPath := CollectFee(2)
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, fee0, bigint(486))
-	shouldEQ(t, fee1, bigint(0))
+	shouldEQ(t, fee0, "486")
+	shouldEQ(t, fee1, "0")
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }

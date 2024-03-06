@@ -1,25 +1,30 @@
 package pool
 
 import (
-	"gno.land/p/demo/u256"
+	i256 "gno.land/p/big/int256"
+	u256 "gno.land/p/big/uint256"
 )
 
 func swapMathComputeSwapStep(
-	sqrtRatioCurrentX96 *u256.Uint,
-	sqrtRatioTargetX96 *u256.Uint,
-	liquidity *u256.Uint,
-	amountRemaining *u256.Int,
-	feePips uint32,
+	sqrtRatioCurrentX96 *u256.Uint, // uint160
+	sqrtRatioTargetX96 *u256.Uint, // uint160
+	liquidity *u256.Uint, // uint128
+	amountRemaining *i256.Int, // int256
+	feePips uint64,
 ) (sqrtRatioNextX96, amountIn, amountOut, feeAmount *u256.Uint) {
 	isToken1Expensive := sqrtRatioCurrentX96.Gte(sqrtRatioTargetX96)
 
 	// POSTIVIE == EXACT_IN => Estimated AmountOut
 	// NEGATIVE == EXACT_OUT => Estimated AmountIn
-	exactIn := !amountRemaining.IsNeg()
+	exactIn := !(amountRemaining.IsNeg()) // amountRemaining >= 0
 
 	if exactIn {
-		amountRemainingLessFee := new(u256.Uint).Mul(amountRemaining.Uint(), u256.NewUint(uint64(1000000-feePips)))
-		amountRemainingLessFee.Div(amountRemainingLessFee, u256.NewUint(1000000))
+		amountRemainingLessFee := u256.Zero()
+
+		// amountRemainingLessFee := amountRemaining * bigint(uint64(1000000-feePips)) / 1000000
+		_amountRemaining := amountRemaining.Abs()
+		amountRemainingLessFee = amountRemainingLessFee.Mul(_amountRemaining, u256.NewUint(1000000-feePips))
+		amountRemainingLessFee = amountRemainingLessFee.Div(amountRemainingLessFee, u256.NewUint(1000000))
 
 		if isToken1Expensive {
 			amountIn = sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity)
@@ -56,7 +61,7 @@ func swapMathComputeSwapStep(
 		}
 	}
 
-	max := sqrtRatioTargetX96 == sqrtRatioNextX96
+	max := sqrtRatioTargetX96.Eq(sqrtRatioNextX96)
 
 	if isToken1Expensive {
 		if max && exactIn {
@@ -88,22 +93,15 @@ func swapMathComputeSwapStep(
 		amountOut = amountRemaining.Abs()
 	}
 
-	if exactIn && !sqrtRatioNextX96.Eq(sqrtRatioTargetX96) {
-		feeAmount = new(u256.Uint).Sub(amountRemaining.Uint(), amountIn)
+	if exactIn && !(sqrtRatioNextX96.Eq(sqrtRatioTargetX96)) {
+		feeAmount = new(u256.Uint).Sub(amountRemaining.Abs(), amountIn)
 	} else {
-		feeAmount = new(u256.Uint).Mul(amountIn, u256.NewUint(uint64(feePips)))
-		feeAmount.Div(feeAmount, u256.NewUint(uint64(1000000-feePips)))
+		feeAmount = new(u256.Uint).Mul(amountIn, u256.NewUint(feePips))
+		feeAmount = feeAmount.Div(feeAmount, u256.NewUint(1000000-feePips))
 	}
 
-	if !exactIn && !amountOut.IsZero() {
-		amountOut++
+	if !exactIn && !(amountOut.IsZero()) {
+		amountOut = amountOut.Add(amountOut, u256.NewUint(1))
 	}
 	return sqrtRatioNextX96, amountIn, amountOut, feeAmount
-}
-
-func absBigint(x bigint) bigint {
-	if x < 0 {
-		return -x
-	}
-	return x
 }

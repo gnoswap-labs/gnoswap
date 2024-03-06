@@ -3,8 +3,6 @@ package router
 import (
 	"encoding/json"
 	"std"
-	"strconv"
-	"strings"
 	"time"
 
 	"gno.land/p/demo/common"
@@ -12,11 +10,13 @@ import (
 
 	"gno.land/r/demo/consts"
 	pl "gno.land/r/demo/pool"
+
+	u256 "gno.land/p/big/uint256"
 )
 
 type TokenRatio struct {
 	Token string `json:"token"`
-	Ratio bigint `json:"ratio"`
+	Ratio string `json:"ratio"`
 }
 
 type ResponseQueryBase struct {
@@ -50,9 +50,9 @@ func ApiGetRatiosFromBase() string {
 }
 
 func findRatios(maxHops int) []TokenRatio {
-	var tokenRatio = make(map[string]bigint, 0)
+	var tokenRatio = make(map[string]*u256.Uint, 0)
 	// WGNOT
-	tokenRatio[consts.WRAPPED_WUGNOT] = consts.Q96 // ~= 1
+	tokenRatio[consts.WRAPPED_WUGNOT] = u256.UnsafeFromDecimal(consts.Q96) // ~= 1
 
 	tokens := getTokenList()
 
@@ -67,24 +67,25 @@ func findRatios(maxHops int) []TokenRatio {
 
 		if len(routes) == 0 {
 			// NO ROUTES FOUND => SET RATIO TO 0
-			tokenRatio[token] = 0
+			tokenRatio[token] = u256.Zero()
 		} else {
-			numRoutes := len(routes)
+			numRoutes := uint64(len(routes))
 
-			var _tokenRatioX96 bigint
+			var _tokenRatioX96 *u256.Uint
 
 			for _, route := range routes {
-				numHops := len(route.route)
+				numHops := uint64(len(route.route))
 
 				switch numHops {
 				case 1, 2, 3:
-					priceRatio := calculateTokenRatio(token, route.route, 0, 1)
-					_tokenRatioX96 += priceRatio
+					priceRatio := calculateTokenRatio(token, route.route, 0, u256.One())
+					// _tokenRatioX96 += priceRatio
+					_tokenRatioX96 = new(u256.Uint).Add(_tokenRatioX96, priceRatio)
 				default:
-					_tokenRatioX96 = 0
+					_tokenRatioX96 = u256.Zero()
 				}
 			}
-			avgPriceX96 := _tokenRatioX96 / bigint(numRoutes)
+			avgPriceX96 := new(u256.Uint).Div(_tokenRatioX96, u256.NewUint(numRoutes))
 			tokenRatio[token] = avgPriceX96
 
 		}
@@ -95,14 +96,14 @@ func findRatios(maxHops int) []TokenRatio {
 	for token, ratio := range tokenRatio {
 		tokenRatios = append(tokenRatios, TokenRatio{
 			Token: token,
-			Ratio: ratio,
+			Ratio: ratio.ToString(),
 		})
 	}
 
 	return tokenRatios
 }
 
-func calculateTokenRatio(currentToken string, routes []PoolWithMeta, proceed int, priceX96 bigint) bigint {
+func calculateTokenRatio(currentToken string, routes []PoolWithMeta, proceed int, priceX96 *u256.Uint) *u256.Uint {
 	poolPath := routes[len(routes)-proceed-1].poolPath
 	pool := pl.GetPoolFromPoolPath(poolPath)
 
@@ -124,7 +125,7 @@ func calculateTokenRatio(currentToken string, routes []PoolWithMeta, proceed int
 	} else {
 		// wrong condition
 		// panic("[ROUTER] _RPC_api.gno__calculateTokenRatio() || wrong condition")
-		return 0
+		return u256.Zero()
 
 	}
 
@@ -133,9 +134,9 @@ func calculateTokenRatio(currentToken string, routes []PoolWithMeta, proceed int
 	if proceed == len(routes) { // numHops
 		for { // remove as much X96 as possible
 			tempPriceX96 := priceX96
-			priceX96 /= consts.Q96
+			priceX96 = new(u256.Uint).Div(priceX96, u256.UnsafeFromDecimal(consts.Q96))
 
-			if priceX96 < consts.MIN_PRICE {
+			if priceX96.Lt(u256.UnsafeFromDecimal(consts.MIN_PRICE)) {
 				return tempPriceX96
 			}
 		}
@@ -162,16 +163,4 @@ func getTokenList() []string {
 	}
 
 	return uniqueTokenList
-}
-
-func poolPathWithFeeDivide(poolPath string) (string, string, int) {
-	poolPathSplit := strings.Split(poolPath, ":")
-	require(len(poolPathSplit) == 3, ufmt.Sprintf("[ROUTER] _RPC_api.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath))
-
-	feeInt, err := strconv.Atoi(poolPathSplit[2])
-	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] _RPC_api.gno__poolPathWithFeeDivide() || cannot convert fee(%s) to int", poolPathSplit[2]))
-	}
-
-	return poolPathSplit[0], poolPathSplit[1], feeInt
 }

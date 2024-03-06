@@ -2,8 +2,9 @@ package pool
 
 import (
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/demo/consts"
 
-	"gno.land/p/demo/u256"
+	u256 "gno.land/p/big/uint256"
 )
 
 func tickBitmapPosition(tick int32) (int16, uint8) {
@@ -17,27 +18,22 @@ func (pool *Pool) tickBitmapFlipTick(
 	tick int32,
 	tickSpacing int32,
 ) {
-	require(tick%tickSpacing == 0, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || tick(%d) MOD tickSpacing(%d) != 0 (got:%d)", tick, tickSpacing, tick%tickSpacing))
+	require(
+		tick%tickSpacing == 0,
+		ufmt.Sprintf(
+			"[POOL] tick_bitmap.gno__tickBitmapFlipTick() || tick(%d) %% tickSpacing(%d) == 0(%d)",
+			tick, tickSpacing, tick%tickSpacing,
+		),
+	)
+
 	wordPos, bitPos := tickBitmapPosition(tick / tickSpacing)
-	mask := u256.NewUint(1)
-	mask.Lsh(mask, uint(bitPos)) // 2 ** bitPos
-	// println("wordPos", wordPos)
-	// println("bitPos", bitPos)
-	// println("mask", mask.Dec())
 
-	// XXXXXXXXXXXXXXXX
-	// mask.Lsh is exptected to check overflow with the signed integer type.
-	// Lets add an overflow proteced shift method for Uint so we dont have to make it a signed integer.
-	// not implemented, should be done in a separate pr
+	// mask := bigint(1) << uint64(bitPos) // 2 ** bitPos
+	mask := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
 
-	//requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || mask(%d) > 0", mask))
-
-	// check init value
+	// pool.tickBitmaps[wordPos] ^= mask
 	pool.tickBitmaps[wordPos] = pool.tickBitmaps[wordPos].NilToZero()
-
-	// println("pool.tickBitmaps[wordPos]:", pool.tickBitmaps[wordPos].Dec())
-	pool.tickBitmaps[wordPos].Xor(pool.tickBitmaps[wordPos], mask)
-	// println("pool.tickBitmaps[wordPos]:", pool.tickBitmaps[wordPos].Dec())
+	pool.tickBitmaps[wordPos] = new(u256.Uint).Xor(pool.tickBitmaps[wordPos], mask)
 }
 
 func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
@@ -53,21 +49,21 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 	if lte {
 		wordPos, bitPos := tickBitmapPosition(compress)
 
-		mask := new(u256.Uint).Lsh(u256.One(), uint(bitPos))
-		mask.UnsafeSub(mask, u256.One())
-		mask.Add(mask, (new(u256.Uint).Lsh(u256.One(), uint(bitPos))))
+		// mask := (bigint(1) << uint64(bitPos)) - bigint(1) + (bigint(1) << uint64(bitPos))
+		shift1LeftByBitPos := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
 
-		// XXXXXXXX overflow check Lsh!
-		// requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapNextInitializedTickWithInOneWord__mask(%d) >= 0__#1", mask))
+		mask := shift1LeftByBitPos.Clone()
+		mask = new(u256.Uint).UnsafeSub(mask, u256.NewUint(1))
+		mask = new(u256.Uint).Add(mask, shift1LeftByBitPos.Clone())
 
+		// masked := pool.tickBitmaps[wordPos] & mask
 		pool.tickBitmaps[wordPos] = pool.tickBitmaps[wordPos].NilToZero()
 		masked := new(u256.Uint).And(pool.tickBitmaps[wordPos], mask)
 
-		initialized := !masked.IsZero()
+		initialized := !(masked.IsZero())
 
 		if initialized {
 			next := (compress - int32(bitPos-bitMathMostSignificantBit(masked))) * tickSpacing
-
 			return next, initialized
 		}
 
@@ -77,34 +73,35 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 
 	wordPos, bitPos := tickBitmapPosition(compress + 1)
 
-	_mask := new(u256.Uint).Lsh(u256.One(), uint(bitPos))
-	_mask.UnsafeSub(_mask, u256.One())
+	shift1LeftByBitPos := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
+	_mask := shift1LeftByBitPos.Clone()
+	_mask = new(u256.Uint).UnsafeSub(_mask, u256.NewUint(1))
 	mask := bigintBitwiseNotForUint256BitmapIndexing(_mask)
 
-	// XXXXXXXX overflow check Lsh!
-	// requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapNextInitializedTickWithInOneWord__mask(%d) >= 0__#2", mask))
-
+	pool.tickBitmaps[wordPos] = pool.tickBitmaps[wordPos].NilToZero()
 	masked := new(u256.Uint).And(pool.tickBitmaps[wordPos], mask)
 
-	// XXXXXXXX overflow check And!
-	//requireUnsigned(masked, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapNextInitializedTickWithInOneWord__masked(%d) >= 0__#2", masked))
-
-	initialized := !masked.IsZero()
+	initialized := !(masked.IsZero())
 	if initialized {
 		next := (compress + 1 + int32(bitMathLeastSignificantBit(masked)-bitPos)) * tickSpacing
 		return next, initialized
 	} else {
-		next := (compress + 1 + int32(int64(consts.MAX_UINT8-bigint(uint64(bitPos))))) * tickSpacing
+		next := (compress + 1 + int32(255-bitPos)) * tickSpacing
+
 		return next, initialized
 	}
 }
 
 func bigintBitwiseNotForUint256BitmapIndexing(x *u256.Uint) *u256.Uint {
+	// REF: https://stackoverflow.com/a/77071037
+
 	// Create a mask with all bits set to 1
-	mask := u256.FromBigint(consts.MAX_UINT256)
-	mask.Sub(mask, u256.One())
+	mask := u256.UnsafeFromDecimal(consts.MAX_UINT256)
+	mask = new(u256.Uint).Sub(mask, u256.NewUint(1))
 
 	// XOR with mask to perform bitwise NOT
+	// result := x ^ mask
+
 	result := new(u256.Uint).Xor(x, mask)
 	return result
 }

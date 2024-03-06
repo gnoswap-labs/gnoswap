@@ -39,6 +39,8 @@ func (FooToken) Approve() func(spender users.AddressOrName, amount uint64) {
 	return foo.Approve
 }
 
+var _ pl.GRC20Interface = FooToken{}
+
 type BarToken struct{}
 
 func (BarToken) Transfer() func(to users.AddressOrName, amount uint64) {
@@ -53,6 +55,8 @@ func (BarToken) BalanceOf() func(owner users.AddressOrName) uint64 {
 func (BarToken) Approve() func(spender users.AddressOrName, amount uint64) {
 	return bar.Approve
 }
+
+var _ pl.GRC20Interface = BarToken{}
 
 type BazToken struct{}
 
@@ -69,6 +73,8 @@ func (BazToken) Approve() func(spender users.AddressOrName, amount uint64) {
 	return baz.Approve
 }
 
+var _ pl.GRC20Interface = BazToken{}
+
 type QuxToken struct{}
 
 func (QuxToken) Transfer() func(to users.AddressOrName, amount uint64) {
@@ -83,6 +89,8 @@ func (QuxToken) BalanceOf() func(owner users.AddressOrName) uint64 {
 func (QuxToken) Approve() func(spender users.AddressOrName, amount uint64) {
 	return qux.Approve
 }
+
+var _ pl.GRC20Interface = QuxToken{}
 
 type WugnotToken struct{}
 
@@ -99,6 +107,8 @@ func (WugnotToken) Approve() func(spender users.AddressOrName, amount uint64) {
 	return wugnot.Approve
 }
 
+var _ pl.GRC20Interface = WugnotToken{}
+
 type OBLToken struct{}
 
 func (OBLToken) Transfer() func(to users.AddressOrName, amount uint64) {
@@ -113,6 +123,8 @@ func (OBLToken) BalanceOf() func(owner users.AddressOrName) uint64 {
 func (OBLToken) Approve() func(spender users.AddressOrName, amount uint64) {
 	return obl.Approve
 }
+
+var _ pl.GRC20Interface = OBLToken{}
 
 type GNSToken struct{}
 
@@ -132,8 +144,10 @@ func (GNSToken) Approve() func(spender users.AddressOrName, amount uint64) {
 	return gns.Approve
 }
 
+var _ pl.GRC20Interface = GNSToken{}
+
 func init() {
-	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
+	std.TestSetPrevAddr(consts.GNOSWAP_ADMIN)
 
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})

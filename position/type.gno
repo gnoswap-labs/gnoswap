@@ -2,10 +2,12 @@ package position
 
 import (
 	"std"
+
+	u256 "gno.land/p/big/uint256"
 )
 
 type Position struct {
-	nonce bigint
+	nonce *u256.Uint // uint96
 
 	operator std.Address
 
@@ -14,13 +16,13 @@ type Position struct {
 	tickLower int32
 	tickUpper int32
 
-	liquidity bigint
+	liquidity *u256.Uint // uint128
 
-	feeGrowthInside0LastX128 bigint
-	feeGrowthInside1LastX128 bigint
+	feeGrowthInside0LastX128 *u256.Uint // uint256
+	feeGrowthInside1LastX128 *u256.Uint // uint256
 
-	tokensOwed0 bigint
-	tokensOwed1 bigint
+	tokensOwed0 *u256.Uint // uint128
+	tokensOwed1 *u256.Uint // uint128
 
 	burned bool
 }
@@ -28,46 +30,46 @@ type Position struct {
 type MintParams struct {
 	token0         string
 	token1         string
-	fee            uint16
+	fee            uint32
 	tickLower      int32
 	tickUpper      int32
-	amount0Desired bigint
-	amount1Desired bigint
-	amount0Min     bigint
-	amount1Min     bigint
-	deadline       bigint
+	amount0Desired *u256.Uint // uint256
+	amount1Desired *u256.Uint // uint256
+	amount0Min     *u256.Uint // uint256
+	amount1Min     *u256.Uint // uint256
+	deadline       int64
 }
 
 type AddLiquidityParams struct {
 	poolKey        string
 	tickLower      int32
 	tickUpper      int32
-	amount0Desired bigint
-	amount1Desired bigint
-	amount0Min     bigint
-	amount1Min     bigint
+	amount0Desired *u256.Uint // uint256
+	amount1Desired *u256.Uint // uint256
+	amount0Min     *u256.Uint // uint256
+	amount1Min     *u256.Uint // uint256
 }
 
 type IncreaseLiquidityParams struct {
 	tokenId        uint64
-	amount0Desired bigint
-	amount1Desired bigint
-	amount0Min     bigint
-	amount1Min     bigint
-	deadline       bigint
+	amount0Desired *u256.Uint // uint256
+	amount1Desired *u256.Uint // uint256
+	amount0Min     *u256.Uint // uint256
+	amount1Min     *u256.Uint // uint256
+	deadline       int64
 }
 
 type DecreaseLiquidityParams struct {
 	tokenId    uint64
-	liquidity  bigint
-	amount0Min bigint
-	amount1Min bigint
-	deadline   bigint
+	liquidity  *u256.Uint // uint128
+	amount0Min *u256.Uint // uint256
+	amount1Min *u256.Uint // uint256
+	deadline   int64
 }
 
 type CollectParams struct {
 	tokenId    uint64
 	recipient  std.Address
-	amount0Max bigint
-	amount1Max bigint
+	amount0Max *u256.Uint // uint128
+	amount1Max *u256.Uint // uint128
 }

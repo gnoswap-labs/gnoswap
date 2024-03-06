@@ -1,8 +1,9 @@
 package common
 
 import (
-	"gno.land/p/demo/u256"
 	"gno.land/r/demo/consts"
+
+	u256 "gno.land/p/big/uint256"
 )
 
 // toAscendingOrder checkes if the first value is greater than
@@ -18,10 +19,10 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 // calcIntermediateValue computes the intermediate value
 // used in liquidity calculations.
 func calcIntermediateValue(sqrtRatioAX96, sqrtRatioBX96 *u256.Uint) *u256.Uint {
-	result := new(u256.Uint).Mul(sqrtRatioAX96, sqrtRatioBX96)
-	result.Div(result, u256.FromBigint(consts.Q96))
 
-	return result
+	res := new(u256.Uint).Mul(sqrtRatioAX96, sqrtRatioBX96)
+	res = res.Div(res, u256.UnsafeFromDecimal(consts.Q96))
+	return res
 }
 
 // computeLiquidityForAmount0 calculates liquidity for a given amount of token 0.
@@ -31,9 +32,9 @@ func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint
 	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
 	// we don't need to care about division by zero here.
-	result := new(u256.Uint).Mul(amount0, intermediate)
-	result.Div(result, diff)
-	return result
+	res := new(u256.Uint).Mul(amount0, intermediate)
+	res = res.Div(res, diff)
+	return res
 }
 
 // computeLiquidityForAmount1 calculates liquidity for a given amount of token 1.
@@ -41,9 +42,9 @@ func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
-	result := new(u256.Uint).Mul(amount1, u256.FromBigint(consts.Q96))
-	result.Div(result, diff)
-	return result
+	res := new(u256.Uint).Mul(amount1, u256.UnsafeFromDecimal(consts.Q96))
+	res = res.Div(res, diff)
+	return res
 }
 
 // GetLiquidityForAmounts calculates the liquidity for given amounts od token 0 and token 1.
@@ -53,7 +54,7 @@ func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0,
 
 	if sqrtRatioX96.Lte(sqrtRatioAX96) {
 		liquidity = computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0)
-	} else if sqrtRatioX96 < sqrtRatioBX96 {
+	} else if sqrtRatioX96.Lt(sqrtRatioBX96) {
 		liquidity0 := computeLiquidityForAmount0(sqrtRatioX96, sqrtRatioBX96, amount0)
 		liquidity1 := computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioX96, amount1)
 
@@ -75,12 +76,13 @@ func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
-	numerator := new(u256.Uint).Lsh(liquidity, 96)
-	numerator.Mul(numerator, diff)
+	res := new(u256.Uint).Lsh(liquidity, 96)
+	res = res.Mul(res, diff)
 
-	denominator := new(u256.Uint).Mul(sqrtRatioBX96, sqrtRatioAX96)
+	_tmp := new(u256.Uint).Mul(sqrtRatioBX96, sqrtRatioAX96)
+	res = res.Div(res, _tmp)
 
-	return numerator.Div(numerator, denominator)
+	return res
 }
 
 // computeAmount1ForLiquidity calculates the amount of token 1 for a given liquidity.
@@ -88,9 +90,10 @@ func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
-	result := new(u256.Uint).Mul(liquidity, diff)
-	result.Div(result, u256.FromBigint(consts.Q96))
-	return result
+	res := new(u256.Uint).Mul(liquidity, diff)
+	res = res.Div(res, u256.UnsafeFromDecimal(consts.Q96))
+
+	return res
 }
 
 // GetAmountsForLiquidity calculates the amounts of token 0 and token 1 for a given liquidity.
@@ -110,5 +113,5 @@ func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidit
 		amount1 = computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity)
 	}
 
-	return amount0, amount1
+	return amount0.NilToZero(), amount1.NilToZero()
 }

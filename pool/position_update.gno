@@ -2,20 +2,22 @@ package pool
 
 import (
 	"std"
+
+	i256 "gno.land/p/big/int256"
 )
 
 func (pool *Pool) updatePosition(
 	owner std.Address,
 	tickLower int32,
 	tickUpper int32,
-	liquidityDelta bigint,
+	liquidityDelta *i256.Int, // int128
 	tick int32,
 ) PositionInfo {
-	var _feeGrowthGlobal0X128 bigint = pool.feeGrowthGlobal0X128
-	var _feeGrowthGlobal1X128 bigint = pool.feeGrowthGlobal1X128
+	_feeGrowthGlobal0X128 := pool.feeGrowthGlobal0X128
+	_feeGrowthGlobal1X128 := pool.feeGrowthGlobal1X128
 
 	var flippedLower, flippedUpper bool
-	if liquidityDelta != 0 {
+	if !(liquidityDelta.IsZero()) {
 		flippedLower = pool.tickUpdate(
 			tickLower,
 			tick,
@@ -64,7 +66,7 @@ func (pool *Pool) updatePosition(
 		feeGrowthInside1X128,
 	)
 
-	if liquidityDelta < 0 {
+	if liquidityDelta.IsNeg() {
 		if flippedLower {
 			pool.tickClear(tickLower)
 		}
@@ -73,5 +75,6 @@ func (pool *Pool) updatePosition(
 			pool.tickClear(tickUpper)
 		}
 	}
+
 	return position
 }
