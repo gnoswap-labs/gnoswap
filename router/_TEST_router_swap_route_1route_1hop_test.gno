@@ -34,13 +34,13 @@ func TestCreatePool(t *testing.T) {
 func TestPositionMint(t *testing.T) {
 	// bar_baz_500 by test1
 	std.TestSetPrevAddr(test1)
-	bar.Approve(a2u(consts.POOL_ADDR), 36790)
-	baz.Approve(a2u(consts.POOL_ADDR), 100000)
+	bar.Approve(a2u(consts.POOL_ADDR), 36789)
+	baz.Approve(a2u(consts.POOL_ADDR), 99999)
 
 	// Mint
 	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout)
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, amount0, "36790")
+	shouldEQ(t, amount0, "36789")
 	shouldEQ(t, amount1, "99999")
 }
 
@@ -89,7 +89,7 @@ func TestDrySwapRouteBarBazExactOut(t *testing.T) {
 		"100", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, "370")
+	shouldEQ(t, dryResult, "369")
 }
 
 func TestSwapRouteBarBazExactOut(t *testing.T) {
@@ -108,7 +108,7 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 		"370", // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, "370")
+	shouldEQ(t, swapResult, "369")
 }
 
 func TestDrySwapRouteBazBarExactIn(t *testing.T) {

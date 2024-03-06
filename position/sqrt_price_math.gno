@@ -80,6 +80,24 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
 		quotient = new(u256.Uint).Sub(quotient, u256.One())
 		return new(u256.Uint).Sub(sqrtPX96, quotient)
 	}
+
+	// quotient mutst be positive when amount and liquidity are positive
+	if add {
+		result := new(u256.Uint).Add(sqrtPX96, quotient)
+
+		if !(result.Gte(sqrtPX96)) {
+			panic("position_sqrt price math #3")
+		}
+
+		return result
+	}
+
+	result := new(u256.Uint).Sub(sqrtPX96, quotient)
+	if !(result.Gte(u256.Zero())) {
+		panic("position_sqrt price math #4")
+	}
+
+	return result
 }
 
 func sqrtPriceMathGetNextSqrtPriceFromInput(

@@ -40,6 +40,9 @@ func Mint(
 			i256.FromUint256(liquidityAmount), // liquidityDelta
 		},
 	)
+	println("amount0:", amount0.ToString())
+	println("amount1:", amount1.ToString())
+	panic("FIX 0 3")
 
 	if amount0.Gt(i256.Zero()) {
 		balance0Before := balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr())
@@ -499,7 +502,6 @@ func Swap(
 		}
 		require(pool.balances.token0.Gte(u256.Zero()), ufmt.Sprintf("[POOL] pool.gno__Swap() || pool.balances.token0(%d) >= 0", pool.balances.token0))
 	}
-
 	pool.slot0.unlocked = true
 	return amount0.ToString(), amount1.ToString()
 }
