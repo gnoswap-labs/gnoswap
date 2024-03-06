@@ -29,6 +29,17 @@ func GetRegisteredTokens() []string {
 	return tokens
 }
 
+func GetRegisterToken(pkgPath string) GRC20Interface {
+	pkgPath = handleNative(pkgPath)
+
+	_, found := registered[pkgPath]
+	if !found {
+		panic(ufmt.Sprintf("[POOL] pool_register.gno__GetRegisterToken() || pkgPath(%s) not found", pkgPath))
+	}
+
+	return registered[pkgPath]
+}
+
 func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	caller := std.GetOrigCaller()
 	if caller != consts.GNOSWAP_ADMIN {
@@ -78,6 +89,7 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 	} else {
 		panic("[POOl] pool_register.gno__transferByRegisterCall() || expected locked to be false")
 	}
+
 	return true
 }
 

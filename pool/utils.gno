@@ -7,22 +7,25 @@ import (
 	"gno.land/r/demo/users"
 
 	"gno.land/r/demo/consts"
+
+	u256 "gno.land/p/big/uint256"
 )
 
 func checkTicks(tickLower, tickUpper int32) {
-	require(tickLower < tickUpper, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickLower(%d) < tickUpper(%d)", tickLower, tickUpper))
-	require(tickLower >= consts.MIN_TICK, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickLower(%d) >= consts.MIN_TICK(%d)", tickLower, consts.MIN_TICK))
-	require(tickUpper <= consts.MAX_TICK, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickUpper(%d) <= consts.MAX_TICK(%d)", tickUpper, consts.MAX_TICK))
+	require(tickLower < tickUpper, ufmt.Sprintf("[POOL] utils.gno__checkTicks() || tickLower(%d) < tickUpper(%d)", tickLower, tickUpper))
+	require(tickLower >= consts.MIN_TICK, ufmt.Sprintf("[POOL] utils.gno__checkTicks() || tickLower(%d) >= consts.MIN_TICK(%d)", tickLower, consts.MIN_TICK))
+	require(tickUpper <= consts.MAX_TICK, ufmt.Sprintf("[POOL] utils.gno__checkTicks() || tickUpper(%d) <= consts.MAX_TICK(%d)", tickUpper, consts.MAX_TICK))
 }
 
 func a2u(addr std.Address) users.AddressOrName {
 	return users.AddressOrName(addr)
 }
 
-func min(num1, num2 bigint) bigint {
-	if num1 < num2 {
+func u256Min(num1, num2 *u256.Uint) *u256.Uint {
+	if num1.Lt(num2) {
 		return num1
 	}
+
 	return num2
 }
 

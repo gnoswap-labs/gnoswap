@@ -2,9 +2,11 @@ package pool
 
 import (
 	"gno.land/p/demo/common"
+
+	i256 "gno.land/p/big/int256"
 )
 
-func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, bigint, bigint) {
+func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *i256.Int, *i256.Int) {
 	position := pool.updatePosition(
 		params.owner,
 		params.tickLower,
@@ -12,10 +14,9 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, big
 		params.liquidityDelta,
 		pool.slot0.tick,
 	)
+	var amount0, amount1 *i256.Int
 
-	var amount0, amount1 bigint
-
-	if params.liquidityDelta != 0 {
+	if !(params.liquidityDelta.IsZero()) {
 		if pool.slot0.tick < params.tickLower {
 			amount0 = sqrtPriceMathGetAmount0Delta(
 				common.TickMathGetSqrtRatioAtTick(params.tickLower),
@@ -23,21 +24,32 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, big
 				params.liquidityDelta,
 			)
 		} else if pool.slot0.tick < params.tickUpper {
+			println("HERE")
 			liquidityBefore := pool.liquidity
+
+			println("tickUpper:", params.tickUpper)
+			println("common.TickMathGetSqrtRatioAtTick(params.tickUpper):", common.TickMathGetSqrtRatioAtTick(params.tickUpper).ToString())
+			println()
+			println("tickLower:", params.tickLower)
+			println("common.TickMathGetSqrtRatioAtTick(params.tickLower):", common.TickMathGetSqrtRatioAtTick(params.tickLower).ToString())
+			println()
 
 			amount0 = sqrtPriceMathGetAmount0Delta(
 				pool.slot0.sqrtPriceX96,
 				common.TickMathGetSqrtRatioAtTick(params.tickUpper),
 				params.liquidityDelta,
 			)
+			println("amount0:", amount0.ToString())
 
 			amount1 = sqrtPriceMathGetAmount1Delta(
 				common.TickMathGetSqrtRatioAtTick(params.tickLower),
 				pool.slot0.sqrtPriceX96,
 				params.liquidityDelta,
 			)
+			println("amount1:", amount1.ToString())
 
 			pool.liquidity = liquidityMathAddDelta(liquidityBefore, params.liquidityDelta)
+			panic("FIX 0 666")
 
 		} else {
 			amount1 = sqrtPriceMathGetAmount1Delta(
@@ -47,6 +59,11 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, big
 			)
 		}
 	}
+
+	// if position is out of range, one of amount0 or amount1 can be nil
+	// handle as 0
+	amount0 = amount0.NilToZero()
+	amount1 = amount1.NilToZero()
 
 	return position, amount0, amount1
 }

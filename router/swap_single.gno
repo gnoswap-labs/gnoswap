@@ -2,13 +2,15 @@ package router
 
 import (
 	"std"
+
+	u256 "gno.land/p/big/uint256"
 )
 
-func singleSwap(params SingleSwapParams) (amountIn, amountOut bigint) {
-	amountIn, amountOut = _swap(
+func singleSwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn, amountOut
+	amountIn, amountOut := _swap(
 		params.amountSpecified,
 		std.GetOrigCaller(), // if single swap => user will recieve
-		0,                   // sqrtPriceLimitX96
+		u256.Zero(),         // sqrtPriceLimitX96
 		SwapCallbackData{
 			params.tokenIn,
 			params.tokenOut,
@@ -20,11 +22,11 @@ func singleSwap(params SingleSwapParams) (amountIn, amountOut bigint) {
 	return amountIn, amountOut
 }
 
-func singleSwapDry(params SingleSwapParams) (amountIn, amountOut bigint) {
-	amountIn, amountOut = _swapDry(
+func singleSwapDry(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn, amountOut
+	amountIn, amountOut := _swapDry(
 		params.amountSpecified,
 		std.GetOrigCaller(), // if single swap => user will recieve
-		0,                   // sqrtPriceLimitX96
+		u256.Zero(),         // sqrtPriceLimitX96
 		SwapCallbackData{
 			params.tokenIn,
 			params.tokenOut,

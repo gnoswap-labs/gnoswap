@@ -3,6 +3,8 @@ package pool
 import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/consts"
+
+	u256 "gno.land/p/big/uint256"
 )
 
 func tickBitmapPosition(tick int32) (int16, uint8) {
@@ -25,11 +27,13 @@ func (pool *Pool) tickBitmapFlipTick(
 	)
 
 	wordPos, bitPos := tickBitmapPosition(tick / tickSpacing)
-	mask := bigint(1) << uint64(bitPos) // 2 ** bitPos
 
-	requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || mask(%d) >= 0", mask))
+	// mask := bigint(1) << uint64(bitPos) // 2 ** bitPos
+	mask := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
 
-	pool.tickBitmaps[wordPos] ^= mask
+	// pool.tickBitmaps[wordPos] ^= mask
+	pool.tickBitmaps[wordPos] = pool.tickBitmaps[wordPos].NilToZero()
+	pool.tickBitmaps[wordPos] = new(u256.Uint).Xor(pool.tickBitmaps[wordPos], mask)
 }
 
 func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
@@ -45,13 +49,18 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 	if lte {
 		wordPos, bitPos := tickBitmapPosition(compress)
 
-		mask := (bigint(1) << uint64(bitPos)) - bigint(1) + (bigint(1) << uint64(bitPos))
-		requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapNextInitializedTickWithInOneWord #1 || mask(%d) >= 0", mask))
+		// mask := (bigint(1) << uint64(bitPos)) - bigint(1) + (bigint(1) << uint64(bitPos))
+		shift1LeftByBitPos := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
 
-		masked := pool.tickBitmaps[wordPos] & mask
-		requireUnsigned(masked, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapNextInitializedTickWithInOneWord #1 || masked(%d) >= 0", masked))
+		mask := shift1LeftByBitPos.Clone()
+		mask = new(u256.Uint).UnsafeSub(mask, u256.NewUint(1))
+		mask = new(u256.Uint).Add(mask, shift1LeftByBitPos.Clone())
 
-		initialized := masked != 0
+		// masked := pool.tickBitmaps[wordPos] & mask
+		pool.tickBitmaps[wordPos] = pool.tickBitmaps[wordPos].NilToZero()
+		masked := new(u256.Uint).And(pool.tickBitmaps[wordPos], mask)
+
+		initialized := !(masked.IsZero())
 
 		if initialized {
 			next := (compress - int32(bitPos-bitMathMostSignificantBit(masked))) * tickSpacing
@@ -64,32 +73,35 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 
 	wordPos, bitPos := tickBitmapPosition(compress + 1)
 
-	_mask := bigint(1) << uint64(bitPos)
-	_mask -= bigint(1)
+	shift1LeftByBitPos := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
+	_mask := shift1LeftByBitPos.Clone()
+	_mask = new(u256.Uint).UnsafeSub(_mask, u256.NewUint(1))
 	mask := bigintBitwiseNotForUint256BitmapIndexing(_mask)
-	requireUnsigned(mask, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapNextInitializedTickWithInOneWord #2 || mask(%d) >= 0", mask))
 
-	masked := pool.tickBitmaps[wordPos] & mask
-	requireUnsigned(masked, ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapNextInitializedTickWithInOneWord #2 || masked(%d) >= 0", masked))
+	pool.tickBitmaps[wordPos] = pool.tickBitmaps[wordPos].NilToZero()
+	masked := new(u256.Uint).And(pool.tickBitmaps[wordPos], mask)
 
-	initialized := masked != 0
+	initialized := !(masked.IsZero())
 	if initialized {
 		next := (compress + 1 + int32(bitMathLeastSignificantBit(masked)-bitPos)) * tickSpacing
 		return next, initialized
 	} else {
-		next := (compress + 1 + int32(int64(consts.MAX_UINT8-bigint(uint64(bitPos))))) * tickSpacing
+		next := (compress + 1 + int32(255-bitPos)) * tickSpacing
+
 		return next, initialized
 	}
 }
 
-func bigintBitwiseNotForUint256BitmapIndexing(x bigint) bigint {
+func bigintBitwiseNotForUint256BitmapIndexing(x *u256.Uint) *u256.Uint {
 	// REF: https://stackoverflow.com/a/77071037
 
 	// Create a mask with all bits set to 1
-	mask := consts.MAX_UINT256
-	mask -= bigint(1)
+	mask := u256.UnsafeFromDecimal(consts.MAX_UINT256)
+	mask = new(u256.Uint).Sub(mask, u256.NewUint(1))
 
 	// XOR with mask to perform bitwise NOT
-	result := x ^ mask
+	// result := x ^ mask
+
+	result := new(u256.Uint).Xor(x, mask)
 	return result
 }

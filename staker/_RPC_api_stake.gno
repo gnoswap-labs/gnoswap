@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
+
+	u256 "gno.land/p/big/uint256"
 )
 
 type LpTokenReward struct {
@@ -18,7 +20,7 @@ type Reward struct {
 	IncentiveType     string `json:"incentiveType"`
 	TargetPoolPath    string `json:"targetPoolPath"`
 	RewardTokenPath   string `json:"rewardTokenPath"`
-	RewardTokenAmount bigint `json:"rewardTokenAmount"`
+	RewardTokenAmount string `json:"rewardTokenAmount"`
 }
 
 type Stake struct {
@@ -57,12 +59,12 @@ func ApiGetRewards() string {
 
 		// get internal gns reward
 		internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-		if internalGNS > 0 {
+		if internalGNS.Gt(u256.Zero()) {
 			rewards = append(rewards, Reward{
 				IncentiveType:     "INTERNAL",
 				TargetPoolPath:    deposit.targetPoolPath,
 				RewardTokenPath:   INTERNAL_REWARD_TOKEN_PATH,
-				RewardTokenAmount: internalGNS,
+				RewardTokenAmount: internalGNS.ToString(),
 			})
 		}
 
@@ -73,10 +75,9 @@ func ApiGetRewards() string {
 				IncentiveType:     "EXTERNAL",
 				TargetPoolPath:    deposit.targetPoolPath,
 				RewardTokenPath:   incentives[incentiveId].rewardToken,
-				RewardTokenAmount: externalReward,
+				RewardTokenAmount: externalReward.ToString(),
 			})
 		}
-
 		lpTokenReward := LpTokenReward{
 			LpTokenId: tokenId,
 			Address:   deposit.owner.String(),
@@ -111,12 +112,12 @@ func ApiGetRewardByLpTokenId(lpTokenId uint64) string {
 
 	// get internal gns reward
 	internalGNS := rewardMathComputeInternalRewardAmount(lpTokenId, deposit)
-	if internalGNS > 0 {
+	if internalGNS.Gt(u256.Zero()) {
 		rewards = append(rewards, Reward{
 			IncentiveType:     "INTERNAL",
 			TargetPoolPath:    deposit.targetPoolPath,
 			RewardTokenPath:   INTERNAL_REWARD_TOKEN_PATH,
-			RewardTokenAmount: internalGNS,
+			RewardTokenAmount: internalGNS.ToString(),
 		})
 	}
 
@@ -127,7 +128,7 @@ func ApiGetRewardByLpTokenId(lpTokenId uint64) string {
 			IncentiveType:     "EXTERNAL",
 			TargetPoolPath:    deposit.targetPoolPath,
 			RewardTokenPath:   incentives[incentiveId].rewardToken,
-			RewardTokenAmount: externalReward,
+			RewardTokenAmount: externalReward.ToString(),
 		})
 	}
 

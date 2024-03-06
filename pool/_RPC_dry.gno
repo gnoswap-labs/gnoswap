@@ -7,36 +7,56 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/consts"
+
+	i256 "gno.land/p/big/int256"
+	u256 "gno.land/p/big/uint256"
 )
 
 func DrySwap(
 	token0Path string,
 	token1Path string,
-	pFee uint16,
+	fee uint32,
 	recipient std.Address,
 	zeroForOne bool,
-	amountSpecified bigint,
-	sqrtPriceLimitX96 bigint,
-) (bigint, bigint, bool) {
+	_amountSpecified string, // int256
+	_sqrtPriceLimitX96 string, // uint160
+) (string, string, bool) { // int256 x2
 
-	if amountSpecified == 0 {
-		return 0, 0, false
+	if _amountSpecified == "0" {
+		return "0", "0", false
 	}
 
-	pool := GetPool(token0Path, token1Path, pFee)
+	amountSpecified, err := i256.FromDecimal(_amountSpecified)
+	if err != nil {
+		panic(ufmt.Sprintf("[POOL] _RPC_dry.gno__DrySwap() || u256.FromDecimal(_amountSpecified[%s]) failed", _amountSpecified))
+	}
+	sqrtPriceLimitX96, err := u256.FromDecimal(_sqrtPriceLimitX96)
+	if err != nil {
+		panic(ufmt.Sprintf("[POOL] _RPC_dry.gno__DrySwap() || u256.FromDecimal(_sqrtPriceLimitX96[%s]) failed", _sqrtPriceLimitX96))
+	}
+
+	pool := GetPool(token0Path, token1Path, fee)
 	slot0Start := pool.slot0
 
 	if zeroForOne {
-		if !(sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > consts.MIN_SQRT_RATIO) {
-			return 0, 0, false
+		min_sqrt_ratio := u256.UnsafeFromDecimal(consts.MIN_SQRT_RATIO)
+		cond1 := sqrtPriceLimitX96.Lt(slot0Start.sqrtPriceX96)
+		cond2 := sqrtPriceLimitX96.Gt(min_sqrt_ratio)
+
+		if !(cond1 && cond2) {
+			return "0", "0", false
 		}
 	} else {
-		if !(sqrtPriceLimitX96 > slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 < consts.MAX_SQRT_RATIO) {
-			return 0, 0, false
+		max_sqrt_ratio := u256.UnsafeFromDecimal(consts.MAX_SQRT_RATIO)
+		cond1 := sqrtPriceLimitX96.Gt(slot0Start.sqrtPriceX96)
+		cond2 := sqrtPriceLimitX96.Lt(max_sqrt_ratio)
+
+		if !(cond1 && cond2) {
+			return "0", "0", false
 		}
 	}
 
-	slot0Start.unlocked = false
+	pool.slot0.unlocked = false
 
 	var cache SwapCache
 	if zeroForOne {
@@ -51,35 +71,34 @@ func DrySwap(
 		}
 	}
 
-	exactInput := amountSpecified > 0
+	exactInput := amountSpecified.Gt(i256.Zero())
 
 	var state SwapState
 	if zeroForOne {
 		state = SwapState{
 			amountSpecifiedRemaining: amountSpecified,
-			amountCalculated:         0,
+			amountCalculated:         i256.Zero(),
 			sqrtPriceX96:             slot0Start.sqrtPriceX96,
 			tick:                     slot0Start.tick,
 			feeGrowthGlobalX128:      pool.feeGrowthGlobal0X128,
-			protocolFee:              0,
+			protocolFee:              u256.Zero(),
 			liquidity:                cache.liquidityStart,
 		}
 	} else {
 		state = SwapState{
 			amountSpecifiedRemaining: amountSpecified,
-			amountCalculated:         0,
+			amountCalculated:         i256.Zero(),
 			sqrtPriceX96:             slot0Start.sqrtPriceX96,
 			tick:                     slot0Start.tick,
 			feeGrowthGlobalX128:      pool.feeGrowthGlobal1X128,
-			protocolFee:              0,
+			protocolFee:              u256.Zero(),
 			liquidity:                cache.liquidityStart,
 		}
 	}
 
 	// continue swapping as long as we haven't used the entire input/output and haven't reached the price limit
-	for state.amountSpecifiedRemaining != 0 && state.sqrtPriceX96 != sqrtPriceLimitX96 {
+	for !(state.amountSpecifiedRemaining.IsZero()) && !(state.sqrtPriceX96.Eq(sqrtPriceLimitX96)) {
 		var step StepComputations
-
 		step.sqrtPriceStartX96 = state.sqrtPriceX96
 
 		step.tickNext, step.initialized = pool.tickBitmapNextInitializedTickWithInOneWord(
@@ -97,10 +116,11 @@ func DrySwap(
 
 		// get the price for the next tick
 		step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
-		var sqrtRatioTargetX96 bigint
 
-		isLower := step.sqrtPriceNextX96 < sqrtPriceLimitX96
-		isHigher := step.sqrtPriceNextX96 > sqrtPriceLimitX96
+		isLower := step.sqrtPriceNextX96.Lt(sqrtPriceLimitX96)
+		isHigher := step.sqrtPriceNextX96.Gt(sqrtPriceLimitX96)
+
+		var sqrtRatioTargetX96 *u256.Uint
 		if (zeroForOne && isLower) || (!zeroForOne && isHigher) {
 			sqrtRatioTargetX96 = sqrtPriceLimitX96
 		} else {
@@ -112,35 +132,40 @@ func DrySwap(
 			sqrtRatioTargetX96,
 			state.liquidity,
 			state.amountSpecifiedRemaining,
-			uint32(pool.fee),
+			uint64(pool.fee),
 		)
 
+		amountInWithFee := i256.FromUint256(new(u256.Uint).Add(step.amountIn, step.feeAmount))
 		if exactInput {
-			state.amountSpecifiedRemaining -= (step.amountIn + step.feeAmount)
-			state.amountCalculated -= step.amountOut
+			state.amountSpecifiedRemaining = i256.Zero().Sub(state.amountSpecifiedRemaining, amountInWithFee)
+			state.amountCalculated = i256.Zero().Sub(state.amountCalculated, i256.FromUint256(step.amountOut))
 		} else {
-			state.amountSpecifiedRemaining += step.amountOut
-			state.amountCalculated += (step.amountIn + step.feeAmount)
+			state.amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
+			state.amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
 		}
 
 		// if the protocol fee is on, calculate how much is owed, decrement feeAmount, and increment protocolFee
 		if cache.feeProtocol > 0 {
-			delta := step.feeAmount / bigint(uint64(cache.feeProtocol))
-			requireUnsigned(delta, ufmt.Sprintf("[POOL] _RPC_dry.gno__DrySwap() || expected x(%d) > 0", delta))
-			step.feeAmount -= delta
-			state.protocolFee += delta
+			delta := new(u256.Uint).Div(step.feeAmount, u256.NewUint(uint64(cache.feeProtocol)))
+			step.feeAmount = new(u256.Uint).Sub(step.feeAmount, delta)
+			state.protocolFee = new(u256.Uint).Add(state.protocolFee, delta)
 		}
 
 		// update global fee tracker
-		if state.liquidity > 0 {
-			state.feeGrowthGlobalX128 += (step.feeAmount * consts.Q128 / state.liquidity)
+		if state.liquidity.Gt(u256.Zero()) {
+			_q128 := u256.UnsafeFromDecimal(consts.Q128)
+
+			value1 := new(u256.Uint).Mul(step.feeAmount, _q128)
+			value2 := new(u256.Uint).Div(value1, state.liquidity)
+
+			state.feeGrowthGlobalX128 = new(u256.Uint).Add(state.feeGrowthGlobalX128, value2)
 		}
 
 		// shift tick if we reached the next price
-		if state.sqrtPriceX96 == step.sqrtPriceNextX96 {
+		if state.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
 			// if the tick is initialized, run the tick transition
 			if step.initialized {
-				var fee0, fee1 bigint
+				var fee0, fee1 *u256.Uint
 
 				// check for the placeholder value, which we replace with the actual value the first time the swap crosses an initialized tick
 				if zeroForOne {
@@ -150,6 +175,7 @@ func DrySwap(
 					fee0 = pool.feeGrowthGlobal0X128
 					fee1 = state.feeGrowthGlobalX128
 				}
+
 				liquidityNet := pool.tickCross(
 					step.tickNext,
 					fee0,
@@ -158,7 +184,7 @@ func DrySwap(
 
 				// if we're moving leftward, we interpret liquidityNet as the opposite sign
 				if zeroForOne {
-					liquidityNet = -liquidityNet
+					liquidityNet = i256.Zero().Neg(liquidityNet)
 				}
 
 				state.liquidity = liquidityMathAddDelta(state.liquidity, liquidityNet)
@@ -169,39 +195,39 @@ func DrySwap(
 			} else {
 				state.tick = step.tickNext
 			}
-		} else if state.sqrtPriceX96 != step.sqrtPriceStartX96 {
+		} else if !(state.sqrtPriceX96.Eq(step.sqrtPriceStartX96)) {
 			// recompute unless we're on a lower tick boundary (i.e. already transitioned ticks), and haven't moved
 			state.tick = common.TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
 		}
 	}
 	// END LOOP
 
-	var amount0, amount1 bigint
+	var amount0, amount1 *i256.Int
 	if zeroForOne == exactInput {
-		amount0 = amountSpecified - state.amountSpecifiedRemaining
+		amount0 = i256.Zero().Sub(amountSpecified, state.amountSpecifiedRemaining)
 		amount1 = state.amountCalculated
 	} else {
 		amount0 = state.amountCalculated
-		amount1 = amountSpecified - state.amountSpecifiedRemaining
+		amount1 = i256.Zero().Sub(amountSpecified, state.amountSpecifiedRemaining)
 	}
 
 	if zeroForOne {
-		if !(pool.balances.token1 >= absBigint(amount1)) {
+		if pool.balances.token1.Lt(amount1.Abs()) {
 			// NOT ENOUGH BALANCE for output token1
-			return 0, 0, false
+			return "0", "0", false
 		}
-
 	} else {
-		if !(pool.balances.token0 >= absBigint(amount0)) {
+		if pool.balances.token0.Lt(amount0.Abs()) {
 			// NOT ENOUGH BALANCE for output token0
-			return 0, 0, false
+			return "0", "0", false
 		}
 	}
 
-	// just not enough balance
-	if amount0 == 0 && amount1 == 0 {
-		return 0, 0, false
+	// JUST NOT ENOUGH BALANCE
+	if amount0.IsZero() && amount1.IsZero() {
+		return "0", "0", false
 	}
 
-	return amount0, amount1, true
+	pool.slot0.unlocked = true
+	return amount0.ToString(), amount1.ToString(), true
 }

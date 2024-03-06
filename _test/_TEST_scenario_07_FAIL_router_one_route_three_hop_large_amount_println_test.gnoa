@@ -39,13 +39,13 @@ func TestPoolCreatePools(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*3)
 
 	// bar-baz
-	pl.CreatePool(barPath, bazPath, 100, 354340008410679467268648495215) // tick 29960 ≈ 1:20
+	pl.CreatePool(barPath, bazPath, 100, "354340008410679467268648495215") // tick 29960 ≈ 1:20
 
 	// baz-foo
-	pl.CreatePool(bazPath, fooPath, 100, 25050389945027294416741547334) // tick -23030 ≈ 1:0.1
+	pl.CreatePool(bazPath, fooPath, 100, "25050389945027294416741547334") // tick -23030 ≈ 1:0.1
 
 	// foo-qux
-	pl.CreatePool(fooPath, quxPath, 100, 17714911063927984461157312042) // tick -29960 ≈ 1:0.05
+	pl.CreatePool(fooPath, quxPath, 100, "17714911063927984461157312042") // tick -29960 ≈ 1:0.05
 
 	std.TestSkipHeights(3)
 }
@@ -84,17 +84,17 @@ func TestPositionMintBarBazInRange(t *testing.T) {
 		100,         // fee
 		29950,       // tickLower
 		29970,       // tickUpper
-		10000000,    // amount0Desired
-		10000000,    // amount1Desired
-		0,           // amount0Min
-		0,           // amount1Min
+		"10000000",  // amount0Desired
+		"10000000",  // amount1Desired
+		"0",         // amount0Min
+		"0",         // amount1Min
 		max_timeout, // deadline
 	)
 
-	shouldEQ(t, tokenId, bigint(1))
-	shouldEQ(t, liquidity, bigint(4473213900))
-	shouldEQ(t, amount0, bigint(499941))
-	shouldEQ(t, amoutn1, bigint(9999999))
+	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, liquidity, "4473213900")
+	shouldEQ(t, amount0, "499941")
+	shouldEQ(t, amoutn1, "9999999")
 
 	std.TestSkipHeights(3)
 }
@@ -112,17 +112,17 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 		100,         // fee
 		-23050,      // tickLower
 		-23010,      // tickUpper
-		10000000,    // amount0Desired
-		10000000,    // amount1Desired
-		0,           // amount0Min
-		0,           // amount1Min
+		"10000000",  // amount0Desired
+		"10000000",  // amount1Desired
+		"0",         // amount0Min
+		"0",         // amount1Min
 		max_timeout, // deadline
 	)
 
-	shouldEQ(t, tokenId, bigint(2))
-	shouldEQ(t, liquidity, bigint(3163542978))
-	shouldEQ(t, amount0, bigint(9999999))
-	shouldEQ(t, amoutn1, bigint(999700))
+	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, liquidity, "3163542978")
+	shouldEQ(t, amount0, "9999999")
+	shouldEQ(t, amoutn1, "999700")
 
 	std.TestSkipHeights(3)
 }
@@ -140,17 +140,17 @@ func TestPositionMintFooQuxInRange(t *testing.T) {
 		100,         // fee
 		-29980,      // tickLower
 		-29940,      // tickUpper
-		10000000,    // amount0Desired
-		10000000,    // amount1Desired
-		0,           // amount0Min
-		0,           // amount1Min
+		"10000000",  // amount0Desired
+		"10000000",  // amount1Desired
+		"0",         // amount0Min
+		"0",         // amount1Min
 		max_timeout, // deadline
 	)
 
-	shouldEQ(t, tokenId, bigint(3))
-	shouldEQ(t, liquidity, bigint(2237166073))
-	shouldEQ(t, amount0, bigint(9999999))
-	shouldEQ(t, amoutn1, bigint(499941))
+	shouldEQ(t, tokenId, 3)
+	shouldEQ(t, liquidity, "2237166073")
+	shouldEQ(t, amount0, "9999999")
+	shouldEQ(t, amoutn1, "499941")
 
 	std.TestSkipHeights(3)
 }
@@ -182,7 +182,7 @@ func TestRouterDrySwapRouteBarQuxExactIn(t *testing.T) {
 	dryResult := rr.DrySwapRoute(
 		barPath,    // inputToken
 		quxPath,    // outputToken
-		100000,     // amountSpecified
+		"100000",   // amountSpecified
 		"EXACT_IN", // swapType
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100*POOL*gno.land/r/demo/baz:gno.land/r/demo/foo:100*POOL*gno.land/r/demo/foo:gno.land/r/demo/qux:100", // strRouteArr
 		"100", // quoteArr
@@ -204,7 +204,7 @@ func TestRouterSwapRouteBarQuxExactIn(t *testing.T) {
 	swapResult := rr.SwapRoute(
 		barPath,    // inputToken
 		quxPath,    // outputToken
-		100000,     // amountSpecified
+		"100000",   // amountSpecified
 		"EXACT_IN", // swapType
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100*POOL*gno.land/r/demo/baz:gno.land/r/demo/foo:100*POOL*gno.land/r/demo/foo:gno.land/r/demo/qux:100", // strRouteArr
 		"100", // quoteArr
@@ -227,7 +227,7 @@ func TestRouterDrySwapRouteBarQuxExactOutAfterSwap(t *testing.T) {
 	dryResult := rr.DrySwapRoute(
 		barPath,     // inputToken
 		quxPath,     // outputToken
-		100000,      // amountSpecified
+		"100000",    // amountSpecified
 		"EXACT_OUT", // swapType
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100*POOL*gno.land/r/demo/baz:gno.land/r/demo/foo:100*POOL*gno.land/r/demo/foo:gno.land/r/demo/qux:100", // strRouteArr
 		"100", // quoteArr
@@ -249,13 +249,13 @@ func TestRouterSwapRouteBarQuxExactOutAfterSwap(t *testing.T) {
 		rr.SwapRoute(
 			barPath,     // inputToken
 			quxPath,     // outputToken
-			100000,      // amountSpecified
+			"100000",    // amountSpecified
 			"EXACT_OUT", // swapType
 			"gno.land/r/demo/bar:gno.land/r/demo/baz:100*POOL*gno.land/r/demo/baz:gno.land/r/demo/foo:100*POOL*gno.land/r/demo/foo:gno.land/r/demo/qux:100", // strRouteArr
 			"100",       // quoteArr
 			"123456789", // tokenAmountLimit (maxSpent)
 		)
 	},
-		"[POOL] pool.gno__Swap() || amountSpecified(0) != 0",
+		"[POOL] pool.gno__Swap() || _amountSpecified == 0",
 	)
 }

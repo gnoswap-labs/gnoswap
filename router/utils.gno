@@ -10,19 +10,34 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-func getDataForSinglePath(poolPath string) (token0, token1 string, fee uint16) {
+func poolPathWithFeeDivide(poolPath string) (string, string, int) {
+	poolPathSplit := strings.Split(poolPath, ":")
+	require(len(poolPathSplit) == 3, ufmt.Sprintf("[ROUTER] _RPC_api.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath))
+
+	feeInt, err := strconv.Atoi(poolPathSplit[2])
+	if err != nil {
+		panic(ufmt.Sprintf("[ROUTER] _RPC_api.gno__poolPathWithFeeDivide() || cannot convert fee(%s) to int", poolPathSplit[2]))
+	}
+
+	return poolPathSplit[0], poolPathSplit[1], feeInt
+}
+
+func getDataForSinglePath(poolPath string) (string, string, uint32) {
 	datas := strings.Split(poolPath, ":")
 	require(len(datas) == 3, ufmt.Sprintf("[ROUTER] _util.gno__getDataForSinglePath() || len(datas) != 3 (poolPath:%s)", poolPath))
 
-	token0 = datas[0]
-	token1 = datas[1]
-	_fee, _ := strconv.Atoi(datas[2])
+	token0 := datas[0]
+	token1 := datas[1]
+	fee, _ := strconv.Atoi(datas[2])
 
-	return token0, token1, uint16(_fee)
+	return token0, token1, uint32(fee)
 }
 
-func getDataForMultiPath(possiblePath string, poolIdx int) (token0, token1 string, fee uint16) {
+func getDataForMultiPath(possiblePath string, poolIdx int) (string, string, uint32) {
 	pools := strings.Split(possiblePath, "*POOL*")
+
+	var token0, token1 string
+	var fee uint32
 
 	switch poolIdx {
 	case 0:
@@ -32,7 +47,7 @@ func getDataForMultiPath(possiblePath string, poolIdx int) (token0, token1 strin
 	case 2:
 		token0, token1, fee = getDataForSinglePath(pools[2])
 	default:
-		return "", "", 0
+		return "", "", uint32(0)
 	}
 
 	return token0, token1, fee
@@ -66,25 +81,9 @@ func require(cond bool, msg string) {
 	}
 }
 
-func abs(x bigint) uint64 {
-	if x < 0 {
-		return uint64(-x)
-	}
-
-	return uint64(x)
-}
-
 func min(a, b int) int {
 	if a < b {
 		return a
 	}
 	return b
-}
-
-func absBigint(x bigint) bigint {
-	if x < 0 {
-		return -x
-	}
-
-	return x
 }

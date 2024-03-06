@@ -7,13 +7,15 @@ import (
 	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/demo/consts"
-
 	"gno.land/r/demo/gnft"
 	"gno.land/r/demo/gns"
 
+	"gno.land/r/demo/consts"
+
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
+
+	u256 "gno.land/p/big/uint256"
 )
 
 var (
@@ -21,32 +23,33 @@ var (
 	incentives     map[string]Incentive = make(map[string]Incentive) // incentiveId => Incentive
 
 	deposits  map[uint64]Deposit = make(map[uint64]Deposit) // tokenId => Deposit
-	poolTiers map[string]uint8   = make(map[string]uint8)   // poolPath -> tier
+	poolTiers map[string]uint64  = make(map[string]uint64)  // poolPath -> tier
+)
+
+const (
+	TIMESTAMP_90DAYS  = 7776000
+	TIMESTAMP_180DAYS = 15552000
+	TIMESTAMP_360DAYS = 31104000
 )
 
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/demo/gns:gno.land/r/demo/wugnot:500"] = 1 // r3v4_xxx:
-	// poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = 1 // dev
-
-	// tier 2
-	// poolTiers["GNS/USDT_500"] = 2
-	// poolTiers["ATOM/GNS_500"] = 2
-
-	// tier 3
-	// poolTiers["ATOM/GNOT_500"] = 3
-	// poolTiers["ATOM/USDT_500"] = 3
-	// poolTiers["ATOM/WETH_500"] = 3
+	poolTiers["gno.land/r/demo/gns:gno.land/r/demo/wugnot:500"] = 1 // r3v4_xxx: INITIALIZE TIER 1 POOL
 }
 
 func CreateExternalIncentive(
 	targetPoolPath string,
 	rewardToken string, // token path should be registered
-	rewardAmount bigint,
+	_rewardAmount string,
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
+	rewardAmount, err := u256.FromDecimal(_rewardAmount)
+	if err != nil {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || u256.FromDecimal(_rewardAmount: %s) failed", _rewardAmount))
+	}
+
 	require(time.Now().Unix() <= startTimestamp, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || startTimestamp must be in the future__time.Now().Unix(%d) <= startTimestamp(%d)", time.Now().Unix(), startTimestamp))
 
 	externalDuration := uint64(endTimestamp - startTimestamp)
@@ -55,7 +58,7 @@ func CreateExternalIncentive(
 	}
 
 	fromBalanceBefore := balanceOfByRegisterCall(rewardToken, std.GetOrigCaller())
-	require(fromBalanceBefore >= uint64(rewardAmount), ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || not enough rewardAmount(%d) to create incentive(%d)", fromBalanceBefore, rewardAmount))
+	require(fromBalanceBefore >= rewardAmount.Uint64(), ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || not enough rewardAmount(%d) to create incentive(%d)", fromBalanceBefore, rewardAmount.Uint64()))
 
 	poolRewardBalanceBefore := balanceOfByRegisterCall(rewardToken, GetOrigPkgAddr())
 
@@ -64,16 +67,19 @@ func CreateExternalIncentive(
 	// if same incentiveId exists => increase rewardTokenAmount
 	for _, v := range poolIncentives[targetPoolPath] {
 		if v == incentiveId {
-			transferFromByRegisterCall(rewardToken, std.GetOrigCaller(), GetOrigPkgAddr(), uint64(rewardAmount))
-			incentives[v].rewardAmount += rewardAmount
+			transferFromByRegisterCall(rewardToken, std.GetOrigCaller(), GetOrigPkgAddr(), rewardAmount.Uint64())
+			incentives[v].rewardAmount = new(u256.Uint).Add(incentives[v].rewardAmount, rewardAmount)
 			return
 		}
 	}
 
-	transferFromByRegisterCall(rewardToken, std.GetOrigCaller(), GetOrigPkgAddr(), uint64(rewardAmount))
+	transferFromByRegisterCall(rewardToken, std.GetOrigCaller(), GetOrigPkgAddr(), rewardAmount.Uint64())
 
 	poolRewardBalanceAfter := balanceOfByRegisterCall(rewardToken, GetOrigPkgAddr())
-	require(poolRewardBalanceAfter-poolRewardBalanceBefore == uint64(rewardAmount), ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || pool reward balance not updated correctly(before:%d, added:%d, final:%d)", poolRewardBalanceBefore, rewardAmount, poolRewardBalanceAfter))
+	require(
+		poolRewardBalanceAfter-poolRewardBalanceBefore == rewardAmount.Uint64(),
+		ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || pool reward balance not updated correctly(before:%d, added:%d, final:%d)",
+			poolRewardBalanceBefore, rewardAmount.Uint64(), poolRewardBalanceAfter))
 
 	incentives[incentiveId] = Incentive{
 		targetPoolPath: targetPoolPath,
@@ -87,7 +93,7 @@ func CreateExternalIncentive(
 	poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath], incentiveId)
 }
 
-func StakeToken(tokenId uint64) (string, bigint, bigint) { // poolPath, token0Amount, token1Amount
+func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
 	// check whether tokenId already staked or not
 	_, exist := deposits[tokenId]
 	require(!exist, ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) already staked", tokenId))
@@ -102,8 +108,8 @@ func StakeToken(tokenId uint64) (string, bigint, bigint) { // poolPath, token0Am
 	)
 
 	// check tokenId has liquidity or not
-	liquidity := pn.PositionGetPositionLiquidity(tokenId)
-	require(liquidity > 0, ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) has no liquidity", tokenId))
+	liquidity := pn.PositionGetPositionLiquidity(tokenId) // *u256.Uint
+	require(liquidity.Gt(u256.Zero()), ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) has no liquidity", tokenId))
 
 	// check pool path from tokenid
 	poolKey := pn.PositionGetPositionPoolKey(tokenId)
@@ -119,7 +125,7 @@ func StakeToken(tokenId uint64) (string, bigint, bigint) { // poolPath, token0Am
 	transferDeposit(tokenId, GetOrigPkgAddr())
 
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
-	return poolKey, token0Amount, token1Amount
+	return poolKey, token0Amount.ToString(), token1Amount.ToString()
 }
 
 func CollectReward(tokenId uint64) {
@@ -135,49 +141,48 @@ func CollectReward(tokenId uint64) {
 	for _, incentiveId := range poolIncentives[poolPath] {
 		incentive := incentives[incentiveId]
 		externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentive) // external reward
-		externalReward = userClaimedRewardAmount(deposit.owner, tokenId, incentive.rewardToken, bigint(externalReward), true)
+		externalReward = userClaimedRewardAmount(deposit.owner, tokenId, incentive.rewardToken, externalReward, true)
 
-		if externalReward > 0 {
+		if externalReward.Gt(u256.Zero()) {
 			// protocol fee
 			toUser := handleRewardFee(incentive.rewardToken, externalReward, false)
 
 			// then transfer rest
-			transferByRegisterCall(incentive.rewardToken, deposit.owner, uint64(toUser))
+			transferByRegisterCall(incentive.rewardToken, deposit.owner, toUser.Uint64())
 		}
 
-		incentive.rewardAmount -= externalReward
+		incentive.rewardAmount = new(u256.Uint).Sub(incentive.rewardAmount, externalReward)
 		incentives[incentiveId] = incentive
 	}
 
 	// default `Internal` reward
 	internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-	internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, bigint(internalGNS), true)
+	internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, true)
 
-	if internalGNS > 0 {
+	if internalGNS.Gt(u256.Zero()) {
 		// protocol fee
 		toUser := handleRewardFee(consts.GNS_PATH, internalGNS, true)
 
 		// then transfer rest
-		gns.TransferFrom(a2u(consts.INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), uint64(toUser))
+		gns.TransferFrom(a2u(consts.INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), toUser.Uint64())
 	}
-
 }
 
-func UnstakeToken(tokenId uint64) (string, bigint, bigint) {
+func UnstakeToken(tokenId uint64) (string, string, string) {
 	// Claim All Rewards
 	CollectReward(tokenId)
 
 	// unstaked status
 	deposit, exist := deposits[tokenId]
 	require(exist, ufmt.Sprintf("[STAKER] staker.gno__UnstakeToken() || tokenId(%d) not staked", tokenId))
-	deposits = deleteFromDeposits(deposits, tokenId)
+	delete(deposits, tokenId)
 
 	// transfer NFT ownership to origin owner
 	gnft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(deposit.owner), tid(tokenId))
 
 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
-	return poolPath, token0Amount, token1Amount
+	return poolPath, token0Amount.ToString(), token1Amount.ToString()
 }
 
 func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken string) {
@@ -192,7 +197,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	switch std.GetOrigCaller() {
 	case consts.GNOSWAP_ADMIN:
 		// admin can end incentive without refund
-		incentives = deleteFromIncentives(incentives, incentiveId)
+		delete(incentives, incentiveId)
 		for i, v := range poolIncentives[targetPoolPath] {
 			if v == incentiveId {
 				poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
@@ -201,11 +206,12 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	case incentive.refundee:
 		// refundee can end incentive with refund
 		refund := incentive.rewardAmount
-		poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
-		require(poolLeftExternalRewardAmount >= uint64(refund), ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || not enough poolLeftExternalRewardAmount(%s_%d) to refund(%d)", incentive.rewardToken, poolLeftExternalRewardAmount, refund))
-		transferByRegisterCall(incentive.rewardToken, incentive.refundee, uint64(refund))
 
-		incentives = deleteFromIncentives(incentives, incentiveId)
+		poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
+		require(poolLeftExternalRewardAmount >= refund.Uint64(), ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || not enough poolLeftExternalRewardAmount(%s_%d) to refund(%d)", incentive.rewardToken, poolLeftExternalRewardAmount, refund))
+		transferByRegisterCall(incentive.rewardToken, incentive.refundee, refund.Uint64())
+
+		delete(incentives, incentiveId)
 		for i, v := range poolIncentives[targetPoolPath] {
 			if v == incentiveId {
 				poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
@@ -226,37 +232,7 @@ func transferDeposit(tokenId uint64, to std.Address) {
 	gnft.TransferFrom(a2u(owner), a2u(to), tid(tokenId))
 }
 
-func deleteFromDeposits(m map[uint64]Deposit, key uint64) map[uint64]Deposit {
-	if _, ok := m[key]; ok {
-		newMap := make(map[uint64]Deposit)
-		for k, v := range m {
-			if k != key {
-				newMap[k] = v
-			}
-		}
-
-		return newMap
-	}
-
-	return m
-}
-
-func deleteFromIncentives(m map[string]Incentive, key string) map[string]Incentive {
-	if _, ok := m[key]; ok {
-		newMap := make(map[string]Incentive)
-		for k, v := range m {
-			if k != key {
-				newMap[k] = v
-			}
-		}
-
-		return newMap
-	}
-
-	return m
-}
-
-func getTokenPairBalanceFromPosition(tokenId uint64) (bigint, bigint) {
+func getTokenPairBalanceFromPosition(tokenId uint64) (*u256.Uint, *u256.Uint) {
 	poolKey := pn.PositionGetPositionPoolKey(tokenId)
 
 	pool := pl.GetPoolFromPoolPath(poolKey)

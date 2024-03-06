@@ -4,6 +4,8 @@ import (
 	"sort"
 
 	pl "gno.land/r/demo/pool"
+
+	u256 "gno.land/p/big/uint256"
 )
 
 type PoolWithMeta struct {
@@ -12,13 +14,13 @@ type PoolWithMeta struct {
 	token1Path string
 	fee        int
 	tokenPair  string
-	liquidity  bigint
+	liquidity  *u256.Uint
 }
 type ByLiquidity []PoolWithMeta
 
 func (p ByLiquidity) Len() int           { return len(p) }
 func (p ByLiquidity) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
-func (p ByLiquidity) Less(i, j int) bool { return p[i].liquidity > p[j].liquidity }
+func (p ByLiquidity) Less(i, j int) bool { return p[i].liquidity.Gt(p[j].liquidity) }
 
 type BuildRoute struct {
 	route    []PoolWithMeta
@@ -163,7 +165,6 @@ func (pool PoolWithMeta) hasToken(token string) bool {
 }
 
 func findCandidatePools() []PoolWithMeta {
-
 	poolList := pl.PoolGetPoolList()
 
 	poolWithMetas := []PoolWithMeta{}

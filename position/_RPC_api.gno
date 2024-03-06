@@ -11,6 +11,8 @@ import (
 	"gno.land/r/demo/consts"
 
 	pl "gno.land/r/demo/pool"
+
+	u256 "gno.land/p/big/uint256"
 )
 
 type RpcPosition struct {
@@ -20,16 +22,16 @@ type RpcPosition struct {
 	PoolKey                  string `json:"poolKey"`
 	TickLower                int32  `json:"tickLower"`
 	TickUpper                int32  `json:"tickUpper"`
-	Liquidity                bigint `json:"liquidity"`
-	FeeGrowthInside0LastX128 bigint `json:"feeGrowthInside0LastX128"`
-	FeeGrowthInside1LastX128 bigint `json:"feeGrowthInside1LastX128"`
-	TokensOwed0              bigint `json:"tokensOwed0"`
-	TokensOwed1              bigint `json:"tokensOwed1"`
+	Liquidity                string `json:"liquidity"`
+	FeeGrowthInside0LastX128 string `json:"feeGrowthInside0LastX128"`
+	FeeGrowthInside1LastX128 string `json:"feeGrowthInside1LastX128"`
+	TokensOwed0              string `json:"tokensOwed0"`
+	TokensOwed1              string `json:"tokensOwed1"`
 
-	Token0Balance bigint `json:"token0Balance"`
-	Token1Balance bigint `json:"token1Balance"`
-	FeeUnclaimed0 bigint `json:"feeUnclaimed0"`
-	FeeUnclaimed1 bigint `json:"feeUnclaimed1"`
+	Token0Balance string `json:"token0Balance"`
+	Token1Balance string `json:"token1Balance"`
+	FeeUnclaimed0 string `json:"feeUnclaimed0"`
+	FeeUnclaimed1 string `json:"feeUnclaimed1"`
 }
 
 type ResponseQueryBase struct {
@@ -85,7 +87,8 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 		position.liquidity,
 	)
 
-	var unclaimedFee0, unclaimedFee1 bigint // if position is burned, unclaimedFee0 and unclaimedFee1 will be 0
+	unclaimedFee0 := u256.Zero()
+	unclaimedFee1 := u256.Zero()
 	if !burned {
 		unclaimedFee0, unclaimedFee1 := unclaimedFee(lpTokenId)
 	}
@@ -97,19 +100,19 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 		PoolKey:                  position.poolKey,
 		TickLower:                position.tickLower,
 		TickUpper:                position.tickUpper,
-		Liquidity:                position.liquidity,
-		FeeGrowthInside0LastX128: position.feeGrowthInside0LastX128,
-		FeeGrowthInside1LastX128: position.feeGrowthInside1LastX128,
-		TokensOwed0:              position.tokensOwed0,
-		TokensOwed1:              position.tokensOwed1,
-		Token0Balance:            token0Balance,
-		Token1Balance:            token1Balance,
-		FeeUnclaimed0:            unclaimedFee0,
-		FeeUnclaimed1:            unclaimedFee1,
+		Liquidity:                position.liquidity.ToString(),
+		FeeGrowthInside0LastX128: position.feeGrowthInside0LastX128.ToString(),
+		FeeGrowthInside1LastX128: position.feeGrowthInside1LastX128.ToString(),
+		TokensOwed0:              position.tokensOwed0.ToString(),
+		TokensOwed1:              position.tokensOwed1.ToString(),
+		Token0Balance:            token0Balance.ToString(),
+		Token1Balance:            token1Balance.ToString(),
+		FeeUnclaimed0:            unclaimedFee0.ToString(),
+		FeeUnclaimed1:            unclaimedFee1.ToString(),
 	}
 }
 
-func unclaimedFee(tokenId uint64) (bigint, bigint) {
+func unclaimedFee(tokenId uint64) (*u256.Uint, *u256.Uint) {
 	// ref: https://blog.uniswap.org/uniswap-v3-math-primer-2#calculating-uncollected-fees
 
 	liquidity := positions[tokenId].liquidity
@@ -133,11 +136,11 @@ func unclaimedFee(tokenId uint64) (bigint, bigint) {
 	feeGrowthInside0LastX128 := positions[tokenId].feeGrowthInside0LastX128
 	feeGrowthInside1LastX128 := positions[tokenId].feeGrowthInside1LastX128
 
-	var tickLowerFeeGrowthBelow0, tickLowerFeeGrowthBelow1, tickUpperFeeGrowthAbove0, tickUpperFeeGrowthAbove1 bigint
+	var tickLowerFeeGrowthBelow0, tickLowerFeeGrowthBelow1, tickUpperFeeGrowthAbove0, tickUpperFeeGrowthAbove1 *u256.Uint
 
 	if currentTick >= tickUpper {
-		tickUpperFeeGrowthAbove0 = feeGrowthGlobal0X128 - tickUpperFeeGrowthOutside0X128
-		tickUpperFeeGrowthAbove1 = feeGrowthGlobal1X128 - tickUpperFeeGrowthOutside1X128
+		tickUpperFeeGrowthAbove0 = new(u256.Uint).Sub(feeGrowthGlobal0X128, tickUpperFeeGrowthOutside0X128)
+		tickUpperFeeGrowthAbove1 = new(u256.Uint).Sub(feeGrowthGlobal1X128, tickUpperFeeGrowthOutside1X128)
 	} else {
 		tickUpperFeeGrowthAbove0 = tickUpperFeeGrowthOutside0X128
 		tickUpperFeeGrowthAbove1 = tickUpperFeeGrowthOutside1X128
@@ -147,15 +150,23 @@ func unclaimedFee(tokenId uint64) (bigint, bigint) {
 		tickLowerFeeGrowthBelow0 = tickLowerFeeGrowthOutside0X128
 		tickLowerFeeGrowthBelow1 = tickLowerFeeGrowthOutside1X128
 	} else {
-		tickLowerFeeGrowthBelow0 = feeGrowthGlobal0X128 - tickLowerFeeGrowthOutside0X128
-		tickLowerFeeGrowthBelow1 = feeGrowthGlobal1X128 - tickLowerFeeGrowthOutside1X128
+		tickLowerFeeGrowthBelow0 = new(u256.Uint).Sub(feeGrowthGlobal0X128, tickLowerFeeGrowthOutside0X128)
+		tickLowerFeeGrowthBelow1 = new(u256.Uint).Sub(feeGrowthGlobal1X128, tickLowerFeeGrowthOutside1X128)
 	}
 
-	feeGrowthInside0X128 := (feeGrowthGlobal0X128 - tickLowerFeeGrowthBelow0 - tickUpperFeeGrowthAbove0)
-	feeGrowthInside1X128 := (feeGrowthGlobal1X128 - tickLowerFeeGrowthBelow1 - tickUpperFeeGrowthAbove1)
+	feeGrowthInside0X128 := new(u256.Uint).Sub(feeGrowthGlobal0X128, tickLowerFeeGrowthBelow0)
+	feeGrowthInside0X128 = new(u256.Uint).Sub(feeGrowthInside0X128, tickUpperFeeGrowthAbove0)
 
-	unclaimedFee0 := (liquidity * (feeGrowthInside0X128 - feeGrowthInside0LastX128)) / consts.Q128
-	unclaimedFee1 := (liquidity * (feeGrowthInside1X128 - feeGrowthInside1LastX128)) / consts.Q128
+	feeGrowthInside1X128 := new(u256.Uint).Sub(feeGrowthGlobal1X128, tickLowerFeeGrowthBelow1)
+	feeGrowthInside1X128 = new(u256.Uint).Sub(feeGrowthInside1X128, tickUpperFeeGrowthAbove1)
+
+	value01 := new(u256.Uint).Sub(feeGrowthInside0X128, feeGrowthInside0LastX128)
+	value02 := new(u256.Uint).Mul(liquidity, value01)
+	unclaimedFee0 := new(u256.Uint).Div(value02, u256.UnsafeFromDecimal(consts.Q128))
+
+	value11 := new(u256.Uint).Sub(feeGrowthInside1X128, feeGrowthInside1LastX128)
+	value12 := new(u256.Uint).Mul(liquidity, value11)
+	unclaimedFee1 := new(u256.Uint).Div(value12, u256.UnsafeFromDecimal(consts.Q128))
 
 	return unclaimedFee0, unclaimedFee1
 }

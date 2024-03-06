@@ -1,10 +1,9 @@
 package position
 
 import (
+	"encoding/gjson"
 	"std"
 	"testing"
-
-	"encoding/gjson"
 
 	"gno.land/r/demo/consts"
 
@@ -13,9 +12,8 @@ import (
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/foo"
 
-	"gno.land/r/demo/gns"
-
 	"gno.land/r/demo/gnft"
+	"gno.land/r/demo/gns"
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
@@ -25,7 +23,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 
-	pl.CreatePool(barPath, fooPath, fee500, 130621891405341611593710811006) // tick = 10000
+	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01InRange(t *testing.T) {
@@ -39,16 +37,16 @@ func TestMintPosition01InRange(t *testing.T) {
 		fee500,
 		8000,
 		12000,
-		bigint(50000000),
-		bigint(50000000),
-		bigint(0),
-		bigint(0),
+		"50000000",
+		"50000000",
+		"0",
+		"0",
 		max_timeout,
 	)
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, getNextId(), 2)
-	shouldEQ(t, amount0, bigint(18394891))
-	shouldEQ(t, amount1, bigint(49999999))
+	shouldEQ(t, amount0, "18394891")
+	shouldEQ(t, amount1, "49999999")
 }
 
 func TestMintPosition02LowerRange(t *testing.T) {
@@ -62,16 +60,16 @@ func TestMintPosition02LowerRange(t *testing.T) {
 		fee500,
 		5000,
 		8000,
-		bigint(50000000),
-		bigint(50000000),
-		bigint(0),
-		bigint(0),
+		"50000000",
+		"50000000",
+		"0",
+		"0",
 		max_timeout,
 	)
 	shouldEQ(t, tokenId, 2)
 	shouldEQ(t, getNextId(), 3)
-	shouldEQ(t, amount0, bigint(0))
-	shouldEQ(t, amount1, bigint(49999999))
+	shouldEQ(t, amount0, "0")
+	shouldEQ(t, amount1, "49999999")
 }
 
 func TestMintPosition03UpperRange(t *testing.T) {
@@ -85,23 +83,23 @@ func TestMintPosition03UpperRange(t *testing.T) {
 		fee500,
 		12000,
 		14000,
-		bigint(50000000),
-		bigint(50000000),
-		bigint(0),
-		bigint(0),
+		"50000000",
+		"50000000",
+		"0",
+		"0",
 		max_timeout,
 	)
 	shouldEQ(t, tokenId, 3)
 	shouldEQ(t, getNextId(), 4)
-	shouldEQ(t, amount0, bigint(49999999))
-	shouldEQ(t, amount1, bigint(0))
+	shouldEQ(t, amount0, "49999999")
+	shouldEQ(t, amount1, "0")
 }
 
 func TestCollectFeeBeforeSwap(t *testing.T) {
 	tokenId, fee0, fee1, poolPath := CollectFee(1)
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, fee0, bigint(0))
-	shouldEQ(t, fee1, bigint(0))
+	shouldEQ(t, fee0, "0")
+	shouldEQ(t, fee1, "0")
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
 
@@ -117,35 +115,36 @@ func TestSwap(t *testing.T) {
 		fee500,
 		test1,
 		true,
-		bigint(1_234_567),
+		"1234567",
 		consts.MIN_PRICE,
 		test1,
 	)
+	shouldEQ(t, amount0, "1234567")
+	shouldEQ(t, amount1, "-3332779")
 }
 
 func TestCollectFeeAfterSwap(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	foo.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64)) // COLLECT_FEE
-	bar.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64)) // COLLECT_FEE
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 
 	tokenId, fee0, fee1, poolPath := CollectFee(1)
 	shouldEQ(t, tokenId, uint64(1))
-	shouldNEQ(t, fee0, bigint(0)) // this is input token
-	shouldEQ(t, fee1, bigint(0))  // this it output token
+	shouldNEQ(t, fee0, "0") // this is input token
+	shouldEQ(t, fee1, "0")  // this it output token
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
-
 }
 
 func TestDecreaseLiquidityUpperPosition(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
 
 	ownerOfPosition := gnft.OwnerOf(tid(3))
 	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())
 
-	tokenId, liquidity, amount0, amount1, poolPath := DecreaseLiquidity(uint64(3), consts.MAX_UINT256, 0, 0, max_timeout)
+	tokenId, liquidity, amount0, amount1, poolPath := DecreaseLiquidity(uint64(3), consts.MAX_UINT256, "0", "0", max_timeout)
 	shouldEQ(t, tokenId, uint64(3))
-	shouldEQ(t, amount0, bigint(49999999))
-	shouldEQ(t, amount1, bigint(0))
+	shouldEQ(t, amount0, "49999999")
+	shouldEQ(t, amount1, "0")
 
 	ownerOfPosition = gnft.OwnerOf(tid(3))
 	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())
