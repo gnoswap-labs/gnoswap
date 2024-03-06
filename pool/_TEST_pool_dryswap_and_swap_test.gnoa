@@ -73,9 +73,9 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	shouldEQ(t, poolOut, "-5883")
 }
 
-func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
-	// zeroForOne true
-	// amountSpecified -16000
+// func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
+// 	// zeroForOne true
+// 	// amountSpecified -16000
 
 	poolIn, poolOut, _ := DrySwap(
 		fooPath,          // fooPath

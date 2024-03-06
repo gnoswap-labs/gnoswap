@@ -60,6 +60,11 @@ func CreatePool(
 		panic("CREATE POOL SQRT STRING")
 	}
 
+	sqrtPriceX96, err := u256.FromDecimal(_sqrtPriceX96)
+	if err != nil {
+		panic("CREATE POOL SQRT STRING")
+	}
+
 	if token1Path < token0Path {
 		token0Path, token1Path = token1Path, token0Path
 		tick := -(common.TickMathGetTickAtSqrtRatio(sqrtPriceX96))

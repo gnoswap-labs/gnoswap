@@ -24,21 +24,32 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *i2
 				params.liquidityDelta,
 			)
 		} else if pool.slot0.tick < params.tickUpper {
+			println("HERE")
 			liquidityBefore := pool.liquidity
+
+			println("tickUpper:", params.tickUpper)
+			println("common.TickMathGetSqrtRatioAtTick(params.tickUpper):", common.TickMathGetSqrtRatioAtTick(params.tickUpper).ToString())
+			println()
+			println("tickLower:", params.tickLower)
+			println("common.TickMathGetSqrtRatioAtTick(params.tickLower):", common.TickMathGetSqrtRatioAtTick(params.tickLower).ToString())
+			println()
 
 			amount0 = sqrtPriceMathGetAmount0Delta(
 				pool.slot0.sqrtPriceX96,
 				common.TickMathGetSqrtRatioAtTick(params.tickUpper),
 				params.liquidityDelta,
 			)
+			println("amount0:", amount0.ToString())
 
 			amount1 = sqrtPriceMathGetAmount1Delta(
 				common.TickMathGetSqrtRatioAtTick(params.tickLower),
 				pool.slot0.sqrtPriceX96,
 				params.liquidityDelta,
 			)
+			println("amount1:", amount1.ToString())
 
 			pool.liquidity = liquidityMathAddDelta(liquidityBefore, params.liquidityDelta)
+			panic("FIX 0 666")
 
 		} else {
 			amount1 = sqrtPriceMathGetAmount1Delta(

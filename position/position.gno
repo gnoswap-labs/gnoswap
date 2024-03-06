@@ -73,6 +73,9 @@ func mint(params MintParams) (uint64, string, string, string) {
 			amount1Min:     params.amount1Min,
 		},
 	)
+	println("amount0", amount0.ToString())
+	println("amount1", amount1.ToString())
+	panic("FIX 0")
 
 	tokenId := nextId
 	nextId++
