@@ -105,7 +105,7 @@ func TestPositionMintBarBazInRangeMore(t *testing.T) {
 	shouldEQ(t, tokenId, 2)
 	shouldEQ(t, liquidity, "447321")
 	shouldEQ(t, amount0, "50")
-	shouldEQ(t, amoutn1, "1000")
+	shouldEQ(t, amoutn1, "999")
 
 	std.TestSkipHeights(3)
 

@@ -5,7 +5,6 @@ import (
 
 	i256 "gno.land/p/big/int256"
 	u256 "gno.land/p/big/uint256"
-	u512 "gno.land/p/big/uint512"
 )
 
 func sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
@@ -17,10 +16,8 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
 	if amount.IsZero() {
 		return sqrtPX96
 	}
-	// println("|| sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp:", add)
 
 	numerator1 := new(u256.Uint).Lsh(liquidity, 96)
-	// println("numerator1:", numerator1.ToString())
 
 	if add {
 		product := new(u256.Uint).Mul(amount, sqrtPX96)
@@ -28,16 +25,15 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
 			denominator := new(u256.Uint).Add(numerator1, product)
 
 			if denominator.Gte(numerator1) {
-				return u512.MulDivRoundingUp(numerator1, sqrtPX96, denominator)
+				return u256.MulDiv(numerator1, sqrtPX96, denominator)
 			}
 		}
 
 		_value1 := new(u256.Uint).Div(numerator1, sqrtPX96)
 		_value2 := new(u256.Uint).Add(_value1, amount)
-		return u512.DivRoundingUp(numerator1, _value2)
+		return u256.DivRoundingUp(numerator1, _value2)
 	} else {
 		product := new(u256.Uint).Mul(amount, sqrtPX96)
-		// println("product:", product.ToString())
 
 		cond1 := new(u256.Uint).Div(product, amount).Eq(sqrtPX96)
 		cond2 := numerator1.Gt(product)
@@ -46,12 +42,8 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
 			panic("position_sqrt price math #1")
 		}
 		denominator := new(u256.Uint).Sub(numerator1, product)
-		// println("denominator:", denominator.ToString())
 
-		zxc := u512.MulDivRoundingUp(numerator1, sqrtPX96, denominator)
-		return zxc
-		// return new(u256.Uint).Sub(zxc, u256.One())
-		// return u512.MulDivRoundingUp(numerator1, sqrtPX96, denominator)
+		return u256.MulDiv(numerator1, sqrtPX96, denominator)
 	}
 }
 
@@ -62,28 +54,23 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
 	add bool,
 ) *u256.Uint { // uint160
 	quotient := u256.Zero()
-	// println("sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown", add)
 	if add {
 		if amount.Lte(u256.UnsafeFromDecimal(consts.MAX_UINT160)) {
 			quotient = new(u256.Uint).Lsh(amount, 96)
 			quotient = new(u256.Uint).Div(quotient, liquidity)
 		} else {
-			quotient = u512.MulDiv(amount, u256.UnsafeFromDecimal(consts.Q96), liquidity)
+			quotient = u256.MulDiv(amount, u256.UnsafeFromDecimal(consts.Q96), liquidity)
 		}
 
 		quotient = new(u256.Uint).Sub(quotient, u256.One())
 		return new(u256.Uint).Add(sqrtPX96, quotient)
 	} else {
-		// println("FF")
 		if amount.Lte(u256.UnsafeFromDecimal(consts.MAX_UINT160)) {
 			value1 := new(u256.Uint).Lsh(amount, 96)
-			quotient = u512.DivRoundingUp(value1, liquidity)
-			// println("q1:", quotient.ToString())
+			quotient = u256.DivRoundingUp(value1, liquidity)
 		} else {
-			quotient = u512.MulDivRoundingUp(amount, u256.UnsafeFromDecimal(consts.Q96), liquidity)
-			// println("q2:", quotient.ToString())
+			quotient = u256.MulDiv(amount, u256.UnsafeFromDecimal(consts.Q96), liquidity)
 		}
-		// println("sqrtPX96:", sqrtPX96.ToString())
 
 		if !(sqrtPX96.Gt(quotient)) {
 			panic("position_sqrt price math #2")
@@ -113,7 +100,6 @@ func sqrtPriceMathGetNextSqrtPriceFromOutput(
 	amountOut *u256.Uint, // uint256
 	zeroForOne bool, // bool
 ) *u256.Uint { // uint160
-	// println("sqrtPriceMathGetNextSqrtPriceFromOutput:", zeroForOne)
 	if zeroForOne {
 		return sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountOut, false)
 	}
@@ -139,10 +125,10 @@ func sqrtPriceMathGetAmount0DeltaHelper(
 	}
 
 	if roundUp {
-		value1 := u512.MulDivRoundingUp(numerator1, numerator2, sqrtRatioBX96)
-		return u512.DivRoundingUp(value1, sqrtRatioAX96)
+		value1 := u256.MulDiv(numerator1, numerator2, sqrtRatioBX96)
+		return u256.DivRoundingUp(value1, sqrtRatioAX96)
 	} else {
-		value1 := u512.MulDiv(numerator1, numerator2, sqrtRatioBX96)
+		value1 := u256.MulDiv(numerator1, numerator2, sqrtRatioBX96)
 		return new(u256.Uint).Div(value1, sqrtRatioAX96)
 	}
 
@@ -160,10 +146,10 @@ func sqrtPriceMathGetAmount1DeltaHelper(
 
 	if roundUp {
 		value1 := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
-		return u512.MulDivRoundingUp(liquidity, value1, u256.UnsafeFromDecimal(consts.Q96))
+		return u256.MulDiv(liquidity, value1, u256.UnsafeFromDecimal(consts.Q96))
 	} else {
 		value1 := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
-		return u512.MulDiv(liquidity, value1, u256.UnsafeFromDecimal(consts.Q96))
+		return u256.MulDiv(liquidity, value1, u256.UnsafeFromDecimal(consts.Q96))
 	}
 }
 
