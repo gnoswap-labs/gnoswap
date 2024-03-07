@@ -8,26 +8,19 @@ import (
 )
 
 var (
-	govRealm string
-
 	// flagHalt is set to true when the emergency halt proposal is passed
 	// when this flag is set to true, all public functions in this package will panic
 	flagHalt bool
 )
 
 func init() {
-	govRealm = consts.GOV_PATH
 	flagHalt = false
 }
 
 func assertCalledByGovRealm() {
-	requirePrevRealmPath(
-		consts.GOV_PATH,
-		ufmt.Sprintf(
-			"[POOL] emergency_halt.gno__assertCalledByGovRealm() || only gov(%s) can call, but called from(%s)",
-			consts.GOV_PATH, std.PrevRealm().PkgPath(),
-		),
-	)
+	if std.PrevRealm().PkgPath() != consts.GOV_PATH {
+		panic(ufmt.Sprintf("[POOL] emergency_halt.gno__assertCalledByGovRealm() || only gov(%s) can call, but called from(%s)", consts.GOV_PATH, std.PrevRealm().PkgPath()))
+	}
 }
 
 func halt() {

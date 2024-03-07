@@ -12,7 +12,9 @@ import (
 
 func poolPathWithFeeDivide(poolPath string) (string, string, int) {
 	poolPathSplit := strings.Split(poolPath, ":")
-	require(len(poolPathSplit) == 3, ufmt.Sprintf("[ROUTER] _RPC_api.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath))
+	if len(poolPathSplit) != 3 {
+		panic(ufmt.Sprintf("[ROUTER] _RPC_api.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath))
+	}
 
 	feeInt, err := strconv.Atoi(poolPathSplit[2])
 	if err != nil {
@@ -24,7 +26,9 @@ func poolPathWithFeeDivide(poolPath string) (string, string, int) {
 
 func getDataForSinglePath(poolPath string) (string, string, uint32) {
 	datas := strings.Split(poolPath, ":")
-	require(len(datas) == 3, ufmt.Sprintf("[ROUTER] _util.gno__getDataForSinglePath() || len(datas) != 3 (poolPath:%s)", poolPath))
+	if len(datas) != 3 {
+		panic(ufmt.Sprintf("[ROUTER] _util.gno__getDataForSinglePath() || len(datas) != 3 (poolPath:%s)", poolPath))
+	}
 
 	token0 := datas[0]
 	token1 := datas[1]
@@ -73,12 +77,6 @@ func removeStringFromStringArr(arr []string, str string) []string {
 
 func a2u(addr std.Address) users.AddressOrName {
 	return users.AddressOrName(addr)
-}
-
-func require(cond bool, msg string) {
-	if !cond {
-		panic(msg)
-	}
 }
 
 func min(a, b int) int {

@@ -37,11 +37,15 @@ func DrySwapRoute(
 
 	// check route length ( should be 1 ~ 7 )
 	routes := strings.Split(strRouteArr, ",")
-	require(1 <= len(routes) && len(routes) <= 7, ufmt.Sprintf("[ROUTER] router_dry.gno__DrySwapRoute() || len(routes) should be 1 ~ 7 (len(routes)[%d])", len(routes)))
+	if !(1 <= len(routes) && len(routes) <= 7) {
+		panic(ufmt.Sprintf("[ROUTER] router_dry.gno__DrySwapRoute() || len(routes) should be 1 ~ 7 (len(routes)[%d])", len(routes)))
+	}
 
 	// check if routes length and quotes length are same
 	quotes := strings.Split(quoteArr, ",")
-	require(len(routes) == len(quotes), ufmt.Sprintf("[ROUTER] router_dry.gno__DrySwapRoute() || len(routes[%d]) != len(quotes[%d])", len(routes), len(quotes)))
+	if len(routes) != len(quotes) {
+		panic(ufmt.Sprintf("[ROUTER] router_dry.gno__DrySwapRoute() || len(routes[%d]) != len(quotes[%d])", len(routes), len(quotes)))
+	}
 
 	// check if quotes are up to 100%
 	quotesSum := int64(0)
@@ -49,7 +53,9 @@ func DrySwapRoute(
 		intQuote, _ := strconv.Atoi(quote)
 		quotesSum += int64(intQuote)
 	}
-	require(quotesSum == 100, "[ROUTER] router_dry.gno__DrySwapRoute() || quotesSum != 100")
+	if quotesSum != 100 {
+		panic(ufmt.Sprintf("[ROUTER] router_dry.gno__DrySwapRoute() || quotesSum != 100 (quotesSum)[%d]", quotesSum))
+	}
 
 	resultAmountIn := u256.Zero()
 	resultAmountOut := u256.Zero()
@@ -58,8 +64,9 @@ func DrySwapRoute(
 		numHops := strings.Count(route, "*POOL*") + 1
 		quote, _ := strconv.Atoi(quotes[i])
 
-		// check if route hop is up to 3
-		require(numHops <= 3, "[ROUTER] router_dry.gno__DrySwapRoute() || numHops > 3")
+		if numHops < 1 || numHops > 3 {
+			panic(ufmt.Sprintf("[ROUTER] router_dry.gno__DrySwapRoute() || numHops should be 1 ~ 3 (numHops)[%d]", numHops))
+		}
 
 		toSwap := i256.Zero().Mul(amountSpecified, i256.NewInt(int64(quote)))
 		toSwap = toSwap.Div(toSwap, i256.NewInt(100))

@@ -46,11 +46,15 @@ func SwapRoute(
 
 	// check route length ( should be 1 ~ 7 )
 	routes := strings.Split(strRouteArr, ",")
-	require(1 <= len(routes) && len(routes) <= 7, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || len(routes) should be 1 ~ 7 (len(routes):%d)", len(routes)))
+	if !(1 <= len(routes) && len(routes) <= 7) {
+		panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || len(routes) should be 1 ~ 7 (len(routes)[%d])", len(routes)))
+	}
 
 	// check if routes length and quotes length are same
 	quotes := strings.Split(quoteArr, ",")
-	require(len(routes) == len(quotes), "[ROUTER] router.gno__SwapRoute() || len(routes) != len(quotes)")
+	if len(routes) != len(quotes) {
+		panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || len(routes[%d]) != len(quotes[%d])", len(routes), len(quotes)))
+	}
 
 	// check if quotes are up to 100%
 	quotesSum := int64(0)
@@ -58,7 +62,9 @@ func SwapRoute(
 		intQuote, _ := strconv.Atoi(quote)
 		quotesSum += int64(intQuote)
 	}
-	require(quotesSum == 100, "[ROUTER] router.gno__SwapRoute() || quotesSum != 100")
+	if quotesSum != 100 {
+		panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || quotesSum != 100 (quotesSum)[%d]", quotesSum))
+	}
 
 	resultAmountIn := u256.Zero()
 	resultAmountOut := u256.Zero()
@@ -67,8 +73,9 @@ func SwapRoute(
 		numHops := strings.Count(route, "*POOL*") + 1
 		quote, _ := strconv.Atoi(quotes[i])
 
-		// check if route hop is up to 3
-		require(numHops <= 3, "[ROUTER] router.gno__SwapRoute() || numHops > 3")
+		if numHops < 1 || numHops > 3 {
+			panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || numHops should be 1 ~ 3 (numHops)[%d]", numHops))
+		}
 
 		toSwap := i256.Zero().Mul(amountSpecified, i256.NewInt(int64(quote)))
 		toSwap = toSwap.Div(toSwap, i256.NewInt(100))
@@ -90,10 +97,14 @@ func SwapRoute(
 	resultAmountOut = handleProtocolFee(outputToken, resultAmountOut, false)
 
 	if swapType == ExactIn {
-		require(tokenAmountLimit.Lte(resultAmountOut), ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received (expected minimum output:%s, actual output:%s)", _tokenAmountLimit, resultAmountOut.ToString()))
+		if !(tokenAmountLimit.Lte(resultAmountOut)) {
+			panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received for user (expected minimum received:%s, actual received:%s)", _tokenAmountLimit, resultAmountOut.ToString()))
+		}
 		return resultAmountOut.ToString()
 	} else { // EXACT_OUT
-		require(resultAmountIn.Lte(tokenAmountLimit), ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too much spend (expected maximum input:%s, actual input:%s)", _tokenAmountLimit, resultAmountIn.ToString()))
+		if !(resultAmountIn.Lte(tokenAmountLimit)) {
+			panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too much spend for user (expected maximum spend:%s, actual spend:%s)", _tokenAmountLimit, resultAmountIn.ToString()))
+		}
 		return resultAmountIn.ToString()
 	}
 }
@@ -160,7 +171,9 @@ func handleProtocolFee(outputToken string, amount *u256.Uint, isDry bool) *u256.
 
 	if !isDry {
 		ok := transferFromByRegisterCall(outputToken, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount.Uint64())
-		require(ok, "[ROUTER] router.gno__handleProtocolFee() || transferFromByRegisterCall failed")
+		if !ok {
+			panic(ufmt.Sprintf("[ROUTER] router.gno__handleProtocolFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", outputToken, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount.ToString()))
+		}
 	}
 
 	return new(u256.Uint).Sub(amount, feeAmount)

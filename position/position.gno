@@ -37,22 +37,10 @@ func Mint(
 		tickLower, tickUpper = -tickUpper, -tickLower
 	}
 
-	amount0Desired, err := u256.FromDecimal(_amount0Desired)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__Mint() || u256.FromDecimal(_amount0Desired: %s) failed", _amount0Desired))
-	}
-	amount1Desired, err := u256.FromDecimal(_amount1Desired)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__Mint() || u256.FromDecimal(_amount1Desired: %s) failed", _amount1Desired))
-	}
-	amount0Min, err := u256.FromDecimal(_amount0Min)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__Mint() || u256.FromDecimal(_amount0Min: %s) failed", _amount0Min))
-	}
-	amount1Min, err := u256.FromDecimal(_amount1Min)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__Mint() || u256.FromDecimal(_amount1Min: %s) failed", _amount1Min))
-	}
+	amount0Desired := u256.MustFromDecimal(_amount0Desired)
+	amount1Desired := u256.MustFromDecimal(_amount1Desired)
+	amount0Min := u256.MustFromDecimal(_amount0Min)
+	amount1Min := u256.MustFromDecimal(_amount1Min)
 
 	mintParams := MintParams{
 		token0:         token0,
@@ -87,7 +75,7 @@ func mint(params MintParams) (uint64, string, string, string) {
 	)
 
 	tokenId := nextId
-	nextId++ // nextId = nextId + 1
+	nextId++
 
 	gnft.Mint(a2u(std.GetOrigCaller()), tid(tokenId)) // owner, tokenId
 
@@ -120,22 +108,10 @@ func IncreaseLiquidity(
 	deadline int64,
 ) (uint64, string, string, string) { // tokenId, liquidity, amount0, amount1
 
-	amount0Desired, err := u256.FromDecimal(_amount0Desired)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__IncreaseLiquidity() || u256.FromDecimal(_amount0Desired: %s) failed", _amount0Desired))
-	}
-	amount1Desired, err := u256.FromDecimal(_amount1Desired)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__IncreaseLiquidity() || u256.FromDecimal(_amount1Desired: %s) failed", _amount1Desired))
-	}
-	amount0Min, err := u256.FromDecimal(_amount0Min)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__IncreaseLiquidity() || u256.FromDecimal(_amount0Min: %s) failed", _amount0Min))
-	}
-	amount1Min, err := u256.FromDecimal(_amount1Min)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__IncreaseLiquidity() || u256.FromDecimal(_amount1Min: %s) failed", _amount1Min))
-	}
+	amount0Desired := u256.MustFromDecimal(_amount0Desired)
+	amount1Desired := u256.MustFromDecimal(_amount1Desired)
+	amount0Min := u256.MustFromDecimal(_amount0Min)
+	amount1Min := u256.MustFromDecimal(_amount1Min)
 
 	increaseLiquidityParams := IncreaseLiquidityParams{
 		tokenId:        tokenId,
@@ -151,12 +127,16 @@ func IncreaseLiquidity(
 
 func increaseLiquidity(params IncreaseLiquidityParams) (uint64, string, string, string) {
 	// verify tokenId exists
-	require(exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
+	if !exists(params.tokenId) {
+		panic(ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
+	}
 
 	// MUST BE OWNER TO INCREASE LIQUIDITY
 	// can not be approved address > staked position can be modified
 	owner := gnft.OwnerOf(tid(params.tokenId))
-	require(owner == std.GetOrigCaller(), ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || only owner can increase liquidity__owner(%s) == std.GetOrigCaller(%s)", owner, std.GetOrigCaller()))
+	if owner != std.GetOrigCaller() {
+		panic(ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || only owner can increase liquidity__owner(%s) == std.GetOrigCaller(%s)", owner, std.GetOrigCaller()))
+	}
 
 	checkDeadline(params.deadline)
 
@@ -178,7 +158,6 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, string, string, 
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 
 	{
-		// position.tokensOwed0 += (feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / consts.Q128
 		value1 := new(u256.Uint).Sub(feeGrowthInside0LastX128.Clone(), position.feeGrowthInside0LastX128.Clone())
 		value2 := new(u256.Uint).Mul(value1, position.liquidity)
 		value3 := new(u256.Uint).Div(value2, u256.MustFromDecimal(consts.Q128))
@@ -186,7 +165,6 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, string, string, 
 	}
 
 	{
-		// position.tokensOwed1 += (feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128) * position.liquidity / consts.Q128
 		value1 := new(u256.Uint).Sub(feeGrowthInside1LastX128.Clone(), position.feeGrowthInside1LastX128.Clone())
 		value2 := new(u256.Uint).Mul(value1, position.liquidity)
 		value3 := new(u256.Uint).Div(value2, u256.MustFromDecimal(consts.Q128))
@@ -212,18 +190,9 @@ func DecreaseLiquidity(
 	_amount1Min string, // uint256
 	deadline int64,
 ) (uint64, string, string, string, string) { // tokenId, liquidity, amount0, amount1, poolPath
-	liquidity, err := u256.FromDecimal(_liquidity)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__DecreaseLiquidity() || u256.FromDecimal(_liquidity: %s) failed", _liquidity))
-	}
-	amount0Min, err := u256.FromDecimal(_amount0Min)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__DecreaseLiquidity() || u256.FromDecimal(_amount0Min: %s) failed", _amount0Min))
-	}
-	amount1Min, err := u256.FromDecimal(_amount1Min)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__DecreaseLiquidity() || u256.FromDecimal(_amount1Min: %s) failed", _amount1Min))
-	}
+	liquidity := u256.MustFromDecimal(_liquidity)
+	amount0Min := u256.MustFromDecimal(_amount0Min)
+	amount1Min := u256.MustFromDecimal(_amount1Min)
 
 	decreaseLiquidityParams := DecreaseLiquidityParams{
 		tokenId:    tokenId,
@@ -238,15 +207,21 @@ func DecreaseLiquidity(
 
 func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, string, string) {
 	// verify tokenId
-	require(exists(params.tokenId), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
+	if !exists(params.tokenId) {
+		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
+	}
 
 	// MUST BE OWNER TO DECREASE LIQUIDITY ( can not be approved address )
 	owner := gnft.OwnerOf(tid(params.tokenId))
-	require(owner == std.GetOrigCaller(), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || only owner can decrease liquidity__owner(%s) == std.GetOrigCaller(%s)", owner, std.GetOrigCaller()))
+	if owner != std.GetOrigCaller() {
+		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || only owner can decrease liquidity__owner(%s) == std.GetOrigCaller(%s)", owner, std.GetOrigCaller()))
+	}
 
 	checkDeadline(params.deadline)
 
-	require(params.liquidity.Gte(u256.Zero()), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidity(%d) >= 0", params.liquidity))
+	if params.liquidity.Lt(u256.Zero()) {
+		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidity(%d) >= 0", params.liquidity))
+	}
 
 	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
 	CollectFee(params.tokenId)
@@ -265,20 +240,17 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 	// BURN HERE
 	_burnedAmount0, _burnedAmount1 := pl.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, params.liquidity.Clone().ToString())
 
-	burnedAmount0, err := u256.FromDecimal(_burnedAmount0)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || u256.FromDecimal(_burnedAmount0: %s) failed", _burnedAmount0))
-	}
-	burnedAmount1, err := u256.FromDecimal(_burnedAmount1)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || u256.FromDecimal(_burnedAmount1: %s) failed", _burnedAmount1))
-	}
+	burnedAmount0 := u256.MustFromDecimal(_burnedAmount0)
+	burnedAmount1 := u256.MustFromDecimal(_burnedAmount1)
 
-	require(burnedAmount0.Gte(params.amount0Min) && burnedAmount1.Gte(params.amount1Min), ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || burnedAmount0(%s) >= amount0Min(%s) && burnedAmount1(%s) >= amount1Min(%s)", burnedAmount0.ToString(), params.amount0Min.ToString(), burnedAmount1.ToString(), params.amount1Min.ToString()))
+	cond0 := burnedAmount0.Gte(params.amount0Min)
+	cond1 := burnedAmount1.Gte(params.amount1Min)
+	if !(cond0 && cond1) {
+		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || burnedAmount0(%s) >= amount0Min(%s) && burnedAmount1(%s) >= amount1Min(%s)", burnedAmount0.ToString(), params.amount0Min.ToString(), burnedAmount1.ToString(), params.amount1Min.ToString()))
+	}
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
-
 	{
 		value1 := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
 		value2 := new(u256.Uint).Mul(value1, position.liquidity)
@@ -302,15 +274,15 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 	if feeGrowthInside0LastX128.IsZero() {
 		position.feeGrowthInside0LastX128 = u256.Zero()
 	} else {
-		_cloneFromDecimal := u256.MustFromDecimal(feeGrowthInside0LastX128.ToString())
-		position.feeGrowthInside0LastX128 = _cloneFromDecimal
+		_cloneMustFromDecimal := u256.MustFromDecimal(feeGrowthInside0LastX128.ToString())
+		position.feeGrowthInside0LastX128 = _cloneMustFromDecimal
 	}
 
 	if feeGrowthInside1LastX128.IsZero() {
 		position.feeGrowthInside1LastX128 = u256.Zero()
 	} else {
-		_cloneFromDecimal := u256.MustFromDecimal(feeGrowthInside1LastX128.ToString())
-		position.feeGrowthInside1LastX128 = _cloneFromDecimal
+		_cloneMustFromDecimal := u256.MustFromDecimal(feeGrowthInside1LastX128.ToString())
+		position.feeGrowthInside1LastX128 = _cloneMustFromDecimal
 	}
 
 	position.liquidity = new(u256.Uint).Sub(positionLiquidity, params.liquidity)
@@ -327,14 +299,8 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 		_burnedAmount0,
 		_burnedAmount1,
 	)
-	amount0, err := u256.FromDecimal(_amount0)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || u256.FromDecimal(_amount0: %s) failed", _amount0))
-	}
-	amount1, err := u256.FromDecimal(_amount1)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || u256.FromDecimal(_amount1: %s) failed", _amount1))
-	}
+	amount0 := u256.MustFromDecimal(_amount0)
+	amount1 := u256.MustFromDecimal(_amount1)
 
 	position.tokensOwed0 = new(u256.Uint).Sub(position.tokensOwed0, amount0)
 	position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
@@ -350,8 +316,10 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 }
 
 func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, tokensOwed0, tokensOwed1, poolPath
-	// verify tokenId exists
-	require(exists(tokenId), ufmt.Sprintf("[POSITION] position.gno__CollectFee() || tokenId(%d) doesn't exist", tokenId))
+	// verify tokenId
+	if !exists(tokenId) {
+		panic(ufmt.Sprintf("[POSITION] position.gno__CollectFee() || tokenId(%d) doesn't exist", tokenId))
+	}
 
 	// verify owner or approved
 	isAuthorizedForToken(tokenId)
@@ -402,14 +370,8 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 		consts.MAX_UINT64, // string, r3v4_xxx: current grc20 handles amount by `uint64`
 	)
 
-	amount0Uint, err := u256.FromDecimal(amount0)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__CollectFee() || u256.FromDecimal(amount0: %s) failed (err: %s)", amount0, err.Error()))
-	}
-	amount1Uint, err := u256.FromDecimal(amount1)
-	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] position.gno__CollectFee() || u256.FromDecimal(amount1: %s) failed (err: %s)", amount1, err.Error()))
-	}
+	amount0Uint := u256.MustFromDecimal(amount0)
+	amount1Uint := u256.MustFromDecimal(amount1)
 
 	position.tokensOwed0 = new(u256.Uint).Sub(tokensOwed0, amount0Uint)
 	position.tokensOwed1 = new(u256.Uint).Sub(tokensOwed1, amount1Uint)
@@ -426,39 +388,26 @@ func burnNFT(tokenId uint64) {
 
 	position := positions[tokenId]
 
-	require(position.isClear(), ufmt.Sprintf("[POSITION] position.gno__burnNFT() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1))
-
-	positions = deleteFromPositions(positions, tokenId)
+	if !(position.isClear()) {
+		panic(ufmt.Sprintf("[POSITION] position.gno__burnNFT() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1))
+	}
+	delete(positions, tokenId)
 	gnft.Burn(tid(tokenId))
 }
 
 func burnPosition(tokenId uint64) {
 	position := positions[tokenId]
-	require(position.isClear(), ufmt.Sprintf("[POSITION] position.gno__burnPosition() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1))
+	if !(position.isClear()) {
+		panic(ufmt.Sprintf("[POSITION] position.gno__burnPosition() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1))
+	}
 
 	position.burned = true
 	positions[tokenId] = position
 }
 
 func isAuthorizedForToken(tokenId uint64) {
-	require(isApprovedOrOwner(std.PrevRealm().Addr(), tokenId), ufmt.Sprintf("[POSITION] position.gno__isAuthorizedForToken() || caller(%s) is not approved or owner of tokenId(%d)", std.PrevRealm().Addr(), tokenId))
-}
-
-func deleteFromPositions(m map[uint64]Position, key uint64) map[uint64]Position {
-	if _, ok := m[key]; ok {
-		newMap := make(map[uint64]Position)
-		for k, v := range m {
-			if k != key {
-				newMap[k] = v
-			}
-		}
-
-		return newMap
+	if !(isApprovedOrOwner(std.PrevRealm().Addr(), tokenId)) {
+		panic(ufmt.Sprintf("[POSITION] position.gno__isAuthorizedForToken() || caller(%s) is not approved or owner of tokenId(%d)", std.PrevRealm().Addr(), tokenId))
 	}
 
-	return m
-}
-
-func (p Position) isClear() bool {
-	return p.liquidity.IsZero() && p.tokensOwed0.IsZero() && p.tokensOwed1.IsZero()
 }

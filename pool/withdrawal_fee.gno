@@ -21,7 +21,10 @@ func HandleWithdrawalFee(
 	token1Path string,
 	_amount1 string, // uint256
 ) (string, string) { // uint256 x2
-	requirePrevRealmPath(consts.POSITION_PATH, ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected std.PrevRealm().PkgPath()(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
+	// only position contract can call this function
+	if std.PrevRealm().PkgPath() != consts.POSITION_PATH {
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected std.PrevRealm().PkgPath()(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
+	}
 
 	amount0, err := u256.FromDecimal(_amount0)
 	if err != nil {
@@ -43,10 +46,14 @@ func HandleWithdrawalFee(
 	feeAmount1 = new(u256.Uint).Div(feeAmount1, u256.NewUint(100))
 
 	ok := transferFromByRegisterCall(token0Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount0.Uint64())
-	require(ok, ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token0Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount0))
+	if !ok {
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token0Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount0))
+	}
 
 	ok = transferFromByRegisterCall(token1Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount1.Uint64())
-	require(ok, ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token1Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount1))
+	if !ok {
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token1Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount1))
+	}
 
 	afterAmount0 := new(u256.Uint).Sub(amount0, feeAmount0)
 	afterAmount1 := new(u256.Uint).Sub(amount1, feeAmount1)
@@ -59,9 +66,13 @@ func SetWithdrawalFee(fee uint64) {
 	std.AssertOriginCall()
 
 	// MUST BE ADMIN
-	require(isAdmin(std.GetOrigCaller()), ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || caller(%s) must be admin", std.GetOrigCaller()))
+	if !(isAdmin(std.GetOrigCaller())) {
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || caller(%s) must be admin", std.GetOrigCaller()))
+	}
 
-	require(fee >= 0, ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || fee(%d) must be >= 0", fee))
+	if fee < 0 {
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || fee(%d) must be >= 0", fee))
+	}
 
 	withdrawalFee = fee
 }

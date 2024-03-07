@@ -271,7 +271,9 @@ func getRewardRatio(timestamp int64) uint64 {
 }
 
 func getTierRatio(tier uint64) uint64 {
-	require(tier >= 1 && tier <= 3, ufmt.Sprintf("[STAKER] reward_math.gno__getTierRatio() || tier(%d) >= 1 && tier(%d) <= 3", tier, tier))
+	if tier < 1 || tier > 3 {
+		panic(ufmt.Sprintf("[STAKER] reward_math.gno__getTierRatio() || tier(%d) must be 1 ~ 3", tier))
+	}
 
 	ratio1, ratio2, ratio3 := listTierRatio()
 	switch tier {
@@ -298,7 +300,9 @@ func listTierRatio() (uint64, uint64, uint64) {
 	// we'll divide by 100 later
 
 	numTier1, numTier2, numTier3 := getNumPoolTiers()
-	require(numTier1 > 0, ufmt.Sprintf("[STAKER] reward_math.gno__listTierRatio() || numTier1(%d) > 0 (numTier2:(%d), numTier3:(%d))", numTier1, numTier2, numTier3))
+	if numTier1 <= 0 {
+		panic(ufmt.Sprintf("[STAKER] reward_math.gno__listTierRatio() || at least 1 numTier1 need(%d), [numTier2:(%d), numTier3:(%d)]", numTier1, numTier2, numTier3))
+	}
 
 	if numTier2 == 0 && numTier3 == 0 { // only tier 1 exists
 		return 100, 0, 0
