@@ -71,7 +71,7 @@ func findRatios(maxHops int) []TokenRatio {
 		} else {
 			numRoutes := uint64(len(routes))
 
-			var _tokenRatioX96 *u256.Uint
+			_tokenRatioX96 := u256.Zero()
 
 			for _, route := range routes {
 				numHops := uint64(len(route.route))
@@ -87,7 +87,6 @@ func findRatios(maxHops int) []TokenRatio {
 			}
 			avgPriceX96 := new(u256.Uint).Div(_tokenRatioX96, u256.NewUint(numRoutes))
 			tokenRatio[token] = avgPriceX96
-
 		}
 	}
 	// LOOP FIN
@@ -113,36 +112,36 @@ func calculateTokenRatio(currentToken string, routes []PoolWithMeta, proceed int
 	if token1Path == currentToken {
 		poolSqrtPriceX96 := pool.PoolGetSlot0SqrtPriceX96()
 
-		priceX96 *= poolSqrtPriceX96 * poolSqrtPriceX96
+		sqrtX96 := new(u256.Uint).Mul(poolSqrtPriceX96, poolSqrtPriceX96)
+		priceX96 = new(u256.Uint).Mul(priceX96, sqrtX96)
 		currentToken = token0Path
 	} else if token0Path == currentToken {
 		poolTick := pool.PoolGetSlot0Tick()
 		oppositeTick := -poolTick
 		oppositeSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(oppositeTick)
 
-		priceX96 *= oppositeSqrtPriceX96 * oppositeSqrtPriceX96
+		oppSqrtX96 := new(u256.Uint).Mul(oppositeSqrtPriceX96, oppositeSqrtPriceX96)
+		priceX96 = new(u256.Uint).Mul(priceX96, oppSqrtX96)
 		currentToken = token1Path
 	} else {
 		// wrong condition
-		// panic("[ROUTER] _RPC_api.gno__calculateTokenRatio() || wrong condition")
+		panic("[ROUTER] _RPC_api.gno__calculateTokenRatio() || wrong condition")
 		return u256.Zero()
-
 	}
 
 	proceed += 1
 
-	if proceed == len(routes) { // numHops
-		for { // remove as much X96 as possible
-			tempPriceX96 := priceX96
-			priceX96 = new(u256.Uint).Div(priceX96, u256.UnsafeFromDecimal(consts.Q96))
+	for { // remove as much X96 as possible
+		tempPriceX96 := priceX96.Clone()
+		priceX96 = new(u256.Uint).Div(priceX96, u256.UnsafeFromDecimal(consts.Q96))
 
-			if priceX96.Lt(u256.UnsafeFromDecimal(consts.MIN_PRICE)) {
+		if priceX96.Lt(u256.UnsafeFromDecimal(consts.MIN_PRICE)) {
+			if proceed == len(routes) {
 				return tempPriceX96
 			}
+			return calculateTokenRatio(currentToken, routes, proceed, priceX96)
 		}
 	}
-
-	return calculateTokenRatio(currentToken, routes, proceed, priceX96)
 }
 
 func getTokenList() []string {

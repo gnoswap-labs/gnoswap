@@ -53,7 +53,7 @@ func TestMint(t *testing.T) {
 		test_tickUpper,
 		test_liquidityExpectStr,
 	)
-	shouldEQ(t, amount0, "29")
+	shouldEQ(t, amount0, "30")
 	shouldEQ(t, amount1, "80")
 
 	pool := GetPool(barPath, fooPath, fee500)

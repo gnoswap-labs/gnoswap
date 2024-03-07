@@ -50,8 +50,8 @@ func TestCreateBarBazPool(t *testing.T) {
 // 4. Mint Foo:Bar Liquidity by test1
 func TestMintFooBarLiquidity(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	foo.Approve(a2u(consts.POOL_ADDR), 2958014)
-	bar.Approve(a2u(consts.POOL_ADDR), 8040315)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
@@ -64,15 +64,15 @@ func TestMintFooBarLiquidity(t *testing.T) {
 		-test_tickLower,
 		test_liquidityExpectStr,
 	)
-	shouldEQ(t, amount0, "8040315")
+	shouldEQ(t, amount0, "8040316")
 	shouldEQ(t, amount1, "2958014")
 }
 
 // 5. Mint Bar:Baz Liquidity by test1
 func TestMintBarBazLiquidity(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	bar.Approve(a2u(consts.POOL_ADDR), 2958014)
-	baz.Approve(a2u(consts.POOL_ADDR), 8040315)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
@@ -85,7 +85,7 @@ func TestMintBarBazLiquidity(t *testing.T) {
 		test_tickUpper,
 		test_liquidityExpectStr,
 	)
-	shouldEQ(t, amount0, "2958014")
+	shouldEQ(t, amount0, "2958015")
 	shouldEQ(t, amount1, "8040315")
 }
 

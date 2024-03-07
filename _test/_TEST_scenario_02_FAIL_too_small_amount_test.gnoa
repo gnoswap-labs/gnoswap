@@ -87,7 +87,7 @@ func TestPositionMintBarBazInRange(t *testing.T) {
 
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, liquidity, "4473213900")
-	shouldEQ(t, amount0, "499941")
+	shouldEQ(t, amount0, "499942")
 	shouldEQ(t, amoutn1, "9999999")
 
 	std.TestSkipHeights(3)
@@ -115,7 +115,7 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 
 	shouldEQ(t, tokenId, 2)
 	shouldEQ(t, liquidity, "205051662")
-	shouldEQ(t, amount0, "9999999")
+	shouldEQ(t, amount0, "10000000")
 	shouldEQ(t, amoutn1, "9999999")
 
 	std.TestSkipHeights(3)

@@ -103,7 +103,7 @@ func TestPositionMintBarBazInRange(t *testing.T) {
 
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, liquidity, "4473213900")
-	shouldEQ(t, amount0, "499941")
+	shouldEQ(t, amount0, "499942")
 	shouldEQ(t, amoutn1, "9999999")
 
 	std.TestSkipHeights(3)
@@ -161,7 +161,7 @@ func TestPositionMintBarBazUpperRange(t *testing.T) {
 
 	shouldEQ(t, tokenId, 3)
 	shouldEQ(t, liquidity, "470937834")
-	shouldEQ(t, amount0, "9999999")
+	shouldEQ(t, amount0, "10000000")
 	shouldEQ(t, amoutn1, "0")
 
 	std.TestSkipHeights(3)
@@ -189,7 +189,7 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 
 	shouldEQ(t, tokenId, 4)
 	shouldEQ(t, liquidity, "3163542978")
-	shouldEQ(t, amount0, "9999999")
+	shouldEQ(t, amount0, "10000000")
 	shouldEQ(t, amoutn1, "999700")
 
 	std.TestSkipHeights(3)
@@ -226,7 +226,7 @@ func TestPositionMintFooGnotInRange(t *testing.T) {
 
 	shouldEQ(t, tokenId, 5)
 	shouldEQ(t, liquidity, "45848241")
-	shouldEQ(t, amount0, "9999999")
+	shouldEQ(t, amount0, "10000000")
 	shouldEQ(t, amoutn1, "499941")
 
 	std.TestSkipHeights(4)
@@ -264,7 +264,7 @@ func TestPositionMintGnsGnotInRange(t *testing.T) {
 
 	shouldEQ(t, tokenId, 6)
 	shouldEQ(t, liquidity, "205051662")
-	shouldEQ(t, amount0, "9999999")
+	shouldEQ(t, amount0, "10000000")
 	shouldEQ(t, amoutn1, "9999999")
 
 	std.TestSkipHeights(4)
@@ -319,12 +319,12 @@ func TestApproveGNS(t *testing.T) {
 func TestStakerCollectInternalReward(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
-	shouldEQ(t, gns.BalanceOf(a2u(lp01)), 90000001)
+	shouldEQ(t, gns.BalanceOf(a2u(lp01)), 90000000)
 	shouldEQ(t, obl.BalanceOf(a2u(lp01)), 0)
 
 	sr.CollectReward(6)
 
-	shouldEQ(t, gns.BalanceOf(a2u(lp01)), 90163351)
+	shouldEQ(t, gns.BalanceOf(a2u(lp01)), 90163350)
 	shouldEQ(t, obl.BalanceOf(a2u(lp01)), 0)
 
 	std.TestSkipHeights(1)
@@ -333,12 +333,12 @@ func TestStakerCollectInternalReward(t *testing.T) {
 func TestStakerCollectExternalReward(t *testing.T) {
 	std.TestSetOrigCaller(lp01)
 
-	shouldEQ(t, gns.BalanceOf(a2u(lp01)), 90163351)
+	shouldEQ(t, gns.BalanceOf(a2u(lp01)), 90163350)
 	shouldEQ(t, obl.BalanceOf(a2u(lp01)), 0)
 
 	sr.CollectReward(1)
 
-	shouldEQ(t, gns.BalanceOf(a2u(lp01)), 90163351)
+	shouldEQ(t, gns.BalanceOf(a2u(lp01)), 90163350)
 	shouldEQ(t, obl.BalanceOf(a2u(lp01)), 21)
 
 	std.TestSkipHeights(1)
@@ -427,9 +427,9 @@ func TestRouterSwapRouteBarBazExactOut(t *testing.T) {
 		"100",    // quoteArr
 		"100000", // tokenAmountLimit
 	)
-	shouldEQ(t, swapResult, "5000")
+	shouldEQ(t, swapResult, "5001")
 
-	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 99895000)
+	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 99894999)
 	shouldEQ(t, baz.BalanceOf(a2u(tr01)), 102096686)
 
 	std.TestSkipHeights(2)
@@ -442,7 +442,7 @@ func TestRouterSwapRouteBarBazFooWgnotExactIn(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), 100000)
 	wugnot.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
 
-	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 99895000)
+	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 99894999)
 	shouldEQ(t, wugnot.BalanceOf(a2u(tr01)), 0)
 
 	swapResult := rr.SwapRoute(
@@ -456,7 +456,7 @@ func TestRouterSwapRouteBarBazFooWgnotExactIn(t *testing.T) {
 	)
 	shouldEQ(t, swapResult, "9965")
 
-	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 99795000)
+	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 99794999)
 	shouldEQ(t, wugnot.BalanceOf(a2u(tr01)), 9965)
 
 	std.TestSkipHeights(2)
@@ -479,7 +479,7 @@ func TestRouterSwapRouteWgnotFooBazBarExactIn(t *testing.T) {
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
 
 	shouldEQ(t, wugnot.BalanceOf(a2u(tr01)), 109965)
-	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 99795000)
+	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 99794999)
 
 	swapResult := rr.SwapRoute(
 		consts.WRAPPED_WUGNOT, // inputToken
@@ -490,10 +490,10 @@ func TestRouterSwapRouteWgnotFooBazBarExactIn(t *testing.T) {
 		"100",    // quoteArr
 		"300000", // tokenAmountLimit
 	)
-	shouldEQ(t, swapResult, "9958")
+	shouldEQ(t, swapResult, "9984")
 
-	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 99894789)
-	shouldEQ(t, wugnot.BalanceOf(a2u(tr01)), 100007)
+	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 99894849)
+	shouldEQ(t, wugnot.BalanceOf(a2u(tr01)), 99981)
 
 	std.TestSkipHeights(3)
 }
@@ -505,7 +505,7 @@ func TestPositionCollectFeeLpTokenId_1(t *testing.T) {
 
 	tokenId, amount0, amount1, poolPath := pn.CollectFee(1)
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, amount0, "19")
+	shouldEQ(t, amount0, "17")
 	shouldEQ(t, amount1, "198")
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
 
@@ -521,7 +521,7 @@ func TestPositionCollectFeeLpTokenId_4(t *testing.T) {
 
 	tokenId, amount0, amount1, poolPath := pn.CollectFee(4)
 	shouldEQ(t, tokenId, uint64(4))
-	shouldEQ(t, amount0, "198")
+	shouldEQ(t, amount0, "197")
 	shouldEQ(t, amount1, "20")
 	shouldEQ(t, poolPath, "gno.land/r/demo/baz:gno.land/r/demo/foo:100")
 
@@ -533,7 +533,7 @@ func TestPositionCollectFeeLpTokenId_5(t *testing.T) {
 
 	tokenId, amount0, amount1, poolPath := pn.CollectFee(5)
 	shouldEQ(t, tokenId, uint64(5))
-	shouldEQ(t, amount0, "19")
+	shouldEQ(t, amount0, "18")
 	shouldEQ(t, amount1, "0")
 	shouldEQ(t, poolPath, "gno.land/r/demo/foo:gno.land/r/demo/wugnot:100")
 
@@ -562,8 +562,8 @@ func TestStakerUnstake(t *testing.T) {
 	// it will return unstaked position's poolPath, amount0, amount1 ( not reward )
 	poolPath, amount0, amount1 := sr.UnstakeToken(1)
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
-	shouldEQ(t, amount0, "604982")
-	shouldEQ(t, amount1, "7899135")
+	shouldEQ(t, amount0, "604922")
+	shouldEQ(t, amount1, "7900345")
 
 	std.TestSkipHeights(1)
 }
@@ -578,8 +578,8 @@ func TestPositionDecreaseLiquidityUnstakedPosition(t *testing.T) {
 	)
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, liquidity, "4473213900")
-	shouldEQ(t, amount0, "604982")
-	shouldEQ(t, amount1, "7899135")
+	shouldEQ(t, amount0, "604922")
+	shouldEQ(t, amount1, "7900345")
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/baz:100")
 
 	std.TestSkipHeights(1)

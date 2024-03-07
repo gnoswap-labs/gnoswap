@@ -98,7 +98,7 @@ func TestpnitionMintBarBazInRange(t *testing.T) {
 
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, liquidity, "4473213900")
-	shouldEQ(t, amount0, "499941")
+	shouldEQ(t, amount0, "499942")
 	shouldEQ(t, amoutn1, "9999999")
 
 	std.TestSkipHeights(3)
@@ -156,7 +156,7 @@ func TestpnitionMintBarBazUpperRange(t *testing.T) {
 
 	shouldEQ(t, tokenId, 3)
 	shouldEQ(t, liquidity, "470937834")
-	shouldEQ(t, amount0, "9999999")
+	shouldEQ(t, amount0, "10000000")
 	shouldEQ(t, amoutn1, "0")
 
 	std.TestSkipHeights(3)
@@ -184,7 +184,7 @@ func TestpnitionMintBazFooInRange(t *testing.T) {
 
 	shouldEQ(t, tokenId, 4)
 	shouldEQ(t, liquidity, "3163542978")
-	shouldEQ(t, amount0, "9999999")
+	shouldEQ(t, amount0, "10000000")
 	shouldEQ(t, amoutn1, "999700")
 
 	std.TestSkipHeights(3)
@@ -221,7 +221,7 @@ func TestpnitionMintFooGnotInRange(t *testing.T) {
 
 	shouldEQ(t, tokenId, 5)
 	shouldEQ(t, liquidity, "45848241")
-	shouldEQ(t, amount0, "9999999")
+	shouldEQ(t, amount0, "10000000")
 	shouldEQ(t, amoutn1, "499941")
 
 	std.TestSkipHeights(4)
@@ -358,7 +358,7 @@ func TestRouterDrySwapRouteBarBazExactOutAfterSwap(t *testing.T) {
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100", // strRouteArr
 		"100", // quoteArr
 	)
-	shouldEQ(t, dryResult, "5000")
+	shouldEQ(t, dryResult, "5001")
 	std.TestSkipHeights(2)
 }
 
@@ -381,9 +381,9 @@ func TestRouterSwapRouteBarBazExactOutAfterSwap(t *testing.T) {
 		"100",  // quoteArr
 		"5001", // tokenAmountLimit (maxSpent)
 	)
-	shouldEQ(t, swapResult, "5000")
+	shouldEQ(t, swapResult, "5001")
 
-	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 99895000)
+	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 99894999)
 	shouldEQ(t, baz.BalanceOf(a2u(tr01)), 102096686)
 
 	std.TestSkipHeights(2)

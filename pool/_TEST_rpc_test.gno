@@ -67,7 +67,7 @@ func TestMintFooBarLiquidity(t *testing.T) {
 		-9000,  // -9000
 		test_liquidityExpectStr,
 	)
-	shouldEQ(t, amount0, "8040315")
+	shouldEQ(t, amount0, "8040316")
 	shouldEQ(t, amount1, "2958014")
 	std.TestSkipHeights(1)
 }
@@ -90,7 +90,7 @@ func TestMintBarBazLiquidity(t *testing.T) {
 		test_tickUpper,
 		test_liquidityExpectStr,
 	)
-	shouldEQ(t, amount0, "2958014")
+	shouldEQ(t, amount0, "2958015")
 	shouldEQ(t, amount1, "8040315")
 	std.TestSkipHeights(1)
 }

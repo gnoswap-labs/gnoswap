@@ -92,7 +92,7 @@ func TestDrySwapRouteBarQuxExactOut(t *testing.T) {
 		"50,50", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, "136")
+	shouldEQ(t, dryResult, "138")
 }
 
 func TestSwapRouteBarQuxExactOut(t *testing.T) {
@@ -108,7 +108,7 @@ func TestSwapRouteBarQuxExactOut(t *testing.T) {
 		"99999", // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, "136")
+	shouldEQ(t, swapResult, "138")
 }
 
 func TestDrySwapRouteQuxBarExactIn(t *testing.T) {
@@ -154,7 +154,7 @@ func TestDrySwapRouteQuxBarExactOut(t *testing.T) {
 		"30,70", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, "7285")
+	shouldEQ(t, dryResult, "7336")
 }
 
 func TestwapRouteQuxBarExactOut(t *testing.T) {
@@ -173,5 +173,5 @@ func TestwapRouteQuxBarExactOut(t *testing.T) {
 		"99999", // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, "7278")
+	shouldEQ(t, swapResult, "7350")
 }

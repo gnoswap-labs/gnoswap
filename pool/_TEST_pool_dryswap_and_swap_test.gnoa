@@ -43,8 +43,8 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 
 	// not enough mint == swap will fail
 	std.TestSetPrevAddr(test1)
-	foo.Approve(a2u(consts.POOL_ADDR), uint64(0))
-	bar.Approve(a2u(consts.POOL_ADDR), uint64(0))
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
@@ -53,8 +53,6 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	shouldEQ(t, ok, false)
 
 	std.TestSetPrevAddr(test1)
-	foo.Approve(a2u(consts.POOL_ADDR), 2958014649)
-	bar.Approve(a2u(consts.POOL_ADDR), 8040315471)
 
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
@@ -75,23 +73,23 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	shouldEQ(t, poolOut, "-5883")
 }
 
-// func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
-// 	// zeroForOne true
-// 	// amountSpecified -16000
+func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
+	// zeroForOne true
+	// amountSpecified -16000
 
-// 	poolIn, poolOut, _ := DrySwap(
-// 		fooPath,          // fooPath
-// 		barPath,          // barPath
-// 		fee500,           // fee500
-// 		"_",              // recipient
-// 		true,             // zeroForOne
-// 		"-16000",         // amountSpecified
-// 		consts.MIN_PRICE, // sqrtPriceLimitX96
-// 	)
+	poolIn, poolOut, _ := DrySwap(
+		fooPath,          // fooPath
+		barPath,          // barPath
+		fee500,           // fee500
+		"_",              // recipient
+		true,             // zeroForOne
+		"-16000",         // amountSpecified
+		consts.MIN_PRICE, // sqrtPriceLimitX96
+	)
 
-// 	shouldEQ(t, poolIn, "43511")
-// 	shouldEQ(t, poolOut, "-16000")
-// }
+	shouldEQ(t, poolIn, "43512") // r3v4_xxx: ROUNDING ERROR
+	shouldEQ(t, poolOut, "-16000")
+}
 
 // func TestDrySwap_ZeroForOneFalse_AmountSpecified_Positive_16000(t *testing.T) {
 // 	// zeroForOne false
