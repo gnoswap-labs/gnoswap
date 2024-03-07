@@ -52,8 +52,8 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 func TestMintBarQux500(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	bar.Approve(a2u(consts.POOL_ADDR), 36789)
-	qux.Approve(a2u(consts.POOL_ADDR), 99999)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
 
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
@@ -72,14 +72,14 @@ func TestMintBarQux500(t *testing.T) {
 
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // test1
-	shouldEQ(t, amount0, "36789")
+	shouldEQ(t, amount0, "36790")
 	shouldEQ(t, amount1, "99999")
 }
 
 func TestMintBarBaz100(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	bar.Approve(a2u(consts.POOL_ADDR), 99999)
-	baz.Approve(a2u(consts.POOL_ADDR), 99999)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
 
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
@@ -98,14 +98,14 @@ func TestMintBarBaz100(t *testing.T) {
 
 	shouldEQ(t, tokenId, 2)
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // test1
-	shouldEQ(t, amount0, "99999")
+	shouldEQ(t, amount0, "100000")
 	shouldEQ(t, amount1, "99999")
 }
 
 func TestMintFooQux500(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	foo.Approve(a2u(consts.POOL_ADDR), 99999)
-	qux.Approve(a2u(consts.POOL_ADDR), 99999)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
 
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
@@ -124,7 +124,7 @@ func TestMintFooQux500(t *testing.T) {
 
 	shouldEQ(t, tokenId, 3)
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // test1
-	shouldEQ(t, amount0, "99999")
+	shouldEQ(t, amount0, "100000")
 	shouldEQ(t, amount1, "99999")
 }
 
