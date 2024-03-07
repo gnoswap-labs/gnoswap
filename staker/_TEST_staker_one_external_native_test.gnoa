@@ -48,8 +48,8 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 func TestPositionMint01(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	bar.Approve(a2u(consts.POOL_ADDR), 367)
-	foo.Approve(a2u(consts.POOL_ADDR), 999)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
 
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
@@ -68,7 +68,7 @@ func TestPositionMint01(t *testing.T) {
 
 	shouldEQ(t, lpTokenId, 1)
 	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // test1
-	shouldEQ(t, amount0, "367")
+	shouldEQ(t, amount0, "368")
 	shouldEQ(t, amount1, "999")
 
 	// approve nft to staker for staking
@@ -79,8 +79,8 @@ func TestPositionMint01(t *testing.T) {
 
 func TestPositionMint02(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	bar.Approve(a2u(consts.POOL_ADDR), 3978)
-	foo.Approve(a2u(consts.POOL_ADDR), 4999)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
 
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
@@ -99,7 +99,7 @@ func TestPositionMint02(t *testing.T) {
 
 	shouldEQ(t, lpTokenId, 2)
 	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // test1
-	shouldEQ(t, amount0, "3978")
+	shouldEQ(t, amount0, "3979")
 	shouldEQ(t, amount1, "4999")
 
 	// approve nft to staker
