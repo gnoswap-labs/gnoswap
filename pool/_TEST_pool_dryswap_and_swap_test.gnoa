@@ -87,7 +87,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 		consts.MIN_PRICE, // sqrtPriceLimitX96
 	)
 
-	shouldEQ(t, poolIn, "43512") 
+	shouldEQ(t, poolIn, "43512") // r3v4_xxx: ROUNDING ERROR
 	shouldEQ(t, poolOut, "-16000")
 }
 
