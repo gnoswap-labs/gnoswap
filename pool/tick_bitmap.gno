@@ -53,7 +53,7 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 		shift1LeftByBitPos := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
 
 		mask := shift1LeftByBitPos.Clone()
-		mask = new(u256.Uint).UnsafeSub(mask, u256.NewUint(1))
+		mask = new(u256.Uint).Sub(mask, u256.NewUint(1))
 		mask = new(u256.Uint).Add(mask, shift1LeftByBitPos.Clone())
 
 		// masked := pool.tickBitmaps[wordPos] & mask
@@ -75,7 +75,7 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 
 	shift1LeftByBitPos := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
 	_mask := shift1LeftByBitPos.Clone()
-	_mask = new(u256.Uint).UnsafeSub(_mask, u256.NewUint(1))
+	_mask = new(u256.Uint).Sub(_mask, u256.NewUint(1))
 	mask := bigintBitwiseNotForUint256BitmapIndexing(_mask)
 
 	pool.tickBitmaps[wordPos] = pool.tickBitmaps[wordPos].NilToZero()

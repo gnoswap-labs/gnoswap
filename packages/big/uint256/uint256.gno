@@ -28,15 +28,6 @@ type Uint struct {
 	arr [4]uint64
 }
 
-// func (x *Uint) Int() *Int {
-// 	// panic if x > MaxInt64
-// 	if x.arr[3] > 0x7fffffffffffffff {
-// 		panic("U256 Int overflow")
-// 	}
-
-// 	return &Int{v: *x}
-// }
-
 // NewUint returns a new initialized Uint.
 func NewUint(val uint64) *Uint {
 	z := &Uint{arr: [4]uint64{val, 0, 0, 0}}
@@ -76,6 +67,11 @@ func (z *Uint) IsZero() bool {
 func (z *Uint) Clear() *Uint {
 	z.arr[3], z.arr[2], z.arr[1], z.arr[0] = 0, 0, 0, 0
 	return z
+}
+
+// Neg returns -x mod 2**256.
+func (z *Uint) Neg(x *Uint) *Uint {
+	return z.Sub(new(Uint), x)
 }
 
 // SetAllOne sets all the bits of z to 1
@@ -166,13 +162,6 @@ func (z *Uint) SetOne() *Uint {
 	return z
 }
 
-// func (z *Uint) AddInt(x *Uint, y *Int) *Uint {
-// 	if y.IsNeg() {
-// 		return z.Sub(x, y.Abs())
-// 	}
-// 	return z.Add(x, y.Uint())
-// }
-
 // Add sets z to the sum x+y
 func (z *Uint) Add(x, y *Uint) *Uint {
 	var carry uint64
@@ -180,11 +169,6 @@ func (z *Uint) Add(x, y *Uint) *Uint {
 	z.arr[1], carry = Add64(x.arr[1], y.arr[1], carry)
 	z.arr[2], carry = Add64(x.arr[2], y.arr[2], carry)
 	z.arr[3], _ = Add64(x.arr[3], y.arr[3], carry)
-	// Different from the original implementation!
-	// We panic on overflow
-	if carry != 0 {
-		panic("U256 Add overflow")
-	}
 	return z
 }
 
@@ -229,24 +213,6 @@ func (z *Uint) Sub(x, y *Uint) *Uint {
 	z.arr[1], carry = Sub64(x.arr[1], y.arr[1], carry)
 	z.arr[2], carry = Sub64(x.arr[2], y.arr[2], carry)
 	z.arr[3], _ = Sub64(x.arr[3], y.arr[3], carry)
-
-	// Different from the original implementation!
-	// We panic on underflow
-	// r3v4 -> mconcat : why do we panic?
-	if carry != 0 {
-		panic("U256 Sub underflow")
-	}
-	return z
-}
-
-// Sub sets z to the difference x-y
-func (z *Uint) UnsafeSub(x, y *Uint) *Uint {
-	var carry uint64
-	z.arr[0], carry = Sub64(x.arr[0], y.arr[0], 0)
-	z.arr[1], carry = Sub64(x.arr[1], y.arr[1], carry)
-	z.arr[2], carry = Sub64(x.arr[2], y.arr[2], carry)
-	z.arr[3], _ = Sub64(x.arr[3], y.arr[3], carry)
-
 	return z
 }
 
@@ -272,7 +238,6 @@ func (z *Uint) Mul(x, y *Uint) *Uint {
 	res3 = res3 + x.arr[1]*y.arr[2] + carry
 
 	res.arr[3] = res3 + x.arr[0]*y.arr[3]
-	
 
 	return z.Set(&res)
 }
@@ -303,10 +268,9 @@ func (z *Uint) MulMod(x, y, m *Uint) *Uint {
 		pl Uint
 		ph Uint
 	)
-	// copy(pl[:], p[:4])
-	// copy(ph[:], p[4:])
 
 	pl = Uint{arr: [4]uint64{p[0], p[1], p[2], p[3]}}
+	ph = Uint{arr: [4]uint64{p[4], p[5], p[6], p[7]}}
 
 	// If the multiplication is within 256 bits use Mod().
 	if ph.IsZero() {
@@ -1008,7 +972,7 @@ func (z *Uint) fromDecimal(bs string) error {
 			z.SetUint64(num)
 		} else {
 			base := NewUint(num)
-			z.Add(z, base.Mul(base, mult))
+			z.UnsafeAdd(z, base.Mul(base, mult))
 		}
 		// Chop off another 19 characters
 		if remaining > 19 {

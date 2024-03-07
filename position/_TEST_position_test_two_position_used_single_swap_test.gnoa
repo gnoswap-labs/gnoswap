@@ -25,8 +25,8 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 func TestMintPosition01WideInRange(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	bar.Approve(a2u(consts.POOL_ADDR), 18394891)
-	foo.Approve(a2u(consts.POOL_ADDR), 49999999)
+	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
+	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -43,14 +43,14 @@ func TestMintPosition01WideInRange(t *testing.T) {
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, getNextId(), 2)
 	shouldEQ(t, liquidity, "318704392")
-	shouldEQ(t, amount0, "18394891")
+	shouldEQ(t, amount0, "18394892")
 	shouldEQ(t, amount1, "49999999")
 }
 
 func TestMintPositionTightInRange(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	bar.Approve(a2u(consts.POOL_ADDR), 18394891)
-	foo.Approve(a2u(consts.POOL_ADDR), 49999999)
+	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
+	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -67,7 +67,7 @@ func TestMintPositionTightInRange(t *testing.T) {
 	shouldEQ(t, tokenId, 2)
 	shouldEQ(t, getNextId(), 3)
 	shouldEQ(t, liquidity, "1228379121")
-	shouldEQ(t, amount0, "18394891")
+	shouldEQ(t, amount0, "18394892")
 	shouldEQ(t, amount1, "49999999")
 }
 
@@ -122,7 +122,7 @@ func TestCollectFeeAfterSwapPos1(t *testing.T) {
 func TestCollectFeeAfterSwapPos2(t *testing.T) {
 	tokenId, fee0, fee1, poolPath := CollectFee(2)
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, fee0, "486")
+	shouldEQ(t, fee0, "485")
 	shouldEQ(t, fee1, "0")
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }

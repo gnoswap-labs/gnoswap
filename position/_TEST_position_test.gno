@@ -28,8 +28,8 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 func TestMintPosition01InRange(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	bar.Approve(a2u(consts.POOL_ADDR), 18394891)
-	foo.Approve(a2u(consts.POOL_ADDR), 49999999)
+	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
+	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -45,14 +45,14 @@ func TestMintPosition01InRange(t *testing.T) {
 	)
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, getNextId(), 2)
-	shouldEQ(t, amount0, "18394891")
+	shouldEQ(t, amount0, "18394892")
 	shouldEQ(t, amount1, "49999999")
 }
 
 func TestMintPosition02LowerRange(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	bar.Approve(a2u(consts.POOL_ADDR), 0)
-	foo.Approve(a2u(consts.POOL_ADDR), 49999999)
+	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		barPath,
@@ -74,7 +74,7 @@ func TestMintPosition02LowerRange(t *testing.T) {
 
 func TestMintPosition03UpperRange(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	bar.Approve(a2u(consts.POOL_ADDR), 49999999)
+	bar.Approve(a2u(consts.POOL_ADDR), 50000000)
 	foo.Approve(a2u(consts.POOL_ADDR), 0)
 
 	tokenId, liquidity, amount0, amount1 := Mint(
@@ -91,7 +91,7 @@ func TestMintPosition03UpperRange(t *testing.T) {
 	)
 	shouldEQ(t, tokenId, 3)
 	shouldEQ(t, getNextId(), 4)
-	shouldEQ(t, amount0, "49999999")
+	shouldEQ(t, amount0, "50000000")
 	shouldEQ(t, amount1, "0")
 }
 

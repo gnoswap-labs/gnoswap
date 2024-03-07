@@ -46,13 +46,13 @@ func TestPositionMintGnsGnot(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	wugnot.Deposit()
 
-	gns.Approve(a2u(consts.POOL_ADDR), 36789)
-	wugnot.Approve(a2u(consts.POOL_ADDR), 99999)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout)
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, amount0, "36789") // 36789
-	shouldEQ(t, amount1, "99999") // 99999
+	shouldEQ(t, amount0, "36790")
+	shouldEQ(t, amount1, "99999")
 }
 
 func TestPositionMintGnotBar(t *testing.T) {
@@ -73,8 +73,8 @@ func TestPositionMintGnotBar(t *testing.T) {
 
 	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.WRAPPED_WUGNOT, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout)
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, amount0, "99999") // 99999
-	shouldEQ(t, amount1, "36789") // 36789
+	shouldEQ(t, amount0, "100000") // 100000
+	shouldEQ(t, amount1, "36789")  // 36789
 }
 
 func TestDrySwapRouteGnsBarExactIn(t *testing.T) {

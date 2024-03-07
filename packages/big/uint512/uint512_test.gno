@@ -30,7 +30,7 @@ func TestFunc2(t *testing.T) {
 	sqrtA := u256.UnsafeFromDecimal("79228162514264337593543950337")
 
 	z := MulDiv(x, y, sqrtB)
-	println("num1 * num2 / sqrtB:", z.ToString())
+	// println("num1 * num2 / sqrtB:", z.ToString())
 
 	r := DivRoundingUp(z, sqrtA)
 	println("num1 * num2 / sqrtB / sqrtA:", r.ToString())

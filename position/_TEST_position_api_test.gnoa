@@ -62,7 +62,7 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 	tokneId, fee0, fee1, fromPath := CollectFee(1)
 	shouldEQ(t, tokneId, uint64(1))
-	shouldEQ(t, fee0, "61")
+	shouldEQ(t, fee0, "60")
 	shouldEQ(t, fee1, "0")
 	shouldEQ(t, fromPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }

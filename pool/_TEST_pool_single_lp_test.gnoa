@@ -1,24 +1,18 @@
 package pool
 
 import (
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	"std"
-	"testing"
-
-========
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 	"encoding/gjson"
 	"std"
 	"strconv"
 	"testing"
 
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/gns"
+
 	"gno.land/r/demo/consts"
 
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	"gno.land/p/demo/u256"
-========
 	u256 "gno.land/p/big/uint256"
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 )
 
 var (
@@ -33,37 +27,24 @@ var (
 
 // 1. Init & Create Pool using Factory Contract by Gnoswap Admin
 func TestInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(gsa)
 	InitManual()
 
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	std.TestSetOrigCaller(test1)
-	CreatePool(barPath, fooPath, fee500, 130621891405341611593710811006)
-
-	// sqrtPrice
-	// 130621891405341611593710811006 // tick = 10000
-	shouldPanic(t, func() { CreatePool(barPath, fooPath, 500, 130621891405341611593710811006) })
-========
 	std.TestSetPrevAddr(test1)
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // x2.7
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 }
 
 // 2. Mint by test1
 func TestMint(t *testing.T) {
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-========
 	std.TestSetPrevAddr(test1)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
-
-	Mint(
+	amount0, amount1 := Mint(
 		fooPath,
 		barPath,
 		fee500,
@@ -72,19 +53,12 @@ func TestMint(t *testing.T) {
 		test_tickUpper,
 		test_liquidityExpectStr,
 	)
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-
-	pool := GetPool(barPath, fooPath, fee500)
-	test_liquidity := pool.PoolGetLiquidity()
-	shouldEQ(t, test_liquidity.Eq(u256.FromBigint(test_liquidityExpect)), true)
-========
-	shouldEQ(t, amount0, "29")
+	shouldEQ(t, amount0, "30")
 	shouldEQ(t, amount1, "80")
 
 	pool := GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity.Dec(), test_liquidityExpectStr)
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr)
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr)
@@ -103,11 +77,7 @@ func TestMint(t *testing.T) {
 	shouldEQ(t, m82, m102)
 
 	test_liquidity = pool.PoolGetLiquidity()
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	shouldEQ(t, test_liquidity.Eq(u256.FromBigint(test_liquidityExpect*10)), true)
-========
 	shouldEQ(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))))
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 
 	// tickLower > currentTick == don't add to current liquidity
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower2, test_tickUpper2, test_liquidityExpectStr)
@@ -133,26 +103,8 @@ func TestMint(t *testing.T) {
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr)
 
 	test_liquidity = pool.PoolGetLiquidity()
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	shouldEQ(t, test_liquidity.Eq(u256.FromBigint(test_liquidityExpect*10)), true)
-
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpect)
-
-	test_liquidity = pool.PoolGetLiquidity()
-	shouldEQ(t, test_liquidity.Eq(u256.FromBigint(test_liquidityExpect*20)), true)
-========
 	shouldEQ(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20))))
 
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 }
 
 // 3. Burn by test1
@@ -167,43 +119,23 @@ func TestBurn(t *testing.T) {
 
 	pool := GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.PoolGetLiquidity()
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	shouldEQ(t, test_liquidity.Eq(u256.FromBigint(test_liquidityExpect*18)), true)
-========
 	shouldEQ(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(18))))
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(8)).ToString())
 	test_liquidity = pool.PoolGetLiquidity()
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	shouldEQ(t, test_liquidity.Eq(u256.FromBigint(test_liquidityExpect*10)), true)
-========
 	shouldEQ(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))))
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, "1")
 	test_liquidity = pool.PoolGetLiquidity()
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	shouldEQ(t, test_liquidity.Eq(u256.FromBigint(9999)), true)
-========
 	shouldEQ(t, test_liquidity.ToString(), "9999")
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, "999")
 	test_liquidity = pool.PoolGetLiquidity()
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	shouldEQ(t, test_liquidity.Eq(u256.FromBigint(test_liquidityExpect*9)), true)
-========
 	shouldEQ(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9))))
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9)).ToString())
 	test_liquidity = pool.PoolGetLiquidity()
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	shouldEQ(t, test_liquidity.IsZero(), true)
-========
 	shouldEQ(t, test_liquidity.ToString(), "0")
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 }
 
 // 4. Collect
@@ -217,11 +149,7 @@ func TestCollect(t *testing.T) {
 	// pool should have zero liquidity
 	pool := GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.PoolGetLiquidity()
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	shouldEQ(t, test_liquidity.IsZero(), true)
-========
 	shouldEQ(t, test_liquidity.ToString(), "0")
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
@@ -262,11 +190,7 @@ func TestCollect(t *testing.T) {
 func TestSwap(t *testing.T) {
 	pool := GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.PoolGetLiquidity()
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	shouldEQ(t, test_liquidity.IsZero(), true)
-========
 	shouldEQ(t, test_liquidity.ToString(), "0")
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
@@ -384,11 +308,11 @@ func TestSwap(t *testing.T) {
 // 6. SetFeeProtocol by Gnoswap Admin
 func TestSetFeeProtocol(t *testing.T) {
 	// non admin call
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	shouldPanic(t, func() { SetFeeProtocol(2, 2) })
 
 	// admin call
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	SetFeeProtocol(6, 8)
 
 	for _, pool := range pools {
@@ -398,8 +322,7 @@ func TestSetFeeProtocol(t *testing.T) {
 
 // 7. CollectProtocol by Gnoswap Admin
 func TestCollectProtocol(t *testing.T) {
-	std.TestSetOrigCaller(test1)
-
+	std.TestSetOrigCaller(gsa)
 	SetFeeProtocol(6, 8)
 	pool := GetPool(barPath, fooPath, fee500)
 	test_slot0 := pool.PoolGetSlot0()
@@ -416,13 +339,8 @@ func TestCollectProtocol(t *testing.T) {
 		test1OldToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		test1OldToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
 
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-		std.TestSetPrevAddr(test1)
-		amount0, amount1 := CollectProtocol(barPath, fooPath, fee500, test1, u256.NewUint(100000), u256.NewUint(100000))
-========
 		std.TestSetPrevAddr(gsa)
 		amount0, amount1 := CollectProtocol(barPath, fooPath, fee500, test1, "100000", "100000")
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 
 		test1NewToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 		test1NewToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
@@ -430,27 +348,11 @@ func TestCollectProtocol(t *testing.T) {
 		_token0Diff := test1NewToken0Bal - test1OldToken0Bal
 		_token1Diff := test1NewToken1Bal - test1OldToken1Bal
 
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	{
-		std.TestSetPrevRealm(consts.ROUTER_PATH)
-		std.TestSetOrigCaller(test1)
-		Swap(barPath, fooPath, fee500, test1, false, 200000, consts.MAX_SQRT_RATIO-1, std.GetOrigCaller()) // swap token0 -> token1 => fee only in token0
-
-		test1OldToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
-		test1OldToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
-
-		std.TestSetPrevAddr(test1)
-		amount0, amount1 := CollectProtocol(barPath, fooPath, fee500, test1, u256.NewUint(100000), u256.NewUint(100000))
-
-		test1NewToken0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
-		test1NewToken1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
-========
 		token0DiffStr := strconv.Itoa(int(_token0Diff))
 		token1DiffStr := strconv.Itoa(int(_token1Diff))
 
 		shouldEQ(t, token0DiffStr, amount0)
 		shouldEQ(t, token1DiffStr, amount1)
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 	}
 }
 
@@ -459,13 +361,8 @@ func TestApiGetPools(t *testing.T) {
 	gpls := ApiGetPools()
 	jsonStr := gjson.Parse(gpls)
 
-<<<<<<<< HEAD:pool/_TEST_pool_single_lp_test.gno_OK
-	shouldEQ(t, jsonStr.Get("stat.height").Int(), GetHeight())
-	shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), GetTimestamp())
-========
 	// shouldEQ(t, jsonStr.Get("stat.height").Int(), std.GetHeight())
 	// shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), time.Now().Unix())
->>>>>>>> 486effd (feat: uint256, int256 instead of bigint):pool/_TEST_pool_single_lp_test.gno
 
 	// shouldEQ(t, len(jsonStr.Get("response").Array()), 1)
 }

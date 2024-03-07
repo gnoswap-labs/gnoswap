@@ -5,14 +5,13 @@ import (
 )
 
 func TestFuncs(t *testing.T) {
-	x := NewUint(0)
-	y := NewUint(1)
+	x := UnsafeFromDecimal("79188548433007205424747178")
+	y := UnsafeFromDecimal("130406999485845074795897568971")
 
-	// println(x.Dec())
+	z := new(Uint).Add(x, y)
+	println("z:", z.ToString()) // 130486188034278082001322316149
 
-	var m256 bigint = 115792089237316195423570985008687907853269984665640564039457584007913129639935
-
-	z := FromBigint(m256)
-
-	println(z.Dec())
+	if z.ToString() != "130486188034278082001322316149" {
+		t.Error("Expected 130486188034278082001322316149, got ", z.ToString())
+	}
 }
