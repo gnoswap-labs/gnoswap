@@ -36,9 +36,6 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 		params.tickUpper,     // tickUpper int32
 		liquidity.ToString(), // _liquidityAmount string(uint128)
 	)
-	println("amount0:", amount0)
-	println("amount1:", amount1)
-	panic("FIX 0 2")
 
 	amount0Uint, err := u256.FromDecimal(amount0)
 	if err != nil {
