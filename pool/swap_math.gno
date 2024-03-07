@@ -18,10 +18,6 @@ func swapMathComputeSwapStep(
 	// NEGATIVE == EXACT_OUT => Estimated AmountIn
 	exactIn := !(amountRemaining.IsNeg()) // amountRemaining >= 0
 
-	// println()
-	// println("exactIn", exactIn)                     // f
-	// println("isToken1Expensive", isToken1Expensive) // t
-
 	if exactIn {
 		amountRemainingLessFee := u256.Zero()
 
@@ -53,15 +49,8 @@ func swapMathComputeSwapStep(
 		}
 
 		if amountRemaining.Abs().Gte(amountOut) {
-			// println(3)
 			sqrtRatioNextX96 = sqrtRatioTargetX96
 		} else {
-			// println(4)
-			// println("sqrtRatioCurrentX96:", sqrtRatioCurrentX96.ToString())
-			// println("liquidity:", liquidity.ToString())
-			// println("amountRemaining.Abs():", amountRemaining.Abs().ToString())
-			// println("isToken1Expensive:", isToken1Expensive)
-			// println("<< SQRT")
 			sqrtRatioNextX96 = sqrtPriceMathGetNextSqrtPriceFromOutput(
 				sqrtRatioCurrentX96,
 				liquidity,
@@ -114,6 +103,5 @@ func swapMathComputeSwapStep(
 	if !exactIn && !(amountOut.IsZero()) {
 		amountOut = amountOut.Add(amountOut, u256.NewUint(1))
 	}
-	// println()
 	return sqrtRatioNextX96, amountIn, amountOut, feeAmount
 }
