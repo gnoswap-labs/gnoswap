@@ -21,7 +21,7 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 func calcIntermediateValue(sqrtRatioAX96, sqrtRatioBX96 *u256.Uint) *u256.Uint {
 
 	res := new(u256.Uint).Mul(sqrtRatioAX96, sqrtRatioBX96)
-	res = res.Div(res, u256.UnsafeFromDecimal(consts.Q96))
+	res = res.Div(res, u256.MustFromDecimal(consts.Q96))
 	return res
 }
 
@@ -42,7 +42,7 @@ func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
 	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
-	res := new(u256.Uint).Mul(amount1, u256.UnsafeFromDecimal(consts.Q96))
+	res := new(u256.Uint).Mul(amount1, u256.MustFromDecimal(consts.Q96))
 	res = res.Div(res, diff)
 	return res
 }
@@ -91,7 +91,7 @@ func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
 	res := new(u256.Uint).Mul(liquidity, diff)
-	res = res.Div(res, u256.UnsafeFromDecimal(consts.Q96))
+	res = res.Div(res, u256.MustFromDecimal(consts.Q96))
 
 	return res
 }

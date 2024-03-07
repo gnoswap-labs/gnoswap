@@ -50,7 +50,7 @@ func userClaimedRewardAmount(address std.Address, tokenId uint64, rewardTokenPat
 }
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) *u256.Uint {
-	_q96 := u256.UnsafeFromDecimal(consts.Q96)
+	_q96 := u256.MustFromDecimal(consts.Q96)
 
 	// r3v4_xxx: calculate amount of `GNS` to be minted by every block
 	// 1. get block creation time (5s for now)
@@ -98,7 +98,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) *u25
 }
 
 func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, incentive Incentive) *u256.Uint {
-	_q96 := u256.UnsafeFromDecimal(consts.Q96)
+	_q96 := u256.MustFromDecimal(consts.Q96)
 
 	// 1 month reward amount
 	incentiveDuration := incentive.endTimestamp - incentive.startTimestamp
@@ -168,7 +168,7 @@ func getPoolTotalStakedLiquidity(poolPath string) *u256.Uint {
 }
 
 func getMyLiquidityRatio(poolPath string, tokenId uint64) *u256.Uint {
-	_q96 := u256.UnsafeFromDecimal(consts.Q96)
+	_q96 := u256.MustFromDecimal(consts.Q96)
 
 	poolStakedLiquidity := getPoolTotalStakedLiquidity(poolPath)
 
@@ -190,7 +190,7 @@ func getMyLiquidityRatio(poolPath string, tokenId uint64) *u256.Uint {
 
 // get current pool tier and reward ratio
 func getPoolTierAndRatio(poolPath string) (uint64, *u256.Uint) {
-	_q96 := u256.UnsafeFromDecimal(consts.Q96)
+	_q96 := u256.MustFromDecimal(consts.Q96)
 
 	poolPath = poolKeyDivide(poolPath)
 

@@ -2,10 +2,10 @@
 package uint256
 
 func fullMul(
-	x Uint,
-	y Uint,
-) (Uint, Uint) { // l, h
-	mm := new(*Uint).MulMod(x, y, UnsafeFromDecimal(MAX_UINT256))
+	x *Uint,
+	y *Uint,
+) (*Uint, *Uint) { // l, h
+	mm := new(Uint).MulMod(x, y, MustFromDecimal(MAX_UINT256))
 
 	l := new(Uint).Mul(x, y)
 	h := new(Uint).Sub(mm, l)
@@ -18,10 +18,10 @@ func fullMul(
 }
 
 func fullDiv(
-	l Uint,
-	h Uint,
-	d Uint,
-) Uint {
+	l *Uint,
+	h *Uint,
+	d *Uint,
+) *Uint {
 	// uint256 pow2 = d & -d;
 	// d
 	_negD := new(Uint).Neg(d)
@@ -31,10 +31,10 @@ func fullDiv(
 
 	_negPow2 := new(Uint).Neg(pow2)
 
-	value1 := new(Uint).Div(_negPow2, pow2)      // (-pow2) / pow2
-	value2 := new(Uint).UnsafeAdd(value1, One()) // (-pow2) / pow2 + 1)
-	value3 := new(Uint).Mul(h, value2)           // h * ((-pow2) / pow2 + 1);
-	l = new(Uint).UnsafeAdd(l, value3)
+	value1 := new(Uint).Div(_negPow2, pow2) // (-pow2) / pow2
+	value2 := new(Uint).Add(value1, One())  // (-pow2) / pow2 + 1)
+	value3 := new(Uint).Mul(h, value2)      // h * ((-pow2) / pow2 + 1);
+	l = new(Uint).Add(l, value3)
 
 	r := One()
 	for i := 0; i < 8; i++ {
@@ -47,10 +47,10 @@ func fullDiv(
 }
 
 func MulDiv(
-	x Uint,
-	y Uint,
-	d Uint,
-) Uint {
+	x *Uint,
+	y *Uint,
+	d *Uint,
+) *Uint {
 	l, h := fullMul(x, y)
 	mm := new(Uint).MulMod(x, y, d)
 
@@ -71,9 +71,9 @@ func MulDiv(
 }
 
 func DivRoundingUp(
-	x Uint,
-	y Uint,
-) Uint {
+	x *Uint,
+	y *Uint,
+) *Uint {
 	div := new(Uint).Div(x, y)
 
 	mod := new(Uint).Mod(x, y)
@@ -81,7 +81,7 @@ func DivRoundingUp(
 }
 
 // HELPERs
-func lt(x, y Uint) Uint {
+func lt(x, y *Uint) *Uint {
 	if x.Lt(y) {
 		return One()
 	} else {
@@ -89,7 +89,7 @@ func lt(x, y Uint) Uint {
 	}
 }
 
-func gt(x, y Uint) Uint {
+func gt(x, y *Uint) *Uint {
 	if x.Gt(y) {
 		return One()
 	} else {

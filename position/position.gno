@@ -181,7 +181,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, string, string, 
 		// position.tokensOwed0 += (feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128) * position.liquidity / consts.Q128
 		value1 := new(u256.Uint).Sub(feeGrowthInside0LastX128.Clone(), position.feeGrowthInside0LastX128.Clone())
 		value2 := new(u256.Uint).Mul(value1, position.liquidity)
-		value3 := new(u256.Uint).Div(value2, u256.UnsafeFromDecimal(consts.Q128))
+		value3 := new(u256.Uint).Div(value2, u256.MustFromDecimal(consts.Q128))
 		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, value3)
 	}
 
@@ -189,7 +189,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, string, string, 
 		// position.tokensOwed1 += (feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128) * position.liquidity / consts.Q128
 		value1 := new(u256.Uint).Sub(feeGrowthInside1LastX128.Clone(), position.feeGrowthInside1LastX128.Clone())
 		value2 := new(u256.Uint).Mul(value1, position.liquidity)
-		value3 := new(u256.Uint).Div(value2, u256.UnsafeFromDecimal(consts.Q128))
+		value3 := new(u256.Uint).Div(value2, u256.MustFromDecimal(consts.Q128))
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, value3)
 	}
 
@@ -282,7 +282,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 	{
 		value1 := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
 		value2 := new(u256.Uint).Mul(value1, position.liquidity)
-		value3 := new(u256.Uint).Div(value2, u256.UnsafeFromDecimal(consts.Q128))
+		value3 := new(u256.Uint).Div(value2, u256.MustFromDecimal(consts.Q128))
 		value4 := new(u256.Uint).Add(burnedAmount0, value3)
 
 		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, value4)
@@ -291,7 +291,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 	{
 		value1 := new(u256.Uint).Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
 		value2 := new(u256.Uint).Mul(value1, position.liquidity)
-		value3 := new(u256.Uint).Div(value2, u256.UnsafeFromDecimal(consts.Q128))
+		value3 := new(u256.Uint).Div(value2, u256.MustFromDecimal(consts.Q128))
 		value4 := new(u256.Uint).Add(burnedAmount1, value3)
 
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, value4)
@@ -302,14 +302,14 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 	if feeGrowthInside0LastX128.IsZero() {
 		position.feeGrowthInside0LastX128 = u256.Zero()
 	} else {
-		_cloneFromDecimal := u256.UnsafeFromDecimal(feeGrowthInside0LastX128.ToString())
+		_cloneFromDecimal := u256.MustFromDecimal(feeGrowthInside0LastX128.ToString())
 		position.feeGrowthInside0LastX128 = _cloneFromDecimal
 	}
 
 	if feeGrowthInside1LastX128.IsZero() {
 		position.feeGrowthInside1LastX128 = u256.Zero()
 	} else {
-		_cloneFromDecimal := u256.UnsafeFromDecimal(feeGrowthInside1LastX128.ToString())
+		_cloneFromDecimal := u256.MustFromDecimal(feeGrowthInside1LastX128.ToString())
 		position.feeGrowthInside1LastX128 = _cloneFromDecimal
 	}
 
@@ -377,14 +377,14 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 	{
 		value1 := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
 		value2 := new(u256.Uint).Mul(value1, position.liquidity)
-		value3 := new(u256.Uint).Div(value2, u256.UnsafeFromDecimal(consts.Q128))
+		value3 := new(u256.Uint).Div(value2, u256.MustFromDecimal(consts.Q128))
 		tokensOwed0 = new(u256.Uint).Add(tokensOwed0, value3)
 	}
 
 	{
 		value1 := new(u256.Uint).Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
 		value2 := new(u256.Uint).Mul(value1, position.liquidity)
-		value3 := new(u256.Uint).Div(value2, u256.UnsafeFromDecimal(consts.Q128))
+		value3 := new(u256.Uint).Div(value2, u256.MustFromDecimal(consts.Q128))
 		tokensOwed1 = new(u256.Uint).Add(tokensOwed1, value3)
 	}
 

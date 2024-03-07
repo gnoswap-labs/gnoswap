@@ -13,8 +13,8 @@ type bitShift struct {
 
 func bitMathMostSignificantBit(x *u256.Uint) uint8 {
 	shifts := []bitShift{
-		{u256.UnsafeFromDecimal(consts.Q128), 128}, // 2^128
-		{u256.UnsafeFromDecimal(consts.Q64), 64},   // 2^64
+		{u256.MustFromDecimal(consts.Q128), 128}, // 2^128
+		{u256.MustFromDecimal(consts.Q64), 64},   // 2^64
 		{u256.NewUint(0x100000000), 32},
 		{u256.NewUint(0x10000), 16},
 		{u256.NewUint(0x100), 8},
@@ -36,11 +36,11 @@ func bitMathMostSignificantBit(x *u256.Uint) uint8 {
 
 func bitMathLeastSignificantBit(x *u256.Uint) uint8 {
 	shifts := []bitShift{
-		{u256.UnsafeFromDecimal(consts.MAX_UINT128), 128},
-		{u256.UnsafeFromDecimal(consts.MAX_UINT64), 64},
-		{u256.UnsafeFromDecimal(consts.MAX_UINT32), 32},
-		{u256.UnsafeFromDecimal(consts.MAX_UINT16), 16},
-		{u256.UnsafeFromDecimal(consts.MAX_UINT8), 8},
+		{u256.MustFromDecimal(consts.MAX_UINT128), 128},
+		{u256.MustFromDecimal(consts.MAX_UINT64), 64},
+		{u256.MustFromDecimal(consts.MAX_UINT32), 32},
+		{u256.MustFromDecimal(consts.MAX_UINT16), 16},
+		{u256.MustFromDecimal(consts.MAX_UINT8), 8},
 		{u256.NewUint(0xf), 4},
 		{u256.NewUint(0x3), 2},
 		{u256.NewUint(0x1), 1},
