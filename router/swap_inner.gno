@@ -24,9 +24,9 @@ func _swap(
 
 	if sqrtPriceLimitX96.IsZero() {
 		if zeroForOne {
-			sqrtPriceLimitX96 = u256.UnsafeFromDecimal(consts.MIN_PRICE)
+			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MIN_PRICE)
 		} else {
-			sqrtPriceLimitX96 = u256.UnsafeFromDecimal(consts.MAX_PRICE)
+			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MAX_PRICE)
 		}
 	}
 
@@ -71,9 +71,9 @@ func _swapDry(
 
 	if sqrtPriceLimitX96.IsZero() {
 		if zeroForOne {
-			sqrtPriceLimitX96 = u256.UnsafeFromDecimal(consts.MIN_PRICE)
+			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MIN_PRICE)
 		} else {
-			sqrtPriceLimitX96 = u256.UnsafeFromDecimal(consts.MAX_PRICE)
+			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MAX_PRICE)
 		}
 	}
 

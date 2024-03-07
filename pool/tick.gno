@@ -15,7 +15,7 @@ func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	// requireUnsigned(consts.MAX_UINT128/numTicks, ufmt.Sprintf("[POOL] tick.gno__tickTickSpacingToMaxLiquidityPerTick() || consts.MAX_UINT128(%d) / numTicks(%d) >= 0(%d)", consts.MAX_UINT128, numTicks, consts.MAX_UINT128/numTicks))
 	// return consts.MAX_UINT128 / numTicks
 
-	_maxUint128 := u256.UnsafeFromDecimal(consts.MAX_UINT128)
+	_maxUint128 := u256.MustFromDecimal(consts.MAX_UINT128)
 	return new(u256.Uint).Div(_maxUint128, u256.NewUint(numTicks))
 }
 

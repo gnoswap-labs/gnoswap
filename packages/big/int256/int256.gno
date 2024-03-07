@@ -76,7 +76,7 @@ func FromDecimal(s string) (*Int, error) {
 	return new(Int).SetString(s)
 }
 
-func UnsafeFromDecimal(s string) *Int {
+func MustFromDecimal(s string) *Int {
 	z, err := FromDecimal(s)
 	if err != nil {
 		panic(err)

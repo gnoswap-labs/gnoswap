@@ -162,11 +162,11 @@ func unclaimedFee(tokenId uint64) (*u256.Uint, *u256.Uint) {
 
 	value01 := new(u256.Uint).Sub(feeGrowthInside0X128, feeGrowthInside0LastX128)
 	value02 := new(u256.Uint).Mul(liquidity, value01)
-	unclaimedFee0 := new(u256.Uint).Div(value02, u256.UnsafeFromDecimal(consts.Q128))
+	unclaimedFee0 := new(u256.Uint).Div(value02, u256.MustFromDecimal(consts.Q128))
 
 	value11 := new(u256.Uint).Sub(feeGrowthInside1X128, feeGrowthInside1LastX128)
 	value12 := new(u256.Uint).Mul(liquidity, value11)
-	unclaimedFee1 := new(u256.Uint).Div(value12, u256.UnsafeFromDecimal(consts.Q128))
+	unclaimedFee1 := new(u256.Uint).Div(value12, u256.MustFromDecimal(consts.Q128))
 
 	return unclaimedFee0, unclaimedFee1
 }

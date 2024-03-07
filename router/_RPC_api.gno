@@ -52,7 +52,7 @@ func ApiGetRatiosFromBase() string {
 func findRatios(maxHops int) []TokenRatio {
 	var tokenRatio = make(map[string]*u256.Uint, 0)
 	// WGNOT
-	tokenRatio[consts.WRAPPED_WUGNOT] = u256.UnsafeFromDecimal(consts.Q96) // ~= 1
+	tokenRatio[consts.WRAPPED_WUGNOT] = u256.MustFromDecimal(consts.Q96) // ~= 1
 
 	tokens := getTokenList()
 
@@ -133,9 +133,9 @@ func calculateTokenRatio(currentToken string, routes []PoolWithMeta, proceed int
 
 	for { // remove as much X96 as possible
 		tempPriceX96 := priceX96.Clone()
-		priceX96 = new(u256.Uint).Div(priceX96, u256.UnsafeFromDecimal(consts.Q96))
+		priceX96 = new(u256.Uint).Div(priceX96, u256.MustFromDecimal(consts.Q96))
 
-		if priceX96.Lt(u256.UnsafeFromDecimal(consts.MIN_PRICE)) {
+		if priceX96.Lt(u256.MustFromDecimal(consts.MIN_PRICE)) {
 			if proceed == len(routes) {
 				return tempPriceX96
 			}

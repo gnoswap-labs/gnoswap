@@ -96,7 +96,7 @@ func bigintBitwiseNotForUint256BitmapIndexing(x *u256.Uint) *u256.Uint {
 	// REF: https://stackoverflow.com/a/77071037
 
 	// Create a mask with all bits set to 1
-	mask := u256.UnsafeFromDecimal(consts.MAX_UINT256)
+	mask := u256.MustFromDecimal(consts.MAX_UINT256)
 	mask = new(u256.Uint).Sub(mask, u256.NewUint(1))
 
 	// XOR with mask to perform bitwise NOT

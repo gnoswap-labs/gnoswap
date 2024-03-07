@@ -219,7 +219,7 @@ func Swap(
 	var feeGrowthGlobalX128 *u256.Uint
 
 	if zeroForOne {
-		min_sqrt_ratio := u256.UnsafeFromDecimal(consts.MIN_SQRT_RATIO)
+		min_sqrt_ratio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
 		cond1 := sqrtPriceLimitX96.Lt(slot0Start.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Gt(min_sqrt_ratio)
 		require(cond1 && cond2, ufmt.Sprintf("[POOL] pool.gno__Swap() || sqrtPriceLimitX96(%s) < slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) > consts.MIN_SQRT_RATIO(%s)", sqrtPriceLimitX96.ToString(), slot0Start.sqrtPriceX96.ToString(), sqrtPriceLimitX96.ToString(), consts.MIN_SQRT_RATIO))
@@ -227,7 +227,7 @@ func Swap(
 		feeProtocol = slot0Start.feeProtocol % 16
 		feeGrowthGlobalX128 = pool.feeGrowthGlobal0X128.Clone()
 	} else {
-		max_sqrt_ratio := u256.UnsafeFromDecimal(consts.MAX_SQRT_RATIO)
+		max_sqrt_ratio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
 		cond1 := sqrtPriceLimitX96.Gt(slot0Start.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Lt(max_sqrt_ratio)
 		require(cond1 && cond2, ufmt.Sprintf("[POOL] pool.gno__Swap() || sqrtPriceLimitX96(%s) > slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) < consts.MAX_SQRT_RATIO(%s)", sqrtPriceLimitX96.ToString(), slot0Start.sqrtPriceX96.ToString(), sqrtPriceLimitX96.ToString(), consts.MAX_SQRT_RATIO))
@@ -333,7 +333,7 @@ func Swap(
 
 		// update global fee tracker
 		if state.liquidity.Gt(u256.Zero()) {
-			_q128 := u256.UnsafeFromDecimal(consts.Q128)
+			_q128 := u256.MustFromDecimal(consts.Q128)
 
 			value1 := new(u256.Uint).Mul(step.feeAmount, _q128)
 			value2 := new(u256.Uint).Div(value1, state.liquidity)

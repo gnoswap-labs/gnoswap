@@ -172,20 +172,6 @@ func (z *Uint) Add(x, y *Uint) *Uint {
 	return z
 }
 
-func (z *Uint) UnsafeAdd(x, y *Uint) *Uint {
-	var carry uint64
-	z.arr[0], carry = Add64(x.arr[0], y.arr[0], 0)
-	z.arr[1], carry = Add64(x.arr[1], y.arr[1], carry)
-	z.arr[2], carry = Add64(x.arr[2], y.arr[2], carry)
-	z.arr[3], _ = Add64(x.arr[3], y.arr[3], carry)
-	// Different from the original implementation!
-	// // We panic on overflow
-	// if carry != 0 {
-	// 	panic("U256 Add overflow")
-	// }
-	return z
-}
-
 // AddOverflow sets z to the sum x+y, and returns z and whether overflow occurred
 func (z *Uint) AddOverflow(x, y *Uint) (*Uint, bool) {
 	var carry uint64
@@ -850,13 +836,13 @@ func FromDecimal(decimal string) (*Uint, error) {
 	return &z, nil
 }
 
-// UnsafeFromDecimal is a convenience-constructor to create an Uint from a
-// decimal (base 10) string. Numbers larger than 256 bits are not accepted.
-// panic if the input is invalid
-func UnsafeFromDecimal(decimal string) *Uint {
+// MustFromDecimal is a convenience-constructor to create an Int from a
+// decimal (base 10) string.
+// Returns a new Int and panics if any error occurred.
+func MustFromDecimal(decimal string) *Uint {
 	var z Uint
 	if err := z.SetFromDecimal(decimal); err != nil {
-		panic("UNSAFE FROM DECIMAL")
+		panic(err)
 	}
 	return &z
 }
@@ -972,7 +958,7 @@ func (z *Uint) fromDecimal(bs string) error {
 			z.SetUint64(num)
 		} else {
 			base := NewUint(num)
-			z.UnsafeAdd(z, base.Mul(base, mult))
+			z.Add(z, base.Mul(base, mult))
 		}
 		// Chop off another 19 characters
 		if remaining > 19 {
