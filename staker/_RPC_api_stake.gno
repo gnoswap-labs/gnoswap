@@ -106,7 +106,9 @@ func ApiGetRewards() string {
 
 func ApiGetRewardByLpTokenId(lpTokenId uint64) string {
 	deposit, exist := deposits[lpTokenId]
-	require(exist, ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardByLpTokenId() || lpTokenId(%d) deposit does not exist", lpTokenId))
+	if !exist {
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardByLpTokenId() || lpTokenId(%d) deposit does not exist", lpTokenId))
+	}
 
 	rewards := []Reward{}
 

@@ -194,12 +194,6 @@ func gt(x, y *u256.Uint) *u256.Uint {
 	return u256.Zero()
 }
 
-func require(condition bool, message string) {
-	if !condition {
-		panic(message)
-	}
-}
-
 func abs(x int32) int32 {
 	if x < 0 {
 		return -x

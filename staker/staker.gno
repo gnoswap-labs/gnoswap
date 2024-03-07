@@ -45,12 +45,11 @@ func CreateExternalIncentive(
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
-	rewardAmount, err := u256.FromDecimal(_rewardAmount)
-	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || u256.FromDecimal(_rewardAmount: %s) failed", _rewardAmount))
-	}
+	rewardAmount := u256.MustFromDecimal(_rewardAmount)
 
-	require(time.Now().Unix() <= startTimestamp, ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || startTimestamp must be in the future__time.Now().Unix(%d) <= startTimestamp(%d)", time.Now().Unix(), startTimestamp))
+	if startTimestamp < time.Now().Unix() {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || startTimestamp(%d) must be in the future [now:%d]", startTimestamp, time.Now().Unix()))
+	}
 
 	externalDuration := uint64(endTimestamp - startTimestamp)
 	if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_360DAYS) {
@@ -58,7 +57,10 @@ func CreateExternalIncentive(
 	}
 
 	fromBalanceBefore := balanceOfByRegisterCall(rewardToken, std.GetOrigCaller())
-	require(fromBalanceBefore >= rewardAmount.Uint64(), ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || not enough rewardAmount(%d) to create incentive(%d)", fromBalanceBefore, rewardAmount.Uint64()))
+
+	if fromBalanceBefore < rewardAmount.Uint64() {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || user(%s) doesn't have enough amount balance(%d) to create incentive(%d)", std.GetOrigCaller(), fromBalanceBefore, rewardAmount.Uint64()))
+	}
 
 	poolRewardBalanceBefore := balanceOfByRegisterCall(rewardToken, GetOrigPkgAddr())
 
@@ -76,10 +78,9 @@ func CreateExternalIncentive(
 	transferFromByRegisterCall(rewardToken, std.GetOrigCaller(), GetOrigPkgAddr(), rewardAmount.Uint64())
 
 	poolRewardBalanceAfter := balanceOfByRegisterCall(rewardToken, GetOrigPkgAddr())
-	require(
-		poolRewardBalanceAfter-poolRewardBalanceBefore == rewardAmount.Uint64(),
-		ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || pool reward balance not updated correctly(before:%d, added:%d, final:%d)",
-			poolRewardBalanceBefore, rewardAmount.Uint64(), poolRewardBalanceAfter))
+	if !(poolRewardBalanceAfter-poolRewardBalanceBefore == rewardAmount.Uint64()) {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || pool reward balance not updated correctly(before:%d, added:%d, final:%d)", poolRewardBalanceBefore, rewardAmount.Uint64(), poolRewardBalanceAfter))
+	}
 
 	incentives[incentiveId] = Incentive{
 		targetPoolPath: targetPoolPath,
@@ -96,20 +97,20 @@ func CreateExternalIncentive(
 func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
 	// check whether tokenId already staked or not
 	_, exist := deposits[tokenId]
-	require(!exist, ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) already staked", tokenId))
+	if exist {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) already staked", tokenId))
+	}
 
 	// check tokenId owner
-	require(
-		gnft.OwnerOf(tid(tokenId)) == std.GetOrigCaller(),
-		ufmt.Sprintf(
-			"[STAKER] staker.gno__StakeToken() || only owner can stake their token tokenId(%d), owner(%s) == std.GetOrigCaller(%s)",
-			tokenId, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller(),
-		),
-	)
+	if gnft.OwnerOf(tid(tokenId)) != std.GetOrigCaller() {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || only owner can stake their token tokenId(%d), owner(%s) == std.GetOrigCaller(%s)", tokenId, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()))
+	}
 
 	// check tokenId has liquidity or not
 	liquidity := pn.PositionGetPositionLiquidity(tokenId) // *u256.Uint
-	require(liquidity.Gt(u256.Zero()), ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) has no liquidity", tokenId))
+	if liquidity.Lte(u256.Zero()) {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) has no liquidity", tokenId))
+	}
 
 	// check pool path from tokenid
 	poolKey := pn.PositionGetPositionPoolKey(tokenId)
@@ -130,9 +131,13 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 func CollectReward(tokenId uint64) {
 	deposit, exist := deposits[tokenId]
-	require(exist, ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || tokenId(%d) not staked", tokenId))
+	if !exist {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || tokenId(%d) not staked", tokenId))
+	}
 
-	require(std.PrevRealm().Addr() == deposit.owner, ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || only owner(%s) can collect reward from tokenId(%d), std.PrevRealm().Addr()(%s)", deposit.owner, tokenId, std.PrevRealm().Addr()))
+	if std.PrevRealm().Addr() != deposit.owner {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || only owner(%s) can collect reward from tokenId(%d), std.PrevRealm().Addr()(%s)", deposit.owner, tokenId, std.PrevRealm().Addr()))
+	}
 
 	// poolPath to collect reward
 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
@@ -174,7 +179,9 @@ func UnstakeToken(tokenId uint64) (string, string, string) {
 
 	// unstaked status
 	deposit, exist := deposits[tokenId]
-	require(exist, ufmt.Sprintf("[STAKER] staker.gno__UnstakeToken() || tokenId(%d) not staked", tokenId))
+	if !exist {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__UnstakeToken() || tokenId(%d) not staked", tokenId))
+	}
 	delete(deposits, tokenId)
 
 	// transfer NFT ownership to origin owner
@@ -187,11 +194,17 @@ func UnstakeToken(tokenId uint64) (string, string, string) {
 
 func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken string) {
 	incentiveId := incentiveIdCompute(refundee, targetPoolPath, rewardToken)
-	incentive, exist := incentives[incentiveId]
-	require(exist, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || cannot end non existent incentive(%s)", incentiveId))
-	require(time.Now().Unix() >= incentive.endTimestamp, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(%d), current(%d)", incentive.endTimestamp, time.Now().Unix()))
 
-	// when incentive is ended
+	incentive, exist := incentives[incentiveId]
+	if !exist {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || cannot end non existent incentive(%s)", incentiveId))
+	}
+
+	if time.Now().Unix() < incentive.endTimestamp {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(%d), current(%d)", incentive.endTimestamp, time.Now().Unix()))
+	}
+
+	// when incentive end time is over
 	// 1. admin can end incentive without refund
 	// 2. refundee can end incentive with refund
 	switch std.GetOrigCaller() {
@@ -208,7 +221,11 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		refund := incentive.rewardAmount
 
 		poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
-		require(poolLeftExternalRewardAmount >= refund.Uint64(), ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || not enough poolLeftExternalRewardAmount(%s_%d) to refund(%d)", incentive.rewardToken, poolLeftExternalRewardAmount, refund))
+
+		if poolLeftExternalRewardAmount < refund.Uint64() {
+			panic(ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || pool doesn't have enough token(%s) amount(%d) to refund(%d)", incentive.rewardToken, poolLeftExternalRewardAmount, refund))
+		}
+
 		transferByRegisterCall(incentive.rewardToken, incentive.refundee, refund.Uint64())
 
 		delete(incentives, incentiveId)
@@ -218,13 +235,15 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 			}
 		}
 	default:
-		require(false, ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || only refundee or admin can end incentive"))
+		panic("[STAKER] staker.gno__EndExternalIncentive() || only refundee or admin can end incentive")
 	}
 }
 
 func transferDeposit(tokenId uint64, to std.Address) {
 	owner := gnft.OwnerOf(tid(tokenId))
-	require(owner == std.GetOrigCaller(), ufmt.Sprintf("[STAKER] staker.gno__transferDeposit() || only owner(%s) can transfer tokenId(%d), std.GetOrigCaller()(%s)", owner, tokenId, std.GetOrigCaller()))
+	if std.GetOrigCaller() == to {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__transferDeposit() || only owner(%s) can transfer tokenId(%d), std.GetOrigCaller()(%s)", owner, tokenId, std.GetOrigCaller()))
+	}
 
 	deposits[tokenId].owner = owner
 
