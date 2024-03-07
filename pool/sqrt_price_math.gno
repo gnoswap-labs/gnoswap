@@ -16,6 +16,7 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
 	if amount.IsZero() {
 		return sqrtPX96
 	}
+	// println("|| sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp:", add)
 
 	numerator1 := new(u256.Uint).Lsh(liquidity, 96)
 
@@ -100,6 +101,7 @@ func sqrtPriceMathGetNextSqrtPriceFromOutput(
 	amountOut *u256.Uint, // uint256
 	zeroForOne bool, // bool
 ) *u256.Uint { // uint160
+	// println("sqrtPriceMathGetNextSqrtPriceFromOutput:", zeroForOne)
 	if zeroForOne {
 		return sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountOut, false)
 	}
