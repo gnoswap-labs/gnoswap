@@ -7,7 +7,6 @@ import (
 	"gno.land/r/demo/gnft"
 
 	u256 "gno.land/p/big/uint256"
-
 	"gno.land/r/demo/consts"
 
 	pl "gno.land/r/demo/pool"
@@ -55,10 +54,11 @@ func Mint(
 		deadline:       deadline,
 	}
 
-	return mint(mintParams)
+	tokenId, liquidity, amount0, amount1 := mint(mintParams)
+	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString()
 }
 
-func mint(params MintParams) (uint64, string, string, string) {
+func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	checkDeadline(params.deadline)
 
 	pool := pl.GetPool(params.token0, params.token1, params.fee)
@@ -96,7 +96,7 @@ func mint(params MintParams) (uint64, string, string, string) {
 	}
 	positions[tokenId] = position
 
-	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString()
+	return tokenId, liquidity, amount0, amount1
 }
 
 func IncreaseLiquidity(
@@ -122,17 +122,18 @@ func IncreaseLiquidity(
 		deadline:       deadline,
 	}
 
-	return increaseLiquidity(increaseLiquidityParams)
+	tokneId, liquidity, amount0, amount1 := increaseLiquidity(increaseLiquidityParams)
+	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString()
 }
 
-func increaseLiquidity(params IncreaseLiquidityParams) (uint64, string, string, string) {
+func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	// verify tokenId exists
 	if !exists(params.tokenId) {
 		panic(ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
 	}
 
 	// MUST BE OWNER TO INCREASE LIQUIDITY
-	// can not be approved address > staked position can be modified
+	// can not be approved address > staked position can't be modified
 	owner := gnft.OwnerOf(tid(params.tokenId))
 	if owner != std.GetOrigCaller() {
 		panic(ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || only owner can increase liquidity__owner(%s) == std.GetOrigCaller(%s)", owner, std.GetOrigCaller()))
@@ -177,7 +178,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, string, string, 
 
 	positions[params.tokenId] = position
 
-	return params.tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString()
+	return params.tokenId, liquidity, amount0, amount1
 }
 
 // *IMPORTANT*
@@ -202,10 +203,11 @@ func DecreaseLiquidity(
 		deadline:   deadline,
 	}
 
-	return decreaseLiquidity(decreaseLiquidityParams)
+	tokenId, liquidity, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
+	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
 }
 
-func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, string, string) {
+func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string) {
 	// verify tokenId
 	if !exists(params.tokenId) {
 		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
@@ -312,7 +314,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, string, string, 
 		burnPosition(params.tokenId) // just update flag
 	}
 
-	return params.tokenId, params.liquidity.ToString(), _amount0, _amount1, position.poolKey
+	return params.tokenId, params.liquidity, amount0, amount1, position.poolKey
 }
 
 func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, tokensOwed0, tokensOwed1, poolPath

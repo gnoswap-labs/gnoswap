@@ -1,8 +1,6 @@
 package position
 
 import (
-	"gno.land/p/demo/ufmt"
-
 	"gno.land/p/demo/common"
 
 	i256 "gno.land/p/big/int256"
@@ -21,14 +19,8 @@ func DryMint(
 	sqrtLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
 	sqrtUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
 
-	amount0Desired, err := u256.FromDecimal(_amount0Desired)
-	if err != nil {
-		ufmt.Sprintf("[POSITION] liquidity_management.gno__DryMint() || u256.FromDecimal(amount0: %s) failed", _amount0Desired)
-	}
-	amount1Desired, err := u256.FromDecimal(_amount1Desired)
-	if err != nil {
-		ufmt.Sprintf("[POSITION] liquidity_management.gno__DryMint() || u256.FromDecimal(amount1: %s) failed", _amount1Desired)
-	}
+	amount0Desired := u256.MustFromDecimal(_amount0Desired)
+	amount1Desired := u256.MustFromDecimal(_amount1Desired)
 
 	liquidity := common.GetLiquidityForAmounts(
 		sqrtRatioX96,
@@ -68,6 +60,7 @@ func DryMint(
 			)
 		}
 	}
-
+	amount0 = amount0.NilToZero()
+	amount1 = amount1.NilToZero()
 	return amount0.ToString(), amount1.ToString()
 }

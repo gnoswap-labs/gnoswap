@@ -94,6 +94,17 @@ func CreatePool(
 	return pool
 }
 
+func DoesPoolExist(token0Path, token1Path string, fee uint32) bool {
+	poolPath := GetPoolPath(token0Path, token1Path, fee)
+	_, exist := pools[poolPath]
+	return exist
+}
+
+func DoesPoolPathExist(poolPath string) bool {
+	_, exist := pools[poolPath]
+	return exist
+}
+
 func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	pool, exist := pools[poolPath]
