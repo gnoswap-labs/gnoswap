@@ -2,84 +2,86 @@ package pool
 
 import (
 	"std"
+
+	"gno.land/p/demo/u256"
 )
 
 type Slot0 struct {
-	sqrtPriceX96 bigint
+	sqrtPriceX96 *u256.Uint
 	tick         int32
 	feeProtocol  uint8
 	unlocked     bool
 }
 
 type Balances struct {
-	token0 bigint
-	token1 bigint
+	token0 *u256.Uint
+	token1 *u256.Uint
 }
 
 type ProtocolFees struct {
-	token0 bigint
-	token1 bigint
+	token0 *u256.Uint
+	token1 *u256.Uint
 }
 
 type ModifyPositionParams struct {
 	owner          std.Address
 	tickLower      int32
 	tickUpper      int32
-	liquidityDelta bigint
+	liquidityDelta *u256.Int
 }
 
 type SwapCache struct {
 	feeProtocol    uint8
-	liquidityStart bigint
+	liquidityStart *u256.Uint
 }
 
 type SwapState struct {
-	amountSpecifiedRemaining bigint
-	amountCalculated         bigint
-	sqrtPriceX96             bigint
+	amountSpecifiedRemaining *u256.Int
+	amountCalculated         *u256.Int
+	sqrtPriceX96             *u256.Uint
 	tick                     int32
-	feeGrowthGlobalX128      bigint
-	protocolFee              bigint
-	liquidity                bigint
+	feeGrowthGlobalX128      *u256.Uint
+	protocolFee              *u256.Uint
+	liquidity                *u256.Uint
 }
 
 type StepComputations struct {
-	sqrtPriceStartX96 bigint
+	sqrtPriceStartX96 *u256.Uint
 	tickNext          int32
 	initialized       bool
-	sqrtPriceNextX96  bigint
-	amountIn          bigint
-	amountOut         bigint
-	feeAmount         bigint
+	sqrtPriceNextX96  *u256.Uint
+	amountIn          *u256.Uint
+	amountOut         *u256.Uint
+	feeAmount         *u256.Uint
 }
 
 type PositionInfo struct {
-	liquidity bigint
+	liquidity *u256.Uint
 
-	feeGrowthInside0LastX128 bigint
-	feeGrowthInside1LastX128 bigint
+	feeGrowthInside0LastX128 *u256.Uint
+	feeGrowthInside1LastX128 *u256.Uint
 
-	tokensOwed0 bigint
-	tokensOwed1 bigint
+	tokensOwed0 *u256.Uint
+	tokensOwed1 *u256.Uint
 }
 
 type TickInfo struct {
-	liquidityGross bigint
-	liquidityNet   bigint
+	liquidityGross *u256.Uint
+	liquidityNet   *u256.Int
 
-	feeGrowthOutside0X128 bigint
-	feeGrowthOutside1X128 bigint
+	feeGrowthOutside0X128 *u256.Uint
+	feeGrowthOutside1X128 *u256.Uint
 
-	tickCumulativeOutside bigint
+	//tickCumulativeOutside bigint
 
-	secondsPerLiquidityOutsideX128 bigint
-	secondsOutside                 bigint
+	//secondsPerLiquidityOutsideX128 bigint
+	// secondsOutside                 bigint
 
 	initialized bool
 }
 
 type Ticks map[int32]TickInfo          // tick => TickInfo
-type TickBitmaps map[int16]bigint      // tick(wordPos) => bitmap(tickWord ^ mask)
+type TickBitmaps map[int16]*u256.Uint  // tick(wordPos) => bitmap(tickWord ^ mask)
 type Positions map[string]PositionInfo // positionKey => PositionInfo
 
 // type Pool describes a single Pool/s state
@@ -97,20 +99,20 @@ type Pool struct {
 	tickSpacing int32
 
 	// maxLiquidityPerTick is the maximum amount of liquidity that can be added per tick
-	maxLiquidityPerTick bigint
+	maxLiquidityPerTick *u256.Uint
 
 	// slot0 is the current tick and price of the pool
 	slot0 Slot0
 
-	feeGrowthGlobal0X128 bigint
-	feeGrowthGlobal1X128 bigint
+	feeGrowthGlobal0X128 *u256.Uint
+	feeGrowthGlobal1X128 *u256.Uint
 
 	// protocolFees is the amount of fees collected by the protocol
 	// collected by CollectFeeProtocol()
 	protocolFees ProtocolFees
 
 	// liquidity is the total amount of liquidity in the pool
-	liquidity bigint
+	liquidity *u256.Uint
 
 	// ticks is a mapping from tick index to tick
 	ticks Ticks

@@ -261,8 +261,8 @@ func getTokenPairBalanceFromPosition(tokenId uint64) (bigint, bigint) {
 
 	pool := pl.GetPoolFromPoolPath(poolKey)
 	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
-	lowerX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickLower(tokenId))
-	upperX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickUpper(tokenId))
+	lowerX96 := pl.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickLower(tokenId)).Bigint()
+	upperX96 := pl.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickUpper(tokenId)).Bigint()
 
 	token0Balance, token1Balance := common.GetAmountsForLiquidity(
 		currentX96,

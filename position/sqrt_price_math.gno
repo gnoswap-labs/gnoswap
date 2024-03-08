@@ -123,10 +123,6 @@ func sqrtPriceMathGetAmount0DeltaHelper(
 	sqrtRatioBX96 bigint,
 	liquidity bigint,
 ) bigint {
-	requireUnsigned(sqrtRatioAX96, ufmt.Sprintf("[POSITION] sqrt_price_math.gno__sqrtPriceMathGetAmount0DeltaHelper() || sqrtRatioAX96(%s) >= 0", sqrtRatioAX96))
-	requireUnsigned(sqrtRatioBX96, ufmt.Sprintf("[POSITION] sqrt_price_math.gno__sqrtPriceMathGetAmount0DeltaHelper() || sqrtRatioBX96(%s) >= 0", sqrtRatioBX96))
-	requireUnsigned(liquidity, ufmt.Sprintf("[POSITION] sqrt_price_math.gno__sqrtPriceMathGetAmount0DeltaHelper() || liquidity(%s) >= 0", liquidity))
-
 	if sqrtRatioAX96 > sqrtRatioBX96 {
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
 	}

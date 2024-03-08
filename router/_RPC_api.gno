@@ -119,8 +119,8 @@ func calculateTokenRatio(currentToken string, routes []PoolWithMeta, proceed int
 		oppositeTick := -poolTick
 		oppositeSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(oppositeTick)
 
-		priceX96 *= oppositeSqrtPriceX96 * oppositeSqrtPriceX96
-		currentToken = token1Path
+		currentPriceX96 *= oppositeSqrtPriceX96.Bigint() * oppositeSqrtPriceX96.Bigint()
+		currentToken = poolToken0
 	} else {
 		// wrong condition
 		// panic("[ROUTER] _RPC_api.gno__calculateTokenRatio() || wrong condition")

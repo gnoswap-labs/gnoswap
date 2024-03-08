@@ -11,9 +11,9 @@ func DryMint(
 	amount0Desired bigint,
 	amount1Desired bigint,
 ) (amount0, amount1 bigint) {
-	sqrtRatioX96 := common.TickMathGetSqrtRatioAtTick(tickCurrent)
-	sqrtLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
-	sqrtUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
+	sqrtRatioX96 := p.TickMathGetSqrtRatioAtTick(tickCurrent).Bigint()
+	sqrtLowerX96 := p.TickMathGetSqrtRatioAtTick(tickLower).Bigint()
+	sqrtUpperX96 := p.TickMathGetSqrtRatioAtTick(tickUpper).Bigint()
 
 	liquidity := common.GetLiquidityForAmounts(
 		sqrtRatioX96,

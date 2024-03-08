@@ -5,11 +5,12 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/common"
+	"gno.land/p/demo/u256"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/consts"
 
-	"gno.land/r/demo/gns"
+	gns "gno.land/r/demo/gns"
 )
 
 var (
@@ -21,15 +22,12 @@ var (
 )
 
 func InitManual() {
-	// MUST BE ORIGIN CALLER
-	std.AssertOriginCall()
 	require(!initialized, ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || expected initialized(%t) == false", initialized))
-	require(std.GetOrigCaller() == consts.GNOSWAP_ADMIN, ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || expected std.GetOrigCaller(%s) == consts.GNOSWAP_ADMIN(%s)", std.GetOrigCaller().String(), consts.GNOSWAP_ADMIN.String()))
 	feeAmountTickSpacing[100] = 2     // 0.01%
 	feeAmountTickSpacing[500] = 10    // 0.05%
 	feeAmountTickSpacing[3000] = 60   // 0.3%
 	feeAmountTickSpacing[10000] = 200 // 1%
-	admins = append(admins, std.PrevRealm().Addr())
+	admins = append(admins, PrevRealmAddr())
 	initialized = true
 }
 
@@ -37,10 +35,12 @@ func CreatePool(
 	token0Path string,
 	token1Path string,
 	fee uint16,
-	sqrtPriceX96 bigint,
+	sqrtPriceX96_ bigint,
 ) *Pool {
 	require(initialized, ufmt.Sprintf("[POOl] pool_manager.gno__gno__CreatePool() || expected initialized(%t) == true", initialized))
 	require(token0Path != token1Path, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
+
+	sqrtPriceX96 := u256.FromBigint(sqrtPriceX96_)
 
 	if token1Path < token0Path {
 		token0Path, token1Path = token1Path, token0Path
@@ -60,6 +60,8 @@ func CreatePool(
 	requireExist(!exist, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected poolPath(%s) not to exist", poolPath))
 
 	if !exist {
+		// recipient is same address that receives protocol fee
+		// r3v4_xxx: change admin address when publish
 		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.GNOSWAP_ADMIN), consts.POOL_CREATION_FEE)
 
 		pool = newPool(token0Path, token1Path, fee, tickSpacing, sqrtPriceX96)
@@ -93,7 +95,7 @@ func GetPoolPath(token0Path, token1Path string, fee uint16) string {
 }
 
 func AddAdmin(addr std.Address) {
-	caller := std.PrevRealm().Addr()
+	caller := PrevRealmAddr()
 	if isAdmin(caller) {
 		admins = append(admins, addr)
 	} else {
@@ -102,7 +104,7 @@ func AddAdmin(addr std.Address) {
 }
 
 func RemoveAdmin(addr std.Address) {
-	caller := std.PrevRealm().Addr()
+	caller := PrevRealmAddr()
 
 	if isAdmin(caller) {
 		if len(admins) == 1 {
@@ -124,7 +126,7 @@ func newPool(
 	token1Path string,
 	fee uint16,
 	tickSpacing int32,
-	sqrtPriceX96 bigint,
+	sqrtPriceX96 *u256.Uint,
 ) *Pool {
 	maxLiquidityPerTick := tickTickSpacingToMaxLiquidityPerTick(tickSpacing)
 	tick := common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
@@ -137,13 +139,13 @@ func newPool(
 	}
 
 	balances := Balances{
-		token0: 0,
-		token1: 0,
+		token0: u256.Zero(),
+		token1: u256.Zero(),
 	}
 
 	protocolFees := ProtocolFees{
-		token0: 0,
-		token1: 0,
+		token0: u256.Zero(),
+		token1: u256.Zero(),
 	}
 
 	return &Pool{
@@ -154,10 +156,10 @@ func newPool(
 		tickSpacing:          tickSpacing,
 		maxLiquidityPerTick:  maxLiquidityPerTick,
 		slot0:                slot0,
-		feeGrowthGlobal0X128: 0,
-		feeGrowthGlobal1X128: 0,
+		feeGrowthGlobal0X128: u256.Zero(),
+		feeGrowthGlobal1X128: u256.Zero(),
 		protocolFees:         protocolFees,
-		liquidity:            0,
+		liquidity:            u256.Zero(),
 		ticks:                Ticks{},
 		tickBitmaps:          TickBitmaps{},
 		positions:            Positions{},

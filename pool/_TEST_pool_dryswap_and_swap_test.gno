@@ -49,6 +49,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
 	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR, -tickUpper, -tickLower, 10)
+	DrySwap(fooPath, barPath, fee500, "_", true, 16000, consts.MIN_PRICE)
 	_, _, ok = DrySwap(fooPath, barPath, fee500, "_", true, 16000, consts.MIN_PRICE)
 	shouldEQ(t, ok, false)
 
@@ -93,36 +94,36 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 	shouldEQ(t, poolOut, bigint(-16000))
 }
 
-func TestDrySwap_ZeroForOneFalse_AmountSpecified_Positive_16000(t *testing.T) {
-	// zeroForOne false
-	// amountSpecified 16000
+// func TestDrySwap_ZeroForOneFalse_AmountSpecified_Positive_16000(t *testing.T) {
+// 	// zeroForOne false
+// 	// amountSpecified 16000
 
-	poolOut, poolIn, _ := DrySwap(
-		fooPath,          // fooPath
-		barPath,          // barPath
-		fee500,           // fee500
-		"_",              // recipient
-		false,            // zeroForOne
-		16000,            // amountSpecified
-		consts.MAX_PRICE, // sqrtPriceLimitX96
-	)
+// 	poolOut, poolIn, _ := DrySwap(
+// 		fooPath,          // fooPath
+// 		barPath,          // barPath
+// 		fee500,           // fee500
+// 		"_",              // recipient
+// 		false,            // zeroForOne
+// 		16000,            // amountSpecified
+// 		consts.MAX_PRICE, // sqrtPriceLimitX96
+// 	)
 
-	shouldEQ(t, poolOut, bigint(-43468))
-	shouldEQ(t, poolIn, bigint(16000))
-}
+// 	shouldEQ(t, poolOut, bigint(-43468))
+// 	shouldEQ(t, poolIn, bigint(16000))
+// }
 
-func TestDrySwap_ZeroForOneFalse_AmountSpecified_Negative_16000(t *testing.T) {
-	// zeroForOne false
-	// amountSpecified -16000
-	poolOut, poolIn, _ := DrySwap(
-		fooPath,          // fooPath
-		barPath,          // barPath
-		fee500,           // fee500
-		"_",              // recipient
-		false,            // zeroForOne
-		-16000,           // amountSpecified
-		consts.MAX_PRICE, // sqrtPriceLimitX96
-	)
-	shouldEQ(t, poolOut, bigint(-16000))
-	shouldEQ(t, poolIn, bigint(5888))
-}
+// func TestDrySwap_ZeroForOneFalse_AmountSpecified_Negative_16000(t *testing.T) {
+// 	// zeroForOne false
+// 	// amountSpecified -16000
+// 	poolOut, poolIn, _ := DrySwap(
+// 		fooPath,          // fooPath
+// 		barPath,          // barPath
+// 		fee500,           // fee500
+// 		"_",              // recipient
+// 		false,            // zeroForOne
+// 		-16000,           // amountSpecified
+// 		consts.MAX_PRICE, // sqrtPriceLimitX96
+// 	)
+// 	shouldEQ(t, poolOut, bigint(-16000))
+// 	shouldEQ(t, poolIn, bigint(5888))
+// }

@@ -1,38 +1,33 @@
 package pool
 
 import (
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/u256"
 )
 
 func swapMathComputeSwapStep(
-	sqrtRatioCurrentX96 bigint,
-	sqrtRatioTargetX96 bigint,
-	liquidity bigint,
-	amountRemaining bigint,
+	sqrtRatioCurrentX96 *u256.Uint,
+	sqrtRatioTargetX96 *u256.Uint,
+	liquidity *u256.Uint,
+	amountRemaining *u256.Int,
 	feePips uint32,
-) (sqrtRatioNextX96, amountIn, amountOut, feeAmount bigint) {
-	requireUnsigned(sqrtRatioCurrentX96, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || sqrtRatioCurrentX96(%d) >= 0", sqrtRatioCurrentX96))
-	requireUnsigned(sqrtRatioTargetX96, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || sqrtRatioTargetX96(%d) >= 0", sqrtRatioTargetX96))
-	requireUnsigned(liquidity, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || liquidity(%d) >= 0", liquidity))
-
-	isToken1Expensive := sqrtRatioCurrentX96 >= sqrtRatioTargetX96
+) (sqrtRatioNextX96, amountIn, amountOut, feeAmount *u256.Uint) {
+	isToken1Expensive := sqrtRatioCurrentX96.Gte(sqrtRatioTargetX96)
 
 	// POSTIVIE == EXACT_IN => Estimated AmountOut
 	// NEGATIVE == EXACT_OUT => Estimated AmountIn
-	exactIn := amountRemaining >= 0
+	exactIn := !amountRemaining.IsNeg()
 
 	if exactIn {
-		amountRemainingLessFee := amountRemaining * bigint(uint64(1000000-feePips)) / 1000000
-		requireUnsigned(amountRemainingLessFee, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || amountRemainingLessFee(%d) >= 0", amountRemainingLessFee))
+		amountRemainingLessFee := new(u256.Uint).Mul(amountRemaining.Uint(), u256.NewUint(uint64(1000000-feePips)))
+		amountRemainingLessFee.Div(amountRemainingLessFee, u256.NewUint(1000000))
 
 		if isToken1Expensive {
 			amountIn = sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity)
 		} else {
 			amountIn = sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity)
 		}
-		requireUnsigned(amountIn, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || amountIn(%d) >= 0", amountIn))
 
-		if amountRemainingLessFee >= amountIn {
+		if amountRemainingLessFee.Gte(amountIn) {
 			sqrtRatioNextX96 = sqrtRatioTargetX96
 		} else {
 			sqrtRatioNextX96 = sqrtPriceMathGetNextSqrtPriceFromInput(
@@ -42,7 +37,6 @@ func swapMathComputeSwapStep(
 				isToken1Expensive,
 			)
 		}
-		requireUnsigned(sqrtRatioNextX96, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || sqrtRatioNextX96(%d) >= 0", sqrtRatioNextX96))
 	} else {
 		if isToken1Expensive {
 			amountOut = sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity)
@@ -50,19 +44,16 @@ func swapMathComputeSwapStep(
 			amountOut = sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity)
 		}
 
-		requireUnsigned(amountOut, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || amountOut(%d) >= 0", amountOut))
-
-		if absBigint(amountRemaining) >= amountOut {
+		if amountRemaining.Abs().Gte(amountOut) {
 			sqrtRatioNextX96 = sqrtRatioTargetX96
 		} else {
 			sqrtRatioNextX96 = sqrtPriceMathGetNextSqrtPriceFromOutput(
 				sqrtRatioCurrentX96,
 				liquidity,
-				absBigint(-amountRemaining),
+				amountRemaining.Abs(),
 				isToken1Expensive,
 			)
 		}
-		requireUnsigned(sqrtRatioNextX96, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() || sqrtRatioNextX96(%d) >= 0", sqrtRatioNextX96))
 	}
 
 	max := sqrtRatioTargetX96 == sqrtRatioNextX96
@@ -73,42 +64,38 @@ func swapMathComputeSwapStep(
 		} else {
 			amountIn = sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioNextX96, sqrtRatioCurrentX96, liquidity)
 		}
-		requireUnsigned(amountIn, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() #1 || amountIn(%d) >= 0", amountIn))
 
 		if max && !exactIn {
 			amountOut = amountOut
 		} else {
 			amountOut = sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioNextX96, sqrtRatioCurrentX96, liquidity)
 		}
-		requireUnsigned(amountOut, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() #1 || amountOut(%d) >= 0", amountOut))
 	} else {
 		if max && exactIn {
 			amountIn = amountIn
 		} else {
 			amountIn = sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioCurrentX96, sqrtRatioNextX96, liquidity)
 		}
-		requireUnsigned(amountIn, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() #2 || amountIn(%d) >= 0", amountIn))
 
 		if max && !exactIn {
 			amountOut = amountOut
 		} else {
 			amountOut = sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioCurrentX96, sqrtRatioNextX96, liquidity)
 		}
-		requireUnsigned(amountOut, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() #2 || amountOut(%d) >= 0", amountOut))
 	}
 
-	if !exactIn && amountOut > absBigint(-amountRemaining) {
-		amountOut = absBigint(-amountRemaining)
-		requireUnsigned(amountOut, ufmt.Sprintf("[POOL] swap_math.gno__swapMathComputeSwapStep() #3 || amountOut(%d) >= 0", amountOut))
+	if !exactIn && amountOut.Gt(amountRemaining.Abs()) {
+		amountOut = amountRemaining.Abs()
 	}
 
-	if exactIn && sqrtRatioNextX96 != sqrtRatioTargetX96 {
-		feeAmount = amountRemaining - amountIn
+	if exactIn && !sqrtRatioNextX96.Eq(sqrtRatioTargetX96) {
+		feeAmount = new(u256.Uint).Sub(amountRemaining.Uint(), amountIn)
 	} else {
-		feeAmount = amountIn * bigint(uint64(feePips)) / bigint(uint64(1000000-feePips))
+		feeAmount = new(u256.Uint).Mul(amountIn, u256.NewUint(uint64(feePips)))
+		feeAmount.Div(feeAmount, u256.NewUint(uint64(1000000-feePips)))
 	}
 
-	if !exactIn && amountOut != 0 {
+	if !exactIn && !amountOut.IsZero() {
 		amountOut++
 	}
 	return sqrtRatioNextX96, amountIn, amountOut, feeAmount
