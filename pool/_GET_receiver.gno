@@ -58,42 +58,54 @@ func (pool *Pool) PoolGetPositions() Positions {
 
 func (pool *Pool) PoolGetPosition(key string) PositionInfo {
 	position, exist := pool.positions[key]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPosition() || position(%s) does not exist", key))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPosition() || position(%s) does not exist", key))
+	}
 
 	return position
 }
 
 func (pool *Pool) PoolGetPositionLiquidity(key string) *u256.Uint {
 	position, exist := pool.positions[key]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPositionLiquidity() || position(%s) does not exist", key))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPositionLiquidity() || position(%s) does not exist", key))
+	}
 
 	return position.liquidity
 }
 
 func (pool *Pool) PoolGetPositionFeeGrowthInside0LastX128(key string) *u256.Uint {
 	position, exist := pool.positions[key]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPositionFeeGrowthInside0LastX128) || position(%s) does not exist", key))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPositionFeeGrowthInside0LastX128) || position(%s) does not exist", key))
+	}
 
 	return position.feeGrowthInside0LastX128
 }
 
 func (pool *Pool) PoolGetPositionFeeGrowthInside1LastX128(key string) *u256.Uint {
 	position, exist := pool.positions[key]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPositionFeeGrowthInside1LastX128() || position(%s) does not exist", key))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPositionFeeGrowthInside1LastX128() || position(%s) does not exist", key))
+	}
 
 	return position.feeGrowthInside1LastX128
 }
 
 func (pool *Pool) PoolGetPositionTokensOwed0(key string) *u256.Uint {
 	position, exist := pool.positions[key]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPositionTokensOwed0() || position(%s) does not exist", key))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPositionTokensOwed0() || position(%s) does not exist", key))
+	}
 
 	return position.tokensOwed0
 }
 
 func (pool *Pool) PoolGetPositionTokensOwed1(key string) *u256.Uint {
 	position, exist := pool.positions[key]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPositionTokensOwed1() || position(%s) does not exist", key))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPositionTokensOwed1() || position(%s) does not exist", key))
+	}
 
 	return position.tokensOwed1
 }
@@ -101,63 +113,81 @@ func (pool *Pool) PoolGetPositionTokensOwed1(key string) *u256.Uint {
 // TickInfo
 func (pool *Pool) PoolGetTick(x int32) TickInfo {
 	tick, exist := pool.ticks[x]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTick() || tick(%d) does not exist", x))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTick() || tick(%d) does not exist", x))
+	}
 
 	return tick
 }
 
 func (pool *Pool) PoolGetTickLiquidityGross(x int32) *u256.Uint {
 	tick, exist := pool.ticks[x]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickLiquidityGross() || tick(%d) does not exist", x))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickLiquidityGross() || tick(%d) does not exist", x))
+	}
 
 	return tick.liquidityGross
 }
 
 func (pool *Pool) PoolGetTickLiquidityNet(x int32) *i256.Int {
 	tick, exist := pool.ticks[x]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickLiquidityNet() || tick(%d) does not exist", x))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickLiquidityNet() || tick(%d) does not exist", x))
+	}
 
 	return tick.liquidityNet
 }
 
 func (pool *Pool) PoolGetTickFeeGrowthOutside0X128(x int32) *u256.Uint {
 	tick, exist := pool.ticks[x]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickFeeGrowthOutside0X128() || tick(%d) does not exist", x))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickFeeGrowthOutside0X128() || tick(%d) does not exist", x))
+	}
 
 	return tick.feeGrowthOutside0X128
 }
 
 func (pool *Pool) PoolGetTickFeeGrowthOutside1X128(x int32) *u256.Uint {
 	tick, exist := pool.ticks[x]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickFeeGrowthOutside1X128() || tick(%d) does not exist", x))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickFeeGrowthOutside1X128() || tick(%d) does not exist", x))
+	}
 
 	return tick.feeGrowthOutside1X128
 }
 
 func (pool *Pool) PoolGetTickTickCumulativeOutside(x int32) int64 {
 	tick, exist := pool.ticks[x]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickTickCumulativeOutside() || tick(%d) does not exist", x))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickTickCumulativeOutside() || tick(%d) does not exist", x))
+	}
 
 	return tick.tickCumulativeOutside
 }
 
 func (pool *Pool) PoolGetTickSecondsPerLiquidityOutsideX128(x int32) *u256.Uint {
 	tick, exist := pool.ticks[x]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickSecondsPerLiquidityOutsideX128() || tick(%d) does not exist", x))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickSecondsPerLiquidityOutsideX128() || tick(%d) does not exist", x))
+	}
 
 	return tick.secondsPerLiquidityOutsideX128
 }
 
 func (pool *Pool) PoolGetTickSecondsOutside(x int32) uint32 {
 	tick, exist := pool.ticks[x]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickSecondsOutside() || tick(%d) does not exist", x))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickSecondsOutside() || tick(%d) does not exist", x))
+	}
 
 	return tick.secondsOutside
 }
 
 func (pool *Pool) PoolGetTickInitialized(x int32) bool {
 	tick, exist := pool.ticks[x]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickInitialized() || tick(%d) does not exist", x))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickInitialized() || tick(%d) does not exist", x))
+	}
 
 	return tick.initialized
 }
@@ -165,7 +195,9 @@ func (pool *Pool) PoolGetTickInitialized(x int32) bool {
 // TickBitmaps
 func (pool *Pool) PoolGetTickBitmap(x int16) *u256.Uint {
 	tickBitmap, exist := pool.tickBitmaps[x]
-	requireExist(exist, ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickBitmap() || tickBitmap(%d) does not exist", x))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickBitmap() || tickBitmap(%d) does not exist", x))
+	}
 
 	return tickBitmap
 }

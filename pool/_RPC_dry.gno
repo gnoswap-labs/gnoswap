@@ -95,9 +95,13 @@ func DrySwap(
 			liquidity:                cache.liquidityStart,
 		}
 	}
+	// println("state.tick:", state.tick)
+	// println("IN state.sqrtPriceX96:", state.sqrtPriceX96.ToString())
 
+	// println("state.sqrtPriceX96:", state.sqrtPriceX96.ToString())
 	// continue swapping as long as we haven't used the entire input/output and haven't reached the price limit
 	for !(state.amountSpecifiedRemaining.IsZero()) && !(state.sqrtPriceX96.Eq(sqrtPriceLimitX96)) {
+		// println("state.amountSpecifiedRemaining:", state.amountSpecifiedRemaining.ToString())
 		var step StepComputations
 		step.sqrtPriceStartX96 = state.sqrtPriceX96
 
@@ -127,6 +131,11 @@ func DrySwap(
 			sqrtRatioTargetX96 = step.sqrtPriceNextX96
 		}
 
+		// println("state.sqrtPriceX96:", state.sqrtPriceX96.ToString())
+		// println("sqrtRatioTargetX96:", sqrtRatioTargetX96.ToString())
+		// println("state.liquidity:", state.liquidity.ToString())
+		// println("state.amountSpecifiedRemaining:", state.amountSpecifiedRemaining.ToString())
+		// println("pool.fee:", pool.fee)
 		state.sqrtPriceX96, step.amountIn, step.amountOut, step.feeAmount = swapMathComputeSwapStep(
 			state.sqrtPriceX96,
 			sqrtRatioTargetX96,
@@ -134,6 +143,13 @@ func DrySwap(
 			state.amountSpecifiedRemaining,
 			uint64(pool.fee),
 		)
+		if step.amountIn.ToString() == "271" {
+			// println("> state.sqrtPriceX96:", state.sqrtPriceX96.ToString())
+			// println("step.amountIn:", step.amountIn.ToString())
+			// println("step.amountOut:", step.amountOut.ToString())
+			// println("step.feeAmount:", step.feeAmount.ToString())
+			// panic("FIX")
+		}
 
 		amountInWithFee := i256.FromUint256(new(u256.Uint).Add(step.amountIn, step.feeAmount))
 		if exactInput {

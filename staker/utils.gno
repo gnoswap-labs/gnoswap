@@ -65,27 +65,3 @@ func min(x, y int64) int64 {
 	}
 	return y
 }
-
-func requireUnsigned(x bigint, msg string) {
-	if x < 0 {
-		panic(msg)
-	}
-}
-
-func require(condition bool, message string) {
-	if !condition {
-		panic(message)
-	}
-}
-
-func requireExist(exist bool, msg string) {
-	if !exist {
-		panic(msg)
-	}
-}
-
-func requirePrevRealmPath(prevRealmPath, msg string) {
-	if std.PrevRealm().PkgPath() != prevRealmPath {
-		panic(msg)
-	}
-}

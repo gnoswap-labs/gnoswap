@@ -27,6 +27,10 @@ type Position struct {
 	burned bool
 }
 
+func (p Position) isClear() bool {
+	return p.liquidity.IsZero() && p.tokensOwed0.IsZero() && p.tokensOwed1.IsZero()
+}
+
 type MintParams struct {
 	token0         string
 	token1         string

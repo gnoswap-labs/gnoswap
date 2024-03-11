@@ -25,8 +25,14 @@ var (
 func InitManual() {
 	// MUST BE ORIGIN CALLER
 	std.AssertOriginCall()
-	require(!initialized, ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || expected initialized(%t) == false", initialized))
-	require(std.GetOrigCaller() == consts.GNOSWAP_ADMIN, ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || expected std.GetOrigCaller(%s) == consts.GNOSWAP_ADMIN(%s)", std.GetOrigCaller().String(), consts.GNOSWAP_ADMIN.String()))
+	if initialized {
+		panic(ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || expected initialized(%t) == false", initialized))
+	}
+
+	if !(std.GetOrigCaller() == consts.GNOSWAP_ADMIN) {
+		panic(ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || expected std.GetOrigCaller(%s) == consts.GNOSWAP_ADMIN(%s)", std.GetOrigCaller().String(), consts.GNOSWAP_ADMIN.String()))
+	}
+
 	feeAmountTickSpacing[100] = 2     // 0.01%
 	feeAmountTickSpacing[500] = 10    // 0.05%
 	feeAmountTickSpacing[3000] = 60   // 0.3%
@@ -41,8 +47,13 @@ func CreatePool(
 	fee uint32,
 	_sqrtPriceX96 string, // uint
 ) *Pool {
-	require(initialized, ufmt.Sprintf("[POOl] pool_manager.gno__gno__CreatePool() || expected initialized(%t) == true", initialized))
-	require(token0Path != token1Path, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
+	if !(initialized) {
+		panic(ufmt.Sprintf("[POOl] pool_manager.gno__gno__CreatePool() || expected initialized(%t) == true", initialized))
+	}
+
+	if token0Path == token1Path {
+		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
+	}
 
 	sqrtPriceX96, err := u256.FromDecimal(_sqrtPriceX96)
 	if err != nil {
@@ -64,7 +75,9 @@ func CreatePool(
 
 	// check whether the pool already exist
 	pool, exist := pools[poolPath]
-	requireExist(!exist, ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected poolPath(%s) not to exist", poolPath))
+	if exist {
+		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected poolPath(%s) not to exist", poolPath))
+	}
 
 	if !exist {
 		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.GNOSWAP_ADMIN), consts.POOL_CREATION_FEE)
@@ -79,14 +92,18 @@ func CreatePool(
 func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	pool, exist := pools[poolPath]
-	requireExist(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPool() || expected poolPath(%s) to exist", poolPath))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] pool_manager.gno__GetPool() || expected poolPath(%s) to exist", poolPath))
+	}
 
 	return pool
 }
 
 func GetPoolFromPoolPath(poolPath string) *Pool {
 	pool, exist := pools[poolPath]
-	requireExist(exist, ufmt.Sprintf("[POOL] pool_manager.gno__GetPoolFromPoolPath() || expected poolPath(%s) to exist", poolPath))
+	if !exist {
+		panic(ufmt.Sprintf("[POOL] pool_manager.gno__GetPoolFromPoolPath() || expected poolPath(%s) to exist", poolPath))
+	}
 
 	return pool
 }
