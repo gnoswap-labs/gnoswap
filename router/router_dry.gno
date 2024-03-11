@@ -37,7 +37,8 @@ func DrySwapRoute(
 
 	// check route length ( should be 1 ~ 7 )
 	routes := strings.Split(strRouteArr, ",")
-	if !(1 <= len(routes) && len(routes) <= 7) {
+	isValidRouteLength := (1 <= len(routes)) && (len(routes) <= 7)
+	if !isValidRouteLength {
 		panic(ufmt.Sprintf("[ROUTER] router_dry.gno__DrySwapRoute() || len(routes) should be 1 ~ 7 (len(routes)[%d])", len(routes)))
 	}
 
