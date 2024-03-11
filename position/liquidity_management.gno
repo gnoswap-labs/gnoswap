@@ -15,8 +15,8 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 	pool := pl.GetPoolFromPoolPath(params.poolKey)
 
 	sqrtPriceX96 := pool.PoolGetSlot0SqrtPriceX96()
-	sqrtRatioAX96 := p.TickMathGetSqrtRatioAtTick(params.tickLower).Bigint()
-	sqrtRatioBX96 := p.TickMathGetSqrtRatioAtTick(params.tickUpper).Bigint()
+	sqrtRatioAX96 := common.TickMathGetSqrtRatioAtTick(params.tickLower)
+	sqrtRatioBX96 := common.TickMathGetSqrtRatioAtTick(params.tickUpper)
 
 	liquidity := common.GetLiquidityForAmounts(
 		sqrtPriceX96,

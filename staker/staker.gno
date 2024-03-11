@@ -30,12 +30,14 @@ const (
 	TIMESTAMP_90DAYS  = 7776000
 	TIMESTAMP_180DAYS = 15552000
 	TIMESTAMP_360DAYS = 31104000
+
+	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000"
 )
 
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/demo/gns:gno.land/r/demo/wugnot:500"] = 1 // r3v4_xxx: INITIALIZE TIER 1 POOL
+	poolTiers[MUST_EXISTS_IN_TIER_1] = 1 // ONLY GNOT:GNS 0.03%
 }
 
 func CreateExternalIncentive(
@@ -256,8 +258,8 @@ func getTokenPairBalanceFromPosition(tokenId uint64) (*u256.Uint, *u256.Uint) {
 
 	pool := pl.GetPoolFromPoolPath(poolKey)
 	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
-	lowerX96 := pl.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickLower(tokenId)).Bigint()
-	upperX96 := pl.TickMathGetSqrtRatioAtTick(pos.PositionGetPositionTickUpper(tokenId)).Bigint()
+	lowerX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickLower(tokenId))
+	upperX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickUpper(tokenId))
 
 	token0Balance, token1Balance := common.GetAmountsForLiquidity(
 		currentX96,

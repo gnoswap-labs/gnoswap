@@ -82,8 +82,8 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 
 	token0Balance, token1Balance := common.GetAmountsForLiquidity(
 		currentX96,
-		lowerX96.Bigint(),
-		upperX96.Bigint(),
+		lowerX96,
+		upperX96,
 		position.liquidity,
 	)
 
