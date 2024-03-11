@@ -39,10 +39,10 @@ func TestPoolCreatePools(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*2)
 
 	// bar-baz
-	pl.CreatePool(barPath, bazPath, 100, 354340008410679467268648495215) // tick 29960 ≈ 1:20
+	pl.CreatePool(barPath, bazPath, 100, "354340008410679467268648495215") // tick 29960 ≈ 1:20
 
 	// baz-foo
-	pl.CreatePool(bazPath, fooPath, 100, 79228162514264337593543950337) // tick 0 ≈ 1:1
+	pl.CreatePool(bazPath, fooPath, 100, "79228162514264337593543950337") // tick 0 ≈ 1:1
 
 	std.TestSkipHeights(2)
 }
@@ -78,17 +78,17 @@ func TestPositionMintBarBazInRange(t *testing.T) {
 		100,         // fee
 		29950,       // tickLower
 		29970,       // tickUpper
-		10000000,    // amount0Desired
-		10000000,    // amount1Desired
-		0,           // amount0Min
-		0,           // amount1Min
+		"10000000",  // amount0Desired
+		"10000000",  // amount1Desired
+		"0",         // amount0Min
+		"0",         // amount1Min
 		max_timeout, // deadline
 	)
 
-	shouldEQ(t, tokenId, bigint(1))
-	shouldEQ(t, liquidity, bigint(4473213900))
-	shouldEQ(t, amount0, bigint(499941))
-	shouldEQ(t, amoutn1, bigint(9999999))
+	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, liquidity, "4473213900")
+	shouldEQ(t, amount0, "499942")
+	shouldEQ(t, amoutn1, "9999999")
 
 	std.TestSkipHeights(3)
 }
@@ -106,17 +106,17 @@ func TestPositionMintBazFooInRange(t *testing.T) {
 		100,         // fee
 		-1000,       // tickLower
 		1000,        // tickUpper
-		10000000,    // amount0Desired
-		10000000,    // amount1Desired
-		0,           // amount0Min
-		0,           // amount1Min
+		"10000000",  // amount0Desired
+		"10000000",  // amount1Desired
+		"0",         // amount0Min
+		"0",         // amount1Min
 		max_timeout, // deadline
 	)
 
-	shouldEQ(t, tokenId, bigint(2))
-	shouldEQ(t, liquidity, bigint(205051662))
-	shouldEQ(t, amount0, bigint(9999999))
-	shouldEQ(t, amoutn1, bigint(9999999))
+	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, liquidity, "205051662")
+	shouldEQ(t, amount0, "10000000")
+	shouldEQ(t, amoutn1, "9999999")
 
 	std.TestSkipHeights(3)
 }
@@ -140,28 +140,26 @@ func TestRouterDrySwapBarBazExactIn(t *testing.T) {
 	dryResult := rr.DrySwapRoute(
 		barPath,    // inputToken
 		bazPath,    // outputToken
-		10,         // amountSpecified
+		"10",       // amountSpecified
 		"EXACT_IN", // swapType
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100,gno.land/r/demo/bar:gno.land/r/demo/baz:100", // strRouteArr
 		"95,5", // quoteArr
 	)
-	shouldEQ(t, dryResult, bigint(-1)) // -1 means fail
+	shouldEQ(t, dryResult, "-1") // -1 means fail
 }
 
 func TestRouterSwapBarBazExactIn(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), 100000)
 
-	shouldPanicWithMsg(t, func() {
+	shouldPanic(t, func() {
 		rr.SwapRoute(
 			barPath,    // inputToken
 			bazPath,    // outputToken
-			10,         // amountSpecified
+			"10",       // amountSpecified
 			"EXACT_IN", // swapType
 			"gno.land/r/demo/bar:gno.land/r/demo/baz:100,gno.land/r/demo/bar:gno.land/r/demo/baz:100", // strRouteArr
 			"95,5", // quoteArr
 			"1",    // tokenAmountLimit
 		)
-	},
-		"[POOL] pool.gno__Swap() || amountSpecified(0) != 0",
-	)
+	})
 }

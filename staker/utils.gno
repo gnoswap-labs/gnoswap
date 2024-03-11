@@ -39,8 +39,6 @@ func tid(tokenId interface{}) grc721.TokenID {
 	}
 
 	switch tokenId.(type) {
-	case bigint:
-		return grc721.TokenID(string(tokenId.(bigint)))
 	case string:
 		return grc721.TokenID(tokenId.(string))
 	case int:

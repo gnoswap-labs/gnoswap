@@ -2,12 +2,14 @@ package staker
 
 import (
 	"std"
+
+	u256 "gno.land/p/big/uint256"
 )
 
 type Incentive struct {
 	targetPoolPath string
 	rewardToken    string
-	rewardAmount   bigint
+	rewardAmount   *u256.Uint
 	startTimestamp int64
 	endTimestamp   int64
 	refundee       std.Address

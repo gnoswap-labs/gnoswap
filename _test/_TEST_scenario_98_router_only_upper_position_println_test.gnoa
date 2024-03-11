@@ -36,7 +36,7 @@ func TestPoolCreatePools(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 
 	// bar-baz
-	pl.CreatePool(barPath, bazPath, 100, 354340008410679467268648495215) // tick 29960 ≈ 1:20
+	pl.CreatePool(barPath, bazPath, 100, "354340008410679467268648495215") // tick 29960 ≈ 1:20
 
 	std.TestSkipHeights(4)
 }
@@ -69,16 +69,16 @@ func TestFaucetLP01(t *testing.T) {
 // 		100,         // fee
 // 		29940,       // tickLower
 // 		29980,       // tickUpper
-// 		1000,        // amount0Desired
-// 		1000,        // amount1Desired
-// 		0,           // amount0Min
-// 		0,           // amount1Min
+// 		"1000",        // amount0Desired
+// 		"1000",        // amount1Desired
+// 		"0",           // amount0Min
+// 		"0",           // amount1Min
 // 		max_timeout, // deadline
 // 	)
-// 	// shouldEQ(t, tokenId, bigint(1))
-// 	shouldEQ(t, liquidity, bigint(223717))
-// 	shouldEQ(t, amount0, bigint(49))
-// 	shouldEQ(t, amoutn1, bigint(1000))
+// 	// shouldEQ(t, tokenId, 1)
+// 	shouldEQ(t, liquidity, "223717"))
+// 	shouldEQ(t, amount0, "49"))
+// 	shouldEQ(t, amoutn1, "1000"))
 
 // 	poolBar := bar.BalanceOf(a2u(consts.POOL_ADDR))
 // 	poolBaz := baz.BalanceOf(a2u(consts.POOL_ADDR))
@@ -101,16 +101,16 @@ func TestPositionMintBarBazUpperRange(t *testing.T) {
 		100,         // fee
 		30000,       // tickLower
 		34000,       // tickUpper
-		1000,        // amount0Desired
-		1000,        // amount1Desired
-		0,           // amount0Min
-		0,           // amount1Min
+		"1000",      // amount0Desired
+		"1000",      // amount1Desired
+		"0",         // amount0Min
+		"0",         // amount1Min
 		max_timeout, // deadline
 	)
-	// shouldEQ(t, tokenId, bigint(2))
-	shouldEQ(t, liquidity, bigint(24723))
-	shouldEQ(t, amount0, bigint(999))
-	shouldEQ(t, amoutn1, bigint(0))
+	// shouldEQ(t, tokenId, "2")
+	shouldEQ(t, liquidity, "24723")
+	shouldEQ(t, amount0, "1000")
+	shouldEQ(t, amoutn1, "0")
 
 	poolBar := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	poolBaz := baz.BalanceOf(a2u(consts.POOL_ADDR))
@@ -138,7 +138,7 @@ func TestRouterDrySwapRouteBazBarExactIn(t *testing.T) {
 	dryResult := rr.DrySwapRoute(
 		bazPath,    // inputToken
 		barPath,    // outputToken
-		1000,       // amountSpecified
+		"1000",     // amountSpecified
 		"EXACT_IN", // swapType
 		"gno.land/r/demo/baz:gno.land/r/demo/bar:100", // strRouteArr
 		"100", // quoteArr
@@ -161,7 +161,7 @@ func TestRouterSwapRouteBazBarExactIn(t *testing.T) {
 	swapResult := rr.SwapRoute(
 		bazPath,    // inputToken
 		barPath,    // outputToken
-		1000,       // amountSpecified
+		"1000",     // amountSpecified
 		"EXACT_IN", // swapType
 		"gno.land/r/demo/baz:gno.land/r/demo/bar:100", // strRouteArr
 		"100", // quoteArr
@@ -182,10 +182,10 @@ func TestRouterDrySwapRouteBazBarExactInTooMuch(t *testing.T) {
 	std.TestSetOrigCaller(tr01)
 
 	dryResult := rr.DrySwapRoute(
-		bazPath,    // inputToken
-		barPath,    // outputToken
-		100000000,  // amountSpecified
-		"EXACT_IN", // swapType
+		bazPath,     // inputToken
+		barPath,     // outputToken
+		"100000000", // amountSpecified
+		"EXACT_IN",  // swapType
 		"gno.land/r/demo/baz:gno.land/r/demo/bar:100", // strRouteArr
 		"100", // quoteArr
 	)
@@ -205,10 +205,10 @@ func TestRouterSwapRouteBazBarExactInTooMuch(t *testing.T) {
 
 	shouldPanicWithMsg(t, func() {
 		rr.SwapRoute(
-			bazPath,    // inputToken
-			barPath,    // outputToken
-			100000000,  // amountSpecified
-			"EXACT_IN", // swapType
+			bazPath,     // inputToken
+			barPath,     // outputToken
+			"100000000", // amountSpecified
+			"EXACT_IN",  // swapType
 			"gno.land/r/demo/baz:gno.land/r/demo/bar:100", // strRouteArr
 			"100",      // quoteArr
 			"10000000", // tokenAmountLimit (minReceived)

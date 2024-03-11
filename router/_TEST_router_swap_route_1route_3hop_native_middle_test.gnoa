@@ -24,8 +24,8 @@ func TestCreatePool(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*2)
 
-	pl.CreatePool(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, 130621891405341611593710811006) // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
-	pl.CreatePool(consts.WRAPPED_WUGNOT, barPath, fee100, 130621891405341611593710811006)         // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(consts.WRAPPED_WUGNOT, barPath, fee100, "130621891405341611593710811006")         // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 	// 1 gns ≈ 7.29 bar
 
 	jsonOutput := pl.ApiGetPools()
@@ -46,13 +46,13 @@ func TestPositionMintGnsGnot(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	wugnot.Deposit()
 
-	gns.Approve(a2u(consts.POOL_ADDR), 36789)
-	wugnot.Approve(a2u(consts.POOL_ADDR), 99999)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout)
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, amount0 > 0, true) // 36789
-	shouldEQ(t, amount1 > 0, true) // 99999
+	shouldEQ(t, amount0, "36790")
+	shouldEQ(t, amount1, "99999")
 }
 
 func TestPositionMintGnotBar(t *testing.T) {
@@ -68,13 +68,13 @@ func TestPositionMintGnotBar(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	wugnot.Deposit()
 
-	wugnot.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64))
-	bar.Approve(a2u(consts.POOL_ADDR), uint64(consts.MAX_UINT64))
+	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.WRAPPED_WUGNOT, barPath, fee100, int32(9000), int32(11000), bigint(100_000), bigint(100_000), 0, 0, max_timeout)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.WRAPPED_WUGNOT, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout)
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, amount0 > 0, true) // 99999
-	shouldEQ(t, amount1 > 0, true) // 36865
+	shouldEQ(t, amount0, "100000") // 100000
+	shouldEQ(t, amount1, "36789")  // 36789
 }
 
 func TestDrySwapRouteGnsBarExactIn(t *testing.T) {
@@ -83,12 +83,12 @@ func TestDrySwapRouteGnsBarExactIn(t *testing.T) {
 	dryResult := DrySwapRoute(
 		consts.GNS_PATH, // inputToken
 		barPath,         // outputToken
-		bigint(1000),    // amountSpecified
+		"1000",          // amountSpecified
 		"EXACT_IN",      // swapType
 		"gno.land/r/demo/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/demo/bar:100", // strRouteArr
 		"100", // quoteArr
 	)
-	shouldEQ(t, dryResult, bigint(7339))
+	shouldEQ(t, dryResult, "7339")
 }
 
 func TestSwapRouteGnsBarExactIn(t *testing.T) {
@@ -100,11 +100,11 @@ func TestSwapRouteGnsBarExactIn(t *testing.T) {
 	swapResult := SwapRoute(
 		consts.GNS_PATH, // inputToken
 		barPath,         // outputToken
-		bigint(1000),    // amountSpecified
+		"1000",          // amountSpecified
 		"EXACT_IN",      // swapType
 		"gno.land/r/demo/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/demo/bar:100", // strRouteArr
 		"100", // quoteArr
 		"0",   // tokenAmountLimit
 	)
-	shouldEQ(t, swapResult, bigint(7328))
+	shouldEQ(t, swapResult, "7328")
 }

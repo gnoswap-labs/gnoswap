@@ -13,9 +13,8 @@ import (
 )
 
 var (
-	test_tickLower       = int32(9000)
-	test_tickUpper       = int32(11000)
-	test_liquidityExpect = bigint(100_000_000)
+	test_tickLower = int32(9000)
+	test_tickUpper = int32(11000)
 )
 
 // 1. Init & Create Pool
@@ -25,7 +24,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 	std.TestSetPrevAddr(test1)
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
-	CreatePool(fooPath, consts.WRAPPED_WUGNOT, fee500, 130621891405341611593710811006) // x2.7
+	CreatePool(fooPath, consts.WRAPPED_WUGNOT, fee500, "130621891405341611593710811006") // x2.7
 }
 
 // 2. Mint LP and Get GNFT
@@ -37,19 +36,19 @@ func TestMint(t *testing.T) {
 
 	// prepare ugnot
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.IssueCoin(test1, "ugnot", 804_031)
+	testBanker.IssueCoin(test1, "ugnot", 804_032)
 
 	// simulate transfer & decrase
-	std.TestSetOrigSend(std.Coins{{"ugnot", 804_031}}, nil)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 804_031)
+	std.TestSetOrigSend(std.Coins{{"ugnot", 804_032}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 804_032)
 
 	// Deposit(wrap)
 	std.TestSetPrevAddr(test1)
 	wugnot.Deposit()
 
 	std.TestSetPrevAddr(test1)
-	foo.Approve(a2u(consts.POOL_ADDR), 295801)
-	wugnot.Approve(a2u(consts.POOL_ADDR), 804031)
+	foo.Approve(a2u(consts.POOL_ADDR), 295802)
+	wugnot.Approve(a2u(consts.POOL_ADDR), 804032)
 
 	// Mint
 	std.TestSetPrevRealm(consts.POSITION_PATH)
@@ -60,11 +59,11 @@ func TestMint(t *testing.T) {
 		consts.POSITION_ADDR,
 		test_tickLower,
 		test_tickUpper,
-		bigint(10000000),
+		"10000000",
 	)
 
-	shouldEQ(t, amount0, bigint(295801))
-	shouldEQ(t, amount1, bigint(804031))
+	shouldEQ(t, amount0, "295802")
+	shouldEQ(t, amount1, "804031")
 }
 
 func TestSwapBuyNative(t *testing.T) {
@@ -72,8 +71,8 @@ func TestSwapBuyNative(t *testing.T) {
 
 	test1OldT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 	test1OldT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
-	shouldEQ(t, test1OldT0Bal, 499999999704199) // foo
-	shouldEQ(t, test1OldT1Bal, bigint(0))       // wugnot
+	shouldEQ(t, test1OldT0Bal, 499999999704198) // foo
+	shouldEQ(t, test1OldT1Bal, 1)               // wugnot
 
 	std.TestSetPrevAddr(test1)
 	foo.Approve(a2u(consts.POOL_ADDR), 10000)
@@ -86,17 +85,17 @@ func TestSwapBuyNative(t *testing.T) {
 		fee500,
 		test1,
 		true,
-		bigint(10000),
+		"10000",
 		consts.MIN_PRICE,
 		std.GetOrigCaller(),
 	)
-	shouldEQ(t, amount0, bigint(10000))
-	shouldEQ(t, amount1, bigint(-27123))
+	shouldEQ(t, amount0, "10000")
+	shouldEQ(t, amount1, "-27123")
 
 	test1NewT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 	test1NewT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
-	shouldEQ(t, test1NewT0Bal, 499999999694199) // - 10_000 // user sells 10_000
-	shouldEQ(t, test1NewT1Bal, 27123)           // gets WGNOT
+	shouldEQ(t, test1NewT0Bal, 499999999694198) // - 10_000 // user sells 10_000
+	shouldEQ(t, test1NewT1Bal, 27124)           // gets WGNOT
 }
 
 func TestSwapSellNative(t *testing.T) {
@@ -104,11 +103,11 @@ func TestSwapSellNative(t *testing.T) {
 
 	test1OldT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 	test1OldT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
-	shouldEQ(t, test1OldT0Bal, 499999999694199)
-	shouldEQ(t, test1OldT1Bal, 27123)
+	shouldEQ(t, test1OldT0Bal, 499999999694198) // foo
+	shouldEQ(t, test1OldT1Bal, 27124)           // wugnot
 
 	std.TestSetPrevAddr(test1)
-	wugnot.Approve(a2u(consts.POOL_ADDR), 10000)
+	wugnot.Approve(a2u(consts.POOL_ADDR), 27123)
 
 	std.TestSetPrevRealm(consts.ROUTER_PATH)
 	std.TestSetOrigCaller(test1)
@@ -118,15 +117,15 @@ func TestSwapSellNative(t *testing.T) {
 		fee500,
 		test1,
 		false,
-		bigint(10000),
+		"10000",
 		consts.MAX_PRICE,
 		std.GetOrigCaller(),
 	)
-	shouldEQ(t, amount0, bigint(-3687))
-	shouldEQ(t, amount1, bigint(10000))
+	shouldEQ(t, amount0, "-3687") // pool sent
+	shouldEQ(t, amount1, "10000") // pool recv
 
 	test1NewT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
 	test1NewT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
-	shouldEQ(t, test1NewT0Bal, 499999999697886) // foo
-	shouldEQ(t, test1NewT1Bal, 17123)           // wugnot
+	shouldEQ(t, test1NewT0Bal, 499999999697885) // foo
+	shouldEQ(t, test1NewT1Bal, 17124)           // wugnot
 }

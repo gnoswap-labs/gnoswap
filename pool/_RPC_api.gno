@@ -3,9 +3,9 @@ package pool
 import (
 	b64 "encoding/base64"
 	"encoding/json"
-	"strings"
-
 	"std"
+	"strconv"
+	"strings"
 	"time"
 
 	"gno.land/p/demo/ufmt"
@@ -21,7 +21,7 @@ type RpcPool struct {
 	BalancesToken1 string `json:"balanceToken1"`
 
 	// fee is the fee tier of the pool
-	Fee uint16 `json:"fee"`
+	Fee uint32 `json:"fee"`
 
 	// tickSpacing is the spacing between ticks
 	TickSpacing int32 `json:"tickSpacing"`
@@ -53,8 +53,8 @@ type RpcPool struct {
 	Positions []RpcPosition `json:"positions"`
 }
 
-type RpcTicks map[int32]RpcTickInfo  // tick => RpcTickInfo
 type RpcTickBitmaps map[int16]string // tick(wordPos) => bitmap(tickWord ^ mask)
+type RpcTicks map[int32]RpcTickInfo  // tick => RpcTickInfo
 
 type RpcTickInfo struct {
 	LiquidityGross string `json:"liquidityGross"`
@@ -63,10 +63,10 @@ type RpcTickInfo struct {
 	FeeGrowthOutside0X128 string `json:"feeGrowthOutside0X128"`
 	FeeGrowthOutside1X128 string `json:"feeGrowthOutside1X128"`
 
-	//TickCumulativeOutside bigint `json:"tickCumulativeOutside"`
+	TickCumulativeOutside int64 `json:"tickCumulativeOutside"`
 
-	//SecondsPerLiquidityOutsideX bigint `json:"secondsPerLiquidityOutsideX"`
-	//SecondsOutside              bigint `json:"secondsOutside"`
+	SecondsPerLiquidityOutsideX string `json:"secondsPerLiquidityOutsideX"`
+	SecondsOutside              uint32 `json:"secondsOutside"`
 
 	Initialized bool `json:"initialized"`
 }
@@ -74,8 +74,8 @@ type RpcTickInfo struct {
 type RpcPosition struct {
 	Owner string `json:"owner"`
 
-	TickLower string `json:"tickLower"`
-	TickUpper string `json:"tickUpper"`
+	TickLower int32 `json:"tickLower"`
+	TickUpper int32 `json:"tickUpper"`
 
 	Liquidity string `json:"liquidity"`
 
@@ -125,52 +125,49 @@ func rpcMakePool(poolPath string) RpcPool {
 	rpcPool.Token0Path = pool.token0Path
 	rpcPool.Token1Path = pool.token1Path
 
-	rpcPool.BalancesToken0 = pool.balances.token0.Dec()
-	rpcPool.BalancesToken1 = pool.balances.token1.Dec()
+	rpcPool.BalancesToken0 = pool.balances.token0.ToString()
+	rpcPool.BalancesToken1 = pool.balances.token1.ToString()
 
 	rpcPool.Fee = pool.fee
 
 	rpcPool.TickSpacing = pool.tickSpacing
 
-	rpcPool.MaxLiquidityPerTick = pool.maxLiquidityPerTick.Dec()
+	rpcPool.MaxLiquidityPerTick = pool.maxLiquidityPerTick.ToString()
 
-	rpcPool.Slot0SqrtPriceX96 = pool.slot0.sqrtPriceX96.Dec()
+	rpcPool.Slot0SqrtPriceX96 = pool.slot0.sqrtPriceX96.ToString()
 	rpcPool.Slot0Tick = pool.slot0.tick
 	rpcPool.Slot0FeeProtocol = pool.slot0.feeProtocol
 	rpcPool.Slot0Unlocked = pool.slot0.unlocked
 
-	rpcPool.FeeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128.Dec()
-	rpcPool.FeeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128.Dec()
+	rpcPool.FeeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128.ToString()
+	rpcPool.FeeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128.ToString()
 
-	rpcPool.ProtocolFeesToken0 = pool.protocolFees.token0.Dec()
-	rpcPool.ProtocolFeesToken1 = pool.protocolFees.token1.Dec()
+	rpcPool.ProtocolFeesToken0 = pool.protocolFees.token0.ToString()
+	rpcPool.ProtocolFeesToken1 = pool.protocolFees.token1.ToString()
 
-	rpcPool.Liquidity = pool.liquidity.Dec()
+	rpcPool.Liquidity = pool.liquidity.ToString()
 
 	rpcPool.Ticks = RpcTicks{}
-
 	for tick, tickInfo := range pool.ticks {
 		rpcPool.Ticks[tick] = RpcTickInfo{
-			LiquidityGross:        tickInfo.liquidityGross.NilToZero().Dec(),
-			LiquidityNet:          tickInfo.liquidityNet.NilToZero().Dec(),
-			FeeGrowthOutside0X128: tickInfo.feeGrowthOutside0X128.NilToZero().Dec(),
-			FeeGrowthOutside1X128: tickInfo.feeGrowthOutside1X128.NilToZero().Dec(),
-			//TickCumulativeOutside:       tickInfo.tickCumulativeOutside,
-			//SecondsPerLiquidityOutsideX: tickInfo.secondsPerLiquidityOutsideX128,
-			//SecondsOutside:              tickInfo.secondsOutside,
-			Initialized: tickInfo.initialized,
+			LiquidityGross:              tickInfo.liquidityGross.ToString(),
+			LiquidityNet:                tickInfo.liquidityNet.ToString(),
+			FeeGrowthOutside0X128:       tickInfo.feeGrowthOutside0X128.ToString(),
+			FeeGrowthOutside1X128:       tickInfo.feeGrowthOutside1X128.ToString(),
+			TickCumulativeOutside:       tickInfo.tickCumulativeOutside,
+			SecondsPerLiquidityOutsideX: tickInfo.secondsPerLiquidityOutsideX128.ToString(),
+			SecondsOutside:              tickInfo.secondsOutside,
+			Initialized:                 tickInfo.initialized,
 		}
 	}
 
-	tickBitmaps := pool.tickBitmaps
 	rpcPool.TickBitmaps = RpcTickBitmaps{}
-	for tick, tickBitmap := range tickBitmaps {
-		rpcPool.TickBitmaps[tick] = tickBitmap.NilToZero().Dec()
+	for tick, tickBitmap := range pool.tickBitmaps {
+		rpcPool.TickBitmaps[tick] = tickBitmap.ToString()
 	}
 
 	Positions := pool.positions
 	rpcPositions := []RpcPosition{}
-
 	for posKey, posInfo := range Positions {
 		owner, tickLower, tickUpper := posKeyDivide(posKey)
 
@@ -178,9 +175,9 @@ func rpcMakePool(poolPath string) RpcPool {
 			Owner:      owner,
 			TickLower:  tickLower,
 			TickUpper:  tickUpper,
-			Liquidity:  posInfo.liquidity.Dec(),
-			Token0Owed: posInfo.tokensOwed0.Dec(),
-			Token1Owed: posInfo.tokensOwed1.Dec(),
+			Liquidity:  posInfo.liquidity.ToString(),
+			Token0Owed: posInfo.tokensOwed0.ToString(),
+			Token1Owed: posInfo.tokensOwed1.ToString(),
 		})
 	}
 	rpcPool.Positions = rpcPositions
@@ -188,7 +185,7 @@ func rpcMakePool(poolPath string) RpcPool {
 	return rpcPool
 }
 
-func posKeyDivide(posKey string) (string, string, string) {
+func posKeyDivide(posKey string) (string, int32, int32) {
 	// base64 decode
 	kDec, _ := b64.StdEncoding.DecodeString(posKey)
 	posKey = string(kDec)
@@ -198,7 +195,10 @@ func posKeyDivide(posKey string) (string, string, string) {
 		panic(ufmt.Sprintf("[POOL] _RPC_api.gno__posKeyDivide() || invalid posKey(%s)", posKey))
 	}
 
-	owner, tickLower, tickUpper := res[0], res[1], res[2]
+	owner, _tickLower, _tickUpper := res[0], res[1], res[2]
 
-	return owner, tickLower, tickUpper
+	tickLower, _ := strconv.Atoi(_tickLower)
+	tickUpper, _ := strconv.Atoi(_tickUpper)
+
+	return owner, int32(tickLower), int32(tickUpper)
 }

@@ -1,19 +1,24 @@
 package pool
 
 import (
-	"gno.land/p/demo/ufmt"
-
-	"gno.land/p/demo/u256"
+	i256 "gno.land/p/big/int256"
+	u256 "gno.land/p/big/uint256"
 )
 
-func liquidityMathAddDelta(x *u256.Uint, y *u256.Int) *u256.Uint {
-	if y.IsNeg() {
+func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
+	if y.Lt(i256.Zero()) {
 		z := new(u256.Uint).Sub(x, y.Abs())
-		require(z.Lt(x), ufmt.Sprintf("[POOL] liquidity_math.gno__liquidityMathAddDelta() || z(%d) < x(%d)", z, x))
-		return z
+
+		if !(z.Lt(x)) {
+			panic("LS")
+		}
+		return z // z < x
 	} else {
-		z := new(u256.Uint).Add(x, y.Uint())
-		require(z.Gte(x), ufmt.Sprintf("[POOL] liquidity_math.gno__liquidityMathAddDelta() || z(%d) >= x(%d)", z, x))
-		return z
+		z := new(u256.Uint).Add(x, y.Abs())
+
+		if !(z.Gte(x)) {
+			panic("LA")
+		}
+		return z // z >= x
 	}
 }

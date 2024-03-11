@@ -8,27 +8,23 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	u256 "gno.land/p/big/uint256"
+
 	pos "gno.land/r/demo/position"
 )
 
-const (
-	TIMESTAMP_90DAYS  = 7776000
-	TIMESTAMP_180DAYS = 15552000
-	TIMESTAMP_360DAYS = 31104000
-)
-
-type userClaimedReward map[std.Address]map[uint64]map[string]bigint // address -> lpTokenId -> rewardTokenPath -> rewardTokenAmount
+type userClaimedReward map[std.Address]map[uint64]map[string]*u256.Uint // address -> lpTokenId -> rewardTokenPath -> rewardTokenAmount
 var userClaimedRewards = make(userClaimedReward)
 
-func userClaimedRewardAmount(address std.Address, tokenId uint64, rewardTokenPath string, rewardAmount bigint, claimeRequest bool) bigint {
+func userClaimedRewardAmount(address std.Address, tokenId uint64, rewardTokenPath string, rewardAmount *u256.Uint, claimeRequest bool) *u256.Uint {
 	userClaimed, ok := userClaimedRewards[address] // if user(address) ever claimed reward
 	if !ok {
-		userClaimedRewards[address] = make(map[uint64]map[string]bigint)
+		userClaimedRewards[address] = make(map[uint64]map[string]*u256.Uint)
 	}
 
 	claimedPosition, ok := userClaimedRewards[address][tokenId] // if user(address) ever claimed reward from tokenId
 	if !ok {
-		userClaimedRewards[address][tokenId] = make(map[string]bigint)
+		userClaimedRewards[address][tokenId] = make(map[string]*u256.Uint)
 	}
 
 	claimedReward, ok := userClaimedRewards[address][tokenId][rewardTokenPath] // if user(address) ever claimed rewardTokenPath
@@ -42,18 +38,20 @@ func userClaimedRewardAmount(address std.Address, tokenId uint64, rewardTokenPat
 	}
 
 	// user ever claimed rewardTokenPath
-	var claimableAmount bigint
+	var claimableAmount *u256.Uint
 	if claimeRequest { // if user is claiming rewardTokenPath
-		claimableAmount = rewardAmount - claimedReward
-		userClaimedRewards[address][tokenId][rewardTokenPath] += claimableAmount
+		claimableAmount = new(u256.Uint).Sub(rewardAmount, claimedReward)
+		userClaimedRewards[address][tokenId][rewardTokenPath] = new(u256.Uint).Add(userClaimedRewards[address][tokenId][rewardTokenPath], claimableAmount)
 		return claimableAmount
 	} else { // if user is not claiming rewardTokenPath
-		claimableAmount = rewardAmount - claimedReward
+		claimableAmount = new(u256.Uint).Sub(rewardAmount, claimedReward)
 		return claimableAmount
 	}
 }
 
-func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) bigint {
+func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) *u256.Uint {
+	_q96 := u256.MustFromDecimal(consts.Q96)
+
 	// r3v4_xxx: calculate amount of `GNS` to be minted by every block
 	// 1. get block creation time (5s for now)
 	// 2. calculate amount of `GNS` to be minted by every block (10_000 for now)
@@ -69,12 +67,13 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) bigi
 	_, poolRatioX96 := getPoolTierAndRatio(poolPath)
 
 	// get pool reward per block
-	poolRewardPerBlockX96 := (bigint(blockReward) * consts.Q96) * poolRatioX96
+	poolRewardPerBlockX96 := new(u256.Uint).Mul(u256.NewUint(uint64(blockReward)), poolRatioX96)
 
 	// calculate my reward amount based on my liquidity ratio
 	// this reward is 31days or more staking reward
 	liqRatioX96 := getMyLiquidityRatio(poolPath, tokenId)
-	myWholeRewardX96 := poolRewardPerBlockX96 * liqRatioX96
+	myWholeRewardX96 := new(u256.Uint).Mul(poolRewardPerBlockX96, liqRatioX96)
+	myWholeRewardX96 = new(u256.Uint).Div(myWholeRewardX96, _q96)
 
 	// calculate my actual reward amount based on staking duration
 	// !IMPORTANT
@@ -87,13 +86,10 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) bigi
 	stakedDuration := endTime - startTime
 	rewardRatio := getRewardRatio(stakedDuration)
 
-	finalRewardQ := myWholeRewardX96 * bigint(rewardRatio)
-	finalReward := finalRewardQ / consts.Q96 / consts.Q96 / consts.Q96 / consts.Q96 / consts.Q96 / 100 / 100
-	// divide by (Q96 ^ 5)
-	// #1 ~ 2: used by getPoolTierAndRatio()
-	// #3    : used by poolRewardPerBlockX96
-	// #4 ~ 5: used by getMyLiquidityRatio()
+	finalRewardBig := new(u256.Uint).Mul(myWholeRewardX96, u256.NewUint(rewardRatio))
 
+	finalReward := new(u256.Uint).Div(finalRewardBig, _q96)
+	finalReward = new(u256.Uint).Div(finalReward, u256.NewUint(200))
 	// divide by (100 ^ 2)
 	// #1: to convert `listTierRatio()` return value to percentage
 	// #2: to convert `getRewardRatio()` return value to percentage
@@ -101,17 +97,21 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) bigi
 	return finalReward
 }
 
-func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, incentive Incentive) bigint {
+func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, incentive Incentive) *u256.Uint {
+	_q96 := u256.MustFromDecimal(consts.Q96)
+
 	// 1 month reward amount
 	incentiveDuration := incentive.endTimestamp - incentive.startTimestamp
-	monthlyReward := bigint(0)
+	monthlyReward := u256.Zero()
 
 	switch {
 	case incentiveDuration == TIMESTAMP_90DAYS:
-		monthlyReward = incentive.rewardAmount / 3
+		monthlyReward = new(u256.Uint).Div(incentive.rewardAmount, u256.NewUint(3))
 	case incentiveDuration > TIMESTAMP_90DAYS:
 		// 1 second reward == total reward amount / reward duration
-		monthlyReward = incentive.rewardAmount / bigint(incentiveDuration) * 2592000 // 30 days
+		_rewardPerSecond := new(u256.Uint).Div(incentive.rewardAmount, u256.NewUint(uint64(incentiveDuration)))
+		// 30 days ≈ 2592000 seconds
+		monthlyReward = new(u256.Uint).Mul(_rewardPerSecond, u256.NewUint(2592000))
 	default:
 		panic(ufmt.Sprintf("[STAKER] reward_math.gno || incentiveDuration(%d) should be at least 90 days", incentiveDuration))
 	}
@@ -121,16 +121,18 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 	// (for now) block creation time = 5 seconds
 	// 518400(2592000/5) blocks ~= 1 month
 	// 1 month reward / 518400 = reward per block
-	blockRewardInit := monthlyReward / 518400
-	// because of `~ 10 days` staking duration, certain block ONBLOC amount won't be distribute 100% as reward)
-	blockRewardLeft := blockRewardInit / 10 // obl.BalanceOf(INTERNAL_REWARD_ACCOUNT) - blockRewardInit
-	blockReward := blockRewardInit + blockRewardLeft
-	blockRewardX96 := bigint(blockReward) * consts.Q96
+	blockRewardInit := new(u256.Uint).Div(monthlyReward, u256.NewUint(518400))
+	// because of `~ 10 days` staking duration, certain block's ExternalRewardAmount won't be distribute 100% as reward)
+	blockRewardLeft := new(u256.Uint).Div(blockRewardInit, u256.NewUint(10)) // obl.BalanceOf(INTERNAL_REWARD_ACCOUNT) - blockRewardInit
+	blockReward := new(u256.Uint).Add(blockRewardInit, blockRewardLeft)
+	blockRewardX96 := new(u256.Uint).Mul(blockReward, _q96)
 
 	// calculate my reward amount based on my liquidity ratio
 	// this reward is 31days or more staking reward
 	liqRatioX96 := getMyLiquidityRatio(incentive.targetPoolPath, tokenId)
-	myWholeRewardX96 := blockRewardX96 * liqRatioX96
+
+	myWholeRewardX96 := new(u256.Uint).Mul(blockRewardX96, liqRatioX96)
+	myWholeRewardX96 = new(u256.Uint).Div(myWholeRewardX96, _q96)
 
 	// calculate my actual reward amount based on staking duration
 	// !IMPORTANT
@@ -142,68 +144,77 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 	stakedDuration := endTime - startTime
 	rewardRatio := getRewardRatio(stakedDuration)
 
-	finalRewardQ := myWholeRewardX96 * bigint(rewardRatio)
-	finalReward := finalRewardQ / consts.Q96 / consts.Q96 / consts.Q96 / 100
-	// why do we need to divide by (96 ^ 3)
-	// #1    : used by blockRewardX96
-	// #2 ~ 3: used by func getMyLiquidityRatio()
+	finalRewardBig := new(u256.Uint).Mul(myWholeRewardX96, u256.NewUint(rewardRatio))
 
-	// why do we need to divide by 100
+	finalReward := new(u256.Uint).Div(finalRewardBig, _q96)
+	finalReward = new(u256.Uint).Div(finalReward, u256.NewUint(100))
+	// divide by 100
 	// to convert `getRewardRatio()` return value to percentage
 
 	return finalReward
 }
 
-func getPoolTotalStakedLiquidity(poolPath string) bigint {
-	poolStakedLiquidity := bigint(0)
+func getPoolTotalStakedLiquidity(poolPath string) *u256.Uint {
+	poolStakedLiquidity := u256.Zero()
 	// get all staked liquidity
 	for tokenId, deposit := range deposits { // key is tokenId // used in this range loop only
 		if deposit.targetPoolPath == poolPath {
 			tokenLiquidity := pos.PositionGetPositionLiquidity(tokenId)
-			poolStakedLiquidity += tokenLiquidity
+			poolStakedLiquidity = new(u256.Uint).Add(poolStakedLiquidity, tokenLiquidity)
 		}
 	}
 
 	return poolStakedLiquidity
 }
 
-func getMyLiquidityRatio(poolPath string, tokenId uint64) bigint {
+func getMyLiquidityRatio(poolPath string, tokenId uint64) *u256.Uint {
+	_q96 := u256.MustFromDecimal(consts.Q96)
+
 	poolStakedLiquidity := getPoolTotalStakedLiquidity(poolPath)
 
 	// my(current tokenId) liquidity
 	myLiquidity := pos.PositionGetPositionLiquidity(tokenId)
 
 	// my liquidity ratio
-	liqRatioX96 := (myLiquidity * consts.Q96 / poolStakedLiquidity * consts.Q96) // 2 times consts.Q96 because of consts.Q96 / consts.Q96
+	myLiquidityX96 := new(u256.Uint).Mul(myLiquidity, _q96)
+	myLiquidityX96 = new(u256.Uint).Mul(myLiquidityX96, u256.NewUint(100)) // mul `100` to bypass #179 being 0
 
-	return liqRatioX96
+	poolStakedLiquidityX96 := new(u256.Uint).Mul(poolStakedLiquidity, _q96)
+
+	myLiquidityRatio := new(u256.Uint).Div(myLiquidityX96, poolStakedLiquidityX96) // this value needs to be divided by 100
+	myLiquidityRatio = new(u256.Uint).Mul(myLiquidityRatio, _q96)                  // so first mul consts.Q96
+	myLiquidityRatioX96 := new(u256.Uint).Div(myLiquidityRatio, u256.NewUint(100)) // then divided by 100
+
+	return myLiquidityRatioX96
 }
 
 // get current pool tier and reward ratio
-func getPoolTierAndRatio(poolPath string) (uint8, bigint) {
+func getPoolTierAndRatio(poolPath string) (uint64, *u256.Uint) {
+	_q96 := u256.MustFromDecimal(consts.Q96)
+
 	poolPath = poolKeyDivide(poolPath)
 
 	// current pool's tier
 	tier, ok := poolTiers[poolPath]
 	if !ok {
-		return 0, 0
+		return 0, u256.Zero()
 	}
 
 	// that tiers ratio
 	ratio := getTierRatio(tier)
-	ratioX96 := bigint(uint64(ratio)) * consts.Q96 // first consts.Q96
+	ratioX96 := new(u256.Uint).Mul(u256.NewUint(ratio), _q96) // first consts.Q96
 
 	// finally current pools ratio
 	numTier1, numTier2, numTier3 := getNumPoolTiers()
 
-	var weight bigint
+	var weight *u256.Uint
 	switch tier {
 	case 1:
-		weight = ratioX96 / bigint(numTier1) * consts.Q96 // second consts.Q96
+		weight = new(u256.Uint).Div(ratioX96, u256.NewUint(numTier1))
 	case 2:
-		weight = ratioX96 / bigint(numTier2) * consts.Q96
+		weight = new(u256.Uint).Div(ratioX96, u256.NewUint(numTier2))
 	case 3:
-		weight = ratioX96 / bigint(numTier3) * consts.Q96
+		weight = new(u256.Uint).Div(ratioX96, u256.NewUint(numTier3))
 	default:
 		panic(ufmt.Sprintf("[STAKER] reward_math.gno__getPoolTierAndRatio() || invalid tier(%d)", tier))
 	}
@@ -259,8 +270,8 @@ func getRewardRatio(timestamp int64) uint64 {
 	return ratio
 }
 
-func getTierRatio(tier uint8) uint8 {
-	require(tier >= 1 && tier <= 3, ufmt.Sprintf("[STAKER] staker.gno__getTierRatio() || tier(%d) >= 1 && tier(%d) <= 3", tier, tier))
+func getTierRatio(tier uint64) uint64 {
+	require(tier >= 1 && tier <= 3, ufmt.Sprintf("[STAKER] reward_math.gno__getTierRatio() || tier(%d) >= 1 && tier(%d) <= 3", tier, tier))
 
 	ratio1, ratio2, ratio3 := listTierRatio()
 	switch tier {
@@ -271,12 +282,12 @@ func getTierRatio(tier uint8) uint8 {
 	case 3:
 		return ratio3 // default 20
 	default:
-		panic("[STAKER] staker.gno__getTierRatio() || invalid ratio")
+		panic("[STAKER] reward_math.gno__getTierRatio() || invalid ratio")
 	}
 }
 
 // return all ratio for each tier
-func listTierRatio() (uint8, uint8, uint8) {
+func listTierRatio() (uint64, uint64, uint64) {
 	// basic
 	// tier1 50%
 	// tier2 30%
@@ -287,7 +298,7 @@ func listTierRatio() (uint8, uint8, uint8) {
 	// we'll divide by 100 later
 
 	numTier1, numTier2, numTier3 := getNumPoolTiers()
-	require(numTier1 > 0, ufmt.Sprintf("[STAKER] staker.gno__listTierRatio() || numTier1(%d) > 0 (numTier2:(%d), numTier3:(%d))", numTier1, numTier2, numTier3))
+	require(numTier1 > 0, ufmt.Sprintf("[STAKER] reward_math.gno__listTierRatio() || numTier1(%d) > 0 (numTier2:(%d), numTier3:(%d))", numTier1, numTier2, numTier3))
 
 	if numTier2 == 0 && numTier3 == 0 { // only tier 1 exists
 		return 100, 0, 0
@@ -298,6 +309,6 @@ func listTierRatio() (uint8, uint8, uint8) {
 	} else if numTier2 >= 1 && numTier3 >= 1 { // all tiers exists
 		return 50, 30, 20
 	} else {
-		panic("[STAKER] staker.gno__listTierRatio() || invalid tier ratio")
+		panic("[STAKER] reward_math.gno__listTierRatio() || invalid tier ratio")
 	}
 }

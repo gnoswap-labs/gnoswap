@@ -25,11 +25,11 @@ var (
 	// wugnotPath string = "gno.land/r/demo/wugnot" // from consts
 	// gnsPath string = "gno.land/r/demo/gns" // from consts
 
-	fee100  uint16 = 100
-	fee500  uint16 = 500
-	fee3000 uint16 = 3000
+	fee100  uint32 = 100
+	fee500  uint32 = 500
+	fee3000 uint32 = 3000
 
-	max_timeout bigint = 9999999999
+	max_timeout int64 = 9999999999
 )
 
 /* UTIL */
@@ -54,8 +54,6 @@ func tid(tokenId interface{}) grc721.TokenID {
 	}
 
 	switch tokenId.(type) {
-	case bigint:
-		return grc721.TokenID(string(tokenId.(bigint)))
 	case string:
 		return grc721.TokenID(tokenId.(string))
 	case int:

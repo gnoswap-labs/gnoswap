@@ -8,24 +8,38 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/consts"
+
+	i256 "gno.land/p/big/int256"
+	u256 "gno.land/p/big/uint256"
 )
 
 func SwapRoute(
 	inputToken string,
 	outputToken string,
-	amountSpecified bigint,
+	_amountSpecified string, // int256
 	swapType SwapType,
 	strRouteArr string, // []string
 	quoteArr string, // []int
-	tokenAmountLimit bigint,
-) bigint {
-	require(amountSpecified != 0, "[ROUTER] router.gno__SwapRoute() || amountSpecified == 0")
+	_tokenAmountLimit string, // uint256
+) string { // uint256
+	amountSpecified, err := i256.FromDecimal(_amountSpecified)
+	if err != nil {
+		panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || i256.FromDecimal(_amountSpecified(%s) failed", _amountSpecified))
+	}
+	if amountSpecified.IsZero() {
+		panic("[ROUTER] router.gno__SwapRoute() || amountSpecified == 0")
+	}
+
+	tokenAmountLimit, err := u256.FromDecimal(_tokenAmountLimit)
+	if err != nil {
+		panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || u256.FromDecimal(_tokenAmountLimit(%s) failed", _tokenAmountLimit))
+	}
 
 	switch swapType {
 	case ExactIn:
 		amountSpecified = amountSpecified
 	case ExactOut:
-		amountSpecified = -amountSpecified
+		amountSpecified = i256.Zero().Neg(amountSpecified)
 	default:
 		panic("[ROUTER] router.gno__SwapRoute() || unknown swapType")
 	}
@@ -39,14 +53,16 @@ func SwapRoute(
 	require(len(routes) == len(quotes), "[ROUTER] router.gno__SwapRoute() || len(routes) != len(quotes)")
 
 	// check if quotes are up to 100%
-	quotesSum := 0
+	quotesSum := int64(0)
 	for _, quote := range quotes {
 		intQuote, _ := strconv.Atoi(quote)
-		quotesSum += intQuote
+		quotesSum += int64(intQuote)
 	}
 	require(quotesSum == 100, "[ROUTER] router.gno__SwapRoute() || quotesSum != 100")
 
-	var resultAmountIn, resultAmountOut bigint
+	resultAmountIn := u256.Zero()
+	resultAmountOut := u256.Zero()
+
 	for i, route := range routes {
 		numHops := strings.Count(route, "*POOL*") + 1
 		quote, _ := strconv.Atoi(quotes[i])
@@ -54,16 +70,17 @@ func SwapRoute(
 		// check if route hop is up to 3
 		require(numHops <= 3, "[ROUTER] router.gno__SwapRoute() || numHops > 3")
 
-		toSwap := amountSpecified * bigint(quote) / bigint(100)
+		toSwap := i256.Zero().Mul(amountSpecified, i256.NewInt(int64(quote)))
+		toSwap = toSwap.Div(toSwap, i256.NewInt(100))
 
 		if numHops == 1 { // SINGLE
 			amountIn, amountOut := handleSingleSwap(route, toSwap, false)
-			resultAmountIn += amountIn
-			resultAmountOut += amountOut
+			resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
+			resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
 		} else if 2 <= numHops && numHops <= 3 { // MULTI
 			amountIn, amountOut := handleMultiSwap(swapType, route, numHops, toSwap, false)
-			resultAmountIn += amountIn
-			resultAmountOut += amountOut
+			resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
+			resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
 		} else {
 			panic("[ROUTER] router.gno__SwapRoute() || numHops should be 1 ~ 3")
 		}
@@ -73,15 +90,15 @@ func SwapRoute(
 	resultAmountOut = handleProtocolFee(outputToken, resultAmountOut, false)
 
 	if swapType == ExactIn {
-		require(tokenAmountLimit <= resultAmountOut, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received (expected minimum output:%d, actual output:%d)", tokenAmountLimit, resultAmountOut))
-		return resultAmountOut
+		require(tokenAmountLimit.Lte(resultAmountOut), ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received (expected minimum output:%s, actual output:%s)", _tokenAmountLimit, resultAmountOut.ToString()))
+		return resultAmountOut.ToString()
 	} else { // EXACT_OUT
-		require(resultAmountIn <= tokenAmountLimit, ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too much spend (expected maximum input:%d, actual input:%d)", tokenAmountLimit, resultAmountIn))
-		return resultAmountIn
+		require(resultAmountIn.Lte(tokenAmountLimit), ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too much spend (expected maximum input:%s, actual input:%s)", _tokenAmountLimit, resultAmountIn.ToString()))
+		return resultAmountIn.ToString()
 	}
 }
 
-func handleSingleSwap(route string, amountSpecified bigint, isDry bool) (amountIn, amountOut bigint) {
+func handleSingleSwap(route string, amountSpecified *i256.Int, isDry bool) (*u256.Uint, *u256.Uint) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
 		tokenIn:         input,
@@ -96,7 +113,7 @@ func handleSingleSwap(route string, amountSpecified bigint, isDry bool) (amountI
 	return singleSwap(singleParams)
 }
 
-func handleMultiSwap(swapType SwapType, route string, numHops int, amountSpecified bigint, isDry bool) (amountIn, amountOut bigint) {
+func handleMultiSwap(swapType SwapType, route string, numHops int, amountSpecified *i256.Int, isDry bool) (*u256.Uint, *u256.Uint) {
 	switch swapType {
 	case ExactIn:
 		input, output, fee := getDataForMultiPath(route, 0) // first data
@@ -133,17 +150,18 @@ func handleMultiSwap(swapType SwapType, route string, numHops int, amountSpecifi
 	}
 }
 
-func handleProtocolFee(outputToken string, amount bigint, isDry bool) bigint {
+func handleProtocolFee(outputToken string, amount *u256.Uint, isDry bool) *u256.Uint {
 	if consts.PROTOCOL_FEE_ROUTER <= 0 { // r3v4_xxx: CHANGABLE BY GOV
 		return amount
 	}
 
-	feeAmount := amount * bigint(consts.PROTOCOL_FEE_ROUTER) / 1e4
+	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(consts.PROTOCOL_FEE_ROUTER))
+	feeAmount.Div(feeAmount, u256.NewUint(10000))
+
 	if !isDry {
-		ok := transferFromByRegisterCall(outputToken, std.GetOrigCaller(), consts.FEE_COLLECTOR, uint64(feeAmount))
+		ok := transferFromByRegisterCall(outputToken, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount.Uint64())
 		require(ok, "[ROUTER] router.gno__handleProtocolFee() || transferFromByRegisterCall failed")
 	}
 
-	amount -= feeAmount
-	return amount
+	return new(u256.Uint).Sub(amount, feeAmount)
 }
