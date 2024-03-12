@@ -1,0 +1,125 @@
+package position
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/demo/consts"
+
+	pl "gno.land/r/demo/pool"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/gns"
+	"gno.land/r/demo/wugnot"
+)
+
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	pl.InitManual()
+
+	std.TestSetPrevAddr(test1)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+
+	pl.CreatePool(barPath, consts.WRAPPED_WUGNOT, fee500, "130621891405341611593710811006") // tick = 10000
+}
+
+func TestMintInRangeNative(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)        // POOL Mint()
+	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)     // POOL Mint()
+	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // POSITION refund leftover wrapped wugnot
+
+	std.TestSkipHeights(2)
+
+	// send ugnot
+	std.TestIssueCoins(test1, std.Coins{{"ugnot", 10000000}})
+	std.TestSetOrigSend(std.Coins{{"ugnot", 10000000}}, nil)
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 10000000)
+
+	lpTokenId, liquidity, amount0, amount1 := Mint(
+		barPath,      // token0
+		consts.GNOT,  // token1
+		uint16(500),  // fee
+		int32(9000),  // tickLower
+		int32(11000), // tickUpper
+		"10000000",   // amount0Desired
+		"10000000",   // amount1Desired
+		"0",          // amount0Min
+		"0",          // amount1Min
+		max_timeout,  // deadline
+	)
+
+	shouldEQ(t, lpTokenId, 1)
+	// println("liquidity", liquidity)
+	// println("amount0", amount0)
+	// println("amount1", amount1)
+	shouldEQ(t, amount0, "3678979")
+	shouldEQ(t, amount1, "9999999")
+}
+
+// upper range => wugnot is 0
+func TestMintUpperRangeNative(t *testing.T) { // GNOT & BAR
+	std.TestSetPrevAddr(test1)
+	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // for pool to mint
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)    // for pool to mint
+
+	// for position to refund left wugnot to user in NATIVE (GNOT) COIN
+	// user have to approve enough amount of wugnot to position
+	// or refund will panic (not fail, BUT PANIC)
+	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX)
+
+	// DO NOT SEND
+	// std.TestIssueCoins(test1, std.Coins{{"ugnot", 10000000}})
+	// std.TestSetOrigSend(std.Coins{{"ugnot", 10000000}}, nil)
+	// testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	// testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 10000000)
+
+	lpTokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		consts.GNOT,
+		fee500,
+		12000,
+		14000,
+		"10000000",
+		"10000000",
+		"0",
+		"0",
+		max_timeout,
+	)
+	shouldEQ(t, lpTokenId, 2)
+	// println("liquidity", liquidity)
+	// println("amount0", amount0)
+	// println("amount1", amount1)
+	shouldEQ(t, amount1, "0")
+}
+
+func TestDecreaseLiquidityNative(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+
+	oldUserUgnot := ugnotBalance(test1)
+	oldUserWugnot := wugnotBalance(test1)
+
+	wugnot.Approve(a2u(consts.ONECLICK_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
+		1,                  // tokenId
+		consts.MAX_UINT256, // liquidity
+		"0",                // amount0Min
+		"0",                // amount1Min
+		max_timeout,        // deadline
+		false,              // unwrapFee
+	)
+	shouldEQ(t, tokenId, 1)
+	// println("liquidity", liquidity)
+	// println("amount0", amount0)
+	// println("amount1", amount1)
+	// println("poolPath", poolPath)
+
+	newUserUgnot := ugnotBalance(test1)
+	newUserWugnot := wugnotBalance(test1)
+
+	shouldEQ(t, oldUserWugnot, newUserWugnot)
+	shouldEQ(t, oldUserUgnot < newUserUgnot, true)
+}

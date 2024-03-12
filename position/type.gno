@@ -42,6 +42,7 @@ type MintParams struct {
 	amount0Min     *u256.Uint // uint256
 	amount1Min     *u256.Uint // uint256
 	deadline       int64
+	mintTo         std.Address
 }
 
 type AddLiquidityParams struct {
@@ -64,16 +65,10 @@ type IncreaseLiquidityParams struct {
 }
 
 type DecreaseLiquidityParams struct {
-	tokenId    uint64
-	liquidity  *u256.Uint // uint128
-	amount0Min *u256.Uint // uint256
-	amount1Min *u256.Uint // uint256
-	deadline   int64
-}
-
-type CollectParams struct {
-	tokenId    uint64
-	recipient  std.Address
-	amount0Max *u256.Uint // uint128
-	amount1Max *u256.Uint // uint128
+	tokenId      uint64
+	liquidity    *u256.Uint // uint128
+	amount0Min   *u256.Uint // uint256
+	amount1Min   *u256.Uint // uint256
+	deadline     int64
+	unwrapResult bool
 }
