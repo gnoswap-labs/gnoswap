@@ -3,6 +3,8 @@ package router
 import (
 	"std"
 
+	"gno.land/r/demo/consts"
+
 	u256 "gno.land/p/big/uint256"
 )
 
@@ -15,7 +17,8 @@ func singleSwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn,
 			params.tokenIn,
 			params.tokenOut,
 			params.fee,
-			std.PrevRealm().Addr(), // payer ==> msg.sender,
+			// std.PrevRealm().Addr(), // payer ==> msg.sender,
+			consts.ROUTER_ADDR,
 		},
 	)
 
@@ -31,7 +34,8 @@ func singleSwapDry(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amount
 			params.tokenIn,
 			params.tokenOut,
 			params.fee,
-			std.PrevRealm().Addr(), // payer ==> msg.sender,
+			// std.PrevRealm().Addr(), // payer ==> msg.sender,
+			consts.ROUTER_ADDR,
 		},
 	)
 
