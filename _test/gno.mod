@@ -1,4 +1,4 @@
-module gno.land/p/demo/swap_scneraio
+module gno.land/p/demo/swap_scenario
 
 require (
 	gno.land/p/demo/common v0.0.0-latest

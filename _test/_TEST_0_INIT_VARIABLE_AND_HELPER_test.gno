@@ -10,6 +10,8 @@ import (
 	"gno.land/r/demo/consts"
 
 	"gno.land/r/demo/users"
+
+	"gno.land/r/demo/wugnot"
 )
 
 var (
@@ -33,7 +35,11 @@ var (
 )
 
 /* UTIL */
-func ugnotBalanceOf(addr std.Address) uint64 {
+func wugnotBalance(addr std.Address) uint64 {
+	return wugnot.BalanceOf(a2u(addr))
+}
+
+func ugnotBalance(addr std.Address) uint64 {
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 
 	coins := testBanker.GetCoins(addr)
