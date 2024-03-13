@@ -38,7 +38,7 @@ func TestPositionMint(t *testing.T) {
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// Mint
-	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(12000), int32(15000), "100000", "100000", "0", "0", max_timeout)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(12000), int32(15000), "100000", "100000", "0", "0", max_timeout, test1.String())
 	shouldEQ(t, tokenId, uint64(1))
 	// shouldEQ(t, liquidity, "1308151")
 	shouldEQ(t, amount0, "100000") // ONLY BAR
