@@ -52,7 +52,7 @@ func ApiGetRatiosFromBase() string {
 func findRatios(maxHops int) []TokenRatio {
 	var tokenRatio = make(map[string]*u256.Uint, 0)
 	// WGNOT
-	tokenRatio[consts.WRAPPED_WUGNOT] = consts.Q96 // ~= 1
+	tokenRatio[consts.WRAPPED_WUGNOT] = u256.MustFromDecimal(consts.Q96) // ~= 1
 
 	tokens := getTokenList()
 
@@ -71,7 +71,7 @@ func findRatios(maxHops int) []TokenRatio {
 		} else {
 			numRoutes := uint64(len(routes))
 
-			var _tokenRatioX96 bigint
+			_tokenRatioX96 := u256.Zero()
 
 			for _, route := range routes {
 				numHops := uint64(len(route.route))
@@ -125,19 +125,18 @@ func calculateTokenRatio(currentToken string, routes []PoolWithMeta, proceed int
 		currentToken = token1Path
 	} else {
 		// wrong condition
-		// panic("[ROUTER] _RPC_api.gno__calculateTokenRatio() || wrong condition")
-		return 0
-
+		panic("[ROUTER] _RPC_api.gno__calculateTokenRatio() || wrong condition")
+		return u256.Zero()
 	}
 
 	proceed += 1
 
-	if proceed == len(routes) { // numHops
-		for { // remove as much X96 as possible
-			tempPriceX96 := priceX96
-			priceX96 /= consts.Q96
+	for { // remove as much X96 as possible
+		tempPriceX96 := priceX96.Clone()
+		priceX96 = new(u256.Uint).Div(priceX96, u256.MustFromDecimal(consts.Q96))
 
-			if priceX96 < consts.MIN_PRICE {
+		if priceX96.Lt(u256.MustFromDecimal(consts.MIN_PRICE)) {
+			if proceed == len(routes) {
 				return tempPriceX96
 			}
 			return calculateTokenRatio(currentToken, routes, proceed, priceX96)

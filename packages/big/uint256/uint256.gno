@@ -958,7 +958,7 @@ func (z *Uint) fromDecimal(bs string) error {
 			z.SetUint64(num)
 		} else {
 			base := NewUint(num)
-			z.UnsafeAdd(z, base.Mul(base, mult))
+			z.Add(z, base.Mul(base, mult))
 		}
 		// Chop off another 19 characters
 		if remaining > 19 {
