@@ -122,8 +122,6 @@ func approveByRegisterCall(pkgPath string, spender std.Address, amount uint64) b
 		panic(ufmt.Sprintf("[ROUTER] router_register.gno__approveByRegisterCall() || pkgPath(%s) not found", pkgPath))
 	}
 
-	println("ROUTER APPROVE:", std.PrevRealm().PkgPath())
-
 	registered[pkgPath].Approve()(users.AddressOrName(spender), amount)
 
 	return true
