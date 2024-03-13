@@ -72,8 +72,8 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) *u25
 	// calculate my reward amount based on my liquidity ratio
 	// this reward is 31days or more staking reward
 	liqRatioX96 := getMyLiquidityRatio(poolPath, tokenId)
-	myWholeRewardX96 := new(u256.Uint).Mul(poolRewardPerBlockX96, liqRatioX96)
-	myWholeRewardX96 = new(u256.Uint).Div(myWholeRewardX96, _q96)
+	myBlockRewardX96 := new(u256.Uint).Mul(poolRewardPerBlockX96, liqRatioX96)
+	myBlockRewardX96 = new(u256.Uint).Div(myBlockRewardX96, _q96)
 
 	// calculate my actual reward amount based on staking duration
 	// !IMPORTANT
@@ -84,8 +84,11 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) *u25
 	startTime := deposit.stakeTimestamp
 	endTime := time.Now().Unix()
 	stakedDuration := endTime - startTime
-	rewardRatio := getRewardRatio(stakedDuration)
 
+	numBlockStaked := uint64(stakedDuration / consts.BLOCK_GENERATION_INTERVAL)
+	myWholeRewardX96 := new(u256.Uint).Mul(myBlockRewardX96, u256.NewUint(numBlockStaked))
+
+	rewardRatio := getRewardRatio(stakedDuration)
 	finalRewardBig := new(u256.Uint).Mul(myWholeRewardX96, u256.NewUint(rewardRatio))
 
 	finalReward := new(u256.Uint).Div(finalRewardBig, _q96)
@@ -131,8 +134,8 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 	// this reward is 31days or more staking reward
 	liqRatioX96 := getMyLiquidityRatio(incentive.targetPoolPath, tokenId)
 
-	myWholeRewardX96 := new(u256.Uint).Mul(blockRewardX96, liqRatioX96)
-	myWholeRewardX96 = new(u256.Uint).Div(myWholeRewardX96, _q96)
+	myBlockRewardX96 := new(u256.Uint).Mul(blockRewardX96, liqRatioX96)
+	myBlockRewardX96 = new(u256.Uint).Div(myBlockRewardX96, _q96)
 
 	// calculate my actual reward amount based on staking duration
 	// !IMPORTANT
@@ -142,8 +145,11 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 	startTime := max(incentive.startTimestamp, deposit.stakeTimestamp)
 	endTime := min(incentive.endTimestamp, time.Now().Unix())
 	stakedDuration := endTime - startTime
-	rewardRatio := getRewardRatio(stakedDuration)
 
+	numBlockStaked := uint64(stakedDuration / consts.BLOCK_GENERATION_INTERVAL)
+	myWholeRewardX96 := new(u256.Uint).Mul(myBlockRewardX96, u256.NewUint(numBlockStaked))
+
+	rewardRatio := getRewardRatio(stakedDuration)
 	finalRewardBig := new(u256.Uint).Mul(myWholeRewardX96, u256.NewUint(rewardRatio))
 
 	finalReward := new(u256.Uint).Div(finalRewardBig, _q96)
