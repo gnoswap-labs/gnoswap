@@ -31,7 +31,14 @@ func Mint(
 	deadline int64,
 	mintTo string,
 ) (uint64, string, string, string) { // tokenId, liquidity, amount0, amount1 ( *u256.Uint x3 )
-	// check if wugnot is being mitned
+	// only user or staker can call
+	isUserCalled := std.IsOriginCall()
+	isStakerCalled := std.PrevRealm().Addr() == consts.STAKER_ADDR
+	if !(isUserCalled || isStakerCalled) {
+		panic("POSITION] position.gno__Mint() || only user or staker can call")
+	}
+
+	// check if wugnot is being minted
 	token0IsNative := false
 	token1IsNative := false
 	if token0 == consts.GNOT {
@@ -47,7 +54,7 @@ func Mint(
 		_amount0Desired, _amount1Desired = _amount1Desired, _amount0Desired
 		_amount0Min, _amount1Min = _amount1Min, _amount0Min
 		tickLower, tickUpper = -tickUpper, -tickLower
-		token0IsNative = !token0IsNative
+		token0IsNative, token1IsNative = token1IsNative, token0IsNative
 	}
 
 	amount0Desired := u256.MustFromDecimal(_amount0Desired)
@@ -109,9 +116,11 @@ func Mint(
 		spendWugnot = amount1.Uint64()
 	}
 
-	leftOver := uint64(ugnotSent - spendWugnot)
-	if leftOver > 0 {
-		unwrap(leftOver)
+	if token0IsNative || token1IsNative {
+		leftOver := uint64(ugnotSent - spendWugnot)
+		if leftOver > 0 {
+			unwrap(leftOver)
+		}
 	}
 
 	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString()
@@ -241,23 +250,28 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 func DecreaseLiquidity(
 	tokenId uint64,
-	_liquidity string, // uint128
+	liquidityRatio uint64,
 	_amount0Min string, // uint256
 	_amount1Min string, // uint256
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) { // tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
-	liquidity := u256.MustFromDecimal(_liquidity)
+
+	isNormalRange := liquidityRatio > 0 && liquidityRatio <= 100
+	if !isNormalRange {
+		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidityRatio(%d) should be in range 1 ~ 100", liquidityRatio))
+	}
+
 	amount0Min := u256.MustFromDecimal(_amount0Min)
 	amount1Min := u256.MustFromDecimal(_amount1Min)
 
 	decreaseLiquidityParams := DecreaseLiquidityParams{
-		tokenId:      tokenId,
-		liquidity:    liquidity,
-		amount0Min:   amount0Min,
-		amount1Min:   amount1Min,
-		deadline:     deadline,
-		unwrapResult: unwrapResult,
+		tokenId:        tokenId,
+		liquidityRatio: liquidityRatio,
+		amount0Min:     amount0Min,
+		amount1Min:     amount1Min,
+		deadline:       deadline,
+		unwrapResult:   unwrapResult,
 	}
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
@@ -281,10 +295,6 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	checkDeadline(params.deadline)
 
-	if params.liquidity.Lt(u256.Zero()) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidity(%d) >= 0", params.liquidity))
-	}
-
 	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
 	_, fee0Str, fee1Str, _ := CollectFee(params.tokenId)
 	fee0 := u256.MustFromDecimal(fee0Str)
@@ -293,16 +303,18 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position := positions[params.tokenId]
 
 	positionLiquidity := position.liquidity
-	if positionLiquidity.Lt(params.liquidity) {
-		// if too many liquidity requested, decrease to entire liquidity
-		params.liquidity = positionLiquidity
+	liquidityToRemove := new(u256.Uint).Mul(positionLiquidity, u256.NewUint(params.liquidityRatio))
+	liquidityToRemove = new(u256.Uint).Div(liquidityToRemove, u256.NewUint(100))
+
+	if positionLiquidity.Lt(liquidityToRemove) || params.liquidityRatio == 100 {
+		liquidityToRemove = positionLiquidity
 	}
 
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 
 	// BURN HERE
-	_burnedAmount0, _burnedAmount1 := pl.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, params.liquidity.Clone().ToString())
+	_burnedAmount0, _burnedAmount1 := pl.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, liquidityToRemove.ToString())
 
 	burnedAmount0 := u256.MustFromDecimal(_burnedAmount0)
 	burnedAmount1 := u256.MustFromDecimal(_burnedAmount1)
@@ -349,7 +361,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		position.feeGrowthInside1LastX128 = _cloneMustFromDecimal
 	}
 
-	position.liquidity = new(u256.Uint).Sub(positionLiquidity, params.liquidity)
+	position.liquidity = new(u256.Uint).Sub(positionLiquidity, liquidityToRemove)
 	positions[params.tokenId] = position
 
 	// GIVE BACK TO USER
@@ -394,7 +406,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		}
 	}
 
-	return params.tokenId, params.liquidity, fee0, fee1, amount0, amount1, position.poolKey
+	return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
 }
 
 func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, tokensOwed0, tokensOwed1, poolPath
@@ -461,7 +473,6 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 
 	// handle withdrawal fee
 	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(tokenId, token0, amount0, token1, amount1)
-
 	return tokenId, withoutFee0, withoutFee1, position.poolKey
 }
 

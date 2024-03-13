@@ -38,6 +38,7 @@ func HandleWithdrawalFee(
 	if withdrawalFee == 0 {
 		return _amount0, _amount1
 	}
+	
 
 	feeAmount0 := new(u256.Uint).Mul(amount0, u256.NewUint(withdrawalFee))
 	feeAmount0 = new(u256.Uint).Div(feeAmount0, u256.NewUint(100))

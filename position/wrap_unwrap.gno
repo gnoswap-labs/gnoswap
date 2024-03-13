@@ -21,7 +21,7 @@ func wrap(ugnotAmount uint64) {
 	// WRAP IT
 	wugnotAddr := std.DerivePkgAddr(consts.WRAPPED_WUGNOT)
 	banker := std.GetBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(std.GetOrigPkgAddr(), wugnotAddr, std.Coins{{"ugnot", int64(ugnotAmount)}})
+	banker.SendCoins(consts.POSITION_ADDR, wugnotAddr, std.Coins{{"ugnot", int64(ugnotAmount)}})
 	wugnot.Deposit() // POSITION HAS WUGNOT
 
 	// SEND WUGNOT: POSITION -> USER
@@ -35,12 +35,12 @@ func unwrap(wugnotAmount uint64) {
 	userOldWugnot := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 
 	// SEND WUGNOT: USER -> POSITION
-	wugnot.TransferFrom(a2u(std.GetOrigCaller()), a2u(std.GetOrigPkgAddr()), wugnotAmount)
+	wugnot.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.POSITION_ADDR), wugnotAmount)
 
 	// UNWRAP IT
 	wugnot.Withdraw(wugnotAmount)
 
 	// SEND GNOT: POSITION -> USER
 	banker := std.GetBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(std.GetOrigPkgAddr(), std.GetOrigCaller(), std.Coins{{"ugnot", int64(wugnotAmount)}})
+	banker.SendCoins(consts.POSITION_ADDR, std.GetOrigCaller(), std.Coins{{"ugnot", int64(wugnotAmount)}})
 }

@@ -49,6 +49,7 @@ func TestPositionMint01(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,  // deadline
+		test1.String(),
 	)
 	std.TestSkipHeights(1)
 
@@ -80,6 +81,7 @@ func TestPositionMint02(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,  // deadline
+		test1.String(),
 	)
 	std.TestSkipHeights(1)
 

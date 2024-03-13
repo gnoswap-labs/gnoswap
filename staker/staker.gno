@@ -182,7 +182,7 @@ func CollectReward(tokenId uint64) {
 	}
 }
 
-func UnstakeToken(tokenId uint64) (string, string, string) {
+func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
 	// Claim All Rewards
 	CollectReward(tokenId)
 

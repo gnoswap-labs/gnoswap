@@ -65,10 +65,10 @@ type IncreaseLiquidityParams struct {
 }
 
 type DecreaseLiquidityParams struct {
-	tokenId      uint64
-	liquidity    *u256.Uint // uint128
-	amount0Min   *u256.Uint // uint256
-	amount1Min   *u256.Uint // uint256
-	deadline     int64
-	unwrapResult bool
+	tokenId        uint64
+	liquidityRatio uint64
+	amount0Min     *u256.Uint // uint256
+	amount1Min     *u256.Uint // uint256
+	deadline       int64
+	unwrapResult   bool
 }

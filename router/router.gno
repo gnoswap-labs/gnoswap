@@ -11,6 +11,8 @@ import (
 
 	i256 "gno.land/p/big/int256"
 	u256 "gno.land/p/big/uint256"
+
+	"gno.land/r/demo/wugnot"
 )
 
 func SwapRoute(
@@ -64,12 +66,10 @@ func SwapRoute(
 		ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
 
 		wrap(ugnotSentByUser)
-		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller())) // wrapped
-	}
+		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 
-	// if output is gnot unwrap later (save user's current wugnot balance)
-	if outputToken == consts.WUGNOT {
-		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller())) // unwrapped
+	} else if outputToken == consts.GNOT { // if output is gnot unwrap later (save user's current wugnot balance)
+		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 	}
 
 	// check if quotes are up to 100%
@@ -116,8 +116,7 @@ func SwapRoute(
 	// if input was gnot, refund left over wugnot
 	if inputToken == consts.GNOT {
 		userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-		leftOver := uint64(userOldWugnotBalance - userNewWugnotBalance) // left over wugnot
-		unwrap(leftOver)
+		unwrap(userNewWugnotBalance)
 	} else if outputToken == consts.GNOT { // if output was gnot, unwrap result
 		userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 		userRecvWugnot := uint64(userNewWugnotBalance - userOldWugnotBalance) // received wugnot
