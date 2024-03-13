@@ -39,6 +39,7 @@ func TestMintPosition01WideInRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
+		test1.String(),
 	)
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, getNextId(), 2)
@@ -63,6 +64,7 @@ func TestMintPositionTightInRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
+		test1.String(),
 	)
 	shouldEQ(t, tokenId, 2)
 	shouldEQ(t, getNextId(), 3)

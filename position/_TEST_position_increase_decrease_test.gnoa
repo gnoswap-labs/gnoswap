@@ -41,6 +41,7 @@ func TestMintPosition(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
+		test1.String(),
 	)
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, getNextId(), 2)
@@ -163,12 +164,13 @@ func TestDecreaseLiquidity(t *testing.T) {
 
 	oldLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
 
-	tokenId, liquidity, amount0, amount1, targetPoolPath := DecreaseLiquidity(
+	DecreaseLiquidity(
 		uint64(1),   // tokenId
-		"10000000",  // liquidity
+		50,          // liquidityRatio
 		"0",         // amount0Min
 		"0",         // amount1Min
 		max_timeout, // deadline
+		false,       // unwrapResult
 	)
 
 	newLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()

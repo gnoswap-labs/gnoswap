@@ -57,6 +57,7 @@ func swapMathComputeSwapStep(
 				amountRemaining.Abs(),
 				isToken1Expensive,
 			)
+			// panic("F")
 		}
 	}
 
