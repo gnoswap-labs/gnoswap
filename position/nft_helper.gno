@@ -9,10 +9,6 @@ import (
 	"gno.land/r/demo/gnft"
 )
 
-func nftBalanceOf(addr std.Address) bigint {
-	return bigint(gnft.BalanceOf(a2u(addr)))
-}
-
 func exists(tokenId uint64) bool {
 	// non exist tokenId will panic
 	// use defer to catch the panic

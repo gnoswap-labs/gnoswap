@@ -12,9 +12,6 @@ func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	maxTick := (consts.MAX_TICK / tickSpacing) * tickSpacing
 	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
 
-	// requireUnsigned(consts.MAX_UINT128/numTicks, ufmt.Sprintf("[POOL] tick.gno__tickTickSpacingToMaxLiquidityPerTick() || consts.MAX_UINT128(%d) / numTicks(%d) >= 0(%d)", consts.MAX_UINT128, numTicks, consts.MAX_UINT128/numTicks))
-	// return consts.MAX_UINT128 / numTicks
-
 	_maxUint128 := u256.MustFromDecimal(consts.MAX_UINT128)
 	return new(u256.Uint).Div(_maxUint128, u256.NewUint(numTicks))
 }
@@ -25,7 +22,7 @@ func (pool *Pool) tickGetFeeGrowthInside(
 	tickCurrent int32,
 	feeGrowthGlobal0X128 *u256.Uint, // uint256
 	feeGrowthGlobal1X128 *u256.Uint, // uint256
-) (feeGrowthInside0X128, feeGrowthInside1X128 *u256.Uint) { // uint256
+) (*u256.Uint, *u256.Uint) { // uint256
 	lower := pool.ticks[tickLower]
 	upper := pool.ticks[tickUpper]
 
@@ -47,8 +44,8 @@ func (pool *Pool) tickGetFeeGrowthInside(
 		feeGrowthAbove1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, upper.feeGrowthOutside1X128)
 	}
 
-	feeGrowthInside0X128 = new(u256.Uint).Sub(new(u256.Uint).Sub(feeGrowthGlobal0X128, feeGrowthBelow0X128), feeGrowthAbove0X128)
-	feeGrowthInside1X128 = new(u256.Uint).Sub(new(u256.Uint).Sub(feeGrowthGlobal1X128, feeGrowthBelow1X128), feeGrowthAbove1X128)
+	feeGrowthInside0X128 := new(u256.Uint).Sub(new(u256.Uint).Sub(feeGrowthGlobal0X128, feeGrowthBelow0X128), feeGrowthAbove0X128)
+	feeGrowthInside1X128 := new(u256.Uint).Sub(new(u256.Uint).Sub(feeGrowthGlobal1X128, feeGrowthBelow1X128), feeGrowthAbove1X128)
 
 	return feeGrowthInside0X128, feeGrowthInside1X128
 }

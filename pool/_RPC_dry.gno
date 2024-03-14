@@ -4,7 +4,6 @@ import (
 	"std"
 
 	"gno.land/p/demo/common"
-	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/consts"
 
@@ -20,20 +19,14 @@ func DrySwap(
 	zeroForOne bool,
 	_amountSpecified string, // int256
 	_sqrtPriceLimitX96 string, // uint160
-) (string, string, bool) { // int256 x2
+) (string, string, bool) {
 
 	if _amountSpecified == "0" {
 		return "0", "0", false
 	}
 
-	amountSpecified, err := i256.FromDecimal(_amountSpecified)
-	if err != nil {
-		panic(ufmt.Sprintf("[POOL] _RPC_dry.gno__DrySwap() || u256.FromDecimal(_amountSpecified[%s]) failed", _amountSpecified))
-	}
-	sqrtPriceLimitX96, err := u256.FromDecimal(_sqrtPriceLimitX96)
-	if err != nil {
-		panic(ufmt.Sprintf("[POOL] _RPC_dry.gno__DrySwap() || u256.FromDecimal(_sqrtPriceLimitX96[%s]) failed", _sqrtPriceLimitX96))
-	}
+	amountSpecified := i256.MustFromDecimal(_amountSpecified)
+	sqrtPriceLimitX96 := u256.MustFromDecimal(_sqrtPriceLimitX96)
 
 	pool := GetPool(token0Path, token1Path, fee)
 	slot0Start := pool.slot0

@@ -11,20 +11,24 @@ func swapMathComputeSwapStep(
 	liquidity *u256.Uint, // uint128
 	amountRemaining *i256.Int, // int256
 	feePips uint64,
-) (sqrtRatioNextX96, amountIn, amountOut, feeAmount *u256.Uint) {
+) (*u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint) { // ) (sqrtRatioNextX96, amountIn, amountOut, feeAmount *u256.Uint) {
 	isToken1Expensive := sqrtRatioCurrentX96.Gte(sqrtRatioTargetX96)
 
 	// POSTIVIE == EXACT_IN => Estimated AmountOut
 	// NEGATIVE == EXACT_OUT => Estimated AmountIn
 	exactIn := !(amountRemaining.IsNeg()) // amountRemaining >= 0
 
+	sqrtRatioNextX96 := u256.Zero()
+	amountIn := u256.Zero()
+	amountOut := u256.Zero()
+	feeAmount := u256.Zero()
+
 	if exactIn {
 		amountRemainingLessFee := u256.Zero()
-
-		// amountRemainingLessFee := amountRemaining * bigint(uint64(1000000-feePips)) / 1000000
 		_amountRemaining := amountRemaining.Abs()
 		amountRemainingLessFee = amountRemainingLessFee.Mul(_amountRemaining, u256.NewUint(1000000-feePips))
 		amountRemainingLessFee = amountRemainingLessFee.Div(amountRemainingLessFee, u256.NewUint(1000000))
+
 		if isToken1Expensive {
 			amountIn = sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity, true)
 		} else {
@@ -41,6 +45,7 @@ func swapMathComputeSwapStep(
 				isToken1Expensive,
 			)
 		}
+
 	} else {
 		if isToken1Expensive {
 			amountOut = sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity, false)
@@ -56,7 +61,7 @@ func swapMathComputeSwapStep(
 				liquidity,
 				amountRemaining.Abs(),
 				isToken1Expensive,
-		        )
+			)
 		}
 	}
 

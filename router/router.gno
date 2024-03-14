@@ -32,7 +32,7 @@ func SwapRoute(
 		panic("[ROUTER] router.gno__SwapRoute() || amountSpecified == 0")
 	}
 
-	tokenAmountLimit, err := u256.FromDecimal(_tokenAmountLimit)
+	tokenAmountLimit := u256.MustFromDecimal(_tokenAmountLimit)
 	if err != nil {
 		panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || u256.FromDecimal(_tokenAmountLimit(%s) failed", _tokenAmountLimit))
 	}

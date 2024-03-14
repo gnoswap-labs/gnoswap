@@ -26,19 +26,12 @@ func HandleWithdrawalFee(
 		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected std.PrevRealm().PkgPath()(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
 	}
 
-	amount0, err := u256.FromDecimal(_amount0)
-	if err != nil {
-		ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() ||u256.FromDecimal(%s) failed", _amount0)
-	}
-	amount1, err := u256.FromDecimal(_amount1)
-	if err != nil {
-		ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() ||u256.FromDecimal(%s) failed", _amount1)
-	}
+	amount0 := u256.MustFromDecimal(_amount0)
+	amount1 := u256.MustFromDecimal(_amount1)
 
 	if withdrawalFee == 0 {
 		return _amount0, _amount1
 	}
-	
 
 	feeAmount0 := new(u256.Uint).Mul(amount0, u256.NewUint(withdrawalFee))
 	feeAmount0 = new(u256.Uint).Div(feeAmount0, u256.NewUint(100))

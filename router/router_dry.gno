@@ -7,7 +7,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/big/int256"
-u256 "gno.land/p/big/uint256"
+	u256 "gno.land/p/big/uint256"
 )
 
 func DrySwapRoute(
@@ -86,10 +86,7 @@ func DrySwapRoute(
 	}
 
 	// PROTOCOL FEE
-	// resultAmountOut = handleProtocolFee(outputToken, resultAmountOut, true)
 	// DrySwap should return raw resultAmountOut( ≈ with protocol fee )
-	// Interface needs to calculate 0.15 protocol fee
-
 	if swapType == "EXACT_IN" {
 		if !(i256.FromUint256(resultAmountIn).Eq(amountSpecified)) {
 			return "-1" // if pool doesn't have enough output token amount to swap against input token amount

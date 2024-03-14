@@ -57,15 +57,7 @@ func CreatePool(
 		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
 	}
 
-	sqrtPriceX96, err := u256.FromDecimal(_sqrtPriceX96)
-	if err != nil {
-		panic("CREATE POOL SQRT STRING")
-	}
-
-	sqrtPriceX96, err := u256.FromDecimal(_sqrtPriceX96)
-	if err != nil {
-		panic("CREATE POOL SQRT STRING")
-	}
+	sqrtPriceX96 := u256.MustFromDecimal(_sqrtPriceX96)
 
 	if token1Path < token0Path {
 		token0Path, token1Path = token1Path, token0Path
@@ -75,8 +67,6 @@ func CreatePool(
 
 	// check tickSpacing for fee
 	tickSpacing := feeAmountTickSpacing[fee]
-	// requirePositive(bigint(tickSpacing), ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || expected tickSpacing(%d) > 0", tickSpacing))
-
 	// calculate poolPath
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 
@@ -188,22 +178,23 @@ func newPool(
 		token1: u256.Zero(),
 	}
 
-	return &Pool{
-		token0Path:           token0Path,
-		token1Path:           token1Path,
-		balances:             balances,
-		fee:                  fee,
-		tickSpacing:          tickSpacing,
-		maxLiquidityPerTick:  maxLiquidityPerTick,
-		slot0:                slot0,
-		feeGrowthGlobal0X128: u256.Zero(),
-		feeGrowthGlobal1X128: u256.Zero(),
-		protocolFees:         protocolFees,
-		liquidity:            u256.Zero(),
-		ticks:                Ticks{},
-		tickBitmaps:          TickBitmaps{},
-		positions:            Positions{},
-	}
+	pool := &Pool{}
+	pool.token0Path = token0Path
+	pool.token1Path = token1Path
+	pool.balances = balances
+	pool.fee = fee
+	pool.tickSpacing = tickSpacing
+	pool.maxLiquidityPerTick = maxLiquidityPerTick
+	pool.slot0 = slot0
+	pool.feeGrowthGlobal0X128 = u256.Zero()
+	pool.feeGrowthGlobal1X128 = u256.Zero()
+	pool.protocolFees = protocolFees
+	pool.liquidity = u256.Zero()
+	pool.ticks = Ticks{}
+	pool.tickBitmaps = TickBitmaps{}
+	pool.positions = Positions{}
+
+	return pool
 }
 
 func isAdmin(target std.Address) bool {
