@@ -14,7 +14,8 @@ const (
 	GNOSWAP_ADMIN std.Address = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4" // GSA, r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
 	FEE_COLLECTOR std.Address = "g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4" // SAME AS GSA FOR NOW, r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
 
-	INTERNAL_REWARD_ACCOUNT std.Address = "g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm" // IRA for GNS, r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
+	INTERNAL_REWARD_ACCOUNT   std.Address = "g1paqttvcjcluuya9n9twyw7yacv54mt7ld3gvzm" // IRA for GNS, r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
+	BLOCK_GENERATION_INTERVAL int64       = 5                                          // 5 seconds
 
 	POOL_CREATION_FEE uint64 = 500_000_000
 )
@@ -23,6 +24,8 @@ const (
 const (
 	GNOT           string = "gnot"
 	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
+
+	UGNOT_MINT_DEPOSIT_TO_WRAP uint64 = 1 // defined in gno.land/r/demo/wugnot
 )
 
 // CONTRACT PATH & ADDRESS
@@ -91,3 +94,13 @@ const (
 const (
 	ZERO_ADDRESS std.Address = ""
 )
+
+// DEBUGs
+// func init() {
+// 	println("pool addr", POOL_ADDR)
+// 	println("position addr", POSITION_ADDR)
+// 	println("staker addr", STAKER_ADDR)
+// 	println("router addr", ROUTER_ADDR)
+// 	println("gov addr", GOV_ADDR)
+// 	println()
+// }

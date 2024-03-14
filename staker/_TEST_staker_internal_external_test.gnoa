@@ -67,6 +67,7 @@ func TestMintBarQux500(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
+		test1.String(),
 	)
 	std.TestSkipHeights(1)
 
@@ -93,6 +94,7 @@ func TestMintBarBaz100(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
+		test1.String(),
 	)
 	std.TestSkipHeights(1)
 
@@ -119,6 +121,7 @@ func TestMintFooQux500(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
+		test1.String(),
 	)
 	std.TestSkipHeights(1)
 
@@ -187,7 +190,7 @@ func TestCollectRewardToken1(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	gnsNew := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 98500040838)
+	shouldEQ(t, gnsNew, 98500285863)
 }
 
 func TestCollectRewardToken2(t *testing.T) {
@@ -195,13 +198,13 @@ func TestCollectRewardToken2(t *testing.T) {
 
 	// before claim
 	gnsOld := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsOld, 98500040838)
+	shouldEQ(t, gnsOld, 98500285863)
 
 	CollectReward(2)
 	std.TestSkipHeights(1)
 
 	gnsNew := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 98500065341)
+	shouldEQ(t, gnsNew, 98500432878)
 }
 
 func TestCollectRewardToken1Again(t *testing.T) {
@@ -209,16 +212,16 @@ func TestCollectRewardToken1Again(t *testing.T) {
 
 	// before claim
 	gnsOld := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsOld, 98500065341)
+	shouldEQ(t, gnsOld, 98500432878)
 
 	// ACCELERATE TIME
-	std.TestSkipHeights(100000)
+	std.TestSkipHeights(1000)
 
 	CollectReward(1)
 	std.TestSkipHeights(1)
 
 	gnsNew := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 98500092566)
+	shouldEQ(t, gnsNew, 98541352053)
 }
 
 func TestCollectExternalReward(t *testing.T) {
@@ -232,7 +235,7 @@ func TestCollectExternalReward(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	oblNew := obl.BalanceOf(a2u(test1))
-	shouldEQ(t, oblNew, 499999900000035)
+	shouldEQ(t, oblNew, 499999900020915)
 }
 
 func TestCollectAll(t *testing.T) {
@@ -249,21 +252,21 @@ func TestUnstakeToken1(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	gnsOld := gns.BalanceOf(a2u(test1))
 	oblOld := obl.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsOld, 98500108901)
-	shouldEQ(t, oblOld, 499999900000035)
+	shouldEQ(t, gnsOld, 98566009736)
+	shouldEQ(t, oblOld, 499999900020936)
 
 	std.TestSkipHeights(100000)
 	UnstakeToken(1)
 	gnsNew := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 98500136126)
+	shouldEQ(t, gnsNew, 105399988399)
 
 	UnstakeToken(2)
 	gnsNew = gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 98500152461)
+	shouldEQ(t, gnsNew, 109500342927)
 
 	UnstakeToken(3)
 	oblNew := obl.BalanceOf(a2u(test1))
-	shouldEQ(t, oblNew, 499999900000049)
+	shouldEQ(t, oblNew, 499999903499997)
 
 	std.TestSkipHeights(1)
 }

@@ -72,15 +72,15 @@ func TestPositionMint(t *testing.T) {
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	pn.Mint(barPath, consts.WRAPPED_WUGNOT, fee100, 8000, 12000, "100000000", "100000000", "0", "0", max_timeout)
-	pn.Mint(barPath, consts.WRAPPED_WUGNOT, fee500, 18000, 22000, "80000000", "80000000", "0", "0", max_timeout)
-	pn.Mint(barPath, consts.WRAPPED_WUGNOT, fee3000, 58020, 62040, "10000000", "10000000", "0", "0", max_timeout)
+	pn.Mint(barPath, consts.WRAPPED_WUGNOT, fee100, 8000, 12000, "100000000", "100000000", "0", "0", max_timeout, test1.String())
+	pn.Mint(barPath, consts.WRAPPED_WUGNOT, fee500, 18000, 22000, "80000000", "80000000", "0", "0", max_timeout, test1.String())
+	pn.Mint(barPath, consts.WRAPPED_WUGNOT, fee3000, 58020, 62040, "10000000", "10000000", "0", "0", max_timeout, test1.String())
 
-	pn.Mint(quxPath, fooPath, fee100, 48000, 52000, "100000000", "100000000", "0", "0", max_timeout)
-	pn.Mint(quxPath, fooPath, fee500, 58000, 62000, "80000000", "80000000", "0", "0", max_timeout)
-	pn.Mint(quxPath, fooPath, fee3000, 98040, 10020, "10000000", "10000000", "0", "0", max_timeout)
+	pn.Mint(quxPath, fooPath, fee100, 48000, 52000, "100000000", "100000000", "0", "0", max_timeout, test1.String())
+	pn.Mint(quxPath, fooPath, fee500, 58000, 62000, "80000000", "80000000", "0", "0", max_timeout, test1.String())
+	pn.Mint(quxPath, fooPath, fee3000, 98040, 10020, "10000000", "10000000", "0", "0", max_timeout, test1.String())
 
-	// pn.Mint(fooPath, consts.GNS_PATH, fee100, 48000, 52000, "100000000", "100000000", "0", "0", max_timeout)
+	// pn.Mint(fooPath, consts.GNS_PATH, fee100, 48000, 52000, "100000000", "100000000", "0", "0", max_timeout, test1.String())
 }
 
 func TestFindRoutes1(t *testing.T) {

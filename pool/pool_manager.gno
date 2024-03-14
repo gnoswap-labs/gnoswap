@@ -23,14 +23,16 @@ var (
 )
 
 func InitManual() {
-	// MUST BE ORIGIN CALLER
+	// only user can call
 	std.AssertOriginCall()
-	if initialized {
-		panic(ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || expected initialized(%t) == false", initialized))
+
+	// only admin can call
+	if std.GetOrigCaller() != consts.GNOSWAP_ADMIN {
+		panic(ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || std.GetOrigCaller(%s) != consts.GNOSWAP_ADMIN(%s)", std.GetOrigCaller().String(), consts.GNOSWAP_ADMIN.String()))
 	}
 
-	if !(std.GetOrigCaller() == consts.GNOSWAP_ADMIN) {
-		panic(ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || expected std.GetOrigCaller(%s) == consts.GNOSWAP_ADMIN(%s)", std.GetOrigCaller().String(), consts.GNOSWAP_ADMIN.String()))
+	if initialized {
+		panic(ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || initialized(%t) != false", initialized))
 	}
 
 	feeAmountTickSpacing[100] = 2     // 0.01%
@@ -53,6 +55,11 @@ func CreatePool(
 
 	if token0Path == token1Path {
 		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
+	}
+
+	sqrtPriceX96, err := u256.FromDecimal(_sqrtPriceX96)
+	if err != nil {
+		panic("CREATE POOL SQRT STRING")
 	}
 
 	sqrtPriceX96, err := u256.FromDecimal(_sqrtPriceX96)
@@ -87,6 +94,17 @@ func CreatePool(
 	}
 
 	return pool
+}
+
+func DoesPoolExist(token0Path, token1Path string, fee uint32) bool {
+	poolPath := GetPoolPath(token0Path, token1Path, fee)
+	_, exist := pools[poolPath]
+	return exist
+}
+
+func DoesPoolPathExist(poolPath string) bool {
+	_, exist := pools[poolPath]
+	return exist
 }
 
 func GetPool(token0Path, token1Path string, fee uint32) *Pool {

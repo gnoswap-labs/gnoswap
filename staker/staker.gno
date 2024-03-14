@@ -103,9 +103,12 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) already staked", tokenId))
 	}
 
-	// check tokenId owner
-	if gnft.OwnerOf(tid(tokenId)) != std.GetOrigCaller() {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || only owner can stake their token tokenId(%d), owner(%s) == std.GetOrigCaller(%s)", tokenId, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()))
+	// if caller is owner
+	callerIsOwner := gnft.OwnerOf(tid(tokenId)) == std.GetOrigCaller()
+	stakerIsOwner := gnft.OwnerOf(tid(tokenId)) == GetOrigPkgAddr()
+
+	if !(callerIsOwner || stakerIsOwner) {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || Neither Caller(%s) or Staker(%s) is not owner of tokenId(%d)", std.GetOrigCaller(), GetOrigPkgAddr(), tokenId))
 	}
 
 	// check tokenId has liquidity or not
@@ -119,13 +122,17 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 	// staked status
 	deposit := deposits[tokenId]
+	deposit.owner = std.GetOrigCaller() // NOT ACTUAL OWNER, MUST BE USER ALWAYS
 	deposit.numberOfStakes++
 	deposit.stakeTimestamp = time.Now().Unix()
 	deposit.targetPoolPath = poolKey
 	deposits[tokenId] = deposit
 
-	// transfer NFT ownership to staker contract
-	transferDeposit(tokenId, GetOrigPkgAddr())
+	if callerIsOwner { // if caller is owner, transfer NFT ownership to staker contract
+		transferDeposit(tokenId, GetOrigPkgAddr())
+	} else if stakerIsOwner { // if staker is owner, approve NFT to caller
+		gnft.Approve(a2u(std.GetOrigCaller()), tid(tokenId))
+	}
 
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
 	return poolKey, token0Amount.ToString(), token1Amount.ToString()
@@ -175,7 +182,7 @@ func CollectReward(tokenId uint64) {
 	}
 }
 
-func UnstakeToken(tokenId uint64) (string, string, string) {
+func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
 	// Claim All Rewards
 	CollectReward(tokenId)
 
@@ -246,8 +253,6 @@ func transferDeposit(tokenId uint64, to std.Address) {
 	if std.GetOrigCaller() == to {
 		panic(ufmt.Sprintf("[STAKER] staker.gno__transferDeposit() || only owner(%s) can transfer tokenId(%d), std.GetOrigCaller()(%s)", owner, tokenId, std.GetOrigCaller()))
 	}
-
-	deposits[tokenId].owner = owner
 
 	// transfer NFT ownership
 	gnft.TransferFrom(a2u(owner), a2u(to), tid(tokenId))

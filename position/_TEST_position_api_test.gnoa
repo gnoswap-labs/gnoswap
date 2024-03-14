@@ -29,16 +29,16 @@ func TestPoolInitCreatePool(t *testing.T) {
 // 2. Mint LP and Get GNFT
 func TestMint(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// test1 mints => will get tid 1 nft
 	std.TestSetOrigCaller(test1)
-	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout)
+	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, test1.String())
 
 	// test1 mints => will get tid 2 nft
 	std.TestSetOrigCaller(test1)
-	Mint(fooPath, barPath, fee500, int32(4000), int32(6000), "1000000", "1000000", "0", "0", max_timeout)
+	Mint(fooPath, barPath, fee500, int32(4000), int32(6000), "1000000", "1000000", "0", "0", max_timeout, test1.String())
 }
 
 // 3. Swap to make position fee

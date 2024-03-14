@@ -19,7 +19,7 @@ func (pool *Pool) tickBitmapFlipTick(
 	tickSpacing int32,
 ) {
 	if tick%tickSpacing != 0 {
-		panic(ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || tick(%d) %% tickSpacing(%d) == 0(%d)", tick, tickSpacing, tick%tickSpacing))
+		panic(ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || tick(%d) MOD tickSpacing(%d) != 0(%d)", tick, tickSpacing, tick%tickSpacing))
 	}
 
 	wordPos, bitPos := tickBitmapPosition(tick / tickSpacing)

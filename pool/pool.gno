@@ -523,6 +523,15 @@ func CollectProtocol(
 	amount0Requested := u256.MustFromDecimal(_amount0Requested)
 	amount1Requested := u256.MustFromDecimal(_amount1Requested)
 
+	amount0Requested, err := u256.FromDecimal(_amount0Requested)
+	if err != nil {
+		panic(ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || u256.FromDecimal(_amount0Requested[%s]) failed", _amount0Requested))
+	}
+	amount1Requested, err := u256.FromDecimal(_amount1Requested)
+	if err != nil {
+		panic(ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || u256.FromDecimal(_amount1Requested[%s]) failed", _amount1Requested))
+	}
+
 	pool := GetPool(token0Path, token1Path, fee)
 
 	amount0 := u256Min(amount0Requested, pool.protocolFees.token0)

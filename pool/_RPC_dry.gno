@@ -158,7 +158,8 @@ func DrySwap(
 			value1 := new(u256.Uint).Mul(step.feeAmount, _q128)
 			value2 := new(u256.Uint).Div(value1, state.liquidity)
 
-			state.feeGrowthGlobalX128 = new(u256.Uint).Add(state.feeGrowthGlobalX128, value2)
+			// r3v4_xxx: if drySwap update this, next swap gets affect in test cases
+			// state.feeGrowthGlobalX128 = new(u256.Uint).Add(state.feeGrowthGlobalX128, value2)
 		}
 
 		// shift tick if we reached the next price

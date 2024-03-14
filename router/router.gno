@@ -11,13 +11,15 @@ import (
 
 	i256 "gno.land/p/big/int256"
 	u256 "gno.land/p/big/uint256"
+
+	"gno.land/r/demo/wugnot"
 )
 
 func SwapRoute(
 	inputToken string,
 	outputToken string,
 	_amountSpecified string, // int256
-	swapType SwapType,
+	swapType string,
 	strRouteArr string, // []string
 	quoteArr string, // []int
 	_tokenAmountLimit string, // uint256
@@ -36,9 +38,9 @@ func SwapRoute(
 	}
 
 	switch swapType {
-	case ExactIn:
+	case "EXACT_IN":
 		amountSpecified = amountSpecified
-	case ExactOut:
+	case "EXACT_OUT":
 		amountSpecified = i256.Zero().Neg(amountSpecified)
 	default:
 		panic("[ROUTER] router.gno__SwapRoute() || unknown swapType")
@@ -55,6 +57,19 @@ func SwapRoute(
 	quotes := strings.Split(quoteArr, ",")
 	if len(routes) != len(quotes) {
 		panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || len(routes[%d]) != len(quotes[%d])", len(routes), len(quotes)))
+	}
+
+	// if input is gnot, wrap it
+	userOldWugnotBalance := uint64(0)
+	if inputToken == consts.GNOT {
+		sent := std.GetOrigSend()
+		ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
+
+		wrap(ugnotSentByUser)
+		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+
+	} else if outputToken == consts.GNOT { // if output is gnot unwrap later (save user's current wugnot balance)
+		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 	}
 
 	// check if quotes are up to 100%
@@ -97,7 +112,18 @@ func SwapRoute(
 	// PROTOCOL FEE
 	resultAmountOut = handleProtocolFee(outputToken, resultAmountOut, false)
 
-	if swapType == ExactIn {
+	// UNWRAP IF NECESSARY
+	// if input was gnot, refund left over wugnot
+	if inputToken == consts.GNOT {
+		userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+		unwrap(userNewWugnotBalance)
+	} else if outputToken == consts.GNOT { // if output was gnot, unwrap result
+		userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+		userRecvWugnot := uint64(userNewWugnotBalance - userOldWugnotBalance) // received wugnot
+		unwrap(userRecvWugnot)
+	}
+
+	if swapType == "EXACT_IN" {
 		if !(tokenAmountLimit.Lte(resultAmountOut)) {
 			panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received for user (expected minimum received:%s, actual received:%s)", _tokenAmountLimit, resultAmountOut.ToString()))
 		}
@@ -125,9 +151,9 @@ func handleSingleSwap(route string, amountSpecified *i256.Int, isDry bool) (*u25
 	return singleSwap(singleParams)
 }
 
-func handleMultiSwap(swapType SwapType, route string, numHops int, amountSpecified *i256.Int, isDry bool) (*u256.Uint, *u256.Uint) {
+func handleMultiSwap(swapType string, route string, numHops int, amountSpecified *i256.Int, isDry bool) (*u256.Uint, *u256.Uint) {
 	switch swapType {
-	case ExactIn:
+	case "EXACT_IN":
 		input, output, fee := getDataForMultiPath(route, 0) // first data
 		swapParams := SwapParams{
 			tokenIn:         input,

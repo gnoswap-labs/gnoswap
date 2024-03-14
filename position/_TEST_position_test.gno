@@ -42,6 +42,7 @@ func TestMintPosition01InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
+		test1.String(),
 	)
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, getNextId(), 2)
@@ -65,6 +66,7 @@ func TestMintPosition02LowerRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
+		test1.String(),
 	)
 	shouldEQ(t, tokenId, 2)
 	shouldEQ(t, getNextId(), 3)
@@ -88,6 +90,7 @@ func TestMintPosition03UpperRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
+		test1.String(),
 	)
 	shouldEQ(t, tokenId, 3)
 	shouldEQ(t, getNextId(), 4)
@@ -141,7 +144,7 @@ func TestDecreaseLiquidityUpperPosition(t *testing.T) {
 	ownerOfPosition := gnft.OwnerOf(tid(3))
 	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())
 
-	tokenId, liquidity, amount0, amount1, poolPath := DecreaseLiquidity(uint64(3), consts.MAX_UINT256, "0", "0", max_timeout)
+	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(uint64(3), 100, "0", "0", max_timeout, false)
 	shouldEQ(t, tokenId, uint64(3))
 	shouldEQ(t, amount0, "49999999")
 	shouldEQ(t, amount1, "0")

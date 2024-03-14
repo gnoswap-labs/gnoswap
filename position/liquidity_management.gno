@@ -2,7 +2,6 @@ package position
 
 import (
 	"gno.land/p/demo/common"
-	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/consts"
 
@@ -37,17 +36,12 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 		liquidity.ToString(), // _liquidityAmount string(uint128)
 	)
 
-	amount0Uint, err := u256.FromDecimal(amount0)
-	if err != nil {
-		ufmt.Sprintf("[POSITION] liquidity_management.gno__addLiquidity() || u256.FromDecimal(amount0: %s) failed (err: %s)", amount0, err.Error())
-	}
-	amount1Uint, err := u256.FromDecimal(amount1)
-	if err != nil {
-		ufmt.Sprintf("[POSITION] liquidity_management.gno__addLiquidity() || u256.FromDecimal(amount1: %s) failed (err: %s)", amount1, err.Error())
-	}
+	amount0Uint := u256.MustFromDecimal(amount0)
+	amount1Uint := u256.MustFromDecimal(amount1)
 
 	amount0Cond := amount0Uint.Gte(params.amount0Min)
 	amount1Cond := amount1Uint.Gte(params.amount1Min)
+
 	if !(amount0Cond && amount1Cond) {
 		panic("[POSITION] liquidity_management.gno__addLiquidity() || LM_Price Slippage Check")
 	}
