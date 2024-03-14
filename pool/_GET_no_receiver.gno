@@ -7,7 +7,6 @@ import (
 	u256 "gno.land/p/big/uint256"
 )
 
-// Slot0
 func PoolGetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
 	pool, exist := pools[poolPath]
 	if !exist {
@@ -35,7 +34,6 @@ func PoolGetSlot0FeeProtocol(poolPath string) uint8 {
 	return pool.slot0.feeProtocol
 }
 
-// Balances
 func PoolGetToken0Balance(poolPath string) *u256.Uint {
 	pool, exist := pools[poolPath]
 	if !exist {
@@ -54,7 +52,6 @@ func PoolGetToken1Balance(poolPath string) *u256.Uint {
 	return pool.balances.token1
 }
 
-// ProtocolFees
 func PoolGetToken0ProtocolFee(poolPath string) *u256.Uint {
 	pool, exist := pools[poolPath]
 	if !exist {
@@ -73,7 +70,6 @@ func PoolGetToken1ProtocolFee(poolPath string) *u256.Uint {
 	return pool.protocolFees.token1
 }
 
-// PositionInfo
 func PoolGetPositionLiquidity(poolPath, key string) *u256.Uint {
 	pool, exist := pools[poolPath]
 	if !exist {
@@ -144,7 +140,6 @@ func PoolGetPositionTokensOwed1(poolPath, key string) *u256.Uint {
 	return position.tokensOwed1
 }
 
-// TickInfo
 func PoolGetTickLiquidityGross(poolPath string, x int32) *u256.Uint {
 	pool, exist := pools[poolPath]
 	if !exist {
@@ -257,7 +252,6 @@ func PoolGetTickInitialized(poolPath string, x int32) bool {
 	return tick.initialized
 }
 
-// TickBitmaps
 func PoolGetTickBitmap(poolPath string, x int16) *u256.Uint {
 	pool, exist := pools[poolPath]
 	if !exist {
@@ -272,7 +266,6 @@ func PoolGetTickBitmap(poolPath string, x int16) *u256.Uint {
 	return tickBitmap
 }
 
-// Pool
 func PoolGetToken0Path(poolPath string) string {
 	pool, exist := pools[poolPath]
 	if !exist {

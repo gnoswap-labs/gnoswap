@@ -10,10 +10,16 @@ import (
 	u256 "gno.land/p/big/uint256"
 )
 
+// withdrawalFee is the fee that is charged when a user withdraws their collected fees
 var (
 	withdrawalFee = uint64(1)
 )
 
+// HandleWithdrawalFee withdraws the fee from the user and returns the amount after the fee
+//
+// Panics if any of the following conditions are met:
+// - caller is not the position contract
+// - caller does not have enough balance to give the fee
 func HandleWithdrawalFee(
 	tokenId uint64,
 	token0Path string,
@@ -55,6 +61,11 @@ func HandleWithdrawalFee(
 	return afterAmount0.ToString(), afterAmount1.ToString()
 }
 
+// SetWithdrawalFee sets the withdrawal fee
+//
+// Panics if any of the following conditions are met:
+// - caller is not the admin
+
 func SetWithdrawalFee(fee uint64) {
 	// MUST BE ORIGIN CALL
 	std.AssertOriginCall()
@@ -64,8 +75,8 @@ func SetWithdrawalFee(fee uint64) {
 		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || caller(%s) must be admin", std.GetOrigCaller()))
 	}
 
-	if fee < 0 {
-		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || fee(%d) must be >= 0", fee))
+	if fee > 100 {
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || fee(%d) must be in range 0 ~ 100", fee))
 	}
 
 	withdrawalFee = fee

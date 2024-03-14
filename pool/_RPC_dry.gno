@@ -11,6 +11,7 @@ import (
 	u256 "gno.land/p/big/uint256"
 )
 
+// DrySwap simulates a swap and returns the amount0, amount1 that would be received and a boolean indicating if the swap is possible
 func DrySwap(
 	token0Path string,
 	token1Path string,

@@ -15,7 +15,7 @@ import (
 
 var (
 	positions map[uint64]Position = make(map[uint64]Position) // tokenId -> Position
-	nextId    uint64              = 1
+	nextId    uint64              = 1                         // lp token id
 )
 
 func Mint(

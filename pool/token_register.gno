@@ -9,6 +9,8 @@ import (
 	"gno.land/r/demo/consts"
 )
 
+// GRC20Interface is the interface for GRC20 tokens
+// It is used to interact with the GRC20 tokens without importing but by registering each tokens function
 type GRC20Interface interface {
 	Transfer() func(to users.AddressOrName, amount uint64)
 	TransferFrom() func(from, to users.AddressOrName, amount uint64)
@@ -21,6 +23,7 @@ var (
 	locked     = false // mutex
 )
 
+// GetRegisteredTokens returns a list of all registered tokens
 func GetRegisteredTokens() []string {
 	tokens := make([]string, 0, len(registered))
 	for k := range registered {
@@ -29,6 +32,10 @@ func GetRegisteredTokens() []string {
 	return tokens
 }
 
+// GetRegisterToken returns the GRC20Interface for the given token
+//
+// Panics if any of the following conditions are met:
+// - token not found
 func GetRegisterToken(pkgPath string) GRC20Interface {
 	pkgPath = handleNative(pkgPath)
 
@@ -40,6 +47,11 @@ func GetRegisterToken(pkgPath string) GRC20Interface {
 	return registered[pkgPath]
 }
 
+// RegisterGRC20Interface registers a GRC20 token interface
+//
+// Panics if any of the following conditions are met:
+// - caller is not the admin
+// - token already registered
 func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	caller := std.GetOrigCaller()
 	if caller != consts.GNOSWAP_ADMIN {
@@ -56,6 +68,10 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	registered[pkgPath] = igrc20
 }
 
+// UnregisterGRC20Interface unregisters a GRC20 token interface
+//
+// Panics if any of the following conditions are met:
+// - caller is not the admin
 func UnregisterGRC20Interface(pkgPath string) {
 	// only admin can unregister
 	caller := std.GetOrigCaller()

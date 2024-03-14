@@ -14,6 +14,11 @@ import (
 	u256 "gno.land/p/big/uint256"
 )
 
+// Mint creates a new position and mints liquidity tokens then return amount0, amount1 in string
+//
+// Panics if any of the following conditions are met:
+// - The caller is not the position contract
+// - Caller does not have enough token0 or token1
 func Mint(
 	token0Path string,
 	token1Path string,
@@ -80,6 +85,11 @@ func Mint(
 	return amount0.ToString(), amount1.ToString()
 }
 
+// Burn removes liquidity from the caller and account tokens owed for the liquidity to the position
+// If liquidity of 0 is burned, it recalculates fees owed to a position
+//
+// Panics if any of the following conditions are met:
+// - The caller is not the position contract
 func Burn(
 	token0Path string,
 	token1Path string,
@@ -119,6 +129,11 @@ func Burn(
 	return amount0.ToString(), amount1.ToString()
 }
 
+// Collect collects tokens owed to a position
+//
+// Panics if any of the following conditions are met:
+// - The caller is not the position contract
+// - The position does not exist
 func Collect(
 	token0Path string,
 	token1Path string,
@@ -167,6 +182,13 @@ func Collect(
 	return amount0.ToString(), amount1.ToString()
 }
 
+// Swap swaps token0 for token1, or token1 for token0
+//
+// Panics if any of the following conditions are met:
+// - The caller is not the router contract
+// - Target pool is being used by another transaction
+// - The amounSpecified is 0
+// - The SqrtPriceLimit is not within the range
 func Swap(
 	token0Path string,
 	token1Path string,
@@ -482,7 +504,11 @@ func Swap(
 	return amount0.ToString(), amount1.ToString()
 }
 
-// ADMIN
+// SetFeeProtocls sets the denominator of the protocol fee
+//
+// Panics if any of the following conditions are met:
+// - The caller is not an admin
+// - The feeProtocol0 or feeProtocol1 is not in the range of 0 or 4-10
 func SetFeeProtocol(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
@@ -507,7 +533,12 @@ func SetFeeProtocol(
 	gv.SetGovParameter("protocoL_fees", feeProtocol0+(feeProtocol1<<4))
 }
 
-// ADMIN
+// CollectProtocol collects protocol fees from the pool
+//
+// Panics if any of the following conditions are met:
+// - The caller is not an admin
+// - The recipient is the zero address
+// - The amount0Requested or amount1Requested is greater than the protocol fees
 func CollectProtocol(
 	token0Path string,
 	token1Path string,

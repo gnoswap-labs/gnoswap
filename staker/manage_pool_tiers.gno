@@ -10,10 +10,18 @@ import (
 	"gno.land/r/demo/consts"
 )
 
+// GetPoolWithTiers returns list of pools with their tiers
 func GetPoolWithTiers() map[string]uint64 {
 	return poolTiers
 }
 
+// SetPoolTier sets the tier of the pool
+//
+// Panics if any of the following conditions are met:
+// - caller is not admin
+// - pool does not exist
+// - pool exists in poolTiers
+// - tier is not valid
 func SetPoolTier(pool string, tier uint64) {
 	// check if caller is admin
 	isAdmin()
@@ -34,6 +42,13 @@ func SetPoolTier(pool string, tier uint64) {
 	poolTiers[pool] = tier
 }
 
+// ChangePoolTier changes the tier of the pool
+//
+// Panics if any of the following conditions are met:
+// - caller is not admin
+// - pool does not exist in poolTiers
+// - tier is not valid
+// - pool is default pool
 func ChangePoolTier(pool string, tier uint64) {
 	// check if caller is admin
 	isAdmin()
@@ -46,7 +61,7 @@ func ChangePoolTier(pool string, tier uint64) {
 	// check if tier is valid
 	validTier(tier)
 
-	// CAN'T CHANGE TIER OF THIS GNS:GNOT 0.03%
+	// CAN'T CHANGE TIER OF THIS GNS:GNOT 0.3%
 	if pool == MUST_EXISTS_IN_TIER_1 {
 		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__ChangePoolTier() || Cannot change tier of this pool(%s)"))
 	}
@@ -54,6 +69,11 @@ func ChangePoolTier(pool string, tier uint64) {
 	poolTiers[pool] = tier
 }
 
+// RemovePoolTier removes the pool from poolTiers
+//
+// Panics if any of the following conditions are met:
+// - caller is not admin
+// - pool is default pool
 func RemovePoolTier(pool string) {
 	// check if caller is admin
 	isAdmin()

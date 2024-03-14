@@ -15,6 +15,18 @@ import (
 	"gno.land/r/demo/wugnot"
 )
 
+// SwapRoute swaps the input token to the output token and returns the result amount
+// If swapType is EXACT_IN, it returns the amount of output token ≈ amount of user to receive
+// If swapType is EXACT_OUT, it returns the amount of input token ≈ amount of user to pay
+//
+// Panics if any of the following conditions are met:
+// - amountSpecified is zero or is not numeric
+// - swapType is not EXACT_IN or EXACT_OUT
+// - length of route and quotes are not the same
+// - length of routes is not 1 ~ 7
+// - sum of quotes is not 100
+// - number of hops is not 1 ~ 3
+// - too many token spend or too few token received
 func SwapRoute(
 	inputToken string,
 	outputToken string,

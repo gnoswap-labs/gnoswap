@@ -37,9 +37,15 @@ const (
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers[MUST_EXISTS_IN_TIER_1] = 1 // ONLY GNOT:GNS 0.03%
+	poolTiers[MUST_EXISTS_IN_TIER_1] = 1 // ONLY GNOT:GNS 0.3%
 }
 
+// CreateExternalIncentive creates an external incentive for the targetPoolPath
+//
+// Panics if any of the following conditions are met:
+// - startTimestamp is not in the future
+// - externalDuration is not 90, 180, or 360 days
+// - user doesn't have enough balance to provide as reward
 func CreateExternalIncentive(
 	targetPoolPath string,
 	rewardToken string, // token path should be registered
@@ -96,6 +102,12 @@ func CreateExternalIncentive(
 	poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath], incentiveId)
 }
 
+// StakeToken stakes the lp token to the staker contract
+//
+// Panics if any of the following conditions are met:
+// - tokenId already staked
+// - tokenId has no liquidity
+// - tokenId is not owned by the caller or staker
 func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
 	// check whether tokenId already staked or not
 	_, exist := deposits[tokenId]
@@ -138,6 +150,11 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 	return poolKey, token0Amount.ToString(), token1Amount.ToString()
 }
 
+// CollectReward collects staked reward from tokenId
+//
+// Panics if any of the following conditions are met:
+// - token is not staked
+// - caller is not owner of lp token
 func CollectReward(tokenId uint64) {
 	deposit, exist := deposits[tokenId]
 	if !exist {
@@ -182,6 +199,10 @@ func CollectReward(tokenId uint64) {
 	}
 }
 
+// UnstakeToken unstakes the lp token from the staker and collects all reward from tokenId
+//
+// Panics if any of the following conditions are met:
+// - token is not staked
 func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
 	// Claim All Rewards
 	CollectReward(tokenId)
@@ -201,6 +222,12 @@ func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0
 	return poolPath, token0Amount.ToString(), token1Amount.ToString()
 }
 
+// EndExternalIncentive ends the external incentive
+// Only refundee or admin can end incentive
+//
+// Panics if any of the following conditions are met:
+// - incentive expiration time is not over
+// - reward token amount is not enough to refund
 func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken string) {
 	incentiveId := incentiveIdCompute(refundee, targetPoolPath, rewardToken)
 
