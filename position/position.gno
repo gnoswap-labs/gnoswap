@@ -77,7 +77,7 @@ func Mint(
 
 	// if estmiated gnot amount is not 0, user should have been sent gnot to position
 	ugnotSent := uint64(0)
-	if (token0IsNative && estimatedMintAmount0Str != "0") || (token1IsNative == true && estimatedMintAmount1Str != "0") {
+	if (token0IsNative && estimatedMintAmount0Str != "0") || (token1IsNative && estimatedMintAmount1Str != "0") {
 		// SEND GNOT: oneclick -> wugnot
 		oldUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 
