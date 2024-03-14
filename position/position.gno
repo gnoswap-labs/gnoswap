@@ -388,25 +388,26 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		burnPosition(params.tokenId) // just update flag
 	}
 
-	// UNWRAP
-	if pToken0 == consts.WRAPPED_WUGNOT {
-		if params.unwrapResult {
-			// UNWRAP WUGNOT FROM LIQUIDITY
-			unwrap(amount0.Uint64())
-			// UNWRAP WUGNOT FROM FEE
-			unwrap(fee0.Uint64())
-		}
+	if !params.unwrapResult {
+		return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
 	}
-	if pToken1 == consts.WRAPPED_WUGNOT {
-		if params.unwrapResult {
-			// UNWRAP WUGNOT FROM LIQUIDITY
-			unwrap(amount1.Uint64())
-			// UNWRAP WUGNOT FROM FEE
-			unwrap(fee1.Uint64())
-		}
-	}
-
-	return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
+	
+	var (
+		unwrapAmount  uint64
+		unwrapFee uint64
+	)
+	switch {
+	case pToken0 == consts.WRAPPED_WUGNOT:
+		unwrapAmount = amount0.Uint64()
+    		unwrapFee = fee0.Uint64()
+    	case pToken1 == consts.WRAPPED_WUGNOT:
+        	unwrapAmount = amount1.Uint64()
+        	unwrapFee = fee1.Uint64()
+        }
+        unwrap(unwrapAmount)
+        unwrap(unwrapFee)
+        
+        return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
 }
 
 func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, tokensOwed0, tokensOwed1, poolPath
