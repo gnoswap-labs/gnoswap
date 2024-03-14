@@ -10,7 +10,7 @@ import (
 )
 
 func wrap(ugnotAmount uint64) {
-	if ugnotAmount <= 0 {
+	if ugnotAmount == 0 {
 		return
 	}
 
