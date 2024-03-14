@@ -228,7 +228,9 @@ func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0
 // Panics if any of the following conditions are met:
 // - incentive expiration time is not over
 // - reward token amount is not enough to refund
-func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken string) {
+func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
+	refundee := std.Address(_refundee)
+
 	incentiveId := incentiveIdCompute(refundee, targetPoolPath, rewardToken)
 
 	incentive, exist := incentives[incentiveId]

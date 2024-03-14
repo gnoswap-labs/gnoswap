@@ -369,7 +369,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		pToken0,
 		pToken1,
 		pFee,
-		std.GetOrigCaller(),
+		std.GetOrigCaller().String(),
 		position.tickLower,
 		position.tickUpper,
 		_burnedAmount0,
@@ -458,7 +458,7 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 		token0,
 		token1,
 		fee,
-		std.GetOrigCaller(),
+		std.GetOrigCaller().String(),
 		position.tickLower,
 		position.tickUpper,
 		consts.MAX_UINT64, // string, r3v4_xxx: current grc20 handles amount by `uint64`

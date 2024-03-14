@@ -56,7 +56,7 @@ func TestMint(t *testing.T) {
 		fooPath,
 		consts.WRAPPED_WUGNOT,
 		fee500,
-		consts.POSITION_ADDR,
+		consts.POSITION_ADDR.String(),
 		test_tickLower,
 		test_tickUpper,
 		"10000000",
@@ -83,11 +83,11 @@ func TestSwapBuyNative(t *testing.T) {
 		fooPath,               // token0
 		consts.WRAPPED_WUGNOT, // token1
 		fee500,
-		test1,
+		test1.String(),
 		true,
 		"10000",
 		consts.MIN_PRICE,
-		std.GetOrigCaller(),
+		std.GetOrigCaller().String(),
 	)
 	shouldEQ(t, amount0, "10000")
 	shouldEQ(t, amount1, "-27123")
@@ -115,11 +115,11 @@ func TestSwapSellNative(t *testing.T) {
 		fooPath,               // token0
 		consts.WRAPPED_WUGNOT, // token1
 		fee500,
-		test1,
+		test1.String(),
 		false,
 		"10000",
 		consts.MAX_PRICE,
-		std.GetOrigCaller(),
+		std.GetOrigCaller().String(),
 	)
 	shouldEQ(t, amount0, "-3687") // pool sent
 	shouldEQ(t, amount1, "10000") // pool recv

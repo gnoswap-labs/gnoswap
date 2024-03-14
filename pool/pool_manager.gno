@@ -156,10 +156,10 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 //
 // Panics if any of the following conditions are met:
 // - The caller is not an admin
-func AddAdmin(addr std.Address) {
+func AddAdmin(addr string) {
 	caller := std.PrevRealm().Addr()
 	if isAdmin(caller) {
-		admins = append(admins, addr)
+		admins = append(admins, std.Address(addr))
 	} else {
 		panic(ufmt.Sprintf("[POOL] pool_manager.gno__AddAdmin() || caller(%s) is not admin", caller.String()))
 	}
@@ -170,7 +170,7 @@ func AddAdmin(addr std.Address) {
 // Panics if any of the following conditions are met:
 // - The caller is not an admin
 // - The address is the last admin
-func RemoveAdmin(addr std.Address) {
+func RemoveAdmin(addr string) {
 	caller := std.PrevRealm().Addr()
 
 	if isAdmin(caller) {
@@ -178,7 +178,7 @@ func RemoveAdmin(addr std.Address) {
 			panic("[POOL] pool_manager.gno__RemoveAdmin() || cannot remove last admin")
 		}
 		for i, v := range admins {
-			if v == addr {
+			if v == std.Address(addr) {
 				admins = append(admins[:i], admins[i+1:]...)
 				return
 			}

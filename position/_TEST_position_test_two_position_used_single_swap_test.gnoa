@@ -99,11 +99,11 @@ func TestSwap(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		test1,
+		test1.String(),
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		test1,
+		test1.String(),
 	)
 }
 

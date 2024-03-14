@@ -197,12 +197,12 @@ func TestEndExternalIncentive(t *testing.T) {
 
 	// incentive time isn't over yet
 	shouldPanicWithMsg(t, func() {
-		EndExternalIncentive(test1, "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl")
+		EndExternalIncentive(test1.String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl")
 	}, "[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(1242343950), current(1234567990)")
 
 	std.TestSkipHeights(9999999) // not yet, one more should be good to end incentive
 
-	EndExternalIncentive(test1, "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
+	EndExternalIncentive(test1.String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, len(incentives), 0)

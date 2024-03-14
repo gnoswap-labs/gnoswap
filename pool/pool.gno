@@ -23,7 +23,7 @@ func Mint(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
+	recipient string,
 	tickLower int32,
 	tickUpper int32,
 	_liquidityAmount string, // uint128
@@ -38,7 +38,7 @@ func Mint(
 	pool := GetPool(token0Path, token1Path, fee)
 	_, amount0, amount1 := pool.modifyPosition( // int256 x2
 		ModifyPositionParams{
-			recipient,                         // owner
+			std.Address(recipient),            // owner
 			tickLower,                         // tickLower
 			tickUpper,                         // tickUpper
 			i256.FromUint256(liquidityAmount), // liquidityDelta
@@ -138,7 +138,7 @@ func Collect(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
+	_recipient string,
 	tickLower int32,
 	tickUpper int32,
 	_amount0Requested string, // uint128
@@ -151,6 +151,9 @@ func Collect(
 
 	amount0Requested := u256.MustFromDecimal(_amount0Requested)
 	amount1Requested := u256.MustFromDecimal(_amount1Requested)
+
+	recipient := std.Address(_recipient)
+
 	pool := GetPool(token0Path, token1Path, fee)
 
 	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
@@ -193,11 +196,11 @@ func Swap(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
+	_recipient string,
 	zeroForOne bool,
 	_amountSpecified string, // int256
 	_sqrtPriceLimitX96 string, // uint160
-	payer std.Address, // router
+	_payer string, // router
 ) (string, string) { // int256 x2
 	// only router contract can call this function
 	if std.PrevRealm().PkgPath() != consts.ROUTER_PATH {
@@ -210,6 +213,9 @@ func Swap(
 
 	amountSpecified := i256.MustFromDecimal(_amountSpecified)
 	sqrtPriceLimitX96 := u256.MustFromDecimal(_sqrtPriceLimitX96)
+
+	recipient := std.Address(_recipient)
+	payer := std.Address(_payer)
 
 	pool := GetPool(token0Path, token1Path, fee)
 	slot0Start := pool.slot0
@@ -543,7 +549,7 @@ func CollectProtocol(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
+	_recipient string,
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
@@ -551,6 +557,9 @@ func CollectProtocol(
 	if !(isAdmin(std.PrevRealm().Addr())) {
 		panic(ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || caller(%s) must be admin", std.PrevRealm().Addr()))
 	}
+
+	recipient := std.Address(_recipient)
+
 	amount0Requested := u256.MustFromDecimal(_amount0Requested)
 	amount1Requested := u256.MustFromDecimal(_amount1Requested)
 
