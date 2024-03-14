@@ -29,7 +29,7 @@ func wrap(ugnotAmount uint64) {
 }
 
 func unwrap(wugnotAmount uint64) {
-	if wugnotAmount <= 0 {
+	if wugnotAmount == 0 {
 		return
 	}
 	userOldWugnot := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
