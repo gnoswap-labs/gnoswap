@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/baz"

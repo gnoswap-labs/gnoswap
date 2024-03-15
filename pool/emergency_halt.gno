@@ -4,7 +4,7 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
 var (

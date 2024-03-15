@@ -7,7 +7,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
 // GetPoolWithTiers returns list of pools with their tiers

@@ -2,7 +2,7 @@ package pool
 
 import (
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	u256 "gno.land/p/big/uint256"
 )

@@ -1,9 +1,9 @@
 package position
 
 import (
-	"gno.land/p/demo/common"
+	"gno.land/r/gnoswap/common"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	pl "gno.land/r/demo/pool"
 

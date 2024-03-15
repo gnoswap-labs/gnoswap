@@ -6,7 +6,7 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
 func wrap(ugnotAmount uint64) {

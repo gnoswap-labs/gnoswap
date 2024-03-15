@@ -6,7 +6,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/users"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
 // GRC20Interface is the interface for GRC20 tokens

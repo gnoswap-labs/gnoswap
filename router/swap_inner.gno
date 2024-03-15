@@ -7,7 +7,7 @@ import (
 
 	pl "gno.land/r/demo/pool"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	i256 "gno.land/p/big/int256"
 	u256 "gno.land/p/big/uint256"
