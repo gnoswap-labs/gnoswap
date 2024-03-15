@@ -4,13 +4,13 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/demo/gnft"
 	"gno.land/r/demo/gns"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
@@ -53,6 +53,10 @@ func CreateExternalIncentive(
 	startTimestamp int64,
 	endTimestamp int64,
 ) {
+	if common.GetLimitCaller() {
+		std.AssertOriginCall()
+	}
+
 	rewardAmount := u256.MustFromDecimal(_rewardAmount)
 
 	if startTimestamp < time.Now().Unix() {

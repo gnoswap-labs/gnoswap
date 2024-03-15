@@ -4,10 +4,10 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/common"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/r/demo/gns"
 
@@ -29,13 +29,7 @@ var (
 // - The caller is not an admin
 // - Pool contract has already been initialized
 func InitManual() {
-	// only user can call
-	std.AssertOriginCall()
-
-	// only admin can call
-	if std.GetOrigCaller() != consts.GNOSWAP_ADMIN {
-		panic(ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || std.GetOrigCaller(%s) != consts.GNOSWAP_ADMIN(%s)", std.GetOrigCaller().String(), consts.GNOSWAP_ADMIN.String()))
-	}
+	common.MustCallFromAdmin()
 
 	if initialized {
 		panic(ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || initialized(%t) != false", initialized))
@@ -157,12 +151,9 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 // Panics if any of the following conditions are met:
 // - The caller is not an admin
 func AddAdmin(addr string) {
-	caller := std.PrevRealm().Addr()
-	if isAdmin(caller) {
-		admins = append(admins, std.Address(addr))
-	} else {
-		panic(ufmt.Sprintf("[POOL] pool_manager.gno__AddAdmin() || caller(%s) is not admin", caller.String()))
-	}
+	common.MustCallFromAdmin()
+	admins = append(admins, std.Address(addr))
+
 }
 
 // RemoveAdmin removes given address from the list of admins
@@ -171,20 +162,17 @@ func AddAdmin(addr string) {
 // - The caller is not an admin
 // - The address is the last admin
 func RemoveAdmin(addr string) {
-	caller := std.PrevRealm().Addr()
+	common.MustCallFromAdmin()
 
-	if isAdmin(caller) {
-		if len(admins) == 1 {
-			panic("[POOL] pool_manager.gno__RemoveAdmin() || cannot remove last admin")
+	if len(admins) == 1 {
+		panic("[POOL] pool_manager.gno__RemoveAdmin() || cannot remove last admin")
+	}
+
+	for i, v := range admins {
+		if v == std.Address(addr) {
+			admins = append(admins[:i], admins[i+1:]...)
+			return
 		}
-		for i, v := range admins {
-			if v == std.Address(addr) {
-				admins = append(admins[:i], admins[i+1:]...)
-				return
-			}
-		}
-	} else {
-		panic(ufmt.Sprintf("[POOL] pool_manager.gno__RemoveAdmin() || caller(%s) is not admin", caller.String()))
 	}
 }
 
@@ -232,15 +220,4 @@ func newPool(
 	pool.positions = Positions{}
 
 	return pool
-}
-
-func isAdmin(target std.Address) bool {
-	for _, admin := range admins {
-		if admin == target {
-			return true
-		}
-	}
-
-	// target isn't one of admins
-	return false
 }

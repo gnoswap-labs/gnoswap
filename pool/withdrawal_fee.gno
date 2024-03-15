@@ -3,7 +3,8 @@ package pool
 import (
 	"std"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/p/demo/ufmt"
 
@@ -69,10 +70,7 @@ func SetWithdrawalFee(fee uint64) {
 	// MUST BE ORIGIN CALL
 	std.AssertOriginCall()
 
-	// MUST BE ADMIN
-	if !(isAdmin(std.GetOrigCaller())) {
-		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || caller(%s) must be admin", std.GetOrigCaller()))
-	}
+	common.MustCallFromAdmin()
 
 	if fee > 100 {
 		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || fee(%d) must be in range 0 ~ 100", fee))

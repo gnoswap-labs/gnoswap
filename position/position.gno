@@ -8,7 +8,9 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	u256 "gno.land/p/big/uint256"
-	"gno.land/r/demo/consts"
+
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
 
 	pl "gno.land/r/demo/pool"
 )
@@ -35,11 +37,14 @@ func Mint(
 	deadline int64,
 	mintTo string,
 ) (uint64, string, string, string) { // tokenId, liquidity, amount0, amount1 ( *u256.Uint x3 )
-	// only user or staker can call
-	isUserCalled := std.IsOriginCall()
-	isStakerCalled := std.PrevRealm().Addr() == consts.STAKER_ADDR
-	if !(isUserCalled || isStakerCalled) {
-		panic("POSITION] position.gno__Mint() || only user or staker can call")
+
+	if common.GetLimitCaller() {
+		// only user or staker can call
+		isUserCalled := std.IsOriginCall()
+		isStakerCalled := std.PrevRealm().Addr() == consts.STAKER_ADDR
+		if !(isUserCalled || isStakerCalled) {
+			panic("POSITION] position.gno__Mint() || only user or staker can call")
+		}
 	}
 
 	// check if wugnot is being minted
@@ -184,7 +189,6 @@ func IncreaseLiquidity(
 	_amount1Min string, // uint256
 	deadline int64,
 ) (uint64, string, string, string) { // tokenId, liquidity, amount0, amount1
-
 	amount0Desired := u256.MustFromDecimal(_amount0Desired)
 	amount1Desired := u256.MustFromDecimal(_amount1Desired)
 	amount0Min := u256.MustFromDecimal(_amount0Min)
