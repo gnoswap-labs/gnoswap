@@ -65,7 +65,6 @@ func HandleWithdrawalFee(
 //
 // Panics if any of the following conditions are met:
 // - caller is not the admin
-
 func SetWithdrawalFee(fee uint64) {
 	// MUST BE ORIGIN CALL
 	std.AssertOriginCall()

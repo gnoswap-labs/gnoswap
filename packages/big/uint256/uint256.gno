@@ -1,4 +1,4 @@
-// Ported from https://github.com/holiman/uint256
+// ported from https://github.com/holiman/uint256
 package uint256
 
 import (
@@ -750,6 +750,14 @@ func (z *Uint) And(x, y *Uint) *Uint {
 	return z
 }
 
+func (z *Uint) AndNot(x, y *Uint) *Uint {
+	z.arr[0] = x.arr[0] &^ y.arr[0]
+	z.arr[1] = x.arr[1] &^ y.arr[1]
+	z.arr[2] = x.arr[2] &^ y.arr[2]
+	z.arr[3] = x.arr[3] &^ y.arr[3]
+	return z
+}
+
 // Xor sets z = x ^ y and returns z.
 func (z *Uint) Xor(x, y *Uint) *Uint {
 	z.arr[0] = x.arr[0] ^ y.arr[0]
@@ -1186,14 +1194,6 @@ func (z *Uint) Dec() string {
 	return string(out[pos-len(buf):])
 }
 
-func (z *Uint) ToString() string {
-	if z == nil {
-		panic("U256 ToString() nil")
-	}
-
-	return z.Dec()
-}
-
 // Mod sets z to the modulus x%y for y != 0 and returns z.
 // If y == 0, z is set to 0 (OBS: differs from the big.Uint)
 func (z *Uint) Mod(x, y *Uint) *Uint {
@@ -1236,22 +1236,28 @@ func (z *Uint) Clone() *Uint {
 	return &x
 }
 
+// OBS, differs from original holiman uint256
+// ToString returns the decimal representation of z.
+func (z *Uint) ToString() string {
+	if z == nil {
+		panic("uin256: nil pointer to ToString()")
+	}
+
+	return z.Dec()
+}
+
+// OBS, differs from original holiman uint256
+// IsNil reports whether z is nil
 func (z *Uint) IsNil() bool {
 	return z == nil
 }
 
+// OBS, differs from original holiman uint256
+// NilToZero sets z to 0 and return it if it's nil, otherwise it returns z
 func (z *Uint) NilToZero() *Uint {
 	if z == nil {
 		z = NewUint(0)
 	}
 
-	return z
-}
-
-func (z *Uint) AndNot(x, y *Uint) *Uint {
-	z.arr[0] = x.arr[0] &^ y.arr[0]
-	z.arr[1] = x.arr[1] &^ y.arr[1]
-	z.arr[2] = x.arr[2] &^ y.arr[2]
-	z.arr[3] = x.arr[3] &^ y.arr[3]
 	return z
 }

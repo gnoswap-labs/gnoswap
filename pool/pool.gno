@@ -510,7 +510,7 @@ func Swap(
 	return amount0.ToString(), amount1.ToString()
 }
 
-// SetFeeProtocls sets the denominator of the protocol fee
+// SetFeeProtocol sets the denominator of the protocol fee
 //
 // Panics if any of the following conditions are met:
 // - The caller is not an admin

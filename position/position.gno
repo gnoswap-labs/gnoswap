@@ -18,6 +18,10 @@ var (
 	nextId    uint64              = 1                         // lp token id
 )
 
+// Mint creates a new position and mints liquidity tokens then return minted info
+//
+// Panics if any of the following conditions are met:
+// - caller is not user or staker
 func Mint(
 	token0 string,
 	token1 string,
@@ -166,6 +170,12 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	return tokenId, liquidity, amount0, amount1
 }
 
+// IncreaseLiquidity increases liquidity of the existing position
+//
+// Panics if any of the following conditions are met:
+// - position doesn't exist
+// - caller is not owner of the position
+// - deadline is passed
 func IncreaseLiquidity(
 	tokenId uint64,
 	_amount0Desired string, // uint256
@@ -248,6 +258,13 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	return params.tokenId, liquidity, amount0, amount1
 }
 
+// DecreaseLiquidity decreases liquidity of the existing position
+//
+// Panics if any of the following conditions are met:
+// - position doesn't exist
+// - caller is not owner of the position
+// - liquidityRatio is not in range 1 ~ 100
+// - deadline is passed
 func DecreaseLiquidity(
 	tokenId uint64,
 	liquidityRatio uint64,
@@ -257,7 +274,7 @@ func DecreaseLiquidity(
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) { // tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
 
-	isNormalRange := liquidityRatio > 0 && liquidityRatio <= 100
+	isNormalRange := liquidityRatio >= 1 && liquidityRatio <= 100
 	if !isNormalRange {
 		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidityRatio(%d) should be in range 1 ~ 100", liquidityRatio))
 	}
@@ -410,6 +427,11 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
         return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
 }
 
+// CollectFee collects swap fee from the position
+//
+// Panics if any of the following conditions are met:
+// - position doesn't exist
+// - caller is not owner or approved
 func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, tokensOwed0, tokensOwed1, poolPath
 	// verify tokenId
 	if !exists(tokenId) {
