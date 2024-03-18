@@ -3,7 +3,7 @@ package pool
 import (
 	"std"
 
-	i256 "gno.land/p/big/int256"
+	i256 "gno.land/p/demo/big/int256"
 )
 
 func (pool *Pool) updatePosition(

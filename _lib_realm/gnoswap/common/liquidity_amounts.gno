@@ -3,7 +3,7 @@ package common
 import (
 	"gno.land/r/gnoswap/consts"
 
-	u256 "gno.land/p/big/uint256"
+	u256 "gno.land/p/demo/big/uint256"
 )
 
 // toAscendingOrder checkes if the first value is greater than

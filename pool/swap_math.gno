@@ -1,8 +1,8 @@
 package pool
 
 import (
-	i256 "gno.land/p/big/int256"
-	u256 "gno.land/p/big/uint256"
+	i256 "gno.land/p/demo/big/int256"
+	u256 "gno.land/p/demo/big/uint256"
 )
 
 func swapMathComputeSwapStep(

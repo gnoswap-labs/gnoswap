@@ -3,8 +3,8 @@ package position
 import (
 	"gno.land/r/gnoswap/common"
 
-	i256 "gno.land/p/big/int256"
-	u256 "gno.land/p/big/uint256"
+	i256 "gno.land/p/demo/big/int256"
+	u256 "gno.land/p/demo/big/uint256"
 )
 
 // DryMint simulates a mint and returns the amount0, amount1 that would be minted

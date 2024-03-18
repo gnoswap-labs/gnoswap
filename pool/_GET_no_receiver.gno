@@ -3,8 +3,8 @@ package pool
 import (
 	"gno.land/p/demo/ufmt"
 
-	i256 "gno.land/p/big/int256"
-	u256 "gno.land/p/big/uint256"
+	i256 "gno.land/p/demo/big/int256"
+	u256 "gno.land/p/demo/big/uint256"
 )
 
 func PoolGetSlot0SqrtPriceX96(poolPath string) *u256.Uint {
