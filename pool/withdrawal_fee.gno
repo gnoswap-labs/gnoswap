@@ -3,17 +3,24 @@ package pool
 import (
 	"std"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/big/uint256"
 )
 
+// withdrawalFee is the fee that is charged when a user withdraws their collected fees
 var (
 	withdrawalFee = uint64(1)
 )
 
+// HandleWithdrawalFee withdraws the fee from the user and returns the amount after the fee
+//
+// Panics if any of the following conditions are met:
+// - caller is not the position contract
+// - caller does not have enough balance to give the fee
 func HandleWithdrawalFee(
 	tokenId uint64,
 	token0Path string,
@@ -26,19 +33,12 @@ func HandleWithdrawalFee(
 		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected std.PrevRealm().PkgPath()(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
 	}
 
-	amount0, err := u256.FromDecimal(_amount0)
-	if err != nil {
-		ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() ||u256.FromDecimal(%s) failed", _amount0)
-	}
-	amount1, err := u256.FromDecimal(_amount1)
-	if err != nil {
-		ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() ||u256.FromDecimal(%s) failed", _amount1)
-	}
+	amount0 := u256.MustFromDecimal(_amount0)
+	amount1 := u256.MustFromDecimal(_amount1)
 
 	if withdrawalFee == 0 {
 		return _amount0, _amount1
 	}
-	
 
 	feeAmount0 := new(u256.Uint).Mul(amount0, u256.NewUint(withdrawalFee))
 	feeAmount0 = new(u256.Uint).Div(feeAmount0, u256.NewUint(100))
@@ -62,17 +62,18 @@ func HandleWithdrawalFee(
 	return afterAmount0.ToString(), afterAmount1.ToString()
 }
 
+// SetWithdrawalFee sets the withdrawal fee
+//
+// Panics if any of the following conditions are met:
+// - caller is not the admin
 func SetWithdrawalFee(fee uint64) {
 	// MUST BE ORIGIN CALL
 	std.AssertOriginCall()
 
-	// MUST BE ADMIN
-	if !(isAdmin(std.GetOrigCaller())) {
-		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || caller(%s) must be admin", std.GetOrigCaller()))
-	}
+	common.MustCallFromAdmin()
 
-	if fee < 0 {
-		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || fee(%d) must be >= 0", fee))
+	if fee > 100 {
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || fee(%d) must be in range 0 ~ 100", fee))
 	}
 
 	withdrawalFee = fee

@@ -7,7 +7,7 @@ import (
 
 	pl "gno.land/r/demo/pool"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	i256 "gno.land/p/big/int256"
 	u256 "gno.land/p/big/uint256"
@@ -39,12 +39,12 @@ func _swap(
 		data.tokenOut,
 		data.fee,
 
-		recipient,
+		recipient.String(),
 		zeroForOne,
 		amountSpecified.ToString(),
 		sqrtPriceLimitX96.ToString(),
 
-		data.payer,
+		data.payer.String(),
 	)
 	amount0, err := i256.FromDecimal(amount0Str)
 	if err != nil {

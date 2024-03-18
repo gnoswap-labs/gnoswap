@@ -5,7 +5,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	pl "gno.land/r/demo/pool"
 
@@ -116,11 +116,11 @@ func TestSwap(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		test1,
+		test1.String(),
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		test1,
+		test1.String(),
 	)
 	shouldEQ(t, amount0, "1234567")
 	shouldEQ(t, amount1, "-3332779")

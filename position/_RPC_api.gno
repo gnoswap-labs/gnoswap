@@ -5,10 +5,10 @@ import (
 	"std"
 	"time"
 
-	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/common"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	pl "gno.land/r/demo/pool"
 

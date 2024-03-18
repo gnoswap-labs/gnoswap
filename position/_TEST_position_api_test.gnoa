@@ -6,7 +6,7 @@ import (
 
 	"encoding/gjson"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/foo"
@@ -49,11 +49,11 @@ func TestSwap(t *testing.T) {
 		fooPath,
 		barPath,
 		fee500,
-		test1,
+		test1.String(),
 		true,
 		"123456",
 		consts.MIN_PRICE,
-		test1,
+		test1.String(),
 	)
 }
 

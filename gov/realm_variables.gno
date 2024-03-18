@@ -49,7 +49,7 @@ func vote(proposalID uint64, address string, option VoteOption) {
 	vote, ok := p.Voters.Get(address)
 	if !ok {
 		// new voter, add to voters map and increase the total voting power
-		p.updateVotingPower(bigint(0), power)
+		p.updateVotingPower(0, power)
 
 	}
 

@@ -12,7 +12,6 @@ import (
 )
 
 func poolKeyDivide(poolKey string) string {
-
 	res := strings.Split(poolKey, ":")
 	if len(res) != 3 {
 		panic(ufmt.Sprintf("[STAKER] utils.gno__poolKeyDivide() || invalid poolKey(%s)", poolKey))

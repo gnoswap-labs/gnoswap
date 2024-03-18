@@ -4,7 +4,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/foo"
@@ -48,7 +48,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
-	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR, -tickUpper, -tickLower, "10")
+	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -tickUpper, -tickLower, "10")
 	_, _, ok = DrySwap(fooPath, barPath, fee500, "_", true, "16000", consts.MIN_PRICE)
 	shouldEQ(t, ok, false)
 
@@ -56,7 +56,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
-	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR, -tickUpper, -tickLower, liquidityExpect) // -11000  ~ -9000
+	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -tickUpper, -tickLower, liquidityExpect) // -11000  ~ -9000
 
 	// zeroForOne true
 	// amountSpecified 16000

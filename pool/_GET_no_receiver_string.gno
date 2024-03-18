@@ -4,7 +4,6 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// Balances
 func PoolGetToken0BalanceStr(poolPath string) string {
 	pool, exist := pools[poolPath]
 	if !exist {
@@ -23,7 +22,6 @@ func PoolGetToken1BalanceStr(poolPath string) string {
 	return pool.balances.token1.ToString()
 }
 
-// ProtocolFees
 func PoolGetToken0ProtocolFeeStr(poolPath string) string {
 	pool, exist := pools[poolPath]
 	if !exist {
@@ -42,11 +40,10 @@ func PoolGetToken1ProtocolFeeStr(poolPath string) string {
 	return pool.protocolFees.token1.ToString()
 }
 
-// PositionInfo
 func PoolGetPositionLiquidityStr(poolPath, key string) string {
 	pool, exist := pools[poolPath]
 	if !exist {
-		panic(ufmt.Sprintf("[POOL]_GET_no_receiver_string.gno__PoolGetPositionLiquidityStr() || pool(%s) does not exist", poolPath))
+		panic(ufmt.Sprintf("[POOL]_GET_no_receiver_string.gno__PoolGetToken0ProtocolFeeStr() || pool(%s) does not exist", poolPath))
 	}
 
 	position, exist := pool.positions[key]
@@ -113,7 +110,6 @@ func PoolGetPositionTokensOwed1Str(poolPath, key string) string {
 	return position.tokensOwed1.ToString()
 }
 
-// TickInfo
 func PoolGetTickLiquidityGrossStr(poolPath string, x int32) string {
 	pool, exist := pools[poolPath]
 	if !exist {
@@ -184,7 +180,6 @@ func PoolGetTickSecondsPerLiquidityOutsideX128Str(poolPath string, x int32) stri
 	return tick.secondsPerLiquidityOutsideX128.ToString()
 }
 
-// TickBitmaps
 func PoolGetTickBitmapStr(poolPath string, x int16) string {
 	pool, exist := pools[poolPath]
 	if !exist {
@@ -199,7 +194,6 @@ func PoolGetTickBitmapStr(poolPath string, x int16) string {
 	return tickBitmap.ToString()
 }
 
-// Pool
 func PoolGetFeeGrowthGlobal0X128Str(poolPath string) string {
 	pool, exist := pools[poolPath]
 	if !exist {

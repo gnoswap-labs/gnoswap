@@ -7,9 +7,21 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/big/int256"
-u256 "gno.land/p/big/uint256"
+	u256 "gno.land/p/big/uint256"
 )
 
+// DrySwapRoute simulates the swap route and returns the result amount
+// If swapType is EXACT_IN, it returns the amount of output token ≈ amount of user to receive
+// If swapType is EXACT_OUT, it returns the amount of input token ≈ amount of user to pay
+// If swap it not possible, it returns -1
+//
+// Panics if any of the following conditions are met:
+// - amountSpecified is zero or is not numeric
+// - swapType is not EXACT_IN or EXACT_OUT
+// - length of route and quotes are not the same
+// - length of routes is not 1 ~ 7
+// - sum of quotes is not 100
+// - number of hops is not 1 ~ 3
 func DrySwapRoute(
 	inputToken string,
 	outputToken string,
@@ -86,10 +98,7 @@ func DrySwapRoute(
 	}
 
 	// PROTOCOL FEE
-	// resultAmountOut = handleProtocolFee(outputToken, resultAmountOut, true)
 	// DrySwap should return raw resultAmountOut( ≈ with protocol fee )
-	// Interface needs to calculate 0.15 protocol fee
-
 	if swapType == "EXACT_IN" {
 		if !(i256.FromUint256(resultAmountIn).Eq(amountSpecified)) {
 			return "-1" // if pool doesn't have enough output token amount to swap against input token amount

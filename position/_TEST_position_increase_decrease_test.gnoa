@@ -4,9 +4,9 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/common"
+	"gno.land/r/gnoswap/common"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/foo"
@@ -93,11 +93,11 @@ func TestSwap(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		test1,
+		test1.String(),
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		test1,
+		test1.String(),
 	)
 }
 
@@ -136,11 +136,11 @@ func TestSwap2(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		test1,
+		test1.String(),
 		true,
 		"1000000",
 		consts.MIN_PRICE,
-		test1,
+		test1.String(),
 	)
 
 	// UNCLAIMED_FEE

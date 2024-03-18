@@ -20,16 +20,12 @@ type RpcPool struct {
 	BalancesToken0 string `json:"balanceToken0"`
 	BalancesToken1 string `json:"balanceToken1"`
 
-	// fee is the fee tier of the pool
 	Fee uint32 `json:"fee"`
 
-	// tickSpacing is the spacing between ticks
 	TickSpacing int32 `json:"tickSpacing"`
 
-	// maxLiquidityPerTick is the maximum amount of liquidity that can be added per tick
 	MaxLiquidityPerTick string `json:"maxLiquidityPerTick"`
 
-	// slot0 is the current tick and price of the pool
 	Slot0SqrtPriceX96 string `json:"sqrtPriceX96"`
 	Slot0Tick         int32  `json:"tick"`
 	Slot0FeeProtocol  uint8  `json:"feeProtocol"`
@@ -41,20 +37,18 @@ type RpcPool struct {
 	ProtocolFeesToken0 string `json:"protocolFeeToken0"`
 	ProtocolFeesToken1 string `json:"protocolFeeToken1"`
 
-	// liquidity is the total amount of liquidity in the pool
 	Liquidity string `json:"liquidity"`
 
-	// ticks is a mapping from tick index to tick
 	Ticks RpcTicks `json:"ticks"`
 
-	// tickBitmaps is a mapping from tick index to tick bitmap
 	TickBitmaps RpcTickBitmaps `json:"tickBitmaps"`
 
 	Positions []RpcPosition `json:"positions"`
 }
 
 type RpcTickBitmaps map[int16]string // tick(wordPos) => bitmap(tickWord ^ mask)
-type RpcTicks map[int32]RpcTickInfo  // tick => RpcTickInfo
+
+type RpcTicks map[int32]RpcTickInfo // tick => RpcTickInfo
 
 type RpcTickInfo struct {
 	LiquidityGross string `json:"liquidityGross"`

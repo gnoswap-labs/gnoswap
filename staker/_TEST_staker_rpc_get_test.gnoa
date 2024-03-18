@@ -17,7 +17,7 @@ import (
 
 	"gno.land/r/demo/gnft"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
 func init() {
@@ -64,6 +64,7 @@ func TestPositionMint01(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
+		test1.String(),
 	)
 	std.TestSkipHeights(1)
 
@@ -95,6 +96,7 @@ func TestPositionMint02(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
+		test1.String(),
 	)
 	std.TestSkipHeights(1)
 
@@ -175,7 +177,7 @@ func TestCollectReward(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	gnsNew := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 99500006126)
+	shouldEQ(t, gnsNew, 99500018377)
 }
 
 func TestUnstakeToken01(t *testing.T) {
@@ -186,8 +188,8 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500006126)     // internal
-	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000000630) // external
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500024503)     // internal
+	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000002521) // external
 }
 
 func TestUnstakeToken02(t *testing.T) {
@@ -198,15 +200,15 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500046964)
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500187853)
 	// internal
-	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000004831) // external
+	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000019327) // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 	std.TestSkipHeights(9999999)
-	EndExternalIncentive(std.GetOrigCaller(), "gno.land/r/demo/bar:gno.land/r/demo/qux:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
+	EndExternalIncentive(std.GetOrigCaller().String(), "gno.land/r/demo/bar:gno.land/r/demo/qux:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, len(incentives), 0)

@@ -8,16 +8,22 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	u256 "gno.land/p/big/uint256"
-	"gno.land/r/demo/consts"
+
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
 
 	pl "gno.land/r/demo/pool"
 )
 
 var (
 	positions map[uint64]Position = make(map[uint64]Position) // tokenId -> Position
-	nextId    uint64              = 1
+	nextId    uint64              = 1                         // lp token id
 )
 
+// Mint creates a new position and mints liquidity tokens then return minted info
+//
+// Panics if any of the following conditions are met:
+// - caller is not user or staker
 func Mint(
 	token0 string,
 	token1 string,
@@ -31,11 +37,14 @@ func Mint(
 	deadline int64,
 	mintTo string,
 ) (uint64, string, string, string) { // tokenId, liquidity, amount0, amount1 ( *u256.Uint x3 )
-	// only user or staker can call
-	isUserCalled := std.IsOriginCall()
-	isStakerCalled := std.PrevRealm().Addr() == consts.STAKER_ADDR
-	if !(isUserCalled || isStakerCalled) {
-		panic("POSITION] position.gno__Mint() || only user or staker can call")
+
+	if common.GetLimitCaller() {
+		// only user or staker can call
+		isUserCalled := std.IsOriginCall()
+		isStakerCalled := std.PrevRealm().Addr() == consts.STAKER_ADDR
+		if !(isUserCalled || isStakerCalled) {
+			panic("POSITION] position.gno__Mint() || only user or staker can call")
+		}
 	}
 
 	// check if wugnot is being minted
@@ -166,6 +175,12 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	return tokenId, liquidity, amount0, amount1
 }
 
+// IncreaseLiquidity increases liquidity of the existing position
+//
+// Panics if any of the following conditions are met:
+// - position doesn't exist
+// - caller is not owner of the position
+// - deadline is passed
 func IncreaseLiquidity(
 	tokenId uint64,
 	_amount0Desired string, // uint256
@@ -174,7 +189,6 @@ func IncreaseLiquidity(
 	_amount1Min string, // uint256
 	deadline int64,
 ) (uint64, string, string, string) { // tokenId, liquidity, amount0, amount1
-
 	amount0Desired := u256.MustFromDecimal(_amount0Desired)
 	amount1Desired := u256.MustFromDecimal(_amount1Desired)
 	amount0Min := u256.MustFromDecimal(_amount0Min)
@@ -248,6 +262,13 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	return params.tokenId, liquidity, amount0, amount1
 }
 
+// DecreaseLiquidity decreases liquidity of the existing position
+//
+// Panics if any of the following conditions are met:
+// - position doesn't exist
+// - caller is not owner of the position
+// - liquidityRatio is not in range 1 ~ 100
+// - deadline is passed
 func DecreaseLiquidity(
 	tokenId uint64,
 	liquidityRatio uint64,
@@ -257,7 +278,7 @@ func DecreaseLiquidity(
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) { // tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
 
-	isNormalRange := liquidityRatio > 0 && liquidityRatio <= 100
+	isNormalRange := liquidityRatio >= 1 && liquidityRatio <= 100
 	if !isNormalRange {
 		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidityRatio(%d) should be in range 1 ~ 100", liquidityRatio))
 	}
@@ -369,7 +390,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		pToken0,
 		pToken1,
 		pFee,
-		std.GetOrigCaller(),
+		std.GetOrigCaller().String(),
 		position.tickLower,
 		position.tickUpper,
 		_burnedAmount0,
@@ -410,6 +431,11 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
         return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
 }
 
+// CollectFee collects swap fee from the position
+//
+// Panics if any of the following conditions are met:
+// - position doesn't exist
+// - caller is not owner or approved
 func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, tokensOwed0, tokensOwed1, poolPath
 	// verify tokenId
 	if !exists(tokenId) {
@@ -458,7 +484,7 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 		token0,
 		token1,
 		fee,
-		std.GetOrigCaller(),
+		std.GetOrigCaller().String(),
 		position.tickLower,
 		position.tickUpper,
 		consts.MAX_UINT64, // string, r3v4_xxx: current grc20 handles amount by `uint64`

@@ -3,15 +3,15 @@ package pool
 import (
 	"std"
 
-	"gno.land/p/demo/common"
-	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/common"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	i256 "gno.land/p/big/int256"
 	u256 "gno.land/p/big/uint256"
 )
 
+// DrySwap simulates a swap and returns the amount0, amount1 that would be received and a boolean indicating if the swap is possible
 func DrySwap(
 	token0Path string,
 	token1Path string,
@@ -20,20 +20,14 @@ func DrySwap(
 	zeroForOne bool,
 	_amountSpecified string, // int256
 	_sqrtPriceLimitX96 string, // uint160
-) (string, string, bool) { // int256 x2
+) (string, string, bool) {
 
 	if _amountSpecified == "0" {
 		return "0", "0", false
 	}
 
-	amountSpecified, err := i256.FromDecimal(_amountSpecified)
-	if err != nil {
-		panic(ufmt.Sprintf("[POOL] _RPC_dry.gno__DrySwap() || u256.FromDecimal(_amountSpecified[%s]) failed", _amountSpecified))
-	}
-	sqrtPriceLimitX96, err := u256.FromDecimal(_sqrtPriceLimitX96)
-	if err != nil {
-		panic(ufmt.Sprintf("[POOL] _RPC_dry.gno__DrySwap() || u256.FromDecimal(_sqrtPriceLimitX96[%s]) failed", _sqrtPriceLimitX96))
-	}
+	amountSpecified := i256.MustFromDecimal(_amountSpecified)
+	sqrtPriceLimitX96 := u256.MustFromDecimal(_sqrtPriceLimitX96)
 
 	pool := GetPool(token0Path, token1Path, fee)
 	slot0Start := pool.slot0

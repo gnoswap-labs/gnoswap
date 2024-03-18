@@ -1,9 +1,8 @@
 package staker
 
 import (
-	"std"
-
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/p/demo/ufmt"
 
@@ -42,13 +41,7 @@ func handleRewardFee(
 }
 
 func SetRewardFee(fee uint64) {
-	// MUST BE ORIGIN CALL
-	std.AssertOriginCall()
-
-	// MUST BE ADMIN
-	if consts.GNOSWAP_ADMIN != std.GetOrigCaller() {
-		panic(ufmt.Sprintf("[STAKER] reward_fee.gno__SetFeeProtocol() || caller(%s) must be admin", std.GetOrigCaller()))
-	}
+	common.MustCallFromAdmin()
 
 	if fee < 0 {
 		panic(ufmt.Sprintf("[STAKER] reward_fee.gno__SetFeeProtocol() || fee(%d) must be >= 0", fee))

@@ -1,13 +1,13 @@
 package pool
 
 import (
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	u256 "gno.land/p/big/uint256"
 )
 
 type bitShift struct {
-	bitPattern *u256.Uint // mask or limit
+	bitPattern *u256.Uint
 	shift      uint
 }
 
@@ -51,8 +51,6 @@ func bitMathLeastSignificantBit(x *u256.Uint) uint8 {
 		if new(u256.Uint).And(x, s.bitPattern).Gt(u256.Zero()) {
 			r -= uint8(s.shift)
 		} else {
-			// x >>= s.shift
-			// x = x >> s.shift
 			x = new(u256.Uint).Rsh(x, s.shift)
 		}
 	}

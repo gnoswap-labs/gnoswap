@@ -4,10 +4,10 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/common"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/r/demo/gns"
 
@@ -15,21 +15,21 @@ import (
 )
 
 var (
-	admins      []std.Address
-	initialized bool = false
+	admins      []std.Address         // list of admin addresses
+	initialized bool          = false // whether the pool contract has been initialized
 
-	feeAmountTickSpacing map[uint32]int32 = make(map[uint32]int32) // map[feeAmount]tick_spacing
-	pools                map[string]*Pool = make(map[string]*Pool) // map[poolPath]*Pool
+	feeAmountTickSpacing map[uint32]int32 = make(map[uint32]int32) // maps fee to tickSpacing || map[feeAmount]tick_spacing
+	pools                map[string]*Pool = make(map[string]*Pool) // maps poolPath to pool || map[poolPath]*Pool
 )
 
+// InitManual initializes a pool contract itself
+//
+// Panics if any of the following conditions are mett:
+// - The caller is not the user
+// - The caller is not an admin
+// - Pool contract has already been initialized
 func InitManual() {
-	// only user can call
-	std.AssertOriginCall()
-
-	// only admin can call
-	if std.GetOrigCaller() != consts.GNOSWAP_ADMIN {
-		panic(ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || std.GetOrigCaller(%s) != consts.GNOSWAP_ADMIN(%s)", std.GetOrigCaller().String(), consts.GNOSWAP_ADMIN.String()))
-	}
+	common.MustCallFromAdmin()
 
 	if initialized {
 		panic(ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || initialized(%t) != false", initialized))
@@ -43,11 +43,20 @@ func InitManual() {
 	initialized = true
 }
 
+// CreatePool creates a new concentrated liquidity pool with the given token0Path, token1Path, fee, and sqrtPriceX96
+// Each pool is identified by the poolPath, which is a combination of token0Path, token1Path, and fee
+// It validates the contract initialization, pool existence, and token0Path and token1Path
+// If validation passes, it calls newPool()
+//
+// Panics if any of the following conditions are met:
+// - The pool contract has not been initialized
+// - The pool already exists
+// - Both token0Path and token1Path are the same
 func CreatePool(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	_sqrtPriceX96 string, // uint
+	_sqrtPriceX96 string, // uint256
 ) *Pool {
 	if !(initialized) {
 		panic(ufmt.Sprintf("[POOl] pool_manager.gno__gno__CreatePool() || expected initialized(%t) == true", initialized))
@@ -57,15 +66,7 @@ func CreatePool(
 		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
 	}
 
-	sqrtPriceX96, err := u256.FromDecimal(_sqrtPriceX96)
-	if err != nil {
-		panic("CREATE POOL SQRT STRING")
-	}
-
-	sqrtPriceX96, err := u256.FromDecimal(_sqrtPriceX96)
-	if err != nil {
-		panic("CREATE POOL SQRT STRING")
-	}
+	sqrtPriceX96 := u256.MustFromDecimal(_sqrtPriceX96)
 
 	if token1Path < token0Path {
 		token0Path, token1Path = token1Path, token0Path
@@ -75,8 +76,6 @@ func CreatePool(
 
 	// check tickSpacing for fee
 	tickSpacing := feeAmountTickSpacing[fee]
-	// requirePositive(bigint(tickSpacing), ufmt.Sprintf("[POOL] pool_manager.gno__CreatePool() || expected tickSpacing(%d) > 0", tickSpacing))
-
 	// calculate poolPath
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 
@@ -87,26 +86,32 @@ func CreatePool(
 	}
 
 	if !exist {
-		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.GNOSWAP_ADMIN), consts.POOL_CREATION_FEE)
-
 		pool = newPool(token0Path, token1Path, fee, tickSpacing, sqrtPriceX96)
 		pools[poolPath] = pool
+
+		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.GNOSWAP_ADMIN), consts.POOL_CREATION_FEE)
 	}
 
 	return pool
 }
 
+// DoesPoolExist reports whether the pool exists with the given token0Path, token1Path, and fee
 func DoesPoolExist(token0Path, token1Path string, fee uint32) bool {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	_, exist := pools[poolPath]
 	return exist
 }
 
+// DoesPoolPathExist reports whether the pool exists with the given poolPath
 func DoesPoolPathExist(poolPath string) bool {
 	_, exist := pools[poolPath]
 	return exist
 }
 
+// GetPool returns the pool with the given token0Path, token1Path, and fee
+//
+// Panics if any of the following conditions are met:
+// - The pool does not exist
 func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	pool, exist := pools[poolPath]
@@ -117,6 +122,10 @@ func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 	return pool
 }
 
+// GetPoolFromPoolPath returns the pool with the given poolPath
+//
+// Panics if any of the following conditions are met:
+// - The pool does not exist
 func GetPoolFromPoolPath(poolPath string) *Pool {
 	pool, exist := pools[poolPath]
 	if !exist {
@@ -126,6 +135,9 @@ func GetPoolFromPoolPath(poolPath string) *Pool {
 	return pool
 }
 
+// GetPoolPath generates a poolPath from the given token0Path, token1Path, and fee
+// If token0Path comes first in alphabetical order, it returns token0Path:token1Path:fee
+// Otherwise, it returns token1Path:token0Path:fee
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	if token0Path < token1Path {
 		return token0Path + ":" + token1Path + ":" + strconv.Itoa(int(fee))
@@ -134,30 +146,33 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	}
 }
 
-func AddAdmin(addr std.Address) {
-	caller := std.PrevRealm().Addr()
-	if isAdmin(caller) {
-		admins = append(admins, addr)
-	} else {
-		panic(ufmt.Sprintf("[POOL] pool_manager.gno__AddAdmin() || caller(%s) is not admin", caller.String()))
-	}
+// AddAdmin adds an given address to the list of admins
+//
+// Panics if any of the following conditions are met:
+// - The caller is not an admin
+func AddAdmin(addr string) {
+	common.MustCallFromAdmin()
+	admins = append(admins, std.Address(addr))
+
 }
 
-func RemoveAdmin(addr std.Address) {
-	caller := std.PrevRealm().Addr()
+// RemoveAdmin removes given address from the list of admins
+//
+// Panics if any of the following conditions are met:
+// - The caller is not an admin
+// - The address is the last admin
+func RemoveAdmin(addr string) {
+	common.MustCallFromAdmin()
 
-	if isAdmin(caller) {
-		if len(admins) == 1 {
-			panic("[POOL] pool_manager.gno__RemoveAdmin() || cannot remove last admin")
+	if len(admins) == 1 {
+		panic("[POOL] pool_manager.gno__RemoveAdmin() || cannot remove last admin")
+	}
+
+	for i, v := range admins {
+		if v == std.Address(addr) {
+			admins = append(admins[:i], admins[i+1:]...)
+			return
 		}
-		for i, v := range admins {
-			if v == addr {
-				admins = append(admins[:i], admins[i+1:]...)
-				return
-			}
-		}
-	} else {
-		panic(ufmt.Sprintf("[POOL] pool_manager.gno__RemoveAdmin() || caller(%s) is not admin", caller.String()))
 	}
 }
 
@@ -188,31 +203,21 @@ func newPool(
 		token1: u256.Zero(),
 	}
 
-	return &Pool{
-		token0Path:           token0Path,
-		token1Path:           token1Path,
-		balances:             balances,
-		fee:                  fee,
-		tickSpacing:          tickSpacing,
-		maxLiquidityPerTick:  maxLiquidityPerTick,
-		slot0:                slot0,
-		feeGrowthGlobal0X128: u256.Zero(),
-		feeGrowthGlobal1X128: u256.Zero(),
-		protocolFees:         protocolFees,
-		liquidity:            u256.Zero(),
-		ticks:                Ticks{},
-		tickBitmaps:          TickBitmaps{},
-		positions:            Positions{},
-	}
-}
+	pool := &Pool{}
+	pool.token0Path = token0Path
+	pool.token1Path = token1Path
+	pool.balances = balances
+	pool.fee = fee
+	pool.tickSpacing = tickSpacing
+	pool.maxLiquidityPerTick = maxLiquidityPerTick
+	pool.slot0 = slot0
+	pool.feeGrowthGlobal0X128 = u256.Zero()
+	pool.feeGrowthGlobal1X128 = u256.Zero()
+	pool.protocolFees = protocolFees
+	pool.liquidity = u256.Zero()
+	pool.ticks = Ticks{}
+	pool.tickBitmaps = TickBitmaps{}
+	pool.positions = Positions{}
 
-func isAdmin(target std.Address) bool {
-	for _, admin := range admins {
-		if admin == target {
-			return true
-		}
-	}
-
-	// target isn't one of admins
-	return false
+	return pool
 }

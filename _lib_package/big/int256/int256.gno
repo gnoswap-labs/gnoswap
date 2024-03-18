@@ -1,4 +1,4 @@
-// github.com/mempooler/int256
+// ported from github.com/mempooler/int256
 
 package int256
 
@@ -13,10 +13,12 @@ type Int struct {
 	neg bool
 }
 
+// Zero returns a new Int set to 0.
 func Zero() *Int {
 	return NewInt(0)
 }
 
+// One returns a new Int set to 1.
 func One() *Int {
 	return NewInt(1)
 }
@@ -536,17 +538,11 @@ func AddDeltaOverflow(z, x *uint256.Uint, y *Int) bool {
 	return overflow
 }
 
-// NIL TO ZERO
-func (z *Int) NilToZero() *Int {
-	if z == nil {
-		return NewInt(0)
-	}
-	return z
-}
-
+// OBS, differs from original holiman uint256
+// ToString returns the decimal representation of z.
 func (z *Int) ToString() string {
 	if z == nil {
-		panic("int256: nil pointer")
+		panic("int256: nil pointer to ToString()")
 	}
 
 	t := z.abs.Dec()
@@ -554,4 +550,13 @@ func (z *Int) ToString() string {
 		return "-" + t
 	}
 	return t
+}
+
+// OBS, differs from original holiman uint256
+// NilToZero sets z to 0 and return it if it's nil, otherwise it returns z
+func (z *Int) NilToZero() *Int {
+	if z == nil {
+		return NewInt(0)
+	}
+	return z
 }

@@ -6,7 +6,7 @@ import (
 
 	"encoding/gjson"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/baz"
@@ -62,7 +62,7 @@ func TestMintFooBarLiquidity(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		consts.POSITION_ADDR,
+		consts.POSITION_ADDR.String(),
 		-11000, // -11000
 		-9000,  // -9000
 		test_liquidityExpectStr,
@@ -85,7 +85,7 @@ func TestMintBarBazLiquidity(t *testing.T) {
 		barPath,
 		bazPath,
 		fee500,
-		consts.POSITION_ADDR,
+		consts.POSITION_ADDR.String(),
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpectStr,

@@ -3,11 +3,12 @@ package staker
 import (
 	pn "gno.land/r/demo/position"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
+// MintAndStake mints and stakes the LP token
+// If minting is successful, it mints LP token to staker not user
 func MintAndStake(
-	// position.Mint() params
 	token0 string,
 	token1 string,
 	fee uint32,
@@ -18,8 +19,6 @@ func MintAndStake(
 	amount0Min string, // *u256.Uint
 	amount1Min string, // *u256.Uint
 	deadline int64,
-	// staker.StakeToken() params
-	// lpTokenId uint64, // can be used from position.Mint() response
 ) (uint64, string, string, string, string) { // tokenId, liquidity, amount0, amount1, poolPath ( *u256.Uint x3)
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		token0,

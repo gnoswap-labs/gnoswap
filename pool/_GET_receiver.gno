@@ -7,6 +7,7 @@ import (
 	u256 "gno.land/p/big/uint256"
 )
 
+// PoolGetPoolList returns a list of all pool paths
 func PoolGetPoolList() []string {
 	poolPaths := []string{}
 	for poolPath, _ := range pools {

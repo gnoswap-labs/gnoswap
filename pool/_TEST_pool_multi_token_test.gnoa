@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/baz"
@@ -59,7 +59,7 @@ func TestMintFooBarLiquidity(t *testing.T) {
 		fooPath,
 		barPath,
 		fee500,
-		consts.POSITION_ADDR,
+		consts.POSITION_ADDR.String(),
 		-test_tickUpper,
 		-test_tickLower,
 		test_liquidityExpectStr,
@@ -80,7 +80,7 @@ func TestMintBarBazLiquidity(t *testing.T) {
 		barPath,
 		bazPath,
 		fee500,
-		consts.POSITION_ADDR,
+		consts.POSITION_ADDR.String(),
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpectStr,
@@ -106,11 +106,11 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		test1,
+		test1.String(),
 		true,
 		"16000",
 		consts.MIN_PRICE,
-		std.GetOrigCaller(),
+		std.GetOrigCaller().String(),
 	)
 	shouldEQ(t, poolIn, "16000")
 	shouldEQ(t, poolOut, "-5882")
@@ -144,11 +144,11 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 		barPath,
 		bazPath,
 		fee500,
-		test1,
+		test1.String(),
 		true,
 		"16000",
 		consts.MIN_PRICE,
-		std.GetOrigCaller(),
+		std.GetOrigCaller().String(),
 	)
 	shouldEQ(t, poolIn, "16000")
 	shouldEQ(t, poolOut, "-43457")
@@ -181,7 +181,7 @@ func TestCollectFooBarFees(t *testing.T) {
 		fooPath,
 		barPath,
 		fee500,
-		test1,
+		test1.String(),
 		-test_tickUpper,
 		-test_tickLower,
 		"100000",
@@ -219,7 +219,7 @@ func TestCollectBarBazFees(t *testing.T) {
 		barPath,
 		bazPath,
 		fee500,
-		test1,
+		test1.String(),
 		test_tickLower,
 		test_tickUpper,
 		"100000",
@@ -304,7 +304,7 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 		fooPath,
 		barPath,
 		fee500,
-		test1,
+		test1.String(),
 		-test_tickUpper,
 		-test_tickLower,
 		"100000",
@@ -339,7 +339,7 @@ func TestCollectBarBazLiquidity(t *testing.T) {
 		barPath,
 		bazPath,
 		fee500,
-		test1,
+		test1.String(),
 		test_tickLower,
 		test_tickUpper,
 		"100000",

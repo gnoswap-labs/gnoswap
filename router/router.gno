@@ -7,7 +7,8 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
 
 	i256 "gno.land/p/big/int256"
 	u256 "gno.land/p/big/uint256"
@@ -15,6 +16,18 @@ import (
 	"gno.land/r/demo/wugnot"
 )
 
+// SwapRoute swaps the input token to the output token and returns the result amount
+// If swapType is EXACT_IN, it returns the amount of output token ≈ amount of user to receive
+// If swapType is EXACT_OUT, it returns the amount of input token ≈ amount of user to pay
+//
+// Panics if any of the following conditions are met:
+// - amountSpecified is zero or is not numeric
+// - swapType is not EXACT_IN or EXACT_OUT
+// - length of route and quotes are not the same
+// - length of routes is not 1 ~ 7
+// - sum of quotes is not 100
+// - number of hops is not 1 ~ 3
+// - too many token spend or too few token received
 func SwapRoute(
 	inputToken string,
 	outputToken string,
@@ -24,6 +37,10 @@ func SwapRoute(
 	quoteArr string, // []int
 	_tokenAmountLimit string, // uint256
 ) string { // uint256
+	if common.GetLimitCaller() {
+		std.AssertOriginCall()
+	}
+
 	amountSpecified, err := i256.FromDecimal(_amountSpecified)
 	if err != nil {
 		panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || i256.FromDecimal(_amountSpecified(%s) failed", _amountSpecified))
@@ -32,7 +49,7 @@ func SwapRoute(
 		panic("[ROUTER] router.gno__SwapRoute() || amountSpecified == 0")
 	}
 
-	tokenAmountLimit, err := u256.FromDecimal(_tokenAmountLimit)
+	tokenAmountLimit := u256.MustFromDecimal(_tokenAmountLimit)
 	if err != nil {
 		panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || u256.FromDecimal(_tokenAmountLimit(%s) failed", _tokenAmountLimit))
 	}

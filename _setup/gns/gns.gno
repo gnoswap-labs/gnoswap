@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/users"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
 const MAXIMUM_SUPPLY = uint64(1_000_000_000_000_000)

@@ -3,10 +3,10 @@ package pool
 import (
 	"std"
 
-	"gno.land/p/demo/common"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
 
 	gv "gno.land/r/demo/gov"
 
@@ -14,26 +14,29 @@ import (
 	u256 "gno.land/p/big/uint256"
 )
 
+// Mint creates a new position and mints liquidity tokens then return amount0, amount1 in string
+//
+// Panics if any of the following conditions are met:
+// - The caller is user
+// - Caller does not have enough token0 or token1
 func Mint(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
+	recipient string,
 	tickLower int32,
 	tickUpper int32,
 	_liquidityAmount string, // uint128
 ) (string, string) { // uint256 x2
-	// only position contract can call this function
-	if std.PrevRealm().PkgPath() != consts.POSITION_PATH {
-		panic(ufmt.Sprintf("[POOL] pool.gno__Mint() || expected std.PrevRealm().PkgPath()(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
-	}
+	common.DisallowCallFromUser()
+	common.AllowCallFromOnly(consts.POSITION_PATH)
 
 	liquidityAmount := u256.MustFromDecimal(_liquidityAmount)
 
 	pool := GetPool(token0Path, token1Path, fee)
 	_, amount0, amount1 := pool.modifyPosition( // int256 x2
 		ModifyPositionParams{
-			recipient,                         // owner
+			std.Address(recipient),            // owner
 			tickLower,                         // tickLower
 			tickUpper,                         // tickUpper
 			i256.FromUint256(liquidityAmount), // liquidityDelta
@@ -80,6 +83,11 @@ func Mint(
 	return amount0.ToString(), amount1.ToString()
 }
 
+// Burn removes liquidity from the caller and account tokens owed for the liquidity to the position
+// If liquidity of 0 is burned, it recalculates fees owed to a position
+//
+// Panics if any of the following conditions are met:
+// - The caller is not the position contract
 func Burn(
 	token0Path string,
 	token1Path string,
@@ -88,10 +96,8 @@ func Burn(
 	tickUpper int32,
 	_liquidityAmount string, // uint128
 ) (string, string) { // uint256 x2
-	// only position contract can call this function
-	if std.PrevRealm().PkgPath() != consts.POSITION_PATH {
-		panic(ufmt.Sprintf("[POOL] pool.gno__Burn() || expected std.PrevRealm().PkgPath()(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
-	}
+	common.DisallowCallFromUser()
+	common.AllowCallFromOnly(consts.POSITION_PATH)
 
 	liquidityAmount := u256.MustFromDecimal(_liquidityAmount)
 
@@ -119,23 +125,29 @@ func Burn(
 	return amount0.ToString(), amount1.ToString()
 }
 
+// Collect collects tokens owed to a position
+//
+// Panics if any of the following conditions are met:
+// - The caller is not the position contract
+// - The position does not exist
 func Collect(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
+	_recipient string,
 	tickLower int32,
 	tickUpper int32,
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
-	// only position contract can call this function
-	if std.PrevRealm().PkgPath() != consts.POSITION_PATH {
-		panic(ufmt.Sprintf("[POOL] pool.gno__Collect() || expected std.PrevRealm().PkgPath()(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
-	}
+	common.DisallowCallFromUser()
+	common.AllowCallFromOnly(consts.POSITION_PATH)
 
 	amount0Requested := u256.MustFromDecimal(_amount0Requested)
 	amount1Requested := u256.MustFromDecimal(_amount1Requested)
+
+	recipient := std.Address(_recipient)
+
 	pool := GetPool(token0Path, token1Path, fee)
 
 	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
@@ -167,20 +179,25 @@ func Collect(
 	return amount0.ToString(), amount1.ToString()
 }
 
+// Swap swaps token0 for token1, or token1 for token0
+//
+// Panics if any of the following conditions are met:
+// - The caller is not the router contract
+// - Target pool is being used by another transaction
+// - The amounSpecified is 0
+// - The SqrtPriceLimit is not within the range
 func Swap(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
+	_recipient string,
 	zeroForOne bool,
 	_amountSpecified string, // int256
 	_sqrtPriceLimitX96 string, // uint160
-	payer std.Address, // router
+	_payer string, // router
 ) (string, string) { // int256 x2
-	// only router contract can call this function
-	if std.PrevRealm().PkgPath() != consts.ROUTER_PATH {
-		panic(ufmt.Sprintf("[POOL] pool.gno__Swap() || expected std.PrevRealm().PkgPath()(%s), got %s", consts.ROUTER_PATH, std.PrevRealm().PkgPath()))
-	}
+	common.DisallowCallFromUser()
+	common.AllowCallFromOnly(consts.ROUTER_PATH)
 
 	if _amountSpecified == "0" {
 		panic("[POOL] pool.gno__Swap() || _amountSpecified == 0")
@@ -188,6 +205,9 @@ func Swap(
 
 	amountSpecified := i256.MustFromDecimal(_amountSpecified)
 	sqrtPriceLimitX96 := u256.MustFromDecimal(_sqrtPriceLimitX96)
+
+	recipient := std.Address(_recipient)
+	payer := std.Address(_payer)
 
 	pool := GetPool(token0Path, token1Path, fee)
 	slot0Start := pool.slot0
@@ -482,15 +502,16 @@ func Swap(
 	return amount0.ToString(), amount1.ToString()
 }
 
-// ADMIN
+// SetFeeProtocol sets the denominator of the protocol fee
+//
+// Panics if any of the following conditions are met:
+// - The caller is not an admin
+// - The feeProtocol0 or feeProtocol1 is not in the range of 0 or 4-10
 func SetFeeProtocol(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
 ) {
-
-	if !(isAdmin(std.PrevRealm().Addr())) {
-		panic(ufmt.Sprintf("[POOL] pool.gno__SetFeeProtocol() || caller(%s) must be admin", std.PrevRealm().Addr()))
-	}
+	common.MustCallFromAdmin()
 
 	fee0Cond := (feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10))
 	fee1Cond := (feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10))
@@ -507,30 +528,26 @@ func SetFeeProtocol(
 	gv.SetGovParameter("protocoL_fees", feeProtocol0+(feeProtocol1<<4))
 }
 
-// ADMIN
+// CollectProtocol collects protocol fees from the pool
+//
+// Panics if any of the following conditions are met:
+// - The caller is not an admin
+// - The recipient is the zero address
+// - The amount0Requested or amount1Requested is greater than the protocol fees
 func CollectProtocol(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
+	_recipient string,
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
+	common.MustCallFromAdmin()
 
-	if !(isAdmin(std.PrevRealm().Addr())) {
-		panic(ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || caller(%s) must be admin", std.PrevRealm().Addr()))
-	}
+	recipient := std.Address(_recipient)
+
 	amount0Requested := u256.MustFromDecimal(_amount0Requested)
 	amount1Requested := u256.MustFromDecimal(_amount1Requested)
-
-	amount0Requested, err := u256.FromDecimal(_amount0Requested)
-	if err != nil {
-		panic(ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || u256.FromDecimal(_amount0Requested[%s]) failed", _amount0Requested))
-	}
-	amount1Requested, err := u256.FromDecimal(_amount1Requested)
-	if err != nil {
-		panic(ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || u256.FromDecimal(_amount1Requested[%s]) failed", _amount1Requested))
-	}
 
 	pool := GetPool(token0Path, token1Path, fee)
 
