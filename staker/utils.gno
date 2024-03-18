@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/demo/users"
+	pusers "gno.land/p/demo/users"
 )
 
 func poolKeyDivide(poolKey string) string {
@@ -28,8 +28,8 @@ func poolKeyDivide(poolKey string) string {
 	return ufmt.Sprintf("%s:%s:%s", pToken1, pToken0, fee)
 }
 
-func a2u(addr std.Address) users.AddressOrName {
-	return users.AddressOrName(addr)
+func a2u(addr std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(addr)
 }
 
 func tid(tokenId interface{}) grc721.TokenID {

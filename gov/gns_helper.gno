@@ -5,17 +5,21 @@ import (
 
 	gns "gno.land/r/demo/gns"
 
-	"gno.land/r/demo/users"
+	pusers "gno.land/p/demo/users"
 )
 
 func balanceOf(address std.Address) uint64 {
-	return gns.BalanceOf(users.AddressOrName(address))
+	return gns.BalanceOf(a2u(address))
 }
 
 func transfer(to std.Address, amount uint64) {
-	gns.Transfer(users.AddressOrName(to), amount)
+	gns.Transfer(a2u(to), amount)
 }
 
 func mint(recipient std.Address, amount uint64) {
-	gns.Mint(users.AddressOrName(recipient), amount)
+	gns.Mint(a2u(recipient), amount)
+}
+
+func a2u(address std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(address)
 }

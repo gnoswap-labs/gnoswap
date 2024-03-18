@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/r/demo/users"
+	pusers "gno.land/p/demo/users"
 
 	"gno.land/p/demo/ufmt"
 )
@@ -75,8 +75,8 @@ func removeStringFromStringArr(arr []string, str string) []string {
 	return arr
 }
 
-func a2u(addr std.Address) users.AddressOrName {
-	return users.AddressOrName(addr)
+func a2u(addr std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(addr)
 }
 
 func min(a, b int) int {

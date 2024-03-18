@@ -1,6 +1,3 @@
-// 1 LP
-// 1 SWAP
-// HAPPY CASES
 package swap_scenario
 
 import (
@@ -15,8 +12,8 @@ import (
 	sr "gno.land/r/demo/staker"
 
 	// gnoswap setting
-	"gno.land/p/demo/common"
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
 
 	// grc20
 	"gno.land/r/demo/bar"
@@ -46,7 +43,7 @@ var (
 // }
 
 func TestFaucetLP01(t *testing.T) {
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 
 	shouldEQ(t, foo.BalanceOf(a2u(lp01)), 0)
 	shouldEQ(t, bar.BalanceOf(a2u(lp01)), 0)
@@ -54,57 +51,57 @@ func TestFaucetLP01(t *testing.T) {
 	shouldEQ(t, qux.BalanceOf(a2u(lp01)), 0)
 	shouldEQ(t, gns.BalanceOf(a2u(lp01)), 0)
 
-	foo.Faucet(lp01)
-	bar.Faucet(lp01)
-	baz.Faucet(lp01)
-	qux.Faucet(lp01)
-	gns.Faucet(lp01)
+	foo.Faucet()
+	bar.Faucet()
+	baz.Faucet()
+	qux.Faucet()
+	gns.Faucet()
 
-	shouldEQ(t, foo.BalanceOf(a2u(lp01)), 100_000_000)
-	shouldEQ(t, bar.BalanceOf(a2u(lp01)), 100_000_000)
-	shouldEQ(t, baz.BalanceOf(a2u(lp01)), 100_000_000)
-	shouldEQ(t, qux.BalanceOf(a2u(lp01)), 100_000_000)
-	shouldEQ(t, gns.BalanceOf(a2u(lp01)), 100_000_000)
+	shouldEQ(t, foo.BalanceOf(a2u(lp01)), 10_000_000)
+	shouldEQ(t, bar.BalanceOf(a2u(lp01)), 10_000_000)
+	shouldEQ(t, baz.BalanceOf(a2u(lp01)), 10_000_000)
+	shouldEQ(t, qux.BalanceOf(a2u(lp01)), 10_000_000)
+	shouldEQ(t, gns.BalanceOf(a2u(lp01)), 10_000_000)
 
 	std.TestSkipHeights(5)
 }
 
 func TestFaucetTR01(t *testing.T) {
-	std.TestSetPrevAddr(tr01)
+	std.TestSetOrigCaller(tr01)
 
 	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 0)
 	shouldEQ(t, baz.BalanceOf(a2u(tr01)), 0)
 	shouldEQ(t, foo.BalanceOf(a2u(tr01)), 0)
 	shouldEQ(t, qux.BalanceOf(a2u(tr01)), 0)
 
-	bar.Faucet(tr01)
-	baz.Faucet(tr01)
-	foo.Faucet(tr01)
-	qux.Faucet(tr01)
+	bar.Faucet()
+	baz.Faucet()
+	foo.Faucet()
+	qux.Faucet()
 
-	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 100_000_000)
-	shouldEQ(t, baz.BalanceOf(a2u(tr01)), 100_000_000)
-	shouldEQ(t, foo.BalanceOf(a2u(tr01)), 100_000_000)
-	shouldEQ(t, qux.BalanceOf(a2u(tr01)), 100_000_000)
+	shouldEQ(t, bar.BalanceOf(a2u(tr01)), 10_000_000)
+	shouldEQ(t, baz.BalanceOf(a2u(tr01)), 10_000_000)
+	shouldEQ(t, foo.BalanceOf(a2u(tr01)), 10_000_000)
+	shouldEQ(t, qux.BalanceOf(a2u(tr01)), 10_000_000)
 
 	std.TestSkipHeights(5)
 }
 
 func TestAllowStakerToDistributeInternalReward(t *testing.T) {
-	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
+	std.TestSetOrigCaller(consts.INTERNAL_REWARD_ACCOUNT)
 	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(1)
 }
 
 func TestPoolInitManual(t *testing.T) {
-	std.TestSetPrevAddr(consts.GNOSWAP_ADMIN) // this address will be registered as admin
+	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN) // this address will be registered as admin
 
 	pl.InitManual()
 	std.TestSkipHeights(1)
 }
 
 func TestPoolCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(test1)
+	std.TestSetOrigCaller(test1)
 
 	// user > pool || approve pool creation fee
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*4)
@@ -125,7 +122,7 @@ func TestPoolCreatePool(t *testing.T) {
 }
 
 func TestPositionMint_BarBazInRange(t *testing.T) {
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 
 	// user > pool || approve pair of token to pool
 	// - position.Mint() calls pool.Mint() ≈ approve to pool
@@ -156,7 +153,7 @@ func TestPositionMint_BarBazInRange(t *testing.T) {
 func TestPositionMint_BarBazLowerRange(t *testing.T) {
 	// lower range == only token1 will be minted
 
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 	bar.Approve(a2u(consts.POOL_ADDR), 10_000_000)
 	baz.Approve(a2u(consts.POOL_ADDR), 10_000_000)
 
@@ -184,7 +181,7 @@ func TestPositionMint_BarBazLowerRange(t *testing.T) {
 func TestPositionMint_BarBazUpperrRange(t *testing.T) {
 	// upper range == only token0 will be minted
 
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 	bar.Approve(a2u(consts.POOL_ADDR), 10_000_000)
 	baz.Approve(a2u(consts.POOL_ADDR), 10_000_000)
 
@@ -210,7 +207,7 @@ func TestPositionMint_BarBazUpperrRange(t *testing.T) {
 }
 
 func TestPositionMint_BazFooInRange(t *testing.T) {
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 	baz.Approve(a2u(consts.POOL_ADDR), 10_000_000)
 	foo.Approve(a2u(consts.POOL_ADDR), 10_000_000)
 
@@ -240,7 +237,7 @@ func TestPositionMint_BazFooInRange(t *testing.T) {
 }
 
 func TestPositionIncreaseLiquidity_BazFoo(t *testing.T) {
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 	baz.Approve(a2u(consts.POOL_ADDR), 1_000_000)
 	foo.Approve(a2u(consts.POOL_ADDR), 1_000_000)
 
@@ -265,7 +262,7 @@ func TestPositionIncreaseLiquidity_BazFoo(t *testing.T) {
 }
 
 func TestPositionDecreaseLiquidity_BazFooPartial(t *testing.T) {
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 
 	lpTokenId, liquidity, fee0, amount0, fee1, amount1, poolPath := pn.DecreaseLiquidity(
 		4,           // lpTokenId
@@ -291,7 +288,7 @@ func TestPositionDecreaseLiquidity_BazFooPartial(t *testing.T) {
 }
 
 func TestPositionMint_FooGnotInRange(t *testing.T) {
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 
 	// user > pool || approve pair of token to pool
 	// - position.Mint() calls pool.Mint() ≈ approve to pool
@@ -340,7 +337,7 @@ func TestPositionMint_FooGnotInRange(t *testing.T) {
 
 func TestPositionMint_GnsGnotInRange(t *testing.T) {
 	// GNS:GNOT:3000 is INTERNAL INCENTIVE POOL
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 
 	gns.Approve(a2u(consts.POOL_ADDR), 10_000_000)
 	wugnot.Approve(a2u(consts.POOL_ADDR), 10_000_000)
@@ -380,7 +377,7 @@ func TestPositionMint_GnsGnotInRange(t *testing.T) {
 }
 
 func TestStakerCreateExternalIncentive(t *testing.T) {
-	std.TestSetPrevAddr(test1)
+	std.TestSetOrigCaller(test1)
 
 	// user > staker || approve external reward token
 	obl.Approve(a2u(consts.STAKER_ADDR), 100_000_000)
@@ -398,7 +395,7 @@ func TestStakerCreateExternalIncentive(t *testing.T) {
 
 func TestStakerMintAndStake_ExternalReward(t *testing.T) {
 	// one click mint & stake lpToken for `external reward` pool
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 
 	bar.Approve(a2u(consts.POOL_ADDR), 10_000_000)
 	baz.Approve(a2u(consts.POOL_ADDR), 10_000_000)
@@ -426,7 +423,7 @@ func TestStakerMintAndStake_ExternalReward(t *testing.T) {
 
 func TestStakerStakeToken_InternalReward(t *testing.T) {
 	// stake lpToken for `internal reward` pool
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 
 	// user > staker || approve lpToken to stake
 	gnft.Approve(a2u(consts.STAKER_ADDR), "6")
@@ -452,7 +449,7 @@ func TestRouterDrySwapRoute_BarBazExactIn(t *testing.T) {
 }
 
 func TestRouterSwapRoute_BarBazExactIn(t *testing.T) {
-	std.TestSetPrevAddr(tr01)
+	std.TestSetOrigCaller(tr01)
 
 	// user > pool || approve input token
 	bar.Approve(a2u(consts.POOL_ADDR), 1_000_000)
@@ -495,7 +492,7 @@ func TestRouterDrySwapRoute_BarBazExactOut(t *testing.T) {
 }
 
 func TestRouterSwapRoute_BarBazExactOut(t *testing.T) {
-	std.TestSetPrevAddr(tr01)
+	std.TestSetOrigCaller(tr01)
 
 	bar.Approve(a2u(consts.POOL_ADDR), 1_999_836)
 
@@ -542,7 +539,7 @@ func TestRouterDrySwapRoute_GnotGnsExactIn(t *testing.T) {
 func TestRouterSwapRoute_GnotGnsExactIn(t *testing.T) {
 	// target pool is gns:gnot:3000
 	// but this swap test swaps gnot > gns
-	std.TestSetPrevAddr(tr01)
+	std.TestSetOrigCaller(tr01)
 
 	// user > pool || approve input token
 	wugnot.Approve(a2u(consts.POOL_ADDR), 100_000)
@@ -594,7 +591,7 @@ func TestRouterDrySwapRoute_GnsGnotExactIn(t *testing.T) {
 }
 
 func TestRouterSwapRoute_GnsGnotExactIn(t *testing.T) {
-	std.TestSetPrevAddr(tr01) // has 99_501 of gns
+	std.TestSetOrigCaller(tr01) // has 99_501 of gns
 
 	gns.Approve(a2u(consts.POOL_ADDR), 50_000)
 	wugnot.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
@@ -620,7 +617,7 @@ func TestRouterSwapRoute_GnsGnotExactIn(t *testing.T) {
 }
 
 func TestPositionCollectFee_LpTokenId1(t *testing.T) {
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 
 	gsaOldBar := bar.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
 
@@ -641,7 +638,7 @@ func TestPositionCollectFee_LpTokenId1(t *testing.T) {
 }
 
 func TestStakerCollectReward_LpTokenId6_Internal(t *testing.T) {
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 
 	lp01OldGns := gns.BalanceOf(a2u(lp01))
 	gsaOldGns := gns.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
@@ -666,7 +663,7 @@ func TestStakerCollectReward_LpTokenId6_Internal(t *testing.T) {
 }
 
 func TestStakerUnstakeToken_LpTokenId7_External(t *testing.T) {
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 
 	gsaOldObl := obl.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
 
@@ -682,7 +679,7 @@ func TestStakerUnstakeToken_LpTokenId7_External(t *testing.T) {
 }
 
 func TestPositionDecreaseLiquidity_BazFooFull(t *testing.T) {
-	std.TestSetPrevAddr(lp01)
+	std.TestSetOrigCaller(lp01)
 
 	lpTokenId, liquidity, fee0, amount0, fee1, amount1, poolPath := pn.DecreaseLiquidity(
 		4,           // lpTokenId
@@ -708,14 +705,14 @@ func TestPositionDecreaseLiquidity_BazFooFull(t *testing.T) {
 }
 
 func TestEndExternalIncentive(t *testing.T) {
-	std.TestSetPrevAddr(test1)
+	std.TestSetOrigCaller(test1)
 
 	userOldObl := obl.BalanceOf(a2u(test1))
 
 	// skip bunch of time to end external incentive
 	std.TestSkipHeights(4000000)
 	sr.EndExternalIncentive(
-		test1,
+		test1.String(),
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100",
 		oblPath,
 	)

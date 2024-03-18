@@ -6,57 +6,59 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/users"
+
+	pusers "gno.land/p/demo/users"
 )
 
 var (
 	// position deployed
 	// std.DerivePkgAddr("gno.land/r/demo/position")
-	admin std.Address = "g10wwa53xgu4397kvzz7akxar9370zjdpwux5th9"
-	nft               = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
+	admin std.Address = "g10wwa53xgu4397kvzz7akxar9370zjdpwux5th9" // r3v4_xxx: POSITION ADDRESS
+	gnft              = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
 )
 
 func init() {
-	// mintNNFT(admin, 10)                                     // @administrator (10)
-	// mintNNFT("g1var589z07ppjsjd24ukm4uguzwdt0tw7g47cgm", 5) // @hariom (5)
 }
 
 func mintNNFT(owner std.Address, n uint64) {
-	count := nft.TokenCount()
+	count := gnft.TokenCount()
 	for i := count; i < count+n; i++ {
 		tid := grc721.TokenID(ufmt.Sprintf("%d", i))
-		nft.Mint(owner, tid)
+		gnft.Mint(owner, tid)
 	}
 }
 
 // Getters
+func TotalSupply() uint64 {
+	return gnft.TokenCount()
+}
 
-func BalanceOf(user users.AddressOrName) uint64 {
-	balance, err := nft.BalanceOf(user.Resolve())
+func BalanceOf(user pusers.AddressOrName) uint64 {
+	balance, err := gnft.BalanceOf(users.Resolve(user))
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
 	return balance
 }
 
 func OwnerOf(tid grc721.TokenID) std.Address {
-	owner, err := nft.OwnerOf(tid)
+	owner, err := gnft.OwnerOf(tid)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
 	return owner
 }
 
-func IsApprovedForAll(owner, user users.AddressOrName) bool {
-	return nft.IsApprovedForAll(owner.Resolve(), user.Resolve())
+func IsApprovedForAll(owner, user pusers.AddressOrName) bool {
+	return gnft.IsApprovedForAll(users.Resolve(owner), users.Resolve(user))
 }
 
 func GetApproved(tid grc721.TokenID) (std.Address, bool) {
-	addr, err := nft.GetApproved(tid)
+	addr, err := gnft.GetApproved(tid)
 	if err != nil {
 		return "", false
-		// panic(err.Error())
 	}
 
 	return addr, true
@@ -64,79 +66,73 @@ func GetApproved(tid grc721.TokenID) (std.Address, bool) {
 
 // Setters
 
-func Approve(user users.AddressOrName, tid grc721.TokenID) {
-	err := nft.Approve(user.Resolve(), tid)
+func Approve(user pusers.AddressOrName, tid grc721.TokenID) {
+	err := gnft.Approve(users.Resolve(user), tid)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
-func SetApprovalForAll(user users.AddressOrName, approved bool) {
-	err := nft.SetApprovalForAll(user.Resolve(), approved)
+func SetApprovalForAll(user pusers.AddressOrName, approved bool) {
+	err := gnft.SetApprovalForAll(users.Resolve(user), approved)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
-func TransferFrom(from, to users.AddressOrName, tid grc721.TokenID) {
-	err := nft.TransferFrom(from.Resolve(), to.Resolve(), tid)
+func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
+	err := gnft.TransferFrom(users.Resolve(from), users.Resolve(to), tid)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
 // Admin
 
-func Mint(to users.AddressOrName, tid grc721.TokenID) {
-	// caller := std.GetOrigCaller()
+func Mint(to pusers.AddressOrName, tid grc721.TokenID) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	err := nft.Mint(to.Resolve(), tid)
+	err := gnft.Mint(users.Resolve(to), tid)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
 func Burn(tid grc721.TokenID) {
-	// caller := std.GetOrigCaller()
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	err := nft.Burn(tid)
+	err := gnft.Burn(tid)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
-func SetAdmin(newAdmin users.AddressOrName) {
-	// caller := std.GetOrigCaller()
+func SetAdmin(newAdmin pusers.AddressOrName) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	admin = newAdmin.Resolve()
+	admin = users.Resolve(newAdmin)
 }
 
 // Render
+
 func Render(path string) string {
 	switch {
 	case path == "":
-		return nft.RenderHome()
+		return gnft.RenderHome()
 	default:
 		return "404\n"
 	}
 }
 
-// util
+// Util
 func assertIsAdmin(address std.Address) {
 	if address != admin {
 		panic("restricted access")
 	}
 }
 
-func TotalSupply() uint64 {
-	return nft.TokenCount()
-}
-
 func Exists(tid grc721.TokenID) bool {
-	_, err := nft.OwnerOf(tid)
+	_, err := gnft.OwnerOf(tid)
 	if err != nil {
 		return false
 	}

@@ -7,6 +7,8 @@ import (
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/users"
+
+	pusers "gno.land/p/demo/users"
 )
 
 var (
@@ -15,7 +17,7 @@ var (
 )
 
 func init() {
-	qux = grc20.NewAdminToken("Qux", "QUX", 6)
+	qux = grc20.NewAdminToken("Qux", "QUX", 4)
 	qux.Mint(admin, 500_000_000_000_000) // @administrator (1M)
 }
 
@@ -23,24 +25,21 @@ func init() {
 //
 
 // getters.
-func GetGRC20() *grc20.AdminToken {
-	return qux
-}
 
 func TotalSupply() uint64 {
 	return qux.TotalSupply()
 }
 
-func BalanceOf(owner users.AddressOrName) uint64 {
-	balance, err := qux.BalanceOf(owner.Resolve())
+func BalanceOf(owner pusers.AddressOrName) uint64 {
+	balance, err := qux.BalanceOf(users.Resolve(owner))
 	if err != nil {
 		panic(err)
 	}
 	return balance
 }
 
-func Allowance(owner, spender users.AddressOrName) uint64 {
-	allowance, err := qux.Allowance(owner.Resolve(), spender.Resolve())
+func Allowance(owner, spender pusers.AddressOrName) uint64 {
+	allowance, err := qux.Allowance(users.Resolve(owner), users.Resolve(spender))
 	if err != nil {
 		panic(err)
 	}
@@ -49,51 +48,60 @@ func Allowance(owner, spender users.AddressOrName) uint64 {
 
 // setters.
 
-func Transfer(to users.AddressOrName, amount uint64) {
+func Transfer(to pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := qux.Transfer(caller, to.Resolve(), amount)
+	err := qux.Transfer(caller, users.Resolve(to), amount)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
-func Approve(spender users.AddressOrName, amount uint64) {
+func Approve(spender pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := qux.Approve(caller, spender.Resolve(), amount)
+	err := qux.Approve(caller, users.Resolve(spender), amount)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
-func TransferFrom(from, to users.AddressOrName, amount uint64) {
+func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := qux.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
+	err := qux.TransferFrom(caller, users.Resolve(from), users.Resolve(to), amount)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
 // faucet.
-func Faucet(addr std.Address) {
-	qux.Mint(addr, 100_000_000)
-}
 
-func FaucetL() {
+func Faucet() {
+	// FIXME: add limits?
+	// FIXME: add payment in gnot?
 	caller := std.PrevRealm().Addr()
-	qux.Mint(caller, 1_000_000_000_000)
+	err := qux.Mint(caller, 1000*10000) // 1k
+	if err != nil {
+		panic(err)
+	}
 }
 
 // administration.
-func Mint(address users.AddressOrName, amount uint64) {
+
+func Mint(address pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	qux.Mint(address.Resolve(), amount)
+	err := qux.Mint(users.Resolve(address), amount)
+	if err != nil {
+		panic(err)
+	}
 }
 
-func Burn(address users.AddressOrName, amount uint64) {
+func Burn(address pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	qux.Burn(address.Resolve(), amount)
+	err := qux.Burn(users.Resolve(address), amount)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // render.
@@ -107,8 +115,8 @@ func Render(path string) string {
 	case path == "":
 		return qux.RenderHome()
 	case c == 2 && parts[0] == "balance":
-		owner := users.AddressOrName(parts[1])
-		balance, _ := qux.BalanceOf(owner.Resolve())
+		owner := pusers.AddressOrName(parts[1])
+		balance, _ := qux.BalanceOf(users.Resolve(owner))
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
