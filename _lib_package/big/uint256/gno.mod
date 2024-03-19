@@ -1,1 +1,1 @@
-module gno.land/p/big/uint256
+module gno.land/p/demo/big/uint256

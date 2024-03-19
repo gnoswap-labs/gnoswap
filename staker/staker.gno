@@ -15,7 +15,7 @@ import (
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
 
-	u256 "gno.land/p/big/uint256"
+	u256 "gno.land/p/demo/big/uint256"
 )
 
 var (

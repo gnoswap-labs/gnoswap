@@ -3,7 +3,7 @@
 package int256
 
 import (
-	"gno.land/p/big/uint256"
+	"gno.land/p/demo/big/uint256"
 )
 
 var one = uint256.NewUint(1)

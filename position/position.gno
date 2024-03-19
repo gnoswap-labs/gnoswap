@@ -7,7 +7,7 @@ import (
 	"gno.land/r/demo/gnft"
 	"gno.land/r/demo/wugnot"
 
-	u256 "gno.land/p/big/uint256"
+	u256 "gno.land/p/demo/big/uint256"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/consts"
@@ -412,23 +412,23 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	if !params.unwrapResult {
 		return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
 	}
-	
+
 	var (
-		unwrapAmount  uint64
-		unwrapFee uint64
+		unwrapAmount uint64
+		unwrapFee    uint64
 	)
 	switch {
 	case pToken0 == consts.WRAPPED_WUGNOT:
 		unwrapAmount = amount0.Uint64()
-    		unwrapFee = fee0.Uint64()
-    	case pToken1 == consts.WRAPPED_WUGNOT:
-        	unwrapAmount = amount1.Uint64()
-        	unwrapFee = fee1.Uint64()
-        }
-        unwrap(unwrapAmount)
-        unwrap(unwrapFee)
-        
-        return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
+		unwrapFee = fee0.Uint64()
+	case pToken1 == consts.WRAPPED_WUGNOT:
+		unwrapAmount = amount1.Uint64()
+		unwrapFee = fee1.Uint64()
+	}
+	unwrap(unwrapAmount)
+	unwrap(unwrapFee)
+
+	return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
 }
 
 // CollectFee collects swap fee from the position
