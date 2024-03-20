@@ -8,6 +8,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/users"
 
+	pusers "gno.land/p/demo/users"
+
 	"gno.land/r/gnoswap/consts"
 )
 
@@ -19,7 +21,7 @@ var (
 )
 
 func init() {
-	gns = grc20.NewAdminToken("Gnoswap", "GNS", 6)
+	gns = grc20.NewAdminToken("Gnoswap", "GNS", 4)
 	gns.Mint(consts.INTERNAL_REWARD_ACCOUNT, 500_000_000_000_000)
 
 	gns.Mint(std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"), 100_000_000_000) // r3v4_xxx: default test1
@@ -28,31 +30,28 @@ func init() {
 	admins = append(admins, string(stakerAddr))
 	admins = append(admins, string(consts.GNOSWAP_ADMIN))
 
-	gns.Approve(consts.INTERNAL_REWARD_ACCOUNT, stakerAddr, uint64(consts.MAX_UINT64))
+	gns.Approve(consts.INTERNAL_REWARD_ACCOUNT, stakerAddr, consts.UINT64_MAX)
 }
 
 // method proxies as public functions.
 //
 
 // getters.
-func GetGRC20() *grc20.AdminToken {
-	return gns
-}
 
 func TotalSupply() uint64 {
 	return gns.TotalSupply()
 }
 
-func BalanceOf(owner users.AddressOrName) uint64 {
-	balance, err := gns.BalanceOf(owner.Resolve())
+func BalanceOf(owner pusers.AddressOrName) uint64 {
+	balance, err := gns.BalanceOf(users.Resolve(owner))
 	if err != nil {
 		panic(err)
 	}
 	return balance
 }
 
-func Allowance(owner, spender users.AddressOrName) uint64 {
-	allowance, err := gns.Allowance(owner.Resolve(), spender.Resolve())
+func Allowance(owner, spender pusers.AddressOrName) uint64 {
+	allowance, err := gns.Allowance(users.Resolve(owner), users.Resolve(spender))
 	if err != nil {
 		panic(err)
 	}
@@ -61,74 +60,73 @@ func Allowance(owner, spender users.AddressOrName) uint64 {
 
 // setters.
 
-func Transfer(to users.AddressOrName, amount uint64) {
+func Transfer(to pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := gns.Transfer(caller, to.Resolve(), amount)
+	err := gns.Transfer(caller, users.Resolve(to), amount)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
-func Approve(spender users.AddressOrName, amount uint64) {
+func Approve(spender pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := gns.Approve(caller, spender.Resolve(), amount)
+	err := gns.Approve(caller, users.Resolve(spender), amount)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
-func TransferFrom(from, to users.AddressOrName, amount uint64) {
+func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := gns.TransferFrom(caller, from.Resolve(), to.Resolve(), amount)
+	err := gns.TransferFrom(caller, users.Resolve(from), users.Resolve(to), amount)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 }
 
 // faucet.
-func Faucet(addr std.Address) { // r3v4_xxx: REMOVE FAUCET WHEN DEPLOYING TO OFFICIAL NETWORK
-	toGive := uint64(100 * 1_000_000)
-	if gns.TotalSupply()+toGive <= MAXIMUM_SUPPLY {
-		gns.Mint(addr, toGive)
-	}
-}
 
-func FaucetL() { // r3v4_xxx: REMOVE FAUCET WHEN DEPLOYING TO OFFICIAL NETWORK
-	toGive := uint64(1_000_000 * 1_000_000) // 1M
+func Faucet() {
+	// FIXME: add limits?
+	// FIXME: add payment in gnot?
 	caller := std.PrevRealm().Addr()
-
-	if gns.TotalSupply()+toGive <= MAXIMUM_SUPPLY {
-		gns.Mint(caller, 1_000_000_000_000)
+	err := gns.Mint(caller, 1000*10000) // 1k
+	if err != nil {
+		panic(err)
 	}
 }
 
 // administration.
-func Mint(address users.AddressOrName, amount uint64) {
+
+func Mint(address pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 
 	if gns.TotalSupply()+amount <= MAXIMUM_SUPPLY {
-		gns.Mint(address.Resolve(), amount)
+		gns.Mint(users.Resolve(address), amount)
 	}
 }
 
-func Burn(address users.AddressOrName, amount uint64) {
+func Burn(address pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	gns.Burn(address.Resolve(), amount)
+	err := gns.Burn(users.Resolve(address), amount)
+	if err != nil {
+		panic(err)
+	}
 }
 
-func AppendAdmin(address users.AddressOrName) {
+func AppendAdmin(address pusers.AddressOrName) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	admins = append(admins, string(address.Resolve()))
+	admins = append(admins, string(users.Resolve(address)))
 }
 
-func RemoveAdmin(address users.AddressOrName) {
+func RemoveAdmin(address pusers.AddressOrName) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 	for i, v := range admins {
-		if v == string(address.Resolve()) {
+		if v == string(users.Resolve(address)) {
 			admins = append(admins[:i], admins[i+1:]...)
 			return
 		}
@@ -136,6 +134,8 @@ func RemoveAdmin(address users.AddressOrName) {
 }
 
 // render.
+//
+
 func Render(path string) string {
 	parts := strings.Split(path, "/")
 	c := len(parts)
@@ -144,8 +144,8 @@ func Render(path string) string {
 	case path == "":
 		return gns.RenderHome()
 	case c == 2 && parts[0] == "balance":
-		owner := users.AddressOrName(parts[1])
-		balance, _ := gns.BalanceOf(owner.Resolve())
+		owner := pusers.AddressOrName(parts[1])
+		balance, _ := gns.BalanceOf(users.Resolve(owner))
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
@@ -153,12 +153,11 @@ func Render(path string) string {
 }
 
 func assertIsAdmin(address std.Address) {
-	if !continas(admins, string(address)) {
+	if !contains(admins, string(address)) {
 		panic("not one of admins")
 	}
 }
-
-func continas(s []string, str string) bool {
+func contains(s []string, str string) bool {
 	for _, v := range s {
 		if v == str {
 			return true

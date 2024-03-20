@@ -4,7 +4,8 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/users"
+
+	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/gnoswap/consts"
 
@@ -25,8 +26,8 @@ func checkTicks(tickLower, tickUpper int32) {
 	}
 }
 
-func a2u(addr std.Address) users.AddressOrName {
-	return users.AddressOrName(addr)
+func a2u(addr std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(addr)
 }
 
 func u256Min(num1, num2 *u256.Uint) *u256.Uint {

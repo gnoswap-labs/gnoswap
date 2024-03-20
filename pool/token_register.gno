@@ -4,7 +4,8 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/users"
+
+	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/gnoswap/consts"
 )
@@ -12,10 +13,10 @@ import (
 // GRC20Interface is the interface for GRC20 tokens
 // It is used to interact with the GRC20 tokens without importing but by registering each tokens function
 type GRC20Interface interface {
-	Transfer() func(to users.AddressOrName, amount uint64)
-	TransferFrom() func(from, to users.AddressOrName, amount uint64)
-	BalanceOf() func(owner users.AddressOrName) uint64
-	Approve() func(spender users.AddressOrName, amount uint64)
+	Transfer() func(to pusers.AddressOrName, amount uint64)
+	TransferFrom() func(from, to pusers.AddressOrName, amount uint64)
+	BalanceOf() func(owner pusers.AddressOrName) uint64
+	Approve() func(spender pusers.AddressOrName, amount uint64)
 }
 
 var (
@@ -97,7 +98,7 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 
 	if !locked {
 		locked = true
-		registered[pkgPath].Transfer()(users.AddressOrName(to), amount)
+		registered[pkgPath].Transfer()(pusers.AddressOrName(to), amount)
 
 		defer func() {
 			locked = false
@@ -119,7 +120,7 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 
 	if !locked {
 		locked = true
-		registered[pkgPath].TransferFrom()(users.AddressOrName(from), users.AddressOrName(to), amount)
+		registered[pkgPath].TransferFrom()(pusers.AddressOrName(from), pusers.AddressOrName(to), amount)
 
 		defer func() {
 			locked = false
@@ -138,7 +139,7 @@ func balanceOfByRegisterCall(pkgPath string, owner std.Address) uint64 {
 		panic(ufmt.Sprintf("[POOL] pool_register.gno__balanceOfByRegisterCall() || pkgPath(%s) not found", pkgPath))
 	}
 
-	balance := registered[pkgPath].BalanceOf()(users.AddressOrName(owner))
+	balance := registered[pkgPath].BalanceOf()(pusers.AddressOrName(owner))
 	return balance
 }
 
@@ -150,7 +151,7 @@ func approveByRegisterCall(pkgPath string, spender std.Address, amount uint64) b
 		panic(ufmt.Sprintf("[POOL] pool_register.gno__approveByRegisterCall() || pkgPath(%s) not found", pkgPath))
 	}
 
-	registered[pkgPath].Approve()(users.AddressOrName(spender), amount)
+	registered[pkgPath].Approve()(pusers.AddressOrName(spender), amount)
 
 	return true
 }

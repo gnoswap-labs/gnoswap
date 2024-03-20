@@ -7,9 +7,9 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
-	"gno.land/r/demo/users"
+	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/demo/wugnot"
 )
@@ -50,8 +50,8 @@ func ugnotBalance(addr std.Address) uint64 {
 	return uint64(testBanker.GetCoins(addr)[0].Amount)
 }
 
-func a2u(addr std.Address) users.AddressOrName {
-	return users.AddressOrName(addr)
+func a2u(addr std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(addr)
 }
 
 func tid(tokenId interface{}) grc721.TokenID {

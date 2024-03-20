@@ -8,7 +8,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/demo/users"
+	pusers "gno.land/p/demo/users"
 )
 
 func checkDeadline(deadline int64) {
@@ -17,8 +17,8 @@ func checkDeadline(deadline int64) {
 	}
 }
 
-func a2u(addr std.Address) users.AddressOrName {
-	return users.AddressOrName(addr)
+func a2u(addr std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(addr)
 }
 
 func poolKeyDivide(poolKey string) (string, string, uint32) {

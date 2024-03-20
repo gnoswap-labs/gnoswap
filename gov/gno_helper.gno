@@ -2,8 +2,10 @@ package gov
 
 import (
 	"std"
+
+	"gno.land/r/gnoswap/consts"
 )
 
 func GetOrigPkgAddr() std.Address {
-	return std.DerivePkgAddr("gno.land/r/demo/gov")
+	return consts.GOV_ADDR
 }
