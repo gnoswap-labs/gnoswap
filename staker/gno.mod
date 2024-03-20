@@ -1,12 +1,12 @@
 module gno.land/r/demo/staker
 
 require (
-	gno.land/p/demo/common v0.0.0-latest
+	gno.land/r/gnoswap/common v0.0.0-latest
 	gno.land/p/demo/grc/grc721 v0.0.0-latest
 	gno.land/p/demo/ufmt v0.0.0-latest
 	gno.land/r/demo/bar v0.0.0-latest
 	gno.land/r/demo/baz v0.0.0-latest
-	gno.land/r/demo/consts v0.0.0-latest
+	gno.land/r/gnoswap/consts v0.0.0-latest
 	gno.land/r/demo/foo v0.0.0-latest
 	gno.land/r/demo/fred v0.0.0-latest
 	gno.land/r/demo/gnft v0.0.0-latest

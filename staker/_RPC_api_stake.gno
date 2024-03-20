@@ -3,8 +3,11 @@ package staker
 import (
 	"encoding/json"
 	"std"
+	"time"
 
 	"gno.land/p/demo/ufmt"
+
+	u256 "gno.land/p/demo/big/uint256"
 )
 
 type LpTokenReward struct {
@@ -17,7 +20,7 @@ type Reward struct {
 	IncentiveType     string `json:"incentiveType"`
 	TargetPoolPath    string `json:"targetPoolPath"`
 	RewardTokenPath   string `json:"rewardTokenPath"`
-	RewardTokenAmount bigint `json:"rewardTokenAmount"`
+	RewardTokenAmount string `json:"rewardTokenAmount"`
 }
 
 type Stake struct {
@@ -56,12 +59,12 @@ func ApiGetRewards() string {
 
 		// get internal gns reward
 		internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-		if internalGNS > 0 {
+		if internalGNS.Gt(u256.Zero()) {
 			rewards = append(rewards, Reward{
 				IncentiveType:     "INTERNAL",
 				TargetPoolPath:    deposit.targetPoolPath,
 				RewardTokenPath:   INTERNAL_REWARD_TOKEN_PATH,
-				RewardTokenAmount: internalGNS,
+				RewardTokenAmount: internalGNS.ToString(),
 			})
 		}
 
@@ -72,10 +75,9 @@ func ApiGetRewards() string {
 				IncentiveType:     "EXTERNAL",
 				TargetPoolPath:    deposit.targetPoolPath,
 				RewardTokenPath:   incentives[incentiveId].rewardToken,
-				RewardTokenAmount: externalReward,
+				RewardTokenAmount: externalReward.ToString(),
 			})
 		}
-
 		lpTokenReward := LpTokenReward{
 			LpTokenId: tokenId,
 			Address:   deposit.owner.String(),
@@ -85,8 +87,8 @@ func ApiGetRewards() string {
 	}
 
 	qb := ResponseQueryBase{
-		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
+		Height:    std.GetHeight(),
+		Timestamp: time.Now().Unix(),
 	}
 
 	r := ResponseApiGetRewards{
@@ -104,18 +106,20 @@ func ApiGetRewards() string {
 
 func ApiGetRewardByLpTokenId(lpTokenId uint64) string {
 	deposit, exist := deposits[lpTokenId]
-	require(exist, ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardByLpTokenId() || lpTokenId(%d) deposit does not exist", lpTokenId))
+	if !exist {
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardByLpTokenId() || lpTokenId(%d) deposit does not exist", lpTokenId))
+	}
 
 	rewards := []Reward{}
 
 	// get internal gns reward
 	internalGNS := rewardMathComputeInternalRewardAmount(lpTokenId, deposit)
-	if internalGNS > 0 {
+	if internalGNS.Gt(u256.Zero()) {
 		rewards = append(rewards, Reward{
 			IncentiveType:     "INTERNAL",
 			TargetPoolPath:    deposit.targetPoolPath,
 			RewardTokenPath:   INTERNAL_REWARD_TOKEN_PATH,
-			RewardTokenAmount: internalGNS,
+			RewardTokenAmount: internalGNS.ToString(),
 		})
 	}
 
@@ -126,7 +130,7 @@ func ApiGetRewardByLpTokenId(lpTokenId uint64) string {
 			IncentiveType:     "EXTERNAL",
 			TargetPoolPath:    deposit.targetPoolPath,
 			RewardTokenPath:   incentives[incentiveId].rewardToken,
-			RewardTokenAmount: externalReward,
+			RewardTokenAmount: externalReward.ToString(),
 		})
 	}
 
@@ -137,8 +141,8 @@ func ApiGetRewardByLpTokenId(lpTokenId uint64) string {
 	}
 
 	qb := ResponseQueryBase{
-		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
+		Height:    std.GetHeight(),
+		Timestamp: time.Now().Unix(),
 	}
 
 	r := ResponseApiGetRewardByLpTokenId{
@@ -167,8 +171,8 @@ func ApiGetStakes() string {
 	}
 
 	qb := ResponseQueryBase{
-		Height:    GetHeight(),
-		Timestamp: int64(GetTimestamp()),
+		Height:    std.GetHeight(),
+		Timestamp: time.Now().Unix(),
 	}
 
 	r := ResponseApiGetStakes{

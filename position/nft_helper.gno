@@ -4,14 +4,10 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/r/demo/gnft"
 )
-
-func nftBalanceOf(addr std.Address) bigint {
-	return bigint(gnft.BalanceOf(a2u(addr)))
-}
 
 func exists(tokenId uint64) bool {
 	// non exist tokenId will panic

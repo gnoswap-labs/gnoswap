@@ -9,20 +9,20 @@ func Init() {
 	setInflationRate(defaultInflationRate())
 }
 
-func defaultInflationRate() bigint {
+func defaultInflationRate() uint64 {
 	return 0 // TODO
 }
 
-func getInflationRate() bigint {
+func getInflationRate() uint64 {
 	param, ok := gov.GetParameter("inflation_rate")
 	if !ok {
 		panic(ufmt.Sprintf("[STAKER] staker_parameters.gno__getInflationRate() || inflation(%s) rate not set"))
 	}
 
-	return param.(bigint)
+	return param.(uint64)
 }
 
-func setInflationRate(newRate bigint) {
+func setInflationRate(newRate uint64) {
 	gov.SetGovParameter("inflation_rate", newRate)
 }
 

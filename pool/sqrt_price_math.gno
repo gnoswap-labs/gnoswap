@@ -1,334 +1,182 @@
 package pool
 
 import (
-	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
+
+	i256 "gno.land/p/demo/big/int256"
+	u256 "gno.land/p/demo/big/uint256"
 )
 
 func sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
-	sqrtPX96 bigint,
-	liquidity bigint,
-	amount bigint,
+	sqrtPX96 *u256.Uint, // uint160
+	liquidity *u256.Uint, // uint128
+	amount *u256.Uint, // uint256
 	add bool,
-) bigint {
-	requireUnsigned(
-		sqrtPX96,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp() || expected sqrtPX96 must be unsigned, got: %d",
-			sqrtPX96,
-		))
-
-	requireUnsigned(
-		liquidity,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp() || expected liquidity must be unsigned, got: %d",
-			liquidity,
-		))
-
-	requireUnsigned(
-		amount,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp() || expected amount must be unsigned, got: %d",
-			amount,
-		))
-
-	if amount == 0 {
+) *u256.Uint { // uint160
+	if amount.IsZero() {
 		return sqrtPX96
 	}
 
-	numerator1 := liquidity << 96
-	product := amount * sqrtPX96
+	numerator1 := new(u256.Uint).Lsh(liquidity, 96)
+	product := new(u256.Uint).Mul(amount, sqrtPX96)
 
 	if add {
-		denominator := numerator1 + product
+		if new(u256.Uint).Div(product, amount).Eq(sqrtPX96) {
+			denominator := new(u256.Uint).Add(numerator1, product)
 
-		require(
-			denominator != 0,
-			ufmt.Sprintf(
-				"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp() || expected denominator != 0, got: %d",
-				denominator,
-			))
+			if denominator.Gte(numerator1) {
+				return u256.MulDiv(numerator1, sqrtPX96, denominator)
+			}
+		}
 
-		return numerator1 * sqrtPX96 / denominator
+		_value1 := new(u256.Uint).Div(numerator1, sqrtPX96)
+		_value2 := new(u256.Uint).Add(_value1, amount)
+		return u256.DivRoundingUp(numerator1, _value2)
+	} else {
+		cond1 := new(u256.Uint).Div(product, amount).Eq(sqrtPX96)
+		cond2 := numerator1.Gt(product)
+
+		if !(cond1 && cond2) {
+			panic("pool_sqrt price math #1")
+		}
+		denominator := new(u256.Uint).Sub(numerator1, product)
+
+		return u256.MulDiv(numerator1, sqrtPX96, denominator)
 	}
-
-	denominator := numerator1 - product
-
-	requireUnsigned(
-		denominator,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp() || expected denominator >= 0, got: %d",
-			denominator,
-		))
-
-	return numerator1 / ((numerator1 / sqrtPX96) + amount)
 }
 
 func sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
-	sqrtPX96 bigint,
-	liquidity bigint,
-	amount bigint,
+	sqrtPX96 *u256.Uint, // uint160
+	liquidity *u256.Uint, // uint1288
+	amount *u256.Uint, // uint256
 	add bool,
-) bigint {
-	requireUnsigned(
-		sqrtPX96,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown() || expected sqrtPX96 must be unsigned, got: %d",
-			sqrtPX96,
-		))
+) *u256.Uint { // uint160
+	quotient := u256.Zero()
 
-	requireUnsigned(
-		amount,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown() || expected amount must be unsigned, got: %d",
-			amount,
-		))
-
-	requireUnsigned(
-		liquidity,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown() || expected liquidity must be unsigned, got: %d",
-			liquidity,
-		))
-
-	var quotient bigint
-	if amount <= consts.MAX_UINT160 {
-		quotient = (amount << 96) / liquidity
-	} else {
-		quotient = amount * (consts.Q96 / liquidity)
+	if !(amount.Lte(u256.MustFromDecimal(consts.MAX_UINT160))) {
+		quotient = u256.MulDiv(amount, u256.MustFromDecimal(consts.Q96), liquidity)
 	}
-
-	// quotient mutst be positive when amount and liquidity are positive
 
 	if add {
-		result := sqrtPX96 + quotient
+		if amount.Lte(u256.MustFromDecimal(consts.MAX_UINT160)) {
+			quotient = new(u256.Uint).Lsh(amount, 96)
+			quotient = new(u256.Uint).Div(quotient, liquidity)
+		}
 
-		require(
-			result >= sqrtPX96,
-			ufmt.Sprintf(
-				"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown() || expected result >= sqrtPX96, got: %d",
-				result,
-			),
-		)
+		quotient = new(u256.Uint).Sub(quotient, u256.One())
+		return new(u256.Uint).Add(sqrtPX96, quotient)
+	} else {
+		if amount.Lte(u256.MustFromDecimal(consts.MAX_UINT160)) {
+			quotient = new(u256.Uint).Lsh(amount, 96)
+			quotient = u256.DivRoundingUp(quotient, liquidity)
+		}
 
-		return result
+		if !(sqrtPX96.Gt(quotient)) {
+			panic("pool_sqrt price math #2")
+		}
+
+		// roundDown
+		quotient = new(u256.Uint).Sub(quotient, u256.One())
+		return new(u256.Uint).Sub(sqrtPX96, quotient)
 	}
-
-	result := sqrtPX96 - quotient
-
-	require(
-		result >= 0,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown() || expected sqrtPX96 >= quotient, got: %d, %d",
-			sqrtPX96,
-			quotient,
-		),
-	)
-
-	return result
 }
 
 func sqrtPriceMathGetNextSqrtPriceFromInput(
-	sqrtPX96 bigint,
-	liquidity bigint,
-	amountIn bigint,
-	zeroForOne bool,
-) (sqrtQ bigint) {
-	requireUnsigned(
-		sqrtPX96,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromInput() || expected sqrtPX96 must be unsigned, got: %d",
-			sqrtPX96,
-		))
-
-	requireUnsigned(
-		liquidity,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromInput() || expected liquidity must be unsigned, got: %d",
-			liquidity,
-		))
-
-	requireUnsigned(
-		amountIn,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromInput() || expected amountIn must be unsigned, got: %d",
-			amountIn,
-		))
-
+	sqrtPX96 *u256.Uint, // uint160
+	liquidity *u256.Uint, // uint128
+	amountIn *u256.Uint, // uint256
+	zeroForOne bool, // bool
+) *u256.Uint { // uint160
 	if zeroForOne {
-		amount0Result := sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountIn, true)
-		requireUnsigned(
-			amount0Result,
-			ufmt.Sprintf(
-				"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromInput() #1 || expected unsigned result, got: %d",
-				amount0Result,
-			),
-		)
-
-		return amount0Result
+		return sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountIn, true)
 	}
-
-	amount1Result := sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountIn, true)
-	requireUnsigned(
-		amount1Result,
-		"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromInput() || condition must return `v` >= 0__#2",
-	)
-
-	return amount1Result
+	return sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountIn, true)
 }
 
 func sqrtPriceMathGetNextSqrtPriceFromOutput(
-	sqrtPX96 bigint,
-	liquidity bigint,
-	amountOut bigint,
-	zeroForOne bool,
-) (sqrtQ bigint) {
-	requireUnsigned(
-		sqrtPX96,
-		ufmt.Sprintf("[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromOutput() || expected sqrtPX96 >= 0, got: %s",
-			sqrtPX96,
-		))
-
-	requireUnsigned(
-		liquidity,
-		ufmt.Sprintf("[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromOutput() || expected liquidity >= 0, got: %d",
-			liquidity,
-		))
-
+	sqrtPX96 *u256.Uint, // uint160
+	liquidity *u256.Uint, // uint128
+	amountOut *u256.Uint, // uint256
+	zeroForOne bool, // bool
+) *u256.Uint { // uint160
 	if zeroForOne {
-		amount1Result := sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountOut, false)
-		requireUnsigned(
-			amount1Result,
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromOutput() || condition must return `v` >= 0__#1",
-		)
-
-		return amount1Result
+		return sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountOut, false)
 	}
 
-	amount0Result := sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountOut, false)
-	requireUnsigned(
-		amount0Result,
-		"[POOL] sqrt_price_math.gno__sqrtPriceMathGetNextSqrtPriceFromOutput() || condition must return `v` >= 0__#2",
-	)
-
-	return amount0Result
+	return sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountOut, false)
 }
 
 func sqrtPriceMathGetAmount0DeltaHelper(
-	sqrtRatioAX96 bigint,
-	sqrtRatioBX96 bigint,
-	liquidity bigint,
-) bigint {
-	requireUnsigned(
-		sqrtRatioAX96,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetAmount0DeltaHelper() || expected sqrtRatioAX96 must be unsigned, got: %d",
-			sqrtRatioAX96,
-		))
-
-	requireUnsigned(
-		sqrtRatioBX96,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetAmount0DeltaHelper() || expected sqrtRatioBX96 must be unsigned, got: %d",
-			sqrtRatioBX96,
-		))
-
-	requireUnsigned(
-		liquidity,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetAmount0DeltaHelper() || expected liquidity must be unsigned, got: %d",
-			liquidity,
-		))
-
-	if sqrtRatioAX96 > sqrtRatioBX96 {
+	sqrtRatioAX96 *u256.Uint, // uint160
+	sqrtRatioBX96 *u256.Uint, // uint160
+	liquidity *u256.Uint, // uint160
+	roundUp bool,
+) *u256.Uint { // uint256
+	if sqrtRatioAX96.Gt(sqrtRatioBX96) {
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
 	}
 
-	numerator1 := absBigint(liquidity) << 96
-	numerator2 := sqrtRatioBX96 - sqrtRatioAX96
+	if !(sqrtRatioAX96.Gt(u256.Zero())) {
+		panic("pool_sqrt price math #3")
+	}
 
-	return ((numerator1 * numerator2) / sqrtRatioBX96) / sqrtRatioAX96
+	numerator1 := new(u256.Uint).Lsh(liquidity, 96)
+	numerator2 := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
+	value := u256.MulDiv(numerator1, numerator2, sqrtRatioBX96)
+
+	if roundUp {
+		return u256.DivRoundingUp(value, sqrtRatioAX96)
+	} else {
+		return new(u256.Uint).Div(value, sqrtRatioAX96)
+	}
+
 }
 
 func sqrtPriceMathGetAmount1DeltaHelper(
-	sqrtRatioAX96 bigint,
-	sqrtRatioBX96 bigint,
-	liquidity bigint,
-) bigint {
-	requireUnsigned(
-		sqrtRatioAX96,
-		ufmt.Sprintf("[POOL] sqrt_price_math.gno__sqrtPriceMathGetAmount1DeltaHelper() || expected sqrtRatioAX96 must be unsigned, got: %d",
-			sqrtRatioAX96,
-		))
-
-	requireUnsigned(
-		sqrtRatioBX96,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetAmount1DeltaHelper() || expected sqrtRatioBX96 must be unsigned, got: %d",
-			sqrtRatioBX96,
-		))
-
-	requireUnsigned(
-		liquidity,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetAmount1DeltaHelper() || expected liquidity must be unsigned, got: %d",
-			liquidity,
-		))
-
-	if sqrtRatioAX96 > sqrtRatioBX96 {
+	sqrtRatioAX96 *u256.Uint, // uint160
+	sqrtRatioBX96 *u256.Uint, // uint160
+	liquidity *u256.Uint, // uint160
+	roundUp bool,
+) *u256.Uint { // uint256
+	if sqrtRatioAX96.Gt(sqrtRatioBX96) {
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
 	}
 
-	return liquidity * (sqrtRatioBX96 - sqrtRatioAX96) / consts.Q96
+	value := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
+
+	if roundUp {
+		return u256.MulDiv(liquidity, value, u256.MustFromDecimal(consts.Q96))
+	} else {
+		return u256.MulDiv(liquidity, value, u256.MustFromDecimal(consts.Q96))
+	}
 }
 
 func sqrtPriceMathGetAmount0Delta(
-	sqrtRatioAX96 bigint,
-	sqrtRatioBX96 bigint,
-	liquidity bigint,
-) bigint {
-	requireUnsigned(
-		sqrtRatioAX96,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetAmount0Delta() || expected sqrtRatioAX96 must be unsigned, got: %d",
-			sqrtRatioAX96,
-		))
+	sqrtRatioAX96 *u256.Uint, // uint160
+	sqrtRatioBX96 *u256.Uint, // uint160
+	liquidity *i256.Int, // int128
+) *i256.Int { // int256
 
-	requireUnsigned(
-		sqrtRatioBX96,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetAmount0Delta() || expected sqrtRatioBX96 must be unsigned, got: %d",
-			sqrtRatioBX96,
-		))
-
-	if liquidity < 0 {
-		return -sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, absBigint(-liquidity))
+	if liquidity.IsNeg() {
+		u := sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), false)
+		i := i256.FromUint256(u)
+		return i256.Zero().Neg(i)
 	}
-
-	return sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity)
+	u := sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
+	return i256.FromUint256(u)
 }
 
 func sqrtPriceMathGetAmount1Delta(
-	sqrtRatioAX96 bigint,
-	sqrtRatioBX96 bigint,
-	liquidity bigint,
-) bigint {
-	requireUnsigned(
-		sqrtRatioAX96,
-		ufmt.Sprintf("[POOL] sqrt_price_math.gno__sqrtPriceMathGetAmount1Delta() || expected sqrtRatioAX96 must be unsigned, got: %d",
-			sqrtRatioAX96,
-		))
-
-	requireUnsigned(
-		sqrtRatioBX96,
-		ufmt.Sprintf(
-			"[POOL] sqrt_price_math.gno__sqrtPriceMathGetAmount1Delta() || expected sqrtRatioBX96 must be unsigned, got: %d",
-			sqrtRatioBX96,
-		))
-
-	if liquidity < 0 {
-		return -sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, absBigint(-liquidity))
+	sqrtRatioAX96 *u256.Uint, // uint160
+	sqrtRatioBX96 *u256.Uint, // uint160
+	liquidity *i256.Int, // int128
+) *i256.Int { // int256
+	if liquidity.IsNeg() {
+		u := sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), false)
+		i := i256.FromUint256(u)
+		return i256.Zero().Neg(i)
 	}
 
-	return sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity)
+	u := sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
+	return i256.FromUint256(u)
 }

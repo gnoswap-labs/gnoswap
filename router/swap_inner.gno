@@ -3,100 +3,120 @@ package router
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
+
 	pl "gno.land/r/demo/pool"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
+
+	i256 "gno.land/p/demo/big/int256"
+	u256 "gno.land/p/demo/big/uint256"
 )
 
 func _swap(
-	amountSpecified bigint,
+	amountSpecified *i256.Int,
 	recipient std.Address,
-	sqrtPriceLimitX96 bigint,
+	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
-) (amountPoolRecv, amountPoolOut bigint) {
+) (*u256.Uint, *u256.Uint) { // poolRecv, poolOut
 	// prepare
 	zeroForOne := data.tokenIn < data.tokenOut
 
-	if sqrtPriceLimitX96 == 0 {
+	if sqrtPriceLimitX96.IsZero() {
 		if zeroForOne {
-			sqrtPriceLimitX96 = consts.MIN_PRICE
+			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MIN_PRICE)
 		} else {
-			sqrtPriceLimitX96 = consts.MAX_PRICE
+			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MAX_PRICE)
 		}
 	}
 
 	// ROUTER approves POOL as spender
-	toApproveAmount := consts.MAX_UINT64
-	approveByRegisterCall(data.tokenIn, consts.POOL_ADDR, uint64(toApproveAmount))
-	approveByRegisterCall(data.tokenOut, consts.POOL_ADDR, uint64(toApproveAmount))
+	approveByRegisterCall(data.tokenIn, consts.POOL_ADDR, consts.UINT64_MAX)
+	approveByRegisterCall(data.tokenOut, consts.POOL_ADDR, consts.UINT64_MAX)
 
-	amount0, amount1 := pl.Swap(
+	amount0Str, amount1Str := pl.Swap( // int256, int256
 		data.tokenIn,
 		data.tokenOut,
 		data.fee,
 
-		recipient,
+		recipient.String(),
 		zeroForOne,
-		amountSpecified,
-		sqrtPriceLimitX96,
+		amountSpecified.ToString(),
+		sqrtPriceLimitX96.ToString(),
 
-		data.payer,
+		data.payer.String(),
 	)
+	amount0, err := i256.FromDecimal(amount0Str)
+	if err != nil {
+		panic(ufmt.Sprintf("[ROUTER] router.gno__Swap() || i256.FromDecimal(amount0Str(%s) failed", amount0Str))
+	}
+	amount1, err := i256.FromDecimal(amount1Str)
+	if err != nil {
+		panic(ufmt.Sprintf("[ROUTER] router.gno__Swap() || i256.FromDecimal(amount1Str(%s) failed", amount1Str))
+	}
 
-	return absBigint(maxBigint(amount0, amount1)), absBigint(minBigint(amount0, amount1))
+	poolRecv := i256Max(amount0, amount1)
+	poolOut := i256Min(amount0, amount1)
+
+	return poolRecv.Abs(), poolOut.Abs()
 }
 
 func _swapDry(
-	amountSpecified bigint,
+	amountSpecified *i256.Int,
 	recipient std.Address,
-	sqrtPriceLimitX96 bigint,
+	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
-) (amountPoolRecv, amountPoolOut bigint) {
+) (*u256.Uint, *u256.Uint) { // poolRecv, poolOut
 	zeroForOne := data.tokenIn < data.tokenOut
 
-	if sqrtPriceLimitX96 == 0 {
+	if sqrtPriceLimitX96.IsZero() {
 		if zeroForOne {
-			sqrtPriceLimitX96 = consts.MIN_PRICE
+			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MIN_PRICE)
 		} else {
-			sqrtPriceLimitX96 = consts.MAX_PRICE
+			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MAX_PRICE)
 		}
 	}
 
 	// check possible
-	amount0, amount1, ok := pl.DrySwap(
+	amount0Str, amount1Str, ok := pl.DrySwap(
 		data.tokenIn,
 		data.tokenOut,
 		data.fee,
 
 		recipient,
 		zeroForOne,
-		amountSpecified,
-		sqrtPriceLimitX96,
+		amountSpecified.ToString(),
+		sqrtPriceLimitX96.ToString(),
 	)
 	if !ok {
-		return 0, 0
+		return u256.Zero(), u256.Zero()
 	}
 
-	return absBigint(maxBigint(amount0, amount1)), absBigint(minBigint(amount0, amount1))
+	amount0, err := i256.FromDecimal(amount0Str)
+	if err != nil {
+		panic(ufmt.Sprintf("[ROUTER] router.gno__Swap() || i256.FromDecimal(amount0Str(%s) failed", amount0Str))
+	}
+	amount1, err := i256.FromDecimal(amount1Str)
+	if err != nil {
+		panic(ufmt.Sprintf("[ROUTER] router.gno__Swap() || i256.FromDecimal(amount1Str(%s) failed", amount1Str))
+	}
+
+	poolRecv := i256Max(amount0, amount1)
+	poolOut := i256Min(amount0, amount1)
+
+	return poolRecv.Abs(), poolOut.Abs()
 }
 
-func max(a, b uint64) uint64 {
-	if a > b {
-		return a
+func i256Min(x, y *i256.Int) *i256.Int {
+	if x.Lt(y) {
+		return x
 	}
-	return b
+	return y
 }
 
-func minBigint(a, b bigint) bigint {
-	if a < b {
-		return a
+func i256Max(x, y *i256.Int) *i256.Int {
+	if x.Gt(y) {
+		return x
 	}
-	return b
-}
-
-func maxBigint(a, b bigint) bigint {
-	if a > b {
-		return a
-	}
-	return b
+	return y
 }

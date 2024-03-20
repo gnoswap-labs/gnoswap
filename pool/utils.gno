@@ -6,23 +6,34 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/users"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
+
+	u256 "gno.land/p/demo/big/uint256"
 )
 
 func checkTicks(tickLower, tickUpper int32) {
-	require(tickLower < tickUpper, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickLower(%d) < tickUpper(%d)", tickLower, tickUpper))
-	require(tickLower >= consts.MIN_TICK, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickLower(%d) >= consts.MIN_TICK(%d)", tickLower, consts.MIN_TICK))
-	require(tickUpper <= consts.MAX_TICK, ufmt.Sprintf("[POOL] pool.gno__checkTicks() || tickUpper(%d) <= consts.MAX_TICK(%d)", tickUpper, consts.MAX_TICK))
+	if tickLower >= tickUpper {
+		panic(ufmt.Sprintf("[POOL] utils.gno__checkTicks() || tickLower(%d) >= consts.MIN_TICK(%d)", tickLower, consts.MIN_TICK))
+	}
+
+	if tickLower < consts.MIN_TICK {
+		panic(ufmt.Sprintf("[POOL] utils.gno__checkTicks() || tickLower(%d) >= consts.MIN_TICK(%d)", tickLower, consts.MIN_TICK))
+	}
+
+	if tickUpper > consts.MAX_TICK {
+		panic(ufmt.Sprintf("[POOL] utils.gno__checkTicks() || tickUpper(%d) <= consts.MAX_TICK(%d)", tickUpper, consts.MAX_TICK))
+	}
 }
 
 func a2u(addr std.Address) users.AddressOrName {
 	return users.AddressOrName(addr)
 }
 
-func min(num1, num2 bigint) bigint {
-	if num1 < num2 {
+func u256Min(num1, num2 *u256.Uint) *u256.Uint {
+	if num1.Lt(num2) {
 		return num1
 	}
+
 	return num2
 }
 
@@ -46,35 +57,4 @@ func remove(s []string, r string) []string {
 		}
 	}
 	return s
-}
-
-// REQUIREs
-func require(cond bool, msg string) {
-	if !(cond) {
-		panic(msg)
-	}
-}
-
-func requireUnsigned(x bigint, msg string) {
-	if !(x >= 0) {
-		panic(msg)
-	}
-}
-
-func requirePositive(x bigint, msg string) {
-	if !(x > 0) {
-		panic(msg)
-	}
-}
-
-func requireExist(exist bool, msg string) {
-	if !exist {
-		panic(msg)
-	}
-}
-
-func requirePrevRealmPath(prevRealmPath, msg string) {
-	if PrevRealmPath() != prevRealmPath {
-		panic(msg)
-	}
 }

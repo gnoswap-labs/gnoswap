@@ -3,10 +3,15 @@ package router
 import (
 	"std"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
+
+	i256 "gno.land/p/demo/big/int256"
+	u256 "gno.land/p/demo/big/uint256"
 )
 
-func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath string) (firstAmountIn, lastAmountOut bigint) {
+func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath string) (*u256.Uint, *u256.Uint) { // firstAmountIn, lastAmountOut
+	firstAmountIn := u256.Zero()
+
 	payer := std.GetOrigCaller() // user
 
 	for {
@@ -22,7 +27,7 @@ func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath strin
 		amountIn, amountOut := _swap(
 			params.amountSpecified,
 			recipient,
-			0,
+			u256.Zero(),
 			SwapCallbackData{
 				params.tokenIn,
 				params.tokenOut,
@@ -43,7 +48,7 @@ func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath strin
 			params.tokenOut = nextOutput
 			params.fee = nextFee
 
-			params.amountSpecified = amountOut
+			params.amountSpecified = i256.FromUint256(amountOut)
 
 		} else {
 			return firstAmountIn, amountOut
@@ -51,7 +56,9 @@ func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath strin
 	}
 }
 
-func multiSwapNegative(params SwapParams, numPools int, swapPath string) (fisrtAmountIn, lastAmountOut bigint) {
+func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.Uint, *u256.Uint) { // firstAmountIn, lastAmountOut
+	firstAmountIn := u256.Zero()
+
 	swapInfo := []SingleSwapParams{}
 	currentPoolIndex := numPools
 
@@ -82,7 +89,9 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (fisrtA
 			params.tokenIn = nextInput
 			params.tokenOut = nextOutput
 			params.fee = nextFee
-			params.amountSpecified = -amountIn
+
+			_intAmountIn := i256.FromUint256(amountIn)
+			params.amountSpecified = i256.Zero().Neg(_intAmountIn)
 		}
 	}
 
@@ -101,7 +110,7 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (fisrtA
 		amountIn, amountOut := _swap(
 			swapInfo[currentPoolIndex].amountSpecified,
 			recipient,
-			0,
+			u256.Zero(),
 			SwapCallbackData{
 				swapInfo[currentPoolIndex].tokenIn,
 				swapInfo[currentPoolIndex].tokenOut,
@@ -112,19 +121,21 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (fisrtA
 
 		// save route's first hop's amountIn to check whether crossed limit or not
 		if currentPoolIndex == len(swapInfo)-1 {
-			fisrtAmountIn = amountIn
+			firstAmountIn = amountIn
 		}
 
 		if currentPoolIndex == 0 {
-			return fisrtAmountIn, amountOut
+			return firstAmountIn, amountOut
 		} else {
 			payer = consts.ROUTER_ADDR
-			swapInfo[currentPoolIndex-1].amountSpecified = amountOut
+			swapInfo[currentPoolIndex-1].amountSpecified = i256.FromUint256(amountOut)
 		}
 	}
 }
 
-func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath string) (firstAmountIn, lastAmountOut bigint) {
+func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath string) (*u256.Uint, *u256.Uint) { // firstAmountIn, lastAmountOut
+	firstAmountIn := u256.Zero()
+
 	payer := std.GetOrigCaller() // user
 
 	for {
@@ -140,7 +151,7 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 		amountIn, amountOut := _swapDry(
 			params.amountSpecified,
 			recipient,
-			0,
+			u256.Zero(),
 			SwapCallbackData{
 				params.tokenIn,
 				params.tokenOut,
@@ -161,7 +172,7 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 			params.tokenOut = nextOutput
 			params.fee = nextFee
 
-			params.amountSpecified = amountOut
+			params.amountSpecified = i256.FromUint256(amountOut)
 		} else {
 			return firstAmountIn, amountOut
 		}
@@ -169,7 +180,8 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 
 }
 
-func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath string) (firstAmountIn, lastAmountOut bigint) {
+func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath string) (*u256.Uint, *u256.Uint) { // firstAmountIn, lastAmountOut
+	firstAmountIn := u256.Zero()
 	payer := consts.ROUTER_ADDR
 	numPools := currentPoolIndex
 
@@ -185,7 +197,7 @@ func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath stri
 		amountIn, amountOut := _swapDry(
 			params.amountSpecified,
 			recipient,
-			0,
+			u256.Zero(),
 			SwapCallbackData{
 				params.tokenIn,
 				params.tokenOut,
@@ -207,7 +219,8 @@ func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath stri
 			params.tokenOut = nextOutput
 			params.fee = nextFee
 
-			params.amountSpecified = -amountIn
+			_intAmountIn := i256.FromUint256(amountIn)
+			params.amountSpecified = i256.Zero().Neg(_intAmountIn)
 		} else {
 			return firstAmountIn, amountOut
 		}

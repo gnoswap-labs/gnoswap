@@ -2,6 +2,8 @@ package position
 
 import (
 	"std"
+
+	u256 "gno.land/p/demo/big/uint256"
 )
 
 // type Position
@@ -9,7 +11,7 @@ func PositionGetPosition(tokenId uint64) Position {
 	return positions[tokenId]
 }
 
-func PositionGetPositionNonce(tokenId uint64) bigint {
+func PositionGetPositionNonce(tokenId uint64) *u256.Uint {
 	return positions[tokenId].nonce
 }
 
@@ -29,22 +31,22 @@ func PositionGetPositionTickUpper(tokenId uint64) int32 {
 	return positions[tokenId].tickUpper
 }
 
-func PositionGetPositionLiquidity(tokenId uint64) bigint {
+func PositionGetPositionLiquidity(tokenId uint64) *u256.Uint {
 	return positions[tokenId].liquidity
 }
 
-func PositionGetPositionFeeGrowthInside0LastX128(tokenId uint64) bigint {
+func PositionGetPositionFeeGrowthInside0LastX128(tokenId uint64) *u256.Uint {
 	return positions[tokenId].feeGrowthInside0LastX128
 }
 
-func PositionGetPositionFeeGrowthInside1LastX128(tokenId uint64) bigint {
+func PositionGetPositionFeeGrowthInside1LastX128(tokenId uint64) *u256.Uint {
 	return positions[tokenId].feeGrowthInside1LastX128
 }
 
-func PositionGetPositionTokensOwed0(tokenId uint64) bigint {
+func PositionGetPositionTokensOwed0(tokenId uint64) *u256.Uint {
 	return positions[tokenId].tokensOwed0
 }
 
-func PositionGetPositionTokensOwed1(tokenId uint64) bigint {
+func PositionGetPositionTokensOwed1(tokenId uint64) *u256.Uint {
 	return positions[tokenId].tokensOwed1
 }

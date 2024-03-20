@@ -4,22 +4,28 @@ import (
 	"sort"
 
 	pl "gno.land/r/demo/pool"
+
+	u256 "gno.land/p/demo/big/uint256"
 )
 
+// PoolWithMeta is a struct that contains poolPath, token0Path, token1Path, fee, tokenPair, and liquidity
+// It's used to store the pool information and sort the pools by liquidity
 type PoolWithMeta struct {
 	poolPath   string
 	token0Path string
 	token1Path string
 	fee        int
 	tokenPair  string
-	liquidity  bigint
+	liquidity  *u256.Uint
 }
 type ByLiquidity []PoolWithMeta
 
 func (p ByLiquidity) Len() int           { return len(p) }
 func (p ByLiquidity) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
-func (p ByLiquidity) Less(i, j int) bool { return p[i].liquidity > p[j].liquidity }
+func (p ByLiquidity) Less(i, j int) bool { return p[i].liquidity.Gt(p[j].liquidity) }
 
+// BuildRoute is a struct that contains route, tokenIn, and tokenOut
+// It's used to store the route information
 type BuildRoute struct {
 	route    []PoolWithMeta
 	tokenIn  string
@@ -163,7 +169,6 @@ func (pool PoolWithMeta) hasToken(token string) bool {
 }
 
 func findCandidatePools() []PoolWithMeta {
-
 	poolList := pl.PoolGetPoolList()
 
 	poolWithMetas := []PoolWithMeta{}

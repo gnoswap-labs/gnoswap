@@ -3,48 +3,78 @@ package pool
 import (
 	"std"
 
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/p/demo/ufmt"
+
+	u256 "gno.land/p/demo/big/uint256"
 )
 
+// withdrawalFee is the fee that is charged when a user withdraws their collected fees
 var (
-	withdrawalFee = bigint(1)
+	withdrawalFee = uint64(1)
 )
 
+// HandleWithdrawalFee withdraws the fee from the user and returns the amount after the fee
+//
+// Panics if any of the following conditions are met:
+// - caller is not the position contract
+// - caller does not have enough balance to give the fee
 func HandleWithdrawalFee(
 	tokenId uint64,
 	token0Path string,
-	amount0 bigint,
+	_amount0 string, // uint256
 	token1Path string,
-	amount1 bigint,
-) (bigint, bigint) {
-	requirePrevRealmPath(consts.POSITION_PATH, ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected PrevRealmPath(%s), got %s", consts.POSITION_PATH, PrevRealmPath()))
-
-	if withdrawalFee == 0 {
-		return amount0, amount1
+	_amount1 string, // uint256
+) (string, string) { // uint256 x2
+	// only position contract can call this function
+	if std.PrevRealm().PkgPath() != consts.POSITION_PATH {
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected std.PrevRealm().PkgPath()(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
 	}
 
-	feeAmount0 := amount0 * withdrawalFee / bigint(100)
-	feeAmount1 := amount1 * withdrawalFee / bigint(100)
+	amount0 := u256.MustFromDecimal(_amount0)
+	amount1 := u256.MustFromDecimal(_amount1)
 
-	ok := transferFromByRegisterCall(token0Path, GetOrigCaller(), consts.FEE_COLLECTOR, uint64(feeAmount0))
-	require(ok, ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token0Path, GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount0))
+	if withdrawalFee == 0 {
+		return _amount0, _amount1
+	}
 
-	ok = transferFromByRegisterCall(token1Path, GetOrigCaller(), consts.FEE_COLLECTOR, uint64(feeAmount1))
-	require(ok, ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token1Path, GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount1))
+	feeAmount0 := new(u256.Uint).Mul(amount0, u256.NewUint(withdrawalFee))
+	feeAmount0 = new(u256.Uint).Div(feeAmount0, u256.NewUint(100))
 
-	return amount0 - feeAmount0, amount1 - feeAmount1
+	feeAmount1 := new(u256.Uint).Mul(amount1, u256.NewUint(withdrawalFee))
+	feeAmount1 = new(u256.Uint).Div(feeAmount1, u256.NewUint(100))
+
+	ok := transferFromByRegisterCall(token0Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount0.Uint64())
+	if !ok {
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token0Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount0))
+	}
+
+	ok = transferFromByRegisterCall(token1Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount1.Uint64())
+	if !ok {
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token1Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount1))
+	}
+
+	afterAmount0 := new(u256.Uint).Sub(amount0, feeAmount0)
+	afterAmount1 := new(u256.Uint).Sub(amount1, feeAmount1)
+
+	return afterAmount0.ToString(), afterAmount1.ToString()
 }
 
-func SetWithdrawalFee(fee bigint) {
+// SetWithdrawalFee sets the withdrawal fee
+//
+// Panics if any of the following conditions are met:
+// - caller is not the admin
+func SetWithdrawalFee(fee uint64) {
 	// MUST BE ORIGIN CALL
 	std.AssertOriginCall()
 
-	// MUST BE ADMIN
-	require(isAdmin(GetOrigCaller()), ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || caller(%s) must be admin", GetOrigCaller()))
+	common.MustCallFromAdmin()
 
-	require(fee >= 0, ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || fee(%d) must be >= 0", fee))
+	if fee > 100 {
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || fee(%d) must be in range 0 ~ 100", fee))
+	}
 
 	withdrawalFee = fee
 }

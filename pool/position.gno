@@ -5,7 +5,10 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/consts"
+	"gno.land/r/gnoswap/consts"
+
+	i256 "gno.land/p/demo/big/int256"
+	u256 "gno.land/p/demo/big/uint256"
 )
 
 func positionGetKey(
@@ -21,12 +24,15 @@ func positionGetKey(
 
 func (pool *Pool) positionUpdateWithKey(
 	positionKey string,
-	liquidityDelta bigint,
-	feeGrowthInside0X128 bigint,
-	feeGrowthInside1X128 bigint,
+	liquidityDelta *i256.Int, // int128
+	feeGrowthInside0X128 *u256.Uint, // uint256
+	feeGrowthInside1X128 *u256.Uint, // uint256
 ) PositionInfo {
-	requireUnsigned(feeGrowthInside0X128, ufmt.Sprintf("[POOL] position.gno__positionUpdateWithKey() || feeGrowthInside0X128(%d) >= 0", feeGrowthInside0X128))
-	requireUnsigned(feeGrowthInside1X128, ufmt.Sprintf("[POOL] position.gno__positionUpdateWithKey() || feeGrowthInside1X128(%d) >= 0", feeGrowthInside1X128))
+	// START INIT PARAM
+	liquidityDelta = liquidityDelta.NilToZero()
+	feeGrowthInside0X128 = feeGrowthInside0X128.NilToZero()
+	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
+	// END INIT PARAM
 
 	position := pool.positions[positionKey]
 
@@ -38,35 +44,46 @@ func (pool *Pool) positionUpdateWithKey(
 
 func positionUpdate(
 	self PositionInfo,
-	liquidityDelta bigint,
-	feeGrowthInside0X128 bigint,
-	feeGrowthInside1X128 bigint,
+	liquidityDelta *i256.Int, // int128
+	feeGrowthInside0X128 *u256.Uint, // uint256
+	feeGrowthInside1X128 *u256.Uint, // uint256
 ) PositionInfo {
-	requireUnsigned(feeGrowthInside0X128, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || feeGrowthInside0X128(%d) >= 0", feeGrowthInside0X128))
-	requireUnsigned(feeGrowthInside1X128, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || feeGrowthInside1X128(%d) >= 0", feeGrowthInside1X128))
+	// START INIT PARAM
+	self.liquidity = self.liquidity.NilToZero()
+	self.feeGrowthInside0LastX128 = self.feeGrowthInside0LastX128.NilToZero()
+	self.feeGrowthInside1LastX128 = self.feeGrowthInside1LastX128.NilToZero()
+	self.tokensOwed0 = self.tokensOwed0.NilToZero()
+	self.tokensOwed1 = self.tokensOwed1.NilToZero()
 
-	var liquidityNext bigint
-	if liquidityDelta == 0 {
+	liquidityDelta = liquidityDelta.NilToZero()
+	feeGrowthInside0X128 = feeGrowthInside0X128.NilToZero()
+	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
+	// END INIT PARAM
+
+	var liquidityNext *u256.Uint
+	if liquidityDelta.IsZero() {
 		liquidityNext = self.liquidity
 	} else {
 		liquidityNext = liquidityMathAddDelta(self.liquidity, liquidityDelta)
 	}
 
-	tokensOwed0 := (feeGrowthInside0X128 - self.feeGrowthInside0LastX128) * self.liquidity / consts.Q128
-	tokensOwed1 := (feeGrowthInside1X128 - self.feeGrowthInside1LastX128) * self.liquidity / consts.Q128
+	tokensOwed0 := new(u256.Uint).Sub(feeGrowthInside0X128, self.feeGrowthInside0LastX128)
+	tokensOwed0 = tokensOwed0.Mul(tokensOwed0, self.liquidity)
+	tokensOwed0 = tokensOwed0.Div(tokensOwed0, u256.MustFromDecimal(consts.Q128))
 
-	requireUnsigned(tokensOwed0, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || tokensOwed0(%d) >= 0", tokensOwed0))
-	requireUnsigned(tokensOwed1, ufmt.Sprintf("[POOL] position.gno__positionUpdate() || tokensOwed1(%d) >= 0", tokensOwed1))
+	tokensOwed1 := new(u256.Uint).Sub(feeGrowthInside1X128, self.feeGrowthInside1LastX128)
+	tokensOwed1 = tokensOwed1.Mul(tokensOwed1, self.liquidity)
+	tokensOwed1 = tokensOwed1.Div(tokensOwed1, u256.MustFromDecimal(consts.Q128))
 
-	if liquidityDelta != 0 {
+	if !(liquidityDelta.IsZero()) {
 		self.liquidity = liquidityNext
 	}
 
 	self.feeGrowthInside0LastX128 = feeGrowthInside0X128
 	self.feeGrowthInside1LastX128 = feeGrowthInside1X128
-	if tokensOwed0 > 0 || tokensOwed1 > 0 {
-		self.tokensOwed0 += tokensOwed0
-		self.tokensOwed1 += tokensOwed1
+	if tokensOwed0.Gt(u256.Zero()) || tokensOwed1.Gt(u256.Zero()) {
+		self.tokensOwed0 = self.tokensOwed0.Add(self.tokensOwed0, tokensOwed0)
+		self.tokensOwed1 = self.tokensOwed1.Add(self.tokensOwed1, tokensOwed1)
 	}
 
 	return self

@@ -12,7 +12,6 @@ import (
 )
 
 func poolKeyDivide(poolKey string) string {
-
 	res := strings.Split(poolKey, ":")
 	if len(res) != 3 {
 		panic(ufmt.Sprintf("[STAKER] utils.gno__poolKeyDivide() || invalid poolKey(%s)", poolKey))
@@ -39,8 +38,6 @@ func tid(tokenId interface{}) grc721.TokenID {
 	}
 
 	switch tokenId.(type) {
-	case bigint:
-		return grc721.TokenID(string(tokenId.(bigint)))
 	case string:
 		return grc721.TokenID(tokenId.(string))
 	case int:
@@ -66,28 +63,4 @@ func min(x, y int64) int64 {
 		return x
 	}
 	return y
-}
-
-func requireUnsigned(x bigint, msg string) {
-	if x < 0 {
-		panic(msg)
-	}
-}
-
-func require(condition bool, message string) {
-	if !condition {
-		panic(message)
-	}
-}
-
-func requireExist(exist bool, msg string) {
-	if !exist {
-		panic(msg)
-	}
-}
-
-func requirePrevRealmPath(prevRealmPath, msg string) {
-	if PrevRealmPath() != prevRealmPath {
-		panic(msg)
-	}
 }
