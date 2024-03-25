@@ -329,8 +329,8 @@ func FromUint256(x *uint256.Uint) *Int {
 	if x == nil {
 		return nil
 	}
-	z := New()
-	// z := &Int{}
+	z := Zero()
+
 	z.SetUint256(x)
 	return z
 }

@@ -852,12 +852,20 @@ func FromDecimal(decimal string) (*Uint, error) {
 // MustFromDecimal is a convenience-constructor to create an Int from a
 // decimal (base 10) string.
 // Returns a new Int and panics if any error occurred.
+//
+//	func MustFromDecimal(decimal string) *Uint {
+//		var z Uint
+//		if err := z.SetFromDecimal(decimal); err != nil {
+//			panic(err)
+//		}
+//		return &z
+//	}
 func MustFromDecimal(decimal string) *Uint {
-	var z Uint
+	z := Zero()
 	if err := z.SetFromDecimal(decimal); err != nil {
 		panic(err)
 	}
-	return &z
+	return z
 }
 
 const twoPow256Sub1 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"

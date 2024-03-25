@@ -13,7 +13,7 @@ import (
 	"gno.land/r/gnoswap/consts"
 )
 
-const MAXIMUM_SUPPLY = uint64(1_000_000_000_000_000)
+const MAXIMUM_SUPPLY = uint64(1_000_000_000_000_000) // 1B
 
 var (
 	gns    *grc20.AdminToken
@@ -22,15 +22,13 @@ var (
 
 func init() {
 	gns = grc20.NewAdminToken("Gnoswap", "GNS", 4)
-	gns.Mint(consts.INTERNAL_REWARD_ACCOUNT, 500_000_000_000_000)
+	gns.Mint(consts.INTERNAL_REWARD_ACCOUNT, 500_000_000_000_000) // 500_000_000 GNS ≈ 0.5B
+	gns.Mint(consts.GNOSWAP_ADMIN, 100_000_000_000)               // 100_000 GNS
 
-	gns.Mint(std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"), 100_000_000_000) // r3v4_xxx: default test1
-
-	stakerAddr := consts.GOV_ADDR
-	admins = append(admins, string(stakerAddr))
 	admins = append(admins, string(consts.GNOSWAP_ADMIN))
+	admins = append(admins, string(consts.STAKER_ADDR))
 
-	gns.Approve(consts.INTERNAL_REWARD_ACCOUNT, stakerAddr, consts.UINT64_MAX)
+	gns.Approve(consts.INTERNAL_REWARD_ACCOUNT, consts.STAKER_ADDR, consts.UINT64_MAX)
 }
 
 // method proxies as public functions.
@@ -90,7 +88,7 @@ func Faucet() {
 	// FIXME: add limits?
 	// FIXME: add payment in gnot?
 	caller := std.PrevRealm().Addr()
-	err := gns.Mint(caller, 1000*10000) // 1k
+	err := gns.Mint(caller, 100*1_000_000) // 100M
 	if err != nil {
 		panic(err)
 	}

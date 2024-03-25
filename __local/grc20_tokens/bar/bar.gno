@@ -1,4 +1,4 @@
-package obl
+package bar
 
 import (
 	"std"
@@ -12,13 +12,13 @@ import (
 )
 
 var (
-	obl   *grc20.AdminToken
-	admin std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // TODO: helper to change admin
+	bar   *grc20.AdminToken
+	admin std.Address = "g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq" // TODO: helper to change admin
 )
 
 func init() {
-	obl = grc20.NewAdminToken("Obl", "OBL", 4)
-	obl.Mint(admin, 500_000_000_000_000) // @administrator (1M)
+	bar = grc20.NewAdminToken("Bar", "BAR", 6)
+	bar.Mint(admin, 500_000_000_000_000)
 }
 
 // method proxies as public functions.
@@ -27,11 +27,11 @@ func init() {
 // getters.
 
 func TotalSupply() uint64 {
-	return obl.TotalSupply()
+	return bar.TotalSupply()
 }
 
 func BalanceOf(owner pusers.AddressOrName) uint64 {
-	balance, err := obl.BalanceOf(users.Resolve(owner))
+	balance, err := bar.BalanceOf(users.Resolve(owner))
 	if err != nil {
 		panic(err)
 	}
@@ -39,7 +39,7 @@ func BalanceOf(owner pusers.AddressOrName) uint64 {
 }
 
 func Allowance(owner, spender pusers.AddressOrName) uint64 {
-	allowance, err := obl.Allowance(users.Resolve(owner), users.Resolve(spender))
+	allowance, err := bar.Allowance(users.Resolve(owner), users.Resolve(spender))
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +50,7 @@ func Allowance(owner, spender pusers.AddressOrName) uint64 {
 
 func Transfer(to pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := obl.Transfer(caller, users.Resolve(to), amount)
+	err := bar.Transfer(caller, users.Resolve(to), amount)
 	if err != nil {
 		panic(err)
 	}
@@ -58,7 +58,7 @@ func Transfer(to pusers.AddressOrName, amount uint64) {
 
 func Approve(spender pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := obl.Approve(caller, users.Resolve(spender), amount)
+	err := bar.Approve(caller, users.Resolve(spender), amount)
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +66,7 @@ func Approve(spender pusers.AddressOrName, amount uint64) {
 
 func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	err := obl.TransferFrom(caller, users.Resolve(from), users.Resolve(to), amount)
+	err := bar.TransferFrom(caller, users.Resolve(from), users.Resolve(to), amount)
 	if err != nil {
 		panic(err)
 	}
@@ -78,7 +78,7 @@ func Faucet() {
 	// FIXME: add limits?
 	// FIXME: add payment in gnot?
 	caller := std.PrevRealm().Addr()
-	err := obl.Mint(caller, 1000*10000) // 1k
+	err := bar.Mint(caller, 100*1_000_000) // 100M
 	if err != nil {
 		panic(err)
 	}
@@ -89,7 +89,7 @@ func Faucet() {
 func Mint(address pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	err := obl.Mint(users.Resolve(address), amount)
+	err := bar.Mint(users.Resolve(address), amount)
 	if err != nil {
 		panic(err)
 	}
@@ -98,7 +98,7 @@ func Mint(address pusers.AddressOrName, amount uint64) {
 func Burn(address pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	err := obl.Burn(users.Resolve(address), amount)
+	err := bar.Burn(users.Resolve(address), amount)
 	if err != nil {
 		panic(err)
 	}
@@ -113,10 +113,10 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return obl.RenderHome()
+		return bar.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := pusers.AddressOrName(parts[1])
-		balance, _ := obl.BalanceOf(users.Resolve(owner))
+		balance, _ := bar.BalanceOf(users.Resolve(owner))
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
