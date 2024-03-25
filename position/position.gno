@@ -156,7 +156,9 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	nextId++
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
+	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
 	position := Position{
 		nonce:                    u256.Zero(),
@@ -237,17 +239,19 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
+	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
 	{
-		value1 := new(u256.Uint).Sub(feeGrowthInside0LastX128.Clone(), position.feeGrowthInside0LastX128.Clone())
+		value1 := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
 		value2 := new(u256.Uint).Mul(value1, position.liquidity)
 		value3 := new(u256.Uint).Div(value2, u256.MustFromDecimal(consts.Q128))
 		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, value3)
 	}
 
 	{
-		value1 := new(u256.Uint).Sub(feeGrowthInside1LastX128.Clone(), position.feeGrowthInside1LastX128.Clone())
+		value1 := new(u256.Uint).Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
 		value2 := new(u256.Uint).Mul(value1, position.liquidity)
 		value3 := new(u256.Uint).Div(value2, u256.MustFromDecimal(consts.Q128))
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, value3)
@@ -285,7 +289,6 @@ func DecreaseLiquidity(
 
 	amount0Min := u256.MustFromDecimal(_amount0Min)
 	amount1Min := u256.MustFromDecimal(_amount1Min)
-
 	decreaseLiquidityParams := DecreaseLiquidityParams{
 		tokenId:        tokenId,
 		liquidityRatio: liquidityRatio,
@@ -301,8 +304,6 @@ func DecreaseLiquidity(
 }
 
 func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) {
-	// RETURN tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
-
 	// verify tokenId
 	if !exists(params.tokenId) {
 		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
@@ -347,7 +348,10 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	}
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
+	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
+
 	{
 		value1 := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
 		value2 := new(u256.Uint).Mul(value1, position.liquidity)
@@ -366,22 +370,8 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, value4)
 	}
 
-	// positions[params.tokenId].feeGrowthInside0LastX128 = feeGrowthInside0LastX128 // r3v4_xxx: panic: unexpected zero object id
-	// r3v4_xxx: weird hacky patch
-	if feeGrowthInside0LastX128.IsZero() {
-		position.feeGrowthInside0LastX128 = u256.Zero()
-	} else {
-		_cloneMustFromDecimal := u256.MustFromDecimal(feeGrowthInside0LastX128.ToString())
-		position.feeGrowthInside0LastX128 = _cloneMustFromDecimal
-	}
-
-	if feeGrowthInside1LastX128.IsZero() {
-		position.feeGrowthInside1LastX128 = u256.Zero()
-	} else {
-		_cloneMustFromDecimal := u256.MustFromDecimal(feeGrowthInside1LastX128.ToString())
-		position.feeGrowthInside1LastX128 = _cloneMustFromDecimal
-	}
-
+	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
+	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 	position.liquidity = new(u256.Uint).Sub(positionLiquidity, liquidityToRemove)
 	positions[params.tokenId] = position
 
@@ -396,12 +386,12 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		_burnedAmount0,
 		_burnedAmount1,
 	)
+
 	amount0 := u256.MustFromDecimal(_amount0)
 	amount1 := u256.MustFromDecimal(_amount1)
 
 	position.tokensOwed0 = new(u256.Uint).Sub(position.tokensOwed0, amount0)
 	position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
-
 	positions[params.tokenId] = position
 
 	if position.isClear() {
@@ -445,9 +435,14 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 	// verify owner or approved
 	isAuthorizedForToken(tokenId)
 
-	position := positions[tokenId]
+	// verify position
+	position, exist := positions[tokenId]
+	if !exist {
+		panic(ufmt.Sprintf("[POSITION] position.gno__CollectFee() || position(tokenId:%d) doesn't exist", tokenId))
+	}
 
 	token0, token1, fee := poolKeyDivide(position.poolKey)
+
 	pl.Burn(
 		token0,
 		token1,
@@ -461,7 +456,9 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
-	feeGrowthInside0LastX128, feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
+	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
 	{
 		value1 := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
@@ -487,8 +484,8 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 		std.GetOrigCaller().String(),
 		position.tickLower,
 		position.tickUpper,
-		consts.MAX_UINT64, // string, r3v4_xxx: current grc20 handles amount by `uint64`
-		consts.MAX_UINT64, // string, r3v4_xxx: current grc20 handles amount by `uint64`
+		consts.MAX_UINT64,
+		consts.MAX_UINT64,
 	)
 
 	amount0Uint := u256.MustFromDecimal(amount0)
@@ -496,10 +493,12 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 
 	position.tokensOwed0 = new(u256.Uint).Sub(tokensOwed0, amount0Uint)
 	position.tokensOwed1 = new(u256.Uint).Sub(tokensOwed1, amount1Uint)
+
 	positions[tokenId] = position
 
 	// handle withdrawal fee
 	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(tokenId, token0, amount0, token1, amount1)
+
 	return tokenId, withoutFee0, withoutFee1, position.poolKey
 }
 

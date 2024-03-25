@@ -102,6 +102,7 @@ func Burn(
 	liquidityAmount := u256.MustFromDecimal(_liquidityAmount)
 
 	pool := GetPool(token0Path, token1Path, fee)
+
 	position, amount0Int, amount1Int := pool.modifyPosition( // in256 x2
 		ModifyPositionParams{
 			std.PrevRealm().Addr(), // msg.sender
@@ -110,6 +111,7 @@ func Burn(
 			i256.Zero().Neg(i256.FromUint256(liquidityAmount)),
 		},
 	)
+
 	amount0 := amount0Int.Abs()
 	amount1 := amount1Int.Abs()
 
