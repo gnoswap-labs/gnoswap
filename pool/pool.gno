@@ -10,8 +10,8 @@ import (
 
 	gv "gno.land/r/demo/gov"
 
-	i256 "gno.land/p/demo/big/int256"
-	u256 "gno.land/p/demo/big/uint256"
+	i256 "gno.land/p/demo/int256"
+	u256 "gno.land/p/demo/uint256"
 )
 
 // Mint creates a new position and mints liquidity tokens then return amount0, amount1 in string
@@ -47,7 +47,7 @@ func Mint(
 		balance0Before := balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr())
 
 		from := std.GetOrigCaller() // token should be transferred from actual user(std.GetOrigCaller), not from the realm(PrevRealm)
-		to := GetOrigPkgAddr()
+		to := std.CurrentRealm().Addr()
 
 		ok := transferFromByRegisterCall(pool.token0Path, from, to, amount0.Uint64())
 		if !ok {
@@ -102,6 +102,7 @@ func Burn(
 	liquidityAmount := u256.MustFromDecimal(_liquidityAmount)
 
 	pool := GetPool(token0Path, token1Path, fee)
+
 	position, amount0Int, amount1Int := pool.modifyPosition( // in256 x2
 		ModifyPositionParams{
 			std.PrevRealm().Addr(), // msg.sender
@@ -110,6 +111,7 @@ func Burn(
 			i256.Zero().Neg(i256.FromUint256(liquidityAmount)),
 		},
 	)
+
 	amount0 := amount0Int.Abs()
 	amount1 := amount1Int.Abs()
 

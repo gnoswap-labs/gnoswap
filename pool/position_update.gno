@@ -3,7 +3,8 @@ package pool
 import (
 	"std"
 
-	i256 "gno.land/p/demo/big/int256"
+	i256 "gno.land/p/demo/int256"
+	u256 "gno.land/p/demo/uint256"
 )
 
 func (pool *Pool) updatePosition(
@@ -13,8 +14,8 @@ func (pool *Pool) updatePosition(
 	liquidityDelta *i256.Int, // int128
 	tick int32,
 ) PositionInfo {
-	_feeGrowthGlobal0X128 := pool.feeGrowthGlobal0X128
-	_feeGrowthGlobal1X128 := pool.feeGrowthGlobal1X128
+	_feeGrowthGlobal0X128 := u256.MustFromDecimal(pool.feeGrowthGlobal0X128.ToString())
+	_feeGrowthGlobal1X128 := u256.MustFromDecimal(pool.feeGrowthGlobal1X128.ToString())
 
 	var flippedLower, flippedUpper bool
 	if !(liquidityDelta.IsZero()) {
@@ -47,8 +48,6 @@ func (pool *Pool) updatePosition(
 		}
 	}
 
-	// NO LIQ, ONLY BURN 0
-
 	feeGrowthInside0X128, feeGrowthInside1X128 := pool.tickGetFeeGrowthInside(
 		tickLower,
 		tickUpper,
@@ -62,8 +61,8 @@ func (pool *Pool) updatePosition(
 	position := pool.positionUpdateWithKey(
 		positionKey,
 		liquidityDelta,
-		feeGrowthInside0X128,
-		feeGrowthInside1X128,
+		u256.MustFromDecimal(feeGrowthInside0X128.ToString()),
+		u256.MustFromDecimal(feeGrowthInside1X128.ToString()),
 	)
 
 	if liquidityDelta.IsNeg() {

@@ -9,8 +9,8 @@ import (
 
 	"gno.land/r/gnoswap/consts"
 
-	i256 "gno.land/p/demo/big/int256"
-	u256 "gno.land/p/demo/big/uint256"
+	i256 "gno.land/p/demo/int256"
+	u256 "gno.land/p/demo/uint256"
 )
 
 func _swap(

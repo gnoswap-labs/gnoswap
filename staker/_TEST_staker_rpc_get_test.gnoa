@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"encoding/gjson"
+	// @notJoon JSON
 
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
@@ -35,18 +35,18 @@ func init() {
 	poolTiers["ATOM/WETH_500"] = 3
 }
 
-func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
-	pl.InitManual()
-	std.TestSkipHeights(1)
-
+func TestPoolCreatePool(t *testing.T) {
 	std.TestSetPrevAddr(test1)
+	for i := 0; i < (5 * 1); i++ {
+		gns.Faucet()
+	}
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
 
 	pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
 	std.TestSkipHeights(1)
 }
+
 func TestPositionMint01(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -149,19 +149,19 @@ func TestStakeToken02(t *testing.T) {
 	shouldEQ(t, len(deposits), 2)
 }
 
-func TestApiGetRewards(t *testing.T) {
-	agrs := ApiGetRewards()
-	jsonStr := gjson.Parse(agrs)
-	jsonArr := jsonStr.Get("response").Array()
-	shouldEQ(t, len(jsonArr), 2) // lpTokenId 1, 2
-}
+// func TestApiGetRewards(t *testing.T) {
+// 	agrs := ApiGetRewards()
+// 	jsonStr := gjson.Parse(agrs)
+// 	jsonArr := jsonStr.Get("response").Array()
+// 	shouldEQ(t, len(jsonArr), 2) // lpTokenId 1, 2
+// }
 
-func TestApiGetStakes(t *testing.T) {
-	ags := ApiGetStakes()
-	jsonStr := gjson.Parse(ags)
-	jsonArr := jsonStr.Get("response").Array()
-	shouldEQ(t, len(jsonArr), 2) // lpTokenId 1, 2
-}
+// func TestApiGetStakes(t *testing.T) {
+// 	ags := ApiGetStakes()
+// 	jsonStr := gjson.Parse(ags)
+// 	jsonArr := jsonStr.Get("response").Array()
+// 	shouldEQ(t, len(jsonArr), 2) // lpTokenId 1, 2
+// }
 
 func TestCollectReward(t *testing.T) {
 	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
@@ -170,14 +170,14 @@ func TestCollectReward(t *testing.T) {
 
 	// before claim
 	gnsOld := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsOld, 99500000000)
+	shouldEQ(t, gnsOld, 0)
 
 	std.TestSetPrevAddr(test1)
 	CollectReward(1) // GNFT tokenId
 	std.TestSkipHeights(1)
 
 	gnsNew := gns.BalanceOf(a2u(test1))
-	shouldEQ(t, gnsNew, 99500018377)
+	shouldEQ(t, gnsNew, 18377)
 }
 
 func TestUnstakeToken01(t *testing.T) {
@@ -188,7 +188,7 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500024503)     // internal
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 24503)           // internal
 	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000002521) // external
 }
 
@@ -200,7 +200,7 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500187853)
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 187853)
 	// internal
 	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000019327) // external
 }

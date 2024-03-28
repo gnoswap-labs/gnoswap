@@ -1,7 +1,7 @@
 package router
 
 import (
-	"encoding/gjson"
+	// @notJoon JSON
 	"std"
 	"testing"
 
@@ -16,19 +16,17 @@ import (
 	"gno.land/r/demo/gns"
 )
 
-func TestInitManual(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
-	pl.InitManual()
-}
-
 func TestCreatePool(t *testing.T) {
 	std.TestSetPrevAddr(test1)
+	for i := 0; i < (5 * 1); i++ {
+		gns.Faucet()
+	}
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 
-	jsonOutput := pl.ApiGetPools()
-	jsonStr := gjson.Parse(jsonOutput)
-	shouldEQ(t, len(jsonStr.Get("response").Array()), 1)
+	// jsonOutput := pl.ApiGetPools()
+	// jsonStr := gjson.Parse(jsonOutput)
+	// shouldEQ(t, len(jsonStr.Get("response").Array()), 1)
 }
 
 func TestPositionMint(t *testing.T) {

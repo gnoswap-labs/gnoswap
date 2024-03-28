@@ -11,7 +11,7 @@ import (
 	pl "gno.land/r/demo/pool"
 	"gno.land/r/gnoswap/consts"
 
-	u256 "gno.land/p/demo/big/uint256"
+	u256 "gno.land/p/demo/uint256"
 )
 
 type TokenRatio struct {

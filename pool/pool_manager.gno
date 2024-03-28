@@ -11,36 +11,19 @@ import (
 
 	"gno.land/r/demo/gns"
 
-	u256 "gno.land/p/demo/big/uint256"
+	u256 "gno.land/p/demo/uint256"
 )
 
 var (
-	admins      []std.Address         // list of admin addresses
-	initialized bool          = false // whether the pool contract has been initialized
-
 	feeAmountTickSpacing map[uint32]int32 = make(map[uint32]int32) // maps fee to tickSpacing || map[feeAmount]tick_spacing
 	pools                map[string]*Pool = make(map[string]*Pool) // maps poolPath to pool || map[poolPath]*Pool
 )
 
-// InitManual initializes a pool contract itself
-//
-// Panics if any of the following conditions are mett:
-// - The caller is not the user
-// - The caller is not an admin
-// - Pool contract has already been initialized
-func InitManual() {
-	common.MustCallFromAdmin()
-
-	if initialized {
-		panic(ufmt.Sprintf("[POOl] pool_manager.gno__InitManual() || initialized(%t) != false", initialized))
-	}
-
+func init() {
 	feeAmountTickSpacing[100] = 2     // 0.01%
 	feeAmountTickSpacing[500] = 10    // 0.05%
 	feeAmountTickSpacing[3000] = 60   // 0.3%
 	feeAmountTickSpacing[10000] = 200 // 1%
-	admins = append(admins, std.PrevRealm().Addr())
-	initialized = true
 }
 
 // CreatePool creates a new concentrated liquidity pool with the given token0Path, token1Path, fee, and sqrtPriceX96
@@ -49,7 +32,6 @@ func InitManual() {
 // If validation passes, it calls newPool()
 //
 // Panics if any of the following conditions are met:
-// - The pool contract has not been initialized
 // - The pool already exists
 // - Both token0Path and token1Path are the same
 func CreatePool(
@@ -58,10 +40,6 @@ func CreatePool(
 	fee uint32,
 	_sqrtPriceX96 string, // uint256
 ) *Pool {
-	if !(initialized) {
-		panic(ufmt.Sprintf("[POOl] pool_manager.gno__gno__CreatePool() || expected initialized(%t) == true", initialized))
-	}
-
 	if token0Path == token1Path {
 		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
 	}
@@ -146,36 +124,6 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	}
 }
 
-// AddAdmin adds an given address to the list of admins
-//
-// Panics if any of the following conditions are met:
-// - The caller is not an admin
-func AddAdmin(addr string) {
-	common.MustCallFromAdmin()
-	admins = append(admins, std.Address(addr))
-
-}
-
-// RemoveAdmin removes given address from the list of admins
-//
-// Panics if any of the following conditions are met:
-// - The caller is not an admin
-// - The address is the last admin
-func RemoveAdmin(addr string) {
-	common.MustCallFromAdmin()
-
-	if len(admins) == 1 {
-		panic("[POOL] pool_manager.gno__RemoveAdmin() || cannot remove last admin")
-	}
-
-	for i, v := range admins {
-		if v == std.Address(addr) {
-			admins = append(admins[:i], admins[i+1:]...)
-			return
-		}
-	}
-}
-
 func newPool(
 	token0Path string,
 	token1Path string,
@@ -203,21 +151,20 @@ func newPool(
 		token1: u256.Zero(),
 	}
 
-	pool := &Pool{}
-	pool.token0Path = token0Path
-	pool.token1Path = token1Path
-	pool.balances = balances
-	pool.fee = fee
-	pool.tickSpacing = tickSpacing
-	pool.maxLiquidityPerTick = maxLiquidityPerTick
-	pool.slot0 = slot0
-	pool.feeGrowthGlobal0X128 = u256.Zero()
-	pool.feeGrowthGlobal1X128 = u256.Zero()
-	pool.protocolFees = protocolFees
-	pool.liquidity = u256.Zero()
-	pool.ticks = Ticks{}
-	pool.tickBitmaps = TickBitmaps{}
-	pool.positions = Positions{}
-
-	return pool
+	return &Pool{
+		token0Path:           token0Path,
+		token1Path:           token1Path,
+		balances:             balances,
+		fee:                  fee,
+		tickSpacing:          tickSpacing,
+		maxLiquidityPerTick:  maxLiquidityPerTick,
+		slot0:                slot0,
+		feeGrowthGlobal0X128: u256.Zero(),
+		feeGrowthGlobal1X128: u256.Zero(),
+		protocolFees:         protocolFees,
+		liquidity:            u256.Zero(),
+		ticks:                Ticks{},
+		tickBitmaps:          TickBitmaps{},
+		positions:            Positions{},
+	}
 }

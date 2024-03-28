@@ -3,7 +3,7 @@ package pool
 import (
 	"gno.land/r/gnoswap/common"
 
-	i256 "gno.land/p/demo/big/int256"
+	i256 "gno.land/p/demo/int256"
 )
 
 func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *i256.Int, *i256.Int) {
@@ -14,6 +14,7 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *i2
 		params.liquidityDelta,
 		pool.slot0.tick,
 	)
+
 	var amount0, amount1 *i256.Int
 
 	if !(params.liquidityDelta.IsZero()) {

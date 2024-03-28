@@ -7,8 +7,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/consts"
 
-	i256 "gno.land/p/demo/big/int256"
-	u256 "gno.land/p/demo/big/uint256"
+	i256 "gno.land/p/demo/int256"
+	u256 "gno.land/p/demo/uint256"
 )
 
 func positionGetKey(
@@ -28,18 +28,15 @@ func (pool *Pool) positionUpdateWithKey(
 	feeGrowthInside0X128 *u256.Uint, // uint256
 	feeGrowthInside1X128 *u256.Uint, // uint256
 ) PositionInfo {
-	// START INIT PARAM
 	liquidityDelta = liquidityDelta.NilToZero()
 	feeGrowthInside0X128 = feeGrowthInside0X128.NilToZero()
 	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
-	// END INIT PARAM
 
-	position := pool.positions[positionKey]
+	positionToUpdate := pool.positions[positionKey]
+	positionAfterUpdate := positionUpdate(positionToUpdate, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
+	pool.positions[positionKey] = positionAfterUpdate
 
-	p := positionUpdate(position, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
-	pool.positions[positionKey] = p
-
-	return p
+	return positionAfterUpdate
 }
 
 func positionUpdate(
@@ -48,17 +45,12 @@ func positionUpdate(
 	feeGrowthInside0X128 *u256.Uint, // uint256
 	feeGrowthInside1X128 *u256.Uint, // uint256
 ) PositionInfo {
-	// START INIT PARAM
+	// if self is nil, init
 	self.liquidity = self.liquidity.NilToZero()
 	self.feeGrowthInside0LastX128 = self.feeGrowthInside0LastX128.NilToZero()
 	self.feeGrowthInside1LastX128 = self.feeGrowthInside1LastX128.NilToZero()
 	self.tokensOwed0 = self.tokensOwed0.NilToZero()
 	self.tokensOwed1 = self.tokensOwed1.NilToZero()
-
-	liquidityDelta = liquidityDelta.NilToZero()
-	feeGrowthInside0X128 = feeGrowthInside0X128.NilToZero()
-	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
-	// END INIT PARAM
 
 	var liquidityNext *u256.Uint
 	if liquidityDelta.IsZero() {
