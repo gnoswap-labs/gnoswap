@@ -41,6 +41,25 @@ type SwapCache struct {
 	liquidityStart *u256.Uint // liquidity at the beginning of the swap
 }
 
+func newSwapCache(feeProtocol uint8, liquidityStart bigint) SwapCache {
+	return SwapCache{
+		feeProtocol:    feeProtocol,
+		liquidityStart: liquidityStart,
+	}
+}
+
+type SwapDirection struct {
+	feeProtocol          uint8
+	feeGrowthGlobalX128 bigint
+}
+
+func newSwapDirection(feeProtocol uint8, feeGrowthGlobalX128 bigint) SwapDirection {
+	return SwapDirection{
+		feeProtocol:          feeProtocol,
+		feeGrowthGlobalX128: feeGrowthGlobalX128,
+	}
+}
+
 type SwapState struct {
 	amountSpecifiedRemaining *i256.Int  // amount remaining to be swapped in/out of the input/output token
 	amountCalculated         *i256.Int  // amount already swapped out/in of the output/input token
@@ -49,6 +68,25 @@ type SwapState struct {
 	feeGrowthGlobalX128      *u256.Uint // global fee growth of the input token
 	protocolFee              *u256.Uint // amount of input token paid as protocol fee
 	liquidity                *u256.Uint // current liquidity in range
+}
+
+func newSwapState(
+	pool *Pool,
+	remaining bigint,
+	feeGrowthGlobalX128 bigint,
+	liquidity bigint,
+) SwapState {
+	slot0 := pool.slot0
+
+	return SwapState{
+		amountSpecifiedRemaining: remaining,
+		amountCalculated:         0,
+		sqrtPriceX96:             slot0.sqrtPriceX96,
+		tick:                     slot0.tick,
+		feeGrowthGlobalX128:      feeGrowthGlobalX128,
+		protocolFee:              0,
+		liquidity:                liquidity,
+	}
 }
 
 type StepComputations struct {
