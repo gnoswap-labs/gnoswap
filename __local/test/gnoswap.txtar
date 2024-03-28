@@ -8,8 +8,8 @@ loadpkg gno.land/r/demo/foo20
 
 loadpkg gno.land/r/gnoswap/consts
 
-loadpkg gno.land/p/demo/big/uint256
-loadpkg gno.land/p/demo/big/int256
+loadpkg gno.land/p/demo/uint256
+loadpkg gno.land/p/demo/int256
 
 loadpkg gno.land/r/gnoswap/common
 loadpkg gno.land/r/demo/gns

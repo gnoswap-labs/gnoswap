@@ -7,7 +7,7 @@ import (
 
 	pl "gno.land/r/demo/pool"
 
-	u256 "gno.land/p/demo/big/uint256"
+	u256 "gno.land/p/demo/uint256"
 )
 
 func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint) { // uint128, uint256, uint256

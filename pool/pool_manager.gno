@@ -11,7 +11,7 @@ import (
 
 	"gno.land/r/demo/gns"
 
-	u256 "gno.land/p/demo/big/uint256"
+	u256 "gno.land/p/demo/uint256"
 )
 
 var (

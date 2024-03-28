@@ -8,7 +8,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	u256 "gno.land/p/demo/big/uint256"
+	u256 "gno.land/p/demo/uint256"
 )
 
 // withdrawalFee is the fee that is charged when a user withdraws their collected fees

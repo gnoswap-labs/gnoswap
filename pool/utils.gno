@@ -9,7 +9,7 @@ import (
 
 	"gno.land/r/gnoswap/consts"
 
-	u256 "gno.land/p/demo/big/uint256"
+	u256 "gno.land/p/demo/uint256"
 )
 
 func checkTicks(tickLower, tickUpper int32) {

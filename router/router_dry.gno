@@ -6,8 +6,8 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	i256 "gno.land/p/demo/big/int256"
-	u256 "gno.land/p/demo/big/uint256"
+	i256 "gno.land/p/demo/int256"
+	u256 "gno.land/p/demo/uint256"
 )
 
 // DrySwapRoute simulates the swap route and returns the result amount

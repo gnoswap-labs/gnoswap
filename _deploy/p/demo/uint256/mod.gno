@@ -1,7 +1,3 @@
-// uint256: Fixed size 256-bit math library
-// Copyright 2021 uint256 Authors
-// SPDX-License-Identifier: BSD-3-Clause
-
 package uint256
 
 import (
@@ -10,24 +6,6 @@ import (
 
 // Some utility functions
 
-func leadingZeros(x *Uint) (z int) {
-	var t int
-	z = bits.LeadingZeros64(x.arr[3])
-	t = bits.LeadingZeros64(x.arr[2])
-	if z == 64 {
-		z = t + 64
-	}
-	t = bits.LeadingZeros64(x.arr[1])
-	if z == 128 {
-		z = t + 128
-	}
-	t = bits.LeadingZeros64(x.arr[0])
-	if z == 192 {
-		z = t + 192
-	}
-	return z
-}
-
 // Reciprocal computes a 320-bit value representing 1/m
 //
 // Notes:
@@ -35,7 +13,6 @@ func leadingZeros(x *Uint) (z int) {
 // - returns zero if m.arr[3] == 0
 // - starts with a 32-bit division, refines with newton-raphson iterations
 func Reciprocal(m *Uint) (mu [5]uint64) {
-
 	if m.arr[3] == 0 {
 		return mu
 	}
@@ -443,7 +420,6 @@ func Reciprocal(m *Uint) (mu [5]uint64) {
 //
 // requires a four-word modulus (m.arr[3] > 1) and its inverse (mu)
 func reduce4(x [8]uint64, m *Uint, mu [5]uint64) (z Uint) {
-
 	// NB: Most variable names in the comments match the pseudocode for
 	// 	Barrett reduction in the Handbook of Applied Cryptography.
 
