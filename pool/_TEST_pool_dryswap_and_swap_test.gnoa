@@ -22,13 +22,16 @@ var (
 	currentTick = int32(10000)
 )
 
-func TestInitManual(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
-	InitManual()
-
+func TestCreatePool(t *testing.T) {
+	// call gns faucet to get creation fee
 	std.TestSetPrevAddr(test1)
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
 
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	CreatePool(fooPath, barPath, fee500, sqrtPrice)
 	shouldEQ(t, len(pools), 1)
 }

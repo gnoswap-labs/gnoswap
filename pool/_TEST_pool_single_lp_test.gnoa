@@ -1,7 +1,7 @@
 package pool
 
 import (
-	"encoding/gjson"
+	// @notJoon JSON
 	"std"
 	"strconv"
 	"testing"
@@ -25,12 +25,16 @@ var (
 	test_tickUpper2 = int32(100000)
 )
 
-// 1. Init & Create Pool using Factory Contract by Gnoswap Admin
+// 1. reate Pool using Factory Contract by Gnoswap Admin
 func TestInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
-	InitManual()
-
+	// call gns faucet to get creation fee
 	std.TestSetPrevAddr(test1)
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // x2.7
 }
@@ -356,29 +360,14 @@ func TestCollectProtocol(t *testing.T) {
 	}
 }
 
-func TestAddAdmin(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
-	shouldEQ(t, len(admins), 1)
+// @notJoon JSON
+// /* GETTER_API TEST */
+// func TestApiGetPools(t *testing.T) {
+// 	gpls := ApiGetPools()
+// 	jsonStr := gjson.Parse(gpls)
 
-	AddAdmin(test1.String())
-	shouldEQ(t, len(admins), 2)
-}
+// 	// shouldEQ(t, jsonStr.Get("stat.height").Int(), std.GetHeight())
+// 	// shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), time.Now().Unix())
 
-func TestRemoveAdmin(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
-	shouldEQ(t, len(admins), 2)
-
-	RemoveAdmin(test1.String())
-	shouldEQ(t, len(admins), 1)
-}
-
-/* GETTER_API TEST */
-func TestApiGetPools(t *testing.T) {
-	gpls := ApiGetPools()
-	jsonStr := gjson.Parse(gpls)
-
-	// shouldEQ(t, jsonStr.Get("stat.height").Int(), std.GetHeight())
-	// shouldEQ(t, jsonStr.Get("stat.timestamp").Int(), time.Now().Unix())
-
-	// shouldEQ(t, len(jsonStr.Get("response").Array()), 1)
-}
+// 	// shouldEQ(t, len(jsonStr.Get("response").Array()), 1)
+// }

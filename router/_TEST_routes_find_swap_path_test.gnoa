@@ -17,13 +17,12 @@ import (
 	"gno.land/r/demo/wugnot"
 )
 
-func TestInitManual(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
-	pl.InitManual()
-}
-
 func TestPoolCreatePool(t *testing.T) {
 	std.TestSetPrevAddr(test1)
+	for i := 0; i < (5 * 10); i++ {
+		gns.Faucet()
+	}
+
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*(3+4+3))
 
 	// 1 HOPS

@@ -113,5 +113,5 @@ func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidit
 		amount1 = computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity)
 	}
 
-	return amount0.NilToZero(), amount1.NilToZero()
+	return amount0, amount1
 }

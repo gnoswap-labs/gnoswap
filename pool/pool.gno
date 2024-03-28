@@ -47,7 +47,7 @@ func Mint(
 		balance0Before := balanceOfByRegisterCall(pool.token0Path, GetOrigPkgAddr())
 
 		from := std.GetOrigCaller() // token should be transferred from actual user(std.GetOrigCaller), not from the realm(PrevRealm)
-		to := GetOrigPkgAddr()
+		to := std.CurrentRealm().Addr()
 
 		ok := transferFromByRegisterCall(pool.token0Path, from, to, amount0.Uint64())
 		if !ok {

@@ -35,13 +35,11 @@ func init() {
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
-	pl.InitManual()
-	std.TestSkipHeights(1)
-
 	std.TestSetPrevAddr(test1)
+	for i := 0; i < (5 * 1); i++ {
+		gns.Faucet()
+	}
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
-	std.TestSkipHeights(1)
 
 	pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
 	std.TestSkipHeights(1)
@@ -158,7 +156,7 @@ func TestCollectReward(t *testing.T) {
 	// before claim
 	gnsOld := gns.BalanceOf(a2u(test1))
 	std.TestSkipHeights(1)
-	shouldEQ(t, gnsOld, 99500000000)
+	shouldEQ(t, gnsOld, 0)
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
 	std.TestSetOrigCaller(test1)
@@ -167,7 +165,7 @@ func TestCollectReward(t *testing.T) {
 
 	gnsNew := gns.BalanceOf(a2u(test1))
 	std.TestSkipHeights(1)
-	shouldEQ(t, gnsNew, 99500024502)
+	shouldEQ(t, gnsNew, 24502)
 }
 
 func TestUnstakeToken01(t *testing.T) {
@@ -178,7 +176,7 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500036754)     // internal
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 36754)           // internal
 	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000003782) // external
 }
 
@@ -190,7 +188,7 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500281779)     // internal
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 281779)          // internal
 	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000028990) // external
 }
 

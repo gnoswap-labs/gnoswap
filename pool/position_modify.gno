@@ -14,6 +14,7 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *i2
 		params.liquidityDelta,
 		pool.slot0.tick,
 	)
+
 	var amount0, amount1 *i256.Int
 
 	if !(params.liquidityDelta.IsZero()) {

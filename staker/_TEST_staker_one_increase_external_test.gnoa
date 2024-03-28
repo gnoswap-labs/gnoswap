@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"encoding/gjson"
+	// @notJoon JSON
 
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
@@ -35,12 +35,11 @@ func init() {
 	poolTiers["ATOM/WETH_500"] = 3
 }
 
-func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
-	pl.InitManual()
-	std.TestSkipHeights(1)
-
+func TestPoolCreatePool(t *testing.T) {
 	std.TestSetPrevAddr(test1)
+	for i := 0; i < (5 * 1); i++ {
+		gns.Faucet()
+	}
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
 
@@ -150,17 +149,17 @@ func TestStakeToken02(t *testing.T) {
 	shouldEQ(t, len(deposits), 2)
 }
 
-func TestApiGetStakes(t *testing.T) {
-	gss := ApiGetStakes()
-	jsonStr := gjson.Parse(gss)
-	shouldEQ(t, len(jsonStr.Get("response").Array()), 2)
-}
+// func TestApiGetStakes(t *testing.T) {
+// 	gss := ApiGetStakes()
+// 	jsonStr := gjson.Parse(gss)
+// 	shouldEQ(t, len(jsonStr.Get("response").Array()), 2)
+// }
 
-func TestApiGetRewardTokens(t *testing.T) {
-	grt := ApiGetRewardTokens()
-	jsonStr := gjson.Parse(grt)
-	shouldEQ(t, len(jsonStr.Get("response").Array()), 1)
-}
+// func TestApiGetRewardTokens(t *testing.T) {
+// 	grt := ApiGetRewardTokens()
+// 	jsonStr := gjson.Parse(grt)
+// 	shouldEQ(t, len(jsonStr.Get("response").Array()), 1)
+// }
 
 func TestUnstakeToken01(t *testing.T) {
 	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
@@ -174,7 +173,7 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500018377)     // internal
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 18377)           // internal
 	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000001890) // external
 }
 
@@ -186,7 +185,7 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500140890)     // internal
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 140890)          // internal
 	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000014494) // external
 }
 
@@ -198,12 +197,10 @@ func TestEndExternalIncentive(t *testing.T) {
 	// incentive time isn't over yet
 	shouldPanicWithMsg(t, func() {
 		EndExternalIncentive(test1.String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl")
-	}, "[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(1242343950), current(1234567990)")
+	}, "[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(1242343945), current(1234567985)")
 
-	std.TestSkipHeights(9999999) // not yet, one more should be good to end incentive
-
+	std.TestSkipHeights(9999999)
 	EndExternalIncentive(test1.String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
-	std.TestSkipHeights(1)
 
 	shouldEQ(t, len(incentives), 0)
 	shouldEQ(t, len(poolIncentives["gno.land/r/demo/bar:gno.land/r/demo/foo:500"]), 0)

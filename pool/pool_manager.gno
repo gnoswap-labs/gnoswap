@@ -124,36 +124,6 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	}
 }
 
-// AddAdmin adds an given address to the list of admins
-//
-// Panics if any of the following conditions are met:
-// - The caller is not an admin
-func AddAdmin(addr string) {
-	common.MustCallFromAdmin()
-	admins = append(admins, std.Address(addr))
-
-}
-
-// RemoveAdmin removes given address from the list of admins
-//
-// Panics if any of the following conditions are met:
-// - The caller is not an admin
-// - The address is the last admin
-func RemoveAdmin(addr string) {
-	common.MustCallFromAdmin()
-
-	if len(admins) == 1 {
-		panic("[POOL] pool_manager.gno__RemoveAdmin() || cannot remove last admin")
-	}
-
-	for i, v := range admins {
-		if v == std.Address(addr) {
-			admins = append(admins[:i], admins[i+1:]...)
-			return
-		}
-	}
-}
-
 func newPool(
 	token0Path string,
 	token1Path string,

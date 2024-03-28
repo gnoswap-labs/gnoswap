@@ -34,11 +34,10 @@ func init() {
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
-	pl.InitManual()
-	std.TestSkipHeights(1)
-
 	std.TestSetPrevAddr(test1)
+	for i := 0; i < (5 * 1); i++ {
+		gns.Faucet()
+	}
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
 
@@ -166,8 +165,8 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500018377) // internal
-	shouldEQ(t, wugnot.BalanceOf(a2u(test1)), 945)      // external
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 18377)  // internal
+	shouldEQ(t, wugnot.BalanceOf(a2u(test1)), 945) // external
 }
 
 func TestUnstakeToken02(t *testing.T) {
@@ -178,8 +177,8 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 99500140890) // internal
-	shouldEQ(t, wugnot.BalanceOf(a2u(test1)), 7247)     // external
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 140890)  // internal
+	shouldEQ(t, wugnot.BalanceOf(a2u(test1)), 7247) // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {

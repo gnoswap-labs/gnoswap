@@ -1,10 +1,9 @@
 package position
 
 import (
+	// @notJoon JSON
 	"std"
 	"testing"
-
-	"encoding/gjson"
 
 	"gno.land/r/gnoswap/consts"
 
@@ -17,12 +16,14 @@ import (
 
 // 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
-	pl.InitManual()
-
 	std.TestSetPrevAddr(test1)
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
 
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	pl.CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
@@ -67,9 +68,10 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 	shouldEQ(t, fromPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
 
-// RPCs
-func TestApiGetPositions(t *testing.T) {
-	gpss := ApiGetPositions()
-	jsonStr := gjson.Parse(gpss)
-	shouldEQ(t, len(jsonStr.Get("response").Array()), 2)
-}
+// @notJoon JSON
+// // RPCs
+// func TestApiGetPositions(t *testing.T) {
+// 	gpss := ApiGetPositions()
+// 	jsonStr := gjson.Parse(gpss)
+// 	shouldEQ(t, len(jsonStr.Get("response").Array()), 2)
+// }

@@ -23,31 +23,39 @@ var (
 	test_liquidityExpect256 = u256.NewUint(100_000_000)
 )
 
-// 1. Init Pool
-func TestInit(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
-	InitManual()
-}
-
-// 2. Create Foo:Bar Pool
+// Create Foo:Bar Pool
 func TestCreateFooBarPool(t *testing.T) {
+	// call gns faucet to get creation fee
 	std.TestSetPrevAddr(test1)
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 
 	CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006")
 	shouldEQ(t, len(pools), 1)
 }
 
-// 3. Create Bar:Baz Pool
+// Create Bar:Baz Pool
 func TestCreateBarBazPool(t *testing.T) {
+	// call gns faucet to get creation fee
 	std.TestSetPrevAddr(test1)
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")
 	shouldEQ(t, len(pools), 2)
 }
 
-// 4. Mint Foo:Bar Liquidity by test1
+// Mint Foo:Bar Liquidity by test1
 func TestMintFooBarLiquidity(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -68,7 +76,7 @@ func TestMintFooBarLiquidity(t *testing.T) {
 	shouldEQ(t, amount1, "2958014")
 }
 
-// 5. Mint Bar:Baz Liquidity by test1
+// Mint Bar:Baz Liquidity by test1
 func TestMintBarBazLiquidity(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -89,7 +97,7 @@ func TestMintBarBazLiquidity(t *testing.T) {
 	shouldEQ(t, amount1, "8040315")
 }
 
-// 6. Swap Foo:Bar Foo > Bar by test1
+// Swap Foo:Bar Foo > Bar by test1
 func TestSwapFooBarFooToBar(t *testing.T) {
 	oldTest1Bar := balanceOfByRegisterCall(barPath, test1)
 	oldTest1Foo := balanceOfByRegisterCall(fooPath, test1)
@@ -128,7 +136,7 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 	shouldEQ(t, oldPoolFoo-newPoolFoo, 5882)
 }
 
-// 7. Swap Bar:Baz Bar > Baz by test1
+// Swap Bar:Baz Bar > Baz by test1
 func TestSwapBarBazBarToBaz(t *testing.T) {
 	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, test1)
 	oldtest1BazBalance := balanceOfByRegisterCall(bazPath, test1)
@@ -164,7 +172,7 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, 43457)
 }
 
-// 8. Collect Foo:Bar Fees by test1
+// Collect Foo:Bar Fees by test1
 func TestCollectFooBarFees(t *testing.T) {
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
@@ -202,7 +210,7 @@ func TestCollectFooBarFees(t *testing.T) {
 	shouldEQ(t, oldPoolToken0Balance-newPoolToken0Balance, strToUint64(c0))
 }
 
-// 9. Collect Bar:Baz Fees by test1
+// Collect Bar:Baz Fees by test1
 func TestCollectBarBazFees(t *testing.T) {
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
@@ -240,7 +248,7 @@ func TestCollectBarBazFees(t *testing.T) {
 	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, c1)
 }
 
-// 10. Burn Foo:Bar Liquidity by test1
+// Burn Foo:Bar Liquidity by test1
 func TestBurnFooBarLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 	std.TestSetPrevRealm(consts.POSITION_PATH)
@@ -265,7 +273,7 @@ func TestBurnFooBarLiquidity(t *testing.T) {
 	shouldEQ(t, true, new(u256.Uint).Sub(poolOldLiquidity, poolNewLiquidity).Eq(test_liquidityExpect256))
 }
 
-// 11. Burn Bar:Baz Liquidity by test1
+// Burn Bar:Baz Liquidity by test1
 func TestBurnBarBazLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 	std.TestSetPrevRealm(consts.POSITION_PATH)
@@ -290,7 +298,7 @@ func TestBurnBarBazLiquidity(t *testing.T) {
 	// shouldEQ(t, poolOldLiquidity-poolNewLiquidity, test_liquidityExpect256)
 }
 
-// 12. Collect Foo:Bar burned Liquidity by test1
+// Collect Foo:Bar burned Liquidity by test1
 func TestCollectFooBarLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 	std.TestSetPrevRealm(consts.POSITION_PATH)
@@ -325,7 +333,7 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 	shouldEQ(t, oldPoolToken0Balance-newPoolToken0Balance, strToUint64(c1))
 }
 
-// 13. Collect Bar:Baz burned Liquidity by test1
+// Collect Bar:Baz burned Liquidity by test1
 func TestCollectBarBazLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 	std.TestSetPrevRealm(consts.POSITION_PATH)
