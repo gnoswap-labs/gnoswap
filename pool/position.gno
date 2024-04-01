@@ -28,6 +28,7 @@ func (pool *Pool) positionUpdateWithKey(
 	feeGrowthInside0X128 *u256.Uint, // uint256
 	feeGrowthInside1X128 *u256.Uint, // uint256
 ) PositionInfo {
+	// PARAM INIT
 	liquidityDelta = liquidityDelta.NilToZero()
 	feeGrowthInside0X128 = feeGrowthInside0X128.NilToZero()
 	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
@@ -45,12 +46,7 @@ func positionUpdate(
 	feeGrowthInside0X128 *u256.Uint, // uint256
 	feeGrowthInside1X128 *u256.Uint, // uint256
 ) PositionInfo {
-	// if self is nil, init
-	self.liquidity = self.liquidity.NilToZero()
-	self.feeGrowthInside0LastX128 = self.feeGrowthInside0LastX128.NilToZero()
-	self.feeGrowthInside1LastX128 = self.feeGrowthInside1LastX128.NilToZero()
-	self.tokensOwed0 = self.tokensOwed0.NilToZero()
-	self.tokensOwed1 = self.tokensOwed1.NilToZero()
+	self.init()
 
 	var liquidityNext *u256.Uint
 	if liquidityDelta.IsZero() {

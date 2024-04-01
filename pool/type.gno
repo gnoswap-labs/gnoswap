@@ -73,6 +73,14 @@ type PositionInfo struct {
 	tokensOwed1 *u256.Uint
 }
 
+func (p *PositionInfo) init() {
+	p.liquidity = p.liquidity.NilToZero()
+	p.feeGrowthInside0LastX128 = p.feeGrowthInside0LastX128.NilToZero()
+	p.feeGrowthInside1LastX128 = p.feeGrowthInside1LastX128.NilToZero()
+	p.tokensOwed0 = p.tokensOwed0.NilToZero()
+	p.tokensOwed1 = p.tokensOwed1.NilToZero()
+}
+
 type TickInfo struct {
 	liquidityGross *u256.Uint // total position liquidity that references this tick
 	liquidityNet   *i256.Int  // amount of net liquidity added (subtracted) when tick is crossed from left to right (right to left)
@@ -93,6 +101,14 @@ type TickInfo struct {
 	secondsOutside uint32
 
 	initialized bool // whether the tick is initialized
+}
+
+func (t *TickInfo) init() {
+	t.liquidityGross = t.liquidityGross.NilToZero()
+	t.liquidityNet = t.liquidityNet.NilToZero()
+	t.feeGrowthOutside0X128 = t.feeGrowthOutside0X128.NilToZero()
+	t.feeGrowthOutside1X128 = t.feeGrowthOutside1X128.NilToZero()
+	t.secondsPerLiquidityOutsideX128 = t.secondsPerLiquidityOutsideX128.NilToZero()
 }
 
 type Ticks map[int32]TickInfo          // tick => TickInfo
