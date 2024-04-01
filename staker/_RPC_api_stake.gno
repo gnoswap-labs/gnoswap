@@ -1,10 +1,10 @@
 package staker
 
 import (
-	"encoding/json"
 	"std"
 	"time"
 
+	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/demo/uint256"
@@ -96,66 +96,34 @@ func ApiGetRewards() string {
 		Response: lpTokenRewards,
 	}
 
-	rr, err := json.Marshal(r)
-	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewards() || json marshal error: %v", err))
-	}
+	// STAT NODE
+	_stat := json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
 
-	return string(rr)
-}
-
-func ApiGetRewardByLpTokenId(lpTokenId uint64) string {
-	deposit, exist := deposits[lpTokenId]
-	if !exist {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardByLpTokenId() || lpTokenId(%d) deposit does not exist", lpTokenId))
-	}
-
-	rewards := []Reward{}
-
-	// get internal gns reward
-	internalGNS := rewardMathComputeInternalRewardAmount(lpTokenId, deposit)
-	if internalGNS.Gt(u256.Zero()) {
-		rewards = append(rewards, Reward{
-			IncentiveType:     "INTERNAL",
-			TargetPoolPath:    deposit.targetPoolPath,
-			RewardTokenPath:   INTERNAL_REWARD_TOKEN_PATH,
-			RewardTokenAmount: internalGNS.ToString(),
+	// RESPONSE (ARRAY) NODE
+	responses := json.ArrayNode("", []*json.Node{})
+	for i, reward := range r.Response {
+		_rewardNode := json.ObjectNode("", map[string]*json.Node{
+			"lpTokenId": json.NumberNode("lpTokenId", float64(reward.LpTokenId)),
+			"address":   json.StringNode("address", reward.Address),
+			"rewards":   json.ArrayNode("rewards", makeRewardsArray(reward.Rewards)),
 		})
+		responses.AppendArray(_rewardNode)
 	}
 
-	// find all external reward list for poolPath which lpTokenId is staked
-	for _, incentiveId := range poolIncentives[deposit.targetPoolPath] {
-		externalReward := rewardMathComputeExternalRewardAmount(lpTokenId, deposit, incentives[incentiveId])
-		rewards = append(rewards, Reward{
-			IncentiveType:     "EXTERNAL",
-			TargetPoolPath:    deposit.targetPoolPath,
-			RewardTokenPath:   incentives[incentiveId].rewardToken,
-			RewardTokenAmount: externalReward.ToString(),
-		})
-	}
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     _stat,
+		"response": responses,
+	})
 
-	lpTokenReward := LpTokenReward{
-		LpTokenId: lpTokenId,
-		Address:   deposit.owner.String(),
-		Rewards:   rewards,
-	}
-
-	qb := ResponseQueryBase{
-		Height:    std.GetHeight(),
-		Timestamp: time.Now().Unix(),
-	}
-
-	r := ResponseApiGetRewardByLpTokenId{
-		Stat:     qb,
-		Response: lpTokenReward,
-	}
-
-	rr, err := json.Marshal(r)
+	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardByLpTokenId() || json marshal error: %v", err))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewards() || json marshal error: %s", err.Error()))
 	}
 
-	return string(rr)
+	return string(b)
 }
 
 func ApiGetStakes() string {
@@ -180,16 +148,54 @@ func ApiGetStakes() string {
 		Response: stakes,
 	}
 
-	rr, err := json.Marshal(r)
-	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetStakes() || json marshal error: %v", err))
+	// STAT NODE
+	_stat := json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
+
+	// RESPONSE (ARRAY) NODE
+	responses := json.ArrayNode("", []*json.Node{})
+	for i, stake := range r.Response {
+		_stakeNode := json.ObjectNode("", map[string]*json.Node{
+			"tokenId":        json.NumberNode("tokenId", float64(stake.TokenId)),
+			"owner":          json.StringNode("owner", stake.Owner.String()),
+			"numberOfStakes": json.NumberNode("numberOfStakes", float64(stake.NumberOfStakes)),
+			"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(stake.StakeTimestamp)),
+			"targetPoolPath": json.StringNode("targetPoolPath", stake.TargetPoolPath),
+		})
+		responses.AppendArray(_stakeNode)
 	}
 
-	return string(rr)
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     _stat,
+		"response": responses,
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetStakes() || json marshal error: %s", err.Error()))
+	}
+
+	return string(b)
 }
 
 // for off chain to check if lpTokenId is staked via RPC
 func IsStaked(tokenId uint64) bool {
 	_, exist := deposits[tokenId]
 	return exist
+}
+
+func makeRewardsArray(rewards []Reward) []*json.Node {
+	rewardsArray := make([]*json.Node, len(rewards))
+
+	for i, reward := range rewards {
+		rewardsArray[i] = json.ObjectNode("", map[string]*json.Node{
+			"incentiveType":     json.StringNode("incentiveType", reward.IncentiveType),
+			"targetPoolPath":    json.StringNode("targetPoolPath", reward.TargetPoolPath),
+			"rewardTokenPath":   json.StringNode("rewardTokenPath", reward.RewardTokenPath),
+			"rewardTokenAmount": json.StringNode("rewardTokenAmount", reward.RewardTokenAmount),
+		})
+	}
+	return rewardsArray
 }
