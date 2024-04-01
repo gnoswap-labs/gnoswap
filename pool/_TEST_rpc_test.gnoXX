@@ -4,7 +4,7 @@ import (
 	"std"
 	"testing"
 
-	// @notJoon JSON
+	"gno.land/p/demo/json"
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/baz"
@@ -106,10 +106,19 @@ func TestMintBarBazLiquidity(t *testing.T) {
 	std.TestSkipHeights(1)
 }
 
-// @notJoon JSON
-// // API TESTS
-// func TestApiGetPools(t *testing.T) {
-// 	jsonStr := ApiGetPools()
-// 	jsonArr := gjson.Parse(jsonStr).Get("response").Array()
-// 	shouldEQ(t, len(jsonArr), 2)
-// }
+// GETTER_API TEST
+func TestApiGetPools(t *testing.T) {
+	gpls := ApiGetPools()
+
+	root, err := json.Unmarshal([]byte(gpls))
+	if err != nil {
+		panic(err)
+	}
+
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, response.Size(), 2)
+}
