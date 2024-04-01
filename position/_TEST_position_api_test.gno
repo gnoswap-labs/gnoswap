@@ -1,7 +1,8 @@
 package position
 
 import (
-	// @notJoon JSON
+	"gno.land/p/demo/json"
+
 	"std"
 	"testing"
 
@@ -68,10 +69,19 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 	shouldEQ(t, fromPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
 
-// @notJoon JSON
-// // RPCs
-// func TestApiGetPositions(t *testing.T) {
-// 	gpss := ApiGetPositions()
-// 	jsonStr := gjson.Parse(gpss)
-// 	shouldEQ(t, len(jsonStr.Get("response").Array()), 2)
-// }
+// RPCs
+func TestApiGetPositions(t *testing.T) {
+	gpss := ApiGetPositions()
+
+	root, err := json.Unmarshal([]byte(gpss))
+	if err != nil {
+		panic(err)
+	}
+
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, response.Size(), 2)
+}

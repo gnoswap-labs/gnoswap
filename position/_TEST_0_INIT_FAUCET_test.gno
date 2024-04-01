@@ -13,7 +13,7 @@ import (
 func init() {
 	std.TestSetPrevAddr(test1)
 
-	// GIVE 100_000_000_000(u( ≈ 100_000
+	// GIVE 100_000_000_000(u) ≈ 100_000
 	for i := 0; i < 100; i++ {
 		foo.Faucet()
 		bar.Faucet()
