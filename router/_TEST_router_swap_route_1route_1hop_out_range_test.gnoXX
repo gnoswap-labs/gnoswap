@@ -1,9 +1,10 @@
 package router
 
 import (
-	// @notJoon JSON
 	"std"
 	"testing"
+
+	"gno.land/p/demo/json"
 
 	"gno.land/r/gnoswap/consts"
 
@@ -12,7 +13,6 @@ import (
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/baz"
-
 	"gno.land/r/demo/gns"
 )
 
@@ -24,9 +24,18 @@ func TestCreatePool(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 
-	// jsonOutput := pl.ApiGetPools()
-	// jsonStr := gjson.Parse(jsonOutput)
-	// shouldEQ(t, len(jsonStr.Get("response").Array()), 1)
+	jsonStr := pl.ApiGetPools()
+	root, err := json.Unmarshal([]byte(jsonStr))
+	if err != nil {
+		panic(err)
+	}
+
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, response.Size(), 1)
 }
 
 func TestPositionMint(t *testing.T) {

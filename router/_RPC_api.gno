@@ -1,15 +1,16 @@
 package router
 
 import (
-	"encoding/json"
 	"std"
 	"time"
 
+	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
 
 	pl "gno.land/r/demo/pool"
-	"gno.land/r/gnoswap/consts"
 
 	u256 "gno.land/p/demo/uint256"
 )
@@ -41,12 +42,33 @@ func ApiGetRatiosFromBase() string {
 		Response: ratios,
 	}
 
-	rr, err := json.Marshal(r)
-	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] _RPC_api.gno()__ApiGetRatioFromBase || json.Marshal error with %v", err))
+	// STAT NODE
+	_stat := json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
+
+	// RESPONSE (ARRAY) NODE
+	responses := json.ArrayNode("", []*json.Node{})
+	for i, pool := range r.Response {
+		_routerNode := json.ObjectNode("", map[string]*json.Node{
+			"token": json.StringNode("token", pool.Token),
+			"ratio": json.StringNode("ratio", pool.Ratio),
+		})
+		responses.AppendArray(_routerNode)
 	}
 
-	return string(rr)
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     _stat,
+		"response": responses,
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(ufmt.Sprintf("[ROUTER] _RPC_api.gno__ApiGetRatiosFromBase() || error marshalling json: %s", err.Error()))
+	}
+
+	return string(b)
 }
 
 func findRatios(maxHops int) []TokenRatio {
