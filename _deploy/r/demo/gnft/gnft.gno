@@ -36,7 +36,7 @@ func TotalSupply() uint64 {
 func BalanceOf(user pusers.AddressOrName) uint64 {
 	balance, err := gnft.BalanceOf(users.Resolve(user))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	return balance
@@ -45,7 +45,7 @@ func BalanceOf(user pusers.AddressOrName) uint64 {
 func OwnerOf(tid grc721.TokenID) std.Address {
 	owner, err := gnft.OwnerOf(tid)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	return owner
@@ -69,21 +69,21 @@ func GetApproved(tid grc721.TokenID) (std.Address, bool) {
 func Approve(user pusers.AddressOrName, tid grc721.TokenID) {
 	err := gnft.Approve(users.Resolve(user), tid)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
 func SetApprovalForAll(user pusers.AddressOrName, approved bool) {
 	err := gnft.SetApprovalForAll(users.Resolve(user), approved)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
 func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
 	err := gnft.TransferFrom(users.Resolve(from), users.Resolve(to), tid)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
@@ -94,7 +94,7 @@ func Mint(to pusers.AddressOrName, tid grc721.TokenID) {
 	assertIsAdmin(caller)
 	err := gnft.Mint(users.Resolve(to), tid)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
@@ -103,7 +103,7 @@ func Burn(tid grc721.TokenID) {
 	assertIsAdmin(caller)
 	err := gnft.Burn(tid)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
