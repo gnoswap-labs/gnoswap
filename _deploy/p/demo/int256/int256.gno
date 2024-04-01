@@ -1,4 +1,4 @@
-// ported from github.com/mempooler/int256
+// This package provides a 256-bit signed integer type, Int, and associated functions.
 package int256
 
 import (
@@ -69,7 +69,6 @@ func MustFromDecimal(s string) *Int {
 
 // SetString sets s to the value of z and returns z and a boolean indicating success.
 func (z *Int) SetString(s string) (*Int, error) {
-	origin := s
 	neg := false
 	// Remove max one leading +
 	if len(s) > 0 && s[0] == '+' {
