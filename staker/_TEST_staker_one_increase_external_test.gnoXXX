@@ -35,7 +35,7 @@ func init() {
 	poolTiers["ATOM/WETH_500"] = 3
 }
 
-func TestPoolInitCreatePool(t *testing.T) {
+func TestPoolCreatePool(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	for i := 0; i < (5 * 1); i++ {
 		gns.Faucet()
@@ -119,10 +119,15 @@ func TestCreateExternalIncentive(t *testing.T) {
 	CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/foo:500", // targetPoolPath
 		oblPath,                            // rewardToken
-		"10000000000",                      // rewardAmount
+		"1000000000",                       // rewardAmount
 		time.Now().Unix(),                  // startTimestamp
 		time.Now().Unix()+TIMESTAMP_90DAYS, // endTimestamp
 	)
+	std.TestSkipHeights(1)
+
+	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
+	std.TestSkipHeights(1)
+	CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/foo:500", oblPath, "100000000", time.Now().Unix(), time.Now().Unix()+TIMESTAMP_90DAYS)
 	std.TestSkipHeights(1)
 }
 
@@ -168,8 +173,8 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 18377)           // internal
-	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499990000000945) // external
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 18377)      // internal
+	shouldEQ(t, obl.BalanceOf(a2u(test1)), 8900000103) // external
 }
 
 func TestUnstakeToken02(t *testing.T) {
@@ -180,15 +185,22 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 140890)          // internal
-	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499990000007247) // external
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 140890)     // internal
+	shouldEQ(t, obl.BalanceOf(a2u(test1)), 8900000796) // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {
+	shouldEQ(t, len(incentives), 1)
+
 	std.TestSetOrigCaller(test1)
+
+	// incentive time isn't over yet
+	shouldPanicWithMsg(t, func() {
+		EndExternalIncentive(test1.String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl")
+	}, "[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(1242343945), current(1234567985)")
+
 	std.TestSkipHeights(9999999)
-	EndExternalIncentive(std.GetOrigCaller().String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
-	std.TestSkipHeights(1)
+	EndExternalIncentive(test1.String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
 
 	shouldEQ(t, len(incentives), 0)
 	shouldEQ(t, len(poolIncentives["gno.land/r/demo/bar:gno.land/r/demo/foo:500"]), 0)

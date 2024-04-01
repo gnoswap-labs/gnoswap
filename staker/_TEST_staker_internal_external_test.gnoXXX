@@ -228,13 +228,13 @@ func TestCollectExternalReward(t *testing.T) {
 
 	// before claim
 	oblOld := obl.BalanceOf(a2u(test1))
-	shouldEQ(t, oblOld, 499999900000000)
+	shouldEQ(t, oblOld, 9900000000)
 
 	CollectReward(3)
 	std.TestSkipHeights(1)
 
 	oblNew := obl.BalanceOf(a2u(test1))
-	shouldEQ(t, oblNew, 499999900020915)
+	shouldEQ(t, oblNew, 9900020915)
 }
 
 func TestCollectAll(t *testing.T) {
@@ -252,7 +252,7 @@ func TestUnstakeToken1(t *testing.T) {
 	gnsOld := gns.BalanceOf(a2u(test1))
 	oblOld := obl.BalanceOf(a2u(test1))
 	shouldEQ(t, gnsOld, 66009736)
-	shouldEQ(t, oblOld, 499999900020936)
+	shouldEQ(t, oblOld, 9900020936)
 
 	std.TestSkipHeights(100000)
 	UnstakeToken(1)
@@ -265,7 +265,7 @@ func TestUnstakeToken1(t *testing.T) {
 
 	UnstakeToken(3)
 	oblNew := obl.BalanceOf(a2u(test1))
-	shouldEQ(t, oblNew, 499999903499997)
+	shouldEQ(t, oblNew, 9903499997)
 
 	std.TestSkipHeights(1)
 }

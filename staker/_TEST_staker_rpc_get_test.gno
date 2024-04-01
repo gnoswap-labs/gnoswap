@@ -5,18 +5,19 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/r/gnoswap/consts"
+	// @notJoon JSON
 
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
 
-	"gno.land/r/demo/gnft"
-
 	"gno.land/r/demo/bar"
-	"gno.land/r/demo/qux"
-
 	"gno.land/r/demo/gns"
 	"gno.land/r/demo/obl"
+	"gno.land/r/demo/qux"
+
+	"gno.land/r/demo/gnft"
+
+	"gno.land/r/gnoswap/consts"
 )
 
 func init() {
@@ -34,12 +35,13 @@ func init() {
 	poolTiers["ATOM/WETH_500"] = 3
 }
 
-func TestPoolInitCreatePool(t *testing.T) {
+func TestPoolCreatePool(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	for i := 0; i < (5 * 1); i++ {
 		gns.Faucet()
 	}
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	std.TestSkipHeights(1)
 
 	pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
 	std.TestSkipHeights(1)
@@ -54,14 +56,14 @@ func TestPositionMint01(t *testing.T) {
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		barPath,      // token0
 		quxPath,      // token1
-		uint16(500),  // fee
+		fee500,       // fee
 		int32(9000),  // tickLower
 		int32(11000), // tickUpper
 		"1000",       // amount0Desired
 		"1000",       // amount1Desired
 		"1",          // amount0Min
 		"1",          // amount1Min
-		max_timeout,  // deadline
+		max_timeout,
 		test1.String(),
 	)
 	std.TestSkipHeights(1)
@@ -71,7 +73,7 @@ func TestPositionMint01(t *testing.T) {
 	shouldEQ(t, amount0, "368")
 	shouldEQ(t, amount1, "999")
 
-	// approve nft to staker
+	// approve nft to staker for staking
 	std.TestSetPrevAddr(test1)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
 	std.TestSkipHeights(1)
@@ -86,14 +88,14 @@ func TestPositionMint02(t *testing.T) {
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		barPath,      // token0
 		quxPath,      // token1
-		uint16(500),  // fee
+		fee500,       // fee
 		int32(9100),  // tickLower
 		int32(12000), // tickUpper
 		"5000",       // amount0Desired
 		"5000",       // amount1Desired
 		"1",          // amount0Min
 		"1",          // amount1Min
-		max_timeout,  // deadline
+		max_timeout,
 		test1.String(),
 	)
 	std.TestSkipHeights(1)
@@ -111,22 +113,21 @@ func TestPositionMint02(t *testing.T) {
 
 func TestCreateExternalIncentive(t *testing.T) {
 	std.TestSetPrevAddr(test1)
-	obl.Approve(a2u(consts.STAKER_ADDR), uint64(10_000_000_000))
+	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
 	std.TestSkipHeights(1)
 
 	CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/qux:500", // targetPoolPath
-		"gno.land/r/demo/obl",                         // rewardToken
-		"10000000000",                                 // rewardAmount
-		time.Now().Unix(),                             // startTimestamp
-		time.Now().Unix()+TIMESTAMP_90DAYS,            // endTimestamp
+		oblPath,                            // rewardToken
+		"1000000000",                       // rewardAmount
+		time.Now().Unix(),                  // startTimestamp
+		time.Now().Unix()+TIMESTAMP_90DAYS, // endTimestamp
 	)
 	std.TestSkipHeights(1)
 
-	obl.Approve(a2u(consts.STAKER_ADDR), uint64(10_000_000_000))
+	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
 	std.TestSkipHeights(1)
-
-	CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/qux:500", "gno.land/r/demo/obl", "10000000000", time.Now().Unix(), time.Now().Unix()+TIMESTAMP_90DAYS)
+	CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/qux:500", oblPath, "1000000000", time.Now().Unix(), time.Now().Unix()+TIMESTAMP_90DAYS)
 	std.TestSkipHeights(1)
 }
 
@@ -148,6 +149,20 @@ func TestStakeToken02(t *testing.T) {
 	shouldEQ(t, len(deposits), 2)
 }
 
+// func TestApiGetRewards(t *testing.T) {
+// 	agrs := ApiGetRewards()
+// 	jsonStr := gjson.Parse(agrs)
+// 	jsonArr := jsonStr.Get("response").Array()
+// 	shouldEQ(t, len(jsonArr), 2) // lpTokenId 1, 2
+// }
+
+// func TestApiGetStakes(t *testing.T) {
+// 	ags := ApiGetStakes()
+// 	jsonStr := gjson.Parse(ags)
+// 	jsonArr := jsonStr.Get("response").Array()
+// 	shouldEQ(t, len(jsonArr), 2) // lpTokenId 1, 2
+// }
+
 func TestCollectReward(t *testing.T) {
 	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
 	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // internal reward distribution
@@ -155,17 +170,14 @@ func TestCollectReward(t *testing.T) {
 
 	// before claim
 	gnsOld := gns.BalanceOf(a2u(test1))
-	std.TestSkipHeights(1)
 	shouldEQ(t, gnsOld, 0)
 
-	std.TestSetPrevRealm(consts.STAKER_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetPrevAddr(test1)
 	CollectReward(1) // GNFT tokenId
 	std.TestSkipHeights(1)
 
 	gnsNew := gns.BalanceOf(a2u(test1))
-	std.TestSkipHeights(1)
-	shouldEQ(t, gnsNew, 24502)
+	shouldEQ(t, gnsNew, 18377)
 }
 
 func TestUnstakeToken01(t *testing.T) {
@@ -176,8 +188,8 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 36754)           // internal
-	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000003782) // external
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 24503)      // internal
+	shouldEQ(t, obl.BalanceOf(a2u(test1)), 8000000253) // external
 }
 
 func TestUnstakeToken02(t *testing.T) {
@@ -188,12 +200,13 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 281779)          // internal
-	shouldEQ(t, obl.BalanceOf(a2u(test1)), 499980000028990) // external
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 187853)
+	// internal
+	shouldEQ(t, obl.BalanceOf(a2u(test1)), 8000001933) // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {
-	std.TestSetPrevAddr(test1)
+	std.TestSetOrigCaller(test1)
 	std.TestSkipHeights(9999999)
 	EndExternalIncentive(std.GetOrigCaller().String(), "gno.land/r/demo/bar:gno.land/r/demo/qux:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
 	std.TestSkipHeights(1)
