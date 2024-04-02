@@ -7,6 +7,8 @@ import (
 
 	"gno.land/r/gnoswap/consts"
 
+	plp "gno.land/p/demo/gnoswap/pool" // pool package
+
 	i256 "gno.land/p/demo/gnoswap/int256"
 	u256 "gno.land/p/demo/gnoswap/uint256"
 )
@@ -121,13 +123,17 @@ func DrySwap(
 			sqrtRatioTargetX96 = step.sqrtPriceNextX96
 		}
 
-		state.sqrtPriceX96, step.amountIn, step.amountOut, step.feeAmount = swapMathComputeSwapStep(
+		_sqrtPriceX96Str, _amountInStr, _amountOutStr, _feeAmountStr := plp.SwapMathComputeSwapStepStr(
 			state.sqrtPriceX96,
 			sqrtRatioTargetX96,
 			state.liquidity,
 			state.amountSpecifiedRemaining,
 			uint64(pool.fee),
 		)
+		state.sqrtPriceX96 = u256.MustFromDecimal(_sqrtPriceX96Str)
+		step.amountIn = u256.MustFromDecimal(_amountInStr)
+		step.amountOut = u256.MustFromDecimal(_amountOutStr)
+		step.feeAmount = u256.MustFromDecimal(_feeAmountStr)
 
 		amountInWithFee := i256.FromUint256(new(u256.Uint).Add(step.amountIn, step.feeAmount))
 		if exactInput {

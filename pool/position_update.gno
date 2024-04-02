@@ -67,11 +67,13 @@ func (pool *Pool) updatePosition(
 
 	if liquidityDelta.IsNeg() {
 		if flippedLower {
-			pool.tickClear(tickLower)
+			//pool.tickClear(tickLower)
+			delete(pool.ticks, tickLower)
 		}
 
 		if flippedUpper {
-			pool.tickClear(tickUpper)
+			//pool.tickClear(tickUpper)
+			delete(pool.ticks, tickUpper)
 		}
 	}
 

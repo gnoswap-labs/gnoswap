@@ -5,13 +5,13 @@ import (
 	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
-func swapMathComputeSwapStep(
+func SwapMathComputeSwapStepStr(
 	sqrtRatioCurrentX96 *u256.Uint, // uint160
 	sqrtRatioTargetX96 *u256.Uint, // uint160
 	liquidity *u256.Uint, // uint128
 	amountRemaining *i256.Int, // int256
 	feePips uint64,
-) (*u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint) { // ) (sqrtRatioNextX96, amountIn, amountOut, feeAmount *u256.Uint) {
+) (string, string, string, string) { // (sqrtRatioNextX96, amountIn, amountOut, feeAmount *u256.Uint)
 	isToken1Expensive := sqrtRatioCurrentX96.Gte(sqrtRatioTargetX96)
 
 	// POSTIVIE == EXACT_IN => Estimated AmountOut
@@ -107,5 +107,5 @@ func swapMathComputeSwapStep(
 	if !exactIn && !(amountOut.IsZero()) {
 		amountOut = amountOut.Add(amountOut, u256.NewUint(1))
 	}
-	return sqrtRatioNextX96, amountIn, amountOut, feeAmount
+	return sqrtRatioNextX96.ToString(), amountIn.ToString(), amountOut.ToString(), feeAmount.ToString()
 }
