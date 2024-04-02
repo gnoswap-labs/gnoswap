@@ -94,6 +94,7 @@ The contracts can be tested using [testscript](https://github.com/gnolang/gno/bl
 ```
 $ cd $WORKDIR/gnoswap
 $ cp __local/test/gnoswap.txtar $WORKDIR/gno/gno.land/cmd/gnoland/testdata/
+$ cp -R x/default_token_register $WORKDIR/gno/examples/gno.land/r/demo
 $ cd $WORKDIR/gno/gno.land/cmd/gnoland
 $ go test -v . -run Testdata/gnoswap
 ```
