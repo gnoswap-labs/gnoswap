@@ -1,8 +1,6 @@
 package pool
 
 import (
-	"gno.land/r/gnoswap/consts"
-
 	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
@@ -11,10 +9,10 @@ type bitShift struct {
 	shift      uint
 }
 
-func bitMathMostSignificantBit(x *u256.Uint) uint8 {
+func BitMathMostSignificantBit(x *u256.Uint) uint8 {
 	shifts := []bitShift{
-		{u256.MustFromDecimal(consts.Q128), 128}, // 2^128
-		{u256.MustFromDecimal(consts.Q64), 64},   // 2^64
+		{u256.MustFromDecimal(Q128), 128}, // 2^128
+		{u256.MustFromDecimal(Q64), 64},   // 2^64
 		{u256.NewUint(0x100000000), 32},
 		{u256.NewUint(0x10000), 16},
 		{u256.NewUint(0x100), 8},
@@ -34,13 +32,13 @@ func bitMathMostSignificantBit(x *u256.Uint) uint8 {
 	return r
 }
 
-func bitMathLeastSignificantBit(x *u256.Uint) uint8 {
+func BitMathLeastSignificantBit(x *u256.Uint) uint8 {
 	shifts := []bitShift{
-		{u256.MustFromDecimal(consts.MAX_UINT128), 128},
-		{u256.MustFromDecimal(consts.MAX_UINT64), 64},
-		{u256.MustFromDecimal(consts.MAX_UINT32), 32},
-		{u256.MustFromDecimal(consts.MAX_UINT16), 16},
-		{u256.MustFromDecimal(consts.MAX_UINT8), 8},
+		{u256.MustFromDecimal(MAX_UINT128), 128},
+		{u256.MustFromDecimal(MAX_UINT64), 64},
+		{u256.MustFromDecimal(MAX_UINT32), 32},
+		{u256.MustFromDecimal(MAX_UINT16), 16},
+		{u256.MustFromDecimal(MAX_UINT8), 8},
 		{u256.NewUint(0xf), 4},
 		{u256.NewUint(0x3), 2},
 		{u256.NewUint(0x1), 1},

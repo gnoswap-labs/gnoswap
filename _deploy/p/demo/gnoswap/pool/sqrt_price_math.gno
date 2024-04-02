@@ -5,11 +5,6 @@ import (
 	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
-const (
-	MAX_UINT160 string = "1461501637330902918203684832716283019655932542975"
-	Q96         string = "79228162514264337593543950336" // 2 ** 96
-)
-
 func sqrtPriceMathGetNextSqrtPriceFromInput(
 	sqrtPX96 *u256.Uint, // uint160
 	liquidity *u256.Uint, // uint128
