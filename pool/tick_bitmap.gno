@@ -4,7 +4,9 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/consts"
 
-	u256 "gno.land/p/demo/uint256"
+	plp "gno.land/p/demo/gnoswap/pool"
+
+	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
 func tickBitmapPosition(tick int32) (int16, uint8) {
@@ -57,7 +59,7 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 		initialized := !(masked.IsZero())
 
 		if initialized {
-			next := (compress - int32(bitPos-bitMathMostSignificantBit(masked))) * tickSpacing
+			next := (compress - int32(bitPos-plp.BitMathMostSignificantBit(masked))) * tickSpacing
 			return next, initialized
 		}
 
@@ -77,7 +79,7 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 
 	initialized := !(masked.IsZero())
 	if initialized {
-		next := (compress + 1 + int32(bitMathLeastSignificantBit(masked)-bitPos)) * tickSpacing
+		next := (compress + 1 + int32(plp.BitMathLeastSignificantBit(masked)-bitPos)) * tickSpacing
 		return next, initialized
 	} else {
 		next := (compress + 1 + int32(255-bitPos)) * tickSpacing

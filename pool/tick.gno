@@ -3,8 +3,8 @@ package pool
 import (
 	"gno.land/r/gnoswap/consts"
 
-	i256 "gno.land/p/demo/int256"
-	u256 "gno.land/p/demo/uint256"
+	i256 "gno.land/p/demo/gnoswap/int256"
+	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
 func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
@@ -53,7 +53,7 @@ func (pool *Pool) tickGetFeeGrowthInside(
 func (pool *Pool) tickUpdate(
 	tick int32,
 	tickCurrent int32,
-	liquidityDelta *i256.Int,        // int128
+	liquidityDelta *i256.Int, // int128
 	feeGrowthGlobal0X128 *u256.Uint, // uint256
 	feeGrowthGlobal1X128 *u256.Uint, // uint256
 	upper bool,
@@ -98,10 +98,6 @@ func (pool *Pool) tickUpdate(
 	return flipped
 }
 
-func (pool *Pool) tickClear(tick int32) {
-	pool.ticks = deleteFromPoolTicks(pool.ticks, tick)
-}
-
 func (pool *Pool) tickCross(
 	tick int32,
 	feeGrowthGlobal0X128 *u256.Uint, // uint256
@@ -115,19 +111,4 @@ func (pool *Pool) tickCross(
 
 	liquidityNet := info.liquidityNet
 	return liquidityNet
-}
-
-func deleteFromPoolTicks(m map[int32]TickInfo, key int32) map[int32]TickInfo {
-	if _, ok := m[key]; ok {
-		newMap := make(map[int32]TickInfo)
-		for k, v := range m {
-			if k != key {
-				newMap[k] = v
-			}
-		}
-
-		return newMap
-	}
-
-	return m
 }

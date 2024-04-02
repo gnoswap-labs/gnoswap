@@ -1,7 +1,7 @@
 package int256
 
 import (
-	"gno.land/p/demo/uint256"
+	"gno.land/p/demo/gnoswap/uint256"
 )
 
 // Or sets z = x | y and returns z.

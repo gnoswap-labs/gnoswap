@@ -3,7 +3,9 @@ package pool
 import (
 	"gno.land/r/gnoswap/common"
 
-	i256 "gno.land/p/demo/int256"
+	i256 "gno.land/p/demo/gnoswap/int256"
+
+	plp "gno.land/p/demo/gnoswap/pool" // pool package
 )
 
 func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *i256.Int, *i256.Int) {
@@ -19,34 +21,38 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *i2
 
 	if !(params.liquidityDelta.IsZero()) {
 		if pool.slot0.tick < params.tickLower {
-			amount0 = sqrtPriceMathGetAmount0Delta(
+			_amount0Str := plp.SqrtPriceMathGetAmount0DeltaStr(
 				common.TickMathGetSqrtRatioAtTick(params.tickLower),
 				common.TickMathGetSqrtRatioAtTick(params.tickUpper),
 				params.liquidityDelta,
 			)
+			amount0 = i256.MustFromDecimal(_amount0Str)
 		} else if pool.slot0.tick < params.tickUpper {
 			liquidityBefore := pool.liquidity
 
-			amount0 = sqrtPriceMathGetAmount0Delta(
+			_amount0Str := plp.SqrtPriceMathGetAmount0DeltaStr(
 				pool.slot0.sqrtPriceX96,
 				common.TickMathGetSqrtRatioAtTick(params.tickUpper),
 				params.liquidityDelta,
 			)
+			amount0 = i256.MustFromDecimal(_amount0Str)
 
-			amount1 = sqrtPriceMathGetAmount1Delta(
+			_amount1Str := plp.SqrtPriceMathGetAmount1DeltaStr(
 				common.TickMathGetSqrtRatioAtTick(params.tickLower),
 				pool.slot0.sqrtPriceX96,
 				params.liquidityDelta,
 			)
+			amount1 = i256.MustFromDecimal(_amount1Str)
 
 			pool.liquidity = liquidityMathAddDelta(liquidityBefore, params.liquidityDelta)
 
 		} else {
-			amount1 = sqrtPriceMathGetAmount1Delta(
+			_amount1Str := plp.SqrtPriceMathGetAmount1DeltaStr(
 				common.TickMathGetSqrtRatioAtTick(params.tickLower),
 				common.TickMathGetSqrtRatioAtTick(params.tickUpper),
 				params.liquidityDelta,
 			)
+			amount1 = i256.MustFromDecimal(_amount1Str)
 		}
 	}
 

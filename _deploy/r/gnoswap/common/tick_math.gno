@@ -1,8 +1,8 @@
 package common
 
 import (
-	i256 "gno.land/p/demo/int256"
-	u256 "gno.land/p/demo/uint256"
+	i256 "gno.land/p/demo/gnoswap/int256"
+	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
 var tickRatioMap = map[int32]*u256.Uint{

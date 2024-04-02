@@ -79,29 +79,11 @@ type RpcPosition struct {
 	Token1Owed string `json:"token1Owed"`
 }
 
-type ResponseQueryBase struct {
-	Height    int64 `json:"height"`
-	Timestamp int64 `json:"timestamp"`
-}
-
-type ResponseApiGetPools struct {
-	Stat     ResponseQueryBase `json:"stat"`
-	Response []RpcPool         `json:"response"`
-}
-
 func ApiGetPools() string {
 	rpcPools := []RpcPool{}
 	for poolPath, _ := range pools {
 		rpcPool := rpcMakePool(poolPath)
 		rpcPools = append(rpcPools, rpcPool)
-	}
-
-	r := ResponseApiGetPools{
-		Stat: ResponseQueryBase{
-			Height:    std.GetHeight(),
-			Timestamp: time.Now().Unix(),
-		},
-		Response: rpcPools,
 	}
 
 	// STAT NODE
@@ -112,7 +94,7 @@ func ApiGetPools() string {
 
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
-	for i, pool := range r.Response {
+	for i, pool := range rpcPools {
 		_poolNode := json.ObjectNode("", map[string]*json.Node{
 			"poolPath":             json.StringNode("poolPath", pool.PoolPath),
 			"token0Path":           json.StringNode("token0Path", pool.Token0Path),

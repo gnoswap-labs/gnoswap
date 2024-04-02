@@ -3,8 +3,8 @@ package pool
 import (
 	"std"
 
-	i256 "gno.land/p/demo/int256"
-	u256 "gno.land/p/demo/uint256"
+	i256 "gno.land/p/demo/gnoswap/int256"
+	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
 func (pool *Pool) updatePosition(
@@ -67,11 +67,11 @@ func (pool *Pool) updatePosition(
 
 	if liquidityDelta.IsNeg() {
 		if flippedLower {
-			pool.tickClear(tickLower)
+			delete(pool.ticks, tickLower)
 		}
 
 		if flippedUpper {
-			pool.tickClear(tickUpper)
+			delete(pool.ticks, tickUpper)
 		}
 	}
 
