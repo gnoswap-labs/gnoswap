@@ -30,31 +30,6 @@ func sqrtPriceMathGetNextSqrtPriceFromOutput(
 	return sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountOut, false)
 }
 
-//func SqrtPriceMathGetAmount0DeltaHelperStr(
-//	sqrtRatioAX96 *u256.Uint, // uint160
-//	sqrtRatioBX96 *u256.Uint, // uint160
-//	liquidity *u256.Uint, // uint160
-//	roundUp bool,
-//) *u256.Uint { // uint256
-//	if sqrtRatioAX96.Gt(sqrtRatioBX96) {
-//		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
-//	}
-//
-//	if !(sqrtRatioAX96.Gt(u256.Zero())) {
-//		panic("pool_sqrt price math #3")
-//	}
-//
-//	numerator1 := new(u256.Uint).Lsh(liquidity, 96)
-//	numerator2 := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
-//	value := u256.MulDiv(numerator1, numerator2, sqrtRatioBX96)
-//
-//	if roundUp {
-//		return u256.DivRoundingUp(value, sqrtRatioAX96)
-//	} else {
-//		return new(u256.Uint).Div(value, sqrtRatioAX96)
-//	}
-//}
-
 func sqrtPriceMathGetAmount0DeltaHelper(
 	sqrtRatioAX96 *u256.Uint, // uint160
 	sqrtRatioBX96 *u256.Uint, // uint160
@@ -79,25 +54,6 @@ func sqrtPriceMathGetAmount0DeltaHelper(
 		return new(u256.Uint).Div(value, sqrtRatioAX96)
 	}
 }
-
-//func SqrtPriceMathGetAmount1DeltaHelperStr(
-//	sqrtRatioAX96 *u256.Uint, // uint160
-//	sqrtRatioBX96 *u256.Uint, // uint160
-//	liquidity *u256.Uint, // uint160
-//	roundUp bool,
-//) *u256.Uint { // uint256
-//	if sqrtRatioAX96.Gt(sqrtRatioBX96) {
-//		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
-//	}
-//
-//	value := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
-//
-//	if roundUp {
-//		return u256.MulDiv(liquidity, value, u256.MustFromDecimal(Q96))
-//	} else {
-//		return u256.MulDiv(liquidity, value, u256.MustFromDecimal(Q96))
-//	}
-//}
 
 func sqrtPriceMathGetAmount1DeltaHelper(
 	sqrtRatioAX96 *u256.Uint, // uint160
