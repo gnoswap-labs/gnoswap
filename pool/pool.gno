@@ -10,8 +10,8 @@ import (
 
 	gv "gno.land/r/demo/gov"
 
-	i256 "gno.land/p/demo/int256"
-	u256 "gno.land/p/demo/uint256"
+	i256 "gno.land/p/demo/gnoswap/int256"
+	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
 // Mint creates a new position and mints liquidity tokens then return amount0, amount1 in string

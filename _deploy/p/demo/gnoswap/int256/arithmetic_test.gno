@@ -3,7 +3,7 @@ package int256
 import (
 	"testing"
 
-	"gno.land/p/demo/uint256"
+	"gno.land/p/demo/gnoswap/uint256"
 )
 
 func TestAdd(t *testing.T) {

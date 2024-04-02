@@ -4,7 +4,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/consts"
 
-	u256 "gno.land/p/demo/uint256"
+	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
 func tickBitmapPosition(tick int32) (int16, uint8) {

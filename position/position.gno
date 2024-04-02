@@ -7,7 +7,7 @@ import (
 	"gno.land/r/demo/gnft"
 	"gno.land/r/demo/wugnot"
 
-	u256 "gno.land/p/demo/uint256"
+	u256 "gno.land/p/demo/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/consts"

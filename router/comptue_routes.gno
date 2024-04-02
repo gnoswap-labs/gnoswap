@@ -5,7 +5,7 @@ import (
 
 	pl "gno.land/r/demo/pool"
 
-	u256 "gno.land/p/demo/uint256"
+	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
 // PoolWithMeta is a struct that contains poolPath, token0Path, token1Path, fee, tokenPair, and liquidity

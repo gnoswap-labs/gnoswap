@@ -7,8 +7,8 @@ import (
 
 	"gno.land/r/gnoswap/consts"
 
-	i256 "gno.land/p/demo/int256"
-	u256 "gno.land/p/demo/uint256"
+	i256 "gno.land/p/demo/gnoswap/int256"
+	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
 // DrySwap simulates a swap and returns the amount0, amount1 that would be received and a boolean indicating if the swap is possible
