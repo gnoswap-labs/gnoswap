@@ -43,7 +43,7 @@ func TotalSupply() uint64 {
 func BalanceOf(owner pusers.AddressOrName) uint64 {
 	balance, err := gns.BalanceOf(users.Resolve(owner))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	return balance
 }
@@ -51,7 +51,7 @@ func BalanceOf(owner pusers.AddressOrName) uint64 {
 func Allowance(owner, spender pusers.AddressOrName) uint64 {
 	allowance, err := gns.Allowance(users.Resolve(owner), users.Resolve(spender))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	return allowance
 }
@@ -62,7 +62,7 @@ func Transfer(to pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	err := gns.Transfer(caller, users.Resolve(to), amount)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
@@ -70,7 +70,7 @@ func Approve(spender pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	err := gns.Approve(caller, users.Resolve(spender), amount)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
@@ -78,7 +78,7 @@ func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	err := gns.TransferFrom(caller, users.Resolve(from), users.Resolve(to), amount)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
@@ -90,7 +90,7 @@ func Faucet() {
 	caller := std.PrevRealm().Addr()
 	err := gns.Mint(caller, 100*1_000_000) // 100M
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
@@ -110,7 +110,7 @@ func Burn(address pusers.AddressOrName, amount uint64) {
 	assertIsAdmin(caller)
 	err := gns.Burn(users.Resolve(address), amount)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 

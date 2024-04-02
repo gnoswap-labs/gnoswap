@@ -2,7 +2,9 @@ package pool
 
 import (
 	b64 "encoding/base64"
-	"encoding/json"
+
+	"gno.land/p/demo/json"
+
 	"std"
 	"strconv"
 	"strings"
@@ -102,12 +104,51 @@ func ApiGetPools() string {
 		Response: rpcPools,
 	}
 
-	rr, err := json.Marshal(r)
-	if err != nil {
-		panic(ufmt.Sprintf("[POOL] _RPC_api.gno__ApiGetPools() || %v", err))
+	// STAT NODE
+	_stat := json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
+
+	// RESPONSE (ARRAY) NODE
+	responses := json.ArrayNode("", []*json.Node{})
+	for i, pool := range r.Response {
+		_poolNode := json.ObjectNode("", map[string]*json.Node{
+			"poolPath":             json.StringNode("poolPath", pool.PoolPath),
+			"token0Path":           json.StringNode("token0Path", pool.Token0Path),
+			"token1Path":           json.StringNode("token1Path", pool.Token1Path),
+			"balancesToken0":       json.StringNode("balancesToken0", pool.BalancesToken0),
+			"balancesToken1":       json.StringNode("balancesToken1", pool.BalancesToken1),
+			"fee":                  json.NumberNode("fee", float64(pool.Fee)),
+			"tickSpacing":          json.NumberNode("tickSpacing", float64(pool.TickSpacing)),
+			"maxLiquidityPerTick":  json.StringNode("maxLiquidityPerTick", pool.MaxLiquidityPerTick),
+			"sqrtPriceX96":         json.StringNode("sqrtPriceX96", pool.Slot0SqrtPriceX96),
+			"tick":                 json.NumberNode("tick", float64(pool.Slot0Tick)),
+			"feeProtocol":          json.NumberNode("feeProtocol", float64(pool.Slot0FeeProtocol)),
+			"unlocked":             json.BoolNode("unlocked", pool.Slot0Unlocked),
+			"feeGrowthGlobal0X128": json.StringNode("feeGrowthGlobal0X128", pool.FeeGrowthGlobal0X128),
+			"feeGrowthGlobal1X128": json.StringNode("feeGrowthGlobal1X128", pool.FeeGrowthGlobal1X128),
+			"protocolFeesToken0":   json.StringNode("protocolFeesToken0", pool.ProtocolFeesToken0),
+			"protocolFeesToken1":   json.StringNode("protocolFeesToken1", pool.ProtocolFeesToken1),
+			"liquidity":            json.StringNode("liquidity", pool.Liquidity),
+			"ticks":                json.ObjectNode("ticks", makeTicksJson(pool.Ticks)),
+			"tickBitmaps":          json.ObjectNode("tickBitmaps", makeRpcTickBitmapsJson(pool.TickBitmaps)),
+			"positions":            json.ArrayNode("positions", makeRpcPositionsArray(pool.Positions)),
+		})
+		responses.AppendArray(_poolNode)
 	}
 
-	return string(rr)
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     _stat,
+		"response": responses,
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(ufmt.Sprintf("[POOL] _RPC_api.gno__ApiGetPools() || %s", err.Error()))
+	}
+
+	return string(b)
 }
 
 func rpcMakePool(poolPath string) RpcPool {
@@ -195,4 +236,50 @@ func posKeyDivide(posKey string) (string, int32, int32) {
 	tickUpper, _ := strconv.Atoi(_tickUpper)
 
 	return owner, int32(tickLower), int32(tickUpper)
+}
+
+func makeTicksJson(ticks RpcTicks) map[string]*json.Node {
+	ticksJson := map[string]*json.Node{}
+
+	for tick, tickInfo := range ticks {
+		ticksJson[strconv.Itoa(int(tick))] = json.ObjectNode("", map[string]*json.Node{
+			"liquidityGross":              json.StringNode("liquidityGross", tickInfo.LiquidityGross),
+			"liquidityNet":                json.StringNode("liquidityNet", tickInfo.LiquidityNet),
+			"feeGrowthOutside0X128":       json.StringNode("feeGrowthOutside0X128", tickInfo.FeeGrowthOutside0X128),
+			"feeGrowthOutside1X128":       json.StringNode("feeGrowthOutside1X128", tickInfo.FeeGrowthOutside1X128),
+			"tickCumulativeOutside":       json.NumberNode("tickCumulativeOutside", float64(tickInfo.TickCumulativeOutside)),
+			"secondsPerLiquidityOutsideX": json.StringNode("secondsPerLiquidityOutsideX", tickInfo.SecondsPerLiquidityOutsideX),
+			"secondsOutside":              json.NumberNode("secondsOutside", float64(tickInfo.SecondsOutside)),
+			"initialized":                 json.BoolNode("initialized", tickInfo.Initialized),
+		})
+	}
+
+	return ticksJson
+}
+
+func makeRpcTickBitmapsJson(tickBitmaps RpcTickBitmaps) map[string]*json.Node {
+	tickBitmapsJson := map[string]*json.Node{}
+
+	for tick, tickBitmap := range tickBitmaps {
+		tickBitmapsJson[strconv.Itoa(int(tick))] = json.StringNode("", tickBitmap)
+	}
+
+	return tickBitmapsJson
+}
+
+func makeRpcPositionsArray(positions []RpcPosition) []*json.Node {
+	positionsJson := make([]*json.Node, len(positions))
+
+	for i, pos := range positions {
+		positionsJson[i] = json.ObjectNode("", map[string]*json.Node{
+			"owner":      json.StringNode("owner", pos.Owner),
+			"tickLower":  json.NumberNode("tickLower", float64(pos.TickLower)),
+			"tickUpper":  json.NumberNode("tickUpper", float64(pos.TickUpper)),
+			"liquidity":  json.StringNode("liquidity", pos.Liquidity),
+			"token0Owed": json.StringNode("token0Owed", pos.Token0Owed),
+			"token1Owed": json.StringNode("token1Owed", pos.Token1Owed),
+		})
+	}
+
+	return positionsJson
 }

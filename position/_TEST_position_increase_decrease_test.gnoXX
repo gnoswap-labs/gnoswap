@@ -1,0 +1,186 @@
+package position
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/gns"
+
+	pl "gno.land/r/demo/pool"
+)
+
+// 1. Create Pool
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // x2.71814592682522526700950038502924144268035888671875
+}
+
+func TestMintPosition(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
+	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		8000,
+		12000,
+		"50000000",
+		"50000000",
+		"0",
+		"0",
+		max_timeout,
+		test1.String(),
+	)
+	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, getNextId(), 2)
+	shouldEQ(t, amount0, "18394892")
+	shouldEQ(t, amount1, "49999999")
+}
+
+func TestIncreaseLiquidity(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 3678979)
+	foo.Approve(a2u(consts.POOL_ADDR), 10000000)
+
+	pool := getPoolFromLpTokenId(uint64(1))
+	oldLiquidity := pool.PoolGetLiquidity()
+
+	_, _, m0, m1 := IncreaseLiquidity(
+		uint64(1),   // tokenId
+		"10000000",  // amount0Desired
+		"10000000",  // amount1Desired
+		"0",         // amount0Min
+		"0",         // amount1Min
+		max_timeout, // deadline
+	)
+	shouldEQ(t, m0, "3678979")
+	shouldEQ(t, m1, "9999999")
+
+	newLiquidity := pool.PoolGetLiquidity()
+
+	shouldEQ(t, newLiquidity.Gt(oldLiquidity), true)
+}
+
+func TestCollectFeeBeforeSwap(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+
+	tokenId, fee0, fee1, poolPath := CollectFee(1)
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, fee0, "0")
+	shouldEQ(t, fee1, "0")
+	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+}
+
+func TestSwap(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 1_234_567)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(test1)
+	amount0, amount1 := pl.Swap(
+		barPath,
+		fooPath,
+		fee500,
+		test1.String(),
+		true,
+		"1234567",
+		consts.MIN_PRICE,
+		test1.String(),
+	)
+}
+
+func TestCollectFeeAfterSwap(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, fee0, fee1, poolPath := CollectFee(1)
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, fee0, "610") // this is input token
+	shouldEQ(t, fee1, "0")   // this it output token
+	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+}
+
+func TestCollectFee2(t *testing.T) {
+	std.TestSetPrevRealm("")
+	std.TestSetOrigCaller(test1)
+
+	tokenId, fee0, fee1, poolPath := CollectFee(1)
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, fee0, "0") // this is input token
+	shouldEQ(t, fee1, "0") // this it output token
+	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+
+	afterFee0, afterFee1 := unclaimedFee(uint64(1))
+	shouldEQ(t, afterFee0.ToString(), "0")
+	shouldEQ(t, afterFee1.ToString(), "0")
+}
+
+func TestSwap2(t *testing.T) {
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(test1)
+	amount0, amount1 := pl.Swap(
+		barPath,
+		fooPath,
+		fee500,
+		test1.String(),
+		true,
+		"1000000",
+		consts.MIN_PRICE,
+		test1.String(),
+	)
+
+	// UNCLAIMED_FEE
+	std.TestSetPrevRealm("")
+	std.TestSetOrigCaller(test1)
+
+	oldFee0, oldFee1 := unclaimedFee(uint64(1))
+	shouldEQ(t, oldFee0.ToString(), "498")
+	shouldEQ(t, oldFee1.ToString(), "0")
+
+	tokenId, fee0, fee1, poolPath := CollectFee(1)
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, fee0, "494") // decreased cause of fee
+	shouldEQ(t, fee1, "0")
+	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+}
+
+func TestDecreaseLiquidity(t *testing.T) {
+	std.TestSetPrevRealm("")
+	std.TestSetOrigCaller(test1)
+
+	oldLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
+
+	DecreaseLiquidity(
+		uint64(1),   // tokenId
+		50,          // liquidityRatio
+		"0",         // amount0Min
+		"0",         // amount1Min
+		max_timeout, // deadline
+		false,       // unwrapResult
+	)
+
+	newLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
+	shouldEQ(t, true, newLiquidity.Lt(oldLiquidity))
+
+	// check fee left
+	tokenId, fee0, fee1, poolPath := CollectFee(1)
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, fee0, "0")
+	shouldEQ(t, fee1, "0")
+}

@@ -53,28 +53,19 @@ func (pool *Pool) tickGetFeeGrowthInside(
 func (pool *Pool) tickUpdate(
 	tick int32,
 	tickCurrent int32,
-	liquidityDelta *i256.Int, // int128
+	liquidityDelta *i256.Int,        // int128
 	feeGrowthGlobal0X128 *u256.Uint, // uint256
 	feeGrowthGlobal1X128 *u256.Uint, // uint256
 	upper bool,
 	maxLiquidity *u256.Uint, // uint256
 ) (flipped bool) {
-	// START PARAM INIT
+	// PARAM INIT
 	liquidityDelta = liquidityDelta.NilToZero()
 	feeGrowthGlobal0X128 = feeGrowthGlobal0X128.NilToZero()
 	feeGrowthGlobal1X128 = feeGrowthGlobal1X128.NilToZero()
-	// END PARAM INIT
 
-	// START STRUCT INIT
 	info := pool.ticks[tick]
-	info.liquidityGross = info.liquidityGross.NilToZero()
-	info.liquidityNet = info.liquidityNet.NilToZero()
-
-	info.feeGrowthOutside0X128 = info.feeGrowthOutside0X128.NilToZero()
-	info.feeGrowthOutside1X128 = info.feeGrowthOutside1X128.NilToZero()
-
-	info.secondsPerLiquidityOutsideX128 = info.secondsPerLiquidityOutsideX128.NilToZero()
-	// END STRUCT INIT
+	info.init()
 
 	liquidityGrossBefore := info.liquidityGross
 	liquidityGrossAfter := liquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)

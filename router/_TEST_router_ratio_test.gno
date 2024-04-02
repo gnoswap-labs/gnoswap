@@ -1,12 +1,13 @@
 package router
 
 import (
-	// @notJoon JSON
 	"std"
 	"testing"
 
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
+
+	"gno.land/p/demo/json"
 
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/consts"
@@ -83,43 +84,40 @@ func TestPositionMint(t *testing.T) {
 	// pn.Mint(fooPath, consts.GNS_PATH, fee100, 48000, 52000, "100000000", "100000000","0", "0" max_timeout, test1.String())
 }
 
-// @notJoon JSON
-// func TestApiGetRatiosFromBase(t *testing.T) {
-// 	std.TestSetOrigCaller(test1)
+func TestApiGetRatiosFromBase(t *testing.T) {
+	std.TestSetOrigCaller(test1)
 
-// 	ratios := ApiGetRatiosFromBase()
-// 	jsonStr := gjson.Parse(ratios)
+	ratios := ApiGetRatiosFromBase()
 
-// 	responseArr := gjson.Get(jsonStr.String(), "response").Array()
-// 	shouldEQ(t, len(responseArr), 7)
-// 	/*
-// 		{"token":"gno.land/r/demo/wugnot","ratio":79228162514264337593543950336}
-// 		{"token":"gno.land/r/demo/bar","ratio":19935653721785907863909200771}
-// 		{"token":"gno.land/r/demo/qux","ratio":79228162514264337593543950338}
-// 		{"token":"gno.land/r/demo/foo","ratio":21827358772679825007021358318119}
-// 		{"token":"gno.land/r/demo/baz","ratio":158459202898910110285447649633}
-// 		{"token":"gno.land/r/demo/obl","ratio":316918405797820220570895299266}
-// 		{"token":"gno.land/r/demo/gns","ratio":633836811595640441141790598532}
-// 	*/
+	root, err := json.Unmarshal([]byte(ratios))
+	if err != nil {
+		panic(err)
+	}
 
-// 	shouldEQ(t, responseArr[0].Get("token").String(), "gno.land/r/demo/wugnot")
-// 	shouldEQ(t, responseArr[0].Get("ratio").String(), "79228162514264337593543950336")
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+	shouldEQ(t, response.Size(), 7)
 
-// 	shouldEQ(t, responseArr[1].Get("token").String(), "gno.land/r/demo/bar")
-// 	shouldEQ(t, responseArr[1].Get("ratio").String(), "19935653721785907863909200771")
+	arr, err := response.GetArray()
+	if err != nil {
+		panic(err)
+	}
 
-// 	shouldEQ(t, responseArr[2].Get("token").String(), "gno.land/r/demo/qux")
-// 	shouldEQ(t, responseArr[2].Get("ratio").String(), "79228162514264337593543950338")
+	token0, _ := response.GetIndex(0)
+	token1, _ := response.GetIndex(1)
+	token2, _ := response.GetIndex(2)
+	token3, _ := response.GetIndex(3)
+	token4, _ := response.GetIndex(4)
+	token5, _ := response.GetIndex(5)
+	token6, _ := response.GetIndex(6)
 
-// 	shouldEQ(t, responseArr[3].Get("token").String(), "gno.land/r/demo/foo")
-// 	shouldEQ(t, responseArr[3].Get("ratio").String(), "21827358772679825007021358318119")
-
-// 	shouldEQ(t, responseArr[4].Get("token").String(), "gno.land/r/demo/baz")
-// 	shouldEQ(t, responseArr[4].Get("ratio").String(), "158459202898910110285447649633")
-
-// 	shouldEQ(t, responseArr[5].Get("token").String(), "gno.land/r/demo/obl")
-// 	shouldEQ(t, responseArr[5].Get("ratio").String(), "316918405797820220570895299266")
-
-// 	shouldEQ(t, responseArr[6].Get("token").String(), "gno.land/r/demo/gns")
-// 	shouldEQ(t, responseArr[6].Get("ratio").String(), "633836811595640441141790598532")
-// }
+	shouldEQ(t, token0.String(), "{\"token\":\"gno.land/r/demo/wugnot\",\"ratio\":\"79228162514264337593543950336\"}")
+	shouldEQ(t, token1.String(), "{\"token\":\"gno.land/r/demo/bar\",\"ratio\":\"19935653721785907863909200771\"}")
+	shouldEQ(t, token2.String(), "{\"token\":\"gno.land/r/demo/qux\",\"ratio\":\"79228162514264337593543950338\"}")
+	shouldEQ(t, token3.String(), "{\"token\":\"gno.land/r/demo/foo\",\"ratio\":\"21827358772679825007021358318119\"}")
+	shouldEQ(t, token4.String(), "{\"token\":\"gno.land/r/demo/baz\",\"ratio\":\"158459202898910110285447649633\"}")
+	shouldEQ(t, token5.String(), "{\"token\":\"gno.land/r/demo/obl\",\"ratio\":\"316918405797820220570895299266\"}")
+	shouldEQ(t, token6.String(), "{\"token\":\"gno.land/r/demo/gns\",\"ratio\":\"633836811595640441141790598532\"}")
+}

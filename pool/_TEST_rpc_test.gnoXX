@@ -1,0 +1,124 @@
+package pool
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/json"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
+	"gno.land/r/demo/foo"
+
+	"gno.land/r/gnoswap/consts"
+
+	"gno.land/r/demo/gns"
+)
+
+var (
+	test_tickLower          = int32(9000)
+	test_tickUpper          = int32(11000)
+	test_liquidityExpectStr = "100000000"
+)
+
+// 1. Create Foo:Bar Pool
+func TestCreateFooBarPool(t *testing.T) {
+	// call gns faucet to get creation fee
+	std.TestSetPrevAddr(test1)
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	std.TestSkipHeights(5)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	std.TestSkipHeights(1)
+
+	CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick 10000
+	shouldEQ(t, len(pools), 1)
+	std.TestSkipHeights(1)
+}
+
+// 2. Create Bar:Baz Pool
+func TestCreateBarBazPool(t *testing.T) {
+	// call gns faucet to get creation fee
+	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(test1)
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	std.TestSkipHeights(5)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	std.TestSkipHeights(1)
+
+	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
+	shouldEQ(t, len(pools), 2)
+	std.TestSkipHeights(1)
+}
+
+// 3. Mint Foo:Bar Liquidity by test1
+func TestMintFooBarLiquidity(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	std.TestSkipHeights(4)
+
+	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetOrigCaller(test1)
+	amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		consts.POSITION_ADDR.String(),
+		-11000, // -11000
+		-9000,  // -9000
+		test_liquidityExpectStr,
+	)
+	shouldEQ(t, amount0, "8040316")
+	shouldEQ(t, amount1, "2958014")
+	std.TestSkipHeights(1)
+}
+
+// 4. Mint Bar:Baz Liquidity by test1
+func TestMintBarBazLiquidity(t *testing.T) {
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	std.TestSkipHeights(2)
+
+	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetOrigCaller(test1)
+	amount0, amount1 := Mint(
+		barPath,
+		bazPath,
+		fee500,
+		consts.POSITION_ADDR.String(),
+		test_tickLower,
+		test_tickUpper,
+		test_liquidityExpectStr,
+	)
+	shouldEQ(t, amount0, "2958015")
+	shouldEQ(t, amount1, "8040315")
+	std.TestSkipHeights(1)
+}
+
+// GETTER_API TEST
+func TestApiGetPools(t *testing.T) {
+	gpls := ApiGetPools()
+
+	root, err := json.Unmarshal([]byte(gpls))
+	if err != nil {
+		panic(err)
+	}
+
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, response.Size(), 2)
+}
