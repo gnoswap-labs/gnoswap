@@ -79,5 +79,21 @@ To run unit tests, follow these steps:
 ### Run the Test Cases
 
 ```
-$ gno test -root-dir $WORKDIR/gno-for-swap -verbose=true $WORKDIR/gno-for-swap/examples/gno.land/r/demo/{CONTRACT_FOLDER_HERE}
+$ gno test -root-dir $WORKDIR/gno-for-swap -verbose=true $WORKDIR/gno/examples/gno.land/r/demo/{CONTRACT_FOLDER_HERE}
+```
+
+## Integration Tests
+
+The contracts can be tested using [testscript](https://github.com/gnolang/gno/blob/d54ca62749f79a6992da520e1659ba0dbbdd980b/gno.land/pkg/integration/doc.go)
+
+### Change Admin Address
+1. Open `$WORKDIR/gno/examples/gno.land/r/gnoswap/consts/consts.gno`
+2. Change `GNOSWAP_ADMIN`, `FEE_COLLECTOR` to `g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5`
+
+### Testing
+```
+$ cd $WORKDIR/gnoswap
+$ cp __local/test/gnoswap.txtar $WORKDIR/gno/gno.land/cmd/gnoland/testdata/
+$ cd $WORKDIR/gno/gno.land/cmd/gnoland
+$ go test -v . -run Testdata/gnoswap
 ```
