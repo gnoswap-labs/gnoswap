@@ -24,6 +24,8 @@ loadpkg gno.land/r/demo/position
 loadpkg gno.land/r/demo/router
 loadpkg gno.land/r/demo/staker
 
+loadpkg gno.land/r/demo/default_token_register
+
 ## import wallet
 importwallet user 'source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast' 0 10
 stdout 'g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4'
@@ -33,12 +35,6 @@ gnoland start
 
 ## give plenty ugnot to user
 gnokey maketx send -send 1000000000ugnot -to g12l9splsyngcgefrwa52x5a7scc29e9v086m6p4 -gas-fee 1ugnot -gas-wanted 2000000 -broadcast -chainid=tendermint_test test1
-
-## foo20_register
-gnokey maketx addpkg -pkgdir $WORK/foo20_register -pkgpath gno.land/r/demo/foo20_register -gas-fee 1ugnot -gas-wanted 2000000 -broadcast -chainid=tendermint_test test1
-
-## wugnot_register
-gnokey maketx addpkg -pkgdir $WORK/wugnot_register -pkgpath gno.land/r/demo/wugnot_register -gas-fee 1ugnot -gas-wanted 2000000 -broadcast -chainid=tendermint_test test1
 
 ## gns_register
 gnokey maketx addpkg -pkgdir $WORK/gns_register -pkgpath gno.land/r/demo/gns_register -gas-fee 1ugnot -gas-wanted 2000000 -broadcast -chainid=tendermint_test test1
@@ -157,79 +153,6 @@ stdout '("gno.land/r/demo/foo20:gno.land/r/demo/gns:3000" string)'
 stdout '("6397000" string)'
 stdout '("4412068" string)'
 
--- foo20_register/foo20_register.gno --
-package token_register
-
-import (
-	token "gno.land/r/demo/foo20"
-
-	pusers "gno.land/p/demo/users"
-
-	pl "gno.land/r/demo/pool"
-	rr "gno.land/r/demo/router"
-	sr "gno.land/r/demo/staker"
-)
-
-type NewToken struct{}
-
-func (NewToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
-	return token.Transfer
-}
-
-func (NewToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
-	return token.TransferFrom
-}
-
-func (NewToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
-	return token.BalanceOf
-}
-
-func (NewToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
-	return token.Approve
-}
-
-func init() {
-	pl.RegisterGRC20Interface("gno.land/r/demo/foo20", NewToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/foo20", NewToken{})
-	sr.RegisterGRC20Interface("gno.land/r/demo/foo20", NewToken{})
-}
-
--- wugnot_register/wugnot_register.gno --
-package token_register
-
-import (
-	token "gno.land/r/demo/wugnot"
-
-	pusers "gno.land/p/demo/users"
-
-	pl "gno.land/r/demo/pool"
-	rr "gno.land/r/demo/router"
-	sr "gno.land/r/demo/staker"
-)
-
-type NewToken struct{}
-
-func (NewToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
-	return token.Transfer
-}
-
-func (NewToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
-	return token.TransferFrom
-}
-
-func (NewToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
-	return token.BalanceOf
-}
-
-func (NewToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
-	return token.Approve
-}
-
-func init() {
-	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", NewToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/wugnot", NewToken{})
-	sr.RegisterGRC20Interface("gno.land/r/demo/wugnot", NewToken{})
-}
 
 -- gns_register/gns_register.gno --
 package token_register
