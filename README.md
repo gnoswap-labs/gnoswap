@@ -98,3 +98,16 @@ $ cp -R x/default_token_register $WORKDIR/gno/examples/gno.land/r/demo
 $ cd $WORKDIR/gno/gno.land/cmd/gnoland
 $ go test -v . -run Testdata/gnoswap
 ```
+
+## WARNING
+> [!WARNING]
+> To deploy `pool` contract, `9781838` gas is required which is close to the [block gas limit](https://github.com/gnolang/gno/blob/831bb6f92e1a2217242169dab1f4fd1f87e5eaa0/tm2/pkg/bft/types/params.go#L26-L27).
+>
+> So, when changing the `pool` contract, make sure to test it on actual network before making PR.
+
+
+> [!WARNING]
+> To deploy `uint256` contract, `9731522` gas is required which is close to the [block gas limit](https://github.com/gnolang/gno/blob/831bb6f92e1a2217242169dab1f4fd1f87e5eaa0/tm2/pkg/bft/types/params.go#L26-L27).
+>
+> So, when changing the `uint256` contract, make sure to test it on actual network before making PR.
+
