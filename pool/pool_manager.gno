@@ -73,13 +73,6 @@ func CreatePool(
 	return pool
 }
 
-// DoesPoolExist reports whether the pool exists with the given token0Path, token1Path, and fee
-func DoesPoolExist(token0Path, token1Path string, fee uint32) bool {
-	poolPath := GetPoolPath(token0Path, token1Path, fee)
-	_, exist := pools[poolPath]
-	return exist
-}
-
 // DoesPoolPathExist reports whether the pool exists with the given poolPath
 func DoesPoolPathExist(poolPath string) bool {
 	_, exist := pools[poolPath]

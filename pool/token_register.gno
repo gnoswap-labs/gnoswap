@@ -33,21 +33,6 @@ func GetRegisteredTokens() []string {
 	return tokens
 }
 
-// GetRegisterToken returns the GRC20Interface for the given token
-//
-// Panics if any of the following conditions are met:
-// - token not found
-func GetRegisterToken(pkgPath string) GRC20Interface {
-	pkgPath = handleNative(pkgPath)
-
-	_, found := registered[pkgPath]
-	if !found {
-		panic(ufmt.Sprintf("[POOL] pool_register.gno__GetRegisterToken() || pkgPath(%s) not found", pkgPath))
-	}
-
-	return registered[pkgPath]
-}
-
 // RegisterGRC20Interface registers a GRC20 token interface
 //
 // Panics if any of the following conditions are met:
