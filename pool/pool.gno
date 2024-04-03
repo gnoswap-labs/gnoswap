@@ -46,41 +46,12 @@ func Mint(
 	)
 
 	if amount0.Gt(i256.Zero()) {
-		balance0Before := balanceOfByRegisterCall(pool.token0Path, consts.POOL_ADDR)
-
-		from := std.GetOrigCaller() // token should be transferred from actual user(std.GetOrigCaller), not from the realm(PrevRealm)
-		to := std.CurrentRealm().Addr()
-
-		ok := transferFromByRegisterCall(pool.token0Path, from, to, amount0.Uint64())
-		if !ok {
-			panic(ufmt.Sprintf("[POOL] pool.gno__Mint() || transferFromByRegisterCall(pool.token0Path(%s), from(%s), to(%s), amount0.Uint64())(%d) failed", pool.token0Path, from.String(), to.String(), amount0.Uint64()))
-		}
-
-		// pool token0 balance should be increased exactly as much amount0
-		if !(balance0Before+amount0.Uint64() <= balanceOfByRegisterCall(pool.token0Path, consts.POOL_ADDR)) {
-			panic(ufmt.Sprintf("[POOL] pool.gno__Mint() || balance0Before(%d) + amount0(%d) <= balanceOfByRegisterCall(pool.token0Path(%s), consts.POOL_ADDR(%s))(%d)", balance0Before, amount0, pool.token0Path, consts.POOL_ADDR.String(), balanceOfByRegisterCall(pool.token0Path, consts.POOL_ADDR)))
-		}
+		pool.transferFromAndVerify(std.GetOrigCaller(), consts.POOL_ADDR, pool.token0Path, amount0, true)
 	}
 
 	if amount1.Gt(i256.Zero()) {
-		balance1Before := balanceOfByRegisterCall(pool.token1Path, consts.POOL_ADDR)
-
-		from := std.GetOrigCaller() // token should be transferred from actual user(std.GetOrigCaller), not from the realm(PrevRealm)
-		to := consts.POOL_ADDR
-
-		ok := transferFromByRegisterCall(pool.token1Path, from, to, amount1.Uint64())
-		if !ok {
-			panic(ufmt.Sprintf("[POOL] pool.gno__Mint() || transferFromByRegisterCall(pool.token1Path(%s), from(%s), to(%s), amount1.Uint64())(%d) failed", pool.token1Path, from.String(), to.String(), amount1.Uint64()))
-		}
-
-		// pool token1 balance should be increased exactly as much amount1
-		if !(balance1Before+amount1.Uint64() <= balanceOfByRegisterCall(pool.token1Path, consts.POOL_ADDR)) {
-			panic(ufmt.Sprintf("[POOL] pool.gno__Mint() || balance1Before(%d) + amount1(%d) <= balanceOfByRegisterCall(pool.token1Path(%s), consts.POOL_ADDR(%s))(%d)", balance1Before, amount1, pool.token1Path, consts.POOL_ADDR.String(), balanceOfByRegisterCall(pool.token1Path, consts.POOL_ADDR)))
-		}
+		pool.transferFromAndVerify(std.GetOrigCaller(), consts.POOL_ADDR, pool.token1Path, amount1, false)
 	}
-
-	pool.balances.token0 = new(u256.Uint).Add(pool.balances.token0, amount0.Abs())
-	pool.balances.token1 = new(u256.Uint).Add(pool.balances.token1, amount1.Abs())
 
 	return amount0.ToString(), amount1.ToString()
 }
@@ -188,7 +159,7 @@ func Collect(
 // Panics if any of the following conditions are met:
 // - The caller is not the router contract
 // - Target pool is being used by another transaction
-// - The amounSpecified is 0
+// - The amountSpecified is 0
 // - The SqrtPriceLimit is not within the range
 func Swap(
 	token0Path string,
@@ -249,7 +220,7 @@ func Swap(
 
 	pool.slot0.unlocked = false
 	cache := newSwapCache(feeProtocol, pool.liquidity)
-	state := pool.newSwapState(amountSpecified, feeGrowthGlobalX128, cache.liquidityStart) // TODO: feeGrowthGlobalX128.Clone() or NOT
+	state := pool.newSwapState(amountSpecified, feeGrowthGlobalX128, cache.liquidityStart)
 
 	exactInput := amountSpecified.Gt(i256.Zero())
 
@@ -429,8 +400,8 @@ func SetFeeProtocol(
 ) {
 	common.MustCallFromAdmin()
 
-	fee0Cond := (feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10))
-	fee1Cond := (feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10))
+	fee0Cond := feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)
+	fee1Cond := feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10)
 	if !(fee0Cond && fee1Cond) {
 		panic(ufmt.Sprintf("[POOL] pool.gno__SetFeeProtocol() || expected (feeProtocol0(%d) == 0 || (feeProtocol0(%d) >= 4 && feeProtocol0(%d) <= 10)) && (feeProtocol1(%d) == 0 || (feeProtocol1(%d) >= 4 && feeProtocol1(%d) <= 10))", feeProtocol0, feeProtocol0, feeProtocol0, feeProtocol1, feeProtocol1, feeProtocol1))
 	}
@@ -440,7 +411,7 @@ func SetFeeProtocol(
 		pool.slot0.feeProtocol = feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
 	}
 
-	// update governace value
+	// update governance value
 	gv.SetGovParameter("protocoL_fees", feeProtocol0+(feeProtocol1<<4))
 }
 
