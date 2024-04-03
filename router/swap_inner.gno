@@ -63,7 +63,6 @@ func _swap(
 
 func _swapDry(
 	amountSpecified *i256.Int,
-	recipient std.Address,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
 ) (*u256.Uint, *u256.Uint) { // poolRecv, poolOut
@@ -82,8 +81,7 @@ func _swapDry(
 		data.tokenIn,
 		data.tokenOut,
 		data.fee,
-
-		recipient,
+		
 		zeroForOne,
 		amountSpecified.ToString(),
 		sqrtPriceLimitX96.ToString(),

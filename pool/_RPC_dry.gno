@@ -1,8 +1,6 @@
 package pool
 
 import (
-	"std"
-
 	"gno.land/r/gnoswap/common"
 
 	"gno.land/r/gnoswap/consts"
@@ -18,10 +16,9 @@ func DrySwap(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient std.Address,
 	zeroForOne bool,
-	_amountSpecified string, // int256
-	_sqrtPriceLimitX96 string, // uint160
+	_amountSpecified string,
+	_sqrtPriceLimitX96 string,
 ) (string, string, bool) {
 
 	if _amountSpecified == "0" {
@@ -34,63 +31,38 @@ func DrySwap(
 	pool := GetPool(token0Path, token1Path, fee)
 	slot0Start := pool.slot0
 
+	var feeProtocol uint8
+	var feeGrowthGlobalX128 *u256.Uint
+
 	if zeroForOne {
-		min_sqrt_ratio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
+		minSqrtRatio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
+
 		cond1 := sqrtPriceLimitX96.Lt(slot0Start.sqrtPriceX96)
-		cond2 := sqrtPriceLimitX96.Gt(min_sqrt_ratio)
-
+		cond2 := sqrtPriceLimitX96.Gt(minSqrtRatio)
 		if !(cond1 && cond2) {
 			return "0", "0", false
 		}
+
+		feeProtocol = slot0Start.feeProtocol % 16
+		feeGrowthGlobalX128 = pool.feeGrowthGlobal0X128
 	} else {
-		max_sqrt_ratio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
-		cond1 := sqrtPriceLimitX96.Gt(slot0Start.sqrtPriceX96)
-		cond2 := sqrtPriceLimitX96.Lt(max_sqrt_ratio)
+		maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
 
+		cond1 := sqrtPriceLimitX96.Gt(slot0Start.sqrtPriceX96)
+		cond2 := sqrtPriceLimitX96.Lt(maxSqrtRatio)
 		if !(cond1 && cond2) {
 			return "0", "0", false
 		}
+
+		feeProtocol = slot0Start.feeProtocol / 16
+		feeGrowthGlobalX128 = pool.feeGrowthGlobal1X128
 	}
 
 	pool.slot0.unlocked = false
-
-	var cache SwapCache
-	if zeroForOne {
-		cache = SwapCache{
-			liquidityStart: pool.liquidity,
-			feeProtocol:    slot0Start.feeProtocol % 16,
-		}
-	} else {
-		cache = SwapCache{
-			liquidityStart: pool.liquidity,
-			feeProtocol:    slot0Start.feeProtocol >> 4,
-		}
-	}
+	cache := newSwapCache(feeProtocol, pool.liquidity)
+	state := pool.newSwapState(amountSpecified, feeGrowthGlobalX128, cache.liquidityStart) // TODO: feeGrowthGlobalX128.Clone() or NOT
 
 	exactInput := amountSpecified.Gt(i256.Zero())
-
-	var state SwapState
-	if zeroForOne {
-		state = SwapState{
-			amountSpecifiedRemaining: amountSpecified,
-			amountCalculated:         i256.Zero(),
-			sqrtPriceX96:             slot0Start.sqrtPriceX96,
-			tick:                     slot0Start.tick,
-			feeGrowthGlobalX128:      pool.feeGrowthGlobal0X128,
-			protocolFee:              u256.Zero(),
-			liquidity:                cache.liquidityStart,
-		}
-	} else {
-		state = SwapState{
-			amountSpecifiedRemaining: amountSpecified,
-			amountCalculated:         i256.Zero(),
-			sqrtPriceX96:             slot0Start.sqrtPriceX96,
-			tick:                     slot0Start.tick,
-			feeGrowthGlobalX128:      pool.feeGrowthGlobal1X128,
-			protocolFee:              u256.Zero(),
-			liquidity:                cache.liquidityStart,
-		}
-	}
 
 	// continue swapping as long as we haven't used the entire input/output and haven't reached the price limit
 	for !(state.amountSpecifiedRemaining.IsZero()) && !(state.sqrtPriceX96.Eq(sqrtPriceLimitX96)) {
@@ -153,12 +125,10 @@ func DrySwap(
 
 		// update global fee tracker
 		if state.liquidity.Gt(u256.Zero()) {
-			_q128 := u256.MustFromDecimal(consts.Q128)
-
-			value1 := new(u256.Uint).Mul(step.feeAmount, _q128)
+			value1 := new(u256.Uint).Mul(step.feeAmount, u256.MustFromDecimal(consts.Q128))
 			value2 := new(u256.Uint).Div(value1, state.liquidity)
 
-			// r3v4_xxx: if drySwap update this, next swap gets affect in test cases
+			// OBS if `DrySwap()` update its state, next ACTUAL `Swap()` gets affect
 			// state.feeGrowthGlobalX128 = new(u256.Uint).Add(state.feeGrowthGlobalX128, value2)
 		}
 

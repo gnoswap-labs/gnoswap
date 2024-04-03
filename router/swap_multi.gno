@@ -139,18 +139,10 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 	payer := std.GetOrigCaller() // user
 
 	for {
-		var recipient std.Address
 		currentPoolIndex++
-
-		if currentPoolIndex < numPool {
-			recipient = consts.ROUTER_ADDR
-		} else {
-			recipient = params.recipient // user ~= std.GetOrigCaller()
-		}
 
 		amountIn, amountOut := _swapDry(
 			params.amountSpecified,
-			recipient,
 			u256.Zero(),
 			SwapCallbackData{
 				params.tokenIn,
@@ -186,17 +178,8 @@ func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath stri
 	numPools := currentPoolIndex
 
 	for {
-		var recipient std.Address
-
-		if currentPoolIndex == numPools-1 {
-			recipient = params.recipient
-		} else {
-			recipient = consts.ROUTER_ADDR
-		}
-
 		amountIn, amountOut := _swapDry(
 			params.amountSpecified,
-			recipient,
 			u256.Zero(),
 			SwapCallbackData{
 				params.tokenIn,

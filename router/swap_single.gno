@@ -25,8 +25,7 @@ func singleSwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn,
 func singleSwapDry(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn, amountOut
 	amountIn, amountOut := _swapDry(
 		params.amountSpecified,
-		std.GetOrigCaller(), // if single swap => user will recieve
-		u256.Zero(),         // sqrtPriceLimitX96
+		u256.Zero(), // sqrtPriceLimitX96
 		SwapCallbackData{
 			params.tokenIn,
 			params.tokenOut,
