@@ -41,7 +41,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	std.TestSetOrigCaller(test1)
 
 	// no mint == no liquidity => swap will fail
-	_, _, ok := DrySwap(fooPath, barPath, fee500, "_", true, "16000", consts.MIN_PRICE)
+	_, _, ok := DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
 	shouldEQ(t, ok, false)
 
 	// not enough mint == swap will fail
@@ -52,7 +52,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	std.TestSetPrevRealm(consts.POSITION_PATH)
 	std.TestSetOrigCaller(test1)
 	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -tickUpper, -tickLower, "10")
-	_, _, ok = DrySwap(fooPath, barPath, fee500, "_", true, "16000", consts.MIN_PRICE)
+	_, _, ok = DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
 	shouldEQ(t, ok, false)
 
 	std.TestSetPrevAddr(test1)
@@ -67,7 +67,6 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 		fooPath,          // fooPath
 		barPath,          // barPath
 		fee500,           // fee500
-		"_",              // recipient
 		true,             // zeroForOne
 		"16000",          // amountSpecified
 		consts.MIN_PRICE, // sqrtPriceLimitX96
@@ -84,7 +83,6 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 		fooPath,          // fooPath
 		barPath,          // barPath
 		fee500,           // fee500
-		"_",              // recipient
 		true,             // zeroForOne
 		"-16000",         // amountSpecified
 		consts.MIN_PRICE, // sqrtPriceLimitX96
