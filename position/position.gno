@@ -47,7 +47,7 @@ func Mint(
 		}
 	}
 
-	// check if wugnot is being minted
+	// check if native ugnot is being minted
 	token0IsNative := false
 	token1IsNative := false
 	if token0 == consts.GNOT {
@@ -87,7 +87,7 @@ func Mint(
 	// if estmiated gnot amount is not 0, user should have been sent gnot to position
 	ugnotSent := uint64(0)
 	if (token0IsNative && estimatedMintAmount0Str != "0") || (token1IsNative && estimatedMintAmount1Str != "0") {
-		// SEND GNOT: oneclick -> wugnot
+		// SEND GNOT: position -> wugnot
 		oldUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 
 		sent := std.GetOrigSend()
@@ -126,7 +126,7 @@ func Mint(
 	}
 
 	if token0IsNative || token1IsNative {
-		leftOver := uint64(ugnotSent - spendWugnot)
+		leftOver := ugnotSent - spendWugnot
 		if leftOver > 0 {
 			unwrap(leftOver)
 		}

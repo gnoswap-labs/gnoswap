@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/common"
 
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/consts"
 
 	"gno.land/r/demo/gns"
@@ -44,6 +44,12 @@ func CreatePool(
 		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
 	}
 
+	if token0Path == consts.GNOT {
+		token0Path = consts.WRAPPED_WUGNOT
+	} else if token1Path == consts.GNOT {
+		token1Path = consts.WRAPPED_WUGNOT
+	}
+
 	sqrtPriceX96 := u256.MustFromDecimal(_sqrtPriceX96)
 
 	if token1Path < token0Path {
@@ -67,7 +73,7 @@ func CreatePool(
 		pool = newPool(token0Path, token1Path, fee, tickSpacing, sqrtPriceX96)
 		pools[poolPath] = pool
 
-		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.GNOSWAP_ADMIN), consts.POOL_CREATION_FEE)
+		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.FEE_COLLECTOR), consts.POOL_CREATION_FEE)
 	}
 
 	return pool
