@@ -13,7 +13,7 @@ var (
 const (
 	// r3v4_xxx: for txtar testing, change below address
 	GNOSWAP_ADMIN std.Address = "g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq" // GSA
-	FEE_COLLECTOR std.Address = "g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq" // SAME AS GSA FOR NOW, r3v4_xxx: CHANGE WHEN DEPLOYING TO OFFICIAL NETWORK
+	FEE_COLLECTOR std.Address = "g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906" // FCL
 
 	INTERNAL_REWARD_ACCOUNT   std.Address = "g1jms5fx2raq4qfkq3502mfh25g54nyl5qeuvz5y" // IRA for GNS
 	BLOCK_GENERATION_INTERVAL int64       = 5                                          // 5 seconds
