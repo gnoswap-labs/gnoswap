@@ -287,7 +287,7 @@ func checkStartTime(startTimestamp int64) {
 	// must be at least +1 day midnight
 	tomorrowMidnight := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
 	if startTimestamp < tomorrowMidnight {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__checkStarTime() || startTimestamp(%d) must be at least +1 day midnight(%d)", startTimestamp, tomorrowMidnight))
+		panic(ufmt.Sprintf("[STAKER] staker.gno__checkStartTime() || startTimestamp(%d) must be at least +1 day midnight(%d)", startTimestamp, tomorrowMidnight))
 	}
 
 	// must be midnight of the day
@@ -296,7 +296,7 @@ func checkStartTime(startTimestamp int64) {
 
 	isMidnight := hour == 0 && minute == 0 && second == 0
 	if !isMidnight {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__checkStarTime() || startTimestamp(%s) must be midnight of the day", startTime.String()))
+		panic(ufmt.Sprintf("[STAKER] staker.gno__checkStartTime() || startTime(%s) must be midnight of the day", startTime.String()))
 	}
 }
 

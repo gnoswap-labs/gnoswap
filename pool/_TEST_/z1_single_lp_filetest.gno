@@ -221,6 +221,7 @@ func createBarFooPool() {
 	std.TestSkipHeights(1)
 }
 func mint() {
+	panic("TEST")
 	std.TestSetPrevAddr(test1)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
