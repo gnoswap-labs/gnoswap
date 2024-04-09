@@ -190,7 +190,7 @@ func IncreaseLiquidity(
 	_amount0Min string, // uint256
 	_amount1Min string, // uint256
 	deadline int64,
-) (uint64, string, string, string) { // tokenId, liquidity, amount0, amount1
+) (uint64, string, string, string, string) { // tokenId, liquidity, amount0, amount1, poolPath
 	amount0Desired := u256.MustFromDecimal(_amount0Desired)
 	amount1Desired := u256.MustFromDecimal(_amount1Desired)
 	amount0Min := u256.MustFromDecimal(_amount0Min)
@@ -205,11 +205,11 @@ func IncreaseLiquidity(
 		deadline:       deadline,
 	}
 
-	tokneId, liquidity, amount0, amount1 := increaseLiquidity(increaseLiquidityParams)
-	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString()
+	tokneId, liquidity, amount0, amount1, poolPath := increaseLiquidity(increaseLiquidityParams)
+	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
 }
 
-func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
+func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string) {
 	// verify tokenId exists
 	if !exists(params.tokenId) {
 		panic(ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
@@ -263,7 +263,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	positions[params.tokenId] = position
 
-	return params.tokenId, liquidity, amount0, amount1
+	return params.tokenId, liquidity, amount0, amount1, position.poolKey
 }
 
 // DecreaseLiquidity decreases liquidity of the existing position

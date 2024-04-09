@@ -159,7 +159,7 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 // Panics if any of the following conditions are met:
 // - token is not staked
 // - caller is not owner of lp token
-func CollectReward(tokenId uint64) {
+func CollectReward(tokenId uint64) string { // poolPath
 	deposit, exist := deposits[tokenId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || tokenId(%d) not staked", tokenId))
@@ -201,6 +201,8 @@ func CollectReward(tokenId uint64) {
 		// then transfer rest
 		gns.TransferFrom(a2u(consts.INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), toUser.Uint64())
 	}
+
+	return poolPath
 }
 
 // UnstakeToken unstakes the lp token from the staker and collects all reward from tokenId
@@ -305,6 +307,13 @@ func getTokenPairBalanceFromPosition(tokenId uint64) (*u256.Uint, *u256.Uint) {
 		upperX96,
 		pn.PositionGetPositionLiquidity(tokenId),
 	)
+
+	if token0Balance == nil {
+		token0Balance = u256.Zero()
+	}
+	if token1Balance == nil {
+		token1Balance = u256.Zero()
+	}
 
 	return token0Balance, token1Balance
 }
