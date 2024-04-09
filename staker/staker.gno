@@ -31,7 +31,7 @@ const (
 	TIMESTAMP_180DAYS = 15552000
 	TIMESTAMP_360DAYS = 31104000
 
-	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000"
+	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/gns:gno.land/r/demo/wugnot:500"
 )
 
 func init() {
