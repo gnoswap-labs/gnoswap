@@ -32,7 +32,7 @@ type RpcPosition struct {
 	Token0Balance string `json:"token0Balance"`
 	Token1Balance string `json:"token1Balance"`
 	FeeUnclaimed0 string `json:"fee0Unclaimed"`
-	FeeUnclaimed1 string `json:"fee0Unclaimed"`
+	FeeUnclaimed1 string `json:"fee1Unclaimed"`
 }
 
 type ResponseQueryBase struct {

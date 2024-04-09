@@ -98,7 +98,8 @@ func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 
 // GetAmountsForLiquidity calculates the amounts of token 0 and token 1 for a given liquidity.
 func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) (*u256.Uint, *u256.Uint) {
-	var amount0, amount1 *u256.Uint
+	amount0 := u256.Zero()
+	amount1 := u256.Zero()
 
 	if sqrtRatioAX96.Gt(sqrtRatioBX96) {
 		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96

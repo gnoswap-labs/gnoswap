@@ -36,27 +36,24 @@ func SwapRoute(
 	strRouteArr string, // []string
 	quoteArr string, // []int
 	_tokenAmountLimit string, // uint256
-) string { // uint256
+) (string, string) { // tokneIn, tokenOut
 	if common.GetLimitCaller() {
 		std.AssertOriginCall()
 	}
 
-	amountSpecified, err := i256.FromDecimal(_amountSpecified)
-	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || i256.FromDecimal(_amountSpecified(%s) failed", _amountSpecified))
-	}
+	amountSpecified := i256.MustFromDecimal(_amountSpecified)
 	if amountSpecified.IsZero() {
 		panic("[ROUTER] router.gno__SwapRoute() || amountSpecified == 0")
 	}
+	if amountSpecified.IsNeg() {
+		panic("[ROUTER] router.gno__SwapRoute() || amountSpecified < 0")
+	}
 
 	tokenAmountLimit := u256.MustFromDecimal(_tokenAmountLimit)
-	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || u256.FromDecimal(_tokenAmountLimit(%s) failed", _tokenAmountLimit))
-	}
 
 	switch swapType {
 	case "EXACT_IN":
-		amountSpecified = amountSpecified
+		// do nothing
 	case "EXACT_OUT":
 		amountSpecified = i256.Zero().Neg(amountSpecified)
 	default:
@@ -76,19 +73,6 @@ func SwapRoute(
 		panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || len(routes[%d]) != len(quotes[%d])", len(routes), len(quotes)))
 	}
 
-	// if input is gnot, wrap it
-	userOldWugnotBalance := uint64(0)
-	if inputToken == consts.GNOT {
-		sent := std.GetOrigSend()
-		ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
-
-		wrap(ugnotSentByUser)
-		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-
-	} else if outputToken == consts.GNOT { // if output is gnot unwrap later (save user's current wugnot balance)
-		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-	}
-
 	// check if quotes are up to 100%
 	quotesSum := int64(0)
 	for _, quote := range quotes {
@@ -97,6 +81,18 @@ func SwapRoute(
 	}
 	if quotesSum != 100 {
 		panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || quotesSum != 100 (quotesSum)[%d]", quotesSum))
+	}
+
+	// if input is gnot, wrap it
+	userOldWugnotBalance := uint64(0)
+	if inputToken == consts.GNOT {
+		sent := std.GetOrigSend()
+		ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
+
+		wrap(ugnotSentByUser)
+		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+	} else if outputToken == consts.GNOT { // if output is gnot unwrap later (save user's current wugnot balance)
+		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 	}
 
 	resultAmountIn := u256.Zero()
@@ -117,7 +113,7 @@ func SwapRoute(
 			amountIn, amountOut := handleSingleSwap(route, toSwap, false)
 			resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
 			resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
-		} else if 2 <= numHops && numHops <= 3 { // MULTI
+		} else if numHops == 2 || numHops == 3 { // MULTI
 			amountIn, amountOut := handleMultiSwap(swapType, route, numHops, toSwap, false)
 			resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
 			resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
@@ -144,13 +140,15 @@ func SwapRoute(
 		if !(tokenAmountLimit.Lte(resultAmountOut)) {
 			panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received for user (expected minimum received:%s, actual received:%s)", _tokenAmountLimit, resultAmountOut.ToString()))
 		}
-		return resultAmountOut.ToString()
 	} else { // EXACT_OUT
 		if !(resultAmountIn.Lte(tokenAmountLimit)) {
 			panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too much spend for user (expected maximum spend:%s, actual spend:%s)", _tokenAmountLimit, resultAmountIn.ToString()))
 		}
-		return resultAmountIn.ToString()
 	}
+	//return resultAmountIn.ToString(), resultAmountOut.ToString()
+
+	intAmountOut := i256.FromUint256(resultAmountOut)
+	return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString()
 }
 
 func handleSingleSwap(route string, amountSpecified *i256.Int, isDry bool) (*u256.Uint, *u256.Uint) {
