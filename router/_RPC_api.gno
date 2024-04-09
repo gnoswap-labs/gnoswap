@@ -161,7 +161,7 @@ func calculateTokenRatio(currentToken string, routes []PoolWithMeta, proceed int
 			if proceed == len(routes) {
 				return tempPriceX96
 			}
-			return calculateTokenRatio(currentToken, routes, proceed, priceX96)
+			return calculateTokenRatio(currentToken, routes, proceed, tempPriceX96)
 		}
 	}
 }

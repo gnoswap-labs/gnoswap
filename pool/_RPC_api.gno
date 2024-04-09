@@ -19,8 +19,8 @@ type RpcPool struct {
 	Token0Path string `json:"token0Path"`
 	Token1Path string `json:"token1Path"`
 
-	BalancesToken0 string `json:"balanceToken0"`
-	BalancesToken1 string `json:"balanceToken1"`
+	Token0Balance string `json:"token0Balance"`
+	Token1Balance string `json:"token1Balance"`
 
 	Fee uint32 `json:"fee"`
 
@@ -36,8 +36,8 @@ type RpcPool struct {
 	FeeGrowthGlobal0X128 string `json:"feeGrowthGlobal0X128"`
 	FeeGrowthGlobal1X128 string `json:"feeGrowthGlobal1X128"`
 
-	ProtocolFeesToken0 string `json:"protocolFeeToken0"`
-	ProtocolFeesToken1 string `json:"protocolFeeToken1"`
+	Token0ProtocolFee string `json:"token0ProtocolFee"`
+	Token1ProtocolFee string `json:"token1ProtocolFee"`
 
 	Liquidity string `json:"liquidity"`
 
@@ -99,8 +99,8 @@ func ApiGetPools() string {
 			"poolPath":             json.StringNode("poolPath", pool.PoolPath),
 			"token0Path":           json.StringNode("token0Path", pool.Token0Path),
 			"token1Path":           json.StringNode("token1Path", pool.Token1Path),
-			"balancesToken0":       json.StringNode("balancesToken0", pool.BalancesToken0),
-			"balancesToken1":       json.StringNode("balancesToken1", pool.BalancesToken1),
+			"token0Balance":        json.StringNode("token0Balance", pool.Token0Balance),
+			"token1Balance":        json.StringNode("token1Balance", pool.Token1Balance),
 			"fee":                  json.NumberNode("fee", float64(pool.Fee)),
 			"tickSpacing":          json.NumberNode("tickSpacing", float64(pool.TickSpacing)),
 			"maxLiquidityPerTick":  json.StringNode("maxLiquidityPerTick", pool.MaxLiquidityPerTick),
@@ -110,8 +110,8 @@ func ApiGetPools() string {
 			"unlocked":             json.BoolNode("unlocked", pool.Slot0Unlocked),
 			"feeGrowthGlobal0X128": json.StringNode("feeGrowthGlobal0X128", pool.FeeGrowthGlobal0X128),
 			"feeGrowthGlobal1X128": json.StringNode("feeGrowthGlobal1X128", pool.FeeGrowthGlobal1X128),
-			"protocolFeesToken0":   json.StringNode("protocolFeesToken0", pool.ProtocolFeesToken0),
-			"protocolFeesToken1":   json.StringNode("protocolFeesToken1", pool.ProtocolFeesToken1),
+			"token0ProtocolFee":    json.StringNode("token0ProtocolFee", pool.Token0ProtocolFee),
+			"token1ProtocolFee":    json.StringNode("token1ProtocolFee", pool.Token1ProtocolFee),
 			"liquidity":            json.StringNode("liquidity", pool.Liquidity),
 			"ticks":                json.ObjectNode("ticks", makeTicksJson(pool.Ticks)),
 			"tickBitmaps":          json.ObjectNode("tickBitmaps", makeRpcTickBitmapsJson(pool.TickBitmaps)),
@@ -142,8 +142,8 @@ func rpcMakePool(poolPath string) RpcPool {
 	rpcPool.Token0Path = pool.token0Path
 	rpcPool.Token1Path = pool.token1Path
 
-	rpcPool.BalancesToken0 = pool.balances.token0.ToString()
-	rpcPool.BalancesToken1 = pool.balances.token1.ToString()
+	rpcPool.Token0Balance = pool.balances.token0.ToString()
+	rpcPool.Token1Balance = pool.balances.token1.ToString()
 
 	rpcPool.Fee = pool.fee
 
@@ -159,8 +159,8 @@ func rpcMakePool(poolPath string) RpcPool {
 	rpcPool.FeeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128.ToString()
 	rpcPool.FeeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128.ToString()
 
-	rpcPool.ProtocolFeesToken0 = pool.protocolFees.token0.ToString()
-	rpcPool.ProtocolFeesToken1 = pool.protocolFees.token1.ToString()
+	rpcPool.Token0ProtocolFee = pool.protocolFees.token0.ToString()
+	rpcPool.Token1ProtocolFee = pool.protocolFees.token1.ToString()
 
 	rpcPool.Liquidity = pool.liquidity.ToString()
 
