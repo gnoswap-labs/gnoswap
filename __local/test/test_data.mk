@@ -24,10 +24,9 @@ INCENTIVE_END := $(shell expr $(NOW) + 360 + 7776000) # 7776000 SECONDS = 90 DAY
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 
 # GNOLAND_RPC_URL ?= localhost:26657
-GNOLAND_RPC_URL ?= localhost:36657 # 36657 for gnodev, 26657 for gnoland
+GNOLAND_RPC_URL ?= localhost:26657 # 36657 for gnodev, 26657 for gnoland
 CHAINID ?= dev
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
-
 
 
 .PHONY: deploy-test-tokens
@@ -59,7 +58,7 @@ mint: mint-bar-baz increase-liquidity-position-01 decrease-liquidity-position-01
 # create-external-incentive
 
 .PHONY: stake-token
-stake-token: stake-token-1-5 stake-token-6 stake-token-7 stake-token-8 stake-token-9 stake-token-10 mint-and-stake # 11
+stake-token: stake-token-1-5 stake-token-6 stake-token-7 stake-token-10 mint-and-stake # stake-token-8 stake-token-9
 
 # set-protocol-fee
 
@@ -67,13 +66,16 @@ stake-token: stake-token-1-5 stake-token-6 stake-token-7 stake-token-8 stake-tok
 swap: swap-exact-in-single-bar-to-baz swap-exact-in-single-baz-to-bar swap-exact-in-multi-foo-to-gns-to-wugnot swap-exact-in-single-foo-to-gns
 
 .PHONY: collect-fee
-collect-fee: collect-fee-position-1-5 collect-fee-position-6 collect-fee-position-7 collect-fee-position-8 collect-fee-position-9 collect-fee-position-10 collect-fee-position-11
+collect-fee: collect-fee-position-1-5 collect-fee-position-6 collect-fee-position-8 collect-fee-position-10 # collect-fee-position-7 collect-fee-position-9 collect-fee-position-11
 
 .PHONY: unstake-token
-unstake-token: unstake-token-1-5 unstake-token-6 unstake-token-7 unstake-token-8 unstake-token-9 unstake-token-10 unstake-token-11
+unstake-token: unstake-token-1-5 unstake-token-6  # unstake-token-7 unstake-token-8 unstake-token-9 unstake-token-10 unstake-token-11
+
+.PHONY: burn-position
+burn-position: burn-position-1 burn-position-2 burn-position-6 # burn-position-7
 
 .PHONY: all
-all: wait send-ugnot deploy-test-tokens deploy-packages deploy-common-realms deploy-base-tokens deploy-gnoswap-realms register-token faucet-test-accounts approve-gsa pool-create mint create-external-incentive stake-token set-protocol-fee swap collect-fee unstake-token
+all: wait send-ugnot deploy-test-tokens deploy-packages deploy-common-realms deploy-base-tokens deploy-gnoswap-realms register-token faucet-test-accounts approve-gsa pool-create mint create-external-incentive stake-token set-protocol-fee swap collect-fee unstake-token burn-position
 
 
 wait:
@@ -336,7 +338,7 @@ increase-liquidity-position-01:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func IncreaseLiquidity  -args 1 -args 20000000 -args 20000000 -args 1 -args 1 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_lp01 > /dev/null
 	@echo
 
-decrease-liquidity-position-01: # need more gas
+decrease-liquidity-position-01:
 	$(info ************ decrease position(1) liquidity // gnoswap_lp01 ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func DecreaseLiquidity -args 1 -args 10 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 20000000 -memo "" gnoswap_lp01 > /dev/null
 	@echo
@@ -473,7 +475,7 @@ swap-exact-out-single-foo-to-gns:
 swap-exact-in-multi-foo-to-gns-to-wugnot:
 	@$(MAKE) -f $(MAKEFILE) print-fee-collector
 
-	$(info ************ swap foo -> gns ->wugnot, exact_in // gnoswap_tr01 ************)
+	$(info ************ swap foo -> gns -> wugnot, exact_in // gnoswap_tr01 ************)
 
 	# approve INPUT TOKEN to POOL
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Approve -args $(ADDR_POOL) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gnoswap_tr01 > /dev/null
@@ -525,7 +527,6 @@ collect-fee-position-11:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func CollectFee -args 11 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100ugnot -gas-wanted 10000000 -memo "" gnoswap_lp02 > /dev/null
 	@echo
 
-
 unstake-token-1-5:
 	$(info ************ unstake token 1~5 // gnoswap_lp01 ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/staker -func UnstakeToken -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gnoswap_lp01 > /dev/null
@@ -565,36 +566,53 @@ unstake-token-11:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/staker -func UnstakeToken -args 11 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gnoswap_lp02 > /dev/null
 	@echo
 
+burn-position-1:
+	$(info ************ decrease entire liquidity(==burn) from position 1 // gnoswap_lp01 ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func DecreaseLiquidity -args 1 -args 100 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 20000000 -memo "" gnoswap_lp01 > /dev/null
+	@echo
 
+burn-position-2:
+	$(info ************ decrease entire liquidity(==burn) from position 2 // gnoswap_lp01 ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func DecreaseLiquidity -args 2 -args 100 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 20000000 -memo "" gnoswap_lp01 > /dev/null
+	@echo
 
+burn-position-6:
+	$(info ************ decrease entire liquidity(==burn) from position 6 // gnoswap_lp02 ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func DecreaseLiquidity -args 6 -args 100 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 20000000 -memo "" gnoswap_lp02 > /dev/null
+	@echo
+
+burn-position-7:
+	$(info ************ decrease entire liquidity(==burn) from position 7 // gnoswap_lp01 ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func DecreaseLiquidity -args 7 -args 100 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 20000000 -memo "" gnoswap_lp01 > /dev/null
+	@echo
 
 print-fee-collector:
 	$(info ************ print fee collector balance ************)
 	@printf "Bar "
-	@curl -s 'localhost:36657/abci_query?path="vm/qeval"&data="gno.land/r/demo/bar\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s 'localhost:26657/abci_query?path="vm/qeval"&data="gno.land/r/demo/bar\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 
 	@printf "Baz "
-	@curl -s 'localhost:36657/abci_query?path="vm/qeval"&data="gno.land/r/demo/baz\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s 'localhost:26657/abci_query?path="vm/qeval"&data="gno.land/r/demo/baz\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 
 	@printf "Qux "
-	@curl -s 'localhost:36657/abci_query?path="vm/qeval"&data="gno.land/r/demo/qux\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s 'localhost:26657/abci_query?path="vm/qeval"&data="gno.land/r/demo/qux\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 
 	@printf "Foo "
-	@curl -s 'localhost:36657/abci_query?path="vm/qeval"&data="gno.land/r/demo/foo\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s 'localhost:26657/abci_query?path="vm/qeval"&data="gno.land/r/demo/foo\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 
 	@printf "Gns "
-	@curl -s 'localhost:36657/abci_query?path="vm/qeval"&data="gno.land/r/demo/gns\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s 'localhost:26657/abci_query?path="vm/qeval"&data="gno.land/r/demo/gns\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 
 	@printf "Obl "
-	@curl -s 'localhost:36657/abci_query?path="vm/qeval"&data="gno.land/r/demo/obl\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s 'localhost:26657/abci_query?path="vm/qeval"&data="gno.land/r/demo/obl\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 
 	@printf "Wugnot "
-	@curl -s 'localhost:36657/abci_query?path="vm/qeval"&data="gno.land/r/demo/wugnot\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s 'localhost:26657/abci_query?path="vm/qeval"&data="gno.land/r/demo/wugnot\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 	@echo
