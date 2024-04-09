@@ -3,7 +3,6 @@ package staker
 import (
 	"std"
 	"testing"
-	"time"
 
 	"gno.land/r/gnoswap/consts"
 
@@ -104,15 +103,15 @@ func TestCreateExternalIncentive(t *testing.T) {
 		"gno.land/r/demo/bar:gno.land/r/demo/qux:500", // targetPoolPath
 		"gno.land/r/demo/obl",                         // rewardToken
 		"1000000000",                                  // rewardAmount
-		time.Now().Unix(),                             // startTimestamp
-		time.Now().Unix()+TIMESTAMP_90DAYS,            // endTimestamp
+		1234569600,                                    // startTimestamp
+		1234569600+TIMESTAMP_90DAYS,                   // endTimestamp
 	)
 	std.TestSkipHeights(1)
 
 	obl.Approve(a2u(consts.STAKER_ADDR), uint64(10_000_000_000))
 	std.TestSkipHeights(1)
 
-	CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/qux:500", "gno.land/r/demo/obl", "1000000000", time.Now().Unix(), time.Now().Unix()+TIMESTAMP_90DAYS)
+	CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/qux:500", "gno.land/r/demo/obl", "1000000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
 	std.TestSkipHeights(1)
 }
 
