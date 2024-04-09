@@ -63,7 +63,7 @@ stake-token: stake-token-1-5 stake-token-6 stake-token-7 stake-token-10 mint-and
 # set-protocol-fee
 
 .PHONY: swap
-swap: swap-exact-in-single-bar-to-baz swap-exact-in-single-baz-to-bar swap-exact-in-multi-foo-to-gns-to-wugnot swap-exact-in-single-foo-to-gns
+swap: swap-exact-in-single-bar-to-baz swap-exact-in-single-baz-to-bar swap-exact-in-multi-foo-to-gns-to-wugnot swap-exact-in-single-foo-to-gns swap-exact-out-single-foo-to-gns
 
 .PHONY: collect-fee
 collect-fee: collect-fee-position-1-5 collect-fee-position-6 collect-fee-position-8 collect-fee-position-10 # collect-fee-position-7 collect-fee-position-9 collect-fee-position-11
@@ -469,7 +469,7 @@ swap-exact-out-single-foo-to-gns:
 	# approve OUTPUT TOKEN to ROUTER ( as 0.15% fee )
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/gns -func Approve -args $(ADDR_ROUTER) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gnoswap_tr01 > /dev/null
 
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/router -func SwapRoute -args "gno.land/r/demo/foo" -args "gno.land/r/demo/gns" -args "-50000" -args "EXACT_OUT" -args "gno.land/r/demo/foo:gno.land/r/demo/gns:500" -args "100" -args "50000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100ugnot -gas-wanted 10000000 -memo "" gnoswap_tr01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/router -func SwapRoute -args "gno.land/r/demo/foo" -args "gno.land/r/demo/gns" -args 50000 -args "EXACT_OUT" -args "gno.land/r/demo/foo:gno.land/r/demo/gns:500" -args "100" -args "50000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100ugnot -gas-wanted 10000000 -memo "" gnoswap_tr01 > /dev/null
 	@echo
 
 swap-exact-in-multi-foo-to-gns-to-wugnot:

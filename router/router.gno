@@ -36,7 +36,7 @@ func SwapRoute(
 	strRouteArr string, // []string
 	quoteArr string, // []int
 	_tokenAmountLimit string, // uint256
-) string { // uint256
+) (string, string) { // tokneIn, tokenOut
 	if common.GetLimitCaller() {
 		std.AssertOriginCall()
 	}
@@ -44,6 +44,9 @@ func SwapRoute(
 	amountSpecified := i256.MustFromDecimal(_amountSpecified)
 	if amountSpecified.IsZero() {
 		panic("[ROUTER] router.gno__SwapRoute() || amountSpecified == 0")
+	}
+	if amountSpecified.IsNeg() {
+		panic("[ROUTER] router.gno__SwapRoute() || amountSpecified < 0")
 	}
 
 	tokenAmountLimit := u256.MustFromDecimal(_tokenAmountLimit)
@@ -137,13 +140,15 @@ func SwapRoute(
 		if !(tokenAmountLimit.Lte(resultAmountOut)) {
 			panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received for user (expected minimum received:%s, actual received:%s)", _tokenAmountLimit, resultAmountOut.ToString()))
 		}
-		return resultAmountOut.ToString()
 	} else { // EXACT_OUT
 		if !(resultAmountIn.Lte(tokenAmountLimit)) {
 			panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too much spend for user (expected maximum spend:%s, actual spend:%s)", _tokenAmountLimit, resultAmountIn.ToString()))
 		}
-		return resultAmountIn.ToString()
 	}
+	//return resultAmountIn.ToString(), resultAmountOut.ToString()
+
+	intAmountOut := i256.FromUint256(resultAmountOut)
+	return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString()
 }
 
 func handleSingleSwap(route string, amountSpecified *i256.Int, isDry bool) (*u256.Uint, *u256.Uint) {
