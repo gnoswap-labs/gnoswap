@@ -186,7 +186,6 @@ func init() {
 	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
-
 }
 
 /* START TEST */
@@ -221,7 +220,6 @@ func createBarFooPool() {
 	std.TestSkipHeights(1)
 }
 func mint() {
-	panic("TEST")
 	std.TestSetPrevAddr(test1)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
