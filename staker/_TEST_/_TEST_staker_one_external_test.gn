@@ -4,7 +4,6 @@ import (
 	"std"
 	"testing"
 
-	// @notJoon JSON
 
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
