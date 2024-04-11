@@ -17,9 +17,13 @@ type RewardToken struct {
 	RewardsTokenList []string `json:"rewardsTokenList"`
 }
 
-type ResponseRewardTokens struct {
-	Stat     ResponseQueryBase `json:"stat"`
-	Response []RewardToken     `json:"response"`
+type ApiIncentive struct {
+	PoolPath       string `json:"poolPath"`
+	RewardToken    string `json:"rewardToken"`
+	RewardAmount   string `json:"rewardAmount"`
+	StartTimestamp int64  `json:"startTimestamp"`
+	EndTimestamp   int64  `json:"endTimestamp"`
+	Refundee       string `json:"refundee"`
 }
 
 func ApiGetRewardTokens() string {
@@ -46,17 +50,6 @@ func ApiGetRewardTokens() string {
 		})
 	}
 
-	// JSON
-	qb := ResponseQueryBase{
-		Height:    std.GetHeight(),
-		Timestamp: time.Now().Unix(),
-	}
-
-	r := ResponseRewardTokens{
-		Stat:     qb,
-		Response: rewardTokens,
-	}
-
 	// STAT NODE
 	_stat := json.ObjectNode("", map[string]*json.Node{
 		"height":    json.NumberNode("height", float64(std.GetHeight())),
@@ -65,7 +58,7 @@ func ApiGetRewardTokens() string {
 
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
-	for i, rewardToken := range r.Response {
+	for i, rewardToken := range rewardTokens {
 		_rewardTokenNode := json.ObjectNode("", map[string]*json.Node{
 			"poolPath": json.StringNode("poolPath", rewardToken.PoolPath),
 			"tokens":   json.ArrayNode("tokens", makeRewardTokensArray(rewardToken.RewardsTokenList)),
@@ -81,6 +74,54 @@ func ApiGetRewardTokens() string {
 	b, err := json.Marshal(node)
 	if err != nil {
 		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardTokens() || json marshal error: %s", err.Error()))
+	}
+
+	return string(b)
+}
+
+func ApiGetIncentives() string {
+	apiIncentives := []ApiIncentive{}
+
+	for _, incentive := range incentives {
+		apiIncentives = append(apiIncentives, ApiIncentive{
+			PoolPath:       incentive.targetPoolPath,
+			RewardToken:    incentive.rewardToken,
+			RewardAmount:   incentive.rewardAmount.ToString(),
+			StartTimestamp: incentive.startTimestamp,
+			EndTimestamp:   incentive.endTimestamp,
+			Refundee:       incentive.refundee.String(),
+		})
+	}
+
+	// STAT NODE
+	_stat := json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
+
+	// RESPONSE (ARRAY) NODE
+	responses := json.ArrayNode("", []*json.Node{})
+	for _, incentive := range apiIncentives {
+		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
+			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
+			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
+			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
+			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
+			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
+			"refundee":       json.StringNode("refundee", incentive.Refundee),
+		})
+		responses.AppendArray(_incentiveNode)
+	}
+
+	// RETURN
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     _stat,
+		"response": responses,
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetIncentives() || json marshal error: %s", err.Error()))
 	}
 
 	return string(b)
