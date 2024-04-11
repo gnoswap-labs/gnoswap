@@ -3,9 +3,7 @@ package staker
 import (
 	"std"
 	"testing"
-	"time"
 
-	// @notJoon JSON
 
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
@@ -118,10 +116,10 @@ func TestCreateExternalIncentive(t *testing.T) {
 
 	CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/foo:500", // targetPoolPath
-		oblPath,                            // rewardToken
-		"10000000000",                      // rewardAmount
-		time.Now().Unix(),                  // startTimestamp
-		time.Now().Unix()+TIMESTAMP_90DAYS, // endTimestamp
+		oblPath,                     // rewardToken
+		"10000000000",               // rewardAmount
+		1234569600,                  // startTimestamp
+		1234569600+TIMESTAMP_90DAYS, // endTimestamp
 	)
 	std.TestSkipHeights(1)
 }
@@ -159,7 +157,7 @@ func TestStakeToken02(t *testing.T) {
 func TestUnstakeToken01(t *testing.T) {
 	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
 	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // internal reward distribution
-	std.TestSkipHeights(1)
+	std.TestSkipHeights(330)
 
 	std.TestSetPrevAddr(test1)
 	UnstakeToken(1) // GNFT tokenId
@@ -168,8 +166,8 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 18377) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(test1)), 945)   // external
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 2033707) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(test1)), 630)     // external
 }
 
 func TestUnstakeToken02(t *testing.T) {
@@ -180,8 +178,8 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 140890) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(test1)), 7247)   // external
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 15591757) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(test1)), 6932)     // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {

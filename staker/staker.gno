@@ -29,7 +29,7 @@ var (
 const (
 	TIMESTAMP_90DAYS  = 7776000
 	TIMESTAMP_180DAYS = 15552000
-	TIMESTAMP_360DAYS = 31104000
+	TIMESTAMP_365DAYS = 31536000
 
 	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000"
 )
@@ -44,7 +44,7 @@ func init() {
 //
 // Panics if any of the following conditions are met:
 // - startTimestamp is not in the future
-// - externalDuration is not 90, 180, or 360 days
+// - externalDuration is not 90, 180, or 365 days
 // - user doesn't have enough balance to provide as reward
 func CreateExternalIncentive(
 	targetPoolPath string,
@@ -59,13 +59,13 @@ func CreateExternalIncentive(
 
 	rewardAmount := u256.MustFromDecimal(_rewardAmount)
 
-	if startTimestamp < time.Now().Unix() {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || startTimestamp(%d) must be in the future [now:%d]", startTimestamp, time.Now().Unix()))
-	}
+	// must be at least +1 day midnight
+	// must be midnight of the day
+	checkStartTime(startTimestamp)
 
 	externalDuration := uint64(endTimestamp - startTimestamp)
-	if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_360DAYS) {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 360 days)", externalDuration))
+	if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_365DAYS) {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 365 days)", externalDuration))
 	}
 
 	fromBalanceBefore := balanceOfByRegisterCall(rewardToken, std.GetOrigCaller())
@@ -280,6 +280,23 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
 		}
 	default:
 		panic("[STAKER] staker.gno__EndExternalIncentive() || only refundee or admin can end incentive")
+	}
+}
+
+func checkStartTime(startTimestamp int64) {
+	// must be at least +1 day midnight
+	tomorrowMidnight := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+	if startTimestamp < tomorrowMidnight {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__checkStartTime() || startTimestamp(%d) must be at least +1 day midnight(%d)", startTimestamp, tomorrowMidnight))
+	}
+
+	// must be midnight of the day
+	startTime := time.Unix(startTimestamp, 0)
+	hour, minute, second := startTime.Hour(), startTime.Minute(), startTime.Second()
+
+	isMidnight := hour == 0 && minute == 0 && second == 0
+	if !isMidnight {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__checkStartTime() || startTime(%s) must be midnight of the day", startTime.String()))
 	}
 }
 

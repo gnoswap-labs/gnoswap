@@ -3,7 +3,6 @@ package staker
 import (
 	"std"
 	"testing"
-	"time"
 
 	"gno.land/p/demo/json"
 
@@ -117,16 +116,16 @@ func TestCreateExternalIncentive(t *testing.T) {
 
 	CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/foo:500", // targetPoolPath
-		oblPath,                            // rewardToken
-		"1000000000",                       // rewardAmount
-		time.Now().Unix(),                  // startTimestamp
-		time.Now().Unix()+TIMESTAMP_90DAYS, // endTimestamp
+		oblPath,                     // rewardToken
+		"1000000000",                // rewardAmount
+		1234569600,                  // startTimestamp
+		1234569600+TIMESTAMP_90DAYS, // endTimestamp
 	)
 	std.TestSkipHeights(1)
 
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
 	std.TestSkipHeights(1)
-	CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/foo:500", oblPath, "100000000", time.Now().Unix(), time.Now().Unix()+TIMESTAMP_90DAYS)
+	CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/foo:500", oblPath, "100000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
 	std.TestSkipHeights(1)
 }
 
@@ -183,7 +182,7 @@ func TestApiGetRewardTokens(t *testing.T) {
 func TestUnstakeToken01(t *testing.T) {
 	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
 	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // internal reward distribution
-	std.TestSkipHeights(1)
+	std.TestSkipHeights(350)
 
 	std.TestSetPrevAddr(test1)
 	UnstakeToken(1) // GNFT tokenId
@@ -192,8 +191,8 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 18377)      // internal
-	shouldEQ(t, obl.BalanceOf(a2u(test1)), 8900000103) // external
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 2156220)    // internal
+	shouldEQ(t, obl.BalanceOf(a2u(test1)), 8900000831) // external
 }
 
 func TestUnstakeToken02(t *testing.T) {
@@ -204,8 +203,8 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), test1)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(test1)), 140890)     // internal
-	shouldEQ(t, obl.BalanceOf(a2u(test1)), 8900000796) // external
+	shouldEQ(t, gns.BalanceOf(a2u(test1)), 16531020)   // internal
+	shouldEQ(t, obl.BalanceOf(a2u(test1)), 8900006600) // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {
@@ -216,7 +215,7 @@ func TestEndExternalIncentive(t *testing.T) {
 	// incentive time isn't over yet
 	shouldPanicWithMsg(t, func() {
 		EndExternalIncentive(test1.String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl")
-	}, "[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(1242343945), current(1234567985)")
+	}, "[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(1242345600), current(1234569730)")
 
 	std.TestSkipHeights(9999999)
 	EndExternalIncentive(test1.String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:500", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()

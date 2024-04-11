@@ -65,7 +65,7 @@ func TestSwapRouteBarQuxExactIn(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), 10000)
 	qux.Approve(a2u(consts.ROUTER_ADDR), 10000)
 
-	swapResult := SwapRoute(
+	amountIn, amountOut := SwapRoute(
 		barPath,    // inputToken
 		quxPath,    // outputToken
 		"1000",     // amountSpecified
@@ -75,7 +75,8 @@ func TestSwapRouteBarQuxExactIn(t *testing.T) {
 		"1",     // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, "7318")
+	shouldEQ(t, amountIn, "1000")
+	shouldEQ(t, amountOut, "-7318")
 }
 
 func TestDrySwapRouteBarQuxExactOut(t *testing.T) {
@@ -96,7 +97,7 @@ func TestDrySwapRouteBarQuxExactOut(t *testing.T) {
 func TestSwapRouteBarQuxExactOut(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 
-	swapResult := SwapRoute(
+	amountIn, amountOut := SwapRoute(
 		barPath,     // inputToken
 		quxPath,     // outputToken
 		"1000",      // amountSpecified
@@ -106,7 +107,8 @@ func TestSwapRouteBarQuxExactOut(t *testing.T) {
 		"99999", // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, "138")
+	shouldEQ(t, amountIn, "138")
+	shouldEQ(t, amountOut, "-996")
 }
 
 func TestDrySwapRouteQuxBarExactIn(t *testing.T) {
@@ -127,7 +129,7 @@ func TestDrySwapRouteQuxBarExactIn(t *testing.T) {
 func TestSwapRouteQuxBarExactIn(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 
-	swapResult := SwapRoute(
+	amountIn, amountOut := SwapRoute(
 		quxPath,    // inputToken
 		barPath,    // outputToken
 		"1000",     // amountSpecified
@@ -137,7 +139,8 @@ func TestSwapRouteQuxBarExactIn(t *testing.T) {
 		"1",     // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, "135")
+	shouldEQ(t, amountIn, "1000")
+	shouldEQ(t, amountOut, "-135")
 }
 
 func TestDrySwapRouteQuxBarExactOut(t *testing.T) {
@@ -161,7 +164,7 @@ func TestwapRouteQuxBarExactOut(t *testing.T) {
 	qux.Approve(a2u(consts.POOL_ADDR), 10000)
 	bar.Approve(a2u(consts.ROUTER_ADDR), 10000)
 
-	swapResult := SwapRoute(
+	amountIn, amountOut := SwapRoute(
 		quxPath,     // inputToken
 		barPath,     // outputToken
 		"1000",      // amountSpecified
@@ -171,5 +174,6 @@ func TestwapRouteQuxBarExactOut(t *testing.T) {
 		"99999", // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, "7350")
+	shouldEQ(t, amountIn, "7350")
+	shouldEQ(t, amountOut, "-997")
 }

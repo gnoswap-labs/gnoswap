@@ -59,7 +59,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 	pool := getPoolFromLpTokenId(uint64(1))
 	oldLiquidity := pool.PoolGetLiquidity()
 
-	_, _, m0, m1 := IncreaseLiquidity(
+	_, _, m0, m1, _ := IncreaseLiquidity(
 		uint64(1),   // tokenId
 		"10000000",  // amount0Desired
 		"10000000",  // amount1Desired

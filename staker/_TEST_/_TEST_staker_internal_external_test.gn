@@ -3,7 +3,6 @@ package staker
 import (
 	"std"
 	"testing"
-	"time"
 
 	"gno.land/r/gnoswap/consts"
 
@@ -139,8 +138,8 @@ func TestCreateExternalIncentive(t *testing.T) {
 		"gno.land/r/demo/foo:gno.land/r/demo/qux:500", // targetPoolPath
 		"gno.land/r/demo/obl",                         // rewardToken
 		"100000000",                                   // rewardAmount
-		time.Now().Unix(),                             // startTimestamp
-		time.Now().Unix()+TIMESTAMP_90DAYS,            // endTimestamp
+		1234569600,                                    // startTimestamp
+		1234569600+TIMESTAMP_90DAYS,                   // endTimestamp
 	)
 	std.TestSkipHeights(1)
 }
@@ -234,7 +233,7 @@ func TestCollectExternalReward(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	oblNew := obl.BalanceOf(a2u(test1))
-	shouldEQ(t, oblNew, 9900020915)
+	shouldEQ(t, oblNew, 9900014200)
 }
 
 func TestCollectAll(t *testing.T) {
@@ -252,7 +251,7 @@ func TestUnstakeToken1(t *testing.T) {
 	gnsOld := gns.BalanceOf(a2u(test1))
 	oblOld := obl.BalanceOf(a2u(test1))
 	shouldEQ(t, gnsOld, 66009736)
-	shouldEQ(t, oblOld, 9900020936)
+	shouldEQ(t, oblOld, 9900014221)
 
 	std.TestSkipHeights(100000)
 	UnstakeToken(1)
@@ -265,7 +264,7 @@ func TestUnstakeToken1(t *testing.T) {
 
 	UnstakeToken(3)
 	oblNew := obl.BalanceOf(a2u(test1))
-	shouldEQ(t, oblNew, 9903499997)
+	shouldEQ(t, oblNew, 9903488806)
 
 	std.TestSkipHeights(1)
 }

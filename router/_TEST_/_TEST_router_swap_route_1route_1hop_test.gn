@@ -1,7 +1,6 @@
 package router
 
 import (
-	// @notJoon JSON
 	"std"
 	"testing"
 
@@ -64,7 +63,7 @@ func TestSwapRouteBarBazExactIn(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), uint64(1000))
 	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
 
-	swapResult := SwapRoute(
+	amountIn, amountOut := SwapRoute(
 		barPath,    // inputToken
 		bazPath,    // outputToken
 		"1000",     // amountSpecified
@@ -73,7 +72,8 @@ func TestSwapRouteBarBazExactIn(t *testing.T) {
 		"100",  // quoteArr
 		"2700", // tokenAmountLimit
 	)
-	shouldEQ(t, swapResult, "2707")
+	shouldEQ(t, amountIn, "1000")
+	shouldEQ(t, amountOut, "-2707")
 }
 
 func TestDrySwapRouteBarBazExactOut(t *testing.T) {
@@ -97,7 +97,7 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), uint64(1000))
 	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
 
-	swapResult := SwapRoute(
+	amountIn, amountOut := SwapRoute(
 		barPath,     // inputToken
 		bazPath,     // outputToken
 		"1000",      // amountSpecified
@@ -107,7 +107,8 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 		"370", // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, "370")
+	shouldEQ(t, amountIn, "370")
+	shouldEQ(t, amountOut, "-999")
 }
 
 func TestDrySwapRouteBazBarExactIn(t *testing.T) {
@@ -131,7 +132,7 @@ func TestSwapRouteBazBarExactIn(t *testing.T) {
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
 
-	swapResult := SwapRoute(
+	amountIn, amountOut := SwapRoute(
 		bazPath,    // inputToken
 		barPath,    // outputToken
 		"1000",     // amountSpecified
@@ -141,37 +142,39 @@ func TestSwapRouteBazBarExactIn(t *testing.T) {
 		"360", // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, "368")
+	shouldEQ(t, amountIn, "1000")
+	shouldEQ(t, amountOut, "-368")
 }
 
 func TestDrySwapRouteBazBarExactOut(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 
 	dryResult := DrySwapRoute(
-		bazPath,    // inputToken
-		barPath,    // outputToken
-		"3000",     // amountSpecified
-		"EXACT_IN", // swapType
+		bazPath,     // inputToken
+		barPath,     // outputToken
+		"3000",      // amountSpecified
+		"EXACT_OUT", // swapType
 		"gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
 		"100", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, "1104")
+	shouldEQ(t, dryResult, "8169")
 }
 
 func TestSwapRouteBazBarExactOut(t *testing.T) {
 	std.TestSetPrevAddr(test1)
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
 
-	swapResult := SwapRoute(
-		bazPath,    // inputToken
-		barPath,    // outputToken
-		"3000",     // amountSpecified
-		"EXACT_IN", // swapType
+	amountIn, amountOut := SwapRoute(
+		bazPath,     // inputToken
+		barPath,     // outputToken
+		"3000",      // amountSpecified
+		"EXACT_OUT", // swapType
 		"gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
 		"100",  // quoteArr
-		"1100", // tokenAmountLimit
+		"8200", // tokenAmountLimit
 	)
 
-	shouldEQ(t, swapResult, "1103")
+	shouldEQ(t, amountIn, "8169")
+	shouldEQ(t, amountOut, "-2996")
 }

@@ -186,7 +186,6 @@ func init() {
 	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
-
 }
 
 /* START TEST */

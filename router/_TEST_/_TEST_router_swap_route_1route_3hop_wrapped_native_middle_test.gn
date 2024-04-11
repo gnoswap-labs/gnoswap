@@ -98,7 +98,7 @@ func TestSwapRouteGnsBarExactIn(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), 1000)   // swap input amount
 	bar.Approve(a2u(consts.ROUTER_ADDR), 7328) // 0.15% fee
 
-	swapResult := SwapRoute(
+	amountIn, amountOut := SwapRoute(
 		consts.GNS_PATH, // inputToken
 		barPath,         // outputToken
 		"1000",          // amountSpecified
@@ -107,5 +107,6 @@ func TestSwapRouteGnsBarExactIn(t *testing.T) {
 		"100", // quoteArr
 		"0",   // tokenAmountLimit
 	)
-	shouldEQ(t, swapResult, "7328")
+	shouldEQ(t, amountIn, "1000")
+	shouldEQ(t, amountOut, "-7328")
 }

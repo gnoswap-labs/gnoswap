@@ -116,8 +116,8 @@ func TestApiGetRatiosFromBase(t *testing.T) {
 	shouldEQ(t, token0.String(), "{\"token\":\"gno.land/r/demo/wugnot\",\"ratio\":\"79228162514264337593543950336\"}")
 	shouldEQ(t, token1.String(), "{\"token\":\"gno.land/r/demo/bar\",\"ratio\":\"19935653721785907863909200771\"}")
 	shouldEQ(t, token2.String(), "{\"token\":\"gno.land/r/demo/qux\",\"ratio\":\"79228162514264337593543950338\"}")
-	shouldEQ(t, token3.String(), "{\"token\":\"gno.land/r/demo/foo\",\"ratio\":\"21827358772679825007021358318119\"}")
+	shouldEQ(t, token3.String(), "{\"token\":\"gno.land/r/demo/foo\",\"ratio\":\"10796452559328726350\"}")
 	shouldEQ(t, token4.String(), "{\"token\":\"gno.land/r/demo/baz\",\"ratio\":\"158459202898910110285447649633\"}")
-	shouldEQ(t, token5.String(), "{\"token\":\"gno.land/r/demo/obl\",\"ratio\":\"316918405797820220570895299266\"}")
-	shouldEQ(t, token6.String(), "{\"token\":\"gno.land/r/demo/gns\",\"ratio\":\"633836811595640441141790598532\"}")
+	shouldEQ(t, token5.String(), "{\"token\":\"gno.land/r/demo/obl\",\"ratio\":\"6102283613564175414\"}")
+	shouldEQ(t, token6.String(), "{\"token\":\"gno.land/r/demo/gns\",\"ratio\":\"12204788885446722546\"}")
 }
