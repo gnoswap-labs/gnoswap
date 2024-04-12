@@ -9,8 +9,8 @@ import (
 
 	u256 "gno.land/p/demo/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/common"
+	"gno.land/r/demo/gnoswap/consts"
 
 	pl "gno.land/r/demo/pool"
 )

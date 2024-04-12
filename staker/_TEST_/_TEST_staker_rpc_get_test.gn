@@ -15,7 +15,7 @@ import (
 
 	"gno.land/r/demo/gnft"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 )
 
 func init() {

@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/demo/gnoswap/common"
 
 	"gno.land/r/demo/gnft"
 	"gno.land/r/demo/gns"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"

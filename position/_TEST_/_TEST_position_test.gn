@@ -5,7 +5,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 
 	pl "gno.land/r/demo/pool"
 

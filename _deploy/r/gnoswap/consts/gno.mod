@@ -1,1 +1,1 @@
-module gno.land/r/gnoswap/consts
+module gno.land/r/demo/gnoswap/consts

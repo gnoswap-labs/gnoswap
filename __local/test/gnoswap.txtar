@@ -10,8 +10,8 @@ loadpkg gno.land/r/demo/users
 loadpkg gno.land/r/demo/wugnot
 loadpkg gno.land/r/demo/foo20
 
-loadpkg gno.land/r/gnoswap/consts
-loadpkg gno.land/r/gnoswap/common
+loadpkg gno.land/r/demo/gnoswap/consts
+loadpkg gno.land/r/demo/gnoswap/common
 
 loadpkg gno.land/r/demo/gns
 loadpkg gno.land/r/demo/gnft

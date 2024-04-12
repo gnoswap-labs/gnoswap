@@ -1,8 +1,8 @@
 package staker
 
 import (
-	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/common"
+	"gno.land/r/demo/gnoswap/consts"
 
 	"gno.land/p/demo/ufmt"
 

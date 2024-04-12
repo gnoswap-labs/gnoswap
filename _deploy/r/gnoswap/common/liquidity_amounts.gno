@@ -1,7 +1,7 @@
 package common
 
 import (
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 
 	u256 "gno.land/p/demo/gnoswap/uint256"
 )

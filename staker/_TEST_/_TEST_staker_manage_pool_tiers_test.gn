@@ -6,7 +6,7 @@ import (
 
 	pl "gno.land/r/demo/pool"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 
 	"gno.land/r/demo/gns"
 )

@@ -8,6 +8,8 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/demo/gnoswap/uint256"
+
+	"gno.land/r/demo/gnoswap/consts"
 )
 
 type LpTokenReward struct {
@@ -63,7 +65,7 @@ func ApiGetRewards() string {
 			rewards = append(rewards, Reward{
 				IncentiveType:     "INTERNAL",
 				TargetPoolPath:    deposit.targetPoolPath,
-				RewardTokenPath:   INTERNAL_REWARD_TOKEN_PATH,
+				RewardTokenPath:   consts.GNS_PATH,
 				RewardTokenAmount: internalGNS.ToString(),
 			})
 		}

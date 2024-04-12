@@ -10,7 +10,7 @@ import (
 	"gno.land/r/demo/baz"
 	"gno.land/r/demo/foo"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 
 	"gno.land/r/demo/gns"
 )

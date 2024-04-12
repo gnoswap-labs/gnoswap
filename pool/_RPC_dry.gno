@@ -1,9 +1,9 @@
 package pool
 
 import (
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/demo/gnoswap/common"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 
 	plp "gno.land/p/demo/gnoswap/pool" // pool package
 

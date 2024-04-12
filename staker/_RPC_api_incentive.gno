@@ -8,9 +8,9 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	pl "gno.land/r/demo/pool"
-)
 
-const INTERNAL_REWARD_TOKEN_PATH = "gno.land/r/demo/gns"
+	"gno.land/r/demo/gnoswap/consts"
+)
 
 type RewardToken struct {
 	PoolPath         string   `json:"poolPath"`
@@ -42,7 +42,7 @@ func ApiGetRewardTokens() string {
 		// HANDLE INTERNAL
 		_, ok := poolTiers[poolPath]
 		if ok {
-			thisPoolRewardTokens = append(thisPoolRewardTokens, INTERNAL_REWARD_TOKEN_PATH)
+			thisPoolRewardTokens = append(thisPoolRewardTokens, consts.GNS_PATH)
 		}
 
 		// HANDLE EXTERNAL
@@ -159,8 +159,9 @@ func ApiGetInternalIncentives() string {
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, incentive := range apiInternalIncentives {
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath": json.StringNode("poolPath", incentive.PoolPath),
-			"tier":     json.NumberNode("tier", float64(incentive.Tier)),
+			"poolPath":    json.StringNode("poolPath", incentive.PoolPath),
+			"rewardToken": json.StringNode("rewardToken", consts.GNS_PATH),
+			"tier":        json.NumberNode("tier", float64(incentive.Tier)),
 		})
 		responses.AppendArray(_incentiveNode)
 	}

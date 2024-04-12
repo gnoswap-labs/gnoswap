@@ -15,7 +15,7 @@ import (
 	"gno.land/p/demo/json"
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 
 	pl "gno.land/r/demo/pool"
 )
