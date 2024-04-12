@@ -17,6 +17,7 @@ MAX_UINT64 := 18446744073709551615
 TX_EXPIRE := 9999999999
 
 # INCENTIVE_START
+# TOMORROW_MIDNIGHT := $(shell date +%s) # DEV
 TOMORROW_MIDNIGHT := $(shell (gdate -ud 'tomorrow 00:00:00' +%s))
 INCENTIVE_END := $(shell expr $(TOMORROW_MIDNIGHT) + 7776000) # 7776000 SECONDS = 90 DAY
 
@@ -150,12 +151,12 @@ deploy-package-pool:
 # deploy common realms
 deploy-consts:
 	$(info ************ deploy consts ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_deploy/r/gnoswap/consts -pkgpath gno.land/r/demo/gnoswap/consts -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_deploy/r/demo/gnoswap/consts -pkgpath gno.land/r/demo/gnoswap/consts -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 deploy-common:
 	$(info ************ deploy common ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_deploy/r/gnoswap/common -pkgpath gno.land/r/demo/gnoswap/common -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_deploy/r/demo/gnoswap/common -pkgpath gno.land/r/demo/gnoswap/common -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 # deploy gnoswap realms
