@@ -296,7 +296,7 @@ func checkStartTime(startTimestamp int64) {
 
 	isMidnight := hour == 0 && minute == 0 && second == 0
 	if !isMidnight {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__checkStartTime() || startTime(%s) must be midnight of the day", startTime.String()))
+		panic(ufmt.Sprintf("[STAKER] staker.gno__checkStartTime() || startTime(%d = %s) must be midnight of the day", startTimestamp, startTime.String()))
 	}
 }
 

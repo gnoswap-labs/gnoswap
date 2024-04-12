@@ -17,13 +17,19 @@ type RewardToken struct {
 	RewardsTokenList []string `json:"rewardsTokenList"`
 }
 
-type ApiIncentive struct {
+type ApiExternalIncentive struct {
 	PoolPath       string `json:"poolPath"`
 	RewardToken    string `json:"rewardToken"`
 	RewardAmount   string `json:"rewardAmount"`
 	StartTimestamp int64  `json:"startTimestamp"`
 	EndTimestamp   int64  `json:"endTimestamp"`
+	Active         bool   `json:"active"`
 	Refundee       string `json:"refundee"`
+}
+
+type ApiInternalIncentive struct {
+	PoolPath string `json:"poolPath"`
+	Tier     uint64 `json:"tier"`
 }
 
 func ApiGetRewardTokens() string {
@@ -79,11 +85,11 @@ func ApiGetRewardTokens() string {
 	return string(b)
 }
 
-func ApiGetIncentives() string {
-	apiIncentives := []ApiIncentive{}
+func ApiGetExternalIncentives() string {
+	apiExternalIncentives := []ApiExternalIncentive{}
 
 	for _, incentive := range incentives {
-		apiIncentives = append(apiIncentives, ApiIncentive{
+		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
 			PoolPath:       incentive.targetPoolPath,
 			RewardToken:    incentive.rewardToken,
 			RewardAmount:   incentive.rewardAmount.ToString(),
@@ -101,13 +107,19 @@ func ApiGetIncentives() string {
 
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
-	for _, incentive := range apiIncentives {
+	for _, incentive := range apiExternalIncentives {
+		active := false
+		if time.Now().Unix() >= incentive.StartTimestamp && time.Now().Unix() <= incentive.EndTimestamp {
+			active = true
+		}
+
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
 			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
 			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
 			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
 			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
 			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
+			"active":         json.BoolNode("active", active),
 			"refundee":       json.StringNode("refundee", incentive.Refundee),
 		})
 		responses.AppendArray(_incentiveNode)
@@ -121,7 +133,47 @@ func ApiGetIncentives() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetIncentives() || json marshal error: %s", err.Error()))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetExternalIncentives() || json marshal error: %s", err.Error()))
+	}
+
+	return string(b)
+}
+
+func ApiGetInternalIncentives() string {
+	apiInternalIncentives := []ApiInternalIncentive{}
+
+	for poolPath, tier := range poolTiers {
+		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
+			PoolPath: poolPath,
+			Tier:     tier,
+		})
+	}
+
+	// STAT NODE
+	_stat := json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
+
+	// RESPONSE (ARRAY) NODE
+	responses := json.ArrayNode("", []*json.Node{})
+	for _, incentive := range apiInternalIncentives {
+		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
+			"poolPath": json.StringNode("poolPath", incentive.PoolPath),
+			"tier":     json.NumberNode("tier", float64(incentive.Tier)),
+		})
+		responses.AppendArray(_incentiveNode)
+	}
+
+	// RETURN
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     _stat,
+		"response": responses,
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetInternalIncentives() || json marshal error: %s", err.Error()))
 	}
 
 	return string(b)
