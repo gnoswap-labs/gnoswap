@@ -12,7 +12,7 @@ import (
 	"gno.land/r/demo/gns"
 	"gno.land/r/demo/qux"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 )
 
 func init() {

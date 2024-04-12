@@ -9,8 +9,8 @@ import (
 
 	"gno.land/p/demo/json"
 
-	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/common"
+	"gno.land/r/demo/gnoswap/consts"
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/foo"

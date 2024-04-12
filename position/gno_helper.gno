@@ -3,7 +3,7 @@ package position
 import (
 	"std"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 )
 
 func GetOrigPkgAddr() std.Address {

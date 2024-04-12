@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/demo/gnoswap/common"
 
 	"gno.land/r/demo/gnft"
 	"gno.land/r/demo/gns"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
@@ -296,7 +296,7 @@ func checkStartTime(startTimestamp int64) {
 
 	isMidnight := hour == 0 && minute == 0 && second == 0
 	if !isMidnight {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__checkStartTime() || startTime(%s) must be midnight of the day", startTime.String()))
+		panic(ufmt.Sprintf("[STAKER] staker.gno__checkStartTime() || startTime(%d = %s) must be midnight of the day", startTimestamp, startTime.String()))
 	}
 }
 

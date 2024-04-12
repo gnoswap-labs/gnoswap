@@ -20,7 +20,7 @@ import (
 
 	"gno.land/r/demo/gns"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 
 	pusers "gno.land/p/demo/users"
 )

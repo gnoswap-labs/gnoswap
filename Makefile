@@ -43,7 +43,7 @@ test.prepare:
 
 	cp -r "$(PWD)/_deploy/p/demo/gnoswap" ".test/examples/gno.land/p/demo" # gnoswap base package
 
-	cp -r "$(PWD)/_deploy/r/gnoswap" ".test/examples/gno.land/r/gnoswap" # gnoswap base realm
+	cp -r "$(PWD)/_deploy/r/demo/gnoswap" ".test/examples/gno.land/r/demo/gnoswap" # gnoswap base realm
 
 	cp -r "$(PWD)/gov" "$(PWD)/pool" "$(PWD)/position" "$(PWD)/router" "$(PWD)/staker" ".test/examples/gno.land/r/demo" # gnoswap realm
 

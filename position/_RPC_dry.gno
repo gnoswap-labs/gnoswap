@@ -1,7 +1,7 @@
 package position
 
 import (
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/demo/gnoswap/common"
 
 	i256 "gno.land/p/demo/gnoswap/int256"
 	u256 "gno.land/p/demo/gnoswap/uint256"

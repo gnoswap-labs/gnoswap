@@ -2,7 +2,7 @@ package pool
 
 import (
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 
 	plp "gno.land/p/demo/gnoswap/pool"
 

@@ -3,7 +3,7 @@ package staker
 import (
 	pn "gno.land/r/demo/position"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 )
 
 // MintAndStake mints and stakes the LP token

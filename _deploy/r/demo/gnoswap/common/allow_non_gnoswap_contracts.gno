@@ -3,7 +3,7 @@ package common
 import (
 	"std"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/demo/gnoswap/consts"
 )
 
 var (

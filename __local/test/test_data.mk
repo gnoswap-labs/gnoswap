@@ -16,15 +16,15 @@ ADDR_WUGNOT := g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6
 MAX_UINT64 := 18446744073709551615
 TX_EXPIRE := 9999999999
 
-NOW := $(shell date +%s)
-INCENTIVE_START := $(shell expr $(NOW) + 360) # GIVE ENOUGH TIME TO EXECUTE PREVIOUS TXS
-INCENTIVE_END := $(shell expr $(NOW) + 360 + 7776000) # 7776000 SECONDS = 90 DAY
+# INCENTIVE_START
+# TOMORROW_MIDNIGHT := $(shell date +%s) # DEV
+TOMORROW_MIDNIGHT := $(shell (gdate -ud 'tomorrow 00:00:00' +%s))
+INCENTIVE_END := $(shell expr $(TOMORROW_MIDNIGHT) + 7776000) # 7776000 SECONDS = 90 DAY
 
 
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 
-# GNOLAND_RPC_URL ?= localhost:26657
-GNOLAND_RPC_URL ?= localhost:26657 # 36657 for gnodev, 26657 for gnoland
+GNOLAND_RPC_URL ?= localhost:26657 
 CHAINID ?= dev
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
 
@@ -151,12 +151,12 @@ deploy-package-pool:
 # deploy common realms
 deploy-consts:
 	$(info ************ deploy consts ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_deploy/r/gnoswap/consts -pkgpath gno.land/r/gnoswap/consts -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_deploy/r/demo/gnoswap/consts -pkgpath gno.land/r/demo/gnoswap/consts -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 deploy-common:
 	$(info ************ deploy common ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_deploy/r/gnoswap/common -pkgpath gno.land/r/gnoswap/common -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_deploy/r/demo/gnoswap/common -pkgpath gno.land/r/demo/gnoswap/common -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 # deploy gnoswap realms
@@ -351,7 +351,7 @@ create-external-incentive:
 	@echo
 
 	# THEN CREATE EXTERNAL INCENTIVE
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/staker -func CreateExternalIncentive -args "gno.land/r/demo/foo:gno.land/r/demo/gns:500" -args "gno.land/r/demo/obl" -args 100000000000000 -args $(INCENTIVE_START) -args $(INCENTIVE_END) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/staker -func CreateExternalIncentive -args "gno.land/r/demo/foo:gno.land/r/demo/gns:500" -args "gno.land/r/demo/obl" -args 100000000000000 -args $(TOMORROW_MIDNIGHT) -args $(INCENTIVE_END) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 
