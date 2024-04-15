@@ -125,7 +125,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 	unclaimedFee0 := u256.Zero()
 	unclaimedFee1 := u256.Zero()
 	if !burned {
-		unclaimedFee0, unclaimedFee1 := unclaimedFee(lpTokenId)
+		unclaimedFee0, unclaimedFee1 = unclaimedFee(lpTokenId)
 	}
 
 	return RpcPosition{
