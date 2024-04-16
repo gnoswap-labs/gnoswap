@@ -52,7 +52,7 @@ func TestPoolCreatePool(t *testing.T) {
 	pl.CreatePool(consts.WRAPPED_WUGNOT, bazPath, fee100, common.TickMathGetSqrtRatioAtTick(6932).ToString()) // 1:2
 	pl.CreatePool(bazPath, oblPath, fee100, common.TickMathGetSqrtRatioAtTick(6932).ToString())               // 1:2
 	pl.CreatePool(oblPath, consts.GNS_PATH, fee100, common.TickMathGetSqrtRatioAtTick(6932).ToString())       // 1:2
-	// 1 GNOT = 8 GNS
+	// 1 WGNOT = 8 GNS
 }
 
 func TestPositionMint(t *testing.T) {
@@ -113,11 +113,11 @@ func TestApiGetRatiosFromBase(t *testing.T) {
 	token5, _ := response.GetIndex(5)
 	token6, _ := response.GetIndex(6)
 
-	shouldEQ(t, token0.String(), "{\"token\":\"gno.land/r/demo/wugnot\",\"ratio\":\"79228162514264337593543950336\"}")
-	shouldEQ(t, token1.String(), "{\"token\":\"gno.land/r/demo/bar\",\"ratio\":\"19935653721785907863909200771\"}")
-	shouldEQ(t, token2.String(), "{\"token\":\"gno.land/r/demo/qux\",\"ratio\":\"79228162514264337593543950338\"}")
-	shouldEQ(t, token3.String(), "{\"token\":\"gno.land/r/demo/foo\",\"ratio\":\"10796452559328726350\"}")
-	shouldEQ(t, token4.String(), "{\"token\":\"gno.land/r/demo/baz\",\"ratio\":\"158459202898910110285447649633\"}")
-	shouldEQ(t, token5.String(), "{\"token\":\"gno.land/r/demo/obl\",\"ratio\":\"6102283613564175414\"}")
-	shouldEQ(t, token6.String(), "{\"token\":\"gno.land/r/demo/gns\",\"ratio\":\"12204788885446722546\"}")
+	shouldEQ(t, token0.String(), "{\"token\":\"gno.land/r/demo/wugnot\",\"ratio\":\"79228162514264337593543950336\"}") // WGNOT: 1
+	shouldEQ(t, token1.String(), "{\"token\":\"gno.land/r/demo/bar\",\"ratio\":\"19935653721785907863909200771\"}")    // BAR: 0.2516233255
+	shouldEQ(t, token2.String(), "{\"token\":\"gno.land/r/demo/qux\",\"ratio\":\"79228162514264337593543950338\"}")    // QUX: 1
+	shouldEQ(t, token3.String(), "{\"token\":\"gno.land/r/demo/foo\",\"ratio\":\"21854449020437189859372345675086\"}") // FOO: 275.8419269979
+	shouldEQ(t, token4.String(), "{\"token\":\"gno.land/r/demo/baz\",\"ratio\":\"158459202898910110285447649633\"}")   // BAZ: 2.0000363238
+	shouldEQ(t, token5.String(), "{\"token\":\"gno.land/r/demo/obl\",\"ratio\":\"316924161643118367991168631862\"}")   // OBL: 4.0001452966
+	shouldEQ(t, token6.String(), "{\"token\":\"gno.land/r/demo/gns\",\"ratio\":\"633859835185907382391729498085\"}")   // GNS: 8.0004358939
 }

@@ -134,7 +134,9 @@ func calculateTokenRatio(currentToken string, routes []PoolWithMeta, proceed int
 	if token1Path == currentToken {
 		poolSqrtPriceX96 := pool.PoolGetSlot0SqrtPriceX96()
 
-		sqrtX96 := new(u256.Uint).Mul(poolSqrtPriceX96, poolSqrtPriceX96)
+		sqrtX96X96 := new(u256.Uint).Mul(poolSqrtPriceX96, poolSqrtPriceX96)
+		sqrtX96 := new(u256.Uint).Div(sqrtX96X96, u256.MustFromDecimal(consts.Q96))
+
 		priceX96 = new(u256.Uint).Mul(priceX96, sqrtX96)
 		currentToken = token0Path
 	} else if token0Path == currentToken {
@@ -142,7 +144,9 @@ func calculateTokenRatio(currentToken string, routes []PoolWithMeta, proceed int
 		oppositeTick := -poolTick
 		oppositeSqrtPriceX96 := common.TickMathGetSqrtRatioAtTick(oppositeTick)
 
-		oppSqrtX96 := new(u256.Uint).Mul(oppositeSqrtPriceX96, oppositeSqrtPriceX96)
+		oppSqrtX96X96 := new(u256.Uint).Mul(oppositeSqrtPriceX96, oppositeSqrtPriceX96)
+		oppSqrtX96 := new(u256.Uint).Div(oppSqrtX96X96, u256.MustFromDecimal(consts.Q96))
+
 		priceX96 = new(u256.Uint).Mul(priceX96, oppSqrtX96)
 		currentToken = token1Path
 	} else {
