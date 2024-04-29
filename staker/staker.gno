@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"strconv"
 	"time"
 
 	"gno.land/p/demo/ufmt"
@@ -31,6 +32,8 @@ const (
 	TIMESTAMP_180DAYS = 15552000
 	TIMESTAMP_365DAYS = 31536000
 
+	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
+
 	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000"
 )
 
@@ -59,9 +62,15 @@ func CreateExternalIncentive(
 
 	rewardAmount := u256.MustFromDecimal(_rewardAmount)
 
+	// must be in seconds format, not milliseconds
 	// must be at least +1 day midnight
 	// must be midnight of the day
 	checkStartTime(startTimestamp)
+
+	// endTimestamp cannot be later than 253402300799 (9999-12-31 23:59:59)
+	if endTimestamp >= MAX_UNIX_EPOCH_TIME {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp))
+	}
 
 	externalDuration := uint64(endTimestamp - startTimestamp)
 	if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_365DAYS) {
@@ -284,6 +293,13 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
 }
 
 func checkStartTime(startTimestamp int64) {
+	// must be in seconds format, not milliseconds
+	// REF: https://stackoverflow.com/a/23982005
+	numStr := strconv.Itoa(int(startTimestamp))
+	if len(numStr) >= 13 {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__checkStartTime() || startTimestamp(%d) must be in seconds format, not milliseconds", startTimestamp))
+	}
+
 	// must be at least +1 day midnight
 	tomorrowMidnight := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
 	if startTimestamp < tomorrowMidnight {
