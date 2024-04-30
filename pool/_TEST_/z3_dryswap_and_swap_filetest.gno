@@ -1,0 +1,309 @@
+package main
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/gns"
+	"gno.land/r/demo/obl"
+	"gno.land/r/demo/qux"
+	"gno.land/r/demo/wugnot"
+
+	pusers "gno.land/p/demo/users"
+
+	"gno.land/r/demo/gnoswap/consts"
+
+	pl "gno.land/r/demo/pool"
+)
+
+var (
+	gsa   std.Address = consts.GNOSWAP_ADMIN
+	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+
+	fooPath string = "gno.land/r/demo/foo"
+	barPath string = "gno.land/r/demo/bar"
+	bazPath string = "gno.land/r/demo/baz"
+	quxPath string = "gno.land/r/demo/qux"
+
+	oblPath string = "gno.land/r/demo/obl"
+
+	fee100  uint32 = 100
+	fee500  uint32 = 500
+	fee3000 uint32 = 3000
+
+	test_tickLower = int32(9000)
+	test_tickUpper = int32(11000)
+
+	maxApprove uint64 = 18446744073709551615
+
+	// TESTING
+	t *testing.T
+)
+
+type FooToken struct{}
+
+func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return foo.Transfer
+}
+func (FooToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return foo.TransferFrom
+}
+func (FooToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return foo.BalanceOf
+}
+func (FooToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return foo.Approve
+}
+
+type BarToken struct{}
+
+func (BarToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return bar.Transfer
+}
+func (BarToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return bar.TransferFrom
+}
+func (BarToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return bar.BalanceOf
+}
+func (BarToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return bar.Approve
+}
+
+type BazToken struct{}
+
+func (BazToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return baz.Transfer
+}
+func (BazToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return baz.TransferFrom
+}
+func (BazToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return baz.BalanceOf
+}
+func (BazToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return baz.Approve
+}
+
+type QuxToken struct{}
+
+func (QuxToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return qux.Transfer
+}
+func (QuxToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return qux.TransferFrom
+}
+func (QuxToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return qux.BalanceOf
+}
+func (QuxToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return qux.Approve
+}
+
+type WugnotToken struct{}
+
+func (WugnotToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return wugnot.Transfer
+}
+func (WugnotToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return wugnot.TransferFrom
+}
+func (WugnotToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return wugnot.BalanceOf
+}
+func (WugnotToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return wugnot.Approve
+}
+
+type OBLToken struct{}
+
+func (OBLToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return obl.Transfer
+}
+func (OBLToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return obl.TransferFrom
+}
+func (OBLToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return obl.BalanceOf
+}
+func (OBLToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return obl.Approve
+}
+
+type GNSToken struct{}
+
+func (GNSToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return gns.Transfer
+}
+
+func (GNSToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return gns.TransferFrom
+}
+
+func (GNSToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return gns.BalanceOf
+}
+
+func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return gns.Approve
+}
+
+/* HELPER FUNCTIONS */
+func a2u(addr std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(addr)
+}
+
+func ugnotBalanceOf(addr std.Address) uint64 {
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+
+	coins := testBanker.GetCoins(addr)
+	if len(coins) == 0 {
+		return 0
+	}
+
+	return uint64(testBanker.GetCoins(addr)[0].Amount)
+}
+
+func init() {
+	// FAUCET
+	std.TestSetPrevAddr(test1)
+
+	for i := 0; i < 100; i++ {
+		foo.Faucet()
+		bar.Faucet()
+		baz.Faucet()
+		qux.Faucet()
+		obl.Faucet()
+	}
+
+	// TOKEN REGISTER
+	std.TestSetPrevAddr(gsa)
+	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+}
+
+/* START TEST */
+func main() {
+	createPool()
+	drySwap_ZeroForOneTrue_AmountSpecified_Positive_16000()
+	drySwap_ZeroForOneTrue_AmountSpecified_Negative_16000()
+	drySwap_ZeroForOneFalse_AmountSpecified_Positive_16000()
+	drySwap_ZeroForOneFalse_AmountSpecified_Negative_16000()
+}
+
+func createPool() {
+	// call gns faucet to get creation fee
+	std.TestSetPrevAddr(test1)
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	std.TestSkipHeights(5)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	std.TestSkipHeights(1)
+
+	pl.CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick 10000 x2.7
+	if len(pl.PoolGetPoolList()) != 1 {
+		panic("expected 1 pool")
+	}
+	std.TestSkipHeights(1)
+}
+
+func drySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
+	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetOrigCaller(test1)
+
+	// no mint == no liquidity => swap will fail
+	_, _, ok := pl.DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
+	if ok {
+		panic("expected dry swap to fail #1")
+	}
+
+	// not enough mint == swap will fail
+	std.TestSetPrevAddr(test1)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetOrigCaller(test1)
+	pl.Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -test_tickUpper, -test_tickLower, "10")
+	_, _, ok = pl.DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
+	if ok {
+		panic("expected dry swap to fail #2")
+	}
+
+	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetOrigCaller(test1)
+	pl.Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -test_tickUpper, -test_tickLower, "100000000000") // -11000  ~ -9000
+	// zeroForOne true
+	// amountSpecified 16000
+	poolIn, poolOut, _ := pl.DrySwap(
+		fooPath,          // fooPath
+		barPath,          // barPath
+		fee500,           // fee500
+		true,             // zeroForOne
+		"16000",          // amountSpecified
+		consts.MIN_PRICE, // sqrtPriceLimitX96
+	)
+	if !(poolIn == "16000" && poolOut == "-5883") {
+		panic("expected 16000, -5883")
+	}
+}
+
+func drySwap_ZeroForOneTrue_AmountSpecified_Negative_16000() {
+	// zeroForOne true
+	// amountSpecified 16000
+	poolIn, poolOut, _ := pl.DrySwap(
+		fooPath,          // fooPath
+		barPath,          // barPath
+		fee500,           // fee500
+		true,             // zeroForOne
+		"-16000",         // amountSpecified
+		consts.MIN_PRICE, // sqrtPriceLimitX96
+	)
+	if !(poolIn == "43512" && poolOut == "-16000") {
+		panic("expected 43512, -16000")
+	}
+}
+
+func drySwap_ZeroForOneFalse_AmountSpecified_Positive_16000() {
+	// zeroForOne false
+	// amountSpecified 16000
+	poolIn, poolOut, _ := pl.DrySwap(
+		fooPath,          // fooPath
+		barPath,          // barPath
+		fee500,           // fee500
+		false,            // zeroForOne
+		"16000",          // amountSpecified
+		consts.MAX_PRICE, // sqrtPriceLimitX96
+	)
+	if !(poolIn == "-43468" && poolOut == "16000") {
+		panic("expected -43468, 16000")
+	}
+}
+
+func drySwap_ZeroForOneFalse_AmountSpecified_Negative_16000() {
+	// zeroForOne false
+	// amountSpecified -16000
+	poolIn, poolOut, _ := pl.DrySwap(
+		fooPath,          // fooPath
+		barPath,          // barPath
+		fee500,           // fee500
+		false,            // zeroForOne
+		"-16000",         // amountSpecified
+		consts.MAX_PRICE, // sqrtPriceLimitX96
+	)
+	if !(poolIn == "-16000" && poolOut == "5888") {
+		panic("expected -16000, 5888")
+	}
+}
