@@ -112,4 +112,6 @@ func DrySwapRoute(
 		}
 		return resultAmountIn.ToString()
 	}
+
+	panic("[ROUTER] router_dry.gno__DrySwapRoute() || unknown swapType")
 }

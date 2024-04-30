@@ -27,6 +27,7 @@ func (p ProposalCommunityPoolSpend) isValid() bool {
 		return false
 	}
 
+	return true
 }
 
 func (p ProposalCommunityPoolSpend) execute() error {
