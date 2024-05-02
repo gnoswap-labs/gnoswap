@@ -1,0 +1,345 @@
+package main
+
+import (
+	"std"
+	"strconv"
+	"testing"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/gns"
+	"gno.land/r/demo/obl"
+	"gno.land/r/demo/qux"
+	"gno.land/r/demo/wugnot"
+
+	"gno.land/r/demo/gnft"
+
+	"gno.land/p/demo/grc/grc721"
+	pusers "gno.land/p/demo/users"
+
+	"gno.land/r/demo/gnoswap/common"
+	"gno.land/r/demo/gnoswap/consts"
+
+	pl "gno.land/r/demo/pool"
+	pn "gno.land/r/demo/position"
+	rr "gno.land/r/demo/router"
+	sr "gno.land/r/demo/staker"
+)
+
+var (
+	gsa   std.Address = consts.GNOSWAP_ADMIN
+	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+
+	fooPath string = "gno.land/r/demo/foo"
+	barPath string = "gno.land/r/demo/bar"
+	bazPath string = "gno.land/r/demo/baz"
+	quxPath string = "gno.land/r/demo/qux"
+
+	oblPath string = "gno.land/r/demo/obl"
+
+	fee100  uint32 = 100
+	fee500  uint32 = 500
+	fee3000 uint32 = 3000
+
+	max_timeout int64 = 9999999999
+
+	maxApprove uint64 = 18446744073709551615
+
+	TIMESTAMP_90DAYS int64 = 7776000
+
+	// TESTING
+	t *testing.T
+)
+
+type FooToken struct{}
+
+func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return foo.Transfer
+}
+func (FooToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return foo.TransferFrom
+}
+func (FooToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return foo.BalanceOf
+}
+func (FooToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return foo.Approve
+}
+
+type BarToken struct{}
+
+func (BarToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return bar.Transfer
+}
+func (BarToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return bar.TransferFrom
+}
+func (BarToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return bar.BalanceOf
+}
+func (BarToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return bar.Approve
+}
+
+type BazToken struct{}
+
+func (BazToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return baz.Transfer
+}
+func (BazToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return baz.TransferFrom
+}
+func (BazToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return baz.BalanceOf
+}
+func (BazToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return baz.Approve
+}
+
+type QuxToken struct{}
+
+func (QuxToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return qux.Transfer
+}
+func (QuxToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return qux.TransferFrom
+}
+func (QuxToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return qux.BalanceOf
+}
+func (QuxToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return qux.Approve
+}
+
+type WugnotToken struct{}
+
+func (WugnotToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return wugnot.Transfer
+}
+func (WugnotToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return wugnot.TransferFrom
+}
+func (WugnotToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return wugnot.BalanceOf
+}
+func (WugnotToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return wugnot.Approve
+}
+
+type OBLToken struct{}
+
+func (OBLToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return obl.Transfer
+}
+func (OBLToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return obl.TransferFrom
+}
+func (OBLToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return obl.BalanceOf
+}
+func (OBLToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return obl.Approve
+}
+
+type GNSToken struct{}
+
+func (GNSToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return gns.Transfer
+}
+
+func (GNSToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return gns.TransferFrom
+}
+
+func (GNSToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return gns.BalanceOf
+}
+
+func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return gns.Approve
+}
+
+/* HELPER FUNCTIONS */
+func a2u(addr std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(addr)
+}
+
+func tid(tokenId interface{}) grc721.TokenID {
+	switch tokenId.(type) {
+	case string:
+		return grc721.TokenID(tokenId.(string))
+	case int:
+		return grc721.TokenID(strconv.Itoa(tokenId.(int)))
+	case uint64:
+		return grc721.TokenID(strconv.Itoa(int(tokenId.(uint64))))
+	case grc721.TokenID:
+		return tokenId.(grc721.TokenID)
+	default:
+		panic("tid() || unsupported tokenId type")
+	}
+}
+
+func ugnotBalanceOf(addr std.Address) uint64 {
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+
+	coins := testBanker.GetCoins(addr)
+	if len(coins) == 0 {
+		return 0
+	}
+
+	return uint64(testBanker.GetCoins(addr)[0].Amount)
+}
+
+func init() {
+	// FAUCET
+	std.TestSetPrevAddr(test1)
+
+	for i := 0; i < 100; i++ {
+		foo.Faucet()
+		bar.Faucet()
+		baz.Faucet()
+		qux.Faucet()
+		obl.Faucet()
+	}
+
+	// TOKEN REGISTER
+	std.TestSetPrevAddr(gsa)
+	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+
+	rr.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
+	rr.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+	rr.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
+	rr.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
+	rr.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	rr.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
+	rr.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+
+	sr.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
+	sr.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+	sr.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
+	sr.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
+	sr.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	sr.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
+	sr.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+}
+
+/* START TEST */
+func main() {
+	createPool()
+	mint01()
+	mint02()
+	createExternalIncentive()
+	stakeToken01()
+	stakeToken02()
+	unStakeToken01()
+	unStakeToken02()
+	endExternalIncentive()
+}
+
+func createPool() {
+	numPool := uint64(1)
+
+	// call gns faucet to get creation fee
+	std.TestSetPrevAddr(test1)
+	for i := uint64(0); i < (5 * numPool); i++ {
+		gns.Faucet()
+		std.TestSkipHeights(1)
+	}
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*numPool)
+	std.TestSkipHeights(1)
+
+	pl.CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(10_000).ToString())
+}
+
+func mint01() {
+	std.TestSetOrigCaller(test1)
+
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.STAKER_PATH)
+	pn.Mint(barPath, fooPath, fee100, 9000, 11000, "1000", "1000", "0", "0", max_timeout, test1.String())
+}
+
+func mint02() {
+	std.TestSetOrigCaller(test1)
+
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.STAKER_PATH)
+	pn.Mint(barPath, fooPath, fee100, 9100, 12000, "5000", "5000", "0", "0", max_timeout, test1.String())
+}
+
+func createExternalIncentive() {
+	std.TestSetPrevAddr(test1)
+	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
+	std.TestSkipHeights(1)
+
+	sr.CreateExternalIncentive(
+		"gno.land/r/demo/bar:gno.land/r/demo/foo:100", // targetPoolPath
+		oblPath,                     // rewardToken
+		"1000000000",                // rewardAmount
+		1234569600,                  // startTimestamp
+		1234569600+TIMESTAMP_90DAYS, // endTimestamp
+	)
+	std.TestSkipHeights(1)
+}
+
+func stakeToken01() {
+	std.TestSetPrevAddr(test1)
+	gnft.Approve(a2u(consts.STAKER_ADDR), tid(1))
+	sr.StakeToken(1)
+	std.TestSkipHeights(2)
+}
+
+func stakeToken02() {
+	std.TestSetPrevAddr(test1)
+	gnft.Approve(a2u(consts.STAKER_ADDR), tid(2))
+	sr.StakeToken(2)
+	std.TestSkipHeights(2)
+}
+
+func unStakeToken01() {
+	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
+	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // internal reward distribution
+	std.TestSkipHeights(360)
+
+	std.TestSetPrevAddr(test1)
+	sr.UnstakeToken(1) // GNFT tokenId
+	std.TestSkipHeights(1)
+
+	gnsBal := gns.BalanceOf(a2u(test1)) // 0
+	oblBal := obl.BalanceOf(a2u(test1))
+	if oblBal != 9000000945 {
+		panic("oblBal != 9000000945")
+	}
+}
+
+func unStakeToken02() {
+	std.TestSetPrevAddr(test1)
+	sr.UnstakeToken(2) // GNFT tokenId
+	std.TestSkipHeights(1)
+
+	gnsBal := gns.BalanceOf(a2u(test1)) // 0
+	oblBal := obl.BalanceOf(a2u(test1))
+	if oblBal != 9000007455 {
+		panic("oblBal != 9000007455")
+	}
+}
+
+func endExternalIncentive() {
+	std.TestSetOrigCaller(test1)
+	std.TestSkipHeights(9999999)
+
+	sr.EndExternalIncentive(std.GetOrigCaller().String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:100", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
+	std.TestSkipHeights(1)
+}
