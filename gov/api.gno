@@ -43,6 +43,10 @@ func GetActiveProposals() []Proposal {
 	return nil
 }
 
+func GetProposalById(proposalID uint64) *Proposal {
+	return &proposalsMap[proposalID]
+}
+
 func SubmitProposalText(
 	title string,
 	summary string,

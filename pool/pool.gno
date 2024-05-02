@@ -484,6 +484,10 @@ func (pool *Pool) transferAndVerify(
 	amount *i256.Int,
 	isToken0 bool,
 ) {
+	if amount.IsZero() {
+		return
+	}
+
 	// must be negative to send token from pool to user
 	// as point of view from pool, it is negative
 	if !amount.IsNeg() {
