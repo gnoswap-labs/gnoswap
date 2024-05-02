@@ -38,7 +38,10 @@ func SwapRoute(
 	_tokenAmountLimit string, // uint256
 ) (string, string) { // tokneIn, tokenOut
 	if common.GetLimitCaller() {
-		std.AssertOriginCall()
+		isUserCalled := std.PrevRealm().PkgPath() == ""
+		if !isUserCalled {
+			panic("[ROUTER] router.gno__SwapRoute() || only user can call this function")
+		}
 	}
 
 	amountSpecified := i256.MustFromDecimal(_amountSpecified)

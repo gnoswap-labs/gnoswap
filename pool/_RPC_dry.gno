@@ -182,6 +182,8 @@ func DrySwap(
 		amount1 = i256.Zero().Sub(amountSpecified, state.amountSpecifiedRemaining)
 	}
 
+	pool.slot0.unlocked = true
+
 	if zeroForOne {
 		if pool.balances.token1.Lt(amount1.Abs()) {
 			// NOT ENOUGH BALANCE for output token1
@@ -199,6 +201,5 @@ func DrySwap(
 		return "0", "0", false
 	}
 
-	pool.slot0.unlocked = true
 	return amount0.ToString(), amount1.ToString(), true
 }

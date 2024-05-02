@@ -1,0 +1,398 @@
+package main
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/gns"
+	"gno.land/r/demo/obl"
+	"gno.land/r/demo/qux"
+	"gno.land/r/demo/wugnot"
+
+	pusers "gno.land/p/demo/users"
+
+	"gno.land/r/demo/gnoswap/common"
+	"gno.land/r/demo/gnoswap/consts"
+
+	pl "gno.land/r/demo/pool"
+	pn "gno.land/r/demo/position"
+	rr "gno.land/r/demo/router"
+)
+
+var (
+	gsa   std.Address = consts.GNOSWAP_ADMIN
+	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+
+	fooPath string = "gno.land/r/demo/foo"
+	barPath string = "gno.land/r/demo/bar"
+	bazPath string = "gno.land/r/demo/baz"
+	quxPath string = "gno.land/r/demo/qux"
+
+	oblPath string = "gno.land/r/demo/obl"
+
+	fee100  uint32 = 100
+	fee500  uint32 = 500
+	fee3000 uint32 = 3000
+
+	maxTimeout int64 = 9999999999
+
+	maxApprove uint64 = 18446744073709551615
+
+	// TESTING
+	t *testing.T
+)
+
+type FooToken struct{}
+
+func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return foo.Transfer
+}
+func (FooToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return foo.TransferFrom
+}
+func (FooToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return foo.BalanceOf
+}
+func (FooToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return foo.Approve
+}
+
+type BarToken struct{}
+
+func (BarToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return bar.Transfer
+}
+func (BarToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return bar.TransferFrom
+}
+func (BarToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return bar.BalanceOf
+}
+func (BarToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return bar.Approve
+}
+
+type BazToken struct{}
+
+func (BazToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return baz.Transfer
+}
+func (BazToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return baz.TransferFrom
+}
+func (BazToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return baz.BalanceOf
+}
+func (BazToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return baz.Approve
+}
+
+type QuxToken struct{}
+
+func (QuxToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return qux.Transfer
+}
+func (QuxToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return qux.TransferFrom
+}
+func (QuxToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return qux.BalanceOf
+}
+func (QuxToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return qux.Approve
+}
+
+type WugnotToken struct{}
+
+func (WugnotToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return wugnot.Transfer
+}
+func (WugnotToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return wugnot.TransferFrom
+}
+func (WugnotToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return wugnot.BalanceOf
+}
+func (WugnotToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return wugnot.Approve
+}
+
+type OBLToken struct{}
+
+func (OBLToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return obl.Transfer
+}
+func (OBLToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return obl.TransferFrom
+}
+func (OBLToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return obl.BalanceOf
+}
+func (OBLToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return obl.Approve
+}
+
+type GNSToken struct{}
+
+func (GNSToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return gns.Transfer
+}
+
+func (GNSToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return gns.TransferFrom
+}
+
+func (GNSToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return gns.BalanceOf
+}
+
+func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return gns.Approve
+}
+
+/* HELPER FUNCTIONS */
+func a2u(addr std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(addr)
+}
+
+func ugnotBalanceOf(addr std.Address) uint64 {
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+
+	coins := testBanker.GetCoins(addr)
+	if len(coins) == 0 {
+		return 0
+	}
+
+	return uint64(testBanker.GetCoins(addr)[0].Amount)
+}
+
+func init() {
+	// FAUCET
+	std.TestSetPrevAddr(test1)
+
+	for i := 0; i < 100; i++ {
+		foo.Faucet()
+		bar.Faucet()
+		baz.Faucet()
+		qux.Faucet()
+		obl.Faucet()
+	}
+
+	// TOKEN REGISTER
+	std.TestSetPrevAddr(gsa)
+	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+
+	rr.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
+	rr.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+	rr.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
+	rr.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
+	rr.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	rr.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
+	rr.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+}
+
+/* START TEST */
+func main() {
+	createPool()
+	mint()
+	drySwapBarBazExactIn()
+	swapBarBazExactIn()
+	drySwapBarBazExactOut()
+	swapBarBazExactOut()
+	drySwapBazBarExactIn()
+	swapBazBarExactIn()
+	drySwapBazBarExactOut()
+	swapBazBarExactOut()
+}
+
+func createPool() {
+	// call gns faucet to get creation fee
+	std.TestSetPrevAddr(test1)
+	for i := 0; i < (5 * 1); i++ {
+		gns.Faucet()
+		std.TestSkipHeights(1)
+	}
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	std.TestSkipHeights(1)
+
+	// 1 HOPS
+	pl.CreatePool(barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(10_000).ToString())
+	// tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+}
+
+func mint() {
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.STAKER_PATH)
+	_, _, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, test1.String())
+	if !(amount0 == "36790" && amount1 == "99999") {
+		panic("amount0 and amount1 should be 36790 and 99999")
+	}
+}
+
+func drySwapBarBazExactIn() {
+	std.TestSetPrevAddr(test1)
+
+	dryResult := rr.DrySwapRoute(
+		barPath,    // inputToken
+		bazPath,    // outputToken
+		"1000",     // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/demo/bar:gno.land/r/demo/baz:500", // strRouteArr
+		"100", // quoteArr
+	)
+	if dryResult != "2711" {
+		panic("dryResult should be 2711")
+	}
+}
+
+func swapBarBazExactIn() {
+	std.TestSetPrevAddr(test1)
+
+	bar.Approve(a2u(consts.POOL_ADDR), uint64(1000))
+	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
+
+	amountIn, amountOut := rr.SwapRoute(
+		barPath,    // inputToken
+		bazPath,    // outputToken
+		"1000",     // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/demo/bar:gno.land/r/demo/baz:500", // strRouteArr
+		"100",  // quoteArr
+		"2700", // tokenAmountLimit
+	)
+
+	if amountIn != "1000" {
+		panic("amountIn should be 1000")
+	}
+	if amountOut != "-2707" {
+		panic("amountOut should be -2707")
+	}
+}
+
+func drySwapBarBazExactOut() {
+	std.TestSetPrevAddr(test1)
+
+	dryResult := rr.DrySwapRoute(
+		barPath,     // inputToken
+		bazPath,     // outputToken
+		"1000",      // amountSpecified
+		"EXACT_OUT", // swapType
+		"gno.land/r/demo/bar:gno.land/r/demo/baz:500", // strRouteArr
+		"100", // quoteArr
+	)
+	if dryResult != "370" {
+		panic("dryResult should be 370")
+	}
+}
+
+func swapBarBazExactOut() {
+	std.TestSetPrevAddr(test1)
+
+	bar.Approve(a2u(consts.POOL_ADDR), uint64(1000))
+	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
+
+	amountIn, amountOut := rr.SwapRoute(
+		barPath,     // inputToken
+		bazPath,     // outputToken
+		"1000",      // amountSpecified
+		"EXACT_OUT", // swapType
+		"gno.land/r/demo/bar:gno.land/r/demo/baz:500", // strRouteArr
+		"100", // quoteArr
+		"370", // tokenAmountLimit
+	)
+	if amountIn != "370" {
+		panic("amountIn should be 370")
+	}
+	if amountOut != "-999" {
+		panic("amountOut should be -999")
+	}
+}
+
+func drySwapBazBarExactIn() {
+	std.TestSetPrevAddr(test1)
+
+	dryResult := rr.DrySwapRoute(
+		bazPath,    // inputToken
+		barPath,    // outputToken
+		"1000",     // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
+		"100", // quoteArr
+	)
+	if dryResult != "368" {
+		panic("dryResult should be 368")
+	}
+}
+
+func swapBazBarExactIn() {
+	std.TestSetPrevAddr(test1)
+
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
+
+	amountIn, amountOut := rr.SwapRoute(
+		bazPath,    // inputToken
+		barPath,    // outputToken
+		"1000",     // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
+		"100", // quoteArr
+		"360", // tokenAmountLimit
+	)
+	if amountIn != "1000" {
+		panic("amountIn should be 1000")
+	}
+	if amountOut != "-368" {
+		panic("amountOut should be -368")
+	}
+}
+
+func drySwapBazBarExactOut() {
+	std.TestSetPrevAddr(test1)
+
+	dryResult := rr.DrySwapRoute(
+		bazPath,     // inputToken
+		barPath,     // outputToken
+		"3000",      // amountSpecified
+		"EXACT_OUT", // swapType
+		"gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
+		"100", // quoteArr
+	)
+	if dryResult != "8169" {
+		panic("dryResult should be 8169")
+	}
+}
+
+func swapBazBarExactOut() {
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+	amountIn, amountOut := rr.SwapRoute(
+		bazPath,     // inputToken
+		barPath,     // outputToken
+		"3000",      // amountSpecified
+		"EXACT_OUT", // swapType
+		"gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
+		"100",  // quoteArr
+		"8200", // tokenAmountLimit
+	)
+	if amountIn != "8169" {
+		panic("amountIn should be 8169")
+	}
+	if amountOut != "-2996" {
+		panic("amountOut should be -2996")
+	}
+}

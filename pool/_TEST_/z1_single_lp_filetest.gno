@@ -179,8 +179,8 @@ func init() {
 
 	// TOKEN REGISTER
 	std.TestSetPrevAddr(gsa)
-	pl.RegisterGRC20Interface("gno.land/r/demo/bar", FooToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/foo", BarToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
