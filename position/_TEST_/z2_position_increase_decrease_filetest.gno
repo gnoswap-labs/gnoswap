@@ -1,0 +1,381 @@
+package main
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/gns"
+	"gno.land/r/demo/obl"
+	"gno.land/r/demo/qux"
+	"gno.land/r/demo/wugnot"
+
+	pusers "gno.land/p/demo/users"
+
+	"gno.land/r/demo/gnoswap/consts"
+
+	pl "gno.land/r/demo/pool"
+	pn "gno.land/r/demo/position"
+)
+
+var (
+	gsa   std.Address = consts.GNOSWAP_ADMIN
+	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+
+	fooPath string = "gno.land/r/demo/foo"
+	barPath string = "gno.land/r/demo/bar"
+	bazPath string = "gno.land/r/demo/baz"
+	quxPath string = "gno.land/r/demo/qux"
+
+	oblPath string = "gno.land/r/demo/obl"
+
+	fee100  uint32 = 100
+	fee500  uint32 = 500
+	fee3000 uint32 = 3000
+
+	max_timeout int64 = 9999999999
+
+	maxApprove uint64 = 18446744073709551615
+
+	// TESTING
+	t *testing.T
+)
+
+type FooToken struct{}
+
+func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return foo.Transfer
+}
+func (FooToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return foo.TransferFrom
+}
+func (FooToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return foo.BalanceOf
+}
+func (FooToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return foo.Approve
+}
+
+type BarToken struct{}
+
+func (BarToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return bar.Transfer
+}
+func (BarToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return bar.TransferFrom
+}
+func (BarToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return bar.BalanceOf
+}
+func (BarToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return bar.Approve
+}
+
+type BazToken struct{}
+
+func (BazToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return baz.Transfer
+}
+func (BazToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return baz.TransferFrom
+}
+func (BazToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return baz.BalanceOf
+}
+func (BazToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return baz.Approve
+}
+
+type QuxToken struct{}
+
+func (QuxToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return qux.Transfer
+}
+func (QuxToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return qux.TransferFrom
+}
+func (QuxToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return qux.BalanceOf
+}
+func (QuxToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return qux.Approve
+}
+
+type WugnotToken struct{}
+
+func (WugnotToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return wugnot.Transfer
+}
+func (WugnotToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return wugnot.TransferFrom
+}
+func (WugnotToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return wugnot.BalanceOf
+}
+func (WugnotToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return wugnot.Approve
+}
+
+type OBLToken struct{}
+
+func (OBLToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return obl.Transfer
+}
+func (OBLToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return obl.TransferFrom
+}
+func (OBLToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return obl.BalanceOf
+}
+func (OBLToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return obl.Approve
+}
+
+type GNSToken struct{}
+
+func (GNSToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return gns.Transfer
+}
+
+func (GNSToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return gns.TransferFrom
+}
+
+func (GNSToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return gns.BalanceOf
+}
+
+func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return gns.Approve
+}
+
+/* HELPER FUNCTIONS */
+func a2u(addr std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(addr)
+}
+
+func ugnotBalanceOf(addr std.Address) uint64 {
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+
+	coins := testBanker.GetCoins(addr)
+	if len(coins) == 0 {
+		return 0
+	}
+
+	return uint64(testBanker.GetCoins(addr)[0].Amount)
+}
+
+func init() {
+	// FAUCET
+	std.TestSetPrevAddr(test1)
+
+	for i := 0; i < 100; i++ {
+		foo.Faucet()
+		bar.Faucet()
+		baz.Faucet()
+		qux.Faucet()
+		obl.Faucet()
+	}
+
+	// TOKEN REGISTER
+	std.TestSetPrevAddr(gsa)
+	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+}
+
+/* START TEST */
+func main() {
+	createPool()
+	mint()
+	increase()
+	decreasePartial()
+	swap()
+	decreaseFull()
+}
+
+func createPool() {
+	// call gns faucet to get creation fee
+	std.TestSetPrevAddr(test1)
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	std.TestSkipHeights(5)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	std.TestSkipHeights(1)
+
+	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick 10000 x2.7
+	if len(pl.PoolGetPoolList()) != 1 {
+		panic("expected 1 pool")
+	}
+	std.TestSkipHeights(1)
+}
+
+func mint() {
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
+	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
+
+	std.TestSetPrevAddr(test1)
+	std.TestSetPrevRealm(consts.STAKER_PATH)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(
+		barPath,
+		fooPath,
+		fee500,
+		8000,
+		12000,
+		"50000000",
+		"50000000",
+		"0",
+		"0",
+		max_timeout,
+		test1.String(),
+	)
+	if tokenId != 1 {
+		panic("expected tokenId 1")
+	}
+	if amount0 != "18394892" {
+		panic("expected amount0 18394892")
+	}
+	if amount1 != "49999999" {
+		panic("expected amount1 49999999")
+	}
+}
+
+func increase() {
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 3678979)
+	foo.Approve(a2u(consts.POOL_ADDR), 10000000)
+
+	pool := pl.GetPool(barPath, fooPath, fee500)
+	oldLiquidity := pool.PoolGetLiquidity()
+
+	if oldLiquidity.ToString() != "318704392" {
+		panic("expected liquidity 318704392")
+	}
+
+	_, _, amount0, amount1, _ := pn.IncreaseLiquidity(
+		uint64(1),   // tokenId
+		"10000000",  // amount0Desired
+		"10000000",  // amount1Desired
+		"0",         // amount0Min
+		"0",         // amount1Min
+		max_timeout, // deadline
+	)
+	if amount0 != "3678979" {
+		panic("expected liquidity 3678979")
+	}
+	if amount1 != "9999999" {
+		panic("expected liquidity 9999999")
+	}
+
+	newLiquidity := pool.PoolGetLiquidity()
+	if newLiquidity.ToString() != "382445270" {
+		panic("expected liquidity 382445270")
+	}
+	// 318704392 -> 382445270
+}
+
+func decreasePartial() {
+	std.TestSetPrevRealm("")
+	std.TestSetOrigCaller(test1)
+
+	pool := pl.GetPool(barPath, fooPath, fee500)
+	oldLiquidity := pool.PoolGetLiquidity()
+	if oldLiquidity.ToString() != "382445270" {
+		panic("expected liquidity 382445270")
+	}
+
+	// remove 50% of liquidity
+	_, liquidity, fee0, fee1, amount0, amount1, _ := pn.DecreaseLiquidity(
+		uint64(1),   // tokenId
+		50,          // liquidityRatio
+		"0",         // amount0Min
+		"0",         // amount1Min
+		max_timeout, // deadline
+		false,       // unwrapResult
+	)
+
+	if liquidity != "191222635" {
+		panic("expected liquidity 191222635")
+	}
+	if fee0 != "0" {
+		panic("expected fee0 0")
+	}
+	if fee1 != "0" {
+		panic("expected fee1 0")
+	}
+	if amount0 != "11036934" {
+		panic("expected amount0 11036934")
+	}
+	if amount1 != "29999999" {
+		panic("expected amount1 29999999")
+	}
+}
+
+func swap() {
+	std.TestSetPrevAddr(test1)
+	bar.Approve(a2u(consts.POOL_ADDR), 1_234_567)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(test1)
+	amount0, amount1 := pl.Swap(
+		barPath,
+		fooPath,
+		fee500,
+		test1.String(),
+		true,
+		"1234567",
+		consts.MIN_PRICE,
+		test1.String(),
+	)
+}
+
+func decreaseFull() {
+	std.TestSetPrevAddr(test1)
+
+	// protocol fee approval
+	bar.Approve(a2u(consts.POOL_ADDR), 10000000)
+	foo.Approve(a2u(consts.POOL_ADDR), 10000000)
+
+	pool := pl.GetPool(barPath, fooPath, fee500)
+	oldLiquidity := pool.PoolGetLiquidity()
+	if oldLiquidity.ToString() != "191222635" {
+		panic("expected liquidity 191222635")
+	}
+
+	// remove all
+	_, liquidity, fee0, fee1, amount0, amount1, _ := pn.DecreaseLiquidity(
+		uint64(1),   // tokenId
+		100,         // liquidityRatio
+		"0",         // amount0Min
+		"0",         // amount1Min
+		max_timeout, // deadline
+		false,       // unwrapResult
+	)
+	if fee0 != "610" {
+		panic("expected fee0 610")
+	}
+	if fee1 != "0" {
+		panic("expected fee1 0")
+	}
+
+	newLiquidity := pool.PoolGetLiquidity()
+	if newLiquidity.ToString() != "0" {
+		panic("expected liquidity 0")
+	}
+
+	positionLiquidity := pn.PositionGetPositionLiquidity(uint64(1))
+	if positionLiquidity.ToString() != "0" {
+		panic("expected position liquidity 0")
+	}
+}

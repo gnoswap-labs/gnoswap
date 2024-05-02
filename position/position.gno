@@ -37,7 +37,6 @@ func Mint(
 	deadline int64,
 	mintTo string,
 ) (uint64, string, string, string) { // tokenId, liquidity, amount0, amount1 ( *u256.Uint x3 )
-
 	if common.GetLimitCaller() {
 		// only user or staker can call
 		isUserCalled := std.IsOriginCall()
