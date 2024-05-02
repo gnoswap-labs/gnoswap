@@ -57,7 +57,10 @@ func CreateExternalIncentive(
 	endTimestamp int64,
 ) {
 	if common.GetLimitCaller() {
-		std.AssertOriginCall()
+		isUserCalled := std.PrevRealm().PkgPath() == ""
+		if !isUserCalled {
+			panic("[STAKER] staker.gno__CreateExternalIncentive() || only user can call this function")
+		}
 	}
 
 	rewardAmount := u256.MustFromDecimal(_rewardAmount)

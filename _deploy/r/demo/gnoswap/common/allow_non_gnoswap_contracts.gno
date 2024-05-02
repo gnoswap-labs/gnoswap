@@ -27,8 +27,8 @@ func MustCallFromAdmin() {
 }
 
 func DisallowCallFromUser() {
-	isOrigin := std.IsOriginCall()
-	if isOrigin {
+	prevRealmPath := std.PrevRealm().PkgPath()
+	if prevRealmPath == "" {
 		panic("must be called by realm, not user")
 	}
 }
