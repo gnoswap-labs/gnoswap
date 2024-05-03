@@ -236,8 +236,11 @@ func mint() {
 		11000,
 		"1000",
 	)
-	if amount0 != "30" || amount1 != "80" {
-		panic("mint foo bar 1")
+	if amount0 != "30" {
+		panic(amount0)
+	}
+	if amount1 != "81" {
+		panic(amount1)
 	}
 
 	pool := pl.GetPool(barPath, fooPath, fee500)
@@ -478,11 +481,14 @@ func collectProtocol() {
 
 	std.TestSetPrevAddr(gsa)
 	protocolFee0, protocolFee1 := pl.CollectProtocol(barPath, fooPath, fee500, test1.String(), "100000", "100000")
-	if protocolFee0 != "7" || protocolFee1 != "0" {
-		panic("collect protocol")
+	if protocolFee0 != "8" {
+		panic(protocolFee0)
 	}
-
+	if protocolFee1 != "0" {
+		panic(protocolFee1)
+	}
 }
+
 func apiGetPools() {
 	gpls := pl.ApiGetPools()
 

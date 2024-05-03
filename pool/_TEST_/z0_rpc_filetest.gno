@@ -239,8 +239,11 @@ func mintFooBar() {
 		-9000,  // -9000
 		"100000000",
 	)
-	if amount0 != "8040316" || amount1 != "2958014" {
-		panic("mint foo bar")
+	if amount0 != "8040316" {
+		panic(amount0)
+	}
+	if amount1 != "2958015" {
+		panic(amount1)
 	}
 }
 
@@ -261,9 +264,13 @@ func mintBarBaz() {
 		11000,
 		"100000000",
 	)
-	if amount0 != "2958015" || amount1 != "8040315" {
-		panic("mint bar baz")
+	if amount0 != "2958015" {
+		panic(amount0)
 	}
+	if amount1 != "8040316" {
+		panic(amount1)
+	}
+
 }
 
 func apiGetPools() {

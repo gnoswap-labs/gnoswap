@@ -1,0 +1,135 @@
+package pool
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/demo/gnoswap/consts"
+
+	"gno.land/r/demo/gns"
+
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/wugnot"
+)
+
+var (
+	test_tickLower = int32(9000)
+	test_tickUpper = int32(11000)
+)
+
+// 1. Init & Create Pool
+func TestPoolInitCreatePool(t *testing.T) {
+	// call gns faucet to get creation fee
+	std.TestSetPrevAddr(test1)
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+	gns.Faucet()
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	CreatePool(fooPath, consts.WRAPPED_WUGNOT, fee500, "130621891405341611593710811006") // x2.7
+}
+
+// 2. Mint LP and Get GNFT
+func TestMint(t *testing.T) {
+	token0, token1 := fooPath, consts.WRAPPED_WUGNOT
+	if token1 < token0 {
+		token0, token1 = token1, token0
+	}
+
+	// prepare ugnot
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	testBanker.IssueCoin(test1, "ugnot", 804_032)
+
+	// simulate transfer & decrase
+	std.TestSetOrigSend(std.Coins{{"ugnot", 804_032}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 804_032)
+
+	// Deposit(wrap)
+	std.TestSetPrevAddr(test1)
+	wugnot.Deposit()
+
+	std.TestSetPrevAddr(test1)
+	foo.Approve(a2u(consts.POOL_ADDR), 295802)
+	wugnot.Approve(a2u(consts.POOL_ADDR), 804032)
+
+	// Mint
+	std.TestSetPrevRealm(consts.POSITION_PATH)
+	amount0, amount1 := Mint(
+		fooPath,
+		consts.WRAPPED_WUGNOT,
+		fee500,
+		consts.POSITION_ADDR.String(),
+		test_tickLower,
+		test_tickUpper,
+		"10000000",
+	)
+
+	shouldEQ(t, amount0, "295802")
+	shouldEQ(t, amount1, "804031")
+}
+
+func TestSwapBuyNative(t *testing.T) {
+	pool := GetPool(fooPath, consts.WRAPPED_WUGNOT, fee500)
+
+	test1OldT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
+	test1OldT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
+	shouldEQ(t, test1OldT0Bal, 9999704198) // foo
+	shouldEQ(t, test1OldT1Bal, 1)          // wugnot
+
+	std.TestSetPrevAddr(test1)
+	foo.Approve(a2u(consts.POOL_ADDR), 10000)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(test1)
+	amount0, amount1 := Swap(
+		fooPath,               // token0
+		consts.WRAPPED_WUGNOT, // token1
+		fee500,
+		test1.String(),
+		true,
+		"10000",
+		consts.MIN_PRICE,
+		std.GetOrigCaller().String(),
+	)
+	shouldEQ(t, amount0, "10000")
+	shouldEQ(t, amount1, "-27123")
+
+	test1NewT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
+	test1NewT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
+	shouldEQ(t, test1NewT0Bal, 9999694198) // - 10_000 // user sells 10_000
+	shouldEQ(t, test1NewT1Bal, 27124)      // gets WGNOT
+}
+
+func TestSwapSellNative(t *testing.T) {
+	pool := GetPool(fooPath, consts.WRAPPED_WUGNOT, fee500)
+
+	test1OldT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
+	test1OldT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
+	shouldEQ(t, test1OldT0Bal, 9999694198) // foo
+	shouldEQ(t, test1OldT1Bal, 27124)      // wugnot
+
+	std.TestSetPrevAddr(test1)
+	wugnot.Approve(a2u(consts.POOL_ADDR), 27123)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(test1)
+	amount0, amount1 := Swap( // ugnot 10_000 > foo ??
+		fooPath,               // token0
+		consts.WRAPPED_WUGNOT, // token1
+		fee500,
+		test1.String(),
+		false,
+		"10000",
+		consts.MAX_PRICE,
+		std.GetOrigCaller().String(),
+	)
+	shouldEQ(t, amount0, "-3687") // pool sent
+	shouldEQ(t, amount1, "10000") // pool recv
+
+	test1NewT0Bal := balanceOfByRegisterCall(pool.token0Path, test1)
+	test1NewT1Bal := balanceOfByRegisterCall(pool.token1Path, test1)
+	shouldEQ(t, test1NewT0Bal, 9999697885) // foo
+	shouldEQ(t, test1NewT1Bal, 17124)      // wugnot
+}

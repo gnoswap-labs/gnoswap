@@ -321,3 +321,6 @@ func stakeToken02() {
 	sr.StakeToken(2)
 	std.TestSkipHeights(2)
 }
+
+// Output:
+//

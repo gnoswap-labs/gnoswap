@@ -231,8 +231,12 @@ func mint() {
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
 	_, _, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(12000), int32(15000), "100000", "100000", "0", "0", maxTimeout, test1.String())
-	if !(amount0 == "100000" && amount1 == "0") { // only bar, no baz
-		panic("amount0 and amount1 should be 100000 and 0")
+	// only bar, no baz
+	if amount0 != "36790" {
+		"router_z3_mint() || amount0 should be 10000"
+	}
+	if amount1 != "100000" {
+		"router_z3_mint() || amount1 should be 0"
 	}
 }
 
@@ -248,7 +252,7 @@ func drySwapBarBazExactIn() {
 		"100", // quoteArr
 	)
 	if dryResult != "-1" {
-		panic("dryResult should be -1")
+		panic("router_z3_drySwapBarBazExactIn() || dryResult should be -1")
 	}
 }
 

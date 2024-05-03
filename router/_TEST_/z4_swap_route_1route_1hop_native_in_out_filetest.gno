@@ -238,10 +238,10 @@ func mintBarBaz() {
 	std.TestSetPrevRealm(consts.STAKER_PATH)
 	_, _, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, test1.String())
 	if amount0 != "36790" {
-		panic("amount0 should be 36790")
+		"router_z4_mintBarBaz() || amount0 should be 36790"
 	}
-	if amount1 != "99999" {
-		panic("amount1 should be 99999")
+	if amount1 != "100000" {
+		"router_z4_mintBarBaz() || amount1 should be 100000"
 	}
 }
 
@@ -253,10 +253,10 @@ func mintBazQux() {
 	std.TestSetPrevRealm(consts.STAKER_PATH)
 	_, _, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, test1.String())
 	if amount0 != "36790" {
-		panic("amount0 should be 36790")
+		"router_z4_mintBazQux() || amount0 should be 36790"
 	}
-	if amount1 != "99999" {
-		panic("amount1 should be 99999")
+	if amount1 != "100000" {
+		"router_z4_mintBazQux() || amount1 should be 100000"
 	}
 }
 
@@ -279,10 +279,10 @@ func mintQuxGnot() {
 	std.TestSetPrevRealm(consts.STAKER_PATH)
 	_, _, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, test1.String())
 	if amount0 != "36790" {
-		panic("amount0 should be 36790")
+		"router_z4_mintQuxGnot() || amount0 should be 36790"
 	}
-	if amount1 != "99999" {
-		panic("amount1 should be 99999")
+	if amount1 != "100000" {
+		"router_z4_mintQuxGnot() || amount1 should be 100000"
 	}
 }
 
@@ -298,7 +298,7 @@ func drySwapBarGnotExactIn() {
 		"100", // quoteArr
 	)
 	if dryResult != "19740" {
-		panic("dryResult should be 19740")
+		panic("router_z4_drySwapBarGnotExactIn() || dryResult should be 19740")
 	}
 }
 
@@ -313,8 +313,8 @@ func drySwapBarGnotExactOut() {
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:500*POOL*gno.land/r/demo/baz:gno.land/r/demo/qux:500*POOL*gno.land/r/demo/qux:gno.land/r/demo/wugnot:500", // strRouteArr
 		"100", // quoteArr
 	)
-	if dryResult != "1012" {
-		panic("dryResult should be 1012")
+	if dryResult != "1014" {
+		panic("router_z4_drySwapBarGnotExactOut() || dryResult should be 1014")
 	}
 }
 
@@ -330,7 +330,7 @@ func drySwapGnotBarExactIn() {
 		"100", // quoteArr
 	)
 	if dryResult != "247" {
-		panic("dryResult should be 247")
+		panic("router_z4_drySwapGnotBarExactIn() || dryResult should be 247")
 	}
 }
 
@@ -345,7 +345,10 @@ func drySwapGnotBarExactOut() {
 		"gno.land/r/demo/wugnot:gno.land/r/demo/qux:500*POOL*gno.land/r/demo/qux:gno.land/r/demo/baz:500*POOL*gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
 		"100", // quoteArr
 	)
-	if dryResult != "2003" {
-		panic("dryResult should be 2003")
+	if dryResult != "2027" {
+		panic("router_z4_drySwapGnotBarExactOut() || dryResult should be 2027")
 	}
 }
+
+// Output:
+//

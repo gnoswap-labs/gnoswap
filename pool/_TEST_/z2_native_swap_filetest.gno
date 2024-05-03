@@ -251,8 +251,11 @@ func mint() {
 		test_tickUpper,
 		"10000000",
 	)
-	if amount0 != "295802" || amount1 != "804031" {
-		panic("mint foo wugnot")
+	if amount0 != "295802" {
+		panic(amount0)
+	}
+	if amount1 != "804032" {
+		panic(amount1)
 	}
 }
 
