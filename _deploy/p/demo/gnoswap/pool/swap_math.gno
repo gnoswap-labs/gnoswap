@@ -24,10 +24,7 @@ func SwapMathComputeSwapStepStr(
 	feeAmount := u256.Zero()
 
 	if exactIn {
-		amountRemainingLessFee := u256.Zero()
-		_amountRemaining := amountRemaining.Abs()
-		amountRemainingLessFee = amountRemainingLessFee.Mul(_amountRemaining, u256.NewUint(1000000-feePips))
-		amountRemainingLessFee = amountRemainingLessFee.Div(amountRemainingLessFee, u256.NewUint(1000000))
+		amountRemainingLessFee := u256.MulDiv(amountRemaining.Abs(), u256.NewUint(1000000-feePips), u256.NewUint(1000000))
 
 		if isToken1Expensive {
 			amountIn = sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity, true)
@@ -100,12 +97,8 @@ func SwapMathComputeSwapStepStr(
 	if exactIn && !(sqrtRatioNextX96.Eq(sqrtRatioTargetX96)) {
 		feeAmount = new(u256.Uint).Sub(amountRemaining.Abs(), amountIn)
 	} else {
-		feeAmount = new(u256.Uint).Mul(amountIn, u256.NewUint(feePips))
-		feeAmount = feeAmount.Div(feeAmount, u256.NewUint(1000000-feePips))
+		feeAmount = u256.MulDivRoundingUp(amountIn, u256.NewUint(feePips), new(u256.Uint).Sub(u256.NewUint(1000000), u256.NewUint(feePips)))
 	}
 
-	if !exactIn && !(amountOut.IsZero()) {
-		amountOut = amountOut.Add(amountOut, u256.NewUint(1))
-	}
 	return sqrtRatioNextX96.ToString(), amountIn.ToString(), amountOut.ToString(), feeAmount.ToString()
 }

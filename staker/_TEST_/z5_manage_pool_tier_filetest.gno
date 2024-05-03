@@ -281,3 +281,6 @@ func removePoolTier() {
 		panic("pool tier not removed")
 	}
 }
+
+// Output:
+//

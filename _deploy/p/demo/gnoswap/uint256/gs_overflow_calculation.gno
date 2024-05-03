@@ -126,3 +126,22 @@ func MulDivRoundingUp(
 
 	return result
 }
+
+// UnsafeMath
+// https://github.com/Uniswap/v3-core/blob/d8b1c635c275d2a9450bd6a78f3fa2484fef73eb/contracts/libraries/UnsafeMath.sol
+func DivRoundingUp(
+	x, y *Uint,
+) *Uint {
+	div := new(Uint).Div(x, y)
+	mod := new(Uint).Mod(x, y)
+
+	z := new(Uint).Add(div, gt(mod, Zero()))
+	return z
+}
+
+func gt(x, y *Uint) *Uint {
+	if x.Gt(y) {
+		return One()
+	}
+	return Zero()
+}

@@ -249,8 +249,8 @@ func mint01Wide() {
 	if amount0 != "18394892" {
 		panic("expected amount0 18394892")
 	}
-	if amount1 != "49999999" {
-		panic("expected amount1 49999999")
+	if amount1 != "50000000" {
+		panic("expected amount1 50000000")
 	}
 }
 
@@ -283,8 +283,8 @@ func mint02Tight() {
 	if amount0 != "18394892" {
 		panic("expected amount0 18394892")
 	}
-	if amount1 != "49999999" {
-		panic("expected amount1 49999999")
+	if amount1 != "50000000" {
+		panic("expected amount1 50000000")
 	}
 }
 
@@ -326,8 +326,8 @@ func collect02() {
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 
 	tokenId, fee0, fee1, poolPath := pn.CollectFee(2)
-	if fee0 != "485" {
-		panic("expected fee0 485")
+	if fee0 != "486" {
+		panic("expected fee0 486")
 	}
 	if fee1 != "0" {
 		panic("expected fee1 0")

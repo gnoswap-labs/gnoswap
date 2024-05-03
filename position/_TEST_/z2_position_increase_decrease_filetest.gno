@@ -246,8 +246,8 @@ func mint() {
 	if amount0 != "18394892" {
 		panic("expected amount0 18394892")
 	}
-	if amount1 != "49999999" {
-		panic("expected amount1 49999999")
+	if amount1 != "50000000" {
+		panic("expected amount1 50000000")
 	}
 }
 
@@ -274,8 +274,8 @@ func increase() {
 	if amount0 != "3678979" {
 		panic("expected liquidity 3678979")
 	}
-	if amount1 != "9999999" {
-		panic("expected liquidity 9999999")
+	if amount1 != "10000000" {
+		panic("expected liquidity 10000000")
 	}
 
 	newLiquidity := pool.PoolGetLiquidity()
@@ -362,8 +362,8 @@ func decreaseFull() {
 		max_timeout, // deadline
 		false,       // unwrapResult
 	)
-	if fee0 != "610" {
-		panic("expected fee0 610")
+	if fee0 != "611" {
+		panic("expected fee0 611")
 	}
 	if fee1 != "0" {
 		panic("expected fee1 0")

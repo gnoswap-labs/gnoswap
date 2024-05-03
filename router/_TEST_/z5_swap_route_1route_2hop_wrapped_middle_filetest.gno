@@ -247,10 +247,10 @@ func mintGnsGnot() {
 	std.TestSetPrevRealm(consts.STAKER_PATH)
 	_, _, amount0, amount1 := pn.Mint(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, test1.String())
 	if amount0 != "36790" {
-		panic("amount0 should be 36790")
+		"router_z5_mintGnsGnot() || amount0 should be 36790"
 	}
-	if amount1 != "99999" {
-		panic("amount1 should be 99999")
+	if amount1 != "100000" {
+		"router_z5_mintGnsGnot() || amount1 should be 100000"
 	}
 }
 

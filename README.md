@@ -20,7 +20,7 @@ Clone the `gno` repository from `gnoswap-labs`. And switch to the `master_202404
 $ cd $WORKDIR
 $ git clone https://github.com/gnoswap-labs/gno.git gno
 $ cd gno
-$ git checkout master_20240401
+$ git checkout master_gs
 $ make install
 ```
 
@@ -42,17 +42,17 @@ To run unit tests, follow these steps:
 
    ```
    # copy grc20 tokens
-   $ cp -R __local/grc20_tokens/* $WORK_DIR/gno/examples/gno.land/r/demo
-   $ cp -R _deploy/r/demo/* $WORK_DIR/gno/examples/gno.land/r/demo
+   $ cp -R __local/grc20_tokens/* $WORKDIR/gno/examples/gno.land/r/demo
+   $ cp -R _deploy/r/demo/* $WORKDIR/gno/examples/gno.land/r/demo
 
    # copy gnoswap base packages ( includes uint256, int256 and bit of pool calculation )
-   $ cp -R _deploy/p/demo/gnoswap $WORK_DIR/gno/examples/gno.land/p/demo
+   $ cp -R _deploy/p/demo/gnoswap $WORKDIR/gno/examples/gno.land/p/demo
 
    # copy gnoswap base realms ( includes common logic, variables and consts )
-   $ cp -R _deploy/r/gnoswap $WORK_DIR/gno/examples/gno.land/r/gnoswap
+   $ cp -R _deploy/r/demo/gnoswap $WORKDIR/gno/examples/gno.land/r/demo/gnoswap
 
    # copy gnoswap realms
-   $ cp -R gov pool position router staker $WORK_DIR/gno/examples/gno.land/r/demo
+   $ cp -R gov pool position router staker $WORKDIR/gno/examples/gno.land/r/demo
    ```
 
 3. Move all test cases into its own directory:
@@ -82,7 +82,8 @@ To run unit tests, follow these steps:
 ### Run the Test Cases
 
 ```
-$ gno test -root-dir $WORKDIR/gno-for-swap -verbose=true $WORKDIR/gno/examples/gno.land/r/demo/{CONTRACT_FOLDER_HERE}
+$ cd $WORKDIR
+$ gno test -root-dir $WORKDIR/gno -v=true $WORKDIR/gno/examples/gno.land/r/demo/{CONTRACT_FOLDER_HERE}
 ```
 
 ## Integration Tests

@@ -37,6 +37,9 @@ func DrySwapRoute(
 	if amountSpecified.IsZero() {
 		panic("[ROUTER] router_dry.gno__SwapRoute() || amountSpecified == 0")
 	}
+	if amountSpecified.IsNeg() {
+		panic("[ROUTER] router.gno__SwapRoute() || amountSpecified < 0")
+	}
 
 	switch swapType {
 	case "EXACT_IN":

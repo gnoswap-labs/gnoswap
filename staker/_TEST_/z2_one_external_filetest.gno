@@ -343,3 +343,6 @@ func endExternalIncentive() {
 	sr.EndExternalIncentive(std.GetOrigCaller().String(), "gno.land/r/demo/bar:gno.land/r/demo/foo:100", "gno.land/r/demo/obl") // use same parameter as CreateExternalIncentive()
 	std.TestSkipHeights(1)
 }
+
+// Output:
+//

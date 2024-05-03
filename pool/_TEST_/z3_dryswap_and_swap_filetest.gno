@@ -255,8 +255,11 @@ func drySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
 		"16000",          // amountSpecified
 		consts.MIN_PRICE, // sqrtPriceLimitX96
 	)
-	if !(poolIn == "16000" && poolOut == "-5883") {
-		panic("expected 16000, -5883")
+	if poolIn != "16000" {
+		panic("expected poolIn 16000")
+	}
+	if poolOut != "-5883" {
+		panic("expected poolOut -5883")
 	}
 }
 
@@ -271,8 +274,11 @@ func drySwap_ZeroForOneTrue_AmountSpecified_Negative_16000() {
 		"-16000",         // amountSpecified
 		consts.MIN_PRICE, // sqrtPriceLimitX96
 	)
-	if !(poolIn == "43512" && poolOut == "-16000") {
-		panic("expected 43512, -16000")
+	if poolIn != "43513" {
+		panic("expected poolIn 43513")
+	}
+	if poolOut != "-16000" {
+		panic("expected poolOut -16000")
 	}
 }
 
@@ -287,8 +293,11 @@ func drySwap_ZeroForOneFalse_AmountSpecified_Positive_16000() {
 		"16000",          // amountSpecified
 		consts.MAX_PRICE, // sqrtPriceLimitX96
 	)
-	if !(poolIn == "-43468" && poolOut == "16000") {
-		panic("expected -43468, 16000")
+	if poolIn != "-43468" {
+		panic("expected poolIn -43468")
+	}
+	if poolOut != "16000" {
+		panic("expected poolOut 16000")
 	}
 }
 
@@ -303,7 +312,10 @@ func drySwap_ZeroForOneFalse_AmountSpecified_Negative_16000() {
 		"-16000",         // amountSpecified
 		consts.MAX_PRICE, // sqrtPriceLimitX96
 	)
-	if !(poolIn == "-16000" && poolOut == "5888") {
-		panic("expected -16000, 5888")
+	if poolIn != "-16000" {
+		panic(poolIn)
+	}
+	if poolOut != "5890" {
+		panic("expected poolOut 5890")
 	}
 }

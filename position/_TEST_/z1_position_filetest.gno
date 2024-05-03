@@ -247,8 +247,8 @@ func mint01InRange() {
 	if amount0 != "18394892" {
 		panic("expected amount0 18394892")
 	}
-	if amount1 != "49999999" {
-		panic("expected amount1 49999999")
+	if amount1 != "50000000" {
+		panic("expected amount1 50000000")
 	}
 }
 
@@ -278,8 +278,8 @@ func mint02LowerRange() {
 	if amount0 != "0" {
 		panic("expected amount0 0")
 	}
-	if amount1 != "49999999" {
-		panic("expected amount1 49999999")
+	if amount1 != "50000000" {
+		panic("expected amount1 50000000")
 	}
 }
 
@@ -347,8 +347,8 @@ func collectFeeAfterSwap() {
 	if tokenId != 1 {
 		panic("expected tokenId 1")
 	}
-	if fee0 != "610" {
-		panic("expected fee0 610")
+	if fee0 != "611" {
+		panic("expected fee0 611")
 	}
 	if fee1 != "0" {
 		panic("expected fee1 0")
@@ -364,10 +364,11 @@ func decreaseLiquidityUpperPosition() {
 		panic("expected tokenId 3")
 	}
 	if amount0 != "49999999" {
-		panic("expected liquidity 49999999")
+		panic(amount0)
+		panic("expected amount0 49999999")
 	}
 	if amount1 != "0" {
-		panic("expected liquidity 0")
+		panic("expected amount1 0")
 	}
 
 }

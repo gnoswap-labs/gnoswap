@@ -281,3 +281,6 @@ func unstakeToken() {
 	std.TestSetPrevAddr(test1)
 	sr.UnstakeToken(1)
 }
+
+// Output:
+//

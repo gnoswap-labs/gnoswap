@@ -395,3 +395,6 @@ func collectExternalReward() {
 		panic("collectExternalReward() || oblBal != 9000145306")
 	}
 }
+
+// Output:
+//

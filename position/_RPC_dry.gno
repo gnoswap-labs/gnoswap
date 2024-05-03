@@ -36,32 +36,37 @@ func DryMint(
 	var amount0, amount1 *i256.Int
 	if !(liquidity.IsZero()) { // != 0
 		if tickCurrent < tickLower {
-			amount0 = sqrtPriceMathGetAmount0Delta(
+			amount0Str := common.SqrtPriceMathGetAmount0DeltaStr(
 				sqrtLowerX96,
 				sqrtUpperX96,
 				i256Liquidity,
 			)
+			amount0 = i256.MustFromDecimal(amount0Str)
 		} else if tickCurrent < tickUpper {
-			amount0 = sqrtPriceMathGetAmount0Delta(
+			amount0Str := common.SqrtPriceMathGetAmount0DeltaStr(
 				sqrtRatioX96,
 				sqrtUpperX96,
 				i256Liquidity,
 			)
+			amount0 = i256.MustFromDecimal(amount0Str)
 
-			amount1 = sqrtPriceMathGetAmount1Delta(
+			amount1Str := common.SqrtPriceMathGetAmount1DeltaStr(
 				sqrtLowerX96,
 				sqrtRatioX96,
 				i256Liquidity,
 			)
+			amount1 = i256.MustFromDecimal(amount1Str)
 		} else {
-			amount1 = sqrtPriceMathGetAmount1Delta(
+			amount1Str := common.SqrtPriceMathGetAmount1DeltaStr(
 				sqrtLowerX96,
 				sqrtUpperX96,
 				i256Liquidity,
 			)
+			amount1 = i256.MustFromDecimal(amount1Str)
 		}
 	}
 	amount0 = amount0.NilToZero()
 	amount1 = amount1.NilToZero()
+
 	return amount0.ToString(), amount1.ToString()
 }
