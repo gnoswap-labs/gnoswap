@@ -57,7 +57,7 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *i2
 	}
 
 	// if position is out of range, one of amount0 or amount1 can be nil
-	// handle as 0
+	// > handle as 0
 	amount0 = amount0.NilToZero()
 	amount1 = amount1.NilToZero()
 

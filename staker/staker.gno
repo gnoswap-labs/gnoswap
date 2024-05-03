@@ -16,6 +16,7 @@ import (
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
 
+	i256 "gno.land/p/demo/gnoswap/int256"
 	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
@@ -163,7 +164,7 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 	}
 
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
-	return poolKey, token0Amount.ToString(), token1Amount.ToString()
+	return poolKey, token0Amount, token1Amount
 }
 
 // CollectReward collects staked reward from tokenId
@@ -237,7 +238,7 @@ func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0
 
 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
-	return poolPath, token0Amount.ToString(), token1Amount.ToString()
+	return poolPath, token0Amount, token1Amount
 }
 
 // EndExternalIncentive ends the external incentive
@@ -329,7 +330,7 @@ func transferDeposit(tokenId uint64, to std.Address) {
 	gnft.TransferFrom(a2u(owner), a2u(to), tid(tokenId))
 }
 
-func getTokenPairBalanceFromPosition(tokenId uint64) (*u256.Uint, *u256.Uint) {
+func getTokenPairBalanceFromPosition(tokenId uint64) (string, string) {
 	poolKey := pn.PositionGetPositionPoolKey(tokenId)
 
 	pool := pl.GetPoolFromPoolPath(poolKey)
@@ -341,14 +342,14 @@ func getTokenPairBalanceFromPosition(tokenId uint64) (*u256.Uint, *u256.Uint) {
 		currentX96,
 		lowerX96,
 		upperX96,
-		pn.PositionGetPositionLiquidity(tokenId),
+		i256.FromUint256(pn.PositionGetPositionLiquidity(tokenId)),
 	)
 
-	if token0Balance == nil {
-		token0Balance = u256.Zero()
+	if token0Balance == "" {
+		token0Balance = "0"
 	}
-	if token1Balance == nil {
-		token1Balance = u256.Zero()
+	if token1Balance == "" {
+		token1Balance = "0"
 	}
 
 	return token0Balance, token1Balance

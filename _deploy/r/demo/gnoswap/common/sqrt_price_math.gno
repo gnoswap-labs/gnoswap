@@ -1,4 +1,4 @@
-package pool
+package common
 
 import (
 	i256 "gno.land/p/demo/gnoswap/int256"
@@ -37,7 +37,7 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
 		cond2 := numerator1.Gt(product)
 
 		if !(cond1 && cond2) {
-			panic("pool_sqrt price math #1")
+			panic("common_sqrt price math #1")
 		}
 
 		denominator := new(u256.Uint).Sub(numerator1, product)
@@ -54,7 +54,7 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
 	quotient := u256.Zero()
 
 	if add {
-		if amount.Lte(u256.MustFromDecimal(MAX_UINT160)) {
+		if amount.Lte(u256.MustFromDecimal(consts.MAX_UINT160)) {
 			value1 := new(u256.Uint).Lsh(amount, 96)
 			quotient = new(u256.Uint).Div(value1, liquidity)
 		} else {
@@ -63,7 +63,7 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
 
 		return new(u256.Uint).Add(sqrtPX96, quotient)
 	} else {
-		if amount.Lte(u256.MustFromDecimal(MAX_UINT160)) {
+		if amount.Lte(u256.MustFromDecimal(consts.MAX_UINT160)) {
 			value1 := new(u256.Uint).Lsh(amount, 96)
 			quotient = u256.DivRoundingUp(value1, liquidity)
 		} else {
@@ -71,7 +71,7 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
 		}
 
 		if !(sqrtPX96.Gt(quotient)) {
-			panic("pool_sqrt price math #2")
+			panic("common_sqrt price math #2")
 		}
 
 		return new(u256.Uint).Sub(sqrtPX96, quotient)
@@ -117,7 +117,7 @@ func sqrtPriceMathGetAmount0DeltaHelper(
 	numerator2 := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
 	if !(sqrtRatioAX96.Gt(u256.Zero())) {
-		panic("pool_sqrt price math #3")
+		panic("common_sqrt price math #3")
 	}
 
 	value := u256.MulDiv(numerator1, numerator2, sqrtRatioBX96)

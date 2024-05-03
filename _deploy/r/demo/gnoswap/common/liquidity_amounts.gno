@@ -3,6 +3,7 @@ package common
 import (
 	"gno.land/r/demo/gnoswap/consts"
 
+	i256 "gno.land/p/demo/gnoswap/int256"
 	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
@@ -16,34 +17,25 @@ func toAscendingOrder(a, b *u256.Uint) (*u256.Uint, *u256.Uint) {
 	return a, b
 }
 
-// calcIntermediateValue computes the intermediate value
-// used in liquidity calculations.
-func calcIntermediateValue(sqrtRatioAX96, sqrtRatioBX96 *u256.Uint) *u256.Uint {
-
-	res := new(u256.Uint).Mul(sqrtRatioAX96, sqrtRatioBX96)
-	res = res.Div(res, u256.MustFromDecimal(consts.Q96))
-	return res
-}
-
 // computeLiquidityForAmount0 calculates liquidity for a given amount of token 0.
 func computeLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0 *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
-	intermediate := calcIntermediateValue(sqrtRatioAX96, sqrtRatioBX96)
+
+	intermediate := u256.MulDiv(sqrtRatioAX96, sqrtRatioBX96, u256.MustFromDecimal(consts.Q96))
+
 	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
-	// we don't need to care about division by zero here.
-	res := new(u256.Uint).Mul(amount0, intermediate)
-	res = res.Div(res, diff)
+	res := u256.MulDiv(amount0, intermediate, diff)
 	return res
 }
 
 // computeLiquidityForAmount1 calculates liquidity for a given amount of token 1.
 func computeLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1 *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
+
 	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
-	res := new(u256.Uint).Mul(amount1, u256.MustFromDecimal(consts.Q96))
-	res = res.Div(res, diff)
+	res := u256.MulDiv(amount1, u256.MustFromDecimal(consts.Q96), diff)
 	return res
 }
 
@@ -71,48 +63,74 @@ func GetLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0,
 	return liquidity
 }
 
-// computeAmount0ForLiquidity calculates the amount of token 0 for a given liquidity.
+// computeAmount0ForLiquidity calculates the amount of token0 for a given liquidity.
 func computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
-	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
-	res := new(u256.Uint).Lsh(liquidity, 96)
-	res = res.Mul(res, diff)
+	val1 := new(u256.Uint).Lsh(liquidity, 96)
+	val2 := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
-	_tmp := new(u256.Uint).Mul(sqrtRatioBX96, sqrtRatioAX96)
-	res = res.Div(res, _tmp)
+	res := u256.MulDiv(val1, val2, sqrtRatioBX96)
+
+	res = res.Div(res, sqrtRatioAX96)
 
 	return res
 }
 
-// computeAmount1ForLiquidity calculates the amount of token 1 for a given liquidity.
+// computeAmount1ForLiquidity calculates the amount of token1 for a given liquidity.
 func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) *u256.Uint {
 	sqrtRatioAX96, sqrtRatioBX96 = toAscendingOrder(sqrtRatioAX96, sqrtRatioBX96)
-	diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
-	res := new(u256.Uint).Mul(liquidity, diff)
-	res = res.Div(res, u256.MustFromDecimal(consts.Q96))
+	val2 := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
 
+	res := u256.MulDiv(liquidity, val2, u256.MustFromDecimal(consts.Q96))
 	return res
 }
 
-// GetAmountsForLiquidity calculates the amounts of token 0 and token 1 for a given liquidity.
-func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Uint) (*u256.Uint, *u256.Uint) {
-	amount0 := u256.Zero()
-	amount1 := u256.Zero()
+// GetAmountsForLiquidity calculates the amounts of token0 and token1 for a given liquidity.
+// FROM [POOL] position_modify.gno
+func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96 *u256.Uint, liquidity *i256.Int) (string, string) {
+	var amount0, amount1 *i256.Int
 
-	if sqrtRatioAX96.Gt(sqrtRatioBX96) {
-		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
+	if !(liquidity.IsZero()) {
+		if sqrtRatioX96.Lt(sqrtRatioAX96) { // currentTick < tickLower
+			_amount0Str := SqrtPriceMathGetAmount0DeltaStr(
+				sqrtRatioAX96,
+				sqrtRatioBX96,
+				liquidity,
+			)
+			amount0 = i256.MustFromDecimal(_amount0Str)
+
+		} else if sqrtRatioX96.Lt(sqrtRatioBX96) { // currentTick < tickUpper
+			_amount0Str := SqrtPriceMathGetAmount0DeltaStr(
+				sqrtRatioX96,
+				sqrtRatioBX96,
+				liquidity,
+			)
+			amount0 = i256.MustFromDecimal(_amount0Str)
+
+			_amount1Str := SqrtPriceMathGetAmount1DeltaStr(
+				sqrtRatioAX96,
+				sqrtRatioX96,
+				liquidity,
+			)
+			amount1 = i256.MustFromDecimal(_amount1Str)
+
+		} else {
+			_amount1Str := SqrtPriceMathGetAmount1DeltaStr(
+				sqrtRatioAX96,
+				sqrtRatioBX96,
+				liquidity,
+			)
+			amount1 = i256.MustFromDecimal(_amount1Str)
+		}
+
 	}
 
-	if sqrtRatioX96.Lte(sqrtRatioAX96) {
-		amount0 = computeAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity)
-	} else if sqrtRatioX96.Lt(sqrtRatioBX96) {
-		amount0 = computeAmount0ForLiquidity(sqrtRatioX96, sqrtRatioBX96, liquidity)
-		amount1 = computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioX96, liquidity)
-	} else {
-		amount1 = computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity)
-	}
+	// if position is out of range, one of amount0 or amount1 can be nil
+	// > handle as 0
+	amount0 = amount0.NilToZero()
+	amount1 = amount1.NilToZero()
 
-	return amount0, amount1
+	return amount0.ToString(), amount1.ToString()
 }

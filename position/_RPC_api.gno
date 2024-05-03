@@ -13,6 +13,7 @@ import (
 
 	pl "gno.land/r/demo/pool"
 
+	i256 "gno.land/p/demo/gnoswap/int256"
 	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
@@ -119,7 +120,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 		currentX96,
 		lowerX96,
 		upperX96,
-		position.liquidity,
+		i256.FromUint256(position.liquidity),
 	)
 
 	unclaimedFee0 := u256.Zero()
@@ -140,8 +141,8 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 		FeeGrowthInside1LastX128: position.feeGrowthInside1LastX128.ToString(),
 		TokensOwed0:              position.tokensOwed0.ToString(),
 		TokensOwed1:              position.tokensOwed1.ToString(),
-		Token0Balance:            token0Balance.ToString(),
-		Token1Balance:            token1Balance.ToString(),
+		Token0Balance:            token0Balance,
+		Token1Balance:            token1Balance,
 		FeeUnclaimed0:            unclaimedFee0.ToString(),
 		FeeUnclaimed1:            unclaimedFee1.ToString(),
 	}

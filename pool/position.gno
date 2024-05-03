@@ -55,13 +55,17 @@ func positionUpdate(
 		liquidityNext = liquidityMathAddDelta(self.liquidity, liquidityDelta)
 	}
 
-	tokensOwed0 := new(u256.Uint).Sub(feeGrowthInside0X128, self.feeGrowthInside0LastX128)
-	tokensOwed0 = tokensOwed0.Mul(tokensOwed0, self.liquidity)
-	tokensOwed0 = tokensOwed0.Div(tokensOwed0, u256.MustFromDecimal(consts.Q128))
+	tokensOwed0 := u256.Zero()
+	{
+		diff := new(u256.Uint).Sub(feeGrowthInside0X128, self.feeGrowthInside0LastX128)
+		tokensOwed0 = u256.MulDiv(diff, self.liquidity, u256.MustFromDecimal(consts.Q128))
+	}
 
-	tokensOwed1 := new(u256.Uint).Sub(feeGrowthInside1X128, self.feeGrowthInside1LastX128)
-	tokensOwed1 = tokensOwed1.Mul(tokensOwed1, self.liquidity)
-	tokensOwed1 = tokensOwed1.Div(tokensOwed1, u256.MustFromDecimal(consts.Q128))
+	tokensOwed1 := u256.Zero()
+	{
+		diff := new(u256.Uint).Sub(feeGrowthInside1X128, self.feeGrowthInside1LastX128)
+		tokensOwed1 = u256.MulDiv(diff, self.liquidity, u256.MustFromDecimal(consts.Q128))
+	}
 
 	if !(liquidityDelta.IsZero()) {
 		self.liquidity = liquidityNext

@@ -285,10 +285,8 @@ func Swap(
 
 		// update global fee tracker
 		if state.liquidity.Gt(u256.Zero()) {
-			value1 := new(u256.Uint).Mul(step.feeAmount, u256.MustFromDecimal(consts.Q128))
-			value2 := new(u256.Uint).Div(value1, state.liquidity)
-
-			state.feeGrowthGlobalX128 = new(u256.Uint).Add(state.feeGrowthGlobalX128, value2)
+			update := u256.MulDiv(step.feeAmount, u256.MustFromDecimal(consts.Q128), state.liquidity)
+			state.feeGrowthGlobalX128 = new(u256.Uint).Add(state.feeGrowthGlobalX128, update)
 		}
 
 		// shift tick if we reached the next price
