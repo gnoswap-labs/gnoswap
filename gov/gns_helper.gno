@@ -16,10 +16,6 @@ func transfer(to std.Address, amount uint64) {
 	gns.Transfer(a2u(to), amount)
 }
 
-func mint(recipient std.Address, amount uint64) {
-	gns.Mint(a2u(recipient), amount)
-}
-
 func a2u(address std.Address) pusers.AddressOrName {
 	return pusers.AddressOrName(address)
 }
