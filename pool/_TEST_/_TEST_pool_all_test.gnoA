@@ -23,52 +23,39 @@ var (
 
 // 1. Create Foo:Bar Pool
 func TestCreateFooBarPool(t *testing.T) {
-	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(test1)
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	std.TestSkipHeights(5)
+	std.TestSetPrevAddr(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
 
 	CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick 10000
+	// event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
 	shouldEQ(t, len(pools), 1)
 	std.TestSkipHeights(1)
 }
 
 // 2. Create Bar:Baz Pool
 func TestCreateBarBazPool(t *testing.T) {
-	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(test1)
-	std.TestSetPrevAddr(test1)
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	std.TestSkipHeights(5)
+	std.TestSetPrevAddr(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
+	// event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:500}]}
 	shouldEQ(t, len(pools), 2)
 	std.TestSkipHeights(1)
 }
 
-// 3. Mint Foo:Bar Liquidity by test1
+// 3. Mint Foo:Bar Liquidity by gsa
 func TestMintFooBarLiquidity(t *testing.T) {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(4)
 
 	std.TestSetPrevRealm(consts.POSITION_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := Mint(
 		barPath,
 		fooPath,
@@ -79,19 +66,19 @@ func TestMintFooBarLiquidity(t *testing.T) {
 		test_liquidityExpectStr,
 	)
 	shouldEQ(t, amount0, "8040316")
-	shouldEQ(t, amount1, "2958014")
+	shouldEQ(t, amount1, "2958015")
 	std.TestSkipHeights(1)
 }
 
-// 4. Mint Bar:Baz Liquidity by test1
+// 4. Mint Bar:Baz Liquidity by gsa
 func TestMintBarBazLiquidity(t *testing.T) {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
 
 	std.TestSetPrevRealm(consts.POSITION_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := Mint(
 		barPath,
 		bazPath,
@@ -102,7 +89,7 @@ func TestMintBarBazLiquidity(t *testing.T) {
 		test_liquidityExpectStr,
 	)
 	shouldEQ(t, amount0, "2958015")
-	shouldEQ(t, amount1, "8040315")
+	shouldEQ(t, amount1, "8040316")
 	std.TestSkipHeights(1)
 }
 

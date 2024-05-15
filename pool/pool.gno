@@ -53,6 +53,20 @@ func Mint(
 		pool.transferFromAndVerify(std.GetOrigCaller(), consts.POOL_ADDR, pool.token1Path, amount1, false)
 	}
 
+	/*
+		std.Emit(
+			"GNOSWAP",
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
+			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
+			"p_tickLower", int32ToStr(tickLower),
+			"p_tickUpper", int32ToStr(tickUpper),
+			"p_liquidityAmount", _liquidityAmount,
+			"amount0", amount0.ToString(),
+			"amount1", amount1.ToString(),
+		)
+	*/
+
 	return amount0.ToString(), amount1.ToString()
 }
 
@@ -95,6 +109,20 @@ func Burn(
 
 	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
 	pool.positions[positionKey] = position
+
+	/*
+		std.Emit(
+			"GNOSWAP",
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
+			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
+			"p_tickLower", int32ToStr(tickLower),
+			"p_tickUpper", int32ToStr(tickUpper),
+			"p_liquidityAmount", _liquidityAmount,
+			"amount0", amount0.ToString(),
+			"amount1", amount1.ToString(),
+		)
+	*/
 
 	// actual token transfer happens in Collect()
 	return amount0.ToString(), amount1.ToString()
@@ -150,6 +178,20 @@ func Collect(
 	transferByRegisterCall(pool.token1Path, recipient, amount1.Uint64())
 
 	pool.positions[positionKey] = position
+
+	/*
+		std.Emit(
+			"GNOSWAP",
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
+			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
+			"p_tickLower", int32ToStr(tickLower),
+			"p_tickUpper", int32ToStr(tickUpper),
+			"p_recipient", _recipient,
+			"amount0", amount0.ToString(),
+			"amount1", amount1.ToString(),
+		)
+	*/
 
 	return amount0.ToString(), amount1.ToString()
 }
@@ -383,6 +425,22 @@ func Swap(
 
 	}
 
+	std.Emit(
+		"GNOSWAP",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
+		"p_zeroForOne", boolToStr(zeroForOne),
+		"p_amountSpecified", _amountSpecified,
+		"p_sqrtPriceLimitX96", _sqrtPriceLimitX96,
+		"p_payer", _payer,
+		"p_recipient", _recipient,
+		"amount0", amount0.ToString(),
+		"amount1", amount1.ToString(),
+		"protocol_fee0", pool.protocolFees.token0.ToString(),
+		"protocol_fee1", pool.protocolFees.token1.ToString(),
+	)
+
 	pool.slot0.unlocked = true
 	return amount0.ToString(), amount1.ToString()
 }
@@ -404,13 +462,24 @@ func SetFeeProtocol(
 		panic(ufmt.Sprintf("[POOL] pool.gno__SetFeeProtocol() || expected (feeProtocol0(%d) == 0 || (feeProtocol0(%d) >= 4 && feeProtocol0(%d) <= 10)) && (feeProtocol1(%d) == 0 || (feeProtocol1(%d) >= 4 && feeProtocol1(%d) <= 10))", feeProtocol0, feeProtocol0, feeProtocol0, feeProtocol1, feeProtocol1, feeProtocol1))
 	}
 
+	newFee := feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
+
 	// iterate all pool
 	for _, pool := range pools {
-		pool.slot0.feeProtocol = feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
+		pool.slot0.feeProtocol = newFee
 	}
 
 	// update governance value
-	gv.SetGovParameter("protocoL_fees", feeProtocol0+(feeProtocol1<<4))
+	gv.SetGovParameter("protocoL_fees", newFee)
+
+	std.Emit(
+		"GNOSWAP",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_feeProtocol0", uint8ToStr(feeProtocol0),
+		"p_feeProtocol1", uint8ToStr(feeProtocol1),
+		"newFee", uint8ToStr(newFee),
+	)
 }
 
 // CollectProtocol collects protocol fees from the pool
@@ -452,6 +521,16 @@ func CollectProtocol(
 	if !ok {
 		panic(ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pool.token1Path(%s), recipient(%s), uAmount1)(%d) failed", pool.token1Path, recipient.String(), uAmount1))
 	}
+
+	std.Emit(
+		"GNOSWAP",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
+		"p_recipient", _recipient,
+		"amount0", amount0.ToString(),
+		"amount1", amount1.ToString(),
+	)
 
 	return amount0.ToString(), amount1.ToString()
 }

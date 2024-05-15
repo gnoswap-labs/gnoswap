@@ -70,11 +70,19 @@ func CreatePool(
 	}
 
 	if !exist {
+		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.FEE_COLLECTOR), consts.POOL_CREATION_FEE)
+
 		pool = newPool(token0Path, token1Path, fee, tickSpacing, sqrtPriceX96)
 		pools[poolPath] = pool
 
-		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.FEE_COLLECTOR), consts.POOL_CREATION_FEE)
-1	}
+		std.Emit(
+			"GNOSWAP",
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
+			"p_poolPath", poolPath,
+		)
+
+	}
 }
 
 // DoesPoolPathExist reports whether the pool exists with the given poolPath

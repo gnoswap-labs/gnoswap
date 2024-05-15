@@ -59,6 +59,17 @@ func HandleWithdrawalFee(
 	afterAmount0 := new(u256.Uint).Sub(amount0, feeAmount0)
 	afterAmount1 := new(u256.Uint).Sub(amount1, feeAmount1)
 
+	std.Emit(
+		"GNOSWAP",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_tokenId", uint64ToStr(tokenId),
+		"p_token0Path", token0Path,
+		"p_token1Path", token1Path,
+		"fee0Amount", feeAmount0.ToString(),
+		"fee1Amount", feeAmount1.ToString(),
+	)
+
 	return afterAmount0.ToString(), afterAmount1.ToString()
 }
 
@@ -77,4 +88,11 @@ func SetWithdrawalFee(fee uint64) {
 	}
 
 	withdrawalFee = fee
+
+	std.Emit(
+		"GNOSWAP",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_fee", uint64ToStr(fee),
+	)
 }

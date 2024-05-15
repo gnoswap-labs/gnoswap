@@ -20,8 +20,7 @@ import (
 )
 
 var (
-	gsa   std.Address = consts.GNOSWAP_ADMIN
-	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+	gsa std.Address = consts.GNOSWAP_ADMIN
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -168,16 +167,7 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func init() {
-	// FAUCET
-	std.TestSetPrevAddr(test1)
-
-	for i := 0; i < 100; i++ {
-		foo.Faucet()
-		bar.Faucet()
-		baz.Faucet()
-		qux.Faucet()
-		obl.Faucet()
-	}
+	std.TestSetPrevAddr(gsa)
 
 	// TOKEN REGISTER
 	std.TestSetPrevAddr(gsa)
@@ -200,14 +190,7 @@ func main() {
 }
 
 func createPool() {
-	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(test1)
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	std.TestSkipHeights(5)
+	std.TestSetPrevAddr(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
@@ -221,7 +204,7 @@ func createPool() {
 
 func drySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
 	std.TestSetPrevRealm(consts.POSITION_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 
 	// no mint == no liquidity => swap will fail
 	_, _, ok := pl.DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
@@ -230,12 +213,12 @@ func drySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
 	}
 
 	// not enough mint == swap will fail
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.POSITION_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	pl.Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -test_tickUpper, -test_tickLower, "10")
 	_, _, ok = pl.DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
 	if ok {
@@ -243,7 +226,7 @@ func drySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
 	}
 
 	std.TestSetPrevRealm(consts.POSITION_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	pl.Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -test_tickUpper, -test_tickLower, "100000000000") // -11000  ~ -9000
 	// zeroForOne true
 	// amountSpecified 16000
