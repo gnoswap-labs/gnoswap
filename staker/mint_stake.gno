@@ -1,7 +1,11 @@
 package staker
 
 import (
+	"std"
+
 	pn "gno.land/r/demo/position"
+
+	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/gnoswap/consts"
 )
@@ -20,6 +24,23 @@ func MintAndStake(
 	amount1Min string, // *u256.Uint
 	deadline int64,
 ) (uint64, string, string, string, string) { // tokenId, liquidity, amount0, amount1, poolPath ( *u256.Uint x3)
+
+	// if one click native
+	if token0 == consts.GNOT || token1 == consts.GNOT {
+		// check sent ugnot
+		sent := std.GetOrigSend()
+		ugnotSent := uint64(sent.AmountOf("ugnot"))
+
+		// not enough ugnot sent
+		if ugnotSent < consts.UGNOT_MINT_DEPOSIT_TO_WRAP {
+			panic(ufmt.Sprintf("[STAKER] mint_stake.gno__MintAndStake() || too less(%d) ugnot sent (minimum:%d)", ugnotSent, consts.UGNOT_MINT_DEPOSIT_TO_WRAP))
+		}
+
+		// send it over to position to wrap
+		banker := std.GetBanker(std.BankerTypeRealmSend)
+		banker.SendCoins(consts.STAKER_ADDR, consts.POSITION_ADDR, std.Coins{{"ugnot", int64(ugnotSent)}})
+	}
+
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		token0,
 		token1,
