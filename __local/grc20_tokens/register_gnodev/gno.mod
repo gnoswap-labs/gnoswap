@@ -10,5 +10,6 @@ require (
 	gno.land/r/demo/obl v0.0.0-latest
 	gno.land/r/demo/pool v0.0.0-latest
 	gno.land/r/demo/qux v0.0.0-latest
+	gno.land/r/demo/usdc v0.0.0-latest
 	gno.land/r/demo/wugnot v0.0.0-latest
 )

@@ -13,12 +13,12 @@ import (
 
 var (
 	qux   *grc20.AdminToken
-	admin std.Address = "g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq" // TODO: helper to change admin
+	admin std.Address = "g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq"
 )
 
 func init() {
-	qux = grc20.NewAdminToken("Qux", "QUX", 4)
-	qux.Mint(admin, 500_000_000_000_000)
+	qux = grc20.NewAdminToken("Qux", "QUX", 6)
+	qux.Mint(admin, 100_000_000_000_000)
 }
 
 // method proxies as public functions.
