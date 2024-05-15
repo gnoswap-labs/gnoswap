@@ -23,8 +23,7 @@ import (
 )
 
 var (
-	gsa   std.Address = consts.GNOSWAP_ADMIN
-	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+	gsa std.Address = consts.GNOSWAP_ADMIN
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -170,17 +169,6 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func init() {
-	// FAUCET
-	std.TestSetPrevAddr(test1)
-
-	for i := 0; i < 100; i++ {
-		foo.Faucet()
-		bar.Faucet()
-		baz.Faucet()
-		qux.Faucet()
-		obl.Faucet()
-	}
-
 	// TOKEN REGISTER
 	std.TestSetPrevAddr(gsa)
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
@@ -225,18 +213,7 @@ func main() {
 }
 
 func createPool() {
-	numPool := uint64(3)
-
-	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(test1)
-
-	for i := uint64(0); i < (5 * numPool); i++ {
-		gns.Faucet()
-		std.TestSkipHeights(1)
-	}
-
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*numPool)
-	std.TestSkipHeights(1)
+	std.TestSetPrevAddr(gsa)
 
 	// tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 
@@ -258,12 +235,12 @@ func createPool() {
 }
 
 func mintBarBaz() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
-	_, _, amount0, amount1 := pn.Mint(barPath, bazPath, fee100, int32(9000), int32(11000), "100000000", "100000000", "0", "0", maxTimeout, test1.String())
+	_, _, amount0, amount1 := pn.Mint(barPath, bazPath, fee100, int32(9000), int32(11000), "100000000", "100000000", "0", "0", maxTimeout, gsa.String())
 	if amount0 != "36789784" {
 		panic("router_z6_mintBarBaz() || amount0 should be 36789784")
 	}
@@ -273,12 +250,12 @@ func mintBarBaz() {
 }
 
 func mintBazFoo() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
-	_, _, amount0, amount1 := pn.Mint(bazPath, fooPath, fee100, int32(9000), int32(11000), "100000000", "100000000", "0", "0", maxTimeout, test1.String())
+	_, _, amount0, amount1 := pn.Mint(bazPath, fooPath, fee100, int32(9000), int32(11000), "100000000", "100000000", "0", "0", maxTimeout, gsa.String())
 	if amount0 != "36789784" {
 		panic("router_z6_mintBazFoo() || amount0 should be 36789784")
 	}
@@ -288,12 +265,12 @@ func mintBazFoo() {
 }
 
 func mintFooQux() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
-	_, _, amount0, amount1 := pn.Mint(fooPath, quxPath, fee100, int32(9000), int32(11000), "100000000", "100000000", "0", "0", maxTimeout, test1.String())
+	_, _, amount0, amount1 := pn.Mint(fooPath, quxPath, fee100, int32(9000), int32(11000), "100000000", "100000000", "0", "0", maxTimeout, gsa.String())
 	if amount0 != "36789784" {
 		panic("router_z6_mintBazFoo() || amount0 should be 36789784")
 	}
@@ -304,7 +281,7 @@ func mintFooQux() {
 
 // BAR > BAZ > ExactIn || DRY
 func drySwapBarBazExactIn() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	dryResult := rr.DrySwapRoute(
 		barPath,    // inputToken
@@ -321,7 +298,7 @@ func drySwapBarBazExactIn() {
 
 // BAR > BAZ > ExactIn || SWAP
 func swapBarBazExactIn() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)   // swap input amount
 	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // 0.15% fee
@@ -345,7 +322,7 @@ func swapBarBazExactIn() {
 
 // BAZ > BAR > ExactIn || DRY
 func drySwapBazBarExactIn() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	dryResult := rr.DrySwapRoute(
 		bazPath,    // inputToken
@@ -362,7 +339,7 @@ func drySwapBazBarExactIn() {
 
 // BAZ > BAR > ExactIn || SWAP
 func swapBazBarExactIn() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)   // swap input amount
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // 0.15% fee
@@ -386,7 +363,7 @@ func swapBazBarExactIn() {
 
 // BAR > BAZ > ExactOut || DRY
 func drySwapBarBazExactOut() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	dryResult := rr.DrySwapRoute(
 		barPath,     // inputToken
@@ -403,7 +380,7 @@ func drySwapBarBazExactOut() {
 
 // BAR > BAZ > ExactOut || SWAP
 func swapBarBazExactOut() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)   // swap input amount
 	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // 0.15% fee
@@ -427,7 +404,7 @@ func swapBarBazExactOut() {
 
 // BAR > QUX > ExactIn || DRY
 func drySwapBarQuxExactIn() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	dryResult := rr.DrySwapRoute(
 		barPath,    // inputToken
@@ -444,7 +421,7 @@ func drySwapBarQuxExactIn() {
 
 // BAR > QUX > ExactIn || SWAP
 func swapBarQuxExactIn() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)   // swap input amount
 	qux.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // 0.15% fee
@@ -469,7 +446,7 @@ func swapBarQuxExactIn() {
 
 // QUX > BAR > ExactOut || DRY
 func drySwapQuxBarExactOut() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	dryResult := rr.DrySwapRoute(
 		quxPath,     // inputToken
@@ -486,7 +463,7 @@ func drySwapQuxBarExactOut() {
 
 // QUX > BAR > ExactOut || SWAP
 func swapQuxBarExactOut() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)   // swap input amount
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // 0.15% fee

@@ -23,8 +23,7 @@ import (
 )
 
 var (
-	gsa   std.Address = consts.GNOSWAP_ADMIN
-	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+	gsa std.Address = consts.GNOSWAP_ADMIN
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -170,17 +169,6 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func init() {
-	// FAUCET
-	std.TestSetPrevAddr(test1)
-
-	for i := 0; i < 100; i++ {
-		foo.Faucet()
-		bar.Faucet()
-		baz.Faucet()
-		qux.Faucet()
-		obl.Faucet()
-	}
-
 	// TOKEN REGISTER
 	std.TestSetPrevAddr(gsa)
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
@@ -213,12 +201,7 @@ func main() {
 }
 
 func createPool() {
-	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(test1)
-	for i := 0; i < (5 * 3); i++ {
-		gns.Faucet()
-		std.TestSkipHeights(1)
-	}
+	std.TestSetPrevAddr(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*3)
 	std.TestSkipHeights(1)
@@ -231,12 +214,12 @@ func createPool() {
 }
 
 func mintBarBaz() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
-	_, _, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, test1.String())
+	_, _, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, gsa.String())
 	if amount0 != "36790" {
 		"router_z4_mintBarBaz() || amount0 should be 36790"
 	}
@@ -246,12 +229,12 @@ func mintBarBaz() {
 }
 
 func mintBazQux() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
-	_, _, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, test1.String())
+	_, _, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, gsa.String())
 	if amount0 != "36790" {
 		"router_z4_mintBazQux() || amount0 should be 36790"
 	}
@@ -261,23 +244,23 @@ func mintBazQux() {
 }
 
 func mintQuxGnot() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	// send
-	std.TestIssueCoins(test1, std.Coins{{"ugnot", 1000009}})
+	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 1000009}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 1000009}}, nil)
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1000009)
 
 	// Deposit(wrap)
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	wugnot.Deposit()
 
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
-	_, _, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, test1.String())
+	_, _, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, gsa.String())
 	if amount0 != "36790" {
 		"router_z4_mintQuxGnot() || amount0 should be 36790"
 	}
@@ -287,7 +270,7 @@ func mintQuxGnot() {
 }
 
 func drySwapBarGnotExactIn() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	dryResult := rr.DrySwapRoute(
 		barPath,               // inputToken
@@ -303,7 +286,7 @@ func drySwapBarGnotExactIn() {
 }
 
 func drySwapBarGnotExactOut() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	dryResult := rr.DrySwapRoute(
 		barPath,               // inputToken
@@ -319,7 +302,7 @@ func drySwapBarGnotExactOut() {
 }
 
 func drySwapGnotBarExactIn() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	dryResult := rr.DrySwapRoute(
 		consts.WRAPPED_WUGNOT, // intputToken
@@ -335,7 +318,7 @@ func drySwapGnotBarExactIn() {
 }
 
 func drySwapGnotBarExactOut() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	dryResult := rr.DrySwapRoute(
 		consts.WRAPPED_WUGNOT, // intputToken

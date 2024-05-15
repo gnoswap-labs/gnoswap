@@ -1,0 +1,88 @@
+package router
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/json"
+
+	"gno.land/r/demo/gnoswap/consts"
+
+	pl "gno.land/r/demo/pool"
+	pn "gno.land/r/demo/position"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
+	"gno.land/r/demo/gns"
+)
+
+func TestCreatePool(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	// event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:500}]}
+
+	jsonStr := pl.ApiGetPools()
+	root, err := json.Unmarshal([]byte(jsonStr))
+	if err != nil {
+		panic(err)
+	}
+
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, response.Size(), 1)
+}
+
+func TestPositionMint(t *testing.T) {
+	// bar_baz_500 by gsa
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	// Mint
+	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(12000), int32(15000), "100000", "100000", "0", "0", max_timeout, gsa.String())
+	// event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:500} {p_tickLower 12000} {p_tickUpper 15000} {tokenId 1} {liquidity 1308149} {amount0 100000} {amount1 0}]}
+
+	shouldEQ(t, tokenId, uint64(1))
+	// shouldEQ(t, liquidity, "1308151")
+	shouldEQ(t, amount0, "100000") // ONLY BAR
+	shouldEQ(t, amount1, "0")      // NO BAZ
+}
+
+func TestDrySwapRouteBarBazExactIn(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+
+	dryResult := DrySwapRoute(
+		barPath,    // inputToken
+		bazPath,    // outputToken
+		"1000",     // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/demo/bar:gno.land/r/demo/baz:500", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, "-1")
+}
+
+func TestSwapRouteBarBazExactIn(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+
+	shouldPanic(
+		t,
+		func() {
+			SwapRoute(
+				barPath,    // inputToken
+				bazPath,    // outputToken
+				"1000",     // amountSpecified
+				"EXACT_IN", // swapType
+				"gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
+				"100",  // quoteArr
+				"2710", // tokenAmountLimit ( too few recieved (expected 2710, got 300))
+			)
+			// event: {GNOSWAP gno.land/r/demo/pool Swap [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:500} {p_zeroForOne false} {p_amountSpecified 1000} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 -300} {amount1 1000} {protocol_fee0 0} {protocol_fee1 0}]}
+		})
+}
