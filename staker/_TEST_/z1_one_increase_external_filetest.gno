@@ -28,8 +28,7 @@ import (
 )
 
 var (
-	gsa   std.Address = consts.GNOSWAP_ADMIN
-	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+	gsa std.Address = consts.GNOSWAP_ADMIN
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -192,17 +191,6 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func init() {
-	// FAUCET
-	std.TestSetPrevAddr(test1)
-
-	for i := 0; i < 100; i++ {
-		foo.Faucet()
-		bar.Faucet()
-		baz.Faucet()
-		qux.Faucet()
-		obl.Faucet()
-	}
-
 	// TOKEN REGISTER
 	std.TestSetPrevAddr(gsa)
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
@@ -243,43 +231,36 @@ func main() {
 }
 
 func createPool() {
-	numPool := uint64(1)
+	std.TestSetPrevAddr(gsa)
 
-	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(test1)
-	for i := uint64(0); i < (5 * numPool); i++ {
-		gns.Faucet()
-		std.TestSkipHeights(1)
-	}
-
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*numPool)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*0)
 	std.TestSkipHeights(1)
 
 	pl.CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(10_000).ToString())
 }
 
 func mint01() {
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
-	pn.Mint(barPath, fooPath, fee100, 9000, 11000, "1000", "1000", "0", "0", max_timeout, test1.String())
+	pn.Mint(barPath, fooPath, fee100, 9000, 11000, "1000", "1000", "0", "0", max_timeout, gsa.String())
 }
 
 func mint02() {
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
-	pn.Mint(barPath, fooPath, fee100, 9100, 12000, "5000", "5000", "0", "0", max_timeout, test1.String())
+	pn.Mint(barPath, fooPath, fee100, 9100, 12000, "5000", "5000", "0", "0", max_timeout, gsa.String())
 }
 
 func createExternalIncentiveInit() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
 	std.TestSkipHeights(1)
 
@@ -294,7 +275,7 @@ func createExternalIncentiveInit() {
 }
 
 func createExternalIncentiveIncrease() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
 	std.TestSkipHeights(1)
 
@@ -309,14 +290,14 @@ func createExternalIncentiveIncrease() {
 }
 
 func stakeToken01() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	gnft.Approve(a2u(consts.STAKER_ADDR), tid(1))
 	sr.StakeToken(1)
 	std.TestSkipHeights(2)
 }
 
 func stakeToken02() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	gnft.Approve(a2u(consts.STAKER_ADDR), tid(2))
 	sr.StakeToken(2)
 	std.TestSkipHeights(2)

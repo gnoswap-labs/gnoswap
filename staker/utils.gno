@@ -64,3 +64,27 @@ func min(x, y int64) int64 {
 	}
 	return y
 }
+
+func uint8ToStr(i uint8) string {
+	return strconv.FormatInt(int64(i), 10)
+}
+
+func int32ToStr(i int32) string {
+	return strconv.FormatInt(int64(i), 10)
+}
+
+func int64ToStr(i int64) string {
+	return strconv.FormatInt(i, 10)
+}
+
+func uint64ToStr(i uint64) string {
+	return strconv.FormatInt(int64(i), 10)
+}
+
+func boolToStr(b bool) string {
+	if b {
+		return "true"
+	}
+
+	return "false"
+}

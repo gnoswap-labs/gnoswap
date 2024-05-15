@@ -117,6 +117,15 @@ func CreateExternalIncentive(
 	}
 
 	poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath], incentiveId)
+
+	std.Emit(
+		"GNOSWAP",
+		"p_poolPath", targetPoolPath,
+		"p_rewardToken", rewardToken,
+		"p_rewardAmount", _rewardAmount,
+		"p_startTimestamp", int64ToStr(startTimestamp),
+		"p_endTimestamp", int64ToStr(endTimestamp),
+	)
 }
 
 // StakeToken stakes the lp token to the staker contract
@@ -147,14 +156,14 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 	}
 
 	// check pool path from tokenid
-	poolKey := pn.PositionGetPositionPoolKey(tokenId)
+	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 
 	// staked status
 	deposit := deposits[tokenId]
 	deposit.owner = std.GetOrigCaller() // NOT ACTUAL OWNER, MUST BE USER ALWAYS
 	deposit.numberOfStakes++
 	deposit.stakeTimestamp = time.Now().Unix()
-	deposit.targetPoolPath = poolKey
+	deposit.targetPoolPath = poolPath
 	deposits[tokenId] = deposit
 
 	if callerIsOwner { // if caller is owner, transfer NFT ownership to staker contract
@@ -164,7 +173,16 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 	}
 
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
-	return poolKey, token0Amount, token1Amount
+
+	std.Emit(
+		"GNOSWAP",
+		"p_tokenId", uint64ToStr(tokenId),
+		"poolPath", poolPath,
+		"amount0", token0Amount,
+		"amount1", token1Amount,
+	)
+
+	return poolPath, token0Amount, token1Amount
 }
 
 // CollectReward collects staked reward from tokenId
@@ -197,6 +215,16 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 			// then transfer rest
 			transferByRegisterCall(incentive.rewardToken, deposit.owner, toUser.Uint64())
+
+			// emit external reward tokens
+			std.Emit(
+				"GNOSWAP",
+				"p_tokenId", uint64ToStr(tokenId),
+				"poolPath", poolPath,
+				"rewardToken", incentive.rewardToken,
+				"recipient", deposit.owner.String(),
+				"amount", toUser.ToString(),
+			)
 		}
 
 		incentive.rewardAmount = new(u256.Uint).Sub(incentive.rewardAmount, externalReward)
@@ -213,6 +241,16 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 		// then transfer rest
 		gns.TransferFrom(a2u(consts.INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), toUser.Uint64())
+
+		// emit internal reward tokens
+		std.Emit(
+			"GNOSWAP",
+			"p_tokenId", uint64ToStr(tokenId),
+			"poolPath", poolPath,
+			"rewardToken", consts.GNS_PATH,
+			"recipient", deposit.owner.String(),
+			"amount", toUser.ToString(),
+		)
 	}
 
 	return poolPath
@@ -238,6 +276,17 @@ func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0
 
 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
+
+	std.Emit(
+		"GNOSWAP",
+		"p_tokenId", uint64ToStr(tokenId),
+		"poolPath", poolPath,
+		"from", GetOrigPkgAddr().String(),
+		"to", deposit.owner.String(),
+		"amount0", token0Amount,
+		"amount1", token1Amount,
+	)
+
 	return poolPath, token0Amount, token1Amount
 }
 
@@ -273,6 +322,16 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
 				poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
 			}
 		}
+
+		std.Emit(
+			"GNOSWAP",
+			"p_poolPath", targetPoolPath,
+			"p_rewardToken", rewardToken,
+			"p_refundee", _refundee,
+			"end_by", consts.GNOSWAP_ADMIN.String(),
+			"refund_amount", "0",
+		)
+
 	case incentive.refundee:
 		// refundee can end incentive with refund
 		refund := incentive.rewardAmount
@@ -291,6 +350,16 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
 				poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
 			}
 		}
+
+		std.Emit(
+			"GNOSWAP",
+			"p_poolPath", targetPoolPath,
+			"p_rewardToken", rewardToken,
+			"p_refundee", _refundee,
+			"end_by", incentive.refundee.String(),
+			"refund_amount", refund.ToString(),
+		)
+
 	default:
 		panic("[STAKER] staker.gno__EndExternalIncentive() || only refundee or admin can end incentive")
 	}

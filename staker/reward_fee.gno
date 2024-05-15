@@ -1,6 +1,8 @@
 package staker
 
 import (
+	"std"
+
 	"gno.land/r/demo/gnoswap/common"
 	"gno.land/r/demo/gnoswap/consts"
 
@@ -37,6 +39,13 @@ func handleRewardFee(
 		}
 	}
 
+	std.Emit(
+		"GNOSWAP",
+		"p_tokenPath", tokenPath,
+		"p_internal", boolToStr(internal),
+		"feeAmount", feeAmount.ToString(),
+	)
+
 	return new(u256.Uint).Sub(amount, feeAmount)
 }
 
@@ -48,4 +57,9 @@ func SetRewardFee(fee uint64) {
 	}
 
 	rewardFee = fee
+
+	std.Emit(
+		"GNOSWAP",
+		"p_fee", uint64ToStr(fee),
+	)
 }

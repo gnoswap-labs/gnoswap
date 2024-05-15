@@ -1,0 +1,320 @@
+package staker
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/demo/gnoswap/consts"
+
+	pl "gno.land/r/demo/pool"
+	pn "gno.land/r/demo/position"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/gns"
+	"gno.land/r/demo/obl"
+	"gno.land/r/demo/qux"
+
+	"gno.land/r/demo/gnft"
+)
+
+func init() {
+	// init pool tiers
+	// tier 1
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = 1
+
+	// tier 2
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = 2
+	poolTiers["ATOM/GNS_500"] = 2
+
+	// tier 3
+	poolTiers["ATOM/GNOT_500"] = 3
+	poolTiers["ATOM/USDT_500"] = 3
+	poolTiers["ATOM/WETH_500"] = 3
+}
+
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*3)
+	std.TestSkipHeights(1)
+
+	pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // internal, tier 1 // tick 10_000 ≈ x2.7
+	// event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500}]}
+
+	pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337") // internal, tier 2 // tick 0 ≈ x1
+	// event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100}]}
+
+	pl.CreatePool(fooPath, quxPath, 500, "79228162514264337593543950337") // external // tick 0 ≈ x1
+	// event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/foo:gno.land/r/demo/qux:500}]}
+
+	std.TestSkipHeights(3)
+}
+
+func TestMintBarQux500(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	std.TestSkipHeights(2)
+
+	tokenId, liquidity, amount0, amount1 := pn.Mint(
+		barPath,      // token0
+		quxPath,      // token1
+		fee500,       // fee
+		int32(9000),  // tickLower
+		int32(11000), // tickUpper
+		"100000",     // amount0Desired
+		"100000",     // amount1Desired
+		"1",          // amount0Min
+		"1",          // amount1Min
+		max_timeout,
+		gsa.String(),
+	)
+	// event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 1} {liquidity 1243732} {amount0 36790} {amount1 100000}]}
+
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, amount0, "36790")
+	shouldEQ(t, amount1, "100000")
+}
+
+func TestMintBarBaz100(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	std.TestSkipHeights(2)
+
+	tokenId, liquidity, amount0, amount1 := pn.Mint(
+		barPath,      // token0
+		bazPath,      // token1
+		fee100,       // fee
+		int32(-1000), // tickLower
+		int32(1000),  // tickUpper
+		"100000",     // amount0Desired
+		"100000",     // amount1Desired
+		"1",          // amount0Min
+		"1",          // amount1Min
+		max_timeout,
+		gsa.String(),
+	)
+	std.TestSkipHeights(1)
+	// event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100} {p_tickLower -1000} {p_tickUpper 1000} {tokenId 2} {liquidity 2050516} {amount0 100000} {amount1 100000}]}
+
+	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, amount0, "100000")
+	shouldEQ(t, amount1, "100000")
+}
+
+func TestMintFooQux500(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	std.TestSkipHeights(2)
+
+	tokenId, liquidity, amount0, amount1 := pn.Mint(
+		fooPath,      // token0
+		quxPath,      // token1
+		fee500,       // fee
+		int32(-1000), // tickLower
+		int32(1000),  // tickUpper
+		"100000",     // amount0Desired
+		"100000",     // amount1Desired
+		"1",          // amount0Min
+		"1",          // amount1Min
+		max_timeout,
+		gsa.String(),
+	)
+	// event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/foo:gno.land/r/demo/qux:500} {p_tickLower -1000} {p_tickUpper 1000} {tokenId 3} {liquidity 2050516} {amount0 100000} {amount1 100000}]}
+
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, tokenId, 3)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, amount0, "100000")
+	shouldEQ(t, amount1, "100000")
+}
+
+func TestCreateExternalIncentive(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	obl.Approve(a2u(consts.STAKER_ADDR), uint64(100_000_000))
+	std.TestSkipHeights(1)
+
+	CreateExternalIncentive(
+		"gno.land/r/demo/foo:gno.land/r/demo/qux:500", // targetPoolPath
+		"gno.land/r/demo/obl",                         // rewardToken
+		"100000000",                                   // rewardAmount
+		1234569600,                                    // startTimestamp
+		1234569600+TIMESTAMP_90DAYS,                   // endTimestamp
+	)
+	// event: {GNOSWAP gno.land/r/demo/staker CreateExternalIncentive [{p_poolPath gno.land/r/demo/foo:gno.land/r/demo/qux:500} {p_rewardToken gno.land/r/demo/obl} {p_rewardAmount 100000000} {p_startTimestamp 1234569600} {p_endTimestamp 1242345600}]}
+
+	std.TestSkipHeights(1)
+}
+
+func TestStakeInternalTier1(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
+	StakeToken(1)
+	// event: {GNOSWAP gno.land/r/demo/staker StakeToken [{p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {amount0 36790} {amount1 100000}]}
+
+	std.TestSkipHeights(2)
+
+	shouldEQ(t, gnft.OwnerOf(tid(1)), GetOrigPkgAddr())
+	shouldEQ(t, len(deposits), 1)
+}
+
+func TestStakeInternalTier2(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
+	StakeToken(2)
+	// event: {GNOSWAP gno.land/r/demo/staker StakeToken [{p_tokenId 2} {poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100} {amount0 100000} {amount1 100000}]}
+
+	std.TestSkipHeights(2)
+
+	shouldEQ(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr())
+	shouldEQ(t, len(deposits), 2)
+}
+
+func TestStakeExternal(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(3))
+	StakeToken(3)
+	// event: {GNOSWAP gno.land/r/demo/staker StakeToken [{p_tokenId 3} {poolPath gno.land/r/demo/foo:gno.land/r/demo/qux:500} {amount0 100000} {amount1 100000}]}
+
+	std.TestSkipHeights(2)
+
+	shouldEQ(t, gnft.OwnerOf(tid(3)), GetOrigPkgAddr())
+	shouldEQ(t, len(deposits), 3)
+}
+
+func TestCollectRewardToken1(t *testing.T) {
+	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
+	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // internal reward distribution
+	std.TestSkipHeights(1)
+
+	// before claim
+	gnsOld := gns.BalanceOf(a2u(gsa))
+	shouldEQ(t, gnsOld, 500000000000000)
+
+	std.TestSetPrevAddr(gsa)
+	CollectReward(1)
+	// event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 2887}]}
+	// event: {GNOSWAP gno.land/r/demo/staker CollectReward [{p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 285863}]}
+
+	std.TestSkipHeights(1)
+
+	gnsNew := gns.BalanceOf(a2u(gsa))
+	shouldEQ(t, gnsNew, 500000000285863)
+}
+
+func TestCollectRewardToken2(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+
+	// before claim
+	gnsOld := gns.BalanceOf(a2u(gsa))
+	shouldEQ(t, gnsOld, 500000000285863)
+
+	CollectReward(2)
+	// event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 1485}]}
+	// event: {GNOSWAP gno.land/r/demo/staker CollectReward [{p_tokenId 2} {poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 147015}]}
+
+	std.TestSkipHeights(1)
+
+	gnsNew := gns.BalanceOf(a2u(gsa))
+	shouldEQ(t, gnsNew, 500000000432878)
+}
+
+func TestCollectRewardToken1Again(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+
+	// before claim
+	gnsOld := gns.BalanceOf(a2u(gsa))
+	shouldEQ(t, gnsOld, 500000000432878)
+
+	// ACCELERATE TIME
+	std.TestSkipHeights(1000)
+
+	CollectReward(1)
+	// event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 413325}]}
+	// event: {GNOSWAP gno.land/r/demo/staker CollectReward [{p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 40919175}]}
+
+	std.TestSkipHeights(1)
+
+	gnsNew := gns.BalanceOf(a2u(gsa))
+	shouldEQ(t, gnsNew, 500000041352053)
+}
+
+func TestCollectExternalReward(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+
+	// before claim
+	oblOld := obl.BalanceOf(a2u(gsa))
+	shouldEQ(t, oblOld, 99999900000000)
+
+	CollectReward(3)
+	// event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{p_tokenPath gno.land/r/demo/obl} {p_internal false} {feeAmount 143}]}
+	// event: {GNOSWAP gno.land/r/demo/staker CollectReward [{p_tokenId 3} {poolPath gno.land/r/demo/foo:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/obl} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 14200}]}
+
+	std.TestSkipHeights(1)
+
+	oblNew := obl.BalanceOf(a2u(gsa))
+	shouldEQ(t, oblNew, 99999900014200)
+}
+
+func TestCollectAll(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+
+	CollectReward(1)
+	// event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 825}]}
+	// event: {GNOSWAP gno.land/r/demo/staker CollectReward [{p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 81675}]}
+
+	CollectReward(2)
+	// event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 248242}]}
+	// event: {GNOSWAP gno.land/r/demo/staker CollectReward [{p_tokenId 2} {poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 24576008}]}
+
+	CollectReward(3)
+	// event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{p_tokenPath gno.land/r/demo/obl} {p_internal false} {feeAmount 0}]}
+	// event: {GNOSWAP gno.land/r/demo/staker CollectReward [{p_tokenId 3} {poolPath gno.land/r/demo/foo:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/obl} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 21}]}
+
+	std.TestSkipHeights(3)
+	// claimed all remaining reward
+}
+
+func TestUnstakeTokens(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+
+	gnsOld := gns.BalanceOf(a2u(gsa))
+	oblOld := obl.BalanceOf(a2u(gsa))
+	shouldEQ(t, gnsOld, 500000066009736)
+	shouldEQ(t, oblOld, 99999900014221)
+
+	std.TestSkipHeights(100000)
+	UnstakeToken(1)
+	// event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 69030087}]}
+	// event: {GNOSWAP gno.land/r/demo/staker CollectReward [{p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 6833978663}]}
+	// event: {GNOSWAP gno.land/r/demo/staker UnstakeToken [{p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {from g1puv9dz470prjshjm9qyg25dyfvrgph2kvjph68} {to g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 36790} {amount1 100000}]}
+
+	gnsNew := gns.BalanceOf(a2u(gsa))
+	shouldEQ(t, gnsNew, 500006899988399)
+
+	UnstakeToken(2)
+	// event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 41417722}]}
+	// event: {GNOSWAP gno.land/r/demo/staker CollectReward [{p_tokenId 2} {poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 4100354528}]}
+	// event: {GNOSWAP gno.land/r/demo/staker UnstakeToken [{p_tokenId 2} {poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100} {from g1puv9dz470prjshjm9qyg25dyfvrgph2kvjph68} {to g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 100000} {amount1 100000}]}
+
+	gnsNew = gns.BalanceOf(a2u(gsa))
+	shouldEQ(t, gnsNew, 500011000342927)
+
+	UnstakeToken(3)
+	oblNew := obl.BalanceOf(a2u(gsa))
+	shouldEQ(t, oblNew, 99999903488806)
+	// event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{p_tokenPath gno.land/r/demo/obl} {p_internal false} {feeAmount 35096}]}
+	// event: {GNOSWAP gno.land/r/demo/staker CollectReward [{p_tokenId 3} {poolPath gno.land/r/demo/foo:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/obl} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 3474585}]}
+	// event: {GNOSWAP gno.land/r/demo/staker UnstakeToken [{p_tokenId 3} {poolPath gno.land/r/demo/foo:gno.land/r/demo/qux:500} {from g1puv9dz470prjshjm9qyg25dyfvrgph2kvjph68} {to g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 100000} {amount1 100000}]}
+
+	std.TestSkipHeights(1)
+}
