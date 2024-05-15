@@ -5,8 +5,6 @@ import (
 	"std"
 	"testing"
 	"time"
-
-	"gno.land/r/demo/gns"
 )
 
 func TestSubmitProposal(t *testing.T) {
@@ -145,7 +143,6 @@ func TestSubmitProposalRejected(t *testing.T) {
 
 func TestSubmitProposalCommunityPoolSpend(t *testing.T) {
 	std.TestSetOrigCaller(std.CurrentRealm().Addr())
-	gns.Faucet()
 
 	initialBalance := balanceOf(std.CurrentRealm().Addr())
 
