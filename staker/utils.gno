@@ -81,6 +81,16 @@ func uint64ToStr(i uint64) string {
 	return strconv.FormatInt(int64(i), 10)
 }
 
+func strToUint64(s string) uint64 {
+	i, err := strconv.Atoi(s)
+
+	if err != nil {
+		panic(ufmt.Sprintf("[STAKER] utils.gno__strToUint64() || failed to convert string(%s) to uint64", s))
+	}
+
+	return uint64(i)
+}
+
 func boolToStr(b bool) string {
 	if b {
 		return "true"

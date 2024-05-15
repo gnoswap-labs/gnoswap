@@ -27,6 +27,17 @@ var (
 )
 
 /* HELPER */
+func ugnotBalanceOf(addr std.Address) uint64 {
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+
+	coins := testBanker.GetCoins(addr)
+	if len(coins) == 0 {
+		return 0
+	}
+
+	return uint64(testBanker.GetCoins(addr)[0].Amount)
+}
+
 func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {
 		t.Errorf("got %v, expected %v", got, expected)
