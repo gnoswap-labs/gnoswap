@@ -21,8 +21,7 @@ import (
 )
 
 var (
-	gsa   std.Address = consts.GNOSWAP_ADMIN
-	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+	gsa std.Address = consts.GNOSWAP_ADMIN
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -168,16 +167,7 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func init() {
-	// FAUCET
-	std.TestSetPrevAddr(test1)
-
-	for i := 0; i < 100; i++ {
-		foo.Faucet()
-		bar.Faucet()
-		baz.Faucet()
-		qux.Faucet()
-		obl.Faucet()
-	}
+	std.TestSetPrevAddr(gsa)
 
 	// TOKEN REGISTER
 	std.TestSetPrevAddr(gsa)
@@ -202,14 +192,7 @@ func main() {
 }
 
 func createPool() {
-	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(test1)
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	std.TestSkipHeights(5)
+	std.TestSetPrevAddr(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
@@ -222,11 +205,11 @@ func createPool() {
 }
 
 func mint01InRange() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	std.TestSetPrevRealm(consts.STAKER_PATH)
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		barPath,
@@ -239,7 +222,7 @@ func mint01InRange() {
 		"0",
 		"0",
 		max_timeout,
-		test1.String(),
+		gsa.String(),
 	)
 	if tokenId != 1 {
 		panic("expected tokenId 1")
@@ -253,11 +236,11 @@ func mint01InRange() {
 }
 
 func mint02LowerRange() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	bar.Approve(a2u(consts.POOL_ADDR), 0)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	std.TestSetPrevRealm(consts.STAKER_PATH)
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		barPath,
@@ -270,7 +253,7 @@ func mint02LowerRange() {
 		"0",
 		"0",
 		max_timeout,
-		test1.String(),
+		gsa.String(),
 	)
 	if tokenId != 2 {
 		panic("expected tokenId 2")
@@ -284,11 +267,11 @@ func mint02LowerRange() {
 }
 
 func mint03UpperRange() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	bar.Approve(a2u(consts.POOL_ADDR), 50000000)
 	foo.Approve(a2u(consts.POOL_ADDR), 0)
 
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	std.TestSetPrevRealm(consts.STAKER_PATH)
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		barPath,
@@ -301,7 +284,7 @@ func mint03UpperRange() {
 		"0",
 		"0",
 		max_timeout,
-		test1.String(),
+		gsa.String(),
 	)
 	if tokenId != 3 {
 		panic("expected tokenId 3")
@@ -315,20 +298,20 @@ func mint03UpperRange() {
 }
 
 func swap() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
 
 	std.TestSetPrevRealm(consts.ROUTER_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
 		fee500,
-		test1.String(),
+		gsa.String(),
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		test1.String(),
+		gsa.String(),
 	)
 	if amount0 != "1234567" {
 		panic("expected amount0 1234567")
@@ -339,7 +322,7 @@ func swap() {
 }
 
 func collectFeeAfterSwap() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 
@@ -357,7 +340,7 @@ func collectFeeAfterSwap() {
 }
 
 func decreaseLiquidityUpperPosition() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := pn.DecreaseLiquidity(uint64(3), 100, "0", "0", max_timeout, false)
 	if tokenId != 3 {

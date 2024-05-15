@@ -1,0 +1,92 @@
+package position
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/demo/gnoswap/common"
+	"gno.land/r/demo/gnoswap/consts"
+
+	pl "gno.land/r/demo/pool"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/foo"
+
+	"gno.land/r/demo/gns"
+)
+
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
+	// event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+}
+
+func TestMintPositionFullInRange(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		-887270,
+		887270,
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+		gsa.String(),
+	)
+	// event {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_tickLower -887270} {p_tickUpper 887270} {tokenId 1} {liquidity 49997} {amount0 49995} {amount1 50000}]}
+
+}
+
+func TestIncreaseLiquidity(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
+		uint64(1),
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+	)
+	// event: {GNOSWAP gno.land/r/demo/position IncreaseLiquidity [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {liquidity 49997} {amount0 49995} {amount1 50000}]}
+}
+
+func TestDecreaseLiquidity(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
+		uint64(1),
+		uint64(50),
+		"0",
+		"0",
+		max_timeout,
+		false,
+	)
+	// event: {GNOSWAP gno.land/r/demo/pool HandleWithdrawalFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/position} {p_tokenId 1} {p_token0Path gno.land/r/demo/bar} {p_token1Path gno.land/r/demo/foo} {fee0Amount 0} {fee1Amount 0}]}
+	// event: {GNOSWAP gno.land/r/demo/position CollectFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+	// event: {GNOSWAP gno.land/r/demo/position DecreaseLiquidity [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {p_liquidityRatio 50} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {liquidity 49997} {fee0 0} {fee1 0} {amount0 49994} {amount1 49999}]}
+
+}
+
+func TestCollectFee(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, fee0, fee1, poolPath := CollectFee(uint64(1))
+	// event: {GNOSWAP gno.land/r/demo/pool HandleWithdrawalFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/position} {p_tokenId 1} {p_token0Path gno.land/r/demo/bar} {p_token1Path gno.land/r/demo/foo} {fee0Amount 0} {fee1Amount 0}]}
+	// event: {GNOSWAP gno.land/r/demo/position CollectFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+
+}

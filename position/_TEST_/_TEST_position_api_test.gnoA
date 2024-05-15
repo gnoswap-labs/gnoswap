@@ -1,0 +1,88 @@
+package position
+
+import (
+	"gno.land/p/demo/json"
+
+	"std"
+	"testing"
+
+	"gno.land/r/demo/gnoswap/consts"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/gns"
+
+	pl "gno.land/r/demo/pool"
+)
+
+// 1. Init & Create Pool
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	pl.CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick = 10000
+	// event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+}
+
+// 2. Mint LP and Get GNFT
+func TestMint(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	// gsa mints => will get tid 1 nft
+	std.TestSetOrigCaller(gsa)
+	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, gsa.String())
+	// event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_tickLower -11000} {p_tickUpper -9000} {tokenId 1} {liquidity 12437322} {amount0 1000000} {amount1 367898}]}
+
+	// gsa mints => will get tid 2 nft
+	std.TestSetOrigCaller(gsa)
+	Mint(fooPath, barPath, fee500, int32(4000), int32(6000), "1000000", "1000000", "0", "0", max_timeout, gsa.String())
+	// event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_tickLower -6000} {p_tickUpper -4000} {tokenId 2} {liquidity 7785250} {amount0 1000000} {amount1 0}]}
+}
+
+// 3. Swap to make position fee
+func TestSwap(t *testing.T) {
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	pl.Swap(
+		fooPath,
+		barPath,
+		fee500,
+		gsa.String(),
+		true,
+		"123456",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+	// event: {GNOSWAP gno.land/r/demo/pool Swap [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_zeroForOne true} {p_amountSpecified 123456} {p_sqrtPriceLimitX96 4295128740} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 123456} {amount1 -45124} {protocol_fee0 0} {protocol_fee1 0}]}
+}
+
+func TestCollectFeeAfterSwap(t *testing.T) {
+	// burn 0 to collect swap fee
+	std.TestSetOrigCaller(gsa)
+	tokneId, fee0, fee1, fromPath := CollectFee(1)
+	// event: {GNOSWAP gno.land/r/demo/pool HandleWithdrawalFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/position} {p_tokenId 1} {p_token0Path gno.land/r/demo/bar} {p_token1Path gno.land/r/demo/foo} {fee0Amount 0} {fee1Amount 0}]}
+	// event: {GNOSWAP gno.land/r/demo/position CollectFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {fee0 61} {fee1 0} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+	shouldEQ(t, tokneId, uint64(1))
+	shouldEQ(t, fee0, "61")
+	shouldEQ(t, fee1, "0")
+	shouldEQ(t, fromPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+}
+
+// RPCs
+func TestApiGetPositions(t *testing.T) {
+	gpss := ApiGetPositions()
+
+	root, err := json.Unmarshal([]byte(gpss))
+	if err != nil {
+		panic(err)
+	}
+
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, response.Size(), 2)
+}
