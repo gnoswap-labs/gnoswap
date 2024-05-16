@@ -2,6 +2,6 @@ package gov
 
 import "std"
 
-const (
+var (
 	GNS_TOKEN_ADDRESS = std.DerivePkgAddr("gno.land/r/demo/gns")
 )

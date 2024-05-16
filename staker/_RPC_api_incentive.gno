@@ -64,7 +64,7 @@ func ApiGetRewardTokens() string {
 
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
-	for i, rewardToken := range rewardTokens {
+	for _, rewardToken := range rewardTokens {
 		_rewardTokenNode := json.ObjectNode("", map[string]*json.Node{
 			"poolPath": json.StringNode("poolPath", rewardToken.PoolPath),
 			"tokens":   json.ArrayNode("tokens", makeRewardTokensArray(rewardToken.RewardsTokenList)),

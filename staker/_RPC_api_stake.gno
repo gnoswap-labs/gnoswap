@@ -106,7 +106,7 @@ func ApiGetRewards() string {
 
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
-	for i, reward := range r.Response {
+	for _, reward := range r.Response {
 		_rewardNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId": json.NumberNode("lpTokenId", float64(reward.LpTokenId)),
 			"address":   json.StringNode("address", reward.Address),
@@ -158,7 +158,7 @@ func ApiGetStakes() string {
 
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
-	for i, stake := range r.Response {
+	for _, stake := range r.Response {
 		_stakeNode := json.ObjectNode("", map[string]*json.Node{
 			"tokenId":        json.NumberNode("tokenId", float64(stake.TokenId)),
 			"owner":          json.StringNode("owner", stake.Owner.String()),

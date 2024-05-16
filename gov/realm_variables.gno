@@ -16,7 +16,7 @@ func getNextProposalID() uint64 {
 }
 
 func updateVote(proposalID uint64, address string, option VoteOption, power uint64) {
-	proposal := &proposalsMap[proposalID]
+	proposal := proposalsMap[proposalID]
 	proposalVotes := proposalVotesMap[proposalID]
 	oldVote := proposalVotes[address]
 

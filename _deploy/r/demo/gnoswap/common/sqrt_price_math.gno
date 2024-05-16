@@ -120,8 +120,6 @@ func sqrtPriceMathGetAmount0DeltaHelper(
 		panic("common_sqrt price math #3")
 	}
 
-	value := u256.MulDiv(numerator1, numerator2, sqrtRatioBX96)
-
 	if roundUp {
 		value1 := u256.MulDivRoundingUp(numerator1, numerator2, sqrtRatioBX96)
 		return u256.DivRoundingUp(value1, sqrtRatioAX96)

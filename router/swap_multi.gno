@@ -64,7 +64,7 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 
 	// CALCULATE BACKWARD INFO
 	for {
-		amountIn, amountOut := singleSwapDry(
+		amountIn, _ := singleSwapDry(
 			SingleSwapParams{
 				tokenIn:         params.tokenIn,
 				tokenOut:        params.tokenOut,
@@ -175,7 +175,6 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath string) (*u256.Uint, *u256.Uint) { // firstAmountIn, lastAmountOut
 	firstAmountIn := u256.Zero()
 	payer := consts.ROUTER_ADDR
-	numPools := currentPoolIndex
 
 	for {
 		amountIn, amountOut := _swapDry(

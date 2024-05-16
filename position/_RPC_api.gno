@@ -68,7 +68,7 @@ func ApiGetPositions() string {
 
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
-	for i, position := range r.Response {
+	for _, position := range r.Response {
 		_positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),

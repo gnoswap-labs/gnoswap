@@ -20,11 +20,9 @@ func poolKeyDivide(poolKey string) string {
 	pToken0, pToken1, fee := res[0], res[1], res[2]
 
 	if pToken0 < pToken1 {
-		zz := ufmt.Sprintf("%s:%s:%s", pToken0, pToken1, fee)
 		return ufmt.Sprintf("%s:%s:%s", pToken0, pToken1, fee)
 	}
 
-	zz := ufmt.Sprintf("%s:%s:%s", pToken1, pToken0, fee)
 	return ufmt.Sprintf("%s:%s:%s", pToken1, pToken0, fee)
 }
 

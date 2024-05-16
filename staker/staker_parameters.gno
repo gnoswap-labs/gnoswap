@@ -60,31 +60,31 @@ func SubmitProposalParameterStakingReward(
 ) uint64 {
 
 	if newStakingReward1 == 0 {
-		return false
+		return 0
 	}
 
 	if newStakingReward2 == 0 {
-		return false
+		return 0
 	}
 
 	if newStakingReward3 == 0 {
-		return false
+		return 0
 	}
 
 	if newStakingReward4 == 0 {
-		return false
+		return 0
 	}
 
 	if newStakingReward1 < newStakingReward2 {
-		return false
+		return 0
 	}
 
 	if newStakingReward2 < newStakingReward3 {
-		return false
+		return 0
 	}
 
 	if newStakingReward3 < newStakingReward4 {
-		return false
+		return 0
 	}
 
 	changes := []gov.ParameterChange{
