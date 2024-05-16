@@ -29,7 +29,7 @@ const (
 )
 
 // CONTRACT PATH & ADDRESS
-const (
+var (
 	POOL_PATH string      = "gno.land/r/demo/pool"
 	POOL_ADDR std.Address = std.DerivePkgAddr(POOL_PATH)
 

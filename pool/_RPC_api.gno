@@ -94,7 +94,7 @@ func ApiGetPools() string {
 
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
-	for i, pool := range rpcPools {
+	for _, pool := range rpcPools {
 		_poolNode := json.ObjectNode("", map[string]*json.Node{
 			"poolPath":             json.StringNode("poolPath", pool.PoolPath),
 			"token0Path":           json.StringNode("token0Path", pool.Token0Path),

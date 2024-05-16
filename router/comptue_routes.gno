@@ -113,7 +113,7 @@ func computeRoutes(
 			continue
 		}
 
-		curPool := pools[i]
+		curPool := pool
 
 		var previousTokenOut string
 		if _previousTokenOut == "" { // first iteration

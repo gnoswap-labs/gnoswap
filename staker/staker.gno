@@ -95,7 +95,15 @@ func CreateExternalIncentive(
 	for _, v := range poolIncentives[targetPoolPath] {
 		if v == incentiveId {
 			transferFromByRegisterCall(rewardToken, std.GetOrigCaller(), GetOrigPkgAddr(), rewardAmount.Uint64())
-			incentives[v].rewardAmount = new(u256.Uint).Add(incentives[v].rewardAmount, rewardAmount)
+
+			incentive, ok := incentives[v]
+			if !ok {
+				return
+			}
+
+			incentive.rewardAmount = new(u256.Uint).Add(incentive.rewardAmount, rewardAmount)
+			incentives[v] = incentive
+
 			return
 		}
 	}

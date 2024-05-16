@@ -32,7 +32,6 @@ func unwrap(wugnotAmount uint64) {
 	if wugnotAmount == 0 {
 		return
 	}
-	userOldWugnot := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 
 	// SEND WUGNOT: USER -> ROUTER
 	wugnot.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.ROUTER_ADDR), wugnotAmount)

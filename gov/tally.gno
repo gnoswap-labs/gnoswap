@@ -74,6 +74,9 @@ func (p *Proposal) processVotingPeriod(currentTime uint64) {
 		// (especially on community pool spend with untrusted tokens)
 		p.ProposalStatus = ProposalStatusPassed
 		err := p.ProposalData.execute()
+		if err != nil {
+			panic(err)
+		}
 		// TODO: handle error
 		return
 	}

@@ -8,10 +8,10 @@ func UpdateVotingPower(address string, newPower uint64) {
 	votes := votersMap[address]
 
 	for proposalID, vote := range votes {
-		proposal := &proposalsMap[proposalID]
+		proposal := proposalsMap[proposalID]
 
 		proposal.updateVotingPower(vote.VoteOption, vote.Power, newPower)
-		proposalsMap[proposal.ProposalID] = *proposal
+		proposalsMap[proposal.ProposalID] = proposal
 	}
 
 }
@@ -20,10 +20,10 @@ func MakeVote(proposalID uint64, option VoteOption) {
 	caller := std.GetOrigCaller()
 	amount := balanceOf(caller)
 
-	proposal := &proposalsMap[proposalID]
+	proposal := proposalsMap[proposalID]
 	proposal.vote(caller, option, amount)
 
-	proposalsMap[proposal.ProposalID] = *proposal
+	proposalsMap[proposal.ProposalID] = proposal
 }
 
 func MakeDeposit(proposalID uint64, amount uint64) {
@@ -32,10 +32,10 @@ func MakeDeposit(proposalID uint64, amount uint64) {
 	// commented out, replace `gov` with the address of the gov contract
 	// gns.Transfer(users.AddressOrName(caller), gov, amount)
 
-	proposal := &proposalsMap[proposalID]
+	proposal := proposalsMap[proposalID]
 	proposal.deposit(caller, amount)
 
-	proposalsMap[proposal.ProposalID] = *proposal
+	proposalsMap[proposal.ProposalID] = proposal
 }
 
 func GetActiveProposals() []Proposal {
@@ -43,8 +43,8 @@ func GetActiveProposals() []Proposal {
 	return nil
 }
 
-func GetProposalById(proposalID uint64) *Proposal {
-	return &proposalsMap[proposalID]
+func GetProposalById(proposalID uint64) Proposal {
+	return proposalsMap[proposalID]
 }
 
 func SubmitProposalText(

@@ -17,12 +17,12 @@ type userClaimedReward map[std.Address]map[uint64]map[string]*u256.Uint // addre
 var userClaimedRewards = make(userClaimedReward)
 
 func userClaimedRewardAmount(address std.Address, tokenId uint64, rewardTokenPath string, rewardAmount *u256.Uint, claimeRequest bool) *u256.Uint {
-	userClaimed, ok := userClaimedRewards[address] // if user(address) ever claimed reward
+	_, ok := userClaimedRewards[address] // if user(address) ever claimed reward
 	if !ok {
 		userClaimedRewards[address] = make(map[uint64]map[string]*u256.Uint)
 	}
 
-	claimedPosition, ok := userClaimedRewards[address][tokenId] // if user(address) ever claimed reward from tokenId
+	_, ok = userClaimedRewards[address][tokenId] // if user(address) ever claimed reward from tokenId
 	if !ok {
 		userClaimedRewards[address][tokenId] = make(map[string]*u256.Uint)
 	}
