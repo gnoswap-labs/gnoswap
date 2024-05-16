@@ -1,0 +1,255 @@
+package position
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/demo/gnoswap/consts"
+
+	pl "gno.land/r/demo/pool"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/foo"
+
+	"gno.land/r/demo/gnft"
+	"gno.land/r/demo/gns"
+
+	// u256 "gno.land/p/demo/gnoswap/uint256"
+	i256 "gno.land/p/demo/gnoswap/int256"
+)
+
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
+	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+
+}
+
+func TestMintPosition01InRange(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
+	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		8000,
+		12000,
+		"50000000",
+		"50000000",
+		"0",
+		"0",
+		max_timeout,
+		gsa.String(),
+	)
+	// ---       event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_tickLower 8000} {p_tickUpper 12000} {tokenId 1} {liquidity 318704392} {amount0 18394892} {amount1 50000000}]}
+
+	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, getNextId(), 2)
+	shouldEQ(t, amount0, "18394892")
+	shouldEQ(t, amount1, "50000000")
+}
+
+func TestMintPosition02LowerRange(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), 0)
+	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		5000,
+		8000,
+		"50000000",
+		"50000000",
+		"0",
+		"0",
+		max_timeout,
+		gsa.String(),
+	)
+	//  event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_tickLower 5000} {p_tickUpper 8000} {tokenId 2} {liquidity 240632772} {amount0 0} {amount1 50000000}]}
+
+	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, getNextId(), 3)
+	shouldEQ(t, amount0, "0")
+	shouldEQ(t, amount1, "50000000")
+}
+
+func TestMintPosition03UpperRange(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), 50000000)
+	foo.Approve(a2u(consts.POOL_ADDR), 0)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		12000,
+		14000,
+		"50000000",
+		"50000000",
+		"0",
+		"0",
+		max_timeout,
+		gsa.String(),
+	)
+	// event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_tickLower 12000} {p_tickUpper 14000} {tokenId 3} {liquidity 957388253} {amount0 50000000} {amount1 0}]}
+
+	shouldEQ(t, tokenId, 3)
+	shouldEQ(t, getNextId(), 4)
+	shouldEQ(t, amount0, "50000000")
+	shouldEQ(t, amount1, "0")
+}
+
+func TestCollectFeeBeforeSwap(t *testing.T) {
+	tokenId, fee0, fee1, poolPath := CollectFee(1)
+	// event: {GNOSWAP gno.land/r/demo/pool HandleWithdrawalFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/position} {p_tokenId 1} {p_token0Path gno.land/r/demo/bar} {p_token1Path gno.land/r/demo/foo} {fee0Amount 0} {fee1Amount 0}]}
+	// event: {GNOSWAP gno.land/r/demo/position CollectFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, fee0, "0")
+	shouldEQ(t, fee1, "0")
+	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+}
+
+func TestUnclaimedFee0(t *testing.T) {
+	amount0, amount1 := unclaimedFee(1)
+
+	shouldEQ(t, amount0.ToString(), "0")
+	shouldEQ(t, amount1.ToString(), "0")
+}
+
+func TestSwap1(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		barPath,
+		fooPath,
+		fee500,
+		gsa.String(),
+		true,
+		"1234567",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+	// ---       event: {GNOSWAP gno.land/r/demo/pool Swap [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_zeroForOne true} {p_amountSpecified 1234567} {p_sqrtPriceLimitX96 4295128740} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 1234567} {amount1 -3332779} {protocol_fee0 0} {protocol_fee1 0}]}
+
+	shouldEQ(t, amount0, "1234567")
+	shouldEQ(t, amount1, "-3332779")
+}
+
+func TestUnclaimedFee1(t *testing.T) {
+	amount0, amount1 := unclaimedFee(1)
+
+	shouldEQ(t, amount0.ToString(), "617")
+	shouldEQ(t, amount1.ToString(), "0")
+}
+
+func TestSwap2(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		barPath,
+		fooPath,
+		fee500,
+		gsa.String(),
+		true,
+		"20000000", //
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+	// ---       event: {GNOSWAP gno.land/r/demo/pool Swap [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_zeroForOne true} {p_amountSpecified 20000000} {p_sqrtPriceLimitX96 4295128740} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 20000000} {amount1 -48647018} {protocol_fee0 0} {protocol_fee1 0}]}
+
+	shouldEQ(t, amount0, "20000000")
+	shouldEQ(t, amount1, "-48647018")
+}
+
+func TestUnclaimedFee2(t *testing.T) {
+	amount0, amount1 := unclaimedFee(1)
+
+	shouldEQ(t, amount0.ToString(), "10170")
+	shouldEQ(t, amount1.ToString(), "0")
+}
+
+func TestSwap3(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		fooPath,
+		barPath,
+		fee500,
+		gsa.String(),
+		false,
+		"20000000", //
+		consts.MAX_PRICE,
+		gsa.String(),
+	)
+	// event: {GNOSWAP gno.land/r/demo/pool Swap [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_zeroForOne true} {p_amountSpecified 1234567} {p_sqrtPriceLimitX96 4295128740} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 1234567} {amount1 -3332779} {protocol_fee0 0} {protocol_fee1 0}]}
+
+	shouldEQ(t, amount0, "-8692001")
+	shouldEQ(t, amount1, "20000000")
+}
+
+func TestUnclaimedFee3(t *testing.T) {
+	amount0, amount1 := unclaimedFee(1)
+
+	shouldEQ(t, amount0.ToString(), "10170")
+	shouldEQ(t, amount1.ToString(), "9009")
+}
+
+func TestCollectFeeAfterSwap(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
+
+	tokenId, fee0, fee1, poolPath := CollectFee(1)
+	// ---       event: {GNOSWAP gno.land/r/demo/pool HandleWithdrawalFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/position} {p_tokenId 1} {p_token0Path gno.land/r/demo/bar} {p_token1Path gno.land/r/demo/foo} {fee0Amount 101} {fee1Amount 90}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/position CollectFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {fee0 10069} {fee1 8919} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, fee0, "10069") // this is input token
+	shouldEQ(t, fee1, "8919")  // this it output token
+	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+}
+
+func TestDecreaseLiquidityUpperPosition(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+
+	ownerOfPosition := gnft.OwnerOf(tid(3))
+	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())
+
+	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(uint64(3), 100, "0", "0", max_timeout, false)
+	// ---       event: {GNOSWAP gno.land/r/demo/pool HandleWithdrawalFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/position} {p_tokenId 3} {p_token0Path gno.land/r/demo/bar} {p_token1Path gno.land/r/demo/foo} {fee0Amount 0} {fee1Amount 0}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/position CollectFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 3} {fee0 0} {fee1 0} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/position DecreaseLiquidity [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 3} {p_liquidityRatio 100} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {liquidity 957388253} {fee0 0} {fee1 0} {amount0 49999999} {amount1 0}]}
+
+	shouldEQ(t, tokenId, uint64(3))
+	shouldEQ(t, amount0, "49999999")
+	shouldEQ(t, amount1, "0")
+
+	ownerOfPosition = gnft.OwnerOf(tid(3))
+	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())
+}
+
+func TestSubIn256(t *testing.T) {
+	a := i256.Zero()
+	b := i256.One()
+
+	c := subIn256(a, b)
+	if c.ToString() != "115792089237316195423570985008687907853269984665640564039457584007913129639934" {
+		t.Errorf("subIn256 error")
+	}
+}

@@ -50,6 +50,9 @@ const (
 
 	GNFT_PATH string      = "gno.land/r/demo/gnft"
 	GNFT_ADDR std.Address = std.DerivePkgAddr(GNFT_PATH)
+
+	WUGNOT_PATH string      = "gno.land/r/demo/wugnot"
+	WUGNOT_ADDR std.Address = std.DerivePkgAddr(WUGNOT_PATH)
 )
 
 // NUMBER
