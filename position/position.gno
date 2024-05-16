@@ -217,7 +217,30 @@ func IncreaseLiquidity(
 		deadline:       deadline,
 	}
 
+	// wrap if target pool has wugnot
+	position := positions[tokenId]
+	pToken0, pToken1, _ := poolKeyDivide(position.poolKey)
+
+	isToken0Wugnot := pToken0 == consts.WRAPPED_WUGNOT
+	isToken1Wugnot := pToken1 == consts.WRAPPED_WUGNOT
+
+	userOldWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller())) // before wrap, user's origin wugnot balance
+	if isToken0Wugnot || isToken1Wugnot {
+		sent := std.GetOrigSend()
+		ugnotSent := uint64(sent.AmountOf("ugnot"))
+		wrap(ugnotSent)
+	}
+
+	// INCREASE
 	tokneId, liquidity, amount0, amount1, poolPath := increaseLiquidity(increaseLiquidityParams)
+
+	// unwrap left
+	if isToken0Wugnot || isToken1Wugnot {
+		userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+
+		leftOver := userNewWugnotBalance - userOldWugnotBalance
+		unwrap(leftOver)
+	}
 
 	std.Emit(
 		"GNOSWAP",
@@ -542,8 +565,8 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
-		"fee0", tokensOwed0.ToString(),
-		"fee1", tokensOwed1.ToString(),
+		"fee0", withoutFee0,
+		"fee1", withoutFee1,
 		"poolPath", position.poolKey,
 	)
 

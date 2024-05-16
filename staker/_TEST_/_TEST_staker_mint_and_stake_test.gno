@@ -1,0 +1,156 @@
+package staker
+
+import (
+	"std"
+	"testing"
+
+	pl "gno.land/r/demo/pool"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/gns"
+	"gno.land/r/demo/qux"
+	"gno.land/r/demo/wugnot"
+
+	"gno.land/r/demo/gnoswap/consts"
+)
+
+func init() {
+	// init pool tiers
+	// tier 1
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = 1 // DEV
+
+	// tier 2
+	poolTiers["GNS/USDT_500"] = 2
+	poolTiers["ATOM/GNS_500"] = 2
+
+	// tier 3
+	poolTiers["ATOM/GNOT_500"] = 3
+	poolTiers["ATOM/USDT_500"] = 3
+	poolTiers["ATOM/WETH_500"] = 3
+}
+
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	std.TestSkipHeights(1)
+
+	pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
+	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500}]}
+
+	pl.CreatePool(consts.GNOT, consts.GNS_PATH, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
+	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500}]}
+
+	std.TestSkipHeights(1)
+}
+
+func TestMintAndStakeGRC20Pair(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	std.TestSkipHeights(2)
+
+	lpTokenId, liquidity, amount0, amount1, poolPath := MintAndStake(
+		barPath,      // token0
+		quxPath,      // token1
+		fee500,       // fee
+		int32(9000),  // tickLower
+		int32(11000), // tickUpper
+		"1000",       // amount0Desired
+		"1000",       // amount1Desired
+		"1",          // amount0Min
+		"1",          // amount1Min
+		max_timeout,
+	)
+	// event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/staker} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 1} {liquidity 12437} {amount0 368} {amount1 1000}]}
+	// event: {GNOSWAP gno.land/r/demo/staker StakeToken [{p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {amount0 368} {amount1 1000}]}
+	shouldEQ(t, lpTokenId, uint64(1))
+
+	std.TestSkipHeights(1)
+}
+
+func TestMintAndStakeNative(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX)
+	std.TestSkipHeights(2)
+
+	// prepare 100005ugnot (5 for refund test)
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+	testBanker.IssueCoin(gsa, "ugnot", 100005)
+
+	// simulate transfer & decrase
+	gsaNativeBalance := ugnotBalanceOf(gsa)
+	shouldEQ(t, gsaNativeBalance, 100005)
+
+	std.TestSetOrigSend(std.Coins{{"ugnot", 100005}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", -100005)
+
+	gsaNativeBalance = ugnotBalanceOf(gsa)
+	shouldEQ(t, gsaNativeBalance, 0)
+
+	gsaOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
+	shouldEQ(t, gsaOldWugnotBalance, 0)
+
+	lpTokenId, liquidity, amount0, amount1, poolPath := MintAndStake(
+		consts.GNOT,     // token0
+		consts.GNS_PATH, // token1
+		fee500,          // fee
+		int32(9000),     // tickLower
+		int32(11000),    // tickUpper
+		"100000",        // amount0Desired
+		"100000",        // amount1Desired
+		"1",             // amount0Min
+		"1",             // amount1Min
+		max_timeout,
+	)
+	// event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/staker} {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500} {p_tickLower -11000} {p_tickUpper -9000} {tokenId 2} {liquidity 1243732} {amount0 100000} {amount1 36790}]}
+	// event: {GNOSWAP gno.land/r/demo/staker StakeToken [{p_tokenId 2} {poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500} {amount0 100000} {amount1 36790}]}
+
+	shouldEQ(t, lpTokenId, uint64(2))
+	std.TestSkipHeights(1)
+
+	// SPEND ALL WUGNOT
+	newOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
+	shouldEQ(t, gsaOldWugnotBalance, 0)
+
+	gsaNativeBalance = ugnotBalanceOf(gsa)
+	shouldEQ(t, gsaNativeBalance, 63215)
+	// 1. 100005 ugnot sent
+	// 2. 100005 ugnot wrapped to wugnot
+	// 3. 36790 wugnot spent to mint (amount1)
+	// 4. refund 100005 - 36790 = 63215
+
+}
+
+/*
+func TestPositionCollectFee(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	pn.CollectFee(1) // lpTokenId
+	std.TestSkipHeights(1)
+}
+
+func TestCollectReward(t *testing.T) {
+	// internal reward distribution
+	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
+	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevAddr(gsa)
+	CollectReward(1) // lpTokenId
+	std.TestSkipHeights(1)
+}
+
+func TestUnstakeToken(t *testing.T) {
+	ownerOfLp1 := gnft.OwnerOf(tid(1))
+	shouldEQ(t, ownerOfLp1, a2u(consts.STAKER_ADDR))
+
+	std.TestSetPrevAddr(gsa)
+	UnstakeToken(1) // lpTokenId
+	std.TestSkipHeights(1)
+
+	ownerOfLp1 = gnft.OwnerOf(tid(1))
+	shouldEQ(t, ownerOfLp1, a2u(gsa))
+}
+
+*/
