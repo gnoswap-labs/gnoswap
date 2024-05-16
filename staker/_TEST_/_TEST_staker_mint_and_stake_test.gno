@@ -36,10 +36,10 @@ func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
-	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500}]}
+	// event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500}]}
 
 	pl.CreatePool(consts.GNOT, consts.GNS_PATH, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
-	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500}]}
+	// event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500}]}
 
 	std.TestSkipHeights(1)
 }
