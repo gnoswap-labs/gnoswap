@@ -85,3 +85,11 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+func origCaller() string {
+	return std.GetOrigCaller().String()
+}
+
+func prevRealm() string {
+	return std.PrevRealm().PkgPath()
+}

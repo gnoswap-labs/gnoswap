@@ -37,7 +37,7 @@ func (p ProposalMint) execute() error {
 		return errors.New("unimplemented: only GNS token is supported")
 	}
 
-	mint(p.Recipient, p.Amount)
+	// mint(p.Recipient, p.Amount)
 
 	return nil
 }

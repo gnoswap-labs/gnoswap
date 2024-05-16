@@ -13,12 +13,12 @@ import (
 
 var (
 	bar   *grc20.AdminToken
-	admin std.Address = "g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq" // TODO: helper to change admin
+	admin std.Address = "g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq"
 )
 
 func init() {
 	bar = grc20.NewAdminToken("Bar", "BAR", 6)
-	bar.Mint(admin, 500_000_000_000_000)
+	bar.Mint(admin, 100_000_000_000_000)
 }
 
 // method proxies as public functions.
@@ -67,29 +67,6 @@ func Approve(spender pusers.AddressOrName, amount uint64) {
 func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	err := bar.TransferFrom(caller, users.Resolve(from), users.Resolve(to), amount)
-	if err != nil {
-		panic(err.Error())
-	}
-}
-
-// faucet.
-
-func Faucet() {
-	// FIXME: add limits?
-	// FIXME: add payment in gnot?
-	caller := std.PrevRealm().Addr()
-	err := bar.Mint(caller, 100*1_000_000) // 100M
-	if err != nil {
-		panic(err.Error())
-	}
-}
-
-// administration.
-
-func Mint(address pusers.AddressOrName, amount uint64) {
-	caller := std.PrevRealm().Addr()
-	assertIsAdmin(caller)
-	err := bar.Mint(users.Resolve(address), amount)
 	if err != nil {
 		panic(err.Error())
 	}

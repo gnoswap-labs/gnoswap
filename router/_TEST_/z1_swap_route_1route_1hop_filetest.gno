@@ -23,8 +23,7 @@ import (
 )
 
 var (
-	gsa   std.Address = consts.GNOSWAP_ADMIN
-	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+	gsa std.Address = consts.GNOSWAP_ADMIN
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -170,17 +169,6 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func init() {
-	// FAUCET
-	std.TestSetPrevAddr(test1)
-
-	for i := 0; i < 100; i++ {
-		foo.Faucet()
-		bar.Faucet()
-		baz.Faucet()
-		qux.Faucet()
-		obl.Faucet()
-	}
-
 	// TOKEN REGISTER
 	std.TestSetPrevAddr(gsa)
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
@@ -203,112 +191,194 @@ func init() {
 /* START TEST */
 func main() {
 	createPool()
-	mintGnsGnot()
-	mintGnotBar()
-	drySwapGnsBarExactIn()
-	swapGnsBarExactIn()
+	mint()
+	drySwapBarBazExactIn()
+	swapBarBazExactIn()
+	drySwapBarBazExactOut()
+	swapBarBazExactOut()
+	drySwapBazBarExactIn()
+	swapBazBarExactIn()
+	drySwapBazBarExactOut()
+	swapBazBarExactOut()
 }
 
 func createPool() {
-	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(test1)
-	for i := 0; i < (5 * 2); i++ {
-		gns.Faucet()
-		std.TestSkipHeights(1)
-	}
+	std.TestSetPrevAddr(gsa)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*2)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
 
-	// 2 HOPS, 1 GNS ≈ 7.29 BAR
-	pl.CreatePool(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, common.TickMathGetSqrtRatioAtTick(10_000).ToString())
-	pl.CreatePool(consts.WRAPPED_WUGNOT, barPath, fee100, common.TickMathGetSqrtRatioAtTick(10_000).ToString())
+	// 1 HOPS
+	pl.CreatePool(barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(10_000).ToString())
 	// tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 }
 
-func mintGnsGnot() {
-	std.TestSetPrevAddr(test1)
-
-	// send
-	std.TestIssueCoins(test1, std.Coins{{"ugnot", 999999}})
-	std.TestSetOrigSend(std.Coins{{"ugnot", 999999}}, nil)
-	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 999999)
-
-	// Deposit(wrap)
-	std.TestSetPrevAddr(test1)
-	wugnot.Deposit()
-
-	gns.Faucet()
-
-	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+func mint() {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
-	_, _, amount0, amount1 := pn.Mint(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, test1.String())
+	_, _, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, gsa.String())
 	if amount0 != "36790" {
-		"router_z5_mintGnsGnot() || amount0 should be 36790"
+		"router_z2_mint() || amount0 should be 36790"
 	}
 	if amount1 != "100000" {
-		"router_z5_mintGnsGnot() || amount1 should be 100000"
+		"router_z2_mint() || amount1 should be 100000"
 	}
 }
 
-func mintGnotBar() {
-	std.TestSetPrevAddr(test1)
-
-	// send
-	std.TestIssueCoins(test1, std.Coins{{"ugnot", 999999}})
-	std.TestSetOrigSend(std.Coins{{"ugnot", 999999}}, nil)
-	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 999999)
-
-	// Deposit(wrap)
-	std.TestSetPrevAddr(test1)
-	wugnot.Deposit()
-
-	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-
-	std.TestSetPrevRealm(consts.STAKER_PATH)
-	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.WRAPPED_WUGNOT, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, test1.String())
-}
-
-func drySwapGnsBarExactIn() {
-	std.TestSetPrevAddr(test1)
+func drySwapBarBazExactIn() {
+	std.TestSetPrevAddr(gsa)
 
 	dryResult := rr.DrySwapRoute(
-		consts.GNS_PATH, // inputToken
-		barPath,         // outputToken
-		"1000",          // amountSpecified
-		"EXACT_IN",      // swapType
-		"gno.land/r/demo/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/demo/bar:100", // strRouteArr
+		barPath,    // inputToken
+		bazPath,    // outputToken
+		"1000",     // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/demo/bar:gno.land/r/demo/baz:500", // strRouteArr
 		"100", // quoteArr
 	)
-	if dryResult != "7339" {
-		panic("dryResult should be 7339")
+	if dryResult != "2711" {
+		panic("router_z2_drySwapBarBazExactIn() || dryResult should be 2711")
 	}
 }
 
-func swapGnsBarExactIn() {
-	std.TestSetPrevAddr(test1)
+func swapBarBazExactIn() {
+	std.TestSetPrevAddr(gsa)
 
-	gns.Approve(a2u(consts.POOL_ADDR), 1000)   // swap input amount
-	bar.Approve(a2u(consts.ROUTER_ADDR), 7328) // 0.15% fee
+	bar.Approve(a2u(consts.POOL_ADDR), uint64(1000))
+	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
 
 	amountIn, amountOut := rr.SwapRoute(
-		consts.GNS_PATH, // inputToken
-		barPath,         // outputToken
-		"1000",          // amountSpecified
-		"EXACT_IN",      // swapType
-		"gno.land/r/demo/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/demo/bar:100", // strRouteArr
-		"100", // quoteArr
-		"0",   // tokenAmountLimit
+		barPath,    // inputToken
+		bazPath,    // outputToken
+		"1000",     // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/demo/bar:gno.land/r/demo/baz:500", // strRouteArr
+		"100",  // quoteArr
+		"2700", // tokenAmountLimit
 	)
 	if amountIn != "1000" {
-		panic("amountIn should be 1000")
+		"router_z2_swapBarBazExactIn() || amountIn should be 1000"
 	}
-	if amountOut != "-7328" {
-		panic("amountOut should be -7328")
+	if amountOut != "-2707" {
+		"router_z2_swapBarBazExactIn() || amountOut should be -2707"
+	}
+}
+
+func drySwapBarBazExactOut() {
+	std.TestSetPrevAddr(gsa)
+
+	dryResult := rr.DrySwapRoute(
+		barPath,     // inputToken
+		bazPath,     // outputToken
+		"1000",      // amountSpecified
+		"EXACT_OUT", // swapType
+		"gno.land/r/demo/bar:gno.land/r/demo/baz:500", // strRouteArr
+		"100", // quoteArr
+	)
+	if dryResult != "371" {
+		panic("router_z2_drySwapBarBazExactOut() || dryResult should be 371")
+	}
+}
+
+func swapBarBazExactOut() {
+	std.TestSetPrevAddr(gsa)
+
+	bar.Approve(a2u(consts.POOL_ADDR), uint64(1000))
+	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
+
+	amountIn, amountOut := rr.SwapRoute(
+		barPath,     // inputToken
+		bazPath,     // outputToken
+		"1000",      // amountSpecified
+		"EXACT_OUT", // swapType
+		"gno.land/r/demo/bar:gno.land/r/demo/baz:500", // strRouteArr
+		"100", // quoteArr
+		"371", // tokenAmountLimit
+	)
+	if amountIn != "371" {
+		"router_z2_swapBarBazExactOut() || amountIn should be 371"
+	}
+	if amountOut != "-1000" {
+		"router_z2_swapBarBazExactOut() || amountOut should be -1000"
+	}
+}
+
+func drySwapBazBarExactIn() {
+	std.TestSetPrevAddr(gsa)
+
+	dryResult := rr.DrySwapRoute(
+		bazPath,    // inputToken
+		barPath,    // outputToken
+		"1000",     // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
+		"100", // quoteArr
+	)
+	if dryResult != "368" {
+		panic("router_z2_drySwapBazBarExactIn() || dryResult should be 368")
+	}
+}
+
+func swapBazBarExactIn() {
+	std.TestSetPrevAddr(gsa)
+
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
+
+	amountIn, amountOut := rr.SwapRoute(
+		bazPath,    // inputToken
+		barPath,    // outputToken
+		"1000",     // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
+		"100", // quoteArr
+		"360", // tokenAmountLimit
+	)
+	if amountIn != "1000" {
+		"router_z2_swapBarBazExactOut() || amountIn should be 1000"
+	}
+	if amountOut != "-368" {
+		"router_z2_swapBarBazExactOut() || amountOut should be -368"
+	}
+}
+
+func drySwapBazBarExactOut() {
+	std.TestSetPrevAddr(gsa)
+
+	dryResult := rr.DrySwapRoute(
+		bazPath,     // inputToken
+		barPath,     // outputToken
+		"3000",      // amountSpecified
+		"EXACT_OUT", // swapType
+		"gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
+		"100", // quoteArr
+	)
+	if dryResult != "8171" {
+		panic("router_z2_drySwapBazBarExactOut() || dryResult should be 8171")
+	}
+}
+
+func swapBazBarExactOut() {
+	std.TestSetPrevAddr(gsa)
+	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+	amountIn, amountOut := rr.SwapRoute(
+		bazPath,     // inputToken
+		barPath,     // outputToken
+		"3000",      // amountSpecified
+		"EXACT_OUT", // swapType
+		"gno.land/r/demo/baz:gno.land/r/demo/bar:500", // strRouteArr
+		"100",  // quoteArr
+		"8200", // tokenAmountLimit
+	)
+	if amountIn != "8171" {
+		"router_z2_swapBazBarExactOut() || amountIn should be 8171"
+	}
+	if amountOut != "-2996" {
+		panic(amountOut)
+		"router_z2_swapBazBarExactOut() || amountOut should be -2996"
 	}
 }

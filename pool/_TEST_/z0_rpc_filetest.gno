@@ -21,8 +21,7 @@ import (
 )
 
 var (
-	gsa   std.Address = consts.GNOSWAP_ADMIN
-	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+	gsa std.Address = consts.GNOSWAP_ADMIN
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -150,16 +149,7 @@ func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 }
 
 func init() {
-	// FAUCET
-	std.TestSetPrevAddr(test1)
-
-	for i := 0; i < 100; i++ {
-		foo.Faucet()
-		bar.Faucet()
-		baz.Faucet()
-		qux.Faucet()
-		obl.Faucet()
-	}
+	std.TestSetPrevAddr(gsa)
 
 	// TOKEN REGISTER
 	std.TestSetPrevAddr(gsa)
@@ -183,14 +173,7 @@ func main() {
 }
 
 func createFooBarPool() {
-	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(test1)
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	std.TestSkipHeights(5)
+	std.TestSetPrevAddr(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
@@ -203,14 +186,7 @@ func createFooBarPool() {
 }
 
 func createBarBazPool() {
-	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(test1)
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	std.TestSkipHeights(5)
+	std.TestSetPrevAddr(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
@@ -223,13 +199,13 @@ func createBarBazPool() {
 }
 
 func mintFooBar() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
 
 	//std.TestSetPrevRealm(consts.POSITION_PATH)
-	//std.TestSetOrigCaller(test1)
+	//std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Mint(
 		barPath,
 		fooPath,
@@ -248,13 +224,13 @@ func mintFooBar() {
 }
 
 func mintBarBaz() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
 
 	//std.TestSetPrevRealm(consts.POSITION_PATH)
-	//std.TestSetOrigCaller(test1)
+	//std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Mint(
 		barPath,
 		bazPath,

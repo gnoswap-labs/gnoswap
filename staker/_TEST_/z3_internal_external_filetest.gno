@@ -28,8 +28,7 @@ import (
 )
 
 var (
-	gsa   std.Address = consts.GNOSWAP_ADMIN
-	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+	gsa std.Address = consts.GNOSWAP_ADMIN
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -192,17 +191,6 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func init() {
-	// FAUCET
-	std.TestSetPrevAddr(test1)
-
-	for i := 0; i < 100; i++ {
-		foo.Faucet()
-		bar.Faucet()
-		baz.Faucet()
-		qux.Faucet()
-		obl.Faucet()
-	}
-
 	// TOKEN REGISTER
 	std.TestSetPrevAddr(gsa)
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
@@ -247,16 +235,9 @@ func main() {
 }
 
 func createPool() {
-	numPool := uint64(4)
+	std.TestSetPrevAddr(gsa)
 
-	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(test1)
-	for i := uint64(0); i < (5 * numPool); i++ {
-		gns.Faucet()
-		std.TestSkipHeights(1)
-	}
-
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*numPool)
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*0)
 	std.TestSkipHeights(1)
 
 	pl.CreatePool(barPath, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(10_000).ToString())
@@ -274,37 +255,41 @@ func setPoolTier() {
 }
 
 func mintBarQux() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
-	pn.Mint(barPath, quxPath, fee500, 9000, 11000, "100000", "100000", "0", "0", maxTimeout, test1.String())
+	pn.Mint(barPath, quxPath, fee500, 9000, 11000, "100000", "100000", "0", "0", maxTimeout, gsa.String())
+
 }
 
 func mintBarBaz() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
-	pn.Mint(barPath, bazPath, fee100, -1000, 1000, "100000", "100000", "0", "0", maxTimeout, test1.String())
+	pn.Mint(barPath, bazPath, fee100, -1000, 1000, "100000", "100000", "0", "0", maxTimeout, gsa.String())
+
 }
 
 func mintFooQux() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.STAKER_PATH)
-	pn.Mint(fooPath, quxPath, fee500, -1000, 11000, "100000", "100000", "0", "0", maxTimeout, test1.String())
+	pn.Mint(fooPath, quxPath, fee500, -1000, 11000, "100000", "100000", "0", "0", maxTimeout, gsa.String())
+
 }
 
 func createExternalIncentive() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
+
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
 	std.TestSkipHeights(1)
 
@@ -319,7 +304,8 @@ func createExternalIncentive() {
 }
 
 func stakeTier01() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
+
 	gnft.Approve(a2u(consts.STAKER_ADDR), tid(1))
 	sr.StakeToken(1)
 
@@ -327,7 +313,8 @@ func stakeTier01() {
 }
 
 func stakeTier02() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
+
 	gnft.Approve(a2u(consts.STAKER_ADDR), tid(2))
 	sr.StakeToken(2)
 
@@ -335,7 +322,8 @@ func stakeTier02() {
 }
 
 func stakeExternal() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
+
 	gnft.Approve(a2u(consts.STAKER_ADDR), tid(3))
 	sr.StakeToken(3)
 
@@ -347,26 +335,30 @@ func collectReward01() {
 	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // internal reward distribution
 	std.TestSkipHeights(1)
 
-	gnsBal := gns.BalanceOf(a2u(test1))
-	if gnsBal != 500000000 {
-		panic("collectReward01() || gnsBal != 500000000")
+	gnsBal := gns.BalanceOf(a2u(gsa))
+
+	if gnsBal != 500000000000000 {
+		panic("collectReward01() || gnsBal != 500000000000000")
 	}
 
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
+
 	sr.CollectReward(1)
 
-	gnsBal = gns.BalanceOf(a2u(test1))
-	if gnsBal != 500266805 {
-		panic("collectReward01() || gnsBal != 500266805")
+	gnsBal = gns.BalanceOf(a2u(gsa))
+
+	if gnsBal != 500000000266805 {
+		panic("collectReward01() || gnsBal != 500000000266805")
 	}
 }
 
 func collectReward01Again() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
-	gnsBal := gns.BalanceOf(a2u(test1))
-	if gnsBal != 500266805 {
-		panic("collectReward01Again() || gnsBal != 500266805")
+	gnsBal := gns.BalanceOf(a2u(gsa))
+
+	if gnsBal != 500000000266805 {
+		panic("collectReward01Again() || gnsBal != 500000000266805")
 	}
 
 	// ACCELERATE TIME
@@ -375,24 +367,27 @@ func collectReward01Again() {
 	sr.CollectReward(1)
 	std.TestSkipHeights(1)
 
-	gnsBal = gns.BalanceOf(a2u(test1))
-	if gnsBal != 538381805 {
-		panic("collectReward01() || gnsBal != 538381805")
+	gnsBal = gns.BalanceOf(a2u(gsa))
+
+	if gnsBal != 500000038381805 {
+		panic("collectReward01() || gnsBal != 500000038381805")
 	}
 }
 
 func collectExternalReward() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
-	oblBal := obl.BalanceOf(a2u(test1))
-	if oblBal != 9000000000 {
-		panic("collectExternalReward() || oblBal != 9000000000")
+	oblBal := obl.BalanceOf(a2u(gsa))
+
+	if oblBal != 99999000000000 {
+		panic("collectExternalReward() || oblBal != 99999000000000")
 	}
 
 	sr.CollectReward(3)
-	oblBal = obl.BalanceOf(a2u(test1))
-	if oblBal != 9000145306 {
-		panic("collectExternalReward() || oblBal != 9000145306")
+	oblBal = obl.BalanceOf(a2u(gsa))
+
+	if oblBal != 99999000141106 {
+		panic("collectExternalReward() || oblBal != 99999000141106")
 	}
 }
 

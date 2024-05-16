@@ -20,8 +20,7 @@ import (
 )
 
 var (
-	gsa   std.Address = consts.GNOSWAP_ADMIN
-	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+	gsa std.Address = consts.GNOSWAP_ADMIN
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -168,17 +167,6 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func init() {
-	// FAUCET
-	std.TestSetPrevAddr(test1)
-
-	for i := 0; i < 100; i++ {
-		foo.Faucet()
-		bar.Faucet()
-		baz.Faucet()
-		qux.Faucet()
-		obl.Faucet()
-	}
-
 	// TOKEN REGISTER
 	std.TestSetPrevAddr(gsa)
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
@@ -199,14 +187,7 @@ func main() {
 }
 
 func createFooWUGNOT() {
-	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(test1)
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	std.TestSkipHeights(5)
+	std.TestSetPrevAddr(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
@@ -226,17 +207,17 @@ func mint() {
 
 	// prepare ugnot
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.IssueCoin(test1, "ugnot", 804_032)
+	testBanker.IssueCoin(gsa, "ugnot", 804_032)
 
 	// simulate transfer & decrase
 	std.TestSetOrigSend(std.Coins{{"ugnot", 804_032}}, nil)
 	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 804_032)
 
 	// Deposit(wrap)
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	wugnot.Deposit()
 
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	foo.Approve(a2u(consts.POOL_ADDR), maxApprove)
 	wugnot.Approve(a2u(consts.POOL_ADDR), maxApprove)
 
@@ -262,16 +243,16 @@ func mint() {
 func swapBuyNative() {
 	pool := pl.GetPool(fooPath, consts.WRAPPED_WUGNOT, fee500)
 
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	foo.Approve(a2u(consts.POOL_ADDR), 10000)
 
 	std.TestSetPrevRealm(consts.ROUTER_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		fooPath,               // token0
 		consts.WRAPPED_WUGNOT, // token1
 		fee500,
-		test1.String(),
+		gsa.String(),
 		true,
 		"10000",
 		consts.MIN_PRICE,
@@ -285,16 +266,16 @@ func swapBuyNative() {
 func swapSellNative() {
 	pool := pl.GetPool(fooPath, consts.WRAPPED_WUGNOT, fee500)
 
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 	foo.Approve(a2u(consts.POOL_ADDR), 10000)
 
 	std.TestSetPrevRealm(consts.ROUTER_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap( // ugnot 10_000 > foo ??
 		fooPath,               // token0
 		consts.WRAPPED_WUGNOT, // token1
 		fee500,
-		test1.String(),
+		gsa.String(),
 		false,
 		"10000",
 		consts.MAX_PRICE,

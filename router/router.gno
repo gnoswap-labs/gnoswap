@@ -148,9 +148,21 @@ func SwapRoute(
 			panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too much spend for user (expected maximum spend:%s, actual spend:%s)", _tokenAmountLimit, resultAmountIn.ToString()))
 		}
 	}
-	//return resultAmountIn.ToString(), resultAmountOut.ToString()
 
 	intAmountOut := i256.FromUint256(resultAmountOut)
+
+	std.Emit(
+		"GNOSWAP",
+		"p_input", inputToken,
+		"p_output", outputToken,
+		"p_swapType", swapType,
+		"p_amountSpecified", _amountSpecified,
+		"p_route", strRouteArr,
+		"p_quote", quoteArr,
+		"amountIn", resultAmountIn.ToString(),
+		"amountOut", i256.Zero().Neg(intAmountOut).ToString(),
+	)
+
 	return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString()
 }
 

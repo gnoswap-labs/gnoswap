@@ -21,8 +21,7 @@ import (
 )
 
 var (
-	gsa   std.Address = consts.GNOSWAP_ADMIN
-	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+	gsa std.Address = consts.GNOSWAP_ADMIN
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -166,16 +165,7 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func init() {
-	// FAUCET
-	std.TestSetPrevAddr(test1)
-
-	for i := 0; i < 100; i++ {
-		foo.Faucet()
-		bar.Faucet()
-		baz.Faucet()
-		qux.Faucet()
-		obl.Faucet()
-	}
+	std.TestSetPrevAddr(gsa)
 
 	// TOKEN REGISTER
 	std.TestSetPrevAddr(gsa)
@@ -201,14 +191,7 @@ func main() {
 }
 
 func createBarFooPool() {
-	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(test1)
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	gns.Faucet()
-	std.TestSkipHeights(5)
+	std.TestSetPrevAddr(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
@@ -220,13 +203,13 @@ func createBarFooPool() {
 	std.TestSkipHeights(1)
 }
 func mint() {
-	std.TestSetPrevAddr(test1)
+	std.TestSetPrevAddr(gsa)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetPrevRealm(consts.POSITION_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Mint(
 		fooPath,
 		barPath,
@@ -305,7 +288,7 @@ func mint() {
 }
 func burn() {
 	std.TestSetPrevRealm(consts.POSITION_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 
 	b11, b12 := pl.Burn(barPath, fooPath, fee500, 9000, 11000, "1000")
 	b21, b22 := pl.Burn(barPath, fooPath, fee500, 9000, 11000, "1000")
@@ -345,10 +328,10 @@ func burn() {
 }
 func collect() {
 	std.TestSetPrevRealm(consts.POSITION_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 
 	// withdraw all token before test `Collect`
-	pl.Collect(barPath, fooPath, fee500, test1.String(), 9000, 11000, "50000000", "50000000")
+	pl.Collect(barPath, fooPath, fee500, gsa.String(), 9000, 11000, "50000000", "50000000")
 
 	pool := pl.GetPool(barPath, fooPath, fee500)
 	testLiquidity := pool.PoolGetLiquidity()
@@ -358,11 +341,11 @@ func collect() {
 
 	pl.Mint(barPath, fooPath, fee500, consts.POSITION_ADDR.String(), 9000, 11000, "15000")
 	pl.Burn(barPath, fooPath, fee500, 9000, 11000, "15000")
-	c11, c12 := pl.Collect(barPath, fooPath, fee500, test1.String(), 9000, 11000, "50000000", "50000000")
+	c11, c12 := pl.Collect(barPath, fooPath, fee500, gsa.String(), 9000, 11000, "50000000", "50000000")
 
 	pl.Mint(barPath, fooPath, fee500, consts.POSITION_ADDR.String(), 9000, 11000, "15000")
 	pl.Burn(barPath, fooPath, fee500, 9000, 11000, "15000")
-	c21, c22 := pl.Collect(barPath, fooPath, fee500, test1.String(), 9000, 11000, "50000000", "50000000")
+	c21, c22 := pl.Collect(barPath, fooPath, fee500, gsa.String(), 9000, 11000, "50000000", "50000000")
 
 	if c11 != c21 || c12 != c22 {
 		panic("collect foo bar 1")
@@ -374,12 +357,12 @@ func collect() {
 
 	pl.Mint(barPath, fooPath, fee500, consts.POSITION_ADDR.String(), 9000, 11000, "15000")
 	pl.Burn(barPath, fooPath, fee500, 9000, 11000, "15000")
-	c31, c32 := pl.Collect(barPath, fooPath, fee500, test1.String(), 9000, 11000, "100", "100")
+	c31, c32 := pl.Collect(barPath, fooPath, fee500, gsa.String(), 9000, 11000, "100", "100")
 	if c31 != "100" || c32 != "100" {
 		panic("collect foo bar 3")
 	}
 
-	c41, c42 := pl.Collect(barPath, fooPath, fee500, test1.String(), 9000, 11000, "50000000", "50000000")
+	c41, c42 := pl.Collect(barPath, fooPath, fee500, gsa.String(), 9000, 11000, "50000000", "50000000")
 	if c41 != "343" || c42 != "1106" {
 		panic("collect foo bar 4")
 	}
@@ -387,14 +370,14 @@ func collect() {
 	// Just Mint > No Burn => nothing to collect
 	pl.Mint(barPath, fooPath, fee500, consts.POSITION_ADDR.String(), 9000, 11000, "15000")
 	// Burn(barPath, fooPath, fee500, 9000, 11000, "15000")
-	c51, c52 := pl.Collect(barPath, fooPath, fee500, test1.String(), 9000, 11000, "50000000", "50000000")
+	c51, c52 := pl.Collect(barPath, fooPath, fee500, gsa.String(), 9000, 11000, "50000000", "50000000")
 	if c51 != "0" || c52 != "0" {
 		panic("collect foo bar 5")
 	}
 
 	// Burn Now => something to collect
 	pl.Burn(barPath, fooPath, fee500, 9000, 11000, "15000")
-	c61, c62 := pl.Collect(barPath, fooPath, fee500, test1.String(), 9000, 11000, "50000000", "50000000")
+	c61, c62 := pl.Collect(barPath, fooPath, fee500, gsa.String(), 9000, 11000, "50000000", "50000000")
 	if c61 == "0" || c62 == "0" {
 		panic("collect foo bar 6")
 	}
@@ -407,17 +390,17 @@ func swap() {
 	}
 
 	std.TestSetPrevRealm(consts.POSITION_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	pl.Mint(barPath, fooPath, fee500, consts.POSITION_ADDR.String(), 9000, 11000, "2000000")
 
 	std.TestSetPrevRealm(consts.ROUTER_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	{
 		amount0, amount1 := pl.Swap(
 			fooPath,                      // token0Path
 			barPath,                      // token1Path
 			fee500,                       // fee
-			test1.String(),               // recipient
+			gsa.String(),                 // recipient
 			true,                         // zeroForOne
 			"10000",                      // _amountSpecified
 			consts.MIN_PRICE,             // _sqrtPriceLimitX96
@@ -429,14 +412,14 @@ func swap() {
 	}
 
 	{
-		amount0, amount1 := pl.Swap(barPath, fooPath, fee500, test1.String(), true, "5000", consts.MIN_PRICE, std.GetOrigCaller().String()) // give enough amount to take fees away
+		amount0, amount1 := pl.Swap(barPath, fooPath, fee500, gsa.String(), true, "5000", consts.MIN_PRICE, std.GetOrigCaller().String()) // give enough amount to take fees away
 		if amount0 != "5000" || amount1 != "-13307" {
 			panic("swap foo bar 2")
 		}
 	}
 
 	{
-		amount0, amount1 := pl.Swap(barPath, fooPath, fee500, test1.String(), true, "1000", consts.MIN_PRICE, std.GetOrigCaller().String()) // give enough amount to take fees away
+		amount0, amount1 := pl.Swap(barPath, fooPath, fee500, gsa.String(), true, "1000", consts.MIN_PRICE, std.GetOrigCaller().String()) // give enough amount to take fees away
 		if amount0 != "1000" || amount1 != "-2647" {
 			panic("swap foo bar 3")
 		}
@@ -444,7 +427,7 @@ func swap() {
 
 	// Token0 -> Token1
 	{
-		amount0, amount1 := pl.Swap(barPath, fooPath, fee500, test1.String(), false, "16000", consts.MAX_PRICE, std.GetOrigCaller().String()) // give enough amount to take fees away
+		amount0, amount1 := pl.Swap(barPath, fooPath, fee500, gsa.String(), false, "16000", consts.MAX_PRICE, std.GetOrigCaller().String()) // give enough amount to take fees away
 		if amount0 != "-6010" || amount1 != "16000" {
 			panic("swap foo bar 4")
 		}
@@ -467,12 +450,12 @@ func collectProtocol() {
 	pl.SetFeeProtocol(6, 8)
 
 	std.TestSetPrevRealm(consts.ROUTER_PATH)
-	std.TestSetOrigCaller(test1)
+	std.TestSetOrigCaller(gsa)
 	pl.Swap(
 		barPath,
 		fooPath,
 		fee500,
-		test1.String(),
+		gsa.String(),
 		true,
 		"200000",
 		consts.MIN_PRICE,
@@ -480,7 +463,7 @@ func collectProtocol() {
 	)
 
 	std.TestSetPrevAddr(gsa)
-	protocolFee0, protocolFee1 := pl.CollectProtocol(barPath, fooPath, fee500, test1.String(), "100000", "100000")
+	protocolFee0, protocolFee1 := pl.CollectProtocol(barPath, fooPath, fee500, gsa.String(), "100000", "100000")
 	if protocolFee0 != "8" {
 		panic(protocolFee0)
 	}

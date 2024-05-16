@@ -40,6 +40,12 @@ func SetPoolTier(pool string, tier uint64) {
 	validTier(tier)
 
 	poolTiers[pool] = tier
+
+	std.Emit(
+		"GNOSWAP",
+		"p_poolPath", pool,
+		"p_tier", uint64ToStr(tier),
+	)
 }
 
 // ChangePoolTier changes the tier of the pool
@@ -66,6 +72,12 @@ func ChangePoolTier(pool string, tier uint64) {
 		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__ChangePoolTier() || Cannot change tier of this pool(%s)"))
 	}
 
+	std.Emit(
+		"GNOSWAP",
+		"p_poolPath", pool,
+		"p_tier", uint64ToStr(tier),
+	)
+
 	poolTiers[pool] = tier
 }
 
@@ -83,6 +95,11 @@ func RemovePoolTier(pool string) {
 	}
 
 	delete(poolTiers, pool)
+
+	std.Emit(
+		"GNOSWAP",
+		"p_poolPath", pool,
+	)
 }
 
 func isAdmin() {

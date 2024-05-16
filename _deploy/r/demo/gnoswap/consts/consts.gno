@@ -11,14 +11,13 @@ var (
 
 // GNOSWAP SERVICE
 const (
-	// r3v4_xxx: for txtar testing, change below address
 	GNOSWAP_ADMIN std.Address = "g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq" // GSA
 	FEE_COLLECTOR std.Address = "g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906" // FCL
 
 	INTERNAL_REWARD_ACCOUNT   std.Address = "g1jms5fx2raq4qfkq3502mfh25g54nyl5qeuvz5y" // IRA for GNS
 	BLOCK_GENERATION_INTERVAL int64       = 5                                          // 5 seconds
 
-	POOL_CREATION_FEE uint64 = 500_000_000
+	POOL_CREATION_FEE uint64 = 0
 )
 
 // WRAP & UNWRAP
@@ -26,7 +25,7 @@ const (
 	GNOT           string = "gnot"
 	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
 
-	UGNOT_MINT_DEPOSIT_TO_WRAP uint64 = 1 // defined in gno.land/r/demo/wugnot
+	UGNOT_MINT_DEPOSIT_TO_WRAP uint64 = 1000 // defined in gno.land/r/demo/wugnot
 )
 
 // CONTRACT PATH & ADDRESS
