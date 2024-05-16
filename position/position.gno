@@ -460,10 +460,12 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		burnPosition(params.tokenId) // just update flag
 	}
 
+	// NO UNWRAP
 	if !params.unwrapResult {
 		return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
 	}
 
+	// UNWRAP
 	var (
 		unwrapAmount uint64
 		unwrapFee    uint64
@@ -538,6 +540,10 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 
+	// check user wugnot amount
+	// need this value to unwrap fee
+	userWugnot := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+
 	amount0, amount1 := pl.Collect(
 		token0,
 		token1,
@@ -569,6 +575,17 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 		"fee1", withoutFee1,
 		"poolPath", position.poolKey,
 	)
+
+	// UNWRAP
+	pToken0, pToken1, _ := poolKeyDivide(position.poolKey)
+	if pToken0 == consts.WUGNOT_PATH || pToken1 == consts.WUGNOT_PATH {
+		userNewWugnot := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+		unwrapAmount := userNewWugnot - userWugnot
+
+		if unwrapAmount > 0 {
+			unwrap(unwrapAmount)
+		}
+	}
 
 	return tokenId, withoutFee0, withoutFee1, position.poolKey
 }
