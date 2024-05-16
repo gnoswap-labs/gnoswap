@@ -14,7 +14,6 @@ import (
 	pl "gno.land/r/demo/pool"
 
 	i256 "gno.land/p/demo/gnoswap/int256"
-	u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
 type RpcPosition struct {
@@ -123,8 +122,8 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 		i256.FromUint256(position.liquidity),
 	)
 
-	unclaimedFee0 := u256.Zero()
-	unclaimedFee1 := u256.Zero()
+	unclaimedFee0 := i256.Zero()
+	unclaimedFee1 := i256.Zero()
 	if !burned {
 		unclaimedFee0, unclaimedFee1 = unclaimedFee(lpTokenId)
 	}
@@ -148,10 +147,12 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 	}
 }
 
-func unclaimedFee(tokenId uint64) (*u256.Uint, *u256.Uint) {
+func unclaimedFee(tokenId uint64) (*i256.Int, *i256.Int) {
 	// ref: https://blog.uniswap.org/uniswap-v3-math-primer-2#calculating-uncollected-fees
 
-	liquidity := positions[tokenId].liquidity
+	_liquidity := positions[tokenId].liquidity // u256
+	liquidity := i256.FromUint256(_liquidity)  // i256
+
 	tickLower := positions[tokenId].tickLower
 	tickUpper := positions[tokenId].tickUpper
 
@@ -160,23 +161,35 @@ func unclaimedFee(tokenId uint64) (*u256.Uint, *u256.Uint) {
 
 	currentTick := pool.PoolGetSlot0Tick()
 
-	feeGrowthGlobal0X128 := pool.PoolGetFeeGrowthGlobal0X128()
-	feeGrowthGlobal1X128 := pool.PoolGetFeeGrowthGlobal1X128()
+	_feeGrowthGlobal0X128 := pool.PoolGetFeeGrowthGlobal0X128()     // u256
+	feeGrowthGlobal0X128 := i256.FromUint256(_feeGrowthGlobal0X128) // i256
 
-	tickUpperFeeGrowthOutside0X128 := pool.PoolGetTickFeeGrowthOutside0X128(tickUpper)
-	tickUpperFeeGrowthOutside1X128 := pool.PoolGetTickFeeGrowthOutside1X128(tickUpper)
+	_feeGrowthGlobal1X128 := pool.PoolGetFeeGrowthGlobal1X128()     // u256
+	feeGrowthGlobal1X128 := i256.FromUint256(_feeGrowthGlobal1X128) // i256
 
-	tickLowerFeeGrowthOutside0X128 := pool.PoolGetTickFeeGrowthOutside0X128(tickLower)
-	tickLowerFeeGrowthOutside1X128 := pool.PoolGetTickFeeGrowthOutside1X128(tickLower)
+	_tickUpperFeeGrowthOutside0X128 := pool.PoolGetTickFeeGrowthOutside0X128(tickUpper) // u256
+	tickUpperFeeGrowthOutside0X128 := i256.FromUint256(_tickUpperFeeGrowthOutside0X128) // i256
 
-	feeGrowthInside0LastX128 := positions[tokenId].feeGrowthInside0LastX128
-	feeGrowthInside1LastX128 := positions[tokenId].feeGrowthInside1LastX128
+	_tickUpperFeeGrowthOutside1X128 := pool.PoolGetTickFeeGrowthOutside1X128(tickUpper) // u256
+	tickUpperFeeGrowthOutside1X128 := i256.FromUint256(_tickUpperFeeGrowthOutside1X128) // i256
 
-	var tickLowerFeeGrowthBelow0, tickLowerFeeGrowthBelow1, tickUpperFeeGrowthAbove0, tickUpperFeeGrowthAbove1 *u256.Uint
+	_tickLowerFeeGrowthOutside0X128 := pool.PoolGetTickFeeGrowthOutside0X128(tickLower) // u256
+	tickLowerFeeGrowthOutside0X128 := i256.FromUint256(_tickLowerFeeGrowthOutside0X128) // i256
+
+	_tickLowerFeeGrowthOutside1X128 := pool.PoolGetTickFeeGrowthOutside1X128(tickLower) // u256
+	tickLowerFeeGrowthOutside1X128 := i256.FromUint256(_tickLowerFeeGrowthOutside1X128) // i256
+
+	_feeGrowthInside0LastX128 := positions[tokenId].feeGrowthInside0LastX128 // u256
+	feeGrowthInside0LastX128 := i256.FromUint256(_feeGrowthInside0LastX128)  // i256
+
+	_feeGrowthInside1LastX128 := positions[tokenId].feeGrowthInside1LastX128 // u256
+	feeGrowthInside1LastX128 := i256.FromUint256(_feeGrowthInside1LastX128)  // i256
+
+	var tickLowerFeeGrowthBelow0, tickLowerFeeGrowthBelow1, tickUpperFeeGrowthAbove0, tickUpperFeeGrowthAbove1 *i256.Int
 
 	if currentTick >= tickUpper {
-		tickUpperFeeGrowthAbove0 = new(u256.Uint).Sub(feeGrowthGlobal0X128, tickUpperFeeGrowthOutside0X128)
-		tickUpperFeeGrowthAbove1 = new(u256.Uint).Sub(feeGrowthGlobal1X128, tickUpperFeeGrowthOutside1X128)
+		tickUpperFeeGrowthAbove0 = subIn256(feeGrowthGlobal0X128, tickUpperFeeGrowthOutside0X128)
+		tickUpperFeeGrowthAbove1 = subIn256(feeGrowthGlobal1X128, tickUpperFeeGrowthOutside1X128)
 	} else {
 		tickUpperFeeGrowthAbove0 = tickUpperFeeGrowthOutside0X128
 		tickUpperFeeGrowthAbove1 = tickUpperFeeGrowthOutside1X128
@@ -186,25 +199,37 @@ func unclaimedFee(tokenId uint64) (*u256.Uint, *u256.Uint) {
 		tickLowerFeeGrowthBelow0 = tickLowerFeeGrowthOutside0X128
 		tickLowerFeeGrowthBelow1 = tickLowerFeeGrowthOutside1X128
 	} else {
-		tickLowerFeeGrowthBelow0 = new(u256.Uint).Sub(feeGrowthGlobal0X128, tickLowerFeeGrowthOutside0X128)
-		tickLowerFeeGrowthBelow1 = new(u256.Uint).Sub(feeGrowthGlobal1X128, tickLowerFeeGrowthOutside1X128)
+		tickLowerFeeGrowthBelow0 = subIn256(feeGrowthGlobal0X128, tickLowerFeeGrowthOutside0X128)
+		tickLowerFeeGrowthBelow1 = subIn256(feeGrowthGlobal1X128, tickLowerFeeGrowthOutside1X128)
 	}
 
-	feeGrowthInside0X128 := new(u256.Uint).Sub(feeGrowthGlobal0X128, tickLowerFeeGrowthBelow0)
-	feeGrowthInside0X128 = new(u256.Uint).Sub(feeGrowthInside0X128, tickUpperFeeGrowthAbove0)
+	feeGrowthInside0X128 := subIn256(feeGrowthGlobal0X128, tickLowerFeeGrowthBelow0)
+	feeGrowthInside0X128 = subIn256(feeGrowthInside0X128, tickUpperFeeGrowthAbove0)
 
-	feeGrowthInside1X128 := new(u256.Uint).Sub(feeGrowthGlobal1X128, tickLowerFeeGrowthBelow1)
-	feeGrowthInside1X128 = new(u256.Uint).Sub(feeGrowthInside1X128, tickUpperFeeGrowthAbove1)
+	feeGrowthInside1X128 := subIn256(feeGrowthGlobal1X128, tickLowerFeeGrowthBelow1)
+	feeGrowthInside1X128 = subIn256(feeGrowthInside1X128, tickUpperFeeGrowthAbove1)
 
-	value01 := new(u256.Uint).Sub(feeGrowthInside0X128, feeGrowthInside0LastX128)
-	value02 := new(u256.Uint).Mul(liquidity, value01)
-	unclaimedFee0 := new(u256.Uint).Div(value02, u256.MustFromDecimal(consts.Q128))
+	value01 := subIn256(feeGrowthInside0X128, feeGrowthInside0LastX128)
+	value02 := i256.Zero().Mul(liquidity, value01)
+	unclaimedFee0 := i256.Zero().Div(value02, i256.MustFromDecimal(consts.Q128))
 
-	value11 := new(u256.Uint).Sub(feeGrowthInside1X128, feeGrowthInside1LastX128)
-	value12 := new(u256.Uint).Mul(liquidity, value11)
-	unclaimedFee1 := new(u256.Uint).Div(value12, u256.MustFromDecimal(consts.Q128))
+	value11 := subIn256(feeGrowthInside1X128, feeGrowthInside1LastX128)
+	value12 := i256.Zero().Mul(liquidity, value11)
+	unclaimedFee1 := i256.Zero().Div(value12, i256.MustFromDecimal(consts.Q128))
 
 	return unclaimedFee0, unclaimedFee1
+}
+
+func subIn256(x, y *i256.Int) *i256.Int {
+	value := i256.Zero()
+	diff := value.Sub(x, y)
+
+	if diff.IsNeg() {
+		q256 := i256.MustFromDecimal(consts.MAX_UINT256)
+		return diff.Add(diff, q256)
+	}
+
+	return diff
 }
 
 func isBurned(tokenId uint64) bool {

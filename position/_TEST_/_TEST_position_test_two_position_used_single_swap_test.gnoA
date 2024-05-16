@@ -144,3 +144,4 @@ func TestCollectFeeAfterSwapPos2(t *testing.T) {
 	shouldEQ(t, fee1, "0")
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }
+
