@@ -72,29 +72,6 @@ func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
 	}
 }
 
-// faucet.
-
-func Faucet() {
-	// FIXME: add limits?
-	// FIXME: add payment in gnot?
-	caller := std.PrevRealm().Addr()
-	err := qux.Mint(caller, 100*1_000_000) // 100M
-	if err != nil {
-		panic(err.Error())
-	}
-}
-
-// administration.
-
-func Mint(address pusers.AddressOrName, amount uint64) {
-	caller := std.PrevRealm().Addr()
-	assertIsAdmin(caller)
-	err := qux.Mint(users.Resolve(address), amount)
-	if err != nil {
-		panic(err.Error())
-	}
-}
-
 func Burn(address pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
