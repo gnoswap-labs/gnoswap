@@ -151,6 +151,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	checkDeadline(params.deadline)
 
 	pool := pl.GetPool(params.token0, params.token1, params.fee)
+
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
 			poolKey:        pl.GetPoolPath(params.token0, params.token1, params.fee),

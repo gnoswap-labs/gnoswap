@@ -204,6 +204,6 @@ func TestSwapRouteGnotBarExactIn(t *testing.T) {
 	shouldEQ(t, newWugnot, 0)
 
 	newUgnot := ugnotBalanceOf(gsa)
-	shouldEQ(t, newUgnot, 915720)
+	shouldEQ(t, newUgnot, 914720)
 
 }

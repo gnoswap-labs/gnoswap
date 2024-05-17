@@ -21,6 +21,7 @@ func wrap(ugnotAmount uint64) {
 	// WRAP IT
 	wugnotAddr := std.DerivePkgAddr(consts.WRAPPED_WUGNOT)
 	banker := std.GetBanker(std.BankerTypeRealmSend)
+
 	banker.SendCoins(consts.POSITION_ADDR, wugnotAddr, std.Coins{{"ugnot", int64(ugnotAmount)}})
 	wugnot.Deposit() // POSITION HAS WUGNOT
 
