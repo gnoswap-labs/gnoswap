@@ -24,9 +24,9 @@ $ git checkout master_gs
 $ make install
 ```
 
-## Unit Tests
+## Tests
 
-To run unit tests, follow these steps:
+To run tests(unit test + integration file test), follow these steps:
 
 ### Set Up Gnoswap Contracts in Gno Core
 
@@ -85,32 +85,3 @@ To run unit tests, follow these steps:
 $ cd $WORKDIR
 $ gno test -root-dir $WORKDIR/gno -v=true $WORKDIR/gno/examples/gno.land/r/demo/{CONTRACT_FOLDER_HERE}
 ```
-
-## Integration Tests
-
-The contracts can be tested using [testscript](https://github.com/gnolang/gno/blob/d54ca62749f79a6992da520e1659ba0dbbdd980b/gno.land/pkg/integration/doc.go)
-
-### Change Admin Address
-
-1. Open `$WORKDIR/gno/examples/gno.land/r/demo/gnoswap/consts/consts.gno`
-2. Change `GNOSWAP_ADMIN`, `FEE_COLLECTOR` to `g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5`
-
-### Testing
-
-```
-$ cd $WORKDIR/gnoswap
-$ cp __local/test/gnoswap.txtar $WORKDIR/gno/gno.land/cmd/gnoland/testdata/
-$ cp -R x/default_token_register $WORKDIR/gno/examples/gno.land/r/demo
-$ cd $WORKDIR/gno/gno.land/cmd/gnoland
-$ go test -v . -run Testdata/gnoswap
-```
-
-## WARNING
-
-> [!WARNING] To deploy `pool` contract, `9781838` gas is required which is close to the [block gas limit](https://github.com/gnolang/gno/blob/831bb6f92e1a2217242169dab1f4fd1f87e5eaa0/tm2/pkg/bft/types/params.go#L26-L27).
->
-> So, when changing the `pool` contract, make sure to test it on actual network before making PR.
-
-> [!WARNING] To deploy `uint256` contract, `9731522` gas is required which is close to the [block gas limit](https://github.com/gnolang/gno/blob/831bb6f92e1a2217242169dab1f4fd1f87e5eaa0/tm2/pkg/bft/types/params.go#L26-L27).
->
-> So, when changing the `uint256` contract, make sure to test it on actual network before making PR.
