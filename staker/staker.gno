@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/demo/gnoswap/common"
+	"gno.land/r/demo/gnoswap/consts"
 
 	"gno.land/r/demo/gnft"
 	"gno.land/r/demo/gns"
-
-	"gno.land/r/demo/gnoswap/consts"
 
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
@@ -65,6 +65,20 @@ func CreateExternalIncentive(
 	}
 
 	rewardAmount := u256.MustFromDecimal(_rewardAmount)
+
+	// native ugnot check
+	if rewardToken == consts.GNOT {
+		sent := std.GetOrigSend()
+		ugnotSent := uint64(sent.AmountOf("ugnot"))
+
+		if ugnotSent != rewardAmount.Uint64() {
+			panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || user(%s) sent ugnot(%d) amount not equal to rewardAmount(%d)", std.GetOrigCaller(), ugnotSent, rewardAmount.Uint64()))
+		}
+
+		wrap(ugnotSent)
+
+		rewardToken = consts.WUGNOT_PATH
+	}
 
 	// must be in seconds format, not milliseconds
 	// must be at least +1 day midnight
@@ -220,9 +234,15 @@ func CollectReward(tokenId uint64) string { // poolPath
 		if externalReward.Gt(u256.Zero()) {
 			// protocol fee
 			toUser := handleRewardFee(incentive.rewardToken, externalReward, false)
+			toUserUint64 := toUser.Uint64()
 
 			// then transfer rest
-			transferByRegisterCall(incentive.rewardToken, deposit.owner, toUser.Uint64())
+			transferByRegisterCall(incentive.rewardToken, deposit.owner, toUserUint64)
+
+			// unwrap if wugnot
+			if incentive.rewardToken == consts.WUGNOT_PATH {
+				unwrap(toUserUint64)
+			}
 
 			// emit external reward tokens
 			std.Emit(
@@ -319,7 +339,7 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
 	}
 
 	// when incentive end time is over
-	// 1. admin can end incentive without refund
+	// 1. admin can end incentive without refund // TODO: SO HOW ARE WE GOING TO HANDLE LEFT REWARD ??
 	// 2. refundee can end incentive with refund
 	switch std.GetOrigCaller() {
 	case consts.GNOSWAP_ADMIN:
@@ -343,14 +363,19 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
 	case incentive.refundee:
 		// refundee can end incentive with refund
 		refund := incentive.rewardAmount
+		refundUint64 := refund.Uint64()
 
 		poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
 
-		if poolLeftExternalRewardAmount < refund.Uint64() {
+		if poolLeftExternalRewardAmount < refundUint64 {
 			panic(ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || pool doesn't have enough token(%s) amount(%d) to refund(%d)", incentive.rewardToken, poolLeftExternalRewardAmount, refund))
 		}
 
-		transferByRegisterCall(incentive.rewardToken, incentive.refundee, refund.Uint64())
+		transferByRegisterCall(incentive.rewardToken, incentive.refundee, refundUint64)
+		// unwrap if wugnot
+		if incentive.rewardToken == consts.WUGNOT_PATH {
+			unwrap(refundUint64)
+		}
 
 		delete(incentives, incentiveId)
 		for i, v := range poolIncentives[targetPoolPath] {
