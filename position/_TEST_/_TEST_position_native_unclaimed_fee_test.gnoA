@@ -38,7 +38,7 @@ func TestMintPosition(t *testing.T) {
 	shouldEQ(t, gsaNativeBalance, 50000005)
 
 	std.TestSetOrigSend(std.Coins{{"ugnot", 50000005}}, nil)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", -50000005)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 50000005)
 
 	gsaNativeBalance = ugnotBalanceOf(gsa)
 	shouldEQ(t, gsaNativeBalance, 0)
