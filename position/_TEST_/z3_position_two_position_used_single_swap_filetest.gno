@@ -163,7 +163,7 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 		return 0
 	}
 
-	return uint64(testBanker.GetCoins(addr)[0].Amount)
+	return uint64(coins.AmountOf("ugnot"))
 }
 
 func init() {
