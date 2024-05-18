@@ -1,4 +1,4 @@
-package position
+package staker
 
 import (
 	"std"
@@ -10,8 +10,8 @@ import (
 )
 
 func wrap(ugnotAmount uint64) {
-	if ugnotAmount == 0 {
-		return
+	if ugnotAmount <= 0 {
+		panic(ufmt.Sprintf("cannot wrap 0 ugnot"))
 	}
 
 	if ugnotAmount < consts.UGNOT_MINT_DEPOSIT_TO_WRAP {
@@ -21,11 +21,10 @@ func wrap(ugnotAmount uint64) {
 	// WRAP IT
 	wugnotAddr := std.DerivePkgAddr(consts.WRAPPED_WUGNOT)
 	banker := std.GetBanker(std.BankerTypeRealmSend)
+	banker.SendCoins(consts.STAKER_ADDR, wugnotAddr, std.Coins{{"ugnot", int64(ugnotAmount)}})
+	wugnot.Deposit() // STAKER HAS WUGNOT
 
-	banker.SendCoins(consts.POSITION_ADDR, wugnotAddr, std.Coins{{"ugnot", int64(ugnotAmount)}})
-	wugnot.Deposit() // POSITION HAS WUGNOT
-
-	// SEND WUGNOT: POSITION -> USER
+	// SEND WUGNOT: STAKER -> USER
 	wugnot.Transfer(a2u(std.GetOrigCaller()), ugnotAmount)
 }
 
@@ -34,13 +33,13 @@ func unwrap(wugnotAmount uint64) {
 		return
 	}
 
-	// SEND WUGNOT: USER -> POSITION
-	wugnot.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.POSITION_ADDR), wugnotAmount)
+	// SEND WUGNOT: USER -> STAKER
+	wugnot.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.STAKER_ADDR), wugnotAmount)
 
 	// UNWRAP IT
 	wugnot.Withdraw(wugnotAmount)
 
-	// SEND GNOT: POSITION -> USER
+	// SEND GNOT: STAKER -> USER
 	banker := std.GetBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(consts.POSITION_ADDR, std.GetOrigCaller(), std.Coins{{"ugnot", int64(wugnotAmount)}})
+	banker.SendCoins(consts.STAKER_ADDR, std.GetOrigCaller(), std.Coins{{"ugnot", int64(wugnotAmount)}})
 }

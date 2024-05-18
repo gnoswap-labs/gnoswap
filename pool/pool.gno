@@ -440,6 +440,7 @@ func Swap(
 		"protocol_fee0", pool.protocolFees.token0.ToString(),
 		"protocol_fee1", pool.protocolFees.token1.ToString(),
 	)
+	// TODO: INCLUDE final value of `step.feeAmount` after all iteration
 
 	pool.slot0.unlocked = true
 	return amount0.ToString(), amount1.ToString()

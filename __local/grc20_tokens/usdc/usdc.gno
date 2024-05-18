@@ -17,7 +17,7 @@ var (
 )
 
 func init() {
-	usdc = grc20.NewAdminToken("Usd Coin", "USC", 6)
+	usdc = grc20.NewAdminToken("Usd Coin", "USDC", 6)
 	usdc.Mint(admin, 100_000_000_000_000)
 }
 

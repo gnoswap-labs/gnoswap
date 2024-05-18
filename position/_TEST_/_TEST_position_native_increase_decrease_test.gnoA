@@ -31,18 +31,16 @@ func TestMintPosition(t *testing.T) {
 	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // WRAP
 
 	// prepare 50000005ugnot (5 for refund test)
-	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.IssueCoin(gsa, "ugnot", 50000005)
+	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 50000005}})
+	shouldEQ(t, ugnotBalanceOf(gsa), 50000005)
+	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), 200000000)
 
-	// simulate transfer & decrase
-	gsaNativeBalance := ugnotBalanceOf(gsa)
-	shouldEQ(t, gsaNativeBalance, 50000005)
-
+	// send & set orig send
+	banker := std.GetBanker(std.BankerTypeRealmIssue)
+	banker.SendCoins(gsa, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 50000005}}, nil)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", -50000005)
 
-	gsaNativeBalance = ugnotBalanceOf(gsa)
-	shouldEQ(t, gsaNativeBalance, 0)
+	shouldEQ(t, ugnotBalanceOf(gsa), 0)
 
 	gsaOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
 	shouldEQ(t, gsaOldWugnotBalance, 0)
@@ -71,11 +69,9 @@ func TestMintPosition(t *testing.T) {
 	shouldEQ(t, position.poolKey, "gno.land/r/demo/gns:gno.land/r/demo/wugnot:500")
 
 	// SPEND ALL WUGNOT
-	newOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, gsaOldWugnotBalance, newOldWugnotBalance)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
 
-	gsaNativeBalance = ugnotBalanceOf(gsa)
-	shouldEQ(t, gsaNativeBalance, 5)
+	shouldEQ(t, ugnotBalanceOf(gsa), 5)
 	// 1. 50000005 ugnot sent
 	// 2. 50000005 ugnot wrapped to wugnot
 	// 3. 50000000 wugnot spent to mint (amount1)
@@ -95,21 +91,17 @@ func TestIncreaseLiquidity(t *testing.T) {
 	oldLiquidity := pool.PoolGetLiquidity()
 
 	// prepare 10000005ugnot (5 for refund test)
-	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.IssueCoin(gsa, "ugnot", 10000005)
+	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 10000005}})
+	shouldEQ(t, ugnotBalanceOf(gsa), 10000010)
+	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), 200000000)
 
-	// simulate transfer & decrase
-	gsaNativeBalance := ugnotBalanceOf(gsa)
-	shouldEQ(t, gsaNativeBalance, 10000010)
-
+	// send & set orig send
+	banker := std.GetBanker(std.BankerTypeRealmIssue)
+	banker.SendCoins(gsa, consts.POSITION_ADDR, std.Coins{{"ugnot", 10000005}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 10000005}}, nil)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", -10000005)
 
-	gsaNativeBalance = ugnotBalanceOf(gsa)
-	shouldEQ(t, gsaNativeBalance, 5)
-
-	gsaOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, gsaOldWugnotBalance, 0)
+	shouldEQ(t, ugnotBalanceOf(gsa), 5)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
 
 	_, _, m0, m1, _ := IncreaseLiquidity( // tokenId, liq, a0, a1, poolPath
 		uint64(1),   // tokenId
@@ -128,11 +120,9 @@ func TestIncreaseLiquidity(t *testing.T) {
 	shouldEQ(t, newLiquidity.Gt(oldLiquidity), true)
 
 	// SPEND ALL WUGNOT
-	newOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, gsaOldWugnotBalance, newOldWugnotBalance)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
 
-	gsaNativeBalance = ugnotBalanceOf(gsa)
-	shouldEQ(t, gsaNativeBalance, 10)
+	shouldEQ(t, ugnotBalanceOf(gsa), 10)
 	// 1. 10000005 ugnot sent
 	// 2. 10000005 ugnot wrapped to wugnot
 	// 3. 10000000 wugnot spent to mint (amount1)

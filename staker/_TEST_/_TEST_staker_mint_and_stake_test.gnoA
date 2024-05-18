@@ -71,24 +71,24 @@ func TestMintAndStakeGRC20Pair(t *testing.T) {
 
 func TestMintAndStakeNative(t *testing.T) {
 	std.TestSetPrevAddr(gsa)
-	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)    // MINT
+	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // MINT
+
+	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // WRAP
+
 	std.TestSkipHeights(2)
 
 	// prepare 100005ugnot (5 for refund test)
-	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.IssueCoin(gsa, "ugnot", 100005)
+	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 100005}})
+	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), 0)
 
-	// simulate transfer & decrase
-	gsaNativeBalance := ugnotBalanceOf(gsa)
-	shouldEQ(t, gsaNativeBalance, 100005)
-
+	// send & set orig send
+	banker := std.GetBanker(std.BankerTypeRealmIssue)
+	banker.SendCoins(gsa, consts.POSITION_ADDR, std.Coins{{"ugnot", 100005}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100005}}, nil)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", -100005)
 
-	gsaNativeBalance = ugnotBalanceOf(gsa)
-	shouldEQ(t, gsaNativeBalance, 0)
+	shouldEQ(t, ugnotBalanceOf(gsa), 0)
 
 	gsaOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
 	shouldEQ(t, gsaOldWugnotBalance, 0)
@@ -112,11 +112,9 @@ func TestMintAndStakeNative(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	// SPEND ALL WUGNOT
-	newOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, gsaOldWugnotBalance, 0)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
 
-	gsaNativeBalance = ugnotBalanceOf(gsa)
-	shouldEQ(t, gsaNativeBalance, 63215)
+	shouldEQ(t, ugnotBalanceOf(gsa), 63215)
 	// 1. 100005 ugnot sent
 	// 2. 100005 ugnot wrapped to wugnot
 	// 3. 36790 wugnot spent to mint (amount1)
