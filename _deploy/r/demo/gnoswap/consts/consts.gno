@@ -31,28 +31,28 @@ const (
 // CONTRACT PATH & ADDRESS
 var (
 	POOL_PATH string      = "gno.land/r/demo/pool"
-	POOL_ADDR std.Address = std.DerivePkgAddr(POOL_PATH)
+	POOL_ADDR std.Address = std.DerivePkgAddr(POOL_PATH) // g15z32w7txv6lw259xzhzzmwtwmcjjc0m6dqzh6f
 
 	POSITION_PATH string      = "gno.land/r/demo/position"
-	POSITION_ADDR std.Address = std.DerivePkgAddr(POSITION_PATH)
+	POSITION_ADDR std.Address = std.DerivePkgAddr(POSITION_PATH) // g10wwa53xgu4397kvzz7akxar9370zjdpwux5th9
 
 	STAKER_PATH string      = "gno.land/r/demo/staker"
-	STAKER_ADDR std.Address = std.DerivePkgAddr(STAKER_PATH)
+	STAKER_ADDR std.Address = std.DerivePkgAddr(STAKER_PATH) // g1puv9dz470prjshjm9qyg25dyfvrgph2kvjph68
 
-	ROUTER_ADDR std.Address = std.DerivePkgAddr(ROUTER_PATH)
 	ROUTER_PATH string      = "gno.land/r/demo/router"
+	ROUTER_ADDR std.Address = std.DerivePkgAddr(ROUTER_PATH) // g1pjtpgjpsn4hjfv2n4mpz8cczdn32jkpsqwxuav
 
 	GOV_PATH string      = "gno.land/r/demo/gov"
-	GOV_ADDR std.Address = std.DerivePkgAddr(GOV_PATH)
+	GOV_ADDR std.Address = std.DerivePkgAddr(GOV_PATH) // g1kmat25auuqf0h5qvd4q7s707r8let5sky4tr76
 
 	GNS_PATH string      = "gno.land/r/demo/gns"
-	GNS_ADDR std.Address = std.DerivePkgAddr(GNS_PATH)
+	GNS_ADDR std.Address = std.DerivePkgAddr(GNS_PATH) // g1zs77uvf8mxzq5k6lu2g8l8fzm6fvf79zkp6cgg
 
 	GNFT_PATH string      = "gno.land/r/demo/gnft"
-	GNFT_ADDR std.Address = std.DerivePkgAddr(GNFT_PATH)
+	GNFT_ADDR std.Address = std.DerivePkgAddr(GNFT_PATH) // g1mpsh77gemyy7ku2hu40c4t4w0ntegp4rg6m4cr
 
 	WUGNOT_PATH string      = "gno.land/r/demo/wugnot"
-	WUGNOT_ADDR std.Address = std.DerivePkgAddr(WUGNOT_PATH)
+	WUGNOT_ADDR std.Address = std.DerivePkgAddr(WUGNOT_PATH) // g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6
 )
 
 // NUMBER
@@ -97,13 +97,3 @@ const (
 const (
 	ZERO_ADDRESS std.Address = ""
 )
-
-// DEBUGs
-// func init() {
-// 	println("pool addr", POOL_ADDR)
-// 	println("position addr", POSITION_ADDR)
-// 	println("staker addr", STAKER_ADDR)
-// 	println("router addr", ROUTER_ADDR)
-// 	println("gov addr", GOV_ADDR)
-// 	println()
-// }
