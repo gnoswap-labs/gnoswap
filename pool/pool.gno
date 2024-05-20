@@ -56,6 +56,7 @@ func Mint(
 	/*
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
 			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
@@ -113,6 +114,7 @@ func Burn(
 	/*
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
 			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
@@ -182,6 +184,7 @@ func Collect(
 	/*
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
 			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
@@ -427,6 +430,7 @@ func Swap(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
@@ -475,6 +479,7 @@ func SetFeeProtocol(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_feeProtocol0", uint8ToStr(feeProtocol0),
@@ -525,6 +530,7 @@ func CollectProtocol(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_poolPath", GetPoolPath(token0Path, token1Path, fee),

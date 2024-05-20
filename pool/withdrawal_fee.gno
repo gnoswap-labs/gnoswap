@@ -61,6 +61,7 @@ func HandleWithdrawalFee(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
@@ -91,6 +92,7 @@ func SetWithdrawalFee(fee uint64) {
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_fee", uint64ToStr(fee),
