@@ -153,6 +153,9 @@ func SwapRoute(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
 		"p_input", inputToken,
 		"p_output", outputToken,
 		"p_swapType", swapType,
