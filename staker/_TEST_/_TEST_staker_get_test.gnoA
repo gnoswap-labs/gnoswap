@@ -25,7 +25,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSkipHeights(2)
 
 	pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
-	// event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500}]}
 
 	std.TestSkipHeights(1)
 }
@@ -49,7 +49,7 @@ func TestPositionMint01(t *testing.T) {
 		max_timeout,  // deadline
 		gsa.String(),
 	)
-	// event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 1} {liquidity 12437} {amount0 368} {amount1 1000}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/position Mint [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 1} {liquidity 12437} {amount0 368} {amount1 1000}]}
 
 	std.TestSkipHeights(1)
 
@@ -83,7 +83,7 @@ func TestPositionMint02(t *testing.T) {
 		max_timeout,  // deadline
 		gsa.String(),
 	)
-	// event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {p_tickLower 9100} {p_tickUpper 12000} {tokenId 2} {liquidity 68925} {amount0 3979} {amount1 5000}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/position Mint [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {p_tickLower 9100} {p_tickUpper 12000} {tokenId 2} {liquidity 68925} {amount0 3979} {amount1 5000}]}
 
 	std.TestSkipHeights(1)
 
@@ -110,7 +110,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 		1234569600,                                    // startTimestamp
 		1234569600+TIMESTAMP_90DAYS,                   // endTimestamp
 	)
-	// event: {GNOSWAP gno.land/r/demo/staker CreateExternalIncentive [{p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {p_rewardToken gno.land/r/demo/obl} {p_rewardAmount 1000000000} {p_startTimestamp 1234569600} {p_endTimestamp 1242345600}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/staker CreateExternalIncentive [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {p_rewardToken gno.land/r/demo/obl} {p_rewardAmount 1000000000} {p_startTimestamp 1234569600} {p_endTimestamp 1242345600}]}
 
 	std.TestSkipHeights(1)
 
@@ -124,7 +124,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 func TestStakeToken01(t *testing.T) {
 	std.TestSetPrevAddr(gsa)
 	StakeToken(1) // GNFT tokenId
-	// event: {GNOSWAP gno.land/r/demo/staker StakeToken [{p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {amount0 368} {amount1 1000}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/staker StakeToken [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {amount0 368} {amount1 1000}]}
 
 	std.TestSkipHeights(1)
 

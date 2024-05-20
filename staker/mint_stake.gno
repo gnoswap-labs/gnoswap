@@ -60,6 +60,9 @@ func MintAndStake(
 	/*
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
 			"p_tickLower", int32ToStr(tickLower),
 			"p_tickUpper", int32ToStr(tickUpper),
 			"poolPath", poolPath,

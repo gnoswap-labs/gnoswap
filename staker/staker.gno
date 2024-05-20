@@ -142,6 +142,9 @@ func CreateExternalIncentive(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
 		"p_poolPath", targetPoolPath,
 		"p_rewardToken", rewardToken,
 		"p_rewardAmount", _rewardAmount,
@@ -198,6 +201,9 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"poolPath", poolPath,
 		"amount0", token0Amount,
@@ -247,6 +253,9 @@ func CollectReward(tokenId uint64) string { // poolPath
 			// emit external reward tokens
 			std.Emit(
 				"GNOSWAP",
+				"m_callType", callType(),
+				"m_origCaller", origCaller(),
+				"m_prevRealm", prevRealm(),
 				"p_tokenId", uint64ToStr(tokenId),
 				"poolPath", poolPath,
 				"rewardToken", incentive.rewardToken,
@@ -273,6 +282,9 @@ func CollectReward(tokenId uint64) string { // poolPath
 		// emit internal reward tokens
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
 			"p_tokenId", uint64ToStr(tokenId),
 			"poolPath", poolPath,
 			"rewardToken", consts.GNS_PATH,
@@ -307,6 +319,9 @@ func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"poolPath", poolPath,
 		"from", GetOrigPkgAddr().String(),
@@ -353,6 +368,9 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
 
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
 			"p_poolPath", targetPoolPath,
 			"p_rewardToken", rewardToken,
 			"p_refundee", _refundee,
@@ -386,6 +404,9 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
 
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
 			"p_poolPath", targetPoolPath,
 			"p_rewardToken", rewardToken,
 			"p_refundee", _refundee,
