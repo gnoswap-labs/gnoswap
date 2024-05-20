@@ -99,7 +99,7 @@ func TestSwapSellGnsBuyGnot(t *testing.T) {
 		consts.MIN_PRICE,
 		gsa.String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/demo/pool Swap [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500} {p_zeroForOne true} {p_amountSpecified 1234567} {p_sqrtPriceLimitX96 4295128740} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 1234567} {amount1 -3332779} {protocol_fee0 0} {protocol_fee1 0}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/pool Swap [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500} {p_zeroForOne true} {p_amountSpecified 1234567} {p_sqrtPriceLimitX96 4295128740} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 1234567} {amount1 -3332779} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 618}]}
 
 	shouldEQ(t, amount0, "1234567")
 	shouldEQ(t, amount1, "-3332779")
@@ -129,7 +129,7 @@ func TestSwapSellGnotBuyGns(t *testing.T) {
 		consts.MAX_PRICE,
 		gsa.String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/demo/pool Swap [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500} {p_zeroForOne false} {p_amountSpecified 123456} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 -45966} {amount1 123456} {protocol_fee0 0} {protocol_fee1 0}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/pool Swap [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500} {p_zeroForOne false} {p_amountSpecified 123456} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 -45966} {amount1 123456} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 62}]}
 
 	shouldEQ(t, amount0, "-45966")
 	shouldEQ(t, amount1, "123456")
