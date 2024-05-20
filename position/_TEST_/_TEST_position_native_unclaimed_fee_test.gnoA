@@ -18,7 +18,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	pl.CreatePool(consts.GNS_PATH, consts.GNOT, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // x2.71814592682522526700950038502924144268035888671875
-	// event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500}]}
 }
 
 func TestMintPosition(t *testing.T) {
@@ -55,7 +55,7 @@ func TestMintPosition(t *testing.T) {
 		max_timeout,
 		gsa.String(),
 	)
-	// event: {GNOSWAP gno.land/r/demo/position Mint [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500} {p_tickLower 8000} {p_tickUpper 12000} {tokenId 1} {liquidity 318704392} {amount0 18394892} {amount1 50000000}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/position Mint [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500} {p_tickLower 8000} {p_tickUpper 12000} {tokenId 1} {liquidity 318704392} {amount0 18394892} {amount1 50000000}]}
 
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, getNextId(), 2)
@@ -99,7 +99,7 @@ func TestSwapSellGnsBuyGnot(t *testing.T) {
 		consts.MIN_PRICE,
 		gsa.String(),
 	)
-	// event: {GNOSWAP gno.land/r/demo/pool Swap [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500} {p_zeroForOne true} {p_amountSpecified 1234567} {p_sqrtPriceLimitX96 4295128740} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 1234567} {amount1 -3332779} {protocol_fee0 0} {protocol_fee1 0}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/pool Swap [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500} {p_zeroForOne true} {p_amountSpecified 1234567} {p_sqrtPriceLimitX96 4295128740} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 1234567} {amount1 -3332779} {protocol_fee0 0} {protocol_fee1 0}]}
 
 	shouldEQ(t, amount0, "1234567")
 	shouldEQ(t, amount1, "-3332779")
@@ -129,7 +129,7 @@ func TestSwapSellGnotBuyGns(t *testing.T) {
 		consts.MAX_PRICE,
 		gsa.String(),
 	)
-	// event: {GNOSWAP gno.land/r/demo/pool Swap [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500} {p_zeroForOne false} {p_amountSpecified 123456} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 -45966} {amount1 123456} {protocol_fee0 0} {protocol_fee1 0}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/pool Swap [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500} {p_zeroForOne false} {p_amountSpecified 123456} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 -45966} {amount1 123456} {protocol_fee0 0} {protocol_fee1 0}]}
 
 	shouldEQ(t, amount0, "-45966")
 	shouldEQ(t, amount1, "123456")
@@ -154,8 +154,8 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 
 	tokenId, fee0, fee1, poolPath := CollectFee(1)
-	// event: {GNOSWAP gno.land/r/demo/pool HandleWithdrawalFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/position} {p_tokenId 1} {p_token0Path gno.land/r/demo/gns} {p_token1Path gno.land/r/demo/wugnot} {fee0Amount 6} {fee1Amount 0}]}
-	// event: {GNOSWAP gno.land/r/demo/position CollectFee [{m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {fee0 611} {fee1 61} {poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/position} {p_tokenId 1} {p_token0Path gno.land/r/demo/gns} {p_token1Path gno.land/r/demo/wugnot} {fee0Amount 6} {fee1Amount 0}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/position CollectFee [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {fee0 611} {fee1 61} {poolPath gno.land/r/demo/gns:gno.land/r/demo/wugnot:500}]}
 
 	newWugnot := wugnot.BalanceOf(a2u(gsa))
 	shouldEQ(t, newWugnot, oldWunogt)
