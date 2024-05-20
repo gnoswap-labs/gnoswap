@@ -9,23 +9,26 @@ import (
 	"gno.land/r/demo/gnoswap/consts"
 
 	"gno.land/r/demo/bar"
+	"gno.land/r/demo/baz"
 	"gno.land/r/demo/foo"
 	"gno.land/r/demo/gns"
+	"gno.land/r/demo/qux"
 
 	pl "gno.land/r/demo/pool"
 )
 
-// 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetPrevAddr(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	pl.CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick = 10000
 	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+
+	pl.CreatePool(bazPath, quxPath, fee500, "130621891405341611593710811006") // tick = 10000
+	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/baz:gno.land/r/demo/qux:500}]}
 }
 
-// 2. Mint LP and Get GNFT
-func TestMint(t *testing.T) {
+func TestMintFooBar(t *testing.T) {
 	std.TestSetPrevAddr(gsa)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -41,7 +44,18 @@ func TestMint(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/demo/position Mint [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_tickLower -6000} {p_tickUpper -4000} {tokenId 2} {liquidity 7785250} {amount0 1000000} {amount1 0}]}
 }
 
-// 3. Swap to make position fee
+func TestMintBazQux(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	// gsa mints => will get tid 1 nft
+	std.TestSetOrigCaller(gsa)
+	Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, gsa.String())
+	// ---       event: {GNOSWAP gno.land/r/demo/position Mint [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/baz:gno.land/r/demo/qux:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 3} {liquidity 12437322} {amount0 367898} {amount1 1000000}]}
+
+}
+
 func TestSwap(t *testing.T) {
 	std.TestSetPrevRealm(consts.ROUTER_PATH)
 	std.TestSetOrigCaller(gsa)
@@ -84,5 +98,59 @@ func TestApiGetPositions(t *testing.T) {
 		panic(err)
 	}
 
-	shouldEQ(t, response.Size(), 2)
+	shouldEQ(t, response.Size(), 3)
+}
+
+func TestApiGetPositionsByPoolPath(t *testing.T) {
+	targetPool := "gno.land/r/demo/baz:gno.land/r/demo/qux:500"
+
+	gpss := ApiGetPositionsByPoolPath(targetPool)
+
+	root, err := json.Unmarshal([]byte(gpss))
+	if err != nil {
+		panic(err)
+	}
+
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, response.Size(), 1)
+}
+
+func TestApiGetPositionsByAddress(t *testing.T) {
+	targetAddress := gsa.String()
+
+	gpss := ApiGetPositionsByAddress(targetAddress)
+
+	root, err := json.Unmarshal([]byte(gpss))
+	if err != nil {
+		panic(err)
+	}
+
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, response.Size(), 3)
+}
+
+func TestApiGetPositionsByAddressNo(t *testing.T) {
+	targetAddress := test1.String()
+
+	gpss := ApiGetPositionsByAddress(targetAddress)
+
+	root, err := json.Unmarshal([]byte(gpss))
+	if err != nil {
+		panic(err)
+	}
+
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, response.Size(), 0)
 }

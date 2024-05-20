@@ -168,6 +168,8 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 	// if caller is owner
 	callerIsOwner := gnft.OwnerOf(tid(tokenId)) == std.GetOrigCaller()
+
+	// stakerIsOwner
 	stakerIsOwner := gnft.OwnerOf(tid(tokenId)) == GetOrigPkgAddr()
 
 	if !(callerIsOwner || stakerIsOwner) {
@@ -193,7 +195,7 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 	if callerIsOwner { // if caller is owner, transfer NFT ownership to staker contract
 		transferDeposit(tokenId, GetOrigPkgAddr())
-	} else if stakerIsOwner { // if staker is owner, approve NFT to caller
+	} else if stakerIsOwner { // if staker is owner, approve NFT to caller (≈one click staking)
 		gnft.Approve(a2u(std.GetOrigCaller()), tid(tokenId))
 	}
 

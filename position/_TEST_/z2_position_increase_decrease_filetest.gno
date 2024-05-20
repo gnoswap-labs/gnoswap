@@ -165,7 +165,6 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 
 	return uint64(coins.AmountOf("ugnot"))
 }
-
 func init() {
 	std.TestSetPrevAddr(gsa)
 
