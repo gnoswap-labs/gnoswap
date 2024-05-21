@@ -2,8 +2,6 @@ package pool
 
 import (
 	u256 "gno.land/p/demo/gnoswap/uint256"
-
-	"gno.land/p/demo/ufmt"
 )
 
 // PoolGetPoolList returns a list of all pool paths
@@ -31,7 +29,7 @@ func (pool *Pool) PoolGetSlot0Tick() int32 {
 func (pool *Pool) PoolGetPositionFeeGrowthInside0LastX128(key string) *u256.Uint {
 	position, exist := pool.positions[key]
 	if !exist {
-		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPositionFeeGrowthInside0LastX128) || position(%s) does not exist", key))
+		return u256.Zero()
 	}
 
 	return position.feeGrowthInside0LastX128
@@ -40,7 +38,7 @@ func (pool *Pool) PoolGetPositionFeeGrowthInside0LastX128(key string) *u256.Uint
 func (pool *Pool) PoolGetPositionFeeGrowthInside1LastX128(key string) *u256.Uint {
 	position, exist := pool.positions[key]
 	if !exist {
-		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetPositionFeeGrowthInside1LastX128() || position(%s) does not exist", key))
+		return u256.Zero()
 	}
 
 	return position.feeGrowthInside1LastX128
@@ -49,7 +47,7 @@ func (pool *Pool) PoolGetPositionFeeGrowthInside1LastX128(key string) *u256.Uint
 func (pool *Pool) PoolGetTickFeeGrowthOutside0X128(x int32) *u256.Uint {
 	tick, exist := pool.ticks[x]
 	if !exist {
-		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickFeeGrowthOutside0X128() || tick(%d) does not exist", x))
+		return u256.Zero()
 	}
 
 	return tick.feeGrowthOutside0X128
@@ -58,7 +56,7 @@ func (pool *Pool) PoolGetTickFeeGrowthOutside0X128(x int32) *u256.Uint {
 func (pool *Pool) PoolGetTickFeeGrowthOutside1X128(x int32) *u256.Uint {
 	tick, exist := pool.ticks[x]
 	if !exist {
-		panic(ufmt.Sprintf("[POOL] _GET_receiver.gno__PoolGetTickFeeGrowthOutside1X128() || tick(%d) does not exist", x))
+		return u256.Zero()
 	}
 
 	return tick.feeGrowthOutside1X128

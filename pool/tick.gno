@@ -24,7 +24,10 @@ func (pool *Pool) tickGetFeeGrowthInside(
 	feeGrowthGlobal1X128 *u256.Uint, // uint256
 ) (*u256.Uint, *u256.Uint) { // uint256
 	lower := pool.ticks[tickLower]
+	lower.init()
+
 	upper := pool.ticks[tickUpper]
+	upper.init()
 
 	var feeGrowthBelow0X128, feeGrowthBelow1X128 *u256.Uint
 	if tickCurrent >= tickLower {
@@ -104,6 +107,8 @@ func (pool *Pool) tickCross(
 	feeGrowthGlobal1X128 *u256.Uint, // uint256
 ) *i256.Int {
 	info := pool.ticks[tick]
+	info.init()
+
 	info.feeGrowthOutside0X128 = new(u256.Uint).Sub(feeGrowthGlobal0X128, info.feeGrowthOutside0X128)
 	info.feeGrowthOutside1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, info.feeGrowthOutside1X128)
 
