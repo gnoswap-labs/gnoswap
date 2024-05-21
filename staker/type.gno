@@ -10,6 +10,7 @@ type Incentive struct {
 	targetPoolPath string
 	rewardToken    string
 	rewardAmount   *u256.Uint
+	rewardLeft     *u256.Uint
 	startTimestamp int64
 	endTimestamp   int64
 	refundee       std.Address
