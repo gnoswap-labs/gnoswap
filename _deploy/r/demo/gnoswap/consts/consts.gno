@@ -9,6 +9,8 @@ var (
 	PROTOCOL_FEE_ROUTER uint64 = 15 // 0.15%
 )
 
+var POOL_CREATION_FEE uint64 = 0 // CHANGABLE VIA GSA
+
 // GNOSWAP SERVICE
 const (
 	GNOSWAP_ADMIN std.Address = "g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq" // GSA
@@ -16,8 +18,6 @@ const (
 
 	INTERNAL_REWARD_ACCOUNT   std.Address = "g1jms5fx2raq4qfkq3502mfh25g54nyl5qeuvz5y" // IRA for GNS
 	BLOCK_GENERATION_INTERVAL int64       = 5                                          // 5 seconds
-
-	POOL_CREATION_FEE uint64 = 0
 )
 
 // WRAP & UNWRAP
