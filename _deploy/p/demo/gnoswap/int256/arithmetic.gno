@@ -155,7 +155,7 @@ func (z *Int) DivUint256(x *Int, y *uint256.Uint) *Int {
 // Quo implements truncated division (like Go); see QuoRem for more details.
 func (z *Int) Quo(x, y *Int) *Int {
 	if y.IsZero() {
-		panic("division by zero")
+		panic("int256_Quo()__division by zero")
 	}
 
 	z.initiateAbs()
@@ -171,7 +171,7 @@ func (z *Int) Quo(x, y *Int) *Int {
 // Rem implements truncated modulus (like Go); see QuoRem for more details.
 func (z *Int) Rem(x, y *Int) *Int {
 	if y.IsZero() {
-		panic("division by zero")
+		panic("int256_Rem()__division by zero")
 	}
 
 	z.initiateAbs()
