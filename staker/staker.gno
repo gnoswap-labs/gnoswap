@@ -142,6 +142,9 @@ func CreateExternalIncentive(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
 		"p_poolPath", targetPoolPath,
 		"p_rewardToken", rewardToken,
 		"p_rewardAmount", _rewardAmount,
@@ -165,6 +168,8 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 	// if caller is owner
 	callerIsOwner := gnft.OwnerOf(tid(tokenId)) == std.GetOrigCaller()
+
+	// stakerIsOwner
 	stakerIsOwner := gnft.OwnerOf(tid(tokenId)) == GetOrigPkgAddr()
 
 	if !(callerIsOwner || stakerIsOwner) {
@@ -190,7 +195,7 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 	if callerIsOwner { // if caller is owner, transfer NFT ownership to staker contract
 		transferDeposit(tokenId, GetOrigPkgAddr())
-	} else if stakerIsOwner { // if staker is owner, approve NFT to caller
+	} else if stakerIsOwner { // if staker is owner, approve NFT to caller (≈one click staking)
 		gnft.Approve(a2u(std.GetOrigCaller()), tid(tokenId))
 	}
 
@@ -198,6 +203,9 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"poolPath", poolPath,
 		"amount0", token0Amount,
@@ -247,6 +255,9 @@ func CollectReward(tokenId uint64) string { // poolPath
 			// emit external reward tokens
 			std.Emit(
 				"GNOSWAP",
+				"m_callType", callType(),
+				"m_origCaller", origCaller(),
+				"m_prevRealm", prevRealm(),
 				"p_tokenId", uint64ToStr(tokenId),
 				"poolPath", poolPath,
 				"rewardToken", incentive.rewardToken,
@@ -273,6 +284,9 @@ func CollectReward(tokenId uint64) string { // poolPath
 		// emit internal reward tokens
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
 			"p_tokenId", uint64ToStr(tokenId),
 			"poolPath", poolPath,
 			"rewardToken", consts.GNS_PATH,
@@ -307,6 +321,9 @@ func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"poolPath", poolPath,
 		"from", GetOrigPkgAddr().String(),
@@ -353,6 +370,9 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
 
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
 			"p_poolPath", targetPoolPath,
 			"p_rewardToken", rewardToken,
 			"p_refundee", _refundee,
@@ -386,6 +406,9 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
 
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
 			"p_poolPath", targetPoolPath,
 			"p_rewardToken", rewardToken,
 			"p_refundee", _refundee,

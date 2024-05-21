@@ -41,6 +41,9 @@ func handleRewardFee(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", "INDIRECT",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
 		"p_tokenPath", tokenPath,
 		"p_internal", boolToStr(internal),
 		"feeAmount", feeAmount.ToString(),
@@ -60,6 +63,9 @@ func SetRewardFee(fee uint64) {
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
 		"p_fee", uint64ToStr(fee),
 	)
 }

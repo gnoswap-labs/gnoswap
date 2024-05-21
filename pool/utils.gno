@@ -48,3 +48,11 @@ func origCaller() string {
 func prevRealm() string {
 	return std.PrevRealm().PkgPath()
 }
+
+func callType() string {
+	if prevRealm() == "" {
+		return "DIRECT"
+	}
+
+	return "INDIRECT"
+}

@@ -96,3 +96,19 @@ func boolToStr(b bool) string {
 
 	return "false"
 }
+
+func origCaller() string {
+	return std.GetOrigCaller().String()
+}
+
+func prevRealm() string {
+	return std.PrevRealm().PkgPath()
+}
+
+func callType() string {
+	if prevRealm() == "" {
+		return "DIRECT"
+	}
+
+	return "INDIRECT"
+}

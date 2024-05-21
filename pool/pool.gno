@@ -56,6 +56,7 @@ func Mint(
 	/*
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
 			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
@@ -113,6 +114,7 @@ func Burn(
 	/*
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
 			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
@@ -182,6 +184,7 @@ func Collect(
 	/*
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
 			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
@@ -244,9 +247,9 @@ func Swap(
 		if !(cond1 && cond2) {
 			panic(ufmt.Sprintf("[POOL] pool.gno__Swap() || sqrtPriceLimitX96(%s) < slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) > consts.MIN_SQRT_RATIO(%s)", sqrtPriceLimitX96.ToString(), slot0Start.sqrtPriceX96.ToString(), sqrtPriceLimitX96.ToString(), consts.MIN_SQRT_RATIO))
 		}
-
 		feeProtocol = slot0Start.feeProtocol % 16
 		feeGrowthGlobalX128 = pool.feeGrowthGlobal0X128
+
 	} else {
 		maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
 
@@ -267,6 +270,7 @@ func Swap(
 	exactInput := amountSpecified.Gt(i256.Zero())
 
 	// continue swapping as long as we haven't used the entire input/output and haven't reached the price limit
+	swapFee := u256.Zero()
 	for !(state.amountSpecifiedRemaining.IsZero()) && !(state.sqrtPriceX96.Eq(sqrtPriceLimitX96)) {
 		var step StepComputations
 		step.sqrtPriceStartX96 = state.sqrtPriceX96
@@ -330,6 +334,7 @@ func Swap(
 			update := u256.MulDiv(step.feeAmount, u256.MustFromDecimal(consts.Q128), state.liquidity)
 			state.feeGrowthGlobalX128 = new(u256.Uint).Add(state.feeGrowthGlobalX128, update)
 		}
+		swapFee = new(u256.Uint).Add(swapFee, step.feeAmount)
 
 		// shift tick if we reached the next price
 		if state.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
@@ -427,6 +432,7 @@ func Swap(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
@@ -439,8 +445,8 @@ func Swap(
 		"amount1", amount1.ToString(),
 		"protocol_fee0", pool.protocolFees.token0.ToString(),
 		"protocol_fee1", pool.protocolFees.token1.ToString(),
+		"swap_fee", swapFee.ToString(),
 	)
-	// TODO: INCLUDE final value of `step.feeAmount` after all iteration
 
 	pool.slot0.unlocked = true
 	return amount0.ToString(), amount1.ToString()
@@ -475,6 +481,7 @@ func SetFeeProtocol(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_feeProtocol0", uint8ToStr(feeProtocol0),
@@ -525,6 +532,7 @@ func CollectProtocol(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_poolPath", GetPoolPath(token0Path, token1Path, fee),

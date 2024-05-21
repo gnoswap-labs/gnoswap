@@ -77,6 +77,7 @@ func CreatePool(
 
 		std.Emit(
 			"GNOSWAP",
+			"m_callType", callType(),
 			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"p_poolPath", poolPath,

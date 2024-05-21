@@ -133,6 +133,7 @@ func Mint(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_poolPath", poolPath,
@@ -174,8 +175,9 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
 	position := Position{
-		nonce:                    u256.Zero(),
-		operator:                 std.PrevRealm().Addr(),
+		nonce: u256.Zero(),
+		// operator:                 std.PrevRealm().Addr(), // staker_MintAndStake() set this to staker, which isn't intended
+		operator:                 std.GetOrigCaller(),
 		poolKey:                  pl.GetPoolPath(params.token0, params.token1, params.fee),
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
@@ -245,6 +247,7 @@ func IncreaseLiquidity(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
@@ -350,6 +353,7 @@ func DecreaseLiquidity(
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
@@ -567,6 +571,7 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 
 	std.Emit(
 		"GNOSWAP",
+		"m_callType", callType(),
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
