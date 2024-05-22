@@ -1,6 +1,10 @@
 // REF: https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/FullMath.sol
 package uint256
 
+import (
+	"gno.land/p/demo/ufmt"
+)
+
 const (
 	MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 )
@@ -26,7 +30,7 @@ func MulDiv(
 	// Handle non-overflow cases, 256 by 256 division
 	if prod1.IsZero() {
 		if !(denominator.Gt(Zero())) { // require(denominator > 0);
-			panic("denominator > 0")
+			panic(ufmt.Sprintf("uint256_MulDiv()__denominator(%s) > 0", denominator.ToString()))
 		}
 
 		result := new(Uint).Div(prod0, denominator)
@@ -36,7 +40,7 @@ func MulDiv(
 	// Make sure the result is less than 2**256.
 	// Also prevents denominator == 0
 	if !(denominator.Gt(prod1)) { // require(denominator > prod1)
-		panic("denominator > prod1")
+		panic(ufmt.Sprintf("uint256_MulDiv()__denominator(%s) > prod1(%s)", denominator.ToString(), prod1.ToString()))
 	}
 
 	///////////////////////////////////////////////
@@ -118,7 +122,7 @@ func MulDivRoundingUp(
 
 	if new(Uint).MulMod(a, b, denominator).Gt(Zero()) {
 		if !(result.Lt(MustFromDecimal(MAX_UINT256))) { // require(result < MAX_UINT256)
-			panic("result < MAX_UINT256")
+			panic(ufmt.Sprintf("uint256_MulDivRoundingUp()__result(%s) < MAX_UINT256", result.ToString()))
 		}
 
 		result = new(Uint).Add(result, One())

@@ -58,7 +58,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) *u25
 	// 3. above `GNS amount`` is supposed to be minted to a separate wallet specified by onbloc
 	// 4. this logic is supposed to be included in GNS token contract, not staker contract
 	blockRewardInit := 10_000
-	// because of `~ 10 days` staking duration, certain block GNS amount won't be distribute 100% as reward)
+	// because of `~ under 90 days` staking duration, certain block GNS amount won't be distribute 100% as reward)
 	blockRewardLeft := blockRewardInit / 10 // gns.BalanceOf(INTERNAL_REWARD_ACCOUNT) - blockRewardInit
 	blockReward := blockRewardInit + blockRewardLeft
 
@@ -70,7 +70,6 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) *u25
 	poolRewardPerBlockX96 := new(u256.Uint).Mul(u256.NewUint(uint64(blockReward)), poolRatioX96)
 
 	// calculate my reward amount based on my liquidity ratio
-	// this reward is 31days or more staking reward
 	liqRatioX96 := getMyLiquidityRatio(poolPath, tokenId)
 	myBlockRewardX96 := new(u256.Uint).Mul(poolRewardPerBlockX96, liqRatioX96)
 	myBlockRewardX96 = new(u256.Uint).Div(myBlockRewardX96, _q96)
@@ -86,13 +85,14 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) *u25
 	stakedDuration := endTime - startTime
 
 	numBlockStaked := uint64(stakedDuration / consts.BLOCK_GENERATION_INTERVAL)
+
 	myWholeRewardX96 := new(u256.Uint).Mul(myBlockRewardX96, u256.NewUint(numBlockStaked))
 
 	rewardRatio := getRewardRatio(stakedDuration)
 	finalRewardBig := new(u256.Uint).Mul(myWholeRewardX96, u256.NewUint(rewardRatio))
 
 	finalReward := new(u256.Uint).Div(finalRewardBig, _q96)
-	finalReward = new(u256.Uint).Div(finalReward, u256.NewUint(200))
+	finalReward = new(u256.Uint).Div(finalReward, u256.NewUint(10000))
 	// divide by (100 ^ 2)
 	// #1: to convert `listTierRatio()` return value to percentage
 	// #2: to convert `getRewardRatio()` return value to percentage
@@ -103,31 +103,14 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) *u25
 func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, incentive Incentive) *u256.Uint {
 	_q96 := u256.MustFromDecimal(consts.Q96)
 
-	// 1 month reward amount
-	incentiveDuration := incentive.endTimestamp - incentive.startTimestamp
-	monthlyReward := u256.Zero()
-
-	switch {
-	case incentiveDuration == TIMESTAMP_90DAYS:
-		monthlyReward = new(u256.Uint).Div(incentive.rewardAmount, u256.NewUint(3))
-	case incentiveDuration > TIMESTAMP_90DAYS:
-		// 1 second reward == total reward amount / reward duration
-		_rewardPerSecond := new(u256.Uint).Div(incentive.rewardAmount, u256.NewUint(uint64(incentiveDuration)))
-		// 30 days ≈ 2592000 seconds
-		monthlyReward = new(u256.Uint).Mul(_rewardPerSecond, u256.NewUint(2592000))
-	default:
-		panic(ufmt.Sprintf("[STAKER] reward_math.gno || incentiveDuration(%d) should be at least 90 days", incentiveDuration))
+	incentiveDurationSecond := uint64(incentive.endTimestamp - incentive.startTimestamp)
+	if incentiveDurationSecond < TIMESTAMP_90DAYS {
+		panic(ufmt.Sprintf("[STAKER] reward_math.gno || incentiveDurationSecond(%d) should be at least 90 days", incentiveDurationSecond))
 	}
 
-	// calculate reward amount per block
-	// 1 month = 2592000 seconds
-	// (for now) block creation time = 5 seconds
-	// 518400(2592000/5) blocks ~= 1 month
-	// 1 month reward / 518400 = reward per block
-	blockRewardInit := new(u256.Uint).Div(monthlyReward, u256.NewUint(518400))
-	// because of `~ 10 days` staking duration, certain block's ExternalRewardAmount won't be distribute 100% as reward)
-	blockRewardLeft := new(u256.Uint).Div(blockRewardInit, u256.NewUint(10)) // obl.BalanceOf(INTERNAL_REWARD_ACCOUNT) - blockRewardInit
-	blockReward := new(u256.Uint).Add(blockRewardInit, blockRewardLeft)
+	incentiveDurationBlock := incentiveDurationSecond / uint64(consts.BLOCK_GENERATION_INTERVAL)
+
+	blockReward := new(u256.Uint).Div(incentive.rewardAmount, u256.NewUint(incentiveDurationBlock))
 	blockRewardX96 := new(u256.Uint).Mul(blockReward, _q96)
 
 	// calculate my reward amount based on my liquidity ratio
@@ -147,6 +130,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, deposit Deposit, ince
 	stakedDuration := endTime - startTime
 
 	numBlockStaked := uint64(stakedDuration / consts.BLOCK_GENERATION_INTERVAL)
+
 	myWholeRewardX96 := new(u256.Uint).Mul(myBlockRewardX96, u256.NewUint(numBlockStaked))
 
 	rewardRatio := getRewardRatio(stakedDuration)

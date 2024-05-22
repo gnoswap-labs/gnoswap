@@ -116,6 +116,7 @@ func CreateExternalIncentive(
 			}
 
 			incentive.rewardAmount = new(u256.Uint).Add(incentive.rewardAmount, rewardAmount)
+			incentive.rewardLeft = new(u256.Uint).Add(incentive.rewardLeft, rewardAmount)
 			incentives[v] = incentive
 
 			return
@@ -133,6 +134,7 @@ func CreateExternalIncentive(
 		targetPoolPath: targetPoolPath,
 		rewardToken:    rewardToken,
 		rewardAmount:   rewardAmount,
+		rewardLeft:     rewardAmount,
 		startTimestamp: startTimestamp,
 		endTimestamp:   endTimestamp,
 		refundee:       std.GetOrigCaller(),
@@ -266,7 +268,8 @@ func CollectReward(tokenId uint64) string { // poolPath
 			)
 		}
 
-		incentive.rewardAmount = new(u256.Uint).Sub(incentive.rewardAmount, externalReward)
+		// update incentive left reward amount
+		incentive.rewardLeft = new(u256.Uint).Sub(incentive.rewardLeft, externalReward)
 		incentives[incentiveId] = incentive
 	}
 
@@ -382,7 +385,7 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
 
 	case incentive.refundee:
 		// refundee can end incentive with refund
-		refund := incentive.rewardAmount
+		refund := incentive.rewardLeft
 		refundUint64 := refund.Uint64()
 
 		poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())

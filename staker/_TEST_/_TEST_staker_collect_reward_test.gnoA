@@ -169,14 +169,14 @@ func TestCollectReward(t *testing.T) {
 	std.TestSetPrevRealm(consts.STAKER_PATH)
 	std.TestSetOrigCaller(gsa)
 	CollectReward(1) // GNFT tokenId
-	// ---       event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 247}]}
-	// ---       event: {GNOSWAP gno.land/r/demo/staker CollectReward [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 24502}]}
+	// 	---       event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 4}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/staker CollectReward [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 490}]}
 
 	std.TestSkipHeights(1)
 
 	gnsNew := gns.BalanceOf(a2u(gsa))
 	std.TestSkipHeights(1)
-	shouldEQ(t, gnsNew, 500000000024502)
+	shouldEQ(t, gnsNew, 500000000000490)
 }
 
 func TestUnstakeToken01(t *testing.T) {
@@ -184,10 +184,10 @@ func TestUnstakeToken01(t *testing.T) {
 	std.TestSkipHeights(400) // spend more time
 
 	UnstakeToken(1) // GNFT tokenId
-	// ---       event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenPath gno.land/r/demo/obl} {p_internal false} {feeAmount 48}]}
-	// ---       event: {GNOSWAP gno.land/r/demo/staker CollectReward [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/obl} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 4851}]}
-	// ---       event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 24873}]}
-	// ---       event: {GNOSWAP gno.land/r/demo/staker CollectReward [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 2462502}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenPath gno.land/r/demo/obl} {p_internal false} {feeAmount 44}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/staker CollectReward [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/obl} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 4411}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 497}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/staker CollectReward [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 49251}]}
 	// ---       event: {GNOSWAP gno.land/r/demo/staker UnstakeToken [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {from g1puv9dz470prjshjm9qyg25dyfvrgph2kvjph68} {to g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 368} {amount1 1000}]}
 
 	std.TestSkipHeights(1)
@@ -195,17 +195,17 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), gsa)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 500000002487004) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000004851)  // external
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 500000000049741) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000004411)  // external
 }
 
 func TestUnstakeToken02(t *testing.T) {
 	std.TestSetPrevAddr(gsa)
 	UnstakeToken(2) // GNFT tokenId
-	// ---       event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenPath gno.land/r/demo/obl} {p_internal false} {feeAmount 330}]}
-	// ---       event: {GNOSWAP gno.land/r/demo/staker CollectReward [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 2} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/obl} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 32757}]}
-	// ---       event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 167475}]}
-	// ---       event: {GNOSWAP gno.land/r/demo/staker CollectReward [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 2} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 16580025}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenPath gno.land/r/demo/obl} {p_internal false} {feeAmount 300}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/staker CollectReward [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 2} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/obl} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 29792}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 3349}]}
+	// ---       event: {GNOSWAP gno.land/r/demo/staker CollectReward [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 2} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 331601}]}
 	// ---       event: {GNOSWAP gno.land/r/demo/staker UnstakeToken [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 2} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {from g1puv9dz470prjshjm9qyg25dyfvrgph2kvjph68} {to g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 3979} {amount1 5000}]}
 
 	std.TestSkipHeights(1)
@@ -213,8 +213,8 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), gsa)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 500000019067029) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000037608)  // external
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 500000000381342) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000034203)  // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {
