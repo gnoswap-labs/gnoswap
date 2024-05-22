@@ -102,10 +102,10 @@ func ApiGetPositions() string {
 	return string(b)
 }
 
-func ApiGetPosition(targetLpTokenId uint64) string {
+func ApiGetPosition(lpTokenId uint64) string {
 	rpcPositions := []RpcPosition{}
 
-	_, ok := positions[targetLpTokenId]
+	_, ok := positions[lpTokenId]
 	if ok {
 		rpcPosition := rpcMakePosition(lpTokenId)
 		rpcPositions = append(rpcPositions, rpcPosition)
