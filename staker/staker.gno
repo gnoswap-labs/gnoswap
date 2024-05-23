@@ -119,6 +119,18 @@ func CreateExternalIncentive(
 			incentive.rewardLeft = new(u256.Uint).Add(incentive.rewardLeft, rewardAmount)
 			incentives[v] = incentive
 
+			std.Emit(
+				"GNOSWAP",
+				"m_callType", callType(),
+				"m_origCaller", origCaller(),
+				"m_prevRealm", prevRealm(),
+				"p_poolPath", targetPoolPath,
+				"p_rewardToken", rewardToken,
+				"p_rewardAmount", incentive.rewardAmount.ToString(),
+				"p_startTimestamp", int64ToStr(startTimestamp),
+				"p_endTimestamp", int64ToStr(endTimestamp),
+			)
+
 			return
 		}
 	}
@@ -308,6 +320,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
 	// Claim All Rewards
 	CollectReward(tokenId)
+	clearUserClaimedRewards(tokenId)
 
 	// unstaked status
 	deposit, exist := deposits[tokenId]

@@ -603,6 +603,17 @@ unstake-token-1-5:
 	@echo
 
 
+## test collect reward
+collect-reward-9:
+	$(info ************ collect reward 9 // gnoswap_admin ************)
+
+	# approve reward token(gns) to STAKER
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/gns -func Approve -args $(ADDR_STAKER) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_tr01 > /dev/null
+
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/staker -func CollectReward -args 9 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
+	@echo
+
+
 ## test unstake token
 unstake-token-6:
 	$(info ************ unstake token 6 // gnoswap_lp02 ************)
