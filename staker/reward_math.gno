@@ -16,19 +16,24 @@ import (
 type userClaimedReward map[std.Address]map[uint64]map[string]*u256.Uint // address -> lpTokenId -> rewardTokenPath -> rewardTokenAmount
 var userClaimedRewards = make(userClaimedReward)
 
+func clearUserClaimedRewards(lpTokenId uint64) {
+	owner := deposits[lpTokenId].owner
+	delete(userClaimedRewards[owner], lpTokenId)
+}
+
 func userClaimedRewardAmount(address std.Address, tokenId uint64, rewardTokenPath string, rewardAmount *u256.Uint, claimeRequest bool) *u256.Uint {
-	_, ok := userClaimedRewards[address] // if user(address) ever claimed reward
+	_, ok := userClaimedRewards[address] // if user(address) ever claimed reward (doesn't matter from which tokenId)
 	if !ok {
 		userClaimedRewards[address] = make(map[uint64]map[string]*u256.Uint)
 	}
 
-	_, ok = userClaimedRewards[address][tokenId] // if user(address) ever claimed reward from tokenId
+	_, ok = userClaimedRewards[address][tokenId] // if user(address) ever claimed reward from certain tokenId
 	if !ok {
 		userClaimedRewards[address][tokenId] = make(map[string]*u256.Uint)
 	}
 
-	claimedReward, ok := userClaimedRewards[address][tokenId][rewardTokenPath] // if user(address) ever claimed rewardTokenPath
-	if !ok {
+	claimedReward, ok := userClaimedRewards[address][tokenId][rewardTokenPath] // if user(address) ever claimed certain rewardTokenPath
+	if !ok {                                                                   // never claimed
 		if claimeRequest { // if user is claiming rewardTokenPath
 			userClaimedRewards[address][tokenId][rewardTokenPath] = rewardAmount // add rewardTokenPath to userClaimedRewards
 			return rewardAmount
