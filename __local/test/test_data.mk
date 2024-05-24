@@ -29,6 +29,9 @@ MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 
 GNOLAND_RPC_URL ?= http://localhost:26657
 CHAINID ?= dev
+
+
+
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
 
 
