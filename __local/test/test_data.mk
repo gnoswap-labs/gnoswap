@@ -51,7 +51,7 @@ deploy-gnoswap-realms: deploy-gov deploy-pool deploy-position deploy-router depl
 
 ### TEST AFTER INIT
 .PHONY: init-test
-init-test:  test-send-ugnot test-grc20-transfer test-pool-create test-position-mint test-increase-decrease test-create-external-incentive test-stake-token test-swap # test-collect-fee test-unstake-token test-burn-position
+init-test: test-send-ugnot test-grc20-transfer test-pool-create test-position-mint test-increase-decrease test-create-external-incentive test-stake-token test-swap # test-collect-fee test-unstake-token test-burn-position
 
 .PHONY: test-grc20-transfer
 test-grc20-transfer: transfer-foo transfer-bar transfer-baz transfer-qux transfer-obl
@@ -87,7 +87,7 @@ test-burn-position: burn-position-1 burn-position-2 burn-position-6 burn-positio
 
 # wait chain to start
 wait:
-	$(info ************ [ETC] wait 5 seconds for chain to start ************)
+	$(info ************ [ETC] wait 5 seconds ************)
 	$(shell sleep 5)
 	@echo
 
@@ -135,6 +135,7 @@ deploy-obl:
 	$(info ************ deploy obl ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/obl -pkgpath gno.land/r/demo/obl -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
 	@echo
+
 
 deploy-test01-07:
 	$(info ************ deploy test01-07 ************)
@@ -225,6 +226,9 @@ deploy-staker:
 register-token:
 	$(info ************ deploy register_gnodev ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/register_gnodev -pkgpath gno.land/r/demo/register_gnodev -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	
+	# run grc20-register now
+	$(shell sleep 20)
 	@echo
 
 
