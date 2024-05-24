@@ -20,7 +20,7 @@ var (
 )
 
 func init() {
-	feeAmountTickSpacing[100] = 2     // 0.01%
+	feeAmountTickSpacing[100] = 1     // 0.01%
 	feeAmountTickSpacing[500] = 10    // 0.05%
 	feeAmountTickSpacing[3000] = 60   // 0.3%
 	feeAmountTickSpacing[10000] = 200 // 1%
