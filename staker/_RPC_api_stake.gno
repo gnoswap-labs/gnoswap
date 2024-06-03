@@ -62,7 +62,7 @@ func ApiGetRewards() string {
 		// get internal gns reward
 		internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
 		if internalGNS.IsZero() {
-			continue
+			// do nothing
 		} else {
 			internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, false)
 
@@ -157,7 +157,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 		// get internal gns reward
 		internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
 		if internalGNS.IsZero() {
-			continue
+			// do nothing
 		} else {
 			internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, false)
 
@@ -246,7 +246,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 		// get internal gns reward
 		internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
 		if internalGNS.IsZero() {
-			continue
+			// do nothing
 		} else {
 			internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, false)
 
