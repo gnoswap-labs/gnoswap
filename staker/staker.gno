@@ -287,6 +287,10 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 	// default `Internal` reward
 	internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
+	if internalGNS.IsZero() {
+		return poolPath
+	}
+
 	internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, true)
 
 	if internalGNS.Gt(u256.Zero()) {

@@ -44,12 +44,21 @@ func userClaimedRewardAmount(address std.Address, tokenId uint64, rewardTokenPat
 
 	// user ever claimed rewardTokenPath
 	var claimableAmount *u256.Uint
+	var flowed bool
+
 	if claimeRequest { // if user is claiming rewardTokenPath
-		claimableAmount = new(u256.Uint).Sub(rewardAmount, claimedReward)
+		claimableAmount, flowed = new(u256.Uint).SubOverflow(rewardAmount, claimedReward)
+		if flowed {
+			claimableAmount = u256.Zero()
+		}
+
 		userClaimedRewards[address][tokenId][rewardTokenPath] = new(u256.Uint).Add(userClaimedRewards[address][tokenId][rewardTokenPath], claimableAmount)
 		return claimableAmount
 	} else { // if user is not claiming rewardTokenPath
-		claimableAmount = new(u256.Uint).Sub(rewardAmount, claimedReward)
+		claimableAmount, flowed = new(u256.Uint).SubOverflow(rewardAmount, claimedReward)
+		if flowed {
+			claimableAmount = u256.Zero()
+		}
 		return claimableAmount
 	}
 }
@@ -69,7 +78,10 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64, deposit Deposit) *u25
 
 	// get pool tier and ratio
 	poolPath := pos.PositionGetPositionPoolKey(tokenId)
-	_, poolRatioX96 := getPoolTierAndRatio(poolPath)
+	_tier, poolRatioX96 := getPoolTierAndRatio(poolPath)
+	if _tier == uint64(0) { // pool doesn't have internal reward
+		return u256.Zero()
+	}
 
 	// get pool reward per block
 	poolRewardPerBlockX96 := new(u256.Uint).Mul(u256.NewUint(uint64(blockReward)), poolRatioX96)
