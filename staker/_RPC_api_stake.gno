@@ -61,14 +61,19 @@ func ApiGetRewards() string {
 
 		// get internal gns reward
 		internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-		internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, false)
-		if internalGNS.Gt(u256.Zero()) {
-			rewards = append(rewards, Reward{
-				IncentiveType:     "INTERNAL",
-				TargetPoolPath:    deposit.targetPoolPath,
-				RewardTokenPath:   consts.GNS_PATH,
-				RewardTokenAmount: internalGNS.ToString(),
-			})
+		if internalGNS.IsZero() {
+			continue
+		} else {
+			internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, false)
+
+			if internalGNS.Gt(u256.Zero()) {
+				rewards = append(rewards, Reward{
+					IncentiveType:     "INTERNAL",
+					TargetPoolPath:    deposit.targetPoolPath,
+					RewardTokenPath:   consts.GNS_PATH,
+					RewardTokenAmount: internalGNS.ToString(),
+				})
+			}
 		}
 
 		// find all external reward list for poolPath which lpTokenId is staked
@@ -151,15 +156,19 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 
 		// get internal gns reward
 		internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-		internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, false)
+		if internalGNS.IsZero() {
+			continue
+		} else {
+			internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, false)
 
-		if internalGNS.Gt(u256.Zero()) {
-			rewards = append(rewards, Reward{
-				IncentiveType:     "INTERNAL",
-				TargetPoolPath:    deposit.targetPoolPath,
-				RewardTokenPath:   consts.GNS_PATH,
-				RewardTokenAmount: internalGNS.ToString(),
-			})
+			if internalGNS.Gt(u256.Zero()) {
+				rewards = append(rewards, Reward{
+					IncentiveType:     "INTERNAL",
+					TargetPoolPath:    deposit.targetPoolPath,
+					RewardTokenPath:   consts.GNS_PATH,
+					RewardTokenAmount: internalGNS.ToString(),
+				})
+			}
 		}
 
 		// find all external reward list for poolPath which lpTokenId is staked
@@ -236,15 +245,19 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 
 		// get internal gns reward
 		internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-		internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, false)
+		if internalGNS.IsZero() {
+			continue
+		} else {
+			internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, false)
 
-		if internalGNS.Gt(u256.Zero()) {
-			rewards = append(rewards, Reward{
-				IncentiveType:     "INTERNAL",
-				TargetPoolPath:    deposit.targetPoolPath,
-				RewardTokenPath:   consts.GNS_PATH,
-				RewardTokenAmount: internalGNS.ToString(),
-			})
+			if internalGNS.Gt(u256.Zero()) {
+				rewards = append(rewards, Reward{
+					IncentiveType:     "INTERNAL",
+					TargetPoolPath:    deposit.targetPoolPath,
+					RewardTokenPath:   consts.GNS_PATH,
+					RewardTokenAmount: internalGNS.ToString(),
+				})
+			}
 		}
 
 		// find all external reward list for poolPath which lpTokenId is staked
