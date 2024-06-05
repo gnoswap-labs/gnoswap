@@ -9,11 +9,11 @@ var (
 	PROTOCOL_FEE_ROUTER uint64 = 15 // 0.15%
 )
 
-var POOL_CREATION_FEE uint64 = 100000000 // CHANGABLE VIA GSA, INITIAL 100_GNS (10^6)
+var POOL_CREATION_FEE uint64 = 0 // CHANGABLE VIA GSA, INITIAL 100_GNS (10^6)
 
 // GNOSWAP SERVICE
 const (
-	GNOSWAP_ADMIN std.Address = "g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq" // GSA
+	GNOSWAP_ADMIN std.Address = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5" // GSA
 	FEE_COLLECTOR std.Address = "g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906" // FCL
 
 	INTERNAL_REWARD_ACCOUNT   std.Address = "g1jms5fx2raq4qfkq3502mfh25g54nyl5qeuvz5y" // IRA for GNS
