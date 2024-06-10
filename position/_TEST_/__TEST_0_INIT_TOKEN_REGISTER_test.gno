@@ -17,6 +17,8 @@ import (
 
 	"gno.land/r/demo/gns"
 
+	"gno.land/r/demo/usdc"
+
 	"gno.land/r/demo/gnoswap/consts"
 
 	pusers "gno.land/p/demo/users"
@@ -132,6 +134,24 @@ func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return gns.Approve
 }
 
+type USDCToken struct{}
+
+func (USDCToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return usdc.Transfer
+}
+
+func (USDCToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return usdc.TransferFrom
+}
+
+func (USDCToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return usdc.BalanceOf
+}
+
+func (USDCToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return usdc.Approve
+}
+
 func init() {
 	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
 
@@ -142,4 +162,5 @@ func init() {
 	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/usdc", USDCToken{})
 }
