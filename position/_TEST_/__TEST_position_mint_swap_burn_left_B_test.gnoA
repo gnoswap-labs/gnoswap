@@ -1,0 +1,370 @@
+package position
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/demo/gnoswap/consts"
+
+	pl "gno.land/r/demo/pool"
+
+	"gno.land/r/demo/obl"
+	"gno.land/r/demo/qux"
+
+	"gno.land/r/demo/gns"
+	// u256 "gno.land/p/demo/gnoswap/uint256"
+)
+
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	pl.CreatePool(oblPath, quxPath, fee3000, "177025116846713535491812780880") // tick = 16080, x.5
+}
+
+func TestPoolBalanceInit(t *testing.T) {
+	poolObl := obl.BalanceOf(a2u(consts.POOL_ADDR))
+	poolQux := qux.BalanceOf(a2u(consts.POOL_ADDR))
+
+	shouldEQ(t, poolObl, 0)
+	shouldEQ(t, poolQux, 0)
+}
+
+func TestMintPosition01InRange(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		oblPath,
+		quxPath,
+		fee3000,
+		15600,
+		16380,
+		"1000000000",
+		"8000000000",
+		"0",
+		"0",
+		max_timeout,
+		gsa.String(),
+	)
+
+	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, getNextId(), 2)
+	shouldEQ(t, amount0, "1000000000")
+	shouldEQ(t, amount1, "7952116209")
+}
+
+func TestSwap1(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		oblPath,
+		quxPath,
+		fee3000,
+		gsa.String(),
+		true,
+		"10000000",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+
+	shouldEQ(t, amount0, "10000000")
+	shouldEQ(t, amount1, "-49766983")
+}
+
+func TestSwap2(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		oblPath,
+		quxPath,
+		fee3000,
+		gsa.String(),
+		true,
+		"1464494323",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+
+	shouldEQ(t, amount0, "1464494323")
+	shouldEQ(t, amount1, "-7132254061")
+}
+
+func TestSwap3(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		oblPath,
+		quxPath,
+		fee3000,
+		gsa.String(),
+		false,
+		"140156564",
+		consts.MAX_PRICE,
+		gsa.String(),
+	)
+
+	shouldEQ(t, amount0, "-29215781")
+	shouldEQ(t, amount1, "140156564")
+}
+
+func TestSwap4(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		oblPath,
+		quxPath,
+		fee3000,
+		gsa.String(),
+		false,
+		"74359454",
+		consts.MAX_PRICE,
+		gsa.String(),
+	)
+
+	shouldEQ(t, amount0, "-15490209")
+	shouldEQ(t, amount1, "74359454")
+}
+
+func TestSwap5(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		oblPath,
+		quxPath,
+		fee3000,
+		gsa.String(),
+		true,
+		"7000000",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+
+	shouldEQ(t, amount0, "7000000")
+	shouldEQ(t, amount1, "-33405741")
+}
+
+func TestSwap6(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		oblPath,
+		quxPath,
+		fee3000,
+		gsa.String(),
+		true,
+		"53752182",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+
+	shouldEQ(t, amount0, "53752182")
+	shouldEQ(t, amount1, "-256292481")
+}
+
+func TestSwap7(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		oblPath,
+		quxPath,
+		fee3000,
+		gsa.String(),
+		true,
+		"16323491",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+
+	shouldEQ(t, amount0, "16323491")
+	shouldEQ(t, amount1, "-77751852")
+}
+
+func TestSwap8(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		oblPath,
+		quxPath,
+		fee3000,
+		gsa.String(),
+		true,
+		"16321336",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+
+	shouldEQ(t, amount0, "16321336")
+	shouldEQ(t, amount1, "-77704749")
+}
+
+func TestSwap9(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		oblPath,
+		quxPath,
+		fee3000,
+		gsa.String(),
+		true,
+		"32636212",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+
+	shouldEQ(t, amount0, "32636212")
+	shouldEQ(t, amount1, "-155268391")
+}
+
+func TestSwap10(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		oblPath,
+		quxPath,
+		fee3000,
+		gsa.String(),
+		false,
+		"3122248",
+		consts.MAX_PRICE,
+		gsa.String(),
+	)
+
+	shouldEQ(t, amount0, "-652643")
+	shouldEQ(t, amount1, "3122248")
+}
+
+func TestSwap11(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		oblPath,
+		quxPath,
+		fee3000,
+		gsa.String(),
+		true,
+		"59515911",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+
+	shouldEQ(t, amount0, "59515911")
+	shouldEQ(t, amount1, "-282777039")
+}
+
+func TestSwap12(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		oblPath,
+		quxPath,
+		fee3000,
+		gsa.String(),
+		true,
+		"21889437",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+
+	shouldEQ(t, amount0, "21889437")
+	shouldEQ(t, amount1, "-103880257")
+}
+
+func TestUnclaimedFee(t *testing.T) {
+	amount0, amount1 := unclaimedFee(1)
+
+	shouldEQ(t, amount0.ToString(), "5045801")
+	shouldEQ(t, amount1.ToString(), "652915")
+}
+
+func TestCollectFee(t *testing.T) {
+	tokenId, fee0, fee1, poolPath := CollectFee(1)
+
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, fee0, "4995343")
+	shouldEQ(t, fee1, "646386")
+
+}
+
+func TestDecreaseAllPos01(t *testing.T) {
+	std.TestSetPrevAddr(gsa)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
+		uint64(1),   // tokenId
+		100,         // liquidityRatio
+		"0",         // amount0Min
+		"0",         // amount1Min
+		max_timeout, // deadline
+		true,        // unwrapResult
+	)
+
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, liquidity, "150085499662")
+	shouldEQ(t, fee0, "0")
+	shouldEQ(t, fee1, "0")
+	shouldEQ(t, amount0, "2631528454")
+	shouldEQ(t, amount1, "0")
+	shouldEQ(t, poolPath, "gno.land/r/demo/obl:gno.land/r/demo/qux:3000")
+
+	printPoolBalance()
+}
+
+func printPoolBalance() {
+	poolQux := qux.BalanceOf(a2u(consts.POOL_ADDR))
+	poolObl := obl.BalanceOf(a2u(consts.POOL_ADDR))
+
+	println("pool token0 qux:", poolQux)
+	println("pool token1 obl:", poolObl)
+	println()
+}
