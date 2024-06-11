@@ -9,6 +9,7 @@ import (
 
 	pl "gno.land/r/demo/pool"
 
+	u256 "gno.land/p/demo/gnoswap/uint256"
 	"gno.land/r/demo/gnoswap/consts"
 )
 
@@ -28,8 +29,9 @@ type ApiExternalIncentive struct {
 }
 
 type ApiInternalIncentive struct {
-	PoolPath string `json:"poolPath"`
-	Tier     uint64 `json:"tier"`
+	PoolPath       string `json:"poolPath"`
+	Tier           uint64 `json:"tier"`
+	RewardPerBlock string `json:"rewardPerBlock"`
 }
 
 func ApiGetRewardTokens() string {
@@ -317,8 +319,9 @@ func ApiGetInternalIncentives() string {
 
 	for poolPath, tier := range poolTiers {
 		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
-			PoolPath: poolPath,
-			Tier:     tier,
+			PoolPath:       poolPath,
+			Tier:           tier,
+			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
 		})
 	}
 
@@ -332,9 +335,10 @@ func ApiGetInternalIncentives() string {
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, incentive := range apiInternalIncentives {
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath":    json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken": json.StringNode("rewardToken", consts.GNS_PATH),
-			"tier":        json.NumberNode("tier", float64(incentive.Tier)),
+			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
+			"rewardToken":    json.StringNode("rewardToken", consts.GNS_PATH),
+			"tier":           json.NumberNode("tier", float64(incentive.Tier)),
+			"rewardPerBlock": json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
 		})
 		responses.AppendArray(_incentiveNode)
 	}
@@ -362,8 +366,9 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 		}
 
 		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
-			PoolPath: poolPath,
-			Tier:     tier,
+			PoolPath:       poolPath,
+			Tier:           tier,
+			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
 		})
 	}
 
@@ -377,9 +382,10 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, incentive := range apiInternalIncentives {
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath":    json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken": json.StringNode("rewardToken", consts.GNS_PATH),
-			"tier":        json.NumberNode("tier", float64(incentive.Tier)),
+			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
+			"rewardToken":    json.StringNode("rewardToken", consts.GNS_PATH),
+			"tier":           json.NumberNode("tier", float64(incentive.Tier)),
+			"rewardPerBlock": json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
 		})
 		responses.AppendArray(_incentiveNode)
 	}
@@ -407,8 +413,9 @@ func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 		}
 
 		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
-			PoolPath: poolPath,
-			Tier:     tier,
+			PoolPath:       poolPath,
+			Tier:           tier,
+			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
 		})
 	}
 
@@ -422,9 +429,10 @@ func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, incentive := range apiInternalIncentives {
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath":    json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken": json.StringNode("rewardToken", consts.GNS_PATH),
-			"tier":        json.NumberNode("tier", float64(incentive.Tier)),
+			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
+			"rewardToken":    json.StringNode("rewardToken", consts.GNS_PATH),
+			"tier":           json.NumberNode("tier", float64(incentive.Tier)),
+			"rewardPerBlock": json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
 		})
 		responses.AppendArray(_incentiveNode)
 	}
@@ -449,4 +457,26 @@ func makeRewardTokensArray(rewardsTokenList []string) []*json.Node {
 		rewardsTokenArray[i] = json.StringNode("", rewardToken)
 	}
 	return rewardsTokenArray
+}
+
+func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
+	tier, ok := poolTiers[poolPath]
+	if !ok {
+		return "0"
+	}
+
+	blockRewardInit := 10_000
+	blockRewardLeft := blockRewardInit / 10
+	blockReward := blockRewardInit + blockRewardLeft
+
+	_tier, poolRatioX96 := getPoolTierAndRatio(poolPath)
+	if _tier == uint64(0) { // pool doesn't have internal reward
+		return "0"
+	}
+
+	_q96 := u256.MustFromDecimal(consts.Q96)
+	poolRewardPerBlockX96 := new(u256.Uint).Mul(u256.NewUint(uint64(blockReward)), poolRatioX96)
+	poolRewardPerBlock := new(u256.Uint).Div(poolRewardPerBlockX96, _q96)
+
+	return poolRewardPerBlock.ToString()
 }
