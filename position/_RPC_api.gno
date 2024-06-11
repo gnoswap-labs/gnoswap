@@ -35,6 +35,12 @@ type RpcPosition struct {
 	FeeUnclaimed1 string `json:"fee1Unclaimed"`
 }
 
+type RpcUnclaimedFee struct {
+	LpTokenId uint64 `json:"lpTokenId"`
+	Fee0      string `json:"fee0"`
+	Fee1      string `json:"fee1"`
+}
+
 type ResponseQueryBase struct {
 	Height    int64 `json:"height"`
 	Timestamp int64 `json:"timestamp"`
@@ -280,6 +286,87 @@ func ApiGetPositionsByAddress(address string) string {
 	b, err := json.Marshal(node)
 	if err != nil {
 		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositions() || error marshalling json: %s", err.Error()))
+	}
+
+	return string(b)
+}
+
+func ApiGetPositionsUnclaimedFee() string {
+	rpcUnclaimedFee := []RpcUnclaimedFee{}
+	for lpTokenId, _ := range positions {
+		unclaimedFee0, unclaimedFee1 := unclaimedFee(lpTokenId)
+		rpcUnclaimedFee = append(rpcUnclaimedFee, RpcUnclaimedFee{
+			LpTokenId: lpTokenId,
+			Fee0:      unclaimedFee0.ToString(),
+			Fee1:      unclaimedFee1.ToString(),
+		})
+	}
+
+	// STAT NODE
+	_stat := json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
+
+	// RESPONSE (ARRAY) NODE
+	responses := json.ArrayNode("", []*json.Node{})
+	for _, unclaimedFee := range rpcUnclaimedFee {
+		_unclaimedFeeNode := json.ObjectNode("", map[string]*json.Node{
+			"lpTokenId": json.NumberNode("lpTokenId", float64(unclaimedFee.LpTokenId)),
+			"fee0":      json.StringNode("fee0", unclaimedFee.Fee0),
+			"fee1":      json.StringNode("fee1", unclaimedFee.Fee1),
+		})
+		responses.AppendArray(_unclaimedFeeNode)
+	}
+
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     _stat,
+		"response": responses,
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositionsUnClaimedFee() || error marshalling json: %s", err.Error()))
+	}
+
+	return string(b)
+}
+
+func ApiGetPositionUnclaimedFeeByLpTokenId(lpTokenId uint64) string {
+	rpcUnclaimedFee := []RpcUnclaimedFee{}
+
+	unclaimedFee0, unclaimedFee1 := unclaimedFee(lpTokenId)
+	rpcUnclaimedFee = append(rpcUnclaimedFee, RpcUnclaimedFee{
+		LpTokenId: lpTokenId,
+		Fee0:      unclaimedFee0.ToString(),
+		Fee1:      unclaimedFee1.ToString(),
+	})
+
+	// STAT NODE
+	_stat := json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
+
+	// RESPONSE (ARRAY) NODE
+	responses := json.ArrayNode("", []*json.Node{})
+	for _, unclaimedFee := range rpcUnclaimedFee {
+		_unclaimedFeeNode := json.ObjectNode("", map[string]*json.Node{
+			"lpTokenId": json.NumberNode("lpTokenId", float64(unclaimedFee.LpTokenId)),
+			"fee0":      json.StringNode("fee0", unclaimedFee.Fee0),
+			"fee1":      json.StringNode("fee1", unclaimedFee.Fee1),
+		})
+		responses.AppendArray(_unclaimedFeeNode)
+	}
+
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     _stat,
+		"response": responses,
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositionUnclaimedFeeByLpTokenId() || error marshalling json: %s", err.Error()))
 	}
 
 	return string(b)

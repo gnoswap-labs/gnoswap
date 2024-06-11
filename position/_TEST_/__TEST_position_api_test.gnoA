@@ -53,7 +53,28 @@ func TestMintBazQux(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, gsa.String())
 	// ---       event: {GNOSWAP gno.land/r/demo/position Mint [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/baz:gno.land/r/demo/qux:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 3} {liquidity 12437322} {amount0 367898} {amount1 1000000}]}
+}
 
+func TestApiGetPositionsUnclaimedFee(t *testing.T) {
+	gpuf := ApiGetPositionsUnclaimedFee()
+
+	root, err := json.Unmarshal([]byte(gpuf))
+	if err != nil {
+		panic(err)
+	}
+
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, response.Size(), 3)
+
+	shouldEQ(
+		t,
+		response.String(),
+		`[{"lpTokenId":1,"fee0":"0","fee1":"0"},{"lpTokenId":2,"fee0":"0","fee1":"0"},{"lpTokenId":3,"fee0":"0","fee1":"0"}]`,
+	)
 }
 
 func TestSwap(t *testing.T) {
@@ -70,6 +91,50 @@ func TestSwap(t *testing.T) {
 		gsa.String(),
 	)
 	// ---       event: {GNOSWAP gno.land/r/demo/pool Swap [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_zeroForOne true} {p_amountSpecified 123456} {p_sqrtPriceLimitX96 4295128740} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 123456} {amount1 -45124} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 62}]}
+}
+
+func TestApiGetPositionsUnclaimedFee2(t *testing.T) {
+	gpuf := ApiGetPositionsUnclaimedFee()
+
+	root, err := json.Unmarshal([]byte(gpuf))
+	if err != nil {
+		panic(err)
+	}
+
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, response.Size(), 3)
+
+	shouldEQ(
+		t,
+		response.String(),
+		`[{"lpTokenId":1,"fee0":"61","fee1":"0"},{"lpTokenId":2,"fee0":"0","fee1":"0"},{"lpTokenId":3,"fee0":"0","fee1":"0"}]`,
+	)
+}
+
+func TestApiGetPositionUnclaimedFeeByLpTokenId(t *testing.T) {
+	gpuf := ApiGetPositionUnclaimedFeeByLpTokenId(uint64(1))
+
+	root, err := json.Unmarshal([]byte(gpuf))
+	if err != nil {
+		panic(err)
+	}
+
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, response.Size(), 1)
+
+	shouldEQ(
+		t,
+		response.String(),
+		`[{"lpTokenId":1,"fee0":"61","fee1":"0"}]`,
+	)
 }
 
 func TestCollectFeeAfterSwap(t *testing.T) {
