@@ -460,7 +460,7 @@ func makeRewardTokensArray(rewardsTokenList []string) []*json.Node {
 }
 
 func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
-	tier, ok := poolTiers[poolPath]
+	_, ok := poolTiers[poolPath]
 	if !ok {
 		return "0"
 	}
