@@ -551,9 +551,6 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 		consts.MAX_UINT64,
 	)
 
-	amount0Uint := u256.MustFromDecimal(amount0)
-	amount1Uint := u256.MustFromDecimal(amount1)
-
 	positions[tokenId] = position
 
 	// handle withdrawal fee
