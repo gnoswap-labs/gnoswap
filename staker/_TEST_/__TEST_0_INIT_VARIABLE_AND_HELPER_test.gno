@@ -9,6 +9,7 @@ import (
 
 var (
 	gsa std.Address = consts.GNOSWAP_ADMIN
+	ira std.Address = consts.INTERNAL_REWARD_ACCOUNT
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -24,6 +25,16 @@ var (
 	fee3000 uint32 = 3000
 
 	max_timeout int64 = 9999999999
+)
+
+// Realms to mock frames
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	iraRealm = std.NewUserRealm(ira)
+	
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
 )
 
 /* HELPER */

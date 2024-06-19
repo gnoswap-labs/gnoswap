@@ -14,13 +14,13 @@ $ export WORKDIR=~/work
 
 ### Build Gno.land for Gnoswap
 
-Clone the `gno` repository from `gnoswap-labs`. And switch to the `master_20240401` branch. You will be able to clone the repository and build it after running the following commands:
+Clone the `gno` repository from `gnoswap-labs`. And switch to the `master_240619` branch. You will be able to clone the repository and build it after running the following commands:
 
 ```
 $ cd $WORKDIR
 $ git clone https://github.com/gnoswap-labs/gno.git gno
 $ cd gno
-$ git checkout master_gs
+$ git checkout master_240619
 $ make install
 ```
 

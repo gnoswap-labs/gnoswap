@@ -40,6 +40,12 @@ var (
 	t *testing.T
 )
 
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+)
+
 type FooToken struct{}
 
 func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
@@ -165,10 +171,12 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func init() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	// TOKEN REGISTER
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
@@ -191,7 +199,7 @@ func main() {
 }
 
 func createBarFooPool() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
@@ -203,12 +211,12 @@ func createBarFooPool() {
 	std.TestSkipHeights(1)
 }
 func mint() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Mint(
 		fooPath,
@@ -287,7 +295,7 @@ func mint() {
 	}
 }
 func burn() {
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 
 	b11, b12 := pl.Burn(barPath, fooPath, fee500, 9000, 11000, "1000")
@@ -327,7 +335,7 @@ func burn() {
 	}
 }
 func collect() {
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 
 	// withdraw all token before test `Collect`
@@ -389,11 +397,11 @@ func swap() {
 		panic("expected 0")
 	}
 
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 	pl.Mint(barPath, fooPath, fee500, consts.POSITION_ADDR.String(), 9000, 11000, "2000000")
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	{
 		amount0, amount1 := pl.Swap(
@@ -449,7 +457,7 @@ func collectProtocol() {
 	std.TestSetOrigCaller(gsa)
 	pl.SetFeeProtocol(6, 8)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	pl.Swap(
 		barPath,
@@ -462,7 +470,7 @@ func collectProtocol() {
 		std.GetOrigCaller().String(),
 	)
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	protocolFee0, protocolFee1 := pl.CollectProtocol(barPath, fooPath, fee500, gsa.String(), "100000", "100000")
 	if protocolFee0 != "8" {
 		panic(protocolFee0)

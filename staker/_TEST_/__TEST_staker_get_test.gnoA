@@ -19,7 +19,7 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(2)
@@ -31,7 +31,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestPositionMint01(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
@@ -59,13 +59,13 @@ func TestPositionMint01(t *testing.T) {
 	shouldEQ(t, amount1, "1000")
 
 	// approve nft to staker
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
 	std.TestSkipHeights(1)
 }
 
 func TestPositionMint02(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
@@ -93,13 +93,13 @@ func TestPositionMint02(t *testing.T) {
 	shouldEQ(t, amount1, "5000")
 
 	// approve nft to staker
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
 	std.TestSkipHeights(1)
 }
 
 func TestCreateExternalIncentive(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.STAKER_ADDR), uint64(10_000_000_000))
 	std.TestSkipHeights(1)
 
@@ -122,7 +122,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 }
 
 func TestStakeToken01(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	StakeToken(1) // GNFT tokenId
 	// ---       event: {GNOSWAP gno.land/r/demo/staker StakeToken [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {amount0 368} {amount1 1000}]}
 
@@ -133,7 +133,7 @@ func TestStakeToken01(t *testing.T) {
 }
 
 // func TestStakeToken02(t *testing.T) {
-// 	std.TestSetPrevAddr(gsa)
+// 	std.TestSetRealm(gsaRealm)
 // 	StakeToken(2) // GNFT tokenId
 // 	std.TestSkipHeights(1)
 

@@ -14,7 +14,7 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
@@ -22,7 +22,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintPosition01WideInRange(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
@@ -49,7 +49,7 @@ func TestMintPosition01WideInRange(t *testing.T) {
 }
 
 func TestMintPositionTightInRange(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
@@ -98,10 +98,10 @@ func TestCollectFeeBeforeSwapPos2(t *testing.T) {
 }
 
 func TestSwap(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		barPath,
@@ -119,7 +119,7 @@ func TestSwap(t *testing.T) {
 
 // FYI, IF POSITION 2 DOESN'T EXIST, POSITION 1 WILL EARN '617' as fee
 func TestCollectFeeAfterSwapPos1(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 

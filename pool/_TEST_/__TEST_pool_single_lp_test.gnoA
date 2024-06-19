@@ -29,7 +29,7 @@ var (
 // 1. reate Pool using Factory Contract by Gnoswap Admin
 func TestInitCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // x2.7
@@ -38,12 +38,12 @@ func TestInitCreatePool(t *testing.T) {
 
 // 2. Mint by gsa
 func TestMint(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := Mint(
 		fooPath,
@@ -110,7 +110,7 @@ func TestMint(t *testing.T) {
 
 // 3. Burn by gsa
 func TestBurn(t *testing.T) {
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 
 	b11, b12 := Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr)
@@ -141,7 +141,7 @@ func TestBurn(t *testing.T) {
 
 // 4. Collect
 func TestCollect(t *testing.T) {
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 
 	// withdraw all token before test `Collect`
@@ -193,12 +193,12 @@ func TestSwap(t *testing.T) {
 	test_liquidity := pool.PoolGetLiquidity()
 	shouldEQ(t, test_liquidity.ToString(), "0")
 
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR.String(), test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20000)).ToString())
 
 	// Swap several times
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	test_price := consts.MIN_PRICE
 	{
@@ -344,7 +344,7 @@ func TestCollectProtocol(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	{
 
-		std.TestSetPrevRealm(consts.ROUTER_PATH)
+		std.TestSetRealm(rouRealm)
 		std.TestSetOrigCaller(gsa)
 		Swap(barPath, fooPath, fee500, gsa.String(), true, "200000", consts.MIN_PRICE, std.GetOrigCaller().String()) // swap token0 -> token1 => fee only in token0
 		// ---       event: {gno.land/r/demo/pool Swap GNOSWAP [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm gno.land/r/demo/router} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_zeroForOne true} {p_amountSpecified 200000} {p_sqrtPriceLimitX96 4295128740} {p_payer g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 200000} {amount1 -533667} {protocol_fee0 16} {protocol_fee1 0} {swap_fee 84}]}
@@ -352,7 +352,7 @@ func TestCollectProtocol(t *testing.T) {
 		gsaOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 		gsaOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
-		std.TestSetPrevAddr(gsa)
+		std.TestSetRealm(gsaRealm)
 		amount0, amount1 := CollectProtocol(barPath, fooPath, fee500, gsa.String(), "100000", "100000")
 		// ---       event: {GNOSWAP gno.land/r/demo/pool CollectProtocol [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount0 15} {amount1 0}]}
 

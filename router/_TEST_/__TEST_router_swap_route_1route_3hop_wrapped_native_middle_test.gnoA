@@ -15,7 +15,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*2)
 
@@ -33,14 +33,14 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestPositionMintGnsGnot(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	// send
 	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 100000}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100000}}, nil)
 
 	// Deposit(wrap)
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	wugnot.Deposit()
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -63,7 +63,7 @@ func TestPositionMintGnotBar(t *testing.T) {
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 
 	// Deposit(wrap)
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	wugnot.Deposit()
 
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -88,11 +88,11 @@ func TestDrySwapRouteGnsBarExactIn(t *testing.T) {
 		"gno.land/r/demo/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/demo/bar:100", // strRouteArr
 		"100", // quoteArr
 	)
-	shouldEQ(t, dryResult, "7339")
+	shouldEQ(t, dryResult, "7325")
 }
 
 func TestSwapRouteGnsBarExactIn(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), 1000)   // swap input amount
 	bar.Approve(a2u(consts.ROUTER_ADDR), 7328) // 0.15% fee
@@ -111,5 +111,5 @@ func TestSwapRouteGnsBarExactIn(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/demo/router SwapRoute [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_input gno.land/r/demo/gns} {p_output gno.land/r/demo/bar} {p_swapType EXACT_IN} {p_amountSpecified 1000} {p_route gno.land/r/demo/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/demo/bar:100} {p_quote 100} {amountIn 1000} {amountOut -7328}]}
 
 	shouldEQ(t, amountIn, "1000")
-	shouldEQ(t, amountOut, "-7328")
+	shouldEQ(t, amountOut, "-7315")
 }

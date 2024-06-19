@@ -29,6 +29,7 @@ import (
 
 var (
 	gsa std.Address = consts.GNOSWAP_ADMIN
+	ira std.Address = consts.INTERNAL_REWARD_ACCOUNT
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -49,6 +50,16 @@ var (
 
 	// TESTING
 	t *testing.T
+)
+
+// Realms to mock frames
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	iraRealm = std.NewUserRealm(ira)
+
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
 )
 
 type FooToken struct{}
@@ -192,7 +203,9 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 
 func init() {
 	// TOKEN REGISTER
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
@@ -231,7 +244,7 @@ func main() {
 }
 
 func createPool() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*0)
 	std.TestSkipHeights(1)
@@ -245,7 +258,7 @@ func mint01() {
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(stkRealm)
 	pn.Mint(barPath, fooPath, fee100, 9000, 11000, "1000", "1000", "0", "0", max_timeout, gsa.String())
 }
 
@@ -255,12 +268,12 @@ func mint02() {
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(stkRealm)
 	pn.Mint(barPath, fooPath, fee100, 9100, 12000, "5000", "5000", "0", "0", max_timeout, gsa.String())
 }
 
 func createExternalIncentiveInit() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
 	std.TestSkipHeights(1)
 
@@ -275,7 +288,7 @@ func createExternalIncentiveInit() {
 }
 
 func createExternalIncentiveIncrease() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
 	std.TestSkipHeights(1)
 
@@ -290,14 +303,14 @@ func createExternalIncentiveIncrease() {
 }
 
 func stakeToken01() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	gnft.Approve(a2u(consts.STAKER_ADDR), tid(1))
 	sr.StakeToken(1)
 	std.TestSkipHeights(2)
 }
 
 func stakeToken02() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	gnft.Approve(a2u(consts.STAKER_ADDR), tid(2))
 	sr.StakeToken(2)
 	std.TestSkipHeights(2)

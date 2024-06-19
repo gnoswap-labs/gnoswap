@@ -30,7 +30,7 @@ func init() {
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
@@ -45,7 +45,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintAndStakeGRC20Pair(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
@@ -70,7 +70,7 @@ func TestMintAndStakeGRC20Pair(t *testing.T) {
 }
 
 func TestMintAndStakeNative(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)    // MINT
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // MINT
@@ -124,17 +124,17 @@ func TestMintAndStakeNative(t *testing.T) {
 
 /*
 func TestPositionCollectFee(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	pn.CollectFee(1) // lpTokenId
 	std.TestSkipHeights(1)
 }
 
 func TestCollectReward(t *testing.T) {
 	// internal reward distribution
-	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
+	std.TestSetRealm(iraRealm)
 	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	CollectReward(1) // lpTokenId
 	std.TestSkipHeights(1)
 }
@@ -143,7 +143,7 @@ func TestUnstakeToken(t *testing.T) {
 	ownerOfLp1 := gnft.OwnerOf(tid(1))
 	shouldEQ(t, ownerOfLp1, a2u(consts.STAKER_ADDR))
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	UnstakeToken(1) // lpTokenId
 	std.TestSkipHeights(1)
 

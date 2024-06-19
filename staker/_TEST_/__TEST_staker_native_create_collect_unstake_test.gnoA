@@ -31,7 +31,7 @@ func init() {
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
 
@@ -41,7 +41,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestPositionMintNative01(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)    // MINT
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // MINT
@@ -88,7 +88,7 @@ func TestPositionMintNative01(t *testing.T) {
 }
 
 func TestPositionMintNative02(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)    // MINT
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // MINT
@@ -136,7 +136,7 @@ func TestPositionMintNative02(t *testing.T) {
 }
 
 func TestCreateExternalIncentive(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	// prepare 10000000000 ugnot
 	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 10_000_000_000}})
@@ -173,7 +173,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 
 func TestStakeToken01(t *testing.T) {
 	// approve nft to staker for staking
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
 	std.TestSkipHeights(1)
 
@@ -188,7 +188,7 @@ func TestStakeToken01(t *testing.T) {
 
 func TestStakeToken02(t *testing.T) {
 	// approve nft to staker for staking
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
 	std.TestSkipHeights(1)
 
@@ -202,7 +202,7 @@ func TestStakeToken02(t *testing.T) {
 }
 
 func TestCollectReward01(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	std.TestSkipHeights(1000)
 
 	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
@@ -220,14 +220,14 @@ func TestCollectReward01(t *testing.T) {
 }
 
 func TestUnstakeToken02(t *testing.T) {
-	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
+	std.TestSetRealm(iraRealm)
 	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // internal reward distribution
 	std.TestSkipHeights(335)                                // skip times
 
 	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
 	shouldEQ(t, ugnotBalanceOf(gsa), 100641583)
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // UNWRAP
 	UnstakeToken(2)                                            // GNFT tokenId

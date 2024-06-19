@@ -16,7 +16,7 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
@@ -31,7 +31,7 @@ func TestPoolBalanceInit(t *testing.T) {
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -64,7 +64,7 @@ func TestPoolBalanceMint01(t *testing.T) {
 }
 
 func TestMintPosition02InRange(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -117,10 +117,10 @@ func TestSwap1(t *testing.T) {
 	// token0: 22073871
 	// token1: 60000000
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		barPath,
@@ -160,10 +160,10 @@ func TestSwap2(t *testing.T) {
 	// token0: 23308438
 	// token1: 56661277
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		barPath,

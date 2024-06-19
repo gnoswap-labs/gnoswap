@@ -42,6 +42,14 @@ var (
 	t *testing.T
 )
 
+// Realms to mock frames
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
+)
+
 type FooToken struct{}
 
 func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
@@ -167,10 +175,12 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func init() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	// TOKEN REGISTER
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
@@ -192,7 +202,7 @@ func main() {
 }
 
 func createPool() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
@@ -205,12 +215,12 @@ func createPool() {
 }
 
 func mint01InRange() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
-	std.TestSetPrevAddr(gsa)
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(stkRealm)
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		barPath,
 		fooPath,
@@ -236,12 +246,12 @@ func mint01InRange() {
 }
 
 func mint02LowerRange() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 0)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
-	std.TestSetPrevAddr(gsa)
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(stkRealm)
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		barPath,
 		fooPath,
@@ -267,12 +277,12 @@ func mint02LowerRange() {
 }
 
 func mint03UpperRange() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 50000000)
 	foo.Approve(a2u(consts.POOL_ADDR), 0)
 
-	std.TestSetPrevAddr(gsa)
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(stkRealm)
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		barPath,
 		fooPath,
@@ -298,10 +308,10 @@ func mint03UpperRange() {
 }
 
 func swap() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		barPath,
@@ -322,7 +332,7 @@ func swap() {
 }
 
 func collectFeeAfterSwap() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 
@@ -340,7 +350,7 @@ func collectFeeAfterSwap() {
 }
 
 func decreaseLiquidityUpperPosition() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := pn.DecreaseLiquidity(uint64(3), 100, "0", "0", max_timeout, false)
 	if tokenId != 3 {

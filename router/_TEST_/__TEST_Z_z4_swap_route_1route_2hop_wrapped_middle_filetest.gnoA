@@ -44,6 +44,14 @@ var (
 	t *testing.T
 )
 
+// Realms to mock frames
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
+)
+
 type FooToken struct{}
 
 func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
@@ -170,7 +178,9 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 
 func init() {
 	// TOKEN REGISTER
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
@@ -198,7 +208,7 @@ func main() {
 }
 
 func createPool() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*2)
 	std.TestSkipHeights(1)
@@ -210,22 +220,21 @@ func createPool() {
 }
 
 func mintGnsGnot() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	// send
 	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 999999}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 999999}}, nil)
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 999999)
 
 	// Deposit(wrap)
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	wugnot.Deposit()
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(stkRealm)
 	_, _, amount0, amount1 := pn.Mint(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, gsa.String())
 	if amount0 != "36790" {
 		"router_z5_mintGnsGnot() || amount0 should be 36790"
@@ -236,27 +245,26 @@ func mintGnsGnot() {
 }
 
 func mintGnotBar() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	// send
 	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 999999}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 999999}}, nil)
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 999999)
 
 	// Deposit(wrap)
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	wugnot.Deposit()
 
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(stkRealm)
 	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.WRAPPED_WUGNOT, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, gsa.String())
 }
 
 func drySwapGnsBarExactIn() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := rr.DrySwapRoute(
 		consts.GNS_PATH, // inputToken
@@ -266,13 +274,13 @@ func drySwapGnsBarExactIn() {
 		"gno.land/r/demo/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/demo/bar:100", // strRouteArr
 		"100", // quoteArr
 	)
-	if dryResult != "7339" {
-		panic("dryResult should be 7339")
+	if dryResult != "7325" {
+		panic("dryResult should be 7325")
 	}
 }
 
 func swapGnsBarExactIn() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), 1000)   // swap input amount
 	bar.Approve(a2u(consts.ROUTER_ADDR), 7328) // 0.15% fee
@@ -289,7 +297,7 @@ func swapGnsBarExactIn() {
 	if amountIn != "1000" {
 		panic("amountIn should be 1000")
 	}
-	if amountOut != "-7328" {
-		panic("amountOut should be -7328")
+	if amountOut != "-7315" {
+		panic("amountOut should be -7315")
 	}
 }

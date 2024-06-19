@@ -12,7 +12,6 @@ import (
 	"gno.land/r/demo/qux"
 	"gno.land/r/demo/wugnot"
 
-	"gno.land/p/demo/json"
 	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/demo/gnoswap/consts"
@@ -34,10 +33,19 @@ var (
 	fee500  uint32 = 500
 	fee3000 uint32 = 3000
 
+	test_tickLower = int32(9000)
+	test_tickUpper = int32(11000)
+
 	maxApprove uint64 = 18446744073709551615
 
 	// TESTING
 	t *testing.T
+)
+
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
 )
 
 type FooToken struct{}
@@ -148,125 +156,6 @@ func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return gns.Approve
 }
 
-func init() {
-	std.TestSetPrevAddr(gsa)
-
-	// TOKEN REGISTER
-	std.TestSetPrevAddr(gsa)
-	pl.RegisterGRC20Interface("gno.land/r/demo/bar", FooToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/foo", BarToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
-
-}
-
-/* START TEST */
-func main() {
-	createFooBarPool()
-	createBarBazPool()
-	mintFooBar()
-	mintBarBaz()
-	apiGetPools()
-}
-
-func createFooBarPool() {
-	std.TestSetPrevAddr(gsa)
-
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
-	std.TestSkipHeights(1)
-
-	pl.CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick 10000
-	if len(pl.PoolGetPoolList()) != 1 {
-		panic("expected 1 pool")
-	}
-	std.TestSkipHeights(1)
-}
-
-func createBarBazPool() {
-	std.TestSetPrevAddr(gsa)
-
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
-	std.TestSkipHeights(1)
-
-	pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
-	if len(pl.PoolGetPoolList()) != 2 {
-		panic("expected 2 pools")
-	}
-	std.TestSkipHeights(1)
-}
-
-func mintFooBar() {
-	std.TestSetPrevAddr(gsa)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	std.TestSkipHeights(2)
-
-	//std.TestSetPrevRealm(consts.POSITION_PATH)
-	//std.TestSetOrigCaller(gsa)
-	amount0, amount1 := pl.Mint(
-		barPath,
-		fooPath,
-		fee500,
-		consts.POSITION_ADDR.String(),
-		-11000, // -11000
-		-9000,  // -9000
-		"100000000",
-	)
-	if amount0 != "8040316" {
-		panic(amount0)
-	}
-	if amount1 != "2958015" {
-		panic(amount1)
-	}
-}
-
-func mintBarBaz() {
-	std.TestSetPrevAddr(gsa)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	std.TestSkipHeights(2)
-
-	//std.TestSetPrevRealm(consts.POSITION_PATH)
-	//std.TestSetOrigCaller(gsa)
-	amount0, amount1 := pl.Mint(
-		barPath,
-		bazPath,
-		fee500,
-		consts.POSITION_ADDR.String(),
-		9000,
-		11000,
-		"100000000",
-	)
-	if amount0 != "2958015" {
-		panic(amount0)
-	}
-	if amount1 != "8040316" {
-		panic(amount1)
-	}
-
-}
-
-func apiGetPools() {
-	gpls := pl.ApiGetPools()
-
-	root, err := json.Unmarshal([]byte(gpls))
-	if err != nil {
-		panic(err)
-	}
-
-	response, err := root.GetKey("response")
-	if err != nil {
-		panic(err)
-	}
-
-	if response.Size() != 2 {
-		panic("expected 2 pools")
-	}
-}
-
 /* HELPER FUNCTIONS */
 func a2u(addr std.Address) pusers.AddressOrName {
 	return pusers.AddressOrName(addr)
@@ -283,5 +172,139 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 	return uint64(coins.AmountOf("ugnot"))
 }
 
-// Output:
-//
+func init() {
+	// TOKEN REGISTER
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
+	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
+	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+}
+
+/* START TEST */
+func main() {
+	createPool()
+	drySwap_ZeroForOneTrue_AmountSpecified_Positive_16000()
+	drySwap_ZeroForOneTrue_AmountSpecified_Negative_16000()
+	drySwap_ZeroForOneFalse_AmountSpecified_Positive_16000()
+	drySwap_ZeroForOneFalse_AmountSpecified_Negative_16000()
+}
+
+func createPool() {
+	std.TestSetRealm(gsaRealm)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	std.TestSkipHeights(1)
+
+	pl.CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick 10000 x2.7
+	if len(pl.PoolGetPoolList()) != 1 {
+		panic("expected 1 pool")
+	}
+	std.TestSkipHeights(1)
+}
+
+func drySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
+	std.TestSetRealm(posRealm)
+	std.TestSetOrigCaller(gsa)
+
+	// no mint == no liquidity => swap will fail
+	_, _, ok := pl.DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
+	if ok {
+		panic("expected dry swap to fail #1")
+	}
+
+	// not enough mint == swap will fail
+	std.TestSetRealm(gsaRealm)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetRealm(posRealm)
+	std.TestSetOrigCaller(gsa)
+	pl.Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -test_tickUpper, -test_tickLower, "10")
+	_, _, ok = pl.DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
+	if ok {
+		panic("expected dry swap to fail #2")
+	}
+
+	std.TestSetRealm(posRealm)
+	std.TestSetOrigCaller(gsa)
+	pl.Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -test_tickUpper, -test_tickLower, "100000000000") // -11000  ~ -9000
+	// zeroForOne true
+	// amountSpecified 16000
+	poolIn, poolOut, _ := pl.DrySwap(
+		fooPath,          // fooPath
+		barPath,          // barPath
+		fee500,           // fee500
+		true,             // zeroForOne
+		"16000",          // amountSpecified
+		consts.MIN_PRICE, // sqrtPriceLimitX96
+	)
+	if poolIn != "16000" {
+		panic("expected poolIn 16000")
+	}
+	if poolOut != "-5883" {
+		panic("expected poolOut -5883")
+	}
+}
+
+func drySwap_ZeroForOneTrue_AmountSpecified_Negative_16000() {
+	// zeroForOne true
+	// amountSpecified 16000
+	poolIn, poolOut, _ := pl.DrySwap(
+		fooPath,          // fooPath
+		barPath,          // barPath
+		fee500,           // fee500
+		true,             // zeroForOne
+		"-16000",         // amountSpecified
+		consts.MIN_PRICE, // sqrtPriceLimitX96
+	)
+	if poolIn != "43513" {
+		panic("expected poolIn 43513")
+	}
+	if poolOut != "-16000" {
+		panic("expected poolOut -16000")
+	}
+}
+
+func drySwap_ZeroForOneFalse_AmountSpecified_Positive_16000() {
+	// zeroForOne false
+	// amountSpecified 16000
+	poolIn, poolOut, _ := pl.DrySwap(
+		fooPath,          // fooPath
+		barPath,          // barPath
+		fee500,           // fee500
+		false,            // zeroForOne
+		"16000",          // amountSpecified
+		consts.MAX_PRICE, // sqrtPriceLimitX96
+	)
+	if poolIn != "-43468" {
+		panic("expected poolIn -43468")
+	}
+	if poolOut != "16000" {
+		panic("expected poolOut 16000")
+	}
+}
+
+func drySwap_ZeroForOneFalse_AmountSpecified_Negative_16000() {
+	// zeroForOne false
+	// amountSpecified -16000
+	poolIn, poolOut, _ := pl.DrySwap(
+		fooPath,          // fooPath
+		barPath,          // barPath
+		fee500,           // fee500
+		false,            // zeroForOne
+		"-16000",         // amountSpecified
+		consts.MAX_PRICE, // sqrtPriceLimitX96
+	)
+	if poolIn != "-16000" {
+		panic(poolIn)
+	}
+	if poolOut != "5890" {
+		panic("expected poolOut 5890")
+	}
+}

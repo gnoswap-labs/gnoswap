@@ -44,6 +44,14 @@ var (
 	t *testing.T
 )
 
+// Realms to mock frames
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
+)
+
 type FooToken struct{}
 
 func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
@@ -170,7 +178,8 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 
 func init() {
 	// TOKEN REGISTER
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
@@ -203,7 +212,7 @@ func main() {
 }
 
 func createPool() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
@@ -214,11 +223,11 @@ func createPool() {
 }
 
 func mint() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(stkRealm)
 	_, _, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", maxTimeout, gsa.String())
 	if amount0 != "36790" {
 		"router_z2_mint() || amount0 should be 36790"
@@ -229,7 +238,7 @@ func mint() {
 }
 
 func drySwapBarBazExactIn() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := rr.DrySwapRoute(
 		barPath,    // inputToken
@@ -245,7 +254,7 @@ func drySwapBarBazExactIn() {
 }
 
 func swapBarBazExactIn() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), uint64(1000))
 	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
@@ -268,7 +277,7 @@ func swapBarBazExactIn() {
 }
 
 func drySwapBarBazExactOut() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := rr.DrySwapRoute(
 		barPath,     // inputToken
@@ -284,7 +293,7 @@ func drySwapBarBazExactOut() {
 }
 
 func swapBarBazExactOut() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), uint64(1000))
 	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
@@ -307,7 +316,7 @@ func swapBarBazExactOut() {
 }
 
 func drySwapBazBarExactIn() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := rr.DrySwapRoute(
 		bazPath,    // inputToken
@@ -323,7 +332,7 @@ func drySwapBazBarExactIn() {
 }
 
 func swapBazBarExactIn() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
@@ -346,7 +355,7 @@ func swapBazBarExactIn() {
 }
 
 func drySwapBazBarExactOut() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := rr.DrySwapRoute(
 		bazPath,     // inputToken
@@ -362,7 +371,7 @@ func drySwapBazBarExactOut() {
 }
 
 func swapBazBarExactOut() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
 
 	amountIn, amountOut := rr.SwapRoute(

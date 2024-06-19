@@ -26,6 +26,7 @@ import (
 
 var (
 	gsa std.Address = consts.GNOSWAP_ADMIN
+	ira std.Address = consts.INTERNAL_REWARD_ACCOUNT
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -46,6 +47,16 @@ var (
 
 	// TESTING
 	t *testing.T
+)
+
+// Realms to mock frames
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	iraRealm = std.NewUserRealm(ira)
+
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
 )
 
 type FooToken struct{}
@@ -189,7 +200,9 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 
 func init() {
 	// TOKEN REGISTER
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
@@ -224,7 +237,7 @@ func main() {
 }
 
 func createPool() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*0)
 	std.TestSkipHeights(1)
@@ -234,7 +247,7 @@ func createPool() {
 }
 
 func setPoolTier() {
-	std.TestSetPrevAddr(consts.GNOSWAP_ADMIN)
+	std.TestSetRealm(gsaRealm)
 	sr.SetPoolTier("gno.land/r/demo/bar:gno.land/r/demo/qux:500", 2)
 
 	poolTier := sr.GetPoolWithTiers()["gno.land/r/demo/bar:gno.land/r/demo/qux:500"]
@@ -244,7 +257,7 @@ func setPoolTier() {
 }
 
 func changePoolTier() {
-	std.TestSetPrevAddr(consts.GNOSWAP_ADMIN)
+	std.TestSetRealm(gsaRealm)
 	sr.ChangePoolTier("gno.land/r/demo/bar:gno.land/r/demo/qux:500", 3)
 
 	poolTier := sr.GetPoolWithTiers()["gno.land/r/demo/bar:gno.land/r/demo/qux:500"]
@@ -254,7 +267,7 @@ func changePoolTier() {
 }
 
 func removePoolTier() {
-	std.TestSetPrevAddr(consts.GNOSWAP_ADMIN)
+	std.TestSetRealm(gsaRealm)
 	sr.RemovePoolTier("gno.land/r/demo/bar:gno.land/r/demo/qux:500")
 
 	_, exist := sr.GetPoolWithTiers()["gno.land/r/demo/bar:gno.land/r/demo/qux:500"]

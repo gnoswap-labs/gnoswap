@@ -24,7 +24,7 @@ var (
 
 func TestCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	CreatePool(fooPath, barPath, fee500, sqrtPrice)
@@ -33,7 +33,7 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 
 	// no mint == no liquidity => swap will fail
@@ -41,19 +41,20 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	shouldEQ(t, ok, false)
 
 	// not enough mint == swap will fail
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
+
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -tickUpper, -tickLower, "10")
 	_, _, ok = DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
 	shouldEQ(t, ok, false)
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -tickUpper, -tickLower, liquidityExpect) // -11000  ~ -9000
 

@@ -44,6 +44,14 @@ var (
 	t *testing.T
 )
 
+// Realms to mock frames
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
+)
+
 type FooToken struct{}
 
 func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
@@ -170,7 +178,9 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 
 func init() {
 	// TOKEN REGISTER
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
@@ -213,7 +223,7 @@ func main() {
 }
 
 func createPool() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	// tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 
@@ -235,11 +245,11 @@ func createPool() {
 }
 
 func mintBarBaz() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(stkRealm)
 	_, _, amount0, amount1 := pn.Mint(barPath, bazPath, fee100, int32(9000), int32(11000), "100000000", "100000000", "0", "0", maxTimeout, gsa.String())
 	if amount0 != "36789784" {
 		panic("router_z6_mintBarBaz() || amount0 should be 36789784")
@@ -250,11 +260,11 @@ func mintBarBaz() {
 }
 
 func mintBazFoo() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(stkRealm)
 	_, _, amount0, amount1 := pn.Mint(bazPath, fooPath, fee100, int32(9000), int32(11000), "100000000", "100000000", "0", "0", maxTimeout, gsa.String())
 	if amount0 != "36789784" {
 		panic("router_z6_mintBazFoo() || amount0 should be 36789784")
@@ -265,11 +275,11 @@ func mintBazFoo() {
 }
 
 func mintFooQux() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(stkRealm)
 	_, _, amount0, amount1 := pn.Mint(fooPath, quxPath, fee100, int32(9000), int32(11000), "100000000", "100000000", "0", "0", maxTimeout, gsa.String())
 	if amount0 != "36789784" {
 		panic("router_z6_mintBazFoo() || amount0 should be 36789784")
@@ -281,7 +291,7 @@ func mintFooQux() {
 
 // BAR > BAZ > ExactIn || DRY
 func drySwapBarBazExactIn() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := rr.DrySwapRoute(
 		barPath,    // inputToken
@@ -291,14 +301,14 @@ func drySwapBarBazExactIn() {
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100", // strRouteArr
 		"100", // quoteArr
 	)
-	if dryResult != "2714276" {
-		panic("router_z6_drySwapBarBazExactIn() || dryResult should be 2714276")
+	if dryResult != "2714272" {
+		panic("router_z6_drySwapBarBazExactIn() || dryResult should be 2714272")
 	}
 }
 
 // BAR > BAZ > ExactIn || SWAP
 func swapBarBazExactIn() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)   // swap input amount
 	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // 0.15% fee
@@ -315,14 +325,14 @@ func swapBarBazExactIn() {
 	if amountIn != "1000000" {
 		panic("router_z6_swapBarBazExactIn() || amountIn should be 1000000")
 	}
-	if amountOut != "-2710205" {
-		panic("router_z6_swapBarBazExactIn() || amountIn should be -2710205")
+	if amountOut != "-2710201" {
+		panic("router_z6_swapBarBazExactIn() || amountIn should be -2710201")
 	}
 }
 
 // BAZ > BAR > ExactIn || DRY
 func drySwapBazBarExactIn() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := rr.DrySwapRoute(
 		bazPath,    // inputToken
@@ -332,14 +342,14 @@ func drySwapBazBarExactIn() {
 		"gno.land/r/demo/baz:gno.land/r/demo/bar:100", // strRouteArr
 		"100", // quoteArr
 	)
-	if dryResult != "999799" {
-		panic("router_z6_drySwapBazBarExactIn() || dryResult should be 999799")
+	if dryResult != "999798" {
+		panic("router_z6_drySwapBazBarExactIn() || dryResult should be 999798")
 	}
 }
 
 // BAZ > BAR > ExactIn || SWAP
 func swapBazBarExactIn() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)   // swap input amount
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // 0.15% fee
@@ -356,14 +366,14 @@ func swapBazBarExactIn() {
 	if amountIn != "2714276" {
 		panic("router_z6_swapBazBarExactIn() || amountIn should be 2714276")
 	}
-	if amountOut != "-998300" {
-		panic("router_z6_swapBazBarExactIn() || amountIn should be -998300")
+	if amountOut != "-998299" {
+		panic("router_z6_swapBazBarExactIn() || amountIn should be -998299")
 	}
 }
 
 // BAR > BAZ > ExactOut || DRY
 func drySwapBarBazExactOut() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := rr.DrySwapRoute(
 		barPath,     // inputToken
@@ -373,14 +383,14 @@ func drySwapBarBazExactOut() {
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100", // strRouteArr
 		"100", // quoteArr
 	)
-	if dryResult != "1000002" {
-		panic("router_z6_drySwapBarBazExactOut() || dryResult should be 1000002") //
+	if dryResult != "1000003" {
+		panic("router_z6_drySwapBarBazExactOut() || dryResult should be 1000003") //
 	}
 }
 
 // BAR > BAZ > ExactOut || SWAP
 func swapBarBazExactOut() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)   // swap input amount
 	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // 0.15% fee
@@ -392,10 +402,10 @@ func swapBarBazExactOut() {
 		"EXACT_OUT", // swapType
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100", // strRouteArr
 		"100",     // quoteArr
-		"1000002", // tokenAmountLimit
+		"1000003", // tokenAmountLimit
 	)
-	if amountIn != "1000002" {
-		panic("router_z6_swapBarBazExactOut() || amountIn should be 1000002")
+	if amountIn != "1000003" {
+		panic("router_z6_swapBarBazExactOut() || amountIn should be 1000003")
 	}
 	if amountOut != "-2710205" {
 		panic("router_z6_swapBarBazExactOut() || amountIn should be 1000002")
@@ -404,7 +414,7 @@ func swapBarBazExactOut() {
 
 // BAR > QUX > ExactIn || DRY
 func drySwapBarQuxExactIn() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := rr.DrySwapRoute(
 		barPath,    // inputToken
@@ -414,14 +424,14 @@ func drySwapBarQuxExactIn() {
 		"gno.land/r/demo/bar:gno.land/r/demo/baz:100*POOL*gno.land/r/demo/baz:gno.land/r/demo/foo:100*POOL*gno.land/r/demo/foo:gno.land/r/demo/qux:100", // strRouteArr
 		"100", // quoteArr
 	)
-	if dryResult != "19733647" {
-		panic("router_z6_drySwapBarQuxExactIn() || amountIn should be 19733647")
+	if dryResult != "19733638" {
+		panic("router_z6_drySwapBarQuxExactIn() || amountIn should be 19733638")
 	}
 }
 
 // BAR > QUX > ExactIn || SWAP
 func swapBarQuxExactIn() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)   // swap input amount
 	qux.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // 0.15% fee
@@ -439,14 +449,14 @@ func swapBarQuxExactIn() {
 	if amountIn != "1000000" {
 		panic("router_z6_swapBarQuxExactIn() || amountIn should be 1000000")
 	}
-	if amountOut != "-19704047" {
-		panic("router_z6_swapBarQuxExactIn() || amountIn should be -19704047")
+	if amountOut != "-19704038" {
+		panic("router_z6_swapBarQuxExactIn() || amountIn should be -19704038")
 	}
 }
 
 // QUX > BAR > ExactOut || DRY
 func drySwapQuxBarExactOut() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := rr.DrySwapRoute(
 		quxPath,     // inputToken
@@ -456,14 +466,14 @@ func drySwapQuxBarExactOut() {
 		"gno.land/r/demo/qux:gno.land/r/demo/foo:100*POOL*gno.land/r/demo/foo:gno.land/r/demo/baz:100*POOL*gno.land/r/demo/baz:gno.land/r/demo/bar:100", // strRouteArr
 		"100", // quoteArr
 	)
-	if dryResult != "40079942" {
-		panic("router_z6_drySwapQuxBarExactOut() || amountIn should be 40079942")
+	if dryResult != "40079976" {
+		panic("router_z6_drySwapQuxBarExactOut() || amountIn should be 40079976")
 	}
 }
 
 // QUX > BAR > ExactOut || SWAP
 func swapQuxBarExactOut() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)   // swap input amount
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // 0.15% fee
@@ -475,11 +485,11 @@ func swapQuxBarExactOut() {
 		"EXACT_OUT", // swapType
 		"gno.land/r/demo/qux:gno.land/r/demo/foo:100*POOL*gno.land/r/demo/foo:gno.land/r/demo/baz:100*POOL*gno.land/r/demo/baz:gno.land/r/demo/bar:100", // strRouteArr
 		"100",      // quoteArr
-		"40079942", // tokenAmountLimit
+		"40079976", // tokenAmountLimit
 	)
 
-	if amountIn != "40079942" {
-		panic("router_z6_swapQuxBarExactOut() || amountIn should be 40079942")
+	if amountIn != "40079976" {
+		panic("router_z6_swapQuxBarExactOut() || amountIn should be 40079976")
 	}
 	if amountOut != "-1997000" {
 		panic("router_z6_swapQuxBarExactOut() || amountIn should be -1997000")
