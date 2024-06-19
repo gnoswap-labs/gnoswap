@@ -52,7 +52,7 @@ func TestPositionMint01(t *testing.T) {
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		barPath,      // token0
 		quxPath,      // token1
-		uint16(500),  // fee
+		uint32(500),  // fee
 		int32(9000),  // tickLower
 		int32(11000), // tickUpper
 		"1000",       // amount0Desired
@@ -86,7 +86,7 @@ func TestPositionMint02(t *testing.T) {
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		barPath,      // token0
 		quxPath,      // token1
-		uint16(500),  // fee
+		uint32(500),  // fee
 		int32(9100),  // tickLower
 		int32(12000), // tickUpper
 		"5000",       // amount0Desired
