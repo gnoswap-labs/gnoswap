@@ -26,7 +26,7 @@ var (
 // Create Foo:Bar Pool
 func TestCreateFooBarPool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 
@@ -38,7 +38,7 @@ func TestCreateFooBarPool(t *testing.T) {
 // Create Bar:Baz Pool
 func TestCreateBarBazPool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 
@@ -49,11 +49,11 @@ func TestCreateBarBazPool(t *testing.T) {
 
 // Mint Foo:Bar Liquidity by gsa
 func TestMintFooBarLiquidity(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := Mint(
 		fooPath,
@@ -70,11 +70,11 @@ func TestMintFooBarLiquidity(t *testing.T) {
 
 // Mint Bar:Baz Liquidity by gsa
 func TestMintBarBazLiquidity(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := Mint(
 		barPath,
@@ -97,10 +97,10 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 	oldPoolBar := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 	oldPoolFoo := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 16000)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	poolIn, poolOut := Swap(
 		barPath,
@@ -136,10 +136,10 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 	oldPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 16000)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	poolIn, poolOut := Swap(
 		barPath,
@@ -169,7 +169,7 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 
 // Collect Foo:Bar Fees by gsa
 func TestCollectFooBarFees(t *testing.T) {
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 
 	oldTest1Token1Balance := balanceOfByRegisterCall(fooPath, gsa)
@@ -207,7 +207,7 @@ func TestCollectFooBarFees(t *testing.T) {
 
 // Collect Bar:Baz Fees by gsa
 func TestCollectBarBazFees(t *testing.T) {
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
 
 	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
@@ -246,7 +246,7 @@ func TestCollectBarBazFees(t *testing.T) {
 // Burn Foo:Bar Liquidity by gsa
 func TestBurnFooBarLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 
 	pool := GetPool(fooPath, barPath, fee500)
 	poolOldLiquidity := pool.PoolGetLiquidity()
@@ -271,7 +271,7 @@ func TestBurnFooBarLiquidity(t *testing.T) {
 // Burn Bar:Baz Liquidity by gsa
 func TestBurnBarBazLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 
 	pool := GetPool(barPath, bazPath, fee500)
 	poolOldLiquidity := pool.PoolGetLiquidity()
@@ -296,7 +296,7 @@ func TestBurnBarBazLiquidity(t *testing.T) {
 // Collect Foo:Bar burned Liquidity by gsa
 func TestCollectFooBarLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 
 	oldTest1Token1Balance := balanceOfByRegisterCall(fooPath, gsa)
 	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
@@ -331,7 +331,7 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 // Collect Bar:Baz burned Liquidity by gsa
 func TestCollectBarBazLiquidity(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 
 	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
 	oldgsaBazBalance := balanceOfByRegisterCall(bazPath, gsa)

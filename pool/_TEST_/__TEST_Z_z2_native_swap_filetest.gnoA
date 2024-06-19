@@ -42,6 +42,12 @@ var (
 	t *testing.T
 )
 
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+)
+
 type FooToken struct{}
 
 func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
@@ -167,10 +173,10 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func init() {
-	std.TestSetPrevAddr(gsa)
-
 	// TOKEN REGISTER
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
@@ -182,123 +188,115 @@ func init() {
 
 /* START TEST */
 func main() {
-	createPool()
-	drySwap_ZeroForOneTrue_AmountSpecified_Positive_16000()
-	drySwap_ZeroForOneTrue_AmountSpecified_Negative_16000()
-	drySwap_ZeroForOneFalse_AmountSpecified_Positive_16000()
-	drySwap_ZeroForOneFalse_AmountSpecified_Negative_16000()
+	createFooWUGNOT()
+	mint()
+	swapBuyNative()
+	swapSellNative()
 }
 
-func createPool() {
-	std.TestSetPrevAddr(gsa)
+func createFooWUGNOT() {
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
 
-	pl.CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick 10000 x2.7
+	pl.CreatePool(fooPath, consts.WRAPPED_WUGNOT, fee500, "130621891405341611593710811006") // tick 10000 x2.7
 	if len(pl.PoolGetPoolList()) != 1 {
 		panic("expected 1 pool")
 	}
 	std.TestSkipHeights(1)
 }
 
-func drySwap_ZeroForOneTrue_AmountSpecified_Positive_16000() {
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+func mint() {
+	token0, token1 := fooPath, consts.WRAPPED_WUGNOT
+	if token1 < token0 {
+		token0, token1 = token1, token0
+	}
+
+	// prepare ugnot
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+
+	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 804032}})
+	// testBanker.IssueCoin(gsa, "ugnot", 804_032)
+
+	// simulate transfer & decrase
+	std.TestSetOrigSend(std.Coins{{"ugnot", 804_032}}, nil)
 	std.TestSetOrigCaller(gsa)
+	// testBanker.RemoveCoin(gsa, "ugnot", 804_032) // TODO: HOW TO REMOVE
 
-	// no mint == no liquidity => swap will fail
-	_, _, ok := pl.DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
-	if ok {
-		panic("expected dry swap to fail #1")
+	// Deposit(wrap)
+	std.TestSetRealm(gsaRealm)
+	wugnot.Deposit()
+
+	std.TestSetRealm(gsaRealm)
+	foo.Approve(a2u(consts.POOL_ADDR), maxApprove)
+	wugnot.Approve(a2u(consts.POOL_ADDR), maxApprove)
+
+	// Mint
+	std.TestSetRealm(posRealm)
+	amount0, amount1 := pl.Mint(
+		fooPath,
+		consts.WRAPPED_WUGNOT,
+		fee500,
+		consts.POSITION_ADDR.String(),
+		test_tickLower,
+		test_tickUpper,
+		"10000000",
+	)
+	if amount0 != "295802" {
+		panic(amount0)
 	}
+	if amount1 != "804032" {
+		panic(amount1)
+	}
+}
 
-	// not enough mint == swap will fail
-	std.TestSetPrevAddr(gsa)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+func swapBuyNative() {
+	pool := pl.GetPool(fooPath, consts.WRAPPED_WUGNOT, fee500)
 
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(gsaRealm)
+	foo.Approve(a2u(consts.POOL_ADDR), 10000)
+
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
-	pl.Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -test_tickUpper, -test_tickLower, "10")
-	_, _, ok = pl.DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
-	if ok {
-		panic("expected dry swap to fail #2")
+	amount0, amount1 := pl.Swap(
+		fooPath,               // token0
+		consts.WRAPPED_WUGNOT, // token1
+		fee500,
+		gsa.String(),
+		true,
+		"10000",
+		consts.MIN_PRICE,
+		std.GetOrigCaller().String(),
+	)
+	if amount0 != "10000" && amount1 != "-27123" {
+		panic("swap sell foo, buy native")
 	}
+}
 
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+func swapSellNative() {
+	pool := pl.GetPool(fooPath, consts.WRAPPED_WUGNOT, fee500)
+
+	std.TestSetRealm(gsaRealm)
+	foo.Approve(a2u(consts.POOL_ADDR), 10000)
+
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
-	pl.Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -test_tickUpper, -test_tickLower, "100000000000") // -11000  ~ -9000
-	// zeroForOne true
-	// amountSpecified 16000
-	poolIn, poolOut, _ := pl.DrySwap(
-		fooPath,          // fooPath
-		barPath,          // barPath
-		fee500,           // fee500
-		true,             // zeroForOne
-		"16000",          // amountSpecified
-		consts.MIN_PRICE, // sqrtPriceLimitX96
+	amount0, amount1 := pl.Swap( // ugnot 10_000 > foo ??
+		fooPath,               // token0
+		consts.WRAPPED_WUGNOT, // token1
+		fee500,
+		gsa.String(),
+		false,
+		"10000",
+		consts.MAX_PRICE,
+		std.GetOrigCaller().String(),
 	)
-	if poolIn != "16000" {
-		panic("expected poolIn 16000")
-	}
-	if poolOut != "-5883" {
-		panic("expected poolOut -5883")
+
+	if amount0 != "-3687" && amount1 != "10000" {
+		panic("swap sell native, buy foo")
 	}
 }
 
-func drySwap_ZeroForOneTrue_AmountSpecified_Negative_16000() {
-	// zeroForOne true
-	// amountSpecified 16000
-	poolIn, poolOut, _ := pl.DrySwap(
-		fooPath,          // fooPath
-		barPath,          // barPath
-		fee500,           // fee500
-		true,             // zeroForOne
-		"-16000",         // amountSpecified
-		consts.MIN_PRICE, // sqrtPriceLimitX96
-	)
-	if poolIn != "43513" {
-		panic("expected poolIn 43513")
-	}
-	if poolOut != "-16000" {
-		panic("expected poolOut -16000")
-	}
-}
-
-func drySwap_ZeroForOneFalse_AmountSpecified_Positive_16000() {
-	// zeroForOne false
-	// amountSpecified 16000
-	poolIn, poolOut, _ := pl.DrySwap(
-		fooPath,          // fooPath
-		barPath,          // barPath
-		fee500,           // fee500
-		false,            // zeroForOne
-		"16000",          // amountSpecified
-		consts.MAX_PRICE, // sqrtPriceLimitX96
-	)
-	if poolIn != "-43468" {
-		panic("expected poolIn -43468")
-	}
-	if poolOut != "16000" {
-		panic("expected poolOut 16000")
-	}
-}
-
-func drySwap_ZeroForOneFalse_AmountSpecified_Negative_16000() {
-	// zeroForOne false
-	// amountSpecified -16000
-	poolIn, poolOut, _ := pl.DrySwap(
-		fooPath,          // fooPath
-		barPath,          // barPath
-		fee500,           // fee500
-		false,            // zeroForOne
-		"-16000",         // amountSpecified
-		consts.MAX_PRICE, // sqrtPriceLimitX96
-	)
-	if poolIn != "-16000" {
-		panic(poolIn)
-	}
-	if poolOut != "5890" {
-		panic("expected poolOut 5890")
-	}
-}
+// Output:
+//

@@ -19,7 +19,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*3)
 
@@ -49,7 +49,7 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestPositionMintBarBaz(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa.String())
@@ -61,7 +61,7 @@ func TestPositionMintBarBaz(t *testing.T) {
 }
 
 func TestPositionMintBazQux(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -75,7 +75,7 @@ func TestPositionMintBazQux(t *testing.T) {
 }
 
 func TestPositionMintQuxGnot(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	// send
 	std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 1000009}})
@@ -110,7 +110,7 @@ func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
 
 // BUY NATIVE
 func TestSwapRouteBarGnotExactIn(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // for output

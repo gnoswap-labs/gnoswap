@@ -16,7 +16,7 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	pl.CreatePool(oblPath, "gno.land/r/demo/usdc", fee3000, "79228162514264337593543950336")
@@ -31,7 +31,7 @@ func TestPoolBalanceInit(t *testing.T) {
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -56,7 +56,7 @@ func TestMintPosition01InRange(t *testing.T) {
 }
 
 func TestMintPosition02InRange(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -83,11 +83,11 @@ func TestMintPosition02InRange(t *testing.T) {
 }
 
 func TestSwap1(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -107,11 +107,11 @@ func TestSwap1(t *testing.T) {
 }
 
 func TestSwap2(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -141,11 +141,11 @@ func TestCollectFee(t *testing.T) {
 }
 
 func TestSwap3(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -165,7 +165,7 @@ func TestSwap3(t *testing.T) {
 }
 
 func TestDecreaseHalfPos01(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -190,7 +190,7 @@ func TestDecreaseHalfPos01(t *testing.T) {
 }
 
 func TestDecreaseAllPos01(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -216,11 +216,11 @@ func TestDecreaseAllPos01(t *testing.T) {
 
 /*
 func TestSwap2(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -238,11 +238,11 @@ func TestSwap2(t *testing.T) {
 }
 
 func TestSwap3(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -260,11 +260,11 @@ func TestSwap3(t *testing.T) {
 }
 
 func TestSwap4(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -282,11 +282,11 @@ func TestSwap4(t *testing.T) {
 }
 
 func TestSwap5(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -304,11 +304,11 @@ func TestSwap5(t *testing.T) {
 }
 
 func TestSwap6(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -326,11 +326,11 @@ func TestSwap6(t *testing.T) {
 }
 
 func TestSwap7(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -348,11 +348,11 @@ func TestSwap7(t *testing.T) {
 }
 
 func TestSwap8(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -370,11 +370,11 @@ func TestSwap8(t *testing.T) {
 }
 
 func TestSwap9(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -392,11 +392,11 @@ func TestSwap9(t *testing.T) {
 }
 
 func TestSwap10(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -414,11 +414,11 @@ func TestSwap10(t *testing.T) {
 }
 
 func TestSwap11(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -436,11 +436,11 @@ func TestSwap11(t *testing.T) {
 }
 
 func TestSwap12(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
@@ -473,7 +473,7 @@ func TestCollectFee(t *testing.T) {
 }
 
 func TestDecreaseAllPos01(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	usdc.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 

@@ -20,7 +20,7 @@ var (
 // 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	CreatePool(fooPath, consts.WRAPPED_WUGNOT, fee500, "130621891405341611593710811006") // x2.7
@@ -43,15 +43,15 @@ func TestMint(t *testing.T) {
 	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 804_032)
 
 	// Deposit(wrap)
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	wugnot.Deposit()
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), 295802)
 	wugnot.Approve(a2u(consts.POOL_ADDR), 804032)
 
 	// Mint
-	std.TestSetPrevRealm(consts.POSITION_PATH)
+	std.TestSetRealm(posRealm)
 	amount0, amount1 := Mint(
 		fooPath,
 		consts.WRAPPED_WUGNOT,
@@ -74,10 +74,10 @@ func TestSwapBuyNative(t *testing.T) {
 	shouldEQ(t, gsaOldT0Bal, 99999999704198) // foo
 	shouldEQ(t, gsaOldT1Bal, 0)              // wugnot
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), 10000)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := Swap(
 		fooPath,               // token0
@@ -108,10 +108,10 @@ func TestSwapSellNative(t *testing.T) {
 	shouldEQ(t, gsaOldT0Bal, 99999999694198) // foo
 	shouldEQ(t, gsaOldT1Bal, 27123)          // wugnot
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	wugnot.Approve(a2u(consts.POOL_ADDR), 27123)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := Swap( // ugnot 10_000 > foo ??
 		fooPath,               // token0

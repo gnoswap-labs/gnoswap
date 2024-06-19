@@ -29,6 +29,7 @@ import (
 
 var (
 	gsa std.Address = consts.GNOSWAP_ADMIN
+	ira std.Address = consts.INTERNAL_REWARD_ACCOUNT
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -49,6 +50,16 @@ var (
 
 	// TESTING
 	t *testing.T
+)
+
+// Realms to mock frames
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	iraRealm = std.NewUserRealm(ira)
+
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
 )
 
 type FooToken struct{}
@@ -192,7 +203,9 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 
 func init() {
 	// TOKEN REGISTER
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
@@ -235,7 +248,7 @@ func main() {
 }
 
 func createPool() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*0)
 	std.TestSkipHeights(1)
@@ -247,7 +260,8 @@ func createPool() {
 }
 
 func setPoolTier() {
-	std.TestSetPrevAddr(consts.GNOSWAP_ADMIN)
+	std.TestSetRealm(gsaRealm)
+
 	sr.SetPoolTier("gno.land/r/demo/bar:gno.land/r/demo/qux:500", 1)
 	sr.SetPoolTier("gno.land/r/demo/bar:gno.land/r/demo/baz:100", 1)
 
@@ -255,40 +269,40 @@ func setPoolTier() {
 }
 
 func mintBarQux() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(stkRealm)
 	pn.Mint(barPath, quxPath, fee500, 9000, 11000, "100000", "100000", "0", "0", maxTimeout, gsa.String())
 
 }
 
 func mintBarBaz() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(stkRealm)
 	pn.Mint(barPath, bazPath, fee100, -1000, 1000, "100000", "100000", "0", "0", maxTimeout, gsa.String())
 
 }
 
 func mintFooQux() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(stkRealm)
 	pn.Mint(fooPath, quxPath, fee500, -1000, 11000, "100000", "100000", "0", "0", maxTimeout, gsa.String())
 
 }
 
 func createExternalIncentive() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
 	std.TestSkipHeights(1)
@@ -304,7 +318,7 @@ func createExternalIncentive() {
 }
 
 func stakeTier01() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gnft.Approve(a2u(consts.STAKER_ADDR), tid(1))
 	sr.StakeToken(1)
@@ -313,7 +327,7 @@ func stakeTier01() {
 }
 
 func stakeTier02() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gnft.Approve(a2u(consts.STAKER_ADDR), tid(2))
 	sr.StakeToken(2)
@@ -322,7 +336,7 @@ func stakeTier02() {
 }
 
 func stakeExternal() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gnft.Approve(a2u(consts.STAKER_ADDR), tid(3))
 	sr.StakeToken(3)
@@ -331,7 +345,7 @@ func stakeExternal() {
 }
 
 func collectReward01() {
-	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
+	std.TestSetRealm(iraRealm)
 	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // internal reward distribution
 	std.TestSkipHeights(1)
 
@@ -341,7 +355,7 @@ func collectReward01() {
 		panic("collectReward01() || gnsBal != 500000000000000")
 	}
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	sr.CollectReward(1)
 
@@ -353,7 +367,7 @@ func collectReward01() {
 }
 
 func collectReward01Again() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gnsBal := gns.BalanceOf(a2u(gsa))
 
@@ -375,7 +389,7 @@ func collectReward01Again() {
 }
 
 func collectExternalReward() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	oblBal := obl.BalanceOf(a2u(gsa))
 

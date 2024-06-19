@@ -26,6 +26,13 @@ var (
 	maxApprove uint64 = 18446744073709551615
 )
 
+// Realms to mock frames
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+)
+
 /* HELPER */
 func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {

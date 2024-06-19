@@ -42,6 +42,13 @@ var (
 	t *testing.T
 )
 
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
+)
+
 type FooToken struct{}
 
 func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
@@ -166,10 +173,12 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 	return uint64(coins.AmountOf("ugnot"))
 }
 func init() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	// TOKEN REGISTER
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
@@ -191,7 +200,7 @@ func main() {
 
 func createPool() {
 	// call gns faucet to get creation fee
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
@@ -204,12 +213,12 @@ func createPool() {
 }
 
 func mint() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
-	std.TestSetPrevAddr(gsa)
-	std.TestSetPrevRealm(consts.STAKER_PATH)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(stkRealm)
 	tokenId, liquidity, amount0, amount1 := pn.Mint(
 		barPath,
 		fooPath,
@@ -235,7 +244,7 @@ func mint() {
 }
 
 func increase() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 3678979)
 	foo.Approve(a2u(consts.POOL_ADDR), 10000000)
 
@@ -269,7 +278,7 @@ func increase() {
 }
 
 func decreasePartial() {
-	std.TestSetPrevRealm("")
+
 	std.TestSetOrigCaller(gsa)
 
 	pool := pl.GetPool(barPath, fooPath, fee500)
@@ -306,10 +315,10 @@ func decreasePartial() {
 }
 
 func swap() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 1_234_567)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		barPath,
@@ -324,7 +333,7 @@ func swap() {
 }
 
 func decreaseFull() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	// protocol fee approval
 	bar.Approve(a2u(consts.POOL_ADDR), 10000000)

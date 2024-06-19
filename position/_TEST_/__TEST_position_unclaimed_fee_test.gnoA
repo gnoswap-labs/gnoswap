@@ -19,7 +19,7 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
@@ -28,7 +28,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
@@ -54,7 +54,7 @@ func TestMintPosition01InRange(t *testing.T) {
 }
 
 func TestMintPosition02LowerRange(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 0)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
@@ -80,7 +80,7 @@ func TestMintPosition02LowerRange(t *testing.T) {
 }
 
 func TestMintPosition03UpperRange(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 50000000)
 	foo.Approve(a2u(consts.POOL_ADDR), 0)
 
@@ -124,10 +124,10 @@ func TestUnclaimedFee0(t *testing.T) {
 }
 
 func TestSwap1(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		barPath,
@@ -153,10 +153,10 @@ func TestUnclaimedFee1(t *testing.T) {
 }
 
 func TestSwap2(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		barPath,
@@ -182,10 +182,10 @@ func TestUnclaimedFee2(t *testing.T) {
 }
 
 func TestSwap3(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		fooPath,
@@ -211,7 +211,7 @@ func TestUnclaimedFee3(t *testing.T) {
 }
 
 func TestCollectFeeAfterSwap(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 
@@ -226,7 +226,7 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 }
 
 func TestDecreaseLiquidityUpperPosition(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	ownerOfPosition := gnft.OwnerOf(tid(3))
 	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())

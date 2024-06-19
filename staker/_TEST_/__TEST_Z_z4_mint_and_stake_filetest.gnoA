@@ -27,6 +27,7 @@ import (
 
 var (
 	gsa std.Address = consts.GNOSWAP_ADMIN
+	ira std.Address = consts.INTERNAL_REWARD_ACCOUNT
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -47,6 +48,16 @@ var (
 
 	// TESTING
 	t *testing.T
+)
+
+// Realms to mock frames
+var (
+	gsaRealm = std.NewUserRealm(gsa)
+	iraRealm = std.NewUserRealm(ira)
+
+	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
+	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
 )
 
 type FooToken struct{}
@@ -190,7 +201,9 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 
 func init() {
 	// TOKEN REGISTER
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
@@ -226,7 +239,7 @@ func main() {
 }
 
 func createPool() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*0)
 	std.TestSkipHeights(1)
@@ -236,7 +249,7 @@ func createPool() {
 }
 
 func mintAndStake() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -245,22 +258,17 @@ func mintAndStake() {
 }
 
 func collectFee() {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	pn.CollectFee(1)
 }
 
 func collectReward() {
 	// internal reward distribution
-	std.TestSetPrevAddr(consts.INTERNAL_REWARD_ACCOUNT)
+	std.TestSetRealm(iraRealm)
 	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	sr.CollectReward(1)
-}
-
-func unstakeToken() {
-	std.TestSetPrevAddr(gsa)
-	sr.UnstakeToken(1)
 }
 
 // Output:

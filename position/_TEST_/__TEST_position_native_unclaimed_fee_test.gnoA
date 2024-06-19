@@ -14,7 +14,7 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	pl.CreatePool(consts.GNS_PATH, consts.GNOT, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // x2.71814592682522526700950038502924144268035888671875
@@ -22,7 +22,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintPosition(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -84,10 +84,10 @@ func TestUnclaimedFee0(t *testing.T) {
 
 // GNS > GNOT
 func TestSwapSellGnsBuyGnot(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), 1234567)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		consts.GNS_PATH,
@@ -114,10 +114,10 @@ func TestUnclaimedFee1(t *testing.T) {
 
 // GNOT > GNS
 func TestSwapSellGnotBuyGns(t *testing.T) {
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), 123456)
 
-	std.TestSetPrevRealm(consts.ROUTER_PATH)
+	std.TestSetRealm(rouRealm)
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		consts.GNS_PATH,
@@ -149,7 +149,7 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 	oldUgnot := ugnotBalanceOf(gsa)
 	shouldEQ(t, oldUgnot, 5)
 
-	std.TestSetPrevAddr(gsa)
+	std.TestSetRealm(gsaRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)    // COLLECT_FEE
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 
