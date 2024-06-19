@@ -39,10 +39,10 @@ func TestPoolCreatePool(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
 	std.TestSkipHeights(1)
 
-	pl.CreatePool(fooPath, barPath, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
+	pl.CreatePool(fooPath, barPath, uint32(500), "130621891405341611593710811006") // tick 10_000 ≈ x2.7
 	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
 
-	pl.CreatePool(bazPath, quxPath, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
+	pl.CreatePool(bazPath, quxPath, uint32(500), "130621891405341611593710811006") // tick 10_000 ≈ x2.7
 	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/baz:gno.land/r/demo/qux:500}]}
 
 	std.TestSkipHeights(1)
@@ -57,7 +57,7 @@ func TestPositionMintFooBar01(t *testing.T) {
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		fooPath,      // token0
 		barPath,      // token1
-		uint16(500),  // fee
+		uint32(500),  // fee
 		int32(9000),  // tickLower
 		int32(11000), // tickUpper
 		"1000",       // amount0Desired
@@ -91,7 +91,7 @@ func TestPositionMintFooBar02(t *testing.T) {
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		fooPath,      // token0
 		barPath,      // token1
-		uint16(500),  // fee
+		uint32(500),  // fee
 		int32(9100),  // tickLower
 		int32(12000), // tickUpper
 		"5000",       // amount0Desired
@@ -125,7 +125,7 @@ func TestPositionMintBazQux01(t *testing.T) {
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		bazPath,      // token0
 		quxPath,      // token1
-		uint16(500),  // fee
+		uint32(500),  // fee
 		int32(9100),  // tickLower
 		int32(12000), // tickUpper
 		"5000",       // amount0Desired

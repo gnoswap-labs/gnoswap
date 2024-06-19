@@ -31,7 +31,7 @@ var (
 var (
 	gsaRealm = std.NewUserRealm(gsa)
 	iraRealm = std.NewUserRealm(ira)
-	
+
 	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
 	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
 	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
@@ -58,18 +58,6 @@ func shouldEQ(t *testing.T, got, expected interface{}) {
 func shouldNEQ(t *testing.T, got, expected interface{}) {
 	if got == expected {
 		t.Errorf("got %v, didn't expected %v", got, expected)
-	}
-}
-
-func shouldGT(t *testing.T, l, r interface{}) {
-	if !(l < r) {
-		t.Errorf("expected %v < %v", l, r)
-	}
-}
-
-func shouldLT(t *testing.T, l, r interface{}) {
-	if !(l > r) {
-		t.Errorf("expected %v > %v", l, r)
 	}
 }
 

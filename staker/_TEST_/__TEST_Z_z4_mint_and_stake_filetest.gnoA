@@ -235,7 +235,6 @@ func main() {
 	mintAndStake()
 	collectFee()
 	collectReward()
-	unstakeToken()
 }
 
 func createPool() {
