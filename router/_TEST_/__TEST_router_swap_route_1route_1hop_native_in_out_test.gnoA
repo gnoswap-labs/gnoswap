@@ -109,6 +109,7 @@ func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
 }
 
 // BUY NATIVE
+// bar > GNOT
 func TestSwapRouteBarGnotExactIn(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
@@ -121,6 +122,12 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 
 	oldUgnot := ugnotBalanceOf(gsa)
 	shouldEQ(t, oldUgnot, 900009)
+
+	// CHECK FEE COLLECTOR
+	feeColUgnot := ugnotBalanceOf(consts.FEE_COLLECTOR)
+	feeColWugnot := wugnotBalanceOf(consts.FEE_COLLECTOR)
+	shouldEQ(t, feeColUgnot, 0)
+	shouldEQ(t, feeColWugnot, 0)
 
 	std.TestSetOrigCaller(gsa)
 	amountIn, amountOut := SwapRoute(
@@ -144,6 +151,11 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 
 	newUgnot := ugnotBalanceOf(gsa)
 	shouldEQ(t, newUgnot, 919720) // 900009 + 19711
+
+	feeColUgnot = ugnotBalanceOf(consts.FEE_COLLECTOR)
+	feeColWugnot = wugnotBalanceOf(consts.FEE_COLLECTOR)
+	shouldEQ(t, feeColUgnot, 29) // UNWRAP RESULT
+	shouldEQ(t, feeColWugnot, 0)
 }
 
 // DRY SELL NATIVE
@@ -162,6 +174,7 @@ func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
 }
 
 // SELL NATIVE
+// GNOT > bar
 func TestSwapRouteGnotBarExactIn(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 
@@ -176,6 +189,11 @@ func TestSwapRouteGnotBarExactIn(t *testing.T) {
 
 	// send
 	std.TestSetOrigSend(std.Coins{{"ugnot", 5000}}, nil)
+
+	feeColUgnot := ugnotBalanceOf(consts.FEE_COLLECTOR)
+	feeColWugnot := wugnotBalanceOf(consts.FEE_COLLECTOR)
+	shouldEQ(t, feeColUgnot, 29)
+	shouldEQ(t, feeColWugnot, 0)
 
 	amountIn, amountOut := SwapRoute(
 		consts.GNOT, // intputToken
@@ -199,4 +217,8 @@ func TestSwapRouteGnotBarExactIn(t *testing.T) {
 	newUgnot := ugnotBalanceOf(gsa)
 	shouldEQ(t, newUgnot, 919720)
 
+	feeColUgnot = ugnotBalanceOf(consts.FEE_COLLECTOR)
+	feeColWugnot = wugnotBalanceOf(consts.FEE_COLLECTOR)
+	shouldEQ(t, feeColUgnot, 29)
+	shouldEQ(t, feeColWugnot, 0)
 }
