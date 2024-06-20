@@ -242,19 +242,19 @@ func TestApiGetExternalIncentivesByRewardTokenPath(t *testing.T) {
 
 func TestApiGetInternalIncentives(t *testing.T) {
 	intIncen := ApiGetInternalIncentives()
-	res := `{"stat":{"height":144,"timestamp":1234567995},"response":[{"poolPath":"gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000","rewardToken":"gno.land/r/demo/gns","tier":1,"rewardPerBlock":"275000"},{"poolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardToken":"gno.land/r/demo/gns","tier":1,"rewardPerBlock":"275000"},{"poolPath":"gno.land/r/demo/baz:gno.land/r/demo/qux:500","rewardToken":"gno.land/r/demo/gns","tier":2,"rewardPerBlock":"165000"},{"poolPath":"ATOM:GNS:500","rewardToken":"gno.land/r/demo/gns","tier":2,"rewardPerBlock":"165000"},{"poolPath":"ATOM:GNOT:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"73333"},{"poolPath":"ATOM:USDT:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"73333"},{"poolPath":"ATOM:WETH:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"73333"}]}`
+	res := `{"stat":{"height":144,"timestamp":1234567995},"response":[{"poolPath":"gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000","rewardToken":"gno.land/r/demo/gns","tier":1,"rewardPerBlock":"2750"},{"poolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardToken":"gno.land/r/demo/gns","tier":1,"rewardPerBlock":"2750"},{"poolPath":"gno.land/r/demo/baz:gno.land/r/demo/qux:500","rewardToken":"gno.land/r/demo/gns","tier":2,"rewardPerBlock":"1650"},{"poolPath":"ATOM:GNS:500","rewardToken":"gno.land/r/demo/gns","tier":2,"rewardPerBlock":"1650"},{"poolPath":"ATOM:GNOT:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"733"},{"poolPath":"ATOM:USDT:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"733"},{"poolPath":"ATOM:WETH:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"733"}]}`
 	shouldEQ(t, intIncen, res)
 }
 
 func TestApiGetInternalIncentivesByPoolPath(t *testing.T) {
 	intIncen := ApiGetInternalIncentivesByPoolPath("ATOM:USDT:500")
-	res := `{"stat":{"height":144,"timestamp":1234567995},"response":[{"poolPath":"ATOM:USDT:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"73333"}]}`
+	res := `{"stat":{"height":144,"timestamp":1234567995},"response":[{"poolPath":"ATOM:USDT:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"733"}]}`
 	shouldEQ(t, intIncen, res)
 }
 
 func TestApiGetInternalIncentivesByTiers(t *testing.T) {
 	intIncen := ApiGetInternalIncentivesByTiers(uint64(3))
-	res := `{"stat":{"height":144,"timestamp":1234567995},"response":[{"poolPath":"ATOM:GNOT:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"73333"},{"poolPath":"ATOM:USDT:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"73333"},{"poolPath":"ATOM:WETH:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"73333"}]}`
+	res := `{"stat":{"height":144,"timestamp":1234567995},"response":[{"poolPath":"ATOM:GNOT:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"733"},{"poolPath":"ATOM:USDT:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"733"},{"poolPath":"ATOM:WETH:500","rewardToken":"gno.land/r/demo/gns","tier":3,"rewardPerBlock":"733"}]}`
 	shouldEQ(t, intIncen, res)
 }
 

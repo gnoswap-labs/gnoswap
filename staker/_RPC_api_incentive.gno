@@ -477,6 +477,7 @@ func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
 	_q96 := u256.MustFromDecimal(consts.Q96)
 	poolRewardPerBlockX96 := new(u256.Uint).Mul(u256.NewUint(uint64(blockReward)), poolRatioX96)
 	poolRewardPerBlock := new(u256.Uint).Div(poolRewardPerBlockX96, _q96)
+	poolRewardPerBlock = new(u256.Uint).Div(poolRewardPerBlock, u256.NewUint(100))
 
 	return poolRewardPerBlock.ToString()
 }
