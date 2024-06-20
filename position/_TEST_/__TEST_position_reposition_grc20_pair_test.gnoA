@@ -1,0 +1,279 @@
+package position
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/demo/gnoswap/consts"
+
+	pl "gno.land/r/demo/pool"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/foo"
+	"gno.land/r/demo/gns"
+
+	"gno.land/r/demo/gnft"
+)
+
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
+}
+
+func TestMintPosition01InRange(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
+	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		8000,
+		12000,
+		"50000000",
+		"50000000",
+		"0",
+		"0",
+		max_timeout,
+		gsa.String(),
+	)
+
+	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, getNextId(), 2)
+	shouldEQ(t, amount0, "18394892")
+	shouldEQ(t, amount1, "50000000")
+
+	position := positions[tokenId]
+	shouldEQ(t, position.nonce.ToString(), "0")
+	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.poolKey, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, position.tickLower, 8000)
+	shouldEQ(t, position.tickUpper, 12000)
+	shouldEQ(t, position.liquidity.ToString(), "318704392")
+	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	shouldEQ(t, position.tokensOwed0.ToString(), "0")
+	shouldEQ(t, position.tokensOwed1.ToString(), "0")
+	shouldEQ(t, position.burned, false)
+}
+
+func TestSwap1(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
+
+	std.TestSetRealm(rouRealm)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		barPath,
+		fooPath,
+		fee500,
+		gsa.String(),
+		true,
+		"1234567",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+
+	shouldEQ(t, amount0, "1234567")
+	shouldEQ(t, amount1, "-3332779")
+
+	position := positions[uint64(1)]
+	shouldEQ(t, position.nonce.ToString(), "0")
+	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.poolKey, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, position.tickLower, 8000)
+	shouldEQ(t, position.tickUpper, 12000)
+	shouldEQ(t, position.liquidity.ToString(), "318704392")
+	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	shouldEQ(t, position.tokensOwed0.ToString(), "0")
+	shouldEQ(t, position.tokensOwed1.ToString(), "0")
+	shouldEQ(t, position.burned, false)
+}
+
+func TestMintPosition02InRange(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		8000,
+		12000,
+		"50000000",
+		"50000000",
+		"0",
+		"0",
+		max_timeout,
+		gsa.String(),
+	)
+
+	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, getNextId(), 3)
+	shouldEQ(t, amount0, "21030652")
+	shouldEQ(t, amount1, "50000000")
+
+	position := positions[tokenId]
+	shouldEQ(t, position.nonce.ToString(), "0")
+	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.poolKey, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, position.tickLower, 8000)
+	shouldEQ(t, position.tickUpper, 12000)
+	shouldEQ(t, position.liquidity.ToString(), "341464938")
+	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "659841872392960215058365142934185")
+	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	shouldEQ(t, position.tokensOwed0.ToString(), "0")
+	shouldEQ(t, position.tokensOwed1.ToString(), "0")
+	shouldEQ(t, position.burned, false)
+}
+
+func TestUnclaimedFee01(t *testing.T) {
+	amount0, amount1 := unclaimedFee(1)
+
+	shouldEQ(t, amount0.ToString(), "617")
+	shouldEQ(t, amount1.ToString(), "0")
+}
+
+func TestUnclaimedFee02(t *testing.T) {
+	amount0, amount1 := unclaimedFee(2)
+
+	shouldEQ(t, amount0.ToString(), "0")
+	shouldEQ(t, amount1.ToString(), "0")
+}
+
+func TestDecreaseLiquidityInPosition(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	_lpTokenId := uint64(1)
+
+	ownerOfPosition := gnft.OwnerOf(tid(_lpTokenId))
+	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())
+
+	// approve fee0, fee_lpTokenId to pool
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(_lpTokenId, 100, "0", "0", max_timeout, false)
+
+	shouldEQ(t, tokenId, _lpTokenId)
+	shouldEQ(t, amount0, "19628840")
+	shouldEQ(t, amount1, "46667220")
+
+	ownerOfPosition = gnft.OwnerOf(tid(_lpTokenId))
+	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())
+
+	position := positions[_lpTokenId]
+	shouldEQ(t, position.nonce.ToString(), "0")
+	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.poolKey, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, position.tickLower, 8000)
+	shouldEQ(t, position.tickUpper, 12000)
+	shouldEQ(t, position.liquidity.ToString(), "0")
+	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "659841872392960215058365142934185")
+	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	shouldEQ(t, position.tokensOwed0.ToString(), "0")
+	shouldEQ(t, position.tokensOwed1.ToString(), "0")
+	shouldEQ(t, position.burned, true)
+}
+
+func TestMintPosition03InRange(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		8000,
+		12000,
+		"50000000",
+		"50000000",
+		"0",
+		"0",
+		max_timeout,
+		gsa.String(),
+	)
+
+	shouldEQ(t, tokenId, 3)
+	shouldEQ(t, getNextId(), 4)
+	shouldEQ(t, amount0, "21030652")
+	shouldEQ(t, amount1, "50000000")
+
+	position := positions[tokenId]
+	shouldEQ(t, position.nonce.ToString(), "0")
+	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.poolKey, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, position.tickLower, 8000)
+	shouldEQ(t, position.tickUpper, 12000)
+	shouldEQ(t, position.liquidity.ToString(), "341464938")
+	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "659841872392960215058365142934185")
+	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	shouldEQ(t, position.tokensOwed0.ToString(), "0")
+	shouldEQ(t, position.tokensOwed1.ToString(), "0")
+	shouldEQ(t, position.burned, false)
+}
+
+func TestRepositionNotOwner(t *testing.T) {
+	std.TestSetOrigCaller(test1)
+	shouldPanic(
+		t,
+		func() {
+			Reposition(uint64(1), -1000, 1000, "500", "500")
+		})
+}
+
+func TestRepositionOwnerButNowBurned(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	shouldPanic(
+		t,
+		func() {
+			Reposition(uint64(2), -1000, 1000, "500", "500")
+		})
+}
+
+func TestReposition(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+
+	_lpTokenId := uint64(1)
+
+	// check current state
+	position := positions[_lpTokenId]
+	shouldEQ(t, position.nonce.ToString(), "0")
+	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.poolKey, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, position.tickLower, 8000)
+	shouldEQ(t, position.tickUpper, 12000)
+	shouldEQ(t, position.liquidity.ToString(), "0")
+	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "659841872392960215058365142934185")
+	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	shouldEQ(t, position.tokensOwed0.ToString(), "0")
+	shouldEQ(t, position.tokensOwed1.ToString(), "0")
+	shouldEQ(t, position.burned, true)
+
+	Reposition(
+		_lpTokenId, // tokenId
+		-1000,      // tickLower
+		1000,       // tickUpper
+		"500",      // amount0
+		"500",      // amount1
+	)
+
+	position = positions[_lpTokenId]
+	shouldEQ(t, position.nonce.ToString(), "0")
+	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.poolKey, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, position.tickLower, -1000)
+	shouldEQ(t, position.tickUpper, 1000)
+	shouldEQ(t, position.liquidity.ToString(), "4998")
+	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	shouldEQ(t, position.tokensOwed0.ToString(), "0")
+	shouldEQ(t, position.tokensOwed1.ToString(), "0")
+	shouldEQ(t, position.burned, false)
+}

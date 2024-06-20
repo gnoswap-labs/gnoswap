@@ -480,6 +480,105 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
 }
 
+func Reposition(
+	tokenId uint64,
+	tickLower int32,
+	tickUpper int32,
+	_amount0Desired string, // uint256
+	_amount1Desired string, // uint256
+) (uint64, string, int32, int32, string, string) { // tokenId, liquidity, tickLower, tickUpper, amount0, amount1
+	// verify tokenId exists
+	if !exists(tokenId) {
+		panic(ufmt.Sprintf("[POSITION] position.gno__Reposition() || tokenId(%d) doesn't exist", tokenId))
+	}
+
+	// MUST BE OWNER TO REPOSITION
+	// can not be approved address > staked position can't be modified
+	owner := gnft.OwnerOf(tid(tokenId))
+	if owner != std.GetOrigCaller() {
+		panic(ufmt.Sprintf("[POSITION] position.gno__Reposition() || only owner can reposition__owner(%s) == std.GetOrigCaller(%s)", owner, std.GetOrigCaller()))
+	}
+
+	// position should be burned to reposition
+	position := positions[tokenId]
+	oldTickLower := position.tickLower
+	oldTickUpper := position.tickUpper
+
+	if !(position.isClear()) {
+		panic(ufmt.Sprintf("[POSITION] position.gno__Reposition() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1))
+	}
+
+	token0, token1, _ := poolKeyDivide(position.poolKey)
+	// check if gnot pool
+	token0IsNative := false
+	token1IsNative := false
+	if token0 == consts.WRAPPED_WUGNOT {
+		token0IsNative = true
+	} else if token1 == consts.WRAPPED_WUGNOT {
+		token1IsNative = true
+	}
+
+	ugnotSent := uint64(0)
+	if token0IsNative || token1IsNative {
+		// WRAP IT
+		oldUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+
+		sent := std.GetOrigSend()
+		ugnotSent = uint64(sent.AmountOf("ugnot"))
+
+		wrap(ugnotSent)
+
+		newUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+	}
+
+	liquidity, amount0, amount1 := addLiquidity(
+		AddLiquidityParams{
+			poolKey:        position.poolKey,
+			tickLower:      tickLower,
+			tickUpper:      tickUpper,
+			amount0Desired: u256.MustFromDecimal(_amount0Desired),
+			amount1Desired: u256.MustFromDecimal(_amount1Desired),
+			amount0Min:     u256.Zero(),
+			amount1Min:     u256.Zero(),
+		},
+	)
+
+	pool := pl.GetPoolFromPoolPath(position.poolKey)
+	positionKey := positionKeyCompute(GetOrigPkgAddr(), tickLower, tickUpper)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
+	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
+
+	position.tickLower = tickLower
+	position.tickUpper = tickUpper
+	position.liquidity = liquidity
+	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
+	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
+	position.tokensOwed0 = u256.Zero()
+	position.tokensOwed1 = u256.Zero()
+	position.burned = false
+
+	positions[tokenId] = position
+
+	std.Emit(
+		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_poolPath", position.poolKey,
+		"p_tickLower", int32ToStr(tickLower),
+		"p_tickUpper", int32ToStr(tickUpper),
+		"tokenId", uint64ToStr(tokenId),
+		"liquidity", liquidity.ToString(),
+		"amount0", amount0.ToString(),
+		"amount1", amount1.ToString(),
+		"old_tickLower", int32ToStr(oldTickLower),
+		"old_tickUpper", int32ToStr(oldTickUpper),
+	)
+
+	return tokenId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
+}
+
 // CollectFee collects swap fee from the position
 //
 // Panics if any of the following conditions are met:
