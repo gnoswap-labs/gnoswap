@@ -475,6 +475,40 @@ mint-and-stake:
 
 
 ## test swap
+swap-gns-to-gnot:
+	@$(MAKE) -f $(MAKEFILE) print-fee-collector
+
+	$(info ************ swap gns -> gnot, exact_in // gnoswap_admin ************)
+
+	# approve INPUT TOKEN to POOL
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/gns -func Approve -args $(ADDR_POOL) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
+
+	# approve OUTPUT TOKEN to ROUTER ( as 0.15% fee )
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/wugnot -func Approve -args $(ADDR_ROUTER) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
+
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/router -func SwapRoute -args "gno.land/r/demo/gns" -args "gno.land/r/demo/wugnot" -args 50000 -args "EXACT_IN" -args "gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000" -args "100" -args "1" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
+	@echo
+
+	@$(MAKE) -f $(MAKEFILE) print-fee-collector
+	@echo
+
+swap-gnot-to-gns:
+	@$(MAKE) -f $(MAKEFILE) print-fee-collector
+
+	$(info ************ swap gnot -> gns, exact_in // gnoswap_admin ************)
+
+	# approve INPUT TOKEN to POOL
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/wugnot -func Approve -args $(ADDR_POOL) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
+
+	# approve OUTPUT TOKEN to ROUTER ( as 0.15% fee )
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/gns -func Approve -args $(ADDR_ROUTER) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
+
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/router -func SwapRoute -args "gno.land/r/demo/wugnot" -args "gno.land/r/demo/gns" -args 50000 -args "EXACT_IN" -args "gno.land/r/demo/wugnot:gno.land/r/demo/gns:3000" -args "100" -args "1" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 10000000 -memo "" gnoswap_admin > /dev/null
+	@echo
+
+	@$(MAKE) -f $(MAKEFILE) print-fee-collector
+	@echo
+
 swap-exact-in-single-bar-to-baz:
 	@$(MAKE) -f $(MAKEFILE) print-fee-collector
 

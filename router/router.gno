@@ -126,7 +126,7 @@ func SwapRoute(
 	}
 
 	// PROTOCOL FEE
-	resultAmountOut = handleProtocolFee(outputToken, resultAmountOut, false)
+	afterFee := handleProtocolFee(outputToken, resultAmountOut, false)
 
 	// UNWRAP IF NECESSARY
 	// if input was gnot, refund left over wugnot
@@ -140,8 +140,8 @@ func SwapRoute(
 	}
 
 	if swapType == "EXACT_IN" {
-		if !(tokenAmountLimit.Lte(resultAmountOut)) {
-			panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received for user (expected minimum received:%s, actual received:%s)", _tokenAmountLimit, resultAmountOut.ToString()))
+		if !(tokenAmountLimit.Lte(afterFee)) {
+			panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || too few received for user (expected minimum received:%s, actual received:%s)", _tokenAmountLimit, afterFee.ToString()))
 		}
 	} else { // EXACT_OUT
 		if !(resultAmountIn.Lte(tokenAmountLimit)) {
@@ -149,7 +149,7 @@ func SwapRoute(
 		}
 	}
 
-	intAmountOut := i256.FromUint256(resultAmountOut)
+	intAmountOut := i256.FromUint256(afterFee)
 
 	std.Emit(
 		"GNOSWAP",
@@ -164,6 +164,7 @@ func SwapRoute(
 		"p_quote", quoteArr,
 		"amountIn", resultAmountIn.ToString(),
 		"amountOut", i256.Zero().Neg(intAmountOut).ToString(),
+		"amountOutWithoutFee", resultAmountOut.ToString(),
 	)
 
 	return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString()
@@ -227,13 +228,28 @@ func handleProtocolFee(outputToken string, amount *u256.Uint, isDry bool) *u256.
 	}
 
 	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(consts.PROTOCOL_FEE_ROUTER))
-	feeAmount.Div(feeAmount, u256.NewUint(10000))
+	feeAmount = feeAmount.Div(feeAmount, u256.NewUint(10000))
+	feeAmountUint64 := feeAmount.Uint64()
 
 	if !isDry {
-		ok := transferFromByRegisterCall(outputToken, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount.Uint64())
-		if !ok {
-			panic(ufmt.Sprintf("[ROUTER] router.gno__handleProtocolFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", outputToken, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount.ToString()))
+		if outputToken == consts.GNOT {
+			// WUGNOT: buyer > router
+			transferFromByRegisterCall(outputToken, std.GetOrigCaller(), consts.ROUTER_ADDR, feeAmountUint64)
+
+			// GNOT: wugnot > router
+			wugnot.Withdraw(feeAmountUint64)
+
+			// GNOT: router > feeCollector
+			banker := std.GetBanker(std.BankerTypeRealmSend)
+			banker.SendCoins(consts.ROUTER_ADDR, consts.FEE_COLLECTOR, std.Coins{{"ugnot", int64(feeAmountUint64)}})
+
+		} else {
+			ok := transferFromByRegisterCall(outputToken, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmountUint64)
+			if !ok {
+				panic(ufmt.Sprintf("[ROUTER] router.gno__handleProtocolFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", outputToken, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount.ToString()))
+			}
 		}
+
 	}
 
 	return new(u256.Uint).Sub(amount, feeAmount)

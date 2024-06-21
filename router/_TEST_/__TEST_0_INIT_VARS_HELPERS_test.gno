@@ -4,11 +4,16 @@ import (
 	"std"
 	"testing"
 
+	pusers "gno.land/p/demo/users"
+
+	"gno.land/r/demo/wugnot"
+
 	"gno.land/r/demo/gnoswap/consts"
 )
 
 var (
 	gsa   std.Address = consts.GNOSWAP_ADMIN
+	fcr   std.Address = consts.FEE_COLLECTOR
 	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
 
 	fooPath string = "gno.land/r/demo/foo"
@@ -66,4 +71,19 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 	}
 
 	return uint64(coins.AmountOf("ugnot"))
+}
+
+func wugnotBalanceOf(addr std.Address) uint64 {
+	addrToUser := pusers.AddressOrName(addr)
+	return wugnot.BalanceOf(addrToUser)
+}
+
+func printFeeBalance() {
+	ugnotBal := ugnotBalanceOf(fcr)
+	wugnotBal := wugnotBalanceOf(fcr)
+
+	println("FEE BALANCE")
+	println("> ugnot:\t", ugnotBal)
+	println("> wugnot:\t", wugnotBal)
+	println()
 }
