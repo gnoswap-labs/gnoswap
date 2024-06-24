@@ -56,6 +56,7 @@ func Mint(
 		token1 = consts.WRAPPED_WUGNOT
 		token1IsNative = true
 	}
+	userWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 
 	if token1 < token0 {
 		token0, token1 = token1, token0
@@ -73,31 +74,24 @@ func Mint(
 	// one of token amount can be 0 if position is out of range
 	// check this condition by using DryMint()
 	poolPath := ufmt.Sprintf("%s:%s:%d", token0, token1, fee)
-	poolCurrentTick := pl.PoolGetSlot0Tick(poolPath)
 
-	estimatedMintAmount0Str, estimatedMintAmount1Str := DryMint(
-		poolCurrentTick,
-		tickLower,
-		tickUpper,
-		_amount0Desired,
-		_amount1Desired,
-	)
-
-	// if estmiated gnot amount is not 0, user should have been sent gnot to position
-	ugnotSent := uint64(0)
-	if (token0IsNative && estimatedMintAmount0Str != "0") || (token1IsNative && estimatedMintAmount1Str != "0") {
+	if token0IsNative || token1IsNative {
 		// SEND GNOT: position -> wugnot
 		oldUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 
 		sent := std.GetOrigSend()
-		ugnotSent = uint64(sent.AmountOf("ugnot"))
+		ugnotSent := uint64(sent.AmountOf("ugnot"))
+		if ugnotSent > 0 {
+			wrap(ugnotSent)
 
-		wrap(ugnotSent)
+			newUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 
-		newUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-
-		if (newUserWugnotBalance - oldUserWugnotBalance) != ugnotSent {
-			panic(ufmt.Sprintf("[POSITION] position.gno__Mint() || wugnot sent(%d) != wugnot received(%d)", ugnotSent, newUserWugnotBalance-oldUserWugnotBalance))
+			if (newUserWugnotBalance - oldUserWugnotBalance) != ugnotSent {
+				panic(ufmt.Sprintf("[POSITION] position.gno__Mint() || wugnot sent(%d) != wugnot received(%d)", ugnotSent, newUserWugnotBalance-oldUserWugnotBalance))
+			}
+		} else {
+			// no ugnot sent
+			// can be happen depending on current position range
 		}
 	}
 
@@ -117,15 +111,10 @@ func Mint(
 
 	tokenId, liquidity, amount0, amount1 := mint(mintParams)
 
-	spendWugnot := uint64(0)
-	if token0IsNative {
-		spendWugnot = amount0.Uint64()
-	} else if token1IsNative {
-		spendWugnot = amount1.Uint64()
-	}
-
 	if token0IsNative || token1IsNative {
-		leftOver := ugnotSent - spendWugnot
+		// if this is larger than before mint, unwrap rest
+		userWugnotAfterMint := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+		leftOver := userWugnotAfterMint - userWugnotBalance
 		if leftOver > 0 {
 			unwrap(leftOver)
 		}
@@ -521,10 +510,14 @@ func Reposition(
 	ugnotSent := uint64(0)
 	if token0IsNative || token1IsNative {
 		// WRAP IT
+		oldUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+
 		sent := std.GetOrigSend()
 		ugnotSent = uint64(sent.AmountOf("ugnot"))
 
 		wrap(ugnotSent)
+
+		newUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 	}
 
 	liquidity, amount0, amount1 := addLiquidity(
