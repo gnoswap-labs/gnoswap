@@ -85,7 +85,6 @@ func Mint(
 			wrap(ugnotSent)
 
 			newUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-
 			if (newUserWugnotBalance - oldUserWugnotBalance) != ugnotSent {
 				panic(ufmt.Sprintf("[POSITION] position.gno__Mint() || wugnot sent(%d) != wugnot received(%d)", ugnotSent, newUserWugnotBalance-oldUserWugnotBalance))
 			}
@@ -211,6 +210,12 @@ func IncreaseLiquidity(
 
 	// wrap if target pool has wugnot
 	position := positions[tokenId]
+
+	// if position is burned, cannot increase liquidity
+	if position.burned {
+		panic(ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || cannot increase liquidity for burned position(%d)", tokenId))
+	}
+
 	pToken0, pToken1, _ := poolKeyDivide(position.poolKey)
 
 	isToken0Wugnot := pToken0 == consts.WRAPPED_WUGNOT
