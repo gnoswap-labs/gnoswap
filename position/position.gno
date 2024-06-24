@@ -510,14 +510,10 @@ func Reposition(
 	ugnotSent := uint64(0)
 	if token0IsNative || token1IsNative {
 		// WRAP IT
-		oldUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-
 		sent := std.GetOrigSend()
 		ugnotSent = uint64(sent.AmountOf("ugnot"))
 
 		wrap(ugnotSent)
-
-		newUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 	}
 
 	liquidity, amount0, amount1 := addLiquidity(
