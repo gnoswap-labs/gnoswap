@@ -708,34 +708,34 @@ burn-position-7:
 print-fee-collector:
 	$(info ************ print fee collector balance ************)
 	@printf "BAR "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/bar\nBalanceOf(\"$(ADDR_FCL)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/bar.BalanceOf(\"$(ADDR_FCL)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 
 	@printf "BAZ "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/baz\nBalanceOf(\"$(ADDR_FCL)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/baz.BalanceOf(\"$(ADDR_FCL)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 
 	@printf "QUX "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/qux\nBalanceOf(\"$(ADDR_FCL)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/qux.BalanceOf(\"$(ADDR_FCL)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 
 	@printf "FOO "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/foo\nBalanceOf(\"$(ADDR_FCL)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/foo.BalanceOf(\"$(ADDR_FCL)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 
 	@printf "GNS "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/gns\nBalanceOf(\"$(ADDR_FCL)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/gns.BalanceOf(\"$(ADDR_FCL)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 
 	@printf "OBL "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/obl\nBalanceOf(\"$(ADDR_FCL)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/obl.BalanceOf(\"$(ADDR_FCL)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 
 	@printf "USDC "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/wugnot\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/wugnot.BalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 
 	@printf "WUGNOT "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/wugnot\nBalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/wugnot.BalanceOf(\"g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
 	@echo
