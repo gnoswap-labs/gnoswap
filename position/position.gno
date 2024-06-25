@@ -163,8 +163,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
 	position := Position{
-		nonce: u256.Zero(),
-		// operator:                 std.PrevRealm().Addr(), // staker_MintAndStake() set this to staker, which isn't intended
+		nonce:                    u256.Zero(),
 		operator:                 std.GetOrigCaller(),
 		poolKey:                  pl.GetPoolPath(params.token0, params.token1, params.fee),
 		tickLower:                params.tickLower,
@@ -174,6 +173,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
 		tokensOwed0:              u256.Zero(),
 		tokensOwed1:              u256.Zero(),
+		burned:                   false,
 	}
 	positions[tokenId] = position
 
@@ -210,12 +210,6 @@ func IncreaseLiquidity(
 
 	// wrap if target pool has wugnot
 	position := positions[tokenId]
-
-	// if position is burned, cannot increase liquidity
-	if position.burned {
-		panic(ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || cannot increase liquidity for burned position(%d)", tokenId))
-	}
-
 	pToken0, pToken1, _ := poolKeyDivide(position.poolKey)
 
 	isToken0Wugnot := pToken0 == consts.WRAPPED_WUGNOT
@@ -305,6 +299,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 	position.liquidity = new(u256.Uint).Add(position.liquidity, liquidity)
+	position.burned = false
 
 	positions[params.tokenId] = position
 
