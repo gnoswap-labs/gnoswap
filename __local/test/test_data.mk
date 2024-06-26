@@ -685,22 +685,22 @@ unstake-token-11:
 ## test position burn
 burn-position-1:
 	$(info ************ decrease entire liquidity(==burn) from position 1 // gnoswap_lp01 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func DecreaseLiquidity -args 1 -args 100 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 12000000 -memo "" gnoswap_lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func DecreaseLiquidity -args 1 -args 100 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_lp01 > /dev/null
 	@echo
 
 burn-position-2:
 	$(info ************ decrease entire liquidity(==burn) from position 2 // gnoswap_lp01 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func DecreaseLiquidity -args 2 -args 100 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 12000000 -memo "" gnoswap_lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func DecreaseLiquidity -args 2 -args 100 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_lp01 > /dev/null
 	@echo
 
 burn-position-6:
 	$(info ************ decrease entire liquidity(==burn) from position 6 // gnoswap_lp02 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func DecreaseLiquidity -args 6 -args 100 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 12000000 -memo "" gnoswap_lp02 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func DecreaseLiquidity -args 6 -args 100 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_lp02 > /dev/null
 	@echo
 
 burn-position-7:
 	$(info ************ decrease entire liquidity(==burn) from position 7 // gnoswap_lp01 ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func DecreaseLiquidity -args 7 -args 100 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 12000000 -memo "" gnoswap_lp01 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/position -func DecreaseLiquidity -args 7 -args 100 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_lp01 > /dev/null
 	@echo
 
 
