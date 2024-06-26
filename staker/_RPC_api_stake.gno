@@ -101,7 +101,9 @@ func ApiGetRewards() string {
 			Rewards:   rewards,
 		}
 
-		lpTokenRewards = append(lpTokenRewards, lpTokenReward)
+		if len(rewards) > 0 {
+			lpTokenRewards = append(lpTokenRewards, lpTokenReward)
+		}
 	}
 
 	qb := ResponseQueryBase{

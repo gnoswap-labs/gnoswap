@@ -107,7 +107,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 	shouldEQ(t, position.burned, false) // not burned yet
 }
 
-func TestDecreaseLiquidityBurnedPosition(t *testing.T) {
+func TestDecreaseLiquidityToBurnPosition(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 
 	// burn it
@@ -120,20 +120,37 @@ func TestDecreaseLiquidityBurnedPosition(t *testing.T) {
 		true,        // unwrapResult
 	)
 	position := positions[uint64(1)]
+	shouldEQ(t, position.burned, true)              // it is burned
+	shouldEQ(t, position.liquidity.ToString(), "0") // and liquidity is 0
+}
+
+func TestIncreaseLiquidityBurnedPosition(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	pool := getPoolFromLpTokenId(uint64(1))
+	oldLiquidity := pool.PoolGetLiquidity()
+
+	position := positions[uint64(1)]
 	shouldEQ(t, position.burned, true) // it is burned
 
-	shouldPanicWithMsg(
-		t,
-		func() {
-			IncreaseLiquidity(
-				uint64(1),   // tokenId
-				"10000000",  // amount0Desired
-				"10000000",  // amount1Desired
-				"0",         // amount0Min
-				"0",         // amount1Min
-				max_timeout, // deadline
-			)
-		},
-		"[POSITION] position.gno__increaseLiquidity() || cannot increase liquidity for burned position(1)",
+	_, _, m0, m1, _ := IncreaseLiquidity(
+		uint64(1),   // tokenId
+		"10000000",  // amount0Desired
+		"10000000",  // amount1Desired
+		"0",         // amount0Min
+		"0",         // amount1Min
+		max_timeout, // deadline
 	)
+	// ---       event: {GNOSWAP gno.land/r/demo/position IncreaseLiquidity [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {liquidity 63740878} {amount0 3678979} {amount1 10000000}]}
+
+	shouldEQ(t, m0, "3678979")
+	shouldEQ(t, m1, "10000000")
+
+	newLiquidity := pool.PoolGetLiquidity()
+	shouldEQ(t, newLiquidity.Gt(oldLiquidity), true)
+
+	position = positions[uint64(1)]
+	shouldEQ(t, position.burned, false)
 }

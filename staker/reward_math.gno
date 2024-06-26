@@ -17,8 +17,17 @@ type userClaimedReward map[std.Address]map[uint64]map[string]*u256.Uint // addre
 var userClaimedRewards = make(userClaimedReward)
 
 func clearUserClaimedRewards(lpTokenId uint64) {
-	owner := deposits[lpTokenId].owner
-	delete(userClaimedRewards[owner], lpTokenId)
+	deposit, ok := deposits[lpTokenId]
+	if !ok {
+		return
+	}
+
+	userClaimed, ok := userClaimedRewards[deposit.owner]
+	if !ok {
+		return
+	}
+
+	delete(userClaimed, lpTokenId)
 }
 
 func userClaimedRewardAmount(address std.Address, tokenId uint64, rewardTokenPath string, rewardAmount *u256.Uint, claimeRequest bool) *u256.Uint {
