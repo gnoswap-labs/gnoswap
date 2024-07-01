@@ -18,7 +18,7 @@ import (
 func TestCreatePool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:500}]}
 

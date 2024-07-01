@@ -210,7 +210,7 @@ func main() {
 func createPool() {
 	std.TestSetRealm(gsaRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*2)
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*2)
 	std.TestSkipHeights(1)
 
 	// 2 HOPS, 1 GNS ≈ 7.29 BAR

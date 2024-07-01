@@ -206,6 +206,10 @@ func init() {
 	std.TestSetRealm(gsaRealm)
 	std.TestSetOrigCaller(gsa)
 
+	// set pool create fee to 0 for testing
+	std.TestSetOrigCaller(gsa)
+	pl.SetPoolCreationFee(0)
+
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
@@ -246,7 +250,7 @@ func main() {
 func createPool() {
 	std.TestSetRealm(gsaRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*0)
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*0)
 	std.TestSkipHeights(1)
 
 	pl.CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(10_000).ToString())

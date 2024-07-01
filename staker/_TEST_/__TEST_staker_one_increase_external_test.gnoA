@@ -31,12 +31,16 @@ func init() {
 	poolTiers["ATOM/GNOT_500"] = 3
 	poolTiers["ATOM/USDT_500"] = 3
 	poolTiers["ATOM/WETH_500"] = 3
+
+	// set pool create fee to 0 for testing
+	std.TestSetOrigCaller(gsa)
+	pl.SetPoolCreationFee(0)
 }
 
 func TestPoolCreatePool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	std.TestSkipHeights(1)
 
 	pl.CreatePool(fooPath, barPath, uint32(500), "130621891405341611593710811006") // tick 10_000 ≈ x2.7

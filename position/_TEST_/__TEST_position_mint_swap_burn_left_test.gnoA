@@ -15,10 +15,16 @@ import (
 	// u256 "gno.land/p/demo/gnoswap/uint256"
 )
 
+func init() {
+	// set pool create fee to 0 for testing
+	std.TestSetOrigCaller(gsa)
+	pl.SetPoolCreationFee(0)
+}
+
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 

@@ -202,7 +202,7 @@ func createPool() {
 	// call gns faucet to get creation fee
 	std.TestSetRealm(gsaRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	std.TestSkipHeights(1)
 
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick 10000 x2.7

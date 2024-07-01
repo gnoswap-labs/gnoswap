@@ -13,6 +13,8 @@ import (
 	"gno.land/r/demo/gnoswap/consts"
 
 	"gno.land/r/demo/gns"
+
+	"gno.land/p/demo/testutils"
 )
 
 var (
@@ -28,7 +30,7 @@ func TestCreateFooBarPool(t *testing.T) {
 
 	std.TestSkipHeights(5)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	std.TestSkipHeights(1)
 
 	CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick 10000
@@ -46,7 +48,7 @@ func TestCreateBarBazPool(t *testing.T) {
 
 	std.TestSkipHeights(5)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	std.TestSkipHeights(1)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
@@ -117,4 +119,66 @@ func TestApiGetPools(t *testing.T) {
 	}
 
 	shouldEQ(t, response.Size(), 2)
+}
+
+// Test Getter/Setter for WithdrawalFee
+func TestGetWithdrawalFee(t *testing.T) {
+	shouldEQ(t, GetWithdrawalFee(), uint64(1))
+}
+
+func TestSetWithdrawalFeeNoPermission(t *testing.T) {
+	dummy := testutils.TestAddress("dummy")
+	std.TestSetOrigCaller(dummy)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			SetWithdrawalFee(2)
+		},
+		"must be called by admin",
+	)
+}
+
+func TestSetWithdrawalFeeFeeOutOfRange(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			SetWithdrawalFee(101)
+		},
+		"[POOL] withdrawal_fee.gno__SetWithdrawalFee() || fee(101) must be in range 0 ~ 100",
+	)
+}
+
+func TestSetWithdrawalFee(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	shouldEQ(t, GetWithdrawalFee(), uint64(1))
+	SetWithdrawalFee(3)
+	shouldEQ(t, GetWithdrawalFee(), uint64(3))
+}
+
+// Test Getter/Setter for PoolCreationFee
+func TestGetPoolCreationFee(t *testing.T) {
+	shouldEQ(t, GetPoolCreationFee(), uint64(100_000_000))
+}
+
+func TestSetPoolCreationFeeNoPermission(t *testing.T) {
+	dummy := testutils.TestAddress("dummy")
+	std.TestSetOrigCaller(dummy)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			SetPoolCreationFee(2)
+		},
+		"must be called by admin",
+	)
+}
+
+func TestSetPoolCreationFee(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	shouldEQ(t, GetPoolCreationFee(), uint64(100_000_000))
+	SetPoolCreationFee(200_000_000)
+	shouldEQ(t, GetPoolCreationFee(), uint64(200_000_000))
 }

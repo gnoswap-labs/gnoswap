@@ -25,7 +25,7 @@ var (
 func TestCreateFooBarPool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	std.TestSkipHeights(1)
 
 	CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick 10000
@@ -37,7 +37,7 @@ func TestCreateFooBarPool(t *testing.T) {
 func TestCreateBarBazPool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	std.TestSkipHeights(1)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
