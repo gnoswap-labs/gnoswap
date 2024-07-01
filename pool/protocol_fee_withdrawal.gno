@@ -74,18 +74,20 @@ func HandleWithdrawalFee(
 	return afterAmount0.ToString(), afterAmount1.ToString()
 }
 
+// GetWithdrawalFee returns the withdrawal fee
+func GetWithdrawalFee() uint64 {
+	return withdrawalFee
+}
+
 // SetWithdrawalFee sets the withdrawal fee
 //
 // Panics if any of the following conditions are met:
 // - caller is not the admin
 func SetWithdrawalFee(fee uint64) {
-	// MUST BE ORIGIN CALL
-	std.AssertOriginCall()
-
 	common.MustCallFromAdmin()
 
 	if fee > 100 {
-		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetFeeProtocol() || fee(%d) must be in range 0 ~ 100", fee))
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetWithdrawalFee() || fee(%d) must be in range 0 ~ 100", fee))
 	}
 
 	withdrawalFee = fee
