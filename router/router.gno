@@ -125,8 +125,8 @@ func SwapRoute(
 		}
 	}
 
-	// PROTOCOL FEE
-	afterFee := handleProtocolFee(outputToken, resultAmountOut, false)
+	// PROTOCOL FEE (router swap fee)
+	afterFee := handleSwapFee(outputToken, resultAmountOut, false)
 
 	// UNWRAP IF NECESSARY
 	// if input was gnot, refund left over wugnot
@@ -220,37 +220,4 @@ func handleMultiSwap(swapType string, route string, numHops int, amountSpecified
 	default:
 		panic("[ROUTER] router.gno__handleMultiSwap() || unknown swapType")
 	}
-}
-
-func handleProtocolFee(outputToken string, amount *u256.Uint, isDry bool) *u256.Uint {
-	if consts.PROTOCOL_FEE_ROUTER <= 0 { // r3v4_xxx: CHANGABLE BY GOV
-		return amount
-	}
-
-	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(consts.PROTOCOL_FEE_ROUTER))
-	feeAmount = feeAmount.Div(feeAmount, u256.NewUint(10000))
-	feeAmountUint64 := feeAmount.Uint64()
-
-	if !isDry {
-		if outputToken == consts.GNOT {
-			// WUGNOT: buyer > router
-			transferFromByRegisterCall(outputToken, std.GetOrigCaller(), consts.ROUTER_ADDR, feeAmountUint64)
-
-			// GNOT: wugnot > router
-			wugnot.Withdraw(feeAmountUint64)
-
-			// GNOT: router > feeCollector
-			banker := std.GetBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(consts.ROUTER_ADDR, consts.FEE_COLLECTOR, std.Coins{{"ugnot", int64(feeAmountUint64)}})
-
-		} else {
-			ok := transferFromByRegisterCall(outputToken, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmountUint64)
-			if !ok {
-				panic(ufmt.Sprintf("[ROUTER] router.gno__handleProtocolFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", outputToken, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount.ToString()))
-			}
-		}
-
-	}
-
-	return new(u256.Uint).Sub(amount, feeAmount)
 }
