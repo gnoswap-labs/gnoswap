@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/testutils"
 
 	"gno.land/r/demo/gnoswap/consts"
 
@@ -21,7 +22,7 @@ import (
 func TestCreatePool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE*3)
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 
 	pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:500}]}
@@ -221,4 +222,42 @@ func TestSwapRouteGnotBarExactIn(t *testing.T) {
 	feeColWugnot = wugnotBalanceOf(consts.FEE_COLLECTOR)
 	shouldEQ(t, feeColUgnot, 29)
 	shouldEQ(t, feeColWugnot, 0)
+}
+
+// Test Getter/Setter for SwapFee
+func TestGetSwapFee(t *testing.T) {
+	fee := GetSwapFee()
+	shouldEQ(t, fee, uint64(15))
+}
+
+func TestSetSwapFeeNoPermission(t *testing.T) {
+	dummy := testutils.TestAddress("dummy")
+	std.TestSetOrigCaller(dummy)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			SetSwapFee(2)
+		},
+		"must be called by admin",
+	)
+}
+
+func TestSetSwapFeeOutOfRange(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			SetSwapFee(101)
+		},
+		"[STAKER] reward_fee.gno__SetSwapFee() || fee(101) must be in range 0 ~ 100",
+	)
+}
+
+func TestSetSwapFee(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	shouldEQ(t, GetSwapFee(), uint64(15))
+	SetSwapFee(51)
+	shouldEQ(t, GetSwapFee(), uint64(51))
 }

@@ -70,7 +70,7 @@ func CreatePool(
 	}
 
 	if !exist {
-		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.FEE_COLLECTOR), consts.POOL_CREATION_FEE)
+		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.FEE_COLLECTOR), poolCreationFee)
 
 		pool = newPool(token0Path, token1Path, fee, tickSpacing, sqrtPriceX96)
 		pools[poolPath] = pool

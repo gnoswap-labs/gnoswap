@@ -21,7 +21,7 @@ import (
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	std.TestSkipHeights(2)
 
 	pl.CreatePool(barPath, quxPath, uint32(500), "130621891405341611593710811006") // tick 10_000 ≈ x2.7

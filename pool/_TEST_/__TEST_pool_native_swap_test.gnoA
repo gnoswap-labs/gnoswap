@@ -22,7 +22,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
 	std.TestSetRealm(gsaRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(fooPath, consts.WRAPPED_WUGNOT, fee500, "130621891405341611593710811006") // x2.7
 	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/foo:gno.land/r/demo/wugnot:500}]}
 }

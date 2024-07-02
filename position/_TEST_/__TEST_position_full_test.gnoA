@@ -15,10 +15,16 @@ import (
 	"gno.land/r/demo/gns"
 )
 
+func init() {
+	// set pool create fee to 0 for testing
+	std.TestSetOrigCaller(gsa)
+	pl.SetPoolCreationFee(0)
+}
+
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	gns.Approve(a2u(consts.POOL_ADDR), consts.POOL_CREATION_FEE)
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
 	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
 }

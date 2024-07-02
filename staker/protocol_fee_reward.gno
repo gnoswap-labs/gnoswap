@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	rewardFee = uint64(1)
+	rewardFee = uint64(1) // currently, chanageable by admin
 )
 
 func handleRewardFee(
@@ -52,11 +52,15 @@ func handleRewardFee(
 	return new(u256.Uint).Sub(amount, feeAmount)
 }
 
+func GetRewardFee() uint64 {
+	return rewardFee
+}
+
 func SetRewardFee(fee uint64) {
 	common.MustCallFromAdmin()
 
-	if fee < 0 {
-		panic(ufmt.Sprintf("[STAKER] reward_fee.gno__SetFeeProtocol() || fee(%d) must be >= 0", fee))
+	if fee > 100 {
+		panic(ufmt.Sprintf("[STAKER] reward_fee.gno__SetRewardFee() || fee(%d) must be in range 0 ~ 100", fee))
 	}
 
 	rewardFee = fee

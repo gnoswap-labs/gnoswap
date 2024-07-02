@@ -101,3 +101,7 @@ func callType() string {
 
 	return "INDIRECT"
 }
+
+func uint64ToStr(i uint64) string {
+	return strconv.FormatInt(int64(i), 10)
+}

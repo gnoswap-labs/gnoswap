@@ -4,13 +4,6 @@ import (
 	"std"
 )
 
-// MOST LIKELY FIXED, BUT CHANGABLE VIA GOVERNANCE
-var (
-	PROTOCOL_FEE_ROUTER uint64 = 15 // 0.15%
-)
-
-var POOL_CREATION_FEE uint64 = 100000000 // CHANGABLE VIA GSA, INITIAL 100_GNS (10^6)
-
 // GNOSWAP SERVICE
 const (
 	GNOSWAP_ADMIN std.Address = "g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq" // GSA
