@@ -8,6 +8,7 @@ import (
 const (
 	GNOSWAP_ADMIN std.Address = "g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq" // GSA
 	FEE_COLLECTOR std.Address = "g18sp3hq6zqfxw88ffgz773gvaqgzjhxy62l9906" // FCL
+	DEV_OPS       std.Address = "g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9" // DevOps
 
 	INTERNAL_REWARD_ACCOUNT   std.Address = "g1jms5fx2raq4qfkq3502mfh25g54nyl5qeuvz5y" // IRA for GNS
 	BLOCK_GENERATION_INTERVAL int64       = 5                                          // 5 seconds
@@ -91,5 +92,6 @@ const (
 
 // ETCs
 const (
-	ZERO_ADDRESS std.Address = ""
+	// REF: https://github.com/gnolang/gno/pull/2401#discussion_r1648064219
+	ZERO_ADDRESS std.Address = "g100000000000000000000000000000000dnmcnx"
 )
