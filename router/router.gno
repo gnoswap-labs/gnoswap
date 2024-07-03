@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	en "gno.land/r/demo/emission"
 	"gno.land/r/demo/gnoswap/common"
 	"gno.land/r/demo/gnoswap/consts"
 
@@ -167,6 +168,7 @@ func SwapRoute(
 		"amountOutWithoutFee", resultAmountOut.ToString(),
 	)
 
+	en.MintAndDistributeGns()
 	return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString()
 }
 

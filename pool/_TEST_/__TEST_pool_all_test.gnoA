@@ -23,14 +23,23 @@ var (
 
 // 1. Create Foo:Bar Pool
 func TestCreateFooBarPool(t *testing.T) {
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 0)
+	shouldEQ(t, gns.TotalSupply(), 100000000000000)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 0)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 0)
+
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
-	std.TestSkipHeights(1)
 
 	CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick 10000
 	// ---       event: {GNOSWAP gno.land/r/demo/pool CreatePool [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}	shouldEQ(t, len(pools), 1)
 	std.TestSkipHeights(1)
+
+	shouldEQ(t, gns.TotalSupply(), 100004387842345)
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 3290881758)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 877568469)
 }
 
 // 2. Create Bar:Baz Pool
@@ -106,4 +115,8 @@ func TestApiGetPools(t *testing.T) {
 	}
 
 	shouldEQ(t, response.Size(), 2)
+}
+
+func gnsBalance(addr std.Address) uint64 {
+	return gns.BalanceOf(a2u(addr))
 }

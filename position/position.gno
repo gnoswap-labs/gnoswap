@@ -12,6 +12,7 @@ import (
 	"gno.land/r/demo/gnoswap/common"
 	"gno.land/r/demo/gnoswap/consts"
 
+	en "gno.land/r/demo/emission"
 	pl "gno.land/r/demo/pool"
 )
 
@@ -133,6 +134,7 @@ func Mint(
 		"amount1", amount1.ToString(),
 	)
 
+	en.MintAndDistributeGns()
 	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString()
 }
 
@@ -245,6 +247,7 @@ func IncreaseLiquidity(
 		"amount1", amount1.ToString(),
 	)
 
+	en.MintAndDistributeGns()
 	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
 }
 
@@ -355,6 +358,7 @@ func DecreaseLiquidity(
 		"amount1", amount1.ToString(),
 	)
 
+	en.MintAndDistributeGns()
 	return tokenId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
 }
 
@@ -561,6 +565,7 @@ func Reposition(
 		"old_tickUpper", int32ToStr(oldTickUpper),
 	)
 
+	en.MintAndDistributeGns()
 	return tokenId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
 }
 
@@ -662,6 +667,7 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 		}
 	}
 
+	en.MintAndDistributeGns()
 	return tokenId, withoutFee0, withoutFee1, position.poolKey
 }
 

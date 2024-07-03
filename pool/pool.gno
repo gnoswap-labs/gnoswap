@@ -11,6 +11,7 @@ import (
 	"gno.land/r/demo/gnoswap/consts"
 
 	gv "gno.land/r/demo/gov"
+	en "gno.land/r/demo/emission"
 
 	i256 "gno.land/p/demo/gnoswap/int256"
 	u256 "gno.land/p/demo/gnoswap/uint256"

@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	en "gno.land/r/demo/emission"
 	"gno.land/r/demo/gnoswap/common"
 	"gno.land/r/demo/gnoswap/consts"
 
@@ -82,8 +83,9 @@ func CreatePool(
 			"m_prevRealm", prevRealm(),
 			"p_poolPath", poolPath,
 		)
-
 	}
+
+	en.MintAndDistributeGns()
 }
 
 // DoesPoolPathExist reports whether the pool exists with the given poolPath
