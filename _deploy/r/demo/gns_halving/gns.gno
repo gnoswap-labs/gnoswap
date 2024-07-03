@@ -121,7 +121,8 @@ func Mint(address pusers.AddressOrName) {
 	}
 }
 
-// ONLY FOR EMISSION TESTING, REMOVE THIS FUNCTION IN PRODUCTION
+// XXX: Remove this
+// ONLY FOR EMISSION TESTING
 func TestSetLastMintedHeight(height int64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.EMISSION_ADDR {
