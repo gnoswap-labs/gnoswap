@@ -120,3 +120,12 @@ func Mint(address pusers.AddressOrName) {
 		// println("height:", i, "minted:", amount)
 	}
 }
+
+// ONLY FOR EMISSION TESTING, REMOVE THIS FUNCTION IN PRODUCTION
+func TestSetLastMintedHeight(height int64) {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.EMISSION_ADDR {
+		panic("only emission contract can call TestSetLastMintedHeight")
+	}
+	lastMintedHeight = height
+}
