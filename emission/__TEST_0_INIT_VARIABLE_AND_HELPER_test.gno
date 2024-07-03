@@ -4,11 +4,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/demo/gns"
-
 	"gno.land/r/demo/gnoswap/consts"
-
-	pusers "gno.land/p/demo/users"
 )
 
 var (

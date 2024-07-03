@@ -1,0 +1,53 @@
+package emission
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/demo/gns"
+
+	"gno.land/r/demo/gnoswap/consts"
+)
+
+func TestMintAndDistributeGns_Initial(t *testing.T) {
+	// check initial state
+	shouldEQ(t, lastExecutedHeight, 0)
+	shouldEQ(t, gns.TotalSupply(), 100000000000000)
+
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 0)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 0)
+	shouldEQ(t, gnsBalance(consts.ZERO_ADDRESS), 0) // XXX: currently, community pool and xGNS distribution will be distributed to zero address
+	shouldEQ(t, gnsBalance(emissionAddr), 0)
+
+	MintAndDistributeGns()                           // 1 ~ 123 height
+	shouldEQ(t, lastExecutedHeight, std.GetHeight()) // after MintAndDistributeGns, locked should be false
+
+	shouldEQ(t, gns.TotalSupply(), 100000000000000+4387842345)
+
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 3290881758) // 75% of 4387842345
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 877568469)      // 20% of 4387842345
+	shouldEQ(t, gnsBalance(consts.ZERO_ADDRESS), 219392117) // 5% of 4387842345
+	shouldEQ(t, gnsBalance(emissionAddr), 1)                // 4387842345 - (3290881758 + 877568469 + 219392117) = 1
+}
+
+func TestMintAndDistributeGns_SameBlock(t *testing.T) {
+	// we're still in the same block, so MintAndDistributeGns should not mint again
+	shouldEQ(t, lastExecutedHeight, std.GetHeight())
+	MintAndDistributeGns()
+
+	shouldEQ(t, gns.TotalSupply(), 100000000000000+4387842345)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 3290881758)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 877568469)
+	shouldEQ(t, gnsBalance(consts.ZERO_ADDRESS), 219392117)
+	shouldEQ(t, gnsBalance(emissionAddr), 1)
+}
+
+func TestMintAndDistributeGns_After5Block(t *testing.T) {
+	std.TestSkipHeights(5)
+	height := std.GetHeight()
+
+	// we're in a new block, so MintAndDistributeGns should mint again
+	shouldEQ(t, lastExecutedHeight, height-5)
+	MintAndDistributeGns()
+	shouldEQ(t, lastExecutedHeight, height)
+}
