@@ -41,6 +41,8 @@ func CreatePool(
 	fee uint32,
 	_sqrtPriceX96 string, // uint256
 ) {
+	en.MintAndDistributeGns()
+
 	if token0Path == token1Path {
 		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
 	}
@@ -84,8 +86,6 @@ func CreatePool(
 			"p_poolPath", poolPath,
 		)
 	}
-
-	en.MintAndDistributeGns()
 }
 
 // DoesPoolPathExist reports whether the pool exists with the given poolPath

@@ -7,7 +7,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	en "gno.land/r/demo/emission"
 	"gno.land/r/demo/gnoswap/common"
 	"gno.land/r/demo/gnoswap/consts"
 
@@ -38,6 +37,8 @@ func SwapRoute(
 	quoteArr string, // []int
 	_tokenAmountLimit string, // uint256
 ) (string, string) { // tokneIn, tokenOut
+	en.MintAndDistributeGns()
+
 	if common.GetLimitCaller() {
 		isUserCalled := std.PrevRealm().PkgPath() == ""
 		if !isUserCalled {
@@ -168,7 +169,6 @@ func SwapRoute(
 		"amountOutWithoutFee", resultAmountOut.ToString(),
 	)
 
-	en.MintAndDistributeGns()
 	return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString()
 }
 
