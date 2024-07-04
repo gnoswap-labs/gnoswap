@@ -18,11 +18,9 @@ var (
 // Realms to mock frames
 var (
 	gsaRealm = std.NewUserRealm(gsa)
-
 	govRealm = std.NewCodeRealm(consts.GOV_PATH)
 )
 
-/* HELPER */
 func gnsBalance(addr std.Address) uint64 {
 	a2u := pusers.AddressOrName(addr)
 
