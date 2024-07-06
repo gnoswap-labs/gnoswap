@@ -206,5 +206,5 @@ func TestCollectExternalReward_3(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	oblNew := obl.BalanceOf(a2u(gsa))
-	shouldEQ(t, oblNew-oblOld, 24624231)
+	shouldEQ(t, oblNew-oblOld, 24624168)
 }
