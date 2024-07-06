@@ -30,20 +30,6 @@ var distributionPct distributionPctMap = distributionPctMap{
 	XGNS:              0,    // 0%
 }
 
-// DistributeToTarget distributes the specified amount to different targets based on their percentages.
-func DistributeToTarget(amount uint64) {
-	totalSent := uint64(0)
-	for target, pct := range distributionPct {
-		distAmount := calculateAmount(amount, pct)
-		totalSent += distAmount
-
-		transferToTarget(target, distAmount)
-	}
-
-	// `amount-totalSent` can be left due to rounding
-	// it will be distributed next time
-}
-
 // GetDistributionPct returns the distribution percentage for the given target.
 func GetDistributionPct(target emissionTarget) uint64 {
 	return distributionPct[target]
@@ -93,6 +79,20 @@ func ChangeDistributionPct04(
 	changeDistributionPct(target04, pct04)
 
 	checkSumDistributionPct()
+}
+
+// distributeToTarget distributes the specified amount to different targets based on their percentages.
+func distributeToTarget(amount uint64) {
+	totalSent := uint64(0)
+	for target, pct := range distributionPct {
+		distAmount := calculateAmount(amount, pct)
+		totalSent += distAmount
+
+		transferToTarget(target, distAmount)
+	}
+
+	// `amount-totalSent` can be left due to rounding
+	// it will be distributed next time
 }
 
 // calculateAmount calculates the amount based on the given percentage in basis points.

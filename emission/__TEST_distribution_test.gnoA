@@ -7,11 +7,11 @@ import (
 	"gno.land/r/demo/gns"
 )
 
-func TestEmitGns(t *testing.T) {
+func Test_mintGns(t *testing.T) {
 	shouldEQ(t, gns.TotalSupply(), 100000000000000) // GSA has
 	shouldEQ(t, gnsBalance(emissionAddr), 0)
 
-	EmitGns() // 1 ~ 123 height
+	mintGns() // 1 ~ 123 height
 
 	shouldEQ(t, gnsBalance(emissionAddr), 4387842345)
 	shouldEQ(t, gns.TotalSupply(), 100000000000000+4387842345)
@@ -19,22 +19,22 @@ func TestEmitGns(t *testing.T) {
 	shouldEQ(t, std.GetHeight(), 123)
 }
 
-func TestDistributeToTarget(t *testing.T) {
+func Test_distributeToTarget(t *testing.T) {
 	shouldEQ(t, gnsBalance(emissionAddr), 4387842345)
-	DistributeToTarget(gnsBalance(emissionAddr))
+	distributeToTarget(gnsBalance(emissionAddr))
 	shouldEQ(t, gnsBalance(emissionAddr), 1) // 1 left
 }
 
-func TestDistributeToTargetAfter5Block(t *testing.T) {
+func Test_distributeToTarget_After5Block(t *testing.T) {
 	std.TestSkipHeights(5)
-	EmitGns()
+	mintGns()
 	shouldEQ(t, gnsBalance(emissionAddr), 178367576)
 
-	DistributeToTarget(gnsBalance(emissionAddr))
+	distributeToTarget(gnsBalance(emissionAddr))
 	shouldEQ(t, gnsBalance(emissionAddr), 1) // 1 left again
 }
 
-func TestChangeDistributionPctByAdmin(t *testing.T) {
+func TestChangeDistributionPct_ByAdmin(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), 7500)

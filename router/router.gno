@@ -37,6 +37,8 @@ func SwapRoute(
 	quoteArr string, // []int
 	_tokenAmountLimit string, // uint256
 ) (string, string) { // tokneIn, tokenOut
+	en.MintAndDistributeGns()
+
 	if common.GetLimitCaller() {
 		isUserCalled := std.PrevRealm().PkgPath() == ""
 		if !isUserCalled {

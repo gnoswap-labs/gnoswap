@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	en "gno.land/r/demo/emission"
 	"gno.land/r/demo/gnoswap/common"
 	"gno.land/r/demo/gnoswap/consts"
 
@@ -40,6 +41,8 @@ func CreatePool(
 	fee uint32,
 	_sqrtPriceX96 string, // uint256
 ) {
+	en.MintAndDistributeGns()
+
 	if token0Path == token1Path {
 		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
 	}
@@ -82,7 +85,6 @@ func CreatePool(
 			"m_prevRealm", prevRealm(),
 			"p_poolPath", poolPath,
 		)
-
 	}
 }
 

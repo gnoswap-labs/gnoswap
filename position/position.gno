@@ -12,6 +12,7 @@ import (
 	"gno.land/r/demo/gnoswap/common"
 	"gno.land/r/demo/gnoswap/consts"
 
+	en "gno.land/r/demo/emission"
 	pl "gno.land/r/demo/pool"
 )
 
@@ -37,6 +38,8 @@ func Mint(
 	deadline int64,
 	mintTo string,
 ) (uint64, string, string, string) { // tokenId, liquidity, amount0, amount1 ( *u256.Uint x3 )
+	en.MintAndDistributeGns()
+
 	if common.GetLimitCaller() {
 		// only user or staker can call
 		isUserCalled := std.IsOriginCall()
@@ -194,6 +197,8 @@ func IncreaseLiquidity(
 	_amount1Min string, // uint256
 	deadline int64,
 ) (uint64, string, string, string, string) { // tokenId, liquidity, amount0, amount1, poolPath
+	en.MintAndDistributeGns()
+
 	amount0Desired := u256.MustFromDecimal(_amount0Desired)
 	amount1Desired := u256.MustFromDecimal(_amount1Desired)
 	amount0Min := u256.MustFromDecimal(_amount0Min)
@@ -321,6 +326,7 @@ func DecreaseLiquidity(
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) { // tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
+	en.MintAndDistributeGns()
 
 	isNormalRange := liquidityRatio >= 1 && liquidityRatio <= 100
 	if !isNormalRange {
@@ -476,6 +482,8 @@ func Reposition(
 	_amount0Desired string, // uint256
 	_amount1Desired string, // uint256
 ) (uint64, string, int32, int32, string, string) { // tokenId, liquidity, tickLower, tickUpper, amount0, amount1
+	en.MintAndDistributeGns()
+
 	// verify tokenId exists
 	if !exists(tokenId) {
 		panic(ufmt.Sprintf("[POSITION] position.gno__Reposition() || tokenId(%d) doesn't exist", tokenId))
@@ -570,6 +578,8 @@ func Reposition(
 // - position doesn't exist
 // - caller is not owner or approved
 func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, tokensOwed0, tokensOwed1, poolPath
+	en.MintAndDistributeGns()
+
 	// verify tokenId
 	if !exists(tokenId) {
 		panic(ufmt.Sprintf("[POSITION] position.gno__CollectFee() || tokenId(%d) doesn't exist", tokenId))
