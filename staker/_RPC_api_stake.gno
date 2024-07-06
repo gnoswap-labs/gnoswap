@@ -52,6 +52,8 @@ type ResponseApiGetStakes struct {
 }
 
 func ApiGetRewards() string {
+	CalcPoolPosition()
+
 	lpTokenRewards := []LpTokenReward{}
 
 	for tokenId, deposit := range deposits {
@@ -138,6 +140,8 @@ func ApiGetRewards() string {
 }
 
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
+	CalcPoolPosition()
+
 	lpTokenRewards := []LpTokenReward{}
 
 	for tokenId, deposit := range deposits {
@@ -227,6 +231,8 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 }
 
 func ApiGetRewardsByAddress(targetAddress string) string {
+	CalcPoolPosition()
+
 	lpTokenRewards := []LpTokenReward{}
 
 	for tokenId, deposit := range deposits {
@@ -313,6 +319,8 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 }
 
 func ApiGetStakes() string {
+	CalcPoolPosition()
+
 	stakes := []Stake{}
 	for tokenId, deposit := range deposits {
 		stakes = append(stakes, Stake{
@@ -367,6 +375,8 @@ func ApiGetStakes() string {
 }
 
 func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
+	CalcPoolPosition()
+
 	stakes := []Stake{}
 
 	for tokenId, deposit := range deposits {
@@ -426,6 +436,8 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 }
 
 func ApiGetStakesByAddress(targetAddress string) string {
+	CalcPoolPosition()
+
 	stakes := []Stake{}
 
 	for tokenId, deposit := range deposits {
