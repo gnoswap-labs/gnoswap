@@ -91,8 +91,6 @@ func getMyLiquidityRatio(poolPath string, tokenId uint64) *u256.Uint {
 func getPoolTierAndRatio(poolPath string) (uint64, *u256.Uint) {
 	_q96 := u256.MustFromDecimal(consts.Q96)
 
-	poolPath = poolKeyDivide(poolPath)
-
 	// current pool's tier
 	tier, ok := poolTiers[poolPath]
 	if !ok {

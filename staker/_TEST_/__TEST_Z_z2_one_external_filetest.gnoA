@@ -282,6 +282,7 @@ func createExternalIncentive() {
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
 	std.TestSkipHeights(1)
 
+	sr.AddToken(oblPath)
 	sr.CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/foo:100", // targetPoolPath
 		oblPath,                     // rewardToken

@@ -122,6 +122,24 @@ func TestCreateExternalIncentive(t *testing.T) {
 	obl.Approve(a2u(consts.STAKER_ADDR), uint64(10_000_000_000))
 	std.TestSkipHeights(1)
 
+	// obl token isnt't allowed for external reward, so panic
+	shouldPanicWithMsg(
+		t,
+		func() {
+			CreateExternalIncentive(
+				"gno.land/r/demo/bar:gno.land/r/demo/qux:500", // targetPoolPath
+				"gno.land/r/demo/obl",                         // rewardToken
+				"1000000000",                                  // rewardAmount 10_000_000_000
+				1234569600,                                    // startTimestamp
+				1234569600+TIMESTAMP_90DAYS,                   // endTimestamp
+			)
+		},
+		"[STAKER] staker.gno__isAllowedForExternalReward() || tokenPath(gno.land/r/demo/obl) is not allowed for external reward for poolPath(gno.land/r/demo/bar:gno.land/r/demo/qux:500)",
+	)
+
+	// allow obl to be used as external reward token
+	AddToken(oblPath)
+
 	CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/qux:500", // targetPoolPath
 		"gno.land/r/demo/obl",                         // rewardToken
