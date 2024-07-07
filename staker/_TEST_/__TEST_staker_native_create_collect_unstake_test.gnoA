@@ -255,7 +255,7 @@ func TestEndExternalIncentive(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
-	shouldEQ(t, ugnotBalanceOf(gsa), 101285156) // if incentive creator wasn't admin, it will get refund
+	shouldEQ(t, ugnotBalanceOf(gsa), 10096951336) // always refund
 
 	shouldEQ(t, len(incentives), 0)
 	shouldEQ(t, len(poolIncentives["gno.land/r/demo/gns:gno.land/r/demo/wugnot:500"]), 0)

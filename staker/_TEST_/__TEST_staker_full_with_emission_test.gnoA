@@ -334,3 +334,12 @@ func TestUnstakeToken03(t *testing.T) {
 	UnstakeToken(3)
 	std.TestSkipHeights(1)
 }
+
+func TestTransferLeftGnsEmission(t *testing.T) {
+	shouldEQ(t, leftGnsBalance, 12014393934)
+	shouldEQ(t, gnsBalance(consts.FEE_ADDR), 0)
+
+	TransferLeftGnsEmission()
+	shouldEQ(t, leftGnsBalance, 0)
+	shouldEQ(t, gnsBalance(consts.FEE_ADDR), 12014393934)
+}
