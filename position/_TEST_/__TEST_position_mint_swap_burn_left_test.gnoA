@@ -119,7 +119,7 @@ func TestUnclaimedFee0(t *testing.T) {
 }
 
 func TestSwap1(t *testing.T) {
-	printPoolBalance()
+	// printPoolBalance()
 	// token0: 22073871
 	// token1: 60000000
 
@@ -142,7 +142,7 @@ func TestSwap1(t *testing.T) {
 	shouldEQ(t, amount0, "1234567")
 	shouldEQ(t, amount1, "-3338723")
 
-	printPoolBalance()
+	// printPoolBalance()
 	// token0: 23308438 (22073871 + 1234567)
 	// token1: 56661277 (60000000 - 3338723)
 }
@@ -162,7 +162,7 @@ func TestUnclaimedFeePos02Swap01(t *testing.T) {
 }
 
 func TestSwap2(t *testing.T) {
-	printPoolBalance()
+	// printPoolBalance()
 	// token0: 23308438
 	// token1: 56661277
 
@@ -185,7 +185,7 @@ func TestSwap2(t *testing.T) {
 	shouldEQ(t, amount0, "20000000")
 	shouldEQ(t, amount1, "-49951535")
 
-	printPoolBalance()
+	// printPoolBalance()
 	// token0: 43308438 (23308438 + 20000000)
 	// token1: 6709742 (56661277 - 49951535)
 }
@@ -205,7 +205,7 @@ func TestUnclaimedFeePos02Swap02(t *testing.T) {
 }
 
 func TestCollectFeePos01(t *testing.T) {
-	printPoolBalance()
+	// printPoolBalance()
 	// token0: 43308438
 	// token1: 6709742
 
@@ -216,13 +216,13 @@ func TestCollectFeePos01(t *testing.T) {
 	shouldEQ(t, fee1, "0")
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 
-	printPoolBalance()
+	// printPoolBalance()
 	// token0: 43299755 (43308438 - 8683)
 	// token1: 6709742
 }
 
 func TestDecreaseAllPos01(t *testing.T) {
-	printPoolBalance()
+	// printPoolBalance()
 	// token0: 43299755
 	// token1: 6709742
 
@@ -243,13 +243,13 @@ func TestDecreaseAllPos01(t *testing.T) {
 	shouldEQ(t, amount1, "6709740")
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 
-	printPoolBalance()
+	// printPoolBalance()
 	// token0: 7548510 (43299755 - 35751245)
 	// token1: 2 (6709742 - 6709740)
 }
 
 func TestDecreaseAllPos02(t *testing.T) {
-	printPoolBalance()
+	// printPoolBalance()
 	// token0: 7548510
 	// token1: 2
 
@@ -270,7 +270,7 @@ func TestDecreaseAllPos02(t *testing.T) {
 	shouldEQ(t, amount1, "0")
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 
-	printPoolBalance()
+	// printPoolBalance()
 	// token0: 3 (7548510 - 7546572 - 1935)
 	// token1: 2
 }

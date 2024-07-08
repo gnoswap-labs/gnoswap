@@ -13,7 +13,7 @@ import (
 
 var (
 	gsa   std.Address = consts.GNOSWAP_ADMIN
-	fcr   std.Address = consts.FEE_COLLECTOR
+	fcr   std.Address = consts.COMMUNITY_POOL_ADDR
 	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
 
 	fooPath string = "gno.land/r/demo/foo"

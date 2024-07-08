@@ -307,39 +307,39 @@ func TestApiGetStakesByAddress(t *testing.T) {
 	shouldEQ(t, stakes, res)
 }
 
-// Test Getter/Setter for RewardFee
-func TestGetRewardFee(t *testing.T) {
-	shouldEQ(t, GetRewardFee(), uint64(1))
+// Test Getter/Setter for UnstakingFee
+func TestGetUnstakingFee(t *testing.T) {
+	shouldEQ(t, GetUnstakingFee(), uint64(10))
 }
 
-func TestSetRewardFeeNoPermission(t *testing.T) {
+func TestSetUnstakingFeeNoPermission(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
 	std.TestSetOrigCaller(dummy)
 
 	shouldPanicWithMsg(
 		t,
 		func() {
-			SetRewardFee(2)
+			SetUnstakingFee(2)
 		},
 		"must be called by admin",
 	)
 }
 
-func TestSetRewardFeeOutOfRange(t *testing.T) {
+func TestSetUnstakingFeeOutOfRange(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 
 	shouldPanicWithMsg(
 		t,
 		func() {
-			SetRewardFee(101)
+			SetUnstakingFee(10001)
 		},
-		"[STAKER] reward_fee.gno__SetRewardFee() || fee(101) must be in range 0 ~ 100",
+		"[STAKER] reward_fee.gno__SetUnstakingFee() || fee(10001) must be in range 0 ~ 10000",
 	)
 }
 
-func TestSetRewardFee(t *testing.T) {
+func TestSetUnstakingFee(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
-	shouldEQ(t, GetRewardFee(), uint64(1))
-	SetRewardFee(3)
-	shouldEQ(t, GetRewardFee(), uint64(3))
+	shouldEQ(t, GetUnstakingFee(), uint64(10))
+	SetUnstakingFee(30)
+	shouldEQ(t, GetUnstakingFee(), uint64(30))
 }

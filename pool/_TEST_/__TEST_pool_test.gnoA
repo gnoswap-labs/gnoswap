@@ -123,7 +123,7 @@ func TestApiGetPools(t *testing.T) {
 
 // Test Getter/Setter for WithdrawalFee
 func TestGetWithdrawalFee(t *testing.T) {
-	shouldEQ(t, GetWithdrawalFee(), uint64(1))
+	shouldEQ(t, GetWithdrawalFee(), uint64(10))
 }
 
 func TestSetWithdrawalFeeNoPermission(t *testing.T) {
@@ -145,17 +145,17 @@ func TestSetWithdrawalFeeFeeOutOfRange(t *testing.T) {
 	shouldPanicWithMsg(
 		t,
 		func() {
-			SetWithdrawalFee(101)
+			SetWithdrawalFee(10001)
 		},
-		"[POOL] withdrawal_fee.gno__SetWithdrawalFee() || fee(101) must be in range 0 ~ 100",
+		"[POOL] withdrawal_fee.gno__SetWithdrawalFee() || fee(10001) must be in range 0 ~ 10000",
 	)
 }
 
 func TestSetWithdrawalFee(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
-	shouldEQ(t, GetWithdrawalFee(), uint64(1))
-	SetWithdrawalFee(3)
-	shouldEQ(t, GetWithdrawalFee(), uint64(3))
+	shouldEQ(t, GetWithdrawalFee(), uint64(10))
+	SetWithdrawalFee(30)
+	shouldEQ(t, GetWithdrawalFee(), uint64(30))
 }
 
 // Test Getter/Setter for PoolCreationFee

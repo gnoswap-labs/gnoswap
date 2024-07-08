@@ -196,8 +196,6 @@ func TestApiGetRewardTokens(t *testing.T) {
 }
 
 func TestUnstakeToken01(t *testing.T) {
-	std.TestSetRealm(iraRealm)
-	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // internal reward distribution
 	std.TestSkipHeights(350)
 
 	std.TestSetRealm(gsaRealm)

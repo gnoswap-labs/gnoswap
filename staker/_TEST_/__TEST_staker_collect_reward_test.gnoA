@@ -181,8 +181,6 @@ func TestStakeToken02(t *testing.T) {
 }
 
 func TestCollectReward(t *testing.T) {
-	std.TestSetRealm(iraRealm)
-	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // internal reward distribution
 	std.TestSkipHeights(1)
 
 	// before claim

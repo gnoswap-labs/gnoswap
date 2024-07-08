@@ -13,7 +13,7 @@ import (
 
 // withdrawalFee is the fee that is charged when a user withdraws their collected fees
 var (
-	withdrawalFee = uint64(1)
+	withdrawalFee = uint64(10) // 0.1%
 )
 
 // HandleWithdrawalFee withdraws the fee from the user and returns the amount after the fee
@@ -41,19 +41,19 @@ func HandleWithdrawalFee(
 	}
 
 	feeAmount0 := new(u256.Uint).Mul(amount0, u256.NewUint(withdrawalFee))
-	feeAmount0 = new(u256.Uint).Div(feeAmount0, u256.NewUint(100))
+	feeAmount0 = new(u256.Uint).Div(feeAmount0, u256.NewUint(1000))
 
 	feeAmount1 := new(u256.Uint).Mul(amount1, u256.NewUint(withdrawalFee))
-	feeAmount1 = new(u256.Uint).Div(feeAmount1, u256.NewUint(100))
+	feeAmount1 = new(u256.Uint).Div(feeAmount1, u256.NewUint(1000))
 
-	ok := transferFromByRegisterCall(token0Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount0.Uint64())
+	ok := transferFromByRegisterCall(token0Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount0.Uint64())
 	if !ok {
-		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token0Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount0))
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token0Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount0))
 	}
 
-	ok = transferFromByRegisterCall(token1Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount1.Uint64())
+	ok = transferFromByRegisterCall(token1Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount1.Uint64())
 	if !ok {
-		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token1Path, std.GetOrigCaller(), consts.FEE_COLLECTOR, feeAmount1))
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token1Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount1))
 	}
 
 	afterAmount0 := new(u256.Uint).Sub(amount0, feeAmount0)
@@ -86,8 +86,9 @@ func GetWithdrawalFee() uint64 {
 func SetWithdrawalFee(fee uint64) {
 	common.MustCallFromAdmin()
 
-	if fee > 100 {
-		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetWithdrawalFee() || fee(%d) must be in range 0 ~ 100", fee))
+	// 10000 (bps) = 100%
+	if fee > 10000 {
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__SetWithdrawalFee() || fee(%d) must be in range 0 ~ 10000", fee))
 	}
 
 	withdrawalFee = fee
