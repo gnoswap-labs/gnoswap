@@ -110,11 +110,9 @@ func transferToTarget(target emissionTarget, amount uint64) {
 		// transfer to devops
 		gns.Transfer(a2u(consts.DEV_OPS), amount)
 	case COMMUNITY_POOL:
-		// TBD, transfer to community pool
-		gns.Transfer(a2u(consts.ZERO_ADDRESS), amount)
+		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), amount)
 	case XGNS:
-		// TBD, transfer to xGNS
-		gns.Transfer(a2u(consts.ZERO_ADDRESS), amount)
+		gns.Transfer(a2u(consts.X_GNS_ADDR), amount)
 	default:
 		panic("invalid target")
 	}

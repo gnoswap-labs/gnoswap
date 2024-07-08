@@ -16,7 +16,8 @@ func TestMintAndDistributeGns_Initial(t *testing.T) {
 
 	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 0)
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 0)
-	shouldEQ(t, gnsBalance(consts.ZERO_ADDRESS), 0) // XXX: currently, community pool and xGNS distribution will be distributed to zero address
+	shouldEQ(t, gnsBalance(consts.COMMUNITY_POOL_ADDR), 0)
+	shouldEQ(t, gnsBalance(consts.X_GNS_ADDR), 0)
 	shouldEQ(t, gnsBalance(emissionAddr), 0)
 
 	MintAndDistributeGns()                           // 1 ~ 123 height
@@ -24,10 +25,11 @@ func TestMintAndDistributeGns_Initial(t *testing.T) {
 
 	shouldEQ(t, gns.TotalSupply(), 100000000000000+4387842345)
 
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 3290881758) // 75% of 4387842345
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 877568469)      // 20% of 4387842345
-	shouldEQ(t, gnsBalance(consts.ZERO_ADDRESS), 219392117) // 5% of 4387842345
-	shouldEQ(t, gnsBalance(emissionAddr), 1)                // 4387842345 - (3290881758 + 877568469 + 219392117) = 1
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 3290881758)        // 75% of 4387842345
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 877568469)             // 20% of 4387842345
+	shouldEQ(t, gnsBalance(consts.COMMUNITY_POOL_ADDR), 219392117) // 5% of 4387842345
+	shouldEQ(t, gnsBalance(consts.X_GNS_ADDR), 0)                  // 0% of 4387842345
+	shouldEQ(t, gnsBalance(emissionAddr), 1)                       // 4387842345 - (3290881758 + 877568469 + 219392117) = 1
 }
 
 func TestMintAndDistributeGns_SameBlock(t *testing.T) {
@@ -38,7 +40,8 @@ func TestMintAndDistributeGns_SameBlock(t *testing.T) {
 	shouldEQ(t, gns.TotalSupply(), 100000000000000+4387842345)
 	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 3290881758)
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 877568469)
-	shouldEQ(t, gnsBalance(consts.ZERO_ADDRESS), 219392117)
+	shouldEQ(t, gnsBalance(consts.COMMUNITY_POOL_ADDR), 219392117)
+	shouldEQ(t, gnsBalance(consts.X_GNS_ADDR), 0)
 	shouldEQ(t, gnsBalance(emissionAddr), 1)
 }
 
