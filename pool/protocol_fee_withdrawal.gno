@@ -12,7 +12,7 @@ import (
 
 // withdrawalFee is the fee that is charged when a user withdraws their collected fees
 var (
-	withdrawalFee = uint64(10) // 0.1%
+	withdrawalFee = uint64(100) // 1%
 )
 
 // HandleWithdrawalFee withdraws the fee from the user and returns the amount after the fee
@@ -40,10 +40,10 @@ func HandleWithdrawalFee(
 	}
 
 	feeAmount0 := new(u256.Uint).Mul(amount0, u256.NewUint(withdrawalFee))
-	feeAmount0 = new(u256.Uint).Div(feeAmount0, u256.NewUint(1000))
+	feeAmount0 = new(u256.Uint).Div(feeAmount0, u256.NewUint(10000))
 
 	feeAmount1 := new(u256.Uint).Mul(amount1, u256.NewUint(withdrawalFee))
-	feeAmount1 = new(u256.Uint).Div(feeAmount1, u256.NewUint(1000))
+	feeAmount1 = new(u256.Uint).Div(feeAmount1, u256.NewUint(10000))
 
 	ok := transferFromByRegisterCall(token0Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount0.Uint64())
 	if !ok {
