@@ -8,6 +8,8 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/gnoswap/consts"
+
+	en "gno.land/r/demo/emission"
 )
 
 type LpTokenReward struct {
@@ -52,15 +54,12 @@ type ResponseApiGetStakes struct {
 }
 
 func ApiGetRewards() string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	lpTokenRewards := []LpTokenReward{}
 
 	for tokenId, deposit := range deposits {
-		stakedHeight := deposit.stakedHeight
-		stakedDuration := std.GetHeight() - stakedHeight
-		durationRatio := getRewardRatio(stakedDuration)
-
 		rewards := []Reward{}
 
 		// get internal gns reward
@@ -77,6 +76,14 @@ func ApiGetRewards() string {
 		// find all external reward list for poolPath which lpTokenId is staked
 		for _, incentiveId := range poolIncentives[deposit.targetPoolPath] {
 			incentive := incentives[incentiveId]
+
+			stakedOrCreatedAt := max(deposit.stakeTimestamp, incentive.startTimestamp)
+			now := time.Now().Unix()
+			if now < stakedOrCreatedAt {
+				continue
+			}
+			duration := now - stakedOrCreatedAt
+			durationRatio := getRewardRatio(duration)
 
 			externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId, durationRatio)
 			if externalReward >= 0 {
@@ -140,6 +147,7 @@ func ApiGetRewards() string {
 }
 
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	lpTokenRewards := []LpTokenReward{}
@@ -149,16 +157,11 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			continue
 		}
 
-		stakedHeight := deposit.stakedHeight
-		stakedDuration := std.GetHeight() - stakedHeight
-		durationRatio := getRewardRatio(stakedDuration)
-
 		rewards := []Reward{}
 
 		// get internal gns reward
 		internalGNS := rewardMathComputeInternalRewardAmount(tokenId)
 		if internalGNS > 0 {
-
 			rewards = append(rewards, Reward{
 				IncentiveType:     "INTERNAL",
 				TargetPoolPath:    deposit.targetPoolPath,
@@ -170,6 +173,14 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 		// find all external reward list for poolPath which lpTokenId is staked
 		for _, incentiveId := range poolIncentives[deposit.targetPoolPath] {
 			incentive := incentives[incentiveId]
+
+			stakedOrCreatedAt := max(deposit.stakeTimestamp, incentive.startTimestamp)
+			now := time.Now().Unix()
+			if now < stakedOrCreatedAt {
+				continue
+			}
+			duration := now - stakedOrCreatedAt
+			durationRatio := getRewardRatio(duration)
 
 			externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId, durationRatio)
 			if externalReward > 0 {
@@ -231,6 +242,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 }
 
 func ApiGetRewardsByAddress(targetAddress string) string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	lpTokenRewards := []LpTokenReward{}
@@ -239,10 +251,6 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 		if deposit.owner.String() != targetAddress {
 			continue
 		}
-
-		stakedHeight := deposit.stakedHeight
-		stakedDuration := std.GetHeight() - stakedHeight
-		durationRatio := getRewardRatio(stakedDuration)
 
 		rewards := []Reward{}
 
@@ -260,6 +268,14 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 		// find all external reward list for poolPath which lpTokenId is staked
 		for _, incentiveId := range poolIncentives[deposit.targetPoolPath] {
 			incentive := incentives[incentiveId]
+
+			stakedOrCreatedAt := max(deposit.stakeTimestamp, incentive.startTimestamp)
+			now := time.Now().Unix()
+			if now < stakedOrCreatedAt {
+				continue
+			}
+			duration := now - stakedOrCreatedAt
+			durationRatio := getRewardRatio(duration)
 
 			externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId, durationRatio)
 
@@ -319,6 +335,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 }
 
 func ApiGetStakes() string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	stakes := []Stake{}
@@ -375,6 +392,7 @@ func ApiGetStakes() string {
 }
 
 func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	stakes := []Stake{}
@@ -436,6 +454,7 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 }
 
 func ApiGetStakesByAddress(targetAddress string) string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	stakes := []Stake{}

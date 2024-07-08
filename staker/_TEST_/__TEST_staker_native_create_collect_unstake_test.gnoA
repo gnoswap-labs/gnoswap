@@ -218,14 +218,14 @@ func TestCollectReward01(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
-	shouldEQ(t, ugnotBalanceOf(gsa), 100583076)
+	shouldEQ(t, ugnotBalanceOf(gsa), 100647433)
 }
 
 func TestUnstakeToken02(t *testing.T) {
 	std.TestSkipHeights(335) // skip times
 
 	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
-	shouldEQ(t, ugnotBalanceOf(gsa), 100583076)
+	shouldEQ(t, ugnotBalanceOf(gsa), 100647433)
 
 	std.TestSetRealm(gsaRealm)
 
@@ -239,7 +239,7 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), gsa)
 
 	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
-	shouldEQ(t, ugnotBalanceOf(gsa), 101168142)
+	shouldEQ(t, ugnotBalanceOf(gsa), 101296856)
 }
 
 func TestEndExternalIncentive(t *testing.T) {
@@ -247,7 +247,7 @@ func TestEndExternalIncentive(t *testing.T) {
 
 	wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // UNWRAP
 	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
-	shouldEQ(t, ugnotBalanceOf(gsa), 101168142)
+	shouldEQ(t, ugnotBalanceOf(gsa), 101296856)
 
 	std.TestSkipHeights(9999999)
 	EndExternalIncentive(std.GetOrigCaller().String(), "gno.land/r/demo/gns:gno.land/r/demo/wugnot:500", consts.WRAPPED_WUGNOT) // use same parameter as CreateExternalIncentive()
@@ -255,7 +255,7 @@ func TestEndExternalIncentive(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
-	shouldEQ(t, ugnotBalanceOf(gsa), 10096834322) // always refund
+	shouldEQ(t, ugnotBalanceOf(gsa), 10096963036) // always refund
 
 	shouldEQ(t, len(incentives), 0)
 	shouldEQ(t, len(poolIncentives["gno.land/r/demo/gns:gno.land/r/demo/wugnot:500"]), 0)

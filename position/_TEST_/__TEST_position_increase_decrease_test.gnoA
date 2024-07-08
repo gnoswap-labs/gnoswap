@@ -168,7 +168,7 @@ func TestSwap2(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/demo/position CollectFee [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {fee0 495} {fee1 0} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, fee0, "495") // decreased cause of fee
+	shouldEQ(t, fee0, "495")
 	shouldEQ(t, fee1, "0")
 	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
 }

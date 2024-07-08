@@ -25,7 +25,7 @@ func handleUnstakingFee(
 		return amount
 	}
 
-	feeAmount := amount * unstakingFee / 100
+	feeAmount := amount * unstakingFee / 10000
 	if feeAmount == 0 {
 		return amount
 	}

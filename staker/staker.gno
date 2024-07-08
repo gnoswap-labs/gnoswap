@@ -139,14 +139,18 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 	poolPath := deposits[tokenId].targetPoolPath
 
-	stakedHeight := deposit.stakedHeight
-	currentHeight := std.GetHeight()
-
-	stakedDuration := currentHeight - stakedHeight
-	durationRatio := getRewardRatio(stakedDuration)
-
 	for k, external := range positionExternal[tokenId] {
 		incentive := incentives[external.incentiveId]
+
+		stakedOrCreatedAt := max(deposit.stakeTimestamp, incentive.startTimestamp)
+		now := time.Now().Unix()
+		if now < stakedOrCreatedAt {
+			continue
+		}
+
+		// external reward
+		duration := now - stakedOrCreatedAt
+		durationRatio := getRewardRatio(duration)
 
 		poolPath := external.poolPath
 		tokenPath := external.tokenPath
@@ -186,7 +190,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 		)
 	}
 
-	// gns emission
+	// INTERNAL gns emission
 	toGive := rewardMathComputeInternalRewardAmount(tokenId)
 	if toGive == 0 {
 		return poolPath
@@ -194,6 +198,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 	toUser := handleUnstakingFee(consts.GNS_PATH, toGive, true)
 	gns.Transfer(a2u(deposit.owner), toUser)
+	positionGns[tokenId] = 0
 
 	// emit internal reward tokens
 	std.Emit(
