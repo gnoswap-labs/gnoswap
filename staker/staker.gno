@@ -272,6 +272,9 @@ func CreateExternalIncentive(
 		}
 	}
 
+	// check token can be used as reward
+	isAllowedForExternalReward(targetPoolPath, rewardToken)
+
 	rewardAmount := u256.MustFromDecimal(_rewardAmount)
 
 	// native ugnot check
@@ -516,4 +519,19 @@ func getTokenPairBalanceFromPosition(tokenId uint64) (string, string) {
 
 func gnsBalance(addr std.Address) uint64 {
 	return gns.BalanceOf(a2u(addr))
+}
+
+func isAllowedForExternalReward(poolPath, tokenPath string) {
+	token0, token1, _ := poolPathDivide(poolPath)
+
+	if tokenPath == token0 || tokenPath == token1 {
+		return
+	}
+
+	allowed := contains(allowedTokens, tokenPath)
+	if allowed {
+		return
+	}
+
+	panic(ufmt.Sprintf("[STAKER] staker.gno__isAllowedForExternalReward() || tokenPath(%s) is not allowed for external reward for poolPath(%s)", tokenPath, poolPath))
 }

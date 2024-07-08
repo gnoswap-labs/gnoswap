@@ -156,6 +156,8 @@ func TestCreateExternalIncentive(t *testing.T) {
 	wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(1)
 
+	AddToken(oblPath)
+
 	CreateExternalIncentive(
 		"gno.land/r/demo/gns:gno.land/r/demo/wugnot:500", // targetPoolPath
 		consts.GNOT,                 // rewardToken

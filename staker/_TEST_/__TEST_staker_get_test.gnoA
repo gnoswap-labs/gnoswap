@@ -103,6 +103,8 @@ func TestCreateExternalIncentive(t *testing.T) {
 	obl.Approve(a2u(consts.STAKER_ADDR), uint64(10_000_000_000))
 	std.TestSkipHeights(1)
 
+	AddToken(oblPath)
+
 	CreateExternalIncentive(
 		"gno.land/r/demo/bar:gno.land/r/demo/qux:500", // targetPoolPath
 		"gno.land/r/demo/obl",                         // rewardToken

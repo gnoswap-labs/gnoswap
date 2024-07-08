@@ -11,10 +11,10 @@ import (
 	pusers "gno.land/p/demo/users"
 )
 
-func poolKeyDivide(poolKey string) string {
-	res := strings.Split(poolKey, ":")
+func poolPathAlign(poolPath string) string {
+	res := strings.Split(poolPath, ":")
 	if len(res) != 3 {
-		panic(ufmt.Sprintf("[STAKER] utils.gno__poolKeyDivide() || invalid poolKey(%s)", poolKey))
+		panic(ufmt.Sprintf("[STAKER] utils.gno__poolPathAlign() || invalid poolPath(%s)", poolPath))
 	}
 
 	pToken0, pToken1, fee := res[0], res[1], res[2]
@@ -24,6 +24,16 @@ func poolKeyDivide(poolKey string) string {
 	}
 
 	return ufmt.Sprintf("%s:%s:%s", pToken1, pToken0, fee)
+}
+
+func poolPathDivide(poolPath string) (string, string, string) {
+	res := strings.Split(poolPath, ":")
+	if len(res) != 3 {
+		panic(ufmt.Sprintf("[STAKER] utils.gno__poolPathDivide() || invalid poolPath(%s)", poolPath))
+	}
+
+	pToken0, pToken1, fee := res[0], res[1], res[2]
+	return pToken0, pToken1, fee
 }
 
 func a2u(addr std.Address) pusers.AddressOrName {
@@ -111,4 +121,13 @@ func callType() string {
 	}
 
 	return "INDIRECT"
+}
+
+func contains(slice []string, item string) bool {
+	for _, element := range slice {
+		if element == item {
+			return true
+		}
+	}
+	return false
 }
