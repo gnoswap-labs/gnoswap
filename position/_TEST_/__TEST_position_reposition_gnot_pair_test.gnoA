@@ -127,6 +127,15 @@ func TestUnclaimedFee01(t *testing.T) {
 	shouldEQ(t, amount1.ToString(), "0")
 }
 
+func TestCollectFee01(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	CollectFee(1)
+	position := positions[uint64(1)]
+	shouldEQ(t, position.tokensOwed0.ToString(), "0")
+	shouldEQ(t, position.tokensOwed1.ToString(), "0")
+}
+
 func TestDecreaseLiquidityInPosition(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 

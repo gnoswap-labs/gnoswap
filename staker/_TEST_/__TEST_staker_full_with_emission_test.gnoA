@@ -338,9 +338,9 @@ func TestUnstakeToken03(t *testing.T) {
 
 func TestTransferLeftGnsEmission(t *testing.T) {
 	shouldEQ(t, leftGnsBalance, 12014393934)
-	shouldEQ(t, gnsBalance(consts.FEE_ADDR), 0)
+	shouldEQ(t, gnsBalance(consts.PROTOCOL_FEE_ADDR), 51490257)
 
 	TransferLeftGnsEmission()
 	shouldEQ(t, leftGnsBalance, 0)
-	shouldEQ(t, gnsBalance(consts.FEE_ADDR), 12014393934)
+	shouldEQ(t, gnsBalance(consts.PROTOCOL_FEE_ADDR), 12065884191)
 }

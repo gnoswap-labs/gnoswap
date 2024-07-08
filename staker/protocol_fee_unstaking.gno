@@ -14,31 +14,31 @@ import (
 )
 
 var (
-	rewardFee = uint64(1) // 0.1%
+	unstakingFee = uint64(10) // 0.1%
 )
 
-func handleRewardFee(
+func handleUnstakingFee(
 	tokenPath string,
 	amount uint64,
 	internal bool,
 ) uint64 {
-	if rewardFee == 0 {
+	if unstakingFee == 0 {
 		return amount
 	}
 
-	feeAmount := amount * rewardFee / 100
+	feeAmount := amount * unstakingFee / 100
 	if feeAmount == 0 {
 		return amount
 	}
 
 	if internal {
 		// staker contract has fee
-		gns.Transfer(a2u(consts.FEE_COLLECTOR), feeAmount)
+		gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), feeAmount)
 	} else {
 		// external contract has fee
-		ok := transferByRegisterCall(tokenPath, consts.FEE_COLLECTOR, feeAmount)
+		ok := transferByRegisterCall(tokenPath, consts.PROTOCOL_FEE_ADDR, feeAmount)
 		if !ok {
-			panic(ufmt.Sprintf("[STAKER] reward_fee.gno__HandleRewardFee() || expected transferByRegisterCall(%s, %s, %s) == true", tokenPath, consts.FEE_COLLECTOR, u256.NewUint(feeAmount).ToString()))
+			panic(ufmt.Sprintf("[STAKER] reward_fee.gno__handleUnstakingFee() || expected transferByRegisterCall(%s, %s, %s) == true", tokenPath, consts.PROTOCOL_FEE_ADDR, u256.NewUint(feeAmount).ToString()))
 		}
 	}
 
@@ -55,18 +55,18 @@ func handleRewardFee(
 	return amount - feeAmount
 }
 
-func GetRewardFee() uint64 {
-	return rewardFee
+func GetUnstakingFee() uint64 {
+	return unstakingFee
 }
 
-func SetRewardFee(fee uint64) {
+func SetUnstakingFee(fee uint64) {
 	common.MustCallFromAdmin()
 
-	if fee > 100 {
-		panic(ufmt.Sprintf("[STAKER] reward_fee.gno__SetRewardFee() || fee(%d) must be in range 0 ~ 100", fee))
+	if fee > 10000 {
+		panic(ufmt.Sprintf("[STAKER] reward_fee.gno__SetUnstakingFee() || fee(%d) must be in range 0 ~ 10000", fee))
 	}
 
-	rewardFee = fee
+	unstakingFee = fee
 
 	std.Emit(
 		"GNOSWAP",

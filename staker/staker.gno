@@ -161,7 +161,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 		leftExternalBalance[tokenPath] += amountLeft
 
-		toUser := handleRewardFee(tokenPath, amountToGive, false)
+		toUser := handleUnstakingFee(tokenPath, amountToGive, false)
 		transferByRegisterCall(tokenPath, deposit.owner, toUser)
 		if tokenPath == consts.WUGNOT_PATH { // unwrap if wugnot
 			unwrap(toUser)
@@ -192,7 +192,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 		return poolPath
 	}
 
-	toUser := handleRewardFee(consts.GNS_PATH, toGive, true)
+	toUser := handleUnstakingFee(consts.GNS_PATH, toGive, true)
 	gns.Transfer(a2u(deposit.owner), toUser)
 
 	// emit internal reward tokens
@@ -454,7 +454,7 @@ func TransferLeftGnsEmission() {
 		leftGnsBalance = stakerGns
 	}
 
-	gns.Transfer(a2u(consts.FEE_ADDR), leftGnsBalance)
+	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), leftGnsBalance)
 	leftGnsBalance = 0
 }
 

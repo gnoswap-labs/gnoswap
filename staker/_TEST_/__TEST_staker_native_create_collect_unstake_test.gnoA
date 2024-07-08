@@ -222,9 +222,7 @@ func TestCollectReward01(t *testing.T) {
 }
 
 func TestUnstakeToken02(t *testing.T) {
-	std.TestSetRealm(iraRealm)
-	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // internal reward distribution
-	std.TestSkipHeights(335)                                // skip times
+	std.TestSkipHeights(335) // skip times
 
 	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
 	shouldEQ(t, ugnotBalanceOf(gsa), 100641583)
