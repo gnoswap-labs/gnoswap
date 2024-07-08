@@ -9,33 +9,36 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/demo/gnoswap/uint256"
+
+	"gno.land/r/demo/gns"
 )
 
 var (
-	rewardFee = uint64(1) // currently, chanageable by admin
+	rewardFee = uint64(1) // 0.1%
 )
 
 func handleRewardFee(
 	tokenPath string,
-	amount *u256.Uint,
+	amount uint64,
 	internal bool,
-) *u256.Uint {
+) uint64 {
 	if rewardFee == 0 {
 		return amount
 	}
 
-	feeAmount := new(u256.Uint).Mul(amount, u256.NewUint(rewardFee))
-	feeAmount.Div(feeAmount, u256.NewUint(100))
+	feeAmount := amount * rewardFee / 100
+	if feeAmount == 0 {
+		return amount
+	}
 
-	if internal { // if internal, reward is in IRA
-		ok := transferFromByRegisterCall(tokenPath, consts.INTERNAL_REWARD_ACCOUNT, consts.FEE_COLLECTOR, feeAmount.Uint64())
+	if internal {
+		// staker contract has fee
+		gns.Transfer(a2u(consts.FEE_COLLECTOR), feeAmount)
+	} else {
+		// external contract has fee
+		ok := transferByRegisterCall(tokenPath, consts.FEE_COLLECTOR, feeAmount)
 		if !ok {
-			panic(ufmt.Sprintf("[STAKER] reward_fee.gno__HandleRewardFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", tokenPath, consts.INTERNAL_REWARD_ACCOUNT, consts.FEE_COLLECTOR, feeAmount.ToString()))
-		}
-	} else { // if external, reward is in staker contract
-		ok := transferByRegisterCall(tokenPath, consts.FEE_COLLECTOR, feeAmount.Uint64())
-		if !ok {
-			panic(ufmt.Sprintf("[STAKER] reward_fee.gno__HandleRewardFee() || expected transferByRegisterCall(%s, %s, %s) == true", tokenPath, consts.FEE_COLLECTOR, feeAmount.ToString()))
+			panic(ufmt.Sprintf("[STAKER] reward_fee.gno__HandleRewardFee() || expected transferByRegisterCall(%s, %s, %s) == true", tokenPath, consts.FEE_COLLECTOR, u256.NewUint(feeAmount).ToString()))
 		}
 	}
 
@@ -46,10 +49,10 @@ func handleRewardFee(
 		"m_prevRealm", prevRealm(),
 		"p_tokenPath", tokenPath,
 		"p_internal", boolToStr(internal),
-		"feeAmount", feeAmount.ToString(),
+		"feeAmount", uint64ToStr(feeAmount),
 	)
 
-	return new(u256.Uint).Sub(amount, feeAmount)
+	return amount - feeAmount
 }
 
 func GetRewardFee() uint64 {

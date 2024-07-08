@@ -317,8 +317,8 @@ func unStakeToken01() {
 
 	gnsBal := gns.BalanceOf(a2u(gsa)) // 0
 	oblBal := obl.BalanceOf(a2u(gsa))
-	if oblBal != 99999000000716 {
-		panic("unStakeToken01() oblBal != 99999000000716")
+	if oblBal != 99999000000669 {
+		panic("unStakeToken01() oblBal != 99999000000669")
 	}
 }
 
@@ -329,8 +329,8 @@ func unStakeToken02() {
 
 	gnsBal := gns.BalanceOf(a2u(gsa)) // 0
 	oblBal := obl.BalanceOf(a2u(gsa))
-	if oblBal != 99999000005681 {
-		panic("unStakeToken02() oblBal != 99999000005681")
+	if oblBal != 99999000004631 {
+		panic("unStakeToken02() oblBal != 99999000004631")
 	}
 }
 

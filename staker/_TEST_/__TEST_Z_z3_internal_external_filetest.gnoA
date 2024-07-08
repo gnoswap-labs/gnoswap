@@ -355,8 +355,8 @@ func collectReward01() {
 
 	gnsBal := gns.BalanceOf(a2u(gsa))
 
-	if gnsBal != 500000000000000 {
-		panic("collectReward01() || gnsBal != 500000000000000")
+	if gnsBal != 100000000000000 {
+		panic("collectReward01() || gnsBal != 100000000000000")
 	}
 
 	std.TestSetRealm(gsaRealm)
@@ -365,8 +365,8 @@ func collectReward01() {
 
 	gnsBal = gns.BalanceOf(a2u(gsa))
 
-	if gnsBal != 500000000005336 {
-		panic("collectReward01() || gnsBal != 500000000005336")
+	if gnsBal != 100000252161808 {
+		panic("collectReward01() || gnsBal != 100000252161808")
 	}
 }
 
@@ -375,8 +375,8 @@ func collectReward01Again() {
 
 	gnsBal := gns.BalanceOf(a2u(gsa))
 
-	if gnsBal != 500000000005336 {
-		panic("collectReward01Again() || gnsBal != 500000000005336")
+	if gnsBal != 100000252161808 {
+		panic("collectReward01Again() || gnsBal != 100000252161808")
 	}
 
 	// ACCELERATE TIME
@@ -387,8 +387,8 @@ func collectReward01Again() {
 
 	gnsBal = gns.BalanceOf(a2u(gsa))
 
-	if gnsBal != 500000000767636 {
-		panic("collectReward01() || gnsBal != 500000000767636")
+	if gnsBal != 100002106292750 {
+		panic("collectReward01() || gnsBal != 100002106292750")
 	}
 }
 
@@ -404,8 +404,8 @@ func collectExternalReward() {
 	sr.CollectReward(3)
 	oblBal = obl.BalanceOf(a2u(gsa))
 
-	if oblBal != 99999000128332 {
-		panic("collectExternalReward() || oblBal != 99999000128332")
+	if oblBal != 99999000128141 {
+		panic("collectExternalReward() || oblBal != 99999000128141")
 	}
 }
 

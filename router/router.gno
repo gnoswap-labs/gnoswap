@@ -14,6 +14,8 @@ import (
 	u256 "gno.land/p/demo/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
+
+	en "gno.land/r/demo/emission"
 )
 
 // SwapRoute swaps the input token to the output token and returns the result amount

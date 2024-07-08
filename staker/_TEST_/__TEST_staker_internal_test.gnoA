@@ -164,24 +164,3 @@ func TestStakeInternalTier2(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr())
 	shouldEQ(t, len(deposits), 2)
 }
-
-func TestCollectRewardToken1(t *testing.T) {
-	std.TestSetRealm(iraRealm)
-	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // internal reward distribution
-	std.TestSkipHeights(1)
-
-	// before claim
-	gnsOld := gns.BalanceOf(a2u(gsa))
-	shouldEQ(t, gnsOld, 500000000000000)
-
-	std.TestSkipHeights(6307200) // 5 * 6307200 = 31536000second = 1 year
-	std.TestSetRealm(gsaRealm)
-	CollectReward(1)
-	// ---       event: {GNOSWAP gno.land/r/demo/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenPath gno.land/r/demo/gns} {p_internal true} {feeAmount 173448137}]}
-	// ---       event: {GNOSWAP gno.land/r/demo/staker CollectReward [{m_callType DIRECT} {m_origCaller g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {rewardToken gno.land/r/demo/gns} {recipient g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq} {amount 17171365613}]}
-
-	std.TestSkipHeights(1)
-
-	gnsNew := gns.BalanceOf(a2u(gsa))
-	shouldEQ(t, gnsNew-gnsOld, 17171365613)
-}

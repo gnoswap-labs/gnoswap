@@ -35,6 +35,8 @@ type ApiInternalIncentive struct {
 }
 
 func ApiGetRewardTokens() string {
+	CalcPoolPosition()
+
 	rewardTokens := []RewardToken{}
 
 	poolList := pl.PoolGetPoolList()
@@ -88,6 +90,8 @@ func ApiGetRewardTokens() string {
 }
 
 func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
+	CalcPoolPosition()
+
 	rewardTokens := []RewardToken{}
 
 	poolList := pl.PoolGetPoolList()
@@ -145,6 +149,8 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 }
 
 func ApiGetExternalIncentives() string {
+	CalcPoolPosition()
+
 	apiExternalIncentives := []ApiExternalIncentive{}
 
 	for _, incentive := range incentives {
@@ -199,6 +205,8 @@ func ApiGetExternalIncentives() string {
 }
 
 func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
+	CalcPoolPosition()
+
 	apiExternalIncentives := []ApiExternalIncentive{}
 
 	for _, incentive := range incentives {
@@ -257,6 +265,8 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 }
 
 func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
+	CalcPoolPosition()
+
 	apiExternalIncentives := []ApiExternalIncentive{}
 
 	for _, incentive := range incentives {
@@ -315,6 +325,8 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 }
 
 func ApiGetInternalIncentives() string {
+	CalcPoolPosition()
+
 	apiInternalIncentives := []ApiInternalIncentive{}
 
 	for poolPath, tier := range poolTiers {
@@ -358,6 +370,8 @@ func ApiGetInternalIncentives() string {
 }
 
 func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
+	CalcPoolPosition()
+
 	apiInternalIncentives := []ApiInternalIncentive{}
 
 	for poolPath, tier := range poolTiers {
@@ -405,6 +419,8 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 }
 
 func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
+	CalcPoolPosition()
+
 	apiInternalIncentives := []ApiInternalIncentive{}
 
 	for poolPath, tier := range poolTiers {

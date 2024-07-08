@@ -7,8 +7,6 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
-	u256 "gno.land/p/demo/gnoswap/uint256"
-
 	"gno.land/r/demo/gnoswap/consts"
 )
 
@@ -22,7 +20,7 @@ type Reward struct {
 	IncentiveType     string `json:"incentiveType"`
 	TargetPoolPath    string `json:"targetPoolPath"`
 	RewardTokenPath   string `json:"rewardTokenPath"`
-	RewardTokenAmount string `json:"rewardTokenAmount"`
+	RewardTokenAmount uint64 `json:"rewardTokenAmount"`
 }
 
 type Stake struct {
@@ -54,55 +52,50 @@ type ResponseApiGetStakes struct {
 }
 
 func ApiGetRewards() string {
+	CalcPoolPosition()
+
 	lpTokenRewards := []LpTokenReward{}
 
 	for tokenId, deposit := range deposits {
+		stakedHeight := deposit.stakedHeight
+		stakedDuration := std.GetHeight() - stakedHeight
+		durationRatio := getRewardRatio(stakedDuration)
+
 		rewards := []Reward{}
 
 		// get internal gns reward
-		internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-		if internalGNS.IsZero() {
-			// do nothing
-		} else {
-			internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, false)
-
-			if internalGNS.Gt(u256.Zero()) {
-				rewards = append(rewards, Reward{
-					IncentiveType:     "INTERNAL",
-					TargetPoolPath:    deposit.targetPoolPath,
-					RewardTokenPath:   consts.GNS_PATH,
-					RewardTokenAmount: internalGNS.ToString(),
-				})
-			}
+		internalGNS := rewardMathComputeInternalRewardAmount(tokenId)
+		if internalGNS > 0 {
+			rewards = append(rewards, Reward{
+				IncentiveType:     "INTERNAL",
+				TargetPoolPath:    deposit.targetPoolPath,
+				RewardTokenPath:   consts.GNS_PATH,
+				RewardTokenAmount: internalGNS,
+			})
 		}
 
 		// find all external reward list for poolPath which lpTokenId is staked
 		for _, incentiveId := range poolIncentives[deposit.targetPoolPath] {
 			incentive := incentives[incentiveId]
 
-			externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentives[incentiveId])
-			externalReward = userClaimedRewardAmount(deposit.owner, tokenId, incentive.rewardToken, externalReward, false)
-
-			if externalReward.ToString() == "0" {
-				continue
+			externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId, durationRatio)
+			if externalReward >= 0 {
+				rewards = append(rewards, Reward{
+					IncentiveType:     "EXTERNAL",
+					TargetPoolPath:    deposit.targetPoolPath,
+					RewardTokenPath:   incentives[incentiveId].rewardToken,
+					RewardTokenAmount: externalReward,
+				})
 			}
 
-			rewards = append(rewards, Reward{
-				IncentiveType:     "EXTERNAL",
-				TargetPoolPath:    deposit.targetPoolPath,
-				RewardTokenPath:   incentives[incentiveId].rewardToken,
-				RewardTokenAmount: externalReward.ToString(),
-			})
-		}
-
-		lpTokenReward := LpTokenReward{
-			LpTokenId: tokenId,
-			Address:   deposit.owner.String(),
-			Rewards:   rewards,
-		}
-
-		if len(rewards) > 0 {
-			lpTokenRewards = append(lpTokenRewards, lpTokenReward)
+			if len(rewards) > 0 {
+				lpTokenReward := LpTokenReward{
+					LpTokenId: tokenId,
+					Address:   deposit.owner.String(),
+					Rewards:   rewards,
+				}
+				lpTokenRewards = append(lpTokenRewards, lpTokenReward)
+			}
 		}
 	}
 
@@ -147,6 +140,8 @@ func ApiGetRewards() string {
 }
 
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
+	CalcPoolPosition()
+
 	lpTokenRewards := []LpTokenReward{}
 
 	for tokenId, deposit := range deposits {
@@ -154,39 +149,39 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			continue
 		}
 
+		stakedHeight := deposit.stakedHeight
+		stakedDuration := std.GetHeight() - stakedHeight
+		durationRatio := getRewardRatio(stakedDuration)
+
 		rewards := []Reward{}
 
 		// get internal gns reward
-		internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-		if internalGNS.IsZero() {
-			// do nothing
-		} else {
-			internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, false)
+		internalGNS := rewardMathComputeInternalRewardAmount(tokenId)
+		if internalGNS > 0 {
 
-			if internalGNS.Gt(u256.Zero()) {
-				rewards = append(rewards, Reward{
-					IncentiveType:     "INTERNAL",
-					TargetPoolPath:    deposit.targetPoolPath,
-					RewardTokenPath:   consts.GNS_PATH,
-					RewardTokenAmount: internalGNS.ToString(),
-				})
-			}
+			rewards = append(rewards, Reward{
+				IncentiveType:     "INTERNAL",
+				TargetPoolPath:    deposit.targetPoolPath,
+				RewardTokenPath:   consts.GNS_PATH,
+				RewardTokenAmount: internalGNS,
+			})
 		}
 
 		// find all external reward list for poolPath which lpTokenId is staked
 		for _, incentiveId := range poolIncentives[deposit.targetPoolPath] {
 			incentive := incentives[incentiveId]
 
-			externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentives[incentiveId])
-			externalReward = userClaimedRewardAmount(deposit.owner, tokenId, incentive.rewardToken, externalReward, false)
-
-			rewards = append(rewards, Reward{
-				IncentiveType:     "EXTERNAL",
-				TargetPoolPath:    deposit.targetPoolPath,
-				RewardTokenPath:   incentives[incentiveId].rewardToken,
-				RewardTokenAmount: externalReward.ToString(),
-			})
+			externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId, durationRatio)
+			if externalReward > 0 {
+				rewards = append(rewards, Reward{
+					IncentiveType:     "EXTERNAL",
+					TargetPoolPath:    deposit.targetPoolPath,
+					RewardTokenPath:   incentives[incentiveId].rewardToken,
+					RewardTokenAmount: externalReward,
+				})
+			}
 		}
+
 		lpTokenReward := LpTokenReward{
 			LpTokenId: tokenId,
 			Address:   deposit.owner.String(),
@@ -236,6 +231,8 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 }
 
 func ApiGetRewardsByAddress(targetAddress string) string {
+	CalcPoolPosition()
+
 	lpTokenRewards := []LpTokenReward{}
 
 	for tokenId, deposit := range deposits {
@@ -243,37 +240,34 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 			continue
 		}
 
+		stakedHeight := deposit.stakedHeight
+		stakedDuration := std.GetHeight() - stakedHeight
+		durationRatio := getRewardRatio(stakedDuration)
+
 		rewards := []Reward{}
 
 		// get internal gns reward
-		internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-		if internalGNS.IsZero() {
-			// do nothing
-		} else {
-			internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, false)
-
-			if internalGNS.Gt(u256.Zero()) {
-				rewards = append(rewards, Reward{
-					IncentiveType:     "INTERNAL",
-					TargetPoolPath:    deposit.targetPoolPath,
-					RewardTokenPath:   consts.GNS_PATH,
-					RewardTokenAmount: internalGNS.ToString(),
-				})
-			}
+		internalGNS := rewardMathComputeInternalRewardAmount(tokenId)
+		if internalGNS > 0 {
+			rewards = append(rewards, Reward{
+				IncentiveType:     "INTERNAL",
+				TargetPoolPath:    deposit.targetPoolPath,
+				RewardTokenPath:   consts.GNS_PATH,
+				RewardTokenAmount: internalGNS,
+			})
 		}
 
 		// find all external reward list for poolPath which lpTokenId is staked
 		for _, incentiveId := range poolIncentives[deposit.targetPoolPath] {
 			incentive := incentives[incentiveId]
 
-			externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentives[incentiveId])
-			externalReward = userClaimedRewardAmount(deposit.owner, tokenId, incentive.rewardToken, externalReward, false)
+			externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId, durationRatio)
 
 			rewards = append(rewards, Reward{
 				IncentiveType:     "EXTERNAL",
 				TargetPoolPath:    deposit.targetPoolPath,
 				RewardTokenPath:   incentives[incentiveId].rewardToken,
-				RewardTokenAmount: externalReward.ToString(),
+				RewardTokenAmount: externalReward,
 			})
 		}
 		lpTokenReward := LpTokenReward{
@@ -325,6 +319,8 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 }
 
 func ApiGetStakes() string {
+	CalcPoolPosition()
+
 	stakes := []Stake{}
 	for tokenId, deposit := range deposits {
 		stakes = append(stakes, Stake{
@@ -379,6 +375,8 @@ func ApiGetStakes() string {
 }
 
 func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
+	CalcPoolPosition()
+
 	stakes := []Stake{}
 
 	for tokenId, deposit := range deposits {
@@ -438,6 +436,8 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 }
 
 func ApiGetStakesByAddress(targetAddress string) string {
+	CalcPoolPosition()
+
 	stakes := []Stake{}
 
 	for tokenId, deposit := range deposits {
@@ -510,7 +510,7 @@ func makeRewardsArray(rewards []Reward) []*json.Node {
 			"incentiveType":     json.StringNode("incentiveType", reward.IncentiveType),
 			"targetPoolPath":    json.StringNode("targetPoolPath", reward.TargetPoolPath),
 			"rewardTokenPath":   json.StringNode("rewardTokenPath", reward.RewardTokenPath),
-			"rewardTokenAmount": json.StringNode("rewardTokenAmount", reward.RewardTokenAmount),
+			"rewardTokenAmount": json.NumberNode("rewardTokenAmount", float64(reward.RewardTokenAmount)),
 		})
 	}
 	return rewardsArray

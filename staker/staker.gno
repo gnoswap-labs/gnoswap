@@ -13,6 +13,7 @@ import (
 	"gno.land/r/demo/gnft"
 	"gno.land/r/demo/gns"
 
+	en "gno.land/r/demo/emission"
 	pl "gno.land/r/demo/pool"
 	pn "gno.land/r/demo/position"
 
@@ -26,6 +27,11 @@ var (
 
 	deposits  map[uint64]Deposit = make(map[uint64]Deposit) // tokenId => Deposit
 	poolTiers map[string]uint64  = make(map[string]uint64)  // poolPath -> tier
+
+	lastCalculatedHeight int64
+	lastGnsBalance       uint64
+
+	leftGnsBalance uint64
 )
 
 const (
@@ -42,6 +48,203 @@ func init() {
 	// init pool tiers
 	// tier 1
 	poolTiers[MUST_EXISTS_IN_TIER_1] = 1 // ONLY GNOT:GNS 0.3%
+}
+
+// StakeToken stakes the lp token to the staker contract
+//
+// Panics if any of the following conditions are met:
+// - tokenId already staked
+// - tokenId has no liquidity
+// - tokenId is not owned by the caller or staker
+func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
+	// check whether tokenId already staked or not
+	_, exist := deposits[tokenId]
+	if exist {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) already staked", tokenId))
+	}
+
+	// if caller is owner
+	callerIsOwner := gnft.OwnerOf(tid(tokenId)) == std.GetOrigCaller()
+
+	// stakerIsOwner
+	stakerIsOwner := gnft.OwnerOf(tid(tokenId)) == GetOrigPkgAddr()
+
+	if !(callerIsOwner || stakerIsOwner) {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || Neither Caller(%s) or Staker(%s) is not owner of tokenId(%d)", std.GetOrigCaller(), GetOrigPkgAddr(), tokenId))
+	}
+
+	// check tokenId has liquidity or not
+	liquidity := pn.PositionGetPositionLiquidity(tokenId) // *u256.Uint
+	if liquidity.Lte(u256.Zero()) {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) has no liquidity", tokenId))
+	}
+
+	// check pool path from tokenid
+	poolPath := pn.PositionGetPositionPoolKey(tokenId)
+
+	// staked status
+	deposit := deposits[tokenId]
+	deposit.owner = std.GetOrigCaller() // NOT ACTUAL OWNER, MUST BE USER ALWAYS
+	deposit.numberOfStakes++
+	deposit.stakeTimestamp = time.Now().Unix()
+	deposit.stakedHeight = std.GetHeight()
+	deposit.targetPoolPath = poolPath
+	deposits[tokenId] = deposit
+
+	if callerIsOwner { // if caller is owner, transfer NFT ownership to staker contract
+		transferDeposit(tokenId, GetOrigPkgAddr())
+	} else if stakerIsOwner { // if staker is owner, approve NFT to caller (≈one click staking)
+		gnft.Approve(a2u(std.GetOrigCaller()), tid(tokenId))
+	}
+
+	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
+
+	std.Emit(
+		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_tokenId", uint64ToStr(tokenId),
+		"poolPath", poolPath,
+		"amount0", token0Amount,
+		"amount1", token1Amount,
+	)
+
+	return poolPath, token0Amount, token1Amount
+}
+
+// CollectReward collects staked reward from tokenId
+//
+// Panics if any of the following conditions are met:
+// - token is not staked
+// - caller is not owner of lp token
+func CollectReward(tokenId uint64) string { // poolPath
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
+	deposit, exist := deposits[tokenId]
+	if !exist {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || tokenId(%d) not staked", tokenId))
+	}
+
+	if std.PrevRealm().Addr() != deposit.owner {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || only owner(%s) can collect reward from tokenId(%d), std.PrevRealm().Addr()(%s)", deposit.owner, tokenId, std.PrevRealm().Addr()))
+	}
+
+	poolPath := deposits[tokenId].targetPoolPath
+
+	stakedHeight := deposit.stakedHeight
+	currentHeight := std.GetHeight()
+
+	stakedDuration := currentHeight - stakedHeight
+	durationRatio := getRewardRatio(stakedDuration)
+
+	for k, external := range positionExternal[tokenId] {
+		incentive := incentives[external.incentiveId]
+
+		poolPath := external.poolPath
+		tokenPath := external.tokenPath
+		tokenAmount := external.tokenAmount
+
+		if tokenAmount == 0 {
+			continue
+		}
+
+		amountToGive := (tokenAmount * durationRatio) / 100
+		amountLeft := tokenAmount - amountToGive
+
+		toUser := handleRewardFee(tokenPath, amountToGive, false)
+		transferByRegisterCall(tokenPath, deposit.owner, toUser)
+		if tokenPath == consts.WUGNOT_PATH { // unwrap if wugnot
+			unwrap(toUser)
+		}
+
+		incentive.rewardLeft = new(u256.Uint).Sub(incentive.rewardLeft, u256.NewUint(tokenAmount))
+		incentives[external.incentiveId] = incentive
+
+		external.tokenAmount = 0
+		positionExternal[tokenId][k] = external
+
+		std.Emit(
+			"GNOSWAP",
+			"m_callType", callType(),
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
+			"p_tokenId", uint64ToStr(tokenId),
+			"poolPath", poolPath,
+			"rewardToken", tokenPath,
+			"recipient", deposit.owner.String(),
+			"amount", uint64ToStr(toUser),
+		)
+	}
+
+	// gns emission
+	toGive := rewardMathComputeInternalRewardAmount(tokenId)
+	if toGive == 0 {
+		return poolPath
+	}
+
+	toUser := handleRewardFee(consts.GNS_PATH, toGive, true)
+	gns.Transfer(a2u(deposit.owner), toUser)
+
+	// emit internal reward tokens
+	std.Emit(
+		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_tokenId", uint64ToStr(tokenId),
+		"poolPath", poolPath,
+		"rewardToken", consts.GNS_PATH,
+		"recipient", deposit.owner.String(),
+		"amount", uint64ToStr(toUser),
+	)
+
+	lastGnsBalance = gnsBalance(consts.STAKER_ADDR)
+	return poolPath
+}
+
+// UnstakeToken unstakes the lp token from the staker and collects all reward from tokenId
+//
+// Panics if any of the following conditions are met:
+// - token is not staked
+func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
+	// unstaked status
+	deposit, exist := deposits[tokenId]
+	if !exist {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__UnstakeToken() || tokenId(%d) not staked", tokenId))
+	}
+	// Claim All Rewards
+	CollectReward(tokenId)
+	delete(positionGns, tokenId)
+	delete(deposits, tokenId)
+
+	// transfer NFT ownership to origin owner
+	gnft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(deposit.owner), tid(tokenId))
+
+	poolPath := pn.PositionGetPositionPoolKey(tokenId)
+	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
+
+	std.Emit(
+		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_tokenId", uint64ToStr(tokenId),
+		"poolPath", poolPath,
+		"from", GetOrigPkgAddr().String(),
+		"to", deposit.owner.String(),
+		"amount0", token0Amount,
+		"amount1", token1Amount,
+	)
+
+	return poolPath, token0Amount, token1Amount
 }
 
 // CreateExternalIncentive creates an external incentive for the targetPoolPath
@@ -165,194 +368,6 @@ func CreateExternalIncentive(
 		"p_startTimestamp", int64ToStr(startTimestamp),
 		"p_endTimestamp", int64ToStr(endTimestamp),
 	)
-}
-
-// StakeToken stakes the lp token to the staker contract
-//
-// Panics if any of the following conditions are met:
-// - tokenId already staked
-// - tokenId has no liquidity
-// - tokenId is not owned by the caller or staker
-func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
-	// check whether tokenId already staked or not
-	_, exist := deposits[tokenId]
-	if exist {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) already staked", tokenId))
-	}
-
-	// if caller is owner
-	callerIsOwner := gnft.OwnerOf(tid(tokenId)) == std.GetOrigCaller()
-
-	// stakerIsOwner
-	stakerIsOwner := gnft.OwnerOf(tid(tokenId)) == GetOrigPkgAddr()
-
-	if !(callerIsOwner || stakerIsOwner) {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || Neither Caller(%s) or Staker(%s) is not owner of tokenId(%d)", std.GetOrigCaller(), GetOrigPkgAddr(), tokenId))
-	}
-
-	// check tokenId has liquidity or not
-	liquidity := pn.PositionGetPositionLiquidity(tokenId) // *u256.Uint
-	if liquidity.Lte(u256.Zero()) {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) has no liquidity", tokenId))
-	}
-
-	// check pool path from tokenid
-	poolPath := pn.PositionGetPositionPoolKey(tokenId)
-
-	// staked status
-	deposit := deposits[tokenId]
-	deposit.owner = std.GetOrigCaller() // NOT ACTUAL OWNER, MUST BE USER ALWAYS
-	deposit.numberOfStakes++
-	deposit.stakeTimestamp = time.Now().Unix()
-	deposit.targetPoolPath = poolPath
-	deposits[tokenId] = deposit
-
-	if callerIsOwner { // if caller is owner, transfer NFT ownership to staker contract
-		transferDeposit(tokenId, GetOrigPkgAddr())
-	} else if stakerIsOwner { // if staker is owner, approve NFT to caller (≈one click staking)
-		gnft.Approve(a2u(std.GetOrigCaller()), tid(tokenId))
-	}
-
-	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
-
-	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_origCaller", origCaller(),
-		"m_prevRealm", prevRealm(),
-		"p_tokenId", uint64ToStr(tokenId),
-		"poolPath", poolPath,
-		"amount0", token0Amount,
-		"amount1", token1Amount,
-	)
-
-	return poolPath, token0Amount, token1Amount
-}
-
-// CollectReward collects staked reward from tokenId
-//
-// Panics if any of the following conditions are met:
-// - token is not staked
-// - caller is not owner of lp token
-func CollectReward(tokenId uint64) string { // poolPath
-	deposit, exist := deposits[tokenId]
-	if !exist {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || tokenId(%d) not staked", tokenId))
-	}
-
-	if std.PrevRealm().Addr() != deposit.owner {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || only owner(%s) can collect reward from tokenId(%d), std.PrevRealm().Addr()(%s)", deposit.owner, tokenId, std.PrevRealm().Addr()))
-	}
-
-	// poolPath to collect reward
-	poolPath := pn.PositionGetPositionPoolKey(tokenId)
-
-	// get all external reward list for this pool
-	for _, incentiveId := range poolIncentives[poolPath] {
-		incentive := incentives[incentiveId]
-		externalReward := rewardMathComputeExternalRewardAmount(tokenId, deposit, incentive) // external reward
-		externalReward = userClaimedRewardAmount(deposit.owner, tokenId, incentive.rewardToken, externalReward, true)
-
-		if externalReward.Gt(u256.Zero()) {
-			// protocol fee
-			toUser := handleRewardFee(incentive.rewardToken, externalReward, false)
-			toUserUint64 := toUser.Uint64()
-
-			// then transfer rest
-			transferByRegisterCall(incentive.rewardToken, deposit.owner, toUserUint64)
-
-			// unwrap if wugnot
-			if incentive.rewardToken == consts.WUGNOT_PATH {
-				unwrap(toUserUint64)
-			}
-
-			// emit external reward tokens
-			std.Emit(
-				"GNOSWAP",
-				"m_callType", callType(),
-				"m_origCaller", origCaller(),
-				"m_prevRealm", prevRealm(),
-				"p_tokenId", uint64ToStr(tokenId),
-				"poolPath", poolPath,
-				"rewardToken", incentive.rewardToken,
-				"recipient", deposit.owner.String(),
-				"amount", toUser.ToString(),
-			)
-		}
-
-		// update incentive left reward amount
-		incentive.rewardLeft = new(u256.Uint).Sub(incentive.rewardLeft, externalReward)
-		incentives[incentiveId] = incentive
-	}
-
-	// default `Internal` reward
-	internalGNS := rewardMathComputeInternalRewardAmount(tokenId, deposit)
-	if internalGNS.IsZero() {
-		return poolPath
-	}
-
-	internalGNS = userClaimedRewardAmount(deposit.owner, tokenId, consts.GNS_PATH, internalGNS, true)
-
-	if internalGNS.Gt(u256.Zero()) {
-		// protocol fee
-		toUser := handleRewardFee(consts.GNS_PATH, internalGNS, true)
-
-		// then transfer rest
-		gns.TransferFrom(a2u(consts.INTERNAL_REWARD_ACCOUNT), a2u(deposit.owner), toUser.Uint64())
-
-		// emit internal reward tokens
-		std.Emit(
-			"GNOSWAP",
-			"m_callType", callType(),
-			"m_origCaller", origCaller(),
-			"m_prevRealm", prevRealm(),
-			"p_tokenId", uint64ToStr(tokenId),
-			"poolPath", poolPath,
-			"rewardToken", consts.GNS_PATH,
-			"recipient", deposit.owner.String(),
-			"amount", toUser.ToString(),
-		)
-	}
-
-	return poolPath
-}
-
-// UnstakeToken unstakes the lp token from the staker and collects all reward from tokenId
-//
-// Panics if any of the following conditions are met:
-// - token is not staked
-func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
-	// Claim All Rewards
-	CollectReward(tokenId)
-	clearUserClaimedRewards(tokenId)
-
-	// unstaked status
-	deposit, exist := deposits[tokenId]
-	if !exist {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__UnstakeToken() || tokenId(%d) not staked", tokenId))
-	}
-	delete(deposits, tokenId)
-
-	// transfer NFT ownership to origin owner
-	gnft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(deposit.owner), tid(tokenId))
-
-	poolPath := pn.PositionGetPositionPoolKey(tokenId)
-	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
-
-	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_origCaller", origCaller(),
-		"m_prevRealm", prevRealm(),
-		"p_tokenId", uint64ToStr(tokenId),
-		"poolPath", poolPath,
-		"from", GetOrigPkgAddr().String(),
-		"to", deposit.owner.String(),
-		"amount0", token0Amount,
-		"amount1", token1Amount,
-	)
-
-	return poolPath, token0Amount, token1Amount
 }
 
 // EndExternalIncentive ends the external incentive
@@ -498,4 +513,8 @@ func getTokenPairBalanceFromPosition(tokenId uint64) (string, string) {
 	}
 
 	return token0Balance, token1Balance
+}
+
+func gnsBalance(addr std.Address) uint64 {
+	return gns.BalanceOf(a2u(addr))
 }

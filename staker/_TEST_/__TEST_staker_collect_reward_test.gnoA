@@ -170,7 +170,7 @@ func TestCollectReward(t *testing.T) {
 	// before claim
 	gnsOld := gns.BalanceOf(a2u(gsa))
 	std.TestSkipHeights(1)
-	shouldEQ(t, gnsOld, 500000000000000)
+	shouldEQ(t, gnsOld, 100000000000000)
 
 	std.TestSetRealm(stkRealm)
 	std.TestSetOrigCaller(gsa)
@@ -182,7 +182,7 @@ func TestCollectReward(t *testing.T) {
 
 	gnsNew := gns.BalanceOf(a2u(gsa))
 	std.TestSkipHeights(1)
-	shouldEQ(t, gnsNew, 500000000000490)
+	shouldEQ(t, gnsNew, 100000038936750)
 }
 
 func TestUnstakeToken01(t *testing.T) {
@@ -201,8 +201,8 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), gsa)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 500000000049741) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000004411)  // external
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000184226451) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000004117)  // external
 }
 
 func TestUnstakeToken02(t *testing.T) {
@@ -219,8 +219,8 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), gsa)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 500000000381342) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000034203)  // external
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100001078706895) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000028527)  // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {
