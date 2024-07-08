@@ -1,0 +1,72 @@
+package protocol_fee
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/qux"
+
+	pusers "gno.land/p/demo/users"
+
+	"gno.land/r/demo/gnoswap/consts"
+
+	"gno.land/p/demo/testutils"
+)
+
+func TestDistributeProtocolFee(t *testing.T) {
+	// admin > protocol_fee
+	// send qux, bar for testing
+	std.TestSetRealm(gsaRealm)
+	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
+	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
+
+	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), 1000)
+	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), 0)
+	shouldEQ(t, bar.BalanceOf(a2u(consts.X_GNS_ADDR)), 0)
+
+	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), 1000)
+	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), 0)
+	shouldEQ(t, qux.BalanceOf(a2u(consts.X_GNS_ADDR)), 0)
+
+	DistributeProtocolFee()
+
+	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), 0)
+	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), 500)
+	shouldEQ(t, bar.BalanceOf(a2u(consts.X_GNS_ADDR)), 500)
+
+	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), 0)
+	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), 500)
+	shouldEQ(t, qux.BalanceOf(a2u(consts.X_GNS_ADDR)), 500)
+}
+
+func TestDistributeProtocolFeeNoPermission(t *testing.T) {
+	dummy := testutils.TestAddress("dummy")
+	dummyRealm := std.NewUserRealm(dummy)
+	std.TestSetRealm(dummyRealm)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			DistributeProtocolFee()
+		},
+		"only admin(g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq) or governance(g1kmat25auuqf0h5qvd4q7s707r8let5sky4tr76) can distribute protocol fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+	)
+}
+
+func a2u(addr std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(addr)
+}
+
+func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		} else {
+			if r != msg {
+				t.Errorf("excepted panic(%v), got(%v)", msg, r)
+			}
+		}
+	}()
+	f()
+}
