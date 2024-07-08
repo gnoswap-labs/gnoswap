@@ -3,7 +3,6 @@ package pool
 import (
 	"std"
 
-	"gno.land/r/demo/gnoswap/common"
 	"gno.land/r/demo/gnoswap/consts"
 
 	"gno.land/p/demo/ufmt"
@@ -84,7 +83,17 @@ func GetWithdrawalFee() uint64 {
 // Panics if any of the following conditions are met:
 // - caller is not the admin
 func SetWithdrawalFee(fee uint64) {
-	common.MustCallFromAdmin()
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+		panic(
+			ufmt.Sprintf(
+				"[POOL] protocol_fee_withdrawal.gno__SetWithdrawalFee() || only admin(%s) or governance(%s) can set withdrawal fee, called from %s",
+				consts.GNOSWAP_ADMIN,
+				consts.GOV_ADDR,
+				caller,
+			),
+		)
+	}
 
 	// 10000 (bps) = 100%
 	if fee > 10000 {

@@ -3,6 +3,7 @@ package gns
 import (
 	"std"
 	"strings"
+	"time"
 
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
@@ -16,21 +17,27 @@ import (
 const MAXIMUM_SUPPLY = uint64(1_000_000_000_000_000) // 1B
 
 var (
+	deployedHeight   int64
+	deployedAt       time.Time
+	lastMintedHeight int64
+	amountToEmission uint64
+)
+
+var (
 	gns *grc20.AdminToken
 )
 
 func init() {
 	gns = grc20.NewAdminToken("Gnoswap", "GNS", 6)
-	gns.Mint(consts.INTERNAL_REWARD_ACCOUNT, 500_000_000_000_000) // 500_000_000 GNS ≈ 0.5B
-	gns.Mint(consts.GNOSWAP_ADMIN, 500_000_000_000_000)           // 500_000_000 GNS ≈ 0.5B
+	gns.Mint(consts.GNOSWAP_ADMIN, 100_000_000_000_000) // 100_000_000 GNS ≈ 0.1B
 
-	gns.Approve(consts.INTERNAL_REWARD_ACCOUNT, consts.STAKER_ADDR, consts.UINT64_MAX)
+	amountToEmission = MAXIMUM_SUPPLY - uint64(100_000_000_000_000)
+
+	height := std.GetHeight()
+	deployedHeight = height
+	deployedAt = time.Now()
+	lastMintedHeight = 0
 }
-
-// method proxies as public functions.
-//
-
-// getters.
 
 func TotalSupply() uint64 {
 	return gns.TotalSupply()
@@ -51,8 +58,6 @@ func Allowance(owner, spender pusers.AddressOrName) uint64 {
 	}
 	return allowance
 }
-
-// setters.
 
 func Transfer(to pusers.AddressOrName, amount uint64) {
 	caller := std.PrevRealm().Addr()
@@ -78,9 +83,6 @@ func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
 	}
 }
 
-// render.
-//
-
 func Render(path string) string {
 	parts := strings.Split(path, "/")
 	c := len(parts)
@@ -95,4 +97,36 @@ func Render(path string) string {
 	default:
 		return "404\n"
 	}
+}
+
+// Mint
+func Mint(address pusers.AddressOrName) {
+	// only emission contract can call Mint
+	caller := std.PrevRealm().Addr()
+	if caller != consts.EMISSION_ADDR {
+		panic("only emission contract can call Mint")
+	}
+
+	nowHeight := std.GetHeight()
+	for i := lastMintedHeight + 1; i <= nowHeight; i++ {
+		amount := getAmountByHeight(i)
+		err := gns.Mint(users.Resolve(address), amount)
+		if err != nil {
+			panic(err.Error())
+		}
+		lastMintedHeight = i
+
+		// debug
+		// println("height:", i, "minted:", amount)
+	}
+}
+
+// XXX: Remove this
+// ONLY FOR EMISSION TESTING
+func TestSetLastMintedHeight(height int64) {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.EMISSION_ADDR {
+		panic("only emission contract can call TestSetLastMintedHeight")
+	}
+	lastMintedHeight = height
 }

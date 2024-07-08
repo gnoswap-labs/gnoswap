@@ -135,7 +135,7 @@ func TestSetWithdrawalFeeNoPermission(t *testing.T) {
 		func() {
 			SetWithdrawalFee(2)
 		},
-		"must be called by admin",
+		"[POOL] protocol_fee_withdrawal.gno__SetWithdrawalFee() || only admin(g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq) or governance(g1kmat25auuqf0h5qvd4q7s707r8let5sky4tr76) can set withdrawal fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
@@ -172,7 +172,7 @@ func TestSetPoolCreationFeeNoPermission(t *testing.T) {
 		func() {
 			SetPoolCreationFee(2)
 		},
-		"must be called by admin",
+		"[POOL] protocol_fee_pool_creation.gno__SetPoolCreationFee() || only admin(g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq) or governance(g1kmat25auuqf0h5qvd4q7s707r8let5sky4tr76) can set pool creation fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 

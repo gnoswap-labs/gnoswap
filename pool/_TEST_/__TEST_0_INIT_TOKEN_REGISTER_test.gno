@@ -134,7 +134,7 @@ func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 }
 
 func init() {
-	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
+	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
 
 	RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
@@ -169,10 +169,12 @@ func TestUnregisterGRC20Interface(t *testing.T) {
 
 	shouldEQ(t, len(GetRegisteredTokens()), 7)
 
-	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
+	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
 	UnregisterGRC20Interface("gno.land/r/demo/bar")
 	shouldEQ(t, len(GetRegisteredTokens()), 6)
 
 	// re-register to avoid panic in other tests
 	RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+
+	std.TestSetOrigCaller(gsa)
 }

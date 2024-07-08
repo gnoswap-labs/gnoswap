@@ -3,7 +3,6 @@ package router
 import (
 	"std"
 
-	"gno.land/r/demo/gnoswap/common"
 	"gno.land/r/demo/gnoswap/consts"
 
 	"gno.land/p/demo/ufmt"
@@ -44,7 +43,7 @@ func handleSwapFee(
 		} else { // just transfer if grc20
 			ok := transferFromByRegisterCall(outputToken, std.GetOrigCaller(), consts.COMMUNITY_POOL_ADDR, feeAmountUint64)
 			if !ok {
-				panic(ufmt.Sprintf("[ROUTER] router.gno__handleSwapFee() || expected transferFromByRegisterCall(%s, %s, %s, %d) == true", outputToken, std.GetOrigCaller(), consts.COMMUNITY_POOL_ADDR, feeAmountUint64))
+				panic(ufmt.Sprintf("[ROUTER] protocol_fee_swap.gno__handleSwapFee() || expected transferFromByRegisterCall(%s, %s, %s, %d) == true", outputToken, std.GetOrigCaller(), consts.COMMUNITY_POOL_ADDR, feeAmountUint64))
 			}
 		}
 	}
@@ -58,10 +57,21 @@ func GetSwapFee() uint64 {
 }
 
 func SetSwapFee(fee uint64) {
-	common.MustCallFromAdmin()
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+		panic(
+			ufmt.Sprintf(
+				"[ROUTER] protocol_fee_swap.gno__SetSwapFee() || only admin(%s) or governance(%s) can set swap fee, called from %s",
+				consts.GNOSWAP_ADMIN,
+				consts.GOV_ADDR,
+				caller,
+			),
+		)
+	}
 
+	// 10000 (bps) = 100%
 	if fee > 10000 {
-		panic(ufmt.Sprintf("[STAKER] reward_fee.gno__SetSwapFee() || fee(%d) must be in range 0 ~ 10000", fee))
+		panic(ufmt.Sprintf("[ROUTER] protocol_fee_swap.gno__SetSwapFee() || fee(%d) must be in range 0 ~ 10000", fee))
 	}
 
 	swapFee = fee

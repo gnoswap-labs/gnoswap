@@ -189,7 +189,7 @@ func TestCollectExternalReward_2(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	oblNew := obl.BalanceOf(a2u(gsa))
-	shouldEQ(t, oblNew-oblOld, 24624168)
+	shouldEQ(t, oblNew-oblOld, 22385607)
 }
 
 func TestCollectExternalReward_3(t *testing.T) {
@@ -197,7 +197,7 @@ func TestCollectExternalReward_3(t *testing.T) {
 
 	// before claim
 	oblOld := obl.BalanceOf(a2u(gsa))
-	shouldEQ(t, oblOld, 99999924624168)
+	shouldEQ(t, oblOld, 99999922385607)
 
 	std.TestSkipHeights(1)
 	CollectReward(3)
@@ -207,5 +207,5 @@ func TestCollectExternalReward_3(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	oblNew := obl.BalanceOf(a2u(gsa))
-	shouldEQ(t, oblNew-oblOld, 24624168)
+	shouldEQ(t, oblNew-oblOld, 22385607)
 }

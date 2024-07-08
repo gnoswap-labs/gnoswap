@@ -153,7 +153,7 @@ func (USDCToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 }
 
 func init() {
-	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
+	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
 
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
