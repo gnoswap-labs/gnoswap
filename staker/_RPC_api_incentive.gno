@@ -22,6 +22,7 @@ type ApiExternalIncentive struct {
 	PoolPath       string `json:"poolPath"`
 	RewardToken    string `json:"rewardToken"`
 	RewardAmount   string `json:"rewardAmount"`
+	RewardLeft     string `json:"rewardLeft"`
 	StartTimestamp int64  `json:"startTimestamp"`
 	EndTimestamp   int64  `json:"endTimestamp"`
 	Active         bool   `json:"active"`
@@ -158,6 +159,7 @@ func ApiGetExternalIncentives() string {
 			PoolPath:       incentive.targetPoolPath,
 			RewardToken:    incentive.rewardToken,
 			RewardAmount:   incentive.rewardAmount.ToString(),
+			RewardLeft:     incentive.rewardLeft.ToString(),
 			StartTimestamp: incentive.startTimestamp,
 			EndTimestamp:   incentive.endTimestamp,
 			Refundee:       incentive.refundee.String(),
@@ -182,6 +184,7 @@ func ApiGetExternalIncentives() string {
 			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
 			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
 			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
+			"rewardLeft":     json.StringNode("rewardLeft", incentive.RewardLeft),
 			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
 			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
 			"active":         json.BoolNode("active", active),
@@ -218,6 +221,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 			PoolPath:       incentive.targetPoolPath,
 			RewardToken:    incentive.rewardToken,
 			RewardAmount:   incentive.rewardAmount.ToString(),
+			RewardLeft:     incentive.rewardLeft.ToString(),
 			StartTimestamp: incentive.startTimestamp,
 			EndTimestamp:   incentive.endTimestamp,
 			Refundee:       incentive.refundee.String(),
@@ -242,6 +246,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
 			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
 			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
+			"rewardLeft":     json.StringNode("rewardLeft", incentive.RewardLeft),
 			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
 			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
 			"active":         json.BoolNode("active", active),
@@ -278,6 +283,7 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 			PoolPath:       incentive.targetPoolPath,
 			RewardToken:    incentive.rewardToken,
 			RewardAmount:   incentive.rewardAmount.ToString(),
+			RewardLeft:     incentive.rewardLeft.ToString(),
 			StartTimestamp: incentive.startTimestamp,
 			EndTimestamp:   incentive.endTimestamp,
 			Refundee:       incentive.refundee.String(),
@@ -302,6 +308,7 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
 			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
 			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
+			"rewardLeft":     json.StringNode("rewardLeft", incentive.RewardLeft),
 			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
 			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
 			"active":         json.BoolNode("active", active),
