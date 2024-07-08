@@ -6,15 +6,22 @@ import (
 	"time"
 
 	"gno.land/p/demo/grc/grc20"
+	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/users"
-
 	pusers "gno.land/p/demo/users"
+
+	"gno.land/r/demo/users"
 
 	"gno.land/r/demo/gnoswap/consts"
 )
 
 const MAXIMUM_SUPPLY = uint64(1_000_000_000_000_000) // 1B
+
+var (
+	banker *grc20.Banker
+	admin  *ownable.Ownable
+	token  grc20.Token
+)
 
 var (
 	deployedHeight   int64
@@ -23,13 +30,12 @@ var (
 	amountToEmission uint64
 )
 
-var (
-	gns *grc20.AdminToken
-)
-
 func init() {
-	gns = grc20.NewAdminToken("Gnoswap", "GNS", 6)
-	gns.Mint(consts.GNOSWAP_ADMIN, 100_000_000_000_000) // 100_000_000 GNS ≈ 0.1B
+	admin = ownable.NewWithAddress("g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq") // GNOSWAP_ADMIN
+	banker = grc20.NewBanker("Gnoswap", "GNS", 6)
+
+	banker.Mint(admin.Owner(), 100_000_000_000_000) // 100_000_000 GNS ≈ 0.1B
+	token = banker.Token()
 
 	amountToEmission = MAXIMUM_SUPPLY - uint64(100_000_000_000_000)
 
@@ -39,48 +45,33 @@ func init() {
 	lastMintedHeight = 0
 }
 
-func TotalSupply() uint64 {
-	return gns.TotalSupply()
-}
+func TotalSupply() uint64 { return token.TotalSupply() }
 
 func BalanceOf(owner pusers.AddressOrName) uint64 {
-	balance, err := gns.BalanceOf(users.Resolve(owner))
-	if err != nil {
-		panic(err.Error())
-	}
-	return balance
+	ownerAddr := users.Resolve(owner)
+	return token.BalanceOf(ownerAddr)
 }
 
 func Allowance(owner, spender pusers.AddressOrName) uint64 {
-	allowance, err := gns.Allowance(users.Resolve(owner), users.Resolve(spender))
-	if err != nil {
-		panic(err.Error())
-	}
-	return allowance
+	ownerAddr := users.Resolve(owner)
+	spenderAddr := users.Resolve(spender)
+	return token.Allowance(ownerAddr, spenderAddr)
 }
 
 func Transfer(to pusers.AddressOrName, amount uint64) {
-	caller := std.PrevRealm().Addr()
-	err := gns.Transfer(caller, users.Resolve(to), amount)
-	if err != nil {
-		panic(err.Error())
-	}
+	toAddr := users.Resolve(to)
+	checkErr(token.Transfer(toAddr, amount))
 }
 
 func Approve(spender pusers.AddressOrName, amount uint64) {
-	caller := std.PrevRealm().Addr()
-	err := gns.Approve(caller, users.Resolve(spender), amount)
-	if err != nil {
-		panic(err.Error())
-	}
+	spenderAddr := users.Resolve(spender)
+	checkErr(token.Approve(spenderAddr, amount))
 }
 
 func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
-	caller := std.PrevRealm().Addr()
-	err := gns.TransferFrom(caller, users.Resolve(from), users.Resolve(to), amount)
-	if err != nil {
-		panic(err.Error())
-	}
+	fromAddr := users.Resolve(from)
+	toAddr := users.Resolve(to)
+	checkErr(token.TransferFrom(fromAddr, toAddr, amount))
 }
 
 func Render(path string) string {
@@ -89,10 +80,11 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return gns.RenderHome()
+		return banker.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := pusers.AddressOrName(parts[1])
-		balance, _ := gns.BalanceOf(users.Resolve(owner))
+		ownerAddr := users.Resolve(owner)
+		balance := banker.BalanceOf(ownerAddr)
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
@@ -110,7 +102,7 @@ func Mint(address pusers.AddressOrName) {
 	nowHeight := std.GetHeight()
 	for i := lastMintedHeight + 1; i <= nowHeight; i++ {
 		amount := getAmountByHeight(i)
-		err := gns.Mint(users.Resolve(address), amount)
+		err := banker.Mint(users.Resolve(address), amount)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -118,6 +110,12 @@ func Mint(address pusers.AddressOrName) {
 
 		// debug
 		// println("height:", i, "minted:", amount)
+	}
+}
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err.Error())
 	}
 }
 
