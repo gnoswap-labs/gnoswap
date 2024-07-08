@@ -27,7 +27,6 @@ import (
 
 var (
 	gsa std.Address = consts.GNOSWAP_ADMIN
-	ira std.Address = consts.INTERNAL_REWARD_ACCOUNT
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -53,7 +52,6 @@ var (
 // Realms to mock frames
 var (
 	gsaRealm = std.NewUserRealm(gsa)
-	iraRealm = std.NewUserRealm(ira)
 
 	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
 	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
@@ -201,12 +199,7 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 
 func init() {
 	// TOKEN REGISTER
-	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
-
-	// set pool create fee to 0 for testing
-	std.TestSetOrigCaller(gsa)
-	pl.SetPoolCreationFee(0)
+	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
 
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
@@ -235,6 +228,12 @@ func init() {
 
 /* START TEST */
 func main() {
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
+	// set pool create fee to 0 for testing
+	pl.SetPoolCreationFee(0)
+
 	createPool()
 	mintAndStake()
 	collectFee()
@@ -266,10 +265,6 @@ func collectFee() {
 }
 
 func collectReward() {
-	// internal reward distribution
-	std.TestSetRealm(iraRealm)
-	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
-
 	std.TestSetRealm(gsaRealm)
 	sr.CollectReward(1)
 }

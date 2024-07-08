@@ -30,7 +30,6 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) uint64 {
 
 	leftGnsBalance += gnsAmountLeft
 
-	positionGns[tokenId] = 0
 	poolGns[deposit.targetPoolPath] -= gnsFullAmount
 	return gnsAmountToGive
 }
@@ -140,59 +139,59 @@ func getNumPoolTiers() (uint64, uint64, uint64) {
 }
 
 // get staking tier
-func getRewardRatio(height int64) uint64 {
-	// since `float` type has determinisim issue, we use `int` instead
-	// so instead of return 50%, we return 50
-	// we'll divide by 100 later
-
-	var ratio uint64
-	switch {
-	case height >= 518401:
-		ratio = 100
-		break
-	case height >= 172801:
-		ratio = 70
-		break
-	case height >= 86401:
-		ratio = 50
-		break
-	case height >= 1:
-		ratio = 30
-		break
-	default:
-		ratio = 0
-		break
-	}
-
-	return ratio
-}
-
-// func getRewardRatio(timestamp int64) uint64 {
+// func getRewardRatio(height int64) uint64 {
 // 	// since `float` type has determinisim issue, we use `int` instead
 // 	// so instead of return 50%, we return 50
 // 	// we'll divide by 100 later
 
 // 	var ratio uint64
 // 	switch {
-// 	case timestamp >= 2592001: // 30d 1s ~
+// 	case height >= 518401:
 // 		ratio = 100
 // 		break
-// 	case timestamp >= 864001: // 10d 1s ~ 30d
+// 	case height >= 172801:
 // 		ratio = 70
 // 		break
-// 	case timestamp >= 432001: // 5d 1s ~ 10d
+// 	case height >= 86401:
 // 		ratio = 50
 // 		break
-// 	case timestamp >= 5: // 5s ~ 5d (5s is block creation time)
+// 	case height >= 1:
 // 		ratio = 30
 // 		break
-// 	default: // ~ 4s
+// 	default:
 // 		ratio = 0
 // 		break
 // 	}
 
 // 	return ratio
 // }
+
+func getRewardRatio(timestamp int64) uint64 {
+	// since `float` type has determinisim issue, we use `int` instead
+	// so instead of return 50%, we return 50
+	// we'll divide by 100 later
+
+	var ratio uint64
+	switch {
+	case timestamp >= 2592001: // 30d 1s ~
+		ratio = 100
+		break
+	case timestamp >= 864001: // 10d 1s ~ 30d
+		ratio = 70
+		break
+	case timestamp >= 432001: // 5d 1s ~ 10d
+		ratio = 50
+		break
+	case timestamp >= 5: // 5s ~ 5d (5s is block creation time)
+		ratio = 30
+		break
+	default: // ~ 4s
+		ratio = 0
+		break
+	}
+
+	return ratio
+}
 
 func getTierRatio(tier uint64) uint64 {
 	if tier < 1 || tier > 3 {

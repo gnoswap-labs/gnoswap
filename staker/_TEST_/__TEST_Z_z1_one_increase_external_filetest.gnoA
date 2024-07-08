@@ -201,12 +201,7 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 
 func init() {
 	// TOKEN REGISTER
-	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
-
-	// set pool create fee to 0 for testing
-	std.TestSetOrigCaller(gsa)
-	pl.SetPoolCreationFee(0)
+	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
 
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
@@ -235,6 +230,11 @@ func init() {
 
 /* START TEST */
 func main() {
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+	// set pool create fee to 0 for testing
+	pl.SetPoolCreationFee(0)
+
 	createPool()
 	mint01()
 	mint02()

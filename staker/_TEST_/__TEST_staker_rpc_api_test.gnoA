@@ -280,13 +280,13 @@ func TestApiGetRewards(t *testing.T) {
 
 func TestApiGetRewardsByLpTokenId(t *testing.T) {
 	rewards := ApiGetRewardsByLpTokenId(uint64(1))
-	res := `{"stat":{"height":1144,"timestamp":1234572995},"response":[{"lpTokenId":1,"address":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq","rewards":[{"incentiveType":"EXTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardTokenPath":"gno.land/r/demo/obl","rewardTokenAmount":20162}]}]}`
+	res := `{"stat":{"height":1144,"timestamp":1234572995},"response":[{"lpTokenId":1,"address":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq","rewards":[{"incentiveType":"INTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardTokenPath":"gno.land/r/demo/gns","rewardTokenAmount":40172836},{"incentiveType":"EXTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardTokenPath":"gno.land/r/demo/obl","rewardTokenAmount":20162}]}]}`
 	shouldEQ(t, rewards, res)
 }
 
 func TestApiGetRewardsByAddress(t *testing.T) {
 	rewards := ApiGetRewardsByAddress("g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq")
-	res := `{"stat":{"height":1144,"timestamp":1234572995},"response":[{"lpTokenId":1,"address":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq","rewards":[{"incentiveType":"EXTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardTokenPath":"gno.land/r/demo/obl","rewardTokenAmount":20162}]},{"lpTokenId":2,"address":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq","rewards":[{"incentiveType":"EXTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardTokenPath":"gno.land/r/demo/obl","rewardTokenAmount":119532}]},{"lpTokenId":3,"address":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq","rewards":[]}]}`
+	res := `{"stat":{"height":1144,"timestamp":1234572995},"response":[{"lpTokenId":1,"address":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq","rewards":[{"incentiveType":"INTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardTokenPath":"gno.land/r/demo/gns","rewardTokenAmount":40172836},{"incentiveType":"EXTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardTokenPath":"gno.land/r/demo/obl","rewardTokenAmount":20162}]},{"lpTokenId":2,"address":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq","rewards":[{"incentiveType":"INTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardTokenPath":"gno.land/r/demo/gns","rewardTokenAmount":238167533},{"incentiveType":"EXTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardTokenPath":"gno.land/r/demo/obl","rewardTokenAmount":119532}]},{"lpTokenId":3,"address":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq","rewards":[{"incentiveType":"INTERNAL","targetPoolPath":"gno.land/r/demo/baz:gno.land/r/demo/qux:500","rewardTokenPath":"gno.land/r/demo/gns","rewardTokenAmount":172169301}]}]}`
 	shouldEQ(t, rewards, res)
 }
 

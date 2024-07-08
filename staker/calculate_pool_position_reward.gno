@@ -52,11 +52,11 @@ func CalcPoolPosition() {
 		poolGns[poolPath] += tierAmount
 	}
 
-	// calculate position gns rewards
 	for tokenId, deposit := range deposits {
 		poolPath := deposit.targetPoolPath
 		poolAmount := poolGns[poolPath]
 
+		// calculate position gns rewards
 		liqRatioX96 := getMyLiquidityRatio(poolPath, tokenId)
 		liqRatioX96x100 := u256.Zero()
 		liqRatioX96x100 = u256.Zero().Mul(liqRatioX96, u256.NewUint(100))
@@ -66,7 +66,7 @@ func CalcPoolPosition() {
 		positionAmount := poolAmount * liqRatio / 100
 		positionGns[tokenId] = positionAmount
 
-		// EXTERNAL
+		// calculate position external rewards
 		incentiveIds := poolIncentives[poolPath]
 		for _, incentiveId := range incentiveIds {
 			incentive := incentives[incentiveId]
@@ -74,7 +74,7 @@ func CalcPoolPosition() {
 			startTimestamp := incentive.startTimestamp
 			endTimestamp := incentive.endTimestamp
 			now := time.Now().Unix()
-			// if inactive incentive skip
+			// if inactive incentive, do not calculate
 			if !(startTimestamp <= now && now <= endTimestamp) {
 				continue
 			}

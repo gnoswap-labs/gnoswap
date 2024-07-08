@@ -29,7 +29,6 @@ import (
 
 var (
 	gsa std.Address = consts.GNOSWAP_ADMIN
-	ira std.Address = consts.INTERNAL_REWARD_ACCOUNT
 
 	fooPath string = "gno.land/r/demo/foo"
 	barPath string = "gno.land/r/demo/bar"
@@ -55,7 +54,6 @@ var (
 // Realms to mock frames
 var (
 	gsaRealm = std.NewUserRealm(gsa)
-	iraRealm = std.NewUserRealm(ira)
 
 	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
 	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
@@ -203,12 +201,7 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 
 func init() {
 	// TOKEN REGISTER
-	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
-
-	// set pool create fee to 0 for testing
-	std.TestSetOrigCaller(gsa)
-	pl.SetPoolCreationFee(0)
+	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
 
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
@@ -237,6 +230,11 @@ func init() {
 
 /* START TEST */
 func main() {
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+	// set pool create fee to 0 for testing
+	pl.SetPoolCreationFee(0)
+
 	createPool()
 	setPoolTier()
 	mintBarQux()
@@ -350,8 +348,6 @@ func stakeExternal() {
 }
 
 func collectReward01() {
-	std.TestSetRealm(iraRealm)
-	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // internal reward distribution
 	std.TestSkipHeights(1)
 
 	gnsBal := gns.BalanceOf(a2u(gsa))
@@ -366,8 +362,8 @@ func collectReward01() {
 
 	gnsBal = gns.BalanceOf(a2u(gsa))
 
-	if gnsBal != 100000252161808 {
-		panic("collectReward01() || gnsBal != 100000252161808")
+	if gnsBal != 100000254454188 {
+		panic("collectReward01() || gnsBal != 100000254454188")
 	}
 }
 
@@ -376,8 +372,8 @@ func collectReward01Again() {
 
 	gnsBal := gns.BalanceOf(a2u(gsa))
 
-	if gnsBal != 100000252161808 {
-		panic("collectReward01Again() || gnsBal != 100000252161808")
+	if gnsBal != 100000254454188 {
+		panic("collectReward01Again() || gnsBal != 100000254454188")
 	}
 
 	// ACCELERATE TIME
@@ -388,8 +384,8 @@ func collectReward01Again() {
 
 	gnsBal = gns.BalanceOf(a2u(gsa))
 
-	if gnsBal != 100002106292750 {
-		panic("collectReward01() || gnsBal != 100002106292750")
+	if gnsBal != 100002125440866 {
+		panic("collectReward01() || gnsBal != 100002125440866")
 	}
 }
 
@@ -405,8 +401,8 @@ func collectExternalReward() {
 	sr.CollectReward(3)
 	oblBal = obl.BalanceOf(a2u(gsa))
 
-	if oblBal != 99999000128141 {
-		panic("collectExternalReward() || oblBal != 99999000128141")
+	if oblBal != 99999000129306 {
+		panic("collectExternalReward() || oblBal != 99999000129306")
 	}
 }
 

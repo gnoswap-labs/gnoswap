@@ -288,11 +288,11 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, poolGns["gno.land/r/demo/bar:gno.land/r/demo/qux:500"], 7374518204)
 	shouldEQ(t, positionGns[2], 0)
 	shouldEQ(t, positionGns[3], 7117267568)
-	shouldEQ(t, leftGnsBalance, 6833502595)
+	shouldEQ(t, leftGnsBalance, 7193653483)
 
 	shouldEQ(t, gns.TotalSupply(), 100022902396630)
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 14248153508)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 14608304396)
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 4580479326)
 }
 
@@ -309,12 +309,12 @@ func TestCollectReward02(t *testing.T) {
 func TestCollectReward03(t *testing.T) {
 	shouldEQ(t, poolGns["gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000"], 26755136)
 	shouldEQ(t, positionGns[1], 0)
-	shouldEQ(t, leftGnsBalance, 6833502595)
+	shouldEQ(t, leftGnsBalance, 7193653483)
 
 	shouldEQ(t, poolGns["gno.land/r/demo/bar:gno.land/r/demo/qux:500"], 7387895772)
 	shouldEQ(t, positionGns[2], 0)
 	shouldEQ(t, positionGns[3], 7387895772)
-	shouldEQ(t, leftGnsBalance, 6833502595)
+	shouldEQ(t, leftGnsBalance, 7193653483)
 
 	shouldEQ(t, len(positionExternal[3]), 1)
 	shouldEQ(t, positionExternal[3][0].tokenAmount, 186791)
@@ -338,10 +338,10 @@ func TestUnstakeToken03(t *testing.T) {
 }
 
 func TestTransferLeftGnsEmission(t *testing.T) {
-	shouldEQ(t, leftGnsBalance, 12014393934)
-	shouldEQ(t, gnsBalance(consts.PROTOCOL_FEE_ADDR), 514902595)
+	shouldEQ(t, leftGnsBalance, 14590913553)
+	shouldEQ(t, gnsBalance(consts.PROTOCOL_FEE_ADDR), 2572505)
 
 	TransferLeftGnsEmission()
 	shouldEQ(t, leftGnsBalance, 0)
-	shouldEQ(t, gnsBalance(consts.PROTOCOL_FEE_ADDR), 12529296529)
+	shouldEQ(t, gnsBalance(consts.PROTOCOL_FEE_ADDR), 14593486058)
 }
