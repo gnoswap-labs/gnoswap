@@ -459,7 +459,17 @@ func SetFeeProtocol(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
 ) {
-	common.MustCallFromAdmin()
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+		panic(
+			ufmt.Sprintf(
+				"[POOL] pool.gno__SetFeeProtocol() || only admin(%s) or governance(%s) can set fee protocol, called from %s",
+				consts.GNOSWAP_ADMIN,
+				consts.GOV_ADDR,
+				caller,
+			),
+		)
+	}
 
 	fee0Cond := feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)
 	fee1Cond := feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10)
@@ -499,7 +509,17 @@ func CollectProtocol(
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
-	common.MustCallFromAdmin()
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+		panic(
+			ufmt.Sprintf(
+				"[POOL] pool.gno__CollectFeeProtocol() || only admin(%s) or governance(%s) can collect fee protocol, called from %s",
+				consts.GNOSWAP_ADMIN,
+				consts.GOV_ADDR,
+				caller,
+			),
+		)
+	}
 
 	recipient := std.Address(_recipient)
 

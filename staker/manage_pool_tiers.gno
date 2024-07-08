@@ -23,8 +23,17 @@ func GetPoolWithTiers() map[string]uint64 {
 // - pool exists in poolTiers
 // - tier is not valid
 func SetPoolTier(pool string, tier uint64) {
-	// check if caller is admin
-	isAdmin()
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+		panic(
+			ufmt.Sprintf(
+				"[STAKER] manage_pool_tiers.gno__SetPoolTier() || only admin(%s) or governance(%s) can set additional pool with tier, called from %s",
+				consts.GNOSWAP_ADMIN,
+				consts.GOV_ADDR,
+				caller,
+			),
+		)
+	}
 
 	// panic if pool does not exist
 	if !(pl.DoesPoolPathExist(pool)) {
@@ -59,9 +68,17 @@ func SetPoolTier(pool string, tier uint64) {
 // - tier is not valid
 // - pool is default pool
 func ChangePoolTier(pool string, tier uint64) {
-	// check if caller is admin
-	isAdmin()
-
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+		panic(
+			ufmt.Sprintf(
+				"[STAKER] manage_pool_tiers.gno__ChangePoolTier() || only admin(%s) or governance(%s) can change existing pool with tier, called from %s",
+				consts.GNOSWAP_ADMIN,
+				consts.GOV_ADDR,
+				caller,
+			),
+		)
+	}
 	// panic if pool does not exist in poolTiers
 	if _, exist := poolTiers[pool]; !exist {
 		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__ChangePoolTier() || pool(%s) does not exist in poolTiers"))
@@ -93,8 +110,17 @@ func ChangePoolTier(pool string, tier uint64) {
 // - caller is not admin
 // - pool is default pool
 func RemovePoolTier(pool string) {
-	// check if caller is admin
-	isAdmin()
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+		panic(
+			ufmt.Sprintf(
+				"[STAKER] manage_pool_tiers.gno__RemovePoolTier() || only admin(%s) or governance(%s) can remove existing pool with tier, called from %s",
+				consts.GNOSWAP_ADMIN,
+				consts.GOV_ADDR,
+				caller,
+			),
+		)
+	}
 
 	if pool == MUST_EXISTS_IN_TIER_1 {
 		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__RemovePoolTier() || Cannot change tier of this pool"))
@@ -109,12 +135,6 @@ func RemovePoolTier(pool string) {
 		"m_prevRealm", prevRealm(),
 		"p_poolPath", pool,
 	)
-}
-
-func isAdmin() {
-	if std.GetOrigCaller() != consts.GNOSWAP_ADMIN {
-		panic(ufmt.Sprintf("caller(%s) is not admin", std.GetOrigCaller()))
-	}
 }
 
 func validTier(tier uint64) {

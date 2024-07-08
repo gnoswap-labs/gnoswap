@@ -34,6 +34,7 @@ func init() {
 
 	// set pool create fee to 0 for testing
 	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 	pl.SetPoolCreationFee(0)
 }
 

@@ -131,7 +131,7 @@ func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 }
 
 func init() {
-	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
+	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
 
 	// PROTOCOL_FEE
 	RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})

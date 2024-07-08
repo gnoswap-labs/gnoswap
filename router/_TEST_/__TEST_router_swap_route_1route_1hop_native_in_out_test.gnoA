@@ -239,7 +239,7 @@ func TestSetSwapFeeNoPermission(t *testing.T) {
 		func() {
 			SetSwapFee(2)
 		},
-		"must be called by admin",
+		"[ROUTER] protocol_fee_swap.gno__SetSwapFee() || only admin(g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq) or governance(g1kmat25auuqf0h5qvd4q7s707r8let5sky4tr76) can set swap fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
@@ -249,9 +249,9 @@ func TestSetSwapFeeOutOfRange(t *testing.T) {
 	shouldPanicWithMsg(
 		t,
 		func() {
-			SetSwapFee(101)
+			SetSwapFee(10001)
 		},
-		"[STAKER] reward_fee.gno__SetSwapFee() || fee(101) must be in range 0 ~ 100",
+		"[ROUTER] protocol_fee_swap.gno__SetSwapFee() || fee(10001) must be in range 0 ~ 10000",
 	)
 }
 

@@ -21,6 +21,7 @@ import (
 func init() {
 	// set pool create fee to 0 for testing
 	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 	pl.SetPoolCreationFee(0)
 }
 
@@ -198,7 +199,7 @@ func TestCollectReward(t *testing.T) {
 
 	gnsNew := gns.BalanceOf(a2u(gsa))
 	std.TestSkipHeights(1)
-	shouldEQ(t, gnsNew, 100000038936750)
+	shouldEQ(t, gnsNew, 100000035397045)
 }
 
 func TestUnstakeToken01(t *testing.T) {
@@ -217,8 +218,8 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), gsa)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000184226451) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000004117)  // external
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000167478591) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000003743)  // external
 }
 
 func TestUnstakeToken02(t *testing.T) {
@@ -235,8 +236,8 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), gsa)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100001078706895) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000028527)  // external
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000980642631) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000025934)  // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {

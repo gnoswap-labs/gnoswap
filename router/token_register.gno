@@ -32,8 +32,8 @@ func GetRegisteredTokens() []string {
 
 func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	caller := std.GetOrigCaller()
-	if caller != consts.GNOSWAP_ADMIN {
-		panic(ufmt.Sprintf("[ROUTER] router_register.gno__RegisterGRC20Interface() || unauthorized address(%s) to register", caller.String()))
+	if caller != consts.TOKEN_REGISTER {
+		panic(ufmt.Sprintf("[ROUTER] token_register.gno__RegisterGRC20Interface() || unauthorized address(%s) to register", caller.String()))
 	}
 
 	pkgPath = handleNative(pkgPath)
@@ -47,10 +47,9 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 }
 
 func UnregisterGRC20Interface(pkgPath string) {
-	// only admin can unregister
 	caller := std.GetOrigCaller()
-	if caller != consts.GNOSWAP_ADMIN {
-		panic(ufmt.Sprintf("[ROUTER] router_register.gno__UnregisterGRC20Interface() || unauthorized address(%s) to unregister", caller.String()))
+	if caller != consts.TOKEN_REGISTER {
+		panic(ufmt.Sprintf("[ROUTER] token_register.gno__UnregisterGRC20Interface() || unauthorized address(%s) to unregister", caller.String()))
 	}
 
 	pkgPath = handleNative(pkgPath)

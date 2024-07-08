@@ -36,6 +36,7 @@ func init() {
 
 	// set pool create fee to 0 for testing
 	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 	pl.SetPoolCreationFee(0)
 }
 
@@ -321,7 +322,7 @@ func TestSetUnstakingFeeNoPermission(t *testing.T) {
 		func() {
 			SetUnstakingFee(2)
 		},
-		"must be called by admin",
+		"[STAKER] protocol_fee_unstaking.gno__SetUnstakingFee() || only admin(g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq) or governance(g1kmat25auuqf0h5qvd4q7s707r8let5sky4tr76) can set unstaking fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
