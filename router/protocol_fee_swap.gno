@@ -39,11 +39,11 @@ func handleSwapFee(
 
 			// ugnot: router > feeCollector
 			banker := std.GetBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(consts.ROUTER_ADDR, consts.COMMUNITY_POOL_ADDR, std.Coins{{"ugnot", int64(feeAmountUint64)}})
+			banker.SendCoins(consts.ROUTER_ADDR, consts.PROTOCOL_FEE_ADDR, std.Coins{{"ugnot", int64(feeAmountUint64)}})
 		} else { // just transfer if grc20
-			ok := transferFromByRegisterCall(outputToken, std.GetOrigCaller(), consts.COMMUNITY_POOL_ADDR, feeAmountUint64)
+			ok := transferFromByRegisterCall(outputToken, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
 			if !ok {
-				panic(ufmt.Sprintf("[ROUTER] protocol_fee_swap.gno__handleSwapFee() || expected transferFromByRegisterCall(%s, %s, %s, %d) == true", outputToken, std.GetOrigCaller(), consts.COMMUNITY_POOL_ADDR, feeAmountUint64))
+				panic(ufmt.Sprintf("[ROUTER] protocol_fee_swap.gno__handleSwapFee() || expected transferFromByRegisterCall(%s, %s, %s, %d) == true", outputToken, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64))
 			}
 		}
 	}
