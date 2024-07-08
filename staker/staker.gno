@@ -31,7 +31,10 @@ var (
 	lastCalculatedHeight int64
 	lastGnsBalance       uint64
 
-	leftGnsBalance uint64
+	// reward amount can be left due to warm up period
+	// keep track of this amount
+	leftGnsBalance      uint64
+	leftExternalBalance map[string]uint64 = make(map[string]uint64) // tokenPath => amount
 )
 
 const (
@@ -155,6 +158,8 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 		amountToGive := (tokenAmount * durationRatio) / 100
 		amountLeft := tokenAmount - amountToGive
+
+		leftExternalBalance[tokenPath] += amountLeft
 
 		toUser := handleRewardFee(tokenPath, amountToGive, false)
 		transferByRegisterCall(tokenPath, deposit.owner, toUser)
@@ -391,69 +396,63 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
 	}
 
 	// when incentive end time is over
-	// 1. admin can end incentive without refund // TODO: SO HOW ARE WE GOING TO HANDLE LEFT REWARD ??
-	// 2. refundee can end incentive with refund
-	switch std.GetOrigCaller() {
-	case consts.GNOSWAP_ADMIN:
-		// admin can end incentive without refund
-		delete(incentives, incentiveId)
-		for i, v := range poolIncentives[targetPoolPath] {
-			if v == incentiveId {
-				poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
-			}
-		}
-
-		std.Emit(
-			"GNOSWAP",
-			"m_callType", callType(),
-			"m_origCaller", origCaller(),
-			"m_prevRealm", prevRealm(),
-			"p_poolPath", targetPoolPath,
-			"p_rewardToken", rewardToken,
-			"p_refundee", _refundee,
-			"end_by", consts.GNOSWAP_ADMIN.String(),
-			"refund_amount", "0",
-		)
-
-	case incentive.refundee:
-		// refundee can end incentive with refund
-		refund := incentive.rewardLeft
-		refundUint64 := refund.Uint64()
-
-		poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
-
-		if poolLeftExternalRewardAmount < refundUint64 {
-			panic(ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || pool doesn't have enough token(%s) amount(%d) to refund(%d)", incentive.rewardToken, poolLeftExternalRewardAmount, refund))
-		}
-
-		transferByRegisterCall(incentive.rewardToken, incentive.refundee, refundUint64)
-		// unwrap if wugnot
-		if incentive.rewardToken == consts.WUGNOT_PATH {
-			unwrap(refundUint64)
-		}
-
-		delete(incentives, incentiveId)
-		for i, v := range poolIncentives[targetPoolPath] {
-			if v == incentiveId {
-				poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
-			}
-		}
-
-		std.Emit(
-			"GNOSWAP",
-			"m_callType", callType(),
-			"m_origCaller", origCaller(),
-			"m_prevRealm", prevRealm(),
-			"p_poolPath", targetPoolPath,
-			"p_rewardToken", rewardToken,
-			"p_refundee", _refundee,
-			"end_by", incentive.refundee.String(),
-			"refund_amount", refund.ToString(),
-		)
-
-	default:
-		panic("[STAKER] staker.gno__EndExternalIncentive() || only refundee or admin can end incentive")
+	// admin or refundee can end incentive ( left amount will be refunded )
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GNOSWAP_ADMIN && caller != refundee {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || only refundee(%s) or admin(%s) can end incentive", refundee, consts.GNOSWAP_ADMIN))
 	}
+
+	// refundee can end incentive with refund
+	refund := incentive.rewardLeft
+	refundUint64 := refund.Uint64()
+
+	poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
+
+	if poolLeftExternalRewardAmount < refundUint64 {
+		refundUint64 = poolLeftExternalRewardAmount
+	}
+
+	transferByRegisterCall(incentive.rewardToken, incentive.refundee, refundUint64)
+	// unwrap if wugnot
+	if incentive.rewardToken == consts.WUGNOT_PATH {
+		unwrap(refundUint64)
+	}
+
+	delete(incentives, incentiveId)
+	for i, v := range poolIncentives[targetPoolPath] {
+		if v == incentiveId {
+			poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
+		}
+	}
+
+	std.Emit(
+		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_poolPath", targetPoolPath,
+		"p_rewardToken", rewardToken,
+		"p_refundee", _refundee,
+		"end_by", incentive.refundee.String(),
+		"refund_amount", refund.ToString(),
+	)
+}
+
+// TransferLeftGnsEmission transfers left gns emission to fee address
+// Only admin or gov can transfer left gns emission
+func TransferLeftGnsEmission() {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__TransfeLeftGnsEmission() || only admin(%s) or gov(%s) can transfer left gns emission", consts.GNOSWAP_ADMIN, consts.GOV_ADDR))
+	}
+
+	stakerGns := gnsBalance(consts.STAKER_ADDR)
+	if stakerGns < leftGnsBalance {
+		leftGnsBalance = stakerGns
+	}
+
+	gns.Transfer(a2u(consts.FEE_ADDR), leftGnsBalance)
+	leftGnsBalance = 0
 }
 
 func checkStartTime(startTimestamp int64) {

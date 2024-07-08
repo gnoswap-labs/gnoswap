@@ -50,6 +50,9 @@ var (
 
 	EMISSION_PATH string      = "gno.land/r/demo/emission"
 	EMISSION_ADDR std.Address = std.DerivePkgAddr(EMISSION_PATH) // g1znut3752hsmu227rat7zajkc2mswdjf08egtqu
+
+	FEE_PATH string      = "gno.land/r/demo/fee"
+	FEE_ADDR std.Address = std.DerivePkgAddr(FEE_PATH) // g1hv3356vekts4lxsfzztkra8kza4fquut3h4377
 )
 
 // NUMBER
