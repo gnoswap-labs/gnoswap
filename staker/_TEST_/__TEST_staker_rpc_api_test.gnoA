@@ -232,19 +232,19 @@ func TestApiGetRewardTokensByPoolPath(t *testing.T) {
 
 func TestApiGetExternalIncentives(t *testing.T) {
 	extIncen := ApiGetExternalIncentives()
-	res := `{"stat":{"height":144,"timestamp":1234567995},"response":[{"poolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardToken":"gno.land/r/demo/obl","rewardAmount":"1100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq"}]}`
+	res := `{"stat":{"height":144,"timestamp":1234567995},"response":[{"poolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardToken":"gno.land/r/demo/obl","rewardAmount":"1100000000","rewardLeft":"1100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq"}]}`
 	shouldEQ(t, extIncen, res)
 }
 
 func TestApiGetExternalIncentivesByPoolPath(t *testing.T) {
 	extIncen := ApiGetExternalIncentivesByPoolPath("gno.land/r/demo/bar:gno.land/r/demo/foo:500")
-	res := `{"stat":{"height":144,"timestamp":1234567995},"response":[{"poolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardToken":"gno.land/r/demo/obl","rewardAmount":"1100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq"}]}`
+	res := `{"stat":{"height":144,"timestamp":1234567995},"response":[{"poolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardToken":"gno.land/r/demo/obl","rewardAmount":"1100000000","rewardLeft":"1100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq"}]}`
 	shouldEQ(t, extIncen, res)
 }
 
 func TestApiGetExternalIncentivesByRewardTokenPath(t *testing.T) {
 	extIncen := ApiGetExternalIncentivesByRewardTokenPath("gno.land/r/demo/obl")
-	res := `{"stat":{"height":144,"timestamp":1234567995},"response":[{"poolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardToken":"gno.land/r/demo/obl","rewardAmount":"1100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq"}]}`
+	res := `{"stat":{"height":144,"timestamp":1234567995},"response":[{"poolPath":"gno.land/r/demo/bar:gno.land/r/demo/foo:500","rewardToken":"gno.land/r/demo/obl","rewardAmount":"1100000000","rewardLeft":"1100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq"}]}`
 	shouldEQ(t, extIncen, res)
 }
 
