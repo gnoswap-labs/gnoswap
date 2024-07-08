@@ -83,8 +83,6 @@ func CalcPoolPosition() {
 			rewardAmount := incentive.rewardAmount
 			rewardLeft := incentive.rewardLeft
 
-			refundee := incentive.refundee
-
 			incentiveDuration := endTimestamp - startTimestamp
 			incentiveBlock := incentiveDuration / consts.BLOCK_GENERATION_INTERVAL
 			rewardPerBlock256 := new(u256.Uint).Div(rewardAmount, u256.NewUint(uint64(incentiveBlock)))
