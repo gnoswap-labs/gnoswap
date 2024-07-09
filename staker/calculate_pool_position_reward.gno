@@ -19,10 +19,11 @@ var poolAccuGns map[string]uint64 = make(map[string]uint64)
 var positionGns map[uint64]uint64 = make(map[uint64]uint64)
 
 type externalRewards struct {
-	incentiveId string
-	poolPath    string
-	tokenPath   string
-	tokenAmount uint64
+	incentiveId        string
+	poolPath           string
+	tokenPath          string
+	tokenAmount        uint64
+	tokenAmountClaimed uint64
 }
 
 // tokenId -> []incentiveIdAndAmount
@@ -108,15 +109,17 @@ func CalcPoolPosition() {
 
 			if len(positionExternal[tokenId]) == 0 {
 				positionExternal[tokenId] = append(positionExternal[tokenId], externalRewards{
-					incentiveId: incentiveId,
-					poolPath:    poolPath,
-					tokenPath:   rewardToken,
-					tokenAmount: positionAmount,
+					incentiveId:        incentiveId,
+					poolPath:           poolPath,
+					tokenPath:          rewardToken,
+					tokenAmount:        positionAmount,
+					tokenAmountClaimed: 0,
 				})
 			} else {
-				for _, external := range positionExternal[tokenId] {
+				for i, external := range positionExternal[tokenId] {
 					if external.incentiveId == incentiveId {
-						external.tokenAmount = positionAmount
+						external.tokenAmount = (positionAmount - external.tokenAmountClaimed)
+						positionExternal[tokenId][i] = external
 						break
 					}
 				}

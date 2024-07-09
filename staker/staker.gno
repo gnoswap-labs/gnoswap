@@ -175,6 +175,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 		incentives[external.incentiveId] = incentive
 
 		external.tokenAmount = 0
+		external.tokenAmountClaimed += tokenAmount
 		positionExternal[tokenId][k] = external
 
 		std.Emit(
@@ -299,17 +300,21 @@ func CreateExternalIncentive(
 	// must be in seconds format, not milliseconds
 	// must be at least +1 day midnight
 	// must be midnight of the day
-	checkStartTime(startTimestamp)
+	// checkStartTime(startTimestamp)
 
 	// endTimestamp cannot be later than 253402300799 (9999-12-31 23:59:59)
-	if endTimestamp >= MAX_UNIX_EPOCH_TIME {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp))
-	}
+	// if endTimestamp >= MAX_UNIX_EPOCH_TIME {
+	// 	panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp))
+	// }
 
-	externalDuration := uint64(endTimestamp - startTimestamp)
-	if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_365DAYS) {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 365 days)", externalDuration))
-	}
+	// externalDuration := uint64(endTimestamp - startTimestamp)
+	// if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_365DAYS) {
+	// 	panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 365 days)", externalDuration))
+	// }
+
+	// XXX: FOR QA, REMOVE WHEN ITS DONE
+	// override start timestamp to now + 2 minute
+	startTimestamp = time.Now().Unix() + 120
 
 	fromBalanceBefore := balanceOfByRegisterCall(rewardToken, std.GetOrigCaller())
 

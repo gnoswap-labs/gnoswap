@@ -166,23 +166,47 @@ func getNumPoolTiers() (uint64, uint64, uint64) {
 // 	return ratio
 // }
 
-func getRewardRatio(timestamp int64) uint64 {
-	// since `float` type has determinisim issue, we use `int` instead
-	// so instead of return 50%, we return 50
-	// we'll divide by 100 later
+// func getRewardRatio(timestamp int64) uint64 {
+// 	// since `float` type has determinisim issue, we use `int` instead
+// 	// so instead of return 50%, we return 50
+// 	// we'll divide by 100 later
 
+// 	var ratio uint64
+// 	switch {
+// 	case timestamp >= 2592001: // 30d 1s ~
+// 		ratio = 100
+// 		break
+// 	case timestamp >= 864001: // 10d 1s ~ 30d
+// 		ratio = 70
+// 		break
+// 	case timestamp >= 432001: // 5d 1s ~ 10d
+// 		ratio = 50
+// 		break
+// 	case timestamp >= 5: // 5s ~ 5d (5s is block creation time)
+// 		ratio = 30
+// 		break
+// 	default: // ~ 4s
+// 		ratio = 0
+// 		break
+// 	}
+
+// 	return ratio
+// }
+
+// XXX: FOR QA, REMOVE WHEN ITS DONE
+func getRewardRatio(timestamp int64) uint64 {
 	var ratio uint64
 	switch {
-	case timestamp >= 2592001: // 30d 1s ~
+	case timestamp >= 86401: // 24h 1s ~
 		ratio = 100
 		break
-	case timestamp >= 864001: // 10d 1s ~ 30d
+	case timestamp >= 3601: // 1h 1s ~ 24h
 		ratio = 70
 		break
-	case timestamp >= 432001: // 5d 1s ~ 10d
+	case timestamp >= 301: // 5m 1s ~ 1h
 		ratio = 50
 		break
-	case timestamp >= 5: // 5s ~ 5d (5s is block creation time)
+	case timestamp >= 5: // 5s ~ 5m (5s is block creation time)
 		ratio = 30
 		break
 	default: // ~ 4s
