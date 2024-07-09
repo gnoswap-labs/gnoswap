@@ -5,7 +5,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	u256 "gno.land/p/demo/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // Incentive

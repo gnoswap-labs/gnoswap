@@ -6,13 +6,13 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	en "gno.land/r/demo/emission"
-	"gno.land/r/demo/gnoswap/common"
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
+	en "gno.land/r/gnoswap/emission"
 
-	"gno.land/r/demo/gns"
+	"gno.land/r/gnoswap/gns"
 
-	u256 "gno.land/p/demo/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 var (

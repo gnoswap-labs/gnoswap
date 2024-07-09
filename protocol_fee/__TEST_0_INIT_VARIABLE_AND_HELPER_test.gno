@@ -4,7 +4,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
 var (
@@ -17,7 +17,7 @@ var (
 
 	oblPath string = "gno.land/r/demo/obl"
 	// wugnotPath string = "gno.land/r/demo/wugnot" // from consts
-	// gnsPath string = "gno.land/r/demo/gns" // from consts
+	// gnsPath string = "gno.land/r/gnoswap/gns" // from consts
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500

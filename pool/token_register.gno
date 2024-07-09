@@ -7,7 +7,7 @@ import (
 
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
 // GRC20Interface is the interface for GRC20 tokens

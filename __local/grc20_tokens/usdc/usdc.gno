@@ -17,7 +17,7 @@ var (
 )
 
 func init() {
-	admin = ownable.NewWithAddress("g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq") // GNOSWAP_ADMIN
+	admin = ownable.NewWithAddress("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c") // GNOSWAP_ADMIN
 	banker = grc20.NewBanker("Usd Coin", "USDC", 6)
 	banker.Mint(admin.Owner(), 100_000_000_000_000)
 	token = banker.Token()

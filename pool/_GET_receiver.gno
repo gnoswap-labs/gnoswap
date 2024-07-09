@@ -1,7 +1,7 @@
 package pool
 
 import (
-	u256 "gno.land/p/demo/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // PoolGetPoolList returns a list of all pool paths

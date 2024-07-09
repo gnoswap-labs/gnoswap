@@ -3,7 +3,7 @@ package staker
 import (
 	"std"
 
-	u256 "gno.land/p/demo/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 type Incentive struct {
@@ -20,7 +20,7 @@ type Deposit struct {
 	owner          std.Address
 	numberOfStakes uint64
 	stakeTimestamp int64
-	stakeHeight   int64
+	stakeHeight    int64
 	targetPoolPath string
 }
 

@@ -7,10 +7,10 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
-	pl "gno.land/r/demo/pool"
+	pl "gno.land/r/gnoswap/pool"
 
-	u256 "gno.land/p/demo/gnoswap/uint256"
-	"gno.land/r/demo/gnoswap/consts"
+	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/consts"
 )
 
 type RewardToken struct {

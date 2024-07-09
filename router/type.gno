@@ -3,7 +3,7 @@ package router
 import (
 	"std"
 
-	i256 "gno.land/p/demo/gnoswap/int256"
+	i256 "gno.land/p/gnoswap/int256"
 )
 
 // SWAP TYPE

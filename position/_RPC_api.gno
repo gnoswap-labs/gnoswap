@@ -7,13 +7,13 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/demo/gnoswap/common"
+	"gno.land/r/gnoswap/common"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 
-	pl "gno.land/r/demo/pool"
+	pl "gno.land/r/gnoswap/pool"
 
-	i256 "gno.land/p/demo/gnoswap/int256"
+	i256 "gno.land/p/gnoswap/int256"
 )
 
 type RpcPosition struct {

@@ -7,15 +7,15 @@ import (
 	"gno.land/r/demo/baz"
 	"gno.land/r/demo/foo"
 	"gno.land/r/demo/foo20"
-	"gno.land/r/demo/gns"
 	"gno.land/r/demo/obl"
 	"gno.land/r/demo/qux"
 	"gno.land/r/demo/usdc"
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/gns"
 
-	pl "gno.land/r/demo/pool"
-	rr "gno.land/r/demo/router"
-	sr "gno.land/r/demo/staker"
+	pl "gno.land/r/gnoswap/pool"
+	rr "gno.land/r/gnoswap/router"
+	sr "gno.land/r/gnoswap/staker"
 )
 
 type FooToken struct{}
@@ -158,7 +158,7 @@ func init() {
 	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/gns", GnsToken{})
+	pl.RegisterGRC20Interface("gno.land/r/gnoswap/gns", GnsToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OblToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/foo20", Foo20Token{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
@@ -168,7 +168,7 @@ func init() {
 	sr.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	sr.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
 	sr.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
-	sr.RegisterGRC20Interface("gno.land/r/demo/gns", GnsToken{})
+	sr.RegisterGRC20Interface("gno.land/r/gnoswap/gns", GnsToken{})
 	sr.RegisterGRC20Interface("gno.land/r/demo/obl", OblToken{})
 	sr.RegisterGRC20Interface("gno.land/r/demo/foo20", Foo20Token{})
 	sr.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
@@ -178,7 +178,7 @@ func init() {
 	rr.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
 	rr.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
 	rr.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/gns", GnsToken{})
+	rr.RegisterGRC20Interface("gno.land/r/gnoswap/gns", GnsToken{})
 	rr.RegisterGRC20Interface("gno.land/r/demo/obl", OblToken{})
 	rr.RegisterGRC20Interface("gno.land/r/demo/foo20", Foo20Token{})
 	rr.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})

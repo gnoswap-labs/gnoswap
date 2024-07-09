@@ -4,9 +4,9 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 
-	"gno.land/r/demo/gnft"
+	"gno.land/r/gnoswap/gnft"
 )
 
 func exists(tokenId uint64) bool {

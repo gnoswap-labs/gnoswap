@@ -3,11 +3,11 @@ package staker
 import (
 	"std"
 
-	pl "gno.land/r/demo/pool"
+	pl "gno.land/r/gnoswap/pool"
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
 // GetPoolWithTiers returns list of pools with their tiers

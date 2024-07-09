@@ -5,12 +5,12 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	pl "gno.land/r/demo/pool"
+	pl "gno.land/r/gnoswap/pool"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 
-	i256 "gno.land/p/demo/gnoswap/int256"
-	u256 "gno.land/p/demo/gnoswap/uint256"
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func _swap(

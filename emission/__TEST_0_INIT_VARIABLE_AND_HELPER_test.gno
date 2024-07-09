@@ -4,7 +4,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
 var (

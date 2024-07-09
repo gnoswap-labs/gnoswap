@@ -1,11 +1,11 @@
 package pool
 
 import (
-	"gno.land/r/demo/gnoswap/common"
+	"gno.land/r/gnoswap/common"
 
-	i256 "gno.land/p/demo/gnoswap/int256"
+	i256 "gno.land/p/gnoswap/int256"
 
-	plp "gno.land/p/demo/gnoswap/pool" // pool package
+	plp "gno.land/p/gnoswap/pool" // pool package
 )
 
 func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *i256.Int, *i256.Int) {

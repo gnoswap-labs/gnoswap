@@ -5,13 +5,13 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	plp "gno.land/p/demo/gnoswap/pool"
+	plp "gno.land/p/gnoswap/pool"
 
-	"gno.land/r/demo/gnoswap/common"
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
 
-	i256 "gno.land/p/demo/gnoswap/int256"
-	u256 "gno.land/p/demo/gnoswap/uint256"
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // Mint creates a new position and mints liquidity tokens then return amount0, amount1 in string

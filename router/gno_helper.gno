@@ -3,7 +3,7 @@ package router
 import (
 	"std"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
 func GetOrigPkgAddr() std.Address {
