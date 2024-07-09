@@ -12,6 +12,9 @@ import (
 // poolPath -> gnsAmount
 var poolGns map[string]uint64 = make(map[string]uint64)
 
+// poolPath -> accumulatedGns
+var poolAccuGns map[string]uint64 = make(map[string]uint64)
+
 // tokenId -> gnsAmount
 var positionGns map[uint64]uint64 = make(map[uint64]uint64)
 
@@ -50,6 +53,7 @@ func CalcPoolPosition() {
 			tierAmount = tier3Amount / tier3Num
 		}
 		poolGns[poolPath] += tierAmount
+		poolAccuGns[poolPath] += tierAmount
 	}
 
 	for tokenId, deposit := range deposits {
