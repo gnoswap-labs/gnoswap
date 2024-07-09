@@ -6,17 +6,15 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/gns"
-
 	"gno.land/r/gnoswap/consts"
 )
 
-func TransferGns(to std.Address, amount uint64) {
+func TransferToken(pkgPath string, to std.Address, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
 		panic(
 			ufmt.Sprintf(
-				"[COMMUNITY_POOL] community_pool.gno__TransferGns() || only admin(%s) or governance(%s) can set transfer gns, called from %s",
+				"only admin(%s) or governance(%s) can transfer community pool's balance, called from %s",
 				consts.GNOSWAP_ADMIN,
 				consts.GOV_ADDR,
 				caller,
@@ -24,7 +22,12 @@ func TransferGns(to std.Address, amount uint64) {
 		)
 	}
 
-	gns.Transfer(a2u(to), amount)
+	_, found := registered[pkgPath]
+	if !found {
+		panic(ufmt.Sprintf("[COMMUNITY_POOL] community_pool.gno__TransferToken() || pkgPath(%s) not registered", pkgPath))
+	}
+
+	registered[pkgPath].Transfer()(a2u(to), amount)
 }
 
 func a2u(addr std.Address) pusers.AddressOrName {
