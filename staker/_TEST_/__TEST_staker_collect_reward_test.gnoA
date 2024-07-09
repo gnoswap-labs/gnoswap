@@ -209,7 +209,7 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000000000)  // external
 
 	response := ApiGetRewardsByLpTokenId(1)
-	shouldEQ(t, response, `{"stat":{"height":542,"timestamp":1234569985},"response":[{"lpTokenId":1,"address":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq","rewards":[{"incentiveType":"INTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/qux:500","rewardTokenPath":"gno.land/r/demo/gns","rewardTokenAmount":146757273},{"incentiveType":"EXTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/qux:500","rewardTokenPath":"gno.land/r/demo/obl","rewardTokenAmount":4158}]}]}`)
+	shouldEQ(t, response, `{"stat":{"height":542,"timestamp":1234569985},"response":[{"lpTokenId":1,"address":"g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq","rewards":[{"incentiveType":"INTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/qux:500","rewardTokenPath":"gno.land/r/demo/gns","rewardTokenAmount":146757273,"stakeTimestamp":1234567955,"stakeHeight":136,"incentiveStart":1234567955},{"incentiveType":"EXTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/qux:500","rewardTokenPath":"gno.land/r/demo/obl","rewardTokenAmount":4158,"stakeTimestamp":1234567955,"stakeHeight":136,"incentiveStart":1234569600}]}]}`)
 	// GNS 146757273
 	// OBL 4158
 

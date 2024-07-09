@@ -23,6 +23,9 @@ type Reward struct {
 	TargetPoolPath    string `json:"targetPoolPath"`
 	RewardTokenPath   string `json:"rewardTokenPath"`
 	RewardTokenAmount uint64 `json:"rewardTokenAmount"`
+	StakeTimestamp    int64  `json:"stakeTimestamp"`
+	StakeHeight       int64  `json:"stakeHeight"`
+	IncentiveStart    int64  `json:"incentiveStart"`
 }
 
 type Stake struct {
@@ -30,6 +33,7 @@ type Stake struct {
 	Owner          std.Address `json:"owner"`
 	NumberOfStakes uint64      `json:"numberOfStakes"`
 	StakeTimestamp int64       `json:"stakeTimestamp"`
+	StakeHeight    int64       `json:"stakeHeight"`
 	TargetPoolPath string      `json:"targetPoolPath"`
 }
 
@@ -70,6 +74,9 @@ func ApiGetRewards() string {
 				TargetPoolPath:    deposit.targetPoolPath,
 				RewardTokenPath:   consts.GNS_PATH,
 				RewardTokenAmount: internalGNS,
+				StakeTimestamp:    deposit.stakeTimestamp,
+				StakeHeight:       deposit.stakeHeight,
+				IncentiveStart:    deposit.stakeTimestamp,
 			})
 		}
 
@@ -92,17 +99,20 @@ func ApiGetRewards() string {
 					TargetPoolPath:    deposit.targetPoolPath,
 					RewardTokenPath:   incentives[incentiveId].rewardToken,
 					RewardTokenAmount: externalReward,
+					StakeTimestamp:    deposit.stakeTimestamp,
+					StakeHeight:       deposit.stakeHeight,
+					IncentiveStart:    incentive.startTimestamp,
 				})
 			}
+		}
 
-			if len(rewards) > 0 {
-				lpTokenReward := LpTokenReward{
-					LpTokenId: tokenId,
-					Address:   deposit.owner.String(),
-					Rewards:   rewards,
-				}
-				lpTokenRewards = append(lpTokenRewards, lpTokenReward)
+		if len(rewards) > 0 {
+			lpTokenReward := LpTokenReward{
+				LpTokenId: tokenId,
+				Address:   deposit.owner.String(),
+				Rewards:   rewards,
 			}
+			lpTokenRewards = append(lpTokenRewards, lpTokenReward)
 		}
 	}
 
@@ -167,6 +177,9 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 				TargetPoolPath:    deposit.targetPoolPath,
 				RewardTokenPath:   consts.GNS_PATH,
 				RewardTokenAmount: internalGNS,
+				StakeTimestamp:    deposit.stakeTimestamp,
+				StakeHeight:       deposit.stakeHeight,
+				IncentiveStart:    deposit.stakeTimestamp,
 			})
 		}
 
@@ -189,6 +202,9 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 					TargetPoolPath:    deposit.targetPoolPath,
 					RewardTokenPath:   incentives[incentiveId].rewardToken,
 					RewardTokenAmount: externalReward,
+					StakeTimestamp:    deposit.stakeTimestamp,
+					StakeHeight:       deposit.stakeHeight,
+					IncentiveStart:    incentive.startTimestamp,
 				})
 			}
 		}
@@ -262,6 +278,9 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 				TargetPoolPath:    deposit.targetPoolPath,
 				RewardTokenPath:   consts.GNS_PATH,
 				RewardTokenAmount: internalGNS,
+				StakeTimestamp:    deposit.stakeTimestamp,
+				StakeHeight:       deposit.stakeHeight,
+				IncentiveStart:    deposit.stakeTimestamp,
 			})
 		}
 
@@ -284,6 +303,9 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 				TargetPoolPath:    deposit.targetPoolPath,
 				RewardTokenPath:   incentives[incentiveId].rewardToken,
 				RewardTokenAmount: externalReward,
+				StakeTimestamp:    deposit.stakeTimestamp,
+				StakeHeight:       deposit.stakeHeight,
+				IncentiveStart:    incentive.startTimestamp,
 			})
 		}
 		lpTokenReward := LpTokenReward{
@@ -530,6 +552,9 @@ func makeRewardsArray(rewards []Reward) []*json.Node {
 			"targetPoolPath":    json.StringNode("targetPoolPath", reward.TargetPoolPath),
 			"rewardTokenPath":   json.StringNode("rewardTokenPath", reward.RewardTokenPath),
 			"rewardTokenAmount": json.NumberNode("rewardTokenAmount", float64(reward.RewardTokenAmount)),
+			"stakeTimestamp":    json.NumberNode("stakeTimestamp", float64(reward.StakeTimestamp)),
+			"stakeHeight":       json.NumberNode("stakeHeight", float64(reward.StakeHeight)),
+			"incentiveStart":    json.NumberNode("incentiveStart", float64(reward.IncentiveStart)),
 		})
 	}
 	return rewardsArray

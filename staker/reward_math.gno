@@ -13,10 +13,10 @@ import (
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64) uint64 {
 	deposit := deposits[tokenId]
-	stakedHeight := deposit.stakedHeight
+	stakeHeight := deposit.stakeHeight
 	currentHeight := std.GetHeight()
 
-	stakedDuration := currentHeight - stakedHeight
+	stakedDuration := currentHeight - stakeHeight
 	durationRatio := getRewardRatio(stakedDuration)
 
 	// 100% amount

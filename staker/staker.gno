@@ -93,7 +93,7 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 	deposit.owner = std.GetOrigCaller() // NOT ACTUAL OWNER, MUST BE USER ALWAYS
 	deposit.numberOfStakes++
 	deposit.stakeTimestamp = time.Now().Unix()
-	deposit.stakedHeight = std.GetHeight()
+	deposit.stakeHeight = std.GetHeight()
 	deposit.targetPoolPath = poolPath
 	deposits[tokenId] = deposit
 

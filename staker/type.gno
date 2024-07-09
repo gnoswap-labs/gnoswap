@@ -20,7 +20,7 @@ type Deposit struct {
 	owner          std.Address
 	numberOfStakes uint64
 	stakeTimestamp int64
-	stakedHeight   int64
+	stakeHeight   int64
 	targetPoolPath string
 }
 
