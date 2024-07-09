@@ -6,9 +6,9 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/demo/gns"
+	"gno.land/r/gnoswap/gns"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
 func TransferGns(to std.Address, amount uint64) {

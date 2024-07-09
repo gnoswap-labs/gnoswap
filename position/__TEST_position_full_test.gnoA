@@ -1,0 +1,98 @@
+package position
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
+
+	pl "gno.land/r/gnoswap/pool"
+
+	"gno.land/r/demo/bar"
+	"gno.land/r/demo/foo"
+
+	"gno.land/r/gnoswap/gns"
+)
+
+func init() {
+	// set pool create fee to 0 for testing
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+	pl.SetPoolCreationFee(0)
+}
+
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+}
+
+func TestMintPositionFullInRange(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		-887270,
+		887270,
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+		gsa.String(),
+	)
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_tickLower -887270} {p_tickUpper 887270} {tokenId 1} {liquidity 49997} {amount0 49995} {amount1 50000}]}
+
+}
+
+func TestIncreaseLiquidity(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1, poolPath := IncreaseLiquidity(
+		uint64(1),
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+	)
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/position IncreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {liquidity 49997} {amount0 49995} {amount1 50000}]}
+}
+
+func TestDecreaseLiquidity(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
+		uint64(1),
+		uint64(50),
+		"0",
+		"0",
+		max_timeout,
+		false,
+	)
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/position} {p_tokenId 1} {p_token0Path gno.land/r/demo/bar} {p_token1Path gno.land/r/demo/foo} {fee0Amount 0} {fee1Amount 0}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/position DecreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {p_liquidityRatio 50} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {liquidity 49997} {fee0 0} {fee1 0} {amount0 49994} {amount1 49999}]}
+
+}
+
+func TestCollectFee(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, fee0, fee1, poolPath := CollectFee(uint64(1))
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/position} {p_tokenId 1} {p_token0Path gno.land/r/demo/bar} {p_token1Path gno.land/r/demo/foo} {fee0Amount 0} {fee1Amount 0}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+}

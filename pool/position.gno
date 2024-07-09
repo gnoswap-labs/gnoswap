@@ -5,10 +5,10 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 
-	i256 "gno.land/p/demo/gnoswap/int256"
-	u256 "gno.land/p/demo/gnoswap/uint256"
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func positionGetKey(

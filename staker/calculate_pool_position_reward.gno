@@ -4,9 +4,9 @@ import (
 	"std"
 	"time"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 
-	u256 "gno.land/p/demo/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // poolPath -> gnsAmount

@@ -7,9 +7,9 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 
-	en "gno.land/r/demo/emission"
+	en "gno.land/r/gnoswap/emission"
 )
 
 type LpTokenReward struct {

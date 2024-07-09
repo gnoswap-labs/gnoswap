@@ -6,7 +6,7 @@ import (
 
 	pusers "gno.land/p/demo/users"
 
-	u256 "gno.land/p/demo/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func a2u(addr std.Address) pusers.AddressOrName {

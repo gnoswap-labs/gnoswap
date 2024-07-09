@@ -3,11 +3,11 @@ package pool
 import (
 	"std"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/p/demo/ufmt"
 
-	u256 "gno.land/p/demo/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // withdrawalFee is the fee that is charged when a user withdraws their collected fees

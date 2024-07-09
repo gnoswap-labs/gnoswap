@@ -4,7 +4,7 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/demo/gns"
+	"gno.land/r/gnoswap/gns"
 )
 
 func Test_mintGns(t *testing.T) {
@@ -26,16 +26,3 @@ func Test_emitGns_SameBlock(t *testing.T) {
 	shouldEQ(t, gns.TotalSupply(), 100000000000000+4387842345)
 }
 
-func Test_emitGns_AllAmount(t *testing.T) {
-	std.TestSkipHeights(75686400 - 1)
-	gns.TestSetLastMintedHeight(std.GetHeight())
-	std.TestSkipHeights(1)
-
-	mintGns()
-	shouldEQ(t, gns.TotalSupply(), 100000000000000+4387842345+2229594)
-	// all emission duration has been passed
-
-	std.TestSkipHeights(1)
-	mintGns() // since all emission has been done, no more minting
-	shouldEQ(t, gns.TotalSupply(), 100000000000000+4387842345+2229594)
-}

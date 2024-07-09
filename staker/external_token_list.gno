@@ -3,7 +3,7 @@ package staker
 import (
 	"std"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 )
 
 var defaultAllowed = []string{consts.GNS_PATH, consts.WUGNOT_PATH, consts.GNOT}

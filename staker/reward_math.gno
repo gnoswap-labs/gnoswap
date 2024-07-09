@@ -5,10 +5,10 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	u256 "gno.land/p/demo/gnoswap/uint256"
-	"gno.land/r/demo/gnoswap/consts"
+	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/consts"
 
-	pos "gno.land/r/demo/position"
+	pos "gno.land/r/gnoswap/position"
 )
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64) uint64 {

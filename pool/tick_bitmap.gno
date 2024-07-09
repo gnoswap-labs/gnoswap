@@ -2,11 +2,11 @@ package pool
 
 import (
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 
-	plp "gno.land/p/demo/gnoswap/pool"
+	plp "gno.land/p/gnoswap/pool"
 
-	u256 "gno.land/p/demo/gnoswap/uint256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func tickBitmapPosition(tick int32) (int16, uint8) {

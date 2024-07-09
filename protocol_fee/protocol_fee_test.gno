@@ -9,7 +9,7 @@ import (
 
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 
 	"gno.land/p/demo/testutils"
 )
@@ -50,7 +50,7 @@ func TestDistributeProtocolFeeNoPermission(t *testing.T) {
 		func() {
 			DistributeProtocolFee()
 		},
-		"only admin(g13f63ua8uhmuf9mgc0x8zfz04yrsaqh7j78vcgq) or governance(g1kmat25auuqf0h5qvd4q7s707r8let5sky4tr76) can distribute protocol fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+		"only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1egdt2l7xjcrm6qjwyd3g60z6e9cnr75pmcuasc) can distribute protocol fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 

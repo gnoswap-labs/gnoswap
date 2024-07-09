@@ -7,18 +7,18 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/demo/gnoswap/common"
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
 
-	"gno.land/r/demo/gnft"
-	"gno.land/r/demo/gns"
+	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/gns"
 
-	en "gno.land/r/demo/emission"
-	pl "gno.land/r/demo/pool"
-	pn "gno.land/r/demo/position"
+	en "gno.land/r/gnoswap/emission"
+	pl "gno.land/r/gnoswap/pool"
+	pn "gno.land/r/gnoswap/position"
 
-	i256 "gno.land/p/demo/gnoswap/int256"
-	u256 "gno.land/p/demo/gnoswap/uint256"
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 var (
@@ -44,7 +44,7 @@ const (
 
 	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
 
-	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/gns:gno.land/r/demo/wugnot:3000"
+	MUST_EXISTS_IN_TIER_1 = "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:3000"
 )
 
 func init() {

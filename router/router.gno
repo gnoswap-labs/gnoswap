@@ -7,15 +7,15 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/demo/gnoswap/common"
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/consts"
 
-	i256 "gno.land/p/demo/gnoswap/int256"
-	u256 "gno.land/p/demo/gnoswap/uint256"
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/wugnot"
 
-	en "gno.land/r/demo/emission"
+	en "gno.land/r/gnoswap/emission"
 )
 
 // SwapRoute swaps the input token to the output token and returns the result amount

@@ -15,9 +15,9 @@ import (
 
 	"gno.land/r/demo/obl"
 
-	"gno.land/r/demo/gns"
+	"gno.land/r/gnoswap/gns"
 
-	"gno.land/r/demo/gnoswap/consts"
+	"gno.land/r/gnoswap/consts"
 
 	pusers "gno.land/p/demo/users"
 )
@@ -140,5 +140,5 @@ func init() {
 	RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
 	RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
-	RegisterGRC20Interface("gno.land/r/demo/gns", GNSToken{})
+	RegisterGRC20Interface("gno.land/r/gnoswap/gns", GNSToken{})
 }

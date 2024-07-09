@@ -1,0 +1,69 @@
+package gns
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/testutils"
+	pusers "gno.land/p/demo/users"
+
+	"gno.land/r/gnoswap/consts"
+)
+
+func TestInitValues(t *testing.T) {
+	shouldEQ(t, deployedHeight, 123)
+	shouldEQ(t, int64(deployedAt.Unix()), 1234567890)
+	shouldEQ(t, lastMintedHeight, 0)
+}
+
+func TestMint(t *testing.T) {
+	emissionUsers := pusers.AddressOrName(consts.EMISSION_ADDR)
+	emissionRealm := std.NewCodeRealm(consts.EMISSION_PATH)
+	std.TestSetRealm(emissionRealm)
+
+	shouldEQ(t, TotalSupply(), 100_000_000_000_000)
+
+	Mint(emissionUsers) // + 4_387_842_345 (block 1 ~ 123)
+	shouldEQ(t, TotalSupply(), 100_000_000_000_000+4_387_842_345)
+
+	Mint(emissionUsers) // no block mined => no emission
+	shouldEQ(t, TotalSupply(), 100_000_000_000_000+4_387_842_345)
+
+	std.TestSkipHeights(1)
+	Mint(emissionUsers) // + 35_673_515 (block 124)
+	shouldEQ(t, TotalSupply(), 100_000_000_000_000+4_387_842_345+35_673_515)
+}
+
+func TestMintNoPermission(t *testing.T) {
+	dummyAddr := testutils.TestAddress("dummy")
+	dummyUser := pusers.AddressOrName(dummyAddr)
+	dummyRealm := std.NewUserRealm(dummyAddr)
+	std.TestSetRealm(dummyRealm)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			Mint(dummyUser)
+		},
+		"only emission contract can call Mint",
+	)
+}
+
+func shouldEQ(t *testing.T, got, expected interface{}) {
+	if got != expected {
+		t.Errorf("got %v, expected %v", got, expected)
+	}
+}
+
+func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		} else {
+			if r != msg {
+				t.Errorf("excepted panic(%v), got(%v)", msg, r)
+			}
+		}
+	}()
+	f()
+}
