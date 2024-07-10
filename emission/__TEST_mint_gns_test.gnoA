@@ -8,10 +8,12 @@ import (
 )
 
 func Test_mintGns(t *testing.T) {
+	shouldEQ(t, gns.GetLastMintedHeight(), 0)
 	shouldEQ(t, gns.TotalSupply(), 100000000000000) // GSA has
 	shouldEQ(t, gnsBalance(emissionAddr), 0)
 
 	mintGns() // 1 ~ 123 height
+	shouldEQ(t, gns.GetLastMintedHeight(), 123)
 
 	shouldEQ(t, gnsBalance(emissionAddr), 4387842345)
 	shouldEQ(t, gns.TotalSupply(), 100000000000000+4387842345)
@@ -23,6 +25,6 @@ func Test_emitGns_SameBlock(t *testing.T) {
 	// request mint again in same block => do not mint again
 	// it may happen because single block can have multiple txs & msgs
 	mintGns()
+	shouldEQ(t, gns.GetLastMintedHeight(), 123)
 	shouldEQ(t, gns.TotalSupply(), 100000000000000+4387842345)
 }
-

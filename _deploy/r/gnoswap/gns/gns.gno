@@ -99,18 +99,23 @@ func Mint(address pusers.AddressOrName) {
 		panic("only emission contract can call Mint")
 	}
 
+	// calculate gns emission amount for every block, and send by single call
+	// for this case, we assume that inside of block range gnoswap state hasn't changed.
 	nowHeight := std.GetHeight()
+	amountToMint := uint64(0)
 	for i := lastMintedHeight + 1; i <= nowHeight; i++ {
 		amount := getAmountByHeight(i)
-		err := banker.Mint(users.Resolve(address), amount)
-		if err != nil {
-			panic(err.Error())
-		}
-		lastMintedHeight = i
-
-		// debug
-		// println("height:", i, "minted:", amount)
+		amountToMint += amount
 	}
+	err := banker.Mint(users.Resolve(address), amountToMint)
+	if err != nil {
+		panic(err.Error())
+	}
+	lastMintedHeight = nowHeight
+}
+
+func GetLastMintedHeight() int64 {
+	return lastMintedHeight
 }
 
 func checkErr(err error) {
