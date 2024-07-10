@@ -44,7 +44,7 @@ const (
 
 	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
 
-	MUST_EXISTS_IN_TIER_1 = "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:3000"
+	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"
 )
 
 func init() {
@@ -174,8 +174,8 @@ func CollectReward(tokenId uint64) string { // poolPath
 		incentive.rewardLeft = new(u256.Uint).Sub(incentive.rewardLeft, u256.NewUint(tokenAmount))
 		incentives[external.incentiveId] = incentive
 
-		external.tokenAmount = 0
 		external.tokenAmountClaimed += tokenAmount
+		external.tokenAmount = 0
 		positionExternal[tokenId][k] = external
 
 		std.Emit(
@@ -199,6 +199,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 	toUser := handleUnstakingFee(consts.GNS_PATH, toGive, true)
 	gns.Transfer(a2u(deposit.owner), toUser)
+
 	positionGns[tokenId] = 0
 
 	// emit internal reward tokens

@@ -57,7 +57,7 @@ func TestPoolCreatePool(t *testing.T) {
 
 func TestPositionMintPos01Tier01(t *testing.T) {
 	// mint position in tier 1 pool
-	// gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:3000
+	// gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000
 
 	std.TestSetRealm(gsaRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -239,7 +239,7 @@ func TestSameHeightCalculation(t *testing.T) {
 }
 
 func TestCollectReward01(t *testing.T) {
-	shouldEQ(t, poolGns["gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:3000"], 8548266031)
+	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 8548266031)
 	shouldEQ(t, positionGns[1], 8548266031)
 	shouldEQ(t, leftGnsBalance, 0)
 
@@ -247,7 +247,7 @@ func TestCollectReward01(t *testing.T) {
 	CollectReward(1)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, poolGns["gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:3000"], 0)
+	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 0)
 	shouldEQ(t, positionGns[1], 0)
 	shouldEQ(t, leftGnsBalance, 5983786222)
 }
@@ -264,13 +264,13 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 14581549259)
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 4573344623)
 
-	shouldEQ(t, poolGns["gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:3000"], 0)
+	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 0)
 	shouldEQ(t, positionGns[1], 0)
 	shouldEQ(t, leftGnsBalance, 5993150520)
 }
 
 func TestUnstakeToken02(t *testing.T) {
-	shouldEQ(t, poolGns["gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:3000"], 0)
+	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 0)
 	shouldEQ(t, positionGns[1], 0)
 	shouldEQ(t, leftGnsBalance, 5993150520)
 
@@ -307,7 +307,7 @@ func TestCollectReward02(t *testing.T) {
 }
 
 func TestCollectReward03(t *testing.T) {
-	shouldEQ(t, poolGns["gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:3000"], 26755136)
+	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 26755136)
 	shouldEQ(t, positionGns[1], 0)
 	shouldEQ(t, leftGnsBalance, 7193653483)
 
