@@ -26,7 +26,7 @@ type externalRewards struct {
 	tokenAmountClaimed uint64
 }
 
-// tokenId -> []incentiveIdAndAmount
+// tokenId -> []externalRewards
 var positionExternal map[uint64][]externalRewards = make(map[uint64][]externalRewards)
 
 func CalcPoolPosition() {

@@ -26,8 +26,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) uint64 {
 	}
 
 	gnsAmountToGive := (gnsFullAmount * durationRatio) / 100
-	gnsAmountLeft := gnsFullAmount - gnsAmountToGive
 
+	// will go to protocol_fee contract
+	gnsAmountLeft := gnsFullAmount - gnsAmountToGive
 	leftGnsBalance += gnsAmountLeft
 
 	poolGns[deposit.targetPoolPath] -= gnsFullAmount
