@@ -54,6 +54,42 @@ func TestDistributeProtocolFeeNoPermission(t *testing.T) {
 	)
 }
 
+func TestChagneXGnsDistributePercentNoPermission(t *testing.T) {
+	dummy := testutils.TestAddress("dummy")
+	dummyRealm := std.NewUserRealm(dummy)
+	std.TestSetRealm(dummyRealm)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			ChagneXGnsDistributePercent(123)
+		},
+		"only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1egdt2l7xjcrm6qjwyd3g60z6e9cnr75pmcuasc) can change protocol fee distribution percent, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+	)
+}
+
+func TestChagneXGnsDistributePercentInvalidFee(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			ChagneXGnsDistributePercent(100001)
+		},
+		"fee should be less than 10000",
+	)
+}
+
+func TestChagneXGnsDistributePercent(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	shouldEQ(t, GetXGnsDistributePercent(), 5000)
+
+	ChagneXGnsDistributePercent(123)
+
+	shouldEQ(t, GetXGnsDistributePercent(), 123)
+}
+
 func a2u(addr std.Address) pusers.AddressOrName {
 	return pusers.AddressOrName(addr)
 }

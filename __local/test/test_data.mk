@@ -1,3 +1,6 @@
+# make -f __local/test/test_data.mk init init-test set-pool-creation-fee
+# make -f __local/test/test_data.mk init init-test test-pool-create-01-07 test-mint-01-07 set-pool-creation-fee
+
 ADDR_GSA := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
 
 ADDR_LP01 := g1qf5863trkaq447zr2xdmql83g0twzl37dm9qqt
@@ -63,19 +66,19 @@ test-grc20-transfer: transfer-foo transfer-bar transfer-baz transfer-qux transfe
 test-pool-create: pool-create-bar-baz pool-create-baz-qux pool-create-qux-foo pool-create-foo-gns pool-create-gns-wugnot
 
 .PHONY: test-position-mint
-test-position-mint: mint-bar-baz mint-baz-qux mint-qux-foo mint-foo-gns mint-gns-gnot
+test-position-mint: mint-bar-baz mint-baz-qux mint-qux-foo mint-gns-gnot
 
 .PHONY: test-increase-decrease
-test-increase-decrease: increase-liquidity-position-01 decrease-liquidity-position-01 increase-liquidity-position-09 decrease-liquidity-position-09
+test-increase-decrease: increase-liquidity-position-01 decrease-liquidity-position-01 increase-liquidity-position-08 decrease-liquidity-position-08
 
 .PHONY: test-create-external
 test-create-external-incentive: create-external-incentive
 
 .PHONY: test-stake-token
-test-stake-token: stake-token-1-5 stake-token-6 stake-token-7 stake-token-8 stake-token-9 stake-token-10 mint-and-stake
+test-stake-token: stake-token-1-5 stake-token-6 stake-token-7 stake-token-8 mint-and-stake
 
 .PHONY: test-swap
-test-swap: swap-exact-in-single-bar-to-baz swap-exact-in-single-baz-to-bar swap-exact-in-single-foo-to-gns swap-exact-out-single-foo-to-gns swap-exact-in-multi-foo-to-gns-to-wugnot
+test-swap: swap-exact-in-single-bar-to-baz swap-exact-in-single-baz-to-bar
 
 .PHONY: test-collect-fee
 test-collect-fee: collect-fee-position-1-5 collect-fee-position-6 
@@ -275,7 +278,10 @@ transfer-obl:
 
 # default pool create
 pool-create-gns-wugnot-default:
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args $(ADDR_POOL) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	$(info ************ set pool creation fee to 0uGNS for testing ************)
+	@echo 
+
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func SetPoolCreationFee -args 0 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 
 	$(info ************ create default pool (GNS:WUGNOT:0.03%) ************)
 	# tick 0 ≈ x1 ≈ 79228162514264337593543950337
@@ -364,20 +370,9 @@ mint-qux-foo:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/demo/qux" -args "gno.land/r/demo/foo" -args 500 -args 5930 -args 7930 -args 20000000 -args 20000000 -args 0 -args 0 -args $(TX_EXPIRE) -args $(ADDR_LP01) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_lp01 > /dev/null
 	@echo
 
-mint-foo-gns:
-	$(info ************ mint position(8) to foo:gns // gnoswap_admin ************)
-
-	# APPROVE FISRT
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Approve -args $(ADDR_POOL) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args $(ADDR_POOL) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-	@echo
-
-	# THEN MINT
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/demo/foo" -args "gno.land/r/gnoswap/gns" -args 500 -args "-887270" -args "887270" -args 20000000 -args 20000000 -args 1 -args 1 -args $(TX_EXPIRE) -args $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-	@echo
 
 mint-gns-gnot:
-	$(info ************ mint position(9~10) to gns:wugnot // gnoswap_admin ************)
+	$(info ************ mint position(8) to gns:wugnot // gnoswap_admin ************)
 
 	# APPROVE FISRT
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args $(ADDR_POOL) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
@@ -389,7 +384,6 @@ mint-gns-gnot:
 
 	# THEN MINT
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args $(TX_EXPIRE) -args $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/gns" -args "gnot" -args 100 -args "-50000" -args "50000" -args 20000000 -args 20000000 -args 1 -args 1 -args $(TX_EXPIRE) -args $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 
@@ -404,18 +398,18 @@ decrease-liquidity-position-01:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 1 -args 10 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 20000000 -memo "" gnoswap_lp01 > /dev/null
 	@echo
 
-increase-liquidity-position-09:
-	$(info ************ increase position(9) liquidity gns:wugnot:3000 // gnoswap_admin ************)
+increase-liquidity-position-08:
+	$(info ************ increase position(8) liquidity gns:wugnot:3000 // gnoswap_admin ************)
 
 	# APPROVE WUGNOT TO POSITION, for wrapping
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/wugnot -func Approve -args $(ADDR_POSITION) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func IncreaseLiquidity -send "20000000ugnot" -args 9 -args 20000000 -args 20000000 -args 1 -args 1 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func IncreaseLiquidity -send "20000000ugnot" -args 8 -args 20000000 -args 20000000 -args 1 -args 1 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
-decrease-liquidity-position-09:
-	$(info ************ decrease position(9) liquidity gns:wugnot:3000 // gnoswap_admin ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 9 -args 10 -args 0 -args 0 -args $(TX_EXPIRE) -args "true" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 20000000 -memo "" gnoswap_admin > /dev/null
+decrease-liquidity-position-08:
+	$(info ************ decrease position(8) liquidity gns:wugnot:3000 // gnoswap_admin ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 8 -args 10 -args 0 -args 0 -args $(TX_EXPIRE) -args "true" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 20000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 
@@ -469,20 +463,9 @@ stake-token-8:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func StakeToken -args 8 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
-stake-token-9:
-	$(info ************ stake token 9 // gnoswap_admin ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gnft -func Approve -args $(ADDR_STAKER) -args 9 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func StakeToken -args 9 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-	@echo
-
-stake-token-10:
-	$(info ************ stake token 10 // gnoswap_admin ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gnft -func Approve -args $(ADDR_STAKER) -args 10 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func StakeToken -args 10 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-	@echo
 
 mint-and-stake:
-	$(info ************ mint and stake(11), to same position with lpTokenId 1 // gnoswap_lp02 ************)
+	$(info ************ mint and stake(9), to same position with lpTokenId 1 // gnoswap_lp02 ************)
 
 	# APPROVE FISRT
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/bar -func Approve -args $(ADDR_POOL) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_lp02 > /dev/null
@@ -660,16 +643,7 @@ unstake-token-1-5:
 
 ## test collect reward
 collect-reward-8:
-	$(info ************ collect reward 8 // gnoswap_admin (external) ************)
-
-	# approve reward token(obl) to STAKER
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/obl -func Approve -args $(ADDR_STAKER) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func CollectReward -args 8 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-	@echo
-
-collect-reward-9:
-	$(info ************ collect reward 9 // gnoswap_admin (internal) ************)
+	$(info ************ collect reward 8 // gnoswap_admin (internal) ************)
 
 	# approve reward token(gns) to STAKER
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gns -func Approve -args $(ADDR_STAKER) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
@@ -694,10 +668,6 @@ unstake-token-8:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func UnstakeToken -args 8 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
-unstake-token-9:
-	$(info ************ unstake token 9 // gnoswap_admin ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func UnstakeToken -args 9 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-	@echo
 
 unstake-token-10:
 	$(info ************ unstake token 10 // gnoswap_admin ************)
@@ -731,6 +701,10 @@ burn-position-7:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func DecreaseLiquidity -args 7 -args 100 -args 0 -args 0 -args $(TX_EXPIRE) -args "false" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_lp01 > /dev/null
 	@echo
 
+
+set-pool-creation-fee:
+	$(info ************ set pool creation fee to 100_000_000 uGNS ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func SetPoolCreationFee -args 100000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 
 ## ETC
 print-fee-collector:
@@ -770,3 +744,42 @@ print-fee-collector:
 	@printf "UGNOT "
 	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="bank/balances/$(ADDR_PROTOCOL_FEE)"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 	@echo
+
+
+## ETC
+emission-debug:
+	$(info ************ emission debug ************)
+	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/gnoswap/staker.GetPrintInfo()"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
+
+
+# {
+#   "height": 209,
+#   "time": 1720681191,
+#   "gns": {
+#     "staker": 2193921191,
+#     "devOps": 585045641,
+#     "communityPool": 146261396,
+#     "xGNS": 0,
+#     "protocolFee": 0,
+#     "GnoswapAdmin": 99999963999999
+#   },
+#   "pool": [
+#     {
+#       "poolPath": "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000",
+#       "tier": 1,
+#       "numPoolSameTier": 1,
+#       "poolReward": 2065496535,
+#       "position": [
+#         {
+#           "lpTokenId": 8,
+#           "stakedHeight": 187,
+#           "stakedTimestamp": 1720681186,
+#           "stakedDuration": 5,
+#           "fullAmount": 2065496535,
+#           "ratio": 30,
+#           "ratioAmount": 619648960
+#         }
+#       ]
+#     }
+#   ]
+# }
