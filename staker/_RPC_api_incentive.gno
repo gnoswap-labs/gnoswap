@@ -32,6 +32,7 @@ type ApiExternalIncentive struct {
 type ApiInternalIncentive struct {
 	PoolPath       string `json:"poolPath"`
 	Tier           uint64 `json:"tier"`
+	StartTimestamp int64  `json:"startTimestamp"`
 	RewardPerBlock string `json:"rewardPerBlock"`
 }
 
@@ -336,10 +337,11 @@ func ApiGetInternalIncentives() string {
 
 	apiInternalIncentives := []ApiInternalIncentive{}
 
-	for poolPath, tier := range poolTiers {
+	for poolPath, internal := range poolTiers {
 		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
 			PoolPath:       poolPath,
-			Tier:           tier,
+			Tier:           internal.tier,
+			StartTimestamp: internal.startTimestamp,
 			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
 		})
 	}
@@ -357,6 +359,7 @@ func ApiGetInternalIncentives() string {
 			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
 			"rewardToken":    json.StringNode("rewardToken", consts.GNS_PATH),
 			"tier":           json.NumberNode("tier", float64(incentive.Tier)),
+			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
 			"rewardPerBlock": json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
 			"accuGns":        json.NumberNode("accuGns", float64(poolAccuGns[incentive.PoolPath])),
 		})
@@ -382,14 +385,15 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 
 	apiInternalIncentives := []ApiInternalIncentive{}
 
-	for poolPath, tier := range poolTiers {
+	for poolPath, internal := range poolTiers {
 		if poolPath != targetPoolPath {
 			continue
 		}
 
 		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
 			PoolPath:       poolPath,
-			Tier:           tier,
+			Tier:           internal.tier,
+			StartTimestamp: internal.startTimestamp,
 			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
 		})
 	}
@@ -407,6 +411,7 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
 			"rewardToken":    json.StringNode("rewardToken", consts.GNS_PATH),
 			"tier":           json.NumberNode("tier", float64(incentive.Tier)),
+			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
 			"rewardPerBlock": json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
 			"accuGns":        json.NumberNode("accuGns", float64(poolAccuGns[targetPoolPath])),
 		})
@@ -432,14 +437,15 @@ func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 
 	apiInternalIncentives := []ApiInternalIncentive{}
 
-	for poolPath, tier := range poolTiers {
-		if tier != targetTier {
+	for poolPath, internal := range poolTiers {
+		if internal.tier != targetTier {
 			continue
 		}
 
 		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
 			PoolPath:       poolPath,
-			Tier:           tier,
+			Tier:           internal.tier,
+			StartTimestamp: internal.startTimestamp,
 			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
 		})
 	}
@@ -457,6 +463,7 @@ func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
 			"rewardToken":    json.StringNode("rewardToken", consts.GNS_PATH),
 			"tier":           json.NumberNode("tier", float64(incentive.Tier)),
+			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
 			"rewardPerBlock": json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
 			"accuGns":        json.NumberNode("accuGns", float64(poolAccuGns[incentive.PoolPath])),
 		})

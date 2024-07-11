@@ -47,7 +47,8 @@ func CalcPoolPosition() {
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(mintedGnsAmount)
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
 
-	for poolPath, tier := range poolTiers {
+	for poolPath, internal := range poolTiers {
+		tier := internal.tier
 		tierAmount := uint64(0)
 		if tier == 1 {
 			tierAmount = tier1Amount / tier1Num

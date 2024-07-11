@@ -7,6 +7,7 @@ package staker
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/r/gnoswap/consts"
 
@@ -30,13 +31,22 @@ func init() {
 	if std.GetHeight() != 0 {
 		panic("height should be 0")
 	}
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:100"] = 1
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:100"] = InternalTier{
+		tier:           1,
+		startTimestamp: time.Now().Unix(),
+	}
 
 	// tier 2
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = 2
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = InternalTier{
+		tier:           2,
+		startTimestamp: time.Now().Unix(),
+	}
 
 	// tier 3
-	poolTiers["gno.land/r/demo/baz:gno.land/r/demo/qux:100"] = 3
+	poolTiers["gno.land/r/demo/baz:gno.land/r/demo/qux:100"] = InternalTier{
+		tier:           3,
+		startTimestamp: time.Now().Unix(),
+	}
 }
 
 func TestPoolInitCreatePool(t *testing.T) {

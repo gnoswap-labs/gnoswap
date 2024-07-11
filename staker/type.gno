@@ -6,7 +6,12 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-type Incentive struct {
+type InternalTier struct {
+	tier           uint64
+	startTimestamp int64
+}
+
+type ExternalIncentive struct {
 	targetPoolPath string
 	rewardToken    string
 	rewardAmount   *u256.Uint
