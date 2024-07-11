@@ -11,7 +11,7 @@ const (
 
 	TOKEN_REGISTER std.Address = "g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5"
 
-	BLOCK_GENERATION_INTERVAL int64 = 5 // 5 seconds
+	BLOCK_GENERATION_INTERVAL int64 = 2 // 2 seconds
 )
 
 // WRAP & UNWRAP

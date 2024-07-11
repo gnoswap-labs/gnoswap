@@ -9,18 +9,18 @@ import (
 )
 
 /*
-	NOTE: assume block will be created every 5 second
-	5 second = 1 block
-	1 minute = 12 block
-	1 hour = 720 block
-	1 day = 17280 block
-	1 year = 6307200 block
+	NOTE: assume block will be created every 2 second
+	2 second = 1 block
+	1 minute = 30 block
+	1 hour = 1800 block
+	1 day = 43200 block
+	(365 days) 1 year = 15768000 block
 
-	2 year = +12614400 block
-	4 year = +25228800 block
-	6 year = +37843200 block
-	8 year = +50457600 block
-	12 year = +75686400 block
+	2 year = +31536000 block
+	4 year = +63072000 block
+	6 year = +94608000 block
+	8 year = +126144000 block
+	12 year = +189216000 block
 */
 
 type halvingTierAmountType map[int64]int64     // map[tier]mintAmount
@@ -46,7 +46,7 @@ func init() {
 	// init 12 years halving tier block
 	height := std.GetHeight()
 	for i := int64(1); i < 13; i++ {
-		halvingTierBlock[i] = height + 6307200*i
+		halvingTierBlock[i] = height + 15768000*i
 	}
 }
 
@@ -82,7 +82,7 @@ func getAmountByHeight(height int64) uint64 {
 	halvingTier := getHalvingTierByBlock(height)
 	halvingAmountYear := halvingTierAmount[halvingTier] // amount per year
 	halvingAmountDay := halvingAmountYear / 365
-	halvingAmountBlock := halvingAmountDay / 17280 // 1 day = 17280 block
+	halvingAmountBlock := halvingAmountDay / 43200 // 1 day = 43200 block
 
 	return uint64(halvingAmountBlock)
 }

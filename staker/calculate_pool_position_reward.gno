@@ -39,6 +39,9 @@ func CalcPoolPosition() {
 	stakerGnsBalance := gnsBalance(consts.STAKER_ADDR)
 	mintedGnsAmount := stakerGnsBalance - lastGnsBalance
 
+	// TODO: REMOVE AFTER EMISSION QA
+	println("(75%) mintedGnsAmount", mintedGnsAmount)
+
 	lastGnsBalance = stakerGnsBalance
 
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(mintedGnsAmount)

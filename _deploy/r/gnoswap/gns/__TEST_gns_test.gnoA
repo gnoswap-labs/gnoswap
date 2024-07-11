@@ -23,15 +23,20 @@ func TestMint(t *testing.T) {
 
 	shouldEQ(t, TotalSupply(), 100_000_000_000_000)
 
-	Mint(emissionUsers) // + 4_387_842_345 (block 1 ~ 123)
-	shouldEQ(t, TotalSupply(), 100_000_000_000_000+4_387_842_345)
+	Mint(emissionUsers) // + 1_755_136_938 (block 1 ~ 123)
+	shouldEQ(t, TotalSupply(), 100_000_000_000_000+1_755_136_938)
 
 	Mint(emissionUsers) // no block mined => no emission
-	shouldEQ(t, TotalSupply(), 100_000_000_000_000+4_387_842_345)
+	shouldEQ(t, TotalSupply(), 100_000_000_000_000+1_755_136_938)
 
 	std.TestSkipHeights(1)
-	Mint(emissionUsers) // + 35_673_515 (block 124)
-	shouldEQ(t, TotalSupply(), 100_000_000_000_000+4_387_842_345+35_673_515)
+	Mint(emissionUsers) // + 14_269_406 (block 124)
+	// 2s = 14_269_406
+	// 1m = 428_082_180
+	// 1h = 25_684_930_800
+	// 24h = 616_438_339_200
+
+	shouldEQ(t, TotalSupply(), 100_000_000_000_000+1_755_136_938+14_269_406)
 }
 
 func TestMintNoPermission(t *testing.T) {
