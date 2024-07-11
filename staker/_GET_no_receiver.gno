@@ -11,6 +11,8 @@ import (
 
 	"gno.land/r/gnoswap/consts"
 	"gno.land/r/gnoswap/gns"
+
+	en "gno.land/r/gnoswap/emission"
 )
 
 // Incentive
@@ -127,12 +129,12 @@ func StakerDepositTargetPoolPath(lpTokenId uint64) string {
 
 // PoolTier
 func StakerPoolTier(poolPath string) uint64 {
-	tier, exist := poolTiers[poolPath]
+	internal, exist := poolTiers[poolPath]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerPoolTier() || poolPath(%s) poolTier does not exist", poolPath))
 	}
 
-	return tier
+	return internal.tier
 }
 
 // DEBUG
@@ -224,6 +226,9 @@ type ApiEmissionDebugPosition struct {
 }
 
 func GetPrintInfo() string {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	emissionDebug := ApiEmissionDebugInfo{}
 	emissionDebug.Height = std.GetHeight()
 	emissionDebug.Time = time.Now().Unix()
@@ -234,7 +239,8 @@ func GetPrintInfo() string {
 	emissionDebug.GnsProtocolFee = gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR))
 	emissionDebug.GnsGSA = gns.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
 
-	for poolPath, tier := range poolTiers {
+	for poolPath, internal := range poolTiers {
+		tier := internal.tier
 		pool := ApiEmissionDebugPool{}
 		pool.PoolPath = poolPath
 		pool.Tier = tier
@@ -293,9 +299,10 @@ func GetPrintInfo() string {
 func makePoolsNode(emissionPool []ApiEmissionDebugPool) []*json.Node {
 	pools := make([]*json.Node, 0)
 
-	for poolPath, tier := range poolTiers {
+	for poolPath, internal := range poolTiers {
 		numTier1, numTier2, numTier3 := getNumPoolTiers()
 		numPoolSameTier := uint64(0)
+		tier := internal.tier
 		if tier == 1 {
 			numPoolSameTier = numTier1
 		} else if tier == 2 {
@@ -306,6 +313,7 @@ func makePoolsNode(emissionPool []ApiEmissionDebugPool) []*json.Node {
 
 		pools = append(pools, json.ObjectNode("", map[string]*json.Node{
 			"poolPath":        json.StringNode("poolPath", poolPath),
+			"startTimestamp":  json.NumberNode("startTimestamp", float64(internal.startTimestamp)),
 			"tier":            json.NumberNode("tier", float64(tier)),
 			"numPoolSameTier": json.NumberNode("numPoolSameTier", float64(numPoolSameTier)),
 			"poolReward":      json.NumberNode("poolReward", float64(poolGns[poolPath])),

@@ -102,10 +102,11 @@ func getPoolTierAndRatio(poolPath string) (uint64, *u256.Uint) {
 	_q96 := u256.MustFromDecimal(consts.Q96)
 
 	// current pool's tier
-	tier, ok := poolTiers[poolPath]
+	internal, ok := poolTiers[poolPath]
 	if !ok {
 		return 0, u256.Zero()
 	}
+	tier := internal.tier
 
 	// that tiers ratio
 	ratio := getTierRatio(tier)
@@ -134,7 +135,7 @@ func getNumPoolTiers() (uint64, uint64, uint64) {
 	var tier1, tier2, tier3 uint64
 
 	for _, v := range poolTiers {
-		switch v {
+		switch v.tier {
 		case 1:
 			tier1++
 		case 2:

@@ -11,7 +11,7 @@ import (
 )
 
 // GetPoolWithTiers returns list of pools with their tiers
-func GetPoolWithTiers() map[string]uint64 {
+func GetPoolWithTiers() map[string]InternalTier {
 	return poolTiers
 }
 
@@ -41,14 +41,16 @@ func SetPoolTier(pool string, tier uint64) {
 	}
 
 	// panic if pool exists in poolTiers
-	if _, exist := poolTiers[pool]; exist {
+	internal, exist := poolTiers[pool]
+	if !exist {
 		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__SetPoolTier() || pool(%s) already exists in poolTiers"))
 	}
 
 	// check if tier is valid
 	validTier(tier)
 
-	poolTiers[pool] = tier
+	internal.tier = tier
+	poolTiers[pool] = internal
 
 	std.Emit(
 		"GNOSWAP",
@@ -80,7 +82,8 @@ func ChangePoolTier(pool string, tier uint64) {
 		)
 	}
 	// panic if pool does not exist in poolTiers
-	if _, exist := poolTiers[pool]; !exist {
+	internal, exist := poolTiers[pool]
+	if !exist {
 		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__ChangePoolTier() || pool(%s) does not exist in poolTiers"))
 	}
 
@@ -101,7 +104,8 @@ func ChangePoolTier(pool string, tier uint64) {
 		"p_tier", uint64ToStr(tier),
 	)
 
-	poolTiers[pool] = tier
+	internal.tier = tier
+	poolTiers[pool] = internal
 }
 
 // RemovePoolTier removes the pool from poolTiers

@@ -22,11 +22,11 @@ import (
 )
 
 var (
-	poolIncentives map[string][]string  = make(map[string][]string)  // poolPath => []incentiveId
-	incentives     map[string]Incentive = make(map[string]Incentive) // incentiveId => Incentive
+	poolIncentives map[string][]string          = make(map[string][]string)          // poolPath => []incentiveId
+	incentives     map[string]ExternalIncentive = make(map[string]ExternalIncentive) // incentiveId => ExternalIncentive
 
-	deposits  map[uint64]Deposit = make(map[uint64]Deposit) // tokenId => Deposit
-	poolTiers map[string]uint64  = make(map[string]uint64)  // poolPath -> tier
+	deposits  map[uint64]Deposit      = make(map[uint64]Deposit)      // tokenId => Deposit
+	poolTiers map[string]InternalTier = make(map[string]InternalTier) // poolPath -> InternalTier
 
 	lastCalculatedHeight int64
 	lastGnsBalance       uint64
@@ -50,7 +50,11 @@ const (
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers[MUST_EXISTS_IN_TIER_1] = 1 // ONLY GNOT:GNS 0.3%
+	// ONLY GNOT:GNS 0.3%
+	poolTiers[MUST_EXISTS_IN_TIER_1] = InternalTier{
+		tier:           1,
+		startTimestamp: time.Now().Unix(),
+	}
 }
 
 // StakeToken stakes the lp token to the staker contract
@@ -364,7 +368,7 @@ func CreateExternalIncentive(
 		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || pool reward balance not updated correctly(before:%d, added:%d, final:%d)", poolRewardBalanceBefore, rewardAmount.Uint64(), poolRewardBalanceAfter))
 	}
 
-	incentives[incentiveId] = Incentive{
+	incentives[incentiveId] = ExternalIncentive{
 		targetPoolPath: targetPoolPath,
 		rewardToken:    rewardToken,
 		rewardAmount:   rewardAmount,
