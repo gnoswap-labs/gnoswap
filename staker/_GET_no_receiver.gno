@@ -321,8 +321,6 @@ func makePositionsNode(poolPath string) []*json.Node {
 
 	for lpTokenId, deposit := range deposits {
 		if deposit.targetPoolPath == poolPath {
-			position := ApiEmissionDebugPosition{}
-
 			stakedDuration := time.Now().Unix() - deposit.stakeTimestamp
 			fullAmount := positionGns[lpTokenId]
 			ratio := getRewardRatio(stakedDuration)
