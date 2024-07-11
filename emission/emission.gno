@@ -27,6 +27,9 @@ func MintAndDistributeGns() {
 	emissionGnsBalance := gnsBalance(emissionAddr)
 	distributeToTarget(emissionGnsBalance)
 
+	// TODO: REMOVE AFTER EMISSION QA
+	println("EM_emissionGnsBalance:", emissionGnsBalance)
+
 	lastExecutedHeight = height
 }
 

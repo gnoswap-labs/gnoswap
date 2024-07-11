@@ -66,7 +66,7 @@ func max(x, y int64) int64 {
 	return y
 }
 
-func min(x, y int64) int64 {
+func min(x, y uint64) uint64 {
 	if x < y {
 		return x
 	}

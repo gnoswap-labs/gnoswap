@@ -13,25 +13,26 @@ func Test_mintGns(t *testing.T) {
 
 	mintGns() // 1 ~ 123 height
 
-	shouldEQ(t, gnsBalance(emissionAddr), 4387842345)
-	shouldEQ(t, gns.TotalSupply(), 100000000000000+4387842345)
+	shouldEQ(t, gnsBalance(emissionAddr), 1_755_136_938)
+	shouldEQ(t, gns.TotalSupply(), 100000000000000+1_755_136_938)
 
 	shouldEQ(t, std.GetHeight(), 123)
 }
 
 func Test_distributeToTarget(t *testing.T) {
-	shouldEQ(t, gnsBalance(emissionAddr), 4387842345)
+	shouldEQ(t, gnsBalance(emissionAddr), 1_755_136_938)
 	distributeToTarget(gnsBalance(emissionAddr))
-	shouldEQ(t, gnsBalance(emissionAddr), 1) // 1 left
+	shouldEQ(t, gnsBalance(emissionAddr), 2) // left due to division
 }
 
 func Test_distributeToTarget_After5Block(t *testing.T) {
-	std.TestSkipHeights(5)
+	// current 1 block will mint 14_269_406
+	std.TestSkipHeights(5) // increase 14_269_406 * 5 = 71_347_030
 	mintGns()
-	shouldEQ(t, gnsBalance(emissionAddr), 178367576)
+	shouldEQ(t, gnsBalance(emissionAddr), 71_347_032) // 2 + 71_347_030
 
 	distributeToTarget(gnsBalance(emissionAddr))
-	shouldEQ(t, gnsBalance(emissionAddr), 1) // 1 left again
+	shouldEQ(t, gnsBalance(emissionAddr), 1)
 }
 
 func TestChangeDistributionPct_ByAdmin(t *testing.T) {
