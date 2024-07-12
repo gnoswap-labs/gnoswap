@@ -279,9 +279,9 @@ transfer-obl:
 # default pool create
 pool-create-gns-wugnot-default:
 	$(info ************ set pool creation fee to 0uGNS for testing ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func SetPoolCreationFee -args 0 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo 
 
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func SetPoolCreationFee -args 0 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 
 	$(info ************ create default pool (GNS:WUGNOT:0.03%) ************)
 	# tick 0 ≈ x1 ≈ 79228162514264337593543950337
@@ -462,7 +462,6 @@ stake-token-8:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gnft -func Approve -args $(ADDR_STAKER) -args 8 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func StakeToken -args 8 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
-
 
 mint-and-stake:
 	$(info ************ mint and stake(9), to same position with lpTokenId 1 // gnoswap_lp02 ************)
@@ -705,6 +704,7 @@ burn-position-7:
 set-pool-creation-fee:
 	$(info ************ set pool creation fee to 100_000_000 uGNS ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func SetPoolCreationFee -args 100000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+
 
 ## ETC
 print-fee-collector:
