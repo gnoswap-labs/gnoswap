@@ -1,0 +1,76 @@
+package staker
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/testutils"
+)
+
+func TestGetWarmUp(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	if GetWarmUp(100) != 901 {
+		panic("GetWarmUp(100) != 901")
+	}
+	if GetWarmUp(70) != 301 {
+		panic("GetWarmUp(70) != 301")
+	}
+	if GetWarmUp(50) != 151 {
+		panic("GetWarmUp(50) != 151")
+	}
+	if GetWarmUp(30) != 1 {
+		panic("GetWarmUp(30) != 1")
+	}
+}
+
+func TestSetWarmUp_NoPrivileges(t *testing.T) {
+	dummy := testutils.TestAddress("dummy")
+	dummyRealm := std.NewUserRealm(dummy)
+	std.TestSetRealm(dummyRealm)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			SetWarmUp(100, 100)
+		},
+		"[STAKER] reward_math_warm_up.gno__SetWarmUp() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1egdt2l7xjcrm6qjwyd3g60z6e9cnr75pmcuasc) can set warm up period, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+	)
+}
+
+func TestSetWarmUp_InvalidPercent(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			SetWarmUp(10, 100)
+		},
+		"[STAKER] reward_math_warm_up.gno__SetWarmUp() || percent(10) must be 30, 50, 70, 100",
+	)
+}
+
+func TestSetWarmUp(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	SetWarmUp(100, 100)
+	if GetWarmUp(100) != 100 {
+		panic("GetWarmUp(100) != 100")
+	}
+
+	SetWarmUp(70, 70)
+	if GetWarmUp(70) != 70 {
+		panic("GetWarmUp(70) != 70")
+	}
+
+	SetWarmUp(50, 50)
+	if GetWarmUp(50) != 50 {
+		panic("GetWarmUp(50) != 50")
+	}
+
+	SetWarmUp(30, 30)
+	if GetWarmUp(30) != 30 {
+		panic("GetWarmUp(30) != 30")
+	}
+
+}

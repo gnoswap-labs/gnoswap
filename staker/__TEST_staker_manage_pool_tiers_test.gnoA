@@ -28,6 +28,9 @@ func TestSetPoolTier(t *testing.T) {
 	SetPoolTier("gno.land/r/demo/bar:gno.land/r/demo/foo:500", 2)
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker SetPoolTier [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_tier 2}]}
 
+	if poolTiers["gno.land/r/demo/bar:gno.land/r/demo/foo:500"].tier != 2 {
+		t.Error("Expected tier to be 2")
+	}
 }
 
 func TestGetPoolWithTiers(t *testing.T) {
@@ -42,7 +45,7 @@ func TestChangePoolTier(t *testing.T) {
 	ChangePoolTier("gno.land/r/demo/bar:gno.land/r/demo/foo:500", 3)
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker ChangePoolTier [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_tier 3}]}
 
-	if poolTiers["gno.land/r/demo/bar:gno.land/r/demo/foo:500"] != 3 {
+	if poolTiers["gno.land/r/demo/bar:gno.land/r/demo/foo:500"].tier != 3 {
 		t.Error("Expected tier to be 3")
 	}
 }
@@ -55,5 +58,4 @@ func TestRemovePoolTier(t *testing.T) {
 	if len(poolTiers) != 1 {
 		t.Error("Expected 1 pool")
 	}
-
 }

@@ -85,6 +85,7 @@ func CalcPoolPosition() {
 			startTimestamp := incentive.startTimestamp
 			endTimestamp := incentive.endTimestamp
 			now := time.Now().Unix()
+
 			// if inactive incentive, do not calculate
 			if !(startTimestamp <= now && now <= endTimestamp) {
 				continue

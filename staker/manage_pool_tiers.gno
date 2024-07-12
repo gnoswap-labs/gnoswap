@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"time"
 
 	pl "gno.land/r/gnoswap/pool"
 
@@ -23,6 +24,17 @@ func GetPoolWithTiers() map[string]InternalTier {
 // - pool exists in poolTiers
 // - tier is not valid
 func SetPoolTier(pool string, tier uint64) {
+	// panic if pool does not exist
+	if !(pl.DoesPoolPathExist(pool)) {
+		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__SetPoolTier() || pool(%s) does not exist"))
+	}
+
+	// panic if pool exists in poolTiers
+	_, exist := poolTiers[pool]
+	if exist {
+		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__SetPoolTier() || pool(%s) already exists in poolTiers", pool))
+	}
+
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
 		panic(
@@ -35,22 +47,13 @@ func SetPoolTier(pool string, tier uint64) {
 		)
 	}
 
-	// panic if pool does not exist
-	if !(pl.DoesPoolPathExist(pool)) {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__SetPoolTier() || pool(%s) does not exist"))
-	}
-
-	// panic if pool exists in poolTiers
-	internal, exist := poolTiers[pool]
-	if !exist {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__SetPoolTier() || pool(%s) already exists in poolTiers"))
-	}
-
 	// check if tier is valid
 	validTier(tier)
 
-	internal.tier = tier
-	poolTiers[pool] = internal
+	poolTiers[pool] = InternalTier{
+		tier:           tier,
+		startTimestamp: time.Now().Unix(),
+	}
 
 	std.Emit(
 		"GNOSWAP",
@@ -70,17 +73,6 @@ func SetPoolTier(pool string, tier uint64) {
 // - tier is not valid
 // - pool is default pool
 func ChangePoolTier(pool string, tier uint64) {
-	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
-		panic(
-			ufmt.Sprintf(
-				"[STAKER] manage_pool_tiers.gno__ChangePoolTier() || only admin(%s) or governance(%s) can change existing pool with tier, called from %s",
-				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
-				caller,
-			),
-		)
-	}
 	// panic if pool does not exist in poolTiers
 	internal, exist := poolTiers[pool]
 	if !exist {
@@ -93,6 +85,18 @@ func ChangePoolTier(pool string, tier uint64) {
 	// CAN'T CHANGE TIER OF THIS GNS:GNOT 0.3%
 	if pool == MUST_EXISTS_IN_TIER_1 {
 		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__ChangePoolTier() || Cannot change tier of this pool(%s)"))
+	}
+
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+		panic(
+			ufmt.Sprintf(
+				"[STAKER] manage_pool_tiers.gno__ChangePoolTier() || only admin(%s) or governance(%s) can change existing pool with tier, called from %s",
+				consts.GNOSWAP_ADMIN,
+				consts.GOV_ADDR,
+				caller,
+			),
+		)
 	}
 
 	std.Emit(
@@ -114,6 +118,10 @@ func ChangePoolTier(pool string, tier uint64) {
 // - caller is not admin
 // - pool is default pool
 func RemovePoolTier(pool string) {
+	if pool == MUST_EXISTS_IN_TIER_1 {
+		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__RemovePoolTier() || Cannot change tier of this pool"))
+	}
+
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
 		panic(
@@ -124,10 +132,6 @@ func RemovePoolTier(pool string) {
 				caller,
 			),
 		)
-	}
-
-	if pool == MUST_EXISTS_IN_TIER_1 {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__RemovePoolTier() || Cannot change tier of this pool"))
 	}
 
 	delete(poolTiers, pool)
