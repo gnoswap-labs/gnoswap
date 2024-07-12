@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	unstakingFee = uint64(10) // 0.1%
+	unstakingFee = uint64(100) // 1%
 )
 
 func handleUnstakingFee(

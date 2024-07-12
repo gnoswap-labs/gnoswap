@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	swapFee = uint64(15) // 0.15% // currently, chanageable by admin
+	swapFee = uint64(15) // 0.15%
 )
 
 func handleSwapFee(
