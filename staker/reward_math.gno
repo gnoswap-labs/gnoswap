@@ -155,55 +155,20 @@ func getNumPoolTiers() (uint64, uint64, uint64) {
 	return tier1, tier2, tier3
 }
 
-// get staking tier by height
-// func getRewardRatio(height int64) uint64 {
-// 	// since `float` type has determinisim issue, we use `int` instead
-// 	// so instead of return 50%, we return 50
-// 	// we'll divide by 100 later
-
-// 	var ratio uint64
-// 	switch {
-// 	case height >= 1296001: // 30d
-// 		ratio = 100
-// 		break
-// 	case height >= 432001: // 10d ~ 30d
-// 		ratio = 70
-// 		break
-// 	case height >= 216001: // 5d ~ 10d
-// 		ratio = 50
-// 		break
-// 	case height >= 1: // ~ 5d
-// 		ratio = 30
-// 		break
-// 	default: // ~4s
-// 		ratio = 0
-// 		break
-// 	}
-
-// 	return ratio
-// }
-
+// get reward ratio by staking duration height
 func getRewardRatio(height int64) uint64 {
-	var ratio uint64
 	switch {
-	case height >= 901: // 30m 1s ~
-		ratio = 100
-		break
-	case height >= 301: // 10m 1s ~ 30m
-		ratio = 70
-		break
-	case height >= 151: // 5m 1s ~ 10m
-		ratio = 50
-		break
-	case height >= 1: // 2s ~ 5m
-		ratio = 30
-		break
-	default: // ~ 2s
-		ratio = 0
-		break
+	case height >= warmUp[100]:
+		return 100
+	case height >= warmUp[70]:
+		return 70
+	case height >= warmUp[50]:
+		return 50
+	case height >= warmUp[30]:
+		return 30
+	default:
+		return 0
 	}
-
-	return ratio
 }
 
 func getTierRatio(tier uint64) uint64 {
