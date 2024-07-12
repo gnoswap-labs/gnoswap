@@ -214,3 +214,40 @@ func TestShortenWramUpPeriod5Block(t *testing.T) {
 
 	curr = printInfo(curr)
 }
+
+func TestShortenWramUpPeriodLARGEBlock(t *testing.T) {
+	println()
+	println()
+
+	curr := getCurrentInfo()
+	std.TestSkipHeights(1000)
+	CollectReward(1)
+	/*
+		EM_emissionGnsBalance 71347032
+		(75%) mintedGnsAmount: 53510274
+		***********************
+		> height: 8
+		> height inc by: 5
+		> time: 1234567660
+		> time inc by: 10
+
+		GNS BALANCE CHANGE
+		> staker_bal		 0
+		> staker_chg		 0
+		> dev ops		 22831049
+		> dev ops_chg		 14269406
+		> community pool_bal	 5707761
+		> community pool_chg	 3567351
+		> x_gns_bal		 0
+		> x_gns_chg		 0
+		> protocol fee_bal	 159957191
+		> protocol fee_chg	 37473245
+		> GSA_bal		 99999925659246
+		> GSA_chg		 16037029
+
+		GNS POSITION
+		> tokenId: 1 amount: 0
+	*/
+
+	curr = printInfo(curr)
+}
