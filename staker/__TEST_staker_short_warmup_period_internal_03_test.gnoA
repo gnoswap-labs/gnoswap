@@ -1,6 +1,5 @@
 // 1 pool for tier 1
 // 2 position
-// different stake time
 
 package staker
 
@@ -102,15 +101,19 @@ func TestMintBarQux100_2(t *testing.T) {
 	shouldEQ(t, amount1, "100000")
 }
 
-func TestStakeInternal_1(t *testing.T) {
+func TestStakeInternal_1_2(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
 	StakeToken(1)
 
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
+	StakeToken(2)
+
 	std.TestSkipHeights(2)
 
 	shouldEQ(t, gnft.OwnerOf(tid(1)), GetOrigPkgAddr())
-	shouldEQ(t, len(deposits), 1)
+	shouldEQ(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr())
+	shouldEQ(t, len(deposits), 2)
 }
 
 func TestShortenWramUpPeriodFirst(t *testing.T) {
@@ -119,7 +122,7 @@ func TestShortenWramUpPeriodFirst(t *testing.T) {
 	curr := getCurrentInfo()
 	curr = printInfo(curr)
 	/*
-		***********************
+			***********************
 		> height: 2
 		> height inc by: 0
 		> time: 1234567648
@@ -157,71 +160,123 @@ func TestShortenWramUpPeriodFirst(t *testing.T) {
 		> time inc by: 2
 
 		GNS BALANCE CHANGE
-		> staker_bal		 0
-		> staker_chg		 0
-		> dev ops		 		8561643
-		> dev ops_chg		8561643
+		> staker_bal		 16053082
+		> staker_chg		 16053082
+		> dev ops			8561643
+		> dev ops_chg	8561643
 		> community pool_bal	 2140410
 		> community pool_chg	 2140410
 		> x_gns_bal		 0
 		> x_gns_chg		 0
-		> protocol fee_bal	 122483946
-		> protocol fee_chg	 22483946
-		> GSA_bal		 99999909622217
-		> GSA_chg		 9622217
+		> protocol fee_bal	 111241972
+		> protocol fee_chg	 11241972
+		> GSA_bal		 99999904811109
+		> GSA_chg		 4811109
 
 		GNS POSITION
 		> tokenId: 1 amount: 0
+		> tokenId: 2 amount: 16053081
 	*/
 }
 
-func TestStakeToken02(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
-
-	std.TestSkipHeights(50)
-	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
-	StakeToken(2)
-	/*
-		EM_emissionGnsBalance 713470302
-		(75%) mintedGnsAmount: 535102726
-	*/
-
-	std.TestSkipHeights(2)
-
-	shouldEQ(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr())
-	shouldEQ(t, len(deposits), 2)
-}
-
-func TestShortenWramUpPeriod(t *testing.T) {
+func TestShortenWramUpPeriodNoChange(t *testing.T) {
 	curr := getCurrentInfo()
+	// no block skip
+	// no change
 	CollectReward(1)
-	CollectReward(2)
 	/*
-		EM_emissionGnsBalance 28538813
-		(75%) mintedGnsAmount: 21404109
 		***********************
-		> height: 55
+		> height: 3
 		> height inc by: 0
-		> time: 1234567754
+		> time: 1234567650
 		> time inc by: 0
 
 		GNS BALANCE CHANGE
-		> staker_bal		 1
-		> staker_chg		 -535102725
-		> dev ops		 156963465
-		> dev ops_chg		 5707762
-		> community pool_bal	 39240865
-		> community pool_chg	 1426940
+		> staker_bal		 16053082
+		> staker_chg		 0
+		> dev ops		 8561643
+		> dev ops_chg		 0
+		> community pool_bal	 2140410
+		> community pool_chg	 0
 		> x_gns_bal		 0
 		> x_gns_chg		 0
-		> protocol fee_bal	 595598231
-		> protocol fee_chg	 473114285
-		> GSA_bal		 99999993014766
-		> GSA_chg		 83392549
+		> protocol fee_bal	 111241972
+		> protocol fee_chg	 0
+		> GSA_bal		 99999904811109
+		> GSA_chg		 0
 
 		GNS POSITION
 		> tokenId: 1 amount: 0
-		> tokenId: 2 amount: 278253417
+		> tokenId: 2 amount: 16053081
+	*/
+
+	curr = printInfo(curr)
+}
+
+func TestShortenWramUpPeriod5Block(t *testing.T) {
+	curr := getCurrentInfo()
+	// 5 block skip
+	std.TestSkipHeights(5)
+	CollectReward(1)
+	/*
+		EM_emissionGnsBalance 71347032
+		(75%) mintedGnsAmount: 53510274
+		***********************
+		> height: 8
+		> height inc by: 5
+		> time: 1234567660
+		> time inc by: 10
+
+		GNS BALANCE CHANGE
+		> staker_bal		 34781678
+		> staker_chg		 18728596
+		> dev ops		 22831049
+		> dev ops_chg		 14269406
+		> community pool_bal	 5707761
+		> community pool_chg	 3567351
+		> x_gns_bal		 0
+		> x_gns_chg		 0
+		> protocol fee_bal	 135599581
+		> protocol fee_chg	 24357609
+		> GSA_bal		 99999915235178
+		> GSA_chg		 10424069
+
+		GNS POSITION
+		> tokenId: 1 amount: 0
+		> tokenId: 2 amount: 34781678
+	*/
+
+	curr = printInfo(curr)
+}
+
+func TestShortenWramUpPeriodSameBlockCollect02(t *testing.T) {
+	curr := getCurrentInfo()
+	// smae block
+	CollectReward(2)
+	/*
+		***********************
+		> height: 8
+		> height inc by: 0
+		> time: 1234567660
+		> time inc by: 0
+
+		GNS BALANCE CHANGE
+		> staker_bal		 0
+		> staker_chg		 -34781678
+		> dev ops		 22831049
+		> dev ops_chg		 0
+		> community pool_bal	 5707761
+		> community pool_chg	 0
+		> x_gns_bal		 0
+		> x_gns_chg		 0
+		> protocol fee_bal	 159957190
+		> protocol fee_chg	 24357609
+		> GSA_bal		 99999925659247
+		> GSA_chg		 10424069
+
+		GNS POSITION
+		> tokenId: 1 amount: 0
+		> tokenId: 2 amount: 0
 	*/
 
 	curr = printInfo(curr)

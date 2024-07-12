@@ -63,6 +63,11 @@ func getPoolTotalStakedLiquidity(poolPath string) *u256.Uint {
 	// get all staked liquidity
 	for tokenId, deposit := range deposits { // key is tokenId // used in this range loop only
 		if deposit.targetPoolPath == poolPath {
+			isInRange := pos.PositionIsInRange(tokenId)
+			if isInRange == false {
+				continue
+			}
+
 			tokenLiquidity := pos.PositionGetPositionLiquidity(tokenId)
 			poolStakedLiquidity = new(u256.Uint).Add(poolStakedLiquidity, tokenLiquidity)
 		}
@@ -78,6 +83,11 @@ func getMyLiquidityRatio(poolPath string, tokenId uint64) *u256.Uint {
 
 	// my(current tokenId) liquidity
 	myLiquidity := pos.PositionGetPositionLiquidity(tokenId)
+
+	isInRange := pos.PositionIsInRange(tokenId)
+	if isInRange == false {
+		return u256.Zero()
+	}
 
 	// my liquidity ratio
 	myLiquidityX96 := new(u256.Uint).Mul(myLiquidity, _q96)

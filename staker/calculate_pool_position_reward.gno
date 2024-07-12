@@ -9,8 +9,10 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// poolPath -> gnsAmount
+// poolPath -> gnsAmount [accu]
 var poolGns map[string]uint64 = make(map[string]uint64)
+
+// poolPath -> gnsAmount [current block]
 var poolTmpGns map[string]uint64 = make(map[string]uint64)
 
 // poolPath -> accumulatedGns
@@ -39,9 +41,6 @@ func CalcPoolPosition() {
 	// calculate pool
 	stakerGnsBalance := gnsBalance(consts.STAKER_ADDR)
 	mintedGnsAmount := stakerGnsBalance - lastGnsBalance
-
-	// TODO: REMOVE AFTER EMISSION QA
-	println("(75%) mintedGnsAmount", mintedGnsAmount)
 
 	lastGnsBalance = stakerGnsBalance
 
