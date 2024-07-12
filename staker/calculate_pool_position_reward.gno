@@ -11,6 +11,7 @@ import (
 
 // poolPath -> gnsAmount
 var poolGns map[string]uint64 = make(map[string]uint64)
+var poolTmpGns map[string]uint64 = make(map[string]uint64)
 
 // poolPath -> accumulatedGns
 var poolAccuGns map[string]uint64 = make(map[string]uint64)
@@ -59,11 +60,13 @@ func CalcPoolPosition() {
 		}
 		poolGns[poolPath] += tierAmount
 		poolAccuGns[poolPath] += tierAmount
+
+		poolTmpGns[poolPath] = tierAmount
 	}
 
 	for tokenId, deposit := range deposits {
 		poolPath := deposit.targetPoolPath
-		poolAmount := poolGns[poolPath]
+		poolTmpAmount := poolTmpGns[poolPath]
 
 		// calculate position gns rewards
 		liqRatioX96 := getMyLiquidityRatio(poolPath, tokenId)
@@ -72,8 +75,8 @@ func CalcPoolPosition() {
 		liqRatiox100 := u256.Zero().Div(liqRatioX96x100, u256.MustFromDecimal(consts.Q96))
 		liqRatio := liqRatiox100.Uint64()
 
-		positionAmount := poolAmount * liqRatio / 100
-		positionGns[tokenId] = positionAmount
+		positionAmount := poolTmpAmount * liqRatio / 100
+		positionGns[tokenId] += positionAmount
 
 		// calculate position external rewards
 		incentiveIds := poolIncentives[poolPath]
@@ -130,7 +133,11 @@ func CalcPoolPosition() {
 			}
 		}
 
-		// update flag
-		lastCalculatedHeight = height
 	}
+	// update flag
+	lastCalculatedHeight = height
+
+	// clear tmp poolGns
+	// clear(poolTmpGns) // gno doesn't support `clear` keyword yet
+	poolTmpGns = make(map[string]uint64)
 }

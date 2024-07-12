@@ -262,7 +262,8 @@ func GetPrintInfo() string {
 				position.LpTokenId = lpTokenId
 				position.StakedHeight = deposit.stakeHeight
 				position.StakedTimestamp = deposit.stakeTimestamp
-				position.StakedDuration = emissionDebug.Time - deposit.stakeTimestamp
+				position.StakedDuration = emissionDebug.Height - deposit.stakeHeight
+
 				position.FullAmount = positionGns[lpTokenId]
 				position.Ratio = getRewardRatio(position.StakedDuration)
 				position.RatioAmount = (position.FullAmount * position.Ratio) / 100
@@ -329,7 +330,7 @@ func makePositionsNode(poolPath string) []*json.Node {
 
 	for lpTokenId, deposit := range deposits {
 		if deposit.targetPoolPath == poolPath {
-			stakedDuration := time.Now().Unix() - deposit.stakeTimestamp
+			stakedDuration := std.GetHeight() - deposit.stakeHeight
 			fullAmount := positionGns[lpTokenId]
 			ratio := getRewardRatio(stakedDuration)
 			ratioAmount := (fullAmount * ratio) / 100
