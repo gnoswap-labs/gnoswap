@@ -4,6 +4,8 @@ import (
 	"std"
 
 	u256 "gno.land/p/gnoswap/uint256"
+
+	pl "gno.land/r/gnoswap/pool"
 )
 
 // type Position
@@ -49,4 +51,16 @@ func PositionGetPositionTokensOwed0(tokenId uint64) *u256.Uint {
 
 func PositionGetPositionTokensOwed1(tokenId uint64) *u256.Uint {
 	return positions[tokenId].tokensOwed1
+}
+
+func PositionIsInRange(tokenId uint64) bool {
+	position := positions[tokenId]
+	poolPath := position.poolKey
+	poolCurrentTick := pl.PoolGetSlot0Tick(poolPath)
+
+	if position.tickLower <= poolCurrentTick && poolCurrentTick <= position.tickUpper {
+		return true
+	}
+
+	return false
 }
