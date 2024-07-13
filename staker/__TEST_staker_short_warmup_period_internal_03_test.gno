@@ -116,6 +116,8 @@ func TestMintBarQux100_3(t *testing.T) {
 		max_timeout,
 		gsa.String(),
 	)
+
+	std.TestSkipHeights(1)
 }
 
 func TestStakeInternal_1_2_3(t *testing.T) {
@@ -184,6 +186,10 @@ func TestShortenWramUpPeriodFirst(t *testing.T) {
 	*/
 
 	std.TestSkipHeights(1)
+	println()
+	println()
+	println()
+
 }
 
 func TestShortenWramUpPeriod1Block(t *testing.T) {
@@ -207,38 +213,152 @@ func TestShortenWramUpPeriod1Block(t *testing.T) {
 		Token3 REWARD  	10691
 	*/
 	/*
-		EM_emissionGnsBalance: 14269406
-		75% // mintedGnsAmount 10702054
+		EM_emissionGnsBalance: 14269407
+		75% // mintedGnsAmount 10702055
 		***********************
-		> height: 1
+		> height: 2
 		> height inc by: 0
-		> time: 1234567646
+		> time: 1234567648
 		> time inc by: 0
 
 		GNS BALANCE CHANGE
-		> staker_bal				  10702054
-		> staker_chg		 			0
-
-		> dev ops		 					2853881
-		> dev ops_chg		 			0
-
-		> community pool_bal	713470
-		> community pool_chg	0
-
-		> x_gns_bal						0
-		> x_gns_chg						0
-
-		> protocol fee_bal	  100000000
-		> protocol fee_chg	  0
-
-		> GSA_bal							99999900000000
-		> GSA_chg							0
+		> staker_bal		 21404109
+		> staker_chg		 0
+		> dev ops		 5707762
+		> dev ops_chg		 0
+		> community pool_bal	 1426940
+		> community pool_chg	 0
+		> x_gns_bal		 0
+		> x_gns_chg		 0
+		> protocol fee_bal	 100000000
+		> protocol fee_chg	 0
+		> GSA_bal		 99999900000000
+		> GSA_chg		 0
 
 		GNS POSITION
-		> tokenId: 1 amount: 40
-		> tokenId: 2 amount: 10702010
+		> tokenId: 1 amount: map{(30 uint64):(18 uint64)}
+		> tokenId: 2 amount: map{(30 uint64):(21382708 uint64)}
+		> tokenId: 3 amount: map{(30 uint64):(21382 uint64)}
 	*/
+	println()
+	println()
+	println()
+
+}
+
+func TestShortenWramUpPeriod150Block(t *testing.T) {
+	std.TestSkipHeights(160)
+
+	// SINGEL_BLOCK_GNS = 14269406 uGNS
+
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
+	curr := getCurrentInfo()
+	curr = printInfo(curr)
+
+	/*
+		POOL_LIQUIDITY		1203278059
+		Token1 LIQUIDITY	1025					  0.000085184
+		Token2 LIQUIDITY	1202074960		99.9000148809
+		Token3 LIQUIDITY 	1202074				 0.0998999351
+
+		GNS REWARD 			10702054
+		Token1 REWARD 	9
+		Tokne2 REWARD		10691353
+		Token3 REWARD  	10691
+	*/
+	/*
+		EM_emissionGnsBalance: 14269407
+		75% // mintedGnsAmount 10702055
+		***********************
+		> height: 2
+		> height inc by: 0
+		> time: 1234567648
+		> time inc by: 0
+
+		GNS BALANCE CHANGE
+		> staker_bal		 21404109
+		> staker_chg		 0
+		> dev ops		 5707762
+		> dev ops_chg		 0
+		> community pool_bal	 1426940
+		> community pool_chg	 0
+		> x_gns_bal		 0
+		> x_gns_chg		 0
+		> protocol fee_bal	 100000000
+		> protocol fee_chg	 0
+		> GSA_bal		 99999900000000
+		> GSA_chg		 0
+
+		GNS POSITION
+		> tokenId: 1 amount: map{(30 uint64):(18 uint64)}
+		> tokenId: 2 amount: map{(30 uint64):(21382708 uint64)}
+		> tokenId: 3 amount: map{(30 uint64):(21382 uint64)}
+	*/
+	println()
+	println()
+	println()
+
+}
+
+func TestCollectReward(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	CollectReward(1)
+	CollectReward(2)
+	CollectReward(3)
+
+	curr := getCurrentInfo()
+	curr = printInfo(curr)
+	println()
+
+	println("><><><><><> SAME BLOCK REWARDING")
+
+	CollectReward(1)
+	CollectReward(2)
+	CollectReward(3)
+
+	println("><><><><><> SAME BLOCK REWARDING END")
+	std.TestSkipHeights(1)
+}
+
+func TestLast(t *testing.T) {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
+	curr := getCurrentInfo()
+	curr = printInfo(curr)
+
+	std.TestSkipHeights(1)
+}
+
+func TestCollectReward1Block(t *testing.T) {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
+	curr := getCurrentInfo()
+	curr = printInfo(curr)
+	println()
 
 	std.TestSetRealm(gsaRealm)
+	CollectReward(1)
+	CollectReward(2)
+	CollectReward(3)
 
+	std.TestSkipHeights(1)
+
+	println()
+	println()
+	println()
+	println()
+	println(GetPrintInfo())
+}
+
+func TestFinalCollect(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	CollectReward(1)
+	CollectReward(2)
+	CollectReward(3)
+
+	std.TestSkipHeights(1)
 }

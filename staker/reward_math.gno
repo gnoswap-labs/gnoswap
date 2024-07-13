@@ -1,43 +1,73 @@
 package staker
 
 import (
-	"std"
-
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/consts"
 
 	pos "gno.land/r/gnoswap/position"
-
-	"gno.land/r/gnoswap/gns"
 )
 
-func rewardMathComputeInternalRewardAmount(tokenId uint64) uint64 {
-	deposit := deposits[tokenId]
+func rewardMathComputeInternalRewardAmount(tokenId uint64) (full, toUser uint64) {
+	println("reward_tokenId:", tokenId)
+	_q96 := u256.MustFromDecimal(consts.Q96)
+	// deposit := deposits[tokenId]
 
 	// using block
-	stakeHeight := deposit.stakeHeight
-	currentHeight := std.GetHeight()
-	stakedDuration := currentHeight - stakeHeight
-	durationRatio := getRewardRatio(stakedDuration)
+	// stakeHeight := deposit.stakeHeight
+	// currentHeight := std.GetHeight()
+	// stakedDuration := currentHeight - stakeHeight
+	// durationRatio := getRewardRatio(stakedDuration)
 
 	// 100% amount
-	gnsFullAmount := positionGns[tokenId]
-	if gnsFullAmount == 0 {
-		return 0
+	// gnsFullAmount := positionGns[tokenId]
+	// if gnsFullAmount == 0 {
+	// 	return 0
+	// }
+	gnsFullAmountX96 := u256.Zero()
+	gnsAmountToGiveX96 := u256.Zero()
+
+	if _, ok := positionGns[tokenId]; !ok {
+		return 0, 0
 	}
 
-	gnsAmountToGive := (gnsFullAmount * durationRatio) / 100
+	for ratio, ratioFullAmountX96 := range positionGns[tokenId] {
+		gnsFullAmountX96 = new(u256.Uint).Add(gnsFullAmountX96, ratioFullAmountX96)
 
-	//  transfer to protocol_fee contract
-	_gnsAmountLeft := gnsFullAmount - gnsAmountToGive
-	_stakerGns := gnsBalance(consts.STAKER_ADDR)
-	toFee := min(_gnsAmountLeft, _stakerGns)
-	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), toFee)
+		// println("ratio:", ratio)
+		// println("ratioFullAmountX96:", ratioFullAmountX96.ToString())
 
-	poolGns[deposit.targetPoolPath] -= gnsFullAmount
-	return gnsAmountToGive
+		// ratioFull := new(u256.Uint).Div(ratioFullAmountX96, _q96).Uint64()
+		// println("ratioFullAmount:", ratioFull)
+
+		ratioAmountX96 := u256.Zero()
+		ratioAmountX96 = new(u256.Uint).Mul(ratioFullAmountX96, u256.NewUint(ratio))
+		ratioAmountX96 = new(u256.Uint).Div(ratioAmountX96, u256.NewUint(100))
+		gnsAmountToGiveX96 = new(u256.Uint).Add(gnsAmountToGiveX96, ratioAmountX96)
+
+		// println("ratioAmountX96:", ratioAmountX96.ToString())
+		// println("ratioAmount:", new(u256.Uint).Div(ratioAmountX96, _q96).Uint64())
+
+		// println()
+	}
+
+	gnsFullAmount := new(u256.Uint).Div(gnsFullAmountX96, _q96).Uint64()
+	gnsAmountToGive := new(u256.Uint).Div(gnsAmountToGiveX96, _q96).Uint64()
+
+	// println("gnsFullAmount:", gnsFullAmount)
+	// println("gnsAmountToGive:", gnsAmountToGive)
+
+	// //  transfer left gns emission to protocol_fee contract
+	// _gnsAmountLeft := gnsFullAmount - gnsAmountToGive
+	// _stakerGns := gnsBalance(consts.STAKER_ADDR)
+	// toFee := min(_gnsAmountLeft, _stakerGns)
+	// println("toFee:", toFee)
+	// gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), toFee)
+	// poolGns[deposit.targetPoolPath] -= gnsFullAmount
+
+	// println("RETURN THIS:", gnsAmountToGive)
+	return gnsFullAmount, gnsAmountToGive
 }
 
 func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string, durationRatio uint64) uint64 {
@@ -101,9 +131,9 @@ func getMyLiquidityRatio(poolPath string, tokenId uint64) *u256.Uint {
 
 	poolStakedLiquidityX96 := new(u256.Uint).Mul(poolStakedLiquidity, _q96)
 
-	myLiquidityRatio := new(u256.Uint).Div(myLiquidityX96X10000000, poolStakedLiquidityX96) // this value needs to be divided by 1_000_000_000
+	myLiquidityRatio := new(u256.Uint).Div(myLiquidityX96X10000000, poolStakedLiquidityX96) // this value needs to be divided by 100
 	myLiquidityRatio = new(u256.Uint).Mul(myLiquidityRatio, _q96)                           // so first mul consts.Q96
-	myLiquidityRatio = new(u256.Uint).Div(myLiquidityRatio, u256.NewUint(1_000_000_000))    // then divided by 1_000_000_000
+	myLiquidityRatio = new(u256.Uint).Div(myLiquidityRatio, u256.NewUint(1_000_000_000))    // then divided by 100
 
 	// XXX REMOVE AFTER QA
 	// println("myLiquidityRatio:", myLiquidityRatio.ToString())
@@ -163,7 +193,7 @@ func getNumPoolTiers() (uint64, uint64, uint64) {
 	return tier1, tier2, tier3
 }
 
-// get reward ratio by staking duration height
+// get reward ration by staking duratino height
 func getRewardRatio(height int64) uint64 {
 	switch {
 	case height >= warmUp[100]:
@@ -172,10 +202,8 @@ func getRewardRatio(height int64) uint64 {
 		return 70
 	case height >= warmUp[50]:
 		return 50
-	case height >= warmUp[30]:
-		return 30
 	default:
-		return 0
+		return 30
 	}
 }
 

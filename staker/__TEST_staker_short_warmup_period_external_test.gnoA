@@ -3,6 +3,7 @@ package staker
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/r/gnoswap/consts"
 
@@ -21,16 +22,27 @@ import (
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = 1
-
-	// tier 2
-	// poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = 2
-	poolTiers["ATOM/GNS_500"] = 2
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = InternalTier{
+		tier:           1,
+		startTimestamp: time.Now().Unix(),
+	}
 
 	// tier 3
-	poolTiers["ATOM/GNOT_500"] = 3
-	poolTiers["ATOM/USDT_500"] = 3
-	poolTiers["ATOM/WETH_500"] = 3
+	poolTiers["ATOM/GNOT_500"] = InternalTier{
+		tier:           3,
+		startTimestamp: time.Now().Unix(),
+	}
+
+	poolTiers["ATOM/USDT_500"] = InternalTier{
+		tier:           3,
+		startTimestamp: time.Now().Unix(),
+	}
+
+	poolTiers["ATOM/WETH_500"] = InternalTier{
+		tier:           3,
+		startTimestamp: time.Now().Unix(),
+	}
+
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
