@@ -78,8 +78,8 @@ func SetHalvingTierBlock(tier int64, block int64) {
 	halvingTierBlock[tier] = block
 }
 
-func getAmountByHeight(height int64) uint64 {
-	halvingTier := getHalvingTierByBlock(height)
+func GetAmountByHeight(height int64) uint64 {
+	halvingTier := GetHalvingTierByBlock(height)
 	halvingAmountYear := halvingTierAmount[halvingTier] // amount per year
 	halvingAmountDay := halvingAmountYear / 365
 	halvingAmountBlock := halvingAmountDay / 43200 // 1 day = 43200 block
@@ -87,7 +87,7 @@ func getAmountByHeight(height int64) uint64 {
 	return uint64(halvingAmountBlock)
 }
 
-func getHalvingTierByBlock(height int64) int64 {
+func GetHalvingTierByBlock(height int64) int64 {
 	// determine which halving tier block is in
 	for tier, block := range halvingTierBlock {
 		if height <= block {
