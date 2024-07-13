@@ -12,6 +12,9 @@ var lastExecutedHeight int64
 // lastStakerGnsBalance is history of staker GNS balance
 var lastStakerGnsBalance uint64
 
+// emissionGnsBalance is balance of emission address
+var emissionGnsBalance uint64
+
 // MintAndDistributeGns mints GNS and distributes to target
 func MintAndDistributeGns() {
 	lastStakerGnsBalance = gnsBalance(consts.STAKER_ADDR)
@@ -24,10 +27,10 @@ func MintAndDistributeGns() {
 
 	mintGns()
 
-	emissionGnsBalance := gnsBalance(emissionAddr)
+	emissionGnsBalance = gnsBalance(emissionAddr)
 	distributeToTarget(emissionGnsBalance)
 
-	// TODO: REMOVE AFTER EMISSION QA
+	// XXX TODO: REMOVE AFTER EMISSION QA
 	println("EM_emissionGnsBalance:", emissionGnsBalance)
 
 	lastExecutedHeight = height

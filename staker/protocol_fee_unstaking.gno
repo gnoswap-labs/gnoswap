@@ -26,6 +26,7 @@ func handleUnstakingFee(
 	}
 
 	feeAmount := amount * unstakingFee / 10000
+	println("feeAmount:", feeAmount)
 	if feeAmount == 0 {
 		return amount
 	}
@@ -51,7 +52,9 @@ func handleUnstakingFee(
 		"feeAmount", uint64ToStr(feeAmount),
 	)
 
-	return amount - feeAmount
+	rest := amount - feeAmount
+	println("rest:", rest)
+	return rest
 }
 
 func GetUnstakingFee() uint64 {

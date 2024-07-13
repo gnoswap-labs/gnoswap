@@ -104,7 +104,7 @@ func Mint(address pusers.AddressOrName) {
 	nowHeight := std.GetHeight()
 	amountToMint := uint64(0)
 	for i := lastMintedHeight + 1; i <= nowHeight; i++ {
-		amount := getAmountByHeight(i)
+		amount := GetAmountByHeight(i)
 		amountToMint += amount
 	}
 	err := banker.Mint(users.Resolve(address), amountToMint)
