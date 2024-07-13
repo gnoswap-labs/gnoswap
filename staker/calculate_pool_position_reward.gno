@@ -15,6 +15,9 @@ var poolGns map[string]uint64 = make(map[string]uint64)
 // poolPath -> gnsAmount [current block]
 var poolTmpGns map[string]uint64 = make(map[string]uint64)
 
+// poolPath -> gnsAmount [how much left from last block]
+var poolLastTmpGns map[string]uint64 = make(map[string]uint64)
+
 // poolPath -> accumulatedGns
 var poolAccuGns map[string]uint64 = make(map[string]uint64)
 
@@ -41,6 +44,7 @@ func CalcPoolPosition() {
 	// calculate pool
 	stakerGnsBalance := gnsBalance(consts.STAKER_ADDR)
 	mintedGnsAmount := stakerGnsBalance - lastGnsBalance
+	println("75% // mintedGnsAmount", mintedGnsAmount)
 
 	lastGnsBalance = stakerGnsBalance
 
@@ -60,22 +64,38 @@ func CalcPoolPosition() {
 		poolGns[poolPath] += tierAmount
 		poolAccuGns[poolPath] += tierAmount
 
+		// current block minted gns + left from last block distributed gns
 		poolTmpGns[poolPath] = tierAmount
+		poolTmpGns[poolPath] += poolLastTmpGns[poolPath]
+		println("poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
+
+		poolLastTmpGns[poolPath] = tierAmount
 	}
+
+	_q96 := u256.MustFromDecimal(consts.Q96)
 
 	for tokenId, deposit := range deposits {
 		poolPath := deposit.targetPoolPath
 		poolTmpAmount := poolTmpGns[poolPath]
 
+		// XXX: REMOVE AFTER QA
+		println(">> poolPath:", poolPath)
+		println(">> poolTmpAmount:", poolTmpAmount)
+
 		// calculate position gns rewards
 		liqRatioX96 := getMyLiquidityRatio(poolPath, tokenId)
-		liqRatioX96x100 := u256.Zero()
-		liqRatioX96x100 = u256.Zero().Mul(liqRatioX96, u256.NewUint(100))
-		liqRatiox100 := u256.Zero().Div(liqRatioX96x100, u256.MustFromDecimal(consts.Q96))
-		liqRatio := liqRatiox100.Uint64()
 
-		positionAmount := poolTmpAmount * liqRatio / 100
+		poolTmpAmountX96 := u256.Zero().Mul(u256.NewUint(poolTmpAmount), _q96)
+		positionAmountX := u256.Zero().Mul(u256.NewUint(poolTmpAmount), liqRatioX96)
+		positionAmountX = u256.Zero().Div(positionAmountX, _q96)
+		positionAmount := positionAmountX.Uint64()
+
+		// XXX: REMOVE AFTER QA
+		println("liqRatioX96:", liqRatioX96.ToString())
+		println("positionAmountX:", positionAmountX.ToString())
+
 		positionGns[tokenId] += positionAmount
+		poolLastTmpGns[poolPath] -= positionAmount
 
 		// calculate position external rewards
 		incentiveIds := poolIncentives[poolPath]
@@ -102,14 +122,13 @@ func CalcPoolPosition() {
 
 			// how many blocks passed since the start of the incentive
 			blocksPassed := (now - startTimestamp) / consts.BLOCK_GENERATION_INTERVAL
-
 			liqRatioX96 := getMyLiquidityRatio(poolPath, tokenId)
-			liqRatioX96x100 := u256.Zero()
-			liqRatioX96x100 = u256.Zero().Mul(liqRatioX96, u256.NewUint(100))
-			liqRatiox100 := u256.Zero().Div(liqRatioX96x100, u256.MustFromDecimal(consts.Q96))
-			liqRatio := liqRatiox100.Uint64()
 
-			positionAmount := (rewardPerBlock * uint64(blocksPassed)) * liqRatio / 100
+			currentPoolReward := u256.NewUint(rewardPerBlock * uint64(blocksPassed))
+			positionAmountX := u256.Zero().Mul(currentPoolReward, liqRatioX96)
+			positionAmountX = u256.Zero().Div(positionAmountX, _q96)
+			positionAmount := positionAmountX.Uint64()
+
 			if positionAmount > rewardLeft.Uint64() {
 				positionAmount = rewardLeft.Uint64()
 			}

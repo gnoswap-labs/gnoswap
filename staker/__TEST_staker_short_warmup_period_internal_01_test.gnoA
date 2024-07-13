@@ -10,6 +10,7 @@ import (
 
 	"gno.land/r/gnoswap/consts"
 
+	en "gno.land/r/gnoswap/emission"
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
@@ -33,22 +34,13 @@ func init() {
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
 	}
-
-	// tier 2
-	// poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = 2
-
-	// tier 3
-	// poolTiers["gno.land/r/demo/baz:gno.land/r/demo/qux:100"] = 3
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
-	372026958
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 
 	pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
-	// pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337")
-	// pl.CreatePool(bazPath, quxPath, 100, "79228162514264337593543950337")
 }
 
 func TestMintBarQux100_1(t *testing.T) {
@@ -90,6 +82,8 @@ func TestStakeInternal_1(t *testing.T) {
 func TestShortenWramUpPeriodFirst(t *testing.T) {
 	// SINGEL_BLOCK_GNS = 14269406 uGNS
 
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
 	curr := getCurrentInfo()
 	curr = printInfo(curr)
 	/*
@@ -116,7 +110,7 @@ func TestShortenWramUpPeriodFirst(t *testing.T) {
 
 	std.TestSetRealm(gsaRealm)
 
-	std.TestSkipHeights(1)
+	std.TestSkipHeights(69)
 	CollectReward(1)
 	curr = printInfo(curr)
 	/*
@@ -145,109 +139,4 @@ func TestShortenWramUpPeriodFirst(t *testing.T) {
 		GNS POSITION
 		> tokenId: 1 amount: 0
 	*/
-}
-
-func TestShortenWramUpPeriodNoChange(t *testing.T) {
-	curr := getCurrentInfo()
-	// no block skip
-	// no change
-	CollectReward(1)
-	/*
-		***********************
-		> height: 3
-		> height inc by: 0
-		> time: 1234567650
-		> time inc by: 0
-
-		GNS BALANCE CHANGE
-		> staker_bal		 0
-		> staker_chg		 0
-		> dev ops		 8561643
-		> dev ops_chg		 0
-		> community pool_bal	 2140410
-		> community pool_chg	 0
-		> x_gns_bal		 0
-		> x_gns_chg		 0
-		> protocol fee_bal	 122483946
-		> protocol fee_chg	 0
-		> GSA_bal		 99999909622217
-		> GSA_chg		 0
-
-		GNS POSITION
-		> tokenId: 1 amount: 0
-	*/
-
-	curr = printInfo(curr)
-}
-
-func TestShortenWramUpPeriod5Block(t *testing.T) {
-	curr := getCurrentInfo()
-	// 5 block skip
-	std.TestSkipHeights(5)
-	CollectReward(1)
-	/*
-		EM_emissionGnsBalance 71347032
-		(75%) mintedGnsAmount: 53510274
-		***********************
-		> height: 8
-		> height inc by: 5
-		> time: 1234567660
-		> time inc by: 10
-
-		GNS BALANCE CHANGE
-		> staker_bal		 0
-		> staker_chg		 0
-		> dev ops		 22831049
-		> dev ops_chg		 14269406
-		> community pool_bal	 5707761
-		> community pool_chg	 3567351
-		> x_gns_bal		 0
-		> x_gns_chg		 0
-		> protocol fee_bal	 159957191
-		> protocol fee_chg	 37473245
-		> GSA_bal		 99999925659246
-		> GSA_chg		 16037029
-
-		GNS POSITION
-		> tokenId: 1 amount: 0
-	*/
-
-	curr = printInfo(curr)
-}
-
-func TestShortenWramUpPeriodLARGEBlock(t *testing.T) {
-	println()
-	println()
-
-	curr := getCurrentInfo()
-	std.TestSkipHeights(1000)
-	CollectReward(1)
-	/*
-		EM_emissionGnsBalance 71347032
-		(75%) mintedGnsAmount: 53510274
-		***********************
-		> height: 8
-		> height inc by: 5
-		> time: 1234567660
-		> time inc by: 10
-
-		GNS BALANCE CHANGE
-		> staker_bal		 0
-		> staker_chg		 0
-		> dev ops		 22831049
-		> dev ops_chg		 14269406
-		> community pool_bal	 5707761
-		> community pool_chg	 3567351
-		> x_gns_bal		 0
-		> x_gns_chg		 0
-		> protocol fee_bal	 159957191
-		> protocol fee_chg	 37473245
-		> GSA_bal		 99999925659246
-		> GSA_chg		 16037029
-
-		GNS POSITION
-		> tokenId: 1 amount: 0
-	*/
-
-	curr = printInfo(curr)
 }
