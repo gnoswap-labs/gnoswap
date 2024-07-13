@@ -68,8 +68,8 @@ func getPoolTotalStakedLiquidity(poolPath string) *u256.Uint {
 				continue
 			}
 
-			tokenLiquidity := pos.PositionGetPositionLiquidity(tokenId)
-			poolStakedLiquidity = new(u256.Uint).Add(poolStakedLiquidity, tokenLiquidity)
+			positionLiquidity := pos.PositionGetPositionLiquidity(tokenId)
+			poolStakedLiquidity = new(u256.Uint).Add(poolStakedLiquidity, positionLiquidity)
 		}
 	}
 
@@ -80,26 +80,34 @@ func getMyLiquidityRatio(poolPath string, tokenId uint64) *u256.Uint {
 	_q96 := u256.MustFromDecimal(consts.Q96)
 
 	poolStakedLiquidity := getPoolTotalStakedLiquidity(poolPath)
+	// XXX REMOVE AFTER QA
+	// println()
+	// println("tokenId:", tokenId)
+	// println("POOL_LIQ:", poolStakedLiquidity.ToString())
 
 	// my(current tokenId) liquidity
 	myLiquidity := pos.PositionGetPositionLiquidity(tokenId)
+
+	// XXX REMOVE AFTER QA
+	// println("MY_LIQ:", myLiquidity.ToString())
 
 	isInRange := pos.PositionIsInRange(tokenId)
 	if isInRange == false {
 		return u256.Zero()
 	}
 
-	// my liquidity ratio
 	myLiquidityX96 := new(u256.Uint).Mul(myLiquidity, _q96)
-	myLiquidityX96X100 := new(u256.Uint).Mul(myLiquidityX96, u256.NewUint(100))
+	myLiquidityX96X10000000 := new(u256.Uint).Mul(myLiquidityX96, u256.NewUint(1_000_000_000))
 
 	poolStakedLiquidityX96 := new(u256.Uint).Mul(poolStakedLiquidity, _q96)
 
-	myLiquidityRatio := new(u256.Uint).Div(myLiquidityX96X100, poolStakedLiquidityX96) // this value needs to be divided by 100
-	myLiquidityRatio = new(u256.Uint).Mul(myLiquidityRatio, _q96)                      // so first mul consts.Q96
-	myLiquidityRatioX96 := new(u256.Uint).Div(myLiquidityRatio, u256.NewUint(100))     // then divided by 100
+	myLiquidityRatio := new(u256.Uint).Div(myLiquidityX96X10000000, poolStakedLiquidityX96) // this value needs to be divided by 1_000_000_000
+	myLiquidityRatio = new(u256.Uint).Mul(myLiquidityRatio, _q96)                           // so first mul consts.Q96
+	myLiquidityRatio = new(u256.Uint).Div(myLiquidityRatio, u256.NewUint(1_000_000_000))    // then divided by 1_000_000_000
 
-	return myLiquidityRatioX96
+	// XXX REMOVE AFTER QA
+	// println("myLiquidityRatio:", myLiquidityRatio.ToString())
+	return myLiquidityRatio
 }
 
 // get current pool tier and reward ratio
