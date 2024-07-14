@@ -354,44 +354,20 @@ func makePositionsNode(poolPath string) []*json.Node {
 	for lpTokenId, deposit := range deposits {
 		if deposit.targetPoolPath == poolPath {
 			stakedDuration := std.GetHeight() - deposit.stakeHeight
-			currentRatio := getRewardRatio(stakedDuration)
-
-			ratio30 := "0"
-			ratio50 := "0"
-			ratio70 := "0"
-			ratio100 := "0"
-
-			ratio30X96, exist := positionGns[lpTokenId][30]
-			if exist {
-				ratio30 = new(u256.Uint).Div(ratio30X96, _q96).ToString()
-			}
-
-			ratio50X96, exist := positionGns[lpTokenId][50]
-			if exist {
-				ratio50 = new(u256.Uint).Div(ratio50X96, _q96).ToString()
-			}
-
-			ratio70X96, exist := positionGns[lpTokenId][70]
-			if exist {
-				ratio70 = new(u256.Uint).Div(ratio70X96, _q96).ToString()
-			}
-
-			ratio100X96, exist := positionGns[lpTokenId][100]
-			if exist {
-				ratio100 = new(u256.Uint).Div(ratio100X96, _q96).ToString()
-			}
+			fullAmount := positionGns[lpTokenId]
+			ratio := getRewardRatio(stakedDuration)
+			ratioAmount := (fullAmount * ratio) / 100
+			warmUpAmount := rewardMathComputeInternalRewardAmount(lpTokenId)
 
 			positions = append(positions, json.ObjectNode("", map[string]*json.Node{
-				"lpTokenId":          json.NumberNode("lpTokenId", float64(lpTokenId)),
-				"stakedHeight":       json.NumberNode("stakedHeight", float64(deposit.stakeHeight)),
-				"stakedTimestamp":    json.NumberNode("stakedTimestamp", float64(deposit.stakeTimestamp)),
-				"stakedDuration":     json.NumberNode("stakedDuration", float64(stakedDuration)),
-				"currentRatio":       json.NumberNode("currentRatio", float64(currentRatio)),
-				"ratio30FullAmount":  json.StringNode("ratio30FullAmount", ratio30),
-				"ratio50FullAmount":  json.StringNode("ratio50FullAmount", ratio50),
-				"ratio70FullAmount":  json.StringNode("ratio70FullAmount", ratio70),
-				"ratio100FullAmount": json.StringNode("ratio100FullAmount", ratio100),
-				// "fullAmount":      json.StringNode("fullAmount", fullAmount.ToString()),
+				"lpTokenId":       json.NumberNode("lpTokenId", float64(lpTokenId)),
+				"stakedHeight":    json.NumberNode("stakedHeight", float64(deposit.stakeHeight)),
+				"stakedTimestamp": json.NumberNode("stakedTimestamp", float64(deposit.stakeTimestamp)),
+				"stakedDuration":  json.NumberNode("stakedDuration", float64(stakedDuration)),
+				"fullAmount":      json.NumberNode("fullAmount", float64(fullAmount)),
+				"ratio":           json.NumberNode("ratio", float64(ratio)),
+				"ratioAmount":     json.NumberNode("ratioAmount", float64(ratioAmount)),
+				"warmUpAmount":    json.NumberNode("warmUpAmount", float64(warmUpAmount)),
 			}))
 		}
 	}

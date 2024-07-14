@@ -21,53 +21,197 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (full, toUser uint64)
 	// durationRatio := getRewardRatio(stakedDuration)
 
 	// 100% amount
-	// gnsFullAmount := positionGns[tokenId]
-	// if gnsFullAmount == 0 {
-	// 	return 0
-	// }
-	gnsFullAmountX96 := u256.Zero()
-	gnsAmountToGiveX96 := u256.Zero()
-
-	if _, ok := positionGns[tokenId]; !ok {
-		return 0, 0
+	gnsFullAmount := positionGns[tokenId]
+	if gnsFullAmount == 0 {
+		return 0
 	}
 
-	for ratio, ratioFullAmountX96 := range positionGns[tokenId] {
-		gnsFullAmountX96 = new(u256.Uint).Add(gnsFullAmountX96, ratioFullAmountX96)
+	var gnsAmountToGive uint64
 
-		// println("ratio:", ratio)
-		// println("ratioFullAmountX96:", ratioFullAmountX96.ToString())
+	until30 := uint64(stakeHeight + warmUp[50] - 1)  // 150
+	until50 := uint64(stakeHeight + warmUp[70] - 1)  // 300
+	until70 := uint64(stakeHeight + warmUp[100] - 1) // 900
+	begin100 := uint64(stakeHeight + warmUp[100])    // 901~
 
-		// ratioFull := new(u256.Uint).Div(ratioFullAmountX96, _q96).Uint64()
-		// println("ratioFullAmount:", ratioFull)
+	lastCollectHeight := positionCollectHeight[tokenId]
 
-		ratioAmountX96 := u256.Zero()
-		ratioAmountX96 = new(u256.Uint).Mul(ratioFullAmountX96, u256.NewUint(ratio))
-		ratioAmountX96 = new(u256.Uint).Div(ratioAmountX96, u256.NewUint(100))
-		gnsAmountToGiveX96 = new(u256.Uint).Add(gnsAmountToGiveX96, ratioAmountX96)
+	avgGnsBlockAmount := gnsFullAmount / (uint64(currentHeight) - lastCollectHeight)
 
-		// println("ratioAmountX96:", ratioAmountX96.ToString())
-		// println("ratioAmount:", new(u256.Uint).Div(ratioAmountX96, _q96).Uint64())
+	switch durationRatio {
+	case 100:
+		if uint64(lastCollectHeight) > begin100 {
+			println("REWARD ONLY 100%")
+			// 100%
+			dur100 := uint64(currentHeight) - lastCollectHeight
+			println("DUR100", dur100)
+			gnsAmountToGive += avgGnsBlockAmount * 100 * dur100 / 100
+			println("100%", gnsAmountToGive)
+		} else {
+			if uint64(lastCollectHeight) > until50 {
+				println("REWARD 100% AND 70%")
+				// 100%
+				dur100 := uint64(currentHeight) - until70
+				println("DUR100", dur100)
+				gnsAmountToGive += avgGnsBlockAmount * 100 * dur100 / 100
+				println("100%", gnsAmountToGive)
 
-		// println()
+				// 70%
+				dur70 := until70 - lastCollectHeight
+				println("DUR70", dur70)
+				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
+				println("70%", gnsAmountToGive)
+			} else if uint64(lastCollectHeight) > until30 {
+				println("REWARD 100% AND 70% AND 50%")
+				// 100%
+				dur100 := uint64(currentHeight) - until70
+				println("DUR100", dur100)
+				gnsAmountToGive += avgGnsBlockAmount * 100 * dur100 / 100
+				println("100%", gnsAmountToGive)
+
+				// 70%
+				dur70 := until70 - until50
+				println("DUR70", dur70)
+				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
+				println("70%", gnsAmountToGive)
+
+				// 50%
+				dur50 := until50 - lastCollectHeight
+				println("DUR50", dur50)
+				gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
+				println("50%", gnsAmountToGive)
+			} else {
+				println("REWARD 100% AND 70% AND 50% AND 30%")
+				// 100%
+				dur100 := uint64(currentHeight) - until70
+				println("DUR100", dur100)
+				gnsAmountToGive += avgGnsBlockAmount * 100 * dur100 / 100
+				println("100%", gnsAmountToGive)
+
+				// 70%
+				dur70 := until70 - until50
+				println("DUR70", dur70)
+				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
+				println("70%", gnsAmountToGive)
+
+				// 50%
+				dur50 := until50 - until30
+				println("DUR50", dur50)
+				gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
+				println("50%", gnsAmountToGive)
+
+				// 30%
+				dur30 := until30 - lastCollectHeight
+				println("DUR30", dur30)
+				gnsAmountToGive += avgGnsBlockAmount * 30 * dur30 / 100
+				println("30%", gnsAmountToGive)
+			}
+		}
+
+	case 70:
+		if uint64(lastCollectHeight) > until50 {
+			println("REWARD ONLY 70%")
+			// 70%
+			dur70 := uint64(currentHeight) - lastCollectHeight
+			println("DUR70", dur70)
+			gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
+			println("70%", gnsAmountToGive)
+		} else {
+			if uint64(lastCollectHeight) > until30 {
+				println("REWAWRD 70% AND 50%")
+				// 70%
+				dur70 := uint64(currentHeight) - until50
+				println("DUR70", dur70)
+				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
+				println("70%", gnsAmountToGive)
+
+				// 50%
+				dur50 := until50 - lastCollectHeight
+				println("DUR50", dur50)
+				gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
+				println("50%", gnsAmountToGive)
+			} else {
+				println("REWARD 70% AND 50% AND 30%")
+				// 70%
+				dur70 := uint64(currentHeight) - until50
+				println("DUR70", dur70)
+				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
+				println("70%", gnsAmountToGive)
+
+				// 50%
+				dur50 := until50 - until30
+				println("DUR50", dur50)
+				gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
+				println("50%", gnsAmountToGive)
+
+				// 30%
+				dur30 := until30 - lastCollectHeight
+				println("DUR30", dur30)
+				gnsAmountToGive += avgGnsBlockAmount * 30 * dur30 / 100
+				println("30%", gnsAmountToGive)
+			}
+		}
+
+	case 50:
+		if uint64(lastCollectHeight) > until30 {
+			println("REWARD ONLY 50%")
+			// 50%
+			dur50 := uint64(currentHeight) - lastCollectHeight
+			println("DUR50", dur50)
+			gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
+			println("50%", gnsAmountToGive)
+		} else {
+			println("REWAD 50% AND 30%")
+			dur50 := uint64(currentHeight) - until30
+			println("DUR50", dur50)
+			gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
+			println("50%", gnsAmountToGive)
+
+			// 30%
+			dur30 := until30 - lastCollectHeight
+			println("DUR30", dur30)
+			gnsAmountToGive += avgGnsBlockAmount * 30 * dur30 / 100
+			println("30%", gnsAmountToGive)
+		}
+
+	case 30:
+		println("REWARD 30%")
+		dur30 := uint64(currentHeight) - lastCollectHeight
+		println("DUR30", dur30)
+		toGive := avgGnsBlockAmount * 30 * dur30 / 100
+		gnsAmountToGive += toGive
+		println("give30%", toGive)
+		println("accu30%", gnsAmountToGive)
+
+	default:
+		println("0 REWARD RATIO")
 	}
 
-	gnsFullAmount := new(u256.Uint).Div(gnsFullAmountX96, _q96).Uint64()
-	gnsAmountToGive := new(u256.Uint).Div(gnsAmountToGiveX96, _q96).Uint64()
+	println()
+	println("STAKER", gnsBalance(consts.STAKER_ADDR))
+	println("tokenId:", tokenId)
+	println("gnsFullAmount:", gnsFullAmount)
+	println("gnsAmountToGive", gnsAmountToGive)
+	println()
 
-	// println("gnsFullAmount:", gnsFullAmount)
-	// println("gnsAmountToGive:", gnsAmountToGive)
+	println("stakedDuration:", stakedDuration)
+	println("durationRatio:", durationRatio)
+	println("stakeHeight:", stakeHeight)
+	println("currentHeight:", currentHeight)
+	println("lastCollectHeight:", lastCollectHeight)
+	println("avgGnsBlockAmount:", avgGnsBlockAmount)
+	println("until30:", until30)
+	println("until50:", until50)
+	println("until70:", until70)
+	println("begin100:", begin100)
 
-	// //  transfer left gns emission to protocol_fee contract
-	// _gnsAmountLeft := gnsFullAmount - gnsAmountToGive
-	// _stakerGns := gnsBalance(consts.STAKER_ADDR)
-	// toFee := min(_gnsAmountLeft, _stakerGns)
-	// println("toFee:", toFee)
-	// gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), toFee)
-	// poolGns[deposit.targetPoolPath] -= gnsFullAmount
+	//  transfer to protocol_fee contract
+	_gnsAmountLeft := gnsFullAmount - gnsAmountToGive
+	_stakerGns := gnsBalance(consts.STAKER_ADDR)
+	toFee := min(_gnsAmountLeft, _stakerGns)
+	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), toFee)
 
-	// println("RETURN THIS:", gnsAmountToGive)
-	return gnsFullAmount, gnsAmountToGive
+	poolGns[deposit.targetPoolPath] -= gnsFullAmount
+	return gnsAmountToGive
 }
 
 func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string, durationRatio uint64) uint64 {
@@ -262,4 +406,12 @@ func getTiersAmount(amount uint64) (uint64, uint64, uint64) {
 	tier3Amount := (amount * tier3Ratio) / 100
 
 	return tier1Amount, tier2Amount, tier3Amount
+}
+
+// safeSub subtracts b from a and checks for underflow.
+func safeSub(a, b uint64) (uint64, bool) {
+	if a < b {
+		panic("UNDERFLOW")
+	}
+	return a - b, false
 }

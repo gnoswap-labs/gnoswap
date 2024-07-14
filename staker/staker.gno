@@ -120,6 +120,7 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 		"amount1", token1Amount,
 	)
 
+	positionCollectHeight[tokenId] = uint64(std.GetHeight())
 	return poolPath, token0Amount, token1Amount
 }
 
@@ -236,6 +237,8 @@ func CollectReward(tokenId uint64) string { // poolPath
 	)
 
 	lastGnsBalance = gnsBalance(consts.STAKER_ADDR)
+
+	positionCollectHeight[tokenId] = uint64(std.GetHeight())
 	return poolPath
 }
 
@@ -256,6 +259,7 @@ func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0
 	CollectReward(tokenId)
 	delete(positionGns, tokenId)
 	delete(deposits, tokenId)
+	delete(positionCollectHeight, tokenId)
 
 	// transfer NFT ownership to origin owner
 	gnft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(deposit.owner), tid(tokenId))
