@@ -35,6 +35,11 @@ var (
 	toDevOps        uint64
 	toCommunityPool uint64
 	toXGNS          uint64
+
+	toStakerAccu        uint64
+	toDevOpsAccu        uint64
+	toCommunityPoolAccu uint64
+	toXGNSAccu          uint64
 )
 
 // GetDistributionPct returns the distribution percentage for the given target.
@@ -114,16 +119,20 @@ func transferToTarget(target emissionTarget, amount uint64) {
 		// transfer to staker contract
 		gns.Transfer(a2u(consts.STAKER_ADDR), amount)
 		toStaker = amount
+		toStakerAccu += amount
 	case DEVOPS:
 		// transfer to devops
 		gns.Transfer(a2u(consts.DEV_OPS), amount)
 		toDevOps = amount
+		toDevOpsAccu += amount
 	case COMMUNITY_POOL:
 		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), amount)
 		toCommunityPool = amount
+		toCommunityPoolAccu += amount
 	case XGNS:
 		gns.Transfer(a2u(consts.X_GNS_ADDR), amount)
 		toXGNS = amount
+		toXGNSAccu += amount
 	default:
 		panic("invalid target")
 	}
@@ -164,4 +173,12 @@ func checkSumDistributionPct() {
 
 func GetLastDistributedAmount() (int64, uint64, uint64, uint64, uint64, uint64, uint64) {
 	return lastExecutedHeight, lastStakerGnsBalance, emissionGnsBalance, toStaker, toDevOps, toCommunityPool, toXGNS
+}
+
+func GetAccuDistributedAmount() (uint64, uint64, uint64, uint64) {
+	return toStaker, toDevOps, toCommunityPool, toXGNS
+}
+
+func GetLastDistributeToStaker() uint64 {
+	return toStaker
 }
