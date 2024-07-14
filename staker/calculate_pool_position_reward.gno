@@ -85,19 +85,19 @@ func CalcPoolPosition() {
 		poolAccuGns[poolPath] += tierAmount
 
 		// current block minted gns + left from last block distributed gns
-		println("CALC__poolPath:", poolPath)
-		println("CALC__tierAmount:", tierAmount)
+		// println("CALC__poolPath:", poolPath)
+		// println("CALC__tierAmount:", tierAmount)
 
 		poolCurrentBlockGns[poolPath] = tierAmount
-		println("CALC__poolCurrentBlockGns[poolPath]:", poolCurrentBlockGns[poolPath])
+		// println("CALC__poolCurrentBlockGns[poolPath]:", poolCurrentBlockGns[poolPath])
 
 		// println("CALC__ADD poolLastTmpGns[poolPath]:", poolCurrentBlockGns[poolPath]+poolLastTmpGns[poolPath])
 		// poolCurrentBlockGns[poolPath] += poolLastTmpGns[poolPath]
 		// println("CALC__AFTER_ADD", poolCurrentBlockGns[poolPath])
 
-		println("CALC__poolLastTmpGns[poolPath] #1:", poolLastTmpGns[poolPath])
+		// println("CALC__poolLastTmpGns[poolPath] #1:", poolLastTmpGns[poolPath])
 		poolLastTmpGns[poolPath] = 0
-		println("CALC__poolLastTmpGns[poolPath] #2:", poolLastTmpGns[poolPath])
+		// println("CALC__poolLastTmpGns[poolPath] #2:", poolLastTmpGns[poolPath])
 	}
 
 	_q96 := u256.MustFromDecimal(consts.Q96)
@@ -205,18 +205,18 @@ func CalcPoolPosition() {
 	lastCalculatedBalance = stakerGnsBalance
 
 	for poolPath, _ := range poolTiers {
-		println("CALC__POOL", poolPath)
+		// println("CALC__POOL", poolPath)
 		amount := poolLastTmpGns[poolPath]
-		println("CALC__amount", amount)
+		// println("CALC__amount", amount)
 		if amount > 0 {
 			poolLastTmpGns[poolPath] = poolCurrentBlockGns[poolPath] - amount
-			println("CALC__!! amount", amount)
-			println("CALC__!! poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
+			// println("CALC__!! amount", amount)
+			// println("CALC__!! poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
 		}
 	}
 
 	// clear(poolCurrentBlockGns) // gno doesn't support `clear` keyword yet
 	poolCurrentBlockGns = make(map[string]uint64)
 
-	println("[----ENDENDEND] END_CALC_CalcPoolPosition")
+	// println("[----ENDENDEND] END_CALC_CalcPoolPosition")
 }
