@@ -45,6 +45,8 @@ var positionExternal map[uint64][]externalRewards = make(map[uint64][]externalRe
 var lastCalculatedBalance uint64
 
 func CalcPoolPosition() {
+	_q96 := u256.MustFromDecimal(consts.Q96)
+
 	height := std.GetHeight()
 
 	println("CalcPoolPosition__", height)
@@ -61,36 +63,53 @@ func CalcPoolPosition() {
 	mintedGnsAmount := en.GetLastDistributeToStaker()
 	println("CALC__mintedGnsAmount:", mintedGnsAmount)
 	if std.GetOrigCaller().String() == "" {
-		println("CALC__ABCI_QUERY")
+		println(" > CALC__ABCI_QUERY")
 		if stakerGnsBalance > lastCalculatedBalance {
-			println("CALC__ABCI_QUERY__stakerGnsBalance > lastCalculatedBalance")
-			println("CALC__ABCI_QUERY__stakerGnsBalance:", stakerGnsBalance)
-			println("CALC__ABCI_QUERY__lastCalculatedBalance:", lastCalculatedBalance)
+			println("  >> CALC__ABCI_QUERY__stakerGnsBalance > lastCalculatedBalance")
+			println("  >> CALC__ABCI_QUERY__stakerGnsBalance:", stakerGnsBalance)
+			println("  >> CALC__ABCI_QUERY__lastCalculatedBalance:", lastCalculatedBalance)
 			mintedGnsAmount = stakerGnsBalance - lastCalculatedBalance
-			println("CALC__ABCI_QUERY__mintedGnsAmount:", mintedGnsAmount)
+			println("  >> CALC__ABCI_QUERY__mintedGnsAmount:", mintedGnsAmount)
 		} else {
-			println("CALC__ABCI_QUERY__stakerGnsBalance <= lastCalculatedBalance")
-			println("CALC__ABCI_QUERY__stakerGnsBalance:", stakerGnsBalance)
-			println("CALC__ABCI_QUERY__lastCalculatedBalance:", lastCalculatedBalance)
+			println("  >> CALC__ABCI_QUERY__stakerGnsBalance <= lastCalculatedBalance")
+			println("  >> CALC__ABCI_QUERY__stakerGnsBalance:", stakerGnsBalance)
+			println("  >> CALC__ABCI_QUERY__lastCalculatedBalance:", lastCalculatedBalance)
 			// mintedGnsAmount = 0
 		}
 	}
-	println("CALC__USE_THIS_mintedGnsAmount:", mintedGnsAmount)
+	println()
 
+	println("CALC__USE_THIS_mintedGnsAmount:", mintedGnsAmount)
 	lastGnsBalance = stakerGnsBalance
 
+	println("CALC__poolTiers DISTRIBUTE==========================================")
+	println("CALC__height:", height)
+	println("CALC__lastCalculatedHeight:", lastCalculatedHeight)
+
+	duration := height - lastCalculatedHeight
+	println("CALC__duration:", duration)
+
+	println("CALC__getTiersAmount_mintedGnsAmount:", mintedGnsAmount)
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(mintedGnsAmount)
+	println("CALC__tier1Amount:", tier1Amount)
+	println("CALC__tier2Amount:", tier2Amount)
+	println("CALC__tier3Amount:", tier3Amount)
+
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
 	println("CALC__tier1Num:", tier1Num)
 	println("CALC__tier2Num:", tier2Num)
 	println("CALC__tier3Num:", tier3Num)
 
+	println("CALC__duration:", duration)
+	println("CALC__height:", height)
 	for poolPath, internal := range poolTiers {
-		println("CALC__poolTiers ITERA")
-		println("CALC__poolPath:", poolPath)
+		println(" > CALC__poolPath:", poolPath)
 		tier := internal.tier
+		startHeight := internal.startHeight
 		tierAmount := uint64(0)
-		println("CALC__tier:", tier)
+		println(" > CALC__tier:", tier)
+		println(" > CALC__startHeight:", startHeight)
+
 		if tier == 1 {
 			tierAmount = tier1Amount / tier1Num
 		} else if tier == 2 {
@@ -98,33 +117,30 @@ func CalcPoolPosition() {
 		} else if tier == 3 {
 			tierAmount = tier3Amount / tier3Num
 		}
-		println("CALC__tierAmount:", tierAmount)
+		println(" > CALC__tierAmount:", tierAmount)
 
-		println("CALC__BEFORE_poolGns[poolPath]:", poolGns[poolPath])
-		println("CALC__BEFORE_poolAccuGns[poolPath]:", poolAccuGns[poolPath])
+		println(" > CALC__BEFORE_poolGns[poolPath]:", poolGns[poolPath])
+		println(" > CALC__BEFORE_poolAccuGns[poolPath]:", poolAccuGns[poolPath])
 		poolGns[poolPath] += tierAmount
 		poolAccuGns[poolPath] += tierAmount
-		println("CALC__AFTER_poolGns[poolPath]:", poolGns[poolPath])
-		println("CALC__AFTER_poolAccuGns[poolPath]:", poolAccuGns[poolPath])
+		println(" > CALC__AFTER_poolGns[poolPath]:", poolGns[poolPath])
+		println(" > CALC__AFTER_poolAccuGns[poolPath]:", poolAccuGns[poolPath])
 
 		// current block minted gns + left from last block distributed gns
 		poolCurrentBlockGns[poolPath] = tierAmount
-		println("CALC__poolCurrentBlockGns[poolPath]:", poolCurrentBlockGns[poolPath])
+		println(" > CALC__poolCurrentBlockGns[poolPath]:", poolCurrentBlockGns[poolPath])
 
-		println("CALC__ADD_poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
+		println(" > CALC__ADD_poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
 
 		poolCurrentBlockGns[poolPath] += poolLastTmpGns[poolPath]
-		println("CALC__AFTER_ADD", poolCurrentBlockGns[poolPath])
+		println(" > CALC__AFTER_ADD", poolCurrentBlockGns[poolPath])
 
 		poolLastTmpGns[poolPath] = 0
-		println("CALC__INIT_TO_ZERO_poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
-	}
+		println(" > CALC__INIT_TO_ZERO_poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
 
-	_q96 := u256.MustFromDecimal(consts.Q96)
-
-	for poolPath, internal := range poolTiers {
 		totalStakedLiquidity := getPoolTotalStakedLiquidity(poolPath)
 		println("CALC__poolPath:", poolPath, "totalStakedLiquidity:", totalStakedLiquidity.ToString())
+
 		if totalStakedLiquidity.ToString() == "0" {
 			println("CALC__ZERO_POOL", poolPath, "HAS TIER OF", internal.tier, "BUT NONE STAKED, SEND AMOUNT TO PROTOCOL FEE")
 			println("CALC__ZERO_poolGns[poolPath]:", poolGns[poolPath])
@@ -140,27 +156,51 @@ func CalcPoolPosition() {
 
 			println("CALC__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
 			println("CALC__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
+			println("----------------------- WAS EMPTY POOL")
+			println()
+		}
+		println()
+	}
+	println("========================================== CALC__poolTiers DISTRIBUTE END")
 
-			println()
-			println()
-			println("---------------------------------------------------------------- EMPTY POOL")
-			println()
+	/*
+		for poolPath, internal := range poolTiers {
+			totalStakedLiquidity := getPoolTotalStakedLiquidity(poolPath)
+			println("CALC__poolPath:", poolPath, "totalStakedLiquidity:", totalStakedLiquidity.ToString())
+
+			if totalStakedLiquidity.ToString() == "0" {
+				println("CALC__ZERO_POOL", poolPath, "HAS TIER OF", internal.tier, "BUT NONE STAKED, SEND AMOUNT TO PROTOCOL FEE")
+				println("CALC__ZERO_poolGns[poolPath]:", poolGns[poolPath])
+
+				send := min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR))
+				println("CALC__ZERO_SEND_min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)", send)
+				println("CALC__BEFORE_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
+				println("CALC__BEFORE_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
+
+				gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), send)
+				poolGns[poolPath] = 0
+				poolCurrentBlockGns[poolPath] = 0
+
+				println("CALC__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
+				println("CALC__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
+				println("----------------------- WAS EMPTY POOL")
+				println()
+			}
 			println()
 			println()
 		}
-	}
+	*/
 
 	for tokenId, deposit := range deposits {
 		poolPath := deposit.targetPoolPath
 		poolCurrentBlockAmount := poolCurrentBlockGns[poolPath]
-
-		if poolCurrentBlockAmount == 0 {
-			continue
-		}
-
-		println()
 		println("CALC__tokenId:", tokenId)
 		println("CALC__poolCurrentBlockAmount:", poolCurrentBlockAmount)
+
+		if poolCurrentBlockAmount == 0 {
+			println("CALC__NO_AMOUNT")
+			continue
+		}
 
 		// calculate position gns rewards
 		liqRatioX96 := getMyLiquidityRatio(poolPath, tokenId)

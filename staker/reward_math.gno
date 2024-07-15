@@ -418,25 +418,10 @@ func listTierRatio() (uint64, uint64, uint64) {
 
 func getTiersAmount(amount uint64) (uint64, uint64, uint64) {
 	tier1Ratio, tier2Ratio, tier3Ratio := listTierRatio()
-	println("getTiersAmount_amount:", amount)
-	println("getTiersAmount_tier1Ratio:", tier1Ratio)
-	println("getTiersAmount_tier2Ratio:", tier2Ratio)
-	println("getTiersAmount_tier3Ratio:", tier3Ratio)
 
 	tier1Amount := (amount * tier1Ratio) / 100
 	tier2Amount := (amount * tier2Ratio) / 100
 	tier3Amount := (amount * tier3Ratio) / 100
-	println("getTiersAmount_tier1Amount:", tier1Amount)
-	println("getTiersAmount_tier2Amount:", tier2Amount)
-	println("getTiersAmount_tier3Amount:", tier3Amount)
 
 	return tier1Amount, tier2Amount, tier3Amount
-}
-
-// safeSub subtracts b from a and checks for underflow.
-func safeSub(a, b uint64) (uint64, bool) {
-	if a < b {
-		panic("UNDERFLOW")
-	}
-	return a - b, false
 }
