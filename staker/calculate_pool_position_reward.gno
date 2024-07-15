@@ -50,6 +50,7 @@ func CalcPoolPosition() {
 	println("CalcPoolPosition__", height)
 	if height <= lastCalculatedHeight {
 		println("CalcPoolPosition__SKIP", height, lastCalculatedHeight)
+		println()
 		return
 	}
 
@@ -125,6 +126,13 @@ func CalcPoolPosition() {
 
 			println("CALC__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
 			println("CALC__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
+
+			println()
+			println()
+			println("---------------------------------------------------------------- EMPTY POOL")
+			println()
+			println()
+			println()
 		}
 	}
 
@@ -148,11 +156,18 @@ func CalcPoolPosition() {
 		positionAmount := positionAmountX.Uint64()
 
 		// XXX: REMOVE AFTER QA
-		println("liqRatioX96:", liqRatioX96.ToString())
-		println("positionAmountX:", positionAmountX.ToString())
+		println("CALC__liqRatioX96:", liqRatioX96.ToString())
+		println("CALC__positionAmountX:", positionAmountX.ToString())
 
+		println("CALC__BEFORE")
+		println("CALC__positionGns[tokenId]:", positionGns[tokenId])
+		println("CALC__poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
 		positionGns[tokenId] += positionAmount
 		poolLastTmpGns[poolPath] += positionAmount
+		println("CALC__AFTER")
+		println("CALC__positionAmount:", positionAmount)
+		println("CALC__positionGns[tokenId]:", positionGns[tokenId])
+		println("CALC__poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
 
 		// calculate position external rewards
 		incentiveIds := poolIncentives[poolPath]
@@ -208,8 +223,8 @@ func CalcPoolPosition() {
 				}
 			}
 		}
-
 	}
+
 	// update flag
 	lastCalculatedHeight = height
 	lastCalculatedBalance = stakerGnsBalance
@@ -222,11 +237,15 @@ func CalcPoolPosition() {
 		println("CALC__FINAL_poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
 		if amount > 0 {
 			if poolCurrentBlockGns[poolPath] >= amount {
+				println("CALC__SAME_OR_LEFT")
 				poolLastTmpGns[poolPath] = poolCurrentBlockGns[poolPath] - amount
+				println("poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
 			} else {
 				println("CALC__FINAL_WRONG")
 				poolCurrentBlockGns[poolPath] = 0
 			}
+		} else {
+			println("CALC__FINAL__amount = 0")
 		}
 	}
 

@@ -104,6 +104,9 @@ func TestFunc11(t *testing.T) {
 	CalcPoolPosition()
 	println(GetPrintInfo())
 
+	curr := getCurrentInfo()
+	curr = printInfo(curr)
+
 	std.TestSkipHeights(1)
 }
 
@@ -113,13 +116,28 @@ func TestFunc12(t *testing.T) {
 	CalcPoolPosition()
 	println(GetPrintInfo())
 
+	curr := getCurrentInfo()
+	curr = printInfo(curr)
+
+	std.TestSkipHeights(1)
 }
 
 func TestFunc13CollectReward(t *testing.T) {
 	std.TestSkipHeights(1)
+	en.MintAndDistributeGns()
+
+	curr := getCurrentInfo()
+	curr = printInfo(curr)
 
 	CollectReward(1)
-	// println()
-	// println()
-	// println(GetPrintInfo())
+	println()
+	println()
+}
+
+func TestLastPrint(t *testing.T) {
+	println(GetPrintInfo())
+	println()
+	println()
+	curr := getCurrentInfo()
+	curr = printInfo(curr)
 }
