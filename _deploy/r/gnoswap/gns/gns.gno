@@ -42,7 +42,7 @@ func init() {
 	height := std.GetHeight()
 	deployedHeight = height
 	deployedAt = time.Now()
-	lastMintedHeight = 0
+	lastMintedHeight = height
 }
 
 func TotalSupply() uint64 { return token.TotalSupply() }
@@ -103,19 +103,34 @@ func Mint(address pusers.AddressOrName) {
 	// for this case, we assume that inside of block range gnoswap state hasn't changed.
 	nowHeight := std.GetHeight()
 	amountToMint := uint64(0)
+
+	println("GNS_lastMintedHeight", lastMintedHeight)
+	println("GNS_lastMintedHeight + 1", lastMintedHeight+1)
+	println("GNS_nowHeight", nowHeight)
+	println("GNS_now-lastMint", nowHeight-lastMintedHeight)
+
 	for i := lastMintedHeight + 1; i <= nowHeight; i++ {
 		amount := GetAmountByHeight(i)
 		amountToMint += amount
 	}
 	err := banker.Mint(users.Resolve(address), amountToMint)
+	println("GNS_MMMMMINT:", amountToMint)
 	if err != nil {
 		panic(err.Error())
 	}
+
 	lastMintedHeight = nowHeight
+	println("GNS_lastMintedHeight:", lastMintedHeight)
+	println("GNS_amountToMint:", amountToMint)
+	println()
 }
 
 func GetLastMintedHeight() int64 {
 	return lastMintedHeight
+}
+
+func GetDeployedHeight() int64 {
+	return deployedHeight
 }
 
 func checkErr(err error) {
