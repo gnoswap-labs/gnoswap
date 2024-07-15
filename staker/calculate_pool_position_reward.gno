@@ -20,7 +20,6 @@ var poolGns map[string]uint64 = make(map[string]uint64)
 
 // poolPath -> gnsAmount [current block]
 var poolCurrentBlockGns map[string]uint64 = make(map[string]uint64)
-var poolCurrentBlockGns map[string]uint64 = make(map[string]uint64)
 
 // poolPath -> gnsAmount [how much left from last block]
 var poolLastTmpGns map[string]uint64 = make(map[string]uint64)
