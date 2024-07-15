@@ -95,28 +95,36 @@ func CalcPoolPosition() {
 		// current block minted gns + left from last block distributed gns
 		poolCurrentBlockGns[poolPath] = tierAmount
 		println("CALC__poolCurrentBlockGns[poolPath]:", poolCurrentBlockGns[poolPath])
-		println("CALC__poolLastTmpGns[poolPath] #1:", poolLastTmpGns[poolPath])
 
-		println("CALC__AFTER_ADD", poolCurrentBlockGns[poolPath])
+		println("CALC__ADD_poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
+
 		poolCurrentBlockGns[poolPath] += poolLastTmpGns[poolPath]
+		println("CALC__AFTER_ADD", poolCurrentBlockGns[poolPath])
 
 		poolLastTmpGns[poolPath] = 0
-		println("CALC__poolLastTmpGns[poolPath] #2:", poolLastTmpGns[poolPath])
+		println("CALC__INIT_TO_ZERO_poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
 	}
 
 	_q96 := u256.MustFromDecimal(consts.Q96)
 
-	for poolPath, _ := range poolTiers {
+	for poolPath, internal := range poolTiers {
 		totalStakedLiquidity := getPoolTotalStakedLiquidity(poolPath)
 		println("CALC__poolPath:", poolPath, "totalStakedLiquidity:", totalStakedLiquidity.ToString())
 		if totalStakedLiquidity.ToString() == "0" {
-			println("CALC__ZERO_POOL", poolPath, "HAS TIER BUT NONE STAEKD, SEND AMOUNT TO PROTOCOL FEE")
-			println("CALC__ZERO_STAKER BALANCE:", gnsBalance(consts.STAKER_ADDR))
+			println("CALC__ZERO_POOL", poolPath, "HAS TIER OF", internal.tier, "BUT NONE STAKED, SEND AMOUNT TO PROTOCOL FEE")
 			println("CALC__ZERO_poolGns[poolPath]:", poolGns[poolPath])
-			println("CALC__ZERO_min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)", min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)))
-			gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)))
+
+			send := min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR))
+			println("CALC__ZERO_SEND_min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)", send)
+			println("CALC__BEFORE_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
+			println("CALC__BEFORE_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
+
+			gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), send)
 			poolGns[poolPath] = 0
 			poolCurrentBlockGns[poolPath] = 0
+
+			pritnln("CALC__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
+			println("CALC__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
 		}
 	}
 
