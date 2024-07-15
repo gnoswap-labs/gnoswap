@@ -54,6 +54,8 @@ func init() {
 	poolTiers[MUST_EXISTS_IN_TIER_1] = InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
+		startHeight:    std.GetHeight(),
+		updateHeight:   std.GetHeight(),
 	}
 }
 
@@ -306,24 +308,20 @@ func CreateExternalIncentive(
 		rewardToken = consts.WUGNOT_PATH
 	}
 
-	/*
-		// must be in seconds format, not milliseconds
-		// must be at least +1 day midnight
-		// must be midnight of the day
-		checkStartTime(startTimestamp)
+	// must be in seconds format, not milliseconds
+	// must be at least +1 day midnight
+	// must be midnight of the day
+	checkStartTime(startTimestamp)
 
-		// endTimestamp cannot be later than 253402300799 (9999-12-31 23:59:59)
-		if endTimestamp >= MAX_UNIX_EPOCH_TIME {
-			panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp))
-		}
+	// endTimestamp cannot be later than 253402300799 (9999-12-31 23:59:59)
+	if endTimestamp >= MAX_UNIX_EPOCH_TIME {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp))
+	}
 
-		externalDuration := uint64(endTimestamp - startTimestamp)
-		if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_365DAYS) {
-			panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 365 days)", externalDuration))
-		}
-	*/
-
-	startTimestamp = time.Now().Unix() + 120 // 2 minutes later
+	externalDuration := uint64(endTimestamp - startTimestamp)
+	if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_365DAYS) {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 365 days)", externalDuration))
+	}
 
 	fromBalanceBefore := balanceOfByRegisterCall(rewardToken, std.GetOrigCaller())
 

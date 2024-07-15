@@ -9,6 +9,8 @@ import (
 type InternalTier struct {
 	tier           uint64
 	startTimestamp int64
+	startHeight    int64
+	updateHeight   int64
 }
 
 type ExternalIncentive struct {
