@@ -1,5 +1,4 @@
-# make -f __local/test/test_data.mk init init-test set-pool-creation-fee
-# make -f __local/test/test_data.mk init init-test test-pool-create-01-07 test-mint-01-07 set-pool-creation-fee
+# make -f __local/test/test_data.mk init init-test transfer-test1 transfer-roh
 
 ADDR_GSA := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
 
@@ -33,8 +32,11 @@ INCENTIVE_END := $(shell expr $(TOMORROW_MIDNIGHT) + 7776000) # 7776000 SECONDS 
 
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 
-GNOLAND_RPC_URL ?= http://localhost:26657
-CHAINID ?= dev
+# GNOLAND_RPC_URL ?= http://localhost:26657
+# CHAINID ?= dev
+
+GNOLAND_RPC_URL ?= https://dev.rpc.gnoswap.io:443
+CHAINID ?= dev.gnoswap
 
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
 
