@@ -1,5 +1,4 @@
-# make -f __local/test/test_data.mk init init-test set-pool-creation-fee
-# make -f __local/test/test_data.mk init init-test test-pool-create-01-07 test-mint-01-07 set-pool-creation-fee
+# make -f __local/test/test_data.mk init init-test transfer-test1 transfer-roh
 
 ADDR_GSA := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
 
@@ -33,8 +32,11 @@ INCENTIVE_END := $(shell expr $(TOMORROW_MIDNIGHT) + 7776000) # 7776000 SECONDS 
 
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 
-GNOLAND_RPC_URL ?= http://localhost:26657
-CHAINID ?= dev
+# GNOLAND_RPC_URL ?= http://localhost:26657
+# CHAINID ?= dev
+
+GNOLAND_RPC_URL ?= https://dev.rpc.gnoswap.io:443
+CHAINID ?= dev.gnoswap
 
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
 
@@ -753,34 +755,29 @@ emission-debug:
 	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/gnoswap/staker.GetPrintInfo()"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
 
 
-# {
-#   "height": 209,
-#   "time": 1720681191,
-#   "gns": {
-#     "staker": 2193921191,
-#     "devOps": 585045641,
-#     "communityPool": 146261396,
-#     "xGNS": 0,
-#     "protocolFee": 0,
-#     "GnoswapAdmin": 99999963999999
-#   },
-#   "pool": [
-#     {
-#       "poolPath": "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000",
-#       "tier": 1,
-#       "numPoolSameTier": 1,
-#       "poolReward": 2065496535,
-#       "position": [
-#         {
-#           "lpTokenId": 8,
-#           "stakedHeight": 187,
-#           "stakedTimestamp": 1720681186,
-#           "stakedDuration": 5,
-#           "fullAmount": 2065496535,
-#           "ratio": 30,
-#           "ratioAmount": 619648960
-#         }
-#       ]
-#     }
-#   ]
-# }
+
+
+
+ADDR_ROH := g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx
+transfer-roh:
+	$(info ************ TO roh account // transfer COIN(ugnot), GRC20(bar, baz, foo, obl, qux, usdc) ************)
+	@echo "" | gnokey maketx send -send 10000000000ugnot -to $(ADDR_ROH) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/bar -func Transfer -args $(ADDR_ROH) -args "1000000000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/baz -func Transfer -args $(ADDR_ROH) -args "1000000000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Transfer -args $(ADDR_ROH) -args "1000000000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/obl -func Transfer -args $(ADDR_ROH) -args "1000000000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/qux -func Transfer -args $(ADDR_ROH) -args "1000000000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/usdc -func Transfer -args $(ADDR_ROH) -args "1000000000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo ""
+
+ADDR_TEST1 := g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+transfer-test1:
+	$(info ************ TO test1 account // transfer COIN(ugnot), GRC20(bar, baz, foo, obl, qux, usdc) ************)
+	@echo "" | gnokey maketx send -send 10000000000ugnot -to $(ADDR_TEST1) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/bar -func Transfer -args $(ADDR_TEST1) -args "1000000000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/baz -func Transfer -args $(ADDR_TEST1) -args "1000000000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/foo -func Transfer -args $(ADDR_TEST1) -args "1000000000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/obl -func Transfer -args $(ADDR_TEST1) -args "1000000000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/qux -func Transfer -args $(ADDR_TEST1) -args "1000000000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/usdc -func Transfer -args $(ADDR_TEST1) -args "1000000000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo ""

@@ -1,24 +1,26 @@
 package staker
 
 import (
+	"std"
+
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/consts"
 
 	pos "gno.land/r/gnoswap/position"
+
+	"gno.land/r/gnoswap/gns"
 )
 
-func rewardMathComputeInternalRewardAmount(tokenId uint64) (full, toUser uint64) {
-	println("reward_tokenId:", tokenId)
-	_q96 := u256.MustFromDecimal(consts.Q96)
-	// deposit := deposits[tokenId]
+func rewardMathComputeInternalRewardAmount(tokenId uint64) uint64 {
+	deposit := deposits[tokenId]
 
 	// using block
-	// stakeHeight := deposit.stakeHeight
-	// currentHeight := std.GetHeight()
-	// stakedDuration := currentHeight - stakeHeight
-	// durationRatio := getRewardRatio(stakedDuration)
+	stakeHeight := deposit.stakeHeight
+	currentHeight := std.GetHeight()
+	stakedDuration := currentHeight - stakeHeight
+	durationRatio := getRewardRatio(stakedDuration)
 
 	// 100% amount
 	gnsFullAmount := positionGns[tokenId]
@@ -37,9 +39,11 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (full, toUser uint64)
 
 	avgGnsBlockAmount := gnsFullAmount / (uint64(currentHeight) - lastCollectHeight)
 
+	// lastCollectHeight
+	// safeSub
 	switch durationRatio {
 	case 100:
-		if uint64(lastCollectHeight) > begin100 {
+		if uint64(lastCalculatedHeight) > begin100 {
 			println("REWARD ONLY 100%")
 			// 100%
 			dur100 := uint64(currentHeight) - lastCollectHeight
@@ -47,7 +51,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (full, toUser uint64)
 			gnsAmountToGive += avgGnsBlockAmount * 100 * dur100 / 100
 			println("100%", gnsAmountToGive)
 		} else {
-			if uint64(lastCollectHeight) > until50 {
+			if uint64(lastCalculatedHeight) > until50 {
 				println("REWARD 100% AND 70%")
 				// 100%
 				dur100 := uint64(currentHeight) - until70
@@ -60,7 +64,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (full, toUser uint64)
 				println("DUR70", dur70)
 				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
 				println("70%", gnsAmountToGive)
-			} else if uint64(lastCollectHeight) > until30 {
+			} else if uint64(lastCalculatedHeight) > until30 {
 				println("REWARD 100% AND 70% AND 50%")
 				// 100%
 				dur100 := uint64(currentHeight) - until70
@@ -108,7 +112,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (full, toUser uint64)
 		}
 
 	case 70:
-		if uint64(lastCollectHeight) > until50 {
+		if uint64(lastCalculatedHeight) > until50 {
 			println("REWARD ONLY 70%")
 			// 70%
 			dur70 := uint64(currentHeight) - lastCollectHeight
@@ -116,7 +120,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (full, toUser uint64)
 			gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
 			println("70%", gnsAmountToGive)
 		} else {
-			if uint64(lastCollectHeight) > until30 {
+			if uint64(lastCalculatedHeight) > until30 {
 				println("REWAWRD 70% AND 50%")
 				// 70%
 				dur70 := uint64(currentHeight) - until50
@@ -152,7 +156,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (full, toUser uint64)
 		}
 
 	case 50:
-		if uint64(lastCollectHeight) > until30 {
+		if uint64(lastCalculatedHeight) > until30 {
 			println("REWARD ONLY 50%")
 			// 50%
 			dur50 := uint64(currentHeight) - lastCollectHeight
@@ -186,23 +190,23 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (full, toUser uint64)
 		println("0 REWARD RATIO")
 	}
 
-	// println()
-	// println("STAKER", gnsBalance(consts.STAKER_ADDR))
-	// println("tokenId:", tokenId)
-	// println("gnsFullAmount:", gnsFullAmount)
-	// println("gnsAmountToGive", gnsAmountToGive)
-	// println()
+	println()
+	println("STAKER", gnsBalance(consts.STAKER_ADDR))
+	println("tokenId:", tokenId)
+	println("gnsFullAmount:", gnsFullAmount)
+	println("gnsAmountToGive", gnsAmountToGive)
+	println()
 
-	// println("stakedDuration:", stakedDuration)
-	// println("durationRatio:", durationRatio)
-	// println("stakeHeight:", stakeHeight)
-	// println("currentHeight:", currentHeight)
-	// println("lastCollectHeight:", lastCollectHeight)
-	// println("avgGnsBlockAmount:", avgGnsBlockAmount)
-	// println("until30:", until30)
-	// println("until50:", until50)
-	// println("until70:", until70)
-	// println("begin100:", begin100)
+	println("stakedDuration:", stakedDuration)
+	println("durationRatio:", durationRatio)
+	println("stakeHeight:", stakeHeight)
+	println("currentHeight:", currentHeight)
+	println("lastCollectHeight:", lastCollectHeight)
+	println("avgGnsBlockAmount:", avgGnsBlockAmount)
+	println("until30:", until30)
+	println("until50:", until50)
+	println("until70:", until70)
+	println("begin100:", begin100)
 
 	//  transfer to protocol_fee contract
 	_gnsAmountLeft := gnsFullAmount - gnsAmountToGive
@@ -212,6 +216,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (full, toUser uint64)
 
 	poolGns[deposit.targetPoolPath] -= gnsFullAmount
 	return gnsAmountToGive
+	// return gnsFullAmount, gnsAmountToGive
 }
 
 func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string, durationRatio uint64) uint64 {
@@ -275,9 +280,9 @@ func getMyLiquidityRatio(poolPath string, tokenId uint64) *u256.Uint {
 
 	poolStakedLiquidityX96 := new(u256.Uint).Mul(poolStakedLiquidity, _q96)
 
-	myLiquidityRatio := new(u256.Uint).Div(myLiquidityX96X10000000, poolStakedLiquidityX96) // this value needs to be divided by 100
+	myLiquidityRatio := new(u256.Uint).Div(myLiquidityX96X10000000, poolStakedLiquidityX96) // this value needs to be divided by 1_000_000_000
 	myLiquidityRatio = new(u256.Uint).Mul(myLiquidityRatio, _q96)                           // so first mul consts.Q96
-	myLiquidityRatio = new(u256.Uint).Div(myLiquidityRatio, u256.NewUint(1_000_000_000))    // then divided by 100
+	myLiquidityRatio = new(u256.Uint).Div(myLiquidityRatio, u256.NewUint(1_000_000_000))    // then divided by 1_000_000_000
 
 	// XXX REMOVE AFTER QA
 	// println("myLiquidityRatio:", myLiquidityRatio.ToString())
@@ -337,7 +342,7 @@ func getNumPoolTiers() (uint64, uint64, uint64) {
 	return tier1, tier2, tier3
 }
 
-// get reward ration by staking duratino height
+// get reward ratio by staking duration height
 func getRewardRatio(height int64) uint64 {
 	switch {
 	case height >= warmUp[100]:
@@ -346,8 +351,10 @@ func getRewardRatio(height int64) uint64 {
 		return 70
 	case height >= warmUp[50]:
 		return 50
-	default:
+	case height >= warmUp[30]:
 		return 30
+	default:
+		return 0
 	}
 }
 

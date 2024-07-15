@@ -15,9 +15,6 @@ var lastStakerGnsBalance uint64
 // emissionGnsBalance is balance of emission address
 var emissionGnsBalance uint64
 
-// emissionGnsBalance is balance of emission address
-var emissionGnsBalance uint64
-
 // MintAndDistributeGns mints GNS and distributes to target
 func MintAndDistributeGns() {
 	lastStakerGnsBalance = gnsBalance(consts.STAKER_ADDR)
@@ -30,7 +27,6 @@ func MintAndDistributeGns() {
 
 	mintGns()
 
-	emissionGnsBalance = gnsBalance(emissionAddr)
 	emissionGnsBalance = gnsBalance(emissionAddr)
 	distributeToTarget(emissionGnsBalance)
 

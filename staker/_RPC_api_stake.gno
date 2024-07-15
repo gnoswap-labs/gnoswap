@@ -67,7 +67,7 @@ func ApiGetRewards() string {
 		rewards := []Reward{}
 
 		// get internal gns reward
-		_, internalGNS := rewardMathComputeInternalRewardAmount(tokenId)
+		internalGNS := rewardMathComputeInternalRewardAmount(tokenId)
 		if internalGNS > 0 {
 			rewards = append(rewards, Reward{
 				IncentiveType:     "INTERNAL",
@@ -170,7 +170,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 		rewards := []Reward{}
 
 		// get internal gns reward
-		_, internalGNS := rewardMathComputeInternalRewardAmount(tokenId)
+		internalGNS := rewardMathComputeInternalRewardAmount(tokenId)
 		if internalGNS > 0 {
 			rewards = append(rewards, Reward{
 				IncentiveType:     "INTERNAL",
@@ -271,7 +271,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 		rewards := []Reward{}
 
 		// get internal gns reward
-		_, internalGNS := rewardMathComputeInternalRewardAmount(tokenId)
+		internalGNS := rewardMathComputeInternalRewardAmount(tokenId)
 		if internalGNS > 0 {
 			rewards = append(rewards, Reward{
 				IncentiveType:     "INTERNAL",

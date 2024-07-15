@@ -133,9 +133,6 @@ func CollectReward(tokenId uint64) string { // poolPath
 	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
-	println()
-	println("COL_REWARD tokenId:", tokenId)
-
 	deposit, exist := deposits[tokenId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] staker.gno__CollectReward() || tokenId(%d) not staked", tokenId))
@@ -147,7 +144,6 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 	poolPath := deposits[tokenId].targetPoolPath
 
-	// EXTERNAL
 	for k, external := range positionExternal[tokenId] {
 		incentive := incentives[external.incentiveId]
 
@@ -201,27 +197,15 @@ func CollectReward(tokenId uint64) string { // poolPath
 	}
 
 	// INTERNAL gns emission
-	full, toGive := rewardMathComputeInternalRewardAmount(tokenId)
+	toGive := rewardMathComputeInternalRewardAmount(tokenId)
 	if toGive == 0 {
 		return poolPath
 	}
-	println("STAKER_GNS", gnsBalance(consts.STAKER_ADDR))
-	println("full:", full)
-	println("toGive:", toGive)
 
-	toUser := handleUnstakingFee(consts.GNS_PATH, toGive, true) // reward protocol fee to fee contract
-	gns.Transfer(a2u(deposit.owner), toUser)                    // reward to user
+	toUser := handleUnstakingFee(consts.GNS_PATH, toGive, true)
+	gns.Transfer(a2u(deposit.owner), toUser)
 
-	// transfer left gns emission to protocol_fee contract
-	emissionLeft := full - toGive
-	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), emissionLeft)
-	poolGns[poolPath] -= full
-
-	println("STAKER_GNS_LEFT", gnsBalance(consts.STAKER_ADDR))
-
-	// positionGns[tokenId] = 0
-	delete(positionGns, tokenId)
-	println("QWEASDZXC DELETE", tokenId)
+	positionGns[tokenId] = 0
 
 	// emit internal reward tokens
 	std.Emit(
@@ -322,24 +306,20 @@ func CreateExternalIncentive(
 		rewardToken = consts.WUGNOT_PATH
 	}
 
-	// PROD
-	/*
-		// must be in seconds format, not milliseconds
-		// must be at least +1 day midnight
-		// must be midnight of the day
-		checkStartTime(startTimestamp)
+	// must be in seconds format, not milliseconds
+	// must be at least +1 day midnight
+	// must be midnight of the day
+	checkStartTime(startTimestamp)
 
-		// endTimestamp cannot be later than 253402300799 (9999-12-31 23:59:59)
-		if endTimestamp >= MAX_UNIX_EPOCH_TIME {
-			panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp))
-		}
+	// endTimestamp cannot be later than 253402300799 (9999-12-31 23:59:59)
+	if endTimestamp >= MAX_UNIX_EPOCH_TIME {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp))
+	}
 
-		externalDuration := uint64(endTimestamp - startTimestamp)
-		if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_365DAYS) {
-			panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 365 days)", externalDuration))
-		}
-	*/
-	startTimestamp = time.Now().Unix() // start immediately
+	externalDuration := uint64(endTimestamp - startTimestamp)
+	if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_365DAYS) {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 365 days)", externalDuration))
+	}
 
 	fromBalanceBefore := balanceOfByRegisterCall(rewardToken, std.GetOrigCaller())
 
