@@ -123,7 +123,7 @@ func CalcPoolPosition() {
 			poolGns[poolPath] = 0
 			poolCurrentBlockGns[poolPath] = 0
 
-			pritnln("CALC__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
+			println("CALC__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
 			println("CALC__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
 		}
 	}
