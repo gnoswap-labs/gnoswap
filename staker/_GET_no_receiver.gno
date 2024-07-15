@@ -9,10 +9,10 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
+	en "gno.land/r/gnoswap/emission"
+
 	"gno.land/r/gnoswap/consts"
 	"gno.land/r/gnoswap/gns"
-
-	en "gno.land/r/gnoswap/emission"
 )
 
 // Incentive

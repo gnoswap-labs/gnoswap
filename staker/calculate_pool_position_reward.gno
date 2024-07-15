@@ -56,19 +56,29 @@ func CalcPoolPosition() {
 
 	// calculate pool
 	stakerGnsBalance := gnsBalance(consts.STAKER_ADDR)
-	println("@@@ stakerGnsBalance:", stakerGnsBalance)
+	println("CALC__stakerGnsBalance:", stakerGnsBalance)
 
 	mintedGnsAmount := en.GetLastDistributeToStaker()
+	println("CALC__mintedGnsAmount:", mintedGnsAmount)
 	if std.GetOrigCaller().String() == "" {
 		println("CALC__ABCI_QUERY")
 		if stakerGnsBalance > lastCalculatedBalance {
+			println("CALC__ABCI_QUERY__stakerGnsBalance > lastCalculatedBalance")
+			println("CALC__ABCI_QUERY__stakerGnsBalance:", stakerGnsBalance)
+			println("CALC__ABCI_QUERY__lastCalculatedBalance:", lastCalculatedBalance)
 			mintedGnsAmount = stakerGnsBalance - lastCalculatedBalance
+			println("CALC__ABCI_QUERY__mintedGnsAmount:", mintedGnsAmount)
+		} else {
+			println("CALC__ABCI_QUERY__stakerGnsBalance <= lastCalculatedBalance")
+			println("CALC__ABCI_QUERY__stakerGnsBalance:", stakerGnsBalance)
+			println("CALC__ABCI_QUERY__lastCalculatedBalance:", lastCalculatedBalance)
+			// mintedGnsAmount = 0
 		}
 	}
+	println("CALC__USE_THIS_mintedGnsAmount:", mintedGnsAmount)
 
 	lastGnsBalance = stakerGnsBalance
 
-	println("CALC__mintedGnsAmount:", mintedGnsAmount)
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(mintedGnsAmount)
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
 	println("CALC__tier1Num:", tier1Num)
@@ -90,8 +100,12 @@ func CalcPoolPosition() {
 		}
 		println("CALC__tierAmount:", tierAmount)
 
+		println("CALC__BEFORE_poolGns[poolPath]:", poolGns[poolPath])
+		println("CALC__BEFORE_poolAccuGns[poolPath]:", poolAccuGns[poolPath])
 		poolGns[poolPath] += tierAmount
 		poolAccuGns[poolPath] += tierAmount
+		println("CALC__AFTER_poolGns[poolPath]:", poolGns[poolPath])
+		println("CALC__AFTER_poolAccuGns[poolPath]:", poolAccuGns[poolPath])
 
 		// current block minted gns + left from last block distributed gns
 		poolCurrentBlockGns[poolPath] = tierAmount
@@ -249,7 +263,6 @@ func CalcPoolPosition() {
 		}
 	}
 
-	// clear tmp poolGns
 	// clear(poolCurrentBlockGns) // gno doesn't support `clear` keyword yet
 	poolCurrentBlockGns = make(map[string]uint64)
 	println("[----ENDENDEND] END_CALC_CalcPoolPosition")
