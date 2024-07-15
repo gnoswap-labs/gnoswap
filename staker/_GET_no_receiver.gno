@@ -165,8 +165,6 @@ func getCurrentInfo() currentInfo {
 func printInfo(prev currentInfo) currentInfo {
 	curr := getCurrentInfo()
 
-	_q96 := u256.MustFromDecimal(consts.Q96)
-
 	println("***********************")
 	println("> height:", curr.height)
 	println("> height inc by:", curr.height-prev.height)
@@ -188,19 +186,10 @@ func printInfo(prev currentInfo) currentInfo {
 	println("> GSA_chg\t\t", int(curr.gnsGSA-prev.gnsGSA))
 	println()
 	println("GNS POSITION")
-	for tid, ratioGns := range positionGns {
-		fullAmount := u256.Zero()
-
-		println("> tokenId:", tid)
-		for ratio, v := range ratioGns {
-			// println("  > ratio:", r, "amountX96:", v.ToString())
-			println("  > ratio:", ratio, "amount:", new(u256.Uint).Div(v, _q96).ToString())
-
-			fullAmount = new(u256.Uint).Add(fullAmount, v)
-		}
-		// println(" > fullAmountX96:", fullAmountX96.ToString())
-		println("  > fullAmount:", new(u256.Uint).Div(fullAmount, _q96).ToString())
+	for k, v := range positionGns {
+		println("> tokenId:", k, "amount:", v)
 	}
+
 	println()
 
 	return curr
@@ -227,16 +216,13 @@ type ApiEmissionDebugPool struct {
 }
 
 type ApiEmissionDebugPosition struct {
-	LpTokenId       uint64     `json:"lpTokenId"`
-	StakedHeight    int64      `json:"stakedHeight"`
-	StakedTimestamp int64      `json:"stakedTimestamp"`
-	StakedDuration  int64      `json:"stakedDuration"`
-	CurrentRatio    uint64     `json:"currentRatio"`
-	Ratio30Amount   *u256.Uint `json:"ratio30Amount"`
-	Ratio50Amount   *u256.Uint `json:"ratio50Amount"`
-	Ratio70Amount   *u256.Uint `json:"ratio70Amount"`
-	Ratio100Amount  *u256.Uint `json:"ratio100Amount"`
-	FullAmount      *u256.Uint `json:"fullAmount"`
+	LpTokenId       uint64 `json:"lpTokenId"`
+	StakedHeight    int64  `json:"stakedHeight"`
+	StakedTimestamp int64  `json:"stakedTimestamp"`
+	StakedDuration  int64  `json:"stakedDuration"`
+	FullAmount      uint64 `json:"fullAmount"`
+	Ratio           uint64 `json:"ratio"`
+	RatioAmount     uint64 `json:"ratioAmount"`
 }
 
 func GetPrintInfo() string {
@@ -277,18 +263,10 @@ func GetPrintInfo() string {
 				position.StakedHeight = deposit.stakeHeight
 				position.StakedTimestamp = deposit.stakeTimestamp
 				position.StakedDuration = emissionDebug.Height - deposit.stakeHeight
-				position.CurrentRatio = getRewardRatio(position.StakedDuration)
 
-				position.Ratio30Amount = positionGns[lpTokenId][30]
-				position.Ratio50Amount = positionGns[lpTokenId][50]
-				position.Ratio70Amount = positionGns[lpTokenId][70]
-				position.Ratio100Amount = positionGns[lpTokenId][100]
-
-				fullAmount := u256.Zero()
-				for _, v := range positionGns[lpTokenId] {
-					fullAmount = new(u256.Uint).Add(fullAmount, v)
-				}
-				position.FullAmount = fullAmount
+				position.FullAmount = positionGns[lpTokenId]
+				position.Ratio = getRewardRatio(position.StakedDuration)
+				position.RatioAmount = (position.FullAmount * position.Ratio) / 100
 
 				pool.Position = append(pool.Position, position)
 			}
@@ -348,7 +326,6 @@ func makePoolsNode(emissionPool []ApiEmissionDebugPool) []*json.Node {
 }
 
 func makePositionsNode(poolPath string) []*json.Node {
-	_q96 := u256.MustFromDecimal(consts.Q96)
 	positions := make([]*json.Node, 0)
 
 	for lpTokenId, deposit := range deposits {

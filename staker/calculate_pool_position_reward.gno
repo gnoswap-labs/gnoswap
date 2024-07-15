@@ -13,8 +13,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-var accuStakerGnsBalance uint64
-
 // poolPath -> gnsAmount [accu]
 var poolGns map[string]uint64 = make(map[string]uint64)
 
@@ -47,7 +45,6 @@ var positionExternal map[uint64][]externalRewards = make(map[uint64][]externalRe
 var lastCalculatedBalance uint64
 
 func CalcPoolPosition() {
-	// println("HEIGHT", std.GetHeight())
 	height := std.GetHeight()
 	if height <= lastCalculatedHeight {
 		return
@@ -65,7 +62,7 @@ func CalcPoolPosition() {
 		}
 	}
 
-	// lastGnsBalance = stakerGnsBalance
+	lastGnsBalance = stakerGnsBalance
 
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(mintedGnsAmount)
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
@@ -84,19 +81,19 @@ func CalcPoolPosition() {
 		poolAccuGns[poolPath] += tierAmount
 
 		// current block minted gns + left from last block distributed gns
-		// println("CALC__poolPath:", poolPath)
-		// println("CALC__tierAmount:", tierAmount)
+		println("CALC__poolPath:", poolPath)
+		println("CALC__tierAmount:", tierAmount)
 
 		poolCurrentBlockGns[poolPath] = tierAmount
-		// println("CALC__poolCurrentBlockGns[poolPath]:", poolCurrentBlockGns[poolPath])
+		println("CALC__poolCurrentBlockGns[poolPath]:", poolCurrentBlockGns[poolPath])
 
 		// println("CALC__ADD poolLastTmpGns[poolPath]:", poolCurrentBlockGns[poolPath]+poolLastTmpGns[poolPath])
 		// poolCurrentBlockGns[poolPath] += poolLastTmpGns[poolPath]
 		// println("CALC__AFTER_ADD", poolCurrentBlockGns[poolPath])
 
-		// println("CALC__poolLastTmpGns[poolPath] #1:", poolLastTmpGns[poolPath])
+		println("CALC__poolLastTmpGns[poolPath] #1:", poolLastTmpGns[poolPath])
 		poolLastTmpGns[poolPath] = 0
-		// println("CALC__poolLastTmpGns[poolPath] #2:", poolLastTmpGns[poolPath])
+		println("CALC__poolLastTmpGns[poolPath] #2:", poolLastTmpGns[poolPath])
 	}
 
 	_q96 := u256.MustFromDecimal(consts.Q96)
@@ -116,8 +113,6 @@ func CalcPoolPosition() {
 	}
 
 	for tokenId, deposit := range deposits {
-		println()
-		println("tokenId:", tokenId)
 		poolPath := deposit.targetPoolPath
 		poolCurrentBlockAmount := poolCurrentBlockGns[poolPath]
 
@@ -197,25 +192,26 @@ func CalcPoolPosition() {
 				}
 			}
 		}
-		// position iterate ends
+
 	}
 	// update flag
 	lastCalculatedHeight = height
 	lastCalculatedBalance = stakerGnsBalance
 
 	for poolPath, _ := range poolTiers {
-		// println("CALC__POOL", poolPath)
+		println("CALC__POOL", poolPath)
 		amount := poolLastTmpGns[poolPath]
-		// println("CALC__amount", amount)
+		println("CALC__amount", amount)
 		if amount > 0 {
 			poolLastTmpGns[poolPath] = poolCurrentBlockGns[poolPath] - amount
-			// println("CALC__!! amount", amount)
-			// println("CALC__!! poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
+			println("CALC__!! amount", amount)
+			println("CALC__!! poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
 		}
 	}
 
+	// clear tmp poolGns
 	// clear(poolCurrentBlockGns) // gno doesn't support `clear` keyword yet
 	poolCurrentBlockGns = make(map[string]uint64)
 
-	// println("[----ENDENDEND] END_CALC_CalcPoolPosition")
+	println("[----ENDENDEND] END_CALC_CalcPoolPosition")
 }
