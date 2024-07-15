@@ -95,12 +95,11 @@ func CalcPoolPosition() {
 		// current block minted gns + left from last block distributed gns
 		poolCurrentBlockGns[poolPath] = tierAmount
 		println("CALC__poolCurrentBlockGns[poolPath]:", poolCurrentBlockGns[poolPath])
-
-		// println("CALC__ADD poolLastTmpGns[poolPath]:", poolCurrentBlockGns[poolPath]+poolLastTmpGns[poolPath])
-		// poolCurrentBlockGns[poolPath] += poolLastTmpGns[poolPath]
-		// println("CALC__AFTER_ADD", poolCurrentBlockGns[poolPath])
-
 		println("CALC__poolLastTmpGns[poolPath] #1:", poolLastTmpGns[poolPath])
+
+		println("CALC__AFTER_ADD", poolCurrentBlockGns[poolPath])
+		poolCurrentBlockGns[poolPath] += poolLastTmpGns[poolPath]
+
 		poolLastTmpGns[poolPath] = 0
 		println("CALC__poolLastTmpGns[poolPath] #2:", poolLastTmpGns[poolPath])
 	}
@@ -214,7 +213,7 @@ func CalcPoolPosition() {
 		println("CALC__FINAL_poolCurrentBlockGns[poolPath]", poolCurrentBlockGns[poolPath])
 		println("CALC__FINAL_poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
 		if amount > 0 {
-			if poolCurrentBlockGns[poolPath] > amount {
+			if poolCurrentBlockGns[poolPath] >= amount {
 				poolLastTmpGns[poolPath] = poolCurrentBlockGns[poolPath] - amount
 			} else {
 				println("CALC__FINAL_WRONG")
