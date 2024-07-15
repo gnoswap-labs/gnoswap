@@ -4,6 +4,7 @@ import (
 	"std"
 	"time"
 
+	en "gno.land/r/gnoswap/emission"
 	pl "gno.land/r/gnoswap/pool"
 
 	"gno.land/p/demo/ufmt"
@@ -24,6 +25,9 @@ func GetPoolWithTiers() map[string]InternalTier {
 // - pool exists in poolTiers
 // - tier is not valid
 func SetPoolTier(pool string, tier uint64) {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	// panic if pool does not exist
 	if !(pl.DoesPoolPathExist(pool)) {
 		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__SetPoolTier() || pool(%s) does not exist"))
@@ -53,6 +57,8 @@ func SetPoolTier(pool string, tier uint64) {
 	poolTiers[pool] = InternalTier{
 		tier:           tier,
 		startTimestamp: time.Now().Unix(),
+		startHeight:    std.GetHeight(),
+		updateHeight:   std.GetHeight(),
 	}
 
 	std.Emit(
@@ -73,6 +79,11 @@ func SetPoolTier(pool string, tier uint64) {
 // - tier is not valid
 // - pool is default pool
 func ChangePoolTier(pool string, tier uint64) {
+	// because we changed poolTiers, previous calculation should be based on last tier
+	// from next calculation, it will be based on new tier
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	// panic if pool does not exist in poolTiers
 	internal, exist := poolTiers[pool]
 	if !exist {
@@ -109,6 +120,7 @@ func ChangePoolTier(pool string, tier uint64) {
 	)
 
 	internal.tier = tier
+	internal.updateHeight = std.GetHeight()
 	poolTiers[pool] = internal
 }
 
@@ -118,6 +130,10 @@ func ChangePoolTier(pool string, tier uint64) {
 // - caller is not admin
 // - pool is default pool
 func RemovePoolTier(pool string) {
+	// because we remove pool from poolTiers, this should be final calculation
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	if pool == MUST_EXISTS_IN_TIER_1 {
 		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__RemovePoolTier() || Cannot change tier of this pool"))
 	}
