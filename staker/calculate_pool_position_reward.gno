@@ -46,7 +46,10 @@ var lastCalculatedBalance uint64
 
 func CalcPoolPosition() {
 	height := std.GetHeight()
+
+	println("CalcPoolPosition__", height)
 	if height <= lastCalculatedHeight {
+		println("CalcPoolPosition__SKIP", height, lastCalculatedHeight)
 		return
 	}
 
@@ -64,12 +67,19 @@ func CalcPoolPosition() {
 
 	lastGnsBalance = stakerGnsBalance
 
+	println("CALC__mintedGnsAmount:", mintedGnsAmount)
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(mintedGnsAmount)
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
+	println("CALC__tier1Num:", tier1Num)
+	println("CALC__tier2Num:", tier2Num)
+	println("CALC__tier3Num:", tier3Num)
 
 	for poolPath, internal := range poolTiers {
+		println("CALC__poolTiers ITERA")
+		println("CALC__poolPath:", poolPath)
 		tier := internal.tier
 		tierAmount := uint64(0)
+		println("CALC__tier:", tier)
 		if tier == 1 {
 			tierAmount = tier1Amount / tier1Num
 		} else if tier == 2 {
@@ -77,13 +87,12 @@ func CalcPoolPosition() {
 		} else if tier == 3 {
 			tierAmount = tier3Amount / tier3Num
 		}
+		println("CALC__tierAmount:", tierAmount)
+
 		poolGns[poolPath] += tierAmount
 		poolAccuGns[poolPath] += tierAmount
 
 		// current block minted gns + left from last block distributed gns
-		println("CALC__poolPath:", poolPath)
-		println("CALC__tierAmount:", tierAmount)
-
 		poolCurrentBlockGns[poolPath] = tierAmount
 		println("CALC__poolCurrentBlockGns[poolPath]:", poolCurrentBlockGns[poolPath])
 
