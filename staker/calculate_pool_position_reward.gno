@@ -102,10 +102,10 @@ func CalcPoolPosition() {
 		totalStakedLiquidity := getPoolTotalStakedLiquidity(poolPath)
 		println("CALC__poolPath:", poolPath, "totalStakedLiquidity:", totalStakedLiquidity.ToString())
 		if totalStakedLiquidity.ToString() == "0" {
-			println("CALC__POOL", poolPath, "HAS TIER BUT NONE STAEKD, SEND AMOUNT TO PROTOCOL FEE")
-			println("CALC__STAKER BALANCE:", gnsBalance(consts.STAKER_ADDR))
-			println("CALC__poolGns[poolPath]:", poolGns[poolPath])
-			println("CALC__min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)", min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)))
+			println("CALC__ZERO_POOL", poolPath, "HAS TIER BUT NONE STAEKD, SEND AMOUNT TO PROTOCOL FEE")
+			println("CALC__ZERO_STAKER BALANCE:", gnsBalance(consts.STAKER_ADDR))
+			println("CALC__ZERO_poolGns[poolPath]:", poolGns[poolPath])
+			println("CALC__ZERO_min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)", min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)))
 			gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)))
 			poolGns[poolPath] = 0
 			poolCurrentBlockGns[poolPath] = 0
@@ -136,7 +136,7 @@ func CalcPoolPosition() {
 		println("positionAmountX:", positionAmountX.ToString())
 
 		positionGns[tokenId] += positionAmount
-		poolLastTmpGns[poolPath] -= positionAmount
+		poolLastTmpGns[poolPath] += positionAmount
 
 		// calculate position external rewards
 		incentiveIds := poolIncentives[poolPath]
@@ -199,19 +199,23 @@ func CalcPoolPosition() {
 	lastCalculatedBalance = stakerGnsBalance
 
 	for poolPath, _ := range poolTiers {
-		println("CALC__POOL", poolPath)
 		amount := poolLastTmpGns[poolPath]
-		println("CALC__amount", amount)
+		println("CALC__FINAL_POOL", poolPath)
+		println("CALC__FINAL_amount", amount)
+		println("CALC__FINAL_poolCurrentBlockGns[poolPath]", poolCurrentBlockGns[poolPath])
+		println("CALC__FINAL_poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
 		if amount > 0 {
-			poolLastTmpGns[poolPath] = poolCurrentBlockGns[poolPath] - amount
-			println("CALC__!! amount", amount)
-			println("CALC__!! poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
+			if poolCurrentBlockGns[poolPath] > amount {
+				poolLastTmpGns[poolPath] = poolCurrentBlockGns[poolPath] - amount
+			} else {
+				println("CALC__FINAL_WRONG")
+				poolCurrentBlockGns[poolPath] = 0
+			}
 		}
 	}
 
 	// clear tmp poolGns
 	// clear(poolCurrentBlockGns) // gno doesn't support `clear` keyword yet
 	poolCurrentBlockGns = make(map[string]uint64)
-
 	println("[----ENDENDEND] END_CALC_CalcPoolPosition")
 }
