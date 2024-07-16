@@ -80,6 +80,8 @@ func CalcPoolPosition() {
 			println("  >> CALC__ABCI_QUERY__lastCalculatedBalance:", lastCalculatedBalance)
 			// mintedGnsAmount = 0
 		}
+	} else {
+		println(" > CALC__ACTUAL_TX")
 	}
 	println()
 
@@ -254,12 +256,12 @@ func CalcPoolPosition() {
 			} else {
 				println(" > CALC__EXTERNAL__len(positionExternal[tokenId]) > 0")
 				for i, external := range positionExternal[tokenId] {
-					println("CALC__external.incentiveId:", external.incentiveId)
+					println(" > CALC__external.incentiveId:", external.incentiveId)
 					if external.incentiveId == incentiveId {
-						println(" > CALC__EXTERNAL__FOUND")
-						println(" > CALC__EXTERNAL__BEFORE", external.tokenAmount)
+						println("  > CALC__EXTERNAL__FOUND")
+						println("  > CALC__EXTERNAL__BEFORE", external.tokenAmount)
 						external.tokenAmount = (positionAmount - external.tokenAmountClaimed)
-						println(" > CALC__EXTERNAL__AFTER", external.tokenAmount)
+						println("  > CALC__EXTERNAL__AFTER", external.tokenAmount)
 						positionExternal[tokenId][i] = external
 						break
 					}
@@ -268,29 +270,31 @@ func CalcPoolPosition() {
 		}
 	}
 	println("========================================== END CALC__deposits ITERATION")
+	println()
 
 	// update flag
 	lastCalculatedHeight = height
 	lastCalculatedTimestamp = time.Now().Unix()
 	lastCalculatedBalance = stakerGnsBalance
 
+	println("CALC_WRAP UP")
 	for poolPath, _ := range poolTiers {
 		amount := poolLastTmpGns[poolPath]
-		println("CALC__FINAL_POOL", poolPath)
-		println("CALC__FINAL_amount", amount)
-		println("CALC__FINAL_poolCurrentBlockGns[poolPath]", poolCurrentBlockGns[poolPath])
-		println("CALC__FINAL_poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
+		println(" > CALC__FINAL_POOL", poolPath)
+		println(" > CALC__FINAL_amount", amount)
+		println(" > CALC__FINAL_poolCurrentBlockGns[poolPath]", poolCurrentBlockGns[poolPath])
+		println(" > CALC__FINAL_poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
 		if amount > 0 {
 			if poolCurrentBlockGns[poolPath] >= amount {
-				println("CALC__SAME_OR_LEFT")
+				println(" > CALC__SAME_OR_LEFT")
 				poolLastTmpGns[poolPath] = poolCurrentBlockGns[poolPath] - amount
-				println("poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
+				println(" > poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
 			} else {
-				println("CALC__FINAL_WRONG")
+				println(" > CALC__FINAL_WRONG")
 				poolCurrentBlockGns[poolPath] = 0
 			}
 		} else {
-			println("CALC__FINAL__amount = 0")
+			println(" > CALC__FINAL__amount = 0")
 		}
 	}
 
