@@ -91,7 +91,7 @@ func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
 // Admin
 func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
 	caller := std.PrevRealm().Addr()
-	// assertIsAdmin(caller)
+	assertIsAdmin(caller)
 
 	err := gnft.Mint(users.Resolve(to), tid)
 	if err != nil {
