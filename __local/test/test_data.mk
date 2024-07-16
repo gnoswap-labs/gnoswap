@@ -39,6 +39,9 @@ MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 GNOLAND_RPC_URL ?= https://dev.rpc.gnoswap.io:443
 CHAINID ?= dev.gnoswap
 
+# GNOLAND_RPC_URL ?= https://rpc.test4.gno.land:443
+# CHAINID ?= test4
+
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
 
 
