@@ -14,8 +14,8 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
-	"gno.land/r/demo/bar"
-	"gno.land/r/demo/qux"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/qux"
 
 	"gno.land/r/gnoswap/gns"
 
@@ -30,16 +30,16 @@ func init() {
 	if std.GetHeight() != 0 {
 		panic("height should be 0")
 	}
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:100"] = InternalTier{
+	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"] = InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
 	}
 
 	// tier 2
-	// poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = 2
+	// poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"] = 2
 
 	// tier 3
-	// poolTiers["gno.land/r/demo/baz:gno.land/r/demo/qux:100"] = 3
+	// poolTiers["gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100"] = 3
 }
 
 func TestPoolInitCreatePool(t *testing.T) {

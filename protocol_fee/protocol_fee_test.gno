@@ -4,8 +4,8 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/demo/bar"
-	"gno.land/r/demo/qux"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/qux"
 
 	pusers "gno.land/p/demo/users"
 

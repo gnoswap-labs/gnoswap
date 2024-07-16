@@ -8,7 +8,7 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 
-	"gno.land/r/demo/foo"
+	"gno.land/r/onbloc/foo"
 	"gno.land/r/demo/wugnot"
 )
 

@@ -75,7 +75,6 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 	// if caller is owner
 	callerIsOwner := gnft.OwnerOf(tid(tokenId)) == std.GetOrigCaller()
-
 	// stakerIsOwner
 	stakerIsOwner := gnft.OwnerOf(tid(tokenId)) == GetOrigPkgAddr()
 
@@ -83,14 +82,40 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || Neither Caller(%s) or Staker(%s) is not owner of tokenId(%d)", std.GetOrigCaller(), GetOrigPkgAddr(), tokenId))
 	}
 
+	// check pool path from tokenid
+	poolPath := pn.PositionGetPositionPoolKey(tokenId)
+
+	// check if target pool doesn't have internal or external incentive then panic
+	hasInternal := poolHasInternal(poolPath)
+	hasExternal := poolHasExternal(poolPath)
+	if hasInternal == false && hasExternal == false {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || poolPath(%s) has no internal or external incentive(can not stake)", poolPath))
+	}
+
+	// if target pool has external but hasn't starrted panic
+	numActive := 0
+	if hasInternal == false && hasExternal == true {
+		for _, incentiveId := range poolIncentives[poolPath] {
+			incentive := incentives[incentiveId]
+			if incentive.startTimestamp < time.Now().Unix() && time.Now().Unix() < incentive.endTimestamp {
+				println("incentive.startTimestamp", incentive.startTimestamp)
+				println("time.Now().Unix()", time.Now().Unix())
+				println("incentive.endTimestamp", incentive.endTimestamp)
+				println()
+				numActive++
+			}
+		}
+
+		if numActive == 0 {
+			panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || poolPath(%s) has external incentive but not started yet(can not stake)", poolPath))
+		}
+	}
+
 	// check tokenId has liquidity or not
 	liquidity := pn.PositionGetPositionLiquidity(tokenId) // *u256.Uint
 	if liquidity.Lte(u256.Zero()) {
 		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) has no liquidity", tokenId))
 	}
-
-	// check pool path from tokenid
-	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 
 	// staked status
 	deposit := deposits[tokenId]

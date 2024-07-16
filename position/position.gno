@@ -561,7 +561,7 @@ func Reposition(
 		"p_poolPath", position.poolKey,
 		"p_tickLower", int32ToStr(tickLower),
 		"p_tickUpper", int32ToStr(tickUpper),
-		"tokenId", uint64ToStr(tokenId),
+		"p_tokenId", uint64ToStr(tokenId),
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),

@@ -7,10 +7,10 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
-	"gno.land/r/demo/bar"
+	"gno.land/r/onbloc/bar"
 	"gno.land/r/gnoswap/gns"
-	"gno.land/r/demo/obl"
-	"gno.land/r/demo/qux"
+	"obl.land/r/onbloc/obl"
+	"gno.land/r/onbloc/qux"
 	"gno.land/r/demo/wugnot"
 
 	"gno.land/r/gnoswap/gnft"
@@ -28,7 +28,7 @@ func init() {
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = 1 // DEV
+	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"] = 1 // DEV
 
 	// tier 2
 	// poolTiers["GNS/USDT_500"] = 2
@@ -177,7 +177,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 
 	AddToken(oblPath)
 	CreateExternalIncentive(
-		"gno.land/r/demo/bar:gno.land/r/demo/qux:500", // targetPoolPath
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", // targetPoolPath
 		oblPath,                     // rewardToken
 		"1000000000",                // rewardAmount
 		1234569600,                  // startTimestamp
@@ -185,7 +185,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	)
 
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
-	CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/qux:500", oblPath, "1000000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
+	CreateExternalIncentive("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", oblPath, "1000000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
 }
 
 func TestStakeToken01(t *testing.T) {
@@ -274,7 +274,7 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, positionGns[1], 0)
 	shouldEQ(t, leftGnsBalance, 5993150520)
 
-	shouldEQ(t, poolGns["gno.land/r/demo/bar:gno.land/r/demo/qux:500"], 8561643599)
+	shouldEQ(t, poolGns["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"], 8561643599)
 	shouldEQ(t, positionGns[2], 1198630103)
 	shouldEQ(t, positionGns[3], 7106164187)
 	shouldEQ(t, leftGnsBalance, 5993150520)
@@ -285,7 +285,7 @@ func TestUnstakeToken02(t *testing.T) {
 
 	shouldEQ(t, len(deposits), 1)
 
-	shouldEQ(t, poolGns["gno.land/r/demo/bar:gno.land/r/demo/qux:500"], 7374518204)
+	shouldEQ(t, poolGns["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"], 7374518204)
 	shouldEQ(t, positionGns[2], 0)
 	shouldEQ(t, positionGns[3], 7117267568)
 	shouldEQ(t, leftGnsBalance, 7193653483)
@@ -311,14 +311,14 @@ func TestCollectReward03(t *testing.T) {
 	shouldEQ(t, positionGns[1], 0)
 	shouldEQ(t, leftGnsBalance, 7193653483)
 
-	shouldEQ(t, poolGns["gno.land/r/demo/bar:gno.land/r/demo/qux:500"], 7387895772)
+	shouldEQ(t, poolGns["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"], 7387895772)
 	shouldEQ(t, positionGns[2], 0)
 	shouldEQ(t, positionGns[3], 7387895772)
 	shouldEQ(t, leftGnsBalance, 7193653483)
 
 	shouldEQ(t, len(positionExternal[3]), 1)
 	shouldEQ(t, positionExternal[3][0].tokenAmount, 186791)
-	shouldEQ(t, positionExternal[3][0].tokenPath, "gno.land/r/demo/obl")
+	shouldEQ(t, positionExternal[3][0].tokenPath, "obl.land/r/onbloc/obl")
 
 	std.TestSetRealm(gsaRealm)
 	CollectReward(3)

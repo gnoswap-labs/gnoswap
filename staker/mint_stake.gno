@@ -8,6 +8,10 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/consts"
+
+	"gno.land/r/gnoswap/gnft"
+
+	"gno.land/p/demo/grc/grc721"
 )
 
 // MintAndStake mints and stakes the LP token
@@ -54,6 +58,10 @@ func MintAndStake(
 		deadline,
 		consts.STAKER_ADDR.String(),
 	)
+
+	// at this point staker has minted token
+	toTid := grc721.TokenID(ufmt.Sprintf("%d", tokenId))
+	gnft.SetTokenURI(toTid)
 
 	poolPath, _, _ := StakeToken(tokenId) // poolPath, stakedAmount0, stakedAmount1
 
