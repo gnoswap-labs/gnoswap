@@ -145,19 +145,6 @@ func Exists(tid grc721.TokenID) bool {
 }
 
 func SetTokenURI(tid grc721.TokenID) {
-	origCaller := std.GetOrigCaller()
-
-	println("GNFT_SetTokenURI")
-	println(" > origCaller:", origCaller)
-	println(" > prevRealm:", std.PrevRealm())
-	println(" > tid:", tid)
-
-	owner, err := gnft.OwnerOf(tid)
-	if err != nil {
-		println(" > tid not found or err:", err.Error())
-	}
-	println(" > owner:", owner)
-
 	// rand instance
 	seed1 := uint64(time.Now().Unix())
 	seed2 := uint64(time.Now().UnixNano())
@@ -171,15 +158,14 @@ func SetTokenURI(tid grc721.TokenID) {
 		panic(err.Error())
 	}
 
-	// remove tid from userMinted[caller]
-	usersNFT := userMinted[origCaller]
-	for i, v := range usersNFT {
-		if v == tid {
-			println("REMOVE_TID", tid)
-			usersNFT = append(usersNFT[:i], usersNFT[i+1:]...)
-			break
-		}
-	}
+	std.Emit(
+		"GNOSWAP",
+		"m_origCaller", std.GetOrigCaller().String(),
+		"m_prevRealm", std.PrevRealm().PkgPath(),
+		"p_tokenId", string(tid),
+		"tokenURI", tokenURI,
+		"SetTokenURI", "SetTokenURI",
+	)
 }
 
 func SetTokenURILast() {
@@ -192,10 +178,6 @@ func SetTokenURILast() {
 	r := rand.New(pcg)
 
 	usersNFT := userMinted[origCaller]
-	println("GNFT_SetTokenURILast")
-	println(" > origCaller:", origCaller)
-	println(" > prevRealm:", std.PrevRealm())
-	println(" > usersNFT:", usersNFT)
 	for _, tid := range usersNFT {
 		tokenURI := genImageURI(r)
 
@@ -203,6 +185,15 @@ func SetTokenURILast() {
 		if !ok {
 			panic(err.Error())
 		}
+
+		std.Emit(
+			"GNOSWAP",
+			"m_origCaller", std.GetOrigCaller().String(),
+			"m_prevRealm", std.PrevRealm().PkgPath(),
+			"p_tokenId", string(tid),
+			"tokenURI", tokenURI,
+			"SetTokenURILast", "SetTokenURILast",
+		)
 	}
 
 	delete(userMinted, origCaller)
