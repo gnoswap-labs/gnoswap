@@ -157,6 +157,16 @@ func SetTokenURI(tid grc721.TokenID) {
 	if !ok {
 		panic(err.Error())
 	}
+
+	std.Emit(
+		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_tokenId", string(tid),
+		"tokenURI", tokenURI,
+		"SetTokenURI", "SetTokenURI",
+	)
 }
 
 func SetTokenURILast() {
@@ -176,6 +186,16 @@ func SetTokenURILast() {
 		if !ok {
 			panic(err.Error())
 		}
+
+		std.Emit(
+			"GNOSWAP",
+			"m_callType", callType(),
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
+			"p_tokenId", string(tid),
+			"tokenURI", tokenURI,
+			"SetTokenURILast", "SetTokenURILast",
+		)
 	}
 
 	delete(userMinted, origCaller)
