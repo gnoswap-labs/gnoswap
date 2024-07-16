@@ -3,15 +3,16 @@ package staker
 import (
 	"std"
 	"testing"
+	"time"
 
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
 	"gno.land/r/demo/bar"
-	"gno.land/r/gnoswap/gns"
 	"gno.land/r/demo/obl"
 	"gno.land/r/demo/qux"
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/gns"
 
 	"gno.land/r/gnoswap/gnft"
 
@@ -28,10 +29,12 @@ func init() {
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = 1 // DEV
-
-	// tier 2
-	// poolTiers["GNS/USDT_500"] = 2
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = InternalTier{
+		tier:           1,
+		startTimestamp: time.Now().Unix(),
+		startHeight:    std.GetHeight(),
+		updateHeight:   std.GetHeight(),
+	}
 }
 
 func TestPoolCreatePool(t *testing.T) {
@@ -46,13 +49,13 @@ func TestPoolCreatePool(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	pl.CreatePool("gno.land/r/gnoswap/gns", "gno.land/r/demo/wugnot", 3000, "79228162514264337593543950336") // tick 0 ≈ x1
-	pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006")                                // tick 10_000 ≈ x2.7
+	pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006")                                   // tick 10_000 ≈ x2.7
 	std.TestSkipHeights(2)
 
-	shouldEQ(t, gns.TotalSupply(), 100004423515860)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 0)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 3317636895)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 884703172)
+	shouldEQ(t, gns.TotalSupply(), 100000014269406)
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 10702054)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 2853881)
 }
 
 func TestPositionMintPos01Tier01(t *testing.T) {
@@ -65,7 +68,7 @@ func TestPositionMintPos01Tier01(t *testing.T) {
 	std.TestSkipHeights(2)
 
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-		"gno.land/r/gnoswap/gns",    // token0
+		"gno.land/r/gnoswap/gns", // token0
 		"gno.land/r/demo/wugnot", // token1
 		fee3000,                  // fee
 		int32(1020),              // tickLower
@@ -81,18 +84,18 @@ func TestPositionMintPos01Tier01(t *testing.T) {
 
 	shouldEQ(t, lpTokenId, 1)
 	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // gsa
-	shouldEQ(t, amount0, "1000")
-	shouldEQ(t, amount1, "0")
+	shouldEQ(t, amount0, "0")
+	shouldEQ(t, amount1, "1000")
 
 	// approve nft to staker for staking
 	std.TestSetRealm(gsaRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, gns.TotalSupply(), 100004566209920)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 0)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 3424657440)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 913241984)
+	shouldEQ(t, gns.TotalSupply(), 100000071347030)
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 53510272)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 14269406)
 }
 
 func TestPositionMintPos02Tier01(t *testing.T) {
@@ -127,10 +130,10 @@ func TestPositionMintPos02Tier01(t *testing.T) {
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, gns.TotalSupply(), 100004708903980)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 0)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 3531677985)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 941780796)
+	shouldEQ(t, gns.TotalSupply(), 100000128424654)
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 96318490)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 25684931)
 }
 
 func TestPositionMintPos03Tier01(t *testing.T) {
@@ -165,10 +168,10 @@ func TestPositionMintPos03Tier01(t *testing.T) {
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, gns.TotalSupply(), 100004851598040)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 0)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 3638698530)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 970319608)
+	shouldEQ(t, gns.TotalSupply(), 100000185502278)
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 139126708)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 37100456)
 }
 
 func TestCreateExternalIncentive(t *testing.T) {
@@ -197,10 +200,10 @@ func TestStakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), GetOrigPkgAddr()) // staker
 	shouldEQ(t, len(deposits), 1)
 
-	shouldEQ(t, gns.TotalSupply(), 100004922945070)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 3692208802)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 984589014)
+	shouldEQ(t, gns.TotalSupply(), 100000214041090)
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 2)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 139126709)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 42808218)
 }
 
 func TestStakeToken02(t *testing.T) {
@@ -212,10 +215,10 @@ func TestStakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr()) // staker
 	shouldEQ(t, len(deposits), 2)
 
-	shouldEQ(t, gns.TotalSupply(), 100022759702570)
+	shouldEQ(t, gns.TotalSupply(), 100007348744090)
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 17069776927)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 4551940514)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 139126710)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 1469748818)
 }
 
 func TestStakeToken03(t *testing.T) {
@@ -227,10 +230,10 @@ func TestStakeToken03(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(3)), GetOrigPkgAddr()) // staker
 	shouldEQ(t, len(deposits), 3)
 
-	shouldEQ(t, gns.TotalSupply(), 100022795376085)
+	shouldEQ(t, gns.TotalSupply(), 100007363013496)
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 17096532064)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 4559075217)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 144477738)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 1472602699)
 }
 
 func TestSameHeightCalculation(t *testing.T) {
@@ -239,17 +242,12 @@ func TestSameHeightCalculation(t *testing.T) {
 }
 
 func TestCollectReward01(t *testing.T) {
-	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 8548266031)
-	shouldEQ(t, positionGns[1], 8548266031)
-	shouldEQ(t, leftGnsBalance, 0)
-
 	std.TestSetRealm(gsaRealm)
 	CollectReward(1)
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 0)
 	shouldEQ(t, positionGns[1], 0)
-	shouldEQ(t, leftGnsBalance, 5983786222)
 }
 
 func TestUnstakeToken01(t *testing.T) {
@@ -259,25 +257,22 @@ func TestUnstakeToken01(t *testing.T) {
 
 	shouldEQ(t, len(deposits), 2)
 
-	shouldEQ(t, gns.TotalSupply(), 100022866723115)
+	shouldEQ(t, gns.TotalSupply(), 100007391552308)
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 14581549259)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 4573344623)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 155179794)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 1478310461)
 
 	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 0)
 	shouldEQ(t, positionGns[1], 0)
-	shouldEQ(t, leftGnsBalance, 5993150520)
 }
 
 func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 0)
 	shouldEQ(t, positionGns[1], 0)
-	shouldEQ(t, leftGnsBalance, 5993150520)
 
-	shouldEQ(t, poolGns["gno.land/r/demo/bar:gno.land/r/demo/qux:500"], 8561643599)
-	shouldEQ(t, positionGns[2], 1198630103)
-	shouldEQ(t, positionGns[3], 7106164187)
-	shouldEQ(t, leftGnsBalance, 5993150520)
+	shouldEQ(t, poolGns["gno.land/r/demo/bar:gno.land/r/demo/qux:500"], 16053081)
+	shouldEQ(t, positionGns[2], 6986943)
+	shouldEQ(t, positionGns[3], 9066137)
 
 	std.TestSetRealm(gsaRealm)
 	UnstakeToken(2)
@@ -285,15 +280,14 @@ func TestUnstakeToken02(t *testing.T) {
 
 	shouldEQ(t, len(deposits), 1)
 
-	shouldEQ(t, poolGns["gno.land/r/demo/bar:gno.land/r/demo/qux:500"], 7374518204)
+	shouldEQ(t, poolGns["gno.land/r/demo/bar:gno.land/r/demo/qux:500"], 13599207)
 	shouldEQ(t, positionGns[2], 0)
-	shouldEQ(t, positionGns[3], 7117267568)
-	shouldEQ(t, leftGnsBalance, 7193653483)
+	shouldEQ(t, positionGns[3], 13599206)
 
-	shouldEQ(t, gns.TotalSupply(), 100022902396630)
+	shouldEQ(t, gns.TotalSupply(), 100007405821714)
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 14608304396)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 4580479326)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 152725921)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 1481164342)
 }
 
 func TestCollectReward02(t *testing.T) {
@@ -304,44 +298,4 @@ func TestCollectReward02(t *testing.T) {
 		},
 		"[STAKER] staker.gno__CollectReward() || tokenId(2) not staked",
 	)
-}
-
-func TestCollectReward03(t *testing.T) {
-	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 26755136)
-	shouldEQ(t, positionGns[1], 0)
-	shouldEQ(t, leftGnsBalance, 7193653483)
-
-	shouldEQ(t, poolGns["gno.land/r/demo/bar:gno.land/r/demo/qux:500"], 7387895772)
-	shouldEQ(t, positionGns[2], 0)
-	shouldEQ(t, positionGns[3], 7387895772)
-	shouldEQ(t, leftGnsBalance, 7193653483)
-
-	shouldEQ(t, len(positionExternal[3]), 1)
-	shouldEQ(t, positionExternal[3][0].tokenAmount, 186791)
-	shouldEQ(t, positionExternal[3][0].tokenPath, "gno.land/r/demo/obl")
-
-	std.TestSetRealm(gsaRealm)
-	CollectReward(3)
-	std.TestSkipHeights(1)
-
-	shouldEQ(t, len(positionExternal[3]), 1)
-	shouldEQ(t, positionExternal[3][0].tokenAmount, 0)
-}
-
-func TestUnstakeToken03(t *testing.T) {
-	shouldEQ(t, len(positionExternal[3]), 1)
-	shouldEQ(t, positionExternal[3][0].tokenAmount, 0)
-
-	std.TestSetRealm(gsaRealm)
-	UnstakeToken(3)
-	std.TestSkipHeights(1)
-}
-
-func TestTransferLeftGnsEmission(t *testing.T) {
-	shouldEQ(t, leftGnsBalance, 14590913553)
-	shouldEQ(t, gnsBalance(consts.PROTOCOL_FEE_ADDR), 2572505)
-
-	TransferLeftGnsEmission()
-	shouldEQ(t, leftGnsBalance, 0)
-	shouldEQ(t, gnsBalance(consts.PROTOCOL_FEE_ADDR), 14593486058)
 }

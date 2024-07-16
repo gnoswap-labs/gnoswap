@@ -9,6 +9,8 @@ import (
 type InternalTier struct {
 	tier           uint64
 	startTimestamp int64
+	startHeight    int64
+	updateHeight   int64
 }
 
 type ExternalIncentive struct {
@@ -18,6 +20,7 @@ type ExternalIncentive struct {
 	rewardLeft     *u256.Uint
 	startTimestamp int64
 	endTimestamp   int64
+	rewardPerBlock uint64
 	refundee       std.Address
 }
 

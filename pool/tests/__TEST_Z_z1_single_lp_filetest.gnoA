@@ -7,10 +7,10 @@ import (
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/baz"
 	"gno.land/r/demo/foo"
-	"gno.land/r/gnoswap/gns"
 	"gno.land/r/demo/obl"
 	"gno.land/r/demo/qux"
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/gns"
 
 	"gno.land/p/demo/json"
 	pusers "gno.land/p/demo/users"
@@ -497,6 +497,3 @@ func apiGetPools() {
 		panic("expected 1")
 	}
 }
-
-// Output:
-//

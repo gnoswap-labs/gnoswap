@@ -11,27 +11,12 @@ import (
 
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/baz"
-	"gno.land/r/gnoswap/gns"
 	"gno.land/r/demo/obl"
 	"gno.land/r/demo/qux"
+	"gno.land/r/gnoswap/gns"
 
 	"gno.land/r/gnoswap/gnft"
 )
-
-func init() {
-	// init pool tiers
-	// tier 1
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = 1
-
-	// tier 2
-	// poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = 2
-	poolTiers["ATOM/GNS_500"] = 2
-
-	// tier 3
-	poolTiers["ATOM/GNOT_500"] = 3
-	poolTiers["ATOM/USDT_500"] = 3
-	poolTiers["ATOM/WETH_500"] = 3
-}
 
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
@@ -151,6 +136,8 @@ func TestCreateExternalIncentive(t *testing.T) {
 }
 
 func TestStakeExternal_2(t *testing.T) {
+	std.TestSkipHeights(900) // active
+
 	std.TestSetRealm(gsaRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
 	StakeToken(2)
@@ -189,7 +176,7 @@ func TestCollectExternalReward_2(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	oblNew := obl.BalanceOf(a2u(gsa))
-	shouldEQ(t, oblNew-oblOld, 24848024)
+	shouldEQ(t, oblNew-oblOld, 9623604)
 }
 
 func TestCollectExternalReward_3(t *testing.T) {
@@ -197,7 +184,7 @@ func TestCollectExternalReward_3(t *testing.T) {
 
 	// before claim
 	oblOld := obl.BalanceOf(a2u(gsa))
-	shouldEQ(t, oblOld, 99999924848024)
+	shouldEQ(t, oblOld, 99999909623604)
 
 	std.TestSkipHeights(1)
 	CollectReward(3)
@@ -207,5 +194,5 @@ func TestCollectExternalReward_3(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	oblNew := obl.BalanceOf(a2u(gsa))
-	shouldEQ(t, oblNew-oblOld, 24848024)
+	shouldEQ(t, oblNew-oblOld, 9623629)
 }

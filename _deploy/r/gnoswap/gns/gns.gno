@@ -114,7 +114,6 @@ func Mint(address pusers.AddressOrName) {
 		amountToMint += amount
 	}
 	err := banker.Mint(users.Resolve(address), amountToMint)
-	println("GNS_MMMMMINT:", amountToMint)
 	if err != nil {
 		panic(err.Error())
 	}

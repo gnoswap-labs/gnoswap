@@ -22,14 +22,14 @@ import (
 )
 
 var (
+	// internal
+	poolTiers map[string]InternalTier = make(map[string]InternalTier) // poolPath -> InternalTier
+
+	// external
 	poolIncentives map[string][]string          = make(map[string][]string)          // poolPath => []incentiveId
 	incentives     map[string]ExternalIncentive = make(map[string]ExternalIncentive) // incentiveId => ExternalIncentive
 
-	deposits  map[uint64]Deposit      = make(map[uint64]Deposit)      // tokenId => Deposit
-	poolTiers map[string]InternalTier = make(map[string]InternalTier) // poolPath -> InternalTier
-
-	lastCalculatedHeight int64
-	lastGnsBalance       uint64
+	deposits map[uint64]Deposit = make(map[uint64]Deposit) // tokenId => Deposit
 
 	// reward amount can be left due to warm up period
 	// keep track of this amount
@@ -54,6 +54,8 @@ func init() {
 	poolTiers[MUST_EXISTS_IN_TIER_1] = InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
+		startHeight:    std.GetHeight(),
+		updateHeight:   std.GetHeight(),
 	}
 }
 
@@ -75,12 +77,39 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 	// if caller is owner
 	callerIsOwner := gnft.OwnerOf(tid(tokenId)) == std.GetOrigCaller()
-
 	// stakerIsOwner
 	stakerIsOwner := gnft.OwnerOf(tid(tokenId)) == GetOrigPkgAddr()
-
 	if !(callerIsOwner || stakerIsOwner) {
 		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || Neither Caller(%s) or Staker(%s) is not owner of tokenId(%d)", std.GetOrigCaller(), GetOrigPkgAddr(), tokenId))
+	}
+
+	// check pool path from tokenid
+	poolPath := pn.PositionGetPositionPoolKey(tokenId)
+
+	// check if target pool doesn't have internal or external incentive then panic
+	hasInternal := poolHasInternal(poolPath)
+	hasExternal := poolHasExternal(poolPath)
+	if hasInternal == false && hasExternal == false {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || poolPath(%s) has no internal or external incentive(can not stake)", poolPath))
+	}
+
+	// if target pool has external but hasn't starrted panic
+	numActive := 0
+	if hasInternal == false && hasExternal == true {
+		for _, incentiveId := range poolIncentives[poolPath] {
+			incentive := incentives[incentiveId]
+			if incentive.startTimestamp < time.Now().Unix() && time.Now().Unix() < incentive.endTimestamp {
+				println("incentive.startTimestamp", incentive.startTimestamp)
+				println("time.Now().Unix()", time.Now().Unix())
+				println("incentive.endTimestamp", incentive.endTimestamp)
+				println()
+				numActive++
+			}
+		}
+
+		if numActive == 0 {
+			panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || poolPath(%s) has external incentive but not started yet(can not stake)", poolPath))
+		}
 	}
 
 	// check tokenId has liquidity or not
@@ -88,9 +117,6 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 	if liquidity.Lte(u256.Zero()) {
 		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || tokenId(%d) has no liquidity", tokenId))
 	}
-
-	// check pool path from tokenid
-	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 
 	// staked status
 	deposit := deposits[tokenId]
@@ -144,18 +170,25 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 	poolPath := deposits[tokenId].targetPoolPath
 
+	println("CollectReward_EXTERNAL", tokenId)
 	for k, external := range positionExternal[tokenId] {
 		incentive := incentives[external.incentiveId]
 
 		stakedOrCreatedAt := max(deposit.stakeTimestamp, incentive.startTimestamp)
 		now := time.Now().Unix()
 		if now < stakedOrCreatedAt {
+			println(" > CollectReward_NOT_START (now < stakedOrCreatedAt)")
+			println("  > now", now)
+			println("  > stakedOrCreatedAt", stakedOrCreatedAt)
 			continue
 		}
 
+		println(" > CollectReward_START")
 		// external reward
 		duration := now - stakedOrCreatedAt/consts.BLOCK_GENERATION_INTERVAL
+		println(" > duration", duration)
 		durationRatio := getRewardRatio(duration)
+		println(" > durationRatio", durationRatio)
 
 		poolPath := external.poolPath
 		tokenPath := external.tokenPath
@@ -219,8 +252,6 @@ func CollectReward(tokenId uint64) string { // poolPath
 		"recipient", deposit.owner.String(),
 		"amount", uint64ToStr(toUser),
 	)
-
-	lastGnsBalance = gnsBalance(consts.STAKER_ADDR)
 
 	positionCollectHeight[tokenId] = uint64(std.GetHeight())
 	return poolPath
@@ -368,6 +399,11 @@ func CreateExternalIncentive(
 		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || pool reward balance not updated correctly(before:%d, added:%d, final:%d)", poolRewardBalanceBefore, rewardAmount.Uint64(), poolRewardBalanceAfter))
 	}
 
+	incentiveDuration := endTimestamp - startTimestamp
+	incentiveBlock := incentiveDuration / consts.BLOCK_GENERATION_INTERVAL
+	rewardPerBlock256 := new(u256.Uint).Div(rewardAmount, u256.NewUint(uint64(incentiveBlock)))
+	rewardPerBlock := rewardPerBlock256.Uint64()
+
 	incentives[incentiveId] = ExternalIncentive{
 		targetPoolPath: targetPoolPath,
 		rewardToken:    rewardToken,
@@ -375,6 +411,7 @@ func CreateExternalIncentive(
 		rewardLeft:     rewardAmount,
 		startTimestamp: startTimestamp,
 		endTimestamp:   endTimestamp,
+		rewardPerBlock: rewardPerBlock,
 		refundee:       std.GetOrigCaller(),
 	}
 
@@ -549,4 +586,14 @@ func isAllowedForExternalReward(poolPath, tokenPath string) {
 	}
 
 	panic(ufmt.Sprintf("[STAKER] staker.gno__isAllowedForExternalReward() || tokenPath(%s) is not allowed for external reward for poolPath(%s)", tokenPath, poolPath))
+}
+
+func poolHasInternal(poolPath string) bool {
+	_, exist := poolTiers[poolPath]
+	return exist
+}
+
+func poolHasExternal(poolPath string) bool {
+	_, exist := poolIncentives[poolPath]
+	return exist
 }
