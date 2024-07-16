@@ -185,7 +185,7 @@ func TestDecreaseHalfPos01(t *testing.T) {
 	shouldEQ(t, fee1, "0")
 	shouldEQ(t, amount0, "120756903565")
 	shouldEQ(t, amount1, "26669121")
-	shouldEQ(t, poolPath, "obl.land/r/onbloc/obl:gno.land/r/demo/usdc:3000")
+	shouldEQ(t, poolPath, "obl.land/r/onbloc/obl:gno.land/r/onbloc/usdc:3000")
 
 	// printPosition(1)
 }
@@ -210,7 +210,7 @@ func TestDecreaseAllPos01(t *testing.T) {
 	shouldEQ(t, fee1, "0")
 	shouldEQ(t, amount0, "120756903565")
 	shouldEQ(t, amount1, "26669121")
-	shouldEQ(t, poolPath, "obl.land/r/onbloc/obl:gno.land/r/demo/usdc:3000")
+	shouldEQ(t, poolPath, "obl.land/r/onbloc/obl:gno.land/r/onbloc/usdc:3000")
 
 	// printPosition(1)
 }

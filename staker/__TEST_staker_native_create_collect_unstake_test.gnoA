@@ -18,7 +18,7 @@ import (
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/onbloc/bar:gno.land/r/demo/foo:500"] = 1 // DEV
+	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"] = 1 // DEV
 
 	// tier 2
 	poolTiers["GNS/USDT_500"] = 2

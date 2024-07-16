@@ -9,6 +9,8 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/consts"
+
+	en "gno.land/r/gnoswap/emission"
 )
 
 // GetPoolWithTiers returns list of pools with their tiers

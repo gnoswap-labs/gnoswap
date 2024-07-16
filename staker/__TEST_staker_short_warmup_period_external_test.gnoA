@@ -145,7 +145,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 		1234569600,                                    // startTimestamp
 		1234569600+TIMESTAMP_90DAYS,                   // endTimestamp
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker CreateExternalIncentive [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100} {p_rewardToken obl.land/r/onbloc/obl} {p_rewardAmount 100000000} {p_startTimestamp 1234569600} {p_endTimestamp 1242345600}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker CreateExternalIncentive [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100} {p_rewardToken gno.land/r/onbloc/obl} {p_rewardAmount 100000000} {p_startTimestamp 1234569600} {p_endTimestamp 1242345600}]}
 
 	std.TestSkipHeights(1)
 }

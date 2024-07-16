@@ -1,4 +1,4 @@
-module obl.land/r/onbloc/obl
+module gno.land/r/onbloc/obl
 
 require (
 	gno.land/p/demo/grc/grc20 v0.0.0-latest

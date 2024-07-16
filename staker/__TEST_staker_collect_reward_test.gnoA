@@ -154,7 +154,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	CreateExternalIncentive("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", "gno.land/r/onbloc/obl", "1000000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker CreateExternalIncentive [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500} {p_rewardToken obl.land/r/onbloc/obl} {p_rewardAmount 1000000000} {p_startTimestamp 1234569600} {p_endTimestamp 1242345600}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker CreateExternalIncentive [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500} {p_rewardToken gno.land/r/onbloc/obl} {p_rewardAmount 1000000000} {p_startTimestamp 1234569600} {p_endTimestamp 1242345600}]}
 
 	std.TestSkipHeights(1)
 }
@@ -226,8 +226,8 @@ func TestUnstakeToken01(t *testing.T) {
 func TestUnstakeToken02(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 	UnstakeToken(2) // GNFT tokenId
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenPath obl.land/r/onbloc/obl} {p_internal false} {feeAmount 300}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker CollectReward [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 2} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500} {rewardToken obl.land/r/onbloc/obl} {recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount 29792}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenPath gno.land/r/onbloc/obl} {p_internal false} {feeAmount 300}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker CollectReward [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 2} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500} {rewardToken gno.land/r/onbloc/obl} {recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount 29792}]}
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenPath gno.land/r/gnoswap/gns} {p_internal true} {feeAmount 3349}]}
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker CollectReward [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 2} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500} {rewardToken gno.land/r/gnoswap/gns} {recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount 331601}]}
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker UnstakeToken [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 2} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500} {from g1puv9dz470prjshjm9qyg25dyfvrgph2kvjph68} {to g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 3979} {amount1 5000}]}
@@ -245,7 +245,7 @@ func TestEndExternalIncentive(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 	std.TestSkipHeights(9999999)
 	EndExternalIncentive(std.GetOrigCaller().String(), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", "gno.land/r/onbloc/obl") // use same parameter as CreateExternalIncentive()
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker EndExternalIncentive [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500} {p_rewardToken obl.land/r/onbloc/obl} {p_refundee g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {end_by g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {refund_amount 0}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker EndExternalIncentive [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500} {p_rewardToken gno.land/r/onbloc/obl} {p_refundee g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {end_by g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {refund_amount 0}]}
 
 	std.TestSkipHeights(1)
 

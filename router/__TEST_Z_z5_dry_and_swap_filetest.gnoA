@@ -425,7 +425,7 @@ func drySwapBarQuxExactIn() {
 		quxPath,    // outputToken
 		"1000000",  // amountSpecified
 		"EXACT_IN", // swapType
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/demo/foo:100*POOL*gno.land/r/demo/foo:gno.land/r/onbloc/qux:100", // strRouteArr
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:100*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:100", // strRouteArr
 		"100", // quoteArr
 	)
 	if dryResult != "19733638" {
@@ -445,7 +445,7 @@ func swapBarQuxExactIn() {
 		quxPath,    // outputToken
 		"1000000",  // amountSpecified
 		"EXACT_IN", // swapType
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/demo/foo:100*POOL*gno.land/r/demo/foo:gno.land/r/onbloc/qux:100", // strRouteArr
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/foo:100*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:100", // strRouteArr
 		"100", // quoteArr
 		"0",   // tokenAmountLimit
 	)
@@ -467,7 +467,7 @@ func drySwapQuxBarExactOut() {
 		barPath,     // outputToken
 		"2000000",   // amountSpecified
 		"EXACT_OUT", // swapType
-		"gno.land/r/onbloc/qux:gno.land/r/demo/foo:100*POOL*gno.land/r/demo/foo:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100", // strRouteArr
+		"gno.land/r/onbloc/qux:gno.land/r/onbloc/foo:100*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100", // strRouteArr
 		"100", // quoteArr
 	)
 	if dryResult != "40079976" {
@@ -487,7 +487,7 @@ func swapQuxBarExactOut() {
 		barPath,     // outputToken
 		"2000000",   // amountSpecified
 		"EXACT_OUT", // swapType
-		"gno.land/r/onbloc/qux:gno.land/r/demo/foo:100*POOL*gno.land/r/demo/foo:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100", // strRouteArr
+		"gno.land/r/onbloc/qux:gno.land/r/onbloc/foo:100*POOL*gno.land/r/onbloc/foo:gno.land/r/onbloc/baz:100*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100", // strRouteArr
 		"100",      // quoteArr
 		"40079976", // tokenAmountLimit
 	)

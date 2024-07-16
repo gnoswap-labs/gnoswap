@@ -267,7 +267,7 @@ func setPoolTier() {
 	sr.SetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", 1)
 	sr.SetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", 1)
 
-	sr.SetPoolTier("gno.land/r/demo/foo:gno.land/r/onbloc/qux:500", 2)
+	sr.SetPoolTier("gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500", 2)
 }
 
 func mintBarQux() {
@@ -311,7 +311,7 @@ func createExternalIncentive() {
 
 	sr.AddToken(oblPath)
 	sr.CreateExternalIncentive(
-		"gno.land/r/demo/foo:gno.land/r/onbloc/qux:500", // targetPoolPath
+		"gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500", // targetPoolPath
 		oblPath,                     // rewardToken
 		"1000000000",                // rewardAmount
 		1234569600,                  // startTimestamp

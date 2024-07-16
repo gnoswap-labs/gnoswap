@@ -12,6 +12,8 @@ import (
 	"gno.land/r/gnoswap/gnft"
 
 	"gno.land/p/demo/grc/grc721"
+
+	en "gno.land/r/gnoswap/emission"
 )
 
 // MintAndStake mints and stakes the LP token

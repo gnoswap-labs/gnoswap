@@ -282,7 +282,7 @@ func createExternalIncentiveInit() {
 	sr.AddToken(oblPath)
 
 	sr.CreateExternalIncentive(
-		"gno.land/r/onbloc/bar:gno.land/r/demo/foo:100", // targetPoolPath
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", // targetPoolPath
 		oblPath,                     // rewardToken
 		"1000000000",                // rewardAmount
 		1234569600,                  // startTimestamp
@@ -297,7 +297,7 @@ func createExternalIncentiveIncrease() {
 	std.TestSkipHeights(1)
 
 	sr.CreateExternalIncentive(
-		"gno.land/r/onbloc/bar:gno.land/r/demo/foo:100", // targetPoolPath
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", // targetPoolPath
 		oblPath,                     // rewardToken
 		"1000000000",                // rewardAmount
 		1234569600,                  // startTimestamp

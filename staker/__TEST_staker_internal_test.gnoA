@@ -51,7 +51,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100}]}
 
 	pl.CreatePool(fooPath, quxPath, 500, "79228162514264337593543950337") // external // tick 0 ≈ x1
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/foo:gno.land/r/onbloc/qux:500}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500}]}
 
 	std.TestSkipHeights(3)
 }
@@ -105,7 +105,7 @@ func TestMintBarBaz100(t *testing.T) {
 		gsa.String(),
 	)
 	std.TestSkipHeights(1)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/foo:gno.land/r/onbloc/qux:500} {p_tickLower -1000} {p_tickUpper 1000} {tokenId 3} {liquidity 2050516} {amount0 100000} {amount1 100000}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500} {p_tickLower -1000} {p_tickUpper 1000} {tokenId 3} {liquidity 2050516} {amount0 100000} {amount1 100000}]}
 
 	shouldEQ(t, tokenId, 2)
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
@@ -132,7 +132,7 @@ func TestMintFooQux500(t *testing.T) {
 		max_timeout,
 		gsa.String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/foo:gno.land/r/onbloc/qux:500} {p_tickLower -1000} {p_tickUpper 1000} {tokenId 3} {liquidity 2050516} {amount0 100000} {amount1 100000}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500} {p_tickLower -1000} {p_tickUpper 1000} {tokenId 3} {liquidity 2050516} {amount0 100000} {amount1 100000}]}
 
 	std.TestSkipHeights(1)
 
