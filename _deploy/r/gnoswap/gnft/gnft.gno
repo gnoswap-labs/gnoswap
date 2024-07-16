@@ -160,9 +160,8 @@ func SetTokenURI(tid grc721.TokenID) {
 
 	std.Emit(
 		"GNOSWAP",
-		"m_callType", callType(),
-		"m_origCaller", origCaller(),
-		"m_prevRealm", prevRealm(),
+		"m_origCaller", std.GetOrigCaller().String(),
+		"m_prevRealm", std.PrevRealm().PkgPath(),
 		"p_tokenId", string(tid),
 		"tokenURI", tokenURI,
 		"SetTokenURI", "SetTokenURI",
@@ -189,9 +188,8 @@ func SetTokenURILast() {
 
 		std.Emit(
 			"GNOSWAP",
-			"m_callType", callType(),
-			"m_origCaller", origCaller(),
-			"m_prevRealm", prevRealm(),
+			"m_origCaller", std.GetOrigCaller().String(),
+			"m_prevRealm", std.PrevRealm().PkgPath(),
 			"p_tokenId", string(tid),
 			"tokenURI", tokenURI,
 			"SetTokenURILast", "SetTokenURILast",
