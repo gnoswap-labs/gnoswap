@@ -3,6 +3,7 @@ package staker
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/r/gnoswap/consts"
 
@@ -12,8 +13,8 @@ import (
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/baz"
 	"gno.land/r/demo/foo"
-	"gno.land/r/gnoswap/gns"
 	"gno.land/r/demo/qux"
+	"gno.land/r/gnoswap/gns"
 
 	"gno.land/r/gnoswap/gnft"
 )
@@ -21,16 +22,20 @@ import (
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = 1
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = InternalTier{
+		tier:           1,
+		startTimestamp: time.Now().Unix(),
+		startHeight:    std.GetHeight(),
+		updateHeight:   std.GetHeight(),
+	}
 
 	// tier 2
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = 2
-	poolTiers["ATOM/GNS_500"] = 2
-
-	// tier 3
-	poolTiers["ATOM/GNOT_500"] = 3
-	poolTiers["ATOM/USDT_500"] = 3
-	poolTiers["ATOM/WETH_500"] = 3
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/baz:100"] = InternalTier{
+		tier:           2,
+		startTimestamp: time.Now().Unix(),
+		startHeight:    std.GetHeight(),
+		updateHeight:   std.GetHeight(),
+	}
 
 	// set pool create fee to 0 for testing
 	std.TestSetOrigCaller(gsa)

@@ -14,8 +14,8 @@ import (
 	"gno.land/r/demo/bar"
 	"gno.land/r/demo/qux"
 
-	"gno.land/r/gnoswap/gns"
 	"gno.land/r/demo/obl"
+	"gno.land/r/gnoswap/gns"
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
@@ -124,6 +124,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 }
 
 func TestStakeToken01(t *testing.T) {
+	std.TestSkipHeights(1000) // active
 	std.TestSetRealm(gsaRealm)
 	StakeToken(1) // GNFT tokenId
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker StakeToken [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {amount0 368} {amount1 1000}]}

@@ -558,15 +558,15 @@ func Reposition(
 		"m_callType", callType(),
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
-		"p_poolPath", position.poolKey,
+		"p_tokenId", uint64ToStr(tokenId),
 		"p_tickLower", int32ToStr(tickLower),
 		"p_tickUpper", int32ToStr(tickUpper),
-		"tokenId", uint64ToStr(tokenId),
 		"liquidity", liquidity.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"old_tickLower", int32ToStr(oldTickLower),
 		"old_tickUpper", int32ToStr(oldTickUpper),
+		"poolPath", position.poolKey,
 	)
 
 	return tokenId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()

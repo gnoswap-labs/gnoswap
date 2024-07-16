@@ -21,10 +21,14 @@ var (
 	test_liquidityExpectStr = "100000000"
 )
 
+func init() {
+	std.TestSkipHeights(100)
+}
+
 // 1. Create Foo:Bar Pool
 func TestCreateFooBarPool(t *testing.T) {
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 0)
 	shouldEQ(t, gns.TotalSupply(), 100000000000000)
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 0)
 	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 0)
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 0)
 
@@ -36,10 +40,10 @@ func TestCreateFooBarPool(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}	shouldEQ(t, len(pools), 1)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, gns.TotalSupply(), 100004387842345)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 3290881758)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 877568469)
+	shouldEQ(t, gns.TotalSupply(), 100001426940600)
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 0)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 1070205450)
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), 285388120)
 }
 
 // 2. Create Bar:Baz Pool

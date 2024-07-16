@@ -3,6 +3,7 @@ package staker
 import (
 	"std"
 	"testing"
+	"time"
 
 	"gno.land/r/gnoswap/consts"
 
@@ -28,16 +29,12 @@ func init() {
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = 1 // DEV
-
-	// tier 2
-	poolTiers["GNS/USDT_500"] = 2
-	poolTiers["ATOM/GNS_500"] = 2
-
-	// tier 3
-	poolTiers["ATOM/GNOT_500"] = 3
-	poolTiers["ATOM/USDT_500"] = 3
-	poolTiers["ATOM/WETH_500"] = 3
+	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = InternalTier{
+		tier:           1,
+		startTimestamp: time.Now().Unix(),
+		startHeight:    std.GetHeight(),
+		updateHeight:   std.GetHeight(),
+	}
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
@@ -205,13 +202,11 @@ func TestUnstakeToken01(t *testing.T) {
 	std.TestSkipHeights(400) //  enough time to claim external reward
 
 	// check reward balance before unstake
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000000000000) // internal
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000002318056) // internal
 	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000000000)  // external
 
 	response := ApiGetRewardsByLpTokenId(1)
-	shouldEQ(t, response, `{"stat":{"height":542,"timestamp":1234569985},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/qux:500","rewardTokenPath":"gno.land/r/gnoswap/gns","rewardTokenAmount":244595455,"stakeTimestamp":1234567955,"stakeHeight":136,"incentiveStart":1234567955},{"incentiveType":"EXTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/qux:500","rewardTokenPath":"gno.land/r/demo/obl","rewardTokenAmount":34630,"stakeTimestamp":1234567955,"stakeHeight":136,"incentiveStart":1234568060}]}]}`)
-	// GNS 146757273
-	// OBL 4158
+	shouldEQ(t, response, `{"stat":{"height":542,"timestamp":1234568728},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","targetPoolPath":"gno.land/r/demo/bar:gno.land/r/demo/qux:500","rewardTokenPath":"gno.land/r/gnoswap/gns","rewardTokenAmount":230173381,"stakeTimestamp":1234567916,"stakeHeight":136,"incentiveStart":1234567916}]}]}`)
 
 	UnstakeToken(1) // GNFT tokenId
 	std.TestSkipHeights(1)
@@ -219,8 +214,8 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), gsa)
 
 	// check reward balance after unstake
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000244350860)
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000034596)
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000161828043)
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000000000)
 }
 
 func TestUnstakeToken02(t *testing.T) {
@@ -237,8 +232,8 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), gsa)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100001504353475) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000282353)  // external
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100001437809926) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000000000)  // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {
