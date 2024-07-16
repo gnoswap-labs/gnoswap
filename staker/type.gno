@@ -20,6 +20,7 @@ type ExternalIncentive struct {
 	rewardLeft     *u256.Uint
 	startTimestamp int64
 	endTimestamp   int64
+	rewardPerBlock uint64
 	refundee       std.Address
 }
 
