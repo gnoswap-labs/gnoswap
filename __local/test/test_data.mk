@@ -1,4 +1,5 @@
-# make -f __local/test/test_data.mk init init-test
+###### DEPLOY
+# make -f __local/test/test_data.mk init
 
 ADDR_GSA := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
 ADDR_ONBLOC := g12vx7dn3dqq89mz550zwunvg4qw6epq73d9csay
@@ -33,14 +34,9 @@ INCENTIVE_END := $(shell expr $(TOMORROW_MIDNIGHT) + 7776000) # 7776000 SECONDS 
 
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 
-# GNOLAND_RPC_URL ?= http://localhost:26657
-# CHAINID ?= dev
 
-GNOLAND_RPC_URL ?= https://dev.rpc.gnoswap.io:443
-CHAINID ?= dev.gnoswap
-
-# GNOLAND_RPC_URL ?= https://rpc.test4.gno.land:443
-# CHAINID ?= test4
+GNOLAND_RPC_URL ?= https://rpc.test4.gno.land:443
+CHAINID ?= test4
 
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
 
