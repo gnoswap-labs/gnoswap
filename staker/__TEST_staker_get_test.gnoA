@@ -15,7 +15,7 @@ import (
 	"gno.land/r/onbloc/qux"
 
 	"gno.land/r/gnoswap/gns"
-	"obl.land/r/onbloc/obl"
+	"gno.land/r/onbloc/obl"
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
@@ -107,7 +107,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 
 	CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", // targetPoolPath
-		"obl.land/r/onbloc/obl",                         // rewardToken
+		"gno.land/r/onbloc/obl",                         // rewardToken
 		"1000000000",                                  // rewardAmount
 		1234569600,                                    // startTimestamp
 		1234569600+TIMESTAMP_90DAYS,                   // endTimestamp
@@ -119,7 +119,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	obl.Approve(a2u(consts.STAKER_ADDR), uint64(10_000_000_000))
 	std.TestSkipHeights(1)
 
-	CreateExternalIncentive("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", "obl.land/r/onbloc/obl", "1000000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
+	CreateExternalIncentive("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", "gno.land/r/onbloc/obl", "1000000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
 	std.TestSkipHeights(1)
 }
 

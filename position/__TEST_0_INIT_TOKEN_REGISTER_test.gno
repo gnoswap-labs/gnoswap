@@ -13,7 +13,7 @@ import (
 
 	"gno.land/r/demo/wugnot"
 
-	"obl.land/r/onbloc/obl"
+	"gno.land/r/onbloc/obl"
 
 	"gno.land/r/gnoswap/gns"
 
@@ -160,7 +160,7 @@ func init() {
 	pl.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
 	pl.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	pl.RegisterGRC20Interface("obl.land/r/onbloc/obl", OBLToken{})
+	pl.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
 	pl.RegisterGRC20Interface("gno.land/r/gnoswap/gns", GNSToken{})
 	pl.RegisterGRC20Interface("gno.land/r/onbloc/usdc", USDCToken{})
 }

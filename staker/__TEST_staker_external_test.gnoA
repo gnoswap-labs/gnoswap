@@ -12,7 +12,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/gnoswap/gns"
-	"obl.land/r/onbloc/obl"
+	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
 
 	"gno.land/r/gnoswap/gnft"
@@ -140,7 +140,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	AddToken(oblPath)
 	CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath
-		"obl.land/r/onbloc/obl",                         // rewardToken
+		"gno.land/r/onbloc/obl",                         // rewardToken
 		"100000000",                                   // rewardAmount
 		1234569600,                                    // startTimestamp
 		1234569600+TIMESTAMP_90DAYS,                   // endTimestamp

@@ -9,7 +9,7 @@ import (
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/gnoswap/gns"
-	"obl.land/r/onbloc/obl"
+	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
 	"gno.land/r/demo/wugnot"
 
@@ -318,7 +318,7 @@ func TestCollectReward03(t *testing.T) {
 
 	shouldEQ(t, len(positionExternal[3]), 1)
 	shouldEQ(t, positionExternal[3][0].tokenAmount, 186791)
-	shouldEQ(t, positionExternal[3][0].tokenPath, "obl.land/r/onbloc/obl")
+	shouldEQ(t, positionExternal[3][0].tokenPath, "gno.land/r/onbloc/obl")
 
 	std.TestSetRealm(gsaRealm)
 	CollectReward(3)

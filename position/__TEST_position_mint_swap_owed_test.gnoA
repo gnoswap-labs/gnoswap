@@ -8,7 +8,7 @@ import (
 
 	pl "gno.land/r/gnoswap/pool"
 
-	"obl.land/r/onbloc/obl"
+	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/usdc"
 
 	"gno.land/r/gnoswap/gns"

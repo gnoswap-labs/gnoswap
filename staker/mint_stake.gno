@@ -28,6 +28,8 @@ func MintAndStake(
 	amount1Min string, // *u256.Uint
 	deadline int64,
 ) (uint64, string, string, string, string) { // tokenId, liquidity, amount0, amount1, poolPath ( *u256.Uint x3)
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
 
 	// if one click native
 	if token0 == consts.GNOT || token1 == consts.GNOT {

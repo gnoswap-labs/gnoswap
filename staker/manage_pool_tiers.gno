@@ -24,6 +24,9 @@ func GetPoolWithTiers() map[string]InternalTier {
 // - pool exists in poolTiers
 // - tier is not valid
 func SetPoolTier(pool string, tier uint64) {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	// panic if pool does not exist
 	if !(pl.DoesPoolPathExist(pool)) {
 		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__SetPoolTier() || pool(%s) does not exist"))
@@ -73,6 +76,9 @@ func SetPoolTier(pool string, tier uint64) {
 // - tier is not valid
 // - pool is default pool
 func ChangePoolTier(pool string, tier uint64) {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	// panic if pool does not exist in poolTiers
 	internal, exist := poolTiers[pool]
 	if !exist {
@@ -118,6 +124,9 @@ func ChangePoolTier(pool string, tier uint64) {
 // - caller is not admin
 // - pool is default pool
 func RemovePoolTier(pool string) {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	if pool == MUST_EXISTS_IN_TIER_1 {
 		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__RemovePoolTier() || Cannot change tier of this pool"))
 	}

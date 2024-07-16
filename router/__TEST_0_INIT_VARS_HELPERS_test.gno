@@ -21,7 +21,7 @@ var (
 	bazPath string = "gno.land/r/onbloc/baz"
 	quxPath string = "gno.land/r/onbloc/qux"
 
-	oblPath string = "obl.land/r/onbloc/obl"
+	oblPath string = "gno.land/r/onbloc/obl"
 	// wugnotPath string = "gno.land/r/demo/wugnot" // from consts
 	// gnsPath string = "gno.land/r/gnoswap/gns" // from consts
 

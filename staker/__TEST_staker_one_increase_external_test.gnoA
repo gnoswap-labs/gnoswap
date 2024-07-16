@@ -12,7 +12,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/gnoswap/gns"
-	"obl.land/r/onbloc/obl"
+	"gno.land/r/onbloc/obl"
 
 	"gno.land/r/gnoswap/gnft"
 	"gno.land/r/gnoswap/consts"
@@ -241,11 +241,11 @@ func TestEndExternalIncentive(t *testing.T) {
 
 	// incentive time isn't over yet
 	shouldPanicWithMsg(t, func() {
-		EndExternalIncentive(gsa.String(), "gno.land/r/onbloc/bar:gno.land/r/demo/foo:500", "obl.land/r/onbloc/obl")
+		EndExternalIncentive(gsa.String(), "gno.land/r/onbloc/bar:gno.land/r/demo/foo:500", "gno.land/r/onbloc/obl")
 	}, "[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(1242345600), current(1234569730)")
 
 	std.TestSkipHeights(9999999)
-	EndExternalIncentive(gsa.String(), "gno.land/r/onbloc/bar:gno.land/r/demo/foo:500", "obl.land/r/onbloc/obl") // use same parameter as CreateExternalIncentive()
+	EndExternalIncentive(gsa.String(), "gno.land/r/onbloc/bar:gno.land/r/demo/foo:500", "gno.land/r/onbloc/obl") // use same parameter as CreateExternalIncentive()
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker EndExternalIncentive [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/demo/foo:500} {p_rewardToken obl.land/r/onbloc/obl} {p_refundee g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {end_by g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {refund_amount 0}]}
 
 	shouldEQ(t, len(incentives), 0)

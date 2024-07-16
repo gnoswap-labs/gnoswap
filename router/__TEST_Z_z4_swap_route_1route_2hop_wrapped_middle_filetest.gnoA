@@ -7,7 +7,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
-	"obl.land/r/onbloc/obl"
+	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/gns"
@@ -30,7 +30,7 @@ var (
 	bazPath string = "gno.land/r/onbloc/baz"
 	quxPath string = "gno.land/r/onbloc/qux"
 
-	oblPath string = "obl.land/r/onbloc/obl"
+	oblPath string = "gno.land/r/onbloc/obl"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -184,7 +184,7 @@ func init() {
 	pl.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
 	pl.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
 	pl.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
-	pl.RegisterGRC20Interface("obl.land/r/onbloc/obl", OBLToken{})
+	pl.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	pl.RegisterGRC20Interface("gno.land/r/gnoswap/gns", GNSToken{})
 
@@ -192,7 +192,7 @@ func init() {
 	rr.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
 	rr.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
 	rr.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
-	rr.RegisterGRC20Interface("obl.land/r/onbloc/obl", OBLToken{})
+	rr.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
 	rr.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	rr.RegisterGRC20Interface("gno.land/r/gnoswap/gns", GNSToken{})
 }
