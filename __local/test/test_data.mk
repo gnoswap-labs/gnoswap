@@ -1,7 +1,7 @@
-# make -f __local/test/test_data.mk init init-test set-pool-creation-fee
-# make -f __local/test/test_data.mk init init-test test-pool-create-01-07 test-mint-01-07 set-pool-creation-fee
+# make -f __local/test/test_data.mk init init-test
 
 ADDR_GSA := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
+ADDR_ONBLOC := g12vx7dn3dqq89mz550zwunvg4qw6epq73d9csay
 
 ADDR_LP01 := g1qf5863trkaq447zr2xdmql83g0twzl37dm9qqt
 ADDR_LP02 := g1ta0w7j4f586kwqu584z5h5sjurzywz3na7qg0a
@@ -14,7 +14,7 @@ ADDR_POOL := g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v
 ADDR_POSITION := g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye
 ADDR_ROUTER := g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp
 ADDR_STAKER := g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3
-ADDR_PROTOCOL_FEE := g1r340tuven27z8wq50u8d20eqrsj470082682tp
+
 
 ADDR_GNS := g13ffa5r3mqfxu3s7ejl02scq9536wt6c2t789dm
 ADDR_GNFT := g1mclfz2dn4lnez0lcjwgz67hh72rdafjmufvfmw
@@ -33,8 +33,11 @@ INCENTIVE_END := $(shell expr $(TOMORROW_MIDNIGHT) + 7776000) # 7776000 SECONDS 
 
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 
-GNOLAND_RPC_URL ?= http://localhost:26657
-CHAINID ?= dev
+# GNOLAND_RPC_URL ?= http://localhost:26657
+# CHAINID ?= dev
+
+GNOLAND_RPC_URL ?= https://dev.rpc.gnoswap.io:443
+CHAINID ?= dev.gnoswap
 
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
 
@@ -103,12 +106,10 @@ wait:
 send-ugnot-must:
 	$(info ************ send ugnot to necessary accounts ************)
 	@echo "" | gnokey maketx send -send 10000000000ugnot -to $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" test1 > /dev/null
-	@echo "" | gnokey maketx send -send 10000000000ugnot -to $(ADDR_PROTOCOL_FEE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" test1 > /dev/null
+	@echo "" | gnokey maketx send -send 10000000000ugnot -to $(ADDR_ONBLOC) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" test1 > /dev/null
 	@echo "" | gnokey maketx send -send 10000000000ugnot -to $(ADDR_REGISTER) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" test1 > /dev/null
 	@echo
 
-
-# send ugnot to test accounts
 test-send-ugnot:
 	$(info ************ send ugnot to test accounts ************)
 	@echo "" | gnokey maketx send -send 10000000000ugnot -to $(ADDR_LP01) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" test1 > /dev/null
@@ -119,29 +120,28 @@ test-send-ugnot:
 
 # deploy test grc20 tokens
 deploy-foo:
-	@echo "" | gnokey maketx send -send 10000000000ugnot -to $(ADDR_PROTOCOL_FEE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" test1 > /dev/null
 	$(info ************ deploy foo ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/foo -pkgpath gno.land/r/onbloc/foo -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/foo -pkgpath gno.land/r/onbloc/foo -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" onbloc > /dev/null
 	@echo
 
 deploy-bar:
 	$(info ************ deploy bar ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/bar -pkgpath gno.land/r/onbloc/bar -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/bar -pkgpath gno.land/r/onbloc/bar -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" onbloc > /dev/null
 	@echo
 
 deploy-baz:
 	$(info ************ deploy baz ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/baz -pkgpath gno.land/r/onbloc/baz -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/baz -pkgpath gno.land/r/onbloc/baz -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" onbloc > /dev/null
 	@echo
 
 deploy-qux:
 	$(info ************ deploy qux ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/qux -pkgpath gno.land/r/onbloc/qux -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/qux -pkgpath gno.land/r/onbloc/qux -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" onbloc > /dev/null
 	@echo
 
 deploy-obl:
 	$(info ************ deploy obl ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/obl -pkgpath gno.land/r/onbloc/obl -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/obl -pkgpath gno.land/r/onbloc/obl -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" onbloc > /dev/null
 	@echo
 
 
@@ -158,7 +158,7 @@ deploy-gnft:
 
 deploy-usdc:
 	$(info ************ deploy usdc ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/usdc -pkgpath gno.land/r/onbloc/usdc -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/usdc -pkgpath gno.land/r/onbloc/usdc -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" onbloc > /dev/null
 	@echo
 
 
@@ -236,7 +236,7 @@ deploy-protocol_fee:
 # Register
 register-token:
 	$(info ************ deploy register_gnodev ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/register_gnodev -pkgpath gno.land/r/demo/register_gnodev -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" token_register > /dev/null
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/__local/grc20_tokens/register_gnodev -pkgpath gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5/register_gnodev -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" register > /dev/null
 	@echo
 
 
@@ -478,7 +478,6 @@ mint-and-stake:
 
 ## test swap
 swap-gns-to-gnot:
-	@$(MAKE) -f $(MAKEFILE) print-fee-collector
 
 	$(info ************ swap gns -> gnot, exact_in // gnoswap_admin ************)
 
@@ -491,11 +490,9 @@ swap-gns-to-gnot:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func SwapRoute -args "gno.land/r/gnoswap/gns" -args "gno.land/r/demo/wugnot" -args 50000 -args "EXACT_IN" -args "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:3000" -args "100" -args "1" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
-	@$(MAKE) -f $(MAKEFILE) print-fee-collector
 	@echo
 
 swap-gnot-to-gns:
-	@$(MAKE) -f $(MAKEFILE) print-fee-collector
 
 	$(info ************ swap gnot -> gns, exact_in // gnoswap_admin ************)
 
@@ -508,11 +505,9 @@ swap-gnot-to-gns:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func SwapRoute -args "gno.land/r/demo/wugnot" -args "gno.land/r/gnoswap/gns" -args 50000 -args "EXACT_IN" -args "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000" -args "100" -args "1" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
-	@$(MAKE) -f $(MAKEFILE) print-fee-collector
 	@echo
 
 swap-exact-in-single-bar-to-baz:
-	@$(MAKE) -f $(MAKEFILE) print-fee-collector
 
 	$(info ************ swap bar -> baz, exact_in // gnoswap_tr01 ************)
 
@@ -525,7 +520,6 @@ swap-exact-in-single-bar-to-baz:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func SwapRoute -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/baz" -args 50000 -args "EXACT_IN" -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100" -args "100" -args "1" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_tr01 > /dev/null
 	@echo
 
-	@$(MAKE) -f $(MAKEFILE) print-fee-collector
 	@echo
 
 swap-exact-in-single-baz-to-bar:
@@ -540,7 +534,6 @@ swap-exact-in-single-baz-to-bar:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func SwapRoute -args "gno.land/r/onbloc/baz" -args "gno.land/r/onbloc/bar" -args 50000 -args "EXACT_IN" -args "gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:100" -args "100" -args "1" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_tr01 > /dev/null
 	@echo
 
-	@$(MAKE) -f $(MAKEFILE) print-fee-collector
 	@echo
 
 swap-exact-in-single-foo-to-gns:
@@ -555,7 +548,6 @@ swap-exact-in-single-foo-to-gns:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func SwapRoute -args "gno.land/r/onbloc/foo" -args "gno.land/r/gnoswap/gns" -args 50000 -args "EXACT_IN" -args "gno.land/r/onbloc/foo:gno.land/r/gnoswap/gns:500" -args "100" -args "1" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_tr01 > /dev/null
 	@echo
 
-	@$(MAKE) -f $(MAKEFILE) print-fee-collector
 	@echo
 
 swap-exact-out-single-foo-to-gns:
@@ -570,11 +562,9 @@ swap-exact-out-single-foo-to-gns:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func SwapRoute -args "gno.land/r/onbloc/foo" -args "gno.land/r/gnoswap/gns" -args 50000 -args "EXACT_OUT" -args "gno.land/r/onbloc/foo:gno.land/r/gnoswap/gns:500" -args "100" -args "50000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 100ugnot -gas-wanted 100000000 -memo "" gnoswap_tr01 > /dev/null
 	@echo
 
-	@$(MAKE) -f $(MAKEFILE) print-fee-collector
 	@echo
 
 swap-exact-in-multi-foo-to-gns-to-wugnot:
-	@$(MAKE) -f $(MAKEFILE) print-fee-collector
 
 	$(info ************ swap foo -> gns -> wugnot, exact_in // gnoswap_tr01 ************)
 
@@ -587,7 +577,6 @@ swap-exact-in-multi-foo-to-gns-to-wugnot:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/router -func SwapRoute -args "gno.land/r/onbloc/foo" -args "gno.land/r/demo/wugnot" -args 50000 -args "EXACT_IN" -args "gno.land/r/onbloc/foo:gno.land/r/gnoswap/gns:500*POOL*gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:3000" -args "100" -args "1" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 20000000 -memo "" gnoswap_tr01 > /dev/null
 	@echo
 
-	@$(MAKE) -f $(MAKEFILE) print-fee-collector
 	@echo
 
 
@@ -705,82 +694,3 @@ burn-position-7:
 set-pool-creation-fee:
 	$(info ************ set pool creation fee to 100_000_000 uGNS ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/pool -func SetPoolCreationFee -args 100000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-
-
-## ETC
-print-fee-collector:
-	$(info ************ print fee collector balance ************)
-	@printf "BAR "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/onbloc/bar.BalanceOf(\"$(ADDR_PROTOCOL_FEE)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
-	@echo
-
-	@printf "BAZ "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/onbloc/baz.BalanceOf(\"$(ADDR_PROTOCOL_FEE)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
-	@echo
-
-	@printf "QUX "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/onbloc/qux.BalanceOf(\"$(ADDR_PROTOCOL_FEE)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
-	@echo
-
-	@printf "FOO "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/onbloc/foo.BalanceOf(\"$(ADDR_PROTOCOL_FEE)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
-	@echo
-
-	@printf "GNS "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/gnoswap/gns.BalanceOf(\"$(ADDR_PROTOCOL_FEE)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
-	@echo
-
-	@printf "OBL "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="obl.land/r/onbloc/obl.BalanceOf(\"$(ADDR_PROTOCOL_FEE)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
-	@echo
-
-	@printf "USDC "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/onbloc/usdc.BalanceOf(\"$(ADDR_PROTOCOL_FEE)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
-	@echo
-
-	@printf "WUGNOT "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/demo/wugnot.BalanceOf(\"$(ADDR_PROTOCOL_FEE)\")"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
-	@echo
-
-	@printf "UGNOT "
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="bank/balances/$(ADDR_PROTOCOL_FEE)"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
-	@echo
-
-
-## ETC
-emission-debug:
-	$(info ************ emission debug ************)
-	@curl -s '$(GNOLAND_RPC_URL)/abci_query?path="vm/qeval"&data="gno.land/r/gnoswap/staker.GetPrintInfo()"' | jq -r '.result.response.ResponseBase.Data' | base64 -d
-
-
-# {
-#   "height": 209,
-#   "time": 1720681191,
-#   "gns": {
-#     "staker": 2193921191,
-#     "devOps": 585045641,
-#     "communityPool": 146261396,
-#     "xGNS": 0,
-#     "protocolFee": 0,
-#     "GnoswapAdmin": 99999963999999
-#   },
-#   "pool": [
-#     {
-#       "poolPath": "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000",
-#       "tier": 1,
-#       "numPoolSameTier": 1,
-#       "poolReward": 2065496535,
-#       "position": [
-#         {
-#           "lpTokenId": 8,
-#           "stakedHeight": 187,
-#           "stakedTimestamp": 1720681186,
-#           "stakedDuration": 5,
-#           "fullAmount": 2065496535,
-#           "ratio": 30,
-#           "ratioAmount": 619648960
-#         }
-#       ]
-#     }
-#   ]
-# }
