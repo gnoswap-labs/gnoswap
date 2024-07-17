@@ -9,10 +9,10 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
-	"gno.land/r/demo/bar"
-	"gno.land/r/demo/baz"
-	"gno.land/r/demo/obl"
-	"gno.land/r/demo/qux"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/obl"
+	"gno.land/r/onbloc/qux"
 	"gno.land/r/gnoswap/gns"
 
 	"gno.land/r/gnoswap/gnft"
@@ -25,10 +25,8 @@ func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // internal, tier 1 // tick 10_000 ≈ x2.7
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500}]}
 
 	pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337") // will be external
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100}]}
 
 	std.TestSkipHeights(3)
 }
@@ -52,7 +50,6 @@ func TestMintBarQux500_1(t *testing.T) {
 		max_timeout,
 		gsa.String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 1} {liquidity 1243732} {amount0 36790} {amount1 100000}]}
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, tokenId, 1)
@@ -80,7 +77,6 @@ func TestMintBarBaz100_2(t *testing.T) {
 		max_timeout,
 		gsa.String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100} {p_tickLower -1000} {p_tickUpper 1000} {tokenId 2} {liquidity 2050516} {amount0 100000} {amount1 100000}]}
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, tokenId, 2)
@@ -108,7 +104,6 @@ func TestMintBarBaz100_3(t *testing.T) {
 		max_timeout,
 		gsa.String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100} {p_tickLower -1000} {p_tickUpper 1000} {tokenId 3} {liquidity 2050516} {amount0 100000} {amount1 100000}]}
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, tokenId, 3)
@@ -124,13 +119,12 @@ func TestCreateExternalIncentive(t *testing.T) {
 
 	AddToken(oblPath)
 	CreateExternalIncentive(
-		"gno.land/r/demo/bar:gno.land/r/demo/baz:100", // targetPoolPath
-		"gno.land/r/demo/obl",                         // rewardToken
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath
+		"gno.land/r/onbloc/obl",                         // rewardToken
 		"100000000",                                   // rewardAmount
 		1234569600,                                    // startTimestamp
 		1234569600+TIMESTAMP_90DAYS,                   // endTimestamp
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker CreateExternalIncentive [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100} {p_rewardToken gno.land/r/demo/obl} {p_rewardAmount 100000000} {p_startTimestamp 1234569600} {p_endTimestamp 1242345600}]}
 
 	std.TestSkipHeights(1)
 }
@@ -141,7 +135,6 @@ func TestStakeExternal_2(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
 	StakeToken(2)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker StakeToken [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 2} {poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100} {amount0 100000} {amount1 100000}]}
 
 	std.TestSkipHeights(2)
 
@@ -153,7 +146,6 @@ func TestStakeExternal_3(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(3))
 	StakeToken(3)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker StakeToken [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 3} {poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100} {amount0 100000} {amount1 100000}]}
 
 	std.TestSkipHeights(2)
 
@@ -170,8 +162,6 @@ func TestCollectExternalReward_2(t *testing.T) {
 
 	std.TestSkipHeights(777601) // 45 days + 1 block
 	CollectReward(2)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenPath gno.land/r/demo/obl} {p_internal false} {feeAmount 248728}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker CollectReward [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 2} {poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100} {rewardToken gno.land/r/demo/obl} {recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount 24624168}]}
 
 	std.TestSkipHeights(1)
 
@@ -188,8 +178,6 @@ func TestCollectExternalReward_3(t *testing.T) {
 
 	std.TestSkipHeights(1)
 	CollectReward(3)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker handleRewardFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenPath gno.land/r/demo/obl} {p_internal false} {feeAmount 248729}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker CollectReward [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 3} {poolPath gno.land/r/demo/bar:gno.land/r/demo/baz:100} {rewardToken gno.land/r/demo/obl} {recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount 24624231}]}
 
 	std.TestSkipHeights(1)
 

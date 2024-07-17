@@ -211,15 +211,18 @@ func CollectReward(tokenId uint64) string { // poolPath
 	}
 
 	// INTERNAL gns emission
-	toGive := rewardMathComputeInternalRewardAmount(tokenId)
+	fullAmount, toGive := rewardMathComputeInternalRewardAmount(tokenId)
 	if toGive == 0 {
 		return poolPath
 	}
-
 	toUser := handleUnstakingFee(consts.GNS_PATH, toGive, true)
 	gns.Transfer(a2u(deposit.owner), toUser)
 
 	positionGns[tokenId] = 0
+	poolGns[poolPath] -= fullAmount
+
+	left := fullAmount - toGive
+	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), left)
 
 	// emit internal reward tokens
 	std.Emit(

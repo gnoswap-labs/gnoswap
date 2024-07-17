@@ -9,8 +9,6 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	en "gno.land/r/gnoswap/emission"
-
 	"gno.land/r/gnoswap/consts"
 	"gno.land/r/gnoswap/gns"
 )
@@ -168,23 +166,35 @@ func printInfo(prev currentInfo) currentInfo {
 	println("***********************")
 	println("> height:", curr.height)
 	println("> height inc by:", curr.height-prev.height)
+	println()
 	println("> time:", curr.time)
 	println("> time inc by:", curr.time-prev.time)
 	println()
 	println("GNS BALANCE CHANGE")
 	println("> staker_bal\t\t", curr.gnsStaker)
 	println("> staker_chg\t\t", int64(curr.gnsStaker-prev.gnsStaker))
+	println()
 	println("> dev ops\t\t", curr.gnsDevOps)
 	println("> dev ops_chg\t\t", int(curr.gnsDevOps-prev.gnsDevOps))
+	println()
 	println("> community pool_bal\t", curr.gnsCommunityPool)
 	println("> community pool_chg\t", int(curr.gnsCommunityPool-prev.gnsCommunityPool))
+	println()
 	println("> x_gns_bal\t\t", curr.gnsXGNS)
 	println("> x_gns_chg\t\t", int(curr.gnsXGNS-prev.gnsXGNS))
+	println()
 	println("> protocol fee_bal\t", curr.gnsProtocolFee)
 	println("> protocol fee_chg\t", int(curr.gnsProtocolFee-prev.gnsProtocolFee))
+	println()
 	println("> GSA_bal\t\t", curr.gnsGSA)
 	println("> GSA_chg\t\t", int(curr.gnsGSA-prev.gnsGSA))
 	println()
+	println("GNS POOL")
+	for k, v := range poolGns {
+		println("> poolPath:", k, "amount:", v)
+	}
+	println()
+
 	println("GNS POSITION")
 	for k, v := range positionGns {
 		println("> tokenId:", k, "amount:", v)
@@ -226,8 +236,8 @@ type ApiEmissionDebugPosition struct {
 }
 
 func GetPrintInfo() string {
-	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	// en.MintAndDistributeGns()
+	// CalcPoolPosition()
 
 	emissionDebug := ApiEmissionDebugInfo{}
 	emissionDebug.Height = std.GetHeight()
@@ -334,7 +344,7 @@ func makePositionsNode(poolPath string) []*json.Node {
 			fullAmount := positionGns[lpTokenId]
 			ratio := getRewardRatio(stakedDuration)
 			ratioAmount := (fullAmount * ratio) / 100
-			warmUpAmount := rewardMathComputeInternalRewardAmount(lpTokenId)
+			_, warmUpAmount := rewardMathComputeInternalRewardAmount(lpTokenId)
 
 			positions = append(positions, json.ObjectNode("", map[string]*json.Node{
 				"lpTokenId":       json.NumberNode("lpTokenId", float64(lpTokenId)),

@@ -9,11 +9,9 @@ import (
 	"gno.land/r/gnoswap/consts"
 
 	pos "gno.land/r/gnoswap/position"
-
-	"gno.land/r/gnoswap/gns"
 )
 
-func rewardMathComputeInternalRewardAmount(tokenId uint64) uint64 {
+func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	println("REWARD__rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
 	deposit := deposits[tokenId]
 
@@ -28,7 +26,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) uint64 {
 	// 100% amount
 	gnsFullAmount := positionGns[tokenId]
 	if gnsFullAmount == 0 {
-		return 0
+		return 0, 0
 	}
 
 	var gnsAmountToGive uint64
@@ -212,22 +210,22 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) uint64 {
 	println("REWARD__begin100:", begin100)
 
 	//  transfer to protocol_fee contract
-	_gnsAmountLeft := gnsFullAmount - gnsAmountToGive
-	println("REWARD__gnsAmountLeft:", _gnsAmountLeft)
-	_stakerGns := gnsBalance(consts.STAKER_ADDR)
-	println("REWARD__stakerGns:", _stakerGns)
-	toFee := min(_gnsAmountLeft, _stakerGns)
-	println("REWARD__toFee:", toFee)
-	println("REWARD__BEFORE_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
-	println("REWARD__BEFORE_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
-	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), toFee)
-	println("REWARD__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
-	println("REWARD__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
+	gnsAmountLeft := gnsFullAmount - gnsAmountToGive
+	// println("REWARD__gnsAmountLeft:", _gnsAmountLeft)
+	// _stakerGns := gnsBalance(consts.STAKER_ADDR)
+	// println("REWARD__stakerGns:", _stakerGns)
+	// toFee := min(_gnsAmountLeft, _stakerGns)
+	// println("REWARD__toFee:", toFee)
+	// println("REWARD__BEFORE_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
+	// println("REWARD__BEFORE_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
+	// gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), toFee)
+	// println("REWARD__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
+	// println("REWARD__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
 
-	poolGns[deposit.targetPoolPath] -= gnsFullAmount
-	positionGns[tokenId] = gnsAmountToGive
+	// poolGns[deposit.targetPoolPath] -= gnsFullAmount
+	// positionGns[tokenId] = gnsAmountToGive
 
-	return gnsAmountToGive
+	return gnsFullAmount, gnsAmountToGive
 }
 
 func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string, durationRatio uint64) uint64 {

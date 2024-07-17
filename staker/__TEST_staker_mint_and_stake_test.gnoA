@@ -7,8 +7,8 @@ import (
 
 	pl "gno.land/r/gnoswap/pool"
 
-	"gno.land/r/demo/bar"
-	"gno.land/r/demo/qux"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/qux"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/gns"
 
@@ -23,7 +23,7 @@ import (
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:3000"] = InternalTier{
+	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000"] = InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
 		startHeight:    std.GetHeight(),
@@ -43,10 +43,8 @@ func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	pl.CreatePool(barPath, quxPath, 3000, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500}]}
 
 	pl.CreatePool(consts.GNOT, consts.GNS_PATH, 3000, "79228162514264337593543950337") //x1
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500}]}
 
 	std.TestSkipHeights(1)
 }
@@ -87,8 +85,6 @@ func TestMintAndStakeNative(t *testing.T) {
 		"1",             // amount1Min
 		max_timeout,
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/position Mint [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/staker} {p_poolPath gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500} {p_tickLower -11000} {p_tickUpper -9000} {tokenId 2} {liquidity 1243732} {amount0 100000} {amount1 36790}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker StakeToken [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 2} {poolPath gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500} {amount0 100000} {amount1 36790}]}
 
 	shouldEQ(t, lpTokenId, uint64(1))
 	std.TestSkipHeights(1)
@@ -125,8 +121,6 @@ func TestMintAndStakeGRC20Pair(t *testing.T) {
 		"1",          // amount1Min
 		max_timeout,
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/position Mint [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/staker} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 1} {liquidity 12437} {amount0 368} {amount1 1000}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker StakeToken [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {amount0 368} {amount1 1000}]}
 	shouldEQ(t, lpTokenId, uint64(2))
 
 	std.TestSkipHeights(1)

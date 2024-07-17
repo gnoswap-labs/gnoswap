@@ -49,13 +49,16 @@ var (
 )
 
 func CalcPoolPosition() {
+	println()
+	println("=== [ START START START ] CALC__CalcPoolPosition")
 	_q96 := u256.MustFromDecimal(consts.Q96)
 
 	height := std.GetHeight()
 
-	println("CalcPoolPosition__", height)
+	println("CALC__CalcPoolPosition__height", height)
+	println("CALC__CalcPoolPosition__lastCalculatedHeight", lastCalculatedHeight)
 	if height <= lastCalculatedHeight {
-		println("CalcPoolPosition__SKIP", height, lastCalculatedHeight)
+		println(" > [XXX] CALC__CalcPoolPosition__SKIP", height, lastCalculatedHeight)
 		println()
 		return
 	}
@@ -81,13 +84,12 @@ func CalcPoolPosition() {
 			// mintedGnsAmount = 0
 		}
 	} else {
-		println(" > CALC__ACTUAL_TX")
+		println(" > CALC__ACTUAL_TX_CALL")
 	}
 	println()
 
 	println("CALC__USE_THIS_mintedGnsAmount:", mintedGnsAmount)
 
-	println("CALC__poolTiers DISTRIBUTE==========================================")
 	println("CALC__height:", height)
 	println("CALC__lastCalculatedHeight:", lastCalculatedHeight)
 
@@ -161,15 +163,17 @@ func CalcPoolPosition() {
 
 			println("  > CALC__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
 			println("  > CALC__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
+			println("  > CALC__AFTET_poolGns[poolPath] = 0")
+			println("  > CALC__AFTET_poolCurrentBlockGns[poolPath] = 0")
 			println("  > ----------------------- WAS EMPTY POOL")
 		}
 		println()
 	}
-	println("========================================== CALC__poolTiers DISTRIBUTE END")
+	println("[ END ] CALC__poolTiers DISTRIBUTE END")
 
 	println()
 
-	println("CALC__deposits ITERATION==========================================")
+	println("[ START ] CALC__deposits ITERATION")
 	for tokenId, deposit := range deposits {
 		poolPath := deposit.targetPoolPath
 		poolCurrentBlockAmount := poolCurrentBlockGns[poolPath]
@@ -204,7 +208,8 @@ func CalcPoolPosition() {
 		// ------------------------------------ EXTERNAL
 		// calculate position external rewards
 		incentiveIds := poolIncentives[poolPath]
-		println("CALC__EXTERNAL START")
+		println()
+		println("[START] CALC__EXTERNAL START")
 		for _, incentiveId := range incentiveIds {
 			println(" > CALC__EXTERNAL_incentiveId:", incentiveId)
 			incentive := incentives[incentiveId]
@@ -269,15 +274,15 @@ func CalcPoolPosition() {
 			}
 		}
 	}
-	println("========================================== END CALC__deposits ITERATION")
-	println()
+	println("[END] CALC__EXTERNAL END")
 
 	// update flag
 	lastCalculatedHeight = height
 	lastCalculatedTimestamp = time.Now().Unix()
 	lastCalculatedBalance = stakerGnsBalance
 
-	println("CALC_WRAP UP")
+	println("")
+	println("[START] CALC__FINAL")
 	for poolPath, _ := range poolTiers {
 		amount := poolLastTmpGns[poolPath]
 		println(" > CALC__FINAL_POOL", poolPath)
@@ -297,8 +302,10 @@ func CalcPoolPosition() {
 			println(" > CALC__FINAL__amount = 0")
 		}
 	}
+	println("[END] CALC__FINAL")
 
 	// clear(poolCurrentBlockGns) // gno doesn't support `clear` keyword yet
 	poolCurrentBlockGns = make(map[string]uint64)
-	println("[----ENDENDEND] END_CALC_CalcPoolPosition")
+	println("=== [ END END END ] CALC__CalcPoolPosition")
+
 }

@@ -30,7 +30,7 @@ func SetPoolTier(pool string, tier uint64) {
 
 	// panic if pool does not exist
 	if !(pl.DoesPoolPathExist(pool)) {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__SetPoolTier() || pool(%s) does not exist"))
+		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__SetPoolTier() || pool(%s) does not exist", pool))
 	}
 
 	// panic if pool exists in poolTiers
