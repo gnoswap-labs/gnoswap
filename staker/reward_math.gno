@@ -210,7 +210,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	println("REWARD__begin100:", begin100)
 
 	//  transfer to protocol_fee contract
-	gnsAmountLeft := gnsFullAmount - gnsAmountToGive
+	// gnsAmountLeft := gnsFullAmount - gnsAmountToGive
 	// println("REWARD__gnsAmountLeft:", _gnsAmountLeft)
 	// _stakerGns := gnsBalance(consts.STAKER_ADDR)
 	// println("REWARD__stakerGns:", _stakerGns)
