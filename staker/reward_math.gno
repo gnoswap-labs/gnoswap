@@ -38,7 +38,12 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 
 	lastCollectHeight := positionCollectHeight[tokenId]
 
-	avgGnsBlockAmount := gnsFullAmount / (uint64(currentHeight) - lastCollectHeight)
+	q96 := u256.MustFromDecimal(consts.Q96)
+	gnsFullAmountX96 := new(u256.Uint).Mul(u256.NewUint(gnsFullAmount), q96)
+	avgGnsBlockAmountX96 := new(u256.Uint).Div(gnsFullAmountX96, u256.NewUint(uint64(currentHeight)-lastCollectHeight))
+	println("avgGnsBlockAmountX96:", avgGnsBlockAmountX96.ToString())
+
+	gnsAmountToGiveX96 := u256.Zero()
 
 	// lastCollectHeight
 	// safeSub
@@ -49,7 +54,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 			// 100%
 			dur100 := uint64(currentHeight) - lastCollectHeight
 			println("  > REWARD__DUR100", dur100)
-			gnsAmountToGive += avgGnsBlockAmount * 100 * dur100 / 100
+			amount := calcAmount(avgGnsBlockAmountX96, dur100, 100)
+			println("  > REWARD__AMOUNT100", amount)
+			gnsAmountToGive += amount
 			println("  > REWARD__100%", gnsAmountToGive)
 		} else {
 			if uint64(lastCollectHeight) > until50 {
@@ -57,58 +64,76 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				// 100%
 				dur100 := uint64(currentHeight) - until70
 				println("  > REWARD__DUR100", dur100)
-				gnsAmountToGive += avgGnsBlockAmount * 100 * dur100 / 100
+				amount := calcAmount(avgGnsBlockAmountX96, dur100, 100)
+				println("  > REWARD__AMOUNT100", amount)
+				gnsAmountToGive += amount
 				println("  > REWARD__100%", gnsAmountToGive)
 
 				// 70%
 				dur70 := until70 - lastCollectHeight
 				println("  > REWARD__DUR70", dur70)
-				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
+				amount = calcAmount(avgGnsBlockAmountX96, dur70, 70)
+				println("  > REWARD__AMOUNT70", amount)
+				gnsAmountToGive += amount
 				println("  > REWARD__70%", gnsAmountToGive)
 			} else if uint64(lastCollectHeight) > until30 {
 				println(" > REWARD__REWARD 100% AND 70% AND 50%")
 				// 100%
 				dur100 := uint64(currentHeight) - until70
 				println("  > REWARD__DUR100", dur100)
-				gnsAmountToGive += avgGnsBlockAmount * 100 * dur100 / 100
+				amount := calcAmount(avgGnsBlockAmountX96, dur100, 100)
+				println("  > REWARD__AMOUNT100", amount)
+				gnsAmountToGive += amount
 				println("  > REWARD__100%", gnsAmountToGive)
 
 				// 70%
 				dur70 := until70 - until50
 				println("  > REWARD__DUR70", dur70)
-				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
+				amount = calcAmount(avgGnsBlockAmountX96, dur70, 70)
+				println("  > REWARD__AMOUNT70", amount)
+				gnsAmountToGive += amount
 				println("  > REWARD__70%", gnsAmountToGive)
 
 				// 50%
 				dur50 := until50 - lastCollectHeight
 				println("  > REWARD__DUR50", dur50)
-				gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
 				println("  > REWARD__50%", gnsAmountToGive)
+				amount = calcAmount(avgGnsBlockAmountX96, dur50, 50)
+				println("  > REWARD__AMOUNT50", amount)
+				gnsAmountToGive += amount
 			} else {
 				println(" > REWARD__REWARD 100% AND 70% AND 50% AND 30%")
 				// 100%
 				dur100 := uint64(currentHeight) - until70
 				println("  > REWARD__DUR100", dur100)
-				gnsAmountToGive += avgGnsBlockAmount * 100 * dur100 / 100
+				amount := calcAmount(avgGnsBlockAmountX96, dur100, 100)
+				println("  > REWARD__AMOUNT100", amount)
+				gnsAmountToGive += amount
 				println("  > REWARD__100%", gnsAmountToGive)
 
 				// 70%
 				dur70 := until70 - until50
 				println("  > REWARD__DUR70", dur70)
-				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
 				println("  > REWARD__70%", gnsAmountToGive)
+				amount = calcAmount(avgGnsBlockAmountX96, dur70, 70)
+				println("  > REWARD__AMOUNT70", amount)
+				gnsAmountToGive += amount
 
 				// 50%
 				dur50 := until50 - until30
 				println("  > REWARD__DUR50", dur50)
-				gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
 				println("  > REWARD__50%", gnsAmountToGive)
+				amount = calcAmount(avgGnsBlockAmountX96, dur50, 50)
+				println("  > REWARD__AMOUNT50", amount)
+				gnsAmountToGive += amount
 
 				// 30%
 				dur30 := until30 - lastCollectHeight
 				println("  > REWARD__DUR30", dur30)
-				gnsAmountToGive += avgGnsBlockAmount * 30 * dur30 / 100
 				println("  > REWARD__30%", gnsAmountToGive)
+				amount = calcAmount(avgGnsBlockAmountX96, dur30, 30)
+				println("  > REWARD__AMOUNT30", amount)
+				gnsAmountToGive += amount
 			}
 		}
 
@@ -118,7 +143,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 			// 70%
 			dur70 := uint64(currentHeight) - lastCollectHeight
 			println("  > REWARD__DUR70", dur70)
-			gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
+			amount := calcAmount(avgGnsBlockAmountX96, dur70, 70)
+			println("  > REWARD__AMOUNT70", amount)
+			gnsAmountToGive += amount
 			println("  > REWARD__70%", gnsAmountToGive)
 		} else {
 			if uint64(lastCollectHeight) > until30 {
@@ -126,32 +153,42 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				// 70%
 				dur70 := uint64(currentHeight) - until50
 				println("  > REWARD__DUR70", dur70)
-				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
 				println("  > REWARD__70%", gnsAmountToGive)
+				amount := calcAmount(avgGnsBlockAmountX96, dur70, 70)
+				println("  > REWARD__AMOUNT70", amount)
+				gnsAmountToGive += amount
 
 				// 50%
 				dur50 := until50 - lastCollectHeight
 				println("  > REWARD__DUR50", dur50)
-				gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
+				amount = calcAmount(avgGnsBlockAmountX96, dur50, 50)
+				println("  > REWARD__AMOUNT50", amount)
+				gnsAmountToGive += amount
 				println("  > REWARD__50%", gnsAmountToGive)
 			} else {
 				println(" > REWARD__REWARD 70% AND 50% AND 30%")
 				// 70%
 				dur70 := uint64(currentHeight) - until50
 				println("  > REWARD__DUR70", dur70)
-				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
+				amount := calcAmount(avgGnsBlockAmountX96, dur70, 70)
+				println("  > REWARD__AMOUNT70", amount)
+				gnsAmountToGive += amount
 				println("  > REWARD__70%", gnsAmountToGive)
 
 				// 50%
 				dur50 := until50 - until30
 				println("  > REWARD__DUR50", dur50)
-				gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
+				amount = calcAmount(avgGnsBlockAmountX96, dur50, 50)
+				println("  > REWARD__AMOUNT50", amount)
+				gnsAmountToGive += amount
 				println("  > REWARD__50%", gnsAmountToGive)
 
 				// 30%
 				dur30 := until30 - lastCollectHeight
 				println("  > REWARD__DUR30", dur30)
-				gnsAmountToGive += avgGnsBlockAmount * 30 * dur30 / 100
+				amount = calcAmount(avgGnsBlockAmountX96, dur30, 30)
+				println("  > REWARD__AMOUNT30", amount)
+				gnsAmountToGive += amount
 				println("  > REWARD__30%", gnsAmountToGive)
 			}
 		}
@@ -162,30 +199,36 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 			// 50%
 			dur50 := uint64(currentHeight) - lastCollectHeight
 			println("  > REWARD__DUR50", dur50)
-			gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
+			amount := calcAmount(avgGnsBlockAmountX96, dur50, 50)
+			println("  > REWARD__AMOUNT50", amount)
+			gnsAmountToGive += amount
 			println("  > REWARD__50%", gnsAmountToGive)
 		} else {
 			println(" > REWARD__REWAD 50% AND 30%")
 			dur50 := uint64(currentHeight) - until30
 			println("  > REWARD__DUR50", dur50)
-			gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
+			amount := calcAmount(avgGnsBlockAmountX96, dur50, 50)
+			println("  > REWARD__AMOUNT50", amount)
+			gnsAmountToGive += amount
 			println("  > REWARD__50%", gnsAmountToGive)
 
 			// 30%
 			dur30 := until30 - lastCollectHeight
+			amount = calcAmount(avgGnsBlockAmountX96, dur30, 30)
+			println("  > REWARD__AMOUNT30", amount)
+			gnsAmountToGive += amount
 			println("  > REWARD__DUR30", dur30)
-			gnsAmountToGive += avgGnsBlockAmount * 30 * dur30 / 100
 			println("  > REWARD__30%", gnsAmountToGive)
 		}
 
 	case 30:
 		println(" > REWARD__REWARD 30%")
 		dur30 := uint64(currentHeight) - lastCollectHeight
+		amount := calcAmount(avgGnsBlockAmountX96, dur30, 30)
+		gnsAmountToGive += amount
+		println("  > REWARD__AMOUNT30", amount)
 		println("  > REWARD__DUR30", dur30)
-		toGive := avgGnsBlockAmount * 30 * dur30 / 100
-		gnsAmountToGive += toGive
-		println("  > REWARD__give30%", toGive)
-		println("  > REWARD__accu30%", gnsAmountToGive)
+		println("  > REWARD__30%", amount)
 
 	default:
 		println(" > REWARD__0 REWARD RATIO")
@@ -195,6 +238,8 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	println(" > REWARD__tokenId:", tokenId)
 	println(" > REWARD__gnsFullAmount:", gnsFullAmount)
 	println(" > REWARD__gnsAmountToGive", gnsAmountToGive)
+	println(" > REWARD__gnsAmountToGiveX96", gnsAmountToGiveX96.ToString())
+	println(" > REWARD__gnsAmountToGiveX", new(u256.Uint).Div(gnsAmountToGiveX96, q96).ToString())
 
 	println(" > REWARD__stakedDuration:", stakedDuration)
 	println(" > REWARD__durationRatio:", durationRatio)
@@ -202,28 +247,11 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	println(" > REWARD__currentHeight:", currentHeight)
 	println(" > REWARD__lastCollectHeight:", lastCollectHeight)
 	println(" > REWARD__[?] lastCalculatedHeight:", lastCalculatedHeight)
-	println(" > REWARD__avgGnsBlockAmount:", avgGnsBlockAmount)
 	println(" > REWARD__until30:", until30)
 	println(" > REWARD__until50:", until50)
 	println(" > REWARD__until70:", until70)
 	println(" > REWARD__begin100:", begin100)
 	println()
-
-	//  transfer to protocol_fee contract
-	// gnsAmountLeft := gnsFullAmount - gnsAmountToGive
-	// println("REWARD__gnsAmountLeft:", _gnsAmountLeft)
-	// _stakerGns := gnsBalance(consts.STAKER_ADDR)
-	// println("REWARD__stakerGns:", _stakerGns)
-	// toFee := min(_gnsAmountLeft, _stakerGns)
-	// println("REWARD__toFee:", toFee)
-	// println("REWARD__BEFORE_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
-	// println("REWARD__BEFORE_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
-	// gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), toFee)
-	// println("REWARD__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
-	// println("REWARD__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
-
-	// poolGns[deposit.targetPoolPath] -= gnsFullAmount
-	// positionGns[tokenId] = gnsAmountToGive
 
 	return gnsFullAmount, gnsAmountToGive
 }
@@ -422,4 +450,13 @@ func getTiersAmount(amount uint64) (uint64, uint64, uint64) {
 	tier3Amount := (amount * tier3Ratio) / 100
 
 	return tier1Amount, tier2Amount, tier3Amount
+}
+
+func calcAmount(avgBlockAmountX96 *u256.Uint, dur, pct uint64) uint64 {
+	durAmountX96 := new(u256.Uint).Mul(avgBlockAmountX96, u256.NewUint(dur))
+	durAmountX96 = new(u256.Uint).Mul(durAmountX96, u256.NewUint(pct))
+	durAmountX96 = new(u256.Uint).Div(durAmountX96, u256.NewUint(100))
+
+	durAmount := new(u256.Uint).Div(durAmountX96, u256.MustFromDecimal(consts.Q96)).Uint64()
+	return durAmount
 }
