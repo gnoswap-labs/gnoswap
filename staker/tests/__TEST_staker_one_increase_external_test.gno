@@ -10,10 +10,10 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/obl"
-	"gno.land/r/gnoswap/gns"
 
 	"gno.land/r/gnoswap/consts"
 	"gno.land/r/gnoswap/gnft"
@@ -42,6 +42,8 @@ func TestPoolCreatePool(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	pl.CreatePool(fooPath, barPath, uint32(500), "130621891405341611593710811006") // tick 10_000 ≈ x2.7
+
+	pl.CreatePool(fooPath, barPath, uint32(100), "130621891405341611593710811006") // tick 10_000 ≈ x2.7
 
 	std.TestSkipHeights(1)
 }
@@ -112,10 +114,9 @@ func TestPositionMint02(t *testing.T) {
 	std.TestSkipHeights(1)
 }
 
-func TestCreateExternalIncentive(t *testing.T) {
+func TestCreateExternalIncentiveFirst(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
-	std.TestSkipHeights(1)
 
 	AddToken(oblPath)
 
@@ -126,12 +127,31 @@ func TestCreateExternalIncentive(t *testing.T) {
 		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp
 	)
+	shouldEQ(t, len(incentives), 1)
 
-	std.TestSkipHeights(1)
+	incentiveId := incentiveIdCompute(gsa, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "gno.land/r/onbloc/obl", 1234569600, 1234569600+TIMESTAMP_90DAYS)
+	shouldEQ(t, incentiveId, "ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAw")
+	shouldEQ(t, incentives[incentiveId].rewardAmount.ToString(), "1000000000")
+}
 
+func TestCreateExternalIncentiveIncrease(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
-	std.TestSkipHeights(1)
-	CreateExternalIncentive("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", oblPath, "100000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
+
+	CreateExternalIncentive(
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", // targetPoolPath
+		oblPath,                     // rewardToken
+		"1000000000",                // rewardAmount
+		1234569600,                  // startTimestamp
+		1234569600+TIMESTAMP_90DAYS, // endTimestamp
+	)
+
+	shouldEQ(t, len(incentives), 1)
+
+	incentiveId := incentiveIdCompute(gsa, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "gno.land/r/onbloc/obl", 1234569600, 1234569600+TIMESTAMP_90DAYS)
+	shouldEQ(t, incentiveId, "ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAw")
+	shouldEQ(t, incentives[incentiveId].rewardAmount.ToString(), "2000000000")
+
 	std.TestSkipHeights(1)
 }
 
@@ -200,8 +220,8 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), gsa)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000202670811) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998900019874)  // external
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000128643323) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000019757)  // external
 }
 
 func TestUnstakeToken02(t *testing.T) {
@@ -213,23 +233,38 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), gsa)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100001309016194) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998900150143)  // external
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000830885278) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000149262)  // external
+}
+
+func TestCreateExternalIncentiveSecond(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
+
+	CreateExternalIncentive(
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", // targetPoolPath
+		barPath,                     // rewardToken
+		"1000000000",                // rewardAmount
+		1234656000,                  // startTimestamp
+		1234656000+TIMESTAMP_90DAYS, // endTimestamp
+	)
+	shouldEQ(t, len(incentives), 2)
 }
 
 func TestEndExternalIncentive(t *testing.T) {
-	shouldEQ(t, len(incentives), 1)
+	shouldEQ(t, len(incentives), 2)
 
 	std.TestSetOrigCaller(gsa)
 
 	// incentive time isn't over yet
 	shouldPanicWithMsg(t, func() {
-		EndExternalIncentive(gsa.String(), "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "gno.land/r/onbloc/obl")
-	}, "[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(1242345600), current(1234570626)")
+		EndExternalIncentive(gsa.String(), "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "gno.land/r/onbloc/obl", 1234569600, 1234569600+TIMESTAMP_90DAYS)
+	}, "[STAKER] staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(1242345600), current(1234570620)")
 
 	std.TestSkipHeights(9999999)
-	EndExternalIncentive(gsa.String(), "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "gno.land/r/onbloc/obl") // use same parameter as CreateExternalIncentive()
+	EndExternalIncentive(gsa.String(), "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", "gno.land/r/onbloc/obl", 1234569600, 1234569600+TIMESTAMP_90DAYS) // use same parameter as CreateExternalIncentive()
 
-	shouldEQ(t, len(incentives), 0)
-	shouldEQ(t, len(poolIncentives["gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"]), 0)
+	shouldEQ(t, len(incentives), 1) // other pool left
+
+	shouldEQ(t, len(poolIncentives["gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"]), 1) // internal left for this pool
 }

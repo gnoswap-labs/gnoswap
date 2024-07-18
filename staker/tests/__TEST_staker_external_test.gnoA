@@ -9,11 +9,11 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
-	"gno.land/r/gnoswap/gns"
 
 	"gno.land/r/gnoswap/gnft"
 )
@@ -120,10 +120,10 @@ func TestCreateExternalIncentive(t *testing.T) {
 	AddToken(oblPath)
 	CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath
-		"gno.land/r/onbloc/obl",                         // rewardToken
-		"100000000",                                   // rewardAmount
-		1234569600,                                    // startTimestamp
-		1234569600+TIMESTAMP_90DAYS,                   // endTimestamp
+		"gno.land/r/onbloc/obl",                           // rewardToken
+		"100000000",                                       // rewardAmount
+		1234569600,                                        // startTimestamp
+		1234569600+TIMESTAMP_90DAYS,                       // endTimestamp
 	)
 
 	std.TestSkipHeights(1)

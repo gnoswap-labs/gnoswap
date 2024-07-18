@@ -15,8 +15,8 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 
-	"gno.land/r/onbloc/obl"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/onbloc/obl"
 )
 
 func init() {
@@ -123,10 +123,10 @@ func TestCreateExternalIncentive(t *testing.T) {
 		func() {
 			CreateExternalIncentive(
 				"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", // targetPoolPath
-				"gno.land/r/onbloc/obl",                         // rewardToken
-				"1000000000",                                  // rewardAmount 10_000_000_000
-				1234569600,                                    // startTimestamp
-				1234569600+TIMESTAMP_90DAYS,                   // endTimestamp
+				"gno.land/r/onbloc/obl",                           // rewardToken
+				"1000000000",                                      // rewardAmount 10_000_000_000
+				1234569600,                                        // startTimestamp
+				1234569600+TIMESTAMP_90DAYS,                       // endTimestamp
 			)
 		},
 		"[STAKER] staker.gno__isAllowedForExternalReward() || tokenPath(gno.land/r/onbloc/obl) is not allowed for external reward for poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500)",
@@ -137,10 +137,10 @@ func TestCreateExternalIncentive(t *testing.T) {
 
 	CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", // targetPoolPath
-		"gno.land/r/onbloc/obl",                         // rewardToken
-		"1000000000",                                  // rewardAmount 10_000_000_000
-		1234569600,                                    // startTimestamp
-		1234569600+TIMESTAMP_90DAYS,                   // endTimestamp
+		"gno.land/r/onbloc/obl",                           // rewardToken
+		"1000000000",                                      // rewardAmount 10_000_000_000
+		1234569600,                                        // startTimestamp
+		1234569600+TIMESTAMP_90DAYS,                       // endTimestamp
 	)
 	std.TestSkipHeights(1)
 
@@ -200,7 +200,7 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000000000)  // external
 
 	response := ApiGetRewardsByLpTokenId(1)
-	shouldEQ(t, response, `{"stat":{"height":542,"timestamp":1234568728},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/gns","rewardTokenAmount":230173381,"stakeTimestamp":1234567916,"stakeHeight":136,"incentiveStart":1234567916}]}]}`)
+	shouldEQ(t, response, `{"stat":{"height":542,"timestamp":1234569985},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/gns","rewardTokenAmount":157865893,"stakeTimestamp":1234567955,"stakeHeight":136,"incentiveStart":1234567955},{"incentiveType":"EXTERNAL","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":5279,"stakeTimestamp":1234567955,"stakeHeight":136,"incentiveStart":1234569600}]}]}`)
 
 	UnstakeToken(1) // GNFT tokenId
 	std.TestSkipHeights(1)
@@ -208,8 +208,8 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), gsa)
 
 	// check reward balance after unstake
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000161828043)
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000000000)
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000158605291)
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000007467)
 }
 
 func TestUnstakeToken02(t *testing.T) {
@@ -221,14 +221,22 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), gsa)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100001437809926) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000000000)  // external
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100001030511278) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000057081)  // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 	std.TestSkipHeights(9999999)
-	EndExternalIncentive(std.GetOrigCaller().String(), "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", "gno.land/r/onbloc/obl") // use same parameter as CreateExternalIncentive()
+
+	// use same parameter as CreateExternalIncentive()
+	EndExternalIncentive(
+		std.GetOrigCaller().String(),
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500",
+		"gno.land/r/onbloc/obl",
+		1234569600,                  // startTimestamp
+		1234569600+TIMESTAMP_90DAYS, // endTimestamp
+	)
 
 	std.TestSkipHeights(1)
 

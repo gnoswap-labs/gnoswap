@@ -244,7 +244,15 @@ func TestEndExternalIncentive(t *testing.T) {
 	shouldEQ(t, ugnotBalanceOf(gsa), 99998010)
 
 	std.TestSkipHeights(9999999)
-	EndExternalIncentive(std.GetOrigCaller().String(), "gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500", consts.WRAPPED_WUGNOT) // use same parameter as CreateExternalIncentive()
+	// use same parameter as CreateExternalIncentive()
+	EndExternalIncentive(
+		std.GetOrigCaller().String(),
+		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500",
+		consts.WRAPPED_WUGNOT,
+		1234569600,                  // startTimestamp
+		1234569600+TIMESTAMP_90DAYS, // endTimestamp
+	)
+
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
