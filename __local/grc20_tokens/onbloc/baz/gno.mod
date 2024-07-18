@@ -1,4 +1,4 @@
-module gno.land/r/demo/baz
+module gno.land/r/onbloc/baz
 
 require (
 	gno.land/p/demo/grc/grc20 v0.0.0-latest

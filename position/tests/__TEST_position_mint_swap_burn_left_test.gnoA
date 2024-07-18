@@ -8,8 +8,8 @@ import (
 
 	pl "gno.land/r/gnoswap/pool"
 
-	"gno.land/r/demo/bar"
-	"gno.land/r/demo/foo"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
 
 	"gno.land/r/gnoswap/gns"
 	// u256 "gno.land/p/gnoswap/uint256"
@@ -109,7 +109,7 @@ func TestCollectFeeBeforeSwap(t *testing.T) {
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, fee0, "0")
 	shouldEQ(t, fee1, "0")
-	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 }
 
 func TestUnclaimedFee0(t *testing.T) {
@@ -215,7 +215,7 @@ func TestCollectFeePos01(t *testing.T) {
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, fee0, "8597") // 99% of 8683, rest 1% is protocol fee
 	shouldEQ(t, fee1, "0")
-	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 
 	// printPoolBalance()
 	// token0: 43299755 (43308438 - 8683)
@@ -242,7 +242,7 @@ func TestDecreaseAllPos01(t *testing.T) {
 	shouldEQ(t, fee1, "0")
 	shouldEQ(t, amount0, "35751245")
 	shouldEQ(t, amount1, "6709740")
-	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 
 	// printPoolBalance()
 	// token0: 7548510 (43299755 - 35751245)
@@ -269,7 +269,7 @@ func TestDecreaseAllPos02(t *testing.T) {
 	shouldEQ(t, fee1, "0")
 	shouldEQ(t, amount0, "7546572")
 	shouldEQ(t, amount1, "0")
-	shouldEQ(t, poolPath, "gno.land/r/demo/bar:gno.land/r/demo/foo:500")
+	shouldEQ(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 
 	// printPoolBalance()
 	// token0: 3 (7548510 - 7546572 - 1935)

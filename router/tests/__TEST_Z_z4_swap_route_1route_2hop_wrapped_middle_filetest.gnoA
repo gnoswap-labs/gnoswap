@@ -4,11 +4,11 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/demo/bar"
-	"gno.land/r/demo/baz"
-	"gno.land/r/demo/foo"
-	"gno.land/r/demo/obl"
-	"gno.land/r/demo/qux"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/foo"
+	"gno.land/r/onbloc/obl"
+	"gno.land/r/onbloc/qux"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/gns"
 
@@ -25,12 +25,12 @@ import (
 var (
 	gsa std.Address = consts.GNOSWAP_ADMIN
 
-	fooPath string = "gno.land/r/demo/foo"
-	barPath string = "gno.land/r/demo/bar"
-	bazPath string = "gno.land/r/demo/baz"
-	quxPath string = "gno.land/r/demo/qux"
+	fooPath string = "gno.land/r/onbloc/foo"
+	barPath string = "gno.land/r/onbloc/bar"
+	bazPath string = "gno.land/r/onbloc/baz"
+	quxPath string = "gno.land/r/onbloc/qux"
 
-	oblPath string = "gno.land/r/demo/obl"
+	oblPath string = "gno.land/r/onbloc/obl"
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -180,19 +180,19 @@ func init() {
 	// TOKEN REGISTER
 	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
 
-	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	pl.RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
+	pl.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
+	pl.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
+	pl.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
+	pl.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	pl.RegisterGRC20Interface("gno.land/r/gnoswap/gns", GNSToken{})
 
-	rr.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
-	rr.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	rr.RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
+	rr.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
+	rr.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
+	rr.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
+	rr.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
 	rr.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	rr.RegisterGRC20Interface("gno.land/r/gnoswap/gns", GNSToken{})
 }
@@ -273,7 +273,7 @@ func drySwapGnsBarExactIn() {
 		barPath,         // outputToken
 		"1000",          // amountSpecified
 		"EXACT_IN",      // swapType
-		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/demo/bar:100", // strRouteArr
+		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
 		"100", // quoteArr
 	)
 	if dryResult != "7328" {
@@ -292,7 +292,7 @@ func swapGnsBarExactIn() {
 		barPath,         // outputToken
 		"1000",          // amountSpecified
 		"EXACT_IN",      // swapType
-		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/demo/bar:100", // strRouteArr
+		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
 		"100", // quoteArr
 		"0",   // tokenAmountLimit
 	)

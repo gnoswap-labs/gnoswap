@@ -8,8 +8,8 @@ import (
 
 	pl "gno.land/r/gnoswap/pool"
 
-	"gno.land/r/demo/obl"
-	"gno.land/r/demo/usdc"
+	"gno.land/r/onbloc/obl"
+	"gno.land/r/onbloc/usdc"
 
 	"gno.land/r/gnoswap/gns"
 	// u256 "gno.land/p/gnoswap/uint256"
@@ -20,7 +20,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
-	pl.CreatePool(oblPath, "gno.land/r/demo/usdc", fee3000, "79228162514264337593543950336")
+	pl.CreatePool(oblPath, "gno.land/r/onbloc/usdc", fee3000, "79228162514264337593543950336")
 }
 
 func TestPoolBalanceInit(t *testing.T) {
@@ -38,7 +38,7 @@ func TestMintPosition01InRange(t *testing.T) {
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		oblPath,
-		"gno.land/r/demo/usdc",
+		"gno.land/r/onbloc/usdc",
 		fee3000,
 		-6960,
 		6960,
@@ -63,7 +63,7 @@ func TestMintPosition02InRange(t *testing.T) {
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		oblPath,
-		"gno.land/r/demo/usdc",
+		"gno.land/r/onbloc/usdc",
 		fee3000,
 		-6960,
 		6960,
@@ -92,7 +92,7 @@ func TestSwap1(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
-		"gno.land/r/demo/usdc",
+		"gno.land/r/onbloc/usdc",
 		fee3000,
 		gsa.String(),
 		true,
@@ -116,7 +116,7 @@ func TestSwap2(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
-		"gno.land/r/demo/usdc",
+		"gno.land/r/onbloc/usdc",
 		fee3000,
 		gsa.String(),
 		true,
@@ -150,7 +150,7 @@ func TestSwap3(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		oblPath,
-		"gno.land/r/demo/usdc",
+		"gno.land/r/onbloc/usdc",
 		fee3000,
 		gsa.String(),
 		true,
@@ -185,7 +185,7 @@ func TestDecreaseHalfPos01(t *testing.T) {
 	shouldEQ(t, fee1, "0")
 	shouldEQ(t, amount0, "120756903565")
 	shouldEQ(t, amount1, "26669121")
-	shouldEQ(t, poolPath, "gno.land/r/demo/obl:gno.land/r/demo/usdc:3000")
+	shouldEQ(t, poolPath, "gno.land/r/onbloc/obl:gno.land/r/onbloc/usdc:3000")
 
 	// printPosition(1)
 }
@@ -210,7 +210,7 @@ func TestDecreaseAllPos01(t *testing.T) {
 	shouldEQ(t, fee1, "0")
 	shouldEQ(t, amount0, "120756903565")
 	shouldEQ(t, amount1, "26669121")
-	shouldEQ(t, poolPath, "gno.land/r/demo/obl:gno.land/r/demo/usdc:3000")
+	shouldEQ(t, poolPath, "gno.land/r/onbloc/obl:gno.land/r/onbloc/usdc:3000")
 
 	// printPosition(1)
 }

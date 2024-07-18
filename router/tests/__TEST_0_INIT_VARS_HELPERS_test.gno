@@ -16,12 +16,12 @@ var (
 	fcr   std.Address = consts.COMMUNITY_POOL_ADDR
 	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
 
-	fooPath string = "gno.land/r/demo/foo"
-	barPath string = "gno.land/r/demo/bar"
-	bazPath string = "gno.land/r/demo/baz"
-	quxPath string = "gno.land/r/demo/qux"
+	fooPath string = "gno.land/r/onbloc/foo"
+	barPath string = "gno.land/r/onbloc/bar"
+	bazPath string = "gno.land/r/onbloc/baz"
+	quxPath string = "gno.land/r/onbloc/qux"
 
-	oblPath string = "gno.land/r/demo/obl"
+	oblPath string = "gno.land/r/onbloc/obl"
 	// wugnotPath string = "gno.land/r/demo/wugnot" // from consts
 	// gnsPath string = "gno.land/r/gnoswap/gns" // from consts
 
