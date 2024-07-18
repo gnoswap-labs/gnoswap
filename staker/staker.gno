@@ -151,7 +151,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 	poolPath := deposits[tokenId].targetPoolPath
 
-	println("CollectReward_EXTERNAL", tokenId)
+	println("[START] CollectReward_EXTERNAL", tokenId)
 	for k, external := range positionExternal[tokenId] {
 		incentive := incentives[external.incentiveId]
 
@@ -209,19 +209,33 @@ func CollectReward(tokenId uint64) string { // poolPath
 			"amount", uint64ToStr(toUser),
 		)
 	}
+	println("[END] CollectReward_EXTERNAL", tokenId)
+	println()
 
+	println("[START] CollectReward_INTERNAL", tokenId)
 	// INTERNAL gns emission
 	fullAmount, toGive := rewardMathComputeInternalRewardAmount(tokenId)
+	println(" > position fullAmount(rewardMathComputeInternal)", fullAmount)
+	println(" > position toGive(rewardMathComputeInternal)", toGive)
 	if toGive == 0 {
 		return poolPath
 	}
 	toUser := handleUnstakingFee(consts.GNS_PATH, toGive, true)
+	println(" > position toUser(after staking fee)", toUser)
+	println(" > unstakingFee", toGive-toUser)
 	gns.Transfer(a2u(deposit.owner), toUser)
 
+	println(" > clear positionGns[tokenId] = 0")
 	positionGns[tokenId] = 0
+
+	println(" > poolGns[poolPath]", poolGns[poolPath])
+	println(" > fullAmount", poolGns[poolPath])
+
 	poolGns[poolPath] -= fullAmount
+	println(" > poolGns[poolPath] - fullAmount", poolGns[poolPath])
 
 	left := fullAmount - toGive
+	println(" > warm up left := fullAmount - toGive (to protocol_fee)", left)
 	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), left)
 
 	// emit internal reward tokens
@@ -238,6 +252,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 	)
 
 	positionCollectHeight[tokenId] = uint64(std.GetHeight())
+	println("[END] CollectReward_INTERNAL", tokenId)
 	return poolPath
 }
 

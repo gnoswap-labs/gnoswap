@@ -90,10 +90,6 @@ func CalcPoolPosition() {
 		}
 	*/
 
-	println()
-
-	println("CALC__USE_THIS_mintedGnsAmount:", mintedGnsAmount)
-
 	println("CALC__height:", height)
 	println("CALC__lastCalculatedHeight:", lastCalculatedHeight)
 
@@ -102,17 +98,22 @@ func CalcPoolPosition() {
 
 	println("CALC__getTiersAmount_mintedGnsAmount:", mintedGnsAmount)
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(mintedGnsAmount)
-	println("CALC__tier1Amount:", tier1Amount)
-	println("CALC__tier2Amount:", tier2Amount)
-	println("CALC__tier3Amount:", tier3Amount)
 
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
 	println("CALC__tier1Num:", tier1Num)
+	println("CALC__tier1Amount:", tier1Amount)
+
 	println("CALC__tier2Num:", tier2Num)
+	println("CALC__tier2Amount:", tier2Amount)
+
 	println("CALC__tier3Num:", tier3Num)
+	println("CALC__tier3Amount:", tier3Amount)
 
 	println("CALC__duration:", duration)
 	println("CALC__height:", height)
+	println()
+
+	println("[ START ] CALC__poolTiers DISTRIBUTE END")
 	for poolPath, internal := range poolTiers {
 		println(" > CALC__poolPath:", poolPath)
 		tier := internal.tier
@@ -171,7 +172,6 @@ func CalcPoolPosition() {
 			println("  > CALC__AFTET_poolCurrentBlockGns[poolPath] = 0")
 			println("  > ----------------------- WAS EMPTY POOL")
 		}
-		println()
 	}
 	println("[ END ] CALC__poolTiers DISTRIBUTE END")
 
@@ -181,8 +181,8 @@ func CalcPoolPosition() {
 	for tokenId, deposit := range deposits {
 		poolPath := deposit.targetPoolPath
 		poolCurrentBlockAmount := poolCurrentBlockGns[poolPath]
-		println("CALC__tokenId:", tokenId)
-		println("CALC__poolCurrentBlockAmount:", poolCurrentBlockAmount)
+		println(" > CALC__tokenId:", tokenId)
+		println(" > CALC__poolCurrentBlockAmount:", poolCurrentBlockAmount)
 
 		// ------------------------------------ INTERNAL
 		if poolCurrentBlockAmount > 0 {
@@ -194,18 +194,18 @@ func CalcPoolPosition() {
 			positionAmount := positionAmountX.Uint64()
 
 			// XXX: REMOVE AFTER QA
-			println("CALC__liqRatioX96:", liqRatioX96.ToString())
-			println("CALC__positionAmountX:", positionAmountX.ToString())
+			println(" > CALC__liqRatioX96:", liqRatioX96.ToString())
+			println(" > CALC__positionAmountX:", positionAmountX.ToString())
 
-			println("CALC__BEFORE")
-			println("CALC__positionGns[tokenId]:", positionGns[tokenId])
-			println("CALC__poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
+			println(" > CALC__BEFORE")
+			println(" > CALC__positionGns[tokenId]:", positionGns[tokenId])
+			println(" > CALC__poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
 			positionGns[tokenId] += positionAmount
 			poolLastTmpGns[poolPath] += positionAmount
-			println("CALC__AFTER")
-			println("CALC__positionAmount:", positionAmount)
-			println("CALC__positionGns[tokenId]:", positionGns[tokenId])
-			println("CALC__poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
+			println(" > CALC__AFTER")
+			println(" > CALC__positionAmount:", positionAmount)
+			println(" > CALC__positionGns[tokenId]:", positionGns[tokenId])
+			println(" > CALC__poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
 			println()
 		}
 
@@ -213,9 +213,9 @@ func CalcPoolPosition() {
 		// calculate position external rewards
 		incentiveIds := poolIncentives[poolPath]
 		println()
-		println("[START] CALC__EXTERNAL START")
+		println(" > [START] CALC__EXTERNAL START")
 		for _, incentiveId := range incentiveIds {
-			println(" > CALC__EXTERNAL_incentiveId:", incentiveId)
+			println("  > CALC__EXTERNAL_incentiveId:", incentiveId)
 			incentive := incentives[incentiveId]
 
 			startTimestamp := incentive.startTimestamp
@@ -223,7 +223,7 @@ func CalcPoolPosition() {
 			now := time.Now().Unix()
 			// if inactive incentive, do not calculate
 			if !(startTimestamp <= now && now <= endTimestamp) {
-				println(" > CALC__EXTERNAL_INACTIVE")
+				println("  > CALC__EXTERNAL_INACTIVE")
 				println()
 				continue
 			}
@@ -231,29 +231,29 @@ func CalcPoolPosition() {
 			rewardToken := incentive.rewardToken
 			rewardAmount := incentive.rewardAmount
 			rewardLeft := incentive.rewardLeft
-			println(" > CALC__EXTERNAL_rewardToken:\t", rewardToken)
-			println(" > CALC__EXTERNAL_rewardAmount:\t", rewardAmount.ToString())
-			println(" > CALC__EXTERNAL_rewardLeft:\t", rewardLeft.ToString())
+			println("  > CALC__EXTERNAL_rewardToken:\t", rewardToken)
+			println("  > CALC__EXTERNAL_rewardAmount:\t", rewardAmount.ToString())
+			println("  > CALC__EXTERNAL_rewardLeft:\t", rewardLeft.ToString())
 
 			// how many blocks passed since the start of the incentive
 			blocksPassed := (now - startTimestamp) / consts.BLOCK_GENERATION_INTERVAL
-			println(" > CALC__EXTERNAL_blocksPassed:", blocksPassed)
+			println("  > CALC__EXTERNAL_blocksPassed:", blocksPassed)
 			liqRatioX96 := getMyLiquidityRatio(poolPath, tokenId)
-			println(" > CALC__EXTERNAL_liqRatioX96:", liqRatioX96.ToString())
+			println("  > CALC__EXTERNAL_liqRatioX96:", liqRatioX96.ToString())
 
 			currentPoolReward := u256.NewUint(incentive.rewardPerBlock * uint64(blocksPassed))
-			println(" > CALC__EXTERNAL_currentPoolReward:", currentPoolReward.ToString())
+			println("  > CALC__EXTERNAL_currentPoolReward:", currentPoolReward.ToString())
 			positionAmountX := u256.Zero().Mul(currentPoolReward, liqRatioX96)
 			positionAmountX = u256.Zero().Div(positionAmountX, _q96)
 			positionAmount := positionAmountX.Uint64()
-			println(" > CALC__EXTERNAL_positionAmount:", positionAmount)
+			println("  > CALC__EXTERNAL_positionAmount:", positionAmount)
 
 			if positionAmount > rewardLeft.Uint64() {
 				positionAmount = rewardLeft.Uint64()
 			}
 
 			if len(positionExternal[tokenId]) == 0 {
-				println(" > CALC__EXTERNAL__len(positionExternal[tokenId]) == 0")
+				println("  > CALC__EXTERNAL__len(positionExternal[tokenId]) == 0")
 				positionExternal[tokenId] = append(positionExternal[tokenId], externalRewards{
 					incentiveId:        incentiveId,
 					poolPath:           poolPath,
@@ -261,16 +261,16 @@ func CalcPoolPosition() {
 					tokenAmount:        positionAmount,
 					tokenAmountClaimed: 0,
 				})
-				println(" > CALC__EXTERNAL__positionExternal[tokenId]:", positionExternal[tokenId])
+				println("  > CALC__EXTERNAL__positionExternal[tokenId]:", positionExternal[tokenId])
 			} else {
-				println(" > CALC__EXTERNAL__len(positionExternal[tokenId]) > 0")
+				println("  > CALC__EXTERNAL__len(positionExternal[tokenId]) > 0")
 				for i, external := range positionExternal[tokenId] {
-					println(" > CALC__external.incentiveId:", external.incentiveId)
+					println("   > CALC__external.incentiveId:", external.incentiveId)
 					if external.incentiveId == incentiveId {
-						println("  > CALC__EXTERNAL__FOUND")
-						println("  > CALC__EXTERNAL__BEFORE", external.tokenAmount)
+						println("    > ALC__EXTERNAL__FOUND")
+						println("    > ALC__EXTERNAL__BEFORE", external.tokenAmount)
 						external.tokenAmount = (positionAmount - external.tokenAmountClaimed)
-						println("  > CALC__EXTERNAL__AFTER", external.tokenAmount)
+						println("    > ALC__EXTERNAL__AFTER", external.tokenAmount)
 						positionExternal[tokenId][i] = external
 						break
 					}
@@ -278,14 +278,16 @@ func CalcPoolPosition() {
 			}
 		}
 	}
-	println("[END] CALC__EXTERNAL END")
+	println("[ END ] CALC__EXTERNAL END")
+	println()
 
 	// update flag
+	println("UPDATE FLAG")
 	lastCalculatedHeight = height
 	lastCalculatedTimestamp = time.Now().Unix()
 	lastCalculatedBalance = stakerGnsBalance
+	println()
 
-	println("")
 	println("[START] CALC__FINAL")
 	for poolPath, _ := range poolTiers {
 		amount := poolLastTmpGns[poolPath]
@@ -293,23 +295,32 @@ func CalcPoolPosition() {
 		println(" > CALC__FINAL_amount", amount)
 		println(" > CALC__FINAL_poolCurrentBlockGns[poolPath]", poolCurrentBlockGns[poolPath])
 		println(" > CALC__FINAL_poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
+		println(" > CALC__FINAL_POOL", poolPath)
+		println(" > CALC__FINAL_amount", amount)
+		println(" > CALC__FINAL_poolCurrentBlockGns[poolPath]", poolCurrentBlockGns[poolPath])
+		println(" > CALC__FINAL_poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
 		if amount > 0 {
 			if poolCurrentBlockGns[poolPath] >= amount {
 				println(" > CALC__SAME_OR_LEFT")
+				println(" > CALC__SAME_OR_LEFT")
 				poolLastTmpGns[poolPath] = poolCurrentBlockGns[poolPath] - amount
 				println(" > poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
+				println(" > poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
 			} else {
+				println(" > CALC__FINAL_WRONG")
 				println(" > CALC__FINAL_WRONG")
 				poolCurrentBlockGns[poolPath] = 0
 			}
 		} else {
 			println(" > CALC__FINAL__amount = 0")
+			println(" > CALC__FINAL__amount = 0")
 		}
 	}
 	println("[END] CALC__FINAL")
+	println()
 
 	// clear(poolCurrentBlockGns) // gno doesn't support `clear` keyword yet
 	poolCurrentBlockGns = make(map[string]uint64)
 	println("=== [ END END END ] CALC__CalcPoolPosition")
-
+	println()
 }
