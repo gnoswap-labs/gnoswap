@@ -74,8 +74,8 @@ test-burn-position: burn-position-1
 
 # wait chain to start
 wait:
-	$(info ************ [ETC] wait 2 seconds for chain to start ************)
-	$(shell sleep 2)
+	$(info ************ [ETC] wait 5 seconds for chain to start ************)
+	$(shell sleep 5)
 	@echo
 
 
@@ -273,6 +273,10 @@ mint-foo-qux:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/position -func Mint -args "gno.land/r/onbloc/foo" -args "gno.land/r/onbloc/qux" -args 100 -args -1000 -args 1000 -args 20000000 -args 20000000 -args 0 -args 0 -args $(TX_EXPIRE) -args $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
+	# THEN CREATE IMAGE
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gnft -func SetTokenURILast -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo
+
 
 stake-token-1:
 	$(info ************ stake token 1 // gnoswap_admin ************)
@@ -308,7 +312,7 @@ burn-position-1:
 
 set-pool-tier-2-bar-baz:
 	$(info ************ set pool tier 2 bar:baz // gnoswap_admin ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func SetPoolTier -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100" -args 100 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func SetPoolTier -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100" -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 stake-token-2:
@@ -319,7 +323,7 @@ stake-token-2:
 
 set-pool-tier-3-foo-qux:
 	$(info ************ set pool tier 3 foo:qux // gnoswap_admin ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func SetPoolTier -args "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:100" -args 100 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func SetPoolTier -args "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:100" -args 3 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 stake-token-3:
