@@ -11,6 +11,8 @@ import (
 
 	"gno.land/r/gnoswap/consts"
 	"gno.land/r/gnoswap/gns"
+
+	en "gno.land/r/gnoswap/emission"
 )
 
 // Incentive
@@ -236,8 +238,8 @@ type ApiEmissionDebugPosition struct {
 }
 
 func GetPrintInfo() string {
-	// en.MintAndDistributeGns()
-	// CalcPoolPosition()
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
 
 	emissionDebug := ApiEmissionDebugInfo{}
 	emissionDebug.Height = std.GetHeight()

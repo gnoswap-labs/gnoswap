@@ -69,23 +69,27 @@ func CalcPoolPosition() {
 
 	mintedGnsAmount := en.GetLastDistributeToStaker()
 	println("CALC__mintedGnsAmount:", mintedGnsAmount)
-	if std.GetOrigCaller().String() == "" {
-		println(" > CALC__ABCI_QUERY")
-		if stakerGnsBalance > lastCalculatedBalance {
-			println("  >> CALC__ABCI_QUERY__stakerGnsBalance > lastCalculatedBalance")
-			println("  >> CALC__ABCI_QUERY__stakerGnsBalance:", stakerGnsBalance)
-			println("  >> CALC__ABCI_QUERY__lastCalculatedBalance:", lastCalculatedBalance)
-			mintedGnsAmount = stakerGnsBalance - lastCalculatedBalance
-			println("  >> CALC__ABCI_QUERY__mintedGnsAmount:", mintedGnsAmount)
+
+	/*
+		if std.GetOrigCaller().String() == "" {
+			println(" > CALC__ABCI_QUERY")
+			if stakerGnsBalance > lastCalculatedBalance {
+				println("  >> CALC__ABCI_QUERY__stakerGnsBalance > lastCalculatedBalance")
+				println("  >> CALC__ABCI_QUERY__stakerGnsBalance:", stakerGnsBalance)
+				println("  >> CALC__ABCI_QUERY__lastCalculatedBalance:", lastCalculatedBalance)
+				mintedGnsAmount = stakerGnsBalance - lastCalculatedBalance
+				println("  >> CALC__ABCI_QUERY__mintedGnsAmount:", mintedGnsAmount)
+			} else {
+				println("  >> CALC__ABCI_QUERY__stakerGnsBalance <= lastCalculatedBalance")
+				println("  >> CALC__ABCI_QUERY__stakerGnsBalance:", stakerGnsBalance)
+				println("  >> CALC__ABCI_QUERY__lastCalculatedBalance:", lastCalculatedBalance)
+				// mintedGnsAmount = 0
+			}
 		} else {
-			println("  >> CALC__ABCI_QUERY__stakerGnsBalance <= lastCalculatedBalance")
-			println("  >> CALC__ABCI_QUERY__stakerGnsBalance:", stakerGnsBalance)
-			println("  >> CALC__ABCI_QUERY__lastCalculatedBalance:", lastCalculatedBalance)
-			// mintedGnsAmount = 0
+			println(" > CALC__ACTUAL_TX_CALL")
 		}
-	} else {
-		println(" > CALC__ACTUAL_TX_CALL")
-	}
+	*/
+
 	println()
 
 	println("CALC__USE_THIS_mintedGnsAmount:", mintedGnsAmount)
