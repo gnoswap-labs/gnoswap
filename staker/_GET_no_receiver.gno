@@ -381,7 +381,6 @@ func makePositionsNode(poolPath string) []*json.Node {
 			stakedDuration := std.GetHeight() - deposit.stakeHeight
 			fullAmount := positionGns[lpTokenId]
 			ratio := getRewardRatio(stakedDuration)
-			ratioAmount := (fullAmount * ratio) / 100
 			_, warmUpAmount := rewardMathComputeInternalRewardAmount(lpTokenId)
 
 			positions = append(positions, json.ObjectNode("", map[string]*json.Node{
@@ -391,7 +390,6 @@ func makePositionsNode(poolPath string) []*json.Node {
 				"stakedDuration":  json.NumberNode("stakedDuration", float64(stakedDuration)),
 				"fullAmount":      json.NumberNode("fullAmount", float64(fullAmount)),
 				"ratio":           json.NumberNode("ratio", float64(ratio)),
-				"ratioAmount":     json.NumberNode("ratioAmount", float64(ratioAmount)),
 				"warmUpAmount":    json.NumberNode("warmUpAmount", float64(warmUpAmount)),
 			}))
 		}
