@@ -17,6 +17,9 @@ import (
 
 // Incentive
 func StakerPoolIncentives(poolPath string) []string {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentives, exist := poolIncentives[poolPath]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerPoolIncentives() || poolPath(%s) incentives does not exist", poolPath))
@@ -26,6 +29,9 @@ func StakerPoolIncentives(poolPath string) []string {
 }
 
 func StakerIncentiveTargetPoolPath(incentiveId string) string {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveTargetPoolPath() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -35,6 +41,9 @@ func StakerIncentiveTargetPoolPath(incentiveId string) string {
 }
 
 func StakerIncentiveRewardToken(incentiveId string) string {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveRewardToken() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -45,6 +54,9 @@ func StakerIncentiveRewardToken(incentiveId string) string {
 
 // UINT
 func StakerIncentiveRewardAmount(incentiveId string) *u256.Uint {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveRewardAmount() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -55,6 +67,9 @@ func StakerIncentiveRewardAmount(incentiveId string) *u256.Uint {
 
 // STR
 func StakerIncentiveRewardAmountStr(incentiveId string) string {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveRewardAmount() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -64,6 +79,9 @@ func StakerIncentiveRewardAmountStr(incentiveId string) string {
 }
 
 func StakerIncentiveStartTimestamp(incentiveId string) int64 {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveStartTimestamp() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -73,6 +91,9 @@ func StakerIncentiveStartTimestamp(incentiveId string) int64 {
 }
 
 func StakerIncentiveEndTimestamp(incentiveId string) int64 {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveEndTimestamp() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -82,6 +103,9 @@ func StakerIncentiveEndTimestamp(incentiveId string) int64 {
 }
 
 func StakerIncentiveRefundee(incentiveId string) std.Address {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveRefundee() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -92,6 +116,9 @@ func StakerIncentiveRefundee(incentiveId string) std.Address {
 
 // Deposit
 func StakerDepositOwner(lpTokenId uint64) std.Address {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	deposit, exist := deposits[lpTokenId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerDepositOwner() || tokenId(%d) deposit does not exist", lpTokenId))
@@ -101,6 +128,9 @@ func StakerDepositOwner(lpTokenId uint64) std.Address {
 }
 
 func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	deposit, exist := deposits[lpTokenId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerDepositNumberOfStakes() || tokenId(%d) deposit does not exist", lpTokenId))
@@ -110,6 +140,9 @@ func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
 }
 
 func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	deposit, exist := deposits[lpTokenId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerDepositStakeTimestamp() || tokenId(%d) deposit does not exist", lpTokenId))
@@ -119,6 +152,9 @@ func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
 }
 
 func StakerDepositTargetPoolPath(lpTokenId uint64) string {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	deposit, exist := deposits[lpTokenId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerDepositTargetPoolPath() || tokenId(%d) deposit does not exist", lpTokenId))
