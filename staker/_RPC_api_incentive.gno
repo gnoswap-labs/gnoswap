@@ -55,7 +55,14 @@ func ApiGetRewardTokens() string {
 
 		// HANDLE EXTERNAL
 		for _, incentiveId := range poolIncentives[poolPath] {
+			if incentives[incentiveId].rewardToken == "" {
+				continue
+			}
 			thisPoolRewardTokens = append(thisPoolRewardTokens, incentives[incentiveId].rewardToken)
+		}
+
+		if len(thisPoolRewardTokens) == 0 {
+			continue
 		}
 
 		rewardTokens = append(rewardTokens, RewardToken{

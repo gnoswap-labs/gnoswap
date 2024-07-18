@@ -317,6 +317,11 @@ func CreateExternalIncentive(
 		}
 	}
 
+	// panic if pool does not exist
+	if !(pl.DoesPoolPathExist(targetPoolPath)) {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || targetPoolPath(%s) does not exist", targetPoolPath))
+	}
+
 	// check token can be used as reward
 	isAllowedForExternalReward(targetPoolPath, rewardToken)
 
@@ -359,7 +364,7 @@ func CreateExternalIncentive(
 
 	poolRewardBalanceBefore := balanceOfByRegisterCall(rewardToken, GetOrigPkgAddr())
 
-	incentiveId := incentiveIdCompute(std.GetOrigCaller(), targetPoolPath, rewardToken)
+	incentiveId := incentiveIdCompute(std.GetOrigCaller(), targetPoolPath, rewardToken, startTimestamp, endTimestamp)
 
 	// if same incentiveId exists => increase rewardTokenAmount
 	for _, v := range poolIncentives[targetPoolPath] {
@@ -435,10 +440,10 @@ func CreateExternalIncentive(
 // Panics if any of the following conditions are met:
 // - incentive expiration time is not over
 // - reward token amount is not enough to refund
-func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string) {
+func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string, startTimestamp, endTimestamp int64) {
 	refundee := std.Address(_refundee)
 
-	incentiveId := incentiveIdCompute(refundee, targetPoolPath, rewardToken)
+	incentiveId := incentiveIdCompute(refundee, targetPoolPath, rewardToken, startTimestamp, endTimestamp)
 
 	incentive, exist := incentives[incentiveId]
 	if !exist {
