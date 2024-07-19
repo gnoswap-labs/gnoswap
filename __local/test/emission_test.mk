@@ -68,8 +68,6 @@ test-unstake-token: unstake-token-1
 .PHONY: test-burn-position
 test-burn-position: burn-position-1
 
-# set-poo-tier-2
-# set-poo-tier-3
 
 
 # wait chain to start
@@ -310,7 +308,7 @@ burn-position-1:
 	@echo
 
 
-set-pool-tier-2-bar-baz:
+set-pool-tier-1-bar-baz:
 	$(info ************ set pool tier 2 bar:baz // gnoswap_admin ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/staker -func SetPoolTier -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100" -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
