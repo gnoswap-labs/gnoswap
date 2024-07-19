@@ -267,10 +267,10 @@ func CalcPoolPosition() {
 				for i, external := range positionExternal[tokenId] {
 					println("   > CALC__external.incentiveId:", external.incentiveId)
 					if external.incentiveId == incentiveId {
-						println("    > ALC__EXTERNAL__FOUND")
-						println("    > ALC__EXTERNAL__BEFORE", external.tokenAmount)
+						println("    > CALC__EXTERNAL__FOUND")
+						println("    > CALC__EXTERNAL__BEFORE", external.tokenAmount)
 						external.tokenAmount = (positionAmount - external.tokenAmountClaimed)
-						println("    > ALC__EXTERNAL__AFTER", external.tokenAmount)
+						println("    > CALC__EXTERNAL__AFTER", external.tokenAmount)
 						positionExternal[tokenId][i] = external
 						break
 					}
