@@ -1,11 +1,11 @@
 package gnft
 
 import (
-	"math/rand"
-
-	"gno.land/p/demo/ufmt"
-
 	b64 "encoding/base64"
+	"math/rand"
+	"strings"
+	
+	"gno.land/p/demo/ufmt"
 )
 
 var baseTempalte = `<svg width="135" height="135" viewBox="0 0 135 135" fill="none" xmlns="http://www.w3.org/2000/svg">
