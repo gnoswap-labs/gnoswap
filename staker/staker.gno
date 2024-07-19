@@ -127,7 +127,7 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 		"amount1", token1Amount,
 	)
 
-	positionCollectHeight[tokenId] = uint64(std.GetHeight())
+	positionWarmUpAmount[tokenId] = warmUpAmount{}
 	return poolPath, token0Amount, token1Amount
 }
 
@@ -212,8 +212,8 @@ func CollectReward(tokenId uint64) string { // poolPath
 	println("[END] CollectReward_EXTERNAL", tokenId)
 	println()
 
-	println("[START] CollectReward_INTERNAL", tokenId)
 	// INTERNAL gns emission
+	println("[START] CollectReward_INTERNAL", tokenId)
 	fullAmount, toGive := rewardMathComputeInternalRewardAmount(tokenId)
 	println(" > position fullAmount(rewardMathComputeInternal)", fullAmount)
 	println(" > position toGive(rewardMathComputeInternal)", toGive)
@@ -226,10 +226,13 @@ func CollectReward(tokenId uint64) string { // poolPath
 	gns.Transfer(a2u(deposit.owner), toUser)
 
 	println(" > clear positionGns[tokenId] = 0")
-	positionGns[tokenId] = 0
+	// positionGns[tokenId] = 0
+
+	// delete(positionWarmUpAmount, tokenId) // DO NOT DELETE
+	positionWarmUpAmount[tokenId] = warmUpAmount{} // JUST CLEAR
 
 	println(" > poolGns[poolPath]", poolGns[poolPath])
-	println(" > fullAmount", poolGns[poolPath])
+	println(" > position fullAmount", fullAmount)
 
 	poolGns[poolPath] -= fullAmount
 	println(" > poolGns[poolPath] - fullAmount", poolGns[poolPath])
@@ -251,7 +254,6 @@ func CollectReward(tokenId uint64) string { // poolPath
 		"amount", uint64ToStr(toUser),
 	)
 
-	positionCollectHeight[tokenId] = uint64(std.GetHeight())
 	println("[END] CollectReward_INTERNAL", tokenId)
 	return poolPath
 }
@@ -271,9 +273,10 @@ func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0
 	}
 	// Claim All Rewards
 	CollectReward(tokenId)
+
 	delete(positionGns, tokenId)
 	delete(deposits, tokenId)
-	delete(positionCollectHeight, tokenId)
+	delete(positionWarmUpAmount, tokenId)
 
 	// transfer NFT ownership to origin owner
 	gnft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(deposit.owner), tid(tokenId))
