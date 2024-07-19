@@ -46,8 +46,16 @@ func genImageRaw(r *rand.Rand) string {
         x2 := 121 + r.Uint64N(6)
         y2 := 121 + r.Uint64N(6)
 
-	color1 := randColor(r)
-	color2 := randColor(r)
+	var color1, color2 strings.Builder
+        color1.Grow(7)
+        color2.Grow(7)
+        color1.WriteByte('#')
+        color2.WriteByte('#')
+
+        for i := 0; i < 6; i++ {
+            color1.WriteByte(charset[r.Intn(16)])
+            color2.WriteByte(charset[r.Intn(16)])
+        }
 
 	randImage := ufmt.Sprintf(baseTempalte, x1, y1, x2, y2, color1, color2)
 	return randImage
