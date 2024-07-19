@@ -235,7 +235,13 @@ func printInfo(prev currentInfo) currentInfo {
 
 	println("GNS POSITION")
 	for k, v := range positionGns {
-		println("> tokenId:", k, "amount:", v)
+		posWarmCalc := positionWarmUpAmount[k]
+		println("> tokenId:", k, "amount:", v, "warmUp:", getRewardRatio(curr.height-deposits[k].stakeHeight))
+		println("> 100%", "full", posWarmCalc.full100, "give", posWarmCalc.give100)
+		println("> 70%", "full", posWarmCalc.full70, "give", posWarmCalc.give70)
+		println("> 50%", "full", posWarmCalc.full50, "give", posWarmCalc.give50)
+		println("> 30%", "full", posWarmCalc.full30, "give", posWarmCalc.give30)
+		println()
 	}
 
 	println()
@@ -379,9 +385,10 @@ func makePositionsNode(poolPath string) []*json.Node {
 	for lpTokenId, deposit := range deposits {
 		if deposit.targetPoolPath == poolPath {
 			stakedDuration := std.GetHeight() - deposit.stakeHeight
-			fullAmount := positionGns[lpTokenId]
 			ratio := getRewardRatio(stakedDuration)
-			_, warmUpAmount := rewardMathComputeInternalRewardAmount(lpTokenId)
+			fullAmount, warmUpAmount := rewardMathComputeInternalRewardAmount(lpTokenId)
+
+			posCalcWarm := positionWarmUpAmount[lpTokenId]
 
 			positions = append(positions, json.ObjectNode("", map[string]*json.Node{
 				"lpTokenId":       json.NumberNode("lpTokenId", float64(lpTokenId)),
@@ -391,6 +398,14 @@ func makePositionsNode(poolPath string) []*json.Node {
 				"fullAmount":      json.NumberNode("fullAmount", float64(fullAmount)),
 				"ratio":           json.NumberNode("ratio", float64(ratio)),
 				"warmUpAmount":    json.NumberNode("warmUpAmount", float64(warmUpAmount)),
+				"full30":          json.NumberNode("full30", float64(posCalcWarm.full30)),
+				"give30":          json.NumberNode("give30", float64(posCalcWarm.give30)),
+				"full50":          json.NumberNode("full50", float64(posCalcWarm.full50)),
+				"give50":          json.NumberNode("give50", float64(posCalcWarm.give50)),
+				"full70":          json.NumberNode("full70", float64(posCalcWarm.full70)),
+				"give70":          json.NumberNode("give70", float64(posCalcWarm.give70)),
+				"full100":         json.NumberNode("full100", float64(posCalcWarm.full100)),
+				"give100":         json.NumberNode("give100", float64(posCalcWarm.give100)),
 			}))
 		}
 	}
