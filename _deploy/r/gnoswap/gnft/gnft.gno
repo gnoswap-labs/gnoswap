@@ -1,10 +1,11 @@
 package gnft
 
 import (
+	"math/rand"
 	"std"
+	"time"
 
 	"gno.land/p/demo/grc/grc721"
-	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/users"
 
 	pusers "gno.land/p/demo/users"
@@ -15,20 +16,22 @@ var (
 	gnft              = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
 )
 
-func init() {
-}
+var userMinted = make(map[std.Address][]grc721.TokenID)
 
-func mintNNFT(owner std.Address, n uint64) {
-	count := gnft.TokenCount()
-	for i := count; i < count+n; i++ {
-		tid := grc721.TokenID(ufmt.Sprintf("%d", i))
-		gnft.Mint(owner, tid)
-	}
-}
+func init() {}
 
 // Getters
 func TotalSupply() uint64 {
 	return gnft.TokenCount()
+}
+
+func GetTokenURI(tid grc721.TokenID) string {
+	uri, err := gnft.TokenURI(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return string(uri)
 }
 
 func BalanceOf(user pusers.AddressOrName) uint64 {
@@ -86,14 +89,17 @@ func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
 }
 
 // Admin
-
-func Mint(to pusers.AddressOrName, tid grc721.TokenID) {
+func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
+
 	err := gnft.Mint(users.Resolve(to), tid)
 	if err != nil {
 		panic(err.Error())
 	}
+
+	userMinted[users.Resolve(to)] = append(userMinted[users.Resolve(to)], tid)
+	return tid
 }
 
 func Burn(tid grc721.TokenID) {
@@ -125,7 +131,7 @@ func Render(path string) string {
 // Util
 func assertIsAdmin(address std.Address) {
 	if address != admin {
-		panic("restricted access")
+		panic("gnft_assertIsAdmin_restricted access")
 	}
 }
 
@@ -136,4 +142,59 @@ func Exists(tid grc721.TokenID) bool {
 	}
 
 	return true
+}
+
+func SetTokenURI(tid grc721.TokenID) {
+	// rand instance
+	seed1 := uint64(time.Now().Unix())
+	seed2 := uint64(time.Now().UnixNano())
+	pcg := rand.NewPCG(seed1, seed2)
+	r := rand.New(pcg)
+
+	tokenURI := genImageURI(r)
+
+	ok, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
+	if !ok {
+		panic(err.Error())
+	}
+
+	std.Emit(
+		"GNOSWAP",
+		"m_origCaller", std.GetOrigCaller().String(),
+		"m_prevRealm", std.PrevRealm().PkgPath(),
+		"p_tokenId", string(tid),
+		"tokenURI", tokenURI,
+		"SetTokenURI", "SetTokenURI",
+	)
+}
+
+func SetTokenURILast() {
+	origCaller := std.GetOrigCaller()
+
+	// rand instance
+	seed1 := uint64(time.Now().Unix())
+	seed2 := uint64(time.Now().UnixNano())
+	pcg := rand.NewPCG(seed1, seed2)
+	r := rand.New(pcg)
+
+	usersNFT := userMinted[origCaller]
+	for _, tid := range usersNFT {
+		tokenURI := genImageURI(r)
+
+		ok, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
+		if !ok {
+			panic(err.Error())
+		}
+
+		std.Emit(
+			"GNOSWAP",
+			"m_origCaller", std.GetOrigCaller().String(),
+			"m_prevRealm", std.PrevRealm().PkgPath(),
+			"p_tokenId", string(tid),
+			"tokenURI", tokenURI,
+			"SetTokenURILast", "SetTokenURILast",
+		)
+	}
+
+	delete(userMinted, origCaller)
 }
