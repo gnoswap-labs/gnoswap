@@ -40,11 +40,11 @@ func genImageURI(r *rand.Rand) string {
 }
 
 func genImageRaw(r *rand.Rand) string {
-	x1 := randNumber(7, 13, r)
-	y1 := randNumber(7, 13, r)
+	x1 := 7 + r.Uint64N(7)
+        y1 := 7 + r.Uint64N(7)
 
-	x2 := randNumber(121, 126, r)
-	y2 := randNumber(121, 126, r)
+        x2 := 121 + r.Uint64N(6)
+        y2 := 121 + r.Uint64N(6)
 
 	color1 := randColor(r)
 	color2 := randColor(r)
