@@ -4,7 +4,7 @@ import (
 	b64 "encoding/base64"
 	"math/rand"
 	"strings"
-	
+
 	"gno.land/p/demo/ufmt"
 )
 
@@ -41,34 +41,22 @@ func genImageURI(r *rand.Rand) string {
 
 func genImageRaw(r *rand.Rand) string {
 	x1 := 7 + r.Uint64N(7)
-        y1 := 7 + r.Uint64N(7)
+	y1 := 7 + r.Uint64N(7)
 
-        x2 := 121 + r.Uint64N(6)
-        y2 := 121 + r.Uint64N(6)
+	x2 := 121 + r.Uint64N(6)
+	y2 := 121 + r.Uint64N(6)
 
 	var color1, color2 strings.Builder
-        color1.Grow(7)
-        color2.Grow(7)
-        color1.WriteByte('#')
-        color2.WriteByte('#')
+	color1.Grow(7)
+	color2.Grow(7)
+	color1.WriteByte('#')
+	color2.WriteByte('#')
 
-        for i := 0; i < 6; i++ {
-            color1.WriteByte(charset[r.Intn(16)])
-            color2.WriteByte(charset[r.Intn(16)])
-        }
-
-	randImage := ufmt.Sprintf(baseTempalte, x1, y1, x2, y2, color1, color2)
-	return randImage
-}
-
-func randNumber(lower, upper uint64, r *rand.Rand) uint64 {
-	return lower + uint64(r.IntN(int(upper-lower+1)))
-}
-
-func randColor(r *rand.Rand) string {
-	color := "#"
 	for i := 0; i < 6; i++ {
-		color += string(charset[r.IntN(len(charset))])
+		color1.WriteByte(charset[r.IntN(16)])
+		color2.WriteByte(charset[r.IntN(16)])
 	}
-	return color
+
+	randImage := ufmt.Sprintf(baseTempalte, x1, y1, x2, y2, color1.String(), color2.String())
+	return randImage
 }
