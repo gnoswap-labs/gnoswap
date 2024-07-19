@@ -46,7 +46,6 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	gnsAmountToGiveX96 := u256.Zero()
 
 	// lastCollectHeight
-	// safeSub
 	switch durationRatio {
 	case 100:
 		if uint64(lastCollectHeight) > begin100 {
