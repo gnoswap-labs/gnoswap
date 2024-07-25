@@ -29,7 +29,7 @@ type warmUpAmount struct {
 	left100 uint64 // doesn't need this I think
 }
 
-var positionWarmUpAmount = make(map[uint64]warmUpAmount) // positionId => warmUpAmount
+var positionsWarmUpAmount = make(map[uint64]warmUpAmount) // positionId => warmUpAmount
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 
@@ -60,6 +60,8 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 
 	// 과거 계산 시점부터 현재 블록까지 쌓인 리워드에 대해 각 가중치별로 분배
 	toDistribute := positionGns[tokenId] - positionLastGns[tokenId]
+	println(" > REWARD__positionGns[tokenId]", positionGns[tokenId])
+	println(" > REWARD__positionLastGns[tokenId]", positionLastGns[tokenId])
 
 	until30 := uint64(stakeHeight + warmUp[50] - 1)  // 150
 	until50 := uint64(stakeHeight + warmUp[70] - 1)  // 300
@@ -71,7 +73,14 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	q96 := u256.MustFromDecimal(consts.Q96)
 	toDistributeX96 := new(u256.Uint).Mul(u256.NewUint(toDistribute), q96)
 	avgGnsBlockAmountX96 := new(u256.Uint).Div(toDistributeX96, u256.NewUint(uint64(currentHeight)-lastCalculatedHeightU64))
-	println("avgGnsBlockAmountX96:", avgGnsBlockAmountX96.ToString())
+	println(" > REWARD__toDistribute:", toDistribute)
+	println(" > REWARD__uint64(currentHeight)-lastCalculatedHeightU64):", uint64(currentHeight)-lastCalculatedHeightU64)
+	println(" > REWARD__avgGnsBlockAmountX96:", avgGnsBlockAmountX96.ToString())
+
+	positionWarmUpAmount, exist := positionsWarmUpAmount[tokenId]
+	if !exist {
+		panic("THIS SHOULD NOT HAPPEN")
+	}
 
 	switch durationRatio {
 	case 100:
@@ -82,9 +91,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 			println("  > REWARD__DUR100", dur100)
 			full, toGive := calcAmount(avgGnsBlockAmountX96, dur100, 100)
 			// println("  > REWARD__AMOUNT100", amount)
-			positionWarmUpAmount[tokenId].full100 += full
-			positionWarmUpAmount[tokenId].give100 += toGive
-			positionWarmUpAmount[tokenId].left100 += full - toGive
+			positionWarmUpAmount.full100 += full
+			positionWarmUpAmount.give100 += toGive
+			positionWarmUpAmount.left100 += full - toGive
 			// gnsAmountToGive += amount // UPDATE EACH PERIOD
 			// println("  > REWARD__100%", gnsAmountToGive)
 		} else {
@@ -94,9 +103,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				dur100 := uint64(currentHeight) - until70
 				println("  > REWARD__DUR100", dur100)
 				full, toGive := calcAmount(avgGnsBlockAmountX96, dur100, 100)
-				positionWarmUpAmount[tokenId].full100 += full
-				positionWarmUpAmount[tokenId].give100 += toGive
-				positionWarmUpAmount[tokenId].left100 += full - toGive
+				positionWarmUpAmount.full100 += full
+				positionWarmUpAmount.give100 += toGive
+				positionWarmUpAmount.left100 += full - toGive
 				// println("  > REWARD__AMOUNT100", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 				// println("  > REWARD__100%", gnsAmountToGive)
@@ -105,9 +114,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				dur70 := until70 - lastCalculatedHeightU64
 				println("  > REWARD__DUR70", dur70)
 				full, toGive = calcAmount(avgGnsBlockAmountX96, dur70, 70)
-				positionWarmUpAmount[tokenId].full70 += full
-				positionWarmUpAmount[tokenId].give70 += toGive
-				positionWarmUpAmount[tokenId].left70 += full - toGive
+				positionWarmUpAmount.full70 += full
+				positionWarmUpAmount.give70 += toGive
+				positionWarmUpAmount.left70 += full - toGive
 				// println("  > REWARD__AMOUNT70", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 				// println("  > REWARD__70%", gnsAmountToGive)
@@ -117,9 +126,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				dur100 := uint64(currentHeight) - until70
 				println("  > REWARD__DUR100", dur100)
 				full, toGive := calcAmount(avgGnsBlockAmountX96, dur100, 100)
-				positionWarmUpAmount[tokenId].full100 += full
-				positionWarmUpAmount[tokenId].give100 += toGive
-				positionWarmUpAmount[tokenId].left100 += full - toGive
+				positionWarmUpAmount.full100 += full
+				positionWarmUpAmount.give100 += toGive
+				positionWarmUpAmount.left100 += full - toGive
 				// println("  > REWARD__AMOUNT100", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 				// println("  > REWARD__100%", gnsAmountToGive)
@@ -128,9 +137,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				dur70 := until70 - until50
 				println("  > REWARD__DUR70", dur70)
 				full, toGive = calcAmount(avgGnsBlockAmountX96, dur70, 70)
-				positionWarmUpAmount[tokenId].full70 += full
-				positionWarmUpAmount[tokenId].give70 += toGive
-				positionWarmUpAmount[tokenId].left70 += full - toGive
+				positionWarmUpAmount.full70 += full
+				positionWarmUpAmount.give70 += toGive
+				positionWarmUpAmount.left70 += full - toGive
 				// println("  > REWARD__AMOUNT70", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 				// println("  > REWARD__70%", gnsAmountToGive)
@@ -140,9 +149,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				println("  > REWARD__DUR50", dur50)
 				// println("  > REWARD__50%", gnsAmountToGive)
 				full, toGive = calcAmount(avgGnsBlockAmountX96, dur50, 50)
-				positionWarmUpAmount[tokenId].full50 += full
-				positionWarmUpAmount[tokenId].give50 += toGive
-				positionWarmUpAmount[tokenId].left50 += full - toGive
+				positionWarmUpAmount.full50 += full
+				positionWarmUpAmount.give50 += toGive
+				positionWarmUpAmount.left50 += full - toGive
 				// println("  > REWARD__AMOUNT50", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 			} else {
@@ -151,9 +160,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				dur100 := uint64(currentHeight) - until70
 				println("  > REWARD__DUR100", dur100)
 				full, toGive := calcAmount(avgGnsBlockAmountX96, dur100, 100)
-				positionWarmUpAmount[tokenId].full100 += full
-				positionWarmUpAmount[tokenId].give100 += toGive
-				positionWarmUpAmount[tokenId].left100 += full - toGive
+				positionWarmUpAmount.full100 += full
+				positionWarmUpAmount.give100 += toGive
+				positionWarmUpAmount.left100 += full - toGive
 				// println("  > REWARD__AMOUNT100", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 				// println("  > REWARD__100%", gnsAmountToGive)
@@ -163,9 +172,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				println("  > REWARD__DUR70", dur70)
 				// println("  > REWARD__70%", gnsAmountToGive)
 				full, toGive = calcAmount(avgGnsBlockAmountX96, dur70, 70)
-				positionWarmUpAmount[tokenId].full70 += full
-				positionWarmUpAmount[tokenId].give70 += toGive
-				positionWarmUpAmount[tokenId].left70 += full - toGive
+				positionWarmUpAmount.full70 += full
+				positionWarmUpAmount.give70 += toGive
+				positionWarmUpAmount.left70 += full - toGive
 				// println("  > REWARD__AMOUNT70", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 
@@ -174,9 +183,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				println("  > REWARD__DUR50", dur50)
 				// println("  > REWARD__50%", gnsAmountToGive)
 				full, toGive = calcAmount(avgGnsBlockAmountX96, dur50, 50)
-				positionWarmUpAmount[tokenId].full50 += full
-				positionWarmUpAmount[tokenId].give50 += toGive
-				positionWarmUpAmount[tokenId].left50 += full - toGive
+				positionWarmUpAmount.full50 += full
+				positionWarmUpAmount.give50 += toGive
+				positionWarmUpAmount.left50 += full - toGive
 				// println("  > REWARD__AMOUNT50", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 
@@ -185,9 +194,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				println("  > REWARD__DUR30", dur30)
 				// println("  > REWARD__30%", gnsAmountToGive)
 				full, toGive = calcAmount(avgGnsBlockAmountX96, dur30, 30)
-				positionWarmUpAmount[tokenId].full30 += full
-				positionWarmUpAmount[tokenId].give30 += toGive
-				positionWarmUpAmount[tokenId].left30 += full - toGive
+				positionWarmUpAmount.full30 += full
+				positionWarmUpAmount.give30 += toGive
+				positionWarmUpAmount.left30 += full - toGive
 				// println("  > REWARD__AMOUNT30", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 			}
@@ -200,9 +209,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 			dur70 := uint64(currentHeight) - lastCalculatedHeightU64
 			println("  > REWARD__DUR70", dur70)
 			full, toGive := calcAmount(avgGnsBlockAmountX96, dur70, 70)
-			positionWarmUpAmount[tokenId].full70 += full
-			positionWarmUpAmount[tokenId].give70 += toGive
-			positionWarmUpAmount[tokenId].left70 += full - toGive
+			positionWarmUpAmount.full70 += full
+			positionWarmUpAmount.give70 += toGive
+			positionWarmUpAmount.left70 += full - toGive
 			// println("  > REWARD__AMOUNT70", amount)
 			// gnsAmountToGive += amount // UPDATE EACH PERIOD
 			// println("  > REWARD__70%", gnsAmountToGive)
@@ -214,9 +223,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				println("  > REWARD__DUR70", dur70)
 				// println("  > REWARD__70%", gnsAmountToGive)
 				full, toGive := calcAmount(avgGnsBlockAmountX96, dur70, 70)
-				positionWarmUpAmount[tokenId].full70 += full
-				positionWarmUpAmount[tokenId].give70 += toGive
-				positionWarmUpAmount[tokenId].left70 += full - toGive
+				positionWarmUpAmount.full70 += full
+				positionWarmUpAmount.give70 += toGive
+				positionWarmUpAmount.left70 += full - toGive
 				// println("  > REWARD__AMOUNT70", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 
@@ -224,9 +233,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				dur50 := until50 - lastCalculatedHeightU64
 				println("  > REWARD__DUR50", dur50)
 				full, toGive = calcAmount(avgGnsBlockAmountX96, dur50, 50)
-				positionWarmUpAmount[tokenId].full50 += full
-				positionWarmUpAmount[tokenId].give50 += toGive
-				positionWarmUpAmount[tokenId].left50 += full - toGive
+				positionWarmUpAmount.full50 += full
+				positionWarmUpAmount.give50 += toGive
+				positionWarmUpAmount.left50 += full - toGive
 				// println("  > REWARD__AMOUNT50", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 				// println("  > REWARD__50%", gnsAmountToGive)
@@ -236,9 +245,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				dur70 := uint64(currentHeight) - until50
 				println("  > REWARD__DUR70", dur70)
 				full, toGive := calcAmount(avgGnsBlockAmountX96, dur70, 70)
-				positionWarmUpAmount[tokenId].full70 += full
-				positionWarmUpAmount[tokenId].give70 += toGive
-				positionWarmUpAmount[tokenId].left70 += full - toGive
+				positionWarmUpAmount.full70 += full
+				positionWarmUpAmount.give70 += toGive
+				positionWarmUpAmount.left70 += full - toGive
 				// println("  > REWARD__AMOUNT70", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 				// println("  > REWARD__70%", gnsAmountToGive)
@@ -247,9 +256,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				dur50 := until50 - until30
 				println("  > REWARD__DUR50", dur50)
 				full, toGive = calcAmount(avgGnsBlockAmountX96, dur50, 50)
-				positionWarmUpAmount[tokenId].full50 += full
-				positionWarmUpAmount[tokenId].give50 += toGive
-				positionWarmUpAmount[tokenId].left50 += full - toGive
+				positionWarmUpAmount.full50 += full
+				positionWarmUpAmount.give50 += toGive
+				positionWarmUpAmount.left50 += full - toGive
 				// println("  > REWARD__AMOUNT50", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 				// println("  > REWARD__50%", gnsAmountToGive)
@@ -258,9 +267,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 				dur30 := until30 - lastCalculatedHeightU64
 				println("  > REWARD__DUR30", dur30)
 				full, toGive = calcAmount(avgGnsBlockAmountX96, dur30, 30)
-				positionWarmUpAmount[tokenId].full30 += full
-				positionWarmUpAmount[tokenId].give30 += toGive
-				positionWarmUpAmount[tokenId].left30 += full - toGive
+				positionWarmUpAmount.full30 += full
+				positionWarmUpAmount.give30 += toGive
+				positionWarmUpAmount.left30 += full - toGive
 				// println("  > REWARD__AMOUNT30", amount)
 				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 				// println("  > REWARD__30%", gnsAmountToGive)
@@ -274,9 +283,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 			dur50 := uint64(currentHeight) - lastCalculatedHeightU64
 			println("  > REWARD__DUR50", dur50)
 			full, toGive := calcAmount(avgGnsBlockAmountX96, dur50, 50)
-			positionWarmUpAmount[tokenId].full50 += full
-			positionWarmUpAmount[tokenId].give50 += toGive
-			positionWarmUpAmount[tokenId].left50 += full - toGive
+			positionWarmUpAmount.full50 += full
+			positionWarmUpAmount.give50 += toGive
+			positionWarmUpAmount.left50 += full - toGive
 			// println("  > REWARD__AMOUNT50", amount)
 			// gnsAmountToGive += amount // UPDATE EACH PERIOD
 			// println("  > REWARD__50%", gnsAmountToGive)
@@ -285,9 +294,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 			dur50 := uint64(currentHeight) - until30
 			println("  > REWARD__DUR50", dur50)
 			full, toGive := calcAmount(avgGnsBlockAmountX96, dur50, 50)
-			positionWarmUpAmount[tokenId].full50 += full
-			positionWarmUpAmount[tokenId].give50 += toGive
-			positionWarmUpAmount[tokenId].left50 += full - toGive
+			positionWarmUpAmount.full50 += full
+			positionWarmUpAmount.give50 += toGive
+			positionWarmUpAmount.left50 += full - toGive
 			// println("  > REWARD__AMOUNT50", amount)
 			// gnsAmountToGive += amount // UPDATE EACH PERIOD
 			// println("  > REWARD__50%", gnsAmountToGive)
@@ -295,9 +304,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 			// 30%
 			dur30 := until30 - lastCalculatedHeightU64
 			full, toGive = calcAmount(avgGnsBlockAmountX96, dur30, 30)
-			positionWarmUpAmount[tokenId].full30 += full
-			positionWarmUpAmount[tokenId].give30 += toGive
-			positionWarmUpAmount[tokenId].left30 += full - toGive
+			positionWarmUpAmount.full30 += full
+			positionWarmUpAmount.give30 += toGive
+			positionWarmUpAmount.left30 += full - toGive
 			// println("  > REWARD__AMOUNT30", amount)
 			// gnsAmountToGive += amount // UPDATE EACH PERIOD
 			println("  > REWARD__DUR30", dur30)
@@ -308,9 +317,9 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 		println(" > REWARD__REWARD 30%")
 		dur30 := uint64(currentHeight) - lastCalculatedHeightU64
 		full, toGive := calcAmount(avgGnsBlockAmountX96, dur30, 30)
-		positionWarmUpAmount[tokenId].full30 += full
-		positionWarmUpAmount[tokenId].give30 += toGive
-		positionWarmUpAmount[tokenId].left30 += full - toGive
+		positionWarmUpAmount.full30 += full
+		positionWarmUpAmount.give30 += toGive
+		positionWarmUpAmount.left30 += full - toGive
 		// gnsAmountToGive += amount // UPDATE EACH PERIOD
 		// println("  > REWARD__AMOUNT30", amount)
 		println("  > REWARD__DUR30", dur30)
@@ -335,23 +344,25 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	println(" > REWARD__until70:", until70)
 	println(" > REWARD__begin100:", begin100)
 
-	println(" > REWARD__full30:", positionWarmUpAmount[tokenId].full30)
-	println(" > REWARD__give30:", positionWarmUpAmount[tokenId].give30)
+	println(" > REWARD__full30:", positionWarmUpAmount.full30)
+	println(" > REWARD__give30:", positionWarmUpAmount.give30)
 
-	println(" > REWARD__full50:", positionWarmUpAmount[tokenId].full50)
-	println(" > REWARD__give50:", positionWarmUpAmount[tokenId].give50)
+	println(" > REWARD__full50:", positionWarmUpAmount.full50)
+	println(" > REWARD__give50:", positionWarmUpAmount.give50)
 
-	println(" > REWARD__full70:", positionWarmUpAmount[tokenId].full70)
-	println(" > REWARD__give70:", positionWarmUpAmount[tokenId].give70)
+	println(" > REWARD__full70:", positionWarmUpAmount.full70)
+	println(" > REWARD__give70:", positionWarmUpAmount.give70)
 
-	println(" > REWARD__full100:", positionWarmUpAmount[tokenId].full100)
-	println(" > REWARD__give100:", positionWarmUpAmount[tokenId].give100)
+	println(" > REWARD__full100:", positionWarmUpAmount.full100)
+	println(" > REWARD__give100:", positionWarmUpAmount.give100)
 
 	accuFull := uint64(0)
 	accuGive := uint64(0)
 
-	accuFull += positionWarmUpAmount[tokenId].full30 + positionWarmUpAmount[tokenId].full50 + positionWarmUpAmount[tokenId].full70 + positionWarmUpAmount[tokenId].full100
-	accuGive += positionWarmUpAmount[tokenId].give30 + positionWarmUpAmount[tokenId].give50 + positionWarmUpAmount[tokenId].give70 + positionWarmUpAmount[tokenId].give100
+	accuFull += positionWarmUpAmount.full30 + positionWarmUpAmount.full50 + positionWarmUpAmount.full70 + positionWarmUpAmount.full100
+	accuGive += positionWarmUpAmount.give30 + positionWarmUpAmount.give50 + positionWarmUpAmount.give70 + positionWarmUpAmount.give100
+
+	positionsWarmUpAmount[tokenId] = positionWarmUpAmount
 
 	return accuFull, accuGive
 }
