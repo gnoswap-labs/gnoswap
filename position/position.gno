@@ -481,6 +481,8 @@ func Reposition(
 	tickUpper int32,
 	_amount0Desired string, // uint256
 	_amount1Desired string, // uint256
+	_amount0Min string, // *u256.Uint
+	_amount1Min string, // *u256.Uint
 ) (uint64, string, int32, int32, string, string) { // tokenId, liquidity, tickLower, tickUpper, amount0, amount1
 	en.MintAndDistributeGns()
 
@@ -531,8 +533,8 @@ func Reposition(
 			tickUpper:      tickUpper,
 			amount0Desired: u256.MustFromDecimal(_amount0Desired),
 			amount1Desired: u256.MustFromDecimal(_amount1Desired),
-			amount0Min:     u256.Zero(),
-			amount1Min:     u256.Zero(),
+			amount0Min:     u256.MustFromDecimal(_amount0Min),
+			amount1Min:     u256.MustFromDecimal(_amount1Min),
 		},
 	)
 
