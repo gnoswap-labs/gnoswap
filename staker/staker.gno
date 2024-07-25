@@ -93,25 +93,6 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || poolPath(%s) has no internal or external incentive(can not stake)", poolPath))
 	}
 
-	// if target pool has external but hasn't starrted panic
-	numActive := 0
-	if hasInternal == false && hasExternal == true {
-		for _, incentiveId := range poolIncentives[poolPath] {
-			incentive := incentives[incentiveId]
-			if incentive.startTimestamp < time.Now().Unix() && time.Now().Unix() < incentive.endTimestamp {
-				println("incentive.startTimestamp", incentive.startTimestamp)
-				println("time.Now().Unix()", time.Now().Unix())
-				println("incentive.endTimestamp", incentive.endTimestamp)
-				println()
-				numActive++
-			}
-		}
-
-		if numActive == 0 {
-			panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || poolPath(%s) has external incentive but not started yet(can not stake)", poolPath))
-		}
-	}
-
 	// check tokenId has liquidity or not
 	liquidity := pn.PositionGetPositionLiquidity(tokenId) // *u256.Uint
 	if liquidity.Lte(u256.Zero()) {
