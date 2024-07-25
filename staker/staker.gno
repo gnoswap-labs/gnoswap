@@ -127,7 +127,7 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 		"amount1", token1Amount,
 	)
 
-	positionWarmUpAmount[tokenId] = warmUpAmount{}
+	positionsWarmUpAmount[tokenId] = warmUpAmount{}
 	return poolPath, token0Amount, token1Amount
 }
 
@@ -228,8 +228,8 @@ func CollectReward(tokenId uint64) string { // poolPath
 	println(" > clear positionGns[tokenId] = 0")
 	// positionGns[tokenId] = 0
 
-	// delete(positionWarmUpAmount, tokenId) // DO NOT DELETE
-	positionWarmUpAmount[tokenId] = warmUpAmount{} // JUST CLEAR
+	// delete(positionsWarmUpAmount, tokenId) // DO NOT DELETE
+	positionsWarmUpAmount[tokenId] = warmUpAmount{} // JUST CLEAR
 
 	println(" > poolGns[poolPath]", poolGns[poolPath])
 	println(" > position fullAmount", fullAmount)
@@ -276,7 +276,7 @@ func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0
 
 	delete(positionGns, tokenId)
 	delete(deposits, tokenId)
-	delete(positionWarmUpAmount, tokenId)
+	delete(positionsWarmUpAmount, tokenId)
 
 	// transfer NFT ownership to origin owner
 	gnft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(deposit.owner), tid(tokenId))

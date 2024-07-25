@@ -235,7 +235,7 @@ func printInfo(prev currentInfo) currentInfo {
 
 	println("GNS POSITION")
 	for k, v := range positionGns {
-		posWarmCalc := positionWarmUpAmount[k]
+		posWarmCalc := positionsWarmUpAmount[k]
 		println("> tokenId:", k, "amount:", v, "warmUp:", getRewardRatio(curr.height-deposits[k].stakeHeight))
 		println("> 100%", "full", posWarmCalc.full100, "give", posWarmCalc.give100)
 		println("> 70%", "full", posWarmCalc.full70, "give", posWarmCalc.give70)
@@ -388,7 +388,7 @@ func makePositionsNode(poolPath string) []*json.Node {
 			ratio := getRewardRatio(stakedDuration)
 			fullAmount, warmUpAmount := rewardMathComputeInternalRewardAmount(lpTokenId)
 
-			posCalcWarm := positionWarmUpAmount[lpTokenId]
+			posCalcWarm := positionsWarmUpAmount[lpTokenId]
 
 			positions = append(positions, json.ObjectNode("", map[string]*json.Node{
 				"lpTokenId":       json.NumberNode("lpTokenId", float64(lpTokenId)),

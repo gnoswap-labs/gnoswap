@@ -113,7 +113,7 @@ func CalcPoolPosition() {
 	println("CALC__height:", height)
 	println()
 
-	println("[ START ] CALC__poolTiers DISTRIBUTE END")
+	println("[ START ] CALC__poolTiers DISTRIBUTE")
 	for poolPath, internal := range poolTiers {
 		println(" > CALC__poolPath:", poolPath)
 		tier := internal.tier
