@@ -8,7 +8,6 @@ require (
 	gno.land/p/demo/users v0.0.0-latest
 	gno.land/r/gnoswap/gnft v0.0.0-latest
 	gno.land/r/gnoswap/gns v0.0.0-latest
-	gno.land/r/gnoswap/gov v0.0.0-latest
 	gno.land/r/gnoswap/pool v0.0.0-latest
 	gno.land/r/gnoswap/position v0.0.0-latest
 	gno.land/r/gnoswap/common v0.0.0-latest
