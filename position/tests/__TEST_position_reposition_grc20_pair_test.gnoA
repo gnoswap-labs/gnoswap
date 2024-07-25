@@ -225,7 +225,7 @@ func TestRepositionNotOwner(t *testing.T) {
 	shouldPanic(
 		t,
 		func() {
-			Reposition(uint64(1), -1000, 1000, "500", "500")
+			Reposition(uint64(1), -1000, 1000, "500", "500", "0", "0")
 		})
 }
 
@@ -234,7 +234,16 @@ func TestRepositionOwnerButNowBurned(t *testing.T) {
 	shouldPanic(
 		t,
 		func() {
-			Reposition(uint64(2), -1000, 1000, "500", "500")
+			Reposition(uint64(2), -1000, 1000, "500", "500", "0", "0")
+		})
+}
+
+func TestRepositionSlippageTooLarge(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	shouldPanic(
+		t,
+		func() {
+			Reposition(uint64(1), -1000, 1000, "500", "500", "100000000000", "100000000000")
 		})
 }
 
@@ -261,8 +270,10 @@ func TestReposition(t *testing.T) {
 		_lpTokenId, // tokenId
 		-1000,      // tickLower
 		1000,       // tickUpper
-		"500",      // amount0
-		"500",      // amount1
+		"500",      // amount0Desired
+		"500",      // amount1Desired
+		"0",        // amount0Min
+		"100",      // amount1Min
 	)
 
 	position = positions[_lpTokenId]
