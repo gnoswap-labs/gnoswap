@@ -2,7 +2,26 @@
 
 This repository contains smart contracts (realms) for GnoSwap.
 
+## Index
+
+- [Setting Up and Testing GnoSwap Contracts](#setting-up-and-testing-gnoswap-contracts)
+  - [Prerequisites](#prerequisites)
+  - [Setting Up GnoSwap Contracts](#setting-up-gnoswap-contracts)
+  - [Running Tests](#running-tests)
+- [Realms](#realms)
+    - [Core Realms Deployed on Testnet4](#core-realms-deployed-on-testnet4)
+    - [Pool](#pool)
+    - [Position](#position)
+    - [Router](#router)
+    - [Staker](#staker)
+
 ## Setting Up and Testing GnoSwap Contracts
+
+### Prerequisites
+
+- Latest version of Gno
+
+### Setting Up GnoSwap Contracts
 
 This section guides you through the process of setting up Gnoswap contracts. The process involves three main steps: cloning the Gnoswap repository, copying the contracts to the gno directory, and moving test cases to their respective directories.
 
@@ -72,3 +91,22 @@ Next, move to the Realm directory you want to test (such as pool, staker, etc.),
 ```bash
 gno test -v . # or specify a particular test file path
 ```
+
+## Realms
+
+This section provides information about the core realms of Gnoswap that have been deployed.
+
+### Core Realms Deployed on Testnet4
+
+- pool: [gno.land/r/gnoswap/pool](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fpool)
+- position: [gno.land/r/gnoswap/position](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fposition)
+- router: [gno.land/r/gnoswap/router](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Frouter)
+- staker: [gno.land/r/gnoswap/staker](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fstaker)
+
+### Pool
+
+### Position
+
+### Router
+
+### Staker
