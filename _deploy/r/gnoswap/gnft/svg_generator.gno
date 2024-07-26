@@ -9,22 +9,27 @@ import (
 )
 
 var baseTempalte = `<svg width="135" height="135" viewBox="0 0 135 135" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="67" cy="68" r="46" fill="url(#paint0_linear_7698_56946)"/>
-<path d="M58.7734 53.6828L67.4941 48L85.0002 59.3178L76.2927 64.9957L58.7734 53.6828Z" fill="white"/>
-<path d="M58.9541 67.7177L67.6748 62.0349L85.0001 73.1804L76.4536 78.9596L58.9541 67.7177Z" fill="white" fill-opacity="0.4"/>
-<path d="M50.0269 75.8605L58.7735 70.1777L76.2408 81.517L67.4942 87.1472L50.0269 75.8605Z" fill="white" fill-opacity="0.6"/>
-<path d="M50.001 59.3174L58.7724 53.6672L58.7724 70.1797L50.001 75.8737L50.001 59.3174Z" fill="white"/>
-<path d="M76.4545 78.9598L85.0017 73.1807L85.0017 75.8302L76.2734 81.5023L76.4545 78.9598Z" fill="white" fill-opacity="0.5"/>
-<path d="M58.7734 53.6828L67.4941 48L85.0002 59.3178L76.2927 64.9957L58.7734 53.6828Z" fill="white"/>
-<path d="M58.9541 67.7177L67.6748 62.0349L85.0001 73.1804L76.4536 78.9596L58.9541 67.7177Z" fill="white" fill-opacity="0.4"/>
-<path d="M50.0269 75.8605L58.7735 70.1777L76.2408 81.517L67.4942 87.1472L50.0269 75.8605Z" fill="white" fill-opacity="0.6"/>
-<path d="M50.001 59.3174L58.7724 53.6672L58.7724 70.1797L50.001 75.8737L50.001 59.3174Z" fill="white"/>
-<path d="M76.4545 78.9598L85.0017 73.1807L85.0017 75.8302L76.2734 81.5023L76.4545 78.9598Z" fill="white" fill-opacity="0.5"/>
+<g clip-path="url(#clip0_7698_56846)">
+<circle cx="67.5" cy="67.5" r="67.5" fill="url(#paint0_linear_7698_56846)"/>
+<path d="M51.2905 42.9449L66.4895 33L97 52.8061L81.8241 62.7425L51.2905 42.9449Z" fill="white"/>
+<path d="M51.6055 67.5059L66.8044 57.561L97 77.0657L82.1046 87.1793L51.6055 67.5059Z" fill="white" fill-opacity="0.4"/>
+<path d="M36.0464 81.7559L51.2905 71.811L81.7336 91.6547L66.4895 101.508L36.0464 81.7559Z" fill="white" fill-opacity="0.6"/>
+<path d="M36.001 52.8055L51.2884 42.9177L51.2884 71.8145L36.001 81.779L36.001 52.8055Z" fill="white"/>
+<path d="M82.1051 87.1797L97.0016 77.0662L97.0016 81.7029L81.7896 91.629L82.1051 87.1797Z" fill="white" fill-opacity="0.5"/>
+<path d="M51.2905 42.9449L66.4895 33L97 52.8061L81.8241 62.7425L51.2905 42.9449Z" fill="white"/>
+<path d="M51.6055 67.5059L66.8044 57.561L97 77.0657L82.1046 87.1793L51.6055 67.5059Z" fill="white" fill-opacity="0.4"/>
+<path d="M36.0464 81.7559L51.2905 71.811L81.7336 91.6547L66.4895 101.508L36.0464 81.7559Z" fill="white" fill-opacity="0.6"/>
+<path d="M36.001 52.8055L51.2884 42.9177L51.2884 71.8145L36.001 81.779L36.001 52.8055Z" fill="white"/>
+<path d="M82.1051 87.1797L97.0016 77.0662L97.0016 81.7029L81.7896 91.629L82.1051 87.1797Z" fill="white" fill-opacity="0.5"/>
+</g>
 <defs>
-<linearGradient id="paint0_linear_7698_56946" x1="%d" y1="%d" x2="%d" y2="%d" gradientUnits="userSpaceOnUse">
-	<stop stop-color="%s"/>
-	<stop offset="1" stop-color="%s"/>
+<linearGradient id="paint0_linear_7698_56846" x1="%d" y1="%d" x2="%d" y2="%d" gradientUnits="userSpaceOnUse">
+<stop stop-color="%s"/>
+<stop offset="1" stop-color="%s"/>
 </linearGradient>
+<clipPath id="clip0_7698_56846">
+<rect width="135" height="135" fill="white"/>
+</clipPath>
 </defs>
 </svg>
 `
