@@ -59,22 +59,18 @@ To set up GnoSwap contracts in Gno Core, follow these steps:
 Move the test cases for each contract to their respective directories. It's not necessary to move all tests; you can selectively move only the tests you need. However, files containing `VARS_HELPERS` in their name must be moved.
 
    ```bash
-   # Pool
-   cd $WORKDIR/gno/examples/gno.land/r/pool
-   mv _TEST_/* .
-
-   # Position
-   cd $WORKDIR/gno/examples/gno.land/r/position
-   mv _TEST_/* .
-
-   # Router
-   cd $WORKDIR/gno/examples/gno.land/r/router
-   mv _TEST_/* .
-
-   # Staker
-   cd $WORKDIR/gno/examples/gno.land/r/staker
+   cd $WORKDIR/gno/examples/gno.land/r/gnoswap/{name}
    mv _TEST_/* .
    ```
+
+   For example, to move all tests for the `pool` realm:
+
+   ```bash
+   cd $WORKDIR/gno/examples/gno.land/r/pool
+   mv _TEST_/* .
+   ```
+
+   Other realms can be moved in a similar way.
 
 ### Running Tests
 
