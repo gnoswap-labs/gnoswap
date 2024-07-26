@@ -8,7 +8,7 @@ ADDR_TR01 := g14m6fj3t8005u77ku6zyzazq9vd9hwhl00ppt8j
 
 ADDR_REGISTER := g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5
 
-ADDR_GOV := g1egdt2l7xjcrm6qjwyd3g60z6e9cnr75pmcuasc
+
 ADDR_POOL := g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v
 ADDR_POSITION := g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye
 ADDR_ROUTER := g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp
@@ -198,11 +198,6 @@ deploy-common:
 deploy-emission:
 	$(info ************ deploy emission ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/emission -pkgpath gno.land/r/gnoswap/emission -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-	@echo
-
-deploy-gov:
-	$(info ************ deploy gov ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/gov -pkgpath gno.land/r/gnoswap/gov -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 deploy-pool:

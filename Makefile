@@ -9,7 +9,7 @@ GNO_TEST_FLAGS ?= -v
 TEST_TOKENS := $(wildcard $(PWD)/__local/grc20_tokens/*)
 BASIC_TOKENS := $(wildcard $(PWD)/_deploy/r/demo/*)
 
-TESTFILE_GOV := $(wildcard $(PWD)/gov/_TEST_/*)
+
 TESTFILE_POOL := $(wildcard $(PWD)/pool/_TEST_/*)
 TESTFILE_POSITION := $(wildcard $(PWD)/position/_TEST_/*)
 TESTFILE_ROUTER := $(wildcard $(PWD)/router/_TEST_/*)
@@ -45,24 +45,13 @@ test.prepare:
 
 	cp -r "$(PWD)/_deploy/r/demo/gnoswap" ".test/examples/gno.land/r/demo/gnoswap" # gnoswap base realm
 
-	cp -r "$(PWD)/gov" "$(PWD)/pool" "$(PWD)/position" "$(PWD)/router" "$(PWD)/staker" ".test/examples/gno.land/r/demo" # gnoswap realm
+	cp -r "$(PWD)/pool" "$(PWD)/position" "$(PWD)/router" "$(PWD)/staker" ".test/examples/gno.land/r/demo" # gnoswap realm
 
 	# Move tests
-	cp $(TESTFILE_GOV) ".test/examples/gno.land/r/demo/gov"
 	cp $(TESTFILE_POOL) ".test/examples/gno.land/r/demo/pool"
 	cp $(TESTFILE_POSITION) ".test/examples/gno.land/r/demo/position"
 	cp $(TESTFILE_ROUTER) ".test/examples/gno.land/r/demo/router"
 	cp $(TESTFILE_STAKER) ".test/examples/gno.land/r/demo/staker"
-
-.PHONY: test.gov
-test.gov:
-	cd .test/examples; GNOROOT="$(PWD)/.test" $(GNOCMD) test $(GNO_TEST_FLAGS) gno.land/r/demo/gov
-	GN_FILES="$(wildcard .test/examples/gno.land/r/demo/gov/*.gn)"; \
-	for f in $$GN_FILES; do \
-		mv $$f $${f%.gn}.gno; \
-		GNOROOT="$(PWD)/.test" $(GNOCMD) test $(GNO_TEST_FLAGS) $${f%.gn}.gno; \
-		mv $${f%.gn}.gno $$f; \
-	done
 
 .PHONY: test.pool
 test.pool:
@@ -106,5 +95,5 @@ test.staker:
 	done
 
 .PHONY: test.integration
-test.integration: clean test.prepare test.gov test.pool test.position test.router test.staker ## Run integration tests.
+test.integration: clean test.prepare test.pool test.position test.router test.staker ## Run integration tests.
 
