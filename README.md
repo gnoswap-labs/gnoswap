@@ -19,7 +19,7 @@ This repository contains smart contracts (realms) for GnoSwap.
 
 ### Prerequisites
 
-- Latest version of Gno
+- Latest version of [gno.land](https://github.com/gnolang/gno)
 
 ### Setting Up GnoSwap Contracts
 
@@ -105,17 +105,17 @@ This section provides information about the core realms of GnoSwap that have bee
 
 ### Pool
 
-Pool is a core component of Gnoswap, a smart contract that provides liquidity between two tokens and enables trading. Each pool has a unique token pair and fee tier, and operates based on Uniswap V3's concentrated liquidity mechanism.
+Pool is a core component of GnoSwap, a smart contract that facilitates liquidity provision and trading between two GRC20 tokens. Each pool has a unique token pair, fee tier, and customizable liquidity range, leveraging Uniswap V3's concentrated liquidity mechanism.
 
 Key features:
- - Composed of two tokens.
- - Allows liquidity provision within a user-defined price range.
+ - Composed of two GRC20 tokens.
+ - Allows liquidity provision within a user-defined, customizable price range.
  - Supports various fee tiers, suitable for different trading strategies.
  - Dynamically adjusts liquidity according to price fluctuations.
 
 ### Position
 
-In GnoSwap, a Position is an NFT (non-fungible token) representing a liquidity provider's (LP's) unique liquidity token. Each position has the following key functions and properties:
+Position is a GRC721 NFT (non-fungible token) representing the liquidity provider's (LP's) unique liquidity position. Each position has the following key functions and properties:
 
 1. Minting: Users can create a new position by providing liquidity within a specific price range.
 
