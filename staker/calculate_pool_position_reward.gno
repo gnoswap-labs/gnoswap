@@ -8,8 +8,6 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 
-	en "gno.land/r/gnoswap/emission"
-
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -66,9 +64,15 @@ func CalcPoolPosition() {
 	// calculate pool
 	stakerGnsBalance := gnsBalance(consts.STAKER_ADDR)
 	println("CALC__stakerGnsBalance:", stakerGnsBalance)
+	println("CALC__lastCalculatedBalance:", lastCalculatedBalance)
 
-	mintedGnsAmount := en.GetLastDistributeToStaker()
+	// mintedGnsAmount := en.GetLastDistributeToStaker()
+	// println("CALC__mintedGnsAmount:", mintedGnsAmount)
+
+	mintedGnsAmount := stakerGnsBalance - lastCalculatedBalance
 	println("CALC__mintedGnsAmount:", mintedGnsAmount)
+
+	lastCalculatedBalance = stakerGnsBalance
 
 	/*
 		if std.GetOrigCaller().String() == "" {
@@ -161,15 +165,18 @@ func CalcPoolPosition() {
 			println("  > CALC__ZERO_SEND_min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)", send)
 			println("  > CALC__BEFORE_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
 			println("  > CALC__BEFORE_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
+			println("  > CALC__BEFORE_lastCalculatedBalance:", lastCalculatedBalance)
 
 			gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), send)
 			poolGns[poolPath] = 0
 			poolCurrentBlockGns[poolPath] = 0
+			lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR)
 
 			println("  > CALC__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
 			println("  > CALC__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
-			println("  > CALC__AFTET_poolGns[poolPath] = 0")
-			println("  > CALC__AFTET_poolCurrentBlockGns[poolPath] = 0")
+			println("  > CALC__AFTER_poolGns[poolPath] = 0")
+			println("  > CALC__AFTER_poolCurrentBlockGns[poolPath] = 0")
+			println("  > CALC__AFTER_lastCalculatedBalance:", lastCalculatedBalance)
 			println("  > ----------------------- WAS EMPTY POOL")
 		}
 	}
@@ -290,7 +297,7 @@ func CalcPoolPosition() {
 	println("UPDATE FLAG")
 	lastCalculatedHeight = height
 	lastCalculatedTimestamp = time.Now().Unix()
-	lastCalculatedBalance = stakerGnsBalance
+	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR)
 	println()
 
 	println("[START] CALC__FINAL")

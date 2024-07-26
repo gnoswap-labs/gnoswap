@@ -81,6 +81,22 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	if !exist {
 		panic("THIS SHOULD NOT HAPPEN")
 	}
+	println(" > REWARD__BEFORE_positionWarmUpAmount.full100", positionWarmUpAmount.full100)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.give100", positionWarmUpAmount.give100)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.left100", positionWarmUpAmount.left100)
+	println()
+	println(" > REWARD__BEFORE_positionWarmUpAmount.full70", positionWarmUpAmount.full70)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.give70", positionWarmUpAmount.give70)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.left70", positionWarmUpAmount.left70)
+	println()
+	println(" > REWARD__BEFORE_positionWarmUpAmount.full50", positionWarmUpAmount.full50)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.give50", positionWarmUpAmount.give50)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.left50", positionWarmUpAmount.left50)
+	println()
+	println(" > REWARD__BEFORE_positionWarmUpAmount.full30", positionWarmUpAmount.full30)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.give30", positionWarmUpAmount.give30)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.left30", positionWarmUpAmount.left30)
+	println()
 
 	switch durationRatio {
 	case 100:
@@ -363,6 +379,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	accuGive += positionWarmUpAmount.give30 + positionWarmUpAmount.give50 + positionWarmUpAmount.give70 + positionWarmUpAmount.give100
 
 	positionsWarmUpAmount[tokenId] = positionWarmUpAmount
+	println(" > REWARD__positionsWarmUpAmount[tokenId]:", positionsWarmUpAmount[tokenId])
 
 	return accuFull, accuGive
 }

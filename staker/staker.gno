@@ -254,6 +254,9 @@ func CollectReward(tokenId uint64) string { // poolPath
 		"amount", uint64ToStr(toUser),
 	)
 
+	// UPDATE stakerGns Balance for calculate_pool_position_reward
+	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR)
+
 	println("[END] CollectReward_INTERNAL", tokenId)
 	return poolPath
 }
