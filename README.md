@@ -23,9 +23,9 @@ This repository contains smart contracts (realms) for GnoSwap.
 
 ### Setting Up GnoSwap Contracts
 
-This section guides you through the process of setting up Gnoswap contracts. The process involves three main steps: cloning the Gnoswap repository, copying the contracts to the gno directory, and moving test cases to their respective directories.
+This section guides you through the process of setting up GnoSwap contracts. The process involves three main steps: cloning the `gnoswap` repository, copying the contracts to the `gno` directory, and moving test cases to their respective directories.
 
-To set up Gnoswap contracts in Gno Core, follow these steps:
+To set up GnoSwap contracts in Gno Core, follow these steps:
 
 1. Clone the `gnoswap` contracts repository:
 
@@ -78,15 +78,15 @@ Move the test cases for each contract to their respective directories. It's not 
 
 ### Running Tests
 
-While it's possible to run tests in the cloned gno directory (where the above setup process was completed), it's recommended to run them in the gnoswap directory to avoid confusion due to the large number of changed files.
+While it's possible to run tests in the cloned `gno` directory (where the above setup process was completed), it's recommended to run them in the `gnoswap` directory to avoid confusion due to the large number of changed files.
 
-First, navigate to the gnoswap directory:
+First, navigate to the `gnoswap` directory:
 
 ```bash
 cd gnoswap
 ```
 
-Next, move to the Realm directory you want to test (such as pool, staker, etc.), then run the tests using the gno test command:
+Next, move to the Realm directory you want to test (such as `pool`, `staker`, etc.), then run the tests using the `gno test` command:
 
 ```bash
 gno test -v . # or specify a particular test file path
@@ -94,7 +94,7 @@ gno test -v . # or specify a particular test file path
 
 ## Realms
 
-This section provides information about the core realms of Gnoswap that have been deployed.
+This section provides information about the core realms of GnoSwap that have been deployed.
 
 ### Core Realms Deployed on Testnet4
 
