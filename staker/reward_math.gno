@@ -47,7 +47,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 		*/
 	}
 
-	println("REWARD__rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
+	println("[ START ] REWARD__rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
 	deposit := deposits[tokenId]
 
 	// using block
@@ -381,6 +381,8 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	positionsWarmUpAmount[tokenId] = positionWarmUpAmount
 	println(" > REWARD__positionsWarmUpAmount[tokenId]:", positionsWarmUpAmount[tokenId])
 
+	println("[ END ] REWARD__rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
+	println()
 	return accuFull, accuGive
 }
 

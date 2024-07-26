@@ -224,7 +224,7 @@ func CalcPoolPosition() {
 		// calculate position external rewards
 		incentiveIds := poolIncentives[poolPath]
 		println()
-		println(" > [START] CALC__EXTERNAL START")
+		println("[ START ] CALC__EXTERNAL")
 		for _, incentiveId := range incentiveIds {
 			println("  > CALC__EXTERNAL_incentiveId:", incentiveId)
 			incentive := incentives[incentiveId]
@@ -290,7 +290,7 @@ func CalcPoolPosition() {
 			// RCE ENDS HERE
 		}
 	}
-	println("[ END ] CALC__EXTERNAL END")
+	println("[ END ] CALC__EXTERNAL")
 	println()
 
 	// update flag
@@ -300,7 +300,7 @@ func CalcPoolPosition() {
 	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR)
 	println()
 
-	println("[START] CALC__FINAL")
+	println("[ START ] CALC__FINAL")
 	for poolPath, _ := range poolTiers {
 		amount := poolLastTmpGns[poolPath]
 		println(" > CALC__FINAL_POOL", poolPath)
@@ -320,7 +320,7 @@ func CalcPoolPosition() {
 			println(" > CALC__FINAL__amount = 0")
 		}
 	}
-	println("[END] CALC__FINAL")
+	println("[ END ] CALC__FINAL")
 	println()
 
 	// clear(poolCurrentBlockGns) // gno doesn't support `clear` keyword yet
