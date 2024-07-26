@@ -1,8 +1,8 @@
-# Gnoswap Contracts
+# GnoSwap Contracts
 
 This repository contains smart contracts (realms) for GnoSwap.
 
-## Setting Up and Testing Gnoswap Contracts
+## Setting Up and Testing GnoSwap Contracts
 
 This section guides you through the process of setting up Gnoswap contracts. The process involves three main steps: cloning the Gnoswap repository, copying the contracts to the gno directory, and moving test cases to their respective directories.
 
