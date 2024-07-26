@@ -41,19 +41,19 @@ Move the test cases for each contract to their respective directories. It's not 
 
    ```bash
    # Pool
-   cd $WORKDIR/gno/examples/gno.land/r/demo/pool
+   cd $WORKDIR/gno/examples/gno.land/r/pool
    mv _TEST_/* .
 
    # Position
-   cd $WORKDIR/gno/examples/gno.land/r/demo/position
+   cd $WORKDIR/gno/examples/gno.land/r/position
    mv _TEST_/* .
 
    # Router
-   cd $WORKDIR/gno/examples/gno.land/r/demo/router
+   cd $WORKDIR/gno/examples/gno.land/r/router
    mv _TEST_/* .
 
    # Staker
-   cd $WORKDIR/gno/examples/gno.land/r/demo/staker
+   cd $WORKDIR/gno/examples/gno.land/r/staker
    mv _TEST_/* .
    ```
 
