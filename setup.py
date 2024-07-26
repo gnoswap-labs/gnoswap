@@ -13,20 +13,20 @@ def copy_contracts(workdir):
 
     # Copy GRC20 tokens
     shutil.copytree("__local/grc20_tokens", os.path.join(gno_dir, "r", "demo"), dirs_exist_ok=True)
-    shutil.copytree("_deploy/r/gnoswap", os.path.join(gno_dir, "r", "demo"), dirs_exist_ok=True)
+    shutil.copytree("_deploy/r/gnoswap", os.path.join(gno_dir, "r"), dirs_exist_ok=True)
 
     # Copy gnoswap base packages
-    shutil.copytree("_deploy/p/gnoswap", os.path.join(gno_dir, "p", "demo"), dirs_exist_ok=True)
+    shutil.copytree("_deploy/p/gnoswap", os.path.join(gno_dir, "p", "gnoswap"), dirs_exist_ok=True)
 
     # Copy gnoswap base realms
     shutil.copytree("_deploy/r/gnoswap", os.path.join(gno_dir, "r", "gnoswap"), dirs_exist_ok=True)
 
     # Copy gnoswap realms
     for realm in ["pool", "position", "router", "staker"]:
-        shutil.copytree(realm, os.path.join(gno_dir, "r", "demo"), dirs_exist_ok=True)
+        shutil.copytree(realm, os.path.join(gno_dir, "r", "gnoswap"), dirs_exist_ok=True)
 
 def move_tests(workdir):
-    gno_dir = os.path.join(workdir, "gno", "examples", "gno.land", "r", "demo")
+    gno_dir = os.path.join(workdir, "gno", "examples", "gno.land", "r")
 
     for realm in ["pool", "position", "router", "staker"]:
         test_dir = os.path.join(gno_dir, realm, "_TEST_")
