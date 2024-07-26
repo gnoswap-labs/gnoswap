@@ -151,7 +151,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 	poolPath := deposits[tokenId].targetPoolPath
 
-	println("[START] CollectReward_EXTERNAL", tokenId)
+	println("[ START ] CollectReward_EXTERNAL", tokenId)
 	for k, external := range positionExternal[tokenId] {
 		incentive := incentives[external.incentiveId]
 
@@ -209,11 +209,11 @@ func CollectReward(tokenId uint64) string { // poolPath
 			"amount", uint64ToStr(toUser),
 		)
 	}
-	println("[END] CollectReward_EXTERNAL", tokenId)
+	println("[ END ] CollectReward_EXTERNAL", tokenId)
 	println()
 
 	// INTERNAL gns emission
-	println("[START] CollectReward_INTERNAL", tokenId)
+	println("[ START ] CollectReward_INTERNAL", tokenId)
 	fullAmount, toGive := rewardMathComputeInternalRewardAmount(tokenId)
 	println(" > position fullAmount(rewardMathComputeInternal)", fullAmount)
 	println(" > position toGive(rewardMathComputeInternal)", toGive)
@@ -251,13 +251,24 @@ func CollectReward(tokenId uint64) string { // poolPath
 		"poolPath", poolPath,
 		"rewardToken", consts.GNS_PATH,
 		"recipient", deposit.owner.String(),
-		"amount", uint64ToStr(toUser),
+		"fullAmount", uint64ToStr(fullAmount),
+		"toGive", uint64ToStr(toGive),
+		"toUser", uint64ToStr(toUser),
+		"unstakingFee", uint64ToStr(toGive-toUser),
+		"left", uint64ToStr(left),
 	)
+
+	// DEBUG
+	println(" > fullAmount", fullAmount)
+	println(" > toGive", toGive)
+	println(" > toUser", toUser)
+	println(" > unstakingFee", toGive-toUser)
+	println(" > left", left)
 
 	// UPDATE stakerGns Balance for calculate_pool_position_reward
 	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR)
 
-	println("[END] CollectReward_INTERNAL", tokenId)
+	println("[ END ] CollectReward_INTERNAL", tokenId)
 	return poolPath
 }
 

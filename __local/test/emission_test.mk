@@ -54,7 +54,7 @@ init-test: test-pool-create test-position-mint test-stake-token
 test-pool-create: pool-create-bar-baz pool-create-foo-qux
 
 .PHONY: test-position-mint
-test-position-mint: mint-gns-gnot mint-bar-baz mint-foo-qux
+test-position-mint: mint-gns-gnot 
 
 .PHONY: test-stake-token
 test-stake-token: stake-token-1 
@@ -261,7 +261,7 @@ mint-bar-baz:
 
 
 mint-foo-qux:
-	$(info ************ mint position(2) to foo:qux // gnoswap_admin ************)
+	$(info ************ mint position(3) to foo:qux // gnoswap_admin ************)
 	# APPROVE FISRT
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Approve -args $(ADDR_POOL) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/onbloc/qux -func Approve -args $(ADDR_POOL) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
@@ -272,8 +272,8 @@ mint-foo-qux:
 	@echo
 
 	# THEN CREATE IMAGE
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gnft -func SetTokenURILast -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-	@echo
+	# @echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/gnft -func SetTokenURILast -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	# @echo
 
 
 stake-token-1:
