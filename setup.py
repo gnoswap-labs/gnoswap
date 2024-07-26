@@ -19,7 +19,7 @@ def copy_contracts(workdir):
     shutil.copytree("_deploy/p/gnoswap", os.path.join(gno_dir, "p", "demo"), dirs_exist_ok=True)
 
     # Copy gnoswap base realms
-    shutil.copytree("_deploy/r/gnoswap", os.path.join(gno_dir, "r", "demo", "gnoswap"), dirs_exist_ok=True)
+    shutil.copytree("_deploy/r/gnoswap", os.path.join(gno_dir, "r", "gnoswap"), dirs_exist_ok=True)
 
     # Copy gnoswap realms
     for realm in ["pool", "position", "router", "staker"]:
@@ -35,7 +35,7 @@ def move_tests(workdir):
                 shutil.move(os.path.join(test_dir, item), os.path.join(gno_dir, realm))
 
 def main():
-    parser = argparse.ArgumentParser(description="Set up Gnoswap contracts")
+    parser = argparse.ArgumentParser(description="Set up GnoSwap contracts")
     parser.add_argument("workdir", help="Path to your work directory")
     args = parser.parse_args()
 
