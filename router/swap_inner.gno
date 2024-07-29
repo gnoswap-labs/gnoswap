@@ -7,6 +7,7 @@ import (
 
 	pl "gno.land/r/gnoswap/pool"
 
+	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/consts"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -24,9 +25,11 @@ func _swap(
 
 	if sqrtPriceLimitX96.IsZero() {
 		if zeroForOne {
-			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MIN_PRICE)
+			sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(getMinTick(data.fee))
+			sqrtPriceLimitX96 = new(u256.Uint).Add(sqrtPriceLimitX96, u256.One())
 		} else {
-			sqrtPriceLimitX96 = u256.MustFromDecimal(consts.MAX_PRICE)
+			sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(getMaxTick(data.fee))
+			sqrtPriceLimitX96 = new(u256.Uint).Sub(sqrtPriceLimitX96, u256.One())
 		}
 	}
 
@@ -117,4 +120,34 @@ func i256Max(x, y *i256.Int) *i256.Int {
 		return x
 	}
 	return y
+}
+
+func getMinTick(fee uint32) int32 {
+	switch fee {
+	case 100:
+		return -887272
+	case 500:
+		return -887270
+	case 3000:
+		return -887220
+	case 10000:
+		return -887200
+	default:
+		panic(ufmt.Sprintf("[ROUTER] router.gno__getMinTick() || unknown fee(%d)", fee))
+	}
+}
+
+func getMaxTick(fee uint32) int32 {
+	switch fee {
+	case 100:
+		return 887272
+	case 500:
+		return 887270
+	case 3000:
+		return 887220
+	case 10000:
+		return 887200
+	default:
+		panic(ufmt.Sprintf("[ROUTER] router.gno__getMaxTick() || unknown fee(%d)", fee))
+	}
 }
