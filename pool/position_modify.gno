@@ -8,6 +8,16 @@ import (
 	plp "gno.land/p/gnoswap/pool" // pool package
 )
 
+// modifyPosition updates a position in the pool and calculates the amount of tokens to be added or removed.
+//
+// This function performs the following operations:
+// 1. Updates the position based on the given parameters.
+// 2. Calculates the amount of token0 and token1 to be added or removed based on the current tick and the position's tick range.
+// 3. Updates the pool's liquidity if the position is within the current tick range.
+//
+// Note:
+//   - If the position is out of the current price range, either amount0 or amount1 may be zero.
+//   - The function handles nil values for amount0 and amount1 by converting them to zero.
 func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *i256.Int, *i256.Int) {
 	position := pool.updatePosition(
 		params.owner,

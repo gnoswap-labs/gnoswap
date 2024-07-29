@@ -7,6 +7,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+// tickTickSpacingToMaxLiquidityPerTick calculates the maximum liquidity
+// per tick for a given tick spacing.
 func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	minTick := (consts.MIN_TICK / tickSpacing) * tickSpacing
 	maxTick := (consts.MAX_TICK / tickSpacing) * tickSpacing
@@ -16,6 +18,7 @@ func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	return new(u256.Uint).Div(_maxUint128, u256.NewUint(numTicks))
 }
 
+// tickGetFeeGrowthInside calculates the fee growth inside a tick range.
 func (pool *Pool) tickGetFeeGrowthInside(
 	tickLower int32,
 	tickUpper int32,
@@ -53,6 +56,10 @@ func (pool *Pool) tickGetFeeGrowthInside(
 	return feeGrowthInside0X128, feeGrowthInside1X128
 }
 
+// tickUpdate updates a tick's state and returns whether the tick was flipped.
+//
+// Panics:
+//   - If the resulting liquidity gross exceeds the maximum allowed liquidity.
 func (pool *Pool) tickUpdate(
 	tick int32,
 	tickCurrent int32,
@@ -101,6 +108,7 @@ func (pool *Pool) tickUpdate(
 	return flipped
 }
 
+// tickCross updates a tick's state when it is crossed and returns the liquidity net.
 func (pool *Pool) tickCross(
 	tick int32,
 	feeGrowthGlobal0X128 *u256.Uint, // uint256

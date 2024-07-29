@@ -35,9 +35,9 @@ func GetRegisteredTokens() []string {
 
 // RegisterGRC20Interface registers a GRC20 token interface
 //
-// Panics if any of the following conditions are met:
-// - caller is not the admin
-// - token already registered
+// Panics:
+//   - caller is not the admin
+//   - token already registered
 func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	caller := std.GetOrigCaller()
 	if caller != consts.TOKEN_REGISTER {
@@ -56,7 +56,8 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 
 // UnregisterGRC20Interface unregisters a GRC20 token interface
 //
-// Panics if any of the following conditions are met:
+// Panics:
+//  - caller is not the admin
 func UnregisterGRC20Interface(pkgPath string) {
 	// only admin can unregister
 	caller := std.GetOrigCaller()
