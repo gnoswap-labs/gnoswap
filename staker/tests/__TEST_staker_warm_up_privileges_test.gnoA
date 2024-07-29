@@ -1,3 +1,10 @@
+// to test short warmup period
+// set warm up period like below
+// warmUp[100] = 901 // 30m ~
+// warmUp[70] = 301  // 10m ~ 30m
+// warmUp[50] = 151  // 5m ~ 10m
+// warmUp[30] = 1    // ~ 5m
+
 package staker
 
 import (

@@ -1,3 +1,10 @@
+// to test short warmup period
+// set warm up period like below
+// warmUp[100] = 901 // 30m ~
+// warmUp[70] = 301  // 10m ~ 30m
+// warmUp[50] = 151  // 5m ~ 10m
+// warmUp[30] = 1    // ~ 5m
+
 package staker
 
 import (
@@ -31,12 +38,6 @@ func init() {
 		updateHeight:   std.GetHeight(),
 	}
 
-	// tier 2
-	// poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"]
-
-	// tier 3
-	// poolTiers["gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:100"] = 3
-
 	std.TestSkipHeights(1)
 }
 
@@ -48,7 +49,6 @@ func TestDoulbeMint(t *testing.T) {
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
@@ -61,8 +61,6 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintBarQux100_1(t *testing.T) {
-	curr := getCurrentInfo()
-
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
@@ -86,16 +84,13 @@ func TestMintBarQux100_1(t *testing.T) {
 	shouldEQ(t, tokenId, 1)
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 
-	println(GetPrintInfo())
-	println()
-	printInfo(curr)
+	gpi := GetPrintInfo()
+	shouldEQ(t, gpi, `{"height":126,"time":1234567905,"gns":{"staker":0,"devOps":8561643,"communityPool":2140410,"xGNS":0,"protocolFee":232106164,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
 
 	std.TestSkipHeights(1)
 }
 
 func TestMintBarBaz100_2(t *testing.T) {
-	curr := getCurrentInfo()
-
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
@@ -119,80 +114,24 @@ func TestMintBarBaz100_2(t *testing.T) {
 	shouldEQ(t, tokenId, 2)
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 
-	println(GetPrintInfo())
-	println()
-	printInfo(curr)
-
-	std.TestSkipHeights(1)
-}
-
-func TestSkip100Height(t *testing.T) {
-	curr := getCurrentInfo()
-
-	std.TestSkipHeights(100)
-
-	println(GetPrintInfo())
-	println()
-	printInfo(curr)
+	gpi := GetPrintInfo()
+	shouldEQ(t, gpi, `{"height":127,"time":1234567910,"gns":{"staker":0,"devOps":11415524,"communityPool":2853880,"xGNS":0,"protocolFee":242808219,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
 
 	std.TestSkipHeights(1)
 }
 
 func TestStakeToken_1(t *testing.T) {
-	curr := getCurrentInfo()
-
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
 	StakeToken(1)
 
-	println(GetPrintInfo())
-	println()
-	printInfo(curr)
+	// skip blocks
+	std.TestSkipHeights(40)
+
+	gpi := GetPrintInfo()
+	shouldEQ(t, gpi, `{"height":168,"time":1234568115,"gns":{"staker":428082180,"devOps":128424653,"communityPool":32106162,"xGNS":0,"protocolFee":253510274,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":428082180,"position":[{"lpTokenId":1,"stakedHeight":128,"stakedTimestamp":1234567915,"stakedDuration":40,"fullAmount":428082180,"ratio":30,"warmUpAmount":128424654,"full30":428082180,"give30":128424654,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0,"give100":0}]}]}`)
 
 	std.TestSkipHeights(1)
-}
-
-func TestSetPoolTier(t *testing.T) {
-	curr := getCurrentInfo()
-
-	std.TestSkipHeights(100) // this reward should go to bar:qux:100
-
-	std.TestSetOrigCaller(gsa)
-	std.TestSetRealm(gsaRealm)
-	SetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
-
-	println(GetPrintInfo())
-	println()
-	printInfo(curr)
-
-	std.TestSkipHeights(1)
-}
-
-func TestStakeToken_2(t *testing.T) {
-	curr := getCurrentInfo()
-
-	std.TestSetOrigCaller(gsa)
-	std.TestSetRealm(gsaRealm)
-
-	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
-	StakeToken(2)
-
-	println(GetPrintInfo())
-	println()
-	printInfo(curr)
-
-	std.TestSkipHeights(1)
-}
-
-func TestNow(t *testing.T) {
-	curr := getCurrentInfo()
-
-	std.TestSetOrigCaller(gsa)
-	std.TestSetRealm(gsaRealm)
-
-	println(GetPrintInfo())
-	println()
-	printInfo(curr)
 }
