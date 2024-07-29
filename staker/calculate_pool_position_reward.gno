@@ -370,15 +370,15 @@ func CalcPoolPosition() {
 }
 
 func removeDupeStr(strSlice []string) []string {
-    seen := make(map[string]struct{}, len(strSlice))
-    result := make([]string, 0, len(strSlice))
-    
-    for _, str := range strSlice {
-        if _, ok := seen[str]; !ok {
-            seen[str] = struct{}{}
-            result = append(result, str)
-        }
-    }
-    
-    return result
+	seen := make(map[string]struct{}, len(strSlice))
+	result := make([]string, 0, len(strSlice))
+
+	for _, str := range strSlice {
+		if _, ok := seen[str]; !ok {
+			seen[str] = struct{}{}
+			result = append(result, str)
+		}
+	}
+
+	return result
 }
