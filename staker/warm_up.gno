@@ -16,6 +16,7 @@ func init() {
 	// warmUp[50] = 216001   // 5d ~ 10d
 	// warmUp[30] = 1        // ~ 5d
 
+	// shorter warm up period for testing
 	warmUp[100] = 901 // 30m ~
 	warmUp[70] = 301  // 10m ~ 30m
 	warmUp[50] = 151  // 5m ~ 10m

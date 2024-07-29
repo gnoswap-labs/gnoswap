@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"time"
 
 	"gno.land/p/demo/ufmt"
 
@@ -29,24 +30,12 @@ type warmUpAmount struct {
 	left100 uint64 // doesn't need this I think
 }
 
-var positionsWarmUpAmount = make(map[uint64]warmUpAmount) // positionId => warmUpAmount
+var positionsInternalWarmUpAmount = make(map[uint64]warmUpAmount) // positionId => warmUpAmount
+
+var positionsExternalWarmUpAmount = make(map[uint64]map[string]warmUpAmount)  // positionId => incentiveId => warmUpAmount
+var positionsExternalLastCalculatedHeight = make(map[uint64]map[string]int64) // positionId => incentiveId => lastCalculatedHeight
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
-
-	// 변경점이 생겼으니 계산 들어가야 함
-	if positionGns[tokenId] != positionLastGns[tokenId] {
-		// panic("ITS HAPPENING") // 패닉 뜨면 변경되었다는 뜻이니 기존에 쌓였던 리워드에 대해서 분배 필요
-
-		/*
-			current 6431934755
-			last 		0
-
-
-			current 19295804265
-			last     6431934755
-		*/
-	}
-
 	println("[ START ] REWARD__rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
 	deposit := deposits[tokenId]
 
@@ -77,7 +66,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	println(" > REWARD__uint64(currentHeight)-lastCalculatedHeightU64):", uint64(currentHeight)-lastCalculatedHeightU64)
 	println(" > REWARD__avgGnsBlockAmountX96:", avgGnsBlockAmountX96.ToString())
 
-	positionWarmUpAmount, exist := positionsWarmUpAmount[tokenId]
+	positionWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
 	if !exist {
 		panic("THIS SHOULD NOT HAPPEN")
 	}
@@ -350,9 +339,8 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	println(" > REWARD__toDistribute:", toDistribute)
 	// println(" > REWARD__gnsAmountToGive", gnsAmountToGive)
 
-	println(" > REWARD__stakedDuration:", stakedDuration)
-	println(" > REWARD__durationRatio:", durationRatio)
 	println(" > REWARD__stakeHeight:", stakeHeight)
+	println(" > REWARD__durationRatio:", durationRatio)
 	println(" > REWARD__currentHeight:", currentHeight)
 	println(" > REWARD__[?] lastCalculatedHeight:", lastCalculatedHeight)
 	println(" > REWARD__until30:", until30)
@@ -378,30 +366,337 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	accuFull += positionWarmUpAmount.full30 + positionWarmUpAmount.full50 + positionWarmUpAmount.full70 + positionWarmUpAmount.full100
 	accuGive += positionWarmUpAmount.give30 + positionWarmUpAmount.give50 + positionWarmUpAmount.give70 + positionWarmUpAmount.give100
 
-	positionsWarmUpAmount[tokenId] = positionWarmUpAmount
-	println(" > REWARD__positionsWarmUpAmount[tokenId]:", positionsWarmUpAmount[tokenId])
+	println(" > REWARD__accuFull:", accuFull)
+	println(" > REWARD__accuGive:", accuGive)
+
+	positionsInternalWarmUpAmount[tokenId] = positionWarmUpAmount
+	println(" > REWARD__positionsInternalWarmUpAmount[tokenId]:", positionsInternalWarmUpAmount[tokenId])
 
 	println("[ END ] REWARD__rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
 	println()
+
 	return accuFull, accuGive
 }
 
-func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string, durationRatio uint64) uint64 {
+func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (uint64, uint64) {
+	currentHeight := std.GetHeight()
+
 	externals := positionExternal[tokenId]
+
+	_max := max(incentives[incentiveId].startTimestamp, deposits[tokenId].stakeTimestamp)
+	stakedOrExternalDuration := (time.Now().Unix() - _max) / consts.BLOCK_GENERATION_INTERVAL
+	stakedOrExternalStartedHeight := std.GetHeight() - stakedOrExternalDuration
+
+	until30 := uint64(stakedOrExternalStartedHeight + warmUp[50] - 1)  // 150
+	until50 := uint64(stakedOrExternalStartedHeight + warmUp[70] - 1)  // 300
+	until70 := uint64(stakedOrExternalStartedHeight + warmUp[100] - 1) // 900
+	begin100 := uint64(stakedOrExternalStartedHeight + warmUp[100])    // 901~
+
 	for _, external := range externals {
 		if external.incentiveId == incentiveId {
 			tokenAmount := external.tokenAmount
-
-			if tokenAmount == 0 {
-				return 0
+			toDistribute := tokenAmount - positionLastExternal[tokenId][incentiveId]
+			println("   > REWARD__tokenAmount:", tokenAmount)
+			println("   > REWARD__positionLastExternal[tokenId][incentiveId]:", positionLastExternal[tokenId][incentiveId])
+			println("   > REWARD__toDistribute:", toDistribute)
+			if tokenAmount < positionLastExternal[tokenId][incentiveId] {
+				panic("THIS SHOULD NOT HAPPEN_EXTERNAL")
 			}
 
-			amountToGive := (tokenAmount * durationRatio) / 100
-			return amountToGive
+			lastCalculatedHeightU64 := uint64(positionsExternalLastCalculatedHeight[tokenId][incentiveId])
+
+			q96 := u256.MustFromDecimal(consts.Q96)
+			toDistributeX96 := new(u256.Uint).Mul(u256.NewUint(toDistribute), q96)
+			avgExternalBlockAmountX96 := new(u256.Uint).Div(toDistributeX96, u256.NewUint(uint64(std.GetHeight())-lastCalculatedHeightU64))
+			println("   > REWARD__toDistribute:", toDistribute)
+			println("   > REWARD__toDistirbuteX96:", toDistributeX96.ToString())
+			println("   > REWARD__uint64(std.GetHeight())-lastCalculatedHeightU64):", uint64(std.GetHeight())-lastCalculatedHeightU64)
+			println("   > REWARD__avgExternalBlockAmountX96:", avgExternalBlockAmountX96.ToString())
+
+			positionExternalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
+			if !exist {
+				panic("THIS SHOULD NOT HAPPEN_EXTERNAL")
+			}
+
+			println("   > REWARD__BEFORE_positionExternalWarmUpAmount.full100", positionExternalWarmUpAmount.full100)
+			println("   > REWARD__BEFORE_positionExternalWarmUpAmount.give100", positionExternalWarmUpAmount.give100)
+			println("   > REWARD__BEFORE_positionExternalWarmUpAmount.left100", positionExternalWarmUpAmount.left100)
+			println()
+			println("   > REWARD__BEFORE_positionExternalWarmUpAmount.full70", positionExternalWarmUpAmount.full70)
+			println("   > REWARD__BEFORE_positionExternalWarmUpAmount.give70", positionExternalWarmUpAmount.give70)
+			println("   > REWARD__BEFORE_positionExternalWarmUpAmount.left70", positionExternalWarmUpAmount.left70)
+			println()
+			println("   > REWARD__BEFORE_positionExternalWarmUpAmount.full50", positionExternalWarmUpAmount.full50)
+			println("   > REWARD__BEFORE_positionExternalWarmUpAmount.give50", positionExternalWarmUpAmount.give50)
+			println("   > REWARD__BEFORE_positionExternalWarmUpAmount.left50", positionExternalWarmUpAmount.left50)
+			println()
+			println("   > REWARD__BEFORE_positionExternalWarmUpAmount.full30", positionExternalWarmUpAmount.full30)
+			println("   > REWARD__BEFORE_positionExternalWarmUpAmount.give30", positionExternalWarmUpAmount.give30)
+			println("   > REWARD__BEFORE_positionExternalWarmUpAmount.left30", positionExternalWarmUpAmount.left30)
+			println()
+
+			durationRatio := getRewardRatio(stakedOrExternalDuration)
+
+			switch durationRatio {
+			case 100:
+				if lastCalculatedHeightU64 > begin100 {
+					println(" > REWARD__REWARD ONLY 100%")
+					// 100%
+					dur100 := uint64(currentHeight) - lastCalculatedHeightU64
+					println("  > REWARD__DUR100", dur100)
+					full, toGive := calcAmount(avgExternalBlockAmountX96, dur100, 100)
+					positionExternalWarmUpAmount.full100 += full
+					positionExternalWarmUpAmount.give100 += toGive
+					positionExternalWarmUpAmount.left100 += full - toGive
+					// gnsAmountToGive += amount // UPDATE EACH PERIOD
+				} else {
+					if lastCalculatedHeightU64 > until50 {
+						println(" > REWARD__REWARD 100% AND 70%")
+						// 100%
+						dur100 := uint64(currentHeight) - until70
+						println("  > REWARD__DUR100", dur100)
+						full, toGive := calcAmount(avgExternalBlockAmountX96, dur100, 100)
+						positionExternalWarmUpAmount.full100 += full
+						positionExternalWarmUpAmount.give100 += toGive
+						positionExternalWarmUpAmount.left100 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+
+						// 70%
+						dur70 := until70 - lastCalculatedHeightU64
+						println("  > REWARD__DUR70", dur70)
+						full, toGive = calcAmount(avgExternalBlockAmountX96, dur70, 70)
+						positionExternalWarmUpAmount.full70 += full
+						positionExternalWarmUpAmount.give70 += toGive
+						positionExternalWarmUpAmount.left70 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+					} else if lastCalculatedHeightU64 > until30 {
+						println(" > REWARD__REWARD 100% AND 70% AND 50%")
+						// 100%
+						dur100 := uint64(currentHeight) - until70
+						println("  > REWARD__DUR100", dur100)
+						full, toGive := calcAmount(avgExternalBlockAmountX96, dur100, 100)
+						positionExternalWarmUpAmount.full100 += full
+						positionExternalWarmUpAmount.give100 += toGive
+						positionExternalWarmUpAmount.left100 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+
+						// 70%
+						dur70 := until70 - until50
+						println("  > REWARD__DUR70", dur70)
+						full, toGive = calcAmount(avgExternalBlockAmountX96, dur70, 70)
+						positionExternalWarmUpAmount.full70 += full
+						positionExternalWarmUpAmount.give70 += toGive
+						positionExternalWarmUpAmount.left70 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+
+						// 50%
+						dur50 := until50 - lastCalculatedHeightU64
+						println("  > REWARD__DUR50", dur50)
+						full, toGive = calcAmount(avgExternalBlockAmountX96, dur50, 50)
+						positionExternalWarmUpAmount.full50 += full
+						positionExternalWarmUpAmount.give50 += toGive
+						positionExternalWarmUpAmount.left50 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+					} else {
+						println(" > REWARD__REWARD 100% AND 70% AND 50% AND 30%")
+						// 100%
+						dur100 := uint64(currentHeight) - until70
+						println("  > REWARD__DUR100", dur100)
+						full, toGive := calcAmount(avgExternalBlockAmountX96, dur100, 100)
+						positionExternalWarmUpAmount.full100 += full
+						positionExternalWarmUpAmount.give100 += toGive
+						positionExternalWarmUpAmount.left100 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+
+						// 70%
+						dur70 := until70 - until50
+						println("  > REWARD__DUR70", dur70)
+						full, toGive = calcAmount(avgExternalBlockAmountX96, dur70, 70)
+						positionExternalWarmUpAmount.full70 += full
+						positionExternalWarmUpAmount.give70 += toGive
+						positionExternalWarmUpAmount.left70 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+
+						// 50%
+						dur50 := until50 - until30
+						println("  > REWARD__DUR50", dur50)
+						full, toGive = calcAmount(avgExternalBlockAmountX96, dur50, 50)
+						positionExternalWarmUpAmount.full50 += full
+						positionExternalWarmUpAmount.give50 += toGive
+						positionExternalWarmUpAmount.left50 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+
+						// 30%
+						dur30 := until30 - lastCalculatedHeightU64
+						println("  > REWARD__DUR30", dur30)
+						full, toGive = calcAmount(avgExternalBlockAmountX96, dur30, 30)
+						positionExternalWarmUpAmount.full30 += full
+						positionExternalWarmUpAmount.give30 += toGive
+						positionExternalWarmUpAmount.left30 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+					}
+				}
+
+			case 70:
+				if lastCalculatedHeightU64 > until50 {
+					println(" > REWARD__REWARD ONLY 70%")
+					// 70%
+					dur70 := uint64(currentHeight) - lastCalculatedHeightU64
+					println("  > REWARD__DUR70", dur70)
+					full, toGive := calcAmount(avgExternalBlockAmountX96, dur70, 70)
+					positionExternalWarmUpAmount.full70 += full
+					positionExternalWarmUpAmount.give70 += toGive
+					positionExternalWarmUpAmount.left70 += full - toGive
+					// gnsAmountToGive += amount // UPDATE EACH PERIOD
+				} else {
+					if lastCalculatedHeightU64 > until30 {
+						println(" > REWARD__REWAWRD 70% AND 50%")
+						// 70%
+						dur70 := uint64(currentHeight) - until50
+						println("  > REWARD__DUR70", dur70)
+						full, toGive := calcAmount(avgExternalBlockAmountX96, dur70, 70)
+						positionExternalWarmUpAmount.full70 += full
+						positionExternalWarmUpAmount.give70 += toGive
+						positionExternalWarmUpAmount.left70 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+
+						// 50%
+						dur50 := until50 - lastCalculatedHeightU64
+						println("  > REWARD__DUR50", dur50)
+						full, toGive = calcAmount(avgExternalBlockAmountX96, dur50, 50)
+						positionExternalWarmUpAmount.full50 += full
+						positionExternalWarmUpAmount.give50 += toGive
+						positionExternalWarmUpAmount.left50 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+					} else {
+						println(" > REWARD__REWARD 70% AND 50% AND 30%")
+						// 70%
+						dur70 := uint64(currentHeight) - until50
+						println("  > REWARD__DUR70", dur70)
+						full, toGive := calcAmount(avgExternalBlockAmountX96, dur70, 70)
+						positionExternalWarmUpAmount.full70 += full
+						positionExternalWarmUpAmount.give70 += toGive
+						positionExternalWarmUpAmount.left70 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+
+						// 50%
+						dur50 := until50 - until30
+						println("  > REWARD__DUR50", dur50)
+						full, toGive = calcAmount(avgExternalBlockAmountX96, dur50, 50)
+						positionExternalWarmUpAmount.full50 += full
+						positionExternalWarmUpAmount.give50 += toGive
+						positionExternalWarmUpAmount.left50 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+
+						// 30%
+						dur30 := until30 - lastCalculatedHeightU64
+						println("  > REWARD__DUR30", dur30)
+						full, toGive = calcAmount(avgExternalBlockAmountX96, dur30, 30)
+						positionExternalWarmUpAmount.full30 += full
+						positionExternalWarmUpAmount.give30 += toGive
+						positionExternalWarmUpAmount.left30 += full - toGive
+						// gnsAmountToGive += amount // UPDATE EACH PERIOD
+					}
+				}
+
+			case 50:
+				if lastCalculatedHeightU64 > until30 {
+					println(" > REWARD__REWARD ONLY 50%")
+					// 50%
+					dur50 := uint64(currentHeight) - lastCalculatedHeightU64
+					println("  > REWARD__DUR50", dur50)
+					full, toGive := calcAmount(avgExternalBlockAmountX96, dur50, 50)
+					positionExternalWarmUpAmount.full50 += full
+					positionExternalWarmUpAmount.give50 += toGive
+					positionExternalWarmUpAmount.left50 += full - toGive
+					// gnsAmountToGive += amount // UPDATE EACH PERIOD
+				} else {
+					println(" > REWARD__REWAD 50% AND 30%")
+					dur50 := uint64(currentHeight) - until30
+					println("  > REWARD__DUR50", dur50)
+					full, toGive := calcAmount(avgExternalBlockAmountX96, dur50, 50)
+					positionExternalWarmUpAmount.full50 += full
+					positionExternalWarmUpAmount.give50 += toGive
+					positionExternalWarmUpAmount.left50 += full - toGive
+					// gnsAmountToGive += amount // UPDATE EACH PERIOD
+
+					// 30%
+					dur30 := until30 - lastCalculatedHeightU64
+					full, toGive = calcAmount(avgExternalBlockAmountX96, dur30, 30)
+					positionExternalWarmUpAmount.full30 += full
+					positionExternalWarmUpAmount.give30 += toGive
+					positionExternalWarmUpAmount.left30 += full - toGive
+					// gnsAmountToGive += amount // UPDATE EACH PERIOD
+					println("  > REWARD__DUR30", dur30)
+				}
+
+			case 30:
+				println(" > REWARD__REWARD 30%")
+				dur30 := uint64(currentHeight) - lastCalculatedHeightU64
+				full, toGive := calcAmount(avgExternalBlockAmountX96, dur30, 30)
+				positionExternalWarmUpAmount.full30 += full
+				positionExternalWarmUpAmount.give30 += toGive
+				positionExternalWarmUpAmount.left30 += full - toGive
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
+				println("  > REWARD__DUR30", dur30)
+
+			default:
+				println("  > REWARD__0 REWARD RATIO")
+			}
+
+			println()
+			println("  > REWARD_==================================")
+			println("  > REWARD__tokenId:", tokenId)
+			println("  > REWARD__toDistribute:", toDistribute)
+			println("  > REWARD__toDistirbuteX96:", toDistributeX96.ToString())
+			// println("  > REWARD__gnsAmountToGive", gnsAmountToGive)
+
+			println("  > REWARD__currentHeight:", currentHeight)
+			println("  > REWARD__stakeHeight:", deposits[tokenId].stakeHeight)
+			println("  > REWARD__stakedOrExternalStartedHeight:", stakedOrExternalStartedHeight)
+			println("  > REWARD__stakedOrExternalDuration:", stakedOrExternalDuration)
+			println("  > REWARD__durationRatio:", durationRatio)
+			println("  > REWARD__lastCalculatedHeightU64:", lastCalculatedHeightU64)
+			println("  > REWARD__until30:", until30)
+			println("  > REWARD__until50:", until50)
+			println("  > REWARD__until70:", until70)
+			println("  > REWARD__begin100:", begin100)
+
+			println("  > REWARD__full30:", positionExternalWarmUpAmount.full30)
+			println("  > REWARD__give30:", positionExternalWarmUpAmount.give30)
+
+			println("  > REWARD__full50:", positionExternalWarmUpAmount.full50)
+			println("  > REWARD__give50:", positionExternalWarmUpAmount.give50)
+
+			println("  > REWARD__full70:", positionExternalWarmUpAmount.full70)
+			println("  > REWARD__give70:", positionExternalWarmUpAmount.give70)
+
+			println("  > REWARD__full100:", positionExternalWarmUpAmount.full100)
+			println("  > REWARD__give100:", positionExternalWarmUpAmount.give100)
+
+			accuFull := uint64(0)
+			accuGive := uint64(0)
+
+			accuFull += positionExternalWarmUpAmount.full30 + positionExternalWarmUpAmount.full50 + positionExternalWarmUpAmount.full70 + positionExternalWarmUpAmount.full100
+			accuGive += positionExternalWarmUpAmount.give30 + positionExternalWarmUpAmount.give50 + positionExternalWarmUpAmount.give70 + positionExternalWarmUpAmount.give100
+
+			println("  > REWARD__accuFull:", accuFull)
+			println("  > REWARD__accuGive:", accuGive)
+
+			positionsExternalWarmUpAmount[tokenId][incentiveId] = positionExternalWarmUpAmount
+			// println("  > REWARD__positionsExternalWarmUpAmount[tokenId][incentiveId]:", positionsExternalWarmUpAmount[tokenId][incentiveId])
+
+			positionExternal[tokenId][incentiveId].tokenAmountFull += accuFull
+			positionExternal[tokenId][incentiveId].tokenAmountActualFull += accuGive
+
+			println("[ END ] REWARD__rewardMathComputeExternalRewardAmount_TOKEN_ID:", tokenId, " INCENTIVE_ID:", incentiveId)
+			println()
+
+			return accuFull, accuGive
 		}
 	}
 
-	return 0
+	panic("NO INCENTIVE_ID FOUND")
 }
 
 func getPoolTotalStakedLiquidity(poolPath string) *u256.Uint {
