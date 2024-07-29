@@ -1,4 +1,4 @@
-module gno.land/r/dmeo/register_gnodev
+module gno.land/r/demo/register_gnodev
 
 require (
 	gno.land/p/demo/users v0.0.0-latest
