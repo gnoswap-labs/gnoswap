@@ -22,7 +22,7 @@ def copy_contracts(workdir):
     gno_dir = os.path.join(workdir, "gno", "examples", "gno.land")
 
     # Copy GRC20 tokens
-    shutil.copytree("__local/grc20_tokens", os.path.join(gno_dir, "r", "demo"), dirs_exist_ok=True)
+    shutil.copytree("__local/grc20_tokens", os.path.join(gno_dir, "r"), dirs_exist_ok=True)
 
     # Copy gnoswap base packages and realms
     for root, dirs, files in os.walk("_deploy"):
