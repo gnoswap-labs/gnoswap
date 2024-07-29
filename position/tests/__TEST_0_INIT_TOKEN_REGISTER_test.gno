@@ -3,21 +3,21 @@ package position
 import (
 	"std"
 
-	"gno.land/r/demo/foo"
+	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/demo/bar"
+	"gno.land/r/onbloc/bar"
 
-	"gno.land/r/demo/baz"
+	"gno.land/r/onbloc/baz"
 
-	"gno.land/r/demo/qux"
+	"gno.land/r/onbloc/qux"
 
 	"gno.land/r/demo/wugnot"
 
-	"gno.land/r/demo/obl"
+	"gno.land/r/onbloc/obl"
 
 	"gno.land/r/gnoswap/gns"
 
-	"gno.land/r/demo/usdc"
+	"gno.land/r/onbloc/usdc"
 
 	"gno.land/r/gnoswap/consts"
 
@@ -155,12 +155,12 @@ func (USDCToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 func init() {
 	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
 
-	pl.RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
+	pl.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
+	pl.RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
+	pl.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
+	pl.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	pl.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
 	pl.RegisterGRC20Interface("gno.land/r/gnoswap/gns", GNSToken{})
-	pl.RegisterGRC20Interface("gno.land/r/demo/usdc", USDCToken{})
+	pl.RegisterGRC20Interface("gno.land/r/onbloc/usdc", USDCToken{})
 }

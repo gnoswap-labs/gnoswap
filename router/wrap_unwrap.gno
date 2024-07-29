@@ -14,8 +14,8 @@ func wrap(ugnotAmount uint64) {
 		panic(ufmt.Sprintf("cannot wrap 0 ugnot"))
 	}
 
-	if ugnotAmount < consts.UGNOT_MINT_DEPOSIT_TO_WRAP {
-		panic(ufmt.Sprintf("Deposit below minimum: %d/%d ugnot.", ugnotAmount, consts.UGNOT_MINT_DEPOSIT_TO_WRAP))
+	if ugnotAmount < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
+		panic(ufmt.Sprintf("Deposit below minimum: %d/%d ugnot.", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP))
 	}
 
 	// WRAP IT

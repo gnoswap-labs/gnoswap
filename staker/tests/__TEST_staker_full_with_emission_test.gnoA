@@ -8,9 +8,9 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
-	"gno.land/r/demo/bar"
-	"gno.land/r/demo/obl"
-	"gno.land/r/demo/qux"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/obl"
+	"gno.land/r/onbloc/qux"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/gns"
 
@@ -29,7 +29,7 @@ func init() {
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:500"] = InternalTier{
+	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"] = InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
 		startHeight:    std.GetHeight(),
@@ -180,7 +180,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 
 	AddToken(oblPath)
 	CreateExternalIncentive(
-		"gno.land/r/demo/bar:gno.land/r/demo/qux:500", // targetPoolPath
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", // targetPoolPath
 		oblPath,                     // rewardToken
 		"1000000000",                // rewardAmount
 		1234569600,                  // startTimestamp
@@ -188,7 +188,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	)
 
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
-	CreateExternalIncentive("gno.land/r/demo/bar:gno.land/r/demo/qux:500", oblPath, "1000000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
+	CreateExternalIncentive("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", oblPath, "1000000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
 }
 
 func TestStakeToken01(t *testing.T) {
@@ -270,7 +270,7 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 0)
 	shouldEQ(t, positionGns[1], 0)
 
-	shouldEQ(t, poolGns["gno.land/r/demo/bar:gno.land/r/demo/qux:500"], 16053081)
+	shouldEQ(t, poolGns["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"], 16053081)
 	shouldEQ(t, positionGns[2], 6986943)
 	shouldEQ(t, positionGns[3], 9066137)
 
@@ -280,7 +280,7 @@ func TestUnstakeToken02(t *testing.T) {
 
 	shouldEQ(t, len(deposits), 1)
 
-	shouldEQ(t, poolGns["gno.land/r/demo/bar:gno.land/r/demo/qux:500"], 13599207)
+	shouldEQ(t, poolGns["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"], 13599207)
 	shouldEQ(t, positionGns[2], 0)
 	shouldEQ(t, positionGns[3], 13599206)
 

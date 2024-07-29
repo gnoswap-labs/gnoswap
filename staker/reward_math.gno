@@ -9,12 +9,45 @@ import (
 	"gno.land/r/gnoswap/consts"
 
 	pos "gno.land/r/gnoswap/position"
-
-	"gno.land/r/gnoswap/gns"
 )
 
-func rewardMathComputeInternalRewardAmount(tokenId uint64) uint64 {
-	println("REWARD__rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
+type warmUpAmount struct {
+	full30 uint64
+	give30 uint64
+	left30 uint64
+
+	full50 uint64
+	give50 uint64
+	left50 uint64
+
+	full70 uint64
+	give70 uint64
+	left70 uint64
+
+	full100 uint64
+	give100 uint64 // doesn't need this I think
+	left100 uint64 // doesn't need this I think
+}
+
+var positionsWarmUpAmount = make(map[uint64]warmUpAmount) // positionId => warmUpAmount
+
+func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
+
+	// 변경점이 생겼으니 계산 들어가야 함
+	if positionGns[tokenId] != positionLastGns[tokenId] {
+		// panic("ITS HAPPENING") // 패닉 뜨면 변경되었다는 뜻이니 기존에 쌓였던 리워드에 대해서 분배 필요
+
+		/*
+			current 6431934755
+			last 		0
+
+
+			current 19295804265
+			last     6431934755
+		*/
+	}
+
+	println("[ START ] REWARD__rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
 	deposit := deposits[tokenId]
 
 	// using block
@@ -23,211 +56,334 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) uint64 {
 	stakedDuration := currentHeight - stakeHeight
 	durationRatio := getRewardRatio(stakedDuration)
 
-	println("REWARD__rewardMathComputeInternalRewardAmount_HEIGHT:", currentHeight)
+	println(" > REWARD__rewardMathComputeInternalRewardAmount_HEIGHT:", currentHeight)
 
-	// 100% amount
-	gnsFullAmount := positionGns[tokenId]
-	if gnsFullAmount == 0 {
-		return 0
-	}
-
-	var gnsAmountToGive uint64
+	// 과거 계산 시점부터 현재 블록까지 쌓인 리워드에 대해 각 가중치별로 분배
+	toDistribute := positionGns[tokenId] - positionLastGns[tokenId]
+	println(" > REWARD__positionGns[tokenId]", positionGns[tokenId])
+	println(" > REWARD__positionLastGns[tokenId]", positionLastGns[tokenId])
 
 	until30 := uint64(stakeHeight + warmUp[50] - 1)  // 150
 	until50 := uint64(stakeHeight + warmUp[70] - 1)  // 300
 	until70 := uint64(stakeHeight + warmUp[100] - 1) // 900
 	begin100 := uint64(stakeHeight + warmUp[100])    // 901~
 
-	lastCollectHeight := positionCollectHeight[tokenId]
+	lastCalculatedHeightU64 := uint64(lastCalculatedHeight)
 
-	avgGnsBlockAmount := gnsFullAmount / (uint64(currentHeight) - lastCollectHeight)
+	q96 := u256.MustFromDecimal(consts.Q96)
+	toDistributeX96 := new(u256.Uint).Mul(u256.NewUint(toDistribute), q96)
+	avgGnsBlockAmountX96 := new(u256.Uint).Div(toDistributeX96, u256.NewUint(uint64(currentHeight)-lastCalculatedHeightU64))
+	println(" > REWARD__toDistribute:", toDistribute)
+	println(" > REWARD__uint64(currentHeight)-lastCalculatedHeightU64):", uint64(currentHeight)-lastCalculatedHeightU64)
+	println(" > REWARD__avgGnsBlockAmountX96:", avgGnsBlockAmountX96.ToString())
 
-	// lastCollectHeight
-	// safeSub
+	positionWarmUpAmount, exist := positionsWarmUpAmount[tokenId]
+	if !exist {
+		panic("THIS SHOULD NOT HAPPEN")
+	}
+	println(" > REWARD__BEFORE_positionWarmUpAmount.full100", positionWarmUpAmount.full100)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.give100", positionWarmUpAmount.give100)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.left100", positionWarmUpAmount.left100)
+	println()
+	println(" > REWARD__BEFORE_positionWarmUpAmount.full70", positionWarmUpAmount.full70)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.give70", positionWarmUpAmount.give70)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.left70", positionWarmUpAmount.left70)
+	println()
+	println(" > REWARD__BEFORE_positionWarmUpAmount.full50", positionWarmUpAmount.full50)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.give50", positionWarmUpAmount.give50)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.left50", positionWarmUpAmount.left50)
+	println()
+	println(" > REWARD__BEFORE_positionWarmUpAmount.full30", positionWarmUpAmount.full30)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.give30", positionWarmUpAmount.give30)
+	println(" > REWARD__BEFORE_positionWarmUpAmount.left30", positionWarmUpAmount.left30)
+	println()
+
 	switch durationRatio {
 	case 100:
-		if uint64(lastCalculatedHeight) > begin100 {
-			println("REWARD__REWARD ONLY 100%")
+		if lastCalculatedHeightU64 > begin100 {
+			println(" > REWARD__REWARD ONLY 100%")
 			// 100%
-			dur100 := uint64(currentHeight) - lastCollectHeight
-			println("REWARD__DUR100", dur100)
-			gnsAmountToGive += avgGnsBlockAmount * 100 * dur100 / 100
-			println("REWARD__100%", gnsAmountToGive)
+			dur100 := uint64(currentHeight) - lastCalculatedHeightU64
+			println("  > REWARD__DUR100", dur100)
+			full, toGive := calcAmount(avgGnsBlockAmountX96, dur100, 100)
+			// println("  > REWARD__AMOUNT100", amount)
+			positionWarmUpAmount.full100 += full
+			positionWarmUpAmount.give100 += toGive
+			positionWarmUpAmount.left100 += full - toGive
+			// gnsAmountToGive += amount // UPDATE EACH PERIOD
+			// println("  > REWARD__100%", gnsAmountToGive)
 		} else {
-			if uint64(lastCalculatedHeight) > until50 {
-				println("REWARD__REWARD 100% AND 70%")
+			if lastCalculatedHeightU64 > until50 {
+				println(" > REWARD__REWARD 100% AND 70%")
 				// 100%
 				dur100 := uint64(currentHeight) - until70
-				println("REWARD__DUR100", dur100)
-				gnsAmountToGive += avgGnsBlockAmount * 100 * dur100 / 100
-				println("REWARD__100%", gnsAmountToGive)
+				println("  > REWARD__DUR100", dur100)
+				full, toGive := calcAmount(avgGnsBlockAmountX96, dur100, 100)
+				positionWarmUpAmount.full100 += full
+				positionWarmUpAmount.give100 += toGive
+				positionWarmUpAmount.left100 += full - toGive
+				// println("  > REWARD__AMOUNT100", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
+				// println("  > REWARD__100%", gnsAmountToGive)
 
 				// 70%
-				dur70 := until70 - lastCollectHeight
-				println("REWARD__DUR70", dur70)
-				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
-				println("REWARD__70%", gnsAmountToGive)
-			} else if uint64(lastCalculatedHeight) > until30 {
-				println("REWARD__REWARD 100% AND 70% AND 50%")
+				dur70 := until70 - lastCalculatedHeightU64
+				println("  > REWARD__DUR70", dur70)
+				full, toGive = calcAmount(avgGnsBlockAmountX96, dur70, 70)
+				positionWarmUpAmount.full70 += full
+				positionWarmUpAmount.give70 += toGive
+				positionWarmUpAmount.left70 += full - toGive
+				// println("  > REWARD__AMOUNT70", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
+				// println("  > REWARD__70%", gnsAmountToGive)
+			} else if lastCalculatedHeightU64 > until30 {
+				println(" > REWARD__REWARD 100% AND 70% AND 50%")
 				// 100%
 				dur100 := uint64(currentHeight) - until70
-				println("REWARD__DUR100", dur100)
-				gnsAmountToGive += avgGnsBlockAmount * 100 * dur100 / 100
-				println("REWARD__100%", gnsAmountToGive)
+				println("  > REWARD__DUR100", dur100)
+				full, toGive := calcAmount(avgGnsBlockAmountX96, dur100, 100)
+				positionWarmUpAmount.full100 += full
+				positionWarmUpAmount.give100 += toGive
+				positionWarmUpAmount.left100 += full - toGive
+				// println("  > REWARD__AMOUNT100", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
+				// println("  > REWARD__100%", gnsAmountToGive)
 
 				// 70%
 				dur70 := until70 - until50
-				println("REWARD__DUR70", dur70)
-				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
-				println("REWARD__70%", gnsAmountToGive)
+				println("  > REWARD__DUR70", dur70)
+				full, toGive = calcAmount(avgGnsBlockAmountX96, dur70, 70)
+				positionWarmUpAmount.full70 += full
+				positionWarmUpAmount.give70 += toGive
+				positionWarmUpAmount.left70 += full - toGive
+				// println("  > REWARD__AMOUNT70", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
+				// println("  > REWARD__70%", gnsAmountToGive)
 
 				// 50%
-				dur50 := until50 - lastCollectHeight
-				println("REWARD__DUR50", dur50)
-				gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
-				println("REWARD__50%", gnsAmountToGive)
+				dur50 := until50 - lastCalculatedHeightU64
+				println("  > REWARD__DUR50", dur50)
+				// println("  > REWARD__50%", gnsAmountToGive)
+				full, toGive = calcAmount(avgGnsBlockAmountX96, dur50, 50)
+				positionWarmUpAmount.full50 += full
+				positionWarmUpAmount.give50 += toGive
+				positionWarmUpAmount.left50 += full - toGive
+				// println("  > REWARD__AMOUNT50", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 			} else {
-				println("REWARD__REWARD 100% AND 70% AND 50% AND 30%")
+				println(" > REWARD__REWARD 100% AND 70% AND 50% AND 30%")
 				// 100%
 				dur100 := uint64(currentHeight) - until70
-				println("REWARD__DUR100", dur100)
-				gnsAmountToGive += avgGnsBlockAmount * 100 * dur100 / 100
-				println("REWARD__100%", gnsAmountToGive)
+				println("  > REWARD__DUR100", dur100)
+				full, toGive := calcAmount(avgGnsBlockAmountX96, dur100, 100)
+				positionWarmUpAmount.full100 += full
+				positionWarmUpAmount.give100 += toGive
+				positionWarmUpAmount.left100 += full - toGive
+				// println("  > REWARD__AMOUNT100", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
+				// println("  > REWARD__100%", gnsAmountToGive)
 
 				// 70%
 				dur70 := until70 - until50
-				println("REWARD__DUR70", dur70)
-				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
-				println("REWARD__70%", gnsAmountToGive)
+				println("  > REWARD__DUR70", dur70)
+				// println("  > REWARD__70%", gnsAmountToGive)
+				full, toGive = calcAmount(avgGnsBlockAmountX96, dur70, 70)
+				positionWarmUpAmount.full70 += full
+				positionWarmUpAmount.give70 += toGive
+				positionWarmUpAmount.left70 += full - toGive
+				// println("  > REWARD__AMOUNT70", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 
 				// 50%
 				dur50 := until50 - until30
-				println("REWARD__DUR50", dur50)
-				gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
-				println("REWARD__50%", gnsAmountToGive)
+				println("  > REWARD__DUR50", dur50)
+				// println("  > REWARD__50%", gnsAmountToGive)
+				full, toGive = calcAmount(avgGnsBlockAmountX96, dur50, 50)
+				positionWarmUpAmount.full50 += full
+				positionWarmUpAmount.give50 += toGive
+				positionWarmUpAmount.left50 += full - toGive
+				// println("  > REWARD__AMOUNT50", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 
 				// 30%
-				dur30 := until30 - lastCollectHeight
-				println("REWARD__DUR30", dur30)
-				gnsAmountToGive += avgGnsBlockAmount * 30 * dur30 / 100
-				println("REWARD__30%", gnsAmountToGive)
+				dur30 := until30 - lastCalculatedHeightU64
+				println("  > REWARD__DUR30", dur30)
+				// println("  > REWARD__30%", gnsAmountToGive)
+				full, toGive = calcAmount(avgGnsBlockAmountX96, dur30, 30)
+				positionWarmUpAmount.full30 += full
+				positionWarmUpAmount.give30 += toGive
+				positionWarmUpAmount.left30 += full - toGive
+				// println("  > REWARD__AMOUNT30", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 			}
 		}
 
 	case 70:
-		if uint64(lastCalculatedHeight) > until50 {
-			println("REWARD__REWARD ONLY 70%")
+		if lastCalculatedHeightU64 > until50 {
+			println(" > REWARD__REWARD ONLY 70%")
 			// 70%
-			dur70 := uint64(currentHeight) - lastCollectHeight
-			println("REWARD__DUR70", dur70)
-			gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
-			println("REWARD__70%", gnsAmountToGive)
+			dur70 := uint64(currentHeight) - lastCalculatedHeightU64
+			println("  > REWARD__DUR70", dur70)
+			full, toGive := calcAmount(avgGnsBlockAmountX96, dur70, 70)
+			positionWarmUpAmount.full70 += full
+			positionWarmUpAmount.give70 += toGive
+			positionWarmUpAmount.left70 += full - toGive
+			// println("  > REWARD__AMOUNT70", amount)
+			// gnsAmountToGive += amount // UPDATE EACH PERIOD
+			// println("  > REWARD__70%", gnsAmountToGive)
 		} else {
-			if uint64(lastCalculatedHeight) > until30 {
-				println("REWARD__REWAWRD 70% AND 50%")
+			if lastCalculatedHeightU64 > until30 {
+				println(" > REWARD__REWAWRD 70% AND 50%")
 				// 70%
 				dur70 := uint64(currentHeight) - until50
-				println("REWARD__DUR70", dur70)
-				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
-				println("REWARD__70%", gnsAmountToGive)
+				println("  > REWARD__DUR70", dur70)
+				// println("  > REWARD__70%", gnsAmountToGive)
+				full, toGive := calcAmount(avgGnsBlockAmountX96, dur70, 70)
+				positionWarmUpAmount.full70 += full
+				positionWarmUpAmount.give70 += toGive
+				positionWarmUpAmount.left70 += full - toGive
+				// println("  > REWARD__AMOUNT70", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
 
 				// 50%
-				dur50 := until50 - lastCollectHeight
-				println("REWARD__DUR50", dur50)
-				gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
-				println("REWARD__50%", gnsAmountToGive)
+				dur50 := until50 - lastCalculatedHeightU64
+				println("  > REWARD__DUR50", dur50)
+				full, toGive = calcAmount(avgGnsBlockAmountX96, dur50, 50)
+				positionWarmUpAmount.full50 += full
+				positionWarmUpAmount.give50 += toGive
+				positionWarmUpAmount.left50 += full - toGive
+				// println("  > REWARD__AMOUNT50", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
+				// println("  > REWARD__50%", gnsAmountToGive)
 			} else {
-				println("REWARD__REWARD 70% AND 50% AND 30%")
+				println(" > REWARD__REWARD 70% AND 50% AND 30%")
 				// 70%
 				dur70 := uint64(currentHeight) - until50
-				println("REWARD__DUR70", dur70)
-				gnsAmountToGive += avgGnsBlockAmount * 70 * dur70 / 100
-				println("REWARD__70%", gnsAmountToGive)
+				println("  > REWARD__DUR70", dur70)
+				full, toGive := calcAmount(avgGnsBlockAmountX96, dur70, 70)
+				positionWarmUpAmount.full70 += full
+				positionWarmUpAmount.give70 += toGive
+				positionWarmUpAmount.left70 += full - toGive
+				// println("  > REWARD__AMOUNT70", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
+				// println("  > REWARD__70%", gnsAmountToGive)
 
 				// 50%
 				dur50 := until50 - until30
-				println("REWARD__DUR50", dur50)
-				gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
-				println("REWARD__50%", gnsAmountToGive)
+				println("  > REWARD__DUR50", dur50)
+				full, toGive = calcAmount(avgGnsBlockAmountX96, dur50, 50)
+				positionWarmUpAmount.full50 += full
+				positionWarmUpAmount.give50 += toGive
+				positionWarmUpAmount.left50 += full - toGive
+				// println("  > REWARD__AMOUNT50", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
+				// println("  > REWARD__50%", gnsAmountToGive)
 
 				// 30%
-				dur30 := until30 - lastCollectHeight
-				println("REWARD__DUR30", dur30)
-				gnsAmountToGive += avgGnsBlockAmount * 30 * dur30 / 100
-				println("REWARD__30%", gnsAmountToGive)
+				dur30 := until30 - lastCalculatedHeightU64
+				println("  > REWARD__DUR30", dur30)
+				full, toGive = calcAmount(avgGnsBlockAmountX96, dur30, 30)
+				positionWarmUpAmount.full30 += full
+				positionWarmUpAmount.give30 += toGive
+				positionWarmUpAmount.left30 += full - toGive
+				// println("  > REWARD__AMOUNT30", amount)
+				// gnsAmountToGive += amount // UPDATE EACH PERIOD
+				// println("  > REWARD__30%", gnsAmountToGive)
 			}
 		}
 
 	case 50:
-		if uint64(lastCalculatedHeight) > until30 {
-			println("REWARD__REWARD ONLY 50%")
+		if lastCalculatedHeightU64 > until30 {
+			println(" > REWARD__REWARD ONLY 50%")
 			// 50%
-			dur50 := uint64(currentHeight) - lastCollectHeight
-			println("REWARD__DUR50", dur50)
-			gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
-			println("REWARD__50%", gnsAmountToGive)
+			dur50 := uint64(currentHeight) - lastCalculatedHeightU64
+			println("  > REWARD__DUR50", dur50)
+			full, toGive := calcAmount(avgGnsBlockAmountX96, dur50, 50)
+			positionWarmUpAmount.full50 += full
+			positionWarmUpAmount.give50 += toGive
+			positionWarmUpAmount.left50 += full - toGive
+			// println("  > REWARD__AMOUNT50", amount)
+			// gnsAmountToGive += amount // UPDATE EACH PERIOD
+			// println("  > REWARD__50%", gnsAmountToGive)
 		} else {
-			println("REWARD__REWAD 50% AND 30%")
+			println(" > REWARD__REWAD 50% AND 30%")
 			dur50 := uint64(currentHeight) - until30
-			println("REWARD__DUR50", dur50)
-			gnsAmountToGive += avgGnsBlockAmount * 50 * dur50 / 100
-			println("REWARD__50%", gnsAmountToGive)
+			println("  > REWARD__DUR50", dur50)
+			full, toGive := calcAmount(avgGnsBlockAmountX96, dur50, 50)
+			positionWarmUpAmount.full50 += full
+			positionWarmUpAmount.give50 += toGive
+			positionWarmUpAmount.left50 += full - toGive
+			// println("  > REWARD__AMOUNT50", amount)
+			// gnsAmountToGive += amount // UPDATE EACH PERIOD
+			// println("  > REWARD__50%", gnsAmountToGive)
 
 			// 30%
-			dur30 := until30 - lastCollectHeight
-			println("REWARD__DUR30", dur30)
-			gnsAmountToGive += avgGnsBlockAmount * 30 * dur30 / 100
-			println("REWARD__30%", gnsAmountToGive)
+			dur30 := until30 - lastCalculatedHeightU64
+			full, toGive = calcAmount(avgGnsBlockAmountX96, dur30, 30)
+			positionWarmUpAmount.full30 += full
+			positionWarmUpAmount.give30 += toGive
+			positionWarmUpAmount.left30 += full - toGive
+			// println("  > REWARD__AMOUNT30", amount)
+			// gnsAmountToGive += amount // UPDATE EACH PERIOD
+			println("  > REWARD__DUR30", dur30)
+			// println("  > REWARD__30%", gnsAmountToGive)
 		}
 
 	case 30:
-		println("REWARD__REWARD 30%")
-		dur30 := uint64(currentHeight) - lastCollectHeight
-		println("REWARD__DUR30", dur30)
-		toGive := avgGnsBlockAmount * 30 * dur30 / 100
-		gnsAmountToGive += toGive
-		println("REWARD__give30%", toGive)
-		println("REWARD__accu30%", gnsAmountToGive)
+		println(" > REWARD__REWARD 30%")
+		dur30 := uint64(currentHeight) - lastCalculatedHeightU64
+		full, toGive := calcAmount(avgGnsBlockAmountX96, dur30, 30)
+		positionWarmUpAmount.full30 += full
+		positionWarmUpAmount.give30 += toGive
+		positionWarmUpAmount.left30 += full - toGive
+		// gnsAmountToGive += amount // UPDATE EACH PERIOD
+		// println("  > REWARD__AMOUNT30", amount)
+		println("  > REWARD__DUR30", dur30)
+		// println("  > REWARD__30%", amount)
 
 	default:
-		println("REWARD__0 REWARD RATIO")
+		println(" > REWARD__0 REWARD RATIO")
 	}
 
+	println(" > REWARD__STAKER", gnsBalance(consts.STAKER_ADDR))
+	println(" > REWARD__tokenId:", tokenId)
+	println(" > REWARD__toDistribute:", toDistribute)
+	// println(" > REWARD__gnsAmountToGive", gnsAmountToGive)
+
+	println(" > REWARD__stakedDuration:", stakedDuration)
+	println(" > REWARD__durationRatio:", durationRatio)
+	println(" > REWARD__stakeHeight:", stakeHeight)
+	println(" > REWARD__currentHeight:", currentHeight)
+	println(" > REWARD__[?] lastCalculatedHeight:", lastCalculatedHeight)
+	println(" > REWARD__until30:", until30)
+	println(" > REWARD__until50:", until50)
+	println(" > REWARD__until70:", until70)
+	println(" > REWARD__begin100:", begin100)
+
+	println(" > REWARD__full30:", positionWarmUpAmount.full30)
+	println(" > REWARD__give30:", positionWarmUpAmount.give30)
+
+	println(" > REWARD__full50:", positionWarmUpAmount.full50)
+	println(" > REWARD__give50:", positionWarmUpAmount.give50)
+
+	println(" > REWARD__full70:", positionWarmUpAmount.full70)
+	println(" > REWARD__give70:", positionWarmUpAmount.give70)
+
+	println(" > REWARD__full100:", positionWarmUpAmount.full100)
+	println(" > REWARD__give100:", positionWarmUpAmount.give100)
+
+	accuFull := uint64(0)
+	accuGive := uint64(0)
+
+	accuFull += positionWarmUpAmount.full30 + positionWarmUpAmount.full50 + positionWarmUpAmount.full70 + positionWarmUpAmount.full100
+	accuGive += positionWarmUpAmount.give30 + positionWarmUpAmount.give50 + positionWarmUpAmount.give70 + positionWarmUpAmount.give100
+
+	positionsWarmUpAmount[tokenId] = positionWarmUpAmount
+	println(" > REWARD__positionsWarmUpAmount[tokenId]:", positionsWarmUpAmount[tokenId])
+
+	println("[ END ] REWARD__rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
 	println()
-	println("REWARD__STAKER", gnsBalance(consts.STAKER_ADDR))
-	println("REWARD__tokenId:", tokenId)
-	println("REWARD__gnsFullAmount:", gnsFullAmount)
-	println("REWARD__gnsAmountToGive", gnsAmountToGive)
-	println()
-
-	println("REWARD__stakedDuration:", stakedDuration)
-	println("REWARD__durationRatio:", durationRatio)
-	println("REWARD__stakeHeight:", stakeHeight)
-	println("REWARD__currentHeight:", currentHeight)
-	println("REWARD__lastCollectHeight:", lastCollectHeight)
-	println("REWARD__avgGnsBlockAmount:", avgGnsBlockAmount)
-	println("REWARD__until30:", until30)
-	println("REWARD__until50:", until50)
-	println("REWARD__until70:", until70)
-	println("REWARD__begin100:", begin100)
-
-	//  transfer to protocol_fee contract
-	_gnsAmountLeft := gnsFullAmount - gnsAmountToGive
-	println("REWARD__gnsAmountLeft:", _gnsAmountLeft)
-	_stakerGns := gnsBalance(consts.STAKER_ADDR)
-	println("REWARD__stakerGns:", _stakerGns)
-	toFee := min(_gnsAmountLeft, _stakerGns)
-	println("REWARD__toFee:", toFee)
-	println("REWARD__BEFORE_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
-	println("REWARD__BEFORE_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
-	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), toFee)
-	println("REWARD__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
-	println("REWARD__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
-
-	poolGns[deposit.targetPoolPath] -= gnsFullAmount
-	positionGns[tokenId] = gnsAmountToGive
-
-	return gnsAmountToGive
+	return accuFull, accuGive
 }
 
 func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string, durationRatio uint64) uint64 {
@@ -424,4 +580,15 @@ func getTiersAmount(amount uint64) (uint64, uint64, uint64) {
 	tier3Amount := (amount * tier3Ratio) / 100
 
 	return tier1Amount, tier2Amount, tier3Amount
+}
+
+func calcAmount(avgBlockAmountX96 *u256.Uint, dur, pct uint64) (uint64, uint64) {
+	durAmountX96 := new(u256.Uint).Mul(avgBlockAmountX96, u256.NewUint(dur))
+	fullAmount := new(u256.Uint).Div(durAmountX96, u256.MustFromDecimal(consts.Q96)).Uint64()
+
+	durAmountX96 = new(u256.Uint).Mul(durAmountX96, u256.NewUint(pct))
+	durAmountX96 = new(u256.Uint).Div(durAmountX96, u256.NewUint(100))
+
+	durAmount := new(u256.Uint).Div(durAmountX96, u256.MustFromDecimal(consts.Q96)).Uint64()
+	return fullAmount, durAmount
 }

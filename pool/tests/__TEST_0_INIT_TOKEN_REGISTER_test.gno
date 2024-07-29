@@ -6,17 +6,17 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	"gno.land/r/demo/foo"
+	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/demo/bar"
+	"gno.land/r/onbloc/bar"
 
-	"gno.land/r/demo/baz"
+	"gno.land/r/onbloc/baz"
 
-	"gno.land/r/demo/qux"
+	"gno.land/r/onbloc/qux"
 
 	"gno.land/r/demo/wugnot"
 
-	"gno.land/r/demo/obl"
+	"gno.land/r/onbloc/obl"
 
 	"gno.land/r/gnoswap/gns"
 
@@ -136,12 +136,12 @@ func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 func init() {
 	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
 
-	RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
-	RegisterGRC20Interface("gno.land/r/demo/foo", FooToken{})
-	RegisterGRC20Interface("gno.land/r/demo/baz", BazToken{})
-	RegisterGRC20Interface("gno.land/r/demo/qux", QuxToken{})
+	RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
+	RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
+	RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
+	RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
 	RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
-	RegisterGRC20Interface("gno.land/r/demo/obl", OBLToken{})
+	RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
 	RegisterGRC20Interface("gno.land/r/gnoswap/gns", GNSToken{})
 }
 
@@ -152,7 +152,7 @@ func TestGetRegisteredTokens(t *testing.T) {
 func TestRegisterGRC20Interface(t *testing.T) {
 	shouldPanic(t,
 		func() {
-			RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+			RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
 		},
 	)
 }
@@ -163,18 +163,18 @@ func TestUnregisterGRC20Interface(t *testing.T) {
 
 	shouldPanic(t,
 		func() {
-			UnregisterGRC20Interface("gno.land/r/demo/bar")
+			UnregisterGRC20Interface("gno.land/r/onbloc/bar")
 		},
 	)
 
 	shouldEQ(t, len(GetRegisteredTokens()), 7)
 
 	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
-	UnregisterGRC20Interface("gno.land/r/demo/bar")
+	UnregisterGRC20Interface("gno.land/r/onbloc/bar")
 	shouldEQ(t, len(GetRegisteredTokens()), 6)
 
 	// re-register to avoid panic in other tests
-	RegisterGRC20Interface("gno.land/r/demo/bar", BarToken{})
+	RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
 
 	std.TestSetOrigCaller(gsa)
 }

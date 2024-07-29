@@ -7,6 +7,7 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
+	en "gno.land/r/gnoswap/emission"
 	pl "gno.land/r/gnoswap/pool"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -37,6 +38,7 @@ type ApiInternalIncentive struct {
 }
 
 func ApiGetRewardTokens() string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	rewardTokens := []RewardToken{}
@@ -53,7 +55,14 @@ func ApiGetRewardTokens() string {
 
 		// HANDLE EXTERNAL
 		for _, incentiveId := range poolIncentives[poolPath] {
+			if incentives[incentiveId].rewardToken == "" {
+				continue
+			}
 			thisPoolRewardTokens = append(thisPoolRewardTokens, incentives[incentiveId].rewardToken)
+		}
+
+		if len(thisPoolRewardTokens) == 0 {
+			continue
 		}
 
 		rewardTokens = append(rewardTokens, RewardToken{
@@ -92,6 +101,7 @@ func ApiGetRewardTokens() string {
 }
 
 func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	rewardTokens := []RewardToken{}
@@ -151,6 +161,7 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 }
 
 func ApiGetExternalIncentives() string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	apiExternalIncentives := []ApiExternalIncentive{}
@@ -209,6 +220,7 @@ func ApiGetExternalIncentives() string {
 }
 
 func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	apiExternalIncentives := []ApiExternalIncentive{}
@@ -271,6 +283,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 }
 
 func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	apiExternalIncentives := []ApiExternalIncentive{}
@@ -333,6 +346,7 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 }
 
 func ApiGetInternalIncentives() string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	apiInternalIncentives := []ApiInternalIncentive{}
@@ -381,6 +395,7 @@ func ApiGetInternalIncentives() string {
 }
 
 func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	apiInternalIncentives := []ApiInternalIncentive{}
@@ -433,6 +448,7 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 }
 
 func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
+	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
 	apiInternalIncentives := []ApiInternalIncentive{}

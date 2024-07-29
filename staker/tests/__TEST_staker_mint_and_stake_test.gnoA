@@ -7,10 +7,10 @@ import (
 
 	pl "gno.land/r/gnoswap/pool"
 
-	"gno.land/r/demo/bar"
-	"gno.land/r/demo/qux"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/qux"
 
 	"gno.land/r/gnoswap/gnft"
 
@@ -23,7 +23,7 @@ import (
 func init() {
 	// init pool tiers
 	// tier 1
-	poolTiers["gno.land/r/demo/bar:gno.land/r/demo/qux:3000"] = InternalTier{
+	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:3000"] = InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
 		startHeight:    std.GetHeight(),
@@ -43,10 +43,8 @@ func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	pl.CreatePool(barPath, quxPath, 3000, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500}]}
 
 	pl.CreatePool(consts.GNOT, consts.GNS_PATH, 3000, "79228162514264337593543950337") //x1
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500}]}
 
 	std.TestSkipHeights(1)
 }
@@ -87,8 +85,6 @@ func TestMintAndStakeNative(t *testing.T) {
 		"1",             // amount1Min
 		max_timeout,
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/position Mint [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/staker} {p_poolPath gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500} {p_tickLower -11000} {p_tickUpper -9000} {tokenId 2} {liquidity 1243732} {amount0 100000} {amount1 36790}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker StakeToken [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 2} {poolPath gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500} {amount0 100000} {amount1 36790}]}
 
 	shouldEQ(t, lpTokenId, uint64(1))
 	std.TestSkipHeights(1)
@@ -102,7 +98,7 @@ func TestMintAndStakeNative(t *testing.T) {
 	toTid := grc721.TokenID(ufmt.Sprintf("%d", lpTokenId))
 	uri := gnft.GetTokenURI(toTid)
 
-	expectedUri := `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTM1IiBoZWlnaHQ9IjEzNSIgdmlld0JveD0iMCAwIDEzNSAxMzUiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjY3IiBjeT0iNjgiIHI9IjQ2IiBmaWxsPSJ1cmwoI3BhaW50MF9saW5lYXJfNzY5OF81Njk0NikiLz4KPHBhdGggZD0iTTU4Ljc3MzQgNTMuNjgyOEw2Ny40OTQxIDQ4TDg1LjAwMDIgNTkuMzE3OEw3Ni4yOTI3IDY0Ljk5NTdMNTguNzczNCA1My42ODI4WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTU4Ljk1NDEgNjcuNzE3N0w2Ny42NzQ4IDYyLjAzNDlMODUuMDAwMSA3My4xODA0TDc2LjQ1MzYgNzguOTU5Nkw1OC45NTQxIDY3LjcxNzdaIiBmaWxsPSJ3aGl0ZSIgZmlsbC1vcGFjaXR5PSIwLjQiLz4KPHBhdGggZD0iTTUwLjAyNjkgNzUuODYwNUw1OC43NzM1IDcwLjE3NzdMNzYuMjQwOCA4MS41MTdMNjcuNDk0MiA4Ny4xNDcyTDUwLjAyNjkgNzUuODYwNVoiIGZpbGw9IndoaXRlIiBmaWxsLW9wYWNpdHk9IjAuNiIvPgo8cGF0aCBkPSJNNTAuMDAxIDU5LjMxNzRMNTguNzcyNCA1My42NjcyTDU4Ljc3MjQgNzAuMTc5N0w1MC4wMDEgNzUuODczN0w1MC4wMDEgNTkuMzE3NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik03Ni40NTQ1IDc4Ljk1OThMODUuMDAxNyA3My4xODA3TDg1LjAwMTcgNzUuODMwMkw3Ni4yNzM0IDgxLjUwMjNMNzYuNDU0NSA3OC45NTk4WiIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC41Ii8+CjxwYXRoIGQ9Ik01OC43NzM0IDUzLjY4MjhMNjcuNDk0MSA0OEw4NS4wMDAyIDU5LjMxNzhMNzYuMjkyNyA2NC45OTU3TDU4Ljc3MzQgNTMuNjgyOFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik01OC45NTQxIDY3LjcxNzdMNjcuNjc0OCA2Mi4wMzQ5TDg1LjAwMDEgNzMuMTgwNEw3Ni40NTM2IDc4Ljk1OTZMNTguOTU0MSA2Ny43MTc3WiIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC40Ii8+CjxwYXRoIGQ9Ik01MC4wMjY5IDc1Ljg2MDVMNTguNzczNSA3MC4xNzc3TDc2LjI0MDggODEuNTE3TDY3LjQ5NDIgODcuMTQ3Mkw1MC4wMjY5IDc1Ljg2MDVaIiBmaWxsPSJ3aGl0ZSIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTUwLjAwMSA1OS4zMTc0TDU4Ljc3MjQgNTMuNjY3Mkw1OC43NzI0IDcwLjE3OTdMNTAuMDAxIDc1Ljg3MzdMNTAuMDAxIDU5LjMxNzRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNzYuNDU0NSA3OC45NTk4TDg1LjAwMTcgNzMuMTgwN0w4NS4wMDE3IDc1LjgzMDJMNzYuMjczNCA4MS41MDIzTDc2LjQ1NDUgNzguOTU5OFoiIGZpbGw9IndoaXRlIiBmaWxsLW9wYWNpdHk9IjAuNSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDBfbGluZWFyXzc2OThfNTY5NDYiIHgxPSI3IiB5MT0iOSIgeDI9IjEyMiIgeTI9IjEyMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJPHN0b3Agc3RvcC1jb2xvcj0iIzk4MUVENiIvPgoJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjN0IzRUMwIi8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cg==`
+	expectedUri := `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTM1IiBoZWlnaHQ9IjEzNSIgdmlld0JveD0iMCAwIDEzNSAxMzUiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjY3IiBjeT0iNjgiIHI9IjQ2IiBmaWxsPSJ1cmwoI3BhaW50MF9saW5lYXJfNzY5OF81Njk0NikiLz4KPHBhdGggZD0iTTU4Ljc3MzQgNTMuNjgyOEw2Ny40OTQxIDQ4TDg1LjAwMDIgNTkuMzE3OEw3Ni4yOTI3IDY0Ljk5NTdMNTguNzczNCA1My42ODI4WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTU4Ljk1NDEgNjcuNzE3N0w2Ny42NzQ4IDYyLjAzNDlMODUuMDAwMSA3My4xODA0TDc2LjQ1MzYgNzguOTU5Nkw1OC45NTQxIDY3LjcxNzdaIiBmaWxsPSJ3aGl0ZSIgZmlsbC1vcGFjaXR5PSIwLjQiLz4KPHBhdGggZD0iTTUwLjAyNjkgNzUuODYwNUw1OC43NzM1IDcwLjE3NzdMNzYuMjQwOCA4MS41MTdMNjcuNDk0MiA4Ny4xNDcyTDUwLjAyNjkgNzUuODYwNVoiIGZpbGw9IndoaXRlIiBmaWxsLW9wYWNpdHk9IjAuNiIvPgo8cGF0aCBkPSJNNTAuMDAxIDU5LjMxNzRMNTguNzcyNCA1My42NjcyTDU4Ljc3MjQgNzAuMTc5N0w1MC4wMDEgNzUuODczN0w1MC4wMDEgNTkuMzE3NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik03Ni40NTQ1IDc4Ljk1OThMODUuMDAxNyA3My4xODA3TDg1LjAwMTcgNzUuODMwMkw3Ni4yNzM0IDgxLjUwMjNMNzYuNDU0NSA3OC45NTk4WiIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC41Ii8+CjxwYXRoIGQ9Ik01OC43NzM0IDUzLjY4MjhMNjcuNDk0MSA0OEw4NS4wMDAyIDU5LjMxNzhMNzYuMjkyNyA2NC45OTU3TDU4Ljc3MzQgNTMuNjgyOFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik01OC45NTQxIDY3LjcxNzdMNjcuNjc0OCA2Mi4wMzQ5TDg1LjAwMDEgNzMuMTgwNEw3Ni40NTM2IDc4Ljk1OTZMNTguOTU0MSA2Ny43MTc3WiIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC40Ii8+CjxwYXRoIGQ9Ik01MC4wMjY5IDc1Ljg2MDVMNTguNzczNSA3MC4xNzc3TDc2LjI0MDggODEuNTE3TDY3LjQ5NDIgODcuMTQ3Mkw1MC4wMjY5IDc1Ljg2MDVaIiBmaWxsPSJ3aGl0ZSIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTUwLjAwMSA1OS4zMTc0TDU4Ljc3MjQgNTMuNjY3Mkw1OC43NzI0IDcwLjE3OTdMNTAuMDAxIDc1Ljg3MzdMNTAuMDAxIDU5LjMxNzRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNzYuNDU0NSA3OC45NTk4TDg1LjAwMTcgNzMuMTgwN0w4NS4wMDE3IDc1LjgzMDJMNzYuMjczNCA4MS41MDIzTDc2LjQ1NDUgNzguOTU5OFoiIGZpbGw9IndoaXRlIiBmaWxsLW9wYWNpdHk9IjAuNSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDBfbGluZWFyXzc2OThfNTY5NDYiIHgxPSI4IiB5MT0iMTAiIHgyPSIxMjIiIHkyPSIxMjYiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCTxzdG9wIHN0b3AtY29sb3I9IiMwNkYwMTciLz4KCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzY0MzVCNyIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo=`
 
 	shouldEQ(t, uri, expectedUri)
 }
@@ -125,8 +121,6 @@ func TestMintAndStakeGRC20Pair(t *testing.T) {
 		"1",          // amount1Min
 		max_timeout,
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/position Mint [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/staker} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 1} {liquidity 12437} {amount0 368} {amount1 1000}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/staker StakeToken [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/demo/bar:gno.land/r/demo/qux:500} {amount0 368} {amount1 1000}]}
 	shouldEQ(t, lpTokenId, uint64(2))
 
 	std.TestSkipHeights(1)

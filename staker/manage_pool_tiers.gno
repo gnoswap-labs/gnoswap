@@ -30,7 +30,7 @@ func SetPoolTier(pool string, tier uint64) {
 
 	// panic if pool does not exist
 	if !(pl.DoesPoolPathExist(pool)) {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__SetPoolTier() || pool(%s) does not exist"))
+		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__SetPoolTier() || pool(%s) does not exist", pool))
 	}
 
 	// panic if pool exists in poolTiers
@@ -87,7 +87,7 @@ func ChangePoolTier(pool string, tier uint64) {
 	// panic if pool does not exist in poolTiers
 	internal, exist := poolTiers[pool]
 	if !exist {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__ChangePoolTier() || pool(%s) does not exist in poolTiers"))
+		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__ChangePoolTier() || pool(%s) does not exist in poolTiers", pool))
 	}
 
 	// check if tier is valid
@@ -95,14 +95,14 @@ func ChangePoolTier(pool string, tier uint64) {
 
 	// CAN'T CHANGE TIER OF THIS GNS:GNOT 0.3%
 	if pool == MUST_EXISTS_IN_TIER_1 {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__ChangePoolTier() || Cannot change tier of this pool(%s)"))
+		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__ChangePoolTier() || Cannot change tier of this pool(%s)", pool))
 	}
 
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
 		panic(
 			ufmt.Sprintf(
-				"[STAKER] manage_pool_tiers.gno__ChangePoolTier() || only admin(%s) or governance(%s) can change existing pool with tier, called from %s",
+				"[STAKER] manage_pool_tiers.gno__ChangePoolTier() || only admin(%s) or governance(%s) can change existing pool tier, called from %s",
 				consts.GNOSWAP_ADMIN,
 				consts.GOV_ADDR,
 				caller,
@@ -135,7 +135,7 @@ func RemovePoolTier(pool string) {
 	CalcPoolPosition()
 
 	if pool == MUST_EXISTS_IN_TIER_1 {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__RemovePoolTier() || Cannot change tier of this pool"))
+		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__RemovePoolTier() || Cannot change tier of this pool(%s)", pool))
 	}
 
 	caller := std.PrevRealm().Addr()

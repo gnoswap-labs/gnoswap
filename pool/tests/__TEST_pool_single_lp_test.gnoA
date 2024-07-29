@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/r/demo/bar"
-	"gno.land/r/demo/foo"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
 	"gno.land/r/gnoswap/gns"
 
 	"gno.land/r/gnoswap/consts"
@@ -33,7 +33,7 @@ func TestInitCreatePool(t *testing.T) {
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // x2.7
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 }
 
 // 2. Mint by gsa
@@ -218,7 +218,7 @@ func TestSwap(t *testing.T) {
 			test_price,                   // _sqrtPriceLimitX96
 			std.GetOrigCaller().String(), // payer
 		)
-		// ---       event: {gno.land/r/gnoswap/pool Swap GNOSWAP [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_zeroForOne true} {p_amountSpecified 10000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 10000} {amount1 -27145} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 5}]}
+		// ---       event: {gno.land/r/gnoswap/pool Swap GNOSWAP [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_zeroForOne true} {p_amountSpecified 10000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 10000} {amount1 -27145} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 5}]}
 
 		shouldNEQ(t, amount0, "0")
 		shouldNEQ(t, amount1, "0")
@@ -245,7 +245,7 @@ func TestSwap(t *testing.T) {
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
 		amount0, amount1 := Swap(barPath, fooPath, fee500, gsa.String(), true, "5000", test_price, std.GetOrigCaller().String()) // give enough amount to take fees away
-		// ---       event: {gno.land/r/gnoswap/pool Swap GNOSWAP [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_zeroForOne true} {p_amountSpecified 5000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 5000} {amount1 -13554} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 3}]}
+		// ---       event: {gno.land/r/gnoswap/pool Swap GNOSWAP [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_zeroForOne true} {p_amountSpecified 5000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 5000} {amount1 -13554} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 3}]}
 
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
@@ -270,7 +270,7 @@ func TestSwap(t *testing.T) {
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
 		amount0, amount1 := Swap(barPath, fooPath, fee500, gsa.String(), true, "1000", test_price, std.GetOrigCaller().String()) // give enough amount to take fees away
-		// ---       event: {gno.land/r/gnoswap/pool Swap GNOSWAP [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_zeroForOne true} {p_amountSpecified 1000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 1000} {amount1 -2708} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 1}]}
+		// ---       event: {gno.land/r/gnoswap/pool Swap GNOSWAP [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_zeroForOne true} {p_amountSpecified 1000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 1000} {amount1 -2708} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 1}]}
 
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
@@ -296,7 +296,7 @@ func TestSwap(t *testing.T) {
 		userOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
 		amount0, amount1 := Swap(barPath, fooPath, fee500, gsa.String(), false, "16000", consts.MAX_PRICE, std.GetOrigCaller().String()) // give enough amount to take fees away
-		// ---       event: {gno.land/r/gnoswap/pool Swap GNOSWAP [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_zeroForOne false} {p_amountSpecified 16000} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 -5896} {amount1 16000} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 8}]}
+		// ---       event: {gno.land/r/gnoswap/pool Swap GNOSWAP [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_zeroForOne false} {p_amountSpecified 16000} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 -5896} {amount1 16000} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 8}]}
 
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
@@ -347,14 +347,14 @@ func TestCollectProtocol(t *testing.T) {
 		std.TestSetRealm(rouRealm)
 		std.TestSetOrigCaller(gsa)
 		Swap(barPath, fooPath, fee500, gsa.String(), true, "200000", consts.MIN_PRICE, std.GetOrigCaller().String()) // swap token0 -> token1 => fee only in token0
-		// ---       event: {gno.land/r/gnoswap/pool Swap GNOSWAP [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_zeroForOne true} {p_amountSpecified 200000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 200000} {amount1 -533667} {protocol_fee0 16} {protocol_fee1 0} {swap_fee 84}]}
+		// ---       event: {gno.land/r/gnoswap/pool Swap GNOSWAP [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_zeroForOne true} {p_amountSpecified 200000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 200000} {amount1 -533667} {protocol_fee0 16} {protocol_fee1 0} {swap_fee 84}]}
 
 		gsaOldToken0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 		gsaOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
 		std.TestSetRealm(gsaRealm)
 		amount0, amount1 := CollectProtocol(barPath, fooPath, fee500, gsa.String(), "100000", "100000")
-		// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CollectProtocol [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/demo/bar:gno.land/r/demo/foo:500} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 15} {amount1 0}]}
+		// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CollectProtocol [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 15} {amount1 0}]}
 
 		gsaNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 		gsaNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)

@@ -36,8 +36,8 @@ func MintAndStake(
 		ugnotSent := uint64(sent.AmountOf("ugnot"))
 
 		// not enough ugnot sent
-		if ugnotSent < consts.UGNOT_MINT_DEPOSIT_TO_WRAP {
-			panic(ufmt.Sprintf("[STAKER] mint_stake.gno__MintAndStake() || too less(%d) ugnot sent (minimum:%d)", ugnotSent, consts.UGNOT_MINT_DEPOSIT_TO_WRAP))
+		if ugnotSent < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
+			panic(ufmt.Sprintf("[STAKER] mint_stake.gno__MintAndStake() || too less(%d) ugnot sent (minimum:%d)", ugnotSent, consts.UGNOT_MIN_DEPOSIT_TO_WRAP))
 		}
 
 		// send it over to position to wrap

@@ -9,14 +9,17 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	en "gno.land/r/gnoswap/emission"
-
 	"gno.land/r/gnoswap/consts"
 	"gno.land/r/gnoswap/gns"
+
+	en "gno.land/r/gnoswap/emission"
 )
 
 // Incentive
 func StakerPoolIncentives(poolPath string) []string {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentives, exist := poolIncentives[poolPath]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerPoolIncentives() || poolPath(%s) incentives does not exist", poolPath))
@@ -26,6 +29,9 @@ func StakerPoolIncentives(poolPath string) []string {
 }
 
 func StakerIncentiveTargetPoolPath(incentiveId string) string {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveTargetPoolPath() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -35,6 +41,9 @@ func StakerIncentiveTargetPoolPath(incentiveId string) string {
 }
 
 func StakerIncentiveRewardToken(incentiveId string) string {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveRewardToken() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -45,6 +54,9 @@ func StakerIncentiveRewardToken(incentiveId string) string {
 
 // UINT
 func StakerIncentiveRewardAmount(incentiveId string) *u256.Uint {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveRewardAmount() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -55,6 +67,9 @@ func StakerIncentiveRewardAmount(incentiveId string) *u256.Uint {
 
 // STR
 func StakerIncentiveRewardAmountStr(incentiveId string) string {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveRewardAmount() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -64,6 +79,9 @@ func StakerIncentiveRewardAmountStr(incentiveId string) string {
 }
 
 func StakerIncentiveStartTimestamp(incentiveId string) int64 {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveStartTimestamp() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -73,6 +91,9 @@ func StakerIncentiveStartTimestamp(incentiveId string) int64 {
 }
 
 func StakerIncentiveEndTimestamp(incentiveId string) int64 {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveEndTimestamp() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -82,6 +103,9 @@ func StakerIncentiveEndTimestamp(incentiveId string) int64 {
 }
 
 func StakerIncentiveRefundee(incentiveId string) std.Address {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerIncentiveRefundee() || incentiveId(%s) incentive does not exist", incentiveId))
@@ -92,6 +116,9 @@ func StakerIncentiveRefundee(incentiveId string) std.Address {
 
 // Deposit
 func StakerDepositOwner(lpTokenId uint64) std.Address {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	deposit, exist := deposits[lpTokenId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerDepositOwner() || tokenId(%d) deposit does not exist", lpTokenId))
@@ -101,6 +128,9 @@ func StakerDepositOwner(lpTokenId uint64) std.Address {
 }
 
 func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	deposit, exist := deposits[lpTokenId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerDepositNumberOfStakes() || tokenId(%d) deposit does not exist", lpTokenId))
@@ -110,6 +140,9 @@ func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
 }
 
 func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	deposit, exist := deposits[lpTokenId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerDepositStakeTimestamp() || tokenId(%d) deposit does not exist", lpTokenId))
@@ -119,6 +152,9 @@ func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
 }
 
 func StakerDepositTargetPoolPath(lpTokenId uint64) string {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
 	deposit, exist := deposits[lpTokenId]
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] _GET_no_receiver__StakerDepositTargetPoolPath() || tokenId(%d) deposit does not exist", lpTokenId))
@@ -168,26 +204,44 @@ func printInfo(prev currentInfo) currentInfo {
 	println("***********************")
 	println("> height:", curr.height)
 	println("> height inc by:", curr.height-prev.height)
+	println()
 	println("> time:", curr.time)
 	println("> time inc by:", curr.time-prev.time)
 	println()
 	println("GNS BALANCE CHANGE")
 	println("> staker_bal\t\t", curr.gnsStaker)
 	println("> staker_chg\t\t", int64(curr.gnsStaker-prev.gnsStaker))
+	println()
 	println("> dev ops\t\t", curr.gnsDevOps)
 	println("> dev ops_chg\t\t", int(curr.gnsDevOps-prev.gnsDevOps))
+	println()
 	println("> community pool_bal\t", curr.gnsCommunityPool)
 	println("> community pool_chg\t", int(curr.gnsCommunityPool-prev.gnsCommunityPool))
+	println()
 	println("> x_gns_bal\t\t", curr.gnsXGNS)
 	println("> x_gns_chg\t\t", int(curr.gnsXGNS-prev.gnsXGNS))
+	println()
 	println("> protocol fee_bal\t", curr.gnsProtocolFee)
 	println("> protocol fee_chg\t", int(curr.gnsProtocolFee-prev.gnsProtocolFee))
+	println()
 	println("> GSA_bal\t\t", curr.gnsGSA)
 	println("> GSA_chg\t\t", int(curr.gnsGSA-prev.gnsGSA))
 	println()
+	println("GNS POOL")
+	for k, v := range poolGns {
+		println("> poolPath:", k, "amount:", v)
+	}
+	println()
+
 	println("GNS POSITION")
 	for k, v := range positionGns {
-		println("> tokenId:", k, "amount:", v)
+		posWarmCalc := positionsWarmUpAmount[k]
+		println("> tokenId:", k, "amount:", v, "warmUp:", getRewardRatio(curr.height-deposits[k].stakeHeight))
+		println("> 100%", "full", posWarmCalc.full100, "give", posWarmCalc.give100)
+		println("> 70%", "full", posWarmCalc.full70, "give", posWarmCalc.give70)
+		println("> 50%", "full", posWarmCalc.full50, "give", posWarmCalc.give50)
+		println("> 30%", "full", posWarmCalc.full30, "give", posWarmCalc.give30)
+		println()
 	}
 
 	println()
@@ -331,10 +385,10 @@ func makePositionsNode(poolPath string) []*json.Node {
 	for lpTokenId, deposit := range deposits {
 		if deposit.targetPoolPath == poolPath {
 			stakedDuration := std.GetHeight() - deposit.stakeHeight
-			fullAmount := positionGns[lpTokenId]
 			ratio := getRewardRatio(stakedDuration)
-			ratioAmount := (fullAmount * ratio) / 100
-			warmUpAmount := rewardMathComputeInternalRewardAmount(lpTokenId)
+			fullAmount, warmUpAmount := rewardMathComputeInternalRewardAmount(lpTokenId)
+
+			posCalcWarm := positionsWarmUpAmount[lpTokenId]
 
 			positions = append(positions, json.ObjectNode("", map[string]*json.Node{
 				"lpTokenId":       json.NumberNode("lpTokenId", float64(lpTokenId)),
@@ -343,8 +397,15 @@ func makePositionsNode(poolPath string) []*json.Node {
 				"stakedDuration":  json.NumberNode("stakedDuration", float64(stakedDuration)),
 				"fullAmount":      json.NumberNode("fullAmount", float64(fullAmount)),
 				"ratio":           json.NumberNode("ratio", float64(ratio)),
-				"ratioAmount":     json.NumberNode("ratioAmount", float64(ratioAmount)),
 				"warmUpAmount":    json.NumberNode("warmUpAmount", float64(warmUpAmount)),
+				"full30":          json.NumberNode("full30", float64(posCalcWarm.full30)),
+				"give30":          json.NumberNode("give30", float64(posCalcWarm.give30)),
+				"full50":          json.NumberNode("full50", float64(posCalcWarm.full50)),
+				"give50":          json.NumberNode("give50", float64(posCalcWarm.give50)),
+				"full70":          json.NumberNode("full70", float64(posCalcWarm.full70)),
+				"give70":          json.NumberNode("give70", float64(posCalcWarm.give70)),
+				"full100":         json.NumberNode("full100", float64(posCalcWarm.full100)),
+				"give100":         json.NumberNode("give100", float64(posCalcWarm.give100)),
 			}))
 		}
 	}
