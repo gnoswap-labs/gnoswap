@@ -2,6 +2,7 @@ import os
 import shutil
 import argparse
 import subprocess
+from pathlib import Path
 
 def clone_repo(workdir):
     os.chdir(workdir)
@@ -36,10 +37,16 @@ def move_tests(workdir):
 
 def main():
     parser = argparse.ArgumentParser(description="Set up GnoSwap contracts")
-    parser.add_argument("workdir", help="Path to your work directory")
+    parser.add_argument(
+        "-w", "--workdir",
+        help="Path to your work directory", default=str(Path.home()),
+    )
+    parser.add_argument("-c", "--clone", action="store_true", help="Clone the repository")
     args = parser.parse_args()
 
-    clone_repo(args.workdir)
+    if args.clone:
+        clone_repo(args.workdir)
+
     copy_contracts(args.workdir)
     move_tests(args.workdir)
 

@@ -17,11 +17,60 @@ This repository contains smart contracts (realms) for GnoSwap.
 
 ## Setting Up and Testing GnoSwap Contracts
 
+There are two ways to set up GnoSwap contracts: using the provided setup script or manually following the steps below.
+
 ### Prerequisites
 
+- GNU Make 3.81 or higher
 - Latest version of [gno.land](https://github.com/gnolang/gno)
+- Python 3.12 or higher
 
-### Setting Up GnoSwap Contracts
+### Using the Setup Script
+
+> Note: If you're using the script, you don't need to manually perform the steps listed in the next section.
+
+For convenience, we provide a Python script that automates the setup process. This script can clone the repository, copy contracts, and move test files as needed.
+
+To use the script:
+
+1. Ensure you have Python 3 installed on your system.
+
+2. Download the setup script (let's assume it's named `setup_gnoswap.py`).
+
+3. Run the script with the desired options:
+
+   - To set up in your home directory without cloning the repository:
+
+     ```bash
+     python3 setup_gnoswap.py
+     ```
+
+   - To set up in a specific directory without cloning:
+
+     ```bash
+     python3 setup_gnoswap.py -w /path/to/workdir
+     ```
+
+   - To clone the repository and set up in your home directory:
+
+     ```bash
+     python3 setup_gnoswap.py -c
+     ```
+
+   - To clone the repository and set up in a specific directory:
+
+     ```bash
+     python3 setup_gnoswap.py -w /path/to/workdir -c
+     ```
+
+Options:
+
+- `-w` or `--workdir`: Specify the working directory (default is your home directory)
+- `-c` or `--clone`: Clone the gnoswap repository before setting up
+
+The script will perform all necessary steps to set up the GnoSwap contracts in the specified directory.
+
+### Setting Up GnoSwap Contracts Manually
 
 This section guides you through the process of setting up GnoSwap contracts. The process involves three main steps: cloning the `gnoswap` repository, copying the contracts to the `gno` directory, and moving test cases to their respective directories.
 
