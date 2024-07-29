@@ -31,36 +31,28 @@ There are two ways to set up GnoSwap contracts: using the provided setup script 
 
 For convenience, we provide a Python script that automates the setup process. This script can clone the repository, copy contracts, and move test files as needed.
 
-To use the script:
-
-1. Ensure you have Python 3 installed on your system.
-
-2. Download the setup script (let's assume it's named `setup_gnoswap.py`).
-
-3. Run the script with the desired options:
-
    - To set up in your home directory without cloning the repository:
 
      ```bash
-     python3 setup_gnoswap.py
+     python3 setup.py
      ```
 
    - To set up in a specific directory without cloning:
 
      ```bash
-     python3 setup_gnoswap.py -w /path/to/workdir
+     python3 setup.py -w /path/to/workdir
      ```
 
    - To clone the repository and set up in your home directory:
 
      ```bash
-     python3 setup_gnoswap.py -c
+     python3 setup.py -c
      ```
 
    - To clone the repository and set up in a specific directory:
 
      ```bash
-     python3 setup_gnoswap.py -w /path/to/workdir -c
+     python3 setup.py -w /path/to/workdir -c
      ```
 
 Options:
