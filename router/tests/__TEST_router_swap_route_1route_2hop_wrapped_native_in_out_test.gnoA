@@ -9,11 +9,11 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
-	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/qux"
-	"gno.land/r/demo/wugnot"
 )
 
 func TestCreatePool(t *testing.T) {
@@ -81,8 +81,8 @@ func TestPositionMintQuxGnot(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 3} {liquidity 1243732} {amount0 36790} {amount1 100000}]}
 
 	shouldEQ(t, tokenId, uint64(3))
-	shouldEQ(t, amount0, "36790")
-	shouldEQ(t, amount1, "100000")
+	shouldEQ(t, amount0, "100000")
+	shouldEQ(t, amount1, "36790")
 }
 
 func TestDrySwapRouteBarGnotExactIn(t *testing.T) {

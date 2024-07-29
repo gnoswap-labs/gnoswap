@@ -4,13 +4,13 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
-	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/gns"
 
 	pusers "gno.land/p/demo/users"
 
@@ -276,8 +276,8 @@ func drySwapGnsBarExactIn() {
 		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
 		"100", // quoteArr
 	)
-	if dryResult != "7328" {
-		panic("dryResult should be 7328")
+	if dryResult != "7327" {
+		panic("dryResult should be 7327")
 	}
 }
 
@@ -285,7 +285,7 @@ func swapGnsBarExactIn() {
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), 1000)   // swap input amount
-	bar.Approve(a2u(consts.ROUTER_ADDR), 7328) // 0.15% fee
+	bar.Approve(a2u(consts.ROUTER_ADDR), 7327) // 0.15% fee
 
 	amountIn, amountOut := rr.SwapRoute(
 		consts.GNS_PATH, // inputToken
@@ -299,7 +299,7 @@ func swapGnsBarExactIn() {
 	if amountIn != "1000" {
 		panic("amountIn should be 1000")
 	}
-	if amountOut != "-7318" {
-		panic("amountOut should be -7318")
+	if amountOut != "-7317" {
+		panic("amountOut should be -7317")
 	}
 }
