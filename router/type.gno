@@ -37,6 +37,16 @@ type SwapParams struct {
 	amountSpecified *i256.Int
 }
 
+func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient std.Address, amountSpecified *i256.Int) *SwapParams {
+	return &SwapParams{
+		tokenIn:        tokenIn,
+		tokenOut:       tokenOut,
+		fee:            fee,
+		recipient:      recipient,
+		amountSpecified: amountSpecified,
+	}
+}
+
 // SWAP DATA
 type SwapCallbackData struct {
 	tokenIn  string // token to spend
