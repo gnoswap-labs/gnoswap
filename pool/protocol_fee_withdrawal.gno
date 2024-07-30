@@ -17,7 +17,7 @@ var (
 
 // HandleWithdrawalFee withdraws the fee from the user and returns the amount after the fee
 //
-// Panics if any of the following conditions are met:
+// Panics:
 // - caller is not the position contract
 // - caller does not have enough balance to give the fee
 func HandleWithdrawalFee(
@@ -80,7 +80,7 @@ func GetWithdrawalFee() uint64 {
 
 // SetWithdrawalFee sets the withdrawal fee
 //
-// Panics if any of the following conditions are met:
+// Panics:
 // - caller is not the admin
 func SetWithdrawalFee(fee uint64) {
 	caller := std.PrevRealm().Addr()

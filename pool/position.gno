@@ -11,6 +11,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+// positionGetKey generates a unique key for a position based on the owner's address and the tick range.
 func positionGetKey(
 	owner std.Address,
 	tickLower int32,
@@ -22,6 +23,7 @@ func positionGetKey(
 	return encoded
 }
 
+// positionUpdateWithKey updates a position in the pool and returns the updated position.
 func (pool *Pool) positionUpdateWithKey(
 	positionKey string,
 	liquidityDelta *i256.Int, // int128
@@ -40,6 +42,7 @@ func (pool *Pool) positionUpdateWithKey(
 	return positionAfterUpdate
 }
 
+// positionUpdate calculates and returns an updated PositionInfo.
 func positionUpdate(
 	self PositionInfo,
 	liquidityDelta *i256.Int, // int128

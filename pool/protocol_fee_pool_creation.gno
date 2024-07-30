@@ -8,7 +8,9 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// poolCreationFee is the fee that is charged when a user creates a pool
+// poolCreationFee is the fee that is charged when a user creates a pool.
+//
+// The fee is denominated in GNS tokens.
 var (
 	poolCreationFee = uint64(100_000_000) // 100_GNS
 )
@@ -20,8 +22,10 @@ func GetPoolCreationFee() uint64 {
 
 // SetPoolCreationFee sets the poolCreationFee
 //
-// Panics if any of the following conditions are met:
-// - caller is not the admin
+// This function can only be called by the admin or governance.
+//
+// Panics:
+//   - If the caller is not the admin or governance
 func SetPoolCreationFee(fee uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {

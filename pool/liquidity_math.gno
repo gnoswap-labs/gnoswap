@@ -13,12 +13,11 @@ func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 			panic("LS")
 		}
 		return z // z < x
-	} else {
-		z := new(u256.Uint).Add(x, y.Abs())
-
-		if !(z.Gte(x)) {
-			panic("LA")
-		}
-		return z // z >= x
 	}
+	z := new(u256.Uint).Add(x, y.Abs())
+
+	if !(z.Gte(x)) {
+		panic("LA")
+	}
+	return z // z >= x	
 }
