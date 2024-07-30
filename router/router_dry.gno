@@ -32,6 +32,10 @@ func DrySwapRoute(
 	strRouteArr string, // []string
 	quoteArr string, // []int
 ) string { // uint256
+	if swapType != "EXACT_IN" && swapType != "EXACT_OUT" {
+        panic("[ROUTER] Unknown swapType")
+    }
+
 	amountSpecified, err := i256.FromDecimal(_amountSpecified)
 	if err != nil {
 		panic(ufmt.Sprintf("[ROUTER] router_dry.gno__SwapRoute() || i256.FromDecimal(_amountSpecified(%s) failed", _amountSpecified))

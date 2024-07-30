@@ -39,11 +39,15 @@ func SwapRoute(
 	quoteArr string, // []int
 	_tokenAmountLimit string, // uint256
 ) (string, string) { // tokneIn, tokenOut
-	en.MintAndDistributeGns()
+	if swapType != "EXACT_IN" && swapType != "EXACT_OUT" {
+        panic("[ROUTER] Unknown swapType")
+    }
 
 	if common.GetLimitCaller() && std.PrevRealm().PkgPath() != ""{
 		panic("[ROUTER] router.gno__SwapRoute() || only user can call this function")
 	}
+
+	en.MintAndDistributeGns()	
 
 	amountSpecified := i256.MustFromDecimal(_amountSpecified)
 	tokenAmountLimit := u256.MustFromDecimal(_tokenAmountLimit)
@@ -85,10 +89,6 @@ func SwapRoute(
 func validateInput(amountSpecified *i256.Int, swapType string, routes, quotes []string) {
     if amountSpecified.IsZero() || amountSpecified.IsNeg() {
         panic("[ROUTER] Invalid amountSpecified")
-    }
-
-    if swapType != "EXACT_IN" && swapType != "EXACT_OUT" {
-        panic("[ROUTER] Unknown swapType")
     }
 
     if len(routes) < 1 || len(routes) > 7 {
