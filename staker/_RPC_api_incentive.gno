@@ -20,6 +20,7 @@ type RewardToken struct {
 }
 
 type ApiExternalIncentive struct {
+	IncentiveId    string `json:"incentiveId"`
 	PoolPath       string `json:"poolPath"`
 	RewardToken    string `json:"rewardToken"`
 	RewardAmount   string `json:"rewardAmount"`
@@ -168,6 +169,7 @@ func ApiGetExternalIncentives() string {
 
 	for _, incentive := range incentives {
 		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
+			IncentiveId:    incentive.incentiveId,
 			PoolPath:       incentive.targetPoolPath,
 			RewardToken:    incentive.rewardToken,
 			RewardAmount:   incentive.rewardAmount.ToString(),
@@ -193,6 +195,7 @@ func ApiGetExternalIncentives() string {
 		}
 
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
+			"incentiveId":    json.StringNode("incentiveId", incentive.IncentiveId),
 			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
 			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
 			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
@@ -231,6 +234,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 		}
 
 		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
+			IncentiveId:    incentive.incentiveId,
 			PoolPath:       incentive.targetPoolPath,
 			RewardToken:    incentive.rewardToken,
 			RewardAmount:   incentive.rewardAmount.ToString(),
@@ -256,6 +260,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 		}
 
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
+			"incentiveId":    json.StringNode("incentiveId", incentive.IncentiveId),
 			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
 			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
 			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
@@ -294,6 +299,7 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 		}
 
 		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
+			IncentiveId:    incentive.incentiveId,
 			PoolPath:       incentive.targetPoolPath,
 			RewardToken:    incentive.rewardToken,
 			RewardAmount:   incentive.rewardAmount.ToString(),
@@ -319,6 +325,7 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 		}
 
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
+			"incentiveId":    json.StringNode("incentiveId", incentive.IncentiveId),
 			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
 			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
 			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
