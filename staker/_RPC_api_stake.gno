@@ -89,10 +89,8 @@ func ApiGetRewards() string {
 			if now < stakedOrCreatedAt {
 				continue
 			}
-			duration := now - stakedOrCreatedAt
-			durationRatio := getRewardRatio(duration)
 
-			externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId, durationRatio)
+			_, externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
 			if externalReward >= 0 {
 				rewards = append(rewards, Reward{
 					IncentiveType:     "EXTERNAL",
@@ -192,10 +190,8 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			if now < stakedOrCreatedAt {
 				continue
 			}
-			duration := now - stakedOrCreatedAt
-			durationRatio := getRewardRatio(duration)
 
-			externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId, durationRatio)
+			_, externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
 			if externalReward > 0 {
 				rewards = append(rewards, Reward{
 					IncentiveType:     "EXTERNAL",
@@ -293,11 +289,8 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 			if now < stakedOrCreatedAt {
 				continue
 			}
-			duration := now - stakedOrCreatedAt
-			durationRatio := getRewardRatio(duration)
 
-			externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId, durationRatio)
-
+			_, externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
 			rewards = append(rewards, Reward{
 				IncentiveType:     "EXTERNAL",
 				TargetPoolPath:    deposit.targetPoolPath,

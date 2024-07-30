@@ -36,7 +36,7 @@ var positionsExternalWarmUpAmount = make(map[uint64]map[string]warmUpAmount)  //
 var positionsExternalLastCalculatedHeight = make(map[uint64]map[string]int64) // positionId => incentiveId => lastCalculatedHeight
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
-	println("[ START ] REWARD__rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
+	println("[ START ] REWARD__INTERNAL_rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
 	deposit := deposits[tokenId]
 
 	// using block
@@ -45,7 +45,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	stakedDuration := currentHeight - stakeHeight
 	durationRatio := getRewardRatio(stakedDuration)
 
-	println(" > REWARD__rewardMathComputeInternalRewardAmount_HEIGHT:", currentHeight)
+	println(" > REWARD__INTERNAL_rewardMathComputeInternalRewardAmount_HEIGHT:", currentHeight)
 
 	// 과거 계산 시점부터 현재 블록까지 쌓인 리워드에 대해 각 가중치별로 분배
 	toDistribute := positionGns[tokenId] - positionLastGns[tokenId]
@@ -372,13 +372,16 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	positionsInternalWarmUpAmount[tokenId] = positionWarmUpAmount
 	println(" > REWARD__positionsInternalWarmUpAmount[tokenId]:", positionsInternalWarmUpAmount[tokenId])
 
-	println("[ END ] REWARD__rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
+	println("[ END ] REWARD__INTERNAL_rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
 	println()
 
 	return accuFull, accuGive
 }
 
 func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (uint64, uint64) {
+	println("[ START ] REWARD__EXTERNAL_rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
+	println("  > REWARD__incentiveId:", incentiveId)
+
 	currentHeight := std.GetHeight()
 
 	externals := positionExternal[tokenId]
@@ -400,7 +403,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 			println("   > REWARD__positionLastExternal[tokenId][incentiveId]:", positionLastExternal[tokenId][incentiveId])
 			println("   > REWARD__toDistribute:", toDistribute)
 			if tokenAmount < positionLastExternal[tokenId][incentiveId] {
-				panic("THIS SHOULD NOT HAPPEN_EXTERNAL")
+				panic("THIS SHOULD NOT HAPPEN_EXTERNAL #1")
 			}
 
 			lastCalculatedHeightU64 := uint64(positionsExternalLastCalculatedHeight[tokenId][incentiveId])
@@ -415,7 +418,9 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 
 			positionExternalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
 			if !exist {
-				panic("THIS SHOULD NOT HAPPEN_EXTERNAL")
+				println("tokenId:", tokenId)
+				println("incentiveId:", incentiveId)
+				panic("THIS SHOULD NOT HAPPEN_EXTERNAL #2")
 			}
 
 			println("   > REWARD__BEFORE_positionExternalWarmUpAmount.full100", positionExternalWarmUpAmount.full100)
@@ -686,10 +691,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 			positionsExternalWarmUpAmount[tokenId][incentiveId] = positionExternalWarmUpAmount
 			// println("  > REWARD__positionsExternalWarmUpAmount[tokenId][incentiveId]:", positionsExternalWarmUpAmount[tokenId][incentiveId])
 
-			positionExternal[tokenId][incentiveId].tokenAmountFull += accuFull
-			positionExternal[tokenId][incentiveId].tokenAmountActualFull += accuGive
-
-			println("[ END ] REWARD__rewardMathComputeExternalRewardAmount_TOKEN_ID:", tokenId, " INCENTIVE_ID:", incentiveId)
+			println("[ END ] REWARD__EXTERNAL_rewardMathComputeExternalRewardAmount_TOKEN_ID:", tokenId, " INCENTIVE_ID:", incentiveId)
 			println()
 
 			return accuFull, accuGive
