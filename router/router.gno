@@ -82,7 +82,7 @@ func SwapRoute(
 	return amountIn, amountOut
 }
 
-func validateInput(amountSpecified *i256.Int, swapType string, routes []string, quotes []string) {
+func validateInput(amountSpecified *i256.Int, swapType string, routes, quotes []string) {
     if amountSpecified.IsZero() || amountSpecified.IsNeg() {
         panic("[ROUTER] Invalid amountSpecified")
     }
@@ -122,7 +122,7 @@ func handleGNOT(inputToken, outputToken string) (uint64, uint64) {
     return userOldWugnotBalance, 0
 }
 
-func processRoutes(routes []string, quotes []string, amountSpecified *i256.Int, swapType string) (*u256.Uint, *u256.Uint) {
+func processRoutes(routes, quotes []string, amountSpecified *i256.Int, swapType string) (*u256.Uint, *u256.Uint) {
     resultAmountIn := u256.Zero()
     resultAmountOut := u256.Zero()
 
