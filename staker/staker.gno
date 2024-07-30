@@ -150,7 +150,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 	_, exist = positionExternal[tokenId]
 	if exist {
-		for i, external := range positionExternal[tokenId] {
+		for _, external := range positionExternal[tokenId] {
 			incentive := incentives[external.incentiveId]
 			incentiveId := external.incentiveId
 
@@ -167,8 +167,10 @@ func CollectReward(tokenId uint64) string { // poolPath
 				continue
 			}
 
-			positionExternal[tokenId][incentiveId].tokenAmountFull += fullAmount
-			positionExternal[tokenId][incentiveId].tokenAmountActualFull += toGive
+			_this := positionExternal[tokenId][incentiveId]
+			_this.tokenAmountFull += fullAmount
+			_this.tokenAmountActualFull += toGive
+			positionExternal[tokenId][incentiveId] = _this
 
 			toUser := handleUnstakingFee(external.tokenPath, toGive, false)
 			println("  > position toUser(after staking fee)", toUser)
