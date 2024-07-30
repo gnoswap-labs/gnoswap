@@ -161,7 +161,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	AddToken(oblPath)
 
 	CreateExternalIncentive(
-		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500", // targetPoolPath
+		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500", // targetPoolPath
 		consts.GNOT,                 // rewardToken
 		"10000000000",               // rewardAmount
 		1234569600,                  // startTimestamp
@@ -209,30 +209,28 @@ func TestCollectReward01(t *testing.T) {
 	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
 	shouldEQ(t, ugnotBalanceOf(gsa), 99998010)
 
-	wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // UNWRAP
 	CollectReward(1)
 
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 64294)
 	shouldEQ(t, ugnotBalanceOf(gsa), 99998010)
 }
 
 func TestUnstakeToken02(t *testing.T) {
 	std.TestSkipHeights(335) // skip times
 
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 64294)
 	shouldEQ(t, ugnotBalanceOf(gsa), 99998010)
 
 	std.TestSetRealm(gsaRealm)
 
-	wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // UNWRAP
-	UnstakeToken(2)                                            // GNFT tokenId
+	UnstakeToken(2) // GNFT tokenId
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, gnft.OwnerOf(tid(2)), gsa)
 
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 392638)
 	shouldEQ(t, ugnotBalanceOf(gsa), 99998010)
 }
 
@@ -240,14 +238,14 @@ func TestEndExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 
 	wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // UNWRAP
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 392638)
 	shouldEQ(t, ugnotBalanceOf(gsa), 99998010)
 
 	std.TestSkipHeights(9999999)
 	// use same parameter as CreateExternalIncentive()
 	EndExternalIncentive(
 		std.GetOrigCaller().String(),
-		"gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500",
+		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500",
 		consts.WRAPPED_WUGNOT,
 		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp
@@ -255,9 +253,9 @@ func TestEndExternalIncentive(t *testing.T) {
 
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
-	shouldEQ(t, ugnotBalanceOf(gsa), 10099998010) // always refund
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 392638)
+	shouldEQ(t, ugnotBalanceOf(gsa), 10099151821) // always refund
 
 	shouldEQ(t, len(incentives), 0)
-	shouldEQ(t, len(poolIncentives["gno.land/r/gnoswap/gns:gno.land/r/demo/wugnot:500"]), 0)
+	shouldEQ(t, len(poolIncentives["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500"]), 0)
 }

@@ -8,11 +8,11 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
-	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/gns"
 
 	"gno.land/r/gnoswap/gnft"
 
@@ -202,7 +202,7 @@ func TestStakeToken01(t *testing.T) {
 
 	shouldEQ(t, gns.TotalSupply(), 100000214041090)
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 2)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 139126709)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 1)
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 42808218)
 }
 
@@ -217,7 +217,7 @@ func TestStakeToken02(t *testing.T) {
 
 	shouldEQ(t, gns.TotalSupply(), 100007348744090)
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 139126710)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 2)
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 1469748818)
 }
 
@@ -232,7 +232,7 @@ func TestStakeToken03(t *testing.T) {
 
 	shouldEQ(t, gns.TotalSupply(), 100007363013496)
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 144477738)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 5351030)
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 1472602699)
 }
 
@@ -259,7 +259,7 @@ func TestUnstakeToken01(t *testing.T) {
 
 	shouldEQ(t, gns.TotalSupply(), 100007391552308)
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 155179794)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 16053085)
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 1478310461)
 
 	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 0)
@@ -270,9 +270,9 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 0)
 	shouldEQ(t, positionGns[1], 0)
 
-	shouldEQ(t, poolGns["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"], 16053081)
+	shouldEQ(t, poolGns["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"], 16053082)
 	shouldEQ(t, positionGns[2], 6986943)
-	shouldEQ(t, positionGns[3], 9066137)
+	shouldEQ(t, positionGns[3], 9066138)
 
 	std.TestSetRealm(gsaRealm)
 	UnstakeToken(2)
@@ -280,13 +280,13 @@ func TestUnstakeToken02(t *testing.T) {
 
 	shouldEQ(t, len(deposits), 1)
 
-	shouldEQ(t, poolGns["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"], 13599207)
+	shouldEQ(t, poolGns["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"], 13599208)
 	shouldEQ(t, positionGns[2], 0)
-	shouldEQ(t, positionGns[3], 13599206)
+	shouldEQ(t, positionGns[3], 13599207)
 
 	shouldEQ(t, gns.TotalSupply(), 100007405821714)
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 152725921)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 13599212)
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 1481164342)
 }
 

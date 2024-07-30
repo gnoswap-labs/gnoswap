@@ -1,10 +1,3 @@
-// to test short warmup period
-// set warm up period like below
-// warmUp[100] = 901 // 30m ~
-// warmUp[70] = 301  // 10m ~ 30m
-// warmUp[50] = 151  // 5m ~ 10m
-// warmUp[30] = 1    // ~ 5m
-
 package staker
 
 import (
@@ -38,6 +31,12 @@ func init() {
 	}
 
 	std.TestSkipHeights(1)
+
+	// override warm-up period for testing
+	warmUp[100] = 901 // 30m ~
+	warmUp[70] = 301  // 10m ~ 30m
+	warmUp[50] = 151  // 5m ~ 10m
+	warmUp[30] = 1    // ~ 5m
 }
 
 func TestDoulbeMint(t *testing.T) {
@@ -87,7 +86,7 @@ func TestMintBarQux100_1(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 
 	gpi := GetPrintInfo()
-	shouldEQ(t, gpi, `{"height":126,"time":1234567905,"gns":{"staker":0,"devOps":8561643,"communityPool":2140410,"xGNS":0,"protocolFee":232106164,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
+	shouldEQ(t, gpi, `{"height":126,"time":1234567896,"gns":{"staker":0,"devOps":8561643,"communityPool":2140410,"xGNS":0,"protocolFee":232106164,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
 	println()
 	printInfo(curr)
 
@@ -121,7 +120,7 @@ func TestMintBarQux100_2(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 
 	gpi := GetPrintInfo()
-	shouldEQ(t, gpi, `{"height":127,"time":1234567910,"gns":{"staker":0,"devOps":11415524,"communityPool":2853880,"xGNS":0,"protocolFee":242808219,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
+	shouldEQ(t, gpi, `{"height":127,"time":1234567898,"gns":{"staker":0,"devOps":11415524,"communityPool":2853880,"xGNS":0,"protocolFee":242808219,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
 	println()
 	printInfo(curr)
 
@@ -141,7 +140,7 @@ func TestStakeToken_1_2(t *testing.T) {
 	StakeToken(2)
 
 	gpi := GetPrintInfo()
-	shouldEQ(t, gpi, `{"height":128,"time":1234567915,"gns":{"staker":0,"devOps":14269405,"communityPool":3567350,"xGNS":0,"protocolFee":253510274,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[{"lpTokenId":1,"stakedHeight":128,"stakedTimestamp":1234567915,"stakedDuration":0,"fullAmount":0,"ratio":0,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0,"give100":0},{"lpTokenId":2,"stakedHeight":128,"stakedTimestamp":1234567915,"stakedDuration":0,"fullAmount":0,"ratio":0,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0,"give100":0}]}]}`)
+	shouldEQ(t, gpi, `{"height":128,"time":1234567900,"gns":{"staker":0,"devOps":14269405,"communityPool":3567350,"xGNS":0,"protocolFee":253510274,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[{"lpTokenId":1,"stakedHeight":128,"stakedTimestamp":1234567900,"stakedDuration":0,"fullAmount":0,"ratio":0,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0,"give100":0},{"lpTokenId":2,"stakedHeight":128,"stakedTimestamp":1234567900,"stakedDuration":0,"fullAmount":0,"ratio":0,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0,"give100":0}]}]}`)
 	println()
 	printInfo(curr)
 
@@ -155,7 +154,7 @@ func TestNow(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	gpi := GetPrintInfo()
-	shouldEQ(t, gpi, `{"height":129,"time":1234567920,"gns":{"staker":10702055,"devOps":17123286,"communityPool":4280820,"xGNS":0,"protocolFee":253510274,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":10702055,"position":[{"lpTokenId":1,"stakedHeight":128,"stakedTimestamp":1234567915,"stakedDuration":1,"fullAmount":10702053,"ratio":30,"warmUpAmount":3210615,"full30":10702053,"give30":3210615,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0,"give100":0},{"lpTokenId":2,"stakedHeight":128,"stakedTimestamp":1234567915,"stakedDuration":1,"fullAmount":1,"ratio":30,"warmUpAmount":0,"full30":1,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0,"give100":0}]}]}`)
+	shouldEQ(t, gpi, `{"height":129,"time":1234567902,"gns":{"staker":10702055,"devOps":17123286,"communityPool":4280820,"xGNS":0,"protocolFee":253510274,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":10702055,"position":[{"lpTokenId":1,"stakedHeight":128,"stakedTimestamp":1234567900,"stakedDuration":1,"fullAmount":10702053,"ratio":30,"warmUpAmount":3210615,"full30":10702053,"give30":3210615,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0,"give100":0},{"lpTokenId":2,"stakedHeight":128,"stakedTimestamp":1234567900,"stakedDuration":1,"fullAmount":1,"ratio":30,"warmUpAmount":0,"full30":1,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0,"give100":0}]}]}`)
 	println()
 	printInfo(curr)
 
@@ -172,7 +171,7 @@ func TestCollectRewardBoth(t *testing.T) {
 	CollectReward(2)
 
 	gpi := GetPrintInfo()
-	shouldEQ(t, gpi, `{"height":130,"time":1234567925,"gns":{"staker":3,"devOps":19977167,"communityPool":4994290,"xGNS":0,"protocolFee":268557362,"GnoswapAdmin":99999806357019},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":3,"position":[{"lpTokenId":1,"stakedHeight":128,"stakedTimestamp":1234567915,"stakedDuration":2,"fullAmount":0,"ratio":30,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0,"give100":0},{"lpTokenId":2,"stakedHeight":128,"stakedTimestamp":1234567915,"stakedDuration":2,"fullAmount":2,"ratio":30,"warmUpAmount":0,"full30":2,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0,"give100":0}]}]}`)
+	shouldEQ(t, gpi, `{"height":130,"time":1234567904,"gns":{"staker":3,"devOps":19977167,"communityPool":4994290,"xGNS":0,"protocolFee":268557362,"GnoswapAdmin":99999806357019},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":3,"position":[{"lpTokenId":1,"stakedHeight":128,"stakedTimestamp":1234567900,"stakedDuration":2,"fullAmount":0,"ratio":30,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0,"give100":0},{"lpTokenId":2,"stakedHeight":128,"stakedTimestamp":1234567900,"stakedDuration":2,"fullAmount":2,"ratio":30,"warmUpAmount":0,"full30":2,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0,"give100":0}]}]}`)
 	println()
 	printInfo(curr)
 
