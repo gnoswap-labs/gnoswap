@@ -196,8 +196,6 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	return tokenId, liquidity, amount0, amount1
 }
 
-// -------------------------------------------------------------------------------------------- //
-
 // IncreaseLiquidity increases liquidity of the existing position
 //
 // Panics if any of the following conditions are met:
@@ -369,8 +367,6 @@ func DecreaseLiquidity(
 	return tokenId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
 }
 
-// -------------------------------------------------------------------------------------------- //
-
 // decreaseLiquidity reduces the liquidity of a given position and collects the corresponding tokens.
 //
 // Panics:
@@ -501,8 +497,6 @@ func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalan
 		unwrap(leftOver)
 	}
 }
-
-// -------------------------------------------------------------------------------------------- //
 
 // Repositiomn adjusts the position of an existing liquidity token
 // by changing its price range and liquidity amount.
