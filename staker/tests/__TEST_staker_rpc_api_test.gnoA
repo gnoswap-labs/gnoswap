@@ -293,6 +293,7 @@ func TestApiGetRewardTokensByPoolPath(t *testing.T) {
 	shouldEQ(t, grt, res)
 }
 
+// EXTERNAL
 func TestApiGetExternalIncentives(t *testing.T) {
 	extIncen := ApiGetExternalIncentives()
 	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAw","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"1100000000","rewardLeft":"1100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c"},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAw","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c"},{"incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAw","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"500000000","rewardLeft":"500000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1w3jhxazpv3j8yh6lta047h6lta047h6lke9x4e"},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/gns","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c"}]}`
@@ -311,21 +312,22 @@ func TestApiGetExternalIncentivesByRewardTokenPath(t *testing.T) {
 	shouldEQ(t, extIncen, res)
 }
 
+// INTERNAL
 func TestApiGetInternalIncentives(t *testing.T) {
 	intIncen := ApiGetInternalIncentives()
-	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000","rewardToken":"gno.land/r/gnoswap/gns","tier":1,"startTimestamp":1234567890,"rewardPerBlock":"3850","accuGns":101134414},{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/gns","tier":1,"startTimestamp":1234567890,"rewardPerBlock":"3850","accuGns":101134414},{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardToken":"gno.land/r/gnoswap/gns","tier":2,"startTimestamp":1234567890,"rewardPerBlock":"3300","accuGns":86686641}]}`
+	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000","rewardToken":"gno.land/r/gnoswap/gns","tier":1,"startTimestamp":1234567890,"rewardPerBlock":"3745718","accuGns":101134414},{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/gns","tier":1,"startTimestamp":1234567890,"rewardPerBlock":"3745718","accuGns":101134414},{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardToken":"gno.land/r/gnoswap/gns","tier":2,"startTimestamp":1234567890,"rewardPerBlock":"3210616","accuGns":86686641}]}`
 	shouldEQ(t, intIncen, res)
 }
 
 func TestApiGetInternalIncentivesByPoolPath(t *testing.T) {
 	intIncen := ApiGetInternalIncentivesByPoolPath("gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500")
-	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardToken":"gno.land/r/gnoswap/gns","tier":2,"startTimestamp":1234567890,"rewardPerBlock":"3300","accuGns":86686641}]}`
+	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardToken":"gno.land/r/gnoswap/gns","tier":2,"startTimestamp":1234567890,"rewardPerBlock":"3210616","accuGns":86686641}]}`
 	shouldEQ(t, intIncen, res)
 }
 
 func TestApiGetInternalIncentivesByTiers(t *testing.T) {
 	intIncen := ApiGetInternalIncentivesByTiers(uint64(2))
-	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardToken":"gno.land/r/gnoswap/gns","tier":2,"startTimestamp":1234567890,"rewardPerBlock":"3300","accuGns":86686641}]}`
+	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardToken":"gno.land/r/gnoswap/gns","tier":2,"startTimestamp":1234567890,"rewardPerBlock":"3210616","accuGns":86686641}]}`
 	shouldEQ(t, intIncen, res)
 }
 

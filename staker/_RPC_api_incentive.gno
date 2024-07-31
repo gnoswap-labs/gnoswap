@@ -10,8 +10,9 @@ import (
 	en "gno.land/r/gnoswap/emission"
 	pl "gno.land/r/gnoswap/pool"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/consts"
+
+	"gno.land/r/gnoswap/gns"
 )
 
 type RewardToken struct {
@@ -516,24 +517,27 @@ func makeRewardTokensArray(rewardsTokenList []string) []*json.Node {
 }
 
 func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
-	_, ok := poolTiers[poolPath]
-	if !ok {
+	nowHeight := std.GetHeight()
+	fullGnsForThisHeight := gns.GetAmountByHeight(nowHeight)
+
+	// staker distribution pct
+	bpsPct := en.GetDistributionPct(1)
+
+	// calculate reward per block
+	stakerGns := fullGnsForThisHeight * bpsPct / 10000
+
+	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(stakerGns)
+	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
+
+	tier := poolTiers[poolPath].tier
+
+	if tier == 1 {
+		return ufmt.Sprintf("%d", tier1Amount/tier1Num)
+	} else if tier == 2 {
+		return ufmt.Sprintf("%d", tier2Amount/tier2Num)
+	} else if tier == 3 {
+		return ufmt.Sprintf("%d", tier3Amount/tier3Num)
+	} else {
 		return "0"
 	}
-
-	blockRewardInit := 10_000
-	blockRewardLeft := blockRewardInit / 10
-	blockReward := blockRewardInit + blockRewardLeft
-
-	_tier, poolRatioX96 := getPoolTierAndRatio(poolPath)
-	if _tier == uint64(0) { // pool doesn't have internal reward
-		return "0"
-	}
-
-	_q96 := u256.MustFromDecimal(consts.Q96)
-	poolRewardPerBlockX96 := new(u256.Uint).Mul(u256.NewUint(uint64(blockReward)), poolRatioX96)
-	poolRewardPerBlock := new(u256.Uint).Div(poolRewardPerBlockX96, _q96)
-	poolRewardPerBlock = new(u256.Uint).Div(poolRewardPerBlock, u256.NewUint(100))
-
-	return poolRewardPerBlock.ToString()
 }
