@@ -1,0 +1,79 @@
+package position
+
+import (
+	"std"
+	"testing"
+
+	pl "gno.land/r/gnoswap/pool"
+)
+
+func init() {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+	pl.SetPoolCreationFee(0)
+}
+
+func TestDryMint(t *testing.T) {
+    std.TestSetRealm(gsaRealm)
+
+    tests := []struct {
+        name            string
+        tickCurrent     int32
+        tickLower       int32
+        tickUpper       int32
+        amount0Desired  string
+        amount1Desired  string
+        expectedAmount0 string
+        expectedAmount1 string
+    }{
+        {
+            name:            "Full In Range",
+            tickCurrent:     0,
+            tickLower:       -887270,
+            tickUpper:       887270,
+            amount0Desired:  "50000",
+            amount1Desired:  "50000",
+            expectedAmount0: "50000",
+            expectedAmount1: "50000",
+        },
+        {
+            name:            "Below Range",
+            tickCurrent:     -887271,
+            tickLower:       -887270,
+            tickUpper:       887270,
+            amount0Desired:  "50000",
+            amount1Desired:  "50000",
+            expectedAmount0: "0",
+            expectedAmount1: "0",
+        },
+        {
+            name:            "Above Range",
+            tickCurrent:     887271,
+            tickLower:       -887270,
+            tickUpper:       887270,
+            amount0Desired:  "50000",
+            amount1Desired:  "50000",
+            expectedAmount0: "0",
+            expectedAmount1: "0",
+        },
+    }
+
+    for _, tc := range tests {
+        t.Run(tc.name, func(t *testing.T) {
+            amount0, amount1 := DryMint(
+                tc.tickCurrent,
+                tc.tickLower,
+                tc.tickUpper,
+                tc.amount0Desired,
+                tc.amount1Desired,
+            )
+
+            if amount0 != tc.expectedAmount0 {
+                t.Errorf("Expected amount0 %s, got %s", tc.expectedAmount0, amount0)
+            }
+            if amount1 != tc.expectedAmount1 {
+                t.Errorf("Expected amount1 %s, got %s", tc.expectedAmount1, amount1)
+            }
+        })
+    }
+}

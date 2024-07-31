@@ -21,10 +21,19 @@ var (
 	nextId    uint64              = 1                         // lp token id
 )
 
-// Mint creates a new position and mints liquidity tokens then return minted info
+// Mint creates a new liquidity position and mints liquidity tokens.
 //
-// Panics if any of the following conditions are met:
-// - caller is not user or staker
+// This function allows users to provide liquidity to a pool by specifying the token pair,
+// fee tier, price range (via ticks), and desired token amounts. It handles both GRC20 tokens
+// and native GNOT (which is wrapped to WUGNOT internally).
+//
+// Panics:
+//   - If the caller is not authorized (when caller limitation is enabled).
+//   - If there's a mismatch between sent and received WUGNOT amounts.
+//   - If the minting operation fails or returns unexpected results.
+//
+// Note: This function automatically sorts the token pair if they are provided in the wrong order.
+// It also handles the conversion between GNOT and WUGNOT transparently for the user.
 func Mint(
 	token0 string,
 	token1 string,
@@ -49,16 +58,7 @@ func Mint(
 		}
 	}
 
-	// check if native ugnot is being minted
-	token0IsNative := false
-	token1IsNative := false
-	if token0 == consts.GNOT {
-		token0 = consts.WRAPPED_WUGNOT
-		token0IsNative = true
-	} else if token1 == consts.GNOT {
-		token1 = consts.WRAPPED_WUGNOT
-		token1IsNative = true
-	}
+	token0, token1, token0IsNative, token1IsNative := processTokens(token0, token1)
 	userWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 
 	if token1 < token0 {
@@ -78,24 +78,7 @@ func Mint(
 	// check this condition by using DryMint()
 	poolPath := ufmt.Sprintf("%s:%s:%d", token0, token1, fee)
 
-	if token0IsNative || token1IsNative {
-		// SEND GNOT: position -> wugnot
-		oldUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-
-		sent := std.GetOrigSend()
-		ugnotSent := uint64(sent.AmountOf("ugnot"))
-		if ugnotSent > 0 {
-			wrap(ugnotSent)
-
-			newUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-			if (newUserWugnotBalance - oldUserWugnotBalance) != ugnotSent {
-				panic(ufmt.Sprintf("[POSITION] position.gno__Mint() || wugnot sent(%d) != wugnot received(%d)", ugnotSent, newUserWugnotBalance-oldUserWugnotBalance))
-			}
-		} else {
-			// no ugnot sent
-			// can be happen depending on current position range
-		}
-	}
+	handleNativeToken(token0IsNative, token1IsNative)
 
 	mintParams := MintParams{
 		token0:         token0,
@@ -113,14 +96,7 @@ func Mint(
 
 	tokenId, liquidity, amount0, amount1 := mint(mintParams)
 
-	if token0IsNative || token1IsNative {
-		// if this is larger than before mint, unwrap rest
-		userWugnotAfterMint := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-		leftOver := userWugnotAfterMint - userWugnotBalance
-		if leftOver > 0 {
-			unwrap(leftOver)
-		}
-	}
+	handleLeftoverNativeToken(token0IsNative, token1IsNative, userWugnotBalance)
 
 	std.Emit(
 		"GNOSWAP",
@@ -139,22 +115,59 @@ func Mint(
 	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString()
 }
 
+func processTokens(token0, token1 string) (string, string, bool, bool) {
+	token0IsNative := false
+	token1IsNative := false
+	if token0 == consts.GNOT {
+		token0 = consts.WRAPPED_WUGNOT
+		token0IsNative = true
+	} else if token1 == consts.GNOT {
+		token1 = consts.WRAPPED_WUGNOT
+		token1IsNative = true
+	}
+	return token0, token1, token0IsNative, token1IsNative
+}
+
+func handleNativeToken(token0IsNative, token1IsNative bool) {
+	if token0IsNative || token1IsNative {
+		oldUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+		sent := std.GetOrigSend()
+		ugnotSent := uint64(sent.AmountOf("ugnot"))
+		if ugnotSent > 0 {
+			wrap(ugnotSent)
+			newUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+			if (newUserWugnotBalance - oldUserWugnotBalance) != ugnotSent {
+				panic(ufmt.Sprintf("[POSITION] position.gno__Mint() || wugnot sent(%d) != wugnot received(%d)", ugnotSent, newUserWugnotBalance-oldUserWugnotBalance))
+			}
+		}
+	}
+}
+
+func handleLeftoverNativeToken(token0IsNative, token1IsNative bool, userWugnotBalance uint64) {
+	if token0IsNative || token1IsNative {
+		userWugnotAfterMint := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+		leftOver := userWugnotAfterMint - userWugnotBalance
+		if leftOver > 0 {
+			unwrap(leftOver)
+		}
+	}
+}
+
 func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	checkDeadline(params.deadline)
 
 	pool := pl.GetPool(params.token0, params.token1, params.fee)
 
-	liquidity, amount0, amount1 := addLiquidity(
-		AddLiquidityParams{
-			poolKey:        pl.GetPoolPath(params.token0, params.token1, params.fee),
-			tickLower:      params.tickLower,
-			tickUpper:      params.tickUpper,
-			amount0Desired: params.amount0Desired,
-			amount1Desired: params.amount1Desired,
-			amount0Min:     params.amount0Min,
-			amount1Min:     params.amount1Min,
-		},
+	liqParams := newAddLiquidtyParams(
+		pl.GetPoolPath(params.token0, params.token1, params.fee),
+		params.tickLower,
+		params.tickUpper,
+		params.amount0Desired,
+		params.amount1Desired,
+		params.amount0Min,
+		params.amount1Min,
 	)
+	liquidity, amount0, amount1 := addLiquidity(liqParams)
 
 	tokenId := nextId
 	gnft.Mint(a2u(params.mintTo), tid(tokenId)) // owner, tokenId
@@ -165,19 +178,19 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
-	position := Position{
-		nonce:                    u256.Zero(),
-		operator:                 std.GetOrigCaller(),
-		poolKey:                  pl.GetPoolPath(params.token0, params.token1, params.fee),
-		tickLower:                params.tickLower,
-		tickUpper:                params.tickUpper,
-		liquidity:                liquidity,
-		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
-		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
-		tokensOwed0:              u256.Zero(),
-		tokensOwed1:              u256.Zero(),
-		burned:                   false,
-	}
+	position := newPosition(
+		u256.Zero(),
+		std.GetOrigCaller(),
+		pl.GetPoolPath(params.token0, params.token1, params.fee),
+		params.tickLower,
+		params.tickUpper,
+		liquidity,
+		feeGrowthInside0LastX128,
+		feeGrowthInside1LastX128,
+		u256.Zero(),
+		u256.Zero(),
+		false,
+	)
 	positions[tokenId] = position
 
 	return tokenId, liquidity, amount0, amount1
@@ -204,14 +217,10 @@ func IncreaseLiquidity(
 	amount0Min := u256.MustFromDecimal(_amount0Min)
 	amount1Min := u256.MustFromDecimal(_amount1Min)
 
-	increaseLiquidityParams := IncreaseLiquidityParams{
-		tokenId:        tokenId,
-		amount0Desired: amount0Desired,
-		amount1Desired: amount1Desired,
-		amount0Min:     amount0Min,
-		amount1Min:     amount1Min,
-		deadline:       deadline,
-	}
+	increaseLiquidityParams := newIncreaseLiquidityParams(
+		tokenId, amount0Desired, amount1Desired,
+		amount0Min, amount1Min, deadline,
+	)
 
 	// wrap if target pool has wugnot
 	position := positions[tokenId]
@@ -269,17 +278,16 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	checkDeadline(params.deadline)
 
 	position := positions[params.tokenId]
-	liquidity, amount0, amount1 := addLiquidity(
-		AddLiquidityParams{
-			poolKey:        position.poolKey,
-			tickLower:      position.tickLower,
-			tickUpper:      position.tickUpper,
-			amount0Desired: params.amount0Desired,
-			amount1Desired: params.amount1Desired,
-			amount0Min:     params.amount0Min,
-			amount1Min:     params.amount1Min,
-		},
+	liqParams := newAddLiquidtyParams(
+		position.poolKey,
+		position.tickLower,
+		position.tickUpper,
+		params.amount0Desired,
+		params.amount1Desired,
+		params.amount0Min,
+		params.amount1Min,
 	)
+	liquidity, amount0, amount1 := addLiquidity(liqParams)
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
@@ -335,14 +343,9 @@ func DecreaseLiquidity(
 
 	amount0Min := u256.MustFromDecimal(_amount0Min)
 	amount1Min := u256.MustFromDecimal(_amount1Min)
-	decreaseLiquidityParams := DecreaseLiquidityParams{
-		tokenId:        tokenId,
-		liquidityRatio: liquidityRatio,
-		amount0Min:     amount0Min,
-		amount1Min:     amount1Min,
-		deadline:       deadline,
-		unwrapResult:   unwrapResult,
-	}
+	decreaseLiquidityParams := newDecreaseLiquidityParams(
+		tokenId, liquidityRatio, amount0Min, amount1Min, deadline, unwrapResult,
+	)
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
 
@@ -364,20 +367,21 @@ func DecreaseLiquidity(
 	return tokenId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
 }
 
+// decreaseLiquidity reduces the liquidity of a given position and collects the corresponding tokens.
+//
+// Panics:
+//   - If the token ID doesn't exist.
+//   - If the caller is not the owner of the position.
+//   - If the deadline has passed.
+//   - If the received amounts are less than the specified minimums.
+//
+// Note: This function handles both GRC20 tokens and native GNOT (wrapped as WUGNOT).
+// If unwrapResult is true and the position involves WUGNOT, any leftover WUGNOT will be
+// unwrapped to GNOT at the end of the operation.
 func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) {
 	userOldWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller())) // before unwrap
 
-	// verify tokenId
-	if !exists(params.tokenId) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
-	}
-
-	// MUST BE OWNER TO DECREASE LIQUIDITY ( can not be approved address )
-	owner := gnft.OwnerOf(tid(params.tokenId))
-	if owner != std.GetOrigCaller() {
-		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || only owner can decrease liquidity__owner(%s) == std.GetOrigCaller(%s)", owner, std.GetOrigCaller()))
-	}
-
+	verifyTokenIdAndOwnership(params.tokenId)
 	checkDeadline(params.deadline)
 
 	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
@@ -386,14 +390,9 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	fee1 := u256.MustFromDecimal(fee1Str)
 
 	position := positions[params.tokenId]
-
 	positionLiquidity := position.liquidity
-	liquidityToRemove := new(u256.Uint).Mul(positionLiquidity, u256.NewUint(params.liquidityRatio))
-	liquidityToRemove = new(u256.Uint).Div(liquidityToRemove, u256.NewUint(100))
 
-	if positionLiquidity.Lt(liquidityToRemove) || params.liquidityRatio == 100 {
-		liquidityToRemove = positionLiquidity
-	}
+	liquidityToRemove := calculateLiquidityToRemove(positionLiquidity, params.liquidityRatio)
 
 	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
@@ -404,32 +403,28 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	burnedAmount0 := u256.MustFromDecimal(_burnedAmount0)
 	burnedAmount1 := u256.MustFromDecimal(_burnedAmount1)
 
-	cond0 := burnedAmount0.Gte(params.amount0Min)
-	cond1 := burnedAmount1.Gte(params.amount1Min)
-	if !(cond0 && cond1) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || burnedAmount0(%s) >= amount0Min(%s) && burnedAmount1(%s) >= amount1Min(%s)", burnedAmount0.ToString(), params.amount0Min.ToString(), burnedAmount1.ToString(), params.amount1Min.ToString()))
-	}
+	verifyBurnedAmounts(burnedAmount0, burnedAmount1, params.amount0Min, params.amount1Min)
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
-	{
-		diff := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
-		mulDiv := u256.MulDiv(diff, position.liquidity, u256.MustFromDecimal(consts.Q128))
-		add := new(u256.Uint).Add(burnedAmount0, mulDiv)
+	position.tokensOwed0 = updateTokensOwed(
+		feeGrowthInside0LastX128,
+		position.feeGrowthInside0LastX128,
+		position.liquidity,
+		burnedAmount0,
+		position.tokensOwed0,
+	)
 
-		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, add)
-	}
-
-	{
-		diff := new(u256.Uint).Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
-		mulDiv := u256.MulDiv(diff, position.liquidity, u256.MustFromDecimal(consts.Q128))
-		add := new(u256.Uint).Add(burnedAmount1, mulDiv)
-
-		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, add)
-	}
+	position.tokensOwed1 = updateTokensOwed(
+		feeGrowthInside1LastX128,
+		position.feeGrowthInside1LastX128,
+		position.liquidity,
+		burnedAmount1,
+		position.tokensOwed1,
+	)
 
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
@@ -465,16 +460,46 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
 	}
 
-	if (pToken0 == consts.WRAPPED_WUGNOT || pToken1 == consts.WRAPPED_WUGNOT) && params.unwrapResult {
-		userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-
-		leftOver := userNewWugnotBalance - userOldWugnotBalance
-		unwrap(leftOver)
-	}
+	handleUnwrap(pToken0, pToken1, params.unwrapResult, userOldWugnotBalance)
 
 	return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
 }
 
+func verifyTokenIdAndOwnership(tokenId uint64) {
+	if !exists(tokenId) {
+		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || tokenId(%d) doesn't exist", tokenId))
+	}
+	owner := gnft.OwnerOf(tid(tokenId))
+	if owner != std.GetOrigCaller() {
+		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || only owner can decrease liquidity__owner(%s) == std.GetOrigCaller(%s)", owner, std.GetOrigCaller()))
+	}
+}
+
+func calculateLiquidityToRemove(positionLiquidity *u256.Uint, liquidityRatio uint64) *u256.Uint {
+	liquidityToRemove := new(u256.Uint).Mul(positionLiquidity, u256.NewUint(liquidityRatio))
+	liquidityToRemove = new(u256.Uint).Div(liquidityToRemove, u256.NewUint(100))
+	if positionLiquidity.Lt(liquidityToRemove) || liquidityRatio == 100 {
+		return positionLiquidity
+	}
+	return liquidityToRemove
+}
+
+func verifyBurnedAmounts(burnedAmount0, burnedAmount1, amount0Min, amount1Min *u256.Uint) {
+	if !(burnedAmount0.Gte(amount0Min) && burnedAmount1.Gte(amount1Min)) {
+		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || burnedAmount0(%s) >= amount0Min(%s) && burnedAmount1(%s) >= amount1Min(%s)", burnedAmount0.ToString(), amount0Min.ToString(), burnedAmount1.ToString(), amount1Min.ToString()))
+	}
+}
+
+func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalance uint64) {
+	if (pToken0 == consts.WRAPPED_WUGNOT || pToken1 == consts.WRAPPED_WUGNOT) && unwrapResult {
+		userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+		leftOver := userNewWugnotBalance - userOldWugnotBalance
+		unwrap(leftOver)
+	}
+}
+
+// Repositiomn adjusts the position of an existing liquidity token
+// by changing its price range and liquidity amount.
 func Reposition(
 	tokenId uint64,
 	tickLower int32,
@@ -526,17 +551,14 @@ func Reposition(
 		wrap(ugnotSent)
 	}
 
-	liquidity, amount0, amount1 := addLiquidity(
-		AddLiquidityParams{
-			poolKey:        position.poolKey,
-			tickLower:      tickLower,
-			tickUpper:      tickUpper,
-			amount0Desired: u256.MustFromDecimal(_amount0Desired),
-			amount1Desired: u256.MustFromDecimal(_amount1Desired),
-			amount0Min:     u256.MustFromDecimal(_amount0Min),
-			amount1Min:     u256.MustFromDecimal(_amount1Min),
-		},
+	liqParams := newAddLiquidtyParams(
+		position.poolKey, tickLower, tickUpper,
+		u256.MustFromDecimal(_amount0Desired),
+		u256.MustFromDecimal(_amount1Desired),
+		u256.MustFromDecimal(_amount0Min),
+		u256.MustFromDecimal(_amount1Min),
 	)
+	liquidity, amount0, amount1 := addLiquidity(liqParams)
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), tickLower, tickUpper)
@@ -576,9 +598,9 @@ func Reposition(
 
 // CollectFee collects swap fee from the position
 //
-// Panics if any of the following conditions are met:
-// - position doesn't exist
-// - caller is not owner or approved
+// Panics:
+//   - position doesn't exist
+//   - caller is not owner or approved
 func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, tokensOwed0, tokensOwed1, poolPath
 	en.MintAndDistributeGns()
 
@@ -615,19 +637,17 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
-	{
-		diff := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
-		mulDiv := u256.MulDiv(diff, position.liquidity, u256.MustFromDecimal(consts.Q128))
+	tokensOwed0 = calculateTokensOwed(
+		feeGrowthInside0LastX128,
+		position.feeGrowthInside0LastX128,
+		position.liquidity,
+	)
 
-		tokensOwed0 = new(u256.Uint).Add(tokensOwed0, mulDiv)
-	}
-
-	{
-		diff := new(u256.Uint).Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
-		mulDiv := u256.MulDiv(diff, position.liquidity, u256.MustFromDecimal(consts.Q128))
-
-		tokensOwed1 = new(u256.Uint).Add(tokensOwed1, mulDiv)
-	}
+	tokensOwed1 = calculateTokensOwed(
+		feeGrowthInside1LastX128,
+		position.feeGrowthInside1LastX128,
+		position.liquidity,
+	)
 
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
@@ -675,6 +695,27 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 	}
 
 	return tokenId, withoutFee0, withoutFee1, position.poolKey
+}
+
+func calculateTokensOwed(
+    feeGrowthInsideLastX128 *u256.Uint,
+    positionFeeGrowthInsideLastX128 *u256.Uint,
+    positionLiquidity *u256.Uint,
+) *u256.Uint {
+    diff := new(u256.Uint).Sub(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
+    return u256.MulDiv(diff, positionLiquidity, u256.MustFromDecimal(consts.Q128))
+}
+
+func updateTokensOwed(
+    feeGrowthInsideLastX128 *u256.Uint,
+    positionFeeGrowthInsideLastX128 *u256.Uint,
+    positionLiquidity *u256.Uint,
+    burnedAmount *u256.Uint,
+    tokensOwed *u256.Uint,
+) *u256.Uint {
+    additionalTokensOwed := calculateTokensOwed(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128, positionLiquidity)
+    add := new(u256.Uint).Add(burnedAmount, additionalTokensOwed)
+    return new(u256.Uint).Add(tokensOwed, add)
 }
 
 func burnNFT(tokenId uint64) {
