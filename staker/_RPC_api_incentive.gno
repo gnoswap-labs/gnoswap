@@ -167,9 +167,9 @@ func ApiGetExternalIncentives() string {
 
 	apiExternalIncentives := []ApiExternalIncentive{}
 
-	for _, incentive := range incentives {
+	for incentiveId, incentive := range incentives {
 		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
-			IncentiveId:    incentive.incentiveId,
+			IncentiveId:    incentiveId,
 			PoolPath:       incentive.targetPoolPath,
 			RewardToken:    incentive.rewardToken,
 			RewardAmount:   incentive.rewardAmount.ToString(),
@@ -228,13 +228,13 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 
 	apiExternalIncentives := []ApiExternalIncentive{}
 
-	for _, incentive := range incentives {
+	for incentiveId, incentive := range incentives {
 		if incentive.targetPoolPath != targetPoolPath {
 			continue
 		}
 
 		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
-			IncentiveId:    incentive.incentiveId,
+			IncentiveId:    incentiveId,
 			PoolPath:       incentive.targetPoolPath,
 			RewardToken:    incentive.rewardToken,
 			RewardAmount:   incentive.rewardAmount.ToString(),
@@ -293,13 +293,13 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 
 	apiExternalIncentives := []ApiExternalIncentive{}
 
-	for _, incentive := range incentives {
+	for incentiveId, incentive := range incentives {
 		if incentive.rewardToken != rewardTokenPath {
 			continue
 		}
 
 		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
-			IncentiveId:    incentive.incentiveId,
+			IncentiveId:    incentiveId,
 			PoolPath:       incentive.targetPoolPath,
 			RewardToken:    incentive.rewardToken,
 			RewardAmount:   incentive.rewardAmount.ToString(),
