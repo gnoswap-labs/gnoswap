@@ -32,11 +32,11 @@ var positionLastGns map[uint64]uint64 = make(map[uint64]uint64)
 // tokenId -> incentiveId -> lastRewardAmount
 var positionLastExternal map[uint64]map[string]uint64 = make(map[uint64]map[string]uint64)
 
-// // incentiveId -> lastCalculatedHeight
-// var externalLastCalculatedHeight map[string]int64 = make(map[string]int64)
-
 // incentiveId -> lastCalculatedTimestamp
 var externalLastCalculatedTimestamp map[string]int64 = make(map[string]int64)
+
+// incentiveId -> gnsAmount
+var externalGns map[string]uint64 = make(map[string]uint64)
 
 type externalRewards struct {
 	incentiveId string
@@ -57,64 +57,68 @@ var (
 )
 
 func CalcPoolPosition() {
-	// println()
-	// println("=== [ START START START ] CALC__CalcPoolPosition")
+	println()
+	println("=== [ START START START ] CALC__CalcPoolPosition")
 	_q96 := u256.MustFromDecimal(consts.Q96)
 
 	height := std.GetHeight()
 	now := time.Now().Unix()
 
-	// println("CALC__CalcPoolPosition__height", height)
-	// println("CALC__CalcPoolPosition__lastCalculatedHeight", lastCalculatedHeight)
+	println("CALC__CalcPoolPosition__height", height)
+	println("CALC__CalcPoolPosition__lastCalculatedHeight", lastCalculatedHeight)
 	if height <= lastCalculatedHeight {
-		// println(" > [XXX] CALC__CalcPoolPosition__SKIP", height, lastCalculatedHeight)
-		// println()
+		println(" > [XXX] CALC__CalcPoolPosition__SKIP", height, lastCalculatedHeight)
+		println()
 		return
 	}
 
 	// calculate pool
 	stakerGnsBalance := gnsBalance(consts.STAKER_ADDR)
-	// println("CALC__stakerGnsBalance:", stakerGnsBalance)
-	// println("CALC__lastCalculatedBalance:", lastCalculatedBalance)
+	println(" > CALC__stakerGnsBalance:", stakerGnsBalance)
+	println(" > CALC__externalGnsAmount:", externalGnsAmount())
+
+	stakerGnsBalance -= externalGnsAmount()
+	println("CALC__stakerGnsBalance - externalGnsAmount", stakerGnsBalance)
+	println("CALC__lastCalculatedBalance:", lastCalculatedBalance)
 
 	// mintedGnsAmount := en.GetLastDistributeToStaker()
 
 	mintedGnsAmount := stakerGnsBalance - lastCalculatedBalance
-	// println("CALC__mintedGnsAmount:", mintedGnsAmount)
+	println("CALC__mintedGnsAmount:", mintedGnsAmount)
 
 	lastCalculatedBalance = stakerGnsBalance
 
-	// println("CALC__height:", height)
-	// println("CALC__lastCalculatedHeight:", lastCalculatedHeight)
+	println("CALC__height:", height)
+	println("CALC__lastCalculatedHeight:", lastCalculatedHeight)
 
 	duration := height - lastCalculatedHeight
-	// println("CALC__duration:", duration)
+	println("CALC__duration:", duration)
 
-	// println("CALC__getTiersAmount_mintedGnsAmount:", mintedGnsAmount)
+	println("CALC__getTiersAmount_mintedGnsAmount:", mintedGnsAmount)
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(mintedGnsAmount)
 
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
-	// println("CALC__tier1Num:", tier1Num)
-	// println("CALC__tier1Amount:", tier1Amount)
+	println("CALC__tier1Num:", tier1Num)
+	println("CALC__tier1Amount:", tier1Amount)
 
-	// println("CALC__tier2Num:", tier2Num)
-	// println("CALC__tier2Amount:", tier2Amount)
+	println("CALC__tier2Num:", tier2Num)
+	println("CALC__tier2Amount:", tier2Amount)
 
-	// println("CALC__tier3Num:", tier3Num)
-	// println("CALC__tier3Amount:", tier3Amount)
+	println("CALC__tier3Num:", tier3Num)
+	println("CALC__tier3Amount:", tier3Amount)
 
-	// println("CALC__duration:", duration)
-	// println("CALC__height:", height)
-	// println()
+	println("CALC__duration:", duration)
+	println("CALC__height:", height)
+	println()
 
-	// println("[ START ] CALC__poolTiers DISTRIBUTE")
+	println("[ START ] CALC__poolTiers DISTRIBUTE")
 	for poolPath, internal := range poolTiers {
-		// println(" > CALC__poolPath:", poolPath)
+		println(" > CALC__poolPath:", poolPath)
 		tier := internal.tier
 		startHeight := internal.startHeight
 		tierAmount := uint64(0)
-		// println(" > CALC__tier:", tier)
-		// println(" > CALC__startHeight:", startHeight)
+		println(" > CALC__tier:", tier)
+		println(" > CALC__startHeight:", startHeight)
 
 		if tier == 1 {
 			tierAmount = tier1Amount / tier1Num
@@ -123,65 +127,65 @@ func CalcPoolPosition() {
 		} else if tier == 3 {
 			tierAmount = tier3Amount / tier3Num
 		}
-		// println(" > CALC__tierAmount:", tierAmount)
+		println(" > CALC__tierAmount:", tierAmount)
 
-		// println(" > CALC__BEFORE_poolGns[poolPath]:", poolGns[poolPath])
-		// println(" > CALC__BEFORE_poolAccuGns[poolPath]:", poolAccuGns[poolPath])
+		println(" > CALC__BEFORE_poolGns[poolPath]:", poolGns[poolPath])
+		println(" > CALC__BEFORE_poolAccuGns[poolPath]:", poolAccuGns[poolPath])
 		poolGns[poolPath] += tierAmount
 		poolAccuGns[poolPath] += tierAmount
-		// println(" > CALC__AFTER_poolGns[poolPath]:", poolGns[poolPath])
-		// println(" > CALC__AFTER_poolAccuGns[poolPath]:", poolAccuGns[poolPath])
+		println(" > CALC__AFTER_poolGns[poolPath]:", poolGns[poolPath])
+		println(" > CALC__AFTER_poolAccuGns[poolPath]:", poolAccuGns[poolPath])
 
 		// current block minted gns + left from last block distributed gns
 		poolCurrentBlockGns[poolPath] = tierAmount
-		// println(" > CALC__poolCurrentBlockGns[poolPath]:", poolCurrentBlockGns[poolPath])
+		println(" > CALC__poolCurrentBlockGns[poolPath]:", poolCurrentBlockGns[poolPath])
 
-		// println(" > CALC__ADD_poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
+		println(" > CALC__ADD_poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
 
 		poolCurrentBlockGns[poolPath] += poolLastTmpGns[poolPath]
-		// println(" > CALC__AFTER_ADD", poolCurrentBlockGns[poolPath])
+		println(" > CALC__AFTER_ADD", poolCurrentBlockGns[poolPath])
 
 		poolLastTmpGns[poolPath] = 0
-		// println(" > CALC__INIT_TO_ZERO_poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
+		println(" > CALC__INIT_TO_ZERO_poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
 
 		totalStakedLiquidity := getPoolTotalStakedLiquidity(poolPath)
-		// println(" > CALC__poolPath:", poolPath, "totalStakedLiquidity:", totalStakedLiquidity.ToString())
+		println(" > CALC__poolPath:", poolPath, "totalStakedLiquidity:", totalStakedLiquidity.ToString())
 
 		if totalStakedLiquidity.ToString() == "0" {
-			// println("  > CALC__ZERO_POOL", poolPath, "HAS TIER OF", internal.tier, "BUT NONE STAKED, SEND AMOUNT TO PROTOCOL FEE")
-			// println("  > CALC__ZERO_poolGns[poolPath]:", poolGns[poolPath])
+			println("  > CALC__ZERO_POOL", poolPath, "HAS TIER OF", internal.tier, "BUT NONE STAKED, SEND AMOUNT TO PROTOCOL FEE")
+			println("  > CALC__ZERO_poolGns[poolPath]:", poolGns[poolPath])
 
-			send := min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR))
-			// println("  > CALC__ZERO_SEND_min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)", send)
-			// println("  > CALC__BEFORE_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
-			// println("  > CALC__BEFORE_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
-			// println("  > CALC__BEFORE_lastCalculatedBalance:", lastCalculatedBalance)
+			send := min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)-externalGnsAmount())
+			println("  > CALC__ZERO_SEND_min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)-externalGnsAmount()", send)
+			println("  > CALC__BEFORE_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR)-externalGnsAmount())
+			println("  > CALC__BEFORE_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
+			println("  > CALC__BEFORE_lastCalculatedBalance:", lastCalculatedBalance)
 
 			gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), send)
 			poolGns[poolPath] = 0
 			poolCurrentBlockGns[poolPath] = 0
-			lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR)
+			lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - externalGnsAmount()
 
-			// println("  > CALC__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR))
-			// println("  > CALC__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
-			// println("  > CALC__AFTER_poolGns[poolPath] = 0")
-			// println("  > CALC__AFTER_poolCurrentBlockGns[poolPath] = 0")
-			// println("  > CALC__AFTER_lastCalculatedBalance:", lastCalculatedBalance)
-			// println("  > ----------------------- WAS EMPTY POOL")
+			println("  > CALC__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR)-externalGnsAmount())
+			println("  > CALC__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
+			println("  > CALC__AFTER_poolGns[poolPath] = 0")
+			println("  > CALC__AFTER_poolCurrentBlockGns[poolPath] = 0")
+			println("  > CALC__AFTER_lastCalculatedBalance:", lastCalculatedBalance)
+			println("  > ----------------------- WAS EMPTY POOL")
 		}
 	}
-	// println("[ END ] CALC__poolTiers DISTRIBUTE END")
+	println("[ END ] CALC__poolTiers DISTRIBUTE END")
 
-	// println()
+	println()
 
-	// println("[ START ] CALC__deposits ITERATION")
+	println("[ START ] CALC__deposits ITERATION")
 
 	externalToUpdate := []string{}
 	for tokenId, deposit := range deposits {
 		poolPath := deposit.targetPoolPath
 		poolCurrentBlockAmount := poolCurrentBlockGns[poolPath]
-		// println(" > CALC__tokenId:", tokenId)
-		// println(" > CALC__poolCurrentBlockAmount:", poolCurrentBlockAmount)
+		println(" > CALC__tokenId:", tokenId)
+		println(" > CALC__poolCurrentBlockAmount:", poolCurrentBlockAmount)
 
 		// ------------------------------------ INTERNAL
 		if poolCurrentBlockAmount > 0 {
@@ -193,20 +197,20 @@ func CalcPoolPosition() {
 			positionAmount := positionAmountX.Uint64()
 
 			// XXX: REMOVE AFTER QA
-			// println(" > CALC__liqRatioX96:", liqRatioX96.ToString())
-			// println(" > CALC__positionAmountX:", positionAmountX.ToString())
+			println(" > CALC__liqRatioX96:", liqRatioX96.ToString())
+			println(" > CALC__positionAmountX:", positionAmountX.ToString())
 
-			// println(" > CALC__BEFORE")
-			// println(" > CALC__positionGns[tokenId]:", positionGns[tokenId])
-			// println(" > CALC__poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
+			println(" > CALC__BEFORE")
+			println(" > CALC__positionGns[tokenId]:", positionGns[tokenId])
+			println(" > CALC__poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
 			positionLastGns[tokenId] = positionGns[tokenId]
 			positionGns[tokenId] += positionAmount
 			poolLastTmpGns[poolPath] += positionAmount
-			// println(" > CALC__AFTER")
-			// println(" > CALC__positionAmount:", positionAmount)
-			// println(" > CALC__positionGns[tokenId]:", positionGns[tokenId])
-			// println(" > CALC__poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
-			// println()
+			println(" > CALC__AFTER")
+			println(" > CALC__positionAmount:", positionAmount)
+			println(" > CALC__positionGns[tokenId]:", positionGns[tokenId])
+			println(" > CALC__poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
+			println()
 
 			// calculate internal amount from previous to now
 			rewardMathComputeInternalRewardAmount(tokenId)
@@ -294,6 +298,10 @@ func CalcPoolPosition() {
 			_, exist = positionsExternalWarmUpAmount[tokenId]
 			if !exist {
 				positionsExternalWarmUpAmount[tokenId] = make(map[string]warmUpAmount)
+			}
+
+			_, exist = positionsExternalWarmUpAmount[tokenId][incentiveId]
+			if !exist {
 				positionsExternalWarmUpAmount[tokenId][incentiveId] = warmUpAmount{}
 			}
 
@@ -335,50 +343,59 @@ func CalcPoolPosition() {
 	}
 
 	// update flag
-	// println("UPDATE FLAG")
+	println("UPDATE FLAG")
 	lastCalculatedHeight = height
-	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR)
-	// println()
+	println(" > lastCalculatedHeight:", lastCalculatedHeight)
+	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - externalGnsAmount()
+	println(" > lastCalculatedBalance:", lastCalculatedBalance)
+	println()
 
-	// println("[ START ] CALC__FINAL")
+	println("[ START ] CALC__FINAL")
 	for poolPath, _ := range poolTiers {
 		amount := poolLastTmpGns[poolPath]
-		// println(" > CALC__FINAL_POOL", poolPath)
-		// println(" > CALC__FINAL_amount", amount)
-		// println(" > CALC__FINAL_poolCurrentBlockGns[poolPath]", poolCurrentBlockGns[poolPath])
-		// println(" > CALC__FINAL_poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
+		println(" > CALC__FINAL_POOL", poolPath)
+		println(" > CALC__FINAL_amount", amount)
+		println(" > CALC__FINAL_poolCurrentBlockGns[poolPath]", poolCurrentBlockGns[poolPath])
+		println(" > CALC__FINAL_poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
 		if amount > 0 {
 			if poolCurrentBlockGns[poolPath] >= amount {
-				// println(" > CALC__SAME_OR_LEFT")
+				println(" > CALC__SAME_OR_LEFT")
 				poolLastTmpGns[poolPath] = poolCurrentBlockGns[poolPath] - amount
-				// println(" > poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
+				println(" > poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
 			} else {
-				// println(" > CALC__FINAL_WRONG")
+				println(" > CALC__FINAL_WRONG")
 				poolCurrentBlockGns[poolPath] = 0
 			}
 		} else {
-			// println(" > CALC__FINAL__amount = 0")
+			println(" > CALC__FINAL__amount = 0")
 		}
 	}
-	// println("[ END ] CALC__FINAL")
-	// println()
+	println("[ END ] CALC__FINAL")
+	println()
 
 	// clear(poolCurrentBlockGns) // gno doesn't support `clear` keyword yet
 	poolCurrentBlockGns = make(map[string]uint64)
-	// println("=== [ END END END ] CALC__CalcPoolPosition")
-	// println()
+	println("=== [ END END END ] CALC__CalcPoolPosition")
+	println()
 }
 
 func removeDupeStr(strSlice []string) []string {
-    seen := make(map[string]struct{}, len(strSlice))
-    result := make([]string, 0, len(strSlice))
-    
-    for _, str := range strSlice {
-        if _, ok := seen[str]; !ok {
-            seen[str] = struct{}{}
-            result = append(result, str)
-        }
-    }
-    
-    return result
+	seen := make(map[string]struct{}, len(strSlice))
+	result := make([]string, 0, len(strSlice))
+
+	for _, str := range strSlice {
+		if _, ok := seen[str]; !ok {
+			seen[str] = struct{}{}
+			result = append(result, str)
+		}
+	}
+
+	return result
+}
+func externalGnsAmount() uint64 {
+	amount := uint64(0)
+	for _, v := range externalGns {
+		amount += v
+	}
+	return amount
 }

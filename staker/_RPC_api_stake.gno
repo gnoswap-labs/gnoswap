@@ -20,6 +20,7 @@ type LpTokenReward struct {
 
 type Reward struct {
 	IncentiveType     string `json:"incentiveType"`
+	IncentiveId       string `json:"incentiveId"`
 	TargetPoolPath    string `json:"targetPoolPath"`
 	RewardTokenPath   string `json:"rewardTokenPath"`
 	RewardTokenAmount uint64 `json:"rewardTokenAmount"`
@@ -71,6 +72,7 @@ func ApiGetRewards() string {
 		if internalGNS > 0 {
 			rewards = append(rewards, Reward{
 				IncentiveType:     "INTERNAL",
+				IncentiveId:       "",
 				TargetPoolPath:    deposit.targetPoolPath,
 				RewardTokenPath:   consts.GNS_PATH,
 				RewardTokenAmount: internalGNS,
@@ -89,13 +91,12 @@ func ApiGetRewards() string {
 			if now < stakedOrCreatedAt {
 				continue
 			}
-			duration := now - stakedOrCreatedAt
-			durationRatio := getRewardRatio(duration)
 
-			externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId, durationRatio)
+			_, externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
 			if externalReward >= 0 {
 				rewards = append(rewards, Reward{
 					IncentiveType:     "EXTERNAL",
+					IncentiveId:       incentiveId,
 					TargetPoolPath:    deposit.targetPoolPath,
 					RewardTokenPath:   incentives[incentiveId].rewardToken,
 					RewardTokenAmount: externalReward,
@@ -174,6 +175,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 		if internalGNS > 0 {
 			rewards = append(rewards, Reward{
 				IncentiveType:     "INTERNAL",
+				IncentiveId:       "",
 				TargetPoolPath:    deposit.targetPoolPath,
 				RewardTokenPath:   consts.GNS_PATH,
 				RewardTokenAmount: internalGNS,
@@ -192,13 +194,12 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			if now < stakedOrCreatedAt {
 				continue
 			}
-			duration := now - stakedOrCreatedAt
-			durationRatio := getRewardRatio(duration)
 
-			externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId, durationRatio)
+			_, externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
 			if externalReward > 0 {
 				rewards = append(rewards, Reward{
 					IncentiveType:     "EXTERNAL",
+					IncentiveId:       incentiveId,
 					TargetPoolPath:    deposit.targetPoolPath,
 					RewardTokenPath:   incentives[incentiveId].rewardToken,
 					RewardTokenAmount: externalReward,
@@ -251,7 +252,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewards() || json marshal error: %s", err.Error()))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardsByLpTokenId() || json marshal error: %s", err.Error()))
 	}
 
 	return string(b)
@@ -275,6 +276,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 		if internalGNS > 0 {
 			rewards = append(rewards, Reward{
 				IncentiveType:     "INTERNAL",
+				IncentiveId:       "",
 				TargetPoolPath:    deposit.targetPoolPath,
 				RewardTokenPath:   consts.GNS_PATH,
 				RewardTokenAmount: internalGNS,
@@ -293,13 +295,11 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 			if now < stakedOrCreatedAt {
 				continue
 			}
-			duration := now - stakedOrCreatedAt
-			durationRatio := getRewardRatio(duration)
 
-			externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId, durationRatio)
-
+			_, externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
 			rewards = append(rewards, Reward{
 				IncentiveType:     "EXTERNAL",
+				IncentiveId:       incentiveId,
 				TargetPoolPath:    deposit.targetPoolPath,
 				RewardTokenPath:   incentives[incentiveId].rewardToken,
 				RewardTokenAmount: externalReward,
@@ -350,7 +350,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewards() || json marshal error: %s", err.Error()))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardsByAddress() || json marshal error: %s", err.Error()))
 	}
 
 	return string(b)
@@ -549,6 +549,7 @@ func makeRewardsArray(rewards []Reward) []*json.Node {
 	for i, reward := range rewards {
 		rewardsArray[i] = json.ObjectNode("", map[string]*json.Node{
 			"incentiveType":     json.StringNode("incentiveType", reward.IncentiveType),
+			"incentiveId":       json.StringNode("incentiveId", reward.IncentiveId),
 			"targetPoolPath":    json.StringNode("targetPoolPath", reward.TargetPoolPath),
 			"rewardTokenPath":   json.StringNode("rewardTokenPath", reward.RewardTokenPath),
 			"rewardTokenAmount": json.NumberNode("rewardTokenAmount", float64(reward.RewardTokenAmount)),

@@ -193,14 +193,14 @@ func TestCollectReward01_External(t *testing.T) {
 
 func TestUnstakeToken01(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
-	std.TestSkipHeights(400) //  enough time to claim external reward
+	std.TestSkipHeights(900) //  enough time to claim external reward
 
 	// check reward balance before unstake
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000002318056) // internal
 	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000000000)  // external
 
 	response := ApiGetRewardsByLpTokenId(1)
-	shouldEQ(t, response, `{"stat":{"height":542,"timestamp":1234569985},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/gns","rewardTokenAmount":157865893,"stakeTimestamp":1234567955,"stakeHeight":136,"incentiveStart":1234567955},{"incentiveType":"EXTERNAL","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":5279,"stakeTimestamp":1234567955,"stakeHeight":136,"incentiveStart":1234569600}]}]}`)
+	shouldEQ(t, response, `{"stat":{"height":1042,"timestamp":1234569728},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/gns","rewardTokenAmount":445623695,"stakeTimestamp":1234567916,"stakeHeight":136,"incentiveStart":1234567916},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAw","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":754,"stakeTimestamp":1234567916,"stakeHeight":136,"incentiveStart":1234569600}]}]}`)
 
 	UnstakeToken(1) // GNFT tokenId
 	std.TestSkipHeights(1)
@@ -208,8 +208,8 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(1)), gsa)
 
 	// check reward balance after unstake
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000158605291)
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000007467)
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000443485515)
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000000747)
 }
 
 func TestUnstakeToken02(t *testing.T) {
@@ -221,8 +221,8 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(2)), gsa)
 
 	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100001030511278) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000057081)  // external
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100002894600370) // internal
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000004965)  // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {

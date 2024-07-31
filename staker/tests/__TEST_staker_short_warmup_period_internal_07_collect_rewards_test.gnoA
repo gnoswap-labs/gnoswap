@@ -1,10 +1,3 @@
-// to test short warmup period
-// set warm up period like below
-// warmUp[100] = 901 // 30m ~
-// warmUp[70] = 301  // 10m ~ 30m
-// warmUp[50] = 151  // 5m ~ 10m
-// warmUp[30] = 1    // ~ 5m
-
 package staker
 
 import (
@@ -39,6 +32,12 @@ func init() {
 	}
 
 	std.TestSkipHeights(1)
+
+	// override warm-up period for testing
+	warmUp[100] = 901 // 30m ~
+	warmUp[70] = 301  // 10m ~ 30m
+	warmUp[50] = 151  // 5m ~ 10m
+	warmUp[30] = 1    // ~ 5m
 }
 
 func TestDoulbeMint(t *testing.T) {
@@ -88,7 +87,7 @@ func TestMintBarQux100_1(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 
 	gpi := GetPrintInfo()
-	shouldEQ(t, gpi, `{"height":126,"time":1234567905,"gns":{"staker":0,"devOps":8561643,"communityPool":2140410,"xGNS":0,"protocolFee":232106164,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
+	shouldEQ(t, gpi, `{"height":126,"time":1234567896,"gns":{"staker":0,"devOps":8561643,"communityPool":2140410,"xGNS":0,"protocolFee":232106164,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
 
 	println()
 	printInfo(curr)
@@ -274,4 +273,27 @@ func TestJustPrint(t *testing.T) {
 	println(GetPrintInfo())
 	println()
 	printInfo(curr)
+}
+
+func TestCollectNow(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	CollectReward(1)
+}
+
+func TestCollectSameBlock(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	CollectReward(1)
+}
+
+func TestCollectAfterSingleBlock(t *testing.T) {
+	std.TestSkipHeights(1)
+
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	CollectReward(1)
 }
