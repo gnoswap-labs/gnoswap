@@ -11,9 +11,9 @@ import (
 	pl "gno.land/r/gnoswap/pool"
 	pn "gno.land/r/gnoswap/position"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
-	"gno.land/r/gnoswap/gns"
 )
 
 func TestCreatePool(t *testing.T) {
