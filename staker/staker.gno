@@ -393,7 +393,7 @@ func CreateExternalIncentive(
 
 	poolRewardBalanceBefore := balanceOfByRegisterCall(rewardToken, GetOrigPkgAddr())
 
-	incentiveId := incentiveIdCompute(std.GetOrigCaller(), targetPoolPath, rewardToken, startTimestamp, endTimestamp)
+	incentiveId := incentiveIdCompute(std.GetOrigCaller(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
 
 	// if same incentiveId exists => increase rewardTokenAmount
 	for _, v := range poolIncentives[targetPoolPath] {
@@ -456,6 +456,7 @@ func CreateExternalIncentive(
 		endTimestamp:      endTimestamp,
 		rewardPerBlockX96: rewardPerBlockX96,
 		refundee:          std.GetOrigCaller(),
+		createdHeight:     std.GetHeight(),
 	}
 
 	poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath], incentiveId)
@@ -485,10 +486,10 @@ func CreateExternalIncentive(
 // Panics:
 // - incentive expiration time is not over
 // - reward token amount is not enough to refund
-func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string, startTimestamp, endTimestamp int64) {
+func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string, startTimestamp, endTimestamp, height int64) {
 	refundee := std.Address(_refundee)
 
-	incentiveId := incentiveIdCompute(refundee, targetPoolPath, rewardToken, startTimestamp, endTimestamp)
+	incentiveId := incentiveIdCompute(refundee, targetPoolPath, rewardToken, startTimestamp, endTimestamp, height)
 
 	incentive, exist := incentives[incentiveId]
 	if !exist {

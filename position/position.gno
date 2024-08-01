@@ -629,25 +629,11 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 		"0", // burn '0' liquidity to collect fee
 	)
 
-	tokensOwed0, tokensOwed1 := position.tokensOwed0, position.tokensOwed1
-
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
-
-	tokensOwed0 = calculateTokensOwed(
-		feeGrowthInside0LastX128,
-		position.feeGrowthInside0LastX128,
-		position.liquidity,
-	)
-
-	tokensOwed1 = calculateTokensOwed(
-		feeGrowthInside1LastX128,
-		position.feeGrowthInside1LastX128,
-		position.liquidity,
-	)
 
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
@@ -698,24 +684,24 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 }
 
 func calculateTokensOwed(
-    feeGrowthInsideLastX128 *u256.Uint,
-    positionFeeGrowthInsideLastX128 *u256.Uint,
-    positionLiquidity *u256.Uint,
+	feeGrowthInsideLastX128 *u256.Uint,
+	positionFeeGrowthInsideLastX128 *u256.Uint,
+	positionLiquidity *u256.Uint,
 ) *u256.Uint {
-    diff := new(u256.Uint).Sub(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
-    return u256.MulDiv(diff, positionLiquidity, u256.MustFromDecimal(consts.Q128))
+	diff := new(u256.Uint).Sub(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
+	return u256.MulDiv(diff, positionLiquidity, u256.MustFromDecimal(consts.Q128))
 }
 
 func updateTokensOwed(
-    feeGrowthInsideLastX128 *u256.Uint,
-    positionFeeGrowthInsideLastX128 *u256.Uint,
-    positionLiquidity *u256.Uint,
-    burnedAmount *u256.Uint,
-    tokensOwed *u256.Uint,
+	feeGrowthInsideLastX128 *u256.Uint,
+	positionFeeGrowthInsideLastX128 *u256.Uint,
+	positionLiquidity *u256.Uint,
+	burnedAmount *u256.Uint,
+	tokensOwed *u256.Uint,
 ) *u256.Uint {
-    additionalTokensOwed := calculateTokensOwed(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128, positionLiquidity)
-    add := new(u256.Uint).Add(burnedAmount, additionalTokensOwed)
-    return new(u256.Uint).Add(tokensOwed, add)
+	additionalTokensOwed := calculateTokensOwed(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128, positionLiquidity)
+	add := new(u256.Uint).Add(burnedAmount, additionalTokensOwed)
+	return new(u256.Uint).Add(tokensOwed, add)
 }
 
 func burnNFT(tokenId uint64) {

@@ -146,10 +146,6 @@ func TestCreateExternalIncentive(t *testing.T) {
 
 	obl.Approve(a2u(consts.STAKER_ADDR), uint64(10_000_000_000))
 	std.TestSkipHeights(1)
-
-	CreateExternalIncentive("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", "gno.land/r/onbloc/obl", "1000000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
-
-	std.TestSkipHeights(1)
 }
 
 func TestStakeToken01(t *testing.T) {
@@ -178,7 +174,7 @@ func TestCollectReward01_External(t *testing.T) {
 	// before claim
 	oblOld := obl.BalanceOf(a2u(gsa))
 	std.TestSkipHeights(1)
-	shouldEQ(t, oblOld, 99998000000000)
+	shouldEQ(t, oblOld, 99999000000000)
 
 	std.TestSetRealm(stkRealm)
 	std.TestSetOrigCaller(gsa)
@@ -188,7 +184,7 @@ func TestCollectReward01_External(t *testing.T) {
 
 	oblNew := obl.BalanceOf(a2u(gsa))
 	std.TestSkipHeights(1)
-	shouldEQ(t, oblNew, 99998000000000)
+	shouldEQ(t, oblNew, 99999000000000)
 }
 
 func TestUnstakeToken01(t *testing.T) {
@@ -197,10 +193,10 @@ func TestUnstakeToken01(t *testing.T) {
 
 	// check reward balance before unstake
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000002318056) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000000000)  // external
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99999000000000)  // external
 
 	response := ApiGetRewardsByLpTokenId(1)
-	shouldEQ(t, response, `{"stat":{"height":1042,"timestamp":1234569728},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/gns","rewardTokenAmount":445623695,"stakeTimestamp":1234567916,"stakeHeight":136,"incentiveStart":1234567916},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAw","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":754,"stakeTimestamp":1234567916,"stakeHeight":136,"incentiveStart":1234569600}]}]}`)
+	shouldEQ(t, response, `{"stat":{"height":1041,"timestamp":1234569726},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/gns","rewardTokenAmount":445623695,"stakeTimestamp":1234567914,"stakeHeight":135,"incentiveStart":1234567914},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMw==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":742,"stakeTimestamp":1234567914,"stakeHeight":135,"incentiveStart":1234569600}]}]}`)
 
 	UnstakeToken(1) // GNFT tokenId
 	std.TestSkipHeights(1)
@@ -209,7 +205,7 @@ func TestUnstakeToken01(t *testing.T) {
 
 	// check reward balance after unstake
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100000443485515)
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000000747)
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99999000000735)
 }
 
 func TestUnstakeToken02(t *testing.T) {
@@ -222,7 +218,7 @@ func TestUnstakeToken02(t *testing.T) {
 
 	// check reward
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), 100002894600370) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99998000004965)  // external
+	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99999000004888)  // external
 }
 
 func TestEndExternalIncentive(t *testing.T) {
@@ -236,6 +232,7 @@ func TestEndExternalIncentive(t *testing.T) {
 		"gno.land/r/onbloc/obl",
 		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp
+		133,
 	)
 
 	std.TestSkipHeights(1)

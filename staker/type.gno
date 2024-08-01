@@ -22,6 +22,7 @@ type ExternalIncentive struct {
 	endTimestamp      int64
 	rewardPerBlockX96 *u256.Uint
 	refundee          std.Address
+	createdHeight     int64
 }
 
 type Deposit struct {

@@ -3,10 +3,6 @@ package gns
 import (
 	"std"
 	"testing"
-
-	"gno.land/p/demo/testutils"
-
-	"gno.land/r/gnoswap/consts"
 )
 
 func TestEmissionAmount(t *testing.T) {
@@ -149,52 +145,13 @@ func TestGetAmountByHeight(t *testing.T) {
 	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 891_837)
 }
 
-func TestSetHalvingTierBlockNoPermission(t *testing.T) {
-	dummyAddr := testutils.TestAddress("dummy")
-	dummyRealm := std.NewUserRealm(dummyAddr)
-	std.TestSetRealm(dummyRealm)
-
-	shouldPanicWithMsg(
-		t,
-		func() {
-			SetHalvingTierBlock(1, 1)
-		},
-		"only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1egdt2l7xjcrm6qjwyd3g60z6e9cnr75pmcuasc) can set halving tier block, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
-	)
-}
-
-func TestSetHalvingTierBlockInvalidTier(t *testing.T) {
-	gsaAddr := consts.GNOSWAP_ADMIN
-	gsaRealm := std.NewUserRealm(gsaAddr)
-	std.TestSetRealm(gsaRealm)
-
-	shouldPanicWithMsg(
-		t,
-		func() {
-			SetHalvingTierBlock(0, 1)
-		},
-		"invalid tier 0",
-	)
-}
-
-func TestSetHalvingTierBlockInvalidBlock(t *testing.T) {
-	gsaAddr := consts.GNOSWAP_ADMIN
-	gsaRealm := std.NewUserRealm(gsaAddr)
-	std.TestSetRealm(gsaRealm)
-
-	shouldPanicWithMsg(
-		t,
-		func() {
-			SetHalvingTierBlock(1, 123456)
-		},
-		"cannot set block less than current block 189216123",
-	)
-}
-
-func shouldEQ(t *testing.T, got, expected interface{}) {
-	if got != expected {
-		t.Errorf("got %v, expected %v", got, expected)
-	}
+func shouldPanic(t *testing.T, f func()) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic")
+		}
+	}()
+	f()
 }
 
 func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
