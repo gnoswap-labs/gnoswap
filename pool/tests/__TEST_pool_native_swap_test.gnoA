@@ -8,8 +8,8 @@ import (
 
 	"gno.land/r/gnoswap/gns"
 
-	"gno.land/r/onbloc/foo"
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/onbloc/foo"
 )
 
 var (
@@ -23,8 +23,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
-	CreatePool(fooPath, consts.WRAPPED_WUGNOT, fee500, "130621891405341611593710811006") // x2.7
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/foo:gno.land/r/demo/wugnot:500}]}
+	CreatePool(consts.WRAPPED_WUGNOT, fooPath, fee500, "130621891405341611593710811006") // x2.7
 }
 
 // 2. Mint LP and Get GNFT
@@ -36,19 +35,19 @@ func TestMint(t *testing.T) {
 
 	// prepare ugnot
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.IssueCoin(gsa, "ugnot", 804_032)
+	testBanker.IssueCoin(gsa, "ugnot", 1_000_000)
 
 	// simulate transfer & decrase
-	std.TestSetOrigSend(std.Coins{{"ugnot", 804_032}}, nil)
-	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 804_032)
+	std.TestSetOrigSend(std.Coins{{"ugnot", 1_000_000}}, nil)
+	testBanker.RemoveCoin(std.GetOrigCaller(), "ugnot", 1_000_000)
 
 	// Deposit(wrap)
 	std.TestSetRealm(gsaRealm)
 	wugnot.Deposit()
 
 	std.TestSetRealm(gsaRealm)
-	foo.Approve(a2u(consts.POOL_ADDR), 295802)
-	wugnot.Approve(a2u(consts.POOL_ADDR), 804032)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// Mint
 	std.TestSetRealm(posRealm)
@@ -71,8 +70,8 @@ func TestSwapBuyNative(t *testing.T) {
 
 	gsaOldT0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 	gsaOldT1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
-	shouldEQ(t, gsaOldT0Bal, 99999999704198) // foo
-	shouldEQ(t, gsaOldT1Bal, 0)              // wugnot
+	shouldEQ(t, gsaOldT0Bal, 704198)
+	shouldEQ(t, gsaOldT1Bal, 99999999195968)
 
 	std.TestSetRealm(gsaRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), 10000)
@@ -89,15 +88,14 @@ func TestSwapBuyNative(t *testing.T) {
 		consts.MIN_PRICE,
 		std.GetOrigCaller().String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/onbloc/foo:gno.land/r/demo/wugnot:500} {p_zeroForOne true} {p_amountSpecified 10000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 10000} {amount1 -27123} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 5}]}
 
 	shouldEQ(t, amount0, "10000")
 	shouldEQ(t, amount1, "-27123")
 
 	gsaNewT0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 	gsaNewT1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
-	shouldEQ(t, gsaNewT0Bal, 99999999694198) // - 10_000 // user sells 10_000
-	shouldEQ(t, gsaNewT1Bal, 27123)          // gets WGNOT
+	shouldEQ(t, gsaNewT0Bal, 694198)         // - 10_000 // user sells 10_000
+	shouldEQ(t, gsaNewT1Bal, 99999999223091) // gets WGNOT
 }
 
 func TestSwapSellNative(t *testing.T) {
@@ -105,8 +103,8 @@ func TestSwapSellNative(t *testing.T) {
 
 	gsaOldT0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 	gsaOldT1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
-	shouldEQ(t, gsaOldT0Bal, 99999999694198) // foo
-	shouldEQ(t, gsaOldT1Bal, 27123)          // wugnot
+	shouldEQ(t, gsaOldT0Bal, 694198)         // foo
+	shouldEQ(t, gsaOldT1Bal, 99999999223091) // wugnot
 
 	std.TestSetRealm(gsaRealm)
 	wugnot.Approve(a2u(consts.POOL_ADDR), 27123)
@@ -123,13 +121,13 @@ func TestSwapSellNative(t *testing.T) {
 		consts.MAX_PRICE,
 		std.GetOrigCaller().String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/onbloc/foo:gno.land/r/demo/wugnot:500} {p_zeroForOne false} {p_amountSpecified 10000} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 -3687} {amount1 10000} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 5}]}
 
 	shouldEQ(t, amount0, "-3687") // pool sent
 	shouldEQ(t, amount1, "10000") // pool recv
 
 	gsaNewT0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 	gsaNewT1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
-	shouldEQ(t, gsaNewT0Bal, 99999999697885) // foo
-	shouldEQ(t, gsaNewT1Bal, 17123)          // wugnot
+	shouldEQ(t, gsaNewT0Bal, 697885)
+	// foo
+	shouldEQ(t, gsaNewT1Bal, 99999999213091) // wugnot
 }

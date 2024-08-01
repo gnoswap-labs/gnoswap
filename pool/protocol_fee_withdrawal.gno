@@ -29,7 +29,7 @@ func HandleWithdrawalFee(
 ) (string, string) { // uint256 x2
 	// only position contract can call this function
 	if std.PrevRealm().PkgPath() != consts.POSITION_PATH {
-		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected std.PrevRealm().PkgPath()(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawalFee() || expected std.PrevRealm().PkgPath()(%s), got %s", consts.POSITION_PATH, std.PrevRealm().PkgPath()))
 	}
 
 	amount0 := u256.MustFromDecimal(_amount0)
@@ -47,13 +47,25 @@ func HandleWithdrawalFee(
 
 	ok := transferFromByRegisterCall(token0Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount0.Uint64())
 	if !ok {
-		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token0Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount0))
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawalFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token0Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount0))
 	}
+	std.Emit(
+		"GNOSWAP_PROTOCOL_FEE",
+		"reason", "withdrawal",
+		"token", token0Path,
+		"amount", feeAmount0.ToString(),
+	)
 
 	ok = transferFromByRegisterCall(token1Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount1.Uint64())
 	if !ok {
-		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token1Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount1))
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawalFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token1Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount1))
 	}
+	std.Emit(
+		"GNOSWAP_PROTOCOL_FEE",
+		"reason", "withdrawal",
+		"token", token1Path,
+		"amount", feeAmount1.ToString(),
+	)
 
 	afterAmount0 := new(u256.Uint).Sub(amount0, feeAmount0)
 	afterAmount1 := new(u256.Uint).Sub(amount1, feeAmount1)

@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"strconv"
 
 	"gno.land/r/gnoswap/consts"
 
@@ -33,12 +34,25 @@ func handleUnstakingFee(
 	if internal {
 		// staker contract has fee
 		gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), feeAmount)
+		std.Emit(
+			"GNOSWAP_PROTOCOL_FEE",
+			"reason", "unstaking_fee",
+			"token", consts.GNS_PATH,
+			"amount", strconv.FormatUint(feeAmount, 10),
+		)
+
 	} else {
 		// external contract has fee
 		ok := transferByRegisterCall(tokenPath, consts.PROTOCOL_FEE_ADDR, feeAmount)
 		if !ok {
 			panic(ufmt.Sprintf("[STAKER] reward_fee.gno__handleUnstakingFee() || expected transferByRegisterCall(%s, %s, %s) == true", tokenPath, consts.PROTOCOL_FEE_ADDR, u256.NewUint(feeAmount).ToString()))
 		}
+		std.Emit(
+			"GNOSWAP_PROTOCOL_FEE",
+			"reason", "unstaking_fee",
+			"token", tokenPath,
+			"amount", strconv.FormatUint(feeAmount, 10),
+		)
 	}
 
 	std.Emit(
