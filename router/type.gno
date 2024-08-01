@@ -25,6 +25,15 @@ type SingleSwapParams struct {
 	amountSpecified *i256.Int
 }
 
+func newSingleSwapParams(tokenIn, tokenOut string, fee uint32, amountSpecified *i256.Int) *SingleSwapParams {
+	return &SingleSwapParams{
+		tokenIn:        tokenIn,
+		tokenOut:       tokenOut,
+		fee:            fee,
+		amountSpecified: amountSpecified,
+	}
+}
+
 // MUTLI SWAP
 type SwapParams struct {
 	tokenIn   string      // token to spend

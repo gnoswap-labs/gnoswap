@@ -99,11 +99,12 @@ func validateInput(amountSpecified *i256.Int, swapType string, routes, quotes []
         panic("[ROUTER] Mismatch between routes and quotes length")
     }
 
-    quotesSum := int64(0)
+	var quotesSum int64
     for _, quote := range quotes {
         intQuote, _ := strconv.Atoi(quote)
         quotesSum += int64(intQuote)
     }
+
     if quotesSum != 100 {
         panic("[ROUTER] Quote sum is not 100")
     }
