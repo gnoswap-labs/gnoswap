@@ -30,6 +30,7 @@ type ApiExternalIncentive struct {
 	EndTimestamp   int64  `json:"endTimestamp"`
 	Active         bool   `json:"active"`
 	Refundee       string `json:"refundee"`
+	CreatedHeight  int64  `json:"createdHeight"`
 }
 
 type ApiInternalIncentive struct {
@@ -178,6 +179,7 @@ func ApiGetExternalIncentives() string {
 			StartTimestamp: incentive.startTimestamp,
 			EndTimestamp:   incentive.endTimestamp,
 			Refundee:       incentive.refundee.String(),
+			CreatedHeight:  incentive.createdHeight,
 		})
 	}
 
@@ -205,6 +207,7 @@ func ApiGetExternalIncentives() string {
 			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
 			"active":         json.BoolNode("active", active),
 			"refundee":       json.StringNode("refundee", incentive.Refundee),
+			"createdHeight":  json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
 		})
 		responses.AppendArray(_incentiveNode)
 	}
@@ -243,6 +246,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 			StartTimestamp: incentive.startTimestamp,
 			EndTimestamp:   incentive.endTimestamp,
 			Refundee:       incentive.refundee.String(),
+			CreatedHeight:  incentive.createdHeight,
 		})
 	}
 
@@ -270,6 +274,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
 			"active":         json.BoolNode("active", active),
 			"refundee":       json.StringNode("refundee", incentive.Refundee),
+			"createdHeight":  json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
 		})
 		responses.AppendArray(_incentiveNode)
 	}
@@ -308,6 +313,7 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 			StartTimestamp: incentive.startTimestamp,
 			EndTimestamp:   incentive.endTimestamp,
 			Refundee:       incentive.refundee.String(),
+			CreatedHeight:  incentive.createdHeight,
 		})
 	}
 
@@ -335,6 +341,7 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
 			"active":         json.BoolNode("active", active),
 			"refundee":       json.StringNode("refundee", incentive.Refundee),
+			"createdHeight":  json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
 		})
 		responses.AppendArray(_incentiveNode)
 	}

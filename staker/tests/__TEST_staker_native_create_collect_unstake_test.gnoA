@@ -167,6 +167,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp
 	)
+	// std.GetHeight() = 134
 
 	gsaNewWugnotBalance := wugnot.BalanceOf(a2u(gsa))
 	shouldEQ(t, gsaNewWugnotBalance, 0)
@@ -249,6 +250,7 @@ func TestEndExternalIncentive(t *testing.T) {
 		consts.WRAPPED_WUGNOT,
 		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp
+		134,
 	)
 
 	std.TestSkipHeights(1)
