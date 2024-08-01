@@ -537,7 +537,7 @@ func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
 		return ufmt.Sprintf("%d", tier2Amount/tier2Num)
 	} else if tier == 3 {
 		return ufmt.Sprintf("%d", tier3Amount/tier3Num)
-	} else {
-		return "0"
 	}
+
+	return "0"
 }

@@ -126,10 +126,10 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 
 		if currentPoolIndex == 0 {
 			return firstAmountIn, amountOut
-		} else {
-			payer = consts.ROUTER_ADDR
-			swapInfo[currentPoolIndex-1].amountSpecified = i256.FromUint256(amountOut)
 		}
+
+		payer = consts.ROUTER_ADDR
+		swapInfo[currentPoolIndex-1].amountSpecified = i256.FromUint256(amountOut)
 	}
 }
 
