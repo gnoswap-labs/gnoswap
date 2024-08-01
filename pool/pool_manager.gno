@@ -82,6 +82,12 @@ func CreatePool(
 
 	if !exist {
 		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.PROTOCOL_FEE_ADDR), poolCreationFee)
+		std.Emit(
+			"GNOSWAP_PROTOCOL_FEE",
+			"reason", "pool_creation",
+			"token", consts.GNS_PATH,
+			"amount", strconv.FormatUint(poolCreationFee, 10),
+		)
 
 		pool = newPool(token0Path, token1Path, fee, tickSpacing, sqrtPriceX96)
 		pools[poolPath] = pool
@@ -137,11 +143,11 @@ func GetPoolFromPoolPath(poolPath string) *Pool {
 //
 // For example, if token0Path is "A" and token1Path is "B" with a fee of 500, the poolPath will be:
 //
-//     "A:B:500"
+//	"A:B:500"
 //
 // If token0Path is lexicographically greater than token1Path, the paths are swapped before constructing the poolPath.
 //
-//     "B:A:500"
+//	"B:A:500"
 //
 // It ensures that the token paths are in lexicographic order.
 //

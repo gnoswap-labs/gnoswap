@@ -56,7 +56,7 @@ func init() {
 
 // StakeToken stakes the lp token to the staker contract
 //
-// Panics if any of the following conditions are met:
+// Panics:
 // - tokenId already staked
 // - tokenId has no liquidity
 // - tokenId is not owned by the caller or staker
@@ -128,7 +128,7 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 // CollectReward collects staked reward from tokenId
 //
-// Panics if any of the following conditions are met:
+// Panics:
 // - token is not staked
 // - caller is not owner of lp token
 func CollectReward(tokenId uint64) string { // poolPath
@@ -185,6 +185,12 @@ func CollectReward(tokenId uint64) string { // poolPath
 			left := fullAmount - toGive
 			println("  > warm up left := fullAmount - toGive (to protocol_fee)", left)
 			transferByRegisterCall(external.tokenPath, consts.PROTOCOL_FEE_ADDR, left)
+			std.Emit(
+				"GNOSWAP_PROTOCOL_FEE",
+				"reason", "unstaking_fee",
+				"token", external.tokenPath,
+				"amount", strconv.FormatUint(left, 10),
+			)
 
 			incentive.rewardLeft = new(u256.Uint).Sub(incentive.rewardLeft, u256.NewUint(fullAmount))
 			incentives[incentiveId] = incentive
@@ -237,6 +243,12 @@ func CollectReward(tokenId uint64) string { // poolPath
 	left := fullAmount - toGive
 	println(" > warm up left := fullAmount - toGive (to protocol_fee)", left)
 	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), left)
+	std.Emit(
+		"GNOSWAP_PROTOCOL_FEE",
+		"reason", "gns_penalty",
+		"token", consts.GNS_PATH,
+		"amount", strconv.FormatUint(left, 10),
+	)
 
 	// emit internal reward tokens
 	std.Emit(
@@ -271,7 +283,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 // UnstakeToken unstakes the lp token from the staker and collects all reward from tokenId
 //
-// Panics if any of the following conditions are met:
+// Panics:
 // - token is not staked
 func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
 	en.MintAndDistributeGns()
@@ -313,7 +325,7 @@ func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0
 
 // CreateExternalIncentive creates an external incentive for the targetPoolPath
 //
-// Panics if any of the following conditions are met:
+// Panics:
 // - startTimestamp is not in the future
 // - externalDuration is not 90, 180, or 365 days
 // - user doesn't have enough balance to provide as reward
@@ -470,7 +482,7 @@ func CreateExternalIncentive(
 // EndExternalIncentive ends the external incentive
 // Only refundee or admin can end incentive
 //
-// Panics if any of the following conditions are met:
+// Panics:
 // - incentive expiration time is not over
 // - reward token amount is not enough to refund
 func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string, startTimestamp, endTimestamp int64) {

@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"strconv"
 	"time"
 
 	"gno.land/r/gnoswap/consts"
@@ -162,6 +163,13 @@ func CalcPoolPosition() {
 			println("  > CALC__BEFORE_lastCalculatedBalance:", lastCalculatedBalance)
 
 			gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), send)
+			std.Emit(
+				"GNOSWAP_PROTOCOL_FEE",
+				"reason", "emission_target_pool_no_staked",
+				"token", consts.GNS_PATH,
+				"amount", strconv.FormatUint(send, 10),
+			)
+
 			poolGns[poolPath] = 0
 			poolCurrentBlockGns[poolPath] = 0
 			lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - externalGnsAmount()
@@ -250,7 +258,14 @@ func CalcPoolPosition() {
 			// how many blocks passed since
 			// max time between (start of the incentive) and (staked at) and (last calculated)
 			_max := max(startTimestamp, deposit.stakeTimestamp)
+			println("  > CALC__EXTERNAL_max:\t\t\t", _max)
+			println("    > startTimestamp:\t\t\t", startTimestamp)
+			println("    > deposit.stakeTimestamp:\t\t", deposit.stakeTimestamp)
+
 			_max = max(_max, externalLastCalculatedTimestamp[incentiveId])
+			println("  > CALC__EXTERNAL_max:\t\t\t", _max)
+			println("    > externalLastCalculatedTimestamp[incentiveId]:", externalLastCalculatedTimestamp[incentiveId])
+
 			blocksPassed := (now - _max) / consts.BLOCK_GENERATION_INTERVAL
 			println("  > CALC__EXTERNAL_blocksPassed:\t", blocksPassed)
 			println("   > incentive_start:\t\t\t", startTimestamp)

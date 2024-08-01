@@ -387,8 +387,18 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 	externals := positionExternal[tokenId]
 
 	_max := max(incentives[incentiveId].startTimestamp, deposits[tokenId].stakeTimestamp)
+	println("  > REWARD__EXTERNAL_incentives[incentiveId].startTimestamp:", incentives[incentiveId].startTimestamp)
+	println("  > REWARD__EXTERNAL_deposits[tokenId].stakeTimestamp:", deposits[tokenId].stakeTimestamp)
+	println("  > REWARD__EXTERNAL_max:", _max)
+
 	stakedOrExternalDuration := (time.Now().Unix() - _max) / consts.BLOCK_GENERATION_INTERVAL
+	println("  > REWARD__EXTERNAL_time.Now().Unix():", time.Now().Unix())
+	println("  > REWARD__EXTERNAL_consts.BLOCK_GENERATION_INTERVAL:", consts.BLOCK_GENERATION_INTERVAL)
+	println("  > REWARD__EXTERNAL_stakedOrExternalDuration:", stakedOrExternalDuration)
+
 	stakedOrExternalStartedHeight := std.GetHeight() - stakedOrExternalDuration
+	println("  > REWARD__EXTERNAL_height:", std.GetHeight())
+	println("  > REWARD__EXTERNAL_stakedOrExternalStartedHeight:", stakedOrExternalStartedHeight)
 
 	until30 := uint64(stakedOrExternalStartedHeight + warmUp[50] - 1)  // 150
 	until50 := uint64(stakedOrExternalStartedHeight + warmUp[70] - 1)  // 300
@@ -397,6 +407,8 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 
 	for _, external := range externals {
 		if external.incentiveId == incentiveId {
+			println("   > REWARD__EXTERNAL_incentiveId:", incentiveId)
+
 			tokenAmount := external.tokenAmount
 			toDistribute := tokenAmount - positionLastExternal[tokenId][incentiveId]
 			println("   > REWARD__EXTERNAL_tokenAmount:", tokenAmount)
@@ -407,6 +419,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 			}
 
 			lastCalculatedHeightU64 := uint64(positionsExternalLastCalculatedHeight[tokenId][incentiveId])
+			println("   > REWARD__EXTERNAL_lastCalculatedHeightU64:", lastCalculatedHeightU64)
 
 			q96 := u256.MustFromDecimal(consts.Q96)
 			toDistributeX96 := new(u256.Uint).Mul(u256.NewUint(toDistribute), q96)
@@ -864,9 +877,9 @@ func listTierRatio() (uint64, uint64, uint64) {
 		return 70, 30, 0
 	} else if numTier2 >= 1 && numTier3 >= 1 { // all tiers exists
 		return 50, 30, 20
-	} else {
-		panic("[STAKER] reward_math.gno__listTierRatio() || invalid tier ratio")
 	}
+
+	panic("[STAKER] reward_math.gno__listTierRatio() || invalid tier ratio")
 }
 
 func getTiersAmount(amount uint64) (uint64, uint64, uint64) {
