@@ -124,9 +124,9 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 	oldUgnot := ugnotBalanceOf(gsa)
 	shouldEQ(t, oldUgnot, 900009)
 
-	// CHECK FEE COLLECTOR
-	feeColUgnot := ugnotBalanceOf(consts.COMMUNITY_POOL_ADDR)
-	feeColWugnot := wugnotBalanceOf(consts.COMMUNITY_POOL_ADDR)
+	// CHECK PROTOCOL_FEE
+	feeColUgnot := ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
+	feeColWugnot := wugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
 	shouldEQ(t, feeColUgnot, 0)
 	shouldEQ(t, feeColWugnot, 0)
 
@@ -153,8 +153,8 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 	newUgnot := ugnotBalanceOf(gsa)
 	shouldEQ(t, newUgnot, 919720) // 900009 + 19711
 
-	feeColUgnot = ugnotBalanceOf(consts.COMMUNITY_POOL_ADDR)
-	feeColWugnot = wugnotBalanceOf(consts.COMMUNITY_POOL_ADDR)
+	feeColUgnot = ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
+	feeColWugnot = wugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
 	shouldEQ(t, feeColUgnot, 29) // UNWRAP RESULT
 	shouldEQ(t, feeColWugnot, 0)
 }
@@ -191,8 +191,8 @@ func TestSwapRouteGnotBarExactIn(t *testing.T) {
 	// send
 	std.TestSetOrigSend(std.Coins{{"ugnot", 5000}}, nil)
 
-	feeColUgnot := ugnotBalanceOf(consts.COMMUNITY_POOL_ADDR)
-	feeColWugnot := wugnotBalanceOf(consts.COMMUNITY_POOL_ADDR)
+	feeColUgnot := ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
+	feeColWugnot := wugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
 	shouldEQ(t, feeColUgnot, 29)
 	shouldEQ(t, feeColWugnot, 0)
 
@@ -218,8 +218,8 @@ func TestSwapRouteGnotBarExactIn(t *testing.T) {
 	newUgnot := ugnotBalanceOf(gsa)
 	shouldEQ(t, newUgnot, 919720)
 
-	feeColUgnot = ugnotBalanceOf(consts.COMMUNITY_POOL_ADDR)
-	feeColWugnot = wugnotBalanceOf(consts.COMMUNITY_POOL_ADDR)
+	feeColUgnot = ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
+	feeColWugnot = wugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
 	shouldEQ(t, feeColUgnot, 29)
 	shouldEQ(t, feeColWugnot, 0)
 }
