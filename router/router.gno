@@ -169,7 +169,7 @@ func handleSingleSwap(route string, amountSpecified *i256.Int, isDry bool) (*u25
 func finalizeSwap(inputToken, outputToken string, resultAmountIn, resultAmountOut *u256.Uint, swapType string, tokenAmountLimit *u256.Uint, userOldWugnotBalance uint64) (string, string) {
     afterFee := handleSwapFee(outputToken, resultAmountOut, false)
 
-	userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+    userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
     if inputToken == consts.GNOT {
         unwrap(userNewWugnotBalance)
     } else if outputToken == consts.GNOT {
