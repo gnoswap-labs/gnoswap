@@ -13,7 +13,7 @@ import (
 func TestInitValues(t *testing.T) {
 	shouldEQ(t, deployedHeight, 123)
 	shouldEQ(t, int64(deployedAt.Unix()), 1234567890)
-	shouldEQ(t, lastMintedHeight, 0)
+	shouldEQ(t, lastMintedHeight, 123)
 }
 
 func TestMint(t *testing.T) {
@@ -23,11 +23,8 @@ func TestMint(t *testing.T) {
 
 	shouldEQ(t, TotalSupply(), 100_000_000_000_000)
 
-	Mint(emissionUsers) // + 1_755_136_938 (block 1 ~ 123)
-	shouldEQ(t, TotalSupply(), 100_000_000_000_000+1_755_136_938)
-
 	Mint(emissionUsers) // no block mined => no emission
-	shouldEQ(t, TotalSupply(), 100_000_000_000_000+1_755_136_938)
+	shouldEQ(t, TotalSupply(), 100_000_000_000_000)
 
 	std.TestSkipHeights(1)
 	Mint(emissionUsers) // + 14_269_406 (block 124)
@@ -36,7 +33,7 @@ func TestMint(t *testing.T) {
 	// 1h = 25_684_930_800
 	// 24h = 616_438_339_200
 
-	shouldEQ(t, TotalSupply(), 100_000_000_000_000+1_755_136_938+14_269_406)
+	shouldEQ(t, TotalSupply(), 100_000_000_000_000+14_269_406)
 }
 
 func TestMintNoPermission(t *testing.T) {
