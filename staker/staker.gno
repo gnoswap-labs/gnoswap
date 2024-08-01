@@ -172,7 +172,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 			_this.tokenAmountActualFull += toGive
 			positionExternal[tokenId][incentiveId] = _this
 
-			toUser := handleUnstakingFee(external.tokenPath, toGive, false)
+			toUser := handleUnstakingFee(external.tokenPath, toGive, false, tokenId, incentive.targetPoolPath)
 			println("  > position toUser(after staking fee)", toUser)
 			println("  > unstakingFee", toGive-toUser)
 			transferByRegisterCall(external.tokenPath, deposit.owner, toUser)
@@ -187,6 +187,11 @@ func CollectReward(tokenId uint64) string { // poolPath
 			transferByRegisterCall(external.tokenPath, consts.PROTOCOL_FEE_ADDR, left)
 			std.Emit(
 				"GNOSWAP_PROTOCOL_FEE",
+				"m_callType", callType(),
+				"m_origCaller", origCaller(),
+				"m_prevRealm", prevRealm(),
+				"p_tokenId", uint64ToStr(tokenId),
+				"poolPath", poolPath,
 				"reason", "unstaking_fee",
 				"token", external.tokenPath,
 				"amount", strconv.FormatUint(left, 10),
@@ -223,7 +228,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 	if toGive == 0 {
 		return poolPath
 	}
-	toUser := handleUnstakingFee(consts.GNS_PATH, toGive, true)
+	toUser := handleUnstakingFee(consts.GNS_PATH, toGive, true, tokenId, poolPath)
 	println(" > position toUser(after staking fee)", toUser)
 	println(" > unstakingFee", toGive-toUser)
 	gns.Transfer(a2u(deposit.owner), toUser)
@@ -245,6 +250,11 @@ func CollectReward(tokenId uint64) string { // poolPath
 	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), left)
 	std.Emit(
 		"GNOSWAP_PROTOCOL_FEE",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_tokenId", uint64ToStr(tokenId),
+		"poolPath", poolPath,
 		"reason", "gns_penalty",
 		"token", consts.GNS_PATH,
 		"amount", strconv.FormatUint(left, 10),

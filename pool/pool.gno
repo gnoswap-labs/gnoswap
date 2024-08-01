@@ -542,6 +542,10 @@ func CollectProtocol(
 	}
 	std.Emit(
 		"GNOSWAP_PROTOCOL_FEE",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"poolPath", GetPoolPath(token0Path, token1Path, fee),
 		"reason", "pool_protocol_fee",
 		"token", pool.token0Path,
 		"amount", strconv.FormatUint(uAmount0, 10),
@@ -553,6 +557,10 @@ func CollectProtocol(
 	}
 	std.Emit(
 		"GNOSWAP_PROTOCOL_FEE",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"poolPath", GetPoolPath(token0Path, token1Path, fee),
 		"reason", "pool_protocol_fee",
 		"token", pool.token1Path,
 		"amount", strconv.FormatUint(uAmount1, 10),

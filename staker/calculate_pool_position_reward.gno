@@ -165,6 +165,10 @@ func CalcPoolPosition() {
 			gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), send)
 			std.Emit(
 				"GNOSWAP_PROTOCOL_FEE",
+				"m_callType", callType(),
+				"m_origCaller", origCaller(),
+				"m_prevRealm", prevRealm(),
+				"poolPath", poolPath,
 				"reason", "emission_target_pool_no_staked",
 				"token", consts.GNS_PATH,
 				"amount", strconv.FormatUint(send, 10),

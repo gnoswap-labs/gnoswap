@@ -656,7 +656,7 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 	positions[tokenId] = position
 
 	// handle withdrawal fee
-	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(tokenId, token0, amount0, token1, amount1)
+	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(tokenId, token0, amount0, token1, amount1, position.poolKey)
 
 	std.Emit(
 		"GNOSWAP",

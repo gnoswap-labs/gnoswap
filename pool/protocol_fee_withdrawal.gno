@@ -2,6 +2,7 @@ package pool
 
 import (
 	"std"
+	"strconv"
 
 	"gno.land/r/gnoswap/consts"
 
@@ -26,6 +27,7 @@ func HandleWithdrawalFee(
 	_amount0 string, // uint256
 	token1Path string,
 	_amount1 string, // uint256
+	poolPath string,
 ) (string, string) { // uint256 x2
 	// only position contract can call this function
 	if std.PrevRealm().PkgPath() != consts.POSITION_PATH {
@@ -51,6 +53,11 @@ func HandleWithdrawalFee(
 	}
 	std.Emit(
 		"GNOSWAP_PROTOCOL_FEE",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_lpTokenId", strconv.FormatUint(tokenId, 10),
+		"p_poolPath", poolPath,
 		"reason", "withdrawal",
 		"token", token0Path,
 		"amount", feeAmount0.ToString(),
@@ -62,6 +69,11 @@ func HandleWithdrawalFee(
 	}
 	std.Emit(
 		"GNOSWAP_PROTOCOL_FEE",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_lpTokenId", strconv.FormatUint(tokenId, 10),
+		"p_poolPath", poolPath,
 		"reason", "withdrawal",
 		"token", token1Path,
 		"amount", feeAmount1.ToString(),
