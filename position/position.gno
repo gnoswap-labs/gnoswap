@@ -157,17 +157,18 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	checkDeadline(params.deadline)
 
 	pool := pl.GetPool(params.token0, params.token1, params.fee)
-
-	liqParams := newAddLiquidtyParams(
-		pl.GetPoolPath(params.token0, params.token1, params.fee),
-		params.tickLower,
-		params.tickUpper,
-		params.amount0Desired,
-		params.amount1Desired,
-		params.amount0Min,
-		params.amount1Min,
+	liquidity, amount0, amount1 := addLiquidity(
+		AddLiquidityParams{
+			poolKey:        pl.GetPoolPath(params.token0, params.token1, params.fee),
+			tickLower:      params.tickLower,
+			tickUpper:      params.tickUpper,
+			amount0Desired: params.amount0Desired,
+			amount1Desired: params.amount1Desired,
+			amount0Min:     params.amount0Min,
+			amount1Min:     params.amount1Min,
+		},
 	)
-	liquidity, amount0, amount1 := addLiquidity(liqParams)
+
 
 	tokenId := nextId
 	gnft.Mint(a2u(params.mintTo), tid(tokenId)) // owner, tokenId
@@ -178,19 +179,19 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
-	position := newPosition(
-		u256.Zero(),
-		std.GetOrigCaller(),
-		pl.GetPoolPath(params.token0, params.token1, params.fee),
-		params.tickLower,
-		params.tickUpper,
-		liquidity,
-		feeGrowthInside0LastX128,
-		feeGrowthInside1LastX128,
-		u256.Zero(),
-		u256.Zero(),
-		false,
-	)
+	position := Position{
+		nonce:                    u256.Zero(),
+		operator:                 std.GetOrigCaller(),
+		poolKey:                  pl.GetPoolPath(params.token0, params.token1, params.fee),
+		tickLower:                params.tickLower,
+		tickUpper:                params.tickUpper,
+		liquidity:                liquidity,
+		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
+		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+		tokensOwed0:              u256.Zero(),
+		tokensOwed1:              u256.Zero(),
+		burned:                   false,
+	}
 	positions[tokenId] = position
 
 	return tokenId, liquidity, amount0, amount1
@@ -216,11 +217,14 @@ func IncreaseLiquidity(
 	amount1Desired := u256.MustFromDecimal(_amount1Desired)
 	amount0Min := u256.MustFromDecimal(_amount0Min)
 	amount1Min := u256.MustFromDecimal(_amount1Min)
-
-	increaseLiquidityParams := newIncreaseLiquidityParams(
-		tokenId, amount0Desired, amount1Desired,
-		amount0Min, amount1Min, deadline,
-	)
+	increaseLiquidityParams := IncreaseLiquidityParams{
+		tokenId:        tokenId,
+		amount0Desired: amount0Desired,
+		amount1Desired: amount1Desired,
+		amount0Min:     amount0Min,
+		amount1Min:     amount1Min,
+		deadline:       deadline,
+	}
 
 	// wrap if target pool has wugnot
 	position := positions[tokenId]
@@ -278,16 +282,17 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	checkDeadline(params.deadline)
 
 	position := positions[params.tokenId]
-	liqParams := newAddLiquidtyParams(
-		position.poolKey,
-		position.tickLower,
-		position.tickUpper,
-		params.amount0Desired,
-		params.amount1Desired,
-		params.amount0Min,
-		params.amount1Min,
+	liquidity, amount0, amount1 := addLiquidity(
+		AddLiquidityParams{
+			poolKey:        position.poolKey,
+			tickLower:      position.tickLower,
+			tickUpper:      position.tickUpper,
+			amount0Desired: params.amount0Desired,
+			amount1Desired: params.amount1Desired,
+			amount0Min:     params.amount0Min,
+			amount1Min:     params.amount1Min,
+		},
 	)
-	liquidity, amount0, amount1 := addLiquidity(liqParams)
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
@@ -343,9 +348,14 @@ func DecreaseLiquidity(
 
 	amount0Min := u256.MustFromDecimal(_amount0Min)
 	amount1Min := u256.MustFromDecimal(_amount1Min)
-	decreaseLiquidityParams := newDecreaseLiquidityParams(
-		tokenId, liquidityRatio, amount0Min, amount1Min, deadline, unwrapResult,
-	)
+	decreaseLiquidityParams := DecreaseLiquidityParams{
+		tokenId:        tokenId,
+		liquidityRatio: liquidityRatio,
+		amount0Min:     amount0Min,
+		amount1Min:     amount1Min,
+		deadline:       deadline,
+		unwrapResult:   unwrapResult,
+	}
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
 
@@ -551,14 +561,17 @@ func Reposition(
 		wrap(ugnotSent)
 	}
 
-	liqParams := newAddLiquidtyParams(
-		position.poolKey, tickLower, tickUpper,
-		u256.MustFromDecimal(_amount0Desired),
-		u256.MustFromDecimal(_amount1Desired),
-		u256.MustFromDecimal(_amount0Min),
-		u256.MustFromDecimal(_amount1Min),
+	liquidity, amount0, amount1 := addLiquidity(
+		AddLiquidityParams{
+			poolKey:        position.poolKey,
+			tickLower:      tickLower,
+			tickUpper:      tickUpper,
+			amount0Desired: u256.MustFromDecimal(_amount0Desired),
+			amount1Desired: u256.MustFromDecimal(_amount1Desired),
+			amount0Min:     u256.Zero(),
+			amount1Min:     u256.Zero(),
+		},
 	)
-	liquidity, amount0, amount1 := addLiquidity(liqParams)
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), tickLower, tickUpper)
