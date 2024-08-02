@@ -84,6 +84,10 @@ func CreatePool(
 		gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.PROTOCOL_FEE_ADDR), poolCreationFee)
 		std.Emit(
 			"GNOSWAP_PROTOCOL_FEE",
+			"m_callType", callType(),
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
+			"poolPath", poolPath,
 			"reason", "pool_creation",
 			"token", consts.GNS_PATH,
 			"amount", strconv.FormatUint(poolCreationFee, 10),

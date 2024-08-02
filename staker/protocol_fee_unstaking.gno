@@ -21,6 +21,8 @@ func handleUnstakingFee(
 	tokenPath string,
 	amount uint64,
 	internal bool,
+	tokenId uint64,
+	poolPath string,
 ) uint64 {
 	if unstakingFee == 0 {
 		return amount
@@ -36,6 +38,11 @@ func handleUnstakingFee(
 		gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), feeAmount)
 		std.Emit(
 			"GNOSWAP_PROTOCOL_FEE",
+			"m_callType", callType(),
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
+			"lpTokenId", strconv.FormatUint(tokenId, 10),
+			"poolPath", poolPath,
 			"reason", "unstaking_fee",
 			"token", consts.GNS_PATH,
 			"amount", strconv.FormatUint(feeAmount, 10),
@@ -49,6 +56,11 @@ func handleUnstakingFee(
 		}
 		std.Emit(
 			"GNOSWAP_PROTOCOL_FEE",
+			"m_callType", callType(),
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
+			"lpTokenId", strconv.FormatUint(tokenId, 10),
+			"poolPath", poolPath,
 			"reason", "unstaking_fee",
 			"token", tokenPath,
 			"amount", strconv.FormatUint(feeAmount, 10),

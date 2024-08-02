@@ -43,6 +43,9 @@ func handleSwapFee(
 			banker.SendCoins(consts.ROUTER_ADDR, consts.PROTOCOL_FEE_ADDR, std.Coins{{"ugnot", int64(feeAmountUint64)}})
 			std.Emit(
 				"GNOSWAP_PROTOCOL_FEE",
+				"m_callType", callType(),
+				"m_origCaller", origCaller(),
+				"m_prevRealm", prevRealm(),
 				"reason", "router_fee",
 				"token", "ugnot",
 				"amount", strconv.FormatUint(feeAmountUint64, 10),
@@ -54,6 +57,9 @@ func handleSwapFee(
 			}
 			std.Emit(
 				"GNOSWAP_PROTOCOL_FEE",
+				"m_callType", callType(),
+				"m_origCaller", origCaller(),
+				"m_prevRealm", prevRealm(),
 				"reason", "router_fee",
 				"token", outputToken,
 				"amount", strconv.FormatUint(feeAmountUint64, 10),
