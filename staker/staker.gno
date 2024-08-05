@@ -294,7 +294,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 		"recipient", deposit.owner.String(),
 		"fullAmount", uint64ToStr(fullAmount),
 		"toGive", uint64ToStr(toGive),
-		"toUser", uint64ToStr(toUser),
+		"amount", uint64ToStr(toUser),
 		"unstakingFee", uint64ToStr(toGive-toUser),
 		"left", uint64ToStr(left),
 	)
