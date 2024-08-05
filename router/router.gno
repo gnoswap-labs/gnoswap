@@ -196,21 +196,33 @@ func handleMultiSwap(swapType string, route string, numHops int, amountSpecified
 	switch swapType {
 	case "EXACT_IN":
 		input, output, fee := getDataForMultiPath(route, 0) // first data
-		sp := newSwapParams(input, output, fee, std.GetOrigCaller(), amountSpecified)
+		swapParams := SwapParams{
+			tokenIn:         input,
+			tokenOut:        output,
+			fee:             fee,
+			recipient:       std.GetOrigCaller(),
+			amountSpecified: amountSpecified,
+		}
 
 		if isDry {
-			return multiSwapDry(*sp, 0, numHops, route) // iterate here
+			return multiSwapDry(swapParams, 0, numHops, route) // iterate here
 		}
 		return multiSwap(*sp, 0, numHops, route) // iterate here
 
 	case "EXACT_OUT":
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
-		sp := newSwapParams(input, output, fee, std.GetOrigCaller(), amountSpecified)
+		swapParams := SwapParams{
+			tokenIn:         input,
+			tokenOut:        output,
+			fee:             fee,
+			recipient:       std.GetOrigCaller(),
+			amountSpecified: amountSpecified,
+		}
 
 		if isDry {
-			return multiSwapNegativeDry(*sp, numHops-1, route) // iterate here
+			return multiSwapNegativeDry(swapParams, numHops-1, route) // iterate here
 		}
-		return multiSwapNegative(*sp, numHops-1, route) // iterate here
+		return multiSwapNegative(swapParams, numHops-1, route) // iterate here
 
 	default:
 		panic("[ROUTER] router.gno__handleMultiSwap() || unknown swapType")

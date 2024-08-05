@@ -63,16 +63,22 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 
 	// CALCULATE BACKWARD INFO
 	for {
-		swapParam := newSingleSwapParams(
-			params.tokenIn,
-			params.tokenOut,
-			params.fee,
-			params.amountSpecified,
+		amountIn, _ := singleSwapDry(
+			SingleSwapParams{
+				tokenIn:         params.tokenIn,
+				tokenOut:        params.tokenOut,
+				fee:             params.fee,
+				amountSpecified: params.amountSpecified,
+			},
 		)
 
-		amountIn, _ := singleSwapDry(*swapParam)
+		thisSwap := SingleSwapParams{
+			tokenIn:         params.tokenIn,
+			tokenOut:        params.tokenOut,
+			fee:             params.fee,
+			amountSpecified: params.amountSpecified,
+		}
 
-		thisSwap := *swapParam
 		swapInfo = append(swapInfo, thisSwap)
 
 		if currentPoolIndex == 0 {
