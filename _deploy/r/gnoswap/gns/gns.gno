@@ -3,7 +3,6 @@ package gns
 import (
 	"std"
 	"strings"
-	"time"
 
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ownable"
@@ -24,8 +23,6 @@ var (
 )
 
 var (
-	deployedHeight   int64
-	deployedAt       time.Time
 	lastMintedHeight int64
 	amountToEmission uint64
 )
@@ -39,13 +36,12 @@ func init() {
 
 	amountToEmission = MAXIMUM_SUPPLY - uint64(100_000_000_000_000)
 
-	height := std.GetHeight()
-	deployedHeight = height
-	deployedAt = time.Now()
-	lastMintedHeight = height
+	lastMintedHeight = std.GetHeight()
 }
 
 func TotalSupply() uint64 { return token.TotalSupply() }
+
+func TotalMinted() uint64 { return token.TotalSupply() - uint64(100_000_000_000_000) }
 
 func BalanceOf(owner pusers.AddressOrName) uint64 {
 	ownerAddr := users.Resolve(owner)
@@ -99,6 +95,12 @@ func Mint(address pusers.AddressOrName) {
 		panic("only emission contract can call Mint")
 	}
 
+	// if not yet initialized, mint 0 amount
+	if initialized == false {
+		println("GNS_not yet initialized")
+		return
+	}
+
 	// calculate gns emission amount for every block, and send by single call
 	// for this case, we assume that inside of block range gnoswap state hasn't changed.
 	nowHeight := std.GetHeight()
@@ -117,6 +119,25 @@ func Mint(address pusers.AddressOrName) {
 	for i := lastMintedHeight + 1; i <= nowHeight; i++ {
 		amount := GetAmountByHeight(i)
 		amountToMint += amount
+
+		year := GetHalvingYearByHeight(i)
+		halvingYearMintAmount[year] += amount
+
+		lastBlock := halvingYearBlock[year]
+		if i == lastBlock {
+			// halvingYearAmount[year] = amountToMint
+			// halvingYearMintAmount[year] = amountToMint
+			println(" > GNS_LAST_year:", year)
+			println(" > GNS_LAST_processing height:", i)
+			println(" > GNS_LAST_halvingYearAmount[1]:\t", halvingYearAmount[1])
+			println(" > GNS_LAST_halvingYearMintAmount[1]:\t", halvingYearMintAmount[1])
+			leftForThisYear := halvingYearAmount[year] - halvingYearMintAmount[year]
+			println(" > GNS_LAST_leftForThisYear:", leftForThisYear)
+			println()
+
+			amountToMint += leftForThisYear
+			halvingYearMintAmount[year] += leftForThisYear
+		}
 	}
 	err := banker.Mint(users.Resolve(address), amountToMint)
 	if err != nil {
@@ -126,14 +147,6 @@ func Mint(address pusers.AddressOrName) {
 	lastMintedHeight = nowHeight
 	println("GNS_lastMintedHeight:", lastMintedHeight)
 	println("GNS_amountToMint:", amountToMint)
-}
-
-func GetLastMintedHeight() int64 {
-	return lastMintedHeight
-}
-
-func GetDeployedHeight() int64 {
-	return deployedHeight
 }
 
 func checkErr(err error) {

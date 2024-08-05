@@ -1,0 +1,140 @@
+package gns
+
+import (
+	"testing"
+
+	"std"
+)
+
+func TestEmissionAmount(t *testing.T) {
+	shouldEQ(t, amountToEmission, 900_000_000_000_000)
+
+	sumAmount := uint64(0)
+	for _, amountYearly := range halvingYearAmount {
+		sumAmount += uint64(amountYearly)
+	}
+	shouldEQ(t, sumAmount, amountToEmission)
+}
+
+func TestSkip50Block(t *testing.T) {
+	std.TestSkipHeights(50)
+	shouldEQ(t, std.GetHeight(), 173) // 123 + 50
+
+	std.TestSetRealm(emissionRealm)
+
+	Mint(emissionUsers) // 14269406 * 50
+	shouldEQ(t, TotalMinted(), 713470300)
+}
+
+// Assume block time is 4s = 4000ms
+func TestSetAvgBlockTimeInMsTo4s(t *testing.T) {
+	// for block time 2s
+	shouldEQ(t, amountPerBlockPerHalvingYear[1], 14269406)
+	shouldEQ(t, halvingYearBlock[1], 15768123)
+
+	std.TestSetRealm(gsaRealm)
+	SetAvgBlockTimeInMs(4000)
+	std.TestSkipHeights(1)
+
+	std.TestSetRealm(emissionRealm)
+	Mint(emissionUsers)                            // 28538812
+	shouldEQ(t, TotalMinted(), 713470300+28538812) // 742009112
+
+	// for block time 4s
+	// amount == 28538812
+	shouldEQ(t, amountPerBlockPerHalvingYear[1], 28538812)
+	shouldEQ(t, halvingYearBlock[1], 7884148)
+	// formula
+	// orig_start = 123
+	// orig_1year = 15768123 ( 123 + 1 year block 15768000 )
+
+	// 50 block mined from L#20
+	// current = 173
+	// 15768123 - 173 = 15767950 // number of block left to next halving
+
+	// 15767950 * 2 = 31535900 // number of timestamp left to next halving
+	// 31535900 / 4 = 7883975 // based on 4s block, number of block left to next halving
+	// current(173) + above left(7883975) = 7884148
+}
+
+func TestReachHalfOfFirstHalving(t *testing.T) {
+	// current := 173
+	// nextHalving := 7884148
+	// 7884148 - 173 = 7883975
+	// 7883975 / 2 = 3941987.5
+
+	std.TestSkipHeights(3941987)
+	std.TestSetRealm(emissionRealm)
+	Mint(emissionUsers)
+	shouldEQ(t, TotalMinted(), 112500367908556)
+
+	year := GetHalvingYearByHeight(std.GetHeight())
+	shouldEQ(t, year, 1)
+
+	amount := GetAmountByHeight(std.GetHeight())
+	shouldEQ(t, amount, 28538812)
+
+	shouldEQ(t, std.GetHeight(), 3942161)
+
+	println("halvingYearMintAmount[1]: #1\t", halvingYearMintAmount[1])
+}
+
+func TestSetAvgBlockTimeInMsTo3s(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	SetAvgBlockTimeInMs(3000) // 3s
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, std.GetHeight(), 3942162)
+
+	std.TestSetRealm(emissionRealm)
+	Mint(emissionUsers)
+	shouldEQ(t, TotalMinted(), 112500382177962)
+}
+
+func TestReachFirstHalving(t *testing.T) {
+	shouldEQ(t, halvingYearBlock[1], 11826135)
+
+	std.TestSkipHeights(7883972) // 11826135-3942162-1
+	std.TestSetRealm(emissionRealm)
+	Mint(emissionUsers)
+	shouldEQ(t, TotalMinted(), 224999979538594)
+
+	year := GetHalvingYearByHeight(std.GetHeight())
+	shouldEQ(t, year, 1)
+
+	amount := GetAmountByHeight(std.GetHeight())
+	shouldEQ(t, amount, 14269406)
+
+	shouldEQ(t, std.GetHeight(), 11826134)
+
+	println("halvingYearMintAmount[1]: #1\t", halvingYearMintAmount[1])
+}
+
+func TestReachFirstHalvingOneMore(t *testing.T) {
+	std.TestSkipHeights(1)
+	std.TestSetRealm(emissionRealm)
+	Mint(emissionUsers)
+	shouldEQ(t, TotalMinted(), 225000000000000)
+
+	year := GetHalvingYearByHeight(std.GetHeight())
+	shouldEQ(t, year, 1)
+	shouldEQ(t, std.GetHeight(), 11826135)
+
+	println("halvingYearMintAmount[1]: #2\t", halvingYearMintAmount[1])
+}
+
+func TestReachFirstHalvingOneMoreMore(t *testing.T) {
+	std.TestSkipHeights(1)
+	std.TestSetRealm(emissionRealm)
+	Mint(emissionUsers)
+	shouldEQ(t, TotalMinted(), 225000014269406)
+
+	year := GetHalvingYearByHeight(std.GetHeight())
+	shouldEQ(t, year, 2)
+	shouldEQ(t, std.GetHeight(), 11826136)
+
+	amount := GetAmountByHeight(std.GetHeight())
+	shouldEQ(t, amount, 14269406)
+
+	println("halvingYearMintAmount[2]:\t", halvingYearMintAmount[2])
+}
