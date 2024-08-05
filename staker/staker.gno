@@ -168,6 +168,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 			}
 
 			_this := positionExternal[tokenId][incentiveId]
+			_this.tokenAmountX96 = u256.Zero()
 			_this.tokenAmountFull += fullAmount
 			_this.tokenAmountActualFull += toGive
 			positionExternal[tokenId][incentiveId] = _this
@@ -180,7 +181,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 			println("  > toUser:", toUser)
 
 			positionsExternalWarmUpAmount[tokenId][incentiveId] = warmUpAmount{} // JUST CLEAR
-			positionLastExternal[tokenId][incentiveId] = 0                       // JUST CLEAR
+			positionLastExternal[tokenId][incentiveId] = u256.Zero()             // JUST CLEAR
 
 			left := fullAmount - toGive
 			println("  > warm up left := fullAmount - toGive (to protocol_fee)", left)

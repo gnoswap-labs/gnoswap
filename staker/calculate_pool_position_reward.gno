@@ -31,7 +31,7 @@ var positionGns map[uint64]uint64 = make(map[uint64]uint64)
 var positionLastGns map[uint64]uint64 = make(map[uint64]uint64)
 
 // tokenId -> incentiveId -> lastRewardAmount
-var positionLastExternal map[uint64]map[string]uint64 = make(map[uint64]map[string]uint64)
+var positionLastExternal map[uint64]map[string]*u256.Uint = make(map[uint64]map[string]*u256.Uint)
 
 // incentiveId -> lastCalculatedTimestamp
 var externalLastCalculatedTimestamp map[string]int64 = make(map[string]int64)
@@ -40,10 +40,10 @@ var externalLastCalculatedTimestamp map[string]int64 = make(map[string]int64)
 var externalGns map[string]uint64 = make(map[string]uint64)
 
 type externalRewards struct {
-	incentiveId string
-	poolPath    string
-	tokenPath   string
-	tokenAmount uint64
+	incentiveId    string
+	poolPath       string
+	tokenPath      string
+	tokenAmountX96 *u256.Uint
 	//
 	tokenAmountFull       uint64
 	tokenAmountActualFull uint64
@@ -228,10 +228,13 @@ func CalcPoolPosition() {
 			rewardMathComputeInternalRewardAmount(tokenId)
 		}
 
+		println()
+		println()
+		println()
+
 		// ------------------------------------ EXTERNAL
 		// calculate position external rewards
 		incentiveIds := poolIncentives[poolPath]
-		println()
 		println("[ START ] CALC__EXTERNAL, TOKEN_ID", tokenId)
 		for _, incentiveId := range incentiveIds {
 			println("  > CALC__EXTERNAL_incentiveId:", incentiveId)
@@ -286,6 +289,8 @@ func CalcPoolPosition() {
 
 			currentPoolRewardX96 := u256.Zero().Mul(incentive.rewardPerBlockX96, u256.NewUint(uint64(blocksPassed)))
 			println("  > CALC__EXTERNAL_currentPoolReward:\t", currentPoolRewardX96.ToString())
+			println("    > block_passed:\t\t\t", blocksPassed)
+			println("    > rewardPerBlockX96:\t\t", incentive.rewardPerBlockX96.ToString())
 
 			positionAmountX96_x2 := u256.Zero().Mul(currentPoolRewardX96, liqRatioX96)
 			println("  > CALC__EXTERNAL_positionAmountX96_x2:", positionAmountX96_x2.ToString())
@@ -293,14 +298,9 @@ func CalcPoolPosition() {
 			positionAmountX96 := u256.Zero().Div(positionAmountX96_x2, _q96)
 			println("  > CALC__EXTERNAL_positionAmountX96:\t", positionAmountX96.ToString())
 
-			positionAmountX := u256.Zero().Div(positionAmountX96, _q96)
-			println("  > CALC__EXTERNAL_positionAmountX:\t", positionAmountX.ToString())
-
-			positionAmount := positionAmountX.Uint64()
-			println("  > CALC__EXTERNAL_positionAmount:\t", positionAmount)
-
-			if positionAmount > rewardLeft.Uint64() {
-				positionAmount = rewardLeft.Uint64()
+			rewardLeftX96 := new(u256.Uint).Mul(rewardLeft, _q96)
+			if positionAmountX96.Gt(rewardLeftX96) {
+				positionAmountX96 = rewardLeftX96
 			}
 
 			_, exist := positionLastExternal[tokenId]
@@ -332,20 +332,20 @@ func CalcPoolPosition() {
 			_, exist = positionExternal[tokenId][incentiveId]
 			if !exist {
 				positionExternal[tokenId][incentiveId] = externalRewards{
-					incentiveId: incentiveId,
-					poolPath:    poolPath,
-					tokenPath:   rewardToken,
-					tokenAmount: positionAmount,
+					incentiveId:    incentiveId,
+					poolPath:       poolPath,
+					tokenPath:      rewardToken,
+					tokenAmountX96: positionAmountX96,
 				}
-				positionLastExternal[tokenId][incentiveId] = 0
+				positionLastExternal[tokenId][incentiveId] = u256.Zero()
 			} else {
-				tempLastExternalAmount := positionExternal[tokenId][incentiveId].tokenAmount
+				tempLastExternalAmount := positionExternal[tokenId][incentiveId].tokenAmountX96
 				positionLastExternal[tokenId][incentiveId] = tempLastExternalAmount
 				positionExternal[tokenId][incentiveId] = externalRewards{
-					incentiveId: incentiveId,
-					poolPath:    poolPath,
-					tokenPath:   rewardToken,
-					tokenAmount: tempLastExternalAmount + positionAmount,
+					incentiveId:    incentiveId,
+					poolPath:       poolPath,
+					tokenPath:      rewardToken,
+					tokenAmountX96: new(u256.Uint).Add(tempLastExternalAmount, positionAmountX96),
 				}
 			}
 

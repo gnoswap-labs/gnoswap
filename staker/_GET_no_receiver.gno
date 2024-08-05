@@ -478,7 +478,7 @@ func GetPrintExternalInfo() string {
 			externalIncentive.RewardPerBlock = new(u256.Uint).Div(incentive.rewardPerBlockX96, u256.MustFromDecimal(consts.Q96)).ToString()
 			externalIncentive.Refundee = incentive.refundee
 
-			externalIncentive.tokenAmount = external.tokenAmount
+			externalIncentive.tokenAmountX96 = external.tokenAmountX96
 
 			fullAmount, toGive := rewardMathComputeExternalRewardAmount(lpTokenId, incentiveId)
 			externalIncentive.tokenAmountFull += fullAmount
@@ -509,6 +509,8 @@ func GetPrintExternalInfo() string {
 }
 
 func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Node {
+	_q96 := u256.MustFromDecimal(consts.Q96)
+
 	externalPositions := make([]*json.Node, 0)
 
 	for _, externalPosition := range positions {
@@ -523,7 +525,8 @@ func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Nod
 				"rewardPerBlockX96":     json.StringNode("rewardPerBlockX96", incentive.RewardPerBlockX96),
 				"rewardPerBlock":        json.StringNode("rewardPerBlock", incentive.RewardPerBlock),
 				"refundee":              json.StringNode("refundee", incentive.Refundee.String()),
-				"tokenAmount":           json.NumberNode("tokenAmount", float64(incentive.tokenAmount)),
+				"tokenAmountX96":        json.StringNode("tokenAmountX96", incentive.tokenAmountX96.ToString()),
+				"tokenAmount":           json.NumberNode("tokenAmount", float64(new(u256.Uint).Div(incentive.tokenAmountX96, _q96).Uint64())),
 				"tokenAmountFull":       json.NumberNode("tokenAmountFull", float64(incentive.tokenAmountFull)),
 				"tokenAmountActualFull": json.NumberNode("tokenAmountActualFull", float64(incentive.tokenAmountActualFull)),
 			}))
@@ -562,9 +565,9 @@ type ApiExternalDebugIncentive struct {
 	RewardPerBlockX96 string      `json:"rewardPerBlockX96"`
 	RewardPerBlock    string      `json:"rewardPerBlock"`
 	Refundee          std.Address `json:"refundee"`
-
 	// FROM externalRewards
-	tokenAmount           uint64 `json:"tokenAmount"`
-	tokenAmountFull       uint64 `json:"tokenAmountFull"`
-	tokenAmountActualFull uint64 `json:"tokenAmountActualFull"`
+	tokenAmountX96        *u256.Uint `json:"tokenAmountX96"`
+	tokenAmount           uint64     `json:"tokenAmount"`
+	tokenAmountFull       uint64     `json:"tokenAmountFull"`
+	tokenAmountActualFull uint64     `json:"tokenAmountActualFull"`
 }
