@@ -57,6 +57,19 @@ var (
 	lastCalculatedBalance uint64
 )
 
+// CalcPoolPosition calculates and updates the position of pools and rewards for stakers.
+//
+// It performs the following operations:
+//
+//   1. Calculates newly minted GNS tokens and distributes them among pool tiers.
+//   2. Updates pool GNS balances and accumulated GNS for each pool.
+//   3. Calculates and updates internal rewards for each staker's position.
+//   4. Calculates and updates external rewards from incentives for each staker's postion.
+//
+// This function is meant to be called periodically to keep the pool postions
+// and reward calculations up-to-date.
+//
+// It uses the current block height and its timestamp to determine the calculation period.
 func CalcPoolPosition() {
 	println()
 	println("=== [ START START START ] CALC__CalcPoolPosition")
@@ -81,8 +94,6 @@ func CalcPoolPosition() {
 	stakerGnsBalance -= externalGnsAmount()
 	println("CALC__stakerGnsBalance - externalGnsAmount", stakerGnsBalance)
 	println("CALC__lastCalculatedBalance:", lastCalculatedBalance)
-
-	// mintedGnsAmount := en.GetLastDistributeToStaker()
 
 	mintedGnsAmount := stakerGnsBalance - lastCalculatedBalance
 	println("CALC__mintedGnsAmount:", mintedGnsAmount)
