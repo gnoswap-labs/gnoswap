@@ -12,18 +12,22 @@ import (
 	"gno.land/r/gnoswap/consts"
 )
 
-// GetPoolWithTiers returns list of pools with their tiers
+// GetPoolWithTiers returns a map of pools and their associated tier information
 func GetPoolWithTiers() map[string]InternalTier {
 	return poolTiers
 }
 
-// SetPoolTier sets the tier of the pool
+// SetPoolTier sets the tier of a specified pool
 //
-// Panics if any of the following conditions are met:
-// - caller is not admin
-// - pool does not exist
-// - pool exists in poolTiers
-// - tier is not valid
+// Parameters:
+//  - pool (string): The path of the pool to set the tier for
+//  - tier (uint64): The tier level to set (must be between 1 and 3)
+//
+// Panics:
+//  - Caller is not admin or governance address
+//  - Pool does not exist
+//  - Pool already exists in poolTiers
+//  - Tier is not valid (not between 1 and 3)
 func SetPoolTier(pool string, tier uint64) {
 	en.MintAndDistributeGns()
 	CalcPoolPosition()
@@ -52,7 +56,7 @@ func SetPoolTier(pool string, tier uint64) {
 	}
 
 	// check if tier is valid
-	validTier(tier)
+	mustValidTier(tier)
 
 	poolTiers[pool] = InternalTier{
 		tier:           tier,
@@ -71,13 +75,17 @@ func SetPoolTier(pool string, tier uint64) {
 	)
 }
 
-// ChangePoolTier changes the tier of the pool
+// ChangePoolTier changes the tier of an existing pool in poolTiers
 //
-// Panics if any of the following conditions are met:
-// - caller is not admin
-// - pool does not exist in poolTiers
-// - tier is not valid
-// - pool is default pool
+// Parameters:
+//  - pool (string): The path of the pool to change the tier for
+//  - tier (uint64): The new tier level to set (must be between 1 and 3)
+//
+// Panics:
+//  - Caller is not admin or governance address
+//  - Pool does not exist in poolTiers
+//  - Tier is not valid (not between 1 and 3)
+//  - Pool is default pool (MUST_EXISTS_IN_TIER_1)
 func ChangePoolTier(pool string, tier uint64) {
 	// because we changed poolTiers, previous calculation should be based on last tier
 	// from next calculation, it will be based on new tier
@@ -91,7 +99,7 @@ func ChangePoolTier(pool string, tier uint64) {
 	}
 
 	// check if tier is valid
-	validTier(tier)
+	mustValidTier(tier)
 
 	// CAN'T CHANGE TIER OF THIS GNS:GNOT 0.3%
 	if pool == MUST_EXISTS_IN_TIER_1 {
@@ -126,9 +134,12 @@ func ChangePoolTier(pool string, tier uint64) {
 
 // RemovePoolTier removes the pool from poolTiers
 //
-// Panics if any of the following conditions are met:
-// - caller is not admin
-// - pool is default pool
+// Parameters:
+//  - pool (string): The path of the pool to remove from poolTiers
+//
+// Panics:
+//  - Caller is not admin or governance address
+//  - Pool is default pool (MUST_EXISTS_IN_TIER_1)
 func RemovePoolTier(pool string) {
 	// because we remove pool from poolTiers, this should be final calculation
 	en.MintAndDistributeGns()
@@ -161,7 +172,8 @@ func RemovePoolTier(pool string) {
 	)
 }
 
-func validTier(tier uint64) {
+// mustValidTier checks if the provided tier is valid (between 1 and 3)
+func mustValidTier(tier uint64) {
 	if tier < 1 || tier > 3 {
 		panic(ufmt.Sprintf("tier(%d) is not valid", tier))
 	}
