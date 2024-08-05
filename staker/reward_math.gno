@@ -409,22 +409,19 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 		if external.incentiveId == incentiveId {
 			println("   > REWARD__EXTERNAL_incentiveId:", incentiveId)
 
-			tokenAmount := external.tokenAmount
-			toDistribute := tokenAmount - positionLastExternal[tokenId][incentiveId]
-			println("   > REWARD__EXTERNAL_tokenAmount:", tokenAmount)
-			println("   > REWARD__EXTERNAL_positionLastExternal[tokenId][incentiveId]:", positionLastExternal[tokenId][incentiveId])
-			println("   > REWARD__EXTERNAL_toDistribute:", toDistribute)
-			if tokenAmount < positionLastExternal[tokenId][incentiveId] {
+			tokenAmountX96 := external.tokenAmountX96
+			toDistributeX96 := new(u256.Uint).Sub(tokenAmountX96, positionLastExternal[tokenId][incentiveId])
+			println("   > REWARD__EXTERNAL_tokenAmountX96:", tokenAmountX96.ToString())
+			println("   > REWARD__EXTERNAL_positionLastExternal[tokenId][incentiveId]:", positionLastExternal[tokenId][incentiveId].ToString())
+			println("   > REWARD__EXTERNAL_toDistributeX96:", toDistributeX96.ToString())
+			if tokenAmountX96.Lt(positionLastExternal[tokenId][incentiveId]) {
 				panic("THIS SHOULD NOT HAPPEN_EXTERNAL #1")
 			}
 
 			lastCalculatedHeightU64 := uint64(positionsExternalLastCalculatedHeight[tokenId][incentiveId])
 			println("   > REWARD__EXTERNAL_lastCalculatedHeightU64:", lastCalculatedHeightU64)
 
-			q96 := u256.MustFromDecimal(consts.Q96)
-			toDistributeX96 := new(u256.Uint).Mul(u256.NewUint(toDistribute), q96)
 			avgExternalBlockAmountX96 := new(u256.Uint).Div(toDistributeX96, u256.NewUint(uint64(std.GetHeight())-lastCalculatedHeightU64))
-			println("   > REWARD__EXTERNAL_toDistribute:", toDistribute)
 			println("   > REWARD__EXTERNAL_toDistirbuteX96:", toDistributeX96.ToString())
 			println("   > REWARD__EXTERNAL_uint64(std.GetHeight())-lastCalculatedHeightU64):", uint64(std.GetHeight())-lastCalculatedHeightU64)
 			println("   > REWARD__EXTERNAL_avgExternalBlockAmountX96:", avgExternalBlockAmountX96.ToString())
@@ -665,9 +662,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 			println()
 			println("  > REWARD_==================================")
 			println("  > REWARD__EXTERNAL_tokenId:", tokenId)
-			println("  > REWARD__EXTERNAL_toDistribute:", toDistribute)
 			println("  > REWARD__EXTERNAL_toDistirbuteX96:", toDistributeX96.ToString())
-			// println("  > REWARD__EXTERNAL_gnsAmountToGive", gnsAmountToGive)
 
 			println("  > REWARD__EXTERNAL_currentHeight:", currentHeight)
 			println("  > REWARD__EXTERNAL_stakeHeight:", deposits[tokenId].stakeHeight)
