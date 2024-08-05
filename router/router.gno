@@ -207,7 +207,7 @@ func handleMultiSwap(swapType string, route string, numHops int, amountSpecified
 		if isDry {
 			return multiSwapDry(swapParams, 0, numHops, route) // iterate here
 		}
-		return multiSwap(*sp, 0, numHops, route) // iterate here
+		return multiSwap(swapParams, 0, numHops, route) // iterate here
 
 	case "EXACT_OUT":
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
