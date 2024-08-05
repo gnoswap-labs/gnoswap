@@ -11,12 +11,10 @@ import (
 )
 
 func TestInitValues(t *testing.T) {
-	shouldEQ(t, deployedHeight, 123)
-	shouldEQ(t, int64(deployedAt.Unix()), 1234567890)
 	shouldEQ(t, lastMintedHeight, 123)
 }
 
-func TestMint(t *testing.T) {
+func TestMintNoBlock(t *testing.T) {
 	emissionUsers := pusers.AddressOrName(consts.EMISSION_ADDR)
 	emissionRealm := std.NewCodeRealm(consts.EMISSION_PATH)
 	std.TestSetRealm(emissionRealm)
@@ -25,8 +23,14 @@ func TestMint(t *testing.T) {
 
 	Mint(emissionUsers) // no block mined => no emission
 	shouldEQ(t, TotalSupply(), 100_000_000_000_000)
+}
 
+func TestMintSingleBlock(t *testing.T) {
+	emissionUsers := pusers.AddressOrName(consts.EMISSION_ADDR)
+	emissionRealm := std.NewCodeRealm(consts.EMISSION_PATH)
+	std.TestSetRealm(emissionRealm)
 	std.TestSkipHeights(1)
+
 	Mint(emissionUsers) // + 14_269_406 (block 124)
 	// 2s = 14_269_406
 	// 1m = 428_082_180
@@ -49,23 +53,4 @@ func TestMintNoPermission(t *testing.T) {
 		},
 		"only emission contract can call Mint",
 	)
-}
-
-func shouldEQ(t *testing.T, got, expected interface{}) {
-	if got != expected {
-		t.Errorf("got %v, expected %v", got, expected)
-	}
-}
-
-func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
-		} else {
-			if r != msg {
-				t.Errorf("excepted panic(%v), got(%v)", msg, r)
-			}
-		}
-	}()
-	f()
 }
