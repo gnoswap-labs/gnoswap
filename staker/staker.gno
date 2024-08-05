@@ -440,6 +440,8 @@ func CreateExternalIncentive(
 				"p_rewardAmount", incentive.rewardAmount.ToString(),
 				"p_startTimestamp", int64ToStr(startTimestamp),
 				"p_endTimestamp", int64ToStr(endTimestamp),
+				"incentiveId", incentiveId,
+				"external", "updated",
 			)
 
 			return
@@ -488,6 +490,8 @@ func CreateExternalIncentive(
 		"p_rewardAmount", _rewardAmount,
 		"p_startTimestamp", int64ToStr(startTimestamp),
 		"p_endTimestamp", int64ToStr(endTimestamp),
+		"incentiveId", incentiveId,
+		"external", "created",
 	)
 }
 

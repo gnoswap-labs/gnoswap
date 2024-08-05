@@ -305,7 +305,7 @@ func CalcPoolPosition() {
 
 			_, exist := positionLastExternal[tokenId]
 			if !exist {
-				positionLastExternal[tokenId] = make(map[string]uint64)
+				positionLastExternal[tokenId] = make(map[string]*u256.Uint)
 			}
 
 			_, exist = positionsExternalLastCalculatedHeight[tokenId]
