@@ -169,7 +169,6 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 		},
 	)
 
-
 	tokenId := nextId
 	gnft.Mint(a2u(params.mintTo), tid(tokenId)) // owner, tokenId
 	nextId++
@@ -568,8 +567,8 @@ func Reposition(
 			tickUpper:      tickUpper,
 			amount0Desired: u256.MustFromDecimal(_amount0Desired),
 			amount1Desired: u256.MustFromDecimal(_amount1Desired),
-			amount0Min:     u256.Zero(),
-			amount1Min:     u256.Zero(),
+			amount0Min:     u256.MustFromDecimal(_amount0Min),
+			amount1Min:     u256.MustFromDecimal(_amount1Min),
 		},
 	)
 
