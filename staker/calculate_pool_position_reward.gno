@@ -57,6 +57,7 @@ var (
 	lastCalculatedBalance uint64
 )
 
+// XXX: need to improve nested iteration
 // CalcPoolPosition calculates and updates the position of pools and rewards for stakers.
 //
 // It performs the following operations:
