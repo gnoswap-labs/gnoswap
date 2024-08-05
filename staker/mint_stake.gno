@@ -17,18 +17,18 @@ import (
 // MintAndStake mints LP tokens and stakes them in a single transaction.
 //
 // Parameters:
-//   - token0, token1: Addresses of the two tokens in the liquidity pool.
-//   - fee: The fee tier of the pool.
-//   - tickLower, tickUpper: The lower and upper tick boundaries for the position.
-//   - amount0Desired, amount1Desired: Desired amounts of token0 and token1 to add as liquidity.
-//   - amount0Min, amount1Min: Minimum amounts of token0 and token1 to add as liquidity.
-//   - deadline: The timestamp by which the transaction must be executed.
+//   - token0, token1 (string): Addresses of the two tokens in the liquidity pool.
+//   - fee (string): The fee tier of the pool.
+//   - tickLower, tickUpper (string): The lower and upper tick boundaries for the position.
+//   - amount0Desired, amount1Desired (string): Desired amounts of token0 and token1 to add as liquidity.
+//   - amount0Min, amount1Min (string): Minimum amounts of token0 and token1 to add as liquidity.
+//   - deadline (int64): The timestamp by which the transaction must be executed.
 //
 // Returns:
-//   - tokenId: The ID of the minted NFT representing the liquidity position.
-//   - liquidity: The amount of liquidity added to the pool.
-//   - amount0, amount1: The actual amounts of token0 and token1 used to provide liquidity.
-//   - poolPath: The path identifier for the liquidity pool.
+//   - tokenId          (uint64): The ID of the minted NFT representing the liquidity position.
+//   - liquidity        (string): The amount of liquidity added to the pool.
+//   - amount0, amount1 (string): The actual amounts of token0 and token1 used to provide liquidity.
+//   - poolPath         (string): The path identifier for the liquidity pool.
 //
 // Note: All amount parameters are strings representing *u256.Uint values.
 func MintAndStake(

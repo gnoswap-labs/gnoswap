@@ -61,10 +61,10 @@ var (
 //
 // It performs the following operations:
 //
-//   1. Calculates newly minted GNS tokens and distributes them among pool tiers.
-//   2. Updates pool GNS balances and accumulated GNS for each pool.
-//   3. Calculates and updates internal rewards for each staker's position.
-//   4. Calculates and updates external rewards from incentives for each staker's postion.
+//  1. Calculates newly minted GNS tokens and distributes them among pool tiers.
+//  2. Updates pool GNS balances and accumulated GNS for each pool.
+//  3. Calculates and updates internal rewards for each staker's position.
+//  4. Calculates and updates external rewards from incentives for each staker's postion.
 //
 // This function is meant to be called periodically to keep the pool postions
 // and reward calculations up-to-date.
@@ -381,7 +381,7 @@ func CalcPoolPosition() {
 	println()
 
 	println("[ START ] CALC__FINAL")
-	for poolPath, _ := range poolTiers {
+	for poolPath := range poolTiers {
 		amount := poolLastTmpGns[poolPath]
 		println(" > CALC__FINAL_POOL", poolPath)
 		println(" > CALC__FINAL_amount", amount)

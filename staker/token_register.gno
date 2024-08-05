@@ -17,10 +17,12 @@ type GRC20Interface interface {
 }
 
 var (
+	// registered is a map of registered GRC20 interfaces keyed by package path
 	registered = make(map[string]GRC20Interface)
 	locked     = false // mutex
 )
 
+// GetRegisteredTokens returns a slice of all registered tokjen package paths
 func GetRegisteredTokens() []string {
 	tokens := make([]string, 0, len(registered))
 	for k := range registered {
@@ -29,6 +31,11 @@ func GetRegisteredTokens() []string {
 	return tokens
 }
 
+// RegisterGRC20Interface registers a GRC20 interface for a given package path.
+//
+// Panics:
+//   - If the caller is not the authorized TOKEN_REGISTER address
+//   - If the package path is already registered
 func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	caller := std.GetOrigCaller()
 	if caller != consts.TOKEN_REGISTER {
@@ -45,6 +52,10 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	registered[pkgPath] = igrc20
 }
 
+// UnregisterGRC20Interface removes a registered GRC20 interface for a given package path.
+//
+// Panics:
+//   - If the caller is not the authorized TOKEN_REGISTER address
 func UnregisterGRC20Interface(pkgPath string) {
 	// only admin can unregister
 	caller := std.GetOrigCaller()

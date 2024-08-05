@@ -12,50 +12,57 @@ import (
 	en "gno.land/r/gnoswap/emission"
 )
 
+// LpTokenReward represents the rewards associated with a specific LP token
 type LpTokenReward struct {
-	LpTokenId uint64   `json:"lpTokenId"`
-	Address   string   `json:"address"`
+	LpTokenId uint64   `json:"lpTokenId"` // The ID of the LP token
+	Address   string   `json:"address"`   // The address associated with the LP token
 	Rewards   []Reward `json:"rewards"`
 }
 
+// Reward represents a single reward for a staked LP token
 type Reward struct {
-	IncentiveType     string `json:"incentiveType"`
-	IncentiveId       string `json:"incentiveId"`
-	TargetPoolPath    string `json:"targetPoolPath"`
-	RewardTokenPath   string `json:"rewardTokenPath"`
-	RewardTokenAmount uint64 `json:"rewardTokenAmount"`
-	StakeTimestamp    int64  `json:"stakeTimestamp"`
-	StakeHeight       int64  `json:"stakeHeight"`
-	IncentiveStart    int64  `json:"incentiveStart"`
+	IncentiveType     string `json:"incentiveType"`     // The type of incentive (INTERNAL or EXTERNAL)
+	IncentiveId       string `json:"incentiveId"`       // The unique identifier of the incentive
+	TargetPoolPath    string `json:"targetPoolPath"`    // The path of the target pool for the reward
+	RewardTokenPath   string `json:"rewardTokenPath"`   // The pathe of the reward token
+	RewardTokenAmount uint64 `json:"rewardTokenAmount"` // The amount of the reward token
+	StakeTimestamp    int64  `json:"stakeTimestamp"`    // The timestamp when the LP token was staked
+	StakeHeight       int64  `json:"stakeHeight"`       // The block height when the LP token was staked
+	IncentiveStart    int64  `json:"incentiveStart"`    // The timestamp when the incentive started
 }
 
+// Stake represents a single stake
 type Stake struct {
-	TokenId        uint64      `json:"tokenId"`
-	Owner          std.Address `json:"owner"`
-	NumberOfStakes uint64      `json:"numberOfStakes"`
-	StakeTimestamp int64       `json:"stakeTimestamp"`
-	StakeHeight    int64       `json:"stakeHeight"`
-	TargetPoolPath string      `json:"targetPoolPath"`
+    TokenId        uint64      `json:"tokenId"`        // The ID of the staked LP token
+    Owner          std.Address `json:"owner"`          // The address of the owner of the staked LP token
+    NumberOfStakes uint64      `json:"numberOfStakes"` // The number of times this LP token has been staked
+    StakeTimestamp int64       `json:"stakeTimestamp"` // The timestamp when the LP token was staked
+    StakeHeight    int64       `json:"stakeHeight"`    // The block height when the LP token was staked
+    TargetPoolPath string      `json:"targetPoolPath"` // The path of the target pool for the stake
 }
 
+// ResponseQueryBase contains basic information about a query response.
 type ResponseQueryBase struct {
-	Height    int64 `json:"height"`
-	Timestamp int64 `json:"timestamp"`
+    Height    int64 `json:"height"`    // The block height at the time of the query
+    Timestamp int64 `json:"timestamp"` // The timestamp at the time of the query
 }
 
+// ResponseApiGetRewards represents the API response for getting rewards.
 type ResponseApiGetRewards struct {
-	Stat     ResponseQueryBase `json:"stat"`
-	Response []LpTokenReward   `json:"response"`
+    Stat     ResponseQueryBase `json:"stat"`     // Basic query information
+    Response []LpTokenReward   `json:"response"` // A slice of LpTokenReward structs
 }
 
+// ResponseApiGetRewardByLpTokenId represents the API response for getting rewards for a specific LP token.
 type ResponseApiGetRewardByLpTokenId struct {
-	Stat     ResponseQueryBase `json:"stat"`
-	Response LpTokenReward     `json:"response"`
+    Stat     ResponseQueryBase `json:"stat"`     // Basic query information
+    Response LpTokenReward     `json:"response"` // The LpTokenReward for the specified LP token
 }
 
+// ResponseApiGetStakes represents the API response for getting stakes.
 type ResponseApiGetStakes struct {
-	Stat     ResponseQueryBase `json:"stat"`
-	Response []Stake           `json:"response"`
+    Stat     ResponseQueryBase `json:"stat"`     // Basic query information
+    Response []Stake           `json:"response"` // A slice of Stake structs
 }
 
 func ApiGetRewards() string {
