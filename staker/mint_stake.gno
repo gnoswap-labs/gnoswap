@@ -14,8 +14,23 @@ import (
 	"gno.land/p/demo/grc/grc721"
 )
 
-// MintAndStake mints and stakes the LP token
-// If minting is successful, it mints LP token to staker not user
+// MintAndStake mints LP tokens and stakes them in a single transaction.
+//
+// Parameters:
+//   - token0, token1: Addresses of the two tokens in the liquidity pool.
+//   - fee: The fee tier of the pool.
+//   - tickLower, tickUpper: The lower and upper tick boundaries for the position.
+//   - amount0Desired, amount1Desired: Desired amounts of token0 and token1 to add as liquidity.
+//   - amount0Min, amount1Min: Minimum amounts of token0 and token1 to add as liquidity.
+//   - deadline: The timestamp by which the transaction must be executed.
+//
+// Returns:
+//   - tokenId: The ID of the minted NFT representing the liquidity position.
+//   - liquidity: The amount of liquidity added to the pool.
+//   - amount0, amount1: The actual amounts of token0 and token1 used to provide liquidity.
+//   - poolPath: The path identifier for the liquidity pool.
+//
+// Note: All amount parameters are strings representing *u256.Uint values.
 func MintAndStake(
 	token0 string,
 	token1 string,
@@ -42,7 +57,7 @@ func MintAndStake(
 
 		// send it over to position to wrap
 		banker := std.GetBanker(std.BankerTypeRealmSend)
-		banker.SendCoins(consts.STAKER_ADDR, consts.POSITION_ADDR, std.Coins{{"ugnot", int64(ugnotSent)}})
+		banker.SendCoins(consts.STAKER_ADDR, consts.POSITION_ADDR, std.Coins{{Denom: "ugnot", Amount: int64(ugnotSent)}})
 	}
 
 	tokenId, liquidity, amount0, amount1 := pn.Mint(

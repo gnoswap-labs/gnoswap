@@ -22,14 +22,21 @@ import (
 )
 
 var (
-	// internal
-	poolTiers map[string]InternalTier = make(map[string]InternalTier) // poolPath -> InternalTier
+	/* internal */
 
-	// external
-	poolIncentives map[string][]string          = make(map[string][]string)          // poolPath => []incentiveId
-	incentives     map[string]ExternalIncentive = make(map[string]ExternalIncentive) // incentiveId => ExternalIncentive
+	// poolTiers stores internal tier information for each pool
+	poolTiers map[string]InternalTier = make(map[string]InternalTier)
 
-	deposits map[uint64]Deposit = make(map[uint64]Deposit) // tokenId => Deposit
+	/* external */
+
+	// poolIncentives maps pool paths to their associated incentive IDs
+	poolIncentives map[string][]string          = make(map[string][]string)
+
+	// incentives stores external incentive for each incentive ID
+	incentives     map[string]ExternalIncentive = make(map[string]ExternalIncentive)
+
+	// deposits stores deposit information for each tokenId
+	deposits map[uint64]Deposit = make(map[uint64]Deposit)
 )
 
 const (
@@ -54,12 +61,20 @@ func init() {
 	}
 }
 
-// StakeToken stakes the lp token to the staker contract
+// StakeToken stakes the LP token to the staker contract
+//
+// Parameters:
+//  - tokenID (uint64): The ID of the LP token to stake
+//
+// Returnes:
+//  - poolPath     (string): The path of the pool associated with the staked token
+//  - token0Amount (string): The amount of token0 in the position
+//  - token1Amount (string): The amount of token1 in the position
 //
 // Panics:
-// - tokenId already staked
-// - tokenId has no liquidity
-// - tokenId is not owned by the caller or staker
+//  - tokenId already staked
+//  - tokenId has no liquidity
+//  - tokenId is not owned by the caller or staker
 func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
 	en.MintAndDistributeGns()
 	CalcPoolPosition()
@@ -126,11 +141,17 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 	return poolPath, token0Amount, token1Amount
 }
 
-// CollectReward collects staked reward from tokenId
+// CollectReward collects staked rewards for the given tokenId
+//
+// Parameters:
+//  - tokenId (uint64): The ID of the LP token to collect rewards for
+//
+// Returns:
+//  - poolPath (string): The path of the pool associated with the collected rewards
 //
 // Panics:
-// - token is not staked
-// - caller is not owner of lp token
+//  - token is not staked
+//  - caller is not owner of lp token
 func CollectReward(tokenId uint64) string { // poolPath
 	en.MintAndDistributeGns()
 	CalcPoolPosition()
@@ -291,10 +312,18 @@ func CollectReward(tokenId uint64) string { // poolPath
 	return poolPath
 }
 
-// UnstakeToken unstakes the lp token from the staker and collects all reward from tokenId
+// UnstakeToken unstakes the LP token from the staker and collects all reward from tokenId
+//
+// Parameters:
+//  - tokenId (uint64): The ID of the LP token to unstake
+//
+// Returns:
+//  - poolPath     (string): The path of the pool associated with the unstaked token
+//  - token0Amount (string): The amount of token0 in the unstaked position
+//  - token1Amount (string): The amount of token1 in the unstaked position
 //
 // Panics:
-// - token is not staked
+//  - If the token is not staked
 func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
 	en.MintAndDistributeGns()
 	CalcPoolPosition()
@@ -335,10 +364,17 @@ func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0
 
 // CreateExternalIncentive creates an external incentive for the targetPoolPath
 //
+// Parameters:
+//  - targetPoolPath (string): The path of the pool to create the incentive for
+//  - rewardToken    (string): The token path of the reward token (must be registered)
+//  - _rewardAmount  (string): The amount of reward token to provide as incentive
+//  - startTimestamp (int64): The start timestamp of the incentive
+//  - endTimestamp   (int64): The end timestamp of the incentive
+//
 // Panics:
-// - startTimestamp is not in the future
-// - externalDuration is not 90, 180, or 365 days
-// - user doesn't have enough balance to provide as reward
+//  - If startTimestamp is not in the future
+//  - If externalDuration is not 90, 180, or 365 days
+//  - If user doesn't have enough balance to provide as reward
 func CreateExternalIncentive(
 	targetPoolPath string,
 	rewardToken string, // token path should be registered
@@ -490,12 +526,20 @@ func CreateExternalIncentive(
 	)
 }
 
-// EndExternalIncentive ends the external incentive
-// Only refundee or admin can end incentive
+// EndExternalIncentive ends the external incentive and refunds the remaining reward
+//
+// Parameters:
+//  - _refundee	     (string): The address of the refundee
+//  - targetPoolPath (string): The path of the pool associated with the incentive
+//  - rewardToken    (string): The token path of the reward token
+//  - startTimestamp (int64): The start timestamp of the incentive
+//  - endTimestamp   (int64): The end timestamp of the incentive
+//  - height         (int64): The height of the block when the incentive was created
 //
 // Panics:
-// - incentive expiration time is not over
-// - reward token amount is not enough to refund
+//  - If incentive expiration time is not over
+//  - If reward token amount is not enough to refund
+//  - If the caller is neither the refundee nor the admin
 func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string, startTimestamp, endTimestamp, height int64) {
 	refundee := std.Address(_refundee)
 

@@ -422,6 +422,7 @@ func removeDupeStr(strSlice []string) []string {
 
 	return result
 }
+
 func externalGnsAmount() uint64 {
 	amount := uint64(0)
 	for _, v := range externalGns {
