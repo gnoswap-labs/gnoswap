@@ -214,7 +214,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 				"m_prevRealm", prevRealm(),
 				"lpTokenId", uint64ToStr(tokenId),
 				"poolPath", poolPath,
-				"reason", "unstaking_fee",
+				"reason", "unstaking_fee_penalty",
 				"token", external.tokenPath,
 				"amount", strconv.FormatUint(left, 10),
 			)

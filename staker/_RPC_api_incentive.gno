@@ -7,6 +7,8 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
+	u256 "gno.land/p/gnoswap/uint256"
+
 	en "gno.land/r/gnoswap/emission"
 	pl "gno.land/r/gnoswap/pool"
 
@@ -167,6 +169,8 @@ func ApiGetExternalIncentives() string {
 	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
+	updateExternalIncentiveLeftAmount()
+
 	apiExternalIncentives := []ApiExternalIncentive{}
 
 	for incentiveId, incentive := range incentives {
@@ -229,6 +233,8 @@ func ApiGetExternalIncentives() string {
 func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 	en.MintAndDistributeGns()
 	CalcPoolPosition()
+
+	updateExternalIncentiveLeftAmount()
 
 	apiExternalIncentives := []ApiExternalIncentive{}
 
@@ -296,6 +302,8 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 	en.MintAndDistributeGns()
 	CalcPoolPosition()
+
+	updateExternalIncentiveLeftAmount()
 
 	apiExternalIncentives := []ApiExternalIncentive{}
 
@@ -547,4 +555,18 @@ func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
 	}
 
 	return "0"
+}
+
+func updateExternalIncentiveLeftAmount() {
+	// external incentive reward left update
+	for tokenId, positionWarmUpAmount := range positionsExternalWarmUpAmount {
+		for incentiveId, warmUpAmount := range positionWarmUpAmount {
+
+			full := warmUpAmount.full100 + warmUpAmount.full70 + warmUpAmount.full50 + warmUpAmount.full30
+
+			incentive := incentives[incentiveId]
+			incentive.rewardLeft = new(u256.Uint).Sub(incentive.rewardLeft, u256.NewUint(full))
+			incentives[incentiveId] = incentive
+		}
+	}
 }
