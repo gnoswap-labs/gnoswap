@@ -26,6 +26,45 @@ func GetPoolsWithTierStruct() map[string]InternalTier {
 	return poolTiers
 }
 
+// GetPoolsWithEmissionGnsAmount returns a list of string that consists of pool path, tier, and the amount of GNS to be distributed as gns emission
+func GetPoolsWithEmissionGnsAmount() []string {
+	var poolWithAmount []string
+
+	const MAX_EMISSION_SUPPLY = 675_000_000_000_000 // uGNS
+
+	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(MAX_EMISSION_SUPPLY)
+
+	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
+
+	for poolPath, internal := range poolTiers {
+		tier := internal.tier
+		tierAmount := uint64(0)
+
+		if tier == 1 {
+			tierAmount = tier1Amount / tier1Num
+		} else if tier == 2 {
+			tierAmount = tier2Amount / tier2Num
+		} else if tier == 3 {
+			tierAmount = tier3Amount / tier3Num
+		}
+
+		poolWithAmount = append(poolWithAmount, ufmt.Sprintf("%s_%d_%d", poolPath, tier, tierAmount))
+	}
+
+	return poolWithAmount
+}
+
+// GetEachTierPoolNum returns a list of string that consists of each tier and the number of pools in that tier
+func GetEachTierPoolNum() []string {
+	numTier1, numTier2, numTier3 := getNumPoolTiers()
+
+	tier1 := ufmt.Sprintf("%d_%d", 1, numTier1)
+	tier2 := ufmt.Sprintf("%d_%d", 2, numTier2)
+	tier3 := ufmt.Sprintf("%d_%d", 3, numTier3)
+
+	return []string{tier1, tier2, tier3}
+}
+
 // SetPoolTier sets the tier of a specified pool
 //
 // Parameters:
