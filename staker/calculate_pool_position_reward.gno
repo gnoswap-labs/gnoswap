@@ -382,7 +382,7 @@ func CalcPoolPosition() {
 	println()
 
 	println("[ START ] CALC__FINAL")
-	for poolPath := range poolTiers {
+	for poolPath, _ := range poolTiers {
 		amount := poolLastTmpGns[poolPath]
 		println(" > CALC__FINAL_POOL", poolPath)
 		println(" > CALC__FINAL_amount", amount)
