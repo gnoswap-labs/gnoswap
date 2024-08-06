@@ -577,6 +577,8 @@ func GetPrintExternalInfo() string {
 	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
+	updateExternalIncentiveLeftAmount()
+
 	externalDebug := ApiExternalDebugInfo{}
 	externalDebug.Height = std.GetHeight()
 	externalDebug.Time = time.Now().Unix()
@@ -597,6 +599,7 @@ func GetPrintExternalInfo() string {
 
 			incentive := incentives[incentiveId]
 			externalIncentive.RewardAmount = incentive.rewardAmount.ToString()
+			externalIncentive.RewardLeft = incentive.rewardLeft.ToString()
 			externalIncentive.StartTimestamp = incentive.startTimestamp
 			externalIncentive.EndTimestamp = incentive.endTimestamp
 			externalIncentive.RewardPerBlockX96 = incentive.rewardPerBlockX96.ToString()
@@ -645,6 +648,7 @@ func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Nod
 				"poolPath":              json.StringNode("poolPath", incentive.PoolPath),
 				"rewardToken":           json.StringNode("rewardToken", incentive.RewardToken),
 				"rewardAmount":          json.StringNode("rewardAmount", incentive.RewardAmount),
+				"rewardLeft":            json.StringNode("rewardLeft", incentive.RewardLeft),
 				"startTimestamp":        json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
 				"endTimestamp":          json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
 				"rewardPerBlockX96":     json.StringNode("rewardPerBlockX96", incentive.RewardPerBlockX96),
@@ -685,6 +689,7 @@ type ApiExternalDebugIncentive struct {
 	PoolPath          string      `json:"poolPath"`
 	RewardToken       string      `json:"rewardToken"`
 	RewardAmount      string      `json:"rewardAmount"`
+	RewardLeft        string      `json:"rewardLeft"`
 	StartTimestamp    int64       `json:"startTimestamp"`
 	EndTimestamp      int64       `json:"endTimestamp"`
 	RewardPerBlockX96 string      `json:"rewardPerBlockX96"`
