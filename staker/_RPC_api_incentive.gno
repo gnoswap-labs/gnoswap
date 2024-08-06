@@ -559,7 +559,7 @@ func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
 
 func updateExternalIncentiveLeftAmount() {
 	// external incentive reward left update
-	for tokenId, positionWarmUpAmount := range positionsExternalWarmUpAmount {
+	for _, positionWarmUpAmount := range positionsExternalWarmUpAmount {
 		for incentiveId, warmUpAmount := range positionWarmUpAmount {
 
 			full := warmUpAmount.full100 + warmUpAmount.full70 + warmUpAmount.full50 + warmUpAmount.full30
