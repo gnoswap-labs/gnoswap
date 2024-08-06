@@ -7,10 +7,18 @@ import (
 	en "gno.land/r/gnoswap/emission"
 	pl "gno.land/r/gnoswap/pool"
 
+	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/consts"
 )
+
+type ApiPoolWithEmissionGnsAmount struct {
+	PoolPath       string `json:"poolPath"`
+	Tier           uint64 `json:"tier"`
+	Amount         uint64 `json:"amount"`
+	StartTimestamp int64  `json:"startTimestamp"`
+}
 
 // GetPoolsWithTier returns a list of string that consists of pool path and tier
 func GetPoolsWithTier() []string {
@@ -26,9 +34,9 @@ func GetPoolsWithTierStruct() map[string]InternalTier {
 	return poolTiers
 }
 
-// GetPoolsWithEmissionGnsAmount returns a list of string that consists of pool path, tier, and the amount of GNS to be distributed as gns emission
-func GetPoolsWithEmissionGnsAmount() []string {
-	var poolWithAmount []string
+// GetPoolsWithEmissionGnsAmount returns a json formatted list of string that consists of pool path, tier, and the amount of GNS to be distributed as gns emission
+func GetPoolsWithEmissionGnsAmount() string {
+	var internals []ApiPoolWithEmissionGnsAmount
 
 	const MAX_EMISSION_SUPPLY = 675_000_000_000_000 // uGNS
 
@@ -48,10 +56,45 @@ func GetPoolsWithEmissionGnsAmount() []string {
 			tierAmount = tier3Amount / tier3Num
 		}
 
-		poolWithAmount = append(poolWithAmount, ufmt.Sprintf("%s_%d_%d", poolPath, tier, tierAmount))
+		internalIncentive := ApiPoolWithEmissionGnsAmount{}
+		internalIncentive.PoolPath = poolPath
+		internalIncentive.Tier = tier
+		internalIncentive.Amount = tierAmount
+		internalIncentive.StartTimestamp = internal.startTimestamp
+
+		internals = append(internals, internalIncentive)
 	}
 
-	return poolWithAmount
+	// STAT NODE
+	_stat := json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
+
+	// RESPONSE (ARRAY) NODE
+	responses := json.ArrayNode("", []*json.Node{})
+	for _, internal := range internals {
+		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
+			"poolPath":       json.StringNode("poolPath", internal.PoolPath),
+			"rewardToken":    json.StringNode("rewardToken", consts.GNS_PATH),
+			"startTimestamp": json.NumberNode("startTimestamp", float64(internal.StartTimestamp)),
+			"tier":           json.NumberNode("tier", float64(internal.Tier)),
+			"amount":         json.NumberNode("amount", float64(internal.Amount)),
+		})
+		responses.AppendArray(_incentiveNode)
+	}
+
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     _stat,
+		"response": responses,
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__GetPoolsWithEmissionGnsAmount() || json marshal error: %s", err.Error()))
+	}
+
+	return string(b)
 }
 
 // GetEachTierPoolNum returns a list of string that consists of each tier and the number of pools in that tier
