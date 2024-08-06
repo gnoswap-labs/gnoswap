@@ -12,22 +12,31 @@ import (
 	"gno.land/r/gnoswap/consts"
 )
 
-// GetPoolWithTiers returns a map of pools and their associated tier information
-func GetPoolWithTiers() map[string]InternalTier {
+// GetPoolsWithTier returns a list of string that consists of pool path and tier
+func GetPoolsWithTier() []string {
+	var pools []string
+	for pool, tier := range poolTiers {
+		pools = append(pools, ufmt.Sprintf("%s_%d", pool, tier.tier))
+	}
+	return pools
+}
+
+// GetPoolsWithTierStruct returns a map of pools and their associated tier information
+func GetPoolsWithTierStruct() map[string]InternalTier {
 	return poolTiers
 }
 
 // SetPoolTier sets the tier of a specified pool
 //
 // Parameters:
-//  - pool (string): The path of the pool to set the tier for
-//  - tier (uint64): The tier level to set (must be between 1 and 3)
+//   - pool (string): The path of the pool to set the tier for
+//   - tier (uint64): The tier level to set (must be between 1 and 3)
 //
 // Panics:
-//  - Caller is not admin or governance address
-//  - Pool does not exist
-//  - Pool already exists in poolTiers
-//  - Tier is not valid (not between 1 and 3)
+//   - Caller is not admin or governance address
+//   - Pool does not exist
+//   - Pool already exists in poolTiers
+//   - Tier is not valid (not between 1 and 3)
 func SetPoolTier(pool string, tier uint64) {
 	en.MintAndDistributeGns()
 	CalcPoolPosition()
@@ -78,14 +87,14 @@ func SetPoolTier(pool string, tier uint64) {
 // ChangePoolTier changes the tier of an existing pool in poolTiers
 //
 // Parameters:
-//  - pool (string): The path of the pool to change the tier for
-//  - tier (uint64): The new tier level to set (must be between 1 and 3)
+//   - pool (string): The path of the pool to change the tier for
+//   - tier (uint64): The new tier level to set (must be between 1 and 3)
 //
 // Panics:
-//  - Caller is not admin or governance address
-//  - Pool does not exist in poolTiers
-//  - Tier is not valid (not between 1 and 3)
-//  - Pool is default pool (MUST_EXISTS_IN_TIER_1)
+//   - Caller is not admin or governance address
+//   - Pool does not exist in poolTiers
+//   - Tier is not valid (not between 1 and 3)
+//   - Pool is default pool (MUST_EXISTS_IN_TIER_1)
 func ChangePoolTier(pool string, tier uint64) {
 	// because we changed poolTiers, previous calculation should be based on last tier
 	// from next calculation, it will be based on new tier
@@ -135,11 +144,11 @@ func ChangePoolTier(pool string, tier uint64) {
 // RemovePoolTier removes the pool from poolTiers
 //
 // Parameters:
-//  - pool (string): The path of the pool to remove from poolTiers
+//   - pool (string): The path of the pool to remove from poolTiers
 //
 // Panics:
-//  - Caller is not admin or governance address
-//  - Pool is default pool (MUST_EXISTS_IN_TIER_1)
+//   - Caller is not admin or governance address
+//   - Pool is default pool (MUST_EXISTS_IN_TIER_1)
 func RemovePoolTier(pool string) {
 	// because we remove pool from poolTiers, this should be final calculation
 	en.MintAndDistributeGns()
