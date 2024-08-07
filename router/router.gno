@@ -16,6 +16,7 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	en "gno.land/r/gnoswap/emission"
+	sr "gno.land/r/gnoswap/staker"
 )
 
 // SwapRoute swaps the input token to the output token and returns the result amount
@@ -40,14 +41,15 @@ func SwapRoute(
 	_tokenAmountLimit string, // uint256
 ) (string, string) { // tokneIn, tokenOut
 	if swapType != "EXACT_IN" && swapType != "EXACT_OUT" {
-        panic("[ROUTER] Unknown swapType")
-    }
+		panic("[ROUTER] Unknown swapType")
+	}
 
-	if common.GetLimitCaller() && std.PrevRealm().PkgPath() != ""{
+	if common.GetLimitCaller() && std.PrevRealm().PkgPath() != "" {
 		panic("[ROUTER] router.gno__SwapRoute() || only user can call this function")
 	}
 
-	en.MintAndDistributeGns()	
+	en.MintAndDistributeGns()
+	sr.CalcPoolPosition()
 
 	amountSpecified := i256.MustFromDecimal(_amountSpecified)
 	tokenAmountLimit := u256.MustFromDecimal(_tokenAmountLimit)
@@ -87,69 +89,69 @@ func SwapRoute(
 }
 
 func validateInput(amountSpecified *i256.Int, swapType string, routes, quotes []string) {
-    if amountSpecified.IsZero() || amountSpecified.IsNeg() {
-        panic("[ROUTER] Invalid amountSpecified")
-    }
+	if amountSpecified.IsZero() || amountSpecified.IsNeg() {
+		panic("[ROUTER] Invalid amountSpecified")
+	}
 
-    if len(routes) < 1 || len(routes) > 7 {
-        panic("[ROUTER] Invalid route length")
-    }
+	if len(routes) < 1 || len(routes) > 7 {
+		panic("[ROUTER] Invalid route length")
+	}
 
-    if len(routes) != len(quotes) {
-        panic("[ROUTER] Mismatch between routes and quotes length")
-    }
+	if len(routes) != len(quotes) {
+		panic("[ROUTER] Mismatch between routes and quotes length")
+	}
 
 	var quotesSum int64
-    for _, quote := range quotes {
-        intQuote, _ := strconv.Atoi(quote)
-        quotesSum += int64(intQuote)
-    }
+	for _, quote := range quotes {
+		intQuote, _ := strconv.Atoi(quote)
+		quotesSum += int64(intQuote)
+	}
 
-    if quotesSum != 100 {
-        panic("[ROUTER] Quote sum is not 100")
-    }
+	if quotesSum != 100 {
+		panic("[ROUTER] Quote sum is not 100")
+	}
 }
 
 func handleGNOT(inputToken, outputToken string) (uint64, uint64) {
-    userOldWugnotBalance := uint64(0)
-    if inputToken == consts.GNOT {
-        sent := std.GetOrigSend()
-        ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
-        wrap(ugnotSentByUser)
-        userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-    } else if outputToken == consts.GNOT {
-        userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-    }
-    return userOldWugnotBalance, 0
+	userOldWugnotBalance := uint64(0)
+	if inputToken == consts.GNOT {
+		sent := std.GetOrigSend()
+		ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
+		wrap(ugnotSentByUser)
+		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+	} else if outputToken == consts.GNOT {
+		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+	}
+	return userOldWugnotBalance, 0
 }
 
 func processRoutes(routes, quotes []string, amountSpecified *i256.Int, swapType string) (*u256.Uint, *u256.Uint) {
-    resultAmountIn := u256.Zero()
-    resultAmountOut := u256.Zero()
+	resultAmountIn := u256.Zero()
+	resultAmountOut := u256.Zero()
 
-    for i, route := range routes {
-        numHops := strings.Count(route, "*POOL*") + 1
-        quote, _ := strconv.Atoi(quotes[i])
+	for i, route := range routes {
+		numHops := strings.Count(route, "*POOL*") + 1
+		quote, _ := strconv.Atoi(quotes[i])
 
-        if numHops < 1 || numHops > 3 {
-            panic(ufmt.Sprintf("[ROUTER] Invalid number of hops: %d", numHops))
-        }
+		if numHops < 1 || numHops > 3 {
+			panic(ufmt.Sprintf("[ROUTER] Invalid number of hops: %d", numHops))
+		}
 
-        toSwap := i256.Zero().Mul(amountSpecified, i256.NewInt(int64(quote)))
-        toSwap = toSwap.Div(toSwap, i256.NewInt(100))
+		toSwap := i256.Zero().Mul(amountSpecified, i256.NewInt(int64(quote)))
+		toSwap = toSwap.Div(toSwap, i256.NewInt(100))
 
-        var amountIn, amountOut *u256.Uint
-        if numHops == 1 {
-            amountIn, amountOut = handleSingleSwap(route, toSwap, false)
-        } else {
-            amountIn, amountOut = handleMultiSwap(swapType, route, numHops, toSwap, false)
-        }
+		var amountIn, amountOut *u256.Uint
+		if numHops == 1 {
+			amountIn, amountOut = handleSingleSwap(route, toSwap, false)
+		} else {
+			amountIn, amountOut = handleMultiSwap(swapType, route, numHops, toSwap, false)
+		}
 
-        resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
-        resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
-    }
+		resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
+		resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
+	}
 
-    return resultAmountIn, resultAmountOut
+	return resultAmountIn, resultAmountOut
 }
 
 func handleSingleSwap(route string, amountSpecified *i256.Int, isDry bool) (*u256.Uint, *u256.Uint) {
@@ -168,28 +170,28 @@ func handleSingleSwap(route string, amountSpecified *i256.Int, isDry bool) (*u25
 }
 
 func finalizeSwap(inputToken, outputToken string, resultAmountIn, resultAmountOut *u256.Uint, swapType string, tokenAmountLimit *u256.Uint, userOldWugnotBalance uint64) (string, string) {
-    afterFee := handleSwapFee(outputToken, resultAmountOut, false)
+	afterFee := handleSwapFee(outputToken, resultAmountOut, false)
 
-    userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-    if inputToken == consts.GNOT {
-        unwrap(userNewWugnotBalance)
-    } else if outputToken == consts.GNOT {
-        userRecvWugnot := uint64(userNewWugnotBalance - userOldWugnotBalance)
-        unwrap(userRecvWugnot)
-    }
+	userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+	if inputToken == consts.GNOT {
+		unwrap(userNewWugnotBalance)
+	} else if outputToken == consts.GNOT {
+		userRecvWugnot := uint64(userNewWugnotBalance - userOldWugnotBalance)
+		unwrap(userRecvWugnot)
+	}
 
-    if swapType == "EXACT_IN" {
-        if !tokenAmountLimit.Lte(afterFee) {
-            panic(ufmt.Sprintf("[ROUTER] Too few received for user (expected minimum: %s, actual: %s)", tokenAmountLimit.ToString(), afterFee.ToString()))
-        }
-    } else {
-        if !resultAmountIn.Lte(tokenAmountLimit) {
-            panic(ufmt.Sprintf("[ROUTER] Too much spent for user (expected maximum: %s, actual: %s)", tokenAmountLimit.ToString(), resultAmountIn.ToString()))
-        }
-    }
+	if swapType == "EXACT_IN" {
+		if !tokenAmountLimit.Lte(afterFee) {
+			panic(ufmt.Sprintf("[ROUTER] Too few received for user (expected minimum: %s, actual: %s)", tokenAmountLimit.ToString(), afterFee.ToString()))
+		}
+	} else {
+		if !resultAmountIn.Lte(tokenAmountLimit) {
+			panic(ufmt.Sprintf("[ROUTER] Too much spent for user (expected maximum: %s, actual: %s)", tokenAmountLimit.ToString(), resultAmountIn.ToString()))
+		}
+	}
 
-    intAmountOut := i256.FromUint256(afterFee)
-    return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString()
+	intAmountOut := i256.FromUint256(afterFee)
+	return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString()
 }
 
 func handleMultiSwap(swapType string, route string, numHops int, amountSpecified *i256.Int, isDry bool) (*u256.Uint, *u256.Uint) {
