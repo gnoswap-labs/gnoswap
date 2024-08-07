@@ -15,8 +15,8 @@ import (
 
 	"gno.land/r/demo/wugnot"
 
+	en "gno.land/r/gnoswap/emission"
 	sr "gno.land/r/gnoswap/staker"
-	en "gno.land/r/gnoswap/v2/emission"
 )
 
 // SwapRoute swaps the input token to the output token and returns the result amount
