@@ -5,18 +5,18 @@ import (
 	"testing"
 	"time"
 
-	pl "gno.land/r/gnoswap/pool"
-	pn "gno.land/r/gnoswap/position"
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
 
-	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/v2/gnft"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 )
 
 func init() {
@@ -48,7 +48,7 @@ func TestPoolCreatePool(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	std.TestSkipHeights(1)
 
-	pl.CreatePool("gno.land/r/gnoswap/gns", "gno.land/r/demo/wugnot", 3000, "79228162514264337593543950336") // tick 0 ≈ x1
+	pl.CreatePool("gno.land/r/gnoswap/v2/gns", "gno.land/r/demo/wugnot", 3000, "79228162514264337593543950336") // tick 0 ≈ x1
 	pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006")                                   // tick 10_000 ≈ x2.7
 	std.TestSkipHeights(2)
 
@@ -60,7 +60,7 @@ func TestPoolCreatePool(t *testing.T) {
 
 func TestPositionMintPos01Tier01(t *testing.T) {
 	// mint position in tier 1 pool
-	// gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000
+	// gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000
 
 	std.TestSetRealm(gsaRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -68,7 +68,7 @@ func TestPositionMintPos01Tier01(t *testing.T) {
 	std.TestSkipHeights(2)
 
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-		"gno.land/r/gnoswap/gns", // token0
+		"gno.land/r/gnoswap/v2/gns", // token0
 		"gno.land/r/demo/wugnot", // token1
 		fee3000,                  // fee
 		int32(1020),              // tickLower
@@ -246,7 +246,7 @@ func TestCollectReward01(t *testing.T) {
 	CollectReward(1)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 0)
+	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000"], 0)
 	shouldEQ(t, positionGns[1], 0)
 }
 
@@ -262,12 +262,12 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 16053085)
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 1478310461)
 
-	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 0)
+	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000"], 0)
 	shouldEQ(t, positionGns[1], 0)
 }
 
 func TestUnstakeToken02(t *testing.T) {
-	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:3000"], 0)
+	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000"], 0)
 	shouldEQ(t, positionGns[1], 0)
 
 	shouldEQ(t, poolGns["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"], 16053082)

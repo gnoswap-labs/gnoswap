@@ -6,9 +6,9 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 )
 
 func TestTransferGnsNoPermission(t *testing.T) {
@@ -21,7 +21,7 @@ func TestTransferGnsNoPermission(t *testing.T) {
 		func() {
 			TransferGns(dummy, 1000)
 		},
-		"[COMMUNITY_POOL] community_pool.gno__TransferGns() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1egdt2l7xjcrm6qjwyd3g60z6e9cnr75pmcuasc) can set transfer gns, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+		"[COMMUNITY_POOL] community_pool.gno__TransferGns() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1cu4dufdlzu0l9pekkqhw6mjnrxkp3z7ykst09d) can set transfer gns, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 

@@ -1,11 +1,11 @@
 package position
 
 import (
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/v2/common"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
-	pl "gno.land/r/gnoswap/pool"
+	pl "gno.land/r/gnoswap/v2/pool"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )

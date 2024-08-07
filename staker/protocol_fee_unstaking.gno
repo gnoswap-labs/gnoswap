@@ -4,13 +4,13 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 )
 
 var (

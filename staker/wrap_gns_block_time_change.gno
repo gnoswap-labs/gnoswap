@@ -5,11 +5,11 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
-	en "gno.land/r/gnoswap/emission"
+	en "gno.land/r/gnoswap/v2/emission"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 )
 
 func GnsSetAvgBlockTimeInMs(ms int64) {

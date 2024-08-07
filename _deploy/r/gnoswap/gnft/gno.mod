@@ -1,4 +1,4 @@
-module gno.land/r/gnoswap/gnft
+module gno.land/r/gnoswap/v2/gnft
 
 require (
 	gno.land/p/demo/grc/grc721 v0.0.0-latest

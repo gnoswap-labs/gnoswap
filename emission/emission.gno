@@ -3,7 +3,7 @@ package emission
 import (
 	"std"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 )
 
 // lastExecutedHeight is a flag to prevent multiple calling MintAndDistributeGns in the same block height

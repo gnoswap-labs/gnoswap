@@ -42,7 +42,7 @@ func TestSetWarmUp_NoPrivileges(t *testing.T) {
 		func() {
 			SetWarmUp(100, 100)
 		},
-		"[STAKER] reward_math_warm_up.gno__SetWarmUp() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1egdt2l7xjcrm6qjwyd3g60z6e9cnr75pmcuasc) can set warm up period, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+		"[STAKER] reward_math_warm_up.gno__SetWarmUp() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1cu4dufdlzu0l9pekkqhw6mjnrxkp3z7ykst09d) can set warm up period, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 

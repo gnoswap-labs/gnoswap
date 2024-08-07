@@ -24,41 +24,41 @@ const (
 
 // CONTRACT PATH & ADDRESS
 const (
-	POOL_PATH string      = "gno.land/r/gnoswap/pool"
-	POOL_ADDR std.Address = "g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v"
+	POOL_PATH string      = "gno.land/r/gnoswap/v2/pool"
+	POOL_ADDR std.Address = "g126swhfaq2vyvvjywevhgw7lv9hg8qan93dasu8"
 
-	POSITION_PATH string      = "gno.land/r/gnoswap/position"
-	POSITION_ADDR std.Address = "g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye"
+	POSITION_PATH string      = "gno.land/r/gnoswap/v2/position"
+	POSITION_ADDR std.Address = "g1vsm68lq9cpn7x507s6gh59anmx86kxfhzyszu2"
 
-	ROUTER_PATH string      = "gno.land/r/gnoswap/router"
-	ROUTER_ADDR std.Address = "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp"
+	ROUTER_PATH string      = "gno.land/r/gnoswap/v2/router"
+	ROUTER_ADDR std.Address = "g1cnz5gm2l09pm2k6rknjjar9a2w53fdhk4yjzy5"
 
-	STAKER_PATH string      = "gno.land/r/gnoswap/staker"
-	STAKER_ADDR std.Address = "g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3"
+	STAKER_PATH string      = "gno.land/r/gnoswap/v2/staker"
+	STAKER_ADDR std.Address = "g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l"
 
-	GOV_PATH string      = "gno.land/r/gnoswap/gov"
-	GOV_ADDR std.Address = "g1egdt2l7xjcrm6qjwyd3g60z6e9cnr75pmcuasc"
+	GOV_PATH string      = "gno.land/r/gnoswap/v2/gov"
+	GOV_ADDR std.Address = "g1cu4dufdlzu0l9pekkqhw6mjnrxkp3z7ykst09d"
 
-	GNS_PATH string      = "gno.land/r/gnoswap/gns"
-	GNS_ADDR std.Address = "g13ffa5r3mqfxu3s7ejl02scq9536wt6c2t789dm"
+	GNS_PATH string      = "gno.land/r/gnoswap/v2/gns"
+	GNS_ADDR std.Address = "g1ttcyeq0u5f6npysfxvew7tzucvwqy0qjp04p95"
 
-	GNFT_PATH string      = "gno.land/r/gnoswap/gnft"
-	GNFT_ADDR std.Address = "g1mclfz2dn4lnez0lcjwgz67hh72rdafjmufvfmw"
+	GNFT_PATH string      = "gno.land/r/gnoswap/v2/gnft"
+	GNFT_ADDR std.Address = "g1rn4pederer0qlw2f7k72ddywde6pv3v3vl69nc"
 
 	WUGNOT_PATH string      = "gno.land/r/demo/wugnot"
 	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
-	EMISSION_PATH string      = "gno.land/r/gnoswap/emission"
-	EMISSION_ADDR std.Address = "g177jkk4xx79uledh9xedqkq4ht4ef9t6amxwjeq"
+	EMISSION_PATH string      = "gno.land/r/gnoswap/v2/emission"
+	EMISSION_ADDR std.Address = "g1mfvpsj55gssep3wkt2t04d6dc3yfs9py5qquft"
 
-	PROTOCOL_FEE_PATH string      = "gno.land/r/gnoswap/protocol_fee"
-	PROTOCOL_FEE_ADDR std.Address = "g1r340tuven27z8wq50u8d20eqrsj470082682tp"
+	PROTOCOL_FEE_PATH string      = "gno.land/r/gnoswap/v2/protocol_fee"
+	PROTOCOL_FEE_ADDR std.Address = "g1397dea8xlfv5858xzhsly7k998xm2zlvrm93t2"
 
-	COMMUNITY_POOL_PATH string      = "gno.land/r/gnoswap/community_pool"
-	COMMUNITY_POOL_ADDR std.Address = "g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7"
+	COMMUNITY_POOL_PATH string      = "gno.land/r/gnoswap/v2/community_pool"
+	COMMUNITY_POOL_ADDR std.Address = "g1r79m0scwztcdvk3c6sy4rjrtv3rnnzrs9ddh9w"
 
-	X_GNS_PATH string      = "gno.land/r/gnoswap/x_gns"
-	X_GNS_ADDR std.Address = "g1gea2eevsk8r5qfu683kajv5nnkpscvpxuchr4q"
+	X_GNS_PATH string      = "gno.land/r/gnoswap/v2/x_gns"
+	X_GNS_ADDR std.Address = "g1dd0t56nqh5a468chr7vkgp5ftzmquvpja5l7qh"
 )
 
 // NUMBER

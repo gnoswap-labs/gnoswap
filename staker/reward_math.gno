@@ -7,9 +7,9 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
-	pos "gno.land/r/gnoswap/position"
+	pos "gno.land/r/gnoswap/v2/position"
 )
 
 type warmUpAmount struct {

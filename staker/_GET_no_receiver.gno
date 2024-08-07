@@ -9,10 +9,10 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/consts"
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v2/gns"
 
-	en "gno.land/r/gnoswap/emission"
+	en "gno.land/r/gnoswap/v2/emission"
 )
 
 // StakerPoolIncentives returns the list of incentive IDs for a given pool

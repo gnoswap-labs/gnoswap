@@ -7,7 +7,7 @@ import (
 
 	pusers "gno.land/p/demo/users"
 
-	consts "gno.land/r/gnoswap/consts"
+	consts "gno.land/r/gnoswap/v2/consts"
 )
 
 var (

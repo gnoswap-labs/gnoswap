@@ -7,7 +7,7 @@ import (
 	"gno.land/p/demo/testutils"
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 )
 
 func TestInitValues(t *testing.T) {

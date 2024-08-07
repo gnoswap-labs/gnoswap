@@ -3,13 +3,13 @@ package staker
 import (
 	"std"
 
-	pn "gno.land/r/gnoswap/position"
+	pn "gno.land/r/gnoswap/v2/position"
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
-	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/v2/gnft"
 
 	"gno.land/p/demo/grc/grc721"
 )

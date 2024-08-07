@@ -4,12 +4,12 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 )
 
 var (
@@ -28,7 +28,7 @@ func TestCreatePool(t *testing.T) {
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(fooPath, barPath, fee500, sqrtPrice)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 	shouldEQ(t, len(pools), 1)
 }
 

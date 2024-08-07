@@ -5,15 +5,15 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/v2/gnft"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/consts"
 
-	en "gno.land/r/gnoswap/emission"
-	pl "gno.land/r/gnoswap/pool"
+	en "gno.land/r/gnoswap/v2/emission"
+	pl "gno.land/r/gnoswap/v2/pool"
 )
 
 var (

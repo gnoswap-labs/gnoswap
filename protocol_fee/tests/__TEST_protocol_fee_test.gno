@@ -9,7 +9,7 @@ import (
 
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/p/demo/testutils"
 )
@@ -50,7 +50,7 @@ func TestDistributeProtocolFeeNoPermission(t *testing.T) {
 		func() {
 			DistributeProtocolFee()
 		},
-		"only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1egdt2l7xjcrm6qjwyd3g60z6e9cnr75pmcuasc) can distribute protocol fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+		"only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1cu4dufdlzu0l9pekkqhw6mjnrxkp3z7ykst09d) can distribute protocol fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
@@ -64,7 +64,7 @@ func TestChagneXGnsDistributePercentNoPermission(t *testing.T) {
 		func() {
 			ChagneXGnsDistributePercent(123)
 		},
-		"only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1egdt2l7xjcrm6qjwyd3g60z6e9cnr75pmcuasc) can change protocol fee distribution percent, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+		"only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1cu4dufdlzu0l9pekkqhw6mjnrxkp3z7ykst09d) can change protocol fee distribution percent, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 

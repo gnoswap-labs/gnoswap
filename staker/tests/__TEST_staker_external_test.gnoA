@@ -4,18 +4,18 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
-	pl "gno.land/r/gnoswap/pool"
-	pn "gno.land/r/gnoswap/position"
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
 
-	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/v2/gnft"
 )
 
 func TestPoolInitCreatePool(t *testing.T) {

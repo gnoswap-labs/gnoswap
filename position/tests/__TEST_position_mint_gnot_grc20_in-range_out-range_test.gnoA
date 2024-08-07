@@ -7,13 +7,13 @@ import (
 
 	"gno.land/p/demo/testutils"
 
-	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/consts"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 	"gno.land/r/demo/wugnot"
 
-	pl "gno.land/r/gnoswap/pool"
+	pl "gno.land/r/gnoswap/v2/pool"
 )
 
 // fresh users

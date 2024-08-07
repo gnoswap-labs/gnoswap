@@ -1,7 +1,7 @@
 package position
 
 import (
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/v2/common"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -14,8 +14,9 @@ import (
 // it calculates and returns the amounts of the two assets that would be minted.
 //
 // Returns:
-//   Two strings representing the amounts of the first and second assets
-//   that would be minted.
+//
+//	Two strings representing the amounts of the first and second assets
+//	that would be minted.
 func DryMint(
 	tickCurrent int32,
 	tickLower int32,

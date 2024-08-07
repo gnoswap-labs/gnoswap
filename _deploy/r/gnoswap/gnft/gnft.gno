@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	admin std.Address = "g1y3uyaa63sjxvah2cx3c2usavwvx97kl8m2v7ye" // deployed position contract
+	admin std.Address = "g1vsm68lq9cpn7x507s6gh59anmx86kxfhzyszu2" // deployed position contract
 	gnft              = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
 )
 

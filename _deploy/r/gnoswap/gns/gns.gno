@@ -11,7 +11,7 @@ import (
 
 	"gno.land/r/demo/users"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 )
 
 const MAXIMUM_SUPPLY = uint64(1_000_000_000_000_000) // 1B

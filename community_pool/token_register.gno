@@ -6,7 +6,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 )
 
 type GRC20Interface interface {
