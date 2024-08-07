@@ -7,14 +7,13 @@ import (
 	"gno.land/r/gnoswap/common"
 	"gno.land/r/gnoswap/consts"
 
+	"gno.land/r/gnoswap/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
-	"gno.land/r/gnoswap/gns"
 
 	pl "gno.land/r/gnoswap/pool"
 )
 
-// 1. Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
@@ -202,4 +201,35 @@ func TestDecreaseLiquidity(t *testing.T) {
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, fee0, "0")
 	shouldEQ(t, fee1, "0")
+}
+
+func TestDecreaseLiquidityAllThenAgainShouldPanic(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+
+	oldLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
+
+	DecreaseLiquidity(
+		uint64(1),   // tokenId
+		100,         // liquidityRatio
+		"0",         // amount0Min
+		"0",         // amount1Min
+		max_timeout, // deadline
+		false,       // unwrapResult
+	)
+
+	newLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
+	shouldEQ(t, true, newLiquidity.Lt(oldLiquidity))
+	shouldEQ(t, newLiquidity.ToString(), "0")
+
+	// decreasing position(with 0 liquidity) should panic
+	shouldPanic(t, func() {
+		DecreaseLiquidity(
+			uint64(1),   // tokenId
+			100,         // liquidityRatio
+			"0",         // amount0Min
+			"0",         // amount1Min
+			max_timeout, // deadline
+			false,       // unwrapResult
+		)
+	})
 }

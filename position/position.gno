@@ -327,6 +327,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 //
 // Panics if any of the following conditions are met:
 // - position doesn't exist
+// - position has 0 liquidity
 // - caller is not owner of the position
 // - liquidityRatio is not in range 1 ~ 100
 // - deadline is passed
@@ -380,6 +381,7 @@ func DecreaseLiquidity(
 //
 // Panics:
 //   - If the token ID doesn't exist.
+//   - If the position has already been burned.
 //   - If the caller is not the owner of the position.
 //   - If the deadline has passed.
 //   - If the received amounts are less than the specified minimums.
@@ -400,6 +402,10 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	position := positions[params.tokenId]
 	positionLiquidity := position.liquidity
+
+	if positionLiquidity.IsZero() {
+		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || position(tokenId:%d) has 0 liquidity", params.tokenId))
+	}
 
 	liquidityToRemove := calculateLiquidityToRemove(positionLiquidity, params.liquidityRatio)
 
