@@ -10,4 +10,5 @@ require (
 	gno.land/r/demo/wugnot v0.0.0-latest
 	gno.land/r/gnoswap/v2/common v0.0.0-latest
 	gno.land/r/gnoswap/v2/consts v0.0.0-latest
+	gno.land/r/gnoswap/v2/staker v0.0.0-latest
 )

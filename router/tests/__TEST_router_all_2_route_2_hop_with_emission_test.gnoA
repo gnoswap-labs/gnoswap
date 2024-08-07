@@ -93,7 +93,7 @@ func TestSwapRouteBarQuxExactIn(t *testing.T) {
 
 	shouldEQ(t, gns.TotalSupply(), 100001455479412)
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 1091609559)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 0) // SwapRoute calls CalcPoolPosition, so nothing will be left
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 291095882)
 
 	shouldEQ(t, amountIn, "1000")
@@ -141,7 +141,7 @@ func TestSwapRouteBarQuxExactOut(t *testing.T) {
 
 	shouldEQ(t, gns.TotalSupply(), 100001469748818)
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 1102311614)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 0) // SwapRoute calls CalcPoolPosition, so nothing will be left
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 293949763)
 
 	shouldEQ(t, amountIn, "140")
@@ -230,7 +230,7 @@ func TestSwapRouteQuxBarExactOut(t *testing.T) {
 
 	shouldEQ(t, gns.TotalSupply(), 100001498287630)
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 1123715724)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 0) // SwapRoute calls CalcPoolPosition, so nothing will be left
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), 299657525)
 
 	shouldEQ(t, amountIn, "7365")
