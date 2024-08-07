@@ -44,7 +44,7 @@ deploy-base-tokens: deploy-gns deploy-usdc deploy-gnft
 deploy-test-tokens: deploy-foo deploy-bar deploy-baz deploy-qux deploy-obl 
 
 .PHONY: deploy-gnoswap-realms
-deploy-gnoswap-realms: deploy-emission deploy-pool deploy-position deploy-router deploy-staker deploy-community_pool deploy-protocol_fee
+deploy-gnoswap-realms: deploy-emission deploy-pool deploy-position deploy-staker deploy-router deploy-community_pool deploy-protocol_fee
 
 ### TEST AFTER INIT
 .PHONY: init-test
