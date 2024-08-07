@@ -16,7 +16,6 @@ import (
 	"gno.land/r/demo/wugnot"
 
 	en "gno.land/r/gnoswap/v2/emission"
-	sr "gno.land/r/gnoswap/v2/staker"
 )
 
 // SwapRoute swaps the input token to the output token and returns the result amount
@@ -49,7 +48,7 @@ func SwapRoute(
 	}
 
 	en.MintAndDistributeGns()
-	sr.CalcPoolPosition()
+	// sr.CalcPoolPosition()
 
 	amountSpecified := i256.MustFromDecimal(_amountSpecified)
 	tokenAmountLimit := u256.MustFromDecimal(_tokenAmountLimit)
