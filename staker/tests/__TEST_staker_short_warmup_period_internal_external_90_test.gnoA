@@ -9,7 +9,7 @@ import (
 	"std"
 	"testing"
 	"time"
-
+  
 	"gno.land/r/gnoswap/v2/consts"
 
 	en "gno.land/r/gnoswap/v2/emission"
@@ -17,7 +17,6 @@ import (
 	pn "gno.land/r/gnoswap/v2/position"
 
 	"gno.land/r/gnoswap/v2/gnft"
-	"gno.land/r/gnoswap/v2/gns"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
