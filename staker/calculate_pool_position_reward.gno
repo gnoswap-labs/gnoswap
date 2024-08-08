@@ -216,6 +216,12 @@ func CalcPoolPosition() {
 			// calculate position gns rewards
 			liqRatioX96 := getMyLiquidityRatio(poolPath, tokenId)
 
+			if liqRatioX96.IsZero() {
+				println(" > CALC__liqRatioX96_IS_ZERO // SKIP", tokenId)
+				println()
+				continue
+			}
+
 			positionAmountX96 := u256.Zero().Mul(u256.NewUint(poolCurrentBlockAmount), liqRatioX96)
 			positionAmountX := u256.Zero().Div(positionAmountX96, _q96)
 			positionAmount := positionAmountX.Uint64()
@@ -297,6 +303,11 @@ func CalcPoolPosition() {
 			}
 
 			liqRatioX96 := getMyLiquidityRatio(poolPath, tokenId)
+			if liqRatioX96.IsZero() {
+				println("  > CALC__EXTERNAL_liqRatioX96_IS_ZERO // SKIP", tokenId)
+				println()
+				continue
+			}
 			println("  > CALC__EXTERNAL_liqRatioX96:\t\t", liqRatioX96.ToString())
 
 			currentPoolRewardX96 := u256.Zero().Mul(incentive.rewardPerBlockX96, u256.NewUint(uint64(blocksPassed)))
