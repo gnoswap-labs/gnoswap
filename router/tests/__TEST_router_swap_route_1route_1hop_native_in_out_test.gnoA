@@ -24,15 +24,9 @@ func TestCreatePool(t *testing.T) {
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 
-	pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500}]}
-
-	pl.CreatePool(bazPath, quxPath, fee500, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500}]}
-
+	pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")     // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(bazPath, quxPath, fee500, "130621891405341611593710811006")     // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
 	pl.CreatePool(quxPath, consts.GNOT, fee500, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500}]}
-
 	// 1 bar ≈ 19.683 gnot
 
 	jsonStr := pl.ApiGetPools()
@@ -54,7 +48,6 @@ func TestPositionMintBarBaz(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa.String())
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 1} {liquidity 1243732} {amount0 36790} {amount1 100000}]}
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, amount0, "36790")  // bar
@@ -67,7 +60,6 @@ func TestPositionMintBazQux(t *testing.T) {
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	tokenId, liquidity, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa.String())
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 2} {liquidity 1243732} {amount0 36790} {amount1 100000}]}
 
 	shouldEQ(t, tokenId, uint64(2))
 	shouldEQ(t, amount0, "36790")
@@ -86,7 +78,6 @@ func TestPositionMintQuxGnot(t *testing.T) {
 	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // wrap unwrap
 
 	tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.GNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa.String())
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 3} {liquidity 1243732} {amount0 36790} {amount1 100000}]}
 
 	shouldEQ(t, tokenId, uint64(3))
 	shouldEQ(t, amount0, "100000")
@@ -117,8 +108,14 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 	wugnot.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // for output
 	wugnot.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // for unwrap
 
+	// wrap some ugnot
+	std.TestSetOrigSend(std.Coins{{"ugnot", 5000}}, nil)
+	wugnot.Deposit()
+
+	std.TestSetOrigSend(std.Coins{{}}, nil)
+
 	oldWugnot := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, oldWugnot, 0)
+	shouldEQ(t, oldWugnot, 5000)
 
 	oldUgnot := ugnotBalanceOf(gsa)
 	shouldEQ(t, oldUgnot, 900009)
@@ -139,15 +136,11 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 		"100", // quoteArr
 		"0",   // tokenAmountLimit
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500} {p_zeroForOne true} {p_amountSpecified 1000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1pjtpgjpsn4hjfv2n4mpz8cczdn32jkpsqwxuav} {amount0 1000} {amount1 -2711} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 1}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500} {p_zeroForOne true} {p_amountSpecified 2711} {p_sqrtPriceLimitX96 4295128740} {p_payer g1pjtpgjpsn4hjfv2n4mpz8cczdn32jkpsqwxuav} {p_recipient g1pjtpgjpsn4hjfv2n4mpz8cczdn32jkpsqwxuav} {amount0 2711} {amount1 -7337} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 2}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500} {p_zeroForOne true} {p_amountSpecified 7337} {p_sqrtPriceLimitX96 4295128740} {p_payer g1pjtpgjpsn4hjfv2n4mpz8cczdn32jkpsqwxuav} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 7337} {amount1 -19740} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 4}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/router SwapRoute [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_input gno.land/r/onbloc/bar} {p_output gnot} {p_swapType EXACT_IN} {p_amountSpecified 1000} {p_route gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500} {p_quote 100} {amountIn 1000} {amountOut -19711}]}
 	shouldEQ(t, amountIn, "1000")
 	shouldEQ(t, amountOut, "-19711")
 
 	newWugnot := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, newWugnot, 0)
+	shouldEQ(t, newWugnot, 5000) // IT SHOULD STAY SAME SINCE SWAP USED uGNOT, not WUGNOT
 
 	newUgnot := ugnotBalanceOf(gsa)
 	shouldEQ(t, newUgnot, 919720) // 900009 + 19711
@@ -182,19 +175,18 @@ func TestSwapRouteGnotBarExactIn(t *testing.T) {
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)  // for output
 
 	oldWugnot := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, oldWugnot, 0)
+	shouldEQ(t, oldWugnot, 5000)
 
 	oldUgnot := ugnotBalanceOf(gsa)
 	shouldEQ(t, oldUgnot, 919720)
-
-	// send
-	std.TestSetOrigSend(std.Coins{{"ugnot", 5000}}, nil)
 
 	feeColUgnot := ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
 	feeColWugnot := wugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
 	shouldEQ(t, feeColUgnot, 29)
 	shouldEQ(t, feeColWugnot, 0)
 
+	// send
+	std.TestSetOrigSend(std.Coins{{"ugnot", 5000}}, nil)
 	amountIn, amountOut := SwapRoute(
 		consts.GNOT, // intputToken
 		barPath,     // outputToken
@@ -204,18 +196,15 @@ func TestSwapRouteGnotBarExactIn(t *testing.T) {
 		"100", // quoteArr
 		"0",
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500} {p_zeroForOne false} {p_amountSpecified 5000} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1pjtpgjpsn4hjfv2n4mpz8cczdn32jkpsqwxuav} {amount0 -1869} {amount1 5000} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 3}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500} {p_zeroForOne false} {p_amountSpecified 1869} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g1pjtpgjpsn4hjfv2n4mpz8cczdn32jkpsqwxuav} {p_recipient g1pjtpgjpsn4hjfv2n4mpz8cczdn32jkpsqwxuav} {amount0 -691} {amount1 1869} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 1}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500} {p_zeroForOne false} {p_amountSpecified 691} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g1pjtpgjpsn4hjfv2n4mpz8cczdn32jkpsqwxuav} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 -254} {amount1 691} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 1}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/router SwapRoute [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_input gnot} {p_output gno.land/r/onbloc/bar} {p_swapType EXACT_IN} {p_amountSpecified 5000} {p_route gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500} {p_quote 100} {amountIn 5000} {amountOut -254}]}
+	std.TestSetOrigSend(std.Coins{{}}, nil)
 	shouldEQ(t, amountIn, "5000")
 	shouldEQ(t, amountOut, "-254")
 
 	newWugnot := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, newWugnot, 0)
+	shouldEQ(t, newWugnot, 5000)
 
 	newUgnot := ugnotBalanceOf(gsa)
-	shouldEQ(t, newUgnot, 919720)
+	shouldEQ(t, newUgnot, 919720) // GNO VM BUG, ugnot amount should be decreased but `std.TestSetOrigSend` doesn't really decrease caller's ugnot balance
 
 	feeColUgnot = ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
 	feeColWugnot = wugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)

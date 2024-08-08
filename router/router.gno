@@ -48,7 +48,6 @@ func SwapRoute(
 	}
 
 	en.MintAndDistributeGns()
-	// sr.CalcPoolPosition()
 
 	amountSpecified := i256.MustFromDecimal(_amountSpecified)
 	tokenAmountLimit := u256.MustFromDecimal(_tokenAmountLimit)
@@ -62,11 +61,32 @@ func SwapRoute(
 		amountSpecified = i256.Zero().Neg(amountSpecified)
 	}
 
-	userOldWugnotBalance, _ := handleGNOT(inputToken, outputToken)
+	var userBeforeWugnotBalance uint64
+	var userWrappedWugnot uint64
+	if inputToken == consts.GNOT || outputToken == consts.GNOT {
+		userBeforeWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+
+		sent := std.GetOrigSend()
+		ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
+		if ugnotSentByUser > 0 {
+			wrap(ugnotSentByUser)
+		}
+
+		userWrappedWugnot = ugnotSentByUser
+	}
 
 	resultAmountIn, resultAmountOut := processRoutes(routes, quotes, amountSpecified, swapType)
 
-	amountIn, amountOut := finalizeSwap(inputToken, outputToken, resultAmountIn, resultAmountOut, swapType, tokenAmountLimit, userOldWugnotBalance)
+	amountIn, amountOut := finalizeSwap(
+		inputToken,
+		outputToken,
+		resultAmountIn,
+		resultAmountOut,
+		swapType,
+		tokenAmountLimit,
+		userBeforeWugnotBalance,
+		userWrappedWugnot,
+	)
 
 	std.Emit(
 		"GNOSWAP",
@@ -109,19 +129,6 @@ func validateInput(amountSpecified *i256.Int, swapType string, routes, quotes []
 	if quotesSum != 100 {
 		panic("[ROUTER] Quote sum is not 100")
 	}
-}
-
-func handleGNOT(inputToken, outputToken string) (uint64, uint64) {
-	userOldWugnotBalance := uint64(0)
-	if inputToken == consts.GNOT {
-		sent := std.GetOrigSend()
-		ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
-		wrap(ugnotSentByUser)
-		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-	} else if outputToken == consts.GNOT {
-		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
-	}
-	return userOldWugnotBalance, 0
 }
 
 func processRoutes(routes, quotes []string, amountSpecified *i256.Int, swapType string) (*u256.Uint, *u256.Uint) {
@@ -168,14 +175,25 @@ func handleSingleSwap(route string, amountSpecified *i256.Int, isDry bool) (*u25
 	return singleSwap(singleParams)
 }
 
-func finalizeSwap(inputToken, outputToken string, resultAmountIn, resultAmountOut *u256.Uint, swapType string, tokenAmountLimit *u256.Uint, userOldWugnotBalance uint64) (string, string) {
+func finalizeSwap(inputToken, outputToken string, resultAmountIn, resultAmountOut *u256.Uint, swapType string, tokenAmountLimit *u256.Uint, userBeforeWugnotBalance, userWrappedWugnot uint64) (string, string) {
 	afterFee := handleSwapFee(outputToken, resultAmountOut, false)
 
 	userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 	if inputToken == consts.GNOT {
-		unwrap(userNewWugnotBalance)
+		totalBefore := userBeforeWugnotBalance + userWrappedWugnot
+		spend := totalBefore - userNewWugnotBalance
+
+		if spend > userWrappedWugnot {
+			// used existing wugnot
+			panic(ufmt.Sprintf("[ROUTER] Too much wugnot spent (wrapped: %d, spend: %d)", userWrappedWugnot, spend))
+		}
+
+		// unwrap left amount
+		toUnwrap := userWrappedWugnot - spend
+		unwrap(toUnwrap)
+
 	} else if outputToken == consts.GNOT {
-		userRecvWugnot := uint64(userNewWugnotBalance - userOldWugnotBalance)
+		userRecvWugnot := uint64(userNewWugnotBalance - userBeforeWugnotBalance - userWrappedWugnot)
 		unwrap(userRecvWugnot)
 	}
 
