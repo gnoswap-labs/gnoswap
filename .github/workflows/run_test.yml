@@ -14,25 +14,18 @@ jobs:
     - name: Checkout GnoSwap repository
       uses: actions/checkout@v2
       with:
-        repository: gnoswap-labs/gnoswap
         path: gnoswap
 
-    - name: Checkout Gno repository
+    - name: Checkout Gno Core repository
       uses: actions/checkout@v2
       with:
-        repository: gnolang/gno
+        repository: gnoswap-labs/gno
         path: gno
 
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
         go-version: '1.20'
-
-    - name: Install Gno
-      run: |
-        cd gno
-        make install
-        echo "${HOME}/go/bin" >> $GITHUB_PATH
 
     - name: Copy GnoSwap files to Gno repository
       run: |
@@ -45,10 +38,11 @@ jobs:
         cp -R gnoswap/_deploy/r/gnoswap gno/examples/gno.land/r/gnoswap/v2
         cp -R gnoswap/pool gnoswap/position gnoswap/router gnoswap/staker gno/examples/gno.land/r/gnoswap/v2
 
-    # - name: Run Go tests
-    #   working-directory: gno
-    #   run: go test -v ./...
+    - name: Install Gno
+      run: |
+        cd gno
+        make install
 
     - name: Run Gno tests
       working-directory: gno
-      run: gno test -v ./examples/gno.land/r/gnoswap/v2/...
+      run: gno run -v ./...
