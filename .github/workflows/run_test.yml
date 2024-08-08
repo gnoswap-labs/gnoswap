@@ -1,0 +1,54 @@
+name: GnoSwap Test Workflow
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout GnoSwap repository
+      uses: actions/checkout@v2
+      with:
+        repository: gnoswap-labs/gnoswap
+        path: gnoswap
+
+    - name: Checkout Gno repository
+      uses: actions/checkout@v2
+      with:
+        repository: gnolang/gno
+        path: gno
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.20'
+
+    - name: Install Gno
+      run: |
+        cd gno
+        make install
+        echo "${HOME}/go/bin" >> $GITHUB_PATH
+
+    - name: Copy GnoSwap files to Gno repository
+      run: |
+        mkdir -p gno/examples/gno.land/r/demo
+        mkdir -p gno/examples/gno.land/r/gnoswap/v2
+        mkdir -p gno/examples/gno.land/p/gnoswap
+        cp -R gnoswap/__local/grc20_tokens/* gno/examples/gno.land/r/demo
+        cp -R gnoswap/_deploy/r/gnoswap gno/examples/gno.land/r
+        cp -R gnoswap/_deploy/p/gnoswap gno/examples/gno.land/p/gnoswap
+        cp -R gnoswap/_deploy/r/gnoswap gno/examples/gno.land/r/gnoswap/v2
+        cp -R gnoswap/pool gnoswap/position gnoswap/router gnoswap/staker gno/examples/gno.land/r/gnoswap/v2
+
+    # - name: Run Go tests
+    #   working-directory: gno
+    #   run: go test -v ./...
+
+    - name: Run Gno tests
+      working-directory: gno
+      run: gno test -v ./examples/gno.land/r/gnoswap/v2/...
