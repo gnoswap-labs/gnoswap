@@ -86,13 +86,13 @@ To set up GnoSwap contracts in Gno Core, follow these steps:
    cp -R _deploy/r/gnoswap $WORKDIR/gno/examples/gno.land/r
 
    # copy gnoswap base packages ( includes uint256, int256 and bit of pool calculation )
-   cp -R _deploy/p/gnoswap $WORKDIR/gno/examples/gno.land/p/gnoswap
+   cp -R _deploy/p/gnoswap $WORKDIR/gno/examples/gno.land/p/gnoswap/v2
 
    # copy gnoswap base realms ( includes common logic, variables and consts )
-   cp -R _deploy/r/gnoswap $WORKDIR/gno/examples/gno.land/r/gnoswap
+   cp -R _deploy/r/gnoswap $WORKDIR/gno/examples/gno.land/r/gnoswap/v2
 
    # copy gnoswap realms
-   cp -R pool position router staker $WORKDIR/gno/examples/gno.land/r/gnoswap
+   cp -R pool position router staker $WORKDIR/gno/examples/gno.land/r/gnoswap/v2
    ```
 
 3. Move all test cases into its own directory:
