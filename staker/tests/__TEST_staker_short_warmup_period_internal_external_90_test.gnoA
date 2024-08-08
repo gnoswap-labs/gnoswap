@@ -9,15 +9,14 @@ import (
 	"std"
 	"testing"
 	"time"
+  
+	"gno.land/r/gnoswap/v2/consts"
 
-	"gno.land/r/gnoswap/consts"
+	en "gno.land/r/gnoswap/v2/emission"
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
 
-	en "gno.land/r/gnoswap/emission"
-	pl "gno.land/r/gnoswap/pool"
-	pn "gno.land/r/gnoswap/position"
-
-	"gno.land/r/gnoswap/gnft"
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gnft"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"

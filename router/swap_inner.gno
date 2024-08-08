@@ -5,10 +5,10 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	pl "gno.land/r/gnoswap/pool"
+	pl "gno.land/r/gnoswap/v2/pool"
 
-	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/consts"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"

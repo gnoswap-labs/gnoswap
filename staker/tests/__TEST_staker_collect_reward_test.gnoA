@@ -5,17 +5,17 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
-	pl "gno.land/r/gnoswap/pool"
-	pn "gno.land/r/gnoswap/position"
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
 
-	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/v2/gnft"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 	"gno.land/r/onbloc/obl"
 )
 
@@ -197,7 +197,7 @@ func TestUnstakeToken01(t *testing.T) {
 	shouldEQ(t, obl.BalanceOf(a2u(gsa)), 99999000000000)  // external
 
 	response := ApiGetRewardsByLpTokenId(1)
-	shouldEQ(t, response, `{"stat":{"height":1041,"timestamp":1234569726},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/gns","rewardTokenAmount":445623695,"stakeTimestamp":1234567914,"stakeHeight":135,"incentiveStart":1234567914},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMw==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":743,"stakeTimestamp":1234567914,"stakeHeight":135,"incentiveStart":1234569600}]}]}`)
+	shouldEQ(t, response, `{"stat":{"height":1041,"timestamp":1234569726},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":445623695,"stakeTimestamp":1234567914,"stakeHeight":135,"incentiveStart":1234567914},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMw==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":743,"stakeTimestamp":1234567914,"stakeHeight":135,"incentiveStart":1234569600}]}]}`)
 
 	UnstakeToken(1) // GNFT tokenId
 	std.TestSkipHeights(1)

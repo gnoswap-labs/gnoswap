@@ -5,13 +5,13 @@ import (
 	"strconv"
 	"testing"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -31,7 +31,7 @@ func TestCreateFooBarPool(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
 	CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006")
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 	shouldEQ(t, len(pools), 1)
 }
 
@@ -43,7 +43,7 @@ func TestCreateBarBazPool(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500}]}
 	shouldEQ(t, len(pools), 2)
 }
 
@@ -112,7 +112,7 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 		consts.MIN_PRICE,
 		std.GetOrigCaller().String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_zeroForOne true} {p_amountSpecified 16000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 16000} {amount1 -5882} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 8}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_zeroForOne true} {p_amountSpecified 16000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 16000} {amount1 -5882} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 8}]}
 	shouldEQ(t, poolIn, "16000")
 	shouldEQ(t, poolOut, "-5882")
 
@@ -151,7 +151,7 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 		consts.MIN_PRICE,
 		std.GetOrigCaller().String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500} {p_zeroForOne true} {p_amountSpecified 16000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 16000} {amount1 -43457} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 8}]}
+	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500} {p_zeroForOne true} {p_amountSpecified 16000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 16000} {amount1 -43457} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 8}]}
 
 	shouldEQ(t, poolIn, "16000")
 	shouldEQ(t, poolOut, "-43457")

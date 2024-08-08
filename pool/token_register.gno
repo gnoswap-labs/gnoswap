@@ -7,7 +7,7 @@ import (
 
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 )
 
 // GRC20Interface is the interface for GRC20 tokens
@@ -57,7 +57,7 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 // UnregisterGRC20Interface unregisters a GRC20 token interface
 //
 // Panics:
-//  - caller is not the admin
+//   - caller is not the admin
 func UnregisterGRC20Interface(pkgPath string) {
 	// only admin can unregister
 	caller := std.GetOrigCaller()

@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )

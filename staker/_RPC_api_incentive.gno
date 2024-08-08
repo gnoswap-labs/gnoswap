@@ -9,12 +9,12 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	en "gno.land/r/gnoswap/emission"
-	pl "gno.land/r/gnoswap/pool"
+	en "gno.land/r/gnoswap/v2/emission"
+	pl "gno.land/r/gnoswap/v2/pool"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 )
 
 type RewardToken struct {

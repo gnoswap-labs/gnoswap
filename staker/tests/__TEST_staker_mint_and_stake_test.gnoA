@@ -5,16 +5,16 @@ import (
 	"testing"
 	"time"
 
-	pl "gno.land/r/gnoswap/pool"
+	pl "gno.land/r/gnoswap/v2/pool"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 
-	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/v2/gnft"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"

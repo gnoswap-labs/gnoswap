@@ -3,7 +3,7 @@ package staker
 import (
 	"std"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 )
 
 // defaultAllowed is the list of default allowed tokens to create external incentive
@@ -20,10 +20,10 @@ func init() {
 // Only the admin (GNOSWAP_ADMIN) can add a new token.
 //
 // Parameters:
-//  - tokenPath (string): The path of the token to add
+//   - tokenPath (string): The path of the token to add
 //
 // Panics:
-//  - If the caller is not the GNOSWAP_ADMIN
+//   - If the caller is not the GNOSWAP_ADMIN
 func AddToken(tokenPath string) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GNOSWAP_ADMIN {
@@ -46,10 +46,10 @@ func AddToken(tokenPath string) {
 // Default tokens can not be removed.
 //
 // Parameters:
-//  - tokenPath (string): The path of the token to remove
+//   - tokenPath (string): The path of the token to remove
 //
 // Panics:
-//  - If the caller is not the GNOSWAP_ADMIN
+//   - If the caller is not the GNOSWAP_ADMIN
 func RemoveToken(tokenPath string) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GNOSWAP_ADMIN {

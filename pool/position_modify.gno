@@ -1,7 +1,7 @@
 package pool
 
 import (
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/v2/common"
 
 	i256 "gno.land/p/gnoswap/int256"
 

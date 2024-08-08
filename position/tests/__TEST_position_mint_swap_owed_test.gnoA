@@ -4,14 +4,14 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
-	pl "gno.land/r/gnoswap/pool"
+	pl "gno.land/r/gnoswap/v2/pool"
 
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/usdc"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 	// u256 "gno.land/p/gnoswap/uint256"
 )
 

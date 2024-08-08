@@ -6,13 +6,13 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
-	pl "gno.land/r/gnoswap/pool"
-	pn "gno.land/r/gnoswap/position"
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
 
-	"gno.land/r/gnoswap/gnft"
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gnft"
+	"gno.land/r/gnoswap/v2/gns"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
@@ -109,14 +109,14 @@ func TestAfterActive(t *testing.T) {
 	std.TestSkipHeights(50)  // skip 50 more block
 
 	pei := GetPrintExternalInfo()
-	shouldEQ(t, pei, `{"height":1028,"time":1234569700,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"20377613815397206171178999572000","tokenAmount":257,"tokenAmountFull":257,"tokenAmountActualFull":77}]}]}`)
+	shouldEQ(t, pei, `{"height":1028,"time":1234569700,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","rewardLeft":"19999743","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"20377613815397206171178999572000","tokenAmount":257,"tokenAmountFull":257,"tokenAmountActualFull":77}]}]}`)
 }
 
 func TestDuratino200(t *testing.T) {
 	std.TestSkipHeights(199) // skip 1 + 199 = 200 more block
 
 	pei := GetPrintExternalInfo()
-	shouldEQ(t, pei, `{"height":1227,"time":1234570098,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"101480516800678086732471417868560","tokenAmount":1280,"tokenAmountFull":1280,"tokenAmountActualFull":485}]}]}`)
+	shouldEQ(t, pei, `{"height":1227,"time":1234570098,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","rewardLeft":"19998463","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"101480516800678086732471417868560","tokenAmount":1280,"tokenAmountFull":1280,"tokenAmountActualFull":485}]}]}`)
 }
 
 func TestCollectReward(t *testing.T) {
@@ -130,7 +130,7 @@ func TestCollectReward(t *testing.T) {
 	shouldEQ(t, newBar-oldBar, 481)
 
 	pei := GetPrintExternalInfo()
-	shouldEQ(t, pei, `{"height":1228,"time":1234570100,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"407552276307944123423579991440","tokenAmount":5,"tokenAmountFull":5,"tokenAmountActualFull":2}]}]}`)
+	shouldEQ(t, pei, `{"height":1228,"time":1234570100,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","rewardLeft":"19997178","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"407552276307944123423579991440","tokenAmount":5,"tokenAmountFull":5,"tokenAmountActualFull":2}]}]}`)
 }
 
 func TestMintBarQux100_2(t *testing.T) {
@@ -164,7 +164,7 @@ func TestSkipSingleBlock(t *testing.T) {
 	// skipped 1 block from previous test
 
 	pei := GetPrintExternalInfo()
-	shouldEQ(t, pei, `{"height":1229,"time":1234570102,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"815104552615888246847159982880","tokenAmount":10,"tokenAmountFull":10,"tokenAmountActualFull":4}]}]}`)
+	shouldEQ(t, pei, `{"height":1229,"time":1234570102,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","rewardLeft":"19997168","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"815104552615888246847159982880","tokenAmount":10,"tokenAmountFull":10,"tokenAmountActualFull":4}]}]}`)
 }
 
 func TestStakeToken_2(t *testing.T) {
@@ -181,7 +181,7 @@ func TestSingleBlock_TwoPosition(t *testing.T) {
 	// skipped 1 block from previous test
 
 	pei := GetPrintExternalInfo()
-	shouldEQ(t, pei, `{"height":1230,"time":1234570104,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"1018880690769860308558949978600","tokenAmount":12,"tokenAmountFull":12,"tokenAmountActualFull":5}]},{"lpTokenId":2,"stakedHeight":1229,"stakedTimestamp":1234570102,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"203776138153972061711789995720","tokenAmount":2,"tokenAmountFull":2,"tokenAmountActualFull":0}]}]}`)
+	shouldEQ(t, pei, `{"height":1230,"time":1234570104,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","rewardLeft":"19997154","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"1018880690769860308558949978600","tokenAmount":12,"tokenAmountFull":12,"tokenAmountActualFull":5}]},{"lpTokenId":2,"stakedHeight":1229,"stakedTimestamp":1234570102,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","rewardLeft":"19997154","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"203776138153972061711789995720","tokenAmount":2,"tokenAmountFull":2,"tokenAmountActualFull":0}]}]}`)
 
 	std.TestSkipHeights(1)
 }
@@ -190,7 +190,7 @@ func TestCollectRewardAll(t *testing.T) {
 	std.TestSkipHeights(10)
 
 	pei := GetPrintExternalInfo()
-	shouldEQ(t, pei, `{"height":1241,"time":1234570126,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"3260418210463552987388639931520","tokenAmount":41,"tokenAmountFull":40,"tokenAmountActualFull":19}]},{"lpTokenId":2,"stakedHeight":1229,"stakedTimestamp":1234570102,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"2445313657847664740541479948640","tokenAmount":30,"tokenAmountFull":30,"tokenAmountActualFull":8}]}]}`)
+	shouldEQ(t, pei, `{"height":1241,"time":1234570126,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","rewardLeft":"19997084","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"3260418210463552987388639931520","tokenAmount":41,"tokenAmountFull":40,"tokenAmountActualFull":19}]},{"lpTokenId":2,"stakedHeight":1229,"stakedTimestamp":1234570102,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","rewardLeft":"19997084","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"2445313657847664740541479948640","tokenAmount":30,"tokenAmountFull":30,"tokenAmountActualFull":8}]}]}`)
 
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
@@ -208,5 +208,5 @@ func TestCollectRewardAll(t *testing.T) {
 
 func TestPrintAfterCollect(t *testing.T) {
 	pei := GetPrintExternalInfo()
-	shouldEQ(t, pei, `{"height":1241,"time":1234570126,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"0","tokenAmount":0,"tokenAmountFull":0,"tokenAmountActualFull":0}]},{"lpTokenId":2,"stakedHeight":1229,"stakedTimestamp":1234570102,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"0","tokenAmount":0,"tokenAmountFull":0,"tokenAmountActualFull":0}]}]}`)
+	shouldEQ(t, pei, `{"height":1241,"time":1234570126,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","rewardLeft":"19997014","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"0","tokenAmount":0,"tokenAmountFull":0,"tokenAmountActualFull":0}]},{"lpTokenId":2,"stakedHeight":1229,"stakedTimestamp":1234570102,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","rewardLeft":"19997014","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountX96":"0","tokenAmount":0,"tokenAmountFull":0,"tokenAmountActualFull":0}]}]}`)
 }

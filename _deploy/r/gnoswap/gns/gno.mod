@@ -1,4 +1,4 @@
-module gno.land/r/gnoswap/gns
+module gno.land/r/gnoswap/v2/gns
 
 require (
 	gno.land/p/demo/grc/grc20 v0.0.0-latest

@@ -4,9 +4,9 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 )
 
 func TestMintAndDistributeGns_Initial(t *testing.T) {

@@ -7,11 +7,11 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/consts"
-	en "gno.land/r/gnoswap/emission"
+	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/consts"
+	en "gno.land/r/gnoswap/v2/emission"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )

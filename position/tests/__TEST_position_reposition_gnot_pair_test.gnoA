@@ -4,15 +4,15 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 
-	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/v2/gnft"
 
-	pl "gno.land/r/gnoswap/pool"
+	pl "gno.land/r/gnoswap/v2/pool"
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
@@ -66,7 +66,7 @@ func TestMintPosition01InRange(t *testing.T) {
 	position := positions[tokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
 	shouldEQ(t, position.operator, gsa)
-	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500")
+	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 	shouldEQ(t, position.tickLower, 8000)
 	shouldEQ(t, position.tickUpper, 12000)
 	shouldEQ(t, position.liquidity.ToString(), "318704392")
@@ -106,7 +106,7 @@ func TestSwap1(t *testing.T) {
 	position := positions[uint64(1)]
 	shouldEQ(t, position.nonce.ToString(), "0")
 	shouldEQ(t, position.operator, gsa)
-	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500")
+	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 	shouldEQ(t, position.tickLower, 8000)
 	shouldEQ(t, position.tickUpper, 12000)
 	shouldEQ(t, position.liquidity.ToString(), "318704392")
@@ -157,7 +157,7 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 	position := positions[_lpTokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
 	shouldEQ(t, position.operator, gsa)
-	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500")
+	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 	shouldEQ(t, position.tickLower, 8000)
 	shouldEQ(t, position.tickUpper, 12000)
 	shouldEQ(t, position.liquidity.ToString(), "0")
@@ -177,7 +177,7 @@ func TestReposition(t *testing.T) {
 	position := positions[_lpTokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
 	shouldEQ(t, position.operator, gsa)
-	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500")
+	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 	shouldEQ(t, position.tickLower, 8000)
 	shouldEQ(t, position.tickUpper, 12000)
 	shouldEQ(t, position.liquidity.ToString(), "0")
@@ -213,7 +213,7 @@ func TestReposition(t *testing.T) {
 	position = positions[_lpTokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
 	shouldEQ(t, position.operator, gsa)
-	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500")
+	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 	shouldEQ(t, position.tickLower, -1000)
 	shouldEQ(t, position.tickUpper, 1000)
 	shouldEQ(t, position.liquidity.ToString(), "49981")

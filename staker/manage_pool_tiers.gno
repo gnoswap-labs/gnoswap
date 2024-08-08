@@ -4,13 +4,13 @@ import (
 	"std"
 	"time"
 
-	en "gno.land/r/gnoswap/emission"
-	pl "gno.land/r/gnoswap/pool"
+	en "gno.land/r/gnoswap/v2/emission"
+	pl "gno.land/r/gnoswap/v2/pool"
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 )
 
 type ApiPoolWithEmissionGnsAmount struct {

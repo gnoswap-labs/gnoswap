@@ -5,15 +5,15 @@ import (
 	"testing"
 	"time"
 
-	pl "gno.land/r/gnoswap/pool"
-	pn "gno.land/r/gnoswap/position"
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v2/gns"
 
-	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/v2/gnft"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 )
 
 func init() {
@@ -26,7 +26,7 @@ func init() {
 		updateHeight:   std.GetHeight(),
 	}
 
-	poolTiers["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500"] = InternalTier{
+	poolTiers["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500"] = InternalTier{
 		tier:           2,
 		startTimestamp: time.Now().Unix(),
 		startHeight:    std.GetHeight(),
@@ -161,7 +161,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	AddToken(oblPath)
 
 	CreateExternalIncentive(
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500", // targetPoolPath
+		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500", // targetPoolPath
 		consts.GNOT,                 // rewardToken
 		"10000000000",               // rewardAmount
 		1234569600,                  // startTimestamp
@@ -246,7 +246,7 @@ func TestEndExternalIncentive(t *testing.T) {
 	// use same parameter as CreateExternalIncentive()
 	EndExternalIncentive(
 		std.GetOrigCaller().String(),
-		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500",
+		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500",
 		consts.WRAPPED_WUGNOT,
 		1234569600,                  // startTimestamp
 		1234569600+TIMESTAMP_90DAYS, // endTimestamp
@@ -259,5 +259,5 @@ func TestEndExternalIncentive(t *testing.T) {
 	shouldEQ(t, ugnotBalanceOf(gsa), 10099151818) // always refund
 
 	shouldEQ(t, len(incentives), 0)
-	shouldEQ(t, len(poolIncentives["gno.land/r/demo/wugnot:gno.land/r/gnoswap/gns:500"]), 0)
+	shouldEQ(t, len(poolIncentives["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500"]), 0)
 }

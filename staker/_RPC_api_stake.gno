@@ -7,9 +7,9 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v2/consts"
 
-	en "gno.land/r/gnoswap/emission"
+	en "gno.land/r/gnoswap/v2/emission"
 )
 
 // LpTokenReward represents the rewards associated with a specific LP token
@@ -33,36 +33,36 @@ type Reward struct {
 
 // Stake represents a single stake
 type Stake struct {
-    TokenId        uint64      `json:"tokenId"`        // The ID of the staked LP token
-    Owner          std.Address `json:"owner"`          // The address of the owner of the staked LP token
-    NumberOfStakes uint64      `json:"numberOfStakes"` // The number of times this LP token has been staked
-    StakeTimestamp int64       `json:"stakeTimestamp"` // The timestamp when the LP token was staked
-    StakeHeight    int64       `json:"stakeHeight"`    // The block height when the LP token was staked
-    TargetPoolPath string      `json:"targetPoolPath"` // The path of the target pool for the stake
+	TokenId        uint64      `json:"tokenId"`        // The ID of the staked LP token
+	Owner          std.Address `json:"owner"`          // The address of the owner of the staked LP token
+	NumberOfStakes uint64      `json:"numberOfStakes"` // The number of times this LP token has been staked
+	StakeTimestamp int64       `json:"stakeTimestamp"` // The timestamp when the LP token was staked
+	StakeHeight    int64       `json:"stakeHeight"`    // The block height when the LP token was staked
+	TargetPoolPath string      `json:"targetPoolPath"` // The path of the target pool for the stake
 }
 
 // ResponseQueryBase contains basic information about a query response.
 type ResponseQueryBase struct {
-    Height    int64 `json:"height"`    // The block height at the time of the query
-    Timestamp int64 `json:"timestamp"` // The timestamp at the time of the query
+	Height    int64 `json:"height"`    // The block height at the time of the query
+	Timestamp int64 `json:"timestamp"` // The timestamp at the time of the query
 }
 
 // ResponseApiGetRewards represents the API response for getting rewards.
 type ResponseApiGetRewards struct {
-    Stat     ResponseQueryBase `json:"stat"`     // Basic query information
-    Response []LpTokenReward   `json:"response"` // A slice of LpTokenReward structs
+	Stat     ResponseQueryBase `json:"stat"`     // Basic query information
+	Response []LpTokenReward   `json:"response"` // A slice of LpTokenReward structs
 }
 
 // ResponseApiGetRewardByLpTokenId represents the API response for getting rewards for a specific LP token.
 type ResponseApiGetRewardByLpTokenId struct {
-    Stat     ResponseQueryBase `json:"stat"`     // Basic query information
-    Response LpTokenReward     `json:"response"` // The LpTokenReward for the specified LP token
+	Stat     ResponseQueryBase `json:"stat"`     // Basic query information
+	Response LpTokenReward     `json:"response"` // The LpTokenReward for the specified LP token
 }
 
 // ResponseApiGetStakes represents the API response for getting stakes.
 type ResponseApiGetStakes struct {
-    Stat     ResponseQueryBase `json:"stat"`     // Basic query information
-    Response []Stake           `json:"response"` // A slice of Stake structs
+	Stat     ResponseQueryBase `json:"stat"`     // Basic query information
+	Response []Stake           `json:"response"` // A slice of Stake structs
 }
 
 func ApiGetRewards() string {
