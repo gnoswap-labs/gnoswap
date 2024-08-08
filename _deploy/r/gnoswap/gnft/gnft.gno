@@ -153,19 +153,17 @@ func SetTokenURI(tid grc721.TokenID) {
 
 	tokenURI := genImageURI(r)
 
-	ok, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
-	if !ok {
-		panic(err.Error())
+	ok, _ := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
+	if ok {
+		std.Emit(
+			"GNOSWAP",
+			"m_origCaller", std.GetOrigCaller().String(),
+			"m_prevRealm", std.PrevRealm().PkgPath(),
+			"p_tokenId", string(tid),
+			"tokenURI", tokenURI,
+			"func", "SetTokenURI",
+		)
 	}
-
-	std.Emit(
-		"GNOSWAP",
-		"m_origCaller", std.GetOrigCaller().String(),
-		"m_prevRealm", std.PrevRealm().PkgPath(),
-		"p_tokenId", string(tid),
-		"tokenURI", tokenURI,
-		"SetTokenURI", "SetTokenURI",
-	)
 }
 
 func SetTokenURILast() {
@@ -181,19 +179,17 @@ func SetTokenURILast() {
 	for _, tid := range usersNFT {
 		tokenURI := genImageURI(r)
 
-		ok, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
-		if !ok {
-			panic(err.Error())
+		ok, _ := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
+		if ok {
+			std.Emit(
+				"GNOSWAP",
+				"m_origCaller", std.GetOrigCaller().String(),
+				"m_prevRealm", std.PrevRealm().PkgPath(),
+				"p_tokenId", string(tid),
+				"tokenURI", tokenURI,
+				"func", "SetTokenURILast",
+			)
 		}
-
-		std.Emit(
-			"GNOSWAP",
-			"m_origCaller", std.GetOrigCaller().String(),
-			"m_prevRealm", std.PrevRealm().PkgPath(),
-			"p_tokenId", string(tid),
-			"tokenURI", tokenURI,
-			"SetTokenURILast", "SetTokenURILast",
-		)
 	}
 
 	delete(userMinted, origCaller)
