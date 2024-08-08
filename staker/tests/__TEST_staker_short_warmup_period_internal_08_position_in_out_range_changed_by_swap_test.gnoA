@@ -1,0 +1,198 @@
+package staker
+
+import (
+	"std"
+	"testing"
+	"time"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
+	rr "gno.land/r/gnoswap/v2/router"
+
+	"gno.land/r/gnoswap/v2/gnft"
+	"gno.land/r/gnoswap/v2/gns"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/qux"
+)
+
+var poolPath string = "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"
+
+func init() {
+	// init pool tiers
+	// tier 1
+	delete(poolTiers, MUST_EXISTS_IN_TIER_1)
+
+	poolTiers[poolPath] = InternalTier{
+		tier:           1,
+		startTimestamp: time.Now().Unix(),
+		startHeight:    std.GetHeight(),
+		updateHeight:   std.GetHeight(),
+	}
+
+	std.TestSkipHeights(1)
+
+	// override warm-up period for testing
+	warmUp[100] = 901 // 30m ~
+	warmUp[70] = 301  // 10m ~ 30m
+	warmUp[50] = 151  // 5m ~ 10m
+	warmUp[30] = 1    // ~ 5m
+}
+
+func TestPoolInitCreatePool(t *testing.T) {
+
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+
+	pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
+
+	std.TestSkipHeights(1)
+}
+
+func TestMintBarQux100_1(t *testing.T) {
+	curr := getCurrentInfo()
+
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1 := pn.Mint(
+		barPath,    // token0
+		quxPath,    // token1
+		fee100,     // fee
+		int32(-30), // tickLower
+		int32(30),  // tickUpper
+		"50",       // amount0Desired
+		"50",       // amount1Desired
+		"1",        // amount0Min
+		"1",        // amount1Min
+		max_timeout,
+		gsa.String(),
+	)
+
+	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+
+	gpi := GetPrintInfo()
+	shouldEQ(t, gpi, `{"height":125,"time":1234567894,"gns":{"staker":0,"devOps":5707762,"communityPool":1426940,"xGNS":0,"protocolFee":121404109,"GnoswapAdmin":99999900000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
+
+	std.TestSkipHeights(1)
+}
+
+func TestMintBarQux100_2(t *testing.T) {
+	curr := getCurrentInfo()
+
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1 := pn.Mint(
+		barPath,      // token0
+		quxPath,      // token1
+		fee100,       // fee
+		int32(-1000), // tickLower
+		int32(1000),  // tickUpper
+		"50000",      // amount0Desired
+		"50000",      // amount1Desired
+		"1",          // amount0Min
+		"1",          // amount1Min
+		max_timeout,
+		gsa.String(),
+	)
+
+	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+
+	gpi := GetPrintInfo()
+	shouldEQ(t, gpi, `{"height":126,"time":1234567896,"gns":{"staker":0,"devOps":8561643,"communityPool":2140410,"xGNS":0,"protocolFee":132106164,"GnoswapAdmin":99999900000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
+
+	std.TestSkipHeights(1)
+}
+
+func TestStakeToken_1_2(t *testing.T) {
+	curr := getCurrentInfo()
+
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
+	StakeToken(1)
+
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
+	StakeToken(2)
+
+	std.TestSkipHeights(1)
+}
+
+func TestCurretRewnard(t *testing.T) {
+	agr := ApiGetRewards()
+	shouldEQ(t, agr, `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":101175,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]},{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":3109440,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
+
+	lpToken01Rewards := ApiGetRewardsByLpTokenId(1)
+	shouldEQ(t, lpToken01Rewards, `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":101175,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
+
+	lpToken02Rewards := ApiGetRewardsByLpTokenId(2)
+	shouldEQ(t, lpToken02Rewards, `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":3109440,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
+}
+
+func TestMakePosition1OutRange(t *testing.T) {
+	poolTick := pl.PoolGetSlot0Tick(poolPath)
+	shouldEQ(t, poolTick, int32(0))
+
+	// ROUTER SWAP
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+	tokenIn, tokenOut := rr.SwapRoute(
+		barPath,    // inputToken
+		quxPath,    // outputToken
+		"10000",    // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // strRouteArr
+		"100", // quoteArr
+		"0",   // tokenAmountLimit
+	)
+	shouldEQ(t, tokenIn, "10000")
+	shouldEQ(t, tokenOut, "-9886")
+	std.TestSkipHeights(1)
+}
+
+func TestCheckRewardAfter1Block(t *testing.T) {
+	poolTick := pl.PoolGetSlot0Tick(poolPath)
+	shouldEQ(t, poolTick, int32(-194))
+	// AT THIS POINT position #1 is out of range
+
+	lpToken01Rewards := ApiGetRewardsByLpTokenId(1)
+	shouldEQ(t, lpToken01Rewards, `{"stat":{"height":129,"timestamp":1234567902},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":101175,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
+
+	lpToken02Rewards := ApiGetRewardsByLpTokenId(2)
+	shouldEQ(t, lpToken02Rewards, `{"stat":{"height":129,"timestamp":1234567902},"response":[{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":6320056,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
+
+	// POSITION #1 PREVIOUS REWARD
+	// `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":101175,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
+
+	// POSITION #2 PREVIOUS REWARD
+	// `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":3109440,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898}]}]}`)
+
+	/*
+		PREVIOUS REWARD -> NOW
+		- POSITION #1
+			101175 > 101175
+		- POSITION #2
+			3109440 > 6320056
+	*/
+}

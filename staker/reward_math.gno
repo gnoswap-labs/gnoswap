@@ -384,7 +384,10 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 
 	currentHeight := std.GetHeight()
 
-	externals := positionExternal[tokenId]
+	externals, exist := positionExternal[tokenId]
+	if !exist {
+		return 0, 0
+	}
 
 	_max := max(incentives[incentiveId].startTimestamp, deposits[tokenId].stakeTimestamp)
 	println("  > REWARD__EXTERNAL_incentives[incentiveId].startTimestamp:", incentives[incentiveId].startTimestamp)

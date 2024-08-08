@@ -180,7 +180,13 @@ func CollectReward(tokenId uint64) string { // poolPath
 			println("  > incentiveId:", incentiveId)
 			println("  > rewardToken:", external.tokenPath)
 
-			fullAmount, toGive := rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
+			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
+			if !exist {
+				continue
+			}
+			fullAmount := externalWarmUpAmount.full30 + externalWarmUpAmount.full50 + externalWarmUpAmount.full70 + externalWarmUpAmount.full100
+			toGive := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.give100
+
 			println("  > position fullAmount(rewardMathComputeExternal)", fullAmount)
 			println("  > position toGive(rewardMathComputeExternal)", toGive)
 
@@ -244,7 +250,14 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 	// INTERNAL gns emission
 	println("[ START ] CollectReward_INTERNAL", tokenId)
-	fullAmount, toGive := rewardMathComputeInternalRewardAmount(tokenId)
+
+	internalWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
+	if !exist {
+		continue
+	}
+	fullAmount := internalWarmUpAmount.full30 + internalWarmUpAmount.full50 + internalWarmUpAmount.full70 + internalWarmUpAmount.full100
+	toGive := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.give100
+
 	println(" > position fullAmount(rewardMathComputeInternal)", fullAmount)
 	println(" > position toGive(rewardMathComputeInternal)", toGive)
 	if toGive == 0 {
