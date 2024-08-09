@@ -7,7 +7,7 @@ import (
 )
 
 // defaultAllowed is the list of default allowed tokens to create external incentive
-var defaultAllowed = []string{consts.GNS_PATH, consts.WUGNOT_PATH, consts.GNOT}
+var defaultAllowed = []string{consts.GNS_PATH, consts.GNOT}
 
 // allowedTokens is a slice of all allowed token paths, including the default and added tokens.
 var allowedTokens = []string{}

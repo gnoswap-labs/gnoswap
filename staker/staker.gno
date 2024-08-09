@@ -203,7 +203,12 @@ func CollectReward(tokenId uint64) string { // poolPath
 			toUser := handleUnstakingFee(external.tokenPath, toGive, false, tokenId, incentive.targetPoolPath)
 			println("  > position toUser(after staking fee)", toUser)
 			println("  > unstakingFee", toGive-toUser)
+
 			transferByRegisterCall(external.tokenPath, deposit.owner, toUser)
+			if external.tokenPath == consts.WUGNOT_PATH {
+				unwrap(toUser)
+			}
+
 			println("  > toAddr:", deposit.owner)
 			println("  > toUser:", toUser)
 
