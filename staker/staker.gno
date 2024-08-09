@@ -203,7 +203,12 @@ func CollectReward(tokenId uint64) string { // poolPath
 			toUser := handleUnstakingFee(external.tokenPath, toGive, false, tokenId, incentive.targetPoolPath)
 			println("  > position toUser(after staking fee)", toUser)
 			println("  > unstakingFee", toGive-toUser)
+
 			transferByRegisterCall(external.tokenPath, deposit.owner, toUser)
+			if external.tokenPath == consts.WUGNOT_PATH {
+				unwrap(toUser)
+			}
+
 			println("  > toAddr:", deposit.owner)
 			println("  > toUser:", toUser)
 
@@ -253,7 +258,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 	internalWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
 	if !exist {
-		continue
+		return poolPath
 	}
 	fullAmount := internalWarmUpAmount.full30 + internalWarmUpAmount.full50 + internalWarmUpAmount.full70 + internalWarmUpAmount.full100
 	toGive := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.give100

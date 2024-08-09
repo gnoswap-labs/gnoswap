@@ -248,6 +248,10 @@ mint-gns-gnot:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/v2/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args $(TX_EXPIRE) -args $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
+	# Set-Token-Uri
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/gnft -func SetTokenURILast -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo
+
 mint-bar-baz:
 	$(info ************ mint position(2) to bar:baz // gnoswap_admin ************)
 	# APPROVE FISRT

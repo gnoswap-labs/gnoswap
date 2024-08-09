@@ -1,0 +1,92 @@
+package staker
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
+
+	"gno.land/r/gnoswap/v2/gnft"
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+
+	"gno.land/r/demo/wugnot"
+)
+
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+
+	pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337") // will be external
+	std.TestSkipHeights(1)
+}
+
+func TestMintBarBaz100(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	std.TestSkipHeights(2)
+
+	tokenId, liquidity, amount0, amount1 := pn.Mint(
+		barPath,      // token0
+		bazPath,      // token1
+		fee100,       // fee
+		int32(-1000), // tickLower
+		int32(1000),  // tickUpper
+		"100000",     // amount0Desired
+		"100000",     // amount1Desired
+		"1",          // amount0Min
+		"1",          // amount1Min
+		max_timeout,
+		gsa.String(),
+	)
+	std.TestSkipHeights(1)
+}
+
+func TestCreateExternalIncentive(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
+
+	std.TestSetOrigSend(std.Coins{{"ugnot", 100000000}}, nil)
+	CreateExternalIncentive(
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath
+		"gnot",                      // rewardToken
+		"100000000",                 // rewardAmount
+		1234569600,                  // startTimestamp
+		1234569600+TIMESTAMP_90DAYS, // endTimestamp
+	)
+
+	std.TestSkipHeights(1)
+}
+
+func TestStakeToken(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	gnft.Approve(a2u(consts.STAKER_ADDR), "1")
+	StakeToken(1)
+}
+
+func TestCollectExternalReward_1(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	oldUgnotBal := ugnotBalanceOf(gsa)
+	shouldEQ(t, oldUgnotBal, 0)
+
+	oldWugnotBal := wugnot.BalanceOf(a2u(gsa))
+	shouldEQ(t, oldWugnotBal, 0)
+
+	std.TestSkipHeights(900)
+	CollectReward(1)
+
+	newUgnotBal := ugnotBalanceOf(gsa)
+	shouldEQ(t, newUgnotBal, 382) // reward was created with ugnot, so ugnot balance should increase
+
+	newWugnotBal := wugnot.BalanceOf(a2u(gsa))
+	shouldEQ(t, newWugnotBal, 0) // no wugnot reward, stays the same
+}
