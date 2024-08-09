@@ -511,9 +511,13 @@ func makePositionsNode(poolPath string) []*json.Node {
 		if deposit.targetPoolPath == poolPath {
 			stakedDuration := std.GetHeight() - deposit.stakeHeight
 			ratio := getRewardRatio(stakedDuration)
-			fullAmount, warmUpAmount := rewardMathComputeInternalRewardAmount(lpTokenId)
 
-			posCalcWarm := positionsInternalWarmUpAmount[lpTokenId]
+			internalWarmUpAmount, exist := positionsInternalWarmUpAmount[lpTokenId]
+			if !exist {
+				continue
+			}
+			fullAmount := internalWarmUpAmount.full30 + internalWarmUpAmount.full50 + internalWarmUpAmount.full70 + internalWarmUpAmount.full100
+			warmUpAmount := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.give100
 
 			positions = append(positions, json.ObjectNode("", map[string]*json.Node{
 				"lpTokenId":       json.NumberNode("lpTokenId", float64(lpTokenId)),
@@ -523,14 +527,14 @@ func makePositionsNode(poolPath string) []*json.Node {
 				"fullAmount":      json.NumberNode("fullAmount", float64(fullAmount)),
 				"ratio":           json.NumberNode("ratio", float64(ratio)),
 				"warmUpAmount":    json.NumberNode("warmUpAmount", float64(warmUpAmount)),
-				"full30":          json.NumberNode("full30", float64(posCalcWarm.full30)),
-				"give30":          json.NumberNode("give30", float64(posCalcWarm.give30)),
-				"full50":          json.NumberNode("full50", float64(posCalcWarm.full50)),
-				"give50":          json.NumberNode("give50", float64(posCalcWarm.give50)),
-				"full70":          json.NumberNode("full70", float64(posCalcWarm.full70)),
-				"give70":          json.NumberNode("give70", float64(posCalcWarm.give70)),
-				"full100":         json.NumberNode("full100", float64(posCalcWarm.full100)),
-				"give100":         json.NumberNode("give100", float64(posCalcWarm.give100)),
+				"full30":          json.NumberNode("full30", float64(internalWarmUpAmount.full30)),
+				"give30":          json.NumberNode("give30", float64(internalWarmUpAmount.give30)),
+				"full50":          json.NumberNode("full50", float64(internalWarmUpAmount.full50)),
+				"give50":          json.NumberNode("give50", float64(internalWarmUpAmount.give50)),
+				"full70":          json.NumberNode("full70", float64(internalWarmUpAmount.full70)),
+				"give70":          json.NumberNode("give70", float64(internalWarmUpAmount.give70)),
+				"full100":         json.NumberNode("full100", float64(internalWarmUpAmount.full100)),
+				"give100":         json.NumberNode("give100", float64(internalWarmUpAmount.give100)),
 			}))
 		}
 	}
@@ -608,7 +612,13 @@ func GetPrintExternalInfo() string {
 
 			externalIncentive.tokenAmountX96 = external.tokenAmountX96
 
-			fullAmount, toGive := rewardMathComputeExternalRewardAmount(lpTokenId, incentiveId)
+			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[lpTokenId][incentiveId]
+			if !exist {
+				continue
+			}
+			fullAmount := externalWarmUpAmount.full30 + externalWarmUpAmount.full50 + externalWarmUpAmount.full70 + externalWarmUpAmount.full100
+			toGive := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.give100
+
 			externalIncentive.tokenAmountFull += fullAmount
 			externalIncentive.tokenAmountActualFull += toGive
 
