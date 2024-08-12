@@ -2,7 +2,6 @@
 // with two external incentives for same pool
 // bar + qux
 
-
 package staker
 
 import (
@@ -153,7 +152,7 @@ func TestCollectReward(t *testing.T) {
 	oldBar := bar.BalanceOf(a2u(gsa))
 	oldQux := qux.BalanceOf(a2u(gsa))
 
-	CollectReward(1)
+	CollectReward(1, false)
 
 	newBar := bar.BalanceOf(a2u(gsa))
 	newQux := qux.BalanceOf(a2u(gsa))

@@ -144,7 +144,8 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 // CollectReward collects staked rewards for the given tokenId
 //
 // Parameters:
-//   - tokenId (uint64): The ID of the LP token to collect rewards for
+//   - tokenId      (uint64): The ID of the LP token to collect rewards for
+//   - unwrapResult   (bool): Unwrap the result if the reward token is ugnot coin
 //
 // Returns:
 //   - poolPath (string): The path of the pool associated with the collected rewards
@@ -152,7 +153,7 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 // Panics:
 //   - token is not staked
 //   - caller is not owner of lp token
-func CollectReward(tokenId uint64) string { // poolPath
+func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
@@ -203,7 +204,12 @@ func CollectReward(tokenId uint64) string { // poolPath
 			toUser := handleUnstakingFee(external.tokenPath, toGive, false, tokenId, incentive.targetPoolPath)
 			println("  > position toUser(after staking fee)", toUser)
 			println("  > unstakingFee", toGive-toUser)
+
 			transferByRegisterCall(external.tokenPath, deposit.owner, toUser)
+			if external.tokenPath == consts.WUGNOT_PATH && unwrapResult {
+				unwrap(toUser)
+			}
+
 			println("  > toAddr:", deposit.owner)
 			println("  > toUser:", toUser)
 
@@ -253,7 +259,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 
 	internalWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
 	if !exist {
-		continue
+		return poolPath
 	}
 	fullAmount := internalWarmUpAmount.full30 + internalWarmUpAmount.full50 + internalWarmUpAmount.full70 + internalWarmUpAmount.full100
 	toGive := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.give100
@@ -329,7 +335,8 @@ func CollectReward(tokenId uint64) string { // poolPath
 // UnstakeToken unstakes the LP token from the staker and collects all reward from tokenId
 //
 // Parameters:
-//   - tokenId (uint64): The ID of the LP token to unstake
+//   - tokenId      (uint64) : The ID of the LP token to unstake
+//   - unwrapResult (bool)   : Unwrap the result if the reward token is ugnot coin
 //
 // Returns:
 //   - poolPath     (string): The path of the pool associated with the unstaked token
@@ -338,7 +345,7 @@ func CollectReward(tokenId uint64) string { // poolPath
 //
 // Panics:
 //   - If the token is not staked
-func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Amount, token1Amount
+func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
@@ -348,7 +355,7 @@ func UnstakeToken(tokenId uint64) (string, string, string) { // poolPath, token0
 		panic(ufmt.Sprintf("[STAKER] staker.gno__UnstakeToken() || tokenId(%d) not staked", tokenId))
 	}
 	// Claim All Rewards
-	CollectReward(tokenId)
+	CollectReward(tokenId, unwrapResult)
 
 	delete(positionGns, tokenId)
 	delete(deposits, tokenId)
