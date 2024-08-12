@@ -1,0 +1,305 @@
+package position
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	pl "gno.land/r/gnoswap/v2/pool"
+
+	"gno.land/r/gnoswap/v2/gnft"
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
+)
+
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
+	std.TestSkipHeights(1)
+}
+
+func TestMintPosition01InRange(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		8000,
+		12000,
+		"50000000",
+		"50000000",
+		"0",
+		"0",
+		max_timeout,
+		gsa.String(),
+	)
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, getNextId(), 2)
+	shouldEQ(t, amount0, "18394892")
+	shouldEQ(t, amount1, "50000000")
+
+	position := positions[uint64(1)]
+	shouldEQ(t, position.nonce.ToString(), "0")
+	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	shouldEQ(t, position.tickLower, 8000)
+	shouldEQ(t, position.tickUpper, 12000)
+	shouldEQ(t, position.liquidity.ToString(), "318704392")
+	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	shouldEQ(t, position.tokensOwed0.ToString(), "0")
+	shouldEQ(t, position.tokensOwed1.ToString(), "0")
+	shouldEQ(t, position.burned, false)
+}
+
+func TestSwap1(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetRealm(rouRealm)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		barPath,
+		fooPath,
+		fee500,
+		gsa.String(),
+		true,
+		"1234567",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, amount0, "1234567")
+	shouldEQ(t, amount1, "-3332779")
+
+	// pool.swap really doesn't update the position
+	position := positions[uint64(1)]
+	shouldEQ(t, position.nonce.ToString(), "0")
+	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	shouldEQ(t, position.tickLower, 8000)
+	shouldEQ(t, position.tickUpper, 12000)
+	shouldEQ(t, position.liquidity.ToString(), "318704392")
+	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	shouldEQ(t, position.tokensOwed0.ToString(), "0")
+	shouldEQ(t, position.tokensOwed1.ToString(), "0")
+	shouldEQ(t, position.burned, false)
+
+	// check pool current tick
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	poolTick := pl.PoolGetSlot0Tick(poolPath)
+	shouldEQ(t, poolTick, 9872)
+}
+
+func TestMintPosition02InRange(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		9000,
+		10000,
+		"50000000",
+		"50000000",
+		"0",
+		"0",
+		max_timeout,
+		gsa.String(),
+	)
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, getNextId(), 3)
+	shouldEQ(t, amount0, "2767688")
+	shouldEQ(t, amount1, "50000000")
+
+	position := positions[uint64(2)]
+	shouldEQ(t, position.nonce.ToString(), "0")
+	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	shouldEQ(t, position.tickLower, 9000)
+	shouldEQ(t, position.tickUpper, 10000)
+	shouldEQ(t, position.liquidity.ToString(), "714838384")
+	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	shouldEQ(t, position.tokensOwed0.ToString(), "0")
+	shouldEQ(t, position.tokensOwed1.ToString(), "0")
+	shouldEQ(t, position.burned, false)
+}
+
+func TestSwap2(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	std.TestSetRealm(rouRealm)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		barPath,
+		fooPath,
+		fee500,
+		gsa.String(),
+		true,
+		"1234567",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, amount0, "1234567")
+	shouldEQ(t, amount1, "-3305175")
+
+	// pool.swap really doesn't update the position
+	position := positions[uint64(1)]
+	shouldEQ(t, position.nonce.ToString(), "0")
+	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	shouldEQ(t, position.tickLower, 8000)
+	shouldEQ(t, position.tickUpper, 12000)
+	shouldEQ(t, position.liquidity.ToString(), "318704392")
+	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	shouldEQ(t, position.tokensOwed0.ToString(), "0")
+	shouldEQ(t, position.tokensOwed1.ToString(), "0")
+	shouldEQ(t, position.burned, false)
+}
+
+func TestSwap3(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	std.TestSetRealm(rouRealm)
+	std.TestSetOrigCaller(gsa)
+	amount0, amount1 := pl.Swap(
+		barPath,
+		fooPath,
+		fee500,
+		gsa.String(),
+		true,
+		"1234567",
+		consts.MIN_PRICE,
+		gsa.String(),
+	)
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, amount0, "1234567")
+	shouldEQ(t, amount1, "-3292296")
+
+	// pool.swap really doesn't update the position
+	{
+		position := positions[uint64(1)]
+		shouldEQ(t, position.nonce.ToString(), "0")
+		shouldEQ(t, position.operator, gsa)
+		shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+		shouldEQ(t, position.tickLower, 8000)
+		shouldEQ(t, position.tickUpper, 12000)
+		shouldEQ(t, position.liquidity.ToString(), "318704392")
+		shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
+		shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+		shouldEQ(t, position.tokensOwed0.ToString(), "0")
+		shouldEQ(t, position.tokensOwed1.ToString(), "0")
+		shouldEQ(t, position.burned, false)
+	}
+
+	{
+		position := positions[uint64(2)]
+		shouldEQ(t, position.nonce.ToString(), "0")
+		shouldEQ(t, position.operator, gsa)
+		shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+		shouldEQ(t, position.tickLower, 9000)
+		shouldEQ(t, position.tickUpper, 10000)
+		shouldEQ(t, position.liquidity.ToString(), "714838384")
+		shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
+		shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+		shouldEQ(t, position.tokensOwed0.ToString(), "0")
+		shouldEQ(t, position.tokensOwed1.ToString(), "0")
+		shouldEQ(t, position.burned, false)
+	}
+}
+
+func TestIncreaseLiquidity02(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	pool := getPoolFromLpTokenId(uint64(2))
+	oldLiquidity := pool.PoolGetLiquidity()
+
+	_, _, m0, m1, _ := IncreaseLiquidity(
+		uint64(2),   // tokenId
+		"10000000",  // amount0Desired
+		"10000000",  // amount1Desired
+		"0",         // amount0Min
+		"0",         // amount1Min
+		max_timeout, // deadline
+	)
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, m0, "984790")
+	shouldEQ(t, m1, "10000000")
+
+	newLiquidity := pool.PoolGetLiquidity()
+
+	shouldEQ(t, newLiquidity.Gt(oldLiquidity), true)
+}
+
+func TestDecreaseLiquidityPosition02(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	_lpTokenId := uint64(2)
+
+	ownerOfPosition := gnft.OwnerOf(tid(_lpTokenId))
+	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())
+
+	unclaimedFee0, unclaimedFee1 := unclaimedFee(_lpTokenId)
+	shouldEQ(t, unclaimedFee0.ToString(), "0")
+	shouldEQ(t, unclaimedFee1.ToString(), "0")
+
+	// approve fee0, fee_lpTokenId to pool
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
+		_lpTokenId,
+		100,
+		"0",
+		"0",
+		max_timeout,
+		false,
+	)
+	shouldEQ(t, tokenId, _lpTokenId)
+	shouldEQ(t, amount0, "5459371")
+	shouldEQ(t, amount1, "55436931")
+
+	ownerOfPosition = gnft.OwnerOf(tid(_lpTokenId))
+	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())
+
+	unclaimedFee0, unclaimedFee1 = unclaimedFee(tokenId)
+	shouldEQ(t, unclaimedFee0.ToString(), "0")
+	shouldEQ(t, unclaimedFee1.ToString(), "0")
+
+	position := positions[_lpTokenId]
+	shouldEQ(t, position.nonce.ToString(), "0")
+	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	shouldEQ(t, position.tickLower, 9000)
+	shouldEQ(t, position.tickUpper, 10000)
+	shouldEQ(t, position.liquidity.ToString(), "0")
+	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "406939137189886314720592672194986")
+	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	shouldEQ(t, position.tokensOwed0.ToString(), "0")
+	shouldEQ(t, position.tokensOwed1.ToString(), "0")
+	shouldEQ(t, position.burned, true)
+}
