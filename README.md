@@ -81,18 +81,21 @@ To set up GnoSwap contracts in Gno Core, follow these steps:
 2. Copy the `gnoswap` contracts into the cloned `gno` repository:
 
    ```bash
+   # make some directory
+   mkdir -p $WORKDIR/gno/examples/gno.land/r/gnoswap/v2
+   mkdir -p $WORKDIR/gno/examples/gno.land/p/gnoswap
+
    # copy grc20 tokens
-   cp -R __local/grc20_tokens/* $WORKDIR/gno/examples/gno.land/r/demo
-   cp -R _deploy/r/gnoswap $WORKDIR/gno/examples/gno.land/r
+   cp -R __local/grc20_tokens/* $WORKDIR/gno/examples/gno.land/r/
 
    # copy gnoswap base packages ( includes uint256, int256 and bit of pool calculation )
-   cp -R _deploy/p/gnoswap $WORKDIR/gno/examples/gno.land/p/gnoswap/v2
+   cp -R _deploy/p/gnoswap/* $WORKDIR/gno/examples/gno.land/p/gnoswap
 
    # copy gnoswap base realms ( includes common logic, variables and consts )
-   cp -R _deploy/r/gnoswap $WORKDIR/gno/examples/gno.land/r/gnoswap/v2
+   cp -R _deploy/r/gnoswap/* $WORKDIR/gno/examples/gno.land/r/gnoswap/v2
 
    # copy gnoswap realms
-   cp -R pool position router staker $WORKDIR/gno/examples/gno.land/r/gnoswap/v2
+   cp -R community_pool emission pool position protocol_fee router staker $WORKDIR/gno/examples/gno.land/r/gnoswap/v2
    ```
 
 3. Move all test cases into its own directory:
@@ -101,14 +104,14 @@ Move the test cases for each contract to their respective directories. It's not 
 
 ```bash
 cd $WORKDIR/gno/examples/gno.land/r/gnoswap/v2/{name}
-mv _TEST_/* .
+mv tests/* .
 ```
 
 For example, to move all tests for the `pool` realm:
 
 ```bash
 cd $WORKDIR/gno/examples/gno.land/r/gnoswap/v2/pool
-mv _TEST_/* .
+mv tests/* .
 ```
 
 Other realms can be moved in a similar way.
@@ -117,16 +120,16 @@ Other realms can be moved in a similar way.
 
 While it's possible to run tests in the cloned `gno` directory (where the above setup process was completed), it's recommended to run them in the `gnoswap` directory to avoid confusion due to the large number of changed files.
 
-First, navigate to the `gnoswap` directory:
+First, navigate to the `gno/examples` directory:
 
 ```bash
-cd gnoswap
+cd $WORKDIR/gno/examples
 ```
 
 Next, move to the Realm directory you want to test (such as `pool`, `staker`, etc.), then run the tests using the `gno test` command:
 
 ```bash
-gno test -v . # or specify a particular test file path
+gno test -root-dir $WORKDIR/gno -v=false ./gno.land/r/gnoswap/v2/pool
 ```
 
 ## Realms
@@ -135,10 +138,10 @@ This section provides information about the core realms of GnoSwap that have bee
 
 ### Core Realms Deployed on Testnet4
 
-- pool: [gno.land/r/gnoswap/v2/pool](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fpool)
-- position: [gno.land/r/gnoswap/v2/position](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fposition)
-- router: [gno.land/r/gnoswap/v2/router](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Frouter)
-- staker: [gno.land/r/gnoswap/v2/staker](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fstaker)
+- pool: [gno.land/r/gnoswap/v2/pool](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Fpool)
+- position: [gno.land/r/gnoswap/v2/position](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Fposition)
+- router: [gno.land/r/gnoswap/v2/router](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Frouter)
+- staker: [gno.land/r/gnoswap/v2/staker](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Fstaker)
 
 ### Pool
 

@@ -36,15 +36,17 @@ def copy_contracts(workdir):
 
     # Copy gnoswap realms
     # TODO: Detect realms automatically
-    for realm in ["pool", "position", "router", "staker", "emission", "community_pool"]:
+    for realm in ["pool", "position", "router", "staker", "emission", "community_pool", "protocol_fee"]:
         shutil.copytree(realm, os.path.join(gno_dir, "r", "gnoswap", "v2", realm), dirs_exist_ok=True)
 
 def move_tests(workdir):
-    gno_dir = os.path.join(workdir, "gno", "examples", "gno.land", "r")
+    gno_dir = os.path.join(workdir, "gno", "examples", "gno.land", "r", "gnoswap", "v2")
+    print(f"GNO_DIR IS {gno_dir}")
 
-    for realm in ["pool", "position", "router", "staker", "emission", "community_pool"]:
-        test_dir = os.path.join(gno_dir, realm, "_TEST_")
+    for realm in ["pool", "position", "router", "staker", "emission", "community_pool", "gns", "gnft"]:
+        test_dir = os.path.join(gno_dir, realm, "tests")
         if os.path.exists(test_dir):
+            print(f"{test_dir} exists")
             for item in os.listdir(test_dir):
                 shutil.move(os.path.join(test_dir, item), os.path.join(gno_dir, realm))
 
