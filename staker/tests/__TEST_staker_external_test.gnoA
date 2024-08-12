@@ -161,7 +161,7 @@ func TestCollectExternalReward_2(t *testing.T) {
 	shouldEQ(t, oblOld, 99999900000000)
 
 	std.TestSkipHeights(777601) // 45 days + 1 block
-	CollectReward(2)
+	CollectReward(2, false)
 
 	std.TestSkipHeights(1)
 
@@ -177,7 +177,7 @@ func TestCollectExternalReward_3(t *testing.T) {
 	shouldEQ(t, oblOld, 99999909895486)
 
 	std.TestSkipHeights(1)
-	CollectReward(3)
+	CollectReward(3, false)
 
 	std.TestSkipHeights(1)
 

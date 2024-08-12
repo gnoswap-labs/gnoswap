@@ -152,7 +152,7 @@ func TestCollectReward(t *testing.T) {
 	oldBar := bar.BalanceOf(a2u(gsa))
 	oldGns := gns.BalanceOf(a2u(gsa))
 
-	CollectReward(1)
+	CollectReward(1, false)
 
 	newBar := bar.BalanceOf(a2u(gsa))
 	newGns := gns.BalanceOf(a2u(gsa))

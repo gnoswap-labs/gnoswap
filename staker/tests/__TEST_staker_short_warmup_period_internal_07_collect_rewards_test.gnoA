@@ -182,7 +182,7 @@ func TestCollect1_1(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	CollectReward(1)
+	CollectReward(1, false)
 
 	println(GetPrintInfo())
 	println()
@@ -197,7 +197,7 @@ func TestCollect1_2(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	CollectReward(1)
+	CollectReward(1, false)
 
 	println(GetPrintInfo())
 	println()
@@ -212,7 +212,7 @@ func TestCollect1_3(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	CollectReward(1)
+	CollectReward(1, false)
 
 	println(GetPrintInfo())
 	println()
@@ -227,7 +227,7 @@ func TestCollect1_4(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	CollectReward(1)
+	CollectReward(1, false)
 
 	println(GetPrintInfo())
 	println()
@@ -242,7 +242,7 @@ func TestCollect2_1(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	CollectReward(2)
+	CollectReward(2, false)
 
 	println(GetPrintInfo())
 	println()
@@ -257,8 +257,8 @@ func TestCollectAll_1(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	CollectReward(1)
-	CollectReward(2)
+	CollectReward(1, false)
+	CollectReward(2, false)
 
 	println(GetPrintInfo())
 	println()
@@ -279,14 +279,14 @@ func TestCollectNow(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	CollectReward(1)
+	CollectReward(1, false)
 }
 
 func TestCollectSameBlock(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	CollectReward(1)
+	CollectReward(1, false)
 }
 
 func TestCollectAfterSingleBlock(t *testing.T) {
@@ -295,5 +295,5 @@ func TestCollectAfterSingleBlock(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	CollectReward(1)
+	CollectReward(1, false)
 }

@@ -124,7 +124,7 @@ func TestCollectReward(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	oldBar := bar.BalanceOf(a2u(gsa))
-	CollectReward(1)
+	CollectReward(1, false)
 	std.TestSkipHeights(1)
 	newBar := bar.BalanceOf(a2u(gsa))
 	shouldEQ(t, newBar-oldBar, 481)
@@ -196,12 +196,12 @@ func TestCollectRewardAll(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	oldBar := bar.BalanceOf(a2u(gsa))
-	CollectReward(1)
+	CollectReward(1, false)
 	newBar := bar.BalanceOf(a2u(gsa))
 	shouldEQ(t, newBar-oldBar, 19)
 
 	oldBar = newBar
-	CollectReward(2)
+	CollectReward(2, false)
 	newBar = bar.BalanceOf(a2u(gsa))
 	shouldEQ(t, newBar-oldBar, 8)
 }

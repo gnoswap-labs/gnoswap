@@ -210,7 +210,7 @@ func TestCollectReward01(t *testing.T) {
 	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
 	shouldEQ(t, ugnotBalanceOf(gsa), 99998010)
 
-	CollectReward(1)
+	CollectReward(1, false)
 
 	std.TestSkipHeights(1)
 
@@ -226,7 +226,7 @@ func TestUnstakeToken02(t *testing.T) {
 
 	std.TestSetRealm(gsaRealm)
 
-	UnstakeToken(2) // GNFT tokenId
+	UnstakeToken(2, false) // GNFT tokenId
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, gnft.OwnerOf(tid(2)), gsa)
