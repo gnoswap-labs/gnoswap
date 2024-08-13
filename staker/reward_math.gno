@@ -8,8 +8,6 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v2/consts"
-
-	pos "gno.land/r/gnoswap/v2/position"
 )
 
 type warmUpAmount struct {
@@ -59,8 +57,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 
 	lastCalculatedHeightU64 := uint64(lastCalculatedHeight)
 
-	q96 := u256.MustFromDecimal(consts.Q96)
-	toDistributeX96 := new(u256.Uint).Mul(u256.NewUint(toDistribute), q96)
+	toDistributeX96 := new(u256.Uint).Mul(u256.NewUint(toDistribute), _q96)
 	avgGnsBlockAmountX96 := new(u256.Uint).Div(toDistributeX96, u256.NewUint(uint64(currentHeight)-lastCalculatedHeightU64))
 	println(" > REWARD__INTERNAL_toDistribute:", toDistribute)
 	println(" > REWARD__INTERNAL_uint64(currentHeight)-lastCalculatedHeightU64):", uint64(currentHeight)-lastCalculatedHeightU64)
@@ -712,61 +709,8 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 	panic("NO INCENTIVE_ID FOUND")
 }
 
-func getPoolTotalStakedLiquidity(poolPath string) *u256.Uint {
-	poolStakedLiquidity := u256.Zero()
-	// get all staked liquidity
-	for tokenId, deposit := range deposits { // key is tokenId // used in this range loop only
-		if deposit.targetPoolPath == poolPath {
-			isInRange := pos.PositionIsInRange(tokenId)
-			if isInRange == false {
-				continue
-			}
-
-			positionLiquidity := pos.PositionGetPositionLiquidity(tokenId)
-			poolStakedLiquidity = new(u256.Uint).Add(poolStakedLiquidity, positionLiquidity)
-		}
-	}
-
-	return poolStakedLiquidity
-}
-
-func getMyLiquidityRatio(poolPath string, tokenId uint64) *u256.Uint {
-	_q96 := u256.MustFromDecimal(consts.Q96)
-
-	poolStakedLiquidity := getPoolTotalStakedLiquidity(poolPath)
-	// XXX REMOVE AFTER QA
-	// println()
-	// println("tokenId:", tokenId)
-	// println("POOL_LIQ:", poolStakedLiquidity.ToString())
-
-	// my(current tokenId) liquidity
-	myLiquidity := pos.PositionGetPositionLiquidity(tokenId)
-
-	// XXX REMOVE AFTER QA
-	// println("MY_LIQ:", myLiquidity.ToString())
-
-	isInRange := pos.PositionIsInRange(tokenId)
-	if isInRange == false {
-		return u256.Zero()
-	}
-
-	myLiquidityX96 := new(u256.Uint).Mul(myLiquidity, _q96)
-	myLiquidityX96X10000000 := new(u256.Uint).Mul(myLiquidityX96, u256.NewUint(1_000_000_000))
-
-	poolStakedLiquidityX96 := new(u256.Uint).Mul(poolStakedLiquidity, _q96)
-
-	myLiquidityRatio := new(u256.Uint).Div(myLiquidityX96X10000000, poolStakedLiquidityX96) // this value needs to be divided by 1_000_000_000
-	myLiquidityRatio = new(u256.Uint).Mul(myLiquidityRatio, _q96)                           // so first mul consts.Q96
-	myLiquidityRatio = new(u256.Uint).Div(myLiquidityRatio, u256.NewUint(1_000_000_000))    // then divided by 1_000_000_000
-
-	// XXX REMOVE AFTER QA
-	// println("myLiquidityRatio:", myLiquidityRatio.ToString())
-	return myLiquidityRatio
-}
-
 // get current pool tier and reward ratio
 func getPoolTierAndRatio(poolPath string) (uint64, *u256.Uint) {
-	_q96 := u256.MustFromDecimal(consts.Q96)
 
 	// current pool's tier
 	internal, ok := poolTiers[poolPath]
@@ -777,7 +721,7 @@ func getPoolTierAndRatio(poolPath string) (uint64, *u256.Uint) {
 
 	// that tiers ratio
 	ratio := getTierRatio(tier)
-	ratioX96 := new(u256.Uint).Mul(u256.NewUint(ratio), _q96) // first consts.Q96
+	ratioX96 := new(u256.Uint).Mul(u256.NewUint(ratio), _q96)
 
 	// finally current pools ratio
 	numTier1, numTier2, numTier3 := getNumPoolTiers()
@@ -892,11 +836,11 @@ func getTiersAmount(amount uint64) (uint64, uint64, uint64) {
 
 func calcAmount(avgBlockAmountX96 *u256.Uint, dur, pct uint64) (uint64, uint64) {
 	durAmountX96 := new(u256.Uint).Mul(avgBlockAmountX96, u256.NewUint(dur))
-	fullAmount := new(u256.Uint).Div(durAmountX96, u256.MustFromDecimal(consts.Q96)).Uint64()
+	fullAmount := new(u256.Uint).Div(durAmountX96, _q96).Uint64()
 
 	durAmountX96 = new(u256.Uint).Mul(durAmountX96, u256.NewUint(pct))
 	durAmountX96 = new(u256.Uint).Div(durAmountX96, u256.NewUint(100))
 
-	durAmount := new(u256.Uint).Div(durAmountX96, u256.MustFromDecimal(consts.Q96)).Uint64()
+	durAmount := new(u256.Uint).Div(durAmountX96, _q96).Uint64()
 	return fullAmount, durAmount
 }
