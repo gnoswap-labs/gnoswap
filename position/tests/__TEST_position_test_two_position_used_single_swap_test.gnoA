@@ -77,7 +77,7 @@ func TestMintPositionTightInRange(t *testing.T) {
 }
 
 func TestCollectFeeBeforeSwapPos1(t *testing.T) {
-	tokenId, fee0, fee1, poolPath := CollectFee(1)
+	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1)
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/onbloc/bar} {p_token1Path gno.land/r/onbloc/foo} {fee0Amount 0} {fee1Amount 0}]}
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 
@@ -88,7 +88,7 @@ func TestCollectFeeBeforeSwapPos1(t *testing.T) {
 }
 
 func TestCollectFeeBeforeSwapPos2(t *testing.T) {
-	tokenId, fee0, fee1, poolPath := CollectFee(2)
+	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(2)
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/onbloc/bar} {p_token1Path gno.land/r/onbloc/foo} {fee0Amount 0} {fee1Amount 0}]}
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 
@@ -124,7 +124,7 @@ func TestCollectFeeAfterSwapPos1(t *testing.T) {
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 
-	tokenId, fee0, fee1, poolPath := CollectFee(1)
+	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1)
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/onbloc/bar} {p_token1Path gno.land/r/onbloc/foo} {fee0Amount 1} {fee1Amount 0}]}
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 126} {fee1 0} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 
@@ -136,7 +136,7 @@ func TestCollectFeeAfterSwapPos1(t *testing.T) {
 }
 
 func TestCollectFeeAfterSwapPos2(t *testing.T) {
-	tokenId, fee0, fee1, poolPath := CollectFee(2)
+	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(2)
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 2} {p_token0Path gno.land/r/onbloc/bar} {p_token1Path gno.land/r/onbloc/foo} {fee0Amount 4} {fee1Amount 0}]}
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 2} {fee0 486} {fee1 0} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 

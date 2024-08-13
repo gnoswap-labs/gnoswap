@@ -127,8 +127,8 @@ func TestUnclaimedFee01(t *testing.T) {
 func TestCollectFee01(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	CollectFee(1)
-	position := positions[uint64(1)]
+	tokenId, tokensOwed0, tokensOwed1, poolPath, fee0, fee1 := CollectFee(1)
+	position := positions[tokenId]
 	shouldEQ(t, position.tokensOwed0.ToString(), "0")
 	shouldEQ(t, position.tokensOwed1.ToString(), "0")
 }
@@ -166,6 +166,10 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 	shouldEQ(t, position.tokensOwed0.ToString(), "0")
 	shouldEQ(t, position.tokensOwed1.ToString(), "0")
 	shouldEQ(t, position.burned, true)
+
+	unclaimedFee0, unclaimedFee1 := unclaimedFee(_lpTokenId)
+	shouldEQ(t, unclaimedFee0.ToString(), "0")
+	shouldEQ(t, unclaimedFee1.ToString(), "0")
 }
 
 func TestReposition(t *testing.T) {
@@ -222,4 +226,8 @@ func TestReposition(t *testing.T) {
 	shouldEQ(t, position.tokensOwed0.ToString(), "0")
 	shouldEQ(t, position.tokensOwed1.ToString(), "0")
 	shouldEQ(t, position.burned, false)
+
+	unclaimedFee0, unclaimedFee1 := unclaimedFee(_lpTokenId)
+	shouldEQ(t, unclaimedFee0.ToString(), "0")
+	shouldEQ(t, unclaimedFee1.ToString(), "0")
 }
