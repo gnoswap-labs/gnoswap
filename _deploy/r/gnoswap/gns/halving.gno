@@ -2,6 +2,7 @@ package gns
 
 import (
 	"std"
+	"strconv"
 	"time"
 
 	"gno.land/r/gnoswap/v2/consts"
@@ -113,6 +114,7 @@ func SetAvgBlockTimeInMs(ms int64) {
 		)
 	}
 
+	before := avgBlockTimeMs
 	avgBlockTimeMs = ms
 
 	// which year current time is in
@@ -172,11 +174,18 @@ func SetAvgBlockTimeInMs(ms int64) {
 		halvingYearBlock[year] = height + numBlock
 		println("GNS_HALVING__ > origBlock:\t", block)
 		println("GNS_HALVING__ > newBlock:\t", halvingYearBlock[year])
-
 		println()
 	}
 
-	println()
+	std.Emit(
+		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"m_func", "SetAvgBlockTimeInMs",
+		"before", int64ToStr(before),
+		"after", int64ToStr(avgBlockTimeMs),
+	)
 
 }
 
@@ -240,4 +249,24 @@ func GetHalvingInfo() string {
 func getYearlyBlockForTimestampMs(ms int64) int64 {
 	yearMs := TIMESTAMP_365DAYS * 1000 // how much millisecond in a year
 	return yearMs / ms                 // how many block in a year
+}
+
+func origCaller() string {
+	return std.GetOrigCaller().String()
+}
+
+func prevRealm() string {
+	return std.PrevRealm().PkgPath()
+}
+
+func callType() string {
+	if prevRealm() == "" {
+		return "DIRECT"
+	}
+
+	return "INDIRECT"
+}
+
+func int64ToStr(i int64) string {
+	return strconv.FormatInt(i, 10)
 }
