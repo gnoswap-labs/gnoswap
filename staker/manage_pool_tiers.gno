@@ -152,8 +152,6 @@ func SetPoolTier(pool string, tier uint64) {
 	poolTiers[pool] = InternalTier{
 		tier:           tier,
 		startTimestamp: time.Now().Unix(),
-		startHeight:    std.GetHeight(),
-		updateHeight:   std.GetHeight(),
 	}
 
 	std.Emit(
@@ -219,7 +217,6 @@ func ChangePoolTier(pool string, tier uint64) {
 	)
 
 	internal.tier = tier
-	internal.updateHeight = std.GetHeight()
 	poolTiers[pool] = internal
 }
 

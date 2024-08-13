@@ -23,18 +23,17 @@ import (
 
 var (
 	/* internal */
-
 	// poolTiers stores internal tier information for each pool
 	poolTiers map[string]InternalTier = make(map[string]InternalTier)
 
 	/* external */
-
 	// poolIncentives maps pool paths to their associated incentive IDs
 	poolIncentives map[string][]string = make(map[string][]string)
 
 	// incentives stores external incentive for each incentive ID
 	incentives map[string]ExternalIncentive = make(map[string]ExternalIncentive)
 
+	/* common */
 	// deposits stores deposit information for each tokenId
 	deposits map[uint64]Deposit = make(map[uint64]Deposit)
 )
@@ -56,8 +55,6 @@ func init() {
 	poolTiers[MUST_EXISTS_IN_TIER_1] = InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
-		startHeight:    std.GetHeight(),
-		updateHeight:   std.GetHeight(),
 	}
 }
 
