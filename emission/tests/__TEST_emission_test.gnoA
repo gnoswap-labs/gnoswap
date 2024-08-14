@@ -20,7 +20,8 @@ func TestMintAndDistributeGns_Initial(t *testing.T) {
 	shouldEQ(t, gnsBalance(consts.X_GNS_ADDR), 0)
 	shouldEQ(t, gnsBalance(emissionAddr), 0)
 
-	MintAndDistributeGns()                           // 1 ~ 123 height
+	std.TestSkipHeights(123)
+	MintAndDistributeGns()                           // 1 ~ 123 duration
 	shouldEQ(t, lastExecutedHeight, std.GetHeight()) // after MintAndDistributeGns, flag(height) should be updated
 
 	shouldEQ(t, gns.TotalSupply(), 100000000000000+1755136938)

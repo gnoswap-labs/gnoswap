@@ -25,16 +25,12 @@ func init() {
 	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"] = InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
-		startHeight:    std.GetHeight(),
-		updateHeight:   std.GetHeight(),
 	}
 
 	// tier 2
 	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"] = InternalTier{
 		tier:           2,
 		startTimestamp: time.Now().Unix(),
-		startHeight:    std.GetHeight(),
-		updateHeight:   std.GetHeight(),
 	}
 
 	// set pool create fee to 0 for testing

@@ -22,15 +22,11 @@ func init() {
 	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"] = InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
-		startHeight:    std.GetHeight(),
-		updateHeight:   std.GetHeight(),
 	}
 
 	poolTiers["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500"] = InternalTier{
 		tier:           2,
 		startTimestamp: time.Now().Unix(),
-		startHeight:    std.GetHeight(),
-		updateHeight:   std.GetHeight(),
 	}
 
 }
