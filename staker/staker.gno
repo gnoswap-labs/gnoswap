@@ -63,7 +63,7 @@ func init() {
 // Parameters:
 //   - tokenID (uint64): The ID of the LP token to stake
 //
-// Returnes:
+// Returns:
 //   - poolPath     (string): The path of the pool associated with the staked token
 //   - token0Amount (string): The amount of token0 in the position
 //   - token1Amount (string): The amount of token1 in the position
@@ -183,7 +183,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 				continue
 			}
 			fullAmount := externalWarmUpAmount.full30 + externalWarmUpAmount.full50 + externalWarmUpAmount.full70 + externalWarmUpAmount.full100
-			toGive := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.give100
+			toGive := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
 
 			println("  > position fullAmount(rewardMathComputeExternal)", fullAmount)
 			println("  > position toGive(rewardMathComputeExternal)", toGive)
@@ -259,7 +259,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 		return poolPath
 	}
 	fullAmount := internalWarmUpAmount.full30 + internalWarmUpAmount.full50 + internalWarmUpAmount.full70 + internalWarmUpAmount.full100
-	toGive := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.give100
+	toGive := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.full100
 
 	println(" > position fullAmount(rewardMathComputeInternal)", fullAmount)
 	println(" > position toGive(rewardMathComputeInternal)", toGive)

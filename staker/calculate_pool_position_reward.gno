@@ -103,20 +103,20 @@ func CalcPoolPosition() {
 	poolTotalStakedLiquidity = make(map[string]*u256.Uint) // clear
 	for tokenId, deposit := range deposits {
 		poolPath := deposit.targetPoolPath
+		if _, exist := poolTotalStakedLiquidity[poolPath]; !exist {
+			poolTotalStakedLiquidity[poolPath] = u256.Zero()
+		}
+
 		isInRange := pn.PositionIsInRange(tokenId)
 		if isInRange == false {
 			continue
 		}
 
 		positionLiquidity := pn.PositionGetPositionLiquidity(tokenId)
-		if _, exist := poolTotalStakedLiquidity[poolPath]; !exist {
-			poolTotalStakedLiquidity[poolPath] = u256.Zero()
-		}
-
-		poolTotalStakedLiquidity[poolPath] = new(u256.Uint).Add(poolTotalStakedLiquidity[poolPath], positionLiquidity)
+		poolTotalStakedLiquidity[poolPath] = poolTotalStakedLiquidity[poolPath].Add(poolTotalStakedLiquidity[poolPath], positionLiquidity)
 	}
 
-	// calculate each positions' liquidity ratio
+	// calculate each position's liquidity ratio
 	// + also which pool has which positions
 	positionsLiquidityRatio = make(map[uint64]*u256.Uint) // clear
 	poolsPositions = make(map[string][]uint64)            // clear
@@ -129,14 +129,14 @@ func CalcPoolPosition() {
 			poolTotalStakedLiquidity := poolTotalStakedLiquidity[poolPath]
 			positionLiquidity := pn.PositionGetPositionLiquidity(tokenId)
 
-			positionLiquidityX96 := new(u256.Uint).Mul(positionLiquidity, _q96)
-			positionLiquidityX96X1000000000 := new(u256.Uint).Mul(positionLiquidityX96, u256.NewUint(1_000_000_000))
+			positionLiquidityX96x := new(u256.Uint).Mul(positionLiquidity, _q96)
+			positionLiquidityX96x = positionLiquidityX96x.Mul(positionLiquidityX96x, u256.NewUint(1_000_000_000))
 
 			poolTotalStakedLiquidityX96 := new(u256.Uint).Mul(poolTotalStakedLiquidity, _q96)
 
-			positionLiquidityRatio := new(u256.Uint).Div(positionLiquidityX96X1000000000, poolTotalStakedLiquidityX96) // this value needs to be divided by 1_000_000_000
-			positionLiquidityRatio = new(u256.Uint).Mul(positionLiquidityRatio, _q96)                                  // so first mul consts.Q96
-			positionLiquidityRatio = new(u256.Uint).Div(positionLiquidityRatio, u256.NewUint(1_000_000_000))           // then divided by 1_000_000_000
+			positionLiquidityRatio := new(u256.Uint).Div(positionLiquidityX96x, poolTotalStakedLiquidityX96)         // this value needs to be divided by 1_000_000_000
+			positionLiquidityRatio = positionLiquidityRatio.Mul(positionLiquidityRatio, _q96)                        // so first mul consts.Q96
+			positionLiquidityRatio = positionLiquidityRatio.Div(positionLiquidityRatio, u256.NewUint(1_000_000_000)) // then divided by 1_000_000_000
 
 			positionsLiquidityRatio[tokenId] = positionLiquidityRatio
 
@@ -240,10 +240,11 @@ func CalcPoolPosition() {
 		poolLastTmpGns[poolPath] = 0
 		println(" > CALC__INIT_TO_ZERO_poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
 
-		totalStakedLiquidity := poolTotalStakedLiquidity[poolPath]
-		println(" > CALC__poolPath:", poolPath, "totalStakedLiquidity:", totalStakedLiquidity.ToString())
+		totalStakedLiquidity, exist := poolTotalStakedLiquidity[poolPath]
+		println(" > CALC__poolPath:", poolPath)
+		println(" > CALC__totalStakedLiquidity:", totalStakedLiquidity.ToString())
 
-		if totalStakedLiquidity.ToString() == "0" {
+		if exist == false || totalStakedLiquidity.IsZero() {
 			println("  > CALC__ZERO_POOL", poolPath, "HAS TIER OF", internal.tier, "BUT NONE STAKED, SEND AMOUNT TO PROTOCOL FEE")
 			println("  > CALC__ZERO_poolGns[poolPath]:", poolGns[poolPath])
 
@@ -267,9 +268,12 @@ func CalcPoolPosition() {
 
 			poolGns[poolPath] = 0
 			poolCurrentBlockGns[poolPath] = 0
-			lastCalculatedBalance = stakerGnsBalance - totalExternalGns
 
-			println("  > CALC__AFTER_STAKER_GNS:", stakerGnsBalance-totalExternalGns)
+			// gns send happens, so update last calculated balance
+			_stakerGnsBalance := gnsBalance(consts.STAKER_ADDR)
+			lastCalculatedBalance = _stakerGnsBalance - totalExternalGns
+
+			println("  > CALC__AFTER_STAKER_GNS:", _stakerGnsBalance-totalExternalGns)
 			println("  > CALC__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
 			println("  > CALC__AFTER_poolGns[poolPath] = 0")
 			println("  > CALC__AFTER_poolCurrentBlockGns[poolPath] = 0")
@@ -293,9 +297,9 @@ func CalcPoolPosition() {
 		// ------------------------------------ INTERNAL
 		if poolCurrentBlockAmount > 0 {
 			// calculate position gns rewards
-			liqRatioX96 := positionsLiquidityRatio[tokenId]
+			liqRatioX96, exist := positionsLiquidityRatio[tokenId]
 
-			if liqRatioX96.IsZero() {
+			if exist == false || liqRatioX96.IsZero() {
 				println(" > CALC__liqRatioX96_IS_ZERO // SKIP", tokenId)
 				println()
 				continue
@@ -334,7 +338,7 @@ func CalcPoolPosition() {
 	println("UPDATE FLAG")
 	lastCalculatedHeight = height
 	println(" > lastCalculatedHeight:", lastCalculatedHeight)
-	lastCalculatedBalance = stakerGnsBalance - totalExternalGns
+	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - totalExternalGns // latest balance
 	println(" > lastCalculatedBalance:", lastCalculatedBalance)
 	println()
 
@@ -417,8 +421,8 @@ func CalcPoolPosition() {
 				continue
 			}
 
-			liqRatioX96 := positionsLiquidityRatio[tokenId]
-			if liqRatioX96.IsZero() {
+			liqRatioX96, exist := positionsLiquidityRatio[tokenId]
+			if exist == false || liqRatioX96.IsZero() {
 				println("  > CALC__EXTERNAL_liqRatioX96_IS_ZERO // SKIP", tokenId)
 				println()
 				continue
@@ -441,7 +445,7 @@ func CalcPoolPosition() {
 				positionAmountX96 = rewardLeftX96
 			}
 
-			_, exist := positionLastExternal[tokenId]
+			_, exist = positionLastExternal[tokenId]
 			if !exist {
 				positionLastExternal[tokenId] = make(map[string]*u256.Uint)
 			}
