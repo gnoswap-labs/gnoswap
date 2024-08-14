@@ -86,7 +86,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 			// 100%
 			dur100 := _currentHeightU64 - lastCalculatedHeightU64
 			println("  > REWARD__INTERNAL_DUR100", dur100)
-			full, toGive := calcAmount(avgGnsBlockAmountX96, dur100, 100)
+			full, _ := calcAmount(avgGnsBlockAmountX96, dur100, 100)
 			// println("  > REWARD__INTERNAL_AMOUNT100", amount)
 			positionWarmUpAmount.full100 += full
 			// gnsAmountToGive += amount // UPDATE EACH PERIOD
@@ -444,7 +444,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 					// 100%
 					dur100 := _currentHeightU64 - lastCalculatedHeightU64
 					println("  > REWARD__EXTERNAL_DUR100", dur100)
-					full, toGive := calcAmount(avgExternalBlockAmountX96, dur100, 100)
+					full, _ := calcAmount(avgExternalBlockAmountX96, dur100, 100)
 					positionExternalWarmUpAmount.full100 += full
 					// gnsAmountToGive += amount // UPDATE EACH PERIOD
 				} else {

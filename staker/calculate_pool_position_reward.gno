@@ -90,7 +90,6 @@ func CalcPoolPosition() {
 	println("=== [ START START START ] CALC__CalcPoolPosition")
 
 	height := std.GetHeight()
-	now := time.Now().Unix()
 	println("CALC__CalcPoolPosition__height", height)
 	println("CALC__CalcPoolPosition__lastCalculatedHeight", lastCalculatedHeight)
 	if height <= lastCalculatedHeight {
