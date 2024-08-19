@@ -28,8 +28,6 @@ func init() {
 	poolTiers[poolPath] = InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
-		startHeight:    std.GetHeight(),
-		updateHeight:   std.GetHeight(),
 	}
 
 	std.TestSkipHeights(1)

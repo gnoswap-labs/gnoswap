@@ -23,18 +23,17 @@ import (
 
 var (
 	/* internal */
-
 	// poolTiers stores internal tier information for each pool
 	poolTiers map[string]InternalTier = make(map[string]InternalTier)
 
 	/* external */
-
 	// poolIncentives maps pool paths to their associated incentive IDs
 	poolIncentives map[string][]string = make(map[string][]string)
 
 	// incentives stores external incentive for each incentive ID
 	incentives map[string]ExternalIncentive = make(map[string]ExternalIncentive)
 
+	/* common */
 	// deposits stores deposit information for each tokenId
 	deposits map[uint64]Deposit = make(map[uint64]Deposit)
 )
@@ -56,8 +55,6 @@ func init() {
 	poolTiers[MUST_EXISTS_IN_TIER_1] = InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
-		startHeight:    std.GetHeight(),
-		updateHeight:   std.GetHeight(),
 	}
 }
 
@@ -66,7 +63,7 @@ func init() {
 // Parameters:
 //   - tokenID (uint64): The ID of the LP token to stake
 //
-// Returnes:
+// Returns:
 //   - poolPath     (string): The path of the pool associated with the staked token
 //   - token0Amount (string): The amount of token0 in the position
 //   - token1Amount (string): The amount of token1 in the position
@@ -186,7 +183,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 				continue
 			}
 			fullAmount := externalWarmUpAmount.full30 + externalWarmUpAmount.full50 + externalWarmUpAmount.full70 + externalWarmUpAmount.full100
-			toGive := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.give100
+			toGive := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
 
 			println("  > position fullAmount(rewardMathComputeExternal)", fullAmount)
 			println("  > position toGive(rewardMathComputeExternal)", toGive)
@@ -262,7 +259,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 		return poolPath
 	}
 	fullAmount := internalWarmUpAmount.full30 + internalWarmUpAmount.full50 + internalWarmUpAmount.full70 + internalWarmUpAmount.full100
-	toGive := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.give100
+	toGive := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.full100
 
 	println(" > position fullAmount(rewardMathComputeInternal)", fullAmount)
 	println(" > position toGive(rewardMathComputeInternal)", toGive)

@@ -11,12 +11,13 @@ func Test_mintGns(t *testing.T) {
 	shouldEQ(t, gns.TotalSupply(), 100000000000000) // GSA has
 	shouldEQ(t, gnsBalance(emissionAddr), 0)
 
+	std.TestSkipHeights(123)
 	mintGns() // 1 ~ 123 height
 
 	shouldEQ(t, gnsBalance(emissionAddr), 1_755_136_938)
 	shouldEQ(t, gns.TotalSupply(), 100000000000000+1_755_136_938)
 
-	shouldEQ(t, std.GetHeight(), 123)
+	shouldEQ(t, std.GetHeight(), 246)
 }
 
 func Test_distributeToTarget(t *testing.T) {

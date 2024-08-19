@@ -79,7 +79,7 @@ func ApiGetRewards() string {
 		if !exist {
 			continue
 		}
-		internalGNS := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.give100
+		internalGNS := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.full100
 
 		if internalGNS > 0 {
 			rewards = append(rewards, Reward{
@@ -108,7 +108,7 @@ func ApiGetRewards() string {
 			if !exist {
 				continue
 			}
-			externalReward := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.give100
+			externalReward := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
 			if externalReward >= 0 {
 				rewards = append(rewards, Reward{
 					IncentiveType:     "EXTERNAL",
@@ -191,7 +191,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 		if !exist {
 			continue
 		}
-		internalGNS := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.give100
+		internalGNS := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.full100
 
 		if internalGNS > 0 {
 			rewards = append(rewards, Reward{
@@ -220,7 +220,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			if !exist {
 				continue
 			}
-			externalReward := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.give100
+			externalReward := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
 			if externalReward > 0 {
 				rewards = append(rewards, Reward{
 					IncentiveType:     "EXTERNAL",
@@ -301,7 +301,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 		if !exist {
 			continue
 		}
-		internalGNS := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.give100
+		internalGNS := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.full100
 
 		if internalGNS > 0 {
 			rewards = append(rewards, Reward{
@@ -330,7 +330,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 			if !exist {
 				continue
 			}
-			externalReward := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.give100
+			externalReward := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
 			rewards = append(rewards, Reward{
 				IncentiveType:     "EXTERNAL",
 				IncentiveId:       incentiveId,

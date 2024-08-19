@@ -53,6 +53,42 @@ func TestPositionMint(t *testing.T) {
 	shouldEQ(t, amount1, "0")      // NO BAZ
 }
 
+func TestDrySwapRouteBazBarExactIn(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+
+	dryResult := DrySwapRoute(
+		bazPath,    // inputToken
+		barPath,    // outputToken
+		"1000",     // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+		"100", // quoteArr
+	)
+
+	shouldEQ(t, dryResult, "300")
+}
+
+func TestSwapRouteBazBarExactIn(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			SwapRoute(
+				bazPath,    // inputToken
+				barPath,    // outputToken
+				"1000",     // amountSpecified
+				"EXACT_IN", // swapType
+				"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+				"100",  // quoteArr
+				"2710", // tokenAmountLimit ( too few recieved (expected 2710, got 300))
+			)
+			// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500} {p_zeroForOne false} {p_amountSpecified 1000} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 -300} {amount1 1000} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 1}]}
+		},
+		"[ROUTER] Too few received for user (expected minimum: 2710, actual: 300)",
+	)
+}
+
 func TestDrySwapRouteBarBazExactIn(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 
@@ -66,23 +102,4 @@ func TestDrySwapRouteBarBazExactIn(t *testing.T) {
 	)
 
 	shouldEQ(t, dryResult, "-1")
-}
-
-func TestSwapRouteBarBazExactIn(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
-
-	shouldPanic(
-		t,
-		func() {
-			SwapRoute(
-				barPath,    // inputToken
-				bazPath,    // outputToken
-				"1000",     // amountSpecified
-				"EXACT_IN", // swapType
-				"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
-				"100",  // quoteArr
-				"2710", // tokenAmountLimit ( too few recieved (expected 2710, got 300))
-			)
-			// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500} {p_zeroForOne false} {p_amountSpecified 1000} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 -300} {amount1 1000} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 1}]}
-		})
 }

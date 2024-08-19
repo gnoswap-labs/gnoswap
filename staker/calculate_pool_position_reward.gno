@@ -9,6 +9,8 @@ import (
 
 	"gno.land/r/gnoswap/v2/gns"
 
+	pn "gno.land/r/gnoswap/v2/position"
+
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -21,7 +23,7 @@ var poolCurrentBlockGns map[string]uint64 = make(map[string]uint64)
 // poolPath -> gnsAmount [how much left from last block]
 var poolLastTmpGns map[string]uint64 = make(map[string]uint64)
 
-// poolPath -> accumulatedGns
+// poolPath -> accumulatedGns ( API VAR )
 var poolAccuGns map[string]uint64 = make(map[string]uint64)
 
 // tokenId -> gnsAmount
@@ -38,6 +40,18 @@ var externalLastCalculatedTimestamp map[string]int64 = make(map[string]int64)
 
 // incentiveId -> gnsAmount
 var externalGns map[string]uint64 = make(map[string]uint64)
+
+// poolPath -> totalStakedLiquidity(inRange)
+var poolTotalStakedLiquidity map[string]*u256.Uint = make(map[string]*u256.Uint)
+
+// tokenId -> positionRatio
+var positionsLiquidityRatio map[uint64]*u256.Uint = make(map[uint64]*u256.Uint)
+
+// poolPath -> []tokenId
+var poolsPositions map[string][]uint64 = make(map[string][]uint64)
+
+// Q96
+var _q96 = u256.MustFromDecimal(consts.Q96)
 
 type externalRewards struct {
 	incentiveId    string
@@ -74,11 +88,8 @@ var (
 func CalcPoolPosition() {
 	println()
 	println("=== [ START START START ] CALC__CalcPoolPosition")
-	_q96 := u256.MustFromDecimal(consts.Q96)
 
 	height := std.GetHeight()
-	now := time.Now().Unix()
-
 	println("CALC__CalcPoolPosition__height", height)
 	println("CALC__CalcPoolPosition__lastCalculatedHeight", lastCalculatedHeight)
 	if height <= lastCalculatedHeight {
@@ -87,12 +98,62 @@ func CalcPoolPosition() {
 		return
 	}
 
+	// calculate each pool's total staked liquidity
+	poolTotalStakedLiquidity = make(map[string]*u256.Uint) // clear
+	for tokenId, deposit := range deposits {
+		poolPath := deposit.targetPoolPath
+		if _, exist := poolTotalStakedLiquidity[poolPath]; !exist {
+			poolTotalStakedLiquidity[poolPath] = u256.Zero()
+		}
+
+		isInRange := pn.PositionIsInRange(tokenId)
+		if isInRange == false {
+			continue
+		}
+
+		positionLiquidity := pn.PositionGetPositionLiquidity(tokenId)
+		poolTotalStakedLiquidity[poolPath] = poolTotalStakedLiquidity[poolPath].Add(poolTotalStakedLiquidity[poolPath], positionLiquidity)
+	}
+
+	// calculate each position's liquidity ratio
+	// + also which pool has which positions
+	positionsLiquidityRatio = make(map[uint64]*u256.Uint) // clear
+	poolsPositions = make(map[string][]uint64)            // clear
+	for tokenId, deposit := range deposits {
+		poolPath := deposit.targetPoolPath
+		isInRange := pn.PositionIsInRange(tokenId)
+		if isInRange == false {
+			positionsLiquidityRatio[tokenId] = u256.Zero()
+		} else {
+			poolTotalStakedLiquidity := poolTotalStakedLiquidity[poolPath]
+			positionLiquidity := pn.PositionGetPositionLiquidity(tokenId)
+
+			positionLiquidityX96x := new(u256.Uint).Mul(positionLiquidity, _q96)
+			positionLiquidityX96x = positionLiquidityX96x.Mul(positionLiquidityX96x, u256.NewUint(1_000_000_000))
+
+			poolTotalStakedLiquidityX96 := new(u256.Uint).Mul(poolTotalStakedLiquidity, _q96)
+
+			positionLiquidityRatio := new(u256.Uint).Div(positionLiquidityX96x, poolTotalStakedLiquidityX96)         // this value needs to be divided by 1_000_000_000
+			positionLiquidityRatio = positionLiquidityRatio.Mul(positionLiquidityRatio, _q96)                        // so first mul consts.Q96
+			positionLiquidityRatio = positionLiquidityRatio.Div(positionLiquidityRatio, u256.NewUint(1_000_000_000)) // then divided by 1_000_000_000
+
+			positionsLiquidityRatio[tokenId] = positionLiquidityRatio
+
+			// poolsPositions
+			poolsPositions[poolPath] = append(poolsPositions[poolPath], tokenId)
+		}
+	}
+
+	// calculate external gns amounts
+	totalExternalGns := externalGnsAmount()
+
 	// calculate pool
 	stakerGnsBalance := gnsBalance(consts.STAKER_ADDR)
-	println(" > CALC__stakerGnsBalance:", stakerGnsBalance)
-	println(" > CALC__externalGnsAmount:", externalGnsAmount())
 
-	stakerGnsBalance -= externalGnsAmount()
+	println(" > CALC__stakerGnsBalance:", stakerGnsBalance)
+	println(" > CALC__externalGnsAmount:", totalExternalGns)
+
+	stakerGnsBalance -= totalExternalGns
 	println("CALC__stakerGnsBalance - externalGnsAmount", stakerGnsBalance)
 	println("CALC__lastCalculatedBalance:", lastCalculatedBalance)
 
@@ -109,36 +170,53 @@ func CalcPoolPosition() {
 
 	println("CALC__getTiersAmount_mintedGnsAmount:", mintedGnsAmount)
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(mintedGnsAmount)
-
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
-	println("CALC__tier1Num:", tier1Num)
+
+	var eachTier1Amount, eachTier2Amount, eachTier3Amount uint64
+	if tier1Num > 0 {
+		eachTier1Amount = tier1Amount / tier1Num
+	}
+
+	if tier2Num > 0 {
+		eachTier2Amount = tier2Amount / tier2Num
+	}
+
+	if tier3Num > 0 {
+		eachTier3Amount = tier3Amount / tier3Num
+	}
+
 	println("CALC__tier1Amount:", tier1Amount)
+	println("CALC__tier1Num:", tier1Num)
+	println("CALC__eachTier1Amount:", eachTier1Amount)
 
-	println("CALC__tier2Num:", tier2Num)
 	println("CALC__tier2Amount:", tier2Amount)
+	println("CALC__tier2Num:", tier2Num)
+	println("CALC__eachTier2Amount:", eachTier2Amount)
 
-	println("CALC__tier3Num:", tier3Num)
 	println("CALC__tier3Amount:", tier3Amount)
+	println("CALC__tier3Num:", tier3Num)
+	println("CALC__eachTier3Amount:", eachTier3Amount)
 
 	println("CALC__duration:", duration)
 	println("CALC__height:", height)
 	println()
 
 	println("[ START ] CALC__poolTiers DISTRIBUTE")
+
+	// 인터널 에미션 대상 풀 수만큼 반복
 	for poolPath, internal := range poolTiers {
 		println(" > CALC__poolPath:", poolPath)
 		tier := internal.tier
-		startHeight := internal.startHeight
-		tierAmount := uint64(0)
-		println(" > CALC__tier:", tier)
-		println(" > CALC__startHeight:", startHeight)
 
+		println(" > CALC__tier:", tier)
+
+		tierAmount := uint64(0)
 		if tier == 1 {
-			tierAmount = tier1Amount / tier1Num
+			tierAmount = eachTier1Amount
 		} else if tier == 2 {
-			tierAmount = tier2Amount / tier2Num
+			tierAmount = eachTier2Amount
 		} else if tier == 3 {
-			tierAmount = tier3Amount / tier3Num
+			tierAmount = eachTier3Amount
 		}
 		println(" > CALC__tierAmount:", tierAmount)
 
@@ -161,16 +239,17 @@ func CalcPoolPosition() {
 		poolLastTmpGns[poolPath] = 0
 		println(" > CALC__INIT_TO_ZERO_poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
 
-		totalStakedLiquidity := getPoolTotalStakedLiquidity(poolPath)
-		println(" > CALC__poolPath:", poolPath, "totalStakedLiquidity:", totalStakedLiquidity.ToString())
+		totalStakedLiquidity, exist := poolTotalStakedLiquidity[poolPath]
+		println(" > CALC__poolPath:", poolPath)
+		println(" > CALC__totalStakedLiquidity:", totalStakedLiquidity.ToString())
 
-		if totalStakedLiquidity.ToString() == "0" {
+		if exist == false || totalStakedLiquidity.IsZero() {
 			println("  > CALC__ZERO_POOL", poolPath, "HAS TIER OF", internal.tier, "BUT NONE STAKED, SEND AMOUNT TO PROTOCOL FEE")
 			println("  > CALC__ZERO_poolGns[poolPath]:", poolGns[poolPath])
 
-			send := min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)-externalGnsAmount())
-			println("  > CALC__ZERO_SEND_min(poolGns[poolPath], gnsBalance(consts.STAKER_ADDR)-externalGnsAmount()", send)
-			println("  > CALC__BEFORE_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR)-externalGnsAmount())
+			send := min(poolGns[poolPath], stakerGnsBalance-totalExternalGns)
+			println("  > CALC__ZERO_SEND_min(poolGns[poolPath], stakerGnsBalance-totalExternalGns", send)
+			println("  > CALC__BEFORE_STAKER_GNS:", stakerGnsBalance-totalExternalGns)
 			println("  > CALC__BEFORE_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
 			println("  > CALC__BEFORE_lastCalculatedBalance:", lastCalculatedBalance)
 
@@ -188,9 +267,12 @@ func CalcPoolPosition() {
 
 			poolGns[poolPath] = 0
 			poolCurrentBlockGns[poolPath] = 0
-			lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - externalGnsAmount()
 
-			println("  > CALC__AFTER_STAKER_GNS:", gnsBalance(consts.STAKER_ADDR)-externalGnsAmount())
+			// gns send happens, so update last calculated balance
+			_stakerGnsBalance := gnsBalance(consts.STAKER_ADDR)
+			lastCalculatedBalance = _stakerGnsBalance - totalExternalGns
+
+			println("  > CALC__AFTER_STAKER_GNS:", _stakerGnsBalance-totalExternalGns)
 			println("  > CALC__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
 			println("  > CALC__AFTER_poolGns[poolPath] = 0")
 			println("  > CALC__AFTER_poolCurrentBlockGns[poolPath] = 0")
@@ -204,7 +286,7 @@ func CalcPoolPosition() {
 
 	println("[ START ] CALC__deposits ITERATION")
 
-	externalToUpdate := []string{}
+	// 전체 포지션 반복
 	for tokenId, deposit := range deposits {
 		poolPath := deposit.targetPoolPath
 		poolCurrentBlockAmount := poolCurrentBlockGns[poolPath]
@@ -214,9 +296,9 @@ func CalcPoolPosition() {
 		// ------------------------------------ INTERNAL
 		if poolCurrentBlockAmount > 0 {
 			// calculate position gns rewards
-			liqRatioX96 := getMyLiquidityRatio(poolPath, tokenId)
+			liqRatioX96, exist := positionsLiquidityRatio[tokenId]
 
-			if liqRatioX96.IsZero() {
+			if exist == false || liqRatioX96.IsZero() {
 				println(" > CALC__liqRatioX96_IS_ZERO // SKIP", tokenId)
 				println()
 				continue
@@ -249,39 +331,75 @@ func CalcPoolPosition() {
 		println()
 		println()
 		println()
+	}
 
-		// ------------------------------------ EXTERNAL
-		// calculate position external rewards
-		incentiveIds := poolIncentives[poolPath]
-		println("[ START ] CALC__EXTERNAL, TOKEN_ID", tokenId)
-		for _, incentiveId := range incentiveIds {
-			println("  > CALC__EXTERNAL_incentiveId:", incentiveId)
-			incentive := incentives[incentiveId]
+	// update flag
+	println("UPDATE FLAG")
+	lastCalculatedHeight = height
+	println(" > lastCalculatedHeight:", lastCalculatedHeight)
+	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - totalExternalGns // latest balance
+	println(" > lastCalculatedBalance:", lastCalculatedBalance)
+	println()
 
-			startTimestamp := incentive.startTimestamp
-			endTimestamp := incentive.endTimestamp
-			now := time.Now().Unix()
-			// if inactive incentive, do not calculate
-			if !(startTimestamp <= now && now <= endTimestamp) {
-				println("  > CALC__EXTERNAL_INACTIVE")
-				println("  > start:\t", startTimestamp)
-				println("  > now:\t", now)
-				println("  > end:\t", endTimestamp)
-				println("  > s-n::\t", startTimestamp-now)
-				println("  > s-n/b:\t", (startTimestamp-now)/2)
-				println()
-				continue
+	println("[ START ] CALC__FINAL")
+	// 인터널 에미션 대상 풀 수만큼 반복
+	for poolPath, _ := range poolTiers {
+		amount := poolLastTmpGns[poolPath]
+		println(" > CALC__FINAL_POOL", poolPath)
+		println(" > CALC__FINAL_amount", amount)
+		println(" > CALC__FINAL_poolCurrentBlockGns[poolPath]", poolCurrentBlockGns[poolPath])
+		println(" > CALC__FINAL_poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
+		if amount > 0 {
+			if poolCurrentBlockGns[poolPath] >= amount {
+				println(" > CALC__SAME_OR_LEFT")
+				poolLastTmpGns[poolPath] = poolCurrentBlockGns[poolPath] - amount
+				println(" > poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
+			} else {
+				println(" > CALC__FINAL_WRONG")
+				poolCurrentBlockGns[poolPath] = 0
 			}
+		} else {
+			println(" > CALC__FINAL__amount = 0")
+		}
+	}
+	println("[ END ] CALC__FINAL")
+	println()
 
-			rewardToken := incentive.rewardToken
-			rewardAmount := incentive.rewardAmount
-			rewardLeft := incentive.rewardLeft
-			println("  > CALC__EXTERNAL_rewardToken:\t\t", rewardToken)
-			println("  > CALC__EXTERNAL_rewardAmount:\t", rewardAmount.ToString())
-			println("  > CALC__EXTERNAL_rewardLeft:\t\t", rewardLeft.ToString())
+	// clear(poolCurrentBlockGns) // gno doesn't support `clear` keyword yet
+	poolCurrentBlockGns = make(map[string]uint64)
+	println("=== [ END END END ] CALC__CalcPoolPosition")
+	println()
 
+	// ------------------------------------ EXTERNAL
+	for incentiveId, incentive := range incentives {
+		poolPath := incentive.targetPoolPath
+
+		startTimestamp := incentive.startTimestamp
+		endTimestamp := incentive.endTimestamp
+		now := time.Now().Unix()
+		// if inactive incentive, do not calculate
+		if !(startTimestamp <= now && now <= endTimestamp) {
+			println("  > CALC__EXTERNAL_INACTIVE")
+			println("  > start:\t", startTimestamp)
+			println("  > now:\t", now)
+			println("  > end:\t", endTimestamp)
+			println("  > s-n::\t", startTimestamp-now)
+			println("  > s-n/b:\t", (startTimestamp-now)/2)
+			println()
+			continue
+		}
+
+		rewardToken := incentive.rewardToken
+		rewardAmount := incentive.rewardAmount
+		rewardLeft := incentive.rewardLeft
+		println("  > CALC__EXTERNAL_rewardToken:\t\t", rewardToken)
+		println("  > CALC__EXTERNAL_rewardAmount:\t", rewardAmount.ToString())
+		println("  > CALC__EXTERNAL_rewardLeft:\t\t", rewardLeft.ToString())
+
+		for _, tokenId := range poolsPositions[poolPath] {
 			// how many blocks passed since
 			// max time between (start of the incentive) and (staked at) and (last calculated)
+			deposit := deposits[tokenId]
 			_max := max(startTimestamp, deposit.stakeTimestamp)
 			println("  > CALC__EXTERNAL_max:\t\t\t", _max)
 			println("    > startTimestamp:\t\t\t", startTimestamp)
@@ -302,8 +420,8 @@ func CalcPoolPosition() {
 				continue
 			}
 
-			liqRatioX96 := getMyLiquidityRatio(poolPath, tokenId)
-			if liqRatioX96.IsZero() {
+			liqRatioX96, exist := positionsLiquidityRatio[tokenId]
+			if exist == false || liqRatioX96.IsZero() {
 				println("  > CALC__EXTERNAL_liqRatioX96_IS_ZERO // SKIP", tokenId)
 				println()
 				continue
@@ -315,10 +433,10 @@ func CalcPoolPosition() {
 			println("    > block_passed:\t\t\t", blocksPassed)
 			println("    > rewardPerBlockX96:\t\t", incentive.rewardPerBlockX96.ToString())
 
-			positionAmountX96_x2 := u256.Zero().Mul(currentPoolRewardX96, liqRatioX96)
-			println("  > CALC__EXTERNAL_positionAmountX96_x2:", positionAmountX96_x2.ToString())
+			positionAmountX96X96 := u256.Zero().Mul(currentPoolRewardX96, liqRatioX96)
+			println("  > CALC__EXTERNAL_positionAmountX96X96:", positionAmountX96X96.ToString())
 
-			positionAmountX96 := u256.Zero().Div(positionAmountX96_x2, _q96)
+			positionAmountX96 := u256.Zero().Div(positionAmountX96X96, _q96)
 			println("  > CALC__EXTERNAL_positionAmountX96:\t", positionAmountX96.ToString())
 
 			rewardLeftX96 := new(u256.Uint).Mul(rewardLeft, _q96)
@@ -326,7 +444,7 @@ func CalcPoolPosition() {
 				positionAmountX96 = rewardLeftX96
 			}
 
-			_, exist := positionLastExternal[tokenId]
+			_, exist = positionLastExternal[tokenId]
 			if !exist {
 				positionLastExternal[tokenId] = make(map[string]*u256.Uint)
 			}
@@ -374,65 +492,9 @@ func CalcPoolPosition() {
 
 			rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
 			positionsExternalLastCalculatedHeight[tokenId][incentiveId] = height
-			externalToUpdate = append(externalToUpdate, incentiveId)
 		}
-		println("[ END ] CALC__EXTERNAL, TOKEN_ID", tokenId)
-	}
-	// update all external incentives time
-	uniquExternals := removeDupeStr(externalToUpdate)
-	for _, incentiveId := range uniquExternals {
 		externalLastCalculatedTimestamp[incentiveId] = now
 	}
-
-	// update flag
-	println("UPDATE FLAG")
-	lastCalculatedHeight = height
-	println(" > lastCalculatedHeight:", lastCalculatedHeight)
-	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - externalGnsAmount()
-	println(" > lastCalculatedBalance:", lastCalculatedBalance)
-	println()
-
-	println("[ START ] CALC__FINAL")
-	for poolPath, _ := range poolTiers {
-		amount := poolLastTmpGns[poolPath]
-		println(" > CALC__FINAL_POOL", poolPath)
-		println(" > CALC__FINAL_amount", amount)
-		println(" > CALC__FINAL_poolCurrentBlockGns[poolPath]", poolCurrentBlockGns[poolPath])
-		println(" > CALC__FINAL_poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
-		if amount > 0 {
-			if poolCurrentBlockGns[poolPath] >= amount {
-				println(" > CALC__SAME_OR_LEFT")
-				poolLastTmpGns[poolPath] = poolCurrentBlockGns[poolPath] - amount
-				println(" > poolLastTmpGns[poolPath]", poolLastTmpGns[poolPath])
-			} else {
-				println(" > CALC__FINAL_WRONG")
-				poolCurrentBlockGns[poolPath] = 0
-			}
-		} else {
-			println(" > CALC__FINAL__amount = 0")
-		}
-	}
-	println("[ END ] CALC__FINAL")
-	println()
-
-	// clear(poolCurrentBlockGns) // gno doesn't support `clear` keyword yet
-	poolCurrentBlockGns = make(map[string]uint64)
-	println("=== [ END END END ] CALC__CalcPoolPosition")
-	println()
-}
-
-func removeDupeStr(strSlice []string) []string {
-	seen := make(map[string]struct{}, len(strSlice))
-	result := make([]string, 0, len(strSlice))
-
-	for _, str := range strSlice {
-		if _, ok := seen[str]; !ok {
-			seen[str] = struct{}{}
-			result = append(result, str)
-		}
-	}
-
-	return result
 }
 
 func externalGnsAmount() uint64 {

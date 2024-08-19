@@ -362,7 +362,7 @@ func printInfo(prev currentInfo) currentInfo {
 	for k, v := range positionGns {
 		posWarmCalc := positionsInternalWarmUpAmount[k]
 		println("> tokenId:", k, "amount:", v, "warmUp:", getRewardRatio(curr.height-deposits[k].stakeHeight))
-		println("> 100%", "full", posWarmCalc.full100, "give", posWarmCalc.give100)
+		println("> 100%", "full", posWarmCalc.full100, "give", posWarmCalc.full100)
 		println("> 70%", "full", posWarmCalc.full70, "give", posWarmCalc.give70)
 		println("> 50%", "full", posWarmCalc.full50, "give", posWarmCalc.give50)
 		println("> 30%", "full", posWarmCalc.full30, "give", posWarmCalc.give30)
@@ -517,7 +517,7 @@ func makePositionsNode(poolPath string) []*json.Node {
 				continue
 			}
 			fullAmount := internalWarmUpAmount.full30 + internalWarmUpAmount.full50 + internalWarmUpAmount.full70 + internalWarmUpAmount.full100
-			warmUpAmount := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.give100
+			warmUpAmount := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.full100
 
 			positions = append(positions, json.ObjectNode("", map[string]*json.Node{
 				"lpTokenId":       json.NumberNode("lpTokenId", float64(lpTokenId)),
@@ -534,7 +534,6 @@ func makePositionsNode(poolPath string) []*json.Node {
 				"full70":          json.NumberNode("full70", float64(internalWarmUpAmount.full70)),
 				"give70":          json.NumberNode("give70", float64(internalWarmUpAmount.give70)),
 				"full100":         json.NumberNode("full100", float64(internalWarmUpAmount.full100)),
-				"give100":         json.NumberNode("give100", float64(internalWarmUpAmount.give100)),
 			}))
 		}
 	}
@@ -617,7 +616,7 @@ func GetPrintExternalInfo() string {
 				continue
 			}
 			fullAmount := externalWarmUpAmount.full30 + externalWarmUpAmount.full50 + externalWarmUpAmount.full70 + externalWarmUpAmount.full100
-			toGive := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.give100
+			toGive := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
 
 			externalIncentive.tokenAmountFull += fullAmount
 			externalIncentive.tokenAmountActualFull += toGive
