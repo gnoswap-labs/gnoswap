@@ -91,14 +91,18 @@ func listTierRatio() (uint64, uint64, uint64) {
 	if numTier1 <= 0 {
 		panic(ufmt.Sprintf("[STAKER] tier_ratio.gno__listTierRatio() || at least 1 of numTier1 need(%d), [numTier2:(%d), numTier3:(%d)]", numTier1, numTier2, numTier3))
 	}
+	
+	hasTier2 := numTier2 > 0
+	hasTier3 := numTier3 > 0
 
-	if numTier2 == 0 && numTier3 == 0 { // only tier 1 exists
+	switch {
+	case !hasTier2 && !hasTier3:
 		return 100, 0, 0
-	} else if numTier2 == 0 && numTier3 >= 1 { // tier 1 and 3 exists ( tier2 ratio goes to tier1 )
+	case !hasTier2 && hasTier3:
 		return 80, 0, 20
-	} else if numTier2 >= 1 && numTier3 == 0 { // tier 1 and 2 exists ( tier3 ratio goes to tier1 )
+	case hasTier2 && !hasTier3:
 		return 70, 30, 0
-	} else if numTier2 >= 1 && numTier3 >= 1 { // all tiers exists
+	case hasTier2 && hasTier3:
 		return 50, 30, 20
 	}
 
