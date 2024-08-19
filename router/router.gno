@@ -41,7 +41,7 @@ func SwapRoute(
 	_tokenAmountLimit string, // uint256
 ) (string, string) { // tokneIn, tokenOut
 	if swapType != "EXACT_IN" && swapType != "EXACT_OUT" {
-		panic("[ROUTER] Unknown swapType")
+		panic("[ROUTER] router.gno__SwapRoute() || Unknown swapType")
 	}
 
 	if common.GetLimitCaller() && std.PrevRealm().PkgPath() != "" {
@@ -88,6 +88,7 @@ func SwapRoute(
 		tokenAmountLimit,
 		userBeforeWugnotBalance,
 		userWrappedWugnot,
+		amountSpecified.Abs(), // if swap type is EXACT_OUT, compare with this value to see user can actually receive this amount
 	)
 
 	std.Emit(
@@ -177,7 +178,11 @@ func handleSingleSwap(route string, amountSpecified *i256.Int, isDry bool) (*u25
 	return singleSwap(singleParams)
 }
 
-func finalizeSwap(inputToken, outputToken string, resultAmountIn, resultAmountOut *u256.Uint, swapType string, tokenAmountLimit *u256.Uint, userBeforeWugnotBalance, userWrappedWugnot uint64) (string, string) {
+func finalizeSwap(inputToken, outputToken string, resultAmountIn, resultAmountOut *u256.Uint, swapType string, tokenAmountLimit *u256.Uint, userBeforeWugnotBalance, userWrappedWugnot uint64, amountSpecified *u256.Uint) (string, string) {
+	if swapType == "EXACT_OUT" && resultAmountOut.Lt(amountSpecified) {
+		panic(ufmt.Sprintf("[ROUTER] router.gno__finalizeSwap() || Too few received for user (expected minimum: %s, actual: %s, swapType: %s)", amountSpecified.ToString(), resultAmountOut.ToString(), swapType))
+	}
+
 	afterFee := handleSwapFee(outputToken, resultAmountOut, false)
 
 	userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
@@ -187,7 +192,7 @@ func finalizeSwap(inputToken, outputToken string, resultAmountIn, resultAmountOu
 
 		if spend > userWrappedWugnot {
 			// used existing wugnot
-			panic(ufmt.Sprintf("[ROUTER] Too much wugnot spent (wrapped: %d, spend: %d)", userWrappedWugnot, spend))
+			panic(ufmt.Sprintf("[ROUTER] router.gno__finalizeSwap() || Too much wugnot spent (wrapped: %d, spend: %d)", userWrappedWugnot, spend))
 		}
 
 		// unwrap left amount
@@ -201,11 +206,11 @@ func finalizeSwap(inputToken, outputToken string, resultAmountIn, resultAmountOu
 
 	if swapType == "EXACT_IN" {
 		if !tokenAmountLimit.Lte(afterFee) {
-			panic(ufmt.Sprintf("[ROUTER] Too few received for user (expected minimum: %s, actual: %s)", tokenAmountLimit.ToString(), afterFee.ToString()))
+			panic(ufmt.Sprintf("[ROUTER] router.gno__finalizeSwap() || Too few received for user (expected minimum: %s, actual: %s, swapType: %s)", tokenAmountLimit.ToString(), afterFee.ToString(), swapType))
 		}
 	} else {
 		if !resultAmountIn.Lte(tokenAmountLimit) {
-			panic(ufmt.Sprintf("[ROUTER] Too much spent for user (expected maximum: %s, actual: %s)", tokenAmountLimit.ToString(), resultAmountIn.ToString()))
+			panic(ufmt.Sprintf("[ROUTER] router.gno__finalizeSwap() || Too much spent for user (expected maximum: %s, actual: %s, swapType: %s)", tokenAmountLimit.ToString(), resultAmountIn.ToString(), swapType))
 		}
 	}
 

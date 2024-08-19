@@ -85,7 +85,7 @@ func TestSwapRouteBazBarExactIn(t *testing.T) {
 			)
 			// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500} {p_zeroForOne false} {p_amountSpecified 1000} {p_sqrtPriceLimitX96 1461446703485210103287273052203988822378723970341} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 -300} {amount1 1000} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 1}]}
 		},
-		"[ROUTER] Too few received for user (expected minimum: 2710, actual: 300)",
+		"[ROUTER] router.gno__finalizeSwap() || Too few received for user (expected minimum: 2710, actual: 300, swapType: EXACT_IN)",
 	)
 }
 
