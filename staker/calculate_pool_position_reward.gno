@@ -59,8 +59,8 @@ type externalRewards struct {
 	tokenPath      string
 	tokenAmountX96 *u256.Uint
 	//
-	tokenAmountFull       uint64
-	tokenAmountActualFull uint64
+	tokenAmountFull   uint64
+	tokenAmountToGive uint64
 }
 
 // tokenId -> incentiveId -> externalRewards
@@ -371,7 +371,9 @@ func CalcPoolPosition() {
 	println()
 
 	// ------------------------------------ EXTERNAL
+	println("=== [ START START START ] CALC__CalcPoolPosition_EXTERNAL")
 	for incentiveId, incentive := range incentives {
+		println(" > CALC__EXTERNAL_incentiveId:", incentiveId)
 		poolPath := incentive.targetPoolPath
 
 		startTimestamp := incentive.startTimestamp
@@ -379,12 +381,12 @@ func CalcPoolPosition() {
 		now := time.Now().Unix()
 		// if inactive incentive, do not calculate
 		if !(startTimestamp <= now && now <= endTimestamp) {
-			println("  > CALC__EXTERNAL_INACTIVE")
-			println("  > start:\t", startTimestamp)
-			println("  > now:\t", now)
-			println("  > end:\t", endTimestamp)
-			println("  > s-n::\t", startTimestamp-now)
-			println("  > s-n/b:\t", (startTimestamp-now)/2)
+			println("  > [XX] INACTIVE_EXTERNAL", incentiveId)
+			println("   > start:\t", startTimestamp)
+			println("   > now:\t", now)
+			println("   > end:\t", endTimestamp)
+			println("   > s-n::\t", startTimestamp-now)
+			println("   > s-n/b:\t", (startTimestamp-now)/2)
 			println()
 			continue
 		}
@@ -392,29 +394,32 @@ func CalcPoolPosition() {
 		rewardToken := incentive.rewardToken
 		rewardAmount := incentive.rewardAmount
 		rewardLeft := incentive.rewardLeft
-		println("  > CALC__EXTERNAL_rewardToken:\t\t", rewardToken)
-		println("  > CALC__EXTERNAL_rewardAmount:\t", rewardAmount.ToString())
-		println("  > CALC__EXTERNAL_rewardLeft:\t\t", rewardLeft.ToString())
+		println(" > CALC__EXTERNAL_rewardToken:\t\t", rewardToken)
+		println(" > CALC__EXTERNAL_rewardAmount:\t", rewardAmount.ToString())
+		println(" > CALC__EXTERNAL_rewardLeft:\t\t", rewardLeft.ToString())
+		println()
 
 		for _, tokenId := range poolsPositions[poolPath] {
+			println(" > CALC__EXTERNAL_tokenId:", tokenId)
 			// how many blocks passed since
 			// max time between (start of the incentive) and (staked at) and (last calculated)
 			deposit := deposits[tokenId]
 			_max := max(startTimestamp, deposit.stakeTimestamp)
 			println("  > CALC__EXTERNAL_max:\t\t\t", _max)
-			println("    > startTimestamp:\t\t\t", startTimestamp)
-			println("    > deposit.stakeTimestamp:\t\t", deposit.stakeTimestamp)
+			println("   > startTimestamp:\t\t\t", startTimestamp)
+			println("   > deposit.stakeTimestamp:\t\t", deposit.stakeTimestamp)
 
 			_max = max(_max, externalLastCalculatedTimestamp[incentiveId])
 			println("  > CALC__EXTERNAL_max:\t\t\t", _max)
-			println("    > externalLastCalculatedTimestamp[incentiveId]:", externalLastCalculatedTimestamp[incentiveId])
+			println("   > externalLastCalculatedTimestamp[incentiveId]:", externalLastCalculatedTimestamp[incentiveId])
 
 			blocksPassed := (now - _max) / consts.BLOCK_GENERATION_INTERVAL
 			println("  > CALC__EXTERNAL_blocksPassed:\t", blocksPassed)
+			println("   > now:\t\t\t\t", now)
+			println("   > max:\t\t\t\t", _max)
 			println("   > incentive_start:\t\t\t", startTimestamp)
 			println("   > stake_timestamp:\t\t\t", deposit.stakeTimestamp)
 			println("   > last_calculated:\t\t\t", externalLastCalculatedTimestamp[incentiveId])
-			println("   > now:\t\t\t\t", now)
 			if blocksPassed == 0 {
 				println("  > CALC__EXTERNAL_BLOCKS_PASSED_ZERO")
 				continue
@@ -495,6 +500,7 @@ func CalcPoolPosition() {
 		}
 		externalLastCalculatedTimestamp[incentiveId] = now
 	}
+	println("=== [ END END END ] CALC__CalcPoolPosition_EXTERNAL")
 }
 
 func externalGnsAmount() uint64 {
