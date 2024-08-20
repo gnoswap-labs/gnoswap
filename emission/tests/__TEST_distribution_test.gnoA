@@ -8,55 +8,55 @@ import (
 )
 
 func Test_mintGns(t *testing.T) {
-	shouldEQ(t, gns.TotalSupply(), 100000000000000) // GSA has
-	shouldEQ(t, gnsBalance(emissionAddr), 0)
+	shouldEQ(t, gns.TotalSupply(), uint64(100000000000000)) // GSA has
+	shouldEQ(t, gnsBalance(emissionAddr), uint64(0))
 
 	std.TestSkipHeights(123)
 	mintGns() // 1 ~ 123 height
 
-	shouldEQ(t, gnsBalance(emissionAddr), 1_755_136_938)
-	shouldEQ(t, gns.TotalSupply(), 100000000000000+1_755_136_938)
+	shouldEQ(t, gnsBalance(emissionAddr), uint64(1_755_136_938))
+	shouldEQ(t, gns.TotalSupply(), uint64(100000000000000+1_755_136_938))
 
-	shouldEQ(t, std.GetHeight(), 246)
+	shouldEQ(t, std.GetHeight(), int64(246))
 }
 
 func Test_distributeToTarget(t *testing.T) {
-	shouldEQ(t, gnsBalance(emissionAddr), 1_755_136_938)
+	shouldEQ(t, gnsBalance(emissionAddr), uint64(1_755_136_938))
 	distributeToTarget(gnsBalance(emissionAddr))
-	shouldEQ(t, gnsBalance(emissionAddr), 2) // left due to division
+	shouldEQ(t, gnsBalance(emissionAddr), uint64(2)) // left due to division
 }
 
 func Test_distributeToTarget_After5Block(t *testing.T) {
 	// current 1 block will mint 14_269_406
 	std.TestSkipHeights(5) // increase 14_269_406 * 5 = 71_347_030
 	mintGns()
-	shouldEQ(t, gnsBalance(emissionAddr), 71_347_032) // 2 + 71_347_030
+	shouldEQ(t, gnsBalance(emissionAddr), uint64(71_347_032)) // 2 + 71_347_030
 
 	distributeToTarget(gnsBalance(emissionAddr))
-	shouldEQ(t, gnsBalance(emissionAddr), 1)
+	shouldEQ(t, gnsBalance(emissionAddr), uint64(1))
 }
 
 func TestChangeDistributionPct_ByAdmin(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), 7500)
-	shouldEQ(t, GetDistributionPct(DEVOPS), 2000)
+	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), uint64(7500))
+	shouldEQ(t, GetDistributionPct(DEVOPS), uint64(2000))
 
 	ChangeDistributionPct02(
 		1, 5000,
 		2, 4500,
 	)
-	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), 5000)
-	shouldEQ(t, GetDistributionPct(DEVOPS), 4500)
+	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), uint64(5000))
+	shouldEQ(t, GetDistributionPct(DEVOPS), uint64(4500))
 
 	ChangeDistributionPct03(
 		1, 5000,
 		2, 4000,
 		3, 1000,
 	)
-	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), 5000)
-	shouldEQ(t, GetDistributionPct(DEVOPS), 4000)
-	shouldEQ(t, GetDistributionPct(COMMUNITY_POOL), 1000)
+	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), uint64(5000))
+	shouldEQ(t, GetDistributionPct(DEVOPS), uint64(4000))
+	shouldEQ(t, GetDistributionPct(COMMUNITY_POOL), uint64(1000))
 
 	ChangeDistributionPct04(
 		1, 10000,
@@ -64,8 +64,8 @@ func TestChangeDistributionPct_ByAdmin(t *testing.T) {
 		3, 0,
 		4, 0,
 	)
-	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), 10000)
-	shouldEQ(t, GetDistributionPct(DEVOPS), 0)
-	shouldEQ(t, GetDistributionPct(COMMUNITY_POOL), 0)
-	shouldEQ(t, GetDistributionPct(XGNS), 0)
+	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), uint64(10000))
+	shouldEQ(t, GetDistributionPct(DEVOPS), uint64(0))
+	shouldEQ(t, GetDistributionPct(COMMUNITY_POOL), uint64(0))
+	shouldEQ(t, GetDistributionPct(XGNS), uint64(0))
 }

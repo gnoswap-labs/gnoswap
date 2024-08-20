@@ -11,26 +11,26 @@ import (
 
 func TestMintAndDistributeGns_Initial(t *testing.T) {
 	// check initial state
-	shouldEQ(t, lastExecutedHeight, 0)
-	shouldEQ(t, gns.TotalSupply(), 100000000000000)
+	shouldEQ(t, lastExecutedHeight, int64(0))
+	shouldEQ(t, gns.TotalSupply(), uint64(100000000000000))
 
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 0)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 0)
-	shouldEQ(t, gnsBalance(consts.COMMUNITY_POOL_ADDR), 0)
-	shouldEQ(t, gnsBalance(consts.X_GNS_ADDR), 0)
-	shouldEQ(t, gnsBalance(emissionAddr), 0)
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(0))
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(0))
+	shouldEQ(t, gnsBalance(consts.COMMUNITY_POOL_ADDR), uint64(0))
+	shouldEQ(t, gnsBalance(consts.X_GNS_ADDR), uint64(0))
+	shouldEQ(t, gnsBalance(emissionAddr), uint64(0))
 
 	std.TestSkipHeights(123)
 	MintAndDistributeGns()                           // 1 ~ 123 duration
 	shouldEQ(t, lastExecutedHeight, std.GetHeight()) // after MintAndDistributeGns, flag(height) should be updated
 
-	shouldEQ(t, gns.TotalSupply(), 100000000000000+1755136938)
+	shouldEQ(t, gns.TotalSupply(), uint64(100000000000000+1755136938))
 
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 1316352703)       // 75% of 1755136938
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 351027387)            // 20% of 1755136938
-	shouldEQ(t, gnsBalance(consts.COMMUNITY_POOL_ADDR), 87756846) // 5% of 1755136938
-	shouldEQ(t, gnsBalance(consts.X_GNS_ADDR), 0)                 // 0% of 1755136938
-	shouldEQ(t, gnsBalance(emissionAddr), 2)                      // 1755136938 - (1316352703 + 351027387 + 87756846) = 2
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(1316352703))       // 75% of 1755136938
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(351027387))            // 20% of 1755136938
+	shouldEQ(t, gnsBalance(consts.COMMUNITY_POOL_ADDR), uint64(87756846)) // 5% of 1755136938
+	shouldEQ(t, gnsBalance(consts.X_GNS_ADDR), uint64(0))                 // 0% of 1755136938
+	shouldEQ(t, gnsBalance(emissionAddr), uint64(2))                      // 1755136938 - (1316352703 + 351027387 + 87756846) = 2
 }
 
 func TestMintAndDistributeGns_SameBlock(t *testing.T) {
@@ -38,12 +38,12 @@ func TestMintAndDistributeGns_SameBlock(t *testing.T) {
 	shouldEQ(t, lastExecutedHeight, std.GetHeight())
 	MintAndDistributeGns()
 
-	shouldEQ(t, gns.TotalSupply(), 100000000000000+1755136938)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 1316352703)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 351027387)
-	shouldEQ(t, gnsBalance(consts.COMMUNITY_POOL_ADDR), 87756846)
-	shouldEQ(t, gnsBalance(consts.X_GNS_ADDR), 0)
-	shouldEQ(t, gnsBalance(emissionAddr), 2)
+	shouldEQ(t, gns.TotalSupply(), uint64(100000000000000+1755136938))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(1316352703))
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(351027387))
+	shouldEQ(t, gnsBalance(consts.COMMUNITY_POOL_ADDR), uint64(87756846))
+	shouldEQ(t, gnsBalance(consts.X_GNS_ADDR), uint64(0))
+	shouldEQ(t, gnsBalance(emissionAddr), uint64(2))
 }
 
 func TestMintAndDistributeGns_After5Block(t *testing.T) {

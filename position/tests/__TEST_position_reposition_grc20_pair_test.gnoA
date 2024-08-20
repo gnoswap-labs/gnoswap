@@ -8,9 +8,9 @@ import (
 
 	pl "gno.land/r/gnoswap/v2/pool"
 
+	"gno.land/r/gnoswap/v2/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
-	"gno.land/r/gnoswap/v2/gns"
 
 	"gno.land/r/gnoswap/v2/gnft"
 )
@@ -42,7 +42,7 @@ func TestMintPosition01InRange(t *testing.T) {
 		gsa.String(),
 	)
 
-	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, getNextId(), 2)
 	shouldEQ(t, amount0, "18394892")
 	shouldEQ(t, amount1, "50000000")
@@ -114,7 +114,7 @@ func TestMintPosition02InRange(t *testing.T) {
 		gsa.String(),
 	)
 
-	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, tokenId, uint64(2))
 	shouldEQ(t, getNextId(), 3)
 	shouldEQ(t, amount0, "21030652")
 	shouldEQ(t, amount1, "50000000")
@@ -201,7 +201,7 @@ func TestMintPosition03InRange(t *testing.T) {
 		gsa.String(),
 	)
 
-	shouldEQ(t, tokenId, 3)
+	shouldEQ(t, tokenId, uint64(3))
 	shouldEQ(t, getNextId(), 4)
 	shouldEQ(t, amount0, "21030652")
 	shouldEQ(t, amount1, "50000000")

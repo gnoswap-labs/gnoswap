@@ -10,11 +10,11 @@ import (
 	pl "gno.land/r/gnoswap/v2/pool"
 	pn "gno.land/r/gnoswap/v2/position"
 
+	"gno.land/r/gnoswap/v2/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/qux"
-	"gno.land/r/gnoswap/v2/gns"
 
 	"gno.land/r/gnoswap/v2/gnft"
 )
@@ -76,7 +76,7 @@ func TestMintBarQux500(t *testing.T) {
 
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 	shouldEQ(t, amount0, "36790")
 	shouldEQ(t, amount1, "100000")
@@ -103,7 +103,7 @@ func TestMintBarBaz100(t *testing.T) {
 	)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, tokenId, uint64(2))
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 	shouldEQ(t, amount0, "100000")
 	shouldEQ(t, amount1, "100000")
@@ -131,7 +131,7 @@ func TestMintFooQux500(t *testing.T) {
 
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, tokenId, 3)
+	shouldEQ(t, tokenId, uint64(3))
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 	shouldEQ(t, amount0, "100000")
 	shouldEQ(t, amount1, "100000")

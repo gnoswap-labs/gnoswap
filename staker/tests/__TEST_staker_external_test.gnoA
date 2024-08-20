@@ -52,7 +52,7 @@ func TestMintBarQux500_1(t *testing.T) {
 	)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 	shouldEQ(t, amount0, "36790")
 	shouldEQ(t, amount1, "100000")
@@ -79,7 +79,7 @@ func TestMintBarBaz100_2(t *testing.T) {
 	)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, tokenId, uint64(2))
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 	shouldEQ(t, amount0, "100000")
 	shouldEQ(t, amount1, "100000")
@@ -106,7 +106,7 @@ func TestMintBarBaz100_3(t *testing.T) {
 	)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, tokenId, 3)
+	shouldEQ(t, tokenId, uint64(3))
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 	shouldEQ(t, amount0, "100000")
 	shouldEQ(t, amount1, "100000")
@@ -158,7 +158,7 @@ func TestCollectExternalReward_2(t *testing.T) {
 
 	// before claim
 	oblOld := obl.BalanceOf(a2u(gsa))
-	shouldEQ(t, oblOld, 99999900000000)
+	shouldEQ(t, oblOld, uint64(99999900000000))
 
 	std.TestSkipHeights(777601) // 45 days + 1 block
 	CollectReward(2, false)
@@ -166,7 +166,7 @@ func TestCollectExternalReward_2(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	oblNew := obl.BalanceOf(a2u(gsa))
-	shouldEQ(t, oblNew-oblOld, 9895486)
+	shouldEQ(t, oblNew-oblOld, uint64(9895486))
 }
 
 func TestCollectExternalReward_3(t *testing.T) {
@@ -174,7 +174,7 @@ func TestCollectExternalReward_3(t *testing.T) {
 
 	// before claim
 	oblOld := obl.BalanceOf(a2u(gsa))
-	shouldEQ(t, oblOld, 99999909895486)
+	shouldEQ(t, oblOld, uint64(99999909895486))
 
 	std.TestSkipHeights(1)
 	CollectReward(3, false)
@@ -182,5 +182,5 @@ func TestCollectExternalReward_3(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	oblNew := obl.BalanceOf(a2u(gsa))
-	shouldEQ(t, oblNew-oblOld, 9895478)
+	shouldEQ(t, oblNew-oblOld, uint64(9895478))
 }

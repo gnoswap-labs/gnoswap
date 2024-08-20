@@ -51,18 +51,18 @@ func TestPositionMintNative01(t *testing.T) {
 
 	// prepare 50000005ugnot (5 for refund test)
 	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 50000005}})
-	shouldEQ(t, ugnotBalanceOf(gsa), 50000005)
-	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), 0)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(50000005))
+	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), uint64(0))
 
 	banker := std.GetBanker(std.BankerTypeRealmIssue)
 	banker.SendCoins(gsa, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 50000005}}, nil)
 
-	shouldEQ(t, ugnotBalanceOf(gsa), 0)
-	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), 50000005)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(0))
+	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), uint64(50000005))
 
 	gsaOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, gsaOldWugnotBalance, 0)
+	shouldEQ(t, gsaOldWugnotBalance, uint64(0))
 
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		consts.GNS_PATH, // token0
@@ -80,7 +80,7 @@ func TestPositionMintNative01(t *testing.T) {
 
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, lpTokenId, 1)
+	shouldEQ(t, lpTokenId, uint64(1))
 	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // gsa
 	shouldEQ(t, amount0, "1000")
 	shouldEQ(t, amount1, "368")
@@ -97,19 +97,19 @@ func TestPositionMintNative02(t *testing.T) {
 
 	// prepare 50000005ugnot (5 for refund test)
 	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 50000005}})
-	shouldEQ(t, ugnotBalanceOf(gsa), 99999010)
-	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), 0)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(99999010))
+	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), uint64(0))
 
 	// send & set orig send
 	banker := std.GetBanker(std.BankerTypeRealmIssue)
 	banker.SendCoins(gsa, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 50000005}}, nil)
 
-	shouldEQ(t, ugnotBalanceOf(gsa), 49999005)
-	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), 50000005)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(49999005))
+	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), uint64(50000005))
 
 	gsaOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, gsaOldWugnotBalance, 0)
+	shouldEQ(t, gsaOldWugnotBalance, uint64(0))
 
 	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
 		consts.GNS_PATH, // token0
@@ -127,7 +127,7 @@ func TestPositionMintNative02(t *testing.T) {
 
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, lpTokenId, 2)
+	shouldEQ(t, lpTokenId, uint64(2))
 	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // gsa
 	shouldEQ(t, amount0, "1000")
 	shouldEQ(t, amount1, "368")
@@ -138,18 +138,18 @@ func TestCreateExternalIncentive(t *testing.T) {
 
 	// prepare 10000000000 ugnot
 	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 10_000_000_000}})
-	shouldEQ(t, ugnotBalanceOf(gsa), 10099998010)
-	shouldEQ(t, ugnotBalanceOf(consts.STAKER_ADDR), 200000000)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(10099998010))
+	shouldEQ(t, ugnotBalanceOf(consts.STAKER_ADDR), uint64(200000000))
 
 	banker := std.GetBanker(std.BankerTypeRealmIssue)
 	banker.SendCoins(gsa, consts.STAKER_ADDR, std.Coins{{"ugnot", 10_000_000_000}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 10_000_000_000}}, nil)
 
-	shouldEQ(t, ugnotBalanceOf(gsa), 99998010)
-	shouldEQ(t, ugnotBalanceOf(consts.STAKER_ADDR), 10200000000)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(99998010))
+	shouldEQ(t, ugnotBalanceOf(consts.STAKER_ADDR), uint64(10200000000))
 
 	gsaOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, gsaOldWugnotBalance, 0)
+	shouldEQ(t, gsaOldWugnotBalance, uint64(0))
 
 	wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(1)
@@ -166,7 +166,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	// std.GetHeight() = 134
 
 	gsaNewWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, gsaNewWugnotBalance, 0)
+	shouldEQ(t, gsaNewWugnotBalance, uint64(0))
 
 	std.TestSkipHeights(1)
 }
@@ -203,22 +203,22 @@ func TestCollectReward01(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 	std.TestSkipHeights(1000)
 
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
-	shouldEQ(t, ugnotBalanceOf(gsa), 99998010)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(0))
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(99998010))
 
 	CollectReward(1, false)
 
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 64294)
-	shouldEQ(t, ugnotBalanceOf(gsa), 99998010)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(64294))
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(99998010))
 }
 
 func TestUnstakeToken02(t *testing.T) {
 	std.TestSkipHeights(335) // skip times
 
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 64294)
-	shouldEQ(t, ugnotBalanceOf(gsa), 99998010)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(64294))
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(99998010))
 
 	std.TestSetRealm(gsaRealm)
 
@@ -227,16 +227,16 @@ func TestUnstakeToken02(t *testing.T) {
 
 	shouldEQ(t, gnft.OwnerOf(tid(2)), gsa)
 
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 392638)
-	shouldEQ(t, ugnotBalanceOf(gsa), 99998010)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(392638))
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(99998010))
 }
 
 func TestEndExternalIncentive(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 
 	wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // UNWRAP
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 392638)
-	shouldEQ(t, ugnotBalanceOf(gsa), 99998010)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(392638))
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(99998010))
 
 	std.TestSkipHeights(9999999)
 	// use same parameter as CreateExternalIncentive()
@@ -251,8 +251,8 @@ func TestEndExternalIncentive(t *testing.T) {
 
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 392638)
-	shouldEQ(t, ugnotBalanceOf(gsa), 10099151818) // always refund
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(392638))
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(10099151818)) // always refund
 
 	shouldEQ(t, len(incentives), 0)
 	shouldEQ(t, len(poolIncentives["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500"]), 0)

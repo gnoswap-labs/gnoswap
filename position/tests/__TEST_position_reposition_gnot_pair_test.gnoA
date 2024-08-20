@@ -58,7 +58,7 @@ func TestMintPosition01InRange(t *testing.T) {
 	)
 	std.TestSetOrigSend(std.Coins{{"ugnot", 0}}, nil)
 
-	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, getNextId(), 2)
 	shouldEQ(t, amount0, "18394892")
 	shouldEQ(t, amount1, "50000000")

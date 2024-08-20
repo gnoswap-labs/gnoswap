@@ -76,36 +76,36 @@ func TestCollectExternalReward_1_Unwrap(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	oldUgnotBal := ugnotBalanceOf(gsa)
-	shouldEQ(t, oldUgnotBal, 0)
+	shouldEQ(t, oldUgnotBal, uint64(0))
 
 	oldWugnotBal := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, oldWugnotBal, 0)
+	shouldEQ(t, oldWugnotBal, uint64(0))
 
 	std.TestSkipHeights(900)
 	CollectReward(1, true)
 
 	newUgnotBal := ugnotBalanceOf(gsa)
-	shouldEQ(t, newUgnotBal, 382)
+	shouldEQ(t, newUgnotBal, uint64(382))
 
 	newWugnotBal := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, newWugnotBal, 0)
+	shouldEQ(t, newWugnotBal, uint64(0))
 }
 
 func TestCollectExternalReward_1_NoUnWrap(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	oldUgnotBal := ugnotBalanceOf(gsa)
-	shouldEQ(t, oldUgnotBal, 382)
+	shouldEQ(t, oldUgnotBal, uint64(382))
 
 	oldWugnotBal := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, oldWugnotBal, 0)
+	shouldEQ(t, oldWugnotBal, uint64(0))
 
 	std.TestSkipHeights(1)
 	CollectReward(1, false)
 
 	newUgnotBal := ugnotBalanceOf(gsa)
-	shouldEQ(t, newUgnotBal, 382)
+	shouldEQ(t, newUgnotBal, uint64(382))
 
 	newWugnotBal := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, newWugnotBal, 7)
+	shouldEQ(t, newWugnotBal, uint64(7))
 }

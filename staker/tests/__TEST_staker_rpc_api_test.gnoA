@@ -83,7 +83,7 @@ func TestPositionMintFooBar01(t *testing.T) {
 
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, lpTokenId, 1)
+	shouldEQ(t, lpTokenId, uint64(1))
 	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // gsa
 	shouldEQ(t, amount0, "1000")
 	shouldEQ(t, amount1, "368")
@@ -116,7 +116,7 @@ func TestPositionMintFooBar02(t *testing.T) {
 
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, lpTokenId, 2)
+	shouldEQ(t, lpTokenId, uint64(2))
 	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // gsa
 	shouldEQ(t, amount0, "5000")
 	shouldEQ(t, amount1, "3979")
@@ -149,7 +149,7 @@ func TestPositionMintBazQux01(t *testing.T) {
 
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, lpTokenId, 3)
+	shouldEQ(t, lpTokenId, uint64(3))
 	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // gsa
 	shouldEQ(t, amount0, "3979")
 	shouldEQ(t, amount1, "5000")
@@ -206,7 +206,7 @@ func TestCreateExternalIncentiveFooBySomeoneElse(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 	foo.Transfer(a2u(testAddr), 5_000_000_000)
 	newFooForTest := foo.BalanceOf(a2u(testAddr))
-	shouldEQ(t, newFooForTest-oldFooForTest, 5_000_000_000)
+	shouldEQ(t, newFooForTest-oldFooForTest, uint64(5_000_000_000))
 
 	std.TestSetOrigCaller(testAddr)
 	std.TestSetRealm(testRealm)

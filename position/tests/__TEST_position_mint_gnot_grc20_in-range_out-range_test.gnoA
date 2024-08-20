@@ -1,4 +1,3 @@
-// GSW-1136
 package position
 
 import (
@@ -10,8 +9,8 @@ import (
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
-	"gno.land/r/gnoswap/v2/gns"
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v2/gns"
 
 	pl "gno.land/r/gnoswap/v2/pool"
 )

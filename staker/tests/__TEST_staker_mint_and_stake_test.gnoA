@@ -59,17 +59,17 @@ func TestMintAndStakeNative(t *testing.T) {
 
 	// prepare 100005ugnot (5 for refund test)
 	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 100005}})
-	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), 0)
+	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), uint64(0))
 
 	// send & set orig send
 	banker := std.GetBanker(std.BankerTypeRealmIssue)
 	banker.SendCoins(gsa, consts.POSITION_ADDR, std.Coins{{"ugnot", 100005}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100005}}, nil)
 
-	shouldEQ(t, ugnotBalanceOf(gsa), 0)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(0))
 
 	gsaOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, gsaOldWugnotBalance, 0)
+	shouldEQ(t, gsaOldWugnotBalance, uint64(0))
 
 	lpTokenId, liquidity, amount0, amount1, poolPath := MintAndStake(
 		consts.GNOT,     // token0
@@ -88,9 +88,9 @@ func TestMintAndStakeNative(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	// SPEND ALL WUGNOT
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(0))
 
-	shouldEQ(t, ugnotBalanceOf(gsa), 5)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(5))
 	// check one click staked token id image uri
 
 	toTid := grc721.TokenID(ufmt.Sprintf("%d", lpTokenId))
