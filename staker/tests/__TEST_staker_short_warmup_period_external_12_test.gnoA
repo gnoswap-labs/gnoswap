@@ -63,7 +63,7 @@ func TestMintBarQux100_1(t *testing.T) {
 		gsa.String(),
 	)
 
-	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 
 	std.TestSkipHeights(1)
@@ -157,6 +157,6 @@ func TestCollectReward(t *testing.T) {
 	newBar := bar.BalanceOf(a2u(gsa))
 	newQux := qux.BalanceOf(a2u(gsa))
 
-	shouldEQ(t, newBar > oldBar, true)
-	shouldEQ(t, newQux > oldQux, true)
+	shouldEQ(t, bool(newBar > oldBar), true)
+	shouldEQ(t, bool(newQux > oldQux), true)
 }

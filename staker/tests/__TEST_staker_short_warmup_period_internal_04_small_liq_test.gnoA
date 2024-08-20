@@ -80,7 +80,7 @@ func TestMintBarQux100_1(t *testing.T) {
 		gsa.String(),
 	)
 
-	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 
 	gpi := GetPrintInfo()
@@ -114,7 +114,7 @@ func TestMintBarQux100_2(t *testing.T) {
 		gsa.String(),
 	)
 
-	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, tokenId, uint64(2))
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 
 	gpi := GetPrintInfo()

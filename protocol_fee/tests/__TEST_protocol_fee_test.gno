@@ -21,23 +21,23 @@ func TestDistributeProtocolFee(t *testing.T) {
 	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
 	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
 
-	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), 1000)
-	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), 0)
-	shouldEQ(t, bar.BalanceOf(a2u(consts.X_GNS_ADDR)), 0)
+	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.X_GNS_ADDR)), uint64(0))
 
-	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), 1000)
-	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), 0)
-	shouldEQ(t, qux.BalanceOf(a2u(consts.X_GNS_ADDR)), 0)
+	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.X_GNS_ADDR)), uint64(0))
 
 	DistributeProtocolFee()
 
-	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), 0)
-	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), 500)
-	shouldEQ(t, bar.BalanceOf(a2u(consts.X_GNS_ADDR)), 500)
+	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(500))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.X_GNS_ADDR)), uint64(500))
 
-	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), 0)
-	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), 500)
-	shouldEQ(t, qux.BalanceOf(a2u(consts.X_GNS_ADDR)), 500)
+	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(500))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.X_GNS_ADDR)), uint64(500))
 }
 
 func TestDistributeProtocolFeeNoPermission(t *testing.T) {
@@ -83,11 +83,11 @@ func TestChagneXGnsDistributePercentInvalidFee(t *testing.T) {
 func TestChagneXGnsDistributePercent(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	shouldEQ(t, GetXGnsDistributePercent(), 5000)
+	shouldEQ(t, GetXGnsDistributePercent(), uint64(5000))
 
 	ChagneXGnsDistributePercent(123)
 
-	shouldEQ(t, GetXGnsDistributePercent(), 123)
+	shouldEQ(t, GetXGnsDistributePercent(), uint64(123))
 }
 
 func a2u(addr std.Address) pusers.AddressOrName {

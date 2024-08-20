@@ -40,7 +40,7 @@ func TestMintPosition01InRange(t *testing.T) {
 		gsa.String(),
 	)
 
-	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, getNextId(), 2)
 	shouldEQ(t, amount0, "18394892")
 	shouldEQ(t, amount1, "50000000")
@@ -78,7 +78,7 @@ func TestMintPosition02InRange(t *testing.T) {
 		gsa.String(),
 	)
 
-	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, tokenId, uint64(2))
 	shouldEQ(t, getNextId(), 3)
 	shouldEQ(t, amount0, "18394892")
 	shouldEQ(t, amount1, "50000000")

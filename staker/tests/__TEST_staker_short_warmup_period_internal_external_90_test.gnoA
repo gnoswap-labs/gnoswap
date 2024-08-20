@@ -73,7 +73,7 @@ func TestMintBarQux100_1(t *testing.T) {
 		gsa.String(),
 	)
 
-	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
 
 	std.TestSkipHeights(1)
@@ -167,8 +167,8 @@ func TestCollectReward(t *testing.T) {
 	newBar := bar.BalanceOf(a2u(gsa))
 	newGns := gns.BalanceOf(a2u(gsa))
 
-	shouldEQ(t, newBar-oldBar, 485)
-	shouldEQ(t, newGns-oldGns, 7861515679) // external 485 + internal 7861515194
+	shouldEQ(t, newBar-oldBar, uint64(485))
+	shouldEQ(t, newGns-oldGns, uint64(7861515679)) // external 485 + internal 7861515194
 }
 
 func TestCollectRewardSameBlockNoReward(t *testing.T) {
@@ -184,8 +184,8 @@ func TestCollectRewardSameBlockNoReward(t *testing.T) {
 	newGns := gns.BalanceOf(a2u(gsa))
 
 	// same block no change
-	shouldEQ(t, newBar-oldBar, 0)
-	shouldEQ(t, newGns-oldGns, 0)
+	shouldEQ(t, newBar-oldBar, uint64(0))
+	shouldEQ(t, newGns-oldGns, uint64(0))
 }
 
 func TestCollectRewardSingleBlock(t *testing.T) {
@@ -202,6 +202,6 @@ func TestCollectRewardSingleBlock(t *testing.T) {
 	newBar := bar.BalanceOf(a2u(gsa))
 	newGns := gns.BalanceOf(a2u(gsa))
 
-	shouldEQ(t, newBar-oldBar, 2)        // 2 bar from external incentive
-	shouldEQ(t, newGns-oldGns, 10595037) // 10595035 gns from internal + 2 gns from external
+	shouldEQ(t, newBar-oldBar, uint64(2))        // 2 bar from external incentive
+	shouldEQ(t, newGns-oldGns, uint64(10595037)) // 10595035 gns from internal + 2 gns from external
 }

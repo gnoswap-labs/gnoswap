@@ -115,16 +115,16 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 	std.TestSetOrigSend(std.Coins{{}}, nil)
 
 	oldWugnot := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, oldWugnot, 5000)
+	shouldEQ(t, oldWugnot, uint64(5000))
 
 	oldUgnot := ugnotBalanceOf(gsa)
-	shouldEQ(t, oldUgnot, 900009)
+	shouldEQ(t, oldUgnot, uint64(900009))
 
 	// CHECK PROTOCOL_FEE
 	feeColUgnot := ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
 	feeColWugnot := wugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
-	shouldEQ(t, feeColUgnot, 0)
-	shouldEQ(t, feeColWugnot, 0)
+	shouldEQ(t, feeColUgnot, uint64(0))
+	shouldEQ(t, feeColWugnot, uint64(0))
 
 	std.TestSetOrigCaller(gsa)
 	amountIn, amountOut := SwapRoute(
@@ -140,15 +140,15 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 	shouldEQ(t, amountOut, "-19711")
 
 	newWugnot := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, newWugnot, 5000) // IT SHOULD STAY SAME SINCE SWAP USED uGNOT, not WUGNOT
+	shouldEQ(t, newWugnot, uint64(5000)) // IT SHOULD STAY SAME SINCE SWAP USED uGNOT, not WUGNOT
 
 	newUgnot := ugnotBalanceOf(gsa)
-	shouldEQ(t, newUgnot, 919720) // 900009 + 19711
+	shouldEQ(t, newUgnot, uint64(919720)) // 900009 + 19711
 
 	feeColUgnot = ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
 	feeColWugnot = wugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
-	shouldEQ(t, feeColUgnot, 29) // UNWRAP RESULT
-	shouldEQ(t, feeColWugnot, 0)
+	shouldEQ(t, feeColUgnot, uint64(29)) // UNWRAP RESULT
+	shouldEQ(t, feeColWugnot, uint64(0))
 }
 
 // DRY SELL NATIVE
@@ -175,15 +175,15 @@ func TestSwapRouteGnotBarExactIn(t *testing.T) {
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)  // for output
 
 	oldWugnot := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, oldWugnot, 5000)
+	shouldEQ(t, oldWugnot, uint64(5000))
 
 	oldUgnot := ugnotBalanceOf(gsa)
-	shouldEQ(t, oldUgnot, 919720)
+	shouldEQ(t, oldUgnot, uint64(919720))
 
 	feeColUgnot := ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
 	feeColWugnot := wugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
-	shouldEQ(t, feeColUgnot, 29)
-	shouldEQ(t, feeColWugnot, 0)
+	shouldEQ(t, feeColUgnot, uint64(29))
+	shouldEQ(t, feeColWugnot, uint64(0))
 
 	// send
 	std.TestSetOrigSend(std.Coins{{"ugnot", 5000}}, nil)
@@ -201,15 +201,15 @@ func TestSwapRouteGnotBarExactIn(t *testing.T) {
 	shouldEQ(t, amountOut, "-254")
 
 	newWugnot := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, newWugnot, 5000)
+	shouldEQ(t, newWugnot, uint64(5000))
 
 	newUgnot := ugnotBalanceOf(gsa)
-	shouldEQ(t, newUgnot, 919720) // GNO VM BUG, ugnot amount should be decreased but `std.TestSetOrigSend` doesn't really decrease caller's ugnot balance
+	shouldEQ(t, newUgnot, uint64(919720)) // GNO VM BUG, ugnot amount should be decreased but `std.TestSetOrigSend` doesn't really decrease caller's ugnot balance)
 
 	feeColUgnot = ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
 	feeColWugnot = wugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
-	shouldEQ(t, feeColUgnot, 29)
-	shouldEQ(t, feeColWugnot, 0)
+	shouldEQ(t, feeColUgnot, uint64(29))
+	shouldEQ(t, feeColWugnot, uint64(0))
 }
 
 // Test Getter/Setter for SwapFee

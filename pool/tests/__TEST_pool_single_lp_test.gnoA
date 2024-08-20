@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"testing"
 
+	"gno.land/r/gnoswap/v2/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
-	"gno.land/r/gnoswap/v2/gns"
 
 	"gno.land/r/gnoswap/v2/consts"
 

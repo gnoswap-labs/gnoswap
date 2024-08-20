@@ -47,7 +47,7 @@ func TestMintPosition01InRange(t *testing.T) {
 	)
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_tickLower 12000} {p_tickUpper 14000} {tokenId 3} {liquidity 957388253} {amount0 50000000} {amount1 0}]}
 
-	shouldEQ(t, tokenId, 1)
+	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, getNextId(), 2)
 	shouldEQ(t, amount0, "18394892")
 	shouldEQ(t, amount1, "50000000")
@@ -73,7 +73,7 @@ func TestMintPosition02LowerRange(t *testing.T) {
 	)
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_tickLower 12000} {p_tickUpper 14000} {tokenId 3} {liquidity 957388253} {amount0 50000000} {amount1 0}]}
 
-	shouldEQ(t, tokenId, 2)
+	shouldEQ(t, tokenId, uint64(2))
 	shouldEQ(t, getNextId(), 3)
 	shouldEQ(t, amount0, "0")
 	shouldEQ(t, amount1, "50000000")
@@ -99,7 +99,7 @@ func TestMintPosition03UpperRange(t *testing.T) {
 	)
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_tickLower 12000} {p_tickUpper 14000} {tokenId 3} {liquidity 957388253} {amount0 50000000} {amount1 0}]}
 
-	shouldEQ(t, tokenId, 3)
+	shouldEQ(t, tokenId, uint64(3))
 	shouldEQ(t, getNextId(), 4)
 	shouldEQ(t, amount0, "50000000")
 	shouldEQ(t, amount1, "0")
