@@ -1,0 +1,145 @@
+// external incentive + warm up period testing
+//  qux for 180 days
+
+package staker
+
+import (
+	"std"
+	"testing"
+
+	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	en "gno.land/r/gnoswap/v2/emission"
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
+
+	"gno.land/r/gnoswap/v2/gnft"
+	"gno.land/r/gnoswap/v2/gns"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/qux"
+)
+
+func init() {
+	// override warm-up period for testing
+	warmUp[100] = 901 // 30m ~
+	warmUp[70] = 301  // 10m ~ 30m
+	warmUp[50] = 151  // 5m ~ 10m
+	warmUp[30] = 1    // ~ 5m
+}
+
+func TestPoolInitCreatePool(t *testing.T) {
+
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+
+	pl.CreatePool(barPath, bazPath, 3000, "79228162514264337593543950337")
+
+	std.TestSkipHeights(1)
+}
+
+func TestMintBarQux3000_1_4(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "13630", "13630", "0", "0", max_timeout, gsa.String())
+	pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "84360", "84360", "0", "0", max_timeout, gsa.String())
+	pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "1990", "1990", "0", "0", max_timeout, gsa.String())
+	pn.Mint(barPath, bazPath, fee3000, int32(-1020), int32(1020), "7", "7", "0", "0", max_timeout, gsa.String())
+	std.TestSkipHeights(1)
+
+	t1Liq := pn.PositionGetPositionLiquidity(1).Clone()
+	t2Liq := pn.PositionGetPositionLiquidity(2).Clone()
+	t3Liq := pn.PositionGetPositionLiquidity(3).Clone()
+	t4Liq := pn.PositionGetPositionLiquidity(4).Clone()
+
+	println("t1 liquidity\t", t1Liq.ToString())
+	println("t2 liquidity\t", t2Liq.ToString())
+	println("t3 liquidity\t", t3Liq.ToString())
+	println("t4 liquidity\t", t4Liq.ToString())
+
+	all := u256.Zero()
+	all.Add(all, t1Liq)
+	all.Add(all, t2Liq)
+	all.Add(all, t3Liq)
+	all.Add(all, t4Liq)
+	println("all liquidity\t", all.ToString())
+
+	t1pct := t1Liq.Mul(t1Liq, u256.NewUint(100))
+	t1pct.Div(t1pct, all)
+	t2pct := t2Liq.Mul(t2Liq, u256.NewUint(100))
+	t2pct.Div(t2pct, all)
+	t3pct := t3Liq.Mul(t3Liq, u256.NewUint(100))
+	t3pct.Div(t3pct, all)
+	t4pct := t4Liq.Mul(t4Liq, u256.NewUint(100))
+	t4pct.Div(t4pct, all)
+}
+
+func TestCreateExternalIncentiveQux365(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	qux.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
+
+	AddToken(quxPath)
+	CreateExternalIncentive(
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", // targetPoolPath string,
+		quxPath,          // rewardToken string, // token path should be registered
+		"10000000000000", // _rewardAmount string,
+		1234569600,
+		1234569600+TIMESTAMP_180DAYS,
+	)
+	std.TestSkipHeights(1)
+}
+
+func TestStakeToken_1_4(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
+	StakeToken(1)
+
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
+	StakeToken(2)
+
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(3))
+	StakeToken(3)
+
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(4))
+	StakeToken(4)
+
+	std.TestSkipHeights(1)
+}
+
+func TestBeforeActive(t *testing.T) {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
+	std.TestSkipHeights(1)
+}
+
+func Test23HoursAfterActive(t *testing.T) {
+	std.TestSkipHeights(849)   // in active
+	std.TestSkipHeights(1)     // active // but no block passed since active
+	std.TestSkipHeights(41400) // skip 23 hours of block
+
+	// GetPrintInfo() // INTERNAL GNS
+}
+
+func TestJustPrint(t *testing.T) {
+	gpei := GetPrintExternalInfo() // EXTERNALs
+	// println()
+	// println()
+	// println()
+	// println(gpei)
+	shouldEQ(t, gpei, `{"height":42378,"time":1234652400,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","rewardToken":"gno.land/r/onbloc/qux","rewardAmount":"10000000000000","startTimestamp":1234569600,"endTimestamp":1250121600,"rewardPerBlockX96":"101888069076986030855894997860082304","stakedOrExternalDuration":41400,"rewardPerBlock":"1286008","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountFull":7257658143,"tokenAmountToGive":7194548072}]},{"lpTokenId":2,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","rewardToken":"gno.land/r/onbloc/qux","rewardAmount":"10000000000000","startTimestamp":1234569600,"endTimestamp":1250121600,"rewardPerBlockX96":"101888069076986030855894997860082304","stakedOrExternalDuration":41400,"rewardPerBlock":"1286008","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountFull":44919747124,"tokenAmountToGive":44529140629}]},{"lpTokenId":3,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","rewardToken":"gno.land/r/onbloc/qux","rewardAmount":"10000000000000","startTimestamp":1234569600,"endTimestamp":1250121600,"rewardPerBlockX96":"101888069076986030855894997860082304","stakedOrExternalDuration":41400,"rewardPerBlock":"1286008","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountFull":1059629005,"tokenAmountToGive":1050414839}]},{"lpTokenId":4,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","rewardToken":"gno.land/r/onbloc/qux","rewardAmount":"10000000000000","startTimestamp":1234569600,"endTimestamp":1250121600,"rewardPerBlockX96":"101888069076986030855894997860082304","stakedOrExternalDuration":41400,"rewardPerBlock":"1286008","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountFull":3706352,"tokenAmountToGive":3674123}]}]}`)
+
+}
