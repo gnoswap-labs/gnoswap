@@ -2,15 +2,10 @@ package staker
 
 import (
 	"std"
-	"time"
 
-	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/r/gnoswap/v2/consts"
-	"gno.land/r/gnoswap/v2/gns"
 
 	en "gno.land/r/gnoswap/v2/emission"
 )

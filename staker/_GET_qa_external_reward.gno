@@ -166,8 +166,6 @@ func GetPrintExternalInfo() string {
 }
 
 func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Node {
-	_q96 := u256.MustFromDecimal(consts.Q96)
-
 	externalPositions := make([]*json.Node, 0)
 
 	for _, externalPosition := range positions {
