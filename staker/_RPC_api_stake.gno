@@ -401,6 +401,7 @@ func ApiGetStakes() string {
 			Owner:          deposit.owner,
 			NumberOfStakes: deposit.numberOfStakes,
 			StakeTimestamp: deposit.stakeTimestamp,
+			StakeHeight:    deposit.stakeHeight,
 			TargetPoolPath: deposit.targetPoolPath,
 		})
 	}
@@ -429,6 +430,7 @@ func ApiGetStakes() string {
 			"owner":          json.StringNode("owner", stake.Owner.String()),
 			"numberOfStakes": json.NumberNode("numberOfStakes", float64(stake.NumberOfStakes)),
 			"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(stake.StakeTimestamp)),
+			"stakeHeight":    json.NumberNode("stakeHeight", float64(stake.StakeHeight)),
 			"targetPoolPath": json.StringNode("targetPoolPath", stake.TargetPoolPath),
 		})
 		responses.AppendArray(_stakeNode)
@@ -463,6 +465,7 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 			Owner:          deposit.owner,
 			NumberOfStakes: deposit.numberOfStakes,
 			StakeTimestamp: deposit.stakeTimestamp,
+			StakeHeight:    deposit.stakeHeight,
 			TargetPoolPath: deposit.targetPoolPath,
 		})
 	}
@@ -491,6 +494,7 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 			"owner":          json.StringNode("owner", stake.Owner.String()),
 			"numberOfStakes": json.NumberNode("numberOfStakes", float64(stake.NumberOfStakes)),
 			"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(stake.StakeTimestamp)),
+			"stakeHeight":    json.NumberNode("stakeHeight", float64(stake.StakeHeight)),
 			"targetPoolPath": json.StringNode("targetPoolPath", stake.TargetPoolPath),
 		})
 		responses.AppendArray(_stakeNode)
@@ -525,6 +529,7 @@ func ApiGetStakesByAddress(targetAddress string) string {
 			Owner:          deposit.owner,
 			NumberOfStakes: deposit.numberOfStakes,
 			StakeTimestamp: deposit.stakeTimestamp,
+			StakeHeight:    deposit.stakeHeight,
 			TargetPoolPath: deposit.targetPoolPath,
 		})
 	}
@@ -553,6 +558,7 @@ func ApiGetStakesByAddress(targetAddress string) string {
 			"owner":          json.StringNode("owner", stake.Owner.String()),
 			"numberOfStakes": json.NumberNode("numberOfStakes", float64(stake.NumberOfStakes)),
 			"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(stake.StakeTimestamp)),
+			"stakeHeight":    json.NumberNode("stakeHeight", float64(stake.StakeHeight)),
 			"targetPoolPath": json.StringNode("targetPoolPath", stake.TargetPoolPath),
 		})
 		responses.AppendArray(_stakeNode)
