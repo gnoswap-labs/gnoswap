@@ -30,6 +30,7 @@ var positionsExternalWarmUpAmount = make(map[uint64]map[string]warmUpAmount)  //
 var positionsExternalLastCalculatedHeight = make(map[uint64]map[string]int64) // positionId => incentiveId => lastCalculatedHeight
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
+	println()
 	println("[ START ] REWARD__INTERNAL_rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
 	deposit := deposits[tokenId]
 
@@ -46,6 +47,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	toDistribute := positionGns[tokenId] - positionLastGns[tokenId]
 	println(" > REWARD__INTERNAL_positionGns[tokenId]", positionGns[tokenId])
 	println(" > REWARD__INTERNAL_positionLastGns[tokenId]", positionLastGns[tokenId])
+	println()
 
 	until30 := uint64(stakeHeight + warmUp[50] - 1)  // 150
 	until50 := uint64(stakeHeight + warmUp[70] - 1)  // 300
@@ -59,6 +61,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	println(" > REWARD__INTERNAL_toDistribute:", toDistribute)
 	println(" > REWARD__INTERNAL__currentHeightU64-lastCalculatedHeightU64):", _currentHeightU64-lastCalculatedHeightU64)
 	println(" > REWARD__INTERNAL_avgGnsBlockAmountX96:", avgGnsBlockAmountX96.ToString())
+	println()
 
 	positionWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
 	if !exist {
@@ -362,8 +365,10 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 }
 
 func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (uint64, uint64) {
+	println()
 	println("[ START ] REWARD__EXTERNAL_rewardMathComputeInternalRewardAmount_TOKEN_ID:", tokenId)
 	println("  > REWARD__EXTERNAL_incentiveId:", incentiveId)
+	println()
 
 	currentHeight := std.GetHeight()
 	_currentHeightU64 := uint64(currentHeight)
@@ -377,15 +382,18 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 	println("  > REWARD__EXTERNAL_incentives[incentiveId].startTimestamp:", incentives[incentiveId].startTimestamp)
 	println("  > REWARD__EXTERNAL_deposits[tokenId].stakeTimestamp:", deposits[tokenId].stakeTimestamp)
 	println("  > REWARD__EXTERNAL_max:", _max)
+	println()
 
 	stakedOrExternalDuration := (time.Now().Unix() - _max) / consts.BLOCK_GENERATION_INTERVAL
 	println("  > REWARD__EXTERNAL_time.Now().Unix():", time.Now().Unix())
 	println("  > REWARD__EXTERNAL_consts.BLOCK_GENERATION_INTERVAL:", consts.BLOCK_GENERATION_INTERVAL)
 	println("  > REWARD__EXTERNAL_stakedOrExternalDuration:", stakedOrExternalDuration)
+	println()
 
 	stakedOrExternalStartedHeight := currentHeight - stakedOrExternalDuration
 	println("  > REWARD__EXTERNAL_height:", currentHeight)
 	println("  > REWARD__EXTERNAL_stakedOrExternalStartedHeight:", stakedOrExternalStartedHeight)
+	println()
 
 	until30 := uint64(stakedOrExternalStartedHeight + warmUp[50] - 1)  // 150
 	until50 := uint64(stakedOrExternalStartedHeight + warmUp[70] - 1)  // 300
@@ -404,6 +412,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 			if tokenAmountX96.Lt(positionLastExternal[tokenId][incentiveId]) {
 				panic("THIS SHOULD NOT HAPPEN_EXTERNAL #1")
 			}
+			println()
 
 			lastCalculatedHeightU64 := uint64(positionsExternalLastCalculatedHeight[tokenId][incentiveId])
 			println("   > REWARD__EXTERNAL_lastCalculatedHeightU64:", lastCalculatedHeightU64)
@@ -412,6 +421,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 			println("   > REWARD__EXTERNAL_toDistirbuteX96:", toDistributeX96.ToString())
 			println("   > REWARD__EXTERNAL__currentHeightU64-lastCalculatedHeightU64):", _currentHeightU64-lastCalculatedHeightU64)
 			println("   > REWARD__EXTERNAL_avgExternalBlockAmountX96:", avgExternalBlockAmountX96.ToString())
+			println()
 
 			positionExternalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
 			if !exist {

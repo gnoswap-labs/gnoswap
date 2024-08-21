@@ -195,7 +195,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 			_this := positionExternal[tokenId][incentiveId]
 			_this.tokenAmountX96 = u256.Zero()
 			_this.tokenAmountFull += fullAmount
-			_this.tokenAmountActualFull += toGive
+			_this.tokenAmountToGive += toGive
 			positionExternal[tokenId][incentiveId] = _this
 
 			toUser := handleUnstakingFee(external.tokenPath, toGive, false, tokenId, incentive.targetPoolPath)
