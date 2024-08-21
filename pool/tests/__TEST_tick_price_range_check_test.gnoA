@@ -1,0 +1,86 @@
+package pool
+
+import (
+	"std"
+	"testing"
+	"time"
+
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/p/demo/testutils"
+
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
+
+	"gno.land/r/gnoswap/v2/common"
+)
+
+const (
+	MIN_TICK int32 = -887272
+	MAX_TICK int32 = 887272
+)
+
+func TestTickMathGetSqrtRatioAtTick_1(t *testing.T) {
+	// throws for too low
+
+	var tick int32 = MIN_TICK
+	var sqrtPriceX96 *u256.Uint
+
+	tick = tick - 1
+
+	shouldPanic( // abs(tick)을 확인하지 않음
+		t,
+		func() {
+			common.TickMathGetSqrtRatioAtTick(tick)
+		},
+	)
+}
+
+func TestTickMathGetSqrtRatioAtTick_2(t *testing.T) {
+	// throws for too low
+
+	var tick int32 = MAX_TICK
+	var sqrtPriceX96 *u256.Uint
+
+	tick = tick + 1
+
+	shouldPanic( // abs(tick)을 확인하지 않음
+		t,
+		func() {
+			common.TickMathGetSqrtRatioAtTick(tick)
+		},
+	)
+}
+
+func TestTickMathGetTickAtSqrtRatio_1(t *testing.T) {
+	// throws for too low
+	var sqrtPriceX96 *u256.Uint = u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
+	sqrtPriceX96.Sub(sqrtPriceX96, u256.One())
+	var rst int32
+
+	shouldPanic( // price의 범위를 확인하지 않음
+		t,
+		func() {
+			common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+		},
+	)
+}
+
+func TestTickMathGetTickAtSqrtRatio_2(t *testing.T) {
+	// throws for too high
+	var sqrtPriceX96 *u256.Uint = u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+	var rst int32
+
+	shouldPanic( // price의 범위를 확인하지 않음
+		t,
+		func() {
+			common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+		},
+	)
+}
