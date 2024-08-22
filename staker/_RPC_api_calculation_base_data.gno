@@ -148,8 +148,8 @@ func GetPositionLastExternal() string {
 		arr2Node := json.ArrayNode("", []*json.Node{})
 		for incentiveId, lastRewardAmount := range lastExternals {
 			obj2Node := json.ObjectNode("", map[string]*json.Node{
-				"incentiveId":      json.StringNode("incentiveId", ufmt.Sprintf("%d", incentiveId)),
-				"lastRewardAmount": json.StringNode("lastRewardAmount", ufmt.Sprintf("%d", lastRewardAmount)),
+				"incentiveId":      json.StringNode("incentiveId", incentiveId),
+				"lastRewardAmount": json.StringNode("lastRewardAmount", lastRewardAmount.ToString()),
 			})
 			arr2Node.AppendArray(obj2Node)
 		}
@@ -291,7 +291,7 @@ func GetPositionExternal() string {
 
 		for incentiveId, externalRewards := range externals {
 			obj2Node := json.ObjectNode("", map[string]*json.Node{
-				"incentiveId":    json.StringNode("incentiveId", ufmt.Sprintf("%d", incentiveId)),
+				"incentiveId":    json.StringNode("incentiveId", incentiveId),
 				"poolPath":       json.StringNode("poolPath", externalRewards.poolPath),
 				"tokenPath":      json.StringNode("tokenPath", externalRewards.tokenPath),
 				"tokenAmountX96": json.StringNode("tokenAmountX96", externalRewards.tokenAmountX96.ToString()),
@@ -519,6 +519,7 @@ func GetNecessary() string {
 	response := json.ObjectNode("", map[string]*json.Node{
 		"height":                                json.StringNode("height", ufmt.Sprintf("%d", height)),
 		"now":                                   json.StringNode("now", ufmt.Sprintf("%d", now)),
+		"blockGenerationInterval":               json.StringNode("blockGenerationInterval", ufmt.Sprintf("%d", consts.BLOCK_GENERATION_INTERVAL)),
 		"lastCalculatedHeight":                  json.StringNode("lastCalculatedHeight", ufmt.Sprintf("%d", lastCalculatedHeight)),
 		"lastCalculatedBalance":                 json.StringNode("lastCalculatedBalance", ufmt.Sprintf("%d", lastCalculatedBalance)),
 		"externalGnsBalance":                    json.StringNode("externalGnsBalance", ufmt.Sprintf("%d", externalGnsBalance)),
@@ -530,10 +531,13 @@ func GetNecessary() string {
 		"poolLastTmpGns":                        json.StringNode("poolLastTmpGns", b64encode(GetPoolLastTmpGns())),
 		"positionLastGns":                       json.StringNode("positionLastGns", b64encode(GetPositionLastGns())),
 		"positionGns":                           json.StringNode("positionGns", b64encode(GetPositionGns())),
+		"positionLastExternal":                  json.StringNode("positionLastExternal", b64encode(GetPositionLastExternal())),
+		"positionExternal":                      json.StringNode("positionExternal", b64encode(GetPositionExternal())),
 		"warmUpPeriods":                         json.StringNode("warmUpPeriods", GetWarmUpPeriods()),
 		"positionsInternalWarmUpAmount":         json.StringNode("positionsInternalWarmUpAmount", b64encode(GetPositionsInternalWarmUpAmount())),
 		"positionsExternalWarmUpAmount":         json.StringNode("positionsExternalWarmUpAmount", b64encode(GetPositionsExternalWarmUpAmount())),
 		"positionsExternalLastCalculatedHeight": json.StringNode("positionsExternalLastCalculatedHeight", b64encode(GetPositionsExternalLastCalculatedHeight())),
+		"externalLastCalculatedTimestamp":       json.StringNode("externalLastCalculatedTimestamp", b64encode(GetExternalLastCalculatedTimestamp())),
 	})
 
 	return marshal(response)
