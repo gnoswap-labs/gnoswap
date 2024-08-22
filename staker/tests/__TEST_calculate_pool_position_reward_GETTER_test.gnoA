@@ -441,3 +441,14 @@ func TestGetPositionsExternalLastCalculatedHeight(t *testing.T) {
 	res := GetPositionsExternalLastCalculatedHeight()
 	shouldEQ(t, res, `[{"tokenId":"1","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2Nzk2NDoxMjQyMzQ1NjAwOjEzMA==","lastCalculatedHeight":"230"},{"tokenId":"1","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2Nzk2NDoxMjUwMTIxNjAwOjEzMA==","lastCalculatedHeight":"230"},{"tokenId":"2","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2Nzk2NDoxMjQyMzQ1NjAwOjEzMA==","lastCalculatedHeight":"230"},{"tokenId":"2","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2Nzk2NDoxMjUwMTIxNjAwOjEzMA==","lastCalculatedHeight":"230"}]`)
 }
+
+func TestGetExternalLastCalculatedTimestamp3(t *testing.T) {
+	println(GetExternalLastCalculatedTimestamp())
+
+	jsonStr := GetExternalLastCalculatedTimestamp()
+	shouldEQ(t, jsonStr, `[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2Nzk2NDoxMjQyMzQ1NjAwOjEzMA==","lastCalculatedTimestamp":"1234568104"},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2Nzk2NDoxMjUwMTIxNjAwOjEzMA==","lastCalculatedTimestamp":"1234568104"}]`)
+}
+
+func TestGetNecessary(t *testing.T) {
+	println(GetNecessary())
+}
