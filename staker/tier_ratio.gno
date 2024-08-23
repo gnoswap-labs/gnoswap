@@ -91,7 +91,7 @@ func listTierRatio() (uint64, uint64, uint64) {
 	if numTier1 <= 0 {
 		panic(ufmt.Sprintf("[STAKER] tier_ratio.gno__listTierRatio() || at least 1 of numTier1 need(%d), [numTier2:(%d), numTier3:(%d)]", numTier1, numTier2, numTier3))
 	}
-	
+
 	hasTier2 := numTier2 > 0
 	hasTier3 := numTier3 > 0
 
