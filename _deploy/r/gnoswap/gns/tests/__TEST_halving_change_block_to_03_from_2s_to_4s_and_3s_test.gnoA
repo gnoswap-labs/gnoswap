@@ -7,7 +7,7 @@ import (
 )
 
 func TestEmissionAmount(t *testing.T) {
-	shouldEQ(t, amountToEmission, 900_000_000_000_000)
+	shouldEQ(t, amountToEmission, uint64(900_000_000_000_000))
 
 	sumAmount := uint64(0)
 	for _, amountYearly := range halvingYearAmount {
@@ -21,12 +21,12 @@ func TestEmissionAmount(t *testing.T) {
 
 func TestSkip50Block(t *testing.T) {
 	std.TestSkipHeights(50)
-	shouldEQ(t, std.GetHeight(), 173) // 123 + 50
+	shouldEQ(t, std.GetHeight(), int64(173)) // 123 + 50
 
 	std.TestSetRealm(emissionRealm)
 
 	Mint(emissionUsers) // 14269406 * 50
-	shouldEQ(t, TotalMinted(), 713470300)
+	shouldEQ(t, TotalMinted(), uint64(713470300))
 
 	ghi := GetHalvingInfo()
 	shouldEQ(t, ghi, `{"height":173,"timestamp":1234567990,"avgBlockTimeMs":2000,"halvings":[{"year":1,"block":15768123,"amount":14269406},{"year":2,"block":31536123,"amount":14269406},{"year":3,"block":47304123,"amount":7134703},{"year":4,"block":63072123,"amount":7134703},{"year":5,"block":78840123,"amount":3567351},{"year":6,"block":94608123,"amount":3567351},{"year":7,"block":110376123,"amount":1783675},{"year":8,"block":126144123,"amount":1783675},{"year":9,"block":141912123,"amount":891837},{"year":10,"block":157680123,"amount":891837},{"year":11,"block":173448123,"amount":891837},{"year":12,"block":189216123,"amount":891837}]}`)
@@ -35,21 +35,21 @@ func TestSkip50Block(t *testing.T) {
 // Assume block time is 4s = 4000ms
 func TestSetAvgBlockTimeInMsTo4s(t *testing.T) {
 	// for block time 2s
-	shouldEQ(t, amountPerBlockPerHalvingYear[1], 14269406)
-	shouldEQ(t, halvingYearBlock[1], 15768123)
+	shouldEQ(t, amountPerBlockPerHalvingYear[1], uint64(14269406))
+	shouldEQ(t, halvingYearBlock[1], int64(15768123))
 
 	std.TestSetRealm(gsaRealm)
 	SetAvgBlockTimeInMs(4000)
 	std.TestSkipHeights(1)
 
 	std.TestSetRealm(emissionRealm)
-	Mint(emissionUsers)                            // 28538812
-	shouldEQ(t, TotalMinted(), 713470300+28538812) // 742009112
+	Mint(emissionUsers)                                    // 28538812
+	shouldEQ(t, TotalMinted(), uint64(713470300+28538812)) // 742009112
 
 	// for block time 4s
 	// amount == 28538812
-	shouldEQ(t, amountPerBlockPerHalvingYear[1], 28538812)
-	shouldEQ(t, halvingYearBlock[1], 7884148)
+	shouldEQ(t, amountPerBlockPerHalvingYear[1], uint64(28538812))
+	shouldEQ(t, halvingYearBlock[1], int64(7884148))
 	// formula
 	// orig_start = 123
 	// orig_1year = 15768123 ( 123 + 1 year block 15768000 )
@@ -75,15 +75,15 @@ func TestReachHalfOfFirstHalving(t *testing.T) {
 	std.TestSkipHeights(3941987)
 	std.TestSetRealm(emissionRealm)
 	Mint(emissionUsers)
-	shouldEQ(t, TotalMinted(), 112500367908556)
+	shouldEQ(t, TotalMinted(), uint64(112500367908556))
 
 	year := GetHalvingYearByHeight(std.GetHeight())
-	shouldEQ(t, year, 1)
+	shouldEQ(t, year, int64(1))
 
 	amount := GetAmountByHeight(std.GetHeight())
-	shouldEQ(t, amount, 28538812)
+	shouldEQ(t, amount, uint64(28538812))
 
-	shouldEQ(t, std.GetHeight(), 3942161)
+	shouldEQ(t, std.GetHeight(), int64(3942161))
 
 	println("halvingYearMintAmount[1]: #1\t", halvingYearMintAmount[1])
 
@@ -96,31 +96,31 @@ func TestSetAvgBlockTimeInMsTo3s(t *testing.T) {
 	SetAvgBlockTimeInMs(3000) // 3s
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, std.GetHeight(), 3942162)
+	shouldEQ(t, std.GetHeight(), int64(3942162))
 
 	std.TestSetRealm(emissionRealm)
 	Mint(emissionUsers)
-	shouldEQ(t, TotalMinted(), 112500382177962)
+	shouldEQ(t, TotalMinted(), uint64(112500382177962))
 
 	ghi := GetHalvingInfo()
 	shouldEQ(t, ghi, `{"height":3942162,"timestamp":1242451968,"avgBlockTimeMs":3000,"halvings":[{"year":1,"block":11826135,"amount":14269406},{"year":2,"block":22338135,"amount":14269406},{"year":3,"block":32850135,"amount":7134703},{"year":4,"block":43362135,"amount":7134703},{"year":5,"block":53874135,"amount":3567351},{"year":6,"block":64386135,"amount":3567351},{"year":7,"block":74898135,"amount":1783675},{"year":8,"block":85410135,"amount":1783675},{"year":9,"block":95922135,"amount":891837},{"year":10,"block":106434135,"amount":891837},{"year":11,"block":116946135,"amount":891837},{"year":12,"block":127458135,"amount":891837}]}`)
 }
 
 func TestReachFirstHalving(t *testing.T) {
-	shouldEQ(t, halvingYearBlock[1], 11826135)
+	shouldEQ(t, halvingYearBlock[1], int64(11826135))
 
 	std.TestSkipHeights(7883972) // 11826135-3942162-1
 	std.TestSetRealm(emissionRealm)
 	Mint(emissionUsers)
-	shouldEQ(t, TotalMinted(), 224999979538594)
+	shouldEQ(t, TotalMinted(), uint64(224999979538594))
 
 	year := GetHalvingYearByHeight(std.GetHeight())
-	shouldEQ(t, year, 1)
+	shouldEQ(t, year, int64(1))
 
 	amount := GetAmountByHeight(std.GetHeight())
-	shouldEQ(t, amount, 14269406)
+	shouldEQ(t, amount, uint64(14269406))
 
-	shouldEQ(t, std.GetHeight(), 11826134)
+	shouldEQ(t, std.GetHeight(), int64(11826134))
 
 	println("halvingYearMintAmount[1]: #1\t", halvingYearMintAmount[1])
 
@@ -132,11 +132,11 @@ func TestReachFirstHalvingOneMore(t *testing.T) {
 	std.TestSkipHeights(1)
 	std.TestSetRealm(emissionRealm)
 	Mint(emissionUsers)
-	shouldEQ(t, TotalMinted(), 225000000000000)
+	shouldEQ(t, TotalMinted(), uint64(225000000000000))
 
 	year := GetHalvingYearByHeight(std.GetHeight())
-	shouldEQ(t, year, 1)
-	shouldEQ(t, std.GetHeight(), 11826135)
+	shouldEQ(t, year, int64(1))
+	shouldEQ(t, std.GetHeight(), int64(11826135))
 
 	println("halvingYearMintAmount[1]: #2\t", halvingYearMintAmount[1])
 
@@ -148,14 +148,14 @@ func TestReachFirstHalvingOneMoreMore(t *testing.T) {
 	std.TestSkipHeights(1)
 	std.TestSetRealm(emissionRealm)
 	Mint(emissionUsers)
-	shouldEQ(t, TotalMinted(), 225000014269406)
+	shouldEQ(t, TotalMinted(), uint64(225000014269406))
 
 	year := GetHalvingYearByHeight(std.GetHeight())
-	shouldEQ(t, year, 2)
-	shouldEQ(t, std.GetHeight(), 11826136)
+	shouldEQ(t, year, int64(2))
+	shouldEQ(t, std.GetHeight(), int64(11826136))
 
 	amount := GetAmountByHeight(std.GetHeight())
-	shouldEQ(t, amount, 14269406)
+	shouldEQ(t, amount, uint64(14269406))
 
 	println("halvingYearMintAmount[2]:\t", halvingYearMintAmount[2])
 

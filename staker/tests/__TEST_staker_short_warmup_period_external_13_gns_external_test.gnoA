@@ -163,6 +163,6 @@ func TestCollectReward(t *testing.T) {
 	shouldEQ(t, newBar-oldBar, uint64(485))
 	shouldEQ(t, newGns-oldGns, uint64(485))
 
-	shouldEQ(t, bool(bool(newBar > oldBar)), true)
+	shouldEQ(t, bool(newBar > oldBar), true)
 	shouldEQ(t, bool(newGns > oldGns), true)
 }

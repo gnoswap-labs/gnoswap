@@ -41,7 +41,7 @@ func TestMintPosition01InRange(t *testing.T) {
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, getNextId(), 2)
+	shouldEQ(t, getNextId(), uint64(2))
 	shouldEQ(t, amount0, "18394892")
 	shouldEQ(t, amount1, "50000000")
 
@@ -49,8 +49,8 @@ func TestMintPosition01InRange(t *testing.T) {
 	shouldEQ(t, position.nonce.ToString(), "0")
 	shouldEQ(t, position.operator, gsa)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, 8000)
-	shouldEQ(t, position.tickUpper, 12000)
+	shouldEQ(t, position.tickLower, int32(8000))
+	shouldEQ(t, position.tickUpper, int32(12000))
 	shouldEQ(t, position.liquidity.ToString(), "318704392")
 	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
 	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
@@ -79,7 +79,7 @@ func TestMintPosition02InRange(t *testing.T) {
 	)
 
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, getNextId(), 3)
+	shouldEQ(t, getNextId(), uint64(3))
 	shouldEQ(t, amount0, "18394892")
 	shouldEQ(t, amount1, "50000000")
 
@@ -87,8 +87,8 @@ func TestMintPosition02InRange(t *testing.T) {
 	shouldEQ(t, position.nonce.ToString(), "0")
 	shouldEQ(t, position.operator, gsa)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, 8000)
-	shouldEQ(t, position.tickUpper, 12000)
+	shouldEQ(t, position.tickLower, int32(8000))
+	shouldEQ(t, position.tickUpper, int32(12000))
 	shouldEQ(t, position.liquidity.ToString(), "318704392")
 	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
 	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
@@ -130,7 +130,7 @@ func TestUnclaimedFee01(t *testing.T) {
 		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-		tokenId, afterFee0, afterFee1, poolPath, fee0, fee1 := CollectFee(1)
+		tokenId, afterFee0, afterFee1, poolPath, fee0, fee1 := CollectFee(1, false)
 		position := positions[tokenId]
 		shouldEQ(t, position.tokensOwed0.ToString(), "0")
 		shouldEQ(t, position.tokensOwed1.ToString(), "0")
@@ -151,7 +151,7 @@ func TestUnclaimedFee02(t *testing.T) {
 		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-		tokenId, afterFee0, afterFee1, poolPath, fee0, fee1 := CollectFee(2)
+		tokenId, afterFee0, afterFee1, poolPath, fee0, fee1 := CollectFee(2, false)
 		position := positions[tokenId]
 		shouldEQ(t, position.tokensOwed0.ToString(), "0")
 		shouldEQ(t, position.tokensOwed1.ToString(), "0")

@@ -231,10 +231,10 @@ func TestSwap(t *testing.T) {
 		userNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 		userNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
-		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(intAmount0))
-		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-intAmount1))
-		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(intAmount0))
-		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-intAmount1))
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, uint64(intAmount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, uint64(-intAmount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, uint64(intAmount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, uint64(-intAmount1))
 	}
 
 	{
@@ -256,10 +256,10 @@ func TestSwap(t *testing.T) {
 		userNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 		userNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
-		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(intAmount0))
-		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-intAmount1))
-		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(intAmount0))
-		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-intAmount1))
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, uint64(intAmount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, uint64(-intAmount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, uint64(intAmount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, uint64(-intAmount1))
 	}
 
 	{
@@ -281,10 +281,10 @@ func TestSwap(t *testing.T) {
 		userNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 		userNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
-		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(intAmount0))
-		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-intAmount1))
-		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(intAmount0))
-		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-intAmount1))
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, uint64(intAmount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, uint64(-intAmount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, uint64(intAmount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, uint64(-intAmount1))
 	}
 
 	// Swap token1 -> token0
@@ -307,10 +307,10 @@ func TestSwap(t *testing.T) {
 		userNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 		userNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
 
-		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, int64(intAmount0))
-		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, int64(-intAmount1))
-		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, int64(intAmount0))
-		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, int64(-intAmount1))
+		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, uint64(intAmount0))
+		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, uint64(-intAmount1))
+		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, uint64(intAmount0))
+		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, uint64(-intAmount1))
 	}
 }
 
@@ -326,7 +326,7 @@ func TestSetFeeProtocol(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool SetFeeProtocol [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_feeProtocol0 6} {p_feeProtocol1 8} {newFee 134}]}
 
 	for _, pool := range pools {
-		shouldEQ(t, pool.PoolGetSlot0().feeProtocol, 134)
+		shouldEQ(t, pool.PoolGetSlot0().feeProtocol, uint8(134))
 	}
 }
 
@@ -338,7 +338,7 @@ func TestCollectProtocol(t *testing.T) {
 
 	pool := GetPool(barPath, fooPath, fee500)
 	test_slot0 := pool.PoolGetSlot0()
-	shouldEQ(t, test_slot0.feeProtocol, 134)
+	shouldEQ(t, test_slot0.feeProtocol, uint8(134))
 
 	// Make ProtocolFee via Swap by gsa ( Mint by gsa )
 	std.TestSetOrigCaller(gsa)

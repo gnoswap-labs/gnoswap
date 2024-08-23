@@ -241,6 +241,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 				"m_origCaller", origCaller(),
 				"m_prevRealm", prevRealm(),
 				"p_tokenId", uint64ToStr(tokenId),
+				"p_unwrapResult", boolToStr(unwrapResult),
 				"poolPath", poolPath,
 				"rewardToken", external.tokenPath,
 				"recipient", deposit.owner.String(),
@@ -351,6 +352,7 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	if !exist {
 		panic(ufmt.Sprintf("[STAKER] staker.gno__UnstakeToken() || tokenId(%d) not staked", tokenId))
 	}
+
 	// Claim All Rewards
 	CollectReward(tokenId, unwrapResult)
 
@@ -370,6 +372,7 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
+		"p_unwrapResult", boolToStr(unwrapResult),
 		"poolPath", poolPath,
 		"from", GetOrigPkgAddr().String(),
 		"to", deposit.owner.String(),

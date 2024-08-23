@@ -26,6 +26,14 @@ func wrap(ugnotAmount uint64) {
 
 	// SEND WUGNOT: ROUTER -> USER
 	wugnot.Transfer(a2u(std.GetOrigCaller()), ugnotAmount)
+
+	std.Emit(
+		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_ugnotAmount", uint64ToStr(ugnotAmount),
+	)
 }
 
 func unwrap(wugnotAmount uint64) {
@@ -42,4 +50,12 @@ func unwrap(wugnotAmount uint64) {
 	// SEND GNOT: ROUTER -> USER
 	banker := std.GetBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(consts.ROUTER_ADDR, std.GetOrigCaller(), std.Coins{{"ugnot", int64(wugnotAmount)}})
+
+	std.Emit(
+		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_wugnotAmount", uint64ToStr(wugnotAmount),
+	)
 }

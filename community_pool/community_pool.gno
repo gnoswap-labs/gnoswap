@@ -14,7 +14,7 @@ func TransferToken(pkgPath string, to std.Address, amount uint64) {
 	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
 		panic(
 			ufmt.Sprintf(
-				"only admin(%s) or governance(%s) can transfer community pool's balance, called from %s",
+				"[COMMUNITY_POOL] community_pool.gno__TransferToken() || only admin(%s) or governance(%s) can transfer community pool's balance, called from %s",
 				consts.GNOSWAP_ADMIN,
 				consts.GOV_ADDR,
 				caller,

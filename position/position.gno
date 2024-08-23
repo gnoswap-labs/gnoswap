@@ -366,6 +366,7 @@ func DecreaseLiquidity(
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"p_liquidityRatio", uint64ToStr(liquidityRatio),
+		"p_unwrapResult", boolToStr(unwrapResult),
 		"poolPath", poolPath,
 		"liquidity", liquidity.ToString(),
 		"fee0", fee0.ToString(),
@@ -396,7 +397,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	checkDeadline(params.deadline)
 
 	// BEFORE DECREASE LIQUIDITY, COLLECT FEE FIRST
-	_, fee0Str, fee1Str, _, _, _ := CollectFee(params.tokenId)
+	_, fee0Str, fee1Str, _, _, _ := CollectFee(params.tokenId, params.unwrapResult)
 	fee0 := u256.MustFromDecimal(fee0Str)
 	fee1 := u256.MustFromDecimal(fee1Str)
 
@@ -599,7 +600,7 @@ func Reposition(
 // Panics:
 //   - position doesn't exist
 //   - caller is not owner or approved
-func CollectFee(tokenId uint64) (uint64, string, string, string, string, string) { // tokenId, afterFee0, afterFee1, poolPath, origFee0, origFee1
+func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, string, string, string) { // tokenId, afterFee0, afterFee1, poolPath, origFee0, origFee1
 	en.MintAndDistributeGns()
 
 	// verify tokenId
@@ -678,20 +679,9 @@ func CollectFee(tokenId uint64) (uint64, string, string, string, string, string)
 	// handle withdrawal fee
 	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(tokenId, token0, amount0, token1, amount1, position.poolKey)
 
-	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_origCaller", origCaller(),
-		"m_prevRealm", prevRealm(),
-		"p_tokenId", uint64ToStr(tokenId),
-		"fee0", withoutFee0,
-		"fee1", withoutFee1,
-		"poolPath", position.poolKey,
-	)
-
 	// UNWRAP
 	pToken0, pToken1, _ := poolKeyDivide(position.poolKey)
-	if pToken0 == consts.WUGNOT_PATH || pToken1 == consts.WUGNOT_PATH {
+	if (pToken0 == consts.WUGNOT_PATH || pToken1 == consts.WUGNOT_PATH) && unwrapResult {
 		userNewWugnot := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 		unwrapAmount := userNewWugnot - userWugnot
 
@@ -699,6 +689,18 @@ func CollectFee(tokenId uint64) (uint64, string, string, string, string, string)
 			unwrap(unwrapAmount)
 		}
 	}
+
+	std.Emit(
+		"GNOSWAP",
+		"m_callType", callType(),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_tokenId", uint64ToStr(tokenId),
+		"p_unwrapResult", boolToStr(unwrapResult),
+		"fee0", withoutFee0,
+		"fee1", withoutFee1,
+		"poolPath", position.poolKey,
+	)
 
 	return tokenId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
 }

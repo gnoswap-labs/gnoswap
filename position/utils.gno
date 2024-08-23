@@ -33,6 +33,14 @@ func poolKeyDivide(poolKey string) (string, string, uint32) {
 	return pToken0, pToken1, uint32(pFee)
 }
 
+func boolToStr(b bool) string {
+	if b {
+		return "true"
+	}
+
+	return "false"
+}
+
 func int32ToStr(i int32) string {
 	return strconv.FormatInt(int64(i), 10)
 }

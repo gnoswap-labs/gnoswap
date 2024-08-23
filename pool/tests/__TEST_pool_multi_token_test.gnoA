@@ -122,11 +122,11 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 	newPoolBar := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 	newPoolFoo := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
 
-	shouldEQ(t, oldTest1Bar-newTest1Bar, 16000)
-	shouldEQ(t, newTest1Foo-oldTest1Foo, 5882)
+	shouldEQ(t, oldTest1Bar-newTest1Bar, uint64(16000))
+	shouldEQ(t, newTest1Foo-oldTest1Foo, uint64(5882))
 
-	shouldEQ(t, newPoolBar-oldPoolBar, 16000)
-	shouldEQ(t, oldPoolFoo-newPoolFoo, 5882)
+	shouldEQ(t, newPoolBar-oldPoolBar, uint64(16000))
+	shouldEQ(t, oldPoolFoo-newPoolFoo, uint64(5882))
 }
 
 // Swap Bar:Baz Bar > Baz by gsa
@@ -161,10 +161,10 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 	newPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 	newPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
 
-	shouldEQ(t, oldTest1Token0Balance-newTest1Token0Balance, 16000)
-	shouldEQ(t, newgsaBazBalance-oldgsaBazBalance, 43457)
-	shouldEQ(t, newPoolToken0Balance-oldPoolToken0Balance, 16000)
-	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, 43457)
+	shouldEQ(t, oldTest1Token0Balance-newTest1Token0Balance, uint64(16000))
+	shouldEQ(t, newgsaBazBalance-oldgsaBazBalance, uint64(43457))
+	shouldEQ(t, newPoolToken0Balance-oldPoolToken0Balance, uint64(16000))
+	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, uint64(43457))
 }
 
 // Collect Foo:Bar Fees by gsa
@@ -199,9 +199,9 @@ func TestCollectFooBarFees(t *testing.T) {
 	newPoolToken1Balance := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
 	newPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 
-	shouldEQ(t, newTest1Token1Balance-oldTest1Token1Balance, c1)
+	shouldEQ(t, newTest1Token1Balance-oldTest1Token1Balance, strToUint64(c1))
 	shouldEQ(t, newTest1Token0Balance-oldTest1Token0Balance, strToUint64(c0))
-	shouldEQ(t, oldPoolToken1Balance-newPoolToken1Balance, c1)
+	shouldEQ(t, oldPoolToken1Balance-newPoolToken1Balance, strToUint64(c1))
 	shouldEQ(t, oldPoolToken0Balance-newPoolToken0Balance, strToUint64(c0))
 }
 
@@ -238,9 +238,9 @@ func TestCollectBarBazFees(t *testing.T) {
 	newPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
 
 	shouldEQ(t, newTest1Token0Balance-oldTest1Token0Balance, strToUint64(c0))
-	shouldEQ(t, newgsaBazBalance-oldgsaBazBalance, c1)
+	shouldEQ(t, newgsaBazBalance-oldgsaBazBalance, strToUint64(c1))
 	shouldEQ(t, oldPoolToken0Balance-newPoolToken0Balance, strToUint64(c0))
-	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, c1)
+	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, strToUint64(c1))
 }
 
 // Burn Foo:Bar Liquidity by gsa
