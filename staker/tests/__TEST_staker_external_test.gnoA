@@ -117,6 +117,8 @@ func TestCreateExternalIncentive(t *testing.T) {
 	obl.Approve(a2u(consts.STAKER_ADDR), uint64(100_000_000))
 	std.TestSkipHeights(1)
 
+	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+
 	AddToken(oblPath)
 	CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath

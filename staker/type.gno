@@ -21,6 +21,7 @@ type ExternalIncentive struct {
 	rewardPerBlockX96 *u256.Uint
 	refundee          std.Address
 	createdHeight     int64
+	depositGnsAmount  uint64
 }
 
 type Deposit struct {

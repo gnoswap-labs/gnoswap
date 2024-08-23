@@ -155,6 +155,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	AddToken(oblPath)
+	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
 
 	CreateExternalIncentive(
 		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500", // targetPoolPath

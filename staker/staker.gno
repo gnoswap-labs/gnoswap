@@ -323,7 +323,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 	println(" > left", left)
 
 	// UPDATE stakerGns Balance for calculate_pool_position_reward
-	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - externalGnsAmount()
+	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - externalGnsAmount() - externalDepositGnsAmount()
 
 	println("[ END ] CollectReward_INTERNAL", tokenId)
 	return poolPath
@@ -449,19 +449,15 @@ func CreateExternalIncentive(
 		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 365 days)", externalDuration))
 	}
 
-	fromBalanceBefore := balanceOfByRegisterCall(rewardToken, std.GetOrigCaller())
-
-	if fromBalanceBefore < rewardAmount.Uint64() {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || user(%s) doesn't have enough amount balance(%d) to create incentive(%d)", std.GetOrigCaller(), fromBalanceBefore, rewardAmount.Uint64()))
-	}
-
-	poolRewardBalanceBefore := balanceOfByRegisterCall(rewardToken, GetOrigPkgAddr())
-
 	incentiveId := incentiveIdCompute(std.GetOrigCaller(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
 
 	// if same incentiveId exists => increase rewardTokenAmount
 	for _, v := range poolIncentives[targetPoolPath] {
 		if v == incentiveId {
+			// external deposit amount
+			gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(GetOrigPkgAddr()), depositGnsAmount)
+
+			// external reward amount
 			transferFromByRegisterCall(rewardToken, std.GetOrigCaller(), GetOrigPkgAddr(), rewardAmount.Uint64())
 
 			incentive, ok := incentives[v]
@@ -477,6 +473,7 @@ func CreateExternalIncentive(
 
 			incentive.rewardAmount = new(u256.Uint).Add(incentive.rewardAmount, rewardAmount)
 			incentive.rewardLeft = new(u256.Uint).Add(incentive.rewardLeft, rewardAmount)
+			incentive.depositGnsAmount += depositGnsAmount
 			incentives[v] = incentive
 
 			if rewardToken == consts.GNS_PATH {
@@ -494,6 +491,7 @@ func CreateExternalIncentive(
 				"p_startTimestamp", int64ToStr(startTimestamp),
 				"p_endTimestamp", int64ToStr(endTimestamp),
 				"incentiveId", incentiveId,
+				"depositGnsAmount", uint64ToStr(incentive.depositGnsAmount),
 				"external", "updated",
 			)
 
@@ -501,12 +499,11 @@ func CreateExternalIncentive(
 		}
 	}
 
-	transferFromByRegisterCall(rewardToken, std.GetOrigCaller(), GetOrigPkgAddr(), rewardAmount.Uint64())
+	// external deposit amount
+	gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(GetOrigPkgAddr()), depositGnsAmount)
 
-	poolRewardBalanceAfter := balanceOfByRegisterCall(rewardToken, GetOrigPkgAddr())
-	if !(poolRewardBalanceAfter-poolRewardBalanceBefore == rewardAmount.Uint64()) {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || pool reward balance not updated correctly(before:%d, added:%d, final:%d)", poolRewardBalanceBefore, rewardAmount.Uint64(), poolRewardBalanceAfter))
-	}
+	// external reward amount
+	transferFromByRegisterCall(rewardToken, std.GetOrigCaller(), GetOrigPkgAddr(), rewardAmount.Uint64())
 
 	incentiveDuration := endTimestamp - startTimestamp
 	incentiveBlock := incentiveDuration / consts.BLOCK_GENERATION_INTERVAL
@@ -523,6 +520,7 @@ func CreateExternalIncentive(
 		rewardPerBlockX96: rewardPerBlockX96,
 		refundee:          std.GetOrigCaller(),
 		createdHeight:     std.GetHeight(),
+		depositGnsAmount:  depositGnsAmount,
 	}
 
 	poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath], incentiveId)
@@ -544,6 +542,7 @@ func CreateExternalIncentive(
 		"p_startTimestamp", int64ToStr(startTimestamp),
 		"p_endTimestamp", int64ToStr(endTimestamp),
 		"incentiveId", incentiveId,
+		"depositGnsAmount", uint64ToStr(depositGnsAmount),
 		"external", "created",
 	)
 }
@@ -583,12 +582,11 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string, startTi
 		panic(ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || only refundee(%s) or admin(%s) can end incentive", refundee, consts.GNOSWAP_ADMIN))
 	}
 
-	// refundee can end incentive with refund
+	// when incentive ended, refund remaining reward
 	refund := incentive.rewardLeft
 	refundUint64 := refund.Uint64()
 
 	poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
-
 	if poolLeftExternalRewardAmount < refundUint64 {
 		refundUint64 = poolLeftExternalRewardAmount
 	}
@@ -598,6 +596,9 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string, startTi
 	if incentive.rewardToken == consts.WUGNOT_PATH {
 		unwrap(refundUint64)
 	}
+
+	// also refund deposit gns amount
+	gns.Transfer(a2u(incentive.refundee), incentive.depositGnsAmount)
 
 	delete(incentives, incentiveId)
 	for i, v := range poolIncentives[targetPoolPath] {
@@ -616,6 +617,7 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string, startTi
 		"p_refundee", _refundee,
 		"end_by", incentive.refundee.String(),
 		"refund_amount", refund.ToString(),
+		"refund_gns_amount", uint64ToStr(incentive.depositGnsAmount),
 	)
 }
 
