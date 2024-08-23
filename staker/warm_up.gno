@@ -26,7 +26,7 @@ func init() {
 func GetWarmUp(percent int64) int64 {
 	value, exist := warmUp[percent]
 	if !exist {
-		panic(ufmt.Sprintf("[STAKER] reward_math_warm_up.gno__GetWarmUp() || percent(%d) must be 30, 50, 70, 100", percent))
+		panic(ufmt.Sprintf("[STAKER] warm_up.gno__GetWarmUp() || percent(%d) must be 30, 50, 70, 100", percent))
 	}
 
 	return value
@@ -34,14 +34,14 @@ func GetWarmUp(percent int64) int64 {
 
 func SetWarmUp(percent int64, block int64) {
 	if _, exist := warmUp[percent]; !exist {
-		panic(ufmt.Sprintf("[STAKER] reward_math_warm_up.gno__SetWarmUp() || percent(%d) must be 30, 50, 70, 100", percent))
+		panic(ufmt.Sprintf("[STAKER] warm_up.gno__SetWarmUp() || percent(%d) must be 30, 50, 70, 100", percent))
 	}
 
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
 		panic(
 			ufmt.Sprintf(
-				"[STAKER] reward_math_warm_up.gno__SetWarmUp() || only admin(%s) or governance(%s) can set warm up period, called from %s",
+				"[STAKER] warm_up.gno__SetWarmUp() || only admin(%s) or governance(%s) can set warm up period, called from %s",
 				consts.GNOSWAP_ADMIN,
 				consts.GOV_ADDR,
 				caller,

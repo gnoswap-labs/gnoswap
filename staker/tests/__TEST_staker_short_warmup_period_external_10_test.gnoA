@@ -72,6 +72,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
+	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
 
 	CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // targetPoolPath string,

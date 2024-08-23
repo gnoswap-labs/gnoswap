@@ -6,7 +6,7 @@ import (
 )
 
 func TestEmissionAmount(t *testing.T) {
-	shouldEQ(t, amountToEmission, 900_000_000_000_000)
+	shouldEQ(t, amountToEmission, uint64(900_000_000_000_000))
 
 	sumAmount := uint64(0)
 	for _, amountYearly := range halvingYearAmount {
@@ -19,128 +19,128 @@ func TestGetHalvingTier(t *testing.T) {
 	height := std.GetHeight()
 
 	// year 1
-	shouldEQ(t, GetHalvingYearByHeight(height+1), 1)
-	shouldEQ(t, GetHalvingYearByHeight(height+15768000), 1)
+	shouldEQ(t, GetHalvingYearByHeight(height+1), int64(1))
+	shouldEQ(t, GetHalvingYearByHeight(height+15768000), int64(1))
 
 	// year 2
-	shouldEQ(t, GetHalvingYearByHeight(height+15768000+1), 2)
-	shouldEQ(t, GetHalvingYearByHeight(height+31536000), 2)
+	shouldEQ(t, GetHalvingYearByHeight(height+15768000+1), int64(2))
+	shouldEQ(t, GetHalvingYearByHeight(height+31536000), int64(2))
 
 	// year 3
-	shouldEQ(t, GetHalvingYearByHeight(height+31536000+1), 3)
-	shouldEQ(t, GetHalvingYearByHeight(height+47304000), 3)
+	shouldEQ(t, GetHalvingYearByHeight(height+31536000+1), int64(3))
+	shouldEQ(t, GetHalvingYearByHeight(height+47304000), int64(3))
 
 	// year 4
-	shouldEQ(t, GetHalvingYearByHeight(height+47304000+1), 4)
-	shouldEQ(t, GetHalvingYearByHeight(height+63072000), 4)
+	shouldEQ(t, GetHalvingYearByHeight(height+47304000+1), int64(4))
+	shouldEQ(t, GetHalvingYearByHeight(height+63072000), int64(4))
 
 	// year 5
-	shouldEQ(t, GetHalvingYearByHeight(height+63072000+1), 5)
-	shouldEQ(t, GetHalvingYearByHeight(height+78840000), 5)
+	shouldEQ(t, GetHalvingYearByHeight(height+63072000+1), int64(5))
+	shouldEQ(t, GetHalvingYearByHeight(height+78840000), int64(5))
 
 	// year 6
-	shouldEQ(t, GetHalvingYearByHeight(height+78840000+1), 6)
-	shouldEQ(t, GetHalvingYearByHeight(height+94608000), 6)
+	shouldEQ(t, GetHalvingYearByHeight(height+78840000+1), int64(6))
+	shouldEQ(t, GetHalvingYearByHeight(height+94608000), int64(6))
 
 	// year 7
-	shouldEQ(t, GetHalvingYearByHeight(height+94608000+1), 7)
-	shouldEQ(t, GetHalvingYearByHeight(height+110376000), 7)
+	shouldEQ(t, GetHalvingYearByHeight(height+94608000+1), int64(7))
+	shouldEQ(t, GetHalvingYearByHeight(height+110376000), int64(7))
 
 	// year 8
-	shouldEQ(t, GetHalvingYearByHeight(height+110376000+1), 8)
-	shouldEQ(t, GetHalvingYearByHeight(height+126144000), 8)
+	shouldEQ(t, GetHalvingYearByHeight(height+110376000+1), int64(8))
+	shouldEQ(t, GetHalvingYearByHeight(height+126144000), int64(8))
 
 	// year 9
-	shouldEQ(t, GetHalvingYearByHeight(height+126144000+1), 9)
-	shouldEQ(t, GetHalvingYearByHeight(height+141912000), 9)
+	shouldEQ(t, GetHalvingYearByHeight(height+126144000+1), int64(9))
+	shouldEQ(t, GetHalvingYearByHeight(height+141912000), int64(9))
 
 	// year 10
-	shouldEQ(t, GetHalvingYearByHeight(height+141912000+1), 10)
-	shouldEQ(t, GetHalvingYearByHeight(height+157680000), 10)
+	shouldEQ(t, GetHalvingYearByHeight(height+141912000+1), int64(10))
+	shouldEQ(t, GetHalvingYearByHeight(height+157680000), int64(10))
 
 	// year 11
-	shouldEQ(t, GetHalvingYearByHeight(height+157680000+1), 11)
-	shouldEQ(t, GetHalvingYearByHeight(height+173448000), 11)
+	shouldEQ(t, GetHalvingYearByHeight(height+157680000+1), int64(11))
+	shouldEQ(t, GetHalvingYearByHeight(height+173448000), int64(11))
 
 	// year 12
-	shouldEQ(t, GetHalvingYearByHeight(height+173448000+1), 12)
-	shouldEQ(t, GetHalvingYearByHeight(height+189216000), 12)
+	shouldEQ(t, GetHalvingYearByHeight(height+173448000+1), int64(12))
+	shouldEQ(t, GetHalvingYearByHeight(height+189216000), int64(12))
 
 	// emission end
-	shouldEQ(t, GetHalvingYearByHeight(height+189216000+1), 0)
+	shouldEQ(t, GetHalvingYearByHeight(height+189216000+1), int64(0))
 }
 
 func TestGetAmountByHeight(t *testing.T) {
 	height1y := int64(15768000)
 
 	// year 1
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 14_269_406) // per block, 24h ≈ 616_438_339_200
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(14_269_406)) // per block, 24h ≈ 616_438_339_200
 	std.TestSkipHeights(height1y)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 14_269_406)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(14_269_406))
 
 	// year 2
 	std.TestSkipHeights(1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 14_269_406)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(14_269_406))
 	std.TestSkipHeights(height1y - 1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 14_269_406)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(14_269_406))
 
 	// year 3
 	std.TestSkipHeights(1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 7_134_703) // per block, 24h ≈ 308_219_169_600
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(7_134_703)) // per block, 24h ≈ 308_219_169_600
 	std.TestSkipHeights(height1y - 1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 7_134_703)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(7_134_703))
 
 	// year 4
 	std.TestSkipHeights(1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 7_134_703)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(7_134_703))
 	std.TestSkipHeights(height1y - 1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 7_134_703)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(7_134_703))
 
 	// year 5
 	std.TestSkipHeights(1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 3_567_351) // per block, 24h ≈ 154_109_563_200
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(3_567_351)) // per block, 24h ≈ 154_109_563_200
 	std.TestSkipHeights(height1y - 1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 3_567_351)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(3_567_351))
 
 	// year 6
 	std.TestSkipHeights(1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 3_567_351)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(3_567_351))
 	std.TestSkipHeights(height1y - 1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 3_567_351)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(3_567_351))
 
 	// year 7
 	std.TestSkipHeights(1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 1_783_675) // per block, 24h ≈ 77_054_760_000
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(1_783_675)) // per block, 24h ≈ 77_054_760_000
 	std.TestSkipHeights(height1y - 1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 1_783_675)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(1_783_675))
 
 	// year 8
 	std.TestSkipHeights(1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 1_783_675)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(1_783_675))
 	std.TestSkipHeights(height1y - 1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 1_783_675)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(1_783_675))
 
 	// year 9
 	std.TestSkipHeights(1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 891_837) // per block, 24h ≈ 38_527_358_400
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(891_837)) // per block, 24h ≈ 38_527_358_400
 	std.TestSkipHeights(height1y - 1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 891_837)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(891_837))
 
 	// year 10
 	std.TestSkipHeights(1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 891_837)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(891_837))
 	std.TestSkipHeights(height1y - 1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 891_837)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(891_837))
 
 	// year 11
 	std.TestSkipHeights(1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 891_837)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(891_837))
 	std.TestSkipHeights(height1y - 1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 891_837)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(891_837))
 
 	// year 12
 	std.TestSkipHeights(1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 891_837)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(891_837))
 	std.TestSkipHeights(height1y - 1)
-	shouldEQ(t, GetAmountByHeight(std.GetHeight()), 891_837)
+	shouldEQ(t, GetAmountByHeight(std.GetHeight()), uint64(891_837))
 }

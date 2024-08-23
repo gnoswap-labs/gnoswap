@@ -39,11 +39,11 @@ func TestFreshUser(t *testing.T) {
 	// fresh users will have...
 	// 100_000_000 ugnot
 	// 100_000_000 gns
-	shouldEQ(t, ugnotBalanceOf(fresh01), 100_000_000)
-	shouldEQ(t, gns.BalanceOf(a2u(fresh01)), 100_000_000)
+	shouldEQ(t, ugnotBalanceOf(fresh01), uint64(100_000_000))
+	shouldEQ(t, gns.BalanceOf(a2u(fresh01)), uint64(100_000_000))
 
-	shouldEQ(t, ugnotBalanceOf(fresh02), 100_000_000)
-	shouldEQ(t, gns.BalanceOf(a2u(fresh02)), 100_000_000)
+	shouldEQ(t, ugnotBalanceOf(fresh02), uint64(100_000_000))
+	shouldEQ(t, gns.BalanceOf(a2u(fresh02)), uint64(100_000_000))
 }
 
 func TestOneSideOnlyGrc20WithoutSend(t *testing.T) {
@@ -112,7 +112,7 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 	banker := std.GetBanker(std.BankerTypeRealmIssue) // NOTE: to send ugnot, use realm issue type banker
 	banker.SendCoins(fresh01, consts.POSITION_ADDR, std.Coins{{"ugnot", 100_000_000}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100_000_000}}, nil)
-	shouldEQ(t, ugnotBalanceOf(fresh01), 0)
+	shouldEQ(t, ugnotBalanceOf(fresh01), uint64(0))
 
 	std.TestSetOrigCaller(fresh01)
 	tokenId, liquidity, amount0, amount1 := Mint(
@@ -132,8 +132,8 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 	// send 100_000_000
 	// mint 900_00_000
 	// => remain 10_000_000
-	shouldEQ(t, ugnotBalanceOf(fresh01), 10_000_000)
-	shouldEQ(t, wugnot.BalanceOf(a2u(fresh01)), 0) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
+	shouldEQ(t, ugnotBalanceOf(fresh01), uint64(10_000_000))
+	shouldEQ(t, wugnot.BalanceOf(a2u(fresh01)), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
 }
 
 func TestBothWithFresh(t *testing.T) {
@@ -148,7 +148,7 @@ func TestBothWithFresh(t *testing.T) {
 	banker := std.GetBanker(std.BankerTypeRealmIssue) // NOTE: to send ugnot, use realm issue type banker
 	banker.SendCoins(fresh02, consts.POSITION_ADDR, std.Coins{{"ugnot", 100_000_000}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100_000_000}}, nil)
-	shouldEQ(t, ugnotBalanceOf(fresh02), 0)
+	shouldEQ(t, ugnotBalanceOf(fresh02), uint64(0))
 
 	std.TestSetOrigCaller(fresh02)
 	tokenId, liquidity, amount0, amount1 := Mint(
@@ -168,8 +168,8 @@ func TestBothWithFresh(t *testing.T) {
 	// send 100_000_000
 	// mint 70_000_000
 	// => remain 30_000_000
-	shouldEQ(t, ugnotBalanceOf(fresh02), 30_000_000)
-	shouldEQ(t, wugnot.BalanceOf(a2u(fresh02)), 0) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
+	shouldEQ(t, ugnotBalanceOf(fresh02), uint64(30_000_000))
+	shouldEQ(t, wugnot.BalanceOf(a2u(fresh02)), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
 }
 
 func TestBothWithFreshButNoSend(t *testing.T) {

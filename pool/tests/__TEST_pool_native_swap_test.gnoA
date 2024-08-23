@@ -70,8 +70,8 @@ func TestSwapBuyNative(t *testing.T) {
 
 	gsaOldT0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 	gsaOldT1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
-	shouldEQ(t, gsaOldT0Bal, 704198)
-	shouldEQ(t, gsaOldT1Bal, 99999999195968)
+	shouldEQ(t, gsaOldT0Bal, uint64(704198))
+	shouldEQ(t, gsaOldT1Bal, uint64(99999999195968))
 
 	std.TestSetRealm(gsaRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), 10000)
@@ -94,8 +94,8 @@ func TestSwapBuyNative(t *testing.T) {
 
 	gsaNewT0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 	gsaNewT1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
-	shouldEQ(t, gsaNewT0Bal, 694198)         // - 10_000 // user sells 10_000
-	shouldEQ(t, gsaNewT1Bal, 99999999223091) // gets WGNOT
+	shouldEQ(t, gsaNewT0Bal, uint64(694198))         // - 10_000 // user sells 10_000
+	shouldEQ(t, gsaNewT1Bal, uint64(99999999223091)) // gets WGNOT
 }
 
 func TestSwapSellNative(t *testing.T) {
@@ -103,8 +103,8 @@ func TestSwapSellNative(t *testing.T) {
 
 	gsaOldT0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 	gsaOldT1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
-	shouldEQ(t, gsaOldT0Bal, 694198)         // foo
-	shouldEQ(t, gsaOldT1Bal, 99999999223091) // wugnot
+	shouldEQ(t, gsaOldT0Bal, uint64(694198))         // foo
+	shouldEQ(t, gsaOldT1Bal, uint64(99999999223091)) // wugnot
 
 	std.TestSetRealm(gsaRealm)
 	wugnot.Approve(a2u(consts.POOL_ADDR), 27123)
@@ -127,7 +127,6 @@ func TestSwapSellNative(t *testing.T) {
 
 	gsaNewT0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
 	gsaNewT1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
-	shouldEQ(t, gsaNewT0Bal, 697885)
-	// foo
-	shouldEQ(t, gsaNewT1Bal, 99999999213091) // wugnot
+	shouldEQ(t, gsaNewT0Bal, uint64(697885))         // foo
+	shouldEQ(t, gsaNewT1Bal, uint64(99999999213091)) // wugnot
 }

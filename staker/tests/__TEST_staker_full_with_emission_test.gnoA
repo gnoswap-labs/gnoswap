@@ -176,6 +176,8 @@ func TestCreateExternalIncentive(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
 
+	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+
 	AddToken(oblPath)
 	CreateExternalIncentive(
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", // targetPoolPath
@@ -186,6 +188,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	)
 
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
+	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
 	CreateExternalIncentive("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", oblPath, "1000000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
 }
 
@@ -200,7 +203,7 @@ func TestStakeToken01(t *testing.T) {
 
 	shouldEQ(t, gns.TotalSupply(), uint64(100000214041090))
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), uint64(2))
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(1))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(2000000001))
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(42808218))
 }
 
@@ -215,7 +218,7 @@ func TestStakeToken02(t *testing.T) {
 
 	shouldEQ(t, gns.TotalSupply(), uint64(100007348744090))
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(2))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(2000000002))
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(1469748818))
 }
 
@@ -230,7 +233,7 @@ func TestStakeToken03(t *testing.T) {
 
 	shouldEQ(t, gns.TotalSupply(), uint64(100007363013496))
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(5351030))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(2005351030))
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(1472602699))
 }
 
@@ -257,7 +260,7 @@ func TestUnstakeToken01(t *testing.T) {
 
 	shouldEQ(t, gns.TotalSupply(), uint64(100007391552308))
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(16053085))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(2016053085))
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(1478310461))
 
 	shouldEQ(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000"], uint64(0))
@@ -284,7 +287,7 @@ func TestUnstakeToken02(t *testing.T) {
 
 	shouldEQ(t, gns.TotalSupply(), uint64(100007405821714))
 	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(13599212))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(2013599212))
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(1481164342))
 }
 

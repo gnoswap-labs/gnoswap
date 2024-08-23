@@ -33,8 +33,8 @@ func TestPoolBalanceInit(t *testing.T) {
 	poolBar := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	poolFoo := foo.BalanceOf(a2u(consts.POOL_ADDR))
 
-	shouldEQ(t, poolBar, 0)
-	shouldEQ(t, poolFoo, 0)
+	shouldEQ(t, poolBar, uint64(0))
+	shouldEQ(t, poolFoo, uint64(0))
 }
 
 func TestMintPosition01InRange(t *testing.T) {
@@ -57,7 +57,7 @@ func TestMintPosition01InRange(t *testing.T) {
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, getNextId(), 2)
+	shouldEQ(t, getNextId(), uint64(2))
 	shouldEQ(t, amount0, "18394892")
 	shouldEQ(t, amount1, "50000000")
 }
@@ -66,8 +66,8 @@ func TestPoolBalanceMint01(t *testing.T) {
 	poolBar := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	poolFoo := foo.BalanceOf(a2u(consts.POOL_ADDR))
 
-	shouldEQ(t, poolBar, 18394892)
-	shouldEQ(t, poolFoo, 50000000)
+	shouldEQ(t, poolBar, uint64(18394892))
+	shouldEQ(t, poolFoo, uint64(50000000))
 }
 
 func TestMintPosition02InRange(t *testing.T) {
@@ -90,7 +90,7 @@ func TestMintPosition02InRange(t *testing.T) {
 	)
 
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, getNextId(), 3)
+	shouldEQ(t, getNextId(), uint64(3))
 	shouldEQ(t, amount0, "3678979")
 	shouldEQ(t, amount1, "10000000")
 }
@@ -99,12 +99,12 @@ func TestPoolBalanceMint02(t *testing.T) {
 	poolBar := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	poolFoo := foo.BalanceOf(a2u(consts.POOL_ADDR))
 
-	shouldEQ(t, poolBar, 22073871)
-	shouldEQ(t, poolFoo, 60000000)
+	shouldEQ(t, poolBar, uint64(22073871))
+	shouldEQ(t, poolFoo, uint64(60000000))
 }
 
 func TestCollectFeeBeforeSwap(t *testing.T) {
-	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1)
+	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, fee0, "0")
@@ -210,7 +210,7 @@ func TestCollectFeePos01(t *testing.T) {
 	// token0: 43308438
 	// token1: 6709742
 
-	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1)
+	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, true)
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, fee0, "8597") // 99% of 8683, rest 1% is protocol fee

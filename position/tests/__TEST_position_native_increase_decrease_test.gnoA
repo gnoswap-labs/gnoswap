@@ -33,18 +33,18 @@ func TestMintPosition(t *testing.T) {
 
 	// prepare 50000005ugnot (5 for refund test)
 	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 50000005}})
-	shouldEQ(t, ugnotBalanceOf(gsa), 50000005)
-	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), 200000000)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(50000005))
+	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), uint64(200000000))
 
 	// send & set orig send
 	banker := std.GetBanker(std.BankerTypeRealmIssue)
 	banker.SendCoins(gsa, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 50000005}}, nil)
 
-	shouldEQ(t, ugnotBalanceOf(gsa), 0)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(0))
 
 	gsaOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, gsaOldWugnotBalance, 0)
+	shouldEQ(t, gsaOldWugnotBalance, uint64(0))
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		consts.GNS_PATH,
@@ -62,7 +62,7 @@ func TestMintPosition(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500} {p_tickLower 8000} {p_tickUpper 12000} {tokenId 1} {liquidity 318704392} {amount0 18394892} {amount1 50000000}]}
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, getNextId(), 2)
+	shouldEQ(t, getNextId(), uint64(2))
 	shouldEQ(t, amount0, "50000000")
 	shouldEQ(t, amount1, "18394892")
 
@@ -70,9 +70,9 @@ func TestMintPosition(t *testing.T) {
 	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 
 	// SPEND ALL WUGNOT
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(0))
 
-	shouldEQ(t, ugnotBalanceOf(gsa), 5)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(5))
 	// 1. 50000005 ugnot sent
 	// 2. 50000005 ugnot wrapped to wugnot
 	// 3. 50000000 wugnot spent to mint (amount1)
@@ -93,16 +93,16 @@ func TestIncreaseLiquidity(t *testing.T) {
 
 	// prepare 10000005ugnot (5 for refund test)
 	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 10000005}})
-	shouldEQ(t, ugnotBalanceOf(gsa), 10000010)
-	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), 200000000)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(10000010))
+	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), uint64(200000000))
 
 	// send & set orig send
 	banker := std.GetBanker(std.BankerTypeRealmIssue)
 	banker.SendCoins(gsa, consts.POSITION_ADDR, std.Coins{{"ugnot", 10000005}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 10000005}}, nil)
 
-	shouldEQ(t, ugnotBalanceOf(gsa), 5)
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(5))
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(0))
 
 	_, _, m0, m1, _ := IncreaseLiquidity( // tokenId, liq, a0, a1, poolPath
 		uint64(1),   // tokenId
@@ -121,9 +121,9 @@ func TestIncreaseLiquidity(t *testing.T) {
 	shouldEQ(t, newLiquidity.Gt(oldLiquidity), true)
 
 	// SPEND ALL WUGNOT
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), 0)
+	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(0))
 
-	shouldEQ(t, ugnotBalanceOf(gsa), 10)
+	shouldEQ(t, ugnotBalanceOf(gsa), uint64(10))
 	// 1. 10000005 ugnot sent
 	// 2. 10000005 ugnot wrapped to wugnot
 	// 3. 10000000 wugnot spent to mint (amount1)
@@ -138,10 +138,10 @@ func TestDecreaseLiquidityWrapped(t *testing.T) {
 	oldLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
 
 	userWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, userWugnotBalance, 0)
+	shouldEQ(t, userWugnotBalance, uint64(0))
 
 	userUgnotBalance := ugnotBalanceOf(gsa)
-	shouldEQ(t, userUgnotBalance, 10)
+	shouldEQ(t, userUgnotBalance, uint64(10))
 
 	_, _, _, _, a0, a1, _ := DecreaseLiquidity( // tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
 		uint64(1),   // tokenId
@@ -156,16 +156,16 @@ func TestDecreaseLiquidityWrapped(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position DecreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {p_liquidityRatio 20} {poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500} {liquidity 76489054} {fee0 0} {fee1 0} {amount0 4414773} {amount1 11999999}]}
 
 	userWugnotBalance = wugnot.BalanceOf(a2u(gsa)) // wrapped result, so wunogt increased
-	shouldEQ(t, userWugnotBalance, 11999999)
+	shouldEQ(t, userWugnotBalance, uint64(11999999))
 
 	userUgnotBalance = ugnotBalanceOf(gsa) // wrapped result, so ugnot didn't change
-	shouldEQ(t, userUgnotBalance, 10)
+	shouldEQ(t, userUgnotBalance, uint64(10))
 
 	newLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
 	shouldEQ(t, true, newLiquidity.Lt(oldLiquidity))
 
 	// check fee left
-	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1)
+	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, true)
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/gnoswap/v2/gns} {p_token1Path gno.land/r/demo/wugnot} {fee0Amount 0} {fee1Amount 0}]}
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500}]}
 
@@ -181,10 +181,10 @@ func TestDecreaseLiquidityUnwrapped(t *testing.T) {
 	oldLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
 
 	userWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, userWugnotBalance, 11999999)
+	shouldEQ(t, userWugnotBalance, uint64(11999999))
 
 	userUgnotBalance := ugnotBalanceOf(gsa)
-	shouldEQ(t, userUgnotBalance, 10)
+	shouldEQ(t, userUgnotBalance, uint64(10))
 
 	_, _, _, _, a0, a1, _ := DecreaseLiquidity( // tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
 		uint64(1),   // tokenId
@@ -199,16 +199,16 @@ func TestDecreaseLiquidityUnwrapped(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position DecreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {p_liquidityRatio 50} {poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500} {liquidity 152978108} {fee0 0} {fee1 0} {amount0 8829547} {amount1 23999999}]}
 
 	userWugnotBalance = wugnot.BalanceOf(a2u(gsa)) // unwrapped result, so wugnot didn't change
-	shouldEQ(t, userWugnotBalance, 11999999)
+	shouldEQ(t, userWugnotBalance, uint64(11999999))
 
 	userUgnotBalance = ugnotBalanceOf(gsa) // unwrapped result, so ugnot decreased
-	shouldEQ(t, userUgnotBalance, 24000009)
+	shouldEQ(t, userUgnotBalance, uint64(24000009))
 
 	newLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
 	shouldEQ(t, true, newLiquidity.Lt(oldLiquidity))
 
 	// check fee left
-	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1)
+	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/gnoswap/v2/gns} {p_token1Path gno.land/r/demo/wugnot} {fee0Amount 0} {fee1Amount 0}]}
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500}]}
 

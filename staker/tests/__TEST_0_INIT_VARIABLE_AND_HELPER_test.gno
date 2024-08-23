@@ -74,7 +74,7 @@ func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
 			t.Errorf("The code did not panic")
 		} else {
 			if r != msg {
-				t.Errorf("excepted panic(%v), got(%v)", msg, r)
+				t.Errorf("excepted panic\n%v\n\ngot\n%v\n", msg, r)
 			}
 		}
 	}()

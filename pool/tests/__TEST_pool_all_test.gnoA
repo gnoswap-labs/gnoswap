@@ -27,10 +27,10 @@ func init() {
 
 // 1. Create Foo:Bar Pool
 func TestCreateFooBarPool(t *testing.T) {
-	shouldEQ(t, gns.TotalSupply(), 100000000000000)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 0)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 0)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 0)
+	shouldEQ(t, gns.TotalSupply(), uint64(100000000000000))
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), uint64(0))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(0))
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(0))
 
 	std.TestSetRealm(gsaRealm)
 
@@ -40,10 +40,10 @@ func TestCreateFooBarPool(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}	shouldEQ(t, len(pools), 1)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, gns.TotalSupply(), 100001426940600)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 0)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 1070205450)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 285388120)
+	shouldEQ(t, gns.TotalSupply(), uint64(100001426940600))
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), uint64(0))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(1070205450))
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(285388120))
 }
 
 // 2. Create Bar:Baz Pool

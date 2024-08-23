@@ -23,10 +23,10 @@ func init() {
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	shouldEQ(t, gns.TotalSupply(), 100000000000000)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 0)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 0)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 0)
+	shouldEQ(t, gns.TotalSupply(), uint64(100000000000000))
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), uint64(0))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(0))
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(0))
 	std.TestSkipHeights(100)
 
 	std.TestSetRealm(gsaRealm)
@@ -36,10 +36,10 @@ func TestPoolInitCreatePool(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, gns.TotalSupply(), 100001426940600)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 0)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 1070205450)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 285388120)
+	shouldEQ(t, gns.TotalSupply(), uint64(100001426940600))
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), uint64(0))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(1070205450))
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(285388120))
 }
 
 func TestMintPositionFullInRange(t *testing.T) {
@@ -63,10 +63,10 @@ func TestMintPositionFullInRange(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_tickLower -887270} {p_tickUpper 887270} {tokenId 1} {liquidity 49997} {amount0 49995} {amount1 50000}]}
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, gns.TotalSupply(), 100001441210006)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 1080907504)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 288242001)
+	shouldEQ(t, gns.TotalSupply(), uint64(100001441210006))
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(1080907504))
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(288242001))
 }
 
 func TestIncreaseLiquidity(t *testing.T) {
@@ -85,10 +85,10 @@ func TestIncreaseLiquidity(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position IncreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {liquidity 49997} {amount0 49995} {amount1 50000}]}
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, gns.TotalSupply(), 100001455479412)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 1091609559)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 291095882)
+	shouldEQ(t, gns.TotalSupply(), uint64(100001455479412))
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(1091609559))
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(291095882))
 }
 
 func TestDecreaseLiquidity(t *testing.T) {
@@ -109,10 +109,10 @@ func TestDecreaseLiquidity(t *testing.T) {
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position DecreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {p_liquidityRatio 50} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {liquidity 49997} {fee0 0} {fee1 0} {amount0 49994} {amount1 49999}]}
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, gns.TotalSupply(), 100001469748818)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 1102311614)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 293949763)
+	shouldEQ(t, gns.TotalSupply(), uint64(100001469748818))
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(1102311614))
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(293949763))
 }
 
 func TestCollectFee(t *testing.T) {
@@ -120,15 +120,15 @@ func TestCollectFee(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(uint64(1))
+	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(uint64(1), false)
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/onbloc/bar} {p_token1Path gno.land/r/onbloc/foo} {fee0Amount 0} {fee1Amount 0}]}
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, gns.TotalSupply(), 100001484018224)
-	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), 1)
-	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), 1113013669)
-	shouldEQ(t, gnsBalance(consts.DEV_OPS), 296803644)
+	shouldEQ(t, gns.TotalSupply(), uint64(100001484018224))
+	shouldEQ(t, gnsBalance(consts.EMISSION_ADDR), uint64(1))
+	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(1113013669))
+	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(296803644))
 }
 
 func gnsBalance(addr std.Address) uint64 {

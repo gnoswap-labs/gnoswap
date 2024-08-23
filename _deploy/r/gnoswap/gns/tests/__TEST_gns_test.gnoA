@@ -11,7 +11,7 @@ import (
 )
 
 func TestInitValues(t *testing.T) {
-	shouldEQ(t, lastMintedHeight, 123)
+	shouldEQ(t, lastMintedHeight, int64(123))
 }
 
 func TestMintNoBlock(t *testing.T) {
@@ -19,10 +19,10 @@ func TestMintNoBlock(t *testing.T) {
 	emissionRealm := std.NewCodeRealm(consts.EMISSION_PATH)
 	std.TestSetRealm(emissionRealm)
 
-	shouldEQ(t, TotalSupply(), 100_000_000_000_000)
+	shouldEQ(t, TotalSupply(), uint64(100_000_000_000_000))
 
 	Mint(emissionUsers) // no block mined => no emission
-	shouldEQ(t, TotalSupply(), 100_000_000_000_000)
+	shouldEQ(t, TotalSupply(), uint64(100_000_000_000_000))
 }
 
 func TestMintSingleBlock(t *testing.T) {
@@ -37,7 +37,7 @@ func TestMintSingleBlock(t *testing.T) {
 	// 1h = 25_684_930_800
 	// 24h = 616_438_339_200
 
-	shouldEQ(t, TotalSupply(), 100_000_000_000_000+14_269_406) // 100000014269406
+	shouldEQ(t, TotalSupply(), uint64(100_000_000_000_000+14_269_406)) // 100000014269406
 }
 
 func TestMint_10_Block(t *testing.T) {
@@ -47,7 +47,7 @@ func TestMint_10_Block(t *testing.T) {
 	std.TestSkipHeights(10)
 
 	Mint(emissionUsers)
-	shouldEQ(t, TotalSupply(), 100000014269406+142_694_060) // 100000156963466
+	shouldEQ(t, TotalSupply(), uint64(100000014269406+142_694_060)) // 100000156963466
 }
 
 func TestMintNoPermission(t *testing.T) {
@@ -67,16 +67,16 @@ func TestMintNoPermission(t *testing.T) {
 
 func TestMintReachFirstHalvingYear(t *testing.T) {
 	height := std.GetHeight()
-	shouldEQ(t, height, 134)
+	shouldEQ(t, height, int64(134))
 
 	year := GetHalvingYearByHeight(height)
-	shouldEQ(t, year, 1)
+	shouldEQ(t, year, int64(1))
 
 	yearEndHeight := halvingYearBlock[year]
-	shouldEQ(t, yearEndHeight, 15768123)
+	shouldEQ(t, yearEndHeight, int64(15768123))
 
 	leftBlock := yearEndHeight - height
-	shouldEQ(t, leftBlock, 15767989)
+	shouldEQ(t, leftBlock, int64(15767989))
 
 	emissionUsers := pusers.AddressOrName(consts.EMISSION_ADDR)
 	emissionRealm := std.NewCodeRealm(consts.EMISSION_PATH)
@@ -84,21 +84,21 @@ func TestMintReachFirstHalvingYear(t *testing.T) {
 	std.TestSkipHeights(15767980) // 9 block left to next halving year
 
 	Mint(emissionUsers)
-	shouldEQ(t, TotalSupply(), 100000156963466+224_999_708_419_880) // 324999865383346
+	shouldEQ(t, TotalSupply(), uint64(100000156963466+224_999_708_419_880)) // 324999865383346
 }
 
 func TestYear01AndYear02(t *testing.T) {
 	height := std.GetHeight()
-	shouldEQ(t, height, 15768114)
+	shouldEQ(t, height, int64(15768114))
 
 	year := GetHalvingYearByHeight(height)
-	shouldEQ(t, year, 1)
+	shouldEQ(t, year, int64(1))
 
 	yearEndHeight := halvingYearBlock[year]
-	shouldEQ(t, yearEndHeight, 15768123)
+	shouldEQ(t, yearEndHeight, int64(15768123))
 
 	leftBlock := yearEndHeight - height
-	shouldEQ(t, leftBlock, 9)
+	shouldEQ(t, leftBlock, int64(9))
 	// 9 block left
 
 	emissionUsers := pusers.AddressOrName(consts.EMISSION_ADDR)
@@ -109,10 +109,10 @@ func TestYear01AndYear02(t *testing.T) {
 
 	Mint(emissionUsers)
 
-	shouldEQ(t, halvingYearMintAmount[1], 225000000000000)
-	shouldEQ(t, halvingYearAmount[1], 225000000000000)
+	shouldEQ(t, halvingYearMintAmount[1], uint64(225000000000000))
+	shouldEQ(t, halvingYearAmount[1], uint64(225000000000000))
 
-	shouldEQ(t, TotalSupply(), 325000142694060)
+	shouldEQ(t, TotalSupply(), uint64(325000142694060))
 	// 325000142694060 - 324999865383346
 	// minted: 277_310_714
 
