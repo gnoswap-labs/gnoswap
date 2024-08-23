@@ -88,6 +88,7 @@ func TestCreateExternalIncentiveQux365(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	qux.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
+	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
 
 	AddToken(quxPath)
 	CreateExternalIncentive(

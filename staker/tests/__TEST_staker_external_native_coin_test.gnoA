@@ -52,6 +52,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
+	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
 
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100000000}}, nil)
 	CreateExternalIncentive(
