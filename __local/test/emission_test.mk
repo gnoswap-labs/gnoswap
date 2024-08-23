@@ -48,7 +48,7 @@ deploy-gnoswap-realms: deploy-emission deploy-pool deploy-position deploy-staker
 
 ### TEST AFTER INIT
 .PHONY: init-test
-init-test: test-pool-create test-position-mint test-stake-token transfer-roh transfer-test1
+init-test: test-pool-create test-position-mint test-stake-token 
 
 .PHONY: test-pool-create
 test-pool-create: pool-create-bar-baz pool-create-foo-qux
@@ -299,6 +299,13 @@ stake-token-3:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/gnft -func Approve -args $(ADDR_STAKER) -args 3 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/staker -func StakeToken -args 3 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
+
+
+# CREATE EXTERNAL INCENTIVE DEPOSIT
+external-deposit-approve:
+	$(info ************ approve gns to staker // gnoswap_admin ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/gns -func Approve -args $(ADDR_STAKER) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+
 
 
 
