@@ -23,16 +23,17 @@ type RewardToken struct {
 }
 
 type ApiExternalIncentive struct {
-	IncentiveId    string `json:"incentiveId"`
-	PoolPath       string `json:"poolPath"`
-	RewardToken    string `json:"rewardToken"`
-	RewardAmount   string `json:"rewardAmount"`
-	RewardLeft     string `json:"rewardLeft"`
-	StartTimestamp int64  `json:"startTimestamp"`
-	EndTimestamp   int64  `json:"endTimestamp"`
-	Active         bool   `json:"active"`
-	Refundee       string `json:"refundee"`
-	CreatedHeight  int64  `json:"createdHeight"`
+	IncentiveId      string `json:"incentiveId"`
+	PoolPath         string `json:"poolPath"`
+	RewardToken      string `json:"rewardToken"`
+	RewardAmount     string `json:"rewardAmount"`
+	RewardLeft       string `json:"rewardLeft"`
+	StartTimestamp   int64  `json:"startTimestamp"`
+	EndTimestamp     int64  `json:"endTimestamp"`
+	Active           bool   `json:"active"`
+	Refundee         string `json:"refundee"`
+	CreatedHeight    int64  `json:"createdHeight"`
+	DepositGnsAmount uint64 `json:"depositGnsAmount"`
 }
 
 type ApiInternalIncentive struct {
@@ -175,15 +176,16 @@ func ApiGetExternalIncentives() string {
 
 	for incentiveId, incentive := range incentives {
 		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
-			IncentiveId:    incentiveId,
-			PoolPath:       incentive.targetPoolPath,
-			RewardToken:    incentive.rewardToken,
-			RewardAmount:   incentive.rewardAmount.ToString(),
-			RewardLeft:     incentive.rewardLeft.ToString(),
-			StartTimestamp: incentive.startTimestamp,
-			EndTimestamp:   incentive.endTimestamp,
-			Refundee:       incentive.refundee.String(),
-			CreatedHeight:  incentive.createdHeight,
+			IncentiveId:      incentiveId,
+			PoolPath:         incentive.targetPoolPath,
+			RewardToken:      incentive.rewardToken,
+			RewardAmount:     incentive.rewardAmount.ToString(),
+			RewardLeft:       incentive.rewardLeft.ToString(),
+			StartTimestamp:   incentive.startTimestamp,
+			EndTimestamp:     incentive.endTimestamp,
+			Refundee:         incentive.refundee.String(),
+			CreatedHeight:    incentive.createdHeight,
+			DepositGnsAmount: incentive.depositGnsAmount,
 		})
 	}
 
@@ -202,16 +204,17 @@ func ApiGetExternalIncentives() string {
 		}
 
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"incentiveId":    json.StringNode("incentiveId", incentive.IncentiveId),
-			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
-			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
-			"rewardLeft":     json.StringNode("rewardLeft", incentive.RewardLeft),
-			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
-			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
-			"active":         json.BoolNode("active", active),
-			"refundee":       json.StringNode("refundee", incentive.Refundee),
-			"createdHeight":  json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"incentiveId":      json.StringNode("incentiveId", incentive.IncentiveId),
+			"poolPath":         json.StringNode("poolPath", incentive.PoolPath),
+			"rewardToken":      json.StringNode("rewardToken", incentive.RewardToken),
+			"rewardAmount":     json.StringNode("rewardAmount", incentive.RewardAmount),
+			"rewardLeft":       json.StringNode("rewardLeft", incentive.RewardLeft),
+			"startTimestamp":   json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
+			"endTimestamp":     json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
+			"active":           json.BoolNode("active", active),
+			"refundee":         json.StringNode("refundee", incentive.Refundee),
+			"createdHeight":    json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(incentive.DepositGnsAmount)),
 		})
 		responses.AppendArray(_incentiveNode)
 	}
@@ -244,15 +247,16 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 		}
 
 		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
-			IncentiveId:    incentiveId,
-			PoolPath:       incentive.targetPoolPath,
-			RewardToken:    incentive.rewardToken,
-			RewardAmount:   incentive.rewardAmount.ToString(),
-			RewardLeft:     incentive.rewardLeft.ToString(),
-			StartTimestamp: incentive.startTimestamp,
-			EndTimestamp:   incentive.endTimestamp,
-			Refundee:       incentive.refundee.String(),
-			CreatedHeight:  incentive.createdHeight,
+			IncentiveId:      incentiveId,
+			PoolPath:         incentive.targetPoolPath,
+			RewardToken:      incentive.rewardToken,
+			RewardAmount:     incentive.rewardAmount.ToString(),
+			RewardLeft:       incentive.rewardLeft.ToString(),
+			StartTimestamp:   incentive.startTimestamp,
+			EndTimestamp:     incentive.endTimestamp,
+			Refundee:         incentive.refundee.String(),
+			CreatedHeight:    incentive.createdHeight,
+			DepositGnsAmount: incentive.depositGnsAmount,
 		})
 	}
 
@@ -271,16 +275,17 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 		}
 
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"incentiveId":    json.StringNode("incentiveId", incentive.IncentiveId),
-			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
-			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
-			"rewardLeft":     json.StringNode("rewardLeft", incentive.RewardLeft),
-			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
-			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
-			"active":         json.BoolNode("active", active),
-			"refundee":       json.StringNode("refundee", incentive.Refundee),
-			"createdHeight":  json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"incentiveId":      json.StringNode("incentiveId", incentive.IncentiveId),
+			"poolPath":         json.StringNode("poolPath", incentive.PoolPath),
+			"rewardToken":      json.StringNode("rewardToken", incentive.RewardToken),
+			"rewardAmount":     json.StringNode("rewardAmount", incentive.RewardAmount),
+			"rewardLeft":       json.StringNode("rewardLeft", incentive.RewardLeft),
+			"startTimestamp":   json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
+			"endTimestamp":     json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
+			"active":           json.BoolNode("active", active),
+			"refundee":         json.StringNode("refundee", incentive.Refundee),
+			"createdHeight":    json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(incentive.DepositGnsAmount)),
 		})
 		responses.AppendArray(_incentiveNode)
 	}
@@ -313,15 +318,16 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 		}
 
 		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
-			IncentiveId:    incentiveId,
-			PoolPath:       incentive.targetPoolPath,
-			RewardToken:    incentive.rewardToken,
-			RewardAmount:   incentive.rewardAmount.ToString(),
-			RewardLeft:     incentive.rewardLeft.ToString(),
-			StartTimestamp: incentive.startTimestamp,
-			EndTimestamp:   incentive.endTimestamp,
-			Refundee:       incentive.refundee.String(),
-			CreatedHeight:  incentive.createdHeight,
+			IncentiveId:      incentiveId,
+			PoolPath:         incentive.targetPoolPath,
+			RewardToken:      incentive.rewardToken,
+			RewardAmount:     incentive.rewardAmount.ToString(),
+			RewardLeft:       incentive.rewardLeft.ToString(),
+			StartTimestamp:   incentive.startTimestamp,
+			EndTimestamp:     incentive.endTimestamp,
+			Refundee:         incentive.refundee.String(),
+			CreatedHeight:    incentive.createdHeight,
+			DepositGnsAmount: incentive.depositGnsAmount,
 		})
 	}
 
@@ -340,16 +346,17 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 		}
 
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"incentiveId":    json.StringNode("incentiveId", incentive.IncentiveId),
-			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
-			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
-			"rewardLeft":     json.StringNode("rewardLeft", incentive.RewardLeft),
-			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
-			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
-			"active":         json.BoolNode("active", active),
-			"refundee":       json.StringNode("refundee", incentive.Refundee),
-			"createdHeight":  json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"incentiveId":      json.StringNode("incentiveId", incentive.IncentiveId),
+			"poolPath":         json.StringNode("poolPath", incentive.PoolPath),
+			"rewardToken":      json.StringNode("rewardToken", incentive.RewardToken),
+			"rewardAmount":     json.StringNode("rewardAmount", incentive.RewardAmount),
+			"rewardLeft":       json.StringNode("rewardLeft", incentive.RewardLeft),
+			"startTimestamp":   json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
+			"endTimestamp":     json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
+			"active":           json.BoolNode("active", active),
+			"refundee":         json.StringNode("refundee", incentive.Refundee),
+			"createdHeight":    json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(incentive.DepositGnsAmount)),
 		})
 		responses.AppendArray(_incentiveNode)
 	}

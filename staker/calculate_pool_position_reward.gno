@@ -90,6 +90,7 @@ func CalcPoolPosition() {
 	println("=== [ START START START ] CALC__CalcPoolPosition")
 
 	height := std.GetHeight()
+
 	println("CALC__CalcPoolPosition__height", height)
 	println("CALC__CalcPoolPosition__lastCalculatedHeight", lastCalculatedHeight)
 	if height <= lastCalculatedHeight {
@@ -146,6 +147,7 @@ func CalcPoolPosition() {
 
 	// calculate external gns amounts
 	totalExternalGns := externalGnsAmount()
+	totalExternalGns += externalDepositGnsAmount()
 
 	// calculate pool
 	stakerGnsBalance := gnsBalance(consts.STAKER_ADDR)
@@ -508,5 +510,15 @@ func externalGnsAmount() uint64 {
 	for _, v := range externalGns {
 		amount += v
 	}
+	return amount
+}
+
+func externalDepositGnsAmount() uint64 {
+	amount := uint64(0)
+
+	for _, incentive := range incentives {
+		amount += incentive.depositGnsAmount
+	}
+
 	return amount
 }

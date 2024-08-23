@@ -415,6 +415,12 @@ func GetExternalGnsAmount() uint64 {
 	return externalGnsAmount()
 }
 
+func GetExternalDepositGnsAmount() uint64 {
+	en.MintAndDistributeGns()
+
+	return externalDepositGnsAmount()
+}
+
 func GetStakerGnsBalance() uint64 {
 	en.MintAndDistributeGns()
 
@@ -424,7 +430,7 @@ func GetStakerGnsBalance() uint64 {
 func GetStakerEmissionGnsBalance() uint64 {
 	en.MintAndDistributeGns()
 
-	return gnsBalance(consts.STAKER_ADDR) - externalGnsAmount()
+	return gnsBalance(consts.STAKER_ADDR) - externalGnsAmount() - externalDepositGnsAmount()
 }
 
 func GetLastCalculatedBalance() uint64 {
@@ -511,6 +517,8 @@ func GetNecessary() string {
 	now := time.Now().Unix()
 
 	externalGnsBalance := GetExternalGnsAmount()
+	externalDepositGnsAmount := GetExternalDepositGnsAmount()
+
 	gnsBalance := GetStakerGnsBalance()
 
 	numPoolTiers := GetNumPoolTiers()
@@ -523,6 +531,7 @@ func GetNecessary() string {
 		"lastCalculatedHeight":                  json.StringNode("lastCalculatedHeight", ufmt.Sprintf("%d", lastCalculatedHeight)),
 		"lastCalculatedBalance":                 json.StringNode("lastCalculatedBalance", ufmt.Sprintf("%d", lastCalculatedBalance)),
 		"externalGnsBalance":                    json.StringNode("externalGnsBalance", ufmt.Sprintf("%d", externalGnsBalance)),
+		"depositGnsAmount":                      json.StringNode("depositGnsAmount", ufmt.Sprintf("%d", externalDepositGnsAmount)),
 		"gnsBalance":                            json.StringNode("gnsBalance", ufmt.Sprintf("%d", gnsBalance)),
 		"numPoolTiers":                          json.StringNode("numPoolTiers", numPoolTiers),
 		"tiersRatio":                            json.StringNode("tiersRatio", tiersRatio),
