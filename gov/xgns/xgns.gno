@@ -3,7 +3,6 @@ package xgns
 import (
 	"std"
 	"strings"
-	"time"
 
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ownable"
@@ -12,17 +11,8 @@ import (
 
 	"gno.land/r/demo/users"
 
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v2/consts"
 )
-
-type lockedXGNS struct {
-	amount uint64
-	unlock uint64
-}
-
-const MAXIMUM_SUPPLY = uint64(1_000_000_000_000_000) // 1B
-
-const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
 
 var (
 	banker *grc20.Banker
@@ -30,12 +20,9 @@ var (
 	token  grc20.Token
 )
 
-var (
-	addrXGns       = make(map[string]uint64)
-	addrLockedXGns = make(map[string][]lockedXGNS)
-)
-
 func init() {
+	admin = ownable.NewWithAddress(std.DerivePkgAddr(consts.GOV_STKAER_PATH)) // GOV_STAKER
+
 	banker = grc20.NewBanker("XGNS", "xGNS", 6)
 	token = banker.Token()
 }
@@ -47,25 +34,8 @@ func BalanceOf(owner pusers.AddressOrName) uint64 {
 	return token.BalanceOf(ownerAddr)
 }
 
-func Allowance(owner, spender pusers.AddressOrName) uint64 {
-	ownerAddr := users.Resolve(owner)
-	spenderAddr := users.Resolve(spender)
-	return token.Allowance(ownerAddr, spenderAddr)
-}
-
-func Approve(spender pusers.AddressOrName, amount uint64) {
-	spenderAddr := users.Resolve(spender)
-	checkErr(token.Approve(spenderAddr, amount))
-}
-
-// need for delegation
-func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
-	fromAddr := users.Resolve(from)
-	toAddr := users.Resolve(to)
-	checkErr(token.TransferFrom(fromAddr, toAddr, amount))
-}
-
-// xGNS is non-transferable, therefore it doesn't have Transfer method
+// xGNS is non-transferable
+// Therefore it doesn't have transfer and transferFrom functions
 
 func Render(path string) string {
 	parts := strings.Split(path, "/")
@@ -84,105 +54,24 @@ func Render(path string) string {
 	}
 }
 
-// GNS -> xGNS -> actual delegation
-func Delegate(to std.Address, amount uint64) {
-	if !to.IsValid() {
-		panic(ufmt.Sprintf("invalid address %s to Delegate", to.String()))
+func Mint(to pusers.AddressOrName, amount uint64) {
+	// only gov staker contract can call Mint
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GOV_STAKER_ADDR {
+		panic("only gov staker contract can call Mint")
 	}
 
-	caller := std.GetOrigCaller()
-
-	gns.TransferFrom(a2u(caller), a2u(std.CurrentRealm().Addr()), amount)
-	err := banker.Mint(caller, amount) // give equivalent amount of xGNS
-	if err != nil {
-		panic(err.Error())
-	}
-
-	addrXGns[caller.String()] += amount
-
-	delegate(to, amount)
+	checkErr(banker.Mint(users.Resolve(to), amount))
 }
 
-// xGNS from -> xGNS to
-func Redelegate(from, to std.Address, amount uint64) {
-	if !from.IsValid() {
-		panic(ufmt.Sprintf("invalid from address %s to Redelegate", to.String()))
+func Burn(from pusers.AddressOrName, amount uint64) {
+	// only gov staker contract can call Burn
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GOV_STAKER_ADDR {
+		panic("only gov staker contract can call Burn")
 	}
 
-	if !to.IsValid() {
-		panic(ufmt.Sprintf("invalid to address %s to Redelegate", to.String()))
-	}
-
-	caller := std.GetOrigCaller()
-	_, exist := delegated[caller.String()]
-	if !exist {
-		panic(ufmt.Sprintf("no delegation from %s", from.String()))
-	}
-
-	delegatedForFrom, exist := delegated[caller.String()][from.String()]
-	if !exist {
-
-	}
-
-	if delegatedForFrom < amount {
-		panic(ufmt.Sprintf("insufficient delegated amount to redelegate %d XGNS from %s (delegated: %d)", amount, from.String(), delegatedForFrom))
-	}
-
-	delegated[from.String()][caller.String()] -= amount
-	delegate(to, amount)
-}
-
-func Undelegate(from std.Address, amount uint64) {
-	if !from.IsValid() {
-		panic(ufmt.Sprintf("invalid address %s to Undelegate from", from.String()))
-	}
-
-	caller := std.GetOrigCaller()
-
-	if addrXGns[caller.String()] < amount {
-		panic("not enough xGNS staked")
-	}
-
-	err := banker.Burn(caller, amount) // burn equivalent amount of xGNS
-	if err != nil {
-		panic(err.Error())
-	}
-
-	addrXGns[caller.String()] -= amount
-
-	undelegate(from, amount)
-
-	// lokcup
-	userLocked := lockedXGNS{
-		amount: amount,
-		unlock: uint64(time.Now().Unix()) + TIMESTAMP_7_DAYS, // after 7 days, call Collect() to receive GNS
-	}
-	addrLockedXGns[caller.String()] = append(addrLockedXGns[caller.String()], userLocked)
-}
-
-func Collect() uint64 {
-	caller := std.GetOrigCaller()
-
-	if len(addrLockedXGns[caller.String()]) == 0 {
-		return 0
-	}
-
-	// check if caller has any GNS to claim
-	for i, locked := range addrLockedXGns[caller.String()] {
-		if uint64(time.Now().Unix()) >= locked.unlock { // passed 20 days
-			// transfer GNS to caller
-			gns.Transfer(a2u(caller), locked.amount)
-
-			// TOOD:
-			// std.Emit()
-
-			// remove from locked list
-			addrLockedXGns[caller.String()] = append(addrLockedXGns[caller.String()][:i], addrLockedXGns[caller.String()][i+1:]...)
-			return locked.amount
-		}
-	}
-
-	return 0
+	checkErr(banker.Burn(users.Resolve(from), amount))
 }
 
 func a2u(addr std.Address) pusers.AddressOrName {
