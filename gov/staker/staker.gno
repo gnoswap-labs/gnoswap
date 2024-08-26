@@ -22,9 +22,17 @@ var (
 	addrLockedXGns = make(map[string][]lockedXGNS)
 )
 
+var (
+	minimumAmount = uint64(1_000_000)
+)
+
 func Delegate(to std.Address, amount uint64) {
 	if !to.IsValid() {
 		panic(ufmt.Sprintf("invalid address %s to Delegate", to.String()))
+	}
+
+	if amount < minimumAmount {
+		panic(ufmt.Sprintf("minimum amount to delegate is %d (requested:%d)", minimumAmount, amount))
 	}
 
 	caller := std.GetOrigCaller()
@@ -52,6 +60,10 @@ func Redelegate(from, to std.Address, amount uint64) {
 		panic(ufmt.Sprintf("invalid to address %s to Redelegate", to.String()))
 	}
 
+	if amount < minimumAmount {
+		panic(ufmt.Sprintf("minimum amount to re-delegate is %d (requested:%d)", minimumAmount, amount))
+	}
+
 	undelegate(from, amount)
 	delegate(to, amount)
 
@@ -62,6 +74,10 @@ func Redelegate(from, to std.Address, amount uint64) {
 func Undelegate(from std.Address, amount uint64) {
 	if !from.IsValid() {
 		panic(ufmt.Sprintf("invalid address %s to Undelegate", from.String()))
+	}
+
+	if amount < minimumAmount {
+		panic(ufmt.Sprintf("minimum amount to undelegate is %d (requested:%d)", minimumAmount, amount))
 	}
 
 	caller := std.GetOrigCaller()
