@@ -32,7 +32,7 @@ func DistributeProtocolFee() {
 
 		balance := balanceOfByRegisterCall(token, consts.PROTOCOL_FEE_ADDR)
 		if balance > 0 {
-			toDevOps := balance * 5000 / 10000
+			toDevOps := balance * xGnsPctBps / 10000
 			toXGns := balance - toDevOps
 
 			transferByRegisterCall(token, consts.DEV_OPS, toDevOps)
