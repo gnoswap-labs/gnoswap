@@ -86,15 +86,14 @@ func Render(path string) string {
 
 // GNS -> xGNS -> actual delegation
 func Delegate(to std.Address, amount uint64) {
-	!to.IsValid() {
+	if !to.IsValid() {
 		panic(ufmt.Sprintf("invalid address %s to Delegate", to.String()))
 	}
 
 	caller := std.GetOrigCaller()
 
-	
-	gns.TransferFrom(caller, std.CurrentRealm().Addr(), amount)
-	err := banker.Mint(users.Resolve(address), amount) // give equivalent amount of xGNS
+	gns.TransferFrom(a2u(caller), a2u(std.CurrentRealm().Addr()), amount)
+	err := banker.Mint(caller, amount) // give equivalent amount of xGNS
 	if err != nil {
 		panic(err.Error())
 	}
@@ -105,12 +104,12 @@ func Delegate(to std.Address, amount uint64) {
 }
 
 // xGNS from -> xGNS to
-func Redelegate(from, to std.Address, amount uint64)  {
-	!from.IsValid() {
+func Redelegate(from, to std.Address, amount uint64) {
+	if !from.IsValid() {
 		panic(ufmt.Sprintf("invalid from address %s to Redelegate", to.String()))
 	}
 
-	!to.IsValid() {
+	if !to.IsValid() {
 		panic(ufmt.Sprintf("invalid to address %s to Redelegate", to.String()))
 	}
 
@@ -122,7 +121,7 @@ func Redelegate(from, to std.Address, amount uint64)  {
 
 	delegatedForFrom, exist := delegated[caller.String()][from.String()]
 	if !exist {
-		
+
 	}
 
 	if delegatedForFrom < amount {
@@ -134,8 +133,8 @@ func Redelegate(from, to std.Address, amount uint64)  {
 }
 
 func Undelegate(from std.Address, amount uint64) {
-	!from.IsValid() {
-		panic(ufmt.Sprintf("invalid address %s to Undelegate", to.String()))
+	if !from.IsValid() {
+		panic(ufmt.Sprintf("invalid address %s to Undelegate from", from.String()))
 	}
 
 	caller := std.GetOrigCaller()
@@ -144,7 +143,7 @@ func Undelegate(from std.Address, amount uint64) {
 		panic("not enough xGNS staked")
 	}
 
-	err := banker.Burn(users.Resolve(caller), amount) // burn equivalent amount of xGNS
+	err := banker.Burn(caller, amount) // burn equivalent amount of xGNS
 	if err != nil {
 		panic(err.Error())
 	}
@@ -156,7 +155,7 @@ func Undelegate(from std.Address, amount uint64) {
 	// lokcup
 	userLocked := lockedXGNS{
 		amount: amount,
-		unlock: time.Now().Unix() + TIMESTAMP_7_DAYS, // after 7 days, call Collect() to receive GNS
+		unlock: uint64(time.Now().Unix()) + TIMESTAMP_7_DAYS, // after 7 days, call Collect() to receive GNS
 	}
 	addrLockedXGns[caller.String()] = append(addrLockedXGns[caller.String()], userLocked)
 }
@@ -170,12 +169,9 @@ func Collect() uint64 {
 
 	// check if caller has any GNS to claim
 	for i, locked := range addrLockedXGns[caller.String()] {
-		if time.Now().Unix() >= locked.unlock { // passed 20 days
+		if uint64(time.Now().Unix()) >= locked.unlock { // passed 20 days
 			// transfer GNS to caller
-			err := gns.Transfer(caller, locked.amount)
-			if err != nil {
-				panic(err.Error())
-			}
+			gns.Transfer(a2u(caller), locked.amount)
 
 			// TOOD:
 			// std.Emit()
@@ -184,5 +180,17 @@ func Collect() uint64 {
 			addrLockedXGns[caller.String()] = append(addrLockedXGns[caller.String()][:i], addrLockedXGns[caller.String()][i+1:]...)
 			return locked.amount
 		}
+	}
+
+	return 0
+}
+
+func a2u(addr std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(addr)
+}
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err.Error())
 	}
 }

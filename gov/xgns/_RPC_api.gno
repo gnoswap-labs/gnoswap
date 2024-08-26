@@ -1,5 +1,9 @@
 package xgns
 
+import (
+	"std"
+)
+
 func TotalDelegated() uint64 {
 	// same as xgns total supply
 	return TotalSupply()
@@ -15,4 +19,4 @@ func TotalDelegatedToAddress(to std.Address) uint64 {
 		sum += amount[to.String()]
 	}
 	return sum
-}`
+}

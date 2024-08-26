@@ -12,8 +12,9 @@ var (
 
 func delegate(to std.Address, amount uint64) {
 	caller := std.GetOrigCaller()
+
 	totalDelegated := sumDelegated(caller)
-	totalXGns := BalanceOf(caller)
+	totalXGns := BalanceOf(a2u(caller))
 
 	if totalDelegated+amount > totalXGns {
 		panic(ufmt.Sprintf("insufficient balance to delegate %d XGNS(total: %d, delegated:%d)", amount, totalXGns, totalDelegated))
