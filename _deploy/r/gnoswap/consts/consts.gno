@@ -57,8 +57,11 @@ const (
 	COMMUNITY_POOL_PATH string      = "gno.land/r/gnoswap/v2/community_pool"
 	COMMUNITY_POOL_ADDR std.Address = "g1r79m0scwztcdvk3c6sy4rjrtv3rnnzrs9ddh9w"
 
-	X_GNS_PATH string      = "gno.land/r/gnoswap/v2/x_gns"
-	X_GNS_ADDR std.Address = "g1dd0t56nqh5a468chr7vkgp5ftzmquvpja5l7qh"
+	GOV_XGNS_PATH string      = "gno.land/r/gnoswap/v2/gov/xgns"
+	GOV_XGNS_ADDR std.Address = "g16gjmzf8725njf48325nl3yx3ve53wdu4ru53vm"
+
+	GOV_STKAER_PATH string      = "gno.land/r/gnoswap/v2/gov/staker"
+	GOV_STAKER_ADDR std.Address = "g1gt2xzjcmhp2t08yh0nkmc3q822sr87t5n92rm0"
 )
 
 // NUMBER
