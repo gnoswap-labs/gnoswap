@@ -1,0 +1,133 @@
+package staker
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/testutils"
+
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v2/gov/xgns"
+
+	en "gno.land/r/gnoswap/v2/emission"
+
+	"gno.land/r/gnoswap/v2/consts"
+)
+
+const minAmount = uint64(1_000_000)
+
+var (
+	dummyToAddr  = testutils.TestAddress("dummyTo")
+	dummyToRealm = std.NewUserRealm(dummyToAddr)
+
+	dummyAddr  = testutils.TestAddress("dummy")
+	dummyRealm = std.NewUserRealm(dummyAddr)
+
+	reDelegate = testutils.TestAddress("reDelegate")
+)
+
+func TestInit(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(100000000000000)) // admin has initial gns
+	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
+
+	en.ChangeDistributionPct02(
+		en.LIQUIDITY_STAKING, 7000,
+		en.GOV_STAKER, 500,
+	)
+	// CHANGE emission distribution ratio
+	// - STAKER 75% => 70%
+	// - DEV_OPS 20% => 20%
+	// - COMMUNITY_POOL 5% => 5%
+	// - GOV_STAKER 0% => 5%
+}
+
+func TestDelegate(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	// gns before emission
+	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+
+	std.TestSkipHeights(1)
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1000001))
+	Delegate(dummyToAddr, 1000001)
+
+	// gns emission after adjustment & delegate
+	// 1 block gns 14269406
+	// 70% ≈ 9988584.2
+	// 20% ≈ 2853881.2
+	// 5% ≈ 713470.3
+
+	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(9988584))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(2853881))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(713470))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1713471))
+	// 1713471 (gov staker gns) - 1000001 (delegated gns) = 713470
+}
+
+func TestDelegateAnother(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+	gns.Transfer(a2u(dummyAddr), 5000000)
+
+	std.TestSkipHeights(1)
+	std.TestSetOrigCaller(dummyAddr)
+	std.TestSetRealm(dummyRealm)
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(5000000))
+	Delegate(dummyAddr, 5000000)
+
+	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(19977168))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(5707762))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(1426940))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(7426941))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))-xgns.TotalSupply(), uint64(1426940))
+}
+
+func TestSkipDummyBlock(t *testing.T) {
+	std.TestSkipHeights(10)
+	en.MintAndDistributeGns()
+	calculateReward()
+}
+
+func TestCollectReward(t *testing.T) {
+	std.TestSetOrigCaller(dummyAddr)
+	std.TestSetRealm(dummyRealm)
+
+	shouldEQ(t, gns.BalanceOf(a2u(dummyAddr)), uint64(0))
+	shouldEQ(t, userEmissionReward[dummyAddr.String()], uint64(5945584))
+
+	CollectReward()
+	shouldEQ(t, gns.BalanceOf(a2u(dummyAddr)), uint64(5945584))
+	shouldEQ(t, userEmissionReward[dummyAddr.String()], uint64(0))
+}
+
+func TestCollectRewardSameBlock(t *testing.T) {
+	std.TestSetOrigCaller(dummyAddr)
+	std.TestSetRealm(dummyRealm)
+
+	shouldEQ(t, gns.BalanceOf(a2u(dummyAddr)), uint64(5945584))
+	shouldEQ(t, userEmissionReward[dummyAddr.String()], uint64(0))
+
+	CollectReward()
+	shouldEQ(t, gns.BalanceOf(a2u(dummyAddr)), uint64(5945584))
+	shouldEQ(t, userEmissionReward[dummyAddr.String()], uint64(0))
+}
+
+func TestCollectRewardMoreBlock01(t *testing.T) {
+	std.TestSkipHeights(1)
+	std.TestSetOrigCaller(dummyAddr)
+	std.TestSetRealm(dummyRealm)
+
+	shouldEQ(t, gns.BalanceOf(a2u(dummyAddr)), uint64(5945584))
+	shouldEQ(t, userEmissionReward[dummyAddr.String()], uint64(0))
+
+	CollectReward()
+	shouldEQ(t, gns.BalanceOf(a2u(dummyAddr)), uint64(6540143))
+	shouldEQ(t, userEmissionReward[dummyAddr.String()], uint64(0))
+}

@@ -8,7 +8,13 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-var xGnsPctBps uint64 = 3000 // 30% // default ratio in bps for devOps
+var (
+	devOpsPct      uint64 = 3000 // 30%
+	gnsToDevOps    uint64
+	gnsToGovStaker uint64
+
+	accuToGovStaker = make(map[string]uint64) // tokenPath -> amount
+)
 
 func DistributeProtocolFee() {
 	caller := std.PrevRealm().Addr()
@@ -26,17 +32,24 @@ func DistributeProtocolFee() {
 	tokens := GetRegisteredTokens()
 	for _, token := range tokens {
 		// default distribute protocol fee percent
-		// xGNS 50%
-		// devOps 50%
+		// devOps 30%
+		// govStaker 70%
 		// ...
 
 		balance := balanceOfByRegisterCall(token, consts.PROTOCOL_FEE_ADDR)
 		if balance > 0 {
-			toDevOps := balance * xGnsPctBps / 10000
-			toXGns := balance - toDevOps
+			toDevOps := balance * devOpsPct / 10000 // default 30%
+			toGovStaker := balance - toDevOps       // default 70%
 
-			transferByRegisterCall(token, consts.DEV_OPS, toDevOps)  // default 30%
-			transferByRegisterCall(token, consts.X_GNS_ADDR, toXGns) // default rest 70%
+			if token == consts.GNS_PATH {
+				gnsToDevOps = toDevOps
+				gnsToGovStaker = toGovStaker
+			}
+
+			accuToGovStaker[token] += toGovStaker
+
+			transferByRegisterCall(token, consts.DEV_OPS, toDevOps)
+			transferByRegisterCall(token, consts.GOV_STAKER_ADDR, toGovStaker)
 		}
 	}
 }
@@ -58,9 +71,24 @@ func ChagneXGnsDistributePercent(fee uint64) {
 		panic("fee should be less than 10000")
 	}
 
-	xGnsPctBps = fee
+	devOpsPct = fee
 }
 
 func GetXGnsDistributePercent() uint64 {
-	return xGnsPctBps
+	return devOpsPct
+}
+
+func GetLastTransferToDevOps() uint64 {
+	return gnsToDevOps
+}
+
+func GetAccuTransferToGovStaker() map[string]uint64 {
+	return accuToGovStaker
+}
+
+func ClearAccuTransferToGovStaker() {
+	if std.PrevRealm().PkgPath() != consts.GOV_STAKER_PATH {
+		panic("only gov staker can clear accu transfer to gov staker")
+	}
+	accuToGovStaker = make(map[string]uint64)
 }

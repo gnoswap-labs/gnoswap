@@ -1,0 +1,198 @@
+package staker
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/testutils"
+
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v2/gov/xgns"
+
+	en "gno.land/r/gnoswap/v2/emission"
+	pf "gno.land/r/gnoswap/v2/protocol_fee"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	// grc20 tokens
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/qux"
+)
+
+var (
+	dummyToAddr  = testutils.TestAddress("dummyTo")
+	dummyToRealm = std.NewUserRealm(dummyToAddr)
+
+	dummyAddr  = testutils.TestAddress("dummy")
+	dummyRealm = std.NewUserRealm(dummyAddr)
+
+	reDelegate = testutils.TestAddress("reDelegate")
+)
+
+func TestDelegate(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	// gns before emission
+	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+
+	std.TestSkipHeights(1)
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1000001))
+	Delegate(dummyToAddr, 1000001)
+
+	// gns emission after adjustment & delegate
+	// 1 block gns 14269406
+	// 75% ≈ 10702054.5
+	// 20% ≈ 2853881.2
+	// 5% ≈ 713470.3
+
+	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(10702054))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(2853881))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(713470))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000001))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))-xgns.TotalSupply(), uint64(0))
+}
+
+func TestDelegateAnother(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+	gns.Transfer(a2u(dummyAddr), 5000000)
+
+	std.TestSkipHeights(1)
+	std.TestSetOrigCaller(dummyAddr)
+	std.TestSetRealm(dummyRealm)
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(5000000))
+	Delegate(dummyAddr, 5000000)
+
+	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(21404109))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(5707762))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(1426940))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(6000001))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))-xgns.TotalSupply(), uint64(0))
+}
+
+func TestMockProtocolFee(t *testing.T) {
+	// admin > protocol_fee
+	// send qux, bar for testing
+	std.TestSetRealm(gsaRealm)
+	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
+	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 2500)
+
+	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+
+	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(2500))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+
+	pf.DistributeProtocolFee()
+
+	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(300))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(700))
+
+	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(750))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1750))
+}
+
+func TestSkipDummyBlock(t *testing.T) {
+	std.TestSkipHeights(10)
+	en.MintAndDistributeGns()
+	calculateReward()
+}
+
+func TestCollectReward(t *testing.T) {
+	std.TestSetOrigCaller(dummyAddr)
+	std.TestSetRealm(dummyRealm)
+
+	// protocol fee has bar, qux
+	shouldEQ(t, bar.BalanceOf(a2u(dummyAddr)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(dummyAddr)), uint64(0))
+
+	CollectReward()
+
+	shouldEQ(t, bar.BalanceOf(a2u(dummyAddr)), uint64(583))
+	shouldEQ(t, qux.BalanceOf(a2u(dummyAddr)), uint64(1458))
+
+}
+
+func TestCollectRewardSameBlock(t *testing.T) {
+	std.TestSetOrigCaller(dummyAddr)
+	std.TestSetRealm(dummyRealm)
+
+	shouldEQ(t, bar.BalanceOf(a2u(dummyAddr)), uint64(583))
+	shouldEQ(t, qux.BalanceOf(a2u(dummyAddr)), uint64(1458))
+
+	CollectReward()
+	shouldEQ(t, bar.BalanceOf(a2u(dummyAddr)), uint64(583))
+	shouldEQ(t, qux.BalanceOf(a2u(dummyAddr)), uint64(1458))
+}
+
+func TestCollectRewardMoreBlock01(t *testing.T) {
+	std.TestSkipHeights(1)
+	std.TestSetOrigCaller(dummyAddr)
+	std.TestSetRealm(dummyRealm)
+
+	shouldEQ(t, bar.BalanceOf(a2u(dummyAddr)), uint64(583))
+	shouldEQ(t, qux.BalanceOf(a2u(dummyAddr)), uint64(1458))
+
+	CollectReward() // even more block, protocol_fee didn't increase
+	shouldEQ(t, bar.BalanceOf(a2u(dummyAddr)), uint64(583))
+	shouldEQ(t, qux.BalanceOf(a2u(dummyAddr)), uint64(1458))
+}
+
+func TestMockProtocolFee2(t *testing.T) {
+	// admin > protocol_fee
+	// send qux, bar for testing
+	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(300))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(117))
+
+	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(750))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(292))
+
+	std.TestSetRealm(gsaRealm)
+	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 2500)
+	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 4000)
+
+	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(2500))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(300))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(117))
+
+	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(4000))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(750))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(292))
+
+	pf.DistributeProtocolFee()
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(1050))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1867))
+
+	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(1950))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(3092))
+}
+
+func TestCollectRewardMoreProtocolFee(t *testing.T) {
+	std.TestSkipHeights(1)
+	std.TestSetOrigCaller(dummyAddr)
+	std.TestSetRealm(dummyRealm)
+
+	shouldEQ(t, bar.BalanceOf(a2u(dummyAddr)), uint64(583))
+	shouldEQ(t, qux.BalanceOf(a2u(dummyAddr)), uint64(1458))
+
+	CollectReward()
+	shouldEQ(t, bar.BalanceOf(a2u(dummyAddr)), uint64(2042))
+	shouldEQ(t, qux.BalanceOf(a2u(dummyAddr)), uint64(3792))
+
+	shouldEQ(t, userProtocolFeeReward[dummyAddr.String()][barPath], uint64(0))
+	shouldEQ(t, userProtocolFeeReward[dummyAddr.String()][quxPath], uint64(0))
+}

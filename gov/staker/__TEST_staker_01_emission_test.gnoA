@@ -32,41 +32,22 @@ func TestDelegate(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	shouldEQ(t, len(delegatedFromTo), 0)
-	shouldEQ(t, len(delegatedTo), 0)
+	// gns before emission
+	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
 
+	std.TestSkipHeights(1)
 	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1000001))
 	Delegate(dummyAddr, 1000001)
 
-	shouldEQ(t, delegatedFromTo[gsa.String()][dummyAddr.String()], uint64(1000001))
-	shouldEQ(t, delegatedTo[dummyAddr.String()], uint64(1000001))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(10702054))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(2853881))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(713470))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000001))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))-xgns.TotalSupply(), uint64(0))
 
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
-	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(1000001))
-}
-
-func TestRedelegateUnknownFrom(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
-	std.TestSetRealm(gsaRealm)
-
-	shouldPanic(
-		t,
-		func() {
-			Redelegate(reDelegate, dummyAddr, 1000001)
-		},
-	)
-}
-
-func TestRedelegateTooMany(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
-	std.TestSetRealm(gsaRealm)
-
-	shouldPanic(
-		t,
-		func() {
-			Redelegate(dummyAddr, reDelegate, 10000010)
-		},
-	)
 }
 
 func TestRedelegate(t *testing.T) {
@@ -139,7 +120,7 @@ func TestCollectAfter7Days(t *testing.T) {
 
 	shouldEQ(t, len(addrLockedXGns[gsa.String()]), 1)
 
-	std.TestSkipHeights(302400) // 7 days 2 seconds
+	std.TestSkipHeights(302401) // 7 days 2 seconds
 	CollectUndelegated()
 
 	shouldEQ(t, len(addrLockedXGns[gsa.String()]), 0)

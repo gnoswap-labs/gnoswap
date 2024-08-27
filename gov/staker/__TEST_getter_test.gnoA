@@ -28,6 +28,18 @@ func TestInit(t *testing.T) {
 	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
 }
 
+func TestDelegateLess(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	shouldPanic(
+		t,
+		func() {
+			Delegate(dummyAddr, 1)
+		},
+	)
+}
+
 func TestDelegate(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
@@ -35,11 +47,11 @@ func TestDelegate(t *testing.T) {
 	shouldEQ(t, GetTotalStaked(), uint64(0))
 	shouldEQ(t, GetDelegationAmount(dummyAddr.String()), uint64(0))
 
-	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(100))
-	Delegate(dummyAddr, 100)
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1000001))
+	Delegate(dummyAddr, 1000001)
 
-	shouldEQ(t, GetTotalStaked(), uint64(100))
-	shouldEQ(t, GetDelegationAmount(dummyAddr.String()), uint64(100))
+	shouldEQ(t, GetTotalStaked(), uint64(1000001))
+	shouldEQ(t, GetDelegationAmount(dummyAddr.String()), uint64(1000001))
 
-	shouldEQ(t, GetAllDelegations(), `[{"from":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":100}]`)
+	shouldEQ(t, GetAllDelegations(), `[{"from":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":1000001}]`)
 }

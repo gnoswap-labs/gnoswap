@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	delegatorAmount = make(map[string]uint64)            // caller => amount
 	delegatedFromTo = make(map[string]map[string]uint64) // caller => to => amount
 	delegatedTo     = make(map[string]uint64)            // to => amount
 )
@@ -18,6 +19,7 @@ func delegate(to std.Address, amount uint64) {
 		delegatedFromTo[caller.String()] = make(map[string]uint64)
 	}
 
+	delegatorAmount[caller.String()] += amount
 	delegatedFromTo[caller.String()][to.String()] += amount
 	delegatedTo[to.String()] += amount
 
@@ -45,6 +47,7 @@ func undelegate(from std.Address, amount uint64) {
 		panic(ufmt.Sprintf("caller %s has only %d delegated amount to %s", caller.String(), delegatedAmount, from.String()))
 	}
 
+	delegatorAmount[caller.String()] -= amount
 	delegatedFromTo[caller.String()][from.String()] -= amount
 	delegatedTo[from.String()] -= amount
 
