@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"time"
 
 	"gno.land/p/demo/ufmt"
 )
@@ -22,6 +23,13 @@ func delegate(to std.Address, amount uint64) {
 	delegatorAmount[caller.String()] += amount
 	delegatedFromTo[caller.String()][to.String()] += amount
 	delegatedTo[to.String()] += amount
+
+	// Update delegation history
+	delegation := DelegationHistory{
+		amount:    amount,
+		timestamp: uint64(time.Now().Unix()),
+	}
+	delegationHistory[caller] = append(delegationHistory[caller], delegation)
 
 	// caller is just owner of token, not owner of voting power.
 	// therefore no need to update caller's voting power
@@ -50,6 +58,13 @@ func undelegate(from std.Address, amount uint64) {
 	delegatorAmount[caller.String()] -= amount
 	delegatedFromTo[caller.String()][from.String()] -= amount
 	delegatedTo[from.String()] -= amount
+
+	// Update delegation history
+	delegation := DelegationHistory{
+		amount:    amount,
+		timestamp: uint64(time.Now().Unix()),
+	}
+	delegationHistory[caller] = append(delegationHistory[caller], delegation)
 
 	// caller is just owner of token, not owner of voting power.
 	// therefore no need to update caller's voting power
