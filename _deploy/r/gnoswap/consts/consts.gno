@@ -60,7 +60,7 @@ const (
 	GOV_XGNS_PATH string      = "gno.land/r/gnoswap/v2/gov/xgns"
 	GOV_XGNS_ADDR std.Address = "g16gjmzf8725njf48325nl3yx3ve53wdu4ru53vm"
 
-	GOV_STKAER_PATH string      = "gno.land/r/gnoswap/v2/gov/staker"
+	GOV_STAKER_PATH string      = "gno.land/r/gnoswap/v2/gov/staker"
 	GOV_STAKER_ADDR std.Address = "g1gt2xzjcmhp2t08yh0nkmc3q822sr87t5n92rm0"
 )
 
