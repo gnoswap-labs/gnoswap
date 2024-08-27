@@ -23,21 +23,21 @@ func TestDistributeProtocolFee(t *testing.T) {
 
 	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
 	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	shouldEQ(t, bar.BalanceOf(a2u(consts.X_GNS_ADDR)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
 
 	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
 	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	shouldEQ(t, qux.BalanceOf(a2u(consts.X_GNS_ADDR)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
 
 	DistributeProtocolFee()
 
 	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
 	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(500))
-	shouldEQ(t, bar.BalanceOf(a2u(consts.X_GNS_ADDR)), uint64(500))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(500))
 
 	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
 	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(500))
-	shouldEQ(t, qux.BalanceOf(a2u(consts.X_GNS_ADDR)), uint64(500))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(500))
 }
 
 func TestDistributeProtocolFeeNoPermission(t *testing.T) {
@@ -83,7 +83,7 @@ func TestChagneXGnsDistributePercentInvalidFee(t *testing.T) {
 func TestChagneXGnsDistributePercent(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	shouldEQ(t, GetXGnsDistributePercent(), uint64(5000))
+	shouldEQ(t, GetXGnsDistributePercent(), uint64(3000))
 
 	ChagneXGnsDistributePercent(123)
 

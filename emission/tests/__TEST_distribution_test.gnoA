@@ -67,5 +67,5 @@ func TestChangeDistributionPct_ByAdmin(t *testing.T) {
 	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), uint64(10000))
 	shouldEQ(t, GetDistributionPct(DEVOPS), uint64(0))
 	shouldEQ(t, GetDistributionPct(COMMUNITY_POOL), uint64(0))
-	shouldEQ(t, GetDistributionPct(XGNS), uint64(0))
+	shouldEQ(t, GetDistributionPct(GOV_STAKER), uint64(0))
 }
