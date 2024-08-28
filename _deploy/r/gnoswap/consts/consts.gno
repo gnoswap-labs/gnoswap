@@ -62,6 +62,9 @@ const (
 
 	GOV_STAKER_PATH string      = "gno.land/r/gnoswap/v2/gov/staker"
 	GOV_STAKER_ADDR std.Address = "g1gt2xzjcmhp2t08yh0nkmc3q822sr87t5n92rm0"
+
+	GOV_GOVERNANCE_PATH string      = "gno.land/r/gnoswap/v2/gov/governance"
+	GOV_GOVERNANCE_ADDR std.Address = "g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5"
 )
 
 // NUMBER
