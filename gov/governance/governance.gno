@@ -23,7 +23,7 @@ var (
 // It checks if the proposer is eligible to create a proposal and if they don't have an active proposal.
 // Returns the proposal ID and an error if the proposal creation fails.
 func Propose(
-	proposalType string, // TODO
+	proposalType string,
 	title string,
 	text string,
 	msgToExecute string, // for proposalType == "COMMUNITY_POOL_SPEND" or "PARAMETER_CHANGE"
@@ -31,6 +31,9 @@ func Propose(
 	updateProposalsState()
 
 	checkProposalType(proposalType)
+	if proposalType == "TEXT" && msgToExecute != "" {
+		panic("TEXT_PROPOSAL_SHOULD_NOT_HAVE_MSG_TO_EXECUTE")
+	}
 
 	proposer := std.GetOrigCaller()
 	proposalId++

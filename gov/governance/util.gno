@@ -171,7 +171,11 @@ func strToU256U64(str string) uint64 {
 }
 
 func checkProposalType(proposalType string) {
-	// TODO: check if proposalType is valid
+	if proposalType != "TEXT" &&
+		proposalType != "COMMUNITY_POOL_SPEND" &&
+		proposalType != "PARAMETER_CHANGE" {
+		panic("INVALID_PROPOSAL_TYPE")
+	}
 }
 
 func voteToString(b bool) string {
