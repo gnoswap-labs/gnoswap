@@ -18,8 +18,8 @@ func init() {
 }
 
 func assertCalledByGovRealm() {
-	if std.PrevRealm().PkgPath() != consts.GOV_PATH {
-		panic(ufmt.Sprintf("[POOL] emergency_halt.gno__assertCalledByGovRealm() || only gov(%s) can call, but called from(%s)", consts.GOV_PATH, std.PrevRealm().PkgPath()))
+	if std.PrevRealm().PkgPath() != consts.GOV_GOVERNANCE_PATH {
+		panic(ufmt.Sprintf("[POOL] emergency_halt.gno__assertCalledByGovRealm() || only gov(%s) can call, but called from(%s)", consts.GOV_GOVERNANCE_PATH, std.PrevRealm().PkgPath()))
 	}
 }
 

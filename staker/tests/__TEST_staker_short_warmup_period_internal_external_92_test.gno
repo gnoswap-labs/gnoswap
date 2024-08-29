@@ -4,6 +4,8 @@
 // with internal incentive for same pool
 // and position range will
 //   1. in-range
+//   2. out-range
+//   3. in-range
 
 package staker
 
@@ -170,65 +172,4 @@ func TestCheckCurrentReward(t *testing.T) {
 	// check if position is in range
 	poolCurrentTick := pl.PoolGetSlot0Tick("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100")
 	shouldEQ(t, poolCurrentTick, int32(0)) // pool's current tick is 0
-
-	// {
-	// 	"stat": {
-	// 		"height": 1229,
-	// 		"timestamp": 1234570102
-	// 	},
-	// 	"response": [
-	// 		{
-	// 			"lpTokenId": 1,
-	// 			"address": "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c",
-	// 			"rewards": [
-	// 				{
-	// 					"incentiveType": "INTERNAL",
-	// 					"incentiveId": "",
-	// 					"targetPoolPath": "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-	// 					"rewardTokenPath": "gno.land/r/gnoswap/v2/gns",
-	// 					"rewardTokenAmount": 7028690,
-	// 					"stakeTimestamp": 1234567898,
-	// 					"stakeHeight": 127,
-	// 					"incentiveStart": 1234567898
-	// 				},
-	// 				{
-	// 					"incentiveType": "EXTERNAL",
-	// 					"incentiveId": "ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==",
-	// 					"targetPoolPath": "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-	// 					"rewardTokenPath": "gno.land/r/onbloc/bar",
-	// 					"rewardTokenAmount": 19,
-	// 					"stakeTimestamp": 1234567898,
-	// 					"stakeHeight": 127,
-	// 					"incentiveStart": 1234569600
-	// 				}
-	// 			]
-	// 		},
-	// 		{
-	// 			"lpTokenId": 2,
-	// 			"address": "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c",
-	// 			"rewards": [
-	// 				{
-	// 					"incentiveType": "INTERNAL",
-	// 					"incentiveId": "",
-	// 					"targetPoolPath": "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-	// 					"rewardTokenPath": "gno.land/r/gnoswap/v2/gns",
-	// 					"rewardTokenAmount": 7933895743,
-	// 					"stakeTimestamp": 1234567898,
-	// 					"stakeHeight": 127,
-	// 					"incentiveStart": 1234567898
-	// 				},
-	// 				{
-	// 					"incentiveType": "EXTERNAL",
-	// 					"incentiveId": "ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==",
-	// 					"targetPoolPath": "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
-	// 					"rewardTokenPath": "gno.land/r/onbloc/bar",
-	// 					"rewardTokenAmount": 22085,
-	// 					"stakeTimestamp": 1234567898,
-	// 					"stakeHeight": 127,
-	// 					"incentiveStart": 1234569600
-	// 				}
-	// 			]
-	// 		}
-	// 	]
-	// }
 }

@@ -36,9 +36,6 @@ const (
 	STAKER_PATH string      = "gno.land/r/gnoswap/v2/staker"
 	STAKER_ADDR std.Address = "g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l"
 
-	GOV_PATH string      = "gno.land/r/gnoswap/v2/gov"
-	GOV_ADDR std.Address = "g1cu4dufdlzu0l9pekkqhw6mjnrxkp3z7ykst09d"
-
 	GNS_PATH string      = "gno.land/r/gnoswap/v2/gns"
 	GNS_ADDR std.Address = "g1ttcyeq0u5f6npysfxvew7tzucvwqy0qjp04p95"
 

@@ -18,12 +18,12 @@ var (
 
 func DistributeProtocolFee() {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
 				"only admin(%s) or governance(%s) can distribute protocol fee, called from %s",
 				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
+				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
 		)
@@ -54,28 +54,28 @@ func DistributeProtocolFee() {
 	}
 }
 
-func ChagneXGnsDistributePercent(fee uint64) {
+func GetDevOpsPct() uint64 {
+	return devOpsPct
+}
+
+func SetDevOpsPct(pct uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
-				"only admin(%s) or governance(%s) can change protocol fee distribution percent, called from %s",
+				"only admin(%s) or governance(%s) can change protocol fee distribution percent for dev ops, called from %s",
 				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
+				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
 		)
 	}
 
-	if fee > 10000 {
-		panic("fee should be less than 10000")
+	if pct > 10000 {
+		panic("pct should be less than 10000")
 	}
 
-	devOpsPct = fee
-}
-
-func GetXGnsDistributePercent() uint64 {
-	return devOpsPct
+	devOpsPct = pct
 }
 
 func GetLastTransferToDevOps() uint64 {

@@ -46,7 +46,7 @@ func TestTransferGnsNoPermission(t *testing.T) {
 		func() {
 			TransferToken(consts.GNS_PATH, dummy, 1000)
 		},
-		"[COMMUNITY_POOL] community_pool.gno__TransferToken() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1cu4dufdlzu0l9pekkqhw6mjnrxkp3z7ykst09d) can transfer community pool's balance, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+		"[COMMUNITY_POOL] community_pool.gno__TransferToken() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can transfer community pool's balance, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
