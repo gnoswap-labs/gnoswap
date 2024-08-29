@@ -1,0 +1,189 @@
+package governance
+
+import (
+	"std"
+	"strings"
+	"testing"
+
+	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v2/gns"
+	gs "gno.land/r/gnoswap/v2/gov/staker"
+
+	"gno.land/p/demo/testutils"
+)
+
+var (
+	to        = std.Address(testutils.TestAddress("to"))
+	tokenPath = consts.GNS_PATH
+)
+
+func TestProposeCommunityPoolSpend(t *testing.T) {
+	t.Run("ProposeCommunityPoolSpend with insufficient delegation", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "THRESHOLD") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 100)
+	})
+
+	t.Run("Successful community pool spend proposal", func(t *testing.T) {
+		std.TestSetOrigCaller(gsa)
+		std.TestSetRealm(gsaRealm)
+		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
+		gs.Delegate(gsa, uint64(1_000_000))
+		std.TestSkipHeights(1)
+
+		proposalID := ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 100)
+		if proposalID != 1 {
+			t.Errorf("Expected proposal ID to be 1, got %d", proposalID)
+		}
+
+		proposal, exist := proposals[proposalId]
+		if !exist {
+			t.Errorf("Proposal not found after creation")
+		}
+
+		if proposal.Proposer != std.GetOrigCaller() {
+			t.Errorf("Incorrect proposer. Expected %v, got %v", std.GetOrigCaller(), proposal.Proposer)
+		}
+
+		if proposal.ProposalType != "COMMUNITY_POOL_SPEND" {
+			t.Errorf("Incorrect proposal type. Expected COMMUNITY_POOL_SPEND {, got %v", proposal.ProposalType)
+		}
+
+		if !proposal.ExecutionState.Created {
+			t.Errorf("Proposal execute state(created) not set correctly")
+		}
+
+		if !proposal.ExecutionState.Upcoming {
+			t.Errorf("Proposal execute state(upcoming) not set correctly")
+		}
+
+		if proposal.Yea.Cmp(u256.NewUint(0)) != 0 || proposal.Nay.Cmp(u256.NewUint(0)) != 0 {
+			t.Errorf("Initial vote counts should be zero")
+		}
+
+		if proposal.ConfigVersion != 1 {
+			t.Errorf("Initial config version should be 1")
+		}
+
+		if proposal.Title != "test_title" {
+			t.Errorf("Incorrect title. Expected test_title, got %v", proposal.Title)
+		}
+
+		if proposal.Description != "test_description" {
+			t.Errorf("Incorrect text. Expected test_description, got %v", proposal.Description)
+		}
+	})
+
+	t.Run("ProposeCommunityPoolSpend with active proposal", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "PROPOSER_HAS_UPCOMING_OR_ACTIVE_PROPOSAL") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		std.TestSetOrigCaller(gsa)
+		std.TestSetRealm(gsaRealm)
+		ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 100)
+	})
+}
+
+func TestExecute(t *testing.T) {
+	proposalId := uint64(1)
+
+	t.Run("Execute proposal didn't passed yet", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "has not passed") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		Execute(proposalId)
+	})
+
+	t.Run("Vote proposal to make it passed", func(t *testing.T) {
+		std.TestSkipHeights(51)
+		voteKey := Vote(proposalId, true)
+		voted := votes[voteKey]
+		if voted != true {
+			t.Errorf("Vote not set correctly")
+		}
+
+		std.TestSkipHeights(1000) // ends voting period
+		updateProposalsState()
+
+		proposal := proposals[proposalId]
+		if !proposal.ExecutionState.Passed {
+			t.Errorf("Proposal execute state(passed) not set correctly")
+		}
+	})
+
+	t.Run("Successful execute proposal", func(t *testing.T) {
+		// to execute community pool spend proposal, we need to have enough balance in community pool
+		std.TestSetOrigCaller(gsa)
+		std.TestSetRealm(gsaRealm)
+
+		shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(0))
+		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), 1000)
+
+		shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(1000))
+		shouldEQ(t, gns.BalanceOf(a2u(to)), uint64(0))
+
+		Execute(proposalId)
+
+		shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(1000-100))
+		shouldEQ(t, gns.BalanceOf(a2u(to)), uint64(100))
+
+		proposal := proposals[proposalId]
+		if !proposal.ExecutionState.Executed {
+			t.Errorf("Proposal execute state(executed) not set correctly")
+		}
+	})
+
+	t.Run("Execute already executed proposal", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "already executed") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		Execute(proposalId)
+	})
+
+	t.Run("Execute rejected proposal", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "or rejected(true)") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		proposalId := ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 50) // create new proposal
+		std.TestSkipHeights(51)
+
+		Vote(proposalId, false)   // vote Nay
+		std.TestSkipHeights(1000) // ends voting period
+
+		updateProposalsState() // proposal rejected
+		proposal := proposals[proposalId]
+		if !proposal.ExecutionState.Rejected {
+			t.Errorf("Proposal execute state(rejected) not set correctly")
+		}
+
+		Execute(proposalId) // panic
+	})
+}

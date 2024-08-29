@@ -55,6 +55,18 @@ type ExecutionState struct {
 	ExpiredAt uint64
 }
 
+type CommunityPoolSpendInfo struct {
+	To        std.Address
+	TokenPath string
+	Amount    uint64
+}
+
+type ParameterChangeInfo struct {
+	PkgPath  string
+	Function string
+	Params   string
+}
+
 // ProposalInfo represents all the information about a proposal
 type ProposalInfo struct {
 	// The address of the proposer
@@ -80,35 +92,9 @@ type ProposalInfo struct {
 	// The description of the proposal
 	Description string
 
-	// The list of calls that will be executed if the proposal is successful
-	ExecuteMsg string
+	// CommunityPoolSpend
+	CommunityPoolSpend CommunityPoolSpendInfo
+
+	// ParamterChange
+	ParameterChange ParameterChangeInfo
 }
-
-// TODO: dynamic call
-// Call represents a contract call
-type Call struct {
-	// To       std.Address
-	// Selector uint64
-	To  std.Address // TODO: XXX: need this ??
-	Key string      // pkg_path + ":" + fn_name
-
-	Calldata string
-}
-
-// TODO: XXX : need this ??
-// hashCalls computes the hash of a list of calls
-// func hashCalls(calls []Call) string {
-// 	var buf strings.Builder
-// 	buf.WriteString("governance::governor::Governor::hash_calls")
-
-// 	for _, call := range calls {
-// 		buf.WriteString(string(call.To))
-// 		buf.WriteString(strconv.FormatUint(call.Key, 10))
-// 		buf.WriteString(call.Calldata)
-// 	}
-
-// 	return buf.String()
-// }
-
-// CallFunction prepresents a function that can be called by the governor
-type CallFunction func(...string) (string, error)

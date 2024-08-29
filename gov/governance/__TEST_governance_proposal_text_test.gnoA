@@ -1,0 +1,273 @@
+package governance
+
+import (
+	"std"
+	"strings"
+	"testing"
+
+	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v2/gns"
+	gs "gno.land/r/gnoswap/v2/gov/staker"
+
+	u256 "gno.land/p/gnoswap/uint256"
+)
+
+func TestProposeText(t *testing.T) {
+	t.Run("ProposeText with insufficient delegation", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "THRESHOLD") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		ProposeText("title", "text")
+	})
+
+	t.Run("Successful text proposal", func(t *testing.T) {
+		std.TestSetOrigCaller(gsa)
+		std.TestSetRealm(gsaRealm)
+		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
+		gs.Delegate(gsa, uint64(1_000_000))
+		std.TestSkipHeights(1)
+
+		proposalID := ProposeText("test_title", "test_description")
+		if proposalID != 1 {
+			t.Errorf("Expected proposal ID to be 1, got %d", proposalID)
+		}
+
+		proposal, exist := proposals[proposalId]
+		if !exist {
+			t.Errorf("Proposal not found after creation")
+		}
+
+		if proposal.Proposer != std.GetOrigCaller() {
+			t.Errorf("Incorrect proposer. Expected %v, got %v", std.GetOrigCaller(), proposal.Proposer)
+		}
+
+		if proposal.ProposalType != "TEXT" {
+			t.Errorf("Incorrect proposal type. Expected TEXT, got %v", proposal.ProposalType)
+		}
+
+		if !proposal.ExecutionState.Created {
+			t.Errorf("Proposal execute state(created) not set correctly")
+		}
+
+		if !proposal.ExecutionState.Upcoming {
+			t.Errorf("Proposal execute state(upcoming) not set correctly")
+		}
+
+		if proposal.Yea.Cmp(u256.NewUint(0)) != 0 || proposal.Nay.Cmp(u256.NewUint(0)) != 0 {
+			t.Errorf("Initial vote counts should be zero")
+		}
+
+		if proposal.ConfigVersion != 1 {
+			t.Errorf("Initial config version should be 1")
+		}
+
+		if proposal.Title != "test_title" {
+			t.Errorf("Incorrect title. Expected test_title, got %v", proposal.Title)
+		}
+
+		if proposal.Description != "test_description" {
+			t.Errorf("Incorrect text. Expected test_description, got %v", proposal.Description)
+		}
+	})
+
+	t.Run("ProposeText with active proposal", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "PROPOSER_HAS_UPCOMING_OR_ACTIVE_PROPOSAL") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		std.TestSetOrigCaller(gsa)
+		std.TestSetRealm(gsaRealm)
+		ProposeText("test_title", "test_description")
+	})
+}
+
+func TestVote(t *testing.T) {
+	t.Run("Vote non existent proposal", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "does not exist") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		Vote(uint64(123), true)
+	})
+
+	proposalId := uint64(1) // text proposal id
+
+	t.Run("Vote before voting period", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "not started yet") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		Vote(proposalId, true)
+	})
+
+	t.Run("Successful vote YES", func(t *testing.T) {
+		std.TestSkipHeights(51)
+
+		voteKey := Vote(proposalId, true)
+		voted := votes[voteKey]
+		if voted != true {
+			t.Errorf("Vote not recorded correctly")
+		}
+
+		proposal := proposals[proposalId]
+		if proposal.Yea.Cmp(u256.NewUint(1_000_000)) != 0 {
+			t.Errorf("Vote count not updated correctly")
+		}
+
+		if proposal.Nay.Cmp(u256.NewUint(0)) != 0 {
+			t.Errorf("Vote count not updated correctly")
+		}
+
+		if proposal.ExecutionState.Upcoming {
+			t.Errorf("Proposal should not be upcoming after vote")
+		}
+
+		if !proposal.ExecutionState.Active {
+			t.Errorf("Proposal should be active after vote")
+		}
+	})
+
+	t.Run("Vote twice", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "already voted") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		Vote(proposalId, true)
+	})
+
+	t.Run("Vote after voting period", func(t *testing.T) {
+		std.TestSkipHeights(2001)
+
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "has ended") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		Vote(proposalId, true)
+	})
+
+	t.Run("Proposal status after voting period", func(t *testing.T) {
+		updateProposalsState()
+
+		proposal := proposals[proposalId]
+		if proposal.ExecutionState.Active {
+			t.Errorf("Proposal should not be active after voting period")
+		}
+
+		if !proposal.ExecutionState.Passed {
+			t.Errorf("Proposal should be passed")
+		}
+
+		if proposal.ExecutionState.Rejected {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposal.ExecutionState.Executed {
+			t.Errorf("Proposal should not be executed, #1 is text proposal and should not be executed")
+		}
+	})
+}
+
+func TestCancel(t *testing.T) {
+	// new text proposal #2
+	proposalId := ProposeText("test2_title", "test2_description")
+	if proposalId != 2 {
+		t.Errorf("Expected proposal ID to be 2, got %d", proposalId)
+	}
+
+	t.Run("Cancel non existent proposal", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "does not exist") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		Cancel(uint64(123))
+	})
+
+	t.Run("Successful cancel", func(t *testing.T) {
+		Cancel(proposalId)
+
+		proposal := proposals[proposalId]
+		if !proposal.ExecutionState.Canceled {
+			t.Errorf("Proposal should be cancelled")
+		}
+
+		if proposal.ExecutionState.Active {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposal.ExecutionState.Upcoming {
+			t.Errorf("Proposal should not be upcoming")
+		}
+	})
+
+	t.Run("Cancel already canceled proposal", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "already canceled") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		Cancel(proposalId)
+	})
+
+	t.Run("Cancle after voting period", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "already started") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		// new text proposal #3
+		proposalId := ProposeText("test3_title", "test3_description")
+		std.TestSkipHeights(51)
+		Cancel(proposalId)
+	})
+}
+
+func TestExecute(t *testing.T) {
+	proposalId := uint64(1) // text proposal id
+
+	t.Run("Execute text proposal", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			} else if !strings.Contains(string(r), "not executable") {
+				t.Errorf("Unexpected panic message: %v", r)
+			}
+		}()
+
+		Execute(proposalId)
+	})
+}

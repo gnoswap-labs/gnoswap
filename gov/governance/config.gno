@@ -3,7 +3,6 @@ package governance
 import (
 	"std"
 
-	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v2/consts"
@@ -60,7 +59,15 @@ func GetConfigVersion(version uint64) Config {
 // Reconfigure updates the Governor's configuration.
 // This function can only be called by the Governor itself (via a proposal).
 // Returns the new configuration version number.
-func Reconfigure(newConfigJSON string) uint64 {
+func Reconfigure(
+	votingStartDelay uint64,
+	votingPeriod uint64,
+	votingWeightSmoothingDuration uint64,
+	quorum uint64,
+	proposalCreationThreshold uint64,
+	executionDelay uint64,
+	executionWindow uint64,
+) uint64 {
 	prev := std.PrevRealm().PkgPath()
 	if !(prev == "" || (prev == consts.GOV_GOVERNANCE_PATH)) {
 		panic(
@@ -71,14 +78,17 @@ func Reconfigure(newConfigJSON string) uint64 {
 		)
 	}
 
-	newConfigNode, err := json.Unmarshal([]byte(newConfigJSON))
-	if err != nil {
-		panic("invalid confiquration JSON: " + err.Error())
-	}
-
-	config = parseConfig(newConfigNode)
-
 	newVersion := uint64(len(configVersions) + 1)
+
+	config = Config{
+		VotingStartDelay:              votingStartDelay,
+		VotingPeriod:                  votingPeriod,
+		VotingWeightSmoothingDuration: votingWeightSmoothingDuration,
+		Quorum:                        quorum,
+		ProposalCreationThreshold:     proposalCreationThreshold,
+		ExecutionDelay:                executionDelay,
+		ExecutionWindow:               executionWindow,
+	}
 	configVersions[newVersion] = config
 
 	std.Emit(
@@ -94,36 +104,4 @@ func Reconfigure(newConfigJSON string) uint64 {
 	)
 
 	return newVersion
-}
-
-// parseConfig converts a JSON Node representing a config into a Config struct.
-// The input JSON object should have the following structure:
-//
-//	{
-//	  "votingStartDelay": 100,
-//	  "votingPeriod": 1000,
-//	  "votingWeightSmoothingDuration": 100,
-//	  "quorum": "500",
-//	  "proposalCreationThreshold": "100",
-//	  "executionDelay": 100,
-//	  "executionWindow": 1000
-//	}
-//
-// Returns a Config struct and an error if parsing fails.
-func parseConfig(node *json.Node) Config {
-	if !node.IsObject() {
-		panic("config must be an object")
-	}
-
-	var config Config
-
-	config.VotingStartDelay = parseUint64Field(node, "votingStartDelay")
-	config.VotingPeriod = parseUint64Field(node, "votingPeriod")
-	config.VotingWeightSmoothingDuration = parseUint64Field(node, "votingWeightSmoothingDuration")
-	config.Quorum = parseUint64Field(node, "quorum")
-	config.ProposalCreationThreshold = parseUint64Field(node, "proposalCreationThreshold")
-	config.ExecutionDelay = parseUint64Field(node, "executionDelay")
-	config.ExecutionWindow = parseUint64Field(node, "executionWindow")
-
-	return config
 }
