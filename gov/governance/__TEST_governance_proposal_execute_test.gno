@@ -11,6 +11,7 @@ import (
 	"gno.land/r/gnoswap/v2/gns"
 	gs "gno.land/r/gnoswap/v2/gov/staker"
 
+	cn "gno.land/r/gnoswap/v2/common"
 	en "gno.land/r/gnoswap/v2/emission"
 	pl "gno.land/r/gnoswap/v2/pool"
 	pf "gno.land/r/gnoswap/v2/protocol_fee"
@@ -693,5 +694,40 @@ func TestProposeParameterChange_Staker_SetWarmUp(t *testing.T) {
 		Execute(proposalId)
 
 		shouldEQ(t, sr.GetWarmUp(100), int64(1000))
+	})
+}
+
+func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
+	t.Run("Successful prpose", func(t *testing.T) {
+		std.TestSetOrigCaller(gsa)
+		std.TestSetRealm(gsaRealm)
+
+		proposalID := ProposeParameterChange(
+			"test_title",
+			"test_description",
+			consts.COMMON_PATH,
+			"SetHalt",
+			"true",
+		)
+	})
+
+	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
+		// vote to pass it
+		std.TestSkipHeights(51)
+		voteKey := Vote(proposalId, true)
+		voted := votes[voteKey]
+		if voted != true {
+			t.Errorf("Vote not set correctly")
+		}
+
+		std.TestSkipHeights(1000) // ends voting period
+		updateProposalsState()
+	})
+
+	t.Run("Execute proposal", func(t *testing.T) {
+		shouldEQ(t, cn.GetHalt(), false)
+
+		Execute(proposalId)
+		shouldEQ(t, cn.GetHalt(), true)
 	})
 }

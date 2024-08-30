@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	cn "gno.land/r/gnoswap/v2/common"
 	en "gno.land/r/gnoswap/v2/emission"
 	"gno.land/r/gnoswap/v2/gns"
 	pl "gno.land/r/gnoswap/v2/pool"
@@ -97,10 +98,11 @@ func executeParameterChange(paramChange ParameterChangeInfo) {
 			sr.GnsSetAvgBlockTimeInMs(ms)
 		}
 
-	case "gno.land/r/gnoswap/v2/consts":
+	case consts.COMMON_PATH:
 		switch funcName {
-		case "Halt":
-			// consts.SetHalt(params)
+		case "SetHalt":
+			halt := handleSingleBool(params)
+			cn.SetHalt(halt)
 		}
 
 	default:
@@ -192,4 +194,18 @@ func handleTwoInt64(params []string) (int64, int64) {
 	}
 
 	return int64(parseUint(params[0], 10, 64)), int64(parseUint(params[1], 10, 64))
+}
+
+func handleSingleBool(params []string) bool {
+	if len(params) != 1 {
+		panic(ufmt.Sprintf("invalid params(%s)", params))
+	}
+
+	if params[0] == "true" {
+		return true
+	} else if params[0] == "false" {
+		return false
+	} else {
+		panic(ufmt.Sprintf("invalid bool(%s)", params[0]))
+	}
 }

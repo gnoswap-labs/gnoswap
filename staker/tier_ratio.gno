@@ -167,6 +167,9 @@ func getRewardRatio(height int64) uint64 {
 //   - tier3Amount (uint64): tier3 amount
 func getTiersAmount(amount uint64) (uint64, uint64, uint64) {
 	tier1Ratio, tier2Ratio, tier3Ratio := listTierRatio()
+	println("tier1Ratio", tier1Ratio)
+	println("tier2Ratio", tier2Ratio)
+	println("tier3Ratio", tier3Ratio)
 
 	tier1Amount := (amount * tier1Ratio) / 100
 	tier2Amount := (amount * tier2Ratio) / 100

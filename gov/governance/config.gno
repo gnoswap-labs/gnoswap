@@ -5,6 +5,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 )
 
@@ -68,6 +69,8 @@ func Reconfigure(
 	executionDelay uint64,
 	executionWindow uint64,
 ) uint64 {
+	common.IsHalted()
+
 	prev := std.PrevRealm().PkgPath()
 	if !(prev == "" || (prev == consts.GOV_GOVERNANCE_PATH)) {
 		panic(

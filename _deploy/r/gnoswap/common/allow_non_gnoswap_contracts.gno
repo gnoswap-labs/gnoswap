@@ -15,15 +15,13 @@ func GetLimitCaller() bool {
 }
 
 func SetLimitCaller(v bool) {
-	MustCallFromAdmin()
-	limitCaller = v
-}
+	IsHalted()
 
-func MustCallFromAdmin() {
-	caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 	if caller != consts.GNOSWAP_ADMIN {
-		panic("must be called by admin")
+		panic("only admin can set limitCaller")
 	}
+	limitCaller = v
 }
 
 func DisallowCallFromUser() {

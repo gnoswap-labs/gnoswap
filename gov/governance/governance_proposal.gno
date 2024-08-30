@@ -9,6 +9,8 @@ import (
 	cp "gno.land/r/gnoswap/v2/community_pool"
 	gs "gno.land/r/gnoswap/v2/gov/staker"
 
+	"gno.land/r/gnoswap/v2/common"
+
 	"gno.land/p/demo/ufmt"
 )
 
@@ -27,6 +29,8 @@ func ProposeText(
 	title string,
 	description string,
 ) uint64 { // proposalId
+	common.IsHalted()
+
 	updateProposalsState()
 
 	proposer := std.GetOrigCaller()
@@ -79,6 +83,8 @@ func ProposeCommunityPoolSpend(
 	tokenPath string,
 	amount uint64,
 ) uint64 { // proposalId
+	common.IsHalted()
+
 	updateProposalsState()
 
 	proposer := std.GetOrigCaller()
@@ -139,6 +145,8 @@ func ProposeParameterChange(
 	function string,
 	param string,
 ) uint64 { // proposalId
+	common.IsHalted()
+
 	updateProposalsState()
 
 	proposer := std.GetOrigCaller()
@@ -193,6 +201,8 @@ func ProposeParameterChange(
 // The user's voting weight is determined by their average delegated stake over a specified period.
 // Panics if the voting conditions are not met (e.g., voting period hasn't started, has ended, or user has already voted).
 func Vote(proposalId uint64, yes bool) string {
+	common.IsHalted()
+
 	updateProposalsState()
 
 	proposal, exist := proposals[proposalId]
@@ -266,6 +276,8 @@ func Vote(proposalId uint64, yes bool) string {
 // Only callable by the proposer or if the proposer's stake has fallen below the threshold.
 // Panics if the proposal doesn't exist, is already canceled, or if voting has already started.
 func Cancel(proposalId uint64) {
+	common.IsHalted()
+
 	updateProposalsState()
 
 	proposal, exist := proposals[proposalId]
@@ -320,6 +332,8 @@ func Cancel(proposalId uint64) {
 // Returns the results of the executed calls.
 // Panics if any of the execution conditions are not met.
 func Execute(proposalId uint64) {
+	common.IsHalted()
+
 	updateProposalsState()
 
 	proposal, exist := proposals[proposalId]

@@ -19,7 +19,7 @@ type currentInfo struct {
 	gnsStaker        uint64
 	gnsDevOps        uint64
 	gnsCommunityPool uint64
-	gnsXGNS          uint64
+	gnsGovStaker     uint64
 	gnsProtocolFee   uint64
 	gnsGSA           uint64
 }
@@ -31,7 +31,7 @@ func getCurrentInfo() currentInfo {
 		gnsStaker:        gns.BalanceOf(a2u(consts.STAKER_ADDR)),
 		gnsDevOps:        gns.BalanceOf(a2u(consts.DEV_OPS)),
 		gnsCommunityPool: gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)),
-		gnsXGNS:          gns.BalanceOf(a2u(consts.X_GNS_ADDR)),
+		gnsGovStaker:     gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)),
 		gnsProtocolFee:   gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)),
 		gnsGSA:           gns.BalanceOf(a2u(consts.GNOSWAP_ADMIN)),
 	}
@@ -57,8 +57,8 @@ func printInfo(prev currentInfo) currentInfo {
 	println("> community pool_bal\t", curr.gnsCommunityPool)
 	println("> community pool_chg\t", int(curr.gnsCommunityPool-prev.gnsCommunityPool))
 	println()
-	println("> x_gns_bal\t\t", curr.gnsXGNS)
-	println("> x_gns_chg\t\t", int(curr.gnsXGNS-prev.gnsXGNS))
+	println("> gov_staker_bal\t\t", curr.gnsGovStaker)
+	println("> gov_staker_chg\t\t", int(curr.gnsGovStaker-prev.gnsGovStaker))
 	println()
 	println("> protocol fee_bal\t", curr.gnsProtocolFee)
 	println("> protocol fee_chg\t", int(curr.gnsProtocolFee-prev.gnsProtocolFee))
@@ -94,7 +94,7 @@ type ApiEmissionDebugInfo struct {
 	GnsStaker        uint64                 `json:"gnsStaker"`
 	GnsDevOps        uint64                 `json:"gnsDevOps"`
 	GnsCommunityPool uint64                 `json:"gnsCommunityPool"`
-	GnsXGNS          uint64                 `json:"gnsXGNS"`
+	GnsGovStaker     uint64                 `json:"gnsGovStaker"`
 	GnsProtocolFee   uint64                 `json:"gnsProtocolFee"`
 	GnsGSA           uint64                 `json:"gnsGSA"`
 	Pool             []ApiEmissionDebugPool `json:"pool"`
@@ -128,7 +128,7 @@ func GetPrintInfo() string {
 	emissionDebug.GnsStaker = gns.BalanceOf(a2u(consts.STAKER_ADDR))
 	emissionDebug.GnsDevOps = gns.BalanceOf(a2u(consts.DEV_OPS))
 	emissionDebug.GnsCommunityPool = gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR))
-	emissionDebug.GnsXGNS = gns.BalanceOf(a2u(consts.X_GNS_ADDR))
+	emissionDebug.GnsGovStaker = gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
 	emissionDebug.GnsProtocolFee = gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR))
 	emissionDebug.GnsGSA = gns.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
 
@@ -175,7 +175,7 @@ func GetPrintInfo() string {
 			"staker":        json.NumberNode("", float64(emissionDebug.GnsStaker)),
 			"devOps":        json.NumberNode("", float64(emissionDebug.GnsDevOps)),
 			"communityPool": json.NumberNode("", float64(emissionDebug.GnsCommunityPool)),
-			"xGNS":          json.NumberNode("", float64(emissionDebug.GnsXGNS)),
+			"govStaker":     json.NumberNode("", float64(emissionDebug.GnsGovStaker)),
 			"protocolFee":   json.NumberNode("", float64(emissionDebug.GnsProtocolFee)),
 			"GnoswapAdmin":  json.NumberNode("", float64(emissionDebug.GnsGSA)),
 		}),
