@@ -28,6 +28,7 @@ func delegate(to std.Address, amount uint64) {
 	delegation := DelegationHistory{
 		amount:    amount,
 		timestamp: uint64(time.Now().Unix()),
+		add:       true,
 	}
 	delegationHistory[caller] = append(delegationHistory[caller], delegation)
 
@@ -61,8 +62,9 @@ func undelegate(from std.Address, amount uint64) {
 
 	// Update delegation history
 	delegation := DelegationHistory{
-		amount:    amount,
+		amount:    amount, // XXX: -amount
 		timestamp: uint64(time.Now().Unix()),
+		add:       false,
 	}
 	delegationHistory[caller] = append(delegationHistory[caller], delegation)
 
