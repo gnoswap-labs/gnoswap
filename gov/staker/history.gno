@@ -16,9 +16,7 @@ type DelegationHistory struct {
 	add       bool
 }
 
-var (
-	delegationHistory = make(map[std.Address][]DelegationHistory)
-)
+var delegationHistory = make(map[std.Address][]DelegationHistory)
 
 // GetDelegatedCumulative gets the cumulative delegated amount * seconds for an address at a certain timestamp.
 func GetDelegatedCumulative(_delegator string, timestamp uint64) string {
@@ -27,7 +25,7 @@ func GetDelegatedCumulative(_delegator string, timestamp uint64) string {
 		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
 	}
 
-	if uint64(time.Now().Unix()) <= timestamp {
+	if timestamp >= uint64(time.Now().Unix()) {
 		panic("FUTURE")
 	}
 
@@ -36,34 +34,25 @@ func GetDelegatedCumulative(_delegator string, timestamp uint64) string {
 		return "0"
 	}
 
-	var lastSnapshot DelegationHistory
-	var cumulativeAmount *u256.Uint
+	if timestamp < history[0].timestamp {
+		return "0"
+	}
 
-	for _, snapshot := range history {
-		if snapshot.timestamp > timestamp {
+	cumulativeAmount := u256.Zero()
+
+	for i, record := range history {
+		if record.timestamp > timestamp {
 			break
 		}
 
-		if lastSnapshot.timestamp != 0 {
-			duration := snapshot.timestamp - lastSnapshot.timestamp
-			if lastSnapshot.add {
-				cumulativeAmount = new(u256.Uint).Add(cumulativeAmount, new(u256.Uint).Mul(u256.NewUint(lastSnapshot.amount), u256.NewUint(duration)))
-			} else {
-				cumulativeAmount = new(u256.Uint).Sub(cumulativeAmount, new(u256.Uint).Mul(u256.NewUint(lastSnapshot.amount), u256.NewUint(duration)))
-			}
-		}
-		lastSnapshot = snapshot
-	}
+		duration := timestamp - record.timestamp
+		toAccu := new(u256.Uint).Mul(u256.NewUint(record.amount), u256.NewUint(duration))
 
-	if lastSnapshot.timestamp < timestamp {
-		duration := timestamp - lastSnapshot.timestamp
-
-		if lastSnapshot.add {
-			cumulativeAmount = new(u256.Uint).Add(cumulativeAmount, new(u256.Uint).Mul(u256.NewUint(lastSnapshot.amount), u256.NewUint(duration)))
+		if record.add {
+			cumulativeAmount = new(u256.Uint).Add(cumulativeAmount, toAccu)
 		} else {
-			cumulativeAmount = new(u256.Uint).Sub(cumulativeAmount, new(u256.Uint).Mul(u256.NewUint(lastSnapshot.amount), u256.NewUint(duration)))
+			cumulativeAmount = new(u256.Uint).Sub(cumulativeAmount, toAccu)
 		}
-
 	}
 
 	return cumulativeAmount.ToString()
@@ -89,60 +78,31 @@ func GetAverageDelegated(_delegator string, start, end uint64) string {
 		return "0"
 	}
 
-	// if start >= history[len(history)-1].timestamp {
-	// 	println("HMHMHMHM")
-	// 	return ufmt.Sprintf("%d", history[len(history)-1].amount)
-	// }
-
-	var (
-		totalAmount = u256.Zero()
-	)
+	cumulativeAmount := u256.Zero()
 
 	for i, record := range history {
-		println("i:", i)
-		println("record.timestamp:", record.timestamp)
-		println("record.amount:", record.amount)
-		println("record.add:", record.add)
-		println("start:", start)
-		println("end:", end)
-
 		if record.timestamp > end {
-			println("BREAK")
 			break
 		}
 
 		duration := end - maxUint64(record.timestamp, start)
-		println("duration:", duration)
-		println(" > end", end)
-		println(" > maxUint64(record.timestamp, start)", maxUint64(record.timestamp, start))
-		println("  > record.timestamp", record.timestamp)
-		println("  > start", start)
-		println()
-
 		toAccu := new(u256.Uint).Mul(u256.NewUint(record.amount), u256.NewUint(duration))
+
 		if record.add {
-			println("ADD", toAccu.ToString(), "FROM", totalAmount.ToString())
-			totalAmount = new(u256.Uint).Add(totalAmount, toAccu)
+			cumulativeAmount = new(u256.Uint).Add(cumulativeAmount, toAccu)
 		} else {
-			println("SUB", toAccu.ToString(), "FROM", totalAmount.ToString())
-			totalAmount = new(u256.Uint).Sub(totalAmount, toAccu)
+			cumulativeAmount = new(u256.Uint).Sub(cumulativeAmount, toAccu)
 		}
-		println()
 	}
 
 	res := u256.Zero()
 	totalDuration := end - start
 	if totalDuration == 0 {
-		res = totalAmount.Clone()
-		println("res #1", res.ToString())
-		println(" > totalAmount", totalAmount.ToString())
+		res = cumulativeAmount.Clone()
 		return res.ToString()
 	}
 
-	res = u256.Zero().Div(totalAmount, u256.NewUint(totalDuration))
-	println("res #2", res.ToString())
-	println(" > totalAmount", totalAmount.ToString())
-	println(" > DIV BY (end - start)", totalDuration)
+	res = u256.Zero().Div(cumulativeAmount, u256.NewUint(totalDuration))
 	return res.ToString()
 }
 

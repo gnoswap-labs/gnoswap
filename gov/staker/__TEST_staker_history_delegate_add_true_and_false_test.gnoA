@@ -7,6 +7,66 @@ import (
 	"gno.land/p/demo/testutils"
 )
 
+func TestGetDelegatedCumulative(t *testing.T) {
+	delegateAddr := testutils.TestAddress("delegate")
+	delegate := delegateAddr.String()
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("GetAverageDelegated panicked: %v", r)
+		}
+	}()
+
+	// simulate time passing and additional stakes
+	currentTime := uint64(1000)
+	delegationHistory[delegateAddr] = []DelegationHistory{
+		{amount: 2500, timestamp: currentTime, add: true},        // 1000
+		{amount: 1000, timestamp: currentTime + 100, add: false}, // 1100
+		{amount: 500, timestamp: currentTime + 200, add: true},   // 1200
+	}
+
+	tests := []struct {
+		name           string
+		timestamp      uint64
+		expectedResult string
+	}{
+		{
+			name:           "period +50",
+			timestamp:      currentTime + 50, // 1050
+			expectedResult: "125000",         // (2500 * 50)
+		},
+		{
+			name:           "period +100",
+			timestamp:      currentTime + 100, // 1100
+			expectedResult: "250000",          // (2500 * 100)
+		},
+		{
+			name:           "period +150",
+			timestamp:      currentTime + 150, // 1100
+			expectedResult: "325000",          // (2500 * 150 - 1000 * 50)
+		},
+		{
+			name:           "period +200",
+			timestamp:      currentTime + 200, // 1200
+			expectedResult: "400000",          // (2500 * 200 - 1000 * 100 + 500 * 0)
+		},
+		{
+			name:           "period +250",
+			timestamp:      currentTime + 250, // 1250
+			expectedResult: "500000",          // (2500 * 250 - 1000 * 150 + 500 * 50)
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := GetDelegatedCumulative(delegate, tt.timestamp)
+			if result != tt.expectedResult {
+				t.Errorf("Expected %s, got %s", tt.expectedResult, result)
+			}
+		})
+	}
+}
+
 func TestGetAverageDelegated(t *testing.T) {
 	delegateAddr := testutils.TestAddress("delegate")
 	delegate := delegateAddr.String()
