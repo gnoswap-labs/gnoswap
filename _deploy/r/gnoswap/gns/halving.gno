@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/p/demo/json"
@@ -101,6 +102,8 @@ func GetAvgBlockTimeInMs() int64 {
 }
 
 func SetAvgBlockTimeInMs(ms int64) {
+	common.IsHalted()
+
 	println()
 
 	// admin or governance or staker only

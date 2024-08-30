@@ -3,6 +3,7 @@ package protocol_fee
 import (
 	"std"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/p/demo/ufmt"
@@ -17,6 +18,8 @@ var (
 )
 
 func DistributeProtocolFee() {
+	common.IsHalted()
+
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
@@ -59,6 +62,8 @@ func GetDevOpsPct() uint64 {
 }
 
 func SetDevOpsPct(pct uint64) {
+	common.IsHalted()
+
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
@@ -72,7 +77,7 @@ func SetDevOpsPct(pct uint64) {
 	}
 
 	if pct > 10000 {
-		panic("pct should be less than 10000")
+		panic("pct should not be bigger than 10000")
 	}
 
 	devOpsPct = pct
@@ -87,6 +92,8 @@ func GetAccuTransferToGovStaker() map[string]uint64 {
 }
 
 func ClearAccuTransferToGovStaker() {
+	common.IsHalted()
+
 	if std.PrevRealm().PkgPath() != consts.GOV_STAKER_PATH {
 		panic("only gov staker can clear accu transfer to gov staker")
 	}

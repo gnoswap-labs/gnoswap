@@ -9,6 +9,7 @@ import (
 
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
+
 	en "gno.land/r/gnoswap/v2/emission"
 
 	"gno.land/r/gnoswap/v2/gns"
@@ -49,6 +50,7 @@ func CreatePool(
 	fee uint32,
 	_sqrtPriceX96 string, // uint256
 ) {
+	common.IsHalted()
 	en.MintAndDistributeGns()
 
 	if token0Path == token1Path {

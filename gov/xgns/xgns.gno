@@ -11,6 +11,7 @@ import (
 
 	"gno.land/r/demo/users"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 )
 
@@ -55,6 +56,8 @@ func Render(path string) string {
 }
 
 func Mint(to pusers.AddressOrName, amount uint64) {
+	common.IsHalted()
+
 	// only gov staker contract can call Mint
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_STAKER_ADDR {
@@ -65,6 +68,8 @@ func Mint(to pusers.AddressOrName, amount uint64) {
 }
 
 func Burn(from pusers.AddressOrName, amount uint64) {
+	common.IsHalted()
+
 	// only gov staker contract can call Burn
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_STAKER_ADDR {

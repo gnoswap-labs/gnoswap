@@ -3,7 +3,9 @@ package emission
 import (
 	"std"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
+
 	"gno.land/r/gnoswap/v2/gns"
 
 	"gno.land/p/demo/ufmt"
@@ -54,6 +56,8 @@ func ChangeDistributionPct(
 	target03 int, pct03 uint64,
 	target04 int, pct04 uint64,
 ) {
+	common.IsHalted()
+
 	changeDistributionPct(emissionTarget(target01), pct01)
 	changeDistributionPct(emissionTarget(target02), pct02)
 	changeDistributionPct(emissionTarget(target03), pct03)
@@ -149,6 +153,8 @@ func GetAccuDistributedAmount() (uint64, uint64, uint64, uint64) {
 }
 
 func ClearAccuDistributedAmount() {
+	common.IsHalted()
+
 	prevRealm := std.PrevRealm().PkgPath()
 
 	if !(prevRealm == consts.STAKER_PATH && prevRealm == consts.GOV_STAKER_PATH) {
@@ -166,6 +172,8 @@ func GetAccuDistributedAmountForGovStaker() uint64 {
 }
 
 func ClearAccuDistributedAmountForGovStaker() {
+	common.IsHalted()
+
 	prevRealm := std.PrevRealm().PkgPath()
 
 	if prevRealm != consts.GOV_STAKER_PATH {

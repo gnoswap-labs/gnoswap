@@ -47,6 +47,7 @@ func Mint(
 	deadline int64,
 	mintTo string,
 ) (uint64, string, string, string) { // tokenId, liquidity, amount0, amount1 ( *u256.Uint x3 )
+	common.IsHalted()
 	en.MintAndDistributeGns()
 
 	if common.GetLimitCaller() {
@@ -210,6 +211,7 @@ func IncreaseLiquidity(
 	_amount1Min string, // uint256
 	deadline int64,
 ) (uint64, string, string, string, string) { // tokenId, liquidity, amount0, amount1, poolPath
+	common.IsHalted()
 	en.MintAndDistributeGns()
 
 	amount0Desired := u256.MustFromDecimal(_amount0Desired)
@@ -339,6 +341,7 @@ func DecreaseLiquidity(
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) { // tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
+	common.IsHalted()
 	en.MintAndDistributeGns()
 
 	isNormalRange := liquidityRatio >= 1 && liquidityRatio <= 100
@@ -366,13 +369,13 @@ func DecreaseLiquidity(
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"p_liquidityRatio", uint64ToStr(liquidityRatio),
-		"p_unwrapResult", boolToStr(unwrapResult),
 		"poolPath", poolPath,
 		"liquidity", liquidity.ToString(),
 		"fee0", fee0.ToString(),
 		"fee1", fee1.ToString(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
+		"unwrapResult", boolToStr(unwrapResult),
 	)
 
 	return tokenId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -499,6 +502,7 @@ func Reposition(
 	_amount0Min string, // *u256.Uint
 	_amount1Min string, // *u256.Uint
 ) (uint64, string, int32, int32, string, string) { // tokenId, liquidity, tickLower, tickUpper, amount0, amount1
+	common.IsHalted()
 	en.MintAndDistributeGns()
 
 	// verify tokenId exists
@@ -601,6 +605,7 @@ func Reposition(
 //   - position doesn't exist
 //   - caller is not owner or approved
 func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, string, string, string) { // tokenId, afterFee0, afterFee1, poolPath, origFee0, origFee1
+	common.IsHalted()
 	en.MintAndDistributeGns()
 
 	// verify tokenId
@@ -696,10 +701,10 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
-		"p_unwrapResult", boolToStr(unwrapResult),
 		"fee0", withoutFee0,
 		"fee1", withoutFee1,
 		"poolPath", position.poolKey,
+		"unwrapResult", boolToStr(unwrapResult),
 	)
 
 	return tokenId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
