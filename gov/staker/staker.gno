@@ -51,8 +51,7 @@ func Delegate(to std.Address, amount uint64) {
 	// actual delegate
 	delegate(to, amount)
 
-	// TODO:
-	// std.Emit()
+	// TODO: std.Emit()
 }
 
 // xGNS from -> xGNS to
@@ -75,8 +74,7 @@ func Redelegate(from, to std.Address, amount uint64) {
 	undelegate(from, amount)
 	delegate(to, amount)
 
-	// TODO:
-	// std.Emit()
+	// TODO: std.Emit()
 }
 
 func Undelegate(from std.Address, amount uint64) {
@@ -110,8 +108,7 @@ func Undelegate(from std.Address, amount uint64) {
 	}
 	addrLockedXGns[caller.String()] = append(addrLockedXGns[caller.String()], userLocked)
 
-	// TODO:
-	// std.Emit()
+	// TODO: std.Emit()
 }
 
 func CollectUndelegated() uint64 {
@@ -159,8 +156,7 @@ func CollectReward() {
 		println("CollectReward_GNS", emissionReward)
 		userEmissionReward[caller.String()] = 0
 
-		// TODO:
-		// std.Emit()
+		// TODO: std.Emit()
 	}
 
 	// PROTOCOL FEE
@@ -180,8 +176,7 @@ func CollectReward() {
 		println("CollectReward_TOKEN", tokenPath, "AMOUNT", amount)
 		userProtocolFeeReward[caller.String()][tokenPath] = 0
 
-		// TODO:
-		// std.Emit()
+		// TODO: std.Emit()
 	}
 }
 

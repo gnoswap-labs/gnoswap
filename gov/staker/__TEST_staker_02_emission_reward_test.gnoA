@@ -33,9 +33,11 @@ func TestInit(t *testing.T) {
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(100000000000000)) // admin has initial gns
 	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
 
-	en.ChangeDistributionPct02(
-		en.LIQUIDITY_STAKING, 7000,
-		en.GOV_STAKER, 500,
+	en.ChangeDistributionPct(
+		int(1), 7000,
+		int(2), 2000,
+		int(3), 500,
+		int(4), 500,
 	)
 	// CHANGE emission distribution ratio
 	// - STAKER 75% => 70%

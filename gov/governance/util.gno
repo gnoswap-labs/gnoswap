@@ -1,6 +1,8 @@
 package governance
 
 import (
+	"strconv"
+
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/p/demo/ufmt"
@@ -165,6 +167,15 @@ func underscoreOK(s string) bool {
 	return saw != '_'
 }
 
+func strToInt(str string) int {
+	res, err := strconv.Atoi(str)
+	if err != nil {
+		panic(err)
+	}
+
+	return res
+}
+
 func strToU256U64(str string) uint64 {
 	strValue := u256.MustFromDecimal(str)
 	return strValue.Uint64()
@@ -183,4 +194,13 @@ func voteToString(b bool) string {
 		return "yes"
 	}
 	return "no"
+}
+
+func contains(slice []string, str string) bool {
+	for _, v := range slice {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }
