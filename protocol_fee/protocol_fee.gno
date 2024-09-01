@@ -41,8 +41,8 @@ func DistributeProtocolFee() {
 
 		balance := balanceOfByRegisterCall(token, consts.PROTOCOL_FEE_ADDR)
 		if balance > 0 {
-			toDevOps := balance * devOpsPct / 10000 // default 30%
-			toGovStaker := balance - toDevOps       // default 70%
+			toDevOps := balance * devOpsPct / 10000 // default 0%
+			toGovStaker := balance - toDevOps       // default 100%
 
 			if token == consts.GNS_PATH {
 				gnsToDevOps = toDevOps
