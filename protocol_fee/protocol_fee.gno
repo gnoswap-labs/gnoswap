@@ -35,8 +35,7 @@ func DistributeProtocolFee() {
 	tokens := GetRegisteredTokens()
 	for _, token := range tokens {
 		// default distribute protocol fee percent
-		// devOps 30%
-		// govStaker 70%
+		// govStaker 100%
 		// ...
 
 		balance := balanceOfByRegisterCall(token, consts.PROTOCOL_FEE_ADDR)
