@@ -1,0 +1,234 @@
+// internal and external incentive + warm up period testing
+// with one external incentives for same pool
+// 	bar
+// with internal incentive for same pool
+// and position range will
+//   1. in-range
+
+package staker
+
+import (
+	"std"
+	"testing"
+	"time"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	en "gno.land/r/gnoswap/v2/emission"
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
+
+	"gno.land/r/gnoswap/v2/gnft"
+	"gno.land/r/gnoswap/v2/gns"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/qux"
+)
+
+func init() {
+	// init pool tiers
+	// tier 1
+	delete(poolTiers, MUST_EXISTS_IN_TIER_1)
+	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"] = InternalTier{
+		tier:           1,
+		startTimestamp: time.Now().Unix(),
+	}
+
+	// override warm-up period for testing
+	warmUp[100] = 901 // 30m ~
+	warmUp[70] = 301  // 10m ~ 30m
+	warmUp[50] = 151  // 5m ~ 10m
+	warmUp[30] = 1    // ~ 5m
+}
+
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+
+	pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
+
+	std.TestSkipHeights(1)
+}
+
+func TestMintBarQux100_1(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1 := pn.Mint(
+		barPath,    // token0
+		quxPath,    // token1
+		fee100,     // fee
+		int32(-50), // tickLower
+		int32(50),  // tickUpper
+		"50",       // amount0Desired
+		"50",       // amount1Desired
+		"1",        // amount0Min
+		"1",        // amount1Min
+		max_timeout,
+		gsa.String(),
+	)
+
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, liquidity, "20026")
+
+	std.TestSkipHeights(1)
+}
+
+func TestMintBarQux100_2(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1 := pn.Mint(
+		barPath,      // token0
+		quxPath,      // token1
+		fee100,       // fee
+		int32(-5000), // tickLower
+		int32(5000),  // tickUpper
+		"5000000",    // amount0Desired
+		"5000000",    // amount1Desired
+		"1",          // amount0Min
+		"1",          // amount1Min
+		max_timeout,
+		gsa.String(),
+	)
+
+	shouldEQ(t, tokenId, uint64(2))
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, liquidity, "22605053")
+
+	std.TestSkipHeights(1)
+}
+
+func TestCreateExternalIncentiveBar(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
+	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+
+	CreateExternalIncentive(
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // targetPoolPath string,
+		barPath,     // rewardToken string, // token path should be registered
+		"900000000", // _rewardAmount string,
+		1234569600,
+		1234569600+TIMESTAMP_90DAYS,
+	)
+
+	// after
+	printExternalInfo()
+
+	std.TestSkipHeights(1)
+}
+
+func TestStakeToken_1_AND_2(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
+	StakeToken(1)
+
+	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
+	StakeToken(2)
+
+	std.TestSkipHeights(1)
+}
+
+func TestBeforeActive(t *testing.T) {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+	printExternalInfo()
+
+	std.TestSkipHeights(1)
+}
+
+func TestAfterActive(t *testing.T) {
+	std.TestSkipHeights(849) // in active
+	std.TestSkipHeights(1)   // active // but no block passed since active
+	std.TestSkipHeights(50)  // skip 50 more block
+
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
+	std.TestSkipHeights(1)
+}
+
+func TestCheckCurrentReward(t *testing.T) {
+	std.TestSkipHeights(199) // skip 1 + 199 = 200 more block
+
+	agr := ApiGetRewards()
+	shouldEQ(t, agr, `{"stat":{"height":1229,"timestamp":1234570102},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":7028690,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":19,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]},{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":7933895743,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234567898},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":22085,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+
+	// check if position is in range
+	poolCurrentTick := pl.PoolGetSlot0Tick("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100")
+	shouldEQ(t, poolCurrentTick, int32(0)) // pool's current tick is 0
+
+	// {
+	// 	"stat": {
+	// 		"height": 1229,
+	// 		"timestamp": 1234570102
+	// 	},
+	// 	"response": [
+	// 		{
+	// 			"lpTokenId": 1,
+	// 			"address": "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c",
+	// 			"rewards": [
+	// 				{
+	// 					"incentiveType": "INTERNAL",
+	// 					"incentiveId": "",
+	// 					"targetPoolPath": "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+	// 					"rewardTokenPath": "gno.land/r/gnoswap/v2/gns",
+	// 					"rewardTokenAmount": 7028690,
+	// 					"stakeTimestamp": 1234567898,
+	// 					"stakeHeight": 127,
+	// 					"incentiveStart": 1234567898
+	// 				},
+	// 				{
+	// 					"incentiveType": "EXTERNAL",
+	// 					"incentiveId": "ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==",
+	// 					"targetPoolPath": "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+	// 					"rewardTokenPath": "gno.land/r/onbloc/bar",
+	// 					"rewardTokenAmount": 19,
+	// 					"stakeTimestamp": 1234567898,
+	// 					"stakeHeight": 127,
+	// 					"incentiveStart": 1234569600
+	// 				}
+	// 			]
+	// 		},
+	// 		{
+	// 			"lpTokenId": 2,
+	// 			"address": "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c",
+	// 			"rewards": [
+	// 				{
+	// 					"incentiveType": "INTERNAL",
+	// 					"incentiveId": "",
+	// 					"targetPoolPath": "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+	// 					"rewardTokenPath": "gno.land/r/gnoswap/v2/gns",
+	// 					"rewardTokenAmount": 7933895743,
+	// 					"stakeTimestamp": 1234567898,
+	// 					"stakeHeight": 127,
+	// 					"incentiveStart": 1234567898
+	// 				},
+	// 				{
+	// 					"incentiveType": "EXTERNAL",
+	// 					"incentiveId": "ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==",
+	// 					"targetPoolPath": "gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100",
+	// 					"rewardTokenPath": "gno.land/r/onbloc/bar",
+	// 					"rewardTokenAmount": 22085,
+	// 					"stakeTimestamp": 1234567898,
+	// 					"stakeHeight": 127,
+	// 					"incentiveStart": 1234569600
+	// 				}
+	// 			]
+	// 		}
+	// 	]
+	// }
+}
