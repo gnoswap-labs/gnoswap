@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	devOpsPct      uint64 = 3000 // 30%
+	devOpsPct      uint64 = 0 // 0%
 	gnsToDevOps    uint64
 	gnsToGovStaker uint64
 
