@@ -18,6 +18,8 @@ type lockedXGNS struct {
 	unlock uint64
 }
 
+var lockedAmount uint64
+
 const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
 
 var (
@@ -107,6 +109,7 @@ func Undelegate(from std.Address, amount uint64) {
 		unlock: uint64(time.Now().Unix()) + TIMESTAMP_7_DAYS, // after 7 days, call Collect() to receive GNS
 	}
 	addrLockedXGns[caller.String()] = append(addrLockedXGns[caller.String()], userLocked)
+	lockedAmount += amount
 
 	// TODO: std.Emit()
 }
@@ -132,6 +135,8 @@ func CollectUndelegated() uint64 {
 
 			// remove from locked list
 			addrLockedXGns[caller.String()] = append(addrLockedXGns[caller.String()][:i], addrLockedXGns[caller.String()][i+1:]...)
+
+			lockedAmount -= locked.amount
 			return locked.amount
 		}
 	}

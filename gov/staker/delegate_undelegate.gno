@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	totalDelegated  = uint64(0)
 	delegatorAmount = make(map[string]uint64)            // caller => amount
 	delegatedFromTo = make(map[string]map[string]uint64) // caller => to => amount
 	delegatedTo     = make(map[string]uint64)            // to => amount
@@ -20,23 +21,19 @@ func delegate(to std.Address, amount uint64) {
 		delegatedFromTo[caller.String()] = make(map[string]uint64)
 	}
 
+	totalDelegated += amount
 	delegatorAmount[caller.String()] += amount
 	delegatedFromTo[caller.String()][to.String()] += amount
 	delegatedTo[to.String()] += amount
 
 	// Update delegation history
 	delegation := DelegationHistory{
+		to:        to.String(),
 		amount:    amount,
 		timestamp: uint64(time.Now().Unix()),
-		add:       true,
+		add:       true, // if true, delegation
 	}
 	delegationHistory[caller] = append(delegationHistory[caller], delegation)
-
-	// caller is just owner of token, not owner of voting power.
-	// therefore no need to update caller's voting power
-	// updateVotingPower(caller)
-
-	updateVotingPower(to)
 }
 
 func undelegate(from std.Address, amount uint64) {
@@ -56,26 +53,17 @@ func undelegate(from std.Address, amount uint64) {
 		panic(ufmt.Sprintf("caller %s has only %d delegated amount to %s", caller.String(), delegatedAmount, from.String()))
 	}
 
+	totalDelegated -= amount
 	delegatorAmount[caller.String()] -= amount
 	delegatedFromTo[caller.String()][from.String()] -= amount
 	delegatedTo[from.String()] -= amount
 
 	// Update delegation history
 	delegation := DelegationHistory{
-		amount:    amount, // XXX: -amount
+		to:        from.String(),
+		amount:    amount,
 		timestamp: uint64(time.Now().Unix()),
-		add:       false,
+		add:       false, // if false, undelegation
 	}
 	delegationHistory[caller] = append(delegationHistory[caller], delegation)
-
-	// caller is just owner of token, not owner of voting power.
-	// therefore no need to update caller's voting power
-	// updateVotingPower(caller)
-
-	updateVotingPower(from)
-}
-
-func updateVotingPower(addr std.Address) {
-	// contract really doesn't need to know the exact voting power
-	// calculation can be done on the client side
 }

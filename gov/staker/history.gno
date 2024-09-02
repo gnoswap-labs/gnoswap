@@ -11,6 +11,7 @@ import (
 
 // DelegationHistory represents a single delegation event
 type DelegationHistory struct {
+	to        string
 	amount    uint64
 	timestamp uint64
 	add       bool
