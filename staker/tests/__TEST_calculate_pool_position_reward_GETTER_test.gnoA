@@ -45,7 +45,6 @@ func TestDoulbeMint(t *testing.T) {
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
@@ -111,7 +110,7 @@ func TestStakeToken_1(t *testing.T) {
 	StakeToken(1)
 
 	gpi := GetPrintInfo()
-	shouldEQ(t, gpi, `{"height":128,"time":1234567900,"gns":{"staker":0,"devOps":14269405,"communityPool":3567350,"xGNS":0,"protocolFee":253510274,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[{"lpTokenId":1,"stakedHeight":128,"stakedTimestamp":1234567900,"stakedDuration":0,"fullAmount":0,"ratio":0,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
+	shouldEQ(t, gpi, `{"height":128,"time":1234567900,"gns":{"staker":0,"devOps":14269405,"communityPool":3567350,"govStaker":0,"protocolFee":253510274,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[{"lpTokenId":1,"stakedHeight":128,"stakedTimestamp":1234567900,"stakedDuration":0,"fullAmount":0,"ratio":0,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
 
 	std.TestSkipHeights(1)
 }
@@ -119,84 +118,61 @@ func TestStakeToken_1(t *testing.T) {
 // START, STAKE 1 TOKEN => GETTER TEST
 
 func TestGetPoolGns(t *testing.T) {
-	println(poolGns) // map{("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100" string):(0 uint64)}
-
 	jsonStr := GetPoolGns()
 	shouldEQ(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","gnsAmount":"0"}]`)
 }
 
 func TestGetPoolCurrentBlockGns(t *testing.T) {
-	println(poolCurrentBlockGns) // map{}
-
 	jsonStr := GetPoolCurrentBlockGns()
 	shouldEQ(t, jsonStr, ``)
 }
 
 func TestGetPoolLastTmpGns(t *testing.T) {
-	println(poolLastTmpGns) // map{("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100" string):(0 uint64)}
-
 	jsonStr := GetPoolLastTmpGns()
 	shouldEQ(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","gnsAmount":"0"}]`)
 }
 
 func TestGetPoolAccuGns(t *testing.T) {
-	println(poolAccuGns) // map{("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100" string):(53510274 uint64)}
-
 	jsonStr := GetPoolAccuGns()
 	shouldEQ(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","gnsAmount":"53510274"}]`)
 }
 
 func TestGetPositionGns(t *testing.T) {
-	println(positionGns) // map{}
-
 	jsonStr := GetPositionGns()
 	shouldEQ(t, jsonStr, ``)
 }
 
 func TestGetPositionLastGns(t *testing.T) {
-	println(positionLastGns) // map{}
-
 	jsonStr := GetPositionLastGns()
 	shouldEQ(t, jsonStr, ``)
 }
 
 func TestGetPositionLastExternal(t *testing.T) {
-	println(positionLastExternal) // map{}
-
 	jsonStr := GetPositionLastExternal()
 	shouldEQ(t, jsonStr, ``)
 }
 
 func TestGetExternalLastCalculatedTimestamp(t *testing.T) {
-	println(externalLastCalculatedTimestamp) // map{}
-
 	jsonStr := GetExternalLastCalculatedTimestamp()
 	shouldEQ(t, jsonStr, ``)
 }
 
 func TestGetExternalGns(t *testing.T) {
-	println(externalGns) // map{}
-
 	jsonStr := GetExternalGns()
 	shouldEQ(t, jsonStr, ``)
 }
 
 func TestGetPoolTotalStakedLiquidity(t *testing.T) {
-	println(poolTotalStakedLiquidity) // map{}
-
 	jsonStr := GetPoolTotalStakedLiquidity()
 	shouldEQ(t, jsonStr, ``)
 }
 
 func TestGetPositionsLiquidityRatio(t *testing.T) {
-	println(positionsLiquidityRatio) // map{}
-
 	jsonStr := GetPositionsLiquidityRatio()
 	shouldEQ(t, jsonStr, ``)
 }
 
 func TestGetPoolsPositions(t *testing.T) {
-	println(poolsPositions) // map{}
 
 	jsonStr := GetPoolsPositions()
 	shouldEQ(t, jsonStr, ``)
@@ -212,93 +188,68 @@ func TestStakeToken_2(t *testing.T) {
 	StakeToken(2)
 
 	gpi := GetPrintInfo()
-	shouldEQ(t, gpi, `{"height":129,"time":1234567902,"gns":{"staker":10702055,"devOps":17123286,"communityPool":4280820,"xGNS":0,"protocolFee":253510274,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":10702055,"position":[{"lpTokenId":1,"stakedHeight":128,"stakedTimestamp":1234567900,"stakedDuration":1,"fullAmount":10702055,"ratio":30,"warmUpAmount":3210616,"full30":10702055,"give30":3210616,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0},{"lpTokenId":2,"stakedHeight":129,"stakedTimestamp":1234567902,"stakedDuration":0,"fullAmount":0,"ratio":0,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
+	shouldEQ(t, gpi, `{"height":129,"time":1234567902,"gns":{"staker":10702055,"devOps":17123286,"communityPool":4280820,"govStaker":0,"protocolFee":253510274,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":10702055,"position":[{"lpTokenId":1,"stakedHeight":128,"stakedTimestamp":1234567900,"stakedDuration":1,"fullAmount":10702055,"ratio":30,"warmUpAmount":3210616,"full30":10702055,"give30":3210616,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0},{"lpTokenId":2,"stakedHeight":129,"stakedTimestamp":1234567902,"stakedDuration":0,"fullAmount":0,"ratio":0,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
 
 	std.TestSkipHeights(1)
 }
 
 // START, STAKE 1 + 2 TOKEN => GETTER TEST
-
 func TestGetPoolGns2(t *testing.T) {
-	println(poolGns) // map{("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100" string):(10702055 uint64)}
-
 	jsonStr := GetPoolGns()
 	shouldEQ(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","gnsAmount":"10702055"}]`)
 }
 
 func TestGetPoolCurrentBlockGns2(t *testing.T) {
-	println(poolCurrentBlockGns) // map{}
-
 	jsonStr := GetPoolCurrentBlockGns()
 	shouldEQ(t, jsonStr, ``)
 }
 
 func TestGetPoolLastTmpGns2(t *testing.T) {
-	println(poolLastTmpGns) // map{("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100" string):(0 uint64)}
-
 	jsonStr := GetPoolLastTmpGns()
 	shouldEQ(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","gnsAmount":"0"}]`)
 }
 
 func TestGetPoolAccuGns2(t *testing.T) {
-	println(poolAccuGns) // map{("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100" string):(64212329 uint64)}
-
 	jsonStr := GetPoolAccuGns()
 	shouldEQ(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","gnsAmount":"64212329"}]`)
 }
 
 func TestGetPositionGns2(t *testing.T) {
-	println(positionGns) // map{(1 uint64):(10702055 uint64)}
-
 	jsonStr := GetPositionGns()
 	shouldEQ(t, jsonStr, `[{"tokenId":"1","gnsAmount":"10702055"}]`)
 }
 
 func TestGetPositionLastGns2(t *testing.T) {
-	println(positionLastGns) // map{(1 uint64):(0 uint64)}
-
 	jsonStr := GetPositionLastGns()
 	shouldEQ(t, jsonStr, `[{"tokenId":"1","gnsAmount":"0"}]`)
 }
 
 func TestGetPositionLastExternal2(t *testing.T) {
-	println(positionLastExternal) // map{}
-
 	jsonStr := GetPositionLastExternal()
 	shouldEQ(t, jsonStr, ``)
 }
 
 func TestGetExternalLastCalculatedTimestamp2(t *testing.T) {
-	println(externalLastCalculatedTimestamp) // map{}
-
 	jsonStr := GetExternalLastCalculatedTimestamp()
 	shouldEQ(t, jsonStr, ``)
 }
 
 func TestGetExternalGns2(t *testing.T) {
-	println(externalGns) // map{}
-
 	jsonStr := GetExternalGns()
 	shouldEQ(t, jsonStr, ``)
 }
 
 func TestGetPoolTotalStakedLiquidity2(t *testing.T) {
-	println(poolTotalStakedLiquidity) // map{("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100" string):(&(struct{(array[(1025 uint64),(0 uint64),(0 uint64),(0 uint64)] [4]uint64)} gno.land/p/gnoswap/uint256.Uint) *gno.land/p/gnoswap/uint256.Uint)}
-
 	jsonStr := GetPoolTotalStakedLiquidity()
 	shouldEQ(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","totalStakedLiquidity":"1025"}]`)
 }
 
 func TestGetPositionsLiquidityRatio2(t *testing.T) {
-	println(positionsLiquidityRatio) // map{(1 uint64):(&(struct{(array[(0 uint64),(4294967296 uint64),(0 uint64),(0 uint64)] [4]uint64)} gno.land/p/gnoswap/uint256.Uint) *gno.land/p/gnoswap/uint256.Uint)}
-
 	jsonStr := GetPositionsLiquidityRatio()
 	shouldEQ(t, jsonStr, `[{"tokenId":"1","positionRatio":"79228162514264337593543950336"}]`)
 }
 
 func TestGetPoolsPositions2(t *testing.T) {
-	println(poolsPositions) // map{("gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100" string):(slice[(1 uint64)] []uint64)}
-
 	jsonStr := GetPoolsPositions()
 	shouldEQ(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","tokenIds":["1"]}]`)
 }
@@ -307,85 +258,61 @@ func TestGetPoolsPositions2(t *testing.T) {
 
 // START, ETC GETTER TEST
 func TestGetHeight(t *testing.T) {
-	println(GetHeight()) // 130
-
 	res := GetHeight()
 	shouldEQ(t, res, int64(130))
 }
 
 func TestGetTimeNowUnix(t *testing.T) {
-	println(GetTimeNowUnix()) // 1234567904
-
 	res := GetTimeNowUnix()
 	shouldEQ(t, res, int64(1234567904))
 }
 
 func TestGetExternalGnsAmount(t *testing.T) {
-	println(GetExternalGnsAmount()) // 0
-
 	res := GetExternalGnsAmount()
 	shouldEQ(t, res, uint64(0))
 }
 
 func TestGetStakerGnsBalance(t *testing.T) {
-	println(GetStakerGnsBalance()) // 21404110
-
 	res := GetStakerGnsBalance()
 	shouldEQ(t, res, uint64(21404110))
 }
 
 func TestGetStakerEmissionGnsBalance(t *testing.T) {
-	println(GetStakerEmissionGnsBalance()) // 21404110
-
 	res := GetStakerEmissionGnsBalance()
 	shouldEQ(t, res, uint64(21404110))
 }
 
 func TestGetLastCalculatedBalance(t *testing.T) {
-	println(GetLastCalculatedBalance()) // 10702055
-
 	res := GetLastCalculatedBalance()
 	shouldEQ(t, res, uint64(10702055))
 }
 
 func TestGetLastCalculatedHeight(t *testing.T) {
-	println(GetLastCalculatedHeight()) // 129
-
 	res := GetLastCalculatedHeight()
 	shouldEQ(t, res, int64(129))
 }
 
 func TestGetMintedGnsAmount(t *testing.T) {
-	println(GetMintedGnsAmount()) // 10702055
-
 	res := GetMintedGnsAmount()
 	shouldEQ(t, res, uint64(10702055))
 }
 
 func TestGetNumPoolTiers(t *testing.T) {
-	println(GetNumPoolTiers()) // 1*STAKER*0*STAKER*0
-
 	res := GetNumPoolTiers()
 	shouldEQ(t, res, `1*STAKER*0*STAKER*0`)
 }
 
 func TestGetTiersRatio(t *testing.T) {
-	println(GetTiersRatio()) // 100*STAKER*0*STAKER*0
-
 	res := GetTiersRatio()
 	shouldEQ(t, res, `100*STAKER*0*STAKER*0`)
 }
 
 func TestGetWarmUpPeriods(t *testing.T) {
-	println(GetWarmUpPeriods()) // 1*STAKER*151*STAKER*301*STAKER*901
-
 	res := GetWarmUpPeriods()
 	shouldEQ(t, res, `1*STAKER*151*STAKER*301*STAKER*901`)
 }
 
 func TestGetGetPositionsInternalWarmUpAmount(t *testing.T) {
-	println(GetPositionsInternalWarmUpAmount())
-
 	res := GetPositionsInternalWarmUpAmount()
 	shouldEQ(t, res, `[{"tokenId":"1","full30":"10702055","give30":"3210616","left30":"7491439","full50":"0","give50":"0","left50":"0","full70":"0","give70":"0","left70":"0","full100":"0"},{"tokenId":"2","full30":"0","give30":"0","left30":"0","full50":"0","give50":"0","left50":"0","full70":"0","give70":"0","left70":"0","full100":"0"}]`)
 }
@@ -431,26 +358,41 @@ func TestGetPositionsExternalWarmUpAmount(t *testing.T) {
 	en.MintAndDistributeGns()
 	CalcPoolPosition() // trigger this to update externalGns
 
-	println(GetPositionsExternalWarmUpAmount())
-
 	res := GetPositionsExternalWarmUpAmount()
 	shouldEQ(t, res, `[{"tokenId":"1","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMA==","full30":"4959","give30":"1487","left30":"3472","full50":"66","give50":"33","left50":"33","full70":"0","give70":"0","left70":"0","full100":"0"},{"tokenId":"1","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2OTYwMDoxMjUwMTIxNjAwOjEzMA==","full30":"3428","give30":"1028","left30":"2400","full50":"6","give50":"3","left50":"3","full70":"0","give70":"0","left70":"0","full100":"0"},{"tokenId":"2","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMA==","full30":"29762","give30":"8928","left30":"20834","full50":"396","give50":"198","left50":"198","full70":"0","give70":"0","left70":"0","full100":"0"},{"tokenId":"2","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2OTYwMDoxMjUwMTIxNjAwOjEzMA==","full30":"20572","give30":"6171","left30":"14401","full50":"36","give50":"18","left50":"18","full70":"0","give70":"0","left70":"0","full100":"0"}]`)
 }
 
 func TestGetPositionsExternalLastCalculatedHeight(t *testing.T) {
-	println(GetPositionsExternalLastCalculatedHeight())
-
 	res := GetPositionsExternalLastCalculatedHeight()
 	shouldEQ(t, res, `[{"tokenId":"1","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMA==","lastCalculatedHeight":"1130"},{"tokenId":"1","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2OTYwMDoxMjUwMTIxNjAwOjEzMA==","lastCalculatedHeight":"1130"},{"tokenId":"2","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMA==","lastCalculatedHeight":"1130"},{"tokenId":"2","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2OTYwMDoxMjUwMTIxNjAwOjEzMA==","lastCalculatedHeight":"1130"}]`)
 }
 
 func TestGetExternalLastCalculatedTimestamp3(t *testing.T) {
-	println(GetExternalLastCalculatedTimestamp())
-
 	jsonStr := GetExternalLastCalculatedTimestamp()
 	shouldEQ(t, jsonStr, `[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMA==","lastCalculatedTimestamp":"1234569904"},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2OTYwMDoxMjUwMTIxNjAwOjEzMA==","lastCalculatedTimestamp":"1234569904"}]`)
 }
 
 func TestGetNecessary(t *testing.T) {
-	println(GetNecessary())
+	res := GetNecessary()
+	shouldEQ(t, res, `{"height":"1130","now":"1234569904","blockGenerationInterval":"2","lastCalculatedHeight":"1130","lastCalculatedBalance":"10723458610","externalGnsBalance":"0","depositGnsAmount":"2000000000","gnsBalance":"12723458610","numPoolTiers":"1*STAKER*0*STAKER*0","tiersRatio":"100*STAKER*0*STAKER*0","warmUpPeriods":"1*STAKER*151*STAKER*301*STAKER*901","poolGns":"W3sicG9vbFBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMCIsImduc0Ftb3VudCI6IjEwNzIzNDU4NjEwIn1d","poolAccuGns":"W3sicG9vbFBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMCIsImduc0Ftb3VudCI6IjEwNzc2OTY4ODg0In1d","poolLastTmpGns":"W3sicG9vbFBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMCIsImduc0Ftb3VudCI6IjEyIn1d","positionGns":"W3sidG9rZW5JZCI6IjEiLCJnbnNBbW91bnQiOiIxNTQwODgyNTc5In0seyJ0b2tlbklkIjoiMiIsImduc0Ftb3VudCI6IjkxODI1NzYwMTkifV0=","positionLastGns":"W3sidG9rZW5JZCI6IjEiLCJnbnNBbW91bnQiOiIxMjIzMDcwNiJ9LHsidG9rZW5JZCI6IjIiLCJnbnNBbW91bnQiOiI5MTczNDAzIn1d","positionsInternalWarmUpAmount":"W3sidG9rZW5JZCI6IjEiLCJmdWxsMzAiOiIyMzg0NzExODMiLCJnaXZlMzAiOiI3MTU0MTM1NCIsImxlZnQzMCI6IjE2NjkyOTgyOSIsImZ1bGw1MCI6IjIyOTI5Nzc4MCIsImdpdmU1MCI6IjExNDY0ODg5MCIsImxlZnQ1MCI6IjExNDY0ODg5MCIsImZ1bGw3MCI6IjkxNzE5MTEyMyIsImdpdmU3MCI6IjY0MjAzMzc4NiIsImxlZnQ3MCI6IjI3NTE1NzMzNyIsImZ1bGwxMDAiOiIxNTU5MjI0OTEifSx7InRva2VuSWQiOiIyIiwiZnVsbDMwIjoiMTM3NjAxMDM5MiIsImdpdmUzMCI6IjQxMjgwMzExNiIsImxlZnQzMCI6Ijk2MzIwNzI3NiIsImZ1bGw1MCI6IjEzNzYwMTAzOTIiLCJnaXZlNTAiOiI2ODgwMDUxOTYiLCJsZWZ0NTAiOiI2ODgwMDUxOTYiLCJmdWxsNzAiOiI1NTA0MDQxNTY5IiwiZ2l2ZTcwIjoiMzg1MjgyOTA5OCIsImxlZnQ3MCI6IjE2NTEyMTI0NzEiLCJmdWxsMTAwIjoiOTI2NTEzNjY0In1d","positionExternal":"W3sidG9rZW5JZCI6IjEiLCJleHRlcm5hbHMiOlt7ImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNk1USXpORFUyT1RZd01Eb3hNalF5TXpRMU5qQXdPakV6TUE9PSIsInBvb2xQYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvYmFyOmduby5sYW5kL3Ivb25ibG9jL3F1eDoxMDAiLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXIiLCJ0b2tlbkFtb3VudFg5NiI6IjM5ODE4MTI5OTQxNzk1Mzk5MDMzMDM2ODYzNDQ1MTgzNCIsInRva2VuQW1vdW50RnVsbCI6IjAiLCJ0b2tlbkFtb3VudFRvR2l2ZSI6IjAifSx7ImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTl4ZFhnNk1USXpORFUyT1RZd01Eb3hNalV3TVRJeE5qQXdPakV6TUE9PSIsInBvb2xQYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvYmFyOmduby5sYW5kL3Ivb25ibG9jL3F1eDoxMDAiLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9xdXgiLCJ0b2tlbkFtb3VudFg5NiI6IjI3MjA5MDU1NDYwMjI2ODU2MDA1OTA4NTIzMzU0MjA5NiIsInRva2VuQW1vdW50RnVsbCI6IjAiLCJ0b2tlbkFtb3VudFRvR2l2ZSI6IjAifV19LHsidG9rZW5JZCI6IjIiLCJleHRlcm5hbHMiOlt7ImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNk1USXpORFUyT1RZd01Eb3hNalF5TXpRMU5qQXdPakV6TUE9PSIsInBvb2xQYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvYmFyOmduby5sYW5kL3Ivb25ibG9jL3F1eDoxMDAiLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXIiLCJ0b2tlbkFtb3VudFg5NiI6IjIzODk0NzYyNjc3NDA3MjYyNDM5NDA1ODA3MDI3MzEzNzUiLCJ0b2tlbkFtb3VudEZ1bGwiOiIwIiwidG9rZW5BbW91bnRUb0dpdmUiOiIwIn0seyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJwb29sUGF0aCI6Imduby5sYW5kL3Ivb25ibG9jL2Jhcjpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTAwIiwidG9rZW5QYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvcXV4IiwidG9rZW5BbW91bnRYOTYiOiIxNjMyODA4NzgyOTU2MTYyOTMzMzU5Mzk2ODEzNTMzMTYyIiwidG9rZW5BbW91bnRGdWxsIjoiMCIsInRva2VuQW1vdW50VG9HaXZlIjoiMCJ9XX1d","positionLastExternal":"W3sidG9rZW5JZCI6IjEiLCJsYXN0RXh0ZXJuYWxzIjpbeyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJsYXN0UmV3YXJkQW1vdW50IjoiMCJ9LHsiaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OXhkWGc2TVRJek5EVTJPVFl3TURveE1qVXdNVEl4TmpBd09qRXpNQT09IiwibGFzdFJld2FyZEFtb3VudCI6IjAifV19LHsidG9rZW5JZCI6IjIiLCJsYXN0RXh0ZXJuYWxzIjpbeyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJsYXN0UmV3YXJkQW1vdW50IjoiMCJ9LHsiaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OXhkWGc2TVRJek5EVTJPVFl3TURveE1qVXdNVEl4TmpBd09qRXpNQT09IiwibGFzdFJld2FyZEFtb3VudCI6IjAifV19XQ==","positionsExternalWarmUpAmount":"W3sidG9rZW5JZCI6IjEiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJmdWxsMzAiOiI0OTU5IiwiZ2l2ZTMwIjoiMTQ4NyIsImxlZnQzMCI6IjM0NzIiLCJmdWxsNTAiOiI2NiIsImdpdmU1MCI6IjMzIiwibGVmdDUwIjoiMzMiLCJmdWxsNzAiOiIwIiwiZ2l2ZTcwIjoiMCIsImxlZnQ3MCI6IjAiLCJmdWxsMTAwIjoiMCJ9LHsidG9rZW5JZCI6IjEiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJmdWxsMzAiOiIzNDI4IiwiZ2l2ZTMwIjoiMTAyOCIsImxlZnQzMCI6IjI0MDAiLCJmdWxsNTAiOiI2IiwiZ2l2ZTUwIjoiMyIsImxlZnQ1MCI6IjMiLCJmdWxsNzAiOiIwIiwiZ2l2ZTcwIjoiMCIsImxlZnQ3MCI6IjAiLCJmdWxsMTAwIjoiMCJ9LHsidG9rZW5JZCI6IjIiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJmdWxsMzAiOiIyOTc2MiIsImdpdmUzMCI6Ijg5MjgiLCJsZWZ0MzAiOiIyMDgzNCIsImZ1bGw1MCI6IjM5NiIsImdpdmU1MCI6IjE5OCIsImxlZnQ1MCI6IjE5OCIsImZ1bGw3MCI6IjAiLCJnaXZlNzAiOiIwIiwibGVmdDcwIjoiMCIsImZ1bGwxMDAiOiIwIn0seyJ0b2tlbklkIjoiMiIsImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTl4ZFhnNk1USXpORFUyT1RZd01Eb3hNalV3TVRJeE5qQXdPakV6TUE9PSIsImZ1bGwzMCI6IjIwNTcyIiwiZ2l2ZTMwIjoiNjE3MSIsImxlZnQzMCI6IjE0NDAxIiwiZnVsbDUwIjoiMzYiLCJnaXZlNTAiOiIxOCIsImxlZnQ1MCI6IjE4IiwiZnVsbDcwIjoiMCIsImdpdmU3MCI6IjAiLCJsZWZ0NzAiOiIwIiwiZnVsbDEwMCI6IjAifV0=","positionsExternalLastCalculatedHeight":"W3sidG9rZW5JZCI6IjEiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJsYXN0Q2FsY3VsYXRlZEhlaWdodCI6IjExMzAifSx7InRva2VuSWQiOiIxIiwiaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OXhkWGc2TVRJek5EVTJPVFl3TURveE1qVXdNVEl4TmpBd09qRXpNQT09IiwibGFzdENhbGN1bGF0ZWRIZWlnaHQiOiIxMTMwIn0seyJ0b2tlbklkIjoiMiIsImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNk1USXpORFUyT1RZd01Eb3hNalF5TXpRMU5qQXdPakV6TUE9PSIsImxhc3RDYWxjdWxhdGVkSGVpZ2h0IjoiMTEzMCJ9LHsidG9rZW5JZCI6IjIiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJsYXN0Q2FsY3VsYXRlZEhlaWdodCI6IjExMzAifV0=","externalLastCalculatedTimestamp":"W3siaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2TVRJek5EVTJPVFl3TURveE1qUXlNelExTmpBd09qRXpNQT09IiwibGFzdENhbGN1bGF0ZWRUaW1lc3RhbXAiOiIxMjM0NTY5OTA0In0seyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJsYXN0Q2FsY3VsYXRlZFRpbWVzdGFtcCI6IjEyMzQ1Njk5MDQifV0="}`)
+}
+
+func TestGetSingleData(t *testing.T) {
+	res := GetSingleData()
+	shouldEQ(t, res, `{"height":"1130","now":"1234569904","blockGenerationInterval":"2","lastCalculatedHeight":"1130","lastCalculatedBalance":"10723458610","externalGnsBalance":"0","depositGnsAmount":"2000000000","gnsBalance":"12723458610","numPoolTiers":"1*STAKER*0*STAKER*0","tiersRatio":"100*STAKER*0*STAKER*0","warmUpPeriods":"1*STAKER*151*STAKER*301*STAKER*901"}`)
+}
+
+func TestGetPoolGnsData(t *testing.T) {
+	res := GetPoolGnsData()
+	shouldEQ(t, res, `{"height":"1130","now":"1234569904","poolGns":"W3sicG9vbFBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMCIsImduc0Ftb3VudCI6IjEwNzIzNDU4NjEwIn1d","poolAccuGns":"W3sicG9vbFBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMCIsImduc0Ftb3VudCI6IjEwNzc2OTY4ODg0In1d","poolLastTmpGns":"W3sicG9vbFBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMCIsImduc0Ftb3VudCI6IjEyIn1d"}`)
+}
+
+func TestGetPositionGnsData(t *testing.T) {
+	res := GetPositionGnsData()
+	shouldEQ(t, res, `{"height":"1130","now":"1234569904","positionGns":"W3sidG9rZW5JZCI6IjEiLCJnbnNBbW91bnQiOiIxNTQwODgyNTc5In0seyJ0b2tlbklkIjoiMiIsImduc0Ftb3VudCI6IjkxODI1NzYwMTkifV0=","positionLastGns":"W3sidG9rZW5JZCI6IjEiLCJnbnNBbW91bnQiOiIxMjIzMDcwNiJ9LHsidG9rZW5JZCI6IjIiLCJnbnNBbW91bnQiOiI5MTczNDAzIn1d","positionsInternalWarmUpAmount":"W3sidG9rZW5JZCI6IjEiLCJmdWxsMzAiOiIyMzg0NzExODMiLCJnaXZlMzAiOiI3MTU0MTM1NCIsImxlZnQzMCI6IjE2NjkyOTgyOSIsImZ1bGw1MCI6IjIyOTI5Nzc4MCIsImdpdmU1MCI6IjExNDY0ODg5MCIsImxlZnQ1MCI6IjExNDY0ODg5MCIsImZ1bGw3MCI6IjkxNzE5MTEyMyIsImdpdmU3MCI6IjY0MjAzMzc4NiIsImxlZnQ3MCI6IjI3NTE1NzMzNyIsImZ1bGwxMDAiOiIxNTU5MjI0OTEifSx7InRva2VuSWQiOiIyIiwiZnVsbDMwIjoiMTM3NjAxMDM5MiIsImdpdmUzMCI6IjQxMjgwMzExNiIsImxlZnQzMCI6Ijk2MzIwNzI3NiIsImZ1bGw1MCI6IjEzNzYwMTAzOTIiLCJnaXZlNTAiOiI2ODgwMDUxOTYiLCJsZWZ0NTAiOiI2ODgwMDUxOTYiLCJmdWxsNzAiOiI1NTA0MDQxNTY5IiwiZ2l2ZTcwIjoiMzg1MjgyOTA5OCIsImxlZnQ3MCI6IjE2NTEyMTI0NzEiLCJmdWxsMTAwIjoiOTI2NTEzNjY0In1d"}`)
+}
+
+func TestGetPositionExternalData(t *testing.T) {
+	res := GetPositionExternalData()
+	shouldEQ(t, res, `{"height":"1130","now":"1234569904","positionExternal":"W3sidG9rZW5JZCI6IjEiLCJleHRlcm5hbHMiOlt7ImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNk1USXpORFUyT1RZd01Eb3hNalF5TXpRMU5qQXdPakV6TUE9PSIsInBvb2xQYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvYmFyOmduby5sYW5kL3Ivb25ibG9jL3F1eDoxMDAiLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXIiLCJ0b2tlbkFtb3VudFg5NiI6IjM5ODE4MTI5OTQxNzk1Mzk5MDMzMDM2ODYzNDQ1MTgzNCIsInRva2VuQW1vdW50RnVsbCI6IjAiLCJ0b2tlbkFtb3VudFRvR2l2ZSI6IjAifSx7ImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTl4ZFhnNk1USXpORFUyT1RZd01Eb3hNalV3TVRJeE5qQXdPakV6TUE9PSIsInBvb2xQYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvYmFyOmduby5sYW5kL3Ivb25ibG9jL3F1eDoxMDAiLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9xdXgiLCJ0b2tlbkFtb3VudFg5NiI6IjI3MjA5MDU1NDYwMjI2ODU2MDA1OTA4NTIzMzU0MjA5NiIsInRva2VuQW1vdW50RnVsbCI6IjAiLCJ0b2tlbkFtb3VudFRvR2l2ZSI6IjAifV19LHsidG9rZW5JZCI6IjIiLCJleHRlcm5hbHMiOlt7ImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNk1USXpORFUyT1RZd01Eb3hNalF5TXpRMU5qQXdPakV6TUE9PSIsInBvb2xQYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvYmFyOmduby5sYW5kL3Ivb25ibG9jL3F1eDoxMDAiLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXIiLCJ0b2tlbkFtb3VudFg5NiI6IjIzODk0NzYyNjc3NDA3MjYyNDM5NDA1ODA3MDI3MzEzNzUiLCJ0b2tlbkFtb3VudEZ1bGwiOiIwIiwidG9rZW5BbW91bnRUb0dpdmUiOiIwIn0seyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJwb29sUGF0aCI6Imduby5sYW5kL3Ivb25ibG9jL2Jhcjpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTAwIiwidG9rZW5QYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvcXV4IiwidG9rZW5BbW91bnRYOTYiOiIxNjMyODA4NzgyOTU2MTYyOTMzMzU5Mzk2ODEzNTMzMTYyIiwidG9rZW5BbW91bnRGdWxsIjoiMCIsInRva2VuQW1vdW50VG9HaXZlIjoiMCJ9XX1d","positionLastExternal":"W3sidG9rZW5JZCI6IjEiLCJsYXN0RXh0ZXJuYWxzIjpbeyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJsYXN0UmV3YXJkQW1vdW50IjoiMCJ9LHsiaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OXhkWGc2TVRJek5EVTJPVFl3TURveE1qVXdNVEl4TmpBd09qRXpNQT09IiwibGFzdFJld2FyZEFtb3VudCI6IjAifV19LHsidG9rZW5JZCI6IjIiLCJsYXN0RXh0ZXJuYWxzIjpbeyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJsYXN0UmV3YXJkQW1vdW50IjoiMCJ9LHsiaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OXhkWGc2TVRJek5EVTJPVFl3TURveE1qVXdNVEl4TmpBd09qRXpNQT09IiwibGFzdFJld2FyZEFtb3VudCI6IjAifV19XQ==","positionsExternalWarmUpAmount":"W3sidG9rZW5JZCI6IjEiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJmdWxsMzAiOiI0OTU5IiwiZ2l2ZTMwIjoiMTQ4NyIsImxlZnQzMCI6IjM0NzIiLCJmdWxsNTAiOiI2NiIsImdpdmU1MCI6IjMzIiwibGVmdDUwIjoiMzMiLCJmdWxsNzAiOiIwIiwiZ2l2ZTcwIjoiMCIsImxlZnQ3MCI6IjAiLCJmdWxsMTAwIjoiMCJ9LHsidG9rZW5JZCI6IjEiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJmdWxsMzAiOiIzNDI4IiwiZ2l2ZTMwIjoiMTAyOCIsImxlZnQzMCI6IjI0MDAiLCJmdWxsNTAiOiI2IiwiZ2l2ZTUwIjoiMyIsImxlZnQ1MCI6IjMiLCJmdWxsNzAiOiIwIiwiZ2l2ZTcwIjoiMCIsImxlZnQ3MCI6IjAiLCJmdWxsMTAwIjoiMCJ9LHsidG9rZW5JZCI6IjIiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJmdWxsMzAiOiIyOTc2MiIsImdpdmUzMCI6Ijg5MjgiLCJsZWZ0MzAiOiIyMDgzNCIsImZ1bGw1MCI6IjM5NiIsImdpdmU1MCI6IjE5OCIsImxlZnQ1MCI6IjE5OCIsImZ1bGw3MCI6IjAiLCJnaXZlNzAiOiIwIiwibGVmdDcwIjoiMCIsImZ1bGwxMDAiOiIwIn0seyJ0b2tlbklkIjoiMiIsImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTl4ZFhnNk1USXpORFUyT1RZd01Eb3hNalV3TVRJeE5qQXdPakV6TUE9PSIsImZ1bGwzMCI6IjIwNTcyIiwiZ2l2ZTMwIjoiNjE3MSIsImxlZnQzMCI6IjE0NDAxIiwiZnVsbDUwIjoiMzYiLCJnaXZlNTAiOiIxOCIsImxlZnQ1MCI6IjE4IiwiZnVsbDcwIjoiMCIsImdpdmU3MCI6IjAiLCJsZWZ0NzAiOiIwIiwiZnVsbDEwMCI6IjAifV0=","positionsExternalLastCalculatedHeight":"W3sidG9rZW5JZCI6IjEiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJsYXN0Q2FsY3VsYXRlZEhlaWdodCI6IjExMzAifSx7InRva2VuSWQiOiIxIiwiaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OXhkWGc2TVRJek5EVTJPVFl3TURveE1qVXdNVEl4TmpBd09qRXpNQT09IiwibGFzdENhbGN1bGF0ZWRIZWlnaHQiOiIxMTMwIn0seyJ0b2tlbklkIjoiMiIsImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNk1USXpORFUyT1RZd01Eb3hNalF5TXpRMU5qQXdPakV6TUE9PSIsImxhc3RDYWxjdWxhdGVkSGVpZ2h0IjoiMTEzMCJ9LHsidG9rZW5JZCI6IjIiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJsYXN0Q2FsY3VsYXRlZEhlaWdodCI6IjExMzAifV0=","externalLastCalculatedTimestamp":"W3siaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2TVRJek5EVTJPVFl3TURveE1qUXlNelExTmpBd09qRXpNQT09IiwibGFzdENhbGN1bGF0ZWRUaW1lc3RhbXAiOiIxMjM0NTY5OTA0In0seyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJsYXN0Q2FsY3VsYXRlZFRpbWVzdGFtcCI6IjEyMzQ1Njk5MDQifV0="}`)
 }
