@@ -100,7 +100,7 @@ func ApiGetRewardTokens() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardTokens() || json marshal error: %s", err.Error()))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_incentive.gno__ApiGetRewardTokens() || json marshal error: %s", err.Error()))
 	}
 
 	return string(b)
@@ -160,7 +160,7 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardTokensByPoolPath() || json marshal error: %s", err.Error()))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_incentive.gno__ApiGetRewardTokensByPoolPath() || json marshal error: %s", err.Error()))
 	}
 
 	return string(b)
@@ -227,7 +227,77 @@ func ApiGetExternalIncentives() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetExternalIncentives() || json marshal error: %s", err.Error()))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_incentive.gno__ApiGetExternalIncentives() || json marshal error: %s", err.Error()))
+	}
+
+	return string(b)
+}
+
+func ApiGetExternalIncentivesById(incentiveId string) string {
+	en.MintAndDistributeGns()
+	CalcPoolPosition()
+
+	updateExternalIncentiveLeftAmount()
+
+	apiExternalIncentives := []ApiExternalIncentive{}
+
+	incentive, exist := incentives[incentiveId]
+	if !exist {
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_incentive.gno__ApiGetExternalIncentivesById() || incentive(%s) not found", incentiveId))
+	}
+
+	apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
+		IncentiveId:      incentiveId,
+		PoolPath:         incentive.targetPoolPath,
+		RewardToken:      incentive.rewardToken,
+		RewardAmount:     incentive.rewardAmount.ToString(),
+		RewardLeft:       incentive.rewardLeft.ToString(),
+		StartTimestamp:   incentive.startTimestamp,
+		EndTimestamp:     incentive.endTimestamp,
+		Refundee:         incentive.refundee.String(),
+		CreatedHeight:    incentive.createdHeight,
+		DepositGnsAmount: incentive.depositGnsAmount,
+	})
+
+	// STAT NODE
+	_stat := json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
+
+	// RESPONSE (ARRAY) NODE
+	responses := json.ArrayNode("", []*json.Node{})
+	for _, incentive := range apiExternalIncentives {
+		active := false
+		if time.Now().Unix() >= incentive.StartTimestamp && time.Now().Unix() <= incentive.EndTimestamp {
+			active = true
+		}
+
+		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
+			"incentiveId":      json.StringNode("incentiveId", incentive.IncentiveId),
+			"poolPath":         json.StringNode("poolPath", incentive.PoolPath),
+			"rewardToken":      json.StringNode("rewardToken", incentive.RewardToken),
+			"rewardAmount":     json.StringNode("rewardAmount", incentive.RewardAmount),
+			"rewardLeft":       json.StringNode("rewardLeft", incentive.RewardLeft),
+			"startTimestamp":   json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
+			"endTimestamp":     json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
+			"active":           json.BoolNode("active", active),
+			"refundee":         json.StringNode("refundee", incentive.Refundee),
+			"createdHeight":    json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(incentive.DepositGnsAmount)),
+		})
+		responses.AppendArray(_incentiveNode)
+	}
+
+	// RETURN
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     _stat,
+		"response": responses,
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_incentive.gno__ApiGetExternalIncentivesByPoolPath() || json marshal error: %s", err.Error()))
 	}
 
 	return string(b)
@@ -298,7 +368,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetExternalIncentivesByPoolPath() || json marshal error: %s", err.Error()))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_incentive.gno__ApiGetExternalIncentivesByPoolPath() || json marshal error: %s", err.Error()))
 	}
 
 	return string(b)
@@ -369,7 +439,7 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetExternalIncentivesByRewardTokenPath() || json marshal error: %s", err.Error()))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_incentive.gno__ApiGetExternalIncentivesByRewardTokenPath() || json marshal error: %s", err.Error()))
 	}
 
 	return string(b)
@@ -418,7 +488,7 @@ func ApiGetInternalIncentives() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetInternalIncentives() || json marshal error: %s", err.Error()))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_incentive.gno__ApiGetInternalIncentives() || json marshal error: %s", err.Error()))
 	}
 
 	return string(b)
@@ -471,7 +541,7 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetInternalIncentivesByPoolPath() || json marshal error: %s", err.Error()))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_incentive.gno__ApiGetInternalIncentivesByPoolPath() || json marshal error: %s", err.Error()))
 	}
 
 	return string(b)
@@ -524,7 +594,7 @@ func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetInternalIncentivesByTiers() || json marshal error: %s", err.Error()))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_incentive.gno__ApiGetInternalIncentivesByTiers() || json marshal error: %s", err.Error()))
 	}
 
 	return string(b)
