@@ -625,6 +625,7 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string, startTi
 		"end_by", incentive.refundee.String(),
 		"refund_amount", refund.ToString(),
 		"refund_gns_amount", uint64ToStr(incentive.depositGnsAmount),
+		"incentiveId", incentiveId,
 	)
 }
 
