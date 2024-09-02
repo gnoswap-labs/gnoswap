@@ -233,7 +233,7 @@ func ApiGetExternalIncentives() string {
 	return string(b)
 }
 
-func ApiGetExternalIncentivesById(incentiveId string) string {
+func ApiGetExternalIncentiveById(incentiveId string) string {
 	en.MintAndDistributeGns()
 	CalcPoolPosition()
 
@@ -243,7 +243,7 @@ func ApiGetExternalIncentivesById(incentiveId string) string {
 
 	incentive, exist := incentives[incentiveId]
 	if !exist {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_incentive.gno__ApiGetExternalIncentivesById() || incentive(%s) not found", incentiveId))
+		panic(ufmt.Sprintf("[STAKER] _RPC_api_incentive.gno__ApiGetExternalIncentiveById() || incentive(%s) not found", incentiveId))
 	}
 
 	apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{

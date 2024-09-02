@@ -304,8 +304,8 @@ func TestApiGetExternalIncentives(t *testing.T) {
 	shouldEQ(t, extIncen, res)
 }
 
-func TestApiGetExternalIncentivesById(t *testing.T) {
-	extIncen := ApiGetExternalIncentivesById("ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==")
+func TestApiGetExternalIncentiveById(t *testing.T) {
+	extIncen := ApiGetExternalIncentiveById("ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==")
 	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"100000000","rewardLeft":"100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":140,"depositGnsAmount":1000000000}]}`
 	shouldEQ(t, extIncen, res)
 }
