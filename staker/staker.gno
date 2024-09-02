@@ -223,6 +223,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 				"m_prevRealm", prevRealm(),
 				"lpTokenId", uint64ToStr(tokenId),
 				"poolPath", poolPath,
+				"incentiveId", incentiveId,
 				"reason", "unstaking_fee_penalty",
 				"token", external.tokenPath,
 				"amount", strconv.FormatUint(left, 10),
@@ -243,6 +244,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 				"p_tokenId", uint64ToStr(tokenId),
 				"p_unwrapResult", boolToStr(unwrapResult),
 				"poolPath", poolPath,
+				"incentiveId", incentiveId,
 				"rewardToken", external.tokenPath,
 				"recipient", deposit.owner.String(),
 				"amount", uint64ToStr(toUser),
@@ -294,6 +296,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 		"m_prevRealm", prevRealm(),
 		"lpTokenId", uint64ToStr(tokenId),
 		"poolPath", poolPath,
+		"incentiveId", "INTERNAL",
 		"reason", "gns_penalty",
 		"token", consts.GNS_PATH,
 		"amount", strconv.FormatUint(left, 10),
@@ -307,6 +310,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"poolPath", poolPath,
+		"incentiveId", "INTERNAL",
 		"rewardToken", consts.GNS_PATH,
 		"recipient", deposit.owner.String(),
 		"fullAmount", uint64ToStr(fullAmount),
@@ -621,6 +625,7 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string, startTi
 		"end_by", incentive.refundee.String(),
 		"refund_amount", refund.ToString(),
 		"refund_gns_amount", uint64ToStr(incentive.depositGnsAmount),
+		"incentiveId", incentiveId,
 	)
 }
 
