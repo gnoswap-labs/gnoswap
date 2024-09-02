@@ -380,10 +380,10 @@ func TestProposeParameterChange_ProtocolFee_DistributeProtocolFee(t *testing.T) 
 		shouldEQ(t, foo.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
 		shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
 
-		shouldEQ(t, foo.BalanceOf(a2u(consts.DEV_OPS)), uint64(300))
-		shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(300))
-		shouldEQ(t, foo.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(700))
-		shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(700))
+		shouldEQ(t, foo.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+		shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+		shouldEQ(t, foo.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
+		shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
 	})
 }
 
@@ -415,7 +415,7 @@ func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 	})
 
 	t.Run("Execute proposal", func(t *testing.T) {
-		shouldEQ(t, pf.GetDevOpsPct(), uint64(3000))
+		shouldEQ(t, pf.GetDevOpsPct(), uint64(0))
 
 		Execute(proposalId)
 

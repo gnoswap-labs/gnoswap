@@ -32,12 +32,12 @@ func TestDistributeProtocolFee(t *testing.T) {
 	DistributeProtocolFee()
 
 	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(300))
-	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(700))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
 
 	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(300))
-	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(700))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
 }
 
 func TestDistributeProtocolFeeNoPermission(t *testing.T) {
@@ -83,7 +83,7 @@ func TestSetDevOpsPctInvalidFee(t *testing.T) {
 func TestSetDevOpsPct(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	shouldEQ(t, GetDevOpsPct(), uint64(3000))
+	shouldEQ(t, GetDevOpsPct(), uint64(0))
 
 	SetDevOpsPct(123)
 
