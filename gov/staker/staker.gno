@@ -53,7 +53,12 @@ func Delegate(to std.Address, amount uint64) {
 	// actual delegate
 	delegate(to, amount)
 
-	// TODO: std.Emit()
+	std.Emit(
+		"Delegate",
+		"from", caller.String(),
+		"to", to.String(),
+		"amount", ufmt.Sprintf("%d", amount),
+	)
 }
 
 // xGNS from -> xGNS to
@@ -76,15 +81,20 @@ func Redelegate(from, to std.Address, amount uint64) {
 	undelegate(from, amount)
 	delegate(to, amount)
 
-	// TODO: std.Emit()
+	std.Emit(
+		"Redelegate",
+		"from", from.String(),
+		"to", to.String(),
+		"amount", ufmt.Sprintf("%d", amount),
+	)
 }
 
-func Undelegate(from std.Address, amount uint64) {
+func Undelegate(to std.Address, amount uint64) {
 	en.MintAndDistributeGns()
 	calculateReward()
 
-	if !from.IsValid() {
-		panic(ufmt.Sprintf("invalid address %s to Undelegate", from.String()))
+	if !to.IsValid() {
+		panic(ufmt.Sprintf("invalid address %s to Undelegate", to.String()))
 	}
 
 	if amount < minimumAmount {
@@ -101,7 +111,7 @@ func Undelegate(from std.Address, amount uint64) {
 	xgns.Burn(a2u(caller), amount)
 
 	// actual undelegate
-	undelegate(from, amount)
+	undelegate(to, amount)
 
 	// lock up
 	userLocked := lockedXGNS{
@@ -111,7 +121,12 @@ func Undelegate(from std.Address, amount uint64) {
 	addrLockedXGns[caller.String()] = append(addrLockedXGns[caller.String()], userLocked)
 	lockedAmount += amount
 
-	// TODO: std.Emit()
+	std.Emit(
+		"Undelegate",
+		"from", caller.String(),
+		"to", to.String(),
+		"amount", ufmt.Sprintf("%d", amount),
+	)
 }
 
 func CollectUndelegated() uint64 {
@@ -130,8 +145,11 @@ func CollectUndelegated() uint64 {
 			// transfer GNS to caller
 			gns.Transfer(a2u(caller), locked.amount)
 
-			// TOOD:
-			// std.Emit()
+			std.Emit(
+				"CollectUndelegated",
+				"from", caller.String(),
+				"amount", ufmt.Sprintf("%d", locked.amount),
+			)
 
 			// remove from locked list
 			addrLockedXGns[caller.String()] = append(addrLockedXGns[caller.String()][:i], addrLockedXGns[caller.String()][i+1:]...)
@@ -161,7 +179,12 @@ func CollectReward() {
 		println("CollectReward_GNS", emissionReward)
 		userEmissionReward[caller.String()] = 0
 
-		// TODO: std.Emit()
+		std.Emit(
+			"CollectReward",
+			"from", caller.String(),
+			"reward", "emission",
+			"amount", ufmt.Sprintf("%d", emissionReward),
+		)
 	}
 
 	// PROTOCOL FEE
@@ -181,7 +204,13 @@ func CollectReward() {
 		println("CollectReward_TOKEN", tokenPath, "AMOUNT", amount)
 		userProtocolFeeReward[caller.String()][tokenPath] = 0
 
-		// TODO: std.Emit()
+		std.Emit(
+			"CollectReward",
+			"from", caller.String(),
+			"reward", "protocol_fee",
+			"token", tokenPath,
+			"amount", ufmt.Sprintf("%d", amount),
+		)
 	}
 }
 
