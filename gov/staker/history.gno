@@ -14,10 +14,25 @@ type DelegationHistory struct {
 	to        string
 	amount    uint64
 	timestamp uint64
+	height    uint64
 	add       bool
 }
 
+// Raw history
 var delegationHistory = make(map[std.Address][]DelegationHistory)
+
+type ModifiedDelegationHistory struct {
+	to                   string
+	delegatedHeight      uint64
+	delegatedTimestamp   uint64
+	delegatedAmount      uint64
+	undelegatedHeight    uint64
+	undelegatedTimestamp uint64
+	undelegatedAmount    uint64
+}
+
+// Modified History => if undelegated, amount will be taken from the first delegation
+var delegationModifiedHistory = make(map[std.Address][]ModifiedDelegationHistory)
 
 // GetDelegatedCumulative gets the cumulative delegated amount * seconds for an address at a certain timestamp.
 func GetDelegatedCumulative(_delegator string, timestamp uint64) string {
@@ -30,30 +45,36 @@ func GetDelegatedCumulative(_delegator string, timestamp uint64) string {
 		panic("FUTURE")
 	}
 
-	history, exist := delegationHistory[delegator]
+	history, exist := delegationModifiedHistory[delegator]
 	if !exist || len(history) == 0 {
 		return "0"
 	}
 
-	if timestamp < history[0].timestamp {
+	if timestamp < history[0].delegatedTimestamp {
 		return "0"
 	}
 
 	cumulativeAmount := u256.Zero()
 
 	for i, record := range history {
-		if record.timestamp > timestamp {
-			break
+		if record.delegatedTimestamp > timestamp || record.undelegatedTimestamp > timestamp {
+			// continue to next if this record uses future time
+			continue
 		}
 
-		duration := timestamp - record.timestamp
-		toAccu := new(u256.Uint).Mul(u256.NewUint(record.amount), u256.NewUint(duration))
-
-		if record.add {
-			cumulativeAmount = new(u256.Uint).Add(cumulativeAmount, toAccu)
-		} else {
-			cumulativeAmount = new(u256.Uint).Sub(cumulativeAmount, toAccu)
+		amount := record.delegatedAmount - record.undelegatedAmount
+		if amount == 0 {
+			// already undelegated full amount for this record
+			continue
 		}
+
+		laterTime := maxUint64(record.delegatedTimestamp, record.undelegatedTimestamp)
+
+		duration := timestamp - laterTime
+
+		toAccu := new(u256.Uint).Mul(u256.NewUint(amount), u256.NewUint(duration))
+
+		cumulativeAmount = new(u256.Uint).Add(cumulativeAmount, toAccu)
 	}
 
 	return cumulativeAmount.ToString()
@@ -70,40 +91,55 @@ func GetAverageDelegated(_delegator string, start, end uint64) string {
 		panic("start > end")
 	}
 
-	history, exist := delegationHistory[delegator]
+	history, exist := delegationModifiedHistory[delegator]
 	if !exist || len(history) == 0 {
 		return "0"
 	}
 
-	if end <= history[0].timestamp {
+	if end <= history[0].delegatedTimestamp {
 		return "0"
 	}
 
 	cumulativeAmount := u256.Zero()
 
 	for i, record := range history {
-		if record.timestamp > end {
-			break
+		println()
+		println("i:", i)
+		if record.delegatedTimestamp > end || record.undelegatedTimestamp > end {
+			println("FUTURE")
+			// continue to next if this record uses future time
+			continue
 		}
 
-		duration := end - maxUint64(record.timestamp, start)
-		toAccu := new(u256.Uint).Mul(u256.NewUint(record.amount), u256.NewUint(duration))
-
-		if record.add {
-			cumulativeAmount = new(u256.Uint).Add(cumulativeAmount, toAccu)
-		} else {
-			cumulativeAmount = new(u256.Uint).Sub(cumulativeAmount, toAccu)
+		amount := record.delegatedAmount - record.undelegatedAmount
+		println("amount:", amount)
+		if amount == 0 {
+			// already undelegated full amount for this record
+			println("SPEND ALL")
+			continue
 		}
+
+		duration := end - maxUint64(maxUint64(record.delegatedTimestamp, record.undelegatedTimestamp), start)
+		println("duration:", duration)
+		toAccu := new(u256.Uint).Mul(u256.NewUint(amount), u256.NewUint(duration))
+		println("toAccu:", toAccu.ToString())
+
+		cumulativeAmount = new(u256.Uint).Add(cumulativeAmount, toAccu)
+		println("cumulativeAmount:", cumulativeAmount.ToString())
 	}
 
 	res := u256.Zero()
 	totalDuration := end - start
+	println("totalDuration:", totalDuration)
 	if totalDuration == 0 {
+		println("totalDuration == 0")
 		res = cumulativeAmount.Clone()
+		println("res #1:", res.ToString())
 		return res.ToString()
 	}
 
 	res = u256.Zero().Div(cumulativeAmount, u256.NewUint(totalDuration))
+	println("res #2:", res.ToString())
 	return res.ToString()
 }
 
@@ -120,14 +156,15 @@ func GetCurrentDelegated(_delegator string) string {
 		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
 	}
 
-	history, exist := delegationHistory[delegator]
+	history, exist := delegationModifiedHistory[delegator]
 
 	if !exist || len(history) == 0 {
 		return "0"
 	}
 
 	lastEntry := history[len(history)-1]
-	res := lastEntry.amount
+	res := lastEntry.delegatedAmount - lastEntry.undelegatedAmount
+	// res := lastEntry.delegatedAmount
 
 	return ufmt.Sprintf("%d", res)
 }
@@ -139,14 +176,15 @@ func GetDelegatedAt(_delegator string, timestamp uint64) string {
 		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
 	}
 
-	history, exist := delegationHistory[delegator]
+	history, exist := delegationModifiedHistory[delegator]
 	if !exist || len(history) == 0 {
 		return "0"
 	}
 
 	for i := len(history) - 1; i >= 0; i-- {
-		if history[i].timestamp <= timestamp {
-			return ufmt.Sprintf("%d", history[i].amount)
+		if history[i].delegatedTimestamp <= timestamp {
+			return ufmt.Sprintf("%d", history[i].delegatedAmount-history[i].undelegatedAmount)
+			// return ufmt.Sprintf("%d", history[i].delegatedAmount)
 		}
 	}
 

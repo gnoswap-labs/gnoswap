@@ -19,10 +19,10 @@ func TestGetDelegatedCumulative(t *testing.T) {
 
 	// simulate time passing and additional stakes
 	currentTime := uint64(1000)
-	delegationHistory[delegateAddr] = []DelegationHistory{
-		{amount: 1000, timestamp: currentTime, add: true},       // 1000
-		{amount: 1500, timestamp: currentTime + 100, add: true}, // 1100
-		{amount: 2000, timestamp: currentTime + 200, add: true}, // 1200
+	delegationModifiedHistory[delegateAddr] = []ModifiedDelegationHistory{
+		{delegatedAmount: 1000, delegatedTimestamp: currentTime},       // 1000
+		{delegatedAmount: 1500, delegatedTimestamp: currentTime + 100}, // 1100
+		{delegatedAmount: 2000, delegatedTimestamp: currentTime + 200}, // 1200
 	}
 
 	tests := []struct {
@@ -79,10 +79,10 @@ func TestGetAverageDelegated(t *testing.T) {
 
 	// simulate time passing and additional stakes
 	currentTime := uint64(1000)
-	delegationHistory[delegateAddr] = []DelegationHistory{
-		{amount: 1000, timestamp: currentTime, add: true},       // 1000
-		{amount: 1500, timestamp: currentTime + 100, add: true}, // 1100
-		{amount: 2000, timestamp: currentTime + 200, add: true}, // 1200
+	delegationModifiedHistory[delegateAddr] = []ModifiedDelegationHistory{
+		{delegatedAmount: 1000, delegatedTimestamp: currentTime},       // 1000
+		{delegatedAmount: 1500, delegatedTimestamp: currentTime + 100}, // 1100
+		{delegatedAmount: 2000, delegatedTimestamp: currentTime + 200}, // 1200
 	}
 
 	tests := []struct {
@@ -145,10 +145,10 @@ func TestGetAverageDelegatedOverLast(t *testing.T) {
 
 	// Set up delegation history
 	now := uint64(time.Now().Unix())
-	delegationHistory[delegateAddr] = []DelegationHistory{
-		{amount: 1000, timestamp: now - 100, add: true},
-		{amount: 2000, timestamp: now - 50, add: true},
-		{amount: 3000, timestamp: now, add: true},
+	delegationModifiedHistory[delegateAddr] = []ModifiedDelegationHistory{
+		{delegatedAmount: 1000, delegatedTimestamp: now - 100},
+		{delegatedAmount: 2000, delegatedTimestamp: now - 50},
+		{delegatedAmount: 3000, delegatedTimestamp: now},
 	}
 
 	avg := GetAverageDelegatedOverLast(delegate, uint64(100))
@@ -162,10 +162,10 @@ func TestGetCurrentDelegated(t *testing.T) {
 	delegate2 := testutils.TestAddress("delegate2")
 
 	// Set up delegation history for delegate1
-	delegationHistory[delegate1] = []DelegationHistory{
-		{amount: 1000, timestamp: 100, add: true},
-		{amount: 1500, timestamp: 200, add: true},
-		{amount: 2000, timestamp: 300, add: true},
+	delegationModifiedHistory[delegate1] = []ModifiedDelegationHistory{
+		{delegatedAmount: 1000, delegatedTimestamp: 100},
+		{delegatedAmount: 1500, delegatedTimestamp: 200},
+		{delegatedAmount: 2000, delegatedTimestamp: 300},
 	}
 
 	tests := []struct {
@@ -199,10 +199,10 @@ func TestGetDelegatedAt(t *testing.T) {
 	delegateAddr := testutils.TestAddress("delegate")
 	delegate := delegateAddr.String()
 
-	delegationHistory[delegateAddr] = []DelegationHistory{
-		{amount: 1000, timestamp: 100, add: true},
-		{amount: 1500, timestamp: 200, add: true},
-		{amount: 2000, timestamp: 300, add: true},
+	delegationModifiedHistory[delegateAddr] = []ModifiedDelegationHistory{
+		{delegatedAmount: 1000, delegatedTimestamp: 100},
+		{delegatedAmount: 1500, delegatedTimestamp: 200},
+		{delegatedAmount: 2000, delegatedTimestamp: 300},
 	}
 
 	tests := []struct {

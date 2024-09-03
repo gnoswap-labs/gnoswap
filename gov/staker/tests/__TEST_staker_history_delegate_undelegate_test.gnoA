@@ -2,7 +2,6 @@ package staker
 
 import (
 	"testing"
-	"time"
 
 	"gno.land/p/demo/testutils"
 )
@@ -19,10 +18,25 @@ func TestGetDelegatedCumulative(t *testing.T) {
 
 	// simulate time passing and additional stakes
 	currentTime := uint64(1000)
-	delegationHistory[delegateAddr] = []DelegationHistory{
-		{amount: 2500, timestamp: currentTime, add: true},        // 1000
-		{amount: 1000, timestamp: currentTime + 100, add: false}, // 1100
-		{amount: 500, timestamp: currentTime + 200, add: true},   // 1200
+	delegationModifiedHistory[delegateAddr] = []ModifiedDelegationHistory{
+		{
+			delegatedAmount:      2500,
+			delegatedTimestamp:   currentTime,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    2500,
+		},
+
+		{
+			delegatedAmount:      1000,
+			delegatedTimestamp:   currentTime + 100,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    500,
+		},
+
+		{
+			delegatedAmount:    500,
+			delegatedTimestamp: currentTime + 200,
+		},
 	}
 
 	tests := []struct {
@@ -32,28 +46,18 @@ func TestGetDelegatedCumulative(t *testing.T) {
 	}{
 		{
 			name:           "period +50",
-			timestamp:      currentTime + 50, // 1050
-			expectedResult: "125000",         // (2500 * 50)
-		},
-		{
-			name:           "period +100",
-			timestamp:      currentTime + 100, // 1100
-			expectedResult: "250000",          // (2500 * 100)
-		},
-		{
-			name:           "period +150",
-			timestamp:      currentTime + 150, // 1100
-			expectedResult: "325000",          // (2500 * 150 - 1000 * 50)
-		},
-		{
-			name:           "period +200",
-			timestamp:      currentTime + 200, // 1200
-			expectedResult: "400000",          // (2500 * 200 - 1000 * 100 + 500 * 0)
+			timestamp:      currentTime + 50,
+			expectedResult: "0",
 		},
 		{
 			name:           "period +250",
-			timestamp:      currentTime + 250, // 1250
-			expectedResult: "500000",          // (2500 * 250 - 1000 * 150 + 500 * 50)
+			timestamp:      currentTime + 230,
+			expectedResult: "15000", // (0 + 0 + 500 * 30)
+		},
+		{
+			name:           "period +250",
+			timestamp:      currentTime + 250,
+			expectedResult: "35000", // (0 + 500 * 20 + 500 * 50)
 		},
 	}
 
@@ -79,11 +83,27 @@ func TestGetAverageDelegated(t *testing.T) {
 
 	// simulate time passing and additional stakes
 	currentTime := uint64(1000)
-	delegationHistory[delegateAddr] = []DelegationHistory{
-		{amount: 1000, timestamp: currentTime, add: true},       // 1000
-		{amount: 1500, timestamp: currentTime + 100, add: true}, // 1100
-		{amount: 2000, timestamp: currentTime + 200, add: true}, // 1200
-		{amount: 500, timestamp: currentTime + 250, add: false}, // 1250
+	delegationModifiedHistory[delegateAddr] = []ModifiedDelegationHistory{
+		{
+			delegatedAmount:      2500,
+			delegatedTimestamp:   currentTime,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    2500,
+		},
+		{
+			delegatedAmount:      1000,
+			delegatedTimestamp:   currentTime + 100,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    500,
+		},
+		{
+			delegatedAmount:    700,
+			delegatedTimestamp: currentTime + 130,
+		},
+		{
+			delegatedAmount:    500,
+			delegatedTimestamp: currentTime + 200,
+		},
 	}
 
 	tests := []struct {
@@ -96,25 +116,25 @@ func TestGetAverageDelegated(t *testing.T) {
 			name:           "Full period average",
 			start:          currentTime,
 			end:            currentTime + 250,
-			expectedResult: "2300", // (1000*250 + 1500*150 + 2000*50 - 500*0) / 250
+			expectedResult: "476", // (0*0 + 500 * 20 + 700 * 120 + 500 * 50) / 250
 		},
 		{
 			name:           "Partial period average_middle",
 			start:          currentTime + 50,
 			end:            currentTime + 150,
-			expectedResult: "1750", // (1000*100 + 1500*50) / 100
+			expectedResult: "140", // (0 + 0 + 700 * 20 + 0) / 100
 		},
 		{
 			name:           "Partial period average",
-			start:          currentTime + 220, // 1220
-			end:            currentTime + 500, // 1500
-			expectedResult: "4053",            // (1000 * 280 + 1500 * 280 + 2000 * 280 - 500 * 250) / 280
+			start:          currentTime + 220,
+			end:            currentTime + 500,
+			expectedResult: "1682", // (0 * 0 + 500 * 270 + 700 * 280 + 500 * 280) / 280
 		},
 		{
 			name:           "Single point in time",
 			start:          currentTime + 100,
 			end:            currentTime + 100,
-			expectedResult: "0",
+			expectedResult: "0", // (0 + 0+ 0+ 0 )
 		},
 		{
 			name:           "Period before any stakes",
@@ -124,9 +144,9 @@ func TestGetAverageDelegated(t *testing.T) {
 		},
 		{
 			name:           "Period after all recorded stakes",
-			start:          currentTime + 300, // 1300
-			end:            currentTime + 400, // 1400
-			expectedResult: "4000",            // (1000 * 100 + 1500 * 100 + 2000 * 100 - 500 * 100) / 100
+			start:          currentTime + 300,
+			end:            currentTime + 400,
+			expectedResult: "1700", // (0 + 500 * 100 + 700 * 100 + 500 * 100) / 100
 		},
 	}
 
@@ -151,15 +171,32 @@ func TestGetAverageDelegatedOverLast(t *testing.T) {
 	}()
 
 	// Set up delegation history
-	now := uint64(time.Now().Unix())
-	delegationHistory[delegateAddr] = []DelegationHistory{
-		{amount: 2500, timestamp: now - 100, add: true},
-		{amount: 1000, timestamp: now - 50, add: false},
-		{amount: 3000, timestamp: now, add: true},
+	currentTime := uint64(1000)
+	delegationModifiedHistory[delegateAddr] = []ModifiedDelegationHistory{
+		{
+			delegatedAmount:      2500,
+			delegatedTimestamp:   currentTime,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    2500,
+		},
+		{
+			delegatedAmount:      1000,
+			delegatedTimestamp:   currentTime + 100,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    500,
+		},
+		{
+			delegatedAmount:    700,
+			delegatedTimestamp: currentTime + 130,
+		},
+		{
+			delegatedAmount:    500,
+			delegatedTimestamp: currentTime + 200,
+		},
 	}
 
 	avg := GetAverageDelegatedOverLast(delegate, uint64(100))
-	if avg != "2000" { // (2500*100 - 1000*50) / 100
-		t.Errorf("Expected 2000, got %s", avg)
+	if avg != "1700" { // (0 + 500 * 100 + 700 * 100 + 500 * 100) / 100
+		t.Errorf("Expected 1700, got %s", avg)
 	}
 }
