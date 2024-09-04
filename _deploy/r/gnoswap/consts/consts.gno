@@ -36,9 +36,6 @@ const (
 	STAKER_PATH string      = "gno.land/r/gnoswap/v2/staker"
 	STAKER_ADDR std.Address = "g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l"
 
-	GOV_PATH string      = "gno.land/r/gnoswap/v2/gov"
-	GOV_ADDR std.Address = "g1cu4dufdlzu0l9pekkqhw6mjnrxkp3z7ykst09d"
-
 	GNS_PATH string      = "gno.land/r/gnoswap/v2/gns"
 	GNS_ADDR std.Address = "g1ttcyeq0u5f6npysfxvew7tzucvwqy0qjp04p95"
 
@@ -57,8 +54,16 @@ const (
 	COMMUNITY_POOL_PATH string      = "gno.land/r/gnoswap/v2/community_pool"
 	COMMUNITY_POOL_ADDR std.Address = "g1r79m0scwztcdvk3c6sy4rjrtv3rnnzrs9ddh9w"
 
-	X_GNS_PATH string      = "gno.land/r/gnoswap/v2/x_gns"
-	X_GNS_ADDR std.Address = "g1dd0t56nqh5a468chr7vkgp5ftzmquvpja5l7qh"
+	GOV_XGNS_PATH string      = "gno.land/r/gnoswap/v2/gov/xgns"
+	GOV_XGNS_ADDR std.Address = "g16gjmzf8725njf48325nl3yx3ve53wdu4ru53vm"
+
+	GOV_STAKER_PATH string      = "gno.land/r/gnoswap/v2/gov/staker"
+	GOV_STAKER_ADDR std.Address = "g1gt2xzjcmhp2t08yh0nkmc3q822sr87t5n92rm0"
+
+	GOV_GOVERNANCE_PATH string      = "gno.land/r/gnoswap/v2/gov/governance"
+	GOV_GOVERNANCE_ADDR std.Address = "g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5"
+
+	COMMON_PATH string = "gno.land/r/gnoswap/v2/common"
 )
 
 // NUMBER

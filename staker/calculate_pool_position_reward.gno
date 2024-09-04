@@ -147,7 +147,9 @@ func CalcPoolPosition() {
 
 	// calculate external gns amounts
 	totalExternalGns := externalGnsAmount()
+	println(" > CALC__totalExternalGns:", totalExternalGns)
 	totalExternalGns += externalDepositGnsAmount()
+	println(" > CALC__totalExternalGns + externalDepositGnsAmount:", totalExternalGns)
 
 	// calculate pool
 	stakerGnsBalance := gnsBalance(consts.STAKER_ADDR)

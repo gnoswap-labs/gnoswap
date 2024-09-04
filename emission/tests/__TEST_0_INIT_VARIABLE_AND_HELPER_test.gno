@@ -15,7 +15,7 @@ var (
 var (
 	gsaRealm = std.NewUserRealm(gsa)
 
-	govRealm = std.NewCodeRealm(consts.GOV_PATH)
+	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
 )
 
 /* HELPER */

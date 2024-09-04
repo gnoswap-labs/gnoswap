@@ -1,0 +1,202 @@
+package staker
+
+import (
+	"testing"
+
+	"gno.land/p/demo/testutils"
+)
+
+func TestGetDelegatedCumulativeDuration(t *testing.T) {
+	delegateAddr := testutils.TestAddress("delegate")
+	delegate := delegateAddr.String()
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("GetAverageDelegatedDuration panicked: %v", r)
+		}
+	}()
+
+	// simulate time passing and additional stakes
+	currentTime := uint64(1000)
+	delegationModifiedHistory[delegateAddr] = []ModifiedDelegationHistory{
+		{
+			delegatedAmount:      2500,
+			delegatedTimestamp:   currentTime,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    2500,
+		},
+
+		{
+			delegatedAmount:      1000,
+			delegatedTimestamp:   currentTime + 100,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    500,
+		},
+
+		{
+			delegatedAmount:    500,
+			delegatedTimestamp: currentTime + 200,
+		},
+	}
+
+	tests := []struct {
+		name           string
+		timestamp      uint64
+		expectedResult string
+	}{
+		{
+			name:           "period +50",
+			timestamp:      currentTime + 50,
+			expectedResult: "0",
+		},
+		{
+			name:           "period +250",
+			timestamp:      currentTime + 230,
+			expectedResult: "15000", // (0 + 0 + 500 * 30)
+		},
+		{
+			name:           "period +250",
+			timestamp:      currentTime + 250,
+			expectedResult: "35000", // (0 + 500 * 20 + 500 * 50)
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := GetDelegatedCumulativeDuration(delegate, tt.timestamp)
+			if result != tt.expectedResult {
+				t.Errorf("Expected %s, got %s", tt.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestGetAverageDelegatedDuration(t *testing.T) {
+	delegateAddr := testutils.TestAddress("delegate")
+	delegate := delegateAddr.String()
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("GetAverageDelegatedDuration panicked: %v", r)
+		}
+	}()
+
+	// simulate time passing and additional stakes
+	currentTime := uint64(1000)
+	delegationModifiedHistory[delegateAddr] = []ModifiedDelegationHistory{
+		{
+			delegatedAmount:      2500,
+			delegatedTimestamp:   currentTime,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    2500,
+		},
+		{
+			delegatedAmount:      1000,
+			delegatedTimestamp:   currentTime + 100,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    500,
+		},
+		{
+			delegatedAmount:    700,
+			delegatedTimestamp: currentTime + 130,
+		},
+		{
+			delegatedAmount:    500,
+			delegatedTimestamp: currentTime + 200,
+		},
+	}
+
+	tests := []struct {
+		name           string
+		start          uint64
+		end            uint64
+		expectedResult string
+	}{
+		{
+			name:           "Full period average",
+			start:          currentTime,
+			end:            currentTime + 250,
+			expectedResult: "476", // (0*0 + 500 * 20 + 700 * 120 + 500 * 50) / 250
+		},
+		{
+			name:           "Partial period average_middle",
+			start:          currentTime + 50,
+			end:            currentTime + 150,
+			expectedResult: "140", // (0 + 0 + 700 * 20 + 0) / 100
+		},
+		{
+			name:           "Partial period average",
+			start:          currentTime + 220,
+			end:            currentTime + 500,
+			expectedResult: "1682", // (0 * 0 + 500 * 270 + 700 * 280 + 500 * 280) / 280
+		},
+		{
+			name:           "Single point in time",
+			start:          currentTime + 100,
+			end:            currentTime + 100,
+			expectedResult: "0", // (0 + 0+ 0+ 0 )
+		},
+		{
+			name:           "Period before any stakes",
+			start:          currentTime - 100,
+			end:            currentTime - 50,
+			expectedResult: "0",
+		},
+		{
+			name:           "Period after all recorded stakes",
+			start:          currentTime + 300,
+			end:            currentTime + 400,
+			expectedResult: "1700", // (0 + 500 * 100 + 700 * 100 + 500 * 100) / 100
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := GetAverageDelegatedDuration(delegate, tt.start, tt.end)
+			if result != tt.expectedResult {
+				t.Errorf("Expected %s, got %s", tt.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestGetAverageDelegatedDurationOverLastDuration(t *testing.T) {
+	delegateAddr := testutils.TestAddress("delegate")
+	delegate := delegateAddr.String()
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("GetAverageDelegatedDurationOverLastDuration panicked: %v", r)
+		}
+	}()
+
+	// Set up delegation history
+	currentTime := uint64(1000)
+	delegationModifiedHistory[delegateAddr] = []ModifiedDelegationHistory{
+		{
+			delegatedAmount:      2500,
+			delegatedTimestamp:   currentTime,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    2500,
+		},
+		{
+			delegatedAmount:      1000,
+			delegatedTimestamp:   currentTime + 100,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    500,
+		},
+		{
+			delegatedAmount:    700,
+			delegatedTimestamp: currentTime + 130,
+		},
+		{
+			delegatedAmount:    500,
+			delegatedTimestamp: currentTime + 200,
+		},
+	}
+
+	avg := GetAverageDelegatedDurationOverLastDuration(delegate, uint64(100))
+	if avg != "1700" { // (0 + 500 * 100 + 700 * 100 + 500 * 100) / 100
+		t.Errorf("Expected 1700, got %s", avg)
+	}
+}

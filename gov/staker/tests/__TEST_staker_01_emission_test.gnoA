@@ -1,0 +1,129 @@
+package staker
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/testutils"
+
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v2/gov/xgns"
+
+	"gno.land/r/gnoswap/v2/consts"
+)
+
+const minAmount = uint64(1_000_000)
+
+var (
+	dummyAddr  = testutils.TestAddress("dummy")
+	dummyRealm = std.NewUserRealm(dummyAddr)
+	reDelegate = testutils.TestAddress("reDelegate")
+)
+
+func TestInit(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(100000000000000)) // admin has initial gns
+	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
+}
+
+func TestDelegate(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	// gns before emission
+	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+
+	std.TestSkipHeights(1)
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1000001))
+	Delegate(dummyAddr, 1000001)
+
+	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(10702054))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(2853881))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(713470))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000001))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))-xgns.TotalSupply(), uint64(0))
+
+}
+
+func TestRedelegate(t *testing.T) {
+	shouldEQ(t, delegatedFromTo[gsa.String()][dummyAddr.String()], uint64(1000001))
+	shouldEQ(t, delegatedTo[dummyAddr.String()], uint64(1000001))
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
+	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(1000001))
+
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	Redelegate(dummyAddr, reDelegate, 1000001)
+
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
+	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(1000001))
+
+	shouldEQ(t, delegatedFromTo[gsa.String()][dummyAddr.String()], uint64(0))
+	shouldEQ(t, delegatedTo[dummyAddr.String()], uint64(0))
+
+	shouldEQ(t, delegatedFromTo[gsa.String()][reDelegate.String()], uint64(1000001))
+	shouldEQ(t, delegatedTo[reDelegate.String()], uint64(1000001))
+}
+
+func TestUndelegateUnknownUser(t *testing.T) {
+	std.TestSetOrigCaller(dummyAddr)
+	std.TestSetRealm(dummyRealm)
+
+	shouldPanic(
+		t,
+		func() {
+			Undelegate(reDelegate, 1000001)
+		},
+	)
+}
+
+func TestUndelegate(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	shouldEQ(t, delegatedFromTo[gsa.String()][reDelegate.String()], uint64(1000001))
+	shouldEQ(t, delegatedTo[reDelegate.String()], uint64(1000001))
+	shouldEQ(t, len(addrLockedGns[gsa.String()]), 0)
+
+	Undelegate(reDelegate, 1000001)
+
+	shouldEQ(t, len(addrLockedGns[gsa.String()]), 1)
+	shouldEQ(t, delegatedFromTo[gsa.String()][reDelegate.String()], uint64(0))
+	shouldEQ(t, delegatedTo[reDelegate.String()], uint64(0))
+
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
+	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0)) // xGNS immediately be burned
+}
+
+func TestCollectBefore7Days(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	shouldEQ(t, len(addrLockedGns[gsa.String()]), 1)
+
+	CollectUndelegated() // 7 days not passed yet
+
+	shouldEQ(t, len(addrLockedGns[gsa.String()]), 1)
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
+	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
+}
+
+func TestCollectAfter7Days(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	shouldEQ(t, len(addrLockedGns[gsa.String()]), 1)
+
+	std.TestSkipHeights(302401) // 7 days 2 seconds
+	CollectUndelegated()
+
+	shouldEQ(t, len(addrLockedGns[gsa.String()]), 0)
+	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(100000000000000))
+	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
+}

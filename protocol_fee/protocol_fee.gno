@@ -3,21 +3,30 @@ package protocol_fee
 import (
 	"std"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/p/demo/ufmt"
 )
 
-var xGnsPctBps uint64 = 5000 // 50%
+var (
+	devOpsPct      uint64 = 0 // 0%
+	gnsToDevOps    uint64
+	gnsToGovStaker uint64
+
+	accuToGovStaker = make(map[string]uint64) // tokenPath -> amount
+)
 
 func DistributeProtocolFee() {
+	common.IsHalted()
+
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
 				"only admin(%s) or governance(%s) can distribute protocol fee, called from %s",
 				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
+				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
 		)
@@ -26,41 +35,71 @@ func DistributeProtocolFee() {
 	tokens := GetRegisteredTokens()
 	for _, token := range tokens {
 		// default distribute protocol fee percent
-		// xGNS 50%
-		// devOps 50%
+		// govStaker 100%
 		// ...
 
 		balance := balanceOfByRegisterCall(token, consts.PROTOCOL_FEE_ADDR)
 		if balance > 0 {
-			toDevOps := balance * 5000 / 10000
-			toXGns := balance - toDevOps
+			toDevOps := balance * devOpsPct / 10000 // default 0%
+			toGovStaker := balance - toDevOps       // default 100%
 
-			transferByRegisterCall(token, consts.DEV_OPS, toDevOps)
-			transferByRegisterCall(token, consts.X_GNS_ADDR, toXGns)
+			if token == consts.GNS_PATH {
+				gnsToDevOps = toDevOps
+				gnsToGovStaker = toGovStaker
+			}
+
+			accuToGovStaker[token] += toGovStaker
+
+			if toDevOps > 0 {
+				transferByRegisterCall(token, consts.DEV_OPS, toDevOps)
+			}
+
+			if toGovStaker > 0 {
+				transferByRegisterCall(token, consts.GOV_STAKER_ADDR, toGovStaker)
+			}
 		}
 	}
 }
 
-func ChagneXGnsDistributePercent(fee uint64) {
+func GetDevOpsPct() uint64 {
+	return devOpsPct
+}
+
+func SetDevOpsPct(pct uint64) {
+	common.IsHalted()
+
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
-				"only admin(%s) or governance(%s) can change protocol fee distribution percent, called from %s",
+				"only admin(%s) or governance(%s) can change protocol fee distribution percent for dev ops, called from %s",
 				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
+				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
 		)
 	}
 
-	if fee > 10000 {
-		panic("fee should be less than 10000")
+	if pct > 10000 {
+		panic("pct should not be bigger than 10000")
 	}
 
-	xGnsPctBps = fee
+	devOpsPct = pct
 }
 
-func GetXGnsDistributePercent() uint64 {
-	return xGnsPctBps
+func GetLastTransferToDevOps() uint64 {
+	return gnsToDevOps
+}
+
+func GetAccuTransferToGovStaker() map[string]uint64 {
+	return accuToGovStaker
+}
+
+func ClearAccuTransferToGovStaker() {
+	common.IsHalted()
+
+	if std.PrevRealm().PkgPath() != consts.GOV_STAKER_PATH {
+		panic("only gov staker can clear accu transfer to gov staker")
+	}
+	accuToGovStaker = make(map[string]uint64)
 }

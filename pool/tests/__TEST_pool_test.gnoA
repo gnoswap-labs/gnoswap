@@ -135,7 +135,7 @@ func TestSetWithdrawalFeeNoPermission(t *testing.T) {
 		func() {
 			SetWithdrawalFee(2)
 		},
-		"[POOL] protocol_fee_withdrawal.gno__SetWithdrawalFee() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1cu4dufdlzu0l9pekkqhw6mjnrxkp3z7ykst09d) can set withdrawal fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+		"[POOL] protocol_fee_withdrawal.gno__SetWithdrawalFee() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can set withdrawal fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
@@ -172,7 +172,7 @@ func TestSetPoolCreationFeeNoPermission(t *testing.T) {
 		func() {
 			SetPoolCreationFee(2)
 		},
-		"[POOL] protocol_fee_pool_creation.gno__SetPoolCreationFee() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1cu4dufdlzu0l9pekkqhw6mjnrxkp3z7ykst09d) can set pool creation fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+		"[POOL] protocol_fee_pool_creation.gno__SetPoolCreationFee() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can set pool creation fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 

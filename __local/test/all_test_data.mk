@@ -55,7 +55,7 @@ deploy-base-tokens: deploy-gns deploy-usdc deploy-gnft
 deploy-test-tokens: deploy-foo deploy-bar deploy-baz deploy-qux deploy-obl 
 
 .PHONY: deploy-gnoswap-realms
-deploy-gnoswap-realms: deploy-emission deploy-pool deploy-position deploy-staker deploy-router deploy-community_pool deploy-protocol_fee
+deploy-gnoswap-realms: deploy-xgns deploy-emission deploy-pool deploy-position deploy-staker deploy-router deploy-community_pool deploy-protocol_fee deploy-gov-staker deploy-gov-governance 
 
 
 ### TEST AFTER INIT
@@ -97,8 +97,8 @@ test-swap: swap-exact-in-single-bar-to-baz swap-exact-in-single-baz-to-bar
 
 # wait chain to start
 wait:
-	$(info ************ [ETC] wait 5 seconds for chain to start ************)
-	$(shell sleep 5)
+	$(info ************ [ETC] wait 1 seconds for chain to start ************)
+	$(shell sleep 1)
 	@echo
 
 
@@ -194,6 +194,11 @@ deploy-common:
 
 
 # deploy gnoswap realms
+deploy-xgns:
+	$(info ************ deploy xgns ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/gov/xgns -pkgpath gno.land/r/gnoswap/v2/gov/xgns -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo
+
 deploy-emission:
 	$(info ************ deploy emission ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/emission -pkgpath gno.land/r/gnoswap/v2/emission -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
@@ -227,6 +232,16 @@ deploy-community_pool:
 deploy-protocol_fee:
 	$(info ************ deploy protocol_fee ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/protocol_fee -pkgpath gno.land/r/gnoswap/v2/protocol_fee -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo
+
+deploy-gov-staker:
+	$(info ************ deploy gov/staker ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/gov/staker -pkgpath gno.land/r/gnoswap/v2/gov/staker -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo
+
+deploy-gov-governance:
+	$(info ************ deploy gov/governance ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/gov/governance -pkgpath gno.land/r/gnoswap/v2/gov/governance -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 
@@ -427,8 +442,12 @@ decrease-liquidity-position-01:
 ## test create external incentive
 create-external-incentive:
 	$(info ************ create external incentive [foo] => gns:foo:500 // gnoswap_admin ************)
-	# APPROVE FISRT
+	# APPROVE REWARD
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Approve -args $(ADDR_STAKER) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gnoswap_admin > /dev/null
+	@echo
+
+	## APROVE GNS (DEPOSIT)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/gns -func Approve -args $(ADDR_STAKER) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 	# THEN CREATE EXTERNAL INCENTIVE
@@ -438,10 +457,10 @@ create-external-incentive:
 
 create-external-incentive-2:
 	$(info ************ create external incentive [gns] => gns:foo:500 // gnoswap_admin ************)
-	# APPROVE FISRT
+	# APPROVE REWARD ( and DEPOSIT )
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/gns -func Approve -args $(ADDR_STAKER) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gnoswap_admin > /dev/null
 	@echo
-
+	
 	# THEN CREATE EXTERNAL INCENTIVE
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/staker -func CreateExternalIncentive -args "gno.land/r/gnoswap/v2/gns:gno.land/r/onbloc/foo:500" -args "gno.land/r/gnoswap/v2/gns" -args 1000000000 -args $(TOMORROW_MIDNIGHT) -args $(INCENTIVE_END) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
@@ -449,8 +468,15 @@ create-external-incentive-2:
 
 create-external-incentive-3:
 	$(info ************ create external incentive [foo] => gns:foo:500 // gnoswap_lp01 ************)
-	# APPROVE FISRT
+	# APPROVE REWARD
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/onbloc/foo -func Approve -args $(ADDR_STAKER) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gnoswap_lp01 > /dev/null
+	@echo
+
+	## TRANSFER GNS FROM admin to lp01
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/gns  -func Transfer -args $(ADDR_LP01) -args "1000000000" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+
+	## APROVE GNS (DEPOSIT)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/gns -func Approve -args $(ADDR_STAKER) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 9000000 -memo "" gnoswap_lp01 > /dev/null
 	@echo
 
 	# THEN CREATE EXTERNAL INCENTIVE
@@ -478,11 +504,9 @@ mint-and-stake:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/wugnot -func Approve -args $(ADDR_POOL) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
-
 	# THEN MINT
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/staker -func MintAndStake -send "20000000ugnot" -args "gno.land/r/gnoswap/v2/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 0 -args 0 -args $(TX_EXPIRE) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
-
 
 ## test swap
 swap-gns-to-gnot:

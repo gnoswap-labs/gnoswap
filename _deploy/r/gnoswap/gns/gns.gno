@@ -11,6 +11,7 @@ import (
 
 	"gno.land/r/demo/users"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 )
 
@@ -55,16 +56,22 @@ func Allowance(owner, spender pusers.AddressOrName) uint64 {
 }
 
 func Transfer(to pusers.AddressOrName, amount uint64) {
+	common.IsHalted()
+
 	toAddr := users.Resolve(to)
 	checkErr(token.Transfer(toAddr, amount))
 }
 
 func Approve(spender pusers.AddressOrName, amount uint64) {
+	common.IsHalted()
+
 	spenderAddr := users.Resolve(spender)
 	checkErr(token.Approve(spenderAddr, amount))
 }
 
 func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
+	common.IsHalted()
+
 	fromAddr := users.Resolve(from)
 	toAddr := users.Resolve(to)
 	checkErr(token.TransferFrom(fromAddr, toAddr, amount))
@@ -89,6 +96,8 @@ func Render(path string) string {
 
 // Mint
 func Mint(address pusers.AddressOrName) {
+	common.IsHalted()
+
 	// only emission contract can call Mint
 	caller := std.PrevRealm().Addr()
 	if caller != consts.EMISSION_ADDR {

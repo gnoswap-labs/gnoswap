@@ -40,6 +40,8 @@ func SwapRoute(
 	quoteArr string, // []int
 	_tokenAmountLimit string, // uint256
 ) (string, string) { // tokneIn, tokenOut
+	common.IsHalted()
+
 	if swapType != "EXACT_IN" && swapType != "EXACT_OUT" {
 		panic("[ROUTER] router.gno__SwapRoute() || Unknown swapType")
 	}

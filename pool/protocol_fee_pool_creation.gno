@@ -3,6 +3,7 @@ package pool
 import (
 	"std"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/p/demo/ufmt"
@@ -27,13 +28,15 @@ func GetPoolCreationFee() uint64 {
 // Panics:
 //   - If the caller is not the admin or governance
 func SetPoolCreationFee(fee uint64) {
+	common.IsHalted()
+
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
 				"[POOL] protocol_fee_pool_creation.gno__SetPoolCreationFee() || only admin(%s) or governance(%s) can set pool creation fee, called from %s",
 				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
+				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
 		)

@@ -4,6 +4,7 @@ import (
 	"std"
 	"strconv"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/p/demo/ufmt"
@@ -76,13 +77,15 @@ func GetSwapFee() uint64 {
 }
 
 func SetSwapFee(fee uint64) {
+	common.IsHalted()
+
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
 				"[ROUTER] protocol_fee_swap.gno__SetSwapFee() || only admin(%s) or governance(%s) can set swap fee, called from %s",
 				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
+				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
 		)

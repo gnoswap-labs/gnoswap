@@ -29,6 +29,7 @@ func Mint(
 	tickUpper int32,
 	_liquidityAmount string, // uint128
 ) (string, string) { // uint256 x2
+	common.IsHalted()
 	common.DisallowCallFromUser()
 	common.AllowCallFromOnly(consts.POSITION_PATH)
 
@@ -83,6 +84,7 @@ func Burn(
 	tickUpper int32,
 	_liquidityAmount string, // uint128
 ) (string, string) { // uint256 x2
+	common.IsHalted()
 	common.DisallowCallFromUser()
 	common.AllowCallFromOnly(consts.POSITION_PATH)
 
@@ -144,6 +146,7 @@ func Collect(
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
+	common.IsHalted()
 	common.DisallowCallFromUser()
 	common.AllowCallFromOnly(consts.POSITION_PATH)
 
@@ -215,6 +218,7 @@ func Swap(
 	_sqrtPriceLimitX96 string, // uint160
 	_payer string, // router
 ) (string, string) { // int256 x2
+	common.IsHalted()
 	common.DisallowCallFromUser()
 	common.AllowCallFromOnly(consts.ROUTER_PATH)
 
@@ -460,13 +464,14 @@ func SetFeeProtocol(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
 ) {
+	common.IsHalted()
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
 				"[POOL] pool.gno__SetFeeProtocol() || only admin(%s) or governance(%s) can set fee protocol, called from %s",
 				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
+				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
 		)
@@ -510,13 +515,15 @@ func CollectProtocol(
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
+	common.IsHalted()
+
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
 				"[POOL] pool.gno__CollectFeeProtocol() || only admin(%s) or governance(%s) can collect fee protocol, called from %s",
 				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
+				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
 		)

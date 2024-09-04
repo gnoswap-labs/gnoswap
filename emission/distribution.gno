@@ -3,7 +3,9 @@ package emission
 import (
 	"std"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
+
 	"gno.land/r/gnoswap/v2/gns"
 
 	"gno.land/p/demo/ufmt"
@@ -19,7 +21,7 @@ const (
 	LIQUIDITY_STAKING emissionTarget = iota + 1
 	DEVOPS
 	COMMUNITY_POOL
-	XGNS
+	GOV_STAKER
 )
 
 // distributionPct defines the distribution percentages.
@@ -27,68 +29,39 @@ var distributionPct distributionPctMap = distributionPctMap{
 	LIQUIDITY_STAKING: 7500, // 75%
 	DEVOPS:            2000, // 20%
 	COMMUNITY_POOL:    500,  // 5%
-	XGNS:              0,    // 0%
+	GOV_STAKER:        0,    // 0%
 }
 
 var (
 	toStaker        uint64
 	toDevOps        uint64
 	toCommunityPool uint64
-	toXGNS          uint64
+	toGovStaker     uint64
 
 	toStakerAccu        uint64
 	toDevOpsAccu        uint64
 	toCommunityPoolAccu uint64
-	toXGNSAccu          uint64
+	toGovStakerAccu     uint64
 )
 
 // GetDistributionPct returns the distribution percentage for the given target.
-func GetDistributionPct(target emissionTarget) uint64 {
-	return distributionPct[target]
+func GetDistributionPct(target int) uint64 {
+	return distributionPct[emissionTarget(target)]
 }
 
-// ChangeDistributionPct01 changes the distribution percentage for the given single target.
-func ChangeDistributionPct01(target01 emissionTarget, pct01 uint64) {
-	changeDistributionPct(target01, pct01)
-
-	checkSumDistributionPct()
-}
-
-// ChangeDistributionPct02 changes the distribution percentage for the given two targets.
-func ChangeDistributionPct02(
-	target01 emissionTarget, pct01 uint64,
-	target02 emissionTarget, pct02 uint64,
+// ChangeDistributionPct changes the distribution percentage for the given four targets.
+func ChangeDistributionPct(
+	target01 int, pct01 uint64,
+	target02 int, pct02 uint64,
+	target03 int, pct03 uint64,
+	target04 int, pct04 uint64,
 ) {
-	changeDistributionPct(target01, pct01)
-	changeDistributionPct(target02, pct02)
+	common.IsHalted()
 
-	checkSumDistributionPct()
-}
-
-// ChangeDistributionPct03 changes the distribution percentage for the given three targets.
-func ChangeDistributionPct03(
-	target01 emissionTarget, pct01 uint64,
-	target02 emissionTarget, pct02 uint64,
-	target03 emissionTarget, pct03 uint64,
-) {
-	changeDistributionPct(target01, pct01)
-	changeDistributionPct(target02, pct02)
-	changeDistributionPct(target03, pct03)
-
-	checkSumDistributionPct()
-}
-
-// ChangeDistributionPct04 changes the distribution percentage for the given four targets.
-func ChangeDistributionPct04(
-	target01 emissionTarget, pct01 uint64,
-	target02 emissionTarget, pct02 uint64,
-	target03 emissionTarget, pct03 uint64,
-	target04 emissionTarget, pct04 uint64,
-) {
-	changeDistributionPct(target01, pct01)
-	changeDistributionPct(target02, pct02)
-	changeDistributionPct(target03, pct03)
-	changeDistributionPct(target04, pct04)
+	changeDistributionPct(emissionTarget(target01), pct01)
+	changeDistributionPct(emissionTarget(target02), pct02)
+	changeDistributionPct(emissionTarget(target03), pct03)
+	changeDistributionPct(emissionTarget(target04), pct04)
 
 	checkSumDistributionPct()
 }
@@ -129,10 +102,10 @@ func transferToTarget(target emissionTarget, amount uint64) {
 		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), amount)
 		toCommunityPool = amount
 		toCommunityPoolAccu += amount
-	case XGNS:
-		gns.Transfer(a2u(consts.X_GNS_ADDR), amount)
-		toXGNS = amount
-		toXGNSAccu += amount
+	case GOV_STAKER:
+		gns.Transfer(a2u(consts.GOV_STAKER_ADDR), amount)
+		toGovStaker = amount
+		toGovStakerAccu += amount
 	default:
 		panic("invalid target")
 	}
@@ -142,12 +115,12 @@ func transferToTarget(target emissionTarget, amount uint64) {
 func changeDistributionPct(target emissionTarget, pct uint64) {
 	// only admin or governance can change
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic("only admin or governance can change distribution percentages")
 	}
 
 	// cannot add new target
-	if target != LIQUIDITY_STAKING && target != DEVOPS && target != COMMUNITY_POOL && target != XGNS {
+	if target != LIQUIDITY_STAKING && target != DEVOPS && target != COMMUNITY_POOL && target != GOV_STAKER {
 		panic("invalid target")
 	}
 
@@ -172,13 +145,48 @@ func checkSumDistributionPct() {
 }
 
 func GetLastDistributedAmount() (int64, uint64, uint64, uint64, uint64, uint64, uint64) {
-	return lastExecutedHeight, lastStakerGnsBalance, emissionGnsBalance, toStaker, toDevOps, toCommunityPool, toXGNS
+	return lastExecutedHeight, lastStakerGnsBalance, emissionGnsBalance, toStaker, toDevOps, toCommunityPool, toGovStaker
 }
 
 func GetAccuDistributedAmount() (uint64, uint64, uint64, uint64) {
-	return toStaker, toDevOps, toCommunityPool, toXGNS
+	return toStakerAccu, toDevOpsAccu, toCommunityPoolAccu, toGovStakerAccu
+}
+
+func ClearAccuDistributedAmount() {
+	common.IsHalted()
+
+	prevRealm := std.PrevRealm().PkgPath()
+
+	if !(prevRealm == consts.STAKER_PATH && prevRealm == consts.GOV_STAKER_PATH) {
+		panic("only staker or gov staker can clear accumulated distributed amount")
+	}
+
+	toStakerAccu = 0
+	toDevOpsAccu = 0
+	toCommunityPoolAccu = 0
+	toGovStakerAccu = 0
+}
+
+func GetAccuDistributedAmountForGovStaker() uint64 {
+	return toGovStakerAccu
+}
+
+func ClearAccuDistributedAmountForGovStaker() {
+	common.IsHalted()
+
+	prevRealm := std.PrevRealm().PkgPath()
+
+	if prevRealm != consts.GOV_STAKER_PATH {
+		panic("only gov staker can clear accumulated distributed amount")
+	}
+
+	toGovStakerAccu = 0
 }
 
 func GetLastDistributeToStaker() uint64 {
 	return toStaker
+}
+
+func GetLastDistributeToGovStaker() uint64 {
+	return toGovStaker
 }

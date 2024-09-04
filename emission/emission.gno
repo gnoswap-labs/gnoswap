@@ -3,6 +3,7 @@ package emission
 import (
 	"std"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 )
 
@@ -17,6 +18,8 @@ var emissionGnsBalance uint64
 
 // MintAndDistributeGns mints GNS and distributes to target
 func MintAndDistributeGns() {
+	common.IsHalted()
+
 	lastStakerGnsBalance = gnsBalance(consts.STAKER_ADDR)
 
 	height := std.GetHeight()

@@ -23,21 +23,21 @@ func TestDistributeProtocolFee(t *testing.T) {
 
 	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
 	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	shouldEQ(t, bar.BalanceOf(a2u(consts.X_GNS_ADDR)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
 
 	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
 	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	shouldEQ(t, qux.BalanceOf(a2u(consts.X_GNS_ADDR)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
 
 	DistributeProtocolFee()
 
 	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(500))
-	shouldEQ(t, bar.BalanceOf(a2u(consts.X_GNS_ADDR)), uint64(500))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
 
 	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(500))
-	shouldEQ(t, qux.BalanceOf(a2u(consts.X_GNS_ADDR)), uint64(500))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
 }
 
 func TestDistributeProtocolFeeNoPermission(t *testing.T) {
@@ -50,11 +50,11 @@ func TestDistributeProtocolFeeNoPermission(t *testing.T) {
 		func() {
 			DistributeProtocolFee()
 		},
-		"only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1cu4dufdlzu0l9pekkqhw6mjnrxkp3z7ykst09d) can distribute protocol fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+		"only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can distribute protocol fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
-func TestChagneXGnsDistributePercentNoPermission(t *testing.T) {
+func TestSetDevOpsPctNoPermission(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
 	dummyRealm := std.NewUserRealm(dummy)
 	std.TestSetRealm(dummyRealm)
@@ -62,32 +62,32 @@ func TestChagneXGnsDistributePercentNoPermission(t *testing.T) {
 	shouldPanicWithMsg(
 		t,
 		func() {
-			ChagneXGnsDistributePercent(123)
+			SetDevOpsPct(123)
 		},
-		"only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1cu4dufdlzu0l9pekkqhw6mjnrxkp3z7ykst09d) can change protocol fee distribution percent, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+		"only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can change protocol fee distribution percent for dev ops, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
-func TestChagneXGnsDistributePercentInvalidFee(t *testing.T) {
+func TestSetDevOpsPctInvalidFee(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	shouldPanicWithMsg(
 		t,
 		func() {
-			ChagneXGnsDistributePercent(100001)
+			SetDevOpsPct(100001)
 		},
-		"fee should be less than 10000",
+		"pct should not be bigger than 10000",
 	)
 }
 
-func TestChagneXGnsDistributePercent(t *testing.T) {
+func TestSetDevOpsPct(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	shouldEQ(t, GetXGnsDistributePercent(), uint64(5000))
+	shouldEQ(t, GetDevOpsPct(), uint64(0))
 
-	ChagneXGnsDistributePercent(123)
+	SetDevOpsPct(123)
 
-	shouldEQ(t, GetXGnsDistributePercent(), uint64(123))
+	shouldEQ(t, GetDevOpsPct(), uint64(123))
 }
 
 func a2u(addr std.Address) pusers.AddressOrName {

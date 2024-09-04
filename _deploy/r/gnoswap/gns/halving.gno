@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/p/demo/json"
@@ -96,18 +97,24 @@ func init() {
 	}
 }
 
+func GetAvgBlockTimeInMs() int64 {
+	return avgBlockTimeMs
+}
+
 func SetAvgBlockTimeInMs(ms int64) {
+	common.IsHalted()
+
 	println()
 
 	// admin or governance or staker only
 	caller := std.PrevRealm().Addr()
 
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR && caller != consts.STAKER_ADDR {
+	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR && caller != consts.STAKER_ADDR {
 		panic(
 			ufmt.Sprintf(
 				"only admin(%s) or governance(%s) or staker(%s) can set avg block time, called from %s",
 				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
+				consts.GOV_GOVERNANCE_ADDR,
 				consts.STAKER_ADDR,
 				caller,
 			),

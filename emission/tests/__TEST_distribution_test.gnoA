@@ -39,33 +39,19 @@ func Test_distributeToTarget_After5Block(t *testing.T) {
 func TestChangeDistributionPct_ByAdmin(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
-	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), uint64(7500))
-	shouldEQ(t, GetDistributionPct(DEVOPS), uint64(2000))
+	shouldEQ(t, GetDistributionPct(int(1)), uint64(7500))
+	shouldEQ(t, GetDistributionPct(int(2)), uint64(2000))
+	shouldEQ(t, GetDistributionPct(int(3)), uint64(500))
+	shouldEQ(t, GetDistributionPct(int(4)), uint64(0))
 
-	ChangeDistributionPct02(
-		1, 5000,
-		2, 4500,
-	)
-	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), uint64(5000))
-	shouldEQ(t, GetDistributionPct(DEVOPS), uint64(4500))
-
-	ChangeDistributionPct03(
-		1, 5000,
-		2, 4000,
-		3, 1000,
-	)
-	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), uint64(5000))
-	shouldEQ(t, GetDistributionPct(DEVOPS), uint64(4000))
-	shouldEQ(t, GetDistributionPct(COMMUNITY_POOL), uint64(1000))
-
-	ChangeDistributionPct04(
+	ChangeDistributionPct(
 		1, 10000,
 		2, 0,
 		3, 0,
 		4, 0,
 	)
-	shouldEQ(t, GetDistributionPct(LIQUIDITY_STAKING), uint64(10000))
-	shouldEQ(t, GetDistributionPct(DEVOPS), uint64(0))
-	shouldEQ(t, GetDistributionPct(COMMUNITY_POOL), uint64(0))
-	shouldEQ(t, GetDistributionPct(XGNS), uint64(0))
+	shouldEQ(t, GetDistributionPct(int(1)), uint64(10000))
+	shouldEQ(t, GetDistributionPct(int(2)), uint64(0))
+	shouldEQ(t, GetDistributionPct(int(3)), uint64(0))
+	shouldEQ(t, GetDistributionPct(int(4)), uint64(0))
 }
