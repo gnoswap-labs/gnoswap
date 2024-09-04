@@ -140,8 +140,9 @@ func CollectUndelegated() uint64 {
 	}
 
 	// check if caller has any GNS to claim
+	collected := uint64(0)
 	for i, locked := range addrLockedGns[caller.String()] {
-		if uint64(time.Now().Unix()) >= locked.unlock { // passed 20 days
+		if uint64(time.Now().Unix()) >= locked.unlock && locked.amount > 0 { // passed 7 days
 			// transfer GNS to caller
 			gns.Transfer(a2u(caller), locked.amount)
 
@@ -155,11 +156,11 @@ func CollectUndelegated() uint64 {
 			addrLockedGns[caller.String()] = append(addrLockedGns[caller.String()][:i], addrLockedGns[caller.String()][i+1:]...)
 
 			lockedAmount -= locked.amount
-			return locked.amount
+			collected += locked.amount
 		}
 	}
 
-	return 0
+	return collected
 }
 
 func CollectReward() {

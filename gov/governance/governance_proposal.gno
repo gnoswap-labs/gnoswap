@@ -321,7 +321,8 @@ func Cancel(proposalId uint64) {
 	caller := std.GetOrigCaller()
 	if caller != proposal.Proposer {
 		// If the caller is not the proposer, check if the proposer's stake has fallen below the threshold
-		delegatedAccu := gs.GetAverageDelegatedOverLastDuration(proposal.Proposer.String(), config.VotingWeightSmoothingDuration)
+		delegatedAccu := gs.GetDelegatedCumulative(proposal.Proposer.String(), proposal.ExecutionState.CreatedAt-config.VotingWeightSmoothingDuration)
+
 		if delegatedAccu == 0 {
 			panic(ufmt.Sprintf("no average delegated found for proposer %s", proposal.Proposer.String()))
 		}
@@ -443,59 +444,59 @@ func checkExisitngProposal(proposer std.Address) {
 }
 
 func updateProposalsState() {
+	now := uint64(time.Now().Unix())
 	for id, proposal := range proposals {
+		config := GetConfigVersion(proposal.ConfigVersion)
+
 		// check if proposal is in a state that needs to be updated
 		// - created
 		// - not canceled
 		// - not executed
+
+		// proposal is in voting period
 		if proposal.ExecutionState.Created &&
 			!proposal.ExecutionState.Canceled &&
 			!proposal.ExecutionState.Executed {
 
-			config := GetConfigVersion(proposal.ConfigVersion)
-			now := uint64(time.Now().Unix())
-
-			// proposal is in voting period
 			if proposal.ExecutionState.Upcoming && // was upcoming
 				now >= (proposal.ExecutionState.CreatedAt+config.VotingStartDelay) && // voting started
 				now <= (proposal.ExecutionState.CreatedAt+config.VotingStartDelay+config.VotingPeriod) { // voting not ended
 				proposal.ExecutionState.Upcoming = false
 				proposal.ExecutionState.Active = true
 			}
-
-			// proposal voting ended, check if passed or rejected
-			if now > (proposal.ExecutionState.CreatedAt + config.VotingStartDelay + config.VotingPeriod) {
-				yeaUint := proposal.Yea.Uint64()
-				nayUint := proposal.Nay.Uint64()
-				quorumUint := config.Quorum
-
-				if yeaUint >= quorumUint && yeaUint > nayUint {
-					proposal.ExecutionState.Passed = true
-					proposal.ExecutionState.PassedAt = now
-				} else {
-					proposal.ExecutionState.Rejected = true
-					proposal.ExecutionState.RejectedAt = now
-				}
-
-				proposal.ExecutionState.Active = false
-			}
-
-			// (non text) proposal passed but not executed until executing window ends
-			if proposal.ProposalType != "TEXT" && // isn't text type ≈ can be executed
-				proposal.ExecutionState.Passed && // passed
-				!proposal.ExecutionState.Executed { // not executed
-
-				votingEnd := proposal.ExecutionState.CreatedAt + config.VotingStartDelay + config.VotingPeriod
-				windowStart := votingEnd + config.ExecutionDelay
-				windowEnd := windowStart + config.ExecutionWindow
-
-				if now >= windowEnd { // execution window ended
-					proposal.ExecutionState.Expired = true
-					proposal.ExecutionState.ExpiredAt = now
-				}
-			}
-
-			proposals[id] = proposal
 		}
+
+		// proposal voting ended, check if passed or rejected
+		if now > (proposal.ExecutionState.CreatedAt + config.VotingStartDelay + config.VotingPeriod) {
+			yeaUint := proposal.Yea.Uint64()
+			nayUint := proposal.Nay.Uint64()
+			quorumUint := config.Quorum
+
+			if yeaUint >= quorumUint && yeaUint > nayUint {
+				proposal.ExecutionState.Passed = true
+				proposal.ExecutionState.PassedAt = now
+			} else {
+				proposal.ExecutionState.Rejected = true
+				proposal.ExecutionState.RejectedAt = now
+			}
+			proposal.ExecutionState.Active = false
+		}
+
+		// (non text) proposal passed but not executed until executing window ends
+		if proposal.ProposalType != "TEXT" && // isn't text type ≈ can be executed
+			proposal.ExecutionState.Passed && // passed
+			!proposal.ExecutionState.Executed { // not executed
+
+			votingEnd := proposal.ExecutionState.CreatedAt + config.VotingStartDelay + config.VotingPeriod
+			windowStart := votingEnd + config.ExecutionDelay
+			windowEnd := windowStart + config.ExecutionWindow
+
+			if now >= windowEnd { // execution window ended
+				proposal.ExecutionState.Expired = true
+				proposal.ExecutionState.ExpiredAt = now
+			}
+		}
+
+		proposals[id] = proposal
 	}
 }
