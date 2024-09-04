@@ -26,11 +26,16 @@ func TestProposeText(t *testing.T) {
 	})
 
 	t.Run("Successful text proposal", func(t *testing.T) {
+		proposalsJson := GetProposals()
+		if proposalsJson != `` {
+			t.Errorf("Expected empty proposals, got %v", proposalsJson)
+		}
+
 		std.TestSetOrigCaller(gsa)
 		std.TestSetRealm(gsaRealm)
 		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
 		gs.Delegate(gsa, uint64(1_000_000))
-		std.TestSkipHeights(1)
+		std.TestSkipHeights(51) // VotingWeightSmoothingDuration is 50 block
 
 		proposalID := ProposeText("test_title", "test_description")
 		if proposalID != 1 {
@@ -72,6 +77,16 @@ func TestProposeText(t *testing.T) {
 
 		if proposal.Description != "test_description" {
 			t.Errorf("Incorrect text. Expected test_description, got %v", proposal.Description)
+		}
+
+		proposalsJson = GetProposals()
+		if proposalsJson != `{"height":"174","now":"1234567992","proposals":[{"id":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTkyIiwiVXBjb21pbmciOiJ0cnVlIiwiQWN0aXZlIjoiZmFsc2UiLCJWb3RpbmdTdGFydCI6IjEyMzQ1NjgwOTIiLCJWb3RpbmdFbmQiOiIxMjM0NTY5MDkyIiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":""}]}` {
+			t.Errorf("Incorrect proposals json: %v", proposalsJson)
+		}
+
+		votesJson := GetVotesByAddress(gsa.String())
+		if votesJson != `` {
+			t.Errorf("Expected empty votes, got %v", votesJson)
 		}
 	})
 
@@ -128,7 +143,7 @@ func TestVote(t *testing.T) {
 
 		proposal := proposals[proposalId]
 		if proposal.Yea.Cmp(u256.NewUint(1_000_000)) != 0 {
-			t.Errorf("Vote count not updated correctly")
+			t.Errorf("Vote count not updated correctly", proposal.Yea.ToString())
 		}
 
 		if proposal.Nay.Cmp(u256.NewUint(0)) != 0 {
@@ -141,6 +156,31 @@ func TestVote(t *testing.T) {
 
 		if !proposal.ExecutionState.Active {
 			t.Errorf("Proposal should be active after vote")
+		}
+
+		proposalsJson := GetProposals()
+		if proposalsJson != `{"height":"225","now":"1234568094","proposals":[{"id":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTkyIiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6InRydWUiLCJWb3RpbmdTdGFydCI6IjEyMzQ1NjgwOTIiLCJWb3RpbmdFbmQiOiIxMjM0NTY5MDkyIiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":""}]}` {
+			t.Errorf("Incorrect proposals json: %v", proposalsJson)
+		}
+
+		votesJson := GetVotesByAddress(gsa.String())
+		if votesJson != `{"height":"225","now":"1234568094","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"225","voteTimestamp":"1234568094"}]}` {
+			t.Errorf("Incorrect votes json: %v", votesJson)
+		}
+
+		voteJson := GetVoteStatusFromProposalById(proposalId)
+		if voteJson != `{"height":"225","now":"1234568094","proposalId":"1","votes":"eyJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9"}` {
+			t.Errorf("Incorrect vote json: %v", voteJson)
+		}
+
+		addrVotesJson := GetVotesByAddress(gsa.String())
+		if addrVotesJson != `{"height":"225","now":"1234568094","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"225","voteTimestamp":"1234568094"}]}` {
+			t.Errorf("Incorrect address votes json: %v", addrVotesJson)
+		}
+
+		addrVoteJson := GetVoteByAddressFromProposalById(gsa.String(), proposalId)
+		if addrVoteJson != `{"height":"225","now":"1234568094","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"225","voteTimestamp":"1234568094"}]}` {
+			t.Errorf("Incorrect address vote json: %v", addrVoteJson)
 		}
 	})
 
@@ -213,6 +253,15 @@ func TestCancel(t *testing.T) {
 
 	t.Run("Successful cancel", func(t *testing.T) {
 		Cancel(proposalId)
+		proposalsJson := GetProposals()
+		if proposalsJson != `{"height":"2226","now":"1234572096","proposals":[{"id":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTkyIiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTY4MDkyIiwiVm90aW5nRW5kIjoiMTIzNDU2OTA5MiIsIlBhc3NlZCI6InRydWUiLCJQYXNzZWRBdCI6IjEyMzQ1NzIwOTYiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":""},{"id":"2","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTcyMDk2IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTcyMTk2IiwiVm90aW5nRW5kIjoiMTIzNDU3MzE5NiIsIlBhc3NlZCI6ImZhbHNlIiwiUGFzc2VkQXQiOiIwIiwiUmVqZWN0ZWQiOiJmYWxzZSIsIlJlamVjdGVkQXQiOiIwIiwiQ2FuY2VsZWQiOiJ0cnVlIiwiQ2FuY2VsZWRBdCI6IjEyMzQ1NzIwOTYiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test2_title","description":"test2_description","vote":"eyJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":""}]}` {
+			t.Errorf("Incorrect proposals json: %v", proposalsJson)
+		}
+
+		proposalJson := GetProposalById(proposalId)
+		if proposalJson != `{"height":"2226","now":"1234572096","proposals":[{"id":"2","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTcyMDk2IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTcyMTk2IiwiVm90aW5nRW5kIjoiMTIzNDU3MzE5NiIsIlBhc3NlZCI6ImZhbHNlIiwiUGFzc2VkQXQiOiIwIiwiUmVqZWN0ZWQiOiJmYWxzZSIsIlJlamVjdGVkQXQiOiIwIiwiQ2FuY2VsZWQiOiJ0cnVlIiwiQ2FuY2VsZWRBdCI6IjEyMzQ1NzIwOTYiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test2_title","description":"test2_description","vote":"eyJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":""}]}` {
+			t.Errorf("Incorrect proposal json: %v", proposalJson)
+		}
 
 		proposal := proposals[proposalId]
 		if !proposal.ExecutionState.Canceled {

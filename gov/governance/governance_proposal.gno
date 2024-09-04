@@ -7,15 +7,23 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 	cp "gno.land/r/gnoswap/v2/community_pool"
-	gs "gno.land/r/gnoswap/v2/gov/staker"
+	gs "gno.land/r/gnoswap/v2/gov/staker" 
 
 	"gno.land/r/gnoswap/v2/common"
 
 	"gno.land/p/demo/ufmt"
 )
 
+type voteWithWeight struct {
+	Yes         bool
+	Weight      uint64
+	VotedHeight uint64
+	VotedAt     uint64
+}
+
 var (
-	votes = make(map[string]bool) // voteKey -> yes/no
+	votes     = make(map[string]bool)                      // voteKey(proposalId:user) -> yes/no
+	userVotes = make(map[string]map[uint64]voteWithWeight) // user -> proposalId -> voteWithWeight
 
 	proposalId               uint64
 	proposals                = make(map[uint64]ProposalInfo) // proposalId -> ProposalInfo
@@ -36,10 +44,10 @@ func ProposeText(
 	proposer := std.GetOrigCaller()
 	checkExisitngProposal(proposer)
 
-	avgDelegatedStr := gs.GetAverageDelegatedOverLast(proposer.String(), config.VotingWeightSmoothingDuration)
-	avgDelegated := strToU256U64(avgDelegatedStr)
-	if avgDelegated < config.ProposalCreationThreshold {
-		panic(ufmt.Sprintf("THRESHOLD NOT MET: %d < %d", avgDelegated, config.ProposalCreationThreshold))
+	now := uint64(time.Now().Unix())
+	delegatedAccu := gs.GetDelegatedCumulative(proposer.String(), now-config.VotingWeightSmoothingDuration)
+	if delegatedAccu < config.ProposalCreationThreshold {
+		panic(ufmt.Sprintf("THRESHOLD NOT MET: %d < %d", delegatedAccu, config.ProposalCreationThreshold))
 	}
 
 	proposal := ProposalInfo{
@@ -90,10 +98,10 @@ func ProposeCommunityPoolSpend(
 	proposer := std.GetOrigCaller()
 	checkExisitngProposal(proposer)
 
-	avgDelegatedStr := gs.GetAverageDelegatedOverLast(proposer.String(), config.VotingWeightSmoothingDuration)
-	avgDelegated := strToU256U64(avgDelegatedStr)
-	if avgDelegated < config.ProposalCreationThreshold {
-		panic(ufmt.Sprintf("THRESHOLD NOT MET: %d < %d", avgDelegated, config.ProposalCreationThreshold))
+	now := uint64(time.Now().Unix())
+	delegatedAccu := gs.GetDelegatedCumulative(proposer.String(), now-config.VotingWeightSmoothingDuration)
+	if delegatedAccu < config.ProposalCreationThreshold {
+		panic(ufmt.Sprintf("THRESHOLD NOT MET: %d < %d", delegatedAccu, config.ProposalCreationThreshold))
 	}
 
 	proposal := ProposalInfo{
@@ -101,7 +109,7 @@ func ProposeCommunityPoolSpend(
 		ProposalType: "COMMUNITY_POOL_SPEND",
 		ExecutionState: ExecutionState{
 			Created:   true,
-			CreatedAt: uint64(time.Now().Unix()),
+			CreatedAt: now,
 			Upcoming:  true,
 		},
 		Yea:           u256.Zero(),
@@ -152,10 +160,10 @@ func ProposeParameterChange(
 	proposer := std.GetOrigCaller()
 	checkExisitngProposal(proposer)
 
-	avgDelegatedStr := gs.GetAverageDelegatedOverLast(proposer.String(), config.VotingWeightSmoothingDuration)
-	avgDelegated := strToU256U64(avgDelegatedStr)
-	if avgDelegated < config.ProposalCreationThreshold {
-		panic(ufmt.Sprintf("THRESHOLD NOT MET: %d < %d", avgDelegated, config.ProposalCreationThreshold))
+	now := uint64(time.Now().Unix())
+	delegatedAccu := gs.GetDelegatedCumulative(proposer.String(), now-config.VotingWeightSmoothingDuration)
+	if delegatedAccu < config.ProposalCreationThreshold {
+		panic(ufmt.Sprintf("THRESHOLD NOT MET: %d < %d", delegatedAccu, config.ProposalCreationThreshold))
 	}
 
 	proposal := ProposalInfo{
@@ -163,7 +171,7 @@ func ProposeParameterChange(
 		ProposalType: "PARAMETER_CHANGE",
 		ExecutionState: ExecutionState{
 			Created:   true,
-			CreatedAt: uint64(time.Now().Unix()),
+			CreatedAt: now,
 			Upcoming:  true,
 		},
 		Yea:           u256.Zero(),
@@ -236,23 +244,22 @@ func Vote(proposalId uint64, yes bool) string {
 		panic(ufmt.Sprintf("user %s has already voted on proposal %d", voter.String(), proposalId))
 	}
 
-	weight := gs.GetAverageDelegated(
+	weight := gs.GetDelegatedCumulative(
 		voter.String(),
 		votingStartTime-config.VotingWeightSmoothingDuration,
-		votingStartTime,
 	)
-	if weight == "0" {
+	if weight == 0 {
 		panic(ufmt.Sprintf("no average delegated found for voter %s", voter.String()))
 	}
 
 	var overflow bool
 	if yes {
-		proposal.Yea, overflow = new(u256.Uint).AddOverflow(proposal.Yea, u256.MustFromDecimal(weight))
+		proposal.Yea, overflow = new(u256.Uint).AddOverflow(proposal.Yea, u256.NewUint(weight))
 		if overflow {
 			panic("VOTE YES OVERFLOW")
 		}
 	} else {
-		proposal.Nay, overflow = new(u256.Uint).AddOverflow(proposal.Nay, u256.MustFromDecimal(weight))
+		proposal.Nay, overflow = new(u256.Uint).AddOverflow(proposal.Nay, u256.NewUint(weight))
 		if overflow {
 			panic("VOTE NO OVERFLOW")
 		}
@@ -261,11 +268,21 @@ func Vote(proposalId uint64, yes bool) string {
 	proposals[proposalId] = proposal // update Yea, Nay
 	votes[voteKey] = yes
 
+	if userVotes[voter.String()] == nil {
+		userVotes[voter.String()] = make(map[uint64]voteWithWeight)
+	}
+	userVotes[voter.String()][proposalId] = voteWithWeight{
+		Yes:         yes,
+		Weight:      weight,
+		VotedHeight: uint64(std.GetHeight()),
+		VotedAt:     now,
+	}
+
 	std.Emit(
 		"Voted",
 		"proposalId", ufmt.Sprintf("%d", proposalId),
 		"voter", voter.String(),
-		"weight", weight,
+		"weight", ufmt.Sprintf("%d", weight),
 		"yes", voteToString(yes),
 	)
 
@@ -298,16 +315,16 @@ func Cancel(proposalId uint64) {
 	caller := std.GetOrigCaller()
 	if caller != proposal.Proposer {
 		// If the caller is not the proposer, check if the proposer's stake has fallen below the threshold
-		avgDelegatedStr := gs.GetAverageDelegatedOverLast(proposal.Proposer.String(), config.VotingWeightSmoothingDuration)
-		if avgDelegatedStr == "0" {
+		delegatedAccu := gs.GetAverageDelegatedOverLastDuration(proposal.Proposer.String(), config.VotingWeightSmoothingDuration)
+		if delegatedAccu == 0 {
 			panic(ufmt.Sprintf("no average delegated found for proposer %s", proposal.Proposer.String()))
 		}
 
-		if strToU256U64(avgDelegatedStr) >= config.ProposalCreationThreshold {
+		if delegatedAccu >= config.ProposalCreationThreshold {
 			panic(
 				ufmt.Sprintf(
-					"caller %s is not the proposer(%s) and proposer's stake(%s) is above the threshold(%d)",
-					caller, proposal.Proposer, avgDelegatedStr, config.ProposalCreationThreshold,
+					"caller %s is not the proposer(%s) and proposer's stake(%d) is above the threshold(%d)",
+					caller, proposal.Proposer, delegatedAccu, config.ProposalCreationThreshold,
 				),
 			)
 		}

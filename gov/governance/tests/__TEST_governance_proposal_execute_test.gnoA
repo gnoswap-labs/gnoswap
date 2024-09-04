@@ -40,7 +40,7 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 		std.TestSetRealm(gsaRealm)
 		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
 		gs.Delegate(gsa, uint64(1_000_000))
-		std.TestSkipHeights(1)
+		std.TestSkipHeights(51) // VotingWeightSmoothingDuration
 
 		proposalID := ProposeParameterChange("test_title", "test_description", consts.EMISSION_PATH, "ChangeDistributionPct", "1*GOV*7000*GOV*2*GOV*1500*GOV*3*GOV*1000*GOV*4*GOV*500")
 		if proposalID != 1 {

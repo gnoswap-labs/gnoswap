@@ -1,10 +1,12 @@
 package governance
 
 import (
+	b64 "encoding/base64"
 	"strconv"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 )
 
@@ -203,4 +205,17 @@ func contains(slice []string, str string) bool {
 		}
 	}
 	return false
+}
+
+func marshal(data *json.Node) string {
+	b, err := json.Marshal(data)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return string(b)
+}
+
+func b64Encode(data string) string {
+	return string(b64.StdEncoding.EncodeToString([]byte(data)))
 }
