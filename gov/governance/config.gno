@@ -17,13 +17,13 @@ var (
 func init() {
 	// value for testing case from @notJoon
 	config = Config{
-		VotingStartDelay:              uint64(100),
-		VotingPeriod:                  uint64(1000),
-		VotingWeightSmoothingDuration: uint64(100),
-		Quorum:                        uint64(500),
-		ProposalCreationThreshold:     uint64(100),
-		ExecutionDelay:                uint64(100),
-		ExecutionWindow:               uint64(1000),
+		VotingStartDelay:              uint64(100),  // 50 block
+		VotingPeriod:                  uint64(1000), // 500 block
+		VotingWeightSmoothingDuration: uint64(100),  // 50 block
+		Quorum:                        uint64(500),  // 250 block
+		ProposalCreationThreshold:     uint64(100),  // 50 block
+		ExecutionDelay:                uint64(100),  // 50 block
+		ExecutionWindow:               uint64(1000), // 500 block
 	}
 
 	// https://docs.gnoswap.io/core-concepts/governance

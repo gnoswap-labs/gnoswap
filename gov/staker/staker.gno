@@ -13,7 +13,7 @@ import (
 	en "gno.land/r/gnoswap/v2/emission"
 )
 
-type lockedXGNS struct {
+type lockedGNS struct {
 	amount uint64
 	unlock uint64
 }
@@ -23,7 +23,7 @@ var lockedAmount uint64
 const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
 
 var (
-	addrLockedXGns = make(map[string][]lockedXGNS)
+	addrLockedGns = make(map[string][]lockedGNS)
 )
 
 var (
@@ -114,11 +114,11 @@ func Undelegate(to std.Address, amount uint64) {
 	undelegate(to, amount)
 
 	// lock up
-	userLocked := lockedXGNS{
+	userLocked := lockedGNS{
 		amount: amount,
 		unlock: uint64(time.Now().Unix()) + TIMESTAMP_7_DAYS, // after 7 days, call Collect() to receive GNS
 	}
-	addrLockedXGns[caller.String()] = append(addrLockedXGns[caller.String()], userLocked)
+	addrLockedGns[caller.String()] = append(addrLockedGns[caller.String()], userLocked)
 	lockedAmount += amount
 
 	std.Emit(
@@ -135,12 +135,12 @@ func CollectUndelegated() uint64 {
 
 	caller := std.GetOrigCaller()
 
-	if len(addrLockedXGns[caller.String()]) == 0 {
+	if len(addrLockedGns[caller.String()]) == 0 {
 		return 0
 	}
 
 	// check if caller has any GNS to claim
-	for i, locked := range addrLockedXGns[caller.String()] {
+	for i, locked := range addrLockedGns[caller.String()] {
 		if uint64(time.Now().Unix()) >= locked.unlock { // passed 20 days
 			// transfer GNS to caller
 			gns.Transfer(a2u(caller), locked.amount)
@@ -152,7 +152,7 @@ func CollectUndelegated() uint64 {
 			)
 
 			// remove from locked list
-			addrLockedXGns[caller.String()] = append(addrLockedXGns[caller.String()][:i], addrLockedXGns[caller.String()][i+1:]...)
+			addrLockedGns[caller.String()] = append(addrLockedGns[caller.String()][:i], addrLockedGns[caller.String()][i+1:]...)
 
 			lockedAmount -= locked.amount
 			return locked.amount
