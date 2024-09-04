@@ -6,10 +6,15 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
+
+	en "gno.land/r/gnoswap/v2/emission"
 )
 
 // GetLockedAmount gets the total locked amount of GNS.
 func GetLockedAmount() uint64 {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	return lockedAmount
 }
 
@@ -17,6 +22,8 @@ func GetLockedAmount() uint64 {
 // - total locked amount
 // - claimable amount
 func GetLockedInfoByAddress(addr string) string {
+	en.MintAndDistributeGns()
+
 	lockeds, exist := addrLockedGns[addr]
 	if !exist {
 		return ""

@@ -8,10 +8,15 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	gs "gno.land/r/gnoswap/v2/gov/staker"
+
+	en "gno.land/r/gnoswap/v2/emission"
 )
 
 // GetProposals returns all proposals with necessary information.
 func GetProposals() string {
+	en.MintAndDistributeGns()
+	updateProposalsState()
+
 	if len(proposals) == 0 {
 		return ""
 	}
@@ -29,6 +34,9 @@ func GetProposals() string {
 
 // GetProposalById returns a single proposal with necessary information.
 func GetProposalById(id uint64) string {
+	en.MintAndDistributeGns()
+	updateProposalsState()
+
 	proposal, exist := proposals[id]
 	if !exist {
 		return ""
@@ -65,6 +73,9 @@ func getProposalById(id uint64) *json.Node {
 
 // GetVoteStatusFromProposalById returns the vote status(max, yes, no) of a proposal.
 func GetVoteStatusFromProposalById(id uint64) string {
+	en.MintAndDistributeGns()
+	updateProposalsState()
+
 	proposal, exist := proposals[id]
 	if !exist {
 		return ""
@@ -85,6 +96,9 @@ func GetVoteStatusFromProposalById(id uint64) string {
 // - height
 // - timestamp
 func GetVotesByAddress(addr string) string {
+	en.MintAndDistributeGns()
+	updateProposalsState()
+
 	if _, exist := userVotes[addr]; !exist {
 		return ""
 	}
@@ -103,6 +117,9 @@ func GetVotesByAddress(addr string) string {
 
 // GetVoteByAddressFromProposalById returns the vote of an address from a certain proposal.
 func GetVoteByAddressFromProposalById(addr string, id uint64) string {
+	en.MintAndDistributeGns()
+	updateProposalsState()
+
 	if _, exist := userVotes[addr]; !exist {
 		return ""
 	}

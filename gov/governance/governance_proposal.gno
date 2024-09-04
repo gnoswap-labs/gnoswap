@@ -6,8 +6,10 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
+
 	cp "gno.land/r/gnoswap/v2/community_pool"
-	gs "gno.land/r/gnoswap/v2/gov/staker" 
+	en "gno.land/r/gnoswap/v2/emission"
+	gs "gno.land/r/gnoswap/v2/gov/staker"
 
 	"gno.land/r/gnoswap/v2/common"
 
@@ -39,6 +41,7 @@ func ProposeText(
 ) uint64 { // proposalId
 	common.IsHalted()
 
+	en.MintAndDistributeGns()
 	updateProposalsState()
 
 	proposer := std.GetOrigCaller()
@@ -93,6 +96,7 @@ func ProposeCommunityPoolSpend(
 ) uint64 { // proposalId
 	common.IsHalted()
 
+	en.MintAndDistributeGns()
 	updateProposalsState()
 
 	proposer := std.GetOrigCaller()
@@ -155,6 +159,7 @@ func ProposeParameterChange(
 ) uint64 { // proposalId
 	common.IsHalted()
 
+	en.MintAndDistributeGns()
 	updateProposalsState()
 
 	proposer := std.GetOrigCaller()
@@ -211,6 +216,7 @@ func ProposeParameterChange(
 func Vote(proposalId uint64, yes bool) string {
 	common.IsHalted()
 
+	en.MintAndDistributeGns()
 	updateProposalsState()
 
 	proposal, exist := proposals[proposalId]
@@ -295,6 +301,7 @@ func Vote(proposalId uint64, yes bool) string {
 func Cancel(proposalId uint64) {
 	common.IsHalted()
 
+	en.MintAndDistributeGns()
 	updateProposalsState()
 
 	proposal, exist := proposals[proposalId]
@@ -351,6 +358,7 @@ func Cancel(proposalId uint64) {
 func Execute(proposalId uint64) {
 	common.IsHalted()
 
+	en.MintAndDistributeGns()
 	updateProposalsState()
 
 	proposal, exist := proposals[proposalId]

@@ -7,6 +7,8 @@ import (
 
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
+
+	en "gno.land/r/gnoswap/v2/emission"
 )
 
 var (
@@ -45,6 +47,9 @@ func init() {
 // GetConfigVersion returns the configuration for a specific version.
 // If version is 0, it returns the current configuration.
 func GetConfigVersion(version uint64) Config {
+	en.MintAndDistributeGns()
+	updateProposalsState()
+
 	if version == 0 {
 		return config
 	}
@@ -70,6 +75,8 @@ func Reconfigure(
 	executionWindow uint64,
 ) uint64 {
 	common.IsHalted()
+	en.MintAndDistributeGns()
+	updateProposalsState()
 
 	prev := std.PrevRealm().PkgPath()
 	if !(prev == "" || (prev == consts.GOV_GOVERNANCE_PATH)) {

@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
+
+	en "gno.land/r/gnoswap/v2/emission"
 )
 
 // DelegationHistory represents a single delegation event
@@ -34,6 +36,9 @@ var delegationModifiedHistory = make(map[std.Address][]ModifiedDelegationHistory
 
 // GetCurrentDelegated returns the current delegated amount for a delegate
 func GetCurrentDelegated(_delegator string) string {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	delegator := std.Address(_delegator)
 	if !delegator.IsValid() {
 		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
@@ -54,6 +59,9 @@ func GetCurrentDelegated(_delegator string) string {
 
 // GetDelegatedAt returns the delegated amount for a delegate at a specific timestamp.
 func GetDelegatedAt(_delegator string, timestamp uint64) string {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	delegator := std.Address(_delegator)
 	if !delegator.IsValid() {
 		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
@@ -76,6 +84,9 @@ func GetDelegatedAt(_delegator string, timestamp uint64) string {
 
 // GetDelegatedCumulative gets the cumulative delegated amount for an address at a certain timestamp.
 func GetDelegatedCumulative(_delegator string, timestamp uint64) uint64 {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	delegator := std.Address(_delegator)
 	if !delegator.IsValid() {
 		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
@@ -116,6 +127,9 @@ func GetDelegatedCumulative(_delegator string, timestamp uint64) uint64 {
 
 // GetAverageDelegated calculates the average delegated amount for a delegate over a given period
 func GetAverageDelegated(_delegator string, start, end uint64) uint64 {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	delegator := std.Address(_delegator)
 	if !delegator.IsValid() {
 		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
@@ -161,6 +175,9 @@ func GetAverageDelegated(_delegator string, start, end uint64) uint64 {
 
 // GetAverageDelegatedOverLastDuration gets the average amount delegated over the last period seconds.
 func GetAverageDelegatedOverLastDuration(_delegator string, period uint64) uint64 {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	now := uint64(time.Now().Unix())
 	return GetAverageDelegated(_delegator, now-period, now)
 }

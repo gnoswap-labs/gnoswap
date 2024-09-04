@@ -7,10 +7,15 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
+
+	en "gno.land/r/gnoswap/v2/emission"
 )
 
 // GetDelegatedCumulativeDuration gets the cumulative delegated amount * seconds for an address at a certain timestamp.
 func GetDelegatedCumulativeDuration(_delegator string, timestamp uint64) string {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	delegator := std.Address(_delegator)
 	if !delegator.IsValid() {
 		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
@@ -54,6 +59,9 @@ func GetDelegatedCumulativeDuration(_delegator string, timestamp uint64) string 
 
 // GetAverageDelegatedDuration calculates the average delegated amount for a delegate over a given period
 func GetAverageDelegatedDuration(_delegator string, start, end uint64) string {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	delegator := std.Address(_delegator)
 	if !delegator.IsValid() {
 		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
@@ -105,6 +113,9 @@ func GetAverageDelegatedDuration(_delegator string, start, end uint64) string {
 
 // GetAverageDelegatedDurationOverLastDuration gets the average amount delegated over the last period seconds.
 func GetAverageDelegatedDurationOverLastDuration(_delegator string, period uint64) string {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	now := uint64(time.Now().Unix())
 	return GetAverageDelegatedDuration(_delegator, now-period, now)
 }

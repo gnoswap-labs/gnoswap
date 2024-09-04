@@ -9,25 +9,39 @@ import (
 
 	"gno.land/r/gnoswap/v2/gns"
 	"gno.land/r/gnoswap/v2/gov/xgns"
+
+	en "gno.land/r/gnoswap/v2/emission"
 )
 
 // GetTotalStaked returns the total amount of GNS staked.
 func GetTotalStaked() uint64 {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	return gns.BalanceOf(a2u(std.CurrentRealm().Addr()))
 }
 
 // GetTotalStaked returns the total amount of GNS staked.
 func GetTotalStakedWithoutLockedAmount() uint64 {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	return gns.BalanceOf(a2u(std.CurrentRealm().Addr())) - lockedAmount
 }
 
 // GetTotalDelegated returns the total amount of xGNS delegated.
 func GetTotalDelegated() uint64 {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	return totalDelegated
 }
 
 // GetTotalDelegatedFrom returns the total amount of xGNS delegated by given address.
 func GetTotalDelegatedFrom(from string) uint64 {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	amount, exist := delegatorAmount[from]
 	if !exist {
 		return 0
@@ -37,6 +51,9 @@ func GetTotalDelegatedFrom(from string) uint64 {
 
 // GetTotalDelegatedTo returns the total amount of xGNS delegated to given address.
 func GetTotalDelegatedTo(to string) uint64 {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	amount, exist := delegatedTo[to]
 	if !exist {
 		return 0
@@ -46,6 +63,9 @@ func GetTotalDelegatedTo(to string) uint64 {
 
 // GetDelegationAmountFromTo returns the amount of xGNS delegated by given address to given address.
 func GetDelegationAmountFromTo(from, to string) uint64 {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	toAmount, exist := delegatedFromTo[from]
 	if !exist {
 		return 0
@@ -62,6 +82,9 @@ func GetDelegationAmountFromTo(from, to string) uint64 {
 // GetDelegationRatioBase returns the data that can be used to calculate the delegation ratio.
 // It returns the total supply of GNS and xGNS.
 func GetDelegationRatioBase() string {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	gnsTotalSupply := gns.TotalSupply()
 	xGnsTotalSupply := xgns.TotalSupply()
 
@@ -82,6 +105,9 @@ func GetDelegationRatioBase() string {
 // GetVotingPowerBase returns the data that can be used to calculate the voting power.
 // It returns the total delegated amount and the list of addresses and their delegated amount.
 func GetVotingPowerBase() string {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	votingObj := json.ObjectNode("", nil)
 	votingObj.AppendObject("height", json.StringNode("height", ufmt.Sprintf("%d", std.GetHeight())))
 	votingObj.AppendObject("now", json.StringNode("now", ufmt.Sprintf("%d", time.Now().Unix())))
@@ -108,6 +134,9 @@ func GetVotingPowerBase() string {
 // GetVotingPowerBaseByAddress returns the data that can be used to calculate the voting power of given address.
 // It returns the total delegated amount and the delegated amount of given address.
 func GetVotingPowerBaseByAddress(addr string) string {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	votingObj := json.ObjectNode("", nil)
 	votingObj.AppendObject("height", json.StringNode("height", ufmt.Sprintf("%d", std.GetHeight())))
 	votingObj.AppendObject("now", json.StringNode("now", ufmt.Sprintf("%d", time.Now().Unix())))
@@ -136,6 +165,9 @@ func GetVotingPowerBaseByAddress(addr string) string {
 
 // func GetTotalDelegatedUntil calculates the total delegated amount until given timestamp.
 func GetTotalDelegatedUntil(timestamp uint64) uint64 {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	total := uint64(0)
 
 	for _, history := range delegationModifiedHistory {

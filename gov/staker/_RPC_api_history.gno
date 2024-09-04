@@ -6,10 +6,15 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
+
+	en "gno.land/r/gnoswap/v2/emission"
 )
 
 // GetDelegatedCumulativeDuration gets the delegation/undelegation history for an address.
 func GetDelegationHistoryByAddress(addr string) string {
+	en.MintAndDistributeGns()
+	calculateReward()
+
 	history, exist := delegationHistory[std.Address(addr)]
 	if !exist || len(history) == 0 {
 		return ""
