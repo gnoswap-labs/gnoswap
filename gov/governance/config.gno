@@ -19,24 +19,36 @@ var (
 func init() {
 	// value for testing case from @notJoon
 	config = Config{
-		VotingStartDelay:              uint64(100),  // 50 block
-		VotingPeriod:                  uint64(1000), // 500 block
-		VotingWeightSmoothingDuration: uint64(100),  // 50 block
-		Quorum:                        uint64(500),  // 250 block
-		ProposalCreationThreshold:     uint64(100),  // 50 block
-		ExecutionDelay:                uint64(100),  // 50 block
-		ExecutionWindow:               uint64(1000), // 500 block
+		// XXX: TODO, REMOVE AFTER QA
+		// - config for makefile testing
+		// VotingStartDelay:              uint64(100),  // 50 block
+		// VotingPeriod:                  uint64(1000), // 500 block
+		// VotingWeightSmoothingDuration: uint64(100),  // 50 block
+		// Quorum:                        uint64(50),   // 50% of total xGNS supply
+		// ProposalCreationThreshold:     uint64(100),  //
+		// ExecutionDelay:                uint64(100),  // 50 block
+		// ExecutionWindow:               uint64(1000), // 500 block
+
+		// XXX: TODO, REMOVE AFTER QA
+		// - config for live qa
+		VotingStartDelay:              uint64(180),       // 3m
+		VotingPeriod:                  uint64(600),       // 10m
+		VotingWeightSmoothingDuration: uint64(100),       // 10m
+		Quorum:                        uint64(50),        // 50% of total xGNS supply
+		ProposalCreationThreshold:     uint64(3_000_000), // 3_000_000
+		ExecutionDelay:                uint64(100),       // 1m
+		ExecutionWindow:               uint64(1000),      // 5m
 	}
 
 	// https://docs.gnoswap.io/core-concepts/governance
 	// config = Config{
-	// 	VotingStartDelay:              86400,   // 1d
-	// 	VotingPeriod:                  604800,  // 7d
-	// 	VotingWeightSmoothingDuration: 86400,   // 1d
-	// 	Quorum:                        500,     // XXX TO BE CONFIRMED
-	// 	ProposalCreationThreshold:     100,     // XXX TO BE CONFIRMED
-	// 	ExecutionDelay:                86400,   // 1d
-	// 	ExecutionWindow:        2592000, // 30d
+	// 	VotingStartDelay:              uint64(86400),   // 1d
+	// 	VotingPeriod:                  uint64(604800),  // 7d
+	// 	VotingWeightSmoothingDuration: uint64(86400),   // 1d
+	// 	Quorum:                        uint64(50),      // 50% of total xGNS supply
+	// 	ProposalCreationThreshold:     uint64(100),     // XXX TO BE CONFIRMED
+	// 	ExecutionDelay:                uint64(86400),   // 1d
+	// 	ExecutionWindow:               uint64(2592000), // 30d
 	// }
 
 	// config version 0 should return the current config
@@ -48,7 +60,7 @@ func init() {
 // If version is 0, it returns the current configuration.
 func GetConfigVersion(version uint64) Config {
 	en.MintAndDistributeGns()
-	updateProposalsState()
+	// updateProposalsState() // do not call this function here, it will cause a init loop in updateProposal()
 
 	if version == 0 {
 		return config
