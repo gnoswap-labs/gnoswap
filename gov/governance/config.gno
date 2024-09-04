@@ -33,11 +33,11 @@ func init() {
 		// - config for live qa
 		VotingStartDelay:              uint64(180),       // 3m
 		VotingPeriod:                  uint64(600),       // 10m
-		VotingWeightSmoothingDuration: uint64(100),       // 10m
+		VotingWeightSmoothingDuration: uint64(600),       // 10m
 		Quorum:                        uint64(50),        // 50% of total xGNS supply
 		ProposalCreationThreshold:     uint64(3_000_000), // 3_000_000
-		ExecutionDelay:                uint64(100),       // 1m
-		ExecutionWindow:               uint64(1000),      // 5m
+		ExecutionDelay:                uint64(60),        // 1m
+		ExecutionWindow:               uint64(300),       // 5m
 	}
 
 	// https://docs.gnoswap.io/core-concepts/governance
