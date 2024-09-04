@@ -107,7 +107,7 @@ func GetDelegatedCumulative(_delegator string, timestamp uint64) uint64 {
 
 	cumulativeAmount := uint64(0)
 
-	for i, record := range history {
+	for _, record := range history {
 		if record.delegatedTimestamp > timestamp {
 			// continue to next if this record uses future time
 			continue
@@ -150,7 +150,7 @@ func GetAverageDelegated(_delegator string, start, end uint64) uint64 {
 
 	cumulativeAmount := uint64(0)
 
-	for i, record := range history {
+	for _, record := range history {
 		if record.delegatedTimestamp > end {
 			// continue to next if this record uses future time
 			continue

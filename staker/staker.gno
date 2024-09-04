@@ -463,8 +463,6 @@ func CreateExternalIncentive(
 		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 365 days)", externalDuration))
 	}
 
-	poolRewardBalanceBefore := balanceOfByRegisterCall(rewardToken, GetOrigPkgAddr())
-
 	incentiveId := incentiveIdCompute(std.GetOrigCaller(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
 
 	// if same incentiveId exists => increase rewardTokenAmount

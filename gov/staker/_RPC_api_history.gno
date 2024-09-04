@@ -25,7 +25,7 @@ func GetDelegationHistoryByAddress(addr string) string {
 	historyObj.AppendObject("now", json.StringNode("now", ufmt.Sprintf("%d", time.Now().Unix())))
 
 	historyArr := json.ArrayNode("history", nil)
-	for i, record := range history {
+	for _, record := range history {
 		recordObj := json.ObjectNode("", nil)
 		recordObj.AppendObject("to", json.StringNode("to", record.to))
 		recordObj.AppendObject("amount", json.StringNode("amount", ufmt.Sprintf("%d", record.amount)))

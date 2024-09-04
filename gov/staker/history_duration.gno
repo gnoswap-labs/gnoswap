@@ -36,7 +36,7 @@ func GetDelegatedCumulativeDuration(_delegator string, timestamp uint64) string 
 
 	cumulativeAmount := u256.Zero()
 
-	for i, record := range history {
+	for _, record := range history {
 		if record.delegatedTimestamp > timestamp || record.undelegatedTimestamp > timestamp {
 			// continue to next if this record uses future time
 			continue
@@ -82,7 +82,7 @@ func GetAverageDelegatedDuration(_delegator string, start, end uint64) string {
 
 	cumulativeAmount := u256.Zero()
 
-	for i, record := range history {
+	for _, record := range history {
 		if record.delegatedTimestamp > end || record.undelegatedTimestamp > end {
 			// continue to next if this record uses future time
 			continue

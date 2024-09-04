@@ -23,7 +23,7 @@ func GetProposals() string {
 
 	proposalsObj := metaNode()
 	proposalArr := json.ArrayNode("", nil)
-	for proposalId, proposal := range proposals {
+	for proposalId, _ := range proposals {
 		proposalObj := getProposalById(proposalId)
 		proposalArr.AppendArray(proposalObj)
 	}
@@ -37,7 +37,7 @@ func GetProposalById(id uint64) string {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	proposal, exist := proposals[id]
+	_, exist := proposals[id]
 	if !exist {
 		return ""
 	}
@@ -76,7 +76,7 @@ func GetVoteStatusFromProposalById(id uint64) string {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	proposal, exist := proposals[id]
+	_, exist := proposals[id]
 	if !exist {
 		return ""
 	}
@@ -106,7 +106,7 @@ func GetVotesByAddress(addr string) string {
 	votesObj := metaNode()
 
 	votesArr := json.ArrayNode("", nil)
-	for proposalId, voteWeight := range userVotes[addr] {
+	for proposalId, _ := range userVotes[addr] {
 		voteObj := getVoteByAddressFromProposalById(addr, proposalId)
 		votesArr.AppendArray(voteObj)
 	}

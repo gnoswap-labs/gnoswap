@@ -44,7 +44,7 @@ deploy-base-tokens: deploy-gns deploy-usdc deploy-gnft
 deploy-test-tokens: deploy-foo deploy-bar deploy-baz deploy-qux deploy-obl 
 
 .PHONY: deploy-gnoswap-realms
-deploy-gnoswap-realms: deploy-emission deploy-pool deploy-position deploy-staker deploy-router deploy-community_pool deploy-protocol_fee
+deploy-gnoswap-realms: deploy-xgns deploy-emission deploy-pool deploy-position deploy-staker deploy-router deploy-community_pool deploy-protocol_fee deploy-gov-staker deploy-gov-governance 
 
 ### TEST AFTER INIT
 .PHONY: init-test
@@ -72,8 +72,8 @@ test-burn-position: burn-position-1
 
 # wait chain to start
 wait:
-	$(info ************ [ETC] wait 5 seconds for chain to start ************)
-	$(shell sleep 5)
+	$(info ************ [ETC] wait 1 seconds for chain to start ************)
+	$(shell sleep 1)
 	@echo
 
 
@@ -160,14 +160,14 @@ deploy-common:
 
 
 # deploy gnoswap realms
+deploy-xgns:
+	$(info ************ deploy xgns ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/gov/xgns -pkgpath gno.land/r/gnoswap/v2/gov/xgns -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo
+	
 deploy-emission:
 	$(info ************ deploy emission ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/emission -pkgpath gno.land/r/gnoswap/v2/emission -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
-	@echo
-
-deploy-gov:
-	$(info ************ deploy gov ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/gov -pkgpath gno.land/r/gnoswap/v2/gov -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 deploy-pool:
@@ -200,6 +200,15 @@ deploy-protocol_fee:
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/protocol_fee -pkgpath gno.land/r/gnoswap/v2/protocol_fee -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
+deploy-gov-staker:
+	$(info ************ deploy gov/staker ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/gov/staker -pkgpath gno.land/r/gnoswap/v2/gov/staker -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo
+
+deploy-gov-governance:
+	$(info ************ deploy gov/governance ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/gov/governance -pkgpath gno.land/r/gnoswap/v2/gov/governance -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo
 
 # Register
 register-token:

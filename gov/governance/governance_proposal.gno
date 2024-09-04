@@ -1,7 +1,6 @@
 package governance
 
 import (
-	"fmt"
 	"std"
 	"time"
 
@@ -141,7 +140,7 @@ func ProposeCommunityPoolSpend(
 		"description", description,
 		"to", to.String(),
 		"tokenPath", tokenPath,
-		"amount", fmt.Sprintf("%d", amount),
+		"amount", ufmt.Sprintf("%d", amount),
 	)
 
 	return proposalId
