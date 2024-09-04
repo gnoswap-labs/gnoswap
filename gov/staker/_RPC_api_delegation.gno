@@ -133,3 +133,18 @@ func GetVotingPowerBaseByAddress(addr string) string {
 
 	return string(b)
 }
+
+// func GetTotalDelegatedUntil calculates the total delegated amount until given timestamp.
+func GetTotalDelegatedUntil(timestamp uint64) uint64 {
+	total := uint64(0)
+
+	for _, history := range delegationModifiedHistory {
+		for i := len(history) - 1; i >= 0; i-- {
+			if history[i].delegatedTimestamp <= timestamp {
+				total += history[i].delegatedAmount - history[i].undelegatedAmount
+			}
+		}
+	}
+
+	return total
+}

@@ -108,11 +108,11 @@ func TestUndelegate(t *testing.T) {
 
 	shouldEQ(t, delegatedFromTo[gsa.String()][reDelegate.String()], uint64(1000001))
 	shouldEQ(t, delegatedTo[reDelegate.String()], uint64(1000001))
-	shouldEQ(t, len(addrLockedXGns[gsa.String()]), 0)
+	shouldEQ(t, len(addrLockedGns[gsa.String()]), 0)
 
 	Undelegate(reDelegate, 1000001)
 
-	shouldEQ(t, len(addrLockedXGns[gsa.String()]), 1)
+	shouldEQ(t, len(addrLockedGns[gsa.String()]), 1)
 	shouldEQ(t, delegatedFromTo[gsa.String()][reDelegate.String()], uint64(0))
 	shouldEQ(t, delegatedTo[reDelegate.String()], uint64(0))
 
@@ -124,11 +124,11 @@ func TestCollectBefore7Days(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	shouldEQ(t, len(addrLockedXGns[gsa.String()]), 1)
+	shouldEQ(t, len(addrLockedGns[gsa.String()]), 1)
 
 	CollectUndelegated() // 7 days not passed yet
 
-	shouldEQ(t, len(addrLockedXGns[gsa.String()]), 1)
+	shouldEQ(t, len(addrLockedGns[gsa.String()]), 1)
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
 	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
 }
@@ -137,12 +137,12 @@ func TestCollectAfter7Days(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	shouldEQ(t, len(addrLockedXGns[gsa.String()]), 1)
+	shouldEQ(t, len(addrLockedGns[gsa.String()]), 1)
 
 	std.TestSkipHeights(302400) // 7 days 2 seconds
 	CollectUndelegated()
 
-	shouldEQ(t, len(addrLockedXGns[gsa.String()]), 0)
+	shouldEQ(t, len(addrLockedGns[gsa.String()]), 0)
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(100000000000000))
 	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
 }

@@ -8,6 +8,7 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// GetDelegatedCumulativeDuration gets the delegation/undelegation history for an address.
 func GetDelegationHistoryByAddress(addr string) string {
 	history, exist := delegationHistory[std.Address(addr)]
 	if !exist || len(history) == 0 {
@@ -30,10 +31,5 @@ func GetDelegationHistoryByAddress(addr string) string {
 
 	historyObj.AppendObject("delegationHistory", historyArr)
 
-	b, err := json.Marshal(historyObj)
-	if err != nil {
-		panic(ufmt.Sprintf("JSON marshal error: %v", err))
-	}
-
-	return string(b)
+	return marshal(historyObj)
 }

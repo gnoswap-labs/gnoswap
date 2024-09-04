@@ -8,14 +8,17 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// GetLockedAmount gets the total locked amount of GNS.
 func GetLockedAmount() uint64 {
 	return lockedAmount
 }
 
+// GetLockedInfoByAddress gets the locked info of an address.
+// - total locked amount
+// - claimable amount
 func GetLockedInfoByAddress(addr string) string {
-	lockeds, exist := addrLockedXGns[addr]
+	lockeds, exist := addrLockedGns[addr]
 	if !exist {
-		// panic("no locked xGNS")
 		return ""
 	}
 
@@ -41,11 +44,5 @@ func GetLockedInfoByAddress(addr string) string {
 	lockedObj.AppendObject("totalLocked", json.StringNode("totalLocked", ufmt.Sprintf("%d", totalLocked)))
 	lockedObj.AppendObject("claimableAmount", json.StringNode("claimableAmount", ufmt.Sprintf("%d", claimableAmount)))
 
-	b, err := json.Marshal(lockedObj)
-	if err != nil {
-		panic(ufmt.Sprintf("JSON marshal error: %v", err))
-	}
-
-	return string(b)
-
+	return marshal(lockedObj)
 }
