@@ -10,7 +10,7 @@ import (
 	en "gno.land/r/gnoswap/v2/emission"
 )
 
-// GetDelegatedCumulativeDuration gets the delegation/undelegation history for an address.
+// GetDelegationHistoryByAddress gets the delegation/undelegation raw history for an address.
 func GetDelegationHistoryByAddress(addr string) string {
 	en.MintAndDistributeGns()
 	calculateReward()
@@ -35,6 +35,37 @@ func GetDelegationHistoryByAddress(addr string) string {
 	}
 
 	historyObj.AppendObject("delegationHistory", historyArr)
+
+	return marshal(historyObj)
+}
+
+func GetModifiedDelegationHistoryByAddress(addr string) string {
+	en.MintAndDistributeGns()
+	calculateReward()
+
+	history, exist := delegationModifiedHistory[std.Address(addr)]
+	if !exist || len(history) == 0 {
+		return ""
+	}
+
+	historyObj := json.ObjectNode("", nil)
+	historyObj.AppendObject("height", json.StringNode("height", ufmt.Sprintf("%d", std.GetHeight())))
+	historyObj.AppendObject("now", json.StringNode("now", ufmt.Sprintf("%d", time.Now().Unix())))
+
+	historyArr := json.ArrayNode("history", nil)
+	for _, record := range history {
+		recordObj := json.ObjectNode("", nil)
+		recordObj.AppendObject("to", json.StringNode("to", record.to))
+		recordObj.AppendObject("delegatedHeight", json.StringNode("delegatedHeight", ufmt.Sprintf("%d", record.delegatedHeight)))
+		recordObj.AppendObject("delegatedTimestamp", json.StringNode("delegatedTimestamp", ufmt.Sprintf("%d", record.delegatedTimestamp)))
+		recordObj.AppendObject("delegatedAmount", json.StringNode("delegatedAmount", ufmt.Sprintf("%d", record.delegatedAmount)))
+		recordObj.AppendObject("undelegatedHeight", json.StringNode("undelegatedHeight", ufmt.Sprintf("%d", record.undelegatedHeight)))
+		recordObj.AppendObject("undelegatedTimestamp", json.StringNode("undelegatedTimestamp", ufmt.Sprintf("%d", record.undelegatedTimestamp)))
+		recordObj.AppendObject("undelegatedAmount", json.StringNode("undelegatedAmount", ufmt.Sprintf("%d", record.undelegatedAmount)))
+		historyArr.AppendArray(recordObj)
+	}
+
+	historyObj.AppendObject("delegationModifiedHistory", historyArr)
 
 	return marshal(historyObj)
 }
