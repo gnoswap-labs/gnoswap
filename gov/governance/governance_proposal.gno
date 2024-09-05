@@ -73,11 +73,13 @@ func ProposeText(
 
 	std.Emit(
 		"Proposed",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_title", title,
+		"p_description", description,
 		"proposalType", "TEXT",
 		"proposer", proposer.String(),
 		"proposalId", ufmt.Sprintf("%d", proposalId),
-		"title", title,
-		"description", description,
 	)
 
 	return proposalId
@@ -133,14 +135,16 @@ func ProposeCommunityPoolSpend(
 
 	std.Emit(
 		"Proposed",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_title", title,
+		"p_description", description,
+		"p_to", to.String(),
+		"p_tokenPath", tokenPath,
+		"p_amount", ufmt.Sprintf("%d", amount),
 		"proposalType", "COMMUNITY_POOL_SPEND",
 		"proposer", proposer.String(),
 		"proposalId", ufmt.Sprintf("%d", proposalId),
-		"title", title,
-		"description", description,
-		"to", to.String(),
-		"tokenPath", tokenPath,
-		"amount", ufmt.Sprintf("%d", amount),
 	)
 
 	return proposalId
@@ -196,14 +200,16 @@ func ProposeParameterChange(
 
 	std.Emit(
 		"Proposed",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_title", title,
+		"p_description", description,
+		"p_pkgPath", pkgPath,
+		"p_function", function,
+		"p_param", param,
 		"proposalType", "PARAMETER_CHANGE",
 		"proposer", proposer.String(),
 		"proposalId", ufmt.Sprintf("%d", proposalId),
-		"title", title,
-		"description", description,
-		"pkgPath", pkgPath,
-		"function", function,
-		"param", param,
 	)
 
 	return proposalId
@@ -285,10 +291,12 @@ func Vote(proposalId uint64, yes bool) string {
 
 	std.Emit(
 		"Voted",
-		"proposalId", ufmt.Sprintf("%d", proposalId),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_proposalId", ufmt.Sprintf("%d", proposalId),
+		"p_yes", voteToString(yes),
 		"voter", voter.String(),
 		"weight", ufmt.Sprintf("%d", weight),
-		"yes", voteToString(yes),
 	)
 
 	return voteKey
@@ -346,7 +354,9 @@ func Cancel(proposalId uint64) {
 
 	std.Emit(
 		"Canceled",
-		"proposalId", ufmt.Sprintf("%d", proposalId),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_proposalId", ufmt.Sprintf("%d", proposalId),
 		"by", caller.String(),
 	)
 }
@@ -428,7 +438,9 @@ func Execute(proposalId uint64) {
 
 	std.Emit(
 		"Executed",
-		"proposalId", ufmt.Sprintf("%d", proposalId),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_proposalId", ufmt.Sprintf("%d", proposalId),
 		"executor", std.GetOrigCaller().String(),
 	)
 }

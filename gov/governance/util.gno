@@ -2,6 +2,7 @@ package governance
 
 import (
 	b64 "encoding/base64"
+	"std"
 	"strconv"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -218,4 +219,12 @@ func marshal(data *json.Node) string {
 
 func b64Encode(data string) string {
 	return string(b64.StdEncoding.EncodeToString([]byte(data)))
+}
+
+func origCaller() string {
+	return std.GetOrigCaller().String()
+}
+
+func prevRealm() string {
+	return std.PrevRealm().PkgPath()
 }

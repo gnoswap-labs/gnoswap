@@ -21,12 +21,12 @@ func init() {
 	config = Config{
 		// XXX: TODO, REMOVE AFTER QA
 		// - config for makefile testing
-		// VotingStartDelay:              uint64(100),  // 50 block
-		// VotingPeriod:                  uint64(1000), // 500 block
-		// VotingWeightSmoothingDuration: uint64(100),  // 50 block
+		// VotingStartDelay:              uint64(10),   // 10s ≈ 5 block
+		// VotingPeriod:                  uint64(30),   // 30s ≈ 15 block
+		// VotingWeightSmoothingDuration: uint64(10),   // 10s ≈ 5 block
 		// Quorum:                        uint64(50),   // 50% of total xGNS supply
 		// ProposalCreationThreshold:     uint64(100),  //
-		// ExecutionDelay:                uint64(100),  // 50 block
+		// ExecutionDelay:                uint64(10),   // 10s ≈5 block
 		// ExecutionWindow:               uint64(1000), // 500 block
 
 		// XXX: TODO, REMOVE AFTER QA
@@ -115,14 +115,16 @@ func Reconfigure(
 
 	std.Emit(
 		"Reconfigured",
-		"version", ufmt.Sprintf("%d", newVersion),
-		"voting_start_delay", ufmt.Sprintf("%d", config.VotingStartDelay),
-		"voting_period", ufmt.Sprintf("%d", config.VotingPeriod),
-		"voting_weight_smoothing_duration", ufmt.Sprintf("%d", config.VotingWeightSmoothingDuration),
-		"quorum", ufmt.Sprintf("%d", config.Quorum),
-		"proposal_creation_threshold", ufmt.Sprintf("%d", config.ProposalCreationThreshold),
-		"execution_delay", ufmt.Sprintf("%d", config.ExecutionDelay),
-		"execution_window", ufmt.Sprintf("%d", config.ExecutionWindow),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_version", ufmt.Sprintf("%d", newVersion),
+		"p_voting_start_delay", ufmt.Sprintf("%d", config.VotingStartDelay),
+		"p_voting_period", ufmt.Sprintf("%d", config.VotingPeriod),
+		"p_voting_weight_smoothing_duration", ufmt.Sprintf("%d", config.VotingWeightSmoothingDuration),
+		"p_quorum", ufmt.Sprintf("%d", config.Quorum),
+		"p_proposal_creation_threshold", ufmt.Sprintf("%d", config.ProposalCreationThreshold),
+		"p_execution_delay", ufmt.Sprintf("%d", config.ExecutionDelay),
+		"p_execution_window", ufmt.Sprintf("%d", config.ExecutionWindow),
 	)
 
 	return newVersion
