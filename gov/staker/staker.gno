@@ -20,7 +20,7 @@ type lockedGNS struct {
 
 var lockedAmount uint64
 
-const TIMESTAMP_7_DAYS = uint64(30) // 30s
+const TIMESTAMP_7_DAYS = uint64(60) // 60s // XXX: TODO, REMOVE AFTER QA
 // const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
 
 var (
