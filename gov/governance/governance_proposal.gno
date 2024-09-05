@@ -10,6 +10,8 @@ import (
 	en "gno.land/r/gnoswap/v2/emission"
 	gs "gno.land/r/gnoswap/v2/gov/staker"
 
+	"gno.land/r/gnoswap/v2/gov/xgns"
+
 	"gno.land/r/gnoswap/v2/common"
 
 	"gno.land/p/demo/ufmt"
@@ -63,6 +65,7 @@ func ProposeText(
 		Yea:           u256.Zero(),
 		Nay:           u256.Zero(),
 		ConfigVersion: uint64(len(configVersions)), // use latest config version
+		QuorumAmount:  xgns.TotalSupply() * config.Quorum / 100,
 		Title:         title,
 		Description:   description,
 	}
@@ -120,6 +123,7 @@ func ProposeCommunityPoolSpend(
 		Yea:           u256.Zero(),
 		Nay:           u256.Zero(),
 		ConfigVersion: uint64(len(configVersions)),
+		QuorumAmount:  xgns.TotalSupply() * config.Quorum / 100,
 		Title:         title,
 		Description:   description,
 		CommunityPoolSpend: CommunityPoolSpendInfo{
@@ -185,6 +189,7 @@ func ProposeParameterChange(
 		Yea:           u256.Zero(),
 		Nay:           u256.Zero(),
 		ConfigVersion: uint64(len(configVersions)),
+		QuorumAmount:  xgns.TotalSupply() * config.Quorum / 100,
 		Title:         title,
 		Description:   description,
 		ParameterChange: ParameterChangeInfo{
@@ -404,7 +409,7 @@ func Execute(proposalId uint64) {
 
 	yeaUint := proposal.Yea.Uint64()
 	nayUint := proposal.Nay.Uint64()
-	quorumUint := config.Quorum
+	quorumUint := proposal.QuorumAmount
 
 	if yeaUint < quorumUint {
 		panic("QUORUM_NOT_MET")
@@ -482,7 +487,7 @@ func updateProposalsState() {
 		if now > (proposal.ExecutionState.CreatedAt + config.VotingStartDelay + config.VotingPeriod) {
 			yeaUint := proposal.Yea.Uint64()
 			nayUint := proposal.Nay.Uint64()
-			quorumUint := config.Quorum
+			quorumUint := proposal.QuorumAmount
 
 			if yeaUint >= quorumUint && yeaUint > nayUint {
 				proposal.ExecutionState.Passed = true

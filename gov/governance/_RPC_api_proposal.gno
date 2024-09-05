@@ -257,6 +257,7 @@ func getProposalVotes(id uint64) string {
 
 	max := gs.GetTotalDelegatedUntil(weightUntilTimestamp)
 
+	proposalObj.AppendObject("quorum", json.StringNode("quorum", ufmt.Sprintf("%d", proposal.QuorumAmount)))
 	proposalObj.AppendObject("max", json.StringNode("max", ufmt.Sprintf("%d", max)))
 	proposalObj.AppendObject("yes", json.StringNode("yes", proposal.Yea.ToString()))
 	proposalObj.AppendObject("no", json.StringNode("no", proposal.Nay.ToString()))

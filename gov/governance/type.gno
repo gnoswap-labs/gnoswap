@@ -17,7 +17,7 @@ type Config struct {
 	// Over how many seconds the voting weight is averaged for proposal voting as creation/cancellation threshold
 	VotingWeightSmoothingDuration uint64
 
-	// How many total votes must be collected for the proposal
+	// Percentags of x gns total supply at the time of proposal creation
 	Quorum uint64
 
 	// The munimum amount of average votes required to create a proposal
@@ -85,6 +85,9 @@ type ProposalInfo struct {
 
 	// The version of the config that this proposal was created with
 	ConfigVersion uint64
+
+	// How many total votes must be collected for the proposal
+	QuorumAmount uint64
 
 	// The title of the proposal
 	Title string
