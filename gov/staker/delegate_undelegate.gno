@@ -83,7 +83,8 @@ func undelegate(to std.Address, amount uint64) {
 		panic(ufmt.Sprintf("caller %s has no modified delegation history", caller.String()))
 	}
 
-	for i := len(modified) - 1; i >= 0; i-- {
+	// for i := len(modified) - 1; i >= 0; i-- {
+	for i := 0; i < len(modified); i++ {
 		if modified[i].to == to.String() {
 			leftAmount := modified[i].delegatedAmount - modified[i].undelegatedAmount
 			if leftAmount > 0 {
