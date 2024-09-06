@@ -7,12 +7,12 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v2/consts"
-	"gno.land/r/gnoswap/v2/gns"
-	gs "gno.land/r/gnoswap/v2/gov/staker"
-
 	cn "gno.land/r/gnoswap/v2/common"
-	en "gno.land/r/gnoswap/v2/emission"
+	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/r/gnoswap/v2/gns"
+
+	gs "gno.land/r/gnoswap/v2/gov/staker"
 	pl "gno.land/r/gnoswap/v2/pool"
 	pf "gno.land/r/gnoswap/v2/protocol_fee"
 	rr "gno.land/r/gnoswap/v2/router"
@@ -20,6 +20,8 @@ import (
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
+
+	en "gno.land/r/gnoswap/v2/emission"
 )
 
 func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
@@ -27,7 +29,7 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "THRESHOLD") {
+			} else if !strings.Contains(string(r), "NOT_ENOUGH") {
 				t.Errorf("Unexpected panic message: %v", r)
 			}
 		}()
@@ -40,7 +42,7 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 		std.TestSetRealm(gsaRealm)
 		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
 		gs.Delegate(gsa, uint64(1_000_000))
-		std.TestSkipHeights(51) // VotingWeightSmoothingDuration
+		std.TestSkipHeights(5) // VotingWeightSmoothingDuration
 
 		proposalID := ProposeParameterChange("test_title", "test_description", consts.EMISSION_PATH, "ChangeDistributionPct", "1*GOV*7000*GOV*2*GOV*1500*GOV*3*GOV*1000*GOV*4*GOV*500")
 		if proposalID != 1 {
@@ -101,14 +103,14 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5) // voting start delay
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 
 		proposal := proposals[proposalId]
@@ -118,6 +120,7 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 	})
 
 	t.Run("Execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(6) // ExecutionDelay
 		shouldEQ(t, en.GetDistributionPct(1), uint64(7500))
 		shouldEQ(t, en.GetDistributionPct(2), uint64(2000))
 		shouldEQ(t, en.GetDistributionPct(3), uint64(500))
@@ -149,18 +152,19 @@ func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
 			"SetAvgBlockTimeInMs",
 			"5000",
 		)
+		std.TestSkipHeights(5) //
 	})
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5) // voting start delay
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(15) // ends voting period
 		updateProposalsState()
 	})
 
@@ -187,27 +191,28 @@ func TestProposeParameterChange_GOV_Reconfigure(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 	})
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		oldConfig := GetConfigVersion(0)
-		shouldEQ(t, oldConfig.VotingStartDelay, uint64(100))
-		shouldEQ(t, oldConfig.VotingPeriod, uint64(1000))
-		shouldEQ(t, oldConfig.VotingWeightSmoothingDuration, uint64(100))
-		shouldEQ(t, oldConfig.Quorum, uint64(500))
+		shouldEQ(t, oldConfig.VotingStartDelay, uint64(10))
+		shouldEQ(t, oldConfig.VotingPeriod, uint64(30))
+		shouldEQ(t, oldConfig.VotingWeightSmoothingDuration, uint64(10))
+		shouldEQ(t, oldConfig.Quorum, uint64(50))
 		shouldEQ(t, oldConfig.ProposalCreationThreshold, uint64(100))
-		shouldEQ(t, oldConfig.ExecutionDelay, uint64(100))
+		shouldEQ(t, oldConfig.ExecutionDelay, uint64(10))
 		shouldEQ(t, oldConfig.ExecutionWindow, uint64(1000))
 
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 
 		newConfig := GetConfigVersion(0)
@@ -220,12 +225,12 @@ func TestProposeParameterChange_GOV_Reconfigure(t *testing.T) {
 		shouldEQ(t, newConfig.ExecutionWindow, uint64(67890))
 
 		// overwrite latest config version to old one for further tests
-		config.VotingStartDelay = 100
-		config.VotingPeriod = 1000
-		config.VotingWeightSmoothingDuration = 100
-		config.Quorum = 500
+		config.VotingStartDelay = 10
+		config.VotingPeriod = 30
+		config.VotingWeightSmoothingDuration = 10
+		config.Quorum = 50
 		config.ProposalCreationThreshold = 100
-		config.ExecutionDelay = 100
+		config.ExecutionDelay = 10
 		config.ExecutionWindow = 1000
 		configVersions[uint64(2)] = config
 	})
@@ -247,18 +252,19 @@ func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16)
 		updateProposalsState()
 	})
 
 	t.Run("Execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 	})
 }
@@ -279,19 +285,20 @@ func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 	})
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, pl.GetPoolCreationFee(), uint64(100000000))
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 		shouldEQ(t, pl.GetPoolCreationFee(), uint64(500))
 	})
@@ -313,19 +320,20 @@ func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 	})
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, pl.GetWithdrawalFee(), uint64(100))
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 		shouldEQ(t, pl.GetWithdrawalFee(), uint64(500))
 	})
@@ -347,14 +355,14 @@ func TestProposeParameterChange_ProtocolFee_DistributeProtocolFee(t *testing.T) 
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 	})
 
@@ -374,6 +382,7 @@ func TestProposeParameterChange_ProtocolFee_DistributeProtocolFee(t *testing.T) 
 		shouldEQ(t, foo.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
 		shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
 
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 		// 30% to dev ops, 70% to gov staker
 
@@ -403,20 +412,21 @@ func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 	})
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, pf.GetDevOpsPct(), uint64(0))
 
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 
 		shouldEQ(t, pf.GetDevOpsPct(), uint64(900))
@@ -439,20 +449,21 @@ func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 	})
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, rr.GetSwapFee(), uint64(15))
 
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 
 		shouldEQ(t, rr.GetSwapFee(), uint64(900))
@@ -475,20 +486,21 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 	})
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, sr.GetDepositGnsAmount(), uint64(1000000000))
 
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 
 		shouldEQ(t, sr.GetDepositGnsAmount(), uint64(900))
@@ -511,14 +523,14 @@ func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 	})
 
@@ -533,6 +545,7 @@ func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
 		shouldEQ(t, len(before), 1)
 		shouldEQ(t, before[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
 
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 
 		after := sr.GetPoolsWithTier()
@@ -558,14 +571,14 @@ func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 	})
 
@@ -575,6 +588,7 @@ func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
 		shouldEQ(t, before[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
 		shouldEQ(t, before[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_1")
 
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 
 		after := sr.GetPoolsWithTier()
@@ -600,14 +614,14 @@ func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 	})
 
@@ -617,6 +631,7 @@ func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
 		shouldEQ(t, before[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
 		shouldEQ(t, before[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_3")
 
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 
 		after := sr.GetPoolsWithTier()
@@ -641,20 +656,21 @@ func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 	})
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, sr.GetUnstakingFee(), uint64(100))
 
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 
 		shouldEQ(t, sr.GetUnstakingFee(), uint64(900))
@@ -677,20 +693,21 @@ func TestProposeParameterChange_Staker_SetWarmUp(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 	})
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, sr.GetWarmUp(100), int64(901))
 
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 
 		shouldEQ(t, sr.GetWarmUp(100), int64(1000))
@@ -713,20 +730,21 @@ func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(5)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
 			t.Errorf("Vote not set correctly")
 		}
 
-		std.TestSkipHeights(1000) // ends voting period
+		std.TestSkipHeights(16) // ends voting period
 		updateProposalsState()
 	})
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, cn.GetHalt(), false)
 
+		std.TestSkipHeights(6)
 		Execute(proposalId)
 		shouldEQ(t, cn.GetHalt(), true)
 	})

@@ -17,7 +17,7 @@ func TestProposeText(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "THRESHOLD") {
+			} else if !strings.Contains(string(r), "PROPOSER_HAS_NOT_ENOUGH_XGNS") {
 				t.Errorf("Unexpected panic message: %v", r)
 			}
 		}()
@@ -35,7 +35,7 @@ func TestProposeText(t *testing.T) {
 		std.TestSetRealm(gsaRealm)
 		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
 		gs.Delegate(gsa, uint64(1_000_000))
-		std.TestSkipHeights(51) // VotingWeightSmoothingDuration is 50 block
+		std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
 
 		proposalID := ProposeText("test_title", "test_description")
 		if proposalID != 1 {
@@ -80,7 +80,7 @@ func TestProposeText(t *testing.T) {
 		}
 
 		proposalsJson = GetProposals()
-		if proposalsJson != `{"height":"174","now":"1234567992","proposals":[{"id":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTkyIiwiVXBjb21pbmciOiJ0cnVlIiwiQWN0aXZlIjoiZmFsc2UiLCJWb3RpbmdTdGFydCI6IjEyMzQ1NjgwOTIiLCJWb3RpbmdFbmQiOiIxMjM0NTY5MDkyIiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":""}]}` {
+		if proposalsJson != `{"height":"134","now":"1234567912","proposals":[{"id":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTEyIiwiVXBjb21pbmciOiJ0cnVlIiwiQWN0aXZlIjoiZmFsc2UiLCJWb3RpbmdTdGFydCI6IjEyMzQ1Njc5MjIiLCJWb3RpbmdFbmQiOiIxMjM0NTY3OTUyIiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":""}]}` {
 			t.Errorf("Incorrect proposals json: %v", proposalsJson)
 		}
 
@@ -133,7 +133,7 @@ func TestVote(t *testing.T) {
 	})
 
 	t.Run("Successful vote YES", func(t *testing.T) {
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(11)
 
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
@@ -159,27 +159,27 @@ func TestVote(t *testing.T) {
 		}
 
 		proposalsJson := GetProposals()
-		if proposalsJson != `{"height":"225","now":"1234568094","proposals":[{"id":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTkyIiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6InRydWUiLCJWb3RpbmdTdGFydCI6IjEyMzQ1NjgwOTIiLCJWb3RpbmdFbmQiOiIxMjM0NTY5MDkyIiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":""}]}` {
+		if proposalsJson != `{"height":"145","now":"1234567934","proposals":[{"id":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTEyIiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6InRydWUiLCJWb3RpbmdTdGFydCI6IjEyMzQ1Njc5MjIiLCJWb3RpbmdFbmQiOiIxMjM0NTY3OTUyIiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":""}]}` {
 			t.Errorf("Incorrect proposals json: %v", proposalsJson)
 		}
 
 		votesJson := GetVotesByAddress(gsa.String())
-		if votesJson != `{"height":"225","now":"1234568094","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"225","voteTimestamp":"1234568094"}]}` {
+		if votesJson != `{"height":"145","now":"1234567934","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"145","voteTimestamp":"1234567934"}]}` {
 			t.Errorf("Incorrect votes json: %v", votesJson)
 		}
 
 		voteJson := GetVoteStatusFromProposalById(proposalId)
-		if voteJson != `{"height":"225","now":"1234568094","proposalId":"1","votes":"eyJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9"}` {
+		if voteJson != `{"height":"145","now":"1234567934","proposalId":"1","votes":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9"}` {
 			t.Errorf("Incorrect vote json: %v", voteJson)
 		}
 
 		addrVotesJson := GetVotesByAddress(gsa.String())
-		if addrVotesJson != `{"height":"225","now":"1234568094","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"225","voteTimestamp":"1234568094"}]}` {
+		if addrVotesJson != `{"height":"145","now":"1234567934","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"145","voteTimestamp":"1234567934"}]}` {
 			t.Errorf("Incorrect address votes json: %v", addrVotesJson)
 		}
 
 		addrVoteJson := GetVoteByAddressFromProposalById(gsa.String(), proposalId)
-		if addrVoteJson != `{"height":"225","now":"1234568094","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"225","voteTimestamp":"1234568094"}]}` {
+		if addrVoteJson != `{"height":"145","now":"1234567934","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"145","voteTimestamp":"1234567934"}]}` {
 			t.Errorf("Incorrect address vote json: %v", addrVoteJson)
 		}
 	})
@@ -254,12 +254,12 @@ func TestCancel(t *testing.T) {
 	t.Run("Successful cancel", func(t *testing.T) {
 		Cancel(proposalId)
 		proposalsJson := GetProposals()
-		if proposalsJson != `{"height":"2226","now":"1234572096","proposals":[{"id":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTkyIiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTY4MDkyIiwiVm90aW5nRW5kIjoiMTIzNDU2OTA5MiIsIlBhc3NlZCI6InRydWUiLCJQYXNzZWRBdCI6IjEyMzQ1NzIwOTYiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":""},{"id":"2","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTcyMDk2IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTcyMTk2IiwiVm90aW5nRW5kIjoiMTIzNDU3MzE5NiIsIlBhc3NlZCI6ImZhbHNlIiwiUGFzc2VkQXQiOiIwIiwiUmVqZWN0ZWQiOiJmYWxzZSIsIlJlamVjdGVkQXQiOiIwIiwiQ2FuY2VsZWQiOiJ0cnVlIiwiQ2FuY2VsZWRBdCI6IjEyMzQ1NzIwOTYiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test2_title","description":"test2_description","vote":"eyJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":""}]}` {
+		if proposalsJson != `{"height":"2146","now":"1234571936","proposals":[{"id":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTEyIiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTY3OTIyIiwiVm90aW5nRW5kIjoiMTIzNDU2Nzk1MiIsIlBhc3NlZCI6InRydWUiLCJQYXNzZWRBdCI6IjEyMzQ1NzE5MzYiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":""},{"id":"2","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTcxOTM2IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTcxOTQ2IiwiVm90aW5nRW5kIjoiMTIzNDU3MTk3NiIsIlBhc3NlZCI6ImZhbHNlIiwiUGFzc2VkQXQiOiIwIiwiUmVqZWN0ZWQiOiJmYWxzZSIsIlJlamVjdGVkQXQiOiIwIiwiQ2FuY2VsZWQiOiJ0cnVlIiwiQ2FuY2VsZWRBdCI6IjEyMzQ1NzE5MzYiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test2_title","description":"test2_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":""}]}` {
 			t.Errorf("Incorrect proposals json: %v", proposalsJson)
 		}
 
 		proposalJson := GetProposalById(proposalId)
-		if proposalJson != `{"height":"2226","now":"1234572096","proposals":[{"id":"2","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTcyMDk2IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTcyMTk2IiwiVm90aW5nRW5kIjoiMTIzNDU3MzE5NiIsIlBhc3NlZCI6ImZhbHNlIiwiUGFzc2VkQXQiOiIwIiwiUmVqZWN0ZWQiOiJmYWxzZSIsIlJlamVjdGVkQXQiOiIwIiwiQ2FuY2VsZWQiOiJ0cnVlIiwiQ2FuY2VsZWRBdCI6IjEyMzQ1NzIwOTYiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test2_title","description":"test2_description","vote":"eyJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":""}]}` {
+		if proposalJson != `{"height":"2146","now":"1234571936","proposals":[{"id":"2","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTcxOTM2IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTcxOTQ2IiwiVm90aW5nRW5kIjoiMTIzNDU3MTk3NiIsIlBhc3NlZCI6ImZhbHNlIiwiUGFzc2VkQXQiOiIwIiwiUmVqZWN0ZWQiOiJmYWxzZSIsIlJlamVjdGVkQXQiOiIwIiwiQ2FuY2VsZWQiOiJ0cnVlIiwiQ2FuY2VsZWRBdCI6IjEyMzQ1NzE5MzYiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test2_title","description":"test2_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":""}]}` {
 			t.Errorf("Incorrect proposal json: %v", proposalJson)
 		}
 
@@ -300,7 +300,7 @@ func TestCancel(t *testing.T) {
 
 		// new text proposal #3
 		proposalId := ProposeText("test3_title", "test3_description")
-		std.TestSkipHeights(51)
+		std.TestSkipHeights(11)
 		Cancel(proposalId)
 	})
 }

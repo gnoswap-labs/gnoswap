@@ -10,6 +10,8 @@ import (
 	en "gno.land/r/gnoswap/v2/emission"
 	gs "gno.land/r/gnoswap/v2/gov/staker"
 
+	"gno.land/r/gnoswap/v2/gov/xgns"
+
 	"gno.land/r/gnoswap/v2/common"
 
 	"gno.land/p/demo/ufmt"
@@ -46,12 +48,12 @@ func ProposeText(
 	proposer := std.GetOrigCaller()
 	checkExisitngProposal(proposer)
 
-	now := uint64(time.Now().Unix())
-	delegatedAccu := gs.GetDelegatedCumulative(proposer.String(), now-config.VotingWeightSmoothingDuration)
-	if delegatedAccu < config.ProposalCreationThreshold {
-		panic(ufmt.Sprintf("THRESHOLD NOT MET: %d < %d", delegatedAccu, config.ProposalCreationThreshold))
+	enough := checkEnoughXGnsToPropose(proposer)
+	if !enough {
+		panic("PROPOSER_HAS_NOT_ENOUGH_XGNS")
 	}
 
+	now := uint64(time.Now().Unix())
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: "TEXT",
@@ -63,6 +65,7 @@ func ProposeText(
 		Yea:           u256.Zero(),
 		Nay:           u256.Zero(),
 		ConfigVersion: uint64(len(configVersions)), // use latest config version
+		QuorumAmount:  xgns.TotalSupply() * config.Quorum / 100,
 		Title:         title,
 		Description:   description,
 	}
@@ -73,11 +76,13 @@ func ProposeText(
 
 	std.Emit(
 		"Proposed",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_title", title,
+		"p_description", description,
 		"proposalType", "TEXT",
 		"proposer", proposer.String(),
 		"proposalId", ufmt.Sprintf("%d", proposalId),
-		"title", title,
-		"description", description,
 	)
 
 	return proposalId
@@ -101,12 +106,12 @@ func ProposeCommunityPoolSpend(
 	proposer := std.GetOrigCaller()
 	checkExisitngProposal(proposer)
 
-	now := uint64(time.Now().Unix())
-	delegatedAccu := gs.GetDelegatedCumulative(proposer.String(), now-config.VotingWeightSmoothingDuration)
-	if delegatedAccu < config.ProposalCreationThreshold {
-		panic(ufmt.Sprintf("THRESHOLD NOT MET: %d < %d", delegatedAccu, config.ProposalCreationThreshold))
+	enough := checkEnoughXGnsToPropose(proposer)
+	if !enough {
+		panic("PROPOSER_HAS_NOT_ENOUGH_XGNS")
 	}
 
+	now := uint64(time.Now().Unix())
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: "COMMUNITY_POOL_SPEND",
@@ -118,6 +123,7 @@ func ProposeCommunityPoolSpend(
 		Yea:           u256.Zero(),
 		Nay:           u256.Zero(),
 		ConfigVersion: uint64(len(configVersions)),
+		QuorumAmount:  xgns.TotalSupply() * config.Quorum / 100,
 		Title:         title,
 		Description:   description,
 		CommunityPoolSpend: CommunityPoolSpendInfo{
@@ -133,14 +139,16 @@ func ProposeCommunityPoolSpend(
 
 	std.Emit(
 		"Proposed",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_title", title,
+		"p_description", description,
+		"p_to", to.String(),
+		"p_tokenPath", tokenPath,
+		"p_amount", ufmt.Sprintf("%d", amount),
 		"proposalType", "COMMUNITY_POOL_SPEND",
 		"proposer", proposer.String(),
 		"proposalId", ufmt.Sprintf("%d", proposalId),
-		"title", title,
-		"description", description,
-		"to", to.String(),
-		"tokenPath", tokenPath,
-		"amount", ufmt.Sprintf("%d", amount),
 	)
 
 	return proposalId
@@ -164,12 +172,12 @@ func ProposeParameterChange(
 	proposer := std.GetOrigCaller()
 	checkExisitngProposal(proposer)
 
-	now := uint64(time.Now().Unix())
-	delegatedAccu := gs.GetDelegatedCumulative(proposer.String(), now-config.VotingWeightSmoothingDuration)
-	if delegatedAccu < config.ProposalCreationThreshold {
-		panic(ufmt.Sprintf("THRESHOLD NOT MET: %d < %d", delegatedAccu, config.ProposalCreationThreshold))
+	enough := checkEnoughXGnsToPropose(proposer)
+	if !enough {
+		panic("PROPOSER_HAS_NOT_ENOUGH_XGNS")
 	}
 
+	now := uint64(time.Now().Unix())
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: "PARAMETER_CHANGE",
@@ -181,6 +189,7 @@ func ProposeParameterChange(
 		Yea:           u256.Zero(),
 		Nay:           u256.Zero(),
 		ConfigVersion: uint64(len(configVersions)),
+		QuorumAmount:  xgns.TotalSupply() * config.Quorum / 100,
 		Title:         title,
 		Description:   description,
 		ParameterChange: ParameterChangeInfo{
@@ -196,14 +205,16 @@ func ProposeParameterChange(
 
 	std.Emit(
 		"Proposed",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_title", title,
+		"p_description", description,
+		"p_pkgPath", pkgPath,
+		"p_function", function,
+		"p_param", param,
 		"proposalType", "PARAMETER_CHANGE",
 		"proposer", proposer.String(),
 		"proposalId", ufmt.Sprintf("%d", proposalId),
-		"title", title,
-		"description", description,
-		"pkgPath", pkgPath,
-		"function", function,
-		"param", param,
 	)
 
 	return proposalId
@@ -285,10 +296,12 @@ func Vote(proposalId uint64, yes bool) string {
 
 	std.Emit(
 		"Voted",
-		"proposalId", ufmt.Sprintf("%d", proposalId),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_proposalId", ufmt.Sprintf("%d", proposalId),
+		"p_yes", voteToString(yes),
 		"voter", voter.String(),
 		"weight", ufmt.Sprintf("%d", weight),
-		"yes", voteToString(yes),
 	)
 
 	return voteKey
@@ -321,17 +334,12 @@ func Cancel(proposalId uint64) {
 	caller := std.GetOrigCaller()
 	if caller != proposal.Proposer {
 		// If the caller is not the proposer, check if the proposer's stake has fallen below the threshold
-		delegatedAccu := gs.GetDelegatedCumulative(proposal.Proposer.String(), proposal.ExecutionState.CreatedAt-config.VotingWeightSmoothingDuration)
-
-		if delegatedAccu == 0 {
-			panic(ufmt.Sprintf("no average delegated found for proposer %s", proposal.Proposer.String()))
-		}
-
-		if delegatedAccu >= config.ProposalCreationThreshold {
+		enough := checkEnoughXGnsToPropose(proposal.Proposer)
+		if enough {
 			panic(
 				ufmt.Sprintf(
-					"caller %s is not the proposer(%s) and proposer's stake(%d) is above the threshold(%d)",
-					caller, proposal.Proposer, delegatedAccu, config.ProposalCreationThreshold,
+					"caller %s is not the proposer(%s) and proposer's xgns balance is above the threshold",
+					caller, proposal.Proposer,
 				),
 			)
 		}
@@ -346,7 +354,9 @@ func Cancel(proposalId uint64) {
 
 	std.Emit(
 		"Canceled",
-		"proposalId", ufmt.Sprintf("%d", proposalId),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_proposalId", ufmt.Sprintf("%d", proposalId),
 		"by", caller.String(),
 	)
 }
@@ -394,7 +404,7 @@ func Execute(proposalId uint64) {
 
 	yeaUint := proposal.Yea.Uint64()
 	nayUint := proposal.Nay.Uint64()
-	quorumUint := config.Quorum
+	quorumUint := proposal.QuorumAmount
 
 	if yeaUint < quorumUint {
 		panic("QUORUM_NOT_MET")
@@ -428,7 +438,9 @@ func Execute(proposalId uint64) {
 
 	std.Emit(
 		"Executed",
-		"proposalId", ufmt.Sprintf("%d", proposalId),
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_proposalId", ufmt.Sprintf("%d", proposalId),
 		"executor", std.GetOrigCaller().String(),
 	)
 }
@@ -470,7 +482,7 @@ func updateProposalsState() {
 		if now > (proposal.ExecutionState.CreatedAt + config.VotingStartDelay + config.VotingPeriod) {
 			yeaUint := proposal.Yea.Uint64()
 			nayUint := proposal.Nay.Uint64()
-			quorumUint := config.Quorum
+			quorumUint := proposal.QuorumAmount
 
 			if yeaUint >= quorumUint && yeaUint > nayUint {
 				proposal.ExecutionState.Passed = true
@@ -499,4 +511,13 @@ func updateProposalsState() {
 
 		proposals[id] = proposal
 	}
+}
+
+func checkEnoughXGnsToPropose(proposer std.Address) bool {
+	xGNS := xgns.BalanceOf(a2u(proposer))
+	if xGNS < config.ProposalCreationThreshold {
+		return false
+	}
+
+	return true
 }

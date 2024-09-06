@@ -23,6 +23,7 @@ func GetLockedAmount() uint64 {
 // - claimable amount
 func GetLockedInfoByAddress(addr string) string {
 	en.MintAndDistributeGns()
+	calculateReward()
 
 	lockeds, exist := addrLockedGns[addr]
 	if !exist {
@@ -52,4 +53,32 @@ func GetLockedInfoByAddress(addr string) string {
 	lockedObj.AppendObject("claimableAmount", json.StringNode("claimableAmount", ufmt.Sprintf("%d", claimableAmount)))
 
 	return marshal(lockedObj)
+}
+
+func GetClaimableRewardByAddress(addr string) string {
+	en.MintAndDistributeGns()
+	calculateReward()
+
+	emissionReward := userEmissionReward[addr]
+
+	rewardObj := json.ObjectNode("", nil)
+	rewardObj.AppendObject("height", json.StringNode("height", ufmt.Sprintf("%d", std.GetHeight())))
+	rewardObj.AppendObject("now", json.StringNode("now", ufmt.Sprintf("%d", time.Now().Unix())))
+	rewardObj.AppendObject("emissionReward", json.StringNode("emissionReward", ufmt.Sprintf("%d", emissionReward)))
+
+	protocolFees, exist := userProtocolFeeReward[addr]
+	if exist {
+
+		pfArr := json.ArrayNode("", nil)
+		for tokenPath, amount := range protocolFees {
+			pfObj := json.ObjectNode("", nil)
+			pfObj.AppendObject("tokenPath", json.StringNode("tokenPath", tokenPath))
+			pfObj.AppendObject("amount", json.StringNode("amount", ufmt.Sprintf("%d", amount)))
+			pfArr.AppendArray(pfObj)
+		}
+
+		rewardObj.AppendObject("protocolFees", pfArr)
+	}
+
+	return marshal(rewardObj)
 }

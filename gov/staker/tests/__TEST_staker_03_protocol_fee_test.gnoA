@@ -106,6 +106,11 @@ func TestSkipDummyBlock(t *testing.T) {
 	calculateReward()
 }
 
+func TestCheckReward(t *testing.T) {
+	gcr := GetClaimableRewardByAddress(dummyAddr.String())
+	shouldEQ(t, gcr, `{"height":"135","now":"1234567914","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"833"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2083"}]}`)
+}
+
 func TestCollectReward(t *testing.T) {
 	std.TestSetOrigCaller(dummyAddr)
 	std.TestSetRealm(dummyRealm)
