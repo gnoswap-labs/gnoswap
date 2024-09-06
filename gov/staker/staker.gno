@@ -183,7 +183,6 @@ func CollectReward() {
 
 		// transfer GNS to caller
 		gns.Transfer(a2u(caller), emissionReward)
-		println("CollectReward_GNS", emissionReward)
 		userEmissionReward[caller.String()] = 0
 
 		std.Emit(
@@ -209,7 +208,6 @@ func CollectReward() {
 		// transfer token to caller
 		// token.Transfer(a2u(caller), amount)
 		transferByRegisterCall(tokenPath, caller, amount)
-		println("CollectReward_TOKEN", tokenPath, "AMOUNT", amount)
 		userProtocolFeeReward[caller.String()][tokenPath] = 0
 
 		std.Emit(
