@@ -31,47 +31,29 @@ func init() {
 
 		// XXX: TODO, REMOVE AFTER QA
 		// - config for live qa
-		// VotingStartDelay:              uint64(180),       // 3m
-		// VotingPeriod:                  uint64(600),       // 10m
-		// VotingWeightSmoothingDuration: uint64(600),       // 10m
-		// Quorum:                        uint64(50),        // 50% of total xGNS supply
-		// ProposalCreationThreshold:     uint64(3_000_000), // 3_000_000
-		// ExecutionDelay:                uint64(60),        // 1m
-		// ExecutionWindow:               uint64(300),       // 5m
+		// VotingStartDelay:              uint64(180),           // 3m
+		// VotingPeriod:                  uint64(600),           // 10m
+		// VotingWeightSmoothingDuration: uint64(600),           // 10m
+		// Quorum:                        uint64(50),            // 50% of total xGNS supply
+		// ProposalCreationThreshold:     uint64(1_000_000_000), // 1_000_000_000
+		// ExecutionDelay:                uint64(60),            // 1m
+		// ExecutionWindow:               uint64(300),           // 5m
 	}
 
 	// https://docs.gnoswap.io/core-concepts/governance
 	// config = Config{
-	// 	VotingStartDelay:              uint64(86400),   // 1d
-	// 	VotingPeriod:                  uint64(604800),  // 7d
-	// 	VotingWeightSmoothingDuration: uint64(86400),   // 1d
-	// 	Quorum:                        uint64(50),      // 50% of total xGNS supply
-	// 	ProposalCreationThreshold:     uint64(100),     // XXX TO BE CONFIRMED
-	// 	ExecutionDelay:                uint64(86400),   // 1d
-	// 	ExecutionWindow:               uint64(2592000), // 30d
+	// 	VotingStartDelay:              uint64(86400),         // 1d
+	// 	VotingPeriod:                  uint64(604800),        // 7d
+	// 	VotingWeightSmoothingDuration: uint64(86400),         // 1d
+	// 	Quorum:                        uint64(50),            // 50% of total xGNS supply
+	// 	ProposalCreationThreshold:     uint64(1_000_000_000), // 1_000_000_000
+	// 	ExecutionDelay:                uint64(86400),         // 1d
+	// 	ExecutionWindow:               uint64(2592000),       // 30d
 	// }
 
 	// config version 0 should return the current config
 	// therefore we set initial config version to 1
 	configVersions[uint64(len(configVersions)+1)] = config
-}
-
-// GetConfigVersion returns the configuration for a specific version.
-// If version is 0, it returns the current configuration.
-func GetConfigVersion(version uint64) Config {
-	en.MintAndDistributeGns()
-	// updateProposalsState() // do not call this function here, it will cause a init loop in updateProposal()
-
-	if version == 0 {
-		return config
-	}
-
-	configValue, exist := configVersions[version]
-	if !exist {
-		panic("CONFIG DOES_NOT_EXIST")
-	}
-
-	return configValue
 }
 
 // Reconfigure updates the Governor's configuration.
@@ -128,4 +110,27 @@ func Reconfigure(
 	)
 
 	return newVersion
+}
+
+// GetConfigVersion returns the configuration for a specific version.
+// If version is 0, it returns the current configuration.
+func GetConfigVersion(version uint64) Config {
+	en.MintAndDistributeGns()
+	// updateProposalsState() // do not call this function here, it will cause a init loop in updateProposal()
+
+	if version == 0 {
+		return config
+	}
+
+	configValue, exist := configVersions[version]
+	if !exist {
+		panic("CONFIG DOES_NOT_EXIST")
+	}
+
+	return configValue
+}
+
+// GetProposalCreationThreshold() returns the current proposal creation threshold.
+func GetProposalCreationThreshold() uint64 {
+	return config.ProposalCreationThreshold
 }

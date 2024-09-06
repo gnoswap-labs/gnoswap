@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"gno.land/r/gnoswap/v2/consts"
-
-	pusers "gno.land/p/demo/users"
 )
 
 var (
@@ -38,10 +36,6 @@ var (
 )
 
 /* HELPER */
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
-}
-
 func ugnotBalanceOf(addr std.Address) uint64 {
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 

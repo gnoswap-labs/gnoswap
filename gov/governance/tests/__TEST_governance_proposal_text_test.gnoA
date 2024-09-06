@@ -17,7 +17,7 @@ func TestProposeText(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "THRESHOLD") {
+			} else if !strings.Contains(string(r), "PROPOSER_HAS_NOT_ENOUGH_XGNS") {
 				t.Errorf("Unexpected panic message: %v", r)
 			}
 		}()

@@ -48,12 +48,12 @@ func ProposeText(
 	proposer := std.GetOrigCaller()
 	checkExisitngProposal(proposer)
 
-	now := uint64(time.Now().Unix())
-	delegatedAccu := gs.GetDelegatedCumulative(proposer.String(), now-config.VotingWeightSmoothingDuration)
-	if delegatedAccu < config.ProposalCreationThreshold {
-		panic(ufmt.Sprintf("THRESHOLD NOT MET: %d < %d", delegatedAccu, config.ProposalCreationThreshold))
+	enough := checkEnoughXGnsToPropose(proposer)
+	if !enough {
+		panic("PROPOSER_HAS_NOT_ENOUGH_XGNS")
 	}
 
+	now := uint64(time.Now().Unix())
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: "TEXT",
@@ -106,12 +106,12 @@ func ProposeCommunityPoolSpend(
 	proposer := std.GetOrigCaller()
 	checkExisitngProposal(proposer)
 
-	now := uint64(time.Now().Unix())
-	delegatedAccu := gs.GetDelegatedCumulative(proposer.String(), now-config.VotingWeightSmoothingDuration)
-	if delegatedAccu < config.ProposalCreationThreshold {
-		panic(ufmt.Sprintf("THRESHOLD NOT MET: %d < %d", delegatedAccu, config.ProposalCreationThreshold))
+	enough := checkEnoughXGnsToPropose(proposer)
+	if !enough {
+		panic("PROPOSER_HAS_NOT_ENOUGH_XGNS")
 	}
 
+	now := uint64(time.Now().Unix())
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: "COMMUNITY_POOL_SPEND",
@@ -172,12 +172,12 @@ func ProposeParameterChange(
 	proposer := std.GetOrigCaller()
 	checkExisitngProposal(proposer)
 
-	now := uint64(time.Now().Unix())
-	delegatedAccu := gs.GetDelegatedCumulative(proposer.String(), now-config.VotingWeightSmoothingDuration)
-	if delegatedAccu < config.ProposalCreationThreshold {
-		panic(ufmt.Sprintf("THRESHOLD NOT MET: %d < %d", delegatedAccu, config.ProposalCreationThreshold))
+	enough := checkEnoughXGnsToPropose(proposer)
+	if !enough {
+		panic("PROPOSER_HAS_NOT_ENOUGH_XGNS")
 	}
 
+	now := uint64(time.Now().Unix())
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: "PARAMETER_CHANGE",
@@ -334,17 +334,12 @@ func Cancel(proposalId uint64) {
 	caller := std.GetOrigCaller()
 	if caller != proposal.Proposer {
 		// If the caller is not the proposer, check if the proposer's stake has fallen below the threshold
-		delegatedAccu := gs.GetDelegatedCumulative(proposal.Proposer.String(), proposal.ExecutionState.CreatedAt-config.VotingWeightSmoothingDuration)
-
-		if delegatedAccu == 0 {
-			panic(ufmt.Sprintf("no average delegated found for proposer %s", proposal.Proposer.String()))
-		}
-
-		if delegatedAccu >= config.ProposalCreationThreshold {
+		enough := checkEnoughXGnsToPropose(proposal.Proposer)
+		if enough {
 			panic(
 				ufmt.Sprintf(
-					"caller %s is not the proposer(%s) and proposer's stake(%d) is above the threshold(%d)",
-					caller, proposal.Proposer, delegatedAccu, config.ProposalCreationThreshold,
+					"caller %s is not the proposer(%s) and proposer's xgns balance is above the threshold",
+					caller, proposal.Proposer,
 				),
 			)
 		}
@@ -516,4 +511,13 @@ func updateProposalsState() {
 
 		proposals[id] = proposal
 	}
+}
+
+func checkEnoughXGnsToPropose(proposer std.Address) bool {
+	xGNS := xgns.BalanceOf(a2u(proposer))
+	if xGNS < config.ProposalCreationThreshold {
+		return false
+	}
+
+	return true
 }

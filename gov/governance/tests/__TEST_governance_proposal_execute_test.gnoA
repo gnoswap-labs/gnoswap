@@ -29,7 +29,7 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "THRESHOLD") {
+			} else if !strings.Contains(string(r), "NOT_ENOUGH") {
 				t.Errorf("Unexpected panic message: %v", r)
 			}
 		}()

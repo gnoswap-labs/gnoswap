@@ -9,6 +9,8 @@ import (
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
+
+	pusers "gno.land/p/demo/users"
 )
 
 const (
@@ -227,4 +229,8 @@ func origCaller() string {
 
 func prevRealm() string {
 	return std.PrevRealm().PkgPath()
+}
+
+func a2u(addr std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(addr)
 }
