@@ -1,0 +1,164 @@
+package pool
+
+import (
+	"gno.land/p/demo/json"
+
+	"std"
+	"testing"
+	"math"
+	"time"
+	"strconv"
+
+	"gno.land/p/demo/testutils"
+
+	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v2/common"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/foo"
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/onbloc/qux"
+	
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
+	pr "gno.land/r/gnoswap/v2/router"
+	i256 "gno.land/p/gnoswap/int256"
+)
+
+var (
+	user1Adderss = testutils.TestAddress("user1")
+	user1Realm = std.NewUserRealm(user1Adderss)
+	user2Adderss = testutils.TestAddress("user2")
+	user2Realm = std.NewUserRealm(user2Adderss)
+	tickSpacing = int32(60)
+	minTick = (consts.MIN_TICK / tickSpacing) * tickSpacing
+	maxTick = (consts.MAX_TICK / tickSpacing) * tickSpacing
+)
+
+func BeforeEachTest(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+	common.SetLimitCaller(true)
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	
+	pl.CreatePool(barPath, bazPath, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
+}
+
+func AfterEachTest(t *testing.T) {
+	poolRealm := std.NewUserRealm(consts.POOL_ADDR)
+	std.TestSetRealm(poolRealm)
+	std.TestSetOrigCaller(consts.POOL_ADDR)
+	barBal := bar.BalanceOf(a2u(consts.POOL_ADDR))
+	bazBal := baz.BalanceOf(a2u(consts.POOL_ADDR))
+	bar.Transfer(a2u(gsa), barBal)
+	baz.Transfer(a2u(gsa), bazBal)
+	delete(pools, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000")
+}
+
+func TestCollectFeeWithTwoUser(t *testing.T) {
+	BeforeEachTest(t)
+	t.Run("mint and swap fee should be distributed pro rata user's liquidity", func(t *testing.T) {
+		std.TestSetRealm(gsaRealm)
+		std.TestSetOrigCaller(gsa)
+		
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		
+		pool := GetPool(barPath, bazPath, 3000)
+		tickSpacing := pool.tickSpacing
+	
+		tokenId_res1, liquidity_res1, amount0_res1, amount1_res1:= pn.Mint(
+			barPath,	// token0 string,
+			bazPath,	// token1 string,
+			3000,	// fee uint32,
+			minTick,	// tickLower int32,
+			maxTick,	// tickUpper int32,
+			"10000000",	// _amount0Desired string, // *u256.Uint // 100e18
+			"10000000",	// _amount1Desired string, // *u256.Uint // 100e18
+			"0",	// _amount0Min string, // *u256.Uint
+			"0",	// _amount1Min string, // *u256.Uint
+			time.Now().Unix() + 1000,	// deadline int64,
+			user1Adderss.String(),	// mintTo string
+		)
+
+		tokenId_res2, liquidity_res2, amount0_res2, amount1_res2:= pn.Mint(
+			barPath,	// token0 string,
+			bazPath,	// token1 string,
+			3000,	// fee uint32,
+			minTick,	// tickLower int32,
+			maxTick,	// tickUpper int32,
+			"10000000",	// _amount0Desired string, // *u256.Uint // 100e18
+			"10000000",	// _amount1Desired string, // *u256.Uint // 100e18
+			"0",	// _amount0Min string, // *u256.Uint
+			"0",	// _amount1Min string, // *u256.Uint
+			time.Now().Unix() + 1000,	// deadline int64,
+			user2Adderss.String(),	// mintTo string
+		)
+
+		// ====== Swap to accrue fees ======
+		pr.SwapRoute(
+			barPath, //inputToken string,
+			bazPath,  //outputToken string,
+			"10000000",//_amountSpecified string, // int256
+			"EXACT_IN", //swapType string,
+			barPath+":"+bazPath+":3000", //strRouteArr string, // []string
+			"100",//quoteArr string, // []int
+			"0",//_tokenAmountLimit string, // uint256
+		)
+
+		pr.SwapRoute(
+			bazPath, //inputToken string,
+			barPath,  //outputToken string,
+			"10000000",//_amountSpecified string, // int256
+			"EXACT_IN", //swapType string,
+			bazPath+":"+barPath+":3000", //strRouteArr string, // []string
+			"100",//quoteArr string, // []int
+			"0",//_tokenAmountLimit string, // uint256
+		)
+
+		// ====== Burn 0 to update fee ======
+		positionRealm := std.NewUserRealm(consts.POSITION_ADDR)
+		std.TestSetRealm(positionRealm)
+		Burn(
+			barPath, // token0Path string,
+			bazPath, // token1Path string,
+			uint32(3000), // fee uint32,
+			minTick,// tickLower int32,
+			maxTick, // tickUpper int32,
+			"0",	// _liquidityAmount string, // uint128
+		)
+
+		// ====== Collect fees and copare ======
+		// user1
+		std.TestSetRealm(user1Realm)
+		std.TestSetOrigCaller(user1Adderss)
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		userBarBalanceBeforeCollect_1 := bar.BalanceOf(a2u(user1Adderss))
+		userBazBalanceBeforeCollect_1 := baz.BalanceOf(a2u(user1Adderss))
+		tokenId_res3, withoutFee0_res3, withoutFee1_res3, positionPoolKey_res3 := pn.CollectFee(tokenId_res1)
+		userBarBalanceAfterCollect_1 := bar.BalanceOf(a2u(user1Adderss))
+		userBazBalanceAfterCollect_1 := baz.BalanceOf(a2u(user1Adderss))
+		println("user1 collect fee ", userBarBalanceAfterCollect_1 - userBarBalanceBeforeCollect_1, userBazBalanceAfterCollect_1 - userBazBalanceBeforeCollect_1)
+
+		// user2
+		std.TestSetRealm(user2Realm)
+		std.TestSetOrigCaller(user2Adderss)
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		userBarBalanceBeforeCollect_2 := bar.BalanceOf(a2u(user2Adderss))
+		userBazBalanceBeforeCollect_2 := baz.BalanceOf(a2u(user2Adderss))
+		tokenId_res4, withoutFee0_res4, withoutFee1_res4, positionPoolKey_res4 := pn.CollectFee(tokenId_res2)
+		userBarBalanceAfterCollect_2 := bar.BalanceOf(a2u(user2Adderss))
+		userBazBalanceAfterCollect_2 := baz.BalanceOf(a2u(user2Adderss))
+		println("user2 collect fee ", userBarBalanceAfterCollect_2 - userBarBalanceBeforeCollect_2, userBazBalanceAfterCollect_2 - userBazBalanceBeforeCollect_2)
+		shouldEQ(t, (userBarBalanceAfterCollect_1 - userBarBalanceBeforeCollect_1) - (userBarBalanceAfterCollect_2 - userBarBalanceBeforeCollect_2), 0)
+		shouldEQ(t, (userBazBalanceAfterCollect_1 - userBazBalanceBeforeCollect_1)- (userBazBalanceAfterCollect_2 - userBazBalanceBeforeCollect_2), 0)
+	})
+	AfterEachTest(t)
+}
+

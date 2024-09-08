@@ -1,0 +1,296 @@
+package pool
+
+import (
+	"std"
+	"testing"
+	"time"
+
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/p/demo/testutils"
+
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
+
+	"gno.land/r/gnoswap/v2/common"
+)
+
+const (
+	MIN_TICK int32 = -887272
+	MAX_TICK int32 = 887272
+)
+
+func TestTickMathGetSqrtRatioAtTick_1(t *testing.T) {
+	// throws for too low
+
+	var tick int32 = MIN_TICK
+	var sqrtPriceX96 *u256.Uint
+
+	tick = tick - 1
+
+	shouldPanic( // abs(tick)을 확인하지 않음
+		t,
+		func() {
+			common.TickMathGetSqrtRatioAtTick(tick)
+		},
+	)
+}
+
+func TestTickMathGetSqrtRatioAtTick_2(t *testing.T) {
+	// throws for too low
+
+	var tick int32 = MAX_TICK
+	var sqrtPriceX96 *u256.Uint
+
+	tick = tick + 1
+
+	shouldPanic( // abs(tick)을 확인하지 않음
+		t,
+		func() {
+			common.TickMathGetSqrtRatioAtTick(tick)
+		},
+	)
+}
+
+func TestTickMathGetSqrtRatioAtTick_3(t *testing.T) {
+	// min tick
+
+	var tick int32 = MIN_TICK
+	var sqrtPriceX96 *u256.Uint
+
+	sqrtPriceX96 = common.TickMathGetSqrtRatioAtTick(tick)
+	shouldEQ(t, sqrtPriceX96.ToString(), "4295128739")
+}
+
+func TestTickMathGetSqrtRatioAtTick_4(t *testing.T) {
+	// min tick +1
+
+	var tick int32 = MIN_TICK
+	var sqrtPriceX96 *u256.Uint
+
+	tick = tick + 1
+	sqrtPriceX96 = common.TickMathGetSqrtRatioAtTick(tick)
+	shouldEQ(t, sqrtPriceX96.ToString(), "4295343490")
+}
+
+func TestTickMathGetSqrtRatioAtTick_5(t *testing.T) {
+	// min tick -1
+
+	var tick int32 = MAX_TICK
+	var sqrtPriceX96 *u256.Uint
+
+	tick = tick - 1
+	sqrtPriceX96 = common.TickMathGetSqrtRatioAtTick(tick)
+	shouldEQ(t, sqrtPriceX96.ToString(), "1461373636630004318706518188784493106690254656249")
+}
+
+func TestTickMathGetSqrtRatioAtTick_6(t *testing.T) {
+	// min tick ratio is less than js implementation
+	// encodePriceSqrt(1, BigNumber.from(2).pow(127)) = 6085630636
+
+	var tick int32 = MIN_TICK
+	var sqrtPriceX96 *u256.Uint
+
+	sqrtPriceX96 = common.TickMathGetSqrtRatioAtTick(tick)
+
+	if sqrtPriceX96.Cmp(u256.MustFromDecimal("6085630636")) > 0 {
+		t.Errorf("should be less than 6085630636 ")
+	}
+}
+
+func TestTickMathGetSqrtRatioAtTick_7(t *testing.T) {
+	// max tick ratio is greater than js implementation
+	// encodePriceSqrt(BigNumber.from(2).pow(127),1) = 1033437718471923706666374484006904511252097097914
+
+	var tick int32 = MAX_TICK
+	var sqrtPriceX96 *u256.Uint
+
+	sqrtPriceX96 = common.TickMathGetSqrtRatioAtTick(tick)
+
+	if sqrtPriceX96.Cmp(u256.MustFromDecimal("1033437718471923706666374484006904511252097097914")) < 0 {
+		t.Errorf("should be greater than 1033437718471923706666374484006904511252097097914 ")
+	}
+}
+
+func TestTickMathGetSqrtRatioAtTick_8(t *testing.T) {
+	// min tick
+
+	var tick int32 = MAX_TICK
+	var sqrtPriceX96 *u256.Uint
+
+	sqrtPriceX96 = common.TickMathGetSqrtRatioAtTick(tick)
+	shouldEQ(t, sqrtPriceX96.ToString(), "1461446703485210103287273052203988822378723970342")
+}
+
+func TestTickMathGetSqrtRatioAtTick_Result(t *testing.T) {
+	absTicks := []int32{50, 100, 250, 500, 1000, 2500, 3000, 4000, 5000, 50000, 150000, 250000, 500000, 738203}
+
+	expectedResults := []string{
+		"79030349367926598376800521322",
+		"79426470787362580746886972461",
+		"78833030112140176575862854579",
+		"79625275426524748796330556128",
+		"78244023372248365697264290337",
+		"80224679980005306637834519095",
+		"77272108795590369356373805297",
+		"81233731461783161732293370115",
+		"75364347830767020784054125655",
+		"83290069058676223003182343270",
+		"69919044979842180277688105136",
+		"89776708723587163891445672585",
+		"68192822843687888778582228483",
+		"92049301871182272007977902845",
+		"64867181785621769311890333195",
+		"96768528593268422080558758223",
+		"61703726247759831737814779831",
+		"101729702841318637793976746270",
+		"6504256538020985011912221507",
+		"965075977353221155028623082916",
+		"43836292794701720435367485",
+		"143194173941309278083010301478497",
+		"295440463448801648376846",
+		"21246587762933397357449903968194344",
+		"1101692437043807371",
+		"5697689776495288729098254600827762987878",
+		"7409801140451",
+		"847134979253254120489401328389043031315994541",
+	}
+
+	for i, absTick := range absTicks {
+		for j, tick := range []int32{-absTick, absTick} {
+			subTC_1(tick, expectedResults[i*2+j], t)
+		}
+	}
+}
+
+func subTC_1(tick int32, expected string, t *testing.T) {
+	// check results
+	var result *u256.Uint
+	var absDiff *u256.Uint
+
+	result = common.TickMathGetSqrtRatioAtTick(tick)
+	shouldEQ(t, result.ToString(), expected)
+}
+
+func TestMIN_SQRT_RATIO(t *testing.T) {
+	// equals #getSqrtRatioAtTick(MIN_TICK)
+	var min *u256.Uint
+
+	min = common.TickMathGetSqrtRatioAtTick(consts.MIN_TICK)
+	shouldEQ(t, min.ToString(), consts.MIN_SQRT_RATIO)
+}
+
+func TestMAX_SQRT_RATIO(t *testing.T) {
+	// equals #getSqrtRatioAtTick(MAX_TICK)
+
+	var max *u256.Uint
+
+	max = common.TickMathGetSqrtRatioAtTick(consts.MAX_TICK)
+	shouldEQ(t, max.ToString(), consts.MAX_SQRT_RATIO)
+}
+
+func TestTickMathGetTickAtSqrtRatio_1(t *testing.T) {
+	// throws for too low
+	var sqrtPriceX96 *u256.Uint = u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
+	sqrtPriceX96.Sub(sqrtPriceX96, u256.One())
+	var rst int32
+
+	shouldPanic( // price의 범위를 확인하지 않음
+		t,
+		func() {
+			common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+		},
+	)
+}
+
+func TestTickMathGetTickAtSqrtRatio_2(t *testing.T) {
+	// throws for too high
+	var sqrtPriceX96 *u256.Uint = u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+	var rst int32
+
+	shouldPanic( // price의 범위를 확인하지 않음
+		t,
+		func() {
+			common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+		},
+	)
+}
+
+func TestTickMathGetTickAtSqrtRatio_3(t *testing.T) {
+	// ratio of min tick
+	var sqrtPriceX96 *u256.Uint = u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
+	var rst int32
+
+	rst = common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+
+	shouldEQ(t, rst, MIN_TICK)
+}
+
+func TestTickMathGetTickAtSqrtRatio_4(t *testing.T) {
+	// ratio of min tick + 1
+	var sqrtPriceX96 *u256.Uint = u256.MustFromDecimal("4295343490")
+	var rst int32
+
+	rst = common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+
+	shouldEQ(t, rst, MIN_TICK+1)
+}
+
+func TestTickMathGetTickAtSqrtRatio_5(t *testing.T) {
+	// ratio of max tick - 1
+	var sqrtPriceX96 *u256.Uint = u256.MustFromDecimal("1461373636630004318706518188784493106690254656249")
+	var rst int32
+
+	rst = common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+
+	shouldEQ(t, rst, MAX_TICK-1)
+}
+
+func TestTickMathGetTickAtSqrtRatio_Result(t *testing.T) {
+	var rst int32
+	var sqrtPriceX96 *u256.Uint
+
+	ratios := []string{
+		"4295128739",
+		"79228162514264337593543950336000000",
+		"79228162514264337593543950336000",
+		"9903520314283042199192993792",
+		"28011385487393069959365969113",
+		"56022770974786139918731938227",
+		"79228162514264337593543950336",
+		"112045541949572279837463876454",
+		"224091083899144559674927752909",
+		"633825300114114700748351602688",
+		"79228162514264337593543950",
+		"79228162514264337593543",
+		"1461446703485210103287273052203988822378723970341",
+	}
+
+	expectedResults := []int32{
+		-887272,
+		276324,
+		138162,
+		-41591,
+		-20796,
+		-6932,
+		0, // got -1, expected 0
+		6931,
+		20795,
+		41590,
+		-138163,
+		-276325,
+		887271,
+	}
+
+	for i, ratio := range ratios {
+		sqrtPriceX96 = u256.MustFromDecimal(ratio)
+		rst = common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+		shouldEQ(t, rst, expectedResults[i])
+	}
+}

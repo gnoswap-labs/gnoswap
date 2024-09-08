@@ -1,0 +1,374 @@
+package pool
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/json"
+
+	"gno.land/p/demo/testutils"
+
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+)
+
+var (
+	got            *u256.Uint
+	x              *u256.Uint
+	y              *u256.Uint
+	expected       *u256.Uint
+	Q128           *u256.Uint
+	MaxUint256     *u256.Uint
+	MaxUint256Sub1 *u256.Uint
+	rst            bool
+)
+
+func TestMulDiv_1(t *testing.T) {
+	// reverts if denominator is 0
+	Q128 = u256.MustFromDecimal("340282366920938463463374607431768211456") // 2**128
+
+	x = u256.NewUint(5)
+	y = u256.Zero()
+
+	shouldPanic(
+		t,
+		func() {
+			u256.MulDiv(Q128, x, y)
+		},
+	)
+}
+
+func TestMulDiv_2(t *testing.T) {
+	// reverts if denominator is 0 and numerator overflows
+	Q128 = u256.MustFromDecimal("340282366920938463463374607431768211456") // 2**128
+	x = u256.NewUint(5)
+	y = u256.Zero()
+
+	shouldPanic(
+		t,
+		func() {
+			u256.MulDiv(Q128, Q128, y)
+		},
+	)
+}
+
+func TestMulDiv_3(t *testing.T) {
+	// reverts if output overflows uint256
+	Q128 = u256.MustFromDecimal("340282366920938463463374607431768211456") // 2**128
+	y = u256.One()
+
+	shouldPanic(
+		t,
+		func() {
+			u256.MulDiv(Q128, Q128, y)
+		},
+	)
+}
+
+func TestMulDiv_4(t *testing.T) {
+	// reverts on overflow with all max inputs
+	MaxUint256 = u256.MustFromHex("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+	MaxUint256Sub1 = u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639934")
+	if MaxUint256.ToString() != "115792089237316195423570985008687907853269984665640564039457584007913129639935" {
+		t.Errorf("MustFromHex is Failed")
+	}
+	shouldPanic(
+		t,
+		func() {
+			u256.MulDiv(MaxUint256, MaxUint256, MaxUint256Sub1)
+		},
+	)
+}
+
+func TestMulDiv_5(t *testing.T) {
+	// all max inputs
+	MaxUint256 = u256.MustFromHex("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+
+	got = u256.MulDiv(MaxUint256, MaxUint256, MaxUint256)
+
+	rst = got.Eq(MaxUint256)
+	if !rst {
+		t.Errorf("MaxUint256 * MaxUint256 / MaxUint256 is not same to MaxUint256")
+	}
+}
+
+func TestMulDiv_6(t *testing.T) { //@Louis - Failed
+	var x1 *u256.Uint
+	var y1 *u256.Uint
+	var denom *u256.Uint
+	var Q128Const *u256.Uint
+
+	denom = u256.NewUint(100)
+
+	// accurate without phantom overflow #1
+	Q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")      // 2**128
+	Q128Const = u256.MustFromDecimal("340282366920938463463374607431768211456") // 2**128
+	expected = Q128.Div(Q128, u256.NewUint(3))
+	x = u256.NewUint(50)
+	x1 = u256.MulDiv(x, Q128Const, denom)
+	y = u256.NewUint(150)
+	y1 = u256.MulDiv(y, Q128Const, denom)
+
+	got = u256.MulDiv(Q128Const, x1, y1)
+
+	rst = got.Eq(expected)
+	if !rst {
+		t.Errorf("Q128/3 is not smae to Q128 * (50*Q128/100) / (150*Q128/100)")
+	}
+}
+
+func TestMulDiv_6_1(t *testing.T) {
+	var x1 *u256.Uint
+	var y1 *u256.Uint
+	var denom *u256.Uint
+
+	denom = u256.NewUint(100)
+
+	// accurate without phantom overflow #1_1
+	Q128 = u256.MustFromDecimal("340282366920938463463374607431768211456") // 2**128
+	expected = new(u256.Uint).Div(Q128, u256.NewUint(3))
+	x = u256.NewUint(50)
+	x1 = u256.MulDiv(x, Q128, denom)
+	y = u256.NewUint(150)
+	y1 = u256.MulDiv(y, Q128, denom)
+
+	got = u256.MulDiv(Q128, x1, y1)
+
+	rst = got.Eq(expected)
+	if !rst {
+		t.Errorf("Q128/3 is not smae to Q128 * (50*Q128/100) / (150*Q128/100)")
+	}
+}
+
+func TestMulDiv_7(t *testing.T) {
+	var x1 *u256.Uint
+	var y1 *u256.Uint
+	var denom *u256.Uint
+	var Q128Const *u256.Uint
+
+	// accurate with phantom overflow #2
+	Q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")      // 2**128
+	Q128Const = u256.MustFromDecimal("340282366920938463463374607431768211456") // 2**128
+	x = u256.NewUint(4375)
+	expected = u256.MulDiv(x, Q128Const, u256.NewUint(1000))
+
+	y1 = u256.NewUint(35)
+	y1.Mul(y1, Q128Const)
+
+	denom = u256.NewUint(8)
+	denom.Mul(denom, Q128Const)
+
+	got = u256.MulDiv(Q128Const, y1, denom)
+
+	rst = got.Eq(expected)
+	if !rst {
+		t.Errorf("4375*Q128/1000 is not smae to Q128*35*Q128/(8*Q128)")
+	}
+}
+
+func TestMulDiv_8(t *testing.T) {
+	var y1 *u256.Uint
+	var denom *u256.Uint
+	var Q128Const *u256.Uint
+
+	// accurate with phantom overflow and repeating decimal
+	Q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")      // 2**128
+	Q128Const = u256.MustFromDecimal("340282366920938463463374607431768211456") // 2**128
+	expected = u256.MulDiv(u256.One(), Q128Const, u256.NewUint(3))
+
+	y1 = u256.NewUint(1000)
+	y1.Mul(y1, Q128Const)
+
+	denom = u256.NewUint(3000)
+	denom.Mul(denom, Q128Const)
+
+	got = u256.MulDiv(Q128Const, y1, denom)
+
+	rst = got.Eq(expected)
+	if !rst {
+		t.Errorf("1*Q128/3 is not smae to Q128*1000*Q128/(3000*Q128)")
+	}
+}
+
+func TestMulDivRoundingUp_1(t *testing.T) {
+	// reverts if denominator is 0
+	Q128 = u256.MustFromDecimal("340282366920938463463374607431768211456") // 2**128
+
+	x = u256.NewUint(5)
+	y = u256.Zero()
+
+	shouldPanic(
+		t,
+		func() {
+			u256.MulDivRoundingUp(Q128, x, y)
+		},
+	)
+}
+
+func TestMulDivRoundingUp_2(t *testing.T) {
+	// reverts if denominator is 0 and numerator overflows
+
+	Q128 = u256.MustFromDecimal("340282366920938463463374607431768211456") // 2**128
+	y = u256.Zero()
+
+	shouldPanic(
+		t,
+		func() {
+			u256.MulDivRoundingUp(Q128, Q128, y)
+		},
+	)
+}
+
+func TestMulDivRoundingUp_3(t *testing.T) {
+	// reverts if output overflows uint256
+
+	Q128 = u256.MustFromDecimal("340282366920938463463374607431768211456") // 2**128
+	y = u256.One()
+
+	shouldPanic(
+		t,
+		func() {
+			u256.MulDivRoundingUp(Q128, Q128, y)
+		},
+	)
+}
+
+func TestMulDivRoundingUp_4(t *testing.T) {
+	// reverts on overflow with all max inputs
+
+	MaxUint256 = u256.MustFromHex("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+	MaxUint256Sub1 = u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639934")
+
+	shouldPanic(
+		t,
+		func() {
+			u256.MulDivRoundingUp(MaxUint256, MaxUint256, MaxUint256Sub1)
+		},
+	)
+}
+
+func TestMulDivRoundingUp_5(t *testing.T) {
+	// reverts if mulDiv overflows 256 bits after rounding up
+
+	x = u256.MustFromDecimal("535006138814359")
+	y = u256.MustFromDecimal("432862656469423142931042426214547535783388063929571229938474969")
+
+	shouldPanic(
+		t,
+		func() {
+			u256.MulDivRoundingUp(x, y, u256.NewUint(2))
+		},
+	)
+}
+
+func TestMulDivRoundingUp_6(t *testing.T) {
+	// reverts if mulDiv overflows 256 bits after rounding up case 2
+	var z *u256.Uint
+
+	x = u256.MustFromDecimal("115792089237316195423570985008687907853269984659341747863450311749907997002549")
+	y = u256.MustFromDecimal("115792089237316195423570985008687907853269984659341747863450311749907997002550")
+	z = u256.MustFromDecimal("115792089237316195423570985008687907853269984653042931687443039491902864365164")
+
+	shouldPanic(
+		t,
+		func() {
+			u256.MulDivRoundingUp(x, y, z)
+		},
+	)
+}
+
+func TestMulDivRoundingUp_7(t *testing.T) {
+	// all max inputs
+	MaxUint256 = u256.MustFromHex("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+
+	got = u256.MulDivRoundingUp(MaxUint256, MaxUint256, MaxUint256)
+
+	rst = got.Eq(MaxUint256)
+
+	if !rst {
+		t.Errorf("MaxUin256*MaxUint256/MaxUint256 RoudingUp is not same to MaxUint256")
+	}
+}
+
+func TestMulDivRoundingUp_8(t *testing.T) {
+	// accurate without phantom overflow
+	var x1 *u256.Uint
+	var y1 *u256.Uint
+	var denom *u256.Uint
+	var Q128Const *u256.Uint
+
+	denom = u256.NewUint(100)
+
+	// accurate without phantom overflow #1
+	Q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")      // 2**128
+	Q128Const = u256.MustFromDecimal("340282366920938463463374607431768211456") // 2**128
+	Q128.Div(Q128, u256.NewUint(3))
+	expected = Q128.Add(Q128, u256.NewUint(1))
+
+	x1 = u256.NewUint(50)
+	x1.Mul(x1, Q128Const)
+
+	y1 = u256.NewUint(150)
+	y1.Mul(y1, Q128Const)
+
+	got = u256.MulDivRoundingUp(Q128Const, x1, y1)
+
+	rst = got.Eq(expected)
+	if !rst {
+		t.Errorf("Q128*50*Q128/100/(150*Q128/100) should be equal to Q128/3")
+	}
+}
+
+func TestMulDivRoundingUp_9(t *testing.T) {
+	var x1 *u256.Uint
+	var y1 *u256.Uint
+	var denom *u256.Uint
+	var Q128Const *u256.Uint
+
+	// accurate with phantom overflow #2
+	Q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")      // 2**128
+	Q128Const = u256.MustFromDecimal("340282366920938463463374607431768211456") // 2**128
+	x = u256.NewUint(4375)
+	expected = u256.MulDiv(x, Q128Const, u256.NewUint(1000))
+
+	y1 = u256.NewUint(35)
+	y1.Mul(y1, Q128Const)
+
+	denom = u256.NewUint(8)
+	denom.Mul(denom, Q128Const)
+
+	got = u256.MulDiv(Q128Const, y1, denom)
+
+	rst = got.Eq(expected)
+	if !rst {
+		t.Errorf("4375*Q128/1000 is not smae to Q128*35*Q128/(8*Q128)")
+	}
+}
+
+func TestMulDivRoundingUp_10(t *testing.T) {
+	var x1 *u256.Uint
+	var y1 *u256.Uint
+	var denom *u256.Uint
+	var Q128Const *u256.Uint
+
+	// accurate with phantom overflow and repeating decimal
+
+	Q128 = u256.MustFromDecimal("340282366920938463463374607431768211456")      // 2**128
+	Q128Const = u256.MustFromDecimal("340282366920938463463374607431768211456") // 2**128
+
+	expected = u256.MulDiv(u256.One(), Q128Const, u256.NewUint(3))
+	expected.Add(expected, u256.One())
+
+	y1 = u256.NewUint(1000)
+	y1.Mul(y1, Q128Const)
+
+	denom = u256.NewUint(3000)
+	denom.Mul(denom, Q128Const)
+
+	got = u256.MulDivRoundingUp(Q128Const, y1, denom)
+
+	rst = got.Eq(expected)
+	if !rst {
+		t.Errorf("Q128*100*Q128/300*Q128 should be eq to 1*Q128+1")
+	}
+}

@@ -1,0 +1,74 @@
+package router
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
+
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/foo"
+)
+
+//=================================Test for SwapRouter exactInput 2 ->1 -> 0 in multi pool=================================
+
+func TestCreatePool(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*2)
+
+	pl.CreatePool(barPath, bazPath, 3000, "79228162514264337593543950336")
+
+	pl.CreatePool(bazPath, fooPath, 3000, "79228162514264337593543950336")
+
+	// jsonOutput := pl.ApiGetPools()
+	// jsonStr := gjson.Parse(jsonOutput)
+	// shouldEQ(t, len(jsonStr.Get("response").Array()), 2)
+}
+
+func TestPositionMint(t *testing.T) {
+	// bar_baz_3000 by gsa
+	std.TestSetRealm(gsaRealm)
+
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	// Mint
+	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, gsa.String())
+
+	pn.Mint(bazPath, fooPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, gsa.String())
+}
+
+func TestSwapRouteFooBarExactIn(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	bar.Approve(a2u(consts.ROUTER_ADDR), 1000000)
+	foo.Approve(a2u(consts.ROUTER_ADDR), 1000000)
+
+	token0Before := bar.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
+	token2Before := foo.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
+
+	amountIn, amountOut := SwapRoute(
+		fooPath,    // inputToken
+		barPath,    // outputToken
+		"5",        // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/onbloc/foo:gno.land/r/onbloc/baz:3000*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000", // strRouteArr
+		"100", // quoteArr
+		"1",   // tokenAmountLimit
+	)
+
+	token0After := bar.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
+	token2After := foo.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
+
+	shouldEQ(t, amountIn, "5")
+	shouldEQ(t, amountOut, "-1")
+
+	shouldEQ(t, token0After, token0Before+1)
+	shouldEQ(t, token2After, token2Before-5)
+}

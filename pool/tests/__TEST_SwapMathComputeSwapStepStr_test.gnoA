@@ -1,0 +1,395 @@
+package pool
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/json"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/foo"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/r/gnoswap/v2/gns"
+
+	"gno.land/p/demo/testutils"
+
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+
+	plp "gno.land/p/gnoswap/pool"
+	"gno.land/r/gnoswap/v2/common"
+)
+
+var (
+	amountIn_i256    *i256.Int
+	amountOut        *u256.Uint
+	zeroForOne       bool
+	expected         *u256.Uint
+	rst              bool
+	price            *u256.Uint
+	priceTarget      *u256.Uint
+	liquidity        *u256.Uint
+	fee              uint64
+	amountIn_String  string
+	amountOut_String string
+	sqrtQ_String     string
+	feeAmount_String string
+)
+
+func TestSwapMathComputeSwapStepStr_1(t *testing.T) {
+	var amountIn_feeAmount *u256.Uint
+	var priceAfterWholeInputAmount *u256.Uint
+	// exact amount in that gets capped at price target in one for zero
+
+	price = u256.MustFromDecimal("79228162514264337593543950336")       // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	priceTarget = u256.MustFromDecimal("79623317895830914510639640423") // encodePriceSqrt(101,100) = 79623317895830914510639640423
+	liquidity = u256.MustFromDecimal("2000000000000000000")             // 2e18
+	amountIn_i256 = i256.MustFromDecimal("1000000000000000000")         // 1e18
+	fee = 600
+	zeroForOne = false
+
+	sqrtQ_String, amountIn_String, amountOut_String, feeAmount_String := plp.SwapMathComputeSwapStepStr(price, priceTarget, liquidity, amountIn_i256, fee)
+
+	shouldEQ(t, amountIn_String, "9975124224178055")
+	shouldEQ(t, feeAmount_String, "5988667735148")
+	shouldEQ(t, amountOut_String, "9925619580021728")
+	amountIn_feeAmount = u256.MustFromDecimal(amountIn_String)
+	amountIn_feeAmount.Add(amountIn_feeAmount, u256.MustFromDecimal(feeAmount_String))
+
+	// println(amountIn_String)               // 79623317895830914510639640423
+	// println(feeAmount_String)              // 5988667735148
+	// println(amountIn_feeAmount.ToString()) // 79623317895830920499307375571
+	// println(amountIn_feeAmount.Cmp(u256.MustFromDecimal("1000000000000000000")))
+	if amountIn_feeAmount.Cmp(u256.MustFromDecimal("1000000000000000000")) > 0 {
+		t.Errorf("entire amount is not used")
+	}
+
+	priceAfterWholeInputAmount = SqrtPriceMathGetNextSqrtPriceFromInput(price, liquidity, u256.MustFromDecimal("1000000000000000000"), zeroForOne)
+
+	shouldEQ(t, sqrtQ_String, priceTarget.ToString())
+	if u256.MustFromDecimal(sqrtQ_String).Cmp(priceAfterWholeInputAmount) > 0 {
+		t.Errorf("price is less than price after whole input amount")
+	}
+}
+
+func TestSwapMathComputeSwapStepStr_2(t *testing.T) {
+	var priceAfterWholeInputAmount *u256.Uint
+	// exact amount out that gets capped at price target in one for zero
+
+	price = u256.MustFromDecimal("79228162514264337593543950336")       // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	priceTarget = u256.MustFromDecimal("79623317895830914510639640423") // encodePriceSqrt(101,100) = 79623317895830914510639640423
+	liquidity = u256.MustFromDecimal("2000000000000000000")             // 2e18
+	amountIn_i256 = i256.MustFromDecimal("-1000000000000000000")        // -1e18
+	fee = 600
+	zeroForOne = false
+
+	sqrtQ_String, amountIn_String, amountOut_String, feeAmount_String := plp.SwapMathComputeSwapStepStr(price, priceTarget, liquidity, amountIn_i256, fee)
+
+	shouldEQ(t, amountIn_String, "9975124224178055")
+	shouldEQ(t, feeAmount_String, "5988667735148")
+	shouldEQ(t, amountOut_String, "9925619580021728")
+
+	if u256.MustFromDecimal(amountOut_String).Cmp(u256.MustFromDecimal("1000000000000000000")) >= 0 {
+		t.Errorf("entire amount out is not returned")
+	}
+
+	priceAfterWholeInputAmount = SqrtPriceMathGetNextSqrtPriceFromInput(price, liquidity, u256.MustFromDecimal("1000000000000000000"), zeroForOne)
+	shouldEQ(t, sqrtQ_String, priceTarget.ToString())
+	if u256.MustFromDecimal(sqrtQ_String).Cmp(priceAfterWholeInputAmount) > 0 {
+		t.Errorf("price is less than price after whole output amount")
+	}
+}
+
+func TestSwapMathComputeSwapStepStr_3(t *testing.T) {
+	var amountIn_feeAmount *u256.Uint
+	var priceAfterWholeInputAmount *u256.Uint
+	// exact amount in that is fully spent in one for zero
+
+	price = u256.MustFromDecimal("79228162514264337593543950336")        // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	priceTarget = u256.MustFromDecimal("792281625142643375935439503360") // encodePriceSqrt(1000,100) = 792281625142643375935439503360
+	liquidity = u256.MustFromDecimal("2000000000000000000")              // 2e18
+	amountIn_i256 = i256.MustFromDecimal("1000000000000000000")          // 1e18
+	fee = 600
+	zeroForOne = false
+
+	sqrtQ_String, amountIn_String, amountOut_String, feeAmount_String := plp.SwapMathComputeSwapStepStr(price, priceTarget, liquidity, amountIn_i256, fee)
+
+	shouldEQ(t, amountIn_String, "999400000000000000")
+	shouldEQ(t, feeAmount_String, "600000000000000")
+	shouldEQ(t, amountOut_String, "666399946655997866")
+	amountIn_feeAmount = u256.MustFromDecimal(amountIn_String)
+	amountIn_feeAmount.Add(amountIn_feeAmount, u256.MustFromDecimal(feeAmount_String))
+	shouldEQ(t, amountIn_feeAmount.ToString(), "1000000000000000000")
+
+	priceAfterWholeInputAmount = SqrtPriceMathGetNextSqrtPriceFromInput(price, liquidity, u256.MustFromDecimal("999400000000000000"), zeroForOne)
+	shouldEQ(t, sqrtQ_String, priceAfterWholeInputAmount.ToString())
+	if u256.MustFromDecimal(sqrtQ_String).Cmp(priceTarget) > 0 {
+		t.Errorf("price does not reach price target")
+	}
+}
+
+func TestSwapMathComputeSwapStepStr_4(t *testing.T) {
+	// amount out is capped at the desired amount out
+
+	price = u256.MustFromDecimal("417332158212080721273783715441582")
+	priceTarget = u256.MustFromDecimal("1452870262520218020823638996")
+	liquidity = u256.MustFromDecimal("159344665391607089467575320103")
+	amountIn_i256 = i256.MustFromDecimal("-1")
+	fee = 1
+
+	sqrtQ_String, amountIn_String, amountOut_String, feeAmount_String := plp.SwapMathComputeSwapStepStr(price, priceTarget, liquidity, amountIn_i256, fee)
+
+	shouldEQ(t, sqrtQ_String, "417332158212080721273783715441581")
+	shouldEQ(t, amountIn_String, "1")
+	shouldEQ(t, feeAmount_String, "1")
+	shouldEQ(t, amountOut_String, "1")
+}
+
+func TestSwapMathComputeSwapStepStr_5(t *testing.T) {
+	var amountIn_feeAmount *u256.Uint
+	// target price of 1 uses partial input amount
+
+	price = u256.MustFromDecimal("2")
+	priceTarget = u256.MustFromDecimal("1")
+	liquidity = u256.MustFromDecimal("1")
+	amountIn_i256 = i256.MustFromDecimal("3915081100057732413702495386755767")
+	fee = 1
+
+	sqrtQ_String, amountIn_String, amountOut_String, feeAmount_String := plp.SwapMathComputeSwapStepStr(price, priceTarget, liquidity, amountIn_i256, fee)
+
+	shouldEQ(t, sqrtQ_String, "1")
+	shouldEQ(t, feeAmount_String, "39614120871253040049813")
+	shouldEQ(t, amountOut_String, "0")
+	shouldEQ(t, amountIn_String, "39614081257132168796771975168")
+	amountIn_feeAmount = u256.MustFromDecimal(amountIn_String)
+	amountIn_feeAmount.Add(amountIn_feeAmount, u256.MustFromDecimal(feeAmount_String))
+
+	if amountIn_feeAmount.Cmp(u256.MustFromDecimal("3915081100057732413702495386755767")) >= 0 {
+		t.Errorf("amountIn+feeAmount should be less than or eq to 3915081100057732413702495386755767")
+	}
+}
+
+func TestSwapMathComputeSwapStepStr_6(t *testing.T) {
+	// entire input amount taken as fee
+	price = u256.MustFromDecimal("2413")
+	priceTarget = u256.MustFromDecimal("79887613182836312")
+	liquidity = u256.MustFromDecimal("1985041575832132834610021537970")
+	amountIn_i256 = i256.MustFromDecimal("10")
+	fee = 1872
+
+	sqrtQ_String, amountIn_String, amountOut_String, feeAmount_String := plp.SwapMathComputeSwapStepStr(price, priceTarget, liquidity, amountIn_i256, fee)
+
+	shouldEQ(t, amountIn_String, "0")
+	shouldEQ(t, feeAmount_String, "10")
+	shouldEQ(t, amountOut_String, "0")
+	shouldEQ(t, sqrtQ_String, "2413")
+}
+
+func TestSwapMathComputeSwapStepStr_7(t *testing.T) {
+	// handles intermediate insufficient liquidity in zero for one exact output case
+
+	price = u256.MustFromDecimal("20282409603651670423947251286016")
+	priceTarget = u256.MulDiv(price, u256.NewUint(11), u256.NewUint(10))
+	liquidity = u256.MustFromDecimal("1024")
+	amountIn_i256 = i256.MustFromDecimal("-4")
+	fee = 3000
+
+	sqrtQ_String, amountIn_String, amountOut_String, feeAmount_String := plp.SwapMathComputeSwapStepStr(price, priceTarget, liquidity, amountIn_i256, fee)
+
+	shouldEQ(t, amountOut_String, "0")
+	shouldEQ(t, sqrtQ_String, priceTarget.ToString())
+	shouldEQ(t, amountIn_String, "26215")
+	shouldEQ(t, feeAmount_String, "79")
+}
+
+func TestSwapMathComputeSwapStepStr_8(t *testing.T) {
+	// handles intermediate insufficient liquidity in one for zero exact output case
+	price = u256.MustFromDecimal("20282409603651670423947251286016")
+	priceTarget = u256.MulDiv(price, u256.NewUint(9), u256.NewUint(10))
+	liquidity = u256.MustFromDecimal("1024")
+	amountIn_i256 = i256.MustFromDecimal("-263000")
+	fee = 3000
+
+	sqrtQ_String, amountIn_String, amountOut_String, feeAmount_String := plp.SwapMathComputeSwapStepStr(price, priceTarget, liquidity, amountIn_i256, fee)
+
+	shouldEQ(t, amountOut_String, "26214")
+	shouldEQ(t, sqrtQ_String, priceTarget.ToString())
+	shouldEQ(t, amountIn_String, "1")
+	shouldEQ(t, feeAmount_String, "1")
+}
+
+//===================For Test =================
+
+func SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
+	sqrtPX96 *u256.Uint, // uint160
+	liquidity *u256.Uint, // uint128
+	amount *u256.Uint, // uint256
+	add bool,
+) *u256.Uint { // uint160
+	if amount.IsZero() {
+		return sqrtPX96
+	}
+
+	numerator1 := new(u256.Uint).Lsh(liquidity, 96)
+	product := new(u256.Uint).Mul(amount, sqrtPX96)
+
+	if add {
+		if new(u256.Uint).Div(product, amount).Eq(sqrtPX96) {
+			denominator := new(u256.Uint).Add(numerator1, product)
+
+			if denominator.Gte(numerator1) {
+				return u256.MulDivRoundingUp(numerator1, sqrtPX96, denominator)
+			}
+		}
+
+		div := new(u256.Uint).Div(numerator1, sqrtPX96)
+		add := new(u256.Uint).Add(div, amount)
+		return u256.DivRoundingUp(numerator1, add)
+	} else {
+		cond1 := new(u256.Uint).Div(product, amount).Eq(sqrtPX96)
+		cond2 := numerator1.Gt(product)
+
+		if !(cond1 && cond2) {
+			panic("common_sqrt price math #1")
+		}
+
+		denominator := new(u256.Uint).Sub(numerator1, product)
+		return u256.MulDivRoundingUp(numerator1, sqrtPX96, denominator)
+	}
+}
+
+func SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
+	sqrtPX96 *u256.Uint, // uint160
+	liquidity *u256.Uint, // uint1288
+	amount *u256.Uint, // uint256
+	add bool,
+) *u256.Uint { // uint160
+	quotient := u256.Zero()
+
+	if add {
+		if amount.Lte(u256.MustFromDecimal(consts.MAX_UINT160)) {
+			value1 := new(u256.Uint).Lsh(amount, 96)
+			quotient = new(u256.Uint).Div(value1, liquidity)
+		} else {
+			quotient = u256.MulDiv(amount, u256.MustFromDecimal(consts.Q96), liquidity)
+		}
+
+		return new(u256.Uint).Add(sqrtPX96, quotient)
+	} else {
+		if amount.Lte(u256.MustFromDecimal(consts.MAX_UINT160)) {
+			value1 := new(u256.Uint).Lsh(amount, 96)
+			quotient = u256.DivRoundingUp(value1, liquidity)
+		} else {
+			quotient = u256.MulDivRoundingUp(amount, u256.MustFromDecimal(consts.Q96), liquidity)
+		}
+
+		if !(sqrtPX96.Gt(quotient)) {
+			panic("common_sqrt price math #2")
+		}
+
+		return new(u256.Uint).Sub(sqrtPX96, quotient)
+	}
+}
+
+func SqrtPriceMathGetNextSqrtPriceFromInput(
+	sqrtPX96 *u256.Uint, // uint160
+	liquidity *u256.Uint, // uint128
+	amountIn *u256.Uint, // uint256
+	zeroForOne bool, // bool
+) *u256.Uint { // uint160
+	if zeroForOne {
+		return SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountIn, true)
+	}
+	return SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountIn, true)
+}
+
+func SqrtPriceMathGetNextSqrtPriceFromOutput(
+	sqrtPX96 *u256.Uint, // uint160
+	liquidity *u256.Uint, // uint128
+	amountOut *u256.Uint, // uint256
+	zeroForOne bool, // bool
+) *u256.Uint { // uint160
+	if zeroForOne {
+		return SqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountOut, false)
+	}
+
+	return SqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountOut, false)
+}
+
+func SqrtPriceMathGetAmount0DeltaHelper(
+	sqrtRatioAX96 *u256.Uint, // uint160
+	sqrtRatioBX96 *u256.Uint, // uint160
+	liquidity *u256.Uint, // uint160
+	roundUp bool,
+) *u256.Uint { // uint256
+	if sqrtRatioAX96.Gt(sqrtRatioBX96) {
+		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
+	}
+
+	numerator1 := new(u256.Uint).Lsh(liquidity, 96)
+	numerator2 := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
+
+	if !(sqrtRatioAX96.Gt(u256.Zero())) {
+		panic("common_sqrt price math #3")
+	}
+
+	if roundUp {
+		value1 := u256.MulDivRoundingUp(numerator1, numerator2, sqrtRatioBX96)
+		return u256.DivRoundingUp(value1, sqrtRatioAX96)
+	} else {
+		value1 := u256.MulDiv(numerator1, numerator2, sqrtRatioBX96)
+		return new(u256.Uint).Div(value1, sqrtRatioAX96)
+	}
+}
+
+func SqrtPriceMathGetAmount1DeltaHelper(
+	sqrtRatioAX96 *u256.Uint, // uint160
+	sqrtRatioBX96 *u256.Uint, // uint160
+	liquidity *u256.Uint, // uint160
+	roundUp bool,
+) *u256.Uint { // uint256
+	if sqrtRatioAX96.Gt(sqrtRatioBX96) {
+		sqrtRatioAX96, sqrtRatioBX96 = sqrtRatioBX96, sqrtRatioAX96
+	}
+
+	if roundUp {
+		diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
+		return u256.MulDivRoundingUp(liquidity, diff, u256.MustFromDecimal(consts.Q96))
+	} else {
+		diff := new(u256.Uint).Sub(sqrtRatioBX96, sqrtRatioAX96)
+		return u256.MulDiv(liquidity, diff, u256.MustFromDecimal(consts.Q96))
+	}
+}
+
+func SqrtPriceMathGetAmount0DeltaStr(
+	sqrtRatioAX96 *u256.Uint, // uint160
+	sqrtRatioBX96 *u256.Uint, // uint160
+	liquidity *i256.Int, // int128
+) string { // int256
+	if liquidity.IsNeg() {
+		u := SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), false)
+		i := i256.FromUint256(u)
+		return i256.Zero().Neg(i).ToString()
+	}
+
+	u := SqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
+	return i256.FromUint256(u).ToString()
+}
+
+func SqrtPriceMathGetAmount1DeltaStr(
+	sqrtRatioAX96 *u256.Uint, // uint160
+	sqrtRatioBX96 *u256.Uint, // uint160
+	liquidity *i256.Int, // int128
+) string { // int256
+	if liquidity.IsNeg() {
+		u := SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), false)
+		i := i256.FromUint256(u)
+		return i256.Zero().Neg(i).ToString()
+	}
+
+	u := SqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
+	return i256.FromUint256(u).ToString()
+}

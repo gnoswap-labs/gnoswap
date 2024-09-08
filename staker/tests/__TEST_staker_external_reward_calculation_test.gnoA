@@ -1,0 +1,212 @@
+package staker
+
+import (
+	"std"
+	"testing"
+	"time"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/r/gnoswap/v2/common"
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
+
+	"gno.land/r/gnoswap/v2/gnft"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/foo"
+	"gno.land/r/onbloc/obl"
+	"gno.land/r/onbloc/qux"
+
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/onbloc/obl"
+)
+
+func TestCreateExternalIncentive(t *testing.T) {
+
+	//================ Create Pool =================
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+	pl.CreatePool(barPath, bazPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+	pl.CreatePool(fooPath, quxPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+	pl.CreatePool(bazPath, oblPath, 500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	std.TestSkipHeights(1)
+
+	//================ Create External Incentive =================
+	barbazPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
+	fooquxPath := "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:500"
+	bazoblPath := "gno.land/r/onbloc/baz:gno.land/r/onbloc/obl:500"
+	startTimeStamp := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
+
+	externalAmount := "1000000000"
+	externalAmountU64 := uint64(1000000000)
+	bar.Approve(a2u(consts.STAKER_ADDR), externalAmountU64)
+	CreateExternalIncentive(
+		barbazPath,
+		barPath,
+		externalAmount,
+		startTimeStamp,
+		startTimeStamp+TIMESTAMP_90DAYS,
+	)
+
+	baz.Approve(a2u(consts.STAKER_ADDR), externalAmountU64)
+	CreateExternalIncentive(
+		bazoblPath,
+		bazPath,
+		externalAmount,
+		startTimeStamp,
+		startTimeStamp+TIMESTAMP_90DAYS,
+	)
+
+	externalAmount_1 := "999900000"
+	externalAmountU64_1 := uint64(999900000)
+	foo.Approve(a2u(consts.STAKER_ADDR), externalAmountU64)
+	CreateExternalIncentive(
+		fooquxPath,
+		fooPath,
+		externalAmount_1,
+		startTimeStamp,
+		startTimeStamp+TIMESTAMP_90DAYS,
+	)
+
+	externalAmount_2 := "100000"
+	externalAmountU64_2 := uint64(100000)
+	foo.Approve(a2u(consts.STAKER_ADDR), externalAmountU64)
+	CreateExternalIncentive(
+		fooquxPath,
+		fooPath,
+		externalAmount_2,
+		startTimeStamp,
+		startTimeStamp+TIMESTAMP_90DAYS,
+	)
+
+	//================ Mint Position =================
+	user1Addr := std.DerivePkgAddr("user1.gno")
+	user1Realm := std.NewUserRealm(user1Addr)
+	user2Addr := std.DerivePkgAddr("user2.gno")
+	user2Realm := std.NewUserRealm(user2Addr)
+	user3Addr := std.DerivePkgAddr("user3.gno")
+	user3Realm := std.NewUserRealm(user3Addr)
+	tickSpacing := int32(10)
+	minTick := (consts.MIN_TICK / tickSpacing) * tickSpacing
+	maxTick := (consts.MAX_TICK / tickSpacing) * tickSpacing
+
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	lpTokenId1, _, _, _ := pn.Mint(
+		barPath,     // token0
+		bazPath,     // token1
+		uint32(500), // fee
+		minTick,     // tickLower
+		maxTick,     // tickUpper
+		"1000000",   // amount0Desired
+		"1000000",   // amount1Desired
+		"1",         // amount0Min
+		"1",         // amount1Min
+		max_timeout, // deadline
+		user1Addr.String(),
+	)
+
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	lpTokenId2, _, _, _ := pn.Mint(
+		fooPath,     // token0
+		quxPath,     // token1
+		uint32(500), // fee
+		minTick,     // tickLower
+		maxTick,     // tickUpper
+		"1000000",   // amount0Desired
+		"1000000",   // amount1Desired
+		"1",         // amount0Min
+		"1",         // amount1Min
+		max_timeout, // deadline
+		user2Addr.String(),
+	)
+
+	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	obl.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	lpTokenId3, _, _, _ := pn.Mint(
+		bazPath,     // token0
+		oblPath,     // token1
+		uint32(500), // fee
+		minTick,     // tickLower
+		maxTick,     // tickUpper
+		"1000000",   // amount0Desired
+		"1000000",   // amount1Desired
+		"1",         // amount0Min
+		"1",         // amount1Min
+		max_timeout, // deadline
+		user3Addr.String(),
+	)
+	std.TestSkipHeights(1)
+
+	//================ Stake GNFT Token =================
+	std.TestSetRealm(user1Realm)
+	std.TestSetOrigCaller(user1Addr)
+	gnft.Approve(a2u(consts.STAKER_ADDR), tid(lpTokenId1))
+	StakeToken(lpTokenId1)
+
+	std.TestSetRealm(user2Realm)
+	std.TestSetOrigCaller(user2Addr)
+	gnft.Approve(a2u(consts.STAKER_ADDR), tid(lpTokenId2))
+	StakeToken(lpTokenId2)
+
+	std.TestSetRealm(user3Realm)
+	std.TestSetOrigCaller(user3Addr)
+	gnft.Approve(a2u(consts.STAKER_ADDR), tid(lpTokenId3))
+	StakeToken(lpTokenId3)
+	std.TestSkipHeights(1)
+
+	//================ Collect Fee =================
+	std.TestSkipHeights((86400 / 5) * 30) // 1 height == 5 seconds
+
+	user1BarBalanceBefore := bar.BalanceOf(a2u(user1Addr))
+	user2FooBalanceBefore := foo.BalanceOf(a2u(user2Addr))
+	user3BazBalanceBefore := baz.BalanceOf(a2u(user3Addr))
+
+	std.TestSetOrigCaller(user1Addr)
+	std.TestSetRealm(user1Realm)
+	CollectReward(lpTokenId1)
+
+	std.TestSetOrigCaller(user2Addr)
+	std.TestSetRealm(user2Realm)
+	CollectReward(lpTokenId2)
+
+	std.TestSetOrigCaller(user3Addr)
+	std.TestSetRealm(user3Realm)
+	CollectReward(lpTokenId3)
+
+	user1BarBalanceAfter := bar.BalanceOf(a2u(user1Addr))
+	user2FooBalanceAfter := foo.BalanceOf(a2u(user2Addr))
+	user3BazBalanceAfter := baz.BalanceOf(a2u(user3Addr))
+	shouldEQ(
+		t,
+		user1BarBalanceAfter-user1BarBalanceBefore,
+		user2FooBalanceAfter-user2FooBalanceBefore,
+	)
+	shouldEQ(
+		t,
+		user2FooBalanceAfter-user2FooBalanceBefore,
+		user3BazBalanceAfter-user3BazBalanceBefore,
+	)
+	shouldEQ(
+		t,
+		user1BarBalanceAfter-user1BarBalanceBefore,
+		user3BazBalanceAfter-user3BazBalanceBefore,
+	)
+
+	println("user1BarBalanceBefore: ", user1BarBalanceBefore)
+	println("user2FooBalanceAfter: ", user2FooBalanceBefore)
+	println("user3BazBalanceBefore: ", user3BazBalanceBefore)
+
+	println("user1BarBalanceAfter: ", user1BarBalanceAfter)
+	println("user2FooBalanceAfter: ", user2FooBalanceAfter)
+	println("user3BazBalanceAfter: ", user3BazBalanceAfter)
+}
