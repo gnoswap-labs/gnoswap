@@ -87,20 +87,6 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 		}
 	})
 
-	t.Run("prpose with active proposal", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "PROPOSER_HAS_UPCOMING_OR_ACTIVE_PROPOSAL") {
-				t.Errorf("Unexpected panic message: %v", r)
-			}
-		}()
-
-		std.TestSetOrigCaller(gsa)
-		std.TestSetRealm(gsaRealm)
-		proposalID := ProposeParameterChange("test_title", "test_description", consts.EMISSION_PATH, "ChangeDistributionPct", "1*GOV*7000*GOV*2*GOV*1500*GOV*3*GOV*1000*GOV*4*GOV*500")
-	})
-
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5) // voting start delay

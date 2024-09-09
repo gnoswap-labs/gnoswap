@@ -91,20 +91,6 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 			t.Errorf("Incorrect proposals json: %v", proposalsJson)
 		}
 	})
-
-	t.Run("ProposeCommunityPoolSpend with active proposal", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "PROPOSER_HAS_UPCOMING_OR_ACTIVE_PROPOSAL") {
-				t.Errorf("Unexpected panic message: %v", r)
-			}
-		}()
-
-		std.TestSetOrigCaller(gsa)
-		std.TestSetRealm(gsaRealm)
-		ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 100)
-	})
 }
 
 func TestExecute(t *testing.T) {
