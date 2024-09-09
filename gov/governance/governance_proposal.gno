@@ -46,7 +46,6 @@ func ProposeText(
 	updateProposalsState()
 
 	proposer := std.GetOrigCaller()
-	checkExisitngProposal(proposer)
 
 	enough := checkEnoughXGnsToPropose(proposer)
 	if !enough {
@@ -104,7 +103,6 @@ func ProposeCommunityPoolSpend(
 	updateProposalsState()
 
 	proposer := std.GetOrigCaller()
-	checkExisitngProposal(proposer)
 
 	enough := checkEnoughXGnsToPropose(proposer)
 	if !enough {
@@ -170,7 +168,6 @@ func ProposeParameterChange(
 	updateProposalsState()
 
 	proposer := std.GetOrigCaller()
-	checkExisitngProposal(proposer)
 
 	enough := checkEnoughXGnsToPropose(proposer)
 	if !enough {
@@ -443,16 +440,6 @@ func Execute(proposalId uint64) {
 		"p_proposalId", ufmt.Sprintf("%d", proposalId),
 		"executor", std.GetOrigCaller().String(),
 	)
-}
-
-func checkExisitngProposal(proposer std.Address) {
-	latestProposalId, exist := latestProposalByProposer[proposer.String()]
-	if exist {
-		latestProposal := proposals[latestProposalId]
-		if latestProposal.ExecutionState.Upcoming || latestProposal.ExecutionState.Active {
-			panic("PROPOSER_HAS_UPCOMING_OR_ACTIVE_PROPOSAL")
-		}
-	}
 }
 
 func updateProposalsState() {

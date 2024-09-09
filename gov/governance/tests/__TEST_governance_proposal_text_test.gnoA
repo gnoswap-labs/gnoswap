@@ -89,20 +89,6 @@ func TestProposeText(t *testing.T) {
 			t.Errorf("Expected empty votes, got %v", votesJson)
 		}
 	})
-
-	t.Run("ProposeText with active proposal", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "PROPOSER_HAS_UPCOMING_OR_ACTIVE_PROPOSAL") {
-				t.Errorf("Unexpected panic message: %v", r)
-			}
-		}()
-
-		std.TestSetOrigCaller(gsa)
-		std.TestSetRealm(gsaRealm)
-		ProposeText("test_title", "test_description")
-	})
 }
 
 func TestVote(t *testing.T) {
@@ -384,6 +370,23 @@ func TestNoBehaviourProposal(t *testing.T) {
 		proposalID = ProposeText("test_title", "test_description")
 		if proposalID != 5 {
 			t.Errorf("Expected proposal ID to be 5, got %d", proposalID)
+		}
+	})
+}
+
+func TestMultipleProposalFromSameAddress(t *testing.T) {
+	t.Run("Successful two text proposal", func(t *testing.T) {
+		std.TestSetOrigCaller(gsa)
+		std.TestSetRealm(gsaRealm)
+
+		proposalID := ProposeText("test_title", "test_description")
+		if proposalID != 6 {
+			t.Errorf("Expected proposal ID to be 6, got %d", proposalID)
+		}
+
+		proposalID = ProposeText("test_title", "test_description")
+		if proposalID != 7 {
+			t.Errorf("Expected proposal ID to be 7, got %d", proposalID)
 		}
 	})
 }
