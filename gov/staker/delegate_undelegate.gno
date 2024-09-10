@@ -34,7 +34,7 @@ func delegate(to std.Address, amount uint64) {
 		height:    uint64(std.GetHeight()),
 		add:       true, // if true, delegation
 	}
-	delegationHistory[to] = append(delegationHistory[to], delegation)
+	delegationHistory[caller] = append(delegationHistory[caller], delegation)
 
 	modified := ModifiedDelegationHistory{
 		from:               caller.String(),
