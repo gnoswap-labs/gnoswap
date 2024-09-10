@@ -24,6 +24,16 @@ import (
 	"gno.land/r/onbloc/obl"
 )
 
+/*
+This test demonstrates a issue(Gnoswap-15) in CreateExternalIncentive function. The key steps are:
+
+· Create pools and external incentives, including one pool with two separate incentive additions
+· Mint liquidity positions (NFTs) for three different users
+· Stake the NFTs
+· Skip 30 days of blockchain time
+· Collect rewards for all three users
+· Compare the rewards collected by each user
+*/
 func TestCreateExternalIncentive(t *testing.T) {
 
 	//================ Create Pool =================
