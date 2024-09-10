@@ -54,7 +54,12 @@ func GetModifiedDelegationHistoryByAddress(addr string) string {
 
 	historyArr := json.ArrayNode("history", nil)
 	for _, record := range history {
+		if record.to != addr {
+			continue
+		}
+
 		recordObj := json.ObjectNode("", nil)
+		recordObj.AppendObject("from", json.StringNode("from", record.from))
 		recordObj.AppendObject("to", json.StringNode("to", record.to))
 		recordObj.AppendObject("delegatedHeight", json.StringNode("delegatedHeight", ufmt.Sprintf("%d", record.delegatedHeight)))
 		recordObj.AppendObject("delegatedTimestamp", json.StringNode("delegatedTimestamp", ufmt.Sprintf("%d", record.delegatedTimestamp)))

@@ -34,15 +34,16 @@ func delegate(to std.Address, amount uint64) {
 		height:    uint64(std.GetHeight()),
 		add:       true, // if true, delegation
 	}
-	delegationHistory[caller] = append(delegationHistory[caller], delegation)
+	delegationHistory[to] = append(delegationHistory[to], delegation)
 
 	modified := ModifiedDelegationHistory{
+		from:               caller.String(),
 		to:                 to.String(),
 		delegatedHeight:    uint64(std.GetHeight()),
 		delegatedTimestamp: uint64(time.Now().Unix()),
 		delegatedAmount:    amount,
 	}
-	delegationModifiedHistory[caller] = append(delegationModifiedHistory[caller], modified)
+	delegationModifiedHistory[to] = append(delegationModifiedHistory[to], modified)
 }
 
 func undelegate(to std.Address, amount uint64) {
@@ -78,14 +79,13 @@ func undelegate(to std.Address, amount uint64) {
 	delegationHistory[caller] = append(delegationHistory[caller], delegation)
 
 	// update modified history
-	modified, exist := delegationModifiedHistory[caller]
+	modified, exist := delegationModifiedHistory[to]
 	if !exist {
 		panic(ufmt.Sprintf("caller %s has no modified delegation history", caller.String()))
 	}
 
-	// for i := len(modified) - 1; i >= 0; i-- {
 	for i := 0; i < len(modified); i++ {
-		if modified[i].to == to.String() {
+		if modified[i].from == caller.String() {
 			leftAmount := modified[i].delegatedAmount - modified[i].undelegatedAmount
 			if leftAmount > 0 {
 				if leftAmount < amount {
