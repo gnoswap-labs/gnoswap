@@ -57,6 +57,15 @@ func AfterEachTest(t *testing.T) {
 	delete(pools, "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000")
 }
 
+/*
+This test demonstrates a issue(Gnoswap-19) fee collection mechanism. The key steps are:
+
+· Create a pool and add liquidity from two different users
+· Perform swaps to generate fees in the pool
+· Burn 0 liquidity to update fees
+· Collect fees for both users
+· Compare the collected fees between the two users
+*/
 func TestCollectFeeWithTwoUser(t *testing.T) {
 	BeforeEachTest(t)
 	t.Run("mint and swap fee should be distributed pro rata user's liquidity", func(t *testing.T) {
