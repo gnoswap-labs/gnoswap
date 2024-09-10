@@ -80,6 +80,12 @@ func Redelegate(from, to std.Address, amount uint64) {
 		panic(ufmt.Sprintf("minimum amount to re-delegate is %d (requested:%d)", minimumAmount, amount))
 	}
 
+	caller := std.GetOrigCaller()
+
+	if xgns.BalanceOf(a2u(caller)) < amount {
+		panic("not enough xGNS staked")
+	}
+
 	undelegate(from, amount)
 	delegate(to, amount)
 

@@ -22,6 +22,7 @@ type DelegationHistory struct {
 var delegationHistory = make(map[std.Address][]DelegationHistory)
 
 type ModifiedDelegationHistory struct {
+	from                 string
 	to                   string
 	delegatedHeight      uint64
 	delegatedTimestamp   uint64
