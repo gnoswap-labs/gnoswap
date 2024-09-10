@@ -206,6 +206,15 @@ func TestCreateWUGNOTWUGNOTPool(t *testing.T) {
 	})
 }
 
+/*
+This test demonstrates a issue(Gnoswap-13) in position minting mechanism. The key steps are:
+
+· Set up a pool with specific tokens and fee
+· Calculate tick values that are outside the MIN_TICK and MAX_TICK range
+· Attempt to mint a position using these out-of-range ticks
+· Check if the minting operation panics as expected
+· Verify if the position was actually created despite being out of range
+*/
 func TestCheckPositionAboveAndBelowLimitTick(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(gsaRealm)
