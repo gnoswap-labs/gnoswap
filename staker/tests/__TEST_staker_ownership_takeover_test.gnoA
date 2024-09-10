@@ -51,6 +51,14 @@ func createPool(t *testing.T) {
 	std.TestSkipHeights(1)
 }
 
+/*
+This test demonstrates a issue(Gnoswap-05) in StakeToken function. The key steps are:
+
+· Create a pool and mint a liquidity position 
+· Transfer the NFT to the Staker contract and call StakeToken ((with StakeToken function)
+· Immediately transfer the NFT back to the original owner
+· Verify that the NFT ownership is still with the original user
+*/
 func TestStakeAndGetBack(t *testing.T) {
 	//================ Create Pool =================
 	std.TestSetRealm(gsaRealm)
@@ -110,6 +118,14 @@ func TestStakeAndGetBack(t *testing.T) {
 	UnstakeToken(lpTokenId)
 }
 
+/*
+This test demonstrates a issue(Gnoswap-05) in MintAndStake. function The key steps are:
+
+· Create a pool and mint a liquidity position 
+· Transfer the NFT to the Staker contract and call StakeToken (with MintAndStakeToken function)
+· Immediately transfer the NFT back to the original owner
+· Verify that the NFT ownership is still with the original user
+*/
 func TestMintAndStakeAndGetBack(t *testing.T) {
 	//================ Create Pool =================
 	std.TestSetRealm(gsaRealm)
