@@ -7,7 +7,14 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
+/*
+This test demonstrates a issue(Gnoswap-17) in int256 implementation. The key steps are:
 
+· Perform various arithmetic operations that result in zero
+· Compare the results of these operations with regular zero
+· Perform bitwise operations on the resulting zero values
+· Compare the results of these operations with expected outcomes
+*/
 func TestInt256MinusZero(t *testing.T) {
 	minusThree := i256.MustFromDecimal("-3")
 	three := i256.MustFromDecimal("3")
