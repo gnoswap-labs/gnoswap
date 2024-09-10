@@ -63,3 +63,37 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 	shouldEQ(t, token0After, token0Before-3)
 	shouldEQ(t, token1After, token1Before+1)
 }
+
+/*
+This test demonstrates a issue(Gnoswap-16) in SwapRoute function. The key steps are:
+
+· Set up the test environment with necessary approvals
+· Set the original send amount to 12345 ugnot
+· Attempt to call SwapRoute with:
+    · GNOT as input token
+    · qux as output token
+    · An amountSpecified of "3" (which doesn't match the sent amount)
+· Check if the function panics as expected
+*/
+func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	wugnot.Approve(a2u(consts.ROUTER_ADDR), 1000000)
+	qux.Approve(a2u(consts.ROUTER_ADDR), 1000000)
+
+	std.TestSetOrigSend(std.Coins{{"ugnot", 12345}}, nil)
+
+	shouldPanic(t,
+		func() {
+			SwapRoute(
+				consts.GNOT, // inputToken
+				quxPath,     // outputToken
+				"3",         // amountSpecified
+				"EXACT_IN",  // swapType
+				"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
+				"100", // quoteArr
+				"1",   // tokenAmountLimit
+			)
+		},
+	)
+}
