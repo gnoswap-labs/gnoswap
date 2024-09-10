@@ -184,6 +184,14 @@ func TestSetPoolCreationFee(t *testing.T) {
 	shouldEQ(t, GetPoolCreationFee(), uint64(200_000_000))
 }
 
+/*
+This test demonstrates a issue(Gnoswap-7) in CreatePool function. The key steps are:
+
+· Set up the test environment with the necessary permissions
+· Call CreatePool with "gnot" as token0Path and "gno.land/r/demo/wugnot" as token1Path
+· Verify that the pool was created successfully
+· Check if a pool path exists for "wugnot:wugnot:500"
+*/
 func TestCreateWUGNOTWUGNOTPool(t *testing.T) {
 	t.Run("TestCreateWUGNOTWUGNOTPool", func(t *testing.T) {
 		std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
