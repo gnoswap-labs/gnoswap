@@ -35,6 +35,17 @@ func TestPositionMint(t *testing.T) {
 	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, gsa.String())
 }
 
+/*
+This test demonstrates a issue(Gnoswap-16) in SwapRoute function. The key steps are:
+
+· Set up the test environment with necessary approvals
+· Set the original send amount to 12345 ugnot
+· Attempt to call SwapRoute with:
+    · GNOT as input token
+    · qux as output token
+    · An amountSpecified of "3" (which doesn't match the sent amount)
+· Check if the function panics as expected
+*/
 func TestSwapRouteBarBazExactOut(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
