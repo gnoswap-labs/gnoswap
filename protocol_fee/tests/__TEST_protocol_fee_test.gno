@@ -40,20 +40,6 @@ func TestDistributeProtocolFee(t *testing.T) {
 	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
 }
 
-func TestDistributeProtocolFeeNoPermission(t *testing.T) {
-	dummy := testutils.TestAddress("dummy")
-	dummyRealm := std.NewUserRealm(dummy)
-	std.TestSetRealm(dummyRealm)
-
-	shouldPanicWithMsg(
-		t,
-		func() {
-			DistributeProtocolFee()
-		},
-		"only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can distribute protocol fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
-	)
-}
-
 func TestSetDevOpsPctNoPermission(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
 	dummyRealm := std.NewUserRealm(dummy)

@@ -44,6 +44,9 @@ func calculateReward() {
 		return
 	}
 
+	// transfer protocol_fee to gov_staker
+	pf.DistributeProtocolFee()
+
 	// calculate user's xGNS ratio
 	xGnsTotalSupply := xgns.TotalSupply()
 	xGnsX96 := new(u256.Uint).Mul(u256.NewUint(xGnsTotalSupply), q96)

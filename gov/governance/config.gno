@@ -37,7 +37,7 @@ func init() {
 		// Quorum:                        uint64(50),            // 50% of total xGNS supply
 		// ProposalCreationThreshold:     uint64(1_000_000_000), // 1_000_000_000
 		// ExecutionDelay:                uint64(60),            // 1m
-		// ExecutionWindow:               uint64(300),           // 5m
+		// ExecutionWindow:               uint64(3600),          // 1h
 	}
 
 	// https://docs.gnoswap.io/core-concepts/governance
@@ -99,7 +99,6 @@ func Reconfigure(
 		"Reconfigured",
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
-		"p_version", ufmt.Sprintf("%d", newVersion),
 		"p_voting_start_delay", ufmt.Sprintf("%d", config.VotingStartDelay),
 		"p_voting_period", ufmt.Sprintf("%d", config.VotingPeriod),
 		"p_voting_weight_smoothing_duration", ufmt.Sprintf("%d", config.VotingWeightSmoothingDuration),
@@ -107,6 +106,7 @@ func Reconfigure(
 		"p_proposal_creation_threshold", ufmt.Sprintf("%d", config.ProposalCreationThreshold),
 		"p_execution_delay", ufmt.Sprintf("%d", config.ExecutionDelay),
 		"p_execution_window", ufmt.Sprintf("%d", config.ExecutionWindow),
+		"newVersion", ufmt.Sprintf("%d", newVersion),
 	)
 
 	return newVersion
@@ -128,6 +128,16 @@ func GetConfigVersion(version uint64) Config {
 	}
 
 	return configValue
+}
+
+// GetLatestConfig() returns the latest configuration.
+func GetLatestConfig() Config {
+	return config
+}
+
+// GetLatestConfigVersion() returns the latest configuration version.
+func GetLatestConfigVersion() uint64 {
+	return uint64(len(configVersions))
 }
 
 // GetProposalCreationThreshold() returns the current proposal creation threshold.

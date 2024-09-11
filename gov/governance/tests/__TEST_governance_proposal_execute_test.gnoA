@@ -325,63 +325,6 @@ func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 	})
 }
 
-func TestProposeParameterChange_ProtocolFee_DistributeProtocolFee(t *testing.T) {
-	t.Run("Successful prpose", func(t *testing.T) {
-		std.TestSetOrigCaller(gsa)
-		std.TestSetRealm(gsaRealm)
-
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			consts.PROTOCOL_FEE_PATH,
-			"DistributeProtocolFee",
-			"",
-		)
-	})
-
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
-
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		// send some tokens to protocol fee address
-		std.TestSetOrigCaller(gsa)
-		std.TestSetRealm(gsaRealm)
-		foo.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
-		bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
-
-		// check balances before execution
-		shouldEQ(t, foo.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
-		shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
-
-		shouldEQ(t, foo.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-		shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-		shouldEQ(t, foo.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
-		shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
-
-		std.TestSkipHeights(6)
-		Execute(proposalId)
-		// 30% to dev ops, 70% to gov staker
-
-		shouldEQ(t, foo.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-		shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-
-		shouldEQ(t, foo.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-		shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-		shouldEQ(t, foo.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
-		shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
-	})
-}
-
 func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 	t.Run("Successful prpose", func(t *testing.T) {
 		std.TestSetOrigCaller(gsa)

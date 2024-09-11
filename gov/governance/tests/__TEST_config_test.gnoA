@@ -63,3 +63,13 @@ func TestReconfigure(t *testing.T) {
 		Reconfigure(handleGovernanceReconfigure(params))
 	})
 }
+
+func TestGetLatestConfigVersion(t *testing.T) {
+	latestVersion := GetLatestConfigVersion()
+	shouldEQ(t, latestVersion, uint64(2))
+}
+
+func TestGetLatestConfig(t *testing.T) {
+	latestConfig := GetLatestConfig()
+	shouldEQ(t, latestConfig, config)
+}

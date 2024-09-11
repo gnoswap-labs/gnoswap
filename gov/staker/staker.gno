@@ -65,8 +65,7 @@ func Delegate(to std.Address, amount uint64) {
 
 // xGNS from -> xGNS to
 func Redelegate(from, to std.Address, amount uint64) {
-	en.MintAndDistributeGns()
-	calculateReward()
+	CollectReward() // en.MintAndDistributeGns() + calculateReward()
 
 	if !from.IsValid() {
 		panic(ufmt.Sprintf("invalid from address %s to Redelegate", to.String()))
@@ -100,8 +99,7 @@ func Redelegate(from, to std.Address, amount uint64) {
 }
 
 func Undelegate(from std.Address, amount uint64) {
-	en.MintAndDistributeGns()
-	calculateReward()
+	CollectReward()
 
 	if !from.IsValid() {
 		panic(ufmt.Sprintf("invalid address %s to Undelegate", from.String()))
@@ -189,6 +187,7 @@ func CollectReward() {
 
 		// transfer GNS to caller
 		gns.Transfer(a2u(caller), emissionReward)
+		println("GOV_STAKER_GNS_EMISSION_USER", caller.String(), "AMOUNT", emissionReward)
 		userEmissionReward[caller.String()] = 0
 
 		std.Emit(
@@ -203,6 +202,7 @@ func CollectReward() {
 	// PROTOCOL FEE
 	protocolFee, exist := userProtocolFeeReward[caller.String()]
 	if !exist || len(protocolFee) == 0 {
+		println("no protocol fee reward for user", caller.String())
 		return
 	}
 
@@ -214,6 +214,7 @@ func CollectReward() {
 		// transfer token to caller
 		// token.Transfer(a2u(caller), amount)
 		transferByRegisterCall(tokenPath, caller, amount)
+		println("GOV_STAKER_PROTOCOL_FEE_USER", caller.String(), "TOKEN", tokenPath, "AMOUNT", amount)
 		userProtocolFeeReward[caller.String()][tokenPath] = 0
 
 		std.Emit(

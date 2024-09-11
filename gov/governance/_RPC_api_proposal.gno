@@ -60,6 +60,7 @@ func getProposalById(id uint64) *json.Node {
 
 	proposalObj := json.ObjectNode("", nil)
 	proposalObj.AppendObject("id", json.StringNode("id", ufmt.Sprintf("%d", id)))
+	proposalObj.AppendObject("configVersion", json.StringNode("configVersion", ufmt.Sprintf("%d", proposal.ConfigVersion)))
 	proposalObj.AppendObject("proposer", json.StringNode("proposer", proposal.Proposer.String()))
 	proposalObj.AppendObject("status", json.StringNode("status", b64Encode(getProposalStatus(id))))
 	proposalObj.AppendObject("type", json.StringNode("type", proposal.ProposalType))
