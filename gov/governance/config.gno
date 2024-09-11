@@ -99,7 +99,6 @@ func Reconfigure(
 		"Reconfigured",
 		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
-		"p_version", ufmt.Sprintf("%d", newVersion),
 		"p_voting_start_delay", ufmt.Sprintf("%d", config.VotingStartDelay),
 		"p_voting_period", ufmt.Sprintf("%d", config.VotingPeriod),
 		"p_voting_weight_smoothing_duration", ufmt.Sprintf("%d", config.VotingWeightSmoothingDuration),
@@ -129,6 +128,16 @@ func GetConfigVersion(version uint64) Config {
 	}
 
 	return configValue
+}
+
+// GetLatestConfig() returns the latest configuration.
+func GetLatestConfig() Config {
+	return config
+}
+
+// GetLatestConfigVersion() returns the latest configuration version.
+func GetLatestConfigVersion() uint64 {
+	return uint64(len(configVersions))
 }
 
 // GetProposalCreationThreshold() returns the current proposal creation threshold.
