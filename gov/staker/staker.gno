@@ -65,9 +65,7 @@ func Delegate(to std.Address, amount uint64) {
 
 // xGNS from -> xGNS to
 func Redelegate(from, to std.Address, amount uint64) {
-	en.MintAndDistributeGns()
-	calculateReward()
-	CollectReward()
+	CollectReward() // en.MintAndDistributeGns() + calculateReward()
 
 	if !from.IsValid() {
 		panic(ufmt.Sprintf("invalid from address %s to Redelegate", to.String()))
@@ -101,8 +99,6 @@ func Redelegate(from, to std.Address, amount uint64) {
 }
 
 func Undelegate(from std.Address, amount uint64) {
-	en.MintAndDistributeGns()
-	calculateReward()
 	CollectReward()
 
 	if !from.IsValid() {
@@ -145,7 +141,6 @@ func Undelegate(from std.Address, amount uint64) {
 func CollectUndelegated() uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
-	CollectReward()
 
 	caller := std.GetOrigCaller()
 
