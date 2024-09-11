@@ -20,18 +20,6 @@ var (
 func DistributeProtocolFee() {
 	common.IsHalted()
 
-	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(
-			ufmt.Sprintf(
-				"only admin(%s) or governance(%s) can distribute protocol fee, called from %s",
-				consts.GNOSWAP_ADMIN,
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		)
-	}
-
 	tokens := GetRegisteredTokens()
 	for _, token := range tokens {
 		// default distribute protocol fee percent

@@ -60,8 +60,6 @@ func executeParameterChange(paramChange ParameterChangeInfo) {
 
 	case consts.PROTOCOL_FEE_PATH:
 		switch funcName {
-		case "DistributeProtocolFee":
-			pf.DistributeProtocolFee()
 		case "SetDevOpsPct":
 			pct := handleSingleUint64(params)
 			pf.SetDevOpsPct(pct)
