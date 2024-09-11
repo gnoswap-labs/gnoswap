@@ -107,6 +107,7 @@ func Reconfigure(
 		"p_proposal_creation_threshold", ufmt.Sprintf("%d", config.ProposalCreationThreshold),
 		"p_execution_delay", ufmt.Sprintf("%d", config.ExecutionDelay),
 		"p_execution_window", ufmt.Sprintf("%d", config.ExecutionWindow),
+		"newVersion", ufmt.Sprintf("%d", newVersion),
 	)
 
 	return newVersion
