@@ -37,7 +37,7 @@ func init() {
 		// Quorum:                        uint64(50),            // 50% of total xGNS supply
 		// ProposalCreationThreshold:     uint64(1_000_000_000), // 1_000_000_000
 		// ExecutionDelay:                uint64(60),            // 1m
-		// ExecutionWindow:               uint64(300),           // 5m
+		// ExecutionWindow:               uint64(3600),          // 1h
 	}
 
 	// https://docs.gnoswap.io/core-concepts/governance
