@@ -37,6 +37,7 @@ func DistributeProtocolFee() {
 			}
 
 			accuToGovStaker[token] += toGovStaker
+			println("TO_GOV_STAKER", token, toGovStaker)
 
 			if toDevOps > 0 {
 				transferByRegisterCall(token, consts.DEV_OPS, toDevOps)
