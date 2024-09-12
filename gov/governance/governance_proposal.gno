@@ -466,7 +466,8 @@ func updateProposalsState() {
 		}
 
 		// proposal voting ended, check if passed or rejected
-		if now > (proposal.ExecutionState.CreatedAt + config.VotingStartDelay + config.VotingPeriod) {
+		if now > (proposal.ExecutionState.CreatedAt+config.VotingStartDelay+config.VotingPeriod) &&
+			(proposal.ExecutionState.Passed == false && proposal.ExecutionState.Rejected == false && proposal.ExecutionState.Canceled == false) {
 			yeaUint := proposal.Yea.Uint64()
 			nayUint := proposal.Nay.Uint64()
 			quorumUint := proposal.QuorumAmount
@@ -485,7 +486,8 @@ func updateProposalsState() {
 		// (non text) proposal passed but not executed until executing window ends
 		if proposal.ProposalType != "TEXT" && // isn't text type ≈ can be executed
 			proposal.ExecutionState.Passed && // passed
-			!proposal.ExecutionState.Executed { // not executed
+			!proposal.ExecutionState.Executed && // not executed
+			!proposal.ExecutionState.Expired { // not expired
 
 			votingEnd := proposal.ExecutionState.CreatedAt + config.VotingStartDelay + config.VotingPeriod
 			windowStart := votingEnd + config.ExecutionDelay

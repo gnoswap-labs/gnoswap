@@ -1,0 +1,955 @@
+package governance
+
+import (
+	"std"
+	"testing"
+	"time"
+
+	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v2/gns"
+	gs "gno.land/r/gnoswap/v2/gov/staker"
+)
+
+var (
+	oldHeight uint64
+	oldTime   uint64
+
+	nowHeight uint64
+	nowTime   uint64
+)
+
+func init() {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
+	gs.Delegate(gsa, uint64(1_000_000))
+	std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
+}
+
+func TestProposeText(t *testing.T) {
+	oldHeight = uint64(std.GetHeight())
+	oldTime = uint64(time.Now().Unix())
+
+	nowHeight = oldHeight
+	nowTime = oldTime
+
+	t.Run("create text proposal", func(t *testing.T) {
+		proposalId := ProposeText("test_title_1", "test_description_1")
+		updateProposalsState()
+		proposalStat := proposals[proposalId].ExecutionState
+
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != oldTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != true {
+			t.Errorf("Proposal should be upcoming")
+		}
+
+		if proposalStat.Active != false {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposalStat.Passed != false {
+			t.Errorf("Proposal should not be passed")
+		}
+
+		if proposalStat.PassedAt != uint64(0) {
+			t.Errorf("Proposal passed at time should be 0")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != false {
+			t.Errorf("Proposal should not be cancelled")
+		}
+
+		if proposalStat.CanceledAt != uint64(0) {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != false {
+			t.Errorf("Proposal should not be executed")
+		}
+
+		if proposalStat.ExecutedAt != uint64(0) {
+			t.Errorf("Proposal executed at time should be 0")
+		}
+	})
+
+	t.Run("vote YES", func(t *testing.T) {
+		std.TestSkipHeights(11)
+
+		nowHeight = uint64(std.GetHeight())
+		nowTime = uint64(time.Now().Unix())
+
+		voteKey := Vote(proposalId, true)
+		voted := votes[voteKey]
+		if voted != true {
+			t.Errorf("Vote not recorded correctly")
+		}
+
+		updateProposalsState()
+		proposalStat := proposals[proposalId].ExecutionState
+
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != oldTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != false {
+			t.Errorf("Proposal should not be upcoming")
+		}
+
+		if proposalStat.Active != true {
+			t.Errorf("Proposal should be active")
+		}
+
+		if proposalStat.Passed != false {
+			t.Errorf("Proposal should not be passed")
+		}
+
+		if proposalStat.PassedAt != uint64(0) {
+			t.Errorf("Proposal passed at time should be 0")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != false {
+			t.Errorf("Proposal should not be cancelled")
+		}
+
+		if proposalStat.CanceledAt != uint64(0) {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != false {
+			t.Errorf("Proposal should not be executed")
+		}
+
+		if proposalStat.ExecutedAt != uint64(0) {
+			t.Errorf("Proposal executed at time should be 0")
+		}
+	})
+
+	t.Run("skip time to check proposal pass/reject", func(t *testing.T) {
+		std.TestSkipHeights(31)
+
+		nowHeight = uint64(std.GetHeight())
+		nowTime = uint64(time.Now().Unix())
+
+		updateProposalsState()
+		proposalStat := proposals[proposalId].ExecutionState
+
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != oldTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != false {
+			t.Errorf("Proposal should not be upcoming")
+		}
+
+		if proposalStat.Active != false {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposalStat.Passed != true {
+			t.Errorf("Proposal should be passed")
+		}
+
+		if proposalStat.PassedAt != nowTime {
+			t.Errorf("Proposal passed at time should be now")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != false {
+			t.Errorf("Proposal should not be cancelled")
+		}
+
+		if proposalStat.CanceledAt != uint64(0) {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != false {
+			t.Errorf("Proposal should not be executed")
+		}
+
+		if proposalStat.ExecutedAt != uint64(0) {
+			t.Errorf("Proposal executed at time should be 0")
+		}
+	})
+
+	t.Run("skip long to check proposal status", func(t *testing.T) {
+		std.TestSkipHeights(500)
+
+		updateProposalsState()
+		proposalStat := proposals[proposalId].ExecutionState
+
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != oldTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != false {
+			t.Errorf("Proposal should not be upcoming")
+		}
+
+		if proposalStat.Active != false {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposalStat.Passed != true {
+			t.Errorf("Proposal should be passed")
+		}
+
+		if proposalStat.PassedAt != nowTime {
+			t.Errorf("Proposal passed at time should be now")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != false {
+			t.Errorf("Proposal should not be cancelled")
+		}
+
+		if proposalStat.CanceledAt != uint64(0) {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != false {
+			t.Errorf("Proposal should not be executed")
+		}
+
+		if proposalStat.ExecutedAt != uint64(0) {
+			t.Errorf("Proposal executed at time should be 0")
+		}
+	})
+
+	t.Run("create new text proposal and cancel", func(t *testing.T) {
+		proposalId := ProposeText("test_title_2", "test_description_2")
+		Cancel(proposalId)
+
+		updateProposalsState()
+		proposalStat := proposals[proposalId].ExecutionState
+
+		nowHeight = uint64(std.GetHeight())
+		nowTime = uint64(time.Now().Unix())
+
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != nowTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != false {
+			t.Errorf("Proposal should not be upcoming")
+		}
+
+		if proposalStat.Active != false {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposalStat.Passed != false {
+			t.Errorf("Proposal should not be passed")
+		}
+
+		if proposalStat.PassedAt != uint64(0) {
+			t.Errorf("Proposal passed at time should be 0")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != true {
+			t.Errorf("Proposal should be cancelled")
+		}
+
+		if proposalStat.CanceledAt != nowTime {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != false {
+			t.Errorf("Proposal should not be executed")
+		}
+
+		if proposalStat.ExecutedAt != uint64(0) {
+			t.Errorf("Proposal executed at time should be 0")
+		}
+	})
+}
+
+func TestParamaterChange(t *testing.T) {
+	oldHeight = uint64(std.GetHeight())
+	oldTime = uint64(time.Now().Unix())
+
+	nowHeight = oldHeight
+	nowTime = oldTime
+
+	t.Run("create param change", func(t *testing.T) {
+		proposalId := ProposeParameterChange("test_title_3", "test_description_3", "gno.land/r/gnoswap/v2/gns", "SetAvgBlockTimeInMs", "100")
+		updateProposalsState()
+		proposalStat := proposals[proposalId].ExecutionState
+
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != oldTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != true {
+			t.Errorf("Proposal should be upcoming")
+		}
+
+		if proposalStat.Active != false {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposalStat.Passed != false {
+			t.Errorf("Proposal should not be passed")
+		}
+
+		if proposalStat.PassedAt != uint64(0) {
+			t.Errorf("Proposal passed at time should be 0")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != false {
+			t.Errorf("Proposal should not be cancelled")
+		}
+
+		if proposalStat.CanceledAt != uint64(0) {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != false {
+			t.Errorf("Proposal should not be executed")
+		}
+
+		if proposalStat.ExecutedAt != uint64(0) {
+			t.Errorf("Proposal executed at time should be 0")
+		}
+	})
+
+	t.Run("vote YES", func(t *testing.T) {
+		std.TestSkipHeights(11)
+
+		nowHeight = uint64(std.GetHeight())
+		nowTime = uint64(time.Now().Unix())
+
+		voteKey := Vote(proposalId, true)
+		voted := votes[voteKey]
+		if voted != true {
+			t.Errorf("Vote not recorded correctly")
+		}
+
+		updateProposalsState()
+		proposalStat := proposals[proposalId].ExecutionState
+
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != oldTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != false {
+			t.Errorf("Proposal should not be upcoming")
+		}
+
+		if proposalStat.Active != true {
+			t.Errorf("Proposal should be active")
+		}
+
+		if proposalStat.Passed != false {
+			t.Errorf("Proposal should not be passed")
+		}
+
+		if proposalStat.PassedAt != uint64(0) {
+			t.Errorf("Proposal passed at time should be 0")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != false {
+			t.Errorf("Proposal should not be cancelled")
+		}
+
+		if proposalStat.CanceledAt != uint64(0) {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != false {
+			t.Errorf("Proposal should not be executed")
+		}
+
+		if proposalStat.ExecutedAt != uint64(0) {
+			t.Errorf("Proposal executed at time should be 0")
+		}
+	})
+
+	t.Run("skip time to check proposal pass/reject => pass", func(t *testing.T) {
+		std.TestSkipHeights(31)
+
+		nowHeight = uint64(std.GetHeight())
+		nowTime = uint64(time.Now().Unix())
+
+		updateProposalsState()
+		proposalStat := proposals[proposalId].ExecutionState
+
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != oldTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != false {
+			t.Errorf("Proposal should not be upcoming")
+		}
+
+		if proposalStat.Active != false {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposalStat.Passed != true {
+			t.Errorf("Proposal should be passed")
+		}
+
+		if proposalStat.PassedAt != nowTime {
+			t.Errorf("Proposal passed at time should be now")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != false {
+			t.Errorf("Proposal should not be cancelled")
+		}
+
+		if proposalStat.CanceledAt != uint64(0) {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != false {
+			t.Errorf("Proposal should not be executed")
+		}
+
+		if proposalStat.ExecutedAt != uint64(0) {
+			t.Errorf("Proposal executed at time should be 0")
+		}
+	})
+
+	t.Run("execute", func(t *testing.T) {
+		Execute(proposalId)
+		updateProposalsState()
+		proposalStat := proposals[proposalId].ExecutionState
+
+		nowHeight = uint64(std.GetHeight())
+		nowTime = uint64(time.Now().Unix())
+
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != oldTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != false {
+			t.Errorf("Proposal should not be upcoming")
+		}
+
+		if proposalStat.Active != false {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposalStat.Passed != true {
+			t.Errorf("Proposal should be passed")
+		}
+
+		if proposalStat.PassedAt != nowTime {
+			t.Errorf("Proposal passed at time should be now")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != false {
+			t.Errorf("Proposal should not be cancelled")
+		}
+
+		if proposalStat.CanceledAt != uint64(0) {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != true {
+			t.Errorf("Proposal should be executed")
+		}
+
+		if proposalStat.ExecutedAt != nowTime {
+			t.Errorf("Proposal executed at time should be now")
+		}
+
+		if proposalStat.Expired != false {
+			t.Errorf("Proposal should not be expired")
+		}
+
+		if proposalStat.ExpiredAt != uint64(0) {
+			t.Errorf("Proposal expired at time should be 0")
+		}
+	})
+
+	t.Run("skip long time after execute", func(t *testing.T) {
+		std.TestSkipHeights(1000)
+		updateProposalsState()
+		proposalStat := proposals[proposalId].ExecutionState
+
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != oldTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != false {
+			t.Errorf("Proposal should not be upcoming")
+		}
+
+		if proposalStat.Active != false {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposalStat.Passed != true {
+			t.Errorf("Proposal should be passed")
+		}
+
+		if proposalStat.PassedAt != nowTime {
+			t.Errorf("Proposal passed at time should be now")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != false {
+			t.Errorf("Proposal should not be cancelled")
+		}
+
+		if proposalStat.CanceledAt != uint64(0) {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != true {
+			t.Errorf("Proposal should be executed")
+		}
+
+		if proposalStat.ExecutedAt != nowTime {
+			t.Errorf("Proposal executed at time should be now")
+		}
+
+		if proposalStat.Expired != false {
+			t.Errorf("Proposal should not be expired")
+		}
+
+		if proposalStat.ExpiredAt != uint64(0) {
+			t.Errorf("Proposal expired at time should be 0")
+		}
+	})
+
+	t.Run("create new param change proposal and cancel", func(t *testing.T) {
+		std.TestSkipHeights(100)
+		proposalId := ProposeParameterChange("test_title_3", "test_description_3", "gno.land/r/gnoswap/v2/gns", "SetAvgBlockTimeInMs", "300")
+		Cancel(proposalId)
+
+		updateProposalsState()
+		proposalStat := proposals[proposalId].ExecutionState
+
+		nowHeight = uint64(std.GetHeight())
+		nowTime = uint64(time.Now().Unix())
+
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != nowTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != false {
+			t.Errorf("Proposal should not be upcoming")
+		}
+
+		if proposalStat.Active != false {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposalStat.Passed != false {
+			t.Errorf("Proposal should not be passed")
+		}
+
+		if proposalStat.PassedAt != uint64(0) {
+			t.Errorf("Proposal passed at time should be 0")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != true {
+			t.Errorf("Proposal should be cancelled")
+		}
+
+		if proposalStat.CanceledAt != nowTime {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != false {
+			t.Errorf("Proposal should not be executed")
+		}
+
+		if proposalStat.ExecutedAt != uint64(0) {
+			t.Errorf("Proposal executed at time should be 0")
+		}
+	})
+
+	t.Run("skip long time after cancel", func(t *testing.T) {
+		oldTime = nowTime
+		oldHeight = nowHeight
+
+		std.TestSkipHeights(1000)
+		nowTime = uint64(time.Now().Unix())
+		nowHeight = uint64(std.GetHeight())
+
+		updateProposalsState()
+		proposalStat := proposals[proposalId].ExecutionState
+
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != oldTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != false {
+			t.Errorf("Proposal should not be upcoming")
+		}
+
+		if proposalStat.Active != false {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposalStat.Passed != false {
+			t.Errorf("Proposal should not be passed")
+		}
+
+		if proposalStat.PassedAt != uint64(0) {
+			t.Errorf("Proposal passed at time should be 0")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != true {
+			t.Errorf("Proposal should be cancelled")
+		}
+
+		if proposalStat.CanceledAt != oldTime {
+			t.Errorf("Proposal cancelled at time should not be change")
+		}
+
+		if proposalStat.Executed != false {
+			t.Errorf("Proposal should not be executed")
+		}
+
+		if proposalStat.ExecutedAt != uint64(0) {
+			t.Errorf("Proposal executed at time should be 0")
+		}
+
+		if proposalStat.Expired != false {
+			t.Errorf("Proposal should not be expired")
+		}
+
+		if proposalStat.ExpiredAt != uint64(0) {
+			t.Errorf("Proposal expired at time should be 0")
+		}
+	})
+
+	t.Run("create new param change proposal and pass", func(t *testing.T) {
+		std.TestSkipHeights(100)
+		proposalId := ProposeParameterChange("test_title_4", "test_description_4", "gno.land/r/gnoswap/v2/gns", "SetAvgBlockTimeInMs", "300")
+		oldHeight = uint64(std.GetHeight())
+		oldTime = uint64(time.Now().Unix())
+
+		std.TestSkipHeights(11) // voting start
+		Vote(proposalId, true)
+		std.TestSkipHeights(31) // finish voting
+
+		nowHeight = uint64(std.GetHeight())
+		nowTime = uint64(time.Now().Unix())
+
+		updateProposalsState()
+		proposalStat := proposals[proposalId].ExecutionState
+
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != oldTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != false {
+			t.Errorf("Proposal should not be upcoming")
+		}
+
+		if proposalStat.Active != false {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposalStat.Passed != true {
+			t.Errorf("Proposal should be passed")
+		}
+
+		if proposalStat.PassedAt != nowTime {
+			t.Errorf("Proposal passed at time should be now")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != false {
+			t.Errorf("Proposal should not be cancelled")
+		}
+
+		if proposalStat.CanceledAt != uint64(0) {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != false {
+			t.Errorf("Proposal should not be executed")
+		}
+
+		if proposalStat.ExecutedAt != uint64(0) {
+			t.Errorf("Proposal executed at time should be 0")
+		}
+	})
+
+	t.Run("skip long time after passed => make expired", func(t *testing.T) {
+		oldOldTime := oldTime
+		oldTime = nowTime
+		oldHeight = nowHeight
+
+		std.TestSkipHeights(600)
+		updateProposalsState()
+		nowTime = uint64(time.Now().Unix())
+		nowHeight = uint64(std.GetHeight())
+
+		proposalStat := proposals[proposalId].ExecutionState
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.CreatedAt != oldOldTime {
+			t.Errorf("Proposal created at time is incorrect")
+		}
+
+		if proposalStat.Upcoming != false {
+			t.Errorf("Proposal should not be upcoming")
+		}
+
+		if proposalStat.Active != false {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposalStat.Passed != true {
+			t.Errorf("Proposal should be passed")
+		}
+
+		if proposalStat.PassedAt != oldTime {
+			t.Errorf("Proposal passed at time should not be change")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != false {
+			t.Errorf("Proposal should be cancelled")
+		}
+
+		if proposalStat.CanceledAt != uint64(0) {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != false {
+			t.Errorf("Proposal should not be executed")
+		}
+
+		if proposalStat.ExecutedAt != uint64(0) {
+			t.Errorf("Proposal executed at time should be 0")
+		}
+
+		if proposalStat.Expired != true {
+			t.Errorf("Proposal should not be expired")
+		}
+
+		if proposalStat.ExpiredAt != nowTime {
+			t.Errorf("Proposal expired at time should be ")
+		}
+	})
+
+	t.Run("skip long time after expired", func(t *testing.T) {
+		std.TestSkipHeights(100)
+		updateProposalsState()
+
+		proposalStat := proposals[proposalId].ExecutionState
+		if proposalStat.Created != true {
+			t.Errorf("Proposal should be created")
+		}
+
+		if proposalStat.Upcoming != false {
+			t.Errorf("Proposal should not be upcoming")
+		}
+
+		if proposalStat.Active != false {
+			t.Errorf("Proposal should not be active")
+		}
+
+		if proposalStat.Passed != true {
+			t.Errorf("Proposal should be passed")
+		}
+
+		if proposalStat.PassedAt != oldTime {
+			t.Errorf("Proposal passed at time should not be change")
+		}
+
+		if proposalStat.Rejected != false {
+			t.Errorf("Proposal should not be rejected")
+		}
+
+		if proposalStat.RejectedAt != uint64(0) {
+			t.Errorf("Proposal rejected at time should be 0")
+		}
+
+		if proposalStat.Canceled != false {
+			t.Errorf("Proposal should be cancelled")
+		}
+
+		if proposalStat.CanceledAt != uint64(0) {
+			t.Errorf("Proposal cancelled at time should be 0")
+		}
+
+		if proposalStat.Executed != false {
+			t.Errorf("Proposal should not be executed")
+		}
+
+		if proposalStat.ExecutedAt != uint64(0) {
+			t.Errorf("Proposal executed at time should be 0")
+		}
+
+		if proposalStat.Expired != true {
+			t.Errorf("Proposal should not be expired")
+		}
+
+		if proposalStat.ExpiredAt != nowTime {
+			t.Errorf("Proposal expired at time should be not change")
+		}
+	})
+}
