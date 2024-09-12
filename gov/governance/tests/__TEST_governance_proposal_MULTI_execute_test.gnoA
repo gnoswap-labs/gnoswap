@@ -1,0 +1,174 @@
+package governance
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v2/gns"
+
+	gs "gno.land/r/gnoswap/v2/gov/staker"
+)
+
+func init() {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
+	gs.Delegate(gsa, uint64(1_000_000))
+	std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
+}
+
+func TestProposeParameterChange_Single_SetAvgBlockTimeInMs(t *testing.T) {
+	t.Run("propose with wrong num to execute", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			}
+		}()
+
+		std.TestSetOrigCaller(gsa)
+		std.TestSetRealm(gsaRealm)
+
+		proposalID := ProposeParameterChange(
+			"test_title",
+			"test_description",
+			uint64(2),
+			"gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs",
+		)
+	})
+
+	t.Run("propose with wrong param", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			}
+		}()
+		std.TestSetOrigCaller(gsa)
+		std.TestSetRealm(gsaRealm)
+
+		proposalID := ProposeParameterChange(
+			"test_title",
+			"test_description",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs",
+		)
+	})
+
+	t.Run("propose with wrong pkg path", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			}
+		}()
+		std.TestSetOrigCaller(gsa)
+		std.TestSetRealm(gsaRealm)
+
+		proposalID := ProposeParameterChange(
+			"test_title",
+			"test_description",
+			uint64(1),
+			"wrongPkgHere*EXE*SetAvgBlockTimeInMs*EXE*1",
+		)
+	})
+
+	t.Run("propose with wrong func", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("The code did not panic")
+			}
+		}()
+		std.TestSetOrigCaller(gsa)
+		std.TestSetRealm(gsaRealm)
+
+		proposalID := ProposeParameterChange(
+			"test_title",
+			"test_description",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/gns*EXE*wrongFuncHere*EXE*1",
+		)
+	})
+
+	t.Run("propose successful", func(t *testing.T) {
+		std.TestSetOrigCaller(gsa)
+		std.TestSetRealm(gsaRealm)
+
+		proposalID := ProposeParameterChange(
+			"test_title",
+			"test_description",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs*EXE*1",
+		)
+
+		if proposalID != 1 {
+			t.Errorf("Proposal ID not set correctly should be 1, got %d", proposalID)
+		}
+
+		proposalsJson := GetProposals()
+		if proposalsJson != `{"height":"134","now":"1234567912","proposals":[{"id":"1","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTEyIiwiVXBjb21pbmciOiJ0cnVlIiwiQWN0aXZlIjoiZmFsc2UiLCJWb3RpbmdTdGFydCI6IjEyMzQ1Njc5MjIiLCJWb3RpbmdFbmQiOiIxMjM0NTY3OTUyIiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"PARAMETER_CHANGE","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":"Z25vLmxhbmQvci9nbm9zd2FwL3YyL2ducypFWEUqU2V0QXZnQmxvY2tUaW1lSW5NcypFWEUqMQ=="}]}` {
+			t.Errorf("proposalsJson wrong, got %s", proposalsJson)
+		}
+	})
+
+	t.Run("vote => skip time => pass status", func(t *testing.T) {
+		// vote to pass it
+		std.TestSkipHeights(11) // voting start delay
+		voteKey := Vote(proposalId, true)
+		voted := votes[voteKey]
+		if voted != true {
+			t.Errorf("Vote not set correctly")
+		}
+
+		std.TestSkipHeights(31) // ends voting period
+		updateProposalsState()
+	})
+
+	t.Run("execute proposal", func(t *testing.T) {
+		shouldEQ(t, gns.GetAvgBlockTimeInMs(), int64(2000))
+		Execute(proposalId)
+		shouldEQ(t, gns.GetAvgBlockTimeInMs(), int64(1))
+	})
+}
+
+func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *testing.T) {
+	t.Run("proposesuccessful", func(t *testing.T) {
+		std.TestSetOrigCaller(gsa)
+		std.TestSetRealm(gsaRealm)
+
+		proposalID := ProposeParameterChange(
+			"test_title",
+			"test_description",
+			uint64(2),
+			"gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs*EXE*123*GOV*gno.land/r/gnoswap/v2/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v2/gns,g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c,905",
+		)
+
+		if proposalID != 2 {
+			t.Errorf("Proposal ID not set correctly should be 2, got %d", proposalID)
+		}
+
+		proposalJson := GetProposalById(2)
+		if proposalJson != `{"height":"176","now":"1234567996","proposals":[{"id":"2","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTk2IiwiVXBjb21pbmciOiJ0cnVlIiwiQWN0aXZlIjoiZmFsc2UiLCJWb3RpbmdTdGFydCI6IjEyMzQ1NjgwMDYiLCJWb3RpbmdFbmQiOiIxMjM0NTY4MDM2IiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"PARAMETER_CHANGE","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":"Z25vLmxhbmQvci9nbm9zd2FwL3YyL2ducypFWEUqU2V0QXZnQmxvY2tUaW1lSW5NcypFWEUqMTIzKkdPVipnbm8ubGFuZC9yL2dub3N3YXAvdjIvY29tbXVuaXR5X3Bvb2wqRVhFKlRyYW5zZmVyVG9rZW4qRVhFKmduby5sYW5kL3IvZ25vc3dhcC92Mi9nbnMsZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yyw5MDU="}]}` {
+			t.Errorf("proposalJson wrong, got %s", proposalJson)
+		}
+	})
+
+	t.Run("vote => skip time => pass status", func(t *testing.T) {
+		// vote to pass it
+		std.TestSkipHeights(11) // voting start delay
+		voteKey := Vote(proposalId, true)
+		voted := votes[voteKey]
+		if voted != true {
+			t.Errorf("Vote not set correctly")
+		}
+
+		std.TestSkipHeights(31) // ends voting period
+		updateProposalsState()
+	})
+
+	t.Run("execute proposal", func(t *testing.T) {
+		shouldEQ(t, gns.GetAvgBlockTimeInMs(), int64(1))
+		shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(37828905))
+		Execute(proposalId)
+		shouldEQ(t, gns.GetAvgBlockTimeInMs(), int64(123))
+		shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(37828000))
+	})
+}

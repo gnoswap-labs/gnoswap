@@ -61,6 +61,11 @@ type CommunityPoolSpendInfo struct {
 	Amount    uint64
 }
 
+type ExecutionInfo struct {
+	Num  uint64
+	Msgs []string // split by *GOV*
+}
+
 type ParameterChangeInfo struct {
 	PkgPath  string
 	Function string
@@ -72,6 +77,7 @@ type ProposalInfo struct {
 	// The address of the proposer
 	Proposer std.Address
 
+	// Text, CommunityPoolSpend, ParameterChange
 	ProposalType string
 
 	// The execution state of the proposal
@@ -98,6 +104,6 @@ type ProposalInfo struct {
 	// CommunityPoolSpend
 	CommunityPoolSpend CommunityPoolSpendInfo
 
-	// ParamterChange
-	ParameterChange ParameterChangeInfo
+	// Execution (ParamterChange)
+	Execution ExecutionInfo
 }

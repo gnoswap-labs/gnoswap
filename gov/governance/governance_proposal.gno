@@ -2,6 +2,7 @@ package governance
 
 import (
 	"std"
+	"strings"
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -158,9 +159,8 @@ func ProposeCommunityPoolSpend(
 func ProposeParameterChange(
 	title string,
 	description string,
-	pkgPath string,
-	function string,
-	param string,
+	numToExecute uint64,
+	executions string,
 ) uint64 { // proposalId
 	common.IsHalted()
 
@@ -172,6 +172,37 @@ func ProposeParameterChange(
 	enough := checkEnoughXGnsToPropose(proposer)
 	if !enough {
 		panic("PROPOSER_HAS_NOT_ENOUGH_XGNS")
+	}
+
+	if numToExecute == 0 {
+		panic("numToExecute is 0")
+	}
+
+	// check if numToExecute is a valid number
+	splitGov := strings.Split(executions, "*GOV*")
+	if uint64(len(splitGov)) != numToExecute {
+		panic(ufmt.Sprintf("numToExecute(%d) does not match the number of executions(%d)", numToExecute, len(splitGov)))
+	}
+
+	// check if each execution is valid
+	for _, gov := range splitGov {
+		splitExe := strings.Split(gov, "*EXE*")
+
+		var pkgPath, funcName, params string
+		switch len(splitExe) {
+		case 3:
+			pkgPath = splitExe[0]
+			funcName = splitExe[1]
+			params = splitExe[2]
+		case 2:
+			pkgPath = splitExe[0]
+			funcName = splitExe[1]
+		default:
+			panic(ufmt.Sprintf("invalid execution(%s) to split by *EXE*", gov))
+		}
+
+		// check if msg is callable
+		callableMsg(pkgPath, funcName, params)
 	}
 
 	now := uint64(time.Now().Unix())
@@ -189,10 +220,9 @@ func ProposeParameterChange(
 		QuorumAmount:  xgns.TotalSupply() * config.Quorum / 100,
 		Title:         title,
 		Description:   description,
-		ParameterChange: ParameterChangeInfo{
-			PkgPath:  pkgPath,
-			Function: function,
-			Params:   param,
+		Execution: ExecutionInfo{
+			Num:  numToExecute,
+			Msgs: splitGov,
 		},
 	}
 
@@ -206,9 +236,8 @@ func ProposeParameterChange(
 		"m_prevRealm", prevRealm(),
 		"p_title", title,
 		"p_description", description,
-		"p_pkgPath", pkgPath,
-		"p_function", function,
-		"p_param", param,
+		"p_numToExecute", ufmt.Sprintf("%d", numToExecute),
+		"p_executions", executions,
 		"proposalType", "PARAMETER_CHANGE",
 		"proposer", proposer.String(),
 		"proposalId", ufmt.Sprintf("%d", proposalId),
@@ -424,7 +453,7 @@ func Execute(proposalId uint64) {
 
 	if proposal.ProposalType == "PARAMETER_CHANGE" {
 		// trigger parameter change
-		executeParameterChange(proposal.ParameterChange)
+		executeParameterChange(proposal.Execution.Msgs)
 	}
 
 	proposal.ExecutionState.Executed = true
