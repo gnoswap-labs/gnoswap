@@ -361,11 +361,12 @@ func handleTwoInt64(params []string) (int64, int64) {
 }
 
 func handleSingleBool(params []string) bool {
-	if params[0] == "true" {
+	switch params[0] {
+	case "true":
 		return true
-	} else if params[0] == "false" {
+	case "false":
 		return false
-	} else {
+	default:
 		panic(ufmt.Sprintf("invalid bool(%s)", params[0]))
 	}
 }
