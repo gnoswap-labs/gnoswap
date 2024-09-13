@@ -332,7 +332,7 @@ func TestParamaterChange(t *testing.T) {
 	nowTime = oldTime
 
 	t.Run("create param change", func(t *testing.T) {
-		proposalId := ProposeParameterChange("test_title_3", "test_description_3", "gno.land/r/gnoswap/v2/gns", "SetAvgBlockTimeInMs", "100")
+		proposalId := ProposeParameterChange("test_title_3", "test_description_3", uint64(1), "gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs*EXE*100")
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
 
@@ -636,7 +636,7 @@ func TestParamaterChange(t *testing.T) {
 
 	t.Run("create new param change proposal and cancel", func(t *testing.T) {
 		std.TestSkipHeights(100)
-		proposalId := ProposeParameterChange("test_title_3", "test_description_3", "gno.land/r/gnoswap/v2/gns", "SetAvgBlockTimeInMs", "300")
+		proposalId := ProposeParameterChange("test_title_3", "test_description_3", uint64(1), "gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs*EXE*300")
 		Cancel(proposalId)
 
 		updateProposalsState()
@@ -764,7 +764,7 @@ func TestParamaterChange(t *testing.T) {
 
 	t.Run("create new param change proposal and pass", func(t *testing.T) {
 		std.TestSkipHeights(100)
-		proposalId := ProposeParameterChange("test_title_4", "test_description_4", "gno.land/r/gnoswap/v2/gns", "SetAvgBlockTimeInMs", "300")
+		proposalId := ProposeParameterChange("test_title_4", "test_description_4", uint64(1), "gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs*EXE*300")
 		oldHeight = uint64(std.GetHeight())
 		oldTime = uint64(time.Now().Unix())
 

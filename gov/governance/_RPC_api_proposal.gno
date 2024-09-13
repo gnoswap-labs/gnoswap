@@ -2,6 +2,7 @@ package governance
 
 import (
 	"std"
+	"strings"
 	"time"
 
 	"gno.land/p/demo/json"
@@ -171,7 +172,7 @@ func getProposalExtraData(proposalId uint64) string {
 	case "COMMUNITY_POOL_SPEND":
 		return getCommunityPoolSpendProposalData(proposalId)
 	case "PARAMETER_CHANGE":
-		return getParameterChangeProposalData()
+		return getParameterChangeProposalData(proposalId)
 	}
 
 	return ""
@@ -193,18 +194,13 @@ func getCommunityPoolSpendProposalData(proposalId uint64) string {
 }
 
 // parameter change proposal has three extra data
-// 1. pkgPath
-// 2. function
-// 3. params
-func getParameterChangeProposalData() string {
+func getParameterChangeProposalData(proposalId uint64) string {
 	proposal := proposals[proposalId]
 
-	proposalObj := json.ObjectNode("", nil)
-	proposalObj.AppendObject("pkgPath", json.StringNode("pkgPath", proposal.ParameterChange.PkgPath))
-	proposalObj.AppendObject("function", json.StringNode("function", proposal.ParameterChange.Function))
-	proposalObj.AppendObject("params", json.StringNode("params", proposal.ParameterChange.Params))
+	msgs := proposal.Execution.Msgs
+	msgsStr := strings.Join(msgs, "*GOV*")
 
-	return marshal(proposalObj)
+	return msgsStr
 }
 
 // getProposalStatus returns the status of a proposal.

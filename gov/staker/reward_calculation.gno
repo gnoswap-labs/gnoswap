@@ -38,6 +38,7 @@ var (
 )
 
 func calculateReward() {
+	println("[START START] calculateReward")
 	height := uint64(std.GetHeight())
 	if height <= lastCalculatedHeight {
 		println("[XXX] ALREADY_CALCULATED, height:", height)

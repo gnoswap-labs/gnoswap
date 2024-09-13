@@ -21,15 +21,20 @@ func DistributeProtocolFee() {
 	common.IsHalted()
 
 	tokens := GetRegisteredTokens()
+	println("PF_REGISTERED_TOKENS", tokens)
 	for _, token := range tokens {
+		println(" > token", token)
 		// default distribute protocol fee percent
 		// govStaker 100%
 		// ...
 
 		balance := balanceOfByRegisterCall(token, consts.PROTOCOL_FEE_ADDR)
+		println(" > balance", balance)
 		if balance > 0 {
 			toDevOps := balance * devOpsPct / 10000 // default 0%
 			toGovStaker := balance - toDevOps       // default 100%
+			println(" > toDevOps", toDevOps)
+			println(" > toGovStaker", toGovStaker)
 
 			if token == consts.GNS_PATH {
 				gnsToDevOps = toDevOps

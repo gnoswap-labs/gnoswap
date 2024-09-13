@@ -64,6 +64,7 @@ const (
 	GOV_GOVERNANCE_ADDR std.Address = "g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5"
 
 	COMMON_PATH string = "gno.land/r/gnoswap/v2/common"
+	COMMON_ADDR string = "g1llrfcez4kuje8fzktrlm5m5jw9tfw7hpnu8lg5"
 )
 
 // NUMBER

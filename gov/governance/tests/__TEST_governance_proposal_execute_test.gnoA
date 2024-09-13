@@ -18,9 +18,6 @@ import (
 	rr "gno.land/r/gnoswap/v2/router"
 	sr "gno.land/r/gnoswap/v2/staker"
 
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/foo"
-
 	en "gno.land/r/gnoswap/v2/emission"
 )
 
@@ -34,7 +31,8 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 			}
 		}()
 
-		ProposeParameterChange("test_title", "test_description", "pkgPath", "function", "param")
+		ProposeParameterChange("test_title", "test_description",
+			uint64(1), "pkgPath*EXE*function*EXE*param")
 	})
 
 	t.Run("Successful prpose", func(t *testing.T) {
@@ -44,7 +42,8 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 		gs.Delegate(gsa, uint64(1_000_000))
 		std.TestSkipHeights(5) // VotingWeightSmoothingDuration
 
-		proposalID := ProposeParameterChange("test_title", "test_description", consts.EMISSION_PATH, "ChangeDistributionPct", "1*GOV*7000*GOV*2*GOV*1500*GOV*3*GOV*1000*GOV*4*GOV*500")
+		proposalID := ProposeParameterChange("test_title", "test_description",
+			uint64(1), "gno.land/r/gnoswap/v2/emission*EXE*ChangeDistributionPct*EXE*1,7000,2,1500,3,1000,4,500")
 		if proposalID != 1 {
 			t.Errorf("Expected proposal ID to be 1, got %d", proposalID)
 		}
@@ -134,11 +133,10 @@ func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.GNS_PATH,
-			"SetAvgBlockTimeInMs",
-			"5000",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs*EXE*5000",
 		)
-		std.TestSkipHeights(5) //
+		std.TestSkipHeights(5)
 	})
 
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
@@ -169,9 +167,8 @@ func TestProposeParameterChange_GOV_Reconfigure(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.GOV_GOVERNANCE_PATH,
-			"Reconfigure",
-			"123*GOV*456*GOV*789*GOV*1234*GOV*5678*GOV*12345*GOV*67890",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/gov/governance*EXE*Reconfigure*EXE*123,456,789,1234,5678,12345,67890",
 		)
 	})
 
@@ -230,9 +227,8 @@ func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.POOL_PATH,
-			"SetFeeProtocol",
-			"4*GOV*4",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/pool*EXE*SetFeeProtocol*EXE*4,4",
 		)
 	})
 
@@ -263,9 +259,8 @@ func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.POOL_PATH,
-			"SetPoolCreationFee",
-			"500",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/pool*EXE*SetPoolCreationFee*EXE*500",
 		)
 	})
 
@@ -298,9 +293,8 @@ func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.POOL_PATH,
-			"SetWithdrawalFee",
-			"500",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/pool*EXE*SetWithdrawalFee*EXE*500",
 		)
 	})
 
@@ -333,9 +327,8 @@ func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.PROTOCOL_FEE_PATH,
-			"SetDevOpsPct",
-			"900",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/protocol_fee*EXE*SetDevOpsPct*EXE*900",
 		)
 	})
 
@@ -370,9 +363,8 @@ func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.ROUTER_PATH,
-			"SetSwapFee",
-			"900",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/router*EXE*SetSwapFee*EXE*900",
 		)
 	})
 
@@ -407,9 +399,8 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.STAKER_PATH,
-			"SetDepositGnsAmount",
-			"900",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/staker*EXE*SetDepositGnsAmount*EXE*900",
 		)
 	})
 
@@ -444,9 +435,8 @@ func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.STAKER_PATH,
-			"SetPoolTier",
-			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100*GOV*1",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/staker*EXE*SetPoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100,1",
 		)
 	})
 
@@ -492,9 +482,8 @@ func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.STAKER_PATH,
-			"ChangePoolTier",
-			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100*GOV*3",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/staker*EXE*ChangePoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100,3",
 		)
 	})
 
@@ -535,9 +524,8 @@ func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.STAKER_PATH,
-			"RemovePoolTier",
-			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/staker*EXE*RemovePoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100",
 		)
 	})
 
@@ -577,9 +565,8 @@ func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.STAKER_PATH,
-			"SetUnstakingFee",
-			"900",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/staker*EXE*SetUnstakingFee*EXE*900",
 		)
 	})
 
@@ -614,9 +601,8 @@ func TestProposeParameterChange_Staker_SetWarmUp(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.STAKER_PATH,
-			"SetWarmUp",
-			"100*GOV*1000",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/staker*EXE*SetWarmUp*EXE*100,1000",
 		)
 	})
 
@@ -651,9 +637,8 @@ func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
-			consts.COMMON_PATH,
-			"SetHalt",
-			"true",
+			uint64(1),
+			"gno.land/r/gnoswap/v2/common*EXE*SetHalt*EXE*true",
 		)
 	})
 
