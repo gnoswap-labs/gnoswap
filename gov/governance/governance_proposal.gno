@@ -187,7 +187,6 @@ func ProposeParameterChange(
 	// check if each execution is valid
 	for _, gov := range splitGov {
 		splitExe := strings.Split(gov, "*EXE*")
-
 		if len(splitExe) != 3 {
 			panic(ufmt.Sprintf("invalid execution(%s) to split by *EXE*, seems like param didn't passed", gov))
 		}

@@ -183,20 +183,13 @@ func callableMsg(pkgPath, function, params string) bool {
 func executeParameterChange(msgs []string) {
 	for _, msg := range msgs {
 		splitExe := strings.Split(msg, "*EXE*")
-
-		var pkgPath, funcName, paramsStr string
-		switch len(splitExe) {
-		case 3:
-			pkgPath = splitExe[0]
-			funcName = splitExe[1]
-			paramsStr = splitExe[2]
-		case 2:
-			pkgPath = splitExe[0]
-			funcName = splitExe[1]
-		default:
-			panic(ufmt.Sprintf("invalid msg(%s) to split by *EXE*", msg))
+		if len(splitExe) != 3 {
+			panic(ufmt.Sprintf("invalid execution(%s) to split by *EXE*, seems like param didn't passed", msg))
 		}
 
+		pkgPath := splitExe[0]
+		funcName := splitExe[1]
+		paramsStr := splitExe[2]
 		params := strings.Split(paramsStr, ",")
 
 		switch pkgPath {
