@@ -188,18 +188,13 @@ func ProposeParameterChange(
 	for _, gov := range splitGov {
 		splitExe := strings.Split(gov, "*EXE*")
 
-		var pkgPath, funcName, params string
-		switch len(splitExe) {
-		case 3:
-			pkgPath = splitExe[0]
-			funcName = splitExe[1]
-			params = splitExe[2]
-		case 2:
-			pkgPath = splitExe[0]
-			funcName = splitExe[1]
-		default:
-			panic(ufmt.Sprintf("invalid execution(%s) to split by *EXE*", gov))
+		if len(splitExe) != 3 {
+			panic(ufmt.Sprintf("invalid execution(%s) to split by *EXE*, seems like param didn't passed", gov))
 		}
+
+		pkgPath := splitExe[0]
+		funcName := splitExe[1]
+		params := splitExe[2]
 
 		// check if msg is callable
 		callableMsg(pkgPath, funcName, params)

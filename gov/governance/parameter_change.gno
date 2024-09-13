@@ -22,10 +22,7 @@ import (
 func callableMsg(pkgPath, function, params string) bool {
 	println(">> callableMsg", pkgPath, function, params)
 
-	var param []string
-	if params != "" {
-		param = strings.Split(params, ",")
-	}
+	param := strings.Split(params, ",")
 
 	switch pkgPath {
 
