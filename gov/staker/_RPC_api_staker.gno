@@ -67,14 +67,16 @@ func GetClaimableRewardByAddress(addr string) string {
 	rewardObj.AppendObject("emissionReward", json.StringNode("emissionReward", ufmt.Sprintf("%d", emissionReward)))
 
 	protocolFees, exist := userProtocolFeeReward[addr]
-	println("GetCLaimableRewardByAddress_PF", protocolFees)
+	println("GetClaimableRewardByAddress_PF", protocolFees)
 	if exist {
 		pfArr := json.ArrayNode("", nil)
 		for tokenPath, amount := range protocolFees {
-			pfObj := json.ObjectNode("", nil)
-			pfObj.AppendObject("tokenPath", json.StringNode("tokenPath", tokenPath))
-			pfObj.AppendObject("amount", json.StringNode("amount", ufmt.Sprintf("%d", amount)))
-			pfArr.AppendArray(pfObj)
+			if amount > 0 {
+				pfObj := json.ObjectNode("", nil)
+				pfObj.AppendObject("tokenPath", json.StringNode("tokenPath", tokenPath))
+				pfObj.AppendObject("amount", json.StringNode("amount", ufmt.Sprintf("%d", amount)))
+				pfArr.AppendArray(pfObj)
+			}
 		}
 
 		rewardObj.AppendObject("protocolFees", pfArr)
