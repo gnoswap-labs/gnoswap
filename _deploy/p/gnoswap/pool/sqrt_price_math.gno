@@ -88,6 +88,10 @@ func sqrtPriceMathGetNextSqrtPriceFromInput(
 		panic("sqrtPX96 should not be zero")
 	}
 
+	if liquidity.IsZero() {
+		panic("liquidity should not be zero")
+	}
+
 	if zeroForOne {
 		return sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountIn, true)
 	}
