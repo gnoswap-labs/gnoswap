@@ -1,0 +1,23 @@
+package common
+
+import (
+	"std"
+
+	"gno.land/r/gnoswap/v2/consts"
+)
+
+var (
+	limitCaller bool = true
+)
+
+func GetLimitCaller() bool {
+	return limitCaller
+}
+
+func SetLimitCaller(v bool) {
+	caller := std.GetOrigCaller()
+	if caller != consts.GNOSWAP_ADMIN {
+		panic("must be called by admin")
+	}
+	limitCaller = v
+}

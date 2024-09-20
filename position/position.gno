@@ -461,8 +461,15 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	amount0 := u256.MustFromDecimal(_amount0)
 	amount1 := u256.MustFromDecimal(_amount1)
 
-	position.tokensOwed0 = new(u256.Uint).Sub(position.tokensOwed0, amount0)
-	position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
+	overflow := false
+	position.tokensOwed0, overflow = new(u256.Uint).SubOverflow(position.tokensOwed0, amount0)
+	if overflow {
+		position.tokensOwed0 = u256.Zero()
+	}
+	position.tokensOwed1, overflow = new(u256.Uint).SubOverflow(position.tokensOwed1, amount1)
+	if overflow {
+		position.tokensOwed1 = u256.Zero()
+	}
 	positions[params.tokenId] = position
 
 	if position.isClear() {
@@ -619,7 +626,7 @@ func Reposition(
 // Panics:
 //   - position doesn't exist
 //   - caller is not owner or approved
-func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, tokensOwed0, tokensOwed1, poolPath
+func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, afterFee0, afterFee1, poolPath
 	en.MintAndDistributeGns()
 
 	// verify tokenId
@@ -653,6 +660,19 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
+	tokensOwed0 := position.tokensOwed0
+	tokensOwed1 := position.tokensOwed1
+	{
+		diff := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
+		mulDiv := u256.MulDiv(diff, position.liquidity, u256.MustFromDecimal(consts.Q128))
+		tokensOwed0 = new(u256.Uint).Add(tokensOwed0, mulDiv)
+	}
+	{
+		diff := new(u256.Uint).Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
+		mulDiv := u256.MulDiv(diff, position.liquidity, u256.MustFromDecimal(consts.Q128))
+		tokensOwed1 = new(u256.Uint).Add(tokensOwed1, mulDiv)
+	}
+
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 
@@ -667,9 +687,14 @@ func CollectFee(tokenId uint64) (uint64, string, string, string) { // tokenId, t
 		std.GetOrigCaller().String(),
 		position.tickLower,
 		position.tickUpper,
-		consts.MAX_UINT64,
-		consts.MAX_UINT64,
+		tokensOwed0.ToString(),
+		tokensOwed1.ToString(),
 	)
+
+	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
+	// instead of the actual amount so we can burn the token
+	position.tokensOwed0 = new(u256.Uint).Sub(tokensOwed0, u256.MustFromDecimal(amount0))
+	position.tokensOwed1 = new(u256.Uint).Sub(tokensOwed1, u256.MustFromDecimal(amount1))
 
 	positions[tokenId] = position
 
