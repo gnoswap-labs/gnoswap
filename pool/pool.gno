@@ -33,6 +33,9 @@ func Mint(
 	common.AllowCallFromOnly(consts.POSITION_PATH)
 
 	liquidityAmount := u256.MustFromDecimal(_liquidityAmount)
+	if liquidityAmount.IsZero() {
+		panic("[POOL] pool.gno__Mint() || liquidityAmount == 0")
+	}
 
 	pool := GetPool(token0Path, token1Path, fee)
 	_, amount0, amount1 := pool.modifyPosition( // int256 x2
