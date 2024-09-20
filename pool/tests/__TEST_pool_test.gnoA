@@ -238,11 +238,21 @@ func TestCheckPositionAboveAndBelowLimitTick(t *testing.T) {
 	maxTick := (consts.MAX_TICK/tickSpacing)*tickSpacing + (tickSpacing * 2)
 
 	// ================================ Position Setup ================================================
+	// orig test logic by auditor
+	// testaddr1 := testutils.TestAddress("test1")
+	// pl.Mint(token0Path, barPath, 3000, testaddr1.String(), minTick, maxTick, "3162")
+	// if r := recover(); r == nil {
+	// 	t.Errorf("should have panic")
+	// }
+
+	// new test logic by r3v4
 	testaddr1 := testutils.TestAddress("test1")
-	pl.Mint(token0Path, barPath, 3000, testaddr1.String(), minTick, maxTick, "3162")
-	if r := recover(); r == nil {
-		t.Errorf("should have panic")
-	}
+	shouldPanic(
+		t,
+		func() {
+			pl.Mint(token0Path, barPath, 3000, testaddr1.String(), minTick, maxTick, "3162")
+		},
+	)
 
 	std.TestSkipHeights(1)
 	// ================================ Position Check ================================================
