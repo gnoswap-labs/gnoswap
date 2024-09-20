@@ -146,8 +146,8 @@ func Exists(tid grc721.TokenID) bool {
 
 func SetTokenURI(tid grc721.TokenID) {
 	// rand instance
-	seed1 := uint64(time.Now().Unix())
-	seed2 := uint64(time.Now().UnixNano())
+	seed1 := uint64(time.Now().Unix() + int64(TotalSupply()))
+	seed2 := uint64(time.Now().UnixNano() + int64(TotalSupply()))
 	pcg := rand.NewPCG(seed1, seed2)
 	r := rand.New(pcg)
 

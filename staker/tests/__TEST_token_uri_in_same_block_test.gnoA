@@ -1,0 +1,69 @@
+package staker
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	pl "gno.land/r/gnoswap/v2/pool"
+
+	"gno.land/p/demo/grc/grc721"
+	"gno.land/r/gnoswap/v2/gnft"
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
+)
+
+func TestPoolInitCreatePool(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
+}
+
+func TestMintPositionAndCheckURI(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
+	SetPoolTier(poolPath, 1)
+
+	tokenId1, _, _, _, _ := MintAndStake(
+		barPath,
+		fooPath,
+		fee500,
+		8000,
+		12000,
+		"50000000",
+		"50000000",
+		"0",
+		"0",
+		max_timeout,
+	)
+
+	tokenId2, _, _, _, _ := MintAndStake(
+		barPath,
+		fooPath,
+		fee500,
+		9000,
+		13000,
+		"50000000",
+		"50000000",
+		"0",
+		"0",
+		max_timeout,
+	)
+
+	tid1 := grc721.TokenID(ufmt.Sprintf("%d", tokenId1))
+	tid2 := grc721.TokenID(ufmt.Sprintf("%d", tokenId2))
+	shouldEQ(t, bool(tid1 != tid2), true)
+
+	tokenURI1 := gnft.GetTokenURI(tid1)
+	tokenURI2 := gnft.GetTokenURI(tid2)
+
+	shouldEQ(t, bool(tokenURI1 != tokenURI2), true)
+}
