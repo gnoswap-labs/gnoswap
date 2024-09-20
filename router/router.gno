@@ -57,11 +57,7 @@ func SwapRoute(
 
 	validateInput(amountSpecified, swapType, routes, quotes)
 
-	if swapType == "EXACT_OUT" {
-		amountSpecified = i256.Zero().Neg(amountSpecified)
-	}
-
-	userOldWugnotBalance, _ := handleGNOT(inputToken, outputToken)
+	userOldWugnotBalance, _ := handleGNOT(inputToken, outputToken, _amountSpecified)
 
 	resultAmountIn, resultAmountOut := processRoutes(routes, quotes, amountSpecified, swapType)
 
@@ -110,11 +106,18 @@ func validateInput(amountSpecified *i256.Int, swapType string, routes, quotes []
 	}
 }
 
-func handleGNOT(inputToken, outputToken string) (uint64, uint64) {
+func handleGNOT(inputToken, outputToken, _amountSpecified string) (uint64, uint64) {
 	userOldWugnotBalance := uint64(0)
 	if inputToken == consts.GNOT {
 		sent := std.GetOrigSend()
 		ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
+
+		i256AmountSpecified := i256.MustFromDecimal(_amountSpecified)
+		u64AmountSpecified := i256AmountSpecified.Uint64()
+		if ugnotSentByUser != u64AmountSpecified {
+			panic("[ROUTER] Invalid amount of ugnot sent by user")
+		}
+
 		wrap(ugnotSentByUser)
 		userOldWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 	} else if outputToken == consts.GNOT {
