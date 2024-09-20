@@ -84,6 +84,10 @@ func sqrtPriceMathGetNextSqrtPriceFromInput(
 	amountIn *u256.Uint, // uint256
 	zeroForOne bool, // bool
 ) *u256.Uint { // uint160
+	if sqrtPX96.IsZero() {
+		panic("sqrtPX96 should not be zero")
+	}
+
 	if zeroForOne {
 		return sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountIn, true)
 	}
