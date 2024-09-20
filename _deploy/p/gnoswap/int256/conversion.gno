@@ -1,8 +1,6 @@
 package int256
 
-import (
-	"gno.land/p/gnoswap/uint256"
-)
+import "gno.land/p/gnoswap/uint256"
 
 // SetInt64 sets z to x and returns z.
 func (z *Int) SetInt64(x int64) *Int {
@@ -14,7 +12,7 @@ func (z *Int) SetInt64(x int64) *Int {
 		x = -x
 	}
 	if z.abs == nil {
-		panic("int256_SetInt64()__abs is nil")
+		panic("abs is nil")
 	}
 	z.abs = z.abs.SetUint64(uint64(x))
 	z.neg = neg
@@ -26,7 +24,7 @@ func (z *Int) SetUint64(x uint64) *Int {
 	z.initiateAbs()
 
 	if z.abs == nil {
-		panic("int256_SetUint64()__abs is nil")
+		panic("abs is nil")
 	}
 	z.abs = z.abs.SetUint64(x)
 	z.neg = false
@@ -84,5 +82,6 @@ func (z *Int) ToString() string {
 	if z.neg {
 		return "-" + t
 	}
+
 	return t
 }
