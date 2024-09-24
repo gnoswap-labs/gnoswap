@@ -104,6 +104,14 @@ func sqrtPriceMathGetNextSqrtPriceFromOutput(
 	amountOut *u256.Uint, // uint256
 	zeroForOne bool, // bool
 ) *u256.Uint { // uint160
+	if sqrtPX96.IsZero() {
+		panic("sqrtPriceMathGetNextSqrtPriceFromOutput_sqrtPX96 should not be zero")
+	}
+
+	if liquidity.IsZero() {
+		panic("sqrtPriceMathGetNextSqrtPriceFromOutput_liquidity should not be zero")
+	}
+
 	if zeroForOne {
 		return sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountOut, false)
 	}
