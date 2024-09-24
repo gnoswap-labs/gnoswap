@@ -1,0 +1,162 @@
+package pool
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/v2/gns"
+	pl "gno.land/r/gnoswap/v2/pool"
+)
+
+var (
+	test_tickLower                      = int32(9000)
+	test_tickUpper                      = int32(11000)
+	test_liquidityExpectStr             = "100000000"
+	user1Addr               std.Address = "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec"
+	minTick                             = int32(-887220)
+	maxTick                             = int32(887220)
+)
+
+func init() {
+	std.TestSkipHeights(100)
+}
+
+func AfterTest(t *testing.T) {
+	poolRealm := std.NewUserRealm(consts.POOL_ADDR)
+	std.TestSetRealm(poolRealm)
+	std.TestSetOrigCaller(consts.POOL_ADDR)
+	barBal := bar.BalanceOf(a2u(consts.POOL_ADDR))
+	fooBal := foo.BalanceOf(a2u(consts.POOL_ADDR))
+	bar.Transfer(a2u(gsa), barBal)
+	foo.Transfer(a2u(gsa), fooBal)
+	delete(pools, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
+}
+
+func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed(t *testing.T) {
+	// ================================ Pool Setup ================================================
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+
+	token0Path := "gno.land/r/onbloc/foo"
+
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	pl.CreatePool(barPath, token0Path, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+
+	std.TestSetRealm(posRealm)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), minTick, maxTick, "3161")
+
+	// ===================== clears tick lower if last position is removed =====================
+
+	pool := GetPool(token0Path, barPath, 3000)
+	tickSpacing := pool.tickSpacing
+
+	std.TestSetRealm(posRealm)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), -240, 0, "100")
+	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")
+	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(-240)
+	shouldEQ(t, liquidityGross.ToString(), "0")
+	shouldEQ(t, feeGrowthOutside0X128.ToString(), "0")
+	shouldEQ(t, feeGrowthOutside1X128.ToString(), "0")
+
+	AfterTest(t)
+}
+
+func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed2(t *testing.T) {
+	// ================================ Pool Setup ================================================
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+
+	token0Path := "gno.land/r/onbloc/foo"
+
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	pl.CreatePool(barPath, token0Path, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+
+	std.TestSetRealm(posRealm)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), minTick, maxTick, "3161")
+
+	// ===================== clears tick lower if last position is removed =====================
+
+	pool := GetPool(token0Path, barPath, 3000)
+	tickSpacing := pool.tickSpacing
+
+	std.TestSetRealm(posRealm)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), -240, 0, "100")
+	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")
+
+	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(0)
+	shouldEQ(t, liquidityGross.ToString(), "0")
+	shouldEQ(t, feeGrowthOutside0X128.ToString(), "0")
+	shouldEQ(t, feeGrowthOutside1X128.ToString(), "0")
+
+	AfterTest(t)
+}
+
+func TestSuccess_case_only_clears_the_tick_that_is_not_used_at_all(t *testing.T) {
+	// ================================ Pool Setup ================================================
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+
+	token0Path := "gno.land/r/onbloc/foo"
+
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	pl.CreatePool(barPath, token0Path, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+
+	std.TestSetRealm(posRealm)
+	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161")
+
+	// ===================== only clears the tick that is not used at all =====================
+
+	pool := GetPool(token0Path, barPath, 3000)
+	tickSpacing := pool.tickSpacing
+
+	std.TestSetRealm(posRealm)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), -240, 0, "100")
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), -240, 0, "250")
+	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")
+	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(-240)
+	// liquidityGrossStr := liquidityGross.ToString()
+	// liquidityGrossUint64, err := strconv.Atoi(liquidityGrossStr)
+
+	shouldEQ(t, liquidityGross.ToString(), "250")
+	shouldEQ(t, feeGrowthOutside0X128.ToString(), "0")
+	shouldEQ(t, feeGrowthOutside1X128.ToString(), "0")
+
+	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ = pool.GetTicks(-tickSpacing)
+	shouldEQ(t, liquidityGross.ToString(), "0")
+	shouldEQ(t, feeGrowthOutside0X128.ToString(), "0")
+	shouldEQ(t, feeGrowthOutside1X128.ToString(), "0")
+
+	AfterTest(t)
+}
+
+func gnsBalance(addr std.Address) uint64 {
+	return gns.BalanceOf(a2u(addr))
+}
+
+func (pool *Pool) GetTicks(
+	tick int32,
+) (feeGrowthOutside0X128 *u256.Uint, feeGrowthOutside1X128 *u256.Uint, liquidityGross *u256.Uint, liquidityNet *i256.Int, secondsPerLiquidityOutsideX128 *u256.Uint, tickCumulativeOutside int64, secondsOutside uint32, initialized bool) {
+	info := pool.ticks[tick]
+	info.init()
+
+	return info.feeGrowthOutside0X128, info.feeGrowthOutside1X128, info.liquidityGross, info.liquidityNet, info.secondsPerLiquidityOutsideX128, info.tickCumulativeOutside, info.secondsOutside, info.initialized
+}
