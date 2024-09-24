@@ -53,6 +53,10 @@ func positionUpdate(
 
 	var liquidityNext *u256.Uint
 	if liquidityDelta.IsZero() {
+		if self.liquidity.IsZero() {
+			panic("NP")
+		}
+
 		liquidityNext = self.liquidity
 	} else {
 		liquidityNext = liquidityMathAddDelta(self.liquidity, liquidityDelta)
