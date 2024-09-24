@@ -1,4 +1,4 @@
-# make -f __local/test/test_data.mk init init-test transfer-test1 transfer-roh
+# make -f __local/test/test_data.mk init init-test
 
 ADDR_GSA := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
 
@@ -46,7 +46,7 @@ ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
 init: wait send-ugnot-must deploy-libraries deploy-base-tokens deploy-gnoswap-realms deploy-test-tokens register-token pool-create-gns-wugnot-default
 
 .PHONY: deploy-libraries
-deploy-libraries: deploy-uint256 deploy-int256 deploy-consts deploy-common deploy-package-pool
+deploy-libraries: deploy-uint256 deploy-int256  deploy-consts deploy-package-pool deploy-common 
 
 .PHONY: deploy-base-tokens
 deploy-base-tokens: deploy-gns deploy-usdc deploy-gnft
@@ -324,19 +324,21 @@ pool-create-baz-qux:
 pool-create-qux-foo:
 	$(info ************ create pool qux:foo ************)
 	# tick 6932 ≈ x2.00003632383094753777186269871890544891357421875000 ≈ 112046559425783515914356180039
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func CreatePool -args "gno.land/r/onbloc/qux" -args "gno.land/r/onbloc/foo" -args 500 -args 112046559425783515914356180039 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	# tick -6932 ≈ x0.49999091920718774506582349204109050333499908447266 ≈ 56022262241300288188759753413
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func CreatePool -args "gno.land/r/onbloc/foo" -args "gno.land/r/onbloc/qux" -args 500 -args 56022262241300288188759753413 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 pool-create-foo-gns:
 	$(info ************ create pool foo:gns ************)
 	# tick 0 ≈ x1 ≈ 79228162514264337593543950337
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func CreatePool -args "gno.land/r/onbloc/foo" -args "gno.land/r/gnoswap/v2/gns" -args 500 -args 79228162514264337593543950337 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func CreatePool -args "gno.land/r/gnoswap/v2/gns" -args "gno.land/r/onbloc/foo"  -args 500 -args 79228162514264337593543950337 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 pool-create-gns-wugnot:
 	$(info ************ create pool gns:wugnot ************)
-	# tick +10 ≈ x1.00100045012002092370551054045790806412696838378906 ≈ 79267784519130042428790663799
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func CreatePool -args "gno.land/r/gnoswap/v2/gns" -args "gnot" -args 100 -args 79267784519130042428790663799 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	# tick 10 ≈ x1.00100045012002092370551054045790806412696838378906 ≈ 79267784519130042428790663799
+	# tick -10 ≈ x0.99900054978007157835406815138412639498710632324219 ≈ 79188560314459151373725315960
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func CreatePool -args "gnot" -args "gno.land/r/gnoswap/v2/gns" -args 100 -args 79267784519130042428790663799 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 
