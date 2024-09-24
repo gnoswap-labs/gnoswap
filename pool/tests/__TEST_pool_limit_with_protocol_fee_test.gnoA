@@ -19,7 +19,13 @@ var (
 	test_liquidityExpectStr = "10000000000"
 )
 
-func TestLimitOrderThru_Positive_1(t *testing.T) {
+// turn protocol fee on
+func init() {
+	std.TestSetRealm(gsaRealm)
+	SetFeeProtocol(4, 4)
+}
+
+func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
@@ -29,7 +35,7 @@ func TestLimitOrderThru_Positive_1(t *testing.T) {
 
 	thisPool := GetPool(barPath, fooPath, fee100)
 
-	t.Run("limit selling 0 for 1 at tick 0 thru 1", func(t *testing.T) {
+	t.Run("limit selling 0 for 1 at tick 0 thru 1 with fee", func(t *testing.T) {
 		// MINT
 		std.TestSetRealm(posRealm)
 		mint0, mint1 := Mint(
@@ -98,7 +104,7 @@ func TestLimitOrderThru_Positive_1(t *testing.T) {
 	})
 }
 
-func TestLimitOrderThru_Negative_1(t *testing.T) {
+func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
@@ -108,7 +114,7 @@ func TestLimitOrderThru_Negative_1(t *testing.T) {
 
 	thisPool := GetPool(barPath, fooPath, fee500)
 
-	t.Run("limit selling 0 for 1 at tick 0 thru 1", func(t *testing.T) {
+	t.Run("limit selling 0 for 1 at tick 0 thru 1 with fee", func(t *testing.T) {
 		// MINT
 		std.TestSetRealm(posRealm)
 		mint0, mint1 := Mint(
