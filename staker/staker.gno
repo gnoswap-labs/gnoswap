@@ -119,8 +119,6 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 	if callerIsOwner { // if caller is owner, transfer NFT ownership to staker contract
 		transferDeposit(tokenId, GetOrigPkgAddr())
-	} else if stakerIsOwner { // if staker is owner, approve NFT to caller (≈one click staking)
-		gnft.Approve(a2u(std.GetOrigCaller()), tid(tokenId))
 	}
 
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
@@ -481,12 +479,15 @@ func CreateExternalIncentive(
 
 			incentiveDuration := endTimestamp - startTimestamp
 			incentiveBlock := incentiveDuration / consts.BLOCK_GENERATION_INTERVAL
-			rewardAmountX96 := new(u256.Uint).Mul(rewardAmount, u256.MustFromDecimal(consts.Q96))
-			rewardPerBlockX96 := new(u256.Uint).Div(rewardAmountX96, u256.NewUint(uint64(incentiveBlock)))
-			incentive.rewardPerBlockX96 = rewardPerBlockX96
 
 			incentive.rewardAmount = new(u256.Uint).Add(incentive.rewardAmount, rewardAmount)
 			incentive.rewardLeft = new(u256.Uint).Add(incentive.rewardLeft, rewardAmount)
+
+			rewardAmountX96 := new(u256.Uint).Mul(incentive.rewardAmount, u256.MustFromDecimal(consts.Q96))
+			rewardPerBlockX96 := new(u256.Uint).Div(rewardAmountX96, u256.NewUint(uint64(incentiveBlock)))
+
+			incentive.rewardPerBlockX96 = rewardPerBlockX96
+
 			incentive.depositGnsAmount += depositGnsAmount
 			incentives[v] = incentive
 
