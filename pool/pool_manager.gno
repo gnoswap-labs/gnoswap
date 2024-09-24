@@ -57,10 +57,16 @@ func CreatePool(
 		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
 	}
 
+	// wrap first
 	if token0Path == consts.GNOT {
 		token0Path = consts.WRAPPED_WUGNOT
 	} else if token1Path == consts.GNOT {
 		token1Path = consts.WRAPPED_WUGNOT
+	}
+
+	// then check if token0Path == token1Path
+	if token0Path == token1Path {
+		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
 	}
 
 	sqrtPriceX96 := u256.MustFromDecimal(_sqrtPriceX96)
