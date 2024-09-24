@@ -72,9 +72,13 @@ func CreatePool(
 	sqrtPriceX96 := u256.MustFromDecimal(_sqrtPriceX96)
 
 	if token1Path < token0Path {
-		token0Path, token1Path = token1Path, token0Path
-		tick := -(common.TickMathGetTickAtSqrtRatio(sqrtPriceX96))
-		sqrtPriceX96 = common.TickMathGetSqrtRatioAtTick(tick)
+		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) < token1Path(%s)", token0Path, token1Path))
+
+		// or we can adjust
+
+		// token0Path, token1Path = token1Path, token0Path
+		// tick := -(common.TickMathGetTickAtSqrtRatio(sqrtPriceX96))
+		// sqrtPriceX96 = common.TickMathGetSqrtRatioAtTick(tick)
 	}
 
 	// check tickSpacing for fee
