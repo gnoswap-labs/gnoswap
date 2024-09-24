@@ -33,7 +33,6 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, gns.TotalSupply(), uint64(100001426940600))
@@ -60,7 +59,6 @@ func TestMintPositionFullInRange(t *testing.T) {
 		max_timeout,
 		gsa.String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_tickLower -887270} {p_tickUpper 887270} {tokenId 1} {liquidity 49997} {amount0 49995} {amount1 50000}]}
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, gns.TotalSupply(), uint64(100001441210006))
@@ -82,7 +80,6 @@ func TestIncreaseLiquidity(t *testing.T) {
 		"0",
 		max_timeout,
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position IncreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {liquidity 49997} {amount0 49995} {amount1 50000}]}
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, gns.TotalSupply(), uint64(100001455479412))
@@ -104,9 +101,6 @@ func TestDecreaseLiquidity(t *testing.T) {
 		max_timeout,
 		false,
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/onbloc/bar} {p_token1Path gno.land/r/onbloc/foo} {fee0Amount 0} {fee1Amount 0}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position DecreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {p_liquidityRatio 50} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {liquidity 49997} {fee0 0} {fee1 0} {amount0 49994} {amount1 49999}]}
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, gns.TotalSupply(), uint64(100001469748818))
@@ -121,8 +115,6 @@ func TestCollectFee(t *testing.T) {
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(uint64(1), false)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/onbloc/bar} {p_token1Path gno.land/r/onbloc/foo} {fee0Amount 0} {fee1Amount 0}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, gns.TotalSupply(), uint64(100001484018224))

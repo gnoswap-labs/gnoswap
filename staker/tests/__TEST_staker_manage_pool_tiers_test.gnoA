@@ -6,6 +6,7 @@ import (
 
 	pl "gno.land/r/gnoswap/v2/pool"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/r/gnoswap/v2/gns"
@@ -17,8 +18,8 @@ func TestPoolInitCreatePool(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*2)
 	std.TestSkipHeights(1)
 
-	pl.CreatePool(fooPath, barPath, 500, "130621891405341611593710811006")
-	pl.CreatePool(fooPath, barPath, 100, "130621891405341611593710811006")
+	pl.CreatePool(barPath, fooPath, 500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+	pl.CreatePool(barPath, fooPath, 100, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 
 	std.TestSkipHeights(1)
 }

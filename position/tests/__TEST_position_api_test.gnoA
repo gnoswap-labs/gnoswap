@@ -1,11 +1,12 @@
 package position
 
 import (
-	"gno.land/p/demo/json"
-
 	"std"
 	"testing"
 
+	"gno.land/p/demo/json"
+
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/r/gnoswap/v2/gns"
@@ -28,11 +29,8 @@ func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
-	pl.CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick = 10000
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
-
+	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 	pl.CreatePool(bazPath, quxPath, fee500, "130621891405341611593710811006") // tick = 10000
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500}]}
 }
 
 func TestMintFooBar(t *testing.T) {
@@ -43,12 +41,10 @@ func TestMintFooBar(t *testing.T) {
 	// gsa mints => will get tid 1 nft
 	std.TestSetOrigCaller(gsa)
 	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, gsa.String())
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_tickLower -11000} {p_tickUpper -9000} {tokenId 1} {liquidity 12437322} {amount0 1000000} {amount1 367898}]}
 
 	// gsa mints => will get tid 2 nft
 	std.TestSetOrigCaller(gsa)
 	Mint(fooPath, barPath, fee500, int32(4000), int32(6000), "1000000", "1000000", "0", "0", max_timeout, gsa.String())
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_tickLower -6000} {p_tickUpper -4000} {tokenId 2} {liquidity 7785250} {amount0 1000000} {amount1 0}]}
 }
 
 func TestMintBazQux(t *testing.T) {
@@ -59,7 +55,6 @@ func TestMintBazQux(t *testing.T) {
 	// gsa mints => will get tid 1 nft
 	std.TestSetOrigCaller(gsa)
 	Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, gsa.String())
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500} {p_tickLower 9000} {p_tickUpper 11000} {tokenId 3} {liquidity 12437322} {amount0 367898} {amount1 1000000}]}
 }
 
 func TestApiGetPositionsUnclaimedFee(t *testing.T) {
@@ -97,7 +92,6 @@ func TestSwap(t *testing.T) {
 		consts.MIN_PRICE,
 		gsa.String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_zeroForOne true} {p_amountSpecified 123456} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 123456} {amount1 -45124} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 62}]}
 }
 
 func TestApiGetPositionsUnclaimedFee2(t *testing.T) {
@@ -148,8 +142,6 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 	// burn 0 to collect swap fee
 	std.TestSetOrigCaller(gsa)
 	tokneId, fee0, fee1, fromPath, _, _ := CollectFee(1, true)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/onbloc/bar} {p_token1Path gno.land/r/onbloc/foo} {fee0Amount 0} {fee1Amount 0}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 61} {fee1 0} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 	shouldEQ(t, tokneId, uint64(1))
 	shouldEQ(t, fee0, "61")
 	shouldEQ(t, fee1, "0")

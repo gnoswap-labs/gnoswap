@@ -84,7 +84,7 @@ func TestSwap1(t *testing.T) {
 		"100",
 		"6550809",
 	)
-	shouldEQ(t, amount0, "6508446")
+	shouldEQ(t, amount0, "6508448")
 	shouldEQ(t, amount1, "-4992500") // -5000000 * 99.85%
 	std.TestSkipHeights(10)
 

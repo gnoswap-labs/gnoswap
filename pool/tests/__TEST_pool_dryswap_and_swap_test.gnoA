@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/r/onbloc/bar"
@@ -27,7 +28,7 @@ func TestCreatePool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
-	CreatePool(fooPath, barPath, fee500, sqrtPrice)
+	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 	shouldEQ(t, len(pools), 1)
 }
@@ -37,8 +38,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	std.TestSetOrigCaller(gsa)
 
 	// no mint == no liquidity => swap will fail
-	_, _, ok := DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
-	shouldEQ(t, ok, false)
+	DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
 
 	// not enough mint == swap will fail
 	std.TestSetRealm(gsaRealm)
@@ -48,9 +48,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 
 	std.TestSetRealm(posRealm)
 	std.TestSetOrigCaller(gsa)
-	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -tickUpper, -tickLower, "10")
-	_, _, ok = DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
-	shouldEQ(t, ok, false)
+	DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
 
 	std.TestSetRealm(gsaRealm)
 

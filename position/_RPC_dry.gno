@@ -1,10 +1,12 @@
 package position
 
 import (
-	"gno.land/r/gnoswap/v2/common"
+	plp "gno.land/p/gnoswap/pool"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v2/common"
 )
 
 // DryMint simulates a mint and returns the amount0, amount1 that would be minted.
@@ -68,11 +70,11 @@ func calculateAmounts(
 }
 
 func getAmount0(sqrtRatioStartX96, sqrtRatioEndX96 *u256.Uint, i256Liquidity *i256.Int) *i256.Int {
-	amount0Str := common.SqrtPriceMathGetAmount0DeltaStr(sqrtRatioStartX96, sqrtRatioEndX96, i256Liquidity)
+	amount0Str := plp.SqrtPriceMathGetAmount0DeltaStr(sqrtRatioStartX96, sqrtRatioEndX96, i256Liquidity)
 	return i256.MustFromDecimal(amount0Str)
 }
 
 func getAmount1(sqrtRatioStartX96, sqrtRatioEndX96 *u256.Uint, i256Liquidity *i256.Int) *i256.Int {
-	amount1Str := common.SqrtPriceMathGetAmount1DeltaStr(sqrtRatioStartX96, sqrtRatioEndX96, i256Liquidity)
+	amount1Str := plp.SqrtPriceMathGetAmount1DeltaStr(sqrtRatioStartX96, sqrtRatioEndX96, i256Liquidity)
 	return i256.MustFromDecimal(amount1Str)
 }
