@@ -61,7 +61,14 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
 			quotient = u256.MulDiv(amount, u256.MustFromDecimal(consts.Q96), liquidity)
 		}
 
-		return new(u256.Uint).Add(sqrtPX96, quotient)
+		res := new(u256.Uint).Add(sqrtPX96, quotient)
+		max160 := u256.MustFromDecimal("1461501637330902918203684832716283019655932542975")
+
+		if res.Gt(max160) {
+			panic("sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown sqrtPx96 + quotient overflow uint160")
+		}
+		return res
+
 	} else {
 		if amount.Lte(u256.MustFromDecimal(MAX_UINT160)) {
 			value1 := new(u256.Uint).Lsh(amount, 96)
@@ -84,6 +91,14 @@ func sqrtPriceMathGetNextSqrtPriceFromInput(
 	amountIn *u256.Uint, // uint256
 	zeroForOne bool, // bool
 ) *u256.Uint { // uint160
+	if sqrtPX96.IsZero() {
+		panic("sqrtPX96 should not be zero")
+	}
+
+	if liquidity.IsZero() {
+		panic("pool_sqrtPriceMathGetNextSqrtPriceFromInput_liquidity should not be zero")
+	}
+
 	if zeroForOne {
 		return sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountIn, true)
 	}
@@ -96,6 +111,14 @@ func sqrtPriceMathGetNextSqrtPriceFromOutput(
 	amountOut *u256.Uint, // uint256
 	zeroForOne bool, // bool
 ) *u256.Uint { // uint160
+	if sqrtPX96.IsZero() {
+		panic("pool_sqrtPriceMathGetNextSqrtPriceFromOutput_sqrtPX96 should not be zero")
+	}
+
+	if liquidity.IsZero() {
+		panic("pool_sqrtPriceMathGetNextSqrtPriceFromOutput_liquidity should not be zero")
+	}
+
 	if zeroForOne {
 		return sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountOut, false)
 	}

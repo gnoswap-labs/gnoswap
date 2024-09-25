@@ -175,6 +175,7 @@ func TestCheckCurrentReward(t *testing.T) {
 }
 
 func TestMakePositionOutRange(t *testing.T) {
+	std.TestSetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		quxPath,
@@ -186,7 +187,7 @@ func TestMakePositionOutRange(t *testing.T) {
 		gsa.String(),
 	)
 	shouldEQ(t, amount0, "70000")
-	shouldEQ(t, amount1, "-69775")
+	shouldEQ(t, amount1, "-69773")
 	std.TestSkipHeights(1)
 
 	// check if position is in range
@@ -207,6 +208,7 @@ func TestCheckReward(t *testing.T) {
 }
 
 func TestMakePositionInRange(t *testing.T) {
+	std.TestSetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		quxPath,

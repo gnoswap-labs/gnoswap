@@ -27,7 +27,6 @@ func TestPoolInitCreatePool(t *testing.T) {
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // x2.71814592682522526700950038502924144268035888671875
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 }
 
 func TestMintPosition(t *testing.T) {
@@ -48,7 +47,6 @@ func TestMintPosition(t *testing.T) {
 		max_timeout,
 		gsa.String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_tickLower 8000} {p_tickUpper 12000} {tokenId 1} {liquidity 318704392} {amount0 18394892} {amount1 50000000}]}
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, getNextId(), uint64(2))
 	shouldEQ(t, amount0, "18394892")
@@ -71,7 +69,6 @@ func TestIncreaseLiquidity(t *testing.T) {
 		"0",         // amount1Min
 		max_timeout, // deadline
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position IncreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {liquidity 63740878} {amount0 3678979} {amount1 10000000}]}
 
 	shouldEQ(t, m0, "3678979")
 	shouldEQ(t, m1, "10000000")
@@ -94,17 +91,12 @@ func TestDecreaseLiquidity(t *testing.T) {
 		max_timeout, // deadline
 		false,       // unwrapResult
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/onbloc/bar} {p_token1Path gno.land/r/onbloc/foo} {fee0Amount 0} {fee1Amount 0}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position DecreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {p_liquidityRatio 50} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {liquidity 191222635} {fee0 0} {fee1 0} {amount0 12153659} {amount1 26993526}]
 
 	newLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
 	shouldEQ(t, true, newLiquidity.Lt(oldLiquidity))
 
 	// check fee left
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/onbloc/bar} {p_token1Path gno.land/r/onbloc/foo} {fee0Amount 0} {fee1Amount 0}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, fee0, "0")
@@ -150,7 +142,6 @@ func TestIncreaseLiquidityBurnedPosition(t *testing.T) {
 		"0",         // amount1Min
 		max_timeout, // deadline
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position IncreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {liquidity 63740878} {amount0 3678979} {amount1 10000000}]}
 
 	shouldEQ(t, m0, "3678979")
 	shouldEQ(t, m1, "10000000")

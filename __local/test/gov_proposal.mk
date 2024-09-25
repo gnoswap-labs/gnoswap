@@ -41,7 +41,7 @@ ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
 init: wait send-ugnot-must deploy-libraries deploy-base-tokens deploy-gnoswap-realms deploy-test-tokens register-token pool-create-gns-wugnot-default
 
 .PHONY: deploy-libraries
-deploy-libraries: deploy-uint256 deploy-int256 deploy-consts deploy-common deploy-package-pool
+deploy-libraries: deploy-uint256 deploy-int256  deploy-consts deploy-package-pool deploy-common 
 
 .PHONY: deploy-base-tokens
 deploy-base-tokens: deploy-gns deploy-usdc deploy-gnft

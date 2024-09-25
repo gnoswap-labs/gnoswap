@@ -1,0 +1,61 @@
+package router
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/json"
+
+	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/consts"
+
+	pl "gno.land/r/gnoswap/v2/pool"
+
+	"gno.land/r/gnoswap/v2/gns"
+
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/onbloc/qux"
+)
+
+func TestCreatePool(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+
+	pl.CreatePool(consts.GNOT, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
+	// 1 bar ≈ 19.683 gnot
+
+	jsonStr := pl.ApiGetPools()
+	root, err := json.Unmarshal([]byte(jsonStr))
+	if err != nil {
+		panic(err)
+	}
+
+	response, err := root.GetKey("response")
+	if err != nil {
+		panic(err)
+	}
+
+	shouldEQ(t, response.Size(), 1)
+}
+
+func TestSwapRouteWugnotquxExactIn(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	wugnot.Approve(a2u(consts.ROUTER_ADDR), 1000000)
+	qux.Approve(a2u(consts.ROUTER_ADDR), 1000000)
+	std.TestSetOrigSend(std.Coins{{"ugnot", 12345}}, nil) //sented ugnot amount
+	shouldPanic(
+		t,
+		func() {
+			SwapRoute(
+				consts.GNOT, // inputToken
+				quxPath,     // outputToken
+				"3",         // amountSpecified   -> should be panic
+				"EXACT_IN",  // swapType
+				"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:500", // strRouteArr
+				"100", // quoteArr
+				"1",   // tokenAmountLimit
+			)
+		},
+	)
+}

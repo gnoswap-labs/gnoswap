@@ -1,0 +1,73 @@
+package router
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/consts"
+
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
+
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/onbloc/qux"
+)
+
+func TestCreatePool(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+
+	pl.CreatePool(consts.WRAPPED_WUGNOT, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+}
+
+func TestPositionMintQuxGnot(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	// send
+	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 1000009}})
+	std.TestSetOrigSend(std.Coins{{"ugnot", 1000009}}, nil)
+
+	// Deposit(wrap)
+	std.TestSetRealm(gsaRealm)
+	wugnot.Deposit()
+
+	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa.String())
+
+	shouldEQ(t, tokenId, uint64(1))
+	shouldEQ(t, amount0, "100000")
+	shouldEQ(t, amount1, "36790")
+}
+
+func TestDrySwapRouteQuxGnotExactIn(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+
+	dryResult := DrySwapRoute(
+		quxPath,               // inputToken
+		consts.WRAPPED_WUGNOT, // outputToken
+		"1000",                // amountSpecified
+		"EXACT_IN",            // swapType
+		"gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500", // strRouteArr
+		"100", // quoteArr
+	)
+	shouldEQ(t, dryResult, "2711")
+}
+
+func TestDrySwapRouteQuxGnotExactOut(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+
+	dryResult := DrySwapRoute(
+		quxPath,               // inputToken
+		consts.WRAPPED_WUGNOT, // outputToken
+		"1000",                // amountSpecified
+		"EXACT_OUT",           // swapType
+		"gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500", // strRouteArr
+		"100", // quoteArr
+	)
+	shouldEQ(t, dryResult, "370")
+}

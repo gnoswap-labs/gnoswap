@@ -1,0 +1,96 @@
+package pool
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
+
+	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/r/gnoswap/v2/gns"
+)
+
+var (
+	test_tickLower          = int32(-6000)
+	test_tickUpper          = int32(6000)
+	test_liquidityExpectStr = "1000"
+)
+
+func TestMintMiscellaneous(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString()) // tick
+
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	thisPool := GetPool(barPath, fooPath, fee500)
+
+	t.Run("returns 0 before initialization", func(t *testing.T) {
+		shouldEQ(t, thisPool.liquidity.ToString(), "0")
+	})
+
+	t.Run("mint to right of the current price", func(t *testing.T) {
+		std.TestSetRealm(posRealm)
+		liqBefore := thisPool.liquidity.ToString()
+
+		amount0, amount1 := Mint(
+			barPath,
+			fooPath,
+			fee500,
+			consts.POSITION_ADDR.String(),
+			1000,
+			2000,
+			test_liquidityExpectStr,
+		)
+
+		liqAfter := thisPool.liquidity.ToString()
+		shouldEQ(t, liqBefore, liqAfter)
+
+		shouldNEQ(t, amount0, "0")
+		shouldEQ(t, amount1, "0")
+	})
+
+	t.Run("mint to left of the current price", func(t *testing.T) {
+		std.TestSetRealm(posRealm)
+		liqBefore := thisPool.liquidity.ToString()
+
+		amount0, amount1 := Mint(
+			barPath,
+			fooPath,
+			fee500,
+			consts.POSITION_ADDR.String(),
+			-2000,
+			-1000,
+			test_liquidityExpectStr,
+		)
+
+		liqAfter := thisPool.liquidity.ToString()
+		shouldEQ(t, liqBefore, liqAfter)
+
+		shouldEQ(t, amount0, "0")
+		shouldNEQ(t, amount1, "0")
+	})
+
+	t.Run("cannot remove more than the entire position", func(t *testing.T) {
+		std.TestSetRealm(posRealm)
+		shouldPanic(
+			t,
+			func() {
+				Burn(
+					barPath,
+					fooPath,
+					fee500,
+					test_tickLower,
+					test_tickUpper,
+					"1001",
+				)
+			},
+		)
+
+	})
+}
+

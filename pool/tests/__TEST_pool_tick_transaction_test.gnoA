@@ -1,0 +1,93 @@
+package pool
+
+import (
+	"std"
+	"testing"
+
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+
+	plp "gno.land/p/gnoswap/pool"
+
+	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/r/gnoswap/v2/gns"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
+)
+
+func TestTickTransaction(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+
+	testSqrt := common.TickMathGetSqrtRatioAtTick(-24081)
+	testSqrt = testSqrt.Add(testSqrt, u256.One())
+	CreatePool(barPath, fooPath, fee100, testSqrt.ToString())
+
+	thisPool := GetPool(barPath, fooPath, fee100)
+
+	shouldEQ(t, thisPool.liquidity.ToString(), "0")
+	shouldEQ(t, thisPool.slot0.tick, int32(-24081))
+
+	liqToMint := "10000000000" // 10_000_000_000
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetRealm(posRealm)
+	Mint(
+		barPath,
+		fooPath,
+		fee100,
+		consts.POSITION_ADDR.String(),
+		-24082,
+		-24080,
+		liqToMint,
+	)
+	shouldEQ(t, thisPool.liquidity.ToString(), "10000000000")
+
+	std.TestSetRealm(posRealm)
+	Mint(
+		barPath,
+		fooPath,
+		fee100,
+		consts.POSITION_ADDR.String(),
+		-24082,
+		-24081,
+		liqToMint,
+	)
+	shouldEQ(t, thisPool.liquidity.ToString(), "10000000000")
+
+	testSqrtSubOne := new(u256.Uint).Sub(testSqrt, u256.One())
+	{
+		sqrtQ, amountIn, amountOut, feeAmount := plp.SwapMathComputeSwapStepStr(
+			testSqrt,
+			testSqrtSubOne,
+			u256.MustFromDecimal(liqToMint),
+			i256.MustFromDecimal("3"),
+			uint64(3000),
+		)
+
+		shouldEQ(t, sqrtQ, testSqrtSubOne.ToString())
+		shouldEQ(t, amountIn, "1")
+		shouldEQ(t, amountOut, "0")
+		shouldEQ(t, feeAmount, "1")
+	}
+
+	std.TestSetRealm(rouRealm)
+	Swap(
+		barPath,
+		fooPath,
+		fee100,
+		gsa.String(),
+		true,
+		"3",
+		consts.MIN_PRICE,
+		std.GetOrigCaller().String(),
+	)
+
+	shouldEQ(t, thisPool.slot0.tick, int32(-24082))
+	shouldEQ(t, thisPool.slot0.sqrtPriceX96.ToString(), testSqrtSubOne.ToString())
+	shouldEQ(t, thisPool.liquidity.ToString(), "20000000000")
+}

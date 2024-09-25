@@ -13,6 +13,7 @@ import (
 
 	"gno.land/r/gnoswap/v2/gnft"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 )
 
@@ -36,7 +37,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	std.TestSkipHeights(1)
 
-	pl.CreatePool(consts.GNS_PATH, consts.GNOT, uint32(500), "130621891405341611593710811006") // tick 10_000 ≈ x2.7
+	pl.CreatePool(consts.GNOT, consts.GNS_PATH, uint32(500), common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 	std.TestSkipHeights(1)
 }
 

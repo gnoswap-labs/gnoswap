@@ -1,0 +1,100 @@
+package router
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	pl "gno.land/r/gnoswap/v2/pool"
+	pn "gno.land/r/gnoswap/v2/position"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
+
+	"gno.land/r/gnoswap/v2/gns"
+)
+
+const (
+	FEELOW    uint32 = 500
+	FEEMEDIUM uint32 = 3000
+	FEEHIGH   uint32 = 10000
+)
+
+var (
+	gsa std.Address = consts.GNOSWAP_ADMIN
+
+	fooPath string = "gno.land/r/onbloc/foo"
+	barPath string = "gno.land/r/onbloc/bar"
+	bazPath string = "gno.land/r/onbloc/baz"
+	quxPath string = "gno.land/r/onbloc/qux"
+
+	token1Path string
+
+	oblPath string = "gno.land/r/onbloc/obl"
+	fee100  uint32 = 100
+	fee500  uint32 = 500
+	fee3000 uint32 = 3000
+
+	maxApprove uint64 = 18446744073709551615
+
+	user1Addr std.Address = "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec"
+	minTick               = int32(-887220)
+	maxTick               = int32(887220)
+)
+
+//=================================Test for SwapRouter exactInput 1 to 0 in single pool=================================
+
+func TestExactInputSinglePool1_to_0(t *testing.T) {
+	// ================================ Pool Setup & Add Liquidity================================================
+	std.TestSetRealm(gsaRealm)
+
+	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+
+	token0Path := "gno.land/r/onbloc/foo"
+
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	pl.CreatePool(barPath, token0Path, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
+	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
+
+	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, token0Path, 3000, minTick, maxTick, "1000000", "1000000", "0", "0", max_timeout, gsa.String())
+	pool := pl.GetPool(barPath, token0Path, FEEMEDIUM)
+	poolLiq := pool.PoolGetLiquidity()
+	shouldEQ(t, poolLiq.ToString(), "1000000")
+
+	// 1 -> 0
+
+	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
+	poolToken0Before := bar.BalanceOf(a2u(consts.POOL_ADDR))
+	poolToken1Before := foo.BalanceOf(a2u(consts.POOL_ADDR))
+
+	user1Token0Before := bar.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
+	user1Token1Before := foo.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
+
+	amountIn, amountOut := SwapRoute(
+		barPath,    // inputToken
+		fooPath,    // outputToken
+		"3",        // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/onbloc/foo:gno.land/r/onbloc/bar:3000", // strRouteArr
+		"100", // quoteArr
+		"1",   // tokenAmountLimit
+	)
+
+	shouldEQ(t, amountIn, "3")
+	shouldEQ(t, amountOut, "-1")
+
+	poolToken0After := bar.BalanceOf(a2u(consts.POOL_ADDR))
+	poolToken1After := foo.BalanceOf(a2u(consts.POOL_ADDR))
+
+	user1Token0After := bar.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
+	user1Token1After := foo.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
+
+	shouldEQ(t, user1Token0After, user1Token0Before+1) // bar
+	shouldEQ(t, user1Token1After, user1Token1Before-3) // foo
+	shouldEQ(t, poolToken0After, poolToken0Before-1)
+	shouldEQ(t, poolToken1After, poolToken1Before+3)
+}

@@ -70,13 +70,21 @@ func SwapRoute(
 	if inputToken == consts.GNOT || outputToken == consts.GNOT {
 		userBeforeWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
 
-		sent := std.GetOrigSend()
-		ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
-		if ugnotSentByUser > 0 {
-			wrap(ugnotSentByUser)
-		}
+		if swapType == "EXACT_IN" && inputToken == consts.GNOT {
+			sent := std.GetOrigSend()
+			ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
+			i256AmountSpecified := i256.MustFromDecimal(_amountSpecified)
+			u64AmountSpecified := i256AmountSpecified.Uint64()
 
-		userWrappedWugnot = ugnotSentByUser
+			if ugnotSentByUser != u64AmountSpecified {
+				panic(ufmt.Sprintf("[ROUTER] router.gno__SwapRoute() || ugnot sent by user is not equal to amount specified (ugnotSentByUser: %d, amountSpecified: %d)", ugnotSentByUser, u64AmountSpecified))
+			}
+
+			if ugnotSentByUser > 0 {
+				wrap(ugnotSentByUser)
+			}
+			userWrappedWugnot = ugnotSentByUser
+		}
 	}
 
 	resultAmountIn, resultAmountOut := processRoutes(routes, quotes, amountSpecified, swapType)

@@ -1,0 +1,37 @@
+package pool
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/r/gnoswap/v2/gns"
+)
+
+func TestCreatePool(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee*10)
+
+	t.Run("succeeds for low fee pool", func(t *testing.T) {
+		CreatePool(barPath, fooPath, uint32(500), common.TickMathGetSqrtRatioAtTick(0).ToString())
+	})
+
+	t.Run("succeeds for medium fee pool", func(t *testing.T) {
+		CreatePool(barPath, fooPath, uint32(3000), common.TickMathGetSqrtRatioAtTick(0).ToString())
+	})
+
+	t.Run("succeeds for high fee pool", func(t *testing.T) {
+		CreatePool(barPath, fooPath, uint32(10000), common.TickMathGetSqrtRatioAtTick(0).ToString())
+	})
+
+	t.Run("fails if token a == token b", func(t *testing.T) {
+		shouldPanic(
+			t,
+			func() {
+				CreatePool(fooPath, fooPath, uint32(500), common.TickMathGetSqrtRatioAtTick(0).ToString())
+			},
+		)
+	})
+}

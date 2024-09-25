@@ -19,8 +19,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
-	pl.CreatePool(consts.GNS_PATH, consts.GNOT, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // x2.71814592682522526700950038502924144268035888671875
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500}]}
+	pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 }
 
 func TestMintPosition(t *testing.T) {
@@ -59,7 +58,6 @@ func TestMintPosition(t *testing.T) {
 		max_timeout,
 		gsa.String(),
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position Mint [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500} {p_tickLower 8000} {p_tickUpper 12000} {tokenId 1} {liquidity 318704392} {amount0 18394892} {amount1 50000000}]}
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, getNextId(), uint64(2))
@@ -112,7 +110,6 @@ func TestIncreaseLiquidity(t *testing.T) {
 		"0",         // amount1Min
 		max_timeout, // deadline
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position IncreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500} {liquidity 63740878} {amount0 3678979} {amount1 10000000}]}
 	shouldEQ(t, m0, "10000000")
 	shouldEQ(t, m1, "3678979")
 
@@ -151,9 +148,6 @@ func TestDecreaseLiquidityWrapped(t *testing.T) {
 		max_timeout, // deadline
 		false,       // unwrapResult
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/gnoswap/v2/gns} {p_token1Path gno.land/r/demo/wugnot} {fee0Amount 0} {fee1Amount 0}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position DecreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {p_liquidityRatio 20} {poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500} {liquidity 76489054} {fee0 0} {fee1 0} {amount0 4414773} {amount1 11999999}]}
 
 	userWugnotBalance = wugnot.BalanceOf(a2u(gsa)) // wrapped result, so wunogt increased
 	shouldEQ(t, userWugnotBalance, uint64(11999999))
@@ -166,8 +160,6 @@ func TestDecreaseLiquidityWrapped(t *testing.T) {
 
 	// check fee left
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, true)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/gnoswap/v2/gns} {p_token1Path gno.land/r/demo/wugnot} {fee0Amount 0} {fee1Amount 0}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500}]}
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, fee0, "0")
@@ -194,9 +186,6 @@ func TestDecreaseLiquidityUnwrapped(t *testing.T) {
 		max_timeout, // deadline
 		true,        // unwrapResult
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/gnoswap/v2/gns} {p_token1Path gno.land/r/demo/wugnot} {fee0Amount 0} {fee1Amount 0}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position DecreaseLiquidity [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {p_liquidityRatio 50} {poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500} {liquidity 152978108} {fee0 0} {fee1 0} {amount0 8829547} {amount1 23999999}]}
 
 	userWugnotBalance = wugnot.BalanceOf(a2u(gsa)) // unwrapped result, so wugnot didn't change
 	shouldEQ(t, userWugnotBalance, uint64(11999999))
@@ -209,8 +198,6 @@ func TestDecreaseLiquidityUnwrapped(t *testing.T) {
 
 	// check fee left
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/gnoswap/v2/gns} {p_token1Path gno.land/r/demo/wugnot} {fee0Amount 0} {fee1Amount 0}]}
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 0} {fee1 0} {poolPath gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:500}]}
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, fee0, "0")

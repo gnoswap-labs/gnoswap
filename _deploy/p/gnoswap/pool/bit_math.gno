@@ -10,6 +10,10 @@ type bitShift struct {
 }
 
 func BitMathMostSignificantBit(x *u256.Uint) uint8 {
+	if x.IsZero() {
+		panic("BitMathMostSignificantBit: x should not be zero")
+	}
+
 	shifts := []bitShift{
 		{u256.MustFromDecimal(Q128), 128}, // 2^128
 		{u256.MustFromDecimal(Q64), 64},   // 2^64
@@ -33,6 +37,10 @@ func BitMathMostSignificantBit(x *u256.Uint) uint8 {
 }
 
 func BitMathLeastSignificantBit(x *u256.Uint) uint8 {
+	if x.IsZero() {
+		panic("BitMathLeastSignificantBit: x should not be zero")
+	}
+
 	shifts := []bitShift{
 		{u256.MustFromDecimal(MAX_UINT128), 128},
 		{u256.MustFromDecimal(MAX_UINT64), 64},

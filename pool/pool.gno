@@ -30,10 +30,17 @@ func Mint(
 	_liquidityAmount string, // uint128
 ) (string, string) { // uint256 x2
 	common.IsHalted()
-	common.DisallowCallFromUser()
-	common.AllowCallFromOnly(consts.POSITION_PATH)
+	if common.GetLimitCaller() {
+		prev := std.PrevRealm().PkgPath()
+		if prev != consts.POSITION_PATH {
+			panic(ufmt.Sprintf("[POOL] pool.gno__Mint() || prev(%s) != consts.POSITION_PATH(%s)", prev, consts.POSITION_PATH))
+		}
+	}
 
 	liquidityAmount := u256.MustFromDecimal(_liquidityAmount)
+	if liquidityAmount.IsZero() {
+		panic("[POOL] pool.gno__Mint() || liquidityAmount == 0")
+	}
 
 	pool := GetPool(token0Path, token1Path, fee)
 	_, amount0, amount1 := pool.modifyPosition( // int256 x2
@@ -85,8 +92,12 @@ func Burn(
 	_liquidityAmount string, // uint128
 ) (string, string) { // uint256 x2
 	common.IsHalted()
-	common.DisallowCallFromUser()
-	common.AllowCallFromOnly(consts.POSITION_PATH)
+	if common.GetLimitCaller() {
+		prev := std.PrevRealm().PkgPath()
+		if prev != consts.POSITION_PATH {
+			panic(ufmt.Sprintf("[POOL] pool.gno__Burn() || prev(%s) != consts.POSITION_PATH(%s)", prev, consts.POSITION_PATH))
+		}
+	}
 
 	liquidityAmount := u256.MustFromDecimal(_liquidityAmount)
 
@@ -147,8 +158,12 @@ func Collect(
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
 	common.IsHalted()
-	common.DisallowCallFromUser()
-	common.AllowCallFromOnly(consts.POSITION_PATH)
+	if common.GetLimitCaller() {
+		prev := std.PrevRealm().PkgPath()
+		if prev != consts.POSITION_PATH {
+			panic(ufmt.Sprintf("[POOL] pool.gno__Collect() || prev(%s) != consts.POSITION_PATH(%s)", prev, consts.POSITION_PATH))
+		}
+	}
 
 	amount0Requested := u256.MustFromDecimal(_amount0Requested)
 	amount1Requested := u256.MustFromDecimal(_amount1Requested)
@@ -219,8 +234,12 @@ func Swap(
 	_payer string, // router
 ) (string, string) { // int256 x2
 	common.IsHalted()
-	common.DisallowCallFromUser()
-	common.AllowCallFromOnly(consts.ROUTER_PATH)
+	if common.GetLimitCaller() {
+		prev := std.PrevRealm().PkgPath()
+		if prev != consts.ROUTER_PATH {
+			panic(ufmt.Sprintf("[POOL] pool.gno__Swap() || prev(%s) != consts.ROUTER_PATH(%s)", prev, consts.ROUTER_PATH))
+		}
+	}
 
 	if _amountSpecified == "0" {
 		panic("[POOL] pool.gno__Swap() || _amountSpecified == 0")

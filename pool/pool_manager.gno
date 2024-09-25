@@ -57,18 +57,28 @@ func CreatePool(
 		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
 	}
 
+	// wrap first
 	if token0Path == consts.GNOT {
 		token0Path = consts.WRAPPED_WUGNOT
 	} else if token1Path == consts.GNOT {
 		token1Path = consts.WRAPPED_WUGNOT
 	}
 
+	// then check if token0Path == token1Path
+	if token0Path == token1Path {
+		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
+	}
+
 	sqrtPriceX96 := u256.MustFromDecimal(_sqrtPriceX96)
 
 	if token1Path < token0Path {
-		token0Path, token1Path = token1Path, token0Path
-		tick := -(common.TickMathGetTickAtSqrtRatio(sqrtPriceX96))
-		sqrtPriceX96 = common.TickMathGetSqrtRatioAtTick(tick)
+		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) < token1Path(%s)", token0Path, token1Path))
+
+		// or we can adjust
+
+		// token0Path, token1Path = token1Path, token0Path
+		// tick := -(common.TickMathGetTickAtSqrtRatio(sqrtPriceX96))
+		// sqrtPriceX96 = common.TickMathGetSqrtRatioAtTick(tick)
 	}
 
 	// check tickSpacing for fee

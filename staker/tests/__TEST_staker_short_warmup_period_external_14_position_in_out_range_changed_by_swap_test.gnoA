@@ -189,7 +189,7 @@ func TestMakePosition1OutRange(t *testing.T) {
 		"0",   // tokenAmountLimit
 	)
 	shouldEQ(t, tokenIn, "100000")
-	shouldEQ(t, tokenOut, "-98875")
+	shouldEQ(t, tokenOut, "-98873")
 
 	poolTick = pl.PoolGetSlot0Tick(poolPath)
 	shouldEQ(t, poolTick, int32(-195))

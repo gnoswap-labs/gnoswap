@@ -1,0 +1,218 @@
+package pool
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
+
+	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/r/gnoswap/v2/gns"
+)
+
+var (
+	test_tickLower          = int32(9000)
+	test_tickUpper          = int32(11000)
+	test_liquidityExpectStr = "100000000"
+)
+
+func TestDoesNotClear(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetRealm(posRealm)
+	Mint(
+		barPath,
+		fooPath,
+		fee500,
+		consts.POSITION_ADDR.String(),
+		-887160,
+		887160,
+		test_liquidityExpectStr,
+	)
+
+	std.TestSetRealm(rouRealm)
+	Swap(
+		barPath,
+		fooPath,
+		fee500,
+		gsa.String(),
+		true,
+		"10000",
+		consts.MIN_PRICE,
+		std.GetOrigCaller().String(),
+	)
+
+	Swap(
+		barPath,
+		fooPath,
+		fee500,
+		gsa.String(),
+		false,
+		"10000",
+		consts.MAX_PRICE,
+		std.GetOrigCaller().String(),
+	)
+	// did swap t0 => t1 and t1 => t0
+
+	// burn all
+	std.TestSetRealm(posRealm)
+	Burn(
+		barPath,
+		fooPath,
+		fee500,
+		-887160,
+		887160,
+		test_liquidityExpectStr,
+	)
+
+	thisPool := GetPool(barPath, fooPath, fee500)
+	liq := thisPool.liquidity
+	shouldEQ(t, liq.ToString(), "0")
+
+	// tokensOwed
+	thisPositionKey := positionGetKey(consts.POSITION_ADDR, -887160, 887160)
+	thisPosition := thisPool.positions[thisPositionKey]
+
+	tokensOwed0 := thisPosition.tokensOwed0
+	tokensOwed1 := thisPosition.tokensOwed1
+	shouldNEQ(t, tokensOwed0.ToString(), "0")
+	shouldNEQ(t, tokensOwed1.ToString(), "0")
+
+	// feeGrowthInside
+	feeGrowthInside0LastX128 := thisPosition.feeGrowthInside0LastX128
+	feeGrowthInside1LastX128 := thisPosition.feeGrowthInside1LastX128
+	shouldNEQ(t, feeGrowthInside0LastX128.ToString(), "0")
+	shouldNEQ(t, feeGrowthInside1LastX128.ToString(), "0")
+}
+
+func TestClearOnlyLowTick(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	CreatePool(barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
+
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetRealm(posRealm)
+	Mint(
+		barPath,
+		fooPath,
+		fee3000,
+		consts.POSITION_ADDR.String(),
+		-887160,
+		887160,
+		"1",
+	)
+
+	Mint(
+		barPath,
+		fooPath,
+		fee3000,
+		consts.POSITION_ADDR.String(),
+		-887100,
+		887160,
+		"1",
+	)
+
+	std.TestSetRealm(rouRealm)
+	Swap(
+		barPath,
+		fooPath,
+		fee3000,
+		gsa.String(),
+		true,
+		"10000",
+		consts.MIN_PRICE,
+		std.GetOrigCaller().String(),
+	)
+
+	std.TestSetRealm(posRealm)
+	Burn(
+		barPath,
+		fooPath,
+		fee3000,
+		-887160,
+		887160,
+		"1",
+	)
+
+	thisPool := GetPool(barPath, fooPath, fee3000)
+	lowerInfo := thisPool.ticks[-887160]
+	shouldEQ(t, lowerInfo.liquidityGross.ToString(), "")
+	shouldEQ(t, lowerInfo.feeGrowthOutside0X128.ToString(), "")
+	shouldEQ(t, lowerInfo.feeGrowthOutside1X128.ToString(), "")
+	// shouldEQ(t, lowerInfo.liquidityNet.ToString(), "") // i256 nil check
+
+	upperInfo := thisPool.ticks[887160]
+	shouldNEQ(t, upperInfo.liquidityGross.ToString(), "")
+}
+
+func TestClearOnlyUpperTick(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
+
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+	std.TestSetRealm(posRealm)
+	Mint(
+		barPath,
+		fooPath,
+		fee100,
+		consts.POSITION_ADDR.String(),
+		-887160,
+		887160,
+		"1",
+	)
+
+	Mint(
+		barPath,
+		fooPath,
+		fee100,
+		consts.POSITION_ADDR.String(),
+		-887160,
+		887100,
+		"1",
+	)
+
+	std.TestSetRealm(rouRealm)
+	Swap(
+		barPath,
+		fooPath,
+		fee100,
+		gsa.String(),
+		true,
+		"10000",
+		consts.MIN_PRICE,
+		std.GetOrigCaller().String(),
+	)
+
+	std.TestSetRealm(posRealm)
+	Burn(
+		barPath,
+		fooPath,
+		fee100,
+		-887160,
+		887160,
+		"1",
+	)
+
+	thisPool := GetPool(barPath, fooPath, fee100)
+	lowerInfo := thisPool.ticks[-887160]
+	shouldNEQ(t, lowerInfo.liquidityGross.ToString(), "")
+
+	upperInfo := thisPool.ticks[887160]
+	shouldEQ(t, upperInfo.liquidityGross.ToString(), "")
+	shouldEQ(t, upperInfo.feeGrowthOutside0X128.ToString(), "")
+	shouldEQ(t, upperInfo.feeGrowthOutside1X128.ToString(), "")
+	// shouldEQ(t, upperInfo.liquidityNet.ToString(), "") // i256 nil check
+}

@@ -33,8 +33,8 @@ func DrySwapRoute(
 	quoteArr string, // []int
 ) string { // uint256
 	if swapType != "EXACT_IN" && swapType != "EXACT_OUT" {
-        panic("[ROUTER] Unknown swapType")
-    }
+		panic("[ROUTER] Unknown swapType")
+	}
 
 	amountSpecified, err := i256.FromDecimal(_amountSpecified)
 	if err != nil {
@@ -73,24 +73,25 @@ func DrySwapRoute(
 			resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
 			resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
 		}
+
 	}
 
 	return processResult(swapType, resultAmountIn, resultAmountOut, amountSpecified)
 }
 
 func processResult(swapType string, resultAmountIn, resultAmountOut *u256.Uint, amountSpecified *i256.Int) string {
-    switch swapType {
-    case "EXACT_IN":
-        if !i256.FromUint256(resultAmountIn).Eq(amountSpecified) {
-            return "-1"
-        }
-        return resultAmountOut.ToString()
-    case "EXACT_OUT":
-        if i256.FromUint256(resultAmountOut).Lt(amountSpecified) {
-            return "-1"
-        }
-        return resultAmountIn.ToString()
-    default:
-        panic("[ROUTER] Unknown swapType")
-    }
+	switch swapType {
+	case "EXACT_IN":
+		if !i256.FromUint256(resultAmountIn).Eq(amountSpecified) {
+			return "-1"
+		}
+		return resultAmountOut.ToString()
+	case "EXACT_OUT":
+		if i256.FromUint256(resultAmountOut).Lt(amountSpecified) {
+			return "-1"
+		}
+		return resultAmountIn.ToString()
+	default:
+		panic("[ROUTER] Unknown swapType")
+	}
 }

@@ -165,7 +165,7 @@ func TestMakePosition1OutRange(t *testing.T) {
 		"0",   // tokenAmountLimit
 	)
 	shouldEQ(t, tokenIn, "10000")
-	shouldEQ(t, tokenOut, "-9886")
+	shouldEQ(t, tokenOut, "-9884")
 	std.TestSkipHeights(1)
 }
 

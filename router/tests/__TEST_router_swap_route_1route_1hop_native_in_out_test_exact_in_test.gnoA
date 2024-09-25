@@ -7,6 +7,7 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/testutils"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	pl "gno.land/r/gnoswap/v2/pool"
@@ -24,9 +25,9 @@ func TestCreatePool(t *testing.T) {
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 
-	pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")     // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
-	pl.CreatePool(bazPath, quxPath, fee500, "130621891405341611593710811006")     // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
-	pl.CreatePool(quxPath, consts.GNOT, fee500, "130621891405341611593710811006") // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")                         // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(bazPath, quxPath, fee500, "130621891405341611593710811006")                         // tick =  10_000, ratio = 2.71814592682522526700950038502924144268035888671875
+	pl.CreatePool(consts.GNOT, quxPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 	// 1 bar ≈ 19.683 gnot
 
 	jsonStr := pl.ApiGetPools()
@@ -108,23 +109,15 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 	wugnot.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // for output
 	wugnot.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // for unwrap
 
-	// wrap some ugnot
-	std.TestSetOrigSend(std.Coins{{"ugnot", 5000}}, nil)
-	wugnot.Deposit()
-
 	std.TestSetOrigSend(std.Coins{{}}, nil)
-
-	oldWugnot := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, oldWugnot, uint64(5000))
-
-	oldUgnot := ugnotBalanceOf(gsa)
-	shouldEQ(t, oldUgnot, uint64(900009))
 
 	// CHECK PROTOCOL_FEE
 	feeColUgnot := ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
 	feeColWugnot := wugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
 	shouldEQ(t, feeColUgnot, uint64(0))
 	shouldEQ(t, feeColWugnot, uint64(0))
+
+	oldWugnot := wugnot.BalanceOf(a2u(gsa))
 
 	std.TestSetOrigCaller(gsa)
 	amountIn, amountOut := SwapRoute(
@@ -140,7 +133,7 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 	shouldEQ(t, amountOut, "-19711")
 
 	newWugnot := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, newWugnot, uint64(5000)) // IT SHOULD STAY SAME SINCE SWAP USED uGNOT, not WUGNOT
+	shouldEQ(t, newWugnot, oldWugnot) // IT SHOULD STAY SAME SINCE SWAP USED uGNOT, not WUGNOT
 
 	newUgnot := ugnotBalanceOf(gsa)
 	shouldEQ(t, newUgnot, uint64(919720)) // 900009 + 19711
@@ -175,7 +168,7 @@ func TestSwapRouteGnotBarExactIn(t *testing.T) {
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)  // for output
 
 	oldWugnot := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, oldWugnot, uint64(5000))
+	shouldEQ(t, oldWugnot, uint64(0))
 
 	oldUgnot := ugnotBalanceOf(gsa)
 	shouldEQ(t, oldUgnot, uint64(919720))
@@ -201,7 +194,7 @@ func TestSwapRouteGnotBarExactIn(t *testing.T) {
 	shouldEQ(t, amountOut, "-254")
 
 	newWugnot := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, newWugnot, uint64(5000))
+	shouldEQ(t, newWugnot, uint64(0))
 
 	newUgnot := ugnotBalanceOf(gsa)
 	shouldEQ(t, newUgnot, uint64(919720)) // GNO VM BUG, ugnot amount should be decreased but `std.TestSetOrigSend` doesn't really decrease caller's ugnot balance)
