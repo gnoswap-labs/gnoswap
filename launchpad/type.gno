@@ -7,7 +7,7 @@ import (
 )
 
 type Project struct {
-	id            string // 'tokenPath_createdHeight'
+	id            string // 'tokenPath:createdHeight'
 	tokenPath     string
 	depositAmount uint64
 	recipient     std.Address // string
@@ -33,10 +33,11 @@ type Project struct {
 	// won't be decreased
 	totalDepositAmount uint64
 	totalParticipant   uint64
+	totalClaimedAmount uint64
 }
 
 type Tier struct {
-	id                     string // 'tokenPath:createdHeight:duration' // duartion == 30, 90, 180
+	id                     string // '{projectId}:duration' // duartion == 30, 90, 180
 	claimWaitDuration      uint64
 	tierAmount             uint64
 	tierAmountPerSecondX96 *u256.Uint

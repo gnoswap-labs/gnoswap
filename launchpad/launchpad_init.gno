@@ -131,6 +131,37 @@ func CreateProject(
 	// XXX: emit event
 }
 
+func RefundProject(projectId string) uint64 {
+	caller := std.GetOrigCaller()
+	project, exist := projects[projectId]
+	if !exist {
+		panic("project not exist")
+	}
+
+	recipient := project.recipient
+	if caller != recipient {
+		panic("only recipient can refund")
+	}
+
+	endTime := project.startTime + TIMESTAMP_180DAYS // 180 is max pool duration
+	height := uint64(std.GetHeight())
+	now := uint64(time.Now().Unix())
+
+	if endTime > now {
+		panic("project not ended yet")
+	}
+
+	toRefund := project.depositAmount - project.totalClaimedAmount
+	transferByRegisterCall(
+		project.tokenPath,
+		recipient,
+		toRefund,
+	)
+
+	// XXX: emit event
+	return toRefund
+}
+
 func generateProjectId(tokenPath string) string {
 	// gno.land/r/gnoswap/gns:123
 	return ufmt.Sprintf("%s:%d", tokenPath, std.GetHeight())
