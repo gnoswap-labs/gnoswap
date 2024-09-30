@@ -40,8 +40,19 @@ func CreateProject(
 		panic("only admin can create project")
 	}
 
+	if _, exist := registered[tokenPath]; !exist {
+		panic("token not registered")
+	}
+
 	if !(recipient.IsValid()) {
 		panic("invalid recipient addr")
+	}
+
+	tokensToCheck := strings.Split(conditionsToken, "*PAD*")
+	for _, token := range tokensToCheck {
+		if _, exist := registered[token]; !exist {
+			panic("condition token not registered")
+		}
 	}
 
 	projectId := generateProjectId(tokenPath)
@@ -52,6 +63,10 @@ func CreateProject(
 
 	if tier30Ratio+tier90Ratio+tier180Ratio != 100 {
 		panic("invalid ratio, sum of all tiers should be 100")
+	}
+
+	if startTime < uint64(time.Now().Unix()) {
+		panic("invalid start time, can not start project in past")
 	}
 
 	transferFromByRegisterCall(
