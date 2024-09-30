@@ -215,7 +215,7 @@ func TestClaimDepositGns(t *testing.T) {
 		println()
 	})
 
-	t.Run("no more claim in same block", fun99999999c(t *testing.T) {
+	t.Run("no more claim in same block", func(t *testing.T) {
 		claimed := ClaimDepositGns()
 		std.TestSkipHeights(1)
 		shouldEQ(t, claimed, uint64(0))
@@ -223,7 +223,7 @@ func TestClaimDepositGns(t *testing.T) {
 		println()
 	})
 
-	//
+	// check deposit
 	shouldEQ(t, len(deposits), 1)
 	deposit := deposits[`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`]
 	shouldEQ(t, deposit.id, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
@@ -246,4 +246,12 @@ func TestClaimDepositGns(t *testing.T) {
 	//
 	shouldEQ(t, len(depositsByUser), 1)
 	shouldEQ(t, depositsByUser[`g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv`][0], `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+
+	// check project
+	project := projects[`gno.land/r/onbloc/obl:124`]
+	tier30 := project.tier30
+	shouldEQ(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
+	shouldEQ(t, tier30.tierAmount, uint64(100000000))
+	shouldEQ(t, tier30.depositAmount, uint64(0))
+	shouldEQ(t, tier30.participant, uint64(0))
 }
