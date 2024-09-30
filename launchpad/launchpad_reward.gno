@@ -79,6 +79,11 @@ func ClaimReward() {
 			}
 		}
 
+		// update project
+		project.totalClaimedAmount += deposit.rewardAmount
+		projects[deposit.projectId] = project
+
+		// update deposit
 		deposit.rewardAmount = 0
 		deposit.rewardClaimHeight = uint64(std.GetHeight())
 		deposit.rewardClaimAt = uint64(time.Now().Unix())
@@ -154,6 +159,11 @@ func ClaimRewardByProjectId(proejctId string) uint64 {
 			}
 		}
 
+		// update project
+		project.totalClaimedAmount += deposit.rewardAmount
+		projects[deposit.projectId] = project
+
+		// update deposit
 		deposit.rewardAmount = 0
 		deposit.rewardClaimHeight = uint64(std.GetHeight())
 		deposit.rewardClaimAt = uint64(time.Now().Unix())

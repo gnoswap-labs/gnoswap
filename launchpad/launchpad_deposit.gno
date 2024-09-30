@@ -22,6 +22,9 @@ var (
 
 	// user -> []depositId
 	depositsByUser = make(map[string][]string)
+
+	//  user -> project -> []depositId
+	depositsByUserByProject = make(map[string]map[string][]string)
 )
 
 func DepositGns(
@@ -47,6 +50,9 @@ func DepositGns(
 	if !checkTierActive(project, tier) {
 		panic(ufmt.Sprintf("tier is not active: %s", tierStr))
 	}
+
+	// after all pre-checks
+	calculateDepositReward()
 
 	// gns will be locked in `launchpad` contract
 	gns.TransferFrom(
@@ -88,6 +94,9 @@ func DepositGns(
 	// update deposits
 	deposits[depositId] = depositToHistory
 
+	// update depositsByUser
+	depositsByUser[depositorStr] = append(depositsByUser[depositorStr], depositId)
+
 	// update depositsByProject
 	if _, exist := depositsByProject[projectId]; !exist {
 		depositsByProject[projectId] = make(map[string][]string)
@@ -97,8 +106,14 @@ func DepositGns(
 	}
 	depositsByProject[projectId][tierStr] = append(depositsByProject[projectId][tierStr], depositId)
 
-	// update depositsByUser
-	depositsByUser[depositorStr] = append(depositsByUser[depositorStr], depositId)
+	// update depositsByUserByProject
+	if _, exist := depositsByUserByProject[depositorStr]; !exist {
+		depositsByUserByProject[depositorStr] = make(map[string][]string)
+	}
+	if _, exist := depositsByUserByProject[depositorStr][projectId]; !exist {
+		depositsByUserByProject[depositorStr][projectId] = make([]string, 0)
+	}
+	depositsByUserByProject[depositorStr][projectId] = append(depositsByUserByProject[depositorStr][projectId], depositId)
 
 	// XXX: emit event
 }
@@ -122,7 +137,7 @@ func ClaimDepositGns() uint64 {
 
 		tier := getTier(project, deposit.tier)
 		if checkTierActive(project, tier) {
-			println("ClaimDepositGns_STILL ACTIVE TIER")
+			println("ClaimDepositGns()_STILL ACTIVE TIER", deposit.tier)
 			continue
 		}
 
@@ -140,7 +155,10 @@ func ClaimDepositGns() uint64 {
 		// update tier
 		tier.depositAmount -= deposit.amount
 		tier.participant -= 1
+
+		// update project
 		project = setTier(project, deposit.tier, tier)
+		projects[deposit.projectId] = project
 	}
 
 	if gnsToUser > 0 {
