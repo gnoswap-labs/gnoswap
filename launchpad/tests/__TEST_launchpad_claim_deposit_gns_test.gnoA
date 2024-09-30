@@ -1,0 +1,249 @@
+package launchpad
+
+import (
+	"std"
+	"testing"
+	"time"
+
+	"gno.land/p/demo/testutils"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
+	"gno.land/r/onbloc/obl"
+
+	"gno.land/r/gnoswap/v2/gns"
+)
+
+// var proejctAddr = testutils.TestAddress("proejctAddr")
+// var projectRealm = std.NewUserRealm(proejctAddr)
+var (
+	projectAddr = testutils.TestAddress("projectAddr")
+	user01      = testutils.TestAddress("user01")
+
+	projectRealm = std.NewUserRealm(projectAddr)
+	user01Realm  = std.NewUserRealm(user01)
+)
+
+func init() {
+	println("test_init")
+}
+
+func TestCreateProject(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
+	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
+	std.TestSkipHeights(1)
+
+	{
+		// check before project create
+		shouldEQ(t, len(projects), 0)
+		shouldEQ(t, len(deposits), 0)
+		shouldEQ(t, len(depositsByProject), 0)
+		shouldEQ(t, len(depositsByUser), 0)
+	}
+
+	CreateProject(
+		oblPath,
+		projectAddr,
+		uint64(1_000_000_000), // 1000000000
+		"gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+		"1*PAD*2",
+		uint64(10),                   // 100000000
+		uint64(20),                   // 200000000
+		uint64(70),                   // 700000000
+		uint64(time.Now().Unix()+10), // 5 block later
+	)
+	std.TestSkipHeights(1)
+
+	{
+		// check after project create
+		shouldEQ(t, len(projects), 1)
+
+		project := projects[`gno.land/r/onbloc/obl:124`]
+		shouldEQ(t, project.id, `gno.land/r/onbloc/obl:124`)
+		shouldEQ(t, project.tokenPath, `gno.land/r/onbloc/obl`)
+		shouldEQ(t, project.depositAmount, uint64(1000000000))
+		shouldEQ(t, project.recipient, projectAddr)
+
+		shouldEQ(t, project.conditions[`gno.land/r/onbloc/foo`].minAmount, uint64(1))
+		shouldEQ(t, project.conditions[`gno.land/r/onbloc/bar`].minAmount, uint64(2))
+
+		shouldEQ(t, project.tier30Ratio, uint64(10))
+		tier30 := project.tier30
+		shouldEQ(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
+		shouldEQ(t, tier30.claimWaitDuration, TIMESTAMP_3DAYS)
+		shouldEQ(t, tier30.tierAmount, uint64(100000000))
+		shouldNEQ(t, tier30.tierAmountPerSecondX96.ToString(), `0`)
+		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
+		shouldEQ(t, tier30.depositAmount, uint64(0))
+		shouldEQ(t, tier30.participant, uint64(0))
+
+		shouldEQ(t, project.tier90Ratio, uint64(20))
+		tier90 := project.tier90
+		shouldEQ(t, tier90.id, `gno.land/r/onbloc/obl:124:90`)
+		shouldEQ(t, tier90.claimWaitDuration, TIMESTAMP_7DAYS)
+		shouldEQ(t, tier90.tierAmount, uint64(200000000))
+		shouldNEQ(t, tier90.tierAmountPerSecondX96.ToString(), `0`)
+		shouldEQ(t, tier90.endTime, project.startTime+TIMESTAMP_90DAYS)
+		shouldEQ(t, tier90.depositAmount, uint64(0))
+		shouldEQ(t, tier90.participant, uint64(0))
+
+		shouldEQ(t, project.tier180Ratio, uint64(70))
+		tier180 := project.tier180
+		shouldEQ(t, tier180.id, `gno.land/r/onbloc/obl:124:180`)
+		shouldEQ(t, tier180.claimWaitDuration, TIMESTAMP_14DAYS)
+		shouldEQ(t, tier180.tierAmount, uint64(700000000))
+		shouldNEQ(t, tier180.tierAmountPerSecondX96.ToString(), `0`)
+		shouldEQ(t, tier180.endTime, project.startTime+TIMESTAMP_180DAYS)
+		shouldEQ(t, tier180.depositAmount, uint64(0))
+		shouldEQ(t, tier180.participant, uint64(0))
+
+		shouldEQ(t, project.createdHeight, uint64(124))
+		shouldEQ(t, project.createdTime, uint64(1234567892))
+
+		shouldEQ(t, project.startTime, uint64(1234567902))
+		shouldEQ(t, project.totalDepositAmount, uint64(0))
+		shouldEQ(t, project.totalParticipant, uint64(0))
+
+		shouldEQ(t, len(deposits), 0)
+		shouldEQ(t, len(depositsByProject), 0)
+		shouldEQ(t, len(depositsByUser), 0)
+	}
+}
+
+func TestDepositGnsToTier30(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
+	// transfer some grc20 tokens to bypass project condition
+	foo.Transfer(a2u(user01), uint64(10))
+	bar.Transfer(a2u(user01), uint64(10))
+
+	std.TestSetRealm(user01Realm)
+	std.TestSetOrigCaller(user01)
+	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
+
+	{
+		// check before deposit
+		shouldEQ(t, len(projects), 1)
+
+		project := projects[`gno.land/r/onbloc/obl:124`]
+		shouldEQ(t, project.tier30Ratio, uint64(10))
+
+		tier30 := project.tier30
+		shouldEQ(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
+		shouldEQ(t, tier30.claimWaitDuration, TIMESTAMP_3DAYS)
+		shouldEQ(t, tier30.tierAmount, uint64(100000000))
+		shouldNEQ(t, tier30.tierAmountPerSecondX96.ToString(), `0`)
+		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
+		shouldEQ(t, tier30.depositAmount, uint64(0))
+		shouldEQ(t, tier30.participant, uint64(0))
+
+		shouldEQ(t, len(deposits), 0)
+		shouldEQ(t, len(depositsByProject), 0)
+		shouldEQ(t, len(depositsByUser), 0)
+	}
+
+	// skip some blocks to make project active
+	std.TestSkipHeights(4)
+	DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000)) // 1000000
+	std.TestSkipHeights(1)
+
+	{
+		// check after deposit
+		shouldEQ(t, len(projects), 1)
+
+		project := projects[`gno.land/r/onbloc/obl:124`]
+		shouldEQ(t, project.tier30Ratio, uint64(10))
+
+		tier30 := project.tier30
+		shouldEQ(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
+		shouldEQ(t, tier30.claimWaitDuration, TIMESTAMP_3DAYS)
+		shouldEQ(t, tier30.tierAmount, uint64(100000000))
+		shouldNEQ(t, tier30.tierAmountPerSecondX96.ToString(), `0`)
+		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
+		shouldEQ(t, tier30.depositAmount, uint64(1000000))
+		shouldEQ(t, tier30.participant, uint64(1))
+
+		//
+		shouldEQ(t, len(deposits), 1)
+		deposit := deposits[`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`]
+		shouldEQ(t, deposit.id, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+		shouldEQ(t, deposit.projectId, `gno.land/r/onbloc/obl:124`)
+		shouldEQ(t, deposit.tier, `30`)
+		shouldEQ(t, deposit.depositor, user01)
+		shouldEQ(t, deposit.amount, uint64(1000000))
+		shouldEQ(t, deposit.depositHeight, uint64(129))
+		shouldEQ(t, deposit.depositAt, uint64(1234567902))
+		shouldEQ(t, deposit.depositClaimHeight, uint64(0))
+		shouldEQ(t, deposit.depositClaimAt, uint64(0))
+		shouldEQ(t, deposit.rewardAmount, uint64(0))
+		shouldEQ(t, deposit.rewardClaimHeight, uint64(0))
+		shouldEQ(t, deposit.rewardClaimAt, uint64(0))
+
+		//
+		shouldEQ(t, len(depositsByProject), 1)
+		shouldEQ(t, depositsByProject[`gno.land/r/onbloc/obl:124`][`30`][0], `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+
+		//
+		shouldEQ(t, len(depositsByUser), 1)
+		shouldEQ(t, depositsByUser[`g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv`][0], `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+	}
+
+}
+
+func TestClaimDepositGns(t *testing.T) {
+	std.TestSetRealm(user01Realm)
+	std.TestSetOrigCaller(user01)
+
+	t.Run("claim before 30 days", func(t *testing.T) {
+		claimed := ClaimDepositGns()
+		std.TestSkipHeights(1)
+		shouldEQ(t, claimed, uint64(0))
+		println()
+		println()
+	})
+
+	t.Run("claim after 30 days", func(t *testing.T) {
+		std.TestSkipHeights(int64(TIMESTAMP_30DAYS) / 2)
+		claimed := ClaimDepositGns()
+		shouldEQ(t, claimed, uint64(1_000_000))
+		println()
+		println()
+	})
+
+	t.Run("no more claim in same block", fun99999999c(t *testing.T) {
+		claimed := ClaimDepositGns()
+		std.TestSkipHeights(1)
+		shouldEQ(t, claimed, uint64(0))
+		println()
+		println()
+	})
+
+	//
+	shouldEQ(t, len(deposits), 1)
+	deposit := deposits[`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`]
+	shouldEQ(t, deposit.id, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+	shouldEQ(t, deposit.projectId, `gno.land/r/onbloc/obl:124`)
+	shouldEQ(t, deposit.tier, `30`)
+	shouldEQ(t, deposit.depositor, user01)
+	shouldEQ(t, deposit.amount, uint64(1000000))
+	shouldEQ(t, deposit.depositHeight, uint64(129))
+	shouldEQ(t, deposit.depositAt, uint64(1234567902))
+	shouldEQ(t, deposit.depositClaimHeight, uint64(1296131))
+	shouldEQ(t, deposit.depositClaimAt, uint64(1237159906))
+	shouldEQ(t, deposit.rewardAmount, uint64(99999999))
+	shouldEQ(t, deposit.rewardClaimHeight, uint64(0))
+	shouldEQ(t, deposit.rewardClaimAt, uint64(0))
+
+	//
+	shouldEQ(t, len(depositsByProject), 1)
+	shouldEQ(t, depositsByProject[`gno.land/r/onbloc/obl:124`][`30`][0], `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+
+	//
+	shouldEQ(t, len(depositsByUser), 1)
+	shouldEQ(t, depositsByUser[`g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv`][0], `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+}
