@@ -36,7 +36,7 @@ var (
 /* HELPER */
 func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {
-		t.Errorf("got %v, expected %v", got, expected)
+		t.Errorf("got\n%v\n\nexpected\n%v\n", got, expected)
 	}
 }
 
