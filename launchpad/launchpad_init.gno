@@ -34,7 +34,7 @@ func CreateProject(
 	tier90Ratio uint64, // 20
 	tier180Ratio uint64, // 70
 	startTime uint64,
-) {
+) string { // projectId
 	// only admin can create project
 	if std.GetOrigCaller() != consts.GNOSWAP_ADMIN {
 		panic("only admin can create project")
@@ -48,10 +48,12 @@ func CreateProject(
 		panic("invalid recipient addr")
 	}
 
-	tokensToCheck := strings.Split(conditionsToken, "*PAD*")
-	for _, token := range tokensToCheck {
-		if _, exist := registered[token]; !exist {
-			panic("condition token not registered")
+	if strings.Contains(conditionsToken, "*PAD*") {
+		tokensToCheck := strings.Split(conditionsToken, "*PAD*")
+		for _, token := range tokensToCheck {
+			if _, exist := registered[token]; !exist {
+				panic(ufmt.Sprintf("condition token(%s) not registered", token))
+			}
 		}
 	}
 
@@ -97,7 +99,7 @@ func CreateProject(
 	tier30AmountPerSecondX96 := new(u256.Uint).Div(tier30AmountX96, u256.NewUint(TIMESTAMP_30DAYS))
 	tier30 := Tier{
 		id:                     generateTierId(projectId, 30),
-		claimWaitDuration:      TIMESTAMP_3DAYS,
+		collectWaitDuration:    TIMESTAMP_3DAYS,
 		tierAmount:             tier30Amount,
 		tierAmountPerSecondX96: tier30AmountPerSecondX96,
 		endTime:                startTime + TIMESTAMP_30DAYS,
@@ -107,7 +109,7 @@ func CreateProject(
 	tier90AmountPerSecondX96 := new(u256.Uint).Div(tier90AmountX96, u256.NewUint(TIMESTAMP_90DAYS))
 	tier90 := Tier{
 		id:                     generateTierId(projectId, 90),
-		claimWaitDuration:      TIMESTAMP_7DAYS,
+		collectWaitDuration:    TIMESTAMP_7DAYS,
 		tierAmount:             tier90Amount,
 		tierAmountPerSecondX96: tier90AmountPerSecondX96,
 		endTime:                startTime + TIMESTAMP_90DAYS,
@@ -117,7 +119,7 @@ func CreateProject(
 	tier180AmountPerSecondX96 := new(u256.Uint).Div(tier180AmountX96, u256.NewUint(TIMESTAMP_180DAYS))
 	tier180 := Tier{
 		id:                     generateTierId(projectId, 180),
-		claimWaitDuration:      TIMESTAMP_14DAYS,
+		collectWaitDuration:    TIMESTAMP_14DAYS,
 		tierAmount:             tier180Amount,
 		tierAmountPerSecondX96: tier180AmountPerSecondX96,
 		endTime:                startTime + TIMESTAMP_180DAYS,
@@ -144,6 +146,8 @@ func CreateProject(
 	projects[projectId] = project
 
 	// XXX: emit event
+
+	return projectId
 }
 
 func RefundProject(projectId string) uint64 {
@@ -166,7 +170,7 @@ func RefundProject(projectId string) uint64 {
 		panic("project not ended yet")
 	}
 
-	toRefund := project.depositAmount - project.totalClaimedAmount
+	toRefund := project.depositAmount - project.totalCollectedAmount
 	transferByRegisterCall(
 		project.tokenPath,
 		recipient,
@@ -188,8 +192,11 @@ func generateTierId(projectId string, duration uint64) string {
 }
 
 func makeConditions(conditionsToken string, conditionsAmount string) map[string]Condition {
-	conditions := make(map[string]Condition)
+	if conditionsToken == "" || conditionsAmount == "" {
+		return nil
+	}
 
+	conditions := make(map[string]Condition)
 	tokens := strings.Split(conditionsToken, "*PAD*")
 	amounts := strings.Split(conditionsAmount, "*PAD*")
 	if len(tokens) != len(amounts) {

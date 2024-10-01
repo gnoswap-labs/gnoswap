@@ -5,21 +5,18 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
+
+	gs "gno.land/r/gnoswap/v2/gov/staker"
 )
 
-// BELOW LOGIC is for each project's recipient
-/*
-	`launchpad` contract will have xGNS because of deposit
-	Therefore when claiming reward from protocol fee, launchpad will get some
-	These rewards should be distributed to the recipients of the projects
+// CollectProtocolFee collects protocol fee from gov/staker
+// each project's recipient wallet will be rewarded
+func CollectProtocolFee() {
+	gs.CollectReward()
 
+	// XXX: emit event
+}
 
-	# re-use gov'stakers reward calculation logic
-	https://github.com/gnoswap-labs/gnoswap/blob/8efa646a76024af74f3920d5b15a01f8ab1d937c/gov/staker/reward_calculation.gno#L40-L69
-
-*/
-
-// BELOW LOGIC is for users who made deposit
 var (
 	lastCalculatedHeight uint64
 )
@@ -28,9 +25,8 @@ func init() {
 	lastCalculatedHeight = uint64(std.GetHeight())
 }
 
-// claim reward for all projects, most likely won't be used
-// `ClaimRewardByProjectId` will be used
-func ClaimReward() {
+// CollectReward collects reward from entire deposit by caller
+func CollectReward() {
 	calculateDepositReward()
 
 	callerStr := std.GetOrigCaller().String()
@@ -54,22 +50,22 @@ func ClaimReward() {
 		projectToken := project.tokenPath
 
 		if deposit.rewardAmount > 0 { // deposit has some reward
-			if deposit.rewardClaimAt != 0 { // this claim is not first claim
-				println("(N)th claim")
+			if deposit.rewardCollectAt != 0 { // this collect is not first collect
+				println("(N)th collect")
 				toUser[projectToken] += deposit.rewardAmount
 			} else {
-				// if fisrt claim, then check tier's claim wait duration
-				claimableAfter := uint64(0)
+				// if fisrt collect, then check tier's collect wait duration
+				collectableAfter := uint64(0)
 				switch deposit.tier {
 				case "30":
-					claimableAfter = project.startTime + project.tier30.claimWaitDuration
+					collectableAfter = project.startTime + project.tier30.collectWaitDuration
 				case "90":
-					claimableAfter = project.startTime + project.tier90.claimWaitDuration
+					collectableAfter = project.startTime + project.tier90.collectWaitDuration
 				case "180":
-					claimableAfter = project.startTime + project.tier180.claimWaitDuration
+					collectableAfter = project.startTime + project.tier180.collectWaitDuration
 				}
 
-				if uint64(time.Now().Unix()) < claimableAfter {
+				if uint64(time.Now().Unix()) < collectableAfter {
 					println("NOT CLAIMABLE YET")
 					continue
 				}
@@ -80,13 +76,13 @@ func ClaimReward() {
 		}
 
 		// update project
-		project.totalClaimedAmount += deposit.rewardAmount
+		project.totalCollectedAmount += deposit.rewardAmount
 		projects[deposit.projectId] = project
 
 		// update deposit
 		deposit.rewardAmount = 0
-		deposit.rewardClaimHeight = uint64(std.GetHeight())
-		deposit.rewardClaimAt = uint64(time.Now().Unix())
+		deposit.rewardCollectHeight = uint64(std.GetHeight())
+		deposit.rewardCollectAt = uint64(time.Now().Unix())
 		deposits[depositId] = deposit
 	}
 
@@ -100,7 +96,8 @@ func ClaimReward() {
 	// XXX: emit event
 }
 
-func ClaimRewardByProjectId(projectId string) uint64 {
+// CollectRewardByProjectId collects reward from entire deposit of certain project by caller
+func CollectRewardByProjectId(projectId string) uint64 {
 	project, exist := projects[projectId]
 	if !exist {
 		println("NO PROJECT FOR THIS ID", projectId)
@@ -135,21 +132,21 @@ func ClaimRewardByProjectId(projectId string) uint64 {
 		}
 
 		if deposit.rewardAmount > 0 {
-			if deposit.rewardClaimAt != 0 {
-				println("(N)th claim")
+			if deposit.rewardCollectAt != 0 {
+				println("(N)th collect")
 				toUser += deposit.rewardAmount
 			} else {
-				claimableAfter := uint64(0)
+				collectableAfter := uint64(0)
 				switch deposit.tier {
 				case "30":
-					claimableAfter = project.startTime + project.tier30.claimWaitDuration
+					collectableAfter = project.startTime + project.tier30.collectWaitDuration
 				case "90":
-					claimableAfter = project.startTime + project.tier90.claimWaitDuration
+					collectableAfter = project.startTime + project.tier90.collectWaitDuration
 				case "180":
-					claimableAfter = project.startTime + project.tier180.claimWaitDuration
+					collectableAfter = project.startTime + project.tier180.collectWaitDuration
 				}
 
-				if uint64(time.Now().Unix()) < claimableAfter {
+				if uint64(time.Now().Unix()) < collectableAfter {
 					println("NOT CLAIMABLE YET")
 					continue
 				}
@@ -160,13 +157,13 @@ func ClaimRewardByProjectId(projectId string) uint64 {
 		}
 
 		// update project
-		project.totalClaimedAmount += deposit.rewardAmount
+		project.totalCollectedAmount += deposit.rewardAmount
 		projects[deposit.projectId] = project
 
 		// update deposit
 		deposit.rewardAmount = 0
-		deposit.rewardClaimHeight = uint64(std.GetHeight())
-		deposit.rewardClaimAt = uint64(time.Now().Unix())
+		deposit.rewardCollectHeight = uint64(std.GetHeight())
+		deposit.rewardCollectAt = uint64(time.Now().Unix())
 		deposits[depositId] = deposit
 	}
 
@@ -178,7 +175,8 @@ func ClaimRewardByProjectId(projectId string) uint64 {
 	return toUser
 }
 
-func ClaimRewardByProjectTier(tierId string) uint64 {
+// CollectRewardByProjectTier collects reward from entire deposit of certain project tier by caller
+func CollectRewardByProjectTier(tierId string) uint64 {
 	projectId, tierStr := getProjectIdAndTierFromTierId(tierId)
 	project, exist := projects[projectId]
 	if !exist {
@@ -201,6 +199,7 @@ func ClaimRewardByProjectTier(tierId string) uint64 {
 
 	toUser := uint64(0)
 	for _, depositId := range depositIds {
+		println("depositId:", depositId)
 		deposit := deposits[depositId]
 
 		// matching tier
@@ -217,21 +216,21 @@ func ClaimRewardByProjectTier(tierId string) uint64 {
 			}
 
 			if deposit.rewardAmount > 0 {
-				if deposit.rewardClaimAt != 0 {
-					println("(N)th claim")
+				if deposit.rewardCollectAt != 0 {
+					println("(N)th collect")
 					toUser += deposit.rewardAmount
 				} else {
-					claimableAfter := uint64(0)
+					collectableAfter := uint64(0)
 					switch deposit.tier {
 					case "30":
-						claimableAfter = project.startTime + project.tier30.claimWaitDuration
+						collectableAfter = project.startTime + project.tier30.collectWaitDuration
 					case "90":
-						claimableAfter = project.startTime + project.tier90.claimWaitDuration
+						collectableAfter = project.startTime + project.tier90.collectWaitDuration
 					case "180":
-						claimableAfter = project.startTime + project.tier180.claimWaitDuration
+						collectableAfter = project.startTime + project.tier180.collectWaitDuration
 					}
 
-					if uint64(time.Now().Unix()) < claimableAfter {
+					if uint64(time.Now().Unix()) < collectableAfter {
 						println("NOT CLAIMABLE YET")
 						continue
 					}
@@ -243,13 +242,13 @@ func ClaimRewardByProjectTier(tierId string) uint64 {
 		}
 
 		// update project
-		project.totalClaimedAmount += deposit.rewardAmount
+		project.totalCollectedAmount += deposit.rewardAmount
 		projects[deposit.projectId] = project
 
 		// update deposit
 		deposit.rewardAmount = 0
-		deposit.rewardClaimHeight = uint64(std.GetHeight())
-		deposit.rewardClaimAt = uint64(time.Now().Unix())
+		deposit.rewardCollectHeight = uint64(std.GetHeight())
+		deposit.rewardCollectAt = uint64(time.Now().Unix())
 		deposits[depositId] = deposit
 	}
 
@@ -261,7 +260,9 @@ func ClaimRewardByProjectTier(tierId string) uint64 {
 	return toUser
 }
 
-func ClaimRewardByDepositId(depositId string) uint64 {
+// CollectRewardByDepositId collects reward from certain deposit by caller
+func CollectRewardByDepositId(depositId string) uint64 {
+	println("CollectRewardByDepositId", depositId)
 	deposit, exist := deposits[depositId]
 	if !exist {
 		panic("deposit not found")
@@ -280,41 +281,42 @@ func ClaimRewardByDepositId(depositId string) uint64 {
 	}
 
 	calculateDepositReward()
+	deposit = deposits[depositId] // get updated deposit
 
 	toUser := uint64(0)
 
 	if deposit.rewardAmount > 0 {
-		if deposit.rewardClaimAt != 0 {
-			println("(N)th claim")
+		if deposit.rewardCollectAt != 0 {
+			println("(N)th collect")
 			toUser += deposit.rewardAmount
 		} else {
-			claimableAfter := uint64(0)
+			collectableAfter := uint64(0)
 			switch deposit.tier {
 			case "30":
-				claimableAfter = project.startTime + project.tier30.claimWaitDuration
+				collectableAfter = project.startTime + project.tier30.collectWaitDuration
 			case "90":
-				claimableAfter = project.startTime + project.tier90.claimWaitDuration
+				collectableAfter = project.startTime + project.tier90.collectWaitDuration
 			case "180":
-				claimableAfter = project.startTime + project.tier180.claimWaitDuration
-			}
-
-			if uint64(time.Now().Unix()) < claimableAfter {
-				println("NOT CLAIMABLE YET")
-				continue
+				collectableAfter = project.startTime + project.tier180.collectWaitDuration
 			}
 
 			println("token:", project.tokenPath, "reward:", deposit.rewardAmount)
+			if uint64(time.Now().Unix()) < collectableAfter {
+				println("NOT COLLECTABLE YET")
+				return 0
+			}
+
 			toUser += deposit.rewardAmount
 		}
 
 		// update project
-		project.totalClaimedAmount += deposit.rewardAmount
+		project.totalCollectedAmount += deposit.rewardAmount
 		projects[deposit.projectId] = project
 
 		// update deposit
 		deposit.rewardAmount = 0
-		deposit.rewardClaimHeight = uint64(std.GetHeight())
-		deposit.rewardClaimAt = uint64(time.Now().Unix())
+		deposit.rewardCollectHeight = uint64(std.GetHeight())
+		deposit.rewardCollectAt = uint64(time.Now().Unix())
 		deposits[depositId] = deposit
 	}
 
@@ -326,7 +328,6 @@ func ClaimRewardByDepositId(depositId string) uint64 {
 	return toUser
 }
 
-var lastCalculateHeightForProjectTier = make(map[string]uint64)    // using height
 var lastCalculateTimestampForProjectTier = make(map[string]uint64) // using time
 
 // amount of project token for each deposit will be calculated
@@ -350,7 +351,7 @@ func calculateDepositReward() {
 		// println("project.startTime\t", project.startTime)
 		// println("now\t\t\t", now)
 		if project.startTime > now {
-			// println("PROJECT NOT STARTED")
+			println("PROJECT NOT STARTED")
 			continue
 		}
 
@@ -404,11 +405,12 @@ func calculateDepositReward() {
 		// iterate deposit (by project)
 		depositWithTier, exist := depositsByProject[project.id]
 		if !exist {
-			// println("NO DEPOSIT FOR THIS PROJECT", project.id)
+			println("NO DEPOSIT FOR THIS PROJECT", project.id)
 			return
 		}
 
 		for tierStr, depositIds := range depositWithTier {
+			println("tierStr", tierStr)
 			tierAmount := uint64(0)
 			var rewardX96 *u256.Uint
 
@@ -435,23 +437,33 @@ func calculateDepositReward() {
 				case "180":
 					sinceLast = sinceLast180
 					rewardX96 = rewardX96_180.Clone()
+				default:
+					panic("INVALID TIER")
 				}
 				if sinceLast == 0 {
-					// println("NO BLOCK PASSED SINCE LAST CALCULATION")
+					println("NO BLOCK PASSED SINCE LAST CALCULATION")
 					continue
 				}
 
 				// calculate reward
 				ratioX96 := calcDepositRatioX96(tierAmount, deposit.amount)
-				depositRewardX96X96 := u256.Zero().Mul(rewardX96, ratioX96)
-				depositRewardX96 := u256.Zero().Div(depositRewardX96X96, q96)
-				depositRewardX := u256.Zero().Div(depositRewardX96, q96)
-				depoistReward := depositRewardX.Uint64()
-				// println("depoistReward:", depoistReward)
+				println("ratioX96:", ratioX96.ToString())
 
-				// println("B_deposit.rewardAmount", deposit.rewardAmount)
+				depositRewardX96X96 := u256.Zero().Mul(rewardX96, ratioX96)
+				println("depositRewardX96X96:", depositRewardX96X96.ToString())
+
+				depositRewardX96 := u256.Zero().Div(depositRewardX96X96, q96)
+				println("depositRewardX96:", depositRewardX96.ToString())
+
+				depositRewardX := u256.Zero().Div(depositRewardX96, q96)
+				println("depositRewardX:", depositRewardX.ToString())
+
+				depoistReward := depositRewardX.Uint64()
+				println("depoistReward:", depoistReward)
+
+				println("B_deposit.rewardAmount", deposit.rewardAmount)
 				deposit.rewardAmount += depoistReward
-				// println("A_deposit.rewardAmount", deposit.rewardAmount)
+				println("A_deposit.rewardAmount", deposit.rewardAmount)
 
 				// update deposit
 				deposits[depositId] = deposit

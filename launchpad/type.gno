@@ -31,14 +31,14 @@ type Project struct {
 
 	// statistics
 	// won't be decreased
-	totalDepositAmount uint64
-	totalParticipant   uint64
-	totalClaimedAmount uint64
+	totalDepositAmount   uint64
+	totalParticipant     uint64
+	totalCollectedAmount uint64
 }
 
 type Tier struct {
 	id                     string // '{projectId}:duration' // duartion == 30, 90, 180
-	claimWaitDuration      uint64
+	collectWaitDuration    uint64
 	tierAmount             uint64
 	tierAmountPerSecondX96 *u256.Uint
 
@@ -70,11 +70,11 @@ type Deposit struct {
 	depositAt     uint64 // timestamp
 
 	// deposit
-	depositClaimHeight uint64
-	depositClaimAt     uint64 // timestamp
+	depositCollectHeight uint64
+	depositCollectAt     uint64 // timestamp
 
-	// reward claim
-	rewardAmount      uint64
-	rewardClaimHeight uint64
-	rewardClaimAt     uint64 // timestamp
+	// reward collect
+	rewardAmount        uint64
+	rewardCollectHeight uint64
+	rewardCollectAt     uint64 // timestamp
 }

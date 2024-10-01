@@ -10,6 +10,7 @@ import (
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/r/gnoswap/v2/gns"
+	gs "gno.land/r/gnoswap/v2/gov/staker"
 	"gno.land/r/gnoswap/v2/gov/xgns"
 )
 
@@ -67,6 +68,9 @@ func DepositGns(
 		amount,
 	)
 
+	// update gov_staker contract's variable to calculate proejct's recipient's reward
+	gs.SetAmountByProjectWallet(project.recipient, amount, true) // true == add
+
 	// update tier
 	tier.depositAmount += amount
 	tier.participant += 1
@@ -118,8 +122,8 @@ func DepositGns(
 	// XXX: emit event
 }
 
-func ClaimDepositGns() uint64 {
-	calculateDepositReward() // uncomment this line if L#149 `ClaimReward` is removed
+func CollectDepositGns() uint64 {
+	calculateDepositReward() // uncomment this line if L#176 `CollectReward` is removed
 
 	caller := std.GetOrigCaller()
 	callerStr := caller.String()
@@ -137,20 +141,23 @@ func ClaimDepositGns() uint64 {
 
 		tier := getTier(project, deposit.tier)
 		if checkTierActive(project, tier) {
-			println("ClaimDepositGns()_STILL ACTIVE TIER", deposit.tier)
+			println("CollectDepositGns()_STILL ACTIVE TIER", deposit.tier)
 			continue
 		}
 
-		// claimed
-		if deposit.depositClaimHeight != 0 {
+		// collected
+		if deposit.depositCollectHeight != 0 {
 			continue
 		}
 
-		deposit.depositClaimHeight = uint64(std.GetHeight())
-		deposit.depositClaimAt = uint64(time.Now().Unix())
+		deposit.depositCollectHeight = uint64(std.GetHeight())
+		deposit.depositCollectAt = uint64(time.Now().Unix())
 		deposits[deposit.id] = deposit
 
 		gnsToUser += deposit.amount
+
+		// update gov_staker contract's variable to calculate proejct's recipient's reward
+		gs.SetAmountByProjectWallet(project.recipient, deposit.amount, false) // subtract
 
 		// update tier
 		tier.depositAmount -= deposit.amount
@@ -165,8 +172,8 @@ func ClaimDepositGns() uint64 {
 		xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), gnsToUser)
 		gns.Transfer(a2u(caller), gnsToUser)
 
-		// umcomment L#110 `calculateDepositReward()`
-		// ClaimReward()
+		// umcomment L#126 `calculateDepositReward()`
+		// CollectReward()
 
 		// XXX: emit event
 		return gnsToUser
@@ -197,6 +204,10 @@ func getProjectIdAndTierFromTierId(tierId string) (string, string) {
 }
 
 func checkDepositConditions(project Project) {
+	if project.conditions == nil {
+		return
+	}
+
 	for _, condition := range project.conditions {
 		if condition.minAmount == 0 {
 			continue
