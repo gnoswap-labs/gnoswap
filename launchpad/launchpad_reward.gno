@@ -100,10 +100,10 @@ func ClaimReward() {
 	// XXX: emit event
 }
 
-func ClaimRewardByProjectId(proejctId string) uint64 {
-	project, exist := projects[proejctId]
+func ClaimRewardByProjectId(projectId string) uint64 {
+	project, exist := projects[projectId]
 	if !exist {
-		println("NO PROJECT FOR THIS ID", proejctId)
+		println("NO PROJECT FOR THIS ID", projectId)
 		return 0
 	}
 
@@ -114,9 +114,9 @@ func ClaimRewardByProjectId(proejctId string) uint64 {
 		println("NO DEPOSIT FOR THIS USER", callerStr)
 		return 0
 	}
-	depositIds, exist := depositsByUserByProject[callerStr][proejctId]
+	depositIds, exist := depositsByUserByProject[callerStr][projectId]
 	if !exist {
-		println("NO DEPOSIT FOR THIS PROJECT", proejctId)
+		println("NO DEPOSIT FOR THIS PROJECT", projectId)
 		return 0
 	}
 
@@ -129,8 +129,8 @@ func ClaimRewardByProjectId(proejctId string) uint64 {
 		}
 
 		project := projects[deposit.projectId]
-		if project.id != proejctId {
-			println("PROJECT ID MISMATCH", project.id, proejctId)
+		if project.id != projectId {
+			println("PROJECT ID MISMATCH", project.id, projectId)
 			continue
 		}
 
@@ -157,6 +157,154 @@ func ClaimRewardByProjectId(proejctId string) uint64 {
 				println("token:", project.tokenPath, "reward:", deposit.rewardAmount)
 				toUser += deposit.rewardAmount
 			}
+		}
+
+		// update project
+		project.totalClaimedAmount += deposit.rewardAmount
+		projects[deposit.projectId] = project
+
+		// update deposit
+		deposit.rewardAmount = 0
+		deposit.rewardClaimHeight = uint64(std.GetHeight())
+		deposit.rewardClaimAt = uint64(time.Now().Unix())
+		deposits[depositId] = deposit
+	}
+
+	// transfer reward to user
+	transferByRegisterCall(project.tokenPath, std.GetOrigCaller(), toUser)
+
+	// XXX: emit event
+
+	return toUser
+}
+
+func ClaimRewardByProjectTier(tierId string) uint64 {
+	projectId, tierStr := getProjectIdAndTierFromTierId(tierId)
+	project, exist := projects[projectId]
+	if !exist {
+		println("NO PROJECT FOR THIS ID", projectId)
+		return 0
+	}
+
+	callerStr := std.GetOrigCaller().String()
+	if _, exist := depositsByUserByProject[callerStr]; !exist {
+		println("NO DEPOSIT FOR THIS USER", callerStr)
+		return 0
+	}
+	depositIds, exist := depositsByUserByProject[callerStr][projectId]
+	if !exist {
+		println("NO DEPOSIT FOR THIS PROJECT", projectId)
+		return 0
+	}
+
+	calculateDepositReward()
+
+	toUser := uint64(0)
+	for _, depositId := range depositIds {
+		deposit := deposits[depositId]
+
+		// matching tier
+		if deposit.projectId == projectId && deposit.tier == tierStr {
+			if deposit.rewardAmount == 0 {
+				println("NO REWARD FOR THIS DEPOSIT", depositId)
+				continue
+			}
+
+			project := projects[deposit.projectId]
+			if project.id != projectId {
+				println("PROJECT ID MISMATCH", project.id, projectId)
+				continue
+			}
+
+			if deposit.rewardAmount > 0 {
+				if deposit.rewardClaimAt != 0 {
+					println("(N)th claim")
+					toUser += deposit.rewardAmount
+				} else {
+					claimableAfter := uint64(0)
+					switch deposit.tier {
+					case "30":
+						claimableAfter = project.startTime + project.tier30.claimWaitDuration
+					case "90":
+						claimableAfter = project.startTime + project.tier90.claimWaitDuration
+					case "180":
+						claimableAfter = project.startTime + project.tier180.claimWaitDuration
+					}
+
+					if uint64(time.Now().Unix()) < claimableAfter {
+						println("NOT CLAIMABLE YET")
+						continue
+					}
+
+					println("token:", project.tokenPath, "reward:", deposit.rewardAmount)
+					toUser += deposit.rewardAmount
+				}
+			}
+		}
+
+		// update project
+		project.totalClaimedAmount += deposit.rewardAmount
+		projects[deposit.projectId] = project
+
+		// update deposit
+		deposit.rewardAmount = 0
+		deposit.rewardClaimHeight = uint64(std.GetHeight())
+		deposit.rewardClaimAt = uint64(time.Now().Unix())
+		deposits[depositId] = deposit
+	}
+
+	// transfer reward to user
+	transferByRegisterCall(project.tokenPath, std.GetOrigCaller(), toUser)
+
+	// XXX: emit event
+
+	return toUser
+}
+
+func ClaimRewardByDepositId(depositId string) uint64 {
+	deposit, exist := deposits[depositId]
+	if !exist {
+		panic("deposit not found")
+	}
+
+	project, exist := projects[deposit.projectId]
+	if !exist {
+		println("NO PROJECT FOR THIS ID", deposit.projectId)
+		return 0
+	}
+
+	callerStr := std.GetOrigCaller().String()
+	if _, exist := depositsByUserByProject[callerStr]; !exist {
+		println("NO DEPOSIT FOR THIS USER", callerStr)
+		return 0
+	}
+
+	calculateDepositReward()
+
+	toUser := uint64(0)
+
+	if deposit.rewardAmount > 0 {
+		if deposit.rewardClaimAt != 0 {
+			println("(N)th claim")
+			toUser += deposit.rewardAmount
+		} else {
+			claimableAfter := uint64(0)
+			switch deposit.tier {
+			case "30":
+				claimableAfter = project.startTime + project.tier30.claimWaitDuration
+			case "90":
+				claimableAfter = project.startTime + project.tier90.claimWaitDuration
+			case "180":
+				claimableAfter = project.startTime + project.tier180.claimWaitDuration
+			}
+
+			if uint64(time.Now().Unix()) < claimableAfter {
+				println("NOT CLAIMABLE YET")
+				continue
+			}
+
+			println("token:", project.tokenPath, "reward:", deposit.rewardAmount)
+			toUser += deposit.rewardAmount
 		}
 
 		// update project
