@@ -97,6 +97,8 @@ func CollectReward() {
 }
 
 // CollectRewardByProjectId collects reward from entire deposit of certain project by caller
+//
+// returns collected reward amount
 func CollectRewardByProjectId(projectId string) uint64 {
 	project, exist := projects[projectId]
 	if !exist {
@@ -176,6 +178,8 @@ func CollectRewardByProjectId(projectId string) uint64 {
 }
 
 // CollectRewardByProjectTier collects reward from entire deposit of certain project tier by caller
+//
+// returns collected reward amount
 func CollectRewardByProjectTier(tierId string) uint64 {
 	projectId, tierStr := getProjectIdAndTierFromTierId(tierId)
 	project, exist := projects[projectId]
@@ -261,6 +265,8 @@ func CollectRewardByProjectTier(tierId string) uint64 {
 }
 
 // CollectRewardByDepositId collects reward from certain deposit by caller
+//
+// returns collected reward amount
 func CollectRewardByDepositId(depositId string) uint64 {
 	println("CollectRewardByDepositId", depositId)
 	deposit, exist := deposits[depositId]
@@ -376,14 +382,16 @@ func calculateDepositReward() {
 			lastCalculateTimestampForProjectTier[project.tier180.id] = project.startTime
 		}
 
-		// if current time is greater than endTime, then use endTime
+		// if current time is greater than endTime, then use endTime as project's each tier's endTime
 		endTimeFor30 := minU64(now, project.startTime+TIMESTAMP_30DAYS)
 		endTimeFor90 := minU64(now, project.startTime+TIMESTAMP_90DAYS)
 		endTimeFor180 := minU64(now, project.startTime+TIMESTAMP_180DAYS)
 
-		sinceLast30 := endTimeFor30 - lastCalculateTimestampForProjectTier[project.tier30.id]
-		sinceLast90 := endTimeFor90 - lastCalculateTimestampForProjectTier[project.tier90.id]
-		sinceLast180 := endTimeFor180 - lastCalculateTimestampForProjectTier[project.tier180.id]
+		// if last calculate time is greater than endTime, then use endTime to calculate duration
+		sinceLast30 := endTimeFor30 - minU64(endTimeFor30, lastCalculateTimestampForProjectTier[project.tier30.id])
+		sinceLast90 := endTimeFor90 - minU64(endTimeFor90, lastCalculateTimestampForProjectTier[project.tier90.id])
+		sinceLast180 := endTimeFor180 - minU64(endTimeFor180, lastCalculateTimestampForProjectTier[project.tier180.id])
+
 		lastCalculateTimestampForProjectTier[project.tier30.id] = now
 		lastCalculateTimestampForProjectTier[project.tier90.id] = now
 		lastCalculateTimestampForProjectTier[project.tier180.id] = now
@@ -483,9 +491,4 @@ func calcDepositRatioX96(tierAmount uint64, amount uint64) *u256.Uint {
 	depositRatioX96 = depositRatioX96.Div(depositRatioX96, u256.NewUint(1_000_000_000))
 
 	return depositRatioX96
-}
-
-func GetClaimableReward() string { // return in json format
-	// for each deposit
-	panic("TODO")
 }
