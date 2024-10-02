@@ -37,7 +37,7 @@ func TestCreateProject(t *testing.T) {
 	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
 	std.TestSkipHeights(1)
 
-	CreateProject(
+	projectId := CreateProject(
 		oblPath,
 		projectAddr,
 		uint64(1_000_000_000), // 1000000000
@@ -48,6 +48,7 @@ func TestCreateProject(t *testing.T) {
 		uint64(70),                   // 700000000
 		uint64(time.Now().Unix()+10), // 5 block later
 	)
+	shouldEQ(t, projectId, `gno.land/r/onbloc/obl:124`)
 	std.TestSkipHeights(1)
 
 }
@@ -66,28 +67,32 @@ func TestDepositGnsToTier30(t *testing.T) {
 
 	// skip some blocks to make project active
 	std.TestSkipHeights(4)
-	DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000))
+	depositId := DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000))
+	shouldEQ(t, depositId, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 	std.TestSkipHeights(1)
 }
 
-func TestClaimReward(t *testing.T) {
+func TestCollectRewardByProjectId(t *testing.T) {
 	std.TestSetRealm(user01Realm)
 	std.TestSetOrigCaller(user01)
 
 	t.Run("claim reward before 30 days", func(t *testing.T) {
-		ClaimReward()
+		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
+		shouldEQ(t, reward, uint64(0))
 		std.TestSkipHeights(1)
 		println()
 	})
 
 	t.Run("claim after 30 days", func(t *testing.T) {
 		std.TestSkipHeights(int64(TIMESTAMP_30DAYS) / 2)
-		ClaimReward()
+		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
+		shouldEQ(t, reward, uint64(99999999))
 		println()
 	})
 
 	t.Run("no more claim in same block", func(t *testing.T) {
-		ClaimReward()
+		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
+		shouldEQ(t, reward, uint64(0))
 		println()
 	})
 
@@ -101,11 +106,11 @@ func TestClaimReward(t *testing.T) {
 	shouldEQ(t, deposit.amount, uint64(1000000))
 	shouldEQ(t, deposit.depositHeight, uint64(129))
 	shouldEQ(t, deposit.depositAt, uint64(1234567902))
-	shouldEQ(t, deposit.depositClaimHeight, uint64(0))
-	shouldEQ(t, deposit.depositClaimAt, uint64(0))
+	shouldEQ(t, deposit.depositCollectHeight, uint64(0))
+	shouldEQ(t, deposit.depositCollectAt, uint64(0))
 	shouldEQ(t, deposit.rewardAmount, uint64(0))
-	shouldEQ(t, deposit.rewardClaimHeight, uint64(1296131))
-	shouldEQ(t, deposit.rewardClaimAt, uint64(1237159906))
+	shouldEQ(t, deposit.rewardCollectHeight, uint64(1296131))
+	shouldEQ(t, deposit.rewardCollectAt, uint64(1237159906))
 
 	//
 	shouldEQ(t, len(depositsByProject), 1)

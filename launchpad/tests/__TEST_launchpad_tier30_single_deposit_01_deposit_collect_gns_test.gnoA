@@ -45,7 +45,7 @@ func TestCreateProject(t *testing.T) {
 		shouldEQ(t, len(depositsByUser), 0)
 	}
 
-	CreateProject(
+	projectId := CreateProject(
 		oblPath,
 		projectAddr,
 		uint64(1_000_000_000), // 1000000000
@@ -56,6 +56,7 @@ func TestCreateProject(t *testing.T) {
 		uint64(70),                   // 700000000
 		uint64(time.Now().Unix()+10), // 5 block later
 	)
+	shouldEQ(t, projectId, `gno.land/r/onbloc/obl:124`)
 	std.TestSkipHeights(1)
 
 	{
@@ -74,7 +75,7 @@ func TestCreateProject(t *testing.T) {
 		shouldEQ(t, project.tier30Ratio, uint64(10))
 		tier30 := project.tier30
 		shouldEQ(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
-		shouldEQ(t, tier30.claimWaitDuration, TIMESTAMP_3DAYS)
+		shouldEQ(t, tier30.collectWaitDuration, TIMESTAMP_3DAYS)
 		shouldEQ(t, tier30.tierAmount, uint64(100000000))
 		shouldNEQ(t, tier30.tierAmountPerSecondX96.ToString(), `0`)
 		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
@@ -84,7 +85,7 @@ func TestCreateProject(t *testing.T) {
 		shouldEQ(t, project.tier90Ratio, uint64(20))
 		tier90 := project.tier90
 		shouldEQ(t, tier90.id, `gno.land/r/onbloc/obl:124:90`)
-		shouldEQ(t, tier90.claimWaitDuration, TIMESTAMP_7DAYS)
+		shouldEQ(t, tier90.collectWaitDuration, TIMESTAMP_7DAYS)
 		shouldEQ(t, tier90.tierAmount, uint64(200000000))
 		shouldNEQ(t, tier90.tierAmountPerSecondX96.ToString(), `0`)
 		shouldEQ(t, tier90.endTime, project.startTime+TIMESTAMP_90DAYS)
@@ -94,7 +95,7 @@ func TestCreateProject(t *testing.T) {
 		shouldEQ(t, project.tier180Ratio, uint64(70))
 		tier180 := project.tier180
 		shouldEQ(t, tier180.id, `gno.land/r/onbloc/obl:124:180`)
-		shouldEQ(t, tier180.claimWaitDuration, TIMESTAMP_14DAYS)
+		shouldEQ(t, tier180.collectWaitDuration, TIMESTAMP_14DAYS)
 		shouldEQ(t, tier180.tierAmount, uint64(700000000))
 		shouldNEQ(t, tier180.tierAmountPerSecondX96.ToString(), `0`)
 		shouldEQ(t, tier180.endTime, project.startTime+TIMESTAMP_180DAYS)
@@ -135,7 +136,7 @@ func TestDepositGnsToTier30(t *testing.T) {
 
 		tier30 := project.tier30
 		shouldEQ(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
-		shouldEQ(t, tier30.claimWaitDuration, TIMESTAMP_3DAYS)
+		shouldEQ(t, tier30.collectWaitDuration, TIMESTAMP_3DAYS)
 		shouldEQ(t, tier30.tierAmount, uint64(100000000))
 		shouldNEQ(t, tier30.tierAmountPerSecondX96.ToString(), `0`)
 		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
@@ -149,7 +150,8 @@ func TestDepositGnsToTier30(t *testing.T) {
 
 	// skip some blocks to make project active
 	std.TestSkipHeights(4)
-	DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000)) // 1000000
+	depositId := DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000)) // 1000000
+	shouldEQ(t, depositId, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 	std.TestSkipHeights(1)
 
 	{
@@ -161,7 +163,7 @@ func TestDepositGnsToTier30(t *testing.T) {
 
 		tier30 := project.tier30
 		shouldEQ(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
-		shouldEQ(t, tier30.claimWaitDuration, TIMESTAMP_3DAYS)
+		shouldEQ(t, tier30.collectWaitDuration, TIMESTAMP_3DAYS)
 		shouldEQ(t, tier30.tierAmount, uint64(100000000))
 		shouldNEQ(t, tier30.tierAmountPerSecondX96.ToString(), `0`)
 		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
@@ -178,11 +180,11 @@ func TestDepositGnsToTier30(t *testing.T) {
 		shouldEQ(t, deposit.amount, uint64(1000000))
 		shouldEQ(t, deposit.depositHeight, uint64(129))
 		shouldEQ(t, deposit.depositAt, uint64(1234567902))
-		shouldEQ(t, deposit.depositClaimHeight, uint64(0))
-		shouldEQ(t, deposit.depositClaimAt, uint64(0))
+		shouldEQ(t, deposit.depositCollectHeight, uint64(0))
+		shouldEQ(t, deposit.depositCollectAt, uint64(0))
 		shouldEQ(t, deposit.rewardAmount, uint64(0))
-		shouldEQ(t, deposit.rewardClaimHeight, uint64(0))
-		shouldEQ(t, deposit.rewardClaimAt, uint64(0))
+		shouldEQ(t, deposit.rewardCollectHeight, uint64(0))
+		shouldEQ(t, deposit.rewardCollectAt, uint64(0))
 
 		//
 		shouldEQ(t, len(depositsByProject), 1)
@@ -192,15 +194,14 @@ func TestDepositGnsToTier30(t *testing.T) {
 		shouldEQ(t, len(depositsByUser), 1)
 		shouldEQ(t, depositsByUser[`g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv`][0], `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 	}
-
 }
 
-func TestClaimDepositGns(t *testing.T) {
+func TestCollectDepositGns(t *testing.T) {
 	std.TestSetRealm(user01Realm)
 	std.TestSetOrigCaller(user01)
 
 	t.Run("claim before 30 days", func(t *testing.T) {
-		claimed := ClaimDepositGns()
+		claimed := CollectDepositGns()
 		std.TestSkipHeights(1)
 		shouldEQ(t, claimed, uint64(0))
 		println()
@@ -209,14 +210,14 @@ func TestClaimDepositGns(t *testing.T) {
 
 	t.Run("claim after 30 days", func(t *testing.T) {
 		std.TestSkipHeights(int64(TIMESTAMP_30DAYS) / 2)
-		claimed := ClaimDepositGns()
+		claimed := CollectDepositGns()
 		shouldEQ(t, claimed, uint64(1_000_000))
 		println()
 		println()
 	})
 
 	t.Run("no more claim in same block", func(t *testing.T) {
-		claimed := ClaimDepositGns()
+		claimed := CollectDepositGns()
 		std.TestSkipHeights(1)
 		shouldEQ(t, claimed, uint64(0))
 		println()
@@ -233,11 +234,11 @@ func TestClaimDepositGns(t *testing.T) {
 	shouldEQ(t, deposit.amount, uint64(1000000))
 	shouldEQ(t, deposit.depositHeight, uint64(129))
 	shouldEQ(t, deposit.depositAt, uint64(1234567902))
-	shouldEQ(t, deposit.depositClaimHeight, uint64(1296131))
-	shouldEQ(t, deposit.depositClaimAt, uint64(1237159906))
+	shouldEQ(t, deposit.depositCollectHeight, uint64(1296131))
+	shouldEQ(t, deposit.depositCollectAt, uint64(1237159906))
 	shouldEQ(t, deposit.rewardAmount, uint64(99999999))
-	shouldEQ(t, deposit.rewardClaimHeight, uint64(0))
-	shouldEQ(t, deposit.rewardClaimAt, uint64(0))
+	shouldEQ(t, deposit.rewardCollectHeight, uint64(0))
+	shouldEQ(t, deposit.rewardCollectAt, uint64(0))
 
 	//
 	shouldEQ(t, len(depositsByProject), 1)

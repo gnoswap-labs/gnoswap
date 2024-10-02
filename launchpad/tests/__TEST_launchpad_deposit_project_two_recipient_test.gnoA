@@ -55,7 +55,7 @@ func TestCreateProject(t *testing.T) {
 	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
 	std.TestSkipHeights(1)
 
-	CreateProject(
+	projectId := CreateProject(
 		oblPath,
 		projectAddr,
 		uint64(1_000_000_000), // 1000000000
@@ -66,6 +66,7 @@ func TestCreateProject(t *testing.T) {
 		uint64(70),                   // 700000000
 		uint64(time.Now().Unix()+10), // 5 block later
 	)
+	shouldEQ(t, projectId, `gno.land/r/onbloc/obl:124`)
 	std.TestSkipHeights(1)
 }
 
@@ -76,7 +77,7 @@ func TestCreateProject02(t *testing.T) {
 	bar.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
 	std.TestSkipHeights(1)
 
-	CreateProject(
+	projectId := CreateProject(
 		barPath,
 		projectAddr02,
 		uint64(1_000_000_000), // 1000000000
@@ -87,6 +88,7 @@ func TestCreateProject02(t *testing.T) {
 		uint64(70),                   // 700000000
 		uint64(time.Now().Unix()+10), // 5 block later
 	)
+	shouldEQ(t, projectId, `gno.land/r/onbloc/bar:126`)
 	std.TestSkipHeights(1)
 }
 
@@ -104,7 +106,8 @@ func TestDepositGnsToTierProject01_Tier30(t *testing.T) {
 
 	// skip some blocks to make project active
 	std.TestSkipHeights(4)
-	DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000)) // 1000000
+	depositId := DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000)) // 1000000
+	shouldEQ(t, depositId, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:131`)
 	std.TestSkipHeights(1)
 }
 
@@ -119,7 +122,8 @@ func TestDepositGnsToTierProject02_Tier180(t *testing.T) {
 
 	// skip some blocks to make project active
 	std.TestSkipHeights(4)
-	DepositGns("gno.land/r/onbloc/bar:126:180", uint64(9_000_000)) // 9000000
+	depositId := DepositGns("gno.land/r/onbloc/bar:126:180", uint64(9_000_000)) // 9000000
+	shouldEQ(t, depositId, `gno.land/r/onbloc/bar:126:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:136`)
 	std.TestSkipHeights(1)
 }
 
