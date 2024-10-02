@@ -37,6 +37,32 @@ var (
 	userProtocolFeeReward = make(map[string]map[string]uint64) // address -> tokenPath -> tokenAmount
 )
 
+// === LAUNCHPAD DEPOSIT
+var (
+	// totalAmountByLaunchpad == xgns.BalanceOf(consts.LAUNCHPAD_ADDR)
+	amountByProjectWallet = make(map[string]uint64) // (project's) recipient wallet => amount
+	rewardByProjectWallet = make(map[string]uint64) // (project's) recipient wallet => reward
+)
+
+func GetRewardByProjectWallet(addr std.Address) uint64 {
+	return rewardByProjectWallet[addr.String()]
+}
+
+func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
+	prev := std.PrevRealm().PkgPath()
+	if prev != consts.LAUNCHPAD_PATH {
+		panic(ufmt.Sprintf("only launchpad can set amountByProjectWallet, called from %s", prev))
+	}
+
+	calculateReward()
+
+	if add {
+		amountByProjectWallet[addr.String()] = amount
+	} else {
+		amountByProjectWallet[addr.String()] -= amount
+	}
+} // LAUCNHAPD DEPOSIT ===
+
 func calculateReward() {
 	println("[START START] calculateReward")
 	height := uint64(std.GetHeight())
@@ -61,6 +87,20 @@ func calculateReward() {
 		ratio = ratio.Div(ratio, u256.NewUint(1_000_000_000))
 
 		userXGnsRatio[delegator] = ratio
+	}
+
+	// calculate project's recipient's xGNS ratio
+	// to calculate protocol fee
+	for recipient, amount := range amountByProjectWallet {
+		println("LAUNCHPAD_recipient:", recipient)
+		println("LAUNCHPAD_amount:", amount)
+		xGnsRecipientX96 := new(u256.Uint).Mul(u256.NewUint(amount), q96)
+		xGnsRecipientX96 = new(u256.Uint).Mul(xGnsRecipientX96, u256.NewUint(1_000_000_000))
+		ratio := new(u256.Uint).Div(xGnsRecipientX96, xGnsX96)
+		ratio = ratio.Mul(ratio, q96)
+		ratio = ratio.Div(ratio, u256.NewUint(1_000_000_000))
+		userXGnsRatio[recipient] = ratio
+		println("LAUNCHPAD_ratio:", ratio.ToString())
 	}
 
 	calculateGNSEmission()
@@ -172,7 +212,6 @@ func calculateProtocolFee() {
 		println("FINAL LEFT TOKEN:", tokenPath, "AMOUNT:", leftProtocolFeeFromLast[tokenPath])
 		println()
 	}
-
 }
 
 func getGovStakerGnsWithoutXGns() uint64 {
