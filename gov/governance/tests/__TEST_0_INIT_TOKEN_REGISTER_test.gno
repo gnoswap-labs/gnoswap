@@ -21,6 +21,7 @@ import (
 
 	cp "gno.land/r/gnoswap/v2/community_pool"
 	gs "gno.land/r/gnoswap/v2/gov/staker"
+	lp "gno.land/r/gnoswap/v2/launchpad"
 	pf "gno.land/r/gnoswap/v2/protocol_fee"
 
 	pusers "gno.land/p/demo/users"
@@ -163,4 +164,13 @@ func init() {
 	gs.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	gs.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
 	gs.RegisterGRC20Interface("gno.land/r/gnoswap/v2/gns", GNSToken{})
+
+	// LAUNCHPAD
+	lp.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
+	lp.RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
+	lp.RegisterGRC20Interface("gno.land/r/onbloc/baz", BazToken{})
+	lp.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
+	lp.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
+	lp.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
+	lp.RegisterGRC20Interface("gno.land/r/gnoswap/v2/gns", GNSToken{})
 }
