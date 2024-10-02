@@ -28,10 +28,15 @@ var (
 	depositsByUserByProject = make(map[string]map[string][]string)
 )
 
+// DepositGns deposit gns to the project's tier
+// - gns will be locked in `launchpad` contract
+// - xgns will be minted to the `launchpad` contract
+//
+// returns depositId
 func DepositGns(
 	targetProjectTierId string,
 	amount uint64,
-) {
+) string {
 	projectId, tierStr := getProjectIdAndTierFromTierId(targetProjectTierId)
 	project, exist := projects[projectId]
 	if !exist {
@@ -120,8 +125,15 @@ func DepositGns(
 	depositsByUserByProject[depositorStr][projectId] = append(depositsByUserByProject[depositorStr][projectId], depositId)
 
 	// XXX: emit event
+
+	return depositId
 }
 
+// CollectDepositGns collect deposited gns
+// - gns will be transfered from the `launchpad` to caller
+// - launchpad's xgns will be burned
+//
+// returns collected gns amount
 func CollectDepositGns() uint64 {
 	calculateDepositReward() // uncomment this line if L#176 `CollectReward` is removed
 

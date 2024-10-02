@@ -24,6 +24,10 @@ func init() {
 	q96 = u256.MustFromDecimal(consts.Q96)
 }
 
+// CreateProject creates a new project
+// - only admin can create project
+//
+// returns projectId
 func CreateProject(
 	tokenPath string,
 	recipient std.Address,
@@ -150,6 +154,10 @@ func CreateProject(
 	return projectId
 }
 
+// RefundProject refunds project's left token amount
+// - only recipient can refund
+//
+// returns amount
 func RefundProject(projectId string) uint64 {
 	caller := std.GetOrigCaller()
 	project, exist := projects[projectId]
