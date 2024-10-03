@@ -4,6 +4,8 @@ import (
 	"std"
 	"time"
 
+	"gno.land/p/demo/ufmt"
+
 	u256 "gno.land/p/gnoswap/uint256"
 
 	gs "gno.land/r/gnoswap/v2/gov/staker"
@@ -13,8 +15,7 @@ import (
 // each project's recipient wallet will be rewarded
 func CollectProtocolFee() {
 	gs.CollectReward()
-
-	// XXX: emit event
+	// event will be emitted in gov/staker `CollectReward`
 }
 
 var (
@@ -73,6 +74,14 @@ func CollectReward() {
 				println("token:", projectToken, "reward:", deposit.rewardAmount)
 				toUser[projectToken] += deposit.rewardAmount
 			}
+
+			std.Emit(
+				"CollectReward",
+				"m_origCaller", origCaller(),
+				"m_prevRealm", prevRealm(),
+				"depositId", depositId,
+				"amount", ufmt.Sprintf("%d", deposit.rewardAmount),
+			)
 		}
 
 		// update project
@@ -90,10 +99,11 @@ func CollectReward() {
 	for tokenPath, amount := range toUser {
 		// println("tokenPath:", tokenPath)
 		// println("amount:", amount)
-		transferByRegisterCall(tokenPath, std.GetOrigCaller(), amount)
-	}
 
-	// XXX: emit event
+		if amount > 0 {
+			transferByRegisterCall(tokenPath, std.GetOrigCaller(), amount)
+		}
+	}
 }
 
 // CollectRewardByProjectId collects reward from entire deposit of certain project by caller
@@ -156,6 +166,15 @@ func CollectRewardByProjectId(projectId string) uint64 {
 				println("token:", project.tokenPath, "reward:", deposit.rewardAmount)
 				toUser += deposit.rewardAmount
 			}
+
+			std.Emit(
+				"CollectRewardByProjectId",
+				"m_origCaller", origCaller(),
+				"m_prevRealm", prevRealm(),
+				"p_projectId", projectId,
+				"depositId", depositId,
+				"amount", ufmt.Sprintf("%d", deposit.rewardAmount),
+			)
 		}
 
 		// update project
@@ -171,8 +190,6 @@ func CollectRewardByProjectId(projectId string) uint64 {
 
 	// transfer reward to user
 	transferByRegisterCall(project.tokenPath, std.GetOrigCaller(), toUser)
-
-	// XXX: emit event
 
 	return toUser
 }
@@ -243,6 +260,15 @@ func CollectRewardByProjectTier(tierId string) uint64 {
 					toUser += deposit.rewardAmount
 				}
 			}
+
+			std.Emit(
+				"CollectRewardByProjectTier",
+				"m_origCaller", origCaller(),
+				"m_prevRealm", prevRealm(),
+				"p_tierId", tierId,
+				"depositId", depositId,
+				"amount", ufmt.Sprintf("%d", deposit.rewardAmount),
+			)
 		}
 
 		// update project
@@ -314,6 +340,14 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 			toUser += deposit.rewardAmount
 		}
+
+		std.Emit(
+			"CollectRewardByDepositId",
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
+			"p_depositId", depositId,
+			"amount", ufmt.Sprintf("%d", deposit.rewardAmount),
+		)
 
 		// update project
 		project.totalCollectedAmount += deposit.rewardAmount

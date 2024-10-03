@@ -83,7 +83,9 @@ func DepositGns(
 
 	// update project
 	project.totalDepositAmount += amount
+	project.actualDepositAmount += amount
 	project.totalParticipant += 1
+	project.actualParticipant += 1
 	projects[projectId] = project
 
 	// deposit History
@@ -124,7 +126,14 @@ func DepositGns(
 	}
 	depositsByUserByProject[depositorStr][projectId] = append(depositsByUserByProject[depositorStr][projectId], depositId)
 
-	// XXX: emit event
+	std.Emit(
+		"DepositGns",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_targetProjectTierId", targetProjectTierId,
+		"p_amount", ufmt.Sprintf("%d", amount),
+		"depositId", depositId,
+	)
 
 	return depositId
 }
@@ -135,7 +144,7 @@ func DepositGns(
 //
 // returns collected gns amount
 func CollectDepositGns() uint64 {
-	calculateDepositReward() // uncomment this line if L#176 `CollectReward` is removed
+	calculateDepositReward() // uncomment this line if L#208 `CollectReward` is removed
 
 	caller := std.GetOrigCaller()
 	callerStr := caller.String()
@@ -177,18 +186,28 @@ func CollectDepositGns() uint64 {
 
 		// update project
 		project = setTier(project, deposit.tier, tier)
+		project.actualDepositAmount -= deposit.amount
+		project.actualParticipant -= 1
 		projects[deposit.projectId] = project
+
+		// emit event for each deposit
+		std.Emit(
+			"CollectDepositGns",
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
+			"depositId", depositId,
+			"amount", ufmt.Sprintf("%d", deposit.amount),
+		)
 	}
 
 	if gnsToUser > 0 {
 		xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), gnsToUser)
 		gns.Transfer(a2u(caller), gnsToUser)
 
-		// umcomment L#126 `calculateDepositReward()`
+		// umcomment L#147 `calculateDepositReward()`
 		// CollectReward()
 
-		// XXX: emit event
-		return gnsToUser
+		return gnsToUser // return accumulated gns amount being withdrawn
 	}
 
 	return 0

@@ -29,11 +29,13 @@ type Project struct {
 	// startHeight uint64
 	startTime uint64
 
-	// statistics
-	// won't be decreased
-	totalDepositAmount   uint64
-	totalParticipant     uint64
-	totalCollectedAmount uint64
+	totalDepositAmount  uint64 // won't be decreased
+	actualDepositAmount uint64 // will be decreased if deposit collected 'CollectDepositGns()'
+
+	totalParticipant  uint64 // accu, won't be decreased
+	actualParticipant uint64 // will be decreased if deposit collected 'CollectDepositGns()'
+
+	totalCollectedAmount uint64 // collect reward amount
 }
 
 type Tier struct {

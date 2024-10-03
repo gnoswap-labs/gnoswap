@@ -149,7 +149,24 @@ func CreateProject(
 
 	projects[projectId] = project
 
-	// XXX: emit event
+	std.Emit(
+		"CreateProject",
+		"m_origCaller", origCaller(),
+		"m_prevRealm", prevRealm(),
+		"p_tokenPath", tokenPath,
+		"p_recipient", recipient.String(),
+		"p_depositAmount", ufmt.Sprintf("%d", depositAmount),
+		"p_conditionsToken", conditionsToken,
+		"p_conditionsAmount", conditionsAmount,
+		"p_tier30Ratio", ufmt.Sprintf("%d", tier30Ratio),
+		"p_tier90Ratio", ufmt.Sprintf("%d", tier90Ratio),
+		"p_tier180Ratio", ufmt.Sprintf("%d", tier180Ratio),
+		"p_startTime", ufmt.Sprintf("%d", startTime),
+		"projectId", projectId,
+		"tier30Amount", ufmt.Sprintf("%d", tier30Amount),
+		"tier90Amount", ufmt.Sprintf("%d", tier90Amount),
+		"tier180Amount", ufmt.Sprintf("%d", tier180Amount),
+	)
 
 	return projectId
 }
@@ -179,13 +196,23 @@ func RefundProject(projectId string) uint64 {
 	}
 
 	toRefund := project.depositAmount - project.totalCollectedAmount
-	transferByRegisterCall(
-		project.tokenPath,
-		recipient,
-		toRefund,
-	)
+	if toRefund > 0 {
+		transferByRegisterCall(
+			project.tokenPath,
+			recipient,
+			toRefund,
+		)
 
-	// XXX: emit event
+		std.Emit(
+			"RefundProject",
+			"m_origCaller", origCaller(),
+			"m_prevRealm", prevRealm(),
+			"p_projectId", projectId,
+			"recipient", recipient.String(),
+			"toRefund", ufmt.Sprintf("%d", toRefund),
+		)
+	}
+
 	return toRefund
 }
 
