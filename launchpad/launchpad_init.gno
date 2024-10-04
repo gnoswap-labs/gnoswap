@@ -9,6 +9,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/r/gnoswap/v2/gns"
 )
 
 var (
@@ -52,6 +54,10 @@ func CreateProject(
 		panic("invalid recipient addr")
 	}
 
+	if depositAmount == 0 {
+		panic("can not deposit 0")
+	}
+
 	if strings.Contains(conditionsToken, "*PAD*") {
 		tokensToCheck := strings.Split(conditionsToken, "*PAD*")
 		for _, token := range tokensToCheck {
@@ -71,9 +77,18 @@ func CreateProject(
 		panic("invalid ratio, sum of all tiers should be 100")
 	}
 
-	if startTime < uint64(time.Now().Unix()) {
+	if startTime <= uint64(time.Now().Unix()) {
 		panic("invalid start time, can not start project in past")
 	}
+
+	avgBlockTimeMs := uint64(gns.GetAvgBlockTimeInMs())
+
+	height := uint64(std.GetHeight())
+	now := uint64(time.Now().Unix())
+
+	timeUntilStart := startTime - now
+	blockDuration := timeUntilStart * 1000 / avgBlockTimeMs
+	startHeight := height + blockDuration
 
 	transferFromByRegisterCall(
 		tokenPath,
@@ -99,34 +114,40 @@ func CreateProject(
 	conditions := makeConditions(conditionsToken, conditionsAmount)
 
 	// create tier
+	tier30EndHeight := startHeight + (TIMESTAMP_30DAYS * 1000 / avgBlockTimeMs)
 	tier30AmountX96 := new(u256.Uint).Mul(u256.NewUint(tier30Amount), q96)
-	tier30AmountPerSecondX96 := new(u256.Uint).Div(tier30AmountX96, u256.NewUint(TIMESTAMP_30DAYS))
+	tier30AmountPerBlockX96 := new(u256.Uint).Div(tier30AmountX96, u256.NewUint(tier30EndHeight-startHeight))
 	tier30 := Tier{
-		id:                     generateTierId(projectId, 30),
-		collectWaitDuration:    TIMESTAMP_3DAYS,
-		tierAmount:             tier30Amount,
-		tierAmountPerSecondX96: tier30AmountPerSecondX96,
-		endTime:                startTime + TIMESTAMP_30DAYS,
+		id:                    generateTierId(projectId, 30),
+		collectWaitDuration:   TIMESTAMP_3DAYS * 1000 / avgBlockTimeMs,
+		tierAmount:            tier30Amount,
+		tierAmountPerBlockX96: tier30AmountPerBlockX96,
+		endHeight:             tier30EndHeight,
+		endTime:               startTime + TIMESTAMP_30DAYS,
 	}
 
+	tier90EndHeight := startHeight + (TIMESTAMP_90DAYS * 1000 / avgBlockTimeMs)
 	tier90AmountX96 := new(u256.Uint).Mul(u256.NewUint(tier90Amount), q96)
-	tier90AmountPerSecondX96 := new(u256.Uint).Div(tier90AmountX96, u256.NewUint(TIMESTAMP_90DAYS))
+	tier90AmountPerBlockX96 := new(u256.Uint).Div(tier90AmountX96, u256.NewUint(tier90EndHeight-startHeight))
 	tier90 := Tier{
-		id:                     generateTierId(projectId, 90),
-		collectWaitDuration:    TIMESTAMP_7DAYS,
-		tierAmount:             tier90Amount,
-		tierAmountPerSecondX96: tier90AmountPerSecondX96,
-		endTime:                startTime + TIMESTAMP_90DAYS,
+		id:                    generateTierId(projectId, 90),
+		collectWaitDuration:   TIMESTAMP_7DAYS * 1000 / avgBlockTimeMs,
+		tierAmount:            tier90Amount,
+		tierAmountPerBlockX96: tier90AmountPerBlockX96,
+		endHeight:             tier90EndHeight,
+		endTime:               startTime + TIMESTAMP_90DAYS,
 	}
 
+	tier180EndHeight := startHeight + (TIMESTAMP_180DAYS * 1000 / avgBlockTimeMs)
 	tier180AmountX96 := new(u256.Uint).Mul(u256.NewUint(tier180Amount), q96)
-	tier180AmountPerSecondX96 := new(u256.Uint).Div(tier180AmountX96, u256.NewUint(TIMESTAMP_180DAYS))
+	tier180AmountPerBlockX96 := new(u256.Uint).Div(tier180AmountX96, u256.NewUint(tier180EndHeight-startHeight))
 	tier180 := Tier{
-		id:                     generateTierId(projectId, 180),
-		collectWaitDuration:    TIMESTAMP_14DAYS,
-		tierAmount:             tier180Amount,
-		tierAmountPerSecondX96: tier180AmountPerSecondX96,
-		endTime:                startTime + TIMESTAMP_180DAYS,
+		id:                    generateTierId(projectId, 180),
+		collectWaitDuration:   TIMESTAMP_14DAYS * 1000 / avgBlockTimeMs,
+		tierAmount:            tier180Amount,
+		tierAmountPerBlockX96: tier180AmountPerBlockX96,
+		endHeight:             tier180EndHeight,
+		endTime:               startTime + TIMESTAMP_180DAYS,
 	}
 
 	// create project
@@ -144,7 +165,10 @@ func CreateProject(
 		tier180Ratio:  tier180Ratio,
 		createdHeight: createdHeight,
 		createdTime:   createdTime,
+		startHeight:   startHeight,
 		startTime:     startTime,
+		endHeight:     tier180.endHeight,
+		endTime:       tier180.endTime,
 	}
 
 	projects[projectId] = project
@@ -161,11 +185,21 @@ func CreateProject(
 		"p_tier30Ratio", ufmt.Sprintf("%d", tier30Ratio),
 		"p_tier90Ratio", ufmt.Sprintf("%d", tier90Ratio),
 		"p_tier180Ratio", ufmt.Sprintf("%d", tier180Ratio),
+		"p_startHeight", ufmt.Sprintf("%d", startHeight),
 		"p_startTime", ufmt.Sprintf("%d", startTime),
 		"projectId", projectId,
+
 		"tier30Amount", ufmt.Sprintf("%d", tier30Amount),
+		"tier30EndHeight", ufmt.Sprintf("%d", tier30EndHeight),
+		"tier30AmountPerBlockX96", tier30AmountPerBlockX96.ToString(),
+
 		"tier90Amount", ufmt.Sprintf("%d", tier90Amount),
+		"tier90EndHeight", ufmt.Sprintf("%d", tier90EndHeight),
+		"tier90AmountPerBlockX96", tier90AmountPerBlockX96.ToString(),
+
 		"tier180Amount", ufmt.Sprintf("%d", tier180Amount),
+		"tier180EndHeight", ufmt.Sprintf("%d", tier180EndHeight),
+		"tier180AmountPerBlockX96", tier180AmountPerBlockX96.ToString(),
 	)
 
 	return projectId
@@ -187,11 +221,10 @@ func RefundProject(projectId string) uint64 {
 		panic("only recipient can refund")
 	}
 
-	endTime := project.startTime + TIMESTAMP_180DAYS // 180 is max pool duration
+	endHeight := project.endHeight
 	height := uint64(std.GetHeight())
-	now := uint64(time.Now().Unix())
 
-	if endTime > now {
+	if endHeight > height {
 		panic("project not ended yet")
 	}
 

@@ -99,7 +99,7 @@ func DepositGns(
 		depositor:     depositor,
 		amount:        amount,
 		depositHeight: uint64(std.GetHeight()),
-		depositAt:     uint64(time.Now().Unix()),
+		depositTime:   uint64(time.Now().Unix()),
 	}
 
 	// update deposits
@@ -172,7 +172,7 @@ func CollectDepositGns() uint64 {
 		}
 
 		deposit.depositCollectHeight = uint64(std.GetHeight())
-		deposit.depositCollectAt = uint64(time.Now().Unix())
+		deposit.depositCollectTime = uint64(time.Now().Unix())
 		deposits[deposit.id] = deposit
 
 		gnsToUser += deposit.amount
@@ -253,15 +253,15 @@ func checkDepositConditions(project Project) {
 }
 
 func checkProjectActive(project Project) bool {
-	if project.startTime > uint64(time.Now().Unix()) {
+	if project.startHeight > uint64(std.GetHeight()) {
 		// not started yet
-		println(ufmt.Sprintf("checkProjectActive()__project not started yet // startTime: %d // now: %d", project.startTime, uint64(time.Now().Unix())))
+		println(ufmt.Sprintf("checkProjectActive()__project not started yet // startHeight: %d // now: %d", project.startHeight, uint64(std.GetHeight())))
 		return false
 	}
 
-	if project.startTime+TIMESTAMP_180DAYS < uint64(time.Now().Unix()) {
+	if project.endHeight < uint64(std.GetHeight()) {
 		// already ended
-		println(ufmt.Sprintf("checkProjectActive()__project already ended // endTime: %d // now: %d", project.startTime+TIMESTAMP_180DAYS, uint64(time.Now().Unix())))
+		println(ufmt.Sprintf("checkProjectActive()__project already ended // endHeight: %d // now: %d", project.endHeight, uint64(std.GetHeight())))
 		return false
 	}
 
@@ -269,7 +269,7 @@ func checkProjectActive(project Project) bool {
 }
 
 func checkTierActive(project Project, tier Tier) bool {
-	if tier.endTime < uint64(time.Now().Unix()) {
+	if tier.endHeight < uint64(std.GetHeight()) {
 		return false
 	}
 

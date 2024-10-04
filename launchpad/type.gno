@@ -26,8 +26,10 @@ type Project struct {
 	createdHeight uint64
 	createdTime   uint64
 
-	// startHeight uint64
-	startTime uint64
+	startHeight uint64
+	startTime   uint64
+	endHeight   uint64 // same with tier 180's data
+	endTime     uint64 // same with tier 180's data
 
 	totalDepositAmount  uint64 // won't be decreased
 	actualDepositAmount uint64 // will be decreased if deposit collected 'CollectDepositGns()'
@@ -39,14 +41,14 @@ type Project struct {
 }
 
 type Tier struct {
-	id                     string // '{projectId}:duration' // duartion == 30, 90, 180
-	collectWaitDuration    uint64
-	tierAmount             uint64
-	tierAmountPerSecondX96 *u256.Uint
+	id                    string // '{projectId}:duration' // duartion == 30, 90, 180
+	collectWaitDuration   uint64
+	tierAmount            uint64
+	tierAmountPerBlockX96 *u256.Uint
 
 	// start height/time is same as the project
-	// endHeight uint64 // XXX: estimate ??
-	endTime uint64
+	endHeight uint64
+	endTime   uint64
 
 	// actual data
 	// unlikely projects' totalDepositAmount or totalParticipant
@@ -69,14 +71,14 @@ type Deposit struct {
 	amount    uint64
 
 	depositHeight uint64
-	depositAt     uint64 // timestamp
+	depositTime   uint64
 
 	// deposit
 	depositCollectHeight uint64
-	depositCollectAt     uint64 // timestamp
+	depositCollectTime   uint64
 
 	// reward collect
 	rewardAmount        uint64
 	rewardCollectHeight uint64
-	rewardCollectAt     uint64 // timestamp
+	rewardCollectTime   uint64
 }

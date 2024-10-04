@@ -9,6 +9,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	gs "gno.land/r/gnoswap/v2/gov/staker"
+
+	"gno.land/r/gnoswap/v2/gns"
 )
 
 // CollectProtocolFee collects protocol fee from gov/staker
@@ -40,6 +42,8 @@ func CollectReward() {
 	// project token -> reward amount
 	toUser := make(map[string]uint64)
 
+	avgBlockTimeMs := uint64(gns.GetAvgBlockTimeInMs())
+
 	for _, depositId := range depositIds {
 		deposit := deposits[depositId]
 		if deposit.rewardAmount == 0 {
@@ -51,7 +55,7 @@ func CollectReward() {
 		projectToken := project.tokenPath
 
 		if deposit.rewardAmount > 0 { // deposit has some reward
-			if deposit.rewardCollectAt != 0 { // this collect is not first collect
+			if deposit.rewardCollectTime != 0 { // this collect is not first collect
 				println("(N)th collect")
 				toUser[projectToken] += deposit.rewardAmount
 			} else {
@@ -59,14 +63,14 @@ func CollectReward() {
 				collectableAfter := uint64(0)
 				switch deposit.tier {
 				case "30":
-					collectableAfter = project.startTime + project.tier30.collectWaitDuration
+					collectableAfter = project.startHeight + project.tier30.collectWaitDuration
 				case "90":
-					collectableAfter = project.startTime + project.tier90.collectWaitDuration
+					collectableAfter = project.startHeight + project.tier90.collectWaitDuration
 				case "180":
-					collectableAfter = project.startTime + project.tier180.collectWaitDuration
+					collectableAfter = project.startHeight + project.tier180.collectWaitDuration
 				}
 
-				if uint64(time.Now().Unix()) < collectableAfter {
+				if uint64(std.GetHeight()) < collectableAfter {
 					println("NOT CLAIMABLE YET")
 					continue
 				}
@@ -91,7 +95,7 @@ func CollectReward() {
 		// update deposit
 		deposit.rewardAmount = 0
 		deposit.rewardCollectHeight = uint64(std.GetHeight())
-		deposit.rewardCollectAt = uint64(time.Now().Unix())
+		deposit.rewardCollectTime = uint64(time.Now().Unix())
 		deposits[depositId] = deposit
 	}
 
@@ -144,21 +148,21 @@ func CollectRewardByProjectId(projectId string) uint64 {
 		}
 
 		if deposit.rewardAmount > 0 {
-			if deposit.rewardCollectAt != 0 {
+			if deposit.rewardCollectTime != 0 {
 				println("(N)th collect")
 				toUser += deposit.rewardAmount
 			} else {
 				collectableAfter := uint64(0)
 				switch deposit.tier {
 				case "30":
-					collectableAfter = project.startTime + project.tier30.collectWaitDuration
+					collectableAfter = project.startHeight + project.tier30.collectWaitDuration
 				case "90":
-					collectableAfter = project.startTime + project.tier90.collectWaitDuration
+					collectableAfter = project.startHeight + project.tier90.collectWaitDuration
 				case "180":
-					collectableAfter = project.startTime + project.tier180.collectWaitDuration
+					collectableAfter = project.startHeight + project.tier180.collectWaitDuration
 				}
 
-				if uint64(time.Now().Unix()) < collectableAfter {
+				if uint64(std.GetHeight()) < collectableAfter {
 					println("NOT CLAIMABLE YET")
 					continue
 				}
@@ -184,7 +188,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 		// update deposit
 		deposit.rewardAmount = 0
 		deposit.rewardCollectHeight = uint64(std.GetHeight())
-		deposit.rewardCollectAt = uint64(time.Now().Unix())
+		deposit.rewardCollectTime = uint64(time.Now().Unix())
 		deposits[depositId] = deposit
 	}
 
@@ -237,21 +241,21 @@ func CollectRewardByProjectTier(tierId string) uint64 {
 			}
 
 			if deposit.rewardAmount > 0 {
-				if deposit.rewardCollectAt != 0 {
+				if deposit.rewardCollectTime != 0 {
 					println("(N)th collect")
 					toUser += deposit.rewardAmount
 				} else {
 					collectableAfter := uint64(0)
 					switch deposit.tier {
 					case "30":
-						collectableAfter = project.startTime + project.tier30.collectWaitDuration
+						collectableAfter = project.startHeight + project.tier30.collectWaitDuration
 					case "90":
-						collectableAfter = project.startTime + project.tier90.collectWaitDuration
+						collectableAfter = project.startHeight + project.tier90.collectWaitDuration
 					case "180":
-						collectableAfter = project.startTime + project.tier180.collectWaitDuration
+						collectableAfter = project.startHeight + project.tier180.collectWaitDuration
 					}
 
-					if uint64(time.Now().Unix()) < collectableAfter {
+					if uint64(std.GetHeight()) < collectableAfter {
 						println("NOT CLAIMABLE YET")
 						continue
 					}
@@ -278,7 +282,7 @@ func CollectRewardByProjectTier(tierId string) uint64 {
 		// update deposit
 		deposit.rewardAmount = 0
 		deposit.rewardCollectHeight = uint64(std.GetHeight())
-		deposit.rewardCollectAt = uint64(time.Now().Unix())
+		deposit.rewardCollectTime = uint64(time.Now().Unix())
 		deposits[depositId] = deposit
 	}
 
@@ -318,23 +322,22 @@ func CollectRewardByDepositId(depositId string) uint64 {
 	toUser := uint64(0)
 
 	if deposit.rewardAmount > 0 {
-		if deposit.rewardCollectAt != 0 {
+		if deposit.rewardCollectTime != 0 {
 			println("(N)th collect")
 			toUser += deposit.rewardAmount
 		} else {
 			collectableAfter := uint64(0)
 			switch deposit.tier {
 			case "30":
-				collectableAfter = project.startTime + project.tier30.collectWaitDuration
+				collectableAfter = project.startHeight + project.tier30.collectWaitDuration
 			case "90":
-				collectableAfter = project.startTime + project.tier90.collectWaitDuration
+				collectableAfter = project.startHeight + project.tier90.collectWaitDuration
 			case "180":
-				collectableAfter = project.startTime + project.tier180.collectWaitDuration
+				collectableAfter = project.startHeight + project.tier180.collectWaitDuration
 			}
 
-			println("token:", project.tokenPath, "reward:", deposit.rewardAmount)
-			if uint64(time.Now().Unix()) < collectableAfter {
-				println("NOT COLLECTABLE YET")
+			if uint64(std.GetHeight()) < collectableAfter {
+				println("NOT CLAIMABLE YET")
 				return 0
 			}
 
@@ -356,7 +359,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 		// update deposit
 		deposit.rewardAmount = 0
 		deposit.rewardCollectHeight = uint64(std.GetHeight())
-		deposit.rewardCollectAt = uint64(time.Now().Unix())
+		deposit.rewardCollectTime = uint64(time.Now().Unix())
 		deposits[depositId] = deposit
 	}
 
@@ -368,7 +371,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 	return toUser
 }
 
-var lastCalculateTimestampForProjectTier = make(map[string]uint64) // using time
+var lastCalculateHeightForProjectTier = make(map[string]uint64) // using height
 
 // amount of project token for each deposit will be calculated
 func calculateDepositReward() {
@@ -388,51 +391,52 @@ func calculateDepositReward() {
 		// println("project.id", project.id)
 
 		// // early return if not active
-		// println("project.startTime\t", project.startTime)
+		// println("project.startHeight\t", project.startHeight)
 		// println("now\t\t\t", now)
-		if project.startTime > now {
+		if project.startHeight > height {
 			println("PROJECT NOT STARTED")
 			continue
 		}
 
 		// println("LAST CALC PROJECT TIER 30", project.tier30.id)
-		// println("lastCalculateTimestampForProjectTier[project.tier30.id]", lastCalculateTimestampForProjectTier[project.tier30.id])
-		if lastCalculateTimestampForProjectTier[project.tier30.id] == 0 {
-			// println(" > INIT TO `project.startTime`", project.startTime)
-			lastCalculateTimestampForProjectTier[project.tier30.id] = project.startTime
+		// println("lastCalculateHeightForProjectTier[project.tier30.id]", lastCalculateHeightForProjectTier[project.tier30.id])
+		if lastCalculateHeightForProjectTier[project.tier30.id] == 0 {
+			// println(" > INIT TO `project.startHeight`", project.startHeight)
+			lastCalculateHeightForProjectTier[project.tier30.id] = project.startHeight
 		}
 
 		// println("LAST CALC PROJECT TIER 90", project.tier90.id)
-		// println("lastCalculateTimestampForProjectTier[project.tier90.id]", lastCalculateTimestampForProjectTier[project.tier90.id])
-		if lastCalculateTimestampForProjectTier[project.tier90.id] == 0 {
-			// println(" > INIT TO `project.startTime`", project.startTime)
-			lastCalculateTimestampForProjectTier[project.tier90.id] = project.startTime
+		// println("lastCalculateHeightForProjectTier[project.tier90.id]", lastCalculateHeightForProjectTier[project.tier90.id])
+		if lastCalculateHeightForProjectTier[project.tier90.id] == 0 {
+			// println(" > INIT TO `project.startHeight`", project.startHeight)
+			lastCalculateHeightForProjectTier[project.tier90.id] = project.startHeight
 		}
 
 		// println("LAST CALC PROJECT TIER 180", project.tier180.id)
-		// println("lastCalculateTimestampForProjectTier[project.tier180.id]", lastCalculateTimestampForProjectTier[project.tier180.id])
-		if lastCalculateTimestampForProjectTier[project.tier180.id] == 0 {
-			// println(" > INIT TO `project.startTime`", project.startTime)
-			lastCalculateTimestampForProjectTier[project.tier180.id] = project.startTime
+		// println("lastCalculateHeightForProjectTier[project.tier180.id]", lastCalculateHeightForProjectTier[project.tier180.id])
+		if lastCalculateHeightForProjectTier[project.tier180.id] == 0 {
+			// println(" > INIT TO `project.startHeight`", project.startHeight)
+			lastCalculateHeightForProjectTier[project.tier180.id] = project.startHeight
 		}
 
-		// if current time is greater than endTime, then use endTime as project's each tier's endTime
-		endTimeFor30 := minU64(now, project.startTime+TIMESTAMP_30DAYS)
-		endTimeFor90 := minU64(now, project.startTime+TIMESTAMP_90DAYS)
-		endTimeFor180 := minU64(now, project.startTime+TIMESTAMP_180DAYS)
+		// if current height is greater than endHeight, then use endHeight as project's each tier's endHeight
+		endHeightFor30 := minU64(height, project.tier30.endHeight)
+		endHeightFor90 := minU64(height, project.tier90.endHeight)
+		endHeightFor180 := minU64(height, project.tier180.endHeight)
 
-		// if last calculate time is greater than endTime, then use endTime to calculate duration
-		sinceLast30 := endTimeFor30 - minU64(endTimeFor30, lastCalculateTimestampForProjectTier[project.tier30.id])
-		sinceLast90 := endTimeFor90 - minU64(endTimeFor90, lastCalculateTimestampForProjectTier[project.tier90.id])
-		sinceLast180 := endTimeFor180 - minU64(endTimeFor180, lastCalculateTimestampForProjectTier[project.tier180.id])
+		// if last calculate height is greater than endHeight, then use endHeight to calculate duration
+		sinceLast30 := endHeightFor30 - minU64(endHeightFor30, lastCalculateHeightForProjectTier[project.tier30.id])
+		sinceLast90 := endHeightFor90 - minU64(endHeightFor90, lastCalculateHeightForProjectTier[project.tier90.id])
+		sinceLast180 := endHeightFor180 - minU64(endHeightFor180, lastCalculateHeightForProjectTier[project.tier180.id])
 
-		lastCalculateTimestampForProjectTier[project.tier30.id] = now
-		lastCalculateTimestampForProjectTier[project.tier90.id] = now
-		lastCalculateTimestampForProjectTier[project.tier180.id] = now
+		// update for next calc
+		lastCalculateHeightForProjectTier[project.tier30.id] = height
+		lastCalculateHeightForProjectTier[project.tier90.id] = height
+		lastCalculateHeightForProjectTier[project.tier180.id] = height
 
-		rewardX96_30 := new(u256.Uint).Mul(project.tier30.tierAmountPerSecondX96, u256.NewUint(sinceLast30))
-		rewardX96_90 := new(u256.Uint).Mul(project.tier90.tierAmountPerSecondX96, u256.NewUint(sinceLast90))
-		rewardX96_180 := new(u256.Uint).Mul(project.tier180.tierAmountPerSecondX96, u256.NewUint(sinceLast180))
+		rewardX96_30 := new(u256.Uint).Mul(project.tier30.tierAmountPerBlockX96, u256.NewUint(sinceLast30))
+		rewardX96_90 := new(u256.Uint).Mul(project.tier90.tierAmountPerBlockX96, u256.NewUint(sinceLast90))
+		rewardX96_180 := new(u256.Uint).Mul(project.tier180.tierAmountPerBlockX96, u256.NewUint(sinceLast180))
 
 		// calculate deposit ratio
 		// loop with each tier (30 90 180)
