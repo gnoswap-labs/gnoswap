@@ -39,7 +39,7 @@ func TestMockProtocolFee(t *testing.T) {
 
 	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
 	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))ㄴ
 
 	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(2500))
 	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
@@ -62,7 +62,7 @@ func TestCreateProject(t *testing.T) {
 		uint64(10),                   // 100000000
 		uint64(20),                   // 200000000
 		uint64(70),                   // 700000000
-		uint64(time.Now().Unix()+10), // 5 block later
+		uint64(time.Now().Unix()+10), // 10s later
 	)
 	shouldEQ(t, projectId, `gno.land/r/onbloc/obl:124`)
 	std.TestSkipHeights(1)

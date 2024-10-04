@@ -46,7 +46,7 @@ func TestCreateProject(t *testing.T) {
 		uint64(10),                   // 100000000
 		uint64(20),                   // 200000000
 		uint64(70),                   // 700000000
-		uint64(time.Now().Unix()+10), // 5 block later
+		uint64(time.Now().Unix()+10), // 10s later
 	)
 	shouldEQ(t, projectId, `gno.land/r/onbloc/obl:124`)
 	std.TestSkipHeights(1)
@@ -105,12 +105,12 @@ func TestCollectRewardByProjectId(t *testing.T) {
 	shouldEQ(t, deposit.depositor, user01)
 	shouldEQ(t, deposit.amount, uint64(1000000))
 	shouldEQ(t, deposit.depositHeight, uint64(129))
-	shouldEQ(t, deposit.depositAt, uint64(1234567902))
+	shouldEQ(t, deposit.depositTime, uint64(1234567902))
 	shouldEQ(t, deposit.depositCollectHeight, uint64(0))
-	shouldEQ(t, deposit.depositCollectAt, uint64(0))
+	shouldEQ(t, deposit.depositCollectTime, uint64(0))
 	shouldEQ(t, deposit.rewardAmount, uint64(0))
 	shouldEQ(t, deposit.rewardCollectHeight, uint64(1296131))
-	shouldEQ(t, deposit.rewardCollectAt, uint64(1237159906))
+	shouldEQ(t, deposit.rewardCollectTime, uint64(1237159906))
 
 	//
 	shouldEQ(t, len(depositsByProject), 1)

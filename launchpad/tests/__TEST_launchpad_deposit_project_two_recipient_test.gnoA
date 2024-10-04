@@ -64,7 +64,7 @@ func TestCreateProject(t *testing.T) {
 		uint64(10),                   // 100000000
 		uint64(20),                   // 200000000
 		uint64(70),                   // 700000000
-		uint64(time.Now().Unix()+10), // 5 block later
+		uint64(time.Now().Unix()+10), // 10s later
 	)
 	shouldEQ(t, projectId, `gno.land/r/onbloc/obl:124`)
 	std.TestSkipHeights(1)
@@ -86,7 +86,7 @@ func TestCreateProject02(t *testing.T) {
 		uint64(10),                   // 100000000
 		uint64(20),                   // 200000000
 		uint64(70),                   // 700000000
-		uint64(time.Now().Unix()+10), // 5 block later
+		uint64(time.Now().Unix()+10), // 10s later
 	)
 	shouldEQ(t, projectId, `gno.land/r/onbloc/bar:126`)
 	std.TestSkipHeights(1)

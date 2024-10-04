@@ -16,8 +16,6 @@ import (
 	"gno.land/r/gnoswap/v2/gns"
 )
 
-// var proejctAddr = testutils.TestAddress("proejctAddr")
-// var projectRealm = std.NewUserRealm(proejctAddr)
 var (
 	projectAddr = testutils.TestAddress("projectAddr")
 	user01      = testutils.TestAddress("user01")
@@ -54,7 +52,7 @@ func TestCreateProject(t *testing.T) {
 		uint64(10),                   // 100000000
 		uint64(20),                   // 200000000
 		uint64(70),                   // 700000000
-		uint64(time.Now().Unix()+10), // 5 block later
+		uint64(time.Now().Unix()+10), // 10s later
 	)
 	shouldEQ(t, projectId, `gno.land/r/onbloc/obl:124`)
 	std.TestSkipHeights(1)
@@ -75,9 +73,9 @@ func TestCreateProject(t *testing.T) {
 		shouldEQ(t, project.tier30Ratio, uint64(10))
 		tier30 := project.tier30
 		shouldEQ(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
-		shouldEQ(t, tier30.collectWaitDuration, TIMESTAMP_3DAYS)
+		shouldEQ(t, tier30.collectWaitDuration, uint64(129600)) // block range for 3 days based on 2s per block
 		shouldEQ(t, tier30.tierAmount, uint64(100000000))
-		shouldNEQ(t, tier30.tierAmountPerSecondX96.ToString(), `0`)
+		shouldNEQ(t, tier30.tierAmountPerBlockX96.ToString(), `0`)
 		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
 		shouldEQ(t, tier30.depositAmount, uint64(0))
 		shouldEQ(t, tier30.participant, uint64(0))
@@ -85,9 +83,9 @@ func TestCreateProject(t *testing.T) {
 		shouldEQ(t, project.tier90Ratio, uint64(20))
 		tier90 := project.tier90
 		shouldEQ(t, tier90.id, `gno.land/r/onbloc/obl:124:90`)
-		shouldEQ(t, tier90.collectWaitDuration, TIMESTAMP_7DAYS)
+		shouldEQ(t, tier90.collectWaitDuration, uint64(302400)) // block range for 7 days based on 2s per block
 		shouldEQ(t, tier90.tierAmount, uint64(200000000))
-		shouldNEQ(t, tier90.tierAmountPerSecondX96.ToString(), `0`)
+		shouldNEQ(t, tier90.tierAmountPerBlockX96.ToString(), `0`)
 		shouldEQ(t, tier90.endTime, project.startTime+TIMESTAMP_90DAYS)
 		shouldEQ(t, tier90.depositAmount, uint64(0))
 		shouldEQ(t, tier90.participant, uint64(0))
@@ -95,9 +93,9 @@ func TestCreateProject(t *testing.T) {
 		shouldEQ(t, project.tier180Ratio, uint64(70))
 		tier180 := project.tier180
 		shouldEQ(t, tier180.id, `gno.land/r/onbloc/obl:124:180`)
-		shouldEQ(t, tier180.collectWaitDuration, TIMESTAMP_14DAYS)
+		shouldEQ(t, tier180.collectWaitDuration, uint64(604800)) // block range for 7 days based on 2s per block
 		shouldEQ(t, tier180.tierAmount, uint64(700000000))
-		shouldNEQ(t, tier180.tierAmountPerSecondX96.ToString(), `0`)
+		shouldNEQ(t, tier180.tierAmountPerBlockX96.ToString(), `0`)
 		shouldEQ(t, tier180.endTime, project.startTime+TIMESTAMP_180DAYS)
 		shouldEQ(t, tier180.depositAmount, uint64(0))
 		shouldEQ(t, tier180.participant, uint64(0))
@@ -136,9 +134,9 @@ func TestDepositGnsToTier30(t *testing.T) {
 
 		tier30 := project.tier30
 		shouldEQ(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
-		shouldEQ(t, tier30.collectWaitDuration, TIMESTAMP_3DAYS)
+		shouldEQ(t, tier30.collectWaitDuration, uint64(129600))
 		shouldEQ(t, tier30.tierAmount, uint64(100000000))
-		shouldNEQ(t, tier30.tierAmountPerSecondX96.ToString(), `0`)
+		shouldNEQ(t, tier30.tierAmountPerBlockX96.ToString(), `0`)
 		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
 		shouldEQ(t, tier30.depositAmount, uint64(0))
 		shouldEQ(t, tier30.participant, uint64(0))
@@ -163,9 +161,9 @@ func TestDepositGnsToTier30(t *testing.T) {
 
 		tier30 := project.tier30
 		shouldEQ(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
-		shouldEQ(t, tier30.collectWaitDuration, TIMESTAMP_3DAYS)
+		shouldEQ(t, tier30.collectWaitDuration, uint64(129600))
 		shouldEQ(t, tier30.tierAmount, uint64(100000000))
-		shouldNEQ(t, tier30.tierAmountPerSecondX96.ToString(), `0`)
+		shouldNEQ(t, tier30.tierAmountPerBlockX96.ToString(), `0`)
 		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
 		shouldEQ(t, tier30.depositAmount, uint64(1000000))
 		shouldEQ(t, tier30.participant, uint64(1))
@@ -179,12 +177,12 @@ func TestDepositGnsToTier30(t *testing.T) {
 		shouldEQ(t, deposit.depositor, user01)
 		shouldEQ(t, deposit.amount, uint64(1000000))
 		shouldEQ(t, deposit.depositHeight, uint64(129))
-		shouldEQ(t, deposit.depositAt, uint64(1234567902))
+		shouldEQ(t, deposit.depositTime, uint64(1234567902))
 		shouldEQ(t, deposit.depositCollectHeight, uint64(0))
-		shouldEQ(t, deposit.depositCollectAt, uint64(0))
+		shouldEQ(t, deposit.depositCollectTime, uint64(0))
 		shouldEQ(t, deposit.rewardAmount, uint64(0))
 		shouldEQ(t, deposit.rewardCollectHeight, uint64(0))
-		shouldEQ(t, deposit.rewardCollectAt, uint64(0))
+		shouldEQ(t, deposit.rewardCollectTime, uint64(0))
 
 		//
 		shouldEQ(t, len(depositsByProject), 1)
@@ -233,12 +231,12 @@ func TestCollectDepositGns(t *testing.T) {
 	shouldEQ(t, deposit.depositor, user01)
 	shouldEQ(t, deposit.amount, uint64(1000000))
 	shouldEQ(t, deposit.depositHeight, uint64(129))
-	shouldEQ(t, deposit.depositAt, uint64(1234567902))
+	shouldEQ(t, deposit.depositTime, uint64(1234567902))
 	shouldEQ(t, deposit.depositCollectHeight, uint64(1296131))
-	shouldEQ(t, deposit.depositCollectAt, uint64(1237159906))
+	shouldEQ(t, deposit.depositCollectTime, uint64(1237159906))
 	shouldEQ(t, deposit.rewardAmount, uint64(99999999))
 	shouldEQ(t, deposit.rewardCollectHeight, uint64(0))
-	shouldEQ(t, deposit.rewardCollectAt, uint64(0))
+	shouldEQ(t, deposit.rewardCollectTime, uint64(0))
 
 	//
 	shouldEQ(t, len(depositsByProject), 1)
