@@ -21,7 +21,6 @@ var (
 )
 
 func TestInit(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(100000000000000)) // admin has initial gns
@@ -29,7 +28,6 @@ func TestInit(t *testing.T) {
 }
 
 func TestDelegate(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	// gns before emission
@@ -51,12 +49,11 @@ func TestDelegate(t *testing.T) {
 }
 
 func TestRedelegate(t *testing.T) {
-	shouldEQ(t, delegatedFromTo[gsa.String()][dummyAddr.String()], uint64(1000001))
-	shouldEQ(t, delegatedTo[dummyAddr.String()], uint64(1000001))
+	shouldEQ(t, delegatedFromTo[gsa][dummyAddr], uint64(1000001))
+	shouldEQ(t, delegatedTo[dummyAddr], uint64(1000001))
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
 	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(1000001))
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	Redelegate(dummyAddr, reDelegate, 1000001)
@@ -64,15 +61,14 @@ func TestRedelegate(t *testing.T) {
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
 	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(1000001))
 
-	shouldEQ(t, delegatedFromTo[gsa.String()][dummyAddr.String()], uint64(0))
-	shouldEQ(t, delegatedTo[dummyAddr.String()], uint64(0))
+	shouldEQ(t, delegatedFromTo[gsa][dummyAddr], uint64(0))
+	shouldEQ(t, delegatedTo[dummyAddr], uint64(0))
 
-	shouldEQ(t, delegatedFromTo[gsa.String()][reDelegate.String()], uint64(1000001))
-	shouldEQ(t, delegatedTo[reDelegate.String()], uint64(1000001))
+	shouldEQ(t, delegatedFromTo[gsa][reDelegate], uint64(1000001))
+	shouldEQ(t, delegatedTo[reDelegate], uint64(1000001))
 }
 
 func TestUndelegateUnknownUser(t *testing.T) {
-	std.TestSetOrigCaller(dummyAddr)
 	std.TestSetRealm(dummyRealm)
 
 	shouldPanic(
@@ -84,46 +80,43 @@ func TestUndelegateUnknownUser(t *testing.T) {
 }
 
 func TestUndelegate(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	shouldEQ(t, delegatedFromTo[gsa.String()][reDelegate.String()], uint64(1000001))
-	shouldEQ(t, delegatedTo[reDelegate.String()], uint64(1000001))
-	shouldEQ(t, len(addrLockedGns[gsa.String()]), 0)
+	shouldEQ(t, delegatedFromTo[gsa][reDelegate], uint64(1000001))
+	shouldEQ(t, delegatedTo[reDelegate], uint64(1000001))
+	shouldEQ(t, len(addrLockedGns[gsa]), 0)
 
 	Undelegate(reDelegate, 1000001)
 
-	shouldEQ(t, len(addrLockedGns[gsa.String()]), 1)
-	shouldEQ(t, delegatedFromTo[gsa.String()][reDelegate.String()], uint64(0))
-	shouldEQ(t, delegatedTo[reDelegate.String()], uint64(0))
+	shouldEQ(t, len(addrLockedGns[gsa]), 1)
+	shouldEQ(t, delegatedFromTo[gsa][reDelegate], uint64(0))
+	shouldEQ(t, delegatedTo[reDelegate], uint64(0))
 
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
 	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0)) // xGNS immediately be burned
 }
 
 func TestCollectBefore7Days(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	shouldEQ(t, len(addrLockedGns[gsa.String()]), 1)
+	shouldEQ(t, len(addrLockedGns[gsa]), 1)
 
 	CollectUndelegated() // 7 days not passed yet
 
-	shouldEQ(t, len(addrLockedGns[gsa.String()]), 1)
+	shouldEQ(t, len(addrLockedGns[gsa]), 1)
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
 	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
 }
 
 func TestCollectAfter7Days(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
-	shouldEQ(t, len(addrLockedGns[gsa.String()]), 1)
+	shouldEQ(t, len(addrLockedGns[gsa]), 1)
 
 	std.TestSkipHeights(302401) // 7 days 2 seconds
 	CollectUndelegated()
 
-	shouldEQ(t, len(addrLockedGns[gsa.String()]), 0)
+	shouldEQ(t, len(addrLockedGns[gsa]), 0)
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(100000000000000))
 	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
 }

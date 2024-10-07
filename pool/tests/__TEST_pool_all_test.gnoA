@@ -62,7 +62,6 @@ func TestCreateBarBazPool(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500}]}	shouldEQ(t, len(pools), 2)
 	std.TestSkipHeights(1)
 }
 
@@ -79,10 +78,11 @@ func TestMintFooBarLiquidity(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		-11000, // -11000
 		-9000,  // -9000
 		test_liquidityExpectStr,
+		gsa,
 	)
 	shouldEQ(t, amount0, "8040316")
 	shouldEQ(t, amount1, "2958015")
@@ -102,10 +102,11 @@ func TestMintBarBazLiquidity(t *testing.T) {
 		barPath,
 		bazPath,
 		fee500,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpectStr,
+		gsa,
 	)
 	shouldEQ(t, amount0, "2958015")
 	shouldEQ(t, amount1, "8040316")

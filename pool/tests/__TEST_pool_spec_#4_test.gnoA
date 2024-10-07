@@ -31,7 +31,6 @@ func init() {
 func AfterTest(t *testing.T) {
 	poolRealm := std.NewUserRealm(consts.POOL_ADDR)
 	std.TestSetRealm(poolRealm)
-	std.TestSetOrigCaller(consts.POOL_ADDR)
 	barBal := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBal := foo.BalanceOf(a2u(consts.POOL_ADDR))
 	bar.Transfer(a2u(gsa), barBal)
@@ -42,7 +41,6 @@ func AfterTest(t *testing.T) {
 func TestSuccess_price_within_range_transfers_current_price_of_both_tokens(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -54,14 +52,14 @@ func TestSuccess_price_within_range_transfers_current_price_of_both_tokens(t *te
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), minTick, maxTick, "3161")
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", gsa)
 
 	// ===================== price within range: transfers current price of both tokens =====================
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), minTick+tickSpacing, maxTick-tickSpacing, "100")
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick+tickSpacing, maxTick-tickSpacing, "100", gsa)
 
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
@@ -73,7 +71,6 @@ func TestSuccess_price_within_range_transfers_current_price_of_both_tokens(t *te
 func TestSuccess_initializes_lower_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -89,7 +86,6 @@ func TestSuccess_initializes_lower_tick(t *testing.T) {
 func TestSuccess_initializes_upper_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -109,7 +105,6 @@ func TestSuccess_initializes_upper_tick(t *testing.T) {
 func TestSuccess_works_for_min_max_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -121,14 +116,14 @@ func TestSuccess_works_for_min_max_tick(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161")
+	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", gsa)
 
 	// ===================== only clears the tick that is not used at all =====================
 
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), minTick, maxTick, "10000")
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "10000", gsa)
 
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
@@ -141,7 +136,6 @@ func TestSuccess_works_for_min_max_tick(t *testing.T) {
 func TestSuccess_removing_works(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -153,7 +147,7 @@ func TestSuccess_removing_works(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161")
+	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", gsa)
 
 	// ===================== only clears the tick that is not used at all =====================
 
@@ -161,10 +155,10 @@ func TestSuccess_removing_works(t *testing.T) {
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), minTick+tickSpacing, maxTick-tickSpacing, "10000")
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick+tickSpacing, maxTick-tickSpacing, "10000", gsa)
 	pl.Burn(token0Path, barPath, 3000, minTick+tickSpacing, maxTick-tickSpacing, "100")
 
-	amount0, amount1 := pl.Collect(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), minTick+tickSpacing, maxTick-tickSpacing, consts.MAX_UINT128, consts.MAX_UINT128)
+	amount0, amount1 := pl.Collect(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick+tickSpacing, maxTick-tickSpacing, consts.MAX_UINT128, consts.MAX_UINT128)
 
 	shouldEQ(t, amount0, "316")
 	shouldEQ(t, amount1, "31")

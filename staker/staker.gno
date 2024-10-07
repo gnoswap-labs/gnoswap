@@ -85,11 +85,11 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 	}
 
 	// if caller is owner
-	callerIsOwner := gnft.OwnerOf(tid(tokenId)) == std.GetOrigCaller()
+	callerIsOwner := gnft.OwnerOf(tid(tokenId)) == std.PrevRealm().Addr()
 	// stakerIsOwner
-	stakerIsOwner := gnft.OwnerOf(tid(tokenId)) == GetOrigPkgAddr()
+	stakerIsOwner := gnft.OwnerOf(tid(tokenId)) == consts.STAKER_ADDR
 	if !(callerIsOwner || stakerIsOwner) {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || Neither Caller(%s) or Staker(%s) is not owner of tokenId(%d)", std.GetOrigCaller(), GetOrigPkgAddr(), tokenId))
+		panic(ufmt.Sprintf("[STAKER] staker.gno__StakeToken() || Neither Caller(%s) or Staker(%s) is not owner of tokenId(%d)", std.PrevRealm().Addr(), consts.STAKER_ADDR, tokenId))
 	}
 
 	// check pool path from tokenid
@@ -110,7 +110,7 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 	// staked status
 	deposit := deposits[tokenId]
-	deposit.owner = std.GetOrigCaller() // NOT ACTUAL OWNER, MUST BE USER ALWAYS
+	deposit.owner = std.PrevRealm().Addr()
 	deposit.numberOfStakes++
 	deposit.stakeTimestamp = time.Now().Unix()
 	deposit.stakeHeight = std.GetHeight()
@@ -119,8 +119,6 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 	if callerIsOwner { // if caller is owner, transfer NFT ownership to staker contract
 		transferDeposit(tokenId, GetOrigPkgAddr())
-	} else if stakerIsOwner { // if staker is owner, approve NFT to caller (≈one click staking)
-		gnft.Approve(a2u(std.GetOrigCaller()), tid(tokenId))
 	}
 
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
@@ -128,7 +126,6 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"poolPath", poolPath,
@@ -223,7 +220,6 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 			std.Emit(
 				"GNOSWAP_PROTOCOL_FEE",
 				"m_callType", callType(),
-				"m_origCaller", origCaller(),
 				"m_prevRealm", prevRealm(),
 				"lpTokenId", uint64ToStr(tokenId),
 				"poolPath", poolPath,
@@ -243,7 +239,6 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 			std.Emit(
 				"GNOSWAP",
 				"m_callType", callType(),
-				"m_origCaller", origCaller(),
 				"m_prevRealm", prevRealm(),
 				"p_tokenId", uint64ToStr(tokenId),
 				"poolPath", poolPath,
@@ -296,7 +291,6 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 	std.Emit(
 		"GNOSWAP_PROTOCOL_FEE",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"lpTokenId", uint64ToStr(tokenId),
 		"poolPath", poolPath,
@@ -310,7 +304,6 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"poolPath", poolPath,
@@ -379,7 +372,6 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"poolPath", poolPath,
@@ -440,7 +432,7 @@ func CreateExternalIncentive(
 		ugnotSent := uint64(sent.AmountOf("ugnot"))
 
 		if ugnotSent != rewardAmount.Uint64() {
-			panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || user(%s) sent ugnot(%d) amount not equal to rewardAmount(%d)", std.GetOrigCaller(), ugnotSent, rewardAmount.Uint64()))
+			panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || user(%s) sent ugnot(%d) amount not equal to rewardAmount(%d)", std.PrevRealm().Addr(), ugnotSent, rewardAmount.Uint64()))
 		}
 
 		wrap(ugnotSent)
@@ -463,16 +455,16 @@ func CreateExternalIncentive(
 		panic(ufmt.Sprintf("[STAKER] staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 365 days)", externalDuration))
 	}
 
-	incentiveId := incentiveIdCompute(std.GetOrigCaller(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
+	incentiveId := incentiveIdCompute(std.PrevRealm().Addr(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
 
 	// if same incentiveId exists => increase rewardTokenAmount
 	for _, v := range poolIncentives[targetPoolPath] {
 		if v == incentiveId {
 			// external deposit amount
-			gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(GetOrigPkgAddr()), depositGnsAmount)
+			gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(GetOrigPkgAddr()), depositGnsAmount)
 
 			// external reward amount
-			transferFromByRegisterCall(rewardToken, std.GetOrigCaller(), GetOrigPkgAddr(), rewardAmount.Uint64())
+			transferFromByRegisterCall(rewardToken, std.PrevRealm().Addr(), GetOrigPkgAddr(), rewardAmount.Uint64())
 
 			incentive, ok := incentives[v]
 			if !ok {
@@ -481,12 +473,15 @@ func CreateExternalIncentive(
 
 			incentiveDuration := endTimestamp - startTimestamp
 			incentiveBlock := incentiveDuration / consts.BLOCK_GENERATION_INTERVAL
-			rewardAmountX96 := new(u256.Uint).Mul(rewardAmount, u256.MustFromDecimal(consts.Q96))
-			rewardPerBlockX96 := new(u256.Uint).Div(rewardAmountX96, u256.NewUint(uint64(incentiveBlock)))
-			incentive.rewardPerBlockX96 = rewardPerBlockX96
 
 			incentive.rewardAmount = new(u256.Uint).Add(incentive.rewardAmount, rewardAmount)
 			incentive.rewardLeft = new(u256.Uint).Add(incentive.rewardLeft, rewardAmount)
+
+			rewardAmountX96 := new(u256.Uint).Mul(incentive.rewardAmount, u256.MustFromDecimal(consts.Q96))
+			rewardPerBlockX96 := new(u256.Uint).Div(rewardAmountX96, u256.NewUint(uint64(incentiveBlock)))
+
+			incentive.rewardPerBlockX96 = rewardPerBlockX96
+
 			incentive.depositGnsAmount += depositGnsAmount
 			incentives[v] = incentive
 
@@ -497,7 +492,6 @@ func CreateExternalIncentive(
 			std.Emit(
 				"GNOSWAP",
 				"m_callType", callType(),
-				"m_origCaller", origCaller(),
 				"m_prevRealm", prevRealm(),
 				"p_poolPath", targetPoolPath,
 				"p_rewardToken", rewardToken,
@@ -514,10 +508,10 @@ func CreateExternalIncentive(
 	}
 
 	// external deposit amount
-	gns.TransferFrom(a2u(std.GetOrigCaller()), a2u(GetOrigPkgAddr()), depositGnsAmount)
+	gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(GetOrigPkgAddr()), depositGnsAmount)
 
 	// external reward amount
-	transferFromByRegisterCall(rewardToken, std.GetOrigCaller(), GetOrigPkgAddr(), rewardAmount.Uint64())
+	transferFromByRegisterCall(rewardToken, std.PrevRealm().Addr(), GetOrigPkgAddr(), rewardAmount.Uint64())
 
 	incentiveDuration := endTimestamp - startTimestamp
 	incentiveBlock := incentiveDuration / consts.BLOCK_GENERATION_INTERVAL
@@ -532,7 +526,7 @@ func CreateExternalIncentive(
 		startTimestamp:    startTimestamp,
 		endTimestamp:      endTimestamp,
 		rewardPerBlockX96: rewardPerBlockX96,
-		refundee:          std.GetOrigCaller(),
+		refundee:          std.PrevRealm().Addr(),
 		createdHeight:     std.GetHeight(),
 		depositGnsAmount:  depositGnsAmount,
 	}
@@ -548,7 +542,6 @@ func CreateExternalIncentive(
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_poolPath", targetPoolPath,
 		"p_rewardToken", rewardToken,
@@ -575,10 +568,8 @@ func CreateExternalIncentive(
 //   - If incentive expiration time is not over
 //   - If reward token amount is not enough to refund
 //   - If the caller is neither the refundee nor the admin
-func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string, startTimestamp, endTimestamp, height int64) {
+func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken string, startTimestamp, endTimestamp, height int64) {
 	common.IsHalted()
-
-	refundee := std.Address(_refundee)
 
 	incentiveId := incentiveIdCompute(refundee, targetPoolPath, rewardToken, startTimestamp, endTimestamp, height)
 
@@ -626,11 +617,10 @@ func EndExternalIncentive(_refundee, targetPoolPath, rewardToken string, startTi
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_poolPath", targetPoolPath,
 		"p_rewardToken", rewardToken,
-		"p_refundee", _refundee,
+		"p_refundee", refundee.String(),
 		"end_by", incentive.refundee.String(),
 		"refund_amount", refund.ToString(),
 		"refund_gns_amount", uint64ToStr(incentive.depositGnsAmount),
@@ -664,8 +654,8 @@ func checkStartTime(startTimestamp int64) {
 
 func transferDeposit(tokenId uint64, to std.Address) {
 	owner := gnft.OwnerOf(tid(tokenId))
-	if std.GetOrigCaller() == to {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__transferDeposit() || only owner(%s) can transfer tokenId(%d), std.GetOrigCaller()(%s)", owner, tokenId, std.GetOrigCaller()))
+	if std.PrevRealm().Addr() == to {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__transferDeposit() || only owner(%s) can transfer tokenId(%d), std.PrevRealm().Addr()(%s)", owner, tokenId, std.PrevRealm().Addr()))
 	}
 
 	// transfer NFT ownership

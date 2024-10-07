@@ -39,7 +39,7 @@ func handleUnstakingFee(
 		std.Emit(
 			"GNOSWAP_PROTOCOL_FEE",
 			"m_callType", callType(),
-			"m_origCaller", origCaller(),
+
 			"m_prevRealm", prevRealm(),
 			"lpTokenId", strconv.FormatUint(tokenId, 10),
 			"poolPath", poolPath,
@@ -57,7 +57,7 @@ func handleUnstakingFee(
 		std.Emit(
 			"GNOSWAP_PROTOCOL_FEE",
 			"m_callType", callType(),
-			"m_origCaller", origCaller(),
+
 			"m_prevRealm", prevRealm(),
 			"lpTokenId", strconv.FormatUint(tokenId, 10),
 			"poolPath", poolPath,
@@ -70,7 +70,6 @@ func handleUnstakingFee(
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", "INDIRECT",
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenPath", tokenPath,
 		"p_internal", boolToStr(internal),
@@ -107,7 +106,6 @@ func SetUnstakingFee(fee uint64) {
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_fee", uint64ToStr(fee),
 	)

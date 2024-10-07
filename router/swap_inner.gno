@@ -42,12 +42,12 @@ func _swap(
 		data.tokenOut,
 		data.fee,
 
-		recipient.String(),
+		recipient,
 		zeroForOne,
 		amountSpecified.ToString(),
 		sqrtPriceLimitX96.ToString(),
 
-		data.payer.String(),
+		data.payer,
 	)
 	amount0, err := i256.FromDecimal(amount0Str)
 	if err != nil {

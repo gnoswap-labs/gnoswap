@@ -16,7 +16,6 @@ import (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	pl.SetPoolCreationFee(0)
 }
@@ -45,7 +44,8 @@ func TestMintPosition(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, getNextId(), uint64(2))
@@ -79,8 +79,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 }
 
 func TestDecreaseLiquidity(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
-
+	std.TestSetRealm(gsaRealm)
 	oldLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
 
 	DecreaseLiquidity(
@@ -107,7 +106,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 }
 
 func TestDecreaseLiquidityToBurnPosition(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	// burn it
 	DecreaseLiquidity(

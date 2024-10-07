@@ -32,7 +32,6 @@ func init() {
 
 func TestCreateProject(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 
 	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
 	std.TestSkipHeights(1)
@@ -50,19 +49,17 @@ func TestCreateProject(t *testing.T) {
 	)
 	shouldEQ(t, projectId, `gno.land/r/onbloc/obl:124`)
 	std.TestSkipHeights(1)
-
 }
 
 func TestDepositGnsToTier30_User01(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
+
 	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
 	// transfer some grc20 tokens to bypass project condition
 	foo.Transfer(a2u(user01), uint64(10))
 	bar.Transfer(a2u(user01), uint64(10))
 
 	std.TestSetRealm(user01Realm)
-	std.TestSetOrigCaller(user01)
 	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
 
 	// skip some blocks to make project active
@@ -73,14 +70,13 @@ func TestDepositGnsToTier30_User01(t *testing.T) {
 
 func TestDepositGnsToTier30_User02(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
+
 	gns.Transfer(a2u(user02), uint64(9_000_000)) // to deposit
 	// transfer some grc20 tokens to bypass project condition
 	foo.Transfer(a2u(user02), uint64(10))
 	bar.Transfer(a2u(user02), uint64(10))
 
 	std.TestSetRealm(user02Realm)
-	std.TestSetOrigCaller(user02)
 	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(9_000_000))
 
 	// skip some blocks to make project active
@@ -91,7 +87,6 @@ func TestDepositGnsToTier30_User02(t *testing.T) {
 func TestCollectRewardByProjectId(t *testing.T) {
 	t.Run("claim reward before 30 days by user01", func(t *testing.T) {
 		std.TestSetRealm(user01Realm)
-		std.TestSetOrigCaller(user01)
 
 		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
 		shouldEQ(t, reward, uint64(0))
@@ -100,7 +95,6 @@ func TestCollectRewardByProjectId(t *testing.T) {
 
 	t.Run("claim reward before 30 days by user02", func(t *testing.T) {
 		std.TestSetRealm(user02Realm)
-		std.TestSetOrigCaller(user02)
 
 		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
 		shouldEQ(t, reward, uint64(0))
@@ -109,7 +103,6 @@ func TestCollectRewardByProjectId(t *testing.T) {
 
 	t.Run("claim after 30 days by user01", func(t *testing.T) {
 		std.TestSetRealm(user01Realm)
-		std.TestSetOrigCaller(user01)
 
 		std.TestSkipHeights(int64(TIMESTAMP_30DAYS) / 2)
 		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
@@ -118,7 +111,6 @@ func TestCollectRewardByProjectId(t *testing.T) {
 
 	t.Run("claim after 30 days by user02", func(t *testing.T) {
 		std.TestSetRealm(user02Realm)
-		std.TestSetOrigCaller(user02)
 
 		std.TestSkipHeights(int64(TIMESTAMP_30DAYS) / 2)
 		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
@@ -127,7 +119,6 @@ func TestCollectRewardByProjectId(t *testing.T) {
 
 	t.Run("no more claim in same block by user 01", func(t *testing.T) {
 		std.TestSetRealm(user01Realm)
-		std.TestSetOrigCaller(user01)
 
 		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
 		shouldEQ(t, reward, uint64(0))
@@ -135,7 +126,6 @@ func TestCollectRewardByProjectId(t *testing.T) {
 
 	t.Run("no more claim in same block by user 02", func(t *testing.T) {
 		std.TestSetRealm(user02Realm)
-		std.TestSetOrigCaller(user02)
 
 		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
 		shouldEQ(t, reward, uint64(0))

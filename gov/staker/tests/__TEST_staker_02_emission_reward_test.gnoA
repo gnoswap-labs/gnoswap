@@ -27,7 +27,6 @@ var (
 )
 
 func TestInit(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(100000000000000)) // admin has initial gns
@@ -47,7 +46,6 @@ func TestInit(t *testing.T) {
 }
 
 func TestDelegate(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	// gns before emission
@@ -74,12 +72,10 @@ func TestDelegate(t *testing.T) {
 }
 
 func TestDelegateAnother(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	gns.Transfer(a2u(dummyAddr), 5000000)
 
 	std.TestSkipHeights(1)
-	std.TestSetOrigCaller(dummyAddr)
 	std.TestSetRealm(dummyRealm)
 	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(5000000))
 	Delegate(dummyAddr, 5000000)
@@ -98,43 +94,40 @@ func TestSkipDummyBlock(t *testing.T) {
 }
 
 func TestCheckReward(t *testing.T) {
-	gcr := GetClaimableRewardByAddress(dummyAddr.String())
+	gcr := GetClaimableRewardByAddress(dummyAddr)
 	shouldEQ(t, gcr, `{"height":"135","now":"1234567914","emissionReward":"5945584"}`)
 }
 
 func TestCollectReward(t *testing.T) {
-	std.TestSetOrigCaller(dummyAddr)
 	std.TestSetRealm(dummyRealm)
 
 	shouldEQ(t, gns.BalanceOf(a2u(dummyAddr)), uint64(0))
-	shouldEQ(t, userEmissionReward[dummyAddr.String()], uint64(5945584))
+	shouldEQ(t, userEmissionReward[dummyAddr], uint64(5945584))
 
 	CollectReward()
 	shouldEQ(t, gns.BalanceOf(a2u(dummyAddr)), uint64(5945584))
-	shouldEQ(t, userEmissionReward[dummyAddr.String()], uint64(0))
+	shouldEQ(t, userEmissionReward[dummyAddr], uint64(0))
 }
 
 func TestCollectRewardSameBlock(t *testing.T) {
-	std.TestSetOrigCaller(dummyAddr)
 	std.TestSetRealm(dummyRealm)
 
 	shouldEQ(t, gns.BalanceOf(a2u(dummyAddr)), uint64(5945584))
-	shouldEQ(t, userEmissionReward[dummyAddr.String()], uint64(0))
+	shouldEQ(t, userEmissionReward[dummyAddr], uint64(0))
 
 	CollectReward()
 	shouldEQ(t, gns.BalanceOf(a2u(dummyAddr)), uint64(5945584))
-	shouldEQ(t, userEmissionReward[dummyAddr.String()], uint64(0))
+	shouldEQ(t, userEmissionReward[dummyAddr], uint64(0))
 }
 
 func TestCollectRewardMoreBlock01(t *testing.T) {
 	std.TestSkipHeights(1)
-	std.TestSetOrigCaller(dummyAddr)
 	std.TestSetRealm(dummyRealm)
 
 	shouldEQ(t, gns.BalanceOf(a2u(dummyAddr)), uint64(5945584))
-	shouldEQ(t, userEmissionReward[dummyAddr.String()], uint64(0))
+	shouldEQ(t, userEmissionReward[dummyAddr], uint64(0))
 
 	CollectReward()
 	shouldEQ(t, gns.BalanceOf(a2u(dummyAddr)), uint64(6540143))
-	shouldEQ(t, userEmissionReward[dummyAddr.String()], uint64(0))
+	shouldEQ(t, userEmissionReward[dummyAddr], uint64(0))
 }

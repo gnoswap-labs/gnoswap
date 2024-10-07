@@ -208,10 +208,6 @@ func b64Encode(data string) string {
 	return string(b64.StdEncoding.EncodeToString([]byte(data)))
 }
 
-func origCaller() string {
-	return std.GetOrigCaller().String()
-}
-
 func prevRealm() string {
 	return std.PrevRealm().PkgPath()
 }
@@ -225,4 +221,14 @@ func minU64(x, y uint64) uint64 {
 		return x
 	}
 	return y
+}
+
+func isUserCall() bool {
+	return std.PrevRealm().IsUser()
+}
+
+func assertUserCall() {
+	if !isUserCall() {
+		panic("must be called by user")
+	}
 }

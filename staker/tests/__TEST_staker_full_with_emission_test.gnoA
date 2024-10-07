@@ -21,7 +21,6 @@ import (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	pl.SetPoolCreationFee(0)
 }
@@ -76,12 +75,13 @@ func TestPositionMintPos01Tier01(t *testing.T) {
 		"0",                         // amount0Min
 		"0",                         // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, lpTokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), gsa)
 	shouldEQ(t, amount0, "0")
 	shouldEQ(t, amount1, "1000")
 
@@ -113,13 +113,14 @@ func TestPositionMintPos02Tier01(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, lpTokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), gsa)
 	shouldEQ(t, amount0, "368")
 	shouldEQ(t, amount1, "1000")
 
@@ -151,13 +152,14 @@ func TestPositionMintPos03Tier01(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, lpTokenId, uint64(3))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), gsa)
 	shouldEQ(t, amount0, "3979")
 	shouldEQ(t, amount1, "5000")
 

@@ -68,7 +68,7 @@ func SwapRoute(
 	var userBeforeWugnotBalance uint64
 	var userWrappedWugnot uint64
 	if inputToken == consts.GNOT || outputToken == consts.GNOT {
-		userBeforeWugnotBalance = wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+		userBeforeWugnotBalance = wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
 
 		if swapType == "EXACT_IN" && inputToken == consts.GNOT {
 			sent := std.GetOrigSend()
@@ -104,7 +104,6 @@ func SwapRoute(
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_input", inputToken,
 		"p_output", outputToken,
@@ -195,7 +194,7 @@ func finalizeSwap(inputToken, outputToken string, resultAmountIn, resultAmountOu
 
 	afterFee := handleSwapFee(outputToken, resultAmountOut, false)
 
-	userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+	userNewWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
 	if inputToken == consts.GNOT {
 		totalBefore := userBeforeWugnotBalance + userWrappedWugnot
 		spend := totalBefore - userNewWugnotBalance
@@ -236,7 +235,7 @@ func handleMultiSwap(swapType string, route string, numHops int, amountSpecified
 			tokenIn:         input,
 			tokenOut:        output,
 			fee:             fee,
-			recipient:       std.GetOrigCaller(),
+			recipient:       std.PrevRealm().Addr(),
 			amountSpecified: amountSpecified,
 		}
 
@@ -251,7 +250,7 @@ func handleMultiSwap(swapType string, route string, numHops int, amountSpecified
 			tokenIn:         input,
 			tokenOut:        output,
 			fee:             fee,
-			recipient:       std.GetOrigCaller(),
+			recipient:       std.PrevRealm().Addr(),
 			amountSpecified: amountSpecified,
 		}
 

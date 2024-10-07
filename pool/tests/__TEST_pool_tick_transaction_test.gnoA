@@ -40,10 +40,11 @@ func TestTickTransaction(t *testing.T) {
 		barPath,
 		fooPath,
 		fee100,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		-24082,
 		-24080,
 		liqToMint,
+		gsa,
 	)
 	shouldEQ(t, thisPool.liquidity.ToString(), "10000000000")
 
@@ -52,10 +53,11 @@ func TestTickTransaction(t *testing.T) {
 		barPath,
 		fooPath,
 		fee100,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		-24082,
 		-24081,
 		liqToMint,
+		gsa,
 	)
 	shouldEQ(t, thisPool.liquidity.ToString(), "10000000000")
 
@@ -80,11 +82,11 @@ func TestTickTransaction(t *testing.T) {
 		barPath,
 		fooPath,
 		fee100,
-		gsa.String(),
+		gsa,
 		true,
 		"3",
 		consts.MIN_PRICE,
-		std.GetOrigCaller().String(),
+		gsa,
 	)
 
 	shouldEQ(t, thisPool.slot0.tick, int32(-24082))

@@ -8,6 +8,6 @@ import (
 )
 
 func TestGnsSetAvgBlockTimeInMs(t *testing.T) {
-	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
+	std.TestSetRealm(gsaRealm)
 	GnsSetAvgBlockTimeInMs(2500)
 }

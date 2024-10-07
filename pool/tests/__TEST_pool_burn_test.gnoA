@@ -32,10 +32,11 @@ func TestDoesNotClear(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		-887160,
 		887160,
 		test_liquidityExpectStr,
+		gsa,
 	)
 
 	std.TestSetRealm(rouRealm)
@@ -43,22 +44,22 @@ func TestDoesNotClear(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		true,
 		"10000",
 		consts.MIN_PRICE,
-		std.GetOrigCaller().String(),
+		gsa,
 	)
 
 	Swap(
 		barPath,
 		fooPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		false,
 		"10000",
 		consts.MAX_PRICE,
-		std.GetOrigCaller().String(),
+		gsa,
 	)
 	// did swap t0 => t1 and t1 => t0
 
@@ -106,20 +107,22 @@ func TestClearOnlyLowTick(t *testing.T) {
 		barPath,
 		fooPath,
 		fee3000,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		-887160,
 		887160,
 		"1",
+		gsa,
 	)
 
 	Mint(
 		barPath,
 		fooPath,
 		fee3000,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		-887100,
 		887160,
 		"1",
+		gsa,
 	)
 
 	std.TestSetRealm(rouRealm)
@@ -127,11 +130,11 @@ func TestClearOnlyLowTick(t *testing.T) {
 		barPath,
 		fooPath,
 		fee3000,
-		gsa.String(),
+		gsa,
 		true,
 		"10000",
 		consts.MIN_PRICE,
-		std.GetOrigCaller().String(),
+		gsa,
 	)
 
 	std.TestSetRealm(posRealm)
@@ -168,20 +171,22 @@ func TestClearOnlyUpperTick(t *testing.T) {
 		barPath,
 		fooPath,
 		fee100,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		-887160,
 		887160,
 		"1",
+		gsa,
 	)
 
 	Mint(
 		barPath,
 		fooPath,
 		fee100,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		-887160,
 		887100,
 		"1",
+		gsa,
 	)
 
 	std.TestSetRealm(rouRealm)
@@ -189,11 +194,11 @@ func TestClearOnlyUpperTick(t *testing.T) {
 		barPath,
 		fooPath,
 		fee100,
-		gsa.String(),
+		gsa,
 		true,
 		"10000",
 		consts.MIN_PRICE,
-		std.GetOrigCaller().String(),
+		gsa,
 	)
 
 	std.TestSetRealm(posRealm)

@@ -400,6 +400,7 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 	until70 := uint64(stakedOrExternalStartedHeight + warmUp[100] - 1) // 900
 	begin100 := uint64(stakedOrExternalStartedHeight + warmUp[100])    // 901~
 
+	// external := externals[incentiveId]
 	for _, external := range externals {
 		if external.incentiveId == incentiveId {
 			println("   > REWARD__EXTERNAL_incentiveId:", incentiveId)

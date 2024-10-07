@@ -157,7 +157,6 @@ func SetPoolTier(pool string, tier uint64) {
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_poolPath", pool,
 		"p_tier", uint64ToStr(tier),
@@ -210,7 +209,6 @@ func ChangePoolTier(pool string, tier uint64) {
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_poolPath", pool,
 		"p_tier", uint64ToStr(tier),
@@ -254,7 +252,6 @@ func RemovePoolTier(pool string) {
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_poolPath", pool,
 	)

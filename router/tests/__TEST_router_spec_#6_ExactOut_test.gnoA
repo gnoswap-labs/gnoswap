@@ -31,7 +31,7 @@ func TestPositionMint(t *testing.T) {
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// Mint
-	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, gsa.String())
+	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, gsa, gsa)
 }
 
 func TestSwapRouteBazBarExactOut(t *testing.T) {

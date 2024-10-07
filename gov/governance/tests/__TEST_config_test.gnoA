@@ -4,22 +4,11 @@ import (
 	"std"
 	"strings"
 	"testing"
-
-	"gno.land/r/gnoswap/v2/consts"
 )
 
 func TestReconfigure(t *testing.T) {
-	// Helper function to set the caller to the governance itself
-	setGovernorAsCaller := func() {
-		// origCaller := std.GetOrigCaller
-		// std.TestSetOrigCaller(std.GetOrigPkgAddr())
-
-		govRealm := std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
-		std.TestSetRealm(govRealm)
-	}
-
 	t.Run("Successful reconfiguration", func(t *testing.T) {
-		setGovernorAsCaller()
+		std.TestSetRealm(gsaRealm)
 
 		newConfigParams := "200*GOV*2000*GOV*200*GOV*1000*GOV*200*GOV*200*GOV*2000"
 		params := strings.Split(newConfigParams, "*GOV*")
@@ -49,7 +38,7 @@ func TestReconfigure(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
-			} else if !strings.HasPrefix(string(r), "Reconfigure can only be called by the governance contract") {
+			} else if !strings.HasPrefix(string(r), "must be called by user") {
 				t.Errorf("Unexpected panic message: %v", r)
 			}
 		}()

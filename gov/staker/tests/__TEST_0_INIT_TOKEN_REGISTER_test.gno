@@ -136,7 +136,7 @@ func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 }
 
 func init() {
-	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
+	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
 
 	// POOL
 	pl.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
@@ -182,6 +182,4 @@ func init() {
 	RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
 	RegisterGRC20Interface("gno.land/r/gnoswap/v2/gns", GNSToken{})
-
-	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
 }

@@ -34,7 +34,6 @@ func init() {
 	}
 
 	// set pool create fee to 0 for testing
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	pl.SetPoolCreationFee(0)
 }
@@ -71,13 +70,14 @@ func TestMintBarQux500(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
 	shouldEQ(t, amount0, "36790")
 	shouldEQ(t, amount1, "100000")
 }
@@ -99,12 +99,13 @@ func TestMintBarBaz100(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
 	shouldEQ(t, amount0, "100000")
 	shouldEQ(t, amount1, "100000")
 }
@@ -126,13 +127,14 @@ func TestMintFooQux500(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, tokenId, uint64(3))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
 	shouldEQ(t, amount0, "100000")
 	shouldEQ(t, amount1, "100000")
 }

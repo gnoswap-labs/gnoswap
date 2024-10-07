@@ -39,9 +39,9 @@ func TestPositionMint(t *testing.T) {
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// Mint
-	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, gsa.String())
+	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, gsa, gsa)
 
-	pn.Mint(bazPath, fooPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, gsa.String())
+	pn.Mint(bazPath, fooPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, gsa, gsa)
 }
 
 func TestSwapRouteBarfooExactIn(t *testing.T) {

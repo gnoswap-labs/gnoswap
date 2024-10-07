@@ -34,7 +34,6 @@ func SetDepositGnsAmount(amount uint64) {
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_amount", uint64ToStr(amount),
 	)

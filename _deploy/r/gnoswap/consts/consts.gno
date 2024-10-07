@@ -63,8 +63,13 @@ const (
 	GOV_GOVERNANCE_PATH string      = "gno.land/r/gnoswap/v2/gov/governance"
 	GOV_GOVERNANCE_ADDR std.Address = "g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5"
 
-	COMMON_PATH string = "gno.land/r/gnoswap/v2/common"
-	COMMON_ADDR string = "g1llrfcez4kuje8fzktrlm5m5jw9tfw7hpnu8lg5"
+	COMMON_PATH string      = "gno.land/r/gnoswap/v2/common"
+	COMMON_ADDR std.Address = "g1llrfcez4kuje8fzktrlm5m5jw9tfw7hpnu8lg5"
+
+	LAUNCHPAD_PATH string      = "gno.land/r/gnoswap/v2/launchpad"
+	LAUNCHPAD_ADDR std.Address = "g1qslhn7vn69e09zwmz5hlz0273v3c33u5z8d9j7"
+
+	INIT_REGISTER_PATH string = "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5/v2/register_gnodev"
 )
 
 // NUMBER

@@ -22,10 +22,10 @@ var (
 	depositsByProject = make(map[string]map[string][]string)
 
 	// user -> []depositId
-	depositsByUser = make(map[string][]string)
+	depositsByUser = make(map[std.Address][]string)
 
 	//  user -> project -> []depositId
-	depositsByUserByProject = make(map[string]map[string][]string)
+	depositsByUserByProject = make(map[std.Address]map[string][]string)
 )
 
 // DepositGns deposit gns to the project's tier
@@ -62,7 +62,7 @@ func DepositGns(
 
 	// gns will be locked in `launchpad` contract
 	gns.TransferFrom(
-		a2u(std.GetOrigCaller()),
+		a2u(std.PrevRealm().Addr()),
 		a2u(std.Address(consts.LAUNCHPAD_ADDR)),
 		amount,
 	)
@@ -89,7 +89,7 @@ func DepositGns(
 	projects[projectId] = project
 
 	// deposit History
-	depositor := std.GetOrigCaller()
+	depositor := std.PrevRealm().Addr()
 	depositorStr := depositor.String()
 	depositId := projectId + ":" + tierStr + ":" + depositorStr + ":" + ufmt.Sprintf("%d", std.GetHeight())
 	depositToHistory := Deposit{
@@ -106,7 +106,7 @@ func DepositGns(
 	deposits[depositId] = depositToHistory
 
 	// update depositsByUser
-	depositsByUser[depositorStr] = append(depositsByUser[depositorStr], depositId)
+	depositsByUser[depositor] = append(depositsByUser[depositor], depositId)
 
 	// update depositsByProject
 	if _, exist := depositsByProject[projectId]; !exist {
@@ -118,17 +118,16 @@ func DepositGns(
 	depositsByProject[projectId][tierStr] = append(depositsByProject[projectId][tierStr], depositId)
 
 	// update depositsByUserByProject
-	if _, exist := depositsByUserByProject[depositorStr]; !exist {
-		depositsByUserByProject[depositorStr] = make(map[string][]string)
+	if _, exist := depositsByUserByProject[depositor]; !exist {
+		depositsByUserByProject[depositor] = make(map[string][]string)
 	}
-	if _, exist := depositsByUserByProject[depositorStr][projectId]; !exist {
-		depositsByUserByProject[depositorStr][projectId] = make([]string, 0)
+	if _, exist := depositsByUserByProject[depositor][projectId]; !exist {
+		depositsByUserByProject[depositor][projectId] = make([]string, 0)
 	}
-	depositsByUserByProject[depositorStr][projectId] = append(depositsByUserByProject[depositorStr][projectId], depositId)
+	depositsByUserByProject[depositor][projectId] = append(depositsByUserByProject[depositor][projectId], depositId)
 
 	std.Emit(
 		"DepositGns",
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_targetProjectTierId", targetProjectTierId,
 		"p_amount", ufmt.Sprintf("%d", amount),
@@ -146,9 +145,8 @@ func DepositGns(
 func CollectDepositGns() uint64 {
 	calculateDepositReward() // uncomment this line if L#208 `CollectReward` is removed
 
-	caller := std.GetOrigCaller()
-	callerStr := caller.String()
-	userDeposits := depositsByUser[callerStr]
+	caller := std.PrevRealm().Addr()
+	userDeposits := depositsByUser[caller]
 
 	gnsToUser := uint64(0)
 	for _, depositId := range userDeposits {
@@ -193,7 +191,6 @@ func CollectDepositGns() uint64 {
 		// emit event for each deposit
 		std.Emit(
 			"CollectDepositGns",
-			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"depositId", depositId,
 			"amount", ufmt.Sprintf("%d", deposit.amount),
@@ -244,7 +241,7 @@ func checkDepositConditions(project Project) {
 			continue
 		} else {
 			// check balance
-			balance := balanceOfByRegisterCall(condition.tokenPath, std.GetOrigCaller())
+			balance := balanceOfByRegisterCall(condition.tokenPath, std.PrevRealm().Addr())
 			if balance < condition.minAmount {
 				panic(ufmt.Sprintf("insufficient balance(%d) for token(%s)", balance, condition.tokenPath))
 			}

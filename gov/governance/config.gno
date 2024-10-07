@@ -57,7 +57,7 @@ func init() {
 }
 
 // Reconfigure updates the Governor's configuration.
-// This function can only be called by the Governor itself (via a proposal).
+// This function can only be called by admin
 // Returns the new configuration version number.
 func Reconfigure(
 	votingStartDelay uint64,
@@ -68,19 +68,40 @@ func Reconfigure(
 	executionDelay uint64,
 	executionWindow uint64,
 ) uint64 {
+	assertUserCall()
+
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GNOSWAP_ADMIN {
+		panic("Reconfigure can only be called by the admin")
+	}
+
+	return reconfigure(
+		votingStartDelay,
+		votingPeriod,
+		votingWeightSmoothingDuration,
+		quorum,
+		proposalCreationThreshold,
+		executionDelay,
+		executionWindow,
+	)
+}
+
+// reconfigure updates the Governor's configuration.
+// This function can only be called by the Governor itself (via a proposal).
+// Returns the new configuration version number.
+func reconfigure(
+	votingStartDelay uint64,
+	votingPeriod uint64,
+	votingWeightSmoothingDuration uint64,
+	quorum uint64,
+	proposalCreationThreshold uint64,
+	executionDelay uint64,
+	executionWindow uint64,
+) uint64 {
 	common.IsHalted()
+
 	en.MintAndDistributeGns()
 	updateProposalsState()
-
-	prev := std.PrevRealm().PkgPath()
-	if !(prev == "" || (prev == consts.GOV_GOVERNANCE_PATH)) {
-		panic(
-			ufmt.Sprintf(
-				"Reconfigure can only be called by the governance contract, but was called by orig(%s), prev(%s), curr(%s)",
-				std.GetOrigCaller().String(), prev, std.CurrentRealm().PkgPath(),
-			),
-		)
-	}
 
 	newVersion := uint64(len(configVersions) + 1)
 
@@ -97,7 +118,6 @@ func Reconfigure(
 
 	std.Emit(
 		"Reconfigured",
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_voting_start_delay", ufmt.Sprintf("%d", config.VotingStartDelay),
 		"p_voting_period", ufmt.Sprintf("%d", config.VotingPeriod),

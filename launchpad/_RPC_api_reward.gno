@@ -13,12 +13,11 @@ func ApiGetProjectRecipientRewardByProjectId(projectId string) string {
 		return "0"
 	}
 
-	return gs.GetClaimableRewardByAddress(project.recipient.String())
+	return gs.GetClaimableRewardByAddress(project.recipient)
 }
 
-func ApiGetProjectRecipientRewardByAddress(address string) string {
-	addr := std.Address(address)
-	if !addr.IsValid() {
+func ApiGetProjectRecipientRewardByAddress(address std.Address) string {
+	if !address.IsValid() {
 		return "0"
 	}
 
@@ -36,9 +35,8 @@ func ApiGetDepositRewardByDepositId(depositId string) uint64 {
 	return deposit.rewardAmount
 }
 
-func ApiGetDepositRewardByAddress(address string) uint64 {
-	addr := std.Address(address)
-	if !addr.IsValid() {
+func ApiGetDepositRewardByAddress(address std.Address) uint64 {
+	if !address.IsValid() {
 		return 0
 	}
 

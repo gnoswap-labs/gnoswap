@@ -59,7 +59,7 @@ func TestPositionMint(t *testing.T) {
 	baz.Approve(a2u(consts.POOL_ADDR), 100000000)
 
 	// Mint
-	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, FEE_MEDIUM, int32(-887220), int32(887220), "100000000", "100000000", "0", "0", max_timeout, gsa.String())
+	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, FEE_MEDIUM, int32(-887220), int32(887220), "100000000", "100000000", "0", "0", max_timeout, gsa, gsa)
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, amount0, "100000000")
@@ -80,7 +80,6 @@ func TestExactInputSinglePool(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 
 	user1Realm := std.NewUserRealm(user1Addr)
-	std.TestSetOrigCaller(user1Addr)
 	std.TestSetRealm(user1Realm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)

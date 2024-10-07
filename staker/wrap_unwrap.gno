@@ -25,12 +25,11 @@ func wrap(ugnotAmount uint64) {
 	wugnot.Deposit() // STAKER HAS WUGNOT
 
 	// SEND WUGNOT: STAKER -> USER
-	wugnot.Transfer(a2u(std.GetOrigCaller()), ugnotAmount)
+	wugnot.Transfer(a2u(std.PrevRealm().Addr()), ugnotAmount)
 
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_ugnotAmount", uint64ToStr(ugnotAmount),
 	)
@@ -42,19 +41,18 @@ func unwrap(wugnotAmount uint64) {
 	}
 
 	// SEND WUGNOT: USER -> STAKER
-	wugnot.TransferFrom(a2u(std.GetOrigCaller()), a2u(consts.STAKER_ADDR), wugnotAmount)
+	wugnot.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(consts.STAKER_ADDR), wugnotAmount)
 
 	// UNWRAP IT
 	wugnot.Withdraw(wugnotAmount)
 
 	// SEND GNOT: STAKER -> USER
 	banker := std.GetBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(consts.STAKER_ADDR, std.GetOrigCaller(), std.Coins{{Denom: "ugnot", Amount: int64(wugnotAmount)}})
+	banker.SendCoins(consts.STAKER_ADDR, std.PrevRealm().Addr(), std.Coins{{Denom: "ugnot", Amount: int64(wugnotAmount)}})
 
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_wugnotAmount", uint64ToStr(wugnotAmount),
 	)

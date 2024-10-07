@@ -38,7 +38,6 @@ var (
 )
 
 func TestDelegateAdminToDummy(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	// gns before emission
@@ -65,12 +64,10 @@ func TestDelegateAdminToDummy(t *testing.T) {
 }
 
 func TestDelegateAnotherDumyToDummy_Self(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	gns.Transfer(a2u(dummyAddr), 5000000)
 
 	std.TestSkipHeights(1)
-	std.TestSetOrigCaller(dummyAddr)
 	std.TestSetRealm(dummyRealm)
 	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(5000000))
 	Delegate(dummyAddr, 5000000)
@@ -100,7 +97,6 @@ func TestMockProtocolFee(t *testing.T) {
 
 func TestLaunchPadCreateProject(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 
 	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), 1_000_000_000)
 	projectId := lp.CreateProject(
@@ -120,11 +116,9 @@ func TestLaunchPadCreateProject(t *testing.T) {
 
 func TestLaunchPadDeposit(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
 
 	std.TestSetRealm(user01Realm)
-	std.TestSetOrigCaller(user01)
 	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
 
 	lp.DepositGns(
@@ -151,23 +145,22 @@ func TestSkipDummyBlock(t *testing.T) {
 
 func TestCheckReward(t *testing.T) {
 	t.Run("check dummy addr", func(t *testing.T) {
-		gcr := GetClaimableRewardByAddress(dummyAddr.String())
+		gcr := GetClaimableRewardByAddress(dummyAddr)
 		shouldEQ(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"817"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2040"}]}`)
 	})
 
 	t.Run("check launchpad addr", func(t *testing.T) {
-		gcr := GetClaimableRewardByAddress(consts.LAUNCHPAD_ADDR.String())
+		gcr := GetClaimableRewardByAddress(consts.LAUNCHPAD_ADDR)
 		shouldEQ(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0"}`)
 	})
 
 	t.Run("check project's recipient", func(t *testing.T) {
-		gcr := GetClaimableRewardByAddress(projectAddr.String())
+		gcr := GetClaimableRewardByAddress(projectAddr)
 		shouldEQ(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"20"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"51"}]}`)
 	})
 }
 
 func TestCollectReward(t *testing.T) {
-	std.TestSetOrigCaller(projectAddr)
 	std.TestSetRealm(projectRealm)
 
 	// protocol fee has bar, qux
@@ -182,7 +175,6 @@ func TestCollectReward(t *testing.T) {
 }
 
 func TestCollectRewardSameBlock(t *testing.T) {
-	std.TestSetOrigCaller(projectAddr)
 	std.TestSetRealm(projectRealm)
 
 	shouldEQ(t, bar.BalanceOf(a2u(projectAddr)), uint64(20))
@@ -196,7 +188,6 @@ func TestCollectRewardSameBlock(t *testing.T) {
 
 func TestCollectRewardMoreBlock01(t *testing.T) {
 	std.TestSkipHeights(1)
-	std.TestSetOrigCaller(projectAddr)
 	std.TestSetRealm(projectRealm)
 
 	shouldEQ(t, bar.BalanceOf(a2u(projectAddr)), uint64(20))

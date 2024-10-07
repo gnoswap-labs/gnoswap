@@ -32,7 +32,6 @@ func init() {
 
 func TestCreateProject(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 
 	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
 	std.TestSkipHeights(1)
@@ -55,14 +54,12 @@ func TestCreateProject(t *testing.T) {
 
 func TestDepositGnsToTier30(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
 	// transfer some grc20 tokens to bypass project condition
 	foo.Transfer(a2u(user01), uint64(10))
 	bar.Transfer(a2u(user01), uint64(10))
 
 	std.TestSetRealm(user01Realm)
-	std.TestSetOrigCaller(user01)
 	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
 
 	// skip some blocks to make project active
@@ -74,7 +71,6 @@ func TestDepositGnsToTier30(t *testing.T) {
 
 func TestCollectRewardByProjectTier(t *testing.T) {
 	std.TestSetRealm(user01Realm)
-	std.TestSetOrigCaller(user01)
 
 	t.Run("claim reward before 30 days", func(t *testing.T) {
 		reward := CollectRewardByProjectTier(`gno.land/r/onbloc/obl:124:30`)

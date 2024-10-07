@@ -11,7 +11,6 @@ import (
 )
 
 func init() {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
 	gs.Delegate(gsa, uint64(1_000_000))
@@ -20,14 +19,12 @@ func init() {
 
 func TestProposeParameterChange_Single_SetAvgBlockTimeInMs(t *testing.T) {
 	t.Run("propose with wrong num to execute", func(t *testing.T) {
+		std.TestSetRealm(gsaRealm)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
 			}
 		}()
-
-		std.TestSetOrigCaller(gsa)
-		std.TestSetRealm(gsaRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -38,13 +35,12 @@ func TestProposeParameterChange_Single_SetAvgBlockTimeInMs(t *testing.T) {
 	})
 
 	t.Run("propose with wrong param", func(t *testing.T) {
+		std.TestSetRealm(gsaRealm)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
 			}
 		}()
-		std.TestSetOrigCaller(gsa)
-		std.TestSetRealm(gsaRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -55,13 +51,12 @@ func TestProposeParameterChange_Single_SetAvgBlockTimeInMs(t *testing.T) {
 	})
 
 	t.Run("propose with wrong pkg path", func(t *testing.T) {
+		std.TestSetRealm(gsaRealm)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
 			}
 		}()
-		std.TestSetOrigCaller(gsa)
-		std.TestSetRealm(gsaRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -72,13 +67,12 @@ func TestProposeParameterChange_Single_SetAvgBlockTimeInMs(t *testing.T) {
 	})
 
 	t.Run("propose with wrong func", func(t *testing.T) {
+		std.TestSetRealm(gsaRealm)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
 			}
 		}()
-		std.TestSetOrigCaller(gsa)
-		std.TestSetRealm(gsaRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -89,7 +83,6 @@ func TestProposeParameterChange_Single_SetAvgBlockTimeInMs(t *testing.T) {
 	})
 
 	t.Run("propose successful", func(t *testing.T) {
-		std.TestSetOrigCaller(gsa)
 		std.TestSetRealm(gsaRealm)
 
 		proposalID := ProposeParameterChange(
@@ -110,6 +103,8 @@ func TestProposeParameterChange_Single_SetAvgBlockTimeInMs(t *testing.T) {
 	})
 
 	t.Run("vote => skip time => pass status", func(t *testing.T) {
+		std.TestSetRealm(gsaRealm)
+
 		// vote to pass it
 		std.TestSkipHeights(11) // voting start delay
 		voteKey := Vote(proposalId, true)
@@ -123,6 +118,8 @@ func TestProposeParameterChange_Single_SetAvgBlockTimeInMs(t *testing.T) {
 	})
 
 	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSetRealm(gsaRealm)
+
 		shouldEQ(t, gns.GetAvgBlockTimeInMs(), int64(2000))
 		Execute(proposalId)
 		shouldEQ(t, gns.GetAvgBlockTimeInMs(), int64(1))
@@ -131,7 +128,6 @@ func TestProposeParameterChange_Single_SetAvgBlockTimeInMs(t *testing.T) {
 
 func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *testing.T) {
 	t.Run("proposesuccessful", func(t *testing.T) {
-		std.TestSetOrigCaller(gsa)
 		std.TestSetRealm(gsaRealm)
 
 		proposalID := ProposeParameterChange(
@@ -152,6 +148,8 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 	})
 
 	t.Run("vote => skip time => pass status", func(t *testing.T) {
+		std.TestSetRealm(gsaRealm)
+
 		// vote to pass it
 		std.TestSkipHeights(11) // voting start delay
 		voteKey := Vote(proposalId, true)
@@ -165,6 +163,8 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 	})
 
 	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSetRealm(gsaRealm)
+
 		shouldEQ(t, gns.GetAvgBlockTimeInMs(), int64(1))
 		shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(37828905))
 		Execute(proposalId)

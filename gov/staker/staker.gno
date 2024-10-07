@@ -7,6 +7,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
+	"gno.land/r/gnoswap/v2/consts"
+
 	"gno.land/r/gnoswap/v2/gns"
 	"gno.land/r/gnoswap/v2/gov/xgns"
 
@@ -24,7 +26,7 @@ const TIMESTAMP_7_DAYS = uint64(60) // 60s // XXX: TODO, REMOVE AFTER QA
 // const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
 
 var (
-	addrLockedGns = make(map[string][]lockedGNS)
+	addrLockedGns = make(map[std.Address][]lockedGNS)
 )
 
 var (
@@ -43,7 +45,7 @@ func Delegate(to std.Address, amount uint64) {
 		panic(ufmt.Sprintf("minimum amount to delegate is %d (requested:%d)", minimumAmount, amount))
 	}
 
-	caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 
 	// GNS // caller -> GovStaker
 	gns.TransferFrom(a2u(caller), a2u(std.CurrentRealm().Addr()), amount)
@@ -56,7 +58,6 @@ func Delegate(to std.Address, amount uint64) {
 
 	std.Emit(
 		"Delegate",
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_to", to.String(),
 		"p_amount", ufmt.Sprintf("%d", amount),
@@ -79,7 +80,7 @@ func Redelegate(from, to std.Address, amount uint64) {
 		panic(ufmt.Sprintf("minimum amount to re-delegate is %d (requested:%d)", minimumAmount, amount))
 	}
 
-	caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 
 	if xgns.BalanceOf(a2u(caller)) < amount {
 		panic("not enough xGNS staked")
@@ -90,7 +91,6 @@ func Redelegate(from, to std.Address, amount uint64) {
 
 	std.Emit(
 		"Redelegate",
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_from", from.String(),
 		"p_to", to.String(),
@@ -109,7 +109,7 @@ func Undelegate(from std.Address, amount uint64) {
 		panic(ufmt.Sprintf("minimum amount to undelegate is %d (requested:%d)", minimumAmount, amount))
 	}
 
-	caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 
 	if xgns.BalanceOf(a2u(caller)) < amount {
 		panic("not enough xGNS staked")
@@ -126,12 +126,11 @@ func Undelegate(from std.Address, amount uint64) {
 		amount: amount,
 		unlock: uint64(time.Now().Unix()) + TIMESTAMP_7_DAYS, // after 7 days, call Collect() to receive GNS
 	}
-	addrLockedGns[caller.String()] = append(addrLockedGns[caller.String()], userLocked)
+	addrLockedGns[caller] = append(addrLockedGns[caller], userLocked)
 	lockedAmount += amount
 
 	std.Emit(
 		"Undelegate",
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_from", from.String(),
 		"p_amount", ufmt.Sprintf("%d", amount),
@@ -142,28 +141,28 @@ func CollectUndelegated() uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
 
-	caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 
-	if len(addrLockedGns[caller.String()]) == 0 {
+	if len(addrLockedGns[caller]) == 0 {
 		return 0
 	}
 
 	// check if caller has any GNS to claim
 	collected := uint64(0)
-	for i, locked := range addrLockedGns[caller.String()] {
+	for i, locked := range addrLockedGns[caller] {
 		if uint64(time.Now().Unix()) >= locked.unlock && locked.amount > 0 { // passed 7 days
 			// transfer GNS to caller
 			gns.Transfer(a2u(caller), locked.amount)
 
 			std.Emit(
 				"CollectUndelegated",
-				"m_origCaller", origCaller(),
+
 				"m_prevRealm", prevRealm(),
 				"amount", ufmt.Sprintf("%d", locked.amount),
 			)
 
 			// remove from locked list
-			addrLockedGns[caller.String()] = append(addrLockedGns[caller.String()][:i], addrLockedGns[caller.String()][i+1:]...)
+			addrLockedGns[caller] = append(addrLockedGns[caller][:i], addrLockedGns[caller][i+1:]...)
 
 			lockedAmount -= locked.amount
 			collected += locked.amount
@@ -178,8 +177,8 @@ func CollectReward() {
 	calculateReward()
 
 	// GNS EMISSION
-	caller := std.GetOrigCaller()
-	emissionReward := userEmissionReward[caller.String()]
+	caller := std.PrevRealm().Addr()
+	emissionReward := userEmissionReward[caller]
 	if emissionReward > 0 {
 		if gns.BalanceOf(a2u(std.CurrentRealm().Addr())) < emissionReward {
 			panic(ufmt.Sprintf("not enough GNS in the realm to send emission reward(%d) for user %s", emissionReward, caller.String()))
@@ -188,11 +187,10 @@ func CollectReward() {
 		// transfer GNS to caller
 		gns.Transfer(a2u(caller), emissionReward)
 		println("GOV_STAKER_GNS_EMISSION_USER", caller.String(), "AMOUNT", emissionReward)
-		userEmissionReward[caller.String()] = 0
+		userEmissionReward[caller] = 0
 
 		std.Emit(
 			"CollectReward",
-			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"reward", "emission",
 			"amount", ufmt.Sprintf("%d", emissionReward),
@@ -200,9 +198,9 @@ func CollectReward() {
 	}
 
 	// PROTOCOL FEE
-	protocolFee, exist := userProtocolFeeReward[caller.String()]
+	protocolFee, exist := userProtocolFeeReward[caller]
 	if !exist || len(protocolFee) == 0 {
-		println("no protocol fee reward for user", caller.String())
+		println("no protocol fee reward for user", caller)
 		return
 	}
 
@@ -215,12 +213,70 @@ func CollectReward() {
 		// token.Transfer(a2u(caller), amount)
 		transferByRegisterCall(tokenPath, caller, amount)
 		println("GOV_STAKER_PROTOCOL_FEE_USER", caller.String(), "TOKEN", tokenPath, "AMOUNT", amount)
-		userProtocolFeeReward[caller.String()][tokenPath] = 0
+		userProtocolFeeReward[caller][tokenPath] = 0
 
 		std.Emit(
 			"CollectReward",
-			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
+			"reward", "protocol_fee",
+			"token", tokenPath,
+			"amount", ufmt.Sprintf("%d", amount),
+		)
+	}
+}
+
+func CollectRewardFromLaunchPad(to std.Address) {
+	prevRealm := std.PrevRealm().PkgPath()
+	if prevRealm != consts.LAUNCHPAD_PATH {
+		panic("only launchpad can call CollectRewardFromLaunchPad()")
+	}
+
+	en.MintAndDistributeGns()
+	calculateReward()
+
+	// GNS EMISSION
+	emissionReward := userEmissionReward[to]
+	if emissionReward > 0 {
+		if gns.BalanceOf(a2u(std.CurrentRealm().Addr())) < emissionReward {
+			panic(ufmt.Sprintf("not enough GNS in the realm to send emission reward(%d) for user %s", emissionReward, to.String()))
+		}
+
+		// transfer GNS to to
+		gns.Transfer(a2u(to), emissionReward)
+		println("GOV_STAKER_GNS_EMISSION_USER", to.String(), "AMOUNT", emissionReward)
+		userEmissionReward[to] = 0
+
+		std.Emit(
+			"CollectRewardFromLaunchPad",
+			"m_prevRealm", prevRealm,
+			"m_to", to.String(),
+			"reward", "emission",
+			"amount", ufmt.Sprintf("%d", emissionReward),
+		)
+	}
+
+	// PROTOCOL FEE
+	protocolFee, exist := userProtocolFeeReward[to]
+	if !exist || len(protocolFee) == 0 {
+		println("no protocol fee reward for user", to)
+		return
+	}
+
+	for tokenPath, amount := range protocolFee {
+		if amount == 0 {
+			continue
+		}
+
+		// transfer token to to
+		// token.Transfer(a2u(to), amount)
+		transferByRegisterCall(tokenPath, to, amount)
+		println("GOV_STAKER_PROTOCOL_FEE_USER", to.String(), "TOKEN", tokenPath, "AMOUNT", amount)
+		userProtocolFeeReward[to][tokenPath] = 0
+
+		std.Emit(
+			"CollectReward",
+			"m_prevRealm", prevRealm,
+			"p_to", to.String(),
 			"reward", "protocol_fee",
 			"token", tokenPath,
 			"amount", ufmt.Sprintf("%d", amount),

@@ -37,7 +37,7 @@ func TestPositionMintQuxGnot(t *testing.T) {
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa.String())
+	tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa, gsa)
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, amount0, "100000")
@@ -45,7 +45,7 @@ func TestPositionMintQuxGnot(t *testing.T) {
 }
 
 func TestDrySwapRouteQuxGnotExactIn(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := DrySwapRoute(
 		quxPath,               // inputToken
@@ -59,7 +59,7 @@ func TestDrySwapRouteQuxGnotExactIn(t *testing.T) {
 }
 
 func TestDrySwapRouteQuxGnotExactOut(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := DrySwapRoute(
 		quxPath,               // inputToken

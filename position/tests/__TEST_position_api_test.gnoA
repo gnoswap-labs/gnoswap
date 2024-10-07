@@ -20,7 +20,6 @@ import (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	pl.SetPoolCreationFee(0)
 }
@@ -39,12 +38,10 @@ func TestMintFooBar(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// gsa mints => will get tid 1 nft
-	std.TestSetOrigCaller(gsa)
-	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, gsa.String())
+	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, gsa, gsa)
 
 	// gsa mints => will get tid 2 nft
-	std.TestSetOrigCaller(gsa)
-	Mint(fooPath, barPath, fee500, int32(4000), int32(6000), "1000000", "1000000", "0", "0", max_timeout, gsa.String())
+	Mint(fooPath, barPath, fee500, int32(4000), int32(6000), "1000000", "1000000", "0", "0", max_timeout, gsa, gsa)
 }
 
 func TestMintBazQux(t *testing.T) {
@@ -53,8 +50,7 @@ func TestMintBazQux(t *testing.T) {
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// gsa mints => will get tid 1 nft
-	std.TestSetOrigCaller(gsa)
-	Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, gsa.String())
+	Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, gsa, gsa)
 }
 
 func TestApiGetPositionsUnclaimedFee(t *testing.T) {
@@ -81,16 +77,15 @@ func TestApiGetPositionsUnclaimedFee(t *testing.T) {
 
 func TestSwap(t *testing.T) {
 	std.TestSetRealm(rouRealm)
-	std.TestSetOrigCaller(gsa)
 	pl.Swap(
 		fooPath,
 		barPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		true,
 		"123456",
 		consts.MIN_PRICE,
-		gsa.String(),
+		gsa,
 	)
 }
 
@@ -139,8 +134,9 @@ func TestApiGetPositionUnclaimedFeeByLpTokenId(t *testing.T) {
 }
 
 func TestCollectFeeAfterSwap(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
 	// burn 0 to collect swap fee
-	std.TestSetOrigCaller(gsa)
 	tokneId, fee0, fee1, fromPath, _, _ := CollectFee(1, true)
 	shouldEQ(t, tokneId, uint64(1))
 	shouldEQ(t, fee0, "61")
@@ -184,7 +180,7 @@ func TestApiGetPositionsByPoolPath(t *testing.T) {
 }
 
 func TestApiGetPositionsByAddress(t *testing.T) {
-	targetAddress := gsa.String()
+	targetAddress := gsa
 
 	gpss := ApiGetPositionsByAddress(targetAddress)
 
@@ -202,7 +198,7 @@ func TestApiGetPositionsByAddress(t *testing.T) {
 }
 
 func TestApiGetPositionsByAddressNo(t *testing.T) {
-	targetAddress := test1.String()
+	targetAddress := test1
 
 	gpss := ApiGetPositionsByAddress(targetAddress)
 

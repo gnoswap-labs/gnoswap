@@ -42,10 +42,11 @@ func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 			barPath,
 			fooPath,
 			fee100,
-			consts.POSITION_ADDR.String(),
+			consts.POSITION_ADDR,
 			0,
 			120,
 			test_liquidityExpectStr,
+			gsa,
 		)
 		// println("mint0", mint0) // 59817378
 		// println("mint1", mint1) // 0
@@ -57,11 +58,11 @@ func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 			barPath,
 			fooPath,
 			fee100,
-			gsa.String(),
+			gsa,
 			false,
 			"60183363",
 			consts.MAX_PRICE,
-			std.GetOrigCaller().String(),
+			gsa,
 		)
 		// println("swap0", swap0) // -59817378
 		// println("swap1", swap1) // 60183363
@@ -87,7 +88,7 @@ func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 			barPath,
 			fooPath,
 			fee100,
-			gsa.String(),
+			gsa,
 			0,
 			120,
 			consts.MAX_UINT128,
@@ -121,10 +122,11 @@ func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			consts.POSITION_ADDR.String(),
+			consts.POSITION_ADDR,
 			-120,
 			0,
 			test_liquidityExpectStr,
+			gsa,
 		)
 		// println("mint0", mint0) // 0
 		// println("mint1", mint1) // 59817378
@@ -136,11 +138,11 @@ func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			gsa.String(),
+			gsa,
 			true,
 			"60283363",
 			consts.MIN_PRICE,
-			std.GetOrigCaller().String(),
+			gsa,
 		)
 		// println("swap0", swap0) // 60207447
 		// println("swap1", swap1) // -59817377
@@ -166,7 +168,7 @@ func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			gsa.String(),
+			gsa,
 			-120,
 			0,
 			consts.MAX_UINT128,

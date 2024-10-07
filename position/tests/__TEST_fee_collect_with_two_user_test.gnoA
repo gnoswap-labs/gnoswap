@@ -42,7 +42,6 @@ This test demonstrates a issue(Gnoswap-19) fee collection mechanism. The key ste
 */
 func TestCollectFeeWithTwoUser(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 	common.SetLimitCaller(true)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -51,7 +50,6 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 
 	t.Run("mint and swap fee should be distributed pro rata user's liquidity", func(t *testing.T) {
 		std.TestSetRealm(gsaRealm)
-		std.TestSetOrigCaller(gsa)
 
 		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -72,7 +70,8 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 			"0",                    // _amount0Min string, // *u256.Uint
 			"0",                    // _amount1Min string, // *u256.Uint
 			time.Now().Unix()+1000, // deadline int64,
-			user1Adderss.String(),  // mintTo string
+			user1Adderss,           // mintTo string
+			gsa,
 		)
 
 		std.TestSetRealm(gsaRealm)
@@ -87,7 +86,8 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 			"0",                    // _amount0Min string, // *u256.Uint
 			"0",                    // _amount1Min string, // *u256.Uint
 			time.Now().Unix()+1000, // deadline int64,
-			user2Adderss.String(),  // mintTo string
+			user2Adderss,           // mintTo string
+			gsa,
 		)
 
 		// ====== Swap to accrue fees ======
@@ -122,10 +122,9 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 			"0",          // _liquidityAmount string, // uint128
 		)
 
-		// ====== Collect fees and copare ======
+		// ====== Collect fees and compare ======
 		// user1
 		std.TestSetRealm(user1Realm)
-		std.TestSetOrigCaller(user1Adderss)
 		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		userBarBalanceBeforeCollect_1 := bar.BalanceOf(a2u(user1Adderss))
@@ -136,7 +135,6 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 
 		// user2
 		std.TestSetRealm(user2Realm)
-		std.TestSetOrigCaller(user2Adderss)
 		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		userBarBalanceBeforeCollect_2 := bar.BalanceOf(a2u(user2Adderss))

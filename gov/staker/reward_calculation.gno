@@ -32,20 +32,20 @@ var (
 )
 
 var (
-	userXGnsRatio         = make(map[string]*u256.Uint)        // address -> ratioX96
-	userEmissionReward    = make(map[string]uint64)            // address -> gnsAmount
-	userProtocolFeeReward = make(map[string]map[string]uint64) // address -> tokenPath -> tokenAmount
+	userXGnsRatio         = make(map[std.Address]*u256.Uint)        // address -> ratioX96
+	userEmissionReward    = make(map[std.Address]uint64)            // address -> gnsAmount
+	userProtocolFeeReward = make(map[std.Address]map[string]uint64) // address -> tokenPath -> tokenAmount
 )
 
 // === LAUNCHPAD DEPOSIT
 var (
 	// totalAmountByLaunchpad == xgns.BalanceOf(consts.LAUNCHPAD_ADDR)
-	amountByProjectWallet = make(map[string]uint64) // (project's) recipient wallet => amount
-	rewardByProjectWallet = make(map[string]uint64) // (project's) recipient wallet => reward
+	amountByProjectWallet = make(map[std.Address]uint64) // (project's) recipient wallet => amount
+	rewardByProjectWallet = make(map[std.Address]uint64) // (project's) recipient wallet => reward
 )
 
 func GetRewardByProjectWallet(addr std.Address) uint64 {
-	return rewardByProjectWallet[addr.String()]
+	return rewardByProjectWallet[addr]
 }
 
 func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
@@ -57,9 +57,9 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 	calculateReward()
 
 	if add {
-		amountByProjectWallet[addr.String()] = amount
+		amountByProjectWallet[addr] = amount
 	} else {
-		amountByProjectWallet[addr.String()] -= amount
+		amountByProjectWallet[addr] -= amount
 	}
 } // LAUCNHAPD DEPOSIT ===
 

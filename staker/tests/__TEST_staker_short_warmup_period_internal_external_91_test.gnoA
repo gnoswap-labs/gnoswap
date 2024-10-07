@@ -44,7 +44,6 @@ func init() {
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
@@ -55,7 +54,6 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintBarQux100_1(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -72,18 +70,18 @@ func TestMintBarQux100_1(t *testing.T) {
 		"1",        // amount0Min
 		"1",        // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
 	shouldEQ(t, liquidity, "20026")
 
 	std.TestSkipHeights(1)
 }
 
 func TestMintBarQux100_2(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -100,18 +98,18 @@ func TestMintBarQux100_2(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
 	shouldEQ(t, liquidity, "22605053")
 
 	std.TestSkipHeights(1)
 }
 
 func TestCreateExternalIncentiveBar(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
@@ -132,7 +130,6 @@ func TestCreateExternalIncentiveBar(t *testing.T) {
 }
 
 func TestStakeToken_1_AND_2(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
@@ -180,11 +177,11 @@ func TestMakePositionOutRange(t *testing.T) {
 		barPath,
 		quxPath,
 		fee100,
-		gsa.String(),
+		gsa,
 		true,
 		"70000",
 		consts.MIN_PRICE,
-		gsa.String(),
+		gsa,
 	)
 	shouldEQ(t, amount0, "70000")
 	shouldEQ(t, amount1, "-69773")
@@ -213,11 +210,11 @@ func TestMakePositionInRange(t *testing.T) {
 		barPath,
 		quxPath,
 		fee100,
-		gsa.String(),
+		gsa,
 		false,
 		"70000",
 		consts.MAX_PRICE,
-		gsa.String(),
+		gsa,
 	)
 	// shouldEQ(t, amount0, "70000")
 	// shouldEQ(t, amount1, "-69775")

@@ -44,7 +44,7 @@ func TestPositionMint(t *testing.T) {
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// Mint
-	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, gsa.String())
+	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, gsa, gsa)
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, liquidity, "637408")
@@ -56,7 +56,7 @@ func TestPositionMint(t *testing.T) {
 }
 
 func TestDrySwapRouteBazBarExactIn(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := DrySwapRoute(
 		bazPath,    // inputToken
@@ -71,7 +71,7 @@ func TestDrySwapRouteBazBarExactIn(t *testing.T) {
 }
 
 func TestSwapRouteBazBarExactIn(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	shouldPanicWithMsg(
 		t,

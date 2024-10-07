@@ -24,6 +24,7 @@ func TestProposeText(t *testing.T) {
 			}
 		}()
 
+		std.TestSetRealm(gsaRealm)
 		ProposeText("title", "text")
 	})
 
@@ -35,7 +36,6 @@ func TestProposeText(t *testing.T) {
 			t.Errorf("Expected empty proposals, got %v", proposalsJson)
 		}
 
-		std.TestSetOrigCaller(gsa)
 		std.TestSetRealm(gsaRealm)
 
 		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
@@ -55,12 +55,12 @@ func TestProposeText(t *testing.T) {
 			t.Errorf("Incorrect proposals json: %v", proposalsJson)
 		}
 
-		votesJsonGsa := GetVotesByAddress(gsa.String())
+		votesJsonGsa := GetVotesByAddress(gsa)
 		if votesJsonGsa != `` {
 			t.Errorf("Expected empty votes for gsa, got %v", votesJsonGsa)
 		}
 
-		votesJsonDummy := GetVotesByAddress(dummyAddr.String())
+		votesJsonDummy := GetVotesByAddress(dummyAddr)
 		if votesJsonDummy != `` {
 			t.Errorf("Expected empty votes for dummy, got %v", votesJsonDummy)
 		}
@@ -100,7 +100,6 @@ func TestVote(t *testing.T) {
 	t.Run("Successful vote YES", func(t *testing.T) {
 		std.TestSkipHeights(11)
 
-		std.TestSetOrigCaller(gsa)
 		std.TestSetRealm(gsaRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
@@ -130,23 +129,21 @@ func TestVote(t *testing.T) {
 			t.Errorf("Incorrect proposals json: %v", proposalsJson)
 		}
 
-		gsaDelegationStat := gs.GetModifiedDelegationHistoryByAddress(gsa.String())
+		gsaDelegationStat := gs.GetModifiedDelegationHistoryByAddress(gsa)
 		shouldEQ(t, gsaDelegationStat, `{"height":"145","now":"1234567934","delegationModifiedHistory":[{"from":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","to":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","delegatedHeight":"123","delegatedTimestamp":"1234567890","delegatedAmount":"1000000","undelegatedHeight":"0","undelegatedTimestamp":"0","undelegatedAmount":"0"}]}`)
 
-		votesJsonGsa := GetVotesByAddress(gsa.String())
+		votesJsonGsa := GetVotesByAddress(gsa)
 		if votesJsonGsa != `{"height":"145","now":"1234567934","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"145","voteTimestamp":"1234567934"}]}` {
 			t.Errorf("Incorrect votes json: %v", votesJsonGsa)
 		}
 
-		std.TestSetOrigCaller(gsa)
 		std.TestSetRealm(gsaRealm)
 		std.TestSkipHeights(1)
 		gs.Undelegate(dummyAddr, uint64(1_500_000)) // undelegate to dummy (75% of origin delegated amount)
 
-		dummyDelegationStat := gs.GetModifiedDelegationHistoryByAddress(dummyAddr.String())
+		dummyDelegationStat := gs.GetModifiedDelegationHistoryByAddress(dummyAddr)
 		shouldEQ(t, dummyDelegationStat, `{"height":"146","now":"1234567936","delegationModifiedHistory":[{"from":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","to":"g1v36k6mteg9jxgujlta047h6lta047h6lydhz9l","delegatedHeight":"123","delegatedTimestamp":"1234567890","delegatedAmount":"2000000","undelegatedHeight":"146","undelegatedTimestamp":"1234567936","undelegatedAmount":"1500000"}]}`)
 
-		std.TestSetOrigCaller(dummyAddr)
 		std.TestSetRealm(dummyRealm)
 		voteKey = Vote(proposalId, false)
 		voted = votes[voteKey]
@@ -154,7 +151,7 @@ func TestVote(t *testing.T) {
 			t.Errorf("Vote not recorded correctly")
 		}
 
-		votesJsonDummy := GetVotesByAddress(dummyAddr.String())
+		votesJsonDummy := GetVotesByAddress(dummyAddr)
 		if votesJsonDummy != `{"height":"146","now":"1234567936","votes":[{"proposalId":"1","voteYes":"false","voteWeight":"500000","voteHeight":"146","voteTimestamp":"1234567936"}]}` {
 			t.Errorf("Incorrect votes json: %v", votesJsonDummy)
 		}

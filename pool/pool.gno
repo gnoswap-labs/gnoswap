@@ -24,10 +24,11 @@ func Mint(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient string,
+	recipient std.Address,
 	tickLower int32,
 	tickUpper int32,
 	_liquidityAmount string, // uint128
+	positionCaller std.Address,
 ) (string, string) { // uint256 x2
 	common.IsHalted()
 	if common.GetLimitCaller() {
@@ -45,7 +46,7 @@ func Mint(
 	pool := GetPool(token0Path, token1Path, fee)
 	_, amount0, amount1 := pool.modifyPosition( // int256 x2
 		ModifyPositionParams{
-			std.Address(recipient),            // owner
+			recipient,                         // owner
 			tickLower,                         // tickLower
 			tickUpper,                         // tickUpper
 			i256.FromUint256(liquidityAmount), // liquidityDelta
@@ -53,18 +54,17 @@ func Mint(
 	)
 
 	if amount0.Gt(i256.Zero()) {
-		pool.transferFromAndVerify(std.GetOrigCaller(), consts.POOL_ADDR, pool.token0Path, amount0, true)
+		pool.transferFromAndVerify(positionCaller, consts.POOL_ADDR, pool.token0Path, amount0, true)
 	}
 
 	if amount1.Gt(i256.Zero()) {
-		pool.transferFromAndVerify(std.GetOrigCaller(), consts.POOL_ADDR, pool.token1Path, amount1, false)
+		pool.transferFromAndVerify(positionCaller, consts.POOL_ADDR, pool.token1Path, amount1, false)
 	}
 
 	/*
 		std.Emit(
 			"GNOSWAP",
 			"m_callType", callType(),
-			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
 			"p_tickLower", int32ToStr(tickLower),
@@ -127,7 +127,6 @@ func Burn(
 		std.Emit(
 			"GNOSWAP",
 			"m_callType", callType(),
-			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
 			"p_tickLower", int32ToStr(tickLower),
@@ -151,7 +150,7 @@ func Collect(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	_recipient string,
+	recipient std.Address,
 	tickLower int32,
 	tickUpper int32,
 	_amount0Requested string, // uint128
@@ -167,8 +166,6 @@ func Collect(
 
 	amount0Requested := u256.MustFromDecimal(_amount0Requested)
 	amount1Requested := u256.MustFromDecimal(_amount1Requested)
-
-	recipient := std.Address(_recipient)
 
 	pool := GetPool(token0Path, token1Path, fee)
 
@@ -202,7 +199,6 @@ func Collect(
 		std.Emit(
 			"GNOSWAP",
 			"m_callType", callType(),
-			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
 			"p_tickLower", int32ToStr(tickLower),
@@ -227,11 +223,11 @@ func Swap(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	_recipient string,
+	recipient std.Address,
 	zeroForOne bool,
 	_amountSpecified string, // int256
 	_sqrtPriceLimitX96 string, // uint160
-	_payer string, // router
+	payer std.Address, // router
 ) (string, string) { // int256 x2
 	common.IsHalted()
 	if common.GetLimitCaller() {
@@ -247,9 +243,6 @@ func Swap(
 
 	amountSpecified := i256.MustFromDecimal(_amountSpecified)
 	sqrtPriceLimitX96 := u256.MustFromDecimal(_sqrtPriceLimitX96)
-
-	recipient := std.Address(_recipient)
-	payer := std.Address(_payer)
 
 	pool := GetPool(token0Path, token1Path, fee)
 	slot0Start := pool.slot0
@@ -455,14 +448,13 @@ func Swap(
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
 		"p_zeroForOne", boolToStr(zeroForOne),
 		"p_amountSpecified", _amountSpecified,
 		"p_sqrtPriceLimitX96", _sqrtPriceLimitX96,
-		"p_payer", _payer,
-		"p_recipient", _recipient,
+		"p_payer", payer.String(),
+		"p_recipient", recipient.String(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 		"protocol_fee0", pool.protocolFees.token0.ToString(),
@@ -512,7 +504,6 @@ func SetFeeProtocol(
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_feeProtocol0", uint8ToStr(feeProtocol0),
 		"p_feeProtocol1", uint8ToStr(feeProtocol1),
@@ -530,7 +521,7 @@ func CollectProtocol(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	_recipient string,
+	recipient std.Address,
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
@@ -547,8 +538,6 @@ func CollectProtocol(
 			),
 		)
 	}
-
-	recipient := std.Address(_recipient)
 
 	amount0Requested := u256.MustFromDecimal(_amount0Requested)
 	amount1Requested := u256.MustFromDecimal(_amount1Requested)
@@ -569,7 +558,6 @@ func CollectProtocol(
 	std.Emit(
 		"GNOSWAP_PROTOCOL_FEE",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"poolPath", GetPoolPath(token0Path, token1Path, fee),
 		"reason", "pool_protocol_fee",
@@ -584,7 +572,6 @@ func CollectProtocol(
 	std.Emit(
 		"GNOSWAP_PROTOCOL_FEE",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"poolPath", GetPoolPath(token0Path, token1Path, fee),
 		"reason", "pool_protocol_fee",
@@ -595,10 +582,9 @@ func CollectProtocol(
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
-		"p_recipient", _recipient,
+		"p_recipient", recipient.String(),
 		"amount0", amount0.ToString(),
 		"amount1", amount1.ToString(),
 	)

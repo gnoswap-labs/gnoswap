@@ -15,7 +15,6 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // x2.71814592682522526700950038502924144268035888671875
@@ -37,7 +36,8 @@ func TestMintPosition(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, getNextId(), uint64(2))
@@ -86,16 +86,15 @@ func TestSwap(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), 1_234_567)
 
 	std.TestSetRealm(rouRealm)
-	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		gsa.String(),
+		gsa,
 	)
 }
 
@@ -106,8 +105,6 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, true)
-	// event: {GNOSWAP gno.land/r/gnoswap/v2/pool HandleWithdrawalFee [{m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/position} {p_tokenId 1} {p_token0Path gno.land/r/onbloc/bar} {p_token1Path gno.land/r/onbloc/foo} {fee0Amount 6} {fee1Amount 0}]}
-	// event: {GNOSWAP gno.land/r/gnoswap/v2/position CollectFee [{m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_tokenId 1} {fee0 617} {fee1 0} {poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, fee0, "611") // this is input token
@@ -116,9 +113,7 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 }
 
 func TestCollectFee2(t *testing.T) {
-
-	std.TestSetOrigCaller(gsa)
-
+	std.TestSetRealm(gsaRealm)
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
 	shouldEQ(t, tokenId, uint64(1))
@@ -133,21 +128,19 @@ func TestCollectFee2(t *testing.T) {
 
 func TestSwap2(t *testing.T) {
 	std.TestSetRealm(rouRealm)
-	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		true,
 		"1000000",
 		consts.MIN_PRICE,
-		gsa.String(),
+		gsa,
 	)
 
 	// UNCLAIMED_FEE
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 
 	oldFee0, oldFee1 := unclaimedFee(uint64(1))
 	shouldEQ(t, oldFee0.ToString(), "499")
@@ -162,9 +155,7 @@ func TestSwap2(t *testing.T) {
 }
 
 func TestDecreaseLiquidity(t *testing.T) {
-
-	std.TestSetOrigCaller(gsa)
-
+	std.TestSetRealm(gsaRealm)
 	oldLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
 
 	DecreaseLiquidity(
@@ -188,8 +179,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 }
 
 func TestDecreaseLiquidityAllThenAgainShouldPanic(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
-
+	std.TestSetRealm(gsaRealm)
 	oldLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
 
 	DecreaseLiquidity(

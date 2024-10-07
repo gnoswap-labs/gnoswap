@@ -134,7 +134,7 @@ func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 }
 
 func init() {
-	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
+	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
 
 	// protocol_fee
 	pf.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
