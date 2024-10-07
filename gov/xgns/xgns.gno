@@ -30,6 +30,15 @@ func init() {
 
 func TotalSupply() uint64 { return token.TotalSupply() }
 
+func VotingSupply() uint64 {
+	total := token.TotalSupply() // this is entire amount of xGNS minted
+
+	// this is amount of xGNS held by launchpad
+	// this xGNS doesn't participate in voting
+	launchpad := token.BalanceOf(consts.LAUNCHPAD_ADDR)
+	return total - launchpad
+}
+
 func BalanceOf(owner pusers.AddressOrName) uint64 {
 	ownerAddr := users.Resolve(owner)
 	return token.BalanceOf(ownerAddr)
@@ -58,10 +67,10 @@ func Render(path string) string {
 func Mint(to pusers.AddressOrName, amount uint64) {
 	common.IsHalted()
 
-	// only gov staker contract can call Mint
+	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_STAKER_ADDR {
-		panic("only gov staker contract can call Mint")
+	if caller != consts.GOV_STAKER_ADDR && caller != consts.LAUNCHPAD_ADDR {
+		panic("only (gov staker) or (launchpad) contract can call Mint")
 	}
 
 	checkErr(banker.Mint(users.Resolve(to), amount))
@@ -70,10 +79,10 @@ func Mint(to pusers.AddressOrName, amount uint64) {
 func Burn(from pusers.AddressOrName, amount uint64) {
 	common.IsHalted()
 
-	// only gov staker contract can call Burn
+	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_STAKER_ADDR {
-		panic("only gov staker contract can call Burn")
+	if caller != consts.GOV_STAKER_ADDR && caller != consts.LAUNCHPAD_ADDR {
+		panic("only (gov staker) or (launchpad) contract can call Burn")
 	}
 
 	checkErr(banker.Burn(users.Resolve(from), amount))

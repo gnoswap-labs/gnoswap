@@ -44,6 +44,8 @@ func TestDelegate(t *testing.T) {
 
 	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1000001))
 	Delegate(dummyAddr, 1000001)
+	// from: admin
+	// to: dummyAddr
 
 	shouldEQ(t, GetTotalStaked(), uint64(1000001))
 	shouldEQ(t, GetTotalDelegated(), uint64(1000001))
@@ -56,8 +58,8 @@ func TestDelegate(t *testing.T) {
 	shouldEQ(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"1000001"}]}`)
 	shouldEQ(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"1000001"}]}`)
 
-	shouldEQ(t, GetDelegationHistoryByAddress(gsa.String()), ``)
-	shouldEQ(t, GetDelegationHistoryByAddress(dummyAddr.String()), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"}]}`)
+	shouldEQ(t, GetDelegationHistoryByAddress(gsa.String()), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"}]}`)
+	shouldEQ(t, GetDelegationHistoryByAddress(dummyAddr.String()), ``)
 }
 
 func TestRedelegateUnknownFrom(t *testing.T) {
@@ -103,8 +105,9 @@ func TestRedelegate(t *testing.T) {
 	shouldEQ(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"},{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"1000001"}]}`)
 	shouldEQ(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"}]}`)
 	shouldEQ(t, GetVotingPowerBaseByAddress("g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt"), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"1000001"}]}`)
-	shouldEQ(t, GetDelegationHistoryByAddress(gsa.String()), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"}]}`)
-	shouldEQ(t, GetDelegationHistoryByAddress(dummyAddr.String()), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"}]}`)
+	shouldEQ(t, GetDelegationHistoryByAddress(gsa.String()), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"true"}]}`)
+	shouldEQ(t, GetDelegationHistoryByAddress(dummyAddr.String()), ``)
+	shouldEQ(t, GetDelegationHistoryByAddress(reDelegate.String()), ``)
 	shouldEQ(t, GetLockedInfoByAddress(gsa.String()), ``)
 }
 
@@ -142,7 +145,7 @@ func TestUndelegate(t *testing.T) {
 	shouldEQ(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"},{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"0"}]}`)
 	shouldEQ(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"}]}`)
 	shouldEQ(t, GetVotingPowerBaseByAddress("g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"0"}]}`)
-	shouldEQ(t, GetDelegationHistoryByAddress(gsa.String()), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"false"}]}`)
+	shouldEQ(t, GetDelegationHistoryByAddress(gsa.String()), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"false"}]}`)
 	shouldEQ(t, GetLockedInfoByAddress(gsa.String()), `{"height":"123","now":"1234567890","totalLocked":"1000001","claimableAmount":"0"}`)
 }
 
@@ -161,7 +164,7 @@ func TestCollectAfter7Days(t *testing.T) {
 	shouldEQ(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"},{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"0"}]}`)
 	shouldEQ(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"}]}`)
 	shouldEQ(t, GetVotingPowerBaseByAddress("g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"0"}]}`)
-	shouldEQ(t, GetDelegationHistoryByAddress(gsa.String()), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"false"}]}`)
+	shouldEQ(t, GetDelegationHistoryByAddress(gsa.String()), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"false"}]}`)
 	shouldEQ(t, GetLockedAmount(), uint64(1000001))
 	shouldEQ(t, GetLockedInfoByAddress(gsa.String()), `{"height":"123","now":"1234567890","totalLocked":"1000001","claimableAmount":"0"}`)
 

@@ -65,7 +65,7 @@ func ProposeText(
 		Yea:           u256.Zero(),
 		Nay:           u256.Zero(),
 		ConfigVersion: uint64(len(configVersions)), // use latest config version
-		QuorumAmount:  xgns.TotalSupply() * config.Quorum / 100,
+		QuorumAmount:  xgns.VotingSupply() * config.Quorum / 100,
 		Title:         title,
 		Description:   description,
 	}
@@ -122,7 +122,7 @@ func ProposeCommunityPoolSpend(
 		Yea:           u256.Zero(),
 		Nay:           u256.Zero(),
 		ConfigVersion: uint64(len(configVersions)),
-		QuorumAmount:  xgns.TotalSupply() * config.Quorum / 100,
+		QuorumAmount:  xgns.VotingSupply() * config.Quorum / 100,
 		Title:         title,
 		Description:   description,
 		CommunityPoolSpend: CommunityPoolSpendInfo{
@@ -211,7 +211,7 @@ func ProposeParameterChange(
 		Yea:           u256.Zero(),
 		Nay:           u256.Zero(),
 		ConfigVersion: uint64(len(configVersions)),
-		QuorumAmount:  xgns.TotalSupply() * config.Quorum / 100,
+		QuorumAmount:  xgns.VotingSupply() * config.Quorum / 100,
 		Title:         title,
 		Description:   description,
 		Execution: ExecutionInfo{

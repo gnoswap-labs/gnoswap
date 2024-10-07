@@ -1,0 +1,208 @@
+package staker
+
+import (
+	"std"
+	"testing"
+	"time"
+
+	"gno.land/p/demo/testutils"
+
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v2/gov/xgns"
+
+	"gno.land/r/gnoswap/v2/consts"
+	en "gno.land/r/gnoswap/v2/emission"
+	lp "gno.land/r/gnoswap/v2/launchpad"
+
+	// grc20 tokens
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/obl"
+	"gno.land/r/onbloc/qux"
+)
+
+var (
+	dummyToAddr  = testutils.TestAddress("dummyTo")
+	dummyToRealm = std.NewUserRealm(dummyToAddr)
+
+	dummyAddr  = testutils.TestAddress("dummy")
+	dummyRealm = std.NewUserRealm(dummyAddr)
+
+	reDelegate = testutils.TestAddress("reDelegate")
+
+	// launchpad
+	projectAddr  = testutils.TestAddress("projectAddr")
+	projectRealm = std.NewUserRealm(projectAddr)
+
+	user01      = testutils.TestAddress("user01")
+	user01Realm = std.NewUserRealm(user01)
+)
+
+func TestDelegateAdminToDummy(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+
+	// gns before emission
+	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+
+	std.TestSkipHeights(1)
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1000001))
+	Delegate(dummyToAddr, 1000001)
+
+	// gns emission after adjustment & delegate
+	// 1 block gns 14269406
+	// 75% ≈ 10702054.5
+	// 20% ≈ 2853881.2
+	// 5% ≈ 713470.3
+
+	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(10702054))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(2853881))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(713470))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000001))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))-xgns.TotalSupply(), uint64(0))
+}
+
+func TestDelegateAnotherDumyToDummy_Self(t *testing.T) {
+	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
+	gns.Transfer(a2u(dummyAddr), 5000000)
+
+	std.TestSkipHeights(1)
+	std.TestSetOrigCaller(dummyAddr)
+	std.TestSetRealm(dummyRealm)
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(5000000))
+	Delegate(dummyAddr, 5000000)
+
+	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(21404109))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(5707762))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(1426940))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(6000001))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))-xgns.TotalSupply(), uint64(0))
+}
+
+func TestMockProtocolFee(t *testing.T) {
+	// admin > protocol_fee
+	// send qux, bar for testing
+	std.TestSetRealm(gsaRealm)
+	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
+	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 2500)
+
+	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+
+	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(2500))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+}
+
+func TestLaunchPadCreateProject(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+
+	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), 1_000_000_000)
+	projectId := lp.CreateProject(
+		oblPath,
+		projectAddr,
+		uint64(1_000_000_000), // 1000000000
+		"",
+		"",
+		uint64(10),                   // 100000000
+		uint64(20),                   // 200000000
+		uint64(70),                   // 700000000
+		uint64(time.Now().Unix()+10), // 5 block later
+	)
+	shouldEQ(t, projectId, `gno.land/r/onbloc/obl:125`)
+	std.TestSkipHeights(10) // active project
+}
+
+func TestLaunchPadDeposit(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	std.TestSetOrigCaller(gsa)
+	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
+
+	std.TestSetRealm(user01Realm)
+	std.TestSetOrigCaller(user01)
+	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
+
+	lp.DepositGns(
+		`gno.land/r/onbloc/obl:125:30`,
+		uint64(1_000_000),
+	)
+	std.TestSkipHeights(1)
+}
+
+func TestSkipDummyBlock(t *testing.T) {
+	std.TestSkipHeights(10)
+	en.MintAndDistributeGns()
+	calculateReward() // pf fee distribution being triggered
+	std.TestSkipHeights(1)
+
+	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
+
+	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(2500))
+}
+
+func TestCheckReward(t *testing.T) {
+	t.Run("check dummy addr", func(t *testing.T) {
+		gcr := GetClaimableRewardByAddress(dummyAddr.String())
+		shouldEQ(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"817"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2040"}]}`)
+	})
+
+	t.Run("check launchpad addr", func(t *testing.T) {
+		gcr := GetClaimableRewardByAddress(consts.LAUNCHPAD_ADDR.String())
+		shouldEQ(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0"}`)
+	})
+
+	t.Run("check project's recipient", func(t *testing.T) {
+		gcr := GetClaimableRewardByAddress(projectAddr.String())
+		shouldEQ(t, gcr, `{"height":"147","now":"1234567938","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"20"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"51"}]}`)
+	})
+}
+
+func TestCollectReward(t *testing.T) {
+	std.TestSetOrigCaller(projectAddr)
+	std.TestSetRealm(projectRealm)
+
+	// protocol fee has bar, qux
+	shouldEQ(t, bar.BalanceOf(a2u(projectAddr)), uint64(0))
+	shouldEQ(t, qux.BalanceOf(a2u(projectAddr)), uint64(0))
+
+	CollectReward()
+
+	shouldEQ(t, bar.BalanceOf(a2u(projectAddr)), uint64(20))
+	shouldEQ(t, qux.BalanceOf(a2u(projectAddr)), uint64(51))
+
+}
+
+func TestCollectRewardSameBlock(t *testing.T) {
+	std.TestSetOrigCaller(projectAddr)
+	std.TestSetRealm(projectRealm)
+
+	shouldEQ(t, bar.BalanceOf(a2u(projectAddr)), uint64(20))
+	shouldEQ(t, qux.BalanceOf(a2u(projectAddr)), uint64(51))
+
+	CollectReward()
+
+	shouldEQ(t, bar.BalanceOf(a2u(projectAddr)), uint64(20))
+	shouldEQ(t, qux.BalanceOf(a2u(projectAddr)), uint64(51))
+}
+
+func TestCollectRewardMoreBlock01(t *testing.T) {
+	std.TestSkipHeights(1)
+	std.TestSetOrigCaller(projectAddr)
+	std.TestSetRealm(projectRealm)
+
+	shouldEQ(t, bar.BalanceOf(a2u(projectAddr)), uint64(20))
+	shouldEQ(t, qux.BalanceOf(a2u(projectAddr)), uint64(51))
+
+	CollectReward() // even more block, protocol_fee didn't increase
+	shouldEQ(t, bar.BalanceOf(a2u(projectAddr)), uint64(20))
+	shouldEQ(t, qux.BalanceOf(a2u(projectAddr)), uint64(51))
+}
