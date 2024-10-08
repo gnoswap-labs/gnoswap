@@ -229,11 +229,11 @@ func ApiGetPositionsByPoolPath(poolPath string) string {
 	return string(b)
 }
 
-func ApiGetPositionsByAddress(address string) string {
+func ApiGetPositionsByAddress(address std.Address) string {
 	rpcPositions := []RpcPosition{}
 	for lpTokenId, position := range positions {
 
-		if position.operator.String() != address {
+		if position.operator != address {
 			continue
 		}
 

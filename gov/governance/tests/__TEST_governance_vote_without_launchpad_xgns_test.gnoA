@@ -53,7 +53,6 @@ func TestCheckInitialGnsAndXGns(t *testing.T) {
 
 func TestLaunchPadCreateProject(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 
 	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), 1_000_000_000)
 	projectId := lp.CreateProject(
@@ -73,11 +72,9 @@ func TestLaunchPadCreateProject(t *testing.T) {
 
 func TestLaunchPadDeposit(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
 
 	std.TestSetRealm(user01Realm)
-	std.TestSetOrigCaller(user01)
 	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
 
 	lp.DepositGns(
@@ -119,7 +116,6 @@ func TestProposeText(t *testing.T) {
 			t.Errorf("Expected empty proposals, got %v", proposalsJson)
 		}
 
-		std.TestSetOrigCaller(gsa)
 		std.TestSetRealm(gsaRealm)
 		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
 		gs.Delegate(gsa, uint64(1_000_000))
@@ -135,8 +131,8 @@ func TestProposeText(t *testing.T) {
 			t.Errorf("Proposal not found after creation")
 		}
 
-		if proposal.Proposer != std.GetOrigCaller() {
-			t.Errorf("Incorrect proposer. Expected %v, got %v", std.GetOrigCaller(), proposal.Proposer)
+		if proposal.Proposer != gsa {
+			t.Errorf("Incorrect proposer. Expected %v, got %v", gsa, proposal.Proposer)
 		}
 
 		if proposal.ProposalType != "TEXT" {
@@ -172,7 +168,7 @@ func TestProposeText(t *testing.T) {
 			t.Errorf("Incorrect proposals json: %v", proposalsJson)
 		}
 
-		votesJson := GetVotesByAddress(gsa.String())
+		votesJson := GetVotesByAddress(gsa)
 		if votesJson != `` {
 			t.Errorf("Expected empty votes, got %v", votesJson)
 		}
@@ -189,6 +185,7 @@ func TestVote(t *testing.T) {
 			}
 		}()
 
+		std.TestSetRealm(gsaRealm)
 		Vote(uint64(123), true)
 	})
 
@@ -203,12 +200,14 @@ func TestVote(t *testing.T) {
 			}
 		}()
 
+		std.TestSetRealm(gsaRealm)
 		Vote(proposalId, true)
 	})
 
 	t.Run("Successful vote YES", func(t *testing.T) {
 		std.TestSkipHeights(11)
 
+		std.TestSetRealm(gsaRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -237,7 +236,7 @@ func TestVote(t *testing.T) {
 			t.Errorf("Incorrect proposals json: %v", proposalsJson)
 		}
 
-		votesJson := GetVotesByAddress(gsa.String())
+		votesJson := GetVotesByAddress(gsa)
 		if votesJson != `{"height":"156","now":"1234567956","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"156","voteTimestamp":"1234567956"}]}` {
 			t.Errorf("Incorrect votes json: %v", votesJson)
 		}
@@ -247,12 +246,12 @@ func TestVote(t *testing.T) {
 			t.Errorf("Incorrect vote json: %v", voteJson)
 		}
 
-		addrVotesJson := GetVotesByAddress(gsa.String())
+		addrVotesJson := GetVotesByAddress(gsa)
 		if addrVotesJson != `{"height":"156","now":"1234567956","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"156","voteTimestamp":"1234567956"}]}` {
 			t.Errorf("Incorrect address votes json: %v", addrVotesJson)
 		}
 
-		addrVoteJson := GetVoteByAddressFromProposalById(gsa.String(), proposalId)
+		addrVoteJson := GetVoteByAddressFromProposalById(gsa, proposalId)
 		if addrVoteJson != `{"height":"156","now":"1234567956","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"156","voteTimestamp":"1234567956"}]}` {
 			t.Errorf("Incorrect address vote json: %v", addrVoteJson)
 		}
@@ -267,6 +266,7 @@ func TestVote(t *testing.T) {
 			}
 		}()
 
+		std.TestSetRealm(gsaRealm)
 		Vote(proposalId, true)
 	})
 
@@ -281,6 +281,7 @@ func TestVote(t *testing.T) {
 			}
 		}()
 
+		std.TestSetRealm(gsaRealm)
 		Vote(proposalId, true)
 	})
 
@@ -308,6 +309,7 @@ func TestVote(t *testing.T) {
 
 func TestCancel(t *testing.T) {
 	// new text proposal #2
+	std.TestSetRealm(gsaRealm)
 	proposalId := ProposeText("test2_title", "test2_description")
 	if proposalId != 2 {
 		t.Errorf("Expected proposal ID to be 2, got %d", proposalId)
@@ -322,10 +324,13 @@ func TestCancel(t *testing.T) {
 			}
 		}()
 
+		std.TestSetRealm(gsaRealm)
 		Cancel(uint64(123))
 	})
 
 	t.Run("Successful cancel", func(t *testing.T) {
+		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(gsaRealm)
 		Cancel(proposalId)
 		proposalsJson := GetProposals()
 		if proposalsJson != `{"height":"2157","now":"1234571958","proposals":[{"id":"1","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTM0IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTY3OTQ0IiwiVm90aW5nRW5kIjoiMTIzNDU2Nzk3NCIsIlBhc3NlZCI6InRydWUiLCJQYXNzZWRBdCI6IjEyMzQ1NzE5NTgiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":""},{"id":"2","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTcxOTU4IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTcxOTY4IiwiVm90aW5nRW5kIjoiMTIzNDU3MTk5OCIsIlBhc3NlZCI6ImZhbHNlIiwiUGFzc2VkQXQiOiIwIiwiUmVqZWN0ZWQiOiJmYWxzZSIsIlJlamVjdGVkQXQiOiIwIiwiQ2FuY2VsZWQiOiJ0cnVlIiwiQ2FuY2VsZWRBdCI6IjEyMzQ1NzE5NTgiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test2_title","description":"test2_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":""}]}` {
@@ -362,6 +367,7 @@ func TestCancel(t *testing.T) {
 			}
 		}()
 
+		std.TestSetRealm(gsaRealm)
 		Cancel(proposalId)
 	})
 
@@ -377,6 +383,7 @@ func TestCancel(t *testing.T) {
 		// new text proposal #3
 		proposalId := ProposeText("test3_title", "test3_description")
 		std.TestSkipHeights(11)
+		std.TestSetRealm(gsaRealm)
 		Cancel(proposalId)
 	})
 }
@@ -393,18 +400,20 @@ func TestExecute(t *testing.T) {
 			}
 		}()
 
+		std.TestSetRealm(gsaRealm)
 		Execute(proposalId)
 	})
 }
 
 func TestNoBehaviourProposal(t *testing.T) {
 	t.Run("Successful text proposal", func(t *testing.T) {
-		std.TestSetOrigCaller(gsa)
+
 		std.TestSetRealm(gsaRealm)
 		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
 		gs.Delegate(gsa, uint64(1_000_000))
 		std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
 
+		std.TestSetRealm(gsaRealm)
 		proposalID := ProposeText("test_title", "test_description")
 		if proposalID != 4 {
 			t.Errorf("Expected proposal ID to be 4, got %d", proposalID)
@@ -415,8 +424,8 @@ func TestNoBehaviourProposal(t *testing.T) {
 			t.Errorf("Proposal not found after creation")
 		}
 
-		if proposal.Proposer != std.GetOrigCaller() {
-			t.Errorf("Incorrect proposer. Expected %v, got %v", std.GetOrigCaller(), proposal.Proposer)
+		if proposal.Proposer != gsa {
+			t.Errorf("Incorrect proposer. Expected %v, got %v", gsa, proposal.Proposer)
 		}
 
 		if proposal.ProposalType != "TEXT" {
@@ -457,6 +466,7 @@ func TestNoBehaviourProposal(t *testing.T) {
 		std.TestSkipHeights(500)
 
 		// CREATE NEW PROPOSAL
+		std.TestSetRealm(gsaRealm)
 		proposalID = ProposeText("test_title", "test_description")
 		if proposalID != 5 {
 			t.Errorf("Expected proposal ID to be 5, got %d", proposalID)
@@ -466,14 +476,14 @@ func TestNoBehaviourProposal(t *testing.T) {
 
 func TestMultipleProposalFromSameAddress(t *testing.T) {
 	t.Run("Successful two text proposal", func(t *testing.T) {
-		std.TestSetOrigCaller(gsa)
-		std.TestSetRealm(gsaRealm)
 
+		std.TestSetRealm(gsaRealm)
 		proposalID := ProposeText("test_title", "test_description")
 		if proposalID != 6 {
 			t.Errorf("Expected proposal ID to be 6, got %d", proposalID)
 		}
 
+		std.TestSetRealm(gsaRealm)
 		proposalID = ProposeText("test_title", "test_description")
 		if proposalID != 7 {
 			t.Errorf("Expected proposal ID to be 7, got %d", proposalID)

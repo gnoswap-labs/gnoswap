@@ -71,7 +71,8 @@ func MintAndStake(
 		amount0Min,
 		amount1Min,
 		deadline,
-		consts.STAKER_ADDR.String(),
+		consts.STAKER_ADDR,
+		std.PrevRealm().Addr(),
 	)
 
 	// at this point staker has minted token
@@ -84,7 +85,6 @@ func MintAndStake(
 		std.Emit(
 			"GNOSWAP",
 			"m_callType", callType(),
-			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"p_tickLower", int32ToStr(tickLower),
 			"p_tickUpper", int32ToStr(tickUpper),

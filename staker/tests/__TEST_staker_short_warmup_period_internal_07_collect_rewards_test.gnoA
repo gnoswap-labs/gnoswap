@@ -47,7 +47,6 @@ func TestDoulbeMint(t *testing.T) {
 
 func TestPoolInitCreatePool(t *testing.T) {
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
@@ -61,7 +60,6 @@ func TestPoolInitCreatePool(t *testing.T) {
 func TestMintBarQux100_1(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -78,11 +76,12 @@ func TestMintBarQux100_1(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
 
 	gpi := GetPrintInfo()
 	shouldEQ(t, gpi, `{"height":126,"time":1234567896,"gns":{"staker":0,"devOps":8561643,"communityPool":2140410,"govStaker":0,"protocolFee":232106164,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
@@ -96,7 +95,6 @@ func TestMintBarQux100_1(t *testing.T) {
 func TestMintBarBaz100_2(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -113,11 +111,12 @@ func TestMintBarBaz100_2(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
 
 	println(GetPrintInfo())
 	println()
@@ -129,7 +128,6 @@ func TestMintBarBaz100_2(t *testing.T) {
 func TestStakeToken_1(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
@@ -147,7 +145,6 @@ func TestSetPoolTier(t *testing.T) {
 
 	std.TestSkipHeights(800) // this reward should go to bar:qux:100
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	SetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
 
@@ -161,7 +158,6 @@ func TestSetPoolTier(t *testing.T) {
 func TestStakeToken_2(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
@@ -177,7 +173,6 @@ func TestStakeToken_2(t *testing.T) {
 func TestCollect1_1(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	CollectReward(1, false)
@@ -192,7 +187,6 @@ func TestCollect1_1(t *testing.T) {
 func TestCollect1_2(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	CollectReward(1, false)
@@ -207,7 +201,6 @@ func TestCollect1_2(t *testing.T) {
 func TestCollect1_3(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	CollectReward(1, false)
@@ -222,7 +215,6 @@ func TestCollect1_3(t *testing.T) {
 func TestCollect1_4(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	CollectReward(1, false)
@@ -237,7 +229,6 @@ func TestCollect1_4(t *testing.T) {
 func TestCollect2_1(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	CollectReward(2, false)
@@ -252,7 +243,6 @@ func TestCollect2_1(t *testing.T) {
 func TestCollectAll_1(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	CollectReward(1, false)
@@ -274,14 +264,12 @@ func TestJustPrint(t *testing.T) {
 }
 
 func TestCollectNow(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	CollectReward(1, false)
 }
 
 func TestCollectSameBlock(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	CollectReward(1, false)
@@ -290,7 +278,6 @@ func TestCollectSameBlock(t *testing.T) {
 func TestCollectAfterSingleBlock(t *testing.T) {
 	std.TestSkipHeights(1)
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	CollectReward(1, false)

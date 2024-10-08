@@ -45,7 +45,6 @@ func TestDoulbeMint(t *testing.T) {
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
@@ -57,7 +56,6 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintBarQux100_1(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -74,13 +72,13 @@ func TestMintBarQux100_1(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 	std.TestSkipHeights(1)
 }
 
 func TestMintBarQux100_2(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -97,13 +95,13 @@ func TestMintBarQux100_2(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 	std.TestSkipHeights(1)
 }
 
 func TestStakeToken_1(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
@@ -181,7 +179,6 @@ func TestGetPoolsPositions(t *testing.T) {
 // END, STAKE 1 TOKEN => GETTER TEST
 
 func TestStakeToken_2(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
@@ -320,7 +317,6 @@ func TestGetGetPositionsInternalWarmUpAmount(t *testing.T) {
 // CREATE EXTERNAL INCENTIVE
 func TestCreateExternalIncentive_90_180(t *testing.T) {
 	{
-		std.TestSetOrigCaller(gsa)
 		std.TestSetRealm(gsaRealm)
 
 		bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
@@ -336,7 +332,6 @@ func TestCreateExternalIncentive_90_180(t *testing.T) {
 	}
 
 	{
-		std.TestSetOrigCaller(gsa)
 		std.TestSetRealm(gsaRealm)
 
 		qux.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)

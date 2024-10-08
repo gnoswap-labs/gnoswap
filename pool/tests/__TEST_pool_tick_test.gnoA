@@ -27,7 +27,6 @@ const (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	pl.SetPoolCreationFee(0)
 }
@@ -41,8 +40,7 @@ func TestInitCreatePool(t *testing.T) {
 }
 
 func DeployPool(token0 string, token1 string) {
-	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
-	std.TestSetRealm(std.NewUserRealm(std.Address((a2u(std.GetOrigCaller())))))
+	std.TestSetRealm(gsaRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	std.TestSetRealm(gsaRealm)
 	CreatePool(token0, token1, 500, "130621891405341611593710811006") // tick 10000

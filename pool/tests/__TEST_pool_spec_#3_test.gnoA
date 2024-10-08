@@ -31,7 +31,6 @@ func init() {
 func AfterTest(t *testing.T) {
 	poolRealm := std.NewUserRealm(consts.POOL_ADDR)
 	std.TestSetRealm(poolRealm)
-	std.TestSetOrigCaller(consts.POOL_ADDR)
 	barBal := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBal := foo.BalanceOf(a2u(consts.POOL_ADDR))
 	bar.Transfer(a2u(gsa), barBal)
@@ -42,7 +41,6 @@ func AfterTest(t *testing.T) {
 func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -54,7 +52,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed(t *testing.T
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), minTick, maxTick, "3161")
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", gsa)
 
 	// ===================== clears tick lower if last position is removed =====================
 
@@ -62,7 +60,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed(t *testing.T
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), -240, 0, "100")
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -240, 0, "100", gsa)
 	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(-240)
 	shouldEQ(t, liquidityGross.ToString(), "0")
@@ -75,7 +73,6 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed(t *testing.T
 func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed2(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -87,7 +84,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed2(t *testing.
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), minTick, maxTick, "3161")
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", gsa)
 
 	// ===================== clears tick lower if last position is removed =====================
 
@@ -95,7 +92,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed2(t *testing.
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), -240, 0, "100")
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -240, 0, "100", gsa)
 	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")
 
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(0)
@@ -109,7 +106,6 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed2(t *testing.
 func TestSuccess_case_only_clears_the_tick_that_is_not_used_at_all(t *testing.T) {
 	// ================================ Pool Setup ================================================
 	std.TestSetRealm(gsaRealm)
-	std.TestSetOrigCaller(gsa)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -121,7 +117,7 @@ func TestSuccess_case_only_clears_the_tick_that_is_not_used_at_all(t *testing.T)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161")
+	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", gsa)
 
 	// ===================== only clears the tick that is not used at all =====================
 
@@ -129,8 +125,8 @@ func TestSuccess_case_only_clears_the_tick_that_is_not_used_at_all(t *testing.T)
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), -240, 0, "100")
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR.String(), -240, 0, "250")
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -240, 0, "100", gsa)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -240, 0, "250", gsa)
 	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(-240)
 	// liquidityGrossStr := liquidityGross.ToString()

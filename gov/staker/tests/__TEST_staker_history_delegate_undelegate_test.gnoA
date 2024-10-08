@@ -8,7 +8,7 @@ import (
 
 func TestGetDelegatedCumulative(t *testing.T) {
 	delegateAddr := testutils.TestAddress("delegate")
-	delegate := delegateAddr.String()
+	delegate := delegateAddr
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -83,7 +83,7 @@ func TestGetDelegatedCumulative(t *testing.T) {
 
 func TestGetAverageDelegated(t *testing.T) {
 	delegateAddr := testutils.TestAddress("delegate")
-	delegate := delegateAddr.String()
+	delegate := delegateAddr
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -172,7 +172,7 @@ func TestGetAverageDelegated(t *testing.T) {
 
 func TestGetAverageDelegatedOverLastDuration(t *testing.T) {
 	delegateAddr := testutils.TestAddress("delegate")
-	delegate := delegateAddr.String()
+	delegate := delegateAddr
 
 	defer func() {
 		if r := recover(); r != nil {

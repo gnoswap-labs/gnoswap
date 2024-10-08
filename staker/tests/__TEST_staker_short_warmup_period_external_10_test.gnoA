@@ -29,7 +29,6 @@ func init() {
 
 func TestPoolInitCreatePool(t *testing.T) {
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
@@ -41,7 +40,6 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintBarQux100_1(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -58,17 +56,17 @@ func TestMintBarQux100_1(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
 
 	std.TestSkipHeights(1)
 }
 
 func TestCreateExternalIncentive(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
@@ -89,7 +87,6 @@ func TestCreateExternalIncentive(t *testing.T) {
 }
 
 func TestStakeToken_1(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
@@ -126,7 +123,6 @@ func TestDuratino200(t *testing.T) {
 }
 
 func TestCollectReward(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	oldBar := bar.BalanceOf(a2u(gsa))
@@ -140,7 +136,6 @@ func TestCollectReward(t *testing.T) {
 }
 
 func TestMintBarQux100_2(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -157,11 +152,12 @@ func TestMintBarQux100_2(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
 
 	std.TestSkipHeights(1)
 }
@@ -174,7 +170,6 @@ func TestSkipSingleBlock(t *testing.T) {
 }
 
 func TestStakeToken_2(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
@@ -198,7 +193,6 @@ func TestCollectRewardAll(t *testing.T) {
 	pei := GetPrintExternalInfo()
 	shouldEQ(t, pei, `{"height":1241,"time":1234570126,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","stakedOrExternalDuration":263,"rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountFull":40,"tokenAmountToGive":19,"full30":0,"give30":0,"full50":40,"give50":19,"full70":0,"give70":0,"full100":0}]},{"lpTokenId":2,"stakedHeight":1229,"stakedTimestamp":1234570102,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","stakedOrExternalDuration":12,"rewardPerBlock":"5","refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","tokenAmountFull":30,"tokenAmountToGive":8,"full30":30,"give30":8,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	oldBar := bar.BalanceOf(a2u(gsa))

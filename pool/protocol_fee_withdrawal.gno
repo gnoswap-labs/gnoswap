@@ -29,6 +29,7 @@ func HandleWithdrawalFee(
 	token1Path string,
 	_amount1 string, // uint256
 	poolPath string,
+	positionCaller std.Address,
 ) (string, string) { // uint256 x2
 	common.IsHalted()
 
@@ -50,14 +51,13 @@ func HandleWithdrawalFee(
 	feeAmount1 := new(u256.Uint).Mul(amount1, u256.NewUint(withdrawalFee))
 	feeAmount1 = new(u256.Uint).Div(feeAmount1, u256.NewUint(10000))
 
-	ok := transferFromByRegisterCall(token0Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount0.Uint64())
+	ok := transferFromByRegisterCall(token0Path, positionCaller, consts.PROTOCOL_FEE_ADDR, feeAmount0.Uint64())
 	if !ok {
-		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawalFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token0Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount0))
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawalFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token0Path, positionCaller.String(), consts.PROTOCOL_FEE_ADDR, feeAmount0))
 	}
 	std.Emit(
 		"GNOSWAP_PROTOCOL_FEE",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"lpTokenId", strconv.FormatUint(tokenId, 10),
 		"poolPath", poolPath,
@@ -66,14 +66,13 @@ func HandleWithdrawalFee(
 		"amount", feeAmount0.ToString(),
 	)
 
-	ok = transferFromByRegisterCall(token1Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount1.Uint64())
+	ok = transferFromByRegisterCall(token1Path, positionCaller, consts.PROTOCOL_FEE_ADDR, feeAmount1.Uint64())
 	if !ok {
-		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawalFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token1Path, std.GetOrigCaller(), consts.PROTOCOL_FEE_ADDR, feeAmount1))
+		panic(ufmt.Sprintf("[POOL] withdrawal_fee.gno__HandleWithdrawalFee() || expected transferFromByRegisterCall(%s, %s, %s, %s) == true", token1Path, positionCaller.String(), consts.PROTOCOL_FEE_ADDR, feeAmount1))
 	}
 	std.Emit(
 		"GNOSWAP_PROTOCOL_FEE",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"lpTokenId", strconv.FormatUint(tokenId, 10),
 		"poolPath", poolPath,
@@ -88,7 +87,6 @@ func HandleWithdrawalFee(
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"p_token0Path", token0Path,
@@ -134,7 +132,6 @@ func SetWithdrawalFee(fee uint64) {
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_fee", uint64ToStr(fee),
 	)

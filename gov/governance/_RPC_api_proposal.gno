@@ -97,7 +97,7 @@ func GetVoteStatusFromProposalById(id uint64) string {
 // - weight
 // - height
 // - timestamp
-func GetVotesByAddress(addr string) string {
+func GetVotesByAddress(addr std.Address) string {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
@@ -118,7 +118,7 @@ func GetVotesByAddress(addr string) string {
 }
 
 // GetVoteByAddressFromProposalById returns the vote of an address from a certain proposal.
-func GetVoteByAddressFromProposalById(addr string, id uint64) string {
+func GetVoteByAddressFromProposalById(addr std.Address, id uint64) string {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
@@ -140,7 +140,7 @@ func GetVoteByAddressFromProposalById(addr string, id uint64) string {
 }
 
 // helper function for GetVotesByAddress and GetVoteByAddressFromProposalById
-func getVoteByAddressFromProposalById(addr string, id uint64) *json.Node {
+func getVoteByAddressFromProposalById(addr std.Address, id uint64) *json.Node {
 	if _, exist := userVotes[addr]; !exist {
 		return nil
 	}

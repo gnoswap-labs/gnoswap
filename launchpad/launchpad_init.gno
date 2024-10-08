@@ -41,8 +41,10 @@ func CreateProject(
 	tier180Ratio uint64, // 70
 	startTime uint64,
 ) string { // projectId
+	assertUserCall()
+
 	// only admin can create project
-	if std.GetOrigCaller() != consts.GNOSWAP_ADMIN {
+	if std.PrevRealm().Addr() != consts.GNOSWAP_ADMIN {
 		panic("only admin can create project")
 	}
 
@@ -92,7 +94,7 @@ func CreateProject(
 
 	transferFromByRegisterCall(
 		tokenPath,
-		std.GetOrigCaller(),
+		std.PrevRealm().Addr(),
 		std.Address(consts.LAUNCHPAD_ADDR),
 		depositAmount,
 	)
@@ -175,7 +177,6 @@ func CreateProject(
 
 	std.Emit(
 		"CreateProject",
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenPath", tokenPath,
 		"p_recipient", recipient.String(),
@@ -210,7 +211,8 @@ func CreateProject(
 //
 // returns amount
 func RefundProject(projectId string) uint64 {
-	caller := std.GetOrigCaller()
+	assertUserCall()
+	caller := std.PrevRealm().Addr()
 	project, exist := projects[projectId]
 	if !exist {
 		panic("project not exist")
@@ -238,7 +240,6 @@ func RefundProject(projectId string) uint64 {
 
 		std.Emit(
 			"RefundProject",
-			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"p_projectId", projectId,
 			"recipient", recipient.String(),

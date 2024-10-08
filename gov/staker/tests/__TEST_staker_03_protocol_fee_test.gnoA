@@ -29,7 +29,6 @@ var (
 )
 
 func TestDelegateAdminToDummy(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	// gns before emission
@@ -56,12 +55,10 @@ func TestDelegateAdminToDummy(t *testing.T) {
 }
 
 func TestDelegateAnotherDumyToDummy_Self(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	gns.Transfer(a2u(dummyAddr), 5000000)
 
 	std.TestSkipHeights(1)
-	std.TestSetOrigCaller(dummyAddr)
 	std.TestSetRealm(dummyRealm)
 	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(5000000))
 	Delegate(dummyAddr, 5000000)
@@ -105,12 +102,11 @@ func TestSkipDummyBlock(t *testing.T) {
 }
 
 func TestCheckReward(t *testing.T) {
-	gcr := GetClaimableRewardByAddress(dummyAddr.String())
+	gcr := GetClaimableRewardByAddress(dummyAddr)
 	shouldEQ(t, gcr, `{"height":"136","now":"1234567916","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"833"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2083"}]}`)
 }
 
 func TestCollectReward(t *testing.T) {
-	std.TestSetOrigCaller(dummyAddr)
 	std.TestSetRealm(dummyRealm)
 
 	// protocol fee has bar, qux
@@ -125,7 +121,6 @@ func TestCollectReward(t *testing.T) {
 }
 
 func TestCollectRewardSameBlock(t *testing.T) {
-	std.TestSetOrigCaller(dummyAddr)
 	std.TestSetRealm(dummyRealm)
 
 	shouldEQ(t, bar.BalanceOf(a2u(dummyAddr)), uint64(833))
@@ -138,7 +133,6 @@ func TestCollectRewardSameBlock(t *testing.T) {
 
 func TestCollectRewardMoreBlock01(t *testing.T) {
 	std.TestSkipHeights(1)
-	std.TestSetOrigCaller(dummyAddr)
 	std.TestSetRealm(dummyRealm)
 
 	shouldEQ(t, bar.BalanceOf(a2u(dummyAddr)), uint64(833))
@@ -186,7 +180,6 @@ func TestMockProtocolFee2(t *testing.T) {
 
 func TestCollectRewardMoreByDummy(t *testing.T) {
 	std.TestSkipHeights(1)
-	std.TestSetOrigCaller(dummyAddr)
 	std.TestSetRealm(dummyRealm)
 
 	shouldEQ(t, bar.BalanceOf(a2u(dummyAddr)), uint64(833))
@@ -196,25 +189,24 @@ func TestCollectRewardMoreByDummy(t *testing.T) {
 	shouldEQ(t, bar.BalanceOf(a2u(dummyAddr)), uint64(2917))
 	shouldEQ(t, qux.BalanceOf(a2u(dummyAddr)), uint64(5417))
 
-	shouldEQ(t, userProtocolFeeReward[dummyAddr.String()][barPath], uint64(0))
-	shouldEQ(t, userProtocolFeeReward[dummyAddr.String()][quxPath], uint64(0))
+	shouldEQ(t, userProtocolFeeReward[dummyAddr][barPath], uint64(0))
+	shouldEQ(t, userProtocolFeeReward[dummyAddr][quxPath], uint64(0))
 }
 
 func TestUndelegateByAdmin(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	shouldEQ(t, bar.BalanceOf(a2u(gsa)), uint64(99999999996500))
 	shouldEQ(t, qux.BalanceOf(a2u(gsa)), uint64(99999999993500))
 
-	shouldEQ(t, userProtocolFeeReward[gsa.String()][barPath], uint64(582))
-	shouldEQ(t, userProtocolFeeReward[gsa.String()][quxPath], uint64(1082))
+	shouldEQ(t, userProtocolFeeReward[gsa][barPath], uint64(582))
+	shouldEQ(t, userProtocolFeeReward[gsa][quxPath], uint64(1082))
 
 	Undelegate(dummyToAddr, 1000001)
 
 	shouldEQ(t, bar.BalanceOf(a2u(gsa)), uint64(99999999997082))
 	shouldEQ(t, qux.BalanceOf(a2u(gsa)), uint64(99999999994582))
 
-	shouldEQ(t, userProtocolFeeReward[gsa.String()][barPath], uint64(0))
-	shouldEQ(t, userProtocolFeeReward[gsa.String()][quxPath], uint64(0))
+	shouldEQ(t, userProtocolFeeReward[gsa][barPath], uint64(0))
+	shouldEQ(t, userProtocolFeeReward[gsa][quxPath], uint64(0))
 }

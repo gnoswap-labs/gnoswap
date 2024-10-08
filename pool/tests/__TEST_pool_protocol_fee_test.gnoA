@@ -34,10 +34,11 @@ func TestPositionsProtected(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		-887160,
 		887160,
 		test_liquidityExpectStr,
+		gsa,
 	)
 
 	std.TestSetRealm(rouRealm)
@@ -45,22 +46,22 @@ func TestPositionsProtected(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		true,
 		"10000",
 		consts.MIN_PRICE,
-		std.GetOrigCaller().String(),
+		gsa,
 	)
 
 	Swap(
 		barPath,
 		fooPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		false,
 		"10000",
 		consts.MAX_PRICE,
-		std.GetOrigCaller().String(),
+		gsa,
 	)
 	// did swap t0 => t1 and t1 => t0
 
@@ -151,11 +152,11 @@ func TestWorkAccross(t *testing.T) {
 		barPath,
 		fooPath,
 		fee100,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		-887270,
 		887270,
-		// test_liquidityExpectStr,
 		"100000000000",
+		gsa,
 	)
 
 	// type(uint128).max * 2**128 / 1e18

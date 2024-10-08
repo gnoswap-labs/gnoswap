@@ -9,15 +9,15 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	gs "gno.land/r/gnoswap/v2/gov/staker"
-
-	"gno.land/r/gnoswap/v2/gns"
 )
 
 // CollectProtocolFee collects protocol fee from gov/staker
 // each project's recipient wallet will be rewarded
 func CollectProtocolFee() {
-	gs.CollectReward()
-	// event will be emitted in gov/staker `CollectReward`
+	caller := std.PrevRealm().Addr()
+	gs.CollectRewardFromLaunchPad(caller)
+
+	// XXX: emit event
 }
 
 var (
@@ -32,17 +32,15 @@ func init() {
 func CollectReward() {
 	calculateDepositReward()
 
-	callerStr := std.GetOrigCaller().String()
-	depositIds, exist := depositsByUser[callerStr]
+	caller := std.PrevRealm().Addr()
+	depositIds, exist := depositsByUser[caller]
 	if !exist {
-		println("NO DEPOSIT FOR THIS USER", callerStr)
+		println("NO DEPOSIT FOR THIS USER", caller)
 		return
 	}
 
 	// project token -> reward amount
 	toUser := make(map[string]uint64)
-
-	avgBlockTimeMs := uint64(gns.GetAvgBlockTimeInMs())
 
 	for _, depositId := range depositIds {
 		deposit := deposits[depositId]
@@ -81,7 +79,6 @@ func CollectReward() {
 
 			std.Emit(
 				"CollectReward",
-				"m_origCaller", origCaller(),
 				"m_prevRealm", prevRealm(),
 				"depositId", depositId,
 				"amount", ufmt.Sprintf("%d", deposit.rewardAmount),
@@ -103,10 +100,7 @@ func CollectReward() {
 	for tokenPath, amount := range toUser {
 		// println("tokenPath:", tokenPath)
 		// println("amount:", amount)
-
-		if amount > 0 {
-			transferByRegisterCall(tokenPath, std.GetOrigCaller(), amount)
-		}
+		transferByRegisterCall(tokenPath, std.PrevRealm().Addr(), amount)
 	}
 }
 
@@ -122,12 +116,12 @@ func CollectRewardByProjectId(projectId string) uint64 {
 
 	calculateDepositReward()
 
-	callerStr := std.GetOrigCaller().String()
-	if _, exist := depositsByUserByProject[callerStr]; !exist {
-		println("NO DEPOSIT FOR THIS USER", callerStr)
+	caller := std.PrevRealm().Addr()
+	if _, exist := depositsByUserByProject[caller]; !exist {
+		println("NO DEPOSIT FOR THIS USER", caller)
 		return 0
 	}
-	depositIds, exist := depositsByUserByProject[callerStr][projectId]
+	depositIds, exist := depositsByUserByProject[caller][projectId]
 	if !exist {
 		println("NO DEPOSIT FOR THIS PROJECT", projectId)
 		return 0
@@ -173,7 +167,6 @@ func CollectRewardByProjectId(projectId string) uint64 {
 
 			std.Emit(
 				"CollectRewardByProjectId",
-				"m_origCaller", origCaller(),
 				"m_prevRealm", prevRealm(),
 				"p_projectId", projectId,
 				"depositId", depositId,
@@ -193,7 +186,10 @@ func CollectRewardByProjectId(projectId string) uint64 {
 	}
 
 	// transfer reward to user
-	transferByRegisterCall(project.tokenPath, std.GetOrigCaller(), toUser)
+
+	transferByRegisterCall(project.tokenPath, std.PrevRealm().Addr(), toUser)
+
+	// XXX: emit event
 
 	return toUser
 }
@@ -209,12 +205,12 @@ func CollectRewardByProjectTier(tierId string) uint64 {
 		return 0
 	}
 
-	callerStr := std.GetOrigCaller().String()
-	if _, exist := depositsByUserByProject[callerStr]; !exist {
-		println("NO DEPOSIT FOR THIS USER", callerStr)
+	caller := std.PrevRealm().Addr()
+	if _, exist := depositsByUserByProject[caller]; !exist {
+		println("NO DEPOSIT FOR THIS USER", caller)
 		return 0
 	}
-	depositIds, exist := depositsByUserByProject[callerStr][projectId]
+	depositIds, exist := depositsByUserByProject[caller][projectId]
 	if !exist {
 		println("NO DEPOSIT FOR THIS PROJECT", projectId)
 		return 0
@@ -267,7 +263,6 @@ func CollectRewardByProjectTier(tierId string) uint64 {
 
 			std.Emit(
 				"CollectRewardByProjectTier",
-				"m_origCaller", origCaller(),
 				"m_prevRealm", prevRealm(),
 				"p_tierId", tierId,
 				"depositId", depositId,
@@ -287,7 +282,7 @@ func CollectRewardByProjectTier(tierId string) uint64 {
 	}
 
 	// transfer reward to user
-	transferByRegisterCall(project.tokenPath, std.GetOrigCaller(), toUser)
+	transferByRegisterCall(project.tokenPath, std.PrevRealm().Addr(), toUser)
 
 	// XXX: emit event
 
@@ -310,9 +305,9 @@ func CollectRewardByDepositId(depositId string) uint64 {
 		return 0
 	}
 
-	callerStr := std.GetOrigCaller().String()
-	if _, exist := depositsByUserByProject[callerStr]; !exist {
-		println("NO DEPOSIT FOR THIS USER", callerStr)
+	caller := std.PrevRealm().Addr()
+	if _, exist := depositsByUserByProject[caller]; !exist {
+		println("NO DEPOSIT FOR THIS USER", caller)
 		return 0
 	}
 
@@ -346,7 +341,6 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 		std.Emit(
 			"CollectRewardByDepositId",
-			"m_origCaller", origCaller(),
 			"m_prevRealm", prevRealm(),
 			"p_depositId", depositId,
 			"amount", ufmt.Sprintf("%d", deposit.rewardAmount),
@@ -364,7 +358,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 	}
 
 	// transfer reward to user
-	transferByRegisterCall(project.tokenPath, std.GetOrigCaller(), toUser)
+	transferByRegisterCall(project.tokenPath, std.PrevRealm().Addr(), toUser)
 
 	// XXX: emit event
 
@@ -377,7 +371,6 @@ var lastCalculateHeightForProjectTier = make(map[string]uint64) // using height
 func calculateDepositReward() {
 	// println(">>> calculateDepositReward")
 	height := uint64(std.GetHeight())
-	now := uint64(time.Now().Unix())
 
 	if height == lastCalculatedHeight {
 		println("THIS BLOCK ALREADY CALCULATED", height)
@@ -385,7 +378,7 @@ func calculateDepositReward() {
 	}
 	lastCalculatedHeight = height
 
-	for projectIdx, project := range projects {
+	for _, project := range projects {
 		// // loop with project
 		// println("projectIdx", projectIdx)
 		// println("project.id", project.id)

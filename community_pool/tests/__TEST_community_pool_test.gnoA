@@ -31,7 +31,7 @@ func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 }
 
 func init() {
-	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
+	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
 
 	RegisterGRC20Interface("gno.land/r/gnoswap/v2/gns", GNSToken{})
 }
@@ -52,7 +52,6 @@ func TestTransferGnsNoPermission(t *testing.T) {
 
 func TestTransferGns(t *testing.T) {
 	gsaRealm := std.NewUserRealm(consts.GNOSWAP_ADMIN)
-	std.TestSetOrigCaller(consts.GNOSWAP_ADMIN)
 	std.TestSetRealm(gsaRealm)
 
 	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), 1000)

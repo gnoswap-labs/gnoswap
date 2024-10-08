@@ -9,26 +9,26 @@ import (
 
 var (
 	totalDelegated  = uint64(0)
-	delegatorAmount = make(map[string]uint64)            // caller => amount
-	delegatedFromTo = make(map[string]map[string]uint64) // caller => to => amount
-	delegatedTo     = make(map[string]uint64)            // to => amount
+	delegatorAmount = make(map[std.Address]uint64)                 // caller => amount
+	delegatedFromTo = make(map[std.Address]map[std.Address]uint64) // caller => to => amount
+	delegatedTo     = make(map[std.Address]uint64)                 // to => amount
 )
 
 func delegate(to std.Address, amount uint64) {
-	caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 
-	if delegatedFromTo[caller.String()] == nil {
-		delegatedFromTo[caller.String()] = make(map[string]uint64)
+	if delegatedFromTo[caller] == nil {
+		delegatedFromTo[caller] = make(map[std.Address]uint64)
 	}
 
 	totalDelegated += amount
-	delegatorAmount[caller.String()] += amount
-	delegatedFromTo[caller.String()][to.String()] += amount
-	delegatedTo[to.String()] += amount
+	delegatorAmount[caller] += amount
+	delegatedFromTo[caller][to] += amount
+	delegatedTo[to] += amount
 
 	// Update delegation history
 	delegation := DelegationHistory{
-		to:        to.String(),
+		to:        to,
 		amount:    amount,
 		timestamp: uint64(time.Now().Unix()),
 		height:    uint64(std.GetHeight()),
@@ -37,8 +37,8 @@ func delegate(to std.Address, amount uint64) {
 	delegationHistory[caller] = append(delegationHistory[caller], delegation)
 
 	modified := ModifiedDelegationHistory{
-		from:               caller.String(),
-		to:                 to.String(),
+		from:               caller,
+		to:                 to,
 		delegatedHeight:    uint64(std.GetHeight()),
 		delegatedTimestamp: uint64(time.Now().Unix()),
 		delegatedAmount:    amount,
@@ -47,30 +47,30 @@ func delegate(to std.Address, amount uint64) {
 }
 
 func undelegate(to std.Address, amount uint64) {
-	caller := std.GetOrigCaller()
+	caller := std.PrevRealm().Addr()
 
-	_, exist := delegatedFromTo[caller.String()]
+	_, exist := delegatedFromTo[caller]
 	if !exist {
-		panic(ufmt.Sprintf("caller %s has no delegated amount", caller.String()))
+		panic(ufmt.Sprintf("caller %s has no delegated amount", caller))
 	}
 
-	delegatedAmount, exist := delegatedFromTo[caller.String()][to.String()]
+	delegatedAmount, exist := delegatedFromTo[caller][to]
 	if !exist {
-		panic(ufmt.Sprintf("caller %s has no delegated amount to %s", caller.String(), to.String()))
+		panic(ufmt.Sprintf("caller %s has no delegated amount to %s", caller, to))
 	}
 
 	if delegatedAmount < amount {
-		panic(ufmt.Sprintf("caller %s has only %d delegated amount to %s", caller.String(), delegatedAmount, to.String()))
+		panic(ufmt.Sprintf("caller %s has only %d delegated amount to %s", caller, delegatedAmount, to))
 	}
 
 	totalDelegated -= amount
-	delegatorAmount[caller.String()] -= amount
-	delegatedFromTo[caller.String()][to.String()] -= amount
-	delegatedTo[to.String()] -= amount
+	delegatorAmount[caller] -= amount
+	delegatedFromTo[caller][to] -= amount
+	delegatedTo[to] -= amount
 
 	// Update delegation history
 	delegation := DelegationHistory{
-		to:        to.String(),
+		to:        to,
 		amount:    amount,
 		timestamp: uint64(time.Now().Unix()),
 		height:    uint64(std.GetHeight()),
@@ -81,11 +81,11 @@ func undelegate(to std.Address, amount uint64) {
 	// update modified history
 	modified, exist := delegationModifiedHistory[to]
 	if !exist {
-		panic(ufmt.Sprintf("caller %s has no modified delegation history", caller.String()))
+		panic(ufmt.Sprintf("caller %s has no modified delegation history", caller))
 	}
 
 	for i := 0; i < len(modified); i++ {
-		if modified[i].from == caller.String() {
+		if modified[i].from == caller {
 			leftAmount := modified[i].delegatedAmount - modified[i].undelegatedAmount
 			if leftAmount > 0 {
 				if leftAmount < amount {

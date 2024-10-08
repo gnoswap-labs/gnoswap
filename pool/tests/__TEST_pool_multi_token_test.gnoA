@@ -32,7 +32,6 @@ func TestCreateFooBarPool(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
 	shouldEQ(t, len(pools), 1)
 }
 
@@ -44,7 +43,6 @@ func TestCreateBarBazPool(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006")
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500}]}
 	shouldEQ(t, len(pools), 2)
 }
 
@@ -55,15 +53,15 @@ func TestMintFooBarLiquidity(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
-	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := Mint(
 		fooPath,
 		barPath,
 		fee500,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		-test_tickUpper,
 		-test_tickLower,
 		test_liquidityExpectStr,
+		gsa,
 	)
 	shouldEQ(t, amount0, "8040316")
 	shouldEQ(t, amount1, "2958015")
@@ -76,15 +74,15 @@ func TestMintBarBazLiquidity(t *testing.T) {
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
-	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := Mint(
 		barPath,
 		bazPath,
 		fee500,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpectStr,
+		gsa,
 	)
 	shouldEQ(t, amount0, "2958015")
 	shouldEQ(t, amount1, "8040316")
@@ -102,18 +100,16 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), 16000)
 
 	std.TestSetRealm(rouRealm)
-	std.TestSetOrigCaller(gsa)
 	poolIn, poolOut := Swap(
 		barPath,
 		fooPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		true,
 		"16000",
 		consts.MIN_PRICE,
-		std.GetOrigCaller().String(),
+		gsa,
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500} {p_zeroForOne true} {p_amountSpecified 16000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 16000} {amount1 -5882} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 8}]}
 	shouldEQ(t, poolIn, "16000")
 	shouldEQ(t, poolOut, "-5882")
 
@@ -141,18 +137,16 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), 16000)
 
 	std.TestSetRealm(rouRealm)
-	std.TestSetOrigCaller(gsa)
 	poolIn, poolOut := Swap(
 		barPath,
 		bazPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		true,
 		"16000",
 		consts.MIN_PRICE,
-		std.GetOrigCaller().String(),
+		gsa,
 	)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/v2/pool Swap [{m_callType INDIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm gno.land/r/gnoswap/v2/router} {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500} {p_zeroForOne true} {p_amountSpecified 16000} {p_sqrtPriceLimitX96 4295128740} {p_payer g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {p_recipient g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {amount0 16000} {amount1 -43457} {protocol_fee0 0} {protocol_fee1 0} {swap_fee 8}]}
 
 	shouldEQ(t, poolIn, "16000")
 	shouldEQ(t, poolOut, "-43457")
@@ -171,7 +165,6 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 // Collect Foo:Bar Fees by gsa
 func TestCollectFooBarFees(t *testing.T) {
 	std.TestSetRealm(posRealm)
-	std.TestSetOrigCaller(gsa)
 
 	oldTest1Token1Balance := balanceOfByRegisterCall(fooPath, gsa)
 	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
@@ -185,7 +178,7 @@ func TestCollectFooBarFees(t *testing.T) {
 		fooPath,
 		barPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		-test_tickUpper,
 		-test_tickLower,
 		"100000",
@@ -209,7 +202,6 @@ func TestCollectFooBarFees(t *testing.T) {
 // Collect Bar:Baz Fees by gsa
 func TestCollectBarBazFees(t *testing.T) {
 	std.TestSetRealm(posRealm)
-	std.TestSetOrigCaller(gsa)
 
 	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
 	oldgsaBazBalance := balanceOfByRegisterCall(bazPath, gsa)
@@ -223,7 +215,7 @@ func TestCollectBarBazFees(t *testing.T) {
 		barPath,
 		bazPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		test_tickLower,
 		test_tickUpper,
 		"100000",
@@ -246,7 +238,6 @@ func TestCollectBarBazFees(t *testing.T) {
 
 // Burn Foo:Bar Liquidity by gsa
 func TestBurnFooBarLiquidity(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(posRealm)
 
 	pool := GetPool(fooPath, barPath, fee500)
@@ -271,7 +262,6 @@ func TestBurnFooBarLiquidity(t *testing.T) {
 
 // Burn Bar:Baz Liquidity by gsa
 func TestBurnBarBazLiquidity(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(posRealm)
 
 	pool := GetPool(barPath, bazPath, fee500)
@@ -296,7 +286,6 @@ func TestBurnBarBazLiquidity(t *testing.T) {
 
 // Collect Foo:Bar burned Liquidity by gsa
 func TestCollectFooBarLiquidity(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(posRealm)
 
 	oldTest1Token1Balance := balanceOfByRegisterCall(fooPath, gsa)
@@ -308,7 +297,7 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 		fooPath,
 		barPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		-test_tickUpper,
 		-test_tickLower,
 		"100000",
@@ -331,7 +320,6 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 
 // Collect Bar:Baz burned Liquidity by gsa
 func TestCollectBarBazLiquidity(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(posRealm)
 
 	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
@@ -343,7 +331,7 @@ func TestCollectBarBazLiquidity(t *testing.T) {
 		barPath,
 		bazPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		test_tickLower,
 		test_tickUpper,
 		"100000",

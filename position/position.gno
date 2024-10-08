@@ -45,14 +45,15 @@ func Mint(
 	_amount0Min string, // *u256.Uint
 	_amount1Min string, // *u256.Uint
 	deadline int64,
-	mintTo string,
+	mintTo std.Address,
+	caller std.Address,
 ) (uint64, string, string, string) { // tokenId, liquidity, amount0, amount1 ( *u256.Uint x3 )
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
 	if common.GetLimitCaller() {
 		// only user or staker can call
-		isUserCalled := std.IsOriginCall()
+		isUserCalled := std.PrevRealm().PkgPath() == ""
 		isStakerCalled := std.PrevRealm().Addr() == consts.STAKER_ADDR
 		if !(isUserCalled || isStakerCalled) {
 			panic("POSITION] position.gno__Mint() || only user or staker can call")
@@ -60,7 +61,7 @@ func Mint(
 	}
 
 	token0, token1, token0IsNative, token1IsNative := processTokens(token0, token1)
-	userWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+	userWugnotBalance := wugnot.BalanceOf(a2u(caller))
 
 	if token1 < token0 {
 		token0, token1 = token1, token0
@@ -79,7 +80,7 @@ func Mint(
 	// check this condition by using DryMint()
 	poolPath := ufmt.Sprintf("%s:%s:%d", token0, token1, fee)
 
-	handleNativeToken(token0IsNative, token1IsNative)
+	handleNativeToken(token0IsNative, token1IsNative, caller)
 
 	mintParams := MintParams{
 		token0:         token0,
@@ -92,17 +93,17 @@ func Mint(
 		amount0Min:     amount0Min,
 		amount1Min:     amount1Min,
 		deadline:       deadline,
-		mintTo:         std.Address(mintTo),
+		mintTo:         mintTo,
+		caller:         caller,
 	}
 
 	tokenId, liquidity, amount0, amount1 := mint(mintParams)
 
-	handleLeftoverNativeToken(token0IsNative, token1IsNative, userWugnotBalance)
+	handleLeftoverNativeToken(token0IsNative, token1IsNative, userWugnotBalance, caller)
 
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tickLower", int32ToStr(tickLower),
 		"p_tickUpper", int32ToStr(tickUpper),
@@ -129,27 +130,27 @@ func processTokens(token0, token1 string) (string, string, bool, bool) {
 	return token0, token1, token0IsNative, token1IsNative
 }
 
-func handleNativeToken(token0IsNative, token1IsNative bool) {
+func handleNativeToken(token0IsNative, token1IsNative bool, caller std.Address) {
 	if token0IsNative || token1IsNative {
-		oldUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+		oldUserWugnotBalance := wugnot.BalanceOf(a2u(caller))
 		sent := std.GetOrigSend()
 		ugnotSent := uint64(sent.AmountOf("ugnot"))
 		if ugnotSent > 0 {
-			wrap(ugnotSent)
-			newUserWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+			wrap(ugnotSent, caller)
+			newUserWugnotBalance := wugnot.BalanceOf(a2u(caller))
 			if (newUserWugnotBalance - oldUserWugnotBalance) != ugnotSent {
-				panic(ufmt.Sprintf("[POSITION] position.gno__Mint() || wugnot sent(%d) != wugnot received(%d)", ugnotSent, newUserWugnotBalance-oldUserWugnotBalance))
+				panic(ufmt.Sprintf("[POSITION] position.gno__Mint() || ugnot sent(%d) != ugnot received(%d)", ugnotSent, newUserWugnotBalance-oldUserWugnotBalance))
 			}
 		}
 	}
 }
 
-func handleLeftoverNativeToken(token0IsNative, token1IsNative bool, userWugnotBalance uint64) {
+func handleLeftoverNativeToken(token0IsNative, token1IsNative bool, userWugnotBalance uint64, caller std.Address) {
 	if token0IsNative || token1IsNative {
-		userWugnotAfterMint := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+		userWugnotAfterMint := wugnot.BalanceOf(a2u(caller))
 		leftOver := userWugnotAfterMint - userWugnotBalance
 		if leftOver > 0 {
-			unwrap(leftOver)
+			unwrap(leftOver, caller)
 		}
 	}
 }
@@ -167,6 +168,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 			amount1Desired: params.amount1Desired,
 			amount0Min:     params.amount0Min,
 			amount1Min:     params.amount1Min,
+			caller:         params.caller,
 		},
 	)
 
@@ -181,7 +183,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 
 	position := Position{
 		nonce:                    u256.Zero(),
-		operator:                 std.GetOrigCaller(),
+		operator:                 params.caller,
 		poolKey:                  pl.GetPoolPath(params.token0, params.token1, params.fee),
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
@@ -234,11 +236,11 @@ func IncreaseLiquidity(
 	isToken0Wugnot := pToken0 == consts.WRAPPED_WUGNOT
 	isToken1Wugnot := pToken1 == consts.WRAPPED_WUGNOT
 
-	userOldWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller())) // before wrap, user's origin wugnot balance
+	userOldWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr())) // before wrap, user's origin wugnot balance
 	if isToken0Wugnot || isToken1Wugnot {
 		sent := std.GetOrigSend()
 		ugnotSent := uint64(sent.AmountOf("ugnot"))
-		wrap(ugnotSent)
+		wrap(ugnotSent, std.PrevRealm().Addr())
 	}
 
 	// INCREASE
@@ -246,16 +248,15 @@ func IncreaseLiquidity(
 
 	// unwrap left
 	if isToken0Wugnot || isToken1Wugnot {
-		userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+		userNewWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
 
 		leftOver := userNewWugnotBalance - userOldWugnotBalance
-		unwrap(leftOver)
+		unwrap(leftOver, std.PrevRealm().Addr())
 	}
 
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"poolPath", poolPath,
@@ -276,8 +277,8 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	// MUST BE OWNER TO INCREASE LIQUIDITY
 	// can not be approved address > staked position can't be modified
 	owner := gnft.OwnerOf(tid(params.tokenId))
-	if owner != std.GetOrigCaller() {
-		panic(ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || only owner can increase liquidity__owner(%s) == std.GetOrigCaller(%s)", owner, std.GetOrigCaller()))
+	if owner != std.PrevRealm().Addr() {
+		panic(ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || only owner can increase liquidity__owner(%s) == std.PrevRealm().Addr()(%s)", owner, std.PrevRealm().Addr()))
 	}
 
 	checkDeadline(params.deadline)
@@ -292,6 +293,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 			amount1Desired: params.amount1Desired,
 			amount0Min:     params.amount0Min,
 			amount1Min:     params.amount1Min,
+			caller:         std.PrevRealm().Addr(),
 		},
 	)
 
@@ -365,7 +367,6 @@ func DecreaseLiquidity(
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"p_liquidityRatio", uint64ToStr(liquidityRatio),
@@ -394,7 +395,7 @@ func DecreaseLiquidity(
 // If unwrapResult is true and the position involves WUGNOT, any leftover WUGNOT will be
 // unwrapped to GNOT at the end of the operation.
 func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) {
-	userOldWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller())) // before unwrap
+	userOldWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr())) // before unwrap
 
 	verifyTokenIdAndOwnership(params.tokenId)
 	checkDeadline(params.deadline)
@@ -455,7 +456,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		pToken0,
 		pToken1,
 		pFee,
-		std.GetOrigCaller().String(),
+		std.PrevRealm().Addr(),
 		position.tickLower,
 		position.tickUpper,
 		_burnedAmount0,
@@ -486,7 +487,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
 	}
 
-	handleUnwrap(pToken0, pToken1, params.unwrapResult, userOldWugnotBalance)
+	handleUnwrap(pToken0, pToken1, params.unwrapResult, userOldWugnotBalance, std.PrevRealm().Addr())
 
 	return params.tokenId, liquidityToRemove, fee0, fee1, amount0, amount1, position.poolKey
 }
@@ -513,8 +514,8 @@ func Reposition(
 	// MUST BE OWNER TO REPOSITION
 	// can not be approved address > staked position can't be modified
 	owner := gnft.OwnerOf(tid(tokenId))
-	if owner != std.GetOrigCaller() {
-		panic(ufmt.Sprintf("[POSITION] position.gno__Reposition() || only owner can reposition__owner(%s) == std.GetOrigCaller(%s)", owner, std.GetOrigCaller()))
+	if owner != std.PrevRealm().Addr() {
+		panic(ufmt.Sprintf("[POSITION] position.gno__Reposition() || only owner can reposition__owner(%s) == std.PrevRealm().Addr()(%s)", owner, std.PrevRealm().Addr()))
 	}
 
 	// position should be burned to reposition
@@ -542,7 +543,7 @@ func Reposition(
 		sent := std.GetOrigSend()
 		ugnotSent = uint64(sent.AmountOf("ugnot"))
 
-		wrap(ugnotSent)
+		wrap(ugnotSent, std.PrevRealm().Addr())
 	}
 
 	liquidity, amount0, amount1 := addLiquidity(
@@ -554,6 +555,7 @@ func Reposition(
 			amount1Desired: u256.MustFromDecimal(_amount1Desired),
 			amount0Min:     u256.MustFromDecimal(_amount0Min),
 			amount1Min:     u256.MustFromDecimal(_amount1Min),
+			caller:         std.PrevRealm().Addr(),
 		},
 	)
 
@@ -583,7 +585,6 @@ func Reposition(
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"p_tickLower", int32ToStr(tickLower),
@@ -661,13 +662,13 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 
 	// check user wugnot amount
 	// need this value to unwrap fee
-	userWugnot := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+	userWugnot := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
 
 	amount0, amount1 := pl.Collect(
 		token0,
 		token1,
 		fee,
-		std.GetOrigCaller().String(),
+		std.PrevRealm().Addr(),
 		position.tickLower,
 		position.tickUpper,
 		tokensOwed0.ToString(),
@@ -682,23 +683,22 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 	positions[tokenId] = position
 
 	// handle withdrawal fee
-	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(tokenId, token0, amount0, token1, amount1, position.poolKey)
+	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(tokenId, token0, amount0, token1, amount1, position.poolKey, std.PrevRealm().Addr())
 
 	// UNWRAP
 	pToken0, pToken1, _ := poolKeyDivide(position.poolKey)
 	if (pToken0 == consts.WUGNOT_PATH || pToken1 == consts.WUGNOT_PATH) && unwrapResult {
-		userNewWugnot := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+		userNewWugnot := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
 		unwrapAmount := userNewWugnot - userWugnot
 
 		if unwrapAmount > 0 {
-			unwrap(unwrapAmount)
+			unwrap(unwrapAmount, std.PrevRealm().Addr())
 		}
 	}
 
 	std.Emit(
 		"GNOSWAP",
 		"m_callType", callType(),
-		"m_origCaller", origCaller(),
 		"m_prevRealm", prevRealm(),
 		"p_tokenId", uint64ToStr(tokenId),
 		"fee0", withoutFee0,
@@ -764,8 +764,8 @@ func verifyTokenIdAndOwnership(tokenId uint64) {
 		panic(ufmt.Sprintf("[POSITION] position.gno__verifyTokenIdAndOwnership() || tokenId(%d) doesn't exist", tokenId))
 	}
 	owner := gnft.OwnerOf(tid(tokenId))
-	if owner != std.GetOrigCaller() {
-		panic(ufmt.Sprintf("[POSITION] position.gno__verifyTokenIdAndOwnership() || only owner can decrease liquidity__owner(%s) == std.GetOrigCaller(%s)", owner, std.GetOrigCaller()))
+	if owner != std.PrevRealm().Addr() {
+		panic(ufmt.Sprintf("[POSITION] position.gno__verifyTokenIdAndOwnership() || only owner can decrease liquidity__owner(%s) == std.PrevRealm().Addr()(%s)", owner, std.PrevRealm().Addr()))
 	}
 }
 
@@ -784,10 +784,10 @@ func verifyBurnedAmounts(burnedAmount0, burnedAmount1, amount0Min, amount1Min *u
 	}
 }
 
-func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalance uint64) {
+func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalance uint64, to std.Address) {
 	if (pToken0 == consts.WRAPPED_WUGNOT || pToken1 == consts.WRAPPED_WUGNOT) && unwrapResult {
-		userNewWugnotBalance := wugnot.BalanceOf(a2u(std.GetOrigCaller()))
+		userNewWugnotBalance := wugnot.BalanceOf(a2u(to))
 		leftOver := userNewWugnotBalance - userOldWugnotBalance
-		unwrap(leftOver)
+		unwrap(leftOver, to)
 	}
 }

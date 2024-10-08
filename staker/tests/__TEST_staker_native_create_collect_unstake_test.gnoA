@@ -76,13 +76,14 @@ func TestPositionMintNative01(t *testing.T) {
 		"1",             // amount0Min
 		"1",             // amount1Min
 		max_timeout,     // deadline
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, lpTokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), gsa)
 	shouldEQ(t, amount0, "1000")
 	shouldEQ(t, amount1, "368")
 }
@@ -123,13 +124,14 @@ func TestPositionMintNative02(t *testing.T) {
 		"1",             // amount0Min
 		"1",             // amount1Min
 		max_timeout,     // deadline
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, lpTokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), gsa)
 	shouldEQ(t, amount0, "1000")
 	shouldEQ(t, amount1, "368")
 }
@@ -234,16 +236,15 @@ func TestUnstakeToken02(t *testing.T) {
 }
 
 func TestEndExternalIncentive(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
-
 	wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // UNWRAP
 	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(392638))
 	shouldEQ(t, ugnotBalanceOf(gsa), uint64(99998010))
 
 	std.TestSkipHeights(9999999)
 	// use same parameter as CreateExternalIncentive()
+	std.TestSetRealm(gsaRealm)
 	EndExternalIncentive(
-		std.GetOrigCaller().String(),
+		gsa,
 		"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500",
 		consts.WRAPPED_WUGNOT,
 		1234569600,                  // startTimestamp

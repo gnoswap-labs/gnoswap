@@ -4,9 +4,8 @@ import (
 	"std"
 )
 
-func ApiGetClaimableDepositByAddress(address string) uint64 {
-	addr := std.Address(address)
-	if !addr.IsValid() {
+func ApiGetClaimableDepositByAddress(address std.Address) uint64 {
+	if !address.IsValid() {
 		return 0
 	}
 

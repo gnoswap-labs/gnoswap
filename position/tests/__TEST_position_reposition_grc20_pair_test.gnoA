@@ -16,7 +16,6 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
@@ -39,7 +38,8 @@ func TestMintPosition01InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
@@ -66,16 +66,15 @@ func TestSwap1(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
 
 	std.TestSetRealm(rouRealm)
-	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
 		fee500,
-		gsa.String(),
+		gsa,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		gsa.String(),
+		gsa,
 	)
 
 	shouldEQ(t, amount0, "1234567")
@@ -111,7 +110,8 @@ func TestMintPosition02InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	shouldEQ(t, tokenId, uint64(2))
@@ -153,7 +153,7 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 	_lpTokenId := uint64(1)
 
 	ownerOfPosition := gnft.OwnerOf(tid(_lpTokenId))
-	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())
+	shouldEQ(t, ownerOfPosition, gsa)
 
 	// approve fee0, fee_lpTokenId to pool
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -166,7 +166,7 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 	shouldEQ(t, amount1, "46667220")
 
 	ownerOfPosition = gnft.OwnerOf(tid(_lpTokenId))
-	shouldEQ(t, ownerOfPosition, std.GetOrigCaller())
+	shouldEQ(t, ownerOfPosition, gsa)
 
 	position := positions[_lpTokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
@@ -198,7 +198,8 @@ func TestMintPosition03InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	shouldEQ(t, tokenId, uint64(3))
@@ -221,7 +222,7 @@ func TestMintPosition03InRange(t *testing.T) {
 }
 
 func TestRepositionNotOwner(t *testing.T) {
-	std.TestSetOrigCaller(test1)
+	std.TestSetRealm(std.NewUserRealm(test1))
 	shouldPanic(
 		t,
 		func() {
@@ -230,7 +231,7 @@ func TestRepositionNotOwner(t *testing.T) {
 }
 
 func TestRepositionOwnerButNowBurned(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 	shouldPanic(
 		t,
 		func() {
@@ -239,7 +240,7 @@ func TestRepositionOwnerButNowBurned(t *testing.T) {
 }
 
 func TestRepositionSlippageTooLarge(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 	shouldPanic(
 		t,
 		func() {
@@ -248,7 +249,7 @@ func TestRepositionSlippageTooLarge(t *testing.T) {
 }
 
 func TestReposition(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	_lpTokenId := uint64(1)
 

@@ -45,7 +45,7 @@ func TestPositionMintGnsGnot(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa.String())
+	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa, gsa)
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, amount0, "100000")
@@ -53,7 +53,7 @@ func TestPositionMintGnsGnot(t *testing.T) {
 }
 
 func TestPositionMintGnotBar(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	// send
 	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 100000}})
@@ -67,7 +67,7 @@ func TestPositionMintGnotBar(t *testing.T) {
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.WRAPPED_WUGNOT, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa.String())
+	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.WRAPPED_WUGNOT, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa, gsa)
 
 	shouldEQ(t, tokenId, uint64(2))
 	shouldEQ(t, amount0, "36790")
@@ -75,7 +75,7 @@ func TestPositionMintGnotBar(t *testing.T) {
 }
 
 func TestDrySwapRouteGnsBarExactIn(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 
 	dryResult := DrySwapRoute(
 		consts.GNS_PATH, // inputToken

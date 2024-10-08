@@ -58,7 +58,7 @@ func TestExactInputSinglePool1_to_0(t *testing.T) {
 	pl.CreatePool(barPath, token0Path, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, token0Path, 3000, minTick, maxTick, "1000000", "1000000", "0", "0", max_timeout, gsa.String())
+	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, token0Path, 3000, minTick, maxTick, "1000000", "1000000", "0", "0", max_timeout, gsa, gsa)
 	pool := pl.GetPool(barPath, token0Path, FEEMEDIUM)
 	poolLiq := pool.PoolGetLiquidity()
 	shouldEQ(t, poolLiq.ToString(), "1000000")

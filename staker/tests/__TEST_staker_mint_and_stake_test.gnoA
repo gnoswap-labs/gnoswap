@@ -29,7 +29,6 @@ func init() {
 	}
 
 	// set pool create fee to 0 for testing
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	pl.SetPoolCreationFee(0)
 }
@@ -71,6 +70,7 @@ func TestMintAndStakeNative(t *testing.T) {
 	gsaOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
 	shouldEQ(t, gsaOldWugnotBalance, uint64(0))
 
+	std.TestSetRealm(gsaRealm)
 	lpTokenId, liquidity, amount0, amount1, poolPath := MintAndStake(
 		consts.GNOT,     // token0
 		consts.GNS_PATH, // token1

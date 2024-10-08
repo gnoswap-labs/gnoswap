@@ -41,10 +41,11 @@ func TestMintMiscellaneous(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			consts.POSITION_ADDR.String(),
+			consts.POSITION_ADDR,
 			1000,
 			2000,
 			test_liquidityExpectStr,
+			gsa,
 		)
 
 		liqAfter := thisPool.liquidity.ToString()
@@ -62,10 +63,11 @@ func TestMintMiscellaneous(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			consts.POSITION_ADDR.String(),
+			consts.POSITION_ADDR,
 			-2000,
 			-1000,
 			test_liquidityExpectStr,
+			gsa,
 		)
 
 		liqAfter := thisPool.liquidity.ToString()
@@ -93,4 +95,3 @@ func TestMintMiscellaneous(t *testing.T) {
 
 	})
 }
-

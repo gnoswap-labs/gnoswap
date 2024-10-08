@@ -15,13 +15,11 @@ import (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	pl.SetPoolCreationFee(0)
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
@@ -59,7 +57,8 @@ func TestMintPosition01InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 	std.TestSetOrigSend(std.Coins{{"ugnot", 0}}, nil)
 
@@ -106,16 +105,15 @@ func TestSwap1(t *testing.T) {
 	wugnot.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
 
 	std.TestSetRealm(rouRealm)
-	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := pl.Swap(
 		consts.WUGNOT_PATH,
 		consts.GNS_PATH,
 		fee500,
-		gsa.String(),
+		gsa,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		gsa.String(),
+		gsa,
 	)
 
 	shouldEQ(t, amount0, "1234567")

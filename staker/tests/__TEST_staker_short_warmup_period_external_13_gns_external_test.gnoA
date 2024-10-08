@@ -33,7 +33,6 @@ func init() {
 
 func TestPoolInitCreatePool(t *testing.T) {
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
@@ -45,7 +44,6 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintBarQux100_1(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -62,17 +60,17 @@ func TestMintBarQux100_1(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
 
 	std.TestSkipHeights(1)
 }
 
 func TestCreateExternalIncentiveBar(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
@@ -93,7 +91,6 @@ func TestCreateExternalIncentiveBar(t *testing.T) {
 }
 
 func TestCreateExternalIncentiveGns(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // this includes depositGnsAmount
@@ -113,7 +110,6 @@ func TestCreateExternalIncentiveGns(t *testing.T) {
 }
 
 func TestStakeToken_1(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
@@ -149,7 +145,6 @@ func TestDuratino200(t *testing.T) {
 }
 
 func TestCollectReward(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	oldBar := bar.BalanceOf(a2u(gsa))
@@ -163,6 +158,6 @@ func TestCollectReward(t *testing.T) {
 	shouldEQ(t, newBar-oldBar, uint64(485))
 	shouldEQ(t, newGns-oldGns, uint64(485))
 
-	shouldEQ(t, bool(bool(newBar > oldBar)), true)
+	shouldEQ(t, bool(newBar > oldBar), true)
 	shouldEQ(t, bool(newGns > oldGns), true)
 }

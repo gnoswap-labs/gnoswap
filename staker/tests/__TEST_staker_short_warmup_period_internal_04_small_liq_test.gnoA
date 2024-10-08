@@ -46,7 +46,6 @@ func TestDoulbeMint(t *testing.T) {
 
 func TestPoolInitCreatePool(t *testing.T) {
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
@@ -60,7 +59,6 @@ func TestPoolInitCreatePool(t *testing.T) {
 func TestMintBarQux100_1(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -77,11 +75,12 @@ func TestMintBarQux100_1(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
 
 	gpi := GetPrintInfo()
 	shouldEQ(t, gpi, `{"height":126,"time":1234567896,"gns":{"staker":0,"devOps":8561643,"communityPool":2140410,"govStaker":0,"protocolFee":232106164,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
@@ -94,7 +93,6 @@ func TestMintBarQux100_1(t *testing.T) {
 func TestMintBarQux100_2(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -111,11 +109,12 @@ func TestMintBarQux100_2(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
 
 	gpi := GetPrintInfo()
 	shouldEQ(t, gpi, `{"height":127,"time":1234567898,"gns":{"staker":0,"devOps":11415524,"communityPool":2853880,"govStaker":0,"protocolFee":242808219,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
@@ -128,7 +127,6 @@ func TestMintBarQux100_2(t *testing.T) {
 func TestStakeToken_1_2(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
@@ -148,7 +146,6 @@ func TestStakeToken_1_2(t *testing.T) {
 func TestNow(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	gpi := GetPrintInfo()
@@ -162,7 +159,6 @@ func TestNow(t *testing.T) {
 func TestCollectRewardBoth(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 
 	CollectReward(1, false) // 21404107 > 6421231

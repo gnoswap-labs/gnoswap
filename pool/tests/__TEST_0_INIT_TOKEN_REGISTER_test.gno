@@ -134,7 +134,7 @@ func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 }
 
 func init() {
-	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
+	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
 
 	RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
 	RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
@@ -159,7 +159,7 @@ func TestRegisterGRC20Interface(t *testing.T) {
 
 func TestUnregisterGRC20Interface(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
-	std.TestSetOrigCaller(dummy)
+	std.TestSetRealm(std.NewUserRealm(dummy))
 
 	shouldPanic(t,
 		func() {
@@ -169,12 +169,12 @@ func TestUnregisterGRC20Interface(t *testing.T) {
 
 	shouldEQ(t, len(GetRegisteredTokens()), 7)
 
-	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
+	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
 	UnregisterGRC20Interface("gno.land/r/onbloc/bar")
 	shouldEQ(t, len(GetRegisteredTokens()), 6)
 
 	// re-register to avoid panic in other tests
 	RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
 
-	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 }

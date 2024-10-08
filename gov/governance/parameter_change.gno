@@ -193,7 +193,6 @@ func executeParameterChange(msgs []string) {
 		params := strings.Split(paramsStr, ",")
 
 		switch pkgPath {
-
 		case consts.COMMUNITY_POOL_PATH:
 			switch funcName {
 			case "TransferToken":
@@ -219,7 +218,7 @@ func executeParameterChange(msgs []string) {
 			switch funcName {
 			case "Reconfigure":
 				votingStartDelay, votingPeriod, votingWeightSmoothingDuration, quorum, proposalCreationThreshold, executionDelay, executionWindow := handleGovernanceReconfigure(params)
-				Reconfigure(votingStartDelay, votingPeriod, votingWeightSmoothingDuration, quorum, proposalCreationThreshold, executionDelay, executionWindow)
+				reconfigure(votingStartDelay, votingPeriod, votingWeightSmoothingDuration, quorum, proposalCreationThreshold, executionDelay, executionWindow)
 			}
 
 		case consts.POOL_PATH:

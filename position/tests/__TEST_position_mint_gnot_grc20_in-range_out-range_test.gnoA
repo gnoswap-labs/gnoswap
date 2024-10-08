@@ -22,7 +22,6 @@ var (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
@@ -55,19 +54,20 @@ func TestOneSideOnlyGrc20WithoutSend(t *testing.T) {
 
 	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // POSITION FOR WRAP
 
-	std.TestSetOrigCaller(fresh01)
+	std.TestSetRealm(fresh01Realm)
 	tokenId, liquidity, amount0, amount1 := Mint(
-		consts.GNS_PATH,  // token0
-		consts.GNOT,      // token1
-		fee500,           // fee
-		12000,            // tickLower
-		14000,            // tickUpper
-		"10000000",       // amount0Desired
-		"10000000",       // amount1Desired
-		"0",              // amount0Min
-		"0",              // amount1Min
-		max_timeout,      // deadline
-		fresh01.String(), // operator
+		consts.GNS_PATH, // token0
+		consts.GNOT,     // token1
+		fee500,          // fee
+		12000,           // tickLower
+		14000,           // tickUpper
+		"10000000",      // amount0Desired
+		"10000000",      // amount1Desired
+		"0",             // amount0Min
+		"0",             // amount1Min
+		max_timeout,     // deadline
+		fresh01,         // operator
+		fresh01,
 	)
 }
 
@@ -84,19 +84,20 @@ func TestOneSideOnlyGrc20WithSend0Coin(t *testing.T) {
 	banker.SendCoins(fresh01, consts.POSITION_ADDR, std.Coins{{"ugnot", 0}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 0}}, nil)
 
-	std.TestSetOrigCaller(fresh01)
+	std.TestSetRealm(fresh01Realm)
 	tokenId, liquidity, amount0, amount1 := Mint(
-		consts.GNS_PATH,  // token0
-		consts.GNOT,      // token1
-		fee500,           // fee
-		12000,            // tickLower
-		14000,            // tickUpper
-		"10000000",       // amount0Desired
-		"10000000",       // amount1Desired
-		"0",              // amount0Min
-		"0",              // amount1Min
-		max_timeout,      // deadline
-		fresh01.String(), // operator
+		consts.GNS_PATH, // token0
+		consts.GNOT,     // token1
+		fee500,          // fee
+		12000,           // tickLower
+		14000,           // tickUpper
+		"10000000",      // amount0Desired
+		"10000000",      // amount1Desired
+		"0",             // amount0Min
+		"0",             // amount1Min
+		max_timeout,     // deadline
+		fresh01,         // operator
+		fresh01,
 	)
 }
 
@@ -114,19 +115,20 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100_000_000}}, nil)
 	shouldEQ(t, ugnotBalanceOf(fresh01), uint64(0))
 
-	std.TestSetOrigCaller(fresh01)
+	std.TestSetRealm(fresh01Realm)
 	tokenId, liquidity, amount0, amount1 := Mint(
-		consts.GNS_PATH,  // token0
-		consts.GNOT,      // token1
-		fee500,           // fee
-		6000,             // tickLower
-		8000,             // tickUpper
-		"90000000",       // amount0Desired
-		"90000000",       // amount1Desired
-		"0",              // amount0Min
-		"0",              // amount1Min
-		max_timeout,      // deadline
-		fresh01.String(), // operator
+		consts.GNS_PATH, // token0
+		consts.GNOT,     // token1
+		fee500,          // fee
+		6000,            // tickLower
+		8000,            // tickUpper
+		"90000000",      // amount0Desired
+		"90000000",      // amount1Desired
+		"0",             // amount0Min
+		"0",             // amount1Min
+		max_timeout,     // deadline
+		fresh01,         // operator
+		fresh01,
 	)
 
 	// send 100_000_000
@@ -150,19 +152,20 @@ func TestBothWithFresh(t *testing.T) {
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100_000_000}}, nil)
 	shouldEQ(t, ugnotBalanceOf(fresh02), uint64(0))
 
-	std.TestSetOrigCaller(fresh02)
+	std.TestSetRealm(fresh02Realm)
 	tokenId, liquidity, amount0, amount1 := Mint(
-		consts.GNS_PATH,  // token0
-		consts.GNOT,      // token1
-		fee500,           // fee
-		6000,             // tickLower
-		16000,            // tickUpper
-		"70000000",       // amount0Desired
-		"70000000",       // amount1Desired
-		"0",              // amount0Min
-		"0",              // amount1Min
-		max_timeout,      // deadline
-		fresh02.String(), // operator
+		consts.GNS_PATH, // token0
+		consts.GNOT,     // token1
+		fee500,          // fee
+		6000,            // tickLower
+		16000,           // tickUpper
+		"70000000",      // amount0Desired
+		"70000000",      // amount1Desired
+		"0",             // amount0Min
+		"0",             // amount1Min
+		max_timeout,     // deadline
+		fresh02,         // operator
+		fresh02,
 	)
 
 	// send 100_000_000
@@ -183,12 +186,11 @@ func TestBothWithFreshButNoSend(t *testing.T) {
 
 	std.TestSetOrigSend(std.Coins{{"ugnot", 0}}, nil)
 
-	std.TestSetOrigCaller(fresh02)
-
+	std.TestSetRealm(fresh02Realm)
 	shouldPanic(
 		t,
 		func() {
-			Mint(consts.GNS_PATH, consts.GNOT, fee500, 6000, 16000, "70000000", "70000000", "0", "0", max_timeout, fresh02.String())
+			Mint(consts.GNS_PATH, consts.GNOT, fee500, 6000, 16000, "70000000", "70000000", "0", "0", max_timeout, fresh02, fresh02)
 		},
 	)
 }

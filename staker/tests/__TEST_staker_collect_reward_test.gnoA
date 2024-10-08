@@ -21,7 +21,6 @@ import (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetOrigCaller(gsa)
 	std.TestSetRealm(gsaRealm)
 	pl.SetPoolCreationFee(0)
 }
@@ -61,13 +60,14 @@ func TestPositionMint01(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,  // deadline
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, lpTokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), gsa)
 	shouldEQ(t, amount0, "368")
 	shouldEQ(t, amount1, "1000")
 
@@ -94,13 +94,14 @@ func TestPositionMint02(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,  // deadline
-		gsa.String(),
+		gsa,
+		gsa,
 	)
 
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, lpTokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), std.GetOrigCaller()) // gsa
+	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), gsa)
 	shouldEQ(t, amount0, "3979")
 	shouldEQ(t, amount1, "5000")
 
@@ -178,8 +179,7 @@ func TestCollectReward01_External(t *testing.T) {
 	std.TestSkipHeights(1)
 	shouldEQ(t, oblOld, uint64(99999000000000))
 
-	std.TestSetRealm(stkRealm)
-	std.TestSetOrigCaller(gsa)
+	std.TestSetRealm(gsaRealm)
 	CollectReward(1, true) // GNFT tokenId
 
 	std.TestSkipHeights(1) // not enough time to claim external reward
@@ -229,7 +229,7 @@ func TestEndExternalIncentive(t *testing.T) {
 
 	// use same parameter as CreateExternalIncentive()
 	EndExternalIncentive(
-		std.GetOrigCaller().String(),
+		gsa,
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500",
 		"gno.land/r/onbloc/obl",
 		1234569600,                  // startTimestamp
