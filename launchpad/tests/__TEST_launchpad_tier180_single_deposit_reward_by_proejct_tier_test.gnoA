@@ -49,7 +49,7 @@ func TestCreateProject(t *testing.T) {
 	std.TestSkipHeights(1)
 }
 
-func TestDepositGnsToTier90(t *testing.T) {
+func TestDepositGnsToTier180(t *testing.T) {
 	std.TestSetRealm(gsaRealm)
 	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
 	// transfer some grc20 tokens to bypass project condition
@@ -61,59 +61,59 @@ func TestDepositGnsToTier90(t *testing.T) {
 
 	// skip some blocks to make project active
 	std.TestSkipHeights(4)
-	depositId := DepositGns("gno.land/r/onbloc/obl:124:90", uint64(1_000_000))
-	shouldEQ(t, depositId, `gno.land/r/onbloc/obl:124:90:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+	depositId := DepositGns("gno.land/r/onbloc/obl:124:180", uint64(1_000_000))
+	shouldEQ(t, depositId, `gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 	std.TestSkipHeights(1)
 }
 
 func TestCollectRewardByDepositId(t *testing.T) {
 	std.TestSetRealm(user01Realm)
 
-	t.Run("claim reward before 7 days(for 90day tier's init reward)", func(t *testing.T) {
-		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:90:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+	t.Run("claim reward before 14 days(for 180day tier's init reward)", func(t *testing.T) {
+		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 		shouldEQ(t, reward, uint64(0))
 		std.TestSkipHeights(1)
 		println()
 	})
 
-	t.Run("claim reward before 7 days(for 90day tier's init reward)", func(t *testing.T) {
+	t.Run("claim reward before 14 days(for 180day tier's init reward)", func(t *testing.T) {
 		std.TestSkipHeights(123)
-		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:90:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 		shouldEQ(t, reward, uint64(0))
 		std.TestSkipHeights(1)
 		println()
 	})
 
-	t.Run("claim after 7 days", func(t *testing.T) {
-		std.TestSkipHeights(int64(TIMESTAMP_7DAYS) / 2)
-		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:90:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
-		shouldEQ(t, reward, uint64(15562035))
+	t.Run("claim after 14 days", func(t *testing.T) {
+		std.TestSkipHeights(int64(TIMESTAMP_14DAYS) / 2)
+		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+		shouldEQ(t, reward, uint64(54455786))
 		println()
 	})
 
 	t.Run("no more claim in same block", func(t *testing.T) {
-		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:90:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 		shouldEQ(t, reward, uint64(0))
 		println()
 	})
 
 	t.Run("wait 1 more block, then claim", func(t *testing.T) {
 		std.TestSkipHeights(1)
-		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:90:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
-		shouldEQ(t, reward, uint64(51))
+		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+		shouldEQ(t, reward, uint64(90))
 		println()
 	})
 
-	t.Run("90day tier is over", func(t *testing.T) {
-		std.TestSkipHeights(int64(TIMESTAMP_90DAYS) / 2)
-		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:90:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
-		shouldEQ(t, reward, uint64(184437911))
+	t.Run("180day tier is over", func(t *testing.T) {
+		std.TestSkipHeights(int64(TIMESTAMP_180DAYS) / 2)
+		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+		shouldEQ(t, reward, uint64(645544122))
 		println()
 	})
 
-	t.Run("more block after 90 days", func(t *testing.T) {
-		std.TestSkipHeights(int64(TIMESTAMP_90DAYS) / 2)
-		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:90:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+	t.Run("more block after 180 days", func(t *testing.T) {
+		std.TestSkipHeights(int64(TIMESTAMP_180DAYS) / 2)
+		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:180:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 		shouldEQ(t, reward, uint64(0))
 		println()
 	})

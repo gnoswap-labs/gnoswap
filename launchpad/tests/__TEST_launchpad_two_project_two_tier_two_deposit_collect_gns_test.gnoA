@@ -1,0 +1,179 @@
+package launchpad
+
+import (
+	"std"
+	"testing"
+	"time"
+
+	"gno.land/p/demo/testutils"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/obl"
+)
+
+var (
+	projectAddr = testutils.TestAddress("projectAddr")
+	user01      = testutils.TestAddress("user01")
+
+	projectRealm = std.NewUserRealm(projectAddr)
+	user01Realm  = std.NewUserRealm(user01)
+)
+
+func init() {
+	println("test_init")
+}
+
+func TestCreateProjectObl(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
+	std.TestSkipHeights(1)
+
+	projectId := CreateProject(
+		oblPath,
+		projectAddr,
+		uint64(1_000_000_000), // 1000000000
+		"",
+		"",
+		uint64(10),                   // 100000000
+		uint64(20),                   // 200000000
+		uint64(70),                   // 700000000
+		uint64(time.Now().Unix()+10), // 10s later
+	)
+	shouldEQ(t, projectId, `gno.land/r/onbloc/obl:124`)
+	std.TestSkipHeights(1)
+}
+
+func TestCreateProjectBar(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+
+	bar.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
+	std.TestSkipHeights(1)
+
+	projectId := CreateProject(
+		barPath,
+		projectAddr,
+		uint64(1_000_000_000), // 1000000000
+		"",
+		"",
+		uint64(10),                   // 100000000
+		uint64(20),                   // 200000000
+		uint64(70),                   // 700000000
+		uint64(time.Now().Unix()+10), // 10s later
+	)
+	shouldEQ(t, projectId, `gno.land/r/onbloc/bar:126`)
+	std.TestSkipHeights(1)
+}
+
+func TestDepositGnsToOblTier30First(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
+
+	std.TestSetRealm(user01Realm)
+	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
+
+	// skip some blocks to make project active
+	std.TestSkipHeights(4)
+
+	depositId := DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000)) // 1000000
+	shouldEQ(t, depositId, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:131`)
+	std.TestSkipHeights(1)
+}
+
+func TestDepositGnsToOblTier30Second(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
+
+	std.TestSetRealm(user01Realm)
+	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
+
+	depositId := DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000)) // 1000000
+	shouldEQ(t, depositId, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:132`)
+	std.TestSkipHeights(1)
+}
+
+func TestDepositGnsToOblTier90First(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
+
+	std.TestSetRealm(user01Realm)
+	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
+
+	depositId := DepositGns("gno.land/r/onbloc/obl:124:90", uint64(1_000_000)) // 1000000
+	shouldEQ(t, depositId, `gno.land/r/onbloc/obl:124:90:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:133`)
+	std.TestSkipHeights(1)
+}
+
+func TestDepositGnsToOblTier90Second(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	gns.Transfer(a2u(user01), uint64(2_000_000)) // to deposit
+
+	std.TestSetRealm(user01Realm)
+	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(2_000_000))
+
+	depositId := DepositGns("gno.land/r/onbloc/obl:124:90", uint64(2_000_000)) // 2000000
+	shouldEQ(t, depositId, `gno.land/r/onbloc/obl:124:90:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:134`)
+	std.TestSkipHeights(1)
+}
+
+func TestDepositGnsToBarTier30(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
+
+	std.TestSetRealm(user01Realm)
+	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
+
+	depositId := DepositGns("gno.land/r/onbloc/bar:126:30", uint64(1_000_000)) // 1000000
+	shouldEQ(t, depositId, `gno.land/r/onbloc/bar:126:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:135`)
+	std.TestSkipHeights(1)
+}
+
+func TestCollectDepositGnsByProjectIdObl_Tier30(t *testing.T) {
+	std.TestSetRealm(user01Realm)
+
+	t.Run("claim before 30 tier ends", func(t *testing.T) {
+		claimed := CollectDepositGnsByProjectId("gno.land/r/onbloc/obl:124")
+		std.TestSkipHeights(1)
+		shouldEQ(t, claimed, uint64(0))
+	})
+
+	t.Run("claim after 30 tier ends from entire obl project's deposit", func(t *testing.T) {
+		std.TestSkipHeights(int64(TIMESTAMP_30DAYS) / 2)
+		claimed := CollectDepositGnsByProjectId("gno.land/r/onbloc/obl:124")
+		std.TestSkipHeights(1)
+		shouldEQ(t, claimed, uint64(2000000))
+	})
+}
+
+func TestCollectDepositGnsByProjectIdObl_Tier90(t *testing.T) {
+	std.TestSetRealm(user01Realm)
+
+	t.Run("claim before 90 tier ends", func(t *testing.T) {
+		claimed := CollectDepositGnsByProjectId("gno.land/r/onbloc/obl:124")
+		std.TestSkipHeights(1)
+		shouldEQ(t, claimed, uint64(0))
+	})
+
+	t.Run("claim after 90 tier ends, from certain deposit (first deposit)", func(t *testing.T) {
+		std.TestSkipHeights(int64(TIMESTAMP_90DAYS) / 2)
+		claimed := CollectDepositGnsByDepositId("gno.land/r/onbloc/obl:124:90:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:133")
+		std.TestSkipHeights(1)
+		shouldEQ(t, claimed, uint64(1000000))
+	})
+
+	t.Run("claim after 90 tier ends, from certain deposit (second deposit)", func(t *testing.T) {
+		std.TestSkipHeights(int64(TIMESTAMP_90DAYS) / 2)
+		claimed := CollectDepositGnsByDepositId("gno.land/r/onbloc/obl:124:90:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:134")
+		std.TestSkipHeights(1)
+		shouldEQ(t, claimed, uint64(2000000))
+	})
+
+	t.Run("claim after 90 tier ends, from entire obl project's deposit", func(t *testing.T) {
+		claimed := CollectDepositGnsByProjectId("gno.land/r/onbloc/obl:124")
+		std.TestSkipHeights(1)
+		shouldEQ(t, claimed, uint64(0))
+	})
+}

@@ -143,7 +143,7 @@ func DepositGns(
 //
 // returns collected gns amount
 func CollectDepositGns() uint64 {
-	calculateDepositReward() // uncomment this line if L#208 `CollectReward` is removed
+	calculateDepositReward()
 
 	caller := std.PrevRealm().Addr()
 	userDeposits := depositsByUser[caller]
@@ -201,10 +201,165 @@ func CollectDepositGns() uint64 {
 		xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), gnsToUser)
 		gns.Transfer(a2u(caller), gnsToUser)
 
-		// umcomment L#147 `calculateDepositReward()`
-		// CollectReward()
+		return gnsToUser // return accumulated gns amount being withdrawn
+	}
+
+	return 0
+}
+
+// CollectDepositGnsByProjectId collect deposited gns of certain project by caller
+// - gns will be transfered from the `launchpad` to caller
+// - launchpad's xgns will be burned
+//
+// returns collected gns amount
+func CollectDepositGnsByProjectId(projectId string) uint64 {
+	project, exist := projects[projectId]
+	if !exist {
+		println("NO PROJECT FOR THIS ID", projectId)
+		return 0
+	}
+
+	caller := std.PrevRealm().Addr()
+	if _, exist := depositsByUserByProject[caller]; !exist {
+		println("NO DEPOSIT FOR THIS USER", caller)
+		return 0
+	}
+
+	depositIds, exist := depositsByUserByProject[caller][projectId]
+	if !exist {
+		println("NO DEPOSIT FOR THIS PROJECT", projectId, " FOR UESR", caller)
+		return 0
+	}
+
+	calculateDepositReward()
+
+	gnsToUser := uint64(0)
+	for _, depositId := range depositIds {
+		deposit := deposits[depositId]
+
+		// check active
+		project, exist := projects[deposit.projectId]
+		if !exist {
+			panic(ufmt.Sprintf("SHOULD_NOT_HAPPEN__project not found: %s", deposit.projectId))
+		}
+
+		tier := getTier(project, deposit.tier)
+		if checkTierActive(project, tier) {
+			println("CollectDepositGns()_STILL ACTIVE TIER", deposit.tier)
+			continue
+		}
+
+		// collected
+		if deposit.depositCollectHeight != 0 {
+			continue
+		}
+
+		deposit.depositCollectHeight = uint64(std.GetHeight())
+		deposit.depositCollectTime = uint64(time.Now().Unix())
+		deposits[deposit.id] = deposit
+
+		gnsToUser += deposit.amount
+
+		// update gov_staker contract's variable to calculate proejct's recipient's reward
+		gs.SetAmountByProjectWallet(project.recipient, deposit.amount, false) // subtract
+
+		// update tier
+		tier.depositAmount -= deposit.amount
+		tier.participant -= 1
+
+		// update project
+		project = setTier(project, deposit.tier, tier)
+		project.actualDepositAmount -= deposit.amount
+		project.actualParticipant -= 1
+		projects[deposit.projectId] = project
+
+		// emit event for each deposit
+		std.Emit(
+			"CollectDepositGns",
+			"m_prevRealm", prevRealm(),
+			"depositId", depositId,
+			"amount", ufmt.Sprintf("%d", deposit.amount),
+		)
+	}
+
+	if gnsToUser > 0 {
+		xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), gnsToUser)
+		gns.Transfer(a2u(caller), gnsToUser)
 
 		return gnsToUser // return accumulated gns amount being withdrawn
+	}
+
+	return 0
+}
+
+// CollectDepositGnsByDepositId collect deposited gns of certain deposit
+// - gns will be transfered from the `launchpad` to caller
+// - launchpad's xgns will be burned
+//
+// returns collected gns amount
+func CollectDepositGnsByDepositId(depositId string) uint64 {
+	deposit, exist := deposits[depositId]
+	if !exist {
+		println("DEPOSIT NOT FOUND", depositId)
+		return 0
+	}
+
+	project, exist := projects[deposit.projectId]
+	if !exist {
+		println("NO PROJECT FOR THIS ID", deposit.projectId)
+		return 0
+	}
+
+	caller := std.PrevRealm().Addr()
+	if _, exist := depositsByUserByProject[caller]; !exist {
+		println("NO DEPOSIT FOR THIS USER", caller)
+		return 0
+	}
+
+	calculateDepositReward()
+
+	// check active
+	tier := getTier(project, deposit.tier)
+	if checkTierActive(project, tier) {
+		println("CollectDepositGns()_STILL ACTIVE TIER", deposit.tier)
+		return 0
+	}
+
+	// collected
+	if deposit.depositCollectHeight != 0 {
+		return 0
+	}
+
+	deposit.depositCollectHeight = uint64(std.GetHeight())
+	deposit.depositCollectTime = uint64(time.Now().Unix())
+	deposits[deposit.id] = deposit
+
+	// update gov_staker contract's variable to calculate proejct's recipient's reward
+	gs.SetAmountByProjectWallet(project.recipient, deposit.amount, false) // subtract
+
+	// update tier
+	tier.depositAmount -= deposit.amount
+	tier.participant -= 1
+
+	// update project
+	project = setTier(project, deposit.tier, tier)
+	project.actualDepositAmount -= deposit.amount
+	project.actualParticipant -= 1
+	projects[deposit.projectId] = project
+
+	// emit event for each deposit
+	std.Emit(
+		"CollectDepositGns",
+		"m_prevRealm", prevRealm(),
+		"depositId", depositId,
+		"amount", ufmt.Sprintf("%d", deposit.amount),
+	)
+
+	if deposit.amount > 0 {
+		xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), deposit.amount)
+		gns.Transfer(a2u(caller), deposit.amount)
+
+		return deposit.amount //
 	}
 
 	return 0
