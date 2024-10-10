@@ -199,3 +199,39 @@ func TestApiGetClaimableDepositByAddress(t *testing.T) {
 		shouldEQ(t, claimed, uint64(0))
 	})
 }
+
+func TestApiGetProjectAndTierStatisticsByProjectId(t *testing.T) {
+	t.Run("not existing project", func(t *testing.T) {
+		got := ApiGetProjectAndTierStatisticsByProjectId("gno.land/r")
+		shouldEQ(t, got, ``)
+	})
+
+	t.Run("existing project", func(t *testing.T) {
+		got := ApiGetProjectAndTierStatisticsByProjectId("gno.land/r/onbloc/obl:124")
+		shouldEQ(t, got, `{"height":"1296142","now":"1237159928","projectId":"gno.land/r/onbloc/obl:124","totalDepositAmount":"1000000","actualDepositAmount":"0","totalParticipant":"1","actualParticipant":"0","totalCollectedAmount":"0","tier30TotalDepositAmount":"1000000","tier30ActualDepositAmount":"0","tier30TotalParticipant":"1","tier30ActualParticipant":"0","tier90TotalDepositAmount":"0","tier90ActualDepositAmount":"0","tier90TotalParticipant":"0","tier90ActualParticipant":"0","tier180TotalDepositAmount":"0","tier180ActualDepositAmount":"0","tier180TotalParticipant":"0","tier180ActualParticipant":"0"}`)
+	})
+}
+
+func TestApiGetProjectStatisticsByProjectId(t *testing.T) {
+	t.Run("not existing project", func(t *testing.T) {
+		got := ApiGetProjectStatisticsByProjectId("gno.land/r")
+		shouldEQ(t, got, ``)
+	})
+
+	t.Run("existing project", func(t *testing.T) {
+		got := ApiGetProjectStatisticsByProjectId("gno.land/r/onbloc/obl:124")
+		shouldEQ(t, got, `{"height":"1296142","now":"1237159928","projectId":"gno.land/r/onbloc/obl:124","totalDepositAmount":"1000000","actualDepositAmount":"0","totalParticipant":"1","actualParticipant":"0","totalCollectedAmount":"0"}`)
+	})
+}
+
+func TestApiGetProjectStatisticsByProjectTierId(t *testing.T) {
+	t.Run("not existing tier", func(t *testing.T) {
+		got := ApiGetProjectStatisticsByProjectTierId("gno.land/r/onbloc/obl:124:31")
+		shouldEQ(t, got, ``)
+	})
+
+	t.Run("existing tier", func(t *testing.T) {
+		got := ApiGetProjectStatisticsByProjectTierId("gno.land/r/onbloc/obl:124:30")
+		shouldEQ(t, got, `{"height":"1296142","now":"1237159928","projectId":"gno.land/r/onbloc/obl:124","tierId":"gno.land/r/onbloc/obl:124:30","tierAmount":"100000000","tierTotalDepositAmount":"1000000","tierActualDepositAmount":"0","tierTotalParticipant":"1","tierActualParticipant":"0"}`)
+	})
+}

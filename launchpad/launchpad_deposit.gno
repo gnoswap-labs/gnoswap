@@ -77,8 +77,10 @@ func DepositGns(
 	gs.SetAmountByProjectWallet(project.recipient, amount, true) // true == add
 
 	// update tier
-	tier.depositAmount += amount
-	tier.participant += 1
+	tier.totalDepositAmount += amount
+	tier.actualDepositAmount += amount
+	tier.totalParticipant += 1
+	tier.actualParticipant += 1
 	project = setTier(project, tierStr, tier)
 
 	// update project
@@ -179,8 +181,8 @@ func CollectDepositGns() uint64 {
 		gs.SetAmountByProjectWallet(project.recipient, deposit.amount, false) // subtract
 
 		// update tier
-		tier.depositAmount -= deposit.amount
-		tier.participant -= 1
+		tier.actualDepositAmount -= deposit.amount
+		tier.actualParticipant -= 1
 
 		// update project
 		project = setTier(project, deposit.tier, tier)
@@ -213,7 +215,7 @@ func CollectDepositGns() uint64 {
 //
 // returns collected gns amount
 func CollectDepositGnsByProjectId(projectId string) uint64 {
-	project, exist := projects[projectId]
+	_, exist := projects[projectId]
 	if !exist {
 		println("NO PROJECT FOR THIS ID", projectId)
 		return 0
@@ -264,8 +266,8 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 		gs.SetAmountByProjectWallet(project.recipient, deposit.amount, false) // subtract
 
 		// update tier
-		tier.depositAmount -= deposit.amount
-		tier.participant -= 1
+		tier.actualDepositAmount -= deposit.amount
+		tier.actualParticipant -= 1
 
 		// update project
 		project = setTier(project, deposit.tier, tier)
@@ -338,8 +340,8 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 	gs.SetAmountByProjectWallet(project.recipient, deposit.amount, false) // subtract
 
 	// update tier
-	tier.depositAmount -= deposit.amount
-	tier.participant -= 1
+	tier.actualDepositAmount -= deposit.amount
+	tier.actualParticipant -= 1
 
 	// update project
 	project = setTier(project, deposit.tier, tier)
@@ -351,7 +353,7 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 	std.Emit(
 		"CollectDepositGns",
 		"m_prevRealm", prevRealm(),
-		"depositId", depositId,
+		"p_depositId", depositId,
 		"amount", ufmt.Sprintf("%d", deposit.amount),
 	)
 

@@ -76,8 +76,8 @@ func TestCreateProject(t *testing.T) {
 		shouldEQ(t, tier30.tierAmount, uint64(100000000))
 		shouldNEQ(t, tier30.tierAmountPerBlockX96.ToString(), `0`)
 		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
-		shouldEQ(t, tier30.depositAmount, uint64(0))
-		shouldEQ(t, tier30.participant, uint64(0))
+		shouldEQ(t, tier30.actualDepositAmount, uint64(0))
+		shouldEQ(t, tier30.actualParticipant, uint64(0))
 
 		shouldEQ(t, project.tier90Ratio, uint64(20))
 		tier90 := project.tier90
@@ -86,8 +86,8 @@ func TestCreateProject(t *testing.T) {
 		shouldEQ(t, tier90.tierAmount, uint64(200000000))
 		shouldNEQ(t, tier90.tierAmountPerBlockX96.ToString(), `0`)
 		shouldEQ(t, tier90.endTime, project.startTime+TIMESTAMP_90DAYS)
-		shouldEQ(t, tier90.depositAmount, uint64(0))
-		shouldEQ(t, tier90.participant, uint64(0))
+		shouldEQ(t, tier90.actualDepositAmount, uint64(0))
+		shouldEQ(t, tier90.actualParticipant, uint64(0))
 
 		shouldEQ(t, project.tier180Ratio, uint64(70))
 		tier180 := project.tier180
@@ -96,8 +96,8 @@ func TestCreateProject(t *testing.T) {
 		shouldEQ(t, tier180.tierAmount, uint64(700000000))
 		shouldNEQ(t, tier180.tierAmountPerBlockX96.ToString(), `0`)
 		shouldEQ(t, tier180.endTime, project.startTime+TIMESTAMP_180DAYS)
-		shouldEQ(t, tier180.depositAmount, uint64(0))
-		shouldEQ(t, tier180.participant, uint64(0))
+		shouldEQ(t, tier180.actualDepositAmount, uint64(0))
+		shouldEQ(t, tier180.actualParticipant, uint64(0))
 
 		shouldEQ(t, project.createdHeight, uint64(124))
 		shouldEQ(t, project.createdTime, uint64(1234567892))
@@ -135,8 +135,8 @@ func TestDepositGnsToTier30(t *testing.T) {
 		shouldEQ(t, tier30.tierAmount, uint64(100000000))
 		shouldNEQ(t, tier30.tierAmountPerBlockX96.ToString(), `0`)
 		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
-		shouldEQ(t, tier30.depositAmount, uint64(0))
-		shouldEQ(t, tier30.participant, uint64(0))
+		shouldEQ(t, tier30.actualDepositAmount, uint64(0))
+		shouldEQ(t, tier30.actualParticipant, uint64(0))
 
 		shouldEQ(t, len(deposits), 0)
 		shouldEQ(t, len(depositsByProject), 0)
@@ -162,8 +162,8 @@ func TestDepositGnsToTier30(t *testing.T) {
 		shouldEQ(t, tier30.tierAmount, uint64(100000000))
 		shouldNEQ(t, tier30.tierAmountPerBlockX96.ToString(), `0`)
 		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
-		shouldEQ(t, tier30.depositAmount, uint64(1000000))
-		shouldEQ(t, tier30.participant, uint64(1))
+		shouldEQ(t, tier30.actualDepositAmount, uint64(1000000))
+		shouldEQ(t, tier30.actualParticipant, uint64(1))
 
 		//
 		shouldEQ(t, len(deposits), 1)
@@ -247,6 +247,6 @@ func TestCollectDepositGns(t *testing.T) {
 	tier30 := project.tier30
 	shouldEQ(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
 	shouldEQ(t, tier30.tierAmount, uint64(100000000))
-	shouldEQ(t, tier30.depositAmount, uint64(0))
-	shouldEQ(t, tier30.participant, uint64(0))
+	shouldEQ(t, tier30.actualDepositAmount, uint64(0))
+	shouldEQ(t, tier30.actualParticipant, uint64(0))
 }

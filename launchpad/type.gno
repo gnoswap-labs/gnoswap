@@ -50,11 +50,11 @@ type Tier struct {
 	endHeight uint64
 	endTime   uint64
 
-	// actual data
-	// unlikely projects' totalDepositAmount or totalParticipant
-	// below data will be decreased
-	depositAmount uint64
-	participant   uint64
+	totalDepositAmount  uint64
+	actualDepositAmount uint64
+
+	totalParticipant  uint64
+	actualParticipant uint64
 }
 
 type Condition struct {

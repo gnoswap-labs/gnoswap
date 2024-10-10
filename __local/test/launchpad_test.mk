@@ -108,6 +108,8 @@ send-ugnot-must:
 	@echo "" | gnokey maketx send -send 10000000000ugnot -to $(ADDR_TR01) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" test1
 	@echo
 
+dummy-tx:
+	@echo "" | gnokey maketx send -send 1ugnot -to $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" test1
 
 # deploy test grc20 tokens
 deploy-foo:
@@ -404,7 +406,7 @@ launchpad-deposit:
 
 	## DEPOSIT TO PROJECT ( tier 30 )
 	$(info ************ deposit to project // gnoswap_admin ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/launchpad -func DepositGns -args "gno.land/r/onbloc/obl:69:30" -args 1000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/launchpad -func DepositGns -args "gno.land/r/onbloc/obl:62:30" -args 1000000 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 
 launchpad-collect-protocol:
 	$(info ************ collect protocol fee by projects recipients // tr01 ************)
@@ -412,7 +414,7 @@ launchpad-collect-protocol:
 
 launchpad-collect-reward:
 	$(info ************ collect reward bt project id // gnoswap_admin ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/launchpad -func CollectRewardByProjectId -args "gno.land/r/onbloc/obl:69" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/launchpad -func CollectRewardByProjectId -args "gno.land/r/onbloc/obl:62" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 
 ## TRANSFER FOR QA
 ADDR_ROH := g16a7etgm9z2r653ucl36rj0l2yqcxgrz2jyegzx
