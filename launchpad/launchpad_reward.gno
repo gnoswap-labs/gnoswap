@@ -17,7 +17,7 @@ func CollectProtocolFee() {
 	caller := std.PrevRealm().Addr()
 	gs.CollectRewardFromLaunchPad(caller)
 
-	// XXX: emit event
+	// event will be emitted in gov/staker CollectRewardFromLaunchPad()
 }
 
 var (
@@ -26,82 +26,6 @@ var (
 
 func init() {
 	lastCalculatedHeight = uint64(std.GetHeight())
-}
-
-// CollectReward collects reward from entire deposit by caller
-func CollectReward() {
-	calculateDepositReward()
-
-	caller := std.PrevRealm().Addr()
-	depositIds, exist := depositsByUser[caller]
-	if !exist {
-		println("NO DEPOSIT FOR THIS USER", caller)
-		return
-	}
-
-	// project token -> reward amount
-	toUser := make(map[string]uint64)
-
-	for _, depositId := range depositIds {
-		deposit := deposits[depositId]
-		if deposit.rewardAmount == 0 {
-			println("NO REWARD FOR THIS DEPOSIT", depositId)
-			continue
-		}
-
-		project := projects[deposit.projectId]
-		projectToken := project.tokenPath
-
-		if deposit.rewardAmount > 0 { // deposit has some reward
-			if deposit.rewardCollectTime != 0 { // this collect is not first collect
-				println("(N)th collect")
-				toUser[projectToken] += deposit.rewardAmount
-			} else {
-				// if fisrt collect, then check tier's collect wait duration
-				collectableAfter := uint64(0)
-				switch deposit.tier {
-				case "30":
-					collectableAfter = project.startHeight + project.tier30.collectWaitDuration
-				case "90":
-					collectableAfter = project.startHeight + project.tier90.collectWaitDuration
-				case "180":
-					collectableAfter = project.startHeight + project.tier180.collectWaitDuration
-				}
-
-				if uint64(std.GetHeight()) < collectableAfter {
-					println("NOT CLAIMABLE YET")
-					continue
-				}
-
-				println("token:", projectToken, "reward:", deposit.rewardAmount)
-				toUser[projectToken] += deposit.rewardAmount
-			}
-
-			std.Emit(
-				"CollectReward",
-				"m_prevRealm", prevRealm(),
-				"depositId", depositId,
-				"amount", ufmt.Sprintf("%d", deposit.rewardAmount),
-			)
-		}
-
-		// update project
-		project.totalCollectedAmount += deposit.rewardAmount
-		projects[deposit.projectId] = project
-
-		// update deposit
-		deposit.rewardAmount = 0
-		deposit.rewardCollectHeight = uint64(std.GetHeight())
-		deposit.rewardCollectTime = uint64(time.Now().Unix())
-		deposits[depositId] = deposit
-	}
-
-	// transfer reward to user
-	for tokenPath, amount := range toUser {
-		// println("tokenPath:", tokenPath)
-		// println("amount:", amount)
-		transferByRegisterCall(tokenPath, std.PrevRealm().Addr(), amount)
-	}
 }
 
 // CollectRewardByProjectId collects reward from entire deposit of certain project by caller
@@ -186,105 +110,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 	}
 
 	// transfer reward to user
-
 	transferByRegisterCall(project.tokenPath, std.PrevRealm().Addr(), toUser)
-
-	// XXX: emit event
-
-	return toUser
-}
-
-// CollectRewardByProjectTier collects reward from entire deposit of certain project tier by caller
-//
-// returns collected reward amount
-func CollectRewardByProjectTier(tierId string) uint64 {
-	projectId, tierStr := getProjectIdAndTierFromTierId(tierId)
-	project, exist := projects[projectId]
-	if !exist {
-		println("NO PROJECT FOR THIS ID", projectId)
-		return 0
-	}
-
-	caller := std.PrevRealm().Addr()
-	if _, exist := depositsByUserByProject[caller]; !exist {
-		println("NO DEPOSIT FOR THIS USER", caller)
-		return 0
-	}
-	depositIds, exist := depositsByUserByProject[caller][projectId]
-	if !exist {
-		println("NO DEPOSIT FOR THIS PROJECT", projectId)
-		return 0
-	}
-
-	calculateDepositReward()
-
-	toUser := uint64(0)
-	for _, depositId := range depositIds {
-		println("depositId:", depositId)
-		deposit := deposits[depositId]
-
-		// matching tier
-		if deposit.projectId == projectId && deposit.tier == tierStr {
-			if deposit.rewardAmount == 0 {
-				println("NO REWARD FOR THIS DEPOSIT", depositId)
-				continue
-			}
-
-			project := projects[deposit.projectId]
-			if project.id != projectId {
-				println("PROJECT ID MISMATCH", project.id, projectId)
-				continue
-			}
-
-			if deposit.rewardAmount > 0 {
-				if deposit.rewardCollectTime != 0 {
-					println("(N)th collect")
-					toUser += deposit.rewardAmount
-				} else {
-					collectableAfter := uint64(0)
-					switch deposit.tier {
-					case "30":
-						collectableAfter = project.startHeight + project.tier30.collectWaitDuration
-					case "90":
-						collectableAfter = project.startHeight + project.tier90.collectWaitDuration
-					case "180":
-						collectableAfter = project.startHeight + project.tier180.collectWaitDuration
-					}
-
-					if uint64(std.GetHeight()) < collectableAfter {
-						println("NOT CLAIMABLE YET")
-						continue
-					}
-
-					println("token:", project.tokenPath, "reward:", deposit.rewardAmount)
-					toUser += deposit.rewardAmount
-				}
-			}
-
-			std.Emit(
-				"CollectRewardByProjectTier",
-				"m_prevRealm", prevRealm(),
-				"p_tierId", tierId,
-				"depositId", depositId,
-				"amount", ufmt.Sprintf("%d", deposit.rewardAmount),
-			)
-		}
-
-		// update project
-		project.totalCollectedAmount += deposit.rewardAmount
-		projects[deposit.projectId] = project
-
-		// update deposit
-		deposit.rewardAmount = 0
-		deposit.rewardCollectHeight = uint64(std.GetHeight())
-		deposit.rewardCollectTime = uint64(time.Now().Unix())
-		deposits[depositId] = deposit
-	}
-
-	// transfer reward to user
-	transferByRegisterCall(project.tokenPath, std.PrevRealm().Addr(), toUser)
-
-	// XXX: emit event
 
 	return toUser
 }
@@ -293,7 +119,6 @@ func CollectRewardByProjectTier(tierId string) uint64 {
 //
 // returns collected reward amount
 func CollectRewardByDepositId(depositId string) uint64 {
-	println("CollectRewardByDepositId", depositId)
 	deposit, exist := deposits[depositId]
 	if !exist {
 		panic("deposit not found")
@@ -433,9 +258,9 @@ func calculateDepositReward() {
 
 		// calculate deposit ratio
 		// loop with each tier (30 90 180)
-		tier30Deposit := project.tier30.depositAmount
-		tier90Deposit := project.tier90.depositAmount
-		tier180Deposit := project.tier180.depositAmount
+		tier30Deposit := project.tier30.actualDepositAmount
+		tier90Deposit := project.tier90.actualDepositAmount
+		tier180Deposit := project.tier180.actualDepositAmount
 		// println("tier30.id", project.tier30.id)
 		// println("tier30Deposit", tier30Deposit)
 		// println("tier90Deposit", tier90Deposit)
