@@ -186,8 +186,8 @@ func CreateProject(
 		"p_tier30Ratio", ufmt.Sprintf("%d", tier30Ratio),
 		"p_tier90Ratio", ufmt.Sprintf("%d", tier90Ratio),
 		"p_tier180Ratio", ufmt.Sprintf("%d", tier180Ratio),
-		"p_startHeight", ufmt.Sprintf("%d", startHeight),
 		"p_startTime", ufmt.Sprintf("%d", startTime),
+		"startHeight", ufmt.Sprintf("%d", startHeight),
 		"projectId", projectId,
 
 		"tier30Amount", ufmt.Sprintf("%d", tier30Amount),
