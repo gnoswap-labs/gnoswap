@@ -21,7 +21,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 
@@ -45,10 +45,10 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestPositionMintBarBaz(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa, gsa)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, amount0, "36790")  // bar
@@ -56,11 +56,11 @@ func TestPositionMintBarBaz(t *testing.T) {
 }
 
 func TestPositionMintBazQux(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa, gsa)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
 	shouldEQ(t, tokenId, uint64(2))
 	shouldEQ(t, amount0, "36790")
@@ -68,7 +68,7 @@ func TestPositionMintBazQux(t *testing.T) {
 }
 
 func TestPositionMintQuxGnot(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	// send
 	std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 1000009}})
@@ -78,7 +78,7 @@ func TestPositionMintQuxGnot(t *testing.T) {
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // wrap unwrap
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.GNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa, gsa)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.GNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
 	shouldEQ(t, tokenId, uint64(3))
 	shouldEQ(t, amount0, "100000")
@@ -87,7 +87,7 @@ func TestPositionMintQuxGnot(t *testing.T) {
 
 // DRY BUY NATIVE
 func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		barPath,     // inputToken
@@ -103,7 +103,7 @@ func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
 // BUY NATIVE
 // bar > GNOT
 func TestSwapRouteBarGnotExactIn(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // for output
@@ -117,9 +117,9 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 	shouldEQ(t, feeColUgnot, uint64(0))
 	shouldEQ(t, feeColWugnot, uint64(0))
 
-	oldWugnot := wugnot.BalanceOf(a2u(gsa))
+	oldWugnot := wugnot.BalanceOf(a2u(admin))
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	amountIn, amountOut := SwapRoute(
 		barPath,     // inputToken
 		consts.GNOT, // outputToken
@@ -132,10 +132,10 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 	shouldEQ(t, amountIn, "1000")
 	shouldEQ(t, amountOut, "-19711")
 
-	newWugnot := wugnot.BalanceOf(a2u(gsa))
+	newWugnot := wugnot.BalanceOf(a2u(admin))
 	shouldEQ(t, newWugnot, oldWugnot) // IT SHOULD STAY SAME SINCE SWAP USED uGNOT, not WUGNOT
 
-	newUgnot := ugnotBalanceOf(gsa)
+	newUgnot := ugnotBalanceOf(admin)
 	shouldEQ(t, newUgnot, uint64(919720)) // 900009 + 19711
 
 	feeColUgnot = ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
@@ -146,7 +146,7 @@ func TestSwapRouteBarGnotExactIn(t *testing.T) {
 
 // DRY SELL NATIVE
 func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		consts.GNOT, // intputToken
@@ -162,15 +162,15 @@ func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
 // SELL NATIVE
 // GNOT > bar
 func TestSwapRouteGnotBarExactIn(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // for input
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)  // for output
 
-	oldWugnot := wugnot.BalanceOf(a2u(gsa))
+	oldWugnot := wugnot.BalanceOf(a2u(admin))
 	shouldEQ(t, oldWugnot, uint64(0))
 
-	oldUgnot := ugnotBalanceOf(gsa)
+	oldUgnot := ugnotBalanceOf(admin)
 	shouldEQ(t, oldUgnot, uint64(919720))
 
 	feeColUgnot := ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
@@ -193,10 +193,10 @@ func TestSwapRouteGnotBarExactIn(t *testing.T) {
 	shouldEQ(t, amountIn, "5000")
 	shouldEQ(t, amountOut, "-254")
 
-	newWugnot := wugnot.BalanceOf(a2u(gsa))
+	newWugnot := wugnot.BalanceOf(a2u(admin))
 	shouldEQ(t, newWugnot, uint64(0))
 
-	newUgnot := ugnotBalanceOf(gsa)
+	newUgnot := ugnotBalanceOf(admin)
 	shouldEQ(t, newUgnot, uint64(919720)) // GNO VM BUG, ugnot amount should be decreased but `std.TestSetOrigSend` doesn't really decrease caller's ugnot balance)
 
 	feeColUgnot = ugnotBalanceOf(consts.PROTOCOL_FEE_ADDR)
@@ -225,7 +225,7 @@ func TestSetSwapFeeNoPermission(t *testing.T) {
 }
 
 func TestSetSwapFeeOutOfRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	shouldPanicWithMsg(
 		t,
@@ -237,7 +237,7 @@ func TestSetSwapFeeOutOfRange(t *testing.T) {
 }
 
 func TestSetSwapFee(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	shouldEQ(t, GetSwapFee(), uint64(15))
 	SetSwapFee(51)
 	shouldEQ(t, GetSwapFee(), uint64(51))

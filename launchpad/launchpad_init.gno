@@ -44,7 +44,7 @@ func CreateProject(
 	assertUserCall()
 
 	// only admin can create project
-	if std.PrevRealm().Addr() != consts.GNOSWAP_ADMIN {
+	if std.PrevRealm().Addr() != consts.ADMIN {
 		panic("only admin can create project")
 	}
 

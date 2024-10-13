@@ -588,8 +588,8 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	// when incentive end time is over
 	// admin or refundee can end incentive ( left amount will be refunded )
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != refundee {
-		panic(ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || only refundee(%s) or admin(%s) can end incentive", refundee, consts.GNOSWAP_ADMIN))
+	if caller != consts.ADMIN && caller != refundee {
+		panic(ufmt.Sprintf("[STAKER] staker.gno__EndExternalIncentive() || only refundee(%s) or admin(%s) can end incentive", refundee, consts.ADMIN))
 	}
 
 	// when incentive ended, refund remaining reward

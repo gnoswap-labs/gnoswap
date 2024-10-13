@@ -18,14 +18,14 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPositionAndCheckURI(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"

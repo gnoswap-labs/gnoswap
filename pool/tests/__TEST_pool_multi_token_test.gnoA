@@ -27,7 +27,7 @@ var (
 // Create Foo:Bar Pool
 func TestCreateFooBarPool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -38,7 +38,7 @@ func TestCreateFooBarPool(t *testing.T) {
 // Create Bar:Baz Pool
 func TestCreateBarBazPool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -46,9 +46,9 @@ func TestCreateBarBazPool(t *testing.T) {
 	shouldEQ(t, len(pools), 2)
 }
 
-// Mint Foo:Bar Liquidity by gsa
+// Mint Foo:Bar Liquidity by admin
 func TestMintFooBarLiquidity(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -61,15 +61,15 @@ func TestMintFooBarLiquidity(t *testing.T) {
 		-test_tickUpper,
 		-test_tickLower,
 		test_liquidityExpectStr,
-		gsa,
+		admin,
 	)
 	shouldEQ(t, amount0, "8040316")
 	shouldEQ(t, amount1, "2958015")
 }
 
-// Mint Bar:Baz Liquidity by gsa
+// Mint Bar:Baz Liquidity by admin
 func TestMintBarBazLiquidity(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -82,21 +82,21 @@ func TestMintBarBazLiquidity(t *testing.T) {
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpectStr,
-		gsa,
+		admin,
 	)
 	shouldEQ(t, amount0, "2958015")
 	shouldEQ(t, amount1, "8040316")
 }
 
-// Swap Foo:Bar Foo > Bar by gsa
+// Swap Foo:Bar Foo > Bar by admin
 func TestSwapFooBarFooToBar(t *testing.T) {
-	oldTest1Bar := balanceOfByRegisterCall(barPath, gsa)
-	oldTest1Foo := balanceOfByRegisterCall(fooPath, gsa)
+	oldTest1Bar := balanceOfByRegisterCall(barPath, admin)
+	oldTest1Foo := balanceOfByRegisterCall(fooPath, admin)
 
 	oldPoolBar := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 	oldPoolFoo := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 16000)
 
 	std.TestSetRealm(rouRealm)
@@ -104,17 +104,17 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"16000",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 	shouldEQ(t, poolIn, "16000")
 	shouldEQ(t, poolOut, "-5882")
 
-	newTest1Bar := balanceOfByRegisterCall(barPath, gsa)
-	newTest1Foo := balanceOfByRegisterCall(fooPath, gsa)
+	newTest1Bar := balanceOfByRegisterCall(barPath, admin)
+	newTest1Foo := balanceOfByRegisterCall(fooPath, admin)
 
 	newPoolBar := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 	newPoolFoo := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
@@ -126,14 +126,14 @@ func TestSwapFooBarFooToBar(t *testing.T) {
 	shouldEQ(t, oldPoolFoo-newPoolFoo, uint64(5882))
 }
 
-// Swap Bar:Baz Bar > Baz by gsa
+// Swap Bar:Baz Bar > Baz by admin
 func TestSwapBarBazBarToBaz(t *testing.T) {
-	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
-	oldgsaBazBalance := balanceOfByRegisterCall(bazPath, gsa)
+	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
+	oldadminBazBalance := balanceOfByRegisterCall(bazPath, admin)
 	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 	oldPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 16000)
 
 	std.TestSetRealm(rouRealm)
@@ -141,33 +141,33 @@ func TestSwapBarBazBarToBaz(t *testing.T) {
 		barPath,
 		bazPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"16000",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 
 	shouldEQ(t, poolIn, "16000")
 	shouldEQ(t, poolOut, "-43457")
 
-	newTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
-	newgsaBazBalance := balanceOfByRegisterCall(bazPath, gsa)
+	newTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
+	newadminBazBalance := balanceOfByRegisterCall(bazPath, admin)
 	newPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 	newPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
 
 	shouldEQ(t, oldTest1Token0Balance-newTest1Token0Balance, uint64(16000))
-	shouldEQ(t, newgsaBazBalance-oldgsaBazBalance, uint64(43457))
+	shouldEQ(t, newadminBazBalance-oldadminBazBalance, uint64(43457))
 	shouldEQ(t, newPoolToken0Balance-oldPoolToken0Balance, uint64(16000))
 	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, uint64(43457))
 }
 
-// Collect Foo:Bar Fees by gsa
+// Collect Foo:Bar Fees by admin
 func TestCollectFooBarFees(t *testing.T) {
 	std.TestSetRealm(posRealm)
 
-	oldTest1Token1Balance := balanceOfByRegisterCall(fooPath, gsa)
-	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
+	oldTest1Token1Balance := balanceOfByRegisterCall(fooPath, admin)
+	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
 	oldPoolToken1Balance := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
 	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 
@@ -178,7 +178,7 @@ func TestCollectFooBarFees(t *testing.T) {
 		fooPath,
 		barPath,
 		fee500,
-		gsa,
+		admin,
 		-test_tickUpper,
 		-test_tickLower,
 		"100000",
@@ -188,8 +188,8 @@ func TestCollectFooBarFees(t *testing.T) {
 	shouldNEQ(t, c0, "0") // swap was foo > bar, so only foo has fees
 	shouldEQ(t, c1, "0")  // swap was foo > bar, so bar has no fees
 
-	newTest1Token1Balance := balanceOfByRegisterCall(fooPath, gsa)
-	newTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
+	newTest1Token1Balance := balanceOfByRegisterCall(fooPath, admin)
+	newTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
 	newPoolToken1Balance := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
 	newPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 
@@ -199,12 +199,12 @@ func TestCollectFooBarFees(t *testing.T) {
 	shouldEQ(t, oldPoolToken0Balance-newPoolToken0Balance, strToUint64(c0))
 }
 
-// Collect Bar:Baz Fees by gsa
+// Collect Bar:Baz Fees by admin
 func TestCollectBarBazFees(t *testing.T) {
 	std.TestSetRealm(posRealm)
 
-	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
-	oldgsaBazBalance := balanceOfByRegisterCall(bazPath, gsa)
+	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
+	oldadminBazBalance := balanceOfByRegisterCall(bazPath, admin)
 	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 	oldPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
 
@@ -215,7 +215,7 @@ func TestCollectBarBazFees(t *testing.T) {
 		barPath,
 		bazPath,
 		fee500,
-		gsa,
+		admin,
 		test_tickLower,
 		test_tickUpper,
 		"100000",
@@ -225,18 +225,18 @@ func TestCollectBarBazFees(t *testing.T) {
 	shouldNEQ(t, c0, "0") // swap was foo > bar, so only foo has fees
 	shouldEQ(t, c1, "0")  // swap was foo > bar, so bar has no fees
 
-	newTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
-	newgsaBazBalance := balanceOfByRegisterCall(bazPath, gsa)
+	newTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
+	newadminBazBalance := balanceOfByRegisterCall(bazPath, admin)
 	newPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 	newPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
 
 	shouldEQ(t, newTest1Token0Balance-oldTest1Token0Balance, strToUint64(c0))
-	shouldEQ(t, newgsaBazBalance-oldgsaBazBalance, strToUint64(c1))
+	shouldEQ(t, newadminBazBalance-oldadminBazBalance, strToUint64(c1))
 	shouldEQ(t, oldPoolToken0Balance-newPoolToken0Balance, strToUint64(c0))
 	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, strToUint64(c1))
 }
 
-// Burn Foo:Bar Liquidity by gsa
+// Burn Foo:Bar Liquidity by admin
 func TestBurnFooBarLiquidity(t *testing.T) {
 	std.TestSetRealm(posRealm)
 
@@ -260,7 +260,7 @@ func TestBurnFooBarLiquidity(t *testing.T) {
 	shouldEQ(t, true, new(u256.Uint).Sub(poolOldLiquidity, poolNewLiquidity).Eq(test_liquidityExpect256))
 }
 
-// Burn Bar:Baz Liquidity by gsa
+// Burn Bar:Baz Liquidity by admin
 func TestBurnBarBazLiquidity(t *testing.T) {
 	std.TestSetRealm(posRealm)
 
@@ -284,12 +284,12 @@ func TestBurnBarBazLiquidity(t *testing.T) {
 	// shouldEQ(t, poolOldLiquidity-poolNewLiquidity, test_liquidityExpect256)
 }
 
-// Collect Foo:Bar burned Liquidity by gsa
+// Collect Foo:Bar burned Liquidity by admin
 func TestCollectFooBarLiquidity(t *testing.T) {
 	std.TestSetRealm(posRealm)
 
-	oldTest1Token1Balance := balanceOfByRegisterCall(fooPath, gsa)
-	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
+	oldTest1Token1Balance := balanceOfByRegisterCall(fooPath, admin)
+	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
 	oldPoolToken1Balance := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
 	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 
@@ -297,7 +297,7 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 		fooPath,
 		barPath,
 		fee500,
-		gsa,
+		admin,
 		-test_tickUpper,
 		-test_tickLower,
 		"100000",
@@ -307,8 +307,8 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 	shouldNEQ(t, c0, "0")
 	shouldNEQ(t, c1, "0")
 
-	newTest1Token1Balance := balanceOfByRegisterCall(fooPath, gsa)
-	newTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
+	newTest1Token1Balance := balanceOfByRegisterCall(fooPath, admin)
+	newTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
 	newPoolToken1Balance := balanceOfByRegisterCall(fooPath, consts.POOL_ADDR)
 	newPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 
@@ -318,12 +318,12 @@ func TestCollectFooBarLiquidity(t *testing.T) {
 	shouldEQ(t, oldPoolToken0Balance-newPoolToken0Balance, strToUint64(c1))
 }
 
-// Collect Bar:Baz burned Liquidity by gsa
+// Collect Bar:Baz burned Liquidity by admin
 func TestCollectBarBazLiquidity(t *testing.T) {
 	std.TestSetRealm(posRealm)
 
-	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
-	oldgsaBazBalance := balanceOfByRegisterCall(bazPath, gsa)
+	oldTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
+	oldadminBazBalance := balanceOfByRegisterCall(bazPath, admin)
 	oldPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 	oldPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
 
@@ -331,7 +331,7 @@ func TestCollectBarBazLiquidity(t *testing.T) {
 		barPath,
 		bazPath,
 		fee500,
-		gsa,
+		admin,
 		test_tickLower,
 		test_tickUpper,
 		"100000",
@@ -341,13 +341,13 @@ func TestCollectBarBazLiquidity(t *testing.T) {
 	shouldNEQ(t, c0, "0")
 	shouldNEQ(t, c1, "0")
 
-	newTest1Token0Balance := balanceOfByRegisterCall(barPath, gsa)
-	newgsaBazBalance := balanceOfByRegisterCall(bazPath, gsa)
+	newTest1Token0Balance := balanceOfByRegisterCall(barPath, admin)
+	newadminBazBalance := balanceOfByRegisterCall(bazPath, admin)
 	newPoolToken0Balance := balanceOfByRegisterCall(barPath, consts.POOL_ADDR)
 	newPoolBazBalance := balanceOfByRegisterCall(bazPath, consts.POOL_ADDR)
 
 	shouldEQ(t, newTest1Token0Balance-oldTest1Token0Balance, strToUint64(c0))
-	shouldEQ(t, newgsaBazBalance-oldgsaBazBalance, strToUint64(c1))
+	shouldEQ(t, newadminBazBalance-oldadminBazBalance, strToUint64(c1))
 	shouldEQ(t, oldPoolToken0Balance-newPoolToken0Balance, strToUint64(c0))
 	shouldEQ(t, oldPoolBazBalance-newPoolBazBalance, strToUint64(c1))
 }

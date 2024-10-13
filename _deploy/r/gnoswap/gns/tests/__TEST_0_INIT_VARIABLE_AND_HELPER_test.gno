@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	gsa      std.Address = consts.GNOSWAP_ADMIN
-	gsaRealm             = std.NewUserRealm(gsa)
+	admin      std.Address = consts.ADMIN
+	adminRealm             = std.NewUserRealm(admin)
 
 	emissionUsers = pusers.AddressOrName(consts.EMISSION_ADDR)
 	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)

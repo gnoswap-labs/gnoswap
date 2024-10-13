@@ -22,7 +22,7 @@ var (
 )
 
 func TestPositionsProtected(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
@@ -38,7 +38,7 @@ func TestPositionsProtected(t *testing.T) {
 		-887160,
 		887160,
 		test_liquidityExpectStr,
-		gsa,
+		admin,
 	)
 
 	std.TestSetRealm(rouRealm)
@@ -46,22 +46,22 @@ func TestPositionsProtected(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"10000",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 
 	Swap(
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		false,
 		"10000",
 		consts.MAX_PRICE,
-		gsa,
+		admin,
 	)
 	// did swap t0 => t1 and t1 => t0
 
@@ -76,7 +76,7 @@ func TestPositionsProtected(t *testing.T) {
 	})
 
 	t.Run("fails if fee is lt 4 or gt 10", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		shouldPanic(t, func() { SetFeeProtocol(3, 3) })
 		shouldPanic(t, func() { SetFeeProtocol(6, 3) })
 		shouldPanic(t, func() { SetFeeProtocol(3, 6) })
@@ -86,19 +86,19 @@ func TestPositionsProtected(t *testing.T) {
 	})
 
 	t.Run("can be changed by the owner", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		SetFeeProtocol(6, 6)
 		shouldEQ(t, thisPool.slot0.feeProtocol, uint8(102))
 	})
 
 	t.Run("succeeds for fee of 4", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		SetFeeProtocol(4, 4)
 		shouldEQ(t, thisPool.slot0.feeProtocol, uint8(68))
 	})
 
 	t.Run("succeeds for fee of 10", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		SetFeeProtocol(10, 10)
 		shouldEQ(t, thisPool.slot0.feeProtocol, uint8(170))
 	})
@@ -109,7 +109,7 @@ func TestPositionsProtected(t *testing.T) {
 	})
 
 	t.Run("can turn off protocol fee", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		SetFeeProtocol(0, 0)
 		shouldEQ(t, thisPool.slot0.feeProtocol, uint8(0))
 	})
@@ -117,7 +117,7 @@ func TestPositionsProtected(t *testing.T) {
 }
 
 func TestPokeIsNotAllowedOnUninitilaizedPosition(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // tick 0
 
@@ -139,7 +139,7 @@ func TestPokeIsNotAllowedOnUninitilaizedPosition(t *testing.T) {
 }
 
 func TestWorkAccross(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	// CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 	CreatePool(barPath, fooPath, fee100, "79228162514264337593543950336")
@@ -156,7 +156,7 @@ func TestWorkAccross(t *testing.T) {
 		-887270,
 		887270,
 		"100000000000",
-		gsa,
+		admin,
 	)
 
 	// type(uint128).max * 2**128 / 1e18

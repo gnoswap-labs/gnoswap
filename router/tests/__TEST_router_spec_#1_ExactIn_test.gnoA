@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	gsa std.Address = consts.GNOSWAP_ADMIN
+	admin std.Address = consts.ADMIN
 
 	fooPath string = "gno.land/r/onbloc/foo"
 	barPath string = "gno.land/r/onbloc/bar"
@@ -44,7 +44,7 @@ var (
 //=================================Test for SwapRouter exactInput 0 to 1 in single pool=================================
 
 func TestcreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, bazPath, FEE_MEDIUM, "79228162514264337593543950336")
@@ -53,13 +53,13 @@ func TestcreatePool(t *testing.T) {
 }
 
 func TestPositionMint(t *testing.T) {
-	// bar_baz_3000 by gsa
-	std.TestSetRealm(gsaRealm)
+	// bar_baz_3000 by admin
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 100000000)
 	baz.Approve(a2u(consts.POOL_ADDR), 100000000)
 
 	// Mint
-	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, FEE_MEDIUM, int32(-887220), int32(887220), "100000000", "100000000", "0", "0", max_timeout, gsa, gsa)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, FEE_MEDIUM, int32(-887220), int32(887220), "100000000", "100000000", "0", "0", max_timeout, admin, admin)
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, amount0, "100000000")

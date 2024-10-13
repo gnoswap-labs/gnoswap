@@ -17,7 +17,7 @@ import (
 func TestDistributeProtocolFee(t *testing.T) {
 	// admin > protocol_fee
 	// send qux, bar for testing
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
 	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
 
@@ -55,7 +55,7 @@ func TestSetDevOpsPctNoPermission(t *testing.T) {
 }
 
 func TestSetDevOpsPctInvalidFee(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	shouldPanicWithMsg(
 		t,
@@ -67,7 +67,7 @@ func TestSetDevOpsPctInvalidFee(t *testing.T) {
 }
 
 func TestSetDevOpsPct(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	shouldEQ(t, GetDevOpsPct(), uint64(0))
 

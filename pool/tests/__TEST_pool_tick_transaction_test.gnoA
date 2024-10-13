@@ -19,7 +19,7 @@ import (
 )
 
 func TestTickTransaction(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
 	testSqrt := common.TickMathGetSqrtRatioAtTick(-24081)
@@ -44,7 +44,7 @@ func TestTickTransaction(t *testing.T) {
 		-24082,
 		-24080,
 		liqToMint,
-		gsa,
+		admin,
 	)
 	shouldEQ(t, thisPool.liquidity.ToString(), "10000000000")
 
@@ -57,7 +57,7 @@ func TestTickTransaction(t *testing.T) {
 		-24082,
 		-24081,
 		liqToMint,
-		gsa,
+		admin,
 	)
 	shouldEQ(t, thisPool.liquidity.ToString(), "10000000000")
 
@@ -82,11 +82,11 @@ func TestTickTransaction(t *testing.T) {
 		barPath,
 		fooPath,
 		fee100,
-		gsa,
+		admin,
 		true,
 		"3",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 
 	shouldEQ(t, thisPool.slot0.tick, int32(-24082))

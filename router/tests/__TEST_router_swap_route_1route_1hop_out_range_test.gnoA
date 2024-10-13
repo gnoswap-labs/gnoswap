@@ -18,7 +18,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, bazPath, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString())
@@ -38,13 +38,13 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestPositionMint(t *testing.T) {
-	// bar_baz_500 by gsa
-	std.TestSetRealm(gsaRealm)
+	// bar_baz_500 by admin
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// Mint
-	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, gsa, gsa)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, liquidity, "637408")
@@ -56,7 +56,7 @@ func TestPositionMint(t *testing.T) {
 }
 
 func TestDrySwapRouteBazBarExactIn(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		bazPath,    // inputToken
@@ -71,7 +71,7 @@ func TestDrySwapRouteBazBarExactIn(t *testing.T) {
 }
 
 func TestSwapRouteBazBarExactIn(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	shouldPanicWithMsg(
 		t,

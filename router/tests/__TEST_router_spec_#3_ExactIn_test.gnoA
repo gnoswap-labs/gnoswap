@@ -18,7 +18,7 @@ import (
 //=================================Test for SwapRouter exactInput 2 ->1 -> 0 in multi pool=================================
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*2)
 
 	pl.CreatePool(barPath, bazPath, 3000, "79228162514264337593543950336")
@@ -31,27 +31,27 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestPositionMint(t *testing.T) {
-	// bar_baz_3000 by gsa
-	std.TestSetRealm(gsaRealm)
+	// bar_baz_3000 by admin
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// Mint
-	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, gsa, gsa)
+	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, admin, admin)
 
-	pn.Mint(bazPath, fooPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, gsa, gsa)
+	pn.Mint(bazPath, fooPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, admin, admin)
 }
 
 func TestSwapRouteFooBarExactIn(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.ROUTER_ADDR), 1000000)
 	foo.Approve(a2u(consts.ROUTER_ADDR), 1000000)
 
-	token0Before := bar.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
-	token2Before := foo.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
+	token0Before := bar.BalanceOf(a2u(consts.ADMIN))
+	token2Before := foo.BalanceOf(a2u(consts.ADMIN))
 
 	amountIn, amountOut := SwapRoute(
 		fooPath,    // inputToken
@@ -63,8 +63,8 @@ func TestSwapRouteFooBarExactIn(t *testing.T) {
 		"1",   // tokenAmountLimit
 	)
 
-	token0After := bar.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
-	token2After := foo.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
+	token0After := bar.BalanceOf(a2u(consts.ADMIN))
+	token2After := foo.BalanceOf(a2u(consts.ADMIN))
 
 	shouldEQ(t, amountIn, "5")
 	shouldEQ(t, amountOut, "-1")

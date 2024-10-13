@@ -20,12 +20,12 @@ import (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	pl.SetPoolCreationFee(0)
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
@@ -33,24 +33,24 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintFooBar(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	// gsa mints => will get tid 1 nft
-	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, gsa, gsa)
+	// admin mints => will get tid 1 nft
+	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, admin, admin)
 
-	// gsa mints => will get tid 2 nft
-	Mint(fooPath, barPath, fee500, int32(4000), int32(6000), "1000000", "1000000", "0", "0", max_timeout, gsa, gsa)
+	// admin mints => will get tid 2 nft
+	Mint(fooPath, barPath, fee500, int32(4000), int32(6000), "1000000", "1000000", "0", "0", max_timeout, admin, admin)
 }
 
 func TestMintBazQux(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	// gsa mints => will get tid 1 nft
-	Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, gsa, gsa)
+	// admin mints => will get tid 1 nft
+	Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, admin, admin)
 }
 
 func TestApiGetPositionsUnclaimedFee(t *testing.T) {
@@ -81,11 +81,11 @@ func TestSwap(t *testing.T) {
 		fooPath,
 		barPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"123456",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 }
 
@@ -134,7 +134,7 @@ func TestApiGetPositionUnclaimedFeeByLpTokenId(t *testing.T) {
 }
 
 func TestCollectFeeAfterSwap(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	// burn 0 to collect swap fee
 	tokneId, fee0, fee1, fromPath, _, _ := CollectFee(1, true)
@@ -180,7 +180,7 @@ func TestApiGetPositionsByPoolPath(t *testing.T) {
 }
 
 func TestApiGetPositionsByAddress(t *testing.T) {
-	targetAddress := gsa
+	targetAddress := admin
 
 	gpss := ApiGetPositionsByAddress(targetAddress)
 

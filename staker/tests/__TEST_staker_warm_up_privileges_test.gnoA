@@ -16,7 +16,7 @@ func init() {
 }
 
 func TestGetWarmUp(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	if GetWarmUp(100) != 901 {
 		panic("GetWarmUp(100) != 901")
@@ -47,7 +47,7 @@ func TestSetWarmUp_NoPrivileges(t *testing.T) {
 }
 
 func TestSetWarmUp_InvalidPercent(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	shouldPanicWithMsg(
 		t,
@@ -59,7 +59,7 @@ func TestSetWarmUp_InvalidPercent(t *testing.T) {
 }
 
 func TestSetWarmUp(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	SetWarmUp(100, 100)
 	if GetWarmUp(100) != 100 {

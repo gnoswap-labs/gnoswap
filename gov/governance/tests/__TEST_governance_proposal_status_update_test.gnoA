@@ -19,9 +19,9 @@ var (
 )
 
 func init() {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
-	gs.Delegate(gsa, uint64(1_000_000))
+	gs.Delegate(admin, uint64(1_000_000))
 	std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
 }
 
@@ -33,7 +33,7 @@ func TestProposeText(t *testing.T) {
 	nowTime = oldTime
 
 	t.Run("create text proposal", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		proposalId := ProposeText("test_title_1", "test_description_1")
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
@@ -88,7 +88,7 @@ func TestProposeText(t *testing.T) {
 	})
 
 	t.Run("vote YES", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(11)
 
 		nowHeight = uint64(std.GetHeight())
@@ -153,7 +153,7 @@ func TestProposeText(t *testing.T) {
 	})
 
 	t.Run("skip time to check proposal pass/reject", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(31)
 
 		nowHeight = uint64(std.GetHeight())
@@ -212,7 +212,7 @@ func TestProposeText(t *testing.T) {
 	})
 
 	t.Run("skip long to check proposal status", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(500)
 
 		updateProposalsState()
@@ -268,7 +268,7 @@ func TestProposeText(t *testing.T) {
 	})
 
 	t.Run("create new text proposal and cancel", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		proposalId := ProposeText("test_title_2", "test_description_2")
 		Cancel(proposalId)
 
@@ -336,7 +336,7 @@ func TestParamaterChange(t *testing.T) {
 	nowTime = oldTime
 
 	t.Run("create param change", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		proposalId := ProposeParameterChange("test_title_3", "test_description_3", uint64(1), "gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs*EXE*100")
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
@@ -391,7 +391,7 @@ func TestParamaterChange(t *testing.T) {
 	})
 
 	t.Run("vote YES", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(11)
 
 		nowHeight = uint64(std.GetHeight())
@@ -456,7 +456,7 @@ func TestParamaterChange(t *testing.T) {
 	})
 
 	t.Run("skip time to check proposal pass/reject => pass", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(31)
 
 		nowHeight = uint64(std.GetHeight())
@@ -515,7 +515,7 @@ func TestParamaterChange(t *testing.T) {
 	})
 
 	t.Run("execute", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
@@ -581,7 +581,7 @@ func TestParamaterChange(t *testing.T) {
 	})
 
 	t.Run("skip long time after execute", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(1000)
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
@@ -644,7 +644,7 @@ func TestParamaterChange(t *testing.T) {
 	})
 
 	t.Run("create new param change proposal and cancel", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(100)
 		proposalId := ProposeParameterChange("test_title_3", "test_description_3", uint64(1), "gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs*EXE*300")
 		Cancel(proposalId)
@@ -705,7 +705,7 @@ func TestParamaterChange(t *testing.T) {
 	})
 
 	t.Run("skip long time after cancel", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		oldTime = nowTime
 		oldHeight = nowHeight
 
@@ -774,7 +774,7 @@ func TestParamaterChange(t *testing.T) {
 	})
 
 	t.Run("create new param change proposal and pass", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(100)
 		proposalId := ProposeParameterChange("test_title_4", "test_description_4", uint64(1), "gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs*EXE*300")
 		oldHeight = uint64(std.GetHeight())
@@ -840,7 +840,7 @@ func TestParamaterChange(t *testing.T) {
 	})
 
 	t.Run("skip long time after passed => make expired", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		oldOldTime := oldTime
 		oldTime = nowTime
@@ -910,7 +910,7 @@ func TestParamaterChange(t *testing.T) {
 	})
 
 	t.Run("skip long time after expired", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		std.TestSkipHeights(100)
 		updateProposalsState()

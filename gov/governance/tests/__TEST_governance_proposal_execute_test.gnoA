@@ -36,9 +36,9 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 	})
 
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
-		gs.Delegate(gsa, uint64(1_000_000))
+		gs.Delegate(admin, uint64(1_000_000))
 		std.TestSkipHeights(5) // VotingWeightSmoothingDuration
 
 		proposalID := ProposeParameterChange("test_title", "test_description",
@@ -52,8 +52,8 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 			t.Errorf("Proposal not found after creation")
 		}
 
-		if proposal.Proposer != gsa {
-			t.Errorf("Incorrect proposer. Expected %v, got %v", gsa, proposal.Proposer)
+		if proposal.Proposer != admin {
+			t.Errorf("Incorrect proposer. Expected %v, got %v", admin, proposal.Proposer)
 		}
 
 		if proposal.ProposalType != "PARAMETER_CHANGE" {
@@ -88,7 +88,7 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5) // voting start delay
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -111,7 +111,7 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 		shouldEQ(t, en.GetDistributionPct(3), uint64(500))
 		shouldEQ(t, en.GetDistributionPct(4), uint64(0))
 
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 
 		shouldEQ(t, en.GetDistributionPct(1), uint64(7000))
@@ -128,7 +128,7 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 
 func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
@@ -141,7 +141,7 @@ func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5) // voting start delay
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -154,7 +154,7 @@ func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, gns.GetAvgBlockTimeInMs(), int64(2000))
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 		shouldEQ(t, gns.GetAvgBlockTimeInMs(), int64(5000))
 	})
@@ -162,9 +162,9 @@ func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
 
 func TestProposeParameterChange_GOV_Reconfigure(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
@@ -176,7 +176,7 @@ func TestProposeParameterChange_GOV_Reconfigure(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -198,7 +198,7 @@ func TestProposeParameterChange_GOV_Reconfigure(t *testing.T) {
 		shouldEQ(t, oldConfig.ExecutionWindow, uint64(1000))
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 
 		newConfig := GetConfigVersion(0)
@@ -224,7 +224,7 @@ func TestProposeParameterChange_GOV_Reconfigure(t *testing.T) {
 
 func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -237,7 +237,7 @@ func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -250,14 +250,14 @@ func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		std.TestSkipHeights(6)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 	})
 }
 
 func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -270,7 +270,7 @@ func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -284,7 +284,7 @@ func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, pl.GetPoolCreationFee(), uint64(100000000))
 		std.TestSkipHeights(6)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 		shouldEQ(t, pl.GetPoolCreationFee(), uint64(500))
 	})
@@ -292,7 +292,7 @@ func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
 
 func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -305,7 +305,7 @@ func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -319,7 +319,7 @@ func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, pl.GetWithdrawalFee(), uint64(100))
 		std.TestSkipHeights(6)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 		shouldEQ(t, pl.GetWithdrawalFee(), uint64(500))
 	})
@@ -327,7 +327,7 @@ func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 
 func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -340,7 +340,7 @@ func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -355,7 +355,7 @@ func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 		shouldEQ(t, pf.GetDevOpsPct(), uint64(0))
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 
 		shouldEQ(t, pf.GetDevOpsPct(), uint64(900))
@@ -364,7 +364,7 @@ func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 
 func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -377,7 +377,7 @@ func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -392,7 +392,7 @@ func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
 		shouldEQ(t, rr.GetSwapFee(), uint64(15))
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 
 		shouldEQ(t, rr.GetSwapFee(), uint64(900))
@@ -401,9 +401,9 @@ func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
 
 func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		proposalID := ProposeParameterChange(
 			"test_title",
 			"test_description",
@@ -415,7 +415,7 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -430,7 +430,7 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 		shouldEQ(t, sr.GetDepositGnsAmount(), uint64(1000000000))
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 
 		shouldEQ(t, sr.GetDepositGnsAmount(), uint64(900))
@@ -439,7 +439,7 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 
 func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -452,7 +452,7 @@ func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -465,7 +465,7 @@ func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		// create sample pool
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		pl.SetPoolCreationFee(0)
 		pl.CreatePool(consts.WUGNOT_PATH, consts.GNS_PATH, 100, "79228162514264337593543950337")
 
@@ -474,7 +474,7 @@ func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
 		shouldEQ(t, before[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 
 		after := sr.GetPoolsWithTier()
@@ -486,7 +486,7 @@ func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
 
 func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -499,7 +499,7 @@ func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -517,7 +517,7 @@ func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
 		shouldEQ(t, before[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_1")
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 
 		after := sr.GetPoolsWithTier()
@@ -529,7 +529,7 @@ func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
 
 func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -542,7 +542,7 @@ func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -560,7 +560,7 @@ func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
 		shouldEQ(t, before[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_3")
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 
 		after := sr.GetPoolsWithTier()
@@ -571,7 +571,7 @@ func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
 
 func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -584,7 +584,7 @@ func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -599,7 +599,7 @@ func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
 		shouldEQ(t, sr.GetUnstakingFee(), uint64(100))
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 
 		shouldEQ(t, sr.GetUnstakingFee(), uint64(900))
@@ -608,7 +608,7 @@ func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
 
 func TestProposeParameterChange_Staker_SetWarmUp(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -621,7 +621,7 @@ func TestProposeParameterChange_Staker_SetWarmUp(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -636,7 +636,7 @@ func TestProposeParameterChange_Staker_SetWarmUp(t *testing.T) {
 		shouldEQ(t, sr.GetWarmUp(100), int64(901))
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 
 		shouldEQ(t, sr.GetWarmUp(100), int64(1000))
@@ -645,7 +645,7 @@ func TestProposeParameterChange_Staker_SetWarmUp(t *testing.T) {
 
 func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
 	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		proposalID := ProposeParameterChange(
 			"test_title",
@@ -658,7 +658,7 @@ func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
 	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
 		// vote to pass it
 		std.TestSkipHeights(5)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -673,7 +673,7 @@ func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
 		shouldEQ(t, cn.GetHalt(), false)
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Execute(proposalId)
 		shouldEQ(t, cn.GetHalt(), true)
 	})

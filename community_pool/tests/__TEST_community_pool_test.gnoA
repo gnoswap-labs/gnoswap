@@ -51,8 +51,8 @@ func TestTransferGnsNoPermission(t *testing.T) {
 }
 
 func TestTransferGns(t *testing.T) {
-	gsaRealm := std.NewUserRealm(consts.GNOSWAP_ADMIN)
-	std.TestSetRealm(gsaRealm)
+	adminRealm := std.NewUserRealm(consts.ADMIN)
+	std.TestSetRealm(adminRealm)
 
 	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), 1000)
 	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(1000))

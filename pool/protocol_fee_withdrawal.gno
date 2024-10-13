@@ -84,11 +84,11 @@ func GetWithdrawalFee() uint64 {
 
 func SetWithdrawalFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic(
 			ufmt.Sprintf(
 				"[POOL] protocol_fee_withdrawal.gno__SetWithdrawalFeeByAdmin() || only admin(%s) can set withdrawal fee, called from %s",
-				consts.GNOSWAP_ADMIN,
+				consts.ADMIN,
 				caller,
 			),
 		)

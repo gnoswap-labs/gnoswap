@@ -8,7 +8,7 @@ import (
 
 func TestReconfigure(t *testing.T) {
 	t.Run("Successful reconfiguration", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		newConfigParams := "200*GOV*2000*GOV*200*GOV*1000*GOV*200*GOV*200*GOV*2000"
 		params := strings.Split(newConfigParams, "*GOV*")

@@ -17,12 +17,12 @@ import (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	pl.SetPoolCreationFee(0)
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
@@ -37,7 +37,7 @@ func TestPoolBalanceInit(t *testing.T) {
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -52,8 +52,8 @@ func TestMintPosition01InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
@@ -71,7 +71,7 @@ func TestPoolBalanceMint01(t *testing.T) {
 }
 
 func TestMintPosition02InRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -86,8 +86,8 @@ func TestMintPosition02InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(2))
@@ -105,7 +105,7 @@ func TestPoolBalanceMint02(t *testing.T) {
 }
 
 func TestCollectFeeBeforeSwap(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
 	shouldEQ(t, tokenId, uint64(1))
@@ -126,7 +126,7 @@ func TestSwap1(t *testing.T) {
 	// token0: 22073871
 	// token1: 60000000
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
 
 	std.TestSetRealm(rouRealm)
@@ -134,11 +134,11 @@ func TestSwap1(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 
 	shouldEQ(t, amount0, "1234567")
@@ -150,7 +150,7 @@ func TestSwap1(t *testing.T) {
 }
 
 func TestUnclaimedFeePos01Swap01(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	amount0, amount1 := unclaimedFee(1)
 
 	shouldEQ(t, amount0.ToString(), "444") // if only one position, this should be 617
@@ -169,7 +169,7 @@ func TestSwap2(t *testing.T) {
 	// token0: 23308438
 	// token1: 56661277
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetRealm(rouRealm)
@@ -177,11 +177,11 @@ func TestSwap2(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"20000000", //
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 
 	shouldEQ(t, amount0, "20000000")
@@ -193,7 +193,7 @@ func TestSwap2(t *testing.T) {
 }
 
 func TestUnclaimedFeePos01Swap02(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	amount0, amount1 := unclaimedFee(1)
 
 	shouldEQ(t, amount0.ToString(), "8683")
@@ -201,7 +201,7 @@ func TestUnclaimedFeePos01Swap02(t *testing.T) {
 }
 
 func TestUnclaimedFeePos02Swap02(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	amount0, amount1 := unclaimedFee(2)
 
 	shouldEQ(t, amount0.ToString(), "1935")
@@ -213,7 +213,7 @@ func TestCollectFeePos01(t *testing.T) {
 	// token0: 43308438
 	// token1: 6709742
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, true)
 
 	shouldEQ(t, tokenId, uint64(1))
@@ -231,7 +231,7 @@ func TestDecreaseAllPos01(t *testing.T) {
 	// token0: 43299755
 	// token1: 6709742
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		uint64(1),   // tokenId
 		100,         // liquidityRatio
@@ -259,7 +259,7 @@ func TestDecreaseAllPos02(t *testing.T) {
 	// token0: 7548510
 	// token1: 2
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(
 		uint64(2),   // tokenId
 		100,         // liquidityRatio

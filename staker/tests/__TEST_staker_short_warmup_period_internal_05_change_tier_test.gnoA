@@ -47,7 +47,7 @@ func TestDoulbeMint(t *testing.T) {
 
 func TestPoolInitCreatePool(t *testing.T) {
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 
@@ -60,7 +60,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 func TestMintBarQux100_1(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -76,12 +76,12 @@ func TestMintBarQux100_1(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), admin)
 
 	gpi := GetPrintInfo()
 	shouldEQ(t, gpi, `{"height":126,"time":1234567896,"gns":{"staker":0,"devOps":8561643,"communityPool":2140410,"govStaker":0,"protocolFee":232106164,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
@@ -94,7 +94,7 @@ func TestMintBarQux100_1(t *testing.T) {
 func TestMintBarBaz100_2(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -110,12 +110,12 @@ func TestMintBarBaz100_2(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), admin)
 
 	gpi := GetPrintInfo()
 	shouldEQ(t, gpi, `{"height":127,"time":1234567898,"gns":{"staker":0,"devOps":11415524,"communityPool":2853880,"govStaker":0,"protocolFee":242808219,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
@@ -141,7 +141,7 @@ func TestSkip100Height(t *testing.T) {
 func TestStakeToken_1(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
 	StakeToken(1)
@@ -159,7 +159,7 @@ func TestSetPoolTier(t *testing.T) {
 
 	std.TestSkipHeights(100) // this reward should go to bar:qux:100
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	SetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
 
 	gpi := GetPrintInfo()
@@ -173,7 +173,7 @@ func TestSetPoolTier(t *testing.T) {
 func TestStakeToken_2(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
 	StakeToken(2)
@@ -189,7 +189,7 @@ func TestStakeToken_2(t *testing.T) {
 func TestNow(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gpi := GetPrintInfo()
 	shouldEQ(t, gpi, `{"height":332,"time":1234568308,"gns":{"staker":1099100999,"devOps":596461169,"communityPool":149115290,"govStaker":0,"protocolFee":1337628395,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":1095890381,"position":[{"lpTokenId":1,"stakedHeight":229,"stakedTimestamp":1234568102,"stakedDuration":103,"fullAmount":1095890380,"ratio":30,"warmUpAmount":328767113,"full30":1095890380,"give30":328767113,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]},{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","startTimestamp":1234568304,"tier":2,"numPoolSameTier":1,"poolReward":3210616,"position":[{"lpTokenId":2,"stakedHeight":331,"stakedTimestamp":1234568306,"stakedDuration":1,"fullAmount":3210616,"ratio":30,"warmUpAmount":963184,"full30":3210616,"give30":963184,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
@@ -202,7 +202,7 @@ func TestNow(t *testing.T) {
 func TestChangePoolTier(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	ChangePoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 1)
 
@@ -217,7 +217,7 @@ func TestChangePoolTier(t *testing.T) {
 func TestNow2(t *testing.T) {
 	curr := getCurrentInfo()
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gpi := GetPrintInfo()
 	shouldEQ(t, gpi, `{"height":334,"time":1234568312,"gns":{"staker":1120505109,"devOps":602168931,"communityPool":150542230,"govStaker":0,"protocolFee":1337628395,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":2,"poolReward":1108732846,"position":[{"lpTokenId":1,"stakedHeight":229,"stakedTimestamp":1234568102,"stakedDuration":105,"fullAmount":1108732845,"ratio":30,"warmUpAmount":332619852,"full30":1108732845,"give30":332619852,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]},{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","startTimestamp":1234568304,"tier":1,"numPoolSameTier":2,"poolReward":11772259,"position":[{"lpTokenId":2,"stakedHeight":331,"stakedTimestamp":1234568306,"stakedDuration":3,"fullAmount":11772259,"ratio":30,"warmUpAmount":3531676,"full30":11772259,"give30":3531676,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)

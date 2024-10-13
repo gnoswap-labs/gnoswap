@@ -14,11 +14,11 @@ import (
 // Panics if the caller is not the admin.
 func TransferTokenByAdmin(pkgPath string, to std.Address, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic(
 			ufmt.Sprintf(
 				"[COMMUNITY_POOL] community_pool.gno__TransferTokenByAdmin() || only admin(%s) can transfer token, called from %s",
-				consts.GNOSWAP_ADMIN,
+				consts.ADMIN,
 				caller,
 			),
 		)

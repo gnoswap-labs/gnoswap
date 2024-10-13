@@ -21,7 +21,7 @@ import (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	pl.SetPoolCreationFee(0)
 }
 
@@ -40,7 +40,7 @@ func TestPoolCreatePool(t *testing.T) {
 	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(0))
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(0))
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	std.TestSkipHeights(1)
@@ -59,7 +59,7 @@ func TestPositionMintPos01Tier01(t *testing.T) {
 	// mint position in tier 1 pool
 	// gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
@@ -75,18 +75,18 @@ func TestPositionMintPos01Tier01(t *testing.T) {
 		"0",                         // amount0Min
 		"0",                         // amount1Min
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, lpTokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), gsa)
+	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), admin)
 	shouldEQ(t, amount0, "0")
 	shouldEQ(t, amount1, "1000")
 
 	// approve nft to staker for staking
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
 	std.TestSkipHeights(1)
 
@@ -97,7 +97,7 @@ func TestPositionMintPos01Tier01(t *testing.T) {
 }
 
 func TestPositionMintPos02Tier01(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
@@ -113,19 +113,19 @@ func TestPositionMintPos02Tier01(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, lpTokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), gsa)
+	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), admin)
 	shouldEQ(t, amount0, "368")
 	shouldEQ(t, amount1, "1000")
 
 	// approve nft to staker for staking
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
 	std.TestSkipHeights(1)
 
@@ -136,7 +136,7 @@ func TestPositionMintPos02Tier01(t *testing.T) {
 }
 
 func TestPositionMintPos03Tier01(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
@@ -152,19 +152,19 @@ func TestPositionMintPos03Tier01(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, lpTokenId, uint64(3))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), gsa)
+	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), admin)
 	shouldEQ(t, amount0, "3979")
 	shouldEQ(t, amount1, "5000")
 
 	// approve nft to staker
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
 	std.TestSkipHeights(1)
 
@@ -175,7 +175,7 @@ func TestPositionMintPos03Tier01(t *testing.T) {
 }
 
 func TestCreateExternalIncentive(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
 
 	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
@@ -195,7 +195,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 }
 
 func TestStakeToken01(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	StakeToken(1) // GNFT tokenId
 
 	std.TestSkipHeights(500)
@@ -210,7 +210,7 @@ func TestStakeToken01(t *testing.T) {
 }
 
 func TestStakeToken02(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	StakeToken(2) // GNFT tokenId
 
 	std.TestSkipHeights(1)
@@ -225,7 +225,7 @@ func TestStakeToken02(t *testing.T) {
 }
 
 func TestStakeToken03(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	StakeToken(3) // GNFT tokenId
 
 	std.TestSkipHeights(1)
@@ -245,7 +245,7 @@ func TestSameHeightCalculation(t *testing.T) {
 }
 
 func TestCollectReward01(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	CollectReward(1, false)
 	std.TestSkipHeights(1)
 
@@ -254,7 +254,7 @@ func TestCollectReward01(t *testing.T) {
 }
 
 func TestUnstakeToken01(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	UnstakeToken(1, false)
 	std.TestSkipHeights(1)
 
@@ -277,7 +277,7 @@ func TestUnstakeToken02(t *testing.T) {
 	shouldEQ(t, positionGns[2], uint64(6986943))
 	shouldEQ(t, positionGns[3], uint64(9066138))
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	UnstakeToken(2, false)
 	std.TestSkipHeights(1)
 

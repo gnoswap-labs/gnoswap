@@ -83,7 +83,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 				}
 
 				if uint64(std.GetHeight()) < collectableAfter {
-					println("NOT CLAIMABLE YET", std.GetHeight(), "<", collectableAfter)
+					println("NOT CLAIMABLE YET")
 					continue
 				}
 
@@ -160,7 +160,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 			}
 
 			if uint64(std.GetHeight()) < collectableAfter {
-				println("NOT CLAIMABLE YET", std.GetHeight(), "<", collectableAfter)
+				println("NOT CLAIMABLE YET")
 				return 0
 			}
 

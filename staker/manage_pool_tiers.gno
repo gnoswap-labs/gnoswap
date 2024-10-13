@@ -111,11 +111,11 @@ func GetEachTierPoolNum() []string {
 
 func SetPoolTierByAdmin(poolPath string, tier uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic(
 			ufmt.Sprintf(
 				"[STAKER] manage_pool_tiers.gno__SetPoolTierByAdmin() || only admin(%s) can set additional pool with tier, called from %s",
-				consts.GNOSWAP_ADMIN,
+				consts.ADMIN,
 				caller,
 			),
 		)
@@ -193,11 +193,11 @@ func setPoolTier(pool string, tier uint64) {
 
 func SetChangePoolTierByAdmin(poolPath string, tier uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic(
 			ufmt.Sprintf(
 				"[STAKER] manage_pool_tiers.gno__SetChangePoolTierByAdmin() || only admin(%s) can change existing pool tier, called from %s",
-				consts.GNOSWAP_ADMIN,
+				consts.ADMIN,
 				caller,
 			),
 		)
@@ -266,11 +266,11 @@ func changePoolTier(pool string, tier uint64) {
 	}
 
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
+	if caller != consts.ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
 				"[STAKER] manage_pool_tiers.gno__ChangePoolTier() || only admin(%s) or governance(%s) can change existing pool tier, called from %s",
-				consts.GNOSWAP_ADMIN,
+				consts.ADMIN,
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
@@ -283,11 +283,11 @@ func changePoolTier(pool string, tier uint64) {
 
 func RemovePoolTierByAdmin(poolPath string) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic(
 			ufmt.Sprintf(
 				"[STAKER] manage_pool_tiers.gno__RemovePoolTierByAdmin() || only admin(%s) can remove existing pool with tier, called from %s",
-				consts.GNOSWAP_ADMIN,
+				consts.ADMIN,
 				caller,
 			),
 		)
@@ -344,11 +344,11 @@ func removePoolTier(pool string) {
 	}
 
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
+	if caller != consts.ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
 				"[STAKER] manage_pool_tiers.gno__RemovePoolTier() || only admin(%s) or governance(%s) can remove existing pool with tier, called from %s",
-				consts.GNOSWAP_ADMIN,
+				consts.ADMIN,
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),

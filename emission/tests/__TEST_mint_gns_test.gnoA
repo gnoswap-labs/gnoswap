@@ -8,7 +8,7 @@ import (
 )
 
 func Test_mintGns(t *testing.T) {
-	shouldEQ(t, gns.TotalSupply(), uint64(100000000000000)) // GSA has
+	shouldEQ(t, gns.TotalSupply(), uint64(100000000000000)) // ADMIN has
 	shouldEQ(t, gnsBalance(emissionAddr), uint64(0))
 
 	std.TestSkipHeights(1)

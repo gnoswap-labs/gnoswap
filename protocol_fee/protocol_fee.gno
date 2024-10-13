@@ -61,7 +61,7 @@ func GetDevOpsPct() uint64 {
 // Panics if the caller is not the admin.
 func SetDevOpsPctByAdmin(pct uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic("must be called by admin")
 	}
 

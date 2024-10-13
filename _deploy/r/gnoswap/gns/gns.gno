@@ -29,7 +29,7 @@ var (
 )
 
 func init() {
-	admin = ownable.NewWithAddress("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c") // GNOSWAP_ADMIN
+	admin = ownable.NewWithAddress("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c") // ADMIN
 	banker = grc20.NewBanker("Gnoswap", "GNS", 6)
 
 	banker.Mint(admin.Owner(), 100_000_000_000_000) // 100_000_000 GNS ≈ 0.1B

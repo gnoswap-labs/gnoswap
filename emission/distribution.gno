@@ -58,7 +58,7 @@ func ChangeDistributionPctByAdmin(
 	target04 int, pct04 uint64,
 ) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic("only admin can change distribution percentages")
 	}
 

@@ -8,7 +8,7 @@ import (
 )
 
 func Test_mintGns(t *testing.T) {
-	shouldEQ(t, gns.TotalSupply(), uint64(100000000000000)) // GSA has
+	shouldEQ(t, gns.TotalSupply(), uint64(100000000000000)) // ADMIN has
 	shouldEQ(t, gnsBalance(emissionAddr), uint64(0))
 
 	std.TestSkipHeights(123)
@@ -37,7 +37,7 @@ func Test_distributeToTarget_After5Block(t *testing.T) {
 }
 
 func TestChangeDistributionPct_ByAdmin(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	shouldEQ(t, GetDistributionPct(int(1)), uint64(7500))
 	shouldEQ(t, GetDistributionPct(int(2)), uint64(2000))

@@ -16,7 +16,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 
@@ -24,20 +24,20 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestPositionMintQuxGnot(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	// send
-	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 1000009}})
+	std.TestIssueCoins(admin, std.Coins{{"ugnot", 1000009}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 1000009}}, nil)
 
 	// Deposit(wrap)
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	wugnot.Deposit()
 
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa, gsa)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, amount0, "100000")
@@ -45,7 +45,7 @@ func TestPositionMintQuxGnot(t *testing.T) {
 }
 
 func TestDrySwapRouteQuxGnotExactIn(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		quxPath,               // inputToken
@@ -59,7 +59,7 @@ func TestDrySwapRouteQuxGnotExactIn(t *testing.T) {
 }
 
 func TestDrySwapRouteQuxGnotExactOut(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		quxPath,               // inputToken

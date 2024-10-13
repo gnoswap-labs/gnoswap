@@ -21,7 +21,7 @@ type currentInfo struct {
 	gnsCommunityPool uint64
 	gnsGovStaker     uint64
 	gnsProtocolFee   uint64
-	gnsGSA           uint64
+	gnsADMIN         uint64
 }
 
 func getCurrentInfo() currentInfo {
@@ -33,7 +33,7 @@ func getCurrentInfo() currentInfo {
 		gnsCommunityPool: gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)),
 		gnsGovStaker:     gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)),
 		gnsProtocolFee:   gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)),
-		gnsGSA:           gns.BalanceOf(a2u(consts.GNOSWAP_ADMIN)),
+		gnsADMIN:         gns.BalanceOf(a2u(consts.ADMIN)),
 	}
 }
 
@@ -63,8 +63,8 @@ func printInfo(prev currentInfo) currentInfo {
 	println("> protocol fee_bal\t", curr.gnsProtocolFee)
 	println("> protocol fee_chg\t", int(curr.gnsProtocolFee-prev.gnsProtocolFee))
 	println()
-	println("> GSA_bal\t\t", curr.gnsGSA)
-	println("> GSA_chg\t\t", int(curr.gnsGSA-prev.gnsGSA))
+	println("> ADMIN_bal\t\t", curr.gnsADMIN)
+	println("> ADMIN_chg\t\t", int(curr.gnsADMIN-prev.gnsADMIN))
 	println()
 	println("GNS POOL")
 	for k, v := range poolGns {
@@ -96,7 +96,7 @@ type ApiEmissionDebugInfo struct {
 	GnsCommunityPool uint64                 `json:"gnsCommunityPool"`
 	GnsGovStaker     uint64                 `json:"gnsGovStaker"`
 	GnsProtocolFee   uint64                 `json:"gnsProtocolFee"`
-	GnsGSA           uint64                 `json:"gnsGSA"`
+	GnsADMIN         uint64                 `json:"gnsADMIN"`
 	Pool             []ApiEmissionDebugPool `json:"pool"`
 }
 
@@ -130,7 +130,7 @@ func GetPrintInfo() string {
 	emissionDebug.GnsCommunityPool = gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR))
 	emissionDebug.GnsGovStaker = gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
 	emissionDebug.GnsProtocolFee = gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR))
-	emissionDebug.GnsGSA = gns.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
+	emissionDebug.GnsADMIN = gns.BalanceOf(a2u(consts.ADMIN))
 
 	for poolPath, internal := range poolTiers {
 		tier := internal.tier
@@ -177,7 +177,7 @@ func GetPrintInfo() string {
 			"communityPool": json.NumberNode("", float64(emissionDebug.GnsCommunityPool)),
 			"govStaker":     json.NumberNode("", float64(emissionDebug.GnsGovStaker)),
 			"protocolFee":   json.NumberNode("", float64(emissionDebug.GnsProtocolFee)),
-			"GnoswapAdmin":  json.NumberNode("", float64(emissionDebug.GnsGSA)),
+			"GnoswapAdmin":  json.NumberNode("", float64(emissionDebug.GnsADMIN)),
 		}),
 		"pool": json.ArrayNode("", makePoolsNode(emissionDebug.Pool)),
 	})

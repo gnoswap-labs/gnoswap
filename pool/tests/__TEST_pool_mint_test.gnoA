@@ -20,7 +20,7 @@ var (
 )
 
 func TestMintMiscellaneous(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString()) // tick
 
@@ -45,7 +45,7 @@ func TestMintMiscellaneous(t *testing.T) {
 			1000,
 			2000,
 			test_liquidityExpectStr,
-			gsa,
+			admin,
 		)
 
 		liqAfter := thisPool.liquidity.ToString()
@@ -67,7 +67,7 @@ func TestMintMiscellaneous(t *testing.T) {
 			-2000,
 			-1000,
 			test_liquidityExpectStr,
-			gsa,
+			admin,
 		)
 
 		liqAfter := thisPool.liquidity.ToString()

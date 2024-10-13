@@ -103,7 +103,7 @@ func GetAvgBlockTimeInMs() int64 {
 // Panics if the caller is not the admin.
 func SetAvgBlockTimeInMsByAdmin(ms int64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic("must be called by admin")
 	}
 

@@ -18,7 +18,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 
@@ -40,7 +40,7 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestSwapRouteWugnotquxExactIn(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	wugnot.Approve(a2u(consts.ROUTER_ADDR), 1000000)
 	qux.Approve(a2u(consts.ROUTER_ADDR), 1000000)
 	std.TestSetOrigSend(std.Coins{{"ugnot", 12345}}, nil) //sented ugnot amount

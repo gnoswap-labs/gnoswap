@@ -21,12 +21,12 @@ var (
 
 // turn protocol fee on
 func init() {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	SetFeeProtocol(4, 4)
 }
 
 func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
@@ -46,7 +46,7 @@ func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 			0,
 			120,
 			test_liquidityExpectStr,
-			gsa,
+			admin,
 		)
 		// println("mint0", mint0) // 59817378
 		// println("mint1", mint1) // 0
@@ -58,11 +58,11 @@ func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 			barPath,
 			fooPath,
 			fee100,
-			gsa,
+			admin,
 			false,
 			"60183363",
 			consts.MAX_PRICE,
-			gsa,
+			admin,
 		)
 		// println("swap0", swap0) // -59817378
 		// println("swap1", swap1) // 60183363
@@ -88,7 +88,7 @@ func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 			barPath,
 			fooPath,
 			fee100,
-			gsa,
+			admin,
 			0,
 			120,
 			consts.MAX_UINT128,
@@ -106,7 +106,7 @@ func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {
 }
 
 func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
@@ -126,7 +126,7 @@ func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
 			-120,
 			0,
 			test_liquidityExpectStr,
-			gsa,
+			admin,
 		)
 		// println("mint0", mint0) // 0
 		// println("mint1", mint1) // 59817378
@@ -138,11 +138,11 @@ func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			gsa,
+			admin,
 			true,
 			"60283363",
 			consts.MIN_PRICE,
-			gsa,
+			admin,
 		)
 		// println("swap0", swap0) // 60207447
 		// println("swap1", swap1) // -59817377
@@ -168,7 +168,7 @@ func TestLimitOrderThru_Negative_1_WithFee(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			gsa,
+			admin,
 			-120,
 			0,
 			consts.MAX_UINT128,

@@ -20,7 +20,7 @@ var (
 // 1. Init & Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(consts.WRAPPED_WUGNOT, fooPath, fee500, "130621891405341611593710811006") // x2.7
@@ -35,17 +35,17 @@ func TestMint(t *testing.T) {
 
 	// prepare ugnot
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-	testBanker.IssueCoin(gsa, "ugnot", 1_000_000)
+	testBanker.IssueCoin(admin, "ugnot", 1_000_000)
 
 	// simulate transfer & decrase
 	std.TestSetOrigSend(std.Coins{{"ugnot", 1_000_000}}, nil)
 	testBanker.RemoveCoin(std.PrevRealm().Addr(), "ugnot", 1_000_000)
 
 	// Deposit(wrap)
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	wugnot.Deposit()
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -59,7 +59,7 @@ func TestMint(t *testing.T) {
 		test_tickLower,
 		test_tickUpper,
 		"10000000",
-		gsa,
+		admin,
 	)
 
 	shouldEQ(t, amount0, "295802")
@@ -69,12 +69,12 @@ func TestMint(t *testing.T) {
 func TestSwapBuyNative(t *testing.T) {
 	pool := GetPool(fooPath, consts.WRAPPED_WUGNOT, fee500)
 
-	gsaOldT0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
-	gsaOldT1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
-	shouldEQ(t, gsaOldT0Bal, uint64(704198))
-	shouldEQ(t, gsaOldT1Bal, uint64(99999999195968))
+	adminOldT0Bal := balanceOfByRegisterCall(pool.token0Path, admin)
+	adminOldT1Bal := balanceOfByRegisterCall(pool.token1Path, admin)
+	shouldEQ(t, adminOldT0Bal, uint64(704198))
+	shouldEQ(t, adminOldT1Bal, uint64(99999999195968))
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), 10000)
 
 	std.TestSetRealm(rouRealm)
@@ -82,31 +82,31 @@ func TestSwapBuyNative(t *testing.T) {
 		fooPath,               // token0
 		consts.WRAPPED_WUGNOT, // token1
 		fee500,
-		gsa,
+		admin,
 		true,
 		"10000",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 
 	shouldEQ(t, amount0, "10000")
 	shouldEQ(t, amount1, "-27123")
 
-	gsaNewT0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
-	gsaNewT1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
-	shouldEQ(t, gsaNewT0Bal, uint64(694198))         // - 10_000 // user sells 10_000
-	shouldEQ(t, gsaNewT1Bal, uint64(99999999223091)) // gets WGNOT
+	adminNewT0Bal := balanceOfByRegisterCall(pool.token0Path, admin)
+	adminNewT1Bal := balanceOfByRegisterCall(pool.token1Path, admin)
+	shouldEQ(t, adminNewT0Bal, uint64(694198))         // - 10_000 // user sells 10_000
+	shouldEQ(t, adminNewT1Bal, uint64(99999999223091)) // gets WGNOT
 }
 
 func TestSwapSellNative(t *testing.T) {
 	pool := GetPool(fooPath, consts.WRAPPED_WUGNOT, fee500)
 
-	gsaOldT0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
-	gsaOldT1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
-	shouldEQ(t, gsaOldT0Bal, uint64(694198))         // foo
-	shouldEQ(t, gsaOldT1Bal, uint64(99999999223091)) // wugnot
+	adminOldT0Bal := balanceOfByRegisterCall(pool.token0Path, admin)
+	adminOldT1Bal := balanceOfByRegisterCall(pool.token1Path, admin)
+	shouldEQ(t, adminOldT0Bal, uint64(694198))         // foo
+	shouldEQ(t, adminOldT1Bal, uint64(99999999223091)) // wugnot
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	wugnot.Approve(a2u(consts.POOL_ADDR), 27123)
 
 	std.TestSetRealm(rouRealm)
@@ -114,18 +114,18 @@ func TestSwapSellNative(t *testing.T) {
 		fooPath,               // token0
 		consts.WRAPPED_WUGNOT, // token1
 		fee500,
-		gsa,
+		admin,
 		false,
 		"10000",
 		consts.MAX_PRICE,
-		gsa,
+		admin,
 	)
 
 	shouldEQ(t, amount0, "-3687") // pool sent
 	shouldEQ(t, amount1, "10000") // pool recv
 
-	gsaNewT0Bal := balanceOfByRegisterCall(pool.token0Path, gsa)
-	gsaNewT1Bal := balanceOfByRegisterCall(pool.token1Path, gsa)
-	shouldEQ(t, gsaNewT0Bal, uint64(697885))         // foo
-	shouldEQ(t, gsaNewT1Bal, uint64(99999999213091)) // wugnot
+	adminNewT0Bal := balanceOfByRegisterCall(pool.token0Path, admin)
+	adminNewT1Bal := balanceOfByRegisterCall(pool.token1Path, admin)
+	shouldEQ(t, adminNewT0Bal, uint64(697885))         // foo
+	shouldEQ(t, adminNewT1Bal, uint64(99999999213091)) // wugnot
 }

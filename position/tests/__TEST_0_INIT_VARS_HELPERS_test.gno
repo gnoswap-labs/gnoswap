@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	gsa   std.Address = consts.GNOSWAP_ADMIN
+	admin std.Address = consts.ADMIN
 	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
 
 	fooPath string = "gno.land/r/onbloc/foo"
@@ -33,10 +33,10 @@ var (
 
 // Realms to mock frames
 var (
-	gsaRealm = std.NewUserRealm(gsa)
-	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
-	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
+	adminRealm = std.NewUserRealm(admin)
+	posRealm   = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
+	stkRealm   = std.NewCodeRealm(consts.STAKER_PATH)
 )
 
 /* HELPER */

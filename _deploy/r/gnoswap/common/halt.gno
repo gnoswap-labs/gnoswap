@@ -26,11 +26,11 @@ func IsHalted() {
 // Panics if the caller is not the admin.
 func SetHaltByAdmin(halt bool) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic(
 			ufmt.Sprintf(
 				"[COMMON] halt.gno__SetHaltByAdmin() || only admin(%s) can set halt, called from %s",
-				consts.GNOSWAP_ADMIN,
+				consts.ADMIN,
 				caller,
 			),
 		)

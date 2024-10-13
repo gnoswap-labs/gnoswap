@@ -27,10 +27,10 @@ var (
 )
 
 func TestInit(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(100000000000000)) // admin has initial gns
-	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(admin)), uint64(100000000000000)) // admin has initial gns
+	shouldEQ(t, xgns.BalanceOf(a2u(admin)), uint64(0))
 
 	en.ChangeDistributionPct(
 		int(1), 7000,
@@ -46,7 +46,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestDelegate(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	// gns before emission
 	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(0))
@@ -72,7 +72,7 @@ func TestDelegate(t *testing.T) {
 }
 
 func TestDelegateAnother(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(dummyAddr), 5000000)
 
 	std.TestSkipHeights(1)

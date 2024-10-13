@@ -17,19 +17,19 @@ import (
 
 func init() {
 	// set pool create fee to 0 for testing
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	pl.SetPoolCreationFee(0)
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(1).ToString())
 }
 
 func TestMintPositionFullInRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -44,13 +44,13 @@ func TestMintPositionFullInRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 }
 
 func TestIncreaseLiquidity(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -65,7 +65,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 }
 
 func TestDecreaseLiquidity(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -81,7 +81,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 }
 
 func TestCollectFee(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 

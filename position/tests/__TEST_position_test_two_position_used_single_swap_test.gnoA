@@ -14,14 +14,14 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01WideInRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
@@ -36,8 +36,8 @@ func TestMintPosition01WideInRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
@@ -48,7 +48,7 @@ func TestMintPosition01WideInRange(t *testing.T) {
 }
 
 func TestMintPositionTightInRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
@@ -63,8 +63,8 @@ func TestMintPositionTightInRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(2))
@@ -75,7 +75,7 @@ func TestMintPositionTightInRange(t *testing.T) {
 }
 
 func TestCollectFeeBeforeSwapPos1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
 	shouldEQ(t, tokenId, uint64(1))
@@ -85,7 +85,7 @@ func TestCollectFeeBeforeSwapPos1(t *testing.T) {
 }
 
 func TestCollectFeeBeforeSwapPos2(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(2, false)
 
 	shouldEQ(t, tokenId, uint64(2))
@@ -95,7 +95,7 @@ func TestCollectFeeBeforeSwapPos2(t *testing.T) {
 }
 
 func TestSwap(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
 
 	std.TestSetRealm(rouRealm)
@@ -103,18 +103,18 @@ func TestSwap(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 
 }
 
 // FYI, IF POSITION 2 DOESN'T EXIST, POSITION 1 WILL EARN '617' as fee
 func TestCollectFeeAfterSwapPos1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // COLLECT_FEE
 
@@ -128,7 +128,7 @@ func TestCollectFeeAfterSwapPos1(t *testing.T) {
 }
 
 func TestCollectFeeAfterSwapPos2(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(2, false)
 
 	shouldEQ(t, tokenId, uint64(2))

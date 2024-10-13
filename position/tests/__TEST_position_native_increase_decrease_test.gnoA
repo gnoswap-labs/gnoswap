@@ -15,14 +15,14 @@ import (
 
 // 1. Create Pool
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 }
 
 func TestMintPosition(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -30,19 +30,19 @@ func TestMintPosition(t *testing.T) {
 	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // WRAP
 
 	// prepare 50000005ugnot (5 for refund test)
-	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 50000005}})
-	shouldEQ(t, ugnotBalanceOf(gsa), uint64(50000005))
+	std.TestIssueCoins(admin, std.Coins{{"ugnot", 50000005}})
+	shouldEQ(t, ugnotBalanceOf(admin), uint64(50000005))
 	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), uint64(200000000))
 
 	// send & set orig send
 	banker := std.GetBanker(std.BankerTypeRealmIssue)
-	banker.SendCoins(gsa, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
+	banker.SendCoins(admin, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 50000005}}, nil)
 
-	shouldEQ(t, ugnotBalanceOf(gsa), uint64(0))
+	shouldEQ(t, ugnotBalanceOf(admin), uint64(0))
 
-	gsaOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, gsaOldWugnotBalance, uint64(0))
+	adminOldWugnotBalance := wugnot.BalanceOf(a2u(admin))
+	shouldEQ(t, adminOldWugnotBalance, uint64(0))
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		consts.GNS_PATH,
@@ -55,8 +55,8 @@ func TestMintPosition(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
@@ -68,9 +68,9 @@ func TestMintPosition(t *testing.T) {
 	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 
 	// SPEND ALL WUGNOT
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(0))
+	shouldEQ(t, wugnot.BalanceOf(a2u(admin)), uint64(0))
 
-	shouldEQ(t, ugnotBalanceOf(gsa), uint64(5))
+	shouldEQ(t, ugnotBalanceOf(admin), uint64(5))
 	// 1. 50000005 ugnot sent
 	// 2. 50000005 ugnot wrapped to wugnot
 	// 3. 50000000 wugnot spent to mint (amount1)
@@ -79,7 +79,7 @@ func TestMintPosition(t *testing.T) {
 }
 
 func TestIncreaseLiquidity(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -90,17 +90,17 @@ func TestIncreaseLiquidity(t *testing.T) {
 	oldLiquidity := pool.PoolGetLiquidity()
 
 	// prepare 10000005ugnot (5 for refund test)
-	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 10000005}})
-	shouldEQ(t, ugnotBalanceOf(gsa), uint64(10000010))
+	std.TestIssueCoins(admin, std.Coins{{"ugnot", 10000005}})
+	shouldEQ(t, ugnotBalanceOf(admin), uint64(10000010))
 	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), uint64(200000000))
 
 	// send & set orig send
 	banker := std.GetBanker(std.BankerTypeRealmIssue)
-	banker.SendCoins(gsa, consts.POSITION_ADDR, std.Coins{{"ugnot", 10000005}})
+	banker.SendCoins(admin, consts.POSITION_ADDR, std.Coins{{"ugnot", 10000005}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 10000005}}, nil)
 
-	shouldEQ(t, ugnotBalanceOf(gsa), uint64(5))
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(0))
+	shouldEQ(t, ugnotBalanceOf(admin), uint64(5))
+	shouldEQ(t, wugnot.BalanceOf(a2u(admin)), uint64(0))
 
 	_, _, m0, m1, _ := IncreaseLiquidity( // tokenId, liq, a0, a1, poolPath
 		uint64(1),   // tokenId
@@ -118,9 +118,9 @@ func TestIncreaseLiquidity(t *testing.T) {
 	shouldEQ(t, newLiquidity.Gt(oldLiquidity), true)
 
 	// SPEND ALL WUGNOT
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(0))
+	shouldEQ(t, wugnot.BalanceOf(a2u(admin)), uint64(0))
 
-	shouldEQ(t, ugnotBalanceOf(gsa), uint64(10))
+	shouldEQ(t, ugnotBalanceOf(admin), uint64(10))
 	// 1. 10000005 ugnot sent
 	// 2. 10000005 ugnot wrapped to wugnot
 	// 3. 10000000 wugnot spent to mint (amount1)
@@ -129,14 +129,14 @@ func TestIncreaseLiquidity(t *testing.T) {
 }
 
 func TestDecreaseLiquidityWrapped(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	oldLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
 
-	userWugnotBalance := wugnot.BalanceOf(a2u(gsa))
+	userWugnotBalance := wugnot.BalanceOf(a2u(admin))
 	shouldEQ(t, userWugnotBalance, uint64(0))
 
-	userUgnotBalance := ugnotBalanceOf(gsa)
+	userUgnotBalance := ugnotBalanceOf(admin)
 	shouldEQ(t, userUgnotBalance, uint64(10))
 
 	_, _, _, _, a0, a1, _ := DecreaseLiquidity( // tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
@@ -148,10 +148,10 @@ func TestDecreaseLiquidityWrapped(t *testing.T) {
 		false,       // unwrapResult
 	)
 
-	userWugnotBalance = wugnot.BalanceOf(a2u(gsa)) // wrapped result, so wunogt increased
+	userWugnotBalance = wugnot.BalanceOf(a2u(admin)) // wrapped result, so wunogt increased
 	shouldEQ(t, userWugnotBalance, uint64(11999999))
 
-	userUgnotBalance = ugnotBalanceOf(gsa) // wrapped result, so ugnot didn't change
+	userUgnotBalance = ugnotBalanceOf(admin) // wrapped result, so ugnot didn't change
 	shouldEQ(t, userUgnotBalance, uint64(10))
 
 	newLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
@@ -166,14 +166,14 @@ func TestDecreaseLiquidityWrapped(t *testing.T) {
 }
 
 func TestDecreaseLiquidityUnwrapped(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	oldLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
 
-	userWugnotBalance := wugnot.BalanceOf(a2u(gsa))
+	userWugnotBalance := wugnot.BalanceOf(a2u(admin))
 	shouldEQ(t, userWugnotBalance, uint64(11999999))
 
-	userUgnotBalance := ugnotBalanceOf(gsa)
+	userUgnotBalance := ugnotBalanceOf(admin)
 	shouldEQ(t, userUgnotBalance, uint64(10))
 
 	_, _, _, _, a0, a1, _ := DecreaseLiquidity( // tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
@@ -185,10 +185,10 @@ func TestDecreaseLiquidityUnwrapped(t *testing.T) {
 		true,        // unwrapResult
 	)
 
-	userWugnotBalance = wugnot.BalanceOf(a2u(gsa)) // unwrapped result, so wugnot didn't change
+	userWugnotBalance = wugnot.BalanceOf(a2u(admin)) // unwrapped result, so wugnot didn't change
 	shouldEQ(t, userWugnotBalance, uint64(11999999))
 
-	userUgnotBalance = ugnotBalanceOf(gsa) // unwrapped result, so ugnot decreased
+	userUgnotBalance = ugnotBalanceOf(admin) // unwrapped result, so ugnot decreased
 	shouldEQ(t, userUgnotBalance, uint64(24000009))
 
 	newLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()

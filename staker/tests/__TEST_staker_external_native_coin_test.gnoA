@@ -18,7 +18,7 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 
@@ -27,7 +27,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintBarBaz100(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
@@ -43,14 +43,14 @@ func TestMintBarBaz100(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 	std.TestSkipHeights(1)
 }
 
 func TestCreateExternalIncentive(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
 	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
@@ -68,46 +68,46 @@ func TestCreateExternalIncentive(t *testing.T) {
 }
 
 func TestStakeToken(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gnft.Approve(a2u(consts.STAKER_ADDR), "1")
 	StakeToken(1)
 }
 
 func TestCollectExternalReward_1_Unwrap(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
-	oldUgnotBal := ugnotBalanceOf(gsa)
+	oldUgnotBal := ugnotBalanceOf(admin)
 	shouldEQ(t, oldUgnotBal, uint64(0))
 
-	oldWugnotBal := wugnot.BalanceOf(a2u(gsa))
+	oldWugnotBal := wugnot.BalanceOf(a2u(admin))
 	shouldEQ(t, oldWugnotBal, uint64(0))
 
 	std.TestSkipHeights(900)
 	CollectReward(1, true)
 
-	newUgnotBal := ugnotBalanceOf(gsa)
+	newUgnotBal := ugnotBalanceOf(admin)
 	shouldEQ(t, newUgnotBal, uint64(382))
 
-	newWugnotBal := wugnot.BalanceOf(a2u(gsa))
+	newWugnotBal := wugnot.BalanceOf(a2u(admin))
 	shouldEQ(t, newWugnotBal, uint64(0))
 }
 
 func TestCollectExternalReward_1_NoUnWrap(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
-	oldUgnotBal := ugnotBalanceOf(gsa)
+	oldUgnotBal := ugnotBalanceOf(admin)
 	shouldEQ(t, oldUgnotBal, uint64(382))
 
-	oldWugnotBal := wugnot.BalanceOf(a2u(gsa))
+	oldWugnotBal := wugnot.BalanceOf(a2u(admin))
 	shouldEQ(t, oldWugnotBal, uint64(0))
 
 	std.TestSkipHeights(1)
 	CollectReward(1, false)
 
-	newUgnotBal := ugnotBalanceOf(gsa)
+	newUgnotBal := ugnotBalanceOf(admin)
 	shouldEQ(t, newUgnotBal, uint64(382))
 
-	newWugnotBal := wugnot.BalanceOf(a2u(gsa))
+	newWugnotBal := wugnot.BalanceOf(a2u(admin))
 	shouldEQ(t, newWugnotBal, uint64(7))
 }

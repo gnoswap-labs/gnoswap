@@ -34,12 +34,12 @@ func init() {
 	}
 
 	// set pool create fee to 0 for testing
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	pl.SetPoolCreationFee(0)
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 	std.TestSkipHeights(1)
@@ -54,7 +54,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintBarQux500(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
@@ -70,20 +70,20 @@ func TestMintBarQux500(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), admin)
 	shouldEQ(t, amount0, "36790")
 	shouldEQ(t, amount1, "100000")
 }
 
 func TestMintBarBaz100(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
@@ -99,19 +99,19 @@ func TestMintBarBaz100(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), admin)
 	shouldEQ(t, amount0, "100000")
 	shouldEQ(t, amount1, "100000")
 }
 
 func TestMintFooQux500(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
@@ -127,20 +127,20 @@ func TestMintFooQux500(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	std.TestSkipHeights(1)
 
 	shouldEQ(t, tokenId, uint64(3))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), admin)
 	shouldEQ(t, amount0, "100000")
 	shouldEQ(t, amount1, "100000")
 }
 
 func TestStakeInternalTier1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
 	StakeToken(1)
 
@@ -151,7 +151,7 @@ func TestStakeInternalTier1(t *testing.T) {
 }
 
 func TestStakeInternalTier2(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
 	StakeToken(2)
 

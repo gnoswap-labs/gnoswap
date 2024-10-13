@@ -25,11 +25,11 @@ func GetPoolCreationFee() uint64 {
 // Panics if the caller is not the admin.
 func SetPoolCreationFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic(
 			ufmt.Sprintf(
 				"[POOL] protocol_fee_pool_creation.gno__SetPoolCreationFeeByAdmin() || only admin(%s) can set pool creation fee, called from %s",
-				consts.GNOSWAP_ADMIN,
+				consts.ADMIN,
 				caller,
 			),
 		)

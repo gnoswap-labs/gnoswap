@@ -21,14 +21,14 @@ var (
 )
 
 func TestInit(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(100000000000000)) // admin has initial gns
-	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(admin)), uint64(100000000000000)) // admin has initial gns
+	shouldEQ(t, xgns.BalanceOf(a2u(admin)), uint64(0))
 }
 
 func TestDelegate(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	// gns before emission
 	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(0))
@@ -49,22 +49,22 @@ func TestDelegate(t *testing.T) {
 }
 
 func TestRedelegate(t *testing.T) {
-	shouldEQ(t, delegatedFromTo[gsa][dummyAddr], uint64(1000001))
+	shouldEQ(t, delegatedFromTo[admin][dummyAddr], uint64(1000001))
 	shouldEQ(t, delegatedTo[dummyAddr], uint64(1000001))
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
-	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(1000001))
+	shouldEQ(t, gns.BalanceOf(a2u(admin)), uint64(99999998999999))
+	shouldEQ(t, xgns.BalanceOf(a2u(admin)), uint64(1000001))
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	Redelegate(dummyAddr, reDelegate, 1000001)
 
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
-	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(1000001))
+	shouldEQ(t, gns.BalanceOf(a2u(admin)), uint64(99999998999999))
+	shouldEQ(t, xgns.BalanceOf(a2u(admin)), uint64(1000001))
 
-	shouldEQ(t, delegatedFromTo[gsa][dummyAddr], uint64(0))
+	shouldEQ(t, delegatedFromTo[admin][dummyAddr], uint64(0))
 	shouldEQ(t, delegatedTo[dummyAddr], uint64(0))
 
-	shouldEQ(t, delegatedFromTo[gsa][reDelegate], uint64(1000001))
+	shouldEQ(t, delegatedFromTo[admin][reDelegate], uint64(1000001))
 	shouldEQ(t, delegatedTo[reDelegate], uint64(1000001))
 }
 
@@ -80,43 +80,43 @@ func TestUndelegateUnknownUser(t *testing.T) {
 }
 
 func TestUndelegate(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
-	shouldEQ(t, delegatedFromTo[gsa][reDelegate], uint64(1000001))
+	shouldEQ(t, delegatedFromTo[admin][reDelegate], uint64(1000001))
 	shouldEQ(t, delegatedTo[reDelegate], uint64(1000001))
-	shouldEQ(t, len(addrLockedGns[gsa]), 0)
+	shouldEQ(t, len(addrLockedGns[admin]), 0)
 
 	Undelegate(reDelegate, 1000001)
 
-	shouldEQ(t, len(addrLockedGns[gsa]), 1)
-	shouldEQ(t, delegatedFromTo[gsa][reDelegate], uint64(0))
+	shouldEQ(t, len(addrLockedGns[admin]), 1)
+	shouldEQ(t, delegatedFromTo[admin][reDelegate], uint64(0))
 	shouldEQ(t, delegatedTo[reDelegate], uint64(0))
 
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
-	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0)) // xGNS immediately be burned
+	shouldEQ(t, gns.BalanceOf(a2u(admin)), uint64(99999998999999))
+	shouldEQ(t, xgns.BalanceOf(a2u(admin)), uint64(0)) // xGNS immediately be burned
 }
 
 func TestCollectBefore7Days(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
-	shouldEQ(t, len(addrLockedGns[gsa]), 1)
+	shouldEQ(t, len(addrLockedGns[admin]), 1)
 
 	CollectUndelegated() // 7 days not passed yet
 
-	shouldEQ(t, len(addrLockedGns[gsa]), 1)
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(99999998999999))
-	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
+	shouldEQ(t, len(addrLockedGns[admin]), 1)
+	shouldEQ(t, gns.BalanceOf(a2u(admin)), uint64(99999998999999))
+	shouldEQ(t, xgns.BalanceOf(a2u(admin)), uint64(0))
 }
 
 func TestCollectAfter7Days(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
-	shouldEQ(t, len(addrLockedGns[gsa]), 1)
+	shouldEQ(t, len(addrLockedGns[admin]), 1)
 
 	std.TestSkipHeights(302401) // 7 days 2 seconds
 	CollectUndelegated()
 
-	shouldEQ(t, len(addrLockedGns[gsa]), 0)
-	shouldEQ(t, gns.BalanceOf(a2u(gsa)), uint64(100000000000000))
-	shouldEQ(t, xgns.BalanceOf(a2u(gsa)), uint64(0))
+	shouldEQ(t, len(addrLockedGns[admin]), 0)
+	shouldEQ(t, gns.BalanceOf(a2u(admin)), uint64(100000000000000))
+	shouldEQ(t, xgns.BalanceOf(a2u(admin)), uint64(0))
 }

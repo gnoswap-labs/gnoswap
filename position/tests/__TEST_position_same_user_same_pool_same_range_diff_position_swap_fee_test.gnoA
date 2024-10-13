@@ -14,14 +14,14 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
@@ -36,8 +36,8 @@ func TestMintPosition01InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
@@ -47,7 +47,7 @@ func TestMintPosition01InRange(t *testing.T) {
 
 	position := positions[tokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -60,7 +60,7 @@ func TestMintPosition01InRange(t *testing.T) {
 }
 
 func TestMintPosition02InRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
@@ -75,8 +75,8 @@ func TestMintPosition02InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(2))
@@ -86,7 +86,7 @@ func TestMintPosition02InRange(t *testing.T) {
 
 	position := positions[tokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -99,7 +99,7 @@ func TestMintPosition02InRange(t *testing.T) {
 }
 
 func TestSwap1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
 
 	std.TestSetRealm(rouRealm)
@@ -107,11 +107,11 @@ func TestSwap1(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 
 	shouldEQ(t, amount0, "1234567")
@@ -125,7 +125,7 @@ func TestUnclaimedFee01(t *testing.T) {
 	shouldEQ(t, unclaimedFee1.ToString(), "0")
 
 	{
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -145,7 +145,7 @@ func TestUnclaimedFee02(t *testing.T) {
 	shouldEQ(t, unclaimedFee1.ToString(), "0")
 
 	{
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 

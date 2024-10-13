@@ -72,11 +72,11 @@ func GetUnstakingFee() uint64 {
 
 func SetUnstakingFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic(
 			ufmt.Sprintf(
 				"[STAKER] reward_fee.gno__SetUnstakingFeeByAdmin() || only admin(%s) can set unstaking fee, called from %s",
-				consts.GNOSWAP_ADMIN,
+				consts.ADMIN,
 				caller,
 			),
 		)

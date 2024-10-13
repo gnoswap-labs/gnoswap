@@ -22,7 +22,7 @@ var (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString())
 }
@@ -31,7 +31,7 @@ func TestFreshUser(t *testing.T) {
 	std.TestIssueCoins(fresh01, std.Coins{{"ugnot", 100_000_000}})
 	std.TestIssueCoins(fresh02, std.Coins{{"ugnot", 100_000_000}})
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(fresh01), 100_000_000)
 	gns.Transfer(a2u(fresh02), 100_000_000)
 

@@ -41,11 +41,11 @@ func SetWarmUp(percent int64, block int64) {
 	}
 
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
+	if caller != consts.ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
 				"[STAKER] warm_up.gno__SetWarmUp() || only admin(%s) or governance(%s) can set warm up period, called from %s",
-				consts.GNOSWAP_ADMIN,
+				consts.ADMIN,
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),

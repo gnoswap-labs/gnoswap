@@ -68,11 +68,11 @@ func GetSwapFee() uint64 {
 
 func SetSwapFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic(
 			ufmt.Sprintf(
 				"[ROUTER] protocol_fee_swap.gno__SetSwapFeeByAdmin() || only admin(%s) can set swap fee, called from %s",
-				consts.GNOSWAP_ADMIN,
+				consts.ADMIN,
 				caller,
 			),
 		)

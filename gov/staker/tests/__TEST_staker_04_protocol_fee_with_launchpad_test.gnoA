@@ -38,7 +38,7 @@ var (
 )
 
 func TestDelegateAdminToDummy(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	// gns before emission
 	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(0))
@@ -64,7 +64,7 @@ func TestDelegateAdminToDummy(t *testing.T) {
 }
 
 func TestDelegateAnotherDumyToDummy_Self(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(dummyAddr), 5000000)
 
 	std.TestSkipHeights(1)
@@ -82,7 +82,7 @@ func TestDelegateAnotherDumyToDummy_Self(t *testing.T) {
 func TestMockProtocolFee(t *testing.T) {
 	// admin > protocol_fee
 	// send qux, bar for testing
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
 	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 2500)
 
@@ -96,7 +96,7 @@ func TestMockProtocolFee(t *testing.T) {
 }
 
 func TestLaunchPadCreateProject(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), 1_000_000_000)
 	projectId := lp.CreateProject(
@@ -115,7 +115,7 @@ func TestLaunchPadCreateProject(t *testing.T) {
 }
 
 func TestLaunchPadDeposit(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
 
 	std.TestSetRealm(user01Realm)

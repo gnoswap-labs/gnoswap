@@ -69,7 +69,7 @@ func ReconfigureByAdmin(
 	executionWindow uint64,
 ) uint64 {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic("must be called by admin")
 	}
 

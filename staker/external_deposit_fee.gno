@@ -18,11 +18,11 @@ func GetDepositGnsAmount() uint64 {
 
 func SetDepositGnsAmountByAdmin(amount uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic(
 			ufmt.Sprintf(
 				"[STAKER] external_deposit_fee.gno__SetDepositGnsAmountByAdmin() || only admin(%s) can set deposit gns amount, called from %s",
-				consts.GNOSWAP_ADMIN,
+				consts.ADMIN,
 				caller,
 			),
 		)
