@@ -5,8 +5,6 @@ import (
 
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
-
-	"gno.land/p/demo/ufmt"
 )
 
 var (
@@ -59,20 +57,42 @@ func GetDevOpsPct() uint64 {
 	return devOpsPct
 }
 
-func SetDevOpsPct(pct uint64) {
-	common.IsHalted()
-
+// SetDevOpsPctByAdmin sets the devOpsPct.
+// Panics if the caller is not the admin.
+func SetDevOpsPctByAdmin(pct uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(
-			ufmt.Sprintf(
-				"only admin(%s) or governance(%s) can change protocol fee distribution percent for dev ops, called from %s",
-				consts.GNOSWAP_ADMIN,
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		)
+	if caller != consts.GNOSWAP_ADMIN {
+		panic("must be called by admin")
 	}
+
+	setDevOpsPct(pct)
+	std.Emit(
+		"SetDevOpsPctByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"pct", pct,
+	)
+}
+
+// SetDevOpsPctByGovernance sets the devOpsPct.
+// Panics if the caller is not the governance contract.
+func SetDevOpsPctByGovernance(pct uint64) {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GOV_GOVERNANCE_ADDR {
+		panic("must be called by governance")
+	}
+
+	setDevOpsPct(pct)
+	std.Emit(
+		"SetDevOpsPctByGovernance",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"pct", pct,
+	)
+}
+
+func setDevOpsPct(pct uint64) {
+	common.IsHalted()
 
 	if pct > 10000 {
 		panic("pct should not be bigger than 10000")

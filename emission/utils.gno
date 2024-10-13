@@ -16,3 +16,8 @@ func gnsBalance(addr std.Address) uint64 {
 
 	return gns.BalanceOf(a2u)
 }
+
+func getPrev() (string, string) {
+	prev := std.PrevRealm()
+	return prev.Addr().String(), prev.PkgPath()
+}

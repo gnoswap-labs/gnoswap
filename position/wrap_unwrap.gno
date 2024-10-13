@@ -27,13 +27,6 @@ func wrap(ugnotAmount uint64, to std.Address) {
 
 	// SEND WUGNOT: POSITION -> USER
 	wugnot.Transfer(a2u(to), ugnotAmount)
-
-	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_ugnotAmount", uint64ToStr(ugnotAmount),
-	)
 }
 
 func unwrap(wugnotAmount uint64, to std.Address) {
@@ -50,11 +43,4 @@ func unwrap(wugnotAmount uint64, to std.Address) {
 	// SEND GNOT: POSITION -> USER
 	banker := std.GetBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(consts.POSITION_ADDR, to, std.Coins{{"ugnot", int64(wugnotAmount)}})
-
-	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_wugnotAmount", uint64ToStr(wugnotAmount),
-	)
 }

@@ -9,31 +9,87 @@ import (
 )
 
 var (
-	halt bool = false
+	halted bool = false
 )
 
 func GetHalt() bool {
-	return halt
+	return halted
 }
 
 func IsHalted() {
-	if halt {
+	if halted {
 		panic("[COMMON] halt.gno__IsHalted() || gnoswap halted")
 	}
 }
 
-func SetHalt(v bool) {
+// SetHaltByAdmin sets the halt status.
+// Panics if the caller is not the admin.
+func SetHaltByAdmin(halt bool) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
+	if caller != consts.GNOSWAP_ADMIN {
 		panic(
 			ufmt.Sprintf(
-				"[COMMON] halt.gno__SetHalt() || only admin(%s) or governance(%s) can set halt, called from %s",
+				"[COMMON] halt.gno__SetHaltByAdmin() || only admin(%s) can set halt, called from %s",
 				consts.GNOSWAP_ADMIN,
+				caller,
+			),
+		)
+	}
+
+	setHalt(halt)
+
+	prevAddr, prevRealm := getPrev()
+	if halt {
+		std.Emit(
+			"SetHaltByAdmin",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"halt", boolToStr(halt),
+		)
+	} else {
+		std.Emit(
+			"UnsetHaltByAdmin",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"halt", boolToStr(halt),
+		)
+	}
+}
+
+// SetHalt sets the halt status.
+// Panics if the caller is not the governance contract.
+func SetHalt(halt bool) {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GOV_GOVERNANCE_ADDR {
+		panic(
+			ufmt.Sprintf(
+				"[COMMON] halt.gno__SetHalt() || only governance(%s) can set halt, called from %s",
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
 		)
 	}
 
-	halt = v
+	setHalt(halt)
+
+	prevAddr, prevRealm := getPrev()
+	if halt {
+		std.Emit(
+			"SetHalt",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"halt", boolToStr(halt),
+		)
+	} else {
+		std.Emit(
+			"UnsetHalt",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"halt", boolToStr(halt),
+		)
+	}
+}
+
+func setHalt(halt bool) {
+	halted = halt
 }

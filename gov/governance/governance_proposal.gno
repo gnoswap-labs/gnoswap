@@ -74,14 +74,14 @@ func ProposeText(
 	proposals[proposalId] = proposal
 	latestProposalByProposer[proposer] = proposalId
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
-		"Proposed",
-		"m_prevRealm", prevRealm(),
-		"p_title", title,
-		"p_description", description,
-		"proposalType", "TEXT",
-		"proposer", proposer.String(),
-		"proposalId", ufmt.Sprintf("%d", proposalId),
+		"ProposeText",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"title", title,
+		"description", description,
+		"internal_proposalId", ufmt.Sprintf("%d", proposalId),
 	)
 
 	return proposalId
@@ -135,17 +135,17 @@ func ProposeCommunityPoolSpend(
 	proposals[proposalId] = proposal
 	latestProposalByProposer[proposer] = proposalId
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
-		"Proposed",
-		"m_prevRealm", prevRealm(),
-		"p_title", title,
-		"p_description", description,
-		"p_to", to.String(),
-		"p_tokenPath", tokenPath,
-		"p_amount", ufmt.Sprintf("%d", amount),
-		"proposalType", "COMMUNITY_POOL_SPEND",
-		"proposer", proposer.String(),
-		"proposalId", ufmt.Sprintf("%d", proposalId),
+		"ProposeCommunityPoolSpend",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"title", title,
+		"description", description,
+		"to", to.String(),
+		"tokenPath", tokenPath,
+		"amount", ufmt.Sprintf("%d", amount),
+		"internal_proposalId", ufmt.Sprintf("%d", proposalId),
 	)
 
 	return proposalId
@@ -222,16 +222,16 @@ func ProposeParameterChange(
 	proposals[proposalId] = proposal
 	latestProposalByProposer[proposer] = proposalId
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
-		"Proposed",
-		"m_prevRealm", prevRealm(),
-		"p_title", title,
-		"p_description", description,
-		"p_numToExecute", ufmt.Sprintf("%d", numToExecute),
-		"p_executions", executions,
-		"proposalType", "PARAMETER_CHANGE",
-		"proposer", proposer.String(),
-		"proposalId", ufmt.Sprintf("%d", proposalId),
+		"ProposeParamterChange",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"title", title,
+		"description", description,
+		"numToExecute", ufmt.Sprintf("%d", numToExecute),
+		"executions", executions,
+		"internal_proposalId", ufmt.Sprintf("%d", proposalId),
 	)
 
 	return proposalId
@@ -311,12 +311,13 @@ func Vote(proposalId uint64, yes bool) string {
 		VotedAt:     now,
 	}
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
-		"Voted",
-		"m_prevRealm", prevRealm(),
-		"p_proposalId", ufmt.Sprintf("%d", proposalId),
-		"p_yes", voteToString(yes),
-		"voter", voter.String(),
+		"Vote",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"proposalId", ufmt.Sprintf("%d", proposalId),
+		"yes", voteToString(yes),
 		"weight", ufmt.Sprintf("%d", weight),
 	)
 
@@ -368,11 +369,12 @@ func Cancel(proposalId uint64) {
 
 	proposals[proposalId] = proposal
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
-		"Canceled",
-		"m_prevRealm", prevRealm(),
-		"p_proposalId", ufmt.Sprintf("%d", proposalId),
-		"by", caller.String(),
+		"Cancel",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"proposalId", ufmt.Sprintf("%d", proposalId),
 	)
 }
 
@@ -451,11 +453,12 @@ func Execute(proposalId uint64) {
 	proposal.ExecutionState.Active = false
 	proposals[proposalId] = proposal
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
-		"Executed",
-		"m_prevRealm", prevRealm(),
-		"p_proposalId", ufmt.Sprintf("%d", proposalId),
-		"executor", std.PrevRealm().Addr().String(),
+		"Execute",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"proposalId", ufmt.Sprintf("%d", proposalId),
 	)
 }
 

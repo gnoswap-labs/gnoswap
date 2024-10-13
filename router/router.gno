@@ -102,18 +102,18 @@ func SwapRoute(
 	)
 
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_input", inputToken,
-		"p_output", outputToken,
-		"p_swapType", swapType,
-		"p_amountSpecified", _amountSpecified,
-		"p_route", strRouteArr,
-		"p_quote", quoteArr,
-		"amountIn", amountIn,
-		"amountOut", amountOut,
-		"amountOutWithoutFee", resultAmountOut.ToString(),
+		"SwapRoute",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"input", inputToken,
+		"output", outputToken,
+		"swapType", swapType,
+		"amountSpecified", _amountSpecified,
+		"route", strRouteArr,
+		"quote", quoteArr,
+		"internal_amountIn", amountIn,
+		"internal_amountOut", amountOut,
+		"internal_amountOutWithoutFee", resultAmountOut.ToString(),
 	)
 
 	return amountIn, amountOut

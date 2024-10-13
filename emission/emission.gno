@@ -2,9 +2,14 @@ package emission
 
 import (
 	"std"
+	"time"
+
+	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/r/gnoswap/v2/gns"
 )
 
 // lastExecutedHeight is a flag to prevent multiple calling MintAndDistributeGns in the same block height
@@ -28,14 +33,21 @@ func MintAndDistributeGns() {
 		return
 	}
 
-	mintGns()
+	amount := mintGns()
 
 	emissionGnsBalance = gnsBalance(emissionAddr)
 	distributeToTarget(emissionGnsBalance)
 
-	// XXX TODO: REMOVE AFTER EMISSION QA
-	println("EM_emissionGnsBalance:\t\t\t", emissionGnsBalance)
-	println("EM_emissionGnsBalance(75%):\t\t", emissionGnsBalance*75/100)
+	std.Emit(
+		"MintAndDistributeGns",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"internal_lastHeight", ufmt.Sprintf("%d", lastExecutedHeight),
+		"internal_height", ufmt.Sprintf("%d", height),
+		"internal_time", ufmt.Sprintf("%d", time.Now().Unix()),
+		"internal_amount", ufmt.Sprintf("%d", amount),
+		"internal_totalSupply", ufmt.Sprintf("%d", gns.TotalSupply()),
+	)
 
 	lastExecutedHeight = height
 }

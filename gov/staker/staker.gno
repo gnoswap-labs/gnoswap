@@ -56,11 +56,13 @@ func Delegate(to std.Address, amount uint64) {
 	// actual delegate
 	delegate(to, amount)
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"Delegate",
-		"m_prevRealm", prevRealm(),
-		"p_to", to.String(),
-		"p_amount", ufmt.Sprintf("%d", amount),
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"to", to.String(),
+		"amount", ufmt.Sprintf("%d", amount),
 	)
 }
 
@@ -89,12 +91,14 @@ func Redelegate(from, to std.Address, amount uint64) {
 	undelegate(from, amount)
 	delegate(to, amount)
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"Redelegate",
-		"m_prevRealm", prevRealm(),
-		"p_from", from.String(),
-		"p_to", to.String(),
-		"p_amount", ufmt.Sprintf("%d", amount),
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"from", from.String(),
+		"to", to.String(),
+		"amount", ufmt.Sprintf("%d", amount),
 	)
 }
 
@@ -129,11 +133,13 @@ func Undelegate(from std.Address, amount uint64) {
 	addrLockedGns[caller] = append(addrLockedGns[caller], userLocked)
 	lockedAmount += amount
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"Undelegate",
-		"m_prevRealm", prevRealm(),
-		"p_from", from.String(),
-		"p_amount", ufmt.Sprintf("%d", amount),
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"from", from.String(),
+		"amount", ufmt.Sprintf("%d", amount),
 	)
 }
 
@@ -147,6 +153,8 @@ func CollectUndelegated() uint64 {
 		return 0
 	}
 
+	prevAdr, prevRealm := getPrev()
+
 	// check if caller has any GNS to claim
 	collected := uint64(0)
 	for i, locked := range addrLockedGns[caller] {
@@ -155,10 +163,10 @@ func CollectUndelegated() uint64 {
 			gns.Transfer(a2u(caller), locked.amount)
 
 			std.Emit(
-				"CollectUndelegated",
-
-				"m_prevRealm", prevRealm(),
-				"amount", ufmt.Sprintf("%d", locked.amount),
+				"CollectUndelegatedGns",
+				"prevAddr", prevAddr,
+				"prevRealm", prevRealm,
+				"internal_amount", ufmt.Sprintf("%d", locked.amount),
 			)
 
 			// remove from locked list
@@ -176,6 +184,8 @@ func CollectReward() {
 	en.MintAndDistributeGns()
 	calculateReward()
 
+	prevAddr, prevRealm := getPrev()
+
 	// GNS EMISSION
 	caller := std.PrevRealm().Addr()
 	emissionReward := userEmissionReward[caller]
@@ -190,10 +200,10 @@ func CollectReward() {
 		userEmissionReward[caller] = 0
 
 		std.Emit(
-			"CollectReward",
-			"m_prevRealm", prevRealm(),
-			"reward", "emission",
-			"amount", ufmt.Sprintf("%d", emissionReward),
+			"CollectEmissionReward",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"internal_amount", ufmt.Sprintf("%d", emissionReward),
 		)
 	}
 
@@ -216,11 +226,11 @@ func CollectReward() {
 		userProtocolFeeReward[caller][tokenPath] = 0
 
 		std.Emit(
-			"CollectReward",
-			"m_prevRealm", prevRealm(),
-			"reward", "protocol_fee",
-			"token", tokenPath,
-			"amount", ufmt.Sprintf("%d", amount),
+			"CollectProtocolFeeReward",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"internal_token", tokenPath,
+			"internal_amount", ufmt.Sprintf("%d", amount),
 		)
 	}
 }
@@ -233,6 +243,8 @@ func CollectRewardFromLaunchPad(to std.Address) {
 
 	en.MintAndDistributeGns()
 	calculateReward()
+
+	prevAddr, prevRealm := getPrev()
 
 	// GNS EMISSION
 	emissionReward := userEmissionReward[to]
@@ -247,11 +259,11 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		userEmissionReward[to] = 0
 
 		std.Emit(
-			"CollectRewardFromLaunchPad",
-			"m_prevRealm", prevRealm,
-			"m_to", to.String(),
-			"reward", "emission",
-			"amount", ufmt.Sprintf("%d", emissionReward),
+			"CollectEmissionFromLaunchPad",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"to", to.String(),
+			"internal_amount", ufmt.Sprintf("%d", emissionReward),
 		)
 	}
 
@@ -273,13 +285,14 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		println("GOV_STAKER_PROTOCOL_FEE_USER", to.String(), "TOKEN", tokenPath, "AMOUNT", amount)
 		userProtocolFeeReward[to][tokenPath] = 0
 
+		prevAddr, prevRealm := getPrev()
 		std.Emit(
-			"CollectReward",
-			"m_prevRealm", prevRealm,
-			"p_to", to.String(),
-			"reward", "protocol_fee",
-			"token", tokenPath,
-			"amount", ufmt.Sprintf("%d", amount),
+			"CollectProtocolFeeFromLaunchPad",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"to", to.String(),
+			"internal_token", tokenPath,
+			"internal_amount", ufmt.Sprintf("%d", amount),
 		)
 	}
 }

@@ -124,13 +124,13 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
 
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_tokenId", uint64ToStr(tokenId),
-		"poolPath", poolPath,
-		"amount0", token0Amount,
-		"amount1", token1Amount,
+		"StakeToken",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"tokenId", uint64ToStr(tokenId),
+		"internal_poolPath", poolPath,
+		"internal_amount0", token0Amount,
+		"internal_amount1", token1Amount,
 	)
 
 	positionsInternalWarmUpAmount[tokenId] = warmUpAmount{}
@@ -167,6 +167,8 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 	poolPath := deposits[tokenId].targetPoolPath
 
 	println("[ START ] CollectReward_EXTERNAL", tokenId)
+
+	prevAddr, prevRealm := getPrev()
 
 	_, exist = positionExternal[tokenId]
 	if exist {
@@ -217,16 +219,16 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 			left := fullAmount - toGive
 			println("  > warm up left := fullAmount - toGive (to protocol_fee)", left)
 			transferByRegisterCall(external.tokenPath, consts.PROTOCOL_FEE_ADDR, left)
+
 			std.Emit(
-				"GNOSWAP_PROTOCOL_FEE",
-				"m_callType", callType(),
-				"m_prevRealm", prevRealm(),
+				"ProtocolFeeExternalPenalty",
+				"prevAddr", prevAddr,
+				"prevRealm", prevRealm,
 				"lpTokenId", uint64ToStr(tokenId),
-				"poolPath", poolPath,
-				"incentiveId", incentiveId,
-				"reason", "unstaking_fee_penalty",
-				"token", external.tokenPath,
-				"amount", strconv.FormatUint(left, 10),
+				"internal_poolPath", poolPath,
+				"internal_incentiveId", incentiveId,
+				"internal_token", external.tokenPath,
+				"internal_amount", strconv.FormatUint(left, 10),
 			)
 
 			incentive.rewardLeft = new(u256.Uint).Sub(incentive.rewardLeft, u256.NewUint(fullAmount))
@@ -237,16 +239,16 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 			}
 
 			std.Emit(
-				"GNOSWAP",
-				"m_callType", callType(),
-				"m_prevRealm", prevRealm(),
-				"p_tokenId", uint64ToStr(tokenId),
+				"CollectRewardExternal",
+				"prevAddr", prevAddr,
+				"prevRealm", prevRealm,
+				"tokenId", uint64ToStr(tokenId),
 				"poolPath", poolPath,
-				"incentiveId", incentiveId,
-				"rewardToken", external.tokenPath,
-				"recipient", deposit.owner.String(),
-				"amount", uint64ToStr(toUser),
-				"unwrapResult", boolToStr(unwrapResult),
+				"internal_incentiveId", incentiveId,
+				"internal_rewardToken", external.tokenPath,
+				"internal_recipient", deposit.owner.String(),
+				"internal_amount", uint64ToStr(toUser),
+				"internal_unwrapResult", boolToStr(unwrapResult),
 			)
 		}
 	}
@@ -289,32 +291,30 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 	println(" > warm up left := fullAmount - toGive (to protocol_fee)", left)
 	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), left)
 	std.Emit(
-		"GNOSWAP_PROTOCOL_FEE",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
+		"ProtocolFeeEmissionPenalty",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
 		"lpTokenId", uint64ToStr(tokenId),
-		"poolPath", poolPath,
-		"incentiveId", "INTERNAL",
-		"reason", "gns_penalty",
-		"token", consts.GNS_PATH,
-		"amount", strconv.FormatUint(left, 10),
+		"internal_poolPath", poolPath,
+		"internal_incentiveId", "INTERNAL",
+		"internal_token", consts.GNS_PATH,
+		"internal_amount", strconv.FormatUint(left, 10),
 	)
 
-	// emit internal reward tokens
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_tokenId", uint64ToStr(tokenId),
-		"poolPath", poolPath,
-		"incentiveId", "INTERNAL",
-		"rewardToken", consts.GNS_PATH,
-		"recipient", deposit.owner.String(),
-		"fullAmount", uint64ToStr(fullAmount),
-		"toGive", uint64ToStr(toGive),
-		"amount", uint64ToStr(toUser),
-		"unstakingFee", uint64ToStr(toGive-toUser),
-		"left", uint64ToStr(left),
+		"CollectRewardEmission",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"tokenId", uint64ToStr(tokenId),
+		"internal_poolPath", poolPath,
+		"internal_incentiveId", "INTERNAL",
+		"internal_rewardToken", consts.GNS_PATH,
+		"internal_recipient", deposit.owner.String(),
+		"internal_fullAmount", uint64ToStr(fullAmount),
+		"internal_toGive", uint64ToStr(toGive),
+		"internal_amount", uint64ToStr(toUser),
+		"internal_unstakingFee", uint64ToStr(toGive-toUser),
+		"internal_left", uint64ToStr(left),
 	)
 
 	// DEBUG
@@ -369,16 +369,17 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_tokenId", uint64ToStr(tokenId),
-		"poolPath", poolPath,
-		"from", GetOrigPkgAddr().String(),
-		"to", deposit.owner.String(),
-		"amount0", token0Amount,
-		"amount1", token1Amount,
+		"UnstakeToken",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"tokenId", uint64ToStr(tokenId),
+		"internal_poolPath", poolPath,
+		"internal_from", GetOrigPkgAddr().String(),
+		"internal_to", deposit.owner.String(),
+		"internal_amount0", token0Amount,
+		"internal_amount1", token1Amount,
 	)
 
 	return poolPath, token0Amount, token1Amount
@@ -489,18 +490,19 @@ func CreateExternalIncentive(
 				externalGns[incentiveId] = incentive.rewardAmount.Uint64()
 			}
 
+			prevAddr, prevRealm := getPrev()
 			std.Emit(
-				"GNOSWAP",
-				"m_callType", callType(),
-				"m_prevRealm", prevRealm(),
-				"p_poolPath", targetPoolPath,
-				"p_rewardToken", rewardToken,
-				"p_rewardAmount", incentive.rewardAmount.ToString(),
-				"p_startTimestamp", int64ToStr(startTimestamp),
-				"p_endTimestamp", int64ToStr(endTimestamp),
-				"incentiveId", incentiveId,
-				"depositGnsAmount", uint64ToStr(incentive.depositGnsAmount),
-				"external", "updated",
+				"CreateExternalIncentive",
+				"prevAddr", prevAddr,
+				"prevRealm", prevRealm,
+				"poolPath", targetPoolPath,
+				"rewardToken", rewardToken,
+				"rewardAmount", incentive.rewardAmount.ToString(),
+				"startTimestamp", int64ToStr(startTimestamp),
+				"endTimestamp", int64ToStr(endTimestamp),
+				"internal_incentiveId", incentiveId,
+				"internal_depositGnsAmount", uint64ToStr(incentive.depositGnsAmount),
+				"internal_external", "updated",
 			)
 
 			return
@@ -539,18 +541,19 @@ func CreateExternalIncentive(
 		externalGns[incentiveId] = rewardAmount.Uint64()
 	}
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_poolPath", targetPoolPath,
-		"p_rewardToken", rewardToken,
-		"p_rewardAmount", _rewardAmount,
-		"p_startTimestamp", int64ToStr(startTimestamp),
-		"p_endTimestamp", int64ToStr(endTimestamp),
-		"incentiveId", incentiveId,
-		"depositGnsAmount", uint64ToStr(depositGnsAmount),
-		"external", "created",
+		"CreateExternalIncentive",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"poolPath", targetPoolPath,
+		"rewardToken", rewardToken,
+		"rewardAmount", _rewardAmount,
+		"startTimestamp", int64ToStr(startTimestamp),
+		"endTimestamp", int64ToStr(endTimestamp),
+		"internal_incentiveId", incentiveId,
+		"internal_depositGnsAmount", uint64ToStr(depositGnsAmount),
+		"internal_external", "created",
 	)
 }
 
@@ -614,17 +617,18 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		}
 	}
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_poolPath", targetPoolPath,
-		"p_rewardToken", rewardToken,
-		"p_refundee", refundee.String(),
-		"end_by", incentive.refundee.String(),
-		"refund_amount", refund.ToString(),
-		"refund_gns_amount", uint64ToStr(incentive.depositGnsAmount),
-		"incentiveId", incentiveId,
+		"EndExternalIncentive",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"poolPath", targetPoolPath,
+		"rewardToken", rewardToken,
+		"refundee", refundee.String(),
+		"internal_endBy", incentive.refundee.String(),
+		"internal_refundAmount", refund.ToString(),
+		"internal_refundGnsAmount", uint64ToStr(incentive.depositGnsAmount),
+		"internal_incentiveId", incentiveId,
 	)
 }
 

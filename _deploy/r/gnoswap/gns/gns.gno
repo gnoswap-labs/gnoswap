@@ -95,7 +95,7 @@ func Render(path string) string {
 }
 
 // Mint
-func Mint(address pusers.AddressOrName) {
+func Mint(address pusers.AddressOrName) uint64 {
 	common.IsHalted()
 
 	// only emission contract can call Mint
@@ -174,6 +174,8 @@ func Mint(address pusers.AddressOrName) {
 	lastMintedHeight = nowHeight
 	println("GNS_lastMintedHeight:", lastMintedHeight)
 	println("GNS_amountToMint:", amountToMint)
+
+	return amountToMint
 }
 
 func checkAndHandleIfLastBlockOfHalvingYear(height int64, amount uint64) uint64 {

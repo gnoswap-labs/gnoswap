@@ -170,14 +170,13 @@ func SetTokenURI(tid grc721.TokenID) {
 	tokenURI := genImageURI(r)
 	ok, _ := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
 	if ok {
-		prev := std.PrevRealm()
-
+		prevAddr, prevRealm := getPrev()
 		std.Emit(
-			"GNOSWAP",
-			"m_prevRealm", prev.PkgPath(),
-			"p_tokenId", string(tid),
-			"tokenURI", tokenURI,
-			"func", "SetTokenURI",
+			"SetTokenURI",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"tokenId", string(tid),
+			"internal_tokenURI", tokenURI,
 		)
 	}
 }
@@ -199,12 +198,13 @@ func SetTokenURILast() {
 
 		ok, _ := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
 		if ok {
+			prevAddr, prevRealm := getPrev()
 			std.Emit(
-				"GNOSWAP",
-				"m_prevRealm", prev.PkgPath(),
-				"p_tokenId", string(tid),
-				"tokenURI", tokenURI,
-				"func", "SetTokenURILast",
+				"SetTokenURI",
+				"prevAddr", prevAddr,
+				"prevRealm", prevRealm,
+				"tokenId", string(tid),
+				"internal_tokenURI", tokenURI,
 			)
 		}
 	}

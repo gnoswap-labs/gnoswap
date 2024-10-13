@@ -175,79 +175,34 @@ func CreateProject(
 
 	projects[projectId] = project
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"CreateProject",
-		"m_prevRealm", prevRealm(),
-		"p_tokenPath", tokenPath,
-		"p_recipient", recipient.String(),
-		"p_depositAmount", ufmt.Sprintf("%d", depositAmount),
-		"p_conditionsToken", conditionsToken,
-		"p_conditionsAmount", conditionsAmount,
-		"p_tier30Ratio", ufmt.Sprintf("%d", tier30Ratio),
-		"p_tier90Ratio", ufmt.Sprintf("%d", tier90Ratio),
-		"p_tier180Ratio", ufmt.Sprintf("%d", tier180Ratio),
-		"p_startTime", ufmt.Sprintf("%d", startTime),
-		"startHeight", ufmt.Sprintf("%d", startHeight),
-		"projectId", projectId,
-
-		"tier30Amount", ufmt.Sprintf("%d", tier30Amount),
-		"tier30EndHeight", ufmt.Sprintf("%d", tier30EndHeight),
-		"tier30AmountPerBlockX96", tier30AmountPerBlockX96.ToString(),
-
-		"tier90Amount", ufmt.Sprintf("%d", tier90Amount),
-		"tier90EndHeight", ufmt.Sprintf("%d", tier90EndHeight),
-		"tier90AmountPerBlockX96", tier90AmountPerBlockX96.ToString(),
-
-		"tier180Amount", ufmt.Sprintf("%d", tier180Amount),
-		"tier180EndHeight", ufmt.Sprintf("%d", tier180EndHeight),
-		"tier180AmountPerBlockX96", tier180AmountPerBlockX96.ToString(),
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"tokenPath", tokenPath,
+		"recipient", recipient.String(),
+		"depositAmount", ufmt.Sprintf("%d", depositAmount),
+		"conditionsToken", conditionsToken,
+		"conditionsAmount", conditionsAmount,
+		"tier30Ratio", ufmt.Sprintf("%d", tier30Ratio),
+		"tier90Ratio", ufmt.Sprintf("%d", tier90Ratio),
+		"tier180Ratio", ufmt.Sprintf("%d", tier180Ratio),
+		"startTime", ufmt.Sprintf("%d", startTime),
+		"internal_startHeight", ufmt.Sprintf("%d", startHeight),
+		"internal_projectId", projectId,
+		"internal_tier30Amount", ufmt.Sprintf("%d", tier30Amount),
+		"internal_tier30EndHeight", ufmt.Sprintf("%d", tier30EndHeight),
+		"internal_tier30AmountPerBlockX96", tier30AmountPerBlockX96.ToString(),
+		"internal_tier90Amount", ufmt.Sprintf("%d", tier90Amount),
+		"internal_tier90EndHeight", ufmt.Sprintf("%d", tier90EndHeight),
+		"internal_tier90AmountPerBlockX96", tier90AmountPerBlockX96.ToString(),
+		"internal_tier180Amount", ufmt.Sprintf("%d", tier180Amount),
+		"internal_tier180EndHeight", ufmt.Sprintf("%d", tier180EndHeight),
+		"internal_tier180AmountPerBlockX96", tier180AmountPerBlockX96.ToString(),
 	)
 
 	return projectId
-}
-
-// RefundProject refunds project's left token amount
-// - only recipient can refund
-//
-// returns amount
-func RefundProject(projectId string) uint64 {
-	assertUserCall()
-	caller := std.PrevRealm().Addr()
-	project, exist := projects[projectId]
-	if !exist {
-		panic("project not exist")
-	}
-
-	recipient := project.recipient
-	if caller != recipient {
-		panic("only recipient can refund")
-	}
-
-	endHeight := project.endHeight
-	height := uint64(std.GetHeight())
-
-	if endHeight > height {
-		panic("project not ended yet")
-	}
-
-	toRefund := project.depositAmount - project.totalCollectedAmount
-	if toRefund > 0 {
-		transferByRegisterCall(
-			project.tokenPath,
-			recipient,
-			toRefund,
-		)
-
-		std.Emit(
-			"RefundProject",
-			"m_prevRealm", prevRealm(),
-			"p_projectId", projectId,
-			"recipient", recipient.String(),
-			"toRefund", ufmt.Sprintf("%d", toRefund),
-		)
-	}
-
-	return toRefund
 }
 
 func generateProjectId(tokenPath string) string {

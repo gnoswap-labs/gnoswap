@@ -42,28 +42,20 @@ func handleSwapFee(
 			// ugnot: router > feeCollector
 			banker := std.GetBanker(std.BankerTypeRealmSend)
 			banker.SendCoins(consts.ROUTER_ADDR, consts.PROTOCOL_FEE_ADDR, std.Coins{{"ugnot", int64(feeAmountUint64)}})
-			std.Emit(
-				"GNOSWAP_PROTOCOL_FEE",
-				"m_callType", callType(),
-				"m_prevRealm", prevRealm(),
-				"reason", "router_fee",
-				"token", "ugnot",
-				"amount", strconv.FormatUint(feeAmountUint64, 10),
-			)
 		} else { // just transfer if grc20
 			ok := transferFromByRegisterCall(outputToken, std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
 			if !ok {
 				panic(ufmt.Sprintf("[ROUTER] protocol_fee_swap.gno__handleSwapFee() || expected transferFromByRegisterCall(%s, %s, %s, %d) == true", outputToken, std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64))
 			}
-			std.Emit(
-				"GNOSWAP_PROTOCOL_FEE",
-				"m_callType", callType(),
-				"m_prevRealm", prevRealm(),
-				"reason", "router_fee",
-				"token", outputToken,
-				"amount", strconv.FormatUint(feeAmountUint64, 10),
-			)
 		}
+
+		std.Emit(
+			"SwapRouteFee"
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"internal_token", outputToken,
+			"internal_amount", strconv.FormatUint(feeAmountUint64, 10),
+		)
 	}
 
 	toUserAfterProtocol := new(u256.Uint).Sub(amount, feeAmount)
@@ -74,20 +66,50 @@ func GetSwapFee() uint64 {
 	return swapFee
 }
 
-func SetSwapFee(fee uint64) {
-	common.IsHalted()
-
+func SetSwapFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
+	if caller != consts.GNOSWAP_ADMIN {
 		panic(
 			ufmt.Sprintf(
-				"[ROUTER] protocol_fee_swap.gno__SetSwapFee() || only admin(%s) or governance(%s) can set swap fee, called from %s",
+				"[ROUTER] protocol_fee_swap.gno__SetSwapFeeByAdmin() || only admin(%s) can set swap fee, called from %s",
 				consts.GNOSWAP_ADMIN,
+				caller,
+			),
+		)
+	}
+
+	setSwapFee(fee)
+	std.Emit(
+		"SetSwapFeeByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"fee", uint64ToStr(fee),
+	)
+}
+
+func SetSwapFee(fee uint64) {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GOV_GOVERNANCE_ADDR {
+		panic(
+			ufmt.Sprintf(
+				"[ROUTER] protocol_fee_swap.gno__SetSwapFee() || only governance(%s) can set swap fee, called from %s",
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
 		)
 	}
+
+	setSwapFee(fee)
+	std.Emit(
+		"SetSwapFee",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"fee", uint64ToStr(fee),
+	)
+}
+
+func setSwapFee(fee uint64) {
+	common.IsHalted()
 
 	// 10000 (bps) = 100%
 	if fee > 10000 {
@@ -95,11 +117,4 @@ func SetSwapFee(fee uint64) {
 	}
 
 	swapFee = fee
-
-	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_fee", uint64ToStr(fee),
-	)
 }

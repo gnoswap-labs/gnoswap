@@ -70,3 +70,8 @@ func assertUserCall() {
 		panic("must be called by user")
 	}
 }
+
+func getPrev() (string, string) {
+	prev := std.PrevRealm()
+	return prev.Addr().String(), prev.PkgPath()
+}

@@ -128,12 +128,14 @@ func DepositGns(
 	}
 	depositsByUserByProject[depositor][projectId] = append(depositsByUserByProject[depositor][projectId], depositId)
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"DepositGns",
-		"m_prevRealm", prevRealm(),
-		"p_targetProjectTierId", targetProjectTierId,
-		"p_amount", ufmt.Sprintf("%d", amount),
-		"depositId", depositId,
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"targetProjectTierId", targetProjectTierId,
+		"amount", ufmt.Sprintf("%d", amount),
+		"internal_depositId", depositId,
 	)
 
 	return depositId
@@ -149,6 +151,8 @@ func CollectDepositGns() uint64 {
 
 	caller := std.PrevRealm().Addr()
 	userDeposits := depositsByUser[caller]
+
+	prevAddr, prevRealm := getPrev()
 
 	gnsToUser := uint64(0)
 	for _, depositId := range userDeposits {
@@ -193,9 +197,10 @@ func CollectDepositGns() uint64 {
 		// emit event for each deposit
 		std.Emit(
 			"CollectDepositGns",
-			"m_prevRealm", prevRealm(),
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
 			"depositId", depositId,
-			"amount", ufmt.Sprintf("%d", deposit.amount),
+			"internal_amount", ufmt.Sprintf("%d", deposit.amount),
 		)
 	}
 
@@ -234,6 +239,8 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 	}
 
 	calculateDepositReward()
+
+	prevAddr, prevRealm := getPrev()
 
 	gnsToUser := uint64(0)
 	for _, depositId := range depositIds {
@@ -277,10 +284,12 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 
 		// emit event for each deposit
 		std.Emit(
-			"CollectDepositGns",
-			"m_prevRealm", prevRealm(),
-			"depositId", depositId,
-			"amount", ufmt.Sprintf("%d", deposit.amount),
+			"CollectDepositGnsByProjectId",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"projectId", projectId,
+			"internal_depositId", depositId,
+			"internal_amount", ufmt.Sprintf("%d", deposit.amount),
 		)
 	}
 
@@ -350,11 +359,13 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 	projects[deposit.projectId] = project
 
 	// emit event for each deposit
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
-		"CollectDepositGns",
-		"m_prevRealm", prevRealm(),
-		"p_depositId", depositId,
-		"amount", ufmt.Sprintf("%d", deposit.amount),
+		"CollectDepositGnsByDepositId",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"depositId", depositId,
+		"internal_amount", ufmt.Sprintf("%d", deposit.amount),
 	)
 
 	if deposit.amount > 0 {
