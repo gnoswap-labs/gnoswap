@@ -63,6 +63,8 @@ func HandleWithdrawalFee(
 	afterAmount0 := new(u256.Uint).Sub(amount0, feeAmount0)
 	afterAmount1 := new(u256.Uint).Sub(amount1, feeAmount1)
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"WithdrawalFee",
 		"prevAddr", prevAddr,
@@ -95,6 +97,9 @@ func SetWithdrawalFeeByAdmin(fee uint64) {
 	}
 
 	setWithdrawalFee(fee)
+
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"SetWithdrawalFeeByAdmin",
 		"prevAddr", prevAddr,
@@ -116,6 +121,9 @@ func SetWithdrawalFee(fee uint64) {
 	}
 
 	setWithdrawalFee(fee)
+
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"SetWithdrawalFee",
 		"prevAddr", prevAddr,

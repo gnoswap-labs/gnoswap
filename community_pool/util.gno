@@ -14,7 +14,7 @@ func assertUserCall() {
 	}
 }
 
-func prev() (string, string) {
+func getPrev() (string, string) {
 	prev := std.PrevRealm()
 	return prev.Addr().String(), prev.PkgPath()
 }

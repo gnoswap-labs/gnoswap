@@ -33,6 +33,7 @@ var (
 	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
 	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
 	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
+	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
 )
 
 /* HELPER */

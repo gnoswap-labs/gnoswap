@@ -107,7 +107,7 @@ func Mint(address pusers.AddressOrName) uint64 {
 	// if not yet initialized, mint 0 amount
 	if initialized == false {
 		println("GNS_not yet initialized")
-		return
+		return 0
 	}
 
 	// calculate gns emission amount for every block, and send by single call
@@ -122,7 +122,7 @@ func Mint(address pusers.AddressOrName) uint64 {
 
 	if lastMintedHeight >= nowHeight {
 		println("GNS_only one mint for each block")
-		return
+		return 0
 	}
 
 	// If from, to block is at same halving year, no need iterate

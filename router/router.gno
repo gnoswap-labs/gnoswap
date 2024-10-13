@@ -101,6 +101,8 @@ func SwapRoute(
 		amountSpecified.Abs(), // if swap type is EXACT_OUT, compare with this value to see user can actually receive this amount
 	)
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"SwapRoute",
 		"prevAddr", prevAddr,

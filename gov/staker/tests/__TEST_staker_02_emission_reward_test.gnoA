@@ -32,7 +32,7 @@ func TestInit(t *testing.T) {
 	shouldEQ(t, gns.BalanceOf(a2u(admin)), uint64(100000000000000)) // admin has initial gns
 	shouldEQ(t, xgns.BalanceOf(a2u(admin)), uint64(0))
 
-	en.ChangeDistributionPct(
+	en.ChangeDistributionPctByAdmin(
 		int(1), 7000,
 		int(2), 2000,
 		int(3), 500,

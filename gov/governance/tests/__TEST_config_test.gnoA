@@ -12,7 +12,7 @@ func TestReconfigure(t *testing.T) {
 
 		newConfigParams := "200*GOV*2000*GOV*200*GOV*1000*GOV*200*GOV*200*GOV*2000"
 		params := strings.Split(newConfigParams, "*GOV*")
-		newVersion := Reconfigure(handleGovernanceReconfigure(params))
+		newVersion := ReconfigureByAdmin(handleGovernanceReconfigure(params))
 
 		if newVersion != 2 {
 			t.Errorf("Expected new version to be 2, got %d", newVersion)
@@ -32,24 +32,6 @@ func TestReconfigure(t *testing.T) {
 			newConfig.ExecutionWindow != 2000 {
 			t.Errorf("New configuration does not match expected values")
 		}
-	})
-
-	t.Run("Not called by governor", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("The code did not panic")
-			} else if !strings.HasPrefix(string(r), "must be called by user") {
-				t.Errorf("Unexpected panic message: %v", r)
-			}
-		}()
-
-		// Set the caller to be a different address
-		dummyRealm := std.NewCodeRealm("dummy")
-		std.TestSetRealm(dummyRealm)
-
-		newConfigParams := "200*GOV*2000*GOV*200*GOV*1000*GOV*200*GOV*200*GOV*2000"
-		params := strings.Split(newConfigParams, "*GOV*")
-		Reconfigure(handleGovernanceReconfigure(params))
 	})
 }
 

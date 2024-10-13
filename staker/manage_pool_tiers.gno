@@ -123,6 +123,8 @@ func SetPoolTierByAdmin(poolPath string, tier uint64) {
 
 	setPoolTier(poolPath, tier)
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"SetPoolTierByAdmin",
 		"prevAddr", prevAddr,
@@ -145,6 +147,8 @@ func SetPoolTier(poolPath string, tier uint64) {
 	}
 
 	setPoolTier(poolPath, tier)
+
+	prevAddr, prevRealm := getPrev()
 
 	std.Emit(
 		"SetPoolTier",
@@ -191,12 +195,12 @@ func setPoolTier(pool string, tier uint64) {
 	}
 }
 
-func SetChangePoolTierByAdmin(poolPath string, tier uint64) {
+func ChangePoolTierByAdmin(poolPath string, tier uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
 		panic(
 			ufmt.Sprintf(
-				"[STAKER] manage_pool_tiers.gno__SetChangePoolTierByAdmin() || only admin(%s) can change existing pool tier, called from %s",
+				"[STAKER] manage_pool_tiers.gno__ChangePoolTierByAdmin() || only admin(%s) can change existing pool tier, called from %s",
 				consts.ADMIN,
 				caller,
 			),
@@ -205,8 +209,10 @@ func SetChangePoolTierByAdmin(poolPath string, tier uint64) {
 
 	changePoolTier(poolPath, tier)
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
-		"SetChangePoolTierByAdmin",
+		"ChangePoolTierByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"poolPath", poolPath,
@@ -214,12 +220,12 @@ func SetChangePoolTierByAdmin(poolPath string, tier uint64) {
 	)
 }
 
-func SetChangePoolTier(poolPath string, tier uint64) {
+func ChangePoolTier(poolPath string, tier uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
-				"[STAKER] manage_pool_tiers.gno__SetChangePoolTier() || only governance(%s) can change existing pool tier, called from %s",
+				"[STAKER] manage_pool_tiers.gno__ChangePoolTier() || only governance(%s) can change existing pool tier, called from %s",
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
@@ -228,8 +234,10 @@ func SetChangePoolTier(poolPath string, tier uint64) {
 
 	changePoolTier(poolPath, tier)
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
-		"SetChangePoolTier",
+		"ChangePoolTier",
 		"poolPath", poolPath,
 		"tier", uint64ToStr(tier),
 	)
@@ -295,6 +303,8 @@ func RemovePoolTierByAdmin(poolPath string) {
 
 	removePoolTier(poolPath)
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"RemovePoolTierByAdmin",
 		"prevAddr", prevAddr,
@@ -316,6 +326,8 @@ func RemovePoolTier(poolPath string) {
 	}
 
 	removePoolTier(poolPath)
+
+	prevAddr, prevRealm := getPrev()
 
 	std.Emit(
 		"RemovePoolTier",

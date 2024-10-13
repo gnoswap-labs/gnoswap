@@ -40,7 +40,7 @@ func init() {
 
 	// set pool create fee to 0 for testing
 	std.TestSetRealm(adminRealm)
-	pl.SetPoolCreationFee(0)
+	pl.SetPoolCreationFeeByAdmin(0)
 
 	// override warm-up period for testing
 	warmUp[100] = 901 // 30m ~

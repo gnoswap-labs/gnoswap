@@ -44,7 +44,7 @@ func TestChangeDistributionPct_ByAdmin(t *testing.T) {
 	shouldEQ(t, GetDistributionPct(int(3)), uint64(500))
 	shouldEQ(t, GetDistributionPct(int(4)), uint64(0))
 
-	ChangeDistributionPct(
+	ChangeDistributionPctByAdmin(
 		1, 10000,
 		2, 0,
 		3, 0,

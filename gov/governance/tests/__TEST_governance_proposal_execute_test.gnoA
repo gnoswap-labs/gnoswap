@@ -111,7 +111,7 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 		shouldEQ(t, en.GetDistributionPct(3), uint64(500))
 		shouldEQ(t, en.GetDistributionPct(4), uint64(0))
 
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
 		shouldEQ(t, en.GetDistributionPct(1), uint64(7000))
@@ -154,7 +154,7 @@ func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, gns.GetAvgBlockTimeInMs(), int64(2000))
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 		shouldEQ(t, gns.GetAvgBlockTimeInMs(), int64(5000))
 	})
@@ -198,7 +198,7 @@ func TestProposeParameterChange_GOV_Reconfigure(t *testing.T) {
 		shouldEQ(t, oldConfig.ExecutionWindow, uint64(1000))
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
 		newConfig := GetConfigVersion(0)
@@ -250,7 +250,7 @@ func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
 
 	t.Run("Execute proposal", func(t *testing.T) {
 		std.TestSkipHeights(6)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 	})
 }
@@ -284,7 +284,7 @@ func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, pl.GetPoolCreationFee(), uint64(100000000))
 		std.TestSkipHeights(6)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 		shouldEQ(t, pl.GetPoolCreationFee(), uint64(500))
 	})
@@ -319,7 +319,7 @@ func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 	t.Run("Execute proposal", func(t *testing.T) {
 		shouldEQ(t, pl.GetWithdrawalFee(), uint64(100))
 		std.TestSkipHeights(6)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 		shouldEQ(t, pl.GetWithdrawalFee(), uint64(500))
 	})
@@ -355,7 +355,7 @@ func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 		shouldEQ(t, pf.GetDevOpsPct(), uint64(0))
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
 		shouldEQ(t, pf.GetDevOpsPct(), uint64(900))
@@ -392,7 +392,7 @@ func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
 		shouldEQ(t, rr.GetSwapFee(), uint64(15))
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
 		shouldEQ(t, rr.GetSwapFee(), uint64(900))
@@ -430,7 +430,7 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 		shouldEQ(t, sr.GetDepositGnsAmount(), uint64(1000000000))
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
 		shouldEQ(t, sr.GetDepositGnsAmount(), uint64(900))
@@ -466,7 +466,7 @@ func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
 	t.Run("Execute proposal", func(t *testing.T) {
 		// create sample pool
 		std.TestSetRealm(adminRealm)
-		pl.SetPoolCreationFee(0)
+		pl.SetPoolCreationFeeByAdmin(0)
 		pl.CreatePool(consts.WUGNOT_PATH, consts.GNS_PATH, 100, "79228162514264337593543950337")
 
 		before := sr.GetPoolsWithTier()
@@ -474,7 +474,7 @@ func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
 		shouldEQ(t, before[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
 		after := sr.GetPoolsWithTier()
@@ -517,7 +517,7 @@ func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
 		shouldEQ(t, before[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_1")
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
 		after := sr.GetPoolsWithTier()
@@ -560,7 +560,7 @@ func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
 		shouldEQ(t, before[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_3")
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
 		after := sr.GetPoolsWithTier()
@@ -599,7 +599,7 @@ func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
 		shouldEQ(t, sr.GetUnstakingFee(), uint64(100))
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
 		shouldEQ(t, sr.GetUnstakingFee(), uint64(900))
@@ -636,7 +636,7 @@ func TestProposeParameterChange_Staker_SetWarmUp(t *testing.T) {
 		shouldEQ(t, sr.GetWarmUp(100), int64(901))
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
 		shouldEQ(t, sr.GetWarmUp(100), int64(1000))
@@ -673,7 +673,7 @@ func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
 		shouldEQ(t, cn.GetHalt(), false)
 
 		std.TestSkipHeights(6)
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 		shouldEQ(t, cn.GetHalt(), true)
 	})

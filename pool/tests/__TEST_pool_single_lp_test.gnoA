@@ -26,7 +26,7 @@ var (
 	test_tickUpper2 = int32(100000)
 )
 
-// 1. reate Pool using Factory Contract by Gnoswap Admin
+// 1. reate Pool using Factory Contract by admin
 func TestInitCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
 	std.TestSetRealm(adminRealm)
@@ -207,11 +207,11 @@ func TestSwap(t *testing.T) {
 			fooPath,    // token0Path
 			barPath,    // token1Path
 			fee500,     // fee
-			admin,        // recipient
+			admin,      // recipient
 			true,       // zeroForOne
 			"10000",    // _amountSpecified
 			test_price, // _sqrtPriceLimitX96
-			admin,        // payer
+			admin,      // payer
 		)
 
 		shouldNEQ(t, amount0, "0")
@@ -305,22 +305,24 @@ func TestSwap(t *testing.T) {
 	}
 }
 
-// 6. SetFeeProtocol by Gnoswap Admin
-func TestSetFeeProtocol(t *testing.T) {
+// 6. SetFeeProtocol by admin
+func TestSetFeeProtocolByAdmin(t *testing.T) {
 	// non admin call
-	shouldPanic(t, func() { SetFeeProtocol(2, 2) })
+	shouldPanic(t, func() { SetFeeProtocolByAdmin(2, 2) })
 
 	// admin call
-	SetFeeProtocol(6, 8)
+	std.TestSetRealm(adminRealm)
+	SetFeeProtocolByAdmin(6, 8)
 
 	for _, pool := range pools {
 		shouldEQ(t, pool.PoolGetSlot0().feeProtocol, uint8(134))
 	}
 }
 
-// 7. CollectProtocol by Gnoswap Admin
+// 7. CollectProtocol by admin
 func TestCollectProtocol(t *testing.T) {
-	SetFeeProtocol(6, 8)
+	std.TestSetRealm(adminRealm)
+	SetFeeProtocolByAdmin(6, 8)
 
 	pool := GetPool(barPath, fooPath, fee500)
 	test_slot0 := pool.PoolGetSlot0()
@@ -336,7 +338,7 @@ func TestCollectProtocol(t *testing.T) {
 		adminOldToken1Bal := balanceOfByRegisterCall(pool.token1Path, admin)
 
 		std.TestSetRealm(adminRealm)
-		amount0, amount1 := CollectProtocol(barPath, fooPath, fee500, admin, "100000", "100000")
+		amount0, amount1 := CollectProtocolByAdmin(barPath, fooPath, fee500, admin, "100000", "100000")
 
 		adminNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, admin)
 		adminNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, admin)

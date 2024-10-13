@@ -26,14 +26,14 @@ func TransferTokenByAdmin(pkgPath string, to std.Address, amount uint64) {
 
 	transferToken(pkgPath, to, amount)
 
-	prevAddr, prevRealm := common.GetPrev()
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"TransferTokenByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"pkgPath", pkgPath,
-		"to", to,
-		"amount", amount,
+		"to", to.String(),
+		"amount", ufmt.Sprintf("%d", amount),
 	)
 }
 
@@ -53,14 +53,14 @@ func TransferToken(pkgPath string, to std.Address, amount uint64) {
 
 	transferToken(pkgPath, to, amount)
 
-	prevAddr, prevRealm := common.GetPrev()
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"TransferToken",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"pkgPath", pkgPath,
-		"to", to,
-		"amount", amount,
+		"to", to.String(),
+		"amount", ufmt.Sprintf("%d", amount),
 	)
 }
 

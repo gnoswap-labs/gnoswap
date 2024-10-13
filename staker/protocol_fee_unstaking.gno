@@ -33,6 +33,8 @@ func handleUnstakingFee(
 		return amount
 	}
 
+	prevAddr, prevRealm := getPrev()
+
 	if internal {
 		// staker contract has fee
 		gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), feeAmount)
@@ -84,8 +86,12 @@ func SetUnstakingFeeByAdmin(fee uint64) {
 
 	setUnstakingFee(fee)
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"SetUnstakingFeeByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
 		"fee", uint64ToStr(fee),
 	)
 }
@@ -104,8 +110,12 @@ func SetUnstakingFee(fee uint64) {
 
 	setUnstakingFee(fee)
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"SetUnstakingFee",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
 		"fee", uint64ToStr(fee),
 	)
 }

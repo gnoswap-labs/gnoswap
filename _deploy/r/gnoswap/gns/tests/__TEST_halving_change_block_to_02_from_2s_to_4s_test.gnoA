@@ -32,8 +32,8 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 	shouldEQ(t, amountPerBlockPerHalvingYear[1], uint64(14269406))
 	shouldEQ(t, halvingYearBlock[1], int64(15768123))
 
-	std.TestSetRealm(adminRealm)
-	SetAvgBlockTimeInMs(4000)
+	std.TestSetRealm(swapAdminRealm)
+	SetAvgBlockTimeInMsByAdmin(4000)
 	std.TestSkipHeights(1)
 
 	std.TestSetRealm(emissionRealm)

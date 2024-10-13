@@ -30,6 +30,8 @@ func SetDepositGnsAmountByAdmin(amount uint64) {
 
 	setDepositGnsAmount(amount)
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"SetDepositGnsAmountByAdmin",
 		"prevAddr", prevAddr,
@@ -51,6 +53,8 @@ func SetDepositGnsAmount(amount uint64) {
 	}
 
 	setDepositGnsAmount(amount)
+
+	prevAddr, prevRealm := getPrev()
 
 	std.Emit(
 		"SetDepositGnsAmount",

@@ -153,7 +153,7 @@ func CollectUndelegated() uint64 {
 		return 0
 	}
 
-	prevAdr, prevRealm := getPrev()
+	prevAddr, prevRealm := getPrev()
 
 	// check if caller has any GNS to claim
 	collected := uint64(0)

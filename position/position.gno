@@ -103,6 +103,8 @@ func Mint(
 
 	poolSqrtPriceX96 := pl.PoolGetSqrtPriceX96(poolPath)
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"Mint",
 		"prevAddr", prevAddr,
@@ -259,6 +261,8 @@ func IncreaseLiquidity(
 
 	poolSqrtPriceX96 := pl.PoolGetSqrtPriceX96(poolPath)
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"IncreaseLiquidity",
 		"prevAddr", prevAddr,
@@ -371,6 +375,8 @@ func DecreaseLiquidity(
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
 
 	poolSqrtPriceX96 := pl.PoolGetSqrtPriceX96(poolPath)
+
+	prevAddr, prevRealm := getPrev()
 
 	std.Emit(
 		"DecreaseLiquidity",
@@ -593,6 +599,8 @@ func Reposition(
 
 	poolSqrtPriceX96 := pl.PoolGetSqrtPriceX96(position.poolKey)
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"Reposition",
 		"prevAddr", prevAddr,
@@ -707,6 +715,8 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 			unwrap(unwrapAmount, std.PrevRealm().Addr())
 		}
 	}
+
+	prevAddr, prevRealm := getPrev()
 
 	std.Emit(
 		"CollectSwapFee",

@@ -99,6 +99,8 @@ func CalcPoolPosition() {
 		return
 	}
 
+	prevAddr, prevRealm := getPrev()
+
 	// calculate each pool's total staked liquidity
 	poolTotalStakedLiquidity = make(map[string]*u256.Uint) // clear
 	for tokenId, deposit := range deposits {

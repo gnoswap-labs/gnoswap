@@ -38,6 +38,7 @@ func MintAndDistributeGns() {
 	emissionGnsBalance = gnsBalance(emissionAddr)
 	distributeToTarget(emissionGnsBalance)
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"MintAndDistributeGns",
 		"prevAddr", prevAddr,

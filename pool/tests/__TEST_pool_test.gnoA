@@ -125,33 +125,32 @@ func TestGetWithdrawalFee(t *testing.T) {
 	shouldEQ(t, GetWithdrawalFee(), uint64(100))
 }
 
-func TestSetWithdrawalFeeNoPermission(t *testing.T) {
+func TestSetWithdrawalFeeByAdminNoPermission(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
 	std.TestSetRealm(std.NewUserRealm(dummy))
 
-	shouldPanicWithMsg(
+	shouldPanic(
 		t,
 		func() {
-			SetWithdrawalFee(2)
+			SetWithdrawalFeeByAdmin(2)
 		},
-		"[POOL] protocol_fee_withdrawal.gno__SetWithdrawalFee() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can set withdrawal fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
-func TestSetWithdrawalFeeFeeOutOfRange(t *testing.T) {
-
-	shouldPanicWithMsg(
+func TestSetWithdrawalFeeByAdminFeeOutOfRange(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+	shouldPanic(
 		t,
 		func() {
-			SetWithdrawalFee(10001)
+			SetWithdrawalFeeByAdmin(10001)
 		},
-		"[POOL] withdrawal_fee.gno__SetWithdrawalFee() || fee(10001) must be in range 0 ~ 10000",
 	)
 }
 
-func TestSetWithdrawalFee(t *testing.T) {
+func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 	shouldEQ(t, GetWithdrawalFee(), uint64(100))
-	SetWithdrawalFee(300)
+	std.TestSetRealm(adminRealm)
+	SetWithdrawalFeeByAdmin(300)
 	shouldEQ(t, GetWithdrawalFee(), uint64(300))
 }
 
@@ -160,21 +159,21 @@ func TestGetPoolCreationFee(t *testing.T) {
 	shouldEQ(t, GetPoolCreationFee(), uint64(100_000_000))
 }
 
-func TestSetPoolCreationFeeNoPermission(t *testing.T) {
+func TestSetPoolCreationFeeByAdminNoPermission(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
 	std.TestSetRealm(std.NewUserRealm(dummy))
 
-	shouldPanicWithMsg(
+	shouldPanic(
 		t,
 		func() {
-			SetPoolCreationFee(2)
+			SetPoolCreationFeeByAdmin(2)
 		},
-		"[POOL] protocol_fee_pool_creation.gno__SetPoolCreationFee() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can set pool creation fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
-func TestSetPoolCreationFee(t *testing.T) {
+func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 	shouldEQ(t, GetPoolCreationFee(), uint64(100_000_000))
-	SetPoolCreationFee(200_000_000)
+	std.TestSetRealm(adminRealm)
+	SetPoolCreationFeeByAdmin(200_000_000)
 	shouldEQ(t, GetPoolCreationFee(), uint64(200_000_000))
 }

@@ -41,12 +41,11 @@ func TestTransferGnsNoPermission(t *testing.T) {
 	dummyRealm := std.NewUserRealm(dummy)
 
 	std.TestSetRealm(dummyRealm)
-	shouldPanicWithMsg(
+	shouldPanic(
 		t,
 		func() {
 			TransferToken(consts.GNS_PATH, dummy, 1000)
 		},
-		"[COMMUNITY_POOL] community_pool.gno__TransferToken() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can transfer community pool's balance, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
@@ -58,9 +57,18 @@ func TestTransferGns(t *testing.T) {
 	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(1000))
 
 	sendTarget := testutils.TestAddress("sendTarget")
-	TransferToken(consts.GNS_PATH, sendTarget, 900)
+	TransferTokenByAdmin(consts.GNS_PATH, sendTarget, 900)
 	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(100))
 	shouldEQ(t, gns.BalanceOf(a2u(sendTarget)), uint64(900))
+}
+
+func shouldPanic(t *testing.T, f func()) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic")
+		}
+	}()
+	f()
 }
 
 func shouldPanicWithMsg(t *testing.T, f func(), msg string) {

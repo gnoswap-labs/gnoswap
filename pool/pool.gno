@@ -402,6 +402,8 @@ func Swap(
 
 	}
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"Swap",
 		"prevAddr", prevAddr,
@@ -448,9 +450,9 @@ func SetFeeProtocolByAdmin(
 		"SetFeeProtocolByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"feeProtocol0", feeProtocol0,
-		"feeProtocol1", feeProtocol1,
-		"internal_newFee", newFee,
+		"feeProtocol0", ufmt.Sprintf("%d", feeProtocol0),
+		"feeProtocol1", ufmt.Sprintf("%d", feeProtocol1),
+		"internal_newFee", ufmt.Sprintf("%d", newFee),
 	)
 }
 
@@ -478,9 +480,9 @@ func SetFeeProtocol(
 		"SetFeeProtocol",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"feeProtocol0", feeProtocol0,
-		"feeProtocol1", feeProtocol1,
-		"internal_newFee", newFee,
+		"feeProtocol0", ufmt.Sprintf("%d", feeProtocol0),
+		"feeProtocol1", ufmt.Sprintf("%d", feeProtocol1),
+		"internal_newFee", ufmt.Sprintf("%d", newFee),
 	)
 }
 
@@ -541,11 +543,13 @@ func CollectProtocolByAdmin(
 		"prevRealm", prevRealm,
 		"token0Path", token0Path,
 		"token1Path", token1Path,
-		"fee", fee,
+		"fee", ufmt.Sprintf("%d", fee),
 		"recipient", recipient.String(),
 		"internal_amount0", amount0,
 		"internal_amount1", amount1,
 	)
+
+	return amount0, amount1
 }
 
 func CollectProtocol(
@@ -583,11 +587,13 @@ func CollectProtocol(
 		"prevRealm", prevRealm,
 		"token0Path", token0Path,
 		"token1Path", token1Path,
-		"fee", fee,
+		"fee", ufmt.Sprintf("%d", fee),
 		"recipient", recipient.String(),
 		"amount0", amount0,
 		"amount1", amount1,
 	)
+
+	return amount0, amount1
 }
 
 func collectProtocol(

@@ -37,7 +37,7 @@ func SetPoolCreationFeeByAdmin(fee uint64) {
 
 	setPoolCreationFee(fee)
 
-	prevAddr, prevRealm := common.GetPrev()
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"SetPoolCreationFeeByAdmin",
 		"prevAddr", prevAddr,

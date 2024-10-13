@@ -3,6 +3,8 @@ package protocol_fee
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 )
@@ -66,11 +68,14 @@ func SetDevOpsPctByAdmin(pct uint64) {
 	}
 
 	setDevOpsPct(pct)
+
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"SetDevOpsPctByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"pct", pct,
+		"pct", ufmt.Sprintf("%d", pct),
 	)
 }
 
@@ -83,11 +88,14 @@ func SetDevOpsPct(pct uint64) {
 	}
 
 	setDevOpsPct(pct)
+
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"SetDevOpsPct",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"pct", pct,
+		"pct", ufmt.Sprintf("%d", pct),
 	)
 }
 

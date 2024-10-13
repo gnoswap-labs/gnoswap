@@ -77,29 +77,29 @@ func TestPositionsProtected(t *testing.T) {
 
 	t.Run("fails if fee is lt 4 or gt 10", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		shouldPanic(t, func() { SetFeeProtocol(3, 3) })
-		shouldPanic(t, func() { SetFeeProtocol(6, 3) })
-		shouldPanic(t, func() { SetFeeProtocol(3, 6) })
-		shouldPanic(t, func() { SetFeeProtocol(11, 11) })
-		shouldPanic(t, func() { SetFeeProtocol(6, 11) })
-		shouldPanic(t, func() { SetFeeProtocol(11, 6) })
+		shouldPanic(t, func() { SetFeeProtocolByAdmin(3, 3) })
+		shouldPanic(t, func() { SetFeeProtocolByAdmin(6, 3) })
+		shouldPanic(t, func() { SetFeeProtocolByAdmin(3, 6) })
+		shouldPanic(t, func() { SetFeeProtocolByAdmin(11, 11) })
+		shouldPanic(t, func() { SetFeeProtocolByAdmin(6, 11) })
+		shouldPanic(t, func() { SetFeeProtocolByAdmin(11, 6) })
 	})
 
 	t.Run("can be changed by the owner", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		SetFeeProtocol(6, 6)
+		SetFeeProtocolByAdmin(6, 6)
 		shouldEQ(t, thisPool.slot0.feeProtocol, uint8(102))
 	})
 
 	t.Run("succeeds for fee of 4", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		SetFeeProtocol(4, 4)
+		SetFeeProtocolByAdmin(4, 4)
 		shouldEQ(t, thisPool.slot0.feeProtocol, uint8(68))
 	})
 
 	t.Run("succeeds for fee of 10", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		SetFeeProtocol(10, 10)
+		SetFeeProtocolByAdmin(10, 10)
 		shouldEQ(t, thisPool.slot0.feeProtocol, uint8(170))
 	})
 
@@ -110,7 +110,7 @@ func TestPositionsProtected(t *testing.T) {
 
 	t.Run("can turn off protocol fee", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		SetFeeProtocol(0, 0)
+		SetFeeProtocolByAdmin(0, 0)
 		shouldEQ(t, thisPool.slot0.feeProtocol, uint8(0))
 	})
 

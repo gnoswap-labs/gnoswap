@@ -30,7 +30,7 @@ func init() {
 
 	// set pool create fee to 0 for testing
 	std.TestSetRealm(adminRealm)
-	pl.SetPoolCreationFee(0)
+	pl.SetPoolCreationFeeByAdmin(0)
 }
 
 func TestPoolInitCreatePool(t *testing.T) {

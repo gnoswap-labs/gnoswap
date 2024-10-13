@@ -22,7 +22,7 @@ var (
 // turn protocol fee on
 func init() {
 	std.TestSetRealm(adminRealm)
-	SetFeeProtocol(4, 4)
+	SetFeeProtocolByAdmin(4, 4)
 }
 
 func TestLimitOrderThru_Positive_1_WithFee(t *testing.T) {

@@ -167,6 +167,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 			toUser += deposit.rewardAmount
 		}
 
+		prevAddr, prevRealm := getPrev()
 		std.Emit(
 			"CollectRewardByDepositId",
 			"prevAddr", prevAddr,
@@ -188,8 +189,6 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 	// transfer reward to user
 	transferByRegisterCall(project.tokenPath, std.PrevRealm().Addr(), toUser)
-
-	// XXX: emit event
 
 	return toUser
 }

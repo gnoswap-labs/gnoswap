@@ -123,6 +123,8 @@ func StakeToken(tokenId uint64) (string, string, string) { // poolPath, token0Am
 
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"StakeToken",
 		"prevAddr", prevAddr,

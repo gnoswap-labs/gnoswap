@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	admin      std.Address = consts.ADMIN
-	adminRealm             = std.NewUserRealm(admin)
+	swapAdmin      std.Address = consts.ADMIN
+	swapAdminRealm             = std.NewUserRealm(swapAdmin)
 
 	emissionUsers = pusers.AddressOrName(consts.EMISSION_ADDR)
 	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)

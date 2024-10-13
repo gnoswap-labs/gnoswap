@@ -40,55 +40,40 @@ func TestDistributeProtocolFee(t *testing.T) {
 	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
 }
 
-func TestSetDevOpsPctNoPermission(t *testing.T) {
+func TestSetDevOpsPctByAdminNoPermission(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
 	dummyRealm := std.NewUserRealm(dummy)
 	std.TestSetRealm(dummyRealm)
 
-	shouldPanicWithMsg(
+	shouldPanic(
 		t,
 		func() {
-			SetDevOpsPct(123)
+			SetDevOpsPctByAdmin(123)
 		},
-		"only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can change protocol fee distribution percent for dev ops, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
-func TestSetDevOpsPctInvalidFee(t *testing.T) {
+func TestSetDevOpsPctByAdminInvalidFee(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	shouldPanicWithMsg(
+	shouldPanic(
 		t,
 		func() {
-			SetDevOpsPct(100001)
+			SetDevOpsPctByAdmin(100001)
 		},
-		"pct should not be bigger than 10000",
 	)
 }
 
-func TestSetDevOpsPct(t *testing.T) {
+func TestSetDevOpsPctByAdmin(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
 	shouldEQ(t, GetDevOpsPct(), uint64(0))
 
-	SetDevOpsPct(123)
+	SetDevOpsPctByAdmin(123)
 
 	shouldEQ(t, GetDevOpsPct(), uint64(123))
 }
 
 func a2u(addr std.Address) pusers.AddressOrName {
 	return pusers.AddressOrName(addr)
-}
-
-func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
-		} else {
-			if r != msg {
-				t.Errorf("excepted panic(%v), got(%v)", msg, r)
-			}
-		}
-	}()
-	f()
 }

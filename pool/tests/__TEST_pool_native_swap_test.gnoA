@@ -39,7 +39,7 @@ func TestMint(t *testing.T) {
 
 	// simulate transfer & decrase
 	std.TestSetOrigSend(std.Coins{{"ugnot", 1_000_000}}, nil)
-	testBanker.RemoveCoin(std.PrevRealm().Addr(), "ugnot", 1_000_000)
+	testBanker.RemoveCoin(admin, "ugnot", 1_000_000)
 
 	// Deposit(wrap)
 	std.TestSetRealm(adminRealm)

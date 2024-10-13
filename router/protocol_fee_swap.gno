@@ -49,8 +49,10 @@ func handleSwapFee(
 			}
 		}
 
+		prevAddr, prevRealm := getPrev()
+
 		std.Emit(
-			"SwapRouteFee"
+			"SwapRouteFee",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
 			"internal_token", outputToken,
@@ -79,6 +81,9 @@ func SetSwapFeeByAdmin(fee uint64) {
 	}
 
 	setSwapFee(fee)
+
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"SetSwapFeeByAdmin",
 		"prevAddr", prevAddr,
@@ -100,6 +105,9 @@ func SetSwapFee(fee uint64) {
 	}
 
 	setSwapFee(fee)
+
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
 		"SetSwapFee",
 		"prevAddr", prevAddr,

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/p/demo/json"
 )
