@@ -74,9 +74,9 @@ func SetDevOpsPctByAdmin(pct uint64) {
 	)
 }
 
-// SetDevOpsPctByGovernance sets the devOpsPct.
+// SetDevOpsPct sets the devOpsPct.
 // Panics if the caller is not the governance contract.
-func SetDevOpsPctByGovernance(pct uint64) {
+func SetDevOpsPct(pct uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
 		panic("must be called by governance")
@@ -84,7 +84,7 @@ func SetDevOpsPctByGovernance(pct uint64) {
 
 	setDevOpsPct(pct)
 	std.Emit(
-		"SetDevOpsPctByGovernance",
+		"SetDevOpsPct",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"pct", pct,
