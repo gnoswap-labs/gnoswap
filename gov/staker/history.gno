@@ -11,7 +11,7 @@ import (
 
 // DelegationHistory represents a single delegation event
 type DelegationHistory struct {
-	to        string
+	to        std.Address
 	amount    uint64
 	timestamp uint64
 	height    uint64
@@ -22,8 +22,8 @@ type DelegationHistory struct {
 var delegationHistory = make(map[std.Address][]DelegationHistory)
 
 type ModifiedDelegationHistory struct {
-	from                 string
-	to                   string
+	from                 std.Address
+	to                   std.Address
 	delegatedHeight      uint64
 	delegatedTimestamp   uint64
 	delegatedAmount      uint64
@@ -36,13 +36,12 @@ type ModifiedDelegationHistory struct {
 var delegationModifiedHistory = make(map[std.Address][]ModifiedDelegationHistory)
 
 // GetCurrentDelegated returns the current delegated amount for a delegate
-func GetCurrentDelegated(_delegator string) string {
+func GetCurrentDelegated(delegator std.Address) string {
 	en.MintAndDistributeGns()
 	calculateReward()
 
-	delegator := std.Address(_delegator)
 	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
+		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
 	}
 
 	history, exist := delegationModifiedHistory[delegator]
@@ -59,13 +58,12 @@ func GetCurrentDelegated(_delegator string) string {
 }
 
 // GetDelegatedAt returns the delegated amount for a delegate at a specific timestamp.
-func GetDelegatedAt(_delegator string, timestamp uint64) string {
+func GetDelegatedAt(delegator std.Address, timestamp uint64) string {
 	en.MintAndDistributeGns()
 	calculateReward()
 
-	delegator := std.Address(_delegator)
 	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
+		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
 	}
 
 	history, exist := delegationModifiedHistory[delegator]
@@ -84,13 +82,12 @@ func GetDelegatedAt(_delegator string, timestamp uint64) string {
 }
 
 // GetDelegatedCumulative gets the cumulative delegated amount for an address at a certain timestamp.
-func GetDelegatedCumulative(_delegator string, timestamp uint64) uint64 {
+func GetDelegatedCumulative(delegator std.Address, timestamp uint64) uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
 
-	delegator := std.Address(_delegator)
 	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
+		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
 	}
 
 	if timestamp >= uint64(time.Now().Unix()) {
@@ -127,13 +124,12 @@ func GetDelegatedCumulative(_delegator string, timestamp uint64) uint64 {
 }
 
 // GetAverageDelegated calculates the average delegated amount for a delegate over a given period
-func GetAverageDelegated(_delegator string, start, end uint64) uint64 {
+func GetAverageDelegated(delegator std.Address, start, end uint64) uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
 
-	delegator := std.Address(_delegator)
 	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
+		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
 	}
 
 	if start > end {
@@ -175,10 +171,10 @@ func GetAverageDelegated(_delegator string, start, end uint64) uint64 {
 }
 
 // GetAverageDelegatedOverLastDuration gets the average amount delegated over the last period seconds.
-func GetAverageDelegatedOverLastDuration(_delegator string, period uint64) uint64 {
+func GetAverageDelegatedOverLastDuration(delegator std.Address, period uint64) uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
 
 	now := uint64(time.Now().Unix())
-	return GetAverageDelegated(_delegator, now-period, now)
+	return GetAverageDelegated(delegator, now-period, now)
 }

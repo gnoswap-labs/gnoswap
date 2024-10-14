@@ -21,7 +21,7 @@ func GetLockedAmount() uint64 {
 // GetLockedInfoByAddress gets the locked info of an address.
 // - total locked amount
 // - claimable amount
-func GetLockedInfoByAddress(addr string) string {
+func GetLockedInfoByAddress(addr std.Address) string {
 	en.MintAndDistributeGns()
 	calculateReward()
 
@@ -55,7 +55,7 @@ func GetLockedInfoByAddress(addr string) string {
 	return marshal(lockedObj)
 }
 
-func GetClaimableRewardByAddress(addr string) string {
+func GetClaimableRewardByAddress(addr std.Address) string {
 	en.MintAndDistributeGns()
 	calculateReward()
 
@@ -67,7 +67,6 @@ func GetClaimableRewardByAddress(addr string) string {
 	rewardObj.AppendObject("emissionReward", json.StringNode("emissionReward", ufmt.Sprintf("%d", emissionReward)))
 
 	protocolFees, exist := userProtocolFeeReward[addr]
-	println("GetClaimableRewardByAddress_PF", protocolFees)
 	if exist {
 		pfArr := json.ArrayNode("", nil)
 		for tokenPath, amount := range protocolFees {

@@ -281,7 +281,7 @@ func Vote(proposalId uint64, yes bool) string {
 	}
 
 	weight := gs.GetDelegatedCumulative(
-		voter.String(),
+		voter,
 		votingStartTime-config.VotingWeightSmoothingDuration,
 	)
 	if weight == 0 {

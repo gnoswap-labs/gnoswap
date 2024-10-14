@@ -1,14 +1,17 @@
-package staker
+package launchpad
 
 import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
+
 	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/gnoswap/v2/consts"
 )
 
+// GRC20Interface is the interface for GRC20 tokens
+// It is used to interact with the GRC20 tokens without importing but by registering each tokens function
 type GRC20Interface interface {
 	Transfer() func(to pusers.AddressOrName, amount uint64)
 	TransferFrom() func(from, to pusers.AddressOrName, amount uint64)
@@ -17,12 +20,11 @@ type GRC20Interface interface {
 }
 
 var (
-	// registered is a map of registered GRC20 interfaces keyed by package path
 	registered = make(map[string]GRC20Interface)
 	locked     = false // mutex
 )
 
-// GetRegisteredTokens returns a slice of all registered tokjen package paths
+// GetRegisteredTokens returns a list of all registered tokens
 func GetRegisteredTokens() []string {
 	tokens := make([]string, 0, len(registered))
 	for k := range registered {
@@ -47,7 +49,7 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 
 	_, found := registered[pkgPath]
 	if found {
-		panic(ufmt.Sprintf("[GOV_STAKER] token_register.gno__RegisterGRC20Interface() || pkgPath(%s) already registered", pkgPath))
+		panic(ufmt.Sprintf("[LAUNCH_PAD] token_register.gno__RegisterGRC20Interface() || pkgPath(%s) already registered", pkgPath))
 	}
 
 	registered[pkgPath] = igrc20
@@ -62,7 +64,7 @@ func UnregisterGRC20Interface(pkgPath string) {
 
 	caller := std.PrevRealm().Addr()
 	if caller != consts.TOKEN_REGISTER {
-		panic(ufmt.Sprintf("[GOV_STAKER] token_register.gno__UnregisterGRC20Interface() || unauthorized address(%s) to unregister", caller.String()))
+		panic(ufmt.Sprintf("[LAUNCH_PAD] token_register.gno__UnregisterGRC20Interface() || unauthorized address(%s) to unregister", caller.String()))
 	}
 
 	pkgPath = handleNative(pkgPath)
@@ -78,7 +80,7 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 
 	_, found := registered[pkgPath]
 	if !found {
-		panic(ufmt.Sprintf("[GOV_STAKER] token_register.gno__transferByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		panic(ufmt.Sprintf("[LAUNCH_PAD] token_register.gno__transferByRegisterCall() || pkgPath(%s) not found", pkgPath))
 	}
 
 	if !locked {
@@ -89,8 +91,9 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 			locked = false
 		}()
 	} else {
-		panic("[GOV_STAKER] token_register.gno__transferByRegisterCall() || expected locked to be false")
+		panic("[LAUNCH_PAD] token_register.gno__transferByRegisterCall() || expected locked to be false")
 	}
+
 	return true
 }
 
@@ -99,7 +102,7 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 
 	_, found := registered[pkgPath]
 	if !found {
-		panic(ufmt.Sprintf("[GOV_STAKER] token_register.gno__transferFromByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		panic(ufmt.Sprintf("[LAUNCH_PAD] token_register.gno__transferFromByRegisterCall() || pkgPath(%s) not found", pkgPath))
 	}
 
 	if !locked {
@@ -110,7 +113,7 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 			locked = false
 		}()
 	} else {
-		panic("[GOV_STAKER] token_register.gno__transferFromByRegisterCall() || expected locked to be false")
+		panic("[LAUNCH_PAD] token_register.gno__transferFromByRegisterCall() || expected locked to be false")
 	}
 	return true
 }
@@ -120,7 +123,7 @@ func balanceOfByRegisterCall(pkgPath string, owner std.Address) uint64 {
 
 	_, found := registered[pkgPath]
 	if !found {
-		panic(ufmt.Sprintf("[GOV_STAKER] token_register.gno__balanceOfByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		panic(ufmt.Sprintf("[LAUNCH_PAD] token_register.gno__balanceOfByRegisterCall() || pkgPath(%s) not found", pkgPath))
 	}
 
 	balance := registered[pkgPath].BalanceOf()(pusers.AddressOrName(owner))
@@ -132,7 +135,7 @@ func approveByRegisterCall(pkgPath string, spender std.Address, amount uint64) b
 
 	_, found := registered[pkgPath]
 	if !found {
-		panic(ufmt.Sprintf("[GOV_STAKER] token_register.gno__approveByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		panic(ufmt.Sprintf("[LAUNCH_PAD] token_register.gno__approveByRegisterCall() || pkgPath(%s) not found", pkgPath))
 	}
 
 	registered[pkgPath].Approve()(pusers.AddressOrName(spender), amount)

@@ -38,7 +38,7 @@ func GetTotalDelegated() uint64 {
 }
 
 // GetTotalDelegatedFrom returns the total amount of xGNS delegated by given address.
-func GetTotalDelegatedFrom(from string) uint64 {
+func GetTotalDelegatedFrom(from std.Address) uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
 
@@ -50,7 +50,7 @@ func GetTotalDelegatedFrom(from string) uint64 {
 }
 
 // GetTotalDelegatedTo returns the total amount of xGNS delegated to given address.
-func GetTotalDelegatedTo(to string) uint64 {
+func GetTotalDelegatedTo(to std.Address) uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
 
@@ -62,7 +62,7 @@ func GetTotalDelegatedTo(to string) uint64 {
 }
 
 // GetDelegationAmountFromTo returns the amount of xGNS delegated by given address to given address.
-func GetDelegationAmountFromTo(from, to string) uint64 {
+func GetDelegationAmountFromTo(from, to std.Address) uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
 
@@ -116,7 +116,7 @@ func GetVotingPowerBase() string {
 	votingArr := json.ArrayNode("", nil)
 	for addr, amount := range delegatedTo {
 		votingObj := json.ObjectNode("", nil)
-		votingObj.AppendObject("address", json.StringNode("address", addr))
+		votingObj.AppendObject("address", json.StringNode("address", addr.String()))
 		votingObj.AppendObject("delegated", json.StringNode("delegated", ufmt.Sprintf("%d", amount)))
 		votingArr.AppendArray(votingObj)
 	}
@@ -133,7 +133,7 @@ func GetVotingPowerBase() string {
 
 // GetVotingPowerBaseByAddress returns the data that can be used to calculate the voting power of given address.
 // It returns the total delegated amount and the delegated amount of given address.
-func GetVotingPowerBaseByAddress(addr string) string {
+func GetVotingPowerBaseByAddress(addr std.Address) string {
 	en.MintAndDistributeGns()
 	calculateReward()
 
@@ -146,7 +146,7 @@ func GetVotingPowerBaseByAddress(addr string) string {
 	for toAddr, amount := range delegatedTo {
 		if toAddr == addr {
 			votingObj := json.ObjectNode("", nil)
-			votingObj.AppendObject("address", json.StringNode("address", addr))
+			votingObj.AppendObject("address", json.StringNode("address", addr.String()))
 			votingObj.AppendObject("delegated", json.StringNode("delegated", ufmt.Sprintf("%d", amount)))
 			votingArr.AppendArray(votingObj)
 			break

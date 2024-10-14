@@ -1,4 +1,4 @@
-package staker
+package launchpad
 
 import (
 	"std"
@@ -23,30 +23,17 @@ var (
 	fee500  uint32 = 500
 	fee3000 uint32 = 3000
 
-	max_timeout int64 = 9999999999
+	maxApprove uint64 = 18446744073709551615
 )
 
 // Realms to mock frames
 var (
 	adminRealm = std.NewUserRealm(admin)
-
-	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
-	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
-	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
+	posRealm   = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
 )
 
 /* HELPER */
-func ugnotBalanceOf(addr std.Address) uint64 {
-	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-
-	coins := testBanker.GetCoins(addr)
-	if len(coins) == 0 {
-		return 0
-	}
-
-	return uint64(coins.AmountOf("ugnot"))
-}
-
 func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {
 		t.Errorf("got\n%v\n\nexpected\n%v\n", got, expected)
@@ -74,9 +61,20 @@ func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
 			t.Errorf("The code did not panic")
 		} else {
 			if r != msg {
-				t.Errorf("excepted panic\n%v\n\ngot\n%v\n", msg, r)
+				t.Errorf("excepted panic(%v), got(%v)", msg, r)
 			}
 		}
 	}()
 	f()
+}
+
+func ugnotBalanceOf(addr std.Address) uint64 {
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+
+	coins := testBanker.GetCoins(addr)
+	if len(coins) == 0 {
+		return 0
+	}
+
+	return uint64(coins.AmountOf("ugnot"))
 }

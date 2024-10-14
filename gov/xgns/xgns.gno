@@ -58,10 +58,10 @@ func Render(path string) string {
 func Mint(to pusers.AddressOrName, amount uint64) {
 	common.IsHalted()
 
-	// only gov staker contract can call Mint
+	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_STAKER_ADDR {
-		panic("only gov staker contract can call Mint")
+	if caller != consts.GOV_STAKER_ADDR && caller != consts.LAUNCHPAD_ADDR {
+		panic("only (gov staker) or (launchpad) contract can call Mint")
 	}
 
 	checkErr(banker.Mint(users.Resolve(to), amount))
