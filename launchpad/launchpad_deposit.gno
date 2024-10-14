@@ -284,7 +284,7 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 
 		// emit event for each deposit
 		std.Emit(
-			"CollectDepositGnsByProjectId",
+			"CollectDepositGnsByProjectId_Deposit",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
 			"projectId", projectId,
@@ -292,6 +292,14 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 			"internal_amount", ufmt.Sprintf("%d", deposit.amount),
 		)
 	}
+
+	std.Emit(
+		"CollectDepositGnsByProjectId",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"projectId", projectId,
+		"internal_amount", ufmt.Sprintf("%d", gnsToUser),
+	)
 
 	if gnsToUser > 0 {
 		xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), gnsToUser)
