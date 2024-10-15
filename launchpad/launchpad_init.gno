@@ -63,6 +63,9 @@ func CreateProject(
 	if strings.Contains(conditionsToken, "*PAD*") {
 		tokensToCheck := strings.Split(conditionsToken, "*PAD*")
 		for _, token := range tokensToCheck {
+			if token == consts.GOV_XGNS_PATH {
+				continue
+			}
 			if _, exist := registered[token]; !exist {
 				panic(ufmt.Sprintf("condition token(%s) not registered", token))
 			}

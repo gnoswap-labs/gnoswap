@@ -398,7 +398,12 @@ func checkDepositConditions(project Project) {
 			continue
 		} else {
 			// check balance
-			balance := balanceOfByRegisterCall(condition.tokenPath, std.PrevRealm().Addr())
+			var balance uint64
+			if condition.tokenPath == consts.GOV_XGNS_PATH {
+				balance = xgns.BalanceOf(a2u(std.PrevRealm().Addr()))
+			} else {
+				balance = balanceOfByRegisterCall(condition.tokenPath, std.PrevRealm().Addr())
+			}
 			if balance < condition.minAmount {
 				panic(ufmt.Sprintf("insufficient balance(%d) for token(%s)", balance, condition.tokenPath))
 			}
