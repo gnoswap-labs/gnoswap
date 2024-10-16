@@ -98,7 +98,7 @@ func CreatePool(
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
 			"internal_poolPath", poolPath,
-			"internal_token", consts.GNS_PATH,
+			"internal_tokenPath", consts.GNS_PATH,
 			"internal_amount", ufmt.Sprintf("%d", poolCreationFee),
 		)
 
@@ -180,7 +180,7 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	s.WriteString(":")
 	s.WriteString(token1Path)
 	s.WriteString(":")
-	s.WriteString(ufmt.Sprintf("%d", fee)),
+	s.WriteString(ufmt.Sprintf("%d", fee))
 
 	return s.String()
 }

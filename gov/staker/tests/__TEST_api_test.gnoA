@@ -145,7 +145,7 @@ func TestUndelegate(t *testing.T) {
 func TestCollectBefore7Days(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	CollectUndelegated() // 7 days not passed yet
+	CollectUndelegatedGns() // 7 days not passed yet
 }
 
 func TestCollectAfter7Days(t *testing.T) {
@@ -162,7 +162,7 @@ func TestCollectAfter7Days(t *testing.T) {
 	std.TestSkipHeights(302400) // 7 days 2 seconds
 	shouldEQ(t, GetLockedInfoByAddress(admin), `{"height":"302523","now":"1235172690","totalLocked":"1000001","claimableAmount":"1000001"}`)
 
-	CollectUndelegated()
+	CollectUndelegatedGns()
 	shouldEQ(t, GetLockedAmount(), uint64(0))
 	shouldEQ(t, GetLockedInfoByAddress(admin), `{"height":"302523","now":"1235172690","totalLocked":"0","claimableAmount":"0"}`)
 }

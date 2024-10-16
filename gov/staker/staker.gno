@@ -143,7 +143,7 @@ func Undelegate(from std.Address, amount uint64) {
 	)
 }
 
-func CollectUndelegated() uint64 {
+func CollectUndelegatedGns() uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
 
@@ -229,7 +229,7 @@ func CollectReward() {
 			"CollectProtocolFeeReward",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"internal_token", tokenPath,
+			"internal_tokenPath", tokenPath,
 			"internal_amount", ufmt.Sprintf("%d", amount),
 		)
 	}
@@ -291,7 +291,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
 			"to", to.String(),
-			"internal_token", tokenPath,
+			"intinternal_tokenPathernal_token", tokenPath,
 			"internal_amount", ufmt.Sprintf("%d", amount),
 		)
 	}

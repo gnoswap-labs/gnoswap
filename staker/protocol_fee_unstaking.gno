@@ -43,7 +43,7 @@ func handleUnstakingFee(
 			"prevRealm", prevRealm,
 			"internal_lpTokenId", ufmt.Sprintf("%d", tokenId),
 			"internal_poolPath", poolPath,
-			"internal_token", consts.GNS_PATH,
+			"internal_tokenPath", consts.GNS_PATH,
 			"internal_amount", ufmt.Sprintf("%d", feeAmount),
 		)
 
@@ -59,7 +59,7 @@ func handleUnstakingFee(
 			"prevRealm", prevRealm,
 			"internal_lpTokenId", ufmt.Sprintf("%d", tokenId),
 			"internal_poolPath", poolPath,
-			"internal_token", tokenPath,
+			"internal_tokenPath", tokenPath,
 			"internal_amount", ufmt.Sprintf("%d", feeAmount),
 		)
 	}

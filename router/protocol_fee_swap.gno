@@ -54,7 +54,7 @@ func handleSwapFee(
 			"SwapRouteFee",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"internal_token", outputToken,
+			"internal_tokenPath", outputToken,
 			"internal_amount", ufmt.Sprintf("%d", feeAmountUint64),
 		)
 	}

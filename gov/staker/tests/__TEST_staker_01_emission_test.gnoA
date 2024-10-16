@@ -101,7 +101,7 @@ func TestCollectBefore7Days(t *testing.T) {
 
 	shouldEQ(t, len(addrLockedGns[admin]), 1)
 
-	CollectUndelegated() // 7 days not passed yet
+	CollectUndelegatedGns() // 7 days not passed yet
 
 	shouldEQ(t, len(addrLockedGns[admin]), 1)
 	shouldEQ(t, gns.BalanceOf(a2u(admin)), uint64(99999998999999))
@@ -114,7 +114,7 @@ func TestCollectAfter7Days(t *testing.T) {
 	shouldEQ(t, len(addrLockedGns[admin]), 1)
 
 	std.TestSkipHeights(302401) // 7 days 2 seconds
-	CollectUndelegated()
+	CollectUndelegatedGns()
 
 	shouldEQ(t, len(addrLockedGns[admin]), 0)
 	shouldEQ(t, gns.BalanceOf(a2u(admin)), uint64(100000000000000))

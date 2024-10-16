@@ -112,7 +112,7 @@ func Mint(
 		"tickLower", ufmt.Sprintf("%d", tickLower),
 		"tickUpper", ufmt.Sprintf("%d", tickUpper),
 		"poolPath", poolPath,
-		"internal_tokenId", ufmt.Sprintf("%d", tokenId),
+		"internal_lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"internal_liquidity", liquidity.ToString(),
 		"internal_amount0", amount0.ToString(),
 		"internal_amount1", amount1.ToString(),
@@ -390,7 +390,7 @@ func DecreaseLiquidity(
 		"internal_fee1", fee1.ToString(),
 		"internal_amount0", amount0.ToString(),
 		"internal_amount1", amount1.ToString(),
-		"internal_unwrapResult", boolToStr(unwrapResult),
+		"internal_unwrapResult", ufmt.Sprintf("%t", unwrapResult),
 		"internal_sqrtPriceX96", poolSqrtPriceX96.ToString(),
 	)
 
@@ -726,7 +726,7 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 		"internal_fee0", withoutFee0,
 		"internal_fee1", withoutFee1,
 		"internal_poolPath", position.poolKey,
-		"internal_unwrapResult", boolToStr(unwrapResult),
+		"internal_unwrapResult", ufmt.Sprintf("%t", unwrapResult),
 	)
 
 	return tokenId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
