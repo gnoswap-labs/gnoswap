@@ -73,50 +73,8 @@ func min(x, y uint64) uint64 {
 	return y
 }
 
-func uint8ToStr(i uint8) string {
-	return strconv.FormatInt(int64(i), 10)
-}
-
-func int32ToStr(i int32) string {
-	return strconv.FormatInt(int64(i), 10)
-}
-
-func int64ToStr(i int64) string {
-	return strconv.FormatInt(i, 10)
-}
-
-func uint64ToStr(i uint64) string {
-	return strconv.FormatInt(int64(i), 10)
-}
-
-func strToUint64(s string) uint64 {
-	i, err := strconv.Atoi(s)
-
-	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] utils.gno__strToUint64() || failed to convert string(%s) to uint64", s))
-	}
-
-	return uint64(i)
-}
-
-func boolToStr(b bool) string {
-	if b {
-		return "true"
-	}
-
-	return "false"
-}
-
 func prevRealm() string {
 	return std.PrevRealm().PkgPath()
-}
-
-func callType() string {
-	if prevRealm() == "" {
-		return "DIRECT"
-	}
-
-	return "INDIRECT"
 }
 
 func contains(slice []string, item string) bool {

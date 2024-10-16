@@ -2,7 +2,6 @@ package pool
 
 import (
 	"std"
-	"strconv"
 
 	pusers "gno.land/p/demo/users"
 
@@ -21,36 +20,8 @@ func u256Min(num1, num2 *u256.Uint) *u256.Uint {
 	return num2
 }
 
-func uint8ToStr(i uint8) string {
-	return strconv.FormatInt(int64(i), 10)
-}
-
-func int32ToStr(i int32) string {
-	return strconv.FormatInt(int64(i), 10)
-}
-
-func uint64ToStr(i uint64) string {
-	return strconv.FormatInt(int64(i), 10)
-}
-
-func boolToStr(b bool) string {
-	if b {
-		return "true"
-	}
-
-	return "false"
-}
-
 func prevRealm() string {
 	return std.PrevRealm().PkgPath()
-}
-
-func callType() string {
-	if prevRealm() == "" {
-		return "DIRECT"
-	}
-
-	return "INDIRECT"
 }
 
 func isUserCall() bool {
