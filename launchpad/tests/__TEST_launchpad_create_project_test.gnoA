@@ -1,0 +1,103 @@
+package launchpad
+
+import (
+	"std"
+	"testing"
+	"time"
+
+	"gno.land/p/demo/testutils"
+
+	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v2/gns"
+	gov_staker "gno.land/r/gnoswap/v2/gov/staker"
+	xgns "gno.land/r/gnoswap/v2/gov/xgns"
+	"gno.land/r/onbloc/obl"
+	"gno.land/r/onbloc/usdc"
+)
+
+var (
+	projectAddr = testutils.TestAddress("projectAddr")
+	user01      = testutils.TestAddress("user01")
+
+	projectRealm = std.NewUserRealm(projectAddr)
+	user01Realm  = std.NewUserRealm(user01)
+)
+
+func init() {
+	println("test_init")
+}
+
+func TestCreateProject(t *testing.T) {
+	var allocationTokenAmount uint64 = 1_000_000_000_000 // 1000000000000
+	std.TestSetRealm(gsaRealm)
+
+	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), allocationTokenAmount)
+	std.TestSkipHeights(1)
+
+	projectId := CreateProject(
+		oblPath,
+		projectAddr,
+		allocationTokenAmount,
+		"gno.land/r/gnoswap/v2/gov/xgns*PAD*gno.land/r/onbloc/usdc",
+		"100000000*PAD*200000000",
+		uint64(50),                   // 50%
+		uint64(30),                   // 30%
+		uint64(20),                   // 20%
+		uint64(time.Now().Unix()+10), // 10s later
+	)
+	shouldEQ(t, projectId, `gno.land/r/onbloc/obl:124`)
+	std.TestSkipHeights(1)
+}
+
+func TestMockProtocolFee(t *testing.T) {
+	std.TestSetRealm(gsaRealm)
+	usdc.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1_000_000_000)
+	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 2_500_000_000)
+
+	shouldEQ(t, usdc.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1_000_000_000))
+	shouldEQ(t, usdc.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, usdc.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+
+	shouldEQ(t, gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(2_500_000_000))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+}
+
+func TestDepositGnsToTier30Failure(t *testing.T) {
+	var usdcConditionAmount uint64 = 200_000_000
+	var oblDepositAmount uint64 = 1_000_000
+	std.TestSetRealm(gsaRealm)
+	usdc.Transfer(a2u(user01), usdcConditionAmount)
+	std.TestSetRealm(user01Realm)
+	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), oblDepositAmount)
+
+	std.TestSkipHeights(4)
+	shouldPanicWithMsg(
+		t,
+		func() {
+			DepositGns("gno.land/r/onbloc/obl:124:30", oblDepositAmount)
+		},
+		`insufficient balance(0) for token(gno.land/r/gnoswap/v2/gov/xgns)`,
+	)
+	std.TestSkipHeights(1)
+}
+
+func TestDepositGnsToTier30WithCondition(t *testing.T) {
+	var xGNSConditionAmount uint64 = 100_000_000
+	var gnsDepositAmount uint64 = 1_000_000
+	std.TestSetRealm(gsaRealm)
+	gns.Transfer(a2u(user01), xGNSConditionAmount+gnsDepositAmount)
+	shouldEQ(t, gns.BalanceOf(a2u(user01)), xGNSConditionAmount+gnsDepositAmount) // admin has initial gns
+	shouldEQ(t, xgns.BalanceOf(a2u(user01)), uint64(0))
+
+	std.TestSetRealm(user01Realm)
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), xGNSConditionAmount)
+	gov_staker.Delegate(user01, xGNSConditionAmount)
+	shouldEQ(t, xgns.BalanceOf(a2u(user01)), xGNSConditionAmount)
+	std.TestSkipHeights(4)
+
+	var beforeDepositGns uint64 = gns.BalanceOf(a2u(consts.LAUNCHPAD_ADDR))
+	DepositGns("gno.land/r/onbloc/obl:124:30", gnsDepositAmount)
+	shouldEQ(t, gns.BalanceOf(a2u(consts.LAUNCHPAD_ADDR)), beforeDepositGns+gnsDepositAmount)
+	std.TestSkipHeights(1)
+}

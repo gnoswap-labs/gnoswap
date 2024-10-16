@@ -15,6 +15,8 @@ import (
 
 	"gno.land/r/onbloc/obl"
 
+	"gno.land/r/onbloc/usdc"
+
 	"gno.land/r/gnoswap/v2/gns"
 
 	"gno.land/r/gnoswap/v2/consts"
@@ -120,17 +122,29 @@ type GNSToken struct{}
 func (GNSToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return gns.Transfer
 }
-
 func (GNSToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return gns.TransferFrom
 }
-
 func (GNSToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return gns.BalanceOf
 }
-
 func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return gns.Approve
+}
+
+type USDCToken struct{}
+
+func (USDCToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return usdc.Transfer
+}
+func (USDCToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return usdc.TransferFrom
+}
+func (USDCToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return usdc.BalanceOf
+}
+func (USDCToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return usdc.Approve
 }
 
 func init() {
@@ -144,6 +158,7 @@ func init() {
 	pf.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	pf.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
 	pf.RegisterGRC20Interface("gno.land/r/gnoswap/v2/gns", GNSToken{})
+	pf.RegisterGRC20Interface("gno.land/r/onbloc/usdc", USDCToken{})
 
 	// gov_staker
 	gs.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
@@ -153,6 +168,7 @@ func init() {
 	gs.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	gs.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
 	gs.RegisterGRC20Interface("gno.land/r/gnoswap/v2/gns", GNSToken{})
+	gs.RegisterGRC20Interface("gno.land/r/onbloc/usdc", USDCToken{})
 
 	RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
 	RegisterGRC20Interface("gno.land/r/onbloc/foo", FooToken{})
@@ -161,4 +177,5 @@ func init() {
 	RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
 	RegisterGRC20Interface("gno.land/r/gnoswap/v2/gns", GNSToken{})
+	RegisterGRC20Interface("gno.land/r/onbloc/usdc", USDCToken{})
 }
