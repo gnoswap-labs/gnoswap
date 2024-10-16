@@ -14,7 +14,7 @@ import (
 
 func TestProposeText(t *testing.T) {
 	t.Run("ProposeText with insufficient delegation", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
@@ -27,15 +27,15 @@ func TestProposeText(t *testing.T) {
 	})
 
 	t.Run("Successful text proposal", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		proposalsJson := GetProposals()
 		if proposalsJson != `` {
 			t.Errorf("Expected empty proposals, got %v", proposalsJson)
 		}
 
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
-		gs.Delegate(gsa, uint64(1_000_000))
+		gs.Delegate(admin, uint64(1_000_000))
 		std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
 
 		proposalID := ProposeText("test_title", "test_description")
@@ -48,8 +48,8 @@ func TestProposeText(t *testing.T) {
 			t.Errorf("Proposal not found after creation")
 		}
 
-		if proposal.Proposer != gsa {
-			t.Errorf("Incorrect proposer. Expected %v, got %v", gsa, proposal.Proposer)
+		if proposal.Proposer != admin {
+			t.Errorf("Incorrect proposer. Expected %v, got %v", admin, proposal.Proposer)
 		}
 
 		if proposal.ProposalType != "TEXT" {
@@ -85,7 +85,7 @@ func TestProposeText(t *testing.T) {
 			t.Errorf("Incorrect proposals json: %v", proposalsJson)
 		}
 
-		votesJson := GetVotesByAddress(gsa)
+		votesJson := GetVotesByAddress(admin)
 		if votesJson != `` {
 			t.Errorf("Expected empty votes, got %v", votesJson)
 		}
@@ -94,7 +94,7 @@ func TestProposeText(t *testing.T) {
 
 func TestVote(t *testing.T) {
 	t.Run("Vote non existent proposal", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
@@ -109,7 +109,7 @@ func TestVote(t *testing.T) {
 	proposalId := uint64(1) // text proposal id
 
 	t.Run("Vote before voting period", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
@@ -122,7 +122,7 @@ func TestVote(t *testing.T) {
 	})
 
 	t.Run("Successful vote YES", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(11)
 
 		voteKey := Vote(proposalId, true)
@@ -153,7 +153,7 @@ func TestVote(t *testing.T) {
 			t.Errorf("Incorrect proposals json: %v", proposalsJson)
 		}
 
-		votesJson := GetVotesByAddress(gsa)
+		votesJson := GetVotesByAddress(admin)
 		if votesJson != `{"height":"145","now":"1234567934","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"145","voteTimestamp":"1234567934"}]}` {
 			t.Errorf("Incorrect votes json: %v", votesJson)
 		}
@@ -163,19 +163,19 @@ func TestVote(t *testing.T) {
 			t.Errorf("Incorrect vote json: %v", voteJson)
 		}
 
-		addrVotesJson := GetVotesByAddress(gsa)
+		addrVotesJson := GetVotesByAddress(admin)
 		if addrVotesJson != `{"height":"145","now":"1234567934","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"145","voteTimestamp":"1234567934"}]}` {
 			t.Errorf("Incorrect address votes json: %v", addrVotesJson)
 		}
 
-		addrVoteJson := GetVoteByAddressFromProposalById(gsa, proposalId)
+		addrVoteJson := GetVoteByAddressFromProposalById(admin, proposalId)
 		if addrVoteJson != `{"height":"145","now":"1234567934","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"145","voteTimestamp":"1234567934"}]}` {
 			t.Errorf("Incorrect address vote json: %v", addrVoteJson)
 		}
 	})
 
 	t.Run("Vote twice", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
@@ -188,7 +188,7 @@ func TestVote(t *testing.T) {
 	})
 
 	t.Run("Vote after voting period", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(2001)
 
 		defer func() {
@@ -203,7 +203,7 @@ func TestVote(t *testing.T) {
 	})
 
 	t.Run("Proposal status after voting period", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		updateProposalsState()
 
 		proposal := proposals[proposalId]
@@ -227,14 +227,14 @@ func TestVote(t *testing.T) {
 
 func TestCancel(t *testing.T) {
 	// new text proposal #2
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	proposalId := ProposeText("test2_title", "test2_description")
 	if proposalId != 2 {
 		t.Errorf("Expected proposal ID to be 2, got %d", proposalId)
 	}
 
 	t.Run("Cancel non existent proposal", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
@@ -247,7 +247,7 @@ func TestCancel(t *testing.T) {
 	})
 
 	t.Run("Successful cancel", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		Cancel(proposalId)
 		proposalsJson := GetProposals()
 		if proposalsJson != `{"height":"2146","now":"1234571936","proposals":[{"id":"1","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTEyIiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTY3OTIyIiwiVm90aW5nRW5kIjoiMTIzNDU2Nzk1MiIsIlBhc3NlZCI6InRydWUiLCJQYXNzZWRBdCI6IjEyMzQ1NzE5MzYiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":""},{"id":"2","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTcxOTM2IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTcxOTQ2IiwiVm90aW5nRW5kIjoiMTIzNDU3MTk3NiIsIlBhc3NlZCI6ImZhbHNlIiwiUGFzc2VkQXQiOiIwIiwiUmVqZWN0ZWQiOiJmYWxzZSIsIlJlamVjdGVkQXQiOiIwIiwiQ2FuY2VsZWQiOiJ0cnVlIiwiQ2FuY2VsZWRBdCI6IjEyMzQ1NzE5MzYiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"TEXT","title":"test2_title","description":"test2_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":""}]}` {
@@ -274,7 +274,7 @@ func TestCancel(t *testing.T) {
 	})
 
 	t.Run("Cancel already canceled proposal", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
@@ -287,7 +287,7 @@ func TestCancel(t *testing.T) {
 	})
 
 	t.Run("Cancle after voting period", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
@@ -307,7 +307,7 @@ func TestExecute(t *testing.T) {
 	proposalId := uint64(1) // text proposal id
 
 	t.Run("Execute text proposal", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
@@ -322,10 +322,10 @@ func TestExecute(t *testing.T) {
 
 func TestNoBehaviourProposal(t *testing.T) {
 	t.Run("Successful text proposal", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(adminRealm)
 		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
-		gs.Delegate(gsa, uint64(1_000_000))
+		gs.Delegate(admin, uint64(1_000_000))
 		std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
 
 		proposalID := ProposeText("test_title", "test_description")
@@ -338,8 +338,8 @@ func TestNoBehaviourProposal(t *testing.T) {
 			t.Errorf("Proposal not found after creation")
 		}
 
-		if proposal.Proposer != gsa {
-			t.Errorf("Incorrect proposer. Expected %v, got %v", gsa, proposal.Proposer)
+		if proposal.Proposer != admin {
+			t.Errorf("Incorrect proposer. Expected %v, got %v", admin, proposal.Proposer)
 		}
 
 		if proposal.ProposalType != "TEXT" {
@@ -389,8 +389,8 @@ func TestNoBehaviourProposal(t *testing.T) {
 
 func TestMultipleProposalFromSameAddress(t *testing.T) {
 	t.Run("Successful two text proposal", func(t *testing.T) {
-		std.TestSetRealm(gsaRealm)
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(adminRealm)
 
 		proposalID := ProposeText("test_title", "test_description")
 		if proposalID != 6 {

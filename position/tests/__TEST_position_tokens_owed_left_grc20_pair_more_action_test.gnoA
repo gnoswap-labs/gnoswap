@@ -15,7 +15,7 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
@@ -23,7 +23,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -38,8 +38,8 @@ func TestMintPosition01InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 	std.TestSkipHeights(1)
 
@@ -50,7 +50,7 @@ func TestMintPosition01InRange(t *testing.T) {
 
 	position := positions[uint64(1)]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -63,7 +63,7 @@ func TestMintPosition01InRange(t *testing.T) {
 }
 
 func TestSwap1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetRealm(rouRealm)
@@ -71,11 +71,11 @@ func TestSwap1(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 	std.TestSkipHeights(1)
 
@@ -85,7 +85,7 @@ func TestSwap1(t *testing.T) {
 	// pool.swap really doesn't update the position
 	position := positions[uint64(1)]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -103,7 +103,7 @@ func TestSwap1(t *testing.T) {
 }
 
 func TestMintPosition02InRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -118,8 +118,8 @@ func TestMintPosition02InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 	std.TestSkipHeights(1)
 
@@ -130,7 +130,7 @@ func TestMintPosition02InRange(t *testing.T) {
 
 	position := positions[uint64(2)]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(9000))
 	shouldEQ(t, position.tickUpper, int32(10000))
@@ -143,18 +143,18 @@ func TestMintPosition02InRange(t *testing.T) {
 }
 
 func TestSwap2(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	std.TestSetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 	std.TestSkipHeights(1)
 
@@ -164,7 +164,7 @@ func TestSwap2(t *testing.T) {
 	// pool.swap really doesn't update the position
 	position := positions[uint64(1)]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -177,18 +177,18 @@ func TestSwap2(t *testing.T) {
 }
 
 func TestSwap3(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	std.TestSetRealm(rouRealm)
 	amount0, amount1 := pl.Swap(
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 	std.TestSkipHeights(1)
 
@@ -199,7 +199,7 @@ func TestSwap3(t *testing.T) {
 	{
 		position := positions[uint64(1)]
 		shouldEQ(t, position.nonce.ToString(), "0")
-		shouldEQ(t, position.operator, gsa)
+		shouldEQ(t, position.operator, admin)
 		shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 		shouldEQ(t, position.tickLower, int32(8000))
 		shouldEQ(t, position.tickUpper, int32(12000))
@@ -214,7 +214,7 @@ func TestSwap3(t *testing.T) {
 	{
 		position := positions[uint64(2)]
 		shouldEQ(t, position.nonce.ToString(), "0")
-		shouldEQ(t, position.operator, gsa)
+		shouldEQ(t, position.operator, admin)
 		shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 		shouldEQ(t, position.tickLower, int32(9000))
 		shouldEQ(t, position.tickUpper, int32(10000))
@@ -228,7 +228,7 @@ func TestSwap3(t *testing.T) {
 }
 
 func TestIncreaseLiquidity02(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -254,12 +254,12 @@ func TestIncreaseLiquidity02(t *testing.T) {
 }
 
 func TestDecreaseLiquidityPosition02(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	_lpTokenId := uint64(2)
 
 	ownerOfPosition := gnft.OwnerOf(tid(_lpTokenId))
-	shouldEQ(t, ownerOfPosition, gsa)
+	shouldEQ(t, ownerOfPosition, admin)
 
 	unclaimedFee0, unclaimedFee1 := unclaimedFee(_lpTokenId)
 	shouldEQ(t, unclaimedFee0.ToString(), "0")
@@ -282,7 +282,7 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 	shouldEQ(t, amount1, "55436931")
 
 	ownerOfPosition = gnft.OwnerOf(tid(_lpTokenId))
-	shouldEQ(t, ownerOfPosition, gsa)
+	shouldEQ(t, ownerOfPosition, admin)
 
 	unclaimedFee0, unclaimedFee1 = unclaimedFee(tokenId)
 	shouldEQ(t, unclaimedFee0.ToString(), "0")
@@ -290,7 +290,7 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 
 	position := positions[_lpTokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(9000))
 	shouldEQ(t, position.tickUpper, int32(10000))

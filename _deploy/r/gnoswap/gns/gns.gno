@@ -29,7 +29,7 @@ var (
 )
 
 func init() {
-	admin = ownable.NewWithAddress("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c") // GNOSWAP_ADMIN
+	admin = ownable.NewWithAddress("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c") // ADMIN
 	banker = grc20.NewBanker("Gnoswap", "GNS", 6)
 
 	banker.Mint(admin.Owner(), 100_000_000_000_000) // 100_000_000 GNS ≈ 0.1B
@@ -95,7 +95,7 @@ func Render(path string) string {
 }
 
 // Mint
-func Mint(address pusers.AddressOrName) {
+func Mint(address pusers.AddressOrName) uint64 {
 	common.IsHalted()
 
 	// only emission contract can call Mint
@@ -107,7 +107,7 @@ func Mint(address pusers.AddressOrName) {
 	// if not yet initialized, mint 0 amount
 	if initialized == false {
 		println("GNS_not yet initialized")
-		return
+		return 0
 	}
 
 	// calculate gns emission amount for every block, and send by single call
@@ -122,7 +122,7 @@ func Mint(address pusers.AddressOrName) {
 
 	if lastMintedHeight >= nowHeight {
 		println("GNS_only one mint for each block")
-		return
+		return 0
 	}
 
 	// If from, to block is at same halving year, no need iterate
@@ -174,6 +174,8 @@ func Mint(address pusers.AddressOrName) {
 	lastMintedHeight = nowHeight
 	println("GNS_lastMintedHeight:", lastMintedHeight)
 	println("GNS_amountToMint:", amountToMint)
+
+	return amountToMint
 }
 
 func checkAndHandleIfLastBlockOfHalvingYear(height int64, amount uint64) uint64 {

@@ -15,13 +15,13 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // x2.71814592682522526700950038502924144268035888671875
 }
 
 func TestMintPosition(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
@@ -36,8 +36,8 @@ func TestMintPosition(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, getNextId(), uint64(2))
@@ -46,7 +46,7 @@ func TestMintPosition(t *testing.T) {
 }
 
 func TestIncreaseLiquidity(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 3678979)
 	foo.Approve(a2u(consts.POOL_ADDR), 10000000)
 
@@ -71,7 +71,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 }
 
 func TestCollectFeeBeforeSwap(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
@@ -82,7 +82,7 @@ func TestCollectFeeBeforeSwap(t *testing.T) {
 }
 
 func TestSwap(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 1_234_567)
 
 	std.TestSetRealm(rouRealm)
@@ -90,16 +90,16 @@ func TestSwap(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 }
 
 func TestCollectFeeAfterSwap(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -113,7 +113,7 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 }
 
 func TestCollectFee2(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
 	shouldEQ(t, tokenId, uint64(1))
@@ -132,15 +132,15 @@ func TestSwap2(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"1000000",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 
 	// UNCLAIMED_FEE
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	oldFee0, oldFee1 := unclaimedFee(uint64(1))
 	shouldEQ(t, oldFee0.ToString(), "499")
@@ -155,7 +155,7 @@ func TestSwap2(t *testing.T) {
 }
 
 func TestDecreaseLiquidity(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	oldLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
 
 	DecreaseLiquidity(
@@ -179,7 +179,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 }
 
 func TestDecreaseLiquidityAllThenAgainShouldPanic(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	oldLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
 
 	DecreaseLiquidity(

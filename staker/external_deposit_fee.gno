@@ -16,25 +16,54 @@ func GetDepositGnsAmount() uint64 {
 	return depositGnsAmount
 }
 
-func SetDepositGnsAmount(amount uint64) {
+func SetDepositGnsAmountByAdmin(amount uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
+	if caller != consts.ADMIN {
 		panic(
 			ufmt.Sprintf(
-				"[STAKER] external_deposit_fee.gno__SetDepositGnsAmount() || only admin(%s) or governance(%s) can set deposit gns amount, called from %s",
-				consts.GNOSWAP_ADMIN,
+				"[STAKER] external_deposit_fee.gno__SetDepositGnsAmountByAdmin() || only admin(%s) can set deposit gns amount, called from %s",
+				consts.ADMIN,
+				caller,
+			),
+		)
+	}
+
+	setDepositGnsAmount(amount)
+
+	prevAddr, prevRealm := getPrev()
+
+	std.Emit(
+		"SetDepositGnsAmountByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"amount", ufmt.Sprintf("%d", amount),
+	)
+}
+
+func SetDepositGnsAmount(amount uint64) {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GOV_GOVERNANCE_ADDR {
+		panic(
+			ufmt.Sprintf(
+				"[STAKER] external_deposit_fee.gno__SetDepositGnsAmount() || only governance(%s) can set deposit gns amount, called from %s",
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
 		)
 	}
 
-	depositGnsAmount = amount
+	setDepositGnsAmount(amount)
+
+	prevAddr, prevRealm := getPrev()
 
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_amount", uint64ToStr(amount),
+		"SetDepositGnsAmount",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"amount", ufmt.Sprintf("%d", amount),
 	)
+}
+
+func setDepositGnsAmount(amount uint64) {
+	depositGnsAmount = amount
 }

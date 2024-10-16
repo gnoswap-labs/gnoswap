@@ -176,5 +176,5 @@ func TestUnregisterGRC20Interface(t *testing.T) {
 	// re-register to avoid panic in other tests
 	RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 }

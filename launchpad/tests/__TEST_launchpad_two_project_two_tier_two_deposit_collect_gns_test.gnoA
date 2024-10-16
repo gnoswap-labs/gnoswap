@@ -27,7 +27,7 @@ func init() {
 }
 
 func TestCreateProjectObl(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
 	std.TestSkipHeights(1)
@@ -48,7 +48,7 @@ func TestCreateProjectObl(t *testing.T) {
 }
 
 func TestCreateProjectBar(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
 	std.TestSkipHeights(1)
@@ -69,7 +69,7 @@ func TestCreateProjectBar(t *testing.T) {
 }
 
 func TestDepositGnsToOblTier30First(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
 
 	std.TestSetRealm(user01Realm)
@@ -84,7 +84,7 @@ func TestDepositGnsToOblTier30First(t *testing.T) {
 }
 
 func TestDepositGnsToOblTier30Second(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
 
 	std.TestSetRealm(user01Realm)
@@ -96,7 +96,7 @@ func TestDepositGnsToOblTier30Second(t *testing.T) {
 }
 
 func TestDepositGnsToOblTier90First(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
 
 	std.TestSetRealm(user01Realm)
@@ -108,7 +108,7 @@ func TestDepositGnsToOblTier90First(t *testing.T) {
 }
 
 func TestDepositGnsToOblTier90Second(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(user01), uint64(2_000_000)) // to deposit
 
 	std.TestSetRealm(user01Realm)
@@ -120,7 +120,7 @@ func TestDepositGnsToOblTier90Second(t *testing.T) {
 }
 
 func TestDepositGnsToBarTier30(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
 
 	std.TestSetRealm(user01Realm)

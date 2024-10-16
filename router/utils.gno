@@ -90,18 +90,6 @@ func prevRealm() string {
 	return std.PrevRealm().PkgPath()
 }
 
-func callType() string {
-	if prevRealm() == "" {
-		return "DIRECT"
-	}
-
-	return "INDIRECT"
-}
-
-func uint64ToStr(i uint64) string {
-	return strconv.FormatInt(int64(i), 10)
-}
-
 func isUserCall() bool {
 	return std.PrevRealm().IsUser()
 }
@@ -110,4 +98,9 @@ func assertUserCall() {
 	if !isUserCall() {
 		panic("must be called by user")
 	}
+}
+
+func getPrev() (string, string) {
+	prev := std.PrevRealm()
+	return prev.Addr().String(), prev.PkgPath()
 }

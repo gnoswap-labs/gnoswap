@@ -8,12 +8,12 @@ import (
 )
 
 var (
-	gsa std.Address = consts.GNOSWAP_ADMIN
+	admin std.Address = consts.ADMIN
 )
 
 // Realms to mock frames
 var (
-	gsaRealm = std.NewUserRealm(gsa)
+	adminRealm = std.NewUserRealm(admin)
 
 	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
 )

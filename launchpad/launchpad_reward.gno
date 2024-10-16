@@ -51,6 +51,8 @@ func CollectRewardByProjectId(projectId string) uint64 {
 		return 0
 	}
 
+	prevAddr, prevRealm := getPrev()
+
 	toUser := uint64(0)
 	for _, depositId := range depositIds {
 		deposit := deposits[depositId]
@@ -81,7 +83,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 				}
 
 				if uint64(std.GetHeight()) < collectableAfter {
-					println("NOT CLAIMABLE YET", std.GetHeight(), "<", collectableAfter)
+					println("NOT CLAIMABLE YET")
 					continue
 				}
 
@@ -91,10 +93,11 @@ func CollectRewardByProjectId(projectId string) uint64 {
 
 			std.Emit(
 				"CollectRewardByProjectId",
-				"m_prevRealm", prevRealm(),
-				"p_projectId", projectId,
-				"depositId", depositId,
-				"amount", ufmt.Sprintf("%d", deposit.rewardAmount),
+				"prevAddr", prevAddr,
+				"prevRealm", prevRealm,
+				"projectId", projectId,
+				"internal_depositId", depositId,
+				"internal_amount", ufmt.Sprintf("%d", deposit.rewardAmount),
 			)
 		}
 
@@ -157,18 +160,20 @@ func CollectRewardByDepositId(depositId string) uint64 {
 			}
 
 			if uint64(std.GetHeight()) < collectableAfter {
-				println("NOT CLAIMABLE YET", std.GetHeight(), "<", collectableAfter)
+				println("NOT CLAIMABLE YET")
 				return 0
 			}
 
 			toUser += deposit.rewardAmount
 		}
 
+		prevAddr, prevRealm := getPrev()
 		std.Emit(
 			"CollectRewardByDepositId",
-			"m_prevRealm", prevRealm(),
-			"p_depositId", depositId,
-			"amount", ufmt.Sprintf("%d", deposit.rewardAmount),
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"depositId", depositId,
+			"internal_amount", ufmt.Sprintf("%d", deposit.rewardAmount),
 		)
 
 		// update project
@@ -184,8 +189,6 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 	// transfer reward to user
 	transferByRegisterCall(project.tokenPath, std.PrevRealm().Addr(), toUser)
-
-	// XXX: emit event
 
 	return toUser
 }

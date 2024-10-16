@@ -101,17 +101,22 @@ func Mint(
 
 	handleLeftoverNativeToken(token0IsNative, token1IsNative, userWugnotBalance, caller)
 
+	poolSqrtPriceX96 := pl.PoolGetSqrtPriceX96(poolPath)
+
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_tickLower", int32ToStr(tickLower),
-		"p_tickUpper", int32ToStr(tickUpper),
+		"Mint",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"tickLower", ufmt.Sprintf("%d", tickLower),
+		"tickUpper", ufmt.Sprintf("%d", tickUpper),
 		"poolPath", poolPath,
-		"tokenId", uint64ToStr(tokenId),
-		"liquidity", liquidity.ToString(),
-		"amount0", amount0.ToString(),
-		"amount1", amount1.ToString(),
+		"internal_lpTokenId", ufmt.Sprintf("%d", tokenId),
+		"internal_liquidity", liquidity.ToString(),
+		"internal_amount0", amount0.ToString(),
+		"internal_amount1", amount1.ToString(),
+		"internal_sqrtPriceX96", poolSqrtPriceX96.ToString(),
 	)
 
 	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString()
@@ -254,15 +259,20 @@ func IncreaseLiquidity(
 		unwrap(leftOver, std.PrevRealm().Addr())
 	}
 
+	poolSqrtPriceX96 := pl.PoolGetSqrtPriceX96(poolPath)
+
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_tokenId", uint64ToStr(tokenId),
-		"poolPath", poolPath,
-		"liquidity", liquidity.ToString(),
-		"amount0", amount0.ToString(),
-		"amount1", amount1.ToString(),
+		"IncreaseLiquidity",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"lpTokenId", ufmt.Sprintf("%d", tokenId),
+		"internal_poolPath", poolPath,
+		"internal_liquidity", liquidity.ToString(),
+		"internal_amount0", amount0.ToString(),
+		"internal_amount1", amount1.ToString(),
+		"internal_sqrtPriceX96", poolSqrtPriceX96.ToString(),
 	)
 
 	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -364,19 +374,24 @@ func DecreaseLiquidity(
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
 
+	poolSqrtPriceX96 := pl.PoolGetSqrtPriceX96(poolPath)
+
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_tokenId", uint64ToStr(tokenId),
-		"p_liquidityRatio", uint64ToStr(liquidityRatio),
-		"poolPath", poolPath,
-		"liquidity", liquidity.ToString(),
-		"fee0", fee0.ToString(),
-		"fee1", fee1.ToString(),
-		"amount0", amount0.ToString(),
-		"amount1", amount1.ToString(),
-		"unwrapResult", boolToStr(unwrapResult),
+		"DecreaseLiquidity",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"lpTokenId", ufmt.Sprintf("%d", tokenId),
+		"liquidityRatio", ufmt.Sprintf("%d", liquidityRatio),
+		"internal_poolPath", poolPath,
+		"internal_liquidity", liquidity.ToString(),
+		"internal_fee0", fee0.ToString(),
+		"internal_fee1", fee1.ToString(),
+		"internal_amount0", amount0.ToString(),
+		"internal_amount1", amount1.ToString(),
+		"internal_unwrapResult", ufmt.Sprintf("%t", unwrapResult),
+		"internal_sqrtPriceX96", poolSqrtPriceX96.ToString(),
 	)
 
 	return tokenId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -582,19 +597,24 @@ func Reposition(
 
 	positions[tokenId] = position
 
+	poolSqrtPriceX96 := pl.PoolGetSqrtPriceX96(position.poolKey)
+
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_tokenId", uint64ToStr(tokenId),
-		"p_tickLower", int32ToStr(tickLower),
-		"p_tickUpper", int32ToStr(tickUpper),
+		"Reposition",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"lpTokenId", ufmt.Sprintf("%d", tokenId),
+		"tickLower", ufmt.Sprintf("%d", tickLower),
+		"tickUpper", ufmt.Sprintf("%d", tickUpper),
 		"liquidity", liquidity.ToString(),
-		"amount0", amount0.ToString(),
-		"amount1", amount1.ToString(),
-		"old_tickLower", int32ToStr(oldTickLower),
-		"old_tickUpper", int32ToStr(oldTickUpper),
-		"poolPath", position.poolKey,
+		"internal_amount0", amount0.ToString(),
+		"internal_amount1", amount1.ToString(),
+		"internal_oldTickLower", ufmt.Sprintf("%d", oldTickLower),
+		"internal_oldTickUpper", ufmt.Sprintf("%d", oldTickUpper),
+		"internal_poolPath", position.poolKey,
+		"internal_sqrtPriceX96", poolSqrtPriceX96.ToString(),
 	)
 
 	return tokenId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
@@ -696,15 +716,17 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 		}
 	}
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_tokenId", uint64ToStr(tokenId),
-		"fee0", withoutFee0,
-		"fee1", withoutFee1,
-		"poolPath", position.poolKey,
-		"unwrapResult", boolToStr(unwrapResult),
+		"CollectSwapFee",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"lpTokenId", ufmt.Sprintf("%d", tokenId),
+		"internal_fee0", withoutFee0,
+		"internal_fee1", withoutFee1,
+		"internal_poolPath", position.poolKey,
+		"internal_unwrapResult", ufmt.Sprintf("%t", unwrapResult),
 	)
 
 	return tokenId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1

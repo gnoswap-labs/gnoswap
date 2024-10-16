@@ -20,7 +20,7 @@ var (
 )
 
 func TestDoesNotClear(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
@@ -36,7 +36,7 @@ func TestDoesNotClear(t *testing.T) {
 		-887160,
 		887160,
 		test_liquidityExpectStr,
-		gsa,
+		admin,
 	)
 
 	std.TestSetRealm(rouRealm)
@@ -44,22 +44,22 @@ func TestDoesNotClear(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"10000",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 
 	Swap(
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		false,
 		"10000",
 		consts.MAX_PRICE,
-		gsa,
+		admin,
 	)
 	// did swap t0 => t1 and t1 => t0
 
@@ -95,7 +95,7 @@ func TestDoesNotClear(t *testing.T) {
 }
 
 func TestClearOnlyLowTick(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
@@ -111,7 +111,7 @@ func TestClearOnlyLowTick(t *testing.T) {
 		-887160,
 		887160,
 		"1",
-		gsa,
+		admin,
 	)
 
 	Mint(
@@ -122,7 +122,7 @@ func TestClearOnlyLowTick(t *testing.T) {
 		-887100,
 		887160,
 		"1",
-		gsa,
+		admin,
 	)
 
 	std.TestSetRealm(rouRealm)
@@ -130,11 +130,11 @@ func TestClearOnlyLowTick(t *testing.T) {
 		barPath,
 		fooPath,
 		fee3000,
-		gsa,
+		admin,
 		true,
 		"10000",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 
 	std.TestSetRealm(posRealm)
@@ -159,7 +159,7 @@ func TestClearOnlyLowTick(t *testing.T) {
 }
 
 func TestClearOnlyUpperTick(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee100, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
@@ -175,7 +175,7 @@ func TestClearOnlyUpperTick(t *testing.T) {
 		-887160,
 		887160,
 		"1",
-		gsa,
+		admin,
 	)
 
 	Mint(
@@ -186,7 +186,7 @@ func TestClearOnlyUpperTick(t *testing.T) {
 		-887160,
 		887100,
 		"1",
-		gsa,
+		admin,
 	)
 
 	std.TestSetRealm(rouRealm)
@@ -194,11 +194,11 @@ func TestClearOnlyUpperTick(t *testing.T) {
 		barPath,
 		fooPath,
 		fee100,
-		gsa,
+		admin,
 		true,
 		"10000",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 
 	std.TestSetRealm(posRealm)

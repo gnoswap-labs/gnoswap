@@ -10,6 +10,6 @@ import (
 var emissionAddr std.Address = consts.EMISSION_ADDR
 
 // mintGns mints GNS to emission address
-func mintGns() {
-	gns.Mint(a2u(emissionAddr))
+func mintGns() uint64 {
+	return gns.Mint(a2u(emissionAddr))
 }

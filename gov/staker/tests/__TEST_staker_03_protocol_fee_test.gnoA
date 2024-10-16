@@ -29,7 +29,7 @@ var (
 )
 
 func TestDelegateAdminToDummy(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	// gns before emission
 	shouldEQ(t, gns.BalanceOf(a2u(consts.STAKER_ADDR)), uint64(0))
@@ -55,7 +55,7 @@ func TestDelegateAdminToDummy(t *testing.T) {
 }
 
 func TestDelegateAnotherDumyToDummy_Self(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(dummyAddr), 5000000)
 
 	std.TestSkipHeights(1)
@@ -73,7 +73,7 @@ func TestDelegateAnotherDumyToDummy_Self(t *testing.T) {
 func TestMockProtocolFee(t *testing.T) {
 	// admin > protocol_fee
 	// send qux, bar for testing
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
 	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 2500)
 
@@ -154,7 +154,7 @@ func TestMockProtocolFee2(t *testing.T) {
 	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
 	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(417))
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 2500)
 	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 4000)
 	std.TestSkipHeights(1)
@@ -194,19 +194,19 @@ func TestCollectRewardMoreByDummy(t *testing.T) {
 }
 
 func TestUndelegateByAdmin(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
-	shouldEQ(t, bar.BalanceOf(a2u(gsa)), uint64(99999999996500))
-	shouldEQ(t, qux.BalanceOf(a2u(gsa)), uint64(99999999993500))
+	shouldEQ(t, bar.BalanceOf(a2u(admin)), uint64(99999999996500))
+	shouldEQ(t, qux.BalanceOf(a2u(admin)), uint64(99999999993500))
 
-	shouldEQ(t, userProtocolFeeReward[gsa][barPath], uint64(582))
-	shouldEQ(t, userProtocolFeeReward[gsa][quxPath], uint64(1082))
+	shouldEQ(t, userProtocolFeeReward[admin][barPath], uint64(582))
+	shouldEQ(t, userProtocolFeeReward[admin][quxPath], uint64(1082))
 
 	Undelegate(dummyToAddr, 1000001)
 
-	shouldEQ(t, bar.BalanceOf(a2u(gsa)), uint64(99999999997082))
-	shouldEQ(t, qux.BalanceOf(a2u(gsa)), uint64(99999999994582))
+	shouldEQ(t, bar.BalanceOf(a2u(admin)), uint64(99999999997082))
+	shouldEQ(t, qux.BalanceOf(a2u(admin)), uint64(99999999994582))
 
-	shouldEQ(t, userProtocolFeeReward[gsa][barPath], uint64(0))
-	shouldEQ(t, userProtocolFeeReward[gsa][quxPath], uint64(0))
+	shouldEQ(t, userProtocolFeeReward[admin][barPath], uint64(0))
+	shouldEQ(t, userProtocolFeeReward[admin][quxPath], uint64(0))
 }

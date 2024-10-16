@@ -15,10 +15,4 @@ require (
 	gno.land/r/gnoswap/v2/gns v0.0.0-latest
 	gno.land/r/gnoswap/v2/pool v0.0.0-latest
 	gno.land/r/gnoswap/v2/position v0.0.0-latest
-	gno.land/r/gnoswap/v2/router v0.0.0-latest
-	gno.land/r/onbloc/bar v0.0.0-latest
-	gno.land/r/onbloc/baz v0.0.0-latest
-	gno.land/r/onbloc/foo v0.0.0-latest
-	gno.land/r/onbloc/obl v0.0.0-latest
-	gno.land/r/onbloc/qux v0.0.0-latest
 )

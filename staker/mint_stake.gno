@@ -81,20 +81,5 @@ func MintAndStake(
 
 	poolPath, _, _ := StakeToken(tokenId) // poolPath, stakedAmount0, stakedAmount1
 
-	/*
-		std.Emit(
-			"GNOSWAP",
-			"m_callType", callType(),
-			"m_prevRealm", prevRealm(),
-			"p_tickLower", int32ToStr(tickLower),
-			"p_tickUpper", int32ToStr(tickUpper),
-			"poolPath", poolPath,
-			"tokenId", uint64ToStr(tokenId),
-			"liquidity", liquidity,
-			"amount0", amount0,
-			"amount1", amount1,
-		)
-	*/
-
 	return tokenId, liquidity, amount0, amount1, poolPath
 }

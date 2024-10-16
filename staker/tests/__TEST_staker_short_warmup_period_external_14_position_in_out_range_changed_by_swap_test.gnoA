@@ -31,7 +31,7 @@ func init() {
 
 func TestPoolInitCreatePool(t *testing.T) {
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 
@@ -42,7 +42,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintBarQux100_1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -58,18 +58,18 @@ func TestMintBarQux100_1(t *testing.T) {
 		"1",        // amount0Min
 		"1",        // amount1Min
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), admin)
 
 	std.TestSkipHeights(1)
 }
 
 func TestMintBarQux100_2(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -85,18 +85,18 @@ func TestMintBarQux100_2(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), admin)
 
 	std.TestSkipHeights(1)
 }
 
 func TestCreateExternalIncentive(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
 	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
@@ -113,7 +113,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 }
 
 func TestStakeToken_1_AND_2(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
 	StakeToken(1)
@@ -167,7 +167,7 @@ func TestMakePosition1OutRange(t *testing.T) {
 	shouldEQ(t, poolTick, int32(0))
 
 	// ROUTER SWAP
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)

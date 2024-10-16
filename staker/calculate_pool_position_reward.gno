@@ -2,8 +2,9 @@ package staker
 
 import (
 	"std"
-	"strconv"
 	"time"
+
+	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v2/consts"
 
@@ -98,6 +99,8 @@ func CalcPoolPosition() {
 		println()
 		return
 	}
+
+	prevAddr, prevRealm := getPrev()
 
 	// calculate each pool's total staked liquidity
 	poolTotalStakedLiquidity = make(map[string]*u256.Uint) // clear
@@ -259,13 +262,11 @@ func CalcPoolPosition() {
 
 			gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), send)
 			std.Emit(
-				"GNOSWAP_PROTOCOL_FEE",
-				"m_callType", callType(),
-				"m_prevRealm", prevRealm(),
-				"poolPath", poolPath,
-				"reason", "emission_target_pool_no_staked",
-				"token", consts.GNS_PATH,
-				"amount", strconv.FormatUint(send, 10),
+				"ProtocolFeeEmptyEmission",
+				"prevAddr", prevAddr,
+				"prevRealm", prevRealm,
+				"internal_poolPath", poolPath,
+				"internal_amount", ufmt.Sprintf("%d", send),
 			)
 
 			poolGns[poolPath] = 0

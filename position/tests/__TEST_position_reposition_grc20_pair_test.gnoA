@@ -16,14 +16,14 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(barPath, fooPath, fee500, "130621891405341611593710811006") // tick = 10000
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 18394892)
 	foo.Approve(a2u(consts.POOL_ADDR), 50000000)
 
@@ -38,8 +38,8 @@ func TestMintPosition01InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
@@ -49,7 +49,7 @@ func TestMintPosition01InRange(t *testing.T) {
 
 	position := positions[tokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -62,7 +62,7 @@ func TestMintPosition01InRange(t *testing.T) {
 }
 
 func TestSwap1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), 1234567)
 
 	std.TestSetRealm(rouRealm)
@@ -70,11 +70,11 @@ func TestSwap1(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		gsa,
+		admin,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		gsa,
+		admin,
 	)
 
 	shouldEQ(t, amount0, "1234567")
@@ -82,7 +82,7 @@ func TestSwap1(t *testing.T) {
 
 	position := positions[uint64(1)]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -95,7 +95,7 @@ func TestSwap1(t *testing.T) {
 }
 
 func TestMintPosition02InRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -110,8 +110,8 @@ func TestMintPosition02InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(2))
@@ -121,7 +121,7 @@ func TestMintPosition02InRange(t *testing.T) {
 
 	position := positions[tokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -148,12 +148,12 @@ func TestUnclaimedFee02(t *testing.T) {
 }
 
 func TestDecreaseLiquidityInPosition(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	_lpTokenId := uint64(1)
 
 	ownerOfPosition := gnft.OwnerOf(tid(_lpTokenId))
-	shouldEQ(t, ownerOfPosition, gsa)
+	shouldEQ(t, ownerOfPosition, admin)
 
 	// approve fee0, fee_lpTokenId to pool
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -166,11 +166,11 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 	shouldEQ(t, amount1, "46667220")
 
 	ownerOfPosition = gnft.OwnerOf(tid(_lpTokenId))
-	shouldEQ(t, ownerOfPosition, gsa)
+	shouldEQ(t, ownerOfPosition, admin)
 
 	position := positions[_lpTokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -183,7 +183,7 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 }
 
 func TestMintPosition03InRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
@@ -198,8 +198,8 @@ func TestMintPosition03InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(3))
@@ -209,7 +209,7 @@ func TestMintPosition03InRange(t *testing.T) {
 
 	position := positions[tokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -231,7 +231,7 @@ func TestRepositionNotOwner(t *testing.T) {
 }
 
 func TestRepositionOwnerButNowBurned(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	shouldPanic(
 		t,
 		func() {
@@ -240,7 +240,7 @@ func TestRepositionOwnerButNowBurned(t *testing.T) {
 }
 
 func TestRepositionSlippageTooLarge(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	shouldPanic(
 		t,
 		func() {
@@ -249,14 +249,14 @@ func TestRepositionSlippageTooLarge(t *testing.T) {
 }
 
 func TestReposition(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	_lpTokenId := uint64(1)
 
 	// check current state
 	position := positions[_lpTokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -279,7 +279,7 @@ func TestReposition(t *testing.T) {
 
 	position = positions[_lpTokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	shouldEQ(t, position.tickLower, int32(-1000))
 	shouldEQ(t, position.tickUpper, int32(1000))

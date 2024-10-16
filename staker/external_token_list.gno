@@ -17,16 +17,16 @@ func init() {
 }
 
 // AddToken adds a new token path to the list of allowed tokens
-// Only the admin (GNOSWAP_ADMIN) can add a new token.
+// Only the admin can add a new token.
 //
 // Parameters:
 //   - tokenPath (string): The path of the token to add
 //
 // Panics:
-//   - If the caller is not the GNOSWAP_ADMIN
+//   - If the caller is not the admin
 func AddToken(tokenPath string) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic("only admin can add token")
 	}
 
@@ -41,7 +41,7 @@ func AddToken(tokenPath string) {
 }
 
 // RemoveToken removes a token path from the list of allowed tokens.
-// Only the admin (GNOSWAP_ADMIN) can remove a token.
+// Only the admin  can remove a token.
 //
 // Default tokens can not be removed.
 //
@@ -49,10 +49,10 @@ func AddToken(tokenPath string) {
 //   - tokenPath (string): The path of the token to remove
 //
 // Panics:
-//   - If the caller is not the GNOSWAP_ADMIN
+//   - If the caller is not the admin
 func RemoveToken(tokenPath string) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
+	if caller != consts.ADMIN {
 		panic("only admin can remove token")
 	}
 

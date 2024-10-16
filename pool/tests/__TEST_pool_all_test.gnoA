@@ -33,7 +33,7 @@ func TestCreateFooBarPool(t *testing.T) {
 	shouldEQ(t, gnsBalance(consts.STAKER_ADDR), uint64(0))
 	shouldEQ(t, gnsBalance(consts.DEV_OPS), uint64(0))
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -56,7 +56,7 @@ func TestCreateFooBarPool(t *testing.T) {
 
 // 2. Create Bar:Baz Pool
 func TestCreateBarBazPool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	std.TestSkipHeights(1)
@@ -65,9 +65,9 @@ func TestCreateBarBazPool(t *testing.T) {
 	std.TestSkipHeights(1)
 }
 
-// 3. Mint Foo:Bar Liquidity by gsa
+// 3. Mint Foo:Bar Liquidity by admin
 func TestMintFooBarLiquidity(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -82,16 +82,16 @@ func TestMintFooBarLiquidity(t *testing.T) {
 		-11000, // -11000
 		-9000,  // -9000
 		test_liquidityExpectStr,
-		gsa,
+		admin,
 	)
 	shouldEQ(t, amount0, "8040316")
 	shouldEQ(t, amount1, "2958015")
 	std.TestSkipHeights(1)
 }
 
-// 4. Mint Bar:Baz Liquidity by gsa
+// 4. Mint Bar:Baz Liquidity by admin
 func TestMintBarBazLiquidity(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -106,7 +106,7 @@ func TestMintBarBazLiquidity(t *testing.T) {
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpectStr,
-		gsa,
+		admin,
 	)
 	shouldEQ(t, amount0, "2958015")
 	shouldEQ(t, amount1, "8040316")

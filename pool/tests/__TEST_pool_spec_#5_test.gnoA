@@ -31,14 +31,14 @@ func AfterTest(t *testing.T) {
 	std.TestSetRealm(poolRealm)
 	barBal := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBal := foo.BalanceOf(a2u(consts.POOL_ADDR))
-	bar.Transfer(a2u(gsa), barBal)
-	foo.Transfer(a2u(gsa), fooBal)
+	bar.Transfer(a2u(admin), barBal)
+	foo.Transfer(a2u(admin), fooBal)
 	delete(pools, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
 }
 
 func TestSuccess_transfers_token1_only(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -50,14 +50,14 @@ func TestSuccess_transfers_token1_only(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", gsa)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", admin)
 
 	// ===================== transfers token1 only =====================
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -46080, -23040, "10000", gsa)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -46080, -23040, "10000", admin)
 
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
@@ -70,7 +70,7 @@ func TestSuccess_transfers_token1_only(t *testing.T) {
 
 func TestSuccess_min_tick_with_max_leverage(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -82,14 +82,14 @@ func TestSuccess_min_tick_with_max_leverage(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", gsa)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", admin)
 
 	// ===================== min tick with max leverage =====================
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, minTick+tickSpacing, "5070602400912917605986812821504", gsa) // 2**102
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, minTick+tickSpacing, "5070602400912917605986812821504", admin) // 2**102
 
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
@@ -102,7 +102,7 @@ func TestSuccess_min_tick_with_max_leverage(t *testing.T) {
 
 func TestSuccess_work_for_min_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -114,14 +114,14 @@ func TestSuccess_work_for_min_tick(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", gsa)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", admin)
 
 	// ===================== work for min tick =====================
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, -23040, "10000", gsa)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, -23040, "10000", admin)
 
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
@@ -134,7 +134,7 @@ func TestSuccess_work_for_min_tick(t *testing.T) {
 
 func TestSuccess_removing_works(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -146,14 +146,14 @@ func TestSuccess_removing_works(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", gsa)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", admin)
 
 	// ===================== removing works =====================
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -46080, -46020, "10000", gsa)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -46080, -46020, "10000", admin)
 	amount0, amount1 := pl.Burn(token0Path, barPath, 3000, -46080, -46020, "10000")
 
 	shouldEQ(t, amount0, "0")

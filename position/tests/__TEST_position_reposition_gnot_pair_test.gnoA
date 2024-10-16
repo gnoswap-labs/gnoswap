@@ -16,31 +16,31 @@ import (
 )
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 	pl.CreatePool(consts.GNOT, consts.GNS_PATH, fee500, common.TickMathGetSqrtRatioAtTick(10000).ToString()) // x2.71814592682522526700950038502924144268035888671875
 }
 
 func TestMintPosition01InRange(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // FOR WRAP
 
-	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 50000005}})
-	shouldEQ(t, ugnotBalanceOf(gsa), uint64(50000005))
+	std.TestIssueCoins(admin, std.Coins{{"ugnot", 50000005}})
+	shouldEQ(t, ugnotBalanceOf(admin), uint64(50000005))
 	shouldEQ(t, ugnotBalanceOf(consts.POSITION_ADDR), uint64(200000000))
 
 	banker := std.GetBanker(std.BankerTypeRealmIssue)
-	banker.SendCoins(gsa, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
+	banker.SendCoins(admin, consts.POSITION_ADDR, std.Coins{{"ugnot", 50000005}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 50000005}}, nil)
-	shouldEQ(t, ugnotBalanceOf(gsa), uint64(0))
+	shouldEQ(t, ugnotBalanceOf(admin), uint64(0))
 
-	gsaOldWugnotBalance := wugnot.BalanceOf(a2u(gsa))
-	shouldEQ(t, gsaOldWugnotBalance, uint64(0))
+	adminOldWugnotBalance := wugnot.BalanceOf(a2u(admin))
+	shouldEQ(t, adminOldWugnotBalance, uint64(0))
 
 	tokenId, liquidity, amount0, amount1 := Mint(
 		consts.GNOT,
@@ -53,8 +53,8 @@ func TestMintPosition01InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 	std.TestSetOrigSend(std.Coins{{"ugnot", 0}}, nil)
 
@@ -65,7 +65,7 @@ func TestMintPosition01InRange(t *testing.T) {
 
 	position := positions[tokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -77,13 +77,13 @@ func TestMintPosition01InRange(t *testing.T) {
 	shouldEQ(t, position.burned, false)
 
 	// SPEND ALL WUGNOT
-	shouldEQ(t, wugnot.BalanceOf(a2u(gsa)), uint64(0))
+	shouldEQ(t, wugnot.BalanceOf(a2u(admin)), uint64(0))
 
-	shouldEQ(t, ugnotBalanceOf(gsa), uint64(31605113))
+	shouldEQ(t, ugnotBalanceOf(admin), uint64(31605113))
 }
 
 func TestSwap1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX) // amountIn
 
@@ -92,11 +92,11 @@ func TestSwap1(t *testing.T) {
 		consts.WUGNOT_PATH,
 		consts.GNS_PATH,
 		fee500,
-		gsa,
+		admin,
 		false,
 		"1234567",
 		consts.MAX_PRICE,
-		gsa,
+		admin,
 	)
 
 	shouldEQ(t, amount0, "-452903")
@@ -104,7 +104,7 @@ func TestSwap1(t *testing.T) {
 
 	position := positions[uint64(1)]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -124,7 +124,7 @@ func TestUnclaimedFee01(t *testing.T) {
 }
 
 func TestCollectFee01(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	tokenId, tokensOwed0, tokensOwed1, poolPath, fee0, fee1 := CollectFee(1, false)
 	position := positions[tokenId]
@@ -133,12 +133,12 @@ func TestCollectFee01(t *testing.T) {
 }
 
 func TestDecreaseLiquidityInPosition(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	_lpTokenId := uint64(1)
 
 	ownerOfPosition := gnft.OwnerOf(tid(_lpTokenId))
-	shouldEQ(t, ownerOfPosition, gsa)
+	shouldEQ(t, ownerOfPosition, admin)
 
 	// approve fee0, fee1 to pool
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -151,11 +151,11 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 	shouldEQ(t, amount1, "51233948")
 
 	ownerOfPosition = gnft.OwnerOf(tid(_lpTokenId))
-	shouldEQ(t, ownerOfPosition, gsa)
+	shouldEQ(t, ownerOfPosition, admin)
 
 	position := positions[_lpTokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -172,14 +172,14 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 }
 
 func TestReposition(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	_lpTokenId := uint64(1)
 
 	// check current state
 	position := positions[_lpTokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 	shouldEQ(t, position.tickLower, int32(8000))
 	shouldEQ(t, position.tickUpper, int32(12000))
@@ -191,15 +191,15 @@ func TestReposition(t *testing.T) {
 	shouldEQ(t, position.burned, true)
 
 	// user ugnot
-	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 50000005}})
-	shouldEQ(t, ugnotBalanceOf(gsa), uint64(81605118))
+	std.TestIssueCoins(admin, std.Coins{{"ugnot", 50000005}})
+	shouldEQ(t, ugnotBalanceOf(admin), uint64(81605118))
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	banker := std.GetBanker(std.BankerTypeRealmIssue)
-	banker.SendCoins(gsa, consts.POSITION_ADDR, std.Coins{{"ugnot", 5000}})
+	banker.SendCoins(admin, consts.POSITION_ADDR, std.Coins{{"ugnot", 5000}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 5000}}, nil)
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	Reposition(
 		_lpTokenId, // tokenId
 		-1000,      // tickLower
@@ -211,11 +211,11 @@ func TestReposition(t *testing.T) {
 	)
 
 	// user ugnot
-	shouldEQ(t, ugnotBalanceOf(gsa), uint64(81600118))
+	shouldEQ(t, ugnotBalanceOf(admin), uint64(81600118))
 
 	position = positions[_lpTokenId]
 	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, gsa)
+	shouldEQ(t, position.operator, admin)
 	shouldEQ(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 	shouldEQ(t, position.tickLower, int32(-1000))
 	shouldEQ(t, position.tickUpper, int32(1000))

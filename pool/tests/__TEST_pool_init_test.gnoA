@@ -20,7 +20,7 @@ var (
 )
 
 func TestMintPostInit(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-1).ToString())
 
@@ -39,7 +39,7 @@ func TestMintPostInit(t *testing.T) {
 			-1000,
 			1000,
 			test_liquidityExpectStr,
-			gsa,
+			admin,
 		)
 	})
 	currentLiq := thisPool.liquidity.ToString()
@@ -54,7 +54,7 @@ func TestMintPostInit(t *testing.T) {
 			-2000,
 			-1000,
 			test_liquidityExpectStr,
-			gsa,
+			admin,
 		)
 
 		nowLiq := thisPool.liquidity.ToString()
@@ -71,7 +71,7 @@ func TestMintPostInit(t *testing.T) {
 			1000,
 			2000,
 			test_liquidityExpectStr,
-			gsa,
+			admin,
 		)
 
 		nowLiq := thisPool.liquidity.ToString()
@@ -90,7 +90,7 @@ func TestMintPostInit(t *testing.T) {
 			0,
 			10,
 			test_liquidityExpectStr,
-			gsa,
+			admin,
 		)
 		nowLiq := thisPool.liquidity.ToString()
 
@@ -99,11 +99,11 @@ func TestMintPostInit(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			gsa,
+			admin,
 			true,
 			"1",
 			consts.MIN_PRICE,
-			gsa,
+			admin,
 		)
 
 		poolTick := thisPool.slot0.tick
@@ -122,7 +122,7 @@ func TestMintPostInit(t *testing.T) {
 			-10,
 			0,
 			test_liquidityExpectStr,
-			gsa,
+			admin,
 		)
 		nowLiq := thisPool.liquidity.ToString()
 
@@ -131,11 +131,11 @@ func TestMintPostInit(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			gsa,
+			admin,
 			true,
 			"1",
 			consts.MIN_PRICE,
-			gsa,
+			admin,
 		)
 
 		poolTick := thisPool.slot0.tick

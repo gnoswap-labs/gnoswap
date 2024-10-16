@@ -41,7 +41,7 @@ func init() {
 
 func TestPoolInitCreatePool(t *testing.T) {
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 
@@ -52,7 +52,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintBarQux100_1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -68,18 +68,18 @@ func TestMintBarQux100_1(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), admin)
 
 	std.TestSkipHeights(1)
 }
 
 func TestCreateExternalIncentiveBar(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
 	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
@@ -99,7 +99,7 @@ func TestCreateExternalIncentiveBar(t *testing.T) {
 }
 
 func TestCreateExternalIncentiveGns(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // this includes depositGnsAmount
 
@@ -118,7 +118,7 @@ func TestCreateExternalIncentiveGns(t *testing.T) {
 }
 
 func TestStakeToken_1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
 	StakeToken(1)
@@ -153,30 +153,30 @@ func TestDuratino200(t *testing.T) {
 }
 
 func TestCollectReward(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
-	oldBar := bar.BalanceOf(a2u(gsa))
-	oldGns := gns.BalanceOf(a2u(gsa))
+	oldBar := bar.BalanceOf(a2u(admin))
+	oldGns := gns.BalanceOf(a2u(admin))
 
 	CollectReward(1, false)
 
-	newBar := bar.BalanceOf(a2u(gsa))
-	newGns := gns.BalanceOf(a2u(gsa))
+	newBar := bar.BalanceOf(a2u(admin))
+	newGns := gns.BalanceOf(a2u(admin))
 
 	shouldEQ(t, newBar-oldBar, uint64(485))
 	shouldEQ(t, newGns-oldGns, uint64(7861515679)) // external 485 + internal 7861515194
 }
 
 func TestCollectRewardSameBlockNoReward(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
-	oldBar := bar.BalanceOf(a2u(gsa))
-	oldGns := gns.BalanceOf(a2u(gsa))
+	oldBar := bar.BalanceOf(a2u(admin))
+	oldGns := gns.BalanceOf(a2u(admin))
 
 	CollectReward(1, false)
 
-	newBar := bar.BalanceOf(a2u(gsa))
-	newGns := gns.BalanceOf(a2u(gsa))
+	newBar := bar.BalanceOf(a2u(admin))
+	newGns := gns.BalanceOf(a2u(admin))
 
 	// same block no change
 	shouldEQ(t, newBar-oldBar, uint64(0))
@@ -186,15 +186,15 @@ func TestCollectRewardSameBlockNoReward(t *testing.T) {
 func TestCollectRewardSingleBlock(t *testing.T) {
 	std.TestSkipHeights(1)
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
-	oldBar := bar.BalanceOf(a2u(gsa))
-	oldGns := gns.BalanceOf(a2u(gsa))
+	oldBar := bar.BalanceOf(a2u(admin))
+	oldGns := gns.BalanceOf(a2u(admin))
 
 	CollectReward(1, false)
 
-	newBar := bar.BalanceOf(a2u(gsa))
-	newGns := gns.BalanceOf(a2u(gsa))
+	newBar := bar.BalanceOf(a2u(admin))
+	newGns := gns.BalanceOf(a2u(admin))
 
 	shouldEQ(t, newBar-oldBar, uint64(2))        // 2 bar from external incentive
 	shouldEQ(t, newGns-oldGns, uint64(10595037)) // 10595035 gns from internal + 2 gns from external

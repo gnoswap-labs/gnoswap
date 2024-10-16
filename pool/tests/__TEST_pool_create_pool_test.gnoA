@@ -11,7 +11,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee*10)
 
 	t.Run("succeeds for low fee pool", func(t *testing.T) {

@@ -24,7 +24,7 @@ func TestProposeText(t *testing.T) {
 			}
 		}()
 
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		ProposeText("title", "text")
 	})
 
@@ -36,10 +36,10 @@ func TestProposeText(t *testing.T) {
 			t.Errorf("Expected empty proposals, got %v", proposalsJson)
 		}
 
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 
 		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
-		gs.Delegate(gsa, uint64(1_000_000)) // self delegate
+		gs.Delegate(admin, uint64(1_000_000)) // self delegate
 
 		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(2_000_000))
 		gs.Delegate(dummyAddr, uint64(2_000_000)) // delegate to dummy
@@ -55,9 +55,9 @@ func TestProposeText(t *testing.T) {
 			t.Errorf("Incorrect proposals json: %v", proposalsJson)
 		}
 
-		votesJsonGsa := GetVotesByAddress(gsa)
-		if votesJsonGsa != `` {
-			t.Errorf("Expected empty votes for gsa, got %v", votesJsonGsa)
+		votesJsonAdmin := GetVotesByAddress(admin)
+		if votesJsonAdmin != `` {
+			t.Errorf("Expected empty votes for admin, got %v", votesJsonAdmin)
 		}
 
 		votesJsonDummy := GetVotesByAddress(dummyAddr)
@@ -100,7 +100,7 @@ func TestVote(t *testing.T) {
 	t.Run("Successful vote YES", func(t *testing.T) {
 		std.TestSkipHeights(11)
 
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
 		if voted != true {
@@ -129,15 +129,15 @@ func TestVote(t *testing.T) {
 			t.Errorf("Incorrect proposals json: %v", proposalsJson)
 		}
 
-		gsaDelegationStat := gs.GetModifiedDelegationHistoryByAddress(gsa)
-		shouldEQ(t, gsaDelegationStat, `{"height":"145","now":"1234567934","delegationModifiedHistory":[{"from":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","to":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","delegatedHeight":"123","delegatedTimestamp":"1234567890","delegatedAmount":"1000000","undelegatedHeight":"0","undelegatedTimestamp":"0","undelegatedAmount":"0"}]}`)
+		adminDelegationStat := gs.GetModifiedDelegationHistoryByAddress(admin)
+		shouldEQ(t, adminDelegationStat, `{"height":"145","now":"1234567934","delegationModifiedHistory":[{"from":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","to":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","delegatedHeight":"123","delegatedTimestamp":"1234567890","delegatedAmount":"1000000","undelegatedHeight":"0","undelegatedTimestamp":"0","undelegatedAmount":"0"}]}`)
 
-		votesJsonGsa := GetVotesByAddress(gsa)
-		if votesJsonGsa != `{"height":"145","now":"1234567934","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"145","voteTimestamp":"1234567934"}]}` {
-			t.Errorf("Incorrect votes json: %v", votesJsonGsa)
+		votesJsonAdmin := GetVotesByAddress(admin)
+		if votesJsonAdmin != `{"height":"145","now":"1234567934","votes":[{"proposalId":"1","voteYes":"true","voteWeight":"1000000","voteHeight":"145","voteTimestamp":"1234567934"}]}` {
+			t.Errorf("Incorrect votes json: %v", votesJsonAdmin)
 		}
 
-		std.TestSetRealm(gsaRealm)
+		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(1)
 		gs.Undelegate(dummyAddr, uint64(1_500_000)) // undelegate to dummy (75% of origin delegated amount)
 

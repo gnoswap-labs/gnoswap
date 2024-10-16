@@ -2,7 +2,6 @@ package pool
 
 import (
 	"std"
-	"strconv"
 	"strings"
 
 	"gno.land/p/demo/ufmt"
@@ -91,26 +90,26 @@ func CreatePool(
 		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected poolPath(%s) not to exist", poolPath))
 	}
 
+	prevAddr, prevRealm := getPrev()
 	if !exist {
 		gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(consts.PROTOCOL_FEE_ADDR), poolCreationFee)
 		std.Emit(
-			"GNOSWAP_PROTOCOL_FEE",
-			"m_callType", callType(),
-			"m_prevRealm", prevRealm(),
-			"poolPath", poolPath,
-			"reason", "pool_creation",
-			"token", consts.GNS_PATH,
-			"amount", strconv.FormatUint(poolCreationFee, 10),
+			"PoolCreationFee",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"internal_poolPath", poolPath,
+			"internal_tokenPath", consts.GNS_PATH,
+			"internal_amount", ufmt.Sprintf("%d", poolCreationFee),
 		)
 
 		pool = newPool(token0Path, token1Path, fee, tickSpacing, sqrtPriceX96)
 		pools[poolPath] = pool
 
 		std.Emit(
-			"GNOSWAP",
-			"m_callType", callType(),
-			"m_prevRealm", prevRealm(),
-			"p_poolPath", poolPath,
+			"CreatePool",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"internal_poolPath", poolPath,
 		)
 	}
 }
@@ -181,7 +180,7 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	s.WriteString(":")
 	s.WriteString(token1Path)
 	s.WriteString(":")
-	s.WriteString(strconv.FormatUint(uint64(fee), 10))
+	s.WriteString(ufmt.Sprintf("%d", fee))
 
 	return s.String()
 }

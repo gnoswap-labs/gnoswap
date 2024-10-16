@@ -16,7 +16,7 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*2)
 
@@ -32,20 +32,20 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestPositionMintGnsGnot(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	// send
-	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 100000}})
+	std.TestIssueCoins(admin, std.Coins{{"ugnot", 100000}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100000}}, nil)
 
 	// Deposit(wrap)
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	wugnot.Deposit()
 
 	gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa, gsa)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.GNS_PATH, consts.WRAPPED_WUGNOT, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
 	shouldEQ(t, tokenId, uint64(1))
 	shouldEQ(t, amount0, "100000")
@@ -53,21 +53,21 @@ func TestPositionMintGnsGnot(t *testing.T) {
 }
 
 func TestPositionMintGnotBar(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	// send
-	std.TestIssueCoins(gsa, std.Coins{{"ugnot", 100000}})
+	std.TestIssueCoins(admin, std.Coins{{"ugnot", 100000}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100000}}, nil)
 	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
 
 	// Deposit(wrap)
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	wugnot.Deposit()
 
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.WRAPPED_WUGNOT, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, gsa, gsa)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(consts.WRAPPED_WUGNOT, barPath, fee100, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
 	shouldEQ(t, tokenId, uint64(2))
 	shouldEQ(t, amount0, "36790")
@@ -75,7 +75,7 @@ func TestPositionMintGnotBar(t *testing.T) {
 }
 
 func TestDrySwapRouteGnsBarExactIn(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	dryResult := DrySwapRoute(
 		consts.GNS_PATH, // inputToken
@@ -89,7 +89,7 @@ func TestDrySwapRouteGnsBarExactIn(t *testing.T) {
 }
 
 func TestSwapRouteGnsBarExactIn(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), 1000)   // swap input amount
 	bar.Approve(a2u(consts.ROUTER_ADDR), 7325) // 0.15% fee

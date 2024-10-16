@@ -25,7 +25,7 @@ var (
 
 func TestCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
@@ -39,7 +39,7 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
 
 	// not enough mint == swap will fail
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -47,10 +47,10 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	std.TestSetRealm(posRealm)
 	DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	std.TestSetRealm(posRealm)
-	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR, -tickUpper, -tickLower, liquidityExpect, gsa) // -11000  ~ -9000
+	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR, -tickUpper, -tickLower, liquidityExpect, admin) // -11000  ~ -9000
 
 	// zeroForOne true
 	// amountSpecified 16000

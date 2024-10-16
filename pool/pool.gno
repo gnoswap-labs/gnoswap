@@ -2,7 +2,6 @@ package pool
 
 import (
 	"std"
-	"strconv"
 
 	"gno.land/p/demo/ufmt"
 
@@ -61,20 +60,6 @@ func Mint(
 		pool.transferFromAndVerify(positionCaller, consts.POOL_ADDR, pool.token1Path, amount1, false)
 	}
 
-	/*
-		std.Emit(
-			"GNOSWAP",
-			"m_callType", callType(),
-			"m_prevRealm", prevRealm(),
-			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
-			"p_tickLower", int32ToStr(tickLower),
-			"p_tickUpper", int32ToStr(tickUpper),
-			"p_liquidityAmount", _liquidityAmount,
-			"amount0", amount0.ToString(),
-			"amount1", amount1.ToString(),
-		)
-	*/
-
 	return amount0.ToString(), amount1.ToString()
 }
 
@@ -122,20 +107,6 @@ func Burn(
 
 	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
 	pool.positions[positionKey] = position
-
-	/*
-		std.Emit(
-			"GNOSWAP",
-			"m_callType", callType(),
-			"m_prevRealm", prevRealm(),
-			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
-			"p_tickLower", int32ToStr(tickLower),
-			"p_tickUpper", int32ToStr(tickUpper),
-			"p_liquidityAmount", _liquidityAmount,
-			"amount0", amount0.ToString(),
-			"amount1", amount1.ToString(),
-		)
-	*/
 
 	// actual token transfer happens in Collect()
 	return amount0.ToString(), amount1.ToString()
@@ -194,20 +165,6 @@ func Collect(
 	transferByRegisterCall(pool.token1Path, recipient, amount1.Uint64())
 
 	pool.positions[positionKey] = position
-
-	/*
-		std.Emit(
-			"GNOSWAP",
-			"m_callType", callType(),
-			"m_prevRealm", prevRealm(),
-			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
-			"p_tickLower", int32ToStr(tickLower),
-			"p_tickUpper", int32ToStr(tickUpper),
-			"p_recipient", _recipient,
-			"amount0", amount0.ToString(),
-			"amount1", amount1.ToString(),
-		)
-	*/
 
 	return amount0.ToString(), amount1.ToString()
 }
@@ -445,48 +402,95 @@ func Swap(
 
 	}
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
-		"p_zeroForOne", boolToStr(zeroForOne),
-		"p_amountSpecified", _amountSpecified,
-		"p_sqrtPriceLimitX96", _sqrtPriceLimitX96,
-		"p_payer", payer.String(),
-		"p_recipient", recipient.String(),
-		"amount0", amount0.ToString(),
-		"amount1", amount1.ToString(),
-		"protocol_fee0", pool.protocolFees.token0.ToString(),
-		"protocol_fee1", pool.protocolFees.token1.ToString(),
-		"swap_fee", swapFee.ToString(),
+		"Swap",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"poolPath", GetPoolPath(token0Path, token1Path, fee),
+		"zeroForOne", ufmt.Sprintf("%t", zeroForOne),
+		"amountSpecified", _amountSpecified,
+		"sqrtPriceLimitX96", _sqrtPriceLimitX96,
+		"payer", payer.String(),
+		"recipient", recipient.String(),
+		"internal_amount0", amount0.ToString(),
+		"internal_amount1", amount1.ToString(),
+		"internal_protocolFee0", pool.protocolFees.token0.ToString(),
+		"internal_protocolFee1", pool.protocolFees.token1.ToString(),
+		"internal_swapFee", swapFee.ToString(),
+		"internal_sqrtPriceX96", pool.slot0.sqrtPriceX96.ToString(),
 	)
 
 	pool.slot0.unlocked = true
 	return amount0.ToString(), amount1.ToString()
 }
 
-// SetFeeProtocol sets the denominator of the protocol fee
-//
-// Panics:
-// - The caller is not an admin
-// - The feeProtocol0 or feeProtocol1 is not in the range of 0 or 4-10
+// SetFeeProtocolByAdmin sets the fee protocol for all pools
+// Panics if the caller is not the admin
+func SetFeeProtocolByAdmin(
+	feeProtocol0 uint8,
+	feeProtocol1 uint8,
+) {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.ADMIN {
+		panic(
+			ufmt.Sprintf(
+				"[POOL] pool.gno__SetFeeProtocolByAdmin() || only admin(%s) can set fee protocol, called from %s",
+				consts.ADMIN,
+				caller,
+			),
+		)
+	}
+
+	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"SetFeeProtocolByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"feeProtocol0", ufmt.Sprintf("%d", feeProtocol0),
+		"feeProtocol1", ufmt.Sprintf("%d", feeProtocol1),
+		"internal_newFee", ufmt.Sprintf("%d", newFee),
+	)
+}
+
+// SetFeeProtocol sets the fee protocol for all pools
+// Panics if the caller is not the governance contract
 func SetFeeProtocol(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
 ) {
-	common.IsHalted()
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
+	if caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
-				"[POOL] pool.gno__SetFeeProtocol() || only admin(%s) or governance(%s) can set fee protocol, called from %s",
-				consts.GNOSWAP_ADMIN,
+				"[POOL] pool.gno__SetFeeProtocol() || only governance(%s) can set fee protocol, called from %s",
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
 		)
 	}
+
+	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"SetFeeProtocol",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"feeProtocol0", ufmt.Sprintf("%d", feeProtocol0),
+		"feeProtocol1", ufmt.Sprintf("%d", feeProtocol1),
+		"internal_newFee", ufmt.Sprintf("%d", newFee),
+	)
+}
+
+func setFeeProtocol(
+	feeProtocol0 uint8,
+	feeProtocol1 uint8,
+) uint8 {
+	common.IsHalted()
 
 	fee0Cond := feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)
 	fee1Cond := feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10)
@@ -501,22 +505,53 @@ func SetFeeProtocol(
 		pool.slot0.feeProtocol = newFee
 	}
 
-	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_feeProtocol0", uint8ToStr(feeProtocol0),
-		"p_feeProtocol1", uint8ToStr(feeProtocol1),
-		"newFee", uint8ToStr(newFee),
-	)
+	return newFee
 }
 
-// CollectProtocol collects protocol fees from the pool
-//
-// Panics:
-// - The caller is not an admin
-// - The recipient is the zero address
-// - The amount0Requested or amount1Requested is greater than the protocol fees
+func CollectProtocolByAdmin(
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient std.Address,
+	_amount0Requested string, // uint128
+	_amount1Requested string, // uint128
+) (string, string) { // uint128 x2
+	caller := std.PrevRealm().Addr()
+	if caller != consts.ADMIN {
+		panic(
+			ufmt.Sprintf(
+				"[POOL] pool.gno__CollectProtocolByAdmin() || only admin(%s) can collect protocol fees, called from %s",
+				consts.ADMIN,
+				caller,
+			),
+		)
+	}
+
+	amount0, amount1 := collectProtocol(
+		token0Path,
+		token1Path,
+		fee,
+		recipient,
+		_amount0Requested,
+		_amount1Requested,
+	)
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"CollectProtocolByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"token0Path", token0Path,
+		"token1Path", token1Path,
+		"fee", ufmt.Sprintf("%d", fee),
+		"recipient", recipient.String(),
+		"internal_amount0", amount0,
+		"internal_amount1", amount1,
+	)
+
+	return amount0, amount1
+}
+
 func CollectProtocol(
 	token0Path string,
 	token1Path string,
@@ -525,19 +560,51 @@ func CollectProtocol(
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
-	common.IsHalted()
-
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
+	if caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
 			ufmt.Sprintf(
-				"[POOL] pool.gno__CollectFeeProtocol() || only admin(%s) or governance(%s) can collect fee protocol, called from %s",
-				consts.GNOSWAP_ADMIN,
+				"[POOL] pool.gno__CollectProtocol() || only governance(%s) can collect protocol fees, called from %s",
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
 		)
 	}
+
+	amount0, amount1 := collectProtocol(
+		token0Path,
+		token1Path,
+		fee,
+		recipient,
+		_amount0Requested,
+		_amount1Requested,
+	)
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"CollectProtocol",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"token0Path", token0Path,
+		"token1Path", token1Path,
+		"fee", ufmt.Sprintf("%d", fee),
+		"recipient", recipient.String(),
+		"internal_amount0", amount0,
+		"internal_amount1", amount1,
+	)
+
+	return amount0, amount1
+}
+
+func collectProtocol(
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient std.Address,
+	_amount0Requested string, // uint128
+	_amount1Requested string, // uint128
+) (string, string) { // uint128 x2
+	common.IsHalted()
 
 	amount0Requested := u256.MustFromDecimal(_amount0Requested)
 	amount1Requested := u256.MustFromDecimal(_amount1Requested)
@@ -555,39 +622,11 @@ func CollectProtocol(
 	if !ok {
 		panic(ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pool.token0Path(%s), recipient(%s), uAmount0)(%d) failed", pool.token0Path, recipient.String(), uAmount0))
 	}
-	std.Emit(
-		"GNOSWAP_PROTOCOL_FEE",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"poolPath", GetPoolPath(token0Path, token1Path, fee),
-		"reason", "pool_protocol_fee",
-		"token", pool.token0Path,
-		"amount", strconv.FormatUint(uAmount0, 10),
-	)
 
 	ok = transferByRegisterCall(pool.token1Path, recipient, uAmount1)
 	if !ok {
 		panic(ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pool.token1Path(%s), recipient(%s), uAmount1)(%d) failed", pool.token1Path, recipient.String(), uAmount1))
 	}
-	std.Emit(
-		"GNOSWAP_PROTOCOL_FEE",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"poolPath", GetPoolPath(token0Path, token1Path, fee),
-		"reason", "pool_protocol_fee",
-		"token", pool.token1Path,
-		"amount", strconv.FormatUint(uAmount1, 10),
-	)
-
-	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_prevRealm", prevRealm(),
-		"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
-		"p_recipient", recipient.String(),
-		"amount0", amount0.ToString(),
-		"amount1", amount1.ToString(),
-	)
 
 	return amount0.ToString(), amount1.ToString()
 }

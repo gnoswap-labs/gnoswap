@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	gsa std.Address = consts.GNOSWAP_ADMIN
+	admin std.Address = consts.ADMIN
 
 	fooPath string = "gno.land/r/onbloc/foo"
 	barPath string = "gno.land/r/onbloc/bar"
@@ -47,7 +47,7 @@ var (
 
 func TestExactInputSinglePool1_to_0(t *testing.T) {
 	// ================================ Pool Setup & Add Liquidity================================================
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 
@@ -58,7 +58,7 @@ func TestExactInputSinglePool1_to_0(t *testing.T) {
 	pl.CreatePool(barPath, token0Path, 3000, "79228162514264337593543950336") // encodePriceSqrt(1, 1)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, token0Path, 3000, minTick, maxTick, "1000000", "1000000", "0", "0", max_timeout, gsa, gsa)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, token0Path, 3000, minTick, maxTick, "1000000", "1000000", "0", "0", max_timeout, admin, admin)
 	pool := pl.GetPool(barPath, token0Path, FEEMEDIUM)
 	poolLiq := pool.PoolGetLiquidity()
 	shouldEQ(t, poolLiq.ToString(), "1000000")
@@ -71,8 +71,8 @@ func TestExactInputSinglePool1_to_0(t *testing.T) {
 	poolToken0Before := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	poolToken1Before := foo.BalanceOf(a2u(consts.POOL_ADDR))
 
-	user1Token0Before := bar.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
-	user1Token1Before := foo.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
+	user1Token0Before := bar.BalanceOf(a2u(consts.ADMIN))
+	user1Token1Before := foo.BalanceOf(a2u(consts.ADMIN))
 
 	amountIn, amountOut := SwapRoute(
 		barPath,    // inputToken
@@ -90,8 +90,8 @@ func TestExactInputSinglePool1_to_0(t *testing.T) {
 	poolToken0After := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	poolToken1After := foo.BalanceOf(a2u(consts.POOL_ADDR))
 
-	user1Token0After := bar.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
-	user1Token1After := foo.BalanceOf(a2u(consts.GNOSWAP_ADMIN))
+	user1Token0After := bar.BalanceOf(a2u(consts.ADMIN))
+	user1Token1After := foo.BalanceOf(a2u(consts.ADMIN))
 
 	shouldEQ(t, user1Token0After, user1Token0Before+1) // bar
 	shouldEQ(t, user1Token1After, user1Token1Before-3) // foo

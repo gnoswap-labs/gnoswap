@@ -32,8 +32,8 @@ func AfterTest(t *testing.T) {
 	std.TestSetRealm(poolRealm)
 	barBal := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBal := foo.BalanceOf(a2u(consts.POOL_ADDR))
-	bar.Transfer(a2u(gsa), barBal)
-	foo.Transfer(a2u(gsa), fooBal)
+	bar.Transfer(a2u(admin), barBal)
+	foo.Transfer(a2u(admin), fooBal)
 	delete(pools, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
 }
 
@@ -44,7 +44,7 @@ func TestCreateFooBarPool_Should_be_failed_if_price_is_too_low(t *testing.T) {
 	shouldEQ(t, uint64(gnsBalance(consts.STAKER_ADDR)), uint64(0))
 	shouldEQ(t, uint64(gnsBalance(consts.DEV_OPS)), uint64(0))
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -58,7 +58,7 @@ func TestCreateFooBarPool_Should_be_failed_if_price_is_too_low(t *testing.T) {
 }
 
 func TestCreateFooBarPool_Should_be_failed_if_price_is_too_high(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
 	shouldPanic(
@@ -70,7 +70,7 @@ func TestCreateFooBarPool_Should_be_failed_if_price_is_too_high(t *testing.T) {
 }
 
 func TestCreateFooBarPool_can_be_init_at_MIN_SQRT_RATIO(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	pl.CreatePool(barPath, fooPath, 3000, "4295128739") // MIN_SQRT_RATIO
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
@@ -80,7 +80,7 @@ func TestCreateFooBarPool_can_be_init_at_MIN_SQRT_RATIO(t *testing.T) {
 }
 
 func TestCreateFooBarPool_can_be_init_at_MAX_SQRT_RATIO_Sub1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	pl.CreatePool(barPath, fooPath, 3000, "1461446703485210103287273052203988822378723970341") // MAX_SQRT_RATIO-1
@@ -91,7 +91,7 @@ func TestCreateFooBarPool_can_be_init_at_MAX_SQRT_RATIO_Sub1(t *testing.T) {
 }
 
 func TestCreateFooBarPool_set_initial_variables(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
 	pl.CreatePool(barPath, fooPath, 3000, "56022770974786139918731938227") // encodePriceSqrt(1, 2)
@@ -112,7 +112,7 @@ func PoolGetSlot0Price(fooPath, token1Path string, fee uint32) string {
 
 func TestMint_fail_if_tickLower_greater_than_tickUpper(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -122,13 +122,13 @@ func TestMint_fail_if_tickLower_greater_than_tickUpper(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", gsa)
+	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
 
 	// =====================fails if tickLower greater than tickUpper==========================
 	shouldPanic(
 		t,
 		func() {
-			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", 1, 0, "1", gsa)
+			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", 1, 0, "1", admin)
 		},
 	)
 	AfterTest(t)
@@ -136,7 +136,7 @@ func TestMint_fail_if_tickLower_greater_than_tickUpper(t *testing.T) {
 
 func TestMint_fail_if_tickLower_less_than_min_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -146,13 +146,13 @@ func TestMint_fail_if_tickLower_less_than_min_tick(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", gsa)
+	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
 
 	// =====================fails if tickLower less than min tick==========================
 	shouldPanic(
 		t,
 		func() {
-			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", -887273, 0, "1", gsa)
+			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", -887273, 0, "1", admin)
 		},
 	)
 	AfterTest(t)
@@ -160,7 +160,7 @@ func TestMint_fail_if_tickLower_less_than_min_tick(t *testing.T) {
 
 func TestMint_fail_if_tickUpper_greater_than_max_tick(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -169,13 +169,13 @@ func TestMint_fail_if_tickUpper_greater_than_max_tick(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", gsa)
+	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
 
 	// =====================fails if tickUpper greater than max tick==========================
 	shouldPanic(
 		t,
 		func() {
-			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", 0, 887273, "1", gsa)
+			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", 0, 887273, "1", admin)
 		},
 	)
 	AfterTest(t)
@@ -183,7 +183,7 @@ func TestMint_fail_if_tickUpper_greater_than_max_tick(t *testing.T) {
 
 func TestMint_fail_if_amount_exceeds_the_max(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -193,7 +193,7 @@ func TestMint_fail_if_amount_exceeds_the_max(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", gsa)
+	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
 
 	// =====================fails if amount exceeds the max ==========================
 	pool := GetPool(barPath, fooPath, 3000)
@@ -203,7 +203,7 @@ func TestMint_fail_if_amount_exceeds_the_max(t *testing.T) {
 	shouldPanic(
 		t,
 		func() {
-			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), gsa)
+			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), admin)
 		},
 	)
 	AfterTest(t)
@@ -211,7 +211,7 @@ func TestMint_fail_if_amount_exceeds_the_max(t *testing.T) {
 
 func TestMint_fail_if_total_amount_at_tick_exceeds_the_max(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -221,7 +221,7 @@ func TestMint_fail_if_total_amount_at_tick_exceeds_the_max(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", gsa)
+	pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
 
 	// =====================fails if total amount at tick exceeds the max========================
 	pool := GetPool(fooPath, barPath, 3000)
@@ -236,21 +236,21 @@ func TestMint_fail_if_total_amount_at_tick_exceeds_the_max(t *testing.T) {
 	shouldPanic(
 		t,
 		func() {
-			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), gsa)
+			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), admin)
 		},
 	)
 
 	shouldPanic(
 		t,
 		func() {
-			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing*2, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), gsa)
+			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing*2, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), admin)
 		},
 	)
 
 	shouldPanic(
 		t,
 		func() {
-			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing*2, maxLiquidityPerTick.ToString(), gsa)
+			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing*2, maxLiquidityPerTick.ToString(), admin)
 		},
 	)
 	AfterTest(t)
@@ -258,7 +258,7 @@ func TestMint_fail_if_total_amount_at_tick_exceeds_the_max(t *testing.T) {
 
 func TestMint_fail_if_amount_is_0(t *testing.T) {
 	// ================================ Pool Setup ================================================
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
@@ -270,7 +270,7 @@ func TestMint_fail_if_amount_is_0(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", gsa)
+	pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
 
 	// =====================fails if total amount at tick exceeds the max========================
 
@@ -279,7 +279,7 @@ func TestMint_fail_if_amount_is_0(t *testing.T) {
 	shouldPanic(
 		t,
 		func() {
-			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, "0", gsa)
+			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, "0", admin)
 		},
 	)
 }

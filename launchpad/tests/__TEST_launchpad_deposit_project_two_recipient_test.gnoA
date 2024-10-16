@@ -35,7 +35,7 @@ func init() {
 func TestMockProtocolFee(t *testing.T) {
 	// admin > protocol_fee
 	// send qux, bar for testing
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
 	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 2500)
 
@@ -49,7 +49,7 @@ func TestMockProtocolFee(t *testing.T) {
 }
 
 func TestCreateProject(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
 	std.TestSkipHeights(1)
@@ -70,7 +70,7 @@ func TestCreateProject(t *testing.T) {
 }
 
 func TestCreateProject02(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
 	std.TestSkipHeights(1)
@@ -91,7 +91,7 @@ func TestCreateProject02(t *testing.T) {
 }
 
 func TestDepositGnsToTierProject01_Tier30(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
 	// transfer some grc20 tokens to bypass project condition
 	foo.Transfer(a2u(user01), uint64(10))
@@ -108,7 +108,7 @@ func TestDepositGnsToTierProject01_Tier30(t *testing.T) {
 }
 
 func TestDepositGnsToTierProject02_Tier180(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(user01), uint64(9_000_000)) // to deposit
 
 	std.TestSetRealm(user01Realm)

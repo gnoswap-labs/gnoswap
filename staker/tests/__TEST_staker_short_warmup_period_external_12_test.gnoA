@@ -31,7 +31,7 @@ func init() {
 
 func TestPoolInitCreatePool(t *testing.T) {
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 
@@ -42,7 +42,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintBarQux100_1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -58,18 +58,18 @@ func TestMintBarQux100_1(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa,
-		gsa,
+		admin,
+		admin,
 	)
 
 	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), gsa)
+	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), admin)
 
 	std.TestSkipHeights(1)
 }
 
 func TestCreateExternalIncentiveBar(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
 	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
@@ -89,7 +89,7 @@ func TestCreateExternalIncentiveBar(t *testing.T) {
 }
 
 func TestCreateExternalIncentiveQux(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	qux.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
 	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
@@ -109,7 +109,7 @@ func TestCreateExternalIncentiveQux(t *testing.T) {
 }
 
 func TestStakeToken_1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
 	StakeToken(1)
@@ -144,15 +144,15 @@ func TestDuratino200(t *testing.T) {
 }
 
 func TestCollectReward(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
-	oldBar := bar.BalanceOf(a2u(gsa))
-	oldQux := qux.BalanceOf(a2u(gsa))
+	oldBar := bar.BalanceOf(a2u(admin))
+	oldQux := qux.BalanceOf(a2u(admin))
 
 	CollectReward(1, false)
 
-	newBar := bar.BalanceOf(a2u(gsa))
-	newQux := qux.BalanceOf(a2u(gsa))
+	newBar := bar.BalanceOf(a2u(admin))
+	newQux := qux.BalanceOf(a2u(admin))
 
 	shouldEQ(t, bool(newBar > oldBar), true)
 	shouldEQ(t, bool(newQux > oldQux), true)
