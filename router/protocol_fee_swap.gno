@@ -2,7 +2,6 @@ package router
 
 import (
 	"std"
-	"strconv"
 
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
@@ -56,7 +55,7 @@ func handleSwapFee(
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
 			"internal_token", outputToken,
-			"internal_amount", strconv.FormatUint(feeAmountUint64, 10),
+			"internal_amount", ufmt.Sprintf("%d", feeAmountUint64),
 		)
 	}
 
@@ -88,7 +87,7 @@ func SetSwapFeeByAdmin(fee uint64) {
 		"SetSwapFeeByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"fee", uint64ToStr(fee),
+		"fee", ufmt.Sprintf("%d", fee),
 	)
 }
 
@@ -112,7 +111,7 @@ func SetSwapFee(fee uint64) {
 		"SetSwapFee",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"fee", uint64ToStr(fee),
+		"fee", ufmt.Sprintf("%d", fee),
 	)
 }
 

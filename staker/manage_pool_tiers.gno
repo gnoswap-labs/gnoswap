@@ -130,7 +130,7 @@ func SetPoolTierByAdmin(poolPath string, tier uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"poolPath", poolPath,
-		"tier", uint64ToStr(tier),
+		"tier", ufmt.Sprintf("%d", tier),
 	)
 }
 
@@ -155,7 +155,7 @@ func SetPoolTier(poolPath string, tier uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"poolPath", poolPath,
-		"tier", uint64ToStr(tier),
+		"tier", ufmt.Sprintf("%d", tier),
 	)
 }
 
@@ -216,7 +216,7 @@ func ChangePoolTierByAdmin(poolPath string, tier uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"poolPath", poolPath,
-		"tier", uint64ToStr(tier),
+		"tier", ufmt.Sprintf("%d", tier),
 	)
 }
 
@@ -238,8 +238,10 @@ func ChangePoolTier(poolPath string, tier uint64) {
 
 	std.Emit(
 		"ChangePoolTier",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
 		"poolPath", poolPath,
-		"tier", uint64ToStr(tier),
+		"tier", ufmt.Sprintf("%d", tier),
 	)
 }
 

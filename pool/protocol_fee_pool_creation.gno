@@ -42,7 +42,7 @@ func SetPoolCreationFeeByAdmin(fee uint64) {
 		"SetPoolCreationFeeByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"internal_fee", uint64ToStr(fee),
+		"fee", ufmt.Sprintf("%d", fee),
 	)
 }
 
@@ -67,7 +67,7 @@ func SetPoolCreationFee(fee uint64) {
 		"SetPoolCreationFee",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"internal_fee", uint64ToStr(fee),
+		"fee", ufmt.Sprintf("%d", fee),
 	)
 }
 

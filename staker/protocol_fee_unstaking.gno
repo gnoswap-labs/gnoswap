@@ -2,7 +2,6 @@ package staker
 
 import (
 	"std"
-	"strconv"
 
 	"gno.land/r/gnoswap/v2/consts"
 
@@ -42,10 +41,10 @@ func handleUnstakingFee(
 			"ProtocolFeeInternalReward",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"internal_lpTokenId", strconv.FormatUint(tokenId, 10),
+			"internal_lpTokenId", ufmt.Sprintf("%d", tokenId),
 			"internal_poolPath", poolPath,
 			"internal_token", consts.GNS_PATH,
-			"internal_amount", strconv.FormatUint(feeAmount, 10),
+			"internal_amount", ufmt.Sprintf("%d", feeAmount),
 		)
 
 	} else {
@@ -58,10 +57,10 @@ func handleUnstakingFee(
 			"ProtocolFeeExternalReward",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"internal_lpTokenId", strconv.FormatUint(tokenId, 10),
+			"internal_lpTokenId", ufmt.Sprintf("%d", tokenId),
 			"internal_poolPath", poolPath,
 			"internal_token", tokenPath,
-			"internal_amount", strconv.FormatUint(feeAmount, 10),
+			"internal_amount", ufmt.Sprintf("%d", feeAmount),
 		)
 	}
 
@@ -92,7 +91,7 @@ func SetUnstakingFeeByAdmin(fee uint64) {
 		"SetUnstakingFeeByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"fee", uint64ToStr(fee),
+		"fee", ufmt.Sprintf("%d", fee),
 	)
 }
 
@@ -116,7 +115,7 @@ func SetUnstakingFee(fee uint64) {
 		"SetUnstakingFee",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"fee", uint64ToStr(fee),
+		"fee", ufmt.Sprintf("%d", fee),
 	)
 }
 

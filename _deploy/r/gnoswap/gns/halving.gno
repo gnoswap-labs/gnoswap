@@ -117,7 +117,7 @@ func SetAvgBlockTimeInMsByAdmin(ms int64) {
 		"SetAvgBlockTimeInMsByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"ms", int64ToStr(ms),
+		"ms", ufmt.Sprintf("%d", ms),
 	)
 }
 
@@ -138,7 +138,7 @@ func SetAvgBlockTimeInMs(ms int64) {
 		"SetAvgBlockTimeInMs",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"ms", int64ToStr(ms),
+		"ms", ufmt.Sprintf("%d", ms),
 	)
 }
 
@@ -259,6 +259,6 @@ func callType() string {
 	return "INDIRECT"
 }
 
-func int64ToStr(i int64) string {
+func ufmt.Sprintf("%d", i int64) string {
 	return strconv.FormatInt(i, 10)
 }

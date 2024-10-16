@@ -318,7 +318,7 @@ func Vote(proposalId uint64, yes bool) string {
 		"prevRealm", prevRealm,
 		"proposalId", ufmt.Sprintf("%d", proposalId),
 		"yes", voteToString(yes),
-		"weight", ufmt.Sprintf("%d", weight),
+		"internal_weight", ufmt.Sprintf("%d", weight),
 	)
 
 	return voteKey

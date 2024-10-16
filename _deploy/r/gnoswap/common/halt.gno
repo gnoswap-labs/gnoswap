@@ -44,14 +44,14 @@ func SetHaltByAdmin(halt bool) {
 			"SetHaltByAdmin",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"halt", boolToStr(halt),
+			"halt", ufmt.Sprintf("%t", halt),
 		)
 	} else {
 		std.Emit(
 			"UnsetHaltByAdmin",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"halt", boolToStr(halt),
+			"halt", ufmt.Sprintf("%t", halt),
 		)
 	}
 }
@@ -78,14 +78,14 @@ func SetHalt(halt bool) {
 			"SetHalt",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"halt", boolToStr(halt),
+			"halt", ufmt.Sprintf("%t", halt),
 		)
 	} else {
 		std.Emit(
 			"UnsetHalt",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"halt", boolToStr(halt),
+			"halt", ufmt.Sprintf("%t", halt),
 		)
 	}
 }

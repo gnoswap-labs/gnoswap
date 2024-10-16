@@ -36,7 +36,7 @@ func SetDepositGnsAmountByAdmin(amount uint64) {
 		"SetDepositGnsAmountByAdmin",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"amount", uint64ToStr(amount),
+		"amount", ufmt.Sprintf("%d", amount),
 	)
 }
 
@@ -60,7 +60,7 @@ func SetDepositGnsAmount(amount uint64) {
 		"SetDepositGnsAmount",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
-		"amount", uint64ToStr(amount),
+		"amount", ufmt.Sprintf("%d", amount),
 	)
 }
 

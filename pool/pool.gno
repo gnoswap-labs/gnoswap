@@ -409,7 +409,7 @@ func Swap(
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"poolPath", GetPoolPath(token0Path, token1Path, fee),
-		"zeroForOne", boolToStr(zeroForOne),
+		"zeroForOne", ufmt.Sprintf("%t", zeroForOne),
 		"amountSpecified", _amountSpecified,
 		"sqrtPriceLimitX96", _sqrtPriceLimitX96,
 		"payer", payer.String(),
@@ -589,8 +589,8 @@ func CollectProtocol(
 		"token1Path", token1Path,
 		"fee", ufmt.Sprintf("%d", fee),
 		"recipient", recipient.String(),
-		"amount0", amount0,
-		"amount1", amount1,
+		"internal_amount0", amount0,
+		"internal_amount1", amount1,
 	)
 
 	return amount0, amount1

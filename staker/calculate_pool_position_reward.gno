@@ -2,8 +2,9 @@ package staker
 
 import (
 	"std"
-	"strconv"
 	"time"
+
+	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v2/consts"
 
@@ -265,7 +266,7 @@ func CalcPoolPosition() {
 				"prevAddr", prevAddr,
 				"prevRealm", prevRealm,
 				"internal_poolPath", poolPath,
-				"internal_amount", strconv.FormatUint(send, 10),
+				"internal_amount", ufmt.Sprintf("%d", send),
 			)
 
 			poolGns[poolPath] = 0

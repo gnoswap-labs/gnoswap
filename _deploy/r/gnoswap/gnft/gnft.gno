@@ -175,7 +175,7 @@ func SetTokenURI(tid grc721.TokenID) {
 			"SetTokenURI",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"tokenId", string(tid),
+			"lpTokenId", string(tid),
 			"internal_tokenURI", tokenURI,
 		)
 	}
@@ -203,7 +203,7 @@ func SetTokenURILast() {
 				"SetTokenURI",
 				"prevAddr", prevAddr,
 				"prevRealm", prevRealm,
-				"tokenId", string(tid),
+				"lpTokenId", string(tid),
 				"internal_tokenURI", tokenURI,
 			)
 		}

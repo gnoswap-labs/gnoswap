@@ -2,7 +2,6 @@ package pool
 
 import (
 	"std"
-	"strconv"
 	"strings"
 
 	"gno.land/p/demo/ufmt"
@@ -100,7 +99,7 @@ func CreatePool(
 			"prevRealm", prevRealm,
 			"internal_poolPath", poolPath,
 			"internal_token", consts.GNS_PATH,
-			"internal_amount", strconv.FormatUint(poolCreationFee, 10),
+			"internal_amount", ufmt.Sprintf("%d", poolCreationFee),
 		)
 
 		pool = newPool(token0Path, token1Path, fee, tickSpacing, sqrtPriceX96)
@@ -181,7 +180,7 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	s.WriteString(":")
 	s.WriteString(token1Path)
 	s.WriteString(":")
-	s.WriteString(strconv.FormatUint(uint64(fee), 10))
+	s.WriteString(ufmt.Sprintf("%d", fee)),
 
 	return s.String()
 }
