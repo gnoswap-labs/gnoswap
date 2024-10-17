@@ -15,6 +15,7 @@ ADDR_QA03 := g1w4qqmxdk59xsh3x5hnp2z78s4ymyva8pnenfem
 ADDR_QA04 := g14supzhx0v5sza947sdh4x74wnws9xvcfwdecef
 ADDR_QA05 := g1apl4u79zhexrxcf4h48y5qlyjncskdlrxtz6vg
 ADDR_QA06 := g12g569s05c293zu2kxk0z426yylxmmthx8hcudd
+ADDR_QA07 := g1dag2p05ax7s2dvmj77j0tgfez4duspdyeh48pv
 
 ADDR_POOL := g126swhfaq2vyvvjywevhgw7lv9hg8qan93dasu8
 ADDR_POSITION := g1vsm68lq9cpn7x507s6gh59anmx86kxfhzyszu2
@@ -39,11 +40,11 @@ TX_EXPIRE := 9999999999
 
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 
-#GNOLAND_RPC_URL ?= http://localhost:26657
-#CHAINID ?= dev
+GNOLAND_RPC_URL ?= http://localhost:26657
+CHAINID ?= dev
 
-GNOLAND_RPC_URL ?= https://dev.rpc.gnoswap.io:443
-CHAINID ?= dev.gnoswap
+#GNOLAND_RPC_URL ?= https://dev.rpc.gnoswap.io:443
+#CHAINID ?= dev.gnoswap
 
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
 
@@ -441,6 +442,13 @@ launchpad-qa:
 	## CREATE PROJECT
 	$(info ************ create project // gnoswap_admin ************)
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/launchpad -func CreateProject -args "gno.land/r/onbloc/qux" -args $(ADDR_QA06) -args 5000000000000 -args "gno.land/r/gnoswap/v2/gov/xgns*PAD*gno.land/r/onbloc/usdc" -args "100000000*PAD*200000000" -args 50 -args 30 -args 20 -args 1729047600 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+
+	## APPROVE
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/onbloc/obl -func Approve -args $(ADDR_LAUNCHPAD) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+
+	## CREATE PROJECT
+	$(info ************ create project // gnoswap_admin ************)
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/launchpad -func CreateProject -args "gno.land/r/onbloc/obl" -args $(ADDR_QA07) -args 1500000000000 -args "gno.land/r/gnoswap/v2/gov/xgns" -args "500000000" -args 50 -args 30 -args 20 -args 1729126800 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 
 
 ## LAUNCHPAD
