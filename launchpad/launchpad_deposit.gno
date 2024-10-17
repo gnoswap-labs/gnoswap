@@ -96,7 +96,7 @@ func DepositGns(
 	depositId := projectId + ":" + tierStr + ":" + depositorStr + ":" + ufmt.Sprintf("%d", std.GetHeight())
 
 	// calculate claimable height & time base on deposit height & time
-	calcClaimableHeight := uint64(project.startHeight) + tier.collectWaitDuration
+	calcClaimableHeight := uint64(std.GetHeight()) + tier.collectWaitDuration
 	_claimWaitDurationTimestamp := uint64(0)
 	switch tierStr {
 	case "30":
@@ -106,7 +106,7 @@ func DepositGns(
 	case "180":
 		_claimWaitDurationTimestamp = TIMESTAMP_14DAYS
 	}
-	calcClaimableTimestamp := uint64(project.startTime) + _claimWaitDurationTimestamp
+	calcClaimableTimestamp := uint64(time.Now().Unix()) + _claimWaitDurationTimestamp
 
 	claimableHeight := min(calcClaimableHeight, tier.endHeight)
 	claimableTime := min(calcClaimableTimestamp, tier.endTime)
