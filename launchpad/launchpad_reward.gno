@@ -72,24 +72,22 @@ func CollectRewardByProjectId(projectId string) uint64 {
 				println("(N)th collect")
 				toUser += deposit.rewardAmount
 			} else {
-				collectableAfter := uint64(0)
-				switch deposit.tier {
-				case "30":
-					collectableAfter = project.startHeight + project.tier30.collectWaitDuration
-				case "90":
-					collectableAfter = project.startHeight + project.tier90.collectWaitDuration
-				case "180":
-					collectableAfter = project.startHeight + project.tier180.collectWaitDuration
-				}
-
-				if uint64(std.GetHeight()) < collectableAfter {
+				if uint64(std.GetHeight()) < deposit.claimableHeight {
 					println("NOT CLAIMABLE YET")
 					continue
 				}
-
 				println("token:", project.tokenPath, "reward:", deposit.rewardAmount)
 				toUser += deposit.rewardAmount
 			}
+
+			// update project
+			project.totalCollectedAmount += deposit.rewardAmount
+
+			// update deposit
+			deposit.rewardAmount = 0
+			deposit.rewardCollectHeight = uint64(std.GetHeight())
+			deposit.rewardCollectTime = uint64(time.Now().Unix())
+			deposits[depositId] = deposit
 
 			std.Emit(
 				"CollectRewardByProjectId",
@@ -100,17 +98,10 @@ func CollectRewardByProjectId(projectId string) uint64 {
 				"internal_amount", ufmt.Sprintf("%d", deposit.rewardAmount),
 			)
 		}
-
-		// update project
-		project.totalCollectedAmount += deposit.rewardAmount
-		projects[deposit.projectId] = project
-
-		// update deposit
-		deposit.rewardAmount = 0
-		deposit.rewardCollectHeight = uint64(std.GetHeight())
-		deposit.rewardCollectTime = uint64(time.Now().Unix())
-		deposits[depositId] = deposit
 	}
+
+	// save updated project
+	projects[projectId] = project
 
 	// transfer reward to user
 	transferByRegisterCall(project.tokenPath, std.PrevRealm().Addr(), toUser)
@@ -149,17 +140,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 			println("(N)th collect")
 			toUser += deposit.rewardAmount
 		} else {
-			collectableAfter := uint64(0)
-			switch deposit.tier {
-			case "30":
-				collectableAfter = project.startHeight + project.tier30.collectWaitDuration
-			case "90":
-				collectableAfter = project.startHeight + project.tier90.collectWaitDuration
-			case "180":
-				collectableAfter = project.startHeight + project.tier180.collectWaitDuration
-			}
-
-			if uint64(std.GetHeight()) < collectableAfter {
+			if uint64(std.GetHeight()) < deposit.claimableHeight {
 				println("NOT CLAIMABLE YET")
 				return 0
 			}
