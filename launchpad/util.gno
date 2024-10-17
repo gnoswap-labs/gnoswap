@@ -237,3 +237,10 @@ func getPrev() (string, string) {
 	prev := std.PrevRealm()
 	return prev.Addr().String(), prev.PkgPath()
 }
+
+func min(x, y uint64) uint64 {
+	if x < y {
+		return x
+	}
+	return y
+}
