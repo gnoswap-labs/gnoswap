@@ -15,13 +15,10 @@ import (
 func TransferTokenByAdmin(pkgPath string, to std.Address, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic(
-			ufmt.Sprintf(
-				"[COMMUNITY_POOL] community_pool.gno__TransferTokenByAdmin() || only admin(%s) can transfer token, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		)
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("community_pool.gno__TransferTokenByAdmin() || only admin(%s) can transfer token, called from %s", consts.ADMIN.String(), caller.String()),
+		))
 	}
 
 	transferToken(pkgPath, to, amount)
@@ -42,13 +39,10 @@ func TransferTokenByAdmin(pkgPath string, to std.Address, amount uint64) {
 func TransferToken(pkgPath string, to std.Address, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(
-			ufmt.Sprintf(
-				"[COMMUNITY_POOL] community_pool.gno__TransferToken() || only governance(%s) can transfer token, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		)
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("community_pool.gno__TransferToken() || only governance(%s) can transfer token, called from %s", consts.GOV_GOVERNANCE_ADDR.String(), caller.String()),
+		))
 	}
 
 	transferToken(pkgPath, to, amount)
@@ -69,7 +63,10 @@ func transferToken(pkgPath string, to std.Address, amount uint64) {
 
 	_, found := registered[pkgPath]
 	if !found {
-		panic(ufmt.Sprintf("[COMMUNITY_POOL] community_pool.gno__transferToken() || pkgPath(%s) not registered", pkgPath))
+		panic(addDetailToError(
+			errNotRegistered,
+			"community_pool.gno__transferToken() || token("+pkgPath+") not registered",
+		))
 	}
 
 	registered[pkgPath].Transfer()(a2u(to), amount)

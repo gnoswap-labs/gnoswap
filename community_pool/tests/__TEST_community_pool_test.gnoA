@@ -2,6 +2,7 @@ package community_pool
 
 import (
 	"std"
+	"strings"
 	"testing"
 
 	"gno.land/p/demo/testutils"
@@ -41,11 +42,12 @@ func TestTransferGnsNoPermission(t *testing.T) {
 	dummyRealm := std.NewUserRealm(dummy)
 
 	std.TestSetRealm(dummyRealm)
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			TransferToken(consts.GNS_PATH, dummy, 1000)
 		},
+		`GNOSWAP-COMMUNITY_POOL-001`,
 	)
 }
 
@@ -76,7 +78,7 @@ func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
 		if r := recover(); r == nil {
 			t.Errorf("The code did not panic")
 		} else {
-			if r != msg {
+			if !strings.Contains(string(r), msg) {
 				t.Errorf("excepted panic\n%v\n\ngot\n%v\n", msg, r)
 			}
 		}

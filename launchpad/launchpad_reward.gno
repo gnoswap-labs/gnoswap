@@ -72,24 +72,22 @@ func CollectRewardByProjectId(projectId string) uint64 {
 				println("(N)th collect")
 				toUser += deposit.rewardAmount
 			} else {
-				collectableAfter := uint64(0)
-				switch deposit.tier {
-				case "30":
-					collectableAfter = project.startHeight + project.tier30.collectWaitDuration
-				case "90":
-					collectableAfter = project.startHeight + project.tier90.collectWaitDuration
-				case "180":
-					collectableAfter = project.startHeight + project.tier180.collectWaitDuration
-				}
-
-				if uint64(std.GetHeight()) < collectableAfter {
+				if uint64(std.GetHeight()) < deposit.claimableHeight {
 					println("NOT CLAIMABLE YET")
 					continue
 				}
-
 				println("token:", project.tokenPath, "reward:", deposit.rewardAmount)
 				toUser += deposit.rewardAmount
 			}
+
+			// update project
+			project.totalCollectedAmount += deposit.rewardAmount
+
+			// update deposit
+			deposit.rewardAmount = 0
+			deposit.rewardCollectHeight = uint64(std.GetHeight())
+			deposit.rewardCollectTime = uint64(time.Now().Unix())
+			deposits[depositId] = deposit
 
 			std.Emit(
 				"CollectRewardByProjectId",
@@ -100,17 +98,10 @@ func CollectRewardByProjectId(projectId string) uint64 {
 				"internal_amount", ufmt.Sprintf("%d", deposit.rewardAmount),
 			)
 		}
-
-		// update project
-		project.totalCollectedAmount += deposit.rewardAmount
-		projects[deposit.projectId] = project
-
-		// update deposit
-		deposit.rewardAmount = 0
-		deposit.rewardCollectHeight = uint64(std.GetHeight())
-		deposit.rewardCollectTime = uint64(time.Now().Unix())
-		deposits[depositId] = deposit
 	}
+
+	// save updated project
+	projects[projectId] = project
 
 	// transfer reward to user
 	transferByRegisterCall(project.tokenPath, std.PrevRealm().Addr(), toUser)
@@ -124,13 +115,18 @@ func CollectRewardByProjectId(projectId string) uint64 {
 func CollectRewardByDepositId(depositId string) uint64 {
 	deposit, exist := deposits[depositId]
 	if !exist {
-		panic("deposit not found")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("launchpad_reward.gno__CollectRewardByDepositId() || deposit not found: %s", depositId),
+		))
 	}
 
 	project, exist := projects[deposit.projectId]
 	if !exist {
-		println("NO PROJECT FOR THIS ID", deposit.projectId)
-		return 0
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("launchpad_reward.gno__CollectRewardByDepositId() || project not found: %s", deposit.projectId),
+		))
 	}
 
 	caller := std.PrevRealm().Addr()
@@ -149,17 +145,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 			println("(N)th collect")
 			toUser += deposit.rewardAmount
 		} else {
-			collectableAfter := uint64(0)
-			switch deposit.tier {
-			case "30":
-				collectableAfter = project.startHeight + project.tier30.collectWaitDuration
-			case "90":
-				collectableAfter = project.startHeight + project.tier90.collectWaitDuration
-			case "180":
-				collectableAfter = project.startHeight + project.tier180.collectWaitDuration
-			}
-
-			if uint64(std.GetHeight()) < collectableAfter {
+			if uint64(std.GetHeight()) < deposit.claimableHeight {
 				println("NOT CLAIMABLE YET")
 				return 0
 			}
@@ -305,7 +291,10 @@ func calculateDepositReward() {
 					sinceLast = sinceLast180
 					rewardX96 = rewardX96_180.Clone()
 				default:
-					panic("INVALID TIER")
+					panic(addDetailToError(
+						errInvalidInput,
+						ufmt.Sprintf("launchpad_reward.gno__calculateDepositReward() || invalid tier: %s", deposit.tier),
+					))
 				}
 				if sinceLast == 0 {
 					println("NO BLOCK PASSED SINCE LAST CALCULATION")

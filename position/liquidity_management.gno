@@ -1,6 +1,8 @@
 package position
 
 import (
+	"gno.land/p/demo/ufmt"
+
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v2/common"
@@ -43,7 +45,11 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 	amount1Cond := amount1Uint.Gte(params.amount1Min)
 
 	if !(amount0Cond && amount1Cond) {
-		panic("[POSITION] liquidity_management.gno__addLiquidity() || LM_Price Slippage Check")
+		panic(addDetailToError(
+			errSlippage,
+			ufmt.Sprintf("[POSITION] liquidity_management.gno__addLiquidity() || LM_Price Slippage Check || amount0(%s) < amount0Min(%s) || amount1(%s) < amount1Min(%s)",
+				amount0, params.amount0Min, amount1, params.amount1Min,
+			)))
 	}
 
 	return liquidity, amount0Uint, amount1Uint

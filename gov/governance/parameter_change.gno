@@ -30,153 +30,234 @@ func callableMsg(pkgPath, function, params string) bool {
 		switch function {
 		case "ChangeDistributionPct":
 			if len(param) != 8 {
-				panic(ufmt.Sprintf("len(param) should be 8 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 8 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 		default:
-			panic(ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath))
+			panic(addDetailToError(
+				errInvalidFunctionParameters,
+				ufmt.Sprintf("parameter_change.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+			))
 		}
 
 	case consts.GNS_PATH:
 		switch function {
 		case "SetAvgBlockTimeInMs":
 			if len(param) != 1 {
-				panic(ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 		default:
-			panic(ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath))
+			panic(addDetailToError(
+				errInvalidFunctionParameters,
+				ufmt.Sprintf("parameter_change.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+			))
 		}
 
 	case consts.GOV_GOVERNANCE_PATH:
 		switch function {
 		case "Reconfigure":
 			if len(param) != 7 {
-				panic(ufmt.Sprintf("len(param) should be 7 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 7 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 		default:
-			panic(ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath))
+			panic(addDetailToError(
+				errInvalidFunctionParameters,
+				ufmt.Sprintf("parameter_change.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+			))
 		}
 
 	case consts.POOL_PATH:
 		switch function {
 		case "SetFeeProtocol":
 			if len(param) != 2 {
-				panic(ufmt.Sprintf("len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 
 		case "SetPoolCreationFee":
 			if len(param) != 1 {
-				panic(ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 
 		case "SetWithdrawalFee":
 			if len(param) != 1 {
-				panic(ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 
 		default:
-			panic(ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath))
+			panic(addDetailToError(
+				errInvalidFunctionParameters,
+				ufmt.Sprintf("parameter_change.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+			))
 		}
 
 	case consts.PROTOCOL_FEE_PATH:
 		switch function {
 		case "SetDevOpsPct":
 			if len(param) != 1 {
-				panic(ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 		default:
-			panic(ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath))
+			panic(addDetailToError(
+				errInvalidFunctionParameters,
+				ufmt.Sprintf("parameter_change.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+			))
 		}
 
 	case consts.ROUTER_PATH:
 		switch function {
 		case "SetSwapFee":
 			if len(param) != 1 {
-				panic(ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 		default:
-			panic(ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath))
+			panic(addDetailToError(
+				errInvalidFunctionParameters,
+				ufmt.Sprintf("parameter_change.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+			))
 		}
 
 	case consts.STAKER_PATH:
 		switch function {
 		case "SetDepositGnsAmount":
 			if len(param) != 1 {
-				panic(ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 
 		case "SetPoolTier":
 			if len(param) != 2 {
-				panic(ufmt.Sprintf("len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 
 		case "ChangePoolTier":
 			if len(param) != 2 {
-				panic(ufmt.Sprintf("len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 
 		case "RemovePoolTier":
 			if len(param) != 1 {
-				panic(ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 
 		case "SetUnstakingFee":
 			if len(param) != 1 {
-				panic(ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 
 		case "SetWarmUp":
 			if len(param) != 2 {
-				panic(ufmt.Sprintf("len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 
 		case "GnsSetAvgBlockTimeInMs":
 			if len(param) != 1 {
-				panic(ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 
 		default:
-			panic(ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath))
+			panic(addDetailToError(
+				errInvalidFunctionParameters,
+				ufmt.Sprintf("parameter_change.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+			))
 		}
 
 	case consts.COMMON_PATH:
 		switch function {
 		case "SetHalt":
 			if len(param) != 1 {
-				panic(ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 		default:
-			panic(ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath))
+			panic(addDetailToError(
+				errInvalidFunctionParameters,
+				ufmt.Sprintf("parameter_change.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+			))
 		}
 
 	case consts.COMMUNITY_POOL_PATH:
 		switch function {
 		case "TransferToken":
 			if len(param) != 3 {
-				panic(ufmt.Sprintf("len(param) should be 3 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function))
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("parameter_change.gno__callableMsg() || len(param) should be 3 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
 			}
 			return true
 		default:
-			panic(ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath))
+			panic(addDetailToError(
+				errInvalidFunctionParameters,
+				ufmt.Sprintf("parameter_change.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+			))
 		}
 
 	default:
-		panic(ufmt.Sprintf("invalid pkgPath(%s)", pkgPath))
+		panic(addDetailToError(
+			errInvalidFunctionParameters,
+			ufmt.Sprintf("parameter_change.gno__callableMsg() || invalid pkgPath(%s)", pkgPath),
+		))
 	}
 }
 
@@ -184,7 +265,10 @@ func executeParameterChange(msgs []string) {
 	for _, msg := range msgs {
 		splitExe := strings.Split(msg, "*EXE*")
 		if len(splitExe) != 3 {
-			panic(ufmt.Sprintf("invalid execution(%s) to split by *EXE*, seems like param didn't passed", msg))
+			panic(addDetailToError(
+				errInvalidFunctionParameters,
+				ufmt.Sprintf("parameter_change.gno__callableMsg() || invalid execution(%s) to split by *EXE*, seems like param didn't passed", msg),
+			))
 		}
 
 		pkgPath := splitExe[0]
@@ -280,14 +364,16 @@ func executeParameterChange(msgs []string) {
 			}
 
 		default:
-			panic(ufmt.Sprintf("invalid package path(%s) and function name(%s)", pkgPath, funcName))
+			panic(addDetailToError(
+				errInvalidFunctionParameters,
+				ufmt.Sprintf("parameter_change.gno__callableMsg() || invalid package path(%s) and function(%s) to execute", pkgPath, funcName),
+			))
 		}
 
 	}
 }
 
 func handleCommunityPoolTransferToken(params []string) (string, std.Address, uint64) {
-
 	return params[0], std.Address(params[1]), parseUint(params[2], 10, 64)
 }
 
@@ -356,6 +442,9 @@ func handleSingleBool(params []string) bool {
 	case "false":
 		return false
 	default:
-		panic(ufmt.Sprintf("invalid bool(%s)", params[0]))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("parameter_change.gno__handleSingleBool() || invalid bool(%s)", params[0]),
+		))
 	}
 }

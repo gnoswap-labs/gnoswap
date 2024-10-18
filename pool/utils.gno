@@ -30,7 +30,10 @@ func isUserCall() bool {
 
 func assertUserCall() {
 	if !isUserCall() {
-		panic("must be called by user")
+		panic(addDetailToError(
+			errNoPermission,
+			"must be called by user",
+		))
 	}
 }
 

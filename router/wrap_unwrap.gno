@@ -11,11 +11,17 @@ import (
 
 func wrap(ugnotAmount uint64) {
 	if ugnotAmount <= 0 {
-		panic(ufmt.Sprintf("cannot wrap 0 ugnot"))
+		panic(addDetailToError(
+			errWrapUnwrap,
+			ufmt.Sprintf("wrap_unwrap.gno__wrap() || cannot wrap 0 ugnot"),
+		))
 	}
 
 	if ugnotAmount < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
-		panic(ufmt.Sprintf("Deposit below minimum: %d/%d ugnot.", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP))
+		panic(addDetailToError(
+			errWrapUnwrap,
+			ufmt.Sprintf("wrap_unwrap.gno__wrap() || Deposit below minimum: %d/%d ugnot.", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
+		))
 	}
 
 	// WRAP IT
