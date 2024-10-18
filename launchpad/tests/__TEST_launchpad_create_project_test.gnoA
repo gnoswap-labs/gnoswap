@@ -77,7 +77,7 @@ func TestDepositGnsToTier30Failure(t *testing.T) {
 		func() {
 			DepositGns("gno.land/r/onbloc/obl:124:30", oblDepositAmount)
 		},
-		`insufficient balance(0) for token(gno.land/r/gnoswap/v2/gov/xgns)`,
+		`GNOSWAP-LAUNCHPAD-011`,
 	)
 	std.TestSkipHeights(1)
 }
