@@ -56,7 +56,7 @@ func Mint(
 		isUserCalled := std.PrevRealm().PkgPath() == ""
 		isStakerCalled := std.PrevRealm().Addr() == consts.STAKER_ADDR
 		if !(isUserCalled || isStakerCalled) {
-			panic("POSITION] position.gno__Mint() || only user or staker can call")
+			panic(addDetailToError(errNoPermission, ufmt.Sprintf("position.gno__Mint() || only user or staker can call__isUserCalled(%t) || isStakerCalled(%t)", isUserCalled, isStakerCalled)))
 		}
 	}
 
@@ -759,7 +759,7 @@ func burnNFT(tokenId uint64) {
 	position := positions[tokenId]
 
 	if !(position.isClear()) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__burnNFT() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1))
+		panic(addDetailToError(errNotClear, ufmt.Sprintf("position.gno__burnNFT() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1)))
 	}
 	delete(positions, tokenId)
 	gnft.Burn(tid(tokenId))
@@ -768,7 +768,7 @@ func burnNFT(tokenId uint64) {
 func burnPosition(tokenId uint64) {
 	position := positions[tokenId]
 	if !(position.isClear()) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__burnPosition() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1))
+		panic(addDetailToError(errNotClear, ufmt.Sprintf("position.gno__burnPosition() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1)))
 	}
 
 	position.burned = true

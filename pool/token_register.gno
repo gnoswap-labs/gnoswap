@@ -21,6 +21,7 @@ type GRC20Interface interface {
 
 var (
 	registered = make(map[string]GRC20Interface)
+	locked     = false // mutex
 )
 
 // GetRegisteredTokens returns a list of all registered tokens
