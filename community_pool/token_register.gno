@@ -18,6 +18,7 @@ type GRC20Interface interface {
 
 var (
 	registered = make(map[string]GRC20Interface)
+	locked     = false // mutex
 )
 
 func GetRegisteredTokens() []string {

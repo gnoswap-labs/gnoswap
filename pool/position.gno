@@ -54,7 +54,7 @@ func positionUpdate(
 	var liquidityNext *u256.Uint
 	if liquidityDelta.IsZero() {
 		if self.liquidity.IsZero() {
-			panic("NP")
+			panic(addDetailToError(errInvalidInput, "position.gno__positionUpdate() || liquidityDelta is zero, but self.liquidity is not zero"))
 		}
 
 		liquidityNext = self.liquidity

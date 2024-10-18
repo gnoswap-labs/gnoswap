@@ -1,0 +1,87 @@
+package common
+
+import (
+	"std"
+	"testing"
+)
+
+func TestHalts(t *testing.T) {
+	t.Run("GetHalt() initial value", func(t *testing.T) {
+		shouldEQ(t, GetHalt(), false)
+	})
+
+	t.Run("IsHalted() initial value", func(t *testing.T) {
+		IsHalted()
+	})
+}
+
+func TestSetHaltByAdmin(t *testing.T) {
+	t.Run("with admin privilege, success", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		SetHaltByAdmin(true)
+		shouldEQ(t, GetHalt(), true)
+	})
+
+	t.Run("with non-admin privilege, panic", func(t *testing.T) {
+		std.TestSetRealm(dummyRealm)
+		shouldPanicWithMsg(
+			t,
+			func() {
+				SetHaltByAdmin(true)
+			},
+			`GNOSWAP-COMMON-001`,
+		)
+	})
+
+	t.Run("with governance contract, panic", func(t *testing.T) {
+		std.TestSetRealm(govRealm)
+		shouldPanicWithMsg(
+			t,
+			func() {
+				SetHaltByAdmin(true)
+			},
+			`GNOSWAP-COMMON-001`,
+		)
+	})
+}
+
+func TestSetHalt(t *testing.T) {
+	t.Run("with governance contract, success", func(t *testing.T) {
+		std.TestSetRealm(govRealm)
+		SetHalt(true)
+		shouldEQ(t, GetHalt(), true)
+	})
+
+	t.Run("with non-governance contract, panic", func(t *testing.T) {
+		std.TestSetRealm(dummyRealm)
+		shouldPanicWithMsg(t,
+			func() {
+				SetHalt(true)
+			},
+			`GNOSWAP-COMMON-001`,
+		)
+	})
+
+	t.Run("with admin contract, panic", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		shouldPanicWithMsg(t,
+			func() {
+				SetHalt(true)
+			},
+			`GNOSWAP-COMMON-001`,
+		)
+	})
+}
+
+func TestIsHalted(t *testing.T) {
+	t.Run("with halted, panic", func(t *testing.T) {
+		std.TestSetRealm(govRealm)
+		SetHalt(true)
+		shouldPanicWithMsg(t,
+			func() {
+				IsHalted()
+			},
+			`GNOSWAP-COMMON-002`,
+		)
+	})
+}

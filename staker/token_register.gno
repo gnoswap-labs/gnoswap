@@ -19,6 +19,7 @@ type GRC20Interface interface {
 var (
 	// registered is a map of registered GRC20 interfaces keyed by package path
 	registered = make(map[string]GRC20Interface)
+	locked     = false // mutex
 )
 
 // GetRegisteredTokens returns a slice of all registered tokjen package paths
