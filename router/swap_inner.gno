@@ -51,11 +51,17 @@ func _swap(
 	)
 	amount0, err := i256.FromDecimal(amount0Str)
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] router.gno__Swap() || i256.FromDecimal(amount0Str(%s) failed", amount0Str))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("router.gno__Swap() || i256.FromDecimal(amount0Str(%s) failed", amount0Str),
+		))
 	}
 	amount1, err := i256.FromDecimal(amount1Str)
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] router.gno__Swap() || i256.FromDecimal(amount1Str(%s) failed", amount1Str))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("router.gno__Swap() || i256.FromDecimal(amount1Str(%s) failed", amount1Str),
+		))
 	}
 
 	poolRecv := i256Max(amount0, amount1)
@@ -95,11 +101,17 @@ func _swapDry(
 
 	amount0, err := i256.FromDecimal(amount0Str)
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] router.gno__Swap() || i256.FromDecimal(amount0Str(%s) failed", amount0Str))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("router.gno__Swap() || i256.FromDecimal(amount0Str(%s) failed", amount0Str),
+		))
 	}
 	amount1, err := i256.FromDecimal(amount1Str)
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] router.gno__Swap() || i256.FromDecimal(amount1Str(%s) failed", amount1Str))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("router.gno__Swap() || i256.FromDecimal(amount1Str(%s) failed", amount1Str),
+		))
 	}
 
 	poolRecv := i256Max(amount0, amount1)
@@ -133,7 +145,10 @@ func getMinTick(fee uint32) int32 {
 	case 10000:
 		return -887200
 	default:
-		panic(ufmt.Sprintf("[ROUTER] router.gno__getMinTick() || unknown fee(%d)", fee))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("router.gno__getMinTick() || unknown fee(%d)", fee),
+		))
 	}
 }
 
@@ -148,6 +163,9 @@ func getMaxTick(fee uint32) int32 {
 	case 10000:
 		return 887200
 	default:
-		panic(ufmt.Sprintf("[ROUTER] router.gno__getMaxTick() || unknown fee(%d)", fee))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("router.gno__getMaxTick() || unknown fee(%d)", fee),
+		))
 	}
 }

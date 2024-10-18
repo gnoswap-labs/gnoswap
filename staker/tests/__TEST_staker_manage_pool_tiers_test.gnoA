@@ -24,9 +24,9 @@ func TestPoolInitCreatePool(t *testing.T) {
 	std.TestSkipHeights(1)
 }
 
-func TestSetPoolTier(t *testing.T) {
+func TestSetPoolTierByAdmin(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	SetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 2)
+	SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 2)
 
 	if poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"].tier != 2 {
 		t.Error("Expected tier to be 2")
@@ -40,9 +40,9 @@ func TestGetPoolsWithTierStruct(t *testing.T) {
 	}
 }
 
-func TestChangePoolTier(t *testing.T) {
+func TestChangePoolTierByAdmin(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	ChangePoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 3)
+	ChangePoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", 3)
 
 	if poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"].tier != 3 {
 		t.Error("Expected tier to be 3")
@@ -63,7 +63,7 @@ func TestGetPoolsWithEmissionGnsAmount(t *testing.T) {
 
 func TestSetAnotherPoolTier3(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	SetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 3)
+	SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100", 3)
 
 	if poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100"].tier != 3 {
 		t.Error("Expected tier to be 3")
@@ -73,9 +73,9 @@ func TestSetAnotherPoolTier3(t *testing.T) {
 	shouldEQ(t, poolTiers, `{"stat":{"height":125,"timestamp":1234567894},"response":[{"poolPath":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000","rewardToken":"gno.land/r/gnoswap/v2/gns","startTimestamp":1234567890,"tier":1,"amount":540000000000000},{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/v2/gns","startTimestamp":1234567894,"tier":3,"amount":67500000000000},{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:100","rewardToken":"gno.land/r/gnoswap/v2/gns","startTimestamp":1234567894,"tier":3,"amount":67500000000000}]}`)
 }
 
-func TestRemovePoolTier(t *testing.T) {
+func TestRemovePoolTierByAdmin(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	RemovePoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	RemovePoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 
 	if len(poolTiers) != 2 {
 		t.Error("Expected 2 pool")

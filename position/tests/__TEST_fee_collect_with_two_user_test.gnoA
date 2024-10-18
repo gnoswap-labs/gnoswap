@@ -15,7 +15,6 @@ import (
 	"gno.land/r/onbloc/baz"
 
 	pl "gno.land/r/gnoswap/v2/pool"
-	pn "gno.land/r/gnoswap/v2/position"
 	pr "gno.land/r/gnoswap/v2/router"
 )
 
@@ -59,7 +58,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 		pool := pl.GetPool(barPath, bazPath, 3000)
 
 		std.TestSetRealm(adminRealm)
-		tokenId_res1, liquidity_res1, amount0_res1, amount1_res1 := pn.Mint(
+		tokenId_res1, liquidity_res1, amount0_res1, amount1_res1 := Mint(
 			barPath,                // token0 string,
 			bazPath,                // token1 string,
 			3000,                   // fee uint32,
@@ -75,7 +74,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 		)
 
 		std.TestSetRealm(adminRealm)
-		tokenId_res2, liquidity_res2, amount0_res2, amount1_res2 := pn.Mint(
+		tokenId_res2, liquidity_res2, amount0_res2, amount1_res2 := Mint(
 			barPath,                // token0 string,
 			bazPath,                // token1 string,
 			3000,                   // fee uint32,
@@ -129,7 +128,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		userBarBalanceBeforeCollect_1 := bar.BalanceOf(a2u(user1Adderss))
 		userBazBalanceBeforeCollect_1 := baz.BalanceOf(a2u(user1Adderss))
-		tokenId_res3, withoutFee0_res3, withoutFee1_res3, positionPoolKey_res3, _, _ := pn.CollectFee(tokenId_res1, false)
+		tokenId_res3, withoutFee0_res3, withoutFee1_res3, positionPoolKey_res3, _, _ := CollectFee(tokenId_res1, false)
 		userBarBalanceAfterCollect_1 := bar.BalanceOf(a2u(user1Adderss))
 		userBazBalanceAfterCollect_1 := baz.BalanceOf(a2u(user1Adderss))
 
@@ -139,7 +138,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		userBarBalanceBeforeCollect_2 := bar.BalanceOf(a2u(user2Adderss))
 		userBazBalanceBeforeCollect_2 := baz.BalanceOf(a2u(user2Adderss))
-		tokenId_res4, withoutFee0_res4, withoutFee1_res4, positionPoolKey_res4, _, _ := pn.CollectFee(tokenId_res2, false)
+		tokenId_res4, withoutFee0_res4, withoutFee1_res4, positionPoolKey_res4, _, _ := CollectFee(tokenId_res2, false)
 		userBarBalanceAfterCollect_2 := bar.BalanceOf(a2u(user2Adderss))
 		userBazBalanceAfterCollect_2 := baz.BalanceOf(a2u(user2Adderss))
 		shouldEQ(t, (userBarBalanceAfterCollect_1-userBarBalanceBeforeCollect_1)-(userBarBalanceAfterCollect_2-userBarBalanceBeforeCollect_2), uint64(0))

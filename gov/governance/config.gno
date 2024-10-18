@@ -17,7 +17,6 @@ var (
 )
 
 func init() {
-	// value for testing case from @notJoon
 	config = Config{
 		// XXX: TODO, REMOVE AFTER QA
 		// - config for testcase
@@ -70,7 +69,10 @@ func ReconfigureByAdmin(
 ) uint64 {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic("must be called by admin")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("config.gno__ReconfigureByAdmin() || caller(%s) is not the admin", caller),
+		))
 	}
 
 	common.IsHalted()
@@ -169,7 +171,10 @@ func GetConfigVersion(version uint64) Config {
 
 	configValue, exist := configVersions[version]
 	if !exist {
-		panic("CONFIG DOES_NOT_EXIST")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("config.gno__GetConfigVersion() || config version(%d) does not exist", version),
+		))
 	}
 
 	return configValue

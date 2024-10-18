@@ -19,11 +19,13 @@ func GnsSetAvgBlockTimeInMs(ms int64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
 		panic(
-			ufmt.Sprintf(
-				"[STAKER] wrap_gns_block_time_change.gno__GnsSetAvgBlockTimeInMs() || only admin(%s) or governance(%s) can set avg block time, called from %s",
-				consts.ADMIN,
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
+			addDetailToError(errNoPermission,
+				ufmt.Sprintf(
+					"wrap_gns_block_time_change.gno__GnsSetAvgBlockTimeInMs() || only admin(%s) or governance(%s) can set avg block time, called from %s",
+					consts.ADMIN,
+					consts.GOV_GOVERNANCE_ADDR,
+					caller,
+				),
 			),
 		)
 	}

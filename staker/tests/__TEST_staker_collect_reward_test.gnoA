@@ -130,7 +130,7 @@ func TestCreateExternalIncentive(t *testing.T) {
 				1234569600+TIMESTAMP_90DAYS,                       // endTimestamp
 			)
 		},
-		"[STAKER] staker.gno__isAllowedForExternalReward() || tokenPath(gno.land/r/onbloc/obl) is not allowed for external reward for poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500)",
+		"GNOSWAP-STAKER-011",
 	)
 
 	// allow obl to be used as external reward token

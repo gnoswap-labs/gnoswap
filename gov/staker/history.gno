@@ -41,7 +41,10 @@ func GetCurrentDelegated(delegator std.Address) string {
 	calculateReward()
 
 	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("history.gno__GetCurrentDelegated() || invalid delegator address(%s)", delegator.String()),
+		))
 	}
 
 	history, exist := delegationModifiedHistory[delegator]
@@ -63,7 +66,10 @@ func GetDelegatedAt(delegator std.Address, timestamp uint64) string {
 	calculateReward()
 
 	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("history.gno__GetDelegatedAt() || invalid delegator address(%s)", delegator.String()),
+		))
 	}
 
 	history, exist := delegationModifiedHistory[delegator]
@@ -87,11 +93,17 @@ func GetDelegatedCumulative(delegator std.Address, timestamp uint64) uint64 {
 	calculateReward()
 
 	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("history.gno__GetDelegatedCumulative() || invalid delegator address(%s)", delegator.String()),
+		))
 	}
 
 	if timestamp >= uint64(time.Now().Unix()) {
-		panic("FUTURE")
+		panic(addDetailToError(
+			errFutureTime,
+			ufmt.Sprintf("history.gno__GetDelegatedCumulative() || future timestamp(%d) > now(%d)", timestamp, time.Now().Unix()),
+		))
 	}
 
 	history, exist := delegationModifiedHistory[delegator]
@@ -129,11 +141,17 @@ func GetAverageDelegated(delegator std.Address, start, end uint64) uint64 {
 	calculateReward()
 
 	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("history.gno__GetAverageDelegated() || invalid delegator address(%s)", delegator.String()),
+		))
 	}
 
 	if start > end {
-		panic("start > end")
+		panic(addDetailToError(
+			errStartTimeAfterEndTime,
+			ufmt.Sprintf("history.gno__GetAverageDelegated() || start(%d) > end(%d)", start, end),
+		))
 	}
 
 	history, exist := delegationModifiedHistory[delegator]

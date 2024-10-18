@@ -68,9 +68,12 @@ func Mint(to pusers.AddressOrName, amount uint64) {
 	common.IsHalted()
 
 	// only (gov staker) or (launchpad) contract can call Mint
-	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_STAKER_ADDR && caller != consts.LAUNCHPAD_ADDR {
-		panic("only (gov staker) or (launchpad) contract can call Mint")
+	caller := std.PrevRealm().PkgPath()
+	if caller != consts.GOV_STAKER_PATH && caller != consts.LAUNCHPAD_PATH {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("xgns.gno__Mint() || caller(%s) is not gov_staker(%s) or launchpad(%s)", caller, consts.GOV_STAKER_PATH, consts.LAUNCHPAD_PATH),
+		))
 	}
 
 	checkErr(banker.Mint(users.Resolve(to), amount))
@@ -80,9 +83,12 @@ func Burn(from pusers.AddressOrName, amount uint64) {
 	common.IsHalted()
 
 	// only (gov staker) or (launchpad) contract can call Mint
-	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_STAKER_ADDR && caller != consts.LAUNCHPAD_ADDR {
-		panic("only (gov staker) or (launchpad) contract can call Burn")
+	caller := std.PrevRealm().PkgPath()
+	if caller != consts.GOV_STAKER_PATH && caller != consts.LAUNCHPAD_PATH {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("xgns.gno__Burn() || caller(%s) is not gov_staker(%s) or launchpad(%s)", caller, consts.GOV_STAKER_PATH, consts.LAUNCHPAD_PATH),
+		))
 	}
 
 	checkErr(banker.Burn(users.Resolve(from), amount))

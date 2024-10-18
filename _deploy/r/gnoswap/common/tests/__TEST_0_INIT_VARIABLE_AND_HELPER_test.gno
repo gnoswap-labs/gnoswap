@@ -1,13 +1,29 @@
 package common
 
 import (
+	"std"
+	"strings"
 	"testing"
+
+	"gno.land/p/demo/testutils"
+
+	"gno.land/r/gnoswap/v2/consts"
+)
+
+var (
+	admin      = consts.ADMIN
+	adminRealm = std.NewUserRealm(admin)
+
+	dummy      = testutils.TestAddress("dummy")
+	dummyRealm = std.NewUserRealm(dummy)
+
+	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
 )
 
 /* HELPER */
 func shouldEQ(t *testing.T, got, expected interface{}) {
 	if got != expected {
-		t.Errorf("got %v, expected %v", got, expected)
+		t.Errorf("got\n%v\n\nexpected\n%v\n", got, expected)
 	}
 }
 
@@ -31,8 +47,8 @@ func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
 		if r := recover(); r == nil {
 			t.Errorf("The code did not panic")
 		} else {
-			if r != msg {
-				t.Errorf("excepted panic(%v), got(%v)", msg, r)
+			if !strings.Contains(string(r), msg) {
+				t.Errorf("excepted panic\n%v\n\ngot\n%v\n", msg, r)
 			}
 		}
 	}()

@@ -40,7 +40,10 @@ func DepositGns(
 	projectId, tierStr := getProjectIdAndTierFromTierId(targetProjectTierId)
 	project, exist := projects[projectId]
 	if !exist {
-		panic(ufmt.Sprintf("project not found: %s", projectId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("launchpad_deposit.gno__DepositGns() || project not found: %s", projectId),
+		))
 	}
 
 	// check conditions (grc20 tokens balance)
@@ -48,13 +51,19 @@ func DepositGns(
 
 	// check if project is active
 	if !checkProjectActive(project) {
-		panic(ufmt.Sprintf("project is not active: %s", projectId))
+		panic(addDetailToError(
+			errInactiveProject,
+			ufmt.Sprintf("launchpad_deposit.gno__DepositGns() || project is not active: %s", projectId),
+		))
 	}
 
 	// check if tier is active
 	tier := getTier(project, tierStr)
 	if !checkTierActive(project, tier) {
-		panic(ufmt.Sprintf("tier is not active: %s", tierStr))
+		panic(addDetailToError(
+			errInactiveTier,
+			ufmt.Sprintf("launchpad_deposit.gno__DepositGns() || tier is not active: %s", tierStr),
+		))
 	}
 
 	// after all pre-checks
@@ -94,14 +103,33 @@ func DepositGns(
 	depositor := std.PrevRealm().Addr()
 	depositorStr := depositor.String()
 	depositId := projectId + ":" + tierStr + ":" + depositorStr + ":" + ufmt.Sprintf("%d", std.GetHeight())
+
+	// calculate claimable height & time base on deposit height & time
+	calcClaimableHeight := uint64(std.GetHeight()) + tier.collectWaitDuration
+	_claimWaitDurationTimestamp := uint64(0)
+	switch tierStr {
+	case "30":
+		_claimWaitDurationTimestamp = TIMESTAMP_3DAYS
+	case "90":
+		_claimWaitDurationTimestamp = TIMESTAMP_7DAYS
+	case "180":
+		_claimWaitDurationTimestamp = TIMESTAMP_14DAYS
+	}
+	calcClaimableTimestamp := uint64(time.Now().Unix()) + _claimWaitDurationTimestamp
+
+	claimableHeight := min(calcClaimableHeight, tier.endHeight)
+	claimableTime := min(calcClaimableTimestamp, tier.endTime)
+
 	depositToHistory := Deposit{
-		id:            depositId,
-		projectId:     projectId,
-		tier:          tierStr,
-		depositor:     depositor,
-		amount:        amount,
-		depositHeight: uint64(std.GetHeight()),
-		depositTime:   uint64(time.Now().Unix()),
+		id:              depositId,
+		projectId:       projectId,
+		tier:            tierStr,
+		depositor:       depositor,
+		amount:          amount,
+		depositHeight:   uint64(std.GetHeight()),
+		depositTime:     uint64(time.Now().Unix()),
+		claimableHeight: claimableHeight,
+		claimableTime:   claimableTime,
 	}
 
 	// update deposits
@@ -136,6 +164,8 @@ func DepositGns(
 		"targetProjectTierId", targetProjectTierId,
 		"amount", ufmt.Sprintf("%d", amount),
 		"internal_depositId", depositId,
+		"internal_claimableHeight", ufmt.Sprintf("%d", claimableHeight),
+		"internal_claimableTime", ufmt.Sprintf("%d", claimableTime),
 	)
 
 	return depositId
@@ -161,7 +191,10 @@ func CollectDepositGns() uint64 {
 		// check active
 		project, exist := projects[deposit.projectId]
 		if !exist {
-			panic(ufmt.Sprintf("SHOULD_NOT_HAPPEN__project not found: %s", deposit.projectId))
+			panic(addDetailToError(
+				errDataNotFound,
+				ufmt.Sprintf("launchpad_deposit.gno__CollectDepositGns() || project not found: %s", deposit.projectId),
+			))
 		}
 
 		tier := getTier(project, deposit.tier)
@@ -249,7 +282,10 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 		// check active
 		project, exist := projects[deposit.projectId]
 		if !exist {
-			panic(ufmt.Sprintf("SHOULD_NOT_HAPPEN__project not found: %s", deposit.projectId))
+			panic(addDetailToError(
+				errDataNotFound,
+				ufmt.Sprintf("launchpad_deposit.gno__CollectDepositGnsByProjectId() || project not found: %s", deposit.projectId),
+			))
 		}
 
 		tier := getTier(project, deposit.tier)
@@ -387,7 +423,10 @@ func getProjectIdFromTierId(tierId string) string {
 		return result[0] + ":" + result[1]
 	}
 
-	panic(ufmt.Sprintf("invalid tierId: %s", tierId))
+	panic(addDetailToError(
+		errInvalidInput,
+		ufmt.Sprintf("launchpad_deposit.gno__getProjectIdFromTierId() || invalid tierId: %s", tierId),
+	))
 }
 
 func getProjectIdAndTierFromTierId(tierId string) (string, string) {
@@ -396,7 +435,10 @@ func getProjectIdAndTierFromTierId(tierId string) (string, string) {
 		return result[0] + ":" + result[1], result[2]
 	}
 
-	panic(ufmt.Sprintf("invalid tierId: %s", tierId))
+	panic(addDetailToError(
+		errInvalidInput,
+		ufmt.Sprintf("launchpad_deposit.gno__getProjectIdAndTierFromTierId() || invalid tierId: %s", tierId),
+	))
 }
 
 func checkDepositConditions(project Project) {
@@ -416,7 +458,10 @@ func checkDepositConditions(project Project) {
 				balance = balanceOfByRegisterCall(condition.tokenPath, std.PrevRealm().Addr())
 			}
 			if balance < condition.minAmount {
-				panic(ufmt.Sprintf("insufficient balance(%d) for token(%s)", balance, condition.tokenPath))
+				panic(addDetailToError(
+					errInsufficientBalance,
+					ufmt.Sprintf("launchpad_deposit.gno__checkDepositConditions() || insufficient balance(%d) for token(%s)", balance, condition.tokenPath),
+				))
 			}
 		}
 	}
@@ -455,7 +500,10 @@ func getTier(project Project, tierStr string) Tier {
 	case "180":
 		return project.tier180
 	default:
-		panic(ufmt.Sprintf("getTier()__invalid tierStr: %s", tierStr))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("launchpad_deposit.gno__getTier() || invalid tierStr: %s", tierStr),
+		))
 	}
 }
 
@@ -468,7 +516,10 @@ func setTier(project Project, tierStr string, tier Tier) Project {
 	case "180":
 		project.tier180 = tier
 	default:
-		panic(ufmt.Sprintf("setTier()__invalid tierStr: %s", tierStr))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("launchpad_deposit.gno__setTier() || invalid tierStr: %s", tierStr),
+		))
 	}
 
 	return project

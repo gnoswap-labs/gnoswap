@@ -82,7 +82,7 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 				"0",         // tokenAmountLimit
 			)
 		},
-		"[ROUTER] router.gno__finalizeSwap() || Too few received for user (expected minimum: 120000, actual: 99997, swapType: EXACT_OUT)",
+		"GNOSWAP-ROUTER-004",
 	)
 
 }
