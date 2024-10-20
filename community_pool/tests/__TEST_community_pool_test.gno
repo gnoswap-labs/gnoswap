@@ -37,6 +37,15 @@ func init() {
 	RegisterGRC20Interface("gno.land/r/gnoswap/v2/gns", GNSToken{})
 }
 
+func TestAlreadyRegistered(t *testing.T) {
+	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
+	shouldPanicWithMsg(
+		t,
+		func() { RegisterGRC20Interface("gno.land/r/gnoswap/v2/gns", GNSToken{}) },
+		`GNOSWAP-COMMUNITY_POOL-003`,
+	)
+}
+
 func TestTransferGnsNoPermission(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
 	dummyRealm := std.NewUserRealm(dummy)
@@ -62,6 +71,16 @@ func TestTransferGns(t *testing.T) {
 	TransferTokenByAdmin(consts.GNS_PATH, sendTarget, 900)
 	shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(100))
 	shouldEQ(t, gns.BalanceOf(a2u(sendTarget)), uint64(900))
+}
+
+func TestTransferNonRegistered(t *testing.T) {
+	adminRealm := std.NewUserRealm(consts.ADMIN)
+	std.TestSetRealm(adminRealm)
+	shouldPanicWithMsg(
+		t,
+		func() { TransferTokenByAdmin("non_registered", testutils.TestAddress("dummy"), 1000) },
+		`GNOSWAP-COMMUNITY_POOL-002`,
+	)
 }
 
 func shouldPanic(t *testing.T, f func()) {

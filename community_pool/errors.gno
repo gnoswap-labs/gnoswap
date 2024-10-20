@@ -7,10 +7,9 @@ import (
 )
 
 var (
-	errNoPermission        = errors.New("[GNOSWAP-COMMUNITY_POOL-001] no permission")
-	errNotRegistered       = errors.New("[GNOSWAP-COMMUNITY_POOL-002] not registered")
-	errAlreadyRegistered   = errors.New("[GNOSWAP-COMMUNITY_POOL-003] already registered")
-	errUnavailableFunction = errors.New("[GNOSWAP-COMMUNITY_POOL-004] unavailable function")
+	errNoPermission      = errors.New("[GNOSWAP-COMMUNITY_POOL-001] no permission")
+	errNotRegistered     = errors.New("[GNOSWAP-COMMUNITY_POOL-002] not registered")
+	errAlreadyRegistered = errors.New("[GNOSWAP-COMMUNITY_POOL-003] already registered")
 )
 
 func addDetailToError(err error, detail string) string {

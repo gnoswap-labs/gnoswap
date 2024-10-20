@@ -76,11 +76,12 @@ func TestAddDelta_5(t *testing.T) {
 	// 0+-1 underflow
 	x = u256.NewUint(0)
 	y = i256.NewInt(-1)
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			LiquidityMathAddDelta(x, y)
 		},
+		`GNOSWAP-POOL-007`,
 	)
 }
 
@@ -88,11 +89,12 @@ func TestAddDelta_6(t *testing.T) {
 	// 3+-4 underflow
 	x = u256.NewUint(3)
 	y = i256.NewInt(-4)
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			LiquidityMathAddDelta(x, y)
 		},
+		`GNOSWAP-POOL-007`,
 	)
 }
 

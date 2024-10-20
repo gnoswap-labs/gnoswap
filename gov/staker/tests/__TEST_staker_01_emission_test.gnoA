@@ -71,11 +71,12 @@ func TestRedelegate(t *testing.T) {
 func TestUndelegateUnknownUser(t *testing.T) {
 	std.TestSetRealm(dummyRealm)
 
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			Undelegate(reDelegate, 1000001)
 		},
+		`GNOSWAP-GOV_STAKER-006`,
 	)
 }
 

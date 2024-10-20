@@ -196,7 +196,7 @@ func TestDecreaseLiquidityAllThenAgainShouldPanic(t *testing.T) {
 	shouldEQ(t, newLiquidity.ToString(), "0")
 
 	// decreasing position(with 0 liquidity) should panic
-	shouldPanic(t, func() {
+	shouldPanicWithMsg(t, func() {
 		DecreaseLiquidity(
 			uint64(1),   // tokenId
 			100,         // liquidityRatio
@@ -205,5 +205,5 @@ func TestDecreaseLiquidityAllThenAgainShouldPanic(t *testing.T) {
 			max_timeout, // deadline
 			false,       // unwrapResult
 		)
-	})
+	}, `GNOSWAP-POSITION-009`)
 }

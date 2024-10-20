@@ -55,3 +55,52 @@ func TestChangeDistributionPct_ByAdmin(t *testing.T) {
 	shouldEQ(t, GetDistributionPct(int(3)), uint64(0))
 	shouldEQ(t, GetDistributionPct(int(4)), uint64(0))
 }
+
+func TestChangeDistributionPct_NoPermission(t *testing.T) {
+	shouldPanicWithMsg(
+		t,
+		func() {
+			ChangeDistributionPctByAdmin(
+				1, 10000,
+				2, 0,
+				3, 0,
+				4, 0,
+			)
+		},
+		`GNOSWAP-EMISSION-001`,
+	)
+}
+
+func TestChangeDistributionPct_InvalidTarget(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			ChangeDistributionPctByAdmin(
+				1, 10000,
+				2, 0,
+				3, 0,
+				5, 0,
+			)
+		},
+		`GNOSWAP-EMISSION-002`,
+	)
+}
+
+func TestChangeDistributionPct_PercentageTooHigh(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+
+	shouldPanicWithMsg(
+		t,
+		func() {
+			ChangeDistributionPctByAdmin(
+				1, 10001,
+				2, 0,
+				3, 0,
+				4, 0,
+			)
+		},
+		`GNOSWAP-EMISSION-003`,
+	)
+}
