@@ -42,11 +42,12 @@ type Project struct {
 
 type Tier struct {
 	id                    string // '{projectId}:duration' // duartion == 30, 90, 180
-	collectWaitDuration   uint64
+	collectWaitDuration   uint64 // block
 	tierAmount            uint64
 	tierAmountPerBlockX96 *u256.Uint
 
 	// start height/time is same as the project
+
 	endHeight uint64
 	endTime   uint64
 
@@ -76,6 +77,10 @@ type Deposit struct {
 	// deposit
 	depositCollectHeight uint64
 	depositCollectTime   uint64
+
+	// claimable height & time
+	claimableHeight uint64
+	claimableTime   uint64
 
 	// reward collect
 	rewardAmount        uint64
