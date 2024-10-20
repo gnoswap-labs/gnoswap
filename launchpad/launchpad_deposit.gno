@@ -76,20 +76,6 @@ func DepositGns(
 	// update gov_staker contract's variable to calculate proejct's recipient's reward
 	gs.SetAmountByProjectWallet(project.recipient, amount, true) // true == add
 
-	// update tier
-	tier.totalDepositAmount += amount
-	tier.actualDepositAmount += amount
-	tier.totalParticipant += 1
-	tier.actualParticipant += 1
-	project = setTier(project, tierStr, tier)
-
-	// update project
-	project.totalDepositAmount += amount
-	project.actualDepositAmount += amount
-	project.totalParticipant += 1
-	project.actualParticipant += 1
-	projects[projectId] = project
-
 	// deposit History
 	depositor := std.PrevRealm().Addr()
 	depositorStr := depositor.String()
@@ -158,6 +144,43 @@ func DepositGns(
 		"internal_claimableHeight", ufmt.Sprintf("%d", claimableHeight),
 		"internal_claimableTime", ufmt.Sprintf("%d", claimableTime),
 	)
+
+	// if first deposit
+	if tier.totalParticipant == 1 {
+		// update necessary data
+		tier.startHeight = uint64(std.GetHeight())
+		tier.startTime = uint64(time.Now().Unix())
+
+		// calculate reward per block x96
+		tierAmountPerBlockX96 := calcProjectTiersRewardPerBlockX96(tier)
+		tier.tierAmountPerBlockX96 = tierAmountPerBlockX96
+
+		// emit event
+		std.Emit(
+			"FirstDepoistForProjectTier",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"targetProjectTierId", targetProjectTierId,
+			"amount", ufmt.Sprintf("%d", amount),
+			"internal_depositId", depositId,
+			"internal_claimableHeight", ufmt.Sprintf("%d", claimableHeight),
+			"internal_claimableTime", ufmt.Sprintf("%d", claimableTime),
+		)
+	}
+
+	// update tier
+	tier.totalDepositAmount += amount
+	tier.actualDepositAmount += amount
+	tier.totalParticipant += 1
+	tier.actualParticipant += 1
+	project = setTier(project, tierStr, tier)
+
+	// update project
+	project.totalDepositAmount += amount
+	project.actualDepositAmount += amount
+	project.totalParticipant += 1
+	project.actualParticipant += 1
+	projects[projectId] = project
 
 	return depositId
 }
