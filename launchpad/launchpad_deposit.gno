@@ -146,7 +146,7 @@ func DepositGns(
 	)
 
 	// if first deposit
-	if tier.totalParticipant == 1 {
+	if tier.totalParticipant == 0 {
 		// update necessary data
 		tier.startHeight = uint64(std.GetHeight())
 		tier.startTime = uint64(time.Now().Unix())
