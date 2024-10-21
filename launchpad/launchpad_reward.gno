@@ -200,25 +200,29 @@ func calculateDepositReward() {
 			continue
 		}
 
-		// println("LAST CALC PROJECT TIER 30", project.tier30.id)
-		// println("lastCalculateHeightForProjectTier[project.tier30.id]", lastCalculateHeightForProjectTier[project.tier30.id])
-		if lastCalculateHeightForProjectTier[project.tier30.id] == 0 {
-			// println(" > INIT TO `project.startHeight`", project.startHeight)
-			lastCalculateHeightForProjectTier[project.tier30.id] = project.startHeight
+		// skip project if no deposit
+		if project.actualParticipant == 0 {
+			continue
 		}
 
-		// println("LAST CALC PROJECT TIER 90", project.tier90.id)
-		// println("lastCalculateHeightForProjectTier[project.tier90.id]", lastCalculateHeightForProjectTier[project.tier90.id])
-		if lastCalculateHeightForProjectTier[project.tier90.id] == 0 {
-			// println(" > INIT TO `project.startHeight`", project.startHeight)
-			lastCalculateHeightForProjectTier[project.tier90.id] = project.startHeight
+		// iterate deposit (by project)
+		depositWithTier, exist := depositsByProject[project.id]
+		if !exist {
+			return
 		}
 
-		// println("LAST CALC PROJECT TIER 180", project.tier180.id)
-		// println("lastCalculateHeightForProjectTier[project.tier180.id]", lastCalculateHeightForProjectTier[project.tier180.id])
-		if lastCalculateHeightForProjectTier[project.tier180.id] == 0 {
-			// println(" > INIT TO `project.startHeight`", project.startHeight)
-			lastCalculateHeightForProjectTier[project.tier180.id] = project.startHeight
+		tier30AmountPerBlockX96 := project.tier30.tierAmountPerBlockX96.NilToZero().Clone()
+		tier90AmountPerBlockX96 := project.tier90.tierAmountPerBlockX96.NilToZero().Clone()
+		tier180AmountPerBlockX96 := project.tier180.tierAmountPerBlockX96.NilToZero().Clone()
+
+		if (lastCalculateHeightForProjectTier[project.tier30.id] == 0) && (!tier30AmountPerBlockX96.IsZero()) {
+			lastCalculateHeightForProjectTier[project.tier30.id] = project.tier30.startHeight
+		}
+		if (lastCalculateHeightForProjectTier[project.tier90.id] == 0) && (!tier90AmountPerBlockX96.IsZero()) {
+			lastCalculateHeightForProjectTier[project.tier90.id] = project.tier90.startHeight
+		}
+		if (lastCalculateHeightForProjectTier[project.tier180.id] == 0) && (!tier180AmountPerBlockX96.IsZero()) {
+			lastCalculateHeightForProjectTier[project.tier180.id] = project.tier180.startHeight
 		}
 
 		// if current height is greater than endHeight, then use endHeight as project's each tier's endHeight
@@ -236,38 +240,34 @@ func calculateDepositReward() {
 		lastCalculateHeightForProjectTier[project.tier90.id] = height
 		lastCalculateHeightForProjectTier[project.tier180.id] = height
 
-		rewardX96_30 := new(u256.Uint).Mul(project.tier30.tierAmountPerBlockX96, u256.NewUint(sinceLast30))
-		rewardX96_90 := new(u256.Uint).Mul(project.tier90.tierAmountPerBlockX96, u256.NewUint(sinceLast90))
-		rewardX96_180 := new(u256.Uint).Mul(project.tier180.tierAmountPerBlockX96, u256.NewUint(sinceLast180))
+		// reward for each tier
+		rewardX96_30 := new(u256.Uint).Mul(project.tier30.tierAmountPerBlockX96.NilToZero(), u256.NewUint(sinceLast30))
+		rewardX96_90 := new(u256.Uint).Mul(project.tier90.tierAmountPerBlockX96.NilToZero(), u256.NewUint(sinceLast90))
+		rewardX96_180 := new(u256.Uint).Mul(project.tier180.tierAmountPerBlockX96.NilToZero(), u256.NewUint(sinceLast180))
 
-		// calculate deposit ratio
-		// loop with each tier (30 90 180)
 		tier30Deposit := project.tier30.actualDepositAmount
 		tier90Deposit := project.tier90.actualDepositAmount
 		tier180Deposit := project.tier180.actualDepositAmount
-		// println("tier30.id", project.tier30.id)
-		// println("tier30Deposit", tier30Deposit)
-		// println("tier90Deposit", tier90Deposit)
-		// println("tier180Deposit", tier180Deposit)
-
-		// iterate deposit (by project)
-		depositWithTier, exist := depositsByProject[project.id]
-		if !exist {
-			println("NO DEPOSIT FOR THIS PROJECT", project.id)
-			return
-		}
 
 		for tierStr, depositIds := range depositWithTier {
-			println("tierStr", tierStr)
 			tierAmount := uint64(0)
 			var rewardX96 *u256.Uint
 
 			switch tierStr {
 			case "30":
+				if tier30AmountPerBlockX96.IsZero() {
+					continue
+				}
 				tierAmount = tier30Deposit
 			case "90":
+				if tier90AmountPerBlockX96.IsZero() {
+					continue
+				}
 				tierAmount = tier90Deposit
 			case "180":
+				if tier180AmountPerBlockX96.IsZero() {
+					continue
+				}
 				tierAmount = tier180Deposit
 			}
 
@@ -331,4 +331,11 @@ func calcDepositRatioX96(tierAmount uint64, amount uint64) *u256.Uint {
 	depositRatioX96 = depositRatioX96.Div(depositRatioX96, u256.NewUint(1_000_000_000))
 
 	return depositRatioX96
+}
+
+func calcProjectTiersRewardPerBlockX96(tier Tier) *u256.Uint {
+	tierAmountX96 := new(u256.Uint).Mul(u256.NewUint(tier.tierAmount), q96)
+	tierAmountPerBlockX96 := new(u256.Uint).Div(tierAmountX96, u256.NewUint(tier.endHeight-tier.startHeight))
+
+	return tierAmountPerBlockX96
 }

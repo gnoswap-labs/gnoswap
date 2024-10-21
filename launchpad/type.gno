@@ -28,8 +28,9 @@ type Project struct {
 
 	startHeight uint64
 	startTime   uint64
-	endHeight   uint64 // same with tier 180's data
-	endTime     uint64 // same with tier 180's data
+
+	endHeight uint64 // same with tier 180's data
+	endTime   uint64 // same with tier 180's data
 
 	totalDepositAmount  uint64 // won't be decreased
 	actualDepositAmount uint64 // will be decreased if deposit collected 'CollectDepositGns()'
@@ -46,10 +47,10 @@ type Tier struct {
 	tierAmount            uint64
 	tierAmountPerBlockX96 *u256.Uint
 
-	// start height/time is same as the project
-
-	endHeight uint64
-	endTime   uint64
+	startHeight uint64 // first deposit height
+	startTime   uint64 // first deposit time
+	endHeight   uint64
+	endTime     uint64
 
 	totalDepositAmount  uint64
 	actualDepositAmount uint64
@@ -66,23 +67,20 @@ type Condition struct {
 type Deposit struct {
 	id string // 'projectId:tier:depositor:height'
 
-	projectId string      //
-	tier      string      // 30, 60, 180 // instead of tierId
-	depositor std.Address // string
+	projectId string
+	tier      string // 30, 60, 180 // instead of tierId
+	depositor std.Address
 	amount    uint64
 
 	depositHeight uint64
 	depositTime   uint64
 
-	// deposit
 	depositCollectHeight uint64
 	depositCollectTime   uint64
 
-	// claimable height & time
 	claimableHeight uint64
 	claimableTime   uint64
 
-	// reward collect
 	rewardAmount        uint64
 	rewardCollectHeight uint64
 	rewardCollectTime   uint64
