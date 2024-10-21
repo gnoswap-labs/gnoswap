@@ -20,13 +20,11 @@ type lockedGNS struct {
 	unlock uint64
 }
 
-var lockedAmount uint64
-
-const TIMESTAMP_7_DAYS = uint64(60) // 60s // XXX: TODO, REMOVE AFTER QA
-// const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
+const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
 
 var (
 	addrLockedGns = make(map[std.Address][]lockedGNS)
+	lockedAmount  = uint64(0)
 )
 
 var (
