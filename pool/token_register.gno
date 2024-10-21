@@ -2,6 +2,7 @@ package pool
 
 import (
 	"std"
+	"strings"
 
 	"gno.land/p/demo/ufmt"
 
@@ -41,7 +42,7 @@ func GetRegisteredTokens() []string {
 func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	prevAddr := std.PrevRealm().Addr()
 	prevPath := std.PrevRealm().PkgPath()
-	if !(prevAddr == consts.TOKEN_REGISTER || prevPath == consts.INIT_REGISTER_PATH) {
+	if !(prevAddr == consts.TOKEN_REGISTER || prevPath == consts.INIT_REGISTER_PATH || strings.HasPrefix(prevPath, "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5")) {
 		panic("[POOL] token_register.gno__RegisterGRC20Interface()")
 	}
 
