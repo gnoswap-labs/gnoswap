@@ -29,7 +29,7 @@ func init() {
 
 func TestCreateProject(t *testing.T) {
 	var allocationTokenAmount uint64 = 1_000_000_000_000 // 1000000000000
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), allocationTokenAmount)
 	std.TestSkipHeights(1)
@@ -50,7 +50,7 @@ func TestCreateProject(t *testing.T) {
 }
 
 func TestMockProtocolFee(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	usdc.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1_000_000_000)
 	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 2_500_000_000)
 
@@ -66,7 +66,7 @@ func TestMockProtocolFee(t *testing.T) {
 func TestDepositGnsToTier30Failure(t *testing.T) {
 	var usdcConditionAmount uint64 = 200_000_000
 	var oblDepositAmount uint64 = 1_000_000
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	usdc.Transfer(a2u(user01), usdcConditionAmount)
 	std.TestSetRealm(user01Realm)
 	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), oblDepositAmount)
@@ -85,7 +85,7 @@ func TestDepositGnsToTier30Failure(t *testing.T) {
 func TestDepositGnsToTier30WithCondition(t *testing.T) {
 	var xGNSConditionAmount uint64 = 100_000_000
 	var gnsDepositAmount uint64 = 1_000_000
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(user01), xGNSConditionAmount+gnsDepositAmount)
 	shouldEQ(t, gns.BalanceOf(a2u(user01)), xGNSConditionAmount+gnsDepositAmount) // admin has initial gns
 	shouldEQ(t, xgns.BalanceOf(a2u(user01)), uint64(0))

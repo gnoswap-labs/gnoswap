@@ -14,7 +14,11 @@ import (
 )
 
 var (
-	projects = make(map[string]Project)
+	projects = make(map[string]Project) // projectId -> project
+
+	// project tier should distrubte project token if deposit ever happend
+	// therefore we need to keep track of project tiers without deposit
+	projectTiersWithoutDeposit = make(map[string]bool) // tierId -> true
 )
 
 var (
@@ -86,15 +90,6 @@ func CreateProject(
 		panic("invalid start time, can not start project in past")
 	}
 
-	avgBlockTimeMs := uint64(gns.GetAvgBlockTimeInMs())
-
-	height := uint64(std.GetHeight())
-	now := uint64(time.Now().Unix())
-
-	timeUntilStart := startTime - now
-	blockDuration := timeUntilStart * 1000 / avgBlockTimeMs
-	startHeight := height + blockDuration
-
 	transferFromByRegisterCall(
 		tokenPath,
 		std.PrevRealm().Addr(),
@@ -119,41 +114,47 @@ func CreateProject(
 	conditions := makeConditions(conditionsToken, conditionsAmount)
 
 	// create tier
+	avgBlockTimeMs := uint64(gns.GetAvgBlockTimeInMs())
+
+	height := uint64(std.GetHeight())
+	now := uint64(time.Now().Unix())
+
+	timeUntilStart := startTime - now
+	blockDuration := timeUntilStart * 1000 / avgBlockTimeMs
+	startHeight := height + blockDuration
+
 	tier30EndHeight := startHeight + (TIMESTAMP_30DAYS * 1000 / avgBlockTimeMs)
-	tier30AmountX96 := new(u256.Uint).Mul(u256.NewUint(tier30Amount), q96)
-	tier30AmountPerBlockX96 := new(u256.Uint).Div(tier30AmountX96, u256.NewUint(tier30EndHeight-startHeight))
+	tier30Id := generateTierId(projectId, 30)
 	tier30 := Tier{
-		id:                    generateTierId(projectId, 30),
-		collectWaitDuration:   TIMESTAMP_3DAYS * 1000 / avgBlockTimeMs,
-		tierAmount:            tier30Amount,
-		tierAmountPerBlockX96: tier30AmountPerBlockX96,
-		endHeight:             tier30EndHeight,
-		endTime:               startTime + TIMESTAMP_30DAYS,
+		id:                  tier30Id,
+		collectWaitDuration: TIMESTAMP_3DAYS * 1000 / avgBlockTimeMs,
+		tierAmount:          tier30Amount,
+		endHeight:           tier30EndHeight,
+		endTime:             startTime + TIMESTAMP_30DAYS,
 	}
+	projectTiersWithoutDeposit[tier30Id] = true
 
 	tier90EndHeight := startHeight + (TIMESTAMP_90DAYS * 1000 / avgBlockTimeMs)
-	tier90AmountX96 := new(u256.Uint).Mul(u256.NewUint(tier90Amount), q96)
-	tier90AmountPerBlockX96 := new(u256.Uint).Div(tier90AmountX96, u256.NewUint(tier90EndHeight-startHeight))
+	tier90Id := generateTierId(projectId, 90)
 	tier90 := Tier{
-		id:                    generateTierId(projectId, 90),
-		collectWaitDuration:   TIMESTAMP_7DAYS * 1000 / avgBlockTimeMs,
-		tierAmount:            tier90Amount,
-		tierAmountPerBlockX96: tier90AmountPerBlockX96,
-		endHeight:             tier90EndHeight,
-		endTime:               startTime + TIMESTAMP_90DAYS,
+		id:                  tier90Id,
+		collectWaitDuration: TIMESTAMP_7DAYS * 1000 / avgBlockTimeMs,
+		tierAmount:          tier90Amount,
+		endHeight:           tier90EndHeight,
+		endTime:             startTime + TIMESTAMP_90DAYS,
 	}
+	projectTiersWithoutDeposit[tier90Id] = true
 
 	tier180EndHeight := startHeight + (TIMESTAMP_180DAYS * 1000 / avgBlockTimeMs)
-	tier180AmountX96 := new(u256.Uint).Mul(u256.NewUint(tier180Amount), q96)
-	tier180AmountPerBlockX96 := new(u256.Uint).Div(tier180AmountX96, u256.NewUint(tier180EndHeight-startHeight))
+	tier180Id := generateTierId(projectId, 180)
 	tier180 := Tier{
-		id:                    generateTierId(projectId, 180),
-		collectWaitDuration:   TIMESTAMP_14DAYS * 1000 / avgBlockTimeMs,
-		tierAmount:            tier180Amount,
-		tierAmountPerBlockX96: tier180AmountPerBlockX96,
-		endHeight:             tier180EndHeight,
-		endTime:               startTime + TIMESTAMP_180DAYS,
+		id:                  tier180Id,
+		collectWaitDuration: TIMESTAMP_14DAYS * 1000 / avgBlockTimeMs,
+		tierAmount:          tier180Amount,
+		endHeight:           tier180EndHeight,
+		endTime:             startTime + TIMESTAMP_180DAYS,
 	}
+	projectTiersWithoutDeposit[tier180Id] = true
 
 	// create project
 	project := Project{
@@ -196,13 +197,10 @@ func CreateProject(
 		"internal_projectId", projectId,
 		"internal_tier30Amount", ufmt.Sprintf("%d", tier30Amount),
 		"internal_tier30EndHeight", ufmt.Sprintf("%d", tier30EndHeight),
-		"internal_tier30AmountPerBlockX96", tier30AmountPerBlockX96.ToString(),
 		"internal_tier90Amount", ufmt.Sprintf("%d", tier90Amount),
 		"internal_tier90EndHeight", ufmt.Sprintf("%d", tier90EndHeight),
-		"internal_tier90AmountPerBlockX96", tier90AmountPerBlockX96.ToString(),
 		"internal_tier180Amount", ufmt.Sprintf("%d", tier180Amount),
 		"internal_tier180EndHeight", ufmt.Sprintf("%d", tier180EndHeight),
-		"internal_tier180AmountPerBlockX96", tier180AmountPerBlockX96.ToString(),
 	)
 
 	return projectId
