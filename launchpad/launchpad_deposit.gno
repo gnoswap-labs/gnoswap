@@ -243,7 +243,7 @@ func CollectDepositGns() uint64 {
 			"CollectDepositGns",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"depositId", depositId,
+			"internal_depositId", depositId,
 			"internal_amount", ufmt.Sprintf("%d", deposit.amount),
 		)
 	}

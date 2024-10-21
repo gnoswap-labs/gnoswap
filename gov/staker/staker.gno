@@ -289,7 +289,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
 			"to", to.String(),
-			"intinternal_tokenPathernal_token", tokenPath,
+			"internal_tokenPath", tokenPath,
 			"internal_amount", ufmt.Sprintf("%d", amount),
 		)
 	}
