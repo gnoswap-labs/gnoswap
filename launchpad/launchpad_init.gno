@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	"std"
+	"strconv"
 	"strings"
 	"time"
 
@@ -229,9 +230,14 @@ func makeConditions(conditionsToken string, conditionsAmount string) map[string]
 	}
 
 	for i, token := range tokens {
+		minAmount, err := strconv.ParseUint(amounts[i], 10, 64)
+		if err != nil {
+			panic(err)
+		}
+
 		conditions[token] = Condition{
 			tokenPath: token,
-			minAmount: parseUint(amounts[i], 10, 64),
+			minAmount: minAmount,
 		}
 	}
 	return conditions
