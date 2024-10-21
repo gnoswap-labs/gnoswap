@@ -19,13 +19,9 @@ func GetDepositGnsAmount() uint64 {
 func SetDepositGnsAmountByAdmin(amount uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic(
-			ufmt.Sprintf(
-				"[STAKER] external_deposit_fee.gno__SetDepositGnsAmountByAdmin() || only admin(%s) can set deposit gns amount, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		)
+		panic(addDetailToError(errNoPermission,
+			ufmt.Sprintf("external_deposit_fee.gno__SetDepositGnsAmountByAdmin() || only admin(%s) can set deposit gns amount, called from %s", consts.ADMIN, caller),
+		))
 	}
 
 	setDepositGnsAmount(amount)
@@ -43,13 +39,9 @@ func SetDepositGnsAmountByAdmin(amount uint64) {
 func SetDepositGnsAmount(amount uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(
-			ufmt.Sprintf(
-				"[STAKER] external_deposit_fee.gno__SetDepositGnsAmount() || only governance(%s) can set deposit gns amount, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		)
+		panic(addDetailToError(errNoPermission,
+			ufmt.Sprintf("external_deposit_fee.gno__SetDepositGnsAmount() || only governance(%s) can set deposit gns amount, called from %s", consts.GOV_GOVERNANCE_ADDR, caller),
+		))
 	}
 
 	setDepositGnsAmount(amount)

@@ -187,10 +187,11 @@ func TestBothWithFreshButNoSend(t *testing.T) {
 	std.TestSetOrigSend(std.Coins{{"ugnot", 0}}, nil)
 
 	std.TestSetRealm(fresh02Realm)
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			Mint(consts.GNS_PATH, consts.GNOT, fee500, 6000, 16000, "70000000", "70000000", "0", "0", max_timeout, fresh02, fresh02)
 		},
+		`GNOSWAP-POSITION-009`,
 	)
 }

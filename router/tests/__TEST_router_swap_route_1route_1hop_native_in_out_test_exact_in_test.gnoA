@@ -218,9 +218,9 @@ func TestSetSwapFeeNoPermission(t *testing.T) {
 	shouldPanicWithMsg(
 		t,
 		func() {
-			SetSwapFee(2)
+			SetSwapFeeByAdmin(2)
 		},
-		"[ROUTER] protocol_fee_swap.gno__SetSwapFee() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can set swap fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+		"[GNOSWAP-ROUTER-001]",
 	)
 }
 
@@ -230,15 +230,15 @@ func TestSetSwapFeeOutOfRange(t *testing.T) {
 	shouldPanicWithMsg(
 		t,
 		func() {
-			SetSwapFee(10001)
+			SetSwapFeeByAdmin(10001)
 		},
-		"[ROUTER] protocol_fee_swap.gno__SetSwapFee() || fee(10001) must be in range 0 ~ 10000",
+		"[GNOSWAP-ROUTER-004]",
 	)
 }
 
-func TestSetSwapFee(t *testing.T) {
+func TestSetSwapFeeByAdmin(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	shouldEQ(t, GetSwapFee(), uint64(15))
-	SetSwapFee(51)
+	SetSwapFeeByAdmin(51)
 	shouldEQ(t, GetSwapFee(), uint64(51))
 }

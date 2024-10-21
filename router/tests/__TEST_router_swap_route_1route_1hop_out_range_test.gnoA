@@ -87,6 +87,6 @@ func TestSwapRouteBazBarExactIn(t *testing.T) {
 			)
 
 		},
-		"[ROUTER] router.gno__finalizeSwap() || Too few received for user (expected minimum: 2710, actual: 367, swapType: EXACT_IN)",
+		"GNOSWAP-ROUTER-004",
 	)
 }

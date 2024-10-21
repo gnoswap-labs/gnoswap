@@ -92,7 +92,7 @@ func GetPoolsWithEmissionGnsAmount() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__GetPoolsWithEmissionGnsAmount() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -112,13 +112,9 @@ func GetEachTierPoolNum() []string {
 func SetPoolTierByAdmin(poolPath string, tier uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic(
-			ufmt.Sprintf(
-				"[STAKER] manage_pool_tiers.gno__SetPoolTierByAdmin() || only admin(%s) can set additional pool with tier, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		)
+		panic(addDetailToError(errNoPermission,
+			ufmt.Sprintf("manage_pool_tiers.gno__SetPoolTierByAdmin() || only admin(%s) can set additional pool with tier, called from %s", consts.ADMIN, caller),
+		))
 	}
 
 	setPoolTier(poolPath, tier)
@@ -137,13 +133,9 @@ func SetPoolTierByAdmin(poolPath string, tier uint64) {
 func SetPoolTier(poolPath string, tier uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(
-			ufmt.Sprintf(
-				"[STAKER] manage_pool_tiers.gno__SetPoolTier() || only governance(%s) can set additional pool with tier, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		)
+		panic(addDetailToError(errNoPermission,
+			ufmt.Sprintf("manage_pool_tiers.gno__SetPoolTier() || only governance(%s) can set additional pool with tier, called from %s", consts.GOV_GOVERNANCE_ADDR, caller),
+		))
 	}
 
 	setPoolTier(poolPath, tier)
@@ -177,13 +169,17 @@ func setPoolTier(pool string, tier uint64) {
 
 	// panic if pool does not exist
 	if !(pl.DoesPoolPathExist(pool)) {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__SetPoolTier() || pool(%s) does not exist", pool))
+		panic(addDetailToError(errDataNotFound,
+			ufmt.Sprintf("manage_pool_tiers.gno__SetPoolTier() || pool(%s) does not exist", pool),
+		))
 	}
 
 	// panic if pool exists in poolTiers
 	_, exist := poolTiers[pool]
 	if exist {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__SetPoolTier() || pool(%s) already exists in poolTiers", pool))
+		panic(addDetailToError(errInvalidPoolPath,
+			ufmt.Sprintf("manage_pool_tiers.gno__SetPoolTier() || pool(%s) already exists in poolTiers", pool),
+		))
 	}
 
 	// check if tier is valid
@@ -198,13 +194,9 @@ func setPoolTier(pool string, tier uint64) {
 func ChangePoolTierByAdmin(poolPath string, tier uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic(
-			ufmt.Sprintf(
-				"[STAKER] manage_pool_tiers.gno__ChangePoolTierByAdmin() || only admin(%s) can change existing pool tier, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		)
+		panic(addDetailToError(errNoPermission,
+			ufmt.Sprintf("manage_pool_tiers.gno__ChangePoolTierByAdmin() || only admin(%s) can change existing pool tier, called from %s", consts.ADMIN, caller),
+		))
 	}
 
 	changePoolTier(poolPath, tier)
@@ -223,13 +215,9 @@ func ChangePoolTierByAdmin(poolPath string, tier uint64) {
 func ChangePoolTier(poolPath string, tier uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(
-			ufmt.Sprintf(
-				"[STAKER] manage_pool_tiers.gno__ChangePoolTier() || only governance(%s) can change existing pool tier, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		)
+		panic(addDetailToError(errNoPermission,
+			ufmt.Sprintf("manage_pool_tiers.gno__ChangePoolTier() || only governance(%s) can change existing pool tier, called from %s", consts.GOV_GOVERNANCE_ADDR, caller),
+		))
 	}
 
 	changePoolTier(poolPath, tier)
@@ -264,7 +252,9 @@ func changePoolTier(pool string, tier uint64) {
 	// panic if pool does not exist in poolTiers
 	internal, exist := poolTiers[pool]
 	if !exist {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__ChangePoolTier() || pool(%s) does not exist in poolTiers", pool))
+		panic(addDetailToError(errDataNotFound,
+			ufmt.Sprintf("manage_pool_tiers.gno__ChangePoolTier() || pool(%s) does not exist in poolTiers", pool),
+		))
 	}
 
 	// check if tier is valid
@@ -272,19 +262,16 @@ func changePoolTier(pool string, tier uint64) {
 
 	// CAN'T CHANGE TIER OF THIS GNS:GNOT 0.3%
 	if pool == MUST_EXISTS_IN_TIER_1 {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__ChangePoolTier() || Cannot change tier of this pool(%s)", pool))
+		panic(addDetailToError(errDefaultPoolTier1CannotDelete,
+			ufmt.Sprintf("manage_pool_tiers.gno__ChangePoolTier() || Cannot change tier of this pool(%s)", pool),
+		))
 	}
 
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(
-			ufmt.Sprintf(
-				"[STAKER] manage_pool_tiers.gno__ChangePoolTier() || only admin(%s) or governance(%s) can change existing pool tier, called from %s",
-				consts.ADMIN,
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		)
+		panic(addDetailToError(errNoPermission,
+			ufmt.Sprintf("manage_pool_tiers.gno__ChangePoolTier() || only admin(%s) or governance(%s) can change existing pool tier, called from %s", consts.ADMIN, consts.GOV_GOVERNANCE_ADDR, caller),
+		))
 	}
 
 	internal.tier = tier
@@ -294,13 +281,9 @@ func changePoolTier(pool string, tier uint64) {
 func RemovePoolTierByAdmin(poolPath string) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic(
-			ufmt.Sprintf(
-				"[STAKER] manage_pool_tiers.gno__RemovePoolTierByAdmin() || only admin(%s) can remove existing pool with tier, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		)
+		panic(addDetailToError(errNoPermission,
+			ufmt.Sprintf("manage_pool_tiers.gno__RemovePoolTierByAdmin() || only admin(%s) can remove existing pool with tier, called from %s", consts.ADMIN, caller),
+		))
 	}
 
 	removePoolTier(poolPath)
@@ -318,13 +301,9 @@ func RemovePoolTierByAdmin(poolPath string) {
 func RemovePoolTier(poolPath string) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(
-			ufmt.Sprintf(
-				"[STAKER] manage_pool_tiers.gno__RemovePoolTier() || only governance(%s) can remove existing pool with tier, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		)
+		panic(addDetailToError(errNoPermission,
+			ufmt.Sprintf("manage_pool_tiers.gno__RemovePoolTier() || only governance(%s) can remove existing pool with tier, called from %s", consts.GOV_GOVERNANCE_ADDR, caller),
+		))
 	}
 
 	removePoolTier(poolPath)
@@ -354,19 +333,16 @@ func removePoolTier(pool string) {
 	CalcPoolPosition()
 
 	if pool == MUST_EXISTS_IN_TIER_1 {
-		panic(ufmt.Sprintf("[STAKER] manage_pool_tiers.gno__RemovePoolTier() || Cannot change tier of this pool(%s)", pool))
+		panic(addDetailToError(errDefaultPoolTier1CannotDelete,
+			ufmt.Sprintf("manage_pool_tiers.gno__RemovePoolTier() || Cannot change tier of this pool(%s)", pool),
+		))
 	}
 
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(
-			ufmt.Sprintf(
-				"[STAKER] manage_pool_tiers.gno__RemovePoolTier() || only admin(%s) or governance(%s) can remove existing pool with tier, called from %s",
-				consts.ADMIN,
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		)
+		panic(addDetailToError(errNoPermission,
+			ufmt.Sprintf("manage_pool_tiers.gno__RemovePoolTier() || only admin(%s) or governance(%s) can remove existing pool with tier, called from %s", consts.ADMIN, consts.GOV_GOVERNANCE_ADDR, caller),
+		))
 	}
 
 	delete(poolTiers, pool)
@@ -375,6 +351,8 @@ func removePoolTier(pool string) {
 // mustValidTier checks if the provided tier is valid (between 1 and 3)
 func mustValidTier(tier uint64) {
 	if tier < 1 || tier > 3 {
-		panic(ufmt.Sprintf("tier(%d) is not valid", tier))
+		panic(addDetailToError(errInvalidInput,
+			ufmt.Sprintf("tier(%d) is not valid", tier),
+		))
 	}
 }

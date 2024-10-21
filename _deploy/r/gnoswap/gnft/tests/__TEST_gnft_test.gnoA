@@ -2,6 +2,7 @@ package gnft
 
 import (
 	"std"
+	"strings"
 	"testing"
 
 	"gno.land/p/demo/grc/grc721"
@@ -63,6 +64,16 @@ func TestTransferFrom(t *testing.T) {
 	SetTokenURILast()
 }
 
+func TestMint_NoPermission(t *testing.T) {
+	std.TestSetRealm(dummyOneRealm)
+
+	shouldPanicWithMsg(
+		t,
+		func() { Mint(a2u(dummyOneAddr), tid(7)) },
+		`GNOSWAP-GNFT-001`,
+	)
+}
+
 // UTILs
 func a2u(addr std.Address) pusers.AddressOrName {
 	return pusers.AddressOrName(addr)
@@ -76,4 +87,17 @@ func shouldEQ(t *testing.T, got, want interface{}) {
 	if got != want {
 		t.Errorf("got %v, want %v", got, want)
 	}
+}
+
+func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		} else {
+			if !strings.Contains(string(r), msg) {
+				t.Errorf("excepted panic\n%v\n\ngot\n%v\n", msg, r)
+			}
+		}
+	}()
+	f()
 }

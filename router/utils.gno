@@ -13,12 +13,18 @@ import (
 func poolPathWithFeeDivide(poolPath string) (string, string, int) {
 	poolPathSplit := strings.Split(poolPath, ":")
 	if len(poolPathSplit) != 3 {
-		panic(ufmt.Sprintf("[ROUTER] _RPC_api.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("utils.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath),
+		))
 	}
 
 	feeInt, err := strconv.Atoi(poolPathSplit[2])
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] _RPC_api.gno__poolPathWithFeeDivide() || cannot convert fee(%s) to int", poolPathSplit[2]))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("utils.gno__poolPathWithFeeDivide() || cannot convert fee(%s) to int", poolPathSplit[2]),
+		))
 	}
 
 	return poolPathSplit[0], poolPathSplit[1], feeInt
@@ -27,7 +33,10 @@ func poolPathWithFeeDivide(poolPath string) (string, string, int) {
 func getDataForSinglePath(poolPath string) (string, string, uint32) {
 	datas := strings.Split(poolPath, ":")
 	if len(datas) != 3 {
-		panic(ufmt.Sprintf("[ROUTER] _util.gno__getDataForSinglePath() || len(datas) != 3 (poolPath:%s)", poolPath))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("utils.gno__getDataForSinglePath() || len(datas) != 3 (poolPath:%s)", poolPath),
+		))
 	}
 
 	token0 := datas[0]

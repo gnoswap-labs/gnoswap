@@ -24,9 +24,6 @@ MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 GNOLAND_RPC_URL ?= http://localhost:26657
 CHAINID ?= dev
 
-# GNOLAND_RPC_URL ?= https://dev.rpc.gnoswap.io:443
-# CHAINID ?= dev.gnoswap
-
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
 
 
@@ -44,7 +41,7 @@ deploy-base-tokens: deploy-gns deploy-usdc deploy-gnft
 deploy-test-tokens: deploy-foo deploy-bar deploy-baz deploy-qux deploy-obl 
 
 .PHONY: deploy-gnoswap-realms
-deploy-gnoswap-realms: deploy-xgns deploy-emission deploy-pool deploy-position deploy-staker deploy-router deploy-community_pool deploy-protocol_fee deploy-gov-staker deploy-gov-governance 
+deploy-gnoswap-realms: deploy-xgns deploy-emission deploy-pool deploy-position deploy-staker deploy-router deploy-community_pool deploy-protocol_fee deploy-gov-staker deploy-gov-governance deploy-launchpad 
 
 ### TEST AFTER INIT
 .PHONY: init-test
@@ -210,6 +207,12 @@ deploy-gov-governance:
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/gov/governance -pkgpath gno.land/r/gnoswap/v2/gov/governance -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
+deploy-launchpad:
+	$(info ************ deploy launchpad ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/launchpad -pkgpath gno.land/r/gnoswap/v2/launchpad -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo
+
+
 # Register
 register-token:
 	$(info ************ deploy register_gnodev ************)
@@ -219,7 +222,7 @@ register-token:
 # default pool create
 pool-create-gns-wugnot-default:
 	$(info ************ set pool creation fee to 0uGNS for testing ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func SetPoolCreationFee -args 0 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/pool -func SetPoolCreationFeeByAdmin -args 0 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo 
 
 
@@ -252,7 +255,7 @@ mint-gns-gnot:
 	@echo "" | gnokey maketx call -pkgpath gno.land/r/demo/wugnot -func Approve -args $(ADDR_POSITION) -args $(MAX_UINT64) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 
 	# THEN MINT
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/v2/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args $(TX_EXPIRE) -args $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/position -func Mint -send "20000000ugnot" -args "gno.land/r/gnoswap/v2/gns" -args "gnot" -args 3000 -args "-49980" -args "49980" -args 20000000 -args 20000000 -args 1 -args 1 -args $(TX_EXPIRE) -args $(ADDR_GSA) -args $(ADDR_GSA) -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 	# Set-Token-Uri
@@ -289,7 +292,7 @@ burn-position-1:
 
 set-pool-tier-1-bar-baz:
 	$(info ************ set pool tier 2 bar:baz // gnoswap_admin ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/staker -func SetPoolTier -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100" -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/staker -func SetPoolTierByAdmin -args "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100" -args 1 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 stake-token-2:
@@ -300,7 +303,7 @@ stake-token-2:
 
 set-pool-tier-3-foo-qux:
 	$(info ************ set pool tier 3 foo:qux // gnoswap_admin ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/staker -func SetPoolTier -args "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:100" -args 3 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v2/staker -func SetPoolTierByAdmin -args "gno.land/r/onbloc/foo:gno.land/r/onbloc/qux:100" -args 3 -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin > /dev/null
 	@echo
 
 stake-token-3:

@@ -42,7 +42,7 @@ func TestCreateFooBarPool(t *testing.T) {
 		func() {
 			CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick 10000
 		},
-		`[POOl] pool_manager.gno__CreatePool() || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)`,
+		`GNOSWAP-POOL-005`,
 	)
 
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000

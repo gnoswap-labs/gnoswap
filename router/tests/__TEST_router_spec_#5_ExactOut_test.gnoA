@@ -86,7 +86,7 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 
 	std.TestSetOrigSend(std.Coins{{"ugnot", 12345}}, nil)
 
-	shouldPanic(t,
+	shouldPanicWithMsg(t,
 		func() {
 			SwapRoute(
 				consts.GNOT, // inputToken
@@ -98,5 +98,6 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 				"1",   // tokenAmountLimit
 			)
 		},
+		`GNOSWAP-ROUTER-005`,
 	)
 }

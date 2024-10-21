@@ -308,7 +308,7 @@ func TestSwap(t *testing.T) {
 // 6. SetFeeProtocol by admin
 func TestSetFeeProtocolByAdmin(t *testing.T) {
 	// non admin call
-	shouldPanic(t, func() { SetFeeProtocolByAdmin(2, 2) })
+	shouldPanicWithMsg(t, func() { SetFeeProtocolByAdmin(2, 2) }, `GNOSWAP-POOL-001`)
 
 	// admin call
 	std.TestSetRealm(adminRealm)

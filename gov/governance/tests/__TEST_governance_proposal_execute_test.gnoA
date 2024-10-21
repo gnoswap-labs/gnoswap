@@ -1,3 +1,4 @@
+
 package governance
 
 import (
@@ -26,7 +27,7 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "NOT_ENOUGH") {
+			} else if !strings.Contains(string(r), "GNOSWAP-GOVERNANCE-005") {
 				t.Errorf("Unexpected panic message: %v", r)
 			}
 		}()
