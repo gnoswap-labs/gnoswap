@@ -80,15 +80,6 @@ func CollectRewardByProjectId(projectId string) uint64 {
 				toUser += deposit.rewardAmount
 			}
 
-			// update project
-			project.totalCollectedAmount += deposit.rewardAmount
-
-			// update deposit
-			deposit.rewardAmount = 0
-			deposit.rewardCollectHeight = uint64(std.GetHeight())
-			deposit.rewardCollectTime = uint64(time.Now().Unix())
-			deposits[depositId] = deposit
-
 			std.Emit(
 				"CollectRewardByProjectId",
 				"prevAddr", prevAddr,
@@ -97,6 +88,15 @@ func CollectRewardByProjectId(projectId string) uint64 {
 				"internal_depositId", depositId,
 				"internal_amount", ufmt.Sprintf("%d", deposit.rewardAmount),
 			)
+
+			// update project
+			project.totalCollectedAmount += deposit.rewardAmount
+
+			// update deposit
+			deposit.rewardAmount = 0
+			deposit.rewardCollectHeight = uint64(std.GetHeight())
+			deposit.rewardCollectTime = uint64(time.Now().Unix())
+			deposits[depositId] = deposit
 		}
 	}
 
