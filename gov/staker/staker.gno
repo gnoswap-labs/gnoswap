@@ -20,13 +20,12 @@ type lockedGNS struct {
 	unlock uint64
 }
 
-var lockedAmount uint64
-
-const TIMESTAMP_7_DAYS = uint64(60) // 60s // XXX: TODO, REMOVE AFTER QA
+const TIMESTAMP_7_DAYS = uint64(60) // 60s // XXX: TODO, REMOVE AFTER QA ( smaller value for testing )
 // const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
 
 var (
 	addrLockedGns = make(map[std.Address][]lockedGNS)
+	lockedAmount  = uint64(0)
 )
 
 var (
@@ -291,7 +290,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
 			"to", to.String(),
-			"intinternal_tokenPathernal_token", tokenPath,
+			"internal_tokenPath", tokenPath,
 			"internal_amount", ufmt.Sprintf("%d", amount),
 		)
 	}

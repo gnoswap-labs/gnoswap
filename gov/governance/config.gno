@@ -17,30 +17,18 @@ var (
 )
 
 func init() {
-	// value for testing case from @notJoon
+	// XXX: TODO, REMOVE AFTER QA ( smaller value for testing )
 	config = Config{
-		// XXX: TODO, REMOVE AFTER QA
-		// - config for testcase
-		VotingStartDelay:              uint64(10),   // 10s ≈ 5 block
-		VotingPeriod:                  uint64(30),   // 30s ≈ 15 block
-		VotingWeightSmoothingDuration: uint64(10),   // 10s ≈ 5 block
-		Quorum:                        uint64(50),   // 50% of total xGNS supply
-		ProposalCreationThreshold:     uint64(100),  //
-		ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
-		ExecutionWindow:               uint64(1000), // 500 block
-
-		// XXX: TODO, REMOVE AFTER QA
-		// - config for live qa
-		// VotingStartDelay:              uint64(180),           // 3m
-		// VotingPeriod:                  uint64(600),           // 10m
-		// VotingWeightSmoothingDuration: uint64(600),           // 10m
-		// Quorum:                        uint64(50),            // 50% of total xGNS supply
-		// ProposalCreationThreshold:     uint64(1_000_000_000), // 1_000_000_000
-		// ExecutionDelay:                uint64(60),            // 1m
-		// ExecutionWindow:               uint64(3600),          // 1h
+		VotingStartDelay:              uint64(180),           // 3m
+		VotingPeriod:                  uint64(600),           // 10m
+		VotingWeightSmoothingDuration: uint64(600),           // 10m
+		Quorum:                        uint64(50),            // 50% of total xGNS supply
+		ProposalCreationThreshold:     uint64(1_000_000_000), // 1_000_000_000
+		ExecutionDelay:                uint64(60),            // 1m
+		ExecutionWindow:               uint64(3600),          // 1h
 	}
 
-	// https://docs.gnoswap.io/core-concepts/governance
+	// // https: //docs.gnoswap.io/core-concepts/governance
 	// config = Config{
 	// 	VotingStartDelay:              uint64(86400),         // 1d
 	// 	VotingPeriod:                  uint64(604800),        // 7d
