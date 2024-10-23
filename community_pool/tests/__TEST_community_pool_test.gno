@@ -2,6 +2,7 @@ package community_pool
 
 import (
 	"std"
+	"strings"
 	"testing"
 
 	"gno.land/p/demo/testutils"
@@ -36,16 +37,26 @@ func init() {
 	RegisterGRC20Interface("gno.land/r/gnoswap/v2/gns", GNSToken{})
 }
 
+func TestAlreadyRegistered(t *testing.T) {
+	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
+	shouldPanicWithMsg(
+		t,
+		func() { RegisterGRC20Interface("gno.land/r/gnoswap/v2/gns", GNSToken{}) },
+		`GNOSWAP-COMMUNITY_POOL-003`,
+	)
+}
+
 func TestTransferGnsNoPermission(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
 	dummyRealm := std.NewUserRealm(dummy)
 
 	std.TestSetRealm(dummyRealm)
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			TransferToken(consts.GNS_PATH, dummy, 1000)
 		},
+		`GNOSWAP-COMMUNITY_POOL-001`,
 	)
 }
 
@@ -62,6 +73,16 @@ func TestTransferGns(t *testing.T) {
 	shouldEQ(t, gns.BalanceOf(a2u(sendTarget)), uint64(900))
 }
 
+func TestTransferNonRegistered(t *testing.T) {
+	adminRealm := std.NewUserRealm(consts.ADMIN)
+	std.TestSetRealm(adminRealm)
+	shouldPanicWithMsg(
+		t,
+		func() { TransferTokenByAdmin("non_registered", testutils.TestAddress("dummy"), 1000) },
+		`GNOSWAP-COMMUNITY_POOL-002`,
+	)
+}
+
 func shouldPanic(t *testing.T, f func()) {
 	defer func() {
 		if r := recover(); r == nil {
@@ -76,7 +97,7 @@ func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
 		if r := recover(); r == nil {
 			t.Errorf("The code did not panic")
 		} else {
-			if r != msg {
+			if !strings.Contains(string(r), msg) {
 				t.Errorf("excepted panic\n%v\n\ngot\n%v\n", msg, r)
 			}
 		}

@@ -223,29 +223,35 @@ func TestMintPosition03InRange(t *testing.T) {
 
 func TestRepositionNotOwner(t *testing.T) {
 	std.TestSetRealm(std.NewUserRealm(test1))
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			Reposition(uint64(1), -1000, 1000, "500", "500", "0", "0")
-		})
+		},
+		`GNOSWAP-POSITION-009`,
+	)
 }
 
 func TestRepositionOwnerButNowBurned(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			Reposition(uint64(2), -1000, 1000, "500", "500", "0", "0")
-		})
+		},
+		`GNOSWAP-POSITION-009`,
+	)
 }
 
 func TestRepositionSlippageTooLarge(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			Reposition(uint64(1), -1000, 1000, "500", "500", "100000000000", "100000000000")
-		})
+		},
+		`GNOSWAP-POSITION-002`,
+	)
 }
 
 func TestReposition(t *testing.T) {

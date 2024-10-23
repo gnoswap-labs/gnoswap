@@ -140,13 +140,13 @@ func TestStakeToken_1(t *testing.T) {
 	std.TestSkipHeights(1)
 }
 
-func TestSetPoolTier(t *testing.T) {
+func TestSetPoolTierByAdmin(t *testing.T) {
 	curr := getCurrentInfo()
 
 	std.TestSkipHeights(800) // this reward should go to bar:qux:100
 
 	std.TestSetRealm(adminRealm)
-	SetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
+	SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
 
 	println(GetPrintInfo())
 	println()

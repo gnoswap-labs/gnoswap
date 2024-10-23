@@ -49,19 +49,31 @@ func CreateProject(
 
 	// only admin can create project
 	if std.PrevRealm().Addr() != consts.ADMIN {
-		panic("only admin can create project")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || only admin can create project, called from %s", std.PrevRealm().Addr().String()),
+		))
 	}
 
 	if _, exist := registered[tokenPath]; !exist {
-		panic("token not registered")
+		panic(addDetailToError(
+			errNotRegistered,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || token not registered: %s", tokenPath),
+		))
 	}
 
 	if !(recipient.IsValid()) {
-		panic("invalid recipient addr")
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || invalid recipient addr: %s", recipient.String()),
+		))
 	}
 
 	if depositAmount == 0 {
-		panic("can not deposit 0")
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || can not deposit 0"),
+		))
 	}
 
 	if strings.Contains(conditionsToken, "*PAD*") {
@@ -71,7 +83,10 @@ func CreateProject(
 				continue
 			}
 			if _, exist := registered[token]; !exist {
-				panic(ufmt.Sprintf("condition token(%s) not registered", token))
+				panic(addDetailToError(
+					errNotRegistered,
+					ufmt.Sprintf("launchpad_init.gno__CreateProject() || condition token(%s) not registered", token),
+				))
 			}
 		}
 	}
@@ -79,15 +94,24 @@ func CreateProject(
 	projectId := generateProjectId(tokenPath)
 	_, exist := projects[projectId]
 	if exist {
-		panic("project already exist")
+		panic(addDetailToError(
+			errDuplicateProject,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || project already exist: %s", projectId),
+		))
 	}
 
 	if tier30Ratio+tier90Ratio+tier180Ratio != 100 {
-		panic("invalid ratio, sum of all tiers should be 100")
+		panic(addDetailToError(
+			errInvalidTierRatio,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || invalid ratio, sum of all tiers should be 100"),
+		))
 	}
 
 	if startTime <= uint64(time.Now().Unix()) {
-		panic("invalid start time, can not start project in past")
+		panic(addDetailToError(
+			errPastStartTime,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || invalid start time, can not start project in past"),
+		))
 	}
 
 	transferFromByRegisterCall(
@@ -225,7 +249,10 @@ func makeConditions(conditionsToken string, conditionsAmount string) map[string]
 	tokens := strings.Split(conditionsToken, "*PAD*")
 	amounts := strings.Split(conditionsAmount, "*PAD*")
 	if len(tokens) != len(amounts) {
-		panic(ufmt.Sprintf("invalid conditions(numTokens(%d) != numAmounts(%d))", len(tokens), len(amounts)))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("launchpad_init.gno__makeConditions() || invalid conditions(numTokens(%d) != numAmounts(%d))", len(tokens), len(amounts)),
+		))
 	}
 
 	for i, token := range tokens {

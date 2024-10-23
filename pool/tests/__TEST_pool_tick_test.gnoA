@@ -451,7 +451,7 @@ func TestTickUpdate_5(t *testing.T) {
 		func() {
 			pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 		},
-		"tick panic #1",
+		"GNOSWAP-POOL-007",
 	)
 }
 
@@ -515,11 +515,12 @@ func TestTickUpdate_7(t *testing.T) {
 	var upper bool = false
 
 	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
 		},
+		`GNOSWAP-POOL-007`,
 	)
 }
 
@@ -850,7 +851,7 @@ func (pool *Pool) TickUpdate(
 	liquidityGrossAfter := liquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
 
 	if !(liquidityGrossAfter.Lte(maxLiquidity)) {
-		panic("tick panic #1")
+		panic(addDetailToError(errLiquidityCalculation, "liquidityGrossAfter.Lte(maxLiquidity)"))
 	}
 
 	flipped = (liquidityGrossAfter.IsZero()) != (liquidityGrossBefore.IsZero())

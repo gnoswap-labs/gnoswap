@@ -77,12 +77,12 @@ func TestPositionsProtected(t *testing.T) {
 
 	t.Run("fails if fee is lt 4 or gt 10", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		shouldPanic(t, func() { SetFeeProtocolByAdmin(3, 3) })
-		shouldPanic(t, func() { SetFeeProtocolByAdmin(6, 3) })
-		shouldPanic(t, func() { SetFeeProtocolByAdmin(3, 6) })
-		shouldPanic(t, func() { SetFeeProtocolByAdmin(11, 11) })
-		shouldPanic(t, func() { SetFeeProtocolByAdmin(6, 11) })
-		shouldPanic(t, func() { SetFeeProtocolByAdmin(11, 6) })
+		shouldPanicWithMsg(t, func() { SetFeeProtocolByAdmin(3, 3) }, `GNOSWAP-POOL-005`)
+		shouldPanicWithMsg(t, func() { SetFeeProtocolByAdmin(6, 3) }, `GNOSWAP-POOL-005`)
+		shouldPanicWithMsg(t, func() { SetFeeProtocolByAdmin(3, 6) }, `GNOSWAP-POOL-005`)
+		shouldPanicWithMsg(t, func() { SetFeeProtocolByAdmin(11, 11) }, `GNOSWAP-POOL-005`)
+		shouldPanicWithMsg(t, func() { SetFeeProtocolByAdmin(6, 11) }, `GNOSWAP-POOL-005`)
+		shouldPanicWithMsg(t, func() { SetFeeProtocolByAdmin(11, 6) }, `GNOSWAP-POOL-005`)
 	})
 
 	t.Run("can be changed by the owner", func(t *testing.T) {
@@ -134,7 +134,7 @@ func TestPokeIsNotAllowedOnUninitilaizedPosition(t *testing.T) {
 				"0",
 			)
 		},
-		`NP`,
+		`GNOSWAP-POOL-005`,
 	)
 }
 

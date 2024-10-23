@@ -115,13 +115,18 @@ func CollectRewardByProjectId(projectId string) uint64 {
 func CollectRewardByDepositId(depositId string) uint64 {
 	deposit, exist := deposits[depositId]
 	if !exist {
-		panic("deposit not found")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("launchpad_reward.gno__CollectRewardByDepositId() || deposit not found: %s", depositId),
+		))
 	}
 
 	project, exist := projects[deposit.projectId]
 	if !exist {
-		println("NO PROJECT FOR THIS ID", deposit.projectId)
-		return 0
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("launchpad_reward.gno__CollectRewardByDepositId() || project not found: %s", deposit.projectId),
+		))
 	}
 
 	caller := std.PrevRealm().Addr()
@@ -286,7 +291,10 @@ func calculateDepositReward() {
 					sinceLast = sinceLast180
 					rewardX96 = rewardX96_180.Clone()
 				default:
-					panic("INVALID TIER")
+					panic(addDetailToError(
+						errInvalidInput,
+						ufmt.Sprintf("launchpad_reward.gno__calculateDepositReward() || invalid tier: %s", deposit.tier),
+					))
 				}
 				if sinceLast == 0 {
 					println("NO BLOCK PASSED SINCE LAST CALCULATION")

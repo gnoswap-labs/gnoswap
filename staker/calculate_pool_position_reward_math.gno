@@ -4,6 +4,8 @@ import (
 	"std"
 	"time"
 
+	"gno.land/p/demo/ufmt"
+
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v2/consts"
 )
@@ -65,7 +67,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 
 	positionWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
 	if !exist {
-		panic("THIS SHOULD NOT HAPPEN")
+		panic(addDetailToError(errDataNotFound, ufmt.Sprintf("REWARD__INTERNAL_rewardMathComputeInternalRewardAmount_TOKEN_ID(%d) || positionWarmUpAmount not found", tokenId)))
 	}
 	println(" > REWARD__INTERNAL_BEFORE_positionWarmUpAmount.full100", positionWarmUpAmount.full100)
 	println()
@@ -411,7 +413,10 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 			println("   > REWARD__EXTERNAL_positionLastExternal[tokenId][incentiveId]:", positionLastExternal[tokenId][incentiveId].ToString())
 			println("   > REWARD__EXTERNAL_toDistributeX96:", toDistributeX96.ToString())
 			if tokenAmountX96.Lt(positionLastExternal[tokenId][incentiveId]) {
-				panic("THIS SHOULD NOT HAPPEN_EXTERNAL #1")
+				panic(addDetailToError(errCalculationError,
+					ufmt.Sprintf("REWARD__EXTERNAL_rewardMathComputeInternalRewardAmount_TOKEN_ID(%d) || tokenAmountX96(%s) is less than positionLastExternal[tokenId][incentiveId](%s)",
+						tokenId, tokenAmountX96.ToString(), positionLastExternal[tokenId][incentiveId].ToString()),
+				))
 			}
 			println()
 
@@ -426,9 +431,9 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 
 			positionExternalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
 			if !exist {
-				println("tokenId:", tokenId)
-				println("incentiveId:", incentiveId)
-				panic("THIS SHOULD NOT HAPPEN_EXTERNAL #2")
+				panic(addDetailToError(errDataNotFound,
+					ufmt.Sprintf("REWARD__EXTERNAL_rewardMathComputeInternalRewardAmount_TOKEN_ID(%d) || positionsExternalWarmUpAmount[tokenId][incentiveId] not found", tokenId),
+				))
 			}
 
 			println("   > REWARD__EXTERNAL_BEFORE_positionExternalWarmUpAmount.full100", positionExternalWarmUpAmount.full100)
@@ -693,5 +698,5 @@ func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (
 		}
 	}
 
-	panic("NO INCENTIVE_ID FOUND")
+	panic(addDetailToError(errDataNotFound, ufmt.Sprintf("REWARD__EXTERNAL_rewardMathComputeInternalRewardAmount_TOKEN_ID(%d) || incentiveId(%s) not found", tokenId, incentiveId)))
 }

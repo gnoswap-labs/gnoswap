@@ -78,6 +78,7 @@ type Deposit struct {
 	depositCollectHeight uint64
 	depositCollectTime   uint64
 
+	// claimable height & time
 	claimableHeight uint64
 	claimableTime   uint64
 

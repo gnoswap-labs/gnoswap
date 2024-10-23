@@ -360,3 +360,11 @@ func TestTickMathGetTickAtSqrtRatio_7(t *testing.T) {
 
 	shouldEQ(t, result, maxTickSub1)
 }
+
+func TestTickMathGetSqrtRatioAtTickTooHigh(t *testing.T) {
+	shouldPanicWithMsg(
+		t,
+		func() { TickMathGetSqrtRatioAtTick(887273) },
+		`GNOSWAP-COMMON-003`,
+	)
+}

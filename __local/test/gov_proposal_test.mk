@@ -1,4 +1,4 @@
-# make -f __local/test/gov_proposal.mk init init-test gov-test
+# make -f __local/test/gov_proposal_test.mk init init-test gov-test
 
 ADDR_GSA := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
 ADDR_REGISTER := g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5
@@ -30,9 +30,6 @@ MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 GNOLAND_RPC_URL ?= http://localhost:26657
 CHAINID ?= dev
 
-# GNOLAND_RPC_URL ?= https://dev.rpc.gnoswap.io:443
-# CHAINID ?= dev.gnoswap
-
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
 
 
@@ -50,7 +47,7 @@ deploy-base-tokens: deploy-gns deploy-usdc deploy-gnft
 deploy-test-tokens: deploy-foo deploy-bar deploy-baz deploy-qux deploy-obl 
 
 .PHONY: deploy-gnoswap-realms
-deploy-gnoswap-realms: deploy-xgns deploy-emission deploy-pool deploy-position deploy-staker deploy-router deploy-community_pool deploy-protocol_fee deploy-gov-staker deploy-gov-governance 
+deploy-gnoswap-realms: deploy-xgns deploy-emission deploy-pool deploy-position deploy-staker deploy-router deploy-community_pool deploy-protocol_fee deploy-gov-staker deploy-gov-governance deploy-launchpad 
 
 ### TEST AFTER INIT
 .PHONY: init-test
@@ -223,6 +220,11 @@ deploy-gov-staker:
 deploy-gov-governance:
 	$(info ************ deploy gov/governance ************)
 	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/gov/governance -pkgpath gno.land/r/gnoswap/v2/gov/governance -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo
+
+deploy-launchpad:
+	$(info ************ deploy launchpad ************)
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/launchpad -pkgpath gno.land/r/gnoswap/v2/launchpad -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
 # Register

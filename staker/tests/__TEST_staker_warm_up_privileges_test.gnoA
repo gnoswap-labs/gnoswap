@@ -32,7 +32,7 @@ func TestGetWarmUp(t *testing.T) {
 	}
 }
 
-func TestSetWarmUp_NoPrivileges(t *testing.T) {
+func TestSetWarmUpByAdmin_NoPrivileges(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
 	dummyRealm := std.NewUserRealm(dummy)
 	std.TestSetRealm(dummyRealm)
@@ -40,43 +40,43 @@ func TestSetWarmUp_NoPrivileges(t *testing.T) {
 	shouldPanicWithMsg(
 		t,
 		func() {
-			SetWarmUp(100, 100)
+			SetWarmUpByAdmin(100, 100)
 		},
-		"[STAKER] warm_up.gno__SetWarmUp() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can set warm up period, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+		"GNOSWAP-STAKER-001",
 	)
 }
 
-func TestSetWarmUp_InvalidPercent(t *testing.T) {
+func TestSetWarmUpByAdmin_InvalidPercent(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
 	shouldPanicWithMsg(
 		t,
 		func() {
-			SetWarmUp(10, 100)
+			SetWarmUpByAdmin(10, 100)
 		},
-		"[STAKER] warm_up.gno__SetWarmUp() || percent(10) must be 30, 50, 70, 100",
+		"GNOSWAP-STAKER-015",
 	)
 }
 
-func TestSetWarmUp(t *testing.T) {
+func TestSetWarmUpByAdmin(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	SetWarmUp(100, 100)
+	SetWarmUpByAdmin(100, 100)
 	if GetWarmUp(100) != 100 {
 		panic("GetWarmUp(100) != 100")
 	}
 
-	SetWarmUp(70, 70)
+	SetWarmUpByAdmin(70, 70)
 	if GetWarmUp(70) != 70 {
 		panic("GetWarmUp(70) != 70")
 	}
 
-	SetWarmUp(50, 50)
+	SetWarmUpByAdmin(50, 50)
 	if GetWarmUp(50) != 50 {
 		panic("GetWarmUp(50) != 50")
 	}
 
-	SetWarmUp(30, 30)
+	SetWarmUpByAdmin(30, 30)
 	if GetWarmUp(30) != 30 {
 		panic("GetWarmUp(30) != 30")
 	}

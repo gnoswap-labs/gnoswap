@@ -62,22 +62,24 @@ func TestDelegate(t *testing.T) {
 func TestRedelegateUnknownFrom(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			Redelegate(reDelegate, dummyAddr, 1000001)
 		},
+		`GNOSWAP-GOV_STAKER-004`,
 	)
 }
 
 func TestRedelegateTooMany(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			Redelegate(dummyAddr, reDelegate, 10000010)
 		},
+		`GNOSWAP-GOV_STAKER-011`,
 	)
 }
 
@@ -108,11 +110,12 @@ func TestRedelegate(t *testing.T) {
 func TestUndelegateUnknownUser(t *testing.T) {
 	std.TestSetRealm(dummyRealm)
 
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			Undelegate(reDelegate, 1000001)
 		},
+		`GNOSWAP-GOV_STAKER-006`,
 	)
 }
 

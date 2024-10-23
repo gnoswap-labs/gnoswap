@@ -129,21 +129,23 @@ func TestSetWithdrawalFeeByAdminNoPermission(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
 	std.TestSetRealm(std.NewUserRealm(dummy))
 
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			SetWithdrawalFeeByAdmin(2)
 		},
+		`GNOSWAP-POOL-001`,
 	)
 }
 
 func TestSetWithdrawalFeeByAdminFeeOutOfRange(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			SetWithdrawalFeeByAdmin(10001)
 		},
+		`GNOSWAP-POOL-005`,
 	)
 }
 
@@ -163,11 +165,12 @@ func TestSetPoolCreationFeeByAdminNoPermission(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
 	std.TestSetRealm(std.NewUserRealm(dummy))
 
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			SetPoolCreationFeeByAdmin(2)
 		},
+		`GNOSWAP-POOL-001`,
 	)
 }
 

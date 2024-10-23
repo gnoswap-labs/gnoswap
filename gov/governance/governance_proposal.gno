@@ -5,17 +5,16 @@ import (
 	"strings"
 	"time"
 
+	"gno.land/p/demo/ufmt"
+
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v2/common"
 	cp "gno.land/r/gnoswap/v2/community_pool"
 	en "gno.land/r/gnoswap/v2/emission"
 	gs "gno.land/r/gnoswap/v2/gov/staker"
 
 	"gno.land/r/gnoswap/v2/gov/xgns"
-
-	"gno.land/r/gnoswap/v2/common"
-
-	"gno.land/p/demo/ufmt"
 )
 
 type voteWithWeight struct {
@@ -48,9 +47,12 @@ func ProposeText(
 
 	proposer := std.PrevRealm().Addr()
 
-	enough := checkEnoughXGnsToPropose(proposer)
+	enough, xGNS, required := checkEnoughXGnsToPropose(proposer)
 	if !enough {
-		panic("PROPOSER_HAS_NOT_ENOUGH_XGNS")
+		panic(addDetailToError(
+			errNotEnoughBalance,
+			ufmt.Sprintf("governance_proposal.gno__ProposeText() || proposer(%s) has not enough xgns(%d, required: %d) to propose", proposer.String(), xGNS, required),
+		))
 	}
 
 	now := uint64(time.Now().Unix())
@@ -104,9 +106,12 @@ func ProposeCommunityPoolSpend(
 
 	proposer := std.PrevRealm().Addr()
 
-	enough := checkEnoughXGnsToPropose(proposer)
+	enough, xGNS, required := checkEnoughXGnsToPropose(proposer)
 	if !enough {
-		panic("PROPOSER_HAS_NOT_ENOUGH_XGNS")
+		panic(addDetailToError(
+			errNotEnoughBalance,
+			ufmt.Sprintf("governance_proposal.gno__ProposeCommunityPoolSpend() || proposer(%s) has not enough xgns(%d, required: %d) to propose", proposer.String(), xGNS, required),
+		))
 	}
 
 	now := uint64(time.Now().Unix())
@@ -167,26 +172,38 @@ func ProposeParameterChange(
 
 	proposer := std.PrevRealm().Addr()
 
-	enough := checkEnoughXGnsToPropose(proposer)
+	enough, xGNS, required := checkEnoughXGnsToPropose(proposer)
 	if !enough {
-		panic("PROPOSER_HAS_NOT_ENOUGH_XGNS")
+		panic(addDetailToError(
+			errNotEnoughBalance,
+			ufmt.Sprintf("governance_proposal.gno__ProposeParameterChange() || proposer(%s) has not enough xgns(%d, required: %d) to propose", proposer.String(), xGNS, required),
+		))
 	}
 
 	if numToExecute == 0 {
-		panic("numToExecute is 0")
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("governance_proposal.gno__ProposeParameterChange() || numToExecute is 0"),
+		))
 	}
 
 	// check if numToExecute is a valid number
 	splitGov := strings.Split(executions, "*GOV*")
 	if uint64(len(splitGov)) != numToExecute {
-		panic(ufmt.Sprintf("numToExecute(%d) does not match the number of executions(%d)", numToExecute, len(splitGov)))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("governance_proposal.gno__ProposeParameterChange() || numToExecute(%d) does not match the number of executions(%d)", numToExecute, len(splitGov)),
+		))
 	}
 
 	// check if each execution is valid
 	for _, gov := range splitGov {
 		splitExe := strings.Split(gov, "*EXE*")
 		if len(splitExe) != 3 {
-			panic(ufmt.Sprintf("invalid execution(%s) to split by *EXE*, seems like param didn't passed", gov))
+			panic(addDetailToError(
+				errInvalidInput,
+				ufmt.Sprintf("governance_proposal.gno__ProposeParameterChange() || invalid execution(%s) to split by *EXE*, seems like param didn't passed", gov),
+			))
 		}
 
 		pkgPath := splitExe[0]
@@ -248,7 +265,10 @@ func Vote(proposalId uint64, yes bool) string {
 
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic(ufmt.Sprintf("Proposal %d does not exist", proposalId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("Proposal %d does not exist", proposalId),
+		))
 	}
 
 	config := GetConfigVersion(proposal.ConfigVersion)
@@ -258,23 +278,35 @@ func Vote(proposalId uint64, yes bool) string {
 	voter := std.PrevRealm().Addr()
 
 	if now < votingStartTime {
-		panic(ufmt.Sprintf("voting has not started yet. Current time: %d, Voting start time: %d", now, votingStartTime))
+		panic(addDetailToError(
+			errUnableToVoteBeforeStarting,
+			ufmt.Sprintf("voting has not started yet. Current time: %d, Voting start time: %d", now, votingStartTime),
+		))
 	}
 
 	votingEndTime := votingStartTime + config.VotingPeriod
 	if now >= votingEndTime {
-		panic(ufmt.Sprintf("voting has ended. Current time: %d, Voting end time: %d", now, votingStartTime+config.VotingPeriod))
+		panic(addDetailToError(
+			errUnableToVoteAfterEnding,
+			ufmt.Sprintf("voting has ended. Current time: %d, Voting end time: %d", now, votingStartTime+config.VotingPeriod),
+		))
 	}
 
 	// check proposal state
 	if proposal.ExecutionState.Canceled {
-		panic(ufmt.Sprintf("proposal %d has canceled(%t)", proposalId, proposal.ExecutionState.Canceled))
+		panic(addDetailToError(
+			errUnableToVoteCanceledProposal,
+			ufmt.Sprintf("proposal %d has canceled(%t)", proposalId, proposal.ExecutionState.Canceled),
+		))
 	}
 
 	voteKey := ufmt.Sprintf("%d", proposalId) + ":" + voter.String()
 	_, voted := votes[voteKey]
 	if voted {
-		panic(ufmt.Sprintf("user %s has already voted on proposal %d", voter.String(), proposalId))
+		panic(addDetailToError(
+			errAlreadyVoted,
+			ufmt.Sprintf("user %s has already voted on proposal %d", voter.String(), proposalId),
+		))
 	}
 
 	weight := gs.GetDelegatedCumulative(
@@ -282,19 +314,28 @@ func Vote(proposalId uint64, yes bool) string {
 		votingStartTime-config.VotingWeightSmoothingDuration,
 	)
 	if weight == 0 {
-		panic(ufmt.Sprintf("no average delegated found for voter %s", voter.String()))
+		panic(addDetailToError(
+			errNotEnoughAvgDelegated,
+			ufmt.Sprintf("no average delegated found for voter %s", voter.String()),
+		))
 	}
 
 	var overflow bool
 	if yes {
 		proposal.Yea, overflow = new(u256.Uint).AddOverflow(proposal.Yea, u256.NewUint(weight))
 		if overflow {
-			panic("VOTE YES OVERFLOW")
+			panic(addDetailToError(
+				errOutOfRange,
+				ufmt.Sprintf("VOTE YES OVERFLOW"),
+			))
 		}
 	} else {
 		proposal.Nay, overflow = new(u256.Uint).AddOverflow(proposal.Nay, u256.NewUint(weight))
 		if overflow {
-			panic("VOTE NO OVERFLOW")
+			panic(addDetailToError(
+				errOutOfRange,
+				ufmt.Sprintf("VOTE NO OVERFLOW"),
+			))
 		}
 	}
 
@@ -335,30 +376,37 @@ func Cancel(proposalId uint64) {
 
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic(ufmt.Sprintf("proposal %d does not exist", proposalId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("proposal %d does not exist", proposalId),
+		))
 	}
 
 	if proposal.ExecutionState.Canceled {
-		panic(ufmt.Sprintf("proposal %d has already canceled", proposalId))
+		panic(addDetailToError(
+			errAlreadyCanceledProposal,
+			ufmt.Sprintf("proposal %d has already canceled", proposalId),
+		))
 	}
 
 	config := GetConfigVersion(proposal.ConfigVersion)
 	now := uint64(time.Now().Unix())
 	if now >= (proposal.ExecutionState.CreatedAt + config.VotingStartDelay) {
-		panic(ufmt.Sprintf("voting has already started for proposal %d", proposalId))
+		panic(addDetailToError(
+			errUnableToCancleVotingProposal,
+			ufmt.Sprintf("voting has already started for proposal %d", proposalId),
+		))
 	}
 
 	caller := std.PrevRealm().Addr()
 	if caller != proposal.Proposer {
 		// If the caller is not the proposer, check if the proposer's stake has fallen below the threshold
-		enough := checkEnoughXGnsToPropose(proposal.Proposer)
+		enough, xGNS, required := checkEnoughXGnsToPropose(proposal.Proposer)
 		if enough {
-			panic(
-				ufmt.Sprintf(
-					"caller %s is not the proposer(%s) and proposer's xgns balance is above the threshold",
-					caller, proposal.Proposer,
-				),
-			)
+			panic(addDetailToError(
+				errUnableToCancelProposalWithVoterEnoughDelegated,
+				ufmt.Sprintf("governance_proposal.gno__Cancel() || caller(%s) is not the proposer(%s) and proposer's xgns balance(%d) is above the threshold(%d)", caller.String(), proposal.Proposer.String(), xGNS, required),
+			))
 		}
 	}
 
@@ -390,19 +438,31 @@ func Execute(proposalId uint64) {
 
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic(ufmt.Sprintf("proposal %d does not exist. failed to execute", proposalId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("governance_proposal.gno__Execute() || proposal %d does not exist. failed to execute", proposalId),
+		))
 	}
 
 	if proposal.ProposalType == "TEXT" {
-		panic(ufmt.Sprintf("proposal %d is a TEXT proposal. not executable", proposalId))
+		panic(addDetailToError(
+			errTextProposalNotExecutable,
+			ufmt.Sprintf("governance_proposal.gno__Execute() || proposal %d is a TEXT proposal. not executable", proposalId),
+		))
 	}
 
 	if proposal.ExecutionState.Executed || proposal.ExecutionState.Canceled || proposal.ExecutionState.Rejected {
-		panic(ufmt.Sprintf("proposal %d has already executed(%t) or canceled(%t) or rejected(%t). failed to execute", proposalId, proposal.ExecutionState.Executed, proposal.ExecutionState.Canceled, proposal.ExecutionState.Rejected))
+		panic(addDetailToError(
+			errUnableToExecuteProposal,
+			ufmt.Sprintf("governance_proposal.gno__Execute() || proposal %d has already executed(%t) or canceled(%t) or rejected(%t). failed to execute", proposalId, proposal.ExecutionState.Executed, proposal.ExecutionState.Canceled, proposal.ExecutionState.Rejected),
+		))
 	}
 
 	if !proposal.ExecutionState.Passed {
-		panic(ufmt.Sprintf("proposal %d has not passed. failed to execute", proposalId))
+		panic(addDetailToError(
+			errUnableToExecuteProposal,
+			ufmt.Sprintf("governance_proposal.gno__Execute() || proposal %d has not passed. failed to execute", proposalId),
+		))
 	}
 
 	now := uint64(time.Now().Unix())
@@ -411,12 +471,18 @@ func Execute(proposalId uint64) {
 	votingEnd := proposal.ExecutionState.CreatedAt + config.VotingStartDelay + config.VotingPeriod
 	windowStart := votingEnd + config.ExecutionDelay
 	if now < windowStart {
-		panic(ufmt.Sprintf("EXECUTION_WINDOW_NOT_STARTED (now(%d) < windowStart(%d))", now, windowStart))
+		panic(addDetailToError(
+			errBeforeProposalExecutionTime,
+			ufmt.Sprintf("governance_proposal.gno__Execute() || execution time has not started yet (now(%d) < windowStart(%d))", now, windowStart),
+		))
 	}
 
 	windowEnd := windowStart + config.ExecutionWindow
 	if now >= windowEnd {
-		panic(ufmt.Sprintf("EXECUTION_WINDOW_OVER (now(%d) >= windowEnd(%d))", now, windowEnd))
+		panic(addDetailToError(
+			errProposalExeuctionTimeExpired,
+			ufmt.Sprintf("governance_proposal.gno__Execute() || execution time has expired (now(%d) >= windowEnd(%d))", now, windowEnd),
+		))
 	}
 
 	yeaUint := proposal.Yea.Uint64()
@@ -424,18 +490,27 @@ func Execute(proposalId uint64) {
 	quorumUint := proposal.QuorumAmount
 
 	if yeaUint < quorumUint {
-		panic("QUORUM_NOT_MET")
+		panic(addDetailToError(
+			errProposalQuorumNotSatisfied,
+			ufmt.Sprintf("governance_proposal.gno__Execute() || quorum not met (yeaUint(%d) < quorumUint(%d))", yeaUint, quorumUint),
+		))
 	}
 
 	if yeaUint < nayUint {
-		panic("NO_MAJORITY")
+		panic(addDetailToError(
+			errMoreNoVotesThanYesVotes,
+			ufmt.Sprintf("governance_proposal.gno__Execute() || no majority (yeaUint(%d) < nayUint(%d))", yeaUint, nayUint),
+		))
 	}
 
 	if proposal.ProposalType == "COMMUNITY_POOL_SPEND" {
 		// check if the token is registered to community pool
 		registered := cp.GetRegisteredTokens()
 		if !contains(registered, proposal.CommunityPoolSpend.TokenPath) {
-			panic(ufmt.Sprintf("token %s is not registered to community pool", proposal.CommunityPoolSpend.TokenPath))
+			panic(addDetailToError(
+				errInvalidInput,
+				ufmt.Sprintf("governance_proposal.gno__Execute() || token(%s) is not registered to community_pool", proposal.CommunityPoolSpend.TokenPath),
+			))
 		}
 
 		// trigger community pool spend
@@ -523,15 +598,12 @@ func updateProposalsState() {
 	}
 }
 
-func checkEnoughXGnsToPropose(proposer std.Address) bool {
+func checkEnoughXGnsToPropose(proposer std.Address) (bool, uint64, uint64) {
 	xGNS := xgns.BalanceOf(a2u(proposer))
-	println("proposer", proposer.String())
-	println("xGNS", xGNS)
-	println("config.ProposalCreationThreshold", config.ProposalCreationThreshold)
 
 	if xGNS < config.ProposalCreationThreshold {
-		return false
+		return false, xGNS, config.ProposalCreationThreshold
 	}
 
-	return true
+	return true, xGNS, config.ProposalCreationThreshold
 }

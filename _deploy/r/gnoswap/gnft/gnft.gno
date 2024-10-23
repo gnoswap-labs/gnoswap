@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"gno.land/p/demo/grc/grc721"
-	"gno.land/r/demo/users"
-
+	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
+
+	"gno.land/r/demo/users"
 
 	"gno.land/r/gnoswap/v2/common"
 )
@@ -101,7 +102,12 @@ func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
 	common.IsHalted()
 
 	caller := std.PrevRealm().Addr()
-	assertIsAdmin(caller)
+	if !isAdmin(caller) {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("gnft.gno__Mint() || only admin(%s) can mint, called from %s", admin.String(), caller.String()),
+		))
+	}
 
 	err := gnft.Mint(users.Resolve(to), tid)
 	if err != nil {
@@ -116,7 +122,13 @@ func Burn(tid grc721.TokenID) {
 	common.IsHalted()
 
 	caller := std.PrevRealm().Addr()
-	assertIsAdmin(caller)
+	if !isAdmin(caller) {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("gnft.gno__Burn() || only admin(%s) can burn, called from %s", admin.String(), caller.String()),
+		))
+	}
+
 	err := gnft.Burn(tid)
 	if err != nil {
 		panic(err.Error())
@@ -127,7 +139,13 @@ func SetAdmin(newAdmin pusers.AddressOrName) {
 	common.IsHalted()
 
 	caller := std.PrevRealm().Addr()
-	assertIsAdmin(caller)
+	if !isAdmin(caller) {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("gnft.gno__SetAdmin() || only admin(%s) can set admin, called from %s", admin.String(), caller.String()),
+		))
+	}
+
 	admin = users.Resolve(newAdmin)
 }
 
@@ -142,11 +160,13 @@ func Render(path string) string {
 	}
 }
 
-// Util
-func assertIsAdmin(address std.Address) {
+// Utils
+func isAdmin(address std.Address) bool {
 	if address != admin {
-		panic("gnft_assertIsAdmin_restricted access")
+		return false
 	}
+
+	return true
 }
 
 func Exists(tid grc721.TokenID) bool {

@@ -18,11 +18,17 @@ func GetDelegatedCumulativeDuration(_delegator string, timestamp uint64) string 
 
 	delegator := std.Address(_delegator)
 	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("history_duration.gno__GetDelegatedCumulativeDuration() || invalid delegator address: %s", _delegator),
+		))
 	}
 
 	if timestamp >= uint64(time.Now().Unix()) {
-		panic("FUTURE")
+		panic(addDetailToError(
+			errFutureTime,
+			ufmt.Sprintf("history_duration.gno__GetDelegatedCumulativeDuration() || future timestamp(%d) > now(%d)", timestamp, time.Now().Unix()),
+		))
 	}
 
 	history, exist := delegationModifiedHistory[delegator]
@@ -64,11 +70,17 @@ func GetAverageDelegatedDuration(_delegator string, start, end uint64) string {
 
 	delegator := std.Address(_delegator)
 	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", _delegator))
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("history_duration.gno__GetAverageDelegatedDuration() || invalid delegator address(%s)", _delegator),
+		))
 	}
 
 	if start > end {
-		panic("start > end")
+		panic(addDetailToError(
+			errStartTimeAfterEndTime,
+			ufmt.Sprintf("history_duration.gno__GetAverageDelegatedDuration() || start(%d) > end(%d)", start, end),
+		))
 	}
 
 	history, exist := delegationModifiedHistory[delegator]

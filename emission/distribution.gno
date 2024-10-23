@@ -3,12 +3,12 @@ package emission
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/r/gnoswap/v2/gns"
-
-	"gno.land/p/demo/ufmt"
 )
 
 // emissionTarget represents different targets for token emission.
@@ -59,7 +59,10 @@ func ChangeDistributionPctByAdmin(
 ) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic("only admin can change distribution percentages")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("distribution.gno__ChangeDistributionPctByAdmin() || only admin(%s) can change distribution percentages, called from %s", consts.ADMIN.String(), caller.String()),
+		))
 	}
 
 	changeDistributionPcts(
@@ -97,7 +100,10 @@ func ChangeDistributionPct(
 ) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic("only governance can change distribution percentages")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("distribution.gno__ChangeDistributionPct() || only governance(%s) can change distribution percentages, called from %s", consts.GOV_GOVERNANCE_ADDR.String(), caller.String()),
+		))
 	}
 
 	changeDistributionPcts(
@@ -182,7 +188,10 @@ func transferToTarget(target emissionTarget, amount uint64) {
 		toGovStaker = amount
 		toGovStakerAccu += amount
 	default:
-		panic("invalid target")
+		panic(addDetailToError(
+			errInvalidEmissionTarget,
+			ufmt.Sprintf("distribution.gno__transferToTarget() || invalid emission target: %d", target),
+		))
 	}
 }
 
@@ -190,12 +199,18 @@ func transferToTarget(target emissionTarget, amount uint64) {
 func changeDistributionPct(target emissionTarget, pct uint64) {
 	// cannot add new target
 	if target != LIQUIDITY_STAKING && target != DEVOPS && target != COMMUNITY_POOL && target != GOV_STAKER {
-		panic("invalid target")
+		panic(addDetailToError(
+			errInvalidEmissionTarget,
+			ufmt.Sprintf("distribution.gno__changeDistributionPct() || invalid emission target: %d", target),
+		))
 	}
 
 	// Maximum pct for a single target is 10000 basis points (100%)
 	if pct > 10000 {
-		panic("percentage too high")
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("distribution.gno__changeDistributionPct() || percentage too high: %d", pct),
+		))
 	}
 
 	distributionPct[target] = pct
@@ -209,7 +224,10 @@ func checkSumDistributionPct() {
 	}
 
 	if sum != 10000 {
-		panic(ufmt.Sprintf("sum of all pct should be 100%% (10000 bps), got %d\n", sum))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("distribution.gno__checkSumDistributionPct() || sum of all pct should be 100%% (10000 bps), got %d", sum),
+		))
 	}
 }
 
@@ -227,7 +245,10 @@ func ClearAccuDistributedAmount() {
 	prevRealm := std.PrevRealm().PkgPath()
 
 	if !(prevRealm == consts.STAKER_PATH && prevRealm == consts.GOV_STAKER_PATH) {
-		panic("only staker or gov staker can clear accumulated distributed amount")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("distribution.gno__ClearAccuDistributedAmount() || only staker or gov/staker can clear accumulated distributed amount, called from %s", prevRealm),
+		))
 	}
 
 	toStakerAccu = 0
@@ -246,7 +267,10 @@ func ClearAccuDistributedAmountForGovStaker() {
 	prevRealm := std.PrevRealm().PkgPath()
 
 	if prevRealm != consts.GOV_STAKER_PATH {
-		panic("only gov staker can clear accumulated distributed amount")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("distribution.gno__ClearAccuDistributedAmountForGovStaker() || only gov/staker can clear accumulated distributed amount, called from %s", prevRealm),
+		))
 	}
 
 	toGovStakerAccu = 0

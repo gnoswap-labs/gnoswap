@@ -45,22 +45,24 @@ func TestSetDevOpsPctByAdminNoPermission(t *testing.T) {
 	dummyRealm := std.NewUserRealm(dummy)
 	std.TestSetRealm(dummyRealm)
 
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			SetDevOpsPctByAdmin(123)
 		},
+		`GNOSWAP-PROTOCOL_FEE-001`,
 	)
 }
 
 func TestSetDevOpsPctByAdminInvalidFee(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			SetDevOpsPctByAdmin(100001)
 		},
+		`GNOSWAP-PROTOCOL_FEE-004`,
 	)
 }
 

@@ -44,7 +44,7 @@ func TestSwapRouteWugnotquxExactIn(t *testing.T) {
 	wugnot.Approve(a2u(consts.ROUTER_ADDR), 1000000)
 	qux.Approve(a2u(consts.ROUTER_ADDR), 1000000)
 	std.TestSetOrigSend(std.Coins{{"ugnot", 12345}}, nil) //sented ugnot amount
-	shouldPanic(
+	shouldPanicWithMsg(
 		t,
 		func() {
 			SwapRoute(
@@ -57,5 +57,6 @@ func TestSwapRouteWugnotquxExactIn(t *testing.T) {
 				"1",   // tokenAmountLimit
 			)
 		},
+		`GNOSWAP-ROUTER-005`,
 	)
 }

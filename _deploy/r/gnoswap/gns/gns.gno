@@ -98,10 +98,13 @@ func Render(path string) string {
 func Mint(address pusers.AddressOrName) uint64 {
 	common.IsHalted()
 
-	// only emission contract can call Mint
-	caller := std.PrevRealm().Addr()
-	if caller != consts.EMISSION_ADDR {
-		panic("only emission contract can call Mint")
+	// only emission can call Mint
+	caller := std.PrevRealm().PkgPath()
+	if caller != consts.EMISSION_PATH {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("gns.gno__Mint() || only emission(%s) can call Mint, called from %s", consts.EMISSION_PATH, caller),
+		))
 	}
 
 	// if not yet initialized, mint 0 amount
