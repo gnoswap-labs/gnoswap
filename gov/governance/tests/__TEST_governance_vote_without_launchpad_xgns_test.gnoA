@@ -21,6 +21,20 @@ import (
 	"gno.land/r/onbloc/obl"
 )
 
+func init() {
+	// overwrite config for testcase
+	config = Config{
+		VotingStartDelay:              uint64(10),   // 10s ≈ 5 block
+		VotingPeriod:                  uint64(30),   // 30s ≈ 15 block
+		VotingWeightSmoothingDuration: uint64(10),   // 10s ≈ 5 block
+		Quorum:                        uint64(50),   // 50% of total xGNS supply
+		ProposalCreationThreshold:     uint64(100),  //
+		ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
+		ExecutionWindow:               uint64(1000), // 500 block
+	}
+	configVersions[1] = config
+}
+
 var (
 	dummyToAddr  = testutils.TestAddress("dummyTo")
 	dummyToRealm = std.NewUserRealm(dummyToAddr)

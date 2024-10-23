@@ -174,6 +174,7 @@ func DepositGns(
 			"internal_depositId", depositId,
 			"internal_claimableHeight", ufmt.Sprintf("%d", claimableHeight),
 			"internal_claimableTime", ufmt.Sprintf("%d", claimableTime),
+			"internal_tierAmountPerBlockX96", tierAmountPerBlockX96.ToString(),
 		)
 	}
 
@@ -255,7 +256,7 @@ func CollectDepositGns() uint64 {
 			"CollectDepositGns",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"depositId", depositId,
+			"internal_depositId", depositId,
 			"internal_amount", ufmt.Sprintf("%d", deposit.amount),
 		)
 	}

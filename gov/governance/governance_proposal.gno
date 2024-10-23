@@ -241,7 +241,7 @@ func ProposeParameterChange(
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
-		"ProposeParamterChange",
+		"ProposeParameterChange",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"title", title,
