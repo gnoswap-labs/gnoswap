@@ -92,16 +92,31 @@ func CollectRewardByProjectId(projectId string) uint64 {
 			// update project
 			project.totalCollectedAmount += deposit.rewardAmount
 
+			var tier Tier
+			switch deposit.tier {
+			case "30":
+				tier = project.tier30
+				tier.userCollectedAmount += deposit.rewardAmount
+			case "90":
+				tier = project.tier90
+				tier.userCollectedAmount += deposit.rewardAmount
+			case "180":
+				tier = project.tier180
+				tier.userCollectedAmount += deposit.rewardAmount
+			}
+			project = setTier(project, deposit.tier, tier)
+
 			// update deposit
+			deposit.rewardCollected += deposit.rewardAmount
 			deposit.rewardAmount = 0
 			deposit.rewardCollectHeight = uint64(std.GetHeight())
 			deposit.rewardCollectTime = uint64(time.Now().Unix())
 			deposits[depositId] = deposit
+
+			// save updated project
+			projects[projectId] = project
 		}
 	}
-
-	// save updated project
-	projects[projectId] = project
 
 	// transfer reward to user
 	transferByRegisterCall(project.tokenPath, std.PrevRealm().Addr(), toUser)
@@ -159,9 +174,20 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 		// update project
 		project.totalCollectedAmount += deposit.rewardAmount
+		tierStr := deposit.tier
+		switch tierStr {
+		case "30":
+			project.tier30.userCollectedAmount += deposit.rewardAmount
+		case "90":
+			project.tier90.userCollectedAmount += deposit.rewardAmount
+		case "180":
+			project.tier180.userCollectedAmount += deposit.rewardAmount
+		}
+
 		projects[deposit.projectId] = project
 
 		// update deposit
+		deposit.rewardCollected += deposit.rewardAmount
 		deposit.rewardAmount = 0
 		deposit.rewardCollectHeight = uint64(std.GetHeight())
 		deposit.rewardCollectTime = uint64(time.Now().Unix())
@@ -245,6 +271,15 @@ func calculateDepositReward() {
 		rewardX96_90 := new(u256.Uint).Mul(project.tier90.tierAmountPerBlockX96.NilToZero(), u256.NewUint(sinceLast90))
 		rewardX96_180 := new(u256.Uint).Mul(project.tier180.tierAmountPerBlockX96.NilToZero(), u256.NewUint(sinceLast180))
 
+		// update each tier's calculated amount
+		reward_30 := new(u256.Uint).Div(rewardX96_30, q96).Uint64()
+		reward_90 := new(u256.Uint).Div(rewardX96_90, q96).Uint64()
+		reward_180 := new(u256.Uint).Div(rewardX96_180, q96).Uint64()
+
+		project.tier30.calculatedAmount += reward_30
+		project.tier90.calculatedAmount += reward_90
+		project.tier180.calculatedAmount += reward_180
+
 		tier30Deposit := project.tier30.actualDepositAmount
 		tier90Deposit := project.tier90.actualDepositAmount
 		tier180Deposit := project.tier180.actualDepositAmount
@@ -317,6 +352,9 @@ func calculateDepositReward() {
 				deposits[depositId] = deposit
 			}
 		}
+
+		// update project
+		projects[project.id] = project
 	}
 }
 

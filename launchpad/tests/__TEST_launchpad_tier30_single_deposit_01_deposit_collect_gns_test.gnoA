@@ -43,6 +43,7 @@ func TestCreateProject(t *testing.T) {
 	}
 
 	projectId := CreateProject(
+		"Obl Protocol",
 		oblPath,
 		projectAddr,
 		uint64(1_000_000_000), // 1000000000

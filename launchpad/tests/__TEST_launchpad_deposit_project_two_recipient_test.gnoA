@@ -55,6 +55,7 @@ func TestCreateProject(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	projectId := CreateProject(
+		"Obl Protocol",
 		oblPath,
 		projectAddr,
 		uint64(1_000_000_000), // 1000000000
@@ -76,6 +77,7 @@ func TestCreateProject02(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	projectId := CreateProject(
+		"Bar Protocol",
 		barPath,
 		projectAddr02,
 		uint64(1_000_000_000), // 1000000000
