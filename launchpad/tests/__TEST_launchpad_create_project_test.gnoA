@@ -35,6 +35,7 @@ func TestCreateProject(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	projectId := CreateProject(
+		"Obl Protocol",
 		oblPath,
 		projectAddr,
 		allocationTokenAmount,

@@ -24,6 +24,7 @@ func ApiGetProjectAndTierStatisticsByProjectId(projectId string) string {
 
 	projectObj := metaNode()
 	projectObj.AppendObject("projectId", json.StringNode("projectId", projectId))
+	projectObj.AppendObject("name", json.StringNode("name", project.name))
 	projectObj.AppendObject("tokenPath", json.StringNode("tokenPath", project.tokenPath))
 	projectObj.AppendObject("depositAmount", json.StringNode("depositAmount", ufmt.Sprintf("%d", project.depositAmount)))
 	projectObj.AppendObject("recipient", json.StringNode("recipient", project.recipient.String()))
@@ -107,6 +108,7 @@ func ApiGetProjectStatisticsByProjectId(projectId string) string {
 
 	projectObj := metaNode()
 	projectObj.AppendObject("projectId", json.StringNode("projectId", projectId))
+	projectObj.AppendObject("name", json.StringNode("name", project.name))
 	projectObj.AppendObject("tokenPath", json.StringNode("tokenPath", project.tokenPath))
 	projectObj.AppendObject("depositAmount", json.StringNode("depositAmount", ufmt.Sprintf("%d", project.depositAmount)))
 	projectObj.AppendObject("recipient", json.StringNode("recipient", project.recipient.String()))

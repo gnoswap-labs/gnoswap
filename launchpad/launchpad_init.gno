@@ -34,6 +34,7 @@ func init() {
 //
 // returns projectId
 func CreateProject(
+	name string,
 	tokenPath string,
 	recipient std.Address,
 	depositAmount uint64,
@@ -158,6 +159,7 @@ func CreateProject(
 	// create project
 	project := Project{
 		id:            projectId,
+		name:          name,
 		tokenPath:     tokenPath,
 		depositAmount: depositAmount,
 		recipient:     recipient,
@@ -183,6 +185,7 @@ func CreateProject(
 		"CreateProject",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
+		"name", name,
 		"tokenPath", tokenPath,
 		"recipient", recipient.String(),
 		"depositAmount", ufmt.Sprintf("%d", depositAmount),

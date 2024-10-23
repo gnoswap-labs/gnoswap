@@ -8,6 +8,7 @@ import (
 
 type Project struct {
 	id            string // 'tokenPath:createdHeight'
+	name          string
 	tokenPath     string
 	depositAmount uint64
 	recipient     std.Address // string
