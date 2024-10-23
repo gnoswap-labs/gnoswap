@@ -22,7 +22,7 @@ var (
 	errUnableToCancelProposalWithVoterEnoughDelegated = errors.New("[GNOSWAP-GOVERNANCE-013] unable to cancel proposal with voter enough delegated")
 	errTextProposalNotExecutable                      = errors.New("[GNOSWAP-GOVERNANCE-014] text proposal not executable")
 	errUnableToExecuteProposal                        = errors.New("[GNOSWAP-GOVERNANCE-015] unable to execute proposal")
-	errBeforeProposalExecutionTime                    = errors.New("[GNOSWAP-GOVERNANCE-016] before proposal execution time")
+	errBeforeProposalExecutionTime                    = errors.New("[GNOSWAP-GOVERNANCE-016] proposal execution time has not been reached yet")
 	errProposalExeuctionTimeExpired                   = errors.New("[GNOSWAP-GOVERNANCE-017] proposal exeuction time expired")
 	errProposalQuorumNotSatisfied                     = errors.New("[GNOSWAP-GOVERNANCE-018] proposal quorum not met")
 	errMoreNoVotesThanYesVotes                        = errors.New("[GNOSWAP-GOVERNANCE-019] more no votes than yes votes")
