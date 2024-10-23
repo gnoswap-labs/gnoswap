@@ -1,0 +1,303 @@
+package launchpad
+
+import (
+	"std"
+	"testing"
+	"time"
+
+	"gno.land/p/demo/testutils"
+
+	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/foo"
+	"gno.land/r/onbloc/obl"
+
+	"gno.land/r/gnoswap/v2/gns"
+)
+
+var (
+	projectAddr = testutils.TestAddress("projectAddr")
+	user01      = testutils.TestAddress("user01")
+
+	projectRealm = std.NewUserRealm(projectAddr)
+	user01Realm  = std.NewUserRealm(user01)
+
+	refundAddr  = testutils.TestAddress("refundAddr")
+	refundRealm = std.NewUserRealm(refundAddr)
+)
+
+func TestCreateProject(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+
+	obl.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000_000))
+	std.TestSkipHeights(1)
+
+	{
+		// check before project create
+		shouldEQ(t, len(projects), 0)
+		shouldEQ(t, len(deposits), 0)
+		shouldEQ(t, len(depositsByProject), 0)
+		shouldEQ(t, len(depositsByUser), 0)
+	}
+
+	projectId := CreateProject(
+		oblPath,
+		projectAddr,
+		uint64(1_000_000_000), // 1000000000
+		"gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar",
+		"1*PAD*2",
+		uint64(10),                   // 100000000
+		uint64(20),                   // 200000000
+		uint64(70),                   // 700000000
+		uint64(time.Now().Unix()+10), // 10s later
+	)
+	shouldEQ(t, projectId, `gno.land/r/onbloc/obl:124`)
+	std.TestSkipHeights(1)
+}
+
+func TestDepositGnsToTier30(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+	gns.Transfer(a2u(user01), uint64(1_000_000)) // to deposit
+	// transfer some grc20 tokens to bypass project condition
+	foo.Transfer(a2u(user01), uint64(10))
+	bar.Transfer(a2u(user01), uint64(10))
+
+	std.TestSetRealm(user01Realm)
+	gns.Approve(a2u(consts.LAUNCHPAD_ADDR), uint64(1_000_000))
+
+	{
+		// check before deposit
+		shouldEQ(t, len(projects), 1)
+
+		project := projects[`gno.land/r/onbloc/obl:124`]
+		shouldEQ(t, project.tier30Ratio, uint64(10))
+
+		tier30 := project.tier30
+		shouldEQ(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
+		shouldEQ(t, tier30.collectWaitDuration, uint64(129600))
+		shouldEQ(t, tier30.tierAmount, uint64(100000000))
+		shouldNEQ(t, tier30.tierAmountPerBlockX96.ToString(), `0`)
+		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
+		shouldEQ(t, tier30.actualDepositAmount, uint64(0))
+		shouldEQ(t, tier30.actualParticipant, uint64(0))
+		shouldEQ(t, tier30.userCollectedAmount, uint64(0))
+		shouldEQ(t, tier30.calculatedAmount, uint64(0))
+
+		shouldEQ(t, len(deposits), 0)
+		shouldEQ(t, len(depositsByProject), 0)
+		shouldEQ(t, len(depositsByUser), 0)
+	}
+
+	// skip some blocks to make project active
+	std.TestSkipHeights(4)
+	depositId := DepositGns("gno.land/r/onbloc/obl:124:30", uint64(1_000_000)) // 1000000
+	shouldEQ(t, depositId, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+	std.TestSkipHeights(1)
+
+	{
+		// check after deposit
+		shouldEQ(t, len(projects), 1)
+
+		project := projects[`gno.land/r/onbloc/obl:124`]
+		shouldEQ(t, project.tier30Ratio, uint64(10))
+
+		tier30 := project.tier30
+		shouldEQ(t, tier30.id, `gno.land/r/onbloc/obl:124:30`)
+		shouldEQ(t, tier30.collectWaitDuration, uint64(129600))
+		shouldEQ(t, tier30.tierAmount, uint64(100000000))
+		shouldNEQ(t, tier30.tierAmountPerBlockX96.ToString(), `0`)
+		shouldEQ(t, tier30.endTime, project.startTime+TIMESTAMP_30DAYS)
+		shouldEQ(t, tier30.actualDepositAmount, uint64(1000000))
+		shouldEQ(t, tier30.actualParticipant, uint64(1))
+		shouldEQ(t, tier30.userCollectedAmount, uint64(0))
+		shouldEQ(t, tier30.calculatedAmount, uint64(0))
+
+		//
+		shouldEQ(t, len(deposits), 1)
+		deposit := deposits[`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`]
+		shouldEQ(t, deposit.id, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+		shouldEQ(t, deposit.projectId, `gno.land/r/onbloc/obl:124`)
+		shouldEQ(t, deposit.tier, `30`)
+		shouldEQ(t, deposit.depositor, user01)
+		shouldEQ(t, deposit.amount, uint64(1000000))
+		shouldEQ(t, deposit.depositHeight, uint64(129))
+		shouldEQ(t, deposit.depositTime, uint64(1234567902))
+		shouldEQ(t, deposit.depositCollectHeight, uint64(0))
+		shouldEQ(t, deposit.depositCollectTime, uint64(0))
+		shouldEQ(t, deposit.rewardAmount, uint64(0))
+		shouldEQ(t, deposit.rewardCollectHeight, uint64(0))
+		shouldEQ(t, deposit.rewardCollectTime, uint64(0))
+
+		//
+		shouldEQ(t, len(depositsByProject), 1)
+		shouldEQ(t, depositsByProject[`gno.land/r/onbloc/obl:124`][`30`][0], `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+
+		//
+		shouldEQ(t, len(depositsByUser), 1)
+		shouldEQ(t, depositsByUser[`g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv`][0], `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+	}
+}
+
+func TestCollectRewardByProjectId(t *testing.T) {
+	std.TestSetRealm(user01Realm)
+
+	// check tier30 before collect
+	project := projects[`gno.land/r/onbloc/obl:124`]
+	tier30 := project.tier30
+	shouldEQ(t, tier30.userCollectedAmount, uint64(0))
+	shouldEQ(t, tier30.calculatedAmount, uint64(0))
+
+	// check deposit before collect
+	shouldEQ(t, len(deposits), 1)
+	deposit := deposits[`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`]
+	shouldEQ(t, deposit.id, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+	shouldEQ(t, deposit.projectId, `gno.land/r/onbloc/obl:124`)
+	shouldEQ(t, deposit.tier, `30`)
+	shouldEQ(t, deposit.depositor, user01)
+	shouldEQ(t, deposit.amount, uint64(1000000))
+	shouldEQ(t, deposit.depositHeight, uint64(129))
+	shouldEQ(t, deposit.depositTime, uint64(1234567902))
+	shouldEQ(t, deposit.depositCollectHeight, uint64(0))
+	shouldEQ(t, deposit.depositCollectTime, uint64(0))
+	shouldEQ(t, deposit.rewardAmount, uint64(0))
+	shouldEQ(t, deposit.rewardCollected, uint64(0))
+	shouldEQ(t, deposit.rewardCollectHeight, uint64(0))
+	shouldEQ(t, deposit.rewardCollectTime, uint64(0))
+
+	t.Run("claim after 3 days", func(t *testing.T) {
+		std.TestSkipHeights(int64(TIMESTAMP_3DAYS) / 2)
+		collected := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
+		shouldEQ(t, collected, uint64(10000077))
+	})
+
+	// check tier30 after collect
+	project = projects[`gno.land/r/onbloc/obl:124`]
+	tier30 = project.tier30
+	shouldEQ(t, tier30.userCollectedAmount, uint64(10000077))
+	shouldEQ(t, tier30.calculatedAmount, uint64(10000077))
+
+	// check deposit after collect
+	shouldEQ(t, len(deposits), 1)
+	deposit = deposits[`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`]
+	shouldEQ(t, deposit.id, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+	shouldEQ(t, deposit.projectId, `gno.land/r/onbloc/obl:124`)
+	shouldEQ(t, deposit.tier, `30`)
+	shouldEQ(t, deposit.depositor, user01)
+	shouldEQ(t, deposit.amount, uint64(1000000))
+	shouldEQ(t, deposit.depositHeight, uint64(129))
+	shouldEQ(t, deposit.depositTime, uint64(1234567902))
+	shouldEQ(t, deposit.depositCollectHeight, uint64(0))
+	shouldEQ(t, deposit.depositCollectTime, uint64(0))
+	shouldEQ(t, deposit.rewardAmount, uint64(0))
+	shouldEQ(t, deposit.rewardCollected, uint64(10000077))
+	shouldEQ(t, deposit.rewardCollectHeight, uint64(129730))
+	shouldEQ(t, deposit.rewardCollectTime, uint64(1234827104))
+}
+
+func TestCollectRewardByDepositId(t *testing.T) {
+	std.TestSetRealm(user01Realm)
+
+	// check tier30 before collect
+	project := projects[`gno.land/r/onbloc/obl:124`]
+	tier30 := project.tier30
+	shouldEQ(t, tier30.userCollectedAmount, uint64(10000077))
+	shouldEQ(t, tier30.calculatedAmount, uint64(10000077))
+
+	// check deposit before collect
+	shouldEQ(t, len(deposits), 1)
+	deposit := deposits[`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`]
+	shouldEQ(t, deposit.id, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+	shouldEQ(t, deposit.projectId, `gno.land/r/onbloc/obl:124`)
+	shouldEQ(t, deposit.tier, `30`)
+	shouldEQ(t, deposit.depositor, user01)
+	shouldEQ(t, deposit.amount, uint64(1000000))
+	shouldEQ(t, deposit.depositHeight, uint64(129))
+	shouldEQ(t, deposit.depositTime, uint64(1234567902))
+	shouldEQ(t, deposit.depositCollectHeight, uint64(0))
+	shouldEQ(t, deposit.depositCollectTime, uint64(0))
+	shouldEQ(t, deposit.rewardAmount, uint64(0))
+	shouldEQ(t, deposit.rewardCollected, uint64(10000077))
+	shouldEQ(t, deposit.rewardCollectHeight, uint64(129730))
+	shouldEQ(t, deposit.rewardCollectTime, uint64(1234827104))
+
+	// skip 100 blocks to make more reward
+	std.TestSkipHeights(100)
+	collected := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
+	shouldEQ(t, collected, uint64(7716))
+
+	// check tier30 after collect
+	project = projects[`gno.land/r/onbloc/obl:124`]
+	tier30 = project.tier30
+	shouldEQ(t, tier30.userCollectedAmount, uint64(10007793))
+	shouldEQ(t, tier30.calculatedAmount, uint64(10007793))
+
+	// check deposit after collect
+	shouldEQ(t, len(deposits), 1)
+	deposit = deposits[`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`]
+	shouldEQ(t, deposit.id, `gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
+	shouldEQ(t, deposit.projectId, `gno.land/r/onbloc/obl:124`)
+	shouldEQ(t, deposit.tier, `30`)
+	shouldEQ(t, deposit.depositor, user01)
+	shouldEQ(t, deposit.amount, uint64(1000000))
+	shouldEQ(t, deposit.depositHeight, uint64(129))
+	shouldEQ(t, deposit.depositTime, uint64(1234567902))
+	shouldEQ(t, deposit.depositCollectHeight, uint64(0))
+	shouldEQ(t, deposit.depositCollectTime, uint64(0))
+	shouldEQ(t, deposit.rewardAmount, uint64(0))
+	shouldEQ(t, deposit.rewardCollected, uint64(10007793))
+	shouldEQ(t, deposit.rewardCollectHeight, uint64(129830))
+	shouldEQ(t, deposit.rewardCollectTime, uint64(1234827304))
+}
+
+func TestDummy(t *testing.T) {
+	std.TestSkipHeights(10)
+	calculateDepositReward()
+
+	// check tier30
+	project := projects[`gno.land/r/onbloc/obl:124`]
+	tier30 := project.tier30
+	shouldEQ(t, tier30.userCollectedAmount, uint64(10007793))
+	shouldEQ(t, tier30.calculatedAmount, uint64(10008564))
+}
+
+func TestMakeProjectEnd(t *testing.T) {
+	user01OldOblBalance := obl.BalanceOf(a2u(user01))
+	shouldEQ(t, user01OldOblBalance, uint64(10007793)) // already collected
+
+	refundOldOblBalance := obl.BalanceOf(a2u(refundAddr))
+	shouldEQ(t, refundOldOblBalance, uint64(0))
+
+	std.TestSkipHeights(int64(TIMESTAMP_180DAYS) / 2)
+	std.TestSetRealm(adminRealm)
+	TransferLeftFromProjectByAdmin(`gno.land/r/onbloc/obl:124`, refundAddr)
+
+	user01NewOblBalance := obl.BalanceOf(a2u(user01))
+	shouldEQ(t, user01NewOblBalance, uint64(10007793))
+
+	refundNewOblBalance := obl.BalanceOf(a2u(refundAddr))
+	shouldEQ(t, refundNewOblBalance, uint64(900000001))
+}
+
+func TestOneMoreBlock(t *testing.T) {
+	std.TestSkipHeights(1)
+
+	shouldPanic(t, func() {
+		std.TestSetRealm(adminRealm)
+		TransferLeftFromProjectByAdmin(`gno.land/r/onbloc/obl:124`, refundAddr)
+	})
+}
+
+func TestCollectRewardAfterProjectEndedAndRefunded(t *testing.T) {
+	// even project is ended & refunded, stil user can collect reward
+	std.TestSetRealm(user01Realm)
+	collected := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
+	shouldEQ(t, collected, uint64(89992206))
+}
+
+func TestCollectDepositGnsAfterProjectEndedAndRefunded(t *testing.T) {
+	// even project is ended & refunded, stil user can collect deposietd gns
+	std.TestSetRealm(user01Realm)
+	collected := CollectDepositGnsByProjectId(`gno.land/r/onbloc/obl:124`)
+	shouldEQ(t, collected, uint64(1000000))
+}

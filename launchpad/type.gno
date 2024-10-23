@@ -39,6 +39,10 @@ type Project struct {
 	actualParticipant uint64 // will be decreased if deposit collected 'CollectDepositGns()'
 
 	totalCollectedAmount uint64 // collect reward amount
+
+	refundedAmount uint64
+	refundedHeight uint64
+	refundedTime   uint64
 }
 
 type Tier struct {
@@ -57,6 +61,9 @@ type Tier struct {
 
 	totalParticipant  uint64
 	actualParticipant uint64
+
+	userCollectedAmount uint64
+	calculatedAmount    uint64
 }
 
 type Condition struct {
@@ -81,7 +88,8 @@ type Deposit struct {
 	claimableHeight uint64
 	claimableTime   uint64
 
-	rewardAmount        uint64
-	rewardCollectHeight uint64
-	rewardCollectTime   uint64
+	rewardAmount        uint64 // calculated, not collected
+	rewardCollected     uint64 // accu, collected
+	rewardCollectHeight uint64 // last collected height
+	rewardCollectTime   uint64 // last collected time
 }

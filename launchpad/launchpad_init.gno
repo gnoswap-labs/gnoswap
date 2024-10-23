@@ -26,7 +26,6 @@ var (
 )
 
 func init() {
-	println("main_init")
 	q96 = u256.MustFromDecimal(consts.Q96)
 }
 
@@ -204,6 +203,73 @@ func CreateProject(
 	)
 
 	return projectId
+}
+
+func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uint64 {
+	calculateDepositReward()
+
+	assertUserCall()
+	caller := std.PrevRealm().Addr()
+	if caller != consts.ADMIN {
+		panic("only admin can transfer left from project")
+	}
+
+	project, exist := projects[projectId]
+	if !exist {
+		panic("project not found")
+	}
+
+	if !recipient.IsValid() {
+		panic("invalid recipient addr")
+	}
+
+	height := uint64(std.GetHeight())
+	if height < project.endHeight {
+		panic("project not ended yet")
+	}
+
+	if project.refundedHeight != 0 {
+		panic("project already refunded")
+	}
+
+	// calculate left reward
+	tier30Full := project.tier30.tierAmount
+	tier90Full := project.tier90.tierAmount
+	tier180Full := project.tier180.tierAmount
+
+	left30 := tier30Full - project.tier30.calculatedAmount
+	left90 := tier90Full - project.tier90.calculatedAmount
+	left180 := tier180Full - project.tier180.calculatedAmount
+	leftReward := left30 + left90 + left180
+
+	if leftReward > 0 {
+		transferByRegisterCall(
+			project.tokenPath,
+			recipient,
+			leftReward,
+		)
+	}
+
+	std.Emit(
+		"TransferLeftFromProjectByAdmin",
+		"projectId", projectId,
+		"recipient", recipient.String(),
+		"internal_tokenPath", project.tokenPath,
+		"internal_leftReward", ufmt.Sprintf("%d", leftReward),
+		"internal_tier30Full", ufmt.Sprintf("%d", tier30Full),
+		"internal_tier30Left", ufmt.Sprintf("%d", left30),
+		"internal_tier90Full", ufmt.Sprintf("%d", tier90Full),
+		"internal_tier90Left", ufmt.Sprintf("%d", left90),
+		"internal_tier180Full", ufmt.Sprintf("%d", tier180Full),
+		"internal_tier180Left", ufmt.Sprintf("%d", left180),
+	)
+
+	project.refundedAmount = leftReward
+	project.refundedHeight = height
+	project.refundedTime = uint64(time.Now().Unix())
+	projects[projectId] = project
+
+	return leftReward
 }
 
 func generateProjectId(tokenPath string) string {
