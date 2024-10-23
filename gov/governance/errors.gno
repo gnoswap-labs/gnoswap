@@ -24,7 +24,7 @@ var (
 	errUnableToExecuteProposal                        = errors.New("[GNOSWAP-GOVERNANCE-015] unable to execute proposal")
 	errBeforeProposalExecutionTime                    = errors.New("[GNOSWAP-GOVERNANCE-016] before proposal execution time")
 	errProposalExeuctionTimeExpired                   = errors.New("[GNOSWAP-GOVERNANCE-017] proposal exeuction time expired")
-	errProposalQuorumNotSatisfied                     = errors.New("[GNOSWAP-GOVERNANCE-018] proposal quorum not satisfied")
+	errProposalQuorumNotSatisfied                     = errors.New("[GNOSWAP-GOVERNANCE-018] proposal quorum not met")
 	errMoreNoVotesThanYesVotes                        = errors.New("[GNOSWAP-GOVERNANCE-019] more no votes than yes votes")
 	errInvalidFunctionParameters                      = errors.New("[GNOSWAP-GOVERNANCE-020] invalid function parameters")
 	errNonExecutableFunction                          = errors.New("[GNOSWAP-GOVERNANCE-021] non-executable function")
