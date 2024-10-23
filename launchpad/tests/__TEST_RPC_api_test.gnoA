@@ -200,6 +200,16 @@ func TestApiGetClaimableDepositByAddress(t *testing.T) {
 	})
 }
 
+func TestApiGetDepositByDepositId(t *testing.T) {
+	res := ApiGetDepositByDepositId("gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:131")
+	shouldEQ(t, res, `{"height":"1296142","now":"1237159928","depositId":"gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:131","projectId":"gno.land/r/onbloc/obl:124","tier":"30","depositor":"g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv","amount":"1000000","depositHeight":"131","depositTime":"1234567906","depositCollectHeight":"1296142","depositCollectTime":"1237159928","claimableHeight":"129731","claimableTime":"1234827106","rewardAmount":"99999999","rewardCollected":"0","rewardCollectHeight":"0","rewardCollectTime":"0"}`)
+}
+
+func TestApiGetDepositFullByDepositId(t *testing.T) {
+	res := ApiGetDepositFullByDepositId("gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:131")
+	shouldEQ(t, res, `{"height":"1296142","now":"1237159928","depositId":"gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:131","projectId":"gno.land/r/onbloc/obl:124","tokenPath":"gno.land/r/onbloc/obl","depositAmount":"1000000000","recipient":"g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp","conditionsToken":"gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar","conditionsAmount":"1*PAD*2","tier30Ratio":"10","tier90Ratio":"20","tier180Ratio":"70","createdHeight":"124","createdTime":"1234567892","totalCollectedAmount":"0","refundedAmount":"0","refundedHeight":"0","refundedTime":"0","tier":"30","collectWaitDuration":"129600","tierAmount":"100000000","tierAmountPerBlockX96":"6113293578714190731277667892697","startHeight":"131","startTime":"1234567906","endHeight":"1296129","endTime":"1237159902","totalDepositAmount":"1000000","actualDepositAmount":"0","totalParticipant":"1","actualParticipant":"0","userCollectedAmount":"0","calculatedAmount":"99999999","depositor":"g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv","amount":"1000000","depositHeight":"131","depositTime":"1234567906","depositCollectHeight":"1296142","depositCollectTime":"1237159928","claimableHeight":"129731","claimableTime":"1234827106","rewardAmount":"99999999","rewardCollected":"0","rewardCollectHeight":"0","rewardCollectTime":"0"}`)
+}
+
 func TestApiGetProjectAndTierStatisticsByProjectId(t *testing.T) {
 	t.Run("not existing project", func(t *testing.T) {
 		got := ApiGetProjectAndTierStatisticsByProjectId("gno.land/r")
@@ -208,7 +218,7 @@ func TestApiGetProjectAndTierStatisticsByProjectId(t *testing.T) {
 
 	t.Run("existing project", func(t *testing.T) {
 		got := ApiGetProjectAndTierStatisticsByProjectId("gno.land/r/onbloc/obl:124")
-		shouldEQ(t, got, `{"height":"1296142","now":"1237159928","projectId":"gno.land/r/onbloc/obl:124","totalDepositAmount":"1000000","actualDepositAmount":"0","totalParticipant":"1","actualParticipant":"0","totalCollectedAmount":"0","tier30TotalDepositAmount":"1000000","tier30ActualDepositAmount":"0","tier30TotalParticipant":"1","tier30ActualParticipant":"0","tier90TotalDepositAmount":"0","tier90ActualDepositAmount":"0","tier90TotalParticipant":"0","tier90ActualParticipant":"0","tier180TotalDepositAmount":"0","tier180ActualDepositAmount":"0","tier180TotalParticipant":"0","tier180ActualParticipant":"0"}`)
+		shouldEQ(t, got, `{"height":"1296142","now":"1237159928","projectId":"gno.land/r/onbloc/obl:124","tokenPath":"gno.land/r/onbloc/obl","depositAmount":"1000000000","recipient":"g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp","conditionsToken":"gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar","conditionsAmount":"1*PAD*2","tier30Ratio":"10","tier90Ratio":"20","tier180Ratio":"70","createdHeight":"124","createdTime":"1234567892","startHeight":"129","startTime":"1234567902","endHeight":"7776129","endTime":"1250119902","totalDepositAmount":"1000000","actualDepositAmount":"0","totalParticipant":"1","actualParticipant":"0","totalCollectedAmount":"0","refundedAmount":"0","refundedHeight":"0","refundedTime":"0","tier30StartHeight":"131","tier30StartTime":"1234567906","tier30EndHeight":"1296129","tier30EndTime":"1237159902","tier30TotalDepositAmount":"1000000","tier30ActualDepositAmount":"0","tier30TotalParticipant":"1","tier30ActualParticipant":"0","tier30UserCollectedAmount":"0","tier30CalculatedAmount":"99999999","tier90StartHeight":"0","tier90StartTime":"0","tier90EndHeight":"3888129","tier90EndTime":"1242343902","tier90TotalDepositAmount":"0","tier90ActualDepositAmount":"0","tier90TotalParticipant":"0","tier90ActualParticipant":"0","tier90UserCollectedAmount":"0","tier90CalculatedAmount":"0","tier180StartHeight":"0","tier180StartTime":"0","tier180EndHeight":"7776129","tier180EndTime":"1250119902","tier180TotalDepositAmount":"0","tier180ActualDepositAmount":"0","tier180TotalParticipant":"0","tier180ActualParticipant":"0","tier180UserCollectedAmount":"0","tier180CalculatedAmount":"0"}`)
 	})
 }
 
@@ -220,7 +230,7 @@ func TestApiGetProjectStatisticsByProjectId(t *testing.T) {
 
 	t.Run("existing project", func(t *testing.T) {
 		got := ApiGetProjectStatisticsByProjectId("gno.land/r/onbloc/obl:124")
-		shouldEQ(t, got, `{"height":"1296142","now":"1237159928","projectId":"gno.land/r/onbloc/obl:124","totalDepositAmount":"1000000","actualDepositAmount":"0","totalParticipant":"1","actualParticipant":"0","totalCollectedAmount":"0"}`)
+		shouldEQ(t, got, `{"height":"1296142","now":"1237159928","projectId":"gno.land/r/onbloc/obl:124","tokenPath":"gno.land/r/onbloc/obl","depositAmount":"1000000000","recipient":"g1wpex76n9vd6yzerywf047h6lta047h6lqlp5qp","conditionsToken":"gno.land/r/onbloc/foo*PAD*gno.land/r/onbloc/bar","conditionsAmount":"1*PAD*2","tier30Ratio":"10","tier90Ratio":"20","tier180Ratio":"70","createdHeight":"124","createdTime":"1234567892","startHeight":"129","startTime":"1234567902","endHeight":"7776129","endTime":"1250119902","totalDepositAmount":"1000000","actualDepositAmount":"0","totalParticipant":"1","actualParticipant":"0","totalCollectedAmount":"0","refundedAmount":"0","refundedHeight":"0","refundedTime":"0"}`)
 	})
 }
 

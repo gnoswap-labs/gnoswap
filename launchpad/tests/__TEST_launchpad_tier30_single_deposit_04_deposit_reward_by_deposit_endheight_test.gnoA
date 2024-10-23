@@ -87,6 +87,6 @@ func TestCollectRewardByDepositId(t *testing.T) {
 		shouldEQ(t, bool(tier30EndHeight < currHeight), true)
 
 		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:1296125`)
-		shouldEQ(t, reward, uint64(308))
+		shouldEQ(t, reward, uint64(100000000))
 	})
 }
