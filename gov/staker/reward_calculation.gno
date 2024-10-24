@@ -57,7 +57,7 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 	calculateReward()
 
 	if add {
-		amountByProjectWallet[addr] = amount
+		amountByProjectWallet[addr] += amount
 	} else {
 		amountByProjectWallet[addr] -= amount
 	}
@@ -190,6 +190,8 @@ func calculateProtocolFee() {
 
 		calculated := uint64(0)
 		for delegator, ratio := range userXGnsRatio {
+			println("delegator:", delegator)
+			println("ratio:", ratio.ToString())
 			protocolFeeX96 := new(u256.Uint).Mul(u256.NewUint(tokenBalance), ratio)
 			println("  > PF tokenBalance:", tokenBalance)
 			protocolFeeX := new(u256.Uint).Div(protocolFeeX96, q96)
@@ -209,7 +211,8 @@ func calculateProtocolFee() {
 
 		alreadyCalculatedProtocolFee[tokenPath] += tokenBalance
 		leftProtocolFeeFromLast[tokenPath] = tokenBalance - calculated
-		println("FINAL LEFT TOKEN:", tokenPath, "AMOUNT:", leftProtocolFeeFromLast[tokenPath])
+		println("FINAL LEFT TOKEN:", tokenPath)
+		println("AMOUNT:", leftProtocolFeeFromLast[tokenPath])
 		println()
 	}
 }

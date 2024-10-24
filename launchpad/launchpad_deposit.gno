@@ -60,6 +60,10 @@ func DepositGns(
 	// after all pre-checks
 	calculateDepositReward()
 
+	// WIP // ORIG NOT ORIG
+	// update gov_staker contract's variable to calculate proejct's recipient's reward
+	// gs.SetAmountByProjectWallet(project.recipient, amount, true) // true == add
+
 	// gns will be locked in `launchpad` contract
 	gns.TransferFrom(
 		a2u(std.PrevRealm().Addr()),
@@ -73,8 +77,10 @@ func DepositGns(
 		amount,
 	)
 
+	// ORIG
 	// update gov_staker contract's variable to calculate proejct's recipient's reward
-	gs.SetAmountByProjectWallet(project.recipient, amount, true) // true == add
+	// and calculate protocol fee
+	// gs.SetAmountByProjectWallet(project.recipient, amount, true) // true == add
 
 	// deposit History
 	depositor := std.PrevRealm().Addr()
