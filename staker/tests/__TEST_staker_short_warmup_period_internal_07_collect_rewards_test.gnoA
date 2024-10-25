@@ -84,7 +84,7 @@ func TestMintBarQux100_1(t *testing.T) {
 	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), admin)
 
 	gpi := GetPrintInfo()
-	shouldEQ(t, gpi, `{"height":126,"time":1234567896,"gns":{"staker":0,"devOps":8561643,"communityPool":2140410,"govStaker":0,"protocolFee":232106164,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
+	shouldEQ(t, gpi, `{"height":126,"time":1234567896,"gns":{"staker":0,"devOps":8561643,"communityPool":34246574,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
 
 	println()
 	printInfo(curr)
@@ -146,7 +146,7 @@ func TestSetPoolTier(t *testing.T) {
 	std.TestSkipHeights(800) // this reward should go to bar:qux:100
 
 	std.TestSetRealm(adminRealm)
-	SetPoolTier("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
+	SetPoolTierByAdmin("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", 2)
 
 	println(GetPrintInfo())
 	println()

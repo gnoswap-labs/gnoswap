@@ -29,7 +29,7 @@ func TestMintPositionAndCheckURI(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-	SetPoolTier(poolPath, 1)
+	SetPoolTierByAdmin(poolPath, 1)
 
 	tokenId1, _, _, _, _ := MintAndStake(
 		barPath,
