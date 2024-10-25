@@ -11,6 +11,7 @@ import (
 	en "gno.land/r/gnoswap/v2/emission"
 	pf "gno.land/r/gnoswap/v2/protocol_fee"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -54,6 +55,9 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 		panic(ufmt.Sprintf("only launchpad can set amountByProjectWallet, called from %s", prev))
 	}
 
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
 	calculateReward()
 
 	if add {
@@ -71,6 +75,22 @@ func calculateReward() {
 		return
 	}
 
+	atLeastOneDelegated := false
+	atLeastOneLaunchpadRecipient := false
+
+	if len(delegatedTo) > 0 {
+		atLeastOneDelegated = true
+	}
+
+	if len(amountByProjectWallet) > 0 {
+		atLeastOneLaunchpadRecipient = true
+	}
+
+	if !atLeastOneDelegated && !atLeastOneLaunchpadRecipient {
+		println("NO DELEGATED AND NO LAUNCHPAD RECIPIENT")
+		return
+	}
+
 	// transfer protocol_fee to gov_staker
 	pf.DistributeProtocolFee()
 
@@ -79,12 +99,15 @@ func calculateReward() {
 	xGnsX96 := new(u256.Uint).Mul(u256.NewUint(xGnsTotalSupply), q96)
 
 	for delegator, amount := range delegatorAmount {
+		println("delegator:", delegator)
+		println("amount:", amount)
 		xGnsUserX96 := new(u256.Uint).Mul(u256.NewUint(amount), q96)
 		xGnsUserX96 = new(u256.Uint).Mul(xGnsUserX96, u256.NewUint(1_000_000_000))
 
 		ratio := new(u256.Uint).Div(xGnsUserX96, xGnsX96)
 		ratio = ratio.Mul(ratio, q96)
 		ratio = ratio.Div(ratio, u256.NewUint(1_000_000_000))
+		println("ratio:", ratio.ToString())
 
 		userXGnsRatio[delegator] = ratio
 	}
@@ -168,8 +191,12 @@ func calculateProtocolFee() {
 	}
 
 	accuProtocolFee := pf.GetAccuTransferToGovStaker()
-	println("accuProtocolFee:", accuProtocolFee)
 	pf.ClearAccuTransferToGovStaker()
+	if len(accuProtocolFee) == 0 {
+		println("protocol_fee no accuProtocolFee")
+		return
+	}
+	println("accuProtocolFee:", accuProtocolFee)
 
 	// get gov staker's grc20 balance
 	for tokenPath, _ := range registered {
@@ -177,6 +204,7 @@ func calculateProtocolFee() {
 
 		tokenBalance := accuProtocolFee[tokenPath]
 		println(" > tokenBalance:", tokenBalance)
+
 		leftFromLast := leftProtocolFeeFromLast[tokenPath]
 		println(" > leftFromLast:", leftFromLast)
 		tokenBalance += leftFromLast
@@ -190,8 +218,8 @@ func calculateProtocolFee() {
 
 		calculated := uint64(0)
 		for delegator, ratio := range userXGnsRatio {
-			println("delegator:", delegator)
-			println("ratio:", ratio.ToString())
+			println(" > delegator:", delegator)
+			println(" > ratio:", ratio.ToString())
 			protocolFeeX96 := new(u256.Uint).Mul(u256.NewUint(tokenBalance), ratio)
 			println("  > PF tokenBalance:", tokenBalance)
 			protocolFeeX := new(u256.Uint).Div(protocolFeeX96, q96)

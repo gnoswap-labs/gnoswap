@@ -9,6 +9,8 @@ import (
 )
 
 func ApiGetClaimableDepositByAddress(address std.Address) uint64 {
+	calculateDepositReward()
+
 	if !address.IsValid() {
 		return 0
 	}
@@ -38,6 +40,8 @@ func ApiGetClaimableDepositByAddress(address std.Address) uint64 {
 }
 
 func ApiGetDepositByDepositId(depositId string) string {
+	calculateDepositReward()
+
 	deposit, exist := deposits[depositId]
 	if !exist {
 		return ""
@@ -64,6 +68,8 @@ func ApiGetDepositByDepositId(depositId string) string {
 }
 
 func ApiGetDepositFullByDepositId(depositId string) string {
+	calculateDepositReward()
+
 	deposit, exist := deposits[depositId]
 	if !exist {
 		return ""

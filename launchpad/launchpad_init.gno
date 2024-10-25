@@ -8,7 +8,10 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
+
+	en "gno.land/r/gnoswap/v2/emission"
 
 	"gno.land/r/gnoswap/v2/gns"
 )
@@ -89,6 +92,9 @@ func CreateProject(
 	if startTime <= uint64(time.Now().Unix()) {
 		panic("invalid start time, can not start project in past")
 	}
+
+	common.IsHalted()
+	en.MintAndDistributeGns()
 
 	transferFromByRegisterCall(
 		tokenPath,
@@ -209,8 +215,6 @@ func CreateProject(
 }
 
 func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uint64 {
-	calculateDepositReward()
-
 	assertUserCall()
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
@@ -234,6 +238,12 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	if project.refundedHeight != 0 {
 		panic("project already refunded")
 	}
+
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
+	calculateDepositReward()
+	project = projects[projectId] // get updates project
 
 	// calculate left reward
 	tier30Full := project.tier30.tierAmount
