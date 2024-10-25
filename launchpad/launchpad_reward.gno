@@ -40,7 +40,6 @@ func CollectRewardByProjectId(projectId string) uint64 {
 
 	project, exist := projects[projectId]
 	if !exist {
-		// println("NO PROJECT FOR THIS ID", projectId)
 		return 0
 	}
 
@@ -226,11 +225,7 @@ func calculateDepositReward() {
 	lastCalculatedHeight = height
 
 	for _, project := range projects {
-		// // loop with project
-		// println("project.id", project.id)
-
-		// // early return if not active
-		// println("project.startHeight\t", project.startHeight)
+		// early return if not active
 		if project.startHeight > height {
 			println("PROJECT NOT STARTED")
 			continue

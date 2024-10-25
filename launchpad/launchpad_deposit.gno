@@ -68,7 +68,6 @@ func DepositGns(
 	project = projects[projectId]    // get updates project
 	tier = getTier(project, tierStr) // get updates tier
 
-	// ORIG NOT ORIG
 	// update gov_staker contract's variable to calculate proejct's recipient's reward
 	gs.SetAmountByProjectWallet(project.recipient, amount, true) // true == add
 
@@ -84,11 +83,6 @@ func DepositGns(
 		a2u(std.Address(consts.LAUNCHPAD_ADDR)),
 		amount,
 	)
-
-	// ORIG
-	// update gov_staker contract's variable to calculate proejct's recipient's reward
-	// and calculate protocol fee
-	// gs.SetAmountByProjectWallet(project.recipient, amount, true) // true == add
 
 	// deposit History
 	depositor := std.PrevRealm().Addr()
