@@ -291,9 +291,9 @@ func CollectReward(tokenId uint64, unwrapResult bool) string { // poolPath
 
 	left := fullAmount - toGive
 	println(" > warm up left := fullAmount - toGive (to protocol_fee)", left)
-	gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), left)
+	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), left)
 	std.Emit(
-		"ProtocolFeeEmissionPenalty",
+		"CommunityPoolEmissionPenalty",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
