@@ -60,7 +60,7 @@ func TestMockProtocolFee(t *testing.T) {
 	shouldEQ(t, usdc.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
 
 	shouldEQ(t, gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(2_500_000_000))
-	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	shouldEQ(t, gns.BalanceOf(a2u(consts.DEV_OPS)), uint64(2853881)) // devOps emission (20%)
 	shouldEQ(t, gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
 }
 

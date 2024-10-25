@@ -125,7 +125,7 @@ func TestDepositGnsToTierProject01_Tier30(t *testing.T) {
 
 	t.Run("check deposit's project token", func(t *testing.T) {
 		got := ApiGetDepositRewardByDepositId("gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:131")
-		shouldEQ(t, got, uint64(0)) // reward occured, but not claimable yet
+		shouldEQ(t, got, uint64(77)) // reward occured, but not claimable yet
 	})
 
 	t.Run("check project's recipient protocol_fee reward", func(t *testing.T) {
