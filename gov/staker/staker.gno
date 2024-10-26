@@ -7,6 +7,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/r/gnoswap/v2/gns"
@@ -33,7 +34,9 @@ var (
 )
 
 func Delegate(to std.Address, amount uint64) {
+	common.IsHalted()
 	en.MintAndDistributeGns()
+
 	calculateReward()
 
 	if !to.IsValid() {
@@ -67,7 +70,7 @@ func Delegate(to std.Address, amount uint64) {
 
 // xGNS from -> xGNS to
 func Redelegate(from, to std.Address, amount uint64) {
-	CollectReward() // en.MintAndDistributeGns() + calculateReward()
+	CollectReward() // common.IsHalted() + en.MintAndDistributeGns() + calculateReward()
 
 	if !from.IsValid() {
 		panic(ufmt.Sprintf("invalid from address %s to Redelegate", to.String()))
@@ -102,7 +105,7 @@ func Redelegate(from, to std.Address, amount uint64) {
 }
 
 func Undelegate(from std.Address, amount uint64) {
-	CollectReward()
+	CollectReward() // common.IsHalted() + en.MintAndDistributeGns() + calculateReward()
 
 	if !from.IsValid() {
 		panic(ufmt.Sprintf("invalid address %s to Undelegate", from.String()))
@@ -143,7 +146,9 @@ func Undelegate(from std.Address, amount uint64) {
 }
 
 func CollectUndelegatedGns() uint64 {
+	common.IsHalted()
 	en.MintAndDistributeGns()
+
 	calculateReward()
 
 	caller := std.PrevRealm().Addr()
@@ -180,7 +185,9 @@ func CollectUndelegatedGns() uint64 {
 }
 
 func CollectReward() {
+	common.IsHalted()
 	en.MintAndDistributeGns()
+
 	calculateReward()
 
 	prevAddr, prevRealm := getPrev()
@@ -240,7 +247,9 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		panic("only launchpad can call CollectRewardFromLaunchPad()")
 	}
 
+	common.IsHalted()
 	en.MintAndDistributeGns()
+
 	calculateReward()
 
 	prevAddr, prevRealm := getPrev()

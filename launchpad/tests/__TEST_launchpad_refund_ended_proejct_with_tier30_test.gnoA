@@ -272,6 +272,7 @@ func TestMakeProjectEnd(t *testing.T) {
 	std.TestSkipHeights(int64(TIMESTAMP_180DAYS) / 2)
 	std.TestSetRealm(adminRealm)
 	TransferLeftFromProjectByAdmin(`gno.land/r/onbloc/obl:124`, refundAddr)
+	std.TestSkipHeights(1)
 
 	user01NewOblBalance := obl.BalanceOf(a2u(user01))
 	shouldEQ(t, user01NewOblBalance, uint64(10007793))

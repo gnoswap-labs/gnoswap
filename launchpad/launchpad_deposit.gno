@@ -7,7 +7,10 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
+
+	en "gno.land/r/gnoswap/v2/emission"
 
 	"gno.land/r/gnoswap/v2/gns"
 	gs "gno.land/r/gnoswap/v2/gov/staker"
@@ -57,8 +60,16 @@ func DepositGns(
 		panic(ufmt.Sprintf("tier is not active: %s", tierStr))
 	}
 
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
 	// after all pre-checks
 	calculateDepositReward()
+	project = projects[projectId]    // get updates project
+	tier = getTier(project, tierStr) // get updates tier
+
+	// update gov_staker contract's variable to calculate proejct's recipient's reward
+	gs.SetAmountByProjectWallet(project.recipient, amount, true) // true == add
 
 	// gns will be locked in `launchpad` contract
 	gns.TransferFrom(
@@ -72,9 +83,6 @@ func DepositGns(
 		a2u(std.Address(consts.LAUNCHPAD_ADDR)),
 		amount,
 	)
-
-	// update gov_staker contract's variable to calculate proejct's recipient's reward
-	gs.SetAmountByProjectWallet(project.recipient, amount, true) // true == add
 
 	// deposit History
 	depositor := std.PrevRealm().Addr()
@@ -192,6 +200,9 @@ func DepositGns(
 //
 // returns collected gns amount
 func CollectDepositGns() uint64 {
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
 	calculateDepositReward()
 
 	caller := std.PrevRealm().Addr()
@@ -283,6 +294,9 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 		return 0
 	}
 
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
 	calculateDepositReward()
 
 	prevAddr, prevRealm := getPrev()
@@ -372,7 +386,11 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 		return 0
 	}
 
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
 	calculateDepositReward()
+	project = projects[deposit.projectId] // get updates project
 
 	// check active
 	tier := getTier(project, deposit.tier)

@@ -8,6 +8,9 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v2/common"
+
+	en "gno.land/r/gnoswap/v2/emission"
 	gs "gno.land/r/gnoswap/v2/gov/staker"
 )
 
@@ -32,13 +35,16 @@ func init() {
 //
 // returns collected reward amount
 func CollectRewardByProjectId(projectId string) uint64 {
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
 	project, exist := projects[projectId]
 	if !exist {
-		println("NO PROJECT FOR THIS ID", projectId)
 		return 0
 	}
 
 	calculateDepositReward()
+	project = projects[projectId] // get updates project
 
 	caller := std.PrevRealm().Addr()
 	if _, exist := depositsByUserByProject[caller]; !exist {
@@ -68,6 +74,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 		}
 
 		if deposit.rewardAmount > 0 {
+			println("deposit.rewardAmount", deposit.rewardAmount)
 			if deposit.rewardCollectTime != 0 {
 				println("(N)th collect")
 				toUser += deposit.rewardAmount
@@ -133,6 +140,9 @@ func CollectRewardByDepositId(depositId string) uint64 {
 		panic("deposit not found")
 	}
 
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
 	project, exist := projects[deposit.projectId]
 	if !exist {
 		println("NO PROJECT FOR THIS ID", deposit.projectId)
@@ -146,7 +156,8 @@ func CollectRewardByDepositId(depositId string) uint64 {
 	}
 
 	calculateDepositReward()
-	deposit = deposits[depositId] // get updated deposit
+	project = projects[deposit.projectId] // get updates project
+	deposit = deposits[depositId]         // get updated deposit
 
 	toUser := uint64(0)
 
@@ -214,13 +225,7 @@ func calculateDepositReward() {
 	lastCalculatedHeight = height
 
 	for _, project := range projects {
-		// // loop with project
-		// println("projectIdx", projectIdx)
-		// println("project.id", project.id)
-
-		// // early return if not active
-		// println("project.startHeight\t", project.startHeight)
-		// println("now\t\t\t", now)
+		// early return if not active
 		if project.startHeight > height {
 			println("PROJECT NOT STARTED")
 			continue
