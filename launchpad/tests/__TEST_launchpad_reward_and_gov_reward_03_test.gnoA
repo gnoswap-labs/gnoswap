@@ -138,11 +138,7 @@ func TestStakerStakeToken(t *testing.T) {
 
 	{
 		checkProtocolFeeBalance()
-		// gns 321_404_109
-		// 21_404_109 == 10702054.5 * 2
-		// => gns emission of staker is 10702054.5 for every block
-		// => 2 block generated
-		// => non token staked => zero staked => goes to protocol_fee
+		// (still) gns 300_000_000
 	}
 	std.TestSkipHeights(1)
 }
@@ -169,7 +165,7 @@ func TestCreateProject_01(t *testing.T) {
 
 	{
 		checkProtocolFeeBalance()
-		// (still) gns 321_404_109
+		// (still) gns 300_000_000
 	}
 	std.TestSkipHeights(1)
 }
@@ -196,7 +192,7 @@ func TestCreateProject_02(t *testing.T) {
 
 	{
 		checkProtocolFeeBalance()
-		// (still) gns 321_404_109
+		// (still) gns 300_000_000
 	}
 	std.TestSkipHeights(1)
 }
@@ -204,7 +200,7 @@ func TestCreateProject_02(t *testing.T) {
 func TestSkip10BlockToMakeProjectActive(t *testing.T) {
 	{
 		checkProtocolFeeBalance()
-		// (still) gns 321_404_109
+		// (still) gns 300_000_000
 	}
 	std.TestSkipHeights(10)
 }
@@ -220,7 +216,7 @@ func TestDepositGnsToProject01Tier30_1GNS(t *testing.T) {
 
 	{
 		checkProtocolFeeBalance()
-		// (still) gns 321_404_109
+		// (still) gns 300_000_000
 	}
 	std.TestSkipHeights(1)
 }
@@ -239,8 +235,8 @@ func TestDepositGnsToProject01Tier30_Another1GNS(t *testing.T) {
 		// none
 
 		rewards := ApiGetProjectRecipientRewardByAddress(launchpadProject01Addr)
-		shouldEQ(t, rewards, `{"height":"141","now":"1234567926","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/gnoswap/v2/gns","amount":"321404109"}]}`)
-		// gns 321_404_109
+		shouldEQ(t, rewards, `{"height":"141","now":"1234567926","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/gnoswap/v2/gns","amount":"300000000"}]}`)
+		// gns 300_000_000
 	}
 	std.TestSkipHeights(1)
 }
@@ -388,9 +384,9 @@ func TestCheckXGnsData(t *testing.T) {
 
 func TestCheckProject01AddrReward(t *testing.T) {
 	rewards := ApiGetProjectRecipientRewardByAddress(launchpadProject01Addr)
-	shouldEQ(t, rewards, `{"height":"148","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/gnoswap/v2/gns","amount":"371404109"},{"tokenPath":"gno.land/r/onbloc/bar","amount":"74"},{"tokenPath":"gno.land/r/onbloc/foo","amount":"74"},{"tokenPath":"gno.land/r/demo/wugnot","amount":"74"}]}`)
-	// gns 371_404_109
-	// > 321_404_109 previously (before 4th create pool and bunch of swaps)
+	shouldEQ(t, rewards, `{"height":"148","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/gnoswap/v2/gns","amount":"350000000"},{"tokenPath":"gno.land/r/onbloc/bar","amount":"74"},{"tokenPath":"gno.land/r/onbloc/foo","amount":"74"},{"tokenPath":"gno.land/r/demo/wugnot","amount":"74"}]}`)
+	// gns 350_000_000
+	// > 300_000_000 previously (before 4th create pool and bunch of swaps)
 	// > 50_000_000 newly
 
 	// bar 74

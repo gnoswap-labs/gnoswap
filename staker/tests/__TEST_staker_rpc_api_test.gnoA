@@ -214,11 +214,9 @@ func TestCreateExternalIncentiveFooBySomeoneElse(t *testing.T) {
 	newFooForTest := foo.BalanceOf(a2u(testAddr))
 	shouldEQ(t, newFooForTest-oldFooForTest, uint64(5_000_000_000))
 
-	
 	std.TestSetRealm(adminRealm)
 	gns.Transfer(a2u(testAddr), depositGnsAmount)
 
-	
 	std.TestSetRealm(testRealm)
 	foo.Approve(a2u(consts.STAKER_ADDR), 5_000_000_000)
 
@@ -398,9 +396,9 @@ func TestSetUnstakingFeeNoPermission(t *testing.T) {
 	shouldPanicWithMsg(
 		t,
 		func() {
-			SetUnstakingFee(2)
+			SetUnstakingFeeByAdmin(2)
 		},
-		"[STAKER] protocol_fee_unstaking.gno__SetUnstakingFee() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can set unstaking fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
+		"[STAKER] reward_fee.gno__SetUnstakingFeeByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set unstaking fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
@@ -410,7 +408,7 @@ func TestSetUnstakingFeeOutOfRange(t *testing.T) {
 	shouldPanicWithMsg(
 		t,
 		func() {
-			SetUnstakingFee(10001)
+			SetUnstakingFeeByAdmin(10001)
 		},
 		"[STAKER] reward_fee.gno__SetUnstakingFee() || fee(10001) must be in range 0 ~ 10000",
 	)
@@ -419,7 +417,7 @@ func TestSetUnstakingFeeOutOfRange(t *testing.T) {
 func TestSetUnstakingFee(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	shouldEQ(t, GetUnstakingFee(), uint64(100))
-	SetUnstakingFee(30)
+	SetUnstakingFeeByAdmin(30)
 	shouldEQ(t, GetUnstakingFee(), uint64(30))
 }
 
