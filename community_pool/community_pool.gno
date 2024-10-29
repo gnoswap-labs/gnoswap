@@ -4,7 +4,6 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
@@ -73,8 +72,4 @@ func transferToken(pkgPath string, to std.Address, amount uint64) {
 	}
 
 	registered[pkgPath].Transfer()(a2u(to), amount)
-}
-
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
 }

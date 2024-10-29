@@ -26,13 +26,13 @@ func main() {
 	std.TestSetRealm(adminRealm)
 
 	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), 1000)
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(1000))
+	uassert.Equal(t, uint64(1000), gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)))
 
 	sendTarget := testutils.TestAddress("sendTarget")
 	cp.TransferTokenByAdmin(consts.GNS_PATH, sendTarget, 900)
 
-	uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(100))
-	uassert.Equal(t, gns.BalanceOf(a2u(sendTarget)), uint64(900))
+	uassert.Equal(t, uint64(100), gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)))
+	uassert.Equal(t, uint64(900), gns.BalanceOf(a2u(sendTarget)))
 }
 
 func a2u(addr std.Address) pusers.AddressOrName {
