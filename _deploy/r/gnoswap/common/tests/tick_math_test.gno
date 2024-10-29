@@ -44,13 +44,13 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 	t.Run("min tick", func(t *testing.T) {
 		tick := MIN_TICK
 		sqrtPriceX96 := TickMathGetSqrtRatioAtTick(tick)
-		uassert.Equal(t, sqrtPriceX96.ToString(), "4295128739")
+		uassert.Equal(t, "4295128739", sqrtPriceX96.ToString())
 	})
 
 	t.Run("min tick + 1", func(t *testing.T) {
 		tick := MIN_TICK + 1
 		sqrtPriceX96 := TickMathGetSqrtRatioAtTick(tick)
-		uassert.Equal(t, sqrtPriceX96.ToString(), "4295343490")
+		uassert.Equal(t, "4295343490", sqrtPriceX96.ToString())
 	})
 
 	t.Run("min tick ratio is less than js implementation", func(t *testing.T) {
@@ -67,7 +67,7 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 
 	t.Run("max tick ratio is equal to js implementation", func(t *testing.T) {
 		sqrtPriceX96 := TickMathGetSqrtRatioAtTick(MAX_TICK)
-		uassert.Equal(t, sqrtPriceX96.ToString(), "1461446703485210103287273052203988822378723970342")
+		uassert.Equal(t, "1461446703485210103287273052203988822378723970342", sqrtPriceX96.ToString())
 	})
 
 	t.Run("multiple ticks", func(t *testing.T) {
@@ -106,19 +106,19 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 		for i, absTick := range absTicks {
 			for j, tick := range []int32{-absTick, absTick} {
 				result := TickMathGetSqrtRatioAtTick(tick)
-				uassert.Equal(t, result.ToString(), expectedResults[i*2+j])
+				uassert.Equal(t, expectedResults[i*2+j], result.ToString())
 			}
 		}
 	})
 
 	t.Run("min_sqrt_ratio", func(t *testing.T) {
 		sqrtPriceX96 := TickMathGetSqrtRatioAtTick(MIN_TICK)
-		uassert.Equal(t, sqrtPriceX96.ToString(), "4295128739")
+		uassert.Equal(t, "4295128739", sqrtPriceX96.ToString())
 	})
 
 	t.Run("max_sqrt_ratio", func(t *testing.T) {
 		sqrtPriceX96 := TickMathGetSqrtRatioAtTick(MAX_TICK)
-		uassert.Equal(t, sqrtPriceX96.ToString(), MAX_SQRT_RATIO)
+		uassert.Equal(t, MAX_SQRT_RATIO, sqrtPriceX96.ToString())
 	})
 
 	t.Run("throws for too low sqrt_ratio", func(t *testing.T) {
@@ -149,12 +149,12 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 
 	t.Run("ratio of min tick", func(t *testing.T) {
 		sqrtPriceX96 := TickMathGetSqrtRatioAtTick(MIN_TICK)
-		uassert.Equal(t, sqrtPriceX96.ToString(), MIN_SQRT_RATIO)
+		uassert.Equal(t, MIN_SQRT_RATIO, sqrtPriceX96.ToString())
 	})
 
 	t.Run("ratio of min tick + 1", func(t *testing.T) {
 		sqrtPriceX96 := u256.MustFromDecimal("4295343490")
-		uassert.Equal(t, TickMathGetTickAtSqrtRatio(sqrtPriceX96), MIN_TICK+1)
+		uassert.Equal(t, MIN_TICK+1, TickMathGetTickAtSqrtRatio(sqrtPriceX96))
 	})
 
 	t.Run("multiple sqrt_ratios", func(t *testing.T) {
@@ -192,7 +192,7 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 		for i, ratio := range ratios {
 			sqrtPriceX96 := u256.MustFromDecimal(ratio)
 			rst := TickMathGetTickAtSqrtRatio(sqrtPriceX96)
-			uassert.Equal(t, rst, expectedResults[i])
+			uassert.Equal(t, expectedResults[i], rst)
 		}
 	})
 
@@ -204,6 +204,6 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 		maxTickSub1 := maxTick - 1
 
 		rst := TickMathGetTickAtSqrtRatio(maxSqrtRatioSub1)
-		uassert.Equal(t, rst, maxTickSub1)
+		uassert.Equal(t, maxTickSub1, rst)
 	})
 }
