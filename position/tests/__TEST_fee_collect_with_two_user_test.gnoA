@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
@@ -142,7 +143,7 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 		tokenId_res4, withoutFee0_res4, withoutFee1_res4, positionPoolKey_res4, _, _ := pn.CollectFee(tokenId_res2, false)
 		userBarBalanceAfterCollect_2 := bar.BalanceOf(a2u(user2Adderss))
 		userBazBalanceAfterCollect_2 := baz.BalanceOf(a2u(user2Adderss))
-		shouldEQ(t, (userBarBalanceAfterCollect_1-userBarBalanceBeforeCollect_1)-(userBarBalanceAfterCollect_2-userBarBalanceBeforeCollect_2), uint64(0))
-		shouldEQ(t, (userBazBalanceAfterCollect_1-userBazBalanceBeforeCollect_1)-(userBazBalanceAfterCollect_2-userBazBalanceBeforeCollect_2), uint64(0))
+		uassert.Equal(t, (userBarBalanceAfterCollect_1-userBarBalanceBeforeCollect_1)-(userBarBalanceAfterCollect_2-userBarBalanceBeforeCollect_2), uint64(0))
+		uassert.Equal(t, (userBazBalanceAfterCollect_1-userBazBalanceBeforeCollect_1)-(userBazBalanceAfterCollect_2-userBazBalanceBeforeCollect_2), uint64(0))
 	})
 }

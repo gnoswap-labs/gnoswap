@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
@@ -38,11 +39,11 @@ func TestFreshUser(t *testing.T) {
 	// fresh users will have...
 	// 100_000_000 ugnot
 	// 100_000_000 gns
-	shouldEQ(t, ugnotBalanceOf(fresh01), uint64(100_000_000))
-	shouldEQ(t, gns.BalanceOf(a2u(fresh01)), uint64(100_000_000))
+	uassert.Equal(t, ugnotBalanceOf(fresh01), uint64(100_000_000))
+	uassert.Equal(t, gns.BalanceOf(a2u(fresh01)), uint64(100_000_000))
 
-	shouldEQ(t, ugnotBalanceOf(fresh02), uint64(100_000_000))
-	shouldEQ(t, gns.BalanceOf(a2u(fresh02)), uint64(100_000_000))
+	uassert.Equal(t, ugnotBalanceOf(fresh02), uint64(100_000_000))
+	uassert.Equal(t, gns.BalanceOf(a2u(fresh02)), uint64(100_000_000))
 }
 
 func TestOneSideOnlyGrc20WithoutSend(t *testing.T) {
@@ -80,8 +81,6 @@ func TestOneSideOnlyGrc20WithSend0Coin(t *testing.T) {
 
 	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // POSITION FOR WRAP
 
-	banker := std.GetBanker(std.BankerTypeRealmIssue) // NOTE: to send ugnot, use realm issue type banker
-	banker.SendCoins(fresh01, consts.POSITION_ADDR, std.Coins{{"ugnot", 0}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 0}}, nil)
 
 	std.TestSetRealm(fresh01Realm)
@@ -110,10 +109,8 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 
 	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // POSITION FOR WRAP
 
-	banker := std.GetBanker(std.BankerTypeRealmIssue) // NOTE: to send ugnot, use realm issue type banker
-	banker.SendCoins(fresh01, consts.POSITION_ADDR, std.Coins{{"ugnot", 100_000_000}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100_000_000}}, nil)
-	shouldEQ(t, ugnotBalanceOf(fresh01), uint64(0))
+	uassert.Equal(t, ugnotBalanceOf(fresh01), uint64(0))
 
 	std.TestSetRealm(fresh01Realm)
 	tokenId, liquidity, amount0, amount1 := Mint(
@@ -134,8 +131,8 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 	// send 100_000_000
 	// mint 900_00_000
 	// => remain 10_000_000
-	shouldEQ(t, ugnotBalanceOf(fresh01), uint64(10_000_000))
-	shouldEQ(t, wugnot.BalanceOf(a2u(fresh01)), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
+	uassert.Equal(t, ugnotBalanceOf(fresh01), uint64(10_000_000))
+	uassert.Equal(t, wugnot.BalanceOf(a2u(fresh01)), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
 }
 
 func TestBothWithFresh(t *testing.T) {
@@ -147,10 +144,8 @@ func TestBothWithFresh(t *testing.T) {
 
 	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // POSITION FOR WRAP
 
-	banker := std.GetBanker(std.BankerTypeRealmIssue) // NOTE: to send ugnot, use realm issue type banker
-	banker.SendCoins(fresh02, consts.POSITION_ADDR, std.Coins{{"ugnot", 100_000_000}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100_000_000}}, nil)
-	shouldEQ(t, ugnotBalanceOf(fresh02), uint64(0))
+	uassert.Equal(t, ugnotBalanceOf(fresh02), uint64(0))
 
 	std.TestSetRealm(fresh02Realm)
 	tokenId, liquidity, amount0, amount1 := Mint(
@@ -171,8 +166,8 @@ func TestBothWithFresh(t *testing.T) {
 	// send 100_000_000
 	// mint 70_000_000
 	// => remain 30_000_000
-	shouldEQ(t, ugnotBalanceOf(fresh02), uint64(30_000_000))
-	shouldEQ(t, wugnot.BalanceOf(a2u(fresh02)), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
+	uassert.Equal(t, ugnotBalanceOf(fresh02), uint64(30_000_000))
+	uassert.Equal(t, wugnot.BalanceOf(a2u(fresh02)), uint64(0)) // position will unwrap remaining wugnot to ugnot, so wugnot balance should be 0
 }
 
 func TestBothWithFreshButNoSend(t *testing.T) {

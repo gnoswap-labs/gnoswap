@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/consts"
 
 	pl "gno.land/r/gnoswap/v2/pool"
@@ -43,23 +45,23 @@ func TestMintPosition01InRange(t *testing.T) {
 	)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, getNextId(), uint64(2))
-	shouldEQ(t, amount0, "18394892")
-	shouldEQ(t, amount1, "50000000")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, getNextId(), uint64(2))
+	uassert.Equal(t, amount0, "18394892")
+	uassert.Equal(t, amount1, "50000000")
 
 	position := positions[uint64(1)]
-	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, admin)
-	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, int32(8000))
-	shouldEQ(t, position.tickUpper, int32(12000))
-	shouldEQ(t, position.liquidity.ToString(), "318704392")
-	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
-	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-	shouldEQ(t, position.tokensOwed0.ToString(), "0")
-	shouldEQ(t, position.tokensOwed1.ToString(), "0")
-	shouldEQ(t, position.burned, false)
+	uassert.Equal(t, position.nonce.ToString(), "0")
+	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, position.tickLower, int32(8000))
+	uassert.Equal(t, position.tickUpper, int32(12000))
+	uassert.Equal(t, position.liquidity.ToString(), "318704392")
+	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+	uassert.Equal(t, position.burned, false)
 }
 
 func TestSwap1(t *testing.T) {
@@ -79,27 +81,27 @@ func TestSwap1(t *testing.T) {
 	)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, amount0, "1234567")
-	shouldEQ(t, amount1, "-3332779")
+	uassert.Equal(t, amount0, "1234567")
+	uassert.Equal(t, amount1, "-3332779")
 
 	// pool.swap really doesn't update the position
 	position := positions[uint64(1)]
-	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, admin)
-	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, int32(8000))
-	shouldEQ(t, position.tickUpper, int32(12000))
-	shouldEQ(t, position.liquidity.ToString(), "318704392")
-	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
-	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-	shouldEQ(t, position.tokensOwed0.ToString(), "0")
-	shouldEQ(t, position.tokensOwed1.ToString(), "0")
-	shouldEQ(t, position.burned, false)
+	uassert.Equal(t, position.nonce.ToString(), "0")
+	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, position.tickLower, int32(8000))
+	uassert.Equal(t, position.tickUpper, int32(12000))
+	uassert.Equal(t, position.liquidity.ToString(), "318704392")
+	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+	uassert.Equal(t, position.burned, false)
 
 	// check pool current tick
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
-	shouldEQ(t, poolTick, int32(9872))
+	uassert.Equal(t, poolTick, int32(9872))
 }
 
 func TestMintPosition02InRange(t *testing.T) {
@@ -123,23 +125,23 @@ func TestMintPosition02InRange(t *testing.T) {
 	)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, getNextId(), uint64(3))
-	shouldEQ(t, amount0, "2767688")
-	shouldEQ(t, amount1, "50000000")
+	uassert.Equal(t, tokenId, uint64(2))
+	uassert.Equal(t, getNextId(), uint64(3))
+	uassert.Equal(t, amount0, "2767688")
+	uassert.Equal(t, amount1, "50000000")
 
 	position := positions[uint64(2)]
-	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, admin)
-	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, int32(9000))
-	shouldEQ(t, position.tickUpper, int32(10000))
-	shouldEQ(t, position.liquidity.ToString(), "714838384")
-	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
-	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-	shouldEQ(t, position.tokensOwed0.ToString(), "0")
-	shouldEQ(t, position.tokensOwed1.ToString(), "0")
-	shouldEQ(t, position.burned, false)
+	uassert.Equal(t, position.nonce.ToString(), "0")
+	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, position.tickLower, int32(9000))
+	uassert.Equal(t, position.tickUpper, int32(10000))
+	uassert.Equal(t, position.liquidity.ToString(), "714838384")
+	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+	uassert.Equal(t, position.burned, false)
 }
 
 func TestSwap2(t *testing.T) {
@@ -158,22 +160,22 @@ func TestSwap2(t *testing.T) {
 	)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, amount0, "1234567")
-	shouldEQ(t, amount1, "-3305175")
+	uassert.Equal(t, amount0, "1234567")
+	uassert.Equal(t, amount1, "-3305175")
 
 	// pool.swap really doesn't update the position
 	position := positions[uint64(1)]
-	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, admin)
-	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, int32(8000))
-	shouldEQ(t, position.tickUpper, int32(12000))
-	shouldEQ(t, position.liquidity.ToString(), "318704392")
-	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
-	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-	shouldEQ(t, position.tokensOwed0.ToString(), "0")
-	shouldEQ(t, position.tokensOwed1.ToString(), "0")
-	shouldEQ(t, position.burned, false)
+	uassert.Equal(t, position.nonce.ToString(), "0")
+	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, position.tickLower, int32(8000))
+	uassert.Equal(t, position.tickUpper, int32(12000))
+	uassert.Equal(t, position.liquidity.ToString(), "318704392")
+	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+	uassert.Equal(t, position.burned, false)
 }
 
 func TestSwap3(t *testing.T) {
@@ -192,38 +194,38 @@ func TestSwap3(t *testing.T) {
 	)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, amount0, "1234567")
-	shouldEQ(t, amount1, "-3292296")
+	uassert.Equal(t, amount0, "1234567")
+	uassert.Equal(t, amount1, "-3292296")
 
 	// pool.swap really doesn't update the position
 	{
 		position := positions[uint64(1)]
-		shouldEQ(t, position.nonce.ToString(), "0")
-		shouldEQ(t, position.operator, admin)
-		shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-		shouldEQ(t, position.tickLower, int32(8000))
-		shouldEQ(t, position.tickUpper, int32(12000))
-		shouldEQ(t, position.liquidity.ToString(), "318704392")
-		shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
-		shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-		shouldEQ(t, position.tokensOwed0.ToString(), "0")
-		shouldEQ(t, position.tokensOwed1.ToString(), "0")
-		shouldEQ(t, position.burned, false)
+		uassert.Equal(t, position.nonce.ToString(), "0")
+		uassert.Equal(t, position.operator, admin)
+		uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+		uassert.Equal(t, position.tickLower, int32(8000))
+		uassert.Equal(t, position.tickUpper, int32(12000))
+		uassert.Equal(t, position.liquidity.ToString(), "318704392")
+		uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "0")
+		uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+		uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+		uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+		uassert.Equal(t, position.burned, false)
 	}
 
 	{
 		position := positions[uint64(2)]
-		shouldEQ(t, position.nonce.ToString(), "0")
-		shouldEQ(t, position.operator, admin)
-		shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-		shouldEQ(t, position.tickLower, int32(9000))
-		shouldEQ(t, position.tickUpper, int32(10000))
-		shouldEQ(t, position.liquidity.ToString(), "714838384")
-		shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
-		shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-		shouldEQ(t, position.tokensOwed0.ToString(), "0")
-		shouldEQ(t, position.tokensOwed1.ToString(), "0")
-		shouldEQ(t, position.burned, false)
+		uassert.Equal(t, position.nonce.ToString(), "0")
+		uassert.Equal(t, position.operator, admin)
+		uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+		uassert.Equal(t, position.tickLower, int32(9000))
+		uassert.Equal(t, position.tickUpper, int32(10000))
+		uassert.Equal(t, position.liquidity.ToString(), "714838384")
+		uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "0")
+		uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+		uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+		uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+		uassert.Equal(t, position.burned, false)
 	}
 }
 
@@ -245,12 +247,12 @@ func TestIncreaseLiquidity02(t *testing.T) {
 	)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, m0, "984790")
-	shouldEQ(t, m1, "10000000")
+	uassert.Equal(t, m0, "984790")
+	uassert.Equal(t, m1, "10000000")
 
 	newLiquidity := pool.PoolGetLiquidity()
 
-	shouldEQ(t, newLiquidity.Gt(oldLiquidity), true)
+	uassert.Equal(t, newLiquidity.Gt(oldLiquidity), true)
 }
 
 func TestDecreaseLiquidityPosition02(t *testing.T) {
@@ -259,11 +261,11 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 	_lpTokenId := uint64(2)
 
 	ownerOfPosition := gnft.OwnerOf(tid(_lpTokenId))
-	shouldEQ(t, ownerOfPosition, admin)
+	uassert.Equal(t, ownerOfPosition, admin)
 
 	unclaimedFee0, unclaimedFee1 := unclaimedFee(_lpTokenId)
-	shouldEQ(t, unclaimedFee0.ToString(), "0")
-	shouldEQ(t, unclaimedFee1.ToString(), "0")
+	uassert.Equal(t, unclaimedFee0.ToString(), "0")
+	uassert.Equal(t, unclaimedFee1.ToString(), "0")
 
 	// approve fee0, fee_lpTokenId to pool
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -277,27 +279,27 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 		max_timeout,
 		false,
 	)
-	shouldEQ(t, tokenId, _lpTokenId)
-	shouldEQ(t, amount0, "5459371")
-	shouldEQ(t, amount1, "55436931")
+	uassert.Equal(t, tokenId, _lpTokenId)
+	uassert.Equal(t, amount0, "5459371")
+	uassert.Equal(t, amount1, "55436931")
 
 	ownerOfPosition = gnft.OwnerOf(tid(_lpTokenId))
-	shouldEQ(t, ownerOfPosition, admin)
+	uassert.Equal(t, ownerOfPosition, admin)
 
 	unclaimedFee0, unclaimedFee1 = unclaimedFee(tokenId)
-	shouldEQ(t, unclaimedFee0.ToString(), "0")
-	shouldEQ(t, unclaimedFee1.ToString(), "0")
+	uassert.Equal(t, unclaimedFee0.ToString(), "0")
+	uassert.Equal(t, unclaimedFee1.ToString(), "0")
 
 	position := positions[_lpTokenId]
-	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, admin)
-	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, int32(9000))
-	shouldEQ(t, position.tickUpper, int32(10000))
-	shouldEQ(t, position.liquidity.ToString(), "0")
-	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "406939137189886314720592672194986")
-	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-	shouldEQ(t, position.tokensOwed0.ToString(), "0")
-	shouldEQ(t, position.tokensOwed1.ToString(), "0")
-	shouldEQ(t, position.burned, true)
+	uassert.Equal(t, position.nonce.ToString(), "0")
+	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, position.tickLower, int32(9000))
+	uassert.Equal(t, position.tickUpper, int32(10000))
+	uassert.Equal(t, position.liquidity.ToString(), "0")
+	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "406939137189886314720592672194986")
+	uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+	uassert.Equal(t, position.burned, true)
 }
