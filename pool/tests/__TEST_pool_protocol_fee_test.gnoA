@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/onbloc/bar"
@@ -67,12 +69,12 @@ func TestPositionsProtected(t *testing.T) {
 
 	// before protocol fee is turned on
 	thisPool := GetPool(barPath, fooPath, fee500)
-	shouldEQ(t, thisPool.protocolFees.token0.ToString(), "0")
-	shouldEQ(t, thisPool.protocolFees.token1.ToString(), "0")
+	uassert.Equal(t, thisPool.protocolFees.token0.ToString(), "0")
+	uassert.Equal(t, thisPool.protocolFees.token1.ToString(), "0")
 
 	// protocol fee
 	t.Run("is initially set to 0", func(t *testing.T) {
-		shouldEQ(t, thisPool.slot0.feeProtocol, uint8(0))
+		uassert.Equal(t, thisPool.slot0.feeProtocol, uint8(0))
 	})
 
 	t.Run("fails if fee is lt 4 or gt 10", func(t *testing.T) {
@@ -88,30 +90,30 @@ func TestPositionsProtected(t *testing.T) {
 	t.Run("can be changed by the owner", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		SetFeeProtocolByAdmin(6, 6)
-		shouldEQ(t, thisPool.slot0.feeProtocol, uint8(102))
+		uassert.Equal(t, thisPool.slot0.feeProtocol, uint8(102))
 	})
 
 	t.Run("succeeds for fee of 4", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		SetFeeProtocolByAdmin(4, 4)
-		shouldEQ(t, thisPool.slot0.feeProtocol, uint8(68))
+		uassert.Equal(t, thisPool.slot0.feeProtocol, uint8(68))
 	})
 
 	t.Run("succeeds for fee of 10", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		SetFeeProtocolByAdmin(10, 10)
-		shouldEQ(t, thisPool.slot0.feeProtocol, uint8(170))
+		uassert.Equal(t, thisPool.slot0.feeProtocol, uint8(170))
 	})
 
 	t.Run("positions are protected before protocol fee is turned on", func(t *testing.T) {
-		shouldEQ(t, thisPool.protocolFees.token0.ToString(), "0")
-		shouldEQ(t, thisPool.protocolFees.token1.ToString(), "0")
+		uassert.Equal(t, thisPool.protocolFees.token0.ToString(), "0")
+		uassert.Equal(t, thisPool.protocolFees.token1.ToString(), "0")
 	})
 
 	t.Run("can turn off protocol fee", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		SetFeeProtocolByAdmin(0, 0)
-		shouldEQ(t, thisPool.slot0.feeProtocol, uint8(0))
+		uassert.Equal(t, thisPool.slot0.feeProtocol, uint8(0))
 	})
 
 }
@@ -181,8 +183,8 @@ func TestWorkAccross(t *testing.T) {
 
 	tokensOwed0 := thisPosition.tokensOwed0
 	tokensOwed1 := thisPosition.tokensOwed1
-	shouldEQ(t, tokensOwed0.ToString(), "34028236692093846346337460743176") // XXX: BE AWARE OF liquidity (unlikely uniswap, we don't use 10^18)
-	shouldEQ(t, tokensOwed1.ToString(), "0")
+	uassert.Equal(t, tokensOwed0.ToString(), "34028236692093846346337460743176") // XXX: BE AWARE OF liquidity (unlikely uniswap, we don't use 10^18)
+	uassert.Equal(t, tokensOwed1.ToString(), "0")
 }
 
 /*

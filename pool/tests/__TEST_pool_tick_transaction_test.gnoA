@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -28,8 +29,8 @@ func TestTickTransaction(t *testing.T) {
 
 	thisPool := GetPool(barPath, fooPath, fee100)
 
-	shouldEQ(t, thisPool.liquidity.ToString(), "0")
-	shouldEQ(t, thisPool.slot0.tick, int32(-24081))
+	uassert.Equal(t, thisPool.liquidity.ToString(), "0")
+	uassert.Equal(t, thisPool.slot0.tick, int32(-24081))
 
 	liqToMint := "10000000000" // 10_000_000_000
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -46,7 +47,7 @@ func TestTickTransaction(t *testing.T) {
 		liqToMint,
 		admin,
 	)
-	shouldEQ(t, thisPool.liquidity.ToString(), "10000000000")
+	uassert.Equal(t, thisPool.liquidity.ToString(), "10000000000")
 
 	std.TestSetRealm(posRealm)
 	Mint(
@@ -59,7 +60,7 @@ func TestTickTransaction(t *testing.T) {
 		liqToMint,
 		admin,
 	)
-	shouldEQ(t, thisPool.liquidity.ToString(), "10000000000")
+	uassert.Equal(t, thisPool.liquidity.ToString(), "10000000000")
 
 	testSqrtSubOne := new(u256.Uint).Sub(testSqrt, u256.One())
 	{
@@ -71,10 +72,10 @@ func TestTickTransaction(t *testing.T) {
 			uint64(3000),
 		)
 
-		shouldEQ(t, sqrtQ, testSqrtSubOne.ToString())
-		shouldEQ(t, amountIn, "1")
-		shouldEQ(t, amountOut, "0")
-		shouldEQ(t, feeAmount, "1")
+		uassert.Equal(t, sqrtQ, testSqrtSubOne.ToString())
+		uassert.Equal(t, amountIn, "1")
+		uassert.Equal(t, amountOut, "0")
+		uassert.Equal(t, feeAmount, "1")
 	}
 
 	std.TestSetRealm(rouRealm)
@@ -89,7 +90,7 @@ func TestTickTransaction(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, thisPool.slot0.tick, int32(-24082))
-	shouldEQ(t, thisPool.slot0.sqrtPriceX96.ToString(), testSqrtSubOne.ToString())
-	shouldEQ(t, thisPool.liquidity.ToString(), "20000000000")
+	uassert.Equal(t, thisPool.slot0.tick, int32(-24082))
+	uassert.Equal(t, thisPool.slot0.sqrtPriceX96.ToString(), testSqrtSubOne.ToString())
+	uassert.Equal(t, thisPool.liquidity.ToString(), "20000000000")
 }

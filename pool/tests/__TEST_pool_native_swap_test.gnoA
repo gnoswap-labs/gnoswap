@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/r/gnoswap/v2/gns"
@@ -62,8 +64,8 @@ func TestMint(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, amount0, "295802")
-	shouldEQ(t, amount1, "804032")
+	uassert.Equal(t, amount0, "295802")
+	uassert.Equal(t, amount1, "804032")
 }
 
 func TestSwapBuyNative(t *testing.T) {
@@ -71,8 +73,8 @@ func TestSwapBuyNative(t *testing.T) {
 
 	adminOldT0Bal := balanceOfByRegisterCall(pool.token0Path, admin)
 	adminOldT1Bal := balanceOfByRegisterCall(pool.token1Path, admin)
-	shouldEQ(t, adminOldT0Bal, uint64(704198))
-	shouldEQ(t, adminOldT1Bal, uint64(99999999195968))
+	uassert.Equal(t, adminOldT0Bal, uint64(704198))
+	uassert.Equal(t, adminOldT1Bal, uint64(99999999195968))
 
 	std.TestSetRealm(adminRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), 10000)
@@ -89,13 +91,13 @@ func TestSwapBuyNative(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, amount0, "10000")
-	shouldEQ(t, amount1, "-27123")
+	uassert.Equal(t, amount0, "10000")
+	uassert.Equal(t, amount1, "-27123")
 
 	adminNewT0Bal := balanceOfByRegisterCall(pool.token0Path, admin)
 	adminNewT1Bal := balanceOfByRegisterCall(pool.token1Path, admin)
-	shouldEQ(t, adminNewT0Bal, uint64(694198))         // - 10_000 // user sells 10_000
-	shouldEQ(t, adminNewT1Bal, uint64(99999999223091)) // gets WGNOT
+	uassert.Equal(t, adminNewT0Bal, uint64(694198))         // - 10_000 // user sells 10_000
+	uassert.Equal(t, adminNewT1Bal, uint64(99999999223091)) // gets WGNOT
 }
 
 func TestSwapSellNative(t *testing.T) {
@@ -103,8 +105,8 @@ func TestSwapSellNative(t *testing.T) {
 
 	adminOldT0Bal := balanceOfByRegisterCall(pool.token0Path, admin)
 	adminOldT1Bal := balanceOfByRegisterCall(pool.token1Path, admin)
-	shouldEQ(t, adminOldT0Bal, uint64(694198))         // foo
-	shouldEQ(t, adminOldT1Bal, uint64(99999999223091)) // wugnot
+	uassert.Equal(t, adminOldT0Bal, uint64(694198))         // foo
+	uassert.Equal(t, adminOldT1Bal, uint64(99999999223091)) // wugnot
 
 	std.TestSetRealm(adminRealm)
 	wugnot.Approve(a2u(consts.POOL_ADDR), 27123)
@@ -121,11 +123,11 @@ func TestSwapSellNative(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, amount0, "-3687") // pool sent
-	shouldEQ(t, amount1, "10000") // pool recv
+	uassert.Equal(t, amount0, "-3687") // pool sent
+	uassert.Equal(t, amount1, "10000") // pool recv
 
 	adminNewT0Bal := balanceOfByRegisterCall(pool.token0Path, admin)
 	adminNewT1Bal := balanceOfByRegisterCall(pool.token1Path, admin)
-	shouldEQ(t, adminNewT0Bal, uint64(697885))         // foo
-	shouldEQ(t, adminNewT1Bal, uint64(99999999213091)) // wugnot
+	uassert.Equal(t, adminNewT0Bal, uint64(697885))         // foo
+	uassert.Equal(t, adminNewT1Bal, uint64(99999999213091)) // wugnot
 }

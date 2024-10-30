@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
@@ -14,8 +16,6 @@ import (
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/r/gnoswap/v2/gns"
-
-	"gno.land/p/demo/testutils"
 )
 
 var (
@@ -36,7 +36,7 @@ func TestCreateFooBarPool(t *testing.T) {
 
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
-	shouldEQ(t, len(pools), 1)
+	uassert.Equal(t, len(pools), 1)
 	std.TestSkipHeights(1)
 }
 
@@ -53,7 +53,7 @@ func TestCreateBarBazPool(t *testing.T) {
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
 
-	shouldEQ(t, len(pools), 2)
+	uassert.Equal(t, len(pools), 2)
 	std.TestSkipHeights(1)
 }
 
@@ -75,8 +75,8 @@ func TestMintFooBarLiquidity(t *testing.T) {
 		test_liquidityExpectStr,
 		admin,
 	)
-	shouldEQ(t, amount0, "8040316")
-	shouldEQ(t, amount1, "2958015")
+	uassert.Equal(t, amount0, "8040316")
+	uassert.Equal(t, amount1, "2958015")
 	std.TestSkipHeights(1)
 }
 
@@ -98,8 +98,8 @@ func TestMintBarBazLiquidity(t *testing.T) {
 		test_liquidityExpectStr,
 		admin,
 	)
-	shouldEQ(t, amount0, "2958015")
-	shouldEQ(t, amount1, "8040316")
+	uassert.Equal(t, amount0, "2958015")
+	uassert.Equal(t, amount1, "8040316")
 	std.TestSkipHeights(1)
 }
 
@@ -117,12 +117,12 @@ func TestApiGetPools(t *testing.T) {
 		panic(err)
 	}
 
-	shouldEQ(t, response.Size(), 2)
+	uassert.Equal(t, response.Size(), 2)
 }
 
 // Test Getter/Setter for WithdrawalFee
 func TestGetWithdrawalFee(t *testing.T) {
-	shouldEQ(t, GetWithdrawalFee(), uint64(100))
+	uassert.Equal(t, GetWithdrawalFee(), uint64(100))
 }
 
 func TestSetWithdrawalFeeByAdminNoPermission(t *testing.T) {
@@ -148,15 +148,15 @@ func TestSetWithdrawalFeeByAdminFeeOutOfRange(t *testing.T) {
 }
 
 func TestSetWithdrawalFeeByAdmin(t *testing.T) {
-	shouldEQ(t, GetWithdrawalFee(), uint64(100))
+	uassert.Equal(t, GetWithdrawalFee(), uint64(100))
 	std.TestSetRealm(adminRealm)
 	SetWithdrawalFeeByAdmin(300)
-	shouldEQ(t, GetWithdrawalFee(), uint64(300))
+	uassert.Equal(t, GetWithdrawalFee(), uint64(300))
 }
 
 // Test Getter/Setter for PoolCreationFee
 func TestGetPoolCreationFee(t *testing.T) {
-	shouldEQ(t, GetPoolCreationFee(), uint64(100_000_000))
+	uassert.Equal(t, GetPoolCreationFee(), uint64(100_000_000))
 }
 
 func TestSetPoolCreationFeeByAdminNoPermission(t *testing.T) {
@@ -172,8 +172,8 @@ func TestSetPoolCreationFeeByAdminNoPermission(t *testing.T) {
 }
 
 func TestSetPoolCreationFeeByAdmin(t *testing.T) {
-	shouldEQ(t, GetPoolCreationFee(), uint64(100_000_000))
+	uassert.Equal(t, GetPoolCreationFee(), uint64(100_000_000))
 	std.TestSetRealm(adminRealm)
 	SetPoolCreationFeeByAdmin(200_000_000)
-	shouldEQ(t, GetPoolCreationFee(), uint64(200_000_000))
+	uassert.Equal(t, GetPoolCreationFee(), uint64(200_000_000))
 }

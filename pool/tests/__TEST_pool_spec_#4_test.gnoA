@@ -4,13 +4,14 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
 	"gno.land/r/gnoswap/v2/consts"
-
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v2/gns"
 	pl "gno.land/r/gnoswap/v2/pool"
 )
@@ -64,8 +65,8 @@ func TestSuccess_price_within_range_transfers_current_price_of_both_tokens(t *te
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
 
-	shouldEQ(t, barBalance, uint64(9996+317))
-	shouldEQ(t, fooBalance, uint64(1000+32))
+	uassert.Equal(t, barBalance, uint64(9996+317))
+	uassert.Equal(t, fooBalance, uint64(1000+32))
 }
 
 func TestSuccess_initializes_lower_tick(t *testing.T) {
@@ -80,7 +81,7 @@ func TestSuccess_initializes_lower_tick(t *testing.T) {
 	pool := GetPool(token0Path, barPath, 3000)
 	tickSpacing := pool.tickSpacing
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(minTick + tickSpacing)
-	shouldEQ(t, liquidityGross.ToString(), "100")
+	uassert.Equal(t, liquidityGross.ToString(), "100")
 }
 
 func TestSuccess_initializes_upper_tick(t *testing.T) {
@@ -98,7 +99,7 @@ func TestSuccess_initializes_upper_tick(t *testing.T) {
 	tickSpacing := pool.tickSpacing
 
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(maxTick - tickSpacing)
-	shouldEQ(t, liquidityGross.ToString(), "100")
+	uassert.Equal(t, liquidityGross.ToString(), "100")
 	AfterTest(t)
 }
 
@@ -128,8 +129,8 @@ func TestSuccess_works_for_min_max_tick(t *testing.T) {
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
 
-	shouldEQ(t, barBalance, uint64(9996+31623))
-	shouldEQ(t, fooBalance, uint64(1000+3163))
+	uassert.Equal(t, barBalance, uint64(9996+31623))
+	uassert.Equal(t, fooBalance, uint64(1000+3163))
 	AfterTest(t)
 }
 
@@ -160,8 +161,8 @@ func TestSuccess_removing_works(t *testing.T) {
 
 	amount0, amount1 := pl.Collect(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick+tickSpacing, maxTick-tickSpacing, consts.MAX_UINT128, consts.MAX_UINT128)
 
-	shouldEQ(t, amount0, "316")
-	shouldEQ(t, amount1, "31")
+	uassert.Equal(t, amount0, "316")
+	uassert.Equal(t, amount1, "31")
 }
 
 func gnsBalance(addr std.Address) uint64 {

@@ -3,7 +3,9 @@ package pool
 import (
 	"testing"
 
+	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
+
 	u256 "gno.land/p/gnoswap/uint256"
 
 	plp "gno.land/p/gnoswap/pool"
@@ -26,8 +28,8 @@ func TestTickInit_1(t *testing.T) {
 	t.Run("is flipped by #flipTick", func(t *testing.T) {
 		TickBitmapFlipTick_Helper(int32(1), tickSpacing)
 		nextTick_res, bool_res := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(1), tickSpacing, true)
-		shouldEQ(t, nextTick_res, int32(1))
-		shouldEQ(t, bool_res, true)
+		uassert.Equal(t, nextTick_res, int32(1))
+		uassert.Equal(t, bool_res, true)
 	})
 }
 
@@ -37,7 +39,7 @@ func TestTickInit_2(t *testing.T) {
 		TickBitmapFlipTick_Helper(int32(1), tickSpacing)
 		TickBitmapFlipTick_Helper(int32(1), tickSpacing)
 		nextTick_res, bool_res := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(1), tickSpacing, true)
-		shouldEQ(t, bool_res, false)
+		uassert.Equal(t, bool_res, false)
 	})
 }
 
@@ -46,7 +48,7 @@ func TestTickInit_3(t *testing.T) {
 	t.Run("is not changed by another flip to a different tick", func(t *testing.T) {
 		TickBitmapFlipTick_Helper(int32(2), tickSpacing)
 		nextTick_res, bool_res := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(1), tickSpacing, true)
-		shouldEQ(t, bool_res, false)
+		uassert.Equal(t, bool_res, false)
 	})
 }
 
@@ -56,7 +58,7 @@ func TestTickInit_4(t *testing.T) {
 		TickBitmapFlipTick_Helper(int32(1)+int32(256), tickSpacing)
 		nextTick_res_1, bool_res_1 := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(257), tickSpacing, true)
 		nextTick_res_2, bool_res_2 := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(1), tickSpacing, true)
-		shouldEQ(t, bool_res_2, false)
+		uassert.Equal(t, bool_res_2, false)
 	})
 }
 
@@ -65,27 +67,27 @@ func TestTickFlip_1(t *testing.T) {
 	t.Run("flips only the specified tick", func(t *testing.T) {
 		TickBitmapFlipTick_Helper(int32(-230), tickSpacing)
 		nextTick_res_1, bool_res_1 := IsInitialized_Helper(int32(-230), tickSpacing)
-		shouldEQ(t, bool_res_1, true)
+		uassert.Equal(t, bool_res_1, true)
 		nextTick_res_2, bool_res_2 := IsInitialized_Helper(int32(-231), tickSpacing)
-		shouldEQ(t, bool_res_2, false)
+		uassert.Equal(t, bool_res_2, false)
 		nextTick_res_3, bool_res_3 := IsInitialized_Helper(int32(-229), tickSpacing)
-		shouldEQ(t, bool_res_3, false)
+		uassert.Equal(t, bool_res_3, false)
 		nextTick_res_4, bool_res_4 := IsInitialized_Helper(int32(-230+256), tickSpacing)
-		shouldEQ(t, bool_res_4, false)
+		uassert.Equal(t, bool_res_4, false)
 		nextTick_res_5, bool_res_5 := IsInitialized_Helper(int32(-230-256), tickSpacing)
-		shouldEQ(t, bool_res_5, false)
+		uassert.Equal(t, bool_res_5, false)
 
 		TickBitmapFlipTick_Helper(int32(-230), tickSpacing)
 		nextTick_res_6, bool_res_6 := IsInitialized_Helper(int32(-230), tickSpacing)
-		shouldEQ(t, bool_res_6, false)
+		uassert.Equal(t, bool_res_6, false)
 		nextTick_res_7, bool_res_7 := IsInitialized_Helper(int32(-231), tickSpacing)
-		shouldEQ(t, bool_res_7, false)
+		uassert.Equal(t, bool_res_7, false)
 		nextTick_res_8, bool_res_8 := IsInitialized_Helper(int32(-229), tickSpacing)
-		shouldEQ(t, bool_res_8, false)
+		uassert.Equal(t, bool_res_8, false)
 		nextTick_res_9, bool_res_9 := IsInitialized_Helper(int32(-230+256), tickSpacing)
-		shouldEQ(t, bool_res_9, false)
+		uassert.Equal(t, bool_res_9, false)
 		nextTick_res_10, bool_res_10 := IsInitialized_Helper(int32(-230-256), tickSpacing)
-		shouldEQ(t, bool_res_10, false)
+		uassert.Equal(t, bool_res_10, false)
 	})
 }
 
@@ -100,9 +102,9 @@ func TestTickFlip_2(t *testing.T) {
 		TickBitmapFlipTick_Helper(int32(-229), tickSpacing)
 		TickBitmapFlipTick_Helper(int32(-259), tickSpacing)
 		nextTick_res_1, bool_res_1 := IsInitialized_Helper(int32(-259), tickSpacing)
-		shouldEQ(t, bool_res_1, true)
+		uassert.Equal(t, bool_res_1, true)
 		nextTick_res_2, bool_res_2 := IsInitialized_Helper(int32(-229), tickSpacing)
-		shouldEQ(t, bool_res_2, false)
+		uassert.Equal(t, bool_res_2, false)
 
 	})
 }
@@ -120,8 +122,8 @@ func TestTicknextInitializedTickWithinOneWord_1(t *testing.T) {
 	TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 	t.Run("returns tick to right if at initialized tick", func(t *testing.T) {
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(78), tickSpacing, false)
-		shouldEQ(t, next, int32(84))
-		shouldEQ(t, initialized, true)
+		uassert.Equal(t, next, int32(84))
+		uassert.Equal(t, initialized, true)
 	})
 }
 
@@ -138,8 +140,8 @@ func TestTicknextInitializedTickWithinOneWord_2(t *testing.T) {
 	TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 	t.Run("returns tick to right if at initialized tick", func(t *testing.T) {
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(-55), tickSpacing, false)
-		shouldEQ(t, next, int32(-4))
-		shouldEQ(t, initialized, true)
+		uassert.Equal(t, next, int32(-4))
+		uassert.Equal(t, initialized, true)
 	})
 }
 
@@ -156,8 +158,8 @@ func TestTicknextInitializedTickWithinOneWord_3(t *testing.T) {
 	TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 	t.Run("returns the tick directly to the right", func(t *testing.T) {
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(77), tickSpacing, false)
-		shouldEQ(t, next, int32(78))
-		shouldEQ(t, initialized, true)
+		uassert.Equal(t, next, int32(78))
+		uassert.Equal(t, initialized, true)
 	})
 }
 
@@ -174,8 +176,8 @@ func TestTicknextInitializedTickWithinOneWord_4(t *testing.T) {
 	TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 	t.Run("returns the tick directly to the right", func(t *testing.T) {
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(-56), tickSpacing, false)
-		shouldEQ(t, next, int32(-55))
-		shouldEQ(t, initialized, true)
+		uassert.Equal(t, next, int32(-55))
+		uassert.Equal(t, initialized, true)
 	})
 }
 
@@ -192,8 +194,8 @@ func TestTicknextInitializedTickWithinOneWord_5(t *testing.T) {
 	TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 	t.Run("skips half word", func(t *testing.T) {
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(255), tickSpacing, false)
-		shouldEQ(t, next, int32(511))
-		shouldEQ(t, initialized, false)
+		uassert.Equal(t, next, int32(511))
+		uassert.Equal(t, initialized, false)
 	})
 }
 
@@ -210,8 +212,8 @@ func TestTicknextInitializedTickWithinOneWord_6(t *testing.T) {
 	TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 	t.Run("skips half word", func(t *testing.T) {
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(383), tickSpacing, false)
-		shouldEQ(t, next, int32(511))
-		shouldEQ(t, initialized, false)
+		uassert.Equal(t, next, int32(511))
+		uassert.Equal(t, initialized, false)
 	})
 }
 
@@ -228,8 +230,8 @@ func TestTickLteEqTrue_1(t *testing.T) {
 	TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 	t.Run("returns same tick if initialized", func(t *testing.T) {
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(78), tickSpacing, true)
-		shouldEQ(t, next, int32(78))
-		shouldEQ(t, initialized, true)
+		uassert.Equal(t, next, int32(78))
+		uassert.Equal(t, initialized, true)
 	})
 }
 
@@ -246,8 +248,8 @@ func TestTickLteEqTrue_2(t *testing.T) {
 	TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 	t.Run("returns tick directly to the left of input tick if not initialized", func(t *testing.T) {
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(79), tickSpacing, true)
-		shouldEQ(t, next, int32(78))
-		shouldEQ(t, initialized, true)
+		uassert.Equal(t, next, int32(78))
+		uassert.Equal(t, initialized, true)
 	})
 }
 
@@ -264,8 +266,8 @@ func TestTickLteEqTrue_3(t *testing.T) {
 	TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 	t.Run("will not exceed the word boundary", func(t *testing.T) {
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(258), tickSpacing, true)
-		shouldEQ(t, next, int32(256))
-		shouldEQ(t, initialized, false)
+		uassert.Equal(t, next, int32(256))
+		uassert.Equal(t, initialized, false)
 	})
 }
 
@@ -282,8 +284,8 @@ func TestTickLteEqTrue_4(t *testing.T) {
 	TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 	t.Run("at the word boundary", func(t *testing.T) {
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(256), tickSpacing, true)
-		shouldEQ(t, next, int32(256))
-		shouldEQ(t, initialized, false)
+		uassert.Equal(t, next, int32(256))
+		uassert.Equal(t, initialized, false)
 	})
 }
 
@@ -300,8 +302,8 @@ func TestTickLteEqTrue_5_1(t *testing.T) {
 	TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 	t.Run("word boundary less 1 (next initialized tick in next word", func(t *testing.T) {
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(72), tickSpacing, true)
-		shouldEQ(t, next, int32(70))
-		shouldEQ(t, initialized, true)
+		uassert.Equal(t, next, int32(70))
+		uassert.Equal(t, initialized, true)
 	})
 }
 
@@ -318,8 +320,8 @@ func TestTickLteEqTrue_5_2(t *testing.T) {
 	TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 	t.Run("word boundary", func(t *testing.T) {
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(-257), tickSpacing, true)
-		shouldEQ(t, next, int32(-512))
-		shouldEQ(t, initialized, false)
+		uassert.Equal(t, next, int32(-512))
+		uassert.Equal(t, initialized, false)
 	})
 }
 
@@ -336,8 +338,8 @@ func TestTickLteEqTrue_6(t *testing.T) {
 	TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 	t.Run("entire empty word", func(t *testing.T) {
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(1023), tickSpacing, true)
-		shouldEQ(t, next, int32(768))
-		shouldEQ(t, initialized, false)
+		uassert.Equal(t, next, int32(768))
+		uassert.Equal(t, initialized, false)
 	})
 }
 
@@ -355,8 +357,8 @@ func TestTickLteEqTrue_7(t *testing.T) {
 	t.Run("boundary is initialized", func(t *testing.T) {
 		TickBitmapFlipTick_Helper(int32(329), tickSpacing)
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(456), tickSpacing, true)
-		shouldEQ(t, next, int32(329))
-		shouldEQ(t, initialized, true)
+		uassert.Equal(t, next, int32(329))
+		uassert.Equal(t, initialized, true)
 	})
 }
 
@@ -364,8 +366,8 @@ func TestTickNextInitializedTickWithinOneWordRight(t *testing.T) {
 	t.Run("returns the next words initialized tick if on the right boundary_255", func(t *testing.T) {
 		BeforeEachTest(t)
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(255), tickSpacing, false)
-		shouldEQ(t, next, int32(511))
-		shouldEQ(t, initialized, false)
+		uassert.Equal(t, next, int32(511))
+		uassert.Equal(t, initialized, false)
 	})
 
 	t.Run("returns the next words initialized tick if on the right boundary_-257", func(t *testing.T) {
@@ -381,8 +383,8 @@ func TestTickNextInitializedTickWithinOneWordRight(t *testing.T) {
 		TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(-257), tickSpacing, false)
-		shouldEQ(t, next, int32(-200))
-		shouldEQ(t, initialized, true)
+		uassert.Equal(t, next, int32(-200))
+		uassert.Equal(t, initialized, true)
 	})
 }
 
@@ -402,8 +404,8 @@ func TestTickNextInitializedTickWithinOneWordNextword(t *testing.T) {
 		TickBitmapFlipTick_Helper(int32(340), tickSpacing)
 
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(328), tickSpacing, false)
-		shouldEQ(t, next, int32(340))
-		shouldEQ(t, initialized, true)
+		uassert.Equal(t, next, int32(340))
+		uassert.Equal(t, initialized, true)
 	})
 }
 
@@ -421,8 +423,8 @@ func TestTickNextInitializedTickWithinOneWordBoundary(t *testing.T) {
 		TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(508), tickSpacing, false)
-		shouldEQ(t, next, int32(511))
-		shouldEQ(t, initialized, false)
+		uassert.Equal(t, next, int32(511))
+		uassert.Equal(t, initialized, false)
 	})
 }
 
@@ -440,8 +442,8 @@ func TestTickNextInitializedTickWithinOneWordSkipEntire(t *testing.T) {
 		TickBitmapFlipTick_Helper(int32(535), tickSpacing)
 
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(255), tickSpacing, false)
-		shouldEQ(t, next, int32(511))
-		shouldEQ(t, initialized, false)
+		uassert.Equal(t, next, int32(511))
+		uassert.Equal(t, initialized, false)
 	})
 }
 
@@ -450,8 +452,8 @@ func TestTickNextInitializedTickWithinOneWordHalfWayEmptyWord(t *testing.T) {
 		BeforeEachTest(t)
 
 		next, initialized := TickBitmapNextInitializedTickWithInOneWord_Helper(int32(900), tickSpacing, true)
-		shouldEQ(t, next, int32(768))
-		shouldEQ(t, initialized, false)
+		uassert.Equal(t, next, int32(768))
+		uassert.Equal(t, initialized, false)
 	})
 }
 

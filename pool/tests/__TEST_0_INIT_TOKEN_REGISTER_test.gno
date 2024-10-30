@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/onbloc/foo"
 
@@ -146,7 +147,7 @@ func init() {
 }
 
 func TestGetRegisteredTokens(t *testing.T) {
-	shouldEQ(t, len(GetRegisteredTokens()), 7)
+	uassert.Equal(t, len(GetRegisteredTokens()), 7)
 }
 
 func TestRegisterGRC20Interface(t *testing.T) {
@@ -167,11 +168,11 @@ func TestUnregisterGRC20Interface(t *testing.T) {
 		},
 	)
 
-	shouldEQ(t, len(GetRegisteredTokens()), 7)
+	uassert.Equal(t, len(GetRegisteredTokens()), 7)
 
 	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
 	UnregisterGRC20Interface("gno.land/r/onbloc/bar")
-	shouldEQ(t, len(GetRegisteredTokens()), 6)
+	uassert.Equal(t, len(GetRegisteredTokens()), 6)
 
 	// re-register to avoid panic in other tests
 	RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})

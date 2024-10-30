@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
@@ -62,8 +64,8 @@ func TestSuccess_transfers_token1_only(t *testing.T) {
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
 
-	shouldEQ(t, barBalance, uint64(9996))
-	shouldEQ(t, fooBalance, uint64(1000+2162))
+	uassert.Equal(t, barBalance, uint64(9996))
+	uassert.Equal(t, fooBalance, uint64(1000+2162))
 
 	AfterTest(t)
 }
@@ -94,8 +96,8 @@ func TestSuccess_min_tick_with_max_leverage(t *testing.T) {
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
 
-	shouldEQ(t, barBalance, uint64(9996)) // got 19992, expected 9996
-	shouldEQ(t, fooBalance, uint64(1000+828011520))
+	uassert.Equal(t, barBalance, uint64(9996)) // got 19992, expected 9996
+	uassert.Equal(t, fooBalance, uint64(1000+828011520))
 
 	AfterTest(t)
 }
@@ -126,8 +128,8 @@ func TestSuccess_work_for_min_tick(t *testing.T) {
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
 
-	shouldEQ(t, barBalance, uint64(9996))
-	shouldEQ(t, fooBalance, uint64(1000+3161))
+	uassert.Equal(t, barBalance, uint64(9996))
+	uassert.Equal(t, fooBalance, uint64(1000+3161))
 
 	AfterTest(t)
 }
@@ -156,8 +158,8 @@ func TestSuccess_removing_works(t *testing.T) {
 	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -46080, -46020, "10000", admin)
 	amount0, amount1 := pl.Burn(token0Path, barPath, 3000, -46080, -46020, "10000")
 
-	shouldEQ(t, amount0, "0")
-	shouldEQ(t, amount1, "3")
+	uassert.Equal(t, amount0, "0")
+	uassert.Equal(t, amount1, "3")
 }
 
 func gnsBalance(addr std.Address) uint64 {
