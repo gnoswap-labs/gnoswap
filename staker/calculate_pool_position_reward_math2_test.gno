@@ -99,7 +99,6 @@ func (tf *TestFixture) setup() {
 }
 
 func TestCalculator_New(t *testing.T) {
-
 	tf := newTestFixture(t)
 
 	tests := []struct {
@@ -128,7 +127,6 @@ func TestCalculator_New(t *testing.T) {
 }
 
 func TestCalculator_CalculateDistribution(t *testing.T) {
-
 	tests := []struct {
 		name       string
 		external   externalRewards
@@ -164,7 +162,6 @@ func TestCalculator_CalculateDistribution(t *testing.T) {
 }
 
 func TestCalculator_CalculateRewardPeriod(t *testing.T) {
-
 	tests := []struct {
 		name        string
 		blockAmount *u256.Uint
@@ -205,7 +202,6 @@ func TestCalculator_CalculateRewardPeriod(t *testing.T) {
 }
 
 func TestCalculator_AccumulateRewards(t *testing.T) {
-
 	tests := []struct {
 		name    string
 		periods []RewardPeriod
@@ -265,7 +261,6 @@ func TestCalculator_AccumulateRewards(t *testing.T) {
 }
 
 func TestCalculator_CalculateTimePeriods(t *testing.T) {
-
 	warmUp = map[int64]int64{
 		50:  150,
 		70:  300,
@@ -787,4 +782,193 @@ func verifyWarmUpAmount(t *testing.T, expected, actual warmUpAmount) {
 	uassert.Equal(t, expected.give70, actual.give70)
 	uassert.Equal(t, expected.left70, actual.left70)
 	uassert.Equal(t, expected.full100, actual.full100)
+}
+
+// technically this test is same as `TestCalculator_ComputeRewards` test. 
+func TestRewardMathComputeExternalRewardAmount(t *testing.T) {
+	const million = new(u256.Uint).SetUint64(1000000)
+	const zero = new(u256.Uint).SetUint64(0)
+
+	type wantData struct {
+		full uint64
+		give uint64
+	}
+
+	type testCase struct {
+		name        string
+		setup       func(*TestFixture)
+		want        wantData
+		expectPanic bool
+	}
+
+	tests := []testCase{
+		{
+			name: "panics when token not found",
+			setup: func(tf *TestFixture) {
+				tf.setup()
+				delete(positionExternal, tf.TokenId)
+			},
+			want:        wantData{},
+			expectPanic: true,
+		},
+		{
+			name: "panics when incentive not found",
+			setup: func(tf *TestFixture) {
+				tf.setup()
+				delete(positionExternal[tf.TokenId], tf.IncentiveId)
+			},
+			want:        wantData{},
+			expectPanic: true,
+		},
+		{
+			name: "success - single period 30%",
+			setup: func(tf *TestFixture) {
+				tf.setup()
+				baseHeight := int64(1000)
+
+				tf.BlockHeight = baseHeight
+				positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
+
+				// Configure durations
+				tf.StakeTime = time.Now().Add(-10 * time.Minute).Unix()
+				deposits[tf.TokenId] = Deposit{
+					stakeTimestamp: tf.StakeTime,
+					stakeHeight:    baseHeight - 100,
+				}
+
+				external := positionExternal[tf.TokenId][tf.IncentiveId]
+				external.tokenAmountX96 = million
+				positionExternal[tf.TokenId][tf.IncentiveId] = external
+
+				positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
+			},
+			want: wantData{
+				full: 1000000,
+				give: 300000, // 30% of full amount
+			},
+			expectPanic: false,
+		},
+		{
+			name: "success - multiple periods",
+			setup: func(tf *TestFixture) {
+				tf.setup()
+				baseHeight := int64(2000)
+
+				tf.BlockHeight = baseHeight
+				positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 400
+
+				tf.StakeTime = time.Now().Add(-24 * time.Hour).Unix()
+				deposits[tf.TokenId] = Deposit{
+					stakeTimestamp: tf.StakeTime,
+					stakeHeight:    baseHeight - 400,
+				}
+
+				external := positionExternal[tf.TokenId][tf.IncentiveId]
+				external.tokenAmountX96 = million
+				positionExternal[tf.TokenId][tf.IncentiveId] = external
+
+				positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
+			},
+			want: wantData{
+				full: 2999878,
+				give: 1499950,
+			},
+			expectPanic: false,
+		},
+		{
+			name: "success - max reward period",
+			setup: func(tf *TestFixture) {
+				tf.setup()
+				baseHeight := int64(10000)
+
+				tf.BlockHeight = baseHeight
+				positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 1000
+
+				tf.StakeTime = time.Now().Add(-100 * 24 * time.Hour).Unix()
+				deposits[tf.TokenId] = Deposit{
+					stakeTimestamp: tf.StakeTime,
+					stakeHeight:    baseHeight - 1000,
+				}
+
+				external := positionExternal[tf.TokenId][tf.IncentiveId]
+				external.tokenAmountX96 = million
+				positionExternal[tf.TokenId][tf.IncentiveId] = external
+
+				positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
+			},
+			want: wantData{
+				full: 3999609,
+				give: 2499761,
+			},
+			expectPanic: false,
+		},
+		{
+			name: "success - zero rewards",
+			setup: func(tf *TestFixture) {
+				tf.setup()
+				baseHeight := int64(1000)
+
+				tf.BlockHeight = baseHeight
+				positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
+
+				external := positionExternal[tf.TokenId][tf.IncentiveId]
+				external.tokenAmountX96 = million
+				positionExternal[tf.TokenId][tf.IncentiveId] = external
+
+				positionLastExternal[tf.TokenId][tf.IncentiveId] = million
+			},
+			want: wantData{
+				full: 0,
+				give: 0,
+			},
+			expectPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tf := newTestFixture(t)
+			tt.setup(tf)
+
+			if tt.expectPanic {
+				panicked := testPanic(t, func() {
+					rewardMathComputeExternalRewardAmount(tf.TokenId, tf.IncentiveId)
+				})
+				uassert.True(t, panicked)
+
+				calculator := NewCalculator(tf.TokenId, tf.IncentiveId)
+				calculator.state.CurrentHeight = tf.BlockHeight
+				_, _, err := calculator.ComputeRewards()
+				if err == nil {
+					t.Fatalf("ComputeRewards returned no error")
+				}
+				return
+			}
+
+			oldFull, oldGive := rewardMathComputeExternalRewardAmount(tf.TokenId, tf.IncentiveId)
+
+			calculator := NewCalculator(tf.TokenId, tf.IncentiveId)
+			calculator.state.CurrentHeight = tf.BlockHeight
+
+			newFull, newGive, err := calculator.ComputeRewards()
+			if err != nil {
+				t.Fatalf("ComputeRewards returned unexpected error: %v", err)
+			}
+
+			uassert.Equal(t, newFull, tt.want.full)
+			uassert.Equal(t, newGive, tt.want.give)
+		})
+	}
+}
+
+func testPanic(t *testing.T, f func()) (panicked bool) {
+	t.Helper()
+
+	defer func() {
+		if r := recover(); r != nil {
+			panicked = true
+		}
+	}()
+	f()
+	return true
 }

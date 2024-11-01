@@ -116,9 +116,9 @@ func (c *Calculator) calculateTimePeriods() []TimeSpan {
 // that represent actual block height ranges for each reward rate period.
 //
 // This function ensures:
-//  - Periods don't exceed current height
-//  - Periods are continuous
-//  - Periods maintain proper order of reward rates
+//   - Periods don't exceed current height
+//   - Periods are continuous
+//   - Periods maintain proper order of reward rates
 func (c *Calculator) computeTimeSpans(startHeight uint64, periodsDef []PeriodDefinition) []TimeSpan {
 	currentHeight := uint64(c.state.CurrentHeight)
 	periods := make([]TimeSpan, 0, len(periodsDef))
@@ -155,9 +155,9 @@ func (c *Calculator) computeTimeSpans(startHeight uint64, periodsDef []PeriodDef
 //  5. Returns the total rewards and immediately claimable amount
 //
 // Returns:
-//  - full: total rewards accumulated
-//  - give: immediately claimable rewards
-//  - error: if position or incentive not found
+//   - full: total rewards accumulated
+//   - give: immediately claimable rewards
+//   - error: if position or incentive not found
 func (c *Calculator) calculatePeriodEnd(startHeight uint64, endOffset uint64, currentHeight uint64) uint64 {
 	if endOffset == 0 {
 		return currentHeight
@@ -200,9 +200,9 @@ func (c *Calculator) ComputeRewards() (uint64, uint64, error) {
 // the actual reward amount for each period.
 //
 // For each time span, it:
-//  - Calculates rewards per block
-//  - Multiplies by the period duration
-//  - Creates a [RewardPeriod] instance with both timing and reward information
+//   - Calculates rewards per block
+//   - Multiplies by the period duration
+//   - Creates a [RewardPeriod] instance with both timing and reward information
 func (c *Calculator) calculateRewardPeriods(periods []TimeSpan) []RewardPeriod {
 	rewardPeriods := make([]RewardPeriod, 0, len(periods))
 
@@ -255,9 +255,9 @@ func calculatePeriodReward(blockAmount *u256.Uint, timeSpan TimeSpan) RewardPeri
 // accumulateRewards aggregates rewards from multiple periods into a single warmUpAmount.
 //
 // For each period, it:
-//  - Adds the full amount to the appropriate total (full30, full50, etc.)
-//  - Calculates the immediately claimable amount based on the ratio
-//  - Tracks the remaining locked amount
+//   - Adds the full amount to the appropriate total (full30, full50, etc.)
+//   - Calculates the immediately claimable amount based on the ratio
+//   - Tracks the remaining locked amount
 //
 // This creates a complete picture of available and locked rewards across all periods.
 func accumulateRewards(periods []RewardPeriod) warmUpAmount {
