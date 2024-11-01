@@ -7,7 +7,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	en "gno.land/r/gnoswap/v2/emission"
-	gs "gno.land/r/gnoswap/v2/gov/staker"
 
 	"gno.land/r/gnoswap/v2/common"
 
@@ -66,11 +65,8 @@ func Vote(proposalId uint64, yes bool) string {
 		panic(ufmt.Sprintf("user %s has already voted on proposal %d", voter.String(), proposalId))
 	}
 
-	weight := gs.GetDelegatedCumulative(
-		voter,
-		proposal.ExecutionState.CreatedAt-config.VotingWeightSmoothingDuration,
-	)
-	if weight == 0 {
+	weight, exist := proposal.PossibleAddressWithWeight[voter]
+	if !exist || weight == 0 {
 		panic(ufmt.Sprintf("no average delegated found for voter %s", voter.String()))
 	}
 

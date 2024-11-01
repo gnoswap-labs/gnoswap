@@ -96,7 +96,7 @@ func GetMaxVotingWeight(timestamp uint64) uint64 {
 }
 
 // GetPossibleVotingAddressWithWeight returns the max voting weight + and possible voting address with weight
-func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, string) {
+func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, map[std.Address]uint64) {
 	en.MintAndDistributeGns()
 	calculateReward()
 
@@ -119,6 +119,37 @@ func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, string) {
 		}
 
 		addressWithWeight[to] = toWeight
+	}
+
+	return totalWeight, addressWithWeight
+}
+
+// GetPossibleVotingAddressWithWeightJSON returns the max voting weight + and possible voting address with weight(string json format)
+func GetPossibleVotingAddressWithWeightJSON(endTimestamp uint64) (uint64, string) {
+	en.MintAndDistributeGns()
+	calculateReward()
+
+	if endTimestamp > uint64(time.Now().Unix()) {
+		panic("FUTURE")
+	}
+
+	totalWeight := uint64(0)
+	addressWithWeight := make(map[std.Address]uint64)
+
+	for to, history := range delegationModifiedHistory {
+		println("to", to.String())
+		toWeight := uint64(0)
+
+		for _, record := range history {
+			if record.delegatedTimestamp > endTimestamp {
+				continue
+			}
+			totalWeight += record.delegatedAmount - record.undelegatedAmount
+			toWeight += record.delegatedAmount - record.undelegatedAmount
+		}
+
+		addressWithWeight[to] = toWeight
+		println("toWeight", toWeight)
 	}
 
 	possibleObj := json.ObjectNode("", nil)

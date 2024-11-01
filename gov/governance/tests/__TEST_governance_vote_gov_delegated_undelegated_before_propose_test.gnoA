@@ -149,6 +149,8 @@ func testProposeText(t *testing.T) {
 			// 2 delegation happend
 			// - 123 block = 1_000_000
 			// - 124 block = 2_000_000
+			// 1 undelegate happend
+			// - 126 block = 1_100_000
 		})
 	})
 }
@@ -162,7 +164,7 @@ func testVote(t *testing.T) {
 		Vote(proposalId, true)
 
 		proposal := proposals[proposalId]
-		uassert.Equal(t, "2000000", proposal.Yea.ToString()) // 2_000_000
+		uassert.Equal(t, "900000", proposal.Yea.ToString()) // 900000
 		uassert.Equal(t, "0", proposal.Nay.ToString())
 	})
 }

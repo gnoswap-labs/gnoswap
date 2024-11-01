@@ -8,6 +8,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	en "gno.land/r/gnoswap/v2/emission"
+	gs "gno.land/r/gnoswap/v2/gov/staker"
 
 	"gno.land/r/gnoswap/v2/gov/xgns"
 
@@ -42,6 +43,8 @@ func ProposeText(
 	}
 
 	now := uint64(time.Now().Unix())
+	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
+
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: "TEXT",
@@ -50,12 +53,14 @@ func ProposeText(
 			CreatedAt: now,
 			Upcoming:  true,
 		},
-		Yea:           u256.Zero(),
-		Nay:           u256.Zero(),
-		ConfigVersion: uint64(len(configVersions)), // use latest config version
-		QuorumAmount:  xgns.VotingSupply() * config.Quorum / 100,
-		Title:         title,
-		Description:   description,
+		Yea:                       u256.Zero(),
+		Nay:                       u256.Zero(),
+		MaxVotingWeight:           u256.NewUint(votingMax),
+		PossibleAddressWithWeight: possibleAddressWithWeight,
+		ConfigVersion:             uint64(len(configVersions)), // use latest config version
+		QuorumAmount:              xgns.VotingSupply() * config.Quorum / 100,
+		Title:                     title,
+		Description:               description,
 	}
 
 	proposalId++
@@ -98,6 +103,8 @@ func ProposeCommunityPoolSpend(
 	}
 
 	now := uint64(time.Now().Unix())
+	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
+
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: "COMMUNITY_POOL_SPEND",
@@ -106,12 +113,14 @@ func ProposeCommunityPoolSpend(
 			CreatedAt: now,
 			Upcoming:  true,
 		},
-		Yea:           u256.Zero(),
-		Nay:           u256.Zero(),
-		ConfigVersion: uint64(len(configVersions)),
-		QuorumAmount:  xgns.VotingSupply() * config.Quorum / 100,
-		Title:         title,
-		Description:   description,
+		Yea:                       u256.Zero(),
+		Nay:                       u256.Zero(),
+		MaxVotingWeight:           u256.NewUint(votingMax),
+		PossibleAddressWithWeight: possibleAddressWithWeight,
+		ConfigVersion:             uint64(len(configVersions)),
+		QuorumAmount:              xgns.VotingSupply() * config.Quorum / 100,
+		Title:                     title,
+		Description:               description,
 		CommunityPoolSpend: CommunityPoolSpendInfo{
 			To:        to,
 			TokenPath: tokenPath,
@@ -186,6 +195,8 @@ func ProposeParameterChange(
 	}
 
 	now := uint64(time.Now().Unix())
+	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
+
 	proposal := ProposalInfo{
 		Proposer:     proposer,
 		ProposalType: "PARAMETER_CHANGE",
@@ -194,12 +205,14 @@ func ProposeParameterChange(
 			CreatedAt: now,
 			Upcoming:  true,
 		},
-		Yea:           u256.Zero(),
-		Nay:           u256.Zero(),
-		ConfigVersion: uint64(len(configVersions)),
-		QuorumAmount:  xgns.VotingSupply() * config.Quorum / 100,
-		Title:         title,
-		Description:   description,
+		Yea:                       u256.Zero(),
+		Nay:                       u256.Zero(),
+		MaxVotingWeight:           u256.NewUint(votingMax),
+		PossibleAddressWithWeight: possibleAddressWithWeight,
+		ConfigVersion:             uint64(len(configVersions)),
+		QuorumAmount:              xgns.VotingSupply() * config.Quorum / 100,
+		Title:                     title,
+		Description:               description,
 		Execution: ExecutionInfo{
 			Num:  numToExecute,
 			Msgs: splitGov,

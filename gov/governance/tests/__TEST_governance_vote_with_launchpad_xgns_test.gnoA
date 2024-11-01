@@ -182,9 +182,9 @@ func testVote(t *testing.T) {
 
 	t.Run("gov/staker api get possible voting address with weight", func(t *testing.T) {
 		proposal := proposals[uint64(1)]
-		maxVoting, addrsWithVooting := gs.GetPossibleVotingAddressWithWeight(proposal.ExecutionState.CreatedAt)
+		maxVoting, addrsWithVooting := gs.GetPossibleVotingAddressWithWeightJSON(proposal.ExecutionState.CreatedAt)
 
 		uassert.Equal(t, maxVoting, uint64(2_000_000)) // 2000000
-		uassert.Equal(t, addrsWithVooting, `{"height":"150","now":"1234567944","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","weight":"2000000"}]`)
+		uassert.Equal(t, addrsWithVooting, `{"height":"150","now":"1234567944","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","weight":"2000000"}]}`)
 	})
 }
