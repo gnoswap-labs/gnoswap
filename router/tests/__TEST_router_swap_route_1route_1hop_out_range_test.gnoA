@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
@@ -34,7 +35,7 @@ func TestCreatePool(t *testing.T) {
 		panic(err)
 	}
 
-	shouldEQ(t, response.Size(), 1)
+	uassert.Equal(t, response.Size(), 1)
 }
 
 func TestPositionMint(t *testing.T) {
@@ -46,13 +47,13 @@ func TestPositionMint(t *testing.T) {
 	// Mint
 	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, liquidity, "637408")
-	shouldEQ(t, amount0, "36790")
-	shouldEQ(t, amount1, "100000")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, liquidity, "637408")
+	uassert.Equal(t, amount0, "36790")
+	uassert.Equal(t, amount1, "100000")
 
 	// check pool liquidity
-	shouldEQ(t, pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"), "637408")
+	uassert.Equal(t, pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"), "637408")
 }
 
 func TestDrySwapRouteBazBarExactIn(t *testing.T) {
@@ -67,7 +68,7 @@ func TestDrySwapRouteBazBarExactIn(t *testing.T) {
 		"100", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, "367")
+	uassert.Equal(t, dryResult, "367")
 }
 
 func TestSwapRouteBazBarExactIn(t *testing.T) {
