@@ -74,3 +74,66 @@ func GetModifiedDelegationHistoryByAddress(addr std.Address) string {
 
 	return marshal(historyObj)
 }
+
+func GetMaxVotingWeight(timestamp uint64) uint64 {
+	if timestamp > uint64(time.Now().Unix()) {
+		panic("FUTURE")
+	}
+
+	totalWeight := uint64(0)
+
+	for _, history := range delegationModifiedHistory {
+		for _, record := range history {
+			if record.delegatedTimestamp > timestamp {
+				continue
+			}
+
+			totalWeight += record.delegatedAmount - record.undelegatedAmount
+		}
+	}
+
+	return totalWeight
+}
+
+// GetPossibleVotingAddressWithWeight returns the max voting weight + and possible voting address with weight
+func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, string) {
+	en.MintAndDistributeGns()
+	calculateReward()
+
+	if endTimestamp > uint64(time.Now().Unix()) {
+		panic("FUTURE")
+	}
+
+	totalWeight := uint64(0)
+	addressWithWeight := make(map[std.Address]uint64)
+
+	for to, history := range delegationModifiedHistory {
+		toWeight := uint64(0)
+
+		for _, record := range history {
+			if record.delegatedTimestamp > endTimestamp {
+				continue
+			}
+			totalWeight += record.delegatedAmount - record.undelegatedAmount
+			toWeight += record.delegatedAmount - record.undelegatedAmount
+		}
+
+		addressWithWeight[to] = toWeight
+	}
+
+	possibleObj := json.ObjectNode("", nil)
+	possibleObj.AppendObject("height", json.StringNode("height", ufmt.Sprintf("%d", std.GetHeight())))
+	possibleObj.AppendObject("now", json.StringNode("now", ufmt.Sprintf("%d", time.Now().Unix())))
+
+	possibleArr := json.ArrayNode("votingPower", nil)
+	for to, weight := range addressWithWeight {
+		addrWithWeightObj := json.ObjectNode("", nil)
+		addrWithWeightObj.AppendObject("address", json.StringNode("address", to.String()))
+		addrWithWeightObj.AppendObject("weight", json.StringNode("weight", ufmt.Sprintf("%d", weight)))
+		possibleArr.AppendArray(addrWithWeightObj)
+	}
+
+	possibleObj.AppendObject("votingPower", possibleArr)
+
+	return totalWeight, marshal(possibleObj)
+}

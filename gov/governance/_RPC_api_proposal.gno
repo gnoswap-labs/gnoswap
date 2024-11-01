@@ -252,7 +252,7 @@ func getProposalVotes(id uint64) string {
 	config := GetConfigVersion(proposal.ConfigVersion)
 	weightUntilTimestamp := proposal.ExecutionState.CreatedAt - config.VotingWeightSmoothingDuration
 
-	max := gs.GetTotalDelegatedUntil(weightUntilTimestamp)
+	max := gs.GetMaxVotingWeight(weightUntilTimestamp)
 
 	proposalObj.AppendObject("quorum", json.StringNode("quorum", ufmt.Sprintf("%d", proposal.QuorumAmount)))
 	proposalObj.AppendObject("max", json.StringNode("max", ufmt.Sprintf("%d", max)))
