@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -53,12 +55,12 @@ func TestMint(t *testing.T) {
 		test_liquidityExpectStr,
 		admin,
 	)
-	shouldEQ(t, amount0, "30")
-	shouldEQ(t, amount1, "81")
+	uassert.Equal(t, amount0, "30")
+	uassert.Equal(t, amount1, "81")
 
 	pool := GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.PoolGetLiquidity()
-	shouldEQ(t, test_liquidity.Dec(), test_liquidityExpectStr)
+	uassert.Equal(t, test_liquidity.Dec(), test_liquidityExpectStr)
 
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, admin)
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, admin)
@@ -71,13 +73,13 @@ func TestMint(t *testing.T) {
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, admin)
 	m101, m102 := Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, admin)
 
-	shouldNEQ(t, m81, "0")
-	shouldNEQ(t, m82, "0")
-	shouldEQ(t, m81, m101)
-	shouldEQ(t, m82, m102)
+	uassert.NotEqual(t, m81, "0")
+	uassert.NotEqual(t, m82, "0")
+	uassert.Equal(t, m81, m101)
+	uassert.Equal(t, m82, m102)
 
 	test_liquidity = pool.PoolGetLiquidity()
-	shouldEQ(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))))
+	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))))
 
 	// tickLower > currentTick == don't add to current liquidity
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower2, test_tickUpper2, test_liquidityExpectStr, admin)
@@ -89,7 +91,7 @@ func TestMint(t *testing.T) {
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, -test_tickUpper, -test_tickLower, test_liquidityExpectStr, admin)
 
 	// test_liquidity = pool.PoolGetLiquidity()
-	shouldEQ(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))))
+	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))))
 
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, admin)
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, admin)
@@ -103,7 +105,7 @@ func TestMint(t *testing.T) {
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, test_liquidityExpectStr, admin)
 
 	test_liquidity = pool.PoolGetLiquidity()
-	shouldEQ(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20))))
+	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20))))
 
 }
 
@@ -113,28 +115,28 @@ func TestBurn(t *testing.T) {
 
 	b11, b12 := Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr)
 	b21, b22 := Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr)
-	shouldEQ(t, b11, b21)
-	shouldEQ(t, b12, b22)
+	uassert.Equal(t, b11, b21)
+	uassert.Equal(t, b12, b22)
 
 	pool := GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.PoolGetLiquidity()
-	shouldEQ(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(18))))
+	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(18))))
 
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(8)).ToString())
 	test_liquidity = pool.PoolGetLiquidity()
-	shouldEQ(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))))
+	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(10))))
 
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, "1")
 	test_liquidity = pool.PoolGetLiquidity()
-	shouldEQ(t, test_liquidity.ToString(), "9999")
+	uassert.Equal(t, test_liquidity.ToString(), "9999")
 
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, "999")
 	test_liquidity = pool.PoolGetLiquidity()
-	shouldEQ(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9))))
+	uassert.Equal(t, true, test_liquidity.Eq(new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9))))
 
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(9)).ToString())
 	test_liquidity = pool.PoolGetLiquidity()
-	shouldEQ(t, test_liquidity.ToString(), "0")
+	uassert.Equal(t, test_liquidity.ToString(), "0")
 }
 
 // 4. Collect
@@ -147,7 +149,7 @@ func TestCollect(t *testing.T) {
 	// pool should have zero liquidity
 	pool := GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.PoolGetLiquidity()
-	shouldEQ(t, test_liquidity.ToString(), "0")
+	uassert.Equal(t, test_liquidity.ToString(), "0")
 
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), admin)
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
@@ -157,38 +159,38 @@ func TestCollect(t *testing.T) {
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
 	c21, c22 := Collect(barPath, fooPath, fee500, admin, test_tickLower, test_tickUpper, "50000000", "50000000")
 
-	shouldEQ(t, c11, c21) // 443
-	shouldEQ(t, c12, c22) // 1206
+	uassert.Equal(t, c11, c21) // 443
+	uassert.Equal(t, c12, c22) // 1206
 
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), admin)
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
 	c31, c32 := Collect(barPath, fooPath, fee500, admin, test_tickLower, test_tickUpper, "100", "100")
-	shouldEQ(t, c31, "100")
-	shouldEQ(t, c32, "100")
+	uassert.Equal(t, c31, "100")
+	uassert.Equal(t, c32, "100")
 
 	c41, c42 := Collect(barPath, fooPath, fee500, admin, test_tickLower, test_tickUpper, "50000000", "50000000")
-	shouldEQ(t, c41, "343")  // 343 = c21 - 100
-	shouldEQ(t, c42, "1106") // 1106 = c22 - 100
+	uassert.Equal(t, c41, "343")  // 343 = c21 - 100
+	uassert.Equal(t, c42, "1106") // 1106 = c22 - 100
 
 	// Mint > No Burn => nothing to collect
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString(), admin)
 	// Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, test_liquidityExpectStr*15)
 	c51, c52 := Collect(barPath, fooPath, fee500, admin, test_tickLower, test_tickUpper, "50000000", "50000000")
-	shouldEQ(t, c51, "0")
-	shouldEQ(t, c52, "0")
+	uassert.Equal(t, c51, "0")
+	uassert.Equal(t, c52, "0")
 
 	// Burn Now => something to collect
 	Burn(barPath, fooPath, fee500, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(15)).ToString())
 	c61, c62 := Collect(barPath, fooPath, fee500, admin, test_tickLower, test_tickUpper, "50000000", "50000000")
-	shouldNEQ(t, c61, "0")
-	shouldNEQ(t, c62, "0")
+	uassert.NotEqual(t, c61, "0")
+	uassert.NotEqual(t, c62, "0")
 }
 
 // 5. Swap by admin
 func TestSwap(t *testing.T) {
 	pool := GetPool(barPath, fooPath, fee500)
 	test_liquidity := pool.PoolGetLiquidity()
-	shouldEQ(t, test_liquidity.ToString(), "0")
+	uassert.Equal(t, test_liquidity.ToString(), "0")
 
 	std.TestSetRealm(posRealm)
 	Mint(barPath, fooPath, fee500, consts.POSITION_ADDR, test_tickLower, test_tickUpper, new(u256.Uint).Mul(test_liquidityExpect256, u256.NewUint(20000)).ToString(), admin)
@@ -214,8 +216,8 @@ func TestSwap(t *testing.T) {
 			admin,      // payer
 		)
 
-		shouldNEQ(t, amount0, "0")
-		shouldNEQ(t, amount1, "0")
+		uassert.NotEqual(t, amount0, "0")
+		uassert.NotEqual(t, amount1, "0")
 		intAmount0, _ := strconv.Atoi(amount0)
 		intAmount1, _ := strconv.Atoi(amount1)
 
@@ -225,10 +227,10 @@ func TestSwap(t *testing.T) {
 		userNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, admin)
 		userNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, admin)
 
-		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, uint64(intAmount0))
-		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, uint64(-intAmount1))
-		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, uint64(intAmount0))
-		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, uint64(-intAmount1))
+		uassert.Equal(t, userOldToken0Bal-userNewToken0Bal, uint64(intAmount0))
+		uassert.Equal(t, userNewToken1Bal-userOldToken1Bal, uint64(-intAmount1))
+		uassert.Equal(t, poolNewToken0Bal-poolOldToken0Bal, uint64(intAmount0))
+		uassert.Equal(t, poolOldToken1Bal-poolNewToken1Bal, uint64(-intAmount1))
 	}
 
 	{
@@ -249,10 +251,10 @@ func TestSwap(t *testing.T) {
 		userNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, admin)
 		userNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, admin)
 
-		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, uint64(intAmount0))
-		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, uint64(-intAmount1))
-		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, uint64(intAmount0))
-		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, uint64(-intAmount1))
+		uassert.Equal(t, userOldToken0Bal-userNewToken0Bal, uint64(intAmount0))
+		uassert.Equal(t, userNewToken1Bal-userOldToken1Bal, uint64(-intAmount1))
+		uassert.Equal(t, poolNewToken0Bal-poolOldToken0Bal, uint64(intAmount0))
+		uassert.Equal(t, poolOldToken1Bal-poolNewToken1Bal, uint64(-intAmount1))
 	}
 
 	{
@@ -273,10 +275,10 @@ func TestSwap(t *testing.T) {
 		userNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, admin)
 		userNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, admin)
 
-		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, uint64(intAmount0))
-		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, uint64(-intAmount1))
-		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, uint64(intAmount0))
-		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, uint64(-intAmount1))
+		uassert.Equal(t, userOldToken0Bal-userNewToken0Bal, uint64(intAmount0))
+		uassert.Equal(t, userNewToken1Bal-userOldToken1Bal, uint64(-intAmount1))
+		uassert.Equal(t, poolNewToken0Bal-poolOldToken0Bal, uint64(intAmount0))
+		uassert.Equal(t, poolOldToken1Bal-poolNewToken1Bal, uint64(-intAmount1))
 	}
 
 	// Swap token1 -> token0
@@ -298,10 +300,10 @@ func TestSwap(t *testing.T) {
 		userNewToken0Bal := balanceOfByRegisterCall(pool.token0Path, admin)
 		userNewToken1Bal := balanceOfByRegisterCall(pool.token1Path, admin)
 
-		shouldEQ(t, userOldToken0Bal-userNewToken0Bal, uint64(intAmount0))
-		shouldEQ(t, userNewToken1Bal-userOldToken1Bal, uint64(-intAmount1))
-		shouldEQ(t, poolNewToken0Bal-poolOldToken0Bal, uint64(intAmount0))
-		shouldEQ(t, poolOldToken1Bal-poolNewToken1Bal, uint64(-intAmount1))
+		uassert.Equal(t, userOldToken0Bal-userNewToken0Bal, uint64(intAmount0))
+		uassert.Equal(t, userNewToken1Bal-userOldToken1Bal, uint64(-intAmount1))
+		uassert.Equal(t, poolNewToken0Bal-poolOldToken0Bal, uint64(intAmount0))
+		uassert.Equal(t, poolOldToken1Bal-poolNewToken1Bal, uint64(-intAmount1))
 	}
 }
 
@@ -315,7 +317,7 @@ func TestSetFeeProtocolByAdmin(t *testing.T) {
 	SetFeeProtocolByAdmin(6, 8)
 
 	for _, pool := range pools {
-		shouldEQ(t, pool.PoolGetSlot0().feeProtocol, uint8(134))
+		uassert.Equal(t, pool.PoolGetSlot0().feeProtocol, uint8(134))
 	}
 }
 
@@ -326,7 +328,7 @@ func TestCollectProtocol(t *testing.T) {
 
 	pool := GetPool(barPath, fooPath, fee500)
 	test_slot0 := pool.PoolGetSlot0()
-	shouldEQ(t, test_slot0.feeProtocol, uint8(134))
+	uassert.Equal(t, test_slot0.feeProtocol, uint8(134))
 
 	// Make ProtocolFee via Swap by admin ( Mint by admin )
 	{
@@ -349,8 +351,8 @@ func TestCollectProtocol(t *testing.T) {
 		token0DiffStr := strconv.Itoa(int(_token0Diff))
 		token1DiffStr := strconv.Itoa(int(_token1Diff))
 
-		shouldEQ(t, token0DiffStr, amount0)
-		shouldEQ(t, token1DiffStr, amount1)
+		uassert.Equal(t, token0DiffStr, amount0)
+		uassert.Equal(t, token1DiffStr, amount1)
 	}
 }
 
@@ -368,5 +370,5 @@ func TestApiGetPools(t *testing.T) {
 		panic(err)
 	}
 
-	shouldEQ(t, response.Size(), 1)
+	uassert.Equal(t, response.Size(), 1)
 }

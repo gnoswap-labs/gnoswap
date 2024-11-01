@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
@@ -76,7 +78,7 @@ func TestDoesNotClear(t *testing.T) {
 
 	thisPool := GetPool(barPath, fooPath, fee500)
 	liq := thisPool.liquidity
-	shouldEQ(t, liq.ToString(), "0")
+	uassert.Equal(t, liq.ToString(), "0")
 
 	// tokensOwed
 	thisPositionKey := positionGetKey(consts.POSITION_ADDR, -887160, 887160)
@@ -84,14 +86,14 @@ func TestDoesNotClear(t *testing.T) {
 
 	tokensOwed0 := thisPosition.tokensOwed0
 	tokensOwed1 := thisPosition.tokensOwed1
-	shouldNEQ(t, tokensOwed0.ToString(), "0")
-	shouldNEQ(t, tokensOwed1.ToString(), "0")
+	uassert.NotEqual(t, tokensOwed0.ToString(), "0")
+	uassert.NotEqual(t, tokensOwed1.ToString(), "0")
 
 	// feeGrowthInside
 	feeGrowthInside0LastX128 := thisPosition.feeGrowthInside0LastX128
 	feeGrowthInside1LastX128 := thisPosition.feeGrowthInside1LastX128
-	shouldNEQ(t, feeGrowthInside0LastX128.ToString(), "0")
-	shouldNEQ(t, feeGrowthInside1LastX128.ToString(), "0")
+	uassert.NotEqual(t, feeGrowthInside0LastX128.ToString(), "0")
+	uassert.NotEqual(t, feeGrowthInside1LastX128.ToString(), "0")
 }
 
 func TestClearOnlyLowTick(t *testing.T) {
@@ -149,13 +151,13 @@ func TestClearOnlyLowTick(t *testing.T) {
 
 	thisPool := GetPool(barPath, fooPath, fee3000)
 	lowerInfo := thisPool.ticks[-887160]
-	shouldEQ(t, lowerInfo.liquidityGross.ToString(), "")
-	shouldEQ(t, lowerInfo.feeGrowthOutside0X128.ToString(), "")
-	shouldEQ(t, lowerInfo.feeGrowthOutside1X128.ToString(), "")
-	// shouldEQ(t, lowerInfo.liquidityNet.ToString(), "") // i256 nil check
+	uassert.Equal(t, lowerInfo.liquidityGross.ToString(), "")
+	uassert.Equal(t, lowerInfo.feeGrowthOutside0X128.ToString(), "")
+	uassert.Equal(t, lowerInfo.feeGrowthOutside1X128.ToString(), "")
+	// uassert.Equal(t, lowerInfo.liquidityNet.ToString(), "") // i256 nil check
 
 	upperInfo := thisPool.ticks[887160]
-	shouldNEQ(t, upperInfo.liquidityGross.ToString(), "")
+	uassert.NotEqual(t, upperInfo.liquidityGross.ToString(), "")
 }
 
 func TestClearOnlyUpperTick(t *testing.T) {
@@ -213,11 +215,11 @@ func TestClearOnlyUpperTick(t *testing.T) {
 
 	thisPool := GetPool(barPath, fooPath, fee100)
 	lowerInfo := thisPool.ticks[-887160]
-	shouldNEQ(t, lowerInfo.liquidityGross.ToString(), "")
+	uassert.NotEqual(t, lowerInfo.liquidityGross.ToString(), "")
 
 	upperInfo := thisPool.ticks[887160]
-	shouldEQ(t, upperInfo.liquidityGross.ToString(), "")
-	shouldEQ(t, upperInfo.feeGrowthOutside0X128.ToString(), "")
-	shouldEQ(t, upperInfo.feeGrowthOutside1X128.ToString(), "")
-	// shouldEQ(t, upperInfo.liquidityNet.ToString(), "") // i256 nil check
+	uassert.Equal(t, upperInfo.liquidityGross.ToString(), "")
+	uassert.Equal(t, upperInfo.feeGrowthOutside0X128.ToString(), "")
+	uassert.Equal(t, upperInfo.feeGrowthOutside1X128.ToString(), "")
+	// uassert.Equal(t, upperInfo.liquidityNet.ToString(), "") // i256 nil check
 }

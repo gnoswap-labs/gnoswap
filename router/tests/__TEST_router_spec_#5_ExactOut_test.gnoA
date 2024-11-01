@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/consts"
 
 	pl "gno.land/r/gnoswap/v2/pool"
@@ -58,11 +60,11 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 	token0After := bar.BalanceOf(a2u(consts.ADMIN))
 	token1After := baz.BalanceOf(a2u(consts.ADMIN))
 
-	shouldEQ(t, amountIn, "3")
-	shouldEQ(t, amountOut, "-1")
+	uassert.Equal(t, amountIn, "3")
+	uassert.Equal(t, amountOut, "-1")
 
-	shouldEQ(t, token0After, token0Before-3)
-	shouldEQ(t, token1After, token1Before+1)
+	uassert.Equal(t, token0After, token0Before-3)
+	uassert.Equal(t, token1After, token1Before+1)
 }
 
 /*

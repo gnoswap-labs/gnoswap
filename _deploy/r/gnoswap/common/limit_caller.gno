@@ -13,6 +13,7 @@ var (
 func GetLimitCaller() bool {
 	return limitCaller
 }
+
 func SetLimitCaller(v bool) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {

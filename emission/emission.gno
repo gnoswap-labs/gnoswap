@@ -29,6 +29,9 @@ func MintAndDistributeGns() {
 
 	height := std.GetHeight()
 	if lastExecutedHeight >= height {
+		println("lastExecutedHeight >= height")
+		println("lastExecutedHeight", lastExecutedHeight)
+		println("height", height)
 		// do not panic here, we don't want to panic entire transaction that calls this function
 		return
 	}

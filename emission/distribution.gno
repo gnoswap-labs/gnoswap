@@ -62,14 +62,14 @@ func ChangeDistributionPctByAdmin(
 		panic("only admin can change distribution percentages")
 	}
 
+	checkSumDistributionPct(pct01, pct02, pct03, pct04)
+
 	changeDistributionPcts(
 		target01, pct01,
 		target02, pct02,
 		target03, pct03,
 		target04, pct04,
 	)
-
-	checkSumDistributionPct()
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -100,14 +100,14 @@ func ChangeDistributionPct(
 		panic("only governance can change distribution percentages")
 	}
 
+	checkSumDistributionPct(pct01, pct02, pct03, pct04)
+
 	changeDistributionPcts(
 		target01, pct01,
 		target02, pct02,
 		target03, pct03,
 		target04, pct04,
 	)
-
-	checkSumDistributionPct()
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -133,12 +133,12 @@ func changeDistributionPcts(
 ) {
 	common.IsHalted()
 
+	checkSumDistributionPct(pct01, pct02, pct03, pct04)
+
 	changeDistributionPct(emissionTarget(target01), pct01)
 	changeDistributionPct(emissionTarget(target02), pct02)
 	changeDistributionPct(emissionTarget(target03), pct03)
 	changeDistributionPct(emissionTarget(target04), pct04)
-
-	checkSumDistributionPct()
 }
 
 // distributeToTarget distributes the specified amount to different targets based on their percentages.
@@ -149,6 +149,9 @@ func distributeToTarget(amount uint64) {
 		totalSent += distAmount
 
 		transferToTarget(target, distAmount)
+		println("target", target)
+		println("amount", distAmount)
+		println()
 	}
 
 	// `amount-totalSent` can be left due to rounding
@@ -193,23 +196,15 @@ func changeDistributionPct(target emissionTarget, pct uint64) {
 		panic("invalid target")
 	}
 
-	// Maximum pct for a single target is 10000 basis points (100%)
-	if pct > 10000 {
-		panic("percentage too high")
-	}
-
 	distributionPct[target] = pct
 }
 
 // checkSumDistributionPct ensures the sum of all distribution percentages is 100%
-func checkSumDistributionPct() {
-	sum := uint64(0)
-	for _, pct := range distributionPct {
-		sum += pct
-	}
+func checkSumDistributionPct(pct01, pct02, pct03, pct04 uint64) {
+	sum := pct01 + pct02 + pct03 + pct04
 
 	if sum != 10000 {
-		panic(ufmt.Sprintf("sum of all pct should be 100%% (10000 bps), got %d\n", sum))
+		panic(ufmt.Sprintf("sum of all pct should be 100%% (10000 bps), got %d", sum))
 	}
 }
 

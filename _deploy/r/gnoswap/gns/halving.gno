@@ -188,6 +188,10 @@ func GetAmountByHeight(height int64) uint64 {
 	return amountPerBlockPerHalvingYear[halvingYear]
 }
 
+func GetAmountByYear(year int64) uint64 {
+	return amountPerBlockPerHalvingYear[year]
+}
+
 func GetHalvingYearByHeight(height int64) int64 {
 	// determine which halving year block is in
 	for year, block := range halvingYearBlock {
@@ -208,6 +212,10 @@ func GetHalvingYearByTimestamp(timestamp int64) (int64, int64) {
 	}
 
 	return 0, 0
+}
+
+func GetHalvingYearBlock(year int64) int64 {
+	return halvingYearBlock[year]
 }
 
 func GetHalvingInfo() string {

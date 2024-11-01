@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/consts"
 
 	pl "gno.land/r/gnoswap/v2/pool"
@@ -47,7 +49,7 @@ func TestDrySwapRouteBarQuxExactIn(t *testing.T) {
 		"50,50", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, "7346")
+	uassert.Equal(t, dryResult, "7346")
 }
 
 func TestSwapRouteBarQuxExactIn(t *testing.T) {
@@ -66,8 +68,8 @@ func TestSwapRouteBarQuxExactIn(t *testing.T) {
 		"1",     // tokenAmountLimit
 	)
 
-	shouldEQ(t, amountIn, "1000")
-	shouldEQ(t, amountOut, "-7318")
+	uassert.Equal(t, amountIn, "1000")
+	uassert.Equal(t, amountOut, "-7318")
 }
 
 func TestDrySwapRouteBarQuxExactOut(t *testing.T) {
@@ -82,7 +84,7 @@ func TestDrySwapRouteBarQuxExactOut(t *testing.T) {
 		"50,50", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, "140")
+	uassert.Equal(t, dryResult, "140")
 }
 
 func TestSwapRouteBarQuxExactOut(t *testing.T) {
@@ -98,8 +100,8 @@ func TestSwapRouteBarQuxExactOut(t *testing.T) {
 		"99999", // tokenAmountLimit
 	)
 
-	shouldEQ(t, amountIn, "140")
-	shouldEQ(t, amountOut, "-1001")
+	uassert.Equal(t, amountIn, "140")
+	uassert.Equal(t, amountOut, "-1001")
 }
 
 func TestDrySwapRouteQuxBarExactIn(t *testing.T) {
@@ -114,7 +116,7 @@ func TestDrySwapRouteQuxBarExactIn(t *testing.T) {
 		"30,70", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, "135")
+	uassert.Equal(t, dryResult, "135")
 }
 
 func TestSwapRouteQuxBarExactIn(t *testing.T) {
@@ -130,8 +132,8 @@ func TestSwapRouteQuxBarExactIn(t *testing.T) {
 		"1",     // tokenAmountLimit
 	)
 
-	shouldEQ(t, amountIn, "1000")
-	shouldEQ(t, amountOut, "-135")
+	uassert.Equal(t, amountIn, "1000")
+	uassert.Equal(t, amountOut, "-135")
 }
 
 func TestDrySwapRouteQuxBarExactOut(t *testing.T) {
@@ -146,7 +148,7 @@ func TestDrySwapRouteQuxBarExactOut(t *testing.T) {
 		"30,70", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, "7351")
+	uassert.Equal(t, dryResult, "7351")
 }
 
 func TestSwapRouteQuxBarExactOut(t *testing.T) {
@@ -165,6 +167,6 @@ func TestSwapRouteQuxBarExactOut(t *testing.T) {
 		"99999", // tokenAmountLimit
 	)
 
-	shouldEQ(t, amountIn, "7365")
-	shouldEQ(t, amountOut, "-999")
+	uassert.Equal(t, amountIn, "7365")
+	uassert.Equal(t, amountOut, "-999")
 }

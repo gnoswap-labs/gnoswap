@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/consts"
 
 	pl "gno.land/r/gnoswap/v2/pool"
@@ -61,17 +63,17 @@ func TestPositionMint(t *testing.T) {
 	// Mint
 	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, FEE_MEDIUM, int32(-887220), int32(887220), "100000000", "100000000", "0", "0", max_timeout, admin, admin)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, amount0, "100000000")
-	shouldEQ(t, amount1, "100000000")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, amount0, "100000000")
+	uassert.Equal(t, amount1, "100000000")
 
 	pool := pl.GetPool(barPath, bazPath, FEE_MEDIUM)
 	poolLiq := pool.PoolGetLiquidity()
-	shouldEQ(t, poolLiq.ToString(), "100000000")
+	uassert.Equal(t, poolLiq.ToString(), "100000000")
 
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
-	// shouldEQ(t, poolTick, int32(0)) // got -1, expected 0
+	// uassert.Equal(t, poolTick, int32(0)) // got -1, expected 0
 }
 
 func TestExactInputSinglePool(t *testing.T) {
@@ -104,8 +106,8 @@ func TestExactInputSinglePool(t *testing.T) {
 		"1",        // tokenAmountLimit
 	)
 
-	shouldEQ(t, amountIn, "3")
-	shouldEQ(t, amountOut, "-1")
+	uassert.Equal(t, amountIn, "3")
+	uassert.Equal(t, amountOut, "-1")
 
 	poolToken0After := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	poolToken1After := baz.BalanceOf(a2u(consts.POOL_ADDR))
@@ -113,8 +115,8 @@ func TestExactInputSinglePool(t *testing.T) {
 	user1Token0After := bar.BalanceOf(a2u(user1Addr))
 	user1Token1After := baz.BalanceOf(a2u(user1Addr))
 
-	shouldEQ(t, user1Token0After, user1Token0Before-3)
-	shouldEQ(t, user1Token1After, user1Token1Before+1)
-	shouldEQ(t, poolToken0After, poolToken0Before+3)
-	shouldEQ(t, poolToken1After, poolToken1Before-1)
+	uassert.Equal(t, user1Token0After, user1Token0Before-3)
+	uassert.Equal(t, user1Token1After, user1Token1Before+1)
+	uassert.Equal(t, poolToken0After, poolToken0Before+3)
+	uassert.Equal(t, poolToken1After, poolToken1Before-1)
 }

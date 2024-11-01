@@ -40,6 +40,8 @@ func init() {
 	lastMintedHeight = std.GetHeight()
 }
 
+func GetAmountToEmission() uint64 { return amountToEmission }
+
 func TotalSupply() uint64 { return token.TotalSupply() }
 
 func TotalMinted() uint64 { return token.TotalSupply() - uint64(100_000_000_000_000) }

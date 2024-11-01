@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
@@ -58,7 +60,7 @@ func TestMintPostInit(t *testing.T) {
 		)
 
 		nowLiq := thisPool.liquidity.ToString()
-		shouldEQ(t, currentLiq, nowLiq)
+		uassert.Equal(t, currentLiq, nowLiq)
 	})
 
 	t.Run("excludes supply at tick below current tick", func(t *testing.T) {
@@ -75,7 +77,7 @@ func TestMintPostInit(t *testing.T) {
 		)
 
 		nowLiq := thisPool.liquidity.ToString()
-		shouldEQ(t, currentLiq, nowLiq)
+		uassert.Equal(t, currentLiq, nowLiq)
 	})
 
 	t.Run("updates correctly when exiting range", func(t *testing.T) {
@@ -107,7 +109,7 @@ func TestMintPostInit(t *testing.T) {
 		)
 
 		poolTick := thisPool.slot0.tick
-		shouldEQ(t, poolTick, int32(-1))
+		uassert.Equal(t, poolTick, int32(-1))
 	})
 
 	t.Run("updates correctly when entering range", func(t *testing.T) {
@@ -139,6 +141,6 @@ func TestMintPostInit(t *testing.T) {
 		)
 
 		poolTick := thisPool.slot0.tick
-		shouldEQ(t, poolTick, int32(-1))
+		uassert.Equal(t, poolTick, int32(-1))
 	})
 }

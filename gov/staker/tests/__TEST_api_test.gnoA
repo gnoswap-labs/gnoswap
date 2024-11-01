@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v2/gns"
 )
 
 const minAmount = uint64(1_000_000)
@@ -19,149 +19,150 @@ var (
 	reDelegate = testutils.TestAddress("reDelegate")
 )
 
-func TestInit(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-
-	shouldEQ(t, GetTotalStaked(), uint64(0))
-	shouldEQ(t, GetTotalDelegated(), uint64(0))
-
-	shouldEQ(t, len(delegatorAmount), 0)
-	shouldEQ(t, len(delegatedFromTo), 0)
-	shouldEQ(t, len(delegatedTo), 0)
-
-	shouldEQ(t, GetDelegationRatioBase(), `{"height":"123","now":"1234567890","gnsTotalSupply":"100000000000000","xGnsTotalSupply":"0"}`)
-	shouldEQ(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[]}`)
-	shouldEQ(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[]}`)
-
-	shouldEQ(t, len(delegationHistory[admin]), 0)
+func TestApiFuncs(t *testing.T) {
+	initial(t)
+	delegateAdmin(t)
+	redelegateUnknownFrom(t)
+	redelegateTooMany(t)
+	redelegateAdmin(t)
+	undelegateUnknownUser(t)
+	undelegateAdmin(t)
+	collectBeforeLockup(t)
+	collectAfterLockup(t)
 }
 
-func TestDelegate(t *testing.T) {
+func initial(t *testing.T) {
+	uassert.Equal(t, GetTotalStaked(), uint64(0))
+	uassert.Equal(t, GetTotalDelegated(), uint64(0))
+
+	uassert.Equal(t, len(delegatorAmount), 0)
+	uassert.Equal(t, len(delegatedFromTo), 0)
+	uassert.Equal(t, len(delegatedTo), 0)
+
+	uassert.Equal(t, GetDelegationRatioBase(), `{"height":"123","now":"1234567890","gnsTotalSupply":"100000000000000","xGnsTotalSupply":"0"}`)
+	uassert.Equal(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[]}`)
+	uassert.Equal(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[]}`)
+}
+
+func delegateAdmin(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1000001))
 	Delegate(dummyAddr, 1000001)
-	// from: admin
-	// to: dummyAddr
 
-	shouldEQ(t, GetTotalStaked(), uint64(1000001))
-	shouldEQ(t, GetTotalDelegated(), uint64(1000001))
+	uassert.Equal(t, GetTotalStaked(), uint64(1000001))
+	uassert.Equal(t, GetTotalDelegated(), uint64(1000001))
 
-	shouldEQ(t, delegatorAmount[admin], uint64(1000001))
-	shouldEQ(t, delegatedFromTo[admin][dummyAddr], uint64(1000001))
-	shouldEQ(t, delegatedTo[dummyAddr], uint64(1000001))
+	uassert.Equal(t, delegatorAmount[admin], uint64(1000001))
+	uassert.Equal(t, delegatedFromTo[admin][dummyAddr], uint64(1000001))
+	uassert.Equal(t, delegatedTo[dummyAddr], uint64(1000001))
 
-	shouldEQ(t, GetDelegationRatioBase(), `{"height":"123","now":"1234567890","gnsTotalSupply":"100000000000000","xGnsTotalSupply":"1000001"}`)
-	shouldEQ(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"1000001"}]}`)
-	shouldEQ(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"1000001"}]}`)
+	uassert.Equal(t, GetDelegationRatioBase(), `{"height":"123","now":"1234567890","gnsTotalSupply":"100000000000000","xGnsTotalSupply":"1000001"}`)
+	uassert.Equal(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"1000001"}]}`)
+	uassert.Equal(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"1000001"}]}`)
 
-	shouldEQ(t, GetDelegationHistoryByAddress(admin), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"}]}`)
-	shouldEQ(t, GetDelegationHistoryByAddress(dummyAddr), ``)
+	uassert.Equal(t, GetDelegationHistoryByAddress(admin), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"}]}`)
+	uassert.Equal(t, GetDelegationHistoryByAddress(dummyAddr), ``)
 }
 
-func TestRedelegateUnknownFrom(t *testing.T) {
+func redelegateUnknownFrom(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	shouldPanic(
-		t,
-		func() {
-			Redelegate(reDelegate, dummyAddr, 1000001)
-		},
-	)
+	uassert.PanicsWithMessage(t, "caller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c has no delegated amount to g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt", func() {
+		Redelegate(reDelegate, dummyAddr, 1000001)
+	})
 }
 
-func TestRedelegateTooMany(t *testing.T) {
+func redelegateTooMany(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-
-	shouldPanic(
-		t,
-		func() {
-			Redelegate(dummyAddr, reDelegate, 10000010)
-		},
-	)
+	uassert.PanicsWithMessage(t, "not enough xGNS staked", func() {
+		Redelegate(reDelegate, dummyAddr, 10000010)
+	})
 }
 
-func TestRedelegate(t *testing.T) {
+func redelegateAdmin(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
 	Redelegate(dummyAddr, reDelegate, 1000001)
 
-	shouldEQ(t, GetTotalStaked(), uint64(1000001))
-	shouldEQ(t, GetTotalDelegated(), uint64(1000001))
+	uassert.Equal(t, GetTotalStaked(), uint64(1000001))
+	uassert.Equal(t, GetTotalDelegated(), uint64(1000001))
 
-	shouldEQ(t, delegatorAmount[admin], uint64(1000001))
-	shouldEQ(t, delegatedFromTo[admin][dummyAddr], uint64(0))
-	shouldEQ(t, delegatedTo[dummyAddr], uint64(0))
-	shouldEQ(t, delegatedFromTo[admin][reDelegate], uint64(1000001))
-	shouldEQ(t, delegatedTo[reDelegate], uint64(1000001))
+	uassert.Equal(t, delegatorAmount[admin], uint64(1000001))
+	uassert.Equal(t, delegatedFromTo[admin][dummyAddr], uint64(0))
+	uassert.Equal(t, delegatedTo[dummyAddr], uint64(0))
+	uassert.Equal(t, delegatedFromTo[admin][reDelegate], uint64(1000001))
+	uassert.Equal(t, delegatedTo[reDelegate], uint64(1000001))
 
-	shouldEQ(t, GetDelegationRatioBase(), `{"height":"123","now":"1234567890","gnsTotalSupply":"100000000000000","xGnsTotalSupply":"1000001"}`)
-	shouldEQ(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"},{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"1000001"}]}`)
-	shouldEQ(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"}]}`)
-	shouldEQ(t, GetVotingPowerBaseByAddress("g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt"), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"1000001"}]}`)
-	shouldEQ(t, GetDelegationHistoryByAddress(admin), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"true"}]}`)
-	shouldEQ(t, GetDelegationHistoryByAddress(dummyAddr), ``)
-	shouldEQ(t, GetDelegationHistoryByAddress(reDelegate), ``)
-	shouldEQ(t, GetLockedInfoByAddress(admin), ``)
+	uassert.Equal(t, GetDelegationRatioBase(), `{"height":"123","now":"1234567890","gnsTotalSupply":"100000000000000","xGnsTotalSupply":"1000001"}`)
+	uassert.Equal(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"},{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"1000001"}]}`)
+	uassert.Equal(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"}]}`)
+
+	uassert.Equal(t, GetVotingPowerBaseByAddress("g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt"), `{"height":"123","now":"1234567890","totalDelegated":"1000001","votingPower":[{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"1000001"}]}`)
+	uassert.Equal(t, GetDelegationHistoryByAddress(admin), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"true"}]}`)
+	uassert.Equal(t, GetDelegationHistoryByAddress(dummyAddr), ``)
+	uassert.Equal(t, GetDelegationHistoryByAddress(reDelegate), ``)
+	uassert.Equal(t, GetLockedInfoByAddress(admin), ``)
 }
 
-func TestUndelegateUnknownUser(t *testing.T) {
+func undelegateUnknownUser(t *testing.T) {
 	std.TestSetRealm(dummyRealm)
 
-	shouldPanic(
-		t,
-		func() {
-			Undelegate(reDelegate, 1000001)
-		},
-	)
+	uassert.PanicsWithMessage(t, "not enough xGNS staked", func() {
+		Undelegate(dummyAddr, 1000001)
+	})
 }
 
-func TestUndelegate(t *testing.T) {
+func undelegateAdmin(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-
-	shouldEQ(t, GetLockedInfoByAddress(admin), ``)
+	uassert.Equal(t, GetLockedInfoByAddress(admin), ``)
 
 	Undelegate(reDelegate, 1000001)
 
-	shouldEQ(t, GetTotalStaked(), uint64(1000001))
-	shouldEQ(t, GetTotalStakedWithoutLockedAmount(), uint64(0))
-	shouldEQ(t, GetTotalDelegated(), uint64(0))
+	uassert.Equal(t, GetTotalStaked(), uint64(1000001))
+	uassert.Equal(t, GetTotalStakedWithoutLockedAmount(), uint64(0))
+	uassert.Equal(t, GetTotalDelegated(), uint64(0))
 
-	shouldEQ(t, delegatorAmount[admin], uint64(0))
-	shouldEQ(t, delegatedFromTo[admin][dummyAddr], uint64(0))
-	shouldEQ(t, delegatedTo[dummyAddr], uint64(0))
-	shouldEQ(t, delegatedFromTo[admin][reDelegate], uint64(0))
-	shouldEQ(t, delegatedTo[reDelegate], uint64(0))
+	uassert.Equal(t, delegatorAmount[admin], uint64(0))
+	uassert.Equal(t, delegatedFromTo[admin][dummyAddr], uint64(0))
+	uassert.Equal(t, delegatedTo[dummyAddr], uint64(0))
+	uassert.Equal(t, delegatedFromTo[admin][reDelegate], uint64(0))
+	uassert.Equal(t, delegatedTo[reDelegate], uint64(0))
 
-	shouldEQ(t, GetDelegationRatioBase(), `{"height":"123","now":"1234567890","gnsTotalSupply":"100000000000000","xGnsTotalSupply":"0"}`)
-	shouldEQ(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"},{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"0"}]}`)
-	shouldEQ(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"}]}`)
-	shouldEQ(t, GetVotingPowerBaseByAddress("g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"0"}]}`)
-	shouldEQ(t, GetDelegationHistoryByAddress(admin), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"false"}]}`)
-	shouldEQ(t, GetLockedInfoByAddress(admin), `{"height":"123","now":"1234567890","totalLocked":"1000001","claimableAmount":"0"}`)
+	uassert.Equal(t, GetDelegationRatioBase(), `{"height":"123","now":"1234567890","gnsTotalSupply":"100000000000000","xGnsTotalSupply":"0"}`)
+	uassert.Equal(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"},{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"0"}]}`)
+	uassert.Equal(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"}]}`)
+	uassert.Equal(t, GetVotingPowerBaseByAddress("g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"0"}]}`)
+	uassert.Equal(t, GetDelegationHistoryByAddress(admin), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"false"}]}`)
+	uassert.Equal(t, GetLockedInfoByAddress(admin), `{"height":"123","now":"1234567890","totalLocked":"1000001","claimableAmount":"0"}`)
 }
 
-func TestCollectBefore7Days(t *testing.T) {
+func collectBeforeLockup(t *testing.T) {
 	std.TestSetRealm(adminRealm)
-
-	CollectUndelegatedGns() // 7 days not passed yet
+	amount := CollectUndelegatedGns()
+	uassert.Equal(t, amount, uint64(0))
 }
 
-func TestCollectAfter7Days(t *testing.T) {
+func collectAfterLockup(t *testing.T) {
+
 	std.TestSetRealm(adminRealm)
 
-	shouldEQ(t, GetDelegationRatioBase(), `{"height":"123","now":"1234567890","gnsTotalSupply":"100000000000000","xGnsTotalSupply":"0"}`)
-	shouldEQ(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"},{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"0"}]}`)
-	shouldEQ(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"}]}`)
-	shouldEQ(t, GetVotingPowerBaseByAddress("g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"0"}]}`)
-	shouldEQ(t, GetDelegationHistoryByAddress(admin), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"false"}]}`)
-	shouldEQ(t, GetLockedAmount(), uint64(1000001))
-	shouldEQ(t, GetLockedInfoByAddress(admin), `{"height":"123","now":"1234567890","totalLocked":"1000001","claimableAmount":"0"}`)
+	amount := CollectUndelegatedGns()
+	uassert.Equal(t, amount, uint64(0))
+
+	uassert.Equal(t, GetDelegationRatioBase(), `{"height":"123","now":"1234567890","gnsTotalSupply":"100000000000000","xGnsTotalSupply":"0"}`)
+	uassert.Equal(t, GetVotingPowerBase(), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"},{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"0"}]}`)
+	uassert.Equal(t, GetVotingPowerBaseByAddress("g1v36k6mteta047h6lta047h6lta047h6lz7gmv8"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","delegated":"0"}]}`)
+	uassert.Equal(t, GetVotingPowerBaseByAddress("g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt"), `{"height":"123","now":"1234567890","totalDelegated":"0","votingPower":[{"address":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","delegated":"0"}]}`)
+	uassert.Equal(t, GetDelegationHistoryByAddress(admin), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"false"}]}`)
+	uassert.Equal(t, GetLockedAmount(), uint64(1000001))
+	uassert.Equal(t, GetLockedInfoByAddress(admin), `{"height":"123","now":"1234567890","totalLocked":"1000001","claimableAmount":"0"}`)
 
 	std.TestSkipHeights(302400) // 7 days 2 seconds
-	shouldEQ(t, GetLockedInfoByAddress(admin), `{"height":"302523","now":"1235172690","totalLocked":"1000001","claimableAmount":"1000001"}`)
+	uassert.Equal(t, GetLockedInfoByAddress(admin), `{"height":"302523","now":"1235172690","totalLocked":"1000001","claimableAmount":"1000001"}`)
 
 	CollectUndelegatedGns()
-	shouldEQ(t, GetLockedAmount(), uint64(0))
-	shouldEQ(t, GetLockedInfoByAddress(admin), `{"height":"302523","now":"1235172690","totalLocked":"0","claimableAmount":"0"}`)
+	uassert.Equal(t, GetLockedAmount(), uint64(0))
+	uassert.Equal(t, GetLockedInfoByAddress(admin), `{"height":"302523","now":"1235172690","totalLocked":"0","claimableAmount":"0"}`)
+
 }

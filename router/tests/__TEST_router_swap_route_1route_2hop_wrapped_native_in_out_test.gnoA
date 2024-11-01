@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
@@ -32,7 +34,7 @@ func TestCreatePool(t *testing.T) {
 
 	// jsonOutput := pl.ApiGetPools()
 	// jsonStr := gjson.Parse(jsonOutput)
-	// shouldEQ(t, len(jsonStr.Get("response").Array()), 3)
+	// uassert.Equal(t, len(jsonStr.Get("response").Array()), 3)
 }
 
 func TestPositionMintBarBaz(t *testing.T) {
@@ -41,9 +43,9 @@ func TestPositionMintBarBaz(t *testing.T) {
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, amount0, "36790")  // bar
-	shouldEQ(t, amount1, "100000") // baz
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, amount0, "36790")  // bar
+	uassert.Equal(t, amount1, "100000") // baz
 }
 
 func TestPositionMintBazQux(t *testing.T) {
@@ -53,9 +55,9 @@ func TestPositionMintBazQux(t *testing.T) {
 
 	tokenId, liquidity, amount0, amount1 := pn.Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
-	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, amount0, "36790")
-	shouldEQ(t, amount1, "100000")
+	uassert.Equal(t, tokenId, uint64(2))
+	uassert.Equal(t, amount0, "36790")
+	uassert.Equal(t, amount1, "100000")
 }
 
 func TestPositionMintQuxGnot(t *testing.T) {
@@ -74,9 +76,9 @@ func TestPositionMintQuxGnot(t *testing.T) {
 
 	tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
-	shouldEQ(t, tokenId, uint64(3))
-	shouldEQ(t, amount0, "100000")
-	shouldEQ(t, amount1, "36790")
+	uassert.Equal(t, tokenId, uint64(3))
+	uassert.Equal(t, amount0, "100000")
+	uassert.Equal(t, amount1, "36790")
 }
 
 func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
@@ -90,7 +92,7 @@ func TestDrySwapRouteBarGnotExactIn(t *testing.T) {
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500", // strRouteArr
 		"100", // quoteArr
 	)
-	shouldEQ(t, dryResult, "19740")
+	uassert.Equal(t, dryResult, "19740")
 }
 
 func TestDrySwapRouteBarGnotExactOut(t *testing.T) {
@@ -104,7 +106,7 @@ func TestDrySwapRouteBarGnotExactOut(t *testing.T) {
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500", // strRouteArr
 		"100", // quoteArr
 	)
-	shouldEQ(t, dryResult, "1014")
+	uassert.Equal(t, dryResult, "1014")
 }
 
 func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
@@ -118,7 +120,7 @@ func TestDrySwapRouteGnotBarExactIn(t *testing.T) {
 		"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 		"100", // quoteArr
 	)
-	shouldEQ(t, dryResult, "247")
+	uassert.Equal(t, dryResult, "247")
 }
 
 func TestDrySwapRouteGnotBarExactOut(t *testing.T) {
@@ -132,5 +134,5 @@ func TestDrySwapRouteGnotBarExactOut(t *testing.T) {
 		"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 		"100", // quoteArr
 	)
-	shouldEQ(t, dryResult, "2027")
+	uassert.Equal(t, dryResult, "2027")
 }

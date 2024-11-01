@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
@@ -36,7 +37,7 @@ func TestCreatePool(t *testing.T) {
 		panic(err)
 	}
 
-	shouldEQ(t, response.Size(), 1)
+	uassert.Equal(t, response.Size(), 1)
 }
 
 func TestSwapRouteWugnotquxExactIn(t *testing.T) {
