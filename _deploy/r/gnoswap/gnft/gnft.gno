@@ -23,11 +23,18 @@ var userMinted = make(map[std.Address][]grc721.TokenID)
 func init() {}
 
 // Getters
+func Name() string {
+	return gnft.Name()
+}
+
+func Symbol() string {
+	return gnft.Symbol()
+}
 func TotalSupply() uint64 {
 	return gnft.TokenCount()
 }
 
-func GetTokenURI(tid grc721.TokenID) string {
+func TokenURI(tid grc721.TokenID) string {
 	uri, err := gnft.TokenURI(tid)
 	if err != nil {
 		panic(err.Error())
