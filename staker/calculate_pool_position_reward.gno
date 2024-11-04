@@ -87,7 +87,6 @@ var (
 //
 // It uses the current block height and its timestamp to determine the calculation period.
 func CalcPoolPosition() {
-
 	height := std.GetHeight()
 
 	if height <= lastCalculatedHeight {
@@ -118,6 +117,7 @@ func CalcPoolPosition() {
 	// + also which pool has which positions
 	positionsLiquidityRatio = make(map[uint64]*u256.Uint) // clear
 	poolsPositions = make(map[string][]uint64)            // clear
+
 	for tokenId, deposit := range deposits {
 		poolPath := deposit.targetPoolPath
 		isInRange := pn.PositionIsInRange(tokenId)
@@ -267,15 +267,10 @@ func CalcPoolPosition() {
 
 		if amount > 0 {
 			if poolCurrentBlockGns[poolPath] >= amount {
-
 				poolLastTmpGns[poolPath] = poolCurrentBlockGns[poolPath] - amount
-
 			} else {
-
 				poolCurrentBlockGns[poolPath] = 0
 			}
-		} else {
-
 		}
 	}
 
@@ -283,110 +278,8 @@ func CalcPoolPosition() {
 	poolCurrentBlockGns = make(map[string]uint64)
 
 	// ------------------------------------ EXTERNAL
-
-	for incentiveId, incentive := range incentives {
-
-		poolPath := incentive.targetPoolPath
-
-		startTimestamp := incentive.startTimestamp
-		endTimestamp := incentive.endTimestamp
-		now := time.Now().Unix()
-		// if inactive incentive, do not calculate
-		if !(startTimestamp <= now && now <= endTimestamp) {
-
-			continue
-		}
-
-		rewardToken := incentive.rewardToken
-		rewardAmount := incentive.rewardAmount
-		rewardLeft := incentive.rewardLeft
-
-		// region `process`
-		for _, tokenId := range poolsPositions[poolPath] {
-
-			// region `must`
-			// how many blocks passed since
-			// max time between (start of the incentive) and (staked at) and (last calculated)
-			deposit := deposits[tokenId]
-			_max := max(startTimestamp, deposit.stakeTimestamp)
-
-			_max = max(_max, externalLastCalculatedTimestamp[incentiveId])
-
-			blocksPassed := (now - _max) / consts.BLOCK_GENERATION_INTERVAL
-
-			if blocksPassed == 0 {
-				continue
-			}
-
-			liqRatioX96, exist := positionsLiquidityRatio[tokenId]
-			if exist == false || liqRatioX96.IsZero() {
-				continue
-			}
-
-			currentPoolRewardX96 := u256.Zero().Mul(incentive.rewardPerBlockX96, u256.NewUint(uint64(blocksPassed)))
-
-			positionAmountX96X96 := u256.Zero().Mul(currentPoolRewardX96, liqRatioX96)
-
-			positionAmountX96 := u256.Zero().Div(positionAmountX96X96, _q96)
-
-			rewardLeftX96 := new(u256.Uint).Mul(rewardLeft, _q96)
-			if positionAmountX96.Gt(rewardLeftX96) {
-				positionAmountX96 = rewardLeftX96
-			}
-
-			// region initPositionMaps
-			_, exist = positionLastExternal[tokenId]
-			if !exist {
-				positionLastExternal[tokenId] = make(map[string]*u256.Uint)
-			}
-
-			_, exist = positionsExternalLastCalculatedHeight[tokenId]
-			if !exist {
-				positionsExternalLastCalculatedHeight[tokenId] = make(map[string]int64)
-				positionsExternalLastCalculatedHeight[tokenId][incentiveId] = height - int64(blocksPassed)
-			}
-
-			_, exist = positionsExternalWarmUpAmount[tokenId]
-			if !exist {
-				positionsExternalWarmUpAmount[tokenId] = make(map[string]warmUpAmount)
-			}
-
-			_, exist = positionsExternalWarmUpAmount[tokenId][incentiveId]
-			if !exist {
-				positionsExternalWarmUpAmount[tokenId][incentiveId] = warmUpAmount{}
-			}
-
-			_, exist = positionExternal[tokenId]
-			if !exist {
-				positionExternal[tokenId] = make(map[string]externalRewards)
-			}
-
-			_, exist = positionExternal[tokenId][incentiveId]
-			if !exist {
-				positionExternal[tokenId][incentiveId] = externalRewards{
-					incentiveId:    incentiveId,
-					poolPath:       poolPath,
-					tokenPath:      rewardToken,
-					tokenAmountX96: positionAmountX96,
-				}
-				positionLastExternal[tokenId][incentiveId] = u256.Zero()
-			} else {
-				tempLastExternalAmount := positionExternal[tokenId][incentiveId].tokenAmountX96
-				positionLastExternal[tokenId][incentiveId] = tempLastExternalAmount
-				positionExternal[tokenId][incentiveId] = externalRewards{
-					incentiveId:    incentiveId,
-					poolPath:       poolPath,
-					tokenPath:      rewardToken,
-					tokenAmountX96: new(u256.Uint).Add(tempLastExternalAmount, positionAmountX96),
-				}
-			}
-
-			rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
-			positionsExternalLastCalculatedHeight[tokenId][incentiveId] = height
-		}
-		externalLastCalculatedTimestamp[incentiveId] = now
-	}
-
+	external := NewExternalCalculator(height)
+	external.calculate(incentives) // XXX: no returning any value?
 }
 
 func externalGnsAmount() uint64 {
@@ -407,19 +300,32 @@ func externalDepositGnsAmount() uint64 {
 	return amount
 }
 
-// refactor
+// region *****refactor******
 
 type ExternalIncentiveMap map[string]ExternalIncentive
+
+// ExternalCalculator manages the calculation of external incentive rewards.
+//
+// This maintains its own timestamp to ensure consistent time-based calculations
+// accross multiple operation calls.
+//
+// TODO: better name
 type ExternalCalculator struct {
 	height int64
-	now int64
+	now    int64
 }
 
 func NewExternalCalculator(height int64) *ExternalCalculator {
 	now := time.Now().Unix()
-	return &ExternalCalculator{ height, now }
+	return &ExternalCalculator{height, now}
 }
 
+// calculate processes all active incentives and their rewards.
+//
+// it iterates throught incentives, checks their activity status,
+// and processes rewards only for active ones to optimize computation.
+//
+// To maintain the functional purity, it passes the [ExternalIncentiveMap] as an argument.
 func (ec *ExternalCalculator) calculate(ictvs ExternalIncentiveMap) {
 	for id, ictv := range ictvs {
 		if !ec.active(ictv) {
@@ -430,19 +336,29 @@ func (ec *ExternalCalculator) calculate(ictvs ExternalIncentiveMap) {
 	}
 }
 
+// active determines if an incentive is currently valid based on its time window.
 func (ec *ExternalCalculator) active(ictv ExternalIncentive) bool {
 	return ictv.startTimestamp <= ec.now && ec.now <= ictv.endTimestamp
 }
 
+// process handles reward calculation for a single incentive across all its positions.
+//
+// SIDE EFFECT: updates the global state once all position calculations are done,
+// maintaining consistency in reward distribution timing.
 func (ec *ExternalCalculator) process(ictvId string, ictv ExternalIncentive) {
 	for _, tokId := range poolsPositions[ictv.targetPoolPath] {
 		if ec.must(tokId, ictvId, ictv) {
-			ec.updatePosition(tokId, ictvId, ictv)
+			blockPassed := ec.getBlockPassed(tokId, ictvId, ictv)
+			ec.updatePosition(tokId, ictvId, ictv, blockPassed)
 		}
 	}
 	externalLastCalculatedTimestamp[ictvId] = ec.now
 }
 
+// must determines if a position should receive rewards at this calculation cycle.
+//
+// it checks both the time elapsed and liquidity conditions to ensure
+// rewards are only calculated for valid, active positions.
 func (ec *ExternalCalculator) must(tokId uint64, ictvId string, ictv ExternalIncentive) bool {
 	passed := ec.getBlockPassed(tokId, ictvId, ictv)
 	if passed == 0 {
@@ -453,14 +369,23 @@ func (ec *ExternalCalculator) must(tokId uint64, ictvId string, ictv ExternalInc
 	return exist && !liqRatioX96.IsZero()
 }
 
+// getBlockPassed calculates the number of blocks that have passed since the last
+// reward calculation.
+//
+// TOO MANY SIDE-EFFECTS: use block height instead of timestamp
 func (ec *ExternalCalculator) getBlockPassed(tokId uint64, ictvId string, ictv ExternalIncentive) int64 {
 	deposit := deposits[tokId]
 	last := max(ictv.startTimestamp, deposit.stakeTimestamp)
 	last = max(last, externalLastCalculatedTimestamp[ictvId])
 
+	// WARNING: error prone. need to use block height instead of timestamp
 	return (ec.now - last) / consts.BLOCK_GENERATION_INTERVAL
 }
 
+// updatePosition calculates the reward amount for a single position.
+//
+// It applies the liquidity ratio to the total pool reward and ensures
+// the result is in Q96 format.
 func (ec *ExternalCalculator) updatePosition(
 	tokId uint64,
 	ictvId string,
@@ -475,8 +400,8 @@ func (ec *ExternalCalculator) updatePosition(
 		u256.NewUint(uint64(blockPassed)),
 	)
 
-	positionAmount := u256.Zero().Mul(currentPoolRewardX96, liqRatioX96)
-	positionAmount = u256.Zero().Div(positionAmount, _q96)
+	positionAmount := u256.Zero().Mul(currentPoolRewardX96, liqRatioX96) // X96X96
+	positionAmount = u256.Zero().Div(positionAmount, _q96) // X96
 
 	rewardLeft := new(u256.Uint).Mul(ictv.rewardLeft, _q96)
 	if positionAmount.Gt(rewardLeft) {
@@ -486,6 +411,13 @@ func (ec *ExternalCalculator) updatePosition(
 	return positionAmount
 }
 
+// initPositionMaps ensures all necessary data structures are initialized
+// for a position's reward tracking.
+//
+// WARNING: this initialization is required before any reward calculations can proceed,
+// preventing null pointer exceptions and maintaining consistent reward tracking.
+//
+// IDEMPOTENT: calling it multiple times with the same parameters will result in the same state.
 func (ex *ExternalCalculator) initPositionMaps(tokId uint64, ictvId string, ictv ExternalIncentive) {
 	if _, exist := positionLastExternal[tokId]; !exist {
 		positionLastExternal[tokId] = make(map[string]*u256.Uint)
@@ -497,12 +429,6 @@ func (ex *ExternalCalculator) initPositionMaps(tokId uint64, ictvId string, ictv
 		positionsExternalLastCalculatedHeight[tokId] = make(map[string]int64)
 		positionsExternalLastCalculatedHeight[tokId][ictvId] = ex.height - int64(blockPassed)
 	}
-
-	// TODO: like this?
-	// warmUpAmounts := positionsExternalWarmUpAmount[tokId]
-	// if _, exist := warmUpAmounts[ictvId]; !exist {
-	// 	warmUpAmounts[ictvId] = warmUpAmount{}
-	// }
 
 	if _, exist := positionsExternalWarmUpAmount[tokId]; !exist {
 		positionsExternalWarmUpAmount[tokId] = make(map[string]warmUpAmount)
@@ -517,28 +443,59 @@ func (ex *ExternalCalculator) initPositionMaps(tokId uint64, ictvId string, ictv
 	}
 }
 
+// createNewPositionReward creates a new position reward record.
+func createNewPositionReward(
+	ictvId string,
+	poolPath string,
+	tokenPath string,
+	positionAmountX96 *u256.Uint,
+) externalRewards {
+	return externalRewards{
+		incentiveId:    ictvId,
+		poolPath:       poolPath,
+		tokenPath:      tokenPath,
+		tokenAmountX96: positionAmountX96,
+	}
+}
+
+// updateExistingPositionReward creates a new reward record with updated amounts.
+func updateExistingPositionReward(
+	existing externalRewards,
+	positionAmountX96 *u256.Uint,
+) externalRewards {
+	return externalRewards{
+		incentiveId:    existing.incentiveId,
+		poolPath:       existing.poolPath,
+		tokenPath:      existing.tokenPath,
+		tokenAmountX96: new(u256.Uint).Add(existing.tokenAmountX96, positionAmountX96),
+	}
+}
+
+// updatePositionRewards coordinates the creation or update of position rewards.
 func (ex *ExternalCalculator) updatePositionRewards(
 	tokId uint64,
 	ictvId string,
 	ictv ExternalIncentive,
 	positionAmountX96 *u256.Uint,
 ) {
-	if _, exist := positionExternal[tokId][ictvId]; !exist {
-		positionExternal[tokId][ictvId] = externalRewards{
-			incentiveId:    ictvId,
-			poolPath:       ictv.targetPoolPath,
-			tokenPath:      ictv.rewardToken,
-			tokenAmountX96: positionAmountX96,
-		}
-		positionLastExternal[tokId][ictvId] = positionAmountX96
-	} else {
-		tempLastExternalAmount := positionExternal[tokId][ictvId].tokenAmountX96
-		positionLastExternal[tokId][ictvId] = tempLastExternalAmount
-		positionExternal[tokId][ictvId] = externalRewards{
-			incentiveId:    ictvId,
-			poolPath:       ictv.targetPoolPath,
-			tokenPath:      ictv.rewardToken,
-			tokenAmountX96: new(u256.Uint).Add(tempLastExternalAmount, positionAmountX96),
-		}
+	amount, exist := positionExternal[tokId][ictvId]
+	if exist {
+		positionLastExternal[tokId][ictvId] = amount.tokenAmountX96
+		positionExternal[tokId][ictvId] = updateExistingPositionReward(
+			amount,
+			positionAmountX96,
+		)
+		return
 	}
+
+	newReward := createNewPositionReward(
+		ictvId,
+		ictv.targetPoolPath,
+		ictv.rewardToken,
+		positionAmountX96,
+	)
+	positionExternal[tokId][ictvId] = newReward
+	positionLastExternal[tokId][ictvId] = positionAmountX96
 }
+
+// 남는 수량 어떻게?
