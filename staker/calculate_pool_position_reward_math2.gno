@@ -7,7 +7,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (uint64, uint64) {
+func rewardMathComputeExternalRewardAmount2(tokenId uint64, incentiveId string) (uint64, uint64) {
 	calculator := NewCalculator(tokenId, incentiveId)
 	full, give, err := calculator.computeRewards()
 	if err != nil {
