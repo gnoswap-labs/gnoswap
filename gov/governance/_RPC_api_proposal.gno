@@ -8,8 +8,6 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
-	gs "gno.land/r/gnoswap/v2/gov/staker"
-
 	en "gno.land/r/gnoswap/v2/emission"
 )
 
@@ -252,10 +250,10 @@ func getProposalVotes(id uint64) string {
 	config := GetConfigVersion(proposal.ConfigVersion)
 	weightUntilTimestamp := proposal.ExecutionState.CreatedAt - config.VotingWeightSmoothingDuration
 
-	max := gs.GetTotalDelegatedUntil(weightUntilTimestamp)
+	maxVoting := proposal.MaxVotingWeight.ToString()
 
 	proposalObj.AppendObject("quorum", json.StringNode("quorum", ufmt.Sprintf("%d", proposal.QuorumAmount)))
-	proposalObj.AppendObject("max", json.StringNode("max", ufmt.Sprintf("%d", max)))
+	proposalObj.AppendObject("max", json.StringNode("max", maxVoting))
 	proposalObj.AppendObject("yes", json.StringNode("yes", proposal.Yea.ToString()))
 	proposalObj.AppendObject("no", json.StringNode("no", proposal.Nay.ToString()))
 

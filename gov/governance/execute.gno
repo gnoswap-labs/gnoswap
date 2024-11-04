@@ -3,10 +3,12 @@ package governance
 import (
 	"std"
 	"strings"
-
-	"gno.land/r/gnoswap/v2/consts"
+	"time"
 
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/r/gnoswap/v2/gns"
 
@@ -18,6 +20,90 @@ import (
 	rr "gno.land/r/gnoswap/v2/router"
 	sr "gno.land/r/gnoswap/v2/staker"
 )
+
+// Execute executes the given proposal.
+// It checks various conditions such as voting period, execution window, quorum, and majority.
+// Returns the results of the executed calls.
+// Panics if any of the execution conditions are not met.
+func Execute(proposalId uint64) {
+	common.IsHalted()
+
+	en.MintAndDistributeGns()
+	updateProposalsState()
+
+	proposal, exist := proposals[proposalId]
+	if !exist {
+		panic(ufmt.Sprintf("proposal %d does not exist. failed to execute", proposalId))
+	}
+
+	if proposal.ProposalType == "TEXT" {
+		panic(ufmt.Sprintf("proposal %d is a TEXT proposal. not executable", proposalId))
+	}
+
+	if proposal.ExecutionState.Executed || proposal.ExecutionState.Canceled || proposal.ExecutionState.Rejected {
+		panic(ufmt.Sprintf("proposal %d has already executed(%t) or canceled(%t) or rejected(%t). failed to execute", proposalId, proposal.ExecutionState.Executed, proposal.ExecutionState.Canceled, proposal.ExecutionState.Rejected))
+	}
+
+	if !proposal.ExecutionState.Passed {
+		panic(ufmt.Sprintf("proposal %d has not passed. failed to execute", proposalId))
+	}
+
+	now := uint64(time.Now().Unix())
+
+	config := GetConfigVersion(proposal.ConfigVersion)
+	votingEnd := proposal.ExecutionState.CreatedAt + config.VotingStartDelay + config.VotingPeriod
+	windowStart := votingEnd + config.ExecutionDelay
+	if now < windowStart {
+		panic(ufmt.Sprintf("EXECUTION_WINDOW_NOT_STARTED (now(%d) < windowStart(%d))", now, windowStart))
+	}
+
+	windowEnd := windowStart + config.ExecutionWindow
+	if now >= windowEnd {
+		panic(ufmt.Sprintf("EXECUTION_WINDOW_OVER (now(%d) >= windowEnd(%d))", now, windowEnd))
+	}
+
+	yeaUint := proposal.Yea.Uint64()
+	nayUint := proposal.Nay.Uint64()
+	quorumUint := proposal.QuorumAmount
+
+	if yeaUint < quorumUint {
+		panic("QUORUM_NOT_MET")
+	}
+
+	if yeaUint < nayUint {
+		panic("NO_MAJORITY")
+	}
+
+	if proposal.ProposalType == "COMMUNITY_POOL_SPEND" {
+		// check if the token is registered to community pool
+		registered := cp.GetRegisteredTokens()
+		if !contains(registered, proposal.CommunityPoolSpend.TokenPath) {
+			panic(ufmt.Sprintf("token %s is not registered to community pool", proposal.CommunityPoolSpend.TokenPath))
+		}
+
+		// trigger community pool spend
+		cp.TransferToken(proposal.CommunityPoolSpend.TokenPath, proposal.CommunityPoolSpend.To, proposal.CommunityPoolSpend.Amount)
+	}
+
+	if proposal.ProposalType == "PARAMETER_CHANGE" {
+		// trigger parameter change
+		executeParameterChange(proposal.Execution.Msgs)
+	}
+
+	proposal.ExecutionState.Executed = true
+	proposal.ExecutionState.ExecutedAt = now
+	proposal.ExecutionState.Upcoming = false
+	proposal.ExecutionState.Active = false
+	proposals[proposalId] = proposal
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"Execute",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"proposalId", ufmt.Sprintf("%d", proposalId),
+	)
+}
 
 func callableMsg(pkgPath, function, params string) bool {
 	println(">> callableMsg", pkgPath, function, params)

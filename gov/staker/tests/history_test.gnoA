@@ -1,0 +1,82 @@
+package staker
+
+import (
+	"testing"
+
+	"gno.land/p/demo/testutils"
+)
+
+func TestGetDelegatedCumulative(t *testing.T) {
+	delegateAddr := testutils.TestAddress("delegate")
+	delegate := delegateAddr
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("GetDelegatedCumulative panicked: %v", r)
+		}
+	}()
+
+	// simulate time passing and additional stakes
+	currentTime := uint64(1000)
+	delegationModifiedHistory[delegateAddr] = []ModifiedDelegationHistory{
+		{
+			delegatedAmount:      2500,
+			delegatedTimestamp:   currentTime,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    2500,
+		},
+
+		{
+			delegatedAmount:      1000,
+			delegatedTimestamp:   currentTime + 100,
+			undelegatedTimestamp: currentTime + 230,
+			undelegatedAmount:    300,
+		},
+
+		{
+			delegatedAmount:    500,
+			delegatedTimestamp: currentTime + 200,
+		},
+	}
+
+	tests := []struct {
+		name           string
+		timestamp      uint64
+		expectedResult uint64
+	}{
+		{
+			name:           "period +50",
+			timestamp:      currentTime + 50,
+			expectedResult: uint64(0),
+		},
+		{
+			name:           "period +100",
+			timestamp:      currentTime + 100,
+			expectedResult: uint64(700), // (1000 - 300)
+		},
+		{
+			name:           "period +150",
+			timestamp:      currentTime + 150,
+			expectedResult: uint64(700), // (1000 - 300)
+		},
+		{
+			name:           "period +200",
+			timestamp:      currentTime + 200,
+			expectedResult: uint64(1200), // (1000 - 300) + 500
+		},
+		{
+			name:           "period +250",
+			timestamp:      currentTime + 250,
+			expectedResult: uint64(1200), // (1000 - 300) + 500
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := GetDelegatedCumulative(delegate, tt.timestamp)
+			if result != tt.expectedResult {
+				t.Errorf("Expected %d, got %d", tt.expectedResult, result)
+			}
+		})
+	}
+}

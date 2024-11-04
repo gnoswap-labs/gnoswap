@@ -32,6 +32,11 @@ func init() {
 }
 
 func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *testing.T) {
+	uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(0))
+	uassert.Equal(t, std.GetHeight(), int64(123))
+
+	std.TestSkipHeights(5)
+
 	t.Run("propose successful", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
@@ -45,7 +50,10 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 		uassert.Equal(t, proposalID, uint64(1))
 
 		proposalJson := GetProposalById(1)
-		uassert.Equal(t, proposalJson, `{"height":"123","now":"1234567890","proposals":[{"id":"1","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3ODkwIiwiVXBjb21pbmciOiJ0cnVlIiwiQWN0aXZlIjoiZmFsc2UiLCJWb3RpbmdTdGFydCI6IjEyMzQ1Njc5MDAiLCJWb3RpbmdFbmQiOiIxMjM0NTY3OTMwIiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"PARAMETER_CHANGE","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":"Z25vLmxhbmQvci9nbm9zd2FwL3YyL2ducypFWEUqU2V0QXZnQmxvY2tUaW1lSW5NcypFWEUqMTIzKkdPVipnbm8ubGFuZC9yL2dub3N3YXAvdjIvY29tbXVuaXR5X3Bvb2wqRVhFKlRyYW5zZmVyVG9rZW4qRVhFKmduby5sYW5kL3IvZ25vc3dhcC92Mi9nbnMsZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yyw5MDU="}]}`)
+		uassert.Equal(t, proposalJson, `{"height":"128","now":"1234567900","proposals":[{"id":"1","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTAwIiwiVXBjb21pbmciOiJ0cnVlIiwiQWN0aXZlIjoiZmFsc2UiLCJWb3RpbmdTdGFydCI6IjEyMzQ1Njc5MTAiLCJWb3RpbmdFbmQiOiIxMjM0NTY3OTQwIiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"PARAMETER_CHANGE","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":"Z25vLmxhbmQvci9nbm9zd2FwL3YyL2ducypFWEUqU2V0QXZnQmxvY2tUaW1lSW5NcypFWEUqMTIzKkdPVipnbm8ubGFuZC9yL2dub3N3YXAvdjIvY29tbXVuaXR5X3Bvb2wqRVhFKlRyYW5zZmVyVG9rZW4qRVhFKmduby5sYW5kL3IvZ25vc3dhcC92Mi9nbnMsZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yyw5MDU="}]}`)
+
+		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(3567351)) // community pool receives 5% of emission reward
+		uassert.Equal(t, std.GetHeight(), int64(128))
 	})
 
 	t.Run("vote => skip time => pass status", func(t *testing.T) {
@@ -61,15 +69,18 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 
 		std.TestSkipHeights(31) // ends voting period
 		updateProposalsState()
+
+		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(33533103))
+		uassert.Equal(t, std.GetHeight(), int64(170)) // 42 from block initial(123)
 	})
 
 	t.Run("execute proposal", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
 		uassert.Equal(t, gns.GetAvgBlockTimeInMs(), int64(2000))
-		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(29965752))
+		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(33533103))
 		Execute(proposalId)
 		uassert.Equal(t, gns.GetAvgBlockTimeInMs(), int64(123))
-		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(29964847))
+		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(33532198)) // 905 transferred, as paramter from proposal L#44
 	})
 }

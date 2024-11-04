@@ -63,6 +63,8 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 }
 
 func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -84,6 +86,8 @@ func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
 }
 
 func TestProposeParameterChange_GOV_reconfigure(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -121,6 +125,8 @@ func TestProposeParameterChange_GOV_reconfigure(t *testing.T) {
 }
 
 func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -142,6 +148,8 @@ func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
 }
 
 func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -163,6 +171,8 @@ func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
 }
 
 func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -184,6 +194,8 @@ func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 }
 
 func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -205,6 +217,8 @@ func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 }
 
 func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -226,6 +240,8 @@ func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
 }
 
 func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -247,6 +263,8 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 }
 
 func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -276,6 +294,8 @@ func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
 }
 
 func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -300,6 +320,8 @@ func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
 }
 
 func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -323,6 +345,8 @@ func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
 }
 
 func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -344,6 +368,8 @@ func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
 }
 
 func TestProposeParameterChange_Staker_SetWarmUp(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
@@ -365,6 +391,8 @@ func TestProposeParameterChange_Staker_SetWarmUp(t *testing.T) {
 }
 
 func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
+	std.TestSkipHeights(5)
+
 	std.TestSetRealm(adminRealm)
 	proposalId := ProposeParameterChange(
 		"test_title",
