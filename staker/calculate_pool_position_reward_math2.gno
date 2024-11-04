@@ -28,12 +28,12 @@ const (
 // RewardState holds the state necessary for computing rewards
 type RewardState struct {
 	TokenId                  uint64
-	IncentiveId              string
+	LastCalculatedHeight     uint64
 	CurrentHeight            int64
 	StakedOrExternalDuration int64
-	WarmUpAmount             warmUpAmount
+	IncentiveId              string
 	DistributionAmount       *u256.Uint
-	LastCalculatedHeight     uint64
+	WarmUpAmount             warmUpAmount
 }
 
 // TimeSpan represents a period during which a specific reward ratio applies
@@ -146,7 +146,7 @@ func (c *Calculator) computeTimeSpans(startHeight uint64, periodsDef []PeriodDef
 	return periods
 }
 
-func (c *Calculator) calculatePeriodEnd(startHeight uint64, endOffset uint64, currentHeight uint64) uint64 {
+func (c *Calculator) calculatePeriodEnd(startHeight, endOffset, currentHeight uint64) uint64 {
 	if endOffset == 0 {
 		return currentHeight
 	}
