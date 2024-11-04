@@ -21,6 +21,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+type External
+
 var (
 	/* internal */
 	// poolTiers stores internal tier information for each pool
