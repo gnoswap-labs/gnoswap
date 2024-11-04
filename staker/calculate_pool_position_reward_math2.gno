@@ -9,7 +9,7 @@ import (
 
 func rewardMathComputeExternalRewardAmount(tokenId uint64, incentiveId string) (uint64, uint64) {
 	calculator := NewCalculator(tokenId, incentiveId)
-	full, give, err := calculator.ComputeRewards()
+	full, give, err := calculator.computeRewards()
 	if err != nil {
 		panic(err)
 	}
@@ -146,7 +146,14 @@ func (c *Calculator) computeTimeSpans(startHeight uint64, periodsDef []PeriodDef
 	return periods
 }
 
-// ComputeRewards calculates the total rewards for a token position in an incentive program.
+func (c *Calculator) calculatePeriodEnd(startHeight uint64, endOffset uint64, currentHeight uint64) uint64 {
+	if endOffset == 0 {
+		return currentHeight
+	}
+	return startHeight + endOffset
+}
+
+// computeRewards calculates the total rewards for a token position in an incentive program.
 // It performs the complete reward calculation process:
 //  1. Validates the existence of position and incentive
 //  2. Determines the calculation period
@@ -158,14 +165,7 @@ func (c *Calculator) computeTimeSpans(startHeight uint64, periodsDef []PeriodDef
 //   - full: total rewards accumulated
 //   - give: immediately claimable rewards
 //   - error: if position or incentive not found
-func (c *Calculator) calculatePeriodEnd(startHeight uint64, endOffset uint64, currentHeight uint64) uint64 {
-	if endOffset == 0 {
-		return currentHeight
-	}
-	return startHeight + endOffset
-}
-
-func (c *Calculator) ComputeRewards() (uint64, uint64, error) {
+func (c *Calculator) computeRewards() (uint64, uint64, error) {
 	externalsMap, exists := positionExternal[c.state.TokenId]
 	if !exists {
 		return 0, 0, ufmt.Errorf("no externals found for token %d", c.state.TokenId)
