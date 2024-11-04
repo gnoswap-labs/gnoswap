@@ -505,6 +505,9 @@ func setFeeProtocol(
 		pool.slot0.feeProtocol = newFee
 	}
 
+	// update slot0
+	slot0FeeProtocol = newFee
+
 	return newFee
 }
 

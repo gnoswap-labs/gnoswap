@@ -19,6 +19,8 @@ import (
 var (
 	feeAmountTickSpacing map[uint32]int32 = make(map[uint32]int32) // maps fee to tickSpacing || map[feeAmount]tick_spacing
 	pools                map[string]*Pool = make(map[string]*Pool) // maps poolPath to pool || map[poolPath]*Pool
+
+	slot0FeeProtocol uint8 = 0
 )
 
 func init() {
@@ -198,7 +200,7 @@ func newPool(
 	slot0 := Slot0{
 		sqrtPriceX96: sqrtPriceX96,
 		tick:         tick,
-		feeProtocol:  0,
+		feeProtocol:  slot0FeeProtocol,
 		unlocked:     true,
 	}
 
