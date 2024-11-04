@@ -82,13 +82,15 @@ func GetMaxVotingWeight(timestamp uint64) uint64 {
 
 	totalWeight := uint64(0)
 
-	for _, history := range delegationModifiedHistory {
-		for _, record := range history {
-			if record.delegatedTimestamp > timestamp {
+	for _, history := range delegationStatHistory {
+		// reverse history
+		for i := len(history) - 1; i >= 0; i-- {
+			if history[i].updatedAt > timestamp {
 				continue
 			}
 
-			totalWeight += record.delegatedAmount - record.undelegatedAmount
+			totalWeight += history[i].amount
+			break
 		}
 	}
 
@@ -107,18 +109,20 @@ func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, map[std.Ad
 	totalWeight := uint64(0)
 	addressWithWeight := make(map[std.Address]uint64)
 
-	for to, history := range delegationModifiedHistory {
-		toWeight := uint64(0)
+	for to, history := range delegationStatHistory {
+		// reverse history
+		for i := len(history) - 1; i >= 0; i-- {
+			record := history[i]
 
-		for _, record := range history {
-			if record.delegatedTimestamp > endTimestamp {
+			if record.updatedAt > endTimestamp {
 				continue
 			}
-			totalWeight += record.delegatedAmount - record.undelegatedAmount
-			toWeight += record.delegatedAmount - record.undelegatedAmount
-		}
 
-		addressWithWeight[to] = toWeight
+			addressWithWeight[to] = record.amount
+			totalWeight += record.amount
+
+			break
+		}
 	}
 
 	return totalWeight, addressWithWeight
@@ -136,20 +140,20 @@ func GetPossibleVotingAddressWithWeightJSON(endTimestamp uint64) (uint64, string
 	totalWeight := uint64(0)
 	addressWithWeight := make(map[std.Address]uint64)
 
-	for to, history := range delegationModifiedHistory {
-		println("to", to.String())
-		toWeight := uint64(0)
+	for to, history := range delegationStatHistory {
+		// reverse history
+		for i := len(history) - 1; i >= 0; i-- {
+			record := history[i]
 
-		for _, record := range history {
-			if record.delegatedTimestamp > endTimestamp {
+			if record.updatedAt > endTimestamp {
 				continue
 			}
-			totalWeight += record.delegatedAmount - record.undelegatedAmount
-			toWeight += record.delegatedAmount - record.undelegatedAmount
-		}
 
-		addressWithWeight[to] = toWeight
-		println("toWeight", toWeight)
+			addressWithWeight[to] = record.amount
+			totalWeight += record.amount
+
+			break
+		}
 	}
 
 	possibleObj := json.ObjectNode("", nil)

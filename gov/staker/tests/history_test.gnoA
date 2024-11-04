@@ -18,24 +18,21 @@ func TestGetDelegatedCumulative(t *testing.T) {
 
 	// simulate time passing and additional stakes
 	currentTime := uint64(1000)
-	delegationModifiedHistory[delegateAddr] = []ModifiedDelegationHistory{
+	delegationStatHistory[delegateAddr] = []DelegationStatHistory{
 		{
-			delegatedAmount:      2500,
-			delegatedTimestamp:   currentTime,
-			undelegatedTimestamp: currentTime + 230,
-			undelegatedAmount:    2500,
+			amount:       1000,
+			updatedBlock: 1,
+			updatedAt:    currentTime,
 		},
-
 		{
-			delegatedAmount:      1000,
-			delegatedTimestamp:   currentTime + 100,
-			undelegatedTimestamp: currentTime + 230,
-			undelegatedAmount:    300,
+			amount:       3000,
+			updatedBlock: 2,
+			updatedAt:    currentTime + 100,
 		},
-
 		{
-			delegatedAmount:    500,
-			delegatedTimestamp: currentTime + 200,
+			amount:       2500,
+			updatedBlock: 3,
+			updatedAt:    currentTime + 200,
 		},
 	}
 
@@ -47,27 +44,27 @@ func TestGetDelegatedCumulative(t *testing.T) {
 		{
 			name:           "period +50",
 			timestamp:      currentTime + 50,
-			expectedResult: uint64(0),
+			expectedResult: uint64(1000),
 		},
 		{
 			name:           "period +100",
 			timestamp:      currentTime + 100,
-			expectedResult: uint64(700), // (1000 - 300)
+			expectedResult: uint64(3000),
 		},
 		{
 			name:           "period +150",
 			timestamp:      currentTime + 150,
-			expectedResult: uint64(700), // (1000 - 300)
+			expectedResult: uint64(3000),
 		},
 		{
 			name:           "period +200",
 			timestamp:      currentTime + 200,
-			expectedResult: uint64(1200), // (1000 - 300) + 500
+			expectedResult: uint64(2500),
 		},
 		{
 			name:           "period +250",
 			timestamp:      currentTime + 250,
-			expectedResult: uint64(1200), // (1000 - 300) + 500
+			expectedResult: uint64(2500),
 		},
 	}
 

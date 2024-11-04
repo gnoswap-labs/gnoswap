@@ -34,10 +34,11 @@ var (
 )
 
 func Delegate(to std.Address, amount uint64) {
-	common.IsHalted()
-	en.MintAndDistributeGns()
+	if running {
+		cleanDelegationStatHistory()
+	}
 
-	calculateReward()
+	CollectReward() // common.IsHalted() + en.MintAndDistributeGns() + calculateReward()
 
 	if !to.IsValid() {
 		panic(ufmt.Sprintf("invalid address %s to Delegate", to.String()))
@@ -70,7 +71,11 @@ func Delegate(to std.Address, amount uint64) {
 
 // xGNS from -> xGNS to
 func Redelegate(from, to std.Address, amount uint64) {
-	CollectReward() // common.IsHalted() + en.MintAndDistributeGns() + calculateReward()
+	if running {
+		cleanDelegationStatHistory()
+	}
+
+	CollectReward()
 
 	if !from.IsValid() {
 		panic(ufmt.Sprintf("invalid from address %s to Redelegate", to.String()))
@@ -105,6 +110,10 @@ func Redelegate(from, to std.Address, amount uint64) {
 }
 
 func Undelegate(from std.Address, amount uint64) {
+	if running {
+		cleanDelegationStatHistory()
+	}
+
 	CollectReward() // common.IsHalted() + en.MintAndDistributeGns() + calculateReward()
 
 	if !from.IsValid() {
