@@ -21,21 +21,6 @@ type DelegationHistory struct {
 // to address -> []delegationHistory
 var delegationHistory = make(map[std.Address][]DelegationHistory)
 
-// Modified History => if undelegated, amount will be taken from the first delegation
-type ModifiedDelegationHistory struct {
-	from                 std.Address
-	to                   std.Address
-	delegatedHeight      uint64
-	delegatedTimestamp   uint64
-	delegatedAmount      uint64
-	undelegatedHeight    uint64
-	undelegatedTimestamp uint64
-	undelegatedAmount    uint64
-}
-
-// to address -> []modifiedDelegationHistory
-var delegationModifiedHistory = make(map[std.Address][]ModifiedDelegationHistory)
-
 // DelegationStatHistory represents delegation stat for to address
 type DelegationStatHistory struct {
 	to           std.Address

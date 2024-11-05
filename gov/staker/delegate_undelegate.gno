@@ -36,16 +36,6 @@ func delegate(to std.Address, amount uint64) {
 	}
 	delegationHistory[caller] = append(delegationHistory[caller], delegation)
 
-	modified := ModifiedDelegationHistory{
-		from:               caller,
-		to:                 to,
-		delegatedHeight:    uint64(std.GetHeight()),
-		delegatedTimestamp: uint64(time.Now().Unix()),
-		delegatedAmount:    amount,
-	}
-
-	delegationModifiedHistory[to] = append(delegationModifiedHistory[to], modified)
-
 	// get last data if exists
 	updateAmount := uint64(0)
 
@@ -96,31 +86,6 @@ func undelegate(to std.Address, amount uint64) {
 		add:       false, // if false, undelegation
 	}
 	delegationHistory[caller] = append(delegationHistory[caller], delegation)
-
-	// update modified history
-	modified, exist := delegationModifiedHistory[to]
-	if !exist {
-		panic(ufmt.Sprintf("caller %s has no modified delegation history", caller))
-	}
-
-	for i := 0; i < len(modified); i++ {
-		if modified[i].from == caller {
-			leftAmount := modified[i].delegatedAmount - modified[i].undelegatedAmount
-			if leftAmount > 0 {
-				if leftAmount < amount {
-					modified[i].undelegatedAmount = modified[i].delegatedAmount
-					amount -= leftAmount
-					modified[i].undelegatedHeight = uint64(std.GetHeight())
-					modified[i].undelegatedTimestamp = uint64(time.Now().Unix())
-				} else {
-					modified[i].undelegatedAmount += amount
-					modified[i].undelegatedHeight = uint64(std.GetHeight())
-					modified[i].undelegatedTimestamp = uint64(time.Now().Unix())
-					break
-				}
-			}
-		}
-	}
 
 	// update delegation stat history
 	stat, exist := delegationStatHistory[to]
