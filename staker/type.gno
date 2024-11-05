@@ -15,7 +15,7 @@ type ExternalIncentive struct {
 	targetPoolPath    string // 줘야 하는 곳
 	rewardToken       string // 실제로 주는 리워드
 	rewardAmount      *u256.Uint
-	rewa산dLeft        *u256.Uint
+	rewardLeft        *u256.Uint
 	startTimestamp    int64
 	endTimestamp      int64
 	// startHeight       int64 => Diff를 구해서 1 block 당 얼만큼 줘야 하는지 계산
