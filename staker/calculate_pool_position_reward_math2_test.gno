@@ -117,7 +117,8 @@ func TestCalculator_New(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			calculator := NewCalculator(tt.tokenId, tt.incentiveId)
+			currentHeight := std.GetHeight()
+			calculator := NewCalculator(currentHeight, tt.tokenId, tt.incentiveId)
 
 			uassert.Equal(t, tt.tokenId, calculator.state.TokenId)
 			uassert.Equal(t, tt.incentiveId, calculator.state.IncentiveId)
@@ -201,43 +202,162 @@ func TestCalculator_CalculateRewardPeriod(t *testing.T) {
 	}
 }
 
-func TestCalculator_AccumulateRewards(t *testing.T) {
+func TestAccumulateRewards(t *testing.T) {
 	tests := []struct {
 		name    string
 		periods []RewardPeriod
 		want    warmUpAmount
 	}{
 		{
-			name: "accumulates rewards correctly for all ratios",
+			name: "single period with 30% ratio",
 			periods: []RewardPeriod{
 				{
-					TimeSpan: TimeSpan{Ratio: RatioThirty},
-					Amount:   new(u256.Uint).SetUint64(1000),
-				},
-				{
-					TimeSpan: TimeSpan{Ratio: RatioFifty},
-					Amount:   new(u256.Uint).SetUint64(1000),
-				},
-				{
-					TimeSpan: TimeSpan{Ratio: RatioSeventy},
-					Amount:   new(u256.Uint).SetUint64(1000),
-				},
-				{
-					TimeSpan: TimeSpan{Ratio: RatioHundred},
-					Amount:   new(u256.Uint).SetUint64(1000),
+					TimeSpan: TimeSpan{
+						Start:    100,
+						End:      200,
+						Duration: 100,
+						Ratio:    RatioThirty,
+					},
+					Amount: u256.NewUint(1000000).Mul(u256.NewUint(1000000), _q96),
 				},
 			},
 			want: warmUpAmount{
-				full30:  1000,
-				give30:  300,
-				left30:  700,
-				full50:  1000,
-				give50:  500,
-				left50:  500,
-				full70:  1000,
-				give70:  700,
-				left70:  300,
-				full100: 1000,
+				full30: 100000000,
+				give30: 30000000,
+				left30: 70000000,
+			},
+		},
+		{
+			name: "multiple periods with different ratios",
+			periods: []RewardPeriod{
+				{
+					TimeSpan: TimeSpan{
+						Start:    100,
+						End:      200,
+						Duration: 100,
+						Ratio:    RatioThirty,
+					},
+					Amount: u256.NewUint(1000000).Mul(u256.NewUint(1000000), _q96),
+				},
+				{
+					TimeSpan: TimeSpan{
+						Start:    200,
+						End:      300,
+						Duration: 100,
+						Ratio:    RatioFifty,
+					},
+					Amount: u256.NewUint(1000000).Mul(u256.NewUint(1000000), _q96),
+				},
+				{
+					TimeSpan: TimeSpan{
+						Start:    300,
+						End:      400,
+						Duration: 100,
+						Ratio:    RatioSeventy,
+					},
+					Amount: u256.NewUint(1000000).Mul(u256.NewUint(1000000), _q96),
+				},
+			},
+			want: warmUpAmount{
+				full30: 100000000,
+				give30: 30000000,
+				left30: 70000000,
+				full50: 100000000,
+				give50: 50000000,
+				left50: 50000000,
+				full70: 100000000,
+				give70: 70000000,
+				left70: 30000000,
+			},
+		},
+		{
+			name: "single period with 100% ratio",
+			periods: []RewardPeriod{
+				{
+					TimeSpan: TimeSpan{
+						Start:    400,
+						End:      500,
+						Duration: 100,
+						Ratio:    RatioHundred,
+					},
+					Amount: u256.NewUint(1000000).Mul(u256.NewUint(1000000), _q96),
+				},
+			},
+			want: warmUpAmount{
+				full100: 100000000,
+			},
+		},
+		{
+			name: "empty periods",
+			periods: []RewardPeriod{},
+			want: warmUpAmount{},
+		},
+		{
+			name: "period with zero amount",
+			periods: []RewardPeriod{
+				{
+					TimeSpan: TimeSpan{
+						Start:    100,
+						End:      200,
+						Duration: 100,
+						Ratio:    RatioFifty,
+					},
+					Amount: u256.NewUint(0),
+				},
+			},
+			want: warmUpAmount{},
+		},
+		{
+			name: "all ratios in sequence",
+			periods: []RewardPeriod{
+				{
+					TimeSpan: TimeSpan{
+						Start:    100,
+						End:      200,
+						Duration: 100,
+						Ratio:    RatioThirty,
+					},
+					Amount: u256.NewUint(1000000).Mul(u256.NewUint(1000000), _q96),
+				},
+				{
+					TimeSpan: TimeSpan{
+						Start:    200,
+						End:      300,
+						Duration: 100,
+						Ratio:    RatioFifty,
+					},
+					Amount: u256.NewUint(1000000).Mul(u256.NewUint(1000000), _q96),
+				},
+				{
+					TimeSpan: TimeSpan{
+						Start:    300,
+						End:      400,
+						Duration: 100,
+						Ratio:    RatioSeventy,
+					},
+					Amount: u256.NewUint(1000000).Mul(u256.NewUint(1000000), _q96),
+				},
+				{
+					TimeSpan: TimeSpan{
+						Start:    400,
+						End:      500,
+						Duration: 100,
+						Ratio:    RatioHundred,
+					},
+					Amount: u256.NewUint(1000000).Mul(u256.NewUint(1000000), _q96),
+				},
+			},
+			want: warmUpAmount{
+				full30:  100000000,
+				give30:  30000000,
+				left30:  70000000,
+				full50:  100000000,
+				give50:  50000000,
+				left50:  50000000,
+				full70:  100000000,
+				give70:  70000000,
+				left70:  30000000,
+				full100: 100000000,
 			},
 		},
 	}
@@ -245,22 +365,30 @@ func TestCalculator_AccumulateRewards(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := accumulateRewards(tt.periods)
-
-			uassert.Equal(t, tt.want.full30, got.full30)
-			uassert.Equal(t, tt.want.give30, got.give30)
-			uassert.Equal(t, tt.want.left30, got.left30)
-			uassert.Equal(t, tt.want.full50, got.full50)
-			uassert.Equal(t, tt.want.give50, got.give50)
-			uassert.Equal(t, tt.want.left50, got.left50)
-			uassert.Equal(t, tt.want.full70, got.full70)
-			uassert.Equal(t, tt.want.give70, got.give70)
-			uassert.Equal(t, tt.want.left70, got.left70)
-			uassert.Equal(t, tt.want.full100, got.full100)
+			
+			if !got.Equal(tt.want) {
+				t.Errorf("accumulateRewards() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
 
+func (w warmUpAmount) Equal(other warmUpAmount) bool {
+	return w.full30 == other.full30 &&
+		w.give30 == other.give30 &&
+		w.left30 == other.left30 &&
+		w.full50 == other.full50 &&
+		w.give50 == other.give50 &&
+		w.left50 == other.left50 &&
+		w.full70 == other.full70 &&
+		w.give70 == other.give70 &&
+		w.left70 == other.left70 &&
+		w.full100 == other.full100
+}
+
 func TestCalculator_CalculateTimePeriods(t *testing.T) {
+	currentHeight := std.GetHeight()
+
 	warmUp = map[int64]int64{
 		50:  150,
 		70:  300,
@@ -381,7 +509,7 @@ func TestCalculator_CalculateTimePeriods(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			calculator := NewCalculator(1, "test")
+			calculator := NewCalculator(currentHeight, 1, "test")
 			calculator.state.CurrentHeight = tt.currentHeight
 			calculator.state.StakedOrExternalDuration = tt.stakedDuration
 			calculator.lastCalcHeight = tt.lastCalculatedHeight
@@ -412,237 +540,239 @@ func TestCalculator_CalculateTimePeriods(t *testing.T) {
 	}
 }
 
+// TODO: fix
 func TestCalculator_ComputeRewards(t *testing.T) {
-	const milion = new(u256.Uint).SetUint64(1000000)
-	const zero = new(u256.Uint).SetUint64(0)
+	currentHeight := std.GetHeight()
 
-	type testCase struct {
-		name        string
-		setup       func(*TestFixture)
-		tokenId     uint64
-		incentiveId string
-		want        struct {
-			full    uint64
-			give    uint64
-			wantErr bool
-			errMsg  string
-		}
-	}
+	milion := new(u256.Uint).Mul(u256.NewUint(1000000), _q96)
+	zero := new(u256.Uint).SetUint64(0)
 
-	tests := []testCase{
-		{
-			name: "error - token not found",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				delete(positionExternal, tf.TokenId)
-			},
-			tokenId:     1,
-			incentiveId: "test-incentive",
-			want: struct {
-				full    uint64
-				give    uint64
-				wantErr bool
-				errMsg  string
-			}{
-				wantErr: true,
-				errMsg:  "no externals found for token 1",
-			},
-		},
-		{
-			name: "error - incentive not found",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				delete(positionExternal[tf.TokenId], tf.IncentiveId)
-			},
-			tokenId:     1,
-			incentiveId: "test-incentive",
-			want: struct {
-				full    uint64
-				give    uint64
-				wantErr bool
-				errMsg  string
-			}{
-				wantErr: true,
-				errMsg:  "no external found for token 1 and incentive test-incentive",
-			},
-		},
-		{
-			name: "success - single period 30%",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				baseHeight := int64(1000)
+    type testCase struct {
+        name        string
+        setup       func(*TestFixture)
+        tokenId     uint64
+        incentiveId string
+        want        struct {
+            full    uint64
+            give    uint64
+            wantErr bool
+            errMsg  string
+        }
+    }
 
-				tf.BlockHeight = baseHeight
-				positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
+    tests := []testCase{
+        {
+            name: "error - token not found",
+            setup: func(tf *TestFixture) {
+                tf.setup()
+                delete(positionExternal, tf.TokenId)
+            },
+            tokenId:     1,
+            incentiveId: "test-incentive",
+            want: struct {
+                full    uint64
+                give    uint64
+                wantErr bool
+                errMsg  string
+            }{
+                wantErr: true,
+                errMsg:  "no externals found for token 1",
+            },
+        },
+        {
+            name: "error - incentive not found",
+            setup: func(tf *TestFixture) {
+                tf.setup()
+                delete(positionExternal[tf.TokenId], tf.IncentiveId)
+            },
+            tokenId:     1,
+            incentiveId: "test-incentive",
+            want: struct {
+                full    uint64
+                give    uint64
+                wantErr bool
+                errMsg  string
+            }{
+                wantErr: true,
+                errMsg:  "no external found for token 1 and incentive test-incentive",
+            },
+        },
+        {
+            name: "success - single period 30%",
+            setup: func(tf *TestFixture) {
+                tf.setup()
+                baseHeight := int64(1000)
 
-				// configure durations
-				tf.StakeTime = time.Now().Add(-10 * time.Minute).Unix()
-				deposits[tf.TokenId] = Deposit{
-					stakeTimestamp: tf.StakeTime,
-					stakeHeight:    baseHeight - 100,
-				}
+                tf.BlockHeight = baseHeight
+                positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
 
-				// set reward amount
-				external := positionExternal[tf.TokenId][tf.IncentiveId]
-				external.tokenAmountX96 = milion
-				positionExternal[tf.TokenId][tf.IncentiveId] = external
+                // 30%
+                tf.StakeTime = time.Now().Add(-10 * time.Minute).Unix()
+                deposits[tf.TokenId] = Deposit{
+                    stakeTimestamp: tf.StakeTime,
+                    stakeHeight:    baseHeight - 100,
+                }
 
-				positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
-			},
-			tokenId:     1,
-			incentiveId: "test-incentive",
-			want: struct {
-				full    uint64
-				give    uint64
-				wantErr bool
-				errMsg  string
-			}{
-				full:    1000000,
-				give:    300000, // 30% of full amount
-				wantErr: false,
-			},
-		},
-		{
-			name: "success - multiple periods",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				baseHeight := int64(2000)
+                external := positionExternal[tf.TokenId][tf.IncentiveId]
+                external.tokenAmountX96 = milion
+                positionExternal[tf.TokenId][tf.IncentiveId] = external
 
-				// set current state
-				tf.BlockHeight = baseHeight
-				positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 400
+                positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
+            },
+            tokenId:     1,
+            incentiveId: "test-incentive",
+            want: struct {
+                full    uint64
+                give    uint64
+                wantErr bool
+                errMsg  string
+            }{
+                full:    100000000,
+                give:    30000000, // 30% ratio
+                wantErr: false,
+            },
+        },
+        {
+            name: "success - multiple periods (30%, 50%, 70%)",
+            setup: func(tf *TestFixture) {
+                tf.setup()
+                baseHeight := int64(2000)
 
-				// configure for multiple periods
-				tf.StakeTime = time.Now().Add(-24 * time.Hour).Unix()
-				deposits[tf.TokenId] = Deposit{
-					stakeTimestamp: tf.StakeTime,
-					stakeHeight:    baseHeight - 400,
-				}
+                tf.BlockHeight = baseHeight
+                // start from 400 blocks ago
+                positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 400
 
-				external := positionExternal[tf.TokenId][tf.IncentiveId]
-				external.tokenAmountX96 = milion
-				positionExternal[tf.TokenId][tf.IncentiveId] = external
+                // stake 24 hours ago
+                tf.StakeTime = time.Now().Add(-24 * time.Hour).Unix()
+                deposits[tf.TokenId] = Deposit{
+                    stakeTimestamp: tf.StakeTime,
+                    stakeHeight:    baseHeight - 400,
+                }
 
-				positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
-			},
-			tokenId:     1,
-			incentiveId: "test-incentive",
-			want: struct {
-				full    uint64
-				give    uint64
-				wantErr bool
-				errMsg  string
-			}{
-				full:    2999878,
-				give:    1499950,
-				wantErr: false,
-			},
-		},
-		{
-			name: "success - max reward period",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				baseHeight := int64(10000)
+                external := positionExternal[tf.TokenId][tf.IncentiveId]
+                external.tokenAmountX96 = milion
+                positionExternal[tf.TokenId][tf.IncentiveId] = external
 
-				// set current state for long duration
-				tf.BlockHeight = baseHeight
-				positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 1000
+                positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
+            },
+            tokenId:     1,
+            incentiveId: "test-incentive",
+            want: struct {
+                full    uint64
+                give    uint64
+                wantErr bool
+                errMsg  string
+            }{
+				// acc of 30% + 50% + 70%
+                full:    397999998,
+                give:    189199998,
+                wantErr: false,
+            },
+        },
+        {
+            name: "success - max reward period (100%)",
+            setup: func(tf *TestFixture) {
+                tf.setup()
+                baseHeight := int64(10000)
 
-				tf.StakeTime = time.Now().Add(-100 * 24 * time.Hour).Unix()
-				deposits[tf.TokenId] = Deposit{
-					stakeTimestamp: tf.StakeTime,
-					stakeHeight:    baseHeight - 1000,
-				}
+                tf.BlockHeight = baseHeight
+                positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 1000
 
-				external := positionExternal[tf.TokenId][tf.IncentiveId]
-				external.tokenAmountX96 = milion
-				positionExternal[tf.TokenId][tf.IncentiveId] = external
+                // stake long enough to reach 100%
+                tf.StakeTime = time.Now().Add(-100 * 24 * time.Hour).Unix()
+                deposits[tf.TokenId] = Deposit{
+                    stakeTimestamp: tf.StakeTime,
+                    stakeHeight:    baseHeight - 1000,
+                }
 
-				positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
-			},
-			tokenId:     1,
-			incentiveId: "test-incentive",
-			want: struct {
-				full    uint64
-				give    uint64
-				wantErr bool
-				errMsg  string
-			}{
-				full:    3999609,
-				give:    2499761,
-				wantErr: false,
-			},
-		},
-		{
-			name: "success - zero rewards",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				baseHeight := int64(1000)
+                external := positionExternal[tf.TokenId][tf.IncentiveId]
+                external.tokenAmountX96 = milion
+                positionExternal[tf.TokenId][tf.IncentiveId] = external
 
-				// set current state
-				tf.BlockHeight = baseHeight
-				positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
+                positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
+            },
+            tokenId:     1,
+            incentiveId: "test-incentive",
+            want: struct {
+                full    uint64
+                give    uint64
+                wantErr bool
+                errMsg  string
+            }{
+                full:    996999997,
+                give:    638499997, // 100% instant
+                wantErr: false,
+            },
+        },
+        {
+            name: "success - zero rewards",
+            setup: func(tf *TestFixture) {
+                tf.setup()
+                baseHeight := int64(1000)
 
-				external := positionExternal[tf.TokenId][tf.IncentiveId]
-				external.tokenAmountX96 = milion
-				positionExternal[tf.TokenId][tf.IncentiveId] = external
+                tf.BlockHeight = baseHeight
+                positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
 
-				// set last external equal to current amount (no new rewards)
-				positionLastExternal[tf.TokenId][tf.IncentiveId] = milion
-			},
-			tokenId:     1,
-			incentiveId: "test-incentive",
-			want: struct {
-				full    uint64
-				give    uint64
-				wantErr bool
-				errMsg  string
-			}{
-				full:    0,
-				give:    0,
-				wantErr: false,
-			},
-		},
-	}
+                external := positionExternal[tf.TokenId][tf.IncentiveId]
+                external.tokenAmountX96 = milion
+                positionExternal[tf.TokenId][tf.IncentiveId] = external
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tf := newTestFixture(t)
-			tt.setup(tf)
+                positionLastExternal[tf.TokenId][tf.IncentiveId] = milion
+            },
+            tokenId:     1,
+            incentiveId: "test-incentive",
+            want: struct {
+                full    uint64
+                give    uint64
+                wantErr bool
+                errMsg  string
+            }{
+                full:    0,
+                give:    0,
+                wantErr: false,
+            },
+        },
+    }
 
-			calculator := NewCalculator(tt.tokenId, tt.incentiveId)
-			calculator.state.CurrentHeight = tf.BlockHeight
-			full, give, err := calculator.computeRewards()
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            tf := newTestFixture(t)
+            tt.setup(tf)
 
-			if tt.want.wantErr {
-				if err == nil {
-					t.Fatalf("ComputeRewards returned no error")
-				}
-				if tt.want.errMsg != "" {
-					uassert.Equal(t, tt.want.errMsg, err.Error())
-				}
-				return
-			}
+            calculator := NewCalculator(currentHeight, tt.tokenId, tt.incentiveId)
+            calculator.state.CurrentHeight = tf.BlockHeight
+            full, give, err := calculator.computeRewards()
 
-			if err != nil {
-				t.Fatalf("ComputeRewards returned error: %v", err)
-			}
+            if tt.want.wantErr {
+                if err == nil {
+                    t.Fatalf("ComputeRewards returned no error")
+                }
+                if tt.want.errMsg != "" {
+                    uassert.Equal(t, tt.want.errMsg, err.Error())
+                }
+                return
+            }
 
-			if full != tt.want.full || give != tt.want.give {
-				t.Logf("\nTest case: %s", tt.name)
-				t.Logf("Current Height: %d", calculator.state.CurrentHeight)
-				t.Logf("Last Calc Height: %d", calculator.lastCalcHeight)
-				t.Logf("Expected full: %d, got: %d", tt.want.full, full)
-				t.Logf("Expected give: %d, got: %d", tt.want.give, give)
-			}
+            if err != nil {
+                t.Fatalf("ComputeRewards returned error: %v", err)
+            }
 
-			uassert.Equal(t, tt.want.full, full)
-			uassert.Equal(t, tt.want.give, give)
-		})
-	}
+            if full != tt.want.full || give != tt.want.give {
+                t.Logf("\nTest case: %s", tt.name)
+                t.Logf("Current Height: %d", calculator.state.CurrentHeight)
+                t.Logf("Last Calc Height: %d", calculator.lastCalcHeight)
+                t.Logf("Expected full: %d, got: %d", tt.want.full, full)
+                t.Logf("Expected give: %d, got: %d", tt.want.give, give)
+            }
+
+            uassert.Equal(t, tt.want.full, full)
+            uassert.Equal(t, tt.want.give, give)
+        })
+    }
 }
 
 func TestCalculator_UpdateWarmUpAmounts(t *testing.T) {
+	currentHeight := std.GetHeight()
 
 	type testCase struct {
 		name        string
@@ -762,12 +892,154 @@ func TestCalculator_UpdateWarmUpAmounts(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
 
-			calculator := NewCalculator(tt.tokenId, tt.incentiveId)
+			calculator := NewCalculator(currentHeight, tt.tokenId, tt.incentiveId)
 			calculator.updateWarmUpAmounts(tt.amount)
 
 			tt.verify(t, tt.tokenId, tt.incentiveId, tt.amount)
 		})
 	}
+}
+
+func TestRewardMathComputeExternalRewardAmount(t *testing.T) {
+	t.Skip("should be fix")
+    milion := new(u256.Uint).Mul(u256.NewUint(1000000), _q96)
+    zero := new(u256.Uint).SetUint64(0)
+
+    tests := []struct {
+        name        string
+        setup       func(*TestFixture)
+        tokenId     uint64
+        incentiveId string
+        wantFull    uint64
+        wantGive    uint64
+        wantPanic   bool
+    }{
+        {
+            name: "panic - token not found",
+            setup: func(tf *TestFixture) {
+                tf.setup()
+                delete(positionExternal, tf.TokenId)
+            },
+            tokenId:     1,
+            incentiveId: "test-incentive",
+            wantPanic:   true,
+        },
+        {
+            name: "panic - incentive not found",
+            setup: func(tf *TestFixture) {
+                tf.setup()
+                delete(positionExternal[tf.TokenId], tf.IncentiveId)
+            },
+            tokenId:     1,
+            incentiveId: "test-incentive",
+            wantPanic:   true,
+        },
+        {
+            name: "success - 30% reward period",
+            setup: func(tf *TestFixture) {
+                tf.setup()
+                baseHeight := int64(1000)
+
+                tf.BlockHeight = baseHeight
+                positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
+
+                tf.StakeTime = time.Now().Add(-10 * time.Minute).Unix()
+                deposits[tf.TokenId] = Deposit{
+                    stakeTimestamp: tf.StakeTime,
+                    stakeHeight:    baseHeight - 100,
+                }
+
+                external := positionExternal[tf.TokenId][tf.IncentiveId]
+                external.tokenAmountX96 = milion
+                positionExternal[tf.TokenId][tf.IncentiveId] = external
+
+                positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
+            },
+            tokenId:     1,
+            incentiveId: "test-incentive",
+            wantFull:    249999999,
+            wantGive:    74999999,
+        },
+        {
+            name: "success - max reward period",
+            setup: func(tf *TestFixture) {
+                tf.setup()
+                baseHeight := int64(10000)
+
+                tf.BlockHeight = baseHeight
+                positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 1000
+
+                tf.StakeTime = time.Now().Add(-100 * 24 * time.Hour).Unix()
+                deposits[tf.TokenId] = Deposit{
+                    stakeTimestamp: tf.StakeTime,
+                    stakeHeight:    baseHeight - 1000,
+                }
+
+                external := positionExternal[tf.TokenId][tf.IncentiveId]
+                external.tokenAmountX96 = milion
+                positionExternal[tf.TokenId][tf.IncentiveId] = external
+
+                positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
+            },
+            tokenId:     1,
+            incentiveId: "test-incentive",
+            wantFull:    996999997,
+            wantGive:    638499997,
+        },
+        {
+            name: "success - zero rewards",
+            setup: func(tf *TestFixture) {
+                tf.setup()
+                baseHeight := int64(1000)
+
+                tf.BlockHeight = baseHeight
+                positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
+
+                external := positionExternal[tf.TokenId][tf.IncentiveId]
+                external.tokenAmountX96 = milion
+                positionExternal[tf.TokenId][tf.IncentiveId] = external
+
+                // no reward
+                positionLastExternal[tf.TokenId][tf.IncentiveId] = milion
+            },
+            tokenId:     1,
+            incentiveId: "test-incentive",
+            wantFull:    0,
+            wantGive:    0,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            tf := newTestFixture(t)
+            tt.setup(tf)
+            // std.TestSkipHeights(tf.BlockHeight) ???
+
+            defer func() {
+                if r := recover(); r != nil {
+                    if !tt.wantPanic {
+                        t.Errorf("unexpected panic: %v", r)
+                    }
+                    return
+                }
+                if tt.wantPanic {
+                    t.Error("expected panic did not occur")
+                }
+            }()
+
+            full, give := rewardMathComputeExternalRewardAmount(tt.tokenId, tt.incentiveId)
+
+            if full != tt.wantFull || give != tt.wantGive {
+                t.Logf("\nTest case: %s", tt.name)
+                t.Logf("Expected full: %d, got: %d", tt.wantFull, full)
+                t.Logf("Expected give: %d, got: %d", tt.wantGive, give)
+                t.Fail()
+            }
+
+            uassert.Equal(t, tt.wantFull, full)
+            uassert.Equal(t, tt.wantGive, give)
+        })
+    }
 }
 
 func verifyWarmUpAmount(t *testing.T, expected, actual warmUpAmount) {
@@ -782,184 +1054,6 @@ func verifyWarmUpAmount(t *testing.T, expected, actual warmUpAmount) {
 	uassert.Equal(t, expected.give70, actual.give70)
 	uassert.Equal(t, expected.left70, actual.left70)
 	uassert.Equal(t, expected.full100, actual.full100)
-}
-
-// technically this test is same as `TestCalculator_ComputeRewards` test. 
-func TestRewardMathComputeExternalRewardAmount(t *testing.T) {
-	t.Skip()
-	const million = new(u256.Uint).SetUint64(1000000)
-	const zero = new(u256.Uint).SetUint64(0)
-
-	type wantData struct {
-		full uint64
-		give uint64
-	}
-
-	type testCase struct {
-		name        string
-		setup       func(*TestFixture)
-		want        wantData
-		expectPanic bool
-	}
-
-	tests := []testCase{
-		{
-			name: "panics when token not found",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				delete(positionExternal, tf.TokenId)
-			},
-			want:        wantData{},
-			expectPanic: true,
-		},
-		{
-			name: "panics when incentive not found",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				delete(positionExternal[tf.TokenId], tf.IncentiveId)
-			},
-			want:        wantData{},
-			expectPanic: true,
-		},
-		{
-			name: "success - single period 30%",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				baseHeight := int64(1000)
-
-				tf.BlockHeight = baseHeight
-				positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
-
-				// Configure durations
-				tf.StakeTime = time.Now().Add(-10 * time.Minute).Unix()
-				deposits[tf.TokenId] = Deposit{
-					stakeTimestamp: tf.StakeTime,
-					stakeHeight:    baseHeight - 100,
-				}
-
-				external := positionExternal[tf.TokenId][tf.IncentiveId]
-				external.tokenAmountX96 = million
-				positionExternal[tf.TokenId][tf.IncentiveId] = external
-
-				positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
-			},
-			want: wantData{
-				full: 1000000,
-				give: 300000, // 30% of full amount
-			},
-			expectPanic: false,
-		},
-		{
-			name: "success - multiple periods",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				baseHeight := int64(2000)
-
-				tf.BlockHeight = baseHeight
-				positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 400
-
-				tf.StakeTime = time.Now().Add(-24 * time.Hour).Unix()
-				deposits[tf.TokenId] = Deposit{
-					stakeTimestamp: tf.StakeTime,
-					stakeHeight:    baseHeight - 400,
-				}
-
-				external := positionExternal[tf.TokenId][tf.IncentiveId]
-				external.tokenAmountX96 = million
-				positionExternal[tf.TokenId][tf.IncentiveId] = external
-
-				positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
-			},
-			want: wantData{
-				full: 2999878,
-				give: 1499950,
-			},
-			expectPanic: false,
-		},
-		{
-			name: "success - max reward period",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				baseHeight := int64(10000)
-
-				tf.BlockHeight = baseHeight
-				positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 1000
-
-				tf.StakeTime = time.Now().Add(-100 * 24 * time.Hour).Unix()
-				deposits[tf.TokenId] = Deposit{
-					stakeTimestamp: tf.StakeTime,
-					stakeHeight:    baseHeight - 1000,
-				}
-
-				external := positionExternal[tf.TokenId][tf.IncentiveId]
-				external.tokenAmountX96 = million
-				positionExternal[tf.TokenId][tf.IncentiveId] = external
-
-				positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
-			},
-			want: wantData{
-				full: 3999609,
-				give: 2499761,
-			},
-			expectPanic: false,
-		},
-		{
-			name: "success - zero rewards",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				baseHeight := int64(1000)
-
-				tf.BlockHeight = baseHeight
-				positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
-
-				external := positionExternal[tf.TokenId][tf.IncentiveId]
-				external.tokenAmountX96 = million
-				positionExternal[tf.TokenId][tf.IncentiveId] = external
-
-				positionLastExternal[tf.TokenId][tf.IncentiveId] = million
-			},
-			want: wantData{
-				full: 0,
-				give: 0,
-			},
-			expectPanic: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tf := newTestFixture(t)
-			tt.setup(tf)
-
-			if tt.expectPanic {
-				panicked := testPanic(t, func() {
-					rewardMathComputeExternalRewardAmount(tf.TokenId, tf.IncentiveId)
-				})
-				uassert.True(t, panicked)
-
-				calculator := NewCalculator(tf.TokenId, tf.IncentiveId)
-				calculator.state.CurrentHeight = tf.BlockHeight
-				_, _, err := calculator.computeRewards()
-				if err == nil {
-					t.Fatalf("ComputeRewards returned no error")
-				}
-				return
-			}
-
-			oldFull, oldGive := rewardMathComputeExternalRewardAmount(tf.TokenId, tf.IncentiveId)
-
-			calculator := NewCalculator(tf.TokenId, tf.IncentiveId)
-			calculator.state.CurrentHeight = tf.BlockHeight
-
-			newFull, newGive, err := calculator.computeRewards()
-			if err != nil {
-				t.Fatalf("ComputeRewards returned unexpected error: %v", err)
-			}
-
-			uassert.Equal(t, newFull, tt.want.full)
-			uassert.Equal(t, newGive, tt.want.give)
-		})
-	}
 }
 
 func testPanic(t *testing.T, f func()) (panicked bool) {

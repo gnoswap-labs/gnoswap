@@ -7,15 +7,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func rewardMathComputeExternalRewardAmount2(tokenId uint64, incentiveId string) (uint64, uint64) {
-	calculator := NewCalculator(tokenId, incentiveId)
-	full, give, err := calculator.computeRewards()
-	if err != nil {
-		panic(err)
-	}
-	return full, give
-}
-
 // These ratios represent different reward levels that increase
 // over time to incentivize longer staking periods.
 const (
@@ -61,27 +52,84 @@ type PeriodDefinition struct {
 //
 // It maintains state neccesary for computing rewards across different staking periods
 // and handles the progression through various reward rates (30%, 50%, 70%, 100%).
+//
+// TODO: better name
 type Calculator struct {
 	state              RewardState
 	lastCalcHeight     uint64
 	distributionAmount *u256.Uint
 }
 
+func rewardMathComputeExternalRewardAmount2(tokenId uint64, incentiveId string) (uint64, uint64) {
+	currentHeight := std.GetHeight()
+
+	calculator := NewCalculator(currentHeight, tokenId, incentiveId)
+	full, give, err := calculator.computeRewards()
+	if err != nil {
+		panic(err)
+	}
+	return full, give
+}
+
 // NewCalculator creates a new reward calculator instance for a given token and incentive.
 //
 // The calculator will be used to compute rewards for the specified token's position
 // in the given incentive program.
-func NewCalculator(tokenId uint64, incentiveId string) *Calculator {
+func NewCalculator(blockHeight int64,tokenId uint64, incentiveId string) *Calculator {
 	state := RewardState{
 		TokenId:       tokenId,
 		IncentiveId:   incentiveId,
-		CurrentHeight: std.GetHeight(),
+		CurrentHeight: blockHeight,
 	}
 
 	return &Calculator{
 		state: state,
 	}
 }
+
+// computeRewards calculates the total rewards for a token position in an incentive program.
+// It performs the complete reward calculation process:
+//  1. Validates the existence of position and incentive
+//  2. Determines the calculation period
+//  3. Computes rewards for each period with different rates
+//  4. Accumulates and stores the rewards
+//  5. Returns the total rewards and immediately claimable amount
+//
+// Returns:
+//   - full: total rewards accumulated
+//   - give: immediately claimable rewards
+//   - error: if position or incentive not found
+func (c *Calculator) computeRewards() (uint64, uint64, error) {
+	externalsMap, exists := positionExternal[c.state.TokenId]
+	if !exists {
+		return 0, 0, ufmt.Errorf("no externals found for token %d", c.state.TokenId)
+	}
+
+	external, exists := externalsMap[c.state.IncentiveId]
+	if !exists {
+		return 0, 0, ufmt.Errorf(
+			"no external found for token %d and incentive %s",
+			c.state.TokenId, c.state.IncentiveId,
+		)
+	}
+
+	c.lastCalcHeight = uint64(positionsExternalLastCalculatedHeight[c.state.TokenId][c.state.IncentiveId])
+	periods := c.calculateTimePeriods()
+
+	c.distributionAmount = calculateDistributionExternalRewards(
+		external,
+		positionLastExternal[c.state.TokenId][c.state.IncentiveId],
+	)
+
+	rewardPeriods := c.calculateRewardPeriods(periods)
+	finalAmount := accumulateRewards(rewardPeriods)
+
+	c.updateWarmUpAmounts(finalAmount)
+
+	totalFull, totalGive := c.calculateTotals(finalAmount)
+	return totalFull, totalGive, nil
+}
+
 
 // calculateTimePeriods computes time spans for difference reward rates based on staking duration.
 //
@@ -153,49 +201,6 @@ func (c *Calculator) calculatePeriodEnd(startHeight, endOffset, currentHeight ui
 	return startHeight + endOffset
 }
 
-// computeRewards calculates the total rewards for a token position in an incentive program.
-// It performs the complete reward calculation process:
-//  1. Validates the existence of position and incentive
-//  2. Determines the calculation period
-//  3. Computes rewards for each period with different rates
-//  4. Accumulates and stores the rewards
-//  5. Returns the total rewards and immediately claimable amount
-//
-// Returns:
-//   - full: total rewards accumulated
-//   - give: immediately claimable rewards
-//   - error: if position or incentive not found
-func (c *Calculator) computeRewards() (uint64, uint64, error) {
-	externalsMap, exists := positionExternal[c.state.TokenId]
-	if !exists {
-		return 0, 0, ufmt.Errorf("no externals found for token %d", c.state.TokenId)
-	}
-
-	external, exists := externalsMap[c.state.IncentiveId]
-	if !exists {
-		return 0, 0, ufmt.Errorf(
-			"no external found for token %d and incentive %s",
-			c.state.TokenId, c.state.IncentiveId,
-		)
-	}
-
-	c.lastCalcHeight = uint64(positionsExternalLastCalculatedHeight[c.state.TokenId][c.state.IncentiveId])
-	periods := c.calculateTimePeriods()
-
-	c.distributionAmount = calculateDistributionExternalRewards(
-		external,
-		positionLastExternal[c.state.TokenId][c.state.IncentiveId],
-	)
-
-	rewardPeriods := c.calculateRewardPeriods(periods)
-	finalAmount := accumulateRewards(rewardPeriods)
-
-	c.updateWarmUpAmounts(finalAmount)
-
-	totalFull, totalGive := c.calculateTotals(finalAmount)
-	return totalFull, totalGive, nil
-}
-
 // calculateRewardPeriods converts time spans into reward periods by computing
 // the actual reward amount for each period.
 //
@@ -243,7 +248,7 @@ func (c *Calculator) calculateTotals(amount warmUpAmount) (uint64, uint64) {
 func calculatePeriodReward(blockAmount *u256.Uint, timeSpan TimeSpan) RewardPeriod {
 	fullAmount := new(u256.Uint).Mul(
 		blockAmount,
-		new(u256.Uint).SetUint64(timeSpan.Duration),
+		u256.NewUint(timeSpan.Duration),
 	)
 
 	return RewardPeriod{
@@ -264,29 +269,29 @@ func accumulateRewards(periods []RewardPeriod) warmUpAmount {
 	var total warmUpAmount
 
 	for _, period := range periods {
-		amount := period.Amount.Uint64()
-		if amount == 0 {
+		fullAmount, giveAmount := calcAmount(period.Amount, period.Duration, uint64(period.Ratio))
+		if fullAmount == 0 {
 			continue
 		}
 
 		switch period.Ratio {
 		case RatioThirty:
-			norm := amount * RatioThirty / 100
-			total.full30 += amount
-			total.give30 += norm
-			total.left30 += amount - norm
+			total.full30 += fullAmount
+			total.give30 += giveAmount
+			total.left30 += fullAmount - giveAmount
+
 		case RatioFifty:
-			norm := amount * RatioFifty / 100
-			total.full50 += amount
-			total.give50 += norm
-			total.left50 += amount - norm
+			total.full50 += fullAmount
+			total.give50 += giveAmount
+			total.left50 += fullAmount - giveAmount
+
 		case RatioSeventy:
-			norm := amount * RatioSeventy / 100
-			total.full70 += amount
-			total.give70 += norm
-			total.left70 += amount - norm
+			total.full70 += fullAmount
+			total.give70 += giveAmount
+			total.left70 += fullAmount - giveAmount
+
 		case RatioHundred:
-			total.full100 += amount
+			total.full100 += fullAmount
 		}
 	}
 
