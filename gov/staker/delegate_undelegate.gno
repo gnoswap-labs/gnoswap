@@ -36,14 +36,23 @@ func delegate(to std.Address, amount uint64) {
 	}
 	delegationHistory[caller] = append(delegationHistory[caller], delegation)
 
-	modified := ModifiedDelegationHistory{
-		from:               caller,
-		to:                 to,
-		delegatedHeight:    uint64(std.GetHeight()),
-		delegatedTimestamp: uint64(time.Now().Unix()),
-		delegatedAmount:    amount,
+	// get last data if exists
+	updateAmount := uint64(0)
+
+	statHistory, exist := delegationStatHistory[to]
+	if !exist {
+		updateAmount = amount // this is first delegation
+	} else {
+		lastAmount := statHistory[len(statHistory)-1].amount
+		updateAmount = lastAmount + amount
 	}
-	delegationModifiedHistory[to] = append(delegationModifiedHistory[to], modified)
+
+	delegationStatHistory[to] = append(delegationStatHistory[to], DelegationStatHistory{
+		to:           to,
+		amount:       updateAmount,
+		updatedBlock: uint64(std.GetHeight()),
+		updatedAt:    uint64(time.Now().Unix()),
+	})
 }
 
 func undelegate(to std.Address, amount uint64) {
@@ -78,27 +87,25 @@ func undelegate(to std.Address, amount uint64) {
 	}
 	delegationHistory[caller] = append(delegationHistory[caller], delegation)
 
-	// update modified history
-	modified, exist := delegationModifiedHistory[to]
+	// update delegation stat history
+	stat, exist := delegationStatHistory[to]
 	if !exist {
-		panic(ufmt.Sprintf("caller %s has no modified delegation history", caller))
+		panic(ufmt.Sprintf("caller %s has no delegation stat history", caller))
 	}
 
-	for i := 0; i < len(modified); i++ {
-		if modified[i].from == caller {
-			leftAmount := modified[i].delegatedAmount - modified[i].undelegatedAmount
-			if leftAmount > 0 {
-				if leftAmount < amount {
-					modified[i].undelegatedAmount = modified[i].delegatedAmount
-					amount -= leftAmount
-					modified[i].undelegatedHeight = uint64(std.GetHeight())
-					modified[i].undelegatedTimestamp = uint64(time.Now().Unix())
-				} else {
-					modified[i].undelegatedAmount += amount
-					modified[i].undelegatedHeight = uint64(std.GetHeight())
-					modified[i].undelegatedTimestamp = uint64(time.Now().Unix())
-					break
-				}
+	for i := 0; i < len(stat); i++ {
+		leftAmount := stat[i].amount
+		if leftAmount > 0 {
+			if leftAmount < amount {
+				// used all
+				amount -= leftAmount
+
+				// delete this record
+				stat = append(stat[:i], stat[i+1:]...)
+			} else {
+				stat[i].amount -= amount
+				stat[i].updatedAt = uint64(time.Now().Unix())
+				break
 			}
 		}
 	}

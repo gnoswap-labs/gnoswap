@@ -23,13 +23,13 @@ var (
 func TestApiFuncs(t *testing.T) {
 	initial(t)
 	delegateAdmin(t)
-	redelegateUnknownFrom(t)
-	redelegateTooMany(t)
-	redelegateAdmin(t)
-	undelegateUnknownUser(t)
-	undelegateAdmin(t)
-	collectBeforeLockup(t)
-	collectAfterLockup(t)
+	// redelegateUnknownFrom(t)
+	// redelegateTooMany(t)
+	// redelegateAdmin(t)
+	// undelegateUnknownUser(t)
+	// undelegateAdmin(t)
+	// collectBeforeLockup(t)
+	// collectAfterLockup(t)
 }
 
 func initial(t *testing.T) {

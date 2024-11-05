@@ -18,23 +18,19 @@ type DelegationHistory struct {
 	add       bool
 }
 
-// Raw history
+// to address -> []delegationHistory
 var delegationHistory = make(map[std.Address][]DelegationHistory)
 
-type ModifiedDelegationHistory struct {
-	from                 std.Address
-	to                   std.Address
-	delegatedHeight      uint64
-	delegatedTimestamp   uint64
-	delegatedAmount      uint64
-	undelegatedHeight    uint64
-	undelegatedTimestamp uint64
-	undelegatedAmount    uint64
+// DelegationStatHistory represents delegation stat for to address
+type DelegationStatHistory struct {
+	to           std.Address
+	amount       uint64
+	updatedBlock uint64
+	updatedAt    uint64
 }
 
-// Modified History => if undelegated, amount will be taken from the first delegation
-// to address -> modifiedDelegationHistory
-var delegationModifiedHistory = make(map[std.Address][]ModifiedDelegationHistory)
+// to address -> []delegationStatHistory
+var delegationStatHistory = make(map[std.Address][]DelegationStatHistory)
 
 // GetDelegatedCumulative gets the cumulative delegated amount for an address at a certain timestamp.
 func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
@@ -49,39 +45,21 @@ func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
 		panic("FUTURE")
 	}
 
-	history, exist := delegationModifiedHistory[delegator]
+	history, exist := delegationStatHistory[delegator]
 	if !exist || len(history) == 0 {
 		return 0
 	}
 
-	if endTimestamp < history[0].delegatedTimestamp {
-		return 0
-	}
+	// reverse history
+	for i := len(history) - 1; i >= 0; i-- {
+		record := history[i]
 
-	cumulativeAmount := uint64(0)
-
-	for _, record := range history {
-		if record.delegatedTimestamp > endTimestamp {
-			// continue to next if this record uses future time
+		if record.updatedAt > endTimestamp {
 			continue
 		}
 
-		amount := uint64(0)
-
-		// if undelegated before endTimestamp, subtract undelegated amount
-		if record.undelegatedTimestamp < endTimestamp {
-			amount = record.delegatedAmount - record.undelegatedAmount
-		} else {
-			amount = record.delegatedAmount
-		}
-
-		if amount == 0 {
-			// already undelegated full amount for this record
-			continue
-		}
-
-		cumulativeAmount += amount
+		return record.amount // return last accu amount
 	}
 
-	return cumulativeAmount
+	return 0
 }
