@@ -3,6 +3,8 @@ package staker
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/gnoswap/v2/consts"
 )
 
@@ -27,7 +29,10 @@ func init() {
 func AddToken(tokenPath string) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic("only admin can add token")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("external_token_list.gno__AddToken() || only admin(%s) can add token, called from %s", consts.ADMIN, caller),
+		))
 	}
 
 	// if exist just return
@@ -53,13 +58,19 @@ func AddToken(tokenPath string) {
 func RemoveToken(tokenPath string) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic("only admin can remove token")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("external_token_list.gno__RemoveToken() || only admin(%s) can remove token, called from %s", consts.ADMIN, caller),
+		))
 	}
 
 	// if default token, can not remove
 	isDefault := contains(defaultAllowed, tokenPath)
 	if isDefault {
-		panic("can not remove default token")
+		panic(addDetailToError(
+			errDefaultExternalToken,
+			ufmt.Sprintf("external_token_list.gno__RemoveToken() || can not remove default token(%s)", tokenPath),
+		))
 	}
 
 	for i, t := range allowedTokens {

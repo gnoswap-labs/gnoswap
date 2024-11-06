@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v2/consts"
@@ -59,10 +60,10 @@ func TestMintPositionAndCheckURI(t *testing.T) {
 
 	tid1 := grc721.TokenID(ufmt.Sprintf("%d", tokenId1))
 	tid2 := grc721.TokenID(ufmt.Sprintf("%d", tokenId2))
-	shouldEQ(t, bool(tid1 != tid2), true)
+	uassert.True(t, tid1 != tid2)
 
-	tokenURI1 := gnft.GetTokenURI(tid1)
-	tokenURI2 := gnft.GetTokenURI(tid2)
+	tokenURI1 := gnft.TokenURI(tid1)
+	tokenURI2 := gnft.TokenURI(tid2)
 
-	shouldEQ(t, bool(tokenURI1 != tokenURI2), true)
+	uassert.True(t, tokenURI1 != tokenURI2)
 }

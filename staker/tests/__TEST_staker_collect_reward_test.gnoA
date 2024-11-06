@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/consts"
 
 	pl "gno.land/r/gnoswap/v2/pool"
@@ -19,226 +21,263 @@ import (
 	"gno.land/r/onbloc/obl"
 )
 
-func init() {
-	// set pool create fee to 0 for testing
-	std.TestSetRealm(adminRealm)
-	pl.SetPoolCreationFeeByAdmin(0)
+func TestCollectReward(t *testing.T) {
+	testInit(t)
+	testPoolCreatePool(t)
+	testPositionMint01(t)
+	testPositionMint02(t)
+	testCreateExternalIncentive(t)
+	testStakeToken01(t)
+	testStakeToken02(t)
+	testCollectReward01_External(t)
+	testUnstakeToken01(t)
+	testUnstakeToken02(t)
+	testEndExternalIncentive(t)
 }
 
-func init() {
-	// init pool tiers
-	// tier 1
-	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"] = InternalTier{
-		tier:           1,
-		startTimestamp: time.Now().Unix(),
-	}
+func testInit(t *testing.T) {
+	t.Run("initial", func(t *testing.T) {
+		// set pool create fee to 0 for testing
+		std.TestSetRealm(adminRealm)
+		pl.SetPoolCreationFeeByAdmin(0)
+
+		// init pool tiers
+		// tier 1
+		poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"] = InternalTier{
+			tier:           1,
+			startTimestamp: time.Now().Unix(),
+		}
+	})
 }
 
-func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+func testPoolCreatePool(t *testing.T) {
+	t.Run("create pool", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
 
-	pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
+		pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // tick 10_000 ≈ x2.7
 
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
+	})
 }
 
-func TestPositionMint01(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	std.TestSkipHeights(2)
+func testPositionMint01(t *testing.T) {
+	t.Run("mint position 01, bar:qux:500", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		std.TestSkipHeights(2)
 
-	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-		barPath,      // token0
-		quxPath,      // token1
-		uint32(500),  // fee
-		int32(9000),  // tickLower
-		int32(11000), // tickUpper
-		"1000",       // amount0Desired
-		"1000",       // amount1Desired
-		"1",          // amount0Min
-		"1",          // amount1Min
-		max_timeout,  // deadline
-		admin,
-		admin,
-	)
+		lpTokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,      // token0
+			quxPath,      // token1
+			uint32(500),  // fee
+			int32(9000),  // tickLower
+			int32(11000), // tickUpper
+			"1000",       // amount0Desired
+			"1000",       // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,  // deadline
+			admin,
+			admin,
+		)
 
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
 
-	shouldEQ(t, lpTokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), admin)
-	shouldEQ(t, amount0, "368")
-	shouldEQ(t, amount1, "1000")
+		uassert.Equal(t, lpTokenId, uint64(1))
+		uassert.Equal(t, gnft.OwnerOf(tid(lpTokenId)), admin)
+		uassert.Equal(t, amount0, "368")
+		uassert.Equal(t, amount1, "1000")
 
-	// approve nft to staker
-	std.TestSetRealm(adminRealm)
-	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
-	std.TestSkipHeights(1)
+		// approve nft to staker
+		std.TestSetRealm(adminRealm)
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
+		std.TestSkipHeights(1)
+	})
 }
 
-func TestPositionMint02(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	std.TestSkipHeights(2)
+func testPositionMint02(t *testing.T) {
+	t.Run("mint position 02, bar:qux:500", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		std.TestSkipHeights(2)
 
-	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-		barPath,      // token0
-		quxPath,      // token1
-		uint32(500),  // fee
-		int32(9100),  // tickLower
-		int32(12000), // tickUpper
-		"5000",       // amount0Desired
-		"5000",       // amount1Desired
-		"1",          // amount0Min
-		"1",          // amount1Min
-		max_timeout,  // deadline
-		admin,
-		admin,
-	)
+		lpTokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,      // token0
+			quxPath,      // token1
+			uint32(500),  // fee
+			int32(9100),  // tickLower
+			int32(12000), // tickUpper
+			"5000",       // amount0Desired
+			"5000",       // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,  // deadline
+			admin,
+			admin,
+		)
 
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
 
-	shouldEQ(t, lpTokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), admin)
-	shouldEQ(t, amount0, "3979")
-	shouldEQ(t, amount1, "5000")
+		uassert.Equal(t, lpTokenId, uint64(2))
+		uassert.Equal(t, gnft.OwnerOf(tid(lpTokenId)), admin)
+		uassert.Equal(t, amount0, "3979")
+		uassert.Equal(t, amount1, "5000")
 
-	// approve nft to staker
-	std.TestSetRealm(adminRealm)
-	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
-	std.TestSkipHeights(1)
+		// approve nft to staker
+		std.TestSetRealm(adminRealm)
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
+		std.TestSkipHeights(1)
+	})
 }
 
-func TestCreateExternalIncentive(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	obl.Approve(a2u(consts.STAKER_ADDR), uint64(10_000_000_000))
-	std.TestSkipHeights(1)
+func testCreateExternalIncentive(t *testing.T) {
+	t.Run("not allowed for external reward", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		obl.Approve(a2u(consts.STAKER_ADDR), uint64(10_000_000_000))
+		std.TestSkipHeights(1)
 
-	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
 
-	// obl token isnt't allowed for external reward, so panic
-	shouldPanicWithMsg(
-		t,
-		func() {
-			CreateExternalIncentive(
-				"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", // targetPoolPath
-				"gno.land/r/onbloc/obl",                           // rewardToken
-				"1000000000",                                      // rewardAmount 10_000_000_000
-				1234569600,                                        // startTimestamp
-				1234569600+TIMESTAMP_90DAYS,                       // endTimestamp
-			)
-		},
-		"[STAKER] staker.gno__isAllowedForExternalReward() || tokenPath(gno.land/r/onbloc/obl) is not allowed for external reward for poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500)",
-	)
+		// obl token isnt't allowed for external reward, so panic
+		uassert.PanicsWithMessage(
+			t,
+			"[GNOSWAP-STAKER-026] not allowed for external reward || staker.gno__isAllowedForExternalReward() || tokenPath(gno.land/r/onbloc/obl) is not allowed for external reward for poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500)",
+			func() {
+				CreateExternalIncentive(
+					"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", // targetPoolPath
+					"gno.land/r/onbloc/obl",                           // rewardToken
+					"1000000000",                                      // rewardAmount 10_000_000_000
+					1234569600,                                        // startTimestamp
+					1234569600+TIMESTAMP_90DAYS,                       // endTimestamp
+				)
+			},
+		)
+	})
 
-	// allow obl to be used as external reward token
-	AddToken(oblPath)
-	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+	t.Run("allow obl to be used as external reward token, then create incentive", func(t *testing.T) {
+		// allow obl to be used as external reward token
+		std.TestSetRealm(adminRealm)
+		AddToken(oblPath)
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
 
-	CreateExternalIncentive(
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", // targetPoolPath
-		"gno.land/r/onbloc/obl",                           // rewardToken
-		"1000000000",                                      // rewardAmount 10_000_000_000
-		1234569600,                                        // startTimestamp
-		1234569600+TIMESTAMP_90DAYS,                       // endTimestamp
-	)
-	// std.GetHeight() = 133
-	std.TestSkipHeights(1)
+		CreateExternalIncentive(
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500", // targetPoolPath
+			"gno.land/r/onbloc/obl",                           // rewardToken
+			"1000000000",                                      // rewardAmount 10_000_000_000
+			1234569600,                                        // startTimestamp
+			1234569600+TIMESTAMP_90DAYS,                       // endTimestamp
+		)
+		// std.GetHeight() = 133
+		std.TestSkipHeights(1)
 
-	obl.Approve(a2u(consts.STAKER_ADDR), uint64(10_000_000_000))
-	std.TestSkipHeights(1)
+		obl.Approve(a2u(consts.STAKER_ADDR), uint64(10_000_000_000))
+		std.TestSkipHeights(1)
+	})
 }
 
-func TestStakeToken01(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	StakeToken(1) // GNFT tokenId
+func testStakeToken01(t *testing.T) {
+	t.Run("stake position 01, bar:qux:500", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		StakeToken(1) // GNFT tokenId
 
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
 
-	shouldEQ(t, gnft.OwnerOf(tid(1)), GetOrigPkgAddr()) // staker
-	shouldEQ(t, len(deposits), 1)
+		uassert.Equal(t, gnft.OwnerOf(tid(1)), GetOrigPkgAddr()) // staker
+		uassert.Equal(t, len(deposits), 1)
+	})
 }
 
-func TestStakeToken02(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	StakeToken(2) // GNFT tokenId
+func testStakeToken02(t *testing.T) {
+	t.Run("stake position 02, bar:qux:500", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		StakeToken(2) // GNFT tokenId
 
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
 
-	shouldEQ(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr()) // staker
-	shouldEQ(t, len(deposits), 2)
+		uassert.Equal(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr()) // staker
+		uassert.Equal(t, len(deposits), 2)
+	})
 }
 
-func TestCollectReward01_External(t *testing.T) {
-	std.TestSkipHeights(1)
+func testCollectReward01_External(t *testing.T) {
+	t.Run("collect reward 01, external", func(t *testing.T) {
+		std.TestSkipHeights(1)
 
-	// before claim
-	oblOld := obl.BalanceOf(a2u(admin))
-	std.TestSkipHeights(1)
-	shouldEQ(t, oblOld, uint64(99999000000000))
+		// before claim
+		oblOld := obl.BalanceOf(a2u(admin))
+		std.TestSkipHeights(1)
+		uassert.Equal(t, oblOld, uint64(99999000000000))
 
-	std.TestSetRealm(adminRealm)
-	CollectReward(1, true) // GNFT tokenId
+		std.TestSetRealm(adminRealm)
+		CollectReward(1, true) // GNFT tokenId
 
-	std.TestSkipHeights(1) // not enough time to claim external reward
+		std.TestSkipHeights(1) // not enough time to claim external reward
 
-	oblNew := obl.BalanceOf(a2u(admin))
-	std.TestSkipHeights(1)
-	shouldEQ(t, oblNew, uint64(99999000000000))
+		oblNew := obl.BalanceOf(a2u(admin))
+		std.TestSkipHeights(1)
+		uassert.Equal(t, oblNew, uint64(99999000000000))
+	})
 }
 
-func TestUnstakeToken01(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	std.TestSkipHeights(900) //  enough time to claim external reward
+func testUnstakeToken01(t *testing.T) {
+	t.Run("unstake position 01, bar:qux:500", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		std.TestSkipHeights(900) //  enough time to claim external reward
 
-	// check reward balance before unstake
-	shouldEQ(t, gns.BalanceOf(a2u(admin)), uint64(99999002318056)) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(admin)), uint64(99999000000000)) // external
+		// check reward balance before unstake
+		uassert.Equal(t, gns.BalanceOf(a2u(admin)), uint64(99999002318056)) // internal
+		uassert.Equal(t, obl.BalanceOf(a2u(admin)), uint64(99999000000000)) // external
 
-	response := ApiGetRewardsByLpTokenId(1)
-	shouldEQ(t, response, `{"stat":{"height":1041,"timestamp":1234569726},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":445623695,"stakeTimestamp":1234567914,"stakeHeight":135,"incentiveStart":1234567914},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMw==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":743,"stakeTimestamp":1234567914,"stakeHeight":135,"incentiveStart":1234569600}]}]}`)
+		response := ApiGetRewardsByLpTokenId(1)
+		uassert.Equal(t, response, `{"stat":{"height":1041,"timestamp":1234569726},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":445623695,"stakeTimestamp":1234567914,"stakeHeight":135,"incentiveStart":1234567914},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMw==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":743,"stakeTimestamp":1234567914,"stakeHeight":135,"incentiveStart":1234569600}]}]}`)
 
-	UnstakeToken(1, false) // GNFT tokenId
-	std.TestSkipHeights(1)
+		UnstakeToken(1, false) // GNFT tokenId
+		std.TestSkipHeights(1)
 
-	shouldEQ(t, gnft.OwnerOf(tid(1)), admin)
+		uassert.Equal(t, gnft.OwnerOf(tid(1)), admin)
 
-	// check reward balance after unstake
-	shouldEQ(t, gns.BalanceOf(a2u(admin)), uint64(99999443485515))
-	shouldEQ(t, obl.BalanceOf(a2u(admin)), uint64(99999000000736))
+		// check reward balance after unstake
+		uassert.Equal(t, gns.BalanceOf(a2u(admin)), uint64(99999443485515))
+		uassert.Equal(t, obl.BalanceOf(a2u(admin)), uint64(99999000000736))
+	})
 }
 
-func TestUnstakeToken02(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	UnstakeToken(2, true) // GNFT tokenId
+func testUnstakeToken02(t *testing.T) {
+	t.Run("unstake position 02, bar:qux:500", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		UnstakeToken(2, true) // GNFT tokenId
 
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
 
-	shouldEQ(t, gnft.OwnerOf(tid(2)), admin)
+		uassert.Equal(t, gnft.OwnerOf(tid(2)), admin)
 
-	// check reward
-	shouldEQ(t, gns.BalanceOf(a2u(admin)), uint64(100001894600370)) // internal
-	shouldEQ(t, obl.BalanceOf(a2u(admin)), uint64(99999000004890))  // external
+		// check reward
+		uassert.Equal(t, gns.BalanceOf(a2u(admin)), uint64(100001894600370)) // internal
+		uassert.Equal(t, obl.BalanceOf(a2u(admin)), uint64(99999000004890))  // external
+	})
 }
 
-func TestEndExternalIncentive(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	std.TestSkipHeights(9999999)
+func testEndExternalIncentive(t *testing.T) {
+	t.Run("end external incentive", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		std.TestSkipHeights(9999999)
 
-	// use same parameter as CreateExternalIncentive()
-	EndExternalIncentive(
-		admin,
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500",
-		"gno.land/r/onbloc/obl",
-		1234569600,                  // startTimestamp
-		1234569600+TIMESTAMP_90DAYS, // endTimestamp
-		133,
-	)
+		// use same parameter as CreateExternalIncentive()
+		EndExternalIncentive(
+			admin,
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500",
+			"gno.land/r/onbloc/obl",
+			1234569600,                  // startTimestamp
+			1234569600+TIMESTAMP_90DAYS, // endTimestamp
+			133,
+		)
 
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
 
-	shouldEQ(t, len(incentives), 0)
-	shouldEQ(t, len(poolIncentives["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"]), 0)
+		uassert.Equal(t, len(incentives), 0)
+		uassert.Equal(t, len(poolIncentives["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"]), 0)
+	})
 }

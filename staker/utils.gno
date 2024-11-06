@@ -7,14 +7,16 @@ import (
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
-
 	pusers "gno.land/p/demo/users"
 )
 
 func poolPathAlign(poolPath string) string {
 	res := strings.Split(poolPath, ":")
 	if len(res) != 3 {
-		panic(ufmt.Sprintf("[STAKER] utils.gno__poolPathAlign() || invalid poolPath(%s)", poolPath))
+		panic(addDetailToError(
+			errInvalidPoolPath,
+			ufmt.Sprintf("utils.gno__poolPathAlign() || invalid poolPath(%s)", poolPath),
+		))
 	}
 
 	pToken0, pToken1, fee := res[0], res[1], res[2]
@@ -29,7 +31,10 @@ func poolPathAlign(poolPath string) string {
 func poolPathDivide(poolPath string) (string, string, string) {
 	res := strings.Split(poolPath, ":")
 	if len(res) != 3 {
-		panic(ufmt.Sprintf("[STAKER] utils.gno__poolPathDivide() || invalid poolPath(%s)", poolPath))
+		panic(addDetailToError(
+			errInvalidPoolPath,
+			ufmt.Sprintf("utils.gno__poolPathDivide() || invalid poolPath(%s)", poolPath),
+		))
 	}
 
 	pToken0, pToken1, fee := res[0], res[1], res[2]
@@ -42,7 +47,10 @@ func a2u(addr std.Address) pusers.AddressOrName {
 
 func tid(tokenId interface{}) grc721.TokenID {
 	if tokenId == nil {
-		panic("[STAKER] utils.gno__tid() || tokenId is nil")
+		panic(addDetailToError(
+			errDataNotFound,
+			"utils.gno__tid() || tokenId is nil",
+		))
 	}
 
 	switch tokenId.(type) {
@@ -55,7 +63,10 @@ func tid(tokenId interface{}) grc721.TokenID {
 	case grc721.TokenID:
 		return tokenId.(grc721.TokenID)
 	default:
-		panic("[STAKER] utils.gno__tid() || unsupported tokenId type")
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("utils.gno__tid() || unsupported tokenId type(%T)", tokenId),
+		))
 	}
 }
 
@@ -92,7 +103,10 @@ func isUserCall() bool {
 
 func assertUserCall() {
 	if !isUserCall() {
-		panic("must be called by user")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("util.gno__assertUserCall() || must be called by user, called from %s", std.PrevRealm().PkgPath()),
+		))
 	}
 }
 

@@ -11,19 +11,23 @@ import (
 
 func wrap(ugnotAmount uint64) {
 	if ugnotAmount <= 0 {
-		panic(ufmt.Sprintf("cannot wrap 0 ugnot"))
+		panic(addDetailToError(
+			errWrapUnwrap,
+			"wrap.gno__wrap() || cannot wrap 0 ugnot",
+		))
 	}
 
 	if ugnotAmount < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
-		panic(ufmt.Sprintf("Deposit below minimum: %d/%d ugnot.", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP))
+		panic(addDetailToError(
+			errWugnotMinimum,
+			ufmt.Sprintf("wrap.gno__wrap() || amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
+		))
 	}
 
 	// WRAP IT
-	wugnotAddr := std.DerivePkgAddr(consts.WRAPPED_WUGNOT)
 	banker := std.GetBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(consts.STAKER_ADDR, wugnotAddr, std.Coins{{Denom: "ugnot", Amount: int64(ugnotAmount)}})
+	banker.SendCoins(consts.STAKER_ADDR, consts.WUGNOT_ADDR, std.Coins{{Denom: "ugnot", Amount: int64(ugnotAmount)}})
 	wugnot.Deposit() // STAKER HAS WUGNOT
-
 	// SEND WUGNOT: STAKER -> USER
 	wugnot.Transfer(a2u(std.PrevRealm().Addr()), ugnotAmount)
 }
