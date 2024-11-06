@@ -5,12 +5,11 @@ import (
 	"std"
 	"strconv"
 
-	u256 "gno.land/p/gnoswap/uint256"
-
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
-
 	pusers "gno.land/p/demo/users"
+
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 const (
@@ -175,7 +174,7 @@ func underscoreOK(s string) bool {
 func strToInt(str string) int {
 	res, err := strconv.Atoi(str)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	return res
@@ -229,7 +228,10 @@ func isUserCall() bool {
 
 func assertUserCall() {
 	if !isUserCall() {
-		panic("must be called by user")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("util.gno__assertUserCall() || must be called by user, called from %s", std.PrevRealm().PkgPath()),
+		))
 	}
 }
 

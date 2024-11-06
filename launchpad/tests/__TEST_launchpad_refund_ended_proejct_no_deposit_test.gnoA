@@ -87,7 +87,7 @@ func testOneMoreBlock(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	uassert.PanicsWithMessage(t,
-		"project already refunded",
+		"[GNOSWAP-LAUNCHPAD-017] already refunded || launchpad_init.gno__TransferLeftFromProjectByAdmin() || projectId(gno.land/r/onbloc/obl:124) already refunded(height:5535)",
 		func() {
 			std.TestSetRealm(adminRealm)
 			TransferLeftFromProjectByAdmin(`gno.land/r/onbloc/obl:124`, refundAddr)
