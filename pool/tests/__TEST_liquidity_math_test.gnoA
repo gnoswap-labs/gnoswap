@@ -80,7 +80,7 @@ func TestAddDelta_5(t *testing.T) {
 	y = i256.NewInt(-1)
 	uassert.PanicsWithMessage(
 		t,
-		`[POOL] liquidity_math.gno__liquidityMathAddDelta() || LS (x: 0, y: -1, z:115792089237316195423570985008687907853269984665640564039457584007913129639935)`,
+		`[GNOSWAP-POOL-009] liquidity calculation || liquidity_math.gno__liquidityMathAddDelta() || LS (x: 0, y: -1, z:115792089237316195423570985008687907853269984665640564039457584007913129639935)`,
 		func() {
 			LiquidityMathAddDelta(x, y)
 		},
@@ -93,7 +93,7 @@ func TestAddDelta_6(t *testing.T) {
 	y = i256.NewInt(-4)
 	uassert.PanicsWithMessage(
 		t,
-		`[POOL] liquidity_math.gno__liquidityMathAddDelta() || LS (x: 3, y: -4, z:115792089237316195423570985008687907853269984665640564039457584007913129639935)`,
+		`[GNOSWAP-POOL-009] liquidity calculation || liquidity_math.gno__liquidityMathAddDelta() || LS (x: 3, y: -4, z:115792089237316195423570985008687907853269984665640564039457584007913129639935)`,
 		func() {
 			LiquidityMathAddDelta(x, y)
 		},

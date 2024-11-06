@@ -31,15 +31,21 @@ func Mint(
 ) (string, string) { // uint256 x2
 	common.IsHalted()
 	if common.GetLimitCaller() {
-		prev := std.PrevRealm().PkgPath()
-		if prev != consts.POSITION_PATH {
-			panic(ufmt.Sprintf("[POOL] pool.gno__Mint() || prev(%s) != consts.POSITION_PATH(%s)", prev, consts.POSITION_PATH))
+		caller := std.PrevRealm().Addr()
+		if caller != consts.POSITION_ADDR {
+			panic(addDetailToError(
+				errNoPermission,
+				ufmt.Sprintf("pool.gno__Mint() || only position(%s) can call pool mint(), called from %s", consts.POSITION_ADDR, caller.String()),
+			))
 		}
 	}
 
 	liquidityAmount := u256.MustFromDecimal(_liquidityAmount)
 	if liquidityAmount.IsZero() {
-		panic("[POOL] pool.gno__Mint() || liquidityAmount == 0")
+		panic(addDetailToError(
+			errZeroLiquidity,
+			ufmt.Sprintf("pool.gno__Mint() || liquidityAmount == 0"),
+		))
 	}
 
 	pool := GetPool(token0Path, token1Path, fee)
@@ -77,10 +83,13 @@ func Burn(
 	_liquidityAmount string, // uint128
 ) (string, string) { // uint256 x2
 	common.IsHalted()
+	caller := std.PrevRealm().Addr()
 	if common.GetLimitCaller() {
-		prev := std.PrevRealm().PkgPath()
-		if prev != consts.POSITION_PATH {
-			panic(ufmt.Sprintf("[POOL] pool.gno__Burn() || prev(%s) != consts.POSITION_PATH(%s)", prev, consts.POSITION_PATH))
+		if caller != consts.POSITION_ADDR {
+			panic(addDetailToError(
+				errNoPermission,
+				ufmt.Sprintf("pool.gno__Burn() || only position(%s) can call pool burn(), called from %s", consts.POSITION_ADDR, caller.String()),
+			))
 		}
 	}
 
@@ -90,7 +99,7 @@ func Burn(
 
 	position, amount0Int, amount1Int := pool.modifyPosition( // in256 x2
 		ModifyPositionParams{
-			std.PrevRealm().Addr(), // msg.sender
+			caller, // msg.sender
 			tickLower,
 			tickUpper,
 			i256.Zero().Neg(i256.FromUint256(liquidityAmount)),
@@ -105,7 +114,7 @@ func Burn(
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, amount1)
 	}
 
-	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
+	positionKey := positionGetKey(caller, tickLower, tickUpper)
 	pool.positions[positionKey] = position
 
 	// actual token transfer happens in Collect()
@@ -129,9 +138,12 @@ func Collect(
 ) (string, string) { // uint128 x2
 	common.IsHalted()
 	if common.GetLimitCaller() {
-		prev := std.PrevRealm().PkgPath()
-		if prev != consts.POSITION_PATH {
-			panic(ufmt.Sprintf("[POOL] pool.gno__Collect() || prev(%s) != consts.POSITION_PATH(%s)", prev, consts.POSITION_PATH))
+		caller := std.PrevRealm().Addr()
+		if caller != consts.POSITION_ADDR {
+			panic(addDetailToError(
+				errNoPermission,
+				ufmt.Sprintf("pool.gno__Collect() || only position(%s) can call pool collect(), called from %s", consts.POSITION_ADDR, caller.String()),
+			))
 		}
 	}
 
@@ -143,7 +155,10 @@ func Collect(
 	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
 	position, exist := pool.positions[positionKey]
 	if !exist {
-		panic(ufmt.Sprintf("[POOL] pool.gno__Collect() || positionKey(%s) does not exist", positionKey))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("pool.gno__Collect() || positionKey(%s) does not exist", positionKey),
+		))
 	}
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
@@ -188,14 +203,20 @@ func Swap(
 ) (string, string) { // int256 x2
 	common.IsHalted()
 	if common.GetLimitCaller() {
-		prev := std.PrevRealm().PkgPath()
-		if prev != consts.ROUTER_PATH {
-			panic(ufmt.Sprintf("[POOL] pool.gno__Swap() || prev(%s) != consts.ROUTER_PATH(%s)", prev, consts.ROUTER_PATH))
+		caller := std.PrevRealm().Addr()
+		if caller != consts.ROUTER_ADDR {
+			panic(addDetailToError(
+				errNoPermission,
+				ufmt.Sprintf("pool.gno__Swap() || only router(%s) can call pool swap(), called from %s", consts.ROUTER_ADDR, caller.String()),
+			))
 		}
 	}
 
 	if _amountSpecified == "0" {
-		panic("[POOL] pool.gno__Swap() || _amountSpecified == 0")
+		panic(addDetailToError(
+			errInvalidSwapAmount,
+			ufmt.Sprintf("pool.gno__Swap() || amountSpecified == 0"),
+		))
 	}
 
 	amountSpecified := i256.MustFromDecimal(_amountSpecified)
@@ -205,7 +226,10 @@ func Swap(
 	slot0Start := pool.slot0
 
 	if !(slot0Start.unlocked) {
-		panic("[POOL] pool.gno__Swap() || slot0Start.unlocked must be unlocked(true)")
+		panic(addDetailToError(
+			errLockedPool,
+			ufmt.Sprintf("pool.gno__Swap() || slot0Start.unlocked(false) must be unlocked)"),
+		))
 	}
 
 	var feeProtocol uint8
@@ -217,7 +241,10 @@ func Swap(
 		cond1 := sqrtPriceLimitX96.Lt(slot0Start.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Gt(minSqrtRatio)
 		if !(cond1 && cond2) {
-			panic(ufmt.Sprintf("[POOL] pool.gno__Swap() || sqrtPriceLimitX96(%s) < slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) > consts.MIN_SQRT_RATIO(%s)", sqrtPriceLimitX96.ToString(), slot0Start.sqrtPriceX96.ToString(), sqrtPriceLimitX96.ToString(), consts.MIN_SQRT_RATIO))
+			panic(addDetailToError(
+				errPriceOutOfRange,
+				ufmt.Sprintf("pool.gno__Swap() || sqrtPriceLimitX96(%s) < slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) > consts.MIN_SQRT_RATIO(%s)", sqrtPriceLimitX96.ToString(), slot0Start.sqrtPriceX96.ToString(), sqrtPriceLimitX96.ToString(), consts.MIN_SQRT_RATIO),
+			))
 		}
 		feeProtocol = slot0Start.feeProtocol % 16
 		feeGrowthGlobalX128 = pool.feeGrowthGlobal0X128
@@ -228,7 +255,10 @@ func Swap(
 		cond1 := sqrtPriceLimitX96.Gt(slot0Start.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Lt(maxSqrtRatio)
 		if !(cond1 && cond2) {
-			panic(ufmt.Sprintf("[POOL] pool.gno__Swap() || sqrtPriceLimitX96(%s) > slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) < consts.MAX_SQRT_RATIO(%s)", sqrtPriceLimitX96.ToString(), slot0Start.sqrtPriceX96.ToString(), sqrtPriceLimitX96.ToString(), consts.MAX_SQRT_RATIO))
+			panic(addDetailToError(
+				errPriceOutOfRange,
+				ufmt.Sprintf("pool.gno__Swap() || sqrtPriceLimitX96(%s) > slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) < consts.MAX_SQRT_RATIO(%s)", sqrtPriceLimitX96.ToString(), slot0Start.sqrtPriceX96.ToString(), sqrtPriceLimitX96.ToString(), consts.MAX_SQRT_RATIO),
+			))
 		}
 
 		feeProtocol = slot0Start.feeProtocol / 16
@@ -434,13 +464,14 @@ func SetFeeProtocolByAdmin(
 ) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic(
+		panic(addDetailToError(
+			errNoPermission,
 			ufmt.Sprintf(
-				"[POOL] pool.gno__SetFeeProtocolByAdmin() || only admin(%s) can set fee protocol, called from %s",
+				"pool.gno__SetFeeProtocolByAdmin() || only admin(%s) can set fee protocol, called from %s",
 				consts.ADMIN,
 				caller,
 			),
-		)
+		))
 	}
 
 	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
@@ -464,13 +495,14 @@ func SetFeeProtocol(
 ) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(
+		panic(addDetailToError(
+			errNoPermission,
 			ufmt.Sprintf(
-				"[POOL] pool.gno__SetFeeProtocol() || only governance(%s) can set fee protocol, called from %s",
+				"pool.gno__SetFeeProtocol() || only governance(%s) can set fee protocol, called from %s",
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
-		)
+		))
 	}
 
 	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
@@ -495,7 +527,10 @@ func setFeeProtocol(
 	fee0Cond := feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)
 	fee1Cond := feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10)
 	if !(fee0Cond && fee1Cond) {
-		panic(ufmt.Sprintf("[POOL] pool.gno__SetFeeProtocol() || expected (feeProtocol0(%d) == 0 || (feeProtocol0(%d) >= 4 && feeProtocol0(%d) <= 10)) && (feeProtocol1(%d) == 0 || (feeProtocol1(%d) >= 4 && feeProtocol1(%d) <= 10))", feeProtocol0, feeProtocol0, feeProtocol0, feeProtocol1, feeProtocol1, feeProtocol1))
+		panic(addDetailToError(
+			errInvalidPotocolFeePct,
+			ufmt.Sprintf("pool.gno__setFeeProtocol() || expected (feeProtocol0(%d) == 0 || (feeProtocol0(%d) >= 4 && feeProtocol0(%d) <= 10)) && (feeProtocol1(%d) == 0 || (feeProtocol1(%d) >= 4 && feeProtocol1(%d) <= 10))", feeProtocol0, feeProtocol0, feeProtocol0, feeProtocol1, feeProtocol1, feeProtocol1),
+		))
 	}
 
 	newFee := feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
@@ -521,13 +556,14 @@ func CollectProtocolByAdmin(
 ) (string, string) { // uint128 x2
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic(
+		panic(addDetailToError(
+			errNoPermission,
 			ufmt.Sprintf(
-				"[POOL] pool.gno__CollectProtocolByAdmin() || only admin(%s) can collect protocol fees, called from %s",
+				"pool.gno__CollectProtocolByAdmin() || only admin(%s) can collect protocol fees, called from %s",
 				consts.ADMIN,
 				caller,
 			),
-		)
+		))
 	}
 
 	amount0, amount1 := collectProtocol(
@@ -565,13 +601,14 @@ func CollectProtocol(
 ) (string, string) { // uint128 x2
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(
+		panic(addDetailToError(
+			errNoPermission,
 			ufmt.Sprintf(
-				"[POOL] pool.gno__CollectProtocol() || only governance(%s) can collect protocol fees, called from %s",
+				"pool.gno__CollectProtocol() || only governance(%s) can collect protocol fees, called from %s",
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
-		)
+		))
 	}
 
 	amount0, amount1 := collectProtocol(
@@ -621,15 +658,8 @@ func collectProtocol(
 	uAmount0 := amount0.Uint64()
 	uAmount1 := amount1.Uint64()
 
-	ok := transferByRegisterCall(pool.token0Path, recipient, uAmount0)
-	if !ok {
-		panic(ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pool.token0Path(%s), recipient(%s), uAmount0)(%d) failed", pool.token0Path, recipient.String(), uAmount0))
-	}
-
-	ok = transferByRegisterCall(pool.token1Path, recipient, uAmount1)
-	if !ok {
-		panic(ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pool.token1Path(%s), recipient(%s), uAmount1)(%d) failed", pool.token1Path, recipient.String(), uAmount1))
-	}
+	transferByRegisterCall(pool.token0Path, recipient, uAmount0)
+	transferByRegisterCall(pool.token1Path, recipient, uAmount1)
 
 	return amount0.ToString(), amount1.ToString()
 }
@@ -667,17 +697,26 @@ func (pool *Pool) transferAndVerify(
 	// must be negative to send token from pool to user
 	// as point of view from pool, it is negative
 	if !amount.IsNeg() {
-		panic(ufmt.Sprintf("[POOL] pool.transferAndVerify() || amount(%s) must be negative", amount.ToString())) // TODO: panic or just pass
+		panic(addDetailToError(
+			errMustBeNegative,
+			ufmt.Sprintf("pool.gno__transferAndVerify() || amount(%s) must be negative", amount.ToString()),
+		))
 	}
 
 	// check pool.balances
 	if isToken0 {
 		if pool.balances.token0.Lt(amount.Abs()) {
-			panic(ufmt.Sprintf("[POOL] pool.transferAndVerify() || pool.balances.token0(%s) >= amount.Abs(%s)", pool.balances.token0.ToString(), amount.Abs().ToString()))
+			panic(addDetailToError(
+				errTransferFailed,
+				ufmt.Sprintf("pool.gno__transferAndVerify() || pool.balances.token0(%s) >= amount.Abs(%s)", pool.balances.token0.ToString(), amount.Abs().ToString()),
+			))
 		}
 	} else {
 		if pool.balances.token1.Lt(amount.Abs()) {
-			panic(ufmt.Sprintf("[POOL] pool.transferAndVerify() || pool.balances.token1(%s) >= amount.Abs(%s)", pool.balances.token1.ToString(), amount.Abs().ToString()))
+			panic(addDetailToError(
+				errTransferFailed,
+				ufmt.Sprintf("pool.gno__transferAndVerify() || pool.balances.token1(%s) >= amount.Abs(%s)", pool.balances.token1.ToString(), amount.Abs().ToString()),
+			))
 		}
 	}
 
@@ -687,22 +726,25 @@ func (pool *Pool) transferAndVerify(
 	// will panic if following conditions are met:
 	// - POOL does not have enough balance
 	// - token is not registered
-	ok := transferByRegisterCall(tokenPath, to, amountUint64)
-	if !ok {
-		panic(ufmt.Sprintf("[POOL] pool.transferAndVerify() || transferByRegisterCall(tokenPath(%s), to(%s), amountUint64(%d)) failed", tokenPath, to.String(), amountUint64))
-	}
+	transferByRegisterCall(tokenPath, to, amountUint64)
 
 	// update pool.balances
 	var overflow bool
 	if isToken0 {
 		pool.balances.token0, overflow = new(u256.Uint).SubOverflow(pool.balances.token0, amount.Abs())
 		if overflow {
-			panic(ufmt.Sprintf("[POOL] pool.transferAndVerify() || cannot decrease, pool.balances.token0(%s) - amount(%s)", pool.balances.token0.ToString(), amount.Abs().ToString()))
+			panic(addDetailToError(
+				errTransferFailed,
+				ufmt.Sprintf("pool.gno__transferAndVerify() || cannot decrease, pool.balances.token0(%s) - amount(%s)", pool.balances.token0.ToString(), amount.Abs().ToString()),
+			))
 		}
 	} else {
 		pool.balances.token1, overflow = new(u256.Uint).SubOverflow(pool.balances.token1, amount.Abs())
 		if pool.balances.token1.Lt(u256.Zero()) {
-			panic(ufmt.Sprintf("[POOL] pool.transferAndVerify() || cannot decrease, pool.balances.token1(%s) - amount(%s)", pool.balances.token1.ToString(), amount.Abs().ToString()))
+			panic(addDetailToError(
+				errTransferFailed,
+				ufmt.Sprintf("pool.gno__transferAndVerify() || cannot decrease, pool.balances.token1(%s) - amount(%s)", pool.balances.token1.ToString(), amount.Abs().ToString()),
+			))
 		}
 	}
 }
@@ -720,10 +762,7 @@ func (pool *Pool) transferFromAndVerify(
 	// - POOL does not have enough approved amount
 	// - from does not have enough balance
 	// - token is not registered
-	ok := transferFromByRegisterCall(tokenPath, from, to, amountUint64)
-	if !ok {
-		panic(ufmt.Sprintf("[POOL] pool.transferFromAndVerify() || transferFromByRegisterCall(tokenPath(%s), from(%s), to(%s), amountUint64(%d)) failed", tokenPath, from.String(), to.String(), amountUint64))
-	}
+	transferFromByRegisterCall(tokenPath, from, to, amountUint64)
 
 	// update pool.balances
 	if isToken0 {
@@ -738,7 +777,10 @@ func checkAmountRange(amount *i256.Int) uint64 {
 	amountAbs := amount.Abs()
 	amountUint64, overflow := amountAbs.Uint64WithOverflow()
 	if overflow {
-		panic(ufmt.Sprintf("[POOL] pool.checkAmount() || amountAbs(%s) overflows uint64 range", amountAbs.ToString()))
+		panic(addDetailToError(
+			errOutOfRange,
+			ufmt.Sprintf("pool.gno__checkAmountRange() || amountAbs(%s) overflows uint64 range", amountAbs.ToString()),
+		))
 	}
 
 	return amountUint64

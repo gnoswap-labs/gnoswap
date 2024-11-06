@@ -310,7 +310,11 @@ func TestSwap(t *testing.T) {
 // 6. SetFeeProtocol by admin
 func TestSetFeeProtocolByAdmin(t *testing.T) {
 	// non admin call
-	shouldPanic(t, func() { SetFeeProtocolByAdmin(2, 2) })
+	uassert.PanicsWithMessage(
+		t,
+		`[GNOSWAP-POOL-001] no permission || pool.gno__SetFeeProtocolByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set fee protocol, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
+		func() { SetFeeProtocolByAdmin(2, 2) },
+	)
 
 	// admin call
 	std.TestSetRealm(adminRealm)
@@ -362,12 +366,12 @@ func TestApiGetPools(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpls))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	uassert.Equal(t, response.Size(), 1)

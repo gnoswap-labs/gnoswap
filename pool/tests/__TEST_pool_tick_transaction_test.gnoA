@@ -94,3 +94,4 @@ func TestTickTransaction(t *testing.T) {
 	uassert.Equal(t, thisPool.slot0.sqrtPriceX96.ToString(), testSqrtSubOne.ToString())
 	uassert.Equal(t, thisPool.liquidity.ToString(), "20000000000")
 }
+

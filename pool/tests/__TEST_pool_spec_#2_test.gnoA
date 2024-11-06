@@ -209,8 +209,9 @@ func TestSuccess_case_removing_works(t *testing.T) {
 	std.TestSetRealm(posRealm)
 	pl.Mint(token0Path, barPath, 3000, "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c", -240, 0, "10000", admin)
 
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-009] liquidity calculation || liquidity_math.gno__liquidityMathAddDelta() || LS(z must be < x) (x: 0, y: -10000, z:115792089237316195423570985008687907853269984665640564039457584007913129629936)`,
 		func() {
 			pl.Burn(token0Path, barPath, 3000, -240, 0, "10000") // LS panic
 		},
