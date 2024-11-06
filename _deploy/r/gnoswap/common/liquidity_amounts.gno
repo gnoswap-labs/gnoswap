@@ -90,7 +90,6 @@ func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 }
 
 // GetAmountsForLiquidity calculates the amounts of token0 and token1 for a given liquidity.
-// FROM [POOL] position_modify.gno
 func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96 *u256.Uint, liquidity *i256.Int) (string, string) {
 	var amount0, amount1 *i256.Int
 
