@@ -11,9 +11,11 @@ import (
 
 func TestReconfigureByAdmin(t *testing.T) {
 	t.Run("panic if not admin", func(t *testing.T) {
-		uassert.PanicsWithMessage(t, "must be called by admin", func() {
-			ReconfigureByAdmin(200, 2000, 200, 1000, 200, 200, 2000)
-		})
+		uassert.PanicsWithMessage(t,
+			`[GNOSWAP-GOVERNANCE-001] no permission || config.gno__ReconfigureByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can call this function, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
+			func() {
+				ReconfigureByAdmin(200, 2000, 200, 1000, 200, 200, 2000)
+			})
 	})
 
 	t.Run("initial config", func(t *testing.T) {

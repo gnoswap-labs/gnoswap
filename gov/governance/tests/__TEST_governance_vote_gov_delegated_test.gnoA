@@ -37,9 +37,11 @@ func TestProposeText(t *testing.T) {
 func proposeText(t *testing.T) {
 	t.Run("ProposeText with insufficient delegation", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
-		uassert.PanicsWithMessage(t, "PROPOSER_HAS_NOT_ENOUGH_XGNS", func() {
-			ProposeText("title", "text")
-		})
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-GOVERNANCE-005] not enough balance || governance.gno__ProposeText() || proposer(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) has not enough xGNS, balance(0), wanted(100)",
+			func() {
+				ProposeText("title", "text")
+			})
 	})
 
 	t.Run("Successful text proposal", func(t *testing.T) {
@@ -142,9 +144,11 @@ func vote(t *testing.T) {
 
 	t.Run("Vote non existent proposal", func(t *testing.T) {
 		std.TestSetRealm(dummyRealm)
-		uassert.PanicsWithMessage(t, "Proposal 123 does not exist", func() {
-			Vote(uint64(123), true)
-		})
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-GOVERNANCE-004] data not found || vote.gno__Vote() || proposalId(123) does not exist",
+			func() {
+				Vote(uint64(123), true)
+			})
 	})
 
 	t.Run("vote with only delegated", func(t *testing.T) {

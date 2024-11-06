@@ -5,16 +5,14 @@ import (
 	"strings"
 	"time"
 
+	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v2/gov/xgns"
 
 	en "gno.land/r/gnoswap/v2/emission"
 	gs "gno.land/r/gnoswap/v2/gov/staker"
-
-	"gno.land/r/gnoswap/v2/gov/xgns"
-
-	"gno.land/r/gnoswap/v2/common"
-
-	"gno.land/p/demo/ufmt"
 )
 
 var (
@@ -37,9 +35,12 @@ func ProposeText(
 
 	proposer := std.PrevRealm().Addr()
 
-	enough := checkEnoughXGnsToPropose(proposer)
+	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
 	if !enough {
-		panic("PROPOSER_HAS_NOT_ENOUGH_XGNS")
+		panic(addDetailToError(
+			errNotEnoughBalance,
+			ufmt.Sprintf("governance.gno__ProposeText() || proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
+		))
 	}
 
 	now := uint64(time.Now().Unix())
@@ -97,9 +98,12 @@ func ProposeCommunityPoolSpend(
 
 	proposer := std.PrevRealm().Addr()
 
-	enough := checkEnoughXGnsToPropose(proposer)
+	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
 	if !enough {
-		panic("PROPOSER_HAS_NOT_ENOUGH_XGNS")
+		panic(addDetailToError(
+			errNotEnoughBalance,
+			ufmt.Sprintf("governance.gno__ProposeCommunityPoolSpend() || proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
+		))
 	}
 
 	now := uint64(time.Now().Unix())
@@ -164,26 +168,38 @@ func ProposeParameterChange(
 
 	proposer := std.PrevRealm().Addr()
 
-	enough := checkEnoughXGnsToPropose(proposer)
+	enough, balance, wanted := checkEnoughXGnsToPropose(proposer)
 	if !enough {
-		panic("PROPOSER_HAS_NOT_ENOUGH_XGNS")
+		panic(addDetailToError(
+			errNotEnoughBalance,
+			ufmt.Sprintf("governance.gno__ProposeParameterChange() || proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
+		))
 	}
 
 	if numToExecute == 0 {
-		panic("numToExecute is 0")
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("governance.gno__ProposeParameterChange() || numToExecute is 0"),
+		))
 	}
 
 	// check if numToExecute is a valid number
 	splitGov := strings.Split(executions, "*GOV*")
 	if uint64(len(splitGov)) != numToExecute {
-		panic(ufmt.Sprintf("numToExecute(%d) does not match the number of executions(%d)", numToExecute, len(splitGov)))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("governance.gno__ProposeParameterChange() || numToExecute(%d) does not match the number of executions(%d)", numToExecute, len(splitGov)),
+		))
 	}
 
 	// check if each execution is valid
 	for _, gov := range splitGov {
 		splitExe := strings.Split(gov, "*EXE*")
 		if len(splitExe) != 3 {
-			panic(ufmt.Sprintf("invalid execution(%s) to split by *EXE*, seems like param didn't passed", gov))
+			panic(addDetailToError(
+				errInvalidInput,
+				ufmt.Sprintf("governance.gno__ProposeParameterChange() || invalid execution(%s) to split by *EXE*, seems like param didn't passed", gov),
+			))
 		}
 
 		pkgPath := splitExe[0]
@@ -299,15 +315,12 @@ func updateProposalsState() {
 	}
 }
 
-func checkEnoughXGnsToPropose(proposer std.Address) bool {
-	xGNS := xgns.BalanceOf(a2u(proposer))
-	println("proposer", proposer.String())
-	println("xGNS", xGNS)
-	println("config.ProposalCreationThreshold", config.ProposalCreationThreshold)
+func checkEnoughXGnsToPropose(proposer std.Address) (bool, uint64, uint64) {
+	xGNSBalance := xgns.BalanceOf(a2u(proposer))
 
-	if xGNS < config.ProposalCreationThreshold {
-		return false
+	if xGNSBalance < config.ProposalCreationThreshold {
+		return false, xGNSBalance, config.ProposalCreationThreshold
 	}
 
-	return true
+	return true, xGNSBalance, config.ProposalCreationThreshold
 }

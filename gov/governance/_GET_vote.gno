@@ -3,6 +3,8 @@ package governance
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
+
 	"strconv"
 	"strings"
 )
@@ -10,7 +12,10 @@ import (
 func GetVoteByVoteKey(voteKey string) bool {
 	vote, exist := votes[voteKey]
 	if !exist {
-		panic("VOTE_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_vote.gno__GetVoteByVoteKey() || voteKey(%s) not found", voteKey),
+		))
 	}
 
 	return vote
@@ -19,14 +24,20 @@ func GetVoteByVoteKey(voteKey string) bool {
 func GetVoteYesByVoteKey(voteKey string) bool {
 	_, exist := votes[voteKey]
 	if !exist {
-		panic("VOTE_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_vote.gno__GetVoteYesByVoteKey() || voteKey(%s) not found", voteKey),
+		))
 	}
 
 	proposalId, address := divideVoteKeyToProposalIdAndUser(voteKey)
 
 	vote, exist := userVotes[address][proposalId]
 	if !exist {
-		panic("VOTE_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_vote.gno__GetVoteYesByVoteKey() || voteKey(%s) not found", voteKey),
+		))
 	}
 
 	return vote.Yes
@@ -35,14 +46,20 @@ func GetVoteYesByVoteKey(voteKey string) bool {
 func GetVoteWeightByVoteKey(voteKey string) uint64 {
 	_, exist := votes[voteKey]
 	if !exist {
-		panic("VOTE_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_vote.gno__GetVoteWeightByVoteKey() || voteKey(%s) not found", voteKey),
+		))
 	}
 
 	proposalId, address := divideVoteKeyToProposalIdAndUser(voteKey)
 
 	vote, exist := userVotes[address][proposalId]
 	if !exist {
-		panic("VOTE_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_vote.gno__GetVoteWeightByVoteKey() || voteKey(%s) not found", voteKey),
+		))
 	}
 
 	return vote.Weight
@@ -51,14 +68,20 @@ func GetVoteWeightByVoteKey(voteKey string) uint64 {
 func GetVotedHeightByVoteKey(voteKey string) uint64 {
 	_, exist := votes[voteKey]
 	if !exist {
-		panic("VOTE_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_vote.gno__GetVotedHeightByVoteKey() || voteKey(%s) not found", voteKey),
+		))
 	}
 
 	proposalId, address := divideVoteKeyToProposalIdAndUser(voteKey)
 
 	vote, exist := userVotes[address][proposalId]
 	if !exist {
-		panic("VOTE_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_vote.gno__GetVotedHeightByVoteKey() || voteKey(%s) not found", voteKey),
+		))
 	}
 
 	return vote.VotedHeight
@@ -67,14 +90,20 @@ func GetVotedHeightByVoteKey(voteKey string) uint64 {
 func GetVotedAtByVoteKey(voteKey string) uint64 {
 	_, exist := votes[voteKey]
 	if !exist {
-		panic("VOTE_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_vote.gno__GetVotedAtByVoteKey() || voteKey(%s) not found", voteKey),
+		))
 	}
 
 	proposalId, address := divideVoteKeyToProposalIdAndUser(voteKey)
 
 	vote, exist := userVotes[address][proposalId]
 	if !exist {
-		panic("VOTE_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_vote.gno__GetVotedAtByVoteKey() || voteKey(%s) not found", voteKey),
+		))
 	}
 
 	return vote.VotedAt
@@ -83,12 +112,18 @@ func GetVotedAtByVoteKey(voteKey string) uint64 {
 func divideVoteKeyToProposalIdAndUser(voteKey string) (uint64, std.Address) {
 	parts := strings.Split(voteKey, ":")
 	if len(parts) != 2 {
-		panic("INVALID_VOTE_KEY")
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("_GET_vote.gno__divideVoteKeyToProposalIdAndUser() || voteKey(%s) is invalid", voteKey),
+		))
 	}
 
 	proposalId, err := strconv.ParseUint(parts[0], 10, 64)
 	if err != nil {
-		panic("INVALID_PROPOSAL_ID")
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("_GET_vote.gno__divideVoteKeyToProposalIdAndUser() || proposalId(%s) is invalid", parts[0]),
+		))
 	}
 
 	return proposalId, std.Address(parts[1])

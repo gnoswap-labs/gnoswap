@@ -58,7 +58,10 @@ func ReconfigureByAdmin(
 ) uint64 {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic("must be called by admin")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("config.gno__ReconfigureByAdmin() || only admin(%s) can call this function, called from %s", consts.ADMIN, caller),
+		))
 	}
 
 	common.IsHalted()
@@ -157,7 +160,10 @@ func GetConfigVersion(version uint64) Config {
 
 	configValue, exist := configVersions[version]
 	if !exist {
-		panic("CONFIG DOES_NOT_EXIST")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("config.gno__GetConfigVersion() || config version(%d) does not exist", version),
+		))
 	}
 
 	return configValue

@@ -43,7 +43,7 @@ func TestCommunityPoolSpend(t *testing.T) {
 func proposeCommunityPoolSpend(t *testing.T) {
 	t.Run("propose with insufficient delegation", func(t *testing.T) {
 		uassert.PanicsWithMessage(t,
-			"PROPOSER_HAS_NOT_ENOUGH_XGNS",
+			"[GNOSWAP-GOVERNANCE-005] not enough balance || governance.gno__ProposeCommunityPoolSpend() || proposer(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has not enough xGNS, balance(0), wanted(100)",
 			func() {
 				ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 100)
 			},
@@ -87,10 +87,12 @@ func passAndExecute(t *testing.T) {
 	proposalId := uint64(1)
 
 	t.Run("did not pass yet", func(t *testing.T) {
-		uassert.PanicsWithMessage(t, "proposal 1 has not passed. failed to execute", func() {
-			std.TestSetRealm(adminRealm)
-			Execute(proposalId)
-		})
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-GOVERNANCE-015] unable to execute proposal || execute.gno__Execute() || proposalId(1) has not passed, failed to execute",
+			func() {
+				std.TestSetRealm(adminRealm)
+				Execute(proposalId)
+			})
 	})
 
 	t.Run("vote proposal to make it passed", func(t *testing.T) {
@@ -130,9 +132,11 @@ func passAndExecute(t *testing.T) {
 	})
 
 	t.Run("already executed", func(t *testing.T) {
-		uassert.PanicsWithMessage(t, "proposal 1 has already executed(true) or canceled(false) or rejected(false). failed to execute", func() {
-			Execute(proposalId)
-		})
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-GOVERNANCE-015] unable to execute proposal || execute.gno__Execute() || proposalId(1) has already executed(true) or canceled(false) or rejected(false), failed to execute",
+			func() {
+				Execute(proposalId)
+			})
 	})
 }
 
@@ -158,9 +162,11 @@ func rejectAndExecute(t *testing.T) {
 	})
 
 	t.Run("execute rejected proposal", func(t *testing.T) {
-		uassert.PanicsWithMessage(t, "proposal 2 has already executed(false) or canceled(false) or rejected(true). failed to execute", func() {
-			Execute(proposalId)
-		})
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-GOVERNANCE-015] unable to execute proposal || execute.gno__Execute() || proposalId(2) has already executed(false) or canceled(false) or rejected(true), failed to execute",
+			func() {
+				Execute(proposalId)
+			})
 	})
 }
 
@@ -190,8 +196,10 @@ func passAndExpire(t *testing.T) {
 		uassert.True(t, proposal.ExecutionState.Passed)
 		uassert.True(t, proposal.ExecutionState.Expired)
 
-		uassert.PanicsWithMessage(t, "EXECUTION_WINDOW_OVER (now(1234570602) >= windowEnd(1234569408))", func() {
-			Execute(proposalId)
-		})
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-GOVERNANCE-017] proposal execution time expired || execute.gno__Execute() || EXECUTION_WINDOW_OVER (now(1234570602) >= windowEnd(1234569408))",
+			func() {
+				Execute(proposalId)
+			})
 	})
 }
