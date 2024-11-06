@@ -111,7 +111,6 @@ func Mint(address pusers.AddressOrName) uint64 {
 
 	// if not yet initialized, mint 0 amount
 	if initialized == false {
-		// println("GNS_not yet initialized")
 		return 0
 	}
 
@@ -120,27 +119,17 @@ func Mint(address pusers.AddressOrName) uint64 {
 	nowHeight := std.GetHeight()
 	amountToMint := uint64(0)
 
-	// println("GNS_lastMintedHeight", lastMintedHeight)
-	// println("GNS_lastMintedHeight + 1", lastMintedHeight+1)
-	// println("GNS_nowHeight", nowHeight)
-	// println("GNS_now-lastMint", nowHeight-lastMintedHeight)
-
 	if lastMintedHeight >= nowHeight {
-		// println("GNS_only one mint for each block")
 		return 0
 	}
 
 	// If from, to block is at same halving year, no need iterate
 	fromYear := GetHalvingYearByHeight(lastMintedHeight + 1)
 	toYear := GetHalvingYearByHeight(nowHeight)
-	// println("GNS_fromYear:", fromYear)
-	// println("GNS_toYear:", toYear)
 
 	if fromYear == toYear {
-		// println(" > GNS_SAME_YEAR")
 		numBlock := uint64(nowHeight - lastMintedHeight)
 		singleBlockAmount := GetAmountByHeight(nowHeight)
-		// println(" > GNS_singleBlockAmount:", singleBlockAmount)
 		totalBlockAmount := singleBlockAmount * numBlock
 
 		amountToMint += totalBlockAmount
@@ -148,26 +137,12 @@ func Mint(address pusers.AddressOrName) uint64 {
 
 		halvingYearMintAmount[fromYear] += totalBlockAmount
 	} else {
-		// println(" > GNS_DIFF_YEAR")
 		for i := lastMintedHeight + 1; i <= nowHeight; i++ {
-			// println(" > GNS_processing height:\t\t\t", i)
-
 			amount := GetAmountByHeight(i)
-			// println(" > GNS_amount_Orig:\t\t\t\t", amount)
-
 			amount = checkAndHandleIfLastBlockOfHalvingYear(i, amount)
-			// println(" > GNS_amount_LastCheck:\t\t\t", amount)
-
 			year := GetHalvingYearByHeight(i)
-			// println(" > GNS_year:\t\t\t\t\t", year)
-
 			halvingYearMintAmount[year] += amount
-			// println(" > GNS_halvingYearMintAmount[year]:\t\t", halvingYearMintAmount[year])
-
 			amountToMint += amount
-			// println(" > GNS_amountToMint:\t\t\t\t", amountToMint)
-
-			// println()
 		}
 	}
 
@@ -177,8 +152,6 @@ func Mint(address pusers.AddressOrName) uint64 {
 	}
 
 	lastMintedHeight = nowHeight
-	// println("GNS_lastMintedHeight:", lastMintedHeight)
-	// println("GNS_amountToMint:", amountToMint)
 
 	return amountToMint
 }
@@ -187,18 +160,8 @@ func checkAndHandleIfLastBlockOfHalvingYear(height int64, amount uint64) uint64 
 	year := GetHalvingYearByHeight(height)
 	lastBlock := halvingYearBlock[year]
 	if height == lastBlock {
-		// println("  > GNS_LAST_processing height:\t\t\t", height)
-		// println("  > GNS_LAST_year:\t\t\t\t", year)
-		// println("  > GNS_LAST_halvingYearAmount[year]:\t\t", halvingYearAmount[year])
-		// println("  > GNS_LAST_halvingYearMintAmount[year]:\t", halvingYearMintAmount[year])
-
 		leftForThisYear := halvingYearAmount[year] - halvingYearMintAmount[year]
-		// println("  > GNS_LAST_leftForThisYear:\t\t\t", leftForThisYear)
-
-		// println("  > GNS_LAST_amount_Before:\t\t\t", amount)
 		amount = leftForThisYear
-		// println("  > GNS_LAST_amount_After(addLeft):\t\t", amount)
-
 		return amount
 	}
 
