@@ -5,34 +5,39 @@ import (
 	"strconv"
 	"strings"
 
-	pusers "gno.land/p/demo/users"
-
 	"gno.land/p/demo/ufmt"
+	pusers "gno.land/p/demo/users"
 )
 
 func poolPathWithFeeDivide(poolPath string) (string, string, int) {
 	poolPathSplit := strings.Split(poolPath, ":")
 	if len(poolPathSplit) != 3 {
-		panic(ufmt.Sprintf("[ROUTER] _RPC_api.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath))
+		panic(addDetailToError(
+			errInvalidPoolPath,
+			ufmt.Sprintf("utils.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath),
+		))
 	}
 
 	feeInt, err := strconv.Atoi(poolPathSplit[2])
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] _RPC_api.gno__poolPathWithFeeDivide() || cannot convert fee(%s) to int", poolPathSplit[2]))
+		panic(err.Error())
 	}
 
 	return poolPathSplit[0], poolPathSplit[1], feeInt
 }
 
 func getDataForSinglePath(poolPath string) (string, string, uint32) {
-	datas := strings.Split(poolPath, ":")
-	if len(datas) != 3 {
-		panic(ufmt.Sprintf("[ROUTER] _util.gno__getDataForSinglePath() || len(datas) != 3 (poolPath:%s)", poolPath))
+	poolPathSplit := strings.Split(poolPath, ":")
+	if len(poolPathSplit) != 3 {
+		panic(addDetailToError(
+			errInvalidPoolPath,
+			ufmt.Sprintf("utils.gno__getDataForSinglePath() || len(poolPathSplit) != 3, poolPath: %s", poolPath),
+		))
 	}
 
-	token0 := datas[0]
-	token1 := datas[1]
-	fee, _ := strconv.Atoi(datas[2])
+	token0 := poolPathSplit[0]
+	token1 := poolPathSplit[1]
+	fee, _ := strconv.Atoi(poolPathSplit[2])
 
 	return token0, token1, uint32(fee)
 }
@@ -96,7 +101,10 @@ func isUserCall() bool {
 
 func assertUserCall() {
 	if !isUserCall() {
-		panic("must be called by user")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("util.gno__assertUserCall() || must be called by user, called from %s", std.PrevRealm().PkgPath()),
+		))
 	}
 }
 

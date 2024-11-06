@@ -41,12 +41,12 @@ func testCreatePool(t *testing.T) {
 		jsonStr := pl.ApiGetPools()
 		root, err := json.Unmarshal([]byte(jsonStr))
 		if err != nil {
-			panic(err)
+			panic(err.Error())
 		}
 
 		response, err := root.GetKey("response")
 		if err != nil {
-			panic(err)
+			panic(err.Error())
 		}
 
 		uassert.Equal(t, response.Size(), 3)

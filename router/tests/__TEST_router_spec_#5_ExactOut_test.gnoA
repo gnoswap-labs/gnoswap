@@ -88,7 +88,9 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 
 	std.TestSetOrigSend(std.Coins{{"ugnot", 12345}}, nil)
 
-	shouldPanic(t,
+	uassert.PanicsWithMessage(
+		t,
+		`[GNOSWAP-ROUTER-005] invalid input || router.gno__SwapRoute() || ugnot sent by user(12345) is not equal to amountSpecified(3)`,
 		func() {
 			SwapRoute(
 				consts.GNOT, // inputToken

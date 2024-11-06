@@ -27,12 +27,12 @@ func TestCreatePool(t *testing.T) {
 	jsonStr := pl.ApiGetPools()
 	root, err := json.Unmarshal([]byte(jsonStr))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	uassert.Equal(t, response.Size(), 1)
@@ -74,8 +74,9 @@ func TestDrySwapRouteBazBarExactIn(t *testing.T) {
 func TestSwapRouteBazBarExactIn(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	shouldPanicWithMsg(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-ROUTER-012] slippage || router.gno__finalizeSwap() || too few received for user (expected minimum: 2710, actual: 367, swapType: EXACT_IN)`,
 		func() {
 			SwapRoute(
 				bazPath,    // inputToken
@@ -86,8 +87,6 @@ func TestSwapRouteBazBarExactIn(t *testing.T) {
 				"100",  // quoteArr
 				"2710", // tokenAmountLimit ( too few recieved (expected 2710, got 300))
 			)
-
 		},
-		"[ROUTER] router.gno__finalizeSwap() || Too few received for user (expected minimum: 2710, actual: 367, swapType: EXACT_IN)",
 	)
 }
