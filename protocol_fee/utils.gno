@@ -2,6 +2,8 @@ package protocol_fee
 
 import (
 	"std"
+
+	"gno.land/p/demo/ufmt"
 )
 
 func isUserCall() bool {
@@ -10,7 +12,10 @@ func isUserCall() bool {
 
 func assertUserCall() {
 	if !isUserCall() {
-		panic("must be called by user")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("util.gno__assertUserCall() || must be called by user, called from %s", std.PrevRealm().PkgPath()),
+		))
 	}
 }
 

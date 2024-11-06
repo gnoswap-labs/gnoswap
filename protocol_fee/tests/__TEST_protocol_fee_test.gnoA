@@ -45,8 +45,9 @@ func TestSetDevOpsPctByAdminNoPermission(t *testing.T) {
 	dummyRealm := std.NewUserRealm(dummy)
 	std.TestSetRealm(dummyRealm)
 
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-PROTOCOL_FEE-001] no permission || protocol_fee.gno__SetDevOpsPctByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set devOpsPct, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
 		func() {
 			SetDevOpsPctByAdmin(123)
 		},
@@ -56,8 +57,9 @@ func TestSetDevOpsPctByAdminNoPermission(t *testing.T) {
 func TestSetDevOpsPctByAdminInvalidFee(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-PROTOCOL_FEE-006] invalid percentage || protocol_fee.gno__setDevOpsPct() || pct(100001) should not be bigger than 10000`,
 		func() {
 			SetDevOpsPctByAdmin(100001)
 		},
