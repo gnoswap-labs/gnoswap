@@ -59,17 +59,17 @@ func TestApiGetPositionsUnclaimedFee(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpuf))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	uassert.Equal(t, response.Size(), 3)
 
-	shouldEQ(
+	uassert.Equal(
 		t,
 		response.String(),
 		`[{"lpTokenId":1,"fee0":"0","fee1":"0"},{"lpTokenId":2,"fee0":"0","fee1":"0"},{"lpTokenId":3,"fee0":"0","fee1":"0"}]`,
@@ -95,17 +95,17 @@ func TestApiGetPositionsUnclaimedFee2(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpuf))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	uassert.Equal(t, response.Size(), 3)
 
-	shouldEQ(
+	uassert.Equal(
 		t,
 		response.String(),
 		`[{"lpTokenId":1,"fee0":"61","fee1":"0"},{"lpTokenId":2,"fee0":"0","fee1":"0"},{"lpTokenId":3,"fee0":"0","fee1":"0"}]`,
@@ -117,17 +117,17 @@ func TestApiGetPositionUnclaimedFeeByLpTokenId(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpuf))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	uassert.Equal(t, response.Size(), 1)
 
-	shouldEQ(
+	uassert.Equal(
 		t,
 		response.String(),
 		`[{"lpTokenId":1,"fee0":"61","fee1":"0"}]`,
@@ -151,12 +151,12 @@ func TestApiGetPositions(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpss))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	uassert.Equal(t, response.Size(), 3)
@@ -169,12 +169,12 @@ func TestApiGetPositionsByPoolPath(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpss))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	uassert.Equal(t, response.Size(), 1)
@@ -187,12 +187,12 @@ func TestApiGetPositionsByAddress(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpss))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	uassert.Equal(t, response.Size(), 3)
@@ -205,12 +205,12 @@ func TestApiGetPositionsByAddressNo(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpss))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	uassert.Equal(t, response.Size(), 0)

@@ -14,7 +14,10 @@ func exists(tokenId uint64) bool {
 	// use defer to catch the panic
 	defer func() {
 		if err := recover(); err != nil {
-			panic(ufmt.Sprintf("[POSITION] nft_helper.gno__exists() || tokenId(%s) doesn't exist", tokenId))
+			panic(addDetailToError(
+				errDataNotFound,
+				ufmt.Sprintf("nft_helper.gno__exists() || tokenId(%d) doesn't exist", tokenId),
+			))
 		}
 	}()
 
@@ -22,7 +25,10 @@ func exists(tokenId uint64) bool {
 	// we don't have much choice but to use ownerOf
 	owner := gnft.OwnerOf(tid(tokenId))
 	if owner == consts.ZERO_ADDRESS {
-		panic(ufmt.Sprintf("[POSITION] nft_helper.gno__exists() || tokenId(%s) doesn't exist__ZeroAddressOwner", tokenId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("nft_helper.gno__exists() || tokenId(%d) doesn't exist__ZeroAddressOwner", tokenId),
+		))
 		return false
 	}
 
@@ -35,7 +41,10 @@ func isApprovedOrOwner(addr std.Address, tokenId uint64) bool {
 
 	// check whether token exists
 	if !exists(tokenId) {
-		panic(ufmt.Sprintf("[POSITION] nft_helper.gno__isApprovedOrOwner() || tokenId(%s) doesn't exist", tokenId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("nft_helper.gno__isApprovedOrOwner() || tokenId(%d) doesn't exist", tokenId),
+		))
 	}
 
 	// check owner first
