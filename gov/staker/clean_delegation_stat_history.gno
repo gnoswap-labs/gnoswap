@@ -3,6 +3,8 @@ package staker
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/gnoswap/v2/consts"
 )
 
@@ -19,7 +21,10 @@ var (
 func CleanDelegationStatHistoryByAdmin() {
 	prev := std.PrevRealm().Addr()
 	if prev != consts.ADMIN {
-		panic("only admin can clean delegation stat history")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("clean_delegation_stat_history.gno__CleanDelegationStatHistoryByAdmin() || prev(%s) != admin(%s)", prev.String(), consts.ADMIN.String()),
+		))
 	}
 
 	cleanDelegationStatHistory()
@@ -31,9 +36,11 @@ func GetRunning() bool {
 
 func SetRunning(run bool) {
 	prev := std.PrevRealm().Addr()
-
 	if prev != consts.ADMIN {
-		panic("only admin can set running")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("clean_delegation_stat_history.gno__SetRunning() || prev(%s) != admin(%s)", prev.String(), consts.ADMIN.String()),
+		))
 	}
 
 	running = run

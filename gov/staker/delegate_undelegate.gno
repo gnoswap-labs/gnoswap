@@ -60,16 +60,25 @@ func undelegate(to std.Address, amount uint64) {
 
 	_, exist := delegatedFromTo[caller]
 	if !exist {
-		panic(ufmt.Sprintf("caller %s has no delegated amount", caller))
+		panic(addDetailToError(
+			errNoDelegatedAmount,
+			ufmt.Sprintf("delegate_undelegate.gno__Undelegate() || caller(%s) has no delegated amount", caller),
+		))
 	}
 
 	delegatedAmount, exist := delegatedFromTo[caller][to]
 	if !exist {
-		panic(ufmt.Sprintf("caller %s has no delegated amount to %s", caller, to))
+		panic(addDetailToError(
+			errNoDelegatedTarget,
+			ufmt.Sprintf("delegate_undelegate.gno__Undelegate() || caller(%s) has no delegated amount to %s", caller, to),
+		))
 	}
 
 	if delegatedAmount < amount {
-		panic(ufmt.Sprintf("caller %s has only %d delegated amount to %s", caller, delegatedAmount, to))
+		panic(addDetailToError(
+			errNotEnoughDelegated,
+			ufmt.Sprintf("delegate_undelegate.gno__Undelegate() || caller(%s) has only %d delegated amount(request: %d) to %s", caller, delegatedAmount, amount, to),
+		))
 	}
 
 	totalDelegated -= amount
@@ -90,7 +99,10 @@ func undelegate(to std.Address, amount uint64) {
 	// update delegation stat history
 	stat, exist := delegationStatHistory[to]
 	if !exist {
-		panic(ufmt.Sprintf("caller %s has no delegation stat history", caller))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("delegate_undelegate.gno__Undelegate() || caller(%s) has no delegation stat history", caller),
+		))
 	}
 
 	for i := 0; i < len(stat); i++ {
