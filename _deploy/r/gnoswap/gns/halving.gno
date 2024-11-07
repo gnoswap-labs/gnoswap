@@ -106,7 +106,10 @@ func GetAvgBlockTimeInMs() int64 {
 func SetAvgBlockTimeInMsByAdmin(ms int64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic("must be called by admin")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("gns.gno__SetAvgBlockTimeInMsByAdmin() || only admin(%s) can call this function, called from %s", consts.ADMIN, caller.String()),
+		))
 	}
 
 	setAvgBlockTimeInMs(ms)
@@ -125,7 +128,10 @@ func SetAvgBlockTimeInMsByAdmin(ms int64) {
 func SetAvgBlockTimeInMs(ms int64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic("must be called by governance")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("gns.gno__SetAvgBlockTimeInMs() || only governance contract(%s) can call this function, called from %s", consts.GOV_GOVERNANCE_ADDR, caller.String()),
+		))
 	}
 
 	setAvgBlockTimeInMs(ms)

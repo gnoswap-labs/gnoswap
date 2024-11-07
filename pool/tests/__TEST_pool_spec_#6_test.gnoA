@@ -79,8 +79,9 @@ func TestPokeIsNotAllowedOnUninitilaizedPosition(t *testing.T) {
 	CreatePool(barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // tick 0
 
 	std.TestSetRealm(posRealm)
-	shouldPanicWithMsg(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and (self)liquidity are zero`,
 		func() {
 			Burn(
 				barPath,
@@ -91,7 +92,6 @@ func TestPokeIsNotAllowedOnUninitilaizedPosition(t *testing.T) {
 				"0",
 			)
 		},
-		`NP`,
 	)
 }
 

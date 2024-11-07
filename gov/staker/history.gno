@@ -38,11 +38,17 @@ func GetDelegatedCumulative(delegator std.Address, endTimestamp uint64) uint64 {
 	calculateReward()
 
 	if !delegator.IsValid() {
-		panic(ufmt.Sprintf("invalid delegator address: %s", delegator.String()))
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("history.gno__GetDelegatedCumulative() || invalid delegator address: %s", delegator.String()),
+		))
 	}
 
 	if endTimestamp > uint64(time.Now().Unix()) {
-		panic("FUTURE")
+		panic(addDetailToError(
+			errFutureTime,
+			ufmt.Sprintf("history.gno__GetDelegatedCumulative() || endTimestamp(%d) > now(%d)", endTimestamp, time.Now().Unix()),
+		))
 	}
 
 	history, exist := delegationStatHistory[delegator]

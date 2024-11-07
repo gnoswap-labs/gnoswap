@@ -3,6 +3,7 @@ package community_pool
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 )
 
@@ -12,7 +13,10 @@ func isUserCall() bool {
 
 func assertUserCall() {
 	if !isUserCall() {
-		panic("must be called by user")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("util.gno__assertUserCall() || must be called by user, called from %s", std.PrevRealm().PkgPath()),
+		))
 	}
 }
 

@@ -50,8 +50,9 @@ func TestCreateFooBarPool_Should_be_failed_if_price_is_too_low(t *testing.T) {
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-012] token sort order || pool_manager.gno__CreatePool() || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)`,
 		func() {
 			CreatePool(fooPath, barPath, 3000, "1")
 		},
@@ -63,8 +64,9 @@ func TestCreateFooBarPool_Should_be_failed_if_price_is_too_high(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-012] token sort order || pool_manager.gno__CreatePool() || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)`,
 		func() {
 			CreatePool(fooPath, barPath, 3000, "1461446703485210103287273052203988822378723970342")
 		},
@@ -127,8 +129,9 @@ func TestMint_fail_if_tickLower_greater_than_tickUpper(t *testing.T) {
 	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
 
 	// =====================fails if tickLower greater than tickUpper==========================
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-022] invalid tick and tick spacing || tick_bitmap.gno__tickBitmapFlipTick() || tick(1) MOD tickSpacing(60) != 0(1)`,
 		func() {
 			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", 1, 0, "1", admin)
 		},
@@ -151,8 +154,9 @@ func TestMint_fail_if_tickLower_less_than_min_tick(t *testing.T) {
 	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
 
 	// =====================fails if tickLower less than min tick==========================
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-022] invalid tick and tick spacing || tick_bitmap.gno__tickBitmapFlipTick() || tick(-887273) MOD tickSpacing(60) != 0(-53)`,
 		func() {
 			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", -887273, 0, "1", admin)
 		},
@@ -174,8 +178,9 @@ func TestMint_fail_if_tickUpper_greater_than_max_tick(t *testing.T) {
 	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
 
 	// =====================fails if tickUpper greater than max tick==========================
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-022] invalid tick and tick spacing || tick_bitmap.gno__tickBitmapFlipTick() || tick(887273) MOD tickSpacing(60) != 0(53)`,
 		func() {
 			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", 0, 887273, "1", admin)
 		},
@@ -202,8 +207,9 @@ func TestMint_fail_if_amount_exceeds_the_max(t *testing.T) {
 	maxLiquidityPerTick := u256.Zero().Add(u256.Zero(), pool.maxLiquidityPerTick)
 	maxLiquidityPerTick.Add(maxLiquidityPerTick, u256.One())
 	tickSpacing := pool.tickSpacing
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-009] liquidity calculation || tick.gno__tickUpdate() || liquidityGrossAfter(11505743598341114571880798222544995) overflows maxLiquidity(11505743598341114571880798222544994)`,
 		func() {
 			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), admin)
 		},
@@ -235,22 +241,25 @@ func TestMint_fail_if_total_amount_at_tick_exceeds_the_max(t *testing.T) {
 	maxLiquidityPerTick.Add(maxLiquidityPerTick, u256.One())
 	tickSpacing = pool.tickSpacing
 
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-005] out of range || pool.gno__checkAmountRange() || amountAbs(36384355944659449090771081304848911) overflows uint64 range`,
 		func() {
 			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), admin)
 		},
 	)
 
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-009] liquidity calculation || tick.gno__tickUpdate() || liquidityGrossAfter(23011487196682229143761596445087990) overflows maxLiquidity(11505743598341114571880798222544994)`,
 		func() {
 			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing*2, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), admin)
 		},
 	)
 
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-009] liquidity calculation || tick.gno__tickUpdate() || liquidityGrossAfter(23011487196682229143761596445087990) overflows maxLiquidity(11505743598341114571880798222544994)`,
 		func() {
 			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing*2, maxLiquidityPerTick.ToString(), admin)
 		},
@@ -278,8 +287,9 @@ func TestMint_fail_if_amount_is_0(t *testing.T) {
 
 	pool := GetPool(fooPath, barPath, 3000)
 	tickSpacing := pool.tickSpacing
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-010] zero liquidity || pool.gno__Mint() || liquidityAmount == 0`,
 		func() {
 			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, "0", admin)
 		},

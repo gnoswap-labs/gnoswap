@@ -330,7 +330,7 @@ func TestTickUpdate_1(t *testing.T) {
 	var token1 string = "gno.land/r/onbloc/foo2"
 	DeployPool(token0, token1)
 	pool := GetPool(token0, token1, 500)
-	// flips from zero to nonzero
+	// flips from zero to non zero
 
 	var flipped bool
 
@@ -342,7 +342,7 @@ func TestTickUpdate_1(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.NewUint(3)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 	uassert.Equal(t, flipped, true)
 }
 
@@ -363,10 +363,10 @@ func TestTickUpdate_2(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.NewUint(3)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 	uassert.Equal(t, flipped, true)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 	uassert.Equal(t, flipped, false)
 }
 
@@ -388,12 +388,12 @@ func TestTickUpdate_3(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.NewUint(3)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 	uassert.Equal(t, flipped, true)
 
 	liquidityDelta = i256.MustFromDecimal("-1")
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 	uassert.Equal(t, flipped, true)
 }
 
@@ -415,12 +415,12 @@ func TestTickUpdate_4(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.NewUint(3)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 	uassert.Equal(t, flipped, true)
 
 	liquidityDelta = i256.MustFromDecimal("-1")
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 	uassert.Equal(t, flipped, false)
 }
 
@@ -442,18 +442,18 @@ func TestTickUpdate_5(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.NewUint(3)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	liquidityDelta = i256.MustFromDecimal("1")
 	upper = true
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
-	shouldPanicWithMsg(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-009] liquidity calculation || tick.gno__tickUpdate() || liquidityGrossAfter(4) overflows maxLiquidity(3)`,
 		func() {
-			pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+			pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 		},
-		"tick panic #1",
 	)
 }
 
@@ -478,18 +478,18 @@ func TestTickUpdate_6(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.NewUint(10)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	liquidityDelta = i256.MustFromDecimal("1")
 	upper = true
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	liquidityDelta = i256.MustFromDecimal("3")
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	liquidityDelta = i256.MustFromDecimal("1")
 	upper = false
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	_, _, liquidityGross, liquidityNet, _, _, _, _ = pool.GetTicks(0)
 	uassert.Equal(t, liquidityGross.ToString(), "7")
@@ -516,11 +516,12 @@ func TestTickUpdate_7(t *testing.T) {
 	var feeGrowthGlobal1X128 *u256.Uint = u256.Zero()
 	var upper bool = false
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
-	shouldPanic(
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-009] liquidity calculation || tick.gno__tickUpdate() || liquidityGrossAfter(1917569901783203986719870431555992) overflows maxLiquidity(1917569901783203986719870431555990)`,
 		func() {
-			pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
+			pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
 		},
 	)
 }
@@ -552,7 +553,7 @@ func TestTickUpdate_8(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.MustFromDecimal(consts.MAX_UINT128)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, liquidityNet, secondsPerLiquidityOutsideX128, tickCumulativeOutside, secondsOutside, initialized = pool.GetTicks(1)
 
 	uassert.Equal(t, feeGrowthOutside0X128.ToString(), "1")
@@ -590,11 +591,11 @@ func TestTickUpdate_9(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.MustFromDecimal(consts.MAX_UINT128)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	feeGrowthGlobal0X128 = u256.MustFromDecimal("6")
 	feeGrowthGlobal1X128 = u256.MustFromDecimal("7")
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, liquidityNet, secondsPerLiquidityOutsideX128, tickCumulativeOutside, secondsOutside, initialized = pool.GetTicks(1)
 
@@ -630,7 +631,7 @@ func TestTickUpdate_10(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.MustFromDecimal(consts.MAX_UINT128)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, liquidityNet, secondsPerLiquidityOutsideX128, tickCumulativeOutside, secondsOutside, initialized = pool.GetTicks(2)
 

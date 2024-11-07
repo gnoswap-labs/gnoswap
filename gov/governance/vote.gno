@@ -36,7 +36,10 @@ func Vote(proposalId uint64, yes bool) string {
 
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic(ufmt.Sprintf("Proposal %d does not exist", proposalId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("vote.gno__Vote() || proposalId(%d) does not exist", proposalId),
+		))
 	}
 
 	config := GetConfigVersion(proposal.ConfigVersion)
@@ -46,40 +49,61 @@ func Vote(proposalId uint64, yes bool) string {
 	voter := std.PrevRealm().Addr()
 
 	if now < votingStartTime {
-		panic(ufmt.Sprintf("voting has not started yet. Current time: %d, Voting start time: %d", now, votingStartTime))
+		panic(addDetailToError(
+			errUnableToVoteBeforeStarting,
+			ufmt.Sprintf("vote.gno__Vote() || voting has not started yet. now(%d) < votingStart(%d)", now, votingStartTime),
+		))
 	}
 
 	votingEndTime := votingStartTime + config.VotingPeriod
 	if now >= votingEndTime {
-		panic(ufmt.Sprintf("voting has ended. Current time: %d, Voting end time: %d", now, votingStartTime+config.VotingPeriod))
+		panic(addDetailToError(
+			errUnableToVoteAfterEnding,
+			ufmt.Sprintf("vote.gno__Vote() || voting has ended. now(%d) >= votingEnd(%d)", now, votingEndTime),
+		))
 	}
 
 	// check proposal state
 	if proposal.ExecutionState.Canceled {
-		panic(ufmt.Sprintf("proposal %d has canceled(%t)", proposalId, proposal.ExecutionState.Canceled))
+		panic(addDetailToError(
+			errUnableToVoteCanceledProposal,
+			ufmt.Sprintf("vote.gno__Vote() || proposalId(%d) has canceled(%t)", proposalId, proposal.ExecutionState.Canceled),
+		))
 	}
 
 	voteKey := ufmt.Sprintf("%d", proposalId) + ":" + voter.String()
 	_, voted := votes[voteKey]
 	if voted {
-		panic(ufmt.Sprintf("user %s has already voted on proposal %d", voter.String(), proposalId))
+		panic(addDetailToError(
+			errAlreadyVoted,
+			ufmt.Sprintf("vote.gno__Vote() || user(%s) has already voted on proposalId(%d)", voter.String(), proposalId),
+		))
 	}
 
 	weight, exist := proposal.PossibleAddressWithWeight[voter]
 	if !exist || weight == 0 {
-		panic(ufmt.Sprintf("no average delegated found for voter %s", voter.String()))
+		panic(addDetailToError(
+			errNotEnoughVotingWeight,
+			ufmt.Sprintf("vote.gno__Vote() || no voting weight found for voter(%s)", voter.String()),
+		))
 	}
 
 	var overflow bool
 	if yes {
 		proposal.Yea, overflow = new(u256.Uint).AddOverflow(proposal.Yea, u256.NewUint(weight))
 		if overflow {
-			panic("VOTE YES OVERFLOW")
+			panic(addDetailToError(
+				errOutOfRange,
+				"vote.gno__Vote() || VOTE YES OVERFLOW",
+			))
 		}
 	} else {
 		proposal.Nay, overflow = new(u256.Uint).AddOverflow(proposal.Nay, u256.NewUint(weight))
 		if overflow {
-			panic("VOTE NO OVERFLOW")
+			panic(addDetailToError(
+				errOutOfRange,
+				"vote.gno__Vote() || VOTE NO OVERFLOW",
+			))
 		}
 	}
 
@@ -120,30 +144,41 @@ func Cancel(proposalId uint64) {
 
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic(ufmt.Sprintf("proposal %d does not exist", proposalId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("vote.gno__Cancel() || proposalId(%d) does not exist", proposalId),
+		))
 	}
 
 	if proposal.ExecutionState.Canceled {
-		panic(ufmt.Sprintf("proposal %d has already canceled", proposalId))
+		panic(addDetailToError(
+			errAlreadyCanceledProposal,
+			ufmt.Sprintf("vote.gno__Cancel() || proposalId(%d) has already canceled", proposalId),
+		))
 	}
 
 	config := GetConfigVersion(proposal.ConfigVersion)
 	now := uint64(time.Now().Unix())
 	if now >= (proposal.ExecutionState.CreatedAt + config.VotingStartDelay) {
-		panic(ufmt.Sprintf("voting has already started for proposal %d", proposalId))
+		panic(addDetailToError(
+			errUnableToCancleVotingProposal,
+			ufmt.Sprintf("vote.gno__Cancel() || voting has already started for proposalId(%d)", proposalId),
+		))
 	}
 
 	caller := std.PrevRealm().Addr()
 	if caller != proposal.Proposer {
 		// If the caller is not the proposer, check if the proposer's stake has fallen below the threshold
-		enough := checkEnoughXGnsToPropose(proposal.Proposer)
+		enough, balance, wanted := checkEnoughXGnsToPropose(proposal.Proposer)
 		if enough {
-			panic(
+			panic(addDetailToError(
+				errUnableToCancelProposalWithVoterEnoughDelegated,
 				ufmt.Sprintf(
-					"caller %s is not the proposer(%s) and proposer's xgns balance is above the threshold",
+					"caller(%s) is not the proposer(%s) and proposer's xgns balance(%d) is above the threshold(%d)",
 					caller, proposal.Proposer,
+					balance, wanted,
 				),
-			)
+			))
 		}
 	}
 

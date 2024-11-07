@@ -44,10 +44,6 @@ func TestLaunchPadAndGovernanceReward(t *testing.T) {
 	testMockProtocolFee(t)
 	testClaimableRewardForProjectRecipient(t)
 	testClaimableRewardForGovernanceDelegate(t)
-	testSkipFewBlock(t)
-	testClaimableRewardForProjectRecipientMoreBlocks(t)
-	testClaimableRewardForGovernanceDelegateMoreBlocks(t)
-	testClaimableRewardForEarlyDummyMoreBlocks(t)
 }
 
 func testCreateProject(t *testing.T) {

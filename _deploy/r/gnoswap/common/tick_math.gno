@@ -1,6 +1,8 @@
 package common
 
 import (
+	"gno.land/p/demo/ufmt"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -46,7 +48,10 @@ var (
 func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	absTick := abs(tick)
 	if absTick > 887272 { // MAX_TICK
-		panic("tick is out of range (larger than 887272)")
+		panic(addDetailToError(
+			errOutOfRange,
+			ufmt.Sprintf("tick_math.gno__TickMathGetSqrtRatioAtTick() || tick is out of range (larger than 887272), tick: %d", tick),
+		))
 	}
 
 	ratio := u256.MustFromDecimal("340282366920938463463374607431768211456") // consts.Q128
@@ -82,7 +87,10 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	cond1 := sqrtPriceX96.Gte(u256.MustFromDecimal("4295128739"))                                       // MIN_SQRT_RATIO
 	cond2 := sqrtPriceX96.Lt(u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")) // MAX_SQRT_RATIO
 	if !(cond1 && cond2) {
-		panic("sqrtPriceX96 is out of range")
+		panic(addDetailToError(
+			errOutOfRange,
+			ufmt.Sprintf("tick_math.gno__TickMathGetTickAtSqrtRatio() || sqrtPriceX96 is out of range, sqrtPriceX96: %s", sqrtPriceX96.ToString()),
+		))
 	}
 
 	ratio := new(u256.Uint).Lsh(sqrtPriceX96, 32)

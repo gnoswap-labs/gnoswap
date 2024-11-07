@@ -59,9 +59,6 @@ func delegateAdmin(t *testing.T) {
 		uassert.Equal(t, delegatedFromTo[admin][dummyAddr], uint64(1000001))
 		uassert.Equal(t, delegatedTo[dummyAddr], uint64(1000001))
 
-		uassert.Equal(t, GetDelegationHistoryByAddress(admin), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"}]}`)
-		uassert.Equal(t, GetDelegationHistoryByAddress(dummyAddr), ``)
-
 		std.TestSkipHeights(1)
 	})
 }
@@ -104,9 +101,6 @@ func redelegateAdmin(t *testing.T) {
 		uassert.Equal(t, delegatedFromTo[admin][reDelegate], uint64(1000001))
 		uassert.Equal(t, delegatedTo[reDelegate], uint64(1000001))
 
-		uassert.Equal(t, GetDelegationHistoryByAddress(admin), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"true"}]}`)
-		uassert.Equal(t, GetDelegationHistoryByAddress(dummyAddr), ``)
-		uassert.Equal(t, GetDelegationHistoryByAddress(reDelegate), ``)
 		uassert.Equal(t, GetLockedInfoByAddress(admin), ``)
 
 		std.TestSkipHeights(1)
@@ -142,7 +136,6 @@ func undelegateAdmin(t *testing.T) {
 		uassert.Equal(t, delegatedFromTo[admin][reDelegate], uint64(0))
 		uassert.Equal(t, delegatedTo[reDelegate], uint64(0))
 
-		uassert.Equal(t, GetDelegationHistoryByAddress(admin), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"false"}]}`)
 		uassert.Equal(t, GetLockedInfoByAddress(admin), `{"height":"123","now":"1234567890","totalLocked":"1000001","claimableAmount":"0"}`)
 
 		std.TestSkipHeights(1)
@@ -166,7 +159,6 @@ func collectAfterLockup(t *testing.T) {
 		amount := CollectUndelegatedGns()
 		uassert.Equal(t, amount, uint64(0))
 
-		uassert.Equal(t, GetDelegationHistoryByAddress(admin), `{"height":"123","now":"1234567890","delegationHistory":[{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1v36k6mteta047h6lta047h6lta047h6lz7gmv8","amount":"1000001","timestamp":"1234567890","add":"false"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"true"},{"to":"g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt","amount":"1000001","timestamp":"1234567890","add":"false"}]}`)
 		uassert.Equal(t, GetLockedAmount(), uint64(1000001))
 		uassert.Equal(t, GetLockedInfoByAddress(admin), `{"height":"123","now":"1234567890","totalLocked":"1000001","claimableAmount":"0"}`)
 

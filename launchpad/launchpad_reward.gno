@@ -137,7 +137,10 @@ func CollectRewardByProjectId(projectId string) uint64 {
 func CollectRewardByDepositId(depositId string) uint64 {
 	deposit, exist := deposits[depositId]
 	if !exist {
-		panic("deposit not found")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("launchpad_reward.gno__CollectRewardByDepositId() || depositId(%s) not found", depositId),
+		))
 	}
 
 	common.IsHalted()
@@ -326,7 +329,10 @@ func calculateDepositReward() {
 					sinceLast = sinceLast180
 					rewardX96 = rewardX96_180.Clone()
 				default:
-					panic("INVALID TIER")
+					panic(addDetailToError(
+						errInvalidTier,
+						ufmt.Sprintf("launchpad_reward.gno__calculateDepositReward() || invalid tier(%s)", deposit.tier),
+					))
 				}
 				if sinceLast == 0 {
 					println("NO BLOCK PASSED SINCE LAST CALCULATION")

@@ -51,20 +51,33 @@ func CreateProject(
 	assertUserCall()
 
 	// only admin can create project
-	if std.PrevRealm().Addr() != consts.ADMIN {
-		panic("only admin can create project")
+	caller := std.PrevRealm().Addr()
+	if caller != consts.ADMIN {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || only admin(%s) can create project, called from %s", consts.ADMIN, caller.String()),
+		))
 	}
 
 	if _, exist := registered[tokenPath]; !exist {
-		panic("token not registered")
+		panic(addDetailToError(
+			errNotRegistered,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || token(%s) not registered", tokenPath),
+		))
 	}
 
 	if !(recipient.IsValid()) {
-		panic("invalid recipient addr")
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || invalid recipient address(%s)", recipient.String()),
+		))
 	}
 
 	if depositAmount == 0 {
-		panic("can not deposit 0")
+		panic(addDetailToError(
+			errInvalidInput,
+			"launchpad_init.gno__CreateProject() || can not deposit 0",
+		))
 	}
 
 	if strings.Contains(conditionsToken, "*PAD*") {
@@ -74,7 +87,10 @@ func CreateProject(
 				continue
 			}
 			if _, exist := registered[token]; !exist {
-				panic(ufmt.Sprintf("condition token(%s) not registered", token))
+				panic(addDetailToError(
+					errNotRegistered,
+					ufmt.Sprintf("condition token(%s) not registered", token),
+				))
 			}
 		}
 	}
@@ -82,15 +98,25 @@ func CreateProject(
 	projectId := generateProjectId(tokenPath)
 	_, exist := projects[projectId]
 	if exist {
-		panic("project already exist")
+		panic(addDetailToError(
+			errDuplicateProject,
+			ufmt.Sprintf("project(%s) already exist", projectId),
+		))
 	}
 
 	if tier30Ratio+tier90Ratio+tier180Ratio != 100 {
-		panic("invalid ratio, sum of all tiers should be 100")
+		panic(addDetailToError(
+			errInvalidTierRatio,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || invalid ratio, sum of all tiers(30:%d, 90:%d, 180:%d) should be 100", tier30Ratio, tier90Ratio, tier180Ratio),
+		))
 	}
 
-	if startTime <= uint64(time.Now().Unix()) {
-		panic("invalid start time, can not start project in past")
+	now := uint64(time.Now().Unix())
+	if startTime <= now {
+		panic(addDetailToError(
+			errPastStartTime,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || invalid start time(%d), can not start project in past(now:%d)", startTime, now),
+		))
 	}
 
 	common.IsHalted()
@@ -123,7 +149,6 @@ func CreateProject(
 	avgBlockTimeMs := uint64(gns.GetAvgBlockTimeInMs())
 
 	height := uint64(std.GetHeight())
-	now := uint64(time.Now().Unix())
 
 	timeUntilStart := startTime - now
 	blockDuration := timeUntilStart * 1000 / avgBlockTimeMs
@@ -218,25 +243,40 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	assertUserCall()
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic("only admin can transfer left from project")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || only admin(%s) can transfer left from project, called from %s", consts.ADMIN, caller.String()),
+		))
 	}
 
 	project, exist := projects[projectId]
 	if !exist {
-		panic("project not found")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || projectId(%s) not found", projectId),
+		))
 	}
 
 	if !recipient.IsValid() {
-		panic("invalid recipient addr")
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || invalid recipient address(%s)", recipient.String()),
+		))
 	}
 
 	height := uint64(std.GetHeight())
 	if height < project.endHeight {
-		panic("project not ended yet")
+		panic(addDetailToError(
+			errActiveProject,
+			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || projectId(%s) not ended yet(current:%d, endHeight: %d)", projectId, height, project.endHeight),
+		))
 	}
 
 	if project.refundedHeight != 0 {
-		panic("project already refunded")
+		panic(addDetailToError(
+			errAlreadyRefunded,
+			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || projectId(%s) already refunded(height:%d)", projectId, project.refundedHeight),
+		))
 	}
 
 	common.IsHalted()
@@ -304,7 +344,10 @@ func makeConditions(conditionsToken string, conditionsAmount string) map[string]
 	tokens := strings.Split(conditionsToken, "*PAD*")
 	amounts := strings.Split(conditionsAmount, "*PAD*")
 	if len(tokens) != len(amounts) {
-		panic(ufmt.Sprintf("invalid conditions(numTokens(%d) != numAmounts(%d))", len(tokens), len(amounts)))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("launchpad_init.gno__makeConditions() || invalid conditions(numTokens(%d) != numAmounts(%d))", len(tokens), len(amounts)),
+		))
 	}
 
 	for i, token := range tokens {
