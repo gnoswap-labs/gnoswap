@@ -2,329 +2,411 @@ package staker
 
 import (
 	"std"
+	"time"
 
-	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/v2/consts"
 )
-
-// These ratios represent different reward levels that increase
-// over time to incentivize longer staking periods.
-const (
-	RatioThirty  = 30
-	RatioFifty   = 50
-	RatioSeventy = 70
-	RatioHundred = 100
-)
-
-// RewardState holds the state necessary for computing rewards
-type RewardState struct {
-	TokenId                  uint64
-	LastCalculatedHeight     uint64
-	CurrentHeight            int64
-	StakedOrExternalDuration int64
-	IncentiveId              string
-	DistributionAmount       *u256.Uint
-	WarmUpAmount             warmUpAmount
-}
-
-// TimeSpan represents a period during which a specific reward ratio applies
-type TimeSpan struct {
-	Start    uint64
-	End      uint64
-	Duration uint64
-	Ratio    int
-}
-
-// RewardPeriod combines a TimeSpan with the calculated reward amount
-type RewardPeriod struct {
-	TimeSpan
-	Amount *u256.Uint
-}
-
-// PeriodDefinition defines the start and end offsets and reward ratio
-type PeriodDefinition struct {
-	Ratio       int
-	StartOffset uint64
-	EndOffset   uint64
-}
-
-// Calculator handles reward calculations for external incentives.
-//
-// It maintains state neccesary for computing rewards across different staking periods
-// and handles the progression through various reward rates (30%, 50%, 70%, 100%).
-//
-// TODO: better name
-type Calculator struct {
-	state              RewardState
-	lastCalcHeight     uint64
-	distributionAmount *u256.Uint
-}
 
 func rewardMathComputeExternalRewardAmount2(tokenId uint64, incentiveId string) (uint64, uint64) {
-	currentHeight := std.GetHeight()
+    currentHeight := std.GetHeight()
+    _currentHeightU64 := uint64(currentHeight)
 
-	calculator := NewCalculator(currentHeight, tokenId, incentiveId)
-	full, give, err := calculator.computeRewards()
-	if err != nil {
-		panic(err)
-	}
-	return full, give
+    // 1. 입력 검증 및 기본 데이터 얻기
+    externals, exists := validateAndGetExternals(tokenId)
+    if !exists {
+        return 0, 0
+    }
+
+    // 2. 시작 시간과 높이 계산
+    stakedStartInfo := calculateStakedStartInfo(tokenId, incentiveId, currentHeight)
+
+    // 3. 각 단계별 임계값(threshold) 계산
+    thresholds := calculateThresholds(stakedStartInfo.startHeight)
+
+    // 4. 리워드 계산
+    for _, external := range externals {
+        if external.incentiveId == incentiveId {
+            return calculateRewardsForExternal(
+                tokenId,
+                incentiveId,
+                external,
+                _currentHeightU64,
+                stakedStartInfo,
+                thresholds,
+            )
+        }
+    }
+
+    panic("NO INCENTIVE_ID FOUND")
 }
 
-// NewCalculator creates a new reward calculator instance for a given token and incentive.
-//
-// The calculator will be used to compute rewards for the specified token's position
-// in the given incentive program.
-func NewCalculator(blockHeight int64,tokenId uint64, incentiveId string) *Calculator {
-	state := RewardState{
-		TokenId:       tokenId,
-		IncentiveId:   incentiveId,
-		CurrentHeight: blockHeight,
-	}
-
-	return &Calculator{
-		state: state,
-	}
+type stakedStartInfo struct {
+    startHeight int64
+    duration    int64
 }
 
-// computeRewards calculates the total rewards for a token position in an incentive program.
-// It performs the complete reward calculation process:
-//  1. Validates the existence of position and incentive
-//  2. Determines the calculation period
-//  3. Computes rewards for each period with different rates
-//  4. Accumulates and stores the rewards
-//  5. Returns the total rewards and immediately claimable amount
-//
-// Returns:
-//   - full: total rewards accumulated
-//   - give: immediately claimable rewards
-//   - error: if position or incentive not found
-func (c *Calculator) computeRewards() (uint64, uint64, error) {
-	externalsMap, exists := positionExternal[c.state.TokenId]
-	if !exists {
-		return 0, 0, ufmt.Errorf("no externals found for token %d", c.state.TokenId)
-	}
-
-	external, exists := externalsMap[c.state.IncentiveId]
-	if !exists {
-		return 0, 0, ufmt.Errorf(
-			"no external found for token %d and incentive %s",
-			c.state.TokenId, c.state.IncentiveId,
-		)
-	}
-
-	c.lastCalcHeight = uint64(positionsExternalLastCalculatedHeight[c.state.TokenId][c.state.IncentiveId])
-	periods := c.calculateTimePeriods()
-
-	c.distributionAmount = calculateDistributionExternalRewards(
-		external,
-		positionLastExternal[c.state.TokenId][c.state.IncentiveId],
-	)
-
-	rewardPeriods := c.calculateRewardPeriods(periods)
-	finalAmount := accumulateRewards(rewardPeriods)
-
-	c.updateWarmUpAmounts(finalAmount)
-
-	totalFull, totalGive := c.calculateTotals(finalAmount)
-	return totalFull, totalGive, nil
+type thresholds struct {
+    until30  uint64
+    until50  uint64
+    until70  uint64
+    begin100 uint64
 }
 
-
-// calculateTimePeriods computes time spans for difference reward rates based on staking duration.
-//
-// It breaks down the staking period into different reward rate periods based on
-// predefined warmup thresholds. Each period represents a time span where specific
-// reward rate applies.
-//
-// The periods are calculated from the last calculated height up to the current height.
-// ensuring continuous reward tracking. Periods are ordered by increasing reward rates
-// and are guaranteed to be continous (no gaps between them).
-func (c *Calculator) calculateTimePeriods() []TimeSpan {
-	startHeight := c.lastCalcHeight
-	currentHeight := uint64(c.state.CurrentHeight)
-
-	threshold50 := uint64(warmUp[50])
-	threshold70 := uint64(warmUp[70])
-	threshold100 := uint64(warmUp[100])
-
-	periodsDef := []PeriodDefinition{
-		{Ratio: RatioThirty, StartOffset: 0, EndOffset: threshold50 - 1},
-		{Ratio: RatioFifty, StartOffset: threshold50, EndOffset: threshold70 - 1},
-		{Ratio: RatioSeventy, StartOffset: threshold70, EndOffset: threshold100 - 1},
-		{Ratio: RatioHundred, StartOffset: threshold100, EndOffset: currentHeight - startHeight},
-	}
-
-	return c.computeTimeSpans(startHeight, periodsDef)
+func validateAndGetExternals(tokenId uint64) (map[string]externalRewards, bool) {
+    externals, exist := positionExternal[tokenId]
+    if !exist {
+        return nil, false
+    }
+    return externals, true
 }
 
-// computeTimeSpans converts period definitions into actual time spans.
-//
-// it takes a start height and period definition and creates [TimeSpan] instances
-// that represent actual block height ranges for each reward rate period.
-//
-// This function ensures:
-//   - Periods don't exceed current height
-//   - Periods are continuous
-//   - Periods maintain proper order of reward rates
-func (c *Calculator) computeTimeSpans(startHeight uint64, periodsDef []PeriodDefinition) []TimeSpan {
-	currentHeight := uint64(c.state.CurrentHeight)
-	periods := make([]TimeSpan, 0, len(periodsDef))
+func calculateStakedStartInfo(tokenId uint64, incentiveId string, currentHeight int64) stakedStartInfo {
+    _max := max(incentives[incentiveId].startTimestamp, deposits[tokenId].stakeTimestamp)
 
-	for _, pd := range periodsDef {
-		periodStart := startHeight + pd.StartOffset
-		periodEnd := c.calculatePeriodEnd(startHeight, pd.EndOffset, currentHeight)
+    stakedOrExternalDuration := (time.Now().Unix() - _max) / consts.BLOCK_GENERATION_INTERVAL
+    stakedOrExternalStartedHeight := currentHeight - stakedOrExternalDuration
 
-		start := maxUint64(periodStart, c.lastCalcHeight)
-		end := minUint64(periodEnd, currentHeight)
-
-		// skip invalid periods
-		if start >= end {
-			continue
-		}
-
-		periods = append(periods, TimeSpan{
-			Start:    start,
-			End:      end,
-			Duration: end - start,
-			Ratio:    pd.Ratio,
-		})
-	}
-
-	return periods
+    return stakedStartInfo{
+        startHeight: stakedOrExternalStartedHeight,
+        duration:    stakedOrExternalDuration,
+    }
 }
 
-func (c *Calculator) calculatePeriodEnd(startHeight, endOffset, currentHeight uint64) uint64 {
-	if endOffset == 0 {
-		return currentHeight
-	}
-	return startHeight + endOffset
+func calculateThresholds(startHeight int64) thresholds {
+    baseHeight := uint64(startHeight)
+    return thresholds{
+        until30:  baseHeight + uint64(warmUp[50]) - 1,  // 150
+        until50:  baseHeight + uint64(warmUp[70]) - 1,  // 300
+        until70:  baseHeight + uint64(warmUp[100]) - 1, // 900
+        begin100: baseHeight + uint64(warmUp[100]),     // 901~
+    }
 }
 
-// calculateRewardPeriods converts time spans into reward periods by computing
-// the actual reward amount for each period.
-//
-// For each time span, it:
-//   - Calculates rewards per block
-//   - Multiplies by the period duration
-//   - Creates a [RewardPeriod] instance with both timing and reward information
-func (c *Calculator) calculateRewardPeriods(periods []TimeSpan) []RewardPeriod {
-	rewardPeriods := make([]RewardPeriod, 0, len(periods))
+func calculateRewardsForExternal(
+    tokenId uint64,
+    incentiveId string,
+    external externalRewards,
+    currentHeight uint64,
+    startInfo stakedStartInfo,
+    thresholds thresholds,
+) (uint64, uint64) {
+    // 1. 분배할 리워드 금액 계산
+    tokenAmountX96 := external.tokenAmountX96
+    toDistributeX96 := new(u256.Uint).Sub(tokenAmountX96, positionLastExternal[tokenId][incentiveId])
 
-	for _, period := range periods {
-		blockAmount, err := calculateBlockAmount(c.distributionAmount, period)
-		if err != nil {
-			panic(err)
-		}
+    if tokenAmountX96.Lt(positionLastExternal[tokenId][incentiveId]) {
+        panic("THIS SHOULD NOT HAPPEN_EXTERNAL #1")
+    }
 
-		rewardPeriod := calculatePeriodReward(blockAmount, period)
-		rewardPeriods = append(rewardPeriods, rewardPeriod)
-	}
+    // 2. 마지막 계산 높이 얻기
+    lastCalculatedHeightU64 := uint64(positionsExternalLastCalculatedHeight[tokenId][incentiveId])
 
-	return rewardPeriods
+    // 3. 블록당 평균 리워드 계산
+    avgExternalBlockAmountX96 := new(u256.Uint).Div(
+        toDistributeX96,
+        u256.NewUint(currentHeight-lastCalculatedHeightU64),
+    )
+
+    // 4. warm-up amount 검증
+    positionExternalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
+    if !exist {
+        panic("THIS SHOULD NOT HAPPEN_EXTERNAL #2")
+    }
+
+    // 5. 리워드 비율 계산 및 리워드 적립
+    durationRatio := getRewardRatio(startInfo.duration)
+    positionExternalWarmUpAmount = computeRewardsByRatio(
+        uint64(durationRatio),
+        currentHeight,
+        lastCalculatedHeightU64,
+        thresholds,
+        avgExternalBlockAmountX96,
+        positionExternalWarmUpAmount,
+    )
+
+    // 6. 총 리워드 계산
+    accuFull := uint64(0)
+    accuGive := uint64(0)
+
+    accuFull += positionExternalWarmUpAmount.full30 +
+        positionExternalWarmUpAmount.full50 +
+        positionExternalWarmUpAmount.full70 +
+        positionExternalWarmUpAmount.full100
+
+    accuGive += positionExternalWarmUpAmount.give30 +
+        positionExternalWarmUpAmount.give50 +
+        positionExternalWarmUpAmount.give70 +
+        positionExternalWarmUpAmount.full100
+
+    // 7. 상태 업데이트
+    positionsExternalWarmUpAmount[tokenId][incentiveId] = positionExternalWarmUpAmount
+
+    return accuFull, accuGive
 }
 
-// updateWarmUpAmounts stores the calculated reward amounts in the global state.
-//
-// This maintains the record of accumulated rewards that can be claimed later.
-// TODO: should we use a more efficient data structure?
-func (c *Calculator) updateWarmUpAmounts(amount warmUpAmount) {
-	if positionsExternalWarmUpAmount[c.state.TokenId] == nil {
-		positionsExternalWarmUpAmount[c.state.TokenId] = make(map[string]warmUpAmount)
-	}
-	positionsExternalWarmUpAmount[c.state.TokenId][c.state.IncentiveId] = amount
+func computeRewardsByRatio(
+    durationRatio uint64,
+    currentHeight uint64,
+    lastCalculatedHeight uint64,
+    thresholds thresholds,
+    avgBlockAmountX96 *u256.Uint,
+    warmUpAmount warmUpAmount,
+) warmUpAmount {
+    switch durationRatio {
+    case 100:
+        return computeRewardsFor100Ratio(
+            currentHeight,
+            lastCalculatedHeight,
+            thresholds,
+            avgBlockAmountX96,
+            warmUpAmount,
+        )
+    case 70:
+        return computeRewardsFor70Ratio(
+            currentHeight,
+            lastCalculatedHeight,
+            thresholds,
+            avgBlockAmountX96,
+            warmUpAmount,
+        )
+    case 50:
+        return computeRewardsFor50Ratio(
+            currentHeight,
+            lastCalculatedHeight,
+            thresholds,
+            avgBlockAmountX96,
+            warmUpAmount,
+        )
+    case 30:
+        return computeRewardsFor30Ratio(
+            currentHeight,
+            lastCalculatedHeight,
+            avgBlockAmountX96,
+            warmUpAmount,
+        )
+    default:
+        return warmUpAmount
+    }
 }
 
-func (c *Calculator) calculateTotals(amount warmUpAmount) (uint64, uint64) {
-	totalFull := amount.full30 + amount.full50 + amount.full70 + amount.full100
-	totalGive := amount.give30 + amount.give50 + amount.give70 + amount.full100
-	return totalFull, totalGive
+func computeRewardsFor100Ratio(
+    currentHeight uint64,
+    lastCalculatedHeight uint64,
+    thresholds thresholds,
+    avgBlockAmountX96 *u256.Uint,
+    warmUpAmount warmUpAmount,
+) warmUpAmount {
+    if lastCalculatedHeight > thresholds.begin100 {
+        // 100% 구간만 계산
+        dur100 := currentHeight - lastCalculatedHeight
+        full, _ := calcAmount(avgBlockAmountX96, dur100, 100)
+        warmUpAmount.full100 += full
+        return warmUpAmount
+    }
+
+    if lastCalculatedHeight > thresholds.until50 {
+        // 100% + 70% 구간 계산
+        dur100 := currentHeight - thresholds.until70
+        full, _ := calcAmount(avgBlockAmountX96, dur100, 100)
+        warmUpAmount.full100 += full
+
+        dur70 := thresholds.until70 - lastCalculatedHeight
+        full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
+        warmUpAmount.full70 += full
+        warmUpAmount.give70 += toGive
+        warmUpAmount.left70 += full - toGive
+
+        return warmUpAmount
+    }
+
+    if lastCalculatedHeight > thresholds.until30 {
+        // 100% + 70% + 50% 구간 계산
+        dur100 := currentHeight - thresholds.until70
+        full, _ := calcAmount(avgBlockAmountX96, dur100, 100)
+        warmUpAmount.full100 += full
+
+        dur70 := thresholds.until70 - thresholds.until50
+        full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
+        warmUpAmount.full70 += full
+        warmUpAmount.give70 += toGive
+        warmUpAmount.left70 += full - toGive
+
+        dur50 := thresholds.until50 - lastCalculatedHeight
+        full, toGive = calcAmount(avgBlockAmountX96, dur50, 50)
+        warmUpAmount.full50 += full
+        warmUpAmount.give50 += toGive
+        warmUpAmount.left50 += full - toGive
+
+        return warmUpAmount
+    }
+
+    // 모든 구간 계산 (100% + 70% + 50% + 30%)
+    dur100 := currentHeight - thresholds.until70
+    full, _ := calcAmount(avgBlockAmountX96, dur100, 100)
+    warmUpAmount.full100 += full
+
+    dur70 := thresholds.until70 - thresholds.until50
+    full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
+    warmUpAmount.full70 += full
+    warmUpAmount.give70 += toGive
+    warmUpAmount.left70 += full - toGive
+
+    dur50 := thresholds.until50 - thresholds.until30
+    full, toGive = calcAmount(avgBlockAmountX96, dur50, 50)
+    warmUpAmount.full50 += full
+    warmUpAmount.give50 += toGive
+    warmUpAmount.left50 += full - toGive
+
+    dur30 := thresholds.until30 - lastCalculatedHeight
+    full, toGive = calcAmount(avgBlockAmountX96, dur30, 30)
+    warmUpAmount.full30 += full
+    warmUpAmount.give30 += toGive
+    warmUpAmount.left30 += full - toGive
+
+    return warmUpAmount
 }
 
-// calculatePeriodReward computes the total reward amount for a specific time span.
-//
-// It takes the reward amount per block and multiplies it by the duration
-// of the period to get the total rewards for that specific time span.
-func calculatePeriodReward(blockAmount *u256.Uint, timeSpan TimeSpan) RewardPeriod {
-	fullAmount := new(u256.Uint).Mul(
-		blockAmount,
-		u256.NewUint(timeSpan.Duration),
-	)
+func computeRewardsFor70Ratio(
+    currentHeight uint64,
+    lastCalculatedHeight uint64,
+    thresholds thresholds,
+    avgBlockAmountX96 *u256.Uint,
+    warmUpAmount warmUpAmount,
+) warmUpAmount {
+    if lastCalculatedHeight > thresholds.until50 {
+        // 70% 구간만 계산
+        dur70 := currentHeight - lastCalculatedHeight
+        full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
+        warmUpAmount.full70 += full
+        warmUpAmount.give70 += toGive
+        warmUpAmount.left70 += full - toGive
+        return warmUpAmount
+    }
 
-	return RewardPeriod{
-		TimeSpan: timeSpan,
-		Amount:   fullAmount,
-	}
+    if lastCalculatedHeight > thresholds.until30 {
+        // 70% + 50% 구간 계산
+        dur70 := currentHeight - thresholds.until50
+        full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
+        warmUpAmount.full70 += full
+        warmUpAmount.give70 += toGive
+        warmUpAmount.left70 += full - toGive
+
+        dur50 := thresholds.until50 - lastCalculatedHeight
+        full, toGive = calcAmount(avgBlockAmountX96, dur50, 50)
+        warmUpAmount.full50 += full
+        warmUpAmount.give50 += toGive
+        warmUpAmount.left50 += full - toGive
+        return warmUpAmount
+    }
+
+    // 모든 구간 계산 (70% + 50% + 30%)
+    dur70 := currentHeight - thresholds.until50
+    full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
+    warmUpAmount.full70 += full
+    warmUpAmount.give70 += toGive
+    warmUpAmount.left70 += full - toGive
+
+    dur50 := thresholds.until50 - thresholds.until30
+    full, toGive = calcAmount(avgBlockAmountX96, dur50, 50)
+    warmUpAmount.full50 += full
+    warmUpAmount.give50 += toGive
+    warmUpAmount.left50 += full - toGive
+
+    dur30 := thresholds.until30 - lastCalculatedHeight
+    full, toGive = calcAmount(avgBlockAmountX96, dur30, 30)
+    warmUpAmount.full30 += full
+    warmUpAmount.give30 += toGive
+    warmUpAmount.left30 += full - toGive
+
+    return warmUpAmount
 }
 
-// accumulateRewards aggregates rewards from multiple periods into a single warmUpAmount.
-//
-// For each period, it:
-//   - Adds the full amount to the appropriate total (full30, full50, etc.)
-//   - Calculates the immediately claimable amount based on the ratio
-//   - Tracks the remaining locked amount
-//
-// This creates a complete picture of available and locked rewards across all periods.
-func accumulateRewards(periods []RewardPeriod) warmUpAmount {
-	var total warmUpAmount
+func computeRewardsFor50Ratio(
+    currentHeight uint64,
+    lastCalculatedHeight uint64,
+    thresholds thresholds,
+    avgBlockAmountX96 *u256.Uint,
+    warmUpAmount warmUpAmount,
+) warmUpAmount {
+    if lastCalculatedHeight > thresholds.until30 {
+        // 50% 구간만 계산
+        dur50 := thresholds.until50 - thresholds.until30
+        full, toGive := calcAmount(avgBlockAmountX96, dur50, 50)
+        warmUpAmount.full50 += full
+        warmUpAmount.give50 += toGive
+        warmUpAmount.left50 += full - toGive
+        return warmUpAmount
+    }
 
-	for _, period := range periods {
-		fullAmount, giveAmount := calcAmount(period.Amount, period.Duration, uint64(period.Ratio))
-		if fullAmount == 0 {
-			continue
-		}
+    // 50% + 30% 구간 계산
+    dur50 := currentHeight - thresholds.until30
+    full, toGive := calcAmount(avgBlockAmountX96, dur50, 50)
+    warmUpAmount.full50 += full
+    warmUpAmount.give50 += toGive
+    warmUpAmount.left50 += full - toGive
 
-		switch period.Ratio {
-		case RatioThirty:
-			total.full30 += fullAmount
-			total.give30 += giveAmount
-			total.left30 += fullAmount - giveAmount
+    dur30 := thresholds.until30 - lastCalculatedHeight
+    full, toGive = calcAmount(avgBlockAmountX96, dur30, 30)
+    warmUpAmount.full30 += full
+    warmUpAmount.give30 += toGive
+    warmUpAmount.left30 += full - toGive
 
-		case RatioFifty:
-			total.full50 += fullAmount
-			total.give50 += giveAmount
-			total.left50 += fullAmount - giveAmount
-
-		case RatioSeventy:
-			total.full70 += fullAmount
-			total.give70 += giveAmount
-			total.left70 += fullAmount - giveAmount
-
-		case RatioHundred:
-			total.full100 += fullAmount
-		}
-	}
-
-	return total
+    return warmUpAmount
 }
 
-// calculateDistributionExternalRewards computes the total amount of rewards
-// to be distributed since the last calculation.
-//
-// This is used to determine how many rewards are available for the current calculating period.
-func calculateDistributionExternalRewards(external externalRewards, lastAmount *u256.Uint) *u256.Uint {
-	tokenAmount := external.tokenAmountX96
-	return new(u256.Uint).Sub(tokenAmount, lastAmount)
+func computeRewardsFor30Ratio(
+    currentHeight uint64,
+    lastCalculatedHeight uint64,
+    avgBlockAmountX96 *u256.Uint,
+    warmUpAmount warmUpAmount,
+) warmUpAmount {
+    dur30 := currentHeight - lastCalculatedHeight
+    full, toGive := calcAmount(avgBlockAmountX96, dur30, 30)
+    warmUpAmount.full30 += full
+    warmUpAmount.give30 += toGive
+    warmUpAmount.left30 += full - toGive
+
+    return warmUpAmount
 }
 
-func calculateBlockAmount(dst *u256.Uint, timeSpan TimeSpan) (*u256.Uint, error) {
-	duration := new(u256.Uint).SetUint64(timeSpan.End - timeSpan.Start)
-	if duration.IsZero() {
-		return nil, ufmt.Errorf("duration is zero")
-	}
-	return new(u256.Uint).Div(dst, duration), nil
+func computeRewardsFor50RatioUnit(
+    currentHeight uint64,
+    lastCalculatedHeight uint64,
+    avgBlockAmountX96 *u256.Uint,
+    warmUpAmount warmUpAmount,
+) warmUpAmount {
+    dur50 := currentHeight - lastCalculatedHeight
+    full, toGive := calcAmount(avgBlockAmountX96, dur50, 50)
+    warmUpAmount.full50 += full
+    warmUpAmount.give50 += toGive
+    warmUpAmount.left50 += full - toGive
+
+    return warmUpAmount
 }
 
-func maxUint64(a, b uint64) uint64 {
-	if a > b {
-		return a
-	}
-	return b
+func (w *warmUpAmount) computeRewardsFor50RatioUnit(
+    currentHeight uint64,
+    lastCalculatedHeight uint64,
+    avgBlockAmountX96 *u256.Uint,
+) *warmUpAmount {
+    dur50 := currentHeight - lastCalculatedHeight
+    full, toGive := calcAmount(avgBlockAmountX96, dur50, 50)
+    w.full50 += full
+    w.give50 += toGive
+    w.left50 += full - toGive
+    return w
 }
 
-func minUint64(a, b uint64) uint64 {
-	if a < b {
-		return a
-	}
-	return b
+func (w *warmUpAmount) computeRewardsFor70RatioUnit(
+    currentHeight uint64,
+    lastCalculatedHeight uint64,
+    avgBlockAmountX96 *u256.Uint,
+) *warmUpAmount {
+    dur70 := currentHeight - lastCalculatedHeight
+    full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
+    w.full70 += full
+    w.give70 += toGive
+    w.left70 += full - toGive
+    return w
 }
