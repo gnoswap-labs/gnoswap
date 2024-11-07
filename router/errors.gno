@@ -22,6 +22,6 @@ var (
 )
 
 func addDetailToError(err error, detail string) string {
-	finalErr := errors.New(ufmt.Sprintf("%s || %s", err.Error(), detail))
+	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
 	return finalErr.Error()
 }
