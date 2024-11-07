@@ -207,3 +207,16 @@ func checkErr(err error) {
 		panic(err.Error())
 	}
 }
+
+// TODO:
+//  1. when emission contract mint gns reward, last executed height should be get from gns contract.
+//     mint function of gns contract and mintGns function of emission contract should be synchronized.
+func GetLastMintedHeight() int64 {
+	return lastMintedHeight
+}
+
+// 2. when test code is executed, last executed height should be set to 123.
+// this function will be removed after test code is executed.
+func SetLastMintedHeight(height int64) {
+	lastMintedHeight = height
+}

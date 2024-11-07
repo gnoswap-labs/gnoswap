@@ -7,52 +7,27 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v2/common"
-	"gno.land/r/gnoswap/v2/consts"
-
 	"gno.land/r/gnoswap/v2/gns"
 )
 
-// lastExecutedHeight is a flag to prevent multiple calling MintAndDistributeGns in the same block height
-var lastExecutedHeight int64
+var (
+	leftGNSAmount      uint64
+	lastExecutedHeight int64
+)
 
-// lastStakerGnsBalance is history of staker GNS balance
-var lastStakerGnsBalance uint64
+func SetLeftGNSAmount(amount uint64) {
+	leftGNSAmount = amount
+}
 
-// emissionGnsBalance is balance of emission address
-var emissionGnsBalance uint64
+func GetLeftGNSAmount() uint64 {
+	return leftGNSAmount
+}
 
-// MintAndDistributeGns mints GNS and distributes to target
-func MintAndDistributeGns() {
-	common.IsHalted()
+func hasLeftGNSAmount() bool {
+	return leftGNSAmount > 0
+}
 
-	lastStakerGnsBalance = gnsBalance(consts.STAKER_ADDR)
-
-	height := std.GetHeight()
-	if lastExecutedHeight >= height {
-		println("lastExecutedHeight >= height")
-		println("lastExecutedHeight", lastExecutedHeight)
-		println("height", height)
-		// do not panic here, we don't want to panic entire transaction that calls this function
-		return
-	}
-
-	amount := mintGns()
-
-	emissionGnsBalance = gnsBalance(emissionAddr)
-	distributeToTarget(emissionGnsBalance)
-
-	prevAddr, prevRealm := getPrev()
-	std.Emit(
-		"MintAndDistributeGns",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"internal_lastHeight", ufmt.Sprintf("%d", lastExecutedHeight),
-		"internal_height", ufmt.Sprintf("%d", height),
-		"internal_time", ufmt.Sprintf("%d", time.Now().Unix()),
-		"internal_amount", ufmt.Sprintf("%d", amount),
-		"internal_totalSupply", ufmt.Sprintf("%d", gns.TotalSupply()),
-	)
-
+func SetLastExecutedHeight(height int64) {
 	lastExecutedHeight = height
 }
 
@@ -60,6 +35,49 @@ func GetLastExecutedHeight() int64 {
 	return lastExecutedHeight
 }
 
-func GetLastStakerGnsBalance() uint64 {
-	return lastStakerGnsBalance
+// MintAndDistributeGns mints GNS and distributes to target
+func MintAndDistributeGns() {
+	common.IsHalted()
+
+	currentHeight := std.GetHeight()
+	lastMintedHeight := gns.GetLastMintedHeight()
+	if lastMintedHeight >= currentHeight {
+		// do not panic here, we don't want to panic entire transaction that calls this function
+		// TODO:
+		// 1. will be removed after testing, do not use panic here
+		println(ufmt.Sprintf("[EMISSION] emission.gno__MintAndDistributeGns() || lastMintedHeight(%d) >= currentHeight(%d)", lastMintedHeight, currentHeight))
+		return
+	}
+
+	mintedEmissionRewardAmount := mintGns()
+	if hasLeftGNSAmount() {
+		mintedEmissionRewardAmount += GetLeftGNSAmount()
+		SetLeftGNSAmount(0)
+	}
+	distributedGNSAmount := distributeToTarget(mintedEmissionRewardAmount)
+	if mintedEmissionRewardAmount != distributedGNSAmount {
+		SetLeftGNSAmount(mintedEmissionRewardAmount - distributedGNSAmount)
+	}
+
+	prevAddr, prevPkgPath := getPrev()
+	std.Emit(
+		"MintAndDistributeGns",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"internal_lastHeight", ufmt.Sprintf("%d", lastExecutedHeight),
+		"internal_height", ufmt.Sprintf("%d", currentHeight),
+		"internal_time", ufmt.Sprintf("%d", time.Now().Unix()),
+		"internal_amount", ufmt.Sprintf("%d", mintedEmissionRewardAmount),
+		"internal_totalSupply", ufmt.Sprintf("%d", gns.TotalSupply()),
+	)
+
+	SetLastExecutedHeight(currentHeight)
+}
+
+// TODO:
+// 1. for test, clear function needed
+func ClearAll() {
+	leftGNSAmount = 0
+	lastExecutedHeight = 0
+	gns.SetLastMintedHeight(123)
 }

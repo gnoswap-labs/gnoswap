@@ -17,8 +17,10 @@ type emissionTarget int
 // distributionPctMap maps emission targets to their respective distribution percentages.
 type distributionPctMap map[emissionTarget]uint64
 
+// TODO:
+// 1. change more clear name from LIQUIDITY_STAKING to LIQUIDITY_STAKER
 const (
-	LIQUIDITY_STAKING emissionTarget = iota + 1
+	LIQUIDITY_STAKER emissionTarget = iota + 1
 	DEVOPS
 	COMMUNITY_POOL
 	GOV_STAKER
@@ -26,10 +28,10 @@ const (
 
 // distributionPct defines the distribution percentages.
 var distributionPct distributionPctMap = distributionPctMap{
-	LIQUIDITY_STAKING: 7500, // 75%
-	DEVOPS:            2000, // 20%
-	COMMUNITY_POOL:    500,  // 5%
-	GOV_STAKER:        0,    // 0%
+	LIQUIDITY_STAKER: 7500, // 75%
+	DEVOPS:           2000, // 20%
+	COMMUNITY_POOL:   500,  // 5%
+	GOV_STAKER:       0,    // 0%
 }
 
 var (
@@ -142,7 +144,9 @@ func changeDistributionPcts(
 }
 
 // distributeToTarget distributes the specified amount to different targets based on their percentages.
-func distributeToTarget(amount uint64) {
+// TOCO:
+// 1. should return amount of sent GNS for distribution
+func distributeToTarget(amount uint64) uint64 {
 	totalSent := uint64(0)
 	for target, pct := range distributionPct {
 		distAmount := calculateAmount(amount, pct)
@@ -154,6 +158,11 @@ func distributeToTarget(amount uint64) {
 		println()
 	}
 
+	// TODO:
+	// 1. Check amount - totalSent is 0
+	// 2. if not 0, save it to leftGNSAmount and distribute it next time
+	// 3. this job is processed in emission.gno
+	return totalSent
 	// `amount-totalSent` can be left due to rounding
 	// it will be distributed next time
 }
@@ -165,8 +174,10 @@ func calculateAmount(amount, bptPct uint64) uint64 {
 
 // transferToTarget transfers the specified amount to the given addresses.
 func transferToTarget(target emissionTarget, amount uint64) {
+	// TODO:
+	// 1. add more clear name from LIQUIDITY_STAKING to LIQUIDITY_STAKER
 	switch target {
-	case LIQUIDITY_STAKING:
+	case LIQUIDITY_STAKER:
 		// transfer to staker contract
 		gns.Transfer(a2u(consts.STAKER_ADDR), amount)
 		toStaker = amount
@@ -192,7 +203,9 @@ func transferToTarget(target emissionTarget, amount uint64) {
 // changeDistributionPct changes the distribution percentage for the given target.
 func changeDistributionPct(target emissionTarget, pct uint64) {
 	// cannot add new target
-	if target != LIQUIDITY_STAKING && target != DEVOPS && target != COMMUNITY_POOL && target != GOV_STAKER {
+	// TODO:
+	// 1. add more clear name from LIQUIDITY_STAKING to LIQUIDITY_STAKER
+	if target != LIQUIDITY_STAKER && target != DEVOPS && target != COMMUNITY_POOL && target != GOV_STAKER {
 		panic("invalid target")
 	}
 
@@ -204,13 +217,15 @@ func checkSumDistributionPct(pct01, pct02, pct03, pct04 uint64) {
 	sum := pct01 + pct02 + pct03 + pct04
 
 	if sum != 10000 {
-		panic(ufmt.Sprintf("sum of all pct should be 100%% (10000 bps), got %d", sum))
+		panic(ufmt.Sprintf("sum of all pct should be 100%% (10000 bps), got %d\n", sum))
 	}
 }
 
-func GetLastDistributedAmount() (int64, uint64, uint64, uint64, uint64, uint64, uint64) {
-	return lastExecutedHeight, lastStakerGnsBalance, emissionGnsBalance, toStaker, toDevOps, toCommunityPool, toGovStaker
-}
+// TODO:
+// 1. remove unused functions
+// func GetLastDistributedAmount() (int64, uint64, uint64, uint64, uint64, uint64, uint64) {
+//	return lastExecutedHeight, lastStakerGnsBalance, emissionGnsBalance, toStaker, toDevOps, toCommunityPool, toGovStaker
+// }
 
 func GetAccuDistributedAmount() (uint64, uint64, uint64, uint64) {
 	return toStakerAccu, toDevOpsAccu, toCommunityPoolAccu, toGovStakerAccu
@@ -247,10 +262,18 @@ func ClearAccuDistributedAmountForGovStaker() {
 	toGovStakerAccu = 0
 }
 
-func GetLastDistributeToStaker() uint64 {
-	return toStaker
-}
+// TODO:
+// 1. remove unused functions
+// func GetLastDistributeToStaker() uint64 {
+//	return toStaker
+// }
 
-func GetLastDistributeToGovStaker() uint64 {
-	return toGovStaker
+// TODO:
+// 1. remove unused functions
+// func GetLastDistributeToGovStaker() uint64 {
+//	return toGovStaker
+// }
+
+func GetLastDistributedGNSAmount() (uint64, uint64, uint64, uint64) {
+	return toStaker, toDevOps, toCommunityPool, toGovStaker
 }

@@ -24,10 +24,36 @@ type warmUpAmount struct {
 	full100 uint64
 }
 
-var positionsInternalWarmUpAmount = make(map[uint64]warmUpAmount) // positionId => warmUpAmount
-
+var positionsInternalWarmUpAmount = make(map[uint64]warmUpAmount)             // positionId => warmUpAmount
 var positionsExternalWarmUpAmount = make(map[uint64]map[string]warmUpAmount)  // positionId => incentiveId => warmUpAmount
 var positionsExternalLastCalculatedHeight = make(map[uint64]map[string]int64) // positionId => incentiveId => lastCalculatedHeight
+
+// computeWarmUpRewardAmount calculate reward amount for warm-up period
+//
+// input:
+//   - stakedHeight: staked height
+//   - rewardAmount: reward amount
+//
+// output:
+//   - rewardAmountByWarmUp : reward amount by warm-up period
+//   - penalty: penalty amount by warm-up period
+func computeWarmUpRewardAmount(currentHeight int64, stakedHeight int64, rewardAmount uint64) (uint64, uint64) {
+	var rewardAmountByWarmUp uint64 = 0
+	var penaltyAmountByWarmUp uint64 = 0
+
+	// 1. calculate warm-up period by stakedHeight and currentHeight
+	if currentHeight <= stakedHeight {
+		// TODO:
+		// After test, should be removed the log
+		println("currentHeight should be greater than stakedHeight")
+		return rewardAmountByWarmUp, penaltyAmountByWarmUp
+	}
+	prevCalculatedHeight := getLastCalculatedHeight()
+	warmupCalculator := NewWarmUpCalculator(stakedHeight, prevCalculatedHeight)
+	rewardAmountByWarmUp, penaltyAmountByWarmUp = warmupCalculator.CalculateWarmUp(currentHeight, rewardAmount)
+
+	return rewardAmountByWarmUp, penaltyAmountByWarmUp
+}
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	println()

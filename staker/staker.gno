@@ -722,3 +722,17 @@ func poolHasExternal(poolPath string) bool {
 	_, exist := poolIncentives[poolPath]
 	return exist
 }
+
+func getPoolTiers() map[string]InternalTier {
+	return poolTiers
+}
+
+// getDeposits returns deposit information for the given tokenId
+func getDepositsByTokenId(tokenId uint64) Deposit {
+	return deposits[tokenId]
+}
+
+// getDeposits returns deposit information for all tokenIds
+func getDeposits() map[uint64]Deposit {
+	return deposits
+}

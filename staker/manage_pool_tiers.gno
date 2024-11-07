@@ -173,6 +173,9 @@ func setPoolTier(pool string, tier uint64) {
 	common.IsHalted()
 
 	en.MintAndDistributeGns()
+	// TODO:
+	// 1. If pool does not exist, CalcPoolPosition() will be panic.
+	// so, this function always can run while already pool exist.
 	CalcPoolPosition()
 
 	// panic if pool does not exist
@@ -377,4 +380,10 @@ func mustValidTier(tier uint64) {
 	if tier < 1 || tier > 3 {
 		panic(ufmt.Sprintf("tier(%d) is not valid", tier))
 	}
+}
+
+// isExistPoolTier checks if the pool exists in poolTiers
+func isExistPoolTiers(poolPath string) bool {
+	_, exist := poolTiers[poolPath]
+	return exist
 }
