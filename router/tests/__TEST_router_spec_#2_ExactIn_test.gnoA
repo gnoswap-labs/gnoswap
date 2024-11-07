@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/consts"
 
 	pl "gno.land/r/gnoswap/v2/pool"
@@ -61,7 +63,7 @@ func TestExactInputSinglePool1_to_0(t *testing.T) {
 	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, token0Path, 3000, minTick, maxTick, "1000000", "1000000", "0", "0", max_timeout, admin, admin)
 	pool := pl.GetPool(barPath, token0Path, FEEMEDIUM)
 	poolLiq := pool.PoolGetLiquidity()
-	shouldEQ(t, poolLiq.ToString(), "1000000")
+	uassert.Equal(t, poolLiq.ToString(), "1000000")
 
 	// 1 -> 0
 
@@ -84,8 +86,8 @@ func TestExactInputSinglePool1_to_0(t *testing.T) {
 		"1",   // tokenAmountLimit
 	)
 
-	shouldEQ(t, amountIn, "3")
-	shouldEQ(t, amountOut, "-1")
+	uassert.Equal(t, amountIn, "3")
+	uassert.Equal(t, amountOut, "-1")
 
 	poolToken0After := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	poolToken1After := foo.BalanceOf(a2u(consts.POOL_ADDR))
@@ -93,8 +95,8 @@ func TestExactInputSinglePool1_to_0(t *testing.T) {
 	user1Token0After := bar.BalanceOf(a2u(consts.ADMIN))
 	user1Token1After := foo.BalanceOf(a2u(consts.ADMIN))
 
-	shouldEQ(t, user1Token0After, user1Token0Before+1) // bar
-	shouldEQ(t, user1Token1After, user1Token1Before-3) // foo
-	shouldEQ(t, poolToken0After, poolToken0Before-1)
-	shouldEQ(t, poolToken1After, poolToken1Before+3)
+	uassert.Equal(t, user1Token0After, user1Token0Before+1) // bar
+	uassert.Equal(t, user1Token1After, user1Token1Before-3) // foo
+	uassert.Equal(t, poolToken0After, poolToken0Before-1)
+	uassert.Equal(t, poolToken1After, poolToken1Before+3)
 }

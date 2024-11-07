@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
@@ -27,8 +29,9 @@ func TestCreatePool(t *testing.T) {
 	})
 
 	t.Run("fails if token a == token b", func(t *testing.T) {
-		shouldPanic(
+		uassert.PanicsWithMessage(
 			t,
+			`[GNOSWAP-POOL-011] duplicate token in pool || pool_manager.gno__CreatePool() || expected token0Path(gno.land/r/onbloc/foo) != token1Path(gno.land/r/onbloc/foo)`,
 			func() {
 				CreatePool(fooPath, fooPath, uint32(500), common.TickMathGetSqrtRatioAtTick(0).ToString())
 			},

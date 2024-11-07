@@ -2,16 +2,15 @@ package governance
 
 import (
 	"std"
-	"strings"
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v2/consts"
-	"gno.land/r/gnoswap/v2/gns"
-	gs "gno.land/r/gnoswap/v2/gov/staker"
+	gns "gno.land/r/gnoswap/v2/gns"
 
-	"gno.land/p/demo/testutils"
+	gs "gno.land/r/gnoswap/v2/gov/staker"
 )
 
 var (
@@ -19,20 +18,39 @@ var (
 	tokenPath = consts.GNS_PATH
 )
 
-func TestProposeCommunityPoolSpend(t *testing.T) {
-	t.Run("ProposeCommunityPoolSpend with insufficient delegation", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "NOT_ENOUGH") {
-				t.Errorf("Unexpected panic message: %v", r)
-			}
-		}()
+func init() {
+	// overwrite config for testcase
+	config = Config{
+		VotingStartDelay:              uint64(10),   // 10s ≈ 5 block
+		VotingPeriod:                  uint64(30),   // 30s ≈ 15 block
+		VotingWeightSmoothingDuration: uint64(10),   // 10s ≈ 5 block
+		Quorum:                        uint64(50),   // 50% of total xGNS supply
+		ProposalCreationThreshold:     uint64(100),  //
+		ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
+		ExecutionWindow:               uint64(1000), // 500 block
+	}
+	configVersions[1] = config
+}
 
-		ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 100)
+func TestCommunityPoolSpend(t *testing.T) {
+	proposeCommunityPoolSpend(t)
+	passAndExecute(t)
+	rejectAndExecute(t)
+	passAndExpire(t)
+
+}
+
+func proposeCommunityPoolSpend(t *testing.T) {
+	t.Run("propose with insufficient delegation", func(t *testing.T) {
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-GOVERNANCE-005] not enough balance || governance.gno__ProposeCommunityPoolSpend() || proposer(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has not enough xGNS, balance(0), wanted(100)",
+			func() {
+				ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 100)
+			},
+		)
 	})
 
-	t.Run("Successful community pool spend proposal", func(t *testing.T) {
+	t.Run("successful proposal", func(t *testing.T) {
 		proposalsJson := GetProposals()
 		if proposalsJson != `` {
 			t.Errorf("Expected empty proposals, got %v", proposalsJson)
@@ -43,195 +61,145 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 		gs.Delegate(admin, uint64(1_000_000))
 		std.TestSkipHeights(11) // VotingWeightSmoothingDuration
 
-		std.TestSetRealm(adminRealm)
 		proposalID := ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 100)
 		if proposalID != 1 {
 			t.Errorf("Expected proposal ID to be 1, got %d", proposalID)
 		}
 
-		proposal, exist := proposals[proposalId]
+		proposal, exist := proposals[proposalID]
 		if !exist {
 			t.Errorf("Proposal not found after creation")
 		}
 
-		if proposal.Proposer != admin {
-			t.Errorf("Incorrect proposer. Expected %v, got %v", admin, proposal.Proposer)
-		}
-
-		if proposal.ProposalType != "COMMUNITY_POOL_SPEND" {
-			t.Errorf("Incorrect proposal type. Expected COMMUNITY_POOL_SPEND {, got %v", proposal.ProposalType)
-		}
-
-		if !proposal.ExecutionState.Created {
-			t.Errorf("Proposal execute state(created) not set correctly")
-		}
-
-		if !proposal.ExecutionState.Upcoming {
-			t.Errorf("Proposal execute state(upcoming) not set correctly")
-		}
-
-		if proposal.Yea.Cmp(u256.NewUint(0)) != 0 || proposal.Nay.Cmp(u256.NewUint(0)) != 0 {
-			t.Errorf("Initial vote counts should be zero")
-		}
-
-		if proposal.ConfigVersion != 1 {
-			t.Errorf("Initial config version should be 1")
-		}
-
-		if proposal.Title != "test_title" {
-			t.Errorf("Incorrect title. Expected test_title, got %v", proposal.Title)
-		}
-
-		if proposal.Description != "test_description" {
-			t.Errorf("Incorrect text. Expected test_description, got %v", proposal.Description)
-		}
-
-		proposalsJson = GetProposals()
-		if proposalsJson != `{"height":"134","now":"1234567912","proposals":[{"id":"1","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTEyIiwiVXBjb21pbmciOiJ0cnVlIiwiQWN0aXZlIjoiZmFsc2UiLCJWb3RpbmdTdGFydCI6IjEyMzQ1Njc5MjIiLCJWb3RpbmdFbmQiOiIxMjM0NTY3OTUyIiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"COMMUNITY_POOL_SPEND","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":"eyJ0byI6ImcxdzNoNDdoNmx0YTA0N2g2bHRhMDQ3aDZsdGEwNDdoNmxma250cDciLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zIiwiYW1vdW50IjoiMTAwIn0="}]}` {
-			t.Errorf("Incorrect proposals json: %v", proposalsJson)
-		}
+		uassert.Equal(t, proposal.Proposer, admin)
+		uassert.Equal(t, proposal.ProposalType, "COMMUNITY_POOL_SPEND")
+		uassert.True(t, proposal.ExecutionState.Created)
+		uassert.True(t, proposal.ExecutionState.Upcoming)
+		uassert.Equal(t, proposal.Yea.ToString(), "0")
+		uassert.Equal(t, proposal.Nay.ToString(), "0")
+		uassert.Equal(t, proposal.ConfigVersion, uint64(1))
+		uassert.Equal(t, proposal.Title, "test_title")
+		uassert.Equal(t, proposal.Description, "test_description")
 	})
 }
 
-func TestExecute(t *testing.T) {
+func passAndExecute(t *testing.T) {
 	proposalId := uint64(1)
 
-	t.Run("Execute proposal didn't passed yet", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "has not passed") {
-				t.Errorf("Unexpected panic message: %v", r)
-			}
-		}()
-
-		std.TestSetRealm(adminRealm)
-		Execute(proposalId)
+	t.Run("did not pass yet", func(t *testing.T) {
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-GOVERNANCE-015] unable to execute proposal || execute.gno__Execute() || proposalId(1) has not passed, failed to execute",
+			func() {
+				std.TestSetRealm(adminRealm)
+				Execute(proposalId)
+			})
 	})
 
-	t.Run("Vote proposal to make it passed", func(t *testing.T) {
+	t.Run("vote proposal to make it passed", func(t *testing.T) {
 		std.TestSkipHeights(11)
 		std.TestSetRealm(adminRealm)
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
-
-		std.TestSkipHeights(100) // ends voting period + skip execution delay
-		updateProposalsState()
-		proposalsJson := GetProposals()
-		if proposalsJson != `{"height":"245","now":"1234568134","proposals":[{"id":"1","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTEyIiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTY3OTIyIiwiVm90aW5nRW5kIjoiMTIzNDU2Nzk1MiIsIlBhc3NlZCI6InRydWUiLCJQYXNzZWRBdCI6IjEyMzQ1NjgxMzQiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"COMMUNITY_POOL_SPEND","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":"eyJ0byI6ImcxdzNoNDdoNmx0YTA0N2g2bHRhMDQ3aDZsdGEwNDdoNmxma250cDciLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zIiwiYW1vdW50IjoiMTAwIn0="}]}` {
-			t.Errorf("Incorrect proposals json: %v", proposalsJson)
-		}
-
-		proposal := proposals[proposalId]
-		if !proposal.ExecutionState.Passed {
-			t.Errorf("Proposal execute state(passed) not set correctly")
-		}
 	})
 
-	t.Run("Successful execute proposal", func(t *testing.T) {
+	t.Run("check status before execution", func(t *testing.T) {
+		std.TestSkipHeights(100) // ends voting period + skip execution delay
+		updateProposalsState()
+
+		proposalsJson := GetProposals()
+		uassert.Equal(t, `{"height":"245","now":"1234568134","proposals":[{"id":"1","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTEyIiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTY3OTIyIiwiVm90aW5nRW5kIjoiMTIzNDU2Nzk1MiIsIlBhc3NlZCI6InRydWUiLCJQYXNzZWRBdCI6IjEyMzQ1NjgxMzQiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"COMMUNITY_POOL_SPEND","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":"eyJ0byI6ImcxdzNoNDdoNmx0YTA0N2g2bHRhMDQ3aDZsdGEwNDdoNmxma250cDciLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zIiwiYW1vdW50IjoiMTAwIn0="}]}`, proposalsJson)
+
+		proposal := proposals[proposalId]
+		uassert.True(t, proposal.ExecutionState.Passed)
+	})
+
+	t.Run("successful execute proposal", func(t *testing.T) {
 		// to execute community pool spend proposal, we need to have enough balance in community pool
 		std.TestSetRealm(adminRealm)
 
-		shouldEQ(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(87043376))
-		shouldEQ(t, gns.BalanceOf(a2u(to)), uint64(0))
+		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(87043376))
+		uassert.Equal(t, gns.BalanceOf(a2u(to)), uint64(0))
 
 		Execute(proposalId)
 		std.TestSkipHeights(1)
-		proposalsJson := GetProposals()
-		if proposalsJson != `{"height":"246","now":"1234568136","proposals":[{"id":"1","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTEyIiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTY3OTIyIiwiVm90aW5nRW5kIjoiMTIzNDU2Nzk1MiIsIlBhc3NlZCI6InRydWUiLCJQYXNzZWRBdCI6IjEyMzQ1NjgxMzQiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6InRydWUiLCJFeGVjdXRlZEF0IjoiMTIzNDU2ODEzNCIsIkV4cGlyZWQiOiJmYWxzZSIsIkV4cGlyZWRBdCI6IjAifQ==","type":"COMMUNITY_POOL_SPEND","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":"eyJ0byI6ImcxdzNoNDdoNmx0YTA0N2g2bHRhMDQ3aDZsdGEwNDdoNmxma250cDciLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zIiwiYW1vdW50IjoiMTAwIn0="}]}` {
-			t.Errorf("Incorrect proposals json: %v", proposalsJson)
-		}
 
-		shouldEQ(t, gns.BalanceOf(a2u(to)), uint64(100))
+		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(87043276))
+		uassert.Equal(t, gns.BalanceOf(a2u(to)), uint64(100))
 
+		// status
 		proposal := proposals[proposalId]
-		if !proposal.ExecutionState.Executed {
-			t.Errorf("Proposal execute state(executed) not set correctly")
-		}
+		uassert.True(t, proposal.ExecutionState.Executed)
 	})
 
-	t.Run("Execute already executed proposal", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "already executed") {
-				t.Errorf("Unexpected panic message: %v", r)
-			}
-		}()
-
-		Execute(proposalId)
+	t.Run("already executed", func(t *testing.T) {
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-GOVERNANCE-015] unable to execute proposal || execute.gno__Execute() || proposalId(1) has already executed(true) or canceled(false) or rejected(false), failed to execute",
+			func() {
+				Execute(proposalId)
+			})
 	})
+}
 
-	t.Run("Execute rejected proposal", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "or rejected(true)") {
-				t.Errorf("Unexpected panic message: %v", r)
-			}
-		}()
-
+func rejectAndExecute(t *testing.T) {
+	t.Run("prpoose new community pool spend", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		proposalId := ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 50) // create new proposal
-		std.TestSkipHeights(11)
+	})
 
-		Vote(proposalId, false)  // vote Nay
+	t.Run("vote to reject", func(t *testing.T) {
+		std.TestSkipHeights(11)
+		std.TestSetRealm(adminRealm)
+		Vote(proposalId, false) // vote Nay
+	})
+
+	t.Run("check status after rejected", func(t *testing.T) {
 		std.TestSkipHeights(100) // ends voting period
 
 		updateProposalsState() // proposal rejected
 		proposal := proposals[proposalId]
-		if !proposal.ExecutionState.Rejected {
-			t.Errorf("Proposal execute state(rejected) not set correctly")
-		}
 
-		proposalJson := GetProposalById(2)
-		if proposalJson != `{"height":"357","now":"1234568358","proposals":[{"id":"2","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY4MTM2IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTY4MTQ2IiwiVm90aW5nRW5kIjoiMTIzNDU2ODE3NiIsIlBhc3NlZCI6ImZhbHNlIiwiUGFzc2VkQXQiOiIwIiwiUmVqZWN0ZWQiOiJ0cnVlIiwiUmVqZWN0ZWRBdCI6IjEyMzQ1NjgzNTgiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"COMMUNITY_POOL_SPEND","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMTAwMDAwMCJ9","extra":"eyJ0byI6ImcxdzNoNDdoNmx0YTA0N2g2bHRhMDQ3aDZsdGEwNDdoNmxma250cDciLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zIiwiYW1vdW50IjoiNTAifQ=="}]}` {
-			t.Errorf("Incorrect proposal json: %v", proposalJson)
-		}
-
-		Execute(proposalId) // panic
+		uassert.True(t, proposal.ExecutionState.Rejected)
 	})
 
-	t.Run("Execute passed but expired proposal", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "OVER") {
-				t.Errorf("Unexpected panic message: %v", r)
-			}
-		}()
+	t.Run("execute rejected proposal", func(t *testing.T) {
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-GOVERNANCE-015] unable to execute proposal || execute.gno__Execute() || proposalId(2) has already executed(false) or canceled(false) or rejected(true), failed to execute",
+			func() {
+				Execute(proposalId)
+			})
+	})
+}
 
+func passAndExpire(t *testing.T) {
+	t.Run("prpoose new community pool spend", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		proposalId := ProposeCommunityPoolSpend("test_title", "test_description", to, tokenPath, 50) // create new proposal
+	})
+
+	t.Run("vote to pass", func(t *testing.T) {
 		std.TestSkipHeights(11)
+		std.TestSetRealm(adminRealm)
+		Vote(proposalId, true)
+	})
 
-		Vote(proposalId, true)   // vote Nay
+	t.Run("check status after pass and expire", func(t *testing.T) {
 		std.TestSkipHeights(100) // ends voting period
-		updateProposalsState()   // proposal pass
-
-		proposalJson := GetProposalById(3)
-		if proposalJson != `{"height":"468","now":"1234568580","proposals":[{"id":"3","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY4MzU4IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTY4MzY4IiwiVm90aW5nRW5kIjoiMTIzNDU2ODM5OCIsIlBhc3NlZCI6InRydWUiLCJQYXNzZWRBdCI6IjEyMzQ1Njg1ODAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"COMMUNITY_POOL_SPEND","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":"eyJ0byI6ImcxdzNoNDdoNmx0YTA0N2g2bHRhMDQ3aDZsdGEwNDdoNmxma250cDciLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zIiwiYW1vdW50IjoiNTAifQ=="}]}` {
-			t.Errorf("Incorrect proposal json: %v", proposalJson)
-		}
+		updateProposalsState()   // proposal passed
 
 		std.TestSkipHeights(10)   // execution delay
 		std.TestSkipHeights(1000) // execution window
 		std.TestSkipHeights(1)    // expired
 		updateProposalsState()
 
-		proposalJson = GetProposalById(3)
-		if proposalJson != `{"height":"1479","now":"1234570602","proposals":[{"id":"3","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY4MzU4IiwiVXBjb21pbmciOiJmYWxzZSIsIkFjdGl2ZSI6ImZhbHNlIiwiVm90aW5nU3RhcnQiOiIxMjM0NTY4MzY4IiwiVm90aW5nRW5kIjoiMTIzNDU2ODM5OCIsIlBhc3NlZCI6InRydWUiLCJQYXNzZWRBdCI6IjEyMzQ1Njg1ODAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoidHJ1ZSIsIkV4cGlyZWRBdCI6IjEyMzQ1NzA2MDIifQ==","type":"COMMUNITY_POOL_SPEND","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMTAwMDAwMCIsIm5vIjoiMCJ9","extra":"eyJ0byI6ImcxdzNoNDdoNmx0YTA0N2g2bHRhMDQ3aDZsdGEwNDdoNmxma250cDciLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zIiwiYW1vdW50IjoiNTAifQ=="}]}` {
-			t.Errorf("Incorrect proposal json: %v", proposalJson)
-		}
-
 		proposal := proposals[proposalId]
-		if !proposal.ExecutionState.Expired {
-			t.Errorf("Proposal execute state(expired) not set correctly")
-		}
 
-		Execute(proposalId) // panic
+		uassert.True(t, proposal.ExecutionState.Passed)
+		uassert.True(t, proposal.ExecutionState.Expired)
+
+		uassert.PanicsWithMessage(t,
+			"[GNOSWAP-GOVERNANCE-017] proposal execution time expired || execute.gno__Execute() || EXECUTION_WINDOW_OVER (now(1234570602) >= windowEnd(1234569408))",
+			func() {
+				Execute(proposalId)
+			})
 	})
 }

@@ -5,8 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/consts"
 	"gno.land/r/gnoswap/v2/gns"
+
 	gs "gno.land/r/gnoswap/v2/gov/staker"
 )
 
@@ -18,14 +21,26 @@ var (
 	nowTime   uint64
 )
 
-func init() {
-	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
-	gs.Delegate(admin, uint64(1_000_000))
-	std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
-}
-
 func TestProposeText(t *testing.T) {
+	t.Run("initial state", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
+		gs.Delegate(admin, uint64(1_000_000))
+		std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
+
+		// overwrite config for testcase
+		config = Config{
+			VotingStartDelay:              uint64(10),   // 10s ≈ 5 block
+			VotingPeriod:                  uint64(30),   // 30s ≈ 15 block
+			VotingWeightSmoothingDuration: uint64(10),   // 10s ≈ 5 block
+			Quorum:                        uint64(50),   // 50% of total xGNS supply
+			ProposalCreationThreshold:     uint64(100),  //
+			ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
+			ExecutionWindow:               uint64(1000), // 500 block
+		}
+		configVersions[1] = config
+	})
+
 	oldHeight = uint64(std.GetHeight())
 	oldTime = uint64(time.Now().Unix())
 
@@ -38,53 +53,18 @@ func TestProposeText(t *testing.T) {
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
 
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.CreatedAt != oldTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != true {
-			t.Errorf("Proposal should be upcoming")
-		}
-
-		if proposalStat.Active != false {
-			t.Errorf("Proposal should not be active")
-		}
-
-		if proposalStat.Passed != false {
-			t.Errorf("Proposal should not be passed")
-		}
-
-		if proposalStat.PassedAt != uint64(0) {
-			t.Errorf("Proposal passed at time should be 0")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != false {
-			t.Errorf("Proposal should not be cancelled")
-		}
-
-		if proposalStat.CanceledAt != uint64(0) {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != false {
-			t.Errorf("Proposal should not be executed")
-		}
-
-		if proposalStat.ExecutedAt != uint64(0) {
-			t.Errorf("Proposal executed at time should be 0")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
+		uassert.True(t, proposalStat.Upcoming)
+		uassert.False(t, proposalStat.Active)
+		uassert.False(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.False(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
+		uassert.False(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
 	})
 
 	t.Run("vote YES", func(t *testing.T) {
@@ -96,60 +76,23 @@ func TestProposeText(t *testing.T) {
 
 		voteKey := Vote(proposalId, true)
 		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not recorded correctly")
-		}
+		uassert.True(t, voted)
 
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
 
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.CreatedAt != oldTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != false {
-			t.Errorf("Proposal should not be upcoming")
-		}
-
-		if proposalStat.Active != true {
-			t.Errorf("Proposal should be active")
-		}
-
-		if proposalStat.Passed != false {
-			t.Errorf("Proposal should not be passed")
-		}
-
-		if proposalStat.PassedAt != uint64(0) {
-			t.Errorf("Proposal passed at time should be 0")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != false {
-			t.Errorf("Proposal should not be cancelled")
-		}
-
-		if proposalStat.CanceledAt != uint64(0) {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != false {
-			t.Errorf("Proposal should not be executed")
-		}
-
-		if proposalStat.ExecutedAt != uint64(0) {
-			t.Errorf("Proposal executed at time should be 0")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
+		uassert.False(t, proposalStat.Upcoming)
+		uassert.True(t, proposalStat.Active)
+		uassert.False(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.False(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
+		uassert.False(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
 	})
 
 	t.Run("skip time to check proposal pass/reject", func(t *testing.T) {
@@ -162,53 +105,18 @@ func TestProposeText(t *testing.T) {
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
 
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.CreatedAt != oldTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != false {
-			t.Errorf("Proposal should not be upcoming")
-		}
-
-		if proposalStat.Active != false {
-			t.Errorf("Proposal should not be active")
-		}
-
-		if proposalStat.Passed != true {
-			t.Errorf("Proposal should be passed")
-		}
-
-		if proposalStat.PassedAt != nowTime {
-			t.Errorf("Proposal passed at time should be now")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != false {
-			t.Errorf("Proposal should not be cancelled")
-		}
-
-		if proposalStat.CanceledAt != uint64(0) {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != false {
-			t.Errorf("Proposal should not be executed")
-		}
-
-		if proposalStat.ExecutedAt != uint64(0) {
-			t.Errorf("Proposal executed at time should be 0")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
+		uassert.False(t, proposalStat.Upcoming)
+		uassert.False(t, proposalStat.Active)
+		uassert.True(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, nowTime)
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.False(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
+		uassert.False(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
 	})
 
 	t.Run("skip long to check proposal status", func(t *testing.T) {
@@ -278,57 +186,41 @@ func TestProposeText(t *testing.T) {
 		nowHeight = uint64(std.GetHeight())
 		nowTime = uint64(time.Now().Unix())
 
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.CreatedAt != nowTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != false {
-			t.Errorf("Proposal should not be upcoming")
-		}
-
-		if proposalStat.Active != false {
-			t.Errorf("Proposal should not be active")
-		}
-
-		if proposalStat.Passed != false {
-			t.Errorf("Proposal should not be passed")
-		}
-
-		if proposalStat.PassedAt != uint64(0) {
-			t.Errorf("Proposal passed at time should be 0")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != true {
-			t.Errorf("Proposal should be cancelled")
-		}
-
-		if proposalStat.CanceledAt != nowTime {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != false {
-			t.Errorf("Proposal should not be executed")
-		}
-
-		if proposalStat.ExecutedAt != uint64(0) {
-			t.Errorf("Proposal executed at time should be 0")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, nowTime)
+		uassert.False(t, proposalStat.Upcoming)
+		uassert.False(t, proposalStat.Active)
+		uassert.False(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.True(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, nowTime)
+		uassert.False(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
 	})
 }
 
 func TestParamaterChange(t *testing.T) {
+	t.Run("initial state", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
+		gs.Delegate(admin, uint64(1_000_000))
+		std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
+
+		// overwrite config for testcase
+		config = Config{
+			VotingStartDelay:              uint64(10),   // 10s ≈ 5 block
+			VotingPeriod:                  uint64(30),   // 30s ≈ 15 block
+			VotingWeightSmoothingDuration: uint64(10),   // 10s ≈ 5 block
+			Quorum:                        uint64(50),   // 50% of total xGNS supply
+			ProposalCreationThreshold:     uint64(100),  //
+			ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
+			ExecutionWindow:               uint64(1000), // 500 block
+		}
+		configVersions[1] = config
+	})
+
 	oldHeight = uint64(std.GetHeight())
 	oldTime = uint64(time.Now().Unix())
 
@@ -341,53 +233,18 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
 
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.CreatedAt != oldTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != true {
-			t.Errorf("Proposal should be upcoming")
-		}
-
-		if proposalStat.Active != false {
-			t.Errorf("Proposal should not be active")
-		}
-
-		if proposalStat.Passed != false {
-			t.Errorf("Proposal should not be passed")
-		}
-
-		if proposalStat.PassedAt != uint64(0) {
-			t.Errorf("Proposal passed at time should be 0")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != false {
-			t.Errorf("Proposal should not be cancelled")
-		}
-
-		if proposalStat.CanceledAt != uint64(0) {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != false {
-			t.Errorf("Proposal should not be executed")
-		}
-
-		if proposalStat.ExecutedAt != uint64(0) {
-			t.Errorf("Proposal executed at time should be 0")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
+		uassert.True(t, proposalStat.Upcoming)
+		uassert.False(t, proposalStat.Active)
+		uassert.False(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.False(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
+		uassert.False(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
 	})
 
 	t.Run("vote YES", func(t *testing.T) {
@@ -406,53 +263,18 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
 
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.CreatedAt != oldTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != false {
-			t.Errorf("Proposal should not be upcoming")
-		}
-
-		if proposalStat.Active != true {
-			t.Errorf("Proposal should be active")
-		}
-
-		if proposalStat.Passed != false {
-			t.Errorf("Proposal should not be passed")
-		}
-
-		if proposalStat.PassedAt != uint64(0) {
-			t.Errorf("Proposal passed at time should be 0")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != false {
-			t.Errorf("Proposal should not be cancelled")
-		}
-
-		if proposalStat.CanceledAt != uint64(0) {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != false {
-			t.Errorf("Proposal should not be executed")
-		}
-
-		if proposalStat.ExecutedAt != uint64(0) {
-			t.Errorf("Proposal executed at time should be 0")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
+		uassert.False(t, proposalStat.Upcoming)
+		uassert.True(t, proposalStat.Active)
+		uassert.False(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.False(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
+		uassert.False(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
 	})
 
 	t.Run("skip time to check proposal pass/reject => pass", func(t *testing.T) {
@@ -465,53 +287,18 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
 
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.CreatedAt != oldTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != false {
-			t.Errorf("Proposal should not be upcoming")
-		}
-
-		if proposalStat.Active != false {
-			t.Errorf("Proposal should not be active")
-		}
-
-		if proposalStat.Passed != true {
-			t.Errorf("Proposal should be passed")
-		}
-
-		if proposalStat.PassedAt != nowTime {
-			t.Errorf("Proposal passed at time should be now")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != false {
-			t.Errorf("Proposal should not be cancelled")
-		}
-
-		if proposalStat.CanceledAt != uint64(0) {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != false {
-			t.Errorf("Proposal should not be executed")
-		}
-
-		if proposalStat.ExecutedAt != uint64(0) {
-			t.Errorf("Proposal executed at time should be 0")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
+		uassert.False(t, proposalStat.Upcoming)
+		uassert.False(t, proposalStat.Active)
+		uassert.True(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, nowTime)
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.False(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
+		uassert.False(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
 	})
 
 	t.Run("execute", func(t *testing.T) {
@@ -523,61 +310,20 @@ func TestParamaterChange(t *testing.T) {
 		nowHeight = uint64(std.GetHeight())
 		nowTime = uint64(time.Now().Unix())
 
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.CreatedAt != oldTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != false {
-			t.Errorf("Proposal should not be upcoming")
-		}
-
-		if proposalStat.Active != false {
-			t.Errorf("Proposal should not be active")
-		}
-
-		if proposalStat.Passed != true {
-			t.Errorf("Proposal should be passed")
-		}
-
-		if proposalStat.PassedAt != nowTime {
-			t.Errorf("Proposal passed at time should be now")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != false {
-			t.Errorf("Proposal should not be cancelled")
-		}
-
-		if proposalStat.CanceledAt != uint64(0) {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != true {
-			t.Errorf("Proposal should be executed")
-		}
-
-		if proposalStat.ExecutedAt != nowTime {
-			t.Errorf("Proposal executed at time should be now")
-		}
-
-		if proposalStat.Expired != false {
-			t.Errorf("Proposal should not be expired")
-		}
-
-		if proposalStat.ExpiredAt != uint64(0) {
-			t.Errorf("Proposal expired at time should be 0")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
+		uassert.False(t, proposalStat.Upcoming)
+		uassert.False(t, proposalStat.Active)
+		uassert.True(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, nowTime)
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.False(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
+		uassert.True(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, nowTime)
+		uassert.False(t, proposalStat.Expired)
+		uassert.Equal(t, proposalStat.ExpiredAt, uint64(0))
 	})
 
 	t.Run("skip long time after execute", func(t *testing.T) {
@@ -586,61 +332,20 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
 
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.CreatedAt != oldTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != false {
-			t.Errorf("Proposal should not be upcoming")
-		}
-
-		if proposalStat.Active != false {
-			t.Errorf("Proposal should not be active")
-		}
-
-		if proposalStat.Passed != true {
-			t.Errorf("Proposal should be passed")
-		}
-
-		if proposalStat.PassedAt != nowTime {
-			t.Errorf("Proposal passed at time should be now")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != false {
-			t.Errorf("Proposal should not be cancelled")
-		}
-
-		if proposalStat.CanceledAt != uint64(0) {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != true {
-			t.Errorf("Proposal should be executed")
-		}
-
-		if proposalStat.ExecutedAt != nowTime {
-			t.Errorf("Proposal executed at time should be now")
-		}
-
-		if proposalStat.Expired != false {
-			t.Errorf("Proposal should not be expired")
-		}
-
-		if proposalStat.ExpiredAt != uint64(0) {
-			t.Errorf("Proposal expired at time should be 0")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
+		uassert.False(t, proposalStat.Upcoming)
+		uassert.False(t, proposalStat.Active)
+		uassert.True(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, nowTime)
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.False(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
+		uassert.True(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, nowTime)
+		uassert.False(t, proposalStat.Expired)
+		uassert.Equal(t, proposalStat.ExpiredAt, uint64(0))
 	})
 
 	t.Run("create new param change proposal and cancel", func(t *testing.T) {
@@ -655,53 +360,18 @@ func TestParamaterChange(t *testing.T) {
 		nowHeight = uint64(std.GetHeight())
 		nowTime = uint64(time.Now().Unix())
 
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.CreatedAt != nowTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != false {
-			t.Errorf("Proposal should not be upcoming")
-		}
-
-		if proposalStat.Active != false {
-			t.Errorf("Proposal should not be active")
-		}
-
-		if proposalStat.Passed != false {
-			t.Errorf("Proposal should not be passed")
-		}
-
-		if proposalStat.PassedAt != uint64(0) {
-			t.Errorf("Proposal passed at time should be 0")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != true {
-			t.Errorf("Proposal should be cancelled")
-		}
-
-		if proposalStat.CanceledAt != nowTime {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != false {
-			t.Errorf("Proposal should not be executed")
-		}
-
-		if proposalStat.ExecutedAt != uint64(0) {
-			t.Errorf("Proposal executed at time should be 0")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, nowTime)
+		uassert.False(t, proposalStat.Upcoming)
+		uassert.False(t, proposalStat.Active)
+		uassert.False(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.True(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, nowTime)
+		uassert.False(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
 	})
 
 	t.Run("skip long time after cancel", func(t *testing.T) {
@@ -716,61 +386,20 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
 
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.CreatedAt != oldTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != false {
-			t.Errorf("Proposal should not be upcoming")
-		}
-
-		if proposalStat.Active != false {
-			t.Errorf("Proposal should not be active")
-		}
-
-		if proposalStat.Passed != false {
-			t.Errorf("Proposal should not be passed")
-		}
-
-		if proposalStat.PassedAt != uint64(0) {
-			t.Errorf("Proposal passed at time should be 0")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != true {
-			t.Errorf("Proposal should be cancelled")
-		}
-
-		if proposalStat.CanceledAt != oldTime {
-			t.Errorf("Proposal cancelled at time should not be change")
-		}
-
-		if proposalStat.Executed != false {
-			t.Errorf("Proposal should not be executed")
-		}
-
-		if proposalStat.ExecutedAt != uint64(0) {
-			t.Errorf("Proposal executed at time should be 0")
-		}
-
-		if proposalStat.Expired != false {
-			t.Errorf("Proposal should not be expired")
-		}
-
-		if proposalStat.ExpiredAt != uint64(0) {
-			t.Errorf("Proposal expired at time should be 0")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
+		uassert.False(t, proposalStat.Upcoming)
+		uassert.False(t, proposalStat.Active)
+		uassert.False(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, uint64(0))
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.True(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, oldTime)
+		uassert.False(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
+		uassert.False(t, proposalStat.Expired)
+		uassert.Equal(t, proposalStat.ExpiredAt, uint64(0))
 	})
 
 	t.Run("create new param change proposal and pass", func(t *testing.T) {
@@ -790,53 +419,18 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 		proposalStat := proposals[proposalId].ExecutionState
 
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.CreatedAt != oldTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != false {
-			t.Errorf("Proposal should not be upcoming")
-		}
-
-		if proposalStat.Active != false {
-			t.Errorf("Proposal should not be active")
-		}
-
-		if proposalStat.Passed != true {
-			t.Errorf("Proposal should be passed")
-		}
-
-		if proposalStat.PassedAt != nowTime {
-			t.Errorf("Proposal passed at time should be now")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != false {
-			t.Errorf("Proposal should not be cancelled")
-		}
-
-		if proposalStat.CanceledAt != uint64(0) {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != false {
-			t.Errorf("Proposal should not be executed")
-		}
-
-		if proposalStat.ExecutedAt != uint64(0) {
-			t.Errorf("Proposal executed at time should be 0")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, oldTime)
+		uassert.False(t, proposalStat.Upcoming)
+		uassert.False(t, proposalStat.Active)
+		uassert.True(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, nowTime)
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.False(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
+		uassert.False(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
 	})
 
 	t.Run("skip long time after passed => make expired", func(t *testing.T) {
@@ -852,61 +446,20 @@ func TestParamaterChange(t *testing.T) {
 		nowHeight = uint64(std.GetHeight())
 
 		proposalStat := proposals[proposalId].ExecutionState
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.CreatedAt != oldOldTime {
-			t.Errorf("Proposal created at time is incorrect")
-		}
-
-		if proposalStat.Upcoming != false {
-			t.Errorf("Proposal should not be upcoming")
-		}
-
-		if proposalStat.Active != false {
-			t.Errorf("Proposal should not be active")
-		}
-
-		if proposalStat.Passed != true {
-			t.Errorf("Proposal should be passed")
-		}
-
-		if proposalStat.PassedAt != oldTime {
-			t.Errorf("Proposal passed at time should not be change")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != false {
-			t.Errorf("Proposal should be cancelled")
-		}
-
-		if proposalStat.CanceledAt != uint64(0) {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != false {
-			t.Errorf("Proposal should not be executed")
-		}
-
-		if proposalStat.ExecutedAt != uint64(0) {
-			t.Errorf("Proposal executed at time should be 0")
-		}
-
-		if proposalStat.Expired != true {
-			t.Errorf("Proposal should not be expired")
-		}
-
-		if proposalStat.ExpiredAt != nowTime {
-			t.Errorf("Proposal expired at time should be ")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.Equal(t, proposalStat.CreatedAt, oldOldTime)
+		uassert.False(t, proposalStat.Upcoming)
+		uassert.False(t, proposalStat.Active)
+		uassert.True(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, oldTime)
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.False(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
+		uassert.False(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
+		uassert.True(t, proposalStat.Expired)
+		uassert.Equal(t, proposalStat.ExpiredAt, nowTime)
 	})
 
 	t.Run("skip long time after expired", func(t *testing.T) {
@@ -916,56 +469,18 @@ func TestParamaterChange(t *testing.T) {
 		updateProposalsState()
 
 		proposalStat := proposals[proposalId].ExecutionState
-		if proposalStat.Created != true {
-			t.Errorf("Proposal should be created")
-		}
-
-		if proposalStat.Upcoming != false {
-			t.Errorf("Proposal should not be upcoming")
-		}
-
-		if proposalStat.Active != false {
-			t.Errorf("Proposal should not be active")
-		}
-
-		if proposalStat.Passed != true {
-			t.Errorf("Proposal should be passed")
-		}
-
-		if proposalStat.PassedAt != oldTime {
-			t.Errorf("Proposal passed at time should not be change")
-		}
-
-		if proposalStat.Rejected != false {
-			t.Errorf("Proposal should not be rejected")
-		}
-
-		if proposalStat.RejectedAt != uint64(0) {
-			t.Errorf("Proposal rejected at time should be 0")
-		}
-
-		if proposalStat.Canceled != false {
-			t.Errorf("Proposal should be cancelled")
-		}
-
-		if proposalStat.CanceledAt != uint64(0) {
-			t.Errorf("Proposal cancelled at time should be 0")
-		}
-
-		if proposalStat.Executed != false {
-			t.Errorf("Proposal should not be executed")
-		}
-
-		if proposalStat.ExecutedAt != uint64(0) {
-			t.Errorf("Proposal executed at time should be 0")
-		}
-
-		if proposalStat.Expired != true {
-			t.Errorf("Proposal should not be expired")
-		}
-
-		if proposalStat.ExpiredAt != nowTime {
-			t.Errorf("Proposal expired at time should be not change")
-		}
+		uassert.True(t, proposalStat.Created)
+		uassert.False(t, proposalStat.Upcoming)
+		uassert.False(t, proposalStat.Active)
+		uassert.True(t, proposalStat.Passed)
+		uassert.Equal(t, proposalStat.PassedAt, oldTime)
+		uassert.False(t, proposalStat.Rejected)
+		uassert.Equal(t, proposalStat.RejectedAt, uint64(0))
+		uassert.False(t, proposalStat.Canceled)
+		uassert.Equal(t, proposalStat.CanceledAt, uint64(0))
+		uassert.False(t, proposalStat.Executed)
+		uassert.Equal(t, proposalStat.ExecutedAt, uint64(0))
+		uassert.True(t, proposalStat.Expired)
+		uassert.Equal(t, proposalStat.ExpiredAt, nowTime)
 	})
 }

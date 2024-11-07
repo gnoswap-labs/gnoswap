@@ -7,6 +7,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	"gno.land/r/gnoswap/v2/gns"
@@ -20,13 +21,12 @@ type lockedGNS struct {
 	unlock uint64
 }
 
-var lockedAmount uint64
-
-const TIMESTAMP_7_DAYS = uint64(60) // 60s // XXX: TODO, REMOVE AFTER QA
+const TIMESTAMP_7_DAYS = uint64(60) // 60s // XXX: TODO, REMOVE AFTER QA ( smaller value for testing )
 // const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
 
 var (
 	addrLockedGns = make(map[std.Address][]lockedGNS)
+	lockedAmount  = uint64(0)
 )
 
 var (
@@ -34,15 +34,24 @@ var (
 )
 
 func Delegate(to std.Address, amount uint64) {
-	en.MintAndDistributeGns()
-	calculateReward()
+	if running {
+		cleanDelegationStatHistory()
+	}
+
+	CollectReward() // common.IsHalted() + en.MintAndDistributeGns() + calculateReward()
 
 	if !to.IsValid() {
-		panic(ufmt.Sprintf("invalid address %s to Delegate", to.String()))
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("staker.gno__Delegate() || invalid address %s to delegate", to.String()),
+		))
 	}
 
 	if amount < minimumAmount {
-		panic(ufmt.Sprintf("minimum amount to delegate is %d (requested:%d)", minimumAmount, amount))
+		panic(addDetailToError(
+			errLessThanMinimum,
+			ufmt.Sprintf("staker.gno__Delegate() || minimum amount to delegate is %d (requested:%d)", minimumAmount, amount),
+		))
 	}
 
 	caller := std.PrevRealm().Addr()
@@ -68,24 +77,41 @@ func Delegate(to std.Address, amount uint64) {
 
 // xGNS from -> xGNS to
 func Redelegate(from, to std.Address, amount uint64) {
-	CollectReward() // en.MintAndDistributeGns() + calculateReward()
+	if running {
+		cleanDelegationStatHistory()
+	}
+
+	CollectReward()
 
 	if !from.IsValid() {
-		panic(ufmt.Sprintf("invalid from address %s to Redelegate", to.String()))
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("staker.gno__Redelegate() || invalid from address %s to redelegate", to.String()),
+		))
 	}
 
 	if !to.IsValid() {
-		panic(ufmt.Sprintf("invalid to address %s to Redelegate", to.String()))
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("staker.gno__Redelegate() || invalid to address %s to redelegate", to.String()),
+		))
 	}
 
 	if amount < minimumAmount {
-		panic(ufmt.Sprintf("minimum amount to re-delegate is %d (requested:%d)", minimumAmount, amount))
+		panic(addDetailToError(
+			errLessThanMinimum,
+			ufmt.Sprintf("staker.gno__Redelegate() || minimum amount to redelegate is %d (requested:%d)", minimumAmount, amount),
+		))
 	}
 
 	caller := std.PrevRealm().Addr()
 
-	if xgns.BalanceOf(a2u(caller)) < amount {
-		panic("not enough xGNS staked")
+	delegated := xgns.BalanceOf(a2u(caller))
+	if delegated < amount {
+		panic(addDetailToError(
+			errNotEnoughBalance,
+			ufmt.Sprintf("staker.gno__Redelegate() || not enough xGNS delegated(%d) to redelegate(%d)", delegated, amount),
+		))
 	}
 
 	undelegate(from, amount)
@@ -103,20 +129,34 @@ func Redelegate(from, to std.Address, amount uint64) {
 }
 
 func Undelegate(from std.Address, amount uint64) {
-	CollectReward()
+	if running {
+		cleanDelegationStatHistory()
+	}
+
+	CollectReward() // common.IsHalted() + en.MintAndDistributeGns() + calculateReward()
 
 	if !from.IsValid() {
-		panic(ufmt.Sprintf("invalid address %s to Undelegate", from.String()))
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("staker.gno__Undelegate() || invalid address %s to undelegate", from.String()),
+		))
 	}
 
 	if amount < minimumAmount {
-		panic(ufmt.Sprintf("minimum amount to undelegate is %d (requested:%d)", minimumAmount, amount))
+		panic(addDetailToError(
+			errLessThanMinimum,
+			ufmt.Sprintf("staker.gno__Undelegate() || minimum amount to undelegate is %d (requested:%d)", minimumAmount, amount),
+		))
 	}
 
 	caller := std.PrevRealm().Addr()
+	delegated := xgns.BalanceOf(a2u(caller))
 
-	if xgns.BalanceOf(a2u(caller)) < amount {
-		panic("not enough xGNS staked")
+	if delegated < amount {
+		panic(addDetailToError(
+			errNotEnoughBalance,
+			ufmt.Sprintf("staker.gno__Undelegate() || not enough xGNS delegated(%d) to undelegate(%d)", delegated, amount),
+		))
 	}
 
 	// burn equivalent amount of xGNS
@@ -144,7 +184,9 @@ func Undelegate(from std.Address, amount uint64) {
 }
 
 func CollectUndelegatedGns() uint64 {
+	common.IsHalted()
 	en.MintAndDistributeGns()
+
 	calculateReward()
 
 	caller := std.PrevRealm().Addr()
@@ -181,7 +223,9 @@ func CollectUndelegatedGns() uint64 {
 }
 
 func CollectReward() {
+	common.IsHalted()
 	en.MintAndDistributeGns()
+
 	calculateReward()
 
 	prevAddr, prevRealm := getPrev()
@@ -190,8 +234,12 @@ func CollectReward() {
 	caller := std.PrevRealm().Addr()
 	emissionReward := userEmissionReward[caller]
 	if emissionReward > 0 {
-		if gns.BalanceOf(a2u(std.CurrentRealm().Addr())) < emissionReward {
-			panic(ufmt.Sprintf("not enough GNS in the realm to send emission reward(%d) for user %s", emissionReward, caller.String()))
+		govStakerGnsBalance := gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
+		if govStakerGnsBalance < emissionReward {
+			panic(addDetailToError(
+				errNotEnoughBalance,
+				ufmt.Sprintf("staker.gno__CollectReward() || not enough GNS(%d) in the realm to send emission reward(%d) for user %s", govStakerGnsBalance, emissionReward, caller.String()),
+			))
 		}
 
 		// transfer GNS to caller
@@ -236,12 +284,17 @@ func CollectReward() {
 }
 
 func CollectRewardFromLaunchPad(to std.Address) {
-	prevRealm := std.PrevRealm().PkgPath()
-	if prevRealm != consts.LAUNCHPAD_PATH {
-		panic("only launchpad can call CollectRewardFromLaunchPad()")
+	caller := std.PrevRealm().Addr()
+	if caller != consts.LAUNCHPAD_ADDR {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("staker.gno__CollectRewardFromLaunchPad() || only launchpad can call CollectRewardFromLaunchPad(), called from %s", caller.String()),
+		))
 	}
 
+	common.IsHalted()
 	en.MintAndDistributeGns()
+
 	calculateReward()
 
 	prevAddr, prevRealm := getPrev()
@@ -249,8 +302,12 @@ func CollectRewardFromLaunchPad(to std.Address) {
 	// GNS EMISSION
 	emissionReward := userEmissionReward[to]
 	if emissionReward > 0 {
-		if gns.BalanceOf(a2u(std.CurrentRealm().Addr())) < emissionReward {
-			panic(ufmt.Sprintf("not enough GNS in the realm to send emission reward(%d) for user %s", emissionReward, to.String()))
+		govStakerGnsBalance := gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
+		if govStakerGnsBalance < emissionReward {
+			panic(addDetailToError(
+				errNotEnoughBalance,
+				ufmt.Sprintf("staker.gno__CollectRewardFromLaunchPad() || not enough GNS(%d) in the realm to send emission reward(%d) for user %s", govStakerGnsBalance, emissionReward, to.String()),
+			))
 		}
 
 		// transfer GNS to to
@@ -291,7 +348,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
 			"to", to.String(),
-			"intinternal_tokenPathernal_token", tokenPath,
+			"internal_tokenPath", tokenPath,
 			"internal_amount", ufmt.Sprintf("%d", amount),
 		)
 	}

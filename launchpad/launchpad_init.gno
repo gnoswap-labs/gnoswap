@@ -9,7 +9,10 @@ import (
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
+
+	en "gno.land/r/gnoswap/v2/emission"
 
 	"gno.land/r/gnoswap/v2/gns"
 )
@@ -27,7 +30,6 @@ var (
 )
 
 func init() {
-	println("main_init")
 	q96 = u256.MustFromDecimal(consts.Q96)
 }
 
@@ -36,6 +38,7 @@ func init() {
 //
 // returns projectId
 func CreateProject(
+	name string,
 	tokenPath string,
 	recipient std.Address,
 	depositAmount uint64,
@@ -49,20 +52,33 @@ func CreateProject(
 	assertUserCall()
 
 	// only admin can create project
-	if std.PrevRealm().Addr() != consts.ADMIN {
-		panic("only admin can create project")
+	caller := std.PrevRealm().Addr()
+	if caller != consts.ADMIN {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || only admin(%s) can create project, called from %s", consts.ADMIN, caller.String()),
+		))
 	}
 
 	if _, exist := registered[tokenPath]; !exist {
-		panic("token not registered")
+		panic(addDetailToError(
+			errNotRegistered,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || token(%s) not registered", tokenPath),
+		))
 	}
 
 	if !(recipient.IsValid()) {
-		panic("invalid recipient addr")
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || invalid recipient address(%s)", recipient.String()),
+		))
 	}
 
 	if depositAmount == 0 {
-		panic("can not deposit 0")
+		panic(addDetailToError(
+			errInvalidInput,
+			"launchpad_init.gno__CreateProject() || can not deposit 0",
+		))
 	}
 
 	if strings.Contains(conditionsToken, "*PAD*") {
@@ -72,7 +88,10 @@ func CreateProject(
 				continue
 			}
 			if _, exist := registered[token]; !exist {
-				panic(ufmt.Sprintf("condition token(%s) not registered", token))
+				panic(addDetailToError(
+					errNotRegistered,
+					ufmt.Sprintf("condition token(%s) not registered", token),
+				))
 			}
 		}
 	}
@@ -80,16 +99,29 @@ func CreateProject(
 	projectId := generateProjectId(tokenPath)
 	_, exist := projects[projectId]
 	if exist {
-		panic("project already exist")
+		panic(addDetailToError(
+			errDuplicateProject,
+			ufmt.Sprintf("project(%s) already exist", projectId),
+		))
 	}
 
 	if tier30Ratio+tier90Ratio+tier180Ratio != 100 {
-		panic("invalid ratio, sum of all tiers should be 100")
+		panic(addDetailToError(
+			errInvalidTierRatio,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || invalid ratio, sum of all tiers(30:%d, 90:%d, 180:%d) should be 100", tier30Ratio, tier90Ratio, tier180Ratio),
+		))
 	}
 
-	if startTime <= uint64(time.Now().Unix()) {
-		panic("invalid start time, can not start project in past")
+	now := uint64(time.Now().Unix())
+	if startTime <= now {
+		panic(addDetailToError(
+			errPastStartTime,
+			ufmt.Sprintf("launchpad_init.gno__CreateProject() || invalid start time(%d), can not start project in past(now:%d)", startTime, now),
+		))
 	}
+
+	common.IsHalted()
+	en.MintAndDistributeGns()
 
 	transferFromByRegisterCall(
 		tokenPath,
@@ -118,7 +150,6 @@ func CreateProject(
 	avgBlockTimeMs := uint64(gns.GetAvgBlockTimeInMs())
 
 	height := uint64(std.GetHeight())
-	now := uint64(time.Now().Unix())
 
 	timeUntilStart := startTime - now
 	blockDuration := timeUntilStart * 1000 / avgBlockTimeMs
@@ -160,6 +191,7 @@ func CreateProject(
 	// create project
 	project := Project{
 		id:            projectId,
+		name:          name,
 		tokenPath:     tokenPath,
 		depositAmount: depositAmount,
 		recipient:     recipient,
@@ -185,6 +217,7 @@ func CreateProject(
 		"CreateProject",
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
+		"name", name,
 		"tokenPath", tokenPath,
 		"recipient", recipient.String(),
 		"depositAmount", ufmt.Sprintf("%d", depositAmount),
@@ -207,6 +240,92 @@ func CreateProject(
 	return projectId
 }
 
+func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uint64 {
+	assertUserCall()
+	caller := std.PrevRealm().Addr()
+	if caller != consts.ADMIN {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || only admin(%s) can transfer left from project, called from %s", consts.ADMIN, caller.String()),
+		))
+	}
+
+	project, exist := projects[projectId]
+	if !exist {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || projectId(%s) not found", projectId),
+		))
+	}
+
+	if !recipient.IsValid() {
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || invalid recipient address(%s)", recipient.String()),
+		))
+	}
+
+	height := uint64(std.GetHeight())
+	if height < project.endHeight {
+		panic(addDetailToError(
+			errActiveProject,
+			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || projectId(%s) not ended yet(current:%d, endHeight: %d)", projectId, height, project.endHeight),
+		))
+	}
+
+	if project.refundedHeight != 0 {
+		panic(addDetailToError(
+			errAlreadyRefunded,
+			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || projectId(%s) already refunded(height:%d)", projectId, project.refundedHeight),
+		))
+	}
+
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
+	calculateDepositReward()
+	project = projects[projectId] // get updates project
+
+	// calculate left reward
+	tier30Full := project.tier30.tierAmount
+	tier90Full := project.tier90.tierAmount
+	tier180Full := project.tier180.tierAmount
+
+	left30 := tier30Full - project.tier30.calculatedAmount
+	left90 := tier90Full - project.tier90.calculatedAmount
+	left180 := tier180Full - project.tier180.calculatedAmount
+	leftReward := left30 + left90 + left180
+
+	if leftReward > 0 {
+		transferByRegisterCall(
+			project.tokenPath,
+			recipient,
+			leftReward,
+		)
+	}
+
+	std.Emit(
+		"TransferLeftFromProjectByAdmin",
+		"projectId", projectId,
+		"recipient", recipient.String(),
+		"internal_tokenPath", project.tokenPath,
+		"internal_leftReward", ufmt.Sprintf("%d", leftReward),
+		"internal_tier30Full", ufmt.Sprintf("%d", tier30Full),
+		"internal_tier30Left", ufmt.Sprintf("%d", left30),
+		"internal_tier90Full", ufmt.Sprintf("%d", tier90Full),
+		"internal_tier90Left", ufmt.Sprintf("%d", left90),
+		"internal_tier180Full", ufmt.Sprintf("%d", tier180Full),
+		"internal_tier180Left", ufmt.Sprintf("%d", left180),
+	)
+
+	project.refundedAmount = leftReward
+	project.refundedHeight = height
+	project.refundedTime = uint64(time.Now().Unix())
+	projects[projectId] = project
+
+	return leftReward
+}
+
 func generateProjectId(tokenPath string) string {
 	// gno.land/r/gnoswap/gns:123
 	return ufmt.Sprintf("%s:%d", tokenPath, std.GetHeight())
@@ -226,7 +345,10 @@ func makeConditions(conditionsToken string, conditionsAmount string) map[string]
 	tokens := strings.Split(conditionsToken, "*PAD*")
 	amounts := strings.Split(conditionsAmount, "*PAD*")
 	if len(tokens) != len(amounts) {
-		panic(ufmt.Sprintf("invalid conditions(numTokens(%d) != numAmounts(%d))", len(tokens), len(amounts)))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("launchpad_init.gno__makeConditions() || invalid conditions(numTokens(%d) != numAmounts(%d))", len(tokens), len(amounts)),
+		))
 	}
 
 	for i, token := range tokens {

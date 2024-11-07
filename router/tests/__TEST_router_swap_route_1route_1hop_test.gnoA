@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/consts"
 
 	pl "gno.land/r/gnoswap/v2/pool"
@@ -23,7 +25,7 @@ func TestCreatePool(t *testing.T) {
 
 	// jsonOutput := pl.ApiGetPools()
 	// jsonStr := gjson.Parse(jsonOutput)
-	// shouldEQ(t, len(jsonStr.Get("response").Array()), 1)
+	// uassert.Equal(t, len(jsonStr.Get("response").Array()), 1)
 }
 
 func TestPositionMint(t *testing.T) {
@@ -35,9 +37,9 @@ func TestPositionMint(t *testing.T) {
 	// Mint
 	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, amount0, "36790")
-	shouldEQ(t, amount1, "100000")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, amount0, "36790")
+	uassert.Equal(t, amount1, "100000")
 }
 
 func TestDrySwapRouteBarBazExactIn(t *testing.T) {
@@ -52,7 +54,7 @@ func TestDrySwapRouteBarBazExactIn(t *testing.T) {
 		"100", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, "2711")
+	uassert.Equal(t, dryResult, "2711")
 }
 
 func TestSwapRouteBarBazExactIn(t *testing.T) {
@@ -71,8 +73,8 @@ func TestSwapRouteBarBazExactIn(t *testing.T) {
 		"2700", // tokenAmountLimit
 	)
 
-	shouldEQ(t, amountIn, "1000")
-	shouldEQ(t, amountOut, "-2707")
+	uassert.Equal(t, amountIn, "1000")
+	uassert.Equal(t, amountOut, "-2707")
 }
 
 func TestDrySwapRouteBarBazExactOut(t *testing.T) {
@@ -87,7 +89,7 @@ func TestDrySwapRouteBarBazExactOut(t *testing.T) {
 		"100", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, "371")
+	uassert.Equal(t, dryResult, "371")
 }
 
 func TestSwapRouteBarBazExactOut(t *testing.T) {
@@ -106,8 +108,8 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 		"371", // tokenAmountLimit
 	)
 
-	shouldEQ(t, amountIn, "371")
-	shouldEQ(t, amountOut, "-999")
+	uassert.Equal(t, amountIn, "371")
+	uassert.Equal(t, amountOut, "-999")
 }
 
 func TestDrySwapRouteBazBarExactIn(t *testing.T) {
@@ -122,7 +124,7 @@ func TestDrySwapRouteBazBarExactIn(t *testing.T) {
 		"100", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, "368")
+	uassert.Equal(t, dryResult, "368")
 }
 
 func TestSwapRouteBazBarExactIn(t *testing.T) {
@@ -141,8 +143,8 @@ func TestSwapRouteBazBarExactIn(t *testing.T) {
 		"360", // tokenAmountLimit
 	)
 
-	shouldEQ(t, amountIn, "1000")
-	shouldEQ(t, amountOut, "-368")
+	uassert.Equal(t, amountIn, "1000")
+	uassert.Equal(t, amountOut, "-368")
 }
 
 func TestDrySwapRouteBazBarExactOut(t *testing.T) {
@@ -157,7 +159,7 @@ func TestDrySwapRouteBazBarExactOut(t *testing.T) {
 		"100", // quoteArr
 	)
 
-	shouldEQ(t, dryResult, "8171")
+	uassert.Equal(t, dryResult, "8171")
 }
 
 func TestSwapRouteBazBarExactOut(t *testing.T) {
@@ -174,6 +176,6 @@ func TestSwapRouteBazBarExactOut(t *testing.T) {
 		"8200", // tokenAmountLimit
 	)
 
-	shouldEQ(t, amountIn, "8171")
-	shouldEQ(t, amountOut, "-2996")
+	uassert.Equal(t, amountIn, "8171")
+	uassert.Equal(t, amountOut, "-2996")
 }

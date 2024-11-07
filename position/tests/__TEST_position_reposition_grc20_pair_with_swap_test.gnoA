@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/consts"
 
 	pl "gno.land/r/gnoswap/v2/pool"
@@ -41,23 +43,23 @@ func TestMintPosition01InRange(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, getNextId(), uint64(2))
-	shouldEQ(t, amount0, "18394892")
-	shouldEQ(t, amount1, "50000000")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, getNextId(), uint64(2))
+	uassert.Equal(t, amount0, "18394892")
+	uassert.Equal(t, amount1, "50000000")
 
 	position := positions[tokenId]
-	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, admin)
-	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, int32(8000))
-	shouldEQ(t, position.tickUpper, int32(12000))
-	shouldEQ(t, position.liquidity.ToString(), "318704392")
-	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
-	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-	shouldEQ(t, position.tokensOwed0.ToString(), "0")
-	shouldEQ(t, position.tokensOwed1.ToString(), "0")
-	shouldEQ(t, position.burned, false)
+	uassert.Equal(t, position.nonce.ToString(), "0")
+	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, position.tickLower, int32(8000))
+	uassert.Equal(t, position.tickUpper, int32(12000))
+	uassert.Equal(t, position.liquidity.ToString(), "318704392")
+	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+	uassert.Equal(t, position.burned, false)
 }
 
 func TestMintPosition02InRange(t *testing.T) {
@@ -80,23 +82,23 @@ func TestMintPosition02InRange(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, getNextId(), uint64(3))
-	shouldEQ(t, amount0, "18394892")
-	shouldEQ(t, amount1, "50000000")
+	uassert.Equal(t, tokenId, uint64(2))
+	uassert.Equal(t, getNextId(), uint64(3))
+	uassert.Equal(t, amount0, "18394892")
+	uassert.Equal(t, amount1, "50000000")
 
 	position := positions[tokenId]
-	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, admin)
-	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, int32(8000))
-	shouldEQ(t, position.tickUpper, int32(12000))
-	shouldEQ(t, position.liquidity.ToString(), "318704392")
-	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
-	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-	shouldEQ(t, position.tokensOwed0.ToString(), "0")
-	shouldEQ(t, position.tokensOwed1.ToString(), "0")
-	shouldEQ(t, position.burned, false)
+	uassert.Equal(t, position.nonce.ToString(), "0")
+	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, position.tickLower, int32(8000))
+	uassert.Equal(t, position.tickUpper, int32(12000))
+	uassert.Equal(t, position.liquidity.ToString(), "318704392")
+	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+	uassert.Equal(t, position.burned, false)
 }
 
 func TestMintPosition03InRange(t *testing.T) {
@@ -119,23 +121,23 @@ func TestMintPosition03InRange(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, tokenId, uint64(3))
-	shouldEQ(t, getNextId(), uint64(4))
-	shouldEQ(t, amount0, "18394892")
-	shouldEQ(t, amount1, "50000000")
+	uassert.Equal(t, tokenId, uint64(3))
+	uassert.Equal(t, getNextId(), uint64(4))
+	uassert.Equal(t, amount0, "18394892")
+	uassert.Equal(t, amount1, "50000000")
 
 	position := positions[tokenId]
-	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, admin)
-	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, int32(6000))
-	shouldEQ(t, position.tickUpper, int32(14000))
-	shouldEQ(t, position.liquidity.ToString(), "167312775")
-	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
-	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-	shouldEQ(t, position.tokensOwed0.ToString(), "0")
-	shouldEQ(t, position.tokensOwed1.ToString(), "0")
-	shouldEQ(t, position.burned, false)
+	uassert.Equal(t, position.nonce.ToString(), "0")
+	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, position.tickLower, int32(6000))
+	uassert.Equal(t, position.tickUpper, int32(14000))
+	uassert.Equal(t, position.liquidity.ToString(), "167312775")
+	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+	uassert.Equal(t, position.burned, false)
 }
 
 func TestSwap1(t *testing.T) {
@@ -154,42 +156,42 @@ func TestSwap1(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, amount0, "1234567")
-	shouldEQ(t, amount1, "-3345595")
+	uassert.Equal(t, amount0, "1234567")
+	uassert.Equal(t, amount1, "-3345595")
 
 	position := positions[uint64(1)]
-	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, admin)
-	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, int32(8000))
-	shouldEQ(t, position.tickUpper, int32(12000))
-	shouldEQ(t, position.liquidity.ToString(), "318704392")
-	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
-	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-	shouldEQ(t, position.tokensOwed0.ToString(), "0")
-	shouldEQ(t, position.tokensOwed1.ToString(), "0")
-	shouldEQ(t, position.burned, false)
+	uassert.Equal(t, position.nonce.ToString(), "0")
+	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, position.tickLower, int32(8000))
+	uassert.Equal(t, position.tickUpper, int32(12000))
+	uassert.Equal(t, position.liquidity.ToString(), "318704392")
+	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+	uassert.Equal(t, position.burned, false)
 }
 
 func TestUnclaimedFee01(t *testing.T) {
 	amount0, amount1 := unclaimedFee(1)
 
-	shouldEQ(t, amount0.ToString(), "244")
-	shouldEQ(t, amount1.ToString(), "0")
+	uassert.Equal(t, amount0.ToString(), "244")
+	uassert.Equal(t, amount1.ToString(), "0")
 }
 
 func TestUnclaimedFee02(t *testing.T) {
 	amount0, amount1 := unclaimedFee(2)
 
-	shouldEQ(t, amount0.ToString(), "244")
-	shouldEQ(t, amount1.ToString(), "0")
+	uassert.Equal(t, amount0.ToString(), "244")
+	uassert.Equal(t, amount1.ToString(), "0")
 }
 
 func TestUnclaimedFee03(t *testing.T) {
 	amount0, amount1 := unclaimedFee(3)
 
-	shouldEQ(t, amount0.ToString(), "128")
-	shouldEQ(t, amount1.ToString(), "0")
+	uassert.Equal(t, amount0.ToString(), "128")
+	uassert.Equal(t, amount1.ToString(), "0")
 }
 
 func TestDecreaseLiquidity03(t *testing.T) {
@@ -198,7 +200,7 @@ func TestDecreaseLiquidity03(t *testing.T) {
 	_lpTokenId := uint64(03)
 
 	ownerOfPosition := gnft.OwnerOf(tid(_lpTokenId))
-	shouldEQ(t, ownerOfPosition, admin)
+	uassert.Equal(t, ownerOfPosition, admin)
 
 	// approve fee0, fee1 to pool ( for withdrawal protocol fee )
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -206,28 +208,28 @@ func TestDecreaseLiquidity03(t *testing.T) {
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(_lpTokenId, 100, "0", "0", max_timeout, false)
 
-	shouldEQ(t, tokenId, _lpTokenId)
-	shouldEQ(t, amount0, "18651446")
-	shouldEQ(t, amount1, "49304404")
+	uassert.Equal(t, tokenId, _lpTokenId)
+	uassert.Equal(t, amount0, "18651446")
+	uassert.Equal(t, amount1, "49304404")
 
-	shouldEQ(t, fee0, "127")
-	shouldEQ(t, fee1, "0")
+	uassert.Equal(t, fee0, "127")
+	uassert.Equal(t, fee1, "0")
 
 	ownerOfPosition = gnft.OwnerOf(tid(_lpTokenId))
-	shouldEQ(t, ownerOfPosition, admin)
+	uassert.Equal(t, ownerOfPosition, admin)
 
 	position := positions[_lpTokenId]
-	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, admin)
-	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, int32(6000))
-	shouldEQ(t, position.tickUpper, int32(14000))
-	shouldEQ(t, position.liquidity.ToString(), "0")
-	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "261325796985563264150557581113385")
-	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-	shouldEQ(t, position.tokensOwed0.ToString(), "0")
-	shouldEQ(t, position.tokensOwed1.ToString(), "0")
-	shouldEQ(t, position.burned, true)
+	uassert.Equal(t, position.nonce.ToString(), "0")
+	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, position.tickLower, int32(6000))
+	uassert.Equal(t, position.tickUpper, int32(14000))
+	uassert.Equal(t, position.liquidity.ToString(), "0")
+	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "261325796985563264150557581113385")
+	uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+	uassert.Equal(t, position.burned, true)
 }
 
 func TestReposition(t *testing.T) {
@@ -237,17 +239,17 @@ func TestReposition(t *testing.T) {
 
 	// check current state
 	position := positions[_lpTokenId]
-	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, admin)
-	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, int32(6000))
-	shouldEQ(t, position.tickUpper, int32(14000))
-	shouldEQ(t, position.liquidity.ToString(), "0")
-	shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "261325796985563264150557581113385")
-	shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-	shouldEQ(t, position.tokensOwed0.ToString(), "0")
-	shouldEQ(t, position.tokensOwed1.ToString(), "0")
-	shouldEQ(t, position.burned, true)
+	uassert.Equal(t, position.nonce.ToString(), "0")
+	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, position.tickLower, int32(6000))
+	uassert.Equal(t, position.tickUpper, int32(14000))
+	uassert.Equal(t, position.liquidity.ToString(), "0")
+	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "261325796985563264150557581113385")
+	uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+	uassert.Equal(t, position.burned, true)
 
 	Reposition(
 		_lpTokenId, // tokenId
@@ -260,17 +262,17 @@ func TestReposition(t *testing.T) {
 	)
 
 	position = positions[_lpTokenId]
-	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, admin)
-	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, int32(8000))
-	shouldEQ(t, position.tickUpper, int32(12000))
-	shouldEQ(t, position.liquidity.ToString(), "314786446")
-	// shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "261325796985563264150557581113385")
-	// shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-	shouldEQ(t, position.tokensOwed0.ToString(), "0")
-	shouldEQ(t, position.tokensOwed1.ToString(), "0")
-	shouldEQ(t, position.burned, false)
+	uassert.Equal(t, position.nonce.ToString(), "0")
+	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, position.tickLower, int32(8000))
+	uassert.Equal(t, position.tickUpper, int32(12000))
+	uassert.Equal(t, position.liquidity.ToString(), "314786446")
+	// uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "261325796985563264150557581113385")
+	// uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+	uassert.Equal(t, position.burned, false)
 }
 
 func TestAfterReposition03UnclaimedFee(t *testing.T) {
@@ -279,8 +281,8 @@ func TestAfterReposition03UnclaimedFee(t *testing.T) {
 	println("amount0: ", amount0.ToString())
 	println("amount1: ", amount1.ToString())
 
-	shouldEQ(t, amount0.ToString(), "0")
-	shouldEQ(t, amount1.ToString(), "0")
+	uassert.Equal(t, amount0.ToString(), "0")
+	uassert.Equal(t, amount1.ToString(), "0")
 }
 
 func TestSwap2(t *testing.T) {
@@ -299,42 +301,42 @@ func TestSwap2(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, amount0, "1234567")
-	shouldEQ(t, amount1, "-3330062")
+	uassert.Equal(t, amount0, "1234567")
+	uassert.Equal(t, amount1, "-3330062")
 
 	position := positions[uint64(1)]
-	shouldEQ(t, position.nonce.ToString(), "0")
-	shouldEQ(t, position.operator, admin)
-	shouldEQ(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	shouldEQ(t, position.tickLower, int32(8000))
-	shouldEQ(t, position.tickUpper, int32(12000))
-	shouldEQ(t, position.liquidity.ToString(), "318704392")
-	// shouldEQ(t, position.feeGrowthInside0LastX128.ToString(), "0")
-	// shouldEQ(t, position.feeGrowthInside1LastX128.ToString(), "0")
-	shouldEQ(t, position.tokensOwed0.ToString(), "0")
-	shouldEQ(t, position.tokensOwed1.ToString(), "0")
-	shouldEQ(t, position.burned, false)
+	uassert.Equal(t, position.nonce.ToString(), "0")
+	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, position.tickLower, int32(8000))
+	uassert.Equal(t, position.tickUpper, int32(12000))
+	uassert.Equal(t, position.liquidity.ToString(), "318704392")
+	// uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	// uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+	uassert.Equal(t, position.burned, false)
 }
 
 func TestUnclaimedFee01_AfterSwap2(t *testing.T) {
 	amount0, amount1 := unclaimedFee(1)
 
-	shouldEQ(t, amount0.ToString(), "451") // 244 + 207 = 451
-	shouldEQ(t, amount1.ToString(), "0")
+	uassert.Equal(t, amount0.ToString(), "451") // 244 + 207 = 451
+	uassert.Equal(t, amount1.ToString(), "0")
 }
 
 func TestUnclaimedFee02_AfterSwap2(t *testing.T) {
 	amount0, amount1 := unclaimedFee(2)
 
-	shouldEQ(t, amount0.ToString(), "451") // 244 + 207 = 451
-	shouldEQ(t, amount1.ToString(), "0")
+	uassert.Equal(t, amount0.ToString(), "451") // 244 + 207 = 451
+	uassert.Equal(t, amount1.ToString(), "0")
 }
 
 func TestUnclaimedFee03_AfterSwap2(t *testing.T) {
 	amount0, amount1 := unclaimedFee(3)
 
-	shouldEQ(t, amount0.ToString(), "204") // +204
-	shouldEQ(t, amount1.ToString(), "0")
+	uassert.Equal(t, amount0.ToString(), "204") // +204
+	uassert.Equal(t, amount1.ToString(), "0")
 
 	{
 
@@ -344,10 +346,10 @@ func TestUnclaimedFee03_AfterSwap2(t *testing.T) {
 
 		tokenId, afterFee0, afterFee1, poolPath, fee0, fee1 := CollectFee(3, true)
 		position := positions[tokenId]
-		shouldEQ(t, position.tokensOwed0.ToString(), "0")
-		shouldEQ(t, position.tokensOwed1.ToString(), "0")
-		shouldEQ(t, fee0, "204")
-		shouldEQ(t, fee1, "0")
+		uassert.Equal(t, position.tokensOwed0.ToString(), "0")
+		uassert.Equal(t, position.tokensOwed1.ToString(), "0")
+		uassert.Equal(t, fee0, "204")
+		uassert.Equal(t, fee1, "0")
 	}
 
 }

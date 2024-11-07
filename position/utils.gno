@@ -7,13 +7,16 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
-
 	pusers "gno.land/p/demo/users"
 )
 
 func checkDeadline(deadline int64) {
-	if time.Now().Unix() > deadline {
-		panic(ufmt.Sprintf("[POSITION] utils.gno__checkDeadline() || transaction too old__time.Now().Unix()(%d) <= deadline(%d)", time.Now().Unix(), deadline))
+	now := time.Now().Unix()
+	if now > deadline {
+		panic(addDetailToError(
+			errExpired,
+			ufmt.Sprintf("utils.gno__checkDeadline() || transaction too old, now(%d) > deadline(%d)", now, deadline),
+		))
 	}
 }
 
@@ -24,7 +27,10 @@ func a2u(addr std.Address) pusers.AddressOrName {
 func poolKeyDivide(poolKey string) (string, string, uint32) {
 	res := strings.Split(poolKey, ":")
 	if len(res) != 3 {
-		panic(ufmt.Sprintf("[POSITION] utils.gno__poolKeyDivide() || invalid poolKey(%s)", poolKey))
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("utils.gno__poolKeyDivide() || invalid poolKey(%s)", poolKey),
+		))
 	}
 
 	pToken0, pToken1, pFeeStr := res[0], res[1], res[2]
@@ -43,7 +49,10 @@ func isUserCall() bool {
 
 func assertUserCall() {
 	if !isUserCall() {
-		panic("must be called by user")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("util.gno__assertUserCall() || must be called by user, called from %s", std.PrevRealm().PkgPath()),
+		))
 	}
 }
 

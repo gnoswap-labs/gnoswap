@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
@@ -39,10 +41,10 @@ func TestMintPosition(t *testing.T) {
 		admin,
 		admin,
 	)
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, getNextId(), uint64(2))
-	shouldEQ(t, amount0, "18394892")
-	shouldEQ(t, amount1, "50000000")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, getNextId(), uint64(2))
+	uassert.Equal(t, amount0, "18394892")
+	uassert.Equal(t, amount1, "50000000")
 }
 
 func TestIncreaseLiquidity(t *testing.T) {
@@ -62,12 +64,12 @@ func TestIncreaseLiquidity(t *testing.T) {
 		max_timeout, // deadline
 	)
 
-	shouldEQ(t, m0, "3678979")
-	shouldEQ(t, m1, "10000000")
+	uassert.Equal(t, m0, "3678979")
+	uassert.Equal(t, m1, "10000000")
 
 	newLiquidity := pool.PoolGetLiquidity()
 
-	shouldEQ(t, newLiquidity.Gt(oldLiquidity), true)
+	uassert.Equal(t, newLiquidity.Gt(oldLiquidity), true)
 }
 
 func TestCollectFeeBeforeSwap(t *testing.T) {
@@ -75,10 +77,10 @@ func TestCollectFeeBeforeSwap(t *testing.T) {
 
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, fee0, "0")
-	shouldEQ(t, fee1, "0")
-	shouldEQ(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, fee0, "0")
+	uassert.Equal(t, fee1, "0")
+	uassert.Equal(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 }
 
 func TestSwap(t *testing.T) {
@@ -106,24 +108,24 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, true)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, fee0, "611") // this is input token
-	shouldEQ(t, fee1, "0")   // this it output token
-	shouldEQ(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, fee0, "611") // this is input token
+	uassert.Equal(t, fee1, "0")   // this it output token
+	uassert.Equal(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 }
 
 func TestCollectFee2(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, fee0, "0") // this is input token
-	shouldEQ(t, fee1, "0") // this it output token
-	shouldEQ(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, fee0, "0") // this is input token
+	uassert.Equal(t, fee1, "0") // this it output token
+	uassert.Equal(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 
 	afterFee0, afterFee1 := unclaimedFee(uint64(1))
-	shouldEQ(t, afterFee0.ToString(), "0")
-	shouldEQ(t, afterFee1.ToString(), "0")
+	uassert.Equal(t, afterFee0.ToString(), "0")
+	uassert.Equal(t, afterFee1.ToString(), "0")
 }
 
 func TestSwap2(t *testing.T) {
@@ -143,15 +145,15 @@ func TestSwap2(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
 	oldFee0, oldFee1 := unclaimedFee(uint64(1))
-	shouldEQ(t, oldFee0.ToString(), "499")
-	shouldEQ(t, oldFee1.ToString(), "0")
+	uassert.Equal(t, oldFee0.ToString(), "499")
+	uassert.Equal(t, oldFee1.ToString(), "0")
 
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, true)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, fee0, "495")
-	shouldEQ(t, fee1, "0")
-	shouldEQ(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, fee0, "495")
+	uassert.Equal(t, fee1, "0")
+	uassert.Equal(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 }
 
 func TestDecreaseLiquidity(t *testing.T) {
@@ -168,14 +170,14 @@ func TestDecreaseLiquidity(t *testing.T) {
 	)
 
 	newLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
-	shouldEQ(t, true, newLiquidity.Lt(oldLiquidity))
+	uassert.Equal(t, true, newLiquidity.Lt(oldLiquidity))
 
 	// check fee left
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, fee0, "0")
-	shouldEQ(t, fee1, "0")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, fee0, "0")
+	uassert.Equal(t, fee1, "0")
 }
 
 func TestDecreaseLiquidityAllThenAgainShouldPanic(t *testing.T) {
@@ -192,18 +194,21 @@ func TestDecreaseLiquidityAllThenAgainShouldPanic(t *testing.T) {
 	)
 
 	newLiquidity := getPoolFromLpTokenId(uint64(1)).PoolGetLiquidity()
-	shouldEQ(t, true, newLiquidity.Lt(oldLiquidity))
-	shouldEQ(t, newLiquidity.ToString(), "0")
+	uassert.Equal(t, true, newLiquidity.Lt(oldLiquidity))
+	uassert.Equal(t, newLiquidity.ToString(), "0")
 
 	// decreasing position(with 0 liquidity) should panic
-	shouldPanic(t, func() {
-		DecreaseLiquidity(
-			uint64(1),   // tokenId
-			100,         // liquidityRatio
-			"0",         // amount0Min
-			"0",         // amount1Min
-			max_timeout, // deadline
-			false,       // unwrapResult
-		)
-	})
+	uassert.PanicsWithMessage(
+		t,
+		`[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and (self)liquidity are zero`,
+		func() {
+			DecreaseLiquidity(
+				uint64(1),   // tokenId
+				100,         // liquidityRatio
+				"0",         // amount0Min
+				"0",         // amount1Min
+				max_timeout, // deadline
+				false,       // unwrapResult
+			)
+		})
 }

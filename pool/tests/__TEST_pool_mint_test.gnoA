@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
@@ -30,7 +32,7 @@ func TestMintMiscellaneous(t *testing.T) {
 	thisPool := GetPool(barPath, fooPath, fee500)
 
 	t.Run("returns 0 before initialization", func(t *testing.T) {
-		shouldEQ(t, thisPool.liquidity.ToString(), "0")
+		uassert.Equal(t, thisPool.liquidity.ToString(), "0")
 	})
 
 	t.Run("mint to right of the current price", func(t *testing.T) {
@@ -49,10 +51,10 @@ func TestMintMiscellaneous(t *testing.T) {
 		)
 
 		liqAfter := thisPool.liquidity.ToString()
-		shouldEQ(t, liqBefore, liqAfter)
+		uassert.Equal(t, liqBefore, liqAfter)
 
-		shouldNEQ(t, amount0, "0")
-		shouldEQ(t, amount1, "0")
+		uassert.NotEqual(t, amount0, "0")
+		uassert.Equal(t, amount1, "0")
 	})
 
 	t.Run("mint to left of the current price", func(t *testing.T) {
@@ -71,16 +73,17 @@ func TestMintMiscellaneous(t *testing.T) {
 		)
 
 		liqAfter := thisPool.liquidity.ToString()
-		shouldEQ(t, liqBefore, liqAfter)
+		uassert.Equal(t, liqBefore, liqAfter)
 
-		shouldEQ(t, amount0, "0")
-		shouldNEQ(t, amount1, "0")
+		uassert.Equal(t, amount0, "0")
+		uassert.NotEqual(t, amount1, "0")
 	})
 
 	t.Run("cannot remove more than the entire position", func(t *testing.T) {
 		std.TestSetRealm(posRealm)
-		shouldPanic(
+		uassert.PanicsWithMessage(
 			t,
+			`[GNOSWAP-POOL-009] liquidity calculation || liquidity_math.gno__liquidityMathAddDelta() || LS(z must be < x) (x: 0, y: -1001, z:115792089237316195423570985008687907853269984665640564039457584007913129638935)`,
 			func() {
 				Burn(
 					barPath,

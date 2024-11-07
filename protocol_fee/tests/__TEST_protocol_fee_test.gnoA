@@ -4,14 +4,14 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
+	pusers "gno.land/p/demo/users"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 
-	pusers "gno.land/p/demo/users"
-
 	"gno.land/r/gnoswap/v2/consts"
-
-	"gno.land/p/demo/testutils"
 )
 
 func TestDistributeProtocolFee(t *testing.T) {
@@ -21,23 +21,23 @@ func TestDistributeProtocolFee(t *testing.T) {
 	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
 	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
 
-	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
-	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
+	uassert.Equal(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
 
-	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
-	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
+	uassert.Equal(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
 
 	DistributeProtocolFee()
 
-	shouldEQ(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	shouldEQ(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	shouldEQ(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
+	uassert.Equal(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	uassert.Equal(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
 
-	shouldEQ(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
-	shouldEQ(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
-	shouldEQ(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
+	uassert.Equal(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	uassert.Equal(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(1000))
 }
 
 func TestSetDevOpsPctByAdminNoPermission(t *testing.T) {
@@ -45,8 +45,9 @@ func TestSetDevOpsPctByAdminNoPermission(t *testing.T) {
 	dummyRealm := std.NewUserRealm(dummy)
 	std.TestSetRealm(dummyRealm)
 
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-PROTOCOL_FEE-001] no permission || protocol_fee.gno__SetDevOpsPctByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set devOpsPct, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
 		func() {
 			SetDevOpsPctByAdmin(123)
 		},
@@ -56,8 +57,9 @@ func TestSetDevOpsPctByAdminNoPermission(t *testing.T) {
 func TestSetDevOpsPctByAdminInvalidFee(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	shouldPanic(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-PROTOCOL_FEE-006] invalid percentage || protocol_fee.gno__setDevOpsPct() || pct(100001) should not be bigger than 10000`,
 		func() {
 			SetDevOpsPctByAdmin(100001)
 		},
@@ -67,11 +69,11 @@ func TestSetDevOpsPctByAdminInvalidFee(t *testing.T) {
 func TestSetDevOpsPctByAdmin(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	shouldEQ(t, GetDevOpsPct(), uint64(0))
+	uassert.Equal(t, GetDevOpsPct(), uint64(0))
 
 	SetDevOpsPctByAdmin(123)
 
-	shouldEQ(t, GetDevOpsPct(), uint64(123))
+	uassert.Equal(t, GetDevOpsPct(), uint64(123))
 }
 
 func a2u(addr std.Address) pusers.AddressOrName {

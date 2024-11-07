@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
@@ -48,17 +50,17 @@ func TestPositionMint(t *testing.T) {
 	// Mint
 	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(-6000), int32(6000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, amount0, "99962")
-	shouldEQ(t, amount1, "100000")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, amount0, "99962")
+	uassert.Equal(t, amount1, "100000")
 
 	pool := pl.GetPool(barPath, bazPath, fee500)
 	poolLiq := pool.PoolGetLiquidity()
-	shouldEQ(t, poolLiq.ToString(), "385771")
+	uassert.Equal(t, poolLiq.ToString(), "385771")
 
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
-	shouldEQ(t, poolTick, int32(1))
+	uassert.Equal(t, poolTick, int32(1))
 }
 
 func TestSwapRouteBarBazExactOut(t *testing.T) {
@@ -69,8 +71,9 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
 
-	shouldPanicWithMsg(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-ROUTER-012] slippage || router.gno__finalizeSwap() || too few received for user (expected minimum: 120000, actual: 99997, swapType: EXACT_OUT)`,
 		func() {
 			amountIn, amountOut := SwapRoute(
 				barPath,     // inputToken
@@ -82,7 +85,6 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 				"0",         // tokenAmountLimit
 			)
 		},
-		"[ROUTER] router.gno__finalizeSwap() || Too few received for user (expected minimum: 120000, actual: 99997, swapType: EXACT_OUT)",
 	)
 
 }

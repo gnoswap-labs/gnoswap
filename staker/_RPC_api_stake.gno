@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v2/consts"
 
@@ -175,7 +174,7 @@ func ApiGetRewards() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewards() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -285,7 +284,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardsByLpTokenId() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -392,7 +391,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardsByAddress() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -451,7 +450,7 @@ func ApiGetStakes() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetStakes() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -515,7 +514,7 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetStakes() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -579,7 +578,7 @@ func ApiGetStakesByAddress(targetAddress string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetStakes() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)

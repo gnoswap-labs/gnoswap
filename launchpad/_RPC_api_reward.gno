@@ -8,6 +8,8 @@ import (
 
 // protocol_fee reward for project's recipient
 func ApiGetProjectRecipientRewardByProjectId(projectId string) string {
+	calculateDepositReward()
+
 	project, exist := projects[projectId]
 	if !exist {
 		return "0"
@@ -17,6 +19,8 @@ func ApiGetProjectRecipientRewardByProjectId(projectId string) string {
 }
 
 func ApiGetProjectRecipientRewardByAddress(address std.Address) string {
+	calculateDepositReward()
+
 	if !address.IsValid() {
 		return "0"
 	}
@@ -26,16 +30,19 @@ func ApiGetProjectRecipientRewardByAddress(address std.Address) string {
 
 // project reward for deposit
 func ApiGetDepositRewardByDepositId(depositId string) uint64 {
+	calculateDepositReward()
+
 	deposit, exist := deposits[depositId]
 	if !exist {
 		return 0
 	}
 
-	calculateDepositReward()
 	return deposit.rewardAmount
 }
 
 func ApiGetDepositRewardByAddress(address std.Address) uint64 {
+	calculateDepositReward()
+
 	if !address.IsValid() {
 		return 0
 	}
@@ -44,8 +51,6 @@ func ApiGetDepositRewardByAddress(address std.Address) uint64 {
 	if !exist {
 		return 0
 	}
-
-	calculateDepositReward()
 
 	totalReward := uint64(0)
 	for _, depositId := range depositIds {

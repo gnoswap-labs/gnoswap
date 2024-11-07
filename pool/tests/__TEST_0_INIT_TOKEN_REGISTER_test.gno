@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/onbloc/foo"
 
@@ -146,11 +147,12 @@ func init() {
 }
 
 func TestGetRegisteredTokens(t *testing.T) {
-	shouldEQ(t, len(GetRegisteredTokens()), 7)
+	uassert.Equal(t, len(GetRegisteredTokens()), 7)
 }
 
 func TestRegisterGRC20Interface(t *testing.T) {
-	shouldPanic(t,
+	uassert.PanicsWithMessage(t,
+		`[GNOSWAP-POOL-001] no permission || token_register.gno__RegisterGRC20Interface() || only register(g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5) can register token, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
 		func() {
 			RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
 		},
@@ -161,17 +163,18 @@ func TestUnregisterGRC20Interface(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
 	std.TestSetRealm(std.NewUserRealm(dummy))
 
-	shouldPanic(t,
+	uassert.PanicsWithMessage(t,
+		`[GNOSWAP-POOL-001] no permission || token_register.gno__UnregisterGRC20Interface() || unauthorized address(g1v36k6mteta047h6lta047h6lta047h6lz7gmv8) to unregister`,
 		func() {
 			UnregisterGRC20Interface("gno.land/r/onbloc/bar")
 		},
 	)
 
-	shouldEQ(t, len(GetRegisteredTokens()), 7)
+	uassert.Equal(t, len(GetRegisteredTokens()), 7)
 
 	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
 	UnregisterGRC20Interface("gno.land/r/onbloc/bar")
-	shouldEQ(t, len(GetRegisteredTokens()), 6)
+	uassert.Equal(t, len(GetRegisteredTokens()), 6)
 
 	// re-register to avoid panic in other tests
 	RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})

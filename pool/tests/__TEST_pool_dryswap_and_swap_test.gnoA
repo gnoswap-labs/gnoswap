@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
@@ -29,7 +31,7 @@ func TestCreatePool(t *testing.T) {
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
-	shouldEQ(t, len(pools), 1)
+	uassert.Equal(t, len(pools), 1)
 }
 
 func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
@@ -62,8 +64,8 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 		"16000",          // amountSpecified
 		consts.MIN_PRICE, // sqrtPriceLimitX96
 	)
-	shouldEQ(t, poolIn, "16000")
-	shouldEQ(t, poolOut, "-5883")
+	uassert.Equal(t, poolIn, "16000")
+	uassert.Equal(t, poolOut, "-5883")
 }
 
 func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
@@ -79,40 +81,6 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 		consts.MIN_PRICE, // sqrtPriceLimitX96
 	)
 
-	shouldEQ(t, poolIn, "43513")
-	shouldEQ(t, poolOut, "-16000")
+	uassert.Equal(t, poolIn, "43513")
+	uassert.Equal(t, poolOut, "-16000")
 }
-
-// func TestDrySwap_ZeroForOneFalse_AmountSpecified_Positive_16000(t *testing.T) {
-// 	// zeroForOne false
-// 	// amountSpecified 16000
-
-// 	poolOut, poolIn, _ := DrySwap(
-// 		fooPath,          // fooPath
-// 		barPath,          // barPath
-// 		fee500,           // fee500
-// 		"_",              // recipient
-// 		false,            // zeroForOne
-// 		"16000",          // amountSpecified
-// 		consts.MAX_PRICE, // sqrtPriceLimitX96
-// 	)
-
-// 	shouldEQ(t, poolOut, "-43468")
-// 	shouldEQ(t, poolIn, "16000")
-// }
-
-// func TestDrySwap_ZeroForOneFalse_AmountSpecified_Negative_16000(t *testing.T) {
-// 	// zeroForOne false
-// 	// amountSpecified -16000
-// 	poolOut, poolIn, _ := DrySwap(
-// 		fooPath,          // fooPath
-// 		barPath,          // barPath
-// 		fee500,           // fee500
-// 		"_",              // recipient
-// 		false,            // zeroForOne
-// 		"-16000",         // amountSpecified
-// 		consts.MAX_PRICE, // sqrtPriceLimitX96
-// 	)
-// 	shouldEQ(t, poolOut, "-16000")
-// 	shouldEQ(t, poolIn, "5888")
-// }

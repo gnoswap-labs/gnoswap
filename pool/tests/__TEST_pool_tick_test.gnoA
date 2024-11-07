@@ -4,12 +4,14 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/v2/gns"
 
 	"gno.land/r/gnoswap/v2/consts"
 
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
 	pl "gno.land/r/gnoswap/v2/pool"
 )
 
@@ -52,8 +54,8 @@ func TestTickTickSpacingToMaxLiquidityPerTick_1(t *testing.T) {
 	var expected string = "1917569901783203986719870431555990"
 	var expectedgetMaxLiquidityPerTick string = "1917569901783203986719870431555990"
 	maxLiquidityPerTick = TickTickSpacingToMaxLiquidityPerTick(LOW)
-	shouldEQ(t, maxLiquidityPerTick.ToString(), expected) // 110.8 bits
-	shouldEQ(t, maxLiquidityPerTick.ToString(), expectedgetMaxLiquidityPerTick)
+	uassert.Equal(t, maxLiquidityPerTick.ToString(), expected) // 110.8 bits
+	uassert.Equal(t, maxLiquidityPerTick.ToString(), expectedgetMaxLiquidityPerTick)
 }
 
 func TestTickTickSpacingToMaxLiquidityPerTick_2(t *testing.T) {
@@ -61,8 +63,8 @@ func TestTickTickSpacingToMaxLiquidityPerTick_2(t *testing.T) {
 	var expected string = "11505743598341114571880798222544994"
 	var expectedgetMaxLiquidityPerTick string = "11505743598341114571880798222544994"
 	maxLiquidityPerTick = TickTickSpacingToMaxLiquidityPerTick(MEDIUM)
-	shouldEQ(t, maxLiquidityPerTick.ToString(), expected) // 113.1 bits
-	shouldEQ(t, maxLiquidityPerTick.ToString(), expectedgetMaxLiquidityPerTick)
+	uassert.Equal(t, maxLiquidityPerTick.ToString(), expected) // 113.1 bits
+	uassert.Equal(t, maxLiquidityPerTick.ToString(), expectedgetMaxLiquidityPerTick)
 }
 
 func TestTickTickSpacingToMaxLiquidityPerTick_3(t *testing.T) {
@@ -70,8 +72,8 @@ func TestTickTickSpacingToMaxLiquidityPerTick_3(t *testing.T) {
 	var expected string = "38350317471085141830651933667504588"
 	var expectedgetMaxLiquidityPerTick string = "38350317471085141830651933667504588"
 	maxLiquidityPerTick = TickTickSpacingToMaxLiquidityPerTick(HIGH)
-	shouldEQ(t, maxLiquidityPerTick.ToString(), expected) // 114.7 bits
-	shouldEQ(t, maxLiquidityPerTick.ToString(), expectedgetMaxLiquidityPerTick)
+	uassert.Equal(t, maxLiquidityPerTick.ToString(), expected) // 114.7 bits
+	uassert.Equal(t, maxLiquidityPerTick.ToString(), expectedgetMaxLiquidityPerTick)
 }
 
 func TestTickTickSpacingToMaxLiquidityPerTick_4(t *testing.T) {
@@ -80,8 +82,8 @@ func TestTickTickSpacingToMaxLiquidityPerTick_4(t *testing.T) {
 	var expected *u256.Uint = u256.MustFromDecimal(consts.MAX_UINT128)
 	expected.Div(expected, u256.NewUint(3))
 	maxLiquidityPerTick = TickTickSpacingToMaxLiquidityPerTick(887272)
-	shouldEQ(t, maxLiquidityPerTick.ToString(), expected.ToString())
-	shouldEQ(t, maxLiquidityPerTick.ToString(), expectedgetMaxLiquidityPerTick)
+	uassert.Equal(t, maxLiquidityPerTick.ToString(), expected.ToString())
+	uassert.Equal(t, maxLiquidityPerTick.ToString(), expectedgetMaxLiquidityPerTick)
 }
 
 func TestTickTickSpacingToMaxLiquidityPerTick_5(t *testing.T) {
@@ -90,8 +92,8 @@ func TestTickTickSpacingToMaxLiquidityPerTick_5(t *testing.T) {
 	var expectedgetMaxLiquidityPerTick string = "441351967472034323558203122479595605"
 	var expected string = "441351967472034323558203122479595605"
 	maxLiquidityPerTick = TickTickSpacingToMaxLiquidityPerTick(2302)
-	shouldEQ(t, maxLiquidityPerTick.ToString(), expected)
-	shouldEQ(t, maxLiquidityPerTick.ToString(), expectedgetMaxLiquidityPerTick)
+	uassert.Equal(t, maxLiquidityPerTick.ToString(), expected)
+	uassert.Equal(t, maxLiquidityPerTick.ToString(), expectedgetMaxLiquidityPerTick)
 }
 
 func TestTickGetFeeGrowthInside_1(t *testing.T) {
@@ -112,8 +114,8 @@ func TestTickGetFeeGrowthInside_1(t *testing.T) {
 
 	feeGrowthInside0X128, feeGrowthInside1X128 = pool.TickGetFeeGrowthInside(tickLower, tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128)
 
-	shouldEQ(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128)
-	shouldEQ(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128)
+	uassert.Equal(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128)
+	uassert.Equal(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128)
 }
 
 func TestTickGetFeeGrowthInside_2(t *testing.T) {
@@ -134,8 +136,8 @@ func TestTickGetFeeGrowthInside_2(t *testing.T) {
 
 	feeGrowthInside0X128, feeGrowthInside1X128 = pool.TickGetFeeGrowthInside(tickLower, tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128)
 
-	shouldEQ(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128)
-	shouldEQ(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128)
+	uassert.Equal(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128)
+	uassert.Equal(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128)
 }
 
 func TestTickGetFeeGrowthInside_3(t *testing.T) {
@@ -156,8 +158,8 @@ func TestTickGetFeeGrowthInside_3(t *testing.T) {
 
 	feeGrowthInside0X128, feeGrowthInside1X128 = pool.TickGetFeeGrowthInside(tickLower, tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128)
 
-	shouldEQ(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128)
-	shouldEQ(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128)
+	uassert.Equal(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128)
+	uassert.Equal(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128)
 }
 
 func TestTickGetFeeGrowthInside_4(t *testing.T) {
@@ -189,8 +191,8 @@ func TestTickGetFeeGrowthInside_4(t *testing.T) {
 
 	feeGrowthInside0X128, feeGrowthInside1X128 = pool.TickGetFeeGrowthInside(tickLower, tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128)
 
-	shouldEQ(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128)
-	shouldEQ(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128)
+	uassert.Equal(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128)
+	uassert.Equal(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128)
 }
 
 func TestTickGetFeeGrowthInside_5(t *testing.T) {
@@ -225,8 +227,8 @@ func TestTickGetFeeGrowthInside_5(t *testing.T) {
 
 	feeGrowthInside0X128, feeGrowthInside1X128 = pool.TickGetFeeGrowthInside(tickLower, tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128)
 
-	shouldEQ(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128) // 11
-	shouldEQ(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128) // 9
+	uassert.Equal(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128) // 11
+	uassert.Equal(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128) // 9
 }
 
 func TestTickGetFeeGrowthInside_6(t *testing.T) {
@@ -270,8 +272,8 @@ func TestTickGetFeeGrowthInside_6(t *testing.T) {
 
 	feeGrowthInside0X128, feeGrowthInside1X128 = pool.TickGetFeeGrowthInside(tickLower, tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128)
 
-	shouldEQ(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128)
-	shouldEQ(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128)
+	uassert.Equal(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128)
+	uassert.Equal(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128)
 }
 
 func TestTickGetFeeGrowthInside_7(t *testing.T) {
@@ -319,8 +321,8 @@ func TestTickGetFeeGrowthInside_7(t *testing.T) {
 
 	feeGrowthInside0X128, feeGrowthInside1X128 = pool.TickGetFeeGrowthInside(tickLower, tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128)
 
-	shouldEQ(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128)
-	shouldEQ(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128)
+	uassert.Equal(t, feeGrowthInside0X128.ToString(), expectedfeeGrowthInside0X128)
+	uassert.Equal(t, feeGrowthInside1X128.ToString(), expectedfeeGrowthInside1X128)
 }
 
 func TestTickUpdate_1(t *testing.T) {
@@ -328,7 +330,7 @@ func TestTickUpdate_1(t *testing.T) {
 	var token1 string = "gno.land/r/onbloc/foo2"
 	DeployPool(token0, token1)
 	pool := GetPool(token0, token1, 500)
-	// flips from zero to nonzero
+	// flips from zero to non zero
 
 	var flipped bool
 
@@ -340,8 +342,8 @@ func TestTickUpdate_1(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.NewUint(3)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
-	shouldEQ(t, flipped, true)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	uassert.Equal(t, flipped, true)
 }
 
 func TestTickUpdate_2(t *testing.T) {
@@ -361,11 +363,11 @@ func TestTickUpdate_2(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.NewUint(3)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
-	shouldEQ(t, flipped, true)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	uassert.Equal(t, flipped, true)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
-	shouldEQ(t, flipped, false)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	uassert.Equal(t, flipped, false)
 }
 
 func TestTickUpdate_3(t *testing.T) {
@@ -386,13 +388,13 @@ func TestTickUpdate_3(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.NewUint(3)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
-	shouldEQ(t, flipped, true)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	uassert.Equal(t, flipped, true)
 
 	liquidityDelta = i256.MustFromDecimal("-1")
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
-	shouldEQ(t, flipped, true)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	uassert.Equal(t, flipped, true)
 }
 
 func TestTickUpdate_4(t *testing.T) {
@@ -413,13 +415,13 @@ func TestTickUpdate_4(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.NewUint(3)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
-	shouldEQ(t, flipped, true)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	uassert.Equal(t, flipped, true)
 
 	liquidityDelta = i256.MustFromDecimal("-1")
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
-	shouldEQ(t, flipped, false)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	uassert.Equal(t, flipped, false)
 }
 
 func TestTickUpdate_5(t *testing.T) {
@@ -440,18 +442,18 @@ func TestTickUpdate_5(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.NewUint(3)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	liquidityDelta = i256.MustFromDecimal("1")
 	upper = true
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
-	shouldPanicWithMsg(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-009] liquidity calculation || tick.gno__tickUpdate() || liquidityGrossAfter(4) overflows maxLiquidity(3)`,
 		func() {
-			pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+			pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 		},
-		"tick panic #1",
 	)
 }
 
@@ -476,22 +478,22 @@ func TestTickUpdate_6(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.NewUint(10)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	liquidityDelta = i256.MustFromDecimal("1")
 	upper = true
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	liquidityDelta = i256.MustFromDecimal("3")
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	liquidityDelta = i256.MustFromDecimal("1")
 	upper = false
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	_, _, liquidityGross, liquidityNet, _, _, _, _ = pool.GetTicks(0)
-	shouldEQ(t, liquidityGross.ToString(), "7")
-	shouldEQ(t, liquidityNet.ToString(), "-1")
+	uassert.Equal(t, liquidityGross.ToString(), "7")
+	uassert.Equal(t, liquidityNet.ToString(), "-1")
 }
 
 func TestTickUpdate_7(t *testing.T) {
@@ -514,11 +516,12 @@ func TestTickUpdate_7(t *testing.T) {
 	var feeGrowthGlobal1X128 *u256.Uint = u256.Zero()
 	var upper bool = false
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
-	shouldPanic(
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-009] liquidity calculation || tick.gno__tickUpdate() || liquidityGrossAfter(1917569901783203986719870431555992) overflows maxLiquidity(1917569901783203986719870431555990)`,
 		func() {
-			pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
+			pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
 		},
 	)
 }
@@ -550,15 +553,15 @@ func TestTickUpdate_8(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.MustFromDecimal(consts.MAX_UINT128)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, liquidityNet, secondsPerLiquidityOutsideX128, tickCumulativeOutside, secondsOutside, initialized = pool.GetTicks(1)
 
-	shouldEQ(t, feeGrowthOutside0X128.ToString(), "1")
-	shouldEQ(t, feeGrowthOutside1X128.ToString(), "2")
-	//shouldEQ(t, secondsPerLiquidityOutsideX128.ToString(), "3")
-	//shouldEQ(t, tickCumulativeOutside, 4)
-	//shouldEQ(t, secondsOutside, 5)
-	shouldEQ(t, initialized, true)
+	uassert.Equal(t, feeGrowthOutside0X128.ToString(), "1")
+	uassert.Equal(t, feeGrowthOutside1X128.ToString(), "2")
+	//uassert.Equal(t, secondsPerLiquidityOutsideX128.ToString(), "3")
+	//uassert.Equal(t, tickCumulativeOutside, 4)
+	//uassert.Equal(t, secondsOutside, 5)
+	uassert.Equal(t, initialized, true)
 }
 
 func TestTickUpdate_9(t *testing.T) {
@@ -588,17 +591,17 @@ func TestTickUpdate_9(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.MustFromDecimal(consts.MAX_UINT128)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	feeGrowthGlobal0X128 = u256.MustFromDecimal("6")
 	feeGrowthGlobal1X128 = u256.MustFromDecimal("7")
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, liquidityNet, secondsPerLiquidityOutsideX128, tickCumulativeOutside, secondsOutside, initialized = pool.GetTicks(1)
 
-	shouldEQ(t, feeGrowthOutside0X128.ToString(), "1")
-	shouldEQ(t, feeGrowthOutside1X128.ToString(), "2")
-	shouldEQ(t, initialized, true)
+	uassert.Equal(t, feeGrowthOutside0X128.ToString(), "1")
+	uassert.Equal(t, feeGrowthOutside1X128.ToString(), "2")
+	uassert.Equal(t, initialized, true)
 }
 
 func TestTickUpdate_10(t *testing.T) {
@@ -628,16 +631,16 @@ func TestTickUpdate_10(t *testing.T) {
 	var upper bool = false
 	var maxLiquidity *u256.Uint = u256.MustFromDecimal(consts.MAX_UINT128)
 
-	flipped = pool.TickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
+	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, liquidityNet, secondsPerLiquidityOutsideX128, tickCumulativeOutside, secondsOutside, initialized = pool.GetTicks(2)
 
-	shouldEQ(t, feeGrowthOutside0X128.ToString(), "0")
-	shouldEQ(t, feeGrowthOutside1X128.ToString(), "0")
-	shouldEQ(t, secondsPerLiquidityOutsideX128.ToString(), "0")
-	shouldEQ(t, tickCumulativeOutside, int64(0))
-	shouldEQ(t, secondsOutside, uint32(0))
-	shouldEQ(t, initialized, true)
+	uassert.Equal(t, feeGrowthOutside0X128.ToString(), "0")
+	uassert.Equal(t, feeGrowthOutside1X128.ToString(), "0")
+	uassert.Equal(t, secondsPerLiquidityOutsideX128.ToString(), "0")
+	uassert.Equal(t, tickCumulativeOutside, int64(0))
+	uassert.Equal(t, secondsOutside, uint32(0))
+	uassert.Equal(t, initialized, true)
 }
 
 // this test for veridating delete(pool.ticks, tick)
@@ -672,12 +675,12 @@ func TestClear_1(t *testing.T) {
 
 	pool.Clear(2)
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, liquidityNet, secondsPerLiquidityOutsideX128, tickCumulativeOutside, secondsOutside, initialized = pool.GetTicks(2)
-	shouldEQ(t, feeGrowthOutside0X128.ToString(), "0")
-	shouldEQ(t, feeGrowthOutside1X128.ToString(), "0")
-	shouldEQ(t, secondsPerLiquidityOutsideX128.ToString(), "0")
-	shouldEQ(t, tickCumulativeOutside, int64(0))
-	shouldEQ(t, secondsOutside, uint32(0))
-	shouldEQ(t, initialized, false)
+	uassert.Equal(t, feeGrowthOutside0X128.ToString(), "0")
+	uassert.Equal(t, feeGrowthOutside1X128.ToString(), "0")
+	uassert.Equal(t, secondsPerLiquidityOutsideX128.ToString(), "0")
+	uassert.Equal(t, tickCumulativeOutside, int64(0))
+	uassert.Equal(t, secondsOutside, uint32(0))
+	uassert.Equal(t, initialized, false)
 }
 
 func TestTickCross_1(t *testing.T) {
@@ -710,11 +713,11 @@ func TestTickCross_1(t *testing.T) {
 	)
 	pool.TickCross(2, u256.NewUint(7), u256.NewUint(9))
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, liquidityNet, secondsPerLiquidityOutsideX128, tickCumulativeOutside, secondsOutside, initialized = pool.GetTicks(2)
-	shouldEQ(t, feeGrowthOutside0X128.ToString(), "6")
-	shouldEQ(t, feeGrowthOutside1X128.ToString(), "7")
-	// shouldEQ(t, secondsPerLiquidityOutsideX128.ToString(), "3")
-	// shouldEQ(t, tickCumulativeOutside, 9)
-	// shouldEQ(t, secondsOutside, 3)
+	uassert.Equal(t, feeGrowthOutside0X128.ToString(), "6")
+	uassert.Equal(t, feeGrowthOutside1X128.ToString(), "7")
+	// uassert.Equal(t, secondsPerLiquidityOutsideX128.ToString(), "3")
+	// uassert.Equal(t, tickCumulativeOutside, 9)
+	// uassert.Equal(t, secondsOutside, 3)
 }
 
 func TestTickCross_2(t *testing.T) {
@@ -748,11 +751,11 @@ func TestTickCross_2(t *testing.T) {
 	pool.TickCross(2, u256.NewUint(7), u256.NewUint(9))
 	pool.TickCross(2, u256.NewUint(7), u256.NewUint(9))
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, liquidityNet, secondsPerLiquidityOutsideX128, tickCumulativeOutside, secondsOutside, initialized = pool.GetTicks(2)
-	shouldEQ(t, feeGrowthOutside0X128.ToString(), "1")
-	shouldEQ(t, feeGrowthOutside1X128.ToString(), "2")
-	// shouldEQ(t, secondsPerLiquidityOutsideX128.ToString(), "3")
-	// shouldEQ(t, tickCumulativeOutside, 9)
-	// shouldEQ(t, secondsOutside, 3)
+	uassert.Equal(t, feeGrowthOutside0X128.ToString(), "1")
+	uassert.Equal(t, feeGrowthOutside1X128.ToString(), "2")
+	// uassert.Equal(t, secondsPerLiquidityOutsideX128.ToString(), "3")
+	// uassert.Equal(t, tickCumulativeOutside, 9)
+	// uassert.Equal(t, secondsOutside, 3)
 }
 
 // ============ For Testing ============

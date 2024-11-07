@@ -18,7 +18,10 @@ func GetHalt() bool {
 
 func IsHalted() {
 	if halted {
-		panic("[COMMON] halt.gno__IsHalted() || gnoswap halted")
+		panic(addDetailToError(
+			errHalted,
+			"halt.gno__IsHalted() || gnoswap halted",
+		))
 	}
 }
 
@@ -27,13 +30,14 @@ func IsHalted() {
 func SetHaltByAdmin(halt bool) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic(
+		panic(addDetailToError(
+			errNoPermission,
 			ufmt.Sprintf(
-				"[COMMON] halt.gno__SetHaltByAdmin() || only admin(%s) can set halt, called from %s",
+				"halt.gno__SetHaltByAdmin() || only admin(%s) can set halt, called from %s",
 				consts.ADMIN,
 				caller,
 			),
-		)
+		))
 	}
 
 	setHalt(halt)
@@ -61,13 +65,14 @@ func SetHaltByAdmin(halt bool) {
 func SetHalt(halt bool) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(
+		panic(addDetailToError(
+			errNoPermission,
 			ufmt.Sprintf(
-				"[COMMON] halt.gno__SetHalt() || only governance(%s) can set halt, called from %s",
+				"halt.gno__SetHalt() || only governance(%s) can set halt, called from %s",
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
-		)
+		))
 	}
 
 	setHalt(halt)

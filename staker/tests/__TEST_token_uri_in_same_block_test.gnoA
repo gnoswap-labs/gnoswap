@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v2/consts"
@@ -29,7 +30,7 @@ func TestMintPositionAndCheckURI(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
-	SetPoolTier(poolPath, 1)
+	SetPoolTierByAdmin(poolPath, 1)
 
 	tokenId1, _, _, _, _ := MintAndStake(
 		barPath,
@@ -59,10 +60,10 @@ func TestMintPositionAndCheckURI(t *testing.T) {
 
 	tid1 := grc721.TokenID(ufmt.Sprintf("%d", tokenId1))
 	tid2 := grc721.TokenID(ufmt.Sprintf("%d", tokenId2))
-	shouldEQ(t, bool(tid1 != tid2), true)
+	uassert.True(t, tid1 != tid2)
 
-	tokenURI1 := gnft.GetTokenURI(tid1)
-	tokenURI2 := gnft.GetTokenURI(tid2)
+	tokenURI1 := gnft.TokenURI(tid1)
+	tokenURI2 := gnft.TokenURI(tid2)
 
-	shouldEQ(t, bool(tokenURI1 != tokenURI2), true)
+	uassert.True(t, tokenURI1 != tokenURI2)
 }

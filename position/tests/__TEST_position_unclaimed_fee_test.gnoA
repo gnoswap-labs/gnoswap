@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/consts"
 
 	pl "gno.land/r/gnoswap/v2/pool"
@@ -44,10 +46,10 @@ func TestMintPosition01InRange(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, getNextId(), uint64(2))
-	shouldEQ(t, amount0, "18394892")
-	shouldEQ(t, amount1, "50000000")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, getNextId(), uint64(2))
+	uassert.Equal(t, amount0, "18394892")
+	uassert.Equal(t, amount1, "50000000")
 }
 
 func TestMintPosition02LowerRange(t *testing.T) {
@@ -70,10 +72,10 @@ func TestMintPosition02LowerRange(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, tokenId, uint64(2))
-	shouldEQ(t, getNextId(), uint64(3))
-	shouldEQ(t, amount0, "0")
-	shouldEQ(t, amount1, "50000000")
+	uassert.Equal(t, tokenId, uint64(2))
+	uassert.Equal(t, getNextId(), uint64(3))
+	uassert.Equal(t, amount0, "0")
+	uassert.Equal(t, amount1, "50000000")
 }
 
 func TestMintPosition03UpperRange(t *testing.T) {
@@ -96,27 +98,27 @@ func TestMintPosition03UpperRange(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, tokenId, uint64(3))
-	shouldEQ(t, getNextId(), uint64(4))
-	shouldEQ(t, amount0, "50000000")
-	shouldEQ(t, amount1, "0")
+	uassert.Equal(t, tokenId, uint64(3))
+	uassert.Equal(t, getNextId(), uint64(4))
+	uassert.Equal(t, amount0, "50000000")
+	uassert.Equal(t, amount1, "0")
 }
 
 func TestCollectFeeBeforeSwap(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, fee0, "0")
-	shouldEQ(t, fee1, "0")
-	shouldEQ(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, fee0, "0")
+	uassert.Equal(t, fee1, "0")
+	uassert.Equal(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 }
 
 func TestUnclaimedFee0(t *testing.T) {
 	amount0, amount1 := unclaimedFee(1)
 
-	shouldEQ(t, amount0.ToString(), "0")
-	shouldEQ(t, amount1.ToString(), "0")
+	uassert.Equal(t, amount0.ToString(), "0")
+	uassert.Equal(t, amount1.ToString(), "0")
 }
 
 func TestSwap1(t *testing.T) {
@@ -135,15 +137,15 @@ func TestSwap1(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, amount0, "1234567")
-	shouldEQ(t, amount1, "-3332779")
+	uassert.Equal(t, amount0, "1234567")
+	uassert.Equal(t, amount1, "-3332779")
 }
 
 func TestUnclaimedFee1(t *testing.T) {
 	amount0, amount1 := unclaimedFee(1)
 
-	shouldEQ(t, amount0.ToString(), "617")
-	shouldEQ(t, amount1.ToString(), "0")
+	uassert.Equal(t, amount0.ToString(), "617")
+	uassert.Equal(t, amount1.ToString(), "0")
 }
 
 func TestSwap2(t *testing.T) {
@@ -162,15 +164,15 @@ func TestSwap2(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, amount0, "20000000")
-	shouldEQ(t, amount1, "-48647018")
+	uassert.Equal(t, amount0, "20000000")
+	uassert.Equal(t, amount1, "-48647018")
 }
 
 func TestUnclaimedFee2(t *testing.T) {
 	amount0, amount1 := unclaimedFee(1)
 
-	shouldEQ(t, amount0.ToString(), "10170")
-	shouldEQ(t, amount1.ToString(), "0")
+	uassert.Equal(t, amount0.ToString(), "10170")
+	uassert.Equal(t, amount1.ToString(), "0")
 }
 
 func TestSwap3(t *testing.T) {
@@ -189,15 +191,15 @@ func TestSwap3(t *testing.T) {
 		admin,
 	)
 
-	shouldEQ(t, amount0, "-8692001")
-	shouldEQ(t, amount1, "20000000")
+	uassert.Equal(t, amount0, "-8692001")
+	uassert.Equal(t, amount1, "20000000")
 }
 
 func TestUnclaimedFee3(t *testing.T) {
 	amount0, amount1 := unclaimedFee(1)
 
-	shouldEQ(t, amount0.ToString(), "10170")
-	shouldEQ(t, amount1.ToString(), "9009")
+	uassert.Equal(t, amount0.ToString(), "10170")
+	uassert.Equal(t, amount1.ToString(), "9009")
 }
 
 func TestCollectFeeAfterSwap(t *testing.T) {
@@ -207,26 +209,26 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 
 	tokenId, fee0, fee1, poolPath, _, _ := CollectFee(1, false)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, fee0, "10069") // this is input token
-	shouldEQ(t, fee1, "8919")  // this it output token
-	shouldEQ(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, fee0, "10069") // this is input token
+	uassert.Equal(t, fee1, "8919")  // this it output token
+	uassert.Equal(t, poolPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 }
 
 func TestDecreaseLiquidityUpperPosition(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
 	ownerOfPosition := gnft.OwnerOf(tid(3))
-	shouldEQ(t, ownerOfPosition, admin)
+	uassert.Equal(t, ownerOfPosition, admin)
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(uint64(3), 100, "0", "0", max_timeout, false)
 
-	shouldEQ(t, tokenId, uint64(3))
-	shouldEQ(t, amount0, "49999999")
-	shouldEQ(t, amount1, "0")
+	uassert.Equal(t, tokenId, uint64(3))
+	uassert.Equal(t, amount0, "49999999")
+	uassert.Equal(t, amount1, "0")
 
 	ownerOfPosition = gnft.OwnerOf(tid(3))
-	shouldEQ(t, ownerOfPosition, admin)
+	uassert.Equal(t, ownerOfPosition, admin)
 }
 
 func TestSubIn256(t *testing.T) {

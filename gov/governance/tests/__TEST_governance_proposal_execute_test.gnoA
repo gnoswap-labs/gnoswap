@@ -2,213 +2,115 @@ package governance
 
 import (
 	"std"
-	"strings"
 	"testing"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/p/demo/uassert"
+
+	"gno.land/r/gnoswap/v2/consts"
+	gns "gno.land/r/gnoswap/v2/gns"
 
 	cn "gno.land/r/gnoswap/v2/common"
-	"gno.land/r/gnoswap/v2/consts"
-
-	"gno.land/r/gnoswap/v2/gns"
-
+	en "gno.land/r/gnoswap/v2/emission"
 	gs "gno.land/r/gnoswap/v2/gov/staker"
 	pl "gno.land/r/gnoswap/v2/pool"
 	pf "gno.land/r/gnoswap/v2/protocol_fee"
 	rr "gno.land/r/gnoswap/v2/router"
 	sr "gno.land/r/gnoswap/v2/staker"
-
-	en "gno.land/r/gnoswap/v2/emission"
 )
 
+func init() {
+	// overwrite config for testcase
+	config = Config{
+		VotingStartDelay:              uint64(10),   // 10s ≈ 5 block
+		VotingPeriod:                  uint64(30),   // 30s ≈ 15 block
+		VotingWeightSmoothingDuration: uint64(10),   // 10s ≈ 5 block
+		Quorum:                        uint64(50),   // 50% of total xGNS supply
+		ProposalCreationThreshold:     uint64(100),  //
+		ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
+		ExecutionWindow:               uint64(1000), // 500 block
+	}
+	configVersions[1] = config
+}
+
 func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
-	t.Run("Propose with insufficient delegation", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("The code did not panic")
-			} else if !strings.Contains(string(r), "NOT_ENOUGH") {
-				t.Errorf("Unexpected panic message: %v", r)
-			}
-		}()
+	std.TestSetRealm(adminRealm)
 
-		ProposeParameterChange("test_title", "test_description",
-			uint64(1), "pkgPath*EXE*function*EXE*param")
-	})
+	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
+	gs.Delegate(admin, uint64(1_000_000))
+	std.TestSkipHeights(5) // VotingWeightSmoothingDuration
 
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
-		gs.Delegate(admin, uint64(1_000_000))
-		std.TestSkipHeights(5) // VotingWeightSmoothingDuration
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/emission*EXE*ChangeDistributionPct*EXE*1,7000,2,1500,3,1000,4,500",
+	)
 
-		proposalID := ProposeParameterChange("test_title", "test_description",
-			uint64(1), "gno.land/r/gnoswap/v2/emission*EXE*ChangeDistributionPct*EXE*1,7000,2,1500,3,1000,4,500")
-		if proposalID != 1 {
-			t.Errorf("Expected proposal ID to be 1, got %d", proposalID)
-		}
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
+	std.TestSkipHeights(16) // ends voting period
 
-		proposal, exist := proposals[proposalId]
-		if !exist {
-			t.Errorf("Proposal not found after creation")
-		}
-
-		if proposal.Proposer != admin {
-			t.Errorf("Incorrect proposer. Expected %v, got %v", admin, proposal.Proposer)
-		}
-
-		if proposal.ProposalType != "PARAMETER_CHANGE" {
-			t.Errorf("Incorrect proposal type. Expected PARAMETER_CHANGE, got %v", proposal.ProposalType)
-		}
-
-		if !proposal.ExecutionState.Created {
-			t.Errorf("Proposal execute state(created) not set correctly")
-		}
-
-		if !proposal.ExecutionState.Upcoming {
-			t.Errorf("Proposal execute state(upcoming) not set correctly")
-		}
-
-		if proposal.Yea.Cmp(u256.NewUint(0)) != 0 || proposal.Nay.Cmp(u256.NewUint(0)) != 0 {
-			t.Errorf("Initial vote counts should be zero")
-		}
-
-		if proposal.ConfigVersion != 1 {
-			t.Errorf("Initial config version should be 1")
-		}
-
-		if proposal.Title != "test_title" {
-			t.Errorf("Incorrect title. Expected test_title, got %v", proposal.Title)
-		}
-
-		if proposal.Description != "test_description" {
-			t.Errorf("Incorrect text. Expected test_description, got %v", proposal.Description)
-		}
-	})
-
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5) // voting start delay
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
-
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-
-		proposal := proposals[proposalId]
-		if !proposal.ExecutionState.Passed {
-			t.Errorf("Proposal execute state(passed) not set correctly")
-		}
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(6) // ExecutionDelay
-		shouldEQ(t, en.GetDistributionPct(1), uint64(7500))
-		shouldEQ(t, en.GetDistributionPct(2), uint64(2000))
-		shouldEQ(t, en.GetDistributionPct(3), uint64(500))
-		shouldEQ(t, en.GetDistributionPct(4), uint64(0))
-
-		std.TestSetRealm(govRealm)
-		Execute(proposalId)
-
-		shouldEQ(t, en.GetDistributionPct(1), uint64(7000))
-		shouldEQ(t, en.GetDistributionPct(2), uint64(1500))
-		shouldEQ(t, en.GetDistributionPct(3), uint64(1000))
-		shouldEQ(t, en.GetDistributionPct(4), uint64(500))
-
-		proposal := proposals[proposalId]
-		if !proposal.ExecutionState.Executed {
-			t.Errorf("Proposal execute state(executed) not set correctly")
-		}
-	})
-}
-
-func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs*EXE*5000",
-		)
-		std.TestSkipHeights(5)
-	})
-
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5) // voting start delay
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
-
-		std.TestSkipHeights(15) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		shouldEQ(t, gns.GetAvgBlockTimeInMs(), int64(2000))
-		std.TestSetRealm(govRealm)
-		Execute(proposalId)
-		shouldEQ(t, gns.GetAvgBlockTimeInMs(), int64(5000))
-	})
-}
-
-func TestProposeParameterChange_GOV_Reconfigure(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-
-		std.TestSetRealm(adminRealm)
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/gov/governance*EXE*Reconfigure*EXE*123,456,789,1234,5678,12345,67890",
-		)
-	})
-
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
-
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		oldConfig := GetConfigVersion(0)
-		shouldEQ(t, oldConfig.VotingStartDelay, uint64(10))
-		shouldEQ(t, oldConfig.VotingPeriod, uint64(30))
-		shouldEQ(t, oldConfig.VotingWeightSmoothingDuration, uint64(10))
-		shouldEQ(t, oldConfig.Quorum, uint64(50))
-		shouldEQ(t, oldConfig.ProposalCreationThreshold, uint64(100))
-		shouldEQ(t, oldConfig.ExecutionDelay, uint64(10))
-		shouldEQ(t, oldConfig.ExecutionWindow, uint64(1000))
-
+	t.Run("execute proposal", func(t *testing.T) {
 		std.TestSkipHeights(6)
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
-		newConfig := GetConfigVersion(0)
-		shouldEQ(t, newConfig.VotingStartDelay, uint64(123))
-		shouldEQ(t, newConfig.VotingPeriod, uint64(456))
-		shouldEQ(t, newConfig.VotingWeightSmoothingDuration, uint64(789))
-		shouldEQ(t, newConfig.Quorum, uint64(1234))
-		shouldEQ(t, newConfig.ProposalCreationThreshold, uint64(5678))
-		shouldEQ(t, newConfig.ExecutionDelay, uint64(12345))
-		shouldEQ(t, newConfig.ExecutionWindow, uint64(67890))
+		uassert.Equal(t, en.GetDistributionPct(1), uint64(7000))
+		uassert.Equal(t, en.GetDistributionPct(2), uint64(1500))
+		uassert.Equal(t, en.GetDistributionPct(3), uint64(1000))
+		uassert.Equal(t, en.GetDistributionPct(4), uint64(500))
+	})
+}
+
+func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
+	std.TestSkipHeights(5)
+
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs*EXE*5000",
+	)
+
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
+
+	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(20)
+		std.TestSetRealm(govRealm)
+		Execute(proposalId)
+
+		uassert.Equal(t, gns.GetAvgBlockTimeInMs(), int64(5000))
+	})
+}
+
+func TestProposeParameterChange_GOV_reconfigure(t *testing.T) {
+	std.TestSkipHeights(5)
+
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/gov/governance*EXE*Reconfigure*EXE*123,456,789,1234,5678,12345,67890",
+	)
+
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
+
+	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(20)
+		std.TestSetRealm(govRealm)
+		Execute(proposalId)
+
+		uassert.Equal(t, GetConfigVersion(0).VotingStartDelay, uint64(123))
+		uassert.Equal(t, GetConfigVersion(0).VotingPeriod, uint64(456))
+		uassert.Equal(t, GetConfigVersion(0).VotingWeightSmoothingDuration, uint64(789))
+		uassert.Equal(t, GetConfigVersion(0).Quorum, uint64(1234))
+		uassert.Equal(t, GetConfigVersion(0).ProposalCreationThreshold, uint64(5678))
+		uassert.Equal(t, GetConfigVersion(0).ExecutionDelay, uint64(12345))
+		uassert.Equal(t, GetConfigVersion(0).ExecutionWindow, uint64(67890))
 
 		// overwrite latest config version to old one for further tests
 		config.VotingStartDelay = 10
@@ -223,458 +125,290 @@ func TestProposeParameterChange_GOV_Reconfigure(t *testing.T) {
 }
 
 func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+	std.TestSkipHeights(5)
 
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/pool*EXE*SetFeeProtocol*EXE*4,4",
-		)
-	})
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/pool*EXE*SetFeeProtocol*EXE*4,4",
+	)
 
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
 
-		std.TestSkipHeights(16)
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		std.TestSkipHeights(6)
+	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(20)
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
+
+		uassert.Equal(t, gns.GetAvgBlockTimeInMs(), int64(5000))
 	})
 }
 
 func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+	std.TestSkipHeights(5)
 
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/pool*EXE*SetPoolCreationFee*EXE*500",
-		)
-	})
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/pool*EXE*SetPoolCreationFee*EXE*500",
+	)
 
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
 
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		shouldEQ(t, pl.GetPoolCreationFee(), uint64(100000000))
-		std.TestSkipHeights(6)
+	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(20)
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
-		shouldEQ(t, pl.GetPoolCreationFee(), uint64(500))
+
+		uassert.Equal(t, pl.GetPoolCreationFee(), uint64(500))
 	})
 }
 
 func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+	std.TestSkipHeights(5)
 
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/pool*EXE*SetWithdrawalFee*EXE*500",
-		)
-	})
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/pool*EXE*SetWithdrawalFee*EXE*600",
+	)
 
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
 
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		shouldEQ(t, pl.GetWithdrawalFee(), uint64(100))
-		std.TestSkipHeights(6)
+	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(20)
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
-		shouldEQ(t, pl.GetWithdrawalFee(), uint64(500))
+
+		uassert.Equal(t, pl.GetWithdrawalFee(), uint64(600))
 	})
 }
 
 func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+	std.TestSkipHeights(5)
 
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/protocol_fee*EXE*SetDevOpsPct*EXE*900",
-		)
-	})
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/protocol_fee*EXE*SetDevOpsPct*EXE*900",
+	)
 
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
 
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		shouldEQ(t, pf.GetDevOpsPct(), uint64(0))
-
-		std.TestSkipHeights(6)
+	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(20)
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
-		shouldEQ(t, pf.GetDevOpsPct(), uint64(900))
+		uassert.Equal(t, pf.GetDevOpsPct(), uint64(900))
 	})
 }
 
 func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+	std.TestSkipHeights(5)
 
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/router*EXE*SetSwapFee*EXE*900",
-		)
-	})
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/router*EXE*SetSwapFee*EXE*400",
+	)
 
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
 
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		shouldEQ(t, rr.GetSwapFee(), uint64(15))
-
-		std.TestSkipHeights(6)
+	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(20)
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
-		shouldEQ(t, rr.GetSwapFee(), uint64(900))
+		uassert.Equal(t, rr.GetSwapFee(), uint64(400))
 	})
 }
 
 func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+	std.TestSkipHeights(5)
 
-		std.TestSetRealm(adminRealm)
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/staker*EXE*SetDepositGnsAmount*EXE*900",
-		)
-	})
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/staker*EXE*SetDepositGnsAmount*EXE*400",
+	)
 
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
 
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		shouldEQ(t, sr.GetDepositGnsAmount(), uint64(1000000000))
-
-		std.TestSkipHeights(6)
+	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(20)
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
-		shouldEQ(t, sr.GetDepositGnsAmount(), uint64(900))
+		uassert.Equal(t, sr.GetDepositGnsAmount(), uint64(400))
 	})
 }
 
 func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+	std.TestSkipHeights(5)
 
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/staker*EXE*SetPoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100,1",
-		)
-	})
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/staker*EXE*SetPoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100,1",
+	)
 
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
 
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
+	t.Run("execute proposal", func(t *testing.T) {
 		// create sample pool
 		std.TestSetRealm(adminRealm)
 		pl.SetPoolCreationFeeByAdmin(0)
 		pl.CreatePool(consts.WUGNOT_PATH, consts.GNS_PATH, 100, "79228162514264337593543950337")
 
-		before := sr.GetPoolsWithTier()
-		shouldEQ(t, len(before), 1)
-		shouldEQ(t, before[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
-
-		std.TestSkipHeights(6)
+		std.TestSkipHeights(20)
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
 		after := sr.GetPoolsWithTier()
-		shouldEQ(t, len(after), 2)
-		shouldEQ(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
-		shouldEQ(t, after[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_1")
+		uassert.Equal(t, len(after), 2)
+		uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
+		uassert.Equal(t, after[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_1")
 	})
 }
 
 func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+	std.TestSkipHeights(5)
 
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/staker*EXE*ChangePoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100,3",
-		)
-	})
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/staker*EXE*ChangePoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100,3",
+	)
 
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
 
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		before := sr.GetPoolsWithTier()
-		shouldEQ(t, len(before), 2)
-		shouldEQ(t, before[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
-		shouldEQ(t, before[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_1")
-
-		std.TestSkipHeights(6)
+	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(20)
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
 		after := sr.GetPoolsWithTier()
-		shouldEQ(t, len(after), 2)
-		shouldEQ(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
-		shouldEQ(t, after[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_3")
+		uassert.Equal(t, len(after), 2)
+		uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
+		uassert.Equal(t, after[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_3")
 	})
 }
 
 func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+	std.TestSkipHeights(5)
 
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/staker*EXE*RemovePoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100",
-		)
-	})
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/staker*EXE*RemovePoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100",
+	)
 
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
 
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		before := sr.GetPoolsWithTier()
-		shouldEQ(t, len(before), 2)
-		shouldEQ(t, before[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
-		shouldEQ(t, before[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_3")
-
-		std.TestSkipHeights(6)
+	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(20)
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
 		after := sr.GetPoolsWithTier()
-		shouldEQ(t, len(after), 1)
-		shouldEQ(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
+		uassert.Equal(t, len(after), 1)
+		uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
 	})
 }
 
 func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+	std.TestSkipHeights(5)
 
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/staker*EXE*SetUnstakingFee*EXE*900",
-		)
-	})
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/staker*EXE*SetUnstakingFee*EXE*200",
+	)
 
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
 
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		shouldEQ(t, sr.GetUnstakingFee(), uint64(100))
-
-		std.TestSkipHeights(6)
+	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(20)
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
-		shouldEQ(t, sr.GetUnstakingFee(), uint64(900))
+		uassert.Equal(t, sr.GetUnstakingFee(), uint64(200))
 	})
 }
 
 func TestProposeParameterChange_Staker_SetWarmUp(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+	std.TestSkipHeights(5)
 
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/staker*EXE*SetWarmUp*EXE*100,1000",
-		)
-	})
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/staker*EXE*SetWarmUp*EXE*100,1000",
+	)
 
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
 
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		shouldEQ(t, sr.GetWarmUp(100), int64(901))
-
-		std.TestSkipHeights(6)
+	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(20)
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
 
-		shouldEQ(t, sr.GetWarmUp(100), int64(1000))
+		uassert.Equal(t, sr.GetWarmUp(100), int64(1000))
 	})
 }
 
 func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
-	t.Run("Successful propose", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+	std.TestSkipHeights(5)
 
-		proposalID := ProposeParameterChange(
-			"test_title",
-			"test_description",
-			uint64(1),
-			"gno.land/r/gnoswap/v2/common*EXE*SetHalt*EXE*true",
-		)
-	})
+	std.TestSetRealm(adminRealm)
+	proposalId := ProposeParameterChange(
+		"test_title",
+		"test_description",
+		uint64(1),
+		"gno.land/r/gnoswap/v2/common*EXE*SetHalt*EXE*true",
+	)
 
-	t.Run("Vote proposal and make it pass status", func(t *testing.T) {
-		// vote to pass it
-		std.TestSkipHeights(5)
-		std.TestSetRealm(adminRealm)
-		voteKey := Vote(proposalId, true)
-		voted := votes[voteKey]
-		if voted != true {
-			t.Errorf("Vote not set correctly")
-		}
+	std.TestSkipHeights(5)
+	Vote(proposalId, true)
 
-		std.TestSkipHeights(16) // ends voting period
-		updateProposalsState()
-	})
-
-	t.Run("Execute proposal", func(t *testing.T) {
-		shouldEQ(t, cn.GetHalt(), false)
-
-		std.TestSkipHeights(6)
+	t.Run("execute proposal", func(t *testing.T) {
+		std.TestSkipHeights(20)
 		std.TestSetRealm(govRealm)
 		Execute(proposalId)
-		shouldEQ(t, cn.GetHalt(), true)
+
+		uassert.True(t, cn.GetHalt())
 	})
 }

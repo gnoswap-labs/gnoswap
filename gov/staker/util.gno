@@ -1,11 +1,11 @@
 package staker
 
 import (
+	b64 "encoding/base64"
 	"std"
 
-	b64 "encoding/base64"
-
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/ufmt"
 )
 
 func maxUint64(a, b uint64) uint64 {
@@ -38,7 +38,10 @@ func isUserCall() bool {
 
 func assertUserCall() {
 	if !isUserCall() {
-		panic("must be called by user")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("util.gno__assertUserCall() || must be called by user, called from %s", std.PrevRealm().PkgPath()),
+		))
 	}
 }
 

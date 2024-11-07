@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
@@ -28,24 +29,27 @@ func TestCreatePool(t *testing.T) {
 	jsonStr := pl.ApiGetPools()
 	root, err := json.Unmarshal([]byte(jsonStr))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
-	shouldEQ(t, response.Size(), 1)
+	uassert.Equal(t, response.Size(), 1)
 }
 
 func TestSwapRouteWugnotquxExactIn(t *testing.T) {
 	std.TestSetRealm(adminRealm)
+
 	wugnot.Approve(a2u(consts.ROUTER_ADDR), 1000000)
 	qux.Approve(a2u(consts.ROUTER_ADDR), 1000000)
-	std.TestSetOrigSend(std.Coins{{"ugnot", 12345}}, nil) //sented ugnot amount
-	shouldPanic(
+	std.TestSetOrigSend(std.Coins{{"ugnot", 12345}}, nil) // sented ugnot amount
+
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-ROUTER-005] invalid input || router.gno__SwapRoute() || ugnot sent by user(12345) is not equal to amountSpecified(3)`,
 		func() {
 			SwapRoute(
 				consts.GNOT, // inputToken

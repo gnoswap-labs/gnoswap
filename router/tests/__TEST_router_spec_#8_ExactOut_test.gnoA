@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/consts"
 
 	pl "gno.land/r/gnoswap/v2/pool"
@@ -27,7 +29,7 @@ func TestCreatePool(t *testing.T) {
 
 	// jsonOutput := pl.ApiGetPools()
 	// jsonStr := gjson.Parse(jsonOutput)
-	// shouldEQ(t, len(jsonStr.Get("response").Array()), 2)
+	// uassert.Equal(t, len(jsonStr.Get("response").Array()), 2)
 }
 
 func TestPositionMint(t *testing.T) {
@@ -66,9 +68,9 @@ func TestSwapRouteFooBarExactOut(t *testing.T) {
 	token0After := bar.BalanceOf(a2u(consts.ADMIN))
 	token2After := foo.BalanceOf(a2u(consts.ADMIN))
 
-	shouldEQ(t, amountIn, "5")
-	shouldEQ(t, amountOut, "-1")
+	uassert.Equal(t, amountIn, "5")
+	uassert.Equal(t, amountOut, "-1")
 
-	shouldEQ(t, token0After, token0Before+1)
-	shouldEQ(t, token2After, token2Before-5)
+	uassert.Equal(t, token0After, token0Before+1)
+	uassert.Equal(t, token2After, token2Before-5)
 }

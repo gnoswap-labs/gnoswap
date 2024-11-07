@@ -7,7 +7,10 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
+
+	en "gno.land/r/gnoswap/v2/emission"
 
 	"gno.land/r/gnoswap/v2/gns"
 	gs "gno.land/r/gnoswap/v2/gov/staker"
@@ -40,7 +43,10 @@ func DepositGns(
 	projectId, tierStr := getProjectIdAndTierFromTierId(targetProjectTierId)
 	project, exist := projects[projectId]
 	if !exist {
-		panic(ufmt.Sprintf("project not found: %s", projectId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("launchpad_deposit.gno__DepositGns() || projectTierId(%s) not found", targetProjectTierId),
+		))
 	}
 
 	// check conditions (grc20 tokens balance)
@@ -48,17 +54,31 @@ func DepositGns(
 
 	// check if project is active
 	if !checkProjectActive(project) {
-		panic(ufmt.Sprintf("project is not active: %s", projectId))
+		panic(addDetailToError(
+			errInactiveProject,
+			ufmt.Sprintf("launchpad_deposit.gno__DepositGns() || projectTierId(%s) > project is not active", targetProjectTierId),
+		))
 	}
 
 	// check if tier is active
 	tier := getTier(project, tierStr)
 	if !checkTierActive(project, tier) {
-		panic(ufmt.Sprintf("tier is not active: %s", tierStr))
+		panic(addDetailToError(
+			errInactiveTier,
+			ufmt.Sprintf("launchpad_deposit.gno__DepositGns() || projectTierId(%s) > tier is not active", targetProjectTierId),
+		))
 	}
+
+	common.IsHalted()
+	en.MintAndDistributeGns()
 
 	// after all pre-checks
 	calculateDepositReward()
+	project = projects[projectId]    // get updates project
+	tier = getTier(project, tierStr) // get updates tier
+
+	// update gov_staker contract's variable to calculate proejct's recipient's reward
+	gs.SetAmountByProjectWallet(project.recipient, amount, true) // true == add
 
 	// gns will be locked in `launchpad` contract
 	gns.TransferFrom(
@@ -72,9 +92,6 @@ func DepositGns(
 		a2u(std.Address(consts.LAUNCHPAD_ADDR)),
 		amount,
 	)
-
-	// update gov_staker contract's variable to calculate proejct's recipient's reward
-	gs.SetAmountByProjectWallet(project.recipient, amount, true) // true == add
 
 	// deposit History
 	depositor := std.PrevRealm().Addr()
@@ -165,6 +182,7 @@ func DepositGns(
 			"internal_depositId", depositId,
 			"internal_claimableHeight", ufmt.Sprintf("%d", claimableHeight),
 			"internal_claimableTime", ufmt.Sprintf("%d", claimableTime),
+			"internal_tierAmountPerBlockX96", tierAmountPerBlockX96.ToString(),
 		)
 	}
 
@@ -191,6 +209,9 @@ func DepositGns(
 //
 // returns collected gns amount
 func CollectDepositGns() uint64 {
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
 	calculateDepositReward()
 
 	caller := std.PrevRealm().Addr()
@@ -205,7 +226,10 @@ func CollectDepositGns() uint64 {
 		// check active
 		project, exist := projects[deposit.projectId]
 		if !exist {
-			panic(ufmt.Sprintf("SHOULD_NOT_HAPPEN__project not found: %s", deposit.projectId))
+			panic(addDetailToError(
+				errDataNotFound,
+				ufmt.Sprintf("launchpad_deposit.gno__CollectDepositGns() || depositId(%s) > projectId(%s) not found", depositId, deposit.projectId),
+			))
 		}
 
 		tier := getTier(project, deposit.tier)
@@ -243,7 +267,7 @@ func CollectDepositGns() uint64 {
 			"CollectDepositGns",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"depositId", depositId,
+			"internal_depositId", depositId,
 			"internal_amount", ufmt.Sprintf("%d", deposit.amount),
 		)
 	}
@@ -282,6 +306,9 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 		return 0
 	}
 
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
 	calculateDepositReward()
 
 	prevAddr, prevRealm := getPrev()
@@ -293,7 +320,10 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 		// check active
 		project, exist := projects[deposit.projectId]
 		if !exist {
-			panic(ufmt.Sprintf("SHOULD_NOT_HAPPEN__project not found: %s", deposit.projectId))
+			panic(addDetailToError(
+				errDataNotFound,
+				ufmt.Sprintf("launchpad_deposit.gno__CollectDepositGnsByProjectId() || depositId(%s) > projectId(%s) not found", depositId, deposit.projectId),
+			))
 		}
 
 		tier := getTier(project, deposit.tier)
@@ -371,7 +401,11 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 		return 0
 	}
 
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
 	calculateDepositReward()
+	project = projects[deposit.projectId] // get updates project
 
 	// check active
 	tier := getTier(project, deposit.tier)
@@ -431,7 +465,10 @@ func getProjectIdFromTierId(tierId string) string {
 		return result[0] + ":" + result[1]
 	}
 
-	panic(ufmt.Sprintf("invalid tierId: %s", tierId))
+	panic(addDetailToError(
+		errInvalidTier,
+		ufmt.Sprintf("launchpad_deposit.gno__getProjectIdFromTierId() || invalid tierId: %s", tierId),
+	))
 }
 
 func getProjectIdAndTierFromTierId(tierId string) (string, string) {
@@ -440,7 +477,10 @@ func getProjectIdAndTierFromTierId(tierId string) (string, string) {
 		return result[0] + ":" + result[1], result[2]
 	}
 
-	panic(ufmt.Sprintf("invalid tierId: %s", tierId))
+	panic(addDetailToError(
+		errInvalidTier,
+		ufmt.Sprintf("launchpad_deposit.gno__getProjectIdAndTierFromTierId() || invalid tierId: %s", tierId),
+	))
 }
 
 func checkDepositConditions(project Project) {
@@ -460,7 +500,10 @@ func checkDepositConditions(project Project) {
 				balance = balanceOfByRegisterCall(condition.tokenPath, std.PrevRealm().Addr())
 			}
 			if balance < condition.minAmount {
-				panic(ufmt.Sprintf("insufficient balance(%d) for token(%s)", balance, condition.tokenPath))
+				panic(addDetailToError(
+					errNotEnoughBalance,
+					ufmt.Sprintf("launchpad_deposit.gno__checkDepositConditions() || insufficient balance(%d) for token(%s)", balance, condition.tokenPath),
+				))
 			}
 		}
 	}
@@ -499,7 +542,10 @@ func getTier(project Project, tierStr string) Tier {
 	case "180":
 		return project.tier180
 	default:
-		panic(ufmt.Sprintf("getTier()__invalid tierStr: %s", tierStr))
+		panic(addDetailToError(
+			errInvalidTier,
+			ufmt.Sprintf("launchpad_deposit.gno__getTier() || invalid tierStr: %s", tierStr),
+		))
 	}
 }
 
@@ -512,7 +558,10 @@ func setTier(project Project, tierStr string, tier Tier) Project {
 	case "180":
 		project.tier180 = tier
 	default:
-		panic(ufmt.Sprintf("setTier()__invalid tierStr: %s", tierStr))
+		panic(addDetailToError(
+			errInvalidTier,
+			ufmt.Sprintf("launchpad_deposit.gno__setTier() || invalid tierStr: %s", tierStr),
+		))
 	}
 
 	return project

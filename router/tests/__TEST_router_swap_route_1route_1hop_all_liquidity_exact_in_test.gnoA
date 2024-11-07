@@ -4,6 +4,8 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
 
@@ -48,17 +50,17 @@ func TestPositionMint(t *testing.T) {
 	// Mint
 	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(-6000), int32(6000), "100000", "100000", "0", "0", max_timeout, admin, admin)
 
-	shouldEQ(t, tokenId, uint64(1))
-	shouldEQ(t, amount0, "99962")
-	shouldEQ(t, amount1, "100000")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, amount0, "99962")
+	uassert.Equal(t, amount1, "100000")
 
 	pool := pl.GetPool(barPath, bazPath, fee500)
 	poolLiq := pool.PoolGetLiquidity()
-	shouldEQ(t, poolLiq.ToString(), "385771")
+	uassert.Equal(t, poolLiq.ToString(), "385771")
 
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
-	shouldEQ(t, poolTick, int32(1))
+	uassert.Equal(t, poolTick, int32(1))
 }
 
 func TestSwapRouteBarBazExactIn(t *testing.T) {
@@ -80,13 +82,13 @@ func TestSwapRouteBarBazExactIn(t *testing.T) {
 		"0",        // tokenAmountLimit
 	)
 
-	shouldEQ(t, amountIn, "135049")
-	shouldEQ(t, amountOut, "-99848")
+	uassert.Equal(t, amountIn, "135049")
+	uassert.Equal(t, amountOut, "-99848")
 
 	pool := pl.GetPool(barPath, bazPath, fee500)
 	poolLiq := pool.PoolGetLiquidity()
-	shouldEQ(t, poolLiq.ToString(), "0")
+	uassert.Equal(t, poolLiq.ToString(), "0")
 
 	poolTick := pl.PoolGetSlot0Tick(poolPath)
-	shouldEQ(t, poolTick, int32(-887270))
+	uassert.Equal(t, poolTick, int32(-887270))
 }

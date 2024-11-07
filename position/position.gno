@@ -53,10 +53,14 @@ func Mint(
 
 	if common.GetLimitCaller() {
 		// only user or staker can call
-		isUserCalled := std.PrevRealm().PkgPath() == ""
-		isStakerCalled := std.PrevRealm().Addr() == consts.STAKER_ADDR
+		prev := std.PrevRealm()
+		isUserCalled := prev.PkgPath() == ""
+		isStakerCalled := prev.Addr() == consts.STAKER_ADDR
 		if !(isUserCalled || isStakerCalled) {
-			panic("POSITION] position.gno__Mint() || only user or staker can call")
+			panic(addDetailToError(
+				errNoPermission,
+				ufmt.Sprintf("position.gno__Mint() || only user or staker can call isUserCalled(%t) || isStakerCalled(%t), but called from %s", isUserCalled, isStakerCalled, prev.Addr().String()),
+			))
 		}
 	}
 
@@ -144,7 +148,10 @@ func handleNativeToken(token0IsNative, token1IsNative bool, caller std.Address) 
 			wrap(ugnotSent, caller)
 			newUserWugnotBalance := wugnot.BalanceOf(a2u(caller))
 			if (newUserWugnotBalance - oldUserWugnotBalance) != ugnotSent {
-				panic(ufmt.Sprintf("[POSITION] position.gno__Mint() || ugnot sent(%d) != ugnot received(%d)", ugnotSent, newUserWugnotBalance-oldUserWugnotBalance))
+				panic(addDetailToError(
+					errWrapUnwrap,
+					ufmt.Sprintf("position.gno__Mint() || ugnot sent(%d) != wugnot received(%d)", ugnotSent, newUserWugnotBalance-oldUserWugnotBalance),
+				))
 			}
 		}
 	}
@@ -281,14 +288,21 @@ func IncreaseLiquidity(
 func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, string) {
 	// verify tokenId exists
 	if !exists(params.tokenId) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("position.gno__increaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId),
+		))
 	}
 
 	// MUST BE OWNER TO INCREASE LIQUIDITY
 	// can not be approved address > staked position can't be modified
 	owner := gnft.OwnerOf(tid(params.tokenId))
-	if owner != std.PrevRealm().Addr() {
-		panic(ufmt.Sprintf("[POSITION] position.gno__increaseLiquidity() || only owner can increase liquidity__owner(%s) == std.PrevRealm().Addr()(%s)", owner, std.PrevRealm().Addr()))
+	caller := std.PrevRealm().Addr()
+	if owner != caller {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("position.gno__increaseLiquidity() || only owner(%s) can increase liquidity for tokenId(%d), but called from %s", owner, params.tokenId, caller),
+		))
 	}
 
 	checkDeadline(params.deadline)
@@ -358,7 +372,10 @@ func DecreaseLiquidity(
 
 	isNormalRange := liquidityRatio >= 1 && liquidityRatio <= 100
 	if !isNormalRange {
-		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || liquidityRatio(%d) should be in range 1 ~ 100", liquidityRatio))
+		panic(addDetailToError(
+			errOutOfRange,
+			ufmt.Sprintf("position.gno__decreaseLiquidity() || liquidityRatio(%d) should be in range 1 ~ 100", liquidityRatio),
+		))
 	}
 
 	amount0Min := u256.MustFromDecimal(_amount0Min)
@@ -424,7 +441,10 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	positionLiquidity := position.liquidity
 
 	if positionLiquidity.IsZero() {
-		panic(ufmt.Sprintf("[POSITION] position.gno__decreaseLiquidity() || position(tokenId:%d) has 0 liquidity", params.tokenId))
+		panic(addDetailToError(
+			errZeroLiquidity,
+			ufmt.Sprintf("position.gno__decreaseLiquidity() || position(tokenId:%d) has 0 liquidity", params.tokenId),
+		))
 	}
 
 	liquidityToRemove := calculateLiquidityToRemove(positionLiquidity, params.liquidityRatio)
@@ -523,14 +543,21 @@ func Reposition(
 
 	// verify tokenId exists
 	if !exists(tokenId) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__Reposition() || tokenId(%d) doesn't exist", tokenId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("position.gno__Reposition() || tokenId(%d) doesn't exist", tokenId),
+		))
 	}
 
 	// MUST BE OWNER TO REPOSITION
 	// can not be approved address > staked position can't be modified
 	owner := gnft.OwnerOf(tid(tokenId))
-	if owner != std.PrevRealm().Addr() {
-		panic(ufmt.Sprintf("[POSITION] position.gno__Reposition() || only owner can reposition__owner(%s) == std.PrevRealm().Addr()(%s)", owner, std.PrevRealm().Addr()))
+	caller := std.PrevRealm().Addr()
+	if owner != caller {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("position.gno__Reposition() || only owner(%s) can reposition for tokenId(%d), but called from %s", owner, tokenId, caller),
+		))
 	}
 
 	// position should be burned to reposition
@@ -539,7 +566,10 @@ func Reposition(
 	oldTickUpper := position.tickUpper
 
 	if !(position.isClear()) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__Reposition() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1))
+		panic(addDetailToError(
+			errNotClear,
+			ufmt.Sprintf("position.gno__Reposition() || position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
+		))
 	}
 
 	token0, token1, _ := poolKeyDivide(position.poolKey)
@@ -631,7 +661,10 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 
 	// verify tokenId
 	if !exists(tokenId) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__CollectFee() || tokenId(%d) doesn't exist", tokenId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("position.gno__CollectFee() || tokenId(%d) doesn't exist", tokenId),
+		))
 	}
 
 	// verify owner or approved
@@ -640,7 +673,10 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 	// verify position
 	position, exist := positions[tokenId]
 	if !exist {
-		panic(ufmt.Sprintf("[POSITION] position.gno__CollectFee() || position(tokenId:%d) doesn't exist", tokenId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("position.gno__CollectFee() || position(%d) doesn't exist", tokenId),
+		))
 	}
 
 	token0, token1, fee := poolKeyDivide(position.poolKey)
@@ -759,7 +795,10 @@ func burnNFT(tokenId uint64) {
 	position := positions[tokenId]
 
 	if !(position.isClear()) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__burnNFT() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1))
+		panic(addDetailToError(
+			errNotClear,
+			ufmt.Sprintf("position.gno__burnNFT() || position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
+		))
 	}
 	delete(positions, tokenId)
 	gnft.Burn(tid(tokenId))
@@ -768,7 +807,10 @@ func burnNFT(tokenId uint64) {
 func burnPosition(tokenId uint64) {
 	position := positions[tokenId]
 	if !(position.isClear()) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__burnPosition() || position(tokenId:%d) isn't clear(liquidity:%d, tokensOwed0:%d, tokensOwed1:%d)", tokenId, position.liquidity, position.tokensOwed0, position.tokensOwed1))
+		panic(addDetailToError(
+			errNotClear,
+			ufmt.Sprintf("position.gno__burnPosition() || position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
+		))
 	}
 
 	position.burned = true
@@ -777,17 +819,28 @@ func burnPosition(tokenId uint64) {
 
 func isAuthorizedForToken(tokenId uint64) {
 	if !(isApprovedOrOwner(std.PrevRealm().Addr(), tokenId)) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__isAuthorizedForToken() || caller(%s) is not approved or owner of tokenId(%d)", std.PrevRealm().Addr(), tokenId))
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("position.gno__isAuthorizedForToken() || caller(%s) is not approved or owner of tokenId(%d)", std.PrevRealm().Addr(), tokenId),
+		))
 	}
 }
 
 func verifyTokenIdAndOwnership(tokenId uint64) {
 	if !exists(tokenId) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__verifyTokenIdAndOwnership() || tokenId(%d) doesn't exist", tokenId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("position.gno__verifyTokenIdAndOwnership() || tokenId(%d) doesn't exist", tokenId),
+		))
 	}
+
 	owner := gnft.OwnerOf(tid(tokenId))
-	if owner != std.PrevRealm().Addr() {
-		panic(ufmt.Sprintf("[POSITION] position.gno__verifyTokenIdAndOwnership() || only owner can decrease liquidity__owner(%s) == std.PrevRealm().Addr()(%s)", owner, std.PrevRealm().Addr()))
+	caller := std.PrevRealm().Addr()
+	if owner != caller {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("position.gno__verifyTokenIdAndOwnership() || only owner(%s) can decrease liquidity(tokenId:%d), but called from %s", owner, tokenId, caller),
+		))
 	}
 }
 
@@ -802,7 +855,10 @@ func calculateLiquidityToRemove(positionLiquidity *u256.Uint, liquidityRatio uin
 
 func verifyBurnedAmounts(burnedAmount0, burnedAmount1, amount0Min, amount1Min *u256.Uint) {
 	if !(burnedAmount0.Gte(amount0Min) && burnedAmount1.Gte(amount1Min)) {
-		panic(ufmt.Sprintf("[POSITION] position.gno__verifyBurnedAmounts() || burnedAmount0(%s) >= amount0Min(%s) && burnedAmount1(%s) >= amount1Min(%s)", burnedAmount0.ToString(), amount0Min.ToString(), burnedAmount1.ToString(), amount1Min.ToString()))
+		panic(addDetailToError(
+			errSlippage,
+			ufmt.Sprintf("position.gno__verifyBurnedAmounts() || burnedAmount0(%s) >= amount0Min(%s) && burnedAmount1(%s) >= amount1Min(%s)", burnedAmount0.ToString(), amount0Min.ToString(), burnedAmount1.ToString(), amount1Min.ToString()),
+		))
 	}
 }
 

@@ -70,7 +70,10 @@ func Mint(to pusers.AddressOrName, amount uint64) {
 	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_STAKER_ADDR && caller != consts.LAUNCHPAD_ADDR {
-		panic("only (gov staker) or (launchpad) contract can call Mint")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("only gov/staker(%s) or launchpad(%s) contract can call Mint, called from %s", consts.GOV_STAKER_ADDR.String(), consts.LAUNCHPAD_ADDR.String(), caller.String()),
+		))
 	}
 
 	checkErr(banker.Mint(users.Resolve(to), amount))
@@ -82,7 +85,10 @@ func Burn(from pusers.AddressOrName, amount uint64) {
 	// only (gov staker) or (launchpad) contract can call Mint
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_STAKER_ADDR && caller != consts.LAUNCHPAD_ADDR {
-		panic("only (gov staker) or (launchpad) contract can call Burn")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("only gov/staker(%s) or launchpad(%s) contract can call Burn, called from %s", consts.GOV_STAKER_ADDR.String(), consts.LAUNCHPAD_ADDR.String(), caller.String()),
+		))
 	}
 
 	checkErr(banker.Burn(users.Resolve(from), amount))

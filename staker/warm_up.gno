@@ -27,7 +27,10 @@ func init() {
 func GetWarmUp(percent int64) int64 {
 	value, exist := warmUp[percent]
 	if !exist {
-		panic(ufmt.Sprintf("[STAKER] warm_up.gno__GetWarmUp() || percent(%d) must be 30, 50, 70, 100", percent))
+		panic(addDetailToError(
+			errInvalidWarmUpPercent,
+			ufmt.Sprintf("warm_up.gno__GetWarmUp() || percent(%d) must be 30, 50, 70, 100", percent),
+		))
 	}
 
 	return value
@@ -37,18 +40,23 @@ func SetWarmUp(percent int64, block int64) {
 	common.IsHalted()
 
 	if _, exist := warmUp[percent]; !exist {
-		panic(ufmt.Sprintf("[STAKER] warm_up.gno__SetWarmUp() || percent(%d) must be 30, 50, 70, 100", percent))
+		panic(addDetailToError(
+			errInvalidWarmUpPercent,
+			ufmt.Sprintf("warm_up.gno__SetWarmUp() || percent(%d) must be 30, 50, 70, 100", percent),
+		))
 	}
 
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN && caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(
+		panic(addDetailToError(
+			errNoPermission,
 			ufmt.Sprintf(
-				"[STAKER] warm_up.gno__SetWarmUp() || only admin(%s) or governance(%s) can set warm up period, called from %s",
+				"warm_up.gno__SetWarmUp() || only admin(%s) or governance(%s) can set warm up period, called from %s",
 				consts.ADMIN,
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
+		),
 		)
 	}
 

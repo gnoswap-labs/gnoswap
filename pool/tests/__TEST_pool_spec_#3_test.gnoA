@@ -4,13 +4,15 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/uassert"
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
 	"gno.land/r/gnoswap/v2/consts"
 
-	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v2/gns"
 	pl "gno.land/r/gnoswap/v2/pool"
 )
@@ -63,9 +65,9 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed(t *testing.T
 	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -240, 0, "100", admin)
 	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(-240)
-	shouldEQ(t, liquidityGross.ToString(), "0")
-	shouldEQ(t, feeGrowthOutside0X128.ToString(), "0")
-	shouldEQ(t, feeGrowthOutside1X128.ToString(), "0")
+	uassert.Equal(t, liquidityGross.ToString(), "0")
+	uassert.Equal(t, feeGrowthOutside0X128.ToString(), "0")
+	uassert.Equal(t, feeGrowthOutside1X128.ToString(), "0")
 
 	AfterTest(t)
 }
@@ -96,9 +98,9 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed2(t *testing.
 	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")
 
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(0)
-	shouldEQ(t, liquidityGross.ToString(), "0")
-	shouldEQ(t, feeGrowthOutside0X128.ToString(), "0")
-	shouldEQ(t, feeGrowthOutside1X128.ToString(), "0")
+	uassert.Equal(t, liquidityGross.ToString(), "0")
+	uassert.Equal(t, feeGrowthOutside0X128.ToString(), "0")
+	uassert.Equal(t, feeGrowthOutside1X128.ToString(), "0")
 
 	AfterTest(t)
 }
@@ -132,14 +134,14 @@ func TestSuccess_case_only_clears_the_tick_that_is_not_used_at_all(t *testing.T)
 	// liquidityGrossStr := liquidityGross.ToString()
 	// liquidityGrossUint64, err := strconv.Atoi(liquidityGrossStr)
 
-	shouldEQ(t, liquidityGross.ToString(), "250")
-	shouldEQ(t, feeGrowthOutside0X128.ToString(), "0")
-	shouldEQ(t, feeGrowthOutside1X128.ToString(), "0")
+	uassert.Equal(t, liquidityGross.ToString(), "250")
+	uassert.Equal(t, feeGrowthOutside0X128.ToString(), "0")
+	uassert.Equal(t, feeGrowthOutside1X128.ToString(), "0")
 
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ = pool.GetTicks(-tickSpacing)
-	shouldEQ(t, liquidityGross.ToString(), "0")
-	shouldEQ(t, feeGrowthOutside0X128.ToString(), "0")
-	shouldEQ(t, feeGrowthOutside1X128.ToString(), "0")
+	uassert.Equal(t, liquidityGross.ToString(), "0")
+	uassert.Equal(t, feeGrowthOutside0X128.ToString(), "0")
+	uassert.Equal(t, feeGrowthOutside1X128.ToString(), "0")
 
 	AfterTest(t)
 }

@@ -37,7 +37,10 @@ func getPoolTierAndRatio(poolPath string) (uint64, *u256.Uint) {
 	case 3:
 		weight = new(u256.Uint).Div(ratioX96, u256.NewUint(numTier3))
 	default:
-		panic(ufmt.Sprintf("[STAKER] tier_ratio.gno__getPoolTierAndRatio() || invalid tier(%d)", tier))
+		panic(addDetailToError(
+			errInvalidPoolTier,
+			ufmt.Sprintf("tier_ratio.gno__getPoolTierAndRatio() || invalid tier(%d) for poolPath(%s)", tier, poolPath),
+		))
 	}
 
 	return tier, weight
@@ -64,7 +67,10 @@ func getTierRatio(tier uint64) uint64 {
 	case 3:
 		return ratio3
 	default:
-		panic(ufmt.Sprintf("[STAKER] tier_ratio.gno__getTierRatio() || invalid tier(%d), must be 1 ~ 3", tier))
+		panic(addDetailToError(
+			errInvalidPoolTier,
+			ufmt.Sprintf("tier_ratio.gno__getTierRatio() || invalid tier(%d), must be 1 ~ 3", tier),
+		))
 	}
 }
 
@@ -89,7 +95,10 @@ func listTierRatio() (uint64, uint64, uint64) {
 
 	numTier1, numTier2, numTier3 := getNumPoolTiers()
 	if numTier1 <= 0 {
-		panic(ufmt.Sprintf("[STAKER] tier_ratio.gno__listTierRatio() || at least 1 of numTier1 need(%d), [numTier2:(%d), numTier3:(%d)]", numTier1, numTier2, numTier3))
+		panic(addDetailToError(
+			errInvalidPoolTier,
+			ufmt.Sprintf("tier_ratio.gno__listTierRatio() || at least 1 of numTier1 need(%d), [numTier2:(%d), numTier3:(%d)]", numTier1, numTier2, numTier3),
+		))
 	}
 
 	hasTier2 := numTier2 > 0
@@ -106,7 +115,10 @@ func listTierRatio() (uint64, uint64, uint64) {
 		return 50, 30, 20
 	}
 
-	panic(ufmt.Sprintf("[STAKER] tier_ratio.gno__listTierRatio() || should not happen, [numTier1:(%d), numTier2:(%d), numTier3:(%d)]", numTier1, numTier2, numTier3))
+	panic(addDetailToError(
+		errInvalidPoolTier,
+		ufmt.Sprintf("tier_ratio.gno__listTierRatio() || numTier1:(%d), numTier2:(%d), numTier3:(%d)", numTier1, numTier2, numTier3),
+	))
 }
 
 // getNumPoolTiers returns number of pools for each tier
@@ -127,7 +139,10 @@ func getNumPoolTiers() (uint64, uint64, uint64) {
 		case 3:
 			tier3++
 		default:
-			panic(ufmt.Sprintf("[STAKER] tier_ratio.gno__getNumPoolTiers() || invalid tier(%d)", v))
+			panic(addDetailToError(
+				errInvalidPoolTier,
+				ufmt.Sprintf("tier_ratio.gno__getNumPoolTiers() || invalid tier(%d)", v),
+			))
 		}
 	}
 

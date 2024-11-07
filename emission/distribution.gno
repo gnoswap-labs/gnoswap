@@ -59,8 +59,13 @@ func ChangeDistributionPctByAdmin(
 ) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic("only admin can change distribution percentages")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("emission.gno__ChangeDistributionPctByAdmin() || only admin(%s) can change distribution percentages, called from %s", consts.ADMIN, caller.String()),
+		))
 	}
+
+	checkSumDistributionPct(pct01, pct02, pct03, pct04)
 
 	changeDistributionPcts(
 		target01, pct01,
@@ -68,8 +73,6 @@ func ChangeDistributionPctByAdmin(
 		target03, pct03,
 		target04, pct04,
 	)
-
-	checkSumDistributionPct()
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -97,8 +100,13 @@ func ChangeDistributionPct(
 ) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic("only governance can change distribution percentages")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("emission.gno__ChangeDistributionPct() || only governance(%s) can change distribution percentages, called from %s", consts.GOV_GOVERNANCE_ADDR, caller.String()),
+		))
 	}
+
+	checkSumDistributionPct(pct01, pct02, pct03, pct04)
 
 	changeDistributionPcts(
 		target01, pct01,
@@ -106,8 +114,6 @@ func ChangeDistributionPct(
 		target03, pct03,
 		target04, pct04,
 	)
-
-	checkSumDistributionPct()
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -133,12 +139,12 @@ func changeDistributionPcts(
 ) {
 	common.IsHalted()
 
+	checkSumDistributionPct(pct01, pct02, pct03, pct04)
+
 	changeDistributionPct(emissionTarget(target01), pct01)
 	changeDistributionPct(emissionTarget(target02), pct02)
 	changeDistributionPct(emissionTarget(target03), pct03)
 	changeDistributionPct(emissionTarget(target04), pct04)
-
-	checkSumDistributionPct()
 }
 
 // distributeToTarget distributes the specified amount to different targets based on their percentages.
@@ -149,6 +155,7 @@ func distributeToTarget(amount uint64) {
 		totalSent += distAmount
 
 		transferToTarget(target, distAmount)
+		// println("target", target, "distAmount", distAmount)
 	}
 
 	// `amount-totalSent` can be left due to rounding
@@ -182,7 +189,10 @@ func transferToTarget(target emissionTarget, amount uint64) {
 		toGovStaker = amount
 		toGovStakerAccu += amount
 	default:
-		panic("invalid target")
+		panic(addDetailToError(
+			errInvalidEmissionTarget,
+			ufmt.Sprintf("emission.gno__transferToTarget() || invalid target(%d)", target),
+		))
 	}
 }
 
@@ -190,26 +200,24 @@ func transferToTarget(target emissionTarget, amount uint64) {
 func changeDistributionPct(target emissionTarget, pct uint64) {
 	// cannot add new target
 	if target != LIQUIDITY_STAKING && target != DEVOPS && target != COMMUNITY_POOL && target != GOV_STAKER {
-		panic("invalid target")
-	}
-
-	// Maximum pct for a single target is 10000 basis points (100%)
-	if pct > 10000 {
-		panic("percentage too high")
+		panic(addDetailToError(
+			errInvalidEmissionTarget,
+			ufmt.Sprintf("emission.gno__changeDistributionPct() || invalid target(%d)", target),
+		))
 	}
 
 	distributionPct[target] = pct
 }
 
 // checkSumDistributionPct ensures the sum of all distribution percentages is 100%
-func checkSumDistributionPct() {
-	sum := uint64(0)
-	for _, pct := range distributionPct {
-		sum += pct
-	}
+func checkSumDistributionPct(pct01, pct02, pct03, pct04 uint64) {
+	sum := pct01 + pct02 + pct03 + pct04
 
 	if sum != 10000 {
-		panic(ufmt.Sprintf("sum of all pct should be 100%% (10000 bps), got %d\n", sum))
+		panic(addDetailToError(
+			errInvalidEmissionPct,
+			ufmt.Sprintf("sum of all pct should be 100%% (10000 bps), got %d", sum),
+		))
 	}
 }
 
@@ -224,10 +232,15 @@ func GetAccuDistributedAmount() (uint64, uint64, uint64, uint64) {
 func ClearAccuDistributedAmount() {
 	common.IsHalted()
 
-	prevRealm := std.PrevRealm().PkgPath()
+	prevAddr := std.PrevRealm().Addr()
 
-	if !(prevRealm == consts.STAKER_PATH && prevRealm == consts.GOV_STAKER_PATH) {
-		panic("only staker or gov staker can clear accumulated distributed amount")
+	if !(prevAddr == consts.STAKER_ADDR || prevAddr == consts.GOV_STAKER_ADDR) {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("only staker(%s) or gov/staker(%s) can clear accumulated distributed amount, called from %s",
+				consts.STAKER_ADDR, consts.GOV_STAKER_ADDR, prevAddr.String(),
+			),
+		))
 	}
 
 	toStakerAccu = 0
@@ -243,10 +256,14 @@ func GetAccuDistributedAmountForGovStaker() uint64 {
 func ClearAccuDistributedAmountForGovStaker() {
 	common.IsHalted()
 
-	prevRealm := std.PrevRealm().PkgPath()
-
-	if prevRealm != consts.GOV_STAKER_PATH {
-		panic("only gov staker can clear accumulated distributed amount")
+	prevAddr := std.PrevRealm().Addr()
+	if prevAddr != consts.GOV_STAKER_ADDR {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("only gov/staker(%s) can clear accumulated distributed amount, called from %s",
+				consts.GOV_STAKER_ADDR, prevAddr.String(),
+			),
+		))
 	}
 
 	toGovStakerAccu = 0

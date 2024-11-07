@@ -251,18 +251,18 @@ func CalcPoolPosition() {
 		println(" > CALC__totalStakedLiquidity:", totalStakedLiquidity.ToString())
 
 		if exist == false || totalStakedLiquidity.IsZero() {
-			println("  > CALC__ZERO_POOL", poolPath, "HAS TIER OF", internal.tier, "BUT NONE STAKED, SEND AMOUNT TO PROTOCOL FEE")
+			println("  > CALC__ZERO_POOL", poolPath, "HAS TIER OF", internal.tier, "BUT NONE STAKED, SEND AMOUNT TO COMMUNITY_POOL")
 			println("  > CALC__ZERO_poolGns[poolPath]:", poolGns[poolPath])
 
 			send := min(poolGns[poolPath], stakerGnsBalance-totalExternalGns)
 			println("  > CALC__ZERO_SEND_min(poolGns[poolPath], stakerGnsBalance-totalExternalGns", send)
 			println("  > CALC__BEFORE_STAKER_GNS:", stakerGnsBalance-totalExternalGns)
-			println("  > CALC__BEFORE_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
+			println("  > CALC__BEFORE_COMM_POOL_GNS:", gnsBalance(consts.COMMUNITY_POOL_ADDR))
 			println("  > CALC__BEFORE_lastCalculatedBalance:", lastCalculatedBalance)
 
-			gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), send)
+			gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), send)
 			std.Emit(
-				"ProtocolFeeEmptyEmission",
+				"CommunityPoolEmptyEmission",
 				"prevAddr", prevAddr,
 				"prevRealm", prevRealm,
 				"internal_poolPath", poolPath,
@@ -277,7 +277,7 @@ func CalcPoolPosition() {
 			lastCalculatedBalance = _stakerGnsBalance - totalExternalGns
 
 			println("  > CALC__AFTER_STAKER_GNS:", _stakerGnsBalance-totalExternalGns)
-			println("  > CALC__AFTER_FEE_GNS:", gnsBalance(consts.PROTOCOL_FEE_ADDR))
+			println("  > CALC__AFTER_COMM_POOL_GNS:", gnsBalance(consts.COMMUNITY_POOL_ADDR))
 			println("  > CALC__AFTER_poolGns[poolPath] = 0")
 			println("  > CALC__AFTER_poolCurrentBlockGns[poolPath] = 0")
 			println("  > CALC__AFTER_lastCalculatedBalance:", lastCalculatedBalance)

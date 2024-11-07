@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v2/common"
 	"gno.land/r/gnoswap/v2/consts"
@@ -58,17 +59,17 @@ func TestApiGetPositionsUnclaimedFee(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpuf))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
-	shouldEQ(t, response.Size(), 3)
+	uassert.Equal(t, response.Size(), 3)
 
-	shouldEQ(
+	uassert.Equal(
 		t,
 		response.String(),
 		`[{"lpTokenId":1,"fee0":"0","fee1":"0"},{"lpTokenId":2,"fee0":"0","fee1":"0"},{"lpTokenId":3,"fee0":"0","fee1":"0"}]`,
@@ -94,17 +95,17 @@ func TestApiGetPositionsUnclaimedFee2(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpuf))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
-	shouldEQ(t, response.Size(), 3)
+	uassert.Equal(t, response.Size(), 3)
 
-	shouldEQ(
+	uassert.Equal(
 		t,
 		response.String(),
 		`[{"lpTokenId":1,"fee0":"61","fee1":"0"},{"lpTokenId":2,"fee0":"0","fee1":"0"},{"lpTokenId":3,"fee0":"0","fee1":"0"}]`,
@@ -116,17 +117,17 @@ func TestApiGetPositionUnclaimedFeeByLpTokenId(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpuf))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
-	shouldEQ(t, response.Size(), 1)
+	uassert.Equal(t, response.Size(), 1)
 
-	shouldEQ(
+	uassert.Equal(
 		t,
 		response.String(),
 		`[{"lpTokenId":1,"fee0":"61","fee1":"0"}]`,
@@ -138,10 +139,10 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 
 	// burn 0 to collect swap fee
 	tokneId, fee0, fee1, fromPath, _, _ := CollectFee(1, true)
-	shouldEQ(t, tokneId, uint64(1))
-	shouldEQ(t, fee0, "61")
-	shouldEQ(t, fee1, "0")
-	shouldEQ(t, fromPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+	uassert.Equal(t, tokneId, uint64(1))
+	uassert.Equal(t, fee0, "61")
+	uassert.Equal(t, fee1, "0")
+	uassert.Equal(t, fromPath, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 }
 
 // RPCs
@@ -150,15 +151,15 @@ func TestApiGetPositions(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpss))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
-	shouldEQ(t, response.Size(), 3)
+	uassert.Equal(t, response.Size(), 3)
 }
 
 func TestApiGetPositionsByPoolPath(t *testing.T) {
@@ -168,15 +169,15 @@ func TestApiGetPositionsByPoolPath(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpss))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
-	shouldEQ(t, response.Size(), 1)
+	uassert.Equal(t, response.Size(), 1)
 }
 
 func TestApiGetPositionsByAddress(t *testing.T) {
@@ -186,15 +187,15 @@ func TestApiGetPositionsByAddress(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpss))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
-	shouldEQ(t, response.Size(), 3)
+	uassert.Equal(t, response.Size(), 3)
 }
 
 func TestApiGetPositionsByAddressNo(t *testing.T) {
@@ -204,13 +205,13 @@ func TestApiGetPositionsByAddressNo(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpss))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
-	shouldEQ(t, response.Size(), 0)
+	uassert.Equal(t, response.Size(), 0)
 }

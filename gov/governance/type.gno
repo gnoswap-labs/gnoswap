@@ -89,6 +89,11 @@ type ProposalInfo struct {
 	// How many no votes have been collected
 	Nay *u256.Uint
 
+	// The max voting weight at the time of proposal creation
+	MaxVotingWeight *u256.Uint
+
+	PossibleAddressWithWeight map[std.Address]uint64
+
 	// The version of the config that this proposal was created with
 	ConfigVersion uint64
 

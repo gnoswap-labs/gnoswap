@@ -1,0 +1,40 @@
+package governance
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/uassert"
+
+	"gno.land/r/gnoswap/v2/consts"
+)
+
+func TestReconfigureByAdmin(t *testing.T) {
+	t.Run("panic if not admin", func(t *testing.T) {
+		uassert.PanicsWithMessage(t,
+			`[GNOSWAP-GOVERNANCE-001] no permission || config.gno__ReconfigureByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can call this function, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
+			func() {
+				ReconfigureByAdmin(200, 2000, 200, 1000, 200, 200, 2000)
+			})
+	})
+
+	t.Run("initial config", func(t *testing.T) {
+		uassert.True(t, len(configVersions) == 1)
+	})
+
+	t.Run("success if admin", func(t *testing.T) {
+		std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
+		ReconfigureByAdmin(201, 2000, 200, 1000, 200, 200, 2000)
+
+		uassert.True(t, len(configVersions) == 2)
+	})
+
+	t.Run("get new config", func(t *testing.T) {
+		newConfig := GetConfigVersion(2)
+		uassert.Equal(t, uint64(201), newConfig.VotingStartDelay)
+	})
+}
+
+func Test_reconfigure(t *testing.T) {
+	// `reconfigure` is private function, so it can't be tested directly.
+}
