@@ -66,11 +66,11 @@ type externalRewards struct {
 var positionExternal map[uint64]map[string]externalRewards = make(map[uint64]map[string]externalRewards)
 
 var (
-	lastCalculatedHeight          int64
-	lastCalculatedBalance         uint64
+	lastCalculatedHeight          int64                 // Last CalcPoolPosition function working height
+	lastCalculatedBalance         uint64                // Last balance of distributed GNS to stakers
 	lastLeftInternalReward        uint64                // total left
 	lastLeftInternalRewardForTier [TIER_TYPE_NUM]uint64 // left for each tier
-	totalRewardManager            *RewardManager
+	totalRewardManager            *RewardManager        // RewardManager instance (internal, external)
 )
 
 func init() {
@@ -108,11 +108,16 @@ func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 	return true
 }
 
-// NOTE:
-// RewardRecipients Condition
-// 1. 리워드 대상 풀에 Mint와 Stake를 해야 한다.
-// 2. inRange 포지션만 해당 된다.
-// -> 대상자 선별시, 해당 내용이 반영되어야 함
+// CalcPoolPositionRefactor calculates and updates the position of pools and rewards for stakers.
+// It performs the following operations:
+// 1. Calculates newly minted GNS tokens and distributes them among pool tiers.
+// 2. Updates pool GNS balances and accumulated GNS for each pool.
+// 3. Calculates and updates internal rewards for each staker's position.
+// 4. Calculates and updates external rewards from incentives for each staker's postion.
+// This function is meant to be called periodically to keep the pool postions and reward calculations up-to-date.
+// It uses the current block height and its timestamp to determine the calculation period.
+// TODO: only use block height to calculate reward and distribute them
+// Returns true if the calculation is successful, false otherwise.
 func CalcPoolPositionRefactor(distributableAmount uint64) bool {
 	currentHeight := std.GetHeight()
 	prevHeight := getLastCalculatedHeight()
@@ -123,7 +128,7 @@ func CalcPoolPositionRefactor(distributableAmount uint64) bool {
 	prevAddr, prevPkgPath := getPrev()
 	// --- Internal Reward ---
 	rewardManager := getRewardManager()
-	internalEmissionReward := rewardManager.GetInternalReward() // TODO: GetInternalEmissionReward
+	internalEmissionReward := rewardManager.GetInternalEmissionReward() // TODO: GetInternalEmissionReward
 	// 지급할 양 계산
 	// TODO:
 	// 1. Last에 남은 리워드는 반드시 적재해둘것
@@ -176,16 +181,17 @@ func CalcPoolPositionRefactor(distributableAmount uint64) bool {
 	}
 
 	// Internal Reward update
-	rewardManager.SetInternalReward(internalEmissionReward)
+	rewardManager.SetInternalEmissionReward(internalEmissionReward)
 
 	// --- External Reward ---
 	// 7. 전체 Pool중 External Reward 대상 Pool을 선별
 	// 8. External Reward 대상 Pool에 대해서, Reward대상자를 선별
 	// 9. External Reward 대상자에게 Reward를 분배
-	rewardManager.SetExternalReward(NewExternalIncentiveReward())
+	externalIncentive := rewardManager.GetExternalIncentiveReward()
 	external := NewExternalCalculator(currentHeight)
 	external.calculate(incentives) // XXX: no returning any value?
-
+	externalIncentive.SetExternalCalculator(external)
+	rewardManager.SetExternalIncentiveReward(externalIncentive)
 	return true
 }
 

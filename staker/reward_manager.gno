@@ -1,10 +1,8 @@
 package staker
 
 type RewardManager struct {
-	// 1. InternalEmissionReward
-	internalReward *InternalEmissionReward
-	// 2. ExternalIncentiveReward
-	externalReward *ExternalIncentiveReward
+	internalReward *InternalEmissionReward  // Internal Reward by Emission
+	externalReward *ExternalIncentiveReward // External Reward by Incentive
 }
 
 func NewRewardManager() *RewardManager {
@@ -14,18 +12,18 @@ func NewRewardManager() *RewardManager {
 	}
 }
 
-func (rm *RewardManager) SetInternalReward(internalReward *InternalEmissionReward) {
+func (rm *RewardManager) SetInternalEmissionReward(internalReward *InternalEmissionReward) {
 	rm.internalReward = internalReward
 }
 
-func (rm *RewardManager) GetInternalReward() *InternalEmissionReward {
+func (rm *RewardManager) GetInternalEmissionReward() *InternalEmissionReward {
 	return rm.internalReward
 }
 
-func (rm *RewardManager) SetExternalReward(externalReward *ExternalIncentiveReward) {
+func (rm *RewardManager) SetExternalIncentiveReward(externalReward *ExternalIncentiveReward) {
 	rm.externalReward = externalReward
 }
 
-func (rm *RewardManager) GetExternalReward() *ExternalIncentiveReward {
+func (rm *RewardManager) GetExternalIncentiveReward() *ExternalIncentiveReward {
 	return rm.externalReward
 }

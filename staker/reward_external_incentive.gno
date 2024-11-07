@@ -13,3 +13,11 @@ type ExternalIncentiveReward struct {
 func NewExternalIncentiveReward() *ExternalIncentiveReward {
 	return &ExternalIncentiveReward{}
 }
+
+func (eir *ExternalIncentiveReward) SetExternalCalculator(externalReward *ExternalCalculator) {
+	eir.externalReward = externalReward
+}
+
+func (eir *ExternalIncentiveReward) GetExternalCalculator() *ExternalCalculator {
+	return eir.externalReward
+}
