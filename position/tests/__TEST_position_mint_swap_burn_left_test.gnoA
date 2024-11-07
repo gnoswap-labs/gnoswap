@@ -289,5 +289,4 @@ func printPoolBalance() {
 
 	println("pool token0 bar:", poolBar)
 	println("pool token1 foo:", poolFoo)
-	println()
 }

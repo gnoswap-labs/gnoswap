@@ -12,16 +12,10 @@ import (
 var warmUp = make(map[int64]int64) // map[percent]block
 
 func init() {
-	// warmUp[100] = 1296001 // 30d ~
-	// warmUp[70] = 432001   // 10d ~ 30d
-	// warmUp[50] = 216001   // 5d ~ 10d
-	// warmUp[30] = 1        // ~ 5d
-
-	// shorter warm up period for testing
-	warmUp[100] = 901 // 30m ~
-	warmUp[70] = 301  // 10m ~ 30m
-	warmUp[50] = 151  // 5m ~ 10m
-	warmUp[30] = 1    // ~ 5m
+	warmUp[100] = 1296001 // 30d ~
+	warmUp[70] = 432001   // 10d ~ 30d
+	warmUp[50] = 216001   // 5d ~ 10d
+	warmUp[30] = 1        // ~ 5d
 }
 
 func GetWarmUp(percent int64) int64 {

@@ -21,8 +21,7 @@ type lockedGNS struct {
 	unlock uint64
 }
 
-const TIMESTAMP_7_DAYS = uint64(60) // 60s // XXX: TODO, REMOVE AFTER QA ( smaller value for testing )
-// const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
+const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
 
 var (
 	addrLockedGns = make(map[std.Address][]lockedGNS)
@@ -244,7 +243,6 @@ func CollectReward() {
 
 		// transfer GNS to caller
 		gns.Transfer(a2u(caller), emissionReward)
-		println("GOV_STAKER_GNS_EMISSION_USER", caller.String(), "AMOUNT", emissionReward)
 		userEmissionReward[caller] = 0
 
 		std.Emit(
@@ -258,7 +256,6 @@ func CollectReward() {
 	// PROTOCOL FEE
 	protocolFee, exist := userProtocolFeeReward[caller]
 	if !exist || len(protocolFee) == 0 {
-		println("no protocol fee reward for user", caller)
 		return
 	}
 
@@ -270,7 +267,6 @@ func CollectReward() {
 		// transfer token to caller
 		// token.Transfer(a2u(caller), amount)
 		transferByRegisterCall(tokenPath, caller, amount)
-		println("GOV_STAKER_PROTOCOL_FEE_USER", caller.String(), "TOKEN", tokenPath, "AMOUNT", amount)
 		userProtocolFeeReward[caller][tokenPath] = 0
 
 		std.Emit(
@@ -310,9 +306,8 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			))
 		}
 
-		// transfer GNS to to
+		// transfer GNS to `to``
 		gns.Transfer(a2u(to), emissionReward)
-		println("GOV_STAKER_GNS_EMISSION_USER", to.String(), "AMOUNT", emissionReward)
 		userEmissionReward[to] = 0
 
 		std.Emit(
@@ -327,7 +322,6 @@ func CollectRewardFromLaunchPad(to std.Address) {
 	// PROTOCOL FEE
 	protocolFee, exist := userProtocolFeeReward[to]
 	if !exist || len(protocolFee) == 0 {
-		println("no protocol fee reward for user", to)
 		return
 	}
 
@@ -339,7 +333,6 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		// transfer token to to
 		// token.Transfer(a2u(to), amount)
 		transferByRegisterCall(tokenPath, to, amount)
-		println("GOV_STAKER_PROTOCOL_FEE_USER", to.String(), "TOKEN", tokenPath, "AMOUNT", amount)
 		userProtocolFeeReward[to][tokenPath] = 0
 
 		prevAddr, prevRealm := getPrev()

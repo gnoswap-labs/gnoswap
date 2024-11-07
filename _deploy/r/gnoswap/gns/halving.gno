@@ -102,7 +102,6 @@ func GetAvgBlockTimeInMs() int64 {
 }
 
 // SetAvgBlockTimeInMsByAdmin sets the average block time in millisecond.
-// Panics if the caller is not the admin.
 func SetAvgBlockTimeInMsByAdmin(ms int64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
@@ -124,7 +123,7 @@ func SetAvgBlockTimeInMsByAdmin(ms int64) {
 }
 
 // SetAvgBlockTimeInMs sets the average block time in millisecond.
-// Panics if the caller is not the governance contract.
+// Only governance contract can execute this function via proposal
 func SetAvgBlockTimeInMs(ms int64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
@@ -175,7 +174,6 @@ func setAvgBlockTimeInMs(ms int64) {
 
 	// adjust halving block
 	for year, _ := range halvingYearBlock {
-		// XXX TODO: no need to adjust previous year
 		yearEnd := halvingYearTimestamp[year]
 
 		if now >= yearEnd {
@@ -237,7 +235,6 @@ func GetHalvingInfo() string {
 		}))
 	}
 
-	// MARSHAL
 	node := json.ObjectNode("", map[string]*json.Node{
 		"height":         json.NumberNode("height", float64(height)),
 		"timestamp":      json.NumberNode("timestamp", float64(now)),

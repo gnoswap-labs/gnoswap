@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"gno.land/p/demo/ufmt"
-
 	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/gnoswap/v2/consts"
@@ -35,10 +34,6 @@ func GetRegisteredTokens() []string {
 }
 
 // RegisterGRC20Interface registers a GRC20 token interface
-//
-// Panics:
-//   - caller is not the admin
-//   - token already registered
 func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	prevAddr := std.PrevRealm().Addr()
 	prevPath := std.PrevRealm().PkgPath()
@@ -63,9 +58,6 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 }
 
 // UnregisterGRC20Interface unregisters a GRC20 token interface
-//
-// Panics:
-//   - caller is not the admin
 func UnregisterGRC20Interface(pkgPath string) {
 	assertUserCall()
 

@@ -83,20 +83,17 @@ func collectRewardByProjectId(t *testing.T) {
 		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
 		uassert.Equal(t, reward, uint64(0))
 		std.TestSkipHeights(1)
-		println()
 	})
 
 	t.Run("claim after 30 days", func(t *testing.T) {
 		std.TestSkipHeights(int64(TIMESTAMP_30DAYS) / 2)
 		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
 		uassert.Equal(t, reward, uint64(99999999))
-		println()
 	})
 
 	t.Run("no more claim in same block", func(t *testing.T) {
 		reward := CollectRewardByProjectId(`gno.land/r/onbloc/obl:124`)
 		uassert.Equal(t, reward, uint64(0))
-		println()
 	})
 
 	//

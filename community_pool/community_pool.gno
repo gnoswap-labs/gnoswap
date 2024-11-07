@@ -10,7 +10,6 @@ import (
 )
 
 // TransferTokenByAdmin transfers token to the given address.
-// Panics if the caller is not the admin.
 func TransferTokenByAdmin(pkgPath string, to std.Address, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
@@ -38,7 +37,7 @@ func TransferTokenByAdmin(pkgPath string, to std.Address, amount uint64) {
 }
 
 // TransferToken transfers token to the given address.
-// Panics if the caller is not the governance contract.
+// Only governance contract can execute this function via proposal
 func TransferToken(pkgPath string, to std.Address, amount uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {

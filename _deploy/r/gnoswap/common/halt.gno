@@ -26,7 +26,6 @@ func IsHalted() {
 }
 
 // SetHaltByAdmin sets the halt status.
-// Panics if the caller is not the admin.
 func SetHaltByAdmin(halt bool) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
@@ -61,7 +60,7 @@ func SetHaltByAdmin(halt bool) {
 }
 
 // SetHalt sets the halt status.
-// Panics if the caller is not the governance contract.
+// Only governance contract can execute this function via proposal
 func SetHalt(halt bool) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
