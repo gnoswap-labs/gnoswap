@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 
 	en "gno.land/r/gnoswap/v2/emission"
 	pl "gno.land/r/gnoswap/v2/pool"
@@ -24,418 +25,519 @@ import (
 	"gno.land/r/gnoswap/v2/gnft"
 )
 
-func init() {
-	// init pool tiers
-	// tier 1
-	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"] = InternalTier{
-		tier:           1,
-		startTimestamp: time.Now().Unix(),
-	}
-
-	// tier 2
-	poolTiers["gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500"] = InternalTier{
-		tier:           2,
-		startTimestamp: time.Now().Unix(),
-	}
-
-	// set pool create fee to 0 for testing
-	std.TestSetRealm(adminRealm)
-	pl.SetPoolCreationFeeByAdmin(0)
-
-	// override warm-up period for testing
-	warmUp[100] = 901 // 30m ~
-	warmUp[70] = 301  // 10m ~ 30m
-	warmUp[50] = 151  // 5m ~ 10m
-	warmUp[30] = 1    // ~ 5m
+func TestRpcApi(t *testing.T) {
+	testInit(t)
+	testCreatePool(t)
+	testPositionMintFooBar01(t)
+	testPositionMintFooBar02(t)
+	testPositionMintBazQux01(t)
+	testCreateExternalIncentiveObl(t)
+	testCreateExternalIncentiveFoo(t)
+	testCreateExternalIncentiveFooBySomeoneElse(t)
+	testCreateExternalIncentiveGns(t)
+	testStakeToken01(t)
+	testStakeToken02(t)
+	testStakeToken03(t)
+	testApiGetRewardTokens(t)
+	testApiGetRewardTokensByPoolPath(t)
+	testApiGetExternalIncentives(t)
+	testApiGetExternalIncentiveById(t)
+	testApiGetExternalIncentivesByPoolPath(t)
+	testApiGetExternalIncentivesByRewardTokenPath(t)
+	testApiGetInternalIncentives(t)
+	testApiGetInternalIncentivesByPoolPath(t)
+	testApiGetInternalIncentivesByTiers(t)
+	testApiGetRewards(t)
+	testApiGetRewardsByLpTokenId(t)
+	testApiGetRewardsByAddress(t)
+	testApiGetStakes(t)
+	testApiGetStakesByLpTokenId(t)
+	testApiGetStakesByLpTokenId(t)
+	testGetUnstakingFee(t)
+	testSetUnstakingFeeNoPermission(t)
+	testSetUnstakingFeeOutOfRange(t)
+	testSetUnstakingFee(t)
+	testApiGetExternalIncentivesOrig(t)
+	testApiGetExternalIncentivesAfterCollectReward(t)
 }
 
-func TestPoolCreatePool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+func testInit(t *testing.T) {
+	t.Run("initial", func(t *testing.T) {
+		// init pool tiers
+		// tier 1
+		poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"] = InternalTier{
+			tier:           1,
+			startTimestamp: time.Now().Unix(),
+		}
 
-	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
-	std.TestSkipHeights(1)
+		// tier 2
+		poolTiers["gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500"] = InternalTier{
+			tier:           2,
+			startTimestamp: time.Now().Unix(),
+		}
 
-	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
-	pl.CreatePool(bazPath, quxPath, uint32(500), "130621891405341611593710811006")                // tick 10_000 ≈ x2.7
+		// set pool create fee to 0 for testing
+		std.TestSetRealm(adminRealm)
+		pl.SetPoolCreationFeeByAdmin(0)
 
-	std.TestSkipHeights(1)
+		// override warm-up period for testing
+		warmUp[100] = 901 // 30m ~
+		warmUp[70] = 301  // 10m ~ 30m
+		warmUp[50] = 151  // 5m ~ 10m
+		warmUp[30] = 1    // ~ 5m
+	})
 }
 
-func TestPositionMintFooBar01(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	std.TestSkipHeights(2)
+func testCreatePool(t *testing.T) {
+	t.Run("create pool", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
 
-	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-		fooPath,      // token0
-		barPath,      // token1
-		uint32(500),  // fee
-		int32(9000),  // tickLower
-		int32(11000), // tickUpper
-		"1000",       // amount0Desired
-		"1000",       // amount1Desired
-		"1",          // amount0Min
-		"1",          // amount1Min
-		max_timeout,  // deadline
-		admin,
-		admin,
-	)
+		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee())
+		std.TestSkipHeights(1)
 
-	std.TestSkipHeights(1)
+		pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+		pl.CreatePool(bazPath, quxPath, uint32(500), "130621891405341611593710811006")                // tick 10_000 ≈ x2.7
 
-	shouldEQ(t, lpTokenId, uint64(1))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), admin)
-	shouldEQ(t, amount0, "1000")
-	shouldEQ(t, amount1, "368")
-
-	// approve nft to staker for staking
-	std.TestSetRealm(adminRealm)
-	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
+	})
 }
 
-func TestPositionMintFooBar02(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	std.TestSkipHeights(2)
+func testPositionMintFooBar01(t *testing.T) {
+	t.Run("position 01 mint, foo:bar:500", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		std.TestSkipHeights(2)
 
-	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-		fooPath,      // token0
-		barPath,      // token1
-		uint32(500),  // fee
-		int32(9100),  // tickLower
-		int32(12000), // tickUpper
-		"5000",       // amount0Desired
-		"5000",       // amount1Desired
-		"1",          // amount0Min
-		"1",          // amount1Min
-		max_timeout,  // deadline
-		admin,
-		admin,
-	)
+		lpTokenId, liquidity, amount0, amount1 := pn.Mint(
+			fooPath,      // token0
+			barPath,      // token1
+			uint32(500),  // fee
+			int32(9000),  // tickLower
+			int32(11000), // tickUpper
+			"1000",       // amount0Desired
+			"1000",       // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,  // deadline
+			admin,
+			admin,
+		)
 
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
 
-	shouldEQ(t, lpTokenId, uint64(2))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), admin)
-	shouldEQ(t, amount0, "5000")
-	shouldEQ(t, amount1, "3979")
+		uassert.Equal(t, lpTokenId, uint64(1))
+		uassert.Equal(t, gnft.OwnerOf(tid(lpTokenId)), admin)
+		uassert.Equal(t, amount0, "1000")
+		uassert.Equal(t, amount1, "368")
 
-	// approve nft to staker
-	std.TestSetRealm(adminRealm)
-	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
-	std.TestSkipHeights(1)
+		// approve nft to staker for staking
+		std.TestSetRealm(adminRealm)
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
+		std.TestSkipHeights(1)
+	})
 }
 
-func TestPositionMintBazQux01(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	std.TestSkipHeights(2)
+func testPositionMintFooBar02(t *testing.T) {
+	t.Run("position 02 mint, foo:bar:500", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		std.TestSkipHeights(2)
 
-	lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-		bazPath,      // token0
-		quxPath,      // token1
-		uint32(500),  // fee
-		int32(9100),  // tickLower
-		int32(12000), // tickUpper
-		"5000",       // amount0Desired
-		"5000",       // amount1Desired
-		"1",          // amount0Min
-		"1",          // amount1Min
-		max_timeout,  // deadline
-		admin,
-		admin,
-	)
+		lpTokenId, liquidity, amount0, amount1 := pn.Mint(
+			fooPath,      // token0
+			barPath,      // token1
+			uint32(500),  // fee
+			int32(9100),  // tickLower
+			int32(12000), // tickUpper
+			"5000",       // amount0Desired
+			"5000",       // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,  // deadline
+			admin,
+			admin,
+		)
 
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
 
-	shouldEQ(t, lpTokenId, uint64(3))
-	shouldEQ(t, gnft.OwnerOf(tid(lpTokenId)), admin)
-	shouldEQ(t, amount0, "3979")
-	shouldEQ(t, amount1, "5000")
+		uassert.Equal(t, lpTokenId, uint64(2))
+		uassert.Equal(t, gnft.OwnerOf(tid(lpTokenId)), admin)
+		uassert.Equal(t, amount0, "5000")
+		uassert.Equal(t, amount1, "3979")
 
-	// approve nft to staker
-	std.TestSetRealm(adminRealm)
-	gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
-	std.TestSkipHeights(1)
+		// approve nft to staker
+		std.TestSetRealm(adminRealm)
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
+		std.TestSkipHeights(1)
+	})
 }
 
-func TestCreateExternalIncentiveObl(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
-	std.TestSkipHeights(1)
+func testPositionMintBazQux01(t *testing.T) {
+	t.Run("position 01 mint, baz:qux:500", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		std.TestSkipHeights(2)
 
-	AddToken(oblPath)
-	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
-	CreateExternalIncentive(
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", // targetPoolPath
-		oblPath,                     // rewardToken
-		"1000000000",                // rewardAmount
-		1234569600,                  // startTimestamp
-		1234569600+TIMESTAMP_90DAYS, // endTimestamp
-	)
+		lpTokenId, liquidity, amount0, amount1 := pn.Mint(
+			bazPath,      // token0
+			quxPath,      // token1
+			uint32(500),  // fee
+			int32(9100),  // tickLower
+			int32(12000), // tickUpper
+			"5000",       // amount0Desired
+			"5000",       // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,  // deadline
+			admin,
+			admin,
+		)
 
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
 
-	obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
-	std.TestSkipHeights(1)
-	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
-	CreateExternalIncentive("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", oblPath, "100000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
-	std.TestSkipHeights(1)
+		uassert.Equal(t, lpTokenId, uint64(3))
+		uassert.Equal(t, gnft.OwnerOf(tid(lpTokenId)), admin)
+		uassert.Equal(t, amount0, "3979")
+		uassert.Equal(t, amount1, "5000")
+
+		// approve nft to staker
+		std.TestSetRealm(adminRealm)
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(lpTokenId))
+		std.TestSkipHeights(1)
+	})
 }
 
-func TestCreateExternalIncentiveFoo(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	foo.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
-	std.TestSkipHeights(1)
+func testCreateExternalIncentiveObl(t *testing.T) {
+	t.Run("create external incentive obl", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
+		std.TestSkipHeights(1)
 
-	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
-	CreateExternalIncentive(
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", // targetPoolPath
-		fooPath,                     // rewardToken
-		"1000000000",                // rewardAmount
-		1234569600,                  // startTimestamp
-		1234569600+TIMESTAMP_90DAYS, // endTimestamp
-	)
+		AddToken(oblPath)
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+		CreateExternalIncentive(
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", // targetPoolPath
+			oblPath,                     // rewardToken
+			"1000000000",                // rewardAmount
+			1234569600,                  // startTimestamp
+			1234569600+TIMESTAMP_90DAYS, // endTimestamp
+		)
 
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
+
+		obl.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
+		std.TestSkipHeights(1)
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+		CreateExternalIncentive("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", oblPath, "100000000", 1234569600, 1234569600+TIMESTAMP_90DAYS)
+		std.TestSkipHeights(1)
+	})
 }
 
-func TestCreateExternalIncentiveFooBySomeoneElse(t *testing.T) {
-	testAddr := testutils.TestAddress("testAddr")
-	testRealm := std.NewUserRealm(testAddr)
+func testCreateExternalIncentiveFoo(t *testing.T) {
+	t.Run("create external incentive foo", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		foo.Approve(a2u(consts.STAKER_ADDR), 10_000_000_000)
+		std.TestSkipHeights(1)
 
-	oldFooForTest := foo.BalanceOf(a2u(testAddr))
-	std.TestSetRealm(adminRealm)
-	foo.Transfer(a2u(testAddr), 5_000_000_000)
-	newFooForTest := foo.BalanceOf(a2u(testAddr))
-	shouldEQ(t, newFooForTest-oldFooForTest, uint64(5_000_000_000))
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+		CreateExternalIncentive(
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", // targetPoolPath
+			fooPath,                     // rewardToken
+			"1000000000",                // rewardAmount
+			1234569600,                  // startTimestamp
+			1234569600+TIMESTAMP_90DAYS, // endTimestamp
+		)
 
-	std.TestSetRealm(adminRealm)
-	gns.Transfer(a2u(testAddr), depositGnsAmount)
-
-	std.TestSetRealm(testRealm)
-	foo.Approve(a2u(consts.STAKER_ADDR), 5_000_000_000)
-
-	std.TestSkipHeights(1)
-
-	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
-	CreateExternalIncentive(
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", // targetPoolPath
-		fooPath,                     // rewardToken
-		"500000000",                 // rewardAmount
-		1234569600,                  // startTimestamp
-		1234569600+TIMESTAMP_90DAYS, // endTimestamp
-	)
-
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
+	})
 }
 
-func TestCreateExternalIncentiveGns(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount+10_000_000_000)
-	std.TestSkipHeights(1)
+func testCreateExternalIncentiveFooBySomeoneElse(t *testing.T) {
+	t.Run("create external incentive foo by someone else", func(t *testing.T) {
+		testAddr := testutils.TestAddress("testAddr")
+		testRealm := std.NewUserRealm(testAddr)
 
-	CreateExternalIncentive(
-		"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", // targetPoolPath
-		consts.GNS_PATH,             // rewardToken
-		"1000000000",                // rewardAmount
-		1234569600,                  // startTimestamp
-		1234569600+TIMESTAMP_90DAYS, // endTimestamp
-	)
+		oldFooForTest := foo.BalanceOf(a2u(testAddr))
+		std.TestSetRealm(adminRealm)
+		foo.Transfer(a2u(testAddr), 5_000_000_000)
+		newFooForTest := foo.BalanceOf(a2u(testAddr))
+		uassert.Equal(t, newFooForTest-oldFooForTest, uint64(5_000_000_000))
 
-	std.TestSkipHeights(1)
+		std.TestSetRealm(adminRealm)
+		gns.Transfer(a2u(testAddr), depositGnsAmount)
+
+		std.TestSetRealm(testRealm)
+		foo.Approve(a2u(consts.STAKER_ADDR), 5_000_000_000)
+
+		std.TestSkipHeights(1)
+
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+		CreateExternalIncentive(
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", // targetPoolPath
+			fooPath,                     // rewardToken
+			"500000000",                 // rewardAmount
+			1234569600,                  // startTimestamp
+			1234569600+TIMESTAMP_90DAYS, // endTimestamp
+		)
+
+		std.TestSkipHeights(1)
+	})
 }
 
-func TestStakeToken01(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	StakeToken(1) // GNFT tokenId
+func testCreateExternalIncentiveGns(t *testing.T) {
+	t.Run("create external incentive gns", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount+10_000_000_000)
+		std.TestSkipHeights(1)
 
-	std.TestSkipHeights(1)
+		CreateExternalIncentive(
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500", // targetPoolPath
+			consts.GNS_PATH,             // rewardToken
+			"1000000000",                // rewardAmount
+			1234569600,                  // startTimestamp
+			1234569600+TIMESTAMP_90DAYS, // endTimestamp
+		)
 
-	shouldEQ(t, gnft.OwnerOf(tid(1)), GetOrigPkgAddr()) // staker
-	shouldEQ(t, len(deposits), 1)
+		std.TestSkipHeights(1)
+	})
 }
 
-func TestStakeToken02(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	StakeToken(2) // GNFT tokenId
+func testStakeToken01(t *testing.T) {
+	t.Run("stake token 01", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		StakeToken(1) // GNFT tokenId
 
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
 
-	shouldEQ(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr()) // staker
-	shouldEQ(t, len(deposits), 2)
+		uassert.Equal(t, gnft.OwnerOf(tid(1)), GetOrigPkgAddr()) // staker
+		uassert.Equal(t, len(deposits), 1)
+	})
 }
 
-func TestStakeToken03(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	StakeToken(3) // GNFT tokenId
+func testStakeToken02(t *testing.T) {
+	t.Run("stake token 02", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		StakeToken(2) // GNFT tokenId
 
-	std.TestSkipHeights(1)
+		std.TestSkipHeights(1)
 
-	shouldEQ(t, gnft.OwnerOf(tid(3)), GetOrigPkgAddr()) // staker
-	shouldEQ(t, len(deposits), 3)
+		uassert.Equal(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr()) // staker
+		uassert.Equal(t, len(deposits), 2)
+	})
+}
+
+func testStakeToken03(t *testing.T) {
+	t.Run("stake token 03", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		StakeToken(3) // GNFT tokenId
+
+		std.TestSkipHeights(1)
+
+		uassert.Equal(t, gnft.OwnerOf(tid(3)), GetOrigPkgAddr()) // staker
+		uassert.Equal(t, len(deposits), 3)
+	})
 }
 
 /*
 RPC_API_INCENTIVE
 */
-func TestApiGetRewardTokens(t *testing.T) {
-	grt := ApiGetRewardTokens()
-	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","tokens":["gno.land/r/gnoswap/v2/gns","gno.land/r/onbloc/obl","gno.land/r/onbloc/obl","gno.land/r/onbloc/foo","gno.land/r/onbloc/foo","gno.land/r/gnoswap/v2/gns"]},{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","tokens":["gno.land/r/gnoswap/v2/gns"]}]}`
+func testApiGetRewardTokens(t *testing.T) {
+	t.Run("get reward tokens", func(t *testing.T) {
+		grt := ApiGetRewardTokens()
+		res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","tokens":["gno.land/r/gnoswap/v2/gns","gno.land/r/onbloc/obl","gno.land/r/onbloc/obl","gno.land/r/onbloc/foo","gno.land/r/onbloc/foo","gno.land/r/gnoswap/v2/gns"]},{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","tokens":["gno.land/r/gnoswap/v2/gns"]}]}`
 
-	shouldEQ(t, grt, res)
+		uassert.Equal(t, grt, res)
+	})
 }
 
-func TestApiGetRewardTokensByPoolPath(t *testing.T) {
-	grt := ApiGetRewardTokensByPoolPath("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","tokens":["gno.land/r/gnoswap/v2/gns","gno.land/r/onbloc/obl","gno.land/r/onbloc/obl","gno.land/r/onbloc/foo","gno.land/r/onbloc/foo","gno.land/r/gnoswap/v2/gns"]}]}`
-
-	shouldEQ(t, grt, res)
+func testApiGetRewardTokensByPoolPath(t *testing.T) {
+	t.Run("get reward tokens by pool path", func(t *testing.T) {
+		grt := ApiGetRewardTokensByPoolPath("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+		res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","tokens":["gno.land/r/gnoswap/v2/gns","gno.land/r/onbloc/obl","gno.land/r/onbloc/obl","gno.land/r/onbloc/foo","gno.land/r/onbloc/foo","gno.land/r/gnoswap/v2/gns"]}]}`
+		uassert.Equal(t, grt, res)
+	})
 }
 
 // EXTERNAL
-func TestApiGetExternalIncentives(t *testing.T) {
-	extIncen := ApiGetExternalIncentives()
-	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":138,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"100000000","rewardLeft":"100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":140,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":142,"depositGnsAmount":1000000000},{"incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"500000000","rewardLeft":"500000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1w3jhxazpv3j8yh6lta047h6lta047h6lke9x4e","createdHeight":144,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/v2/gns","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":146,"depositGnsAmount":1000000000}]}`
-	shouldEQ(t, extIncen, res)
+func testApiGetExternalIncentives(t *testing.T) {
+	t.Run("api get external incentives", func(t *testing.T) {
+		extIncen := ApiGetExternalIncentives()
+		res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":138,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"100000000","rewardLeft":"100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":140,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":142,"depositGnsAmount":1000000000},{"incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"500000000","rewardLeft":"500000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1w3jhxazpv3j8yh6lta047h6lta047h6lke9x4e","createdHeight":144,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/v2/gns","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":146,"depositGnsAmount":1000000000}]}`
+		uassert.Equal(t, extIncen, res)
+	})
 }
 
-func TestApiGetExternalIncentiveById(t *testing.T) {
-	extIncen := ApiGetExternalIncentiveById("ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==")
-	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"100000000","rewardLeft":"100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":140,"depositGnsAmount":1000000000}]}`
-	shouldEQ(t, extIncen, res)
+func testApiGetExternalIncentiveById(t *testing.T) {
+	t.Run("get external incentive by id", func(t *testing.T) {
+		extIncen := ApiGetExternalIncentiveById("ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==")
+		res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"100000000","rewardLeft":"100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":140,"depositGnsAmount":1000000000}]}`
+		uassert.Equal(t, extIncen, res)
+	})
 }
 
-func TestApiGetExternalIncentivesByPoolPath(t *testing.T) {
-	extIncen := ApiGetExternalIncentivesByPoolPath("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
-	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":138,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"100000000","rewardLeft":"100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":140,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":142,"depositGnsAmount":1000000000},{"incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"500000000","rewardLeft":"500000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1w3jhxazpv3j8yh6lta047h6lta047h6lke9x4e","createdHeight":144,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/v2/gns","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":146,"depositGnsAmount":1000000000}]}`
-	shouldEQ(t, extIncen, res)
+func testApiGetExternalIncentivesByPoolPath(t *testing.T) {
+	t.Run("get external incentives by pool path", func(t *testing.T) {
+		extIncen := ApiGetExternalIncentivesByPoolPath("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
+		res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":138,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"100000000","rewardLeft":"100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":140,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":142,"depositGnsAmount":1000000000},{"incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"500000000","rewardLeft":"500000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1w3jhxazpv3j8yh6lta047h6lta047h6lke9x4e","createdHeight":144,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/v2/gns","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":146,"depositGnsAmount":1000000000}]}`
+		uassert.Equal(t, extIncen, res)
+	})
 }
 
-func TestApiGetExternalIncentivesByRewardTokenPath(t *testing.T) {
-	extIncen := ApiGetExternalIncentivesByRewardTokenPath("gno.land/r/onbloc/obl")
-	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":138,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"100000000","rewardLeft":"100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":140,"depositGnsAmount":1000000000}]}`
-	shouldEQ(t, extIncen, res)
+func testApiGetExternalIncentivesByRewardTokenPath(t *testing.T) {
+	t.Run("get external incentives by reward token path", func(t *testing.T) {
+		extIncen := ApiGetExternalIncentivesByRewardTokenPath("gno.land/r/onbloc/obl")
+		res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"1000000000","rewardLeft":"1000000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":138,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"100000000","rewardLeft":"100000000","startTimestamp":1234569600,"endTimestamp":1242345600,"active":false,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":140,"depositGnsAmount":1000000000}]}`
+		uassert.Equal(t, extIncen, res)
+	})
 }
 
 // INTERNAL
-func TestApiGetInternalIncentives(t *testing.T) {
-	intIncen := ApiGetInternalIncentives()
-	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000","rewardToken":"gno.land/r/gnoswap/v2/gns","tier":1,"startTimestamp":1234567890,"rewardPerBlock":"3745718","accuGns":101134414},{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/v2/gns","tier":1,"startTimestamp":1234567890,"rewardPerBlock":"3745718","accuGns":101134414},{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardToken":"gno.land/r/gnoswap/v2/gns","tier":2,"startTimestamp":1234567890,"rewardPerBlock":"3210616","accuGns":86686641}]}`
-	shouldEQ(t, intIncen, res)
+func testApiGetInternalIncentives(t *testing.T) {
+	t.Run("get internal incentives", func(t *testing.T) {
+		intIncen := ApiGetInternalIncentives()
+		res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000","rewardToken":"gno.land/r/gnoswap/v2/gns","tier":1,"startTimestamp":1234567890,"rewardPerBlock":"3745718","accuGns":101134414},{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/v2/gns","tier":1,"startTimestamp":1234567890,"rewardPerBlock":"3745718","accuGns":101134414},{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardToken":"gno.land/r/gnoswap/v2/gns","tier":2,"startTimestamp":1234567890,"rewardPerBlock":"3210616","accuGns":86686641}]}`
+		uassert.Equal(t, intIncen, res)
+	})
 }
 
-func TestApiGetInternalIncentivesByPoolPath(t *testing.T) {
-	intIncen := ApiGetInternalIncentivesByPoolPath("gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500")
-	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardToken":"gno.land/r/gnoswap/v2/gns","tier":2,"startTimestamp":1234567890,"rewardPerBlock":"3210616","accuGns":86686641}]}`
-	shouldEQ(t, intIncen, res)
+func testApiGetInternalIncentivesByPoolPath(t *testing.T) {
+	t.Run("get internal incentives by pool path", func(t *testing.T) {
+		intIncen := ApiGetInternalIncentivesByPoolPath("gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500")
+		res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardToken":"gno.land/r/gnoswap/v2/gns","tier":2,"startTimestamp":1234567890,"rewardPerBlock":"3210616","accuGns":86686641}]}`
+		uassert.Equal(t, intIncen, res)
+	})
 }
 
-func TestApiGetInternalIncentivesByTiers(t *testing.T) {
-	intIncen := ApiGetInternalIncentivesByTiers(uint64(2))
-	res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardToken":"gno.land/r/gnoswap/v2/gns","tier":2,"startTimestamp":1234567890,"rewardPerBlock":"3210616","accuGns":86686641}]}`
-	shouldEQ(t, intIncen, res)
+func testApiGetInternalIncentivesByTiers(t *testing.T) {
+	t.Run("get internal incentives by tiers", func(t *testing.T) {
+		intIncen := ApiGetInternalIncentivesByTiers(uint64(2))
+		res := `{"stat":{"height":150,"timestamp":1234567944},"response":[{"poolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardToken":"gno.land/r/gnoswap/v2/gns","tier":2,"startTimestamp":1234567890,"rewardPerBlock":"3210616","accuGns":86686641}]}`
+		uassert.Equal(t, intIncen, res)
+	})
 }
 
 // /*
 // RPC_API_INCENTIVE
 // */
-func TestApiGetRewards(t *testing.T) {
-	std.TestSkipHeights(1000)
-	en.MintAndDistributeGns()
-	CalcPoolPosition()
+func testApiGetRewards(t *testing.T) {
+	t.Run("get rewards", func(t *testing.T) {
+		std.TestSkipHeights(1000)
+		en.MintAndDistributeGns()
+		CalcPoolPosition()
 
-	rewards := ApiGetRewards()
-	res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":369114986,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234567938},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":2201,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":204,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":2053,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":1026,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2053,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600}]},{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2037161166,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234567940},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":12200,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":1137,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":11385,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":5692,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":11385,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600}]},{"lpTokenId":3,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2058005077,"stakeTimestamp":1234567942,"stakeHeight":149,"incentiveStart":1234567942}]}]}`
-	shouldEQ(t, rewards, res)
+		rewards := ApiGetRewards()
+		res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":369114986,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234567938},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":2201,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":204,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":2053,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":1026,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2053,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600}]},{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2037161166,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234567940},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":12200,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":1137,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":11385,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":5692,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":11385,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600}]},{"lpTokenId":3,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2058005077,"stakeTimestamp":1234567942,"stakeHeight":149,"incentiveStart":1234567942}]}]}`
+		uassert.Equal(t, rewards, res)
+	})
 }
 
-func TestApiGetRewardsByLpTokenId(t *testing.T) {
-	rewards := ApiGetRewardsByLpTokenId(uint64(1))
-	res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":369114986,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234567938},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":2201,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":204,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":2053,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":1026,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2053,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600}]}]}`
-	shouldEQ(t, rewards, res)
+func testApiGetRewardsByLpTokenId(t *testing.T) {
+	t.Run("get rewards by lp token id", func(t *testing.T) {
+		rewards := ApiGetRewardsByLpTokenId(uint64(1))
+		res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":369114986,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234567938},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":2201,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":204,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":2053,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":1026,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2053,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600}]}]}`
+		uassert.Equal(t, rewards, res)
+	})
 }
 
-func TestApiGetRewardsByAddress(t *testing.T) {
-	rewards := ApiGetRewardsByAddress("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
-	res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":369114986,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234567938},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":2201,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":204,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":2053,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":1026,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2053,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600}]},{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2037161166,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234567940},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":12200,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":1137,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":11385,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":5692,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":11385,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600}]},{"lpTokenId":3,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2058005077,"stakeTimestamp":1234567942,"stakeHeight":149,"incentiveStart":1234567942}]}]}`
-	shouldEQ(t, rewards, res)
+func testApiGetRewardsByAddress(t *testing.T) {
+	t.Run("get rewards by address", func(t *testing.T) {
+		rewards := ApiGetRewardsByAddress("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
+		res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":369114986,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234567938},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":2201,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":204,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":2053,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":1026,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2053,"stakeTimestamp":1234567938,"stakeHeight":147,"incentiveStart":1234569600}]},{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2037161166,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234567940},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":12200,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/obl","rewardTokenAmount":1137,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":11385,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/onbloc/foo","rewardTokenAmount":5692,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600},{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":11385,"stakeTimestamp":1234567940,"stakeHeight":148,"incentiveStart":1234569600}]},{"lpTokenId":3,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"INTERNAL","incentiveId":"","targetPoolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500","rewardTokenPath":"gno.land/r/gnoswap/v2/gns","rewardTokenAmount":2058005077,"stakeTimestamp":1234567942,"stakeHeight":149,"incentiveStart":1234567942}]}]}`
+		uassert.Equal(t, rewards, res)
+	})
 }
 
-func TestApiGetStakes(t *testing.T) {
-	stakes := ApiGetStakes()
-	res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"tokenId":1,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567938,"stakeHeight":147,"targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"},{"tokenId":2,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567940,"stakeHeight":148,"targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"},{"tokenId":3,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567942,"stakeHeight":149,"targetPoolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500"}]}`
-	shouldEQ(t, stakes, res)
+func testApiGetStakes(t *testing.T) {
+	t.Run("get stakes", func(t *testing.T) {
+		stakes := ApiGetStakes()
+		res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"tokenId":1,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567938,"stakeHeight":147,"targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"},{"tokenId":2,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567940,"stakeHeight":148,"targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"},{"tokenId":3,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567942,"stakeHeight":149,"targetPoolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500"}]}`
+		uassert.Equal(t, stakes, res)
+	})
 }
 
-func TestApiGetStakesByLpTokenId(t *testing.T) {
-	stakes := ApiGetStakesByLpTokenId(uint64(1))
-	res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"tokenId":1,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567938,"stakeHeight":147,"targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"}]}`
-	shouldEQ(t, stakes, res)
+func testApiGetStakesByLpTokenId(t *testing.T) {
+	t.Run("get stakes by lp token id", func(t *testing.T) {
+		stakes := ApiGetStakesByLpTokenId(uint64(1))
+		res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"tokenId":1,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567938,"stakeHeight":147,"targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"}]}`
+		uassert.Equal(t, stakes, res)
+	})
 }
 
-func TestApiGetStakesByAddress(t *testing.T) {
-	stakes := ApiGetStakesByAddress("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
-	res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"tokenId":1,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567938,"stakeHeight":147,"targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"},{"tokenId":2,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567940,"stakeHeight":148,"targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"},{"tokenId":3,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567942,"stakeHeight":149,"targetPoolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500"}]}`
-	shouldEQ(t, stakes, res)
+func testApiGetStakesByAddress(t *testing.T) {
+	t.Run("get stakes by address", func(t *testing.T) {
+		stakes := ApiGetStakesByAddress("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
+		res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"tokenId":1,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567938,"stakeHeight":147,"targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"},{"tokenId":2,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567940,"stakeHeight":148,"targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"},{"tokenId":3,"owner":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","numberOfStakes":1,"stakeTimestamp":1234567942,"stakeHeight":149,"targetPoolPath":"gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500"}]}`
+		uassert.Equal(t, stakes, res)
+	})
 }
 
 // Test Getter/Setter for UnstakingFee
-func TestGetUnstakingFee(t *testing.T) {
-	shouldEQ(t, GetUnstakingFee(), uint64(100))
+func testGetUnstakingFee(t *testing.T) {
+	t.Run("get unstaking fee", func(t *testing.T) {
+		uassert.Equal(t, GetUnstakingFee(), uint64(100))
+	})
 }
 
-func TestSetUnstakingFeeNoPermission(t *testing.T) {
-	dummy := testutils.TestAddress("dummy")
-	std.TestSetRealm(std.NewUserRealm(dummy))
+func testSetUnstakingFeeNoPermission(t *testing.T) {
+	t.Run("set unstaking fee no permission", func(t *testing.T) {
+		dummy := testutils.TestAddress("dummy")
+		std.TestSetRealm(std.NewUserRealm(dummy))
 
-	shouldPanicWithMsg(
-		t,
-		func() {
-			SetUnstakingFeeByAdmin(2)
-		},
-		"[STAKER] reward_fee.gno__SetUnstakingFeeByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set unstaking fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
-	)
+		uassert.PanicsWithMessage(
+			t,
+			`[GNOSWAP-STAKER-001] no permission || reward_fee.gno__SetUnstakingFeeByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set unstaking fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
+			func() {
+				SetUnstakingFeeByAdmin(2)
+			},
+		)
+	})
 }
 
-func TestSetUnstakingFeeOutOfRange(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+func testSetUnstakingFeeOutOfRange(t *testing.T) {
+	t.Run("set unstaking fee out of range", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
 
-	shouldPanicWithMsg(
-		t,
-		func() {
-			SetUnstakingFeeByAdmin(10001)
-		},
-		"[STAKER] reward_fee.gno__SetUnstakingFee() || fee(10001) must be in range 0 ~ 10000",
-	)
+		uassert.PanicsWithMessage(
+			t,
+			`[GNOSWAP-STAKER-008] invalid unstaking fee || reward_fee.gno__SetUnstakingFee() || fee(10001) must be in range 0 ~ 10000`,
+			func() {
+				SetUnstakingFeeByAdmin(10001)
+			},
+		)
+	})
 }
 
-func TestSetUnstakingFee(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-	shouldEQ(t, GetUnstakingFee(), uint64(100))
-	SetUnstakingFeeByAdmin(30)
-	shouldEQ(t, GetUnstakingFee(), uint64(30))
+func testSetUnstakingFee(t *testing.T) {
+	t.Run("set unstaking fee", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		uassert.Equal(t, GetUnstakingFee(), uint64(100))
+		SetUnstakingFeeByAdmin(30)
+		uassert.Equal(t, GetUnstakingFee(), uint64(30))
+	})
 }
 
 // reward left decrease
-func TestApiGetExternalIncentivesOrig(t *testing.T) {
-	extIncen := ApiGetExternalIncentives()
-	res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"1000000000","rewardLeft":"999955764","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":138,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"100000000","rewardLeft":"99995579","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":140,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"1000000000","rewardLeft":"999955764","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":142,"depositGnsAmount":1000000000},{"incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"500000000","rewardLeft":"499977883","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1w3jhxazpv3j8yh6lta047h6lta047h6lke9x4e","createdHeight":144,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/v2/gns","rewardAmount":"1000000000","rewardLeft":"999955764","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":146,"depositGnsAmount":1000000000}]}`
-	shouldEQ(t, extIncen, res)
+func testApiGetExternalIncentivesOrig(t *testing.T) {
+	t.Run("external incentive orig", func(t *testing.T) {
+		extIncen := ApiGetExternalIncentives()
+		res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"1000000000","rewardLeft":"999955764","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":138,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"100000000","rewardLeft":"99995579","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":140,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"1000000000","rewardLeft":"999955764","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":142,"depositGnsAmount":1000000000},{"incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"500000000","rewardLeft":"499977883","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1w3jhxazpv3j8yh6lta047h6lta047h6lke9x4e","createdHeight":144,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/v2/gns","rewardAmount":"1000000000","rewardLeft":"999955764","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":146,"depositGnsAmount":1000000000}]}`
+		uassert.Equal(t, extIncen, res)
+	})
 }
 
-func TestApiGetExternalIncentivesAfterCollectReward(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+func testApiGetExternalIncentivesAfterCollectReward(t *testing.T) {
+	t.Run("external incentive after collect reward", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
 
-	CollectReward(1, false)
-	CollectReward(2, false)
-	CollectReward(3, false)
+		CollectReward(1, false)
+		CollectReward(2, false)
+		CollectReward(3, false)
 
-	extIncen := ApiGetExternalIncentives()
-	res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"1000000000","rewardLeft":"999911528","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":138,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"100000000","rewardLeft":"99991158","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":140,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"1000000000","rewardLeft":"999911528","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":142,"depositGnsAmount":1000000000},{"incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"500000000","rewardLeft":"499955766","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1w3jhxazpv3j8yh6lta047h6lta047h6lke9x4e","createdHeight":144,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/v2/gns","rewardAmount":"1000000000","rewardLeft":"999911528","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":146,"depositGnsAmount":1000000000}]}`
-	shouldEQ(t, extIncen, res)
+		extIncen := ApiGetExternalIncentives()
+		res := `{"stat":{"height":1150,"timestamp":1234569944},"response":[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzOA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"1000000000","rewardLeft":"999911528","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":138,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9vYmw6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0MA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/obl","rewardAmount":"100000000","rewardLeft":"99991158","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":140,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0Mg==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"1000000000","rewardLeft":"999911528","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":142,"depositGnsAmount":1000000000},{"incentiveId":"ZzF3M2poeGF6cHYzajh5aDZsdGEwNDdoNmx0YTA0N2g2bGtlOXg0ZTpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL29uYmxvYy9mb286MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjE0NA==","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/onbloc/foo","rewardAmount":"500000000","rewardLeft":"499955766","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1w3jhxazpv3j8yh6lta047h6lta047h6lke9x4e","createdHeight":144,"depositGnsAmount":1000000000},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvZm9vOjUwMDpnbm8ubGFuZC9yL2dub3N3YXAvdjIvZ25zOjEyMzQ1Njk2MDA6MTI0MjM0NTYwMDoxNDY=","poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500","rewardToken":"gno.land/r/gnoswap/v2/gns","rewardAmount":"1000000000","rewardLeft":"999911528","startTimestamp":1234569600,"endTimestamp":1242345600,"active":true,"refundee":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","createdHeight":146,"depositGnsAmount":1000000000}]}`
+		uassert.Equal(t, extIncen, res)
+	})
 }

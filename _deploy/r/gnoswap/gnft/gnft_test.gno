@@ -54,7 +54,7 @@ func TestSetTokenURILast(t *testing.T) {
 		uassert.PanicsWithMessage(t,
 			"invalid token id",
 			func() {
-				GetTokenURI(tid(1))
+				TokenURI(tid(1))
 			},
 		)
 	})
@@ -66,7 +66,7 @@ func TestSetTokenURILast(t *testing.T) {
 
 	t.Run("get token uri", func(t *testing.T) {
 		uassert.NotPanics(t, func() {
-			GetTokenURI(tid(1))
+			TokenURI(tid(1))
 		})
 	})
 }
@@ -89,6 +89,16 @@ func TestTransferFrom(t *testing.T) {
 	t.Run("dummyOne can call SetTokenURI", func(t *testing.T) {
 		std.TestSetRealm(dummyOneRealm)
 		SetTokenURI(tid(5))
+	})
+}
+
+func TestMetaGetter(t *testing.T) {
+	t.Run("name", func(t *testing.T) {
+		uassert.Equal(t, Name(), "GNOSWAP NFT")
+	})
+
+	t.Run("symbol", func(t *testing.T) {
+		uassert.Equal(t, Symbol(), "GNFT")
 	})
 }
 

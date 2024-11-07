@@ -21,26 +21,26 @@ var (
 	nowTime   uint64
 )
 
-func init() {
-	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
-	gs.Delegate(admin, uint64(1_000_000))
-	std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
-
-	// overwrite config for testcase
-	config = Config{
-		VotingStartDelay:              uint64(10),   // 10s ≈ 5 block
-		VotingPeriod:                  uint64(30),   // 30s ≈ 15 block
-		VotingWeightSmoothingDuration: uint64(10),   // 10s ≈ 5 block
-		Quorum:                        uint64(50),   // 50% of total xGNS supply
-		ProposalCreationThreshold:     uint64(100),  //
-		ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
-		ExecutionWindow:               uint64(1000), // 500 block
-	}
-	configVersions[1] = config
-}
-
 func TestProposeText(t *testing.T) {
+	t.Run("initial state", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
+		gs.Delegate(admin, uint64(1_000_000))
+		std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
+
+		// overwrite config for testcase
+		config = Config{
+			VotingStartDelay:              uint64(10),   // 10s ≈ 5 block
+			VotingPeriod:                  uint64(30),   // 30s ≈ 15 block
+			VotingWeightSmoothingDuration: uint64(10),   // 10s ≈ 5 block
+			Quorum:                        uint64(50),   // 50% of total xGNS supply
+			ProposalCreationThreshold:     uint64(100),  //
+			ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
+			ExecutionWindow:               uint64(1000), // 500 block
+		}
+		configVersions[1] = config
+	})
+
 	oldHeight = uint64(std.GetHeight())
 	oldTime = uint64(time.Now().Unix())
 
@@ -202,6 +202,25 @@ func TestProposeText(t *testing.T) {
 }
 
 func TestParamaterChange(t *testing.T) {
+	t.Run("initial state", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		gns.Approve(a2u(consts.GOV_STAKER_ADDR), uint64(1_000_000))
+		gs.Delegate(admin, uint64(1_000_000))
+		std.TestSkipHeights(11) // VotingWeightSmoothingDuration is 10 block
+
+		// overwrite config for testcase
+		config = Config{
+			VotingStartDelay:              uint64(10),   // 10s ≈ 5 block
+			VotingPeriod:                  uint64(30),   // 30s ≈ 15 block
+			VotingWeightSmoothingDuration: uint64(10),   // 10s ≈ 5 block
+			Quorum:                        uint64(50),   // 50% of total xGNS supply
+			ProposalCreationThreshold:     uint64(100),  //
+			ExecutionDelay:                uint64(10),   // 10s ≈ 5 block
+			ExecutionWindow:               uint64(1000), // 500 block
+		}
+		configVersions[1] = config
+	})
+
 	oldHeight = uint64(std.GetHeight())
 	oldTime = uint64(time.Now().Unix())
 

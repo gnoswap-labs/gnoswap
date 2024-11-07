@@ -33,12 +33,15 @@ func DrySwapRoute(
 	quoteArr string, // []int
 ) string { // uint256
 	if swapType != "EXACT_IN" && swapType != "EXACT_OUT" {
-		panic("[ROUTER] Unknown swapType")
+		panic(addDetailToError(
+			errInvalidSwapType,
+			ufmt.Sprintf("router_dry.gno__DrySwapRoute() || unknown swapType(%s)", swapType),
+		))
 	}
 
 	amountSpecified, err := i256.FromDecimal(_amountSpecified)
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] router_dry.gno__SwapRoute() || i256.FromDecimal(_amountSpecified(%s) failed", _amountSpecified))
+		panic(err.Error())
 	}
 
 	routes := strings.Split(strRouteArr, ",")
@@ -58,7 +61,10 @@ func DrySwapRoute(
 		quote, _ := strconv.Atoi(quotes[i])
 
 		if numHops < 1 || numHops > 3 {
-			panic(ufmt.Sprintf("[ROUTER] router_dry.gno__DrySwapRoute() || numHops should be 1 ~ 3 (numHops)[%d]", numHops))
+			panic(addDetailToError(
+				errInvalidInput,
+				ufmt.Sprintf("router_dry.gno__DrySwapRoute() || number of hops(%d) must be 1~3", numHops),
+			))
 		}
 
 		toSwap := i256.Zero().Mul(amountSpecified, i256.NewInt(int64(quote)))
@@ -92,6 +98,9 @@ func processResult(swapType string, resultAmountIn, resultAmountOut *u256.Uint, 
 		}
 		return resultAmountIn.ToString()
 	default:
-		panic("[ROUTER] Unknown swapType")
+		panic(addDetailToError(
+			errInvalidSwapType,
+			ufmt.Sprintf("router_dry.gno__processResult() || unknown swapType(%s)", swapType),
+		))
 	}
 }

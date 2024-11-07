@@ -56,9 +56,11 @@ func testCreateProject(t *testing.T) {
 
 func depositTier30(t *testing.T) {
 	t.Run("deposit tier 30, fail for no balance", func(t *testing.T) {
-		uassert.PanicsWithMessage(t, "insufficient balance(0) for token(gno.land/r/gnoswap/v2/gov/xgns)", func() {
-			DepositGns("gno.land/r/onbloc/obl:124:30", 1000000)
-		})
+		uassert.PanicsWithMessage(t,
+			`[GNOSWAP-LAUNCHPAD-016] not enough balance || launchpad_deposit.gno__checkDepositConditions() || insufficient balance(0) for token(gno.land/r/gnoswap/v2/gov/xgns)`,
+			func() {
+				DepositGns("gno.land/r/onbloc/obl:124:30", 1000000)
+			})
 	})
 
 	t.Run("deposit tier 30, success", func(t *testing.T) {

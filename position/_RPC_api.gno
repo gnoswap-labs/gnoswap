@@ -102,7 +102,7 @@ func ApiGetPositions() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositions() || error marshalling json: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -161,7 +161,7 @@ func ApiGetPosition(lpTokenId uint64) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositions() || error marshalling json: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -223,7 +223,7 @@ func ApiGetPositionsByPoolPath(poolPath string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositions() || error marshalling json: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -285,7 +285,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositions() || error marshalling json: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -326,7 +326,7 @@ func ApiGetPositionsUnclaimedFee() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositionsUnClaimedFee() || error marshalling json: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -366,7 +366,7 @@ func ApiGetPositionUnclaimedFeeByLpTokenId(lpTokenId uint64) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositionUnclaimedFeeByLpTokenId() || error marshalling json: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -375,7 +375,10 @@ func ApiGetPositionUnclaimedFeeByLpTokenId(lpTokenId uint64) string {
 func rpcMakePosition(lpTokenId uint64) RpcPosition {
 	position, exist := positions[lpTokenId]
 	if !exist {
-		panic(ufmt.Sprintf("[POSITION] getter_api.gno__rpcMakePosition() || position not found for lpTokenId(%d)", lpTokenId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_RPC_api.gno__rpcMakePosition() || lpTokenId(%d) not found", lpTokenId),
+		))
 	}
 
 	burned := isBurned(lpTokenId)

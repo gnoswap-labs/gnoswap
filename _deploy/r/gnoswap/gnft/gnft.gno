@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"gno.land/p/demo/grc/grc721"
-	"gno.land/r/demo/users"
-
+	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
+
+	"gno.land/r/demo/users"
 
 	"gno.land/r/gnoswap/v2/common"
 )
@@ -20,14 +21,19 @@ var (
 
 var userMinted = make(map[std.Address][]grc721.TokenID)
 
-func init() {}
-
 // Getters
+func Name() string {
+	return gnft.Name()
+}
+
+func Symbol() string {
+	return gnft.Symbol()
+}
 func TotalSupply() uint64 {
 	return gnft.TokenCount()
 }
 
-func GetTokenURI(tid grc721.TokenID) string {
+func TokenURI(tid grc721.TokenID) string {
 	uri, err := gnft.TokenURI(tid)
 	if err != nil {
 		panic(err.Error())
@@ -145,7 +151,10 @@ func Render(path string) string {
 // Util
 func assertIsAdmin(address std.Address) {
 	if address != admin {
-		panic("gnft_assertIsAdmin_restricted access")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("gnft.gno__assertIsAdmin() || only admin(%s) can call this function, called from %s", admin.String(), address.String()),
+		))
 	}
 }
 

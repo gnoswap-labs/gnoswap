@@ -21,20 +21,20 @@ func DistributeProtocolFee() {
 	common.IsHalted()
 
 	tokens := GetRegisteredTokens()
-	println("PF_REGISTERED_TOKENS", tokens)
+	// println("PF_REGISTERED_TOKENS", tokens)
 	for _, token := range tokens {
-		println(" > token", token)
+		// println(" > token", token)
 		// default distribute protocol fee percent
 		// govStaker 100%
 		// ...
 
 		balance := balanceOfByRegisterCall(token, consts.PROTOCOL_FEE_ADDR)
-		println(" > balance", balance)
+		// println(" > balance", balance)
 		if balance > 0 {
 			toDevOps := balance * devOpsPct / 10000 // default 0%
 			toGovStaker := balance - toDevOps       // default 100%
-			println(" > toDevOps", toDevOps)
-			println(" > toGovStaker", toGovStaker)
+			// println(" > toDevOps", toDevOps)
+			// println(" > toGovStaker", toGovStaker)
 
 			if token == consts.GNS_PATH {
 				gnsToDevOps = toDevOps
@@ -42,7 +42,7 @@ func DistributeProtocolFee() {
 			}
 
 			accuToGovStaker[token] += toGovStaker
-			println("TO_GOV_STAKER", token, toGovStaker)
+			// println("TO_GOV_STAKER", token, toGovStaker)
 
 			if toDevOps > 0 {
 				transferByRegisterCall(token, consts.DEV_OPS, toDevOps)
@@ -64,7 +64,10 @@ func GetDevOpsPct() uint64 {
 func SetDevOpsPctByAdmin(pct uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
-		panic("must be called by admin")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("protocol_fee.gno__SetDevOpsPctByAdmin() || only admin(%s) can set devOpsPct, called from %s", consts.ADMIN, caller),
+		))
 	}
 
 	setDevOpsPct(pct)
@@ -84,7 +87,10 @@ func SetDevOpsPctByAdmin(pct uint64) {
 func SetDevOpsPct(pct uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic("must be called by governance")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("protocol_fee.gno__SetDevOpsPct() || only governance(%s) can set devOpsPct, called from %s", consts.GOV_GOVERNANCE_ADDR, caller),
+		))
 	}
 
 	setDevOpsPct(pct)
@@ -103,7 +109,10 @@ func setDevOpsPct(pct uint64) {
 	common.IsHalted()
 
 	if pct > 10000 {
-		panic("pct should not be bigger than 10000")
+		panic(addDetailToError(
+			errInvalidPct,
+			ufmt.Sprintf("protocol_fee.gno__setDevOpsPct() || pct(%d) should not be bigger than 10000", pct),
+		))
 	}
 
 	devOpsPct = pct
@@ -120,8 +129,12 @@ func GetAccuTransferToGovStaker() map[string]uint64 {
 func ClearAccuTransferToGovStaker() {
 	common.IsHalted()
 
-	if std.PrevRealm().PkgPath() != consts.GOV_STAKER_PATH {
-		panic("only gov staker can clear accu transfer to gov staker")
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GOV_STAKER_ADDR {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("protocol_fee.gno__ClearAccuTransferToGovStaker() || only gov/staker(%s) can clear accu transfer to gov/staker, called from %s", consts.GOV_STAKER_ADDR, caller),
+		))
 	}
 	accuToGovStaker = make(map[string]uint64)
 }

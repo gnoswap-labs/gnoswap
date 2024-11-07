@@ -19,6 +19,8 @@ import (
 var (
 	feeAmountTickSpacing map[uint32]int32 = make(map[uint32]int32) // maps fee to tickSpacing || map[feeAmount]tick_spacing
 	pools                map[string]*Pool = make(map[string]*Pool) // maps poolPath to pool || map[poolPath]*Pool
+
+	slot0FeeProtocol uint8 = 0
 )
 
 func init() {
@@ -53,7 +55,10 @@ func CreatePool(
 	en.MintAndDistributeGns()
 
 	if token0Path == token1Path {
-		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
+		panic(addDetailToError(
+			errDuplicateTokenInPool,
+			ufmt.Sprintf("pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path),
+		))
 	}
 
 	// wrap first
@@ -65,18 +70,19 @@ func CreatePool(
 
 	// then check if token0Path == token1Path
 	if token0Path == token1Path {
-		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path))
+		panic(addDetailToError(
+			errDuplicateTokenInPool,
+			ufmt.Sprintf("pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path),
+		))
 	}
 
 	sqrtPriceX96 := u256.MustFromDecimal(_sqrtPriceX96)
 
 	if token1Path < token0Path {
-		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected token0Path(%s) < token1Path(%s)", token0Path, token1Path))
-
-		// XXX: or we can adjust
-		// token0Path, token1Path = token1Path, token0Path
-		// tick := -(common.TickMathGetTickAtSqrtRatio(sqrtPriceX96))
-		// sqrtPriceX96 = common.TickMathGetSqrtRatioAtTick(tick)
+		panic(addDetailToError(
+			errTokenSortOrder,
+			ufmt.Sprintf("pool_manager.gno__CreatePool() || expected token0Path(%s) < token1Path(%s)", token0Path, token1Path),
+		))
 	}
 
 	// check tickSpacing for fee
@@ -87,7 +93,10 @@ func CreatePool(
 	// check whether the pool already exist
 	pool, exist := pools[poolPath]
 	if exist {
-		panic(ufmt.Sprintf("[POOl] pool_manager.gno__CreatePool() || expected poolPath(%s) not to exist", poolPath))
+		panic(addDetailToError(
+			errPoolAlreadyExists,
+			ufmt.Sprintf("pool_manager.gno__CreatePool() || expected poolPath(%s) not to exist", poolPath),
+		))
 	}
 
 	prevAddr, prevRealm := getPrev()
@@ -131,7 +140,10 @@ func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	pool, exist := pools[poolPath]
 	if !exist {
-		panic(ufmt.Sprintf("[POOL] pool_manager.gno__GetPool() || expected poolPath(%s) to exist", poolPath))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("pool_manager.gno__GetPool() || expected poolPath(%s) to exist", poolPath),
+		))
 	}
 
 	return pool
@@ -144,7 +156,10 @@ func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 func GetPoolFromPoolPath(poolPath string) *Pool {
 	pool, exist := pools[poolPath]
 	if !exist {
-		panic(ufmt.Sprintf("[POOL] pool_manager.gno__GetPoolFromPoolPath() || expected poolPath(%s) to exist", poolPath))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("pool_manager.gno__GetPoolFromPoolPath() || expected poolPath(%s) to exist", poolPath),
+		))
 	}
 
 	return pool
@@ -198,7 +213,7 @@ func newPool(
 	slot0 := Slot0{
 		sqrtPriceX96: sqrtPriceX96,
 		tick:         tick,
-		feeProtocol:  0,
+		feeProtocol:  slot0FeeProtocol,
 		unlocked:     true,
 	}
 

@@ -1,9 +1,16 @@
 package governance
 
+import (
+	"gno.land/p/demo/ufmt"
+)
+
 func GetProposerByProposalId(proposalId uint64) string {
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic("PROPOSAL_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_proposal.gno__GetProposerByProposalId() || proposalId(%d) not found", proposalId),
+		))
 	}
 
 	return proposal.Proposer.String()
@@ -12,7 +19,10 @@ func GetProposerByProposalId(proposalId uint64) string {
 func GetProposalTypeByProposalId(proposalId uint64) string {
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic("PROPOSAL_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_proposal.gno__GetProposalTypeByProposalId() || proposalId(%d) not found", proposalId),
+		))
 	}
 
 	return proposal.ProposalType
@@ -21,7 +31,10 @@ func GetProposalTypeByProposalId(proposalId uint64) string {
 func GetYeaByProposalId(proposalId uint64) string {
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic("PROPOSAL_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_proposal.gno__GetYeaByProposalId() || proposalId(%d) not found", proposalId),
+		))
 	}
 
 	return proposal.Yea.ToString()
@@ -30,7 +43,10 @@ func GetYeaByProposalId(proposalId uint64) string {
 func GetNayByProposalId(proposalId uint64) string {
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic("PROPOSAL_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_proposal.gno__GetNayByProposalId() || proposalId(%d) not found", proposalId),
+		))
 	}
 
 	return proposal.Nay.ToString()
@@ -39,7 +55,10 @@ func GetNayByProposalId(proposalId uint64) string {
 func GetConfigVersionByProposalId(proposalId uint64) uint64 {
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic("PROPOSAL_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_proposal.gno__GetConfigVersionByProposalId() || proposalId(%d) not found", proposalId),
+		))
 	}
 
 	return proposal.ConfigVersion
@@ -48,7 +67,10 @@ func GetConfigVersionByProposalId(proposalId uint64) uint64 {
 func GetQuorumAmountByProposalId(proposalId uint64) uint64 {
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic("PROPOSAL_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_proposal.gno__GetQuorumAmountByProposalId() || proposalId(%d) not found", proposalId),
+		))
 	}
 
 	return proposal.QuorumAmount
@@ -57,7 +79,10 @@ func GetQuorumAmountByProposalId(proposalId uint64) uint64 {
 func GetTitleByProposalId(proposalId uint64) string {
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic("PROPOSAL_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_proposal.gno__GetTitleByProposalId() || proposalId(%d) not found", proposalId),
+		))
 	}
 
 	return proposal.Title
@@ -66,7 +91,10 @@ func GetTitleByProposalId(proposalId uint64) string {
 func GetDescriptionByProposalId(proposalId uint64) string {
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic("PROPOSAL_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_proposal.gno__GetDescriptionByProposalId() || proposalId(%d) not found", proposalId),
+		))
 	}
 
 	return proposal.Description
@@ -75,7 +103,10 @@ func GetDescriptionByProposalId(proposalId uint64) string {
 func GetExecutionStateByProposalId(proposalId uint64) ExecutionState {
 	proposal, exist := proposals[proposalId]
 	if !exist {
-		panic("PROPOSAL_NOT_FOUND")
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_GET_proposal.gno__GetExecutionStateByProposalId() || proposalId(%d) not found", proposalId),
+		))
 	}
 
 	return proposal.ExecutionState

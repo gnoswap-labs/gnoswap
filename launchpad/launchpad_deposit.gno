@@ -43,7 +43,10 @@ func DepositGns(
 	projectId, tierStr := getProjectIdAndTierFromTierId(targetProjectTierId)
 	project, exist := projects[projectId]
 	if !exist {
-		panic(ufmt.Sprintf("project not found: %s", projectId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("launchpad_deposit.gno__DepositGns() || projectTierId(%s) not found", targetProjectTierId),
+		))
 	}
 
 	// check conditions (grc20 tokens balance)
@@ -51,13 +54,19 @@ func DepositGns(
 
 	// check if project is active
 	if !checkProjectActive(project) {
-		panic(ufmt.Sprintf("project is not active: %s", projectId))
+		panic(addDetailToError(
+			errInactiveProject,
+			ufmt.Sprintf("launchpad_deposit.gno__DepositGns() || projectTierId(%s) > project is not active", targetProjectTierId),
+		))
 	}
 
 	// check if tier is active
 	tier := getTier(project, tierStr)
 	if !checkTierActive(project, tier) {
-		panic(ufmt.Sprintf("tier is not active: %s", tierStr))
+		panic(addDetailToError(
+			errInactiveTier,
+			ufmt.Sprintf("launchpad_deposit.gno__DepositGns() || projectTierId(%s) > tier is not active", targetProjectTierId),
+		))
 	}
 
 	common.IsHalted()
@@ -217,7 +226,10 @@ func CollectDepositGns() uint64 {
 		// check active
 		project, exist := projects[deposit.projectId]
 		if !exist {
-			panic(ufmt.Sprintf("SHOULD_NOT_HAPPEN__project not found: %s", deposit.projectId))
+			panic(addDetailToError(
+				errDataNotFound,
+				ufmt.Sprintf("launchpad_deposit.gno__CollectDepositGns() || depositId(%s) > projectId(%s) not found", depositId, deposit.projectId),
+			))
 		}
 
 		tier := getTier(project, deposit.tier)
@@ -308,7 +320,10 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 		// check active
 		project, exist := projects[deposit.projectId]
 		if !exist {
-			panic(ufmt.Sprintf("SHOULD_NOT_HAPPEN__project not found: %s", deposit.projectId))
+			panic(addDetailToError(
+				errDataNotFound,
+				ufmt.Sprintf("launchpad_deposit.gno__CollectDepositGnsByProjectId() || depositId(%s) > projectId(%s) not found", depositId, deposit.projectId),
+			))
 		}
 
 		tier := getTier(project, deposit.tier)
@@ -450,7 +465,10 @@ func getProjectIdFromTierId(tierId string) string {
 		return result[0] + ":" + result[1]
 	}
 
-	panic(ufmt.Sprintf("invalid tierId: %s", tierId))
+	panic(addDetailToError(
+		errInvalidTier,
+		ufmt.Sprintf("launchpad_deposit.gno__getProjectIdFromTierId() || invalid tierId: %s", tierId),
+	))
 }
 
 func getProjectIdAndTierFromTierId(tierId string) (string, string) {
@@ -459,7 +477,10 @@ func getProjectIdAndTierFromTierId(tierId string) (string, string) {
 		return result[0] + ":" + result[1], result[2]
 	}
 
-	panic(ufmt.Sprintf("invalid tierId: %s", tierId))
+	panic(addDetailToError(
+		errInvalidTier,
+		ufmt.Sprintf("launchpad_deposit.gno__getProjectIdAndTierFromTierId() || invalid tierId: %s", tierId),
+	))
 }
 
 func checkDepositConditions(project Project) {
@@ -479,7 +500,10 @@ func checkDepositConditions(project Project) {
 				balance = balanceOfByRegisterCall(condition.tokenPath, std.PrevRealm().Addr())
 			}
 			if balance < condition.minAmount {
-				panic(ufmt.Sprintf("insufficient balance(%d) for token(%s)", balance, condition.tokenPath))
+				panic(addDetailToError(
+					errNotEnoughBalance,
+					ufmt.Sprintf("launchpad_deposit.gno__checkDepositConditions() || insufficient balance(%d) for token(%s)", balance, condition.tokenPath),
+				))
 			}
 		}
 	}
@@ -518,7 +542,10 @@ func getTier(project Project, tierStr string) Tier {
 	case "180":
 		return project.tier180
 	default:
-		panic(ufmt.Sprintf("getTier()__invalid tierStr: %s", tierStr))
+		panic(addDetailToError(
+			errInvalidTier,
+			ufmt.Sprintf("launchpad_deposit.gno__getTier() || invalid tierStr: %s", tierStr),
+		))
 	}
 }
 
@@ -531,7 +558,10 @@ func setTier(project Project, tierStr string, tier Tier) Project {
 	case "180":
 		project.tier180 = tier
 	default:
-		panic(ufmt.Sprintf("setTier()__invalid tierStr: %s", tierStr))
+		panic(addDetailToError(
+			errInvalidTier,
+			ufmt.Sprintf("launchpad_deposit.gno__setTier() || invalid tierStr: %s", tierStr),
+		))
 	}
 
 	return project

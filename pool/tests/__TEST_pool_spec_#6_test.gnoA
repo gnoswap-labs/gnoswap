@@ -71,51 +71,6 @@ func TestPositionsProtected(t *testing.T) {
 	thisPool := GetPool(barPath, fooPath, fee500)
 	uassert.Equal(t, thisPool.protocolFees.token0.ToString(), "0")
 	uassert.Equal(t, thisPool.protocolFees.token1.ToString(), "0")
-
-	// protocol fee
-	t.Run("is initially set to 0", func(t *testing.T) {
-		uassert.Equal(t, thisPool.slot0.feeProtocol, uint8(0))
-	})
-
-	t.Run("fails if fee is lt 4 or gt 10", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		shouldPanic(t, func() { SetFeeProtocolByAdmin(3, 3) })
-		shouldPanic(t, func() { SetFeeProtocolByAdmin(6, 3) })
-		shouldPanic(t, func() { SetFeeProtocolByAdmin(3, 6) })
-		shouldPanic(t, func() { SetFeeProtocolByAdmin(11, 11) })
-		shouldPanic(t, func() { SetFeeProtocolByAdmin(6, 11) })
-		shouldPanic(t, func() { SetFeeProtocolByAdmin(11, 6) })
-	})
-
-	t.Run("can be changed by the owner", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		SetFeeProtocolByAdmin(6, 6)
-		uassert.Equal(t, thisPool.slot0.feeProtocol, uint8(102))
-	})
-
-	t.Run("succeeds for fee of 4", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		SetFeeProtocolByAdmin(4, 4)
-		uassert.Equal(t, thisPool.slot0.feeProtocol, uint8(68))
-	})
-
-	t.Run("succeeds for fee of 10", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		SetFeeProtocolByAdmin(10, 10)
-		uassert.Equal(t, thisPool.slot0.feeProtocol, uint8(170))
-	})
-
-	t.Run("positions are protected before protocol fee is turned on", func(t *testing.T) {
-		uassert.Equal(t, thisPool.protocolFees.token0.ToString(), "0")
-		uassert.Equal(t, thisPool.protocolFees.token1.ToString(), "0")
-	})
-
-	t.Run("can turn off protocol fee", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
-		SetFeeProtocolByAdmin(0, 0)
-		uassert.Equal(t, thisPool.slot0.feeProtocol, uint8(0))
-	})
-
 }
 
 func TestPokeIsNotAllowedOnUninitilaizedPosition(t *testing.T) {
@@ -124,8 +79,9 @@ func TestPokeIsNotAllowedOnUninitilaizedPosition(t *testing.T) {
 	CreatePool(barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString()) // tick 0
 
 	std.TestSetRealm(posRealm)
-	shouldPanicWithMsg(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and (self)liquidity are zero`,
 		func() {
 			Burn(
 				barPath,
@@ -136,7 +92,6 @@ func TestPokeIsNotAllowedOnUninitilaizedPosition(t *testing.T) {
 				"0",
 			)
 		},
-		`NP`,
 	)
 }
 
@@ -186,15 +141,3 @@ func TestWorkAccross(t *testing.T) {
 	uassert.Equal(t, tokensOwed0.ToString(), "34028236692093846346337460743176") // XXX: BE AWARE OF liquidity (unlikely uniswap, we don't use 10^18)
 	uassert.Equal(t, tokensOwed1.ToString(), "0")
 }
-
-/*
-		      it('works just before the cap binds', async () => {
-	        await pool.setFeeGrowthGlobal0X128(magicNumber)
-	        await pool.burn(minTick, maxTick, 0)
-
-	        const { tokensOwed0, tokensOwed1 } = await pool.positions(getPositionKey(wallet.address, minTick, maxTick))
-
-	        expect(tokensOwed0).to.be.eq(MaxUint128.sub(1))
-	        expect(tokensOwed1).to.be.eq(0)
-	      })
-*/

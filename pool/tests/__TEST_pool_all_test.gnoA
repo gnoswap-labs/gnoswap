@@ -38,7 +38,7 @@ func TestCreateFooBarPool(t *testing.T) {
 	t.Run("wrong pool path", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			`[POOl] pool_manager.gno__CreatePool() || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)`,
+			`[GNOSWAP-POOL-012] token sort order || pool_manager.gno__CreatePool() || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)`,
 			func() {
 				CreatePool(fooPath, barPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 			},
@@ -121,12 +121,12 @@ func TestApiGetPools(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpls))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	uassert.Equal(t, response.Size(), 2)

@@ -176,9 +176,11 @@ func TestGetAmountByHeight(t *testing.T) {
 
 func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 	t.Run("panic if not admin", func(t *testing.T) {
-		uassert.PanicsWithMessage(t, "must be called by admin", func() {
-			SetAvgBlockTimeInMsByAdmin(1000)
-		})
+		uassert.PanicsWithMessage(t,
+			`[GNOSWAP-GNS-001] no permission || gns.gno__SetAvgBlockTimeInMsByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can call this function, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
+			func() {
+				SetAvgBlockTimeInMsByAdmin(1000)
+			})
 	})
 
 	t.Run("success if admin", func(t *testing.T) {
@@ -193,9 +195,10 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 
 func TestSetAvgBlockTimeInMs(t *testing.T) {
 	t.Run("panic if not governance", func(t *testing.T) {
-		uassert.PanicsWithMessage(t, "must be called by governance", func() {
-			SetAvgBlockTimeInMs(1000)
-		})
+		uassert.PanicsWithMessage(t,
+			`[GNOSWAP-GNS-001] no permission || gns.gno__SetAvgBlockTimeInMs() || only governance contract(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can call this function, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`, func() {
+				SetAvgBlockTimeInMs(1000)
+			})
 	})
 
 	t.Run("success if governance", func(t *testing.T) {
