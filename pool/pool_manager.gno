@@ -34,6 +34,7 @@ func init() {
 // It mints and distributes GNS tokens, validates the input parameters, and creates a new pool.
 // If GNOT is used as one of the tokens, it is automatically wrapped to WUGNOT.
 // The function ensures that token0Path is lexicographically smaller than token1Path.
+// ref: https://docs.gnoswap.io/contracts/pool/pool_manager.gno#createpool
 func CreatePool(
 	token0Path string,
 	token1Path string,

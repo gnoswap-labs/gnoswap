@@ -23,6 +23,7 @@ import (
 
 // Execute executes the given proposal.
 // It checks various conditions such as voting period, execution window, quorum, and majority.
+// ref: https://docs.gnoswap.io/contracts/governance/execute.gno#execute
 func Execute(proposalId uint64) {
 	common.IsHalted()
 

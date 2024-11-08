@@ -17,6 +17,7 @@ var (
 )
 
 // HandleWithdrawalFee withdraws the fee from the user and returns the amount after the fee
+// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#handlewithdrawalfee
 func HandleWithdrawalFee(
 	tokenId uint64,
 	token0Path string,
@@ -73,6 +74,7 @@ func HandleWithdrawalFee(
 }
 
 // GetWithdrawalFee returns the withdrawal fee
+// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#getwithdrawalfee
 func GetWithdrawalFee() uint64 {
 	return withdrawalFee
 }
@@ -102,6 +104,9 @@ func SetWithdrawalFeeByAdmin(fee uint64) {
 	)
 }
 
+// SetWithdrawalFee sets the withdrawal fee.
+// Only governance contract can execute this function via proposal
+// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#setwithdrawalfee
 func SetWithdrawalFee(fee uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {

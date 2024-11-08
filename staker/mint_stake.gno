@@ -16,6 +16,7 @@ import (
 
 // MintAndStake mints LP tokens and stakes them in a single transaction.
 // Returns tokenId, liquidity, amount0, amount1, poolPath
+// ref: https://docs.gnoswap.io/contracts/staker/mint_stake.gno#mintandstake
 func MintAndStake(
 	token0 string,
 	token1 string,

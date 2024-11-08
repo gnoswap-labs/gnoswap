@@ -63,6 +63,8 @@ func handleUnstakingFee(
 	return amount - feeAmount
 }
 
+// GetUnstakingFee returns current rate of unstaking fee
+// ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#getunstakingfee
 func GetUnstakingFee() uint64 {
 	return unstakingFee
 }
@@ -92,6 +94,9 @@ func SetUnstakingFeeByAdmin(fee uint64) {
 	)
 }
 
+// SetUnstakingFee modifies the unstaking fee
+// Only governance contract can execute this function via proposal
+// ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#setunstakingfee
 func SetUnstakingFee(fee uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
