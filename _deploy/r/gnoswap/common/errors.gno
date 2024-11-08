@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	errNoPermission = errors.New("[GNOSWAP-COMMON-001] no permission")
+	errNoPermission = errors.New("[GNOSWAP-COMMON-001] caller has no permission")
 	errHalted       = errors.New("[GNOSWAP-COMMON-002] halted")
 	errOutOfRange   = errors.New("[GNOSWAP-COMMON-003] value out of range")
 )

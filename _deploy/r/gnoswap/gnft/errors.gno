@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	errNoPermission = errors.New("[GNOSWAP-GNFT-001] no permission")
+	errNoPermission = errors.New("[GNOSWAP-GNFT-001] caller has no permission")
 )
 
 func addDetailToError(err error, detail string) string {
