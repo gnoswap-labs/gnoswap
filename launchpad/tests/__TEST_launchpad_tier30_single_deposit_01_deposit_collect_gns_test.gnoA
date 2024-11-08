@@ -207,24 +207,18 @@ func collectDepositGns(t *testing.T) {
 		claimed := CollectDepositGns()
 		std.TestSkipHeights(1)
 		uassert.Equal(t, claimed, uint64(0))
-		println()
-		println()
 	})
 
 	t.Run("claim after 30 days", func(t *testing.T) {
 		std.TestSkipHeights(int64(TIMESTAMP_30DAYS) / 2)
 		claimed := CollectDepositGns()
 		uassert.Equal(t, claimed, uint64(1_000_000))
-		println()
-		println()
 	})
 
 	t.Run("no more claim in same block", func(t *testing.T) {
 		claimed := CollectDepositGns()
 		std.TestSkipHeights(1)
 		uassert.Equal(t, claimed, uint64(0))
-		println()
-		println()
 	})
 
 	// check deposit

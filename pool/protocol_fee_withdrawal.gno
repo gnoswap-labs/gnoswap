@@ -17,10 +17,6 @@ var (
 )
 
 // HandleWithdrawalFee withdraws the fee from the user and returns the amount after the fee
-//
-// Panics:
-// - caller is not the position contract
-// - caller does not have enough balance to give the fee
 func HandleWithdrawalFee(
 	tokenId uint64,
 	token0Path string,

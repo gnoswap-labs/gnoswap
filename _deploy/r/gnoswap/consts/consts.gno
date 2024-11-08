@@ -21,7 +21,7 @@ const (
 	GNOT           string = "gnot"
 	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
 
-	UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000 // defined in gno.land/r/demo/wugnot
+	UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000 // defined in https://github.com/gnolang/gno/blob/81a88a2976ba9f2f9127ebbe7fb7d1e1f7fa4bd4/examples/gno.land/r/demo/wugnot/wugnot.gno#L19
 )
 
 // CONTRACT PATH & ADDRESS

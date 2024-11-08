@@ -32,10 +32,9 @@ func init() {
 	q96 = u256.MustFromDecimal(consts.Q96)
 }
 
-// CreateProject creates a new project
-// - only admin can create project
-//
-// returns projectId
+// CreateProject creates a new project.
+// Only admin can create project.
+// Returns projectId
 func CreateProject(
 	name string,
 	tokenPath string,
@@ -132,13 +131,7 @@ func CreateProject(
 	tier30Amount := depositAmount * tier30Ratio / 100
 	tier90Amount := depositAmount * tier90Ratio / 100
 	tier180Amount := depositAmount * tier180Ratio / 100
-	sumAll := tier30Amount + tier90Amount + tier180Amount
-	left := depositAmount - sumAll
-	if left > 0 {
-		// uAmounts can be left due to rounding
-		// XXX: how to handle this?
-		// tier180Amount += left
-	}
+
 	createdHeight := uint64(std.GetHeight())
 	createdTime := uint64(time.Now().Unix())
 
@@ -239,6 +232,9 @@ func CreateProject(
 	return projectId
 }
 
+// TransferLeftFromProjectByAdmin transfers left reward token amount from project to recipient.
+// Only admin can transfer left reward token amount.
+// Returns (left)transferred amount.
 func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uint64 {
 	assertUserCall()
 	caller := std.PrevRealm().Addr()
@@ -326,12 +322,14 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 }
 
 func generateProjectId(tokenPath string) string {
-	// gno.land/r/gnoswap/gns:123
+	// gno.land/r/gnoswap/gns:{height}
+	// gno.land/r/gnoswap/gns:30
 	return ufmt.Sprintf("%s:%d", tokenPath, std.GetHeight())
 }
 
 func generateTierId(projectId string, duration uint64) string {
-	// gno.land/r/gnoswap/gns:123:30
+	// gno.land/r/gnoswap/gns:{height}:{duration}
+	// gno.land/r/gnoswap/gns:30:30(90,180)
 	return ufmt.Sprintf("%s:%d", projectId, duration)
 }
 

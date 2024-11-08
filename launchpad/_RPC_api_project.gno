@@ -153,7 +153,6 @@ func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
 	projectId, tierStr := getProjectIdAndTierFromTierId(tierId)
 	project, exist := projects[projectId]
 	if !exist {
-		println("NO PROJECT FOR THIS ID", projectId)
 		return ""
 	}
 
@@ -166,7 +165,6 @@ func ApiGetProjectStatisticsByProjectTierId(tierId string) string {
 	case "180":
 		tier = project.tier180
 	default:
-		println("NO TIER FOR THIS ID", tierId)
 		return ""
 	}
 

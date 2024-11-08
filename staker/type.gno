@@ -7,29 +7,27 @@ import (
 )
 
 type InternalTier struct {
-	tier           uint64
-	startTimestamp int64
+	tier           uint64 // internal reward tier
+	startTimestamp int64  // start time for internal reward
 }
 
 type ExternalIncentive struct {
-	targetPoolPath    string // 줘야 하는 곳
-	rewardToken       string // 실제로 주는 리워드
-	rewardAmount      *u256.Uint
-	rewardLeft        *u256.Uint
-	startTimestamp    int64
-	endTimestamp      int64
-	// startHeight       int64 => Diff를 구해서 1 block 당 얼만큼 줘야 하는지 계산
-	// endHeight         int64
-	rewardPerBlockX96 *u256.Uint
-	refundee          std.Address
-	createdHeight     int64
-	depositGnsAmount  uint64
+	targetPoolPath    string      // external reward target pool path
+	rewardToken       string      // external reward token path
+	rewardAmount      *u256.Uint  // total reward amount
+	rewardLeft        *u256.Uint  // remaining reward amount
+	startTimestamp    int64       // start time for external reward
+	endTimestamp      int64       // end time for external reward
+	rewardPerBlockX96 *u256.Uint  // reward per block in Q96 notation
+	refundee          std.Address // refundee address
+	createdHeight     int64       // block height when the incentive was created
+	depositGnsAmount  uint64      // deposited gns amount
 }
 
 type Deposit struct {
-	owner          std.Address
-	numberOfStakes uint64
-	stakeTimestamp int64
-	stakeHeight    int64
-	targetPoolPath string
+	owner          std.Address // owner address
+	numberOfStakes uint64      // number of stakes
+	stakeTimestamp int64       // staked time
+	stakeHeight    int64       // staked block height
+	targetPoolPath string      // staked position's pool path
 }

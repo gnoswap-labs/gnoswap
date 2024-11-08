@@ -420,7 +420,6 @@ func checkProtocolFeeBalance() {
 		if balance != 0 {
 			println("token", token)
 			println("balance", balance)
-			println()
 		}
 	}
 }

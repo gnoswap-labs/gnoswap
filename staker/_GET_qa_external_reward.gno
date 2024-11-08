@@ -23,7 +23,6 @@ func printExternalInfo() {
 	println("***********************")
 	println("> height:", std.GetHeight())
 	println("> time:", time.Now().Unix())
-	println()
 	println("[ START ] GET_EXTERNAL INCENTIVE")
 	for poolPath, externalIds := range poolIncentives {
 		println(" > poolPath:", poolPath)
@@ -39,9 +38,7 @@ func printExternalInfo() {
 			println("  > endTimestamp:", incentive.endTimestamp)
 			println("  > rewardPerBlockX96:", incentive.rewardPerBlockX96.ToString())
 			println("  > refundee:", incentive.refundee)
-			println()
 		}
-		println()
 	}
 
 	println("[ END ] GET_EXTERNAL INCENTIVE")

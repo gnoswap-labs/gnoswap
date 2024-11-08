@@ -12,18 +12,7 @@ import (
 
 // DrySwapRoute simulates a token swap route without actually executing the swap.
 // It calculates the expected outcome based on the current state of liquidity pools.
-//
-// The function supports multi-hop and split routes, with up to 7 routes and 3 hops per route.
-// Panics:
-//   - If _amountSpecified is zero, negative, or not a valid number
-//   - If swapType is neither "EXACT_IN" nor "EXACT_OUT"
-//   - If the number of routes doesn't match the number of quotes
-//   - If there are less than 1 or more than 7 routes
-//   - If the sum of quote percentages is not exactly 100
-//   - If any route has less than 1 or more than 3 hops
-//   - If any other validation or processing error occurs during the simulation
-//
-// Note: This function only simulates the swap and does not modify any state or execute any transactions.
+// Returns the expected amount in or out
 func DrySwapRoute(
 	inputToken string,
 	outputToken string,

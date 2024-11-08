@@ -108,7 +108,6 @@ func testMintBarQux100_1(t *testing.T) {
 
 		gpi := GetPrintInfo()
 		uassert.Equal(t, gpi, `{"height":126,"time":1234567896,"gns":{"staker":0,"devOps":8561643,"communityPool":34246574,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
-		println()
 		printInfo(curr)
 
 		std.TestSkipHeights(1)
@@ -144,7 +143,6 @@ func testMintBarBaz100_2(t *testing.T) {
 
 		gpi := GetPrintInfo()
 		uassert.Equal(t, gpi, `{"height":127,"time":1234567898,"gns":{"staker":0,"devOps":11415524,"communityPool":45662099,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
-		println()
 		printInfo(curr)
 
 		std.TestSkipHeights(1)
@@ -159,7 +157,6 @@ func testSkip100Height(t *testing.T) {
 
 		gpi := GetPrintInfo()
 		uassert.Equal(t, gpi, `{"height":228,"time":1234568100,"gns":{"staker":0,"devOps":299657525,"communityPool":1198630104,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
-		println()
 		printInfo(curr)
 
 		std.TestSkipHeights(1)
@@ -177,7 +174,6 @@ func testStakeToken_1(t *testing.T) {
 
 		gpi := GetPrintInfo()
 		uassert.Equal(t, gpi, `{"height":229,"time":1234568102,"gns":{"staker":0,"devOps":302511406,"communityPool":1210045629,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[{"lpTokenId":1,"stakedHeight":229,"stakedTimestamp":1234568102,"stakedDuration":0,"fullAmount":0,"ratio":0,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
-		println()
 		printInfo(curr)
 
 		std.TestSkipHeights(1)
@@ -195,7 +191,6 @@ func testSetPoolTier(t *testing.T) {
 
 		gpi := GetPrintInfo()
 		uassert.Equal(t, gpi, `{"height":330,"time":1234568304,"gns":{"staker":1080907505,"devOps":590753407,"communityPool":1282106129,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":1080907505,"position":[{"lpTokenId":1,"stakedHeight":229,"stakedTimestamp":1234568102,"stakedDuration":101,"fullAmount":1080907504,"ratio":30,"warmUpAmount":324272251,"full30":1080907504,"give30":324272251,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]},{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","startTimestamp":1234568304,"tier":2,"numPoolSameTier":1,"poolReward":0,"position":[]}]}`)
-		println()
 		printInfo(curr)
 
 		std.TestSkipHeights(1)
@@ -213,7 +208,6 @@ func testStakeToken_2(t *testing.T) {
 
 		gpi := GetPrintInfo()
 		uassert.Equal(t, gpi, `{"height":331,"time":1234568306,"gns":{"staker":1088398944,"devOps":593607288,"communityPool":1286030215,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":1088398943,"position":[{"lpTokenId":1,"stakedHeight":229,"stakedTimestamp":1234568102,"stakedDuration":102,"fullAmount":1088398942,"ratio":30,"warmUpAmount":326519682,"full30":1088398942,"give30":326519682,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]},{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","startTimestamp":1234568304,"tier":2,"numPoolSameTier":1,"poolReward":0,"position":[{"lpTokenId":2,"stakedHeight":331,"stakedTimestamp":1234568306,"stakedDuration":0,"fullAmount":0,"ratio":0,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
-		println()
 		printInfo(curr)
 
 		std.TestSkipHeights(1)
@@ -228,7 +222,6 @@ func testNow(t *testing.T) {
 
 		gpi := GetPrintInfo()
 		uassert.Equal(t, gpi, `{"height":332,"time":1234568308,"gns":{"staker":1099100999,"devOps":596461169,"communityPool":1286743685,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":1095890381,"position":[{"lpTokenId":1,"stakedHeight":229,"stakedTimestamp":1234568102,"stakedDuration":103,"fullAmount":1095890380,"ratio":30,"warmUpAmount":328767113,"full30":1095890380,"give30":328767113,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]},{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","startTimestamp":1234568304,"tier":2,"numPoolSameTier":1,"poolReward":3210616,"position":[{"lpTokenId":2,"stakedHeight":331,"stakedTimestamp":1234568306,"stakedDuration":1,"fullAmount":3210616,"ratio":30,"warmUpAmount":963184,"full30":3210616,"give30":963184,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
-		println()
 		printInfo(curr)
 
 		std.TestSkipHeights(1)
@@ -245,7 +238,6 @@ func testChangePoolTier(t *testing.T) {
 
 		gpi := GetPrintInfo()
 		uassert.Equal(t, gpi, `{"height":333,"time":1234568310,"gns":{"staker":1109803054,"devOps":599315050,"communityPool":1287457155,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":2,"poolReward":1103381819,"position":[{"lpTokenId":1,"stakedHeight":229,"stakedTimestamp":1234568102,"stakedDuration":104,"fullAmount":1103381818,"ratio":30,"warmUpAmount":331014544,"full30":1103381818,"give30":331014544,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]},{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","startTimestamp":1234568304,"tier":1,"numPoolSameTier":2,"poolReward":6421232,"position":[{"lpTokenId":2,"stakedHeight":331,"stakedTimestamp":1234568306,"stakedDuration":2,"fullAmount":6421232,"ratio":30,"warmUpAmount":1926368,"full30":6421232,"give30":1926368,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
-		println()
 		printInfo(curr)
 
 		std.TestSkipHeights(1)
@@ -259,6 +251,5 @@ func testNow2(t *testing.T) {
 
 	gpi := GetPrintInfo()
 	uassert.Equal(t, gpi, `{"height":334,"time":1234568312,"gns":{"staker":1120505109,"devOps":602168931,"communityPool":1288170625,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":2,"poolReward":1108732846,"position":[{"lpTokenId":1,"stakedHeight":229,"stakedTimestamp":1234568102,"stakedDuration":105,"fullAmount":1108732845,"ratio":30,"warmUpAmount":332619852,"full30":1108732845,"give30":332619852,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]},{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000","startTimestamp":1234568304,"tier":1,"numPoolSameTier":2,"poolReward":11772259,"position":[{"lpTokenId":2,"stakedHeight":331,"stakedTimestamp":1234568306,"stakedDuration":3,"fullAmount":11772259,"ratio":30,"warmUpAmount":3531676,"full30":11772259,"give30":3531676,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
-	println()
 	printInfo(curr)
 }

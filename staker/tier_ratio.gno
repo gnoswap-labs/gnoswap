@@ -7,13 +7,7 @@ import (
 )
 
 // getPoolTierAndRatio returns current pool's tier and ratio
-//
-// Parameters:
-//   - poolPath (string): pool path
-//
-// Returns:
-//   - tier       (uint64): tier of the pool
-//   - ratio  (*u256.Uint): ratio of the pool in Q96 notation
+// Returns tier, ratio
 func getPoolTierAndRatio(poolPath string) (uint64, *u256.Uint) {
 	internal, exist := poolTiers[poolPath]
 	if !exist {
@@ -47,15 +41,7 @@ func getPoolTierAndRatio(poolPath string) (uint64, *u256.Uint) {
 }
 
 // getTierRatio returns ratio for given tier
-//
-// Parameters:
-//   - tier (uint64): tier
-//
-// Returns:
-//   - ratio (uint64): ratio
-//
-// Panics:
-//   - tier must be 1 ~ 3
+// Returns ratio
 func getTierRatio(tier uint64) uint64 {
 	ratio1, ratio2, ratio3 := listTierRatio()
 
@@ -75,23 +61,12 @@ func getTierRatio(tier uint64) uint64 {
 }
 
 // listTierRatio returns each tier's ratio
-//
-// Returns:
-//   - tier1Ratio (uint64): tier1 ratio
-//   - tier2Ratio (uint64): tier2 ratio
-//   - tier3Ratio (uint64): tier3 ratio
-//
-// Panics:
-//   - tier1 pool does not exist
+// Returns tier1Ratio, tier2Ratio, tier3Ratio
 func listTierRatio() (uint64, uint64, uint64) {
-	// basic
+	// default
 	// tier1 50%
 	// tier2 30%
 	// tier3 20%
-
-	// since `float` type has determinisim issue, we use `int` instead
-	// so instead of return 50%(=0.5), we return 50
-	// we'll divide by 100 later
 
 	numTier1, numTier2, numTier3 := getNumPoolTiers()
 	if numTier1 <= 0 {
@@ -122,11 +97,7 @@ func listTierRatio() (uint64, uint64, uint64) {
 }
 
 // getNumPoolTiers returns number of pools for each tier
-//
-// Returns:
-//   - numTier1 (uint64): number of tier1 pools
-//   - numTier2 (uint64): number of tier2 pools
-//   - numTier3 (uint64): number of tier3 pools
+// Returns numTier1, numTier2, numTier3
 func getNumPoolTiers() (uint64, uint64, uint64) {
 	var tier1, tier2, tier3 uint64
 
@@ -150,12 +121,7 @@ func getNumPoolTiers() (uint64, uint64, uint64) {
 }
 
 // getRewardRatio returns reward ratio for given height based on warm-up period
-//
-// Parameters:
-//   - height (int64): height
-//
-// Returns:
-//   - ratio (uint64): ratio
+// Returns ratio
 func getRewardRatio(height int64) uint64 {
 	switch {
 	case height >= warmUp[100]:
@@ -172,19 +138,9 @@ func getRewardRatio(height int64) uint64 {
 }
 
 // getTiersAmount returns amount for each tier's ratio
-//
-// Parameters:
-//   - amount (uint64): total amount
-//
-// Returns:
-//   - tier1Amount (uint64): tier1 amount
-//   - tier2Amount (uint64): tier2 amount
-//   - tier3Amount (uint64): tier3 amount
+// Returns tier1Amount, tier2Amount, tier3Amount
 func getTiersAmount(amount uint64) (uint64, uint64, uint64) {
 	tier1Ratio, tier2Ratio, tier3Ratio := listTierRatio()
-	println("tier1Ratio", tier1Ratio)
-	println("tier2Ratio", tier2Ratio)
-	println("tier3Ratio", tier3Ratio)
 
 	tier1Amount := (amount * tier1Ratio) / 100
 	tier2Amount := (amount * tier2Ratio) / 100
@@ -194,15 +150,7 @@ func getTiersAmount(amount uint64) (uint64, uint64, uint64) {
 }
 
 // calcAmount calculates full amount and duration amount
-//
-// Parameters:
-//   - avgBlockAmountX96 (u256.Uint): average block amount in Q96 notation
-//   - dur (uint64): duration in block
-//   - pct (uint64): percentage
-//
-// Returns:
-//   - fullAmount (uint64): full amount
-//   - durAmount  (uint64): duration amount based on warm-up percentage
+// Returns fullAmount, durAmount
 func calcAmount(avgBlockAmountX96 *u256.Uint, dur, pct uint64) (uint64, uint64) {
 	durAmountX96 := new(u256.Uint).Mul(avgBlockAmountX96, u256.NewUint(dur))
 	fullAmount := new(u256.Uint).Div(durAmountX96, _q96).Uint64()

@@ -83,40 +83,34 @@ func collectRewardByDepositId(t *testing.T) {
 		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 		uassert.Equal(t, reward, uint64(0))
 		std.TestSkipHeights(1)
-		println()
 	})
 
 	t.Run("claim after 3 days", func(t *testing.T) {
 		std.TestSkipHeights(int64(TIMESTAMP_3DAYS) / 2)
 		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 		uassert.Equal(t, reward, uint64(10222222))
-		println()
 	})
 
 	t.Run("no more claim in same block", func(t *testing.T) {
 		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 		uassert.Equal(t, reward, uint64(0))
-		println()
 	})
 
 	t.Run("wait 1 more block, then claim", func(t *testing.T) {
 		std.TestSkipHeights(1)
 		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 		uassert.Equal(t, reward, uint64(111111))
-		println()
 	})
 
 	t.Run("30day tier is over", func(t *testing.T) {
 		std.TestSkipHeights(int64(TIMESTAMP_30DAYS) / 2)
 		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 		uassert.Equal(t, reward, uint64(89666666))
-		println()
 	})
 
 	t.Run("more block after 30 days", func(t *testing.T) {
 		std.TestSkipHeights(int64(TIMESTAMP_30DAYS) / 2)
 		reward := CollectRewardByDepositId(`gno.land/r/onbloc/obl:124:30:g1w4ek2u3sx9047h6lta047h6lta047h6lh0ssfv:129`)
 		uassert.Equal(t, reward, uint64(0))
-		println()
 	})
 }

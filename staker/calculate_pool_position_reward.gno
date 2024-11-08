@@ -213,7 +213,6 @@ func CalcPoolPosition() {
 	height := std.GetHeight()
 
 	if height <= lastCalculatedHeight {
-
 		return
 	}
 
@@ -268,18 +267,13 @@ func CalcPoolPosition() {
 
 	// calculate external gns amounts
 	totalExternalGns := externalGnsAmount()
-
 	totalExternalGns += externalDepositGnsAmount()
 
 	// calculate pool
 	stakerGnsBalance := gnsBalance(consts.STAKER_ADDR)
-
 	stakerGnsBalance -= totalExternalGns
-
 	mintedGnsAmount := stakerGnsBalance - lastCalculatedBalance
-
 	lastCalculatedBalance = stakerGnsBalance
-
 	duration := height - lastCalculatedHeight
 
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(mintedGnsAmount)
@@ -298,9 +292,8 @@ func CalcPoolPosition() {
 		eachTier3Amount = tier3Amount / tier3Num
 	}
 
-	// 인터널 에미션 대상 풀 수만큼 반복
+	// Repeat for the number of internal emission target pools
 	for poolPath, internal := range poolTiers {
-
 		tier := internal.tier
 
 		tierAmount := uint64(0)
@@ -347,26 +340,21 @@ func CalcPoolPosition() {
 		}
 	}
 
-	// 전체 포지션 반복
-	for tokenId, deposit := range deposits { // 찐 대상만
+	for tokenId, deposit := range deposits {
 		poolPath := deposit.targetPoolPath
 		poolCurrentBlockAmount := poolCurrentBlockGns[poolPath]
 
-		// ------------------------------------ INTERNAL
 		if poolCurrentBlockAmount > 0 {
 			// calculate position gns rewards
 			liqRatioX96, exist := positionsLiquidityRatio[tokenId]
 
 			if exist == false || liqRatioX96.IsZero() {
-
 				continue
 			}
 
 			positionAmountX96 := u256.Zero().Mul(u256.NewUint(poolCurrentBlockAmount), liqRatioX96)
 			positionAmountX := u256.Zero().Div(positionAmountX96, _q96)
 			positionAmount := positionAmountX.Uint64()
-
-			// XXX: REMOVE AFTER QA
 
 			positionLastGns[tokenId] = positionGns[tokenId]
 			positionGns[tokenId] += positionAmount
@@ -379,21 +367,19 @@ func CalcPoolPosition() {
 	}
 
 	// update flag
-
 	lastCalculatedHeight = height
-
 	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - totalExternalGns // latest balance
 
-	// 인터널 에미션 대상 풀 수만큼 반복
+	// Repeat for the number of internal emission target pools (clean up)
 	for poolPath, _ := range poolTiers {
 		amount := poolLastTmpGns[poolPath]
-
 		if amount > 0 {
 			if poolCurrentBlockGns[poolPath] >= amount {
 				poolLastTmpGns[poolPath] = poolCurrentBlockGns[poolPath] - amount
 			} else {
 				poolCurrentBlockGns[poolPath] = 0
 			}
+		} else {
 		}
 	}
 
@@ -401,8 +387,101 @@ func CalcPoolPosition() {
 	poolCurrentBlockGns = make(map[string]uint64)
 
 	// ------------------------------------ EXTERNAL
-	external := NewExternalCalculator(height)
-	external.calculate(incentives) // XXX: no returning any value?
+	for incentiveId, incentive := range incentives {
+		poolPath := incentive.targetPoolPath
+
+		startTimestamp := incentive.startTimestamp
+		endTimestamp := incentive.endTimestamp
+		now := time.Now().Unix()
+		// if inactive incentive, do not calculate
+		if !(startTimestamp <= now && now <= endTimestamp) {
+			continue
+		}
+
+		rewardToken := incentive.rewardToken
+		rewardAmount := incentive.rewardAmount
+		rewardLeft := incentive.rewardLeft
+
+		for _, tokenId := range poolsPositions[poolPath] {
+			// how many blocks passed since
+			// max time between (start of the incentive) and (staked at) and (last calculated)
+			deposit := deposits[tokenId]
+			_max := max(startTimestamp, deposit.stakeTimestamp)
+
+			_max = max(_max, externalLastCalculatedTimestamp[incentiveId])
+
+			blocksPassed := (now - _max) / consts.BLOCK_GENERATION_INTERVAL
+			if blocksPassed == 0 {
+				continue
+			}
+
+			liqRatioX96, exist := positionsLiquidityRatio[tokenId]
+			if exist == false || liqRatioX96.IsZero() {
+				continue
+			}
+
+			currentPoolRewardX96 := u256.Zero().Mul(incentive.rewardPerBlockX96, u256.NewUint(uint64(blocksPassed)))
+
+			positionAmountX96X96 := u256.Zero().Mul(currentPoolRewardX96, liqRatioX96)
+
+			positionAmountX96 := u256.Zero().Div(positionAmountX96X96, _q96)
+
+			rewardLeftX96 := new(u256.Uint).Mul(rewardLeft, _q96)
+			if positionAmountX96.Gt(rewardLeftX96) {
+				positionAmountX96 = rewardLeftX96
+			}
+
+			_, exist = positionLastExternal[tokenId]
+			if !exist {
+				positionLastExternal[tokenId] = make(map[string]*u256.Uint)
+			}
+
+			_, exist = positionsExternalLastCalculatedHeight[tokenId]
+			if !exist {
+				positionsExternalLastCalculatedHeight[tokenId] = make(map[string]int64)
+				positionsExternalLastCalculatedHeight[tokenId][incentiveId] = height - int64(blocksPassed)
+			}
+
+			_, exist = positionsExternalWarmUpAmount[tokenId]
+			if !exist {
+				positionsExternalWarmUpAmount[tokenId] = make(map[string]warmUpAmount)
+			}
+
+			_, exist = positionsExternalWarmUpAmount[tokenId][incentiveId]
+			if !exist {
+				positionsExternalWarmUpAmount[tokenId][incentiveId] = warmUpAmount{}
+			}
+
+			_, exist = positionExternal[tokenId]
+			if !exist {
+				positionExternal[tokenId] = make(map[string]externalRewards)
+			}
+
+			_, exist = positionExternal[tokenId][incentiveId]
+			if !exist {
+				positionExternal[tokenId][incentiveId] = externalRewards{
+					incentiveId:    incentiveId,
+					poolPath:       poolPath,
+					tokenPath:      rewardToken,
+					tokenAmountX96: positionAmountX96,
+				}
+				positionLastExternal[tokenId][incentiveId] = u256.Zero()
+			} else {
+				tempLastExternalAmount := positionExternal[tokenId][incentiveId].tokenAmountX96
+				positionLastExternal[tokenId][incentiveId] = tempLastExternalAmount
+				positionExternal[tokenId][incentiveId] = externalRewards{
+					incentiveId:    incentiveId,
+					poolPath:       poolPath,
+					tokenPath:      rewardToken,
+					tokenAmountX96: new(u256.Uint).Add(tempLastExternalAmount, positionAmountX96),
+				}
+			}
+
+			rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
+			positionsExternalLastCalculatedHeight[tokenId][incentiveId] = height
+		}
+		externalLastCalculatedTimestamp[incentiveId] = now
+	}
 }
 
 func externalGnsAmount() uint64 {

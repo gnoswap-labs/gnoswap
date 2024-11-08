@@ -159,7 +159,6 @@ func distributeToTarget(amount uint64) uint64 {
 		totalSent += distAmount
 
 		transferToTarget(target, distAmount)
-		// println("target", target, "distAmount", distAmount)
 	}
 
 	// TODO:

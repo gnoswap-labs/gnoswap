@@ -23,8 +23,6 @@ import (
 
 // Execute executes the given proposal.
 // It checks various conditions such as voting period, execution window, quorum, and majority.
-// Returns the results of the executed calls.
-// Panics if any of the execution conditions are not met.
 func Execute(proposalId uint64) {
 	common.IsHalted()
 
@@ -133,8 +131,6 @@ func Execute(proposalId uint64) {
 }
 
 func callableMsg(pkgPath, function, params string) bool {
-	println(">> callableMsg", pkgPath, function, params)
-
 	param := strings.Split(params, ",")
 
 	switch pkgPath {
@@ -316,15 +312,6 @@ func callableMsg(pkgPath, function, params string) bool {
 			}
 			return true
 
-		case "GnsSetAvgBlockTimeInMs":
-			if len(param) != 1 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-
 		default:
 			panic(addDetailToError(
 				errNonExecutableFunction,
@@ -407,7 +394,7 @@ func executeParameterChange(msgs []string) {
 		case consts.GNS_PATH:
 			switch funcName {
 			case "SetAvgBlockTimeInMs":
-				ms := handleGnsSetAvgBlockTimeInMs(params)
+				ms := handleSetAvgBlockTimeInMs(params)
 				gns.SetAvgBlockTimeInMs(ms)
 			}
 
@@ -464,9 +451,6 @@ func executeParameterChange(msgs []string) {
 			case "SetWarmUp":
 				percent, block := handleTwoInt64(params)
 				sr.SetWarmUp(percent, block)
-			case "GnsSetAvgBlockTimeInMs":
-				ms := handleGnsSetAvgBlockTimeInMs(params)
-				sr.GnsSetAvgBlockTimeInMs(ms)
 			}
 
 		case consts.COMMON_PATH:
@@ -512,7 +496,7 @@ func handleEmissionChangeDistributionPct(params []string) (
 	return target01, pct01, target02, pct02, target03, pct03, target04, pct04
 }
 
-func handleGnsSetAvgBlockTimeInMs(params []string) int64 {
+func handleSetAvgBlockTimeInMs(params []string) int64 {
 	return int64(parseUint(params[0], 10, 64))
 }
 

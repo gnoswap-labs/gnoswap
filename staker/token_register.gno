@@ -10,6 +10,8 @@ import (
 	"gno.land/r/gnoswap/v2/consts"
 )
 
+// GRC20Interface is the interface for GRC20 tokens
+// It is used to interact with the GRC20 tokens without importing but by registering each tokens function
 type GRC20Interface interface {
 	Transfer() func(to pusers.AddressOrName, amount uint64)
 	TransferFrom() func(from, to pusers.AddressOrName, amount uint64)
@@ -18,12 +20,11 @@ type GRC20Interface interface {
 }
 
 var (
-	// registered is a map of registered GRC20 interfaces keyed by package path
 	registered = make(map[string]GRC20Interface)
 	locked     = false // mutex
 )
 
-// GetRegisteredTokens returns a slice of all registered tokjen package paths
+// GetRegisteredTokens returns a list of all registered tokens
 func GetRegisteredTokens() []string {
 	tokens := make([]string, 0, len(registered))
 	for k := range registered {
@@ -33,10 +34,6 @@ func GetRegisteredTokens() []string {
 }
 
 // RegisterGRC20Interface registers a GRC20 token interface
-//
-// Panics:
-//   - caller is not the admin
-//   - token already registered
 func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	prevAddr := std.PrevRealm().Addr()
 	prevPath := std.PrevRealm().PkgPath()
@@ -61,9 +58,6 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 }
 
 // UnregisterGRC20Interface unregisters a GRC20 token interface
-//
-// Panics:
-//   - caller is not the admin
 func UnregisterGRC20Interface(pkgPath string) {
 	assertUserCall()
 
@@ -107,6 +101,7 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 			ufmt.Sprintf("token_register.gno__transferByRegisterCall() || expected locked(%t) to be false", locked),
 		))
 	}
+
 	return true
 }
 
