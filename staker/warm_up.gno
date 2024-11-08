@@ -9,6 +9,25 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+const (
+	WarmUpFor30Ratio  int64 = int64(30)
+	WarmUpFor50Ratio  int64 = int64(50)
+	WarmUpFor70Ratio  int64 = int64(70)
+	WarmUpFor100Ratio int64 = int64(100)
+
+	NumOfWarmUpSection int8 = 5
+	WarmUpSection0     int8 = 0 // Section 0 is no reward duration
+	WarmUpSection30    int8 = 1 // Section 30 is 30% reward duration
+	WarmUpSection50    int8 = 2 // Section 50 is 50% reward duration
+	WarmUpSection70    int8 = 3 // Section 70 is 70% reward duration
+	WarmUpSection100   int8 = 4 // Section 100 is 100% reward duration
+
+	DefaultRewardPayoutStartBlock30  int64 = 1   // ~ 5m
+	DefaultRewardPayoutStartBlock50  int64 = 151 // 5m ~ 10m
+	DefaultRewardPayoutStartBlock70  int64 = 301 // 10m ~ 30m
+	DefaultRewardPayoutStartBlock100 int64 = 901 // 30m ~
+)
+
 // NOTE: warmUp is a map of percent to block number
 // warmUp has a duration value. It applies different reward payout rates
 // based on when the LP was staked by the staking position.
@@ -17,27 +36,8 @@ import (
 // if the staked block height is 10, the 30% reward period
 // for warmup starts at the staked block height + warmup[30].
 var (
-	warmUp           = make(map[int64]int64) // map[percent]block
-	warmUpThresholds []int64                 // warmUpThresholds = warmUp[percent] - 1
-)
-
-const (
-	WarmUpFor30Ratio  int64 = int64(30)
-	WarmUpFor50Ratio  int64 = int64(50)
-	WarmUpFor70Ratio  int64 = int64(70)
-	WarmUpFor100Ratio int64 = int64(100)
-
-	NumOfWarmUpSection      uint8 = 5
-	IndexOfWarmUpSection0   uint8 = 0 // Section 0 is no reward duration
-	IndexOfWarmUpSection30  uint8 = 1 // Section 30 is 30% reward duration
-	IndexOfWarmUpSection50  uint8 = 2 // Section 50 is 50% reward duration
-	IndexOfWarmUpSection70  uint8 = 3 // Section 70 is 70% reward duration
-	IndexOfWarmUpSection100 uint8 = 4 // Section 100 is 100% reward duration
-
-	DefaultRewardPayoutStartBlock30  int64 = 1   // ~ 5m
-	DefaultRewardPayoutStartBlock50  int64 = 151 // 5m ~ 10m
-	DefaultRewardPayoutStartBlock70  int64 = 301 // 10m ~ 30m
-	DefaultRewardPayoutStartBlock100 int64 = 901 // 30m ~
+	warmUp        = make(map[int64]int64)      // map[percent]block
+	WarmUpSection = [NumOfWarmUpSection]int8{} // WarmUpSection
 )
 
 func init() {
@@ -53,7 +53,12 @@ func init() {
 		DefaultRewardPayoutStartBlock70,
 		DefaultRewardPayoutStartBlock100)
 
-	warmUpThresholds = NewWarmUpThresholds()
+	WarmUpSection = [NumOfWarmUpSection]int8{
+		WarmUpSection0,
+		WarmUpSection30,
+		WarmUpSection50,
+		WarmUpSection70,
+		WarmUpSection100}
 }
 
 func NewWarmUp(rewardHeight30, rewardHeight50, rewardHeight70, rewardHeight100 int64) map[int64]int64 {
@@ -63,20 +68,6 @@ func NewWarmUp(rewardHeight30, rewardHeight50, rewardHeight70, rewardHeight100 i
 		WarmUpFor70Ratio:  rewardHeight70,
 		WarmUpFor100Ratio: rewardHeight100,
 	}
-}
-
-func NewWarmUpThresholds() []int64 {
-	// DifferenceBlock Between WarmUp Rearward Payout Start Block 30 and Threshold
-	DifferenceBetweenWarmUpAndThreshold := GetWarmUp(WarmUpFor30Ratio)
-
-	thresholds := make([]int64, NumOfWarmUpSection)
-	thresholds[IndexOfWarmUpSection0] = 0
-	thresholds[IndexOfWarmUpSection30] = GetWarmUp(WarmUpFor30Ratio) - DifferenceBetweenWarmUpAndThreshold
-	thresholds[IndexOfWarmUpSection50] = GetWarmUp(WarmUpFor50Ratio) - DifferenceBetweenWarmUpAndThreshold
-	thresholds[IndexOfWarmUpSection70] = GetWarmUp(WarmUpFor70Ratio) - DifferenceBetweenWarmUpAndThreshold
-	thresholds[IndexOfWarmUpSection100] = GetWarmUp(WarmUpFor100Ratio) - DifferenceBetweenWarmUpAndThreshold
-
-	return thresholds
 }
 
 func GetWarmUp(percent int64) int64 {
@@ -118,59 +109,160 @@ func SetWarmUp(percent int64, block int64) {
 	warmUp[percent] = block
 }
 
-var (
-	WarmUpSection [NumOfWarmUpSection]int8 = [NumOfWarmUpSection]int8{0, 1, 2, 3, 4} // WarmUpSection
-)
+func GetWarmUpMap() map[int64]int64 {
+	return warmUp
+}
 
 // WarmUpCalculator it helps to calculate the reward by applying the warmup period.
 type WarmUpCalculator struct {
-	stakeHeight    int64 // stakeHeight is the height when the staking position was created
+	startHeight    int64 // startHeight is the height at which warm-up rewards can be paid.
 	lastCalcHeight int64 // lastCalcHeight is the last calculated height
 	currentSection int8  // currentSection is the section at the current height
 	lastSection    int8  // lastSection is the section at the last calculated height
 	warmUpOverFlow bool  // Check if the section at the current height is different from the section at the last calculated height
 }
 
-func NewWarmUpCalculator(stakeHeight int64, lastHeight int64) *WarmUpCalculator {
+func NewWarmUpCalculator(startHeight int64, lastHeight int64) *WarmUpCalculator {
 	return &WarmUpCalculator{
-		stakeHeight:    stakeHeight,
+		startHeight:    startHeight,
 		lastCalcHeight: lastHeight,
-		currentSection: WarmUpSection[IndexOfWarmUpSection0],
-		lastSection:    WarmUpSection[IndexOfWarmUpSection0],
+		currentSection: WarmUpSection[WarmUpSection0],
+		lastSection:    WarmUpSection[WarmUpSection0],
+		warmUpOverFlow: false,
 	}
 }
 
-func (wc *WarmUpCalculator) CalculateWarmUp(currentHeight int64, rewardAmount uint64) (uint64, uint64) {
-	reward, penalty := uint64(0), uint64(0)
-	if currentHeight <= wc.stakeHeight {
-		return reward, penalty
+func (wc *WarmUpCalculator) SetSectionOverFlow(isOverFlow bool) {
+	wc.warmUpOverFlow = isOverFlow
+}
+func (wc *WarmUpCalculator) SetCurrentSection(section int8) {
+	wc.currentSection = section
+}
+func (wc *WarmUpCalculator) SetLastSection(section int8) {
+	wc.lastSection = section
+}
+
+func (wc *WarmUpCalculator) GetSectionOverFlow() bool {
+	return wc.warmUpOverFlow
+}
+func (wc *WarmUpCalculator) GetCurrentSection() int8 {
+	return wc.currentSection
+}
+func (wc *WarmUpCalculator) GetLastSection() int8 {
+	return wc.lastSection
+}
+
+// normalizeHeight returns the normalizedHeight to calculate warm-up rewards.
+// If the height is less than the startHeight, it returns -1.
+// Otherwise, it returns the normalized height.
+func (wc *WarmUpCalculator) normalizeHeight(height int64) int64 {
+	if height < wc.startHeight {
+		return -1
 	}
 
-	//warmUpHeight           []int64 // warmUpHeight = stakeHeight + warmUp[percent]
-	//warmUpThresholdsHeight []int64 // warmUpThresholdsHeight = stakeHeight + warmUpThresholds[percent]
-	//warmUpSection          []int8  // warmUpSection = {0, 1, 2, 3, 4}
+	normHeight := height - (wc.startHeight - 1)
+	return normHeight
+}
 
-	//thresholds := []int64{WarmUp30, WarmUp50, WarmUp70, WarmUp100}
-	//for _, threshold := range thresholds {
-	//	thresholdHeight := wc.warmUp[threshold] + wc.stakeHeight
-	//	warmUpRatio := threshold
-	//
-	//	if currentHeight >= thresholdHeight && wc.lastCalcHeight < thresholdHeight {
-	//		reward, penalty = wc.calculateWarmUpRewardAmount(currentHeight, wc.stakeHeight, rewardAmount, threshold)
-	//		break
-	//	}
-	//}
+// searchSection returns the section at the normalized height.
+// Loop over the size of warmUp, updating as it goes,
+// checking to see if it's above the warmUp[percent] block
+func (wc *WarmUpCalculator) searchSection(normalizedHeight int64) int8 {
+	section := wc.currentSection
+	warmUpMap := GetWarmUpMap()
+	for percent, block := range warmUpMap {
+		if normalizedHeight >= block {
+			section = WarmUpSection[percent]
+		}
+	}
+	return section
+}
 
+// GetWarmUpRewardRatio returns the reward ratio for the given section.
+func (wc *WarmUpCalculator) GetWarmUpRewardRatio(section int8) int64 {
+	switch section {
+	case WarmUpSection30:
+		return WarmUpFor30Ratio
+	case WarmUpSection50:
+		return WarmUpFor50Ratio
+	case WarmUpSection70:
+		return WarmUpFor70Ratio
+	case WarmUpSection100:
+		return WarmUpFor100Ratio
+	default:
+		return 0
+	}
+}
+
+// GetWamUpHeightBy returns the warm-up height for the given section.
+func (wc *WarmUpCalculator) GetWamUpHeightBy(section int8) int64 {
+	switch section {
+	case WarmUpSection30:
+		return GetWarmUp(WarmUpFor30Ratio)
+	case WarmUpSection50:
+		return GetWarmUp(WarmUpFor50Ratio)
+	case WarmUpSection70:
+		return GetWarmUp(WarmUpFor70Ratio)
+	case WarmUpSection100:
+		return GetWarmUp(WarmUpFor100Ratio)
+	default:
+		return 0
+	}
+}
+
+// compute calculates the reward and penalty for the given warmup height.
+func (wc *WarmUpCalculator) compute(curHeight int64, lastHeight int64, amount uint64) (uint64, uint64) {
+	reward, penalty := uint64(0), uint64(0)
+
+	isOverFlow := wc.GetSectionOverFlow()
+	if isOverFlow && wc.GetLastSection() != WarmUpSection[WarmUpSection0] {
+		// amount = amount for current section + amount for last section
+		// amount for current section = (currentHeight - (currentSectionStartHeight-1)) / (currentHeight - lastHeight)
+		curSectionAmount := uint64((curHeight - (wc.GetWamUpHeightBy(wc.GetCurrentSection()) - 1)) / (curHeight - lastHeight))
+		currRewardRatio := wc.GetWarmUpRewardRatio(wc.GetCurrentSection())
+		// current section amount * reward ratio for current section / 100
+		curSectionReward := curSectionAmount * uint64(currRewardRatio) / 100
+		lastSectionAmount := amount - curSectionAmount
+		lastRewardRatio := wc.GetWarmUpRewardRatio(wc.GetLastSection())
+		// last section amount * reward ratio for last section / 100
+		lastSectionReward := lastSectionAmount * uint64(lastRewardRatio) / 100
+
+		reward = curSectionReward + lastSectionReward
+	} else {
+		// warmupReward = amount * reward ratio for section / 100
+		warmUpRewardRatio := wc.GetWarmUpRewardRatio(wc.GetCurrentSection())
+		reward = amount * uint64(warmUpRewardRatio) / 100
+	}
+	penalty = amount - reward
 	return reward, penalty
 }
 
-func (wc *WarmUpCalculator) findSection(height int64) int8 {
-	section := wc.currentSection
-	for i := 0; i < len(warmUpThresholds); i++ {
-		if height >= warmUpThresholds[i] {
-			section = WarmUpSection[i]
-		}
+// CalculateWarmUp calculates the warm-up rewards and penalties.
+func (wc *WarmUpCalculator) CalculateWarmUp(currentHeight int64, rewardAmount uint64) (uint64, uint64) {
+	reward, penalty := uint64(0), uint64(0)
+	// 1. Check conditions
+	if currentHeight < wc.startHeight || currentHeight <= wc.lastCalcHeight {
+		return reward, penalty
 	}
+	// 2. change unit from height to warmup height
+	normCurrHeight := wc.normalizeHeight(currentHeight)
+	normLastHeight := wc.normalizeHeight(wc.lastCalcHeight)
+	if normLastHeight < 0 {
+		normLastHeight = 0
+	}
+	// 3. search section
+	normCurrSection := wc.searchSection(normCurrHeight)
+	wc.SetCurrentSection(normCurrSection)
+	normLastSection := wc.searchSection(normLastHeight)
+	wc.SetLastSection(normLastSection)
+	// 4. Check warmup overflow
+	if normCurrSection != normLastSection && normCurrSection > normLastSection {
+		wc.SetSectionOverFlow(true)
+	} else {
+		wc.SetSectionOverFlow(false)
+	}
+	// 5. compute reward and penalty
+	reward, penalty = wc.compute(normCurrHeight, normLastHeight, rewardAmount)
 
-	return section
+	return reward, penalty
 }

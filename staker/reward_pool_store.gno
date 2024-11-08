@@ -7,11 +7,17 @@ const (
 	TIER_TYPE_NUM = 3
 )
 
+// RewardPool represents a reward pool.
+// A RewardPool type has the following fields:
+// - tier: tier of pool
+// - rewardAmount: distributable reward amount
+// - distributedAmount: distributed reward amount
+// - leftAmount: left reward amount
 type RewardPool struct {
-	tier              uint64 // tier of pool
-	rewardAmount      uint64 // distributable reward amount
-	distributedAmount uint64 // distributed reward amount
-	leftAmount        uint64 // left reward amount
+	tier              uint64
+	rewardAmount      uint64
+	distributedAmount uint64
+	leftAmount        uint64
 }
 
 func NewRewardPool() *RewardPool {
@@ -71,7 +77,7 @@ func NewRewardPoolMap() *RewardPoolMap {
 	}
 }
 
-func (r *RewardPoolMap) SetRewardPools(rewardPools map[string]*RewardPool) {
+func (r *RewardPoolMap) SetRewardPoolMap(rewardPools map[string]*RewardPool) {
 	r.rewardPools = rewardPools
 }
 
@@ -105,7 +111,7 @@ func (r *RewardPoolMap) SetLeftAmountForTier(tierIndex int, amount uint64) {
 	r.leftAmountForTier[tierIndex] = amount
 }
 
-func (r *RewardPoolMap) GetRewardPool() map[string]*RewardPool {
+func (r *RewardPoolMap) GetRewardPools() map[string]*RewardPool {
 	return r.rewardPools
 }
 

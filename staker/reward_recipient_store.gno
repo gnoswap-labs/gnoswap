@@ -17,262 +17,36 @@ func init() {
 }
 
 type RewardRecipientsMap struct {
-	poolLiquidity map[string]*PoolLiquidity // poolPath -> poolLiquidity
+	poolLiquidityMap map[string]*PoolLiquidity // poolPath -> poolLiquidity
 }
 
 // NewRewardRecipientMap creates a new RewardRecipientsMap
 func NewRewardRecipientMap() *RewardRecipientsMap {
 	return &RewardRecipientsMap{
-		poolLiquidity: make(map[string]*PoolLiquidity),
+		poolLiquidityMap: make(map[string]*PoolLiquidity),
 	}
 }
 
 func (r *RewardRecipientsMap) SetPoolLiquidity(poolPath string, poolLiquidity *PoolLiquidity) {
-	r.poolLiquidity[poolPath] = poolLiquidity
+	r.poolLiquidityMap[poolPath] = poolLiquidity
 }
 
 func (r *RewardRecipientsMap) GetPoolLiquidity(poolPath string) *PoolLiquidity {
-	if _, exist := r.poolLiquidity[poolPath]; !exist {
+	if _, exist := r.poolLiquidityMap[poolPath]; !exist {
 		return nil
 	}
-	return r.poolLiquidity[poolPath]
+	return r.poolLiquidityMap[poolPath]
 }
 
-func (r *RewardRecipientsMap) GetRewardRecipientsMap() map[string]*PoolLiquidity {
-	return r.poolLiquidity
-}
-
-type PoolLiquidity struct {
-	totalLiquidity   *u256.Uint                        // total liquidity
-	inRangeLiquidity map[uint64]*InRangeLiquidity      // tokenID -> liquidity
-	inRangeReward    map[uint64]*InRangePositionReward // tokenID -> reward
-}
-
-// NewPoolLiquidity creates a new PoolLiquidity
-func NewPoolLiquidity() *PoolLiquidity {
-	return &PoolLiquidity{
-		totalLiquidity:   u256.Zero(),
-		inRangeLiquidity: make(map[uint64]*InRangeLiquidity),
-		inRangeReward:    make(map[uint64]*InRangePositionReward),
-	}
-}
-
-func (p *PoolLiquidity) SetTotalLiquidity(totalLiquidity *u256.Uint) {
-	p.totalLiquidity = totalLiquidity
-}
-
-func (p *PoolLiquidity) SetInRangeLiquidity(tokenID uint64, inRangeLiquidity *InRangeLiquidity) {
-	p.inRangeLiquidity[tokenID] = inRangeLiquidity
-}
-
-func (p *PoolLiquidity) SetInRangeReward(tokenID uint64, inRangePositionReward *InRangePositionReward) {
-	p.inRangeReward[tokenID] = inRangePositionReward
-}
-
-func (p *PoolLiquidity) GetTotalLiquidity() *u256.Uint {
-	return p.totalLiquidity
-}
-
-func (p *PoolLiquidity) GetInRangeLiquidity(tokenID uint64) *InRangeLiquidity {
-	if _, exist := p.inRangeLiquidity[tokenID]; !exist {
-		return nil
-	}
-	return p.inRangeLiquidity[tokenID]
-}
-
-func (p *PoolLiquidity) GetInRangeLiquidityMap() map[uint64]*InRangeLiquidity {
-	return p.inRangeLiquidity
-}
-
-func (p *PoolLiquidity) GetOrCreateInRangeLiquidity(tokenID uint64) *InRangeLiquidity {
-	if _, exist := p.inRangeLiquidity[tokenID]; !exist {
-		p.inRangeLiquidity[tokenID] = NewInRangeLiquidity()
-	}
-	return p.inRangeLiquidity[tokenID]
-}
-
-func (p *PoolLiquidity) GetOrCreateInRangePositionReward(tokenID uint64) *InRangePositionReward {
-	if _, exist := p.inRangeReward[tokenID]; !exist {
-		p.inRangeReward[tokenID] = NewInRangePositionReward()
-	}
-	return p.inRangeReward[tokenID]
-}
-
-func (p *PoolLiquidity) GetInRangeRewardMap() map[uint64]*InRangePositionReward {
-	return p.inRangeReward
-}
-
-func (p *PoolLiquidity) GetInRangeReward(tokenID uint64) *InRangePositionReward {
-	if _, exist := p.inRangeReward[tokenID]; !exist {
-		return nil
-	}
-	return p.inRangeReward[tokenID]
-}
-
-func (p *PoolLiquidity) SetRewardToStakers(tokenID uint64, rewardAmount uint64) {
-	inRangePositionReward := p.GetOrCreateInRangePositionReward(tokenID)
-	inRangePositionReward.SetRewardAmount(rewardAmount)
-	p.SetInRangeReward(tokenID, inRangePositionReward)
-}
-
-func (p *PoolLiquidity) HasLeftAmount(tokenID uint64) bool {
-	if _, exist := p.inRangeReward[tokenID]; !exist {
-		return false
-	}
-	return p.inRangeReward[tokenID].GetLeftAmount() > 0
-}
-
-func (p *PoolLiquidity) GetLeftAmount(tokenID uint64) uint64 {
-	if p.HasLeftAmount(tokenID) {
-		return p.inRangeReward[tokenID].GetLeftAmount()
-	}
-	return 0
-}
-
-func (p *PoolLiquidity) GetRewardAmount(tokenID uint64) uint64 {
-	if _, exist := p.inRangeReward[tokenID]; !exist {
-		return 0
-	}
-	return p.inRangeReward[tokenID].GetRewardAmount()
-}
-
-func (p *PoolLiquidity) GetStakedHeight(tokenID uint64) int64 {
-	if _, exist := p.inRangeLiquidity[tokenID]; !exist {
-		return 0
-	}
-	return p.inRangeLiquidity[tokenID].GetStakedHeight()
-}
-
-type InRangeLiquidity struct {
-	liquidity      *u256.Uint // liquidity
-	liquidityRatio *u256.Uint // liquidity ratio
-	stakedHeight   int64      // staked block height
-}
-
-// NewInRangeLiquidity creates a new InRangeLiquidity
-func NewInRangeLiquidity() *InRangeLiquidity {
-	return &InRangeLiquidity{
-		liquidity:      u256.Zero(),
-		liquidityRatio: u256.Zero(),
-	}
-}
-
-func (i *InRangeLiquidity) SetLiquidity(liquidity *u256.Uint) {
-	i.liquidity = liquidity
-}
-
-func (i *InRangeLiquidity) SetLiquidityRatio(liquidityRatio *u256.Uint) {
-	i.liquidityRatio = liquidityRatio
-}
-
-func (i *InRangeLiquidity) SetStakedHeight(stakedHeight int64) {
-	i.stakedHeight = stakedHeight
-}
-
-func (i *InRangeLiquidity) GetLiquidity() *u256.Uint {
-	return i.liquidity
-}
-
-func (i *InRangeLiquidity) GetLiquidityRatio() *u256.Uint {
-	return i.liquidityRatio
-}
-
-func (i *InRangeLiquidity) GetStakedHeight() int64 {
-	return i.stakedHeight
-}
-
-type InRangePositionReward struct {
-	accumulatedRewardAmount uint64 // accumulated reward amount
-	accumulatedPenalty      uint64 // accumulated penalty amount
-	rewardAmount            uint64 // reward amount to be distributed
-	leftAmount              uint64 // left reward amount to be distributed
-	warmUpAmount            uint64 // warm-up reward amount (actual reward amount)
-	warmUpPenalty           uint64 // warm-up penalty amount
-}
-
-// NewInRangePositionReward creates a new InRangePositionReward
-func NewInRangePositionReward() *InRangePositionReward {
-	return &InRangePositionReward{
-		rewardAmount:  0,
-		leftAmount:    0,
-		warmUpAmount:  0,
-		warmUpPenalty: 0,
-	}
-}
-
-func (i *InRangePositionReward) SetRewardAmount(rewardAmount uint64) {
-	i.rewardAmount = rewardAmount
-}
-
-func (i *InRangePositionReward) AddRewardAmount(rewardAmount uint64) {
-	// TODO:
-	// 1. log should be removed
-	println(" > Before RewardAmount:", i.accumulatedRewardAmount)
-	i.accumulatedRewardAmount += rewardAmount
-	println(" > After RewardAmount:", i.accumulatedRewardAmount)
-}
-
-func (i *InRangePositionReward) SetLeftAmount(leftAmount uint64) {
-	i.leftAmount = leftAmount
-}
-
-func (i *InRangePositionReward) SetWarmUpAmount(warmUpAmount uint64) {
-	i.warmUpAmount = warmUpAmount
-}
-
-func (i *InRangePositionReward) SetWarmUpPenalty(warmUpPenalty uint64) {
-	i.warmUpPenalty = warmUpPenalty
-}
-
-func (i *InRangePositionReward) GetRewardAmount() uint64 {
-	return i.rewardAmount
-}
-
-func (i *InRangePositionReward) GetLeftAmount() uint64 {
-	return i.leftAmount
-}
-
-func (i *InRangePositionReward) GetWarmUpAmount() uint64 {
-	return i.warmUpAmount
-}
-
-func (i *InRangePositionReward) GetWarmUpPenalty() uint64 {
-	return i.warmUpPenalty
-}
-
-func (r *RewardRecipientsMap) SetInRangeLiquidity(poolPath string, tokenId uint64, inRangeLiquidity *InRangeLiquidity) {
-	poolLiquidity := r.GetOrCreatePoolLiquidity(poolPath)
-	poolLiquidity.SetInRangeLiquidity(tokenId, inRangeLiquidity)
-	r.SetPoolLiquidity(poolPath, poolLiquidity)
-}
-
-func (r *RewardRecipientsMap) SetInRangePositionReward(poolPath string, tokenId uint64, inRangePositionReward *InRangePositionReward) {
-	poolLiquidity := r.GetOrCreatePoolLiquidity(poolPath)
-	poolLiquidity.SetInRangeReward(tokenId, inRangePositionReward)
-	r.SetPoolLiquidity(poolPath, poolLiquidity)
+func (r *RewardRecipientsMap) GetPoolLiquidityMap() map[string]*PoolLiquidity {
+	return r.poolLiquidityMap
 }
 
 func (r *RewardRecipientsMap) GetOrCreatePoolLiquidity(poolPath string) *PoolLiquidity {
-	if _, exist := r.poolLiquidity[poolPath]; !exist {
-		r.poolLiquidity[poolPath] = NewPoolLiquidity()
+	if _, exist := r.poolLiquidityMap[poolPath]; !exist {
+		r.poolLiquidityMap[poolPath] = NewPoolLiquidity()
 	}
-	return r.poolLiquidity[poolPath]
-}
-
-func (r *RewardRecipientsMap) GetOrCreateInRangeLiquidity(poolPath string, tokenID uint64) *InRangeLiquidity {
-	poolLiquidity := r.GetOrCreatePoolLiquidity(poolPath)
-	if _, exist := poolLiquidity.inRangeLiquidity[tokenID]; !exist {
-		poolLiquidity.inRangeLiquidity[tokenID] = NewInRangeLiquidity()
-	}
-	return poolLiquidity.inRangeLiquidity[tokenID]
-}
-
-func (r *RewardRecipientsMap) GetOrCreateInRangePositionReward(poolPath string, tokenID uint64) *InRangePositionReward {
-	poolLiquidity := r.GetOrCreatePoolLiquidity(poolPath)
-	if _, exist := poolLiquidity.inRangeReward[tokenID]; !exist {
-		poolLiquidity.inRangeReward[tokenID] = NewInRangePositionReward()
-	}
-	return poolLiquidity.inRangeReward[tokenID]
+	return r.poolLiquidityMap[poolPath]
 }
 
 // CalculateLiquidityRatio calculates the liquidity ratio
@@ -340,8 +114,8 @@ func (r *RewardRecipientsMap) UpdateInRangeLiquidityRatio(poolPath string, token
 // NOTE: this function is called when emission reward is calculated
 // and reward recipients should have position in the pool with in-range liquidity
 func (r *RewardRecipientsMap) GenerateRewardRecipients(depositList map[uint64]Deposit) {
-	if r.poolLiquidity == nil {
-		r.poolLiquidity = make(map[string]*PoolLiquidity)
+	if r.GetPoolLiquidityMap() == nil {
+		r.poolLiquidityMap = make(map[string]*PoolLiquidity)
 	}
 
 	currentHeight := std.GetHeight()
@@ -374,7 +148,7 @@ func (r *RewardRecipientsMap) CalculateLiquidityRatioAndGetTokenIdMap() map[stri
 	// 1. after refactoring is completed, poolsPositions should be removed
 	tokenIdMap := make(map[string][]uint64) // clear
 
-	poolLiquidityMap := r.GetRewardRecipientsMap()
+	poolLiquidityMap := r.GetPoolLiquidityMap()
 
 	// 2. calculate the liquidity ratio for each position
 	for poolPath, poolLiquidity := range poolLiquidityMap {
@@ -385,4 +159,241 @@ func (r *RewardRecipientsMap) CalculateLiquidityRatioAndGetTokenIdMap() map[stri
 		}
 	}
 	return tokenIdMap
+}
+
+type PoolLiquidity struct {
+	totalLiquidity      *u256.Uint                        // total liquidity
+	inRangeLiquidityMap map[uint64]*InRangeLiquidity      // tokenID -> liquidity
+	inRangeRewardMap    map[uint64]*InRangePositionReward // tokenID -> reward
+}
+
+// NewPoolLiquidity creates a new PoolLiquidity
+func NewPoolLiquidity() *PoolLiquidity {
+	return &PoolLiquidity{
+		totalLiquidity:      u256.Zero(),
+		inRangeLiquidityMap: make(map[uint64]*InRangeLiquidity),
+		inRangeRewardMap:    make(map[uint64]*InRangePositionReward),
+	}
+}
+
+func (p *PoolLiquidity) SetTotalLiquidity(totalLiquidity *u256.Uint) {
+	p.totalLiquidity = totalLiquidity
+}
+
+func (p *PoolLiquidity) SetInRangeLiquidityMap(inRangeLiquidityMap map[uint64]*InRangeLiquidity) {
+	p.inRangeLiquidityMap = inRangeLiquidityMap
+}
+
+func (p *PoolLiquidity) SetInRangeRewardMap(inRangeRewardMap map[uint64]*InRangePositionReward) {
+	p.inRangeRewardMap = inRangeRewardMap
+}
+
+func (p *PoolLiquidity) SetInRangeLiquidity(tokenID uint64, inRangeLiquidity *InRangeLiquidity) {
+	p.inRangeLiquidityMap[tokenID] = inRangeLiquidity
+}
+
+func (p *PoolLiquidity) SetInRangePositionReward(tokenID uint64, inRangePositionReward *InRangePositionReward) {
+	p.inRangeRewardMap[tokenID] = inRangePositionReward
+}
+
+func (p *PoolLiquidity) GetTotalLiquidity() *u256.Uint {
+	return p.totalLiquidity
+}
+
+func (p *PoolLiquidity) GetInRangeLiquidityMap() map[uint64]*InRangeLiquidity {
+	return p.inRangeLiquidityMap
+}
+
+func (p *PoolLiquidity) GetInRangeRewardMap() map[uint64]*InRangePositionReward {
+	return p.inRangeRewardMap
+}
+
+func (p *PoolLiquidity) GetInRangeLiquidity(tokenID uint64) *InRangeLiquidity {
+	if _, exist := p.inRangeLiquidityMap[tokenID]; !exist {
+		return nil
+	}
+	return p.GetInRangeLiquidity(tokenID)
+}
+
+func (p *PoolLiquidity) GetInRangePositionReward(tokenID uint64) *InRangePositionReward {
+	if _, exist := p.inRangeRewardMap[tokenID]; !exist {
+		return nil
+	}
+	return p.GetInRangePositionReward(tokenID)
+}
+
+func (p *PoolLiquidity) GetOrCreateInRangeLiquidity(tokenID uint64) *InRangeLiquidity {
+	if _, exist := p.inRangeLiquidityMap[tokenID]; !exist {
+		p.inRangeLiquidityMap[tokenID] = NewInRangeLiquidity()
+	}
+	return p.GetInRangeLiquidity(tokenID)
+}
+
+func (p *PoolLiquidity) GetOrCreateInRangePositionReward(tokenID uint64) *InRangePositionReward {
+	if _, exist := p.inRangeRewardMap[tokenID]; !exist {
+		p.inRangeRewardMap[tokenID] = NewInRangePositionReward()
+	}
+	return p.GetInRangePositionReward(tokenID)
+}
+
+func (p *PoolLiquidity) SetRewardToStakers(tokenID uint64, rewardAmount uint64) {
+	inRangePositionReward := p.GetOrCreateInRangePositionReward(tokenID)
+	inRangePositionReward.SetDistributableRewardAmount(rewardAmount)
+	p.SetInRangePositionReward(tokenID, inRangePositionReward)
+}
+
+func (p *PoolLiquidity) SetLeftAmount(tokenID uint64, leftAmount uint64) {
+	inRangePositionReward := p.GetOrCreateInRangePositionReward(tokenID)
+	inRangePositionReward.SetLeftAmount(leftAmount)
+	p.SetInRangePositionReward(tokenID, inRangePositionReward)
+}
+
+func (p *PoolLiquidity) HasLeftAmount(tokenID uint64) bool {
+	if _, exist := p.inRangeRewardMap[tokenID]; !exist {
+		return false
+	}
+	return p.GetInRangePositionReward(tokenID).GetLeftAmount() > 0
+}
+
+func (p *PoolLiquidity) GetLeftAmount(tokenID uint64) uint64 {
+	if p.HasLeftAmount(tokenID) {
+		return p.GetInRangePositionReward(tokenID).GetLeftAmount()
+	}
+	return 0
+}
+
+func (p *PoolLiquidity) GetDistributableRewardAmount(tokenID uint64) uint64 {
+	if _, exist := p.inRangeRewardMap[tokenID]; !exist {
+		return 0
+	}
+	return p.GetInRangePositionReward(tokenID).GetDistributableRewardAmount()
+}
+
+func (p *PoolLiquidity) GetStakedHeight(tokenID uint64) int64 {
+	if _, exist := p.inRangeLiquidityMap[tokenID]; !exist {
+		return 0
+	}
+	return p.GetInRangeLiquidity(tokenID).GetStakedHeight()
+}
+
+type InRangeLiquidity struct {
+	liquidity      *u256.Uint // liquidity
+	liquidityRatio *u256.Uint // liquidity ratio
+	stakedHeight   int64      // staked block height
+}
+
+// NewInRangeLiquidity creates a new InRangeLiquidity
+func NewInRangeLiquidity() *InRangeLiquidity {
+	return &InRangeLiquidity{
+		liquidity:      u256.Zero(),
+		liquidityRatio: u256.Zero(),
+		stakedHeight:   int64(0),
+	}
+}
+
+func (i *InRangeLiquidity) SetLiquidity(liquidity *u256.Uint) {
+	i.liquidity = liquidity
+}
+
+func (i *InRangeLiquidity) SetLiquidityRatio(liquidityRatio *u256.Uint) {
+	i.liquidityRatio = liquidityRatio
+}
+
+func (i *InRangeLiquidity) SetStakedHeight(stakedHeight int64) {
+	i.stakedHeight = stakedHeight
+}
+
+func (i *InRangeLiquidity) GetLiquidity() *u256.Uint {
+	return i.liquidity
+}
+
+func (i *InRangeLiquidity) GetLiquidityRatio() *u256.Uint {
+	return i.liquidityRatio
+}
+
+func (i *InRangeLiquidity) GetStakedHeight() int64 {
+	return i.stakedHeight
+}
+
+type InRangePositionReward struct {
+	distributableRewardAmount uint64 // reward amount to be distributed
+	warmUpAmount              uint64 // warm-up reward amount (actual reward amount)
+	warmUpPenalty             uint64 // warm-up penalty amount
+	leftAmount                uint64 // left reward amount to be distributed
+	accumulatedWarmUpAmount   uint64 // accumulated reward amount (warm-up)
+	accumulatedWarmUpPenalty  uint64 // accumulated penalty amount (warm-up)
+}
+
+// NewInRangePositionReward creates a new InRangePositionReward
+func NewInRangePositionReward() *InRangePositionReward {
+	return &InRangePositionReward{
+		distributableRewardAmount: 0,
+		warmUpAmount:              0,
+		warmUpPenalty:             0,
+		leftAmount:                0,
+		accumulatedWarmUpAmount:   0,
+		accumulatedWarmUpPenalty:  0,
+	}
+}
+
+func (i *InRangePositionReward) SetDistributableRewardAmount(rewardAmount uint64) {
+	i.distributableRewardAmount = rewardAmount
+}
+
+func (i *InRangePositionReward) SetWarmUpAmount(warmUpAmount uint64) {
+	i.warmUpAmount = warmUpAmount
+}
+
+func (i *InRangePositionReward) SetWarmUpPenalty(warmUpPenalty uint64) {
+	i.warmUpPenalty = warmUpPenalty
+}
+
+func (i *InRangePositionReward) SetLeftAmount(leftAmount uint64) {
+	i.leftAmount = leftAmount
+}
+
+func (i *InRangePositionReward) AddWarmUpRewardAmount(rewardAmount uint64) {
+	// TODO:
+	// 1. log should be removed
+	println(" > Before accumulatedWarmUpAmount:", i.accumulatedWarmUpAmount)
+	// Add reward amount to the accumulated reward amount
+	i.accumulatedWarmUpAmount += rewardAmount
+	println(" > After accumulatedWarmUpAmount:", i.accumulatedWarmUpAmount)
+}
+
+func (i *InRangePositionReward) AddWarmUpPenaltyAmount(penaltyAmount uint64) {
+	// TODO:
+	// 1. log should be removed
+	println(" > Before penaltyAmount:", i.accumulatedWarmUpPenalty)
+	// Add reward amount to the accumulated reward amount
+	i.accumulatedWarmUpPenalty += penaltyAmount
+	println(" > After penaltyAmount:", i.accumulatedWarmUpPenalty)
+}
+
+func (i *InRangePositionReward) GetDistributableRewardAmount() uint64 {
+	return i.distributableRewardAmount
+}
+
+func (i *InRangePositionReward) GetAccumulatedWarmUpAmount() uint64 {
+	return i.accumulatedWarmUpAmount
+}
+
+func (i *InRangePositionReward) GetAccumulatedWarmUpPenalty() uint64 {
+	return i.accumulatedWarmUpPenalty
+}
+
+func (i *InRangePositionReward) GetLeftAmount() uint64 {
+	return i.leftAmount
+}
+
+func (i *InRangePositionReward) GetWarmUpAmount() uint64 {
+	return i.warmUpAmount
+}
+
+func (i *InRangePositionReward) GetWarmUpPenalty() uint64 {
+	return i.warmUpPenalty
+}
+
+func (i *InRangePositionReward) HasPrevLeftAmount() bool {
+	return i.leftAmount > 0
 }

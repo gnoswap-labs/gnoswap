@@ -133,7 +133,7 @@ func (r *InternalEmissionReward) DistributeRewardToEachPools(prevAddr string, pr
 	var distributedAmountForTier3 uint64 = uint64(0)
 
 	poolMap := r.GetRewardPoolsMap()
-	pools := poolMap.GetRewardPool()
+	pools := poolMap.GetRewardPools()
 
 	// 1. distributed reward to each pool
 	for poolPath, rewardPool := range pools {
@@ -189,89 +189,95 @@ func (r *InternalEmissionReward) DistributeRewardToEachPools(prevAddr string, pr
 	return distributedAmountForTier1, distributedAmountForTier2, distributedAmountForTier3
 }
 
-func (r *InternalEmissionReward) DistributeRewardToStakers() uint64 {
-	poolMap := r.GetRewardPoolsMap()
-	pools := poolMap.GetRewardPool()
+func (r *InternalEmissionReward) distributeRewardToStakers(poolPath string, poolRewardAmount uint64) uint64 {
 	recipientsMap := r.GetRewardRecipientsMap()
+	poolLiquidity := recipientsMap.GetPoolLiquidity(poolPath)
+	if poolLiquidity == nil {
+		return 0
+	}
+	inRangeLiquidityMap := poolLiquidity.GetInRangeLiquidityMap()
+	currentHeight := std.GetHeight()
 	distributedAmount := uint64(0)
 	compareLiquidityRatio := u256.Zero() // TODO: for test, should be removed
-	currentHeight := std.GetHeight()
 
-	for poolPath, rewardPool := range pools {
-		poolLiquidity := recipientsMap.GetOrCreatePoolLiquidity(poolPath)
-		poolRewardAmount := rewardPool.GetRewardAmount()
-		accuDistributedAmount := uint64(0) // accumulated distributed amount for each pool
-		for tokenId, inRangePosition := range poolLiquidity.inRangeLiquidity {
-			if inRangePosition.liquidity.IsZero() || (currentHeight == inRangePosition.GetStakedHeight()) {
-				// TODO :
-				// 이 시점에서, 이 곳에 빠지는것은 대상자 선정 코드를 다시 체크해봐야할 수 있음
-				println(" > Skip : inRangePosition.liquidity.IsZero() || (currentHeight == inRangePosition.GetStakedHeight())")
-				continue
-			}
-			liqRatioX96 := inRangePosition.GetLiquidityRatio()
-			positionRewardAmountX96 := u256.Zero().Mul(u256.NewUint(poolRewardAmount), liqRatioX96)
-			positionRewardAmountX := u256.Zero().Div(positionRewardAmountX96, _q96)
-			positionRewardAmount := positionRewardAmountX.Uint64()
-			println(" > positionRewardAmount:", positionRewardAmount)
+	//poolLiquidity.distributeRewardToStakers(poolPath, poolRewardAmount)
 
-			// TODO:
-			// 1. 이전에 남은양이 있으면, 이전에 남은양을 더해서 계산
-			positionRewardAmount += poolLiquidity.GetLeftAmount(tokenId)
-			println(" > positionRewardAmount + leftAmount:", positionRewardAmount)
-
-			// 2. tokenId에 대한 reward를 staker에게 지급 하기 위해 설정
-			poolLiquidity.SetRewardToStakers(tokenId, positionRewardAmount)
-			accuDistributedAmount += positionRewardAmount
-			compareLiquidityRatio = compareLiquidityRatio.Add(compareLiquidityRatio, liqRatioX96) // TODO: for test, should be removed
-
-			// 3. Warmup 적용
-			stakedHeight := poolLiquidity.GetStakedHeight(tokenId)
-			warmupAmount, warmupPenalty := computeWarmUpRewardAmount(currentHeight, stakedHeight, positionRewardAmount)
-			// 4. WarmUp 적용된 Reward를 staker에게 지급
-			inRangePositionReward := poolLiquidity.GetInRangeReward(tokenId)
-			inRangePositionReward.SetWarmUpAmount(inRangePositionReward.GetWarmUpAmount() + warmupAmount)
-			inRangePositionReward.SetWarmUpPenalty(inRangePositionReward.GetWarmUpPenalty() + warmupPenalty)
-
-			// TODO:
-			// block 높이가 stake 와 같으면, reward를 지급하지 않음 (없음)
-			if warmupAmount == 0 {
-				continue
-			}
-
-			if positionRewardAmount != (warmupAmount + warmupPenalty) {
-				leftAmount := positionRewardAmount - (warmupAmount + warmupPenalty)
-				inRangePositionReward.SetLeftAmount(leftAmount)
-			} else {
-				// TODO:
-				// after test, should be removed
-				println(" > positionRewardAmount == (warmupAmount + warmupPenalty)")
-			}
-			poolLiquidity.SetInRangeReward(tokenId, inRangePositionReward)
-
-			// TODO:
-			// 1. positionRewardAmount 는 position에 부여되는 Reward
-			positionLastGns[tokenId] = positionGns[tokenId]
-			positionGns[tokenId] += positionRewardAmount
-			poolLastTmpGns[poolPath] += positionRewardAmount
-
-			distributedAmount += positionRewardAmount
-
-			// calculate internal amount from previous to now
-			// rewardMathComputeInternalRewardAmount(tokenId)
-			// TODO:
-			// 1. update reward amount and penalty amount into positionsInternalWarmUpAmount
+	for tokenId, inRangePosition := range inRangeLiquidityMap {
+		if inRangePosition.GetLiquidity().IsZero() || (currentHeight == inRangePosition.GetStakedHeight()) {
+			// TODO : 이 시점에서, 이 곳에 빠지는것은 대상자 선정 코드를 다시 체크해봐야할 수 있음
+			println(" > Skip : inRangePosition.liquidity.IsZero() || (currentHeight == inRangePosition.GetStakedHeight())")
+			continue
 		}
-		rewardPool.SetDistributedAmount(accuDistributedAmount)
-		if poolRewardAmount != accuDistributedAmount {
-			leftAmount := poolRewardAmount - accuDistributedAmount
-			rewardPool.SetLeftAmount(leftAmount)
+		stakedHeight := poolLiquidity.GetStakedHeight(tokenId)
+		if stakedHeight == 0 {
+			// TODO: stakedHeight가 0인 경우는 있어선 안됨
+			println(" > [Error][distributeReardToStakers] stakedHeight == 0")
+			continue
 		}
-		poolMap.SetRewardPool(poolPath, rewardPool)
-		recipientsMap.SetPoolLiquidity(poolPath, poolLiquidity)
+
+		liqRatioX96 := inRangePosition.GetLiquidityRatio()
+		positionRewardAmount := computeRewardByRatio(poolRewardAmount, liqRatioX96)
+		println(" > positionRewardAmount:", positionRewardAmount)
+		if poolLiquidity.GetInRangePositionReward(tokenId).HasPrevLeftAmount() {
+			positionRewardAmount += poolLiquidity.GetInRangePositionReward(tokenId).GetLeftAmount()
+		}
+
+		// Calculate Warmup Reward
+		warmupAmount, warmupPenalty := computeInternalWarmUpRewardAmount(currentHeight, stakedHeight+1, positionRewardAmount)
+
+		// Update Reward Information
+		inRangePositionReward := poolLiquidity.GetInRangePositionReward(tokenId)
+		inRangePositionReward.SetWarmUpAmount(warmupAmount)
+		inRangePositionReward.SetWarmUpPenalty(warmupPenalty)
+		inRangePositionReward.AddWarmUpRewardAmount(warmupAmount)
+		inRangePositionReward.AddWarmUpPenaltyAmount(warmupPenalty)
+
+		if positionRewardAmount != (warmupAmount + warmupPenalty) {
+			leftAmount := positionRewardAmount - (warmupAmount + warmupPenalty)
+			inRangePositionReward.SetLeftAmount(leftAmount)
+		}
+
+		distributedAmount += positionRewardAmount
+		compareLiquidityRatio = compareLiquidityRatio.Add(compareLiquidityRatio, liqRatioX96) // TODO: for test, should be removed
+
+		poolLiquidity.SetInRangePositionReward(tokenId, inRangePositionReward)
+		// TODO:
+		// 1. positionRewardAmount 는 position에 부여되는 Reward
+		positionLastGns[tokenId] = positionGns[tokenId]
+		positionGns[tokenId] += positionRewardAmount
+		poolLastTmpGns[poolPath] += positionRewardAmount
+
+		distributedAmount += positionRewardAmount
 	}
+
 	// TODO:
 	// 1. For test, should be removed
 	println(" > compareLiquidityRatio:", compareLiquidityRatio.Div(compareLiquidityRatio, _q96).ToString())
 
+	recipientsMap.SetPoolLiquidity(poolPath, poolLiquidity)
+	r.SetRewardRecipientsMap(recipientsMap)
+
 	return distributedAmount
+}
+
+func (r *InternalEmissionReward) DistributeRewardToStakers() uint64 {
+	poolMap := r.GetRewardPoolsMap()
+	pools := poolMap.GetRewardPools()
+	accuDistributedAmount := uint64(0) // accumulated distributed amount for each pool
+
+	for poolPath, rewardPool := range pools {
+		poolRewardAmount := rewardPool.GetRewardAmount()
+		poolRewardAmount += rewardPool.GetLeftAmount()
+		distributedAmount := r.distributeRewardToStakers(poolPath, poolRewardAmount)
+		rewardPool.SetDistributedAmount(distributedAmount)
+		// update left amount and distributed amount
+		poolLeftAmount := poolRewardAmount - distributedAmount
+		rewardPool.SetLeftAmount(poolLeftAmount)
+
+		poolMap.SetRewardPool(poolPath, rewardPool)
+		accuDistributedAmount += poolRewardAmount
+	}
+	r.SetRewardPoolsMap(poolMap)
+
+	return accuDistributedAmount
 }

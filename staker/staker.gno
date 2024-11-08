@@ -804,3 +804,11 @@ func getDepositsByTokenId(tokenId uint64) Deposit {
 func getDeposits() map[uint64]Deposit {
 	return deposits
 }
+
+func getIncentives() map[string]ExternalIncentive {
+	return incentives
+}
+
+func getPoolIncentives() map[string][]string {
+	return poolIncentives
+}

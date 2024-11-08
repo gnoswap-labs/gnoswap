@@ -31,31 +31,47 @@ var positionsInternalWarmUpAmount = make(map[uint64]warmUpAmount)             //
 var positionsExternalWarmUpAmount = make(map[uint64]map[string]warmUpAmount)  // positionId => incentiveId => warmUpAmount
 var positionsExternalLastCalculatedHeight = make(map[uint64]map[string]int64) // positionId => incentiveId => lastCalculatedHeight
 
-// computeWarmUpRewardAmount calculate reward amount for warm-up period
+// computeInternalWarmUpRewardAmount calculate reward amount for warm-up period
 //
 // input:
-//   - stakedHeight: staked height
+//   - startHeight: startHeight is the height at which warm-up rewards can be paid.
 //   - rewardAmount: reward amount
 //
 // output:
 //   - rewardAmountByWarmUp : reward amount by warm-up period
 //   - penalty: penalty amount by warm-up period
-func computeWarmUpRewardAmount(currentHeight int64, stakedHeight int64, rewardAmount uint64) (uint64, uint64) {
+func computeInternalWarmUpRewardAmount(currentHeight int64, startHeight int64, rewardAmount uint64) (uint64, uint64) {
 	var rewardAmountByWarmUp uint64 = 0
 	var penaltyAmountByWarmUp uint64 = 0
 
-	// 1. calculate warm-up period by stakedHeight and currentHeight
-	if currentHeight <= stakedHeight {
+	// 1. calculate warm-up period by startHeight and currentHeight
+	// startHeight = stakedHeight + warmUp[WarmUpFor30Ratio]
+	if currentHeight < startHeight {
 		// TODO:
 		// After test, should be removed the log
 		println("currentHeight should be greater than stakedHeight")
 		return rewardAmountByWarmUp, penaltyAmountByWarmUp
 	}
+	// 2. Get the last calculated height
 	prevCalculatedHeight := getLastCalculatedHeight()
-	warmupCalculator := NewWarmUpCalculator(stakedHeight, prevCalculatedHeight)
+
+	// 3. Calculate the reward amount by warm-up period
+	warmupCalculator := NewWarmUpCalculator(startHeight, prevCalculatedHeight)
 	rewardAmountByWarmUp, penaltyAmountByWarmUp = warmupCalculator.CalculateWarmUp(currentHeight, rewardAmount)
 
 	return rewardAmountByWarmUp, penaltyAmountByWarmUp
+}
+
+func computeExternalWarmUpRewardAmount() (uint64, uint64) {
+	return 0, 0
+}
+
+func computeRewardByRatio(amount uint64, ratioX96 *u256.Uint) uint64 {
+	rewardAmountX96 := u256.Zero().Mul(u256.NewUint(amount), ratioX96)
+	rewardAmountX := u256.Zero().Div(rewardAmountX96, _q96)
+	rewardAmount := rewardAmountX.Uint64()
+
+	return rewardAmount
 }
 
 func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
