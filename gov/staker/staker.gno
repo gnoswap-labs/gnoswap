@@ -32,7 +32,7 @@ var (
 	minimumAmount = uint64(1_000_000)
 )
 
-// Delegate delegate gns to a delegate
+// Delegate delegates GNS tokens to a specified address.
 // ref: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
 func Delegate(to std.Address, amount uint64) {
 	if running {
