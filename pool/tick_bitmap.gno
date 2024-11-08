@@ -19,9 +19,6 @@ func tickBitmapPosition(tick int32) (int16, uint8) {
 
 // tickBitmapFlipTick flips tthe bit corresponding to the given tick
 // in the pool's tick bitmap.
-//
-// Panics:
-//   - If tick % tickSpacing != 0
 func (pool *Pool) tickBitmapFlipTick(
 	tick int32,
 	tickSpacing int32,
@@ -110,7 +107,7 @@ func bitwiseNotForUint256BitmapIndexing(x *u256.Uint) *u256.Uint {
 
 	// XOR with mask to perform bitwise NOT
 	// result := x ^ mask
-
 	result := new(u256.Uint).Xor(x, mask)
+
 	return result
 }

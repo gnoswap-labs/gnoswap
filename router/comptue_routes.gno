@@ -69,12 +69,10 @@ func _computeAllRoutes(
 		outputTokenPath,
 		[]PoolWithMeta{}, // currentRoute
 		poolUsed,
-		tokenVisited, // tokenVisited
-		"",           // _previousTokenOut
-		//
+		tokenVisited,
+		"", // _previousTokenOut
 		maxHops,
 		pools,
-		//
 		&routes,
 	)
 

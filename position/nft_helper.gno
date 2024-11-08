@@ -35,7 +35,6 @@ func exists(tokenId uint64) bool {
 	return true
 }
 
-// Error handling isn't necessary here
 func isApprovedOrOwner(addr std.Address, tokenId uint64) bool {
 	tid := tid(tokenId)
 

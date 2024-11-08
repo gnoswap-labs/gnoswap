@@ -63,5 +63,4 @@ func printFeeBalance() {
 	println("FEE BALANCE")
 	println("> ugnot:\t", ugnotBal)
 	println("> wugnot:\t", wugnotBal)
-	println()
 }

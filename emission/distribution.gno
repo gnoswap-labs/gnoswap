@@ -155,7 +155,6 @@ func distributeToTarget(amount uint64) {
 		totalSent += distAmount
 
 		transferToTarget(target, distAmount)
-		// println("target", target, "distAmount", distAmount)
 	}
 
 	// `amount-totalSent` can be left due to rounding

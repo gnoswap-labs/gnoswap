@@ -43,13 +43,6 @@ var (
 	user01Realm = std.NewUserRealm(user01)
 )
 
-func init() {
-	println("dummyToAddr", dummyToAddr)
-	println("dummyAddr", dummyAddr)
-	println("reDelegate", reDelegate)
-	println("projectAddr", projectAddr)
-	println("user01", user01)
-}
 
 func TestGovernanceRewardProtocolFeeWithLaunchpad(t *testing.T) {
 	delegateFromAdminToDummy(t)

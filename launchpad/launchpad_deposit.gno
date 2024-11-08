@@ -32,10 +32,9 @@ var (
 )
 
 // DepositGns deposit gns to the project's tier
-// - gns will be locked in `launchpad` contract
-// - xgns will be minted to the `launchpad` contract
-//
-// returns depositId
+// gns will be locked in `launchpad` contract
+// xgns will be minted to the `launchpad` contract
+// Returns depositId
 func DepositGns(
 	targetProjectTierId string,
 	amount uint64,
@@ -204,10 +203,9 @@ func DepositGns(
 }
 
 // CollectDepositGns collect deposited gns
-// - gns will be transfered from the `launchpad` to caller
-// - launchpad's xgns will be burned
-//
-// returns collected gns amount
+// gns will be transfered from the `launchpad` to caller
+// launchpad's xgns will be burned.
+// Returns collected gns amount
 func CollectDepositGns() uint64 {
 	common.IsHalted()
 	en.MintAndDistributeGns()
@@ -234,7 +232,6 @@ func CollectDepositGns() uint64 {
 
 		tier := getTier(project, deposit.tier)
 		if checkTierActive(project, tier) {
-			println("CollectDepositGns()_STILL ACTIVE TIER", deposit.tier)
 			continue
 		}
 
@@ -283,26 +280,22 @@ func CollectDepositGns() uint64 {
 }
 
 // CollectDepositGnsByProjectId collect deposited gns of certain project by caller
-// - gns will be transfered from the `launchpad` to caller
-// - launchpad's xgns will be burned
-//
-// returns collected gns amount
+// gns will be transfered from the `launchpad` to caller
+// launchpad's xgns will be burned
+// Returns collected gns amount
 func CollectDepositGnsByProjectId(projectId string) uint64 {
 	_, exist := projects[projectId]
 	if !exist {
-		println("NO PROJECT FOR THIS ID", projectId)
 		return 0
 	}
 
 	caller := std.PrevRealm().Addr()
 	if _, exist := depositsByUserByProject[caller]; !exist {
-		println("NO DEPOSIT FOR THIS USER", caller)
 		return 0
 	}
 
 	depositIds, exist := depositsByUserByProject[caller][projectId]
 	if !exist {
-		println("NO DEPOSIT FOR THIS PROJECT", projectId, " FOR UESR", caller)
 		return 0
 	}
 
@@ -328,7 +321,6 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 
 		tier := getTier(project, deposit.tier)
 		if checkTierActive(project, tier) {
-			println("CollectDepositGns()_STILL ACTIVE TIER", deposit.tier)
 			continue
 		}
 
@@ -378,26 +370,22 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 }
 
 // CollectDepositGnsByDepositId collect deposited gns of certain deposit
-// - gns will be transfered from the `launchpad` to caller
-// - launchpad's xgns will be burned
-//
-// returns collected gns amount
+// gns will be transfered from the `launchpad` to caller
+// launchpad's xgns will be burned
+// Returns collected gns amount
 func CollectDepositGnsByDepositId(depositId string) uint64 {
 	deposit, exist := deposits[depositId]
 	if !exist {
-		println("DEPOSIT NOT FOUND", depositId)
 		return 0
 	}
 
 	project, exist := projects[deposit.projectId]
 	if !exist {
-		println("NO PROJECT FOR THIS ID", deposit.projectId)
 		return 0
 	}
 
 	caller := std.PrevRealm().Addr()
 	if _, exist := depositsByUserByProject[caller]; !exist {
-		println("NO DEPOSIT FOR THIS USER", caller)
 		return 0
 	}
 
@@ -410,7 +398,6 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 	// check active
 	tier := getTier(project, deposit.tier)
 	if checkTierActive(project, tier) {
-		println("CollectDepositGns()_STILL ACTIVE TIER", deposit.tier)
 		return 0
 	}
 
@@ -512,13 +499,11 @@ func checkDepositConditions(project Project) {
 func checkProjectActive(project Project) bool {
 	if project.startHeight > uint64(std.GetHeight()) {
 		// not started yet
-		println(ufmt.Sprintf("checkProjectActive()__project not started yet // startHeight: %d // now: %d", project.startHeight, uint64(std.GetHeight())))
 		return false
 	}
 
 	if project.endHeight < uint64(std.GetHeight()) {
 		// already ended
-		println(ufmt.Sprintf("checkProjectActive()__project already ended // endHeight: %d // now: %d", project.endHeight, uint64(std.GetHeight())))
 		return false
 	}
 

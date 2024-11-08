@@ -59,9 +59,6 @@ func (pool *Pool) tickGetFeeGrowthInside(
 }
 
 // tickUpdate updates a tick's state and returns whether the tick was flipped.
-//
-// Panics:
-//   - If the resulting liquidity gross exceeds the maximum allowed liquidity.
 func (pool *Pool) tickUpdate(
 	tick int32,
 	tickCurrent int32,
@@ -71,7 +68,6 @@ func (pool *Pool) tickUpdate(
 	upper bool,
 	maxLiquidity *u256.Uint, // uint256
 ) (flipped bool) {
-	// PARAM INIT
 	liquidityDelta = liquidityDelta.NilToZero()
 	feeGrowthGlobal0X128 = feeGrowthGlobal0X128.NilToZero()
 	feeGrowthGlobal1X128 = feeGrowthGlobal1X128.NilToZero()

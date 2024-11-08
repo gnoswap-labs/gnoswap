@@ -96,11 +96,11 @@ func Render(path string) string {
 	}
 }
 
-// Mint
+// Mint mints GNS to the address.
+// Only emission contract can call Mint.
 func Mint(address pusers.AddressOrName) uint64 {
 	common.IsHalted()
 
-	// only emission contract can call Mint
 	caller := std.PrevRealm().Addr()
 	if caller != consts.EMISSION_ADDR {
 		panic(addDetailToError(

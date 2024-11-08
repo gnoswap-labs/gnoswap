@@ -67,13 +67,6 @@ type ResponseApiGetStakes struct {
 func ApiGetRewards() string {
 	en.MintAndDistributeGns()
 
-	println()
-	println()
-	a := GetNecessary()
-	println(a)
-	println()
-	println()
-
 	CalcPoolPosition()
 
 	lpTokenRewards := []LpTokenReward{}
