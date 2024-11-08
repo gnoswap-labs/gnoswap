@@ -3,6 +3,7 @@ package staker
 import (
 	"gno.land/p/demo/ufmt"
 	"std"
+	"time"
 
 	"gno.land/r/gnoswap/v2/consts"
 
@@ -119,9 +120,10 @@ func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 // TODO: only use block height to calculate reward and distribute them
 // Returns true if the calculation is successful, false otherwise.
 func CalcPoolPositionRefactor(distributableAmount uint64) bool {
+	println("distributableAmount : ", distributableAmount)
 	currentHeight := std.GetHeight()
 	prevHeight := getLastCalculatedHeight()
-	if !isAbleToCalculateEmissionReward(prevHeight, currentHeight) {
+	if !isAbleToCalculateEmissionReward(prevHeight, currentHeight) || distributableAmount == 0 {
 		return false
 	}
 
@@ -139,7 +141,7 @@ func CalcPoolPositionRefactor(distributableAmount uint64) bool {
 	depositList := getDeposits()
 	rewardRecipients.GenerateRewardRecipients(depositList)
 	// TODO :
-	// poolsPositions은 정리후, 삭제
+	// poolsPositions -> after refactoring is complete, it will be removed
 	poolsPositions = rewardRecipients.CalculateLiquidityRatioAndGetTokenIdMap()
 	internalEmissionReward.SetRewardRecipientsMap(rewardRecipients)
 
@@ -159,6 +161,8 @@ func CalcPoolPositionRefactor(distributableAmount uint64) bool {
 	rewardTier2 := internalEmissionReward.GetRewardPoolsMap().GetRewardAmountForTier(TIER2_INDEX)
 	rewardTier3 := internalEmissionReward.GetRewardPoolsMap().GetRewardAmountForTier(TIER3_INDEX)
 	// Save left reward for each tier
+	// TODO:
+	// after refactoring is completed, should be removed
 	setLastLeftInternalRewardForTier(TIER1_INDEX, rewardTier1-distributedTier1)
 	setLastLeftInternalRewardForTier(TIER2_INDEX, rewardTier2-distributedTier2)
 	setLastLeftInternalRewardForTier(TIER3_INDEX, rewardTier3-distributedTier3)
@@ -179,9 +183,13 @@ func CalcPoolPositionRefactor(distributableAmount uint64) bool {
 		internalEmissionReward.SetLeftAmount(leftAmountAfterDistribution)
 		setLastLeftInternalReward(leftAmountAfterDistribution)
 	}
-
 	// Internal Reward update
 	rewardManager.SetInternalEmissionReward(internalEmissionReward)
+
+	// TODO:
+	// after refactoring is complete, it will be removed
+	totalExternalGns := externalGnsAmount() + externalDepositGnsAmount()
+	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - totalExternalGns
 
 	// --- External Reward ---
 	// 7. 전체 Pool중 External Reward 대상 Pool을 선별
@@ -192,6 +200,7 @@ func CalcPoolPositionRefactor(distributableAmount uint64) bool {
 	external.calculate(incentives) // XXX: no returning any value?
 	externalIncentive.SetExternalCalculator(external)
 	rewardManager.SetExternalIncentiveReward(externalIncentive)
+
 	return true
 }
 

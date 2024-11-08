@@ -168,14 +168,30 @@ func (wc *WarmUpCalculator) normalizeHeight(height int64) int64 {
 // Loop over the size of warmUp, updating as it goes,
 // checking to see if it's above the warmUp[percent] block
 func (wc *WarmUpCalculator) searchSection(normalizedHeight int64) int8 {
-	section := wc.currentSection
+	section := WarmUpSection0
 	warmUpMap := GetWarmUpMap()
 	for percent, block := range warmUpMap {
 		if normalizedHeight >= block {
-			section = WarmUpSection[percent]
+			section = WarmUpSection[wc.PercentToSection(percent)]
 		}
 	}
 	return section
+}
+
+// PercentToSection returns the section for the given percent.
+func (wc *WarmUpCalculator) PercentToSection(percent int64) int8 {
+	switch percent {
+	case WarmUpFor30Ratio:
+		return WarmUpSection30
+	case WarmUpFor50Ratio:
+		return WarmUpSection50
+	case WarmUpFor70Ratio:
+		return WarmUpSection70
+	case WarmUpFor100Ratio:
+		return WarmUpSection100
+	default:
+		return WarmUpSection0
+	}
 }
 
 // GetWarmUpRewardRatio returns the reward ratio for the given section.

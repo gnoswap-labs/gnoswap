@@ -4,7 +4,6 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v2/consts"
 	"gno.land/r/gnoswap/v2/gns"
 )
@@ -154,13 +153,15 @@ func (r *InternalEmissionReward) DistributeRewardToEachPools(prevAddr string, pr
 			panic(ufmt.Sprintf("[STAKER] reward_internal_emission.gno__DistributeRewardToEachPools() || invalid tier(%d)", rewardPool.tier))
 		}
 		poolMap.SetPoolRewardAmount(poolPath, poolAmount)
-		println(" > poolPath:", poolPath)
-		println(" > poolAmount:", poolMap.GetPoolRewardAmount(poolPath))
-
+		// TODO:
+		// after refactoring is complete, should be removed
+		poolGns[poolPath] += poolAmount
+		poolAccuGns[poolPath] += poolAmount
+		// current block minted gns + left from last block distributed gns
+		poolCurrentBlockGns[poolPath] = poolAmount
+		//poolCurrentBlockGns[poolPath] += poolLastTmpGns[poolPath]
 		//poolLastTmpGns[poolPath] = 0
-		//println(" > CALC__INIT_TO_ZERO_poolLastTmpGns[poolPath]:", poolLastTmpGns[poolPath])
 
-		//println(" > CALC__poolPath:", poolPath)
 		if r.HasPoolWithoutStaker(poolPath) {
 			// TODO:
 			// 1. send poolAmount to community pool
@@ -198,9 +199,6 @@ func (r *InternalEmissionReward) distributeRewardToStakers(poolPath string, pool
 	inRangeLiquidityMap := poolLiquidity.GetInRangeLiquidityMap()
 	currentHeight := std.GetHeight()
 	distributedAmount := uint64(0)
-	compareLiquidityRatio := u256.Zero() // TODO: for test, should be removed
-
-	//poolLiquidity.distributeRewardToStakers(poolPath, poolRewardAmount)
 
 	for tokenId, inRangePosition := range inRangeLiquidityMap {
 		if inRangePosition.GetLiquidity().IsZero() || (currentHeight == inRangePosition.GetStakedHeight()) {
@@ -217,11 +215,9 @@ func (r *InternalEmissionReward) distributeRewardToStakers(poolPath string, pool
 
 		liqRatioX96 := inRangePosition.GetLiquidityRatio()
 		positionRewardAmount := computeRewardByRatio(poolRewardAmount, liqRatioX96)
-		println(" > positionRewardAmount:", positionRewardAmount)
-		if poolLiquidity.GetInRangePositionReward(tokenId).HasPrevLeftAmount() {
+		if poolLiquidity.GetOrCreateInRangePositionReward(tokenId).HasPrevLeftAmount() {
 			positionRewardAmount += poolLiquidity.GetInRangePositionReward(tokenId).GetLeftAmount()
 		}
-
 		// Calculate Warmup Reward
 		warmupAmount, warmupPenalty := computeInternalWarmUpRewardAmount(currentHeight, stakedHeight+1, positionRewardAmount)
 
@@ -236,9 +232,7 @@ func (r *InternalEmissionReward) distributeRewardToStakers(poolPath string, pool
 			leftAmount := positionRewardAmount - (warmupAmount + warmupPenalty)
 			inRangePositionReward.SetLeftAmount(leftAmount)
 		}
-
 		distributedAmount += positionRewardAmount
-		compareLiquidityRatio = compareLiquidityRatio.Add(compareLiquidityRatio, liqRatioX96) // TODO: for test, should be removed
 
 		poolLiquidity.SetInRangePositionReward(tokenId, inRangePositionReward)
 		// TODO:
@@ -249,10 +243,6 @@ func (r *InternalEmissionReward) distributeRewardToStakers(poolPath string, pool
 
 		distributedAmount += positionRewardAmount
 	}
-
-	// TODO:
-	// 1. For test, should be removed
-	println(" > compareLiquidityRatio:", compareLiquidityRatio.Div(compareLiquidityRatio, _q96).ToString())
 
 	recipientsMap.SetPoolLiquidity(poolPath, poolLiquidity)
 	r.SetRewardRecipientsMap(recipientsMap)
@@ -273,6 +263,9 @@ func (r *InternalEmissionReward) DistributeRewardToStakers() uint64 {
 		// update left amount and distributed amount
 		poolLeftAmount := poolRewardAmount - distributedAmount
 		rewardPool.SetLeftAmount(poolLeftAmount)
+		// TODO:
+		// after refactor is completed, should be removed
+		poolLastTmpGns[poolPath] = poolLeftAmount
 
 		poolMap.SetRewardPool(poolPath, rewardPool)
 		accuDistributedAmount += poolRewardAmount

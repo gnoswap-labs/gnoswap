@@ -87,6 +87,10 @@ func (r *RewardRecipientsMap) UpdatePoolLiquidity(poolPath string, tokenID uint6
 	poolLiquidity.SetTotalLiquidity(totalLiquidity)
 	// 6. Update the pool liquidity
 	r.SetPoolLiquidity(poolPath, poolLiquidity)
+
+	// TODO:
+	// 1. after refactoring is completed, poolsPositions should be removed
+	poolTotalStakedLiquidity[poolPath] = totalLiquidity
 }
 
 // UpdateInRangeLiquidityRatio calculates the in-range liquidity ratio
@@ -126,6 +130,9 @@ func (r *RewardRecipientsMap) GenerateRewardRecipients(depositList map[uint64]De
 		}
 		// 1. Check if the position is in range, if not, skip the position
 		if !pn.PositionIsInRange(tokenId) {
+			// TODO:
+			// 1. after refactoring is completed, poolsPositions should be removed
+			positionsLiquidityRatio[tokenId] = u256.Zero()
 			continue
 		}
 		// 2. Check if the pool is eligible for rewards
@@ -212,28 +219,28 @@ func (p *PoolLiquidity) GetInRangeLiquidity(tokenID uint64) *InRangeLiquidity {
 	if _, exist := p.inRangeLiquidityMap[tokenID]; !exist {
 		return nil
 	}
-	return p.GetInRangeLiquidity(tokenID)
+	return p.inRangeLiquidityMap[tokenID]
 }
 
 func (p *PoolLiquidity) GetInRangePositionReward(tokenID uint64) *InRangePositionReward {
 	if _, exist := p.inRangeRewardMap[tokenID]; !exist {
 		return nil
 	}
-	return p.GetInRangePositionReward(tokenID)
+	return p.inRangeRewardMap[tokenID]
 }
 
 func (p *PoolLiquidity) GetOrCreateInRangeLiquidity(tokenID uint64) *InRangeLiquidity {
 	if _, exist := p.inRangeLiquidityMap[tokenID]; !exist {
 		p.inRangeLiquidityMap[tokenID] = NewInRangeLiquidity()
 	}
-	return p.GetInRangeLiquidity(tokenID)
+	return p.inRangeLiquidityMap[tokenID]
 }
 
 func (p *PoolLiquidity) GetOrCreateInRangePositionReward(tokenID uint64) *InRangePositionReward {
 	if _, exist := p.inRangeRewardMap[tokenID]; !exist {
 		p.inRangeRewardMap[tokenID] = NewInRangePositionReward()
 	}
-	return p.GetInRangePositionReward(tokenID)
+	return p.inRangeRewardMap[tokenID]
 }
 
 func (p *PoolLiquidity) SetRewardToStakers(tokenID uint64, rewardAmount uint64) {
@@ -353,21 +360,13 @@ func (i *InRangePositionReward) SetLeftAmount(leftAmount uint64) {
 }
 
 func (i *InRangePositionReward) AddWarmUpRewardAmount(rewardAmount uint64) {
-	// TODO:
-	// 1. log should be removed
-	println(" > Before accumulatedWarmUpAmount:", i.accumulatedWarmUpAmount)
 	// Add reward amount to the accumulated reward amount
 	i.accumulatedWarmUpAmount += rewardAmount
-	println(" > After accumulatedWarmUpAmount:", i.accumulatedWarmUpAmount)
 }
 
 func (i *InRangePositionReward) AddWarmUpPenaltyAmount(penaltyAmount uint64) {
-	// TODO:
-	// 1. log should be removed
-	println(" > Before penaltyAmount:", i.accumulatedWarmUpPenalty)
 	// Add reward amount to the accumulated reward amount
 	i.accumulatedWarmUpPenalty += penaltyAmount
-	println(" > After penaltyAmount:", i.accumulatedWarmUpPenalty)
 }
 
 func (i *InRangePositionReward) GetDistributableRewardAmount() uint64 {
