@@ -80,7 +80,7 @@ func vote(t *testing.T) {
 	t.Run("Vote non existent proposal", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-GOVERNANCE-004] data not found || vote.gno__Vote() || proposalId(123) does not exist",
+			"[GNOSWAP-GOVERNANCE-004] requested data not found || vote.gno__Vote() || proposalId(123) does not exist",
 			func() {
 				Vote(uint64(123), true)
 			})
@@ -91,7 +91,7 @@ func vote(t *testing.T) {
 	t.Run("Vote before voting period", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-GOVERNANCE-006] unable to vote before starting || vote.gno__Vote() || voting has not started yet. now(1234567912) < votingStart(1234567922)",
+			"[GNOSWAP-GOVERNANCE-006] unable to vote before starts || vote.gno__Vote() || voting has not started yet. now(1234567912) < votingStart(1234567922)",
 			func() {
 				Vote(proposalId, true)
 			})
@@ -126,7 +126,7 @@ func vote(t *testing.T) {
 	t.Run("Vote twice", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-GOVERNANCE-009] already voted || vote.gno__Vote() || user(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) has already voted on proposalId(1)",
+			"[GNOSWAP-GOVERNANCE-009] can not vote twice || vote.gno__Vote() || user(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) has already voted on proposalId(1)",
 			func() {
 				Vote(proposalId, true)
 			})
@@ -137,7 +137,7 @@ func vote(t *testing.T) {
 		std.TestSkipHeights(2001)
 
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-GOVERNANCE-007] unable to vote after ending || vote.gno__Vote() || voting has ended. now(1234571924) >= votingEnd(1234567952)",
+			"[GNOSWAP-GOVERNANCE-007] unable to vote after ends || vote.gno__Vote() || voting has ended. now(1234571924) >= votingEnd(1234567952)",
 			func() {
 				Vote(proposalId, true)
 			})
@@ -159,7 +159,7 @@ func cancel(t *testing.T) {
 	t.Run("Cancel non existent proposal", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-GOVERNANCE-004] data not found || vote.gno__Cancel() || proposalId(123) does not exist",
+			"[GNOSWAP-GOVERNANCE-004] requested data not found || vote.gno__Cancel() || proposalId(123) does not exist",
 			func() {
 				Cancel(uint64(123))
 			})
@@ -185,7 +185,7 @@ func cancel(t *testing.T) {
 	t.Run("Cancel already canceled proposal", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-GOVERNANCE-011] already canceled proposal || vote.gno__Cancel() || proposalId(2) has already canceled",
+			"[GNOSWAP-GOVERNANCE-011] can not cancel already canceled proposal || vote.gno__Cancel() || proposalId(2) has already canceled",
 			func() {
 				Cancel(proposalId)
 			})
@@ -208,7 +208,7 @@ func execute(t *testing.T) {
 	t.Run("Execute non existent proposal", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-GOVERNANCE-004] data not found || execute.gno__Execute() || proposalId(123) does not exist, failed to execute",
+			"[GNOSWAP-GOVERNANCE-004] requested data not found || execute.gno__Execute() || proposalId(123) does not exist, failed to execute",
 			func() {
 				Execute(uint64(123))
 			})
@@ -218,7 +218,7 @@ func execute(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		std.TestSkipHeights(11)
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-GOVERNANCE-014] text proposal not executable || execute.gno__Execute() || proposalId(1) is a TEXT proposal, not executable",
+			"[GNOSWAP-GOVERNANCE-014] can not execute text proposal || execute.gno__Execute() || proposalId(1) is a TEXT proposal, not executable",
 			func() {
 				Execute(uint64(1))
 			})

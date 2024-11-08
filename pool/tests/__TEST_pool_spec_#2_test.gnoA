@@ -211,7 +211,7 @@ func TestSuccess_case_removing_works(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-009] liquidity calculation || liquidity_math.gno__liquidityMathAddDelta() || LS(z must be < x) (x: 0, y: -10000, z:115792089237316195423570985008687907853269984665640564039457584007913129629936)`,
+		`[GNOSWAP-POOL-009] invalid liquidity calculated || liquidity_math.gno__liquidityMathAddDelta() || LS(z must be < x) (x: 0, y: -10000, z:115792089237316195423570985008687907853269984665640564039457584007913129629936)`,
 		func() {
 			pl.Burn(token0Path, barPath, 3000, -240, 0, "10000") // LS panic
 		},
