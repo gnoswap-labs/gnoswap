@@ -32,6 +32,8 @@ var (
 	minimumAmount = uint64(1_000_000)
 )
 
+// Delegate delegates GNS tokens to a specified address.
+// ref: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
 func Delegate(to std.Address, amount uint64) {
 	if running {
 		cleanDelegationStatHistory()
@@ -74,7 +76,8 @@ func Delegate(to std.Address, amount uint64) {
 	)
 }
 
-// xGNS from -> xGNS to
+// Redelegate redelegates xGNS from existing delegate to another.
+// ref: https://docs.gnoswap.io/contracts/governance/staker.gno#redelegate
 func Redelegate(from, to std.Address, amount uint64) {
 	if running {
 		cleanDelegationStatHistory()
@@ -127,6 +130,8 @@ func Redelegate(from, to std.Address, amount uint64) {
 	)
 }
 
+// Undelegate undelegates xGNS from the existing delegate.
+// ref: https://docs.gnoswap.io/contracts/governance/staker.gno#undelegate
 func Undelegate(from std.Address, amount uint64) {
 	if running {
 		cleanDelegationStatHistory()
@@ -182,6 +187,8 @@ func Undelegate(from std.Address, amount uint64) {
 	)
 }
 
+// CollectUndelegatedGns collects the amount of the undelegated GNS.
+// ref: https://docs.gnoswap.io/contracts/governance/staker.gno#collectundelegatedgns
 func CollectUndelegatedGns() uint64 {
 	common.IsHalted()
 	en.MintAndDistributeGns()
@@ -221,6 +228,8 @@ func CollectUndelegatedGns() uint64 {
 	return collected
 }
 
+// CollectReward collects the rewards from the protocol fee contract based on the holdings of xGNS.
+// ref: https://docs.gnoswap.io/contracts/governance/staker.gno#collectreward
 func CollectReward() {
 	common.IsHalted()
 	en.MintAndDistributeGns()
@@ -279,6 +288,9 @@ func CollectReward() {
 	}
 }
 
+// CollectRewardFromLaunchPad collects the rewards from the protocol fee contract based on the holdings of xGNS in the launchpad contract.
+// Only launchpad contract can call this function
+// ref: https://docs.gnoswap.io/contracts/governance/staker.gno#collectrewardfromlaunchpad
 func CollectRewardFromLaunchPad(to std.Address) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.LAUNCHPAD_ADDR {

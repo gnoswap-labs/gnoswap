@@ -226,7 +226,7 @@ func TestRepositionNotOwner(t *testing.T) {
 	std.TestSetRealm(std.NewUserRealm(test1))
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POSITION-001] no permission || position.gno__Reposition() || only owner(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can reposition for tokenId(1), but called from g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5`,
+		`[GNOSWAP-POSITION-001] caller has no permission || position.gno__Reposition() || only owner(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can reposition for tokenId(1), but called from g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5`,
 		func() {
 			Reposition(uint64(1), -1000, 1000, "500", "500", "0", "0")
 		})
@@ -236,7 +236,7 @@ func TestRepositionOwnerButNowBurned(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POSITION-009] not clear || position.gno__Reposition() || position(2) isn't clear(liquidity:341464938, tokensOwed0:0, tokensOwed1:0)`,
+		`[GNOSWAP-POSITION-009] position is not clear || position.gno__Reposition() || position(2) isn't clear(liquidity:341464938, tokensOwed0:0, tokensOwed1:0)`,
 		func() {
 			Reposition(uint64(2), -1000, 1000, "500", "500", "0", "0")
 		})
@@ -246,7 +246,7 @@ func TestRepositionSlippageTooLarge(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POSITION-002] slippage || liquidity_management.gno__addLiquidity() || LM_Price Slippage Check(amount0(0) >= params.amount0Min(100000000000), amount1(500) >= params.amount1Min(100000000000))`,
+		`[GNOSWAP-POSITION-002] slippage failed || liquidity_management.gno__addLiquidity() || LM_Price Slippage Check(amount0(0) >= params.amount0Min(100000000000), amount1(500) >= params.amount1Min(100000000000))`,
 		func() {
 			Reposition(uint64(1), -1000, 1000, "500", "500", "100000000000", "100000000000")
 		})

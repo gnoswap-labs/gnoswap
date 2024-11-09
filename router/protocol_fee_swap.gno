@@ -60,6 +60,8 @@ func handleSwapFee(
 	return toUserAfterProtocol
 }
 
+// GetSwapFee returns current rate of swap fee
+// ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#getswapfee
 func GetSwapFee() uint64 {
 	return swapFee
 }
@@ -89,6 +91,9 @@ func SetSwapFeeByAdmin(fee uint64) {
 	)
 }
 
+// SetSwapFee modifies the swap fee
+// Only governance contract can execute this function via proposal
+// ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#setswapfee
 func SetSwapFee(fee uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {

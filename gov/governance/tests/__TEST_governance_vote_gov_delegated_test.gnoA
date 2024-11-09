@@ -145,7 +145,7 @@ func vote(t *testing.T) {
 	t.Run("Vote non existent proposal", func(t *testing.T) {
 		std.TestSetRealm(dummyRealm)
 		uassert.PanicsWithMessage(t,
-			"[GNOSWAP-GOVERNANCE-004] data not found || vote.gno__Vote() || proposalId(123) does not exist",
+			"[GNOSWAP-GOVERNANCE-004] requested data not found || vote.gno__Vote() || proposalId(123) does not exist",
 			func() {
 				Vote(uint64(123), true)
 			})

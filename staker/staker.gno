@@ -60,6 +60,7 @@ func init() {
 
 // StakeToken stakes the LP token to the staker contract
 // Returns poolPath, token0Amount, token1Amount
+// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#staketoken
 func StakeToken(tokenId uint64) (string, string, string) {
 	common.IsHalted()
 
@@ -146,6 +147,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 
 // CollectReward collects staked rewards for the given tokenId
 // Returns poolPath
+// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
 func CollectReward(tokenId uint64, unwrapResult bool) string {
 	common.IsHalted()
 
@@ -296,18 +298,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 }
 
 // UnstakeToken unstakes the LP token from the staker and collects all reward from tokenId
-//
-// Parameters:
-//   - tokenId      (uint64) : The ID of the LP token to unstake
-//   - unwrapResult (bool)   : Unwrap the result if the reward token is ugnot coin
-//
-// Returns:
-//   - poolPath     (string): The path of the pool associated with the unstaked token
-//   - token0Amount (string): The amount of token0 in the unstaked position
-//   - token1Amount (string): The amount of token1 in the unstaked position
-//
-// Panics:
-//   - If the token is not staked
+// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#unstaketoken
 func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	common.IsHalted()
 
@@ -353,19 +344,8 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	return poolPath, token0Amount, token1Amount
 }
 
-// CreateExternalIncentive creates an external incentive for the targetPoolPath
-//
-// Parameters:
-//   - targetPoolPath (string): The path of the pool to create the incentive for
-//   - rewardToken    (string): The token path of the reward token (must be registered)
-//   - _rewardAmount  (string): The amount of reward token to provide as incentive
-//   - startTimestamp (int64): The start timestamp of the incentive
-//   - endTimestamp   (int64): The end timestamp of the incentive
-//
-// Panics:
-//   - If startTimestamp is not in the future
-//   - If externalDuration is not 90, 180, or 365 days
-//   - If user doesn't have enough balance to provide as reward
+// CreateExternalIncentive creates an incentive program for a pool.
+// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#createexternalincentive
 func CreateExternalIncentive(
 	targetPoolPath string,
 	rewardToken string, // token path should be registered
@@ -541,6 +521,7 @@ func CreateExternalIncentive(
 }
 
 // EndExternalIncentive ends the external incentive and refunds the remaining reward
+// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#endexternalincentive
 func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken string, startTimestamp, endTimestamp, height int64) {
 	common.IsHalted()
 

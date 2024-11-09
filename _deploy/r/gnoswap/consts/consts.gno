@@ -13,7 +13,7 @@ const (
 
 	TOKEN_REGISTER_NAMESPACE string = "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5"
 
-	BLOCK_GENERATION_INTERVAL int64 = 2 // 2 seconds
+	BLOCK_GENERATION_INTERVAL int64 = 2 // seconds
 )
 
 // WRAP & UNWRAP
@@ -109,7 +109,19 @@ const (
 	Q64  string = "18446744073709551616"                    // 2 ** 64
 	Q96  string = "79228162514264337593543950336"           // 2 ** 96
 	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
+)
 
+// TIMESTAMP & DAY
+const (
+	SECOND_IN_MILLISECOND = 1000
+
+	// in seconds
+	TIMESTAMP_MINUTE = 60
+	TIMESTAMP_HOUR   = 3600
+	TIMESTAMP_DAY    = 86400
+	TIMESTAMP_YEAR   = 31536000
+
+	DAY_PER_YEAR = 365
 )
 
 // ETCs

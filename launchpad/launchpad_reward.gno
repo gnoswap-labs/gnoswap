@@ -16,6 +16,7 @@ import (
 
 // CollectProtocolFee collects protocol fee from gov/staker
 // each project's recipient wallet will be rewarded
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectprotocolfee
 func CollectProtocolFee() {
 	caller := std.PrevRealm().Addr()
 	gs.CollectRewardFromLaunchPad(caller)
@@ -33,6 +34,7 @@ func init() {
 
 // CollectRewardByProjectId collects reward from entire deposit of certain project by caller
 // Returns collected reward amount
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbyprojectid
 func CollectRewardByProjectId(projectId string) uint64 {
 	common.IsHalted()
 	en.MintAndDistributeGns()
@@ -124,6 +126,7 @@ func CollectRewardByProjectId(projectId string) uint64 {
 
 // CollectRewardByDepositId collects reward from certain deposit by caller
 // Returns collected reward amount
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbydepositid
 func CollectRewardByDepositId(depositId string) uint64 {
 	deposit, exist := deposits[depositId]
 	if !exist {

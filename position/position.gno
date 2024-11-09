@@ -24,6 +24,7 @@ var (
 // Mint creates a new liquidity position and mints liquidity tokens.
 // It also handles the conversion between GNOT and WUGNOT transparently for the user.
 // Returns minted tokenId, liquidity, amount0, amount1
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#mint
 func Mint(
 	token0 string,
 	token1 string,
@@ -203,6 +204,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 
 // IncreaseLiquidity increases liquidity of the existing position
 // Returns tokenId, liquidity, amount0, amount1, poolPath
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#increaseliquidity
 func IncreaseLiquidity(
 	tokenId uint64,
 	_amount0Desired string, // uint256
@@ -340,6 +342,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 // DecreaseLiquidity decreases liquidity of the existing position
 // It also handles the conversion between GNOT and WUGNOT transparently for the user.
 // Returns tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#decreaseliquidity
 func DecreaseLiquidity(
 	tokenId uint64,
 	liquidityRatio uint64,
@@ -502,6 +505,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 // Repositiomn adjusts the position of an existing liquidity token
 // by changing its price range and liquidity amount.
 // Returns tokenId, liquidity, tickLower, tickUpper, amount0, amount1
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#reposition
 func Reposition(
 	tokenId uint64,
 	tickLower int32,
@@ -625,6 +629,7 @@ func Reposition(
 
 // CollectFee collects swap fee from the position
 // Returns tokenId, afterFee0, afterFee1, poolPath, origFee0, origFee1
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#collectfee
 func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
 	common.IsHalted()
 	en.MintAndDistributeGns()

@@ -16,6 +16,7 @@ import (
 
 // Mint creates a new position and mints liquidity tokens.
 // Returns minted amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#mint
 func Mint(
 	token0Path string,
 	token1Path string,
@@ -69,6 +70,7 @@ func Mint(
 // Burn removes liquidity from the caller and account tokens owed for the liquidity to the position
 // If liquidity of 0 is burned, it recalculates fees owed to a position
 // Returns burned amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#burn
 func Burn(
 	token0Path string,
 	token1Path string,
@@ -119,6 +121,7 @@ func Burn(
 // Collect collects tokens owed to a position
 // Burned amounts, and swap fees will be transferred to the caller
 // Returns collected amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collect
 func Collect(
 	token0Path string,
 	token1Path string,
@@ -179,6 +182,7 @@ func Collect(
 
 // Swap swaps token0 for token1, or token1 for token0
 // Returns swapped amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#swap
 func Swap(
 	token0Path string,
 	token1Path string,
@@ -478,6 +482,7 @@ func SetFeeProtocolByAdmin(
 // SetFeeProtocol sets the fee protocol for all pools
 // Only governance contract can execute this function via proposal
 // Also it will be applied to new created pools
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#setfeeprotocol
 func SetFeeProtocol(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
@@ -585,6 +590,7 @@ func CollectProtocolByAdmin(
 // CollectProtocol collects protocol fees for the given pool that accumulated while it was being used for swap
 // Only governance contract can execute this function via proposal
 // Returns collected amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collectprotocol
 func CollectProtocol(
 	token0Path string,
 	token1Path string,
