@@ -23,6 +23,7 @@ import (
 // If swapType is EXACT_IN, it returns the amount of output token ≈ amount of user to receive
 // If swapType is EXACT_OUT, it returns the amount of input token ≈ amount of user to pay
 // Returns amountIn, amountOut
+// ref: https://docs.gnoswap.io/contracts/router/router.gno#swaproute
 func SwapRoute(
 	inputToken string,
 	outputToken string,

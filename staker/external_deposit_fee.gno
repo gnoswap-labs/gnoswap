@@ -41,6 +41,9 @@ func SetDepositGnsAmountByAdmin(amount uint64) {
 	)
 }
 
+// SetDepositGnsAmount modifies the deposit gns amount
+// Only governance contract can execute this function via proposal
+// ref: https://docs.gnoswap.io/contracts/staker/external_deposit_fee.gno
 func SetDepositGnsAmount(amount uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {

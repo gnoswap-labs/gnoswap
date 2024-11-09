@@ -488,7 +488,7 @@ func testSetUnstakingFeeNoPermission(t *testing.T) {
 
 		uassert.PanicsWithMessage(
 			t,
-			`[GNOSWAP-STAKER-001] no permission || reward_fee.gno__SetUnstakingFeeByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set unstaking fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
+			`[GNOSWAP-STAKER-001] caller has no permission || reward_fee.gno__SetUnstakingFeeByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set unstaking fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
 			func() {
 				SetUnstakingFeeByAdmin(2)
 			},

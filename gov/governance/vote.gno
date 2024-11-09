@@ -27,6 +27,7 @@ var (
 
 // Vote allows a user to vote on a given proposal.
 // The user's voting weight is determined by their accumulated delegated stake until proposal creation time.
+// ref: https://docs.gnoswap.io/contracts/governance/vote.gno#vote
 func Vote(proposalId uint64, yes bool) string {
 	common.IsHalted()
 
@@ -134,6 +135,7 @@ func Vote(proposalId uint64, yes bool) string {
 
 // Cancel cancels the proposal with the given ID.
 // Only callable by the proposer or if the proposer's stake has fallen below the threshold others can call.
+// ref: https://docs.gnoswap.io/contracts/governance/vote.gno#cancel
 func Cancel(proposalId uint64) {
 	common.IsHalted()
 

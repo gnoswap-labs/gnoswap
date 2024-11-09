@@ -13,7 +13,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 	t.Run("panic if not admin", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			"[GNOSWAP-EMISSION-001] no permission || emission.gno__ChangeDistributionPctByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can change distribution percentages, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm",
+			`[GNOSWAP-EMISSION-001] caller has no permission || emission.gno__ChangeDistributionPctByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can change distribution percentages, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
 			func() {
 				ChangeDistributionPctByAdmin(0, 0, 0, 0, 0, 0, 0, 0)
 			},
@@ -63,7 +63,7 @@ func TestChangeDistributionPct(t *testing.T) {
 	t.Run("panic if not governance", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			"[GNOSWAP-EMISSION-001] no permission || emission.gno__ChangeDistributionPct() || only governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can change distribution percentages, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm",
+			`[GNOSWAP-EMISSION-001] caller has no permission || emission.gno__ChangeDistributionPct() || only governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can change distribution percentages, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
 			func() {
 				ChangeDistributionPct(1, 0, 2, 0, 3, 0, 4, 0)
 			},

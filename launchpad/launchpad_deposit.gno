@@ -35,6 +35,7 @@ var (
 // gns will be locked in `launchpad` contract
 // xgns will be minted to the `launchpad` contract
 // Returns depositId
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#depositgns
 func DepositGns(
 	targetProjectTierId string,
 	amount uint64,
@@ -206,6 +207,7 @@ func DepositGns(
 // gns will be transfered from the `launchpad` to caller
 // launchpad's xgns will be burned.
 // Returns collected gns amount
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#collectdepositgns
 func CollectDepositGns() uint64 {
 	common.IsHalted()
 	en.MintAndDistributeGns()
@@ -283,6 +285,7 @@ func CollectDepositGns() uint64 {
 // gns will be transfered from the `launchpad` to caller
 // launchpad's xgns will be burned
 // Returns collected gns amount
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#collectdepositgnsbyprojectid
 func CollectDepositGnsByProjectId(projectId string) uint64 {
 	_, exist := projects[projectId]
 	if !exist {
@@ -373,6 +376,7 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 // gns will be transfered from the `launchpad` to caller
 // launchpad's xgns will be burned
 // Returns collected gns amount
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_deposit.gno#collectdepositgnsbydepositid
 func CollectDepositGnsByDepositId(depositId string) uint64 {
 	deposit, exist := deposits[depositId]
 	if !exist {
