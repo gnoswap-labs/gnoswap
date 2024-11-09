@@ -44,6 +44,12 @@ func testInit(t *testing.T) {
 		tier:           2,
 		startTimestamp: time.Now().Unix(),
 	}
+
+	// override warm-up period for testing
+	warmUp[100] = 901 // 30m ~
+	warmUp[70] = 301  // 10m ~ 30m
+	warmUp[50] = 151  // 5m ~ 10m
+	warmUp[30] = 1    // ~ 5m
 }
 
 func testCreatePool(t *testing.T) {

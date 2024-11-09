@@ -38,7 +38,7 @@ func TestCreateFooBarPool(t *testing.T) {
 	t.Run("wrong pool path", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			`[GNOSWAP-POOL-012] token sort order || pool_manager.gno__CreatePool() || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)`,
+			`[GNOSWAP-POOL-012] tokens must be in lexicographical order || pool_manager.gno__CreatePool() || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)`,
 			func() {
 				CreatePool(fooPath, barPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 			},

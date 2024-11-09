@@ -7,11 +7,11 @@ import (
 )
 
 var (
-	errNoPermission      = errors.New("[GNOSWAP-PROTOCOL_FEE-001] no permission")
-	errNotRegistered     = errors.New("[GNOSWAP-PROTOCOL_FEE-002] not registered")
-	errAlreadyRegistered = errors.New("[GNOSWAP-PROTOCOL_FEE-003] already registered")
+	errNoPermission      = errors.New("[GNOSWAP-PROTOCOL_FEE-001] caller has no permission")
+	errNotRegistered     = errors.New("[GNOSWAP-PROTOCOL_FEE-002] not registered token")
+	errAlreadyRegistered = errors.New("[GNOSWAP-PROTOCOL_FEE-003] already registered token")
 	errLocked            = errors.New("[GNOSWAP-PROTOCOL_FEE-004] can't transfer token while locked")
-	errInvalidInput      = errors.New("[GNOSWAP-PROTOCOL_FEE-005] invalid input")
+	errInvalidInput      = errors.New("[GNOSWAP-PROTOCOL_FEE-005] invalid input data")
 	errInvalidPct        = errors.New("[GNOSWAP-PROTOCOL_FEE-006] invalid percentage")
 )
 

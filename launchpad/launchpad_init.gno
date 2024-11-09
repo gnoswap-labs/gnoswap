@@ -35,6 +35,7 @@ func init() {
 // CreateProject creates a new project.
 // Only admin can create project.
 // Returns projectId
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_init.gno#createproject
 func CreateProject(
 	name string,
 	tokenPath string,
@@ -235,6 +236,7 @@ func CreateProject(
 // TransferLeftFromProjectByAdmin transfers left reward token amount from project to recipient.
 // Only admin can transfer left reward token amount.
 // Returns (left)transferred amount.
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_init.gno#transferleftfromprojectbyadmin
 func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uint64 {
 	assertUserCall()
 	caller := std.PrevRealm().Addr()

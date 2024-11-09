@@ -450,7 +450,7 @@ func TestTickUpdate_5(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-009] liquidity calculation || tick.gno__tickUpdate() || liquidityGrossAfter(4) overflows maxLiquidity(3)`,
+		`[GNOSWAP-POOL-009] invalid liquidity calculated || tick.gno__tickUpdate() || liquidityGrossAfter(4) overflows maxLiquidity(3)`,
 		func() {
 			pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 		},
@@ -519,7 +519,7 @@ func TestTickUpdate_7(t *testing.T) {
 	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-009] liquidity calculation || tick.gno__tickUpdate() || liquidityGrossAfter(1917569901783203986719870431555992) overflows maxLiquidity(1917569901783203986719870431555990)`,
+		`[GNOSWAP-POOL-009] invalid liquidity calculated || tick.gno__tickUpdate() || liquidityGrossAfter(1917569901783203986719870431555992) overflows maxLiquidity(1917569901783203986719870431555990)`,
 		func() {
 			pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
 		},

@@ -8,7 +8,7 @@ import (
 	"gno.land/r/gnoswap/v2/consts"
 )
 
-const BLOCK_PER_DAY = 86400 // based on block time 1s
+var BLOCK_PER_DAY = consts.TIMESTAMP_DAY / consts.BLOCK_GENERATION_INTERVAL
 
 var (
 	lastCleanedHeight uint64 = 0
@@ -50,14 +50,14 @@ func cleanDelegationStatHistory() {
 	height := uint64(std.GetHeight())
 	sinceLast := height - lastCleanedHeight
 
-	if sinceLast < BLOCK_PER_DAY {
+	if sinceLast < uint64(BLOCK_PER_DAY) {
 		return
 	}
 
 	lastCleanedHeight = height
 
 	// delete history older than 1 day, but keep the latest one
-	keepFrom := height - BLOCK_PER_DAY
+	keepFrom := height - uint64(BLOCK_PER_DAY)
 	for to, history := range delegationStatHistory {
 		// reverse history
 		for i := len(history) - 1; i >= 0; i-- {

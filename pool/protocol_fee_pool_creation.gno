@@ -16,6 +16,7 @@ var (
 )
 
 // GetPoolCreationFee returns the poolCreationFee
+// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#getpoolcreationfee
 func GetPoolCreationFee() uint64 {
 	return poolCreationFee
 }
@@ -47,6 +48,7 @@ func SetPoolCreationFeeByAdmin(fee uint64) {
 
 // SetPoolCreationFee sets the poolCreationFee.
 // Only governance contract can execute this function via proposal
+// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#setpoolcreationfee
 func SetPoolCreationFee(fee uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {

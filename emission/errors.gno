@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	errNoPermission          = errors.New("[GNOSWAP-EMISSION-001] no permission")
+	errNoPermission          = errors.New("[GNOSWAP-EMISSION-001] caller has no permission")
 	errInvalidEmissionTarget = errors.New("[GNOSWAP-EMISSION-002] invalid emission target")
 	errInvalidEmissionPct    = errors.New("[GNOSWAP-EMISSION-003] invalid emission percentage")
 )

@@ -24,6 +24,7 @@ var (
 // ProposeText creates a new text proposal with the given data
 // It checks if the proposer is eligible to create a proposal and if they don't have an active proposal.
 // Returns the proposal ID
+// ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposetext
 func ProposeText(
 	title string,
 	description string,
@@ -84,6 +85,7 @@ func ProposeText(
 // ProposeCommunityPoolSpend creates a new community pool spend proposal with the given data
 // It checks if the proposer is eligible to create a proposal and if they don't have an active proposal.
 // Returns the proposal ID
+// ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposecommunitypoolspend
 func ProposeCommunityPoolSpend(
 	title string,
 	description string,
@@ -155,6 +157,7 @@ func ProposeCommunityPoolSpend(
 // ProposeParameterChange creates a new parameter change with the given data
 // It checks if the proposer is eligible to create a proposal and if they don't have an active proposal.
 // Returns the proposal ID
+// ref: https://docs.gnoswap.io/contracts/governance/proposal.gno#proposeparameterchange
 func ProposeParameterChange(
 	title string,
 	description string,
