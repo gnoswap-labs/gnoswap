@@ -50,7 +50,7 @@ func TestMintBazQux(t *testing.T) {
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	// admin mints => will get tid 1 nft
+	// admin mints => will get tid 3 nft
 	Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, admin, admin)
 }
 

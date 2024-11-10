@@ -80,7 +80,7 @@ func testMintPosition01InRange(t *testing.T) {
 
 		position := positions[tokenId]
 		uassert.Equal(t, position.nonce.ToString(), "0")
-		uassert.Equal(t, position.operator, admin)
+		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 		uassert.Equal(t, position.tickLower, int32(8000))
 		uassert.Equal(t, position.tickUpper, int32(12000))
@@ -120,7 +120,7 @@ func testSwap(t *testing.T) {
 
 		position := positions[uint64(1)]
 		uassert.Equal(t, position.nonce.ToString(), "0")
-		uassert.Equal(t, position.operator, admin)
+		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 		uassert.Equal(t, position.tickLower, int32(8000))
 		uassert.Equal(t, position.tickUpper, int32(12000))
@@ -177,7 +177,7 @@ func testDecreaseLiquidityInPosition(t *testing.T) {
 
 		position := positions[lpTokenId]
 		uassert.Equal(t, position.nonce.ToString(), "0")
-		uassert.Equal(t, position.operator, admin)
+		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 		uassert.Equal(t, position.tickLower, int32(8000))
 		uassert.Equal(t, position.tickUpper, int32(12000))
@@ -203,7 +203,7 @@ func testReposition(t *testing.T) {
 		// check current state
 		position := positions[lpTokenId]
 		uassert.Equal(t, position.nonce.ToString(), "0")
-		uassert.Equal(t, position.operator, admin)
+		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 		uassert.Equal(t, position.tickLower, int32(8000))
 		uassert.Equal(t, position.tickUpper, int32(12000))
@@ -239,7 +239,7 @@ func testReposition(t *testing.T) {
 
 		position = positions[lpTokenId]
 		uassert.Equal(t, position.nonce.ToString(), "0")
-		uassert.Equal(t, position.operator, admin)
+		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
 		uassert.Equal(t, position.tickLower, int32(-1000))
 		uassert.Equal(t, position.tickUpper, int32(1000))
