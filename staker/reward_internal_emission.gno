@@ -81,6 +81,49 @@ func (r *InternalEmissionReward) HasPoolWithoutStaker(poolPath string) bool {
 	return poolLiquidity.totalLiquidity.IsZero()
 }
 
+func (r *InternalEmissionReward) CalculateRewardForEachTier(rewardAmountForDistribution uint64) uint64 {
+	rewardPoolMap := r.GetRewardPoolsMap()
+	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(rewardAmountForDistribution)
+	rewardPoolMap.SetRewardAmountForTier(TIER1_INDEX, tier1Amount)
+	rewardPoolMap.SetRewardAmountForTier(TIER2_INDEX, tier2Amount)
+	rewardPoolMap.SetRewardAmountForTier(TIER3_INDEX, tier3Amount)
+	r.SetRewardPoolsMap(rewardPoolMap)
+	return tier1Amount + tier2Amount + tier3Amount
+}
+
+func (r *InternalEmissionReward) CalculateRewardForTierEachPool(leftAmountForTier1 uint64, leftAmountForTier2 uint64, leftAmountForTier3 uint64) {
+	var eachTier1Amount, eachTier2Amount, eachTier3Amount uint64
+	rewardPoolMap := r.GetRewardPoolsMap()
+	tier1Amount := rewardPoolMap.GetRewardAmountForTier(TIER1_INDEX)
+	tier2Amount := rewardPoolMap.GetRewardAmountForTier(TIER2_INDEX)
+	tier3Amount := rewardPoolMap.GetRewardAmountForTier(TIER3_INDEX)
+
+	totalRewardForTier1 := tier1Amount + leftAmountForTier1
+	totalRewardForTier2 := tier2Amount + leftAmountForTier2
+	totalRewardForTier3 := tier3Amount + leftAmountForTier3
+
+	rewardPoolMap.SetRewardAmountForTier(TIER1_INDEX, totalRewardForTier1)
+	rewardPoolMap.SetRewardAmountForTier(TIER2_INDEX, totalRewardForTier2)
+	rewardPoolMap.SetRewardAmountForTier(TIER3_INDEX, totalRewardForTier3)
+
+	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
+
+	if tier1Num > 0 {
+		eachTier1Amount = totalRewardForTier1 / tier1Num
+		rewardPoolMap.SetRewardAmountForTierEachPool(TIER1_INDEX, eachTier1Amount)
+	}
+	if tier2Num > 0 {
+		eachTier2Amount = totalRewardForTier2 / tier2Num
+		rewardPoolMap.SetRewardAmountForTierEachPool(TIER2_INDEX, eachTier2Amount)
+	}
+	if tier3Num > 0 {
+		eachTier3Amount = totalRewardForTier3 / tier3Num
+		rewardPoolMap.SetRewardAmountForTierEachPool(TIER3_INDEX, eachTier3Amount)
+	}
+
+	r.SetRewardPoolsMap(rewardPoolMap)
+}
+
 // CalculateRewardEachTiers calculates reward amount for each tiers
 // TODO:
 // 1. 지난번 Tier별 남은 수량을 Tier별 계산하는 함수에 input parameter로 추가
@@ -91,6 +134,8 @@ func (r *InternalEmissionReward) CalculateRewardEachTiers(leftAmountForTier1 uin
 	rewardPoolMap := r.GetRewardPoolsMap()
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(rewardAmountForDistribution)
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
+	// TODO:
+	// leftAmountByTierDistribution = rewardAmountForDistribution -(tier1Amount + tier2Amount + tier3Amount)
 
 	rewardPoolMap.SetRewardAmountForTier(TIER1_INDEX, tier1Amount+leftAmountForTier1)
 	rewardPoolMap.SetRewardAmountForTier(TIER2_INDEX, tier2Amount+leftAmountForTier2)
@@ -152,7 +197,8 @@ func (r *InternalEmissionReward) DistributeRewardToEachPools(prevAddr string, pr
 			// 1. panic should be removed
 			panic(ufmt.Sprintf("[STAKER] reward_internal_emission.gno__DistributeRewardToEachPools() || invalid tier(%d)", rewardPool.tier))
 		}
-		poolMap.SetPoolRewardAmount(poolPath, poolAmount)
+		rewardPool.SetRewardAmount(poolAmount)
+		poolMap.SetRewardPool(poolPath, rewardPool)
 		// TODO:
 		// after refactoring is complete, should be removed
 		poolGns[poolPath] += poolAmount
@@ -240,8 +286,6 @@ func (r *InternalEmissionReward) distributeRewardToStakers(poolPath string, pool
 		positionLastGns[tokenId] = positionGns[tokenId]
 		positionGns[tokenId] += positionRewardAmount
 		poolLastTmpGns[poolPath] += positionRewardAmount
-
-		distributedAmount += positionRewardAmount
 	}
 
 	recipientsMap.SetPoolLiquidity(poolPath, poolLiquidity)
@@ -250,10 +294,9 @@ func (r *InternalEmissionReward) distributeRewardToStakers(poolPath string, pool
 	return distributedAmount
 }
 
-func (r *InternalEmissionReward) DistributeRewardToStakers() uint64 {
+func (r *InternalEmissionReward) DistributeRewardToStakers() {
 	poolMap := r.GetRewardPoolsMap()
 	pools := poolMap.GetRewardPools()
-	accuDistributedAmount := uint64(0) // accumulated distributed amount for each pool
 
 	for poolPath, rewardPool := range pools {
 		poolRewardAmount := rewardPool.GetRewardAmount()
@@ -263,14 +306,11 @@ func (r *InternalEmissionReward) DistributeRewardToStakers() uint64 {
 		// update left amount and distributed amount
 		poolLeftAmount := poolRewardAmount - distributedAmount
 		rewardPool.SetLeftAmount(poolLeftAmount)
+		poolMap.SetRewardPool(poolPath, rewardPool)
+
 		// TODO:
 		// after refactor is completed, should be removed
 		poolLastTmpGns[poolPath] = poolLeftAmount
-
-		poolMap.SetRewardPool(poolPath, rewardPool)
-		accuDistributedAmount += poolRewardAmount
 	}
 	r.SetRewardPoolsMap(poolMap)
-
-	return accuDistributedAmount
 }

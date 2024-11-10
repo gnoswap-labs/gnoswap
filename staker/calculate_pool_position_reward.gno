@@ -126,17 +126,12 @@ func CalcPoolPositionRefactor(distributableAmount uint64) bool {
 	if !isAbleToCalculateEmissionReward(prevHeight, currentHeight) || distributableAmount == 0 {
 		return false
 	}
-
 	prevAddr, prevPkgPath := getPrev()
 	// --- Internal Reward ---
 	rewardManager := getRewardManager()
-	internalEmissionReward := rewardManager.GetInternalEmissionReward() // TODO: GetInternalEmissionReward
-	// 지급할 양 계산
-	// TODO:
-	// 1. Last에 남은 리워드는 반드시 적재해둘것
-	internalRewardAmount := distributableAmount + getLastLeftInternalReward()
-	internalEmissionReward.SetRewardTotalAmount(internalRewardAmount)
-	// 지급 대상 계산
+	internalEmissionReward := rewardManager.GetInternalEmissionReward()
+
+	// Generate Reward Recipients
 	rewardRecipients := NewRewardRecipientMap()
 	depositList := getDeposits()
 	rewardRecipients.GenerateRewardRecipients(depositList)
@@ -148,12 +143,23 @@ func CalcPoolPositionRefactor(distributableAmount uint64) bool {
 	// Select Internal Reward Pools
 	poolList := getPoolTiers()
 	internalEmissionReward.SelectRewardPools(poolList)
-	// Calculate Internal Reward for each Tiers
-	internalEmissionReward.CalculateRewardEachTiers(
+
+	// Calculate Internal Reward for each Tier
+	prevLeftInternalRewardAmount := getLastLeftInternalReward()
+	internalRewardAmount := distributableAmount + prevLeftInternalRewardAmount
+	internalEmissionReward.SetRewardTotalAmount(internalRewardAmount)
+	setLastLeftInternalReward(0) // reset
+
+	distributedAmountForTier := internalEmissionReward.CalculateRewardForEachTier(internalRewardAmount)
+	leftAmountForTier := internalRewardAmount - distributedAmountForTier
+	internalEmissionReward.SetLeftAmount(leftAmountForTier)
+	setLastLeftInternalReward(leftAmountForTier)
+
+	// Calculate Each Tier Reward for Each Pool
+	internalEmissionReward.CalculateRewardForTierEachPool(
 		getLastLeftInternalRewardForTier(TIER1_INDEX),
 		getLastLeftInternalRewardForTier(TIER2_INDEX),
-		getLastLeftInternalRewardForTier(TIER3_INDEX),
-	)
+		getLastLeftInternalRewardForTier(TIER3_INDEX))
 	// Distribute Internal Reward to Pools
 	distributedTier1, distributedTier2, distributedTier3 :=
 		internalEmissionReward.DistributeRewardToEachPools(prevAddr, prevPkgPath)
@@ -173,16 +179,7 @@ func CalcPoolPositionRefactor(distributableAmount uint64) bool {
 	internalEmissionReward.SetRewardPoolsMap(rewardPoolMap)
 
 	// Distribute Internal Reward to Staker (Warm-up)
-	distributedAmountToStaker := internalEmissionReward.DistributeRewardToStakers()
-	// Check Left Reward
-	if internalEmissionReward.GetRewardTotalAmount() != distributedAmountToStaker {
-		totalDistributableAmount := internalEmissionReward.GetRewardTotalAmount()
-		leftAmountAfterDistribution := totalDistributableAmount - distributableAmount
-		// TODO:
-		// 1. Last에 남은 리워드는 반드시 적재해둘것
-		internalEmissionReward.SetLeftAmount(leftAmountAfterDistribution)
-		setLastLeftInternalReward(leftAmountAfterDistribution)
-	}
+	internalEmissionReward.DistributeRewardToStakers()
 	// Internal Reward update
 	rewardManager.SetInternalEmissionReward(internalEmissionReward)
 
