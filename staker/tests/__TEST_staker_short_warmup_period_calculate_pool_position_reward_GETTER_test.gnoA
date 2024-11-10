@@ -496,8 +496,7 @@ func testGetPositionsExternalWarmUpAmount(t *testing.T) {
 
 		en.MintAndDistributeGns()
 		if consts.EMISSION_REFACTORED {
-			toStaker := en.GetLastDistributeToStaker()
-			CalcPoolPositionRefactor(toStaker)
+			CalcPoolPositionRefactor()
 		} else {
 			CalcPoolPosition()
 		}

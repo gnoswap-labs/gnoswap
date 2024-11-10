@@ -87,8 +87,7 @@ func GetPrintExternalInfo() string {
 	// TODO: LIMIT ONLY ABCI_QUERY CAN CALL THIS
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}

@@ -51,8 +51,7 @@ func SwapRoute(
 
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		sr.CalcPoolPositionRefactor(toStaker)
+		sr.CalcPoolPositionRefactor()
 	} else {
 		sr.CalcPoolPosition()
 	}

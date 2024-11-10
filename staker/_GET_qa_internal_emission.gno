@@ -109,8 +109,7 @@ type ApiEmissionDebugPosition struct {
 func GetPrintInfo() string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}

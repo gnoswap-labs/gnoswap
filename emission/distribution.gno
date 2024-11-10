@@ -233,12 +233,6 @@ func checkSumDistributionPct(pct01, pct02, pct03, pct04 uint64) {
 	}
 }
 
-// TODO:
-// 1. remove unused functions
-// func GetLastDistributedAmount() (int64, uint64, uint64, uint64, uint64, uint64, uint64) {
-//	return lastExecutedHeight, lastStakerGnsBalance, emissionGnsBalance, toStaker, toDevOps, toCommunityPool, toGovStaker
-// }
-
 func GetAccuDistributedAmount() (uint64, uint64, uint64, uint64) {
 	return toStakerAccu, toDevOpsAccu, toCommunityPoolAccu, toGovStakerAccu
 }
@@ -283,8 +277,24 @@ func ClearAccuDistributedAmountForGovStaker() {
 	toGovStakerAccu = 0
 }
 
-func GetLastDistributeToStaker() uint64 {
-	return toStaker
+func GetAccuDistributedAmountForStaker() uint64 {
+	return toStakerAccu
+}
+
+func ClearAccuDistributedAmountForStaker() {
+	common.IsHalted()
+
+	prevAddr := std.PrevRealm().Addr()
+	if prevAddr != consts.STAKER_ADDR {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("only staker(%s) can clear accumulated distributed amount, called from %s",
+				consts.STAKER_ADDR, prevAddr.String(),
+			),
+		))
+	}
+
+	toStakerAccu = 0
 }
 
 func GetLastDistributedGNSAmount() (uint64, uint64, uint64, uint64) {

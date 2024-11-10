@@ -67,8 +67,7 @@ type ResponseApiGetStakes struct {
 func ApiGetRewards() string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -180,8 +179,7 @@ func ApiGetRewards() string {
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -295,8 +293,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 func ApiGetRewardsByAddress(targetAddress string) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -407,8 +404,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 func ApiGetStakes() string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -471,8 +467,7 @@ func ApiGetStakes() string {
 func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -540,8 +535,7 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 func ApiGetStakesByAddress(targetAddress string) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}

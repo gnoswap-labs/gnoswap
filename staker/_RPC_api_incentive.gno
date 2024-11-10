@@ -46,8 +46,7 @@ type ApiInternalIncentive struct {
 func ApiGetRewardTokens() string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -114,8 +113,7 @@ func ApiGetRewardTokens() string {
 func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -179,8 +177,7 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 func ApiGetExternalIncentives() string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -251,8 +248,7 @@ func ApiGetExternalIncentives() string {
 func ApiGetExternalIncentiveById(incentiveId string) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -329,8 +325,7 @@ func ApiGetExternalIncentiveById(incentiveId string) string {
 func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -405,8 +400,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -481,8 +475,7 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 func ApiGetInternalIncentives() string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -535,8 +528,7 @@ func ApiGetInternalIncentives() string {
 func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -593,8 +585,7 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}

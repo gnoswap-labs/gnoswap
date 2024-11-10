@@ -146,8 +146,7 @@ func testBeforeActive(t *testing.T) {
 	t.Run("before active", func(t *testing.T) {
 		en.MintAndDistributeGns()
 		if consts.EMISSION_REFACTORED {
-			toStaker := en.GetLastDistributeToStaker()
-			CalcPoolPositionRefactor(toStaker)
+			CalcPoolPositionRefactor()
 		} else {
 			CalcPoolPosition()
 		}
@@ -165,8 +164,7 @@ func testAfterActive(t *testing.T) {
 
 		en.MintAndDistributeGns()
 		if consts.EMISSION_REFACTORED {
-			toStaker := en.GetLastDistributeToStaker()
-			CalcPoolPositionRefactor(toStaker)
+			CalcPoolPositionRefactor()
 		} else {
 			CalcPoolPosition()
 		}
@@ -180,8 +178,7 @@ func testDuratino200(t *testing.T) {
 		std.TestSkipHeights(199) // skip 1 + 199 = 200 more block
 		en.MintAndDistributeGns()
 		if consts.EMISSION_REFACTORED {
-			toStaker := en.GetLastDistributeToStaker()
-			CalcPoolPositionRefactor(toStaker)
+			CalcPoolPositionRefactor()
 		} else {
 			CalcPoolPosition()
 		}

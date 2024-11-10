@@ -25,8 +25,7 @@ import (
 func StakerPoolIncentives(poolPath string) []string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -55,8 +54,7 @@ func StakerPoolIncentives(poolPath string) []string {
 func StakerIncentiveTargetPoolPath(incentiveId string) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -85,8 +83,7 @@ func StakerIncentiveTargetPoolPath(incentiveId string) string {
 func StakerIncentiveRewardToken(incentiveId string) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -115,8 +112,7 @@ func StakerIncentiveRewardToken(incentiveId string) string {
 func StakerIncentiveRewardAmount(incentiveId string) *u256.Uint {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -145,8 +141,7 @@ func StakerIncentiveRewardAmount(incentiveId string) *u256.Uint {
 func StakerIncentiveRewardAmountStr(incentiveId string) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -175,8 +170,7 @@ func StakerIncentiveRewardAmountStr(incentiveId string) string {
 func StakerIncentiveStartTimestamp(incentiveId string) int64 {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -205,8 +199,7 @@ func StakerIncentiveStartTimestamp(incentiveId string) int64 {
 func StakerIncentiveEndTimestamp(incentiveId string) int64 {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -235,8 +228,7 @@ func StakerIncentiveEndTimestamp(incentiveId string) int64 {
 func StakerIncentiveRefundee(incentiveId string) std.Address {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -265,8 +257,7 @@ func StakerIncentiveRefundee(incentiveId string) std.Address {
 func StakerDepositOwner(lpTokenId uint64) std.Address {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -295,8 +286,7 @@ func StakerDepositOwner(lpTokenId uint64) std.Address {
 func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -325,8 +315,7 @@ func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
 func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -355,8 +344,7 @@ func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
 func StakerDepositTargetPoolPath(lpTokenId uint64) string {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}

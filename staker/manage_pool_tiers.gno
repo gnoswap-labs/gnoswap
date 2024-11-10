@@ -179,8 +179,7 @@ func setPoolTier(pool string, tier uint64) {
 	// 1. If pool does not exist, CalcPoolPosition() will be panic.
 	// so, this function always can run while already pool exist.
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -278,8 +277,7 @@ func changePoolTier(pool string, tier uint64) {
 	// from next calculation, it will be based on new tier
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}
@@ -371,8 +369,7 @@ func removePoolTier(pool string) {
 	// because we remove pool from poolTiers, this should be final calculation
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
-		toStaker := en.GetLastDistributeToStaker()
-		CalcPoolPositionRefactor(toStaker)
+		CalcPoolPositionRefactor()
 	} else {
 		CalcPoolPosition()
 	}

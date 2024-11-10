@@ -427,8 +427,7 @@ func testApiGetRewards(t *testing.T) {
 		std.TestSkipHeights(1000)
 		en.MintAndDistributeGns()
 		if consts.EMISSION_REFACTORED {
-			toStaker := en.GetLastDistributeToStaker()
-			CalcPoolPositionRefactor(toStaker)
+			CalcPoolPositionRefactor()
 		} else {
 			CalcPoolPosition()
 		}

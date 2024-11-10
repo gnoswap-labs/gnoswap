@@ -12,6 +12,7 @@ import (
 	pn "gno.land/r/gnoswap/v2/position"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	en "gno.land/r/gnoswap/v2/emission"
 )
 
 // poolPath -> gnsAmount [accu]
@@ -119,7 +120,9 @@ func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 // It uses the current block height and its timestamp to determine the calculation period.
 // TODO: only use block height to calculate reward and distribute them
 // Returns true if the calculation is successful, false otherwise.
-func CalcPoolPositionRefactor(distributableAmount uint64) bool {
+func CalcPoolPositionRefactor() bool {
+	distributableAmount := en.GetAccuDistributedAmountForStaker()
+	en.ClearAccuDistributedAmountForStaker()
 	println("distributableAmount : ", distributableAmount)
 	currentHeight := std.GetHeight()
 	prevHeight := getLastCalculatedHeight()
