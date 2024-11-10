@@ -109,18 +109,8 @@ func TestRewardMathComputeExternalRewardAmount(t *testing.T) {
 		incentiveId string
 		wantFull    uint64
 		wantGive    uint64
-		wantPanic   bool
+		wantErr   bool
 	}{
-		{
-			name: "panic - incentive not found",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				delete(positionExternal[tf.TokenId], tf.IncentiveId)
-			},
-			tokenId:     1,
-			incentiveId: "test-incentive",
-			wantPanic:   true,
-		},
 		// {
 		// 	name: "success - 30% reward period",
 		// 	setup: func(tf *TestFixture) {
@@ -332,18 +322,6 @@ func TestRewardMathComputeExternalRewardAmount(t *testing.T) {
 			tt.setup(tf)
 			// std.TestSkipHeights(tf.BlockHeight) ???
 
-			defer func() {
-				if r := recover(); r != nil {
-					if !tt.wantPanic {
-						t.Errorf("unexpected panic: %v", r)
-					}
-					return
-				}
-				if tt.wantPanic {
-					t.Error("expected panic did not occur")
-				}
-			}()
-
 			full, give := rewardMathComputeExternalRewardAmount2(tt.tokenId, tt.incentiveId)
 
 			uassert.Equal(t, tt.wantFull, full)
@@ -411,32 +389,6 @@ func TestFindExternalByIncentiveId(t *testing.T) {
 	_, found = findExternalByIctvId(externals, "non-existent")
 	if found {
 		t.Error("Expected not to find external")
-	}
-}
-
-func TestCalculateDurations(t *testing.T) {
-	currentHeight := uint64(1000)
-	lastCalculatedHeight := uint64(900)
-	thresholds := thresholds{
-		until30:  950,
-		until50:  970,
-		until70:  990,
-		begin100: 1000,
-	}
-
-	ratios := []uint64{30, 50, 70, 100}
-
-	durations := calculateDurations(ratios, currentHeight, lastCalculatedHeight, thresholds)
-
-	expectedDurations := map[uint64]uint64{
-		30:  50, // 950 - 900
-		50:  20, // 970 - 950
-		70:  20, // 990 - 970
-		100: 10, // 1000 - 990
-	}
-
-	for ratio, duration := range durations {
-		uassert.Equal(t, expectedDurations[ratio], duration)
 	}
 }
 

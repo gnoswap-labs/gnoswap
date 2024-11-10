@@ -6,6 +6,8 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v2/consts"
+
+	"gno.land/p/demo/ufmt"
 )
 
 const (
@@ -15,38 +17,21 @@ const (
 	RATIO_100 = 100
 )
 
-// rewardMathComputeExternalRewardAmount2 calculates the total and payble rewards for a given
-// tokenId and incentiveID.
-func rewardMathComputeExternalRewardAmount2(tokenId uint64, ictvId string) (uint64, uint64) {
-	currentHeight := std.GetHeight()
-	_currentHeightU64 := uint64(currentHeight)
-
-	// retrieve the external rewards associated with
-	// the given token ID.
-	externals, exists := validateAndGetExternals(tokenId)
-	if !exists {
-		return 0, 0
-	}
-
-	// calculate the start info of staking based on the latest timestamp
-	// TODO: must use block height instead of timestamp
-	stakedStartInfo := calculateStakedStartInfo(tokenId, ictvId, currentHeight)
-	// determine the thresholds for different reward ratios.
-	thresholds := calculateThresholds(stakedStartInfo.startHeight)
-
-	external, found := findExternalByIctvId(externals, ictvId)
-	if !found {
-		panic("NO INCENTIVE_ID FOUND")
-	}
-
-	return calculateRewardsForExternal(
-		tokenId,
-		ictvId,
-		external,
-		_currentHeightU64,
-		stakedStartInfo,
-		thresholds,
-	)
+// RewardState encapsulates all necessary data for reward calculations.
+// This structure is designed to reduce global state dependencies and 
+// make the data flow more explicit. It contains all contextual information
+// needed to calculate rewards, allowing for more pure function implementations
+// and easier testing.
+type RewardState struct {
+	TokenId              uint64
+	CurrentHeight        uint64
+	LastCalculatedHeight uint64
+    IncentiveId          string
+	TokenAmountX96      *u256.Uint
+	LastExternalAmount  *u256.Uint
+	WarmUpAmount        warmUpAmount
+	ThresholdInfo       thresholds
+	StartInfo           stakedStartInfo
 }
 
 type stakedStartInfo struct {
@@ -61,13 +46,85 @@ type thresholds struct {
 	begin100 uint64
 }
 
+// RewardCalculation represents the intermediate results during the reward calculation process.
+// // It holds both the initial state and intermediate results to avoid global state mutations.
+type RewardCalculation struct {
+	BlockDuration    uint64
+    DurationRatio    uint64
+	DistributeAmount *u256.Uint
+	AvgBlockAmount   *u256.Uint
+    State            RewardState 
+	WarmUpResult     warmUpAmount
+}
+
+// rewardMathComputeExternalRewardAmount2 is the main entry point for reward calculations.
+// It follows a three-step process:
+//
+//  1. Initialize the reward state with all necessary data
+//  2. Perform the reward calculations through a pipeline of pure functions
+//  3. Update the global state with the results
+//
+// Returns (totalFull, totalGive) representing the total and distributable rewards.
+func rewardMathComputeExternalRewardAmount2(tokenId uint64, ictvId string) (uint64, uint64) {
+	state, err := initializeRewardState(tokenId, ictvId)
+	if err != nil {
+		panic(err)
+	}
+
+	result := calculateRewards(state)
+	updatePositionWarmUpAmount(result)
+
+	return result.WarmUpResult.totalFull(), result.WarmUpResult.totalGive()
+}
+
+// initializeRewardState gathers all necessary data to perform reward calculations.
+// This function is separated from the main calculation logic to:
+//
+//  1. Ensure all required data is available before starting calculations
+//  2. Handle initialization errors explicitly
+//  3. Reduce complexity in the calculation functions
+//
+// Returns an error if required data is missing or invalid.
+func initializeRewardState(tokenId uint64, ictvId string) (RewardState, error) {
+	externals, exists := validateAndGetExternals(tokenId)
+	if !exists {
+		return RewardState{}, ufmt.Errorf("no externals found for token %d", tokenId)
+	}
+
+	external, found := findExternalByIctvId(externals, ictvId)
+	if !found {
+		return RewardState{}, ufmt.Errorf("no incentive found for ID %s", ictvId)
+	}
+
+	// initialize all required state in one place to ensure consistency
+	currentHeight := std.GetHeight()
+	startInfo := calculateStakedStartInfo(tokenId, ictvId, currentHeight)
+	thresholds := calculateThresholds(startInfo.startHeight)
+
+	return RewardState{
+		TokenId:              tokenId,
+		IncentiveId:          ictvId,
+		CurrentHeight:        uint64(currentHeight),
+		LastCalculatedHeight: uint64(positionsExternalLastCalculatedHeight[tokenId][ictvId]),
+		TokenAmountX96:      external.tokenAmountX96,
+		LastExternalAmount:  positionLastExternal[tokenId][ictvId],
+		WarmUpAmount:        positionsExternalWarmUpAmount[tokenId][ictvId],
+		ThresholdInfo:       thresholds,
+		StartInfo:           startInfo,
+	}, nil
+}
+
 func validateAndGetExternals(tokenId uint64) (map[string]externalRewards, bool) {
 	externals, exist := positionExternal[tokenId]
 	return externals, exist
 }
 
+func findExternalByIctvId(externals map[string]externalRewards, ictvId string) (externalRewards, bool) {
+	external, exists := externals[ictvId]
+	return external, exists
+}
+
 func calculateStakedStartInfo(tokenId uint64, incentiveId string, currentHeight int64) stakedStartInfo {
-	// TODO: use block height
 	_max := max(incentives[incentiveId].startTimestamp, deposits[tokenId].stakeTimestamp)
 	stakedOrExternalDuration := (time.Now().Unix() - _max) / consts.BLOCK_GENERATION_INTERVAL
 	stakedOrExternalStartedHeight := currentHeight - stakedOrExternalDuration
@@ -78,7 +135,6 @@ func calculateStakedStartInfo(tokenId uint64, incentiveId string, currentHeight 
 	}
 }
 
-// calculateThresholds determines the block height thresholds for different reward ratios.
 func calculateThresholds(startHeight int64) thresholds {
 	baseHeight := uint64(startHeight)
 	return thresholds{
@@ -89,70 +145,74 @@ func calculateThresholds(startHeight int64) thresholds {
 	}
 }
 
-// findExternalByIctvId retrieves the external reward matching the given incentive ID.
-func findExternalByIctvId(externals map[string]externalRewards, ictvId string) (externalRewards, bool) {
-	external, exists := externals[ictvId]
-	return external, exists
+func calculateRewards(state RewardState) RewardCalculation {
+	return validateTokenAmount(state).
+		calculateDistribution().
+		calculateBlockDuration().
+		calculateAverageAmount().
+		calculateWarmUpAmount()
 }
 
-// calculateRewardsForExternal computes the total and payable rewards for the external incentive.
-func calculateRewardsForExternal(
-	tokenId uint64,
-	incentiveId string,
-	external externalRewards,
-	currentHeight uint64,
-	startInfo stakedStartInfo,
-	thresholds thresholds,
-) (uint64, uint64) {
-	// retrieve the last recoreded external reward amount
-	tokenAmountX96 := external.tokenAmountX96
-	lastExternalAmount := positionLastExternal[tokenId][incentiveId]
-	if tokenAmountX96.Lt(lastExternalAmount) {
+func validateTokenAmount(state RewardState) RewardCalculation {
+	if state.TokenAmountX96.Lt(state.LastExternalAmount) {
 		panic("THIS SHOULD NOT HAPPEN_EXTERNAL #1")
 	}
+	return RewardCalculation{State: state}
+}
 
-	// calculate the new amount to distribute since the last calculation.
-	toDistributeX96 := new(u256.Uint).Sub(tokenAmountX96, lastExternalAmount)
-	// get the last calculated block height for the external rewards.
-	lastCalculatedHeight := uint64(positionsExternalLastCalculatedHeight[tokenId][incentiveId])
+func (calc RewardCalculation) calculateDistribution() RewardCalculation {
+	calc.DistributeAmount = new(u256.Uint).Sub(
+		calc.State.TokenAmountX96,
+		calc.State.LastExternalAmount,
+	)
+	return calc
+}
 
-	// calculate the duration in blocks since the last calculation.
-	blockDuration := currentHeight - lastCalculatedHeight
-	if blockDuration == 0 {
-		return 0, 0
+func (calc RewardCalculation) calculateBlockDuration() RewardCalculation {
+	calc.BlockDuration = calc.State.CurrentHeight - calc.State.LastCalculatedHeight
+	return calc
+}
+
+func (calc RewardCalculation) calculateAverageAmount() RewardCalculation {
+	if calc.BlockDuration == 0 {
+		return calc
 	}
 
-	avgExternalBlockAmountX96 := new(u256.Uint).Div(toDistributeX96, u256.NewUint(blockDuration))
+	calc.AvgBlockAmount = new(u256.Uint).Div(
+		calc.DistributeAmount,
+		u256.NewUint(calc.BlockDuration),
+	)
+	return calc
+}
 
-	// retrieve the warm-up amounts; if not present, panic as it's an unexpected state.
-	positionExternalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
-	if !exist {
+// calculateWarmUpAmount determines the final warm-up amounts based on various ratios.
+func (calc RewardCalculation) calculateWarmUpAmount() RewardCalculation {
+	if calc.BlockDuration == 0 {
+		return calc
+	}
+
+	if _, exist := positionsExternalWarmUpAmount[calc.State.TokenId][calc.State.IncentiveId]; !exist {
 		panic("THIS SHOULD NOT HAPPEN_EXTERNAL #2")
 	}
 
-	// determine the reward ratio based on the staking duration.
-	// after that, compute the rewards according to the determined ratio.
-	durationRatio := getRewardRatio(startInfo.duration)
-	warmUpAmount := computeRewardsByRatio(
-		uint64(durationRatio),
-		currentHeight,
-		lastCalculatedHeight,
-		thresholds,
-		avgExternalBlockAmountX96,
-		positionExternalWarmUpAmount,
+	calc.DurationRatio = uint64(getRewardRatio(calc.State.StartInfo.duration))
+	calc.WarmUpResult = computeRewardsByRatio(
+		calc.DurationRatio,
+		calc.State.CurrentHeight,
+		calc.State.LastCalculatedHeight,
+		calc.State.ThresholdInfo,
+		calc.AvgBlockAmount,
+		calc.State.WarmUpAmount,
 	)
-
-	accFull := warmUpAmount.totalFull()
-	accGive := warmUpAmount.totalGive()
-
-	// update the warm-up amounr in the global state.
-	// WARNING: TOO MANY SIDE EFFECTS. NEED TO FIND A BETTER WAY.
-	positionsExternalWarmUpAmount[tokenId][incentiveId] = warmUpAmount
-
-	return accFull, accGive
+	return calc
 }
 
-// computeRewardsByRatio calculates the rewards based in the reward ratio.
+// computeRewardsByRatio calculates rewards based on different ratio thresholds.
+// The implementation uses a multi-step approach:
+//
+//  1. Determine applicable reward ratios based on staking duration
+//  2. Calculate durations for each ratio period
+//  3. Compute rewards for each period
 func computeRewardsByRatio(
 	durationRatio uint64,
 	currentHeight uint64,
@@ -161,76 +221,41 @@ func computeRewardsByRatio(
 	avgBlockAmountX96 *u256.Uint,
 	warmUpAmount warmUpAmount,
 ) warmUpAmount {
-	switch durationRatio {
-	case RATIO_100:
-		// include all prev ratios.
-		return computeRewardsForRatio(
-			[]uint64{RATIO_30, RATIO_50, RATIO_70, RATIO_100},
-			currentHeight,
-			lastCalculatedHeight,
-			thresholds,
-			avgBlockAmountX96,
-			warmUpAmount,
-		)
-	case RATIO_70:
-		// include up to 70% ratio.
-		return computeRewardsForRatio(
-			[]uint64{RATIO_30, RATIO_50, RATIO_70},
-			currentHeight,
-			lastCalculatedHeight,
-			thresholds,
-			avgBlockAmountX96,
-			warmUpAmount,
-		)
-	case RATIO_50:
-		// include up to 50% ratio.
-		return computeRewardsForRatio(
-			[]uint64{RATIO_30, RATIO_50},
-			currentHeight,
-			lastCalculatedHeight,
-			thresholds,
-			avgBlockAmountX96,
-			warmUpAmount,
-		)
-	case RATIO_30:
-		// only calculate for 30% ratio.
-		return computeRewardsForRatio(
-			[]uint64{RATIO_30},
-			currentHeight,
-			lastCalculatedHeight,
-			thresholds,
-			avgBlockAmountX96,
-			warmUpAmount,
-		)
-	default:
-		// unrecognized. no need to update warm-up amount.
-		return warmUpAmount
-	}
-}
+	ratios, count := getRatiosForDuration(durationRatio)
+	durations := calculateRewardDurations(ratios, currentHeight, lastCalculatedHeight, thresholds)
 
-// computeRewardForRatio calculates rewards for the given ratios.
-func computeRewardsForRatio(
-	ratios []uint64,
-	currentHeight uint64,
-	lastCalculatedHeight uint64,
-	thresholds thresholds,
-	avgBlockAmountX96 *u256.Uint,
-	warmUpAmount warmUpAmount,
-) warmUpAmount {
-	durations := calculateDurations(ratios, currentHeight, lastCalculatedHeight, thresholds)
-
-	for _, item := range durations.iter(ratios) {
-		if item.duration > 0 {
-			full, toGive := calcAmount(avgBlockAmountX96, item.duration, item.ratio)
-			warmUpAmount.add(item.ratio, full, toGive)
+    for i := uint8(0); i < count; i++ {
+		ratio := ratios[i]
+		if duration, exists := durations[ratio]; exists && duration > 0 {
+			full, toGive := calcAmount(avgBlockAmountX96, duration, ratio)
+			warmUpAmount.add(ratio, full, toGive)
 		}
 	}
+
 	return warmUpAmount
 }
 
-// calculateDurations computes the duration for each reward ratio based on thresholds.
-func calculateDurations(
-	ratios []uint64,
+// getRatiosForDuration returns fixed-size array of ratios and its length
+func getRatiosForDuration(ratio uint64) ([4]uint64, uint8) {
+	switch ratio {
+	case RATIO_100:
+		return [4]uint64{RATIO_30, RATIO_50, RATIO_70, RATIO_100}, 4
+	case RATIO_70:
+		return [4]uint64{RATIO_30, RATIO_50, RATIO_70, 0}, 3
+	case RATIO_50:
+		return [4]uint64{RATIO_30, RATIO_50, 0, 0}, 2
+	case RATIO_30:
+		return [4]uint64{RATIO_30, 0, 0, 0}, 1
+	default:
+		return [4]uint64{}, 0
+	}
+}
+
+type durationsMap map[uint64]uint64
+
+// calculateRewardDurations computes the duration for each reward ratio period.
+func calculateRewardDurations(
+	ratios [4]uint64,
 	currentHeight uint64,
 	lastCalculatedHeight uint64,
 	thresholds thresholds,
@@ -258,6 +283,15 @@ func calculateDurations(
 	return durations
 }
 
+func maxUint64(a, b uint64) uint64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// TODO: below functions move to warmUpAmount declaration
+
 // add updates the warmUpAmount with the calculated full and toGive amounts for a specific ratio.
 func (w *warmUpAmount) add(ratio, full, toGive uint64) {
 	switch ratio {
@@ -278,43 +312,14 @@ func (w *warmUpAmount) add(ratio, full, toGive uint64) {
 	}
 }
 
-func (w warmUpAmount) totalFull() uint64 {
+func (w *warmUpAmount) totalFull() uint64 {
 	return w.full30 + w.full50 + w.full70 + w.full100
 }
 
-func (w warmUpAmount) totalGive() uint64 {
+func (w *warmUpAmount) totalGive() uint64 {
 	return w.give30 + w.give50 + w.give70 + w.full100
 }
 
-type durationsMap map[uint64]uint64
-
-// iter returns a slice of key-value pairs sorted by the order of ratios provided.
-func (d durationsMap) iter(ratios []uint64) []struct {
-	ratio    uint64
-	duration uint64
-} {
-	var result []struct {
-		ratio    uint64
-		duration uint64
-	}
-	for _, ratio := range ratios {
-		duration, exists := d[ratio]
-		if exists {
-			result = append(result, struct {
-				ratio    uint64
-				duration uint64
-			}{
-				ratio:    ratio,
-				duration: duration,
-			})
-		}
-	}
-	return result
-}
-
-func maxUint64(a, b uint64) uint64 {
-	if a > b {
-		return a
-	}
-	return b
+func updatePositionWarmUpAmount(calc RewardCalculation) {
+	positionsExternalWarmUpAmount[calc.State.TokenId][calc.State.IncentiveId] = calc.WarmUpResult
 }
