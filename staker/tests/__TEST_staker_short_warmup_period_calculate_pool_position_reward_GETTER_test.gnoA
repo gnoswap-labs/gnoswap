@@ -495,7 +495,12 @@ func testGetPositionsExternalWarmUpAmount(t *testing.T) {
 		std.TestSkipHeights(1000)
 
 		en.MintAndDistributeGns()
-		CalcPoolPosition() // trigger this to update externalGns
+		if consts.EMISSION_REFACTORED {
+			toStaker := en.GetLastDistributeToStaker()
+			CalcPoolPositionRefactor(toStaker)
+		} else {
+			CalcPoolPosition()
+		}
 
 		res := GetPositionsExternalWarmUpAmount()
 		uassert.Equal(t, res, `[{"tokenId":"1","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMA==","full30":"4959","give30":"1487","left30":"3472","full50":"66","give50":"33","left50":"33","full70":"0","give70":"0","left70":"0","full100":"0"},{"tokenId":"1","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2OTYwMDoxMjUwMTIxNjAwOjEzMA==","full30":"3428","give30":"1028","left30":"2400","full50":"6","give50":"3","left50":"3","full70":"0","give70":"0","left70":"0","full100":"0"},{"tokenId":"2","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMA==","full30":"29762","give30":"8928","left30":"20834","full50":"396","give50":"198","left50":"198","full70":"0","give70":"0","left70":"0","full100":"0"},{"tokenId":"2","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2OTYwMDoxMjUwMTIxNjAwOjEzMA==","full30":"20572","give30":"6171","left30":"14401","full50":"36","give50":"18","left50":"18","full70":"0","give70":"0","left70":"0","full100":"0"}]`)

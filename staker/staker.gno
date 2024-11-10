@@ -65,7 +65,12 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	common.IsHalted()
 
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	// check whether tokenId already staked or not
 	_, exist := deposits[tokenId]
@@ -152,7 +157,12 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 	common.IsHalted()
 
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	deposit, exist := deposits[tokenId]
 	if !exist {
@@ -303,7 +313,12 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	common.IsHalted()
 
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	// unstaked status
 	deposit, exist := deposits[tokenId]
@@ -356,7 +371,12 @@ func CreateExternalIncentive(
 	common.IsHalted()
 
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	if common.GetLimitCaller() {
 		prev := std.PrevRealm()

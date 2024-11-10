@@ -108,7 +108,12 @@ type ApiEmissionDebugPosition struct {
 
 func GetPrintInfo() string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	emissionDebug := ApiEmissionDebugInfo{}
 	emissionDebug.Height = std.GetHeight()

@@ -50,7 +50,12 @@ func SwapRoute(
 	}
 
 	en.MintAndDistributeGns()
-	sr.CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		sr.CalcPoolPositionRefactor(toStaker)
+	} else {
+		sr.CalcPoolPosition()
+	}
 
 	amountSpecified := i256.MustFromDecimal(_amountSpecified)
 	tokenAmountLimit := u256.MustFromDecimal(_tokenAmountLimit)

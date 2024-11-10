@@ -145,7 +145,12 @@ func testStakeToken_1(t *testing.T) {
 func testBeforeActive(t *testing.T) {
 	t.Run("before active", func(t *testing.T) {
 		en.MintAndDistributeGns()
-		CalcPoolPosition()
+		if consts.EMISSION_REFACTORED {
+			toStaker := en.GetLastDistributeToStaker()
+			CalcPoolPositionRefactor(toStaker)
+		} else {
+			CalcPoolPosition()
+		}
 		printExternalInfo()
 
 		std.TestSkipHeights(1)
@@ -159,7 +164,12 @@ func testAfterActive(t *testing.T) {
 		std.TestSkipHeights(50)  // skip 50 more block
 
 		en.MintAndDistributeGns()
-		CalcPoolPosition()
+		if consts.EMISSION_REFACTORED {
+			toStaker := en.GetLastDistributeToStaker()
+			CalcPoolPositionRefactor(toStaker)
+		} else {
+			CalcPoolPosition()
+		}
 
 		std.TestSkipHeights(1)
 	})
@@ -169,7 +179,12 @@ func testDuratino200(t *testing.T) {
 	t.Run("duration 200", func(t *testing.T) {
 		std.TestSkipHeights(199) // skip 1 + 199 = 200 more block
 		en.MintAndDistributeGns()
-		CalcPoolPosition()
+		if consts.EMISSION_REFACTORED {
+			toStaker := en.GetLastDistributeToStaker()
+			CalcPoolPositionRefactor(toStaker)
+		} else {
+			CalcPoolPosition()
+		}
 		printExternalInfo()
 	})
 }

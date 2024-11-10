@@ -19,6 +19,8 @@ import (
 	"gno.land/r/gnoswap/v2/gnft"
 
 	"gno.land/r/gnoswap/v2/consts"
+
+	en "gno.land/r/gnoswap/v2/emission"
 )
 
 func TestStakerWithEmissionAmount(t *testing.T) {
@@ -276,8 +278,14 @@ func testStakeToken03(t *testing.T) {
 
 func testSameHeightCalculation(t *testing.T) {
 	t.Run("same height calculation", func(t *testing.T) {
-		CalcPoolPosition()
-		CalcPoolPosition()
+		if consts.EMISSION_REFACTORED {
+			toStaker := en.GetLastDistributeToStaker()
+			CalcPoolPositionRefactor(toStaker)
+			CalcPoolPositionRefactor(toStaker)
+		} else {
+			CalcPoolPosition()
+			CalcPoolPosition()
+		}
 	})
 }
 

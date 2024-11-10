@@ -8,6 +8,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	en "gno.land/r/gnoswap/v2/emission"
+
+	"gno.land/r/gnoswap/v2/consts"
 )
 
 // StakerPoolIncentives returns the list of incentive IDs for a given pool
@@ -22,7 +24,12 @@ import (
 //   - If the pool incentives do not exist for the given pool path
 func StakerPoolIncentives(poolPath string) []string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	incentives, exist := poolIncentives[poolPath]
 	if !exist {
@@ -47,7 +54,12 @@ func StakerPoolIncentives(poolPath string) []string {
 //   - If the incentive does nor exist for the given incentive ID
 func StakerIncentiveTargetPoolPath(incentiveId string) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	incentive, exist := incentives[incentiveId]
 	if !exist {
@@ -72,7 +84,12 @@ func StakerIncentiveTargetPoolPath(incentiveId string) string {
 //   - If the incentive does not exist for the given incentiveId
 func StakerIncentiveRewardToken(incentiveId string) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	incentive, exist := incentives[incentiveId]
 	if !exist {
@@ -97,7 +114,12 @@ func StakerIncentiveRewardToken(incentiveId string) string {
 //   - If the incentive does not exist for the given incentiveId
 func StakerIncentiveRewardAmount(incentiveId string) *u256.Uint {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	incentive, exist := incentives[incentiveId]
 	if !exist {
@@ -122,7 +144,12 @@ func StakerIncentiveRewardAmount(incentiveId string) *u256.Uint {
 //   - If the incentive does not exist for the given incentiveId
 func StakerIncentiveRewardAmountStr(incentiveId string) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	incentive, exist := incentives[incentiveId]
 	if !exist {
@@ -147,7 +174,12 @@ func StakerIncentiveRewardAmountStr(incentiveId string) string {
 //   - If the incentive does not exist for the given incentiveId
 func StakerIncentiveStartTimestamp(incentiveId string) int64 {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	incentive, exist := incentives[incentiveId]
 	if !exist {
@@ -172,7 +204,12 @@ func StakerIncentiveStartTimestamp(incentiveId string) int64 {
 //   - If the incentive does not exist for the given incentiveId
 func StakerIncentiveEndTimestamp(incentiveId string) int64 {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	incentive, exist := incentives[incentiveId]
 	if !exist {
@@ -197,7 +234,12 @@ func StakerIncentiveEndTimestamp(incentiveId string) int64 {
 //   - If the incentive does not exist for the given incentiveId
 func StakerIncentiveRefundee(incentiveId string) std.Address {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	incentive, exist := incentives[incentiveId]
 	if !exist {
@@ -222,7 +264,12 @@ func StakerIncentiveRefundee(incentiveId string) std.Address {
 //   - If the deposit does not exist for the given lpTokenId
 func StakerDepositOwner(lpTokenId uint64) std.Address {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	deposit, exist := deposits[lpTokenId]
 	if !exist {
@@ -247,7 +294,12 @@ func StakerDepositOwner(lpTokenId uint64) std.Address {
 //   - If the deposit does not exist for the given lpTokenId
 func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	deposit, exist := deposits[lpTokenId]
 	if !exist {
@@ -272,7 +324,12 @@ func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
 //   - If the deposit does not exist for the given lpTokenId
 func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	deposit, exist := deposits[lpTokenId]
 	if !exist {
@@ -297,7 +354,12 @@ func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
 //   - If the deposit does not exist for the given lpTokenId
 func StakerDepositTargetPoolPath(lpTokenId uint64) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	deposit, exist := deposits[lpTokenId]
 	if !exist {

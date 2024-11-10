@@ -211,7 +211,7 @@ func changeDistributionPct(target emissionTarget, pct uint64) {
 	// cannot add new target
 	// TODO:
 	// 1. add more clear name from LIQUIDITY_STAKING to LIQUIDITY_STAKER
-	if target != LIQUIDITY_STAKING && target != DEVOPS && target != COMMUNITY_POOL && target != GOV_STAKER {
+	if target != LIQUIDITY_STAKER && target != DEVOPS && target != COMMUNITY_POOL && target != GOV_STAKER {
 		panic(addDetailToError(
 			errInvalidEmissionTarget,
 			ufmt.Sprintf("emission.gno__changeDistributionPct() || invalid target(%d)", target),
@@ -283,17 +283,9 @@ func ClearAccuDistributedAmountForGovStaker() {
 	toGovStakerAccu = 0
 }
 
-// TODO:
-// 1. remove unused functions
-// func GetLastDistributeToStaker() uint64 {
-//	return toStaker
-// }
-
-// TODO:
-// 1. remove unused functions
-// func GetLastDistributeToGovStaker() uint64 {
-//	return toGovStaker
-// }
+func GetLastDistributeToStaker() uint64 {
+	return toStaker
+}
 
 func GetLastDistributedGNSAmount() (uint64, uint64, uint64, uint64) {
 	return toStaker, toDevOps, toCommunityPool, toGovStaker

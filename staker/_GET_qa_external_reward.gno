@@ -86,7 +86,12 @@ type ApiExternalDebugIncentive struct {
 func GetPrintExternalInfo() string {
 	// TODO: LIMIT ONLY ABCI_QUERY CAN CALL THIS
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		toStaker := en.GetLastDistributeToStaker()
+		CalcPoolPositionRefactor(toStaker)
+	} else {
+		CalcPoolPosition()
+	}
 
 	updateExternalIncentiveLeftAmount()
 

@@ -129,3 +129,8 @@ const (
 	// REF: https://github.com/gnolang/gno/pull/2401#discussion_r1648064219
 	ZERO_ADDRESS std.Address = "g100000000000000000000000000000000dnmcnx"
 )
+
+// EMISSION
+const (
+	EMISSION_REFACTORED bool = true
+)
