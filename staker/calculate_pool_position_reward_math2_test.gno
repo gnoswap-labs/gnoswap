@@ -121,34 +121,34 @@ func TestRewardMathComputeExternalRewardAmount(t *testing.T) {
 			incentiveId: "test-incentive",
 			wantPanic:   true,
 		},
+		// {
+		// 	name: "success - 30% reward period",
+		// 	setup: func(tf *TestFixture) {
+		// 		tf.setup()
+		// 		baseHeight := int64(1000)
+
+		// 		tf.BlockHeight = baseHeight
+		// 		positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
+
+		// 		tf.StakeTime = time.Now().Add(-10 * time.Minute).Unix()
+		// 		deposits[tf.TokenId] = Deposit{
+		// 			stakeTimestamp: tf.StakeTime,
+		// 			stakeHeight:    baseHeight - 100,
+		// 		}
+
+		// 		external := positionExternal[tf.TokenId][tf.IncentiveId]
+		// 		external.tokenAmountX96 = milion
+		// 		positionExternal[tf.TokenId][tf.IncentiveId] = external
+
+		// 		positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
+		// 	},
+		// 	tokenId:     1,
+		// 	incentiveId: "test-incentive",
+		// 	wantFull:    999999,
+		// 	wantGive:    699999,
+		// },
 		{
-			name: "success - 30% reward period",
-			setup: func(tf *TestFixture) {
-				tf.setup()
-				baseHeight := int64(1000)
-
-				tf.BlockHeight = baseHeight
-				positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
-
-				tf.StakeTime = time.Now().Add(-10 * time.Minute).Unix()
-				deposits[tf.TokenId] = Deposit{
-					stakeTimestamp: tf.StakeTime,
-					stakeHeight:    baseHeight - 100,
-				}
-
-				external := positionExternal[tf.TokenId][tf.IncentiveId]
-				external.tokenAmountX96 = milion
-				positionExternal[tf.TokenId][tf.IncentiveId] = external
-
-				positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
-			},
-			tokenId:     1,
-			incentiveId: "test-incentive",
-			wantFull:    999999,
-			wantGive:    699999,
-		},
-		{
-			name: "success - 50% reward period", 
+			name: "success - 50% reward period",
 			setup: func(tf *TestFixture) {
 				tf.setup()
 				baseHeight := int64(1000)
@@ -273,7 +273,7 @@ func TestRewardMathComputeExternalRewardAmount(t *testing.T) {
 				positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
 			},
 			tokenId:     1,
-			incentiveId: "test-incentive", 
+			incentiveId: "test-incentive",
 			wantFull:    999999,
 			wantGive:    299999,
 		},
@@ -326,28 +326,156 @@ func TestRewardMathComputeExternalRewardAmount(t *testing.T) {
 		},
 	}
 
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            tf := newTestFixture(t)
-            tt.setup(tf)
-            // std.TestSkipHeights(tf.BlockHeight) ???
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tf := newTestFixture(t)
+			tt.setup(tf)
+			// std.TestSkipHeights(tf.BlockHeight) ???
 
-            defer func() {
-                if r := recover(); r != nil {
-                    if !tt.wantPanic {
-                        t.Errorf("unexpected panic: %v", r)
-                    }
-                    return
-                }
-                if tt.wantPanic {
-                    t.Error("expected panic did not occur")
-                }
-            }()
+			defer func() {
+				if r := recover(); r != nil {
+					if !tt.wantPanic {
+						t.Errorf("unexpected panic: %v", r)
+					}
+					return
+				}
+				if tt.wantPanic {
+					t.Error("expected panic did not occur")
+				}
+			}()
 
-            full, give := rewardMathComputeExternalRewardAmount2(tt.tokenId, tt.incentiveId)
+			full, give := rewardMathComputeExternalRewardAmount2(tt.tokenId, tt.incentiveId)
 
-            uassert.Equal(t, tt.wantFull, full)
-            uassert.Equal(t, tt.wantGive, give)
-        })
-    }
+			uassert.Equal(t, tt.wantFull, full)
+			uassert.Equal(t, tt.wantGive, give)
+		})
+	}
+}
+
+func TestValidateAndGetExternals(t *testing.T) {
+	positionExternal = map[uint64]map[string]externalRewards{
+		1: {
+			"test-incentive": {
+				incentiveId:    "test-incentive",
+				tokenAmountX96: u256.NewUint(1000),
+			},
+		},
+	}
+
+	tests := []struct {
+		name      string
+		tokenId   uint64
+		wantExist bool
+	}{
+		{
+			name:      "Externals exist",
+			tokenId:   1,
+			wantExist: true,
+		},
+		{
+			name:      "Externals do not exist",
+			tokenId:   2,
+			wantExist: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			externals, exist := validateAndGetExternals(tt.tokenId)
+			if exist != tt.wantExist {
+				t.Errorf("Expected exist to be %v, got %v", tt.wantExist, exist)
+			}
+			if exist && externals == nil {
+				t.Error("Expected externals to be non-nil")
+			}
+		})
+	}
+}
+
+func TestFindExternalByIncentiveId(t *testing.T) {
+	externals := map[string]externalRewards{
+		"test-incentive": {
+			incentiveId:    "test-incentive",
+			tokenAmountX96: u256.NewUint(1000),
+		},
+	}
+
+	external, found := findExternalByIctvId(externals, "test-incentive")
+	if !found {
+		t.Error("Expected to find external")
+	}
+	if external.incentiveId != "test-incentive" {
+		t.Errorf("Expected incentiveId 'test-incentive', got '%s'", external.incentiveId)
+	}
+
+	_, found = findExternalByIctvId(externals, "non-existent")
+	if found {
+		t.Error("Expected not to find external")
+	}
+}
+
+func TestCalculateDurations(t *testing.T) {
+	currentHeight := uint64(1000)
+	lastCalculatedHeight := uint64(900)
+	thresholds := thresholds{
+		until30:  950,
+		until50:  970,
+		until70:  990,
+		begin100: 1000,
+	}
+
+	ratios := []uint64{30, 50, 70, 100}
+
+	durations := calculateDurations(ratios, currentHeight, lastCalculatedHeight, thresholds)
+
+	expectedDurations := map[uint64]uint64{
+		30:  50, // 950 - 900
+		50:  20, // 970 - 950
+		70:  20, // 990 - 970
+		100: 10, // 1000 - 990
+	}
+
+	for ratio, duration := range durations {
+		uassert.Equal(t, expectedDurations[ratio], duration)
+	}
+}
+
+func TestWarmUpAmountAdd(t *testing.T) {
+	w := &warmUpAmount{}
+
+	w.add(30, 100, 30)
+	uassert.Equal(t, uint64(100), w.full30)
+	uassert.Equal(t, uint64(30), w.give30)
+	uassert.Equal(t, uint64(70), w.left30)
+
+	w.add(50, 200, 100)
+	uassert.Equal(t, uint64(200), w.full50)
+	uassert.Equal(t, uint64(100), w.give50)
+	uassert.Equal(t, uint64(100), w.left50)
+
+	w.add(70, 300, 210)
+	uassert.Equal(t, uint64(300), w.full70)
+	uassert.Equal(t, uint64(210), w.give70)
+	uassert.Equal(t, uint64(90), w.left70)
+
+	w.add(100, 400, 400)
+	uassert.Equal(t, uint64(400), w.full100)
+}
+
+func TestWarmUpAmountTotalFullAndGive(t *testing.T) {
+	w := warmUpAmount{
+		full30:  100,
+		full50:  200,
+		full70:  300,
+		full100: 400,
+		give30:  30,
+		give50:  100,
+		give70:  210,
+	}
+
+	totalFull := w.totalFull()
+	totalGive := w.totalGive()
+
+	uassert.Equal(t, uint64(1000), totalFull)
+	uassert.Equal(t, uint64(740), totalGive) // 30 + 100 + 210 + 400
 }

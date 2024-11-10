@@ -8,405 +8,313 @@ import (
 	"gno.land/r/gnoswap/v2/consts"
 )
 
-func rewardMathComputeExternalRewardAmount2(tokenId uint64, incentiveId string) (uint64, uint64) {
-    currentHeight := std.GetHeight()
-    _currentHeightU64 := uint64(currentHeight)
+const (
+	RATIO_30  = 30
+	RATIO_50  = 50
+	RATIO_70  = 70
+	RATIO_100 = 100
+)
 
-    // 1. 입력 검증 및 기본 데이터 얻기
-    externals, exists := validateAndGetExternals(tokenId)
-    if !exists {
-        return 0, 0
-    }
+// rewardMathComputeExternalRewardAmount2 calculates the total and payble rewards for a given
+// tokenId and incentiveID.
+func rewardMathComputeExternalRewardAmount2(tokenId uint64, ictvId string) (uint64, uint64) {
+	currentHeight := std.GetHeight()
+	_currentHeightU64 := uint64(currentHeight)
 
-    // 2. 시작 시간과 높이 계산
-    stakedStartInfo := calculateStakedStartInfo(tokenId, incentiveId, currentHeight)
+	// retrieve the external rewards associated with
+	// the given token ID.
+	externals, exists := validateAndGetExternals(tokenId)
+	if !exists {
+		return 0, 0
+	}
 
-    // 3. 각 단계별 임계값(threshold) 계산
-    thresholds := calculateThresholds(stakedStartInfo.startHeight)
+	// calculate the start info of staking based on the latest timestamp
+	// TODO: must use block height instead of timestamp
+	stakedStartInfo := calculateStakedStartInfo(tokenId, ictvId, currentHeight)
+	// determine the thresholds for different reward ratios.
+	thresholds := calculateThresholds(stakedStartInfo.startHeight)
 
-    // 4. 리워드 계산
-    for _, external := range externals {
-        if external.incentiveId == incentiveId {
-            return calculateRewardsForExternal(
-                tokenId,
-                incentiveId,
-                external,
-                _currentHeightU64,
-                stakedStartInfo,
-                thresholds,
-            )
-        }
-    }
+	external, found := findExternalByIctvId(externals, ictvId)
+	if !found {
+		panic("NO INCENTIVE_ID FOUND")
+	}
 
-    panic("NO INCENTIVE_ID FOUND")
+	return calculateRewardsForExternal(
+		tokenId,
+		ictvId,
+		external,
+		_currentHeightU64,
+		stakedStartInfo,
+		thresholds,
+	)
 }
 
 type stakedStartInfo struct {
-    startHeight int64
-    duration    int64
+	startHeight int64
+	duration    int64
 }
 
 type thresholds struct {
-    until30  uint64
-    until50  uint64
-    until70  uint64
-    begin100 uint64
+	until30  uint64
+	until50  uint64
+	until70  uint64
+	begin100 uint64
 }
 
 func validateAndGetExternals(tokenId uint64) (map[string]externalRewards, bool) {
-    externals, exist := positionExternal[tokenId]
-    if !exist {
-        return nil, false
-    }
-    return externals, true
+	externals, exist := positionExternal[tokenId]
+	return externals, exist
 }
 
 func calculateStakedStartInfo(tokenId uint64, incentiveId string, currentHeight int64) stakedStartInfo {
-    _max := max(incentives[incentiveId].startTimestamp, deposits[tokenId].stakeTimestamp)
+	// TODO: use block height
+	_max := max(incentives[incentiveId].startTimestamp, deposits[tokenId].stakeTimestamp)
+	stakedOrExternalDuration := (time.Now().Unix() - _max) / consts.BLOCK_GENERATION_INTERVAL
+	stakedOrExternalStartedHeight := currentHeight - stakedOrExternalDuration
 
-    stakedOrExternalDuration := (time.Now().Unix() - _max) / consts.BLOCK_GENERATION_INTERVAL
-    stakedOrExternalStartedHeight := currentHeight - stakedOrExternalDuration
-
-    return stakedStartInfo{
-        startHeight: stakedOrExternalStartedHeight,
-        duration:    stakedOrExternalDuration,
-    }
+	return stakedStartInfo{
+		startHeight: stakedOrExternalStartedHeight,
+		duration:    stakedOrExternalDuration,
+	}
 }
 
+// calculateThresholds determines the block height thresholds for different reward ratios.
 func calculateThresholds(startHeight int64) thresholds {
-    baseHeight := uint64(startHeight)
-    return thresholds{
-        until30:  baseHeight + uint64(warmUp[50]) - 1,  // 150
-        until50:  baseHeight + uint64(warmUp[70]) - 1,  // 300
-        until70:  baseHeight + uint64(warmUp[100]) - 1, // 900
-        begin100: baseHeight + uint64(warmUp[100]),     // 901~
-    }
+	baseHeight := uint64(startHeight)
+	return thresholds{
+		until30:  baseHeight + uint64(warmUp[RATIO_50]) - 1,
+		until50:  baseHeight + uint64(warmUp[RATIO_70]) - 1,
+		until70:  baseHeight + uint64(warmUp[RATIO_100]) - 1,
+		begin100: baseHeight + uint64(warmUp[RATIO_100]),
+	}
 }
 
+// findExternalByIctvId retrieves the external reward matching the given incentive ID.
+func findExternalByIctvId(externals map[string]externalRewards, ictvId string) (externalRewards, bool) {
+	external, exists := externals[ictvId]
+	return external, exists
+}
+
+// calculateRewardsForExternal computes the total and payable rewards for the external incentive.
 func calculateRewardsForExternal(
-    tokenId uint64,
-    incentiveId string,
-    external externalRewards,
-    currentHeight uint64,
-    startInfo stakedStartInfo,
-    thresholds thresholds,
+	tokenId uint64,
+	incentiveId string,
+	external externalRewards,
+	currentHeight uint64,
+	startInfo stakedStartInfo,
+	thresholds thresholds,
 ) (uint64, uint64) {
-    // 1. 분배할 리워드 금액 계산
-    tokenAmountX96 := external.tokenAmountX96
-    toDistributeX96 := new(u256.Uint).Sub(tokenAmountX96, positionLastExternal[tokenId][incentiveId])
+	// retrieve the last recoreded external reward amount
+	tokenAmountX96 := external.tokenAmountX96
+	lastExternalAmount := positionLastExternal[tokenId][incentiveId]
+	if tokenAmountX96.Lt(lastExternalAmount) {
+		panic("THIS SHOULD NOT HAPPEN_EXTERNAL #1")
+	}
 
-    if tokenAmountX96.Lt(positionLastExternal[tokenId][incentiveId]) {
-        panic("THIS SHOULD NOT HAPPEN_EXTERNAL #1")
-    }
+	// calculate the new amount to distribute since the last calculation.
+	toDistributeX96 := new(u256.Uint).Sub(tokenAmountX96, lastExternalAmount)
+	// get the last calculated block height for the external rewards.
+	lastCalculatedHeight := uint64(positionsExternalLastCalculatedHeight[tokenId][incentiveId])
 
-    // 2. 마지막 계산 높이 얻기
-    lastCalculatedHeightU64 := uint64(positionsExternalLastCalculatedHeight[tokenId][incentiveId])
+	// calculate the duration in blocks since the last calculation.
+	blockDuration := currentHeight - lastCalculatedHeight
+	if blockDuration == 0 {
+		return 0, 0
+	}
 
-    // 3. 블록당 평균 리워드 계산
-    avgExternalBlockAmountX96 := new(u256.Uint).Div(
-        toDistributeX96,
-        u256.NewUint(currentHeight-lastCalculatedHeightU64),
-    )
+	avgExternalBlockAmountX96 := new(u256.Uint).Div(toDistributeX96, u256.NewUint(blockDuration))
 
-    // 4. warm-up amount 검증
-    positionExternalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
-    if !exist {
-        panic("THIS SHOULD NOT HAPPEN_EXTERNAL #2")
-    }
+	// retrieve the warm-up amounts; if not present, panic as it's an unexpected state.
+	positionExternalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
+	if !exist {
+		panic("THIS SHOULD NOT HAPPEN_EXTERNAL #2")
+	}
 
-    // 5. 리워드 비율 계산 및 리워드 적립
-    durationRatio := getRewardRatio(startInfo.duration)
-    positionExternalWarmUpAmount = computeRewardsByRatio(
-        uint64(durationRatio),
-        currentHeight,
-        lastCalculatedHeightU64,
-        thresholds,
-        avgExternalBlockAmountX96,
-        positionExternalWarmUpAmount,
-    )
+	// determine the reward ratio based on the staking duration.
+	// after that, compute the rewards according to the determined ratio.
+	durationRatio := getRewardRatio(startInfo.duration)
+	warmUpAmount := computeRewardsByRatio(
+		uint64(durationRatio),
+		currentHeight,
+		lastCalculatedHeight,
+		thresholds,
+		avgExternalBlockAmountX96,
+		positionExternalWarmUpAmount,
+	)
 
-    // 6. 총 리워드 계산
-    accuFull := uint64(0)
-    accuGive := uint64(0)
+	accFull := warmUpAmount.totalFull()
+	accGive := warmUpAmount.totalGive()
 
-    accuFull += positionExternalWarmUpAmount.full30 +
-        positionExternalWarmUpAmount.full50 +
-        positionExternalWarmUpAmount.full70 +
-        positionExternalWarmUpAmount.full100
+	// update the warm-up amounr in the global state.
+	// WARNING: TOO MANY SIDE EFFECTS. NEED TO FIND A BETTER WAY.
+	positionsExternalWarmUpAmount[tokenId][incentiveId] = warmUpAmount
 
-    accuGive += positionExternalWarmUpAmount.give30 +
-        positionExternalWarmUpAmount.give50 +
-        positionExternalWarmUpAmount.give70 +
-        positionExternalWarmUpAmount.full100
-
-    // 7. 상태 업데이트
-    positionsExternalWarmUpAmount[tokenId][incentiveId] = positionExternalWarmUpAmount
-
-    return accuFull, accuGive
+	return accFull, accGive
 }
 
+// computeRewardsByRatio calculates the rewards based in the reward ratio.
 func computeRewardsByRatio(
-    durationRatio uint64,
-    currentHeight uint64,
-    lastCalculatedHeight uint64,
-    thresholds thresholds,
-    avgBlockAmountX96 *u256.Uint,
-    warmUpAmount warmUpAmount,
+	durationRatio uint64,
+	currentHeight uint64,
+	lastCalculatedHeight uint64,
+	thresholds thresholds,
+	avgBlockAmountX96 *u256.Uint,
+	warmUpAmount warmUpAmount,
 ) warmUpAmount {
-    switch durationRatio {
-    case 100:
-        return computeRewardsFor100Ratio(
-            currentHeight,
-            lastCalculatedHeight,
-            thresholds,
-            avgBlockAmountX96,
-            warmUpAmount,
-        )
-    case 70:
-        return computeRewardsFor70Ratio(
-            currentHeight,
-            lastCalculatedHeight,
-            thresholds,
-            avgBlockAmountX96,
-            warmUpAmount,
-        )
-    case 50:
-        return computeRewardsFor50Ratio(
-            currentHeight,
-            lastCalculatedHeight,
-            thresholds,
-            avgBlockAmountX96,
-            warmUpAmount,
-        )
-    case 30:
-        return computeRewardsFor30Ratio(
-            currentHeight,
-            lastCalculatedHeight,
-            avgBlockAmountX96,
-            warmUpAmount,
-        )
-    default:
-        return warmUpAmount
-    }
+	switch durationRatio {
+	case RATIO_100:
+		// include all prev ratios.
+		return computeRewardsForRatio(
+			[]uint64{RATIO_30, RATIO_50, RATIO_70, RATIO_100},
+			currentHeight,
+			lastCalculatedHeight,
+			thresholds,
+			avgBlockAmountX96,
+			warmUpAmount,
+		)
+	case RATIO_70:
+		// include up to 70% ratio.
+		return computeRewardsForRatio(
+			[]uint64{RATIO_30, RATIO_50, RATIO_70},
+			currentHeight,
+			lastCalculatedHeight,
+			thresholds,
+			avgBlockAmountX96,
+			warmUpAmount,
+		)
+	case RATIO_50:
+		// include up to 50% ratio.
+		return computeRewardsForRatio(
+			[]uint64{RATIO_30, RATIO_50},
+			currentHeight,
+			lastCalculatedHeight,
+			thresholds,
+			avgBlockAmountX96,
+			warmUpAmount,
+		)
+	case RATIO_30:
+		// only calculate for 30% ratio.
+		return computeRewardsForRatio(
+			[]uint64{RATIO_30},
+			currentHeight,
+			lastCalculatedHeight,
+			thresholds,
+			avgBlockAmountX96,
+			warmUpAmount,
+		)
+	default:
+		// unrecognized. no need to update warm-up amount.
+		return warmUpAmount
+	}
 }
 
-func computeRewardsFor100Ratio(
-    currentHeight uint64,
-    lastCalculatedHeight uint64,
-    thresholds thresholds,
-    avgBlockAmountX96 *u256.Uint,
-    warmUpAmount warmUpAmount,
+// computeRewardForRatio calculates rewards for the given ratios.
+func computeRewardsForRatio(
+	ratios []uint64,
+	currentHeight uint64,
+	lastCalculatedHeight uint64,
+	thresholds thresholds,
+	avgBlockAmountX96 *u256.Uint,
+	warmUpAmount warmUpAmount,
 ) warmUpAmount {
-    if lastCalculatedHeight > thresholds.begin100 {
-        // 100% 구간만 계산
-        dur100 := currentHeight - lastCalculatedHeight
-        full, _ := calcAmount(avgBlockAmountX96, dur100, 100)
-        warmUpAmount.full100 += full
-        return warmUpAmount
-    }
+	durations := calculateDurations(ratios, currentHeight, lastCalculatedHeight, thresholds)
 
-    if lastCalculatedHeight > thresholds.until50 {
-        // 100% + 70% 구간 계산
-        dur100 := currentHeight - thresholds.until70
-        full, _ := calcAmount(avgBlockAmountX96, dur100, 100)
-        warmUpAmount.full100 += full
-
-        dur70 := thresholds.until70 - lastCalculatedHeight
-        full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
-        warmUpAmount.full70 += full
-        warmUpAmount.give70 += toGive
-        warmUpAmount.left70 += full - toGive
-
-        return warmUpAmount
-    }
-
-    if lastCalculatedHeight > thresholds.until30 {
-        // 100% + 70% + 50% 구간 계산
-        dur100 := currentHeight - thresholds.until70
-        full, _ := calcAmount(avgBlockAmountX96, dur100, 100)
-        warmUpAmount.full100 += full
-
-        dur70 := thresholds.until70 - thresholds.until50
-        full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
-        warmUpAmount.full70 += full
-        warmUpAmount.give70 += toGive
-        warmUpAmount.left70 += full - toGive
-
-        dur50 := thresholds.until50 - lastCalculatedHeight
-        full, toGive = calcAmount(avgBlockAmountX96, dur50, 50)
-        warmUpAmount.full50 += full
-        warmUpAmount.give50 += toGive
-        warmUpAmount.left50 += full - toGive
-
-        return warmUpAmount
-    }
-
-    // 모든 구간 계산 (100% + 70% + 50% + 30%)
-    dur100 := currentHeight - thresholds.until70
-    full, _ := calcAmount(avgBlockAmountX96, dur100, 100)
-    warmUpAmount.full100 += full
-
-    dur70 := thresholds.until70 - thresholds.until50
-    full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
-    warmUpAmount.full70 += full
-    warmUpAmount.give70 += toGive
-    warmUpAmount.left70 += full - toGive
-
-    dur50 := thresholds.until50 - thresholds.until30
-    full, toGive = calcAmount(avgBlockAmountX96, dur50, 50)
-    warmUpAmount.full50 += full
-    warmUpAmount.give50 += toGive
-    warmUpAmount.left50 += full - toGive
-
-    dur30 := thresholds.until30 - lastCalculatedHeight
-    full, toGive = calcAmount(avgBlockAmountX96, dur30, 30)
-    warmUpAmount.full30 += full
-    warmUpAmount.give30 += toGive
-    warmUpAmount.left30 += full - toGive
-
-    return warmUpAmount
+	for _, item := range durations.iter(ratios) {
+		if item.duration > 0 {
+			full, toGive := calcAmount(avgBlockAmountX96, item.duration, item.ratio)
+			warmUpAmount.add(item.ratio, full, toGive)
+		}
+	}
+	return warmUpAmount
 }
 
-func computeRewardsFor70Ratio(
-    currentHeight uint64,
-    lastCalculatedHeight uint64,
-    thresholds thresholds,
-    avgBlockAmountX96 *u256.Uint,
-    warmUpAmount warmUpAmount,
-) warmUpAmount {
-    if lastCalculatedHeight > thresholds.until50 {
-        // 70% 구간만 계산
-        dur70 := currentHeight - lastCalculatedHeight
-        full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
-        warmUpAmount.full70 += full
-        warmUpAmount.give70 += toGive
-        warmUpAmount.left70 += full - toGive
-        return warmUpAmount
-    }
+// calculateDurations computes the duration for each reward ratio based on thresholds.
+func calculateDurations(
+	ratios []uint64,
+	currentHeight uint64,
+	lastCalculatedHeight uint64,
+	thresholds thresholds,
+) durationsMap {
+	durations := make(durationsMap)
+	heights := map[uint64]uint64{
+		RATIO_30:  thresholds.until30,
+		RATIO_50:  thresholds.until50,
+		RATIO_70:  thresholds.until70,
+		RATIO_100: thresholds.begin100,
+	}
 
-    if lastCalculatedHeight > thresholds.until30 {
-        // 70% + 50% 구간 계산
-        dur70 := currentHeight - thresholds.until50
-        full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
-        warmUpAmount.full70 += full
-        warmUpAmount.give70 += toGive
-        warmUpAmount.left70 += full - toGive
-
-        dur50 := thresholds.until50 - lastCalculatedHeight
-        full, toGive = calcAmount(avgBlockAmountX96, dur50, 50)
-        warmUpAmount.full50 += full
-        warmUpAmount.give50 += toGive
-        warmUpAmount.left50 += full - toGive
-        return warmUpAmount
-    }
-
-    // 모든 구간 계산 (70% + 50% + 30%)
-    dur70 := currentHeight - thresholds.until50
-    full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
-    warmUpAmount.full70 += full
-    warmUpAmount.give70 += toGive
-    warmUpAmount.left70 += full - toGive
-
-    dur50 := thresholds.until50 - thresholds.until30
-    full, toGive = calcAmount(avgBlockAmountX96, dur50, 50)
-    warmUpAmount.full50 += full
-    warmUpAmount.give50 += toGive
-    warmUpAmount.left50 += full - toGive
-
-    dur30 := thresholds.until30 - lastCalculatedHeight
-    full, toGive = calcAmount(avgBlockAmountX96, dur30, 30)
-    warmUpAmount.full30 += full
-    warmUpAmount.give30 += toGive
-    warmUpAmount.left30 += full - toGive
-
-    return warmUpAmount
+	prevHeight := lastCalculatedHeight
+	for _, ratio := range ratios {
+		var nextHeight uint64
+		if ratio == RATIO_100 {
+			nextHeight = currentHeight
+		} else {
+			nextHeight = min(heights[ratio], currentHeight)
+		}
+		duration := maxUint64(0, nextHeight-prevHeight)
+		durations[ratio] = duration
+		prevHeight = nextHeight
+	}
+	return durations
 }
 
-func computeRewardsFor50Ratio(
-    currentHeight uint64,
-    lastCalculatedHeight uint64,
-    thresholds thresholds,
-    avgBlockAmountX96 *u256.Uint,
-    warmUpAmount warmUpAmount,
-) warmUpAmount {
-    if lastCalculatedHeight > thresholds.until30 {
-        // 50% 구간만 계산
-        dur50 := thresholds.until50 - thresholds.until30
-        full, toGive := calcAmount(avgBlockAmountX96, dur50, 50)
-        warmUpAmount.full50 += full
-        warmUpAmount.give50 += toGive
-        warmUpAmount.left50 += full - toGive
-        return warmUpAmount
-    }
-
-    // 50% + 30% 구간 계산
-    dur50 := currentHeight - thresholds.until30
-    full, toGive := calcAmount(avgBlockAmountX96, dur50, 50)
-    warmUpAmount.full50 += full
-    warmUpAmount.give50 += toGive
-    warmUpAmount.left50 += full - toGive
-
-    dur30 := thresholds.until30 - lastCalculatedHeight
-    full, toGive = calcAmount(avgBlockAmountX96, dur30, 30)
-    warmUpAmount.full30 += full
-    warmUpAmount.give30 += toGive
-    warmUpAmount.left30 += full - toGive
-
-    return warmUpAmount
+// add updates the warmUpAmount with the calculated full and toGive amounts for a specific ratio.
+func (w *warmUpAmount) add(ratio, full, toGive uint64) {
+	switch ratio {
+	case RATIO_30:
+		w.full30 += full
+		w.give30 += toGive
+		w.left30 += full - toGive
+	case RATIO_50:
+		w.full50 += full
+		w.give50 += toGive
+		w.left50 += full - toGive
+	case RATIO_70:
+		w.full70 += full
+		w.give70 += toGive
+		w.left70 += full - toGive
+	case RATIO_100:
+		w.full100 += full
+	}
 }
 
-func computeRewardsFor30Ratio(
-    currentHeight uint64,
-    lastCalculatedHeight uint64,
-    avgBlockAmountX96 *u256.Uint,
-    warmUpAmount warmUpAmount,
-) warmUpAmount {
-    dur30 := currentHeight - lastCalculatedHeight
-    full, toGive := calcAmount(avgBlockAmountX96, dur30, 30)
-    warmUpAmount.full30 += full
-    warmUpAmount.give30 += toGive
-    warmUpAmount.left30 += full - toGive
-
-    return warmUpAmount
+func (w warmUpAmount) totalFull() uint64 {
+	return w.full30 + w.full50 + w.full70 + w.full100
 }
 
-func computeRewardsFor50RatioUnit(
-    currentHeight uint64,
-    lastCalculatedHeight uint64,
-    avgBlockAmountX96 *u256.Uint,
-    warmUpAmount warmUpAmount,
-) warmUpAmount {
-    dur50 := currentHeight - lastCalculatedHeight
-    full, toGive := calcAmount(avgBlockAmountX96, dur50, 50)
-    warmUpAmount.full50 += full
-    warmUpAmount.give50 += toGive
-    warmUpAmount.left50 += full - toGive
-
-    return warmUpAmount
+func (w warmUpAmount) totalGive() uint64 {
+	return w.give30 + w.give50 + w.give70 + w.full100
 }
 
-func (w *warmUpAmount) computeRewardsFor50RatioUnit(
-    currentHeight uint64,
-    lastCalculatedHeight uint64,
-    avgBlockAmountX96 *u256.Uint,
-) *warmUpAmount {
-    dur50 := currentHeight - lastCalculatedHeight
-    full, toGive := calcAmount(avgBlockAmountX96, dur50, 50)
-    w.full50 += full
-    w.give50 += toGive
-    w.left50 += full - toGive
-    return w
+type durationsMap map[uint64]uint64
+
+// iter returns a slice of key-value pairs sorted by the order of ratios provided.
+func (d durationsMap) iter(ratios []uint64) []struct {
+	ratio    uint64
+	duration uint64
+} {
+	var result []struct {
+		ratio    uint64
+		duration uint64
+	}
+	for _, ratio := range ratios {
+		duration, exists := d[ratio]
+		if exists {
+			result = append(result, struct {
+				ratio    uint64
+				duration uint64
+			}{
+				ratio:    ratio,
+				duration: duration,
+			})
+		}
+	}
+	return result
 }
 
-func (w *warmUpAmount) computeRewardsFor70RatioUnit(
-    currentHeight uint64,
-    lastCalculatedHeight uint64,
-    avgBlockAmountX96 *u256.Uint,
-) *warmUpAmount {
-    dur70 := currentHeight - lastCalculatedHeight
-    full, toGive := calcAmount(avgBlockAmountX96, dur70, 70)
-    w.full70 += full
-    w.give70 += toGive
-    w.left70 += full - toGive
-    return w
+func maxUint64(a, b uint64) uint64 {
+	if a > b {
+		return a
+	}
+	return b
 }
