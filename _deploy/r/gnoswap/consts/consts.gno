@@ -131,6 +131,16 @@ const (
 )
 
 // EMISSION
-const (
+// TODO:
+// This is a temporary solution to prevent the emission from being refactored.
+// 1. After refactoring, remove this var
+var (
 	EMISSION_REFACTORED bool = true
 )
+
+func setEmissionRefactored(value bool) {
+	caller := std.PrevRealm().Addr()
+	if caller == ADMIN {
+		EMISSION_REFACTORED = value
+	}
+}
