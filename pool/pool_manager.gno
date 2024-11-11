@@ -108,6 +108,10 @@ func CreatePool(
 			"CreatePool",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
+			"token0Path", token0Path,
+			"token1Path", token1Path,
+			"fee", ufmt.Sprintf("%d", fee),
+			"sqrtPriceX96", _sqrtPriceX96,
 			"internal_poolPath", poolPath,
 		)
 	}
