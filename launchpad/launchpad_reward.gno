@@ -255,10 +255,16 @@ func calculateDepositReward() {
 		sinceLast90 := endHeightFor90 - minU64(endHeightFor90, lastCalculateHeightForProjectTier[project.tier90.id])
 		sinceLast180 := endHeightFor180 - minU64(endHeightFor180, lastCalculateHeightForProjectTier[project.tier180.id])
 
-		// update for next calc
-		lastCalculateHeightForProjectTier[project.tier30.id] = height
-		lastCalculateHeightForProjectTier[project.tier90.id] = height
-		lastCalculateHeightForProjectTier[project.tier180.id] = height
+		// update for next calc ( only when tier is started )
+		if project.tier30.startHeight != 0 {
+			lastCalculateHeightForProjectTier[project.tier30.id] = height
+		}
+		if project.tier90.startHeight != 0 {
+			lastCalculateHeightForProjectTier[project.tier90.id] = height
+		}
+		if project.tier180.startHeight != 0 {
+			lastCalculateHeightForProjectTier[project.tier180.id] = height
+		}
 
 		// reward for each tier
 		rewardX96_30 := new(u256.Uint).Mul(project.tier30.tierAmountPerBlockX96.NilToZero(), u256.NewUint(sinceLast30))
