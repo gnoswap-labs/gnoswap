@@ -42,17 +42,24 @@ func Mint(
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
+	prev := std.PrevRealm()
+	isUserCalled := prev.PkgPath() == ""
+	isStakerCalled := prev.Addr() == consts.STAKER_ADDR
+
 	if common.GetLimitCaller() {
 		// only user or staker can call
-		prev := std.PrevRealm()
-		isUserCalled := prev.PkgPath() == ""
-		isStakerCalled := prev.Addr() == consts.STAKER_ADDR
 		if !(isUserCalled || isStakerCalled) {
 			panic(addDetailToError(
 				errNoPermission,
 				ufmt.Sprintf("position.gno__Mint() || only user or staker can call isUserCalled(%t) || isStakerCalled(%t), but called from %s", isUserCalled, isStakerCalled, prev.Addr().String()),
 			))
 		}
+	}
+
+	// if user called, set caller & mintTo to user address
+	if isUserCalled {
+		caller = prev.Addr()
+		mintTo = prev.Addr()
 	}
 
 	token0, token1, token0IsNative, token1IsNative := processTokens(token0, token1)
@@ -186,7 +193,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 
 	position := Position{
 		nonce:                    u256.Zero(),
-		operator:                 params.caller,
+		operator:                 consts.ZERO_ADDRESS,
 		poolKey:                  pl.GetPoolPath(params.token0, params.token1, params.fee),
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
@@ -843,4 +850,24 @@ func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalan
 		leftOver := userNewWugnotBalance - userOldWugnotBalance
 		unwrap(leftOver, to)
 	}
+}
+
+func SetPositionOperator(tokenId uint64, operator std.Address) {
+	caller := std.PrevRealm().PkgPath()
+	if caller != consts.STAKER_PATH {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("position.gno__SetPositionOperator() || caller(%s) is not staker", caller),
+		))
+	}
+
+	_, exist := positions[tokenId]
+	if !exist {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("position.gno__SetPositionOperator() || position(%d) doesn't exist", tokenId),
+		))
+	}
+
+	positions[tokenId].operator = operator
 }

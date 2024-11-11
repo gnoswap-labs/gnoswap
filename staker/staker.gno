@@ -124,8 +124,11 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	deposits[tokenId] = deposit
 
 	if callerIsOwner { // if caller is owner, transfer NFT ownership to staker contract
-		transferDeposit(tokenId, GetOrigPkgAddr())
+		transferDeposit(tokenId, consts.STAKER_ADDR)
 	}
+
+	// after transfer, set caller(user) as position operator (to collect fee and reward)
+	pn.SetPositionOperator(tokenId, caller)
 
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
 
@@ -322,7 +325,8 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	delete(positionsInternalWarmUpAmount, tokenId)
 
 	// transfer NFT ownership to origin owner
-	gnft.TransferFrom(a2u(GetOrigPkgAddr()), a2u(deposit.owner), tid(tokenId))
+	gnft.TransferFrom(a2u(consts.STAKER_ADDR), a2u(deposit.owner), tid(tokenId))
+	pn.SetPositionOperator(tokenId, consts.ZERO_ADDRESS)
 
 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)

@@ -8,17 +8,19 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v2/common"
-
 	"gno.land/r/gnoswap/v2/consts"
 
 	pl "gno.land/r/gnoswap/v2/pool"
 
 	i256 "gno.land/p/gnoswap/int256"
+
+	"gno.land/r/gnoswap/v2/gnft"
 )
 
 type RpcPosition struct {
 	LpTokenId                uint64 `json:"lpTokenId"`
 	Burned                   bool   `json:"burned"`
+	Owner                    string `json:"owner"`
 	Operator                 string `json:"operator"`
 	PoolKey                  string `json:"poolKey"`
 	TickLower                int32  `json:"tickLower"`
@@ -78,6 +80,7 @@ func ApiGetPositions() string {
 		_positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tid(position.LpTokenId)).String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -137,6 +140,7 @@ func ApiGetPosition(lpTokenId uint64) string {
 		_positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tid(position.LpTokenId)).String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -199,6 +203,7 @@ func ApiGetPositionsByPoolPath(poolPath string) string {
 		_positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tid(position.LpTokenId)).String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -233,7 +238,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 	rpcPositions := []RpcPosition{}
 	for lpTokenId, position := range positions {
 
-		if position.operator != address {
+		if !(position.operator == address || gnft.OwnerOf(tid(lpTokenId)) == address) {
 			continue
 		}
 
@@ -261,6 +266,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 		_positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tid(position.LpTokenId)).String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -404,6 +410,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 	return RpcPosition{
 		LpTokenId:                lpTokenId,
 		Burned:                   burned,
+		Owner:                    gnft.OwnerOf(tid(lpTokenId)).String(),
 		Operator:                 position.operator.String(),
 		PoolKey:                  position.poolKey,
 		TickLower:                position.tickLower,
