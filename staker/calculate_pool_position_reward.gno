@@ -149,7 +149,6 @@ func CalcPoolPosition() {
 	stakerGnsBalance -= totalExternalGns
 	mintedGnsAmount := stakerGnsBalance - lastCalculatedBalance
 	lastCalculatedBalance = stakerGnsBalance
-	duration := height - lastCalculatedHeight
 
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(mintedGnsAmount)
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
@@ -274,7 +273,6 @@ func CalcPoolPosition() {
 		}
 
 		rewardToken := incentive.rewardToken
-		rewardAmount := incentive.rewardAmount
 		rewardLeft := incentive.rewardLeft
 
 		for _, tokenId := range poolsPositions[poolPath] {
