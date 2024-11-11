@@ -861,7 +861,7 @@ func SetPositionOperator(tokenId uint64, operator std.Address) {
 		))
 	}
 
-	_, exist := positions[tokenId]
+	position, exist := positions[tokenId]
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -869,5 +869,6 @@ func SetPositionOperator(tokenId uint64, operator std.Address) {
 		))
 	}
 
-	positions[tokenId].operator = operator
+	position.operator = operator
+	positions[tokenId] = position
 }
