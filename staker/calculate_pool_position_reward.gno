@@ -203,19 +203,7 @@ func CalcPoolPositionRefactor() bool {
 	// 8. External Reward 대상 Pool에 대해서, Reward대상자를 선별
 	// 9. External Reward 대상자에게 Reward를 분배
 	externalIncentive := rewardManager.GetExternalIncentiveReward()
-	externalIncentive.GetOrCreateExternalCalculator(currentHeight)
 	external := NewExternalCalculator(currentHeight)
-	for incentiveId, incentive := range incentives {
-		for tokenId, deposit := range depositList {
-			if incentive.targetPoolPath == deposit.targetPoolPath {
-				blockPassed := external.getBlockPassed(tokenId, incentiveId, incentive)
-				external.initPositionMaps(tokenId, incentiveId, incentive, blockPassed)
-				positionAmountX96 := external.updatePosition(tokenId, incentiveId, incentive, blockPassed)
-				external.updatePositionRewards(tokenId, incentiveId, incentive, positionAmountX96)
-				rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
-			}
-		}
-	}
 	external.calculate(incentives) // XXX: no returning any value?
 	externalIncentive.SetExternalCalculator(external)
 	rewardManager.SetExternalIncentiveReward(externalIncentive)
