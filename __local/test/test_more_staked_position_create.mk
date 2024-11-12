@@ -2,6 +2,9 @@
 
 include init.mk # run initialization 
 
+GNOLAND_RPC_URL ?= https://dev.rpc.gnoswap.io:443
+CHAINID ?= dev.gnoswap
+
 
 MAX_UINT64 := 18446744073709551615
 TX_EXPIRE := 9999999999
