@@ -66,8 +66,11 @@ type ResponseApiGetStakes struct {
 
 func ApiGetRewards() string {
 	en.MintAndDistributeGns()
-
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	lpTokenRewards := []LpTokenReward{}
 
@@ -175,7 +178,11 @@ func ApiGetRewards() string {
 
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	lpTokenRewards := []LpTokenReward{}
 
@@ -285,7 +292,11 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 
 func ApiGetRewardsByAddress(targetAddress string) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	lpTokenRewards := []LpTokenReward{}
 
@@ -392,7 +403,11 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 
 func ApiGetStakes() string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	stakes := []Stake{}
 	for tokenId, deposit := range deposits {
@@ -451,7 +466,11 @@ func ApiGetStakes() string {
 
 func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	stakes := []Stake{}
 
@@ -515,7 +534,11 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 
 func ApiGetStakesByAddress(targetAddress string) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	stakes := []Stake{}
 

@@ -65,7 +65,11 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	common.IsHalted()
 
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	// check whether tokenId already staked or not
 	_, exist := deposits[tokenId]
@@ -155,7 +159,11 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 	common.IsHalted()
 
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	deposit, exist := deposits[tokenId]
 	if !exist {
@@ -306,7 +314,11 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	common.IsHalted()
 
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	// unstaked status
 	deposit, exist := deposits[tokenId]
@@ -323,6 +335,18 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	delete(positionGns, tokenId)
 	delete(deposits, tokenId)
 	delete(positionsInternalWarmUpAmount, tokenId)
+
+	rewardManger := getRewardManager()
+	internalEmission := rewardManger.GetInternalEmissionReward()
+	recipientsMap := internalEmission.GetRewardRecipientsMap()
+	poolLiquidity := recipientsMap.GetPoolLiquidity(deposit.targetPoolPath)
+	inRangeLiquidityMap := poolLiquidity.GetInRangeLiquidityMap()
+	delete(inRangeLiquidityMap, tokenId)
+	poolLiquidity.SetTotalLiquidity(u256.Zero())
+	poolLiquidity.SetInRangeLiquidityMap(inRangeLiquidityMap)
+	recipientsMap.SetPoolLiquidity(deposit.targetPoolPath, poolLiquidity)
+	internalEmission.SetRewardRecipientsMap(recipientsMap)
+	rewardManger.SetInternalEmissionReward(internalEmission)
 
 	// transfer NFT ownership to origin owner
 	gnft.TransferFrom(a2u(consts.STAKER_ADDR), a2u(deposit.owner), tid(tokenId))
@@ -360,7 +384,11 @@ func CreateExternalIncentive(
 	common.IsHalted()
 
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	if common.GetLimitCaller() {
 		prev := std.PrevRealm()
@@ -699,4 +727,26 @@ func poolHasInternal(poolPath string) bool {
 func poolHasExternal(poolPath string) bool {
 	_, exist := poolIncentives[poolPath]
 	return exist
+}
+
+func getPoolTiers() map[string]InternalTier {
+	return poolTiers
+}
+
+// getDeposits returns deposit information for the given tokenId
+func getDepositsByTokenId(tokenId uint64) Deposit {
+	return deposits[tokenId]
+}
+
+// getDeposits returns deposit information for all tokenIds
+func getDeposits() map[uint64]Deposit {
+	return deposits
+}
+
+func getIncentives() map[string]ExternalIncentive {
+	return incentives
+}
+
+func getPoolIncentives() map[string][]string {
+	return poolIncentives
 }

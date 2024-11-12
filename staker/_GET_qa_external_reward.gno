@@ -86,7 +86,11 @@ type ApiExternalDebugIncentive struct {
 func GetPrintExternalInfo() string {
 	// TODO: LIMIT ONLY ABCI_QUERY CAN CALL THIS
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	updateExternalIncentiveLeftAmount()
 

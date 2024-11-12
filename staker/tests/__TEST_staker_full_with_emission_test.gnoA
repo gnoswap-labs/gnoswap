@@ -276,8 +276,13 @@ func testStakeToken03(t *testing.T) {
 
 func testSameHeightCalculation(t *testing.T) {
 	t.Run("same height calculation", func(t *testing.T) {
-		CalcPoolPosition()
-		CalcPoolPosition()
+		if consts.EMISSION_REFACTORED {
+			CalcPoolPositionRefactor()
+			CalcPoolPositionRefactor()
+		} else {
+			CalcPoolPosition()
+			CalcPoolPosition()
+		}
 	})
 }
 
