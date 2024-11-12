@@ -21,20 +21,15 @@ func DistributeProtocolFee() {
 	common.IsHalted()
 
 	tokens := GetRegisteredTokens()
-	// println("PF_REGISTERED_TOKENS", tokens)
 	for _, token := range tokens {
-		// println(" > token", token)
 		// default distribute protocol fee percent
 		// govStaker 100%
 		// ...
 
 		balance := balanceOfByRegisterCall(token, consts.PROTOCOL_FEE_ADDR)
-		// println(" > balance", balance)
 		if balance > 0 {
 			toDevOps := balance * devOpsPct / 10000 // default 0%
 			toGovStaker := balance - toDevOps       // default 100%
-			// println(" > toDevOps", toDevOps)
-			// println(" > toGovStaker", toGovStaker)
 
 			if token == consts.GNS_PATH {
 				gnsToDevOps = toDevOps
@@ -42,7 +37,6 @@ func DistributeProtocolFee() {
 			}
 
 			accuToGovStaker[token] += toGovStaker
-			// println("TO_GOV_STAKER", token, toGovStaker)
 
 			if toDevOps > 0 {
 				transferByRegisterCall(token, consts.DEV_OPS, toDevOps)
@@ -60,7 +54,6 @@ func GetDevOpsPct() uint64 {
 }
 
 // SetDevOpsPctByAdmin sets the devOpsPct.
-// Panics if the caller is not the admin.
 func SetDevOpsPctByAdmin(pct uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
@@ -83,7 +76,7 @@ func SetDevOpsPctByAdmin(pct uint64) {
 }
 
 // SetDevOpsPct sets the devOpsPct.
-// Panics if the caller is not the governance contract.
+// Only governance contract can execute this function via proposal
 func SetDevOpsPct(pct uint64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {

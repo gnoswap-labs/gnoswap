@@ -13,7 +13,7 @@ const (
 
 	TOKEN_REGISTER_NAMESPACE string = "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5"
 
-	BLOCK_GENERATION_INTERVAL int64 = 2 // 2 seconds
+	BLOCK_GENERATION_INTERVAL int64 = 2 // seconds
 )
 
 // WRAP & UNWRAP
@@ -21,7 +21,7 @@ const (
 	GNOT           string = "gnot"
 	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
 
-	UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000 // defined in gno.land/r/demo/wugnot
+	UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000 // defined in https://github.com/gnolang/gno/blob/81a88a2976ba9f2f9127ebbe7fb7d1e1f7fa4bd4/examples/gno.land/r/demo/wugnot/wugnot.gno#L19
 )
 
 // CONTRACT PATH & ADDRESS
@@ -109,7 +109,19 @@ const (
 	Q64  string = "18446744073709551616"                    // 2 ** 64
 	Q96  string = "79228162514264337593543950336"           // 2 ** 96
 	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
+)
 
+// TIMESTAMP & DAY
+const (
+	SECOND_IN_MILLISECOND = 1000
+
+	// in seconds
+	TIMESTAMP_MINUTE = 60
+	TIMESTAMP_HOUR   = 3600
+	TIMESTAMP_DAY    = 86400
+	TIMESTAMP_YEAR   = 31536000
+
+	DAY_PER_YEAR = 365
 )
 
 // ETCs
@@ -117,3 +129,18 @@ const (
 	// REF: https://github.com/gnolang/gno/pull/2401#discussion_r1648064219
 	ZERO_ADDRESS std.Address = "g100000000000000000000000000000000dnmcnx"
 )
+
+// EMISSION
+// TODO:
+// This is a temporary solution to prevent the emission from being refactored.
+// 1. After refactoring, remove this var
+var (
+	EMISSION_REFACTORED bool = true
+)
+
+func setEmissionRefactored(value bool) {
+	caller := std.PrevRealm().Addr()
+	if caller == ADMIN {
+		EMISSION_REFACTORED = value
+	}
+}

@@ -43,34 +43,25 @@ func printInfo(prev currentInfo) currentInfo {
 	println("***********************")
 	println("> height:", curr.height)
 	println("> height inc by:", curr.height-prev.height)
-	println()
 	println("> time:", curr.time)
 	println("> time inc by:", curr.time-prev.time)
-	println()
 	println("GNS BALANCE CHANGE")
 	println("> staker_bal\t\t", curr.gnsStaker)
 	println("> staker_chg\t\t", int64(curr.gnsStaker-prev.gnsStaker))
-	println()
 	println("> dev ops\t\t", curr.gnsDevOps)
 	println("> dev ops_chg\t\t", int(curr.gnsDevOps-prev.gnsDevOps))
-	println()
 	println("> community pool_bal\t", curr.gnsCommunityPool)
 	println("> community pool_chg\t", int(curr.gnsCommunityPool-prev.gnsCommunityPool))
-	println()
 	println("> gov_staker_bal\t\t", curr.gnsGovStaker)
 	println("> gov_staker_chg\t\t", int(curr.gnsGovStaker-prev.gnsGovStaker))
-	println()
 	println("> protocol fee_bal\t", curr.gnsProtocolFee)
 	println("> protocol fee_chg\t", int(curr.gnsProtocolFee-prev.gnsProtocolFee))
-	println()
 	println("> ADMIN_bal\t\t", curr.gnsADMIN)
 	println("> ADMIN_chg\t\t", int(curr.gnsADMIN-prev.gnsADMIN))
-	println()
 	println("GNS POOL")
 	for k, v := range poolGns {
 		println("> poolPath:", k, "amount:", v)
 	}
-	println()
 
 	println("GNS POSITION")
 	for k, v := range positionGns {
@@ -80,10 +71,7 @@ func printInfo(prev currentInfo) currentInfo {
 		println("> 70%", "full", posWarmCalc.full70, "give", posWarmCalc.give70)
 		println("> 50%", "full", posWarmCalc.full50, "give", posWarmCalc.give50)
 		println("> 30%", "full", posWarmCalc.full30, "give", posWarmCalc.give30)
-		println()
 	}
-
-	println()
 
 	return curr
 }
@@ -120,7 +108,11 @@ type ApiEmissionDebugPosition struct {
 
 func GetPrintInfo() string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	emissionDebug := ApiEmissionDebugInfo{}
 	emissionDebug.Height = std.GetHeight()

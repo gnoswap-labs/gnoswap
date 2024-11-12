@@ -131,7 +131,7 @@ func TestSetWithdrawalFeeByAdminNoPermission(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-001] no permission || protocol_fee_withdrawal.gno__SetWithdrawalFeeByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set withdrawal fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
+		`[GNOSWAP-POOL-001] caller has no permission || protocol_fee_withdrawal.gno__SetWithdrawalFeeByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set withdrawal fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
 		func() {
 			SetWithdrawalFeeByAdmin(2)
 		},
@@ -142,7 +142,7 @@ func TestSetWithdrawalFeeByAdminFeeOutOfRange(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-016] invalid withdrawal fee pct || withdrawal_fee.gno__setWithdrawalFee() || fee(10001) must be in range 0 ~ 10000`,
+		`[GNOSWAP-POOL-016] invalid withdrawal fee percentage || withdrawal_fee.gno__setWithdrawalFee() || fee(10001) must be in range 0 ~ 10000`,
 		func() {
 			SetWithdrawalFeeByAdmin(10001)
 		},
@@ -167,7 +167,7 @@ func TestSetPoolCreationFeeByAdminNoPermission(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-001] no permission || protocol_fee_pool_creation.gno__SetPoolCreationFeeByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set pool creation fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
+		`[GNOSWAP-POOL-001] caller has no permission || protocol_fee_pool_creation.gno__SetPoolCreationFeeByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set pool creation fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
 		func() {
 			SetPoolCreationFeeByAdmin(2)
 		},

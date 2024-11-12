@@ -49,7 +49,7 @@ func TestMintPosition01InRange(t *testing.T) {
 
 	position := positions[tokenId]
 	uassert.Equal(t, position.nonce.ToString(), "0")
-	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	uassert.Equal(t, position.tickLower, int32(7000))
 	uassert.Equal(t, position.tickUpper, int32(13000))
@@ -88,7 +88,7 @@ func TestMintPosition02InRange(t *testing.T) {
 
 	position := positions[tokenId]
 	uassert.Equal(t, position.nonce.ToString(), "0")
-	uassert.Equal(t, position.operator, admin)
+	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	uassert.Equal(t, position.tickLower, int32(8000))
 	uassert.Equal(t, position.tickUpper, int32(12000))

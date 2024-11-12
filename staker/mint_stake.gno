@@ -15,22 +15,8 @@ import (
 )
 
 // MintAndStake mints LP tokens and stakes them in a single transaction.
-//
-// Parameters:
-//   - token0, token1 (string): Addresses of the two tokens in the liquidity pool.
-//   - fee (string): The fee tier of the pool.
-//   - tickLower, tickUpper (string): The lower and upper tick boundaries for the position.
-//   - amount0Desired, amount1Desired (string): Desired amounts of token0 and token1 to add as liquidity.
-//   - amount0Min, amount1Min (string): Minimum amounts of token0 and token1 to add as liquidity.
-//   - deadline (int64): The timestamp by which the transaction must be executed.
-//
-// Returns:
-//   - tokenId          (uint64): The ID of the minted NFT representing the liquidity position.
-//   - liquidity        (string): The amount of liquidity added to the pool.
-//   - amount0, amount1 (string): The actual amounts of token0 and token1 used to provide liquidity.
-//   - poolPath         (string): The path identifier for the liquidity pool.
-//
-// Note: All amount parameters are strings representing *u256.Uint values.
+// Returns tokenId, liquidity, amount0, amount1, poolPath
+// ref: https://docs.gnoswap.io/contracts/staker/mint_stake.gno#mintandstake
 func MintAndStake(
 	token0 string,
 	token1 string,
@@ -42,7 +28,7 @@ func MintAndStake(
 	amount0Min string, // *u256.Uint
 	amount1Min string, // *u256.Uint
 	deadline int64,
-) (uint64, string, string, string, string) { // tokenId, liquidity, amount0, amount1, poolPath ( *u256.Uint x3)
+) (uint64, string, string, string, string) {
 
 	// if one click native
 	if token0 == consts.GNOT || token1 == consts.GNOT {
@@ -78,7 +64,7 @@ func MintAndStake(
 		std.PrevRealm().Addr(),
 	)
 
-	// at this point staker has minted token
+	// at this point, staker has minted token
 	toTid := grc721.TokenID(ufmt.Sprintf("%d", tokenId))
 	gnft.SetTokenURI(toTid)
 

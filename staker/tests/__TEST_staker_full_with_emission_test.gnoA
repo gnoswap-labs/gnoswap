@@ -276,8 +276,13 @@ func testStakeToken03(t *testing.T) {
 
 func testSameHeightCalculation(t *testing.T) {
 	t.Run("same height calculation", func(t *testing.T) {
-		CalcPoolPosition()
-		CalcPoolPosition()
+		if consts.EMISSION_REFACTORED {
+			CalcPoolPositionRefactor()
+			CalcPoolPositionRefactor()
+		} else {
+			CalcPoolPosition()
+			CalcPoolPosition()
+		}
 	})
 }
 
@@ -340,7 +345,7 @@ func testCollectReward02(t *testing.T) {
 	t.Run("collect reward from unstaked position should panic", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			"[GNOSWAP-STAKER-022] data not found || staker.gno__CollectReward() || tokenId(2) not staked",
+			"[GNOSWAP-STAKER-022] requested data not found || staker.gno__CollectReward() || tokenId(2) not staked",
 			func() {
 				CollectReward(2, false)
 			},

@@ -127,7 +127,11 @@ func testStakeToken_1(t *testing.T) {
 func testBeforeActive(t *testing.T) {
 	t.Run("before active", func(t *testing.T) {
 		en.MintAndDistributeGns()
-		CalcPoolPosition()
+		if consts.EMISSION_REFACTORED {
+			CalcPoolPositionRefactor()
+		} else {
+			CalcPoolPosition()
+		}
 		printExternalInfo()
 
 		std.TestSkipHeights(1)

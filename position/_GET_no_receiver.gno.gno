@@ -6,6 +6,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 
 	pl "gno.land/r/gnoswap/v2/pool"
+
+	"gno.land/r/gnoswap/v2/gnft"
 )
 
 // type Position
@@ -63,4 +65,8 @@ func PositionIsInRange(tokenId uint64) bool {
 	}
 
 	return false
+}
+
+func PositionGetPositionOwner(tokenId uint64) std.Address {
+	return gnft.OwnerOf(tid(tokenId))
 }

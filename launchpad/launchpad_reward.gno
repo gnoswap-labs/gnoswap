@@ -16,6 +16,7 @@ import (
 
 // CollectProtocolFee collects protocol fee from gov/staker
 // each project's recipient wallet will be rewarded
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectprotocolfee
 func CollectProtocolFee() {
 	caller := std.PrevRealm().Addr()
 	gs.CollectRewardFromLaunchPad(caller)
@@ -32,8 +33,8 @@ func init() {
 }
 
 // CollectRewardByProjectId collects reward from entire deposit of certain project by caller
-//
-// returns collected reward amount
+// Returns collected reward amount
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbyprojectid
 func CollectRewardByProjectId(projectId string) uint64 {
 	common.IsHalted()
 	en.MintAndDistributeGns()
@@ -48,12 +49,10 @@ func CollectRewardByProjectId(projectId string) uint64 {
 
 	caller := std.PrevRealm().Addr()
 	if _, exist := depositsByUserByProject[caller]; !exist {
-		println("NO DEPOSIT FOR THIS USER", caller)
 		return 0
 	}
 	depositIds, exist := depositsByUserByProject[caller][projectId]
 	if !exist {
-		println("NO DEPOSIT FOR THIS PROJECT", projectId)
 		return 0
 	}
 
@@ -63,27 +62,21 @@ func CollectRewardByProjectId(projectId string) uint64 {
 	for _, depositId := range depositIds {
 		deposit := deposits[depositId]
 		if deposit.rewardAmount == 0 {
-			println("NO REWARD FOR THIS DEPOSIT", depositId)
 			continue
 		}
 
 		project := projects[deposit.projectId]
 		if project.id != projectId {
-			println("PROJECT ID MISMATCH", project.id, projectId)
 			continue
 		}
 
 		if deposit.rewardAmount > 0 {
-			println("deposit.rewardAmount", deposit.rewardAmount)
 			if deposit.rewardCollectTime != 0 {
-				println("(N)th collect")
 				toUser += deposit.rewardAmount
 			} else {
 				if uint64(std.GetHeight()) < deposit.claimableHeight {
-					println("NOT CLAIMABLE YET")
 					continue
 				}
-				println("token:", project.tokenPath, "reward:", deposit.rewardAmount)
 				toUser += deposit.rewardAmount
 			}
 
@@ -132,8 +125,8 @@ func CollectRewardByProjectId(projectId string) uint64 {
 }
 
 // CollectRewardByDepositId collects reward from certain deposit by caller
-//
-// returns collected reward amount
+// Returns collected reward amount
+// ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_reward.gno#collectrewardbydepositid
 func CollectRewardByDepositId(depositId string) uint64 {
 	deposit, exist := deposits[depositId]
 	if !exist {
@@ -148,13 +141,11 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 	project, exist := projects[deposit.projectId]
 	if !exist {
-		println("NO PROJECT FOR THIS ID", deposit.projectId)
 		return 0
 	}
 
 	caller := std.PrevRealm().Addr()
 	if _, exist := depositsByUserByProject[caller]; !exist {
-		println("NO DEPOSIT FOR THIS USER", caller)
 		return 0
 	}
 
@@ -166,11 +157,9 @@ func CollectRewardByDepositId(depositId string) uint64 {
 
 	if deposit.rewardAmount > 0 {
 		if deposit.rewardCollectTime != 0 {
-			println("(N)th collect")
 			toUser += deposit.rewardAmount
 		} else {
 			if uint64(std.GetHeight()) < deposit.claimableHeight {
-				println("NOT CLAIMABLE YET")
 				return 0
 			}
 
@@ -218,11 +207,9 @@ var lastCalculateHeightForProjectTier = make(map[string]uint64) // using height
 
 // amount of project token for each deposit will be calculated
 func calculateDepositReward() {
-	// println(">>> calculateDepositReward")
 	height := uint64(std.GetHeight())
 
 	if height == lastCalculatedHeight {
-		println("THIS BLOCK ALREADY CALCULATED", height)
 		return
 	}
 	lastCalculatedHeight = height
@@ -230,7 +217,6 @@ func calculateDepositReward() {
 	for _, project := range projects {
 		// early return if not active
 		if project.startHeight > height {
-			println("PROJECT NOT STARTED")
 			continue
 		}
 
@@ -269,10 +255,16 @@ func calculateDepositReward() {
 		sinceLast90 := endHeightFor90 - minU64(endHeightFor90, lastCalculateHeightForProjectTier[project.tier90.id])
 		sinceLast180 := endHeightFor180 - minU64(endHeightFor180, lastCalculateHeightForProjectTier[project.tier180.id])
 
-		// update for next calc
-		lastCalculateHeightForProjectTier[project.tier30.id] = height
-		lastCalculateHeightForProjectTier[project.tier90.id] = height
-		lastCalculateHeightForProjectTier[project.tier180.id] = height
+		// update for next calc ( only when tier is started )
+		if project.tier30.startHeight != 0 {
+			lastCalculateHeightForProjectTier[project.tier30.id] = height
+		}
+		if project.tier90.startHeight != 0 {
+			lastCalculateHeightForProjectTier[project.tier90.id] = height
+		}
+		if project.tier180.startHeight != 0 {
+			lastCalculateHeightForProjectTier[project.tier180.id] = height
+		}
 
 		// reward for each tier
 		rewardX96_30 := new(u256.Uint).Mul(project.tier30.tierAmountPerBlockX96.NilToZero(), u256.NewUint(sinceLast30))
@@ -335,29 +327,16 @@ func calculateDepositReward() {
 					))
 				}
 				if sinceLast == 0 {
-					println("NO BLOCK PASSED SINCE LAST CALCULATION")
 					continue
 				}
 
 				// calculate reward
 				ratioX96 := calcDepositRatioX96(tierAmount, deposit.amount)
-				println("ratioX96:", ratioX96.ToString())
-
 				depositRewardX96X96 := u256.Zero().Mul(rewardX96, ratioX96)
-				println("depositRewardX96X96:", depositRewardX96X96.ToString())
-
 				depositRewardX96 := u256.Zero().Div(depositRewardX96X96, q96)
-				println("depositRewardX96:", depositRewardX96.ToString())
-
 				depositRewardX := u256.Zero().Div(depositRewardX96, q96)
-				println("depositRewardX:", depositRewardX.ToString())
-
 				depoistReward := depositRewardX.Uint64()
-				println("depoistReward:", depoistReward)
-
-				println("B_deposit.rewardAmount", deposit.rewardAmount)
 				deposit.rewardAmount += depoistReward
-				println("A_deposit.rewardAmount", deposit.rewardAmount)
 
 				// update deposit
 				deposits[depositId] = deposit

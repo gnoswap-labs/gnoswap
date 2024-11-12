@@ -21,8 +21,7 @@ type lockedGNS struct {
 	unlock uint64
 }
 
-const TIMESTAMP_7_DAYS = uint64(60) // 60s // XXX: TODO, REMOVE AFTER QA ( smaller value for testing )
-// const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
+const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
 
 var (
 	addrLockedGns = make(map[std.Address][]lockedGNS)
@@ -33,6 +32,8 @@ var (
 	minimumAmount = uint64(1_000_000)
 )
 
+// Delegate delegates GNS tokens to a specified address.
+// ref: https://docs.gnoswap.io/contracts/governance/staker.gno#delegate
 func Delegate(to std.Address, amount uint64) {
 	if running {
 		cleanDelegationStatHistory()
@@ -75,7 +76,8 @@ func Delegate(to std.Address, amount uint64) {
 	)
 }
 
-// xGNS from -> xGNS to
+// Redelegate redelegates xGNS from existing delegate to another.
+// ref: https://docs.gnoswap.io/contracts/governance/staker.gno#redelegate
 func Redelegate(from, to std.Address, amount uint64) {
 	if running {
 		cleanDelegationStatHistory()
@@ -128,6 +130,8 @@ func Redelegate(from, to std.Address, amount uint64) {
 	)
 }
 
+// Undelegate undelegates xGNS from the existing delegate.
+// ref: https://docs.gnoswap.io/contracts/governance/staker.gno#undelegate
 func Undelegate(from std.Address, amount uint64) {
 	if running {
 		cleanDelegationStatHistory()
@@ -183,6 +187,8 @@ func Undelegate(from std.Address, amount uint64) {
 	)
 }
 
+// CollectUndelegatedGns collects the amount of the undelegated GNS.
+// ref: https://docs.gnoswap.io/contracts/governance/staker.gno#collectundelegatedgns
 func CollectUndelegatedGns() uint64 {
 	common.IsHalted()
 	en.MintAndDistributeGns()
@@ -222,6 +228,8 @@ func CollectUndelegatedGns() uint64 {
 	return collected
 }
 
+// CollectReward collects the rewards from the protocol fee contract based on the holdings of xGNS.
+// ref: https://docs.gnoswap.io/contracts/governance/staker.gno#collectreward
 func CollectReward() {
 	common.IsHalted()
 	en.MintAndDistributeGns()
@@ -244,7 +252,6 @@ func CollectReward() {
 
 		// transfer GNS to caller
 		gns.Transfer(a2u(caller), emissionReward)
-		println("GOV_STAKER_GNS_EMISSION_USER", caller.String(), "AMOUNT", emissionReward)
 		userEmissionReward[caller] = 0
 
 		std.Emit(
@@ -258,7 +265,6 @@ func CollectReward() {
 	// PROTOCOL FEE
 	protocolFee, exist := userProtocolFeeReward[caller]
 	if !exist || len(protocolFee) == 0 {
-		println("no protocol fee reward for user", caller)
 		return
 	}
 
@@ -270,7 +276,6 @@ func CollectReward() {
 		// transfer token to caller
 		// token.Transfer(a2u(caller), amount)
 		transferByRegisterCall(tokenPath, caller, amount)
-		println("GOV_STAKER_PROTOCOL_FEE_USER", caller.String(), "TOKEN", tokenPath, "AMOUNT", amount)
 		userProtocolFeeReward[caller][tokenPath] = 0
 
 		std.Emit(
@@ -283,6 +288,9 @@ func CollectReward() {
 	}
 }
 
+// CollectRewardFromLaunchPad collects the rewards from the protocol fee contract based on the holdings of xGNS in the launchpad contract.
+// Only launchpad contract can call this function
+// ref: https://docs.gnoswap.io/contracts/governance/staker.gno#collectrewardfromlaunchpad
 func CollectRewardFromLaunchPad(to std.Address) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.LAUNCHPAD_ADDR {
@@ -310,9 +318,8 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			))
 		}
 
-		// transfer GNS to to
+		// transfer GNS to `to``
 		gns.Transfer(a2u(to), emissionReward)
-		println("GOV_STAKER_GNS_EMISSION_USER", to.String(), "AMOUNT", emissionReward)
 		userEmissionReward[to] = 0
 
 		std.Emit(
@@ -327,7 +334,6 @@ func CollectRewardFromLaunchPad(to std.Address) {
 	// PROTOCOL FEE
 	protocolFee, exist := userProtocolFeeReward[to]
 	if !exist || len(protocolFee) == 0 {
-		println("no protocol fee reward for user", to)
 		return
 	}
 
@@ -339,7 +345,6 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		// transfer token to to
 		// token.Transfer(a2u(to), amount)
 		transferByRegisterCall(tokenPath, to, amount)
-		println("GOV_STAKER_PROTOCOL_FEE_USER", to.String(), "TOKEN", tokenPath, "AMOUNT", amount)
 		userProtocolFeeReward[to][tokenPath] = 0
 
 		prevAddr, prevRealm := getPrev()

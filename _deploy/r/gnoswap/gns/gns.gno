@@ -96,11 +96,11 @@ func Render(path string) string {
 	}
 }
 
-// Mint
+// Mint mints GNS to the address.
+// Only emission contract can call Mint.
 func Mint(address pusers.AddressOrName) uint64 {
 	common.IsHalted()
 
-	// only emission contract can call Mint
 	caller := std.PrevRealm().Addr()
 	if caller != consts.EMISSION_ADDR {
 		panic(addDetailToError(
@@ -172,4 +172,11 @@ func checkErr(err error) {
 	if err != nil {
 		panic(err.Error())
 	}
+}
+
+// TODO:
+//  1. when emission contract mint gns reward, last executed height should be get from gns contract.
+//     mint function of gns contract and mintGns function of emission contract should be synchronized.
+func GetLastMintedHeight() int64 {
+	return lastMintedHeight
 }

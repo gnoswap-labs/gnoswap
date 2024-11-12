@@ -14,24 +14,20 @@ import (
 
 // init 12 years halving tier block
 /*
-	NOTE: assume block will be created every 2 second by default
-	2 second = 1 block
-	1 minute = 30 block
-	1 hour = 1800 block
-	1 day = 43200 block
-	(365 days) 1 year = 15768000 block
-
-	2 year = +31536000 block
-	4 year = +63072000 block
-	6 year = +94608000 block
-	8 year = +126144000 block
-	12 year = +189216000 block
+	NOTE: assume block will be created every 1 second by default
+	1 second = 1 block
+	1 minute = 60 block
+	1 hour = 3600 block
+	1 day = 86400 block
+	(365 days) 1 year = 31536000 block
 */
-const YEAR_BLOCK int64 = 15768000
 
-const TIMESTAMP_365DAYS int64 = 31536000
+var (
+	BLOCK_PER_YEAR = consts.TIMESTAMP_YEAR / consts.BLOCK_GENERATION_INTERVAL
+	BLOCK_PER_DAY  = consts.TIMESTAMP_DAY / consts.BLOCK_GENERATION_INTERVAL
 
-var avgBlockTimeMs int64 = 2000 // 2000s = 2s for default
+	avgBlockTimeMs int64 = consts.SECOND_IN_MILLISECOND * consts.BLOCK_GENERATION_INTERVAL
+)
 
 var (
 	initialized    bool
@@ -86,12 +82,12 @@ func init() {
 	initialized = true
 
 	for i := int64(1); i < 13; i++ {
-		halvingYearBlock[i] = height + YEAR_BLOCK*i
-		halvingYearTimestamp[i] = startTimestamp + (TIMESTAMP_365DAYS * i)
+		halvingYearBlock[i] = height + BLOCK_PER_YEAR*i
+		halvingYearTimestamp[i] = startTimestamp + (consts.TIMESTAMP_YEAR * i)
 
-		amountPerYear := halvingYearAmount[i]  // amount per year
-		amountPerDay := amountPerYear / 365    // amount per day
-		amountPerBlock := amountPerDay / 43200 // amount per block ( 1 day = 43200 block (2s/block) )
+		amountPerYear := halvingYearAmount[i]                  // amount per year
+		amountPerDay := amountPerYear / consts.DAY_PER_YEAR    // amount per day
+		amountPerBlock := amountPerDay / uint64(BLOCK_PER_DAY) // amount per block
 
 		amountPerBlockPerHalvingYear[i] = uint64(amountPerBlock)
 	}
@@ -102,7 +98,6 @@ func GetAvgBlockTimeInMs() int64 {
 }
 
 // SetAvgBlockTimeInMsByAdmin sets the average block time in millisecond.
-// Panics if the caller is not the admin.
 func SetAvgBlockTimeInMsByAdmin(ms int64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.ADMIN {
@@ -124,7 +119,7 @@ func SetAvgBlockTimeInMsByAdmin(ms int64) {
 }
 
 // SetAvgBlockTimeInMs sets the average block time in millisecond.
-// Panics if the caller is not the governance contract.
+// Only governance contract can execute this function via proposal
 func SetAvgBlockTimeInMs(ms int64) {
 	caller := std.PrevRealm().Addr()
 	if caller != consts.GOV_GOVERNANCE_ADDR {
@@ -160,7 +155,7 @@ func setAvgBlockTimeInMs(ms int64) {
 	timeLeft := endTimestamp - now
 
 	// how many block left to next halving
-	timeLeftMs := timeLeft * 1000
+	timeLeftMs := timeLeft * consts.SECOND_IN_MILLISECOND
 	blockLeft := timeLeftMs / avgBlockTimeMs
 
 	// how many reward left to next halving
@@ -174,17 +169,16 @@ func setAvgBlockTimeInMs(ms int64) {
 	amountPerBlockPerHalvingYear[year] = adjustedAmountPerBlock
 
 	// adjust halving block
-	for year, _ := range halvingYearBlock {
-		// XXX TODO: no need to adjust previous year
-		yearEnd := halvingYearTimestamp[year]
+	for keyYear, _ := range halvingYearBlock {
+		yearEnd := halvingYearTimestamp[keyYear]
 
 		if now >= yearEnd {
 			continue
 		}
 
 		diff := yearEnd - now
-		numBlock := diff * 1000 / avgBlockTimeMs
-		halvingYearBlock[year] = height + numBlock
+		numBlock := diff * consts.SECOND_IN_MILLISECOND / avgBlockTimeMs
+		halvingYearBlock[keyYear] = height + numBlock
 	}
 }
 
@@ -237,7 +231,6 @@ func GetHalvingInfo() string {
 		}))
 	}
 
-	// MARSHAL
 	node := json.ObjectNode("", map[string]*json.Node{
 		"height":         json.NumberNode("height", float64(height)),
 		"timestamp":      json.NumberNode("timestamp", float64(now)),
@@ -254,8 +247,8 @@ func GetHalvingInfo() string {
 }
 
 func getYearlyBlockForTimestampMs(ms int64) int64 {
-	yearMs := TIMESTAMP_365DAYS * 1000 // how much millisecond in a year
-	return yearMs / ms                 // how many block in a year
+	yearMs := consts.TIMESTAMP_YEAR * consts.SECOND_IN_MILLISECOND // how much millisecond in a year
+	return int64(yearMs) / ms                                      // how many block in a year
 }
 
 func prevRealm() string {

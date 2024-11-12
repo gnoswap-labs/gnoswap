@@ -14,11 +14,9 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// Mint creates a new position and mints liquidity tokens then return amount0, amount1 in string
-//
-// Panics:
-//   - The caller is user
-//   - Caller does not have enough token0 or token1
+// Mint creates a new position and mints liquidity tokens.
+// Returns minted amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#mint
 func Mint(
 	token0Path string,
 	token1Path string,
@@ -49,7 +47,7 @@ func Mint(
 	}
 
 	pool := GetPool(token0Path, token1Path, fee)
-	_, amount0, amount1 := pool.modifyPosition( // int256 x2
+	_, amount0, amount1 := pool.modifyPosition(
 		ModifyPositionParams{
 			recipient,                         // owner
 			tickLower,                         // tickLower
@@ -71,9 +69,8 @@ func Mint(
 
 // Burn removes liquidity from the caller and account tokens owed for the liquidity to the position
 // If liquidity of 0 is burned, it recalculates fees owed to a position
-//
-// Panics:
-//   - The caller is not the position contract
+// Returns burned amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#burn
 func Burn(
 	token0Path string,
 	token1Path string,
@@ -122,10 +119,9 @@ func Burn(
 }
 
 // Collect collects tokens owed to a position
-//
-// Panics:
-// - The caller is not the position contract
-// - The position does not exist
+// Burned amounts, and swap fees will be transferred to the caller
+// Returns collected amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collect
 func Collect(
 	token0Path string,
 	token1Path string,
@@ -185,12 +181,8 @@ func Collect(
 }
 
 // Swap swaps token0 for token1, or token1 for token0
-//
-// Panics:
-//   - The caller is not the router contract
-//   - Target pool is being used by another transaction
-//   - The amountSpecified is 0
-//   - The SqrtPriceLimit is not within the range
+// Returns swapped amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#swap
 func Swap(
 	token0Path string,
 	token1Path string,
@@ -457,7 +449,7 @@ func Swap(
 }
 
 // SetFeeProtocolByAdmin sets the fee protocol for all pools
-// Panics if the caller is not the admin
+// Also it will be applied to new created pools
 func SetFeeProtocolByAdmin(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
@@ -488,7 +480,9 @@ func SetFeeProtocolByAdmin(
 }
 
 // SetFeeProtocol sets the fee protocol for all pools
-// Panics if the caller is not the governance contract
+// Only governance contract can execute this function via proposal
+// Also it will be applied to new created pools
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#setfeeprotocol
 func SetFeeProtocol(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
@@ -546,6 +540,8 @@ func setFeeProtocol(
 	return newFee
 }
 
+// CollectProtocolByAdmin collects protocol fees for the given pool that accumulated while it was being used for swap
+// Returns collected amount0, amount1 in string
 func CollectProtocolByAdmin(
 	token0Path string,
 	token1Path string,
@@ -591,6 +587,10 @@ func CollectProtocolByAdmin(
 	return amount0, amount1
 }
 
+// CollectProtocol collects protocol fees for the given pool that accumulated while it was being used for swap
+// Only governance contract can execute this function via proposal
+// Returns collected amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collectprotocol
 func CollectProtocol(
 	token0Path string,
 	token1Path string,

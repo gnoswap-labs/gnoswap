@@ -49,17 +49,19 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 	pl.CreatePool(barPath, bazPath, 3000, "25054144837504793118641380156") // encodePriceSqrt(1, 10)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 
-	t.Run("mint and swap fee should be distributed pro rata user's liquidity", func(t *testing.T) {
-		std.TestSetRealm(adminRealm)
+	// initial balance for user1 & user2
+	bar.Transfer(a2u(user1Adderss), 100_000_000)
+	baz.Transfer(a2u(user1Adderss), 100_000_000)
+	bar.Transfer(a2u(user2Adderss), 100_000_000)
+	baz.Transfer(a2u(user2Adderss), 100_000_000)
 
+	t.Run("mint and swap fee should be distributed to user's liquidity", func(t *testing.T) {
+		std.TestSetRealm(user1Realm)
 		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
 		baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
 
-		pool := pl.GetPool(barPath, bazPath, 3000)
-
-		std.TestSetRealm(adminRealm)
 		tokenId_res1, liquidity_res1, amount0_res1, amount1_res1 := pn.Mint(
 			barPath,                // token0 string,
 			bazPath,                // token1 string,
@@ -75,7 +77,12 @@ func TestCollectFeeWithTwoUser(t *testing.T) {
 			admin,
 		)
 
-		std.TestSetRealm(adminRealm)
+		std.TestSetRealm(user2Realm)
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
+
 		tokenId_res2, liquidity_res2, amount0_res2, amount1_res2 := pn.Mint(
 			barPath,                // token0 string,
 			bazPath,                // token1 string,

@@ -22,18 +22,9 @@ var (
 )
 
 // Mint creates a new liquidity position and mints liquidity tokens.
-//
-// This function allows users to provide liquidity to a pool by specifying the token pair,
-// fee tier, price range (via ticks), and desired token amounts. It handles both GRC20 tokens
-// and native GNOT (which is wrapped to WUGNOT internally).
-//
-// Panics:
-//   - If the caller is not authorized (when caller limitation is enabled).
-//   - If there's a mismatch between sent and received WUGNOT amounts.
-//   - If the minting operation fails or returns unexpected results.
-//
-// Note: This function automatically sorts the token pair if they are provided in the wrong order.
 // It also handles the conversion between GNOT and WUGNOT transparently for the user.
+// Returns minted tokenId, liquidity, amount0, amount1
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#mint
 func Mint(
 	token0 string,
 	token1 string,
@@ -47,21 +38,28 @@ func Mint(
 	deadline int64,
 	mintTo std.Address,
 	caller std.Address,
-) (uint64, string, string, string) { // tokenId, liquidity, amount0, amount1 ( *u256.Uint x3 )
+) (uint64, string, string, string) {
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
+	prev := std.PrevRealm()
+	isUserCalled := prev.PkgPath() == ""
+	isStakerCalled := prev.Addr() == consts.STAKER_ADDR
+
 	if common.GetLimitCaller() {
 		// only user or staker can call
-		prev := std.PrevRealm()
-		isUserCalled := prev.PkgPath() == ""
-		isStakerCalled := prev.Addr() == consts.STAKER_ADDR
 		if !(isUserCalled || isStakerCalled) {
 			panic(addDetailToError(
 				errNoPermission,
 				ufmt.Sprintf("position.gno__Mint() || only user or staker can call isUserCalled(%t) || isStakerCalled(%t), but called from %s", isUserCalled, isStakerCalled, prev.Addr().String()),
 			))
 		}
+	}
+
+	// if user called, set caller & mintTo to user address
+	if isUserCalled {
+		caller = prev.Addr()
+		mintTo = prev.Addr()
 	}
 
 	token0, token1, token0IsNative, token1IsNative := processTokens(token0, token1)
@@ -116,6 +114,8 @@ func Mint(
 		"tickLower", ufmt.Sprintf("%d", tickLower),
 		"tickUpper", ufmt.Sprintf("%d", tickUpper),
 		"poolPath", poolPath,
+		"mintTo", mintTo.String(),
+		"caller", caller.String(),
 		"internal_lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"internal_liquidity", liquidity.ToString(),
 		"internal_amount0", amount0.ToString(),
@@ -195,7 +195,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 
 	position := Position{
 		nonce:                    u256.Zero(),
-		operator:                 params.caller,
+		operator:                 consts.ZERO_ADDRESS,
 		poolKey:                  pl.GetPoolPath(params.token0, params.token1, params.fee),
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
@@ -212,11 +212,8 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 }
 
 // IncreaseLiquidity increases liquidity of the existing position
-//
-// Panics if any of the following conditions are met:
-// - position doesn't exist
-// - caller is not owner of the position
-// - deadline is passed
+// Returns tokenId, liquidity, amount0, amount1, poolPath
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#increaseliquidity
 func IncreaseLiquidity(
 	tokenId uint64,
 	_amount0Desired string, // uint256
@@ -224,7 +221,7 @@ func IncreaseLiquidity(
 	_amount0Min string, // uint256
 	_amount1Min string, // uint256
 	deadline int64,
-) (uint64, string, string, string, string) { // tokenId, liquidity, amount0, amount1, poolPath
+) (uint64, string, string, string, string) {
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
@@ -255,7 +252,7 @@ func IncreaseLiquidity(
 		wrap(ugnotSent, std.PrevRealm().Addr())
 	}
 
-	// INCREASE
+	// increase liquidity
 	_, liquidity, amount0, amount1, poolPath := increaseLiquidity(increaseLiquidityParams)
 
 	// unwrap left
@@ -295,7 +292,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	}
 
 	// MUST BE OWNER TO INCREASE LIQUIDITY
-	// can not be approved address > staked position can't be modified
+	// can not be approved address ≈ staked position can't be modified
 	owner := gnft.OwnerOf(tid(params.tokenId))
 	caller := std.PrevRealm().Addr()
 	if owner != caller {
@@ -352,13 +349,9 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 }
 
 // DecreaseLiquidity decreases liquidity of the existing position
-//
-// Panics if any of the following conditions are met:
-// - position doesn't exist
-// - position has 0 liquidity
-// - caller is not owner of the position
-// - liquidityRatio is not in range 1 ~ 100
-// - deadline is passed
+// It also handles the conversion between GNOT and WUGNOT transparently for the user.
+// Returns tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#decreaseliquidity
 func DecreaseLiquidity(
 	tokenId uint64,
 	liquidityRatio uint64,
@@ -366,7 +359,7 @@ func DecreaseLiquidity(
 	_amount1Min string, // uint256
 	deadline int64,
 	unwrapResult bool,
-) (uint64, string, string, string, string, string, string) { // tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
+) (uint64, string, string, string, string, string, string) {
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
@@ -415,17 +408,9 @@ func DecreaseLiquidity(
 }
 
 // decreaseLiquidity reduces the liquidity of a given position and collects the corresponding tokens.
-//
-// Panics:
-//   - If the token ID doesn't exist.
-//   - If the position has already been burned.
-//   - If the caller is not the owner of the position.
-//   - If the deadline has passed.
-//   - If the received amounts are less than the specified minimums.
-//
-// Note: This function handles both GRC20 tokens and native GNOT (wrapped as WUGNOT).
 // If unwrapResult is true and the position involves WUGNOT, any leftover WUGNOT will be
 // unwrapped to GNOT at the end of the operation.
+// Returns tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
 func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint, string) {
 	userOldWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr())) // before unwrap
 
@@ -513,8 +498,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	positions[params.tokenId] = position
 
 	if position.isClear() {
-		// burnNFT(params.tokenId) // actual burn
-		burnPosition(params.tokenId) // just update flag
+		burnPosition(params.tokenId) // just update flag (we don't want to burn actual position)
 	}
 
 	// NO UNWRAP
@@ -529,6 +513,8 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 // Repositiomn adjusts the position of an existing liquidity token
 // by changing its price range and liquidity amount.
+// Returns tokenId, liquidity, tickLower, tickUpper, amount0, amount1
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#reposition
 func Reposition(
 	tokenId uint64,
 	tickLower int32,
@@ -537,7 +523,7 @@ func Reposition(
 	_amount1Desired string, // uint256
 	_amount0Min string, // *u256.Uint
 	_amount1Min string, // *u256.Uint
-) (uint64, string, int32, int32, string, string) { // tokenId, liquidity, tickLower, tickUpper, amount0, amount1
+) (uint64, string, int32, int32, string, string) {
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
@@ -651,11 +637,9 @@ func Reposition(
 }
 
 // CollectFee collects swap fee from the position
-//
-// Panics:
-//   - position doesn't exist
-//   - caller is not owner or approved
-func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, string, string, string) { // tokenId, afterFee0, afterFee1, poolPath, origFee0, origFee1
+// Returns tokenId, afterFee0, afterFee1, poolPath, origFee0, origFee1
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#collectfee
+func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
@@ -868,4 +852,25 @@ func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalan
 		leftOver := userNewWugnotBalance - userOldWugnotBalance
 		unwrap(leftOver, to)
 	}
+}
+
+func SetPositionOperator(tokenId uint64, operator std.Address) {
+	caller := std.PrevRealm().PkgPath()
+	if caller != consts.STAKER_PATH {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("position.gno__SetPositionOperator() || caller(%s) is not staker", caller),
+		))
+	}
+
+	position, exist := positions[tokenId]
+	if !exist {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("position.gno__SetPositionOperator() || position(%d) doesn't exist", tokenId),
+		))
+	}
+
+	position.operator = operator
+	positions[tokenId] = position
 }
