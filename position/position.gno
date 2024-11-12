@@ -114,6 +114,8 @@ func Mint(
 		"tickLower", ufmt.Sprintf("%d", tickLower),
 		"tickUpper", ufmt.Sprintf("%d", tickUpper),
 		"poolPath", poolPath,
+		"mintTo", mintTo.String(),
+		"caller", caller.String(),
 		"internal_lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"internal_liquidity", liquidity.ToString(),
 		"internal_amount0", amount0.ToString(),
@@ -861,7 +863,7 @@ func SetPositionOperator(tokenId uint64, operator std.Address) {
 		))
 	}
 
-	_, exist := positions[tokenId]
+	position, exist := positions[tokenId]
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -869,5 +871,6 @@ func SetPositionOperator(tokenId uint64, operator std.Address) {
 		))
 	}
 
-	positions[tokenId].operator = operator
+	position.operator = operator
+	positions[tokenId] = position
 }
