@@ -111,32 +111,6 @@ func TestRewardMathComputeExternalRewardAmount(t *testing.T) {
 		wantGive    uint64
 		wantErr   bool
 	}{
-		// {
-		// 	name: "success - 30% reward period",
-		// 	setup: func(tf *TestFixture) {
-		// 		tf.setup()
-		// 		baseHeight := int64(1000)
-
-		// 		tf.BlockHeight = baseHeight
-		// 		positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
-
-		// 		tf.StakeTime = time.Now().Add(-10 * time.Minute).Unix()
-		// 		deposits[tf.TokenId] = Deposit{
-		// 			stakeTimestamp: tf.StakeTime,
-		// 			stakeHeight:    baseHeight - 100,
-		// 		}
-
-		// 		external := positionExternal[tf.TokenId][tf.IncentiveId]
-		// 		external.tokenAmountX96 = milion
-		// 		positionExternal[tf.TokenId][tf.IncentiveId] = external
-
-		// 		positionLastExternal[tf.TokenId][tf.IncentiveId] = zero
-		// 	},
-		// 	tokenId:     1,
-		// 	incentiveId: "test-incentive",
-		// 	wantFull:    999999,
-		// 	wantGive:    699999,
-		// },
 		{
 			name: "success - 50% reward period",
 			setup: func(tf *TestFixture) {
@@ -430,4 +404,39 @@ func TestWarmUpAmountTotalFullAndGive(t *testing.T) {
 
 	uassert.Equal(t, uint64(1000), totalFull)
 	uassert.Equal(t, uint64(740), totalGive) // 30 + 100 + 210 + 400
+}
+
+func TestRewardMathComputeExternalRewardAmount_NoDuplicateRewards(t *testing.T) {
+    tf := newTestFixture(t)
+    tf.setup()
+    baseHeight := int64(1000)
+
+    tf.BlockHeight = baseHeight
+    positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId] = baseHeight - 100
+
+    tf.StakeTime = time.Now().Add(-10 * time.Minute).Unix()
+    deposits[tf.TokenId] = Deposit{
+        stakeTimestamp: tf.StakeTime,
+        stakeHeight:    baseHeight - 100,
+    }
+
+    external := positionExternal[tf.TokenId][tf.IncentiveId]
+    external.tokenAmountX96 = u256.NewUint(1000000)
+    positionExternal[tf.TokenId][tf.IncentiveId] = external
+
+    positionLastExternal[tf.TokenId][tf.IncentiveId] = u256.NewUint(0)
+
+    // calculate first reward
+    full1, give1 := rewardMathComputeExternalRewardAmount2(tf.TokenId, tf.IncentiveId)
+
+    updatedHeight := positionsExternalLastCalculatedHeight[tf.TokenId][tf.IncentiveId]
+	if updatedHeight == baseHeight {
+		t.Errorf("Expected positionsExternalLastCalculatedHeight to be updated to %d, got %d", baseHeight, updatedHeight)
+	}
+
+	// calculate another reward (no additional reward)
+    full2, give2 := rewardMathComputeExternalRewardAmount2(tf.TokenId, tf.IncentiveId)
+
+    uassert.Equal(t, uint64(0), full2-full1)
+    uassert.Equal(t, uint64(0), give2-give1)
 }

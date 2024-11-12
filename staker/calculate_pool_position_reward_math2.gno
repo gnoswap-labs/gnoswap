@@ -40,6 +40,7 @@ type stakedStartInfo struct {
 }
 
 type thresholds struct {
+	startHeight uint64
 	until30  uint64
 	until50  uint64
 	until70  uint64
@@ -73,6 +74,8 @@ func rewardMathComputeExternalRewardAmount2(tokenId uint64, ictvId string) (uint
 
 	result := calculateRewards(state)
 	updatePositionWarmUpAmount(result)
+
+	positionsExternalLastCalculatedHeight[tokenId][ictvId] = int64(state.CurrentHeight)
 
 	return result.WarmUpResult.totalFull(), result.WarmUpResult.totalGive()
 }
@@ -138,6 +141,7 @@ func calculateStakedStartInfo(tokenId uint64, incentiveId string, currentHeight 
 func calculateThresholds(startHeight int64) thresholds {
 	baseHeight := uint64(startHeight)
 	return thresholds{
+		startHeight: baseHeight,
 		until30:  baseHeight + uint64(warmUp[RATIO_50]) - 1,
 		until50:  baseHeight + uint64(warmUp[RATIO_70]) - 1,
 		until70:  baseHeight + uint64(warmUp[RATIO_100]) - 1,
