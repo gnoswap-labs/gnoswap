@@ -1,10 +1,9 @@
 package staker
 
 import (
+	"gno.land/p/demo/ufmt"
 	"std"
 	"time"
-
-	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v2/consts"
 
@@ -13,6 +12,7 @@ import (
 	pn "gno.land/r/gnoswap/v2/position"
 
 	u256 "gno.land/p/gnoswap/uint256"
+	en "gno.land/r/gnoswap/v2/emission"
 )
 
 // poolPath -> gnsAmount [accu]
@@ -54,6 +54,9 @@ var poolsPositions map[string][]uint64 = make(map[string][]uint64)
 // Q96
 var _q96 = u256.MustFromDecimal(consts.Q96)
 
+// warmUp
+var warmUpReward warmUpAmount
+
 type externalRewards struct {
 	incentiveId    string
 	poolPath       string
@@ -68,9 +71,146 @@ type externalRewards struct {
 var positionExternal map[uint64]map[string]externalRewards = make(map[uint64]map[string]externalRewards)
 
 var (
-	lastCalculatedHeight  int64
-	lastCalculatedBalance uint64
+	lastCalculatedHeight          int64                 // Last CalcPoolPosition function working height
+	lastCalculatedBalance         uint64                // Last balance of distributed GNS to stakers
+	lastLeftInternalReward        uint64                // total left
+	lastLeftInternalRewardForTier [TIER_TYPE_NUM]uint64 // left for each tier
+	totalRewardManager            *RewardManager        // RewardManager instance (internal, external)
 )
+
+func init() {
+	totalRewardManager = NewRewardManager()
+}
+
+func getLastCalculatedHeight() int64 {
+	return lastCalculatedHeight
+}
+
+func setLastCalculatedHeight(height int64) {
+	lastCalculatedHeight = height
+}
+
+func getLastLeftInternalReward() uint64 {
+	return lastLeftInternalReward
+}
+
+func setLastLeftInternalReward(amount uint64) {
+	lastLeftInternalReward = amount
+}
+
+func getLastLeftInternalRewardForTier(tierIndex int) uint64 {
+	return lastLeftInternalRewardForTier[tierIndex]
+}
+
+func setLastLeftInternalRewardForTier(tierIndex int, amount uint64) {
+	lastLeftInternalRewardForTier[tierIndex] = amount
+}
+
+func getRewardManager() *RewardManager {
+	return totalRewardManager
+}
+
+func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
+	if prev >= current {
+		return false
+	}
+	return true
+}
+
+// CalcPoolPositionRefactor calculates and updates the position of pools and rewards for stakers.
+// It performs the following operations:
+// 1. Calculates newly minted GNS tokens and distributes them among pool tiers.
+// 2. Updates pool GNS balances and accumulated GNS for each pool.
+// 3. Calculates and updates internal rewards for each staker's position.
+// 4. Calculates and updates external rewards from incentives for each staker's postion.
+// This function is meant to be called periodically to keep the pool postions and reward calculations up-to-date.
+// It uses the current block height and its timestamp to determine the calculation period.
+// TODO: only use block height to calculate reward and distribute them
+// Returns true if the calculation is successful, false otherwise.
+func CalcPoolPositionRefactor() bool {
+	distributableAmount := en.GetAccuDistributedAmountForStaker()
+	en.ClearAccuDistributedAmountForStaker()
+	currentHeight := std.GetHeight()
+	prevHeight := getLastCalculatedHeight()
+	if !isAbleToCalculateEmissionReward(prevHeight, currentHeight) || distributableAmount == 0 {
+		return false
+	}
+	prevAddr, prevPkgPath := getPrev()
+	// --- Internal Reward ---
+	rewardManager := getRewardManager()
+	internalEmissionReward := rewardManager.GetInternalEmissionReward()
+
+	// Generate Reward Recipients
+	rewardRecipients := internalEmissionReward.GetOrCreateRewardRecipientsMap()
+	depositList := getDeposits()
+	rewardRecipients.GenerateRewardRecipients(depositList)
+	// TODO :
+	// poolsPositions -> after refactoring is complete, it will be removed
+	poolsPositions = rewardRecipients.CalculateLiquidityRatioAndGetTokenIdMap()
+	internalEmissionReward.SetRewardRecipientsMap(rewardRecipients)
+
+	// Select Internal Reward Pools
+	poolList := getPoolTiers()
+	internalEmissionReward.SelectRewardPools(poolList)
+
+	// Calculate Internal Reward for each Tier
+	prevLeftInternalRewardAmount := getLastLeftInternalReward()
+	internalRewardAmount := distributableAmount + prevLeftInternalRewardAmount
+	internalEmissionReward.SetRewardTotalAmount(internalRewardAmount)
+	setLastLeftInternalReward(0) // reset
+
+	distributedAmountForTier := internalEmissionReward.CalculateRewardForEachTier(internalRewardAmount)
+	leftAmountForTier := internalRewardAmount - distributedAmountForTier
+	internalEmissionReward.SetLeftAmount(leftAmountForTier)
+	setLastLeftInternalReward(leftAmountForTier)
+
+	// Calculate Each Tier Reward for Each Pool
+	internalEmissionReward.CalculateRewardForTierEachPool(
+		getLastLeftInternalRewardForTier(TIER1_INDEX),
+		getLastLeftInternalRewardForTier(TIER2_INDEX),
+		getLastLeftInternalRewardForTier(TIER3_INDEX))
+	// Distribute Internal Reward to Pools
+	distributedTier1, distributedTier2, distributedTier3 :=
+		internalEmissionReward.DistributeRewardToEachPools(prevAddr, prevPkgPath)
+	rewardTier1 := internalEmissionReward.GetRewardPoolsMap().GetRewardAmountForTier(TIER1_INDEX)
+	rewardTier2 := internalEmissionReward.GetRewardPoolsMap().GetRewardAmountForTier(TIER2_INDEX)
+	rewardTier3 := internalEmissionReward.GetRewardPoolsMap().GetRewardAmountForTier(TIER3_INDEX)
+	// Save left reward for each tier
+	// TODO:
+	// after refactoring is completed, should be removed
+	setLastLeftInternalRewardForTier(TIER1_INDEX, rewardTier1-distributedTier1)
+	setLastLeftInternalRewardForTier(TIER2_INDEX, rewardTier2-distributedTier2)
+	setLastLeftInternalRewardForTier(TIER3_INDEX, rewardTier3-distributedTier3)
+	rewardPoolMap := internalEmissionReward.GetRewardPoolsMap()
+	rewardPoolMap.SetLeftAmountForTier(TIER1_INDEX, rewardTier1-distributedTier1)
+	rewardPoolMap.SetLeftAmountForTier(TIER2_INDEX, rewardTier2-distributedTier2)
+	rewardPoolMap.SetLeftAmountForTier(TIER3_INDEX, rewardTier3-distributedTier3)
+	internalEmissionReward.SetRewardPoolsMap(rewardPoolMap)
+
+	// Distribute Internal Reward to Staker (Warm-up)
+	internalEmissionReward.DistributeRewardToStakers()
+	// Internal Reward update
+	rewardManager.SetInternalEmissionReward(internalEmissionReward)
+
+	// TODO:
+	// after refactoring is complete, it will be removed
+	totalExternalGns := externalGnsAmount() + externalDepositGnsAmount()
+	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - totalExternalGns
+
+	// --- External Reward ---
+	// 7. 전체 Pool중 External Reward 대상 Pool을 선별
+	// 8. External Reward 대상 Pool에 대해서, Reward대상자를 선별
+	// 9. External Reward 대상자에게 Reward를 분배
+	externalIncentive := rewardManager.GetExternalIncentiveReward()
+	external := NewExternalCalculator(currentHeight)
+	external.calculate(incentives) // XXX: no returning any value?
+	externalIncentive.SetExternalCalculator(external)
+	rewardManager.SetExternalIncentiveReward(externalIncentive)
+
+	setLastCalculatedHeight(currentHeight)
+
+	return true
+}
 
 // XXX: need to improve nested iteration
 // CalcPoolPosition calculates and updates the position of pools and rewards for stakers.
@@ -88,6 +228,7 @@ var (
 // It uses the current block height and its timestamp to determine the calculation period.
 func CalcPoolPosition() {
 	height := std.GetHeight()
+
 	if height <= lastCalculatedHeight {
 		return
 	}
@@ -115,6 +256,7 @@ func CalcPoolPosition() {
 	// + also which pool has which positions
 	positionsLiquidityRatio = make(map[uint64]*u256.Uint) // clear
 	poolsPositions = make(map[string][]uint64)            // clear
+
 	for tokenId, deposit := range deposits {
 		poolPath := deposit.targetPoolPath
 		isInRange := pn.PositionIsInRange(tokenId)
