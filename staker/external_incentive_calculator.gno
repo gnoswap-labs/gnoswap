@@ -57,6 +57,7 @@ func (ec *ExternalCalculator) process(ictvId string, ictv ExternalIncentive) {
 		if ec.must(tokId, ictvId, ictv) {
 			blockPassed := ec.getBlockPassed(tokId, ictvId, ictv)
 			ec.updatePosition(tokId, ictvId, ictv, blockPassed)
+			ec.initPositionMaps(tokId, ictvId, ictv, blockPassed)
 
 			rewardMathComputeExternalRewardAmount2(tokId, ictvId)
 			positionsExternalLastCalculatedHeight[tokId][ictvId] = ec.height
@@ -127,16 +128,23 @@ func (ec *ExternalCalculator) updatePosition(
 // preventing null pointer exceptions and maintaining consistent reward tracking.
 //
 // IDEMPOTENT: calling it multiple times with the same parameters will result in the same state.
-func (ex *ExternalCalculator) initPositionMaps(tokId uint64, ictvId string, ictv ExternalIncentive) {
+func (ex *ExternalCalculator) initPositionMaps(tokId uint64, ictvId string, ictv ExternalIncentive, blocksPassed int64) {
+	liqRatioX96, exist := positionsLiquidityRatio[tokId]
+	if exist == false || liqRatioX96.IsZero() {
+		return
+	}
+
+	currentPoolRewardX96 := u256.Zero().Mul(ictv.rewardPerBlockX96, u256.NewUint(uint64(blocksPassed)))
+	positionAmountX96X96 := u256.Zero().Mul(currentPoolRewardX96, liqRatioX96)
+	positionAmountX96 := u256.Zero().Div(positionAmountX96X96, _q96)
+
 	if _, exist := positionLastExternal[tokId]; !exist {
 		positionLastExternal[tokId] = make(map[string]*u256.Uint)
 	}
 
-	blockPassed := ex.getBlockPassed(tokId, ictvId, ictv)
-
 	if _, exist := positionsExternalLastCalculatedHeight[tokId]; !exist {
 		positionsExternalLastCalculatedHeight[tokId] = make(map[string]int64)
-		positionsExternalLastCalculatedHeight[tokId][ictvId] = ex.height - int64(blockPassed)
+		positionsExternalLastCalculatedHeight[tokId][ictvId] = ex.height - int64(blocksPassed)
 	}
 
 	if _, exist := positionsExternalWarmUpAmount[tokId]; !exist {
@@ -149,6 +157,21 @@ func (ex *ExternalCalculator) initPositionMaps(tokId uint64, ictvId string, ictv
 
 	if _, exist := positionExternal[tokId]; !exist {
 		positionExternal[tokId] = make(map[string]externalRewards)
+	}
+
+	_, exist = positionExternal[tokId][ictvId]
+	if !exist {
+		positionExternal[tokId][ictvId] = createNewPositionReward(ictvId, ictv.targetPoolPath, ictv.rewardToken, positionAmountX96)
+		positionLastExternal[tokId][ictvId] = u256.Zero()
+	} else {
+		tempLastExternalAmount := positionExternal[tokId][ictvId].tokenAmountX96
+		positionLastExternal[tokId][ictvId] = tempLastExternalAmount
+		positionExternal[tokId][ictvId] = externalRewards{
+			incentiveId:    ictvId,
+			poolPath:       ictv.targetPoolPath,
+			tokenPath:      ictv.rewardToken,
+			tokenAmountX96: new(u256.Uint).Add(tempLastExternalAmount, positionAmountX96),
+		}
 	}
 }
 
