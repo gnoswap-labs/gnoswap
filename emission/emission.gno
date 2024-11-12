@@ -73,11 +73,3 @@ func MintAndDistributeGns() {
 
 	SetLastExecutedHeight(currentHeight)
 }
-
-// TODO:
-// 1. for test, clear function needed
-func ClearAll() {
-	leftGNSAmount = 0
-	lastExecutedHeight = 0
-	gns.SetLastMintedHeight(123)
-}

@@ -180,9 +180,3 @@ func checkErr(err error) {
 func GetLastMintedHeight() int64 {
 	return lastMintedHeight
 }
-
-// 2. when test code is executed, last executed height should be set to 123.
-// this function will be removed after test code is executed.
-func SetLastMintedHeight(height int64) {
-	lastMintedHeight = height
-}
