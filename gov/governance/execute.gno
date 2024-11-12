@@ -317,14 +317,14 @@ func callableMsg(pkgPath, function, params string) bool {
 			}
 			return true
 
-		// case "GnsSetAvgBlockTimeInMs":
-		// 	if len(param) != 1 {
-		// 		panic(addDetailToError(
-		// 			errInvalidFunctionParameters,
-		// 			ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-		// 		))
-		// 	}
-		// 	return true
+		case "GnsSetAvgBlockTimeInMs":
+			if len(param) != 1 {
+				panic(addDetailToError(
+					errInvalidFunctionParameters,
+					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+				))
+			}
+			return true
 
 		default:
 			panic(addDetailToError(
@@ -544,37 +544,37 @@ func handleGovernanceReconfigure(params []string) (
 ) {
 	votingStartDelay, err := strconv.ParseUint(params[0], 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	votingPeriod, err := strconv.ParseUint(params[1], 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	votingWeightSmoothingDuration, err := strconv.ParseUint(params[2], 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	quorum, err := strconv.ParseUint(params[3], 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	proposalCreationThreshold, err := strconv.ParseUint(params[4], 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	executionDelay, err := strconv.ParseUint(params[5], 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	executionWindow, err := strconv.ParseUint(params[6], 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	return votingStartDelay, votingPeriod, votingWeightSmoothingDuration, quorum, proposalCreationThreshold, executionDelay, executionWindow
@@ -583,12 +583,12 @@ func handleGovernanceReconfigure(params []string) (
 func handlePoolSetFeeProtocol(params []string) (uint8, uint8) {
 	feeProtocol0, err := strconv.ParseUint(params[0], 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	feeProtocol1, err := strconv.ParseUint(params[1], 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	return uint8(feeProtocol0), uint8(feeProtocol1)
@@ -597,7 +597,7 @@ func handlePoolSetFeeProtocol(params []string) (uint8, uint8) {
 func handleSingleUint64(params []string) uint64 {
 	res, err := strconv.ParseUint(params[0], 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	return res
 }
@@ -605,7 +605,7 @@ func handleSingleUint64(params []string) uint64 {
 func handlePoolPathTier(params []string) (string, uint64) {
 	res, err := strconv.ParseUint(params[1], 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	return params[0], res
 }
@@ -613,11 +613,11 @@ func handlePoolPathTier(params []string) (string, uint64) {
 func handleTwoInt64(params []string) (int64, int64) {
 	res0, err := strconv.ParseInt(params[0], 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	res1, err := strconv.ParseInt(params[1], 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	return res0, res1
 }
