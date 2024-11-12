@@ -27,6 +27,38 @@ type warmUpAmount struct {
 	full100 uint64
 }
 
+// add updates the warmUpAmount with the calculated full and toGive amounts for a specific ratio.
+func (w *warmUpAmount) add(ratio, full, toGive uint64) {
+	switch ratio {
+	case RATIO_30:
+		w.full30 += full
+		w.give30 += toGive
+		w.left30 += full - toGive
+	case RATIO_50:
+		w.full50 += full
+		w.give50 += toGive
+		w.left50 += full - toGive
+	case RATIO_70:
+		w.full70 += full
+		w.give70 += toGive
+		w.left70 += full - toGive
+	case RATIO_100:
+		w.full100 += full
+	}
+}
+
+func (w *warmUpAmount) totalFull() uint64 {
+	return w.full30 + w.full50 + w.full70 + w.full100
+}
+
+func (w *warmUpAmount) totalGive() uint64 {
+	return w.give30 + w.give50 + w.give70 + w.full100
+}
+
+func updatePositionWarmUpAmount(calc RewardCalculation) {
+	positionsExternalWarmUpAmount[calc.State.TokenId][calc.State.IncentiveId] = calc.WarmUpResult
+}
+
 var positionsInternalWarmUpAmount = make(map[uint64]warmUpAmount)             // positionId => warmUpAmount
 var positionsExternalWarmUpAmount = make(map[uint64]map[string]warmUpAmount)  // positionId => incentiveId => warmUpAmount
 var positionsExternalLastCalculatedHeight = make(map[uint64]map[string]int64) // positionId => incentiveId => lastCalculatedHeight

@@ -10,6 +10,7 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// TODO: remove duplicate constants
 const (
 	RATIO_30  = 30
 	RATIO_50  = 50
@@ -48,7 +49,8 @@ type thresholds struct {
 }
 
 // RewardCalculation represents the intermediate results during the reward calculation process.
-// // It holds both the initial state and intermediate results to avoid global state mutations.
+//
+// It holds both the initial state and intermediate results to avoid global state mutations.
 type RewardCalculation struct {
 	BlockDuration    uint64
     DurationRatio    uint64
@@ -292,38 +294,4 @@ func maxUint64(a, b uint64) uint64 {
 		return a
 	}
 	return b
-}
-
-// TODO: below functions move to warmUpAmount declaration
-
-// add updates the warmUpAmount with the calculated full and toGive amounts for a specific ratio.
-func (w *warmUpAmount) add(ratio, full, toGive uint64) {
-	switch ratio {
-	case RATIO_30:
-		w.full30 += full
-		w.give30 += toGive
-		w.left30 += full - toGive
-	case RATIO_50:
-		w.full50 += full
-		w.give50 += toGive
-		w.left50 += full - toGive
-	case RATIO_70:
-		w.full70 += full
-		w.give70 += toGive
-		w.left70 += full - toGive
-	case RATIO_100:
-		w.full100 += full
-	}
-}
-
-func (w *warmUpAmount) totalFull() uint64 {
-	return w.full30 + w.full50 + w.full70 + w.full100
-}
-
-func (w *warmUpAmount) totalGive() uint64 {
-	return w.give30 + w.give50 + w.give70 + w.full100
-}
-
-func updatePositionWarmUpAmount(calc RewardCalculation) {
-	positionsExternalWarmUpAmount[calc.State.TokenId][calc.State.IncentiveId] = calc.WarmUpResult
 }

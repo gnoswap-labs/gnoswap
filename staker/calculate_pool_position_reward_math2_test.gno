@@ -294,7 +294,6 @@ func TestRewardMathComputeExternalRewardAmount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tf := newTestFixture(t)
 			tt.setup(tf)
-			// std.TestSkipHeights(tf.BlockHeight) ???
 
 			full, give := rewardMathComputeExternalRewardAmount2(tt.tokenId, tt.incentiveId)
 
