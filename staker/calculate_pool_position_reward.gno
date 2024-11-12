@@ -130,7 +130,6 @@ func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 func CalcPoolPositionRefactor() bool {
 	distributableAmount := en.GetAccuDistributedAmountForStaker()
 	en.ClearAccuDistributedAmountForStaker()
-	println("distributableAmount : ", distributableAmount)
 	currentHeight := std.GetHeight()
 	prevHeight := getLastCalculatedHeight()
 	if !isAbleToCalculateEmissionReward(prevHeight, currentHeight) || distributableAmount == 0 {
