@@ -56,6 +56,13 @@ func (r *InternalEmissionReward) GetRewardRecipientsMap() *RewardRecipientsMap {
 	return r.rewardRecipientsMap
 }
 
+func (r *InternalEmissionReward) GetOrCreateRewardRecipientsMap() *RewardRecipientsMap {
+	if r.rewardRecipientsMap == nil {
+		r.rewardRecipientsMap = NewRewardRecipientMap()
+	}
+	return r.rewardRecipientsMap
+}
+
 func (r *InternalEmissionReward) GetRewardTotalAmount() uint64 {
 	return r.rewardTotalAmount
 }
@@ -266,6 +273,24 @@ func (r *InternalEmissionReward) distributeRewardToStakers(poolPath string, pool
 		}
 		// Calculate Warmup Reward
 		warmupAmount, warmupPenalty := computeInternalWarmUpRewardAmount(currentHeight, stakedHeight+1, positionRewardAmount)
+		// TODO:
+		// 1. after refactoring is completed, should be removed
+		internalWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
+		if !exist {
+			positionsInternalWarmUpAmount[tokenId] = warmUpAmount{}
+		}
+		internalWarmUpAmount.full30 += warmUpReward.give30 + warmUpReward.left30
+		internalWarmUpAmount.give30 += warmUpReward.give30
+		internalWarmUpAmount.left30 += warmUpReward.left30
+		internalWarmUpAmount.full50 += warmUpReward.give50 + warmUpReward.left50
+		internalWarmUpAmount.give50 += warmUpReward.give50
+		internalWarmUpAmount.left50 += warmUpReward.left50
+		internalWarmUpAmount.full70 += warmUpReward.give70 + warmUpReward.left70
+		internalWarmUpAmount.give70 += warmUpReward.give70
+		internalWarmUpAmount.left70 += warmUpReward.left70
+		internalWarmUpAmount.full100 += warmUpReward.full100
+		positionsInternalWarmUpAmount[tokenId] = internalWarmUpAmount
+		warmUpReward = warmUpAmount{}
 
 		// Update Reward Information
 		inRangePositionReward := poolLiquidity.GetInRangePositionReward(tokenId)

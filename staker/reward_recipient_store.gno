@@ -140,11 +140,15 @@ func (r *RewardRecipientsMap) GenerateRewardRecipients(depositList map[uint64]De
 		if !isExistPoolTiers(poolPath) {
 			continue
 		}
-		// 3. get position liquidity
+		// 3. already exist in the pool, skip
+		if r.GetPoolLiquidity(poolPath) != nil && r.GetPoolLiquidity(poolPath).GetInRangeLiquidity(tokenId) != nil {
+			continue
+		}
+		// 4. get position liquidity
 		positionLiquidity := pn.PositionGetPositionLiquidity(tokenId)
-		// 4. get staked block height of the position
+		// 5. get staked block height of the position
 		positionStakedHeight := deposit.stakeHeight
-		// 5. update liquidity
+		// 6. update liquidity
 		r.UpdatePoolLiquidity(poolPath, tokenId, positionLiquidity, positionStakedHeight)
 	}
 }

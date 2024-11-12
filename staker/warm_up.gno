@@ -244,10 +244,46 @@ func (wc *WarmUpCalculator) compute(curHeight int64, lastHeight int64, amount ui
 		lastSectionReward := lastSectionAmount * uint64(lastRewardRatio) / 100
 
 		reward = curSectionReward + lastSectionReward
+		//TODO :
+		// 1. after refactoring is completed, should be removed
+		switch wc.GetCurrentSection() {
+		case WarmUpSection30:
+			warmUpReward.give30 += reward
+			warmUpReward.left30 += amount - reward
+		case WarmUpSection50:
+			warmUpReward.give30 += lastSectionReward
+			warmUpReward.left30 += lastSectionAmount - lastSectionReward
+			warmUpReward.give50 += curSectionReward
+			warmUpReward.left50 += curSectionAmount - curSectionReward
+		case WarmUpSection70:
+			warmUpReward.give50 += lastSectionReward
+			warmUpReward.left50 += lastSectionAmount - lastSectionReward
+			warmUpReward.give70 += curSectionReward
+			warmUpReward.left70 += curSectionAmount - curSectionReward
+		case WarmUpSection100:
+			warmUpReward.give70 += lastSectionReward
+			warmUpReward.left70 += lastSectionAmount - lastSectionReward
+			warmUpReward.full100 += curSectionReward
+		}
 	} else {
 		// warmupReward = amount * reward ratio for section / 100
 		warmUpRewardRatio := wc.GetWarmUpRewardRatio(wc.GetCurrentSection())
 		reward = amount * uint64(warmUpRewardRatio) / 100
+		//TODO :
+		// 1. after refactoring is completed, should be removed
+		switch wc.GetCurrentSection() {
+		case WarmUpSection30:
+			warmUpReward.give30 += reward
+			warmUpReward.left30 += amount - reward
+		case WarmUpSection50:
+			warmUpReward.give50 += reward
+			warmUpReward.left50 += amount - reward
+		case WarmUpSection70:
+			warmUpReward.give70 += reward
+			warmUpReward.left70 += amount - reward
+		case WarmUpSection100:
+			warmUpReward.full100 += reward
+		}
 	}
 	penalty = amount - reward
 	return reward, penalty
