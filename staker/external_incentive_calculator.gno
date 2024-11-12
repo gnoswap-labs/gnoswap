@@ -57,9 +57,11 @@ func (ec *ExternalCalculator) process(ictvId string, ictv ExternalIncentive) {
 		if ec.must(tokId, ictvId, ictv) {
 			blockPassed := ec.getBlockPassed(tokId, ictvId, ictv)
 			ec.updatePosition(tokId, ictvId, ictv, blockPassed)
+
+			rewardMathComputeExternalRewardAmount2(tokId, ictvId)
+			positionsExternalLastCalculatedHeight[tokId][ictvId] = ec.height
 		}
 	}
-	externalLastCalculatedTimestamp[ictvId] = ec.now
 }
 
 // must determines if a position should receive rewards at this calculation cycle.
