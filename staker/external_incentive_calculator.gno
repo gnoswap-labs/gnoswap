@@ -40,6 +40,7 @@ func (ec *ExternalCalculator) calculate(ictvs ExternalIncentiveMap) {
 		}
 
 		ec.process(id, ictv)
+		externalLastCalculatedTimestamp[id] = ec.now
 	}
 }
 
