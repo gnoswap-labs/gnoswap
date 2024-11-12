@@ -233,9 +233,6 @@ func (r *InternalEmissionReward) DistributeRewardToEachPools(prevAddr string, pr
 			lastCalculatedBalance -= poolAmount
 			NewRewardAmount := poolMap.GetPoolRewardAmount(poolPath) - poolAmount
 			poolMap.SetPoolRewardAmount(poolPath, NewRewardAmount)
-			println(" > Transfer to Community pool : ", poolPath)
-			println(" > Sent Amount:", poolAmount)
-			println(" > Left Amount:", poolMap.GetPoolRewardAmount(poolPath))
 		}
 	}
 
