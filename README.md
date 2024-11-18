@@ -82,7 +82,7 @@ To set up GnoSwap contracts in Gno Core, follow these steps:
 
    ```bash
    # make some directory
-   mkdir -p $WORKDIR/gno/examples/gno.land/r/gnoswap/v2
+   mkdir -p $WORKDIR/gno/examples/gno.land/r/gnoswap/v1
    mkdir -p $WORKDIR/gno/examples/gno.land/p/gnoswap
 
    # copy grc20 tokens
@@ -92,10 +92,10 @@ To set up GnoSwap contracts in Gno Core, follow these steps:
    cp -R _deploy/p/gnoswap/* $WORKDIR/gno/examples/gno.land/p/gnoswap
 
    # copy gnoswap base realms ( includes common logic, variables and consts )
-   cp -R _deploy/r/gnoswap/* $WORKDIR/gno/examples/gno.land/r/gnoswap/v2
+   cp -R _deploy/r/gnoswap/* $WORKDIR/gno/examples/gno.land/r/gnoswap/v1
 
    # copy gnoswap realms
-   cp -R community_pool emission pool position protocol_fee router staker $WORKDIR/gno/examples/gno.land/r/gnoswap/v2
+   cp -R community_pool emission pool position protocol_fee router staker $WORKDIR/gno/examples/gno.land/r/gnoswap/v1
    ```
 
 3. Move all test cases into its own directory:
@@ -103,7 +103,7 @@ To set up GnoSwap contracts in Gno Core, follow these steps:
 Move the test cases for each contract to their respective directories. It's not necessary to move all tests; you can selectively move only the tests you need. However, files containing `VARS_HELPERS` in their name must be moved.
 
 ```bash
-cd $WORKDIR/gno/examples/gno.land/r/gnoswap/v2/{name}
+cd $WORKDIR/gno/examples/gno.land/r/gnoswap/v1/{name}
 mv tests/* .
 ```
 
