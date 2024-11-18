@@ -98,6 +98,20 @@ func (p *poolInput) wrap() (string, string) {
 	return p.token0Path, p.token1Path
 }
 
+func (p *poolInput) filterValidTokenPaths() (string, string, error) {
+	if p.isSameTokenPath() {
+		return "", "", errDuplicateTokenInPool
+	}
+
+	token0Path, token1Path := p.wrap()
+
+	if !p.isInOrder() {
+		return "", "", errTokenSortOrder
+	}
+
+	return token0Path, token1Path, nil
+}
+
 func (p *poolInput) Token0Path() string {
 	return p.token0Path
 }
@@ -134,24 +148,14 @@ func CreatePool(
 
 	poolInfo := newPoolInput(token0Path, token1Path, fee, _sqrtPriceX96)
 
-	if poolInfo.isSameTokenPath() {
-		panic(addDetailToError(
-			errDuplicateTokenInPool,
-			ufmt.Sprintf("pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)", token0Path, token1Path),
-		))
-	}
-
-	token0Path, token1Path = poolInfo.wrap()
-
-	if !poolInfo.isInOrder() {
-		panic(addDetailToError(
-			errTokenSortOrder,
-			ufmt.Sprintf("pool_manager.gno__CreatePool() || expected token0Path(%s) < token1Path(%s)", token0Path, token1Path),
-		))
+	token0Path, token1Path, err := poolInfo.filterValidTokenPaths()
+	if err != nil {
+		panic(err)
 	}
 
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 
+	// TODO: make this as a parameter
 	prevAddr, prevRealm := getPrev()
 
 	// check whether the pool already exist
@@ -164,6 +168,7 @@ func CreatePool(
 	}
 
 	gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(consts.PROTOCOL_FEE_ADDR), poolCreationFee)
+
 	std.Emit(
 		"PoolCreationFee",
 		"prevAddr", prevAddr,
@@ -186,17 +191,6 @@ func CreatePool(
 		"sqrtPriceX96", _sqrtPriceX96,
 		"internal_poolPath", poolPath,
 	)
-}
-
-func wrapTokenPaths(token0Path, token1Path string) (string, string) {
-	if token0Path == consts.GNOT {
-		token0Path = consts.WRAPPED_WUGNOT
-	}
-	if token1Path == consts.GNOT {
-		token1Path = consts.WRAPPED_WUGNOT
-	}
-
-	return token0Path, token1Path
 }
 
 // DoesPoolPathExist checks if a pool exists for the given poolPath.
@@ -238,7 +232,9 @@ func GetPoolFromPoolPath(poolPath string) *Pool {
 // GetPoolPath generates a poolPath from the given token paths and fee.
 // The poolPath is constructed by joining the token paths and fee with colons.
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
-	if token1Path < token0Path {
+	// TODO: this check is not unnecessary, if we are sure that
+	// all the token paths in the pool are sorted in alphabetical order.
+	if strings.Compare(token1Path, token0Path) < 0 {
 		token0Path, token1Path = token1Path, token0Path
 	}
 
