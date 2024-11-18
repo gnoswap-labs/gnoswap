@@ -40,12 +40,12 @@ TX_EXPIRE := 9999999999
 
 MAKEFILE := $(shell realpath $(firstword $(MAKEFILE_LIST)))
 
-GNOLAND_RPC_URL ?= http://localhost:26657
-CHAINID ?= dev
+# GNOLAND_RPC_URL ?= http://localhost:26657
+# CHAINID ?= dev
 
 
-# GNOLAND_RPC_URL ?= https://dev.rpc.gnoswap.io:443
-# CHAINID ?= dev.gnoswap
+GNOLAND_RPC_URL ?= https://dev.rpc.gnoswap.io:443
+CHAINID ?= dev.gnoswap
 
 ROOT_DIR:=$(shell dirname $(MAKEFILE))/../../
 
@@ -68,7 +68,7 @@ deploy-gnoswap-realms: deploy-xgns deploy-emission deploy-pool deploy-position d
 
 ### TEST AFTER INIT
 .PHONY: init-test
-init-test: test-pool-create test-position-mint test-stake-token 
+init-test: test-position-mint test-stake-token 
 
 .PHONY: test-pool-create
 test-pool-create: pool-create-bar-baz pool-create-foo-qux
@@ -185,7 +185,7 @@ deploy-package-pool:
 # deploy common realms
 deploy-consts:
 	$(info ************ deploy consts ************)
-	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_deploy/r/gnoswap/consts -pkgpath gno.land/r/gnoswap/v2/consts -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx addpkg -pkgdir $(ROOT_DIR)/_deploy/r/gnoswap/consts -pkgpath gno.land/r/gnoswap/v1/consts -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
 deploy-common:

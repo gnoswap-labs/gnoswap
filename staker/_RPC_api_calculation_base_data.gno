@@ -5,7 +5,7 @@ import (
 	"std"
 	"time"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
 	en "gno.land/r/gnoswap/v1/emission"
 	pn "gno.land/r/gnoswap/v1/position"

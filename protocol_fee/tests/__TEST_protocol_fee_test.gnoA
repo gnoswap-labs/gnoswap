@@ -11,7 +11,7 @@ import (
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/qux"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 func TestDistributeProtocolFee(t *testing.T) {

@@ -17,7 +17,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/gns"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
 	cp "gno.land/r/gnoswap/v1/community_pool"
 	gs "gno.land/r/gnoswap/v1/gov/staker"

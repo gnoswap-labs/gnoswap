@@ -12,7 +12,7 @@ import (
 
 	en "gno.land/r/gnoswap/v1/emission"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
 	// grc20 tokens
 	"gno.land/r/onbloc/bar"

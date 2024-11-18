@@ -6,7 +6,7 @@ import (
 
 	plp "gno.land/p/gnoswap/pool"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 // toAscendingOrder checkes if the first value is greater than

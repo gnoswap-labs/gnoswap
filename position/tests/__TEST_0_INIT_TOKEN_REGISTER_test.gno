@@ -19,7 +19,7 @@ import (
 
 	"gno.land/r/onbloc/usdc"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
 	pusers "gno.land/p/demo/users"
 

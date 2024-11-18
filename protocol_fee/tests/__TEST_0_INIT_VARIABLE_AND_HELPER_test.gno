@@ -3,7 +3,7 @@ package protocol_fee
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 var (

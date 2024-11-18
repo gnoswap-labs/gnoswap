@@ -7,7 +7,7 @@ require (
 	gno.land/p/gnoswap/uint256 v0.0.0-latest
 	gno.land/r/demo/wugnot v0.0.0-latest
 	gno.land/r/gnoswap/v1/common v0.0.0-latest
-	gno.land/r/gnoswap/v2/consts v0.0.0-latest
+	gno.land/r/gnoswap/v1/consts v0.0.0-latest
 	gno.land/r/gnoswap/v1/emission v0.0.0-latest
 	gno.land/r/gnoswap/v1/pool v0.0.0-latest
 	gno.land/r/gnoswap/v1/staker v0.0.0-latest
