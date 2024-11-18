@@ -3,6 +3,8 @@ package pool
 import (
 	"std"
 
+	"gno.land/r/gnoswap/v2/common"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -14,16 +16,44 @@ type Slot0 struct {
 	unlocked     bool       // whether the pool is currently locked to reentrancy
 }
 
+func newSlot0(
+	sqrtPriceX96 *u256.Uint,
+	tick int32,
+	feeProtocol uint8,
+	unlocked bool,
+) Slot0 {
+	return Slot0{
+		sqrtPriceX96: sqrtPriceX96,
+		tick:         tick,
+		feeProtocol:  feeProtocol,
+		unlocked:     unlocked,
+	}
+}
+
 type Balances struct {
 	// current balance of the pool in token0/token1
 	token0 *u256.Uint
 	token1 *u256.Uint
 }
 
+func newBalances() Balances {
+	return Balances{
+		token0: u256.Zero(),
+		token1: u256.Zero(),
+	}
+}
+
 type ProtocolFees struct {
 	// current protocol fees of the pool in token0/token1
 	token0 *u256.Uint
 	token1 *u256.Uint
+}
+
+func newProtocolFees() ProtocolFees {
+	return ProtocolFees{
+		token0: u256.Zero(),
+		token1: u256.Zero(),
+	}
 }
 
 type ModifyPositionParams struct {
@@ -172,4 +202,27 @@ type Pool struct {
 	tickBitmaps TickBitmaps // maps tick index to tick bitmap
 
 	positions Positions // maps the key (caller, lower tick, upper tick) to a unique position
+}
+
+func newPool(poolInfo *poolInput) *Pool {
+	maxLiquidityPerTick := tickTickSpacingToMaxLiquidityPerTick(poolInfo.tickSpacing)
+	tick := common.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
+	slot0 := newSlot0(poolInfo.SqrtPriceX96(), tick, slot0FeeProtocol, true)
+
+	return &Pool{
+		token0Path:           poolInfo.Token0Path(),
+		token1Path:           poolInfo.Token1Path(),
+		balances:             newBalances(),
+		fee:                  poolInfo.Fee(),
+		tickSpacing:          poolInfo.TickSpacing(),
+		maxLiquidityPerTick:  maxLiquidityPerTick,
+		slot0:                slot0,
+		feeGrowthGlobal0X128: u256.Zero(),
+		feeGrowthGlobal1X128: u256.Zero(),
+		protocolFees:         newProtocolFees(),
+		liquidity:            u256.Zero(),
+		ticks:                Ticks{},
+		tickBitmaps:          TickBitmaps{},
+		positions:            Positions{},
+	}
 }
