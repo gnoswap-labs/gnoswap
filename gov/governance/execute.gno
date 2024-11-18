@@ -2,6 +2,7 @@ package governance
 
 import (
 	"std"
+	"strconv"
 	"strings"
 	"time"
 
@@ -472,8 +473,11 @@ func executeParameterChange(msgs []string) {
 }
 
 func handleCommunityPoolTransferToken(params []string) (string, std.Address, uint64) {
-
-	return params[0], std.Address(params[1]), parseUint(params[2], 10, 64)
+	p2, err := strconv.ParseUint(params[2], 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return params[0], std.Address(params[1]), p2
 }
 
 func handleEmissionChangeDistributionPct(params []string) (
@@ -482,56 +486,125 @@ func handleEmissionChangeDistributionPct(params []string) (
 	int, uint64,
 	int, uint64,
 ) {
-	target01 := strToInt(params[0])
-	pct01 := parseUint(params[1], 10, 64)
+	target01, err := strconv.ParseInt(params[0], 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	pct01, err := strconv.ParseUint(params[1], 10, 64)
+	if err != nil {
+		panic(err)
+	}
 
 	target02 := strToInt(params[2])
-	pct02 := parseUint(params[3], 10, 64)
+	pct02, err := strconv.ParseUint(params[3], 10, 64)
+	if err != nil {
+		panic(err)
+	}
 
 	target03 := strToInt(params[4])
-	pct03 := parseUint(params[5], 10, 64)
+	pct03, err := strconv.ParseUint(params[5], 10, 64)
+	if err != nil {
+		panic(err)
+	}
 
 	target04 := strToInt(params[6])
-	pct04 := parseUint(params[7], 10, 64)
+	pct04, err := strconv.ParseUint(params[7], 10, 64)
+	if err != nil {
+		panic(err)
+	}
 
-	return target01, pct01, target02, pct02, target03, pct03, target04, pct04
+	return int(target01), pct01, target02, pct02, target03, pct03, target04, pct04
 }
 
 func handleSetAvgBlockTimeInMs(params []string) int64 {
-	return int64(parseUint(params[0], 10, 64))
+	res, err := strconv.ParseInt(params[0], 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return res
 }
 
 func handleGovernanceReconfigure(params []string) (
 	uint64, uint64, uint64, uint64, uint64, uint64, uint64,
 ) {
-	votingStartDelay := parseUint(params[0], 10, 64)
-	votingPeriod := parseUint(params[1], 10, 64)
-	votingWeightSmoothingDuration := parseUint(params[2], 10, 64)
-	quorum := parseUint(params[3], 10, 64)
-	proposalCreationThreshold := parseUint(params[4], 10, 64)
-	executionDelay := parseUint(params[5], 10, 64)
-	executionWindow := parseUint(params[6], 10, 64)
+	votingStartDelay, err := strconv.ParseUint(params[0], 10, 64)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	votingPeriod, err := strconv.ParseUint(params[1], 10, 64)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	votingWeightSmoothingDuration, err := strconv.ParseUint(params[2], 10, 64)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	quorum, err := strconv.ParseUint(params[3], 10, 64)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	proposalCreationThreshold, err := strconv.ParseUint(params[4], 10, 64)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	executionDelay, err := strconv.ParseUint(params[5], 10, 64)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	executionWindow, err := strconv.ParseUint(params[6], 10, 64)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	return votingStartDelay, votingPeriod, votingWeightSmoothingDuration, quorum, proposalCreationThreshold, executionDelay, executionWindow
 }
 
 func handlePoolSetFeeProtocol(params []string) (uint8, uint8) {
-	feeProtocol0 := parseUint(params[0], 10, 64)
-	feeProtocol1 := parseUint(params[1], 10, 64)
+	feeProtocol0, err := strconv.ParseUint(params[0], 10, 64)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	feeProtocol1, err := strconv.ParseUint(params[1], 10, 64)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	return uint8(feeProtocol0), uint8(feeProtocol1)
 }
 
 func handleSingleUint64(params []string) uint64 {
-	return parseUint(params[0], 10, 64)
+	res, err := strconv.ParseUint(params[0], 10, 64)
+	if err != nil {
+		panic(err.Error())
+	}
+	return res
 }
 
 func handlePoolPathTier(params []string) (string, uint64) {
-	return params[0], parseUint(params[1], 10, 64)
+	res, err := strconv.ParseUint(params[1], 10, 64)
+	if err != nil {
+		panic(err.Error())
+	}
+	return params[0], res
 }
 
 func handleTwoInt64(params []string) (int64, int64) {
-	return int64(parseUint(params[0], 10, 64)), int64(parseUint(params[1], 10, 64))
+	res0, err := strconv.ParseInt(params[0], 10, 64)
+	if err != nil {
+		panic(err.Error())
+	}
+	res1, err := strconv.ParseInt(params[1], 10, 64)
+	if err != nil {
+		panic(err.Error())
+	}
+	return res0, res1
 }
 
 func handleSingleBool(params []string) bool {
