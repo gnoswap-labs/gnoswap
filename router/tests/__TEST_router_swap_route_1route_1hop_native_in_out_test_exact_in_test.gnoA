@@ -7,18 +7,18 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v2/consts"
 
-	pl "gno.land/r/gnoswap/v2/pool"
-	pn "gno.land/r/gnoswap/v2/position"
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/qux"
 
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 func TestSwapRouteSingleRouteSinlgeHopWithNativeInAndOut(t *testing.T) {
@@ -86,7 +86,7 @@ func testPositionMint(t *testing.T) {
 		wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // wrap / unwrap
 
 		// send coin
-		std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 1000009}}) // without issuing, it will fail `source address g1vsm68lq9cpn7x507s6gh59anmx86kxfhzyszu2 does not exist`
+		std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 1000009}}) // without issuing, it will fail `source address g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5 does not exist`
 		std.TestSetOrigSend(std.Coins{{"ugnot", 1000009}}, nil)
 
 		tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.GNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)

@@ -3,9 +3,9 @@ package staker
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gns"
 
-	en "gno.land/r/gnoswap/v2/emission"
+	en "gno.land/r/gnoswap/v1/emission"
 )
 
 // GetTotalStaked returns the total amount of GNS staked.

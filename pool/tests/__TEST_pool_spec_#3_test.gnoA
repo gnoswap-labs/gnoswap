@@ -13,8 +13,8 @@ import (
 
 	"gno.land/r/gnoswap/v2/consts"
 
-	"gno.land/r/gnoswap/v2/gns"
-	pl "gno.land/r/gnoswap/v2/pool"
+	"gno.land/r/gnoswap/v1/gns"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 var (

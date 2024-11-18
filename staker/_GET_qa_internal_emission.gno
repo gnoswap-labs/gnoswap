@@ -6,10 +6,10 @@ import (
 
 	"gno.land/p/demo/json"
 
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/gnoswap/v2/consts"
-	"gno.land/r/gnoswap/v2/gns"
 
-	en "gno.land/r/gnoswap/v2/emission"
+	en "gno.land/r/gnoswap/v1/emission"
 )
 
 // DEBUG INTERNAL (GNS EMISSION)

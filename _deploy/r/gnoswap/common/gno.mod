@@ -1,4 +1,4 @@
-module gno.land/r/gnoswap/v2/common
+module gno.land/r/gnoswap/v1/common
 
 require (
 	gno.land/p/demo/ufmt v0.0.0-latest

@@ -14,7 +14,7 @@ import (
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/obl"
 
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 var (

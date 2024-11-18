@@ -6,13 +6,13 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v2/consts"
 
-	pl "gno.land/r/gnoswap/v2/pool"
+	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 func TestCoinMintSwapBurn(t *testing.T) {
@@ -81,7 +81,7 @@ func testMintPosition(t *testing.T) {
 		position := positions[tokenId]
 		uassert.Equal(t, position.nonce.ToString(), "0")
 		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
-		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
+		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
 		uassert.Equal(t, position.tickLower, int32(-8000))
 		uassert.Equal(t, position.tickUpper, int32(8000))
 		uassert.Equal(t, position.liquidity.ToString(), "151645407")
@@ -136,7 +136,7 @@ func testSwap(t *testing.T) {
 		position := positions[uint64(1)]
 		uassert.Equal(t, position.nonce.ToString(), "0")
 		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
-		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
+		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
 		uassert.Equal(t, position.tickLower, int32(-8000))
 		uassert.Equal(t, position.tickUpper, int32(8000))
 		uassert.Equal(t, position.liquidity.ToString(), "151645407")

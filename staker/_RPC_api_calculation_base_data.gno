@@ -7,8 +7,8 @@ import (
 
 	"gno.land/r/gnoswap/v2/consts"
 
-	en "gno.land/r/gnoswap/v2/emission"
-	pn "gno.land/r/gnoswap/v2/position"
+	en "gno.land/r/gnoswap/v1/emission"
+	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"

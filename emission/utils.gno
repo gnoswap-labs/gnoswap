@@ -4,7 +4,7 @@ import (
 	"std"
 
 	pusers "gno.land/p/demo/users"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 func a2u(addr std.Address) pusers.AddressOrName {

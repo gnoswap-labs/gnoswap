@@ -9,7 +9,7 @@ import (
 
 	"gno.land/r/gnoswap/v2/consts"
 
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 var (
@@ -51,7 +51,7 @@ func TestTransferToken(t *testing.T) {
 	t.Run("panic if not governance", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			"[GNOSWAP-COMMUNITY_POOL-001] caller has no permission || community_pool.gno__TransferToken() || only governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can transfer token, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm",
+			"[GNOSWAP-COMMUNITY_POOL-001] caller has no permission || community_pool.gno__TransferToken() || only governance(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) can transfer token, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm",
 			func() {
 				TransferToken(consts.GNS_PATH, dummyAddr, 1)
 			},

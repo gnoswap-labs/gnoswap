@@ -7,15 +7,15 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	pl "gno.land/r/gnoswap/v2/pool"
-	pn "gno.land/r/gnoswap/v2/position"
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gns"
 
-	"gno.land/r/gnoswap/v2/gnft"
+	"gno.land/r/gnoswap/v1/gnft"
 
-	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v2/consts"
 )
 
@@ -40,7 +40,7 @@ func testInit(t *testing.T) {
 		startTimestamp: time.Now().Unix(),
 	}
 
-	poolTiers["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500"] = InternalTier{
+	poolTiers["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500"] = InternalTier{
 		tier:           2,
 		startTimestamp: time.Now().Unix(),
 	}
@@ -188,7 +188,7 @@ func testCreateExternalIncentive(t *testing.T) {
 		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
 
 		CreateExternalIncentive(
-			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500", // targetPoolPath
+			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500", // targetPoolPath
 			consts.GNOT,                 // rewardToken
 			"10000000000",               // rewardAmount
 			1234569600,                  // startTimestamp
@@ -282,7 +282,7 @@ func testEndExternalIncentive(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		EndExternalIncentive(
 			admin,
-			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500",
+			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500",
 			consts.WRAPPED_WUGNOT,
 			1234569600,                  // startTimestamp
 			1234569600+TIMESTAMP_90DAYS, // endTimestamp
@@ -295,6 +295,6 @@ func testEndExternalIncentive(t *testing.T) {
 		uassert.Equal(t, ugnotBalanceOf(admin), uint64(10099151818)) // always refund
 
 		uassert.Equal(t, len(incentives), 0)
-		uassert.Equal(t, len(poolIncentives["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500"]), 0)
+		uassert.Equal(t, len(poolIncentives["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500"]), 0)
 	})
 }

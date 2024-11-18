@@ -63,7 +63,7 @@ func TestChangeDistributionPct(t *testing.T) {
 	t.Run("panic if not governance", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			`[GNOSWAP-EMISSION-001] caller has no permission || emission.gno__ChangeDistributionPct() || only governance(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can change distribution percentages, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
+			`[GNOSWAP-EMISSION-001] caller has no permission || emission.gno__ChangeDistributionPct() || only governance(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) can change distribution percentages, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
 			func() {
 				ChangeDistributionPct(1, 0, 2, 0, 3, 0, 4, 0)
 			},

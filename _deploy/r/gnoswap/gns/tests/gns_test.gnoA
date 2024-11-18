@@ -19,7 +19,7 @@ func TestMint(t *testing.T) {
 
 	t.Run("panic if not emission", func(t *testing.T) {
 		uassert.PanicsWithMessage(t,
-			`[GNOSWAP-GNS-001] caller has no permission || only emission contract(g1mfvpsj55gssep3wkt2t04d6dc3yfs9py5qquft) can call Mint, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
+			`[GNOSWAP-GNS-001] caller has no permission || only emission contract(g10xg6559w9e93zfttlhvdmaaa0er3zewcr7nh20) can call Mint, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
 			func() { Mint(pusers.AddressOrName(testutils.TestAddress("dummy"))) })
 	})
 

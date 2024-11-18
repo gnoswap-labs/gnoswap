@@ -5,12 +5,12 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v2/gov/xgns"
+	"gno.land/r/gnoswap/v1/gov/xgns"
 
-	en "gno.land/r/gnoswap/v2/emission"
-	pf "gno.land/r/gnoswap/v2/protocol_fee"
+	en "gno.land/r/gnoswap/v1/emission"
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
 
-	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	u256 "gno.land/p/gnoswap/uint256"

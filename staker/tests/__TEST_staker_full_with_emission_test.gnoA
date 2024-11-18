@@ -7,16 +7,16 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	pl "gno.land/r/gnoswap/v2/pool"
-	pn "gno.land/r/gnoswap/v2/position"
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
 
-	"gno.land/r/gnoswap/v2/gnft"
+	"gno.land/r/gnoswap/v1/gnft"
 
 	"gno.land/r/gnoswap/v2/consts"
 )
@@ -79,7 +79,7 @@ func testCreatePool(t *testing.T) {
 func testPositionMintPos01Tier01(t *testing.T) {
 	t.Run("mint position 01, gns:wugnot:3000", func(t *testing.T) {
 		// mint position in tier 1 pool
-		// gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000
+		// gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000
 
 		std.TestSetRealm(adminRealm)
 		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -87,7 +87,7 @@ func testPositionMintPos01Tier01(t *testing.T) {
 		std.TestSkipHeights(2)
 
 		lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-			"gno.land/r/gnoswap/v2/gns", // token0
+			"gno.land/r/gnoswap/v1/gns", // token0
 			"gno.land/r/demo/wugnot",    // token1
 			fee3000,                     // fee
 			int32(1020),                 // tickLower
@@ -292,7 +292,7 @@ func testCollectReward01(t *testing.T) {
 		CollectReward(1, false)
 		std.TestSkipHeights(1)
 
-		uassert.Equal(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000"], uint64(0))
+		uassert.Equal(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"], uint64(0))
 		uassert.Equal(t, positionGns[1], uint64(0))
 	})
 }
@@ -310,14 +310,14 @@ func testUnstakeToken01(t *testing.T) {
 		uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(2016053085))
 		uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(1478310461))
 
-		uassert.Equal(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000"], uint64(0))
+		uassert.Equal(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"], uint64(0))
 		uassert.Equal(t, positionGns[1], uint64(0))
 	})
 }
 
 func testUnstakeToken02(t *testing.T) {
 	t.Run("unstake token 02", func(t *testing.T) {
-		uassert.Equal(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000"], uint64(0))
+		uassert.Equal(t, poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"], uint64(0))
 		uassert.Equal(t, positionGns[1], uint64(0))
 
 		uassert.Equal(t, poolGns["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"], uint64(16053082))

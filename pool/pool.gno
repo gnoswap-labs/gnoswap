@@ -7,7 +7,7 @@ import (
 
 	plp "gno.land/p/gnoswap/pool"
 
-	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v2/consts"
 
 	i256 "gno.land/p/gnoswap/int256"

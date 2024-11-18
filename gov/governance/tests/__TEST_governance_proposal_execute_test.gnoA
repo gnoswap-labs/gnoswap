@@ -7,15 +7,15 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v2/consts"
-	gns "gno.land/r/gnoswap/v2/gns"
+	gns "gno.land/r/gnoswap/v1/gns"
 
-	cn "gno.land/r/gnoswap/v2/common"
-	en "gno.land/r/gnoswap/v2/emission"
-	gs "gno.land/r/gnoswap/v2/gov/staker"
-	pl "gno.land/r/gnoswap/v2/pool"
-	pf "gno.land/r/gnoswap/v2/protocol_fee"
-	rr "gno.land/r/gnoswap/v2/router"
-	sr "gno.land/r/gnoswap/v2/staker"
+	cn "gno.land/r/gnoswap/v1/common"
+	en "gno.land/r/gnoswap/v1/emission"
+	gs "gno.land/r/gnoswap/v1/gov/staker"
+	pl "gno.land/r/gnoswap/v1/pool"
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
+	rr "gno.land/r/gnoswap/v1/router"
+	sr "gno.land/r/gnoswap/v1/staker"
 )
 
 func init() {
@@ -43,7 +43,7 @@ func TestProposeParameterChange_Emission_ChangeDistributionPct(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/emission*EXE*ChangeDistributionPct*EXE*1,7000,2,1500,3,1000,4,500",
+		"gno.land/r/gnoswap/v1/emission*EXE*ChangeDistributionPct*EXE*1,7000,2,1500,3,1000,4,500",
 	)
 
 	std.TestSkipHeights(5)
@@ -70,7 +70,7 @@ func TestProposeParameterChange_GNS_SetAvgBlockTimeInMs(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs*EXE*5000",
+		"gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*5000",
 	)
 
 	std.TestSkipHeights(5)
@@ -93,7 +93,7 @@ func TestProposeParameterChange_GOV_reconfigure(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/gov/governance*EXE*Reconfigure*EXE*123,456,789,1234,5678,12345,67890",
+		"gno.land/r/gnoswap/v1/gov/governance*EXE*Reconfigure*EXE*123,456,789,1234,5678,12345,67890",
 	)
 
 	std.TestSkipHeights(5)
@@ -132,7 +132,7 @@ func TestProposeParameterChange_Pool_SetFeeProtocol(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/pool*EXE*SetFeeProtocol*EXE*4,4",
+		"gno.land/r/gnoswap/v1/pool*EXE*SetFeeProtocol*EXE*4,4",
 	)
 
 	std.TestSkipHeights(5)
@@ -155,7 +155,7 @@ func TestProposeParameterChange_Pool_SetPoolCreationFee(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/pool*EXE*SetPoolCreationFee*EXE*500",
+		"gno.land/r/gnoswap/v1/pool*EXE*SetPoolCreationFee*EXE*500",
 	)
 
 	std.TestSkipHeights(5)
@@ -178,7 +178,7 @@ func TestProposeParameterChange_Pool_SetWithdrawalFee(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/pool*EXE*SetWithdrawalFee*EXE*600",
+		"gno.land/r/gnoswap/v1/pool*EXE*SetWithdrawalFee*EXE*600",
 	)
 
 	std.TestSkipHeights(5)
@@ -201,7 +201,7 @@ func TestProposeParameterChange_ProtocolFee_SetDevOpsPct(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/protocol_fee*EXE*SetDevOpsPct*EXE*900",
+		"gno.land/r/gnoswap/v1/protocol_fee*EXE*SetDevOpsPct*EXE*900",
 	)
 
 	std.TestSkipHeights(5)
@@ -224,7 +224,7 @@ func TestProposeParameterChange_Router_SetSwapFee(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/router*EXE*SetSwapFee*EXE*400",
+		"gno.land/r/gnoswap/v1/router*EXE*SetSwapFee*EXE*400",
 	)
 
 	std.TestSkipHeights(5)
@@ -247,7 +247,7 @@ func TestProposeParameterChange_Staker_SetDepositGnsAmount(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/staker*EXE*SetDepositGnsAmount*EXE*400",
+		"gno.land/r/gnoswap/v1/staker*EXE*SetDepositGnsAmount*EXE*400",
 	)
 
 	std.TestSkipHeights(5)
@@ -270,7 +270,7 @@ func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/staker*EXE*SetPoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100,1",
+		"gno.land/r/gnoswap/v1/staker*EXE*SetPoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100,1",
 	)
 
 	std.TestSkipHeights(5)
@@ -288,8 +288,8 @@ func TestProposeParameterChange_Staker_SetPoolTier(t *testing.T) {
 
 		after := sr.GetPoolsWithTier()
 		uassert.Equal(t, len(after), 2)
-		uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
-		uassert.Equal(t, after[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_1")
+		uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000_1")
+		uassert.Equal(t, after[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100_1")
 	})
 }
 
@@ -301,7 +301,7 @@ func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/staker*EXE*ChangePoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100,3",
+		"gno.land/r/gnoswap/v1/staker*EXE*ChangePoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100,3",
 	)
 
 	std.TestSkipHeights(5)
@@ -314,8 +314,8 @@ func TestProposeParameterChange_Staker_ChangePoolTier(t *testing.T) {
 
 		after := sr.GetPoolsWithTier()
 		uassert.Equal(t, len(after), 2)
-		uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
-		uassert.Equal(t, after[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100_3")
+		uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000_1")
+		uassert.Equal(t, after[1], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100_3")
 	})
 }
 
@@ -327,7 +327,7 @@ func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/staker*EXE*RemovePoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:100",
+		"gno.land/r/gnoswap/v1/staker*EXE*RemovePoolTier*EXE*gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:100",
 	)
 
 	std.TestSkipHeights(5)
@@ -340,7 +340,7 @@ func TestProposeParameterChange_Staker_RemovePoolTier(t *testing.T) {
 
 		after := sr.GetPoolsWithTier()
 		uassert.Equal(t, len(after), 1)
-		uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000_1")
+		uassert.Equal(t, after[0], "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000_1")
 	})
 }
 
@@ -352,7 +352,7 @@ func TestProposeParameterChange_Staker_SetUnstakingFee(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/staker*EXE*SetUnstakingFee*EXE*200",
+		"gno.land/r/gnoswap/v1/staker*EXE*SetUnstakingFee*EXE*200",
 	)
 
 	std.TestSkipHeights(5)
@@ -375,7 +375,7 @@ func TestProposeParameterChange_Staker_SetWarmUp(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/staker*EXE*SetWarmUp*EXE*100,1000",
+		"gno.land/r/gnoswap/v1/staker*EXE*SetWarmUp*EXE*100,1000",
 	)
 
 	std.TestSkipHeights(5)
@@ -398,7 +398,7 @@ func TestProposeParameterChange_Common_SetHalt(t *testing.T) {
 		"test_title",
 		"test_description",
 		uint64(1),
-		"gno.land/r/gnoswap/v2/common*EXE*SetHalt*EXE*true",
+		"gno.land/r/gnoswap/v1/common*EXE*SetHalt*EXE*true",
 	)
 
 	std.TestSkipHeights(5)

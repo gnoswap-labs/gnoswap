@@ -5,9 +5,9 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	pl "gno.land/r/gnoswap/v2/pool"
+	pl "gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/r/gnoswap/v2/gnft"
+	"gno.land/r/gnoswap/v1/gnft"
 )
 
 // type Position

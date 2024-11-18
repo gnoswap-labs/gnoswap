@@ -6,7 +6,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 // DryMint simulates a mint and returns the amount0, amount1 that would be minted.

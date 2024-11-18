@@ -5,10 +5,10 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v2/consts"
 
-	en "gno.land/r/gnoswap/v2/emission"
+	en "gno.land/r/gnoswap/v1/emission"
 )
 
 var (

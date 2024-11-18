@@ -7,16 +7,16 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	pl "gno.land/r/gnoswap/v2/pool"
-	pn "gno.land/r/gnoswap/v2/position"
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
 
-	"gno.land/r/gnoswap/v2/gnft"
+	"gno.land/r/gnoswap/v1/gnft"
 
 	"gno.land/r/gnoswap/v2/consts"
 )
@@ -83,14 +83,14 @@ func testCreatePool(t *testing.T) {
 func testPositionMintPos01Tier01(t *testing.T) {
 	t.Run("mint position 01, gns:wugnot:3000", func(t *testing.T) {
 		// mint position in tier 1 pool
-		// gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000
+		// gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000
 		std.TestSetRealm(adminRealm)
 		gns.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 		std.TestSkipHeights(2)
 
 		lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-			"gno.land/r/gnoswap/v2/gns", // token0
+			"gno.land/r/gnoswap/v1/gns", // token0
 			"gno.land/r/demo/wugnot",    // token1
 			fee3000,                     // fee
 			int32(0),                    // tickLower
@@ -345,7 +345,7 @@ func testCollectReward01(t *testing.T) {
 		leftAmount := uint64(1)
 		expectedPoolAmount := token2Amount + token2Penalty + token3Amount + token3Penalty + leftAmount
 		uassert.Equal(t, expectedPoolAmount, poolGns["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"])
-		uassert.Equal(t, uint64(0), poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000"])
+		uassert.Equal(t, uint64(0), poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"])
 
 		rewardForUser := uint64(1884096693)
 		rewardForPenalty := uint64(807470014)
@@ -394,7 +394,7 @@ func testUnstakeToken01(t *testing.T) {
 		uassert.Equal(t, currGNSForStaker, gnsBalance(consts.STAKER_ADDR))                                                   // 1021404110
 		uassert.Equal(t, uint64(4013092071)+uint64(713470)+uint64(rewardForPenalty), gnsBalance(consts.COMMUNITY_POOL_ADDR)) // 4015410850
 
-		uassert.Equal(t, uint64(0), poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000"])
+		uassert.Equal(t, uint64(0), poolGns["gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"])
 		uassert.Equal(t, uint64(0), positionGns[1])
 
 		std.TestSkipHeights(1)
@@ -406,7 +406,7 @@ func testExternalIncentiveReward(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		gns.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX) // this includes depositGnsAmount
 		CreateExternalIncentive(
-			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000", // targetPoolPath string,
+			"gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000", // targetPoolPath string,
 			consts.GNS_PATH, // rewardToken string, // token path should be registered
 			"20000000",      // _rewardAmount string,
 			1234656000,
@@ -430,7 +430,7 @@ func testExternalIncentiveReward(t *testing.T) {
 		std.TestSkipHeights(gapHeight)
 
 		lpTokenId, liquidity, amount0, amount1 := pn.Mint(
-			"gno.land/r/gnoswap/v2/gns", // token0
+			"gno.land/r/gnoswap/v1/gns", // token0
 			"gno.land/r/demo/wugnot",    // token1
 			fee3000,                     // fee
 			int32(0),                    // tickLower
