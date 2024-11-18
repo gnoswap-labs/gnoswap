@@ -10,7 +10,6 @@ import (
 
 const (
 	MaxUint64 = 1<<64 - 1
-	uintSize  = 32 << (^uint(0) >> 63)
 )
 
 // Uint is represented as an array of 4 uint64, in little-endian order,

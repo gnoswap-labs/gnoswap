@@ -12,11 +12,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-const (
-	MaxUint64 = 1<<64 - 1
-	uintSize  = 32 << (^uint(0) >> 63)
-)
-
 func strToInt(str string) int {
 	res, err := strconv.Atoi(str)
 	if err != nil {
