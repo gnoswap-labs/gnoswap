@@ -522,7 +522,7 @@ func setFeeProtocol(
 	fee1Cond := feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10)
 	if !(fee0Cond && fee1Cond) {
 		panic(addDetailToError(
-			errInvalidPotocolFeePct,
+			errInvalidProtocolFeePct,
 			ufmt.Sprintf("pool.gno__setFeeProtocol() || expected (feeProtocol0(%d) == 0 || (feeProtocol0(%d) >= 4 && feeProtocol0(%d) <= 10)) && (feeProtocol1(%d) == 0 || (feeProtocol1(%d) >= 4 && feeProtocol1(%d) <= 10))", feeProtocol0, feeProtocol0, feeProtocol0, feeProtocol1, feeProtocol1, feeProtocol1),
 		))
 	}
