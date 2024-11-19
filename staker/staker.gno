@@ -344,17 +344,7 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 
 	rewardManger := getRewardManager()
 	internalEmission := rewardManger.GetInternalEmissionReward()
-	recipientsMap := internalEmission.GetRewardRecipientsMap()
-	poolLiquidity := recipientsMap.GetPoolLiquidity(deposit.targetPoolPath)
-	inRangeLiquidityMap := poolLiquidity.GetInRangeLiquidityMap()
-	totalLiquidity := poolLiquidity.GetTotalLiquidity()
-	inRangeLiquidity := poolLiquidity.GetInRangeLiquidity(tokenId)
-	totalLiquidity = totalLiquidity.Sub(totalLiquidity, inRangeLiquidity.liquidity)
-	delete(inRangeLiquidityMap, tokenId)
-	poolLiquidity.SetTotalLiquidity(totalLiquidity)
-	poolLiquidity.SetInRangeLiquidityMap(inRangeLiquidityMap)
-	recipientsMap.SetPoolLiquidity(deposit.targetPoolPath, poolLiquidity)
-	internalEmission.SetRewardRecipientsMap(recipientsMap)
+	internalEmission.RemoveInRangePosition(deposit.targetPoolPath, tokenId)
 	rewardManger.SetInternalEmissionReward(internalEmission)
 
 	// transfer NFT ownership to origin owner

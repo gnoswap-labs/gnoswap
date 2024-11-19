@@ -71,6 +71,17 @@ func (r *InternalEmissionReward) GetLeftAmount() uint64 {
 	return r.leftAmount
 }
 
+func (r *InternalEmissionReward) RemoveInRangePosition(poolPath string, tokenId uint64) {
+	recipientsMap := r.GetRewardRecipientsMap()
+	poolLiquidity := recipientsMap.GetPoolLiquidity(poolPath)
+	if poolLiquidity == nil {
+		return
+	}
+	poolLiquidity.RemoveInRangePosition(tokenId)
+	recipientsMap.SetPoolLiquidity(poolPath, poolLiquidity)
+	r.SetRewardRecipientsMap(recipientsMap)
+}
+
 func (r *InternalEmissionReward) SelectRewardPools(pools map[string]InternalTier) {
 	rewardPool := r.GetRewardPoolsMap()
 	for poolPath, internalTier := range pools {

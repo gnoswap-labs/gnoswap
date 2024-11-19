@@ -287,6 +287,17 @@ func (p *PoolLiquidity) GetStakedHeight(tokenID uint64) int64 {
 	return p.GetInRangeLiquidity(tokenID).GetStakedHeight()
 }
 
+func (p *PoolLiquidity) RemoveInRangePosition(tokenID uint64) {
+	if _, exist := p.inRangeLiquidityMap[tokenID]; !exist {
+		return
+	}
+	totalLiquidity := p.totalLiquidity
+	tokenLiquidity := p.inRangeLiquidityMap[tokenID].GetLiquidity()
+	totalLiquidity.Sub(totalLiquidity, tokenLiquidity)
+	p.SetTotalLiquidity(totalLiquidity)
+	delete(p.inRangeLiquidityMap, tokenID)
+}
+
 type InRangeLiquidity struct {
 	liquidity      *u256.Uint // liquidity
 	liquidityRatio *u256.Uint // liquidity ratio
