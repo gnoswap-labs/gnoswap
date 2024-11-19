@@ -5,7 +5,7 @@ import (
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/p/demo/ufmt"
 )
@@ -19,7 +19,7 @@ const (
 )
 
 // RewardState encapsulates all necessary data for reward calculations.
-// This structure is designed to reduce global state dependencies and 
+// This structure is designed to reduce global state dependencies and
 // make the data flow more explicit. It contains all contextual information
 // needed to calculate rewards, allowing for more pure function implementations
 // and easier testing.
@@ -27,12 +27,12 @@ type RewardState struct {
 	TokenId              uint64
 	CurrentHeight        uint64
 	LastCalculatedHeight uint64
-    IncentiveId          string
-	TokenAmountX96      *u256.Uint
-	LastExternalAmount  *u256.Uint
-	WarmUpAmount        warmUpAmount
-	ThresholdInfo       thresholds
-	StartInfo           stakedStartInfo
+	IncentiveId          string
+	TokenAmountX96       *u256.Uint
+	LastExternalAmount   *u256.Uint
+	WarmUpAmount         warmUpAmount
+	ThresholdInfo        thresholds
+	StartInfo            stakedStartInfo
 }
 
 type stakedStartInfo struct {
@@ -42,10 +42,10 @@ type stakedStartInfo struct {
 
 type thresholds struct {
 	startHeight uint64
-	until30  uint64
-	until50  uint64
-	until70  uint64
-	begin100 uint64
+	until30     uint64
+	until50     uint64
+	until70     uint64
+	begin100    uint64
 }
 
 // RewardCalculation represents the intermediate results during the reward calculation process.
@@ -53,10 +53,10 @@ type thresholds struct {
 // It holds both the initial state and intermediate results to avoid global state mutations.
 type RewardCalculation struct {
 	BlockDuration    uint64
-    DurationRatio    uint64
+	DurationRatio    uint64
 	DistributeAmount *u256.Uint
 	AvgBlockAmount   *u256.Uint
-    State            RewardState 
+	State            RewardState
 	WarmUpResult     warmUpAmount
 }
 
@@ -111,11 +111,11 @@ func initializeRewardState(tokenId uint64, ictvId string) (RewardState, error) {
 		IncentiveId:          ictvId,
 		CurrentHeight:        uint64(currentHeight),
 		LastCalculatedHeight: uint64(positionsExternalLastCalculatedHeight[tokenId][ictvId]),
-		TokenAmountX96:      external.tokenAmountX96,
-		LastExternalAmount:  positionLastExternal[tokenId][ictvId],
-		WarmUpAmount:        positionsExternalWarmUpAmount[tokenId][ictvId],
-		ThresholdInfo:       thresholds,
-		StartInfo:           startInfo,
+		TokenAmountX96:       external.tokenAmountX96,
+		LastExternalAmount:   positionLastExternal[tokenId][ictvId],
+		WarmUpAmount:         positionsExternalWarmUpAmount[tokenId][ictvId],
+		ThresholdInfo:        thresholds,
+		StartInfo:            startInfo,
 	}, nil
 }
 
@@ -144,10 +144,10 @@ func calculateThresholds(startHeight int64) thresholds {
 	baseHeight := uint64(startHeight)
 	return thresholds{
 		startHeight: baseHeight,
-		until30:  baseHeight + uint64(warmUp[RATIO_50]) - 1,
-		until50:  baseHeight + uint64(warmUp[RATIO_70]) - 1,
-		until70:  baseHeight + uint64(warmUp[RATIO_100]) - 1,
-		begin100: baseHeight + uint64(warmUp[RATIO_100]),
+		until30:     baseHeight + uint64(warmUp[RATIO_50]) - 1,
+		until50:     baseHeight + uint64(warmUp[RATIO_70]) - 1,
+		until70:     baseHeight + uint64(warmUp[RATIO_100]) - 1,
+		begin100:    baseHeight + uint64(warmUp[RATIO_100]),
 	}
 }
 
@@ -230,7 +230,7 @@ func computeRewardsByRatio(
 	ratios, count := getRatiosForDuration(durationRatio)
 	durations := calculateRewardDurations(ratios, currentHeight, lastCalculatedHeight, thresholds)
 
-    for i := uint8(0); i < count; i++ {
+	for i := uint8(0); i < count; i++ {
 		ratio := ratios[i]
 		if duration, exists := durations[ratio]; exists && duration > 0 {
 			full, toGive := calcAmount(avgBlockAmountX96, duration, ratio)

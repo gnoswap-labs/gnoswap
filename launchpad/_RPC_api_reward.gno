@@ -3,7 +3,7 @@ package launchpad
 import (
 	"std"
 
-	gs "gno.land/r/gnoswap/v2/gov/staker"
+	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
 
 // protocol_fee reward for project's recipient

@@ -3,7 +3,7 @@ package governance
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
 
 	oblPath string = "gno.land/r/onbloc/obl"
 	// wugnotPath string = "gno.land/r/demo/wugnot" // from consts
-	// gnsPath string = "gno.land/r/gnoswap/v2/gns" // from consts
+	// gnsPath string = "gno.land/r/gnoswap/v1/gns" // from consts
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500

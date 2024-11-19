@@ -6,10 +6,10 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v2/consts"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gns"
 
-	gs "gno.land/r/gnoswap/v2/gov/staker"
+	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
 
 func init() {
@@ -44,7 +44,7 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 			"test_title",
 			"test_description",
 			uint64(2),
-			"gno.land/r/gnoswap/v2/gns*EXE*SetAvgBlockTimeInMs*EXE*123*GOV*gno.land/r/gnoswap/v2/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v2/gns,g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c,905",
+			"gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*123*GOV*gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c,905",
 		)
 
 		uassert.Equal(t, proposalID, uint64(1))

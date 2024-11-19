@@ -4,7 +4,7 @@ import (
 	"std"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	pn "gno.land/r/gnoswap/v2/position"
+	pn "gno.land/r/gnoswap/v1/position"
 )
 
 // For Emission Reward Distribution

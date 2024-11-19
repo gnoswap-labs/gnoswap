@@ -6,9 +6,9 @@ import (
 
 	"gno.land/p/demo/json"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
-	en "gno.land/r/gnoswap/v2/emission"
+	en "gno.land/r/gnoswap/v1/emission"
 )
 
 // LpTokenReward represents the rewards associated with a specific LP token

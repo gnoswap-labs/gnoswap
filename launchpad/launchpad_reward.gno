@@ -8,10 +8,10 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v1/common"
 
-	en "gno.land/r/gnoswap/v2/emission"
-	gs "gno.land/r/gnoswap/v2/gov/staker"
+	en "gno.land/r/gnoswap/v1/emission"
+	gs "gno.land/r/gnoswap/v1/gov/staker"
 )
 
 // CollectProtocolFee collects protocol fee from gov/staker

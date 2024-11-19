@@ -13,7 +13,7 @@ const (
 
 	TOKEN_REGISTER_NAMESPACE string = "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5"
 
-	BLOCK_GENERATION_INTERVAL int64 = 2 // seconds
+	BLOCK_GENERATION_INTERVAL int64 = 1 // seconds
 )
 
 // WRAP & UNWRAP
@@ -26,50 +26,50 @@ const (
 
 // CONTRACT PATH & ADDRESS
 const (
-	POOL_PATH string      = "gno.land/r/gnoswap/v2/pool"
-	POOL_ADDR std.Address = "g126swhfaq2vyvvjywevhgw7lv9hg8qan93dasu8"
+	POOL_PATH string      = "gno.land/r/gnoswap/v1/pool"
+	POOL_ADDR std.Address = "g148tjamj80yyrm309z7rk690an22thd2l3z8ank"
 
-	POSITION_PATH string      = "gno.land/r/gnoswap/v2/position"
-	POSITION_ADDR std.Address = "g1vsm68lq9cpn7x507s6gh59anmx86kxfhzyszu2"
+	POSITION_PATH string      = "gno.land/r/gnoswap/v1/position"
+	POSITION_ADDR std.Address = "g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5"
 
-	ROUTER_PATH string      = "gno.land/r/gnoswap/v2/router"
-	ROUTER_ADDR std.Address = "g1cnz5gm2l09pm2k6rknjjar9a2w53fdhk4yjzy5"
+	ROUTER_PATH string      = "gno.land/r/gnoswap/v1/router"
+	ROUTER_ADDR std.Address = "g1lm2l7tf49h3mykesct7rhfml30yx8dw5xrval7"
 
-	STAKER_PATH string      = "gno.land/r/gnoswap/v2/staker"
-	STAKER_ADDR std.Address = "g14fclvfqynndp0l6kpyxkpgn4sljw9rr96hz46l"
+	STAKER_PATH string      = "gno.land/r/gnoswap/v1/staker"
+	STAKER_ADDR std.Address = "g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu"
 
-	GNS_PATH string      = "gno.land/r/gnoswap/v2/gns"
-	GNS_ADDR std.Address = "g1ttcyeq0u5f6npysfxvew7tzucvwqy0qjp04p95"
+	GNS_PATH string      = "gno.land/r/gnoswap/v1/gns"
+	GNS_ADDR std.Address = "g1jgqwaa2le3yr63d533fj785qkjspumzv22ys5m"
 
-	GNFT_PATH string      = "gno.land/r/gnoswap/v2/gnft"
-	GNFT_ADDR std.Address = "g1rn4pederer0qlw2f7k72ddywde6pv3v3vl69nc"
+	GNFT_PATH string      = "gno.land/r/gnoswap/v1/gnft"
+	GNFT_ADDR std.Address = "g1wxv2rdfn53qc84nt3nn646f9yh3nly8lm7j89t"
 
 	WUGNOT_PATH string      = "gno.land/r/demo/wugnot"
 	WUGNOT_ADDR std.Address = "g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6"
 
-	EMISSION_PATH string      = "gno.land/r/gnoswap/v2/emission"
-	EMISSION_ADDR std.Address = "g1mfvpsj55gssep3wkt2t04d6dc3yfs9py5qquft"
+	EMISSION_PATH string      = "gno.land/r/gnoswap/v1/emission"
+	EMISSION_ADDR std.Address = "g10xg6559w9e93zfttlhvdmaaa0er3zewcr7nh20"
 
-	PROTOCOL_FEE_PATH string      = "gno.land/r/gnoswap/v2/protocol_fee"
-	PROTOCOL_FEE_ADDR std.Address = "g1397dea8xlfv5858xzhsly7k998xm2zlvrm93t2"
+	PROTOCOL_FEE_PATH string      = "gno.land/r/gnoswap/v1/protocol_fee"
+	PROTOCOL_FEE_ADDR std.Address = "g1f7wpek7q67tkns27sw495u5yuu3a5wwjxw5l6l"
 
-	COMMUNITY_POOL_PATH string      = "gno.land/r/gnoswap/v2/community_pool"
-	COMMUNITY_POOL_ADDR std.Address = "g1r79m0scwztcdvk3c6sy4rjrtv3rnnzrs9ddh9w"
+	COMMUNITY_POOL_PATH string      = "gno.land/r/gnoswap/v1/community_pool"
+	COMMUNITY_POOL_ADDR std.Address = "g100fnnlz5eh87p5hvwt8pf279lxaelm8k8md049"
 
-	GOV_XGNS_PATH string      = "gno.land/r/gnoswap/v2/gov/xgns"
-	GOV_XGNS_ADDR std.Address = "g16gjmzf8725njf48325nl3yx3ve53wdu4ru53vm"
+	GOV_XGNS_PATH string      = "gno.land/r/gnoswap/v1/gov/xgns"
+	GOV_XGNS_ADDR std.Address = "g1wwh55uwzlz2zzr2qcvvxf83qhcvmx2t8779l9r"
 
-	GOV_STAKER_PATH string      = "gno.land/r/gnoswap/v2/gov/staker"
-	GOV_STAKER_ADDR std.Address = "g1gt2xzjcmhp2t08yh0nkmc3q822sr87t5n92rm0"
+	GOV_STAKER_PATH string      = "gno.land/r/gnoswap/v1/gov/staker"
+	GOV_STAKER_ADDR std.Address = "g17e3ykyqk9jmqe2y9wxe9zhep3p7cw56davjqwa"
 
-	GOV_GOVERNANCE_PATH string      = "gno.land/r/gnoswap/v2/gov/governance"
-	GOV_GOVERNANCE_ADDR std.Address = "g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5"
+	GOV_GOVERNANCE_PATH string      = "gno.land/r/gnoswap/v1/gov/governance"
+	GOV_GOVERNANCE_ADDR std.Address = "g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd"
 
-	COMMON_PATH string      = "gno.land/r/gnoswap/v2/common"
-	COMMON_ADDR std.Address = "g1llrfcez4kuje8fzktrlm5m5jw9tfw7hpnu8lg5"
+	COMMON_PATH string      = "gno.land/r/gnoswap/v1/common"
+	COMMON_ADDR std.Address = "g14ytarn5u7h3xywygt8hzhs3m23frljz72ta9xk"
 
-	LAUNCHPAD_PATH string      = "gno.land/r/gnoswap/v2/launchpad"
-	LAUNCHPAD_ADDR std.Address = "g1qslhn7vn69e09zwmz5hlz0273v3c33u5z8d9j7"
+	LAUNCHPAD_PATH string      = "gno.land/r/gnoswap/v1/launchpad"
+	LAUNCHPAD_ADDR std.Address = "g122mau2lp2rc0scs8d27pkkuys4w54mdy2tuer3"
 
 	INIT_REGISTER_PATH string = "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5/v2/register_gnodev"
 )

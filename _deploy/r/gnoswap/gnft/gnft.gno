@@ -11,11 +11,11 @@ import (
 
 	"gno.land/r/demo/users"
 
-	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 var (
-	admin std.Address = "g1vsm68lq9cpn7x507s6gh59anmx86kxfhzyszu2" // deployed position contract
+	admin std.Address = "g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5" // deployed position contract
 	gnft              = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
 )
 

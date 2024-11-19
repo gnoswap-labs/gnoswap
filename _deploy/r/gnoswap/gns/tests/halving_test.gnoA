@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 func TestPreCalculatedData(t *testing.T) {
@@ -196,7 +196,7 @@ func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 func TestSetAvgBlockTimeInMs(t *testing.T) {
 	t.Run("panic if not governance", func(t *testing.T) {
 		uassert.PanicsWithMessage(t,
-			`[GNOSWAP-GNS-001] caller has no permission || gns.gno__SetAvgBlockTimeInMs() || only governance contract(g1eudq5dvx9sem5ascp0etlpk3kpxylz8kcy8cf5) can call this function, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`, func() {
+			`[GNOSWAP-GNS-001] caller has no permission || gns.gno__SetAvgBlockTimeInMs() || only governance contract(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) can call this function, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`, func() {
 				SetAvgBlockTimeInMs(1000)
 			})
 	})

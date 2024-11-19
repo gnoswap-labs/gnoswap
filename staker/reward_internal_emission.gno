@@ -4,8 +4,8 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v2/consts"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 // InternalEmissionReward ...

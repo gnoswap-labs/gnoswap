@@ -3,8 +3,8 @@ package pool
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v2/common"
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/p/demo/ufmt"
 )

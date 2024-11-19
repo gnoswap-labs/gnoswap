@@ -7,13 +7,13 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/v2/common"
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
-	"gno.land/r/gnoswap/v2/gns"
-	"gno.land/r/gnoswap/v2/gov/xgns"
+	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/gov/xgns"
 
-	en "gno.land/r/gnoswap/v2/emission"
+	en "gno.land/r/gnoswap/v1/emission"
 )
 
 type lockedGNS struct {
@@ -21,7 +21,10 @@ type lockedGNS struct {
 	unlock uint64
 }
 
-const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
+// ORIG TIME
+// const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
+// QA TIME
+const TIMESTAMP_7_DAYS = uint64(60)
 
 var (
 	addrLockedGns = make(map[std.Address][]lockedGNS)

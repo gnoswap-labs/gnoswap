@@ -8,14 +8,14 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v2/common"
-	"gno.land/r/gnoswap/v2/consts"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gns"
 
-	gs "gno.land/r/gnoswap/v2/gov/staker"
-	pl "gno.land/r/gnoswap/v2/pool"
-	pn "gno.land/r/gnoswap/v2/position"
-	rr "gno.land/r/gnoswap/v2/router"
+	gs "gno.land/r/gnoswap/v1/gov/staker"
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
+	rr "gno.land/r/gnoswap/v1/router"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
@@ -111,7 +111,7 @@ func testEarlyGovDelegateAndReward(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		rewardJson := gs.GetClaimableRewardByAddress(dummyAddr)
-		uassert.Equal(t, rewardJson, `{"height":"125","now":"1234567894","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/foo","amount":"149"},{"tokenPath":"gno.land/r/gnoswap/v2/gns","amount":"100000000"}]}`)
+		uassert.Equal(t, rewardJson, `{"height":"125","now":"1234567894","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/foo","amount":"149"},{"tokenPath":"gno.land/r/gnoswap/v1/gns","amount":"100000000"}]}`)
 		// foo 149
 		// 0.15% of router swap fee
 
@@ -219,7 +219,7 @@ func testClaimableRewardForGovernanceDelegate(t *testing.T) {
 func testClaimableRewardForEarlyDummy(t *testing.T) {
 	t.Run("claimable reward for early dummy", func(t *testing.T) {
 		res := gs.GetClaimableRewardByAddress(dummyAddr)
-		uassert.Equal(t, res, `{"height":"134","now":"1234567912","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/foo","amount":"149"},{"tokenPath":"gno.land/r/gnoswap/v2/gns","amount":"100000000"},{"tokenPath":"gno.land/r/onbloc/bar","amount":"49"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"124"}]}`)
+		uassert.Equal(t, res, `{"height":"134","now":"1234567912","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/foo","amount":"149"},{"tokenPath":"gno.land/r/gnoswap/v1/gns","amount":"100000000"},{"tokenPath":"gno.land/r/onbloc/bar","amount":"49"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"124"}]}`)
 		// foo 149
 		// gns 100000000
 		// bar 49
@@ -245,5 +245,5 @@ func testClaimableRewardForGovernanceDelegateMoreBlocks(t *testing.T) {
 
 func testClaimableRewardForEarlyDummyMoreBlocks(t *testing.T) {
 	res := gs.GetClaimableRewardByAddress(dummyAddr)
-	uassert.Equal(t, res, `{"height":"144","now":"1234567932","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/foo","amount":"149"},{"tokenPath":"gno.land/r/gnoswap/v2/gns","amount":"100000000"},{"tokenPath":"gno.land/r/onbloc/bar","amount":"49"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"124"}]}`)
+	uassert.Equal(t, res, `{"height":"144","now":"1234567932","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/foo","amount":"149"},{"tokenPath":"gno.land/r/gnoswap/v1/gns","amount":"100000000"},{"tokenPath":"gno.land/r/onbloc/bar","amount":"49"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"124"}]}`)
 }
