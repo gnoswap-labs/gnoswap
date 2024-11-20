@@ -6,14 +6,14 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v2/common"
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
-	pl "gno.land/r/gnoswap/v2/pool"
-	pn "gno.land/r/gnoswap/v2/position"
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
 )
 
@@ -84,7 +84,7 @@ func TestDrySwapRouteGnsBarExactIn(t *testing.T) {
 		barPath,         // outputToken
 		"1000",          // amountSpecified
 		"EXACT_IN",      // swapType
-		"gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
+		"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
 		"100", // quoteArr
 	)
 	uassert.Equal(t, dryResult, "7327")
@@ -101,7 +101,7 @@ func TestSwapRouteGnsBarExactIn(t *testing.T) {
 		barPath,         // outputToken
 		"1000",          // amountSpecified
 		"EXACT_IN",      // swapType
-		"gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
+		"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:100*POOL*gno.land/r/demo/wugnot:gno.land/r/onbloc/bar:100", // strRouteArr
 		"100", // quoteArr
 		"0",   // tokenAmountLimit
 	)

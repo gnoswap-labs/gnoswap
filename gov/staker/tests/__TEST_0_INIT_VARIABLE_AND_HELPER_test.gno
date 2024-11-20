@@ -3,7 +3,7 @@ package staker
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
 
 	oblPath string = "gno.land/r/onbloc/obl"
 	// wugnotPath string = "gno.land/r/demo/wugnot" // from consts
-	// gnsPath string = "gno.land/r/gnoswap/v2/gns" // from consts
+	// gnsPath string = "gno.land/r/gnoswap/v1/gns" // from consts
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -33,15 +33,3 @@ var (
 	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
 	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
 )
-
-/* HELPER */
-func ugnotBalanceOf(addr std.Address) uint64 {
-	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-
-	coins := testBanker.GetCoins(addr)
-	if len(coins) == 0 {
-		return 0
-	}
-
-	return uint64(coins.AmountOf("ugnot"))
-}

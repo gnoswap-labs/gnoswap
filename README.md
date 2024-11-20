@@ -82,7 +82,7 @@ To set up GnoSwap contracts in Gno Core, follow these steps:
 
    ```bash
    # make some directory
-   mkdir -p $WORKDIR/gno/examples/gno.land/r/gnoswap/v2
+   mkdir -p $WORKDIR/gno/examples/gno.land/r/gnoswap/v1
    mkdir -p $WORKDIR/gno/examples/gno.land/p/gnoswap
 
    # copy grc20 tokens
@@ -92,10 +92,10 @@ To set up GnoSwap contracts in Gno Core, follow these steps:
    cp -R _deploy/p/gnoswap/* $WORKDIR/gno/examples/gno.land/p/gnoswap
 
    # copy gnoswap base realms ( includes common logic, variables and consts )
-   cp -R _deploy/r/gnoswap/* $WORKDIR/gno/examples/gno.land/r/gnoswap/v2
+   cp -R _deploy/r/gnoswap/* $WORKDIR/gno/examples/gno.land/r/gnoswap/v1
 
    # copy gnoswap realms
-   cp -R community_pool emission pool position protocol_fee router staker $WORKDIR/gno/examples/gno.land/r/gnoswap/v2
+   cp -R community_pool emission pool position protocol_fee router staker $WORKDIR/gno/examples/gno.land/r/gnoswap/v1
    ```
 
 3. Move all test cases into its own directory:
@@ -103,14 +103,14 @@ To set up GnoSwap contracts in Gno Core, follow these steps:
 Move the test cases for each contract to their respective directories. It's not necessary to move all tests; you can selectively move only the tests you need. However, files containing `VARS_HELPERS` in their name must be moved.
 
 ```bash
-cd $WORKDIR/gno/examples/gno.land/r/gnoswap/v2/{name}
+cd $WORKDIR/gno/examples/gno.land/r/gnoswap/v1/{name}
 mv tests/* .
 ```
 
 For example, to move all tests for the `pool` realm:
 
 ```bash
-cd $WORKDIR/gno/examples/gno.land/r/gnoswap/v2/pool
+cd $WORKDIR/gno/examples/gno.land/r/gnoswap/v1/pool
 mv tests/* .
 ```
 
@@ -129,7 +129,7 @@ cd $WORKDIR/gno/examples
 Next, move to the Realm directory you want to test (such as `pool`, `staker`, etc.), then run the tests using the `gno test` command:
 
 ```bash
-gno test -root-dir $WORKDIR/gno -v=false ./gno.land/r/gnoswap/v2/pool
+gno test -root-dir $WORKDIR/gno -v=false ./gno.land/r/gnoswap/v1/pool
 ```
 
 ## Realms
@@ -138,10 +138,10 @@ This section provides information about the core realms of GnoSwap that have bee
 
 ### Core Realms Deployed on Testnet4
 
-- pool: [gno.land/r/gnoswap/v2/pool](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Fpool)
-- position: [gno.land/r/gnoswap/v2/position](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Fposition)
-- router: [gno.land/r/gnoswap/v2/router](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Frouter)
-- staker: [gno.land/r/gnoswap/v2/staker](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Fstaker)
+- pool: [gno.land/r/gnoswap/v1/pool](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Fpool)
+- position: [gno.land/r/gnoswap/v1/position](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Fposition)
+- router: [gno.land/r/gnoswap/v1/router](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Frouter)
+- staker: [gno.land/r/gnoswap/v1/staker](https://gnoscan.io/realms/details?path=gno.land%2Fr%2Fgnoswap%2Fv2%2Fstaker)
 
 ### Pool
 

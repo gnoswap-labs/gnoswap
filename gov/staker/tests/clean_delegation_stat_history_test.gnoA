@@ -11,7 +11,7 @@ import (
 func TestCleanDelegationStatHistoryPermission(t *testing.T) {
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-GOV_STAKER-001] caller has no permission || clean_delegation_stat_history.gno__CleanDelegationStatHistoryByAdmin() || prev(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) != admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c)`,
+		`[GNOSWAP-GOV_STAKER-001] caller has no permission || clean_delegation_stat_history.gno__CleanDelegationStatHistoryByAdmin() || prev(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) != admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d)`,
 		func() {
 			CleanDelegationStatHistoryByAdmin()
 		},
@@ -26,7 +26,7 @@ func TestCleanDelegationStatHistoryPermission(t *testing.T) {
 func TestSetRunningPermission(t *testing.T) {
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-GOV_STAKER-001] caller has no permission || clean_delegation_stat_history.gno__SetRunning() || prev(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) != admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c)`,
+		`[GNOSWAP-GOV_STAKER-001] caller has no permission || clean_delegation_stat_history.gno__SetRunning() || prev(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) != admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d)`,
 		func() {
 			SetRunning(false)
 		},

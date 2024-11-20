@@ -4,8 +4,8 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v2/consts"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 // InternalEmissionReward ...
@@ -69,6 +69,17 @@ func (r *InternalEmissionReward) GetRewardTotalAmount() uint64 {
 
 func (r *InternalEmissionReward) GetLeftAmount() uint64 {
 	return r.leftAmount
+}
+
+func (r *InternalEmissionReward) RemoveInRangePosition(poolPath string, tokenId uint64) {
+	recipientsMap := r.GetRewardRecipientsMap()
+	poolLiquidity := recipientsMap.GetPoolLiquidity(poolPath)
+	if poolLiquidity == nil {
+		return
+	}
+	poolLiquidity.RemoveInRangePosition(tokenId)
+	recipientsMap.SetPoolLiquidity(poolPath, poolLiquidity)
+	r.SetRewardRecipientsMap(recipientsMap)
 }
 
 func (r *InternalEmissionReward) SelectRewardPools(pools map[string]InternalTier) {

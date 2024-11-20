@@ -1,6 +1,6 @@
 // change block avg time from 2s to 4s
 
-// PKGPATH: gno.land/r/gnoswap/v2/gns_test
+// PKGPATH: gno.land/r/gnoswap/v1/gns_test
 package gns_test
 
 import (
@@ -11,8 +11,8 @@ import (
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/v2/consts"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 var t *testing.T

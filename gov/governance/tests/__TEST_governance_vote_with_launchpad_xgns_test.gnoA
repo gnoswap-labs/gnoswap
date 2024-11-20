@@ -10,13 +10,13 @@ import (
 
 	"gno.land/r/onbloc/obl"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
-	"gno.land/r/gnoswap/v2/gns"
-	"gno.land/r/gnoswap/v2/gov/xgns"
+	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/gov/xgns"
 
-	gs "gno.land/r/gnoswap/v2/gov/staker"
-	lp "gno.land/r/gnoswap/v2/launchpad"
+	gs "gno.land/r/gnoswap/v1/gov/staker"
+	lp "gno.land/r/gnoswap/v1/launchpad"
 )
 
 var (

@@ -1,18 +1,19 @@
 package staker
 
 import (
-	"gno.land/p/demo/ufmt"
 	"std"
 	"time"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/consts"
 
-	pn "gno.land/r/gnoswap/v2/position"
+	"gno.land/r/gnoswap/v1/gns"
+
+	pn "gno.land/r/gnoswap/v1/position"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	en "gno.land/r/gnoswap/v2/emission"
+	en "gno.land/r/gnoswap/v1/emission"
 )
 
 // poolPath -> gnsAmount [accu]
@@ -248,7 +249,8 @@ func CalcPoolPosition() {
 			continue
 		}
 
-		positionLiquidity := pn.PositionGetPositionLiquidity(tokenId)
+		liqStr := pn.PositionGetPositionLiquidityStr(tokenId)
+		positionLiquidity := u256.MustFromDecimal(liqStr)
 		poolTotalStakedLiquidity[poolPath] = poolTotalStakedLiquidity[poolPath].Add(poolTotalStakedLiquidity[poolPath], positionLiquidity)
 	}
 

@@ -6,7 +6,7 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	en "gno.land/r/gnoswap/v2/emission"
+	en "gno.land/r/gnoswap/v1/emission"
 )
 
 // DelegationHistory represents a single delegation event

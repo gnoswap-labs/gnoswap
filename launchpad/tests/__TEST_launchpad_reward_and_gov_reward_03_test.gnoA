@@ -8,23 +8,23 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v2/gnft"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/gns"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v2/common"
-	"gno.land/r/gnoswap/v2/consts"
-	"gno.land/r/gnoswap/v2/gov/xgns"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gov/xgns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 
-	gs "gno.land/r/gnoswap/v2/gov/staker"
-	pl "gno.land/r/gnoswap/v2/pool"
-	pn "gno.land/r/gnoswap/v2/position"
-	pf "gno.land/r/gnoswap/v2/protocol_fee"
-	rr "gno.land/r/gnoswap/v2/router"
-	sr "gno.land/r/gnoswap/v2/staker"
+	gs "gno.land/r/gnoswap/v1/gov/staker"
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
+	rr "gno.land/r/gnoswap/v1/router"
+	sr "gno.land/r/gnoswap/v1/staker"
 )
 
 var (
@@ -236,7 +236,7 @@ func testDepositGns(t *testing.T) {
 		// none
 
 		rewards := ApiGetProjectRecipientRewardByAddress(launchpadProject01Addr)
-		uassert.Equal(t, rewards, `{"height":"141","now":"1234567926","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/gnoswap/v2/gns","amount":"300000000"}]}`)
+		uassert.Equal(t, rewards, `{"height":"141","now":"1234567926","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/gnoswap/v1/gns","amount":"300000000"}]}`)
 	})
 
 	t.Run("deposit to project02 tier30", func(t *testing.T) {
@@ -348,7 +348,7 @@ func testSwapRoute(t *testing.T) {
 			consts.WUGNOT_PATH,
 			"100000",
 			"EXACT_IN",
-			"gno.land/r/gnoswap/v2/gns:gno.land/r/demo/wugnot:3000",
+			"gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:3000",
 			"100",
 			"1",
 		)
@@ -383,7 +383,7 @@ func testXgnsData(t *testing.T) {
 func testCheckReward(t *testing.T) {
 	t.Run("project01 addr reward", func(t *testing.T) {
 		rewards := ApiGetProjectRecipientRewardByAddress(launchpadProject01Addr)
-		uassert.Equal(t, rewards, `{"height":"148","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/gnoswap/v2/gns","amount":"350000000"},{"tokenPath":"gno.land/r/onbloc/bar","amount":"74"},{"tokenPath":"gno.land/r/onbloc/foo","amount":"74"},{"tokenPath":"gno.land/r/demo/wugnot","amount":"74"}]}`)
+		uassert.Equal(t, rewards, `{"height":"148","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/gnoswap/v1/gns","amount":"350000000"},{"tokenPath":"gno.land/r/onbloc/bar","amount":"74"},{"tokenPath":"gno.land/r/onbloc/foo","amount":"74"},{"tokenPath":"gno.land/r/demo/wugnot","amount":"74"}]}`)
 		// gns 350_000_000
 		// > 300_000_000 previously (before 4th create pool and bunch of swaps)
 		// > 50_000_000 newly
@@ -395,7 +395,7 @@ func testCheckReward(t *testing.T) {
 
 	t.Run("project02 addr reward", func(t *testing.T) {
 		rewards := ApiGetProjectRecipientRewardByAddress(launchpadProject02Addr)
-		uassert.Equal(t, rewards, `{"height":"148","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"37"},{"tokenPath":"gno.land/r/onbloc/foo","amount":"37"},{"tokenPath":"gno.land/r/demo/wugnot","amount":"37"},{"tokenPath":"gno.land/r/gnoswap/v2/gns","amount":"25000000"}]}`)
+		uassert.Equal(t, rewards, `{"height":"148","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"37"},{"tokenPath":"gno.land/r/onbloc/foo","amount":"37"},{"tokenPath":"gno.land/r/demo/wugnot","amount":"37"},{"tokenPath":"gno.land/r/gnoswap/v1/gns","amount":"25000000"}]}`)
 		// bar 37
 		// foo 37
 		// wugnot 37
@@ -404,7 +404,7 @@ func testCheckReward(t *testing.T) {
 
 	t.Run("gov delegate reward", func(t *testing.T) {
 		rewards := ApiGetProjectRecipientRewardByAddress(govDelegateAddr)
-		uassert.Equal(t, rewards, `{"height":"148","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"37"},{"tokenPath":"gno.land/r/onbloc/foo","amount":"37"},{"tokenPath":"gno.land/r/demo/wugnot","amount":"37"},{"tokenPath":"gno.land/r/gnoswap/v2/gns","amount":"25000000"}]}`)
+		uassert.Equal(t, rewards, `{"height":"148","now":"1234567940","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"37"},{"tokenPath":"gno.land/r/onbloc/foo","amount":"37"},{"tokenPath":"gno.land/r/demo/wugnot","amount":"37"},{"tokenPath":"gno.land/r/gnoswap/v1/gns","amount":"25000000"}]}`)
 		// bar 37
 		// foo 37
 		// wugnot 37

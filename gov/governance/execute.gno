@@ -8,18 +8,18 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v2/common"
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gns"
 
-	cn "gno.land/r/gnoswap/v2/common"
-	cp "gno.land/r/gnoswap/v2/community_pool"
-	en "gno.land/r/gnoswap/v2/emission"
-	pl "gno.land/r/gnoswap/v2/pool"
-	pf "gno.land/r/gnoswap/v2/protocol_fee"
-	rr "gno.land/r/gnoswap/v2/router"
-	sr "gno.land/r/gnoswap/v2/staker"
+	cn "gno.land/r/gnoswap/v1/common"
+	cp "gno.land/r/gnoswap/v1/community_pool"
+	en "gno.land/r/gnoswap/v1/emission"
+	pl "gno.land/r/gnoswap/v1/pool"
+	pf "gno.land/r/gnoswap/v1/protocol_fee"
+	rr "gno.land/r/gnoswap/v1/router"
+	sr "gno.land/r/gnoswap/v1/staker"
 )
 
 // Execute executes the given proposal.

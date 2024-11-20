@@ -7,13 +7,15 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/v2/common"
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/demo/wugnot"
 
-	"gno.land/r/gnoswap/v2/gns"
-	"gno.land/r/gnoswap/v2/gov/xgns"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
-	en "gno.land/r/gnoswap/v2/emission"
+	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/gov/xgns"
+
+	en "gno.land/r/gnoswap/v1/emission"
 )
 
 type lockedGNS struct {
@@ -21,7 +23,7 @@ type lockedGNS struct {
 	unlock uint64
 }
 
-const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
+// const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
 
 var (
 	addrLockedGns = make(map[std.Address][]lockedGNS)
@@ -275,7 +277,16 @@ func CollectReward() {
 
 		// transfer token to caller
 		// token.Transfer(a2u(caller), amount)
-		transferByRegisterCall(tokenPath, caller, amount)
+
+		if tokenPath == consts.WUGNOT_PATH {
+			if amount > 0 {
+				wugnot.Withdraw(amount)
+				banker := std.GetBanker(std.BankerTypeRealmSend)
+				banker.SendCoins(consts.GOV_STAKER_ADDR, caller, std.Coins{{"ugnot", int64(amount)}})
+			}
+		} else {
+			transferByRegisterCall(tokenPath, caller, amount)
+		}
 		userProtocolFeeReward[caller][tokenPath] = 0
 
 		std.Emit(

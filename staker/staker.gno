@@ -7,15 +7,15 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v2/common"
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
-	"gno.land/r/gnoswap/v2/gnft"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/gns"
 
-	en "gno.land/r/gnoswap/v2/emission"
-	pl "gno.land/r/gnoswap/v2/pool"
-	pn "gno.land/r/gnoswap/v2/position"
+	en "gno.land/r/gnoswap/v1/emission"
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -45,7 +45,7 @@ const (
 
 	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
 
-	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:3000"
+	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
 )
 
 func init() {
@@ -110,7 +110,8 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	}
 
 	// check tokenId has liquidity or not
-	liquidity := pn.PositionGetPositionLiquidity(tokenId) // *u256.Uint
+	liqStr := pn.PositionGetPositionLiquidityStr(tokenId)
+	liquidity := u256.MustFromDecimal(liqStr)
 	if liquidity.Lte(u256.Zero()) {
 		panic(addDetailToError(
 			errZeroLiquidity,
@@ -338,14 +339,7 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 
 	rewardManger := getRewardManager()
 	internalEmission := rewardManger.GetInternalEmissionReward()
-	recipientsMap := internalEmission.GetRewardRecipientsMap()
-	poolLiquidity := recipientsMap.GetPoolLiquidity(deposit.targetPoolPath)
-	inRangeLiquidityMap := poolLiquidity.GetInRangeLiquidityMap()
-	delete(inRangeLiquidityMap, tokenId)
-	poolLiquidity.SetTotalLiquidity(u256.Zero())
-	poolLiquidity.SetInRangeLiquidityMap(inRangeLiquidityMap)
-	recipientsMap.SetPoolLiquidity(deposit.targetPoolPath, poolLiquidity)
-	internalEmission.SetRewardRecipientsMap(recipientsMap)
+	internalEmission.RemoveInRangePosition(deposit.targetPoolPath, tokenId)
 	rewardManger.SetInternalEmissionReward(internalEmission)
 
 	// transfer NFT ownership to origin owner

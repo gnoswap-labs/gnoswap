@@ -4,7 +4,7 @@ import (
 	"std"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	pn "gno.land/r/gnoswap/v2/position"
+	pn "gno.land/r/gnoswap/v1/position"
 )
 
 // For Emission Reward Distribution
@@ -141,11 +141,19 @@ func (r *RewardRecipientsMap) GenerateRewardRecipients(depositList map[uint64]De
 			continue
 		}
 		// 3. already exist in the pool, skip
-		if r.GetPoolLiquidity(poolPath) != nil && r.GetPoolLiquidity(poolPath).GetInRangeLiquidity(tokenId) != nil {
+		if r.GetPoolLiquidity(poolPath) != nil &&
+			r.GetPoolLiquidity(poolPath).GetInRangeLiquidity(tokenId) != nil &&
+			!(r.GetPoolLiquidity(poolPath).GetInRangeLiquidity(tokenId).GetLiquidity().IsZero()) {
 			continue
 		}
 		// 4. get position liquidity
-		positionLiquidity := pn.PositionGetPositionLiquidity(tokenId)
+		liqStr := pn.PositionGetPositionLiquidityStr(tokenId)
+		positionLiquidity := u256.MustFromDecimal(liqStr)
+		if positionLiquidity == nil {
+			positionLiquidity = u256.Zero()
+		} else {
+			positionLiquidity = positionLiquidity.Clone()
+		}
 		// 5. get staked block height of the position
 		positionStakedHeight := deposit.stakeHeight
 		// 6. update liquidity
@@ -285,6 +293,36 @@ func (p *PoolLiquidity) GetStakedHeight(tokenID uint64) int64 {
 		return 0
 	}
 	return p.GetInRangeLiquidity(tokenID).GetStakedHeight()
+}
+
+func (p *PoolLiquidity) RemoveInRangePosition(tokenID uint64) {
+	// nil check for p.inRangeLiquidityMap
+	if p.inRangeLiquidityMap == nil {
+		return
+	}
+
+	// nil check for postion
+	position, exist := p.inRangeLiquidityMap[tokenID]
+	if !exist || position == nil {
+		return
+	}
+
+	// nil check for totalLiquidity
+	if p.totalLiquidity == nil {
+		p.totalLiquidity = u256.Zero()
+	}
+
+	// nil check for position liquidity
+	tokenLiquidity := position.GetLiquidity()
+	if tokenLiquidity == nil {
+		return
+	}
+
+	p.totalLiquidity.Sub(p.totalLiquidity, tokenLiquidity)
+	position.SetLiquidity(u256.Zero())
+	position.SetLiquidityRatio(u256.Zero())
+	position.SetStakedHeight(0)
+	p.inRangeLiquidityMap[tokenID] = position
 }
 
 type InRangeLiquidity struct {

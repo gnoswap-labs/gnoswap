@@ -6,13 +6,13 @@ import (
 
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v2/common"
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/gns"
 
-	pl "gno.land/r/gnoswap/v2/pool"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 func TestCoinIncreaseDecrease(t *testing.T) {
@@ -77,7 +77,7 @@ func testMintPosition(t *testing.T) {
 		uassert.Equal(t, amount1, "18394892")
 
 		position := positions[tokenId]
-		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v2/gns:500")
+		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
 
 		// SPEND ALL WUGNOT
 		uassert.Equal(t, wugnot.BalanceOf(a2u(admin)), uint64(0))

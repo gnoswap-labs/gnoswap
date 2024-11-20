@@ -5,10 +5,10 @@ import (
 	"std"
 	"time"
 
-	"gno.land/r/gnoswap/v2/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
-	en "gno.land/r/gnoswap/v2/emission"
-	pn "gno.land/r/gnoswap/v2/position"
+	en "gno.land/r/gnoswap/v1/emission"
+	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
@@ -454,7 +454,7 @@ func GetPositionIsInRange(tokenId uint64) bool {
 func GetPositionLiquidity(tokenId uint64) string {
 	en.MintAndDistributeGns()
 
-	return pn.PositionGetPositionLiquidity(tokenId).ToString()
+	return pn.PositionGetPositionLiquidityStr(tokenId)
 }
 
 func GetMintedGnsAmount() uint64 {

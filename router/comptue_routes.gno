@@ -3,7 +3,7 @@ package router
 import (
 	"sort"
 
-	pl "gno.land/r/gnoswap/v2/pool"
+	pl "gno.land/r/gnoswap/v1/pool"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )

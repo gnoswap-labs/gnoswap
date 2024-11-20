@@ -7,12 +7,14 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
-	"gno.land/r/gnoswap/v2/gns"
-	"gno.land/r/gnoswap/v2/gov/xgns"
+	"gno.land/r/demo/wugnot"
 
-	en "gno.land/r/gnoswap/v2/emission"
+	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/gov/xgns"
 
-	"gno.land/r/gnoswap/v2/consts"
+	en "gno.land/r/gnoswap/v1/emission"
+
+	"gno.land/r/gnoswap/v1/consts"
 
 	// grc20 tokens
 	"gno.land/r/onbloc/bar"
@@ -30,6 +32,7 @@ var (
 )
 
 func TestGovernanceRewardProtocolFee(t *testing.T) {
+	initData(t)
 	delegateFromAdminToDummy(t)
 	delegetFromDummyToDummy(t)
 	mockProtocolFee(t)
@@ -38,6 +41,11 @@ func TestGovernanceRewardProtocolFee(t *testing.T) {
 	mockProtocolFee2(t)
 	moreReward(t)
 	undelegateAdmin(t)
+}
+
+func initData(t *testing.T) {
+	// prevent `panic: source address g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6 does not exist`
+	std.TestIssueCoins(consts.WUGNOT_ADDR, std.Coins{{"ugnot", 1}})
 }
 
 func delegateFromAdminToDummy(t *testing.T) {
@@ -89,6 +97,13 @@ func mockProtocolFee(t *testing.T) {
 	bar.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 1000)
 	qux.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 2500)
 
+	// wugnot
+	std.TestSetOrigSend(std.Coins{{"ugnot", 10000}}, nil)
+	std.TestIssueCoins(consts.WUGNOT_ADDR, std.Coins{{"ugnot", 10000}})
+	wugnot.Deposit()
+
+	wugnot.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), 10000)
+
 	uassert.Equal(t, bar.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(1000))
 	uassert.Equal(t, bar.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
 	uassert.Equal(t, bar.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
@@ -96,6 +111,10 @@ func mockProtocolFee(t *testing.T) {
 	uassert.Equal(t, qux.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(2500))
 	uassert.Equal(t, qux.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
 	uassert.Equal(t, qux.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
+
+	uassert.Equal(t, wugnot.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR)), uint64(10000))
+	uassert.Equal(t, wugnot.BalanceOf(a2u(consts.DEV_OPS)), uint64(0))
+	uassert.Equal(t, wugnot.BalanceOf(a2u(consts.GOV_STAKER_ADDR)), uint64(0))
 }
 
 func skipDummyBlocks(t *testing.T) {
@@ -116,17 +135,19 @@ func skipDummyBlocks(t *testing.T) {
 func reward(t *testing.T) {
 	t.Run("check reward", func(t *testing.T) {
 		gcr := GetClaimableRewardByAddress(dummyAddr)
-		uassert.Equal(t, gcr, `{"height":"136","now":"1234567916","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"833"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2083"}]}`)
+		uassert.Equal(t, gcr, `{"height":"136","now":"1234567916","emissionReward":"0","protocolFees":[{"tokenPath":"gno.land/r/onbloc/bar","amount":"833"},{"tokenPath":"gno.land/r/onbloc/qux","amount":"2083"},{"tokenPath":"gno.land/r/demo/wugnot","amount":"8333"}]}`)
 	})
 
 	t.Run("collect reward", func(t *testing.T) {
 		uassert.Equal(t, bar.BalanceOf(a2u(dummyAddr)), uint64(0))
 		uassert.Equal(t, qux.BalanceOf(a2u(dummyAddr)), uint64(0))
+		uassert.Equal(t, ugnotBalanceOf(dummyAddr), uint64(0))
 
 		std.TestSetRealm(dummyRealm)
 		CollectReward()
 		uassert.Equal(t, bar.BalanceOf(a2u(dummyAddr)), uint64(833))
 		uassert.Equal(t, qux.BalanceOf(a2u(dummyAddr)), uint64(2083))
+		uassert.Equal(t, ugnotBalanceOf(dummyAddr), uint64(8333))
 	})
 
 	t.Run("same block", func(t *testing.T) {
@@ -135,6 +156,7 @@ func reward(t *testing.T) {
 
 		uassert.Equal(t, bar.BalanceOf(a2u(dummyAddr)), uint64(833))
 		uassert.Equal(t, qux.BalanceOf(a2u(dummyAddr)), uint64(2083))
+		uassert.Equal(t, ugnotBalanceOf(dummyAddr), uint64(8333))
 	})
 
 	t.Run("more block", func(t *testing.T) {
@@ -143,6 +165,7 @@ func reward(t *testing.T) {
 
 		uassert.Equal(t, bar.BalanceOf(a2u(dummyAddr)), uint64(833))
 		uassert.Equal(t, qux.BalanceOf(a2u(dummyAddr)), uint64(2083))
+		uassert.Equal(t, ugnotBalanceOf(dummyAddr), uint64(8333))
 	})
 }
 

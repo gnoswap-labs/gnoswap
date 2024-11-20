@@ -3,8 +3,8 @@ package emission
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v2/consts"
-	"gno.land/r/gnoswap/v2/gns"
+	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 var emissionAddr std.Address = consts.EMISSION_ADDR
