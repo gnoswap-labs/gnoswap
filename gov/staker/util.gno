@@ -36,6 +36,7 @@ func isUserCall() bool {
 	return std.PrevRealm().IsUser()
 }
 
+// TODO: use common.UserOnly instead
 func assertUserCall() {
 	if !isUserCall() {
 		panic(addDetailToError(
