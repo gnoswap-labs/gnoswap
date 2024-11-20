@@ -67,7 +67,7 @@ func redelegateUnknownFrom(t *testing.T) {
 	t.Run("unknown address redelegate", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
-		uassert.PanicsWithMessage(t, "caller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c has no delegated amount to g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt", func() {
+		uassert.PanicsWithMessage(t, "caller g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d has no delegated amount to g1wfj5getvv4nkzar9ta047h6lta047h6lycyuqt", func() {
 			Redelegate(reDelegate, dummyAddr, 1000001)
 		})
 

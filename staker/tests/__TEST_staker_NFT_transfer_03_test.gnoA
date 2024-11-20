@@ -116,7 +116,7 @@ func testStakeToken01(t *testing.T) {
 
 		uassert.PanicsWithMessage(
 			t,
-			`[GNOSWAP-STAKER-001] caller has no permission || staker.gno__StakeToken() || caller(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or staker(g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu) is not owner(g1v36k6mteta047h6lta047h6lta047h6lz7gmv8) of tokenId(1)`,
+			`[GNOSWAP-STAKER-001] caller has no permission || staker.gno__StakeToken() || caller(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) or staker(g1cceshmzzlmrh7rr3z30j2t5mrvsq9yccysw9nu) is not owner(g1v36k6mteta047h6lta047h6lta047h6lz7gmv8) of tokenId(1)`,
 			func() {
 				std.TestSetRealm(adminRealm)
 				StakeToken(1)
@@ -141,7 +141,7 @@ func testCollectReward01(t *testing.T) {
 	t.Run("admin can not collect reward(not a owner)", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			`[GNOSWAP-STAKER-001] caller has no permission || staker.gno__CollectReward() || only owner(g1v36k6mteta047h6lta047h6lta047h6lz7gmv8) can collect reward from tokenId(1), called from g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c`,
+			`[GNOSWAP-STAKER-001] caller has no permission || staker.gno__CollectReward() || only owner(g1v36k6mteta047h6lta047h6lta047h6lz7gmv8) can collect reward from tokenId(1), called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d`,
 			func() {
 				std.TestSetRealm(adminRealm)
 				CollectReward(1, false)

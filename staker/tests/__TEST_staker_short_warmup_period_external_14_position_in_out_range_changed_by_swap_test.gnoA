@@ -159,10 +159,10 @@ func testBeforeActive(t *testing.T) {
 		uassert.Equal(t, pei, `{"height":128,"time":1234567900,"position":[]}`)
 
 		lp01ExternalRewards := ApiGetRewardsByLpTokenId(1)
-		uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[]}]}`)
+		uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[]}]}`)
 
 		lp02ExternalRewards := ApiGetRewardsByLpTokenId(2)
-		uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[]}]}`)
+		uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":128,"timestamp":1234567900},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[]}]}`)
 	})
 }
 
@@ -170,10 +170,10 @@ func testAfter849Blocks(t *testing.T) {
 	t.Run("after 849 blocks", func(t *testing.T) {
 		std.TestSkipHeights(849) // in-active
 		lp01ExternalRewards := ApiGetRewardsByLpTokenId(1)
-		uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":977,"timestamp":1234569598},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[]}]}`)
+		uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":977,"timestamp":1234569598},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[]}]}`)
 
 		lp02ExternalRewards := ApiGetRewardsByLpTokenId(2)
-		uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":977,"timestamp":1234569598},"response":[{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[]}]}`)
+		uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":977,"timestamp":1234569598},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[]}]}`)
 	})
 }
 
@@ -181,10 +181,10 @@ func testAfter1Block(t *testing.T) {
 	t.Run("after 1 block", func(t *testing.T) {
 		std.TestSkipHeights(1) // active // but no block passed since active
 		lp01ExternalRewards := ApiGetRewardsByLpTokenId(1)
-		uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":978,"timestamp":1234569600},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[]}]}`)
+		uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":978,"timestamp":1234569600},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[]}]}`)
 
 		lp02ExternalRewards := ApiGetRewardsByLpTokenId(2)
-		uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":978,"timestamp":1234569600},"response":[{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[]}]}`)
+		uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":978,"timestamp":1234569600},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[]}]}`)
 	})
 }
 
@@ -192,10 +192,10 @@ func testAfter50Blocks(t *testing.T) {
 	t.Run("after 50 blocks", func(t *testing.T) {
 		std.TestSkipHeights(50)
 		lp01ExternalRewards := ApiGetRewardsByLpTokenId(1)
-		uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":67,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+		uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":67,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
 
 		lp02ExternalRewards := ApiGetRewardsByLpTokenId(2)
-		uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":34654,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+		uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":34654,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
 	})
 }
 
@@ -233,10 +233,10 @@ func testMakePosition1OutRange(t *testing.T) {
 func testRewardNow(t *testing.T) {
 	t.Run("check reward", func(t *testing.T) {
 		lp01ExternalRewards := ApiGetRewardsByLpTokenId(1)
-		uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":67,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+		uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":67,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
 
 		lp02ExternalRewards := ApiGetRewardsByLpTokenId(2)
-		uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":34654,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+		uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":34654,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
 	})
 }
 
@@ -245,17 +245,17 @@ func testRewardNowAfter1Block(t *testing.T) {
 		std.TestSkipHeights(1)
 
 		lp01ExternalRewards := ApiGetRewardsByLpTokenId(1)
-		uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":1029,"timestamp":1234569702},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":67,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+		uassert.Equal(t, lp01ExternalRewards, `{"stat":{"height":1029,"timestamp":1234569702},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":67,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
 
 		lp02ExternalRewards := ApiGetRewardsByLpTokenId(2)
-		uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":1029,"timestamp":1234569702},"response":[{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":35348,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+		uassert.Equal(t, lp02ExternalRewards, `{"stat":{"height":1029,"timestamp":1234569702},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":35348,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
 	})
 
 	// POSITION #1 PREVIOUS REWARD
-	// `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":1,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":67,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+	// `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":1,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":67,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
 
 	// POSITION #2 PREVIOUS REWARD
-	// `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":2,"address":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":34654,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
+	// `{"stat":{"height":1028,"timestamp":1234569700},"response":[{"lpTokenId":2,"address":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","rewards":[{"incentiveType":"EXTERNAL","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEyNg==","targetPoolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardTokenPath":"gno.land/r/onbloc/bar","rewardTokenAmount":34654,"stakeTimestamp":1234567898,"stakeHeight":127,"incentiveStart":1234569600}]}]}`)
 
 	/*
 		PREVIOUS REWARD -> NOW

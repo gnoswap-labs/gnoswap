@@ -41,7 +41,7 @@ func TestSetWarmUp_NoPrivileges(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-STAKER-001] caller has no permission || warm_up.gno__SetWarmUp() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) can set warm up period, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
+		`[GNOSWAP-STAKER-001] caller has no permission || warm_up.gno__SetWarmUp() || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) or governance(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) can set warm up period, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
 		func() {
 			SetWarmUp(100, 100)
 		},

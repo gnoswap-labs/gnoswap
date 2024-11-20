@@ -131,7 +131,7 @@ func TestSetWithdrawalFeeByAdminNoPermission(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-001] caller has no permission || protocol_fee_withdrawal.gno__SetWithdrawalFeeByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set withdrawal fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
+		`[GNOSWAP-POOL-001] caller has no permission || protocol_fee_withdrawal.gno__SetWithdrawalFeeByAdmin() || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can set withdrawal fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
 		func() {
 			SetWithdrawalFeeByAdmin(2)
 		},
@@ -167,7 +167,7 @@ func TestSetPoolCreationFeeByAdminNoPermission(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-001] caller has no permission || protocol_fee_pool_creation.gno__SetPoolCreationFeeByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set pool creation fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
+		`[GNOSWAP-POOL-001] caller has no permission || protocol_fee_pool_creation.gno__SetPoolCreationFeeByAdmin() || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can set pool creation fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
 		func() {
 			SetPoolCreationFeeByAdmin(2)
 		},

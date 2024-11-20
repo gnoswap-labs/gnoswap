@@ -1,6 +1,6 @@
 # make -f __local/test/test_data.mk init init-test
 
-ADDR_GSA := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
+ADDR_GSA := g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
 
 ADDR_LP01 := g1qf5863trkaq447zr2xdmql83g0twzl37dm9qqt
 ADDR_LP02 := g1ta0w7j4f586kwqu584z5h5sjurzywz3na7qg0a

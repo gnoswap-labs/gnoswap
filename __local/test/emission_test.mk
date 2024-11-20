@@ -1,6 +1,6 @@
 # make -f __local/test/emission_test.mk init init-test
 
-ADDR_GSA := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
+ADDR_GSA := g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
 ADDR_REGISTER := g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5
 
 ADDR_GOV := g1cu4dufdlzu0l9pekkqhw6mjnrxkp3z7ykst09d

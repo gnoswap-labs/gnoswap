@@ -1,6 +1,6 @@
 # make -f __local/test/launchpad.mk init init-test launchpad-test
 
-ADDR_GSA := g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c
+ADDR_GSA := g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d
 ADDR_REGISTER := g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5
 
 ADDR_LP01 := g1qf5863trkaq447zr2xdmql83g0twzl37dm9qqt
@@ -382,7 +382,7 @@ execute-community:
 
 propose-param:
 	$(info ************ propose param change // gnoswap_admin ************)
-	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func ProposeParameterChange -args "title param change" -args "desc param change" -args "2" -args "gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*123*GOV*gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c,905" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
+	@echo "" | gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gov/governance -func ProposeParameterChange -args "title param change" -args "desc param change" -args "2" -args "gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*123*GOV*gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905" -insecure-password-stdin=true -remote $(GNOLAND_RPC_URL) -broadcast=true -chainid $(CHAINID) -gas-fee 1ugnot -gas-wanted 100000000 -memo "" gnoswap_admin
 	@echo
 
 vote-param:

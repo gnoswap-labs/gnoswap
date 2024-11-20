@@ -44,13 +44,13 @@ func TestProposeParameterChange_Two_SetAvgBlockTimeInMs_CommunityPoolSpend(t *te
 			"test_title",
 			"test_description",
 			uint64(2),
-			"gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*123*GOV*gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c,905",
+			"gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*123*GOV*gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
 		)
 
 		uassert.Equal(t, proposalID, uint64(1))
 
 		proposalJson := GetProposalById(1)
-		uassert.Equal(t, proposalJson, `{"height":"128","now":"1234567900","proposals":[{"id":"1","configVersion":"1","proposer":"g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTAwIiwiVXBjb21pbmciOiJ0cnVlIiwiQWN0aXZlIjoiZmFsc2UiLCJWb3RpbmdTdGFydCI6IjEyMzQ1Njc5MTAiLCJWb3RpbmdFbmQiOiIxMjM0NTY3OTQwIiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"PARAMETER_CHANGE","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":"Z25vLmxhbmQvci9nbm9zd2FwL3YyL2ducypFWEUqU2V0QXZnQmxvY2tUaW1lSW5NcypFWEUqMTIzKkdPVipnbm8ubGFuZC9yL2dub3N3YXAvdjIvY29tbXVuaXR5X3Bvb2wqRVhFKlRyYW5zZmVyVG9rZW4qRVhFKmduby5sYW5kL3IvZ25vc3dhcC92Mi9nbnMsZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yyw5MDU="}]}`)
+		uassert.Equal(t, proposalJson, `{"height":"128","now":"1234567900","proposals":[{"id":"1","configVersion":"1","proposer":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","status":"eyJDcmVhdGVkQXQiOiIxMjM0NTY3OTAwIiwiVXBjb21pbmciOiJ0cnVlIiwiQWN0aXZlIjoiZmFsc2UiLCJWb3RpbmdTdGFydCI6IjEyMzQ1Njc5MTAiLCJWb3RpbmdFbmQiOiIxMjM0NTY3OTQwIiwiUGFzc2VkIjoiZmFsc2UiLCJQYXNzZWRBdCI6IjAiLCJSZWplY3RlZCI6ImZhbHNlIiwiUmVqZWN0ZWRBdCI6IjAiLCJDYW5jZWxlZCI6ImZhbHNlIiwiQ2FuY2VsZWRBdCI6IjAiLCJFeGVjdXRlZCI6ImZhbHNlIiwiRXhlY3V0ZWRBdCI6IjAiLCJFeHBpcmVkIjoiZmFsc2UiLCJFeHBpcmVkQXQiOiIwIn0=","type":"PARAMETER_CHANGE","title":"test_title","description":"test_description","vote":"eyJxdW9ydW0iOiI1MDAwMDAiLCJtYXgiOiIxMDAwMDAwIiwieWVzIjoiMCIsIm5vIjoiMCJ9","extra":"Z25vLmxhbmQvci9nbm9zd2FwL3YyL2ducypFWEUqU2V0QXZnQmxvY2tUaW1lSW5NcypFWEUqMTIzKkdPVipnbm8ubGFuZC9yL2dub3N3YXAvdjIvY29tbXVuaXR5X3Bvb2wqRVhFKlRyYW5zZmVyVG9rZW4qRVhFKmduby5sYW5kL3IvZ25vc3dhcC92Mi9nbnMsZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yyw5MDU="}]}`)
 
 		uassert.Equal(t, gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR)), uint64(3567351)) // community pool receives 5% of emission reward
 		uassert.Equal(t, std.GetHeight(), int64(128))
