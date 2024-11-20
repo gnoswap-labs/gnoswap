@@ -430,9 +430,9 @@ func CreateExternalIncentive(
 		rewardToken = consts.WUGNOT_PATH
 	}
 
-	// must be in seconds format, not milliseconds
-	// must be at least +1 day midnight
-	// must be midnight of the day
+	// // must be in seconds format, not milliseconds
+	// // must be at least +1 day midnight
+	// // must be midnight of the day
 	checkStartTime(startTimestamp)
 
 	// endTimestamp cannot be later than 253402300799 (9999-12-31 23:59:59)
@@ -443,13 +443,16 @@ func CreateExternalIncentive(
 		))
 	}
 
-	externalDuration := uint64(endTimestamp - startTimestamp)
-	if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_365DAYS) {
-		panic(addDetailToError(
-			errInvalidIncentiveDuration,
-			ufmt.Sprintf("staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 365 days", externalDuration),
-		))
-	}
+	// externalDuration := uint64(endTimestamp - startTimestamp)
+	// if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_365DAYS) {
+	// 	panic(addDetailToError(
+	// 		errInvalidIncentiveDuration,
+	// 		ufmt.Sprintf("staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 365 days", externalDuration),
+	// 	))
+	// }
+
+	startTimestamp = time.Now().Unix() + 10
+	endTimestamp = startTimestamp + 540
 
 	incentiveId := incentiveIdCompute(std.PrevRealm().Addr(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
 
@@ -626,6 +629,8 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 }
 
 func checkStartTime(startTimestamp int64) {
+	return
+
 	// must be in seconds format, not milliseconds
 	// REF: https://stackoverflow.com/a/23982005
 	numStr := strconv.Itoa(int(startTimestamp))
