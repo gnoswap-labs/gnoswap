@@ -9,8 +9,6 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/r/demo/wugnot"
 )
 
 var (
@@ -31,19 +29,7 @@ func handleSwapFee(
 	feeAmountUint64 := feeAmount.Uint64()
 
 	if !isDry {
-		if outputToken == consts.GNOT { // unwrap if coin
-			// wugnot: buyer > router
-			transferFromByRegisterCall(outputToken, std.PrevRealm().Addr(), consts.ROUTER_ADDR, feeAmountUint64)
-
-			// ugnot: wugnot > router
-			wugnot.Withdraw(feeAmountUint64)
-
-			// ugnot: router > feeCollector
-			banker := std.GetBanker(std.BankerTypeRealmSend)
-			banker.SendCoins(consts.ROUTER_ADDR, consts.PROTOCOL_FEE_ADDR, std.Coins{{"ugnot", int64(feeAmountUint64)}})
-		} else { // just transfer if grc20
-			transferFromByRegisterCall(outputToken, std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
-		}
+		transferFromByRegisterCall(outputToken, std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
 
 		prevAddr, prevRealm := getPrev()
 
