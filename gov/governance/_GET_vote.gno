@@ -2,11 +2,11 @@ package governance
 
 import (
 	"std"
+	"strconv"
 
 	"gno.land/p/demo/ufmt"
 
-	"strconv"
-	"strings"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 func GetVoteByVoteKey(voteKey string) bool {
@@ -110,12 +110,9 @@ func GetVotedAtByVoteKey(voteKey string) uint64 {
 }
 
 func divideVoteKeyToProposalIdAndUser(voteKey string) (uint64, std.Address) {
-	parts := strings.Split(voteKey, ":")
-	if len(parts) != 2 {
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("_GET_vote.gno__divideVoteKeyToProposalIdAndUser() || voteKey(%s) is invalid", voteKey),
-		))
+	parts, err := common.Split(voteKey, ":", 2)
+	if err != nil {
+		panic(errInvalidInput)
 	}
 
 	proposalId, err := strconv.ParseUint(parts[0], 10, 64)

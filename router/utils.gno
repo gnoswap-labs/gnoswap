@@ -7,15 +7,13 @@ import (
 
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 func poolPathWithFeeDivide(poolPath string) (string, string, int) {
-	poolPathSplit := strings.Split(poolPath, ":")
-	if len(poolPathSplit) != 3 {
-		panic(addDetailToError(
-			errInvalidPoolPath,
-			ufmt.Sprintf("utils.gno__poolPathWithFeeDivide() || len(poolPathSplit) != 3, poolPath: %s", poolPath),
-		))
+	poolPathSplit, err := common.Split(poolPath, ":", 3)
+	if err != nil {
+		panic(errInvalidPoolPath)
 	}
 
 	feeInt, err := strconv.Atoi(poolPathSplit[2])
@@ -27,12 +25,9 @@ func poolPathWithFeeDivide(poolPath string) (string, string, int) {
 }
 
 func getDataForSinglePath(poolPath string) (string, string, uint32) {
-	poolPathSplit := strings.Split(poolPath, ":")
-	if len(poolPathSplit) != 3 {
-		panic(addDetailToError(
-			errInvalidPoolPath,
-			ufmt.Sprintf("utils.gno__getDataForSinglePath() || len(poolPathSplit) != 3, poolPath: %s", poolPath),
-		))
+	poolPathSplit, err := common.Split(poolPath, ":", 3)
+	if err != nil {
+		panic(errInvalidPoolPath)
 	}
 
 	token0 := poolPathSplit[0]

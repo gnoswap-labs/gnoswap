@@ -3,11 +3,11 @@ package position
 import (
 	"std"
 	"strconv"
-	"strings"
 	"time"
 
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 func checkDeadline(deadline int64) {
@@ -25,12 +25,9 @@ func a2u(addr std.Address) pusers.AddressOrName {
 }
 
 func poolKeyDivide(poolKey string) (string, string, uint32) {
-	res := strings.Split(poolKey, ":")
-	if len(res) != 3 {
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("utils.gno__poolKeyDivide() || invalid poolKey(%s)", poolKey),
-		))
+	res, err := common.Split(poolKey, ":", 3)
+	if err != nil {
+		panic(errInvalidInput)
 	}
 
 	pToken0, pToken1, pFeeStr := res[0], res[1], res[2]

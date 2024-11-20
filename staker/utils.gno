@@ -8,15 +8,13 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 func poolPathAlign(poolPath string) string {
-	res := strings.Split(poolPath, ":")
-	if len(res) != 3 {
-		panic(addDetailToError(
-			errInvalidPoolPath,
-			ufmt.Sprintf("utils.gno__poolPathAlign() || invalid poolPath(%s)", poolPath),
-		))
+	res, err := common.Split(poolPath, ":", 3)
+	if err != nil {
+		panic(errInvalidPoolPath)
 	}
 
 	pToken0, pToken1, fee := res[0], res[1], res[2]
@@ -29,12 +27,9 @@ func poolPathAlign(poolPath string) string {
 }
 
 func poolPathDivide(poolPath string) (string, string, string) {
-	res := strings.Split(poolPath, ":")
-	if len(res) != 3 {
-		panic(addDetailToError(
-			errInvalidPoolPath,
-			ufmt.Sprintf("utils.gno__poolPathDivide() || invalid poolPath(%s)", poolPath),
-		))
+	res, err := common.Split(poolPath, ":", 3)
+	if err != nil {
+		panic(errInvalidPoolPath)
 	}
 
 	pToken0, pToken1, fee := res[0], res[1], res[2]
