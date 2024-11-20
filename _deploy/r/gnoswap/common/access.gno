@@ -14,7 +14,6 @@ func AssertCaller(caller, addr std.Address) error {
 	return nil
 }
 
-// ref: pool/token_register.gno RegisterGRC20Interface
 func SatisfyCond(cond bool) error {
 	if !cond {
 		return ufmt.Errorf("given condition is not satisfied the permission check")
