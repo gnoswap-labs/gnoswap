@@ -18,7 +18,7 @@ func TestSetLimitCaller(t *testing.T) {
 
 	t.Run("with non-admin privilege, panics", func(t *testing.T) {
 		uassert.PanicsWithMessage(t,
-			`[GNOSWAP-COMMON-001] caller has no permission || limit_caller.gno__SetLimitCaller() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set limit caller, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
+			`[GNOSWAP-COMMON-001] caller has no permission || limit_caller.gno__SetLimitCaller() || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can set limit caller, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
 			func() { SetLimitCaller(false) },
 		)
 	})

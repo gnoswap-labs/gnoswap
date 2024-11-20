@@ -20,7 +20,7 @@ func TestTransferTokenByAdmin(t *testing.T) {
 	t.Run("panic if not admin", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			"[GNOSWAP-COMMUNITY_POOL-001] caller has no permission || community_pool.gno__TransferTokenByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can transfer token, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm",
+			"[GNOSWAP-COMMUNITY_POOL-001] caller has no permission || community_pool.gno__TransferTokenByAdmin() || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can transfer token, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm",
 			func() {
 				TransferTokenByAdmin(consts.GNS_PATH, dummyAddr, 1000)
 			},

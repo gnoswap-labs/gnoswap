@@ -226,7 +226,7 @@ func TestRepositionNotOwner(t *testing.T) {
 	std.TestSetRealm(std.NewUserRealm(test1))
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POSITION-001] caller has no permission || position.gno__Reposition() || only owner(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can reposition for tokenId(1), but called from g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5`,
+		`[GNOSWAP-POSITION-001] caller has no permission || position.gno__Reposition() || only owner(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can reposition for tokenId(1), but called from g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5`,
 		func() {
 			Reposition(uint64(1), -1000, 1000, "500", "500", "0", "0")
 		})

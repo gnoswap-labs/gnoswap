@@ -177,7 +177,7 @@ func TestGetAmountByHeight(t *testing.T) {
 func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
 	t.Run("panic if not admin", func(t *testing.T) {
 		uassert.PanicsWithMessage(t,
-			`[GNOSWAP-GNS-001] caller has no permission || gns.gno__SetAvgBlockTimeInMsByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can call this function, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
+			`[GNOSWAP-GNS-001] caller has no permission || gns.gno__SetAvgBlockTimeInMsByAdmin() || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can call this function, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
 			func() {
 				SetAvgBlockTimeInMsByAdmin(1000)
 			})

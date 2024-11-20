@@ -312,7 +312,7 @@ func TestSetFeeProtocolByAdmin(t *testing.T) {
 	// non admin call
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-001] caller has no permission || pool.gno__SetFeeProtocolByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set fee protocol, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
+		`[GNOSWAP-POOL-001] caller has no permission || pool.gno__SetFeeProtocolByAdmin() || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can set fee protocol, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
 		func() { SetFeeProtocolByAdmin(2, 2) },
 	)
 

@@ -47,7 +47,7 @@ func TestSetDevOpsPctByAdminNoPermission(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-PROTOCOL_FEE-001] caller has no permission || protocol_fee.gno__SetDevOpsPctByAdmin() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) can set devOpsPct, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
+		`[GNOSWAP-PROTOCOL_FEE-001] caller has no permission || protocol_fee.gno__SetDevOpsPctByAdmin() || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can set devOpsPct, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
 		func() {
 			SetDevOpsPctByAdmin(123)
 		},
