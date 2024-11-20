@@ -3,10 +3,10 @@ package staker
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/consts"
-
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -71,15 +71,8 @@ func GetUnstakingFee() uint64 {
 
 func SetUnstakingFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"reward_fee.gno__SetUnstakingFeeByAdmin() || only admin(%s) can set unstaking fee, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	setUnstakingFee(fee)

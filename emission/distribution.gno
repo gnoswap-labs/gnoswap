@@ -60,11 +60,8 @@ func ChangeDistributionPctByAdmin(
 	target04 int, pct04 uint64,
 ) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("emission.gno__ChangeDistributionPctByAdmin() || only admin(%s) can change distribution percentages, called from %s", consts.ADMIN, caller.String()),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	checkSumDistributionPct(pct01, pct02, pct03, pct04)

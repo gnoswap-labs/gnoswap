@@ -3,9 +3,7 @@ package pool
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
-
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -27,15 +25,6 @@ func prevRealm() string {
 
 func isUserCall() bool {
 	return std.PrevRealm().IsUser()
-}
-
-func assertUserCall() {
-	if !isUserCall() {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("util.gno__assertUserCall() || must be called by user, called from %s", std.PrevRealm().PkgPath()),
-		))
-	}
 }
 
 func getPrev() (string, string) {

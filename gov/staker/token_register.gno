@@ -8,6 +8,7 @@ import (
 	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 type GRC20Interface interface {
@@ -65,13 +66,14 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 // Panics:
 //   - caller is not the admin
 func UnregisterGRC20Interface(pkgPath string) {
-	assertUserCall()
+	if err := common.SatisfyCond(isUserCall()); err != nil {
+		panic(err)
+	}
 
 	caller := std.PrevRealm().Addr()
-	panic(addDetailToError(
-		errNoPermission,
-		ufmt.Sprintf("token_register.gno__UnregisterGRC20Interface() || unauthorized address(%s) to unregister", caller.String()),
-	))
+	if err := common.TokenRegisterOnly(caller); err != nil {
+		panic(err)
+	}
 
 	pkgPath = handleNative(pkgPath)
 

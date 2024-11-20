@@ -12,15 +12,8 @@ import (
 // TransferTokenByAdmin transfers token to the given address.
 func TransferTokenByAdmin(pkgPath string, to std.Address, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"community_pool.gno__TransferTokenByAdmin() || only admin(%s) can transfer token, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	transferToken(pkgPath, to, amount)
@@ -40,15 +33,8 @@ func TransferTokenByAdmin(pkgPath string, to std.Address, amount uint64) {
 // Only governance contract can execute this function via proposal
 func TransferToken(pkgPath string, to std.Address, amount uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"community_pool.gno__TransferToken() || only governance(%s) can transfer token, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		))
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err)
 	}
 
 	transferToken(pkgPath, to, amount)

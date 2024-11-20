@@ -36,6 +36,13 @@ func GovernanceOnly(caller std.Address) error {
 	return nil
 }
 
+func GovStakerOnly(caller std.Address) error {
+	if caller != consts.GOV_STAKER_ADDR {
+		return ufmt.Errorf("caller(%s) has no permission", caller.String())
+	}
+	return nil
+}
+
 func RouterOnly(caller std.Address) error {
 	if caller != consts.ROUTER_ADDR {
 		return ufmt.Errorf("caller(%s) has no permission", caller.String())
@@ -59,6 +66,13 @@ func StakerOnly(caller std.Address) error {
 
 func TokenRegisterOnly(caller std.Address) error {
 	if caller != consts.TOKEN_REGISTER {
+		return ufmt.Errorf("caller(%s) has no permission", caller.String())
+	}
+	return nil
+}
+
+func LaunchpadOnly(caller std.Address) error {
+	if caller != consts.LAUNCHPAD_ADDR {
 		return ufmt.Errorf("caller(%s) has no permission", caller.String())
 	}
 	return nil

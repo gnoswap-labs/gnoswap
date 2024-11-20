@@ -57,11 +57,8 @@ func ReconfigureByAdmin(
 	executionWindow uint64,
 ) uint64 {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("config.gno__ReconfigureByAdmin() || only admin(%s) can call this function, called from %s", consts.ADMIN, caller),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	common.IsHalted()

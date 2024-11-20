@@ -7,6 +7,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -38,11 +39,8 @@ func GetRegisteredTokens() []string {
 func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	prevAddr := std.PrevRealm().Addr()
 	prevPath := std.PrevRealm().PkgPath()
-	if !(prevAddr == consts.TOKEN_REGISTER || prevPath == consts.INIT_REGISTER_PATH || strings.HasPrefix(prevPath, consts.TOKEN_REGISTER_NAMESPACE)) {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("token_register.gno__RegisterGRC20Interface() || only register(%s) can register token, called from %s", consts.TOKEN_REGISTER, prevAddr),
-		))
+	if err := common.SatisfyCond(isValidRegisterCall(prevAddr, prevPath)); err != nil {
+		panic(err)
 	}
 
 	pkgPath = handleNative(pkgPath)
@@ -58,19 +56,24 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	registered[pkgPath] = igrc20
 }
 
+func isValidRegisterCall(prevAddr std.Address, prevPath string) bool {
+	return prevAddr == consts.TOKEN_REGISTER ||
+		prevPath == consts.INIT_REGISTER_PATH ||
+		strings.HasPrefix(prevPath, consts.TOKEN_REGISTER_NAMESPACE)
+}
+
 // UnregisterGRC20Interface unregisters a GRC20 token interface
 //
 // Panics:
 //   - caller is not the admin
 func UnregisterGRC20Interface(pkgPath string) {
-	assertUserCall()
+	if err := common.SatisfyCond(isUserCall()); err != nil {
+		panic(err)
+	}
 
 	caller := std.PrevRealm().Addr()
-	if caller != consts.TOKEN_REGISTER {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("token_register.gno__UnregisterGRC20Interface() || unauthorized address(%s) to unregister", caller.String()),
-		))
+	if err := common.TokenRegisterOnly(caller); err != nil {
+		panic(err)
 	}
 
 	pkgPath = handleNative(pkgPath)
@@ -132,6 +135,7 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 			ufmt.Sprintf("token_register.gno__transferFromByRegisterCall() || expected locked(%t) to be false", locked),
 		))
 	}
+
 	return true
 }
 

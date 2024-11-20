@@ -56,11 +56,8 @@ func GetDevOpsPct() uint64 {
 // SetDevOpsPctByAdmin sets the devOpsPct.
 func SetDevOpsPctByAdmin(pct uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("protocol_fee.gno__SetDevOpsPctByAdmin() || only admin(%s) can set devOpsPct, called from %s", consts.ADMIN, caller),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	setDevOpsPct(pct)
@@ -79,11 +76,8 @@ func SetDevOpsPctByAdmin(pct uint64) {
 // Only governance contract can execute this function via proposal
 func SetDevOpsPct(pct uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("protocol_fee.gno__SetDevOpsPct() || only governance(%s) can set devOpsPct, called from %s", consts.GOV_GOVERNANCE_ADDR, caller),
-		))
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err)
 	}
 
 	setDevOpsPct(pct)
@@ -123,11 +117,9 @@ func ClearAccuTransferToGovStaker() {
 	common.IsHalted()
 
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_STAKER_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("protocol_fee.gno__ClearAccuTransferToGovStaker() || only gov/staker(%s) can clear accu transfer to gov/staker, called from %s", consts.GOV_STAKER_ADDR, caller),
-		))
+	if err := common.GovStakerOnly(caller); err != nil {
+		panic(err)
 	}
+
 	accuToGovStaker = make(map[string]uint64)
 }
