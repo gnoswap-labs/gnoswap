@@ -33,15 +33,3 @@ var (
 	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
 	stkRealm = std.NewCodeRealm(consts.STAKER_PATH)
 )
-
-/* HELPER */
-func ugnotBalanceOf(addr std.Address) uint64 {
-	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
-
-	coins := testBanker.GetCoins(addr)
-	if len(coins) == 0 {
-		return 0
-	}
-
-	return uint64(coins.AmountOf("ugnot"))
-}
