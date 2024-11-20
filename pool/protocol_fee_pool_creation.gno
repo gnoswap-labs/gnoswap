@@ -3,49 +3,78 @@ package pool
 import (
 	"std"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/p/demo/ufmt"
 )
 
 // poolCreationFee is the fee that is charged when a user creates a pool.
-//
 // The fee is denominated in GNS tokens.
 var (
 	poolCreationFee = uint64(100_000_000) // 100_GNS
 )
 
 // GetPoolCreationFee returns the poolCreationFee
+// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#getpoolcreationfee
 func GetPoolCreationFee() uint64 {
 	return poolCreationFee
 }
 
-// SetPoolCreationFee sets the poolCreationFee
-//
-// This function can only be called by the admin or governance.
-//
-// Panics:
-//   - If the caller is not the admin or governance
-func SetPoolCreationFee(fee uint64) {
+// SetPoolCreationFeeByAdmin sets the poolCreationFee.
+func SetPoolCreationFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
-		panic(
+	if caller != consts.ADMIN {
+		panic(addDetailToError(
+			errNoPermission,
 			ufmt.Sprintf(
-				"[POOL] protocol_fee_pool_creation.gno__SetPoolCreationFee() || only admin(%s) or governance(%s) can set pool creation fee, called from %s",
-				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
+				"protocol_fee_pool_creation.gno__SetPoolCreationFeeByAdmin() || only admin(%s) can set pool creation fee, called from %s",
+				consts.ADMIN,
 				caller,
 			),
-		)
+		))
 	}
 
-	poolCreationFee = fee
+	setPoolCreationFee(fee)
 
+	prevAddr, prevRealm := getPrev()
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_origCaller", origCaller(),
-		"m_prevRealm", prevRealm(),
-		"p_fee", uint64ToStr(fee),
+		"SetPoolCreationFeeByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"fee", ufmt.Sprintf("%d", fee),
 	)
+}
+
+// SetPoolCreationFee sets the poolCreationFee.
+// Only governance contract can execute this function via proposal
+// ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#setpoolcreationfee
+func SetPoolCreationFee(fee uint64) {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GOV_GOVERNANCE_ADDR {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf(
+				"protocol_fee_pool_creation.gno__SetPoolCreationFee() || only governance(%s) can set pool creation fee, called from %s",
+				consts.GOV_GOVERNANCE_ADDR,
+				caller,
+			),
+		))
+	}
+
+	setPoolCreationFee(fee)
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"SetPoolCreationFee",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"fee", ufmt.Sprintf("%d", fee),
+	)
+}
+
+func setPoolCreationFee(fee uint64) {
+	common.IsHalted()
+
+	poolCreationFee = fee
 }

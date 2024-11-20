@@ -5,10 +5,10 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	pl "gno.land/r/gnoswap/pool"
+	pl "gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -42,20 +42,20 @@ func _swap(
 		data.tokenOut,
 		data.fee,
 
-		recipient.String(),
+		recipient,
 		zeroForOne,
 		amountSpecified.ToString(),
 		sqrtPriceLimitX96.ToString(),
 
-		data.payer.String(),
+		data.payer,
 	)
 	amount0, err := i256.FromDecimal(amount0Str)
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] router.gno__Swap() || i256.FromDecimal(amount0Str(%s) failed", amount0Str))
+		panic(err.Error())
 	}
 	amount1, err := i256.FromDecimal(amount1Str)
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] router.gno__Swap() || i256.FromDecimal(amount1Str(%s) failed", amount1Str))
+		panic(err.Error())
 	}
 
 	poolRecv := i256Max(amount0, amount1)
@@ -95,11 +95,11 @@ func _swapDry(
 
 	amount0, err := i256.FromDecimal(amount0Str)
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] router.gno__Swap() || i256.FromDecimal(amount0Str(%s) failed", amount0Str))
+		panic(err.Error())
 	}
 	amount1, err := i256.FromDecimal(amount1Str)
 	if err != nil {
-		panic(ufmt.Sprintf("[ROUTER] router.gno__Swap() || i256.FromDecimal(amount1Str(%s) failed", amount1Str))
+		panic(err.Error())
 	}
 
 	poolRecv := i256Max(amount0, amount1)
@@ -133,7 +133,10 @@ func getMinTick(fee uint32) int32 {
 	case 10000:
 		return -887200
 	default:
-		panic(ufmt.Sprintf("[ROUTER] router.gno__getMinTick() || unknown fee(%d)", fee))
+		panic(addDetailToError(
+			errInvalidPoolFeeTier,
+			ufmt.Sprintf("swap_inner.gno__getMinTick() || unknown fee(%d)", fee),
+		))
 	}
 }
 
@@ -148,6 +151,9 @@ func getMaxTick(fee uint32) int32 {
 	case 10000:
 		return 887200
 	default:
-		panic(ufmt.Sprintf("[ROUTER] router.gno__getMaxTick() || unknown fee(%d)", fee))
+		panic(addDetailToError(
+			errInvalidPoolFeeTier,
+			ufmt.Sprintf("swap_inner.gno__getMaxTick() || unknown fee(%d)", fee),
+		))
 	}
 }

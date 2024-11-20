@@ -1,0 +1,556 @@
+package staker
+
+import (
+	"std"
+	"testing"
+	"time"
+
+	"gno.land/p/demo/uassert"
+
+	"gno.land/r/gnoswap/v1/consts"
+
+	en "gno.land/r/gnoswap/v1/emission"
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
+
+	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/gns"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/qux"
+)
+
+func TestCalcPoolPositionRewardGetter(t *testing.T) {
+	testInit(t)
+	testDoubleMint(t)
+	testPoolCreatePool(t)
+	testMintBarQux100_1(t)
+	testMintBarQux100_2(t)
+
+	// stake position 01 +  getter tests
+	testStakeToken_1(t)
+	testGetPoolGns(t)
+	testGetPoolCurrentBlockGns(t)
+	testGetPoolLastTmpGns(t)
+	testGetPoolAccuGns(t)
+	testGetPositionGns(t)
+	testGetPositionLastGns(t)
+	testGetPositionLastExternal(t)
+	testGetExternalLastCalculatedTimestamp(t)
+	testGetExternalGns(t)
+	testGetPoolTotalStakedLiquidity(t)
+	testGetPositionsLiquidityRatio(t)
+	testGetPoolsPositions(t)
+
+	// stake position 02 +  getter tests
+	testStakeToken_2(t)
+	testGetPoolGns2(t)
+	testGetPoolCurrentBlockGns2(t)
+	testGetPoolLastTmpGns2(t)
+	testGetPoolAccuGns2(t)
+	testGetPositionGns2(t)
+	testGetPositionLastGns2(t)
+	testGetPositionLastExternal2(t)
+	testGetExternalLastCalculatedTimestamp2(t)
+	testGetExternalGns2(t)
+	testGetPoolTotalStakedLiquidity2(t)
+	testGetPositionsLiquidityRatio2(t)
+	testGetPoolsPositions2(t)
+
+	// etc getter tests
+	testGetHeight(t)
+	testGetTimeNowUnix(t)
+	testGetExternalGnsAmount(t)
+	testGetStakerGnsBalance(t)
+	testGetStakerEmissionGnsBalance(t)
+	testGetLastCalculatedBalance(t)
+	testGetLastCalculatedHeight(t)
+	testGetMintedGnsAmount(t)
+	testGetNumPoolTiers(t)
+	testGetTiersRatio(t)
+	testGetWarmUpPeriods(t)
+	testGetGetPositionsInternalWarmUpAmount(t)
+
+	// create external incentive + getter tests
+	testCreateExternalIncentive_90_180(t)
+	testGetPositionsExternalWarmUpAmount(t)
+	testGetPositionsExternalLastCalculatedHeight(t)
+	testGetExternalLastCalculatedTimestamp3(t)
+	testGetNecessary(t)
+	testGetSingleData(t)
+	testGetPoolGnsData(t)
+	testGetPositionGnsData(t)
+	testGetPositionExternalData(t)
+}
+
+func testInit(t *testing.T) {
+	t.Run("initial", func(t *testing.T) {
+		// init pool tiers
+		// tier 1
+		delete(poolTiers, MUST_EXISTS_IN_TIER_1)
+
+		poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100"] = InternalTier{
+			tier:           1,
+			startTimestamp: time.Now().Unix(),
+		}
+
+		std.TestSkipHeights(1)
+
+		// override warm-up period for testing
+		warmUp[100] = 901 // 30m ~
+		warmUp[70] = 301  // 10m ~ 30m
+		warmUp[50] = 151  // 5m ~ 10m
+		warmUp[30] = 1    // ~ 5m
+	})
+}
+
+func testDoubleMint(t *testing.T) {
+	t.Run("two mint(and distribute) in same block", func(t *testing.T) {
+		en.MintAndDistributeGns()
+		en.MintAndDistributeGns()
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testPoolCreatePool(t *testing.T) {
+	t.Run("create pool", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+
+		pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
+		pl.CreatePool(barPath, bazPath, 3000, "79228162514264337593543950337")
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testMintBarQux100_1(t *testing.T) {
+	t.Run("mint position 01, bar:qux:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,      // token0
+			quxPath,      // token1
+			fee100,       // fee
+			int32(-1000), // tickLower
+			int32(1000),  // tickUpper
+			"50",         // amount0Desired
+			"50",         // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,
+			admin,
+			admin,
+		)
+		std.TestSkipHeights(1)
+	})
+}
+
+func testMintBarQux100_2(t *testing.T) {
+	t.Run("mint position 02, bar:qux:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,      // token0
+			quxPath,      // token1
+			fee100,       // fee
+			int32(-1000), // tickLower
+			int32(1000),  // tickUpper
+			"300",        // amount0Desired
+			"300",        // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,
+			admin,
+			admin,
+		)
+		std.TestSkipHeights(1)
+	})
+}
+
+func testStakeToken_1(t *testing.T) {
+	t.Run("stake token 01", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
+		StakeToken(1)
+
+		gpi := GetPrintInfo()
+		uassert.Equal(t, gpi, `{"height":128,"time":1234567900,"gns":{"staker":0,"devOps":14269405,"communityPool":57077624,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":0,"position":[{"lpTokenId":1,"stakedHeight":128,"stakedTimestamp":1234567900,"stakedDuration":0,"fullAmount":0,"ratio":0,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testGetPoolGns(t *testing.T) {
+	t.Run("staked 1, get pool gns", func(t *testing.T) {
+		jsonStr := GetPoolGns()
+		uassert.Equal(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","gnsAmount":"0"}]`)
+	})
+}
+
+func testGetPoolCurrentBlockGns(t *testing.T) {
+	t.Run("staked 1, get pool current block gns", func(t *testing.T) {
+		jsonStr := GetPoolCurrentBlockGns()
+		uassert.Equal(t, jsonStr, ``)
+	})
+}
+
+func testGetPoolLastTmpGns(t *testing.T) {
+	t.Run("staked 1, get pool last tmp gns", func(t *testing.T) {
+		jsonStr := GetPoolLastTmpGns()
+		uassert.Equal(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","gnsAmount":"0"}]`)
+	})
+}
+
+func testGetPoolAccuGns(t *testing.T) {
+	t.Run("staked 1, get pool accu gns", func(t *testing.T) {
+		jsonStr := GetPoolAccuGns()
+		uassert.Equal(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","gnsAmount":"53510274"}]`)
+	})
+}
+
+func testGetPositionGns(t *testing.T) {
+	t.Run("staked 1, get position gns", func(t *testing.T) {
+		jsonStr := GetPositionGns()
+		uassert.Equal(t, jsonStr, ``)
+	})
+}
+
+func testGetPositionLastGns(t *testing.T) {
+	t.Run("staked 1, get position last gns", func(t *testing.T) {
+		jsonStr := GetPositionLastGns()
+		uassert.Equal(t, jsonStr, ``)
+	})
+}
+
+func testGetPositionLastExternal(t *testing.T) {
+	t.Run("staked 1, get position last external", func(t *testing.T) {
+		jsonStr := GetPositionLastExternal()
+		uassert.Equal(t, jsonStr, ``)
+	})
+}
+
+func testGetExternalLastCalculatedTimestamp(t *testing.T) {
+	t.Run("staked 1, get external last calculated timestamp", func(t *testing.T) {
+		jsonStr := GetExternalLastCalculatedTimestamp()
+		uassert.Equal(t, jsonStr, ``)
+	})
+}
+
+func testGetExternalGns(t *testing.T) {
+	t.Run("staked 1, get external gns", func(t *testing.T) {
+		jsonStr := GetExternalGns()
+		uassert.Equal(t, jsonStr, ``)
+	})
+}
+
+func testGetPoolTotalStakedLiquidity(t *testing.T) {
+	t.Run("staked 1, get pool total staked liquidity", func(t *testing.T) {
+		jsonStr := GetPoolTotalStakedLiquidity()
+		uassert.Equal(t, jsonStr, ``)
+	})
+}
+
+func testGetPositionsLiquidityRatio(t *testing.T) {
+	t.Run("staked 1, get positions liquidity ratio", func(t *testing.T) {
+		jsonStr := GetPositionsLiquidityRatio()
+		uassert.Equal(t, jsonStr, ``)
+	})
+}
+
+func testGetPoolsPositions(t *testing.T) {
+	t.Run("staked 1, get pools positions", func(t *testing.T) {
+		jsonStr := GetPoolsPositions()
+		uassert.Equal(t, jsonStr, ``)
+	})
+}
+
+func testStakeToken_2(t *testing.T) {
+	t.Run("stake token 02", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
+		StakeToken(2)
+
+		gpi := GetPrintInfo()
+		uassert.Equal(t, gpi, `{"height":129,"time":1234567902,"gns":{"staker":10702055,"devOps":17123286,"communityPool":57791094,"govStaker":0,"protocolFee":200000000,"GnoswapAdmin":99999800000000},"pool":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","startTimestamp":1234567890,"tier":1,"numPoolSameTier":1,"poolReward":10702055,"position":[{"lpTokenId":1,"stakedHeight":128,"stakedTimestamp":1234567900,"stakedDuration":1,"fullAmount":10702055,"ratio":30,"warmUpAmount":3210616,"full30":10702055,"give30":3210616,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0},{"lpTokenId":2,"stakedHeight":129,"stakedTimestamp":1234567902,"stakedDuration":0,"fullAmount":0,"ratio":0,"warmUpAmount":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testGetPoolGns2(t *testing.T) {
+	t.Run("staked 2, get pool gns", func(t *testing.T) {
+		jsonStr := GetPoolGns()
+		uassert.Equal(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","gnsAmount":"10702055"}]`)
+	})
+}
+
+func testGetPoolCurrentBlockGns2(t *testing.T) {
+	t.Run("staked 2, get pool current block gns", func(t *testing.T) {
+		jsonStr := GetPoolCurrentBlockGns()
+		uassert.Equal(t, jsonStr, ``)
+	})
+}
+
+func testGetPoolLastTmpGns2(t *testing.T) {
+	t.Run("staked 2, get pool last tmp gns", func(t *testing.T) {
+		jsonStr := GetPoolLastTmpGns()
+		uassert.Equal(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","gnsAmount":"0"}]`)
+	})
+}
+
+func testGetPoolAccuGns2(t *testing.T) {
+	t.Run("staked 2, get pool accu gns", func(t *testing.T) {
+		jsonStr := GetPoolAccuGns()
+		uassert.Equal(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","gnsAmount":"64212329"}]`)
+	})
+}
+
+func testGetPositionGns2(t *testing.T) {
+	t.Run("staked 2, get position gns", func(t *testing.T) {
+		jsonStr := GetPositionGns()
+		uassert.Equal(t, jsonStr, `[{"tokenId":"1","gnsAmount":"10702055"}]`)
+	})
+}
+
+func testGetPositionLastGns2(t *testing.T) {
+	t.Run("staked 2, get position last gns", func(t *testing.T) {
+		jsonStr := GetPositionLastGns()
+		uassert.Equal(t, jsonStr, `[{"tokenId":"1","gnsAmount":"0"}]`)
+	})
+}
+
+func testGetPositionLastExternal2(t *testing.T) {
+	t.Run("staked 2, get position last external", func(t *testing.T) {
+		jsonStr := GetPositionLastExternal()
+		uassert.Equal(t, jsonStr, ``)
+	})
+}
+
+func testGetExternalLastCalculatedTimestamp2(t *testing.T) {
+	t.Run("staked 2, get external last calculated timestamp", func(t *testing.T) {
+		jsonStr := GetExternalLastCalculatedTimestamp()
+		uassert.Equal(t, jsonStr, ``)
+	})
+}
+
+func testGetExternalGns2(t *testing.T) {
+	t.Run("staked 2, get external gns", func(t *testing.T) {
+		jsonStr := GetExternalGns()
+		uassert.Equal(t, jsonStr, ``)
+	})
+}
+
+func testGetPoolTotalStakedLiquidity2(t *testing.T) {
+	t.Run("staked 2, get pool total staked liquidity", func(t *testing.T) {
+		jsonStr := GetPoolTotalStakedLiquidity()
+		uassert.Equal(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","totalStakedLiquidity":"1025"}]`)
+	})
+}
+
+func testGetPositionsLiquidityRatio2(t *testing.T) {
+	t.Run("staked 2, get positions liquidity ratio", func(t *testing.T) {
+		jsonStr := GetPositionsLiquidityRatio()
+		uassert.Equal(t, jsonStr, `[{"tokenId":"1","positionRatio":"79228162514264337593543950336"}]`)
+	})
+}
+
+func testGetPoolsPositions2(t *testing.T) {
+	t.Run("staked 2, get pools positions", func(t *testing.T) {
+		jsonStr := GetPoolsPositions()
+		uassert.Equal(t, jsonStr, `[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","tokenIds":["1"]}]`)
+	})
+}
+
+// START, ETC GETTER TEST
+func testGetHeight(t *testing.T) {
+	t.Run("get height", func(t *testing.T) {
+		res := GetHeight()
+		uassert.Equal(t, res, int64(130))
+	})
+}
+
+func testGetTimeNowUnix(t *testing.T) {
+	t.Run("get time now unix", func(t *testing.T) {
+		res := GetTimeNowUnix()
+		uassert.Equal(t, res, int64(1234567904))
+	})
+}
+
+func testGetExternalGnsAmount(t *testing.T) {
+	t.Run("get external gns amount", func(t *testing.T) {
+		res := GetExternalGnsAmount()
+		uassert.Equal(t, res, uint64(0))
+	})
+}
+
+func testGetStakerGnsBalance(t *testing.T) {
+	t.Run("get staker gns balance", func(t *testing.T) {
+		res := GetStakerGnsBalance()
+		uassert.Equal(t, res, uint64(21404110))
+	})
+}
+
+func testGetStakerEmissionGnsBalance(t *testing.T) {
+	t.Run("get staker emission gns balance", func(t *testing.T) {
+		res := GetStakerEmissionGnsBalance()
+		uassert.Equal(t, res, uint64(21404110))
+	})
+}
+
+func testGetLastCalculatedBalance(t *testing.T) {
+	t.Run("get last calculated balance", func(t *testing.T) {
+		res := GetLastCalculatedBalance()
+		uassert.Equal(t, res, uint64(10702055))
+	})
+}
+
+func testGetLastCalculatedHeight(t *testing.T) {
+	t.Run("get last calculated height", func(t *testing.T) {
+		res := GetLastCalculatedHeight()
+		uassert.Equal(t, res, int64(129))
+	})
+}
+
+func testGetMintedGnsAmount(t *testing.T) {
+	t.Run("get minted gns amount", func(t *testing.T) {
+		res := GetMintedGnsAmount()
+		uassert.Equal(t, res, uint64(10702055))
+	})
+}
+
+func testGetNumPoolTiers(t *testing.T) {
+	t.Run("get num pool tiers", func(t *testing.T) {
+		res := GetNumPoolTiers()
+		uassert.Equal(t, res, `1*STAKER*0*STAKER*0`)
+	})
+}
+
+func testGetTiersRatio(t *testing.T) {
+	t.Run("get tiers ratio", func(t *testing.T) {
+		res := GetTiersRatio()
+		uassert.Equal(t, res, `100*STAKER*0*STAKER*0`)
+	})
+}
+
+func testGetWarmUpPeriods(t *testing.T) {
+	t.Run("get warm up periods", func(t *testing.T) {
+		res := GetWarmUpPeriods()
+		uassert.Equal(t, res, `1*STAKER*151*STAKER*301*STAKER*901`)
+	})
+}
+
+func testGetGetPositionsInternalWarmUpAmount(t *testing.T) {
+	t.Run("get positions internal warm up amount", func(t *testing.T) {
+		res := GetPositionsInternalWarmUpAmount()
+		uassert.Equal(t, res, `[{"tokenId":"1","full30":"10702055","give30":"3210616","left30":"7491439","full50":"0","give50":"0","left50":"0","full70":"0","give70":"0","left70":"0","full100":"0"},{"tokenId":"2","full30":"0","give30":"0","left30":"0","full50":"0","give50":"0","left50":"0","full70":"0","give70":"0","left70":"0","full100":"0"}]`)
+	})
+}
+
+// CREATE EXTERNAL INCENTIVE
+func testCreateExternalIncentive_90_180(t *testing.T) {
+	t.Run("create external incentive 90 days", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+
+		CreateExternalIncentive(
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // targetPoolPath string,
+			barPath,     // rewardToken string, // token path should be registered
+			"900000000", // _rewardAmount string,
+			1234569600,
+			1234569600+TIMESTAMP_90DAYS,
+		)
+	})
+
+	t.Run("create external incentive 180 days", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		qux.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+
+		CreateExternalIncentive(
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // targetPoolPath string,
+			quxPath,      // rewardToken string, // token path should be registered
+			"1230000000", // _rewardAmount string,
+			1234569600,
+			1234569600+TIMESTAMP_180DAYS,
+		)
+	})
+}
+
+func testGetPositionsExternalWarmUpAmount(t *testing.T) {
+	t.Run("get positions external warm up amount", func(t *testing.T) {
+		std.TestSkipHeights(1000)
+
+		en.MintAndDistributeGns()
+		if consts.EMISSION_REFACTORED {
+			CalcPoolPositionRefactor()
+		} else {
+			CalcPoolPosition()
+		}
+
+		res := GetPositionsExternalWarmUpAmount()
+		uassert.Equal(t, res, `[{"tokenId":"1","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMA==","full30":"4959","give30":"1487","left30":"3472","full50":"66","give50":"33","left50":"33","full70":"0","give70":"0","left70":"0","full100":"0"},{"tokenId":"1","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2OTYwMDoxMjUwMTIxNjAwOjEzMA==","full30":"3428","give30":"1028","left30":"2400","full50":"6","give50":"3","left50":"3","full70":"0","give70":"0","left70":"0","full100":"0"},{"tokenId":"2","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMA==","full30":"29762","give30":"8928","left30":"20834","full50":"396","give50":"198","left50":"198","full70":"0","give70":"0","left70":"0","full100":"0"},{"tokenId":"2","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2OTYwMDoxMjUwMTIxNjAwOjEzMA==","full30":"20572","give30":"6171","left30":"14401","full50":"36","give50":"18","left50":"18","full70":"0","give70":"0","left70":"0","full100":"0"}]`)
+	})
+}
+
+func testGetPositionsExternalLastCalculatedHeight(t *testing.T) {
+	t.Run("get positions external last calculated height", func(t *testing.T) {
+		res := GetPositionsExternalLastCalculatedHeight()
+		uassert.Equal(t, res, `[{"tokenId":"1","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMA==","lastCalculatedHeight":"1130"},{"tokenId":"1","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2OTYwMDoxMjUwMTIxNjAwOjEzMA==","lastCalculatedHeight":"1130"},{"tokenId":"2","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMA==","lastCalculatedHeight":"1130"},{"tokenId":"2","incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2OTYwMDoxMjUwMTIxNjAwOjEzMA==","lastCalculatedHeight":"1130"}]`)
+	})
+}
+
+func testGetExternalLastCalculatedTimestamp3(t *testing.T) {
+	t.Run("get external last calculated timestamp", func(t *testing.T) {
+		jsonStr := GetExternalLastCalculatedTimestamp()
+		uassert.Equal(t, jsonStr, `[{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9iYXI6MTIzNDU2OTYwMDoxMjQyMzQ1NjAwOjEzMA==","lastCalculatedTimestamp":"1234569904"},{"incentiveId":"ZzFsbXZycnJyNGVyMnVzODRoMjczMnNydTc2Yzl6bDJudmtuaGE4Yzpnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMDpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTIzNDU2OTYwMDoxMjUwMTIxNjAwOjEzMA==","lastCalculatedTimestamp":"1234569904"}]`)
+	})
+}
+
+func testGetNecessary(t *testing.T) {
+	t.Run("get necessary", func(t *testing.T) {
+		res := GetNecessary()
+		uassert.Equal(t, res, `{"height":"1130","now":"1234569904","blockGenerationInterval":"2","lastCalculatedHeight":"1130","lastCalculatedBalance":"10723458610","externalGnsBalance":"0","depositGnsAmount":"2000000000","gnsBalance":"12723458610","numPoolTiers":"1*STAKER*0*STAKER*0","tiersRatio":"100*STAKER*0*STAKER*0","warmUpPeriods":"1*STAKER*151*STAKER*301*STAKER*901","poolGns":"W3sicG9vbFBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMCIsImduc0Ftb3VudCI6IjEwNzIzNDU4NjEwIn1d","poolAccuGns":"W3sicG9vbFBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMCIsImduc0Ftb3VudCI6IjEwNzc2OTY4ODg0In1d","poolLastTmpGns":"W3sicG9vbFBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMCIsImduc0Ftb3VudCI6IjEyIn1d","positionGns":"W3sidG9rZW5JZCI6IjEiLCJnbnNBbW91bnQiOiIxNTQwODgyNTc5In0seyJ0b2tlbklkIjoiMiIsImduc0Ftb3VudCI6IjkxODI1NzYwMTkifV0=","positionLastGns":"W3sidG9rZW5JZCI6IjEiLCJnbnNBbW91bnQiOiIxMjIzMDcwNiJ9LHsidG9rZW5JZCI6IjIiLCJnbnNBbW91bnQiOiI5MTczNDAzIn1d","positionsInternalWarmUpAmount":"W3sidG9rZW5JZCI6IjEiLCJmdWxsMzAiOiIyMzg0NzExODMiLCJnaXZlMzAiOiI3MTU0MTM1NCIsImxlZnQzMCI6IjE2NjkyOTgyOSIsImZ1bGw1MCI6IjIyOTI5Nzc4MCIsImdpdmU1MCI6IjExNDY0ODg5MCIsImxlZnQ1MCI6IjExNDY0ODg5MCIsImZ1bGw3MCI6IjkxNzE5MTEyMyIsImdpdmU3MCI6IjY0MjAzMzc4NiIsImxlZnQ3MCI6IjI3NTE1NzMzNyIsImZ1bGwxMDAiOiIxNTU5MjI0OTEifSx7InRva2VuSWQiOiIyIiwiZnVsbDMwIjoiMTM3NjAxMDM5MiIsImdpdmUzMCI6IjQxMjgwMzExNiIsImxlZnQzMCI6Ijk2MzIwNzI3NiIsImZ1bGw1MCI6IjEzNzYwMTAzOTIiLCJnaXZlNTAiOiI2ODgwMDUxOTYiLCJsZWZ0NTAiOiI2ODgwMDUxOTYiLCJmdWxsNzAiOiI1NTA0MDQxNTY5IiwiZ2l2ZTcwIjoiMzg1MjgyOTA5OCIsImxlZnQ3MCI6IjE2NTEyMTI0NzEiLCJmdWxsMTAwIjoiOTI2NTEzNjY0In1d","positionExternal":"W3sidG9rZW5JZCI6IjEiLCJleHRlcm5hbHMiOlt7ImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNk1USXpORFUyT1RZd01Eb3hNalF5TXpRMU5qQXdPakV6TUE9PSIsInBvb2xQYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvYmFyOmduby5sYW5kL3Ivb25ibG9jL3F1eDoxMDAiLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXIiLCJ0b2tlbkFtb3VudFg5NiI6IjM5ODE4MTI5OTQxNzk1Mzk5MDMzMDM2ODYzNDQ1MTgzNCIsInRva2VuQW1vdW50RnVsbCI6IjAiLCJ0b2tlbkFtb3VudFRvR2l2ZSI6IjAifSx7ImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTl4ZFhnNk1USXpORFUyT1RZd01Eb3hNalV3TVRJeE5qQXdPakV6TUE9PSIsInBvb2xQYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvYmFyOmduby5sYW5kL3Ivb25ibG9jL3F1eDoxMDAiLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9xdXgiLCJ0b2tlbkFtb3VudFg5NiI6IjI3MjA5MDU1NDYwMjI2ODU2MDA1OTA4NTIzMzU0MjA5NiIsInRva2VuQW1vdW50RnVsbCI6IjAiLCJ0b2tlbkFtb3VudFRvR2l2ZSI6IjAifV19LHsidG9rZW5JZCI6IjIiLCJleHRlcm5hbHMiOlt7ImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNk1USXpORFUyT1RZd01Eb3hNalF5TXpRMU5qQXdPakV6TUE9PSIsInBvb2xQYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvYmFyOmduby5sYW5kL3Ivb25ibG9jL3F1eDoxMDAiLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXIiLCJ0b2tlbkFtb3VudFg5NiI6IjIzODk0NzYyNjc3NDA3MjYyNDM5NDA1ODA3MDI3MzEzNzUiLCJ0b2tlbkFtb3VudEZ1bGwiOiIwIiwidG9rZW5BbW91bnRUb0dpdmUiOiIwIn0seyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJwb29sUGF0aCI6Imduby5sYW5kL3Ivb25ibG9jL2Jhcjpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTAwIiwidG9rZW5QYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvcXV4IiwidG9rZW5BbW91bnRYOTYiOiIxNjMyODA4NzgyOTU2MTYyOTMzMzU5Mzk2ODEzNTMzMTYyIiwidG9rZW5BbW91bnRGdWxsIjoiMCIsInRva2VuQW1vdW50VG9HaXZlIjoiMCJ9XX1d","positionLastExternal":"W3sidG9rZW5JZCI6IjEiLCJsYXN0RXh0ZXJuYWxzIjpbeyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJsYXN0UmV3YXJkQW1vdW50IjoiMCJ9LHsiaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OXhkWGc2TVRJek5EVTJPVFl3TURveE1qVXdNVEl4TmpBd09qRXpNQT09IiwibGFzdFJld2FyZEFtb3VudCI6IjAifV19LHsidG9rZW5JZCI6IjIiLCJsYXN0RXh0ZXJuYWxzIjpbeyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJsYXN0UmV3YXJkQW1vdW50IjoiMCJ9LHsiaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OXhkWGc2TVRJek5EVTJPVFl3TURveE1qVXdNVEl4TmpBd09qRXpNQT09IiwibGFzdFJld2FyZEFtb3VudCI6IjAifV19XQ==","positionsExternalWarmUpAmount":"W3sidG9rZW5JZCI6IjEiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJmdWxsMzAiOiI0OTU5IiwiZ2l2ZTMwIjoiMTQ4NyIsImxlZnQzMCI6IjM0NzIiLCJmdWxsNTAiOiI2NiIsImdpdmU1MCI6IjMzIiwibGVmdDUwIjoiMzMiLCJmdWxsNzAiOiIwIiwiZ2l2ZTcwIjoiMCIsImxlZnQ3MCI6IjAiLCJmdWxsMTAwIjoiMCJ9LHsidG9rZW5JZCI6IjEiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJmdWxsMzAiOiIzNDI4IiwiZ2l2ZTMwIjoiMTAyOCIsImxlZnQzMCI6IjI0MDAiLCJmdWxsNTAiOiI2IiwiZ2l2ZTUwIjoiMyIsImxlZnQ1MCI6IjMiLCJmdWxsNzAiOiIwIiwiZ2l2ZTcwIjoiMCIsImxlZnQ3MCI6IjAiLCJmdWxsMTAwIjoiMCJ9LHsidG9rZW5JZCI6IjIiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJmdWxsMzAiOiIyOTc2MiIsImdpdmUzMCI6Ijg5MjgiLCJsZWZ0MzAiOiIyMDgzNCIsImZ1bGw1MCI6IjM5NiIsImdpdmU1MCI6IjE5OCIsImxlZnQ1MCI6IjE5OCIsImZ1bGw3MCI6IjAiLCJnaXZlNzAiOiIwIiwibGVmdDcwIjoiMCIsImZ1bGwxMDAiOiIwIn0seyJ0b2tlbklkIjoiMiIsImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTl4ZFhnNk1USXpORFUyT1RZd01Eb3hNalV3TVRJeE5qQXdPakV6TUE9PSIsImZ1bGwzMCI6IjIwNTcyIiwiZ2l2ZTMwIjoiNjE3MSIsImxlZnQzMCI6IjE0NDAxIiwiZnVsbDUwIjoiMzYiLCJnaXZlNTAiOiIxOCIsImxlZnQ1MCI6IjE4IiwiZnVsbDcwIjoiMCIsImdpdmU3MCI6IjAiLCJsZWZ0NzAiOiIwIiwiZnVsbDEwMCI6IjAifV0=","positionsExternalLastCalculatedHeight":"W3sidG9rZW5JZCI6IjEiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJsYXN0Q2FsY3VsYXRlZEhlaWdodCI6IjExMzAifSx7InRva2VuSWQiOiIxIiwiaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OXhkWGc2TVRJek5EVTJPVFl3TURveE1qVXdNVEl4TmpBd09qRXpNQT09IiwibGFzdENhbGN1bGF0ZWRIZWlnaHQiOiIxMTMwIn0seyJ0b2tlbklkIjoiMiIsImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNk1USXpORFUyT1RZd01Eb3hNalF5TXpRMU5qQXdPakV6TUE9PSIsImxhc3RDYWxjdWxhdGVkSGVpZ2h0IjoiMTEzMCJ9LHsidG9rZW5JZCI6IjIiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJsYXN0Q2FsY3VsYXRlZEhlaWdodCI6IjExMzAifV0=","externalLastCalculatedTimestamp":"W3siaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2TVRJek5EVTJPVFl3TURveE1qUXlNelExTmpBd09qRXpNQT09IiwibGFzdENhbGN1bGF0ZWRUaW1lc3RhbXAiOiIxMjM0NTY5OTA0In0seyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJsYXN0Q2FsY3VsYXRlZFRpbWVzdGFtcCI6IjEyMzQ1Njk5MDQifV0="}`)
+	})
+}
+
+func testGetSingleData(t *testing.T) {
+	t.Run("get single data", func(t *testing.T) {
+		res := GetSingleData()
+		uassert.Equal(t, res, `{"height":"1130","now":"1234569904","blockGenerationInterval":"2","lastCalculatedHeight":"1130","lastCalculatedBalance":"10723458610","externalGnsBalance":"0","depositGnsAmount":"2000000000","gnsBalance":"12723458610","numPoolTiers":"1*STAKER*0*STAKER*0","tiersRatio":"100*STAKER*0*STAKER*0","warmUpPeriods":"1*STAKER*151*STAKER*301*STAKER*901"}`)
+	})
+}
+
+func testGetPoolGnsData(t *testing.T) {
+	t.Run("get pool gns data", func(t *testing.T) {
+		res := GetPoolGnsData()
+		uassert.Equal(t, res, `{"height":"1130","now":"1234569904","poolGns":"W3sicG9vbFBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMCIsImduc0Ftb3VudCI6IjEwNzIzNDU4NjEwIn1d","poolAccuGns":"W3sicG9vbFBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMCIsImduc0Ftb3VudCI6IjEwNzc2OTY4ODg0In1d","poolLastTmpGns":"W3sicG9vbFBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXI6Z25vLmxhbmQvci9vbmJsb2MvcXV4OjEwMCIsImduc0Ftb3VudCI6IjEyIn1d"}`)
+	})
+}
+
+func testGetPositionGnsData(t *testing.T) {
+	t.Run("get position gns data", func(t *testing.T) {
+		res := GetPositionGnsData()
+		uassert.Equal(t, res, `{"height":"1130","now":"1234569904","positionGns":"W3sidG9rZW5JZCI6IjEiLCJnbnNBbW91bnQiOiIxNTQwODgyNTc5In0seyJ0b2tlbklkIjoiMiIsImduc0Ftb3VudCI6IjkxODI1NzYwMTkifV0=","positionLastGns":"W3sidG9rZW5JZCI6IjEiLCJnbnNBbW91bnQiOiIxMjIzMDcwNiJ9LHsidG9rZW5JZCI6IjIiLCJnbnNBbW91bnQiOiI5MTczNDAzIn1d","positionsInternalWarmUpAmount":"W3sidG9rZW5JZCI6IjEiLCJmdWxsMzAiOiIyMzg0NzExODMiLCJnaXZlMzAiOiI3MTU0MTM1NCIsImxlZnQzMCI6IjE2NjkyOTgyOSIsImZ1bGw1MCI6IjIyOTI5Nzc4MCIsImdpdmU1MCI6IjExNDY0ODg5MCIsImxlZnQ1MCI6IjExNDY0ODg5MCIsImZ1bGw3MCI6IjkxNzE5MTEyMyIsImdpdmU3MCI6IjY0MjAzMzc4NiIsImxlZnQ3MCI6IjI3NTE1NzMzNyIsImZ1bGwxMDAiOiIxNTU5MjI0OTEifSx7InRva2VuSWQiOiIyIiwiZnVsbDMwIjoiMTM3NjAxMDM5MiIsImdpdmUzMCI6IjQxMjgwMzExNiIsImxlZnQzMCI6Ijk2MzIwNzI3NiIsImZ1bGw1MCI6IjEzNzYwMTAzOTIiLCJnaXZlNTAiOiI2ODgwMDUxOTYiLCJsZWZ0NTAiOiI2ODgwMDUxOTYiLCJmdWxsNzAiOiI1NTA0MDQxNTY5IiwiZ2l2ZTcwIjoiMzg1MjgyOTA5OCIsImxlZnQ3MCI6IjE2NTEyMTI0NzEiLCJmdWxsMTAwIjoiOTI2NTEzNjY0In1d"}`)
+	})
+}
+
+func testGetPositionExternalData(t *testing.T) {
+	t.Run("get position external data", func(t *testing.T) {
+		res := GetPositionExternalData()
+		uassert.Equal(t, res, `{"height":"1130","now":"1234569904","positionExternal":"W3sidG9rZW5JZCI6IjEiLCJleHRlcm5hbHMiOlt7ImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNk1USXpORFUyT1RZd01Eb3hNalF5TXpRMU5qQXdPakV6TUE9PSIsInBvb2xQYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvYmFyOmduby5sYW5kL3Ivb25ibG9jL3F1eDoxMDAiLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXIiLCJ0b2tlbkFtb3VudFg5NiI6IjM5ODE4MTI5OTQxNzk1Mzk5MDMzMDM2ODYzNDQ1MTgzNCIsInRva2VuQW1vdW50RnVsbCI6IjAiLCJ0b2tlbkFtb3VudFRvR2l2ZSI6IjAifSx7ImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTl4ZFhnNk1USXpORFUyT1RZd01Eb3hNalV3TVRJeE5qQXdPakV6TUE9PSIsInBvb2xQYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvYmFyOmduby5sYW5kL3Ivb25ibG9jL3F1eDoxMDAiLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9xdXgiLCJ0b2tlbkFtb3VudFg5NiI6IjI3MjA5MDU1NDYwMjI2ODU2MDA1OTA4NTIzMzU0MjA5NiIsInRva2VuQW1vdW50RnVsbCI6IjAiLCJ0b2tlbkFtb3VudFRvR2l2ZSI6IjAifV19LHsidG9rZW5JZCI6IjIiLCJleHRlcm5hbHMiOlt7ImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNk1USXpORFUyT1RZd01Eb3hNalF5TXpRMU5qQXdPakV6TUE9PSIsInBvb2xQYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvYmFyOmduby5sYW5kL3Ivb25ibG9jL3F1eDoxMDAiLCJ0b2tlblBhdGgiOiJnbm8ubGFuZC9yL29uYmxvYy9iYXIiLCJ0b2tlbkFtb3VudFg5NiI6IjIzODk0NzYyNjc3NDA3MjYyNDM5NDA1ODA3MDI3MzEzNzUiLCJ0b2tlbkFtb3VudEZ1bGwiOiIwIiwidG9rZW5BbW91bnRUb0dpdmUiOiIwIn0seyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJwb29sUGF0aCI6Imduby5sYW5kL3Ivb25ibG9jL2Jhcjpnbm8ubGFuZC9yL29uYmxvYy9xdXg6MTAwIiwidG9rZW5QYXRoIjoiZ25vLmxhbmQvci9vbmJsb2MvcXV4IiwidG9rZW5BbW91bnRYOTYiOiIxNjMyODA4NzgyOTU2MTYyOTMzMzU5Mzk2ODEzNTMzMTYyIiwidG9rZW5BbW91bnRGdWxsIjoiMCIsInRva2VuQW1vdW50VG9HaXZlIjoiMCJ9XX1d","positionLastExternal":"W3sidG9rZW5JZCI6IjEiLCJsYXN0RXh0ZXJuYWxzIjpbeyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJsYXN0UmV3YXJkQW1vdW50IjoiMCJ9LHsiaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OXhkWGc2TVRJek5EVTJPVFl3TURveE1qVXdNVEl4TmpBd09qRXpNQT09IiwibGFzdFJld2FyZEFtb3VudCI6IjAifV19LHsidG9rZW5JZCI6IjIiLCJsYXN0RXh0ZXJuYWxzIjpbeyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJsYXN0UmV3YXJkQW1vdW50IjoiMCJ9LHsiaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OXhkWGc2TVRJek5EVTJPVFl3TURveE1qVXdNVEl4TmpBd09qRXpNQT09IiwibGFzdFJld2FyZEFtb3VudCI6IjAifV19XQ==","positionsExternalWarmUpAmount":"W3sidG9rZW5JZCI6IjEiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJmdWxsMzAiOiI0OTU5IiwiZ2l2ZTMwIjoiMTQ4NyIsImxlZnQzMCI6IjM0NzIiLCJmdWxsNTAiOiI2NiIsImdpdmU1MCI6IjMzIiwibGVmdDUwIjoiMzMiLCJmdWxsNzAiOiIwIiwiZ2l2ZTcwIjoiMCIsImxlZnQ3MCI6IjAiLCJmdWxsMTAwIjoiMCJ9LHsidG9rZW5JZCI6IjEiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJmdWxsMzAiOiIzNDI4IiwiZ2l2ZTMwIjoiMTAyOCIsImxlZnQzMCI6IjI0MDAiLCJmdWxsNTAiOiI2IiwiZ2l2ZTUwIjoiMyIsImxlZnQ1MCI6IjMiLCJmdWxsNzAiOiIwIiwiZ2l2ZTcwIjoiMCIsImxlZnQ3MCI6IjAiLCJmdWxsMTAwIjoiMCJ9LHsidG9rZW5JZCI6IjIiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJmdWxsMzAiOiIyOTc2MiIsImdpdmUzMCI6Ijg5MjgiLCJsZWZ0MzAiOiIyMDgzNCIsImZ1bGw1MCI6IjM5NiIsImdpdmU1MCI6IjE5OCIsImxlZnQ1MCI6IjE5OCIsImZ1bGw3MCI6IjAiLCJnaXZlNzAiOiIwIiwibGVmdDcwIjoiMCIsImZ1bGwxMDAiOiIwIn0seyJ0b2tlbklkIjoiMiIsImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTl4ZFhnNk1USXpORFUyT1RZd01Eb3hNalV3TVRJeE5qQXdPakV6TUE9PSIsImZ1bGwzMCI6IjIwNTcyIiwiZ2l2ZTMwIjoiNjE3MSIsImxlZnQzMCI6IjE0NDAxIiwiZnVsbDUwIjoiMzYiLCJnaXZlNTAiOiIxOCIsImxlZnQ1MCI6IjE4IiwiZnVsbDcwIjoiMCIsImdpdmU3MCI6IjAiLCJsZWZ0NzAiOiIwIiwiZnVsbDEwMCI6IjAifV0=","positionsExternalLastCalculatedHeight":"W3sidG9rZW5JZCI6IjEiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZNVEl6TkRVMk9UWXdNRG94TWpReU16UTFOakF3T2pFek1BPT0iLCJsYXN0Q2FsY3VsYXRlZEhlaWdodCI6IjExMzAifSx7InRva2VuSWQiOiIxIiwiaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OXhkWGc2TVRJek5EVTJPVFl3TURveE1qVXdNVEl4TmpBd09qRXpNQT09IiwibGFzdENhbGN1bGF0ZWRIZWlnaHQiOiIxMTMwIn0seyJ0b2tlbklkIjoiMiIsImluY2VudGl2ZUlkIjoiWnpGc2JYWnljbkp5TkdWeU1uVnpPRFJvTWpjek1uTnlkVGMyWXpsNmJESnVkbXR1YUdFNFl6cG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2WjI1dkxteGhibVF2Y2k5dmJtSnNiMk12Y1hWNE9qRXdNRHBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNk1USXpORFUyT1RZd01Eb3hNalF5TXpRMU5qQXdPakV6TUE9PSIsImxhc3RDYWxjdWxhdGVkSGVpZ2h0IjoiMTEzMCJ9LHsidG9rZW5JZCI6IjIiLCJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJsYXN0Q2FsY3VsYXRlZEhlaWdodCI6IjExMzAifV0=","externalLastCalculatedTimestamp":"W3siaW5jZW50aXZlSWQiOiJaekZzYlhaeWNuSnlOR1Z5TW5Wek9EUm9NamN6TW5OeWRUYzJZemw2YkRKdWRtdHVhR0U0WXpwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5aVlYSTZaMjV2TG14aGJtUXZjaTl2Ym1Kc2IyTXZjWFY0T2pFd01EcG5ibTh1YkdGdVpDOXlMMjl1WW14dll5OWlZWEk2TVRJek5EVTJPVFl3TURveE1qUXlNelExTmpBd09qRXpNQT09IiwibGFzdENhbGN1bGF0ZWRUaW1lc3RhbXAiOiIxMjM0NTY5OTA0In0seyJpbmNlbnRpdmVJZCI6Ilp6RnNiWFp5Y25KeU5HVnlNblZ6T0RSb01qY3pNbk55ZFRjMll6bDZiREp1ZG10dWFHRTRZenBuYm04dWJHRnVaQzl5TDI5dVlteHZZeTlpWVhJNloyNXZMbXhoYm1RdmNpOXZibUpzYjJNdmNYVjRPakV3TURwbmJtOHViR0Z1WkM5eUwyOXVZbXh2WXk5eGRYZzZNVEl6TkRVMk9UWXdNRG94TWpVd01USXhOakF3T2pFek1BPT0iLCJsYXN0Q2FsY3VsYXRlZFRpbWVzdGFtcCI6IjEyMzQ1Njk5MDQifV0="}`)
+	})
+}

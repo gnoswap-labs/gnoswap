@@ -11,7 +11,8 @@ import (
 
 	"gno.land/r/demo/users"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 const MAXIMUM_SUPPLY = uint64(1_000_000_000_000_000) // 1B
@@ -28,7 +29,7 @@ var (
 )
 
 func init() {
-	admin = ownable.NewWithAddress("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c") // GNOSWAP_ADMIN
+	admin = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
 	banker = grc20.NewBanker("Gnoswap", "GNS", 6)
 
 	banker.Mint(admin.Owner(), 100_000_000_000_000) // 100_000_000 GNS ≈ 0.1B
@@ -38,6 +39,8 @@ func init() {
 
 	lastMintedHeight = std.GetHeight()
 }
+
+func GetAmountToEmission() uint64 { return amountToEmission }
 
 func TotalSupply() uint64 { return token.TotalSupply() }
 
@@ -55,16 +58,22 @@ func Allowance(owner, spender pusers.AddressOrName) uint64 {
 }
 
 func Transfer(to pusers.AddressOrName, amount uint64) {
+	common.IsHalted()
+
 	toAddr := users.Resolve(to)
 	checkErr(token.Transfer(toAddr, amount))
 }
 
 func Approve(spender pusers.AddressOrName, amount uint64) {
+	common.IsHalted()
+
 	spenderAddr := users.Resolve(spender)
 	checkErr(token.Approve(spenderAddr, amount))
 }
 
 func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
+	common.IsHalted()
+
 	fromAddr := users.Resolve(from)
 	toAddr := users.Resolve(to)
 	checkErr(token.TransferFrom(fromAddr, toAddr, amount))
@@ -87,18 +96,22 @@ func Render(path string) string {
 	}
 }
 
-// Mint
-func Mint(address pusers.AddressOrName) {
-	// only emission contract can call Mint
+// Mint mints GNS to the address.
+// Only emission contract can call Mint.
+func Mint(address pusers.AddressOrName) uint64 {
+	common.IsHalted()
+
 	caller := std.PrevRealm().Addr()
 	if caller != consts.EMISSION_ADDR {
-		panic("only emission contract can call Mint")
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("only emission contract(%s) can call Mint, called from %s", consts.EMISSION_ADDR, caller.String()),
+		))
 	}
 
 	// if not yet initialized, mint 0 amount
 	if initialized == false {
-		println("GNS_not yet initialized")
-		return
+		return 0
 	}
 
 	// calculate gns emission amount for every block, and send by single call
@@ -106,51 +119,64 @@ func Mint(address pusers.AddressOrName) {
 	nowHeight := std.GetHeight()
 	amountToMint := uint64(0)
 
-	println("GNS_lastMintedHeight", lastMintedHeight)
-	println("GNS_lastMintedHeight + 1", lastMintedHeight+1)
-	println("GNS_nowHeight", nowHeight)
-	println("GNS_now-lastMint", nowHeight-lastMintedHeight)
-
 	if lastMintedHeight >= nowHeight {
-		println("GNS_only one mint for each block")
-		return
+		return 0
 	}
 
-	for i := lastMintedHeight + 1; i <= nowHeight; i++ {
-		amount := GetAmountByHeight(i)
-		amountToMint += amount
+	// If from, to block is at same halving year, no need iterate
+	fromYear := GetHalvingYearByHeight(lastMintedHeight + 1)
+	toYear := GetHalvingYearByHeight(nowHeight)
 
-		year := GetHalvingYearByHeight(i)
-		halvingYearMintAmount[year] += amount
+	if fromYear == toYear {
+		numBlock := uint64(nowHeight - lastMintedHeight)
+		singleBlockAmount := GetAmountByHeight(nowHeight)
+		totalBlockAmount := singleBlockAmount * numBlock
 
-		lastBlock := halvingYearBlock[year]
-		if i == lastBlock {
-			// halvingYearAmount[year] = amountToMint
-			// halvingYearMintAmount[year] = amountToMint
-			println(" > GNS_LAST_year:", year)
-			println(" > GNS_LAST_processing height:", i)
-			println(" > GNS_LAST_halvingYearAmount[1]:\t", halvingYearAmount[1])
-			println(" > GNS_LAST_halvingYearMintAmount[1]:\t", halvingYearMintAmount[1])
-			leftForThisYear := halvingYearAmount[year] - halvingYearMintAmount[year]
-			println(" > GNS_LAST_leftForThisYear:", leftForThisYear)
-			println()
+		amountToMint += totalBlockAmount
+		amountToMint = checkAndHandleIfLastBlockOfHalvingYear(nowHeight, amountToMint)
 
-			amountToMint += leftForThisYear
-			halvingYearMintAmount[year] += leftForThisYear
+		halvingYearMintAmount[fromYear] += totalBlockAmount
+	} else {
+		for i := lastMintedHeight + 1; i <= nowHeight; i++ {
+			amount := GetAmountByHeight(i)
+			amount = checkAndHandleIfLastBlockOfHalvingYear(i, amount)
+			year := GetHalvingYearByHeight(i)
+			halvingYearMintAmount[year] += amount
+			amountToMint += amount
 		}
 	}
+
 	err := banker.Mint(users.Resolve(address), amountToMint)
 	if err != nil {
 		panic(err.Error())
 	}
 
 	lastMintedHeight = nowHeight
-	println("GNS_lastMintedHeight:", lastMintedHeight)
-	println("GNS_amountToMint:", amountToMint)
+
+	return amountToMint
+}
+
+func checkAndHandleIfLastBlockOfHalvingYear(height int64, amount uint64) uint64 {
+	year := GetHalvingYearByHeight(height)
+	lastBlock := halvingYearBlock[year]
+	if height == lastBlock {
+		leftForThisYear := halvingYearAmount[year] - halvingYearMintAmount[year]
+		amount = leftForThisYear
+		return amount
+	}
+
+	return amount
 }
 
 func checkErr(err error) {
 	if err != nil {
 		panic(err.Error())
 	}
+}
+
+// TODO:
+//  1. when emission contract mint gns reward, last executed height should be get from gns contract.
+//     mint function of gns contract and mintGns function of emission contract should be synchronized.
+func GetLastMintedHeight() int64 {
+	return lastMintedHeight
 }

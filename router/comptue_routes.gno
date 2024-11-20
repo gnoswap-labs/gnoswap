@@ -3,7 +3,7 @@ package router
 import (
 	"sort"
 
-	pl "gno.land/r/gnoswap/pool"
+	pl "gno.land/r/gnoswap/v1/pool"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -69,12 +69,10 @@ func _computeAllRoutes(
 		outputTokenPath,
 		[]PoolWithMeta{}, // currentRoute
 		poolUsed,
-		tokenVisited, // tokenVisited
-		"",           // _previousTokenOut
-		//
+		tokenVisited,
+		"", // _previousTokenOut
 		maxHops,
 		pools,
-		//
 		&routes,
 	)
 

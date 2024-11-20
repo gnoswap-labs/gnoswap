@@ -4,31 +4,30 @@ import (
 	"std"
 	"time"
 
-	"gno.land/r/gnoswap/consts"
-
 	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
+
+	"gno.land/p/demo/json"
 )
 
 // init 12 years halving tier block
 /*
-	NOTE: assume block will be created every 2 second by default
-	2 second = 1 block
-	1 minute = 30 block
-	1 hour = 1800 block
-	1 day = 43200 block
-	(365 days) 1 year = 15768000 block
-
-	2 year = +31536000 block
-	4 year = +63072000 block
-	6 year = +94608000 block
-	8 year = +126144000 block
-	12 year = +189216000 block
+	NOTE: assume block will be created every 1 second by default
+	1 second = 1 block
+	1 minute = 60 block
+	1 hour = 3600 block
+	1 day = 86400 block
+	(365 days) 1 year = 31536000 block
 */
-const YEAR_BLOCK int64 = 15768000
 
-const TIMESTAMP_365DAYS int64 = 31536000
+var (
+	BLOCK_PER_YEAR = consts.TIMESTAMP_YEAR / consts.BLOCK_GENERATION_INTERVAL
+	BLOCK_PER_DAY  = consts.TIMESTAMP_DAY / consts.BLOCK_GENERATION_INTERVAL
 
-var avgBlockTimeMs int64 = 2000 // 2000s = 2s for default
+	avgBlockTimeMs int64 = consts.SECOND_IN_MILLISECOND * consts.BLOCK_GENERATION_INTERVAL
+)
 
 var (
 	initialized    bool
@@ -75,17 +74,6 @@ func init() {
 var amountPerBlockPerHalvingYear = make(map[int64]uint64) // year => reward per block
 
 func init() {
-	// caller := std.PrevRealm().Addr()
-	// if caller != consts.STAKER_ADDR {
-	// 	panic(
-	// 		ufmt.Sprintf(
-	// 			"only staker(%s) can init start height, start timestamp, called from %s",
-	// 			consts.STAKER_ADDR,
-	// 			caller,
-	// 		),
-	// 	)
-	// }
-
 	height := std.GetHeight()
 
 	startHeight = height
@@ -94,94 +82,114 @@ func init() {
 	initialized = true
 
 	for i := int64(1); i < 13; i++ {
-		halvingYearBlock[i] = height + YEAR_BLOCK*i
-		halvingYearTimestamp[i] = startTimestamp + (TIMESTAMP_365DAYS * i)
+		halvingYearBlock[i] = height + BLOCK_PER_YEAR*i
+		halvingYearTimestamp[i] = startTimestamp + (consts.TIMESTAMP_YEAR * i)
 
-		amountPerYear := halvingYearAmount[i]  // amount per year
-		amountPerDay := amountPerYear / 365    // amount per day
-		amountPerBlock := amountPerDay / 43200 // amount per block ( 1 day = 43200 block (2s/block) )
+		amountPerYear := halvingYearAmount[i]                  // amount per year
+		amountPerDay := amountPerYear / consts.DAY_PER_YEAR    // amount per day
+		amountPerBlock := amountPerDay / uint64(BLOCK_PER_DAY) // amount per block
 
 		amountPerBlockPerHalvingYear[i] = uint64(amountPerBlock)
 	}
 }
 
-func SetAvgBlockTimeInMs(ms int64) {
-	// admin or governance or staker only
-	caller := std.PrevRealm().Addr()
+func GetAvgBlockTimeInMs() int64 {
+	return avgBlockTimeMs
+}
 
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR && caller != consts.STAKER_ADDR {
-		panic(
-			ufmt.Sprintf(
-				"only admin(%s) or governance(%s) or staker(%s) can set avg block time, called from %s",
-				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
-				consts.STAKER_ADDR,
-				caller,
-			),
-		)
+// SetAvgBlockTimeInMsByAdmin sets the average block time in millisecond.
+func SetAvgBlockTimeInMsByAdmin(ms int64) {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.ADMIN {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("gns.gno__SetAvgBlockTimeInMsByAdmin() || only admin(%s) can call this function, called from %s", consts.ADMIN, caller.String()),
+		))
 	}
 
+	setAvgBlockTimeInMs(ms)
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"SetAvgBlockTimeInMsByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"ms", ufmt.Sprintf("%d", ms),
+	)
+}
+
+// SetAvgBlockTimeInMs sets the average block time in millisecond.
+// Only governance contract can execute this function via proposal
+func SetAvgBlockTimeInMs(ms int64) {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GOV_GOVERNANCE_ADDR {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("gns.gno__SetAvgBlockTimeInMs() || only governance contract(%s) can call this function, called from %s", consts.GOV_GOVERNANCE_ADDR, caller.String()),
+		))
+	}
+
+	setAvgBlockTimeInMs(ms)
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"SetAvgBlockTimeInMs",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"ms", ufmt.Sprintf("%d", ms),
+	)
+}
+
+func setAvgBlockTimeInMs(ms int64) {
+	common.IsHalted()
+
+	// set it
 	avgBlockTimeMs = ms
 
 	// which year current time is in
 	now := time.Now().Unix()
-	println("GNS_HALVING__now_time:", now)
-	println("GNS_HALVING__now_height:", std.GetHeight())
+	height := std.GetHeight()
 	year, endTimestamp := GetHalvingYearByTimestamp(now)
-	println("GNS_HALVING__year:", year, "endTimestamp:", endTimestamp)
 
 	// how much time left to next halving
 	timeLeft := endTimestamp - now
-	println("GNS_HALVING__timeLeft:", timeLeft)
 
 	// how many block left to next halving
-	timeLeftMs := timeLeft * 1000
-	println("GNS_HALVING__timeLeftMs:", timeLeftMs)
+	timeLeftMs := timeLeft * consts.SECOND_IN_MILLISECOND
 	blockLeft := timeLeftMs / avgBlockTimeMs
-	println("GNS_HALVING__blockLeft:", blockLeft)
 
 	// how many reward left to next halving
 	minted := TotalMinted()
-	println("GNS_HALVING__minted:", minted)
 	amountLeft := halvingYearAccuAmount[year] - minted
-	println("GNS_HALVING__amountLeft:", amountLeft)
 
 	// how much reward per block
 	adjustedAmountPerBlock := amountLeft / uint64(blockLeft)
-	println("GNS_HALVING__adjustedAmountPerBlock:", adjustedAmountPerBlock)
 
 	// update it
 	amountPerBlockPerHalvingYear[year] = adjustedAmountPerBlock
-	println("GNS_HALVING__amountPerBlockPerHalvingYear[year]:", amountPerBlockPerHalvingYear[year])
 
 	// adjust halving block
-	for year, block := range halvingYearBlock {
-		println("GNS_HALVING__ > year:\t\t", year)
+	for keyYear, _ := range halvingYearBlock {
+		yearEnd := halvingYearTimestamp[keyYear]
 
-		yearEnd := halvingYearTimestamp[year]
-		println("GNS_HALVING__ > endTime:\t", yearEnd)
+		if now >= yearEnd {
+			continue
+		}
 
 		diff := yearEnd - now
-		println("GNS_HALVING__ > diff:\t\t", diff)
-
-		numBlock := diff * 1000 / avgBlockTimeMs
-		println("GNS_HALVING__ > numBlock:\t", numBlock)
-
-		halvingYearBlock[year] = std.GetHeight() + numBlock
-		println("GNS_HALVING__ > origBlock:\t", block)
-		println("GNS_HALVING__ > newBlock:\t", halvingYearBlock[year])
-
-		println()
+		numBlock := diff * consts.SECOND_IN_MILLISECOND / avgBlockTimeMs
+		halvingYearBlock[keyYear] = height + numBlock
 	}
-
-	println()
-
 }
 
 func GetAmountByHeight(height int64) uint64 {
 	halvingYear := GetHalvingYearByHeight(height)
 
 	return amountPerBlockPerHalvingYear[halvingYear]
+}
+
+func GetAmountByYear(year int64) uint64 {
+	return amountPerBlockPerHalvingYear[year]
 }
 
 func GetHalvingYearByHeight(height int64) int64 {
@@ -206,7 +214,51 @@ func GetHalvingYearByTimestamp(timestamp int64) (int64, int64) {
 	return 0, 0
 }
 
+func GetHalvingYearBlock(year int64) int64 {
+	return halvingYearBlock[year]
+}
+
+func GetHalvingInfo() string {
+	height := std.GetHeight()
+	now := time.Now().Unix()
+
+	halvings := make([]*json.Node, 0)
+	for year, block := range halvingYearBlock {
+		halvings = append(halvings, json.ObjectNode("", map[string]*json.Node{
+			"year":   json.NumberNode("year", float64(year)),
+			"block":  json.NumberNode("block", float64(block)),
+			"amount": json.NumberNode("amount", float64(amountPerBlockPerHalvingYear[year])),
+		}))
+	}
+
+	node := json.ObjectNode("", map[string]*json.Node{
+		"height":         json.NumberNode("height", float64(height)),
+		"timestamp":      json.NumberNode("timestamp", float64(now)),
+		"avgBlockTimeMs": json.NumberNode("avgBlockTimeMs", float64(avgBlockTimeMs)),
+		"halvings":       json.ArrayNode("", halvings),
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return string(b)
+}
+
 func getYearlyBlockForTimestampMs(ms int64) int64 {
-	yearMs := TIMESTAMP_365DAYS * 1000 // how much millisecond in a year
-	return yearMs / ms                 // how many block in a year
+	yearMs := consts.TIMESTAMP_YEAR * consts.SECOND_IN_MILLISECOND // how much millisecond in a year
+	return int64(yearMs) / ms                                      // how many block in a year
+}
+
+func prevRealm() string {
+	return std.PrevRealm().PkgPath()
+}
+
+func callType() string {
+	if prevRealm() == "" {
+		return "DIRECT"
+	}
+
+	return "INDIRECT"
 }

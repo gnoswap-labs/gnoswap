@@ -2,42 +2,54 @@ package pool
 
 import (
 	"std"
-	"strconv"
 
 	"gno.land/p/demo/ufmt"
 
 	plp "gno.land/p/gnoswap/pool"
 
-	"gno.land/r/gnoswap/common"
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// Mint creates a new position and mints liquidity tokens then return amount0, amount1 in string
-//
-// Panics:
-//   - The caller is user
-//   - Caller does not have enough token0 or token1
+// Mint creates a new position and mints liquidity tokens.
+// Returns minted amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#mint
 func Mint(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	recipient string,
+	recipient std.Address,
 	tickLower int32,
 	tickUpper int32,
 	_liquidityAmount string, // uint128
+	positionCaller std.Address,
 ) (string, string) { // uint256 x2
-	common.DisallowCallFromUser()
-	common.AllowCallFromOnly(consts.POSITION_PATH)
+	common.IsHalted()
+	if common.GetLimitCaller() {
+		caller := std.PrevRealm().Addr()
+		if caller != consts.POSITION_ADDR {
+			panic(addDetailToError(
+				errNoPermission,
+				ufmt.Sprintf("pool.gno__Mint() || only position(%s) can call pool mint(), called from %s", consts.POSITION_ADDR, caller.String()),
+			))
+		}
+	}
 
 	liquidityAmount := u256.MustFromDecimal(_liquidityAmount)
+	if liquidityAmount.IsZero() {
+		panic(addDetailToError(
+			errZeroLiquidity,
+			ufmt.Sprintf("pool.gno__Mint() || liquidityAmount == 0"),
+		))
+	}
 
 	pool := GetPool(token0Path, token1Path, fee)
-	_, amount0, amount1 := pool.modifyPosition( // int256 x2
+	_, amount0, amount1 := pool.modifyPosition(
 		ModifyPositionParams{
-			std.Address(recipient),            // owner
+			recipient,                         // owner
 			tickLower,                         // tickLower
 			tickUpper,                         // tickUpper
 			i256.FromUint256(liquidityAmount), // liquidityDelta
@@ -45,36 +57,20 @@ func Mint(
 	)
 
 	if amount0.Gt(i256.Zero()) {
-		pool.transferFromAndVerify(std.GetOrigCaller(), consts.POOL_ADDR, pool.token0Path, amount0, true)
+		pool.transferFromAndVerify(positionCaller, consts.POOL_ADDR, pool.token0Path, amount0, true)
 	}
 
 	if amount1.Gt(i256.Zero()) {
-		pool.transferFromAndVerify(std.GetOrigCaller(), consts.POOL_ADDR, pool.token1Path, amount1, false)
+		pool.transferFromAndVerify(positionCaller, consts.POOL_ADDR, pool.token1Path, amount1, false)
 	}
-
-	/*
-		std.Emit(
-			"GNOSWAP",
-			"m_callType", callType(),
-			"m_origCaller", origCaller(),
-			"m_prevRealm", prevRealm(),
-			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
-			"p_tickLower", int32ToStr(tickLower),
-			"p_tickUpper", int32ToStr(tickUpper),
-			"p_liquidityAmount", _liquidityAmount,
-			"amount0", amount0.ToString(),
-			"amount1", amount1.ToString(),
-		)
-	*/
 
 	return amount0.ToString(), amount1.ToString()
 }
 
 // Burn removes liquidity from the caller and account tokens owed for the liquidity to the position
 // If liquidity of 0 is burned, it recalculates fees owed to a position
-//
-// Panics:
-//   - The caller is not the position contract
+// Returns burned amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#burn
 func Burn(
 	token0Path string,
 	token1Path string,
@@ -83,8 +79,16 @@ func Burn(
 	tickUpper int32,
 	_liquidityAmount string, // uint128
 ) (string, string) { // uint256 x2
-	common.DisallowCallFromUser()
-	common.AllowCallFromOnly(consts.POSITION_PATH)
+	common.IsHalted()
+	caller := std.PrevRealm().Addr()
+	if common.GetLimitCaller() {
+		if caller != consts.POSITION_ADDR {
+			panic(addDetailToError(
+				errNoPermission,
+				ufmt.Sprintf("pool.gno__Burn() || only position(%s) can call pool burn(), called from %s", consts.POSITION_ADDR, caller.String()),
+			))
+		}
+	}
 
 	liquidityAmount := u256.MustFromDecimal(_liquidityAmount)
 
@@ -92,7 +96,7 @@ func Burn(
 
 	position, amount0Int, amount1Int := pool.modifyPosition( // in256 x2
 		ModifyPositionParams{
-			std.PrevRealm().Addr(), // msg.sender
+			caller, // msg.sender
 			tickLower,
 			tickUpper,
 			i256.Zero().Neg(i256.FromUint256(liquidityAmount)),
@@ -107,57 +111,50 @@ func Burn(
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, amount1)
 	}
 
-	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
+	positionKey := positionGetKey(caller, tickLower, tickUpper)
 	pool.positions[positionKey] = position
-
-	/*
-		std.Emit(
-			"GNOSWAP",
-			"m_callType", callType(),
-			"m_origCaller", origCaller(),
-			"m_prevRealm", prevRealm(),
-			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
-			"p_tickLower", int32ToStr(tickLower),
-			"p_tickUpper", int32ToStr(tickUpper),
-			"p_liquidityAmount", _liquidityAmount,
-			"amount0", amount0.ToString(),
-			"amount1", amount1.ToString(),
-		)
-	*/
 
 	// actual token transfer happens in Collect()
 	return amount0.ToString(), amount1.ToString()
 }
 
 // Collect collects tokens owed to a position
-//
-// Panics:
-// - The caller is not the position contract
-// - The position does not exist
+// Burned amounts, and swap fees will be transferred to the caller
+// Returns collected amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collect
 func Collect(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	_recipient string,
+	recipient std.Address,
 	tickLower int32,
 	tickUpper int32,
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
-	common.DisallowCallFromUser()
-	common.AllowCallFromOnly(consts.POSITION_PATH)
+	common.IsHalted()
+	if common.GetLimitCaller() {
+		caller := std.PrevRealm().Addr()
+		if caller != consts.POSITION_ADDR {
+			panic(addDetailToError(
+				errNoPermission,
+				ufmt.Sprintf("pool.gno__Collect() || only position(%s) can call pool collect(), called from %s", consts.POSITION_ADDR, caller.String()),
+			))
+		}
+	}
 
 	amount0Requested := u256.MustFromDecimal(_amount0Requested)
 	amount1Requested := u256.MustFromDecimal(_amount1Requested)
-
-	recipient := std.Address(_recipient)
 
 	pool := GetPool(token0Path, token1Path, fee)
 
 	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
 	position, exist := pool.positions[positionKey]
 	if !exist {
-		panic(ufmt.Sprintf("[POOL] pool.gno__Collect() || positionKey(%s) does not exist", positionKey))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("pool.gno__Collect() || positionKey(%s) does not exist", positionKey),
+		))
 	}
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
@@ -180,59 +177,51 @@ func Collect(
 
 	pool.positions[positionKey] = position
 
-	/*
-		std.Emit(
-			"GNOSWAP",
-			"m_callType", callType(),
-			"m_origCaller", origCaller(),
-			"m_prevRealm", prevRealm(),
-			"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
-			"p_tickLower", int32ToStr(tickLower),
-			"p_tickUpper", int32ToStr(tickUpper),
-			"p_recipient", _recipient,
-			"amount0", amount0.ToString(),
-			"amount1", amount1.ToString(),
-		)
-	*/
-
 	return amount0.ToString(), amount1.ToString()
 }
 
 // Swap swaps token0 for token1, or token1 for token0
-//
-// Panics:
-//   - The caller is not the router contract
-//   - Target pool is being used by another transaction
-//   - The amountSpecified is 0
-//   - The SqrtPriceLimit is not within the range
+// Returns swapped amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#swap
 func Swap(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	_recipient string,
+	recipient std.Address,
 	zeroForOne bool,
 	_amountSpecified string, // int256
 	_sqrtPriceLimitX96 string, // uint160
-	_payer string, // router
+	payer std.Address, // router
 ) (string, string) { // int256 x2
-	common.DisallowCallFromUser()
-	common.AllowCallFromOnly(consts.ROUTER_PATH)
+	common.IsHalted()
+	if common.GetLimitCaller() {
+		caller := std.PrevRealm().Addr()
+		if caller != consts.ROUTER_ADDR {
+			panic(addDetailToError(
+				errNoPermission,
+				ufmt.Sprintf("pool.gno__Swap() || only router(%s) can call pool swap(), called from %s", consts.ROUTER_ADDR, caller.String()),
+			))
+		}
+	}
 
 	if _amountSpecified == "0" {
-		panic("[POOL] pool.gno__Swap() || _amountSpecified == 0")
+		panic(addDetailToError(
+			errInvalidSwapAmount,
+			ufmt.Sprintf("pool.gno__Swap() || amountSpecified == 0"),
+		))
 	}
 
 	amountSpecified := i256.MustFromDecimal(_amountSpecified)
 	sqrtPriceLimitX96 := u256.MustFromDecimal(_sqrtPriceLimitX96)
 
-	recipient := std.Address(_recipient)
-	payer := std.Address(_payer)
-
 	pool := GetPool(token0Path, token1Path, fee)
 	slot0Start := pool.slot0
 
 	if !(slot0Start.unlocked) {
-		panic("[POOL] pool.gno__Swap() || slot0Start.unlocked must be unlocked(true)")
+		panic(addDetailToError(
+			errLockedPool,
+			ufmt.Sprintf("pool.gno__Swap() || slot0Start.unlocked(false) must be unlocked)"),
+		))
 	}
 
 	var feeProtocol uint8
@@ -244,7 +233,10 @@ func Swap(
 		cond1 := sqrtPriceLimitX96.Lt(slot0Start.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Gt(minSqrtRatio)
 		if !(cond1 && cond2) {
-			panic(ufmt.Sprintf("[POOL] pool.gno__Swap() || sqrtPriceLimitX96(%s) < slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) > consts.MIN_SQRT_RATIO(%s)", sqrtPriceLimitX96.ToString(), slot0Start.sqrtPriceX96.ToString(), sqrtPriceLimitX96.ToString(), consts.MIN_SQRT_RATIO))
+			panic(addDetailToError(
+				errPriceOutOfRange,
+				ufmt.Sprintf("pool.gno__Swap() || sqrtPriceLimitX96(%s) < slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) > consts.MIN_SQRT_RATIO(%s)", sqrtPriceLimitX96.ToString(), slot0Start.sqrtPriceX96.ToString(), sqrtPriceLimitX96.ToString(), consts.MIN_SQRT_RATIO),
+			))
 		}
 		feeProtocol = slot0Start.feeProtocol % 16
 		feeGrowthGlobalX128 = pool.feeGrowthGlobal0X128
@@ -255,7 +247,10 @@ func Swap(
 		cond1 := sqrtPriceLimitX96.Gt(slot0Start.sqrtPriceX96)
 		cond2 := sqrtPriceLimitX96.Lt(maxSqrtRatio)
 		if !(cond1 && cond2) {
-			panic(ufmt.Sprintf("[POOL] pool.gno__Swap() || sqrtPriceLimitX96(%s) > slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) < consts.MAX_SQRT_RATIO(%s)", sqrtPriceLimitX96.ToString(), slot0Start.sqrtPriceX96.ToString(), sqrtPriceLimitX96.ToString(), consts.MAX_SQRT_RATIO))
+			panic(addDetailToError(
+				errPriceOutOfRange,
+				ufmt.Sprintf("pool.gno__Swap() || sqrtPriceLimitX96(%s) > slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) < consts.MAX_SQRT_RATIO(%s)", sqrtPriceLimitX96.ToString(), slot0Start.sqrtPriceX96.ToString(), sqrtPriceLimitX96.ToString(), consts.MAX_SQRT_RATIO),
+			))
 		}
 
 		feeProtocol = slot0Start.feeProtocol / 16
@@ -429,53 +424,107 @@ func Swap(
 
 	}
 
+	prevAddr, prevRealm := getPrev()
+
 	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_origCaller", origCaller(),
-		"m_prevRealm", prevRealm(),
-		"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
-		"p_zeroForOne", boolToStr(zeroForOne),
-		"p_amountSpecified", _amountSpecified,
-		"p_sqrtPriceLimitX96", _sqrtPriceLimitX96,
-		"p_payer", _payer,
-		"p_recipient", _recipient,
-		"amount0", amount0.ToString(),
-		"amount1", amount1.ToString(),
-		"protocol_fee0", pool.protocolFees.token0.ToString(),
-		"protocol_fee1", pool.protocolFees.token1.ToString(),
-		"swap_fee", swapFee.ToString(),
+		"Swap",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"poolPath", GetPoolPath(token0Path, token1Path, fee),
+		"zeroForOne", ufmt.Sprintf("%t", zeroForOne),
+		"amountSpecified", _amountSpecified,
+		"sqrtPriceLimitX96", _sqrtPriceLimitX96,
+		"payer", payer.String(),
+		"recipient", recipient.String(),
+		"internal_amount0", amount0.ToString(),
+		"internal_amount1", amount1.ToString(),
+		"internal_protocolFee0", pool.protocolFees.token0.ToString(),
+		"internal_protocolFee1", pool.protocolFees.token1.ToString(),
+		"internal_swapFee", swapFee.ToString(),
+		"internal_sqrtPriceX96", pool.slot0.sqrtPriceX96.ToString(),
 	)
 
 	pool.slot0.unlocked = true
 	return amount0.ToString(), amount1.ToString()
 }
 
-// SetFeeProtocol sets the denominator of the protocol fee
-//
-// Panics:
-// - The caller is not an admin
-// - The feeProtocol0 or feeProtocol1 is not in the range of 0 or 4-10
+// SetFeeProtocolByAdmin sets the fee protocol for all pools
+// Also it will be applied to new created pools
+func SetFeeProtocolByAdmin(
+	feeProtocol0 uint8,
+	feeProtocol1 uint8,
+) {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.ADMIN {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf(
+				"pool.gno__SetFeeProtocolByAdmin() || only admin(%s) can set fee protocol, called from %s",
+				consts.ADMIN,
+				caller,
+			),
+		))
+	}
+
+	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"SetFeeProtocolByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"feeProtocol0", ufmt.Sprintf("%d", feeProtocol0),
+		"feeProtocol1", ufmt.Sprintf("%d", feeProtocol1),
+		"internal_newFee", ufmt.Sprintf("%d", newFee),
+	)
+}
+
+// SetFeeProtocol sets the fee protocol for all pools
+// Only governance contract can execute this function via proposal
+// Also it will be applied to new created pools
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#setfeeprotocol
 func SetFeeProtocol(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
 ) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
-		panic(
+	if caller != consts.GOV_GOVERNANCE_ADDR {
+		panic(addDetailToError(
+			errNoPermission,
 			ufmt.Sprintf(
-				"[POOL] pool.gno__SetFeeProtocol() || only admin(%s) or governance(%s) can set fee protocol, called from %s",
-				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
+				"pool.gno__SetFeeProtocol() || only governance(%s) can set fee protocol, called from %s",
+				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
-		)
+		))
 	}
+
+	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"SetFeeProtocol",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"feeProtocol0", ufmt.Sprintf("%d", feeProtocol0),
+		"feeProtocol1", ufmt.Sprintf("%d", feeProtocol1),
+		"internal_newFee", ufmt.Sprintf("%d", newFee),
+	)
+}
+
+func setFeeProtocol(
+	feeProtocol0 uint8,
+	feeProtocol1 uint8,
+) uint8 {
+	common.IsHalted()
 
 	fee0Cond := feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)
 	fee1Cond := feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10)
 	if !(fee0Cond && fee1Cond) {
-		panic(ufmt.Sprintf("[POOL] pool.gno__SetFeeProtocol() || expected (feeProtocol0(%d) == 0 || (feeProtocol0(%d) >= 4 && feeProtocol0(%d) <= 10)) && (feeProtocol1(%d) == 0 || (feeProtocol1(%d) >= 4 && feeProtocol1(%d) <= 10))", feeProtocol0, feeProtocol0, feeProtocol0, feeProtocol1, feeProtocol1, feeProtocol1))
+		panic(addDetailToError(
+			errInvalidPotocolFeePct,
+			ufmt.Sprintf("pool.gno__setFeeProtocol() || expected (feeProtocol0(%d) == 0 || (feeProtocol0(%d) >= 4 && feeProtocol0(%d) <= 10)) && (feeProtocol1(%d) == 0 || (feeProtocol1(%d) >= 4 && feeProtocol1(%d) <= 10))", feeProtocol0, feeProtocol0, feeProtocol0, feeProtocol1, feeProtocol1, feeProtocol1),
+		))
 	}
 
 	newFee := feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
@@ -485,44 +534,117 @@ func SetFeeProtocol(
 		pool.slot0.feeProtocol = newFee
 	}
 
-	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_origCaller", origCaller(),
-		"m_prevRealm", prevRealm(),
-		"p_feeProtocol0", uint8ToStr(feeProtocol0),
-		"p_feeProtocol1", uint8ToStr(feeProtocol1),
-		"newFee", uint8ToStr(newFee),
-	)
+	// update slot0
+	slot0FeeProtocol = newFee
+
+	return newFee
 }
 
-// CollectProtocol collects protocol fees from the pool
-//
-// Panics:
-// - The caller is not an admin
-// - The recipient is the zero address
-// - The amount0Requested or amount1Requested is greater than the protocol fees
-func CollectProtocol(
+// CollectProtocolByAdmin collects protocol fees for the given pool that accumulated while it was being used for swap
+// Returns collected amount0, amount1 in string
+func CollectProtocolByAdmin(
 	token0Path string,
 	token1Path string,
 	fee uint32,
-	_recipient string,
+	recipient std.Address,
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
-		panic(
+	if caller != consts.ADMIN {
+		panic(addDetailToError(
+			errNoPermission,
 			ufmt.Sprintf(
-				"[POOL] pool.gno__CollectFeeProtocol() || only admin(%s) or governance(%s) can collect fee protocol, called from %s",
-				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
+				"pool.gno__CollectProtocolByAdmin() || only admin(%s) can collect protocol fees, called from %s",
+				consts.ADMIN,
 				caller,
 			),
-		)
+		))
 	}
 
-	recipient := std.Address(_recipient)
+	amount0, amount1 := collectProtocol(
+		token0Path,
+		token1Path,
+		fee,
+		recipient,
+		_amount0Requested,
+		_amount1Requested,
+	)
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"CollectProtocolByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"token0Path", token0Path,
+		"token1Path", token1Path,
+		"fee", ufmt.Sprintf("%d", fee),
+		"recipient", recipient.String(),
+		"internal_amount0", amount0,
+		"internal_amount1", amount1,
+	)
+
+	return amount0, amount1
+}
+
+// CollectProtocol collects protocol fees for the given pool that accumulated while it was being used for swap
+// Only governance contract can execute this function via proposal
+// Returns collected amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collectprotocol
+func CollectProtocol(
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient std.Address,
+	_amount0Requested string, // uint128
+	_amount1Requested string, // uint128
+) (string, string) { // uint128 x2
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GOV_GOVERNANCE_ADDR {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf(
+				"pool.gno__CollectProtocol() || only governance(%s) can collect protocol fees, called from %s",
+				consts.GOV_GOVERNANCE_ADDR,
+				caller,
+			),
+		))
+	}
+
+	amount0, amount1 := collectProtocol(
+		token0Path,
+		token1Path,
+		fee,
+		recipient,
+		_amount0Requested,
+		_amount1Requested,
+	)
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"CollectProtocol",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"token0Path", token0Path,
+		"token1Path", token1Path,
+		"fee", ufmt.Sprintf("%d", fee),
+		"recipient", recipient.String(),
+		"internal_amount0", amount0,
+		"internal_amount1", amount1,
+	)
+
+	return amount0, amount1
+}
+
+func collectProtocol(
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient std.Address,
+	_amount0Requested string, // uint128
+	_amount1Requested string, // uint128
+) (string, string) { // uint128 x2
+	common.IsHalted()
 
 	amount0Requested := u256.MustFromDecimal(_amount0Requested)
 	amount1Requested := u256.MustFromDecimal(_amount1Requested)
@@ -536,46 +658,8 @@ func CollectProtocol(
 	uAmount0 := amount0.Uint64()
 	uAmount1 := amount1.Uint64()
 
-	ok := transferByRegisterCall(pool.token0Path, recipient, uAmount0)
-	if !ok {
-		panic(ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pool.token0Path(%s), recipient(%s), uAmount0)(%d) failed", pool.token0Path, recipient.String(), uAmount0))
-	}
-	std.Emit(
-		"GNOSWAP_PROTOCOL_FEE",
-		"m_callType", callType(),
-		"m_origCaller", origCaller(),
-		"m_prevRealm", prevRealm(),
-		"poolPath", GetPoolPath(token0Path, token1Path, fee),
-		"reason", "pool_protocol_fee",
-		"token", pool.token0Path,
-		"amount", strconv.FormatUint(uAmount0, 10),
-	)
-
-	ok = transferByRegisterCall(pool.token1Path, recipient, uAmount1)
-	if !ok {
-		panic(ufmt.Sprintf("[POOL] pool.gno__CollectProtocol() || transferByRegisterCall(pool.token1Path(%s), recipient(%s), uAmount1)(%d) failed", pool.token1Path, recipient.String(), uAmount1))
-	}
-	std.Emit(
-		"GNOSWAP_PROTOCOL_FEE",
-		"m_callType", callType(),
-		"m_origCaller", origCaller(),
-		"m_prevRealm", prevRealm(),
-		"poolPath", GetPoolPath(token0Path, token1Path, fee),
-		"reason", "pool_protocol_fee",
-		"token", pool.token1Path,
-		"amount", strconv.FormatUint(uAmount1, 10),
-	)
-
-	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_origCaller", origCaller(),
-		"m_prevRealm", prevRealm(),
-		"p_poolPath", GetPoolPath(token0Path, token1Path, fee),
-		"p_recipient", _recipient,
-		"amount0", amount0.ToString(),
-		"amount1", amount1.ToString(),
-	)
+	transferByRegisterCall(pool.token0Path, recipient, uAmount0)
+	transferByRegisterCall(pool.token1Path, recipient, uAmount1)
 
 	return amount0.ToString(), amount1.ToString()
 }
@@ -613,17 +697,26 @@ func (pool *Pool) transferAndVerify(
 	// must be negative to send token from pool to user
 	// as point of view from pool, it is negative
 	if !amount.IsNeg() {
-		panic(ufmt.Sprintf("[POOL] pool.transferAndVerify() || amount(%s) must be negative", amount.ToString())) // TODO: panic or just pass
+		panic(addDetailToError(
+			errMustBeNegative,
+			ufmt.Sprintf("pool.gno__transferAndVerify() || amount(%s) must be negative", amount.ToString()),
+		))
 	}
 
 	// check pool.balances
 	if isToken0 {
 		if pool.balances.token0.Lt(amount.Abs()) {
-			panic(ufmt.Sprintf("[POOL] pool.transferAndVerify() || pool.balances.token0(%s) >= amount.Abs(%s)", pool.balances.token0.ToString(), amount.Abs().ToString()))
+			panic(addDetailToError(
+				errTransferFailed,
+				ufmt.Sprintf("pool.gno__transferAndVerify() || pool.balances.token0(%s) >= amount.Abs(%s)", pool.balances.token0.ToString(), amount.Abs().ToString()),
+			))
 		}
 	} else {
 		if pool.balances.token1.Lt(amount.Abs()) {
-			panic(ufmt.Sprintf("[POOL] pool.transferAndVerify() || pool.balances.token1(%s) >= amount.Abs(%s)", pool.balances.token1.ToString(), amount.Abs().ToString()))
+			panic(addDetailToError(
+				errTransferFailed,
+				ufmt.Sprintf("pool.gno__transferAndVerify() || pool.balances.token1(%s) >= amount.Abs(%s)", pool.balances.token1.ToString(), amount.Abs().ToString()),
+			))
 		}
 	}
 
@@ -633,22 +726,25 @@ func (pool *Pool) transferAndVerify(
 	// will panic if following conditions are met:
 	// - POOL does not have enough balance
 	// - token is not registered
-	ok := transferByRegisterCall(tokenPath, to, amountUint64)
-	if !ok {
-		panic(ufmt.Sprintf("[POOL] pool.transferAndVerify() || transferByRegisterCall(tokenPath(%s), to(%s), amountUint64(%d)) failed", tokenPath, to.String(), amountUint64))
-	}
+	transferByRegisterCall(tokenPath, to, amountUint64)
 
 	// update pool.balances
 	var overflow bool
 	if isToken0 {
 		pool.balances.token0, overflow = new(u256.Uint).SubOverflow(pool.balances.token0, amount.Abs())
 		if overflow {
-			panic(ufmt.Sprintf("[POOL] pool.transferAndVerify() || cannot decrease, pool.balances.token0(%s) - amount(%s)", pool.balances.token0.ToString(), amount.Abs().ToString()))
+			panic(addDetailToError(
+				errTransferFailed,
+				ufmt.Sprintf("pool.gno__transferAndVerify() || cannot decrease, pool.balances.token0(%s) - amount(%s)", pool.balances.token0.ToString(), amount.Abs().ToString()),
+			))
 		}
 	} else {
 		pool.balances.token1, overflow = new(u256.Uint).SubOverflow(pool.balances.token1, amount.Abs())
 		if pool.balances.token1.Lt(u256.Zero()) {
-			panic(ufmt.Sprintf("[POOL] pool.transferAndVerify() || cannot decrease, pool.balances.token1(%s) - amount(%s)", pool.balances.token1.ToString(), amount.Abs().ToString()))
+			panic(addDetailToError(
+				errTransferFailed,
+				ufmt.Sprintf("pool.gno__transferAndVerify() || cannot decrease, pool.balances.token1(%s) - amount(%s)", pool.balances.token1.ToString(), amount.Abs().ToString()),
+			))
 		}
 	}
 }
@@ -666,10 +762,7 @@ func (pool *Pool) transferFromAndVerify(
 	// - POOL does not have enough approved amount
 	// - from does not have enough balance
 	// - token is not registered
-	ok := transferFromByRegisterCall(tokenPath, from, to, amountUint64)
-	if !ok {
-		panic(ufmt.Sprintf("[POOL] pool.transferFromAndVerify() || transferFromByRegisterCall(tokenPath(%s), from(%s), to(%s), amountUint64(%d)) failed", tokenPath, from.String(), to.String(), amountUint64))
-	}
+	transferFromByRegisterCall(tokenPath, from, to, amountUint64)
 
 	// update pool.balances
 	if isToken0 {
@@ -684,7 +777,10 @@ func checkAmountRange(amount *i256.Int) uint64 {
 	amountAbs := amount.Abs()
 	amountUint64, overflow := amountAbs.Uint64WithOverflow()
 	if overflow {
-		panic(ufmt.Sprintf("[POOL] pool.checkAmount() || amountAbs(%s) overflows uint64 range", amountAbs.ToString()))
+		panic(addDetailToError(
+			errOutOfRange,
+			ufmt.Sprintf("pool.gno__checkAmountRange() || amountAbs(%s) overflows uint64 range", amountAbs.ToString()),
+		))
 	}
 
 	return amountUint64

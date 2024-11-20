@@ -5,18 +5,20 @@ import (
 	"testing"
 	"time"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/p/demo/uassert"
 
-	pl "gno.land/r/gnoswap/pool"
-	pn "gno.land/r/gnoswap/position"
+	"gno.land/r/gnoswap/v1/consts"
 
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
+
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/qux"
-	"gno.land/r/gnoswap/gns"
 
-	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/v1/gnft"
 )
 
 func init() {
@@ -25,26 +27,21 @@ func init() {
 	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:500"] = InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
-		startHeight:    std.GetHeight(),
-		updateHeight:   std.GetHeight(),
 	}
 
 	// tier 2
 	poolTiers["gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100"] = InternalTier{
 		tier:           2,
 		startTimestamp: time.Now().Unix(),
-		startHeight:    std.GetHeight(),
-		updateHeight:   std.GetHeight(),
 	}
 
 	// set pool create fee to 0 for testing
-	std.TestSetOrigCaller(gsa)
-	std.TestSetRealm(gsaRealm)
-	pl.SetPoolCreationFee(0)
+	std.TestSetRealm(adminRealm)
+	pl.SetPoolCreationFeeByAdmin(0)
 }
 
 func TestPoolInitCreatePool(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
 	std.TestSkipHeights(1)
@@ -59,7 +56,7 @@ func TestPoolInitCreatePool(t *testing.T) {
 }
 
 func TestMintBarQux500(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
@@ -75,19 +72,20 @@ func TestMintBarQux500(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		admin,
+		admin,
 	)
 
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, tokenId, 1)
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
-	shouldEQ(t, amount0, "36790")
-	shouldEQ(t, amount1, "100000")
+	uassert.Equal(t, tokenId, uint64(1))
+	uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+	uassert.Equal(t, amount0, "36790")
+	uassert.Equal(t, amount1, "100000")
 }
 
 func TestMintBarBaz100(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
@@ -103,18 +101,19 @@ func TestMintBarBaz100(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		admin,
+		admin,
 	)
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, tokenId, 2)
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
-	shouldEQ(t, amount0, "100000")
-	shouldEQ(t, amount1, "100000")
+	uassert.Equal(t, tokenId, uint64(2))
+	uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+	uassert.Equal(t, amount0, "100000")
+	uassert.Equal(t, amount1, "100000")
 }
 
 func TestMintFooQux500(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
@@ -130,35 +129,36 @@ func TestMintFooQux500(t *testing.T) {
 		"1",          // amount0Min
 		"1",          // amount1Min
 		max_timeout,
-		gsa.String(),
+		admin,
+		admin,
 	)
 
 	std.TestSkipHeights(1)
 
-	shouldEQ(t, tokenId, 3)
-	shouldEQ(t, gnft.OwnerOf(tid(tokenId)), std.GetOrigCaller()) // gsa
-	shouldEQ(t, amount0, "100000")
-	shouldEQ(t, amount1, "100000")
+	uassert.Equal(t, tokenId, uint64(3))
+	uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+	uassert.Equal(t, amount0, "100000")
+	uassert.Equal(t, amount1, "100000")
 }
 
 func TestStakeInternalTier1(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(1))
 	StakeToken(1)
 
 	std.TestSkipHeights(2)
 
-	shouldEQ(t, gnft.OwnerOf(tid(1)), GetOrigPkgAddr())
-	shouldEQ(t, len(deposits), 1)
+	uassert.Equal(t, gnft.OwnerOf(tid(1)), GetOrigPkgAddr())
+	uassert.Equal(t, len(deposits), 1)
 }
 
 func TestStakeInternalTier2(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
 	StakeToken(2)
 
 	std.TestSkipHeights(2)
 
-	shouldEQ(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr())
-	shouldEQ(t, len(deposits), 2)
+	uassert.Equal(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr())
+	uassert.Equal(t, len(deposits), 2)
 }

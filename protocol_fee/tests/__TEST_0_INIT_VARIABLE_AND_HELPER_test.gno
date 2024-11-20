@@ -2,13 +2,12 @@ package protocol_fee
 
 import (
 	"std"
-	"testing"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 var (
-	gsa std.Address = consts.GNOSWAP_ADMIN
+	admin std.Address = consts.ADMIN
 
 	fooPath string = "gno.land/r/onbloc/foo"
 	barPath string = "gno.land/r/onbloc/bar"
@@ -17,7 +16,7 @@ var (
 
 	oblPath string = "gno.land/r/onbloc/obl"
 	// wugnotPath string = "gno.land/r/demo/wugnot" // from consts
-	// gnsPath string = "gno.land/r/gnoswap/gns" // from consts
+	// gnsPath string = "gno.land/r/gnoswap/v1/gns" // from consts
 
 	fee100  uint32 = 100
 	fee500  uint32 = 500
@@ -28,7 +27,7 @@ var (
 
 // Realms to mock frames
 var (
-	gsaRealm = std.NewUserRealm(gsa)
+	adminRealm = std.NewUserRealm(admin)
 
 	posRealm = std.NewCodeRealm(consts.POSITION_PATH)
 	rouRealm = std.NewCodeRealm(consts.ROUTER_PATH)
@@ -45,38 +44,4 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 	}
 
 	return uint64(coins.AmountOf("ugnot"))
-}
-
-func shouldEQ(t *testing.T, got, expected interface{}) {
-	if got != expected {
-		t.Errorf("got %v, expected %v", got, expected)
-	}
-}
-
-func shouldNEQ(t *testing.T, got, expected interface{}) {
-	if got == expected {
-		t.Errorf("got %v, didn't expected %v", got, expected)
-	}
-}
-
-func shouldPanic(t *testing.T, f func()) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("expected panic")
-		}
-	}()
-	f()
-}
-
-func shouldPanicWithMsg(t *testing.T, f func(), msg string) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
-		} else {
-			if r != msg {
-				t.Errorf("excepted panic(%v), got(%v)", msg, r)
-			}
-		}
-	}()
-	f()
 }

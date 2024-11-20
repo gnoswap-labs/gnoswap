@@ -5,11 +5,10 @@ import (
 	"time"
 
 	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
-	en "gno.land/r/gnoswap/emission"
+	en "gno.land/r/gnoswap/v1/emission"
 )
 
 // LpTokenReward represents the rewards associated with a specific LP token
@@ -33,41 +32,45 @@ type Reward struct {
 
 // Stake represents a single stake
 type Stake struct {
-    TokenId        uint64      `json:"tokenId"`        // The ID of the staked LP token
-    Owner          std.Address `json:"owner"`          // The address of the owner of the staked LP token
-    NumberOfStakes uint64      `json:"numberOfStakes"` // The number of times this LP token has been staked
-    StakeTimestamp int64       `json:"stakeTimestamp"` // The timestamp when the LP token was staked
-    StakeHeight    int64       `json:"stakeHeight"`    // The block height when the LP token was staked
-    TargetPoolPath string      `json:"targetPoolPath"` // The path of the target pool for the stake
+	TokenId        uint64      `json:"tokenId"`        // The ID of the staked LP token
+	Owner          std.Address `json:"owner"`          // The address of the owner of the staked LP token
+	NumberOfStakes uint64      `json:"numberOfStakes"` // The number of times this LP token has been staked
+	StakeTimestamp int64       `json:"stakeTimestamp"` // The timestamp when the LP token was staked
+	StakeHeight    int64       `json:"stakeHeight"`    // The block height when the LP token was staked
+	TargetPoolPath string      `json:"targetPoolPath"` // The path of the target pool for the stake
 }
 
 // ResponseQueryBase contains basic information about a query response.
 type ResponseQueryBase struct {
-    Height    int64 `json:"height"`    // The block height at the time of the query
-    Timestamp int64 `json:"timestamp"` // The timestamp at the time of the query
+	Height    int64 `json:"height"`    // The block height at the time of the query
+	Timestamp int64 `json:"timestamp"` // The timestamp at the time of the query
 }
 
 // ResponseApiGetRewards represents the API response for getting rewards.
 type ResponseApiGetRewards struct {
-    Stat     ResponseQueryBase `json:"stat"`     // Basic query information
-    Response []LpTokenReward   `json:"response"` // A slice of LpTokenReward structs
+	Stat     ResponseQueryBase `json:"stat"`     // Basic query information
+	Response []LpTokenReward   `json:"response"` // A slice of LpTokenReward structs
 }
 
 // ResponseApiGetRewardByLpTokenId represents the API response for getting rewards for a specific LP token.
 type ResponseApiGetRewardByLpTokenId struct {
-    Stat     ResponseQueryBase `json:"stat"`     // Basic query information
-    Response LpTokenReward     `json:"response"` // The LpTokenReward for the specified LP token
+	Stat     ResponseQueryBase `json:"stat"`     // Basic query information
+	Response LpTokenReward     `json:"response"` // The LpTokenReward for the specified LP token
 }
 
 // ResponseApiGetStakes represents the API response for getting stakes.
 type ResponseApiGetStakes struct {
-    Stat     ResponseQueryBase `json:"stat"`     // Basic query information
-    Response []Stake           `json:"response"` // A slice of Stake structs
+	Stat     ResponseQueryBase `json:"stat"`     // Basic query information
+	Response []Stake           `json:"response"` // A slice of Stake structs
 }
 
 func ApiGetRewards() string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	lpTokenRewards := []LpTokenReward{}
 
@@ -75,7 +78,12 @@ func ApiGetRewards() string {
 		rewards := []Reward{}
 
 		// get internal gns reward
-		_, internalGNS := rewardMathComputeInternalRewardAmount(tokenId)
+		internalWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
+		if !exist {
+			continue
+		}
+		internalGNS := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.full100
+
 		if internalGNS > 0 {
 			rewards = append(rewards, Reward{
 				IncentiveType:     "INTERNAL",
@@ -99,7 +107,11 @@ func ApiGetRewards() string {
 				continue
 			}
 
-			_, externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
+			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
+			if !exist {
+				continue
+			}
+			externalReward := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
 			if externalReward >= 0 {
 				rewards = append(rewards, Reward{
 					IncentiveType:     "EXTERNAL",
@@ -158,7 +170,7 @@ func ApiGetRewards() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewards() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -166,7 +178,11 @@ func ApiGetRewards() string {
 
 func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	lpTokenRewards := []LpTokenReward{}
 
@@ -178,7 +194,12 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 		rewards := []Reward{}
 
 		// get internal gns reward
-		_, internalGNS := rewardMathComputeInternalRewardAmount(tokenId)
+		internalWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
+		if !exist {
+			continue
+		}
+		internalGNS := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.full100
+
 		if internalGNS > 0 {
 			rewards = append(rewards, Reward{
 				IncentiveType:     "INTERNAL",
@@ -202,7 +223,11 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 				continue
 			}
 
-			_, externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
+			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
+			if !exist {
+				continue
+			}
+			externalReward := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
 			if externalReward > 0 {
 				rewards = append(rewards, Reward{
 					IncentiveType:     "EXTERNAL",
@@ -259,7 +284,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardsByLpTokenId() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -267,7 +292,11 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 
 func ApiGetRewardsByAddress(targetAddress string) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	lpTokenRewards := []LpTokenReward{}
 
@@ -279,7 +308,12 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 		rewards := []Reward{}
 
 		// get internal gns reward
-		_, internalGNS := rewardMathComputeInternalRewardAmount(tokenId)
+		internalWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
+		if !exist {
+			continue
+		}
+		internalGNS := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.full100
+
 		if internalGNS > 0 {
 			rewards = append(rewards, Reward{
 				IncentiveType:     "INTERNAL",
@@ -303,7 +337,11 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 				continue
 			}
 
-			_, externalReward := rewardMathComputeExternalRewardAmount(tokenId, incentiveId)
+			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
+			if !exist {
+				continue
+			}
+			externalReward := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
 			rewards = append(rewards, Reward{
 				IncentiveType:     "EXTERNAL",
 				IncentiveId:       incentiveId,
@@ -357,7 +395,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardsByAddress() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -365,7 +403,11 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 
 func ApiGetStakes() string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	stakes := []Stake{}
 	for tokenId, deposit := range deposits {
@@ -374,6 +416,7 @@ func ApiGetStakes() string {
 			Owner:          deposit.owner,
 			NumberOfStakes: deposit.numberOfStakes,
 			StakeTimestamp: deposit.stakeTimestamp,
+			StakeHeight:    deposit.stakeHeight,
 			TargetPoolPath: deposit.targetPoolPath,
 		})
 	}
@@ -402,6 +445,7 @@ func ApiGetStakes() string {
 			"owner":          json.StringNode("owner", stake.Owner.String()),
 			"numberOfStakes": json.NumberNode("numberOfStakes", float64(stake.NumberOfStakes)),
 			"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(stake.StakeTimestamp)),
+			"stakeHeight":    json.NumberNode("stakeHeight", float64(stake.StakeHeight)),
 			"targetPoolPath": json.StringNode("targetPoolPath", stake.TargetPoolPath),
 		})
 		responses.AppendArray(_stakeNode)
@@ -414,7 +458,7 @@ func ApiGetStakes() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetStakes() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -422,7 +466,11 @@ func ApiGetStakes() string {
 
 func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	stakes := []Stake{}
 
@@ -436,6 +484,7 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 			Owner:          deposit.owner,
 			NumberOfStakes: deposit.numberOfStakes,
 			StakeTimestamp: deposit.stakeTimestamp,
+			StakeHeight:    deposit.stakeHeight,
 			TargetPoolPath: deposit.targetPoolPath,
 		})
 	}
@@ -464,6 +513,7 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 			"owner":          json.StringNode("owner", stake.Owner.String()),
 			"numberOfStakes": json.NumberNode("numberOfStakes", float64(stake.NumberOfStakes)),
 			"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(stake.StakeTimestamp)),
+			"stakeHeight":    json.NumberNode("stakeHeight", float64(stake.StakeHeight)),
 			"targetPoolPath": json.StringNode("targetPoolPath", stake.TargetPoolPath),
 		})
 		responses.AppendArray(_stakeNode)
@@ -476,7 +526,7 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetStakes() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -484,7 +534,11 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 
 func ApiGetStakesByAddress(targetAddress string) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	stakes := []Stake{}
 
@@ -498,6 +552,7 @@ func ApiGetStakesByAddress(targetAddress string) string {
 			Owner:          deposit.owner,
 			NumberOfStakes: deposit.numberOfStakes,
 			StakeTimestamp: deposit.stakeTimestamp,
+			StakeHeight:    deposit.stakeHeight,
 			TargetPoolPath: deposit.targetPoolPath,
 		})
 	}
@@ -526,6 +581,7 @@ func ApiGetStakesByAddress(targetAddress string) string {
 			"owner":          json.StringNode("owner", stake.Owner.String()),
 			"numberOfStakes": json.NumberNode("numberOfStakes", float64(stake.NumberOfStakes)),
 			"stakeTimestamp": json.NumberNode("stakeTimestamp", float64(stake.StakeTimestamp)),
+			"stakeHeight":    json.NumberNode("stakeHeight", float64(stake.StakeHeight)),
 			"targetPoolPath": json.StringNode("targetPoolPath", stake.TargetPoolPath),
 		})
 		responses.AppendArray(_stakeNode)
@@ -538,7 +594,7 @@ func ApiGetStakesByAddress(targetAddress string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetStakes() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)

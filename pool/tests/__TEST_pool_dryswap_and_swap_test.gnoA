@@ -4,12 +4,15 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/p/demo/uassert"
+
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 var (
@@ -24,39 +27,32 @@ var (
 
 func TestCreatePool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
-	CreatePool(fooPath, barPath, fee500, sqrtPrice)
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
-	shouldEQ(t, len(pools), 1)
+	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+	uassert.Equal(t, len(pools), 1)
 }
 
 func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 	std.TestSetRealm(posRealm)
-	std.TestSetOrigCaller(gsa)
 
 	// no mint == no liquidity => swap will fail
-	_, _, ok := DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
-	shouldEQ(t, ok, false)
+	DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
 
 	// not enough mint == swap will fail
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
-	std.TestSetOrigCaller(gsa)
-	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -tickUpper, -tickLower, "10")
-	_, _, ok = DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
-	shouldEQ(t, ok, false)
+	DrySwap(fooPath, barPath, fee500, true, "16000", consts.MIN_PRICE)
 
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	std.TestSetRealm(posRealm)
-	std.TestSetOrigCaller(gsa)
-	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR.String(), -tickUpper, -tickLower, liquidityExpect) // -11000  ~ -9000
+	Mint(fooPath, barPath, fee500, consts.POSITION_ADDR, -tickUpper, -tickLower, liquidityExpect, admin) // -11000  ~ -9000
 
 	// zeroForOne true
 	// amountSpecified 16000
@@ -68,8 +64,8 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Positive_16000(t *testing.T) {
 		"16000",          // amountSpecified
 		consts.MIN_PRICE, // sqrtPriceLimitX96
 	)
-	shouldEQ(t, poolIn, "16000")
-	shouldEQ(t, poolOut, "-5883")
+	uassert.Equal(t, poolIn, "16000")
+	uassert.Equal(t, poolOut, "-5883")
 }
 
 func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
@@ -85,40 +81,6 @@ func TestDrySwap_ZeroForOneTrue_AmountSpecified_Negative_16000(t *testing.T) {
 		consts.MIN_PRICE, // sqrtPriceLimitX96
 	)
 
-	shouldEQ(t, poolIn, "43513")
-	shouldEQ(t, poolOut, "-16000")
+	uassert.Equal(t, poolIn, "43513")
+	uassert.Equal(t, poolOut, "-16000")
 }
-
-// func TestDrySwap_ZeroForOneFalse_AmountSpecified_Positive_16000(t *testing.T) {
-// 	// zeroForOne false
-// 	// amountSpecified 16000
-
-// 	poolOut, poolIn, _ := DrySwap(
-// 		fooPath,          // fooPath
-// 		barPath,          // barPath
-// 		fee500,           // fee500
-// 		"_",              // recipient
-// 		false,            // zeroForOne
-// 		"16000",          // amountSpecified
-// 		consts.MAX_PRICE, // sqrtPriceLimitX96
-// 	)
-
-// 	shouldEQ(t, poolOut, "-43468")
-// 	shouldEQ(t, poolIn, "16000")
-// }
-
-// func TestDrySwap_ZeroForOneFalse_AmountSpecified_Negative_16000(t *testing.T) {
-// 	// zeroForOne false
-// 	// amountSpecified -16000
-// 	poolOut, poolIn, _ := DrySwap(
-// 		fooPath,          // fooPath
-// 		barPath,          // barPath
-// 		fee500,           // fee500
-// 		"_",              // recipient
-// 		false,            // zeroForOne
-// 		"-16000",         // amountSpecified
-// 		consts.MAX_PRICE, // sqrtPriceLimitX96
-// 	)
-// 	shouldEQ(t, poolOut, "-16000")
-// 	shouldEQ(t, poolIn, "5888")
-// }

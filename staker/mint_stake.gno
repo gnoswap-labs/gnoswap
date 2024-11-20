@@ -3,34 +3,20 @@ package staker
 import (
 	"std"
 
-	pn "gno.land/r/gnoswap/position"
+	pn "gno.land/r/gnoswap/v1/position"
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
-	"gno.land/r/gnoswap/gnft"
+	"gno.land/r/gnoswap/v1/gnft"
 
 	"gno.land/p/demo/grc/grc721"
 )
 
 // MintAndStake mints LP tokens and stakes them in a single transaction.
-//
-// Parameters:
-//   - token0, token1 (string): Addresses of the two tokens in the liquidity pool.
-//   - fee (string): The fee tier of the pool.
-//   - tickLower, tickUpper (string): The lower and upper tick boundaries for the position.
-//   - amount0Desired, amount1Desired (string): Desired amounts of token0 and token1 to add as liquidity.
-//   - amount0Min, amount1Min (string): Minimum amounts of token0 and token1 to add as liquidity.
-//   - deadline (int64): The timestamp by which the transaction must be executed.
-//
-// Returns:
-//   - tokenId          (uint64): The ID of the minted NFT representing the liquidity position.
-//   - liquidity        (string): The amount of liquidity added to the pool.
-//   - amount0, amount1 (string): The actual amounts of token0 and token1 used to provide liquidity.
-//   - poolPath         (string): The path identifier for the liquidity pool.
-//
-// Note: All amount parameters are strings representing *u256.Uint values.
+// Returns tokenId, liquidity, amount0, amount1, poolPath
+// ref: https://docs.gnoswap.io/contracts/staker/mint_stake.gno#mintandstake
 func MintAndStake(
 	token0 string,
 	token1 string,
@@ -42,7 +28,7 @@ func MintAndStake(
 	amount0Min string, // *u256.Uint
 	amount1Min string, // *u256.Uint
 	deadline int64,
-) (uint64, string, string, string, string) { // tokenId, liquidity, amount0, amount1, poolPath ( *u256.Uint x3)
+) (uint64, string, string, string, string) {
 
 	// if one click native
 	if token0 == consts.GNOT || token1 == consts.GNOT {
@@ -52,7 +38,10 @@ func MintAndStake(
 
 		// not enough ugnot sent
 		if ugnotSent < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
-			panic(ufmt.Sprintf("[STAKER] mint_stake.gno__MintAndStake() || too less(%d) ugnot sent (minimum:%d)", ugnotSent, consts.UGNOT_MIN_DEPOSIT_TO_WRAP))
+			panic(addDetailToError(
+				errWugnotMinimum,
+				ufmt.Sprintf("mint_stake.gno__MintAndStake() || too less ugnot sent(%d), minimum:%d", ugnotSent, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
+			))
 		}
 
 		// send it over to position to wrap
@@ -71,30 +60,15 @@ func MintAndStake(
 		amount0Min,
 		amount1Min,
 		deadline,
-		consts.STAKER_ADDR.String(),
+		consts.STAKER_ADDR,
+		std.PrevRealm().Addr(),
 	)
 
-	// at this point staker has minted token
+	// at this point, staker has minted token
 	toTid := grc721.TokenID(ufmt.Sprintf("%d", tokenId))
 	gnft.SetTokenURI(toTid)
 
 	poolPath, _, _ := StakeToken(tokenId) // poolPath, stakedAmount0, stakedAmount1
-
-	/*
-		std.Emit(
-			"GNOSWAP",
-			"m_callType", callType(),
-			"m_origCaller", origCaller(),
-			"m_prevRealm", prevRealm(),
-			"p_tickLower", int32ToStr(tickLower),
-			"p_tickUpper", int32ToStr(tickUpper),
-			"poolPath", poolPath,
-			"tokenId", uint64ToStr(tokenId),
-			"liquidity", liquidity,
-			"amount0", amount0,
-			"amount1", amount1,
-		)
-	*/
 
 	return tokenId, liquidity, amount0, amount1, poolPath
 }

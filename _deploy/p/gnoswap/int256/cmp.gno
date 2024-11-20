@@ -2,11 +2,17 @@ package int256
 
 // Eq returns true if z == x
 func (z *Int) Eq(x *Int) bool {
+	if z == nil || x == nil {
+		panic("int256: comparing with nil")
+	}
 	return (z.neg == x.neg) && z.abs.Eq(x.abs)
 }
 
 // Neq returns true if z != x
 func (z *Int) Neq(x *Int) bool {
+	if z == nil || x == nil {
+		panic("int256: comparing with nil")
+	}
 	return !z.Eq(x)
 }
 
@@ -16,6 +22,9 @@ func (z *Int) Neq(x *Int) bool {
 //	 0 if x == y
 //	+1 if x >  y
 func (z *Int) Cmp(x *Int) (r int) {
+	if z == nil || x == nil {
+		panic("int256: comparing with nil")
+	}
 	// x cmp y == x cmp y
 	// x cmp (-y) == x
 	// (-x) cmp y == y
@@ -48,6 +57,9 @@ func (z *Int) IsNeg() bool {
 
 // Lt returns true if z < x
 func (z *Int) Lt(x *Int) bool {
+	if z == nil || x == nil {
+		panic("int256: comparing with nil")
+	}
 	if z.neg {
 		if x.neg {
 			return z.abs.Gt(x.abs)
@@ -65,6 +77,9 @@ func (z *Int) Lt(x *Int) bool {
 
 // Gt returns true if z > x
 func (z *Int) Gt(x *Int) bool {
+	if z == nil || x == nil {
+		panic("int256: comparing with nil")
+	}
 	if z.neg {
 		if x.neg {
 			return z.abs.Lt(x.abs)

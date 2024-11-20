@@ -9,12 +9,12 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	en "gno.land/r/gnoswap/emission"
-	pl "gno.land/r/gnoswap/pool"
+	en "gno.land/r/gnoswap/v1/emission"
+	pl "gno.land/r/gnoswap/v1/pool"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 type RewardToken struct {
@@ -23,16 +23,17 @@ type RewardToken struct {
 }
 
 type ApiExternalIncentive struct {
-	IncentiveId    string `json:"incentiveId"`
-	PoolPath       string `json:"poolPath"`
-	RewardToken    string `json:"rewardToken"`
-	RewardAmount   string `json:"rewardAmount"`
-	RewardLeft     string `json:"rewardLeft"`
-	StartTimestamp int64  `json:"startTimestamp"`
-	EndTimestamp   int64  `json:"endTimestamp"`
-	Active         bool   `json:"active"`
-	Refundee       string `json:"refundee"`
-	CreatedHeight  int64  `json:"createdHeight"`
+	IncentiveId      string `json:"incentiveId"`
+	PoolPath         string `json:"poolPath"`
+	RewardToken      string `json:"rewardToken"`
+	RewardAmount     string `json:"rewardAmount"`
+	RewardLeft       string `json:"rewardLeft"`
+	StartTimestamp   int64  `json:"startTimestamp"`
+	EndTimestamp     int64  `json:"endTimestamp"`
+	Active           bool   `json:"active"`
+	Refundee         string `json:"refundee"`
+	CreatedHeight    int64  `json:"createdHeight"`
+	DepositGnsAmount uint64 `json:"depositGnsAmount"`
 }
 
 type ApiInternalIncentive struct {
@@ -44,7 +45,11 @@ type ApiInternalIncentive struct {
 
 func ApiGetRewardTokens() string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	rewardTokens := []RewardToken{}
 
@@ -99,7 +104,7 @@ func ApiGetRewardTokens() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardTokens() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -107,7 +112,11 @@ func ApiGetRewardTokens() string {
 
 func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	rewardTokens := []RewardToken{}
 
@@ -159,7 +168,7 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetRewardTokensByPoolPath() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -167,7 +176,11 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 
 func ApiGetExternalIncentives() string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	updateExternalIncentiveLeftAmount()
 
@@ -175,15 +188,16 @@ func ApiGetExternalIncentives() string {
 
 	for incentiveId, incentive := range incentives {
 		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
-			IncentiveId:    incentiveId,
-			PoolPath:       incentive.targetPoolPath,
-			RewardToken:    incentive.rewardToken,
-			RewardAmount:   incentive.rewardAmount.ToString(),
-			RewardLeft:     incentive.rewardLeft.ToString(),
-			StartTimestamp: incentive.startTimestamp,
-			EndTimestamp:   incentive.endTimestamp,
-			Refundee:       incentive.refundee.String(),
-			CreatedHeight:  incentive.createdHeight,
+			IncentiveId:      incentiveId,
+			PoolPath:         incentive.targetPoolPath,
+			RewardToken:      incentive.rewardToken,
+			RewardAmount:     incentive.rewardAmount.ToString(),
+			RewardLeft:       incentive.rewardLeft.ToString(),
+			StartTimestamp:   incentive.startTimestamp,
+			EndTimestamp:     incentive.endTimestamp,
+			Refundee:         incentive.refundee.String(),
+			CreatedHeight:    incentive.createdHeight,
+			DepositGnsAmount: incentive.depositGnsAmount,
 		})
 	}
 
@@ -202,16 +216,17 @@ func ApiGetExternalIncentives() string {
 		}
 
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"incentiveId":    json.StringNode("incentiveId", incentive.IncentiveId),
-			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
-			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
-			"rewardLeft":     json.StringNode("rewardLeft", incentive.RewardLeft),
-			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
-			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
-			"active":         json.BoolNode("active", active),
-			"refundee":       json.StringNode("refundee", incentive.Refundee),
-			"createdHeight":  json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"incentiveId":      json.StringNode("incentiveId", incentive.IncentiveId),
+			"poolPath":         json.StringNode("poolPath", incentive.PoolPath),
+			"rewardToken":      json.StringNode("rewardToken", incentive.RewardToken),
+			"rewardAmount":     json.StringNode("rewardAmount", incentive.RewardAmount),
+			"rewardLeft":       json.StringNode("rewardLeft", incentive.RewardLeft),
+			"startTimestamp":   json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
+			"endTimestamp":     json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
+			"active":           json.BoolNode("active", active),
+			"refundee":         json.StringNode("refundee", incentive.Refundee),
+			"createdHeight":    json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(incentive.DepositGnsAmount)),
 		})
 		responses.AppendArray(_incentiveNode)
 	}
@@ -224,7 +239,84 @@ func ApiGetExternalIncentives() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetExternalIncentives() || json marshal error: %s", err.Error()))
+		panic(err.Error())
+	}
+
+	return string(b)
+}
+
+func ApiGetExternalIncentiveById(incentiveId string) string {
+	en.MintAndDistributeGns()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
+
+	updateExternalIncentiveLeftAmount()
+
+	apiExternalIncentives := []ApiExternalIncentive{}
+
+	incentive, exist := incentives[incentiveId]
+	if !exist {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_RPC_api_incentive.gno__ApiGetExternalIncentiveById() || incentive(%s) not found", incentiveId),
+		))
+	}
+
+	apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
+		IncentiveId:      incentiveId,
+		PoolPath:         incentive.targetPoolPath,
+		RewardToken:      incentive.rewardToken,
+		RewardAmount:     incentive.rewardAmount.ToString(),
+		RewardLeft:       incentive.rewardLeft.ToString(),
+		StartTimestamp:   incentive.startTimestamp,
+		EndTimestamp:     incentive.endTimestamp,
+		Refundee:         incentive.refundee.String(),
+		CreatedHeight:    incentive.createdHeight,
+		DepositGnsAmount: incentive.depositGnsAmount,
+	})
+
+	// STAT NODE
+	_stat := json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
+
+	// RESPONSE (ARRAY) NODE
+	responses := json.ArrayNode("", []*json.Node{})
+	for _, incentive := range apiExternalIncentives {
+		active := false
+		if time.Now().Unix() >= incentive.StartTimestamp && time.Now().Unix() <= incentive.EndTimestamp {
+			active = true
+		}
+
+		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
+			"incentiveId":      json.StringNode("incentiveId", incentive.IncentiveId),
+			"poolPath":         json.StringNode("poolPath", incentive.PoolPath),
+			"rewardToken":      json.StringNode("rewardToken", incentive.RewardToken),
+			"rewardAmount":     json.StringNode("rewardAmount", incentive.RewardAmount),
+			"rewardLeft":       json.StringNode("rewardLeft", incentive.RewardLeft),
+			"startTimestamp":   json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
+			"endTimestamp":     json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
+			"active":           json.BoolNode("active", active),
+			"refundee":         json.StringNode("refundee", incentive.Refundee),
+			"createdHeight":    json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(incentive.DepositGnsAmount)),
+		})
+		responses.AppendArray(_incentiveNode)
+	}
+
+	// RETURN
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     _stat,
+		"response": responses,
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -232,7 +324,11 @@ func ApiGetExternalIncentives() string {
 
 func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	updateExternalIncentiveLeftAmount()
 
@@ -244,15 +340,16 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 		}
 
 		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
-			IncentiveId:    incentiveId,
-			PoolPath:       incentive.targetPoolPath,
-			RewardToken:    incentive.rewardToken,
-			RewardAmount:   incentive.rewardAmount.ToString(),
-			RewardLeft:     incentive.rewardLeft.ToString(),
-			StartTimestamp: incentive.startTimestamp,
-			EndTimestamp:   incentive.endTimestamp,
-			Refundee:       incentive.refundee.String(),
-			CreatedHeight:  incentive.createdHeight,
+			IncentiveId:      incentiveId,
+			PoolPath:         incentive.targetPoolPath,
+			RewardToken:      incentive.rewardToken,
+			RewardAmount:     incentive.rewardAmount.ToString(),
+			RewardLeft:       incentive.rewardLeft.ToString(),
+			StartTimestamp:   incentive.startTimestamp,
+			EndTimestamp:     incentive.endTimestamp,
+			Refundee:         incentive.refundee.String(),
+			CreatedHeight:    incentive.createdHeight,
+			DepositGnsAmount: incentive.depositGnsAmount,
 		})
 	}
 
@@ -271,16 +368,17 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 		}
 
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"incentiveId":    json.StringNode("incentiveId", incentive.IncentiveId),
-			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
-			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
-			"rewardLeft":     json.StringNode("rewardLeft", incentive.RewardLeft),
-			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
-			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
-			"active":         json.BoolNode("active", active),
-			"refundee":       json.StringNode("refundee", incentive.Refundee),
-			"createdHeight":  json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"incentiveId":      json.StringNode("incentiveId", incentive.IncentiveId),
+			"poolPath":         json.StringNode("poolPath", incentive.PoolPath),
+			"rewardToken":      json.StringNode("rewardToken", incentive.RewardToken),
+			"rewardAmount":     json.StringNode("rewardAmount", incentive.RewardAmount),
+			"rewardLeft":       json.StringNode("rewardLeft", incentive.RewardLeft),
+			"startTimestamp":   json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
+			"endTimestamp":     json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
+			"active":           json.BoolNode("active", active),
+			"refundee":         json.StringNode("refundee", incentive.Refundee),
+			"createdHeight":    json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(incentive.DepositGnsAmount)),
 		})
 		responses.AppendArray(_incentiveNode)
 	}
@@ -293,7 +391,7 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetExternalIncentivesByPoolPath() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -301,7 +399,11 @@ func ApiGetExternalIncentivesByPoolPath(targetPoolPath string) string {
 
 func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	updateExternalIncentiveLeftAmount()
 
@@ -313,15 +415,16 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 		}
 
 		apiExternalIncentives = append(apiExternalIncentives, ApiExternalIncentive{
-			IncentiveId:    incentiveId,
-			PoolPath:       incentive.targetPoolPath,
-			RewardToken:    incentive.rewardToken,
-			RewardAmount:   incentive.rewardAmount.ToString(),
-			RewardLeft:     incentive.rewardLeft.ToString(),
-			StartTimestamp: incentive.startTimestamp,
-			EndTimestamp:   incentive.endTimestamp,
-			Refundee:       incentive.refundee.String(),
-			CreatedHeight:  incentive.createdHeight,
+			IncentiveId:      incentiveId,
+			PoolPath:         incentive.targetPoolPath,
+			RewardToken:      incentive.rewardToken,
+			RewardAmount:     incentive.rewardAmount.ToString(),
+			RewardLeft:       incentive.rewardLeft.ToString(),
+			StartTimestamp:   incentive.startTimestamp,
+			EndTimestamp:     incentive.endTimestamp,
+			Refundee:         incentive.refundee.String(),
+			CreatedHeight:    incentive.createdHeight,
+			DepositGnsAmount: incentive.depositGnsAmount,
 		})
 	}
 
@@ -340,16 +443,17 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 		}
 
 		_incentiveNode := json.ObjectNode("", map[string]*json.Node{
-			"incentiveId":    json.StringNode("incentiveId", incentive.IncentiveId),
-			"poolPath":       json.StringNode("poolPath", incentive.PoolPath),
-			"rewardToken":    json.StringNode("rewardToken", incentive.RewardToken),
-			"rewardAmount":   json.StringNode("rewardAmount", incentive.RewardAmount),
-			"rewardLeft":     json.StringNode("rewardLeft", incentive.RewardLeft),
-			"startTimestamp": json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
-			"endTimestamp":   json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
-			"active":         json.BoolNode("active", active),
-			"refundee":       json.StringNode("refundee", incentive.Refundee),
-			"createdHeight":  json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"incentiveId":      json.StringNode("incentiveId", incentive.IncentiveId),
+			"poolPath":         json.StringNode("poolPath", incentive.PoolPath),
+			"rewardToken":      json.StringNode("rewardToken", incentive.RewardToken),
+			"rewardAmount":     json.StringNode("rewardAmount", incentive.RewardAmount),
+			"rewardLeft":       json.StringNode("rewardLeft", incentive.RewardLeft),
+			"startTimestamp":   json.NumberNode("startTimestamp", float64(incentive.StartTimestamp)),
+			"endTimestamp":     json.NumberNode("endTimestamp", float64(incentive.EndTimestamp)),
+			"active":           json.BoolNode("active", active),
+			"refundee":         json.StringNode("refundee", incentive.Refundee),
+			"createdHeight":    json.NumberNode("createdHeight", float64(incentive.CreatedHeight)),
+			"depositGnsAmount": json.NumberNode("depositGnsAmount", float64(incentive.DepositGnsAmount)),
 		})
 		responses.AppendArray(_incentiveNode)
 	}
@@ -362,7 +466,7 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetExternalIncentivesByRewardTokenPath() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -370,7 +474,11 @@ func ApiGetExternalIncentivesByRewardTokenPath(rewardTokenPath string) string {
 
 func ApiGetInternalIncentives() string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	apiInternalIncentives := []ApiInternalIncentive{}
 
@@ -411,7 +519,7 @@ func ApiGetInternalIncentives() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetInternalIncentives() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -419,7 +527,11 @@ func ApiGetInternalIncentives() string {
 
 func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	apiInternalIncentives := []ApiInternalIncentive{}
 
@@ -464,7 +576,7 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetInternalIncentivesByPoolPath() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -472,7 +584,11 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 
 func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 	en.MintAndDistributeGns()
-	CalcPoolPosition()
+	if consts.EMISSION_REFACTORED {
+		CalcPoolPositionRefactor()
+	} else {
+		CalcPoolPosition()
+	}
 
 	apiInternalIncentives := []ApiInternalIncentive{}
 
@@ -517,7 +633,7 @@ func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[STAKER] _RPC_api_stake.gno__ApiGetInternalIncentivesByTiers() || json marshal error: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)

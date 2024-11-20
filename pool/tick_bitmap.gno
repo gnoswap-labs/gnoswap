@@ -2,7 +2,7 @@ package pool
 
 import (
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
 	plp "gno.land/p/gnoswap/pool"
 
@@ -19,15 +19,15 @@ func tickBitmapPosition(tick int32) (int16, uint8) {
 
 // tickBitmapFlipTick flips tthe bit corresponding to the given tick
 // in the pool's tick bitmap.
-//
-// Panics:
-//   - If tick % tickSpacing != 0
 func (pool *Pool) tickBitmapFlipTick(
 	tick int32,
 	tickSpacing int32,
 ) {
 	if tick%tickSpacing != 0 {
-		panic(ufmt.Sprintf("[POOL] tick_bitmap.gno__tickBitmapFlipTick() || tick(%d) MOD tickSpacing(%d) != 0(%d)", tick, tickSpacing, tick%tickSpacing))
+		panic(addDetailToError(
+			errInvalidTickAndTickSpacing,
+			ufmt.Sprintf("tick_bitmap.gno__tickBitmapFlipTick() || tick(%d) MOD tickSpacing(%d) != 0(%d)", tick, tickSpacing, tick%tickSpacing),
+		))
 	}
 
 	wordPos, bitPos := tickBitmapPosition(tick / tickSpacing)
@@ -107,7 +107,7 @@ func bitwiseNotForUint256BitmapIndexing(x *u256.Uint) *u256.Uint {
 
 	// XOR with mask to perform bitwise NOT
 	// result := x ^ mask
-
 	result := new(u256.Uint).Xor(x, mask)
+
 	return result
 }

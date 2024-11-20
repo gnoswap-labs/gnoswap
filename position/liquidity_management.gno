@@ -1,16 +1,19 @@
 package position
 
 import (
-	"gno.land/r/gnoswap/common"
-
-	"gno.land/r/gnoswap/consts"
-
-	pl "gno.land/r/gnoswap/pool"
-
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
+
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
-func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint) { // uint128, uint256, uint256
+// addLiquidity adds liquidity to the pool and checks for slippage.
+// Returns liquidity, amount0, amount1
+func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint) {
 	pool := pl.GetPoolFromPoolPath(params.poolKey)
 
 	sqrtPriceX96 := pool.PoolGetSlot0SqrtPriceX96()
@@ -26,14 +29,15 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 	)
 
 	pToken0, pToken1, pFee := poolKeyDivide(params.poolKey)
-	amount0, amount1 := pl.Mint( // string(uint256), string(uint256)
-		pToken0,                       // token0Path string
-		pToken1,                       // token1Path string
-		pFee,                          // fee uint16
-		consts.POSITION_ADDR.String(), // recipient std.Address
-		params.tickLower,              // tickLower int32
-		params.tickUpper,              // tickUpper int32
-		liquidity.ToString(),          // _liquidityAmount string(uint128)
+	amount0, amount1 := pl.Mint(
+		pToken0,
+		pToken1,
+		pFee,
+		consts.POSITION_ADDR,
+		params.tickLower,
+		params.tickUpper,
+		liquidity.ToString(),
+		params.caller,
 	)
 
 	amount0Uint := u256.MustFromDecimal(amount0)
@@ -43,7 +47,10 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 	amount1Cond := amount1Uint.Gte(params.amount1Min)
 
 	if !(amount0Cond && amount1Cond) {
-		panic("[POSITION] liquidity_management.gno__addLiquidity() || LM_Price Slippage Check")
+		panic(addDetailToError(
+			errSlippage,
+			ufmt.Sprintf("liquidity_management.gno__addLiquidity() || LM_Price Slippage Check(amount0(%s) >= params.amount0Min(%s), amount1(%s) >= params.amount1Min(%s))", amount0Uint.ToString(), params.amount0Min.ToString(), amount1Uint.ToString(), params.amount1Min.ToString()),
+		))
 	}
 
 	return liquidity, amount0Uint, amount1Uint

@@ -2,13 +2,16 @@ package staker
 
 import (
 	"std"
+	"strings"
 
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
+// GRC20Interface is the interface for GRC20 tokens
+// It is used to interact with the GRC20 tokens without importing but by registering each tokens function
 type GRC20Interface interface {
 	Transfer() func(to pusers.AddressOrName, amount uint64)
 	TransferFrom() func(from, to pusers.AddressOrName, amount uint64)
@@ -17,12 +20,11 @@ type GRC20Interface interface {
 }
 
 var (
-	// registered is a map of registered GRC20 interfaces keyed by package path
 	registered = make(map[string]GRC20Interface)
 	locked     = false // mutex
 )
 
-// GetRegisteredTokens returns a slice of all registered tokjen package paths
+// GetRegisteredTokens returns a list of all registered tokens
 func GetRegisteredTokens() []string {
 	tokens := make([]string, 0, len(registered))
 	for k := range registered {
@@ -31,36 +33,40 @@ func GetRegisteredTokens() []string {
 	return tokens
 }
 
-// RegisterGRC20Interface registers a GRC20 interface for a given package path.
-//
-// Panics:
-//   - If the caller is not the authorized TOKEN_REGISTER address
-//   - If the package path is already registered
+// RegisterGRC20Interface registers a GRC20 token interface
 func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
-	caller := std.GetOrigCaller()
-	if caller != consts.TOKEN_REGISTER {
-		panic(ufmt.Sprintf("[STAKER] staker_register.gno__RegisterGRC20Interface() || unauthorized address(%s) to register", caller.String()))
+	prevAddr := std.PrevRealm().Addr()
+	prevPath := std.PrevRealm().PkgPath()
+	if !(prevAddr == consts.TOKEN_REGISTER || prevPath == consts.INIT_REGISTER_PATH || strings.HasPrefix(prevPath, "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5")) {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("token_register.gno__RegisterGRC20Interface() || only register(%s) can register token, called from %s", consts.TOKEN_REGISTER, prevAddr),
+		))
 	}
 
 	pkgPath = handleNative(pkgPath)
 
 	_, found := registered[pkgPath]
 	if found {
-		panic(ufmt.Sprintf("[STAKER] staker_register.gno__RegisterGRC20Interface() || pkgPath(%s) already registered", pkgPath))
+		panic(addDetailToError(
+			errAlreadyRegistered,
+			ufmt.Sprintf("token_register.gno__RegisterGRC20Interface() || token(%s) already registered", pkgPath),
+		))
 	}
 
 	registered[pkgPath] = igrc20
 }
 
-// UnregisterGRC20Interface removes a registered GRC20 interface for a given package path.
-//
-// Panics:
-//   - If the caller is not the authorized TOKEN_REGISTER address
+// UnregisterGRC20Interface unregisters a GRC20 token interface
 func UnregisterGRC20Interface(pkgPath string) {
-	// only admin can unregister
-	caller := std.GetOrigCaller()
+	assertUserCall()
+
+	caller := std.PrevRealm().Addr()
 	if caller != consts.TOKEN_REGISTER {
-		panic(ufmt.Sprintf("[STAKER] staker_register.gno__UnregisterGRC20Interface() || unauthorized address(%s) to unregister", caller.String()))
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("token_register.gno__UnregisterGRC20Interface() || unauthorized address(%s) to unregister", caller.String()),
+		))
 	}
 
 	pkgPath = handleNative(pkgPath)
@@ -76,7 +82,10 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 
 	_, found := registered[pkgPath]
 	if !found {
-		panic(ufmt.Sprintf("[STAKER] staker_register.gno__transferByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		panic(addDetailToError(
+			errNotRegistered,
+			ufmt.Sprintf("token_register.gno__transferByRegisterCall() || token(%s) not registered", pkgPath),
+		))
 	}
 
 	if !locked {
@@ -87,8 +96,12 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 			locked = false
 		}()
 	} else {
-		panic("[POOl] staker_register.gno__transferByRegisterCall() || expected locked to be false")
+		panic(addDetailToError(
+			errLocked,
+			ufmt.Sprintf("token_register.gno__transferByRegisterCall() || expected locked(%t) to be false", locked),
+		))
 	}
+
 	return true
 }
 
@@ -97,7 +110,10 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 
 	_, found := registered[pkgPath]
 	if !found {
-		panic(ufmt.Sprintf("[STAKER] staker_register.gno__transferFromByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		panic(addDetailToError(
+			errNotRegistered,
+			ufmt.Sprintf("token_register.gno__transferFromByRegisterCall() || token(%s) not registered", pkgPath),
+		))
 	}
 
 	if !locked {
@@ -108,7 +124,10 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 			locked = false
 		}()
 	} else {
-		panic("[POOl] staker_register.gno__transferFromByRegisterCall() || expected locked to be false")
+		panic(addDetailToError(
+			errLocked,
+			ufmt.Sprintf("token_register.gno__transferFromByRegisterCall() || expected locked(%t) to be false", locked),
+		))
 	}
 	return true
 }
@@ -118,7 +137,10 @@ func balanceOfByRegisterCall(pkgPath string, owner std.Address) uint64 {
 
 	_, found := registered[pkgPath]
 	if !found {
-		panic(ufmt.Sprintf("[STAKER] staker_register.gno__balanceOfByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		panic(addDetailToError(
+			errNotRegistered,
+			ufmt.Sprintf("token_register.gno__balanceOfByRegisterCall() || token(%s) not registered", pkgPath),
+		))
 	}
 
 	balance := registered[pkgPath].BalanceOf()(pusers.AddressOrName(owner))
@@ -130,7 +152,10 @@ func approveByRegisterCall(pkgPath string, spender std.Address, amount uint64) b
 
 	_, found := registered[pkgPath]
 	if !found {
-		panic(ufmt.Sprintf("[STAKER] staker_register.gno__approveByRegisterCall() || pkgPath(%s) not found", pkgPath))
+		panic(addDetailToError(
+			errNotRegistered,
+			ufmt.Sprintf("token_register.gno__approveByRegisterCall() || token(%s) not registered", pkgPath),
+		))
 	}
 
 	registered[pkgPath].Approve()(pusers.AddressOrName(spender), amount)

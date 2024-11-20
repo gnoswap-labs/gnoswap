@@ -1,10 +1,12 @@
 package pool
 
 import (
-	"gno.land/r/gnoswap/consts"
+	"gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 // tickTickSpacingToMaxLiquidityPerTick calculates the maximum liquidity
@@ -57,9 +59,6 @@ func (pool *Pool) tickGetFeeGrowthInside(
 }
 
 // tickUpdate updates a tick's state and returns whether the tick was flipped.
-//
-// Panics:
-//   - If the resulting liquidity gross exceeds the maximum allowed liquidity.
 func (pool *Pool) tickUpdate(
 	tick int32,
 	tickCurrent int32,
@@ -69,7 +68,6 @@ func (pool *Pool) tickUpdate(
 	upper bool,
 	maxLiquidity *u256.Uint, // uint256
 ) (flipped bool) {
-	// PARAM INIT
 	liquidityDelta = liquidityDelta.NilToZero()
 	feeGrowthGlobal0X128 = feeGrowthGlobal0X128.NilToZero()
 	feeGrowthGlobal1X128 = feeGrowthGlobal1X128.NilToZero()
@@ -81,7 +79,10 @@ func (pool *Pool) tickUpdate(
 	liquidityGrossAfter := liquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
 
 	if !(liquidityGrossAfter.Lte(maxLiquidity)) {
-		panic("tick panic #1")
+		panic(addDetailToError(
+			errLiquidityCalculation,
+			ufmt.Sprintf("tick.gno__tickUpdate() || liquidityGrossAfter(%s) overflows maxLiquidity(%s)", liquidityGrossAfter.ToString(), maxLiquidity.ToString()),
+		))
 	}
 
 	flipped = (liquidityGrossAfter.IsZero()) != (liquidityGrossBefore.IsZero())

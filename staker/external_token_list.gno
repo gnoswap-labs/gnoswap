@@ -3,11 +3,13 @@ package staker
 import (
 	"std"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/p/demo/ufmt"
+
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 // defaultAllowed is the list of default allowed tokens to create external incentive
-var defaultAllowed = []string{consts.GNS_PATH, consts.WUGNOT_PATH, consts.GNOT}
+var defaultAllowed = []string{consts.GNS_PATH, consts.GNOT}
 
 // allowedTokens is a slice of all allowed token paths, including the default and added tokens.
 var allowedTokens = []string{}
@@ -17,17 +19,20 @@ func init() {
 }
 
 // AddToken adds a new token path to the list of allowed tokens
-// Only the admin (GNOSWAP_ADMIN) can add a new token.
+// Only the admin can add a new token.
 //
 // Parameters:
-//  - tokenPath (string): The path of the token to add
+//   - tokenPath (string): The path of the token to add
 //
 // Panics:
-//  - If the caller is not the GNOSWAP_ADMIN
+//   - If the caller is not the admin
 func AddToken(tokenPath string) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
-		panic("only admin can add token")
+	if caller != consts.ADMIN {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("external_token_list.gno__AddToken() || only admin(%s) can add token, called from %s", consts.ADMIN, caller),
+		))
 	}
 
 	// if exist just return
@@ -41,25 +46,31 @@ func AddToken(tokenPath string) {
 }
 
 // RemoveToken removes a token path from the list of allowed tokens.
-// Only the admin (GNOSWAP_ADMIN) can remove a token.
+// Only the admin  can remove a token.
 //
 // Default tokens can not be removed.
 //
 // Parameters:
-//  - tokenPath (string): The path of the token to remove
+//   - tokenPath (string): The path of the token to remove
 //
 // Panics:
-//  - If the caller is not the GNOSWAP_ADMIN
+//   - If the caller is not the admin
 func RemoveToken(tokenPath string) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN {
-		panic("only admin can remove token")
+	if caller != consts.ADMIN {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("external_token_list.gno__RemoveToken() || only admin(%s) can remove token, called from %s", consts.ADMIN, caller),
+		))
 	}
 
 	// if default token, can not remove
 	isDefault := contains(defaultAllowed, tokenPath)
 	if isDefault {
-		panic("can not remove default token")
+		panic(addDetailToError(
+			errDefaultExternalToken,
+			ufmt.Sprintf("external_token_list.gno__RemoveToken() || can not remove default token(%s)", tokenPath),
+		))
 	}
 
 	for i, t := range allowedTokens {

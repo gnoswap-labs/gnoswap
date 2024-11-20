@@ -12,7 +12,10 @@ func getNextId() uint64 {
 
 func tid(tokenId interface{}) grc721.TokenID {
 	if tokenId == nil {
-		panic("[POSITION] test_helper.gno__tid() || tokenId is nil")
+		panic(addDetailToError(
+			errDataNotFound,
+			"helper.gno__tid() || tokenId is nil",
+		))
 	}
 
 	switch tokenId.(type) {
@@ -25,6 +28,9 @@ func tid(tokenId interface{}) grc721.TokenID {
 	case grc721.TokenID:
 		return tokenId.(grc721.TokenID)
 	default:
-		panic("[POSITION] utils.gno__tid() || unsupported tokenId type")
+		panic(addDetailToError(
+			errInvalidInput,
+			"helper.gno__tid() || unsupported tokenId type",
+		))
 	}
 }

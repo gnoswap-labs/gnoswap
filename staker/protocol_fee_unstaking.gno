@@ -2,15 +2,12 @@ package staker
 
 import (
 	"std"
-	"strconv"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/p/demo/ufmt"
 
-	u256 "gno.land/p/gnoswap/uint256"
-
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 var (
@@ -33,82 +30,106 @@ func handleUnstakingFee(
 		return amount
 	}
 
+	prevAddr, prevRealm := getPrev()
+
 	if internal {
 		// staker contract has fee
 		gns.Transfer(a2u(consts.PROTOCOL_FEE_ADDR), feeAmount)
 		std.Emit(
-			"GNOSWAP_PROTOCOL_FEE",
-			"m_callType", callType(),
-			"m_origCaller", origCaller(),
-			"m_prevRealm", prevRealm(),
-			"lpTokenId", strconv.FormatUint(tokenId, 10),
-			"poolPath", poolPath,
-			"reason", "unstaking_fee",
-			"token", consts.GNS_PATH,
-			"amount", strconv.FormatUint(feeAmount, 10),
+			"ProtocolFeeInternalReward",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"internal_lpTokenId", ufmt.Sprintf("%d", tokenId),
+			"internal_poolPath", poolPath,
+			"internal_tokenPath", consts.GNS_PATH,
+			"internal_amount", ufmt.Sprintf("%d", feeAmount),
 		)
 
 	} else {
 		// external contract has fee
-		ok := transferByRegisterCall(tokenPath, consts.PROTOCOL_FEE_ADDR, feeAmount)
-		if !ok {
-			panic(ufmt.Sprintf("[STAKER] reward_fee.gno__handleUnstakingFee() || expected transferByRegisterCall(%s, %s, %s) == true", tokenPath, consts.PROTOCOL_FEE_ADDR, u256.NewUint(feeAmount).ToString()))
-		}
+		transferByRegisterCall(tokenPath, consts.PROTOCOL_FEE_ADDR, feeAmount)
+
 		std.Emit(
-			"GNOSWAP_PROTOCOL_FEE",
-			"m_callType", callType(),
-			"m_origCaller", origCaller(),
-			"m_prevRealm", prevRealm(),
-			"lpTokenId", strconv.FormatUint(tokenId, 10),
-			"poolPath", poolPath,
-			"reason", "unstaking_fee",
-			"token", tokenPath,
-			"amount", strconv.FormatUint(feeAmount, 10),
+			"ProtocolFeeExternalReward",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"internal_lpTokenId", ufmt.Sprintf("%d", tokenId),
+			"internal_poolPath", poolPath,
+			"internal_tokenPath", tokenPath,
+			"internal_amount", ufmt.Sprintf("%d", feeAmount),
 		)
 	}
-
-	std.Emit(
-		"GNOSWAP",
-		"m_callType", "INDIRECT",
-		"m_origCaller", origCaller(),
-		"m_prevRealm", prevRealm(),
-		"p_tokenPath", tokenPath,
-		"p_internal", boolToStr(internal),
-		"feeAmount", uint64ToStr(feeAmount),
-	)
 
 	return amount - feeAmount
 }
 
+// GetUnstakingFee returns current rate of unstaking fee
+// ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#getunstakingfee
 func GetUnstakingFee() uint64 {
 	return unstakingFee
 }
 
-func SetUnstakingFee(fee uint64) {
+func SetUnstakingFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GNOSWAP_ADMIN && caller != consts.GOV_ADDR {
-		panic(
+	if caller != consts.ADMIN {
+		panic(addDetailToError(
+			errNoPermission,
 			ufmt.Sprintf(
-				"[STAKER] protocol_fee_unstaking.gno__SetUnstakingFee() || only admin(%s) or governance(%s) can set unstaking fee, called from %s",
-				consts.GNOSWAP_ADMIN,
-				consts.GOV_ADDR,
+				"reward_fee.gno__SetUnstakingFeeByAdmin() || only admin(%s) can set unstaking fee, called from %s",
+				consts.ADMIN,
 				caller,
 			),
-		)
+		))
 	}
 
+	setUnstakingFee(fee)
+
+	prevAddr, prevRealm := getPrev()
+
+	std.Emit(
+		"SetUnstakingFeeByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"fee", ufmt.Sprintf("%d", fee),
+	)
+}
+
+// SetUnstakingFee modifies the unstaking fee
+// Only governance contract can execute this function via proposal
+// ref: https://docs.gnoswap.io/contracts/staker/protocol_fee_unstaking.gno#setunstakingfee
+func SetUnstakingFee(fee uint64) {
+	caller := std.PrevRealm().Addr()
+	if caller != consts.GOV_GOVERNANCE_ADDR {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf(
+				"reward_fee.gno__SetUnstakingFee() || only governance(%s) can set unstaking fee, called from %s",
+				consts.GOV_GOVERNANCE_ADDR,
+				caller,
+			),
+		))
+	}
+
+	setUnstakingFee(fee)
+
+	prevAddr, prevRealm := getPrev()
+
+	std.Emit(
+		"SetUnstakingFee",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"fee", ufmt.Sprintf("%d", fee),
+	)
+}
+
+func setUnstakingFee(fee uint64) {
 	// 10000 (bps) = 100%
 	if fee > 10000 {
-		panic(ufmt.Sprintf("[STAKER] reward_fee.gno__SetUnstakingFee() || fee(%d) must be in range 0 ~ 10000", fee))
+		panic(addDetailToError(
+			errInvalidUnstakingFee,
+			ufmt.Sprintf("reward_fee.gno__SetUnstakingFee() || fee(%d) must be in range 0 ~ 10000", fee),
+		))
 	}
 
 	unstakingFee = fee
-
-	std.Emit(
-		"GNOSWAP",
-		"m_callType", callType(),
-		"m_origCaller", origCaller(),
-		"m_prevRealm", prevRealm(),
-		"p_fee", uint64ToStr(fee),
-	)
 }

@@ -1,0 +1,233 @@
+package staker
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/uassert"
+
+	"gno.land/r/gnoswap/v1/consts"
+
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
+
+	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/obl"
+	"gno.land/r/onbloc/qux"
+
+	"gno.land/r/gnoswap/v1/gnft"
+)
+
+func TestExternalIncentive(t *testing.T) {
+	testInit(t)
+	testPoolCreatePool(t)
+	testMintBarQux500_1(t)
+	testMintBarBaz100_2(t)
+	testMintBarBaz100_3(t)
+	testCreateExternalIncentive(t)
+	testStakeExternal_2(t)
+	testStakeExternal_3(t)
+	testCollectExternalReward_2(t)
+	testCollectExternalReward_3(t)
+}
+
+func testInit(t *testing.T) {
+	t.Run("initialize", func(t *testing.T) {
+		// override warm-up period for testing
+		warmUp[100] = 901 // 30m ~
+		warmUp[70] = 301  // 10m ~ 30m
+		warmUp[50] = 151  // 5m ~ 10m
+		warmUp[30] = 1    // ~ 5m
+	})
+}
+
+func testPoolCreatePool(t *testing.T) {
+	t.Run("pool create pool", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*2)
+		std.TestSkipHeights(1)
+
+		pl.CreatePool(barPath, quxPath, 500, "130621891405341611593710811006") // internal, tier 1 // tick 10_000 ≈ x2.7
+		pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337")  // will be external
+
+		std.TestSkipHeights(3)
+	})
+}
+
+func testMintBarQux500_1(t *testing.T) {
+	t.Run("mint position 01, bar:qux:500", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		std.TestSkipHeights(2)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,      // token0
+			quxPath,      // token1
+			fee500,       // fee
+			int32(9000),  // tickLower
+			int32(11000), // tickUpper
+			"100000",     // amount0Desired
+			"100000",     // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,
+			admin,
+			admin,
+		)
+		std.TestSkipHeights(1)
+
+		uassert.Equal(t, tokenId, uint64(1))
+		uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+		uassert.Equal(t, amount0, "36790")
+		uassert.Equal(t, amount1, "100000")
+	})
+}
+
+func testMintBarBaz100_2(t *testing.T) {
+	t.Run("mint position 02, bar:baz:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		std.TestSkipHeights(2)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,      // token0
+			bazPath,      // token1
+			fee100,       // fee
+			int32(-1000), // tickLower
+			int32(1000),  // tickUpper
+			"100000",     // amount0Desired
+			"100000",     // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,
+			admin,
+			admin,
+		)
+		std.TestSkipHeights(1)
+
+		uassert.Equal(t, tokenId, uint64(2))
+		uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+		uassert.Equal(t, amount0, "100000")
+		uassert.Equal(t, amount1, "100000")
+	})
+}
+
+func testMintBarBaz100_3(t *testing.T) {
+	t.Run("mint position 03, bar:baz:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		std.TestSkipHeights(2)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,      // token0
+			bazPath,      // token1
+			fee100,       // fee
+			int32(-1000), // tickLower
+			int32(1000),  // tickUpper
+			"100000",     // amount0Desired
+			"100000",     // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,
+			admin,
+			admin,
+		)
+		std.TestSkipHeights(1)
+
+		uassert.Equal(t, tokenId, uint64(3))
+		uassert.Equal(t, gnft.OwnerOf(tid(tokenId)), admin)
+		uassert.Equal(t, amount0, "100000")
+		uassert.Equal(t, amount1, "100000")
+	})
+}
+
+func testCreateExternalIncentive(t *testing.T) {
+	t.Run("create external incentive", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		obl.Approve(a2u(consts.STAKER_ADDR), uint64(100_000_000))
+		std.TestSkipHeights(1)
+
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+
+		AddToken(oblPath)
+		CreateExternalIncentive(
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath
+			"gno.land/r/onbloc/obl",                           // rewardToken
+			"100000000",                                       // rewardAmount
+			1234569600,                                        // startTimestamp
+			1234569600+TIMESTAMP_90DAYS,                       // endTimestamp
+		)
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testStakeExternal_2(t *testing.T) {
+	t.Run("stake position 02, bar:baz:100", func(t *testing.T) {
+		std.TestSkipHeights(900) // active
+
+		std.TestSetRealm(adminRealm)
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(2))
+		StakeToken(2)
+
+		std.TestSkipHeights(2)
+
+		uassert.Equal(t, gnft.OwnerOf(tid(2)), GetOrigPkgAddr())
+		uassert.Equal(t, len(deposits), 1)
+	})
+}
+
+func testStakeExternal_3(t *testing.T) {
+	t.Run("stake position 03, bar:baz:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		gnft.Approve(a2u(GetOrigPkgAddr()), tid(3))
+		StakeToken(3)
+
+		std.TestSkipHeights(2)
+
+		uassert.Equal(t, gnft.OwnerOf(tid(3)), GetOrigPkgAddr())
+		uassert.Equal(t, len(deposits), 2)
+	})
+}
+
+func testCollectExternalReward_2(t *testing.T) {
+	t.Run("collect external reward 02", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		// before claim
+		oblOld := obl.BalanceOf(a2u(admin))
+		uassert.Equal(t, oblOld, uint64(99999900000000))
+
+		std.TestSkipHeights(777601) // 45 days + 1 block
+		CollectReward(2, false)
+
+		std.TestSkipHeights(1)
+
+		oblNew := obl.BalanceOf(a2u(admin))
+		uassert.Equal(t, oblNew-oblOld, uint64(9895486))
+	})
+}
+
+func testCollectExternalReward_3(t *testing.T) {
+	t.Run("collect external reward 03", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		// before claim
+		oblOld := obl.BalanceOf(a2u(admin))
+		uassert.Equal(t, oblOld, uint64(99999909895486))
+
+		std.TestSkipHeights(1)
+		CollectReward(3, false)
+
+		std.TestSkipHeights(1)
+
+		oblNew := obl.BalanceOf(a2u(admin))
+		uassert.Equal(t, oblNew-oblOld, uint64(9895478))
+	})
+}

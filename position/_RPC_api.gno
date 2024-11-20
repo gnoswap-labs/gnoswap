@@ -7,18 +7,20 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/common"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
-	"gno.land/r/gnoswap/consts"
-
-	pl "gno.land/r/gnoswap/pool"
+	pl "gno.land/r/gnoswap/v1/pool"
 
 	i256 "gno.land/p/gnoswap/int256"
+
+	"gno.land/r/gnoswap/v1/gnft"
 )
 
 type RpcPosition struct {
 	LpTokenId                uint64 `json:"lpTokenId"`
 	Burned                   bool   `json:"burned"`
+	Owner                    string `json:"owner"`
 	Operator                 string `json:"operator"`
 	PoolKey                  string `json:"poolKey"`
 	TickLower                int32  `json:"tickLower"`
@@ -78,6 +80,7 @@ func ApiGetPositions() string {
 		_positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tid(position.LpTokenId)).String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -102,7 +105,7 @@ func ApiGetPositions() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositions() || error marshalling json: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -137,6 +140,7 @@ func ApiGetPosition(lpTokenId uint64) string {
 		_positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tid(position.LpTokenId)).String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -161,7 +165,7 @@ func ApiGetPosition(lpTokenId uint64) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositions() || error marshalling json: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -199,6 +203,7 @@ func ApiGetPositionsByPoolPath(poolPath string) string {
 		_positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tid(position.LpTokenId)).String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -223,17 +228,17 @@ func ApiGetPositionsByPoolPath(poolPath string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositions() || error marshalling json: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
 }
 
-func ApiGetPositionsByAddress(address string) string {
+func ApiGetPositionsByAddress(address std.Address) string {
 	rpcPositions := []RpcPosition{}
 	for lpTokenId, position := range positions {
 
-		if position.operator.String() != address {
+		if !(position.operator == address || gnft.OwnerOf(tid(lpTokenId)) == address) {
 			continue
 		}
 
@@ -261,6 +266,7 @@ func ApiGetPositionsByAddress(address string) string {
 		_positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tid(position.LpTokenId)).String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -285,7 +291,7 @@ func ApiGetPositionsByAddress(address string) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositions() || error marshalling json: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -326,7 +332,7 @@ func ApiGetPositionsUnclaimedFee() string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositionsUnClaimedFee() || error marshalling json: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -366,7 +372,7 @@ func ApiGetPositionUnclaimedFeeByLpTokenId(lpTokenId uint64) string {
 
 	b, err := json.Marshal(node)
 	if err != nil {
-		panic(ufmt.Sprintf("[POSITION] _RPC_api.gno__ApiGetPositionUnclaimedFeeByLpTokenId() || error marshalling json: %s", err.Error()))
+		panic(err.Error())
 	}
 
 	return string(b)
@@ -375,7 +381,10 @@ func ApiGetPositionUnclaimedFeeByLpTokenId(lpTokenId uint64) string {
 func rpcMakePosition(lpTokenId uint64) RpcPosition {
 	position, exist := positions[lpTokenId]
 	if !exist {
-		panic(ufmt.Sprintf("[POSITION] getter_api.gno__rpcMakePosition() || position not found for lpTokenId(%d)", lpTokenId))
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("_RPC_api.gno__rpcMakePosition() || lpTokenId(%d) not found", lpTokenId),
+		))
 	}
 
 	burned := isBurned(lpTokenId)
@@ -401,6 +410,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 	return RpcPosition{
 		LpTokenId:                lpTokenId,
 		Burned:                   burned,
+		Owner:                    gnft.OwnerOf(tid(lpTokenId)).String(),
 		Operator:                 position.operator.String(),
 		PoolKey:                  position.poolKey,
 		TickLower:                position.tickLower,

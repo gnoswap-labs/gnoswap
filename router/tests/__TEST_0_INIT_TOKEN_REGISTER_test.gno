@@ -15,13 +15,13 @@ import (
 
 	"gno.land/r/onbloc/obl"
 
-	"gno.land/r/gnoswap/gns"
+	"gno.land/r/gnoswap/v1/gns"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
 	pusers "gno.land/p/demo/users"
 
-	pl "gno.land/r/gnoswap/pool"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 type FooToken struct{}
@@ -133,7 +133,7 @@ func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 }
 
 func init() {
-	std.TestSetOrigCaller(consts.TOKEN_REGISTER)
+	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
 
 	// POOL
 	pl.RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
@@ -142,7 +142,7 @@ func init() {
 	pl.RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
 	pl.RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	pl.RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
-	pl.RegisterGRC20Interface("gno.land/r/gnoswap/gns", GNSToken{})
+	pl.RegisterGRC20Interface("gno.land/r/gnoswap/v1/gns", GNSToken{})
 
 	// ROUTER
 	RegisterGRC20Interface("gno.land/r/onbloc/bar", BarToken{})
@@ -151,7 +151,5 @@ func init() {
 	RegisterGRC20Interface("gno.land/r/onbloc/qux", QuxToken{})
 	RegisterGRC20Interface("gno.land/r/demo/wugnot", WugnotToken{})
 	RegisterGRC20Interface("gno.land/r/onbloc/obl", OBLToken{})
-	RegisterGRC20Interface("gno.land/r/gnoswap/gns", GNSToken{})
-
-	std.TestSetOrigCaller(gsa)
+	RegisterGRC20Interface("gno.land/r/gnoswap/v1/gns", GNSToken{})
 }

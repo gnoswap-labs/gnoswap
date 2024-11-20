@@ -1,0 +1,690 @@
+package pool
+
+import (
+	"testing"
+
+	"gno.land/r/gnoswap/v1/consts"
+
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+)
+
+func TestGetNextSqrtPriceFromInput_1(t *testing.T) {
+	// fails if price is zero
+	sqrtPX96 := u256.Zero()
+	liquidity := u256.Zero()
+	amountIn := u256.MustFromDecimal("1000000000000000000") // 1e18
+	zeroForOne := false
+	amountIn.Div(amountIn, u256.NewUint(10))
+
+	shouldPanic(
+		t,
+		func() {
+			sqrtPriceMathGetNextSqrtPriceFromInput(sqrtPX96, liquidity, amountIn, zeroForOne)
+		},
+	)
+}
+
+func TestGetNextSqrtPriceFromInput_2(t *testing.T) {
+	// fails if liquidity is zero
+	sqrtPX96 := u256.One()
+	liquidity := u256.Zero()
+	amountIn := u256.MustFromDecimal("1000000000000000000") // 1e18
+	zeroForOne := true
+	amountIn.Div(amountIn, u256.NewUint(10))
+
+	shouldPanic(
+		t,
+		func() {
+			sqrtPriceMathGetNextSqrtPriceFromInput(sqrtPX96, liquidity, amountIn, zeroForOne)
+		},
+	)
+}
+
+func TestGetNextSqrtPriceFromInput_3(t *testing.T) {
+	// fails if input amount overflows the price
+	sqrtPX96 := u256.NewUint(2)
+	sqrtPX96.Exp(sqrtPX96, u256.NewUint(160))
+	sqrtPX96.Sub(sqrtPX96, u256.One())
+
+	liquidity := u256.NewUint(1024)
+	amountIn := u256.NewUint(1024)
+	zeroForOne := false
+
+	shouldPanic(
+		t,
+		func() {
+			sqrtPriceMathGetNextSqrtPriceFromInput(sqrtPX96, liquidity, amountIn, zeroForOne)
+		},
+	)
+}
+
+func TestGetNextSqrtPriceFromInput_4(t *testing.T) {
+	// any input amount cannot underflow the price
+	sqrtPX96 := u256.One()
+	liquidity := u256.One()
+	amountIn := u256.NewUint(2)
+	amountIn.Exp(amountIn, u256.NewUint(225))
+	zeroForOne := true
+
+	expected := u256.One()
+
+	got := sqrtPriceMathGetNextSqrtPriceFromInput(sqrtPX96, liquidity, amountIn, zeroForOne)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("any input amount cannot underflow the price")
+	}
+}
+
+func TestGetNextSqrtPriceFromInput_5(t *testing.T) {
+	// returns input price if amount in is zero and zeroForOne := true
+	sqrtPX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.MustFromDecimal("1000000000000000000")
+	liquidity.Div(liquidity, u256.NewUint(10))
+	amountIn := u256.Zero()
+	zeroForOne := true
+
+	expected := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+
+	got := sqrtPriceMathGetNextSqrtPriceFromInput(sqrtPX96, liquidity, amountIn, zeroForOne)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("returns input price if amount in is zero and zeroForOne := true")
+	}
+}
+
+func TestGetNextSqrtPriceFromInput_6(t *testing.T) {
+	// returns input price if amount in is zero and zeroForOne := false
+	sqrtPX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.MustFromDecimal("1000000000000000000")
+	liquidity.Div(liquidity, u256.NewUint(10))
+	amountIn := u256.Zero()
+	zeroForOne := false
+
+	expected := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+
+	got := sqrtPriceMathGetNextSqrtPriceFromInput(sqrtPX96, liquidity, amountIn, zeroForOne)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("returns input price if amount in is zero and zeroForOne := false")
+	}
+}
+
+func TestGetNextSqrtPriceFromInput_7(t *testing.T) {
+	var maxAmountNoOverflow *u256.Uint
+	var a *u256.Uint
+
+	// returns the minimum price for max inputs
+	sqrtPX96 := u256.NewUint(2)
+	sqrtPX96.Exp(sqrtPX96, u256.NewUint(160))
+	sqrtPX96.Sub(sqrtPX96, u256.NewUint(1))
+
+	liquidity := u256.MustFromDecimal(consts.MAX_UINT128)
+	a = u256.MustFromDecimal(consts.MAX_UINT128)
+	maxAmountNoOverflow = u256.MustFromDecimal(consts.MAX_UINT256)
+	a.Lsh(a, 96)
+	a.Div(a, sqrtPX96)
+	maxAmountNoOverflow.Sub(maxAmountNoOverflow, a)
+
+	zeroForOne := true
+
+	expected := u256.One()
+
+	got := sqrtPriceMathGetNextSqrtPriceFromInput(sqrtPX96, liquidity, maxAmountNoOverflow, zeroForOne)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("returns the minimum price for max inputs")
+	}
+}
+
+func TestGetNextSqrtPriceFromInput_8(t *testing.T) {
+	// input amount of 0.1 token1
+	sqrtPX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.MustFromDecimal("1000000000000000000")
+	amountIn := u256.MustFromDecimal("1000000000000000000")
+	amountIn.Div(amountIn, u256.NewUint(10))
+	zeroForOne := false
+
+	expected := u256.MustFromDecimal("87150978765690771352898345369")
+
+	got := sqrtPriceMathGetNextSqrtPriceFromInput(sqrtPX96, liquidity, amountIn, zeroForOne)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("input amount of 0.1 token1")
+	}
+}
+
+func TestGetNextSqrtPriceFromInput_9(t *testing.T) {
+	// input amount of 0.1 token1
+	sqrtPX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.MustFromDecimal("1000000000000000000")
+	amountIn := u256.MustFromDecimal("1000000000000000000")
+	amountIn.Div(amountIn, u256.NewUint(10))
+	zeroForOne := true
+
+	expected := u256.MustFromDecimal("72025602285694852357767227579")
+
+	got := sqrtPriceMathGetNextSqrtPriceFromInput(sqrtPX96, liquidity, amountIn, zeroForOne)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("input amount of 0.1 token1")
+	}
+}
+
+func TestGetNextSqrtPriceFromInput_10(t *testing.T) {
+	// amountIn > type(uint96).max and zeroForOne := true
+	sqrtPX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.MustFromDecimal("10000000000000000000")         // 10e18
+	amountIn := u256.MustFromDecimal("2")
+	amountIn.Exp(amountIn, u256.NewUint(100))
+	zeroForOne := true
+
+	expected := u256.MustFromDecimal("624999999995069620")
+
+	got := sqrtPriceMathGetNextSqrtPriceFromInput(sqrtPX96, liquidity, amountIn, zeroForOne)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("amountIn > type(uint96).max and zeroForOne := true")
+	}
+}
+
+func TestGetNextSqrtPriceFromInput_11(t *testing.T) {
+	// can return 1 with enough amountIn and zeroForOne := true
+	sqrtPX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.MustFromDecimal("1")
+	amountIn := u256.MustFromDecimal(consts.MAX_UINT256)
+	amountIn.Div(amountIn, u256.NewUint(2))
+	zeroForOne := true
+
+	expected := u256.MustFromDecimal("1")
+
+	got := sqrtPriceMathGetNextSqrtPriceFromInput(sqrtPX96, liquidity, amountIn, zeroForOne)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("can return 1 with enough amountIn and zeroForOne := true")
+	}
+}
+
+func TestGetNextSqrtPriceFromOutput_1(t *testing.T) {
+	// fails if price is zero
+	sqrtPX96 := u256.Zero()
+	liquidity := u256.Zero()
+	amountOut := u256.MustFromDecimal("1000000000000000000") // 1e18
+	amountOut.Div(amountOut, u256.NewUint(10))
+	zeroForOne := false
+
+	shouldPanic(
+		t,
+		func() {
+			sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+		},
+	)
+}
+
+func TestGetNextSqrtPriceFromOutput_2(t *testing.T) {
+	// fails if liquidity is zero
+	sqrtPX96 := u256.One()
+	liquidity := u256.Zero()
+	amountOut := u256.MustFromDecimal("1000000000000000000") // 1e18
+	amountOut.Div(amountOut, u256.NewUint(10))
+	zeroForOne := true
+
+	shouldPanic(
+		t,
+		func() {
+			sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+		},
+	)
+}
+
+func TestGetNextSqrtPriceFromOutput_3(t *testing.T) {
+	// fails if output amount is exactly the virtual reserves of token0
+	sqrtPX96 := u256.MustFromDecimal("20282409603651670423947251286016")
+	liquidity := u256.NewUint(1024)
+	amountOut := u256.MustFromDecimal("4")
+	zeroForOne := false
+
+	shouldPanic(
+		t,
+		func() {
+			sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+		},
+	)
+}
+
+func TestGetNextSqrtPriceFromOutput_4_1(t *testing.T) {
+	// fails if output amount is greater than virtual reserves of token0
+	sqrtPX96 := u256.MustFromDecimal("20282409603651670423947251286016")
+	liquidity := u256.NewUint(1024)
+	amountOut := u256.MustFromDecimal("5")
+	zeroForOne := false
+
+	shouldPanic(
+		t,
+		func() {
+			sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+		},
+	)
+}
+
+func TestGetNextSqrtPriceFromOutput_4_2(t *testing.T) {
+	// fails if output amount is greater than virtual reserves of token1
+	sqrtPX96 := u256.MustFromDecimal("20282409603651670423947251286016")
+	liquidity := u256.NewUint(1024)
+	amountOut := u256.MustFromDecimal("262145")
+	zeroForOne := true
+
+	shouldPanic(
+		t,
+		func() {
+			sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+		},
+	)
+}
+
+func TestGetNextSqrtPriceFromOutput_5(t *testing.T) {
+	// fails if output amount is exactly the virtual reserves of token1
+	sqrtPX96 := u256.MustFromDecimal("20282409603651670423947251286016")
+	liquidity := u256.NewUint(1024)
+	amountOut := u256.MustFromDecimal("262144")
+	zeroForOne := true
+
+	shouldPanic(
+		t,
+		func() {
+			sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+		},
+	)
+}
+
+func TestGetNextSqrtPriceFromOutput_6(t *testing.T) {
+	// succeeds if output amount is just less than the virtual reserves of token1
+	sqrtPX96 := u256.MustFromDecimal("20282409603651670423947251286016")
+	liquidity := u256.NewUint(1024)
+	amountOut := u256.MustFromDecimal("262143")
+	zeroForOne := true
+
+	expected := u256.MustFromDecimal("77371252455336267181195264")
+
+	got := sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("The result should be eq to 77371252455336267181195264")
+	}
+}
+
+func TestGetNextSqrtPriceFromOutput_7(t *testing.T) {
+	// puzzling echidna test
+	sqrtPX96 := u256.MustFromDecimal("20282409603651670423947251286016")
+	liquidity := u256.NewUint(1024)
+	amountOut := u256.MustFromDecimal("4")
+	zeroForOne := false
+
+	shouldPanic(
+		t,
+		func() {
+			sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+		},
+	)
+}
+
+func TestGetNextSqrtPriceFromOutput_8(t *testing.T) {
+	// returns input price if amount in is zero and zeroForOne := true
+	sqrtPX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.MustFromDecimal("1000000000000000000")
+	liquidity.Div(liquidity, u256.NewUint(10))
+	amountOut := u256.Zero()
+	zeroForOne := true
+
+	expected := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+
+	got := sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("The result should be eq to 79228162514264337593543950336")
+	}
+}
+
+func TestGetNextSqrtPriceFromOutput_9(t *testing.T) {
+	// returns input price if amount in is zero and zeroForOne := false
+
+	sqrtPX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.MustFromDecimal("1000000000000000000")
+	liquidity.Div(liquidity, u256.NewUint(10))
+	amountOut := u256.Zero()
+	zeroForOne := false
+	expected := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+
+	got := sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("The result should be eq to 79228162514264337593543950336")
+	}
+}
+
+func TestGetNextSqrtPriceFromOutput_10(t *testing.T) {
+	// output amount of 0.1 token1
+	sqrtPX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.MustFromDecimal("1000000000000000000")
+	amountOut := u256.MustFromDecimal("1000000000000000000")
+	amountOut.Div(amountOut, u256.NewUint(10))
+	zeroForOne := false
+	expected := u256.MustFromDecimal("88031291682515930659493278152")
+
+	got := sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("The result should be eq to 88031291682515930659493278152")
+	}
+}
+
+func TestGetNextSqrtPriceFromOutput_11(t *testing.T) {
+	// output amount of 0.1 token1
+	sqrtPX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.MustFromDecimal("1000000000000000000")
+	amountOut := u256.MustFromDecimal("1000000000000000000")
+	amountOut.Div(amountOut, u256.NewUint(10))
+	zeroForOne := true
+	expected := u256.MustFromDecimal("71305346262837903834189555302")
+
+	got := sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("The result should be eq to 71305346262837903834189555302")
+	}
+}
+
+func TestGetNextSqrtPriceFromOutput_12(t *testing.T) {
+	// reverts if amountOut is impossible in zero for one direction
+	sqrtPX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.One()
+	amountOut := u256.MustFromDecimal(consts.MAX_UINT256)
+	zeroForOne := true
+
+	shouldPanic(
+		t,
+		func() {
+			sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+		},
+	)
+}
+
+func TestGetNextSqrtPriceFromOutput_13(t *testing.T) {
+	// reverts if amountOut is impossible in one for zero direction
+	sqrtPX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.One()
+	amountOut := u256.MustFromDecimal(consts.MAX_UINT256)
+	zeroForOne := false
+
+	shouldPanic(
+		t,
+		func() {
+			sqrtPriceMathGetNextSqrtPriceFromOutput(sqrtPX96, liquidity, amountOut, zeroForOne)
+		},
+	)
+}
+
+func TestSqrtPriceMathGetAmount0DeltaStr_1(t *testing.T) {
+	// returns 0 if liquidity is 0
+
+	sqrtRatioAX96 := u256.MustFromDecimal("79228162514264337593543950336")  // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	sqrtRatioBX96 := u256.MustFromDecimal("112045541949572279837463876454") // encodePriceSqrt(2, 1) = 112045541949572279837463876454
+	liquidity_i256 := i256.Zero()
+
+	got_string := SqrtPriceMathGetAmount0DeltaStr(sqrtRatioAX96, sqrtRatioBX96, liquidity_i256)
+
+	if got_string != "0" {
+		t.Errorf("return value should be eq to 0")
+	}
+}
+
+func TestSqrtPriceMathGetAmount0DeltaHelper_1(t *testing.T) {
+	// returns 0 if liquidity is 0
+	sqrtRatioAX96 := u256.MustFromDecimal("79228162514264337593543950336")  // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	sqrtRatioBX96 := u256.MustFromDecimal("112045541949572279837463876454") // encodePriceSqrt(2, 1) = 112045541949572279837463876454
+	liquidity := u256.Zero()
+	roundUp := true
+
+	expected := u256.Zero()
+
+	got := sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp)
+
+	rst := got.Eq(expected)
+	if !rst {
+		t.Errorf("return value should be eq to 0")
+	}
+}
+
+func TestSqrtPriceMathGetAmount0DeltaStr_2(t *testing.T) {
+	// returns 0 if prices are equal
+
+	sqrtRatioAX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	sqrtRatioBX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity_i256 := i256.Zero()
+
+	got_string := SqrtPriceMathGetAmount0DeltaStr(sqrtRatioAX96, sqrtRatioBX96, liquidity_i256)
+
+	if got_string != "0" {
+		t.Errorf("return value should be eq to 0")
+	}
+}
+
+func TestSqrtPriceMathGetAmount0DeltaStr_3(t *testing.T) {
+	// return value should be eq to 90909090909090910
+
+	sqrtRatioAX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	sqrtRatioBX96 := u256.MustFromDecimal("87150978765690771352898345369") // encodePriceSqrt(121, 100) = 87150978765690771352898345369
+	liquidity_i256 := i256.MustFromDecimal("1000000000000000000")
+
+	got_string := SqrtPriceMathGetAmount0DeltaStr(sqrtRatioAX96, sqrtRatioBX96, liquidity_i256)
+
+	if got_string != "90909090909090910" {
+		t.Errorf("return value should be eq to 90909090909090910")
+	}
+}
+
+func TestSqrtPriceMathGetAmount0DeltaStr_4(t *testing.T) {
+	// return value should be eq to 90909090909090910
+
+	sqrtRatioAX96 := u256.MustFromDecimal("2787593149816327892691964784081045188247552")  // encodePriceSqrt(BigNumber.from(2).pow(90), 1) = 2787593149816327892691964784081045188247552
+	sqrtRatioBX96 := u256.MustFromDecimal("22300745198530623141535718272648361505980416") // encodePriceSqrt(BigNumber.from(2).pow(96), 1) = 22300745198530623141535718272648361505980416
+	liquidity_i256 := i256.MustFromDecimal("1000000000000000000")
+
+	got_string := SqrtPriceMathGetAmount0DeltaStr(sqrtRatioAX96, sqrtRatioBX96, liquidity_i256)
+	if got_string == "0" {
+		t.Errorf("The result should not return 0")
+	}
+}
+
+func TestSqrtPriceMathGetAmount0DeltaHelper_2(t *testing.T) {
+	// returns 0 if prices are equal
+
+	sqrtRatioAX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	sqrtRatioBX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.Zero()
+	roundUp := true
+
+	expected := u256.Zero()
+
+	got := sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp)
+
+	rst := got.Eq(expected)
+	if !rst {
+		t.Errorf("return value should be eq to 0")
+	}
+}
+
+func TestSqrtPriceMathGetAmount0DeltaHelper_3(t *testing.T) {
+	sqrtRatioAX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	sqrtRatioBX96 := u256.MustFromDecimal("87150978765690771352898345369") // encodePriceSqrt(121, 100) = 79228162514264337593543950336
+	liquidity := u256.MustFromDecimal("1000000000000000000")
+	roundUp := true
+
+	expected := u256.MustFromDecimal("90909090909090910")
+
+	got := sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("The result should be eq to 90909090909090910")
+	}
+}
+
+func TestSqrtPriceMathGetAmount0DeltaHelper_4(t *testing.T) {
+	// the sub between the result of roundup and rounddown should be eq to 1
+	var got2 *u256.Uint
+	sqrtRatioAX96 := u256.MustFromDecimal("112045541949572279837463876454") // encodePriceSqrt(2, 1) = 112045541949572279837463876454
+	sqrtRatioBX96 := u256.MustFromDecimal("87150978765690771352898345369")  // encodePriceSqrt(121, 100) = 87150978765690771352898345369
+	liquidity := u256.MustFromDecimal("1000000000000000000")
+	roundUp := true
+
+	got := sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp)
+
+	roundUp = false
+
+	got2 = sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp)
+
+	got.Sub(got, got2)
+
+	rst := got.Eq(u256.One())
+
+	if !rst {
+		t.Errorf("the sub between the result of roundup and rounddown should be eq to 1")
+	}
+}
+
+func TestSqrtPriceMathGetAmount0DeltaHelper_5(t *testing.T) {
+	// works for prices that overflow
+
+	var got2 *u256.Uint
+	sqrtRatioAX96 := u256.MustFromDecimal("2787593149816327892691964784081045188247552")  // encodePriceSqrt(BigNumber.from(2).pow(90), 1) = 2787593149816327892691964784081045188247552
+	sqrtRatioBX96 := u256.MustFromDecimal("22300745198530623141535718272648361505980416") // encodePriceSqrt(BigNumber.from(2).pow(96), 1) = 22300745198530623141535718272648361505980416
+	liquidity := u256.MustFromDecimal("1000000000000000000")
+	roundUp := true
+
+	got := sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp)
+
+	roundUp = false
+
+	got2 = sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp)
+
+	// println(got.ToString())
+	// println(got2.ToString())
+	got.Sub(got, got2)
+
+	rst := got.Eq(u256.One())
+
+	if !rst {
+		t.Errorf("the sub between the result of roundup and rounddown should be eq to 1")
+	}
+}
+
+func TestSqrtPriceMathGetAmount1DeltaHelper_1(t *testing.T) {
+	// returns 0 if liquidity is 0
+
+	var got2 *u256.Uint
+	sqrtRatioAX96 := u256.MustFromDecimal("79228162514264337593543950336")  // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	sqrtRatioBX96 := u256.MustFromDecimal("112045541949572279837463876454") // encodePriceSqrt(2, 1) = 112045541949572279837463876454
+	liquidity := u256.MustFromDecimal("0")
+	roundUp := true
+
+	rst := sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp)
+	shouldEQ(t, rst.ToString(), "0")
+}
+
+func TestSqrtPriceMathGetAmount1DeltaHelper_2(t *testing.T) {
+	// returns 0 if prices are equal
+
+	sqrtRatioAX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	sqrtRatioBX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	liquidity := u256.MustFromDecimal("1")
+	roundUp := true
+
+	expected := u256.Zero()
+
+	got := sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("returns 0 if prices are equal")
+	}
+}
+
+func TestSqrtPriceMathGetAmount1DeltaHelper_3(t *testing.T) {
+	var got2 *u256.Uint
+	// returns 0.1 amount1 for price of 1 to 1.21
+	sqrtRatioAX96 := u256.MustFromDecimal("79228162514264337593543950336") // encodePriceSqrt(1, 1) = 79228162514264337593543950336
+	sqrtRatioBX96 := u256.MustFromDecimal("87150978765690771352898345369") // encodePriceSqrt(121, 100) = 87150978765690771352898345369
+	liquidity := u256.MustFromDecimal("1000000000000000000")
+	roundUp := true
+
+	expected := u256.MustFromDecimal("100000000000000000") // 0.1e18
+
+	got := sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp)
+
+	rst := got.Eq(expected)
+
+	if !rst {
+		t.Errorf("the result should be eq to expected")
+	}
+	roundUp = false
+
+	got2 = sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp)
+	got.Sub(got, got2)
+
+	rst = got.Eq(u256.One())
+	if !rst {
+		t.Errorf("the sub between the result of roundup and rounddown should be eq to 1")
+	}
+}
+
+func TestSwapComputation(t *testing.T) {
+	// sqrtP * sqrtQ overflows
+
+	sqrtPX96 := u256.MustFromDecimal("1025574284609383690408304870162715216695788925244")
+	liquidity := u256.MustFromDecimal("50015962439936049619261659728067971248")
+	amountIn := u256.NewUint(406)
+	zeroForOne := true
+
+	expected := u256.MustFromDecimal("1025574284609383582644711336373707553698163132913")
+
+	got := sqrtPriceMathGetNextSqrtPriceFromInput(sqrtPX96, liquidity, amountIn, zeroForOne)
+	rst := got.Eq(expected)
+	if !rst {
+		t.Errorf("The result should eq to expected")
+	}
+
+	got = sqrtPriceMathGetAmount0DeltaHelper(expected, sqrtPX96, liquidity, true)
+	rst = got.Eq(u256.NewUint(406))
+	if !rst {
+		t.Errorf("The result should eq to 406")
+	}
+}

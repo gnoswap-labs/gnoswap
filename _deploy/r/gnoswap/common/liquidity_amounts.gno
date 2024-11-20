@@ -1,10 +1,12 @@
 package common
 
 import (
-	"gno.land/r/gnoswap/consts"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	plp "gno.land/p/gnoswap/pool"
+
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 // toAscendingOrder checkes if the first value is greater than
@@ -88,13 +90,12 @@ func computeAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity *u256.Ui
 }
 
 // GetAmountsForLiquidity calculates the amounts of token0 and token1 for a given liquidity.
-// FROM [POOL] position_modify.gno
 func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96 *u256.Uint, liquidity *i256.Int) (string, string) {
 	var amount0, amount1 *i256.Int
 
 	if !(liquidity.IsZero()) {
 		if sqrtRatioX96.Lt(sqrtRatioAX96) { // currentTick < tickLower
-			_amount0Str := SqrtPriceMathGetAmount0DeltaStr(
+			_amount0Str := plp.SqrtPriceMathGetAmount0DeltaStr(
 				sqrtRatioAX96,
 				sqrtRatioBX96,
 				liquidity,
@@ -102,14 +103,14 @@ func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96 *u256.Uin
 			amount0 = i256.MustFromDecimal(_amount0Str)
 
 		} else if sqrtRatioX96.Lt(sqrtRatioBX96) { // currentTick < tickUpper
-			_amount0Str := SqrtPriceMathGetAmount0DeltaStr(
+			_amount0Str := plp.SqrtPriceMathGetAmount0DeltaStr(
 				sqrtRatioX96,
 				sqrtRatioBX96,
 				liquidity,
 			)
 			amount0 = i256.MustFromDecimal(_amount0Str)
 
-			_amount1Str := SqrtPriceMathGetAmount1DeltaStr(
+			_amount1Str := plp.SqrtPriceMathGetAmount1DeltaStr(
 				sqrtRatioAX96,
 				sqrtRatioX96,
 				liquidity,
@@ -117,7 +118,7 @@ func GetAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96 *u256.Uin
 			amount1 = i256.MustFromDecimal(_amount1Str)
 
 		} else {
-			_amount1Str := SqrtPriceMathGetAmount1DeltaStr(
+			_amount1Str := plp.SqrtPriceMathGetAmount1DeltaStr(
 				sqrtRatioAX96,
 				sqrtRatioBX96,
 				liquidity,

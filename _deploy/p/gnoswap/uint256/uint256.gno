@@ -4,12 +4,12 @@ package uint256
 
 import (
 	"errors"
+	"strconv"
 	"math/bits"
 )
 
 const (
 	MaxUint64 = 1<<64 - 1
-	uintSize  = 32 << (^uint(0) >> 63)
 )
 
 // Uint is represented as an array of 4 uint64, in little-endian order,
@@ -143,10 +143,10 @@ func (z *Uint) fromDecimal(bs string) error {
 		if remaining <= 0 {
 			return nil // Done
 		} else if remaining > 19 {
-			num, err = parseUint(bs[remaining-19:remaining], 10, 64)
+			num, err = strconv.ParseUint(bs[remaining-19:remaining], 10, 64)
 		} else {
 			// Final round
-			num, err = parseUint(bs, 10, 64)
+			num, err = strconv.ParseUint(bs, 10, 64)
 		}
 		if err != nil {
 			return err

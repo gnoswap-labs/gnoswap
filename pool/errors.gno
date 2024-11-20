@@ -1,0 +1,37 @@
+package pool
+
+import (
+	"errors"
+
+	"gno.land/p/demo/ufmt"
+)
+
+var (
+	errNoPermission              = errors.New("[GNOSWAP-POOL-001] caller has no permission")
+	errNotRegistered             = errors.New("[GNOSWAP-POOL-002] not registered token")
+	errAlreadyRegistered         = errors.New("[GNOSWAP-POOL-003] already registered token")
+	errLocked                    = errors.New("[GNOSWAP-POOL-004] can't transfer token while locked")
+	errOutOfRange                = errors.New("[GNOSWAP-POOL-005] out of range for numeric value")
+	errInvalidInput              = errors.New("[GNOSWAP-POOL-006] invalid input data")
+	errInvalidPositionKey        = errors.New("[GNOSWAP-POOL-007] invalid position key")
+	errDataNotFound              = errors.New("[GNOSWAP-POOL-008] requested data not found")
+	errLiquidityCalculation      = errors.New("[GNOSWAP-POOL-009] invalid liquidity calculated")
+	errZeroLiquidity             = errors.New("[GNOSWAP-POOL-010] zero liquidity")
+	errDuplicateTokenInPool      = errors.New("[GNOSWAP-POOL-011] same token used in single pool")
+	errTokenSortOrder            = errors.New("[GNOSWAP-POOL-012] tokens must be in lexicographical order")
+	errPoolAlreadyExists         = errors.New("[GNOSWAP-POOL-013] pool already created")
+	errInvalidSwapAmount         = errors.New("[GNOSWAP-POOL-014] invalid swap amount")
+	errInvalidPotocolFeePct      = errors.New("[GNOSWAP-POOL-015] invalid protocol fee percentage")
+	errInvalidWithdrawalFeePct   = errors.New("[GNOSWAP-POOL-016] invalid withdrawal fee percentage")
+	errLockedPool                = errors.New("[GNOSWAP-POOL-017] can't swap while pool is locked")
+	errPriceOutOfRange           = errors.New("[GNOSWAP-POOL-018] swap price out of range")
+	errNotEnoughBalance          = errors.New("[GNOSWAP-POOL-019] not enough balance to transfer")
+	errMustBeNegative            = errors.New("[GNOSWAP-POOL-020] negative value expected")
+	errTransferFailed            = errors.New("[GNOSWAP-POOL-021] token transfer failed")
+	errInvalidTickAndTickSpacing = errors.New("[GNOSWAP-POOL-022] invalid tick and tick spacing requested")
+)
+
+func addDetailToError(err error, detail string) string {
+	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
+	return finalErr.Error()
+}

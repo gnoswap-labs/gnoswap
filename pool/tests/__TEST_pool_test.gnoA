@@ -5,16 +5,17 @@ import (
 	"testing"
 
 	"gno.land/p/demo/json"
+	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
-	"gno.land/r/gnoswap/gns"
-
-	"gno.land/p/demo/testutils"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 var (
@@ -26,25 +27,24 @@ var (
 // 1. Create Foo:Bar Pool
 func TestCreateFooBarPool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 
 	std.TestSkipHeights(5)
 
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	std.TestSkipHeights(1)
 
-	CreatePool(fooPath, barPath, fee500, "130621891405341611593710811006") // tick 10000
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500}]}
+	CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 
-	shouldEQ(t, len(pools), 1)
+	uassert.Equal(t, len(pools), 1)
 	std.TestSkipHeights(1)
 }
 
 // 2. Create Bar:Baz Pool
 func TestCreateBarBazPool(t *testing.T) {
 	// call gns faucet to get creation fee
-	std.TestSetRealm(gsaRealm)
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
+	std.TestSetRealm(adminRealm)
 
 	std.TestSkipHeights(5)
 
@@ -52,55 +52,54 @@ func TestCreateBarBazPool(t *testing.T) {
 	std.TestSkipHeights(1)
 
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
-	// ---       event: {GNOSWAP gno.land/r/gnoswap/pool CreatePool [{m_callType DIRECT} {m_origCaller g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c} {m_prevRealm } {p_poolPath gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500}]}
 
-	shouldEQ(t, len(pools), 2)
+	uassert.Equal(t, len(pools), 2)
 	std.TestSkipHeights(1)
 }
 
-// 3. Mint Foo:Bar Liquidity by gsa
+// 3. Mint Foo:Bar Liquidity by admin
 func TestMintFooBarLiquidity(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(4)
 
 	std.TestSetRealm(posRealm)
-	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := Mint(
 		barPath,
 		fooPath,
 		fee500,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		-11000, // -11000
 		-9000,  // -9000
 		test_liquidityExpectStr,
+		admin,
 	)
-	shouldEQ(t, amount0, "8040316")
-	shouldEQ(t, amount1, "2958015")
+	uassert.Equal(t, amount0, "8040316")
+	uassert.Equal(t, amount1, "2958015")
 	std.TestSkipHeights(1)
 }
 
-// 4. Mint Bar:Baz Liquidity by gsa
+// 4. Mint Bar:Baz Liquidity by admin
 func TestMintBarBazLiquidity(t *testing.T) {
-	std.TestSetRealm(gsaRealm)
+	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	std.TestSkipHeights(2)
 
 	std.TestSetRealm(posRealm)
-	std.TestSetOrigCaller(gsa)
 	amount0, amount1 := Mint(
 		barPath,
 		bazPath,
 		fee500,
-		consts.POSITION_ADDR.String(),
+		consts.POSITION_ADDR,
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpectStr,
+		admin,
 	)
-	shouldEQ(t, amount0, "2958015")
-	shouldEQ(t, amount1, "8040316")
+	uassert.Equal(t, amount0, "2958015")
+	uassert.Equal(t, amount1, "8040316")
 	std.TestSkipHeights(1)
 }
 
@@ -110,75 +109,74 @@ func TestApiGetPools(t *testing.T) {
 
 	root, err := json.Unmarshal([]byte(gpls))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	response, err := root.GetKey("response")
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
-	shouldEQ(t, response.Size(), 2)
+	uassert.Equal(t, response.Size(), 2)
 }
 
 // Test Getter/Setter for WithdrawalFee
 func TestGetWithdrawalFee(t *testing.T) {
-	shouldEQ(t, GetWithdrawalFee(), uint64(100))
+	uassert.Equal(t, GetWithdrawalFee(), uint64(100))
 }
 
-func TestSetWithdrawalFeeNoPermission(t *testing.T) {
+func TestSetWithdrawalFeeByAdminNoPermission(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
-	std.TestSetOrigCaller(dummy)
+	std.TestSetRealm(std.NewUserRealm(dummy))
 
-	shouldPanicWithMsg(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-001] caller has no permission || protocol_fee_withdrawal.gno__SetWithdrawalFeeByAdmin() || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can set withdrawal fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
 		func() {
-			SetWithdrawalFee(2)
+			SetWithdrawalFeeByAdmin(2)
 		},
-		"[POOL] protocol_fee_withdrawal.gno__SetWithdrawalFee() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1egdt2l7xjcrm6qjwyd3g60z6e9cnr75pmcuasc) can set withdrawal fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
-func TestSetWithdrawalFeeFeeOutOfRange(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
-
-	shouldPanicWithMsg(
+func TestSetWithdrawalFeeByAdminFeeOutOfRange(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-016] invalid withdrawal fee percentage || withdrawal_fee.gno__setWithdrawalFee() || fee(10001) must be in range 0 ~ 10000`,
 		func() {
-			SetWithdrawalFee(10001)
+			SetWithdrawalFeeByAdmin(10001)
 		},
-		"[POOL] withdrawal_fee.gno__SetWithdrawalFee() || fee(10001) must be in range 0 ~ 10000",
 	)
 }
 
-func TestSetWithdrawalFee(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
-	shouldEQ(t, GetWithdrawalFee(), uint64(100))
-	SetWithdrawalFee(300)
-	shouldEQ(t, GetWithdrawalFee(), uint64(300))
+func TestSetWithdrawalFeeByAdmin(t *testing.T) {
+	uassert.Equal(t, GetWithdrawalFee(), uint64(100))
+	std.TestSetRealm(adminRealm)
+	SetWithdrawalFeeByAdmin(300)
+	uassert.Equal(t, GetWithdrawalFee(), uint64(300))
 }
 
 // Test Getter/Setter for PoolCreationFee
 func TestGetPoolCreationFee(t *testing.T) {
-	shouldEQ(t, GetPoolCreationFee(), uint64(100_000_000))
+	uassert.Equal(t, GetPoolCreationFee(), uint64(100_000_000))
 }
 
-func TestSetPoolCreationFeeNoPermission(t *testing.T) {
+func TestSetPoolCreationFeeByAdminNoPermission(t *testing.T) {
 	dummy := testutils.TestAddress("dummy")
-	std.TestSetOrigCaller(dummy)
+	std.TestSetRealm(std.NewUserRealm(dummy))
 
-	shouldPanicWithMsg(
+	uassert.PanicsWithMessage(
 		t,
+		`[GNOSWAP-POOL-001] caller has no permission || protocol_fee_pool_creation.gno__SetPoolCreationFeeByAdmin() || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can set pool creation fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8`,
 		func() {
-			SetPoolCreationFee(2)
+			SetPoolCreationFeeByAdmin(2)
 		},
-		"[POOL] protocol_fee_pool_creation.gno__SetPoolCreationFee() || only admin(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) or governance(g1egdt2l7xjcrm6qjwyd3g60z6e9cnr75pmcuasc) can set pool creation fee, called from g1v36k6mteta047h6lta047h6lta047h6lz7gmv8",
 	)
 }
 
-func TestSetPoolCreationFee(t *testing.T) {
-	std.TestSetOrigCaller(gsa)
-	shouldEQ(t, GetPoolCreationFee(), uint64(100_000_000))
-	SetPoolCreationFee(200_000_000)
-	shouldEQ(t, GetPoolCreationFee(), uint64(200_000_000))
+func TestSetPoolCreationFeeByAdmin(t *testing.T) {
+	uassert.Equal(t, GetPoolCreationFee(), uint64(100_000_000))
+	std.TestSetRealm(adminRealm)
+	SetPoolCreationFeeByAdmin(200_000_000)
+	uassert.Equal(t, GetPoolCreationFee(), uint64(200_000_000))
 }

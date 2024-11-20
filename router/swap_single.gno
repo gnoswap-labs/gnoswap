@@ -9,8 +9,8 @@ import (
 func singleSwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn, amountOut
 	amountIn, amountOut := _swap(
 		params.amountSpecified,
-		std.GetOrigCaller(), // if single swap => user will recieve
-		u256.Zero(),         // sqrtPriceLimitX96
+		std.PrevRealm().Addr(), // if single swap => user will recieve
+		u256.Zero(),            // sqrtPriceLimitX96
 		SwapCallbackData{
 			params.tokenIn,
 			params.tokenOut,

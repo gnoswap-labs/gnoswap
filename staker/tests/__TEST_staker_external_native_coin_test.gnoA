@@ -1,0 +1,137 @@
+package staker
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/uassert"
+
+	"gno.land/r/gnoswap/v1/consts"
+
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
+
+	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+
+	"gno.land/r/demo/wugnot"
+
+	"gno.land/r/gnoswap/v1/gnft"
+)
+
+func TestExternalIncentiveNativeCoin(t *testing.T) {
+	testPoolCreatePool(t)
+	testMintBarBaz100(t)
+	testCreateExternalIncentive(t)
+	testStakeToken(t)
+	testCollectExternalReward_1_Unwrap(t)
+	testCollectExternalReward_1_NoUnWrap(t)
+}
+
+func testPoolCreatePool(t *testing.T) {
+	t.Run("pool create pool", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+
+		pl.CreatePool(barPath, bazPath, 100, "79228162514264337593543950337") // will be external
+		std.TestSkipHeights(1)
+	})
+}
+
+func testMintBarBaz100(t *testing.T) {
+	t.Run("mint position 01, bar:baz:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		std.TestSkipHeights(2)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,      // token0
+			bazPath,      // token1
+			fee100,       // fee
+			int32(-1000), // tickLower
+			int32(1000),  // tickUpper
+			"100000",     // amount0Desired
+			"100000",     // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,
+			admin,
+			admin,
+		)
+		std.TestSkipHeights(1)
+	})
+}
+
+func testCreateExternalIncentive(t *testing.T) {
+	t.Run("create external incentive", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		wugnot.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+
+		std.TestSetOrigSend(std.Coins{{"ugnot", 100000000}}, nil)
+		CreateExternalIncentive(
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:100", // targetPoolPath
+			"gnot",                      // rewardToken
+			"100000000",                 // rewardAmount
+			1234569600,                  // startTimestamp
+			1234569600+TIMESTAMP_90DAYS, // endTimestamp
+		)
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testStakeToken(t *testing.T) {
+	t.Run("stake token 01", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gnft.Approve(a2u(consts.STAKER_ADDR), "1")
+		StakeToken(1)
+	})
+}
+
+func testCollectExternalReward_1_Unwrap(t *testing.T) {
+	t.Run("collect external reward 01, unwrap", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		oldUgnotBal := ugnotBalanceOf(admin)
+		uassert.Equal(t, oldUgnotBal, uint64(0))
+
+		oldWugnotBal := wugnot.BalanceOf(a2u(admin))
+		uassert.Equal(t, oldWugnotBal, uint64(0))
+
+		std.TestSkipHeights(900)
+		CollectReward(1, true)
+
+		newUgnotBal := ugnotBalanceOf(admin)
+		uassert.Equal(t, newUgnotBal, uint64(382))
+
+		newWugnotBal := wugnot.BalanceOf(a2u(admin))
+		uassert.Equal(t, newWugnotBal, uint64(0))
+	})
+}
+
+func testCollectExternalReward_1_NoUnWrap(t *testing.T) {
+	t.Run("collect external reward 01, no unwrap", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		oldUgnotBal := ugnotBalanceOf(admin)
+		uassert.Equal(t, oldUgnotBal, uint64(382))
+
+		oldWugnotBal := wugnot.BalanceOf(a2u(admin))
+		uassert.Equal(t, oldWugnotBal, uint64(0))
+
+		std.TestSkipHeights(1)
+		CollectReward(1, false)
+
+		newUgnotBal := ugnotBalanceOf(admin)
+		uassert.Equal(t, newUgnotBal, uint64(382))
+
+		newWugnotBal := wugnot.BalanceOf(a2u(admin))
+		uassert.Equal(t, newWugnotBal, uint64(7))
+	})
+}

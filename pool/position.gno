@@ -5,7 +5,7 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/consts"
+	"gno.land/r/gnoswap/v1/consts"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -53,6 +53,13 @@ func positionUpdate(
 
 	var liquidityNext *u256.Uint
 	if liquidityDelta.IsZero() {
+		if self.liquidity.IsZero() {
+			panic(addDetailToError(
+				errZeroLiquidity,
+				"position.gno__positionUpdate() || both liquidityDelta and (self)liquidity are zero",
+			))
+		}
+
 		liquidityNext = self.liquidity
 	} else {
 		liquidityNext = liquidityMathAddDelta(self.liquidity, liquidityDelta)
