@@ -116,7 +116,8 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	}
 
 	// check tokenId has liquidity or not
-	liquidity := pn.PositionGetPositionLiquidity(tokenId) // *u256.Uint
+	liqStr := pn.PositionGetPositionLiquidityStr(tokenId)
+	liquidity := u256.MustFromDecimal(liqStr)
 	if liquidity.Lte(u256.Zero()) {
 		panic(addDetailToError(
 			errZeroLiquidity,

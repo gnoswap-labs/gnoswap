@@ -249,7 +249,8 @@ func CalcPoolPosition() {
 			continue
 		}
 
-		positionLiquidity := pn.PositionGetPositionLiquidity(tokenId)
+		liqStr := pn.PositionGetPositionLiquidityStr(tokenId)
+		positionLiquidity := u256.MustFromDecimal(liqStr)
 		poolTotalStakedLiquidity[poolPath] = poolTotalStakedLiquidity[poolPath].Add(poolTotalStakedLiquidity[poolPath], positionLiquidity)
 	}
 

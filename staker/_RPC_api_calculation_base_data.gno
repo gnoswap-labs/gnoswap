@@ -454,7 +454,7 @@ func GetPositionIsInRange(tokenId uint64) bool {
 func GetPositionLiquidity(tokenId uint64) string {
 	en.MintAndDistributeGns()
 
-	return pn.PositionGetPositionLiquidity(tokenId).ToString()
+	return pn.PositionGetPositionLiquidityStr(tokenId)
 }
 
 func GetMintedGnsAmount() uint64 {
