@@ -18,26 +18,14 @@ var (
 
 func init() {
 	// https: //docs.gnoswap.io/core-concepts/governance
-	// ORIG TIME
-	// config = Config{
-	// 	VotingStartDelay:              uint64(86400),         // 1d
-	// 	VotingPeriod:                  uint64(604800),        // 7d
-	// 	VotingWeightSmoothingDuration: uint64(86400),         // 1d
-	// 	Quorum:                        uint64(50),            // 50% of total xGNS supply
-	// 	ProposalCreationThreshold:     uint64(1_000_000_000), // 1_000_000_000
-	// 	ExecutionDelay:                uint64(86400),         // 1d
-	// 	ExecutionWindow:               uint64(2592000),       // 30d
-	// }
-
-	// QA TIME
 	config = Config{
-		VotingStartDelay:              uint64(180),           // 3m
-		VotingPeriod:                  uint64(600),           // 10m
-		VotingWeightSmoothingDuration: uint64(600),           // 10m
+		VotingStartDelay:              uint64(86400),         // 1d
+		VotingPeriod:                  uint64(604800),        // 7d
+		VotingWeightSmoothingDuration: uint64(86400),         // 1d
 		Quorum:                        uint64(50),            // 50% of total xGNS supply
 		ProposalCreationThreshold:     uint64(1_000_000_000), // 1_000_000_000
-		ExecutionDelay:                uint64(60),            // 1m
-		ExecutionWindow:               uint64(3600),          // 1h
+		ExecutionDelay:                uint64(86400),         // 1d
+		ExecutionWindow:               uint64(2592000),       // 30d
 	}
 
 	// config version 0 should return the current config
