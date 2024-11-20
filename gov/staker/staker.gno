@@ -7,6 +7,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
+	"gno.land/r/demo/wugnot"
+
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -278,7 +280,16 @@ func CollectReward() {
 
 		// transfer token to caller
 		// token.Transfer(a2u(caller), amount)
-		transferByRegisterCall(tokenPath, caller, amount)
+
+		if tokenPath == consts.WUGNOT_PATH {
+			if amount > 0 {
+				wugnot.Withdraw(amount)
+				banker := std.GetBanker(std.BankerTypeRealmSend)
+				banker.SendCoins(consts.GOV_STAKER_ADDR, caller, std.Coins{{"ugnot", int64(amount)}})
+			}
+		} else {
+			transferByRegisterCall(tokenPath, caller, amount)
+		}
 		userProtocolFeeReward[caller][tokenPath] = 0
 
 		std.Emit(
