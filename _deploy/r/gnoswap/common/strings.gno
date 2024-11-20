@@ -6,8 +6,8 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-func Split(tierId string, sep string, length int) ([]string, error) {
-	result := strings.Split(tierId, sep)
+func Split(input string, sep string, length int) ([]string, error) {
+	result := strings.Split(input, sep)
 	if len(result) != length {
 		return nil, ufmt.Errorf("invalid length: %d", len(result))
 	}
