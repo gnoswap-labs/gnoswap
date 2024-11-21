@@ -71,7 +71,7 @@ func Vote(proposalId uint64, yes bool) string {
 		))
 	}
 
-	voteKey := ufmt.Sprintf("%d", proposalId) + ":" + voter.String()
+	voteKey := ufmt.Sprintf("%d:%s", proposalId, voter.String())
 	_, voted := votes[voteKey]
 	if voted {
 		panic(addDetailToError(

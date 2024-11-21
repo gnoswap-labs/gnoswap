@@ -96,7 +96,7 @@ func DepositGns(
 	// deposit History
 	depositor := std.PrevRealm().Addr()
 	depositorStr := depositor.String()
-	depositId := projectId + ":" + tierStr + ":" + depositorStr + ":" + ufmt.Sprintf("%d", std.GetHeight())
+	depositId := ufmt.Sprintf("%s:%s:%s:%d", projectId, tierStr, depositorStr, std.GetHeight())
 
 	// calculate claimable height & time base on deposit height & time
 	calcClaimableHeight := uint64(std.GetHeight()) + tier.collectWaitDuration
@@ -451,27 +451,27 @@ func getProjectIdFromTierId(tierId string) string {
 	// input: gno.land/r/gnoswap/gns:123:30
 	// output: gno.land/r/gnoswap/gns:123
 
-	result := strings.Split(tierId, ":")
-	if len(result) == 3 {
-		return result[0] + ":" + result[1]
+	res, err := common.Split(tierId, ":", 3)
+	if err != nil {
+		panic(addDetailToError(
+			errInvalidTier,
+			ufmt.Sprintf("launchpad_deposit.gno__getProjectIdFromTierId() || invalid tierId: %s", tierId),
+		))
 	}
 
-	panic(addDetailToError(
-		errInvalidTier,
-		ufmt.Sprintf("launchpad_deposit.gno__getProjectIdFromTierId() || invalid tierId: %s", tierId),
-	))
+	return ufmt.Sprintf("%s:%s", res[0], res[1])
 }
 
 func getProjectIdAndTierFromTierId(tierId string) (string, string) {
-	result := strings.Split(tierId, ":")
-	if len(result) == 3 {
-		return result[0] + ":" + result[1], result[2]
+	res, err := common.Split(tierId, ":", 3)
+	if err != nil {
+		panic(addDetailToError(
+			errInvalidTier,
+			ufmt.Sprintf("launchpad_deposit.gno__getProjectIdAndTierFromTierId() || invalid tierId: %s", tierId),
+		))
 	}
 
-	panic(addDetailToError(
-		errInvalidTier,
-		ufmt.Sprintf("launchpad_deposit.gno__getProjectIdAndTierFromTierId() || invalid tierId: %s", tierId),
-	))
+	return ufmt.Sprintf("%s:%s", res[0], res[1]), res[2]
 }
 
 func checkDepositConditions(project Project) {
