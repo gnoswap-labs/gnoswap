@@ -49,15 +49,14 @@ func CreateProject(
 	tier180Ratio uint64, // 70
 	startTime uint64,
 ) string { // projectId
-	assertUserCall()
+	if err := common.SatisfyCond(isUserCall()); err != nil {
+		panic(err)
+	}
 
 	// only admin can create project
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("launchpad_init.gno__CreateProject() || only admin(%s) can create project, called from %s", consts.ADMIN, caller.String()),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	if _, exist := registered[tokenPath]; !exist {
@@ -239,13 +238,13 @@ func CreateProject(
 // Returns (left)transferred amount.
 // ref: https://docs.gnoswap.io/contracts/launchpad/launchpad_init.gno#transferleftfromprojectbyadmin
 func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uint64 {
-	assertUserCall()
+	if err := common.SatisfyCond(isUserCall()); err != nil {
+		panic(err)
+	}
+
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || only admin(%s) can transfer left from project, called from %s", consts.ADMIN, caller.String()),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	project, exist := projects[projectId]

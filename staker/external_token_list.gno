@@ -6,6 +6,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 // defaultAllowed is the list of default allowed tokens to create external incentive
@@ -28,11 +29,8 @@ func init() {
 //   - If the caller is not the admin
 func AddToken(tokenPath string) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("external_token_list.gno__AddToken() || only admin(%s) can add token, called from %s", consts.ADMIN, caller),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	// if exist just return
@@ -57,11 +55,8 @@ func AddToken(tokenPath string) {
 //   - If the caller is not the admin
 func RemoveToken(tokenPath string) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("external_token_list.gno__RemoveToken() || only admin(%s) can remove token, called from %s", consts.ADMIN, caller),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	// if default token, can not remove

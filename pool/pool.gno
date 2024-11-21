@@ -455,15 +455,8 @@ func SetFeeProtocolByAdmin(
 	feeProtocol1 uint8,
 ) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"pool.gno__SetFeeProtocolByAdmin() || only admin(%s) can set fee protocol, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
@@ -488,15 +481,8 @@ func SetFeeProtocol(
 	feeProtocol1 uint8,
 ) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"pool.gno__SetFeeProtocol() || only governance(%s) can set fee protocol, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		))
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err)
 	}
 
 	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
@@ -551,15 +537,8 @@ func CollectProtocolByAdmin(
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"pool.gno__CollectProtocolByAdmin() || only admin(%s) can collect protocol fees, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	amount0, amount1 := collectProtocol(
@@ -600,15 +579,8 @@ func CollectProtocol(
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"pool.gno__CollectProtocol() || only governance(%s) can collect protocol fees, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		))
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err)
 	}
 
 	amount0, amount1 := collectProtocol(

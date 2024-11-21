@@ -54,15 +54,8 @@ func GetSwapFee() uint64 {
 
 func SetSwapFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"protocol_fee_swap.gno__SetSwapFeeByAdmin() || only admin(%s) can set swap fee, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	setSwapFee(fee)
@@ -82,15 +75,8 @@ func SetSwapFeeByAdmin(fee uint64) {
 // ref: https://docs.gnoswap.io/contracts/router/protocol_fee_swap.gno#setswapfee
 func SetSwapFee(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"protocol_fee_swap.gno__SetSwapFee() || only governance(%s) can set swap fee, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		))
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err)
 	}
 
 	setSwapFee(fee)

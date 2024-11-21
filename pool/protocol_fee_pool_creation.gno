@@ -24,15 +24,8 @@ func GetPoolCreationFee() uint64 {
 // SetPoolCreationFeeByAdmin sets the poolCreationFee.
 func SetPoolCreationFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"protocol_fee_pool_creation.gno__SetPoolCreationFeeByAdmin() || only admin(%s) can set pool creation fee, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	setPoolCreationFee(fee)
@@ -51,15 +44,8 @@ func SetPoolCreationFeeByAdmin(fee uint64) {
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#setpoolcreationfee
 func SetPoolCreationFee(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"protocol_fee_pool_creation.gno__SetPoolCreationFee() || only governance(%s) can set pool creation fee, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		))
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err)
 	}
 
 	setPoolCreationFee(fee)

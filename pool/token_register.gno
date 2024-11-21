@@ -7,6 +7,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -59,14 +60,13 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 
 // UnregisterGRC20Interface unregisters a GRC20 token interface
 func UnregisterGRC20Interface(pkgPath string) {
-	assertUserCall()
+	if err := common.SatisfyCond(isUserCall()); err != nil {
+		panic(err)
+	}
 
 	caller := std.PrevRealm().Addr()
-	if caller != consts.TOKEN_REGISTER {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("token_register.gno__UnregisterGRC20Interface() || unauthorized address(%s) to unregister", caller.String()),
-		))
+	if err := common.TokenRegisterOnly(caller); err != nil {
+		panic(err)
 	}
 
 	pkgPath = handleNative(pkgPath)

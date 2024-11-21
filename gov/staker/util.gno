@@ -5,7 +5,6 @@ import (
 	"std"
 
 	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
 )
 
 func maxUint64(a, b uint64) uint64 {
@@ -34,15 +33,6 @@ func prevRealm() string {
 
 func isUserCall() bool {
 	return std.PrevRealm().IsUser()
-}
-
-func assertUserCall() {
-	if !isUserCall() {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("util.gno__assertUserCall() || must be called by user, called from %s", std.PrevRealm().PkgPath()),
-		))
-	}
 }
 
 func getPrev() (string, string) {
