@@ -7,8 +7,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
-	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 // GRC20Interface is the interface for GRC20 tokens
@@ -60,7 +60,7 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 
 // UnregisterGRC20Interface unregisters a GRC20 token interface
 func UnregisterGRC20Interface(pkgPath string) {
-	if err := common.SatisfyCondition(isUserCall()); err != nil {
+	if err := common.SatisfyCond(isUserCall()); err != nil {
 		panic(err)
 	}
 
