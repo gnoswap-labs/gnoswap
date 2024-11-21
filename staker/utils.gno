@@ -14,7 +14,10 @@ import (
 func poolPathAlign(poolPath string) string {
 	res, err := common.Split(poolPath, ":", 3)
 	if err != nil {
-		panic(errInvalidPoolPath)
+		panic(addDetailToError(
+			errInvalidPoolPath,
+			ufmt.Sprintf("utils.gno__poolPathAlign() || invalid poolPath(%s)", poolPath),
+		))
 	}
 
 	pToken0, pToken1, fee := res[0], res[1], res[2]

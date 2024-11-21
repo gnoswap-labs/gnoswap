@@ -112,7 +112,10 @@ func GetVotedAtByVoteKey(voteKey string) uint64 {
 func divideVoteKeyToProposalIdAndUser(voteKey string) (uint64, std.Address) {
 	parts, err := common.Split(voteKey, ":", 2)
 	if err != nil {
-		panic(errInvalidInput)
+		panic(addDetailToError(
+			errInvalidInput,
+			ufmt.Sprintf("_GET_vote.gno__divideVoteKeyToProposalIdAndUser() || voteKey(%s) is invalid", voteKey),
+		))
 	}
 
 	proposalId, err := strconv.ParseUint(parts[0], 10, 64)

@@ -13,7 +13,10 @@ import (
 func poolPathWithFeeDivide(poolPath string) (string, string, int) {
 	poolPathSplit, err := common.Split(poolPath, ":", 3)
 	if err != nil {
-		panic(errInvalidPoolPath)
+		panic(addDetailToError(
+			errInvalidPoolPath,
+			ufmt.Sprintf("utils.gno__poolPathWithFeeDivide() || invalid poolPath(%s)", poolPath),
+		))
 	}
 
 	feeInt, err := strconv.Atoi(poolPathSplit[2])
@@ -27,7 +30,10 @@ func poolPathWithFeeDivide(poolPath string) (string, string, int) {
 func getDataForSinglePath(poolPath string) (string, string, uint32) {
 	poolPathSplit, err := common.Split(poolPath, ":", 3)
 	if err != nil {
-		panic(errInvalidPoolPath)
+		panic(addDetailToError(
+			errInvalidPoolPath,
+			ufmt.Sprintf("utils.gno__getDataForSinglePath() || len(poolPathSplit) != 3, poolPath: %s", poolPath),
+		))
 	}
 
 	token0 := poolPathSplit[0]
