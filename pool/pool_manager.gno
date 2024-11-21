@@ -58,7 +58,7 @@ type createPoolParams struct {
 	tickSpacing            int32
 }
 
-func newPoolInput(
+func newPoolParams(
 	token0Path string,
 	token1Path string,
 	fee uint32,
@@ -147,7 +147,7 @@ func CreatePool(
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
-	poolInfo := newPoolInput(token0Path, token1Path, fee, _sqrtPriceX96)
+	poolInfo := newPoolParams(token0Path, token1Path, fee, _sqrtPriceX96)
 
 	token0Path, token1Path, err := poolInfo.filterValidTokenPaths()
 	if err != nil {
@@ -168,16 +168,18 @@ func CreatePool(
 		))
 	}
 
-	gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(consts.PROTOCOL_FEE_ADDR), poolCreationFee)
+	if poolCreationFee > 0 {
+		gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(consts.PROTOCOL_FEE_ADDR), poolCreationFee)
 
-	std.Emit(
-		"PoolCreationFee",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"internal_poolPath", poolPath,
-		"internal_tokenPath", consts.GNS_PATH,
-		"internal_amount", ufmt.Sprintf("%d", poolCreationFee),
-	)
+		std.Emit(
+			"PoolCreationFee",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"internal_poolPath", poolPath,
+			"internal_tokenPath", consts.GNS_PATH,
+			"internal_amount", ufmt.Sprintf("%d", poolCreationFee),
+		)
+	}
 
 	pool = newPool(poolInfo)
 	pools.Set(poolPath, pool)
