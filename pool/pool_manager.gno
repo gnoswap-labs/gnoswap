@@ -51,6 +51,7 @@ func init() {
 	feeAmountTickSpacing[10000] = 200 // 1%
 }
 
+// createPoolParams holds the essential parameters for creating a new pool.
 type createPoolParams struct {
 	token0Path, token1Path string
 	fee                    uint32
@@ -58,6 +59,7 @@ type createPoolParams struct {
 	tickSpacing            int32
 }
 
+// newPoolParams defines the essential parameters for creating a new pool.
 func newPoolParams(
 	token0Path string,
 	token1Path string,
@@ -99,20 +101,6 @@ func (p *createPoolParams) wrap() (string, string) {
 	return p.token0Path, p.token1Path
 }
 
-func (p *createPoolParams) filterValidTokenPaths() (string, string, error) {
-	if p.isSameTokenPath() {
-		return "", "", errDuplicateTokenInPool
-	}
-
-	token0Path, token1Path := p.wrap()
-
-	if !p.isInOrder() {
-		return "", "", errTokenSortOrder
-	}
-
-	return token0Path, token1Path, nil
-}
-
 func (p *createPoolParams) Token0Path() string {
 	return p.token0Path
 }
@@ -149,9 +137,35 @@ func CreatePool(
 
 	poolInfo := newPoolParams(token0Path, token1Path, fee, _sqrtPriceX96)
 
-	token0Path, token1Path, err := poolInfo.filterValidTokenPaths()
-	if err != nil {
-		panic(err)
+	if poolInfo.isSameTokenPath() {
+		panic(addDetailToError(
+			errDuplicateTokenInPool,
+			ufmt.Sprintf(
+				"pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)",
+				poolInfo.token0Path, poolInfo.token1Path,
+			),
+		))
+	}
+
+	// wrap first
+	token0Path, token1Path = poolInfo.wrap()
+
+	// then check if token0Path == token1Path
+	if token0Path == token1Path {
+		panic(addDetailToError(
+			errDuplicateTokenInPool,
+			ufmt.Sprintf(
+				"pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)",
+				token0Path, token1Path,
+			),
+		))
+	}
+
+	if !poolInfo.isInOrder() {
+		panic(addDetailToError(
+			errTokenSortOrder,
+			ufmt.Sprintf("pool_manager.gno__CreatePool() || expected token0Path(%s) < token1Path(%s)", token0Path, token1Path),
+		))
 	}
 
 	poolPath := GetPoolPath(token0Path, token1Path, fee)

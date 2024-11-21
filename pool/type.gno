@@ -204,7 +204,7 @@ type Pool struct {
 	positions Positions // maps the key (caller, lower tick, upper tick) to a unique position
 }
 
-func newPool(poolInfo *poolInput) *Pool {
+func newPool(poolInfo *createPoolParams) *Pool {
 	maxLiquidityPerTick := tickTickSpacingToMaxLiquidityPerTick(poolInfo.tickSpacing)
 	tick := common.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
 	slot0 := newSlot0(poolInfo.SqrtPriceX96(), tick, slot0FeeProtocol, true)
