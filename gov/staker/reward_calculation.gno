@@ -3,8 +3,6 @@ package staker
 import (
 	"std"
 
-	"gno.land/p/demo/ufmt"
-
 	"gno.land/r/gnoswap/v1/gov/xgns"
 
 	en "gno.land/r/gnoswap/v1/emission"
@@ -49,12 +47,9 @@ func GetRewardByProjectWallet(addr std.Address) uint64 {
 }
 
 func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
-	prev := std.PrevRealm().Addr()
-	if prev != consts.LAUNCHPAD_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("reward_calculation.gno__SetAmountByProjectWallet() || only launchpad can set amountByProjectWallet, called from %s", prev.String()),
-		))
+	caller := std.PrevRealm().Addr()
+	if err := common.LaunchpadOnly(caller); err != nil {
+		panic(err)
 	}
 
 	common.IsHalted()
@@ -67,7 +62,8 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 	} else {
 		amountByProjectWallet[addr] -= amount
 	}
-} // LAUCNHAPD DEPOSIT ===
+}
+// LAUCNHAPD DEPOSIT ===
 
 func calculateReward() {
 	height := uint64(std.GetHeight())
@@ -161,7 +157,6 @@ func calculateGNSEmission() {
 }
 
 func calculateProtocolFee() {
-
 	// gov_staker received protocol_fee
 	// but no gns has been staked, left amount will be used next time
 	if len(userXGnsRatio) == 0 {

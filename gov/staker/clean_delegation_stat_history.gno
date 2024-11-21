@@ -6,6 +6,7 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 var BLOCK_PER_DAY = consts.TIMESTAMP_DAY / consts.BLOCK_GENERATION_INTERVAL
@@ -19,12 +20,9 @@ var (
 )
 
 func CleanDelegationStatHistoryByAdmin() {
-	prev := std.PrevRealm().Addr()
-	if prev != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("clean_delegation_stat_history.gno__CleanDelegationStatHistoryByAdmin() || prev(%s) != admin(%s)", prev.String(), consts.ADMIN.String()),
-		))
+	caller := std.PrevRealm().Addr()
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	cleanDelegationStatHistory()
@@ -35,12 +33,9 @@ func GetRunning() bool {
 }
 
 func SetRunning(run bool) {
-	prev := std.PrevRealm().Addr()
-	if prev != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("clean_delegation_stat_history.gno__SetRunning() || prev(%s) != admin(%s)", prev.String(), consts.ADMIN.String()),
-		))
+	caller := std.PrevRealm().Addr()
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	running = run

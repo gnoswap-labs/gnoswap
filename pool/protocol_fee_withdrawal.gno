@@ -81,15 +81,8 @@ func GetWithdrawalFee() uint64 {
 
 func SetWithdrawalFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"protocol_fee_withdrawal.gno__SetWithdrawalFeeByAdmin() || only admin(%s) can set withdrawal fee, called from %s",
-				consts.ADMIN,
-				caller.String(),
-			),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	setWithdrawalFee(fee)
@@ -109,15 +102,8 @@ func SetWithdrawalFeeByAdmin(fee uint64) {
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_withdrawal.gno#setwithdrawalfee
 func SetWithdrawalFee(fee uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"protocol_fee_withdrawal.gno__SetWithdrawalFee() || only governance(%s) can set withdrawal fee, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller.String(),
-			),
-		))
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err)
 	}
 
 	setWithdrawalFee(fee)

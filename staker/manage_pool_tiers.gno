@@ -111,15 +111,8 @@ func GetEachTierPoolNum() []string {
 
 func SetPoolTierByAdmin(poolPath string, tier uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"manage_pool_tiers.gno__SetPoolTierByAdmin() || only admin(%s) can set additional pool with tier, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	setPoolTier(poolPath, tier)
@@ -137,15 +130,8 @@ func SetPoolTierByAdmin(poolPath string, tier uint64) {
 
 func SetPoolTier(poolPath string, tier uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"manage_pool_tiers.gno__SetPoolTier() || only governance(%s) can set additional pool with tier, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		))
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err)
 	}
 
 	setPoolTier(poolPath, tier)
@@ -212,15 +198,8 @@ func setPoolTier(pool string, tier uint64) {
 
 func ChangePoolTierByAdmin(poolPath string, tier uint64) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"manage_pool_tiers.gno__ChangePoolTierByAdmin() || only admin(%s) can change existing pool tier, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	changePoolTier(poolPath, tier)
@@ -308,15 +287,8 @@ func changePoolTier(pool string, tier uint64) {
 
 func RemovePoolTierByAdmin(poolPath string) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"manage_pool_tiers.gno__RemovePoolTierByAdmin() || only admin(%s) can remove existing pool with tier, called from %s",
-				consts.ADMIN,
-				caller,
-			),
-		))
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
 	}
 
 	removePoolTier(poolPath)
@@ -333,15 +305,8 @@ func RemovePoolTierByAdmin(poolPath string) {
 
 func RemovePoolTier(poolPath string) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf(
-				"manage_pool_tiers.gno__RemovePoolTier() || only governance(%s) can remove existing pool with tier, called from %s",
-				consts.GOV_GOVERNANCE_ADDR,
-				caller,
-			),
-		))
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err)
 	}
 
 	removePoolTier(poolPath)
