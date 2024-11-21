@@ -51,7 +51,7 @@ func init() {
 	feeAmountTickSpacing[10000] = 200 // 1%
 }
 
-type poolInput struct {
+type createPoolParams struct {
 	token0Path, token1Path string
 	fee                    uint32
 	sqrtPriceX96           *u256.Uint
@@ -63,10 +63,10 @@ func newPoolInput(
 	token1Path string,
 	fee uint32,
 	sqrtPriceX96 string,
-) *poolInput {
+) *createPoolParams {
 	price := u256.MustFromDecimal(sqrtPriceX96)
 	tickSpacing := feeAmountTickSpacing.Get(fee)
-	return &poolInput{
+	return &createPoolParams{
 		token0Path: token0Path,
 		token1Path: token1Path,
 		fee:        fee,
@@ -75,11 +75,12 @@ func newPoolInput(
 	}
 }
 
-func (p *poolInput) isSameTokenPath() bool {
+func (p *createPoolParams) isSameTokenPath() bool {
 	return p.token0Path == p.token1Path
 }
 
-func (p *poolInput) isInOrder() bool {
+// isInOrder checks if token paths are in lexicographical (or, alphabetical) order
+func (p *createPoolParams) isInOrder() bool {
 	if strings.Compare(p.token0Path, p.token1Path) > 0 {
 		return false
 	}
@@ -87,7 +88,7 @@ func (p *poolInput) isInOrder() bool {
 	return true
 }
 
-func (p *poolInput) wrap() (string, string) {
+func (p *createPoolParams) wrap() (string, string) {
 	if p.token0Path == consts.GNOT {
 		p.token0Path = consts.WRAPPED_WUGNOT
 	}
@@ -98,7 +99,7 @@ func (p *poolInput) wrap() (string, string) {
 	return p.token0Path, p.token1Path
 }
 
-func (p *poolInput) filterValidTokenPaths() (string, string, error) {
+func (p *createPoolParams) filterValidTokenPaths() (string, string, error) {
 	if p.isSameTokenPath() {
 		return "", "", errDuplicateTokenInPool
 	}
@@ -112,23 +113,23 @@ func (p *poolInput) filterValidTokenPaths() (string, string, error) {
 	return token0Path, token1Path, nil
 }
 
-func (p *poolInput) Token0Path() string {
+func (p *createPoolParams) Token0Path() string {
 	return p.token0Path
 }
 
-func (p *poolInput) Token1Path() string {
+func (p *createPoolParams) Token1Path() string {
 	return p.token1Path
 }
 
-func (p *poolInput) Fee() uint32 {
+func (p *createPoolParams) Fee() uint32 {
 	return p.fee
 }
 
-func (p *poolInput) TickSpacing() int32 {
+func (p *createPoolParams) TickSpacing() int32 {
 	return p.tickSpacing
 }
 
-func (p *poolInput) SqrtPriceX96() *u256.Uint {
+func (p *createPoolParams) SqrtPriceX96() *u256.Uint {
 	return p.sqrtPriceX96
 }
 
