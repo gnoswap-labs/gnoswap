@@ -94,7 +94,7 @@ func SetWarmUp(percent int64, block int64) {
 
 	caller := std.PrevRealm().Addr()
 	cond := !(caller == consts.ADMIN || caller == consts.GOV_GOVERNANCE_ADDR)
-	if err := common.SatisfyCondition(cond); err != nil {
+	if err := common.SatisfyCond(cond); err != nil {
 		panic(err)
 	}
 

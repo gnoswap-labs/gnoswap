@@ -64,7 +64,7 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 // Panics:
 //   - caller is not the admin
 func UnregisterGRC20Interface(pkgPath string) {
-	if err := common.SatisfyCondition(isUserCall()); err != nil {
+	if err := common.SatisfyCond(isUserCall()); err != nil {
 		panic(err)
 	}
 
