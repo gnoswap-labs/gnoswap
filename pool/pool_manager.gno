@@ -150,8 +150,11 @@ func CreatePool(
 	// wrap first
 	token0Path, token1Path = poolInfo.wrap()
 
+	// reinitialize poolInfo with wrapped tokens
+	poolInfo = newPoolParams(token0Path, token1Path, fee, _sqrtPriceX96)
+
 	// then check if token0Path == token1Path
-	if token0Path == token1Path {
+	if poolInfo.isSameTokenPath() {
 		panic(addDetailToError(
 			errDuplicateTokenInPool,
 			ufmt.Sprintf(
