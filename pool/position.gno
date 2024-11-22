@@ -11,12 +11,30 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+var (
+	Q128 = u256.MustFromDecimal(consts.Q128)
+)
+
 // positionGetKey generates a unique key for a position based on the owner's address and the tick range.
 func positionGetKey(
 	owner std.Address,
 	tickLower int32,
 	tickUpper int32,
 ) string {
+	if !owner.IsValid() {
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("position.gno__positionGetKey() || invalid owner address %s", owner.String()),
+		))
+	}
+
+	if tickLower > tickUpper {
+		panic(addDetailToError(
+			errInvalidTickRange,
+			ufmt.Sprintf("position.gno__positionGetKey() || tickLower(%d) is greater than tickUpper(%d)", tickLower, tickUpper),
+		))
+	}
+
 	positionKey := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
 
 	encoded := base64.StdEncoding.EncodeToString([]byte(positionKey))
@@ -26,11 +44,11 @@ func positionGetKey(
 // positionUpdateWithKey updates a position in the pool and returns the updated position.
 func (pool *Pool) positionUpdateWithKey(
 	positionKey string,
-	liquidityDelta *i256.Int, // int128
-	feeGrowthInside0X128 *u256.Uint, // uint256
-	feeGrowthInside1X128 *u256.Uint, // uint256
+	liquidityDelta *i256.Int,
+	feeGrowthInside0X128 *u256.Uint,
+	feeGrowthInside1X128 *u256.Uint,
 ) PositionInfo {
-	// PARAM INIT
+	// if pointer is nil, set to zero for calculation
 	liquidityDelta = liquidityDelta.NilToZero()
 	feeGrowthInside0X128 = feeGrowthInside0X128.NilToZero()
 	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
@@ -44,49 +62,45 @@ func (pool *Pool) positionUpdateWithKey(
 
 // positionUpdate calculates and returns an updated PositionInfo.
 func positionUpdate(
-	self PositionInfo,
-	liquidityDelta *i256.Int, // int128
-	feeGrowthInside0X128 *u256.Uint, // uint256
-	feeGrowthInside1X128 *u256.Uint, // uint256
+	position PositionInfo,
+	liquidityDelta *i256.Int,
+	feeGrowthInside0X128 *u256.Uint,
+	feeGrowthInside1X128 *u256.Uint,
 ) PositionInfo {
-	self.init()
+	position.init()
 
 	var liquidityNext *u256.Uint
 	if liquidityDelta.IsZero() {
-		if self.liquidity.IsZero() {
+		if position.liquidity.IsZero() {
 			panic(addDetailToError(
 				errZeroLiquidity,
-				"position.gno__positionUpdate() || both liquidityDelta and (self)liquidity are zero",
+				"position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero",
 			))
 		}
 
-		liquidityNext = self.liquidity
+		liquidityNext = position.liquidity
 	} else {
-		liquidityNext = liquidityMathAddDelta(self.liquidity, liquidityDelta)
+		liquidityNext = liquidityMathAddDelta(position.liquidity, liquidityDelta)
 	}
 
 	tokensOwed0 := u256.Zero()
-	{
-		diff := new(u256.Uint).Sub(feeGrowthInside0X128, self.feeGrowthInside0LastX128)
-		tokensOwed0 = u256.MulDiv(diff, self.liquidity, u256.MustFromDecimal(consts.Q128))
-	}
+	diff0 := new(u256.Uint).Sub(feeGrowthInside0X128, position.feeGrowthInside0LastX128)
+	tokensOwed0 = u256.MulDiv(diff0, position.liquidity, Q128)
 
 	tokensOwed1 := u256.Zero()
-	{
-		diff := new(u256.Uint).Sub(feeGrowthInside1X128, self.feeGrowthInside1LastX128)
-		tokensOwed1 = u256.MulDiv(diff, self.liquidity, u256.MustFromDecimal(consts.Q128))
-	}
+	diff1 := new(u256.Uint).Sub(feeGrowthInside1X128, position.feeGrowthInside1LastX128)
+	tokensOwed1 = u256.MulDiv(diff1, position.liquidity, Q128)
 
 	if !(liquidityDelta.IsZero()) {
-		self.liquidity = liquidityNext
+		position.liquidity = liquidityNext
 	}
 
-	self.feeGrowthInside0LastX128 = feeGrowthInside0X128
-	self.feeGrowthInside1LastX128 = feeGrowthInside1X128
+	position.feeGrowthInside0LastX128 = feeGrowthInside0X128
+	position.feeGrowthInside1LastX128 = feeGrowthInside1X128
 	if tokensOwed0.Gt(u256.Zero()) || tokensOwed1.Gt(u256.Zero()) {
-		self.tokensOwed0 = self.tokensOwed0.Add(self.tokensOwed0, tokensOwed0)
-		self.tokensOwed1 = self.tokensOwed1.Add(self.tokensOwed1, tokensOwed1)
+		position.tokensOwed0 = position.tokensOwed0.Add(position.tokensOwed0, tokensOwed0)
+		position.tokensOwed1 = position.tokensOwed1.Add(position.tokensOwed1, tokensOwed1)
 	}
 
-	return self
+	return position
 }
