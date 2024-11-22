@@ -2,7 +2,6 @@ package pool
 
 import (
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/consts"
 
 	plp "gno.land/p/gnoswap/pool"
 
@@ -31,11 +30,9 @@ func (pool *Pool) tickBitmapFlipTick(
 	}
 
 	wordPos, bitPos := tickBitmapPosition(tick / tickSpacing)
-
-	// 1 << bitPos
-	mask := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
-
 	pool.tickBitmaps[wordPos] = pool.tickBitmaps[wordPos].NilToZero()
+
+	mask := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
 	pool.tickBitmaps[wordPos] = new(u256.Uint).Xor(pool.tickBitmaps[wordPos], mask)
 }
 
@@ -53,19 +50,15 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 
 	if lte {
 		wordPos, bitPos := tickBitmapPosition(compress)
-
-		// mask := (1 << bitPos) - 1 + (1 << bitPos)
-		shift1LeftByBitPos := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
-
-		mask := shift1LeftByBitPos.Clone()
-		mask = new(u256.Uint).Sub(mask, u256.NewUint(1))
-		mask = new(u256.Uint).Add(mask, shift1LeftByBitPos.Clone())
-
 		pool.tickBitmaps[wordPos] = pool.tickBitmaps[wordPos].NilToZero()
+
+		mask := generateFullMaskForBitPos(uint(bitPos))
 		masked := new(u256.Uint).And(pool.tickBitmaps[wordPos], mask)
 
+		// if there are no initialized ticks to the right of or at the current tick, return rightmost in the word
 		initialized := !(masked.IsZero())
 
+		// overflow/underflow is possible, but prevented externally by limiting both tickSpacing and tick
 		if initialized {
 			next := (compress - int32(bitPos-plp.BitMathMostSignificantBit(masked))) * tickSpacing
 			return next, initialized
@@ -76,13 +69,9 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 	}
 
 	wordPos, bitPos := tickBitmapPosition(compress + 1)
-
-	shift1LeftByBitPos := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
-	_mask := shift1LeftByBitPos.Clone()
-	_mask = new(u256.Uint).Sub(_mask, u256.NewUint(1))
-	mask := bitwiseNotForUint256BitmapIndexing(_mask)
-
 	pool.tickBitmaps[wordPos] = pool.tickBitmaps[wordPos].NilToZero()
+
+	mask := generateMaskClearingBitsBelow(uint(bitPos))
 	masked := new(u256.Uint).And(pool.tickBitmaps[wordPos], mask)
 
 	initialized := !(masked.IsZero())
@@ -96,18 +85,30 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 	}
 }
 
-// bitwiseNotForUint256BitmapIndexing performs a bitwise NOT operation on the uint256 value.
-// This function is designed for use in bitmap indexing
-func bitwiseNotForUint256BitmapIndexing(x *u256.Uint) *u256.Uint {
-	// REF: https://stackoverflow.com/a/77071037
+func generateFullMaskForBitPos(bitPos uint) *u256.Uint {
+	// 1 << bitPos
+	one := u256.NewUint(1)
+	shifted := new(u256.Uint).Lsh(one, bitPos)
 
-	// Create a mask with all bits set to 1
-	mask := u256.MustFromDecimal(consts.MAX_UINT256)
-	mask = new(u256.Uint).Sub(mask, u256.NewUint(1))
+	// (1 << bitPos) - 1
+	minusOne := new(u256.Uint).Sub(shifted, u256.NewUint(1))
 
-	// XOR with mask to perform bitwise NOT
-	// result := x ^ mask
-	result := new(u256.Uint).Xor(x, mask)
+	// (1 << bitPos) - 1 + (1 << bitPos)
+	result := new(u256.Uint).Add(minusOne, shifted)
 
 	return result
+}
+
+func generateMaskClearingBitsBelow(bitPos uint) *u256.Uint {
+	// 1 << bitPos
+	one := u256.NewUint(1)
+	shifted := new(u256.Uint).Lsh(one, bitPos)
+
+	// (1 << bitPos) - 1
+	minusOne := new(u256.Uint).Sub(shifted, u256.NewUint(1))
+
+	// ~((1 << bitPos) - 1)
+	mask := new(u256.Uint).Not(minusOne)
+
+	return mask
 }
