@@ -27,7 +27,7 @@ func TestModifyPosition(t *testing.T) {
 	}{
 		{
 			name: "current price is lower than range",
-			sqrtPrice:   common.TickMathGetSqrtRatioAtTick(-12000).ToString(), // 범위보다 낮은 틱
+			sqrtPrice:   common.TickMathGetSqrtRatioAtTick(-12000).ToString(),
 			tickLower:   -11000,
 			tickUpper:   -9000,
 			expectedAmt0: "16492846",
@@ -35,7 +35,7 @@ func TestModifyPosition(t *testing.T) {
 		},
 		{
 			name: "current price is in range",
-			sqrtPrice:   common.TickMathGetSqrtRatioAtTick(-10000).ToString(), // 범위 내 틱
+			sqrtPrice:   common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
 			tickLower:   -11000,
 			tickUpper:   -9000,
 			expectedAmt0: "8040316",
@@ -43,7 +43,7 @@ func TestModifyPosition(t *testing.T) {
 		},
 		{
 			name: "current price is higher than range",
-			sqrtPrice:   common.TickMathGetSqrtRatioAtTick(-8000).ToString(), // 범위보다 높은 틱
+			sqrtPrice:   common.TickMathGetSqrtRatioAtTick(-8000).ToString(),
 			tickLower:   -11000,
 			tickUpper:   -9000,
 			expectedAmt0: "0",
