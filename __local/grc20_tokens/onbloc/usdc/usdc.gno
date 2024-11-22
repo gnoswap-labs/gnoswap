@@ -11,16 +11,15 @@ import (
 )
 
 var (
-	banker *grc20.Banker
 	admin  *ownable.Ownable
-	token  grc20.Token
+	token  *grc20.Token
+	ledger *grc20.PrivateLedger
 )
 
 func init() {
 	admin = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
-	banker = grc20.NewBanker("Usd Coin", "USDC", 6)
-	banker.Mint(admin.Owner(), 100_000_000_000_000)
-	token = banker.Token()
+	token, ledger = grc20.NewToken("Usd Coin", "USDC", 6)
+	ledger.Mint(admin.Owner(), 100_000_000_000_000)
 }
 
 func TotalSupply() uint64 { return token.TotalSupply() }
@@ -38,24 +37,24 @@ func Allowance(owner, spender pusers.AddressOrName) uint64 {
 
 func Transfer(to pusers.AddressOrName, amount uint64) {
 	toAddr := users.Resolve(to)
-	checkErr(token.Transfer(toAddr, amount))
+	checkErr(token.CallerTeller().Transfer(toAddr, amount))
 }
 
 func Approve(spender pusers.AddressOrName, amount uint64) {
 	spenderAddr := users.Resolve(spender)
-	checkErr(token.Approve(spenderAddr, amount))
+	checkErr(token.CallerTeller().Approve(spenderAddr, amount))
 }
 
 func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
 	fromAddr := users.Resolve(from)
 	toAddr := users.Resolve(to)
-	checkErr(token.TransferFrom(fromAddr, toAddr, amount))
+	checkErr(token.CallerTeller().TransferFrom(fromAddr, toAddr, amount))
 }
 
 func Burn(from pusers.AddressOrName, amount uint64) {
 	admin.AssertCallerIsOwner()
 	fromAddr := users.Resolve(from)
-	checkErr(banker.Burn(fromAddr, amount))
+	checkErr(ledger.Burn(fromAddr, amount))
 }
 
 func Render(path string) string {
@@ -64,11 +63,11 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return banker.RenderHome()
+		return token.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := pusers.AddressOrName(parts[1])
 		ownerAddr := users.Resolve(owner)
-		balance := banker.BalanceOf(ownerAddr)
+		balance := token.BalanceOf(ownerAddr)
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"

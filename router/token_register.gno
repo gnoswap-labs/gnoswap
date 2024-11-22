@@ -60,7 +60,7 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 
 // UnregisterGRC20Interface unregisters a GRC20 token interface
 func UnregisterGRC20Interface(pkgPath string) {
-	if err := common.SatisfyCondition(isUserCall()); err != nil {
+	if err := common.SatisfyCond(isUserCall()); err != nil {
 		panic(err)
 	}
 

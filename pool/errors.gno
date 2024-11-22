@@ -6,6 +6,8 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
+// Error Messages
+// These error messages are intended to inform you when an error occurs while using Contract and what it is.
 var (
 	errNoPermission              = errors.New("[GNOSWAP-POOL-001] caller has no permission")
 	errNotRegistered             = errors.New("[GNOSWAP-POOL-002] not registered token")
@@ -21,7 +23,7 @@ var (
 	errTokenSortOrder            = errors.New("[GNOSWAP-POOL-012] tokens must be in lexicographical order")
 	errPoolAlreadyExists         = errors.New("[GNOSWAP-POOL-013] pool already created")
 	errInvalidSwapAmount         = errors.New("[GNOSWAP-POOL-014] invalid swap amount")
-	errInvalidPotocolFeePct      = errors.New("[GNOSWAP-POOL-015] invalid protocol fee percentage")
+	errInvalidProtocolFeePct     = errors.New("[GNOSWAP-POOL-015] invalid protocol fee percentage")
 	errInvalidWithdrawalFeePct   = errors.New("[GNOSWAP-POOL-016] invalid withdrawal fee percentage")
 	errLockedPool                = errors.New("[GNOSWAP-POOL-017] can't swap while pool is locked")
 	errPriceOutOfRange           = errors.New("[GNOSWAP-POOL-018] swap price out of range")
@@ -31,6 +33,12 @@ var (
 	errInvalidTickAndTickSpacing = errors.New("[GNOSWAP-POOL-022] invalid tick and tick spacing requested")
 )
 
+// addDetailToError adds detail to an error message
+//
+// input
+// err: error - the error message that is one of above list
+// detail: string - the detail to add to the error message
+// Returns: string - the final error message
 func addDetailToError(err error, detail string) string {
 	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
 	return finalErr.Error()

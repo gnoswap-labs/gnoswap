@@ -18,9 +18,10 @@ import (
 const MAXIMUM_SUPPLY = uint64(1_000_000_000_000_000) // 1B
 
 var (
-	banker *grc20.Banker
+	banker *grc20.Teller
 	admin  *ownable.Ownable
 	token  grc20.Token
+	ledger *grc20.PrivateLedger
 )
 
 var (
@@ -30,10 +31,9 @@ var (
 
 func init() {
 	admin = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
-	banker = grc20.NewBanker("Gnoswap", "GNS", 6)
+	_, ledger = grc20.NewToken("Gnoswap", "GNS", 6)
 
-	banker.Mint(admin.Owner(), 100_000_000_000_000) // 100_000_000 GNS ≈ 0.1B
-	token = banker.Token()
+	ledger.Mint(admin.Owner(), 100_000_000_000_000) // 100_000_000 GNS ≈ 0.1B
 
 	amountToEmission = MAXIMUM_SUPPLY - uint64(100_000_000_000_000)
 
@@ -61,14 +61,14 @@ func Transfer(to pusers.AddressOrName, amount uint64) {
 	common.IsHalted()
 
 	toAddr := users.Resolve(to)
-	checkErr(token.Transfer(toAddr, amount))
+	checkErr(token.CallerTeller().Transfer(toAddr, amount))
 }
 
 func Approve(spender pusers.AddressOrName, amount uint64) {
 	common.IsHalted()
 
 	spenderAddr := users.Resolve(spender)
-	checkErr(token.Approve(spenderAddr, amount))
+	checkErr(token.CallerTeller().Approve(spenderAddr, amount))
 }
 
 func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
@@ -76,7 +76,7 @@ func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
 
 	fromAddr := users.Resolve(from)
 	toAddr := users.Resolve(to)
-	checkErr(token.TransferFrom(fromAddr, toAddr, amount))
+	checkErr(token.CallerTeller().TransferFrom(fromAddr, toAddr, amount))
 }
 
 func Render(path string) string {
@@ -85,11 +85,11 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return banker.RenderHome()
+		return token.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := pusers.AddressOrName(parts[1])
 		ownerAddr := users.Resolve(owner)
-		balance := banker.BalanceOf(ownerAddr)
+		balance := token.BalanceOf(ownerAddr)
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
@@ -146,7 +146,7 @@ func Mint(address pusers.AddressOrName) uint64 {
 		}
 	}
 
-	err := banker.Mint(users.Resolve(address), amountToMint)
+	err := ledger.Mint(users.Resolve(address), amountToMint)
 	if err != nil {
 		panic(err.Error())
 	}

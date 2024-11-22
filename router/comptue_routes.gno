@@ -4,8 +4,9 @@ import (
 	"sort"
 
 	pl "gno.land/r/gnoswap/v1/pool"
-
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/p/demo/ufmt"
 )
 
 // PoolWithMeta is a struct that contains poolPath, token0Path, token1Path, fee, tokenPair, and liquidity
@@ -180,7 +181,7 @@ func findCandidatePools() []PoolWithMeta {
 			token0Path,
 			token1Path,
 			pFee,
-			token0Path + ":" + token1Path,
+			ufmt.Sprintf("%s:%s", token0Path, token1Path),
 			liquidity,
 		})
 	}
