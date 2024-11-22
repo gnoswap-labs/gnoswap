@@ -17,7 +17,7 @@ func TestPositionGetKey(t *testing.T) {
 	invalidAddr := std.Address("invalidAddr")
 	validAddr := testutils.TestAddress("validAddr")
 
-	testStruct := []struct {
+	tests := []struct {
 		owner       std.Address
 		tickLower   int32
 		tickUpper   int32
@@ -31,7 +31,7 @@ func TestPositionGetKey(t *testing.T) {
 		{validAddr, 100, 200, false}, // tickLower < tickUpper
 	}
 
-	for _, tc := range testStruct {
+	for _, tc := range tests {
 		if tc.shouldPanic {
 			uassert.PanicsWithMessage(t, tc.panicMsg, func() { positionGetKey(tc.owner, tc.tickLower, tc.tickUpper) })
 		} else {
@@ -41,26 +41,68 @@ func TestPositionGetKey(t *testing.T) {
 }
 
 func TestPositionUpdateWithKey(t *testing.T) {
-	dummyPool := newPool(
-		"token0",
-		"token1",
-		100,
-		10,
-		common.TickMathGetSqrtRatioAtTick(0),
-	)
+	var dummyPool *Pool
+	var positionKey string
 
-	positionKey := positionGetKey(
-		testutils.TestAddress("dummyAddr"),
-		100,
-		200,
-	)
+	t.Run("set up initial data for this test function", func(t *testing.T) {
+		dummyPool = newPool(
+			"token0",
+			"token1",
+			100,
+			10,
+			common.TickMathGetSqrtRatioAtTick(0),
+		)
 
-	newPos := dummyPool.positionUpdateWithKey(
-		positionKey,
-		i256.MustFromDecimal("100000"),
-		u256.Zero(),
-		u256.Zero(),
-	)
+		positionKey = positionGetKey(
+			testutils.TestAddress("dummyAddr"),
+			100,
+			200,
+		)
+	})
 
-	uassert.Equal(t, newPos.liquidity.ToString(), "100000")
+	tests := []struct {
+		liquidity   *i256.Int
+		amount0     *u256.Uint
+		amount1     *u256.Uint
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{i256.MustFromDecimal("0"), u256.Zero(), u256.Zero(), true, `[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero`},
+		{i256.MustFromDecimal("100000"), u256.Zero(), u256.Zero(), false, ``},
+	}
+
+	for _, tc := range tests {
+		if tc.shouldPanic {
+			uassert.PanicsWithMessage(t, tc.panicMsg, func() { dummyPool.positionUpdateWithKey(positionKey, tc.liquidity, tc.amount0, tc.amount1) })
+		} else {
+			var newPos PositionInfo
+			uassert.NotPanics(t, func() { newPos = dummyPool.positionUpdateWithKey(positionKey, tc.liquidity, tc.amount0, tc.amount1) })
+			uassert.Equal(t, newPos.liquidity.ToString(), "100000")
+		}
+	}
+}
+
+func TestPositionUpdate(t *testing.T) {
+	position := PositionInfo{
+		liquidity: u256.Zero(),
+	}
+
+	tests := []struct {
+		liquidityDelta       *i256.Int
+		feeGrowthInside0X128 *u256.Uint
+		feeGrowthInside1X128 *u256.Uint
+		shouldPanic          bool
+		panicMsg             string
+	}{
+		{i256.MustFromDecimal("0"), u256.Zero(), u256.Zero(), true, `[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero`},
+		{i256.MustFromDecimal("100000"), u256.Zero(), u256.Zero(), false, ``},
+	}
+
+	for _, tc := range tests {
+		if tc.shouldPanic {
+			uassert.PanicsWithMessage(t, tc.panicMsg, func() { positionUpdate(position, tc.liquidityDelta, tc.feeGrowthInside0X128, tc.feeGrowthInside1X128) })
+		} else {
+			uassert.NotPanics(t, func() { positionUpdate(position, tc.liquidityDelta, tc.feeGrowthInside0X128, tc.feeGrowthInside1X128) })
+		}
+	}
 }
