@@ -79,13 +79,6 @@ func LaunchpadOnly(caller std.Address) error {
 
 // realm assertion
 
-func StakerPathOnly(prev std.Realm) error {
-	if prev.PkgPath() != consts.STAKER_PKG_PATH {
-		return ufmt.Errorf("caller(%s) has no permission", prev.PkgPath())
-	}
-	return nil
-}
-
 func UserOnly(prev std.Realm) error {
 	if !prev.IsUser() {
 		return ufmt.Errorf("caller(%s) is not a user", prev.PkgPath())
