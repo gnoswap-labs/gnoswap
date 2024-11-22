@@ -40,7 +40,7 @@ func TestPositionGetKey(t *testing.T) {
 	}
 }
 
-func Test_positionUpdateWithKey(t *testing.T) {
+func TestPositionUpdateWithKey(t *testing.T) {
 	dummyPool := newPool(
 		"token0",
 		"token1",
