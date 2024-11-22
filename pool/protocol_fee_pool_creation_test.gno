@@ -12,20 +12,18 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 )
 
-type TestCase struct {
-	name        string
-	action      func()
-	verify      func() string
-	expected    string
-	shouldPanic bool
-}
-
 func TestSetPoolCreationFee(t *testing.T) {
 	var (
 		admin = pusers.AddressOrName("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
 	)
 
-	tests := []TestCase{
+	tests := []struct {
+		name        string
+		action      func()
+		verify      func() string
+		expected    string
+		shouldPanic bool
+	}{
 		{
 			name: "Panic call by non-governance",
 			action: func() {
@@ -88,7 +86,13 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 		alice = pusers.AddressOrName(testutils.TestAddress("alice"))
 	)
 
-	tests := []TestCase{
+	tests := []struct {
+		name        string
+		action      func()
+		verify      func() string
+		expected    string
+		shouldPanic bool
+	}{
 		{
 			name: "Panic call by non-admin (gov contract)",
 			action: func() {
