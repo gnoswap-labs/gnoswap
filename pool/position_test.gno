@@ -23,19 +23,21 @@ func TestPositionGetKey(t *testing.T) {
 		tickUpper   int32
 		shouldPanic bool
 		panicMsg    string
+		expectedKey string
 	}{
-		{invalidAddr, 100, 200, true, `[GNOSWAP-POOL-023] invalid address || position.gno__positionGetKey() || invalid owner address invalidAddr`},                                   // invalid address
-		{validAddr, 200, 100, true, `[GNOSWAP-POOL-024] tickLower is greater than tickUpper || position.gno__positionGetKey() || tickLower(200) is greater than tickUpper(100)`},     // tickLower > tickUpper
-		{validAddr, -100, -200, true, `[GNOSWAP-POOL-024] tickLower is greater than tickUpper || position.gno__positionGetKey() || tickLower(-100) is greater than tickUpper(-200)`}, // tickLower > tickUpper
-		{validAddr, 100, 100, false}, // tickLower == tickUpper
-		{validAddr, 100, 200, false}, // tickLower < tickUpper
+		{invalidAddr, 100, 200, true, `[GNOSWAP-POOL-023] invalid address || position.gno__positionGetKey() || invalid owner address invalidAddr`, ""},                                   // invalid address
+		{validAddr, 200, 100, true, `[GNOSWAP-POOL-024] tickLower is greater than tickUpper || position.gno__positionGetKey() || tickLower(200) is greater than tickUpper(100)`, ""},     // tickLower > tickUpper
+		{validAddr, -100, -200, true, `[GNOSWAP-POOL-024] tickLower is greater than tickUpper || position.gno__positionGetKey() || tickLower(-100) is greater than tickUpper(-200)`, ""}, // tickLower > tickUpper
+		{validAddr, 100, 100, false, "", "ZzF3ZXNrYzZ0eWc5anhndWpsdGEwNDdoNmx0YTA0N2g2bGRqbHVkdV9fMTAwX18xMDA="},                                                                         // tickLower == tickUpper
+		{validAddr, 100, 200, false, "", "ZzF3ZXNrYzZ0eWc5anhndWpsdGEwNDdoNmx0YTA0N2g2bGRqbHVkdV9fMTAwX18yMDA="},                                                                         // tickLower < tickUpper
 	}
 
 	for _, tc := range tests {
 		if tc.shouldPanic {
 			uassert.PanicsWithMessage(t, tc.panicMsg, func() { positionGetKey(tc.owner, tc.tickLower, tc.tickUpper) })
 		} else {
-			uassert.NotPanics(t, func() { positionGetKey(tc.owner, tc.tickLower, tc.tickUpper) })
+			key := positionGetKey(tc.owner, tc.tickLower, tc.tickUpper)
+			uassert.Equal(t, tc.expectedKey, key)
 		}
 	}
 }
@@ -61,23 +63,23 @@ func TestPositionUpdateWithKey(t *testing.T) {
 	})
 
 	tests := []struct {
-		liquidity   *i256.Int
-		amount0     *u256.Uint
-		amount1     *u256.Uint
-		shouldPanic bool
-		panicMsg    string
+		liquidity         *i256.Int
+		amount0           *u256.Uint
+		amount1           *u256.Uint
+		shouldPanic       bool
+		panicMsg          string
+		expectedLiquidity string
 	}{
-		{i256.MustFromDecimal("0"), u256.Zero(), u256.Zero(), true, `[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero`},
-		{i256.MustFromDecimal("100000"), u256.Zero(), u256.Zero(), false, ``},
+		{i256.MustFromDecimal("0"), u256.Zero(), u256.Zero(), true, `[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero`, ""},
+		{i256.MustFromDecimal("100000"), u256.Zero(), u256.Zero(), false, "", "100000"},
 	}
 
 	for _, tc := range tests {
 		if tc.shouldPanic {
 			uassert.PanicsWithMessage(t, tc.panicMsg, func() { dummyPool.positionUpdateWithKey(positionKey, tc.liquidity, tc.amount0, tc.amount1) })
 		} else {
-			var newPos PositionInfo
-			uassert.NotPanics(t, func() { newPos = dummyPool.positionUpdateWithKey(positionKey, tc.liquidity, tc.amount0, tc.amount1) })
-			uassert.Equal(t, newPos.liquidity.ToString(), "100000")
+			newPos := dummyPool.positionUpdateWithKey(positionKey, tc.liquidity, tc.amount0, tc.amount1)
+			uassert.Equal(t, newPos.liquidity.ToString(), tc.expectedLiquidity)
 		}
 	}
 }
@@ -93,16 +95,18 @@ func TestPositionUpdate(t *testing.T) {
 		feeGrowthInside1X128 *u256.Uint
 		shouldPanic          bool
 		panicMsg             string
+		expectedLiquidity    string
 	}{
-		{i256.MustFromDecimal("0"), u256.Zero(), u256.Zero(), true, `[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero`},
-		{i256.MustFromDecimal("100000"), u256.Zero(), u256.Zero(), false, ``},
+		{i256.MustFromDecimal("0"), u256.Zero(), u256.Zero(), true, `[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero`, ""},
+		{i256.MustFromDecimal("100000"), u256.Zero(), u256.Zero(), false, "", "100000"},
 	}
 
 	for _, tc := range tests {
 		if tc.shouldPanic {
 			uassert.PanicsWithMessage(t, tc.panicMsg, func() { positionUpdate(position, tc.liquidityDelta, tc.feeGrowthInside0X128, tc.feeGrowthInside1X128) })
 		} else {
-			uassert.NotPanics(t, func() { positionUpdate(position, tc.liquidityDelta, tc.feeGrowthInside0X128, tc.feeGrowthInside1X128) })
+			newPos := positionUpdate(position, tc.liquidityDelta, tc.feeGrowthInside0X128, tc.feeGrowthInside1X128)
+			uassert.Equal(t, newPos.liquidity.ToString(), tc.expectedLiquidity)
 		}
 	}
 }
