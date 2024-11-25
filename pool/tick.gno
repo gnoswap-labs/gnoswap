@@ -16,41 +16,23 @@ func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	maxTick := (consts.MAX_TICK / tickSpacing) * tickSpacing
 	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
 
-	_maxUint128 := u256.MustFromDecimal(consts.MAX_UINT128)
-	return new(u256.Uint).Div(_maxUint128, u256.NewUint(numTicks))
+	return new(u256.Uint).Div(consts.MAX_UINT128.Clone(), u256.NewUint(numTicks))
 }
 
-// tickGetFeeGrowthInside calculates the fee growth inside a tick range.
+// tickGetFeeGrowthInside calculates the fee growth inside a tick range,
+// and returns the fee growth inside for both tokens.
 func (pool *Pool) tickGetFeeGrowthInside(
 	tickLower int32,
 	tickUpper int32,
 	tickCurrent int32,
-	feeGrowthGlobal0X128 *u256.Uint, // uint256
-	feeGrowthGlobal1X128 *u256.Uint, // uint256
-) (*u256.Uint, *u256.Uint) { // uint256
-	lower := pool.ticks[tickLower]
-	lower.init()
+	feeGrowthGlobal0X128 *u256.Uint,
+	feeGrowthGlobal1X128 *u256.Uint,
+) (*u256.Uint, *u256.Uint) {
+	lower := pool.getTick(tickLower)
+	upper := pool.getTick(tickUpper)
 
-	upper := pool.ticks[tickUpper]
-	upper.init()
-
-	var feeGrowthBelow0X128, feeGrowthBelow1X128 *u256.Uint
-	if tickCurrent >= tickLower {
-		feeGrowthBelow0X128 = lower.feeGrowthOutside0X128
-		feeGrowthBelow1X128 = lower.feeGrowthOutside1X128
-	} else {
-		feeGrowthBelow0X128 = new(u256.Uint).Sub(feeGrowthGlobal0X128, lower.feeGrowthOutside0X128)
-		feeGrowthBelow1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, lower.feeGrowthOutside1X128)
-	}
-
-	var feeGrowthAbove0X128, feeGrowthAbove1X128 *u256.Uint
-	if tickCurrent < tickUpper {
-		feeGrowthAbove0X128 = upper.feeGrowthOutside0X128
-		feeGrowthAbove1X128 = upper.feeGrowthOutside1X128
-	} else {
-		feeGrowthAbove0X128 = new(u256.Uint).Sub(feeGrowthGlobal0X128, upper.feeGrowthOutside0X128)
-		feeGrowthAbove1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, upper.feeGrowthOutside1X128)
-	}
+	feeGrowthBelow0X128, feeGrowthBelow1X128 := getFeeGrowthBelowX128(tickLower, tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128, lower, upper)
+	feeGrowthAbove0X128, feeGrowthAbove1X128 := getFeeGrowthAboveX128(tickLower, tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128, lower, upper)
 
 	feeGrowthInside0X128 := new(u256.Uint).Sub(new(u256.Uint).Sub(feeGrowthGlobal0X128, feeGrowthBelow0X128), feeGrowthAbove0X128)
 	feeGrowthInside1X128 := new(u256.Uint).Sub(new(u256.Uint).Sub(feeGrowthGlobal1X128, feeGrowthBelow1X128), feeGrowthAbove1X128)
@@ -63,19 +45,18 @@ func (pool *Pool) tickUpdate(
 	tick int32,
 	tickCurrent int32,
 	liquidityDelta *i256.Int, // int128
-	feeGrowthGlobal0X128 *u256.Uint, // uint256
-	feeGrowthGlobal1X128 *u256.Uint, // uint256
+	feeGrowthGlobal0X128 *u256.Uint,
+	feeGrowthGlobal1X128 *u256.Uint,
 	upper bool,
-	maxLiquidity *u256.Uint, // uint256
+	maxLiquidity *u256.Uint,
 ) (flipped bool) {
 	liquidityDelta = liquidityDelta.NilToZero()
 	feeGrowthGlobal0X128 = feeGrowthGlobal0X128.NilToZero()
 	feeGrowthGlobal1X128 = feeGrowthGlobal1X128.NilToZero()
 
-	info := pool.ticks[tick]
-	info.init()
+	thisTick := pool.getTick(tick)
 
-	liquidityGrossBefore := info.liquidityGross
+	liquidityGrossBefore := thisTick.liquidityGross
 	liquidityGrossAfter := liquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
 
 	if !(liquidityGrossAfter.Lte(maxLiquidity)) {
@@ -89,22 +70,22 @@ func (pool *Pool) tickUpdate(
 
 	if liquidityGrossBefore.IsZero() {
 		if tick <= tickCurrent {
-			info.feeGrowthOutside0X128 = feeGrowthGlobal0X128
-			info.feeGrowthOutside1X128 = feeGrowthGlobal1X128
+			thisTick.feeGrowthOutside0X128 = feeGrowthGlobal0X128
+			thisTick.feeGrowthOutside1X128 = feeGrowthGlobal1X128
 		}
 
-		info.initialized = true
+		thisTick.initialized = true
 	}
 
-	info.liquidityGross = liquidityGrossAfter
+	thisTick.liquidityGross = liquidityGrossAfter
 
 	if upper {
-		info.liquidityNet = i256.Zero().Sub(info.liquidityNet, liquidityDelta)
+		thisTick.liquidityNet = i256.Zero().Sub(thisTick.liquidityNet, liquidityDelta)
 	} else {
-		info.liquidityNet = i256.Zero().Add(info.liquidityNet, liquidityDelta)
+		thisTick.liquidityNet = i256.Zero().Add(thisTick.liquidityNet, liquidityDelta)
 	}
 
-	pool.ticks[tick] = info
+	pool.ticks[tick] = thisTick
 
 	return flipped
 }
@@ -112,17 +93,52 @@ func (pool *Pool) tickUpdate(
 // tickCross updates a tick's state when it is crossed and returns the liquidity net.
 func (pool *Pool) tickCross(
 	tick int32,
-	feeGrowthGlobal0X128 *u256.Uint, // uint256
-	feeGrowthGlobal1X128 *u256.Uint, // uint256
+	feeGrowthGlobal0X128 *u256.Uint,
+	feeGrowthGlobal1X128 *u256.Uint,
 ) *i256.Int {
-	info := pool.ticks[tick]
-	info.init()
+	thisTick := pool.getTick(tick)
 
-	info.feeGrowthOutside0X128 = new(u256.Uint).Sub(feeGrowthGlobal0X128, info.feeGrowthOutside0X128)
-	info.feeGrowthOutside1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, info.feeGrowthOutside1X128)
+	thisTick.feeGrowthOutside0X128 = new(u256.Uint).Sub(feeGrowthGlobal0X128, thisTick.feeGrowthOutside0X128)
+	thisTick.feeGrowthOutside1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, thisTick.feeGrowthOutside1X128)
 
-	pool.ticks[tick] = info
+	pool.ticks[tick] = thisTick
 
-	liquidityNet := info.liquidityNet
-	return liquidityNet
+	return thisTick.liquidityNet
+}
+
+func (pool *Pool) getTick(tick int32) TickInfo {
+	tickInfo := pool.ticks[tick]
+	tickInfo.init()
+
+	return tickInfo
+}
+
+func getFeeGrowthBelowX128(
+	tickLower, tickUpper, tickCurrent int32,
+	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
+	lowerTick, upperTick TickInfo,
+) (*u256.Uint, *u256.Uint) {
+	if tickCurrent >= tickLower {
+		return lowerTick.feeGrowthOutside0X128, lowerTick.feeGrowthOutside1X128
+	}
+
+	below0X128 := new(u256.Uint).Sub(feeGrowthGlobal0X128, lowerTick.feeGrowthOutside0X128)
+	below1X128 := new(u256.Uint).Sub(feeGrowthGlobal1X128, lowerTick.feeGrowthOutside1X128)
+
+	return below0X128, below1X128
+}
+
+func getFeeGrowthAboveX128(
+	tickLower, tickUpper, tickCurrent int32,
+	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
+	lowerTick, upperTick TickInfo,
+) (*u256.Uint, *u256.Uint) {
+	if tickCurrent < tickUpper {
+		return upperTick.feeGrowthOutside0X128, upperTick.feeGrowthOutside1X128
+	}
+
+	above0X128 := new(u256.Uint).Sub(feeGrowthGlobal0X128, upperTick.feeGrowthOutside0X128)
+	above1X128 := new(u256.Uint).Sub(feeGrowthGlobal1X128, upperTick.feeGrowthOutside1X128)
+
+	return above0X128, above1X128
 }
