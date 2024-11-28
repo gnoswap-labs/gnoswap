@@ -112,7 +112,7 @@ func Burn(
 	}
 
 	positionKey := positionGetKey(caller, tickLower, tickUpper)
-	pool.positions[positionKey] = position
+	pool.positions.Set(positionKey, position)
 
 	// actual token transfer happens in Collect()
 	return amount0.ToString(), amount1.ToString()
@@ -149,12 +149,16 @@ func Collect(
 	pool := GetPool(token0Path, token1Path, fee)
 
 	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
-	position, exist := pool.positions[positionKey]
+	iposition, exist := pool.positions.Get(positionKey)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
 			ufmt.Sprintf("pool.gno__Collect() || positionKey(%s) does not exist", positionKey),
 		))
+	}
+	position, ok := iposition.(PositionInfo)
+	if !ok {
+		panic("type assertion failed")
 	}
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
@@ -175,7 +179,7 @@ func Collect(
 	pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
 	transferByRegisterCall(pool.token1Path, recipient, amount1.Uint64())
 
-	pool.positions[positionKey] = position
+	pool.positions.Set(positionKey, position)
 
 	return amount0.ToString(), amount1.ToString()
 }

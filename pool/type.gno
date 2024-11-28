@@ -3,6 +3,8 @@ package pool
 import (
 	"std"
 
+	"gno.land/p/demo/avl"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -139,9 +141,8 @@ func (t *TickInfo) init() {
 	t.secondsPerLiquidityOutsideX128 = t.secondsPerLiquidityOutsideX128.NilToZero()
 }
 
-type Ticks map[int32]TickInfo          // tick => TickInfo
-type TickBitmaps map[int16]*u256.Uint  // tick(wordPos) => bitmap(tickWord ^ mask)
-type Positions map[string]PositionInfo // positionKey => PositionInfo
+type Ticks map[int32]TickInfo         // tick => TickInfo
+type TickBitmaps map[int16]*u256.Uint // tick(wordPos) => bitmap(tickWord ^ mask)
 
 // type Pool describes a single Pool's state
 // A pool is identificed with a unique key (token0, token1, fee), where token0 < token1
@@ -171,5 +172,5 @@ type Pool struct {
 
 	tickBitmaps TickBitmaps // maps tick index to tick bitmap
 
-	positions Positions // maps the key (caller, lower tick, upper tick) to a unique position
+	positions *avl.Tree // maps the key (caller, lower tick, upper tick) to a unique position
 }
