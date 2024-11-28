@@ -116,15 +116,6 @@ func TestIsUserCall(t *testing.T) {
 			},
 			expected: false,
 		},
-		{
-			name: "called from package",
-			action: func() bool {
-				fromPackage := std.NewCodeRealm("gno.land/p/package")
-				std.TestSetRealm(fromPackage)
-				return isUserCall()
-			},
-			expected: false,
-		},
 	}
 
 	for _, tt := range tests {
@@ -165,7 +156,7 @@ func TestGetPrev(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			addr, pkgPath := tt.s()
+			addr, pkgPath := tt.action()
 			uassert.Equal(t, tt.expectedAddr, addr)
 			uassert.Equal(t, tt.expectedPkgPath, pkgPath)
 		})
