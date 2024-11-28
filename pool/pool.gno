@@ -30,7 +30,7 @@ func Mint(
 	common.IsHalted()
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
-		if caller != consts.POSITION_ADDR {
+		if err := common.PositionOnly(caller); err != nil {
 			panic(addDetailToError(
 				errNoPermission,
 				ufmt.Sprintf("pool.gno__Mint() || only position(%s) can call pool mint(), called from %s", consts.POSITION_ADDR, caller.String()),
@@ -82,7 +82,7 @@ func Burn(
 	common.IsHalted()
 	caller := std.PrevRealm().Addr()
 	if common.GetLimitCaller() {
-		if caller != consts.POSITION_ADDR {
+		if err := common.PositionOnly(caller); err != nil {
 			panic(addDetailToError(
 				errNoPermission,
 				ufmt.Sprintf("pool.gno__Burn() || only position(%s) can call pool burn(), called from %s", consts.POSITION_ADDR, caller.String()),
@@ -135,7 +135,7 @@ func Collect(
 	common.IsHalted()
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
-		if caller != consts.POSITION_ADDR {
+		if err := common.PositionOnly(caller); err != nil {
 			panic(addDetailToError(
 				errNoPermission,
 				ufmt.Sprintf("pool.gno__Collect() || only position(%s) can call pool collect(), called from %s", consts.POSITION_ADDR, caller.String()),
@@ -196,7 +196,7 @@ func Swap(
 	common.IsHalted()
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
-		if caller != consts.ROUTER_ADDR {
+		if err := common.RouterOnly(caller); err != nil {
 			panic(addDetailToError(
 				errNoPermission,
 				ufmt.Sprintf("pool.gno__Swap() || only router(%s) can call pool swap(), called from %s", consts.ROUTER_ADDR, caller.String()),
