@@ -27,8 +27,12 @@ func (pool *Pool) PoolGetSlot0Tick() int32 {
 }
 
 func (pool *Pool) PoolGetPositionFeeGrowthInside0LastX128(key string) *u256.Uint {
-	position, exist := pool.positions[key]
+	iposition, exist := pool.positions.Get(key)
 	if !exist {
+		return u256.Zero()
+	}
+	position, ok := iposition.(PositionInfo)
+	if !ok {
 		return u256.Zero()
 	}
 
@@ -36,8 +40,12 @@ func (pool *Pool) PoolGetPositionFeeGrowthInside0LastX128(key string) *u256.Uint
 }
 
 func (pool *Pool) PoolGetPositionFeeGrowthInside1LastX128(key string) *u256.Uint {
-	position, exist := pool.positions[key]
+	iposition, exist := pool.positions.Get(key)
 	if !exist {
+		return u256.Zero()
+	}
+	position, ok := iposition.(PositionInfo)
+	if !ok {
 		return u256.Zero()
 	}
 

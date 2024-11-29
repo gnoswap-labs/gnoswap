@@ -4,6 +4,7 @@ import (
 	"std"
 	"strings"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -211,6 +212,6 @@ func newPool(
 		liquidity:            u256.Zero(),
 		ticks:                Ticks{},
 		tickBitmaps:          TickBitmaps{},
-		positions:            Positions{},
+		positions:            avl.NewTree(),
 	}
 }

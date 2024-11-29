@@ -35,9 +35,16 @@ func (pool *Pool) positionUpdateWithKey(
 	feeGrowthInside0X128 = feeGrowthInside0X128.NilToZero()
 	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
 
-	positionToUpdate := pool.positions[positionKey]
+	var positionToUpdate PositionInfo
+	iposition, exist := pool.positions.Get(positionKey)
+	if exist {
+		positionToUpdate = iposition.(PositionInfo)
+	} else {
+		positionToUpdate.init()
+	}
+
 	positionAfterUpdate := positionUpdate(positionToUpdate, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
-	pool.positions[positionKey] = positionAfterUpdate
+	pool.positions.Set(positionKey, positionAfterUpdate)
 
 	return positionAfterUpdate
 }

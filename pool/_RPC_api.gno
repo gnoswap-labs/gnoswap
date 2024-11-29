@@ -235,18 +235,24 @@ func rpcMakePool(poolPath string) RpcPool {
 
 	Positions := pool.positions
 	rpcPositions := []RpcPosition{}
-	for posKey, posInfo := range Positions {
-		owner, tickLower, tickUpper := posKeyDivide(posKey)
+
+	Positions.Iterate("", "", func(key string, value interface{}) bool {
+		position := value.(PositionInfo)
+
+		owner, tickLower, tickUpper := posKeyDivide(key)
 
 		rpcPositions = append(rpcPositions, RpcPosition{
 			Owner:      owner,
 			TickLower:  tickLower,
 			TickUpper:  tickUpper,
-			Liquidity:  posInfo.liquidity.ToString(),
-			Token0Owed: posInfo.tokensOwed0.ToString(),
-			Token1Owed: posInfo.tokensOwed1.ToString(),
+			Liquidity:  position.liquidity.ToString(),
+			Token0Owed: position.tokensOwed0.ToString(),
+			Token1Owed: position.tokensOwed1.ToString(),
 		})
-	}
+
+		return true
+	})
+
 	rpcPool.Positions = rpcPositions
 
 	return rpcPool
