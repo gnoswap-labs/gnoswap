@@ -332,38 +332,7 @@ func Swap(
 
 		// shift tick if we reached the next price
 		if state.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
-			// if the tick is initialized, run the tick transition
-			if step.initialized {
-				var fee0, fee1 *u256.Uint
-
-				// check for the placeholder value, which we replace with the actual value the first time the swap crosses an initialized tick
-				if zeroForOne {
-					fee0 = state.feeGrowthGlobalX128
-					fee1 = pool.feeGrowthGlobal1X128
-				} else {
-					fee0 = pool.feeGrowthGlobal0X128
-					fee1 = state.feeGrowthGlobalX128
-				}
-
-				liquidityNet := pool.tickCross(
-					step.tickNext,
-					fee0,
-					fee1,
-				)
-
-				// if we're moving leftward, we interpret liquidityNet as the opposite sign
-				if zeroForOne {
-					liquidityNet = i256.Zero().Neg(liquidityNet)
-				}
-
-				state.liquidity = liquidityMathAddDelta(state.liquidity, liquidityNet)
-			}
-
-			if zeroForOne {
-				state.tick = step.tickNext - 1
-			} else {
-				state.tick = step.tickNext
-			}
+			tickTransition(step, zeroForOne, state, pool)
 		} else if !(state.sqrtPriceX96.Eq(step.sqrtPriceStartX96)) {
 			// recompute unless we're on a lower tick boundary (i.e. already transitioned ticks), and haven't moved
 			state.tick = common.TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
@@ -408,21 +377,7 @@ func Swap(
 	}
 
 	// actual swap
-	if zeroForOne {
-		// payer > POOL
-		pool.transferFromAndVerify(payer, consts.POOL_ADDR, pool.token0Path, amount0, true)
-
-		// POOL > recipient
-		pool.transferAndVerify(recipient, pool.token1Path, amount1, false)
-
-	} else {
-		// payer > POOL
-		pool.transferFromAndVerify(payer, consts.POOL_ADDR, pool.token1Path, amount1, false)
-
-		// POOL > recipient
-		pool.transferAndVerify(recipient, pool.token0Path, amount0, true)
-
-	}
+	pool.swapTransfers(zeroForOne, payer, recipient, amount0, amount1)
 
 	prevAddr, prevRealm := getPrev()
 
@@ -446,6 +401,64 @@ func Swap(
 
 	pool.slot0.unlocked = true
 	return amount0.ToString(), amount1.ToString()
+}
+
+func (pool *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
+	var targetTokenPath string
+	var amount *i256.Int
+	var isToken0 bool
+
+	switch zeroForOne {
+	case true:
+		targetTokenPath = pool.token0Path
+		amount = amount0
+		isToken0 = true
+	case false:
+		targetTokenPath = pool.token1Path
+		amount = amount1
+		isToken0 = false
+	}
+
+	// payer -> POOL -> recipient
+	pool.transferFromAndVerify(payer, consts.POOL_ADDR, targetTokenPath, amount, isToken0)
+	pool.transferAndVerify(recipient, targetTokenPath, amount, !isToken0)
+}
+
+// tickTransition handles the transition between ticks during a swap
+func tickTransition(step StepComputations, zeroForOne bool, state SwapState, pool *Pool) {
+	// if the tick is initialized, run the tick transition
+	if step.initialized {
+		var fee0, fee1 *u256.Uint
+
+		// check for the placeholder value, which we replace with the actual value
+		// the first time the swap crosses an initialized tick
+		if zeroForOne {
+			fee0 = state.feeGrowthGlobalX128
+			fee1 = pool.feeGrowthGlobal1X128
+		} else {
+			fee0 = pool.feeGrowthGlobal0X128
+			fee1 = state.feeGrowthGlobalX128
+		}
+
+		// if we're moving leftward, we interpret liquidityNet as the opposite sign
+		liquidityNet := pool.tickCross(
+			step.tickNext,
+			fee0,
+			fee1,
+		)
+
+		if zeroForOne {
+			liquidityNet = i256.Zero().Neg(liquidityNet)
+		}
+
+		state.liquidity = liquidityMathAddDelta(state.liquidity, liquidityNet)
+	}
+
+	if zeroForOne {
+		state.tick = step.tickNext - 1
+	} else {
+		state.tick = step.tickNext
+	}
 }
 
 // SetFeeProtocolByAdmin sets the fee protocol for all pools
