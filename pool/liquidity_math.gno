@@ -22,25 +22,27 @@ func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 		))
 	}
 
-	if y.Lt(i256.Zero()) {
-		z := new(u256.Uint).Sub(x, y.Abs())
+	absDelta := y.Abs()
+	var z *u256.Uint
 
-		if !(z.Lt(x)) {
+	// Subtract or add based on the sign of y
+	if y.Lt(i256.Zero()) {
+		z = new(u256.Uint).Sub(x, absDelta)
+		if z.Gte(x) { // z must be < x
 			panic(addDetailToError(
 				errLiquidityCalculation,
 				ufmt.Sprintf("liquidity_math.gno__liquidityMathAddDelta() || LS(z must be < x) (x: %s, y: %s, z:%s)", x.ToString(), y.ToString(), z.ToString()),
 			))
 		}
-		return z // z < x
+	} else {
+		z = new(u256.Uint).Add(x, absDelta)
+		if z.Lt(x) { // z must be >= x
+			panic(addDetailToError(
+				errLiquidityCalculation,
+				ufmt.Sprintf("liquidity_math.gno__liquidityMathAddDelta() || LA(z must be >= x) (x: %s, y: %s, z:%s)", x.ToString(), y.ToString(), z.ToString()),
+			))
+		}
 	}
 
-	z := new(u256.Uint).Add(x, y.Abs())
-
-	if !(z.Gte(x)) {
-		panic(addDetailToError(
-			errLiquidityCalculation,
-			ufmt.Sprintf("liquidity_math.gno__liquidityMathAddDelta() || LA(z must be >= x) (x: %s, y: %s, z:%s)", x.ToString(), y.ToString(), z.ToString()),
-		))
-	}
-	return z // z >= x
+	return z
 }
