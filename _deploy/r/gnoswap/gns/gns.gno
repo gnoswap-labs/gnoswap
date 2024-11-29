@@ -20,7 +20,7 @@ const MAXIMUM_SUPPLY = uint64(1_000_000_000_000_000) // 1B
 var (
 	banker *grc20.Teller
 	admin  *ownable.Ownable
-	token  grc20.Token
+	token  *grc20.Token
 	ledger *grc20.PrivateLedger
 )
 
@@ -31,7 +31,7 @@ var (
 
 func init() {
 	admin = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
-	_, ledger = grc20.NewToken("Gnoswap", "GNS", 6)
+	token, ledger = grc20.NewToken("Gnoswap", "GNS", 6)
 
 	ledger.Mint(admin.Owner(), 100_000_000_000_000) // 100_000_000 GNS ≈ 0.1B
 
