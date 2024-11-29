@@ -1,9 +1,10 @@
-package staker
+package pool
 
 import (
 	"std"
 	"strings"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
@@ -21,16 +22,19 @@ type GRC20Interface interface {
 }
 
 var (
-	registered = make(map[string]GRC20Interface)
+	registered = avl.NewTree()
 	locked     = false // mutex
 )
 
 // GetRegisteredTokens returns a list of all registered tokens
 func GetRegisteredTokens() []string {
-	tokens := make([]string, 0, len(registered))
-	for k := range registered {
-		tokens = append(tokens, k)
-	}
+	tokens := make([]string, 0, registered.Size())
+
+	registered.Iterate("", "", func(key string, value interface{}) bool {
+		tokens = append(tokens, key)
+		return false
+	})
+
 	return tokens
 }
 
@@ -38,69 +42,60 @@ func GetRegisteredTokens() []string {
 func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	prevAddr := std.PrevRealm().Addr()
 	prevPath := std.PrevRealm().PkgPath()
-	if !(prevAddr == consts.TOKEN_REGISTER || prevPath == consts.INIT_REGISTER_PATH || strings.HasPrefix(prevPath, "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5")) {
+	if !(prevAddr == consts.TOKEN_REGISTER || prevPath == consts.INIT_REGISTER_PATH || strings.HasPrefix(prevPath, consts.TOKEN_REGISTER_NAMESPACE)) {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("token_register.gno__RegisterGRC20Interface() || only register(%s) can register token, called from %s", consts.TOKEN_REGISTER, prevAddr),
+			ufmt.Sprintf("only register(%s) can register token, called from %s", consts.TOKEN_REGISTER, prevAddr),
 		))
 	}
 
 	pkgPath = handleNative(pkgPath)
 
-	_, found := registered[pkgPath]
-	if found {
+	if registered.Has(pkgPath) {
 		panic(addDetailToError(
 			errAlreadyRegistered,
-			ufmt.Sprintf("token_register.gno__RegisterGRC20Interface() || token(%s) already registered", pkgPath),
+			ufmt.Sprintf("token(%s) already registered", pkgPath),
 		))
 	}
 
-	registered[pkgPath] = igrc20
+	registered.Set(pkgPath, igrc20)
 }
 
 // UnregisterGRC20Interface unregisters a GRC20 token interface
 func UnregisterGRC20Interface(pkgPath string) {
 	if err := common.SatisfyCond(isUserCall()); err != nil {
-		panic(err)
+		panic(addDetailToError(
+			err,
+			ufmt.Sprintf("is not user call"),
+		))
 	}
 
 	caller := std.PrevRealm().Addr()
 	if err := common.TokenRegisterOnly(caller); err != nil {
-		panic(err)
+		panic(addDetailToError(
+			err,
+			ufmt.Sprintf("unauthorized address to unregister"),
+		))
 	}
 
 	pkgPath = handleNative(pkgPath)
 
-	_, found := registered[pkgPath]
-	if found {
-		delete(registered, pkgPath)
+	if registered.Has(pkgPath) {
+		registered.Remove(pkgPath)
 	}
 }
 
 func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool {
 	pkgPath = handleNative(pkgPath)
 
-	_, found := registered[pkgPath]
-	if !found {
-		panic(addDetailToError(
-			errNotRegistered,
-			ufmt.Sprintf("token_register.gno__transferByRegisterCall() || token(%s) not registered", pkgPath),
-		))
-	}
+	mustRegistered(pkgPath)
+	mustUnlocked()
 
-	if !locked {
-		locked = true
-		registered[pkgPath].Transfer()(pusers.AddressOrName(to), amount)
-
-		defer func() {
-			locked = false
-		}()
-	} else {
-		panic(addDetailToError(
-			errLocked,
-			ufmt.Sprintf("token_register.gno__transferByRegisterCall() || expected locked(%t) to be false", locked),
-		))
-	}
+	locked = true
+	getToken(pkgPath).Transfer()(pusers.AddressOrName(to), amount)
+	defer func() {
+		locked = false
+	}()
 
 	return true
 }
@@ -108,57 +103,33 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uint64) bool {
 	pkgPath = handleNative(pkgPath)
 
-	_, found := registered[pkgPath]
-	if !found {
-		panic(addDetailToError(
-			errNotRegistered,
-			ufmt.Sprintf("token_register.gno__transferFromByRegisterCall() || token(%s) not registered", pkgPath),
-		))
-	}
+	mustRegistered(pkgPath)
+	mustUnlocked()
 
-	if !locked {
-		locked = true
-		registered[pkgPath].TransferFrom()(pusers.AddressOrName(from), pusers.AddressOrName(to), amount)
+	locked = true
+	getToken(pkgPath).TransferFrom()(pusers.AddressOrName(from), pusers.AddressOrName(to), amount)
+	defer func() {
+		locked = false
+	}()
 
-		defer func() {
-			locked = false
-		}()
-	} else {
-		panic(addDetailToError(
-			errLocked,
-			ufmt.Sprintf("token_register.gno__transferFromByRegisterCall() || expected locked(%t) to be false", locked),
-		))
-	}
 	return true
 }
 
 func balanceOfByRegisterCall(pkgPath string, owner std.Address) uint64 {
 	pkgPath = handleNative(pkgPath)
 
-	_, found := registered[pkgPath]
-	if !found {
-		panic(addDetailToError(
-			errNotRegistered,
-			ufmt.Sprintf("token_register.gno__balanceOfByRegisterCall() || token(%s) not registered", pkgPath),
-		))
-	}
+	mustRegistered(pkgPath)
 
-	balance := registered[pkgPath].BalanceOf()(pusers.AddressOrName(owner))
+	balance := getToken(pkgPath).BalanceOf()(pusers.AddressOrName(owner))
 	return balance
 }
 
 func approveByRegisterCall(pkgPath string, spender std.Address, amount uint64) bool {
 	pkgPath = handleNative(pkgPath)
 
-	_, found := registered[pkgPath]
-	if !found {
-		panic(addDetailToError(
-			errNotRegistered,
-			ufmt.Sprintf("token_register.gno__approveByRegisterCall() || token(%s) not registered", pkgPath),
-		))
-	}
+	mustRegistered(pkgPath)
 
-	registered[pkgPath].Approve()(pusers.AddressOrName(spender), amount)
+	getToken(pkgPath).Approve()(pusers.AddressOrName(spender), amount)
 
 	return true
 }
@@ -169,4 +140,31 @@ func handleNative(pkgPath string) string {
 	}
 
 	return pkgPath
+}
+
+func getToken(pkgPath string) GRC20Interface {
+	pkgPath = handleNative(pkgPath)
+
+	itoken, _ := registered.Get(pkgPath)
+	return itoken.(GRC20Interface)
+}
+
+func mustRegistered(pkgPath string) {
+	pkgPath = handleNative(pkgPath)
+
+	if !registered.Has(pkgPath) {
+		panic(addDetailToError(
+			errNotRegistered,
+			ufmt.Sprintf("token(%s) not registered", pkgPath),
+		))
+	}
+}
+
+func mustUnlocked() {
+	if locked {
+		panic(addDetailToError(
+			errLocked,
+			ufmt.Sprintf("expected locked(%t) to be false", locked),
+		))
+	}
 }
