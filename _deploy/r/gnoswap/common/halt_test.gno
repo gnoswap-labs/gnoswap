@@ -28,7 +28,7 @@ func TestSetHaltByAdmin(t *testing.T) {
 	t.Run("with non-admin privilege, panics", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			`[GNOSWAP-COMMON-001] caller has no permission || halt.gno__SetHaltByAdmin() || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can set halt, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
+			`[GNOSWAP-COMMON-001] caller has no permission || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can set halt, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
 			func() { SetHaltByAdmin(false) },
 		)
 	})
@@ -37,7 +37,7 @@ func TestSetHaltByAdmin(t *testing.T) {
 		std.TestSetRealm(govRealm)
 		uassert.PanicsWithMessage(
 			t,
-			`[GNOSWAP-COMMON-001] caller has no permission || halt.gno__SetHaltByAdmin() || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can set halt, called from g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd`,
+			`[GNOSWAP-COMMON-001] caller has no permission || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can set halt, called from g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd`,
 			func() { SetHaltByAdmin(false) },
 		)
 	})
@@ -56,7 +56,7 @@ func TestSetHalt(t *testing.T) {
 	t.Run("with non-governance privilege, panics", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			`[GNOSWAP-COMMON-001] caller has no permission || halt.gno__SetHalt() || only governance(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) can set halt, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
+			`[GNOSWAP-COMMON-001] caller has no permission || only governance(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) can set halt, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
 			func() { SetHalt(false) },
 		)
 	})
@@ -65,7 +65,7 @@ func TestSetHalt(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 		uassert.PanicsWithMessage(
 			t,
-			`[GNOSWAP-COMMON-001] caller has no permission || halt.gno__SetHalt() || only governance(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) can set halt, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d`,
+			`[GNOSWAP-COMMON-001] caller has no permission || only governance(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) can set halt, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d`,
 			func() { SetHalt(false) },
 		)
 	})
