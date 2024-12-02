@@ -9,9 +9,9 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 )
 
-// tickTickSpacingToMaxLiquidityPerTick calculates the maximum liquidity
+// calculateMaxLiquidityPerTick calculates the maximum liquidity
 // per tick for a given tick spacing.
-func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
+func calculateMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	minTick := (consts.MIN_TICK / tickSpacing) * tickSpacing
 	maxTick := (consts.MAX_TICK / tickSpacing) * tickSpacing
 	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
@@ -19,9 +19,9 @@ func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	return new(u256.Uint).Div(u256.MustFromDecimal(consts.MAX_UINT128), u256.NewUint(numTicks))
 }
 
-// tickGetFeeGrowthInside calculates the fee growth inside a tick range,
+// calculateFeeGrowthInside calculates the fee growth inside a tick range,
 // and returns the fee growth inside for both tokens.
-func (pool *Pool) tickGetFeeGrowthInside(
+func (pool *Pool) calculateFeeGrowthInside(
 	tickLower int32,
 	tickUpper int32,
 	tickCurrent int32,
