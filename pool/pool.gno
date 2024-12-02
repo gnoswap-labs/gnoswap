@@ -202,14 +202,12 @@ func Swap(
 		}
 	}
 
-	// --- foo == "0"인지 검사하는 로직이 반복됨. 함수로 추출
 	if _amountSpecified == "0" {
 		panic(addDetailToError(
 			errInvalidSwapAmount,
 			ufmt.Sprintf("pool.gno__Swap() || amountSpecified == 0"),
 		))
 	}
-	// ---
 
 	amountSpecified := i256.MustFromDecimal(_amountSpecified)
 	sqrtPriceLimitX96 := u256.MustFromDecimal(_sqrtPriceLimitX96)
@@ -493,10 +491,7 @@ func SetFeeProtocolByAdmin(
 // Only governance contract can execute this function via proposal
 // Also it will be applied to new created pools
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#setfeeprotocol
-func SetFeeProtocol(
-	feeProtocol0 uint8,
-	feeProtocol1 uint8,
-) {
+func SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
 	caller := std.PrevRealm().Addr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err)
@@ -515,22 +510,15 @@ func SetFeeProtocol(
 	)
 }
 
-func setFeeProtocol(
-	feeProtocol0 uint8,
-	feeProtocol1 uint8,
-) uint8 {
+func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) uint8 {
 	common.IsHalted()
 
-	// --- cond 함수로 만들어야 함 
-	fee0Cond := feeProtocol0 == 0 || (feeProtocol0 >= 4 && feeProtocol0 <= 10)
-	fee1Cond := feeProtocol1 == 0 || (feeProtocol1 >= 4 && feeProtocol1 <= 10)
-	if !(fee0Cond && fee1Cond) {
+	if err := validateFeeProtocol(feeProtocol0, feeProtocol1); err != nil {
 		panic(addDetailToError(
-			errInvalidProtocolFeePct,
+			err,
 			ufmt.Sprintf("pool.gno__setFeeProtocol() || expected (feeProtocol0(%d) == 0 || (feeProtocol0(%d) >= 4 && feeProtocol0(%d) <= 10)) && (feeProtocol1(%d) == 0 || (feeProtocol1(%d) >= 4 && feeProtocol1(%d) <= 10))", feeProtocol0, feeProtocol0, feeProtocol0, feeProtocol1, feeProtocol1, feeProtocol1),
 		))
 	}
-	// ---
 
 	newFee := feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
 
@@ -543,6 +531,17 @@ func setFeeProtocol(
 	slot0FeeProtocol = newFee
 
 	return newFee
+}
+
+func validateFeeProtocol(feeProtocol0, feeProtocol1 uint8) error {
+    if !isValidFeeProtocolValue(feeProtocol0) || !isValidFeeProtocolValue(feeProtocol1) {
+        return errInvalidProtocolFeePct
+    }
+    return nil
+}
+
+func isValidFeeProtocolValue(value uint8) bool {
+    return value == 0 || (value >= 4 && value <= 10)
 }
 
 // CollectProtocolByAdmin collects protocol fees for the given pool that accumulated while it was being used for swap
@@ -701,6 +700,7 @@ func (pool *Pool) transferAndVerify(
 	pool.updatePoolBalance(absAmount, isToken0) // abs
 }
 
+// token0, 1은 파라미터로 넘기는게 좋아보임. 이 경우 pool을 넘겨받지 않아도 됨.
 func (pool *Pool) validatePoolBalance(amount *u256.Uint, isToken0 bool) {
 	if isToken0 {
 		if pool.balances.token0.Lt(amount) {
@@ -723,29 +723,32 @@ func (pool *Pool) validatePoolBalance(amount *u256.Uint, isToken0 bool) {
 }
 
 func (pool *Pool) updatePoolBalance(amount *u256.Uint, isToken0 bool) {
-	var overflow bool
-	
-	if isToken0 {
-		pool.balances.token0, overflow = new(u256.Uint).SubOverflow(pool.balances.token0, amount)
-		if overflow {
-			panic(addDetailToError(
-				errTransferFailed,
-				ufmt.Sprintf("pool.gno__transferAndVerify() || cannot decrease, pool.balances.token0(%s) - amount(%s)", 
-					pool.balances.token0.ToString(), amount.ToString()),
-			))
-		}
-		return
-	}
+    var overflow bool
+    var newBalance *u256.Uint
 
-	pool.balances.token1, overflow = new(u256.Uint).SubOverflow(pool.balances.token1, amount)
-	if pool.balances.token1.Lt(u256.Zero()) {
-		panic(addDetailToError(
-			errTransferFailed,
-			ufmt.Sprintf("pool.gno__transferAndVerify() || cannot decrease, pool.balances.token1(%s) - amount(%s)", 
-				pool.balances.token1.ToString(), amount.ToString()),
-		))
-	}
-	return
+    if isToken0 {
+        newBalance, overflow = new(u256.Uint).SubOverflow(pool.balances.token0, amount)
+        if overflow || newBalance.Lt(u256.Zero()) {
+            panic(addDetailToError(
+                errTransferFailed,
+                ufmt.Sprintf("pool.gno__transferAndVerify() || cannot decrease, pool.balances.token0(%s) - amount(%s)", 
+                    pool.balances.token0.ToString(), amount.ToString()),
+            ))
+        }
+        pool.balances.token0 = newBalance
+        return
+    }
+
+    newBalance, overflow = new(u256.Uint).SubOverflow(pool.balances.token1, amount)
+    if overflow || newBalance.Lt(u256.Zero()) {
+        panic(addDetailToError(
+            errTransferFailed,
+            ufmt.Sprintf("pool.gno__transferAndVerify() || cannot decrease, pool.balances.token1(%s) - amount(%s)", 
+                pool.balances.token1.ToString(), amount.ToString()),
+        ))
+    }
+    pool.balances.token1 = newBalance
+    return
 }
 
 func (pool *Pool) transferFromAndVerify(
@@ -754,7 +757,6 @@ func (pool *Pool) transferFromAndVerify(
 	amount *i256.Int,
 	isToken0 bool,
 ) {
-	// abs
 	absAmount := amount.Abs()
 	amountUint64 := checkAmountRange(absAmount)
 
@@ -765,11 +767,11 @@ func (pool *Pool) transferFromAndVerify(
 	// - token is not registered
 	transferFromByRegisterCall(tokenPath, from, to, amountUint64)
 
-	// update pool.balances
+	// update pool balances
 	if isToken0 {
-		pool.balances.token0 = new(u256.Uint).Add(pool.balances.token0, amount.Abs())
+		pool.balances.token0 = new(u256.Uint).Add(pool.balances.token0, absAmount)
 	} else {
-		pool.balances.token1 = new(u256.Uint).Add(pool.balances.token1, amount.Abs())
+		pool.balances.token1 = new(u256.Uint).Add(pool.balances.token1, absAmount)
 	}
 }
 
