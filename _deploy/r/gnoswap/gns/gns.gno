@@ -9,6 +9,7 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
+	"gno.land/r/demo/grc20reg"
 	"gno.land/r/demo/users"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -20,7 +21,7 @@ const MAXIMUM_SUPPLY = uint64(1_000_000_000_000_000) // 1B
 var (
 	banker *grc20.Teller
 	admin  *ownable.Ownable
-	token  *grc20.Token
+	Token  *grc20.Token
 	ledger *grc20.PrivateLedger
 )
 
@@ -31,9 +32,12 @@ var (
 
 func init() {
 	admin = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
-	token, ledger = grc20.NewToken("Gnoswap", "GNS", 6)
+	Token, ledger = grc20.NewToken("Gnoswap", "GNS", 6)
 
 	ledger.Mint(admin.Owner(), 100_000_000_000_000) // 100_000_000 GNS ≈ 0.1B
+
+	getter := func() *grc20.Token { return Token }
+	grc20reg.Register(getter, "")
 
 	amountToEmission = MAXIMUM_SUPPLY - uint64(100_000_000_000_000)
 
