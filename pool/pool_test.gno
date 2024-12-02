@@ -93,120 +93,45 @@ func TestTransferAndVerify(t *testing.T) {
             name        string
             amount      *u256.Uint
             isToken0    bool
-            shouldPanic bool
+            expectedError bool
         }{
             {
 				name: "must success for negative amount",
                 amount:      u256.NewUint(500),
                 isToken0:    true,
-                shouldPanic: false,
+                expectedError: false,
             },
             {
 				name: "must panic for insufficient token0 balance",
                 amount:      u256.NewUint(1500),
                 isToken0:    true,
-                shouldPanic: true,
+                expectedError: true,
             },
             {
 				name: "must success for negative amount",
                 amount:      u256.NewUint(500),
                 isToken0:    false,
-                shouldPanic: false,
+                expectedError: false,
             },
             {
 				name: "must panic for insufficient token1 balance",
                 amount:      u256.NewUint(1500),
                 isToken0:    false,
-                shouldPanic: true,
+                expectedError: true,
             },
         }
 
         for _, tt := range tests {
             t.Run(tt.name, func(t *testing.T) {
-                defer func() {
-                    r := recover()
-                    if tt.shouldPanic && r == nil {
-                        t.Error("expected panic but no panic")
-                    }
-                    if !tt.shouldPanic && r != nil {
-                        t.Errorf("unexpected panic: %v", r)
-                    }
-                }()
-                
-                pool.validatePoolBalance(tt.amount, tt.isToken0)
-            })
-        }
-    })
+				token0 := pool.balances.token0
+				token1 := pool.balances.token1
 
-    t.Run("updatePoolBalance", func(t *testing.T) {
-        tests := []struct {
-            name           string
-            initialBalance *u256.Uint
-            amount        *u256.Uint
-            isToken0      bool
-            expectedBalance *u256.Uint
-            shouldPanic    bool
-        }{
-            {
-				name: "must success for negative amount",
-                initialBalance: u256.NewUint(1000),
-                amount:        u256.NewUint(300),
-                isToken0:      true,
-                expectedBalance: u256.NewUint(700),
-                shouldPanic:    false,
-            },
-            {
-				name: "must panic for overflow",
-                initialBalance: u256.NewUint(100),
-                amount:        u256.NewUint(200),
-                isToken0:      true,
-                expectedBalance: nil,
-                shouldPanic:    true,
-            },
-            {
-				name: "must success for negative amount",
-                initialBalance: u256.NewUint(1000),
-                amount:        u256.NewUint(300),
-                isToken0:      false,
-                expectedBalance: u256.NewUint(700),
-                shouldPanic:    false,
-            },
-        }
-
-        for _, tt := range tests {
-            t.Run(tt.name, func(t *testing.T) {
-                testPool := &Pool{
-                    balances: Balances{
-                        token0: tt.initialBalance,
-                        token1: tt.initialBalance,
-                    },
-                }
-
-                defer func() {
-                    r := recover()
-                    if tt.shouldPanic && r == nil {
-                        t.Error("expected panic but no panic")
-                    }
-                    if !tt.shouldPanic && r != nil {
-                        t.Errorf("unexpected panic: %v", r)
-                    }
-                }()
-
-                testPool.updatePoolBalance(tt.amount, tt.isToken0)
-                if !tt.shouldPanic {
-                    var actualBalance *u256.Uint
-                    if tt.isToken0 {
-                        actualBalance = testPool.balances.token0
-                    } else {
-                        actualBalance = testPool.balances.token1
-                    }
-
-                    if !actualBalance.Eq(tt.expectedBalance) {
-                        t.Errorf("expected balance: %v, actual balance: %v", 
-                            tt.expectedBalance.ToString(), 
-                            actualBalance.ToString())
-                    }
-                }
+                err := validatePoolBalance(token0, token1, tt.amount, tt.isToken0)
+				if err != nil {
+					if !tt.expectedError {
+						t.Errorf("unexpected error: %v", err)
+					}
+				}
             })
         }
     })
@@ -214,64 +139,58 @@ func TestTransferAndVerify(t *testing.T) {
 
 func TestUpdatePoolBalance(t *testing.T) {
     tests := []struct {
-        name           string
-        initialToken0  *u256.Uint
-        initialToken1  *u256.Uint
-        amount         *u256.Uint
-        isToken0       bool
-        expectedToken0 *u256.Uint
-        expectedToken1 *u256.Uint
-        shouldPanic    bool
+        name          string
+        initialToken0 *u256.Uint 
+        initialToken1 *u256.Uint
+        amount        *u256.Uint
+        isToken0      bool
+        expectedBal   *u256.Uint
+        expectErr     bool
     }{
         {
 			name: "normal token0 decrease",
-            initialToken0:  u256.NewUint(1000),
-            initialToken1:  u256.NewUint(2000),
-            amount:         u256.NewUint(300),
-            isToken0:       true,
-            expectedToken0: u256.NewUint(700),
-            expectedToken1: u256.NewUint(2000),
-            shouldPanic:    false,
+            initialToken0: u256.NewUint(1000),
+            initialToken1: u256.NewUint(2000),
+            amount: u256.NewUint(300),
+            isToken0: true,
+            expectedBal: u256.NewUint(700),
+            expectErr: false,
         },
         {
 			name: "normal token1 decrease",
-            initialToken0:  u256.NewUint(1000),
-            initialToken1:  u256.NewUint(2000),
-            amount:         u256.NewUint(500),
-            isToken0:       false,
-            expectedToken0: u256.NewUint(1000),
-            expectedToken1: u256.NewUint(1500),
-            shouldPanic:    false,
+            initialToken0: u256.NewUint(1000),
+            initialToken1: u256.NewUint(2000), 
+            amount: u256.NewUint(500),
+            isToken0: false,
+            expectedBal: u256.NewUint(1500),
+            expectErr: false,
         },
         {
 			name: "insufficient token0 balance",
-            initialToken0:  u256.NewUint(100),
-            initialToken1:  u256.NewUint(2000),
-            amount:         u256.NewUint(200),
-            isToken0:       true,
-            expectedToken0: nil,
-            expectedToken1: nil,
-            shouldPanic:    true,
+            initialToken0: u256.NewUint(100),
+            initialToken1: u256.NewUint(2000),
+            amount: u256.NewUint(200),
+            isToken0: true,
+            expectedBal: nil,
+            expectErr: true,
         },
         {
 			name: "insufficient token1 balance",
-            initialToken0:  u256.NewUint(1000),
-            initialToken1:  u256.NewUint(100),
-            amount:         u256.NewUint(200),
-            isToken0:       false,
-            expectedToken0: nil,
-            expectedToken1: nil,
-            shouldPanic:    true,
+            initialToken0: u256.NewUint(1000),
+            initialToken1: u256.NewUint(100),
+            amount: u256.NewUint(200),
+            isToken0: false,
+            expectedBal: nil,
+            expectErr: true,
         },
         {
-			name: "0 value handling for token0",
-            initialToken0:  u256.NewUint(1000),
-            initialToken1:  u256.NewUint(2000),
-            amount:         u256.NewUint(0),
-            isToken0:       true,
-            expectedToken0: u256.NewUint(1000),
-            expectedToken1: u256.NewUint(2000),
-            shouldPanic:    false,
+			name: "zero value handling",
+            initialToken0: u256.NewUint(1000),
+            initialToken1: u256.NewUint(2000),
+            amount: u256.NewUint(0),
+            isToken0: true,
+            expectedBal: u256.NewUint(1000),
+            expectErr: false,
         },
     }
 
@@ -284,29 +203,25 @@ func TestUpdatePoolBalance(t *testing.T) {
                 },
             }
 
-            defer func() {
-                r := recover()
-                if tt.shouldPanic && r == nil {
-                    t.Error("expected panic but no panic")
-                }
-                if !tt.shouldPanic && r != nil {
-                    t.Errorf("unexpected panic: %v", r)
-                }
-            }()
+			newBal, err := updatePoolBalance(tt.initialToken0, tt.initialToken1, tt.amount, tt.isToken0)
 
-            pool.updatePoolBalance(tt.amount, tt.isToken0)
+            if tt.expectErr {
+                if err == nil {
+                    t.Errorf("%s: expected error but no error", tt.name)
+                }
+                return
+            }
+            if err != nil {
+                t.Errorf("%s: unexpected error: %v", tt.name, err)
+                return
+            }
 
-            if !tt.shouldPanic {
-                if !pool.balances.token0.Eq(tt.expectedToken0) {
-                    t.Errorf("token0 balance mismatch. expected: %s, actual: %s",
-                        tt.expectedToken0.ToString(),
-                        pool.balances.token0.ToString())
-                }
-                if !pool.balances.token1.Eq(tt.expectedToken1) {
-                    t.Errorf("token1 balance mismatch. expected: %s, actual: %s",
-                        tt.expectedToken1.ToString(),
-                        pool.balances.token1.ToString())
-                }
+            if !newBal.Eq(tt.expectedBal) {
+                t.Errorf("%s: balance mismatch, expected: %s, actual: %s", 
+                    tt.name,
+                    tt.expectedBal.ToString(),
+                    newBal.ToString(),
+                )
             }
         })
     }
