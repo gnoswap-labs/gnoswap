@@ -13,6 +13,7 @@ import (
 
 // withdrawalFee is the fee that is charged when a user withdraws their collected fees
 var (
+	BASIS_POINTS = uint64(10000) // 100%
 	withdrawalFee = uint64(100) // 1%
 )
 
@@ -121,8 +122,8 @@ func SetWithdrawalFee(fee uint64) {
 func setWithdrawalFee(fee uint64) {
 	common.IsHalted()
 
-	// 10000 (bps) = 100%
-	if fee > 10000 {
+	// fee must in range 0 ~ 100%
+	if fee > BASIS_POINTS {
 		panic(addDetailToError(
 			errInvalidWithdrawalFeePct,
 			ufmt.Sprintf("withdrawal_fee.gno__setWithdrawalFee() || fee(%d) must be in range 0 ~ 10000", fee),
