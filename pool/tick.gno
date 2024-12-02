@@ -31,8 +31,8 @@ func (pool *Pool) tickGetFeeGrowthInside(
 	lower := pool.getTick(tickLower)
 	upper := pool.getTick(tickUpper)
 
-	feeGrowthBelow0X128, feeGrowthBelow1X128 := getFeeGrowthBelowX128(tickLower, tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128, lower, upper)
-	feeGrowthAbove0X128, feeGrowthAbove1X128 := getFeeGrowthAboveX128(tickLower, tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128, lower, upper)
+	feeGrowthBelow0X128, feeGrowthBelow1X128 := getFeeGrowthX128(tickLower, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128, lower, true)
+	feeGrowthAbove0X128, feeGrowthAbove1X128 := getFeeGrowthX128(tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, false)
 
 	feeGrowthInside0X128 := new(u256.Uint).Sub(new(u256.Uint).Sub(feeGrowthGlobal0X128, feeGrowthBelow0X128), feeGrowthAbove0X128)
 	feeGrowthInside1X128 := new(u256.Uint).Sub(new(u256.Uint).Sub(feeGrowthGlobal1X128, feeGrowthBelow1X128), feeGrowthAbove1X128)
@@ -113,32 +113,22 @@ func (pool *Pool) getTick(tick int32) TickInfo {
 	return tickInfo
 }
 
-func getFeeGrowthBelowX128(
-	tickLower, tickUpper, tickCurrent int32,
+func getFeeGrowthX128(
+	tickCompare, tickCurrent int32,
 	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
-	lowerTick, upperTick TickInfo,
+	tick TickInfo,
+	lower bool,
 ) (*u256.Uint, *u256.Uint) {
-	if tickCurrent >= tickLower {
-		return lowerTick.feeGrowthOutside0X128, lowerTick.feeGrowthOutside1X128
+	if lower && tickCurrent >= tickCompare {
+		return tick.feeGrowthOutside0X128, tick.feeGrowthOutside1X128
 	}
 
-	below0X128 := new(u256.Uint).Sub(feeGrowthGlobal0X128, lowerTick.feeGrowthOutside0X128)
-	below1X128 := new(u256.Uint).Sub(feeGrowthGlobal1X128, lowerTick.feeGrowthOutside1X128)
-
-	return below0X128, below1X128
-}
-
-func getFeeGrowthAboveX128(
-	tickLower, tickUpper, tickCurrent int32,
-	feeGrowthGlobal0X128, feeGrowthGlobal1X128 *u256.Uint,
-	lowerTick, upperTick TickInfo,
-) (*u256.Uint, *u256.Uint) {
-	if tickCurrent < tickUpper {
-		return upperTick.feeGrowthOutside0X128, upperTick.feeGrowthOutside1X128
+	if !lower && tickCurrent < tickCompare {
+		return tick.feeGrowthOutside0X128, tick.feeGrowthOutside1X128
 	}
 
-	above0X128 := new(u256.Uint).Sub(feeGrowthGlobal0X128, upperTick.feeGrowthOutside0X128)
-	above1X128 := new(u256.Uint).Sub(feeGrowthGlobal1X128, upperTick.feeGrowthOutside1X128)
+	growth0X128 := new(u256.Uint).Sub(feeGrowthGlobal0X128, tick.feeGrowthOutside0X128)
+	growth1X128 := new(u256.Uint).Sub(feeGrowthGlobal1X128, tick.feeGrowthOutside1X128)
 
-	return above0X128, above1X128
+	return growth0X128, growth1X128
 }
