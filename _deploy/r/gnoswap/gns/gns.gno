@@ -19,23 +19,18 @@ import (
 const MAXIMUM_SUPPLY = uint64(1_000_000_000_000_000) // 1B
 
 var (
-	banker *grc20.Teller
-	admin  *ownable.Ownable
-	Token  *grc20.Token
-	ledger *grc20.PrivateLedger
-)
-
-var (
 	lastMintedHeight int64
 	amountToEmission uint64
 )
 
+var (
+	Token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
+	UserTeller           = Token.CallerTeller()
+	owner                = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
+)
+
 func init() {
-	admin = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
-	Token, ledger = grc20.NewToken("Gnoswap", "GNS", 6)
-
-	ledger.Mint(admin.Owner(), 100_000_000_000_000) // 100_000_000 GNS ≈ 0.1B
-
+	privateLedger.Mint(owner.Owner(), 100_000_000_000_000) // 100_000_000 GNS ≈ 0.1B
 	getter := func() *grc20.Token { return Token }
 	grc20reg.Register(getter, "")
 
@@ -46,41 +41,39 @@ func init() {
 
 func GetAmountToEmission() uint64 { return amountToEmission }
 
-func TotalSupply() uint64 { return token.TotalSupply() }
+func TotalSupply() uint64 {
+	return UserTeller.TotalSupply()
+}
 
-func TotalMinted() uint64 { return token.TotalSupply() - uint64(100_000_000_000_000) }
+func TotalMinted() uint64 {
+	return UserTeller.TotalSupply() - uint64(100_000_000_000_000)
+}
 
 func BalanceOf(owner pusers.AddressOrName) uint64 {
 	ownerAddr := users.Resolve(owner)
-	return token.BalanceOf(ownerAddr)
+	return UserTeller.BalanceOf(ownerAddr)
 }
 
 func Allowance(owner, spender pusers.AddressOrName) uint64 {
 	ownerAddr := users.Resolve(owner)
 	spenderAddr := users.Resolve(spender)
-	return token.Allowance(ownerAddr, spenderAddr)
+	return UserTeller.Allowance(ownerAddr, spenderAddr)
 }
 
 func Transfer(to pusers.AddressOrName, amount uint64) {
-	common.IsHalted()
-
 	toAddr := users.Resolve(to)
-	checkErr(token.CallerTeller().Transfer(toAddr, amount))
+	checkErr(UserTeller.Transfer(toAddr, amount))
 }
 
 func Approve(spender pusers.AddressOrName, amount uint64) {
-	common.IsHalted()
-
 	spenderAddr := users.Resolve(spender)
-	checkErr(token.CallerTeller().Approve(spenderAddr, amount))
+	checkErr(UserTeller.Approve(spenderAddr, amount))
 }
 
 func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
-	common.IsHalted()
-
 	fromAddr := users.Resolve(from)
 	toAddr := users.Resolve(to)
-	checkErr(token.CallerTeller().TransferFrom(fromAddr, toAddr, amount))
+	checkErr(UserTeller.TransferFrom(fromAddr, toAddr, amount))
 }
 
 func Render(path string) string {
@@ -89,11 +82,11 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return token.RenderHome()
+		return Token.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := pusers.AddressOrName(parts[1])
 		ownerAddr := users.Resolve(owner)
-		balance := token.BalanceOf(ownerAddr)
+		balance := UserTeller.BalanceOf(ownerAddr)
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
@@ -150,7 +143,7 @@ func Mint(address pusers.AddressOrName) uint64 {
 		}
 	}
 
-	err := ledger.Mint(users.Resolve(address), amountToMint)
+	err := privateLedger.Mint(users.Resolve(address), amountToMint)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -158,6 +151,12 @@ func Mint(address pusers.AddressOrName) uint64 {
 	lastMintedHeight = nowHeight
 
 	return amountToMint
+}
+
+func Burn(from pusers.AddressOrName, amount uint64) {
+	owner.AssertCallerIsOwner()
+	fromAddr := users.Resolve(from)
+	checkErr(privateLedger.Burn(fromAddr, amount))
 }
 
 func checkAndHandleIfLastBlockOfHalvingYear(height int64, amount uint64) uint64 {
