@@ -13,53 +13,52 @@ import (
 )
 
 var (
-	admin  *ownable.Ownable
-	Token  *grc20.Token
-	ledger *grc20.PrivateLedger
+	Token, privateLedger = grc20.NewToken("Bar", "BAR", 6)
+	UserTeller           = Token.CallerTeller()
+	owner                = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
 )
 
 func init() {
-	admin = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
-	Token, ledger = grc20.NewToken("Bar", "BAR", 6)
-	ledger.Mint(admin.Owner(), 100_000_000_000_000)
-
+	privateLedger.Mint(owner.Owner(), 100_000_000_000_000)
 	getter := func() *grc20.Token { return Token }
 	grc20reg.Register(getter, "")
 }
 
-func TotalSupply() uint64 { return token.TotalSupply() }
+func TotalSupply() uint64 {
+	return UserTeller.TotalSupply()
+}
 
 func BalanceOf(owner pusers.AddressOrName) uint64 {
 	ownerAddr := users.Resolve(owner)
-	return token.BalanceOf(ownerAddr)
+	return UserTeller.BalanceOf(ownerAddr)
 }
 
 func Allowance(owner, spender pusers.AddressOrName) uint64 {
 	ownerAddr := users.Resolve(owner)
 	spenderAddr := users.Resolve(spender)
-	return token.Allowance(ownerAddr, spenderAddr)
+	return UserTeller.Allowance(ownerAddr, spenderAddr)
 }
 
 func Transfer(to pusers.AddressOrName, amount uint64) {
 	toAddr := users.Resolve(to)
-	checkErr(token.CallerTeller().Transfer(toAddr, amount))
+	checkErr(UserTeller.Transfer(toAddr, amount))
 }
 
 func Approve(spender pusers.AddressOrName, amount uint64) {
 	spenderAddr := users.Resolve(spender)
-	checkErr(token.CallerTeller().Approve(spenderAddr, amount))
+	checkErr(UserTeller.Approve(spenderAddr, amount))
 }
 
 func TransferFrom(from, to pusers.AddressOrName, amount uint64) {
 	fromAddr := users.Resolve(from)
 	toAddr := users.Resolve(to)
-	checkErr(token.CallerTeller().TransferFrom(fromAddr, toAddr, amount))
+	checkErr(UserTeller.TransferFrom(fromAddr, toAddr, amount))
 }
 
 func Burn(from pusers.AddressOrName, amount uint64) {
-	admin.AssertCallerIsOwner()
+	owner.AssertCallerIsOwner()
 	fromAddr := users.Resolve(from)
-	checkErr(ledger.Burn(fromAddr, amount))
+	checkErr(privateLedger.Burn(fromAddr, amount))
 }
 
 func Render(path string) string {
