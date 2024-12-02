@@ -7,19 +7,24 @@ import (
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
+
+	"gno.land/r/demo/grc20reg"
 	"gno.land/r/demo/users"
 )
 
 var (
 	admin  *ownable.Ownable
-	token  *grc20.Token
+	Token  *grc20.Token
 	ledger *grc20.PrivateLedger
 )
 
 func init() {
 	admin = ownable.NewWithAddress("g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d") // ADMIN
-	token, ledger = grc20.NewToken("Usd Coin", "USDC", 6)
+	Token, ledger = grc20.NewToken("Usd Coin", "USDC", 6)
 	ledger.Mint(admin.Owner(), 100_000_000_000_000)
+
+	getter := func() *grc20.Token { return Token }
+	grc20reg.Register(getter, "")
 }
 
 func TotalSupply() uint64 { return token.TotalSupply() }
