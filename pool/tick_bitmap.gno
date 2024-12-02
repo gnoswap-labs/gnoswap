@@ -86,29 +86,18 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 }
 
 func generateFullMaskForBitPos(bitPos uint) *u256.Uint {
-	// 1 << bitPos
-	one := u256.NewUint(1)
-	shifted := new(u256.Uint).Lsh(one, bitPos)
-
-	// (1 << bitPos) - 1
-	minusOne := new(u256.Uint).Sub(shifted, u256.NewUint(1))
-
 	// (1 << bitPos) - 1 + (1 << bitPos)
-	result := new(u256.Uint).Add(minusOne, shifted)
+	shifted := new(u256.Uint).Lsh(u256.One(), bitPos)
+	minusOne := new(u256.Uint).Sub(shifted, u256.One())
 
-	return result
+	return new(u256.Uint).Add(minusOne, shifted)
 }
 
 func generateMaskClearingBitsBelow(bitPos uint) *u256.Uint {
-	// 1 << bitPos
-	one := u256.NewUint(1)
-	shifted := new(u256.Uint).Lsh(one, bitPos)
-
-	// (1 << bitPos) - 1
-	minusOne := new(u256.Uint).Sub(shifted, u256.NewUint(1))
-
 	// ~((1 << bitPos) - 1)
-	mask := new(u256.Uint).Not(minusOne)
 
-	return mask
+	shifted := new(u256.Uint).Lsh(u256.One(), bitPos)
+	minusOne := new(u256.Uint).Sub(shifted, u256.One())
+
+	return new(u256.Uint).Not(minusOne)
 }
