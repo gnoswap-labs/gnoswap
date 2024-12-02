@@ -16,7 +16,7 @@ func tickTickSpacingToMaxLiquidityPerTick(tickSpacing int32) *u256.Uint {
 	maxTick := (consts.MAX_TICK / tickSpacing) * tickSpacing
 	numTicks := uint64((maxTick-minTick)/tickSpacing) + 1
 
-	return new(u256.Uint).Div(consts.MAX_UINT128.Clone(), u256.NewUint(numTicks))
+	return new(u256.Uint).Div(u256.MustFromDecimal(consts.MAX_UINT128), u256.NewUint(numTicks))
 }
 
 // tickGetFeeGrowthInside calculates the fee growth inside a tick range,
