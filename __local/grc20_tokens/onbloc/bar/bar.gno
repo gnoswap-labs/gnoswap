@@ -68,11 +68,11 @@ func Render(path string) string {
 
 	switch {
 	case path == "":
-		return token.RenderHome()
+		return Token.RenderHome()
 	case c == 2 && parts[0] == "balance":
 		owner := pusers.AddressOrName(parts[1])
 		ownerAddr := users.Resolve(owner)
-		balance := token.BalanceOf(ownerAddr)
+		balance := UserTeller.BalanceOf(ownerAddr)
 		return ufmt.Sprintf("%d\n", balance)
 	default:
 		return "404\n"
