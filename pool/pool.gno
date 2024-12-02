@@ -145,12 +145,18 @@ func Collect(
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
 	amount0Req := u256.MustFromDecimal(amount0Requested)
 	amount0, position.tokensOwed0, pool.balances.token0 = collectToken(amount0Req, position.tokensOwed0, pool.balances.token0)
-	transferByRegisterCall(pool.token0Path, recipient, amount0.Uint64())
+	token0 := common.GetToken(pool.token0Path)
+	checkTransferError(token0.Transfer(recipient, amount0.Uint64()))
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
 	amount1Req := u256.MustFromDecimal(amount1Requested)
 	amount1, position.tokensOwed1, pool.balances.token1 = collectToken(amount1Req, position.tokensOwed1, pool.balances.token1)
-	transferByRegisterCall(pool.token1Path, recipient, amount1.Uint64())
+
+	// Update state first then transfer
+	position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
+	pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
+	token1 := common.GetToken(pool.token1Path)
+	checkTransferError(token1.Transfer(recipient, amount1.Uint64()))
 
 	pool.positions[positionKey] = position
 
@@ -175,15 +181,15 @@ func collectToken(
 // SwapResult encapsulates all state changes that occur as a result of a swap
 // This type ensure all state transitions are atomic and can be applied at once.
 type SwapResult struct {
-	Amount0          *i256.Int
-	Amount1          *i256.Int
-	NewSqrtPrice     *u256.Uint
-	NewTick          int32
-	NewLiquidity     *u256.Uint
-	NewProtocolFees  ProtocolFees
+	Amount0              *i256.Int
+	Amount1              *i256.Int
+	NewSqrtPrice         *u256.Uint
+	NewTick              int32
+	NewLiquidity         *u256.Uint
+	NewProtocolFees      ProtocolFees
 	FeeGrowthGlobal0X128 *u256.Uint
 	FeeGrowthGlobal1X128 *u256.Uint
-	SwapFee          *u256.Uint
+	SwapFee              *u256.Uint
 }
 
 // SwapComputation encapsulates pure computation logic for swap
@@ -294,10 +300,11 @@ func Swap(
 // The function follows these state transitions:
 // 1. Initial State: Provided by `SwapComputation.InitialState`
 // 2. Stepping State: For each step:
-//    - Compute next tick and price target
-//    - Calculate amounts and fees
-//    - Update state (remaining amount, fees, liquidity)
-//    - Handle tick transitions if necessary
+//   - Compute next tick and price target
+//   - Calculate amounts and fees
+//   - Update state (remaining amount, fees, liquidity)
+//   - Handle tick transitions if necessary
+//
 // 3. Final State: Aggregated in SwapResult
 //
 // The computation continues until either:
@@ -308,7 +315,6 @@ func Swap(
 func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 	state := comp.InitialState
 	swapFee := u256.Zero()
-
 
 	var newFee *u256.Uint
 	var err error
@@ -342,7 +348,7 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 		},
 		FeeGrowthGlobal0X128: pool.feeGrowthGlobal0X128,
 		FeeGrowthGlobal1X128: pool.feeGrowthGlobal1X128,
-		SwapFee:          swapFee,
+		SwapFee:              swapFee,
 	}
 
 	// Update protocol fees if necessary
@@ -377,6 +383,7 @@ func applySwapResult(pool *Pool, result *SwapResult) {
 // For zeroForOne (selling token0):
 //   - Price limit must be below current price
 //   - Price limit must be above MIN_SQRT_RATIO
+//
 // For !zeroForOne (selling token1):
 //   - Price limit must be above current price
 //   - Price limit must be below MAX_SQRT_RATIO
@@ -562,6 +569,7 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 // For exact input swaps:
 //   - Decrements remaining input amount by (amountIn + feeAmount)
 //   - Decrements calculated amount by amountOut
+//
 // For exact output swaps:
 //   - Increments remaining output amount by amountOut
 //   - Increments calculated amount by (amountIn + feeAmount)
@@ -814,8 +822,11 @@ func collectProtocol(
 	uAmount0 := amount0.Uint64()
 	uAmount1 := amount1.Uint64()
 
-	transferByRegisterCall(pool.token0Path, recipient, uAmount0)
-	transferByRegisterCall(pool.token1Path, recipient, uAmount1)
+	token0 := common.GetToken(pool.token0Path)
+	checkTransferError(token0.Transfer(recipient, uAmount0))
+
+	token1 := common.GetToken(pool.token1Path)
+	checkTransferError(token1.Transfer(recipient, uAmount1))
 
 	return amount0.ToString(), amount1.ToString()
 }
@@ -943,12 +954,8 @@ func (pool *Pool) transferFromAndVerify(
 		panic(err)
 	}
 
-	// try sending
-	// will panic if following conditions are met:
-	// - POOL does not have enough approved amount
-	// - from does not have enough balance
-	// - token is not registered
-	transferFromByRegisterCall(tokenPath, from, to, amountUint64)
+	token := common.GetToken(tokenPath)
+	checkTransferError(token.TransferFrom(from, to, amountUint64))
 
 	// update pool balances
 	if isToken0 {
