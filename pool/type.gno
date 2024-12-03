@@ -149,6 +149,22 @@ type StepComputations struct {
 	feeAmount         *u256.Uint // how much fee is being paid in this step
 }
 
+// init initializes the computation for a single swap step
+func (step *StepComputations) initSwapStep(state SwapState, pool *Pool, zeroForOne bool) {
+	step.sqrtPriceStartX96 = state.sqrtPriceX96
+	step.tickNext, step.initialized = pool.tickBitmapNextInitializedTickWithInOneWord(
+		state.tick,
+		pool.tickSpacing, 
+		zeroForOne,
+	)
+
+	// prevent overshoot the min/max tick
+	step.clampTickNext()
+
+	// get the price for the next tick 
+	step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
+}
+
 // clampTickNext ensures that `tickNext` stays within the min, max tick boundaries
 // as the tick bitmap is not aware of these bounds
 func (step *StepComputations) clampTickNext() {
