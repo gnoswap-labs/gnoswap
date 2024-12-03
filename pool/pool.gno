@@ -201,19 +201,21 @@ func Swap(
 	sqrtPriceLimitX96 := u256.MustFromDecimal(_sqrtPriceLimitX96)
 
 	pool := GetPool(token0Path, token1Path, fee)
-	slot0Start := pool.slot0
 
+	// 락 관리
+	slot0Start := pool.slot0 // 이걸 따로 변수로 만드는게 좋긴한데 이름을 바꿔야 됨
 	if !slot0Start.unlocked {
-		panic(addDetailToError(
-			errLockedPool,
-			ufmt.Sprintf("pool.gno__Swap() || slot0Start.unlocked(false) must be unlocked)"),
-		))
+		panic(errLockedPool)
 	}
+
+	slot0Start.unlocked = false // unlocked라는 변수명이 좋지 않음. lock으로 변
+	defer func() { slot0Start.unlocked = true }()
+	//
 
 	var feeProtocol uint8
 	var feeGrowthGlobalX128 *u256.Uint
 
-	// --- 중복 됨. 함수로 만들면 좋을 듯
+	// --- 중복 됨. 함수로 만들면 좋을 듯 (validatePriceAndGetFeeParams)
 	if zeroForOne {
 		minSqrtRatio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
 
@@ -243,11 +245,15 @@ func Swap(
 		feeProtocol = slot0Start.feeProtocol / 16
 		feeGrowthGlobalX128 = pool.feeGrowthGlobal1X128
 	}
-	// ---
 
-	pool.slot0.unlocked = false
+
+
+
+
+
+	// -------
 	cache := newSwapCache(feeProtocol, pool.liquidity)
-	state := pool.newSwapState(amountSpecified, feeGrowthGlobalX128, cache.liquidityStart)
+	state := newSwapState(amountSpecified, feeGrowthGlobalX128, cache.liquidityStart, pool.slot0)
 
 	exactInput := amountSpecified.Gt(i256.Zero())
 
@@ -256,21 +262,18 @@ func Swap(
 	// continue swapping as long as we haven't used the entire input/output and haven't reached the price limit
 	swapFee := u256.Zero()
 	for !(state.amountSpecifiedRemaining.IsZero()) && !(state.sqrtPriceX96.Eq(sqrtPriceLimitX96)) {
+		// ----- computeSingleSwapStep
 		var step StepComputations
 		step.sqrtPriceStartX96 = state.sqrtPriceX96
-
 		step.tickNext, step.initialized = pool.tickBitmapNextInitializedTickWithInOneWord(
 			state.tick,
 			pool.tickSpacing,
 			zeroForOne,
 		)
 
-		// ensure that we do not overshoot the min/max tick, as the tick bitmap is not aware of these bounds
-		if step.tickNext < consts.MIN_TICK {
-			step.tickNext = consts.MIN_TICK
-		} else if step.tickNext > consts.MAX_TICK {
-			step.tickNext = consts.MAX_TICK
-		}
+		// prevent overshoot the min/max tick
+		step.clampTickNext()
+		// -----
 
 		// get the price for the next tick
 		step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
@@ -292,7 +295,10 @@ func Swap(
 			state.amountSpecifiedRemaining,
 			uint64(pool.fee),
 		)
-		state.sqrtPriceX96 = u256.MustFromDecimal(_sqrtPriceX96Str)
+
+		// ----
+
+		// 상태 격리
 		step.amountIn = u256.MustFromDecimal(_amountInStr)
 		step.amountOut = u256.MustFromDecimal(_amountOutStr)
 		step.feeAmount = u256.MustFromDecimal(_feeAmountStr)
@@ -308,24 +314,30 @@ func Swap(
 
 		// if the protocol fee is on, calculate how much is owed, decrement feeAmount, and increment protocolFee
 		if cache.feeProtocol > 0 {
-			delta := new(u256.Uint).Div(step.feeAmount, u256.NewUint(uint64(cache.feeProtocol)))
-			step.feeAmount = new(u256.Uint).Sub(step.feeAmount, delta)
-			state.protocolFee = new(u256.Uint).Add(state.protocolFee, delta)
+			delta := step.feeAmount
+			delta.Div(delta, u256.NewUint(uint64(cache.feeProtocol)))
+
+			step.feeAmount.Sub(step.feeAmount, delta)
+			state.protocolFee.Add(state.protocolFee, delta)
 		}
 
 		// update global fee tracker
 		if state.liquidity.Gt(u256.Zero()) {
 			update := u256.MulDiv(step.feeAmount, u256.MustFromDecimal(consts.Q128), state.liquidity)
-			state.feeGrowthGlobalX128 = new(u256.Uint).Add(state.feeGrowthGlobalX128, update)
+			state.SetFeeGrowthGlobalX128(new(u256.Uint).Add(state.feeGrowthGlobalX128, update))
 		}
 		swapFee = new(u256.Uint).Add(swapFee, step.feeAmount)
 
+		//////////
+		state.SetSqrtPriceX96(_sqrtPriceX96Str)
 		// shift tick if we reached the next price
 		if state.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
 			tickTransition(step, zeroForOne, state, pool)
-		} else if !(state.sqrtPriceX96.Eq(step.sqrtPriceStartX96)) {
-			// recompute unless we're on a lower tick boundary (i.e. already transitioned ticks), and haven't moved
-			state.tick = common.TickMathGetTickAtSqrtRatio(state.sqrtPriceX96)
+			continue
+		}
+		// recompute unless we're on a lower tick boundary (i.e. already transitioned ticks), and haven't moved
+		if state.sqrtPriceX96.Neq(step.sqrtPriceStartX96) {
+			state.SetTick(common.TickMathGetTickAtSqrtRatio(state.sqrtPriceX96))
 		}
 	}
 	// END LOOP
@@ -345,6 +357,7 @@ func Swap(
 
 	// update fee growth global and, if necessary, protocol fees
 	// overflow is acceptable, protocol has to withdraw before it hits MAX_UINT256 fees
+	// --  최종 상태
 	if zeroForOne {
 		pool.feeGrowthGlobal0X128 = state.feeGrowthGlobalX128
 		if state.protocolFee.Gt(u256.Zero()) {
@@ -386,7 +399,6 @@ func Swap(
 		"internal_sqrtPriceX96", pool.slot0.sqrtPriceX96.ToString(),
 	)
 
-	pool.slot0.unlocked = true
 	return amount0.ToString(), amount1.ToString()
 }
 
