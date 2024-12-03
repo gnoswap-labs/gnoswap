@@ -3,7 +3,7 @@ package pool
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v2/common"
+	"gno.land/r/gnoswap/v1/common"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -64,6 +64,20 @@ type ModifyPositionParams struct {
 	tickUpper int32
 
 	liquidityDelta *i256.Int // any change in liquidity
+}
+
+func newModifyPositionParams(
+	owner std.Address,
+	tickLower int32,
+	tickUpper int32,
+	liquidityDelta *i256.Int,
+) ModifyPositionParams {
+	return ModifyPositionParams{
+		owner:          owner,
+		tickLower:      tickLower,
+		tickUpper:      tickUpper,
+		liquidityDelta: liquidityDelta,
+	}
 }
 
 type SwapCache struct {

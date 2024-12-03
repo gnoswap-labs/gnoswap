@@ -47,7 +47,7 @@ func Mint(
 	}
 
 	pool := GetPool(token0Path, token1Path, fee)
-	position := NewModifyPositionParams(recipient, tickLower, tickUpper, i256.FromUint256(liquidityAmount))
+	position := newModifyPositionParams(recipient, tickLower, tickUpper, i256.FromUint256(liquidityAmount))
 	_, amount0, amount1 := pool.modifyPosition(position)
 
 	if amount0.Gt(i256.Zero()) {
@@ -89,7 +89,7 @@ func Burn(
 	pool := GetPool(token0Path, token1Path, fee)
 
 	liqDelta := i256.Zero().Neg(i256.FromUint256(liqAmount))
-	posParams := NewModifyPositionParams(caller, tickLower, tickUpper, liqDelta)
+	posParams := newModifyPositionParams(caller, tickLower, tickUpper, liqDelta)
 	position, amount0, amount1 := pool.modifyPosition(posParams)
 
 	if amount0.Gt(i256.Zero()) || amount1.Gt(i256.Zero()) {
