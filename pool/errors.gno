@@ -12,7 +12,6 @@ var (
 	errNoPermission              = errors.New("[GNOSWAP-POOL-001] caller has no permission")
 	errNotRegistered             = errors.New("[GNOSWAP-POOL-002] not registered token")
 	errAlreadyRegistered         = errors.New("[GNOSWAP-POOL-003] already registered token")
-	errLocked                    = errors.New("[GNOSWAP-POOL-004] can't transfer token while locked")
 	errOutOfRange                = errors.New("[GNOSWAP-POOL-005] out of range for numeric value")
 	errInvalidInput              = errors.New("[GNOSWAP-POOL-006] invalid input data")
 	errInvalidPositionKey        = errors.New("[GNOSWAP-POOL-007] invalid position key")

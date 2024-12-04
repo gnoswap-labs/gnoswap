@@ -190,10 +190,10 @@ func InitialisePoolTest(t *testing.T) {
 		fee3000,
 		int32(1020),
 		int32(5040),
-		("1000"),
-		("1000"),
-		("0"),
-		("0"),
+		"1000",
+		"1000",
+		"0",
+		"0",
 		max_timeout,
 		users.Resolve(alice),
 		users.Resolve(alice),
@@ -297,10 +297,10 @@ func MintPosition(t *testing.T,
 	fee uint32,
 	tickLower int32,
 	tickUpper int32,
-	_amount0Desired string, // *u256.Uint
-	_amount1Desired string, // *u256.Uint
-	_amount0Min string, // *u256.Uint
-	_amount1Min string, // *u256.Uint
+	amount0Desired string, // *u256.Uint
+	amount1Desired string, // *u256.Uint
+	amount0Min string, // *u256.Uint
+	amount1Min string, // *u256.Uint
 	deadline int64,
 	mintTo std.Address,
 	caller std.Address,
@@ -314,10 +314,10 @@ func MintPosition(t *testing.T,
 		fee,
 		tickLower,
 		tickUpper,
-		_amount0Desired,
-		_amount1Desired,
-		_amount0Min,
-		_amount1Min,
+		amount0Desired,
+		amount1Desired,
+		amount0Min,
+		amount1Min,
 		deadline,
 		mintTo,
 		caller)
@@ -460,7 +460,7 @@ func ugnotFaucet(t *testing.T, to std.Address, amount uint64) {
 func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(addr))
-	wugnotAddr := std.DerivePkgAddr(consts.WRAPPED_WUGNOT)
+	wugnotAddr := consts.WUGNOT_ADDR
 	banker := std.GetBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
 	wugnot.Deposit()
