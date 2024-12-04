@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"std"
 	"testing"
 
 	"gno.land/p/demo/uassert"
@@ -420,5 +421,152 @@ func TestComputeSwap(t *testing.T) {
 		if !result.Amount0.IsZero() || !result.Amount1.IsZero() {
 			t.Error("expected zero amounts for zero liquidity")
 		}
+	})
+}
+
+func TestTransferFromAndVerify(t *testing.T) {
+	tests := []struct {
+		name         string
+		pool         *Pool
+		from         std.Address
+		to           std.Address
+		tokenPath    string
+		amount       *i256.Int
+		isToken0     bool
+		expectedBal0 *u256.Uint
+		expectedBal1 *u256.Uint
+	}{
+		{
+			name: "normal token0 transfer",
+			pool: &Pool{
+				balances: Balances{
+					token0: u256.NewUint(1000),
+					token1: u256.NewUint(2000),
+				},
+			},
+			from:         std.Address("from_addr"),
+			to:           std.Address("to_addr"),
+			tokenPath:    "token0_path",
+			amount:       i256.NewInt(500),
+			isToken0:     true,
+			expectedBal0: u256.NewUint(1500), // 1000 + 500
+			expectedBal1: u256.NewUint(2000), // unchanged
+		},
+		{
+			name: "normal token1 transfer",
+			pool: &Pool{
+				balances: Balances{
+					token0: u256.NewUint(1000),
+					token1: u256.NewUint(2000),
+				},
+			},
+			from:         std.Address("from_addr"),
+			to:           std.Address("to_addr"),
+			tokenPath:    "token1_path",
+			amount:       i256.NewInt(800),
+			isToken0:     false,
+			expectedBal0: u256.NewUint(1000), // unchanged
+			expectedBal1: u256.NewUint(2800), // 2000 + 800
+		},
+		{
+			name: "zero value transfer",
+			pool: &Pool{
+				balances: Balances{
+					token0: u256.NewUint(1000),
+					token1: u256.NewUint(2000),
+				},
+			},
+			from:         std.Address("from_addr"),
+			to:           std.Address("to_addr"),
+			tokenPath:    "token0_path",
+			amount:       i256.NewInt(0),
+			isToken0:     true,
+			expectedBal0: u256.NewUint(1000), // unchanged
+			expectedBal1: u256.NewUint(2000), // unchanged
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// mock transferFromByRegisterCall
+			oldTransferFromByRegisterCall := transferFromByRegisterCall
+			defer func() { transferFromByRegisterCall = oldTransferFromByRegisterCall }()
+
+			transferFromByRegisterCall = func(tokenPath string, from, to std.Address, amount uint64) bool {
+                // mock the transfer (just return true)
+                return true
+			}
+
+			tt.pool.transferFromAndVerify(tt.from, tt.to, tt.tokenPath, tt.amount, tt.isToken0)
+
+			if !tt.pool.balances.token0.Eq(tt.expectedBal0) {
+				t.Errorf("token0 balance mismatch: expected %s, got %s",
+					tt.expectedBal0.ToString(),
+					tt.pool.balances.token0.ToString())
+			}
+
+			if !tt.pool.balances.token1.Eq(tt.expectedBal1) {
+				t.Errorf("token1 balance mismatch: expected %s, got %s",
+					tt.expectedBal1.ToString(),
+					tt.pool.balances.token1.ToString())
+			}
+		})
+	}
+
+	t.Run("negative value handling", func(t *testing.T) {
+		pool := &Pool{
+			balances: Balances{
+				token0: u256.NewUint(1000),
+				token1: u256.NewUint(2000),
+			},
+		}
+
+		oldTransferFromByRegisterCall := transferFromByRegisterCall
+		defer func() { transferFromByRegisterCall = oldTransferFromByRegisterCall }()
+
+		transferFromByRegisterCall = func(tokenPath string, from, to std.Address, amount uint64) bool {
+			return true
+		}
+
+		negativeAmount := i256.NewInt(-500)
+		pool.transferFromAndVerify(
+			std.Address("from_addr"),
+			std.Address("to_addr"),
+			"token0_path",
+			negativeAmount,
+			true,
+		)
+
+		expectedBal := u256.NewUint(1500) // 1000 + 500 (absolute value)
+		if !pool.balances.token0.Eq(expectedBal) {
+			t.Errorf("negative amount handling failed: expected %s, got %s",
+				expectedBal.ToString(),
+				pool.balances.token0.ToString())
+		}
+	})
+
+	t.Run("uint64 overflow value", func(t *testing.T) {
+		pool := &Pool{
+			balances: Balances{
+				token0: u256.NewUint(1000),
+				token1: u256.NewUint(2000),
+			},
+		}
+
+		hugeAmount := i256.FromUint256(u256.MustFromDecimal("18446744073709551616")) // 2^64
+
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("expected panic for amount exceeding uint64 range")
+			}
+		}()
+
+		pool.transferFromAndVerify(
+			std.Address("from_addr"),
+			std.Address("to_addr"),
+			"token0_path",
+			hugeAmount,
+			true,
+		)
 	})
 }

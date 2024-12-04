@@ -193,6 +193,100 @@ type SwapComputation struct {
 	Cache             SwapCache
 }
 
+// Swap swaps token0 for token1, or token1 for token0
+// Returns swapped amount0, amount1 in string
+// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#swap
+func Swap(
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	recipient std.Address,
+	zeroForOne bool,
+	_amountSpecified string, // int256
+	_sqrtPriceLimitX96 string, // uint160
+	payer std.Address, // router
+) (string, string) { // int256 x2
+	common.IsHalted()
+	if common.GetLimitCaller() {
+		caller := std.PrevRealm().Addr()
+		if err := common.RouterOnly(caller); err != nil {
+			panic(addDetailToError(
+				errNoPermission,
+				ufmt.Sprintf("pool.gno__Swap() || only router(%s) can call pool swap(), called from %s", consts.ROUTER_ADDR, caller.String()),
+			))
+		}
+	}
+
+	if _amountSpecified == "0" {
+		panic(addDetailToError(
+			errInvalidSwapAmount,
+			ufmt.Sprintf("pool.gno__Swap() || amountSpecified == 0"),
+		))
+	}
+
+	pool := GetPool(token0Path, token1Path, fee)
+
+	slot0Start := pool.slot0
+	if !slot0Start.unlocked {
+		panic(errLockedPool)
+	}
+
+	slot0Start.unlocked = false
+	defer func() { slot0Start.unlocked = true }()
+
+	amountSpecified := i256.MustFromDecimal(_amountSpecified)
+	sqrtPriceLimitX96 := u256.MustFromDecimal(_sqrtPriceLimitX96)
+
+	validatePriceLimits(pool, zeroForOne, sqrtPriceLimitX96)
+
+	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
+	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
+	cache := newSwapCache(feeProtocol, pool.liquidity)
+
+	state := newSwapState(amountSpecified, feeGrowthGlobalX128, cache.liquidityStart, pool.slot0)
+
+	comp := SwapComputation{
+		AmountSpecified:   amountSpecified,
+		SqrtPriceLimitX96: sqrtPriceLimitX96,
+		ZeroForOne:        zeroForOne,
+		ExactInput:        amountSpecified.Gt(i256.Zero()),
+		InitialState:      state,
+		Cache:             cache,
+	}
+
+	result, err := computeSwap(pool, comp)
+	if err != nil {
+		panic(err)
+	}
+
+	applySwapResult(pool, result)
+
+	// actual swap
+	pool.swapTransfers(zeroForOne, payer, recipient, result.Amount0, result.Amount1)
+
+	prevAddr, prevRealm := getPrev()
+
+	std.Emit(
+		"Swap",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"poolPath", GetPoolPath(token0Path, token1Path, fee),
+		"zeroForOne", ufmt.Sprintf("%t", zeroForOne),
+		"amountSpecified", _amountSpecified,
+		"sqrtPriceLimitX96", _sqrtPriceLimitX96,
+		"payer", payer.String(),
+		"recipient", recipient.String(),
+		"internal_amount0", result.Amount0.ToString(),
+		"internal_amount1", result.Amount1.ToString(),
+		"internal_protocolFee0", pool.protocolFees.token0.ToString(),
+		"internal_protocolFee1", pool.protocolFees.token1.ToString(),
+		"internal_swapFee", result.SwapFee.ToString(),
+		"internal_sqrtPriceX96", pool.slot0.sqrtPriceX96.ToString(),
+	)
+
+	return result.Amount0.ToString(), result.Amount1.ToString()
+}
+
 func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 	state := comp.InitialState
 	swapFee := u256.Zero()
@@ -302,100 +396,6 @@ func getFeeGrowthGlobal(pool *Pool, zeroForOne bool) *u256.Uint {
 		return pool.feeGrowthGlobal0X128
 	}
 	return pool.feeGrowthGlobal1X128
-}
-
-// Swap swaps token0 for token1, or token1 for token0
-// Returns swapped amount0, amount1 in string
-// ref: https://docs.gnoswap.io/contracts/pool/pool.gno#swap
-func Swap(
-	token0Path string,
-	token1Path string,
-	fee uint32,
-	recipient std.Address,
-	zeroForOne bool,
-	_amountSpecified string, // int256
-	_sqrtPriceLimitX96 string, // uint160
-	payer std.Address, // router
-) (string, string) { // int256 x2
-	common.IsHalted()
-	if common.GetLimitCaller() {
-		caller := std.PrevRealm().Addr()
-		if err := common.RouterOnly(caller); err != nil {
-			panic(addDetailToError(
-				errNoPermission,
-				ufmt.Sprintf("pool.gno__Swap() || only router(%s) can call pool swap(), called from %s", consts.ROUTER_ADDR, caller.String()),
-			))
-		}
-	}
-
-	if _amountSpecified == "0" {
-		panic(addDetailToError(
-			errInvalidSwapAmount,
-			ufmt.Sprintf("pool.gno__Swap() || amountSpecified == 0"),
-		))
-	}
-
-	pool := GetPool(token0Path, token1Path, fee)
-
-	slot0Start := pool.slot0
-	if !slot0Start.unlocked {
-		panic(errLockedPool)
-	}
-
-	slot0Start.unlocked = false
-	defer func() { slot0Start.unlocked = true }()
-
-	amountSpecified := i256.MustFromDecimal(_amountSpecified)
-	sqrtPriceLimitX96 := u256.MustFromDecimal(_sqrtPriceLimitX96)
-
-	validatePriceLimits(pool, zeroForOne, sqrtPriceLimitX96)
-
-	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
-	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
-	cache := newSwapCache(feeProtocol, pool.liquidity)
-
-	state := newSwapState(amountSpecified, feeGrowthGlobalX128, cache.liquidityStart, pool.slot0)
-
-	comp := SwapComputation{
-		AmountSpecified:   amountSpecified,
-		SqrtPriceLimitX96: sqrtPriceLimitX96,
-		ZeroForOne:        zeroForOne,
-		ExactInput:        amountSpecified.Gt(i256.Zero()),
-		InitialState:      state,
-		Cache:             cache,
-	}
-
-	result, err := computeSwap(pool, comp)
-	if err != nil {
-		panic(err)
-	}
-
-	applySwapResult(pool, result)
-
-	// actual swap
-	pool.swapTransfers(zeroForOne, payer, recipient, result.Amount0, result.Amount1)
-
-	prevAddr, prevRealm := getPrev()
-
-	std.Emit(
-		"Swap",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"poolPath", GetPoolPath(token0Path, token1Path, fee),
-		"zeroForOne", ufmt.Sprintf("%t", zeroForOne),
-		"amountSpecified", _amountSpecified,
-		"sqrtPriceLimitX96", _sqrtPriceLimitX96,
-		"payer", payer.String(),
-		"recipient", recipient.String(),
-		"internal_amount0", result.Amount0.ToString(),
-		"internal_amount1", result.Amount1.ToString(),
-		"internal_protocolFee0", pool.protocolFees.token0.ToString(),
-		"internal_protocolFee1", pool.protocolFees.token1.ToString(),
-		"internal_swapFee", result.SwapFee.ToString(),
-		"internal_sqrtPriceX96", pool.slot0.sqrtPriceX96.ToString(),
-	)
-
-	return result.Amount0.ToString(), result.Amount1.ToString()
 }
 
 func shouldContinueSwap(state SwapState, sqrtPriceLimitX96 *u256.Uint) bool {
