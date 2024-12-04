@@ -28,9 +28,9 @@ func TestCreateFooBarPool(t *testing.T) {
 	std.TestSkipHeights(100)
 
 	uassert.Equal(t, gns.TotalSupply(), uint64(100000000000000))
-	uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(0))
-	uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(0))
-	uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(0))
+	uassert.Equal(t, gnsBalance(t, consts.EMISSION_ADDR), uint64(0))
+	uassert.Equal(t, gnsBalance(t, consts.STAKER_ADDR), uint64(0))
+	uassert.Equal(t, gnsBalance(t, consts.DEV_OPS), uint64(0))
 
 	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
@@ -51,9 +51,9 @@ func TestCreateFooBarPool(t *testing.T) {
 	})
 
 	uassert.Equal(t, gns.TotalSupply(), uint64(100001426940600))
-	uassert.Equal(t, gnsBalance(consts.EMISSION_ADDR), uint64(0))
-	uassert.Equal(t, gnsBalance(consts.STAKER_ADDR), uint64(1070205450))
-	uassert.Equal(t, gnsBalance(consts.DEV_OPS), uint64(285388120))
+	uassert.Equal(t, gnsBalance(t, consts.EMISSION_ADDR), uint64(0))
+	uassert.Equal(t, gnsBalance(t, consts.STAKER_ADDR), uint64(1070205450))
+	uassert.Equal(t, gnsBalance(t, consts.DEV_OPS), uint64(285388120))
 }
 
 // 2. Create Bar:Baz Pool
@@ -132,6 +132,7 @@ func TestApiGetPools(t *testing.T) {
 	uassert.Equal(t, response.Size(), 2)
 }
 
-func gnsBalance(addr std.Address) uint64 {
+func gnsBalance(t *testing.T, addr std.Address) uint64 {
+	t.Helper()
 	return gns.BalanceOf(a2u(addr))
 }
