@@ -135,6 +135,21 @@ func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 			expected:    strconv.FormatUint(2_000_000_000, 10),
 			shouldPanic: false,
 		},
+		{
+			name: "Success call by admin (rollback)",
+			action: func() {
+				const newFee = 1_000_000_000
+				std.TestSetOrigCaller(users.Resolve(admin))
+				{
+					SetPoolCreationFeeByAdmin(newFee)
+				}
+			},
+			verify: func() string {
+				return strconv.FormatUint(GetPoolCreationFee(), 10)
+			},
+			expected:    strconv.FormatUint(1_000_000_000, 10),
+			shouldPanic: false,
+		},
 	}
 
 	for _, tc := range tests {
