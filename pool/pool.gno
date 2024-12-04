@@ -170,7 +170,8 @@ func Collect(
 // Swap
 ////////////////////////////////////////////////////////////
 
-// SwapResult represents the final state after swap computation
+// SwapResult encapsulates all state changes that occur as a result of a swap
+// This type ensure all state transitions are atomic and can be applied at once.
 type SwapResult struct {
 	Amount0          *i256.Int
 	Amount1          *i256.Int
@@ -287,6 +288,21 @@ func Swap(
 	return result.Amount0.ToString(), result.Amount1.ToString()
 }
 
+// computeSwap performs the core swap computation without modifying pool state
+// The function follows these state transitions:
+// 1. Initial State: Provided by `SwapComputation.InitialState`
+// 2. Stepping State: For each step:
+//    - Compute next tick and price target
+//    - Calculate amounts and fees
+//    - Update state (remaining amount, fees, liquidity)
+//    - Handle tick transitions if necessary
+// 3. Final State: Aggregated in SwapResult
+//
+// The computation continues until either:
+// - The entire amount is consumed (`amountSpecifiedRemaining` = 0)
+// - The price limit is reached (`sqrtPriceX96` = `sqrtPriceLimitX96`)
+//
+// Returns an error if the computation fails at any step
 func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 	state := comp.InitialState
 	swapFee := u256.Zero()
@@ -337,7 +353,8 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 	return result, nil
 }
 
-// applySwapResult updates pool state with computed results
+// applySwapResult updates pool state with computed results.
+// All state changes are applied at once to maintain consistency
 func applySwapResult(pool *Pool, result *SwapResult) {
 	pool.slot0.sqrtPriceX96 = result.NewSqrtPrice
 	pool.slot0.tick = result.NewTick
@@ -347,7 +364,14 @@ func applySwapResult(pool *Pool, result *SwapResult) {
 	pool.feeGrowthGlobal1X128 = result.FeeGrowthGlobal1
 }
 
-// validatePriceLimits validates the price limits for the swap
+// validatePriceLimits ensures the provided price limit is valid for the swap direction
+// The function enforces that:
+// For zeroForOne (selling token0):
+//   - Price limit must be below current price
+//   - Price limit must be above MIN_SQRT_RATIO
+// For !zeroForOne (selling token1):
+//   - Price limit must be above current price
+//   - Price limit must be below MAX_SQRT_RATIO
 func validatePriceLimits(pool *Pool, zeroForOne bool, sqrtPriceLimitX96 *u256.Uint) {
 	if zeroForOne {
 		minSqrtRatio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
@@ -413,8 +437,11 @@ func computeSwapStep(
 	swapFee *u256.Uint,
 ) (SwapState, *u256.Uint) {
 	step := computeSwapStepInit(state, pool, zeroForOne)
+
+	// determining the price target for this step
 	sqrtRatioTargetX96 := computeTargetSqrtRatio(step, sqrtPriceLimitX96, zeroForOne)
 
+	// computing the amounts to be swapped at this step
 	var newState SwapState
 	newState, step = computeAmounts(state, sqrtRatioTargetX96, pool, step)
 	newState = updateAmounts(step, newState, exactInput)
@@ -431,8 +458,7 @@ func computeSwapStep(
 		newState.SetFeeGrowthGlobalX128(new(u256.Uint).Add(newState.feeGrowthGlobalX128, update))
 	}
 
-	newSwapFee := new(u256.Uint).Add(swapFee, step.feeAmount)
-
+	// handling tick transitions
 	if newState.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
 		newState = tickTransition(step, zeroForOne, newState, pool)
 	}
@@ -440,6 +466,8 @@ func computeSwapStep(
 	if newState.sqrtPriceX96.Neq(step.sqrtPriceStartX96) {
 		newState.SetTick(common.TickMathGetTickAtSqrtRatio(newState.sqrtPriceX96))
 	}
+
+	newSwapFee := new(u256.Uint).Add(swapFee, step.feeAmount)
 
 	return newState, newSwapFee
 }
@@ -506,8 +534,13 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 	return state, step
 }
 
-// updateAmounts updates the remaining amounts and calculated amounts
-// based on the swap direction.
+// updateAmounts calculates new remaining and calculated amounts based on the swap step
+// For exact input swaps:
+//   - Decrements remaining input amount by (amountIn + feeAmount)
+//   - Decrements calculated amount by amountOut
+// For exact output swaps:
+//   - Increments remaining output amount by amountOut
+//   - Increments calculated amount by (amountIn + feeAmount)
 func updateAmounts(step StepComputations, state SwapState, exactInput bool) SwapState {
 	amountInWithFee := i256.FromUint256(new(u256.Uint).Add(step.amountIn, step.feeAmount))
 	if exactInput {
@@ -521,29 +554,9 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) Swap
 	return state
 }
 
-func (pool *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
-	var targetTokenPath string
-	var amount *i256.Int
-	var isToken0 bool
-
-	switch zeroForOne {
-	case true:
-		targetTokenPath = pool.token0Path
-		amount = amount0
-		isToken0 = true
-	case false:
-		targetTokenPath = pool.token1Path
-		amount = amount1
-		isToken0 = false
-	}
-
-	// payer -> POOL -> recipient
-	pool.transferFromAndVerify(payer, consts.POOL_ADDR, targetTokenPath, amount, isToken0)
-	pool.transferAndVerify(recipient, targetTokenPath, amount, !isToken0)
-}
-
-// tickTransition now returns new state instead of modifying existing
+// tickTransition handles the transition between price ticks during a swap
 func tickTransition(step StepComputations, zeroForOne bool, state SwapState, pool *Pool) SwapState {
+	// ensure existing state to keep immutability
 	newState := state
 
 	if step.initialized {
@@ -573,6 +586,27 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 	}
 
 	return newState
+}
+
+func (pool *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
+	var targetTokenPath string
+	var amount *i256.Int
+	var isToken0 bool
+
+	switch zeroForOne {
+	case true:
+		targetTokenPath = pool.token0Path
+		amount = amount0
+		isToken0 = true
+	case false:
+		targetTokenPath = pool.token1Path
+		amount = amount1
+		isToken0 = false
+	}
+
+	// payer -> POOL -> recipient
+	pool.transferFromAndVerify(payer, consts.POOL_ADDR, targetTokenPath, amount, isToken0)
+	pool.transferAndVerify(recipient, targetTokenPath, amount, !isToken0)
 }
 
 // SetFeeProtocolByAdmin sets the fee protocol for all pools
