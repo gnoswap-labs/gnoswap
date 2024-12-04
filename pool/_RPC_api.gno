@@ -250,7 +250,7 @@ func rpcMakePool(poolPath string) RpcPool {
 			Token1Owed: position.tokensOwed1.ToString(),
 		})
 
-		return true
+		return false // false to continue iteration
 	})
 
 	rpcPool.Positions = rpcPositions
