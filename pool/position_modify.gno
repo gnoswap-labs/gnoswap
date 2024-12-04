@@ -11,13 +11,7 @@ import (
 // modifyPosition updates a position in the pool and calculates the amount of tokens to be added or removed.
 // Returns positionInfo, amount0, amount1
 func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *i256.Int, *i256.Int) {
-	position := pool.updatePosition(
-		params.owner,
-		params.tickLower,
-		params.tickUpper,
-		params.liquidityDelta,
-		pool.slot0.tick,
-	)
+	position := pool.updatePosition(params)
 
 	var amount0, amount1 *i256.Int
 
