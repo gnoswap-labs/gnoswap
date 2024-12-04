@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/testutils"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -444,8 +445,8 @@ func TestTransferFromAndVerify(t *testing.T) {
 					token1: u256.NewUint(2000),
 				},
 			},
-			from:         std.Address("from_addr"),
-			to:           std.Address("to_addr"),
+			from:         testutils.TestAddress("from_addr"),
+			to:           testutils.TestAddress("to_addr"),
 			tokenPath:    "token0_path",
 			amount:       i256.NewInt(500),
 			isToken0:     true,
@@ -460,8 +461,8 @@ func TestTransferFromAndVerify(t *testing.T) {
 					token1: u256.NewUint(2000),
 				},
 			},
-			from:         std.Address("from_addr"),
-			to:           std.Address("to_addr"),
+			from:         testutils.TestAddress("from_addr"),
+			to:           testutils.TestAddress("to_addr"),
 			tokenPath:    "token1_path",
 			amount:       i256.NewInt(800),
 			isToken0:     false,
@@ -476,8 +477,8 @@ func TestTransferFromAndVerify(t *testing.T) {
 					token1: u256.NewUint(2000),
 				},
 			},
-			from:         std.Address("from_addr"),
-			to:           std.Address("to_addr"),
+			from:         testutils.TestAddress("from_addr"),
+			to:           testutils.TestAddress("to_addr"),
 			tokenPath:    "token0_path",
 			amount:       i256.NewInt(0),
 			isToken0:     true,
@@ -530,8 +531,8 @@ func TestTransferFromAndVerify(t *testing.T) {
 
 		negativeAmount := i256.NewInt(-500)
 		pool.transferFromAndVerify(
-			std.Address("from_addr"),
-			std.Address("to_addr"),
+			testutils.TestAddress("from_addr"),
+			testutils.TestAddress("to_addr"),
 			"token0_path",
 			negativeAmount,
 			true,
@@ -562,8 +563,8 @@ func TestTransferFromAndVerify(t *testing.T) {
 		}()
 
 		pool.transferFromAndVerify(
-			std.Address("from_addr"),
-			std.Address("to_addr"),
+			testutils.TestAddress("from_addr"),
+			testutils.TestAddress("to_addr"),
 			"token0_path",
 			hugeAmount,
 			true,
