@@ -166,145 +166,142 @@ func Collect(
 	return amount0.ToString(), amount1.ToString()
 }
 
-
-
 ////////////////////////////////////////////////////////////
 // Swap
 ////////////////////////////////////////////////////////////
 
 // SwapResult represents the final state after swap computation
 type SwapResult struct {
-    Amount0             *i256.Int
-    Amount1             *i256.Int
-    NewSqrtPrice        *u256.Uint
-    NewTick            int32
-    NewLiquidity       *u256.Uint
-    NewProtocolFees    ProtocolFees
-    FeeGrowthGlobal0   *u256.Uint
-    FeeGrowthGlobal1   *u256.Uint
-    SwapFee            *u256.Uint
+	Amount0          *i256.Int
+	Amount1          *i256.Int
+	NewSqrtPrice     *u256.Uint
+	NewTick          int32
+	NewLiquidity     *u256.Uint
+	NewProtocolFees  ProtocolFees
+	FeeGrowthGlobal0 *u256.Uint
+	FeeGrowthGlobal1 *u256.Uint
+	SwapFee          *u256.Uint
 }
 
 // SwapComputation encapsulates pure computation logic for swap
 type SwapComputation struct {
-    AmountSpecified        *i256.Int
-    SqrtPriceLimitX96     *u256.Uint
-    ZeroForOne            bool
-    ExactInput            bool
-    InitialState          SwapState
-    Cache                 SwapCache
+	AmountSpecified   *i256.Int
+	SqrtPriceLimitX96 *u256.Uint
+	ZeroForOne        bool
+	ExactInput        bool
+	InitialState      SwapState
+	Cache             SwapCache
 }
 
 func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
-    state := comp.InitialState
-    swapFee := u256.Zero()
+	state := comp.InitialState
+	swapFee := u256.Zero()
 
-    // Compute swap steps until completion
-    for shouldContinueSwap(state, comp.SqrtPriceLimitX96) {
-        var newFee *u256.Uint
-        state, newFee = computeSwapStep(state, pool, comp.ZeroForOne, comp.SqrtPriceLimitX96, comp.ExactInput, comp.Cache, swapFee)
-        swapFee = newFee
-    }
+	// Compute swap steps until completion
+	for shouldContinueSwap(state, comp.SqrtPriceLimitX96) {
+		var newFee *u256.Uint
+		state, newFee = computeSwapStep(state, pool, comp.ZeroForOne, comp.SqrtPriceLimitX96, comp.ExactInput, comp.Cache, swapFee)
+		swapFee = newFee
+	}
 
-    // Calculate final amounts
-    amount0 := state.amountCalculated
-    amount1 := i256.Zero().Sub(comp.AmountSpecified, state.amountSpecifiedRemaining)
-    if comp.ZeroForOne == comp.ExactInput {
-        amount0, amount1 = amount1, amount0
-    }
+	// Calculate final amounts
+	amount0 := state.amountCalculated
+	amount1 := i256.Zero().Sub(comp.AmountSpecified, state.amountSpecifiedRemaining)
+	if comp.ZeroForOne == comp.ExactInput {
+		amount0, amount1 = amount1, amount0
+	}
 
-    // Prepare result
-    result := &SwapResult{
-        Amount0:          amount0,
-        Amount1:          amount1,
-        NewSqrtPrice:     state.sqrtPriceX96,
-        NewTick:         state.tick,
-        NewLiquidity:    state.liquidity,
-        NewProtocolFees: ProtocolFees{
-            token0: pool.protocolFees.token0,
-            token1: pool.protocolFees.token1,
-        },
-        FeeGrowthGlobal0: pool.feeGrowthGlobal0X128,
-        FeeGrowthGlobal1: pool.feeGrowthGlobal1X128,
-        SwapFee:         swapFee,
-    }
+	// Prepare result
+	result := &SwapResult{
+		Amount0:      amount0,
+		Amount1:      amount1,
+		NewSqrtPrice: state.sqrtPriceX96,
+		NewTick:      state.tick,
+		NewLiquidity: state.liquidity,
+		NewProtocolFees: ProtocolFees{
+			token0: pool.protocolFees.token0,
+			token1: pool.protocolFees.token1,
+		},
+		FeeGrowthGlobal0: pool.feeGrowthGlobal0X128,
+		FeeGrowthGlobal1: pool.feeGrowthGlobal1X128,
+		SwapFee:          swapFee,
+	}
 
-    // Update protocol fees if necessary
-    if comp.ZeroForOne {
-        if state.protocolFee.Gt(u256.Zero()) {
-            result.NewProtocolFees.token0 = new(u256.Uint).Add(result.NewProtocolFees.token0, state.protocolFee)
-        }
-        result.FeeGrowthGlobal0 = state.feeGrowthGlobalX128
-    } else {
-        if state.protocolFee.Gt(u256.Zero()) {
-            result.NewProtocolFees.token1 = new(u256.Uint).Add(result.NewProtocolFees.token1, state.protocolFee)
-        }
-        result.FeeGrowthGlobal1 = state.feeGrowthGlobalX128
-    }
+	// Update protocol fees if necessary
+	if comp.ZeroForOne {
+		if state.protocolFee.Gt(u256.Zero()) {
+			result.NewProtocolFees.token0 = new(u256.Uint).Add(result.NewProtocolFees.token0, state.protocolFee)
+		}
+		result.FeeGrowthGlobal0 = state.feeGrowthGlobalX128
+	} else {
+		if state.protocolFee.Gt(u256.Zero()) {
+			result.NewProtocolFees.token1 = new(u256.Uint).Add(result.NewProtocolFees.token1, state.protocolFee)
+		}
+		result.FeeGrowthGlobal1 = state.feeGrowthGlobalX128
+	}
 
-    return result, nil
+	return result, nil
 }
-
 
 // applySwapResult updates pool state with computed results
 func applySwapResult(pool *Pool, result *SwapResult) {
-    pool.slot0.sqrtPriceX96 = result.NewSqrtPrice
-    pool.slot0.tick = result.NewTick
-    pool.liquidity = result.NewLiquidity
-    pool.protocolFees = result.NewProtocolFees
-    pool.feeGrowthGlobal0X128 = result.FeeGrowthGlobal0
-    pool.feeGrowthGlobal1X128 = result.FeeGrowthGlobal1
+	pool.slot0.sqrtPriceX96 = result.NewSqrtPrice
+	pool.slot0.tick = result.NewTick
+	pool.liquidity = result.NewLiquidity
+	pool.protocolFees = result.NewProtocolFees
+	pool.feeGrowthGlobal0X128 = result.FeeGrowthGlobal0
+	pool.feeGrowthGlobal1X128 = result.FeeGrowthGlobal1
 }
 
 // validatePriceLimits validates the price limits for the swap
 func validatePriceLimits(pool *Pool, zeroForOne bool, sqrtPriceLimitX96 *u256.Uint) {
-    if zeroForOne {
-        minSqrtRatio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
-        
-        cond1 := sqrtPriceLimitX96.Lt(pool.slot0.sqrtPriceX96)
-        cond2 := sqrtPriceLimitX96.Gt(minSqrtRatio)
-        if !(cond1 && cond2) {
-            panic(addDetailToError(
-                errPriceOutOfRange,
-                ufmt.Sprintf("pool.gno__Swap() || sqrtPriceLimitX96(%s) < slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) > consts.MIN_SQRT_RATIO(%s)", 
-                    sqrtPriceLimitX96.ToString(), 
-                    pool.slot0.sqrtPriceX96.ToString(), 
-                    sqrtPriceLimitX96.ToString(), 
-                    consts.MIN_SQRT_RATIO),
-            ))
-        }
-    } else {
-        maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
-        
-        cond1 := sqrtPriceLimitX96.Gt(pool.slot0.sqrtPriceX96)
-        cond2 := sqrtPriceLimitX96.Lt(maxSqrtRatio)
-        if !(cond1 && cond2) {
-            panic(addDetailToError(
-                errPriceOutOfRange,
-                ufmt.Sprintf("pool.gno__Swap() || sqrtPriceLimitX96(%s) > slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) < consts.MAX_SQRT_RATIO(%s)", 
-                    sqrtPriceLimitX96.ToString(), 
-                    pool.slot0.sqrtPriceX96.ToString(), 
-                    sqrtPriceLimitX96.ToString(), 
-                    consts.MAX_SQRT_RATIO),
-            ))
-        }
-    }
+	if zeroForOne {
+		minSqrtRatio := u256.MustFromDecimal(consts.MIN_SQRT_RATIO)
+
+		cond1 := sqrtPriceLimitX96.Lt(pool.slot0.sqrtPriceX96)
+		cond2 := sqrtPriceLimitX96.Gt(minSqrtRatio)
+		if !(cond1 && cond2) {
+			panic(addDetailToError(
+				errPriceOutOfRange,
+				ufmt.Sprintf("pool.gno__Swap() || sqrtPriceLimitX96(%s) < slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) > consts.MIN_SQRT_RATIO(%s)",
+					sqrtPriceLimitX96.ToString(),
+					pool.slot0.sqrtPriceX96.ToString(),
+					sqrtPriceLimitX96.ToString(),
+					consts.MIN_SQRT_RATIO),
+			))
+		}
+	} else {
+		maxSqrtRatio := u256.MustFromDecimal(consts.MAX_SQRT_RATIO)
+
+		cond1 := sqrtPriceLimitX96.Gt(pool.slot0.sqrtPriceX96)
+		cond2 := sqrtPriceLimitX96.Lt(maxSqrtRatio)
+		if !(cond1 && cond2) {
+			panic(addDetailToError(
+				errPriceOutOfRange,
+				ufmt.Sprintf("pool.gno__Swap() || sqrtPriceLimitX96(%s) > slot0Start.sqrtPriceX96(%s) && sqrtPriceLimitX96(%s) < consts.MAX_SQRT_RATIO(%s)",
+					sqrtPriceLimitX96.ToString(),
+					pool.slot0.sqrtPriceX96.ToString(),
+					sqrtPriceLimitX96.ToString(),
+					consts.MAX_SQRT_RATIO),
+			))
+		}
+	}
 }
 
 // getFeeProtocol returns the appropriate fee protocol based on zero for one
 func getFeeProtocol(slot0 Slot0, zeroForOne bool) uint8 {
-    if zeroForOne {
-        return slot0.feeProtocol % 16
-    }
-    return slot0.feeProtocol / 16
+	if zeroForOne {
+		return slot0.feeProtocol % 16
+	}
+	return slot0.feeProtocol / 16
 }
 
 // getFeeGrowthGlobal returns the appropriate fee growth global based on zero for one
 func getFeeGrowthGlobal(pool *Pool, zeroForOne bool) *u256.Uint {
-    if zeroForOne {
-        return pool.feeGrowthGlobal0X128
-    }
-    return pool.feeGrowthGlobal1X128
+	if zeroForOne {
+		return pool.feeGrowthGlobal0X128
+	}
+	return pool.feeGrowthGlobal1X128
 }
 
 // Swap swaps token0 for token1, or token1 for token0
@@ -353,18 +350,19 @@ func Swap(
 
 	validatePriceLimits(pool, zeroForOne, sqrtPriceLimitX96)
 
+	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
 	cache := newSwapCache(feeProtocol, pool.liquidity)
-	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
+
 	state := newSwapState(amountSpecified, feeGrowthGlobalX128, cache.liquidityStart, pool.slot0)
 
 	comp := SwapComputation{
-		AmountSpecified: amountSpecified,
+		AmountSpecified:   amountSpecified,
 		SqrtPriceLimitX96: sqrtPriceLimitX96,
-		ZeroForOne: zeroForOne,
-		ExactInput: amountSpecified.Gt(i256.Zero()),
-		InitialState: state,
-		Cache: cache,
+		ZeroForOne:        zeroForOne,
+		ExactInput:        amountSpecified.Gt(i256.Zero()),
+		InitialState:      state,
+		Cache:             cache,
 	}
 
 	result, err := computeSwap(pool, comp)
@@ -401,99 +399,50 @@ func Swap(
 }
 
 func shouldContinueSwap(state SwapState, sqrtPriceLimitX96 *u256.Uint) bool {
-	println("sqrtPriceLimitX96", sqrtPriceLimitX96.ToString())
 	return !(state.amountSpecifiedRemaining.IsZero()) && !(state.sqrtPriceX96.Eq(sqrtPriceLimitX96))
 }
 
-
 // computeSwapStep executes a single step of swap and returns new state
 func computeSwapStep(
-    state SwapState,
-    pool *Pool,
-    zeroForOne bool,
-    sqrtPriceLimitX96 *u256.Uint,
-    exactInput bool,
-    cache SwapCache,
-    swapFee *u256.Uint,
+	state SwapState,
+	pool *Pool,
+	zeroForOne bool,
+	sqrtPriceLimitX96 *u256.Uint,
+	exactInput bool,
+	cache SwapCache,
+	swapFee *u256.Uint,
 ) (SwapState, *u256.Uint) {
-    step := computeSwapStepInit(state, pool, zeroForOne)
-    sqrtRatioTargetX96 := computeTargetSqrtRatio(step, sqrtPriceLimitX96, zeroForOne)
-    
-    var newState SwapState
-    newState, step = computeAmounts(state, sqrtRatioTargetX96, pool, step)
-    newState = updateAmounts(step, newState, exactInput)
+	step := computeSwapStepInit(state, pool, zeroForOne)
+	sqrtRatioTargetX96 := computeTargetSqrtRatio(step, sqrtPriceLimitX96, zeroForOne)
 
-    // if the protocol fee is on, calculate how much is owed,
-    // decrement fee amount, and increment protocol fee
-    if cache.feeProtocol > 0 {
-        newState = updateFeeProtocol(step, cache.feeProtocol, newState)
-    }
+	var newState SwapState
+	newState, step = computeAmounts(state, sqrtRatioTargetX96, pool, step)
+	newState = updateAmounts(step, newState, exactInput)
 
-    // update global fee tracker
-    if newState.liquidity.Gt(u256.Zero()) {
-        update := u256.MulDiv(step.feeAmount, u256.MustFromDecimal(consts.Q128), newState.liquidity)
-        newState.SetFeeGrowthGlobalX128(new(u256.Uint).Add(newState.feeGrowthGlobalX128, update))
-    }
+	// if the protocol fee is on, calculate how much is owed,
+	// decrement fee amount, and increment protocol fee
+	if cache.feeProtocol > 0 {
+		newState = updateFeeProtocol(step, cache.feeProtocol, newState)
+	}
 
-    newSwapFee := new(u256.Uint).Add(swapFee, step.feeAmount)
+	// update global fee tracker
+	if newState.liquidity.Gt(u256.Zero()) {
+		update := u256.MulDiv(step.feeAmount, u256.MustFromDecimal(consts.Q128), newState.liquidity)
+		newState.SetFeeGrowthGlobalX128(new(u256.Uint).Add(newState.feeGrowthGlobalX128, update))
+	}
 
-    if newState.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
-        newState = tickTransition(step, zeroForOne, newState, pool)
-    }
+	newSwapFee := new(u256.Uint).Add(swapFee, step.feeAmount)
 
-    if newState.sqrtPriceX96.Neq(step.sqrtPriceStartX96) {
-        newState.SetTick(common.TickMathGetTickAtSqrtRatio(newState.sqrtPriceX96))
-    }
+	if newState.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
+		newState = tickTransition(step, zeroForOne, newState, pool)
+	}
 
-    return newState, newSwapFee
+	if newState.sqrtPriceX96.Neq(step.sqrtPriceStartX96) {
+		newState.SetTick(common.TickMathGetTickAtSqrtRatio(newState.sqrtPriceX96))
+	}
+
+	return newState, newSwapFee
 }
-
-// computeSingleSwapStep executes a single step of swap.
-// computing the new state and price limit.
-// func computeSwapStep(
-// 	state SwapState,
-// 	pool *Pool,
-// 	zeroForOne bool,
-// 	sqrtPriceLimitX96 *u256.Uint,
-// 	exactInput bool,
-// 	cache SwapCache,
-// 	swapFee *u256.Uint,
-// ) *u256.Uint {
-// 	step := computeSwapStepInit(state, pool, zeroForOne)
-
-
-// 	sqrtRatioTargetX96 := computeTargetSqrtRatio(step, sqrtPriceLimitX96, zeroForOne)
-// 	state, step = computeAmounts(state, sqrtRatioTargetX96, pool, step)
-
-// 	state = updateAmounts(step, state, exactInput)
-
-// 	// if the protocol fee is on, calculate how much is owed,
-// 	// decrement fee amount, and increment protocol fee
-// 	feeProtocol := cache.feeProtocol
-// 	if feeProtocol > 0 {
-// 		state = updateFeeProtocol(step, feeProtocol, state)
-// 	}
-
-// 	println(">>>>>> AFTER UPDATE FEE PROTOCOL")
-
-// 	// update global fee tracker
-// 	if state.liquidity.Gt(u256.Zero()) {
-// 		update := u256.MulDiv(step.feeAmount, u256.MustFromDecimal(consts.Q128), state.liquidity)
-// 		state.SetFeeGrowthGlobalX128(new(u256.Uint).Add(state.feeGrowthGlobalX128, update))
-// 	}
-
-// 	swapFee = new(u256.Uint).Add(swapFee, step.feeAmount)
-
-// 	if state.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
-// 		tickTransition(step, zeroForOne, state, pool)
-// 	}
-
-// 	if state.sqrtPriceX96.Neq(step.sqrtPriceStartX96) {
-// 		state.SetTick(common.TickMathGetTickAtSqrtRatio(state.sqrtPriceX96))
-// 	}
-
-// 	return swapFee
-// }
 
 // updateFeeProtocol calculates and updates protocol fees for the current step.
 func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState) SwapState {
@@ -595,35 +544,35 @@ func (pool *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, a
 
 // tickTransition now returns new state instead of modifying existing
 func tickTransition(step StepComputations, zeroForOne bool, state SwapState, pool *Pool) SwapState {
-    newState := state
-    
-    if step.initialized {
-        var fee0, fee1 *u256.Uint
+	newState := state
 
-        if zeroForOne {
-            fee0 = state.feeGrowthGlobalX128
-            fee1 = pool.feeGrowthGlobal1X128
-        } else {
-            fee0 = pool.feeGrowthGlobal0X128
-            fee1 = state.feeGrowthGlobalX128
-        }
+	if step.initialized {
+		var fee0, fee1 *u256.Uint
 
-        liquidityNet := pool.tickCross(step.tickNext, fee0, fee1)
+		if zeroForOne {
+			fee0 = state.feeGrowthGlobalX128
+			fee1 = pool.feeGrowthGlobal1X128
+		} else {
+			fee0 = pool.feeGrowthGlobal0X128
+			fee1 = state.feeGrowthGlobalX128
+		}
 
-        if zeroForOne {
-            liquidityNet = i256.Zero().Neg(liquidityNet)
-        }
+		liquidityNet := pool.tickCross(step.tickNext, fee0, fee1)
 
-        newState.liquidity = liquidityMathAddDelta(state.liquidity, liquidityNet)
-    }
+		if zeroForOne {
+			liquidityNet = i256.Zero().Neg(liquidityNet)
+		}
 
-    if zeroForOne {
-        newState.tick = step.tickNext - 1
-    } else {
-        newState.tick = step.tickNext
-    }
+		newState.liquidity = liquidityMathAddDelta(state.liquidity, liquidityNet)
+	}
 
-    return newState
+	if zeroForOne {
+		newState.tick = step.tickNext - 1
+	} else {
+		newState.tick = step.tickNext
+	}
+
+	return newState
 }
 
 // SetFeeProtocolByAdmin sets the fee protocol for all pools
@@ -697,14 +646,14 @@ func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) uint8 {
 }
 
 func validateFeeProtocol(feeProtocol0, feeProtocol1 uint8) error {
-    if !isValidFeeProtocolValue(feeProtocol0) || !isValidFeeProtocolValue(feeProtocol1) {
-        return errInvalidProtocolFeePct
-    }
-    return nil
+	if !isValidFeeProtocolValue(feeProtocol0) || !isValidFeeProtocolValue(feeProtocol1) {
+		return errInvalidProtocolFeePct
+	}
+	return nil
 }
 
 func isValidFeeProtocolValue(value uint8) bool {
-    return value == 0 || (value >= 4 && value <= 10)
+	return value == 0 || (value >= 4 && value <= 10)
 }
 
 // CollectProtocolByAdmin collects protocol fees for the given pool that accumulated while it was being used for swap
@@ -903,25 +852,25 @@ func updatePoolBalance(
 	var overflow bool
 	var newBalance *u256.Uint
 
-    if isToken0 {
-        newBalance, overflow = new(u256.Uint).SubOverflow(token0, amount)
-        if overflow || newBalance.Lt(u256.Zero()) {
+	if isToken0 {
+		newBalance, overflow = new(u256.Uint).SubOverflow(token0, amount)
+		if overflow || newBalance.Lt(u256.Zero()) {
 			return nil, ufmt.Errorf(
 				"%s || cannot decrease, token0(%s) - amount(%s)",
 				errTransferFailed.Error(), token0.ToString(), amount.ToString(),
 			)
-        }
-        return newBalance, nil
-    }
+		}
+		return newBalance, nil
+	}
 
-    newBalance, overflow = new(u256.Uint).SubOverflow(token1, amount)
-    if overflow || newBalance.Lt(u256.Zero()) {
+	newBalance, overflow = new(u256.Uint).SubOverflow(token1, amount)
+	if overflow || newBalance.Lt(u256.Zero()) {
 		return nil, ufmt.Errorf(
 			"%s || cannot decrease, token1(%s) - amount(%s)",
 			errTransferFailed.Error(), token1.ToString(), amount.ToString(),
 		)
-    }
-    return newBalance, nil
+	}
+	return newBalance, nil
 }
 
 func (pool *Pool) transferFromAndVerify(
