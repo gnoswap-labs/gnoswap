@@ -56,24 +56,6 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 	return nextTick, initialized
 }
 
-// generateFullMaskForBitPos generates a mask with all bits set to 1 up to the given bit position
-func generateFullMaskForBitPos(bitPos uint) *u256.Uint {
-	// (1 << bitPos) - 1 + (1 << bitPos)
-	shifted := new(u256.Uint).Lsh(u256.One(), bitPos)
-	minusOne := new(u256.Uint).Sub(shifted, u256.One())
-
-	return new(u256.Uint).Add(minusOne, shifted)
-}
-
-// generateMaskClearingBitsBelow generates a mask with all bits set to 1 below the given bit position
-func generateMaskClearingBitsBelow(bitPos uint) *u256.Uint {
-	// ~((1 << bitPos) - 1)
-	shifted := new(u256.Uint).Lsh(u256.One(), bitPos)
-	minusOne := new(u256.Uint).Sub(shifted, u256.One())
-
-	return new(u256.Uint).Not(minusOne)
-}
-
 // getTickBitmap gets the tick bitmap for the given word position
 // if the tick bitmap is not initialized, initialize it to zero
 func (pool *Pool) getTickBitmap(wordPos int16) *u256.Uint {
@@ -99,22 +81,29 @@ func getWordAndBitPos(tick int32, lte bool) (int16, uint8) {
 	return tickBitmapPosition(tick)
 }
 
-// getMaskBit gets a mask with all bits set to 1 up to the given bit position if lte is true,
-// or a mask with all bits set to 1 below the given bit position if lte is false
-var bmap = map[bool]uint{
+// bMap is a map that maps boolean values to uint values.
+// true maps to 1, and false maps to 0.
+var bMap = map[bool]uint{
 	true:  1,
 	false: 0,
 }
 
-// getMaskBit gets a mask with all bits set to 1 up to the given bit position if lte is true,
-// or a mask with all bits set to 1 below the given bit position if lte is false
+// getMaskBit generates a mask based on the provided bit position (bitPos) and a boolean flag (lte).
+// The function constructs a bitmask with a shift depending on the bit position and the boolean value.
+// It either returns the mask or its negation, based on the value of 'lte' (swap direction).
 func getMaskBit(bitPos uint, lte bool) *u256.Uint {
-	shifted := new(u256.Uint).Lsh(u256.One(), bitPos+bmap[lte])
+	// Shift the number 1 to the left by (bitPos + bMap[lte]) positions.
+	// If lte is true, the shift will be bitPos + 1; if false, it will be just bitPos.
+	shifted := new(u256.Uint).Lsh(u256.One(), bitPos+bMap[lte])
+
+	// Subtract 1 from the shifted value to create a mask.
 	mask := new(u256.Uint).Sub(shifted, u256.One())
 
+	// If lte is false, return the negation of the mask.
 	if !lte {
 		return new(u256.Uint).Not(mask)
 	}
+	// Otherwise, return the mask itself.
 	return mask
 }
 
