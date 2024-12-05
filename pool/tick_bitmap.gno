@@ -101,12 +101,21 @@ func getWordAndBitPos(tick int32, lte bool) (int16, uint8) {
 
 // getMaskBit gets a mask with all bits set to 1 up to the given bit position if lte is true,
 // or a mask with all bits set to 1 below the given bit position if lte is false
-func getMaskBit(bitPos uint, lte bool) *u256.Uint {
-	if lte {
-		return generateFullMaskForBitPos(bitPos)
-	}
+var bmap = map[bool]uint{
+	true:  1,
+	false: 0,
+}
 
-	return generateMaskClearingBitsBelow(bitPos)
+// getMaskBit gets a mask with all bits set to 1 up to the given bit position if lte is true,
+// or a mask with all bits set to 1 below the given bit position if lte is false
+func getMaskBit(bitPos uint, lte bool) *u256.Uint {
+	shifted := new(u256.Uint).Lsh(u256.One(), bitPos+bmap[lte])
+	mask := new(u256.Uint).Sub(shifted, u256.One())
+
+	if !lte {
+		return new(u256.Uint).Not(mask)
+	}
+	return mask
 }
 
 // getNextTick gets the next tick depending on the initialized state and the swap direction
