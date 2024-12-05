@@ -54,8 +54,14 @@ func TestTickBitmapFlipTick(t *testing.T) {
 		shouldPanic bool
 	}{
 		{
-			name:        "valid tick and spacing",
+			name:        "valid positive tick and spacing",
 			tick:        100,
+			tickSpacing: 20,
+			shouldPanic: false,
+		},
+		{
+			name:        "valid negative tick and spacing",
+			tick:        -300,
 			tickSpacing: 20,
 			shouldPanic: false,
 		},
