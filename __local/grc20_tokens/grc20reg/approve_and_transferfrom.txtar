@@ -3,7 +3,7 @@ loadpkg gno.land/p/demo/users
 loadpkg gno.land/r/demo/foo20
 loadpkg gno.land/r/demo/grc20reg
 
-loadpkg gno.land/r/demo/echo $WORK/echo
+loadpkg gno.land/r/demo/reg $WORK/reg
 
 ## start a new node
 gnoland start
