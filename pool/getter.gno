@@ -48,7 +48,7 @@ func PoolGetLiquidity(poolPath string) string {
 		))
 	}
 
-	return pool.liquidity.ToString()
+	return pool.PoolGetLiquidity().ToString()
 }
 
 func (p *Pool) PoolGetSlot0() Slot0 {
