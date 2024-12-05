@@ -87,6 +87,7 @@ func TestPositionUpdateWithKey(t *testing.T) {
 
 func TestPositionUpdate(t *testing.T) {
 	tests := []struct {
+		initialLiquidity             *u256.Uint
 		liquidityDelta               *i256.Int
 		feeGrowthInside0X128         *u256.Uint
 		feeGrowthInside1X128         *u256.Uint
@@ -99,40 +100,62 @@ func TestPositionUpdate(t *testing.T) {
 		expectedToken1Owed           string
 	}{
 		{
-			liquidityDelta:               i256.MustFromDecimal("0"),
-			feeGrowthInside0X128:         u256.Zero(),
-			feeGrowthInside1X128:         u256.Zero(),
-			shouldPanic:                  true,
-			panicMsg:                     `[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero`,
-			expectedLiquidity:            "",
-			expectedFeeGrowthInside0X128: "",
-			expectedFeeGrowthInside1X128: "",
+			initialLiquidity:     u256.Zero(),
+			liquidityDelta:       i256.MustFromDecimal("0"),
+			feeGrowthInside0X128: u256.Zero(),
+			feeGrowthInside1X128: u256.Zero(),
+			shouldPanic:          true,
+			panicMsg:             `[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero`,
 		},
 		{
+			initialLiquidity:             u256.Zero(),
 			liquidityDelta:               i256.MustFromDecimal("100000"),
 			feeGrowthInside0X128:         u256.Zero(),
 			feeGrowthInside1X128:         u256.Zero(),
-			shouldPanic:                  false,
 			expectedLiquidity:            "100000",
 			expectedFeeGrowthInside0X128: "0",
 			expectedFeeGrowthInside1X128: "0",
+			expectedToken0Owed:           "0",
+			expectedToken1Owed:           "0",
 		},
 		{
+			initialLiquidity:             u256.Zero(),
 			liquidityDelta:               i256.MustFromDecimal("100000"),
 			feeGrowthInside0X128:         u256.MustFromDecimal("100000000"),
 			feeGrowthInside1X128:         u256.MustFromDecimal("100000000"),
-			shouldPanic:                  false,
-			panicMsg:                     "",
 			expectedLiquidity:            "100000",
 			expectedFeeGrowthInside0X128: "100000000",
 			expectedFeeGrowthInside1X128: "100000000",
+			expectedToken0Owed:           "0",
+			expectedToken1Owed:           "0",
+		},
+		{
+			initialLiquidity:             u256.NewUint(100000),
+			liquidityDelta:               i256.MustFromDecimal("100000"),
+			feeGrowthInside0X128:         u256.MustFromDecimal("100000000"),
+			feeGrowthInside1X128:         u256.MustFromDecimal("100000000"),
+			expectedLiquidity:            "200000",
+			expectedFeeGrowthInside0X128: "100000000",
+			expectedFeeGrowthInside1X128: "100000000",
+			expectedToken0Owed:           "0",
+			expectedToken1Owed:           "0",
+		},
+		{
+			initialLiquidity:             u256.MustFromDecimal("340282366920938463463374607431768211456"), // Q128 value
+			liquidityDelta:               i256.Zero(),
+			feeGrowthInside0X128:         u256.MustFromDecimal("100000000"),
+			feeGrowthInside1X128:         u256.MustFromDecimal("200000000"),
+			expectedLiquidity:            "340282366920938463463374607431768211456",
+			expectedFeeGrowthInside0X128: "100000000",
+			expectedFeeGrowthInside1X128: "200000000",
+			expectedToken0Owed:           "100000000",
+			expectedToken1Owed:           "200000000",
 		},
 	}
 
 	for _, tc := range tests {
-		// clear position
 		position := PositionInfo{
-			liquidity: u256.Zero(),
+			liquidity: tc.initialLiquidity,
 		}
 
 		if tc.shouldPanic {
@@ -142,6 +165,8 @@ func TestPositionUpdate(t *testing.T) {
 			uassert.Equal(t, newPos.liquidity.ToString(), tc.expectedLiquidity)
 			uassert.Equal(t, newPos.feeGrowthInside0LastX128.ToString(), tc.expectedFeeGrowthInside0X128)
 			uassert.Equal(t, newPos.feeGrowthInside1LastX128.ToString(), tc.expectedFeeGrowthInside1X128)
+			uassert.Equal(t, newPos.tokensOwed0.ToString(), tc.expectedToken0Owed)
+			uassert.Equal(t, newPos.tokensOwed1.ToString(), tc.expectedToken1Owed)
 		}
 	}
 }
