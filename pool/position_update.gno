@@ -5,7 +5,7 @@ import (
 )
 
 func (pool *Pool) updatePosition(positionParams ModifyPositionParams) PositionInfo {
-	feeGrowthGlobal0X128 := u256.MustFromDecimal(pool.feeGrowthGlobal0X128.Clone())
+	_feeGrowthGlobal0X128 := u256.MustFromDecimal(pool.feeGrowthGlobal0X128.ToString())
 	_feeGrowthGlobal1X128 := u256.MustFromDecimal(pool.feeGrowthGlobal1X128.ToString())
 
 	var flippedLower, flippedUpper bool
@@ -39,7 +39,7 @@ func (pool *Pool) updatePosition(positionParams ModifyPositionParams) PositionIn
 		}
 	}
 
-	feeGrowthInside0X128, feeGrowthInside1X128 := pool.tickGetFeeGrowthInside(
+	feeGrowthInside0X128, feeGrowthInside1X128 := pool.calculateFeeGrowthInside(
 		positionParams.tickLower,
 		positionParams.tickUpper,
 		pool.slot0.tick,
