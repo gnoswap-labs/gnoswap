@@ -258,5 +258,57 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 		token0Path, token1Path = token1Path, token0Path
 	}
 
-	return ufmt.Sprintf("%s:%s:%d", token0Path, token1Path, fee)
+	var s strings.Builder
+	s.WriteString(token0Path)
+	s.WriteString(":")
+	s.WriteString(token1Path)
+	s.WriteString(":")
+	s.WriteString(ufmt.Sprintf("%d", fee))
+
+	return s.String()
+}
+
+func newPool(
+	token0Path string,
+	token1Path string,
+	fee uint32,
+	tickSpacing int32,
+	sqrtPriceX96 *u256.Uint,
+) *Pool {
+	maxLiquidityPerTick := calculateMaxLiquidityPerTick(tickSpacing)
+	tick := common.TickMathGetTickAtSqrtRatio(sqrtPriceX96)
+
+	slot0 := Slot0{
+		sqrtPriceX96: sqrtPriceX96,
+		tick:         tick,
+		feeProtocol:  slot0FeeProtocol,
+		unlocked:     true,
+	}
+
+	balances := Balances{
+		token0: u256.Zero(),
+		token1: u256.Zero(),
+	}
+
+	protocolFees := ProtocolFees{
+		token0: u256.Zero(),
+		token1: u256.Zero(),
+	}
+
+	return &Pool{
+		token0Path:           token0Path,
+		token1Path:           token1Path,
+		balances:             balances,
+		fee:                  fee,
+		tickSpacing:          tickSpacing,
+		maxLiquidityPerTick:  maxLiquidityPerTick,
+		slot0:                slot0,
+		feeGrowthGlobal0X128: u256.Zero(),
+		feeGrowthGlobal1X128: u256.Zero(),
+		protocolFees:         protocolFees,
+		liquidity:            u256.Zero(),
+		ticks:                Ticks{},
+		tickBitmaps:          TickBitmaps{},
+		positions:            Positions{},
+	}
 }
