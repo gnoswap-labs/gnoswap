@@ -24,7 +24,7 @@ func PoolGetSlot0Tick(poolPath string) int32 {
 		))
 	}
 
-	return pool.slot0.tick
+	return pool.PoolGetSlot0Tick()
 }
 
 func PoolGetSqrtPriceX96(poolPath string) *u256.Uint {
