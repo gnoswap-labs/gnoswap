@@ -36,7 +36,7 @@ func PoolGetSqrtPriceX96(poolPath string) *u256.Uint {
 		))
 	}
 
-	return pool.slot0.sqrtPriceX96
+	return pool.PoolGetSlot0SqrtPriceX96()
 }
 
 func PoolGetLiquidity(poolPath string) string {
