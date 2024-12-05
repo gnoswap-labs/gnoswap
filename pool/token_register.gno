@@ -22,7 +22,6 @@ type GRC20Interface interface {
 
 var (
 	registered = make(map[string]GRC20Interface)
-	locked     = false // mutex
 )
 
 // GetRegisteredTokens returns a list of all registered tokens
@@ -93,20 +92,7 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 			ufmt.Sprintf("token_register.gno__transferByRegisterCall() || token(%s) not registered", pkgPath),
 		))
 	}
-
-	if !locked {
-		locked = true
-		registered[pkgPath].Transfer()(pusers.AddressOrName(to), amount)
-
-		defer func() {
-			locked = false
-		}()
-	} else {
-		panic(addDetailToError(
-			errLocked,
-			ufmt.Sprintf("token_register.gno__transferByRegisterCall() || expected locked(%t) to be false", locked),
-		))
-	}
+	registered[pkgPath].Transfer()(pusers.AddressOrName(to), amount)
 
 	return true
 }
@@ -122,19 +108,8 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 		))
 	}
 
-	if !locked {
-		locked = true
-		registered[pkgPath].TransferFrom()(pusers.AddressOrName(from), pusers.AddressOrName(to), amount)
+	registered[pkgPath].TransferFrom()(pusers.AddressOrName(from), pusers.AddressOrName(to), amount)
 
-		defer func() {
-			locked = false
-		}()
-	} else {
-		panic(addDetailToError(
-			errLocked,
-			ufmt.Sprintf("token_register.gno__transferFromByRegisterCall() || expected locked(%t) to be false", locked),
-		))
-	}
 	return true
 }
 

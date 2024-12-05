@@ -81,8 +81,6 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 	const fee500 = uint32(500)
 	sqrtPrice := common.TickMathGetSqrtRatioAtTick(-10000).ToString()
 
-	sp := u256.MustFromDecimal(sqrtPrice)
-
 	t.Run("liquidityDelta is zero", func(t *testing.T) {
 		poolParams := newPoolParams(
 			barPath,
@@ -91,7 +89,6 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 			sp.ToString(),
 		)
 		pool := newPool(poolParams)
-
 		params := ModifyPositionParams{
 			owner:          consts.POSITION_ADDR,
 			tickLower:      -11000,

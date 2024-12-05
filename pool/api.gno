@@ -86,13 +86,6 @@ func ApiGetPools() string {
 		rpcPools = append(rpcPools, rpcPool)
 	}
 
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, pool := range rpcPools {
 		_poolNode := json.ObjectNode("", map[string]*json.Node{
@@ -121,16 +114,11 @@ func ApiGetPools() string {
 	}
 
 	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
+		"stat":     makeStatNode(),
 		"response": responses,
 	})
 
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
+	return marshal(node)
 }
 
 func ApiGetPool(poolPath string) string {
@@ -140,13 +128,6 @@ func ApiGetPool(poolPath string) string {
 	}
 	rpcPool := rpcMakePool(poolPath)
 
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE NODE
 	responseNode := json.ObjectNode("", map[string]*json.Node{
 		"poolPath":             json.StringNode("poolPath", rpcPool.PoolPath),
 		"token0Path":           json.StringNode("token0Path", rpcPool.Token0Path),
@@ -171,16 +152,18 @@ func ApiGetPool(poolPath string) string {
 	})
 
 	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
+		"stat":     makeStatNode(),
 		"response": responseNode,
 	})
 
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
+	return marshal(node)
+}
 
-	return string(b)
+func makeStatNode() *json.Node {
+	return json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
 }
 
 func rpcMakePool(poolPath string) RpcPool {
@@ -317,4 +300,13 @@ func makeRpcPositionsArray(positions []RpcPosition) []*json.Node {
 	}
 
 	return positionsJson
+}
+
+func marshal(node *json.Node) string {
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return string(b)
 }
