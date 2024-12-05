@@ -1,11 +1,6 @@
 package pool
 
-import (
-	"gno.land/p/demo/ufmt"
-
-	u256 "gno.land/p/gnoswap/uint256"
-)
-
+// pool
 func PoolGetPoolList() []string {
 	poolPaths := []string{}
 	for poolPath, _ := range pools {
@@ -15,110 +10,120 @@ func PoolGetPoolList() []string {
 	return poolPaths
 }
 
-func PoolGetSlot0Tick(poolPath string) int32 {
-	pool, exist := pools[poolPath]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno()__PoolGetSlot0Tick || poolPath(%s) does not exist", poolPath),
-		))
-	}
-
-	return pool.PoolGetSlot0Tick()
+func PoolGetToken0Path(poolPath string) string {
+	return mustGetPool(poolPath).PoolGetToken0Path()
 }
 
-func PoolGetSqrtPriceX96(poolPath string) *u256.Uint {
-	pool, exist := pools[poolPath]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno()__PoolGetSqrtPriceX96 || poolPath(%s) does not exist", poolPath),
-		))
-	}
+func PoolGetToken1Path(poolPath string) string {
+	return mustGetPool(poolPath).PoolGetToken1Path()
+}
 
-	return pool.PoolGetSlot0SqrtPriceX96()
+func PoolGetFee(poolPath string) uint32 {
+	return mustGetPool(poolPath).PoolGetFee()
+}
+
+func PoolGetBalanceToken0(poolPath string) string {
+	return mustGetPool(poolPath).PoolGetBalanceToken0().ToString()
+}
+
+func PoolGetBalanceToken1(poolPath string) string {
+	return mustGetPool(poolPath).PoolGetBalanceToken1().ToString()
+}
+
+func PoolGetTickSpacing(poolPath string) int32 {
+	return mustGetPool(poolPath).PoolGetTickSpacing()
+}
+
+func PoolGetMaxLiquidityPerTick(poolPath string) string {
+	return mustGetPool(poolPath).PoolGetMaxLiquidityPerTick().ToString()
+}
+
+func PoolGetSlot0SqrtPriceX96(poolPath string) string {
+	return mustGetPool(poolPath).PoolGetSlot0SqrtPriceX96().ToString()
+}
+
+func PoolGetSlot0Tick(poolPath string) int32 {
+	return mustGetPool(poolPath).PoolGetSlot0Tick()
+}
+
+func PoolGetSlot0FeeProtocol(poolPath string) uint8 {
+	return mustGetPool(poolPath).PoolGetSlot0FeeProtocol()
+}
+
+func PoolGetSlot0Unlocked(poolPath string) bool {
+	return mustGetPool(poolPath).PoolGetSlot0Unlocked()
+}
+
+func PoolGetFeeGrowthGlobal0X128(poolPath string) string {
+	return mustGetPool(poolPath).PoolGetFeeGrowthGlobal0X128().ToString()
+}
+
+func PoolGetFeeGrowthGlobal1X128(poolPath string) string {
+	return mustGetPool(poolPath).PoolGetFeeGrowthGlobal1X128().ToString()
+}
+
+func PoolGetProtocolFeesToken0(poolPath string) string {
+	return mustGetPool(poolPath).PoolGetProtocolFeesToken0().ToString()
+}
+
+func PoolGetProtocolFeesToken1(poolPath string) string {
+	return mustGetPool(poolPath).PoolGetProtocolFeesToken1().ToString()
 }
 
 func PoolGetLiquidity(poolPath string) string {
-	pool, exist := pools[poolPath]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno()__PoolGetLiquidity || poolPath(%s) does not exist", poolPath),
-		))
-	}
-
-	return pool.PoolGetLiquidity().ToString()
+	return mustGetPool(poolPath).PoolGetLiquidity().ToString()
 }
 
-func (p *Pool) PoolGetSlot0() Slot0 {
-	return p.slot0
+// position
+func PoolGetPositionLiquidity(poolPath, key string) string {
+	return mustGetPool(poolPath).PoolGetPositionLiquidity(key).ToString()
 }
 
-func (p *Pool) PoolGetSlot0SqrtPriceX96() *u256.Uint {
-	return p.slot0.sqrtPriceX96
+func PoolGetPositionFeeGrowthInside0LastX128(poolPath, key string) string {
+	return mustGetPool(poolPath).PoolGetPositionFeeGrowthInside0LastX128(key).ToString()
 }
 
-func (p *Pool) PoolGetSlot0Tick() int32 {
-	return p.slot0.tick
+func PoolGetPositionFeeGrowthInside1LastX128(poolPath, key string) string {
+	return mustGetPool(poolPath).PoolGetPositionFeeGrowthInside1LastX128(key).ToString()
 }
 
-func (p *Pool) PoolGetPositionFeeGrowthInside0LastX128(key string) *u256.Uint {
-	position, exist := p.positions[key]
-	if !exist {
-		return u256.Zero()
-	}
-
-	return position.feeGrowthInside0LastX128
+func PoolGetPositionTokensOwed0(poolPath, key string) string {
+	return mustGetPool(poolPath).PoolGetPositionTokensOwed0(key).ToString()
 }
 
-func (p *Pool) PoolGetPositionFeeGrowthInside1LastX128(key string) *u256.Uint {
-	position, exist := p.positions[key]
-	if !exist {
-		return u256.Zero()
-	}
-
-	return position.feeGrowthInside1LastX128
+func PoolGetPositionTokensOwed1(poolPath, key string) string {
+	return mustGetPool(poolPath).PoolGetPositionTokensOwed1(key).ToString()
 }
 
-func (p *Pool) PoolGetTickFeeGrowthOutside0X128(x int32) *u256.Uint {
-	tick, exist := p.ticks[x]
-	if !exist {
-		return u256.Zero()
-	}
-
-	return tick.feeGrowthOutside0X128
+// tick
+func PoolGetTickLiquidityGross(poolPath string, tick int32) string {
+	return mustGetPool(poolPath).PoolGetTickLiquidityGross(tick).ToString()
 }
 
-func (p *Pool) PoolGetTickFeeGrowthOutside1X128(x int32) *u256.Uint {
-	tick, exist := p.ticks[x]
-	if !exist {
-		return u256.Zero()
-	}
-
-	return tick.feeGrowthOutside1X128
+func PoolGetTickLiquidityNet(poolPath string, tick int32) string {
+	return mustGetPool(poolPath).PoolGetTickLiquidityNet(tick).ToString()
 }
 
-func (p *Pool) PoolGetToken0Path() string {
-	return p.token0Path
+func PoolGetTickFeeGrowthOutside0X128(poolPath string, tick int32) string {
+	return mustGetPool(poolPath).PoolGetTickFeeGrowthOutside0X128(tick).ToString()
 }
 
-func (p *Pool) PoolGetToken1Path() string {
-	return p.token1Path
+func PoolGetTickFeeGrowthOutside1X128(poolPath string, tick int32) string {
+	return mustGetPool(poolPath).PoolGetTickFeeGrowthOutside1X128(tick).ToString()
 }
 
-func (p *Pool) PoolGetFee() uint32 {
-	return p.fee
+func PoolGetTickCumulativeOutside(poolPath string, tick int32) int64 {
+	return mustGetPool(poolPath).PoolGetTickCumulativeOutside(tick)
 }
 
-func (p *Pool) PoolGetFeeGrowthGlobal0X128() *u256.Uint {
-	return p.feeGrowthGlobal0X128
+func PoolGetTickSecondsPerLiquidityOutsideX128(poolPath string, tick int32) string {
+	return mustGetPool(poolPath).PoolGetTickSecondsPerLiquidityOutsideX128(tick).ToString()
 }
 
-func (p *Pool) PoolGetFeeGrowthGlobal1X128() *u256.Uint {
-	return p.feeGrowthGlobal1X128
+func PoolGetTickSecondsOutside(poolPath string, tick int32) uint32 {
+	return mustGetPool(poolPath).PoolGetTickSecondsOutside(tick)
 }
 
-func (p *Pool) PoolGetLiquidity() *u256.Uint {
-	return p.liquidity
+func PoolGetTickInitialized(poolPath string, tick int32) bool {
+	return mustGetPool(poolPath).PoolGetTickInitialized(tick)
 }
