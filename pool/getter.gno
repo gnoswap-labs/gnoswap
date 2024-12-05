@@ -51,20 +51,20 @@ func PoolGetLiquidity(poolPath string) string {
 	return pool.liquidity.ToString()
 }
 
-func (pool *Pool) PoolGetSlot0() Slot0 {
-	return pool.slot0
+func (p *Pool) PoolGetSlot0() Slot0 {
+	return p.slot0
 }
 
-func (pool *Pool) PoolGetSlot0SqrtPriceX96() *u256.Uint {
-	return pool.slot0.sqrtPriceX96
+func (p *Pool) PoolGetSlot0SqrtPriceX96() *u256.Uint {
+	return p.slot0.sqrtPriceX96
 }
 
-func (pool *Pool) PoolGetSlot0Tick() int32 {
-	return pool.slot0.tick
+func (p *Pool) PoolGetSlot0Tick() int32 {
+	return p.slot0.tick
 }
 
-func (pool *Pool) PoolGetPositionFeeGrowthInside0LastX128(key string) *u256.Uint {
-	position, exist := pool.positions[key]
+func (p *Pool) PoolGetPositionFeeGrowthInside0LastX128(key string) *u256.Uint {
+	position, exist := p.positions[key]
 	if !exist {
 		return u256.Zero()
 	}
@@ -72,8 +72,8 @@ func (pool *Pool) PoolGetPositionFeeGrowthInside0LastX128(key string) *u256.Uint
 	return position.feeGrowthInside0LastX128
 }
 
-func (pool *Pool) PoolGetPositionFeeGrowthInside1LastX128(key string) *u256.Uint {
-	position, exist := pool.positions[key]
+func (p *Pool) PoolGetPositionFeeGrowthInside1LastX128(key string) *u256.Uint {
+	position, exist := p.positions[key]
 	if !exist {
 		return u256.Zero()
 	}
@@ -81,8 +81,8 @@ func (pool *Pool) PoolGetPositionFeeGrowthInside1LastX128(key string) *u256.Uint
 	return position.feeGrowthInside1LastX128
 }
 
-func (pool *Pool) PoolGetTickFeeGrowthOutside0X128(x int32) *u256.Uint {
-	tick, exist := pool.ticks[x]
+func (p *Pool) PoolGetTickFeeGrowthOutside0X128(x int32) *u256.Uint {
+	tick, exist := p.ticks[x]
 	if !exist {
 		return u256.Zero()
 	}
@@ -90,8 +90,8 @@ func (pool *Pool) PoolGetTickFeeGrowthOutside0X128(x int32) *u256.Uint {
 	return tick.feeGrowthOutside0X128
 }
 
-func (pool *Pool) PoolGetTickFeeGrowthOutside1X128(x int32) *u256.Uint {
-	tick, exist := pool.ticks[x]
+func (p *Pool) PoolGetTickFeeGrowthOutside1X128(x int32) *u256.Uint {
+	tick, exist := p.ticks[x]
 	if !exist {
 		return u256.Zero()
 	}
@@ -99,26 +99,26 @@ func (pool *Pool) PoolGetTickFeeGrowthOutside1X128(x int32) *u256.Uint {
 	return tick.feeGrowthOutside1X128
 }
 
-func (pool *Pool) PoolGetToken0Path() string {
-	return pool.token0Path
+func (p *Pool) PoolGetToken0Path() string {
+	return p.token0Path
 }
 
-func (pool *Pool) PoolGetToken1Path() string {
-	return pool.token1Path
+func (p *Pool) PoolGetToken1Path() string {
+	return p.token1Path
 }
 
-func (pool *Pool) PoolGetFee() uint32 {
-	return pool.fee
+func (p *Pool) PoolGetFee() uint32 {
+	return p.fee
 }
 
-func (pool *Pool) PoolGetFeeGrowthGlobal0X128() *u256.Uint {
-	return pool.feeGrowthGlobal0X128
+func (p *Pool) PoolGetFeeGrowthGlobal0X128() *u256.Uint {
+	return p.feeGrowthGlobal0X128
 }
 
-func (pool *Pool) PoolGetFeeGrowthGlobal1X128() *u256.Uint {
-	return pool.feeGrowthGlobal1X128
+func (p *Pool) PoolGetFeeGrowthGlobal1X128() *u256.Uint {
+	return p.feeGrowthGlobal1X128
 }
 
-func (pool *Pool) PoolGetLiquidity() *u256.Uint {
-	return pool.liquidity
+func (p *Pool) PoolGetLiquidity() *u256.Uint {
+	return p.liquidity
 }
