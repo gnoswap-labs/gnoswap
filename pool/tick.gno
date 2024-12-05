@@ -142,3 +142,48 @@ func getFeeGrowthAboveX128(
 
 	return above0X128, above1X128
 }
+
+// receiver getters
+func (p *Pool) PoolGetTickLiquidityGross(tick int32) *u256.Uint {
+	return p.mustGetTick(tick).liquidityGross
+}
+
+func (p *Pool) PoolGetTickLiquidityNet(tick int32) *i256.Int {
+	return p.mustGetTick(tick).liquidityNet
+}
+
+func (p *Pool) PoolGetTickFeeGrowthOutside0X128(tick int32) *u256.Uint {
+	return p.mustGetTick(tick).feeGrowthOutside0X128
+}
+
+func (p *Pool) PoolGetTickFeeGrowthOutside1X128(tick int32) *u256.Uint {
+	return p.mustGetTick(tick).feeGrowthOutside1X128
+}
+
+func (p *Pool) PoolGetTickCumulativeOutside(tick int32) int64 {
+	return p.mustGetTick(tick).tickCumulativeOutside
+}
+
+func (p *Pool) PoolGetTickSecondsPerLiquidityOutsideX128(tick int32) *u256.Uint {
+	return p.mustGetTick(tick).secondsPerLiquidityOutsideX128
+}
+
+func (p *Pool) PoolGetTickSecondsOutside(tick int32) uint32 {
+	return p.mustGetTick(tick).secondsOutside
+}
+
+func (p *Pool) PoolGetTickInitialized(tick int32) bool {
+	return p.mustGetTick(tick).initialized
+}
+
+func (p *Pool) mustGetTick(tick int32) TickInfo {
+	tickInfo, exist := p.ticks[tick]
+	if !exist {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("tick(%d) does not exist", tick),
+		))
+	}
+
+	return tickInfo
+}

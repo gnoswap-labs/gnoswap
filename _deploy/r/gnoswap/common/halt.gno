@@ -20,7 +20,7 @@ func IsHalted() {
 	if halted {
 		panic(addDetailToError(
 			errHalted,
-			"halt.gno__IsHalted() || gnoswap halted",
+			"gnoswap halted",
 		))
 	}
 }
@@ -28,11 +28,12 @@ func IsHalted() {
 // SetHaltByAdmin sets the halt status.
 func SetHaltByAdmin(halt bool) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN {
+	err := AdminOnly(caller)
+	if err != nil {
 		panic(addDetailToError(
 			errNoPermission,
 			ufmt.Sprintf(
-				"halt.gno__SetHaltByAdmin() || only admin(%s) can set halt, called from %s",
+				"only admin(%s) can set halt, called from %s",
 				consts.ADMIN,
 				caller,
 			),
@@ -63,11 +64,12 @@ func SetHaltByAdmin(halt bool) {
 // Only governance contract can execute this function via proposal
 func SetHalt(halt bool) {
 	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_GOVERNANCE_ADDR {
+	err := GovernanceOnly(caller)
+	if err != nil {
 		panic(addDetailToError(
 			errNoPermission,
 			ufmt.Sprintf(
-				"halt.gno__SetHalt() || only governance(%s) can set halt, called from %s",
+				"only governance(%s) can set halt, called from %s",
 				consts.GOV_GOVERNANCE_ADDR,
 				caller,
 			),
