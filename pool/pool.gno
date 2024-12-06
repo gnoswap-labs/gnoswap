@@ -24,9 +24,9 @@ func Mint(
 	recipient std.Address,
 	tickLower int32,
 	tickUpper int32,
-	_liquidityAmount string, // uint128
+	_liquidityAmount string,
 	positionCaller std.Address,
-) (string, string) { // uint256 x2== "0"
+) (string, string) {
 	common.IsHalted()
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()

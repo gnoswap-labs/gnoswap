@@ -63,7 +63,7 @@ func DrySwap(
 	slot0.unlocked = false
 
 	cache := newSwapCache(feeProtocol, pool.liquidity)
-	state := newSwapState(amountSpecified, feeGrowthGlobalX128, cache.liquidityStart, slot0) // TODO: feeGrowthGlobalX128.Clone() or NOT
+	state := newSwapState(amountSpecified.Clone(), feeGrowthGlobalX128.Clone(), cache.liquidityStart.Clone(), slot0) // TODO: feeGrowthGlobalX128.Clone() or NOT
 
 	exactInput := amountSpecified.Gt(i256.Zero())
 
