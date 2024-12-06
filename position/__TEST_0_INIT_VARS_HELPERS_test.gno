@@ -1,0 +1,69 @@
+package position
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/r/gnoswap/v1/consts"
+
+	"gno.land/r/gnoswap/v1/gnft"
+
+	pl "gno.land/r/gnoswap/v1/pool"
+)
+
+var (
+	admin std.Address = consts.ADMIN
+	test1 std.Address = std.Address("g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5")
+
+	fooPath string = "gno.land/r/onbloc/foo"
+	barPath string = "gno.land/r/onbloc/bar"
+	bazPath string = "gno.land/r/onbloc/baz"
+	quxPath string = "gno.land/r/onbloc/qux"
+
+	oblPath string = "gno.land/r/onbloc/obl"
+	// wugnotPath string = "gno.land/r/demo/wugnot" // from consts
+	// gnsPath string = "gno.land/r/gnoswap/v1/gns" // from consts
+
+	fee100  uint32 = 100
+	fee500  uint32 = 500
+	fee3000 uint32 = 3000
+
+	max_timeout int64 = 9999999999
+)
+
+// Realms to mock frames
+var (
+	adminRealm = std.NewUserRealm(admin)
+	posRealm   = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm   = std.NewCodeRealm(consts.ROUTER_PATH)
+	stkRealm   = std.NewCodeRealm(consts.STAKER_PATH)
+)
+
+/* HELPER */
+func ugnotBalanceOf(addr std.Address) uint64 {
+	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+
+	coins := testBanker.GetCoins(addr)
+	if len(coins) == 0 {
+		return 0
+	}
+
+	return uint64(coins.AmountOf("ugnot"))
+}
+
+func isOwner(t *testing.T, tokenId uint64, addr std.Address) bool {
+	owner := gnft.OwnerOf(tid(tokenId))
+
+	if owner == addr {
+		return true
+	}
+
+	t.Errorf("expected owner %v, got %v", addr, owner)
+	return false
+}
+
+func getPoolFromLpTokenId(lpTokenId uint64) *pl.Pool {
+	position := positions[lpTokenId]
+
+	return pl.GetPoolFromPoolPath(position.poolKey)
+}
