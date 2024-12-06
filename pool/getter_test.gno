@@ -7,7 +7,9 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func init() {
+func TestInitData(t *testing.T) {
+	resetObject(t)
+
 	mockPool := &Pool{
 		token0Path: "token0",
 		token1Path: "token1",
