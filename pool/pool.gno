@@ -71,8 +71,8 @@ func Burn(
 	fee uint32,
 	tickLower int32,
 	tickUpper int32,
-	liquidityAmount string, // uint128
-) (string, string) { // uint256 x2
+	liquidityAmount string,
+) (string, string) {
 	common.IsHalted()
 	caller := std.PrevRealm().Addr()
 	if common.GetLimitCaller() {
@@ -115,9 +115,9 @@ func Collect(
 	recipient std.Address,
 	tickLower int32,
 	tickUpper int32,
-	_amount0Requested string, // uint128
-	_amount1Requested string, // uint128
-) (string, string) { // uint128 x2
+	amount0Requested string,
+	amount1Requested string,
+) (string, string) {
 	common.IsHalted()
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
@@ -129,8 +129,8 @@ func Collect(
 		}
 	}
 
-	amount0Requested := u256.MustFromDecimal(_amount0Requested)
-	amount1Requested := u256.MustFromDecimal(_amount1Requested)
+	amount0Req := u256.MustFromDecimal(amount0Requested)
+	amount1Req := u256.MustFromDecimal(amount1Requested)
 
 	pool := GetPool(token0Path, token1Path, fee)
 
@@ -144,7 +144,7 @@ func Collect(
 	}
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
-	amount0 := u256Min(amount0Requested, position.tokensOwed0)
+	amount0 := u256Min(amount0Req, position.tokensOwed0)
 	amount0 = u256Min(amount0, pool.balances.token0)
 
 	// Update state first then transfer
@@ -153,7 +153,7 @@ func Collect(
 	transferByRegisterCall(pool.token0Path, recipient, amount0.Uint64())
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
-	amount1 := u256Min(amount1Requested, position.tokensOwed1)
+	amount1 := u256Min(amount1Req, position.tokensOwed1)
 	amount1 = u256Min(amount1, pool.balances.token1)
 
 	// Update state first then transfer
@@ -203,10 +203,10 @@ func Swap(
 	fee uint32,
 	recipient std.Address,
 	zeroForOne bool,
-	_amountSpecified string, // int256
-	_sqrtPriceLimitX96 string, // uint160
+	amountSpecified string,
+	sqrtPriceLimitX96 string,
 	payer std.Address, // router
-) (string, string) { // int256 x2
+) (string, string) {
 	common.IsHalted()
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
@@ -218,7 +218,7 @@ func Swap(
 		}
 	}
 
-	if _amountSpecified == "0" {
+	if amountSpecified == "0" {
 		panic(addDetailToError(
 			errInvalidSwapAmount,
 			ufmt.Sprintf("pool.gno__Swap() || amountSpecified == 0"),
@@ -235,22 +235,22 @@ func Swap(
 	slot0Start.unlocked = false
 	defer func() { slot0Start.unlocked = true }()
 
-	amountSpecified := i256.MustFromDecimal(_amountSpecified)
-	sqrtPriceLimitX96 := u256.MustFromDecimal(_sqrtPriceLimitX96)
+	amounts := i256.MustFromDecimal(amountSpecified)
+	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
 
-	validatePriceLimits(pool, zeroForOne, sqrtPriceLimitX96)
+	validatePriceLimits(pool, zeroForOne, sqrtPriceLimit)
 
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	feeProtocol := getFeeProtocol(slot0Start, zeroForOne)
 	cache := newSwapCache(feeProtocol, pool.liquidity)
 
-	state := newSwapState(amountSpecified, feeGrowthGlobalX128, cache.liquidityStart, pool.slot0)
+	state := newSwapState(amounts, feeGrowthGlobalX128, cache.liquidityStart, pool.slot0)
 
 	comp := SwapComputation{
-		AmountSpecified:   amountSpecified,
-		SqrtPriceLimitX96: sqrtPriceLimitX96,
+		AmountSpecified:   amounts,
+		SqrtPriceLimitX96: sqrtPriceLimit,
 		ZeroForOne:        zeroForOne,
-		ExactInput:        amountSpecified.Gt(i256.Zero()),
+		ExactInput:        amounts.Gt(i256.Zero()),
 		InitialState:      state,
 		Cache:             cache,
 	}
@@ -273,8 +273,8 @@ func Swap(
 		"prevRealm", prevRealm,
 		"poolPath", GetPoolPath(token0Path, token1Path, fee),
 		"zeroForOne", ufmt.Sprintf("%t", zeroForOne),
-		"amountSpecified", _amountSpecified,
-		"sqrtPriceLimitX96", _sqrtPriceLimitX96,
+		"amountSpecified", amountSpecified,
+		"sqrtPriceLimitX96", sqrtPriceLimitX96,
 		"payer", payer.String(),
 		"recipient", recipient.String(),
 		"internal_amount0", result.Amount0.ToString(),
@@ -697,9 +697,9 @@ func CollectProtocolByAdmin(
 	token1Path string,
 	fee uint32,
 	recipient std.Address,
-	_amount0Requested string, // uint128
-	_amount1Requested string, // uint128
-) (string, string) { // uint128 x2
+	amount0Requested string,
+	amount1Requested string,
+) (string, string) {
 	caller := std.PrevRealm().Addr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err)
@@ -710,8 +710,8 @@ func CollectProtocolByAdmin(
 		token1Path,
 		fee,
 		recipient,
-		_amount0Requested,
-		_amount1Requested,
+		amount0Requested,
+		amount1Requested,
 	)
 
 	prevAddr, prevRealm := getPrev()
@@ -739,9 +739,9 @@ func CollectProtocol(
 	token1Path string,
 	fee uint32,
 	recipient std.Address,
-	_amount0Requested string, // uint128
-	_amount1Requested string, // uint128
-) (string, string) { // uint128 x2
+	amount0Requested string,
+	amount1Requested string,
+) (string, string) {
 	caller := std.PrevRealm().Addr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err)
@@ -752,8 +752,8 @@ func CollectProtocol(
 		token1Path,
 		fee,
 		recipient,
-		_amount0Requested,
-		_amount1Requested,
+		amount0Requested,
+		amount1Requested,
 	)
 
 	prevAddr, prevRealm := getPrev()
@@ -777,18 +777,18 @@ func collectProtocol(
 	token1Path string,
 	fee uint32,
 	recipient std.Address,
-	_amount0Requested string, // uint128
-	_amount1Requested string, // uint128
-) (string, string) { // uint128 x2
+	amount0Requested string,
+	amount1Requested string,
+) (string, string) {
 	common.IsHalted()
-
-	amount0Requested := u256.MustFromDecimal(_amount0Requested)
-	amount1Requested := u256.MustFromDecimal(_amount1Requested)
 
 	pool := GetPool(token0Path, token1Path, fee)
 
-	amount0 := u256Min(amount0Requested, pool.protocolFees.token0)
-	amount1 := u256Min(amount1Requested, pool.protocolFees.token1)
+	amount0Req := u256.MustFromDecimal(amount0Requested)
+	amount1Req := u256.MustFromDecimal(amount1Requested)
+
+	amount0 := u256Min(amount0Req, pool.protocolFees.token0)
+	amount1 := u256Min(amount1Req, pool.protocolFees.token1)
 
 	amount0, amount1 = pool.saveProtocolFees(amount0, amount1)
 	uAmount0 := amount0.Uint64()
