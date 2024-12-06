@@ -142,6 +142,8 @@ func Collect(
 
 	var amount0, amount1 *u256.Uint
 
+	var amount0, amount1 *u256.Uint
+
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
 	amount0Req := u256.MustFromDecimal(amount0Requested)
 	amount0, position.tokensOwed0, pool.balances.token0 = collectToken(amount0Req, position.tokensOwed0, pool.balances.token0)
@@ -822,10 +824,10 @@ func collectProtocol(
 	uAmount0 := amount0.Uint64()
 	uAmount1 := amount1.Uint64()
 
-	token0 := common.GetToken(pool.token0Path)
+	token0 := common.GetTokenTeller(pool.token0Path)
 	checkTransferError(token0.Transfer(recipient, uAmount0))
 
-	token1 := common.GetToken(pool.token1Path)
+	token1 := common.GetTokenTeller(pool.token1Path)
 	checkTransferError(token1.Transfer(recipient, uAmount1))
 
 	return amount0.ToString(), amount1.ToString()
@@ -954,7 +956,7 @@ func (pool *Pool) transferFromAndVerify(
 		panic(err)
 	}
 
-	token := common.GetToken(tokenPath)
+	token := common.GetTokenTeller(tokenPath)
 	checkTransferError(token.TransferFrom(from, to, amountUint64))
 
 	// update pool balances
