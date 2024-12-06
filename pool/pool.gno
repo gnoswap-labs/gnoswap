@@ -71,8 +71,8 @@ func Burn(
 	fee uint32,
 	tickLower int32,
 	tickUpper int32,
-	liquidityAmount string,
-) (string, string) {
+	liquidityAmount string, // uint128
+) (string, string) { // uint256 x2
 	common.IsHalted()
 	caller := std.PrevRealm().Addr()
 	if common.GetLimitCaller() {
@@ -129,9 +129,6 @@ func Collect(
 		}
 	}
 
-	amount0Req := u256.MustFromDecimal(amount0Requested)
-	amount1Req := u256.MustFromDecimal(amount1Requested)
-
 	pool := GetPool(token0Path, token1Path, fee)
 
 	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
@@ -143,22 +140,16 @@ func Collect(
 		))
 	}
 
-	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
-	amount0 := u256Min(amount0Req, position.tokensOwed0)
-	amount0 = u256Min(amount0, pool.balances.token0)
+	var amount0, amount1 *u256.Uint
 
-	// Update state first then transfer
-	position.tokensOwed0 = new(u256.Uint).Sub(position.tokensOwed0, amount0)
-	pool.balances.token0 = new(u256.Uint).Sub(pool.balances.token0, amount0)
+	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
+	amount0Req := u256.MustFromDecimal(amount0Requested)
+	amount0, position.tokensOwed0, pool.balances.token0 = collectToken(amount0Req, position.tokensOwed0, pool.balances.token0)
 	transferByRegisterCall(pool.token0Path, recipient, amount0.Uint64())
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
-	amount1 := u256Min(amount1Req, position.tokensOwed1)
-	amount1 = u256Min(amount1, pool.balances.token1)
-
-	// Update state first then transfer
-	position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
-	pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
+	amount1Req := u256.MustFromDecimal(amount1Requested)
+	amount1, position.tokensOwed1, pool.balances.token1 = collectToken(amount1Req, position.tokensOwed1, pool.balances.token1)
 	transferByRegisterCall(pool.token1Path, recipient, amount1.Uint64())
 
 	pool.positions[positionKey] = position
@@ -166,9 +157,20 @@ func Collect(
 	return amount0.ToString(), amount1.ToString()
 }
 
-////////////////////////////////////////////////////////////
-// Swap
-////////////////////////////////////////////////////////////
+// collectToken handles the collection of a single token type (token0 or token1)
+func collectToken(
+	amountReq, tokensOwed, poolBalance *u256.Uint,
+) (amount, newTokensOwed, newPoolBalance *u256.Uint) {
+	// find smallest of three amounts
+	amount = u256Min(amountReq, tokensOwed)
+	amount = u256Min(amount, poolBalance)
+
+	// value for update state
+	newTokensOwed = new(u256.Uint).Sub(tokensOwed, amount)
+	newPoolBalance = new(u256.Uint).Sub(poolBalance, amount)
+
+	return amount, newTokensOwed, newPoolBalance
+}
 
 // SwapResult encapsulates all state changes that occur as a result of a swap
 // This type ensure all state transitions are atomic and can be applied at once.
@@ -506,13 +508,20 @@ func computeSwapStepInit(state SwapState, pool *Pool, zeroForOne bool) StepCompu
 
 // computeTargetSqrtRatio determines the target sqrt price for the current swap step.
 func computeTargetSqrtRatio(step StepComputations, sqrtPriceLimitX96 *u256.Uint, zeroForOne bool) *u256.Uint {
-	isLower := step.sqrtPriceNextX96.Lt(sqrtPriceLimitX96)
-	isHigher := step.sqrtPriceNextX96.Gt(sqrtPriceLimitX96)
-
-	if (zeroForOne && isLower) || (!zeroForOne && isHigher) {
+	if shouldUsePriceLimit(step.sqrtPriceNextX96, sqrtPriceLimitX96, zeroForOne) {
 		return sqrtPriceLimitX96
 	}
 	return step.sqrtPriceNextX96
+}
+
+// shouldUsePriceLimit returns true if the price limit should be used instead of the next tick price
+func shouldUsePriceLimit(sqrtPriceNext, sqrtPriceLimit *u256.Uint, zeroForOne bool) bool {
+	isLower := sqrtPriceNext.Lt(sqrtPriceLimit)
+	isHigher := sqrtPriceNext.Gt(sqrtPriceLimit)
+	if zeroForOne {
+		return isLower
+	}
+	return isHigher
 }
 
 // computeAmounts calculates the input and output amounts for the current swap step.
@@ -591,22 +600,18 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 func (pool *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
 	var targetTokenPath string
 	var amount *i256.Int
-	var isToken0 bool
 
-	switch zeroForOne {
-	case true:
+	if zeroForOne {
 		targetTokenPath = pool.token0Path
 		amount = amount0
-		isToken0 = true
-	case false:
+	} else {
 		targetTokenPath = pool.token1Path
 		amount = amount1
-		isToken0 = false
 	}
 
 	// payer -> POOL -> recipient
-	pool.transferFromAndVerify(payer, consts.POOL_ADDR, targetTokenPath, amount, isToken0)
-	pool.transferAndVerify(recipient, targetTokenPath, amount, !isToken0)
+	pool.transferFromAndVerify(payer, consts.POOL_ADDR, targetTokenPath, amount, zeroForOne)
+	pool.transferAndVerify(recipient, targetTokenPath, amount, !zeroForOne)
 }
 
 // SetFeeProtocolByAdmin sets the fee protocol for all pools
@@ -888,7 +893,7 @@ func updatePoolBalance(
 
 	if isToken0 {
 		newBalance, overflow = new(u256.Uint).SubOverflow(token0, amount)
-		if overflow || newBalance.Lt(u256.Zero()) {
+		if isBalanceOverflowOrNegative(overflow, newBalance) {
 			return nil, ufmt.Errorf(
 				"%s || cannot decrease, token0(%s) - amount(%s)",
 				errTransferFailed.Error(), token0.ToString(), amount.ToString(),
@@ -898,13 +903,17 @@ func updatePoolBalance(
 	}
 
 	newBalance, overflow = new(u256.Uint).SubOverflow(token1, amount)
-	if overflow || newBalance.Lt(u256.Zero()) {
+	if isBalanceOverflowOrNegative(overflow, newBalance) {
 		return nil, ufmt.Errorf(
 			"%s || cannot decrease, token1(%s) - amount(%s)",
 			errTransferFailed.Error(), token1.ToString(), amount.ToString(),
 		)
 	}
 	return newBalance, nil
+}
+
+func isBalanceOverflowOrNegative(overflow bool, newBalance *u256.Uint) bool {
+	return overflow || newBalance.Lt(u256.Zero())
 }
 
 func (pool *Pool) transferFromAndVerify(
