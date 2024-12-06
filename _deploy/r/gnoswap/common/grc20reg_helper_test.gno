@@ -11,11 +11,15 @@ import (
 	_ "gno.land/r/demo/foo20"
 )
 
+var (
+	tokenPath = "gno.land/r/demo/foo20"
+)
+
 func TestGetToken(t *testing.T) {
 	t.Run("registered(by default)", func(t *testing.T) {
-		token := GetToken("gno.land/r/demo/foo20")
+		token := GetToken(tokenPath)
 		if token == nil {
-			t.Error("Expected non-nil teller for WUGNOT")
+			t.Error("Expected non-nil teller for foo20")
 		}
 	})
 
@@ -30,7 +34,7 @@ func TestGetToken(t *testing.T) {
 }
 
 func TestTokenMethod(t *testing.T) {
-	token := GetToken("gno.land/r/demo/foo20")
+	token := GetToken(tokenPath)
 
 	t.Run("GetName()", func(t *testing.T) {
 		uassert.Equal(t, "Foo", token.GetName())
@@ -72,9 +76,9 @@ func TestTokenMethod(t *testing.T) {
 
 func TestGetTokenTeller(t *testing.T) {
 	t.Run("registered(by default)", func(t *testing.T) {
-		teller := GetTokenTeller("gno.land/r/demo/foo20")
+		teller := GetTokenTeller(tokenPath)
 		if teller == nil {
-			t.Error("Expected non-nil teller for WUGNOT")
+			t.Error("Expected non-nil teller for foo20")
 		}
 	})
 
@@ -89,8 +93,8 @@ func TestGetTokenTeller(t *testing.T) {
 }
 
 func TestTellerMethod(t *testing.T) {
-	teller := GetTokenTeller("gno.land/r/demo/foo20")
-	token := GetToken("gno.land/r/demo/foo20")
+	teller := GetTokenTeller(tokenPath)
+	token := GetToken(tokenPath)
 	defaultHolder := std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
 	addr01 := testutils.TestAddress("addr01")
 
@@ -122,4 +126,9 @@ func TestTellerMethod(t *testing.T) {
 
 		uassert.Error(t, teller.TransferFrom(addr01, defaultHolder, uint64(500))) // not enough allowance
 	})
+}
+
+func TestIsRegistered(t *testing.T) {
+	uassert.NoError(t, IsRegistered(tokenPath))
+	uassert.Error(t, IsRegistered("not_registered"))
 }

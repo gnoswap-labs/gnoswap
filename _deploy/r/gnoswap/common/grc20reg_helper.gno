@@ -2,7 +2,7 @@ package common
 
 import (
 	"gno.land/p/demo/grc/grc20"
-
+	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/grc20reg"
 )
 
@@ -33,4 +33,14 @@ func GetTokenTeller(path string) grc20.Teller {
 	tokenGetter := grc20reg.MustGet(path) // if token is not registered, it will panic
 	token := tokenGetter()
 	return token.CallerTeller()
+}
+
+// IsRegistered returns nil if token is registered to grc20reg
+// otherwise, it returns an error
+func IsRegistered(path string) error {
+	getter := grc20reg.Get(path)
+	if getter == nil {
+		return ufmt.Errorf("token(%s) is not registered to grc20reg", path)
+	}
+	return nil
 }
