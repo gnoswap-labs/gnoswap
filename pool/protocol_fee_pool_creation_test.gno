@@ -82,7 +82,7 @@ func TestSetPoolCreationFee(t *testing.T) {
 
 func TestSetPoolCreationFeeByAdmin(t *testing.T) {
 	var (
-		admin = pusers.AddressOrName("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
+		admin = pusers.AddressOrName(consts.ADMIN)
 		alice = pusers.AddressOrName(testutils.TestAddress("alice"))
 	)
 

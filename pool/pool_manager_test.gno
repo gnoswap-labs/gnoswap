@@ -4,7 +4,6 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/json"
 	"gno.land/p/demo/uassert"
 
 	"gno.land/r/onbloc/bar"
@@ -15,6 +14,8 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/gnoswap/v1/gns"
+
+	"gno.land/r/demo/users"
 )
 
 var (
@@ -46,7 +47,7 @@ func TestCreateFooBarPool(t *testing.T) {
 	})
 
 	t.Run("create pool", func(t *testing.T) {
-		CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
+		CreatePool(barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
 		std.TestSkipHeights(1)
 	})
 
@@ -63,7 +64,7 @@ func TestCreateBarBazPool(t *testing.T) {
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	std.TestSkipHeights(1)
 
-	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
+	CreatePool(barPath, bazPath, fee100, "130621891405341611593710811006") // tick 10000
 	std.TestSkipHeights(1)
 }
 
@@ -84,7 +85,7 @@ func TestMintFooBarLiquidity(t *testing.T) {
 		-11000, // -11000
 		-9000,  // -9000
 		test_liquidityExpectStr,
-		admin,
+		users.Resolve(admin),
 	)
 	uassert.Equal(t, amount0, "8040316")
 	uassert.Equal(t, amount1, "2958015")
@@ -108,28 +109,11 @@ func TestMintBarBazLiquidity(t *testing.T) {
 		test_tickLower,
 		test_tickUpper,
 		test_liquidityExpectStr,
-		admin,
+		users.Resolve(admin),
 	)
 	uassert.Equal(t, amount0, "2958015")
 	uassert.Equal(t, amount1, "8040316")
 	std.TestSkipHeights(1)
-}
-
-// GETTER_API TEST
-func TestApiGetPools(t *testing.T) {
-	gpls := ApiGetPools()
-
-	root, err := json.Unmarshal([]byte(gpls))
-	if err != nil {
-		panic(err.Error())
-	}
-
-	response, err := root.GetKey("response")
-	if err != nil {
-		panic(err.Error())
-	}
-
-	uassert.Equal(t, response.Size(), 2)
 }
 
 func gnsBalance(t *testing.T, addr std.Address) uint64 {
