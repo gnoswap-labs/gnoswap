@@ -39,7 +39,7 @@ func (t *tickSpacingMap) Get(fee uint32) int32 {
 
 var (
 	feeAmountTickSpacing tickSpacingMap = make(tickSpacingMap) // maps fee to tickSpacing || map[feeAmount]tick_spacing
-	pools                poolMap = make(poolMap) // maps poolPath to pool || map[poolPath]*Pool
+	pools                poolMap        = make(poolMap)        // maps poolPath to pool || map[poolPath]*Pool
 
 	slot0FeeProtocol uint8 = 0
 )
@@ -69,11 +69,11 @@ func newPoolParams(
 	price := u256.MustFromDecimal(sqrtPriceX96)
 	tickSpacing := feeAmountTickSpacing.Get(fee)
 	return &createPoolParams{
-		token0Path: token0Path,
-		token1Path: token1Path,
-		fee:        fee,
+		token0Path:   token0Path,
+		token1Path:   token1Path,
+		fee:          fee,
 		sqrtPriceX96: price,
-		tickSpacing: tickSpacing,
+		tickSpacing:  tickSpacing,
 	}
 }
 
