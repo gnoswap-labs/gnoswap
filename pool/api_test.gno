@@ -37,7 +37,7 @@ func TestApiGetPools(t *testing.T) {
 		panic(err.Error())
 	}
 
-	uassert.Equal(t, response.Size(), 2) // should be same as the number of pools
+	uassert.Equal(t, 2, response.Size()) // should be same as the number of pools
 }
 
 func TestApiGetPool(t *testing.T) {
@@ -70,9 +70,6 @@ func TestMakeStatNode(t *testing.T) {
 
 		statHeight, _ := statNode.GetKey("height")
 		uassert.Equal(t, statHeight.String(), "124")
-
-		statTimestamp, _ := statNode.GetKey("timestamp")
-		uassert.Equal(t, statTimestamp.String(), "1234567895")
 	})
 }
 

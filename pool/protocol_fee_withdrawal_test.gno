@@ -15,7 +15,7 @@ import (
 
 func TestHandleWithdrawalFee(t *testing.T) {
 	var (
-		admin       = pusers.AddressOrName("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
+		admin       = pusers.AddressOrName(consts.ADMIN)
 		position    = pusers.AddressOrName(consts.POSITION_ADDR)
 		pool        = pusers.AddressOrName(consts.POOL_ADDR)
 		protocolFee = pusers.AddressOrName(consts.PROTOCOL_FEE_ADDR)
@@ -35,7 +35,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				HandleWithdrawalFee(0, "", "0", "", "0", "", users.Resolve(admin))
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-001] caller has no permission || withdrawal_fee.gno__HandleWithdrawalFee() || only position(g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) can call this function, called from g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c",
+			expected:    "[GNOSWAP-POOL-001] caller has no permission || withdrawal_fee.gno__HandleWithdrawalFee() || only position(g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) can call this function, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
 			shouldPanic: true,
 		},
 		{
@@ -143,7 +143,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 
 func TestSetWithdrawalFee(t *testing.T) {
 	var (
-		admin = pusers.AddressOrName("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
+		admin = pusers.AddressOrName(consts.ADMIN)
 		alice = pusers.AddressOrName(testutils.TestAddress("alice"))
 	)
 	tests := []struct {
@@ -178,7 +178,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 				}
 			},
 			verify:      nil,
-			expected:    "caller(g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c) has no permission",
+			expected:    "caller(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) has no permission",
 			shouldPanic: true,
 		},
 		{
@@ -239,7 +239,7 @@ func TestSetWithdrawalFee(t *testing.T) {
 
 func TestSetWithdrawalFeeByAdmin(t *testing.T) {
 	var (
-		admin      = pusers.AddressOrName("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
+		admin      = pusers.AddressOrName(consts.ADMIN)
 		alice      = pusers.AddressOrName(testutils.TestAddress("alice"))
 		governance = pusers.AddressOrName(consts.GOV_GOVERNANCE_ADDR)
 	)

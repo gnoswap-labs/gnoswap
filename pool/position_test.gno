@@ -47,13 +47,13 @@ func TestPositionUpdateWithKey(t *testing.T) {
 	var positionKey string
 
 	t.Run("set up initial data for this test function", func(t *testing.T) {
-		dummyPool = newPool(
+		poolParams := newPoolParams(
 			"token0",
 			"token1",
 			100,
-			10,
-			common.TickMathGetSqrtRatioAtTick(0),
+			common.TickMathGetSqrtRatioAtTick(0).ToString(),
 		)
+		dummyPool = newPool(poolParams)
 
 		positionKey = positionGetKey(
 			testutils.TestAddress("dummyAddr"),
