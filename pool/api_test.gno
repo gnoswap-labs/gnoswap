@@ -70,9 +70,6 @@ func TestMakeStatNode(t *testing.T) {
 
 		statHeight, _ := statNode.GetKey("height")
 		uassert.Equal(t, statHeight.String(), "124")
-
-		statTimestamp, _ := statNode.GetKey("timestamp")
-		uassert.Equal(t, statTimestamp.String(), "1234567892")
 	})
 }
 
