@@ -757,3 +757,81 @@ func checkAmountRange(amount *i256.Int) uint64 {
 
 	return amountUint64
 }
+
+// receiver getters
+func (p *Pool) PoolGetToken0Path() string {
+	return p.token0Path
+}
+
+func (p *Pool) PoolGetToken1Path() string {
+	return p.token1Path
+}
+
+func (p *Pool) PoolGetFee() uint32 {
+	return p.fee
+}
+
+func (p *Pool) PoolGetBalanceToken0() *u256.Uint {
+	return p.balances.token0
+}
+
+func (p *Pool) PoolGetBalanceToken1() *u256.Uint {
+	return p.balances.token1
+}
+
+func (p *Pool) PoolGetTickSpacing() int32 {
+	return p.tickSpacing
+}
+
+func (p *Pool) PoolGetMaxLiquidityPerTick() *u256.Uint {
+	return p.maxLiquidityPerTick
+}
+
+func (p *Pool) PoolGetSlot0() Slot0 {
+	return p.slot0
+}
+
+func (p *Pool) PoolGetSlot0SqrtPriceX96() *u256.Uint {
+	return p.slot0.sqrtPriceX96
+}
+
+func (p *Pool) PoolGetSlot0Tick() int32 {
+	return p.slot0.tick
+}
+
+func (p *Pool) PoolGetSlot0FeeProtocol() uint8 {
+	return p.slot0.feeProtocol
+}
+
+func (p *Pool) PoolGetSlot0Unlocked() bool {
+	return p.slot0.unlocked
+}
+
+func (p *Pool) PoolGetFeeGrowthGlobal0X128() *u256.Uint {
+	return p.feeGrowthGlobal0X128
+}
+
+func (p *Pool) PoolGetFeeGrowthGlobal1X128() *u256.Uint {
+	return p.feeGrowthGlobal1X128
+}
+
+func (p *Pool) PoolGetProtocolFeesToken0() *u256.Uint {
+	return p.protocolFees.token0
+}
+
+func (p *Pool) PoolGetProtocolFeesToken1() *u256.Uint {
+	return p.protocolFees.token1
+}
+
+func (p *Pool) PoolGetLiquidity() *u256.Uint {
+	return p.liquidity
+}
+
+func mustGetPool(poolPath string) *Pool {
+	pool, exist := pools[poolPath]
+	if !exist {
+		panic(addDetailToError(errDataNotFound,
+			ufmt.Sprintf("poolPath(%s) does not exist", poolPath)))
+	}
+	return pool
+}

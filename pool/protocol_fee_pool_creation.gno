@@ -3,10 +3,8 @@ package pool
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
-
 	"gno.land/p/demo/ufmt"
+	"gno.land/r/gnoswap/v1/common"
 )
 
 // poolCreationFee is the fee that is charged when a user creates a pool.
@@ -21,46 +19,52 @@ func GetPoolCreationFee() uint64 {
 	return poolCreationFee
 }
 
-// SetPoolCreationFeeByAdmin sets the poolCreationFee.
-func SetPoolCreationFeeByAdmin(fee uint64) {
-	caller := std.PrevRealm().Addr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
-
-	setPoolCreationFee(fee)
-
-	prevAddr, prevRealm := getPrev()
-	std.Emit(
-		"SetPoolCreationFeeByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"fee", ufmt.Sprintf("%d", fee),
-	)
-}
-
 // SetPoolCreationFee sets the poolCreationFee.
 // Only governance contract can execute this function via proposal
 // ref: https://docs.gnoswap.io/contracts/pool/protocol_fee_pool_creation.gno#setpoolcreationfee
 func SetPoolCreationFee(fee uint64) {
+	// TODO:
+	// 1. IsHalted name chnage to assertIsHalted
+	common.IsHalted()
 	caller := std.PrevRealm().Addr()
 	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
-
 	setPoolCreationFee(fee)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"SetPoolCreationFee",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"fee", ufmt.Sprintf("%d", fee),
 	)
 }
 
-func setPoolCreationFee(fee uint64) {
+// SetPoolCreationFeeByAdmin sets the poolCreationFee by Admin.
+// Only admin can execute this function.
+func SetPoolCreationFeeByAdmin(fee uint64) {
+	// TODO:
+	// 1. IsHalted name chnage to assertIsHalted
 	common.IsHalted()
 
+	caller := std.PrevRealm().Addr()
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err.Error())
+	}
+	setPoolCreationFee(fee)
+
+	prevAddr, prevPkgPath := getPrev()
+	std.Emit(
+		"SetPoolCreationFeeByAdmin",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"fee", ufmt.Sprintf("%d", fee),
+	)
+}
+
+// setPoolCreationFee this function is internal function called by SetPoolCreationFee
+// And SetPoolCreationFeeByAdmin
+func setPoolCreationFee(fee uint64) {
 	poolCreationFee = fee
 }

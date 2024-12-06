@@ -4,10 +4,17 @@ import (
 	"std"
 
 	pusers "gno.land/p/demo/users"
+
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func a2u(addr std.Address) pusers.AddressOrName {
+	if !addr.IsValid() {
+		panic(addDetailToError(
+			errInvalidAddress,
+			addr.String(),
+		))
+	}
 	return pusers.AddressOrName(addr)
 }
 
@@ -17,10 +24,6 @@ func u256Min(num1, num2 *u256.Uint) *u256.Uint {
 	}
 
 	return num2
-}
-
-func prevRealm() string {
-	return std.PrevRealm().PkgPath()
 }
 
 func isUserCall() bool {
