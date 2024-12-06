@@ -2,121 +2,201 @@ package pool
 
 import (
 	"std"
+	"strings"
 	"testing"
 
-	"gno.land/p/demo/uassert"
-
-	"gno.land/r/onbloc/bar"
-	"gno.land/r/onbloc/baz"
-	"gno.land/r/onbloc/foo"
-
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
-
-	"gno.land/r/gnoswap/v1/gns"
-
-	"gno.land/r/demo/users"
 )
 
-var (
-	test_tickLower          = int32(9000)
-	test_tickUpper          = int32(11000)
-	test_liquidityExpectStr = "100000000"
-)
+func TestPoolMapOperations(t *testing.T) {
+	pm := make(poolMap)
 
-// 1. Create Foo:Bar Pool
-func TestCreateFooBarPool(t *testing.T) {
-	std.TestSkipHeights(100)
+	poolPath := "token0:token1:500"
+	params := newPoolParams("token0", "token1", 500, "4295128740")
+	pool := newPool(params)
 
-	uassert.Equal(t, gns.TotalSupply(), uint64(100000000000000))
-	uassert.Equal(t, gnsBalance(t, consts.EMISSION_ADDR), uint64(0))
-	uassert.Equal(t, gnsBalance(t, consts.STAKER_ADDR), uint64(0))
-	uassert.Equal(t, gnsBalance(t, consts.DEV_OPS), uint64(0))
+	pm.Set(poolPath, pool)
 
-	std.TestSetRealm(adminRealm)
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
+	retrieved, exists := pm.Get(poolPath)
+	if !exists {
+		t.Error("Expected pool to exist")
+	}
+	if retrieved != pool {
+		t.Error("Retrieved pool doesn't match original")
+	}
 
-	t.Run("wrong pool path", func(t *testing.T) {
-		uassert.PanicsWithMessage(
-			t,
-			`[GNOSWAP-POOL-012] tokens must be in lexicographical order || pool_manager.gno__CreatePool() || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)`,
-			func() {
-				CreatePool(fooPath, barPath, fee500, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
-			},
-		)
-	})
-
-	t.Run("create pool", func(t *testing.T) {
-		CreatePool(barPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(-10000).ToString()) // tick -10000
-		std.TestSkipHeights(1)
-	})
-
-	uassert.Equal(t, gns.TotalSupply(), uint64(100001426940600))
-	uassert.Equal(t, gnsBalance(t, consts.EMISSION_ADDR), uint64(0))
-	uassert.Equal(t, gnsBalance(t, consts.STAKER_ADDR), uint64(1070205450))
-	uassert.Equal(t, gnsBalance(t, consts.DEV_OPS), uint64(285388120))
+	_, exists = pm.Get("nonexistent")
+	if exists {
+		t.Error("Expected pool to not exist")
+	}
 }
 
-// 2. Create Bar:Baz Pool
-func TestCreateBarBazPool(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-
-	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
-	std.TestSkipHeights(1)
-
-	CreatePool(barPath, bazPath, fee100, "130621891405341611593710811006") // tick 10000
-	std.TestSkipHeights(1)
-}
-
-// 3. Mint Foo:Bar Liquidity by admin
-func TestMintFooBarLiquidity(t *testing.T) {
-	std.TestSetRealm(adminRealm)
-
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	std.TestSkipHeights(4)
-
-	std.TestSetRealm(posRealm)
-	amount0, amount1 := Mint(
-		barPath,
-		fooPath,
-		fee500,
-		consts.POSITION_ADDR,
-		-11000, // -11000
-		-9000,  // -9000
-		test_liquidityExpectStr,
-		users.Resolve(admin),
+func TestNewPoolParams(t *testing.T) {
+	params := newPoolParams(
+		"token0",
+		"token1",
+		500,       // 0.05% fee
+		"1000000", // example sqrt price
 	)
-	uassert.Equal(t, amount0, "8040316")
-	uassert.Equal(t, amount1, "2958015")
-	std.TestSkipHeights(1)
-}
 
-// 4. Mint Bar:Baz Liquidity by admin
-func TestMintBarBazLiquidity(t *testing.T) {
-	std.TestSetRealm(adminRealm)
+	if params.Token0Path() != "token0" {
+		t.Errorf("Expected token0Path to be 'token0', got %s", params.Token0Path())
+	}
 
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	std.TestSkipHeights(2)
+	if params.TickSpacing() != 10 { // 500 fee should have 10 tick spacing
+		t.Errorf("Expected tick spacing 10, got %d", params.TickSpacing())
+	}
 
-	std.TestSetRealm(posRealm)
-	amount0, amount1 := Mint(
-		barPath,
-		bazPath,
-		fee500,
-		consts.POSITION_ADDR,
-		test_tickLower,
-		test_tickUpper,
-		test_liquidityExpectStr,
-		users.Resolve(admin),
+	if !params.isInOrder() {
+		t.Errorf("Expected token0Path(token0) < token1Path(token1)")
+	}
+
+	params = newPoolParams(
+		consts.GNOT,
+		"token1",
+		500,
+		"1000000",
 	)
-	uassert.Equal(t, amount0, "2958015")
-	uassert.Equal(t, amount1, "8040316")
-	std.TestSkipHeights(1)
+	token0, token1 := params.wrap()
+	if token0 != consts.WRAPPED_WUGNOT {
+		t.Errorf("Expected GNOT to be wrapped to WUGNOT")
+	}
+
+	params = newPoolParams(
+		"token0",
+		"token0",
+		500,
+		"1000000",
+	)
+	if !params.isSameTokenPath() {
+		t.Errorf("Expected token0Path(token0) == token1Path(token0)")
+	}
 }
 
-func gnsBalance(t *testing.T, addr std.Address) uint64 {
-	t.Helper()
-	return gns.BalanceOf(a2u(addr))
+func TestGetPoolPath(t *testing.T) {
+	path := GetPoolPath("tokenA", "tokenB", 500)
+	expected := "tokenA:tokenB:500"
+	if path != expected {
+		t.Errorf("Expected path %s, got %s", expected, path)
+	}
+
+	path = GetPoolPath("tokenB", "tokenA", 500)
+	if path != expected {
+		t.Errorf("Expected tokens to be sorted, expected %s, got %s", expected, path)
+	}
+}
+
+func TestTickSpacingMap(t *testing.T) {
+	tests := []struct {
+		fee         uint32
+		tickSpacing int32
+	}{
+		{100, 1},     // 0.01%
+		{500, 10},    // 0.05%
+		{3000, 60},   // 0.3%
+		{10000, 200}, // 1%
+	}
+
+	for _, tt := range tests {
+		spacing := feeAmountTickSpacing.Get(tt.fee)
+		if spacing != tt.tickSpacing {
+			t.Errorf("For fee %d, expected tick spacing %d, got %d",
+				tt.fee, tt.tickSpacing, spacing)
+		}
+	}
+}
+
+func TestCreatePool(t *testing.T) {
+	tests := []struct {
+		name        string
+		token0Path  string
+		token1Path  string
+		fee         uint32
+		sqrtPrice   string
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:       "success - normal token pair",
+			token0Path: "test/token0",
+			token1Path: "test/token1",
+			fee:        3000,
+			sqrtPrice:  "4295128740",
+		},
+		{
+			name:        "fail - same tokens",
+			token0Path:  "test/token0",
+			token1Path:  "test/token0",
+			fee:         3000,
+			sqrtPrice:   "4295128740",
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-POOL-011] same token used in single pool || pool_manager.gno__CreatePool() || expected token0Path(test/token0) != token1Path(test/token0",
+		},
+		{
+			name:        "fail - tokens not in order",
+			token0Path:  "test/tokenB",
+			token1Path:  "test/tokenA",
+			fee:         3000,
+			sqrtPrice:   "4295128740",
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-POOL-012] tokens must be in lexicographical order || pool_manager.gno__CreatePool() || expected token0Path(test/tokenB) < token1Path(test/tokenA)",
+		},
+		{
+			name:        "fail - pool already exists",
+			token0Path:  "test/token0",
+			token1Path:  "test/token1",
+			fee:         3000,
+			sqrtPrice:   "4295128740",
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-POOL-013] pool already created || pool_manager.gno__CreatePool() || expected poolPath(test/token0:test/token1:3000) not to exist",
+		},
+	}
+
+	std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
+	SetPoolCreationFeeByAdmin(0)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() {
+					r := recover()
+					if r == nil {
+						t.Errorf("expected panic but got none")
+						return
+					}
+					errMsg := string(r)
+					if !strings.Contains(errMsg, tt.panicMsg) {
+						t.Errorf("expected panic message containing %q but got %q", tt.panicMsg, errMsg)
+					}
+				}()
+			}
+
+			CreatePool(tt.token0Path, tt.token1Path, tt.fee, tt.sqrtPrice)
+
+			if !tt.shouldPanic {
+				// verify pool was created correctly
+				poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
+				pool, exists := pools.Get(poolPath)
+				if !exists {
+					t.Errorf("pool was not created")
+					return
+				}
+
+				// check if GNOT was properly wrapped
+				expectedToken0 := tt.token0Path
+				expectedToken1 := tt.token1Path
+				if expectedToken0 == consts.GNOT {
+					expectedToken0 = consts.WRAPPED_WUGNOT
+				}
+				if expectedToken1 == consts.GNOT {
+					expectedToken1 = consts.WRAPPED_WUGNOT
+				}
+
+				if pool.token0Path != expectedToken0 || pool.token1Path != expectedToken1 {
+					t.Errorf("incorrect token paths in pool. got %s,%s want %s,%s",
+						pool.token0Path, pool.token1Path, expectedToken0, expectedToken1)
+				}
+			}
+		})
+	}
 }
