@@ -42,7 +42,7 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *i2
 		amount1 = calculateToken1Amount(sqrtRatioLower, sqrtRatioUpper, liqDelta)
 	}
 
-	return position, amount0, amount1
+	return position, amount0.Abs(), amount1.Abs()
 }
 
 func calculateToken0Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {

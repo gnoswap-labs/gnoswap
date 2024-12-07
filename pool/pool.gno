@@ -93,8 +93,8 @@ func Burn(
 	position, amount0, amount1 := pool.modifyPosition(posParams)
 
 	if amount0.Gt(i256.Zero()) || amount1.Gt(i256.Zero()) {
-		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, amount0.Abs())
-		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, amount1.Abs())
+		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, amount0)
+		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, amount1)
 	}
 
 	positionKey := positionGetKey(caller, tickLower, tickUpper)
