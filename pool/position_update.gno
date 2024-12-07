@@ -5,8 +5,8 @@ import (
 )
 
 func (pool *Pool) updatePosition(positionParams ModifyPositionParams) PositionInfo {
-	_feeGrowthGlobal0X128 := u256.MustFromDecimal(pool.feeGrowthGlobal0X128.ToString())
-	_feeGrowthGlobal1X128 := u256.MustFromDecimal(pool.feeGrowthGlobal1X128.ToString())
+	feeGrowthGlobal0X128 := pool.feeGrowthGlobal0X128.Clone()
+	feeGrowthGlobal1X128 := pool.feeGrowthGlobal1X128.Clone()
 
 	var flippedLower, flippedUpper bool
 	if !(positionParams.liquidityDelta.IsZero()) {
@@ -14,8 +14,8 @@ func (pool *Pool) updatePosition(positionParams ModifyPositionParams) PositionIn
 			positionParams.tickLower,
 			pool.slot0.tick,
 			positionParams.liquidityDelta,
-			_feeGrowthGlobal0X128,
-			_feeGrowthGlobal1X128,
+			feeGrowthGlobal0X128,
+			feeGrowthGlobal1X128,
 			false,
 			pool.maxLiquidityPerTick,
 		)
@@ -24,8 +24,8 @@ func (pool *Pool) updatePosition(positionParams ModifyPositionParams) PositionIn
 			positionParams.tickUpper,
 			pool.slot0.tick,
 			positionParams.liquidityDelta,
-			_feeGrowthGlobal0X128,
-			_feeGrowthGlobal1X128,
+			feeGrowthGlobal0X128,
+			feeGrowthGlobal1X128,
 			true,
 			pool.maxLiquidityPerTick,
 		)
@@ -43,8 +43,8 @@ func (pool *Pool) updatePosition(positionParams ModifyPositionParams) PositionIn
 		positionParams.tickLower,
 		positionParams.tickUpper,
 		pool.slot0.tick,
-		_feeGrowthGlobal0X128,
-		_feeGrowthGlobal1X128,
+		feeGrowthGlobal0X128,
+		feeGrowthGlobal1X128,
 	)
 
 	positionKey := positionGetKey(positionParams.owner, positionParams.tickLower, positionParams.tickUpper)

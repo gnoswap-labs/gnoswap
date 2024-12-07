@@ -58,7 +58,7 @@ func TestModifyPosition(t *testing.T) {
 				barPath,
 				fooPath,
 				fee500,
-				tt.sqrtPrice,
+				sqrtPrice.ToString(),
 			)
 			pool := newPool(poolParams)
 
@@ -86,7 +86,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			sqrtPrice,
+			sp.ToString(),
 		)
 		pool := newPool(poolParams)
 		params := ModifyPositionParams{
@@ -115,7 +115,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			sqrtPrice,
+			sp.ToString(),
 		)
 		pool := newPool(poolParams)
 		params := ModifyPositionParams{
