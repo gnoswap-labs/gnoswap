@@ -50,11 +50,11 @@ func Mint(
 	position := newModifyPositionParams(recipient, tickLower, tickUpper, i256.FromUint256(liquidityAmount))
 	_, amount0, amount1 := pool.modifyPosition(position)
 
-	if amount0.Gt(i256.Zero()) {
+	if amount0.Gt(u256.Zero()) {
 		pool.transferFromAndVerify(positionCaller, consts.POOL_ADDR, pool.token0Path, amount0, true)
 	}
 
-	if amount1.Gt(i256.Zero()) {
+	if amount1.Gt(u256.Zero()) {
 		pool.transferFromAndVerify(positionCaller, consts.POOL_ADDR, pool.token1Path, amount1, false)
 	}
 
@@ -92,7 +92,7 @@ func Burn(
 	posParams := newModifyPositionParams(caller, tickLower, tickUpper, liqDelta)
 	position, amount0, amount1 := pool.modifyPosition(posParams)
 
-	if amount0.Gt(i256.Zero()) || amount1.Gt(i256.Zero()) {
+	if amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()) {
 		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, amount0)
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, amount1)
 	}
@@ -309,10 +309,16 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 	state := comp.InitialState
 	swapFee := u256.Zero()
 
+
+	var newFee *u256.Uint
+	var err error
+
 	// Compute swap steps until completion
 	for shouldContinueSwap(state, comp.SqrtPriceLimitX96) {
-		var newFee *u256.Uint
-		state, newFee = computeSwapStep(state, pool, comp.ZeroForOne, comp.SqrtPriceLimitX96, comp.ExactInput, comp.Cache, swapFee)
+		state, newFee, err = computeSwapStep(state, pool, comp.ZeroForOne, comp.SqrtPriceLimitX96, comp.ExactInput, comp.Cache, swapFee)
+		if err != nil {
+			return nil, err
+		}
 		swapFee = newFee
 	}
 
@@ -437,7 +443,7 @@ func computeSwapStep(
 	exactInput bool,
 	cache SwapCache,
 	swapFee *u256.Uint,
-) (SwapState, *u256.Uint) {
+) (SwapState, *u256.Uint, error) {
 	step := computeSwapStepInit(state, pool, zeroForOne)
 
 	// determining the price target for this step
@@ -445,13 +451,18 @@ func computeSwapStep(
 
 	// computing the amounts to be swapped at this step
 	var newState SwapState
+	var err error
+
 	newState, step = computeAmounts(state, sqrtRatioTargetX96, pool, step)
 	newState = updateAmounts(step, newState, exactInput)
 
 	// if the protocol fee is on, calculate how much is owed,
 	// decrement fee amount, and increment protocol fee
 	if cache.feeProtocol > 0 {
-		newState = updateFeeProtocol(step, cache.feeProtocol, newState)
+		newState, err = updateFeeProtocol(step, cache.feeProtocol, newState)
+		if err != nil {
+			return state, nil, err
+		}
 	}
 
 	// update global fee tracker
@@ -471,18 +482,22 @@ func computeSwapStep(
 
 	newSwapFee := new(u256.Uint).Add(swapFee, step.feeAmount)
 
-	return newState, newSwapFee
+	return newState, newSwapFee, nil
 }
 
 // updateFeeProtocol calculates and updates protocol fees for the current step.
-func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState) SwapState {
+func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState) (SwapState, error) {
 	delta := step.feeAmount
 	delta.Div(delta, u256.NewUint(uint64(feeProtocol)))
 
-	step.feeAmount.Sub(step.feeAmount, delta)
+	newFeeAmount, overflow := new(u256.Uint).SubOverflow(step.feeAmount, delta)
+	if overflow {
+		return state, errUnderflow
+	}
+	step.feeAmount = newFeeAmount
 	state.protocolFee.Add(state.protocolFee, delta)
 
-	return state
+	return state, nil
 }
 
 // computeSwapStepInit initializes the computation for a single swap step.
@@ -610,7 +625,7 @@ func (pool *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, a
 	}
 
 	// payer -> POOL -> recipient
-	pool.transferFromAndVerify(payer, consts.POOL_ADDR, targetTokenPath, amount, zeroForOne)
+	pool.transferFromAndVerify(payer, consts.POOL_ADDR, targetTokenPath, amount.Abs(), zeroForOne)
 	pool.transferAndVerify(recipient, targetTokenPath, amount, !zeroForOne)
 }
 
@@ -919,10 +934,10 @@ func isBalanceOverflowOrNegative(overflow bool, newBalance *u256.Uint) bool {
 func (pool *Pool) transferFromAndVerify(
 	from, to std.Address,
 	tokenPath string,
-	amount *i256.Int,
+	amount *u256.Uint,
 	isToken0 bool,
 ) {
-	absAmount := amount.Abs()
+	absAmount := amount
 	amountUint64, err := checkAmountRange(absAmount)
 	if err != nil {
 		panic(err)

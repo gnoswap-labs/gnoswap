@@ -10,15 +10,15 @@ import (
 
 // modifyPosition updates a position in the pool and calculates the amount of tokens to be added or removed.
 // Returns positionInfo, amount0, amount1
-func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *i256.Int, *i256.Int) {
+func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.Uint, *u256.Uint) {
 	position := pool.updatePosition(params)
 	liqDelta := params.liquidityDelta
 
-	amount0, amount1 := i256.Zero(), i256.Zero()
-
 	if liqDelta.IsZero() {
-		return position, amount0, amount1
+		return position, u256.Zero(), u256.Zero()
 	}
+
+	amount0, amount1 := i256.Zero(), i256.Zero()
 
 	tick := pool.slot0.tick
 	sqrtRatioLower := common.TickMathGetSqrtRatioAtTick(params.tickLower)
