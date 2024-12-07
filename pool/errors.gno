@@ -31,7 +31,8 @@ var (
 	errTransferFailed            = errors.New("[GNOSWAP-POOL-021] token transfer failed")
 	errInvalidTickAndTickSpacing = errors.New("[GNOSWAP-POOL-022] invalid tick and tick spacing requested")
 	errInvalidAddress            = errors.New("[GNOSWAP-POOL-023] invalid address")
-	errUnderflow                 = errors.New("[GNOSWAP-POOL-024] underflow") // TODO: make as common error code
+	errInvalidTickRange          = errors.New("[GNOSWAP-POOL-024] tickLower is greater than tickUpper")
+  errUnderflow                 = errors.New("[GNOSWAP-POOL-025] underflow") // TODO: make as common error code
 )
 
 // addDetailToError adds detail to an error message

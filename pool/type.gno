@@ -6,7 +6,6 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
-	"gno.land/p/demo/avl"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -228,7 +227,7 @@ func (t *TickInfo) init() {
 
 type Ticks map[int32]TickInfo          // tick => TickInfo
 type TickBitmaps map[int16]*u256.Uint  // tick(wordPos) => bitmap(tickWord ^ mask)
-type Positions map[string]PositionInfo // positionKey => PositionInfo 
+type Positions map[string]PositionInfo // positionKey => PositionInfo
 
 // type Pool describes a single Pool's state
 // A pool is identificed with a unique key (token0, token1, fee), where token0 < token1
@@ -262,7 +261,7 @@ type Pool struct {
 }
 
 func newPool(poolInfo *createPoolParams) *Pool {
-	maxLiquidityPerTick := tickTickSpacingToMaxLiquidityPerTick(poolInfo.tickSpacing)
+	maxLiquidityPerTick := calculateMaxLiquidityPerTick(poolInfo.tickSpacing)
 	tick := common.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
 	slot0 := newSlot0(poolInfo.SqrtPriceX96(), tick, slot0FeeProtocol, true)
 

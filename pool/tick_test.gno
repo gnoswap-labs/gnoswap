@@ -1,0 +1,610 @@
+package pool
+
+import (
+	"testing"
+
+	"gno.land/p/demo/uassert"
+
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+)
+
+func TestcalculateMaxLiquidityPerTick(t *testing.T) {
+	tests := []struct {
+		name        string
+		tickSpacing int32
+		want        string // expected result in string format
+	}{
+		{
+			name:        "tick spacing 1 (for 0.01% pool)",
+			tickSpacing: 1,
+			want:        "191757530477355301479181766273477",
+		},
+		{
+			name:        "tick spacing 10 (for 0.05% pool)",
+			tickSpacing: 10,
+			want:        "1917569901783203986719870431555990",
+		},
+		{
+			name:        "tick spacing 60 (for 0.3% pool)",
+			tickSpacing: 60,
+			want:        "11505743598341114571880798222544994",
+		},
+		{
+			name:        "tick spacing 200 (for 1% pool)",
+			tickSpacing: 200,
+			want:        "38350317471085141830651933667504588",
+		},
+		{
+			name:        "entire range",
+			tickSpacing: 887272,
+			want:        "113427455640312821154458202477256070485",
+		},
+		{
+			name:        "custom tick spacing",
+			tickSpacing: 2302,
+			want:        "441351967472034323558203122479595605",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := calculateMaxLiquidityPerTick(tt.tickSpacing)
+			if got.ToString() != tt.want {
+				t.Errorf("calculateMaxLiquidityPerTick() = %v, want %v", got.ToString(), tt.want)
+			}
+		})
+	}
+}
+
+func TestCalculateFeeGrowthInside(t *testing.T) {
+	// Create a mock pool
+	pool := &Pool{
+		ticks: make(map[int32]TickInfo),
+	}
+
+	// Setup test ticks
+	pool.ticks[0] = TickInfo{
+		liquidityGross:        u256.NewUint(1000),
+		liquidityNet:          i256.NewInt(100),
+		feeGrowthOutside0X128: u256.NewUint(5),
+		feeGrowthOutside1X128: u256.NewUint(7),
+		initialized:           true,
+	}
+	pool.ticks[100] = TickInfo{
+		liquidityGross:        u256.NewUint(2000),
+		liquidityNet:          i256.NewInt(-100),
+		feeGrowthOutside0X128: u256.NewUint(10),
+		feeGrowthOutside1X128: u256.NewUint(15),
+		initialized:           true,
+	}
+
+	tests := []struct {
+		name                 string
+		tickLower            int32
+		tickUpper            int32
+		tickCurrent          int32
+		feeGrowthGlobal0X128 *u256.Uint
+		feeGrowthGlobal1X128 *u256.Uint
+		want0                string
+		want1                string
+		preconditions        func()
+	}{
+		{
+			name:                 "returns all for two uninitialized ticks if tick is inside",
+			tickLower:            -2,
+			tickUpper:            2,
+			tickCurrent:          0,
+			feeGrowthGlobal0X128: u256.NewUint(15),
+			feeGrowthGlobal1X128: u256.NewUint(15),
+			want0:                "15",
+			want1:                "15",
+		},
+		{
+			name:                 "returns 0 for two uninitialized ticks if tick is above",
+			tickLower:            -2,
+			tickUpper:            2,
+			tickCurrent:          4,
+			feeGrowthGlobal0X128: u256.NewUint(15),
+			feeGrowthGlobal1X128: u256.NewUint(15),
+			want0:                "0",
+			want1:                "0",
+		},
+		{
+			name:                 "returns 0 for two uninitialized ticks if tick is below",
+			tickLower:            -2,
+			tickUpper:            2,
+			tickCurrent:          4,
+			feeGrowthGlobal0X128: u256.NewUint(15),
+			feeGrowthGlobal1X128: u256.NewUint(15),
+			want0:                "0",
+			want1:                "0",
+		},
+		{
+			name:                 "subtracts upper tick if below",
+			tickLower:            -2,
+			tickUpper:            2,
+			tickCurrent:          0,
+			feeGrowthGlobal0X128: u256.NewUint(15),
+			feeGrowthGlobal1X128: u256.NewUint(15),
+			want0:                "13",
+			want1:                "12",
+			preconditions: func() {
+				pool.setTick(
+					t,
+					2,
+					u256.NewUint(2),
+					u256.NewUint(3),
+					u256.NewUint(0),
+					i256.NewInt(0),
+					u256.NewUint(0),
+					0,
+					0,
+					true,
+				)
+			},
+		},
+		{
+			name:                 "subtracts lower tick if below",
+			tickLower:            -2,
+			tickUpper:            2,
+			tickCurrent:          0,
+			feeGrowthGlobal0X128: u256.NewUint(15),
+			feeGrowthGlobal1X128: u256.NewUint(15),
+			want0:                "13",
+			want1:                "12",
+			preconditions: func() {
+				pool.deleteTick(t, 2) // delete tick from previous test
+				pool.setTick(
+					t,
+					-2,
+					u256.NewUint(2),
+					u256.NewUint(3),
+					u256.NewUint(0),
+					i256.NewInt(0),
+					u256.NewUint(0),
+					0,
+					0,
+					true,
+				)
+			},
+		},
+		{
+			name:                 "subtracts upper and lower tick if inside",
+			tickLower:            -2,
+			tickUpper:            2,
+			tickCurrent:          0,
+			feeGrowthGlobal0X128: u256.NewUint(15),
+			feeGrowthGlobal1X128: u256.NewUint(15),
+			want0:                "9",
+			want1:                "11",
+			preconditions: func() {
+				// we already have tick -2
+				pool.setTick(
+					t,
+					2,
+					u256.NewUint(4),
+					u256.NewUint(1),
+					u256.NewUint(0),
+					i256.NewInt(0),
+					u256.NewUint(0),
+					0,
+					0,
+					true,
+				)
+			},
+		},
+		{
+			name:                 "works correctly with overflow on inside tick",
+			tickLower:            -2,
+			tickUpper:            2,
+			tickCurrent:          0,
+			feeGrowthGlobal0X128: u256.NewUint(15),
+			feeGrowthGlobal1X128: u256.NewUint(15),
+			want0:                "16",
+			want1:                "13",
+			preconditions: func() {
+				pool.deleteTick(t, 2)
+				pool.deleteTick(t, -2)
+				pool.setTick(
+					t,
+					-2,
+					u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639932"), // max uint256 - 3
+					u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639933"), // max uint256 - 2
+					u256.NewUint(0),
+					i256.NewInt(0),
+					u256.NewUint(0),
+					0,
+					0,
+					true,
+				)
+				pool.setTick(
+					t,
+					2,
+					u256.NewUint(3),
+					u256.NewUint(5),
+					u256.NewUint(0),
+					i256.NewInt(0),
+					u256.NewUint(0),
+					0,
+					0,
+					true,
+				)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.preconditions != nil {
+				tt.preconditions()
+			}
+			got0, got1 := pool.calculateFeeGrowthInside(
+				tt.tickLower,
+				tt.tickUpper,
+				tt.tickCurrent,
+				tt.feeGrowthGlobal0X128,
+				tt.feeGrowthGlobal1X128,
+			)
+			if got0.ToString() != tt.want0 || got1.ToString() != tt.want1 {
+				t.Errorf("calculateFeeGrowthInside() = (%v, %v), want (%v, %v)",
+					got0.ToString(), got1.ToString(), tt.want0, tt.want1)
+			}
+		})
+	}
+}
+
+func TestTickUpdate(t *testing.T) {
+	pool := &Pool{
+		ticks: make(map[int32]TickInfo),
+	}
+
+	tests := []struct {
+		name                 string
+		preconditions        func()
+		tick                 int32
+		tickCurrent          int32
+		liquidityDelta       *i256.Int
+		feeGrowthGlobal0X128 *u256.Uint
+		feeGrowthGlobal1X128 *u256.Uint
+		upper                bool
+		maxLiquidity         *u256.Uint
+		wantFlipped          bool
+		shouldPanic          bool
+		verify               func()
+	}{
+		{
+			name:                 "flips from zero to non zero",
+			tick:                 0,
+			tickCurrent:          0,
+			liquidityDelta:       i256.One(),
+			feeGrowthGlobal0X128: u256.Zero(),
+			feeGrowthGlobal1X128: u256.Zero(),
+			upper:                false,
+			maxLiquidity:         u256.NewUint(3),
+			wantFlipped:          true,
+		},
+		{
+			name: "does not flip from nonzero to greater nonzero",
+			preconditions: func() {
+				pool.deleteTick(t, 0)
+				pool.tickUpdate(0, 0, i256.One(), u256.Zero(), u256.Zero(), false, u256.NewUint(3))
+			},
+			tick:                 0,
+			tickCurrent:          0,
+			liquidityDelta:       i256.One(),
+			feeGrowthGlobal0X128: u256.Zero(),
+			feeGrowthGlobal1X128: u256.Zero(),
+			upper:                false,
+			maxLiquidity:         u256.NewUint(3),
+			wantFlipped:          false,
+		},
+		{
+			name: "flips from nonzero to zero",
+			preconditions: func() {
+				pool.deleteTick(t, 0)
+				pool.tickUpdate(0, 0, i256.One(), u256.Zero(), u256.Zero(), false, u256.NewUint(3))
+			},
+			tick:                 0,
+			tickCurrent:          0,
+			liquidityDelta:       i256.NewInt(-1),
+			feeGrowthGlobal0X128: u256.Zero(),
+			feeGrowthGlobal1X128: u256.Zero(),
+			upper:                false,
+			maxLiquidity:         u256.NewUint(3),
+			wantFlipped:          true,
+		},
+		{
+			name: "does not flip from nonzero to lesser nonzero",
+			preconditions: func() {
+				pool.deleteTick(t, 0)
+				pool.tickUpdate(0, 0, i256.NewInt(2), u256.Zero(), u256.Zero(), false, u256.NewUint(3))
+			},
+			tick:                 0,
+			tickCurrent:          0,
+			liquidityDelta:       i256.NewInt(-1),
+			feeGrowthGlobal0X128: u256.Zero(),
+			feeGrowthGlobal1X128: u256.Zero(),
+			upper:                false,
+			maxLiquidity:         u256.NewUint(3),
+			wantFlipped:          false,
+		},
+		{
+			name: "reverts if total liquidity gross is greater than max",
+			preconditions: func() {
+				pool.deleteTick(t, 0)
+				pool.tickUpdate(0, 0, i256.NewInt(2), u256.Zero(), u256.Zero(), false, u256.NewUint(3))
+				pool.tickUpdate(0, 0, i256.One(), u256.Zero(), u256.Zero(), true, u256.NewUint(3))
+
+			},
+			tick:                 0,
+			tickCurrent:          0,
+			liquidityDelta:       i256.One(),
+			feeGrowthGlobal0X128: u256.Zero(),
+			feeGrowthGlobal1X128: u256.Zero(),
+			upper:                false,
+			maxLiquidity:         u256.NewUint(3),
+			wantFlipped:          false,
+			shouldPanic:          true,
+		},
+		{
+			name: "nets the liquidity based on upper flag",
+			preconditions: func() {
+				pool.tickUpdate(0, 0, i256.NewInt(2), u256.Zero(), u256.Zero(), false, u256.NewUint(10))
+				pool.tickUpdate(0, 0, i256.One(), u256.Zero(), u256.Zero(), true, u256.NewUint(10))
+				pool.tickUpdate(0, 0, i256.NewInt(3), u256.Zero(), u256.Zero(), true, u256.NewUint(10))
+				pool.tickUpdate(0, 0, i256.One(), u256.Zero(), u256.Zero(), false, u256.NewUint(10))
+
+			},
+			tick:                 0,
+			tickCurrent:          0,
+			liquidityDelta:       i256.One(),
+			feeGrowthGlobal0X128: u256.Zero(),
+			feeGrowthGlobal1X128: u256.Zero(),
+			upper:                false,
+			maxLiquidity:         u256.NewUint(3),
+			wantFlipped:          false,
+			shouldPanic:          true,
+		},
+		{
+			name: "reverts on overflow liquidity gross",
+			preconditions: func() {
+				pool.tickUpdate(0, 0, i256.MustFromDecimal("170141183460469231731687303715884105726"), u256.Zero(), u256.Zero(), false, u256.MustFromDecimal("340282366920938463463374607431768211455"))
+			},
+			tick:                 0,
+			tickCurrent:          0,
+			liquidityDelta:       i256.MustFromDecimal("170141183460469231731687303715884105726"), // (maxUint128 / 2) + 1
+			feeGrowthGlobal0X128: u256.Zero(),
+			feeGrowthGlobal1X128: u256.Zero(),
+			upper:                false,
+			maxLiquidity:         u256.MustFromDecimal("340282366920938463463374607431768211455"), // maxUint128
+			wantFlipped:          false,
+			shouldPanic:          true,
+		},
+		{
+			name: "assumes all growth happens below ticks lte current tick",
+			preconditions: func() {
+				pool.deleteTick(t, 0)
+				pool.deleteTick(t, 1)
+				pool.tickUpdate(1, 1, i256.One(), u256.One(), u256.NewUint(2), false, u256.MustFromDecimal("340282366920938463463374607431768211455"))
+			},
+			tick:                 0,
+			tickCurrent:          0,
+			liquidityDelta:       i256.MustFromDecimal("170141183460469231731687303715884105726"),
+			feeGrowthGlobal0X128: u256.Zero(),
+			feeGrowthGlobal1X128: u256.Zero(),
+			upper:                false,
+			maxLiquidity:         u256.MustFromDecimal("340282366920938463463374607431768211455"),
+			wantFlipped:          false,
+			shouldPanic:          false,
+			verify: func() {
+				info := pool.ticks[1]
+				uassert.Equal(t, info.feeGrowthOutside0X128.ToString(), "1")
+				uassert.Equal(t, info.feeGrowthOutside1X128.ToString(), "2")
+			},
+		},
+		{
+			name: "does not set any growth fields if tick is already initialized",
+			preconditions: func() {
+				pool.tickUpdate(1, 1, i256.One(), u256.One(), u256.NewUint(2), false, u256.MustFromDecimal("340282366920938463463374607431768211455"))
+				pool.tickUpdate(1, 1, i256.One(), u256.NewUint(6), u256.NewUint(7), false, u256.MustFromDecimal("340282366920938463463374607431768211455"))
+			},
+			tick:                 1,
+			tickCurrent:          1,
+			liquidityDelta:       i256.One(),
+			feeGrowthGlobal0X128: u256.NewUint(6),
+			feeGrowthGlobal1X128: u256.NewUint(7),
+			upper:                false,
+			maxLiquidity:         u256.MustFromDecimal("340282366920938463463374607431768211455"),
+			wantFlipped:          false,
+			shouldPanic:          false,
+			verify: func() {
+				info := pool.ticks[1]
+				uassert.Equal(t, info.feeGrowthOutside0X128.ToString(), "1")
+				uassert.Equal(t, info.feeGrowthOutside1X128.ToString(), "2")
+			},
+		},
+		{
+			name:                 "does not set any growth fields for ticks gt current tick",
+			tick:                 2,
+			tickCurrent:          1,
+			liquidityDelta:       i256.One(),
+			feeGrowthGlobal0X128: u256.NewUint(1),
+			feeGrowthGlobal1X128: u256.NewUint(2),
+			upper:                false,
+			maxLiquidity:         u256.MustFromDecimal("340282366920938463463374607431768211455"),
+			wantFlipped:          false,
+			shouldPanic:          false,
+			verify: func() {
+				info := pool.ticks[2]
+				uassert.Equal(t, info.feeGrowthOutside0X128.ToString(), "")
+				uassert.Equal(t, info.feeGrowthOutside1X128.ToString(), "")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.preconditions != nil {
+				tt.preconditions()
+			}
+
+			if tt.shouldPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("expected panic, but got nil")
+					}
+				}()
+
+				pool.tickUpdate(
+					tt.tick,
+					tt.tickCurrent,
+					tt.liquidityDelta,
+					tt.feeGrowthGlobal0X128,
+					tt.feeGrowthGlobal1X128,
+					tt.upper,
+					tt.maxLiquidity,
+				)
+			} else {
+				if tt.verify != nil {
+					tt.verify()
+				} else {
+					gotFlipped := pool.tickUpdate(
+						tt.tick,
+						tt.tickCurrent,
+						tt.liquidityDelta,
+						tt.feeGrowthGlobal0X128,
+						tt.feeGrowthGlobal1X128,
+						tt.upper,
+						tt.maxLiquidity,
+					)
+					if gotFlipped != tt.wantFlipped {
+						t.Errorf("tickUpdate() flipped = %v, want %v", gotFlipped, tt.wantFlipped)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestTickCross(t *testing.T) {
+	pool := &Pool{
+		ticks: make(map[int32]TickInfo),
+	}
+
+	// Setup initial tick state
+	pool.ticks[100] = TickInfo{
+		liquidityGross:        u256.NewUint(1000),
+		liquidityNet:          i256.NewInt(500),
+		feeGrowthOutside0X128: u256.NewUint(10),
+		feeGrowthOutside1X128: u256.NewUint(15),
+		initialized:           true,
+	}
+
+	tests := []struct {
+		name                 string
+		tick                 int32
+		feeGrowthGlobal0X128 *u256.Uint
+		feeGrowthGlobal1X128 *u256.Uint
+		wantLiquidityNet     string
+	}{
+		{
+			name:                 "cross tick upwards",
+			tick:                 100,
+			feeGrowthGlobal0X128: u256.NewUint(20),
+			feeGrowthGlobal1X128: u256.NewUint(25),
+			wantLiquidityNet:     "500",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotLiquidityNet := pool.tickCross(
+				tt.tick,
+				tt.feeGrowthGlobal0X128,
+				tt.feeGrowthGlobal1X128,
+			)
+			if gotLiquidityNet.ToString() != tt.wantLiquidityNet {
+				t.Errorf("tickCross() liquidityNet = %v, want %v",
+					gotLiquidityNet.ToString(), tt.wantLiquidityNet)
+			}
+		})
+	}
+}
+
+func TestGetTick(t *testing.T) {
+	pool := &Pool{
+		ticks: make(map[int32]TickInfo),
+	}
+
+	// Setup a tick
+	expectedTick := TickInfo{
+		liquidityGross:        u256.NewUint(1000),
+		liquidityNet:          i256.NewInt(500),
+		feeGrowthOutside0X128: u256.NewUint(10),
+		feeGrowthOutside1X128: u256.NewUint(15),
+		initialized:           true,
+	}
+	pool.ticks[50] = expectedTick
+
+	tests := []struct {
+		name     string
+		tick     int32
+		wantInit bool
+	}{
+		{
+			name:     "get existing tick",
+			tick:     50,
+			wantInit: true,
+		},
+		{
+			name:     "get non-existing tick",
+			tick:     100,
+			wantInit: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := pool.getTick(tt.tick)
+			if got.initialized != tt.wantInit {
+				t.Errorf("getTick() initialized = %v, want %v", got.initialized, tt.wantInit)
+			}
+		})
+	}
+}
+
+func (pool *Pool) setTick(
+	t *testing.T,
+	tick int32,
+	feeGrowthOutside0X128 *u256.Uint,
+	feeGrowthOutside1X128 *u256.Uint,
+	liquidityGross *u256.Uint,
+	liquidityNet *i256.Int,
+	secondsPerLiquidityOutsideX128 *u256.Uint,
+	tickCumulativeOutside int64,
+	secondsOutside uint32,
+	initialized bool,
+) {
+	t.Helper()
+
+	info := pool.ticks[tick]
+	info.init()
+
+	info.feeGrowthOutside0X128 = feeGrowthOutside0X128
+	info.feeGrowthOutside1X128 = feeGrowthOutside1X128
+	info.liquidityGross = liquidityGross
+	info.liquidityNet = liquidityNet
+	info.secondsPerLiquidityOutsideX128 = secondsPerLiquidityOutsideX128
+	info.tickCumulativeOutside = tickCumulativeOutside
+	info.secondsOutside = secondsOutside
+	info.initialized = initialized
+
+	pool.ticks[tick] = info
+}
+
+func (pool *Pool) deleteTick(t *testing.T, tick int32) {
+	t.Helper()
+
+	delete(pool.ticks, tick)
+}

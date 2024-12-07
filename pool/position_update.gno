@@ -39,7 +39,7 @@ func (pool *Pool) updatePosition(positionParams ModifyPositionParams) PositionIn
 		}
 	}
 
-	feeGrowthInside0X128, feeGrowthInside1X128 := pool.tickGetFeeGrowthInside(
+	feeGrowthInside0X128, feeGrowthInside1X128 := pool.calculateFeeGrowthInside(
 		positionParams.tickLower,
 		positionParams.tickUpper,
 		pool.slot0.tick,
