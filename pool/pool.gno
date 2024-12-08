@@ -28,6 +28,9 @@ func Mint(
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
 	common.IsHalted()
+	common.MustRegisteredToken(token0Path)
+	common.MustRegisteredToken(token1Path)
+
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
 		if caller != consts.POSITION_ADDR {
@@ -80,6 +83,9 @@ func Burn(
 	_liquidityAmount string, // uint128
 ) (string, string) { // uint256 x2
 	common.IsHalted()
+	common.MustRegisteredToken(token0Path)
+	common.MustRegisteredToken(token1Path)
+
 	caller := std.PrevRealm().Addr()
 	if common.GetLimitCaller() {
 		if caller != consts.POSITION_ADDR {
@@ -133,6 +139,9 @@ func Collect(
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
 	common.IsHalted()
+	common.MustRegisteredToken(token0Path)
+	common.MustRegisteredToken(token1Path)
+
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
 		if caller != consts.POSITION_ADDR {
@@ -164,7 +173,9 @@ func Collect(
 	// Update state first then transfer
 	position.tokensOwed0 = new(u256.Uint).Sub(position.tokensOwed0, amount0)
 	pool.balances.token0 = new(u256.Uint).Sub(pool.balances.token0, amount0)
-	transferByRegisterCall(pool.token0Path, recipient, amount0.Uint64())
+
+	token0Teller := common.GetTokenTeller(pool.token0Path)
+	checkTransferError(token0Teller.Transfer(recipient, amount0.Uint64()))
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
 	amount1 := u256Min(amount1Requested, position.tokensOwed1)
@@ -173,7 +184,9 @@ func Collect(
 	// Update state first then transfer
 	position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
 	pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
-	transferByRegisterCall(pool.token1Path, recipient, amount1.Uint64())
+
+	token1Teller := common.GetTokenTeller(pool.token1Path)
+	checkTransferError(token1Teller.Transfer(recipient, amount1.Uint64()))
 
 	pool.positions[positionKey] = position
 
@@ -194,6 +207,9 @@ func Swap(
 	payer std.Address, // router
 ) (string, string) { // int256 x2
 	common.IsHalted()
+	common.MustRegisteredToken(token0Path)
+	common.MustRegisteredToken(token1Path)
+
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
 		if caller != consts.ROUTER_ADDR {
@@ -536,6 +552,9 @@ func CollectProtocolByAdmin(
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
+	common.MustRegisteredToken(token0Path)
+	common.MustRegisteredToken(token1Path)
+
 	caller := std.PrevRealm().Addr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err)
@@ -578,6 +597,9 @@ func CollectProtocol(
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
+	common.MustRegisteredToken(token0Path)
+	common.MustRegisteredToken(token1Path)
+
 	caller := std.PrevRealm().Addr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err)
@@ -630,8 +652,11 @@ func collectProtocol(
 	uAmount0 := amount0.Uint64()
 	uAmount1 := amount1.Uint64()
 
-	transferByRegisterCall(pool.token0Path, recipient, uAmount0)
-	transferByRegisterCall(pool.token1Path, recipient, uAmount1)
+	token0Teller := common.GetTokenTeller(pool.token0Path)
+	checkTransferError(token0Teller.Transfer(recipient, uAmount0))
+
+	token1Teller := common.GetTokenTeller(pool.token1Path)
+	checkTransferError(token1Teller.Transfer(recipient, uAmount1))
 
 	return amount0.ToString(), amount1.ToString()
 }
@@ -694,11 +719,8 @@ func (pool *Pool) transferAndVerify(
 
 	amountUint64 := checkAmountRange(amount)
 
-	// try sending
-	// will panic if following conditions are met:
-	// - POOL does not have enough balance
-	// - token is not registered
-	transferByRegisterCall(tokenPath, to, amountUint64)
+	tokenTeller := common.GetTokenTeller(tokenPath)
+	checkTransferError(tokenTeller.Transfer(to, amountUint64))
 
 	// update pool.balances
 	var overflow bool
@@ -729,12 +751,8 @@ func (pool *Pool) transferFromAndVerify(
 ) {
 	amountUint64 := checkAmountRange(amount)
 
-	// try sending
-	// will panic if following conditions are met:
-	// - POOL does not have enough approved amount
-	// - from does not have enough balance
-	// - token is not registered
-	transferFromByRegisterCall(tokenPath, from, to, amountUint64)
+	tokenTeller := common.GetTokenTeller(tokenPath)
+	checkTransferError(tokenTeller.TransferFrom(from, to, amountUint64))
 
 	// update pool.balances
 	if isToken0 {

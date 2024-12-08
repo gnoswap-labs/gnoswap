@@ -3,6 +3,7 @@ package pool
 import (
 	"std"
 
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -42,4 +43,9 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 	}
 
 	return uint64(coins.AmountOf("ugnot"))
+}
+
+func balanceOfByRegisterCall(tokenPath string, caller std.Address) uint64 {
+	token := common.GetToken(tokenPath)
+	return token.BalanceOf(caller)
 }
