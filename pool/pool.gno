@@ -824,11 +824,11 @@ func collectProtocol(
 	uAmount0 := amount0.Uint64()
 	uAmount1 := amount1.Uint64()
 
-	token0 := common.GetTokenTeller(pool.token0Path)
-	checkTransferError(token0.Transfer(recipient, uAmount0))
+	token0Teller := common.GetTokenTeller(pool.token0Path)
+	checkTransferError(token0Teller.Transfer(recipient, uAmount0))
 
-	token1 := common.GetTokenTeller(pool.token1Path)
-	checkTransferError(token1.Transfer(recipient, uAmount1))
+	token1Teller := common.GetTokenTeller(pool.token1Path)
+	checkTransferError(token1Teller.Transfer(recipient, uAmount1))
 
 	return amount0.ToString(), amount1.ToString()
 }
