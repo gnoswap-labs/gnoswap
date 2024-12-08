@@ -44,3 +44,12 @@ func IsRegistered(path string) error {
 	}
 	return nil
 }
+
+func MustRegisteredToken(path string) {
+	if err := IsRegistered(path); err != nil {
+		panic(addDetailToError(
+			errNotRegistered,
+			ufmt.Sprintf("token(%s) is not registered", path),
+		))
+	}
+}
