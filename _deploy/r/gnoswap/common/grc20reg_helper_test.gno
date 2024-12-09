@@ -129,6 +129,26 @@ func TestTellerMethod(t *testing.T) {
 }
 
 func TestIsRegistered(t *testing.T) {
-	uassert.NoError(t, IsRegistered(tokenPath))
-	uassert.Error(t, IsRegistered("not_registered"))
+	t.Run("registered(by default)", func(t *testing.T) {
+		uassert.NoError(t, IsRegistered(tokenPath))
+	})
+
+	t.Run("not registered", func(t *testing.T) {
+		uassert.Error(t, IsRegistered("not_registered"))
+	})
+}
+
+func TestMustRegistered(t *testing.T) {
+	t.Run("registered(by default)", func(t *testing.T) {
+		MustRegistered(tokenPath)
+	})
+
+	t.Run("not registered", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic for non-registered token")
+			}
+		}()
+		MustRegistered("not_registered")
+	})
 }
