@@ -58,12 +58,11 @@ func DrySwap(
 		feeGrowthGlobalX128 = pool.feeGrowthGlobal1X128
 	}
 
-	// pool.slot0.unlocked = false
 	slot0 := pool.slot0
 	slot0.unlocked = false
 
 	cache := newSwapCache(feeProtocol, pool.liquidity)
-	state := newSwapState(amountSpecified.Clone(), feeGrowthGlobalX128.Clone(), cache.liquidityStart.Clone(), slot0) // TODO: feeGrowthGlobalX128.Clone() or NOT
+	state := newSwapState(amountSpecified.Clone(), feeGrowthGlobalX128.Clone(), cache.liquidityStart.Clone(), slot0)
 
 	exactInput := amountSpecified.Gt(i256.Zero())
 
