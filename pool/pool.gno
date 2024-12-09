@@ -28,8 +28,8 @@ func Mint(
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
 	common.IsHalted()
-	common.MustRegisteredToken(token0Path)
-	common.MustRegisteredToken(token1Path)
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
 
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
@@ -83,8 +83,8 @@ func Burn(
 	_liquidityAmount string, // uint128
 ) (string, string) { // uint256 x2
 	common.IsHalted()
-	common.MustRegisteredToken(token0Path)
-	common.MustRegisteredToken(token1Path)
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
 
 	caller := std.PrevRealm().Addr()
 	if common.GetLimitCaller() {
@@ -139,8 +139,8 @@ func Collect(
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
 	common.IsHalted()
-	common.MustRegisteredToken(token0Path)
-	common.MustRegisteredToken(token1Path)
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
 
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
@@ -207,8 +207,8 @@ func Swap(
 	payer std.Address, // router
 ) (string, string) { // int256 x2
 	common.IsHalted()
-	common.MustRegisteredToken(token0Path)
-	common.MustRegisteredToken(token1Path)
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
 
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
@@ -552,8 +552,8 @@ func CollectProtocolByAdmin(
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
-	common.MustRegisteredToken(token0Path)
-	common.MustRegisteredToken(token1Path)
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
 
 	caller := std.PrevRealm().Addr()
 	if err := common.AdminOnly(caller); err != nil {
@@ -597,8 +597,8 @@ func CollectProtocol(
 	_amount0Requested string, // uint128
 	_amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
-	common.MustRegisteredToken(token0Path)
-	common.MustRegisteredToken(token1Path)
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
 
 	caller := std.PrevRealm().Addr()
 	if err := common.GovernanceOnly(caller); err != nil {

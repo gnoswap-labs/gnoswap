@@ -150,8 +150,8 @@ func CreatePool(
 	// wrap first
 	token0Path, token1Path = poolInfo.wrap()
 
-	common.MustRegisteredToken(token0Path)
-	common.MustRegisteredToken(token1Path)
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
 
 	// reinitialize poolInfo with wrapped tokens
 	poolInfo = newPoolParams(token0Path, token1Path, fee, _sqrtPriceX96)
@@ -227,8 +227,8 @@ func DoesPoolPathExist(poolPath string) bool {
 // It constructs the poolPath from the given parameters and returns the corresponding pool.
 // Returns pool struct
 func GetPool(token0Path, token1Path string, fee uint32) *Pool {
-	common.MustRegisteredToken(token0Path)
-	common.MustRegisteredToken(token1Path)
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
 
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	pool, exist := pools[poolPath]
@@ -258,8 +258,8 @@ func GetPoolFromPoolPath(poolPath string) *Pool {
 // GetPoolPath generates a poolPath from the given token paths and fee.
 // The poolPath is constructed by joining the token paths and fee with colons.
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
-	common.MustRegisteredToken(token0Path)
-	common.MustRegisteredToken(token1Path)
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
 
 	// TODO: this check is not unnecessary, if we are sure that
 	// all the token paths in the pool are sorted in alphabetical order.
