@@ -181,8 +181,8 @@ type SwapResult struct {
 	NewTick          int32
 	NewLiquidity     *u256.Uint
 	NewProtocolFees  ProtocolFees
-	FeeGrowthGlobal0 *u256.Uint
-	FeeGrowthGlobal1 *u256.Uint
+	FeeGrowthGlobal0X128 *u256.Uint
+	FeeGrowthGlobal1X128 *u256.Uint
 	SwapFee          *u256.Uint
 }
 
@@ -340,8 +340,8 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 			token0: pool.protocolFees.token0,
 			token1: pool.protocolFees.token1,
 		},
-		FeeGrowthGlobal0: pool.feeGrowthGlobal0X128,
-		FeeGrowthGlobal1: pool.feeGrowthGlobal1X128,
+		FeeGrowthGlobal0X128: pool.feeGrowthGlobal0X128,
+		FeeGrowthGlobal1X128: pool.feeGrowthGlobal1X128,
 		SwapFee:          swapFee,
 	}
 
@@ -350,12 +350,12 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 		if state.protocolFee.Gt(u256.Zero()) {
 			result.NewProtocolFees.token0 = new(u256.Uint).Add(result.NewProtocolFees.token0, state.protocolFee)
 		}
-		result.FeeGrowthGlobal0 = state.feeGrowthGlobalX128
+		result.FeeGrowthGlobal0X128 = state.feeGrowthGlobalX128
 	} else {
 		if state.protocolFee.Gt(u256.Zero()) {
 			result.NewProtocolFees.token1 = new(u256.Uint).Add(result.NewProtocolFees.token1, state.protocolFee)
 		}
-		result.FeeGrowthGlobal1 = state.feeGrowthGlobalX128
+		result.FeeGrowthGlobal1X128 = state.feeGrowthGlobalX128
 	}
 
 	return result, nil
@@ -368,8 +368,8 @@ func applySwapResult(pool *Pool, result *SwapResult) {
 	pool.slot0.tick = result.NewTick
 	pool.liquidity = result.NewLiquidity
 	pool.protocolFees = result.NewProtocolFees
-	pool.feeGrowthGlobal0X128 = result.FeeGrowthGlobal0
-	pool.feeGrowthGlobal1X128 = result.FeeGrowthGlobal1
+	pool.feeGrowthGlobal0X128 = result.FeeGrowthGlobal0X128
+	pool.feeGrowthGlobal1X128 = result.FeeGrowthGlobal1X128
 }
 
 // validatePriceLimits ensures the provided price limit is valid for the swap direction
