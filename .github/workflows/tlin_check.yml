@@ -31,8 +31,13 @@ jobs:
       - name: list changed directories
         run: |
           echo "Changed directories: ${{ steps.changed_directories.outputs.all_changed_files }}"
-
-      # - name: install tlin
-      #   run: |
-      #     cd tlin
-      #     go install ./cmd/tlin
+      - name: install tlin
+        run: |
+          cd tlin
+          go install ./cmd/tlin
+      - name: tlin check
+        run: |
+          for directory in ${{ steps.changed_directories.outputs.all_changed_files }}; do
+            echo "checking $directory ..."
+            tlin $directory
+          done
