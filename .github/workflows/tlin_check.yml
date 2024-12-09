@@ -18,6 +18,7 @@ jobs:
         with:
           repository: gnoverse/tlin
           ref: main
+          path: ./tlin
       - name: setup go
         uses: actions/setup-go@v5
         with:
@@ -25,4 +26,4 @@ jobs:
       - name: install tlin
         run: |
           cd tlin
-          go install github.com/gnoverse/tlin
+          go install ./cmd/tlin
