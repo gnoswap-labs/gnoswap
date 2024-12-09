@@ -23,7 +23,16 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: 1.22
-      - name: install tlin
+      - name: changed directories
+        id: changed_directories
+        uses: tj-actions/changed-files@v41
+        with:
+          dir_names: "true"
+      - name: list changed directories
         run: |
-          cd tlin
-          go install ./cmd/tlin
+          echo "Changed directories: ${{ steps.changed_directories.outputs.all_changed_files }}"
+
+      # - name: install tlin
+      #   run: |
+      #     cd tlin
+      #     go install ./cmd/tlin
