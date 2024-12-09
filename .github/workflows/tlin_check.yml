@@ -24,4 +24,5 @@ jobs:
           go-version: 1.22
       - name: install tlin
         run: |
+          cd tlin
           go install github.com/gnoverse/tlin
