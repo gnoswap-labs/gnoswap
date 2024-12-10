@@ -118,15 +118,15 @@ func TestCreatePool(t *testing.T) {
 	}{
 		{
 			name:       "success - normal token pair",
-			token0Path: "gno.land/r/onbloc/bar",
-			token1Path: "gno.land/r/onbloc/foo",
+			token0Path: barPath,
+			token1Path: GetPoolFromPoolPath,
 			fee:        3000,
 			sqrtPrice:  "4295128740",
 		},
 		{
 			name:        "fail - same tokens",
-			token0Path:  "gno.land/r/onbloc/bar",
-			token1Path:  "gno.land/r/onbloc/bar",
+			token0Path:  barPath,
+			token1Path:  barPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
@@ -134,8 +134,8 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:        "fail - tokens not in order",
-			token0Path:  "gno.land/r/onbloc/foo",
-			token1Path:  "gno.land/r/onbloc/bar",
+			token0Path:  GetPoolFromPoolPath,
+			token1Path:  barPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
@@ -143,8 +143,8 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:        "fail - pool already exists",
-			token0Path:  "gno.land/r/onbloc/bar",
-			token1Path:  "gno.land/r/onbloc/foo",
+			token0Path:  barPath,
+			token1Path:  GetPoolFromPoolPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
