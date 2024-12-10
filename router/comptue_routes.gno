@@ -19,6 +19,11 @@ type PoolWithMeta struct {
 	tokenPair  string
 	liquidity  *u256.Uint
 }
+
+func (pm PoolWithMeta) hasToken(token string) bool {
+	return pm.token0Path == token || pm.token1Path == token
+}
+
 type ByLiquidity []PoolWithMeta
 
 func (p ByLiquidity) Len() int           { return len(p) }
@@ -80,6 +85,7 @@ func _computeAllRoutes(
 	return routes
 }
 
+// TOOD: overcomplicated parameters
 func computeRoutes(
 	inputTokenPath string,
 	outputTokenPath string,
@@ -161,10 +167,6 @@ func computeRoutes(
 	}
 
 	return routes
-}
-
-func (pool PoolWithMeta) hasToken(token string) bool {
-	return pool.token0Path == token || pool.token1Path == token
 }
 
 func findCandidatePools() []PoolWithMeta {
