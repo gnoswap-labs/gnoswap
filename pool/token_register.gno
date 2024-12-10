@@ -60,12 +60,18 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 // UnregisterGRC20Interface unregisters a GRC20 token interface
 func UnregisterGRC20Interface(pkgPath string) {
 	if err := common.SatisfyCond(isUserCall()); err != nil {
-		panic(err)
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("token_register.gno__UnregisterGRC20Interface() || unauthorized address(%s) to unregister", std.PrevRealm().Addr()),
+		))
 	}
 
 	caller := std.PrevRealm().Addr()
 	if err := common.TokenRegisterOnly(caller); err != nil {
-		panic(err)
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("token_register.gno__UnregisterGRC20Interface() || unauthorized address(%s) to unregister", caller),
+		))
 	}
 
 	pkgPath = handleNative(pkgPath)
