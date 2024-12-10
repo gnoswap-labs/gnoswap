@@ -42,6 +42,6 @@ jobs:
       - name: tlin check
         run: |
           for file in ${{ steps.changed_files.outputs.all_changed_files }}; do
-            echo "checking $file ..."
-            tlin $file
+            echo "checking ${file} ..."
+            tlin ${file}
           done
