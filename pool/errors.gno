@@ -32,7 +32,6 @@ var (
 	errInvalidTickAndTickSpacing = errors.New("[GNOSWAP-POOL-022] invalid tick and tick spacing requested")
 	errInvalidAddress            = errors.New("[GNOSWAP-POOL-023] invalid address")
 	errInvalidTickRange          = errors.New("[GNOSWAP-POOL-024] tickLower is greater than tickUpper")
-	err
 )
 
 // addDetailToError adds detail to an error message
