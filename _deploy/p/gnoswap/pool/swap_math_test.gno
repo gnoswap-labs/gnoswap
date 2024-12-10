@@ -201,9 +201,10 @@ func sqrt(t *testing.T, x *u256.Uint) *u256.Uint {
 	z := new(u256.Uint).Set(x)
 	y := new(u256.Uint).Rsh(z, 1) // Initial guess is x / 2
 
+	temp := new(u256.Uint)
 	for y.Cmp(z) < 0 {
 		z.Set(y)
-		temp := new(u256.Uint).Div(x, z)
+		temp.Div(x, z)
 		y.Add(z, temp).Rsh(y, 1)
 	}
 	return z
