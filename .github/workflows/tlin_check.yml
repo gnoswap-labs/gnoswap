@@ -32,6 +32,7 @@ jobs:
         with:
           files: |
             *.gno
+            **.gno
 
       - name: install tlin
         run: |
