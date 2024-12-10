@@ -46,6 +46,8 @@ func HandleWithdrawalFee(
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
 	common.IsHalted()
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
 
 	// only position contract can call this function
 	caller := std.PrevRealm().Addr()
