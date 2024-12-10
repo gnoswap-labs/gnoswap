@@ -26,11 +26,9 @@ jobs:
         with:
           go-version: 1.22
 
-      - name: changed directories
-        id: changed_directories
+      - name: changed files
+        id: changed_files
         uses: tj-actions/changed-files@v45
-        with:
-          dir_names: "true"
 
       - name: install tlin
         run: |
@@ -39,7 +37,7 @@ jobs:
 
       - name: tlin check
         run: |
-          for directory in ${{ steps.changed_directories.outputs.all_changed_files }}; do
-            echo "checking $directory ..."
-            tlin $directory
+          for file in ${{ steps.changed_files.outputs.all_changed_files }}; do
+            echo "checking $file ..."
+            tlin $file
           done
