@@ -22,12 +22,12 @@ func TestSwapMathComputeSwapStepStr(t *testing.T) {
 	}{
 		{
 			name:            "exact amount in that gets capped at price target in one for zero",
-			currentX96:      encodePriceSqrt("1", "1"),
-			targetX96:       encodePriceSqrt("101", "100"),
+			currentX96:      encodePriceSqrt(t, "1", "1"),
+			targetX96:       encodePriceSqrt(t, "101", "100"),
 			liquidity:       u256.MustFromDecimal("2000000000000000000"),
 			amountRemaining: i256.MustFromDecimal("1000000000000000000"),
 			feePips:         600,
-			sqrtNextX96:     encodePriceSqrt("101", "100"),
+			sqrtNextX96:     encodePriceSqrt(t, "101", "100"),
 			chkSqrtNextX96: func(sqrtRatioNextX96, priceTarget *u256.Uint) {
 				uassert.True(t, sqrtRatioNextX96.Eq(priceTarget))
 			},
@@ -37,12 +37,12 @@ func TestSwapMathComputeSwapStepStr(t *testing.T) {
 		},
 		{
 			name:            "exact amount out that gets capped at price target in one for zero",
-			currentX96:      encodePriceSqrt("1", "1"),
-			targetX96:       encodePriceSqrt("101", "100"),
+			currentX96:      encodePriceSqrt(t, "1", "1"),
+			targetX96:       encodePriceSqrt(t, "101", "100"),
 			liquidity:       u256.MustFromDecimal("2000000000000000000"),
 			amountRemaining: i256.MustFromDecimal("-1000000000000000000"),
 			feePips:         600,
-			sqrtNextX96:     encodePriceSqrt("101", "100"),
+			sqrtNextX96:     encodePriceSqrt(t, "101", "100"),
 			chkSqrtNextX96: func(sqrtRatioNextX96, priceTarget *u256.Uint) {
 				uassert.True(t, sqrtRatioNextX96.Eq(priceTarget))
 			},
@@ -52,11 +52,11 @@ func TestSwapMathComputeSwapStepStr(t *testing.T) {
 		},
 		{
 			name:            "exact amount in that is fully spent in one for zero",
-			currentX96:      encodePriceSqrt("1", "1"),
-			targetX96:       encodePriceSqrt("1000", "100"),
+			currentX96:      encodePriceSqrt(t, "1", "1"),
+			targetX96:       encodePriceSqrt(t, "1000", "100"),
 			liquidity:       u256.MustFromDecimal("2000000000000000000"),
 			amountRemaining: i256.MustFromDecimal("1000000000000000000"),
-			sqrtNextX96:     encodePriceSqrt("1000", "100"),
+			sqrtNextX96:     encodePriceSqrt(t, "1000", "100"),
 			feePips:         600,
 			chkSqrtNextX96: func(sqrtRatioNextX96, priceTarget *u256.Uint) {
 				uassert.True(t, sqrtRatioNextX96.Lte(priceTarget))
@@ -67,12 +67,12 @@ func TestSwapMathComputeSwapStepStr(t *testing.T) {
 		},
 		{
 			name:            "exact amount out that is fully received in one for zero",
-			currentX96:      encodePriceSqrt("1", "1"),
-			targetX96:       encodePriceSqrt("1000", "100"),
+			currentX96:      encodePriceSqrt(t, "1", "1"),
+			targetX96:       encodePriceSqrt(t, "1000", "100"),
 			liquidity:       u256.MustFromDecimal("2000000000000000000"),
 			amountRemaining: i256.MustFromDecimal("-1000000000000000000"),
 			feePips:         600,
-			sqrtNextX96:     encodePriceSqrt("1000", "100"),
+			sqrtNextX96:     encodePriceSqrt(t, "1000", "100"),
 			chkSqrtNextX96: func(sqrtRatioNextX96, priceTarget *u256.Uint) {
 				uassert.True(t, sqrtRatioNextX96.Lt(priceTarget))
 			},
@@ -169,7 +169,9 @@ func TestSwapMathComputeSwapStepStr(t *testing.T) {
 }
 
 // encodePriceSqrt calculates the sqrt((reserve1 << 192) / reserve0)
-func encodePriceSqrt(reserve1, reserve0 string) *u256.Uint {
+func encodePriceSqrt(t *testing.T, reserve1, reserve0 string) *u256.Uint {
+	t.Helper()
+
 	reserve1Uint := u256.MustFromDecimal(reserve1)
 	reserve0Uint := u256.MustFromDecimal(reserve0)
 
@@ -185,11 +187,13 @@ func encodePriceSqrt(reserve1, reserve0 string) *u256.Uint {
 	ratioX192 := new(u256.Uint).Div(numerator, reserve0Uint)
 
 	// Return sqrt(ratioX192)
-	return sqrt(ratioX192)
+	return sqrt(t, ratioX192)
 }
 
 // sqrt computes the integer square root of a u256.Uint
-func sqrt(x *u256.Uint) *u256.Uint {
+func sqrt(t *testing.T, x *u256.Uint) *u256.Uint {
+	t.Helper()
+
 	if x.IsZero() {
 		return u256.NewUint(0)
 	}
