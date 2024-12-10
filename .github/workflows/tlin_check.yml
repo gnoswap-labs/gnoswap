@@ -29,6 +29,9 @@ jobs:
       - name: changed files
         id: changed_files
         uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            *.gno
 
       - name: install tlin
         run: |
