@@ -6,12 +6,9 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 )
 
-// SWAP TYPE
-type SwapType string
-
 const (
-	ExactIn  SwapType = "EXACT_IN"
-	ExactOut SwapType = "EXACT_OUT"
+	ExactIn  string = "EXACT_IN"
+	ExactOut string = "EXACT_OUT"
 )
 
 // SINGLE SWAP

@@ -104,20 +104,6 @@ func _swapDry(
 	return poolRecv.Abs(), poolOut.Abs()
 }
 
-func i256Min(x, y *i256.Int) *i256.Int {
-	if x.Lt(y) {
-		return x
-	}
-	return y
-}
-
-func i256Max(x, y *i256.Int) *i256.Int {
-	if x.Gt(y) {
-		return x
-	}
-	return y
-}
-
 func getMinTick(fee uint32) int32 {
 	switch fee {
 	case 100:
