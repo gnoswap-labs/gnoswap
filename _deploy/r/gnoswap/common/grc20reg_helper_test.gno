@@ -85,7 +85,7 @@ func TestGetTokenTeller(t *testing.T) {
 	t.Run("get non registered token teller", func(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
-				t.Errorf("Expected panic for non-registered token")
+				t.Errorf("Expected panic for non-registered token teller")
 			}
 		}()
 		GetTokenTeller("not_registered_teller")
