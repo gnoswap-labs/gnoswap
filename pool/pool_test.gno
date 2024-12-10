@@ -2,8 +2,10 @@ package pool
 
 import (
 	"std"
+	"strconv"
 	"testing"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
@@ -60,7 +62,7 @@ func TestBurn(t *testing.T) {
 		tokensOwed1: u256.NewUint(0),
 	}
 	mockPool := &Pool{
-		positions: make(map[string]PositionInfo),
+		positions: avl.NewTree(),
 	}
 
 	GetPool = func(token0Path, token1Path string, fee uint32) *Pool {
@@ -101,7 +103,7 @@ func TestBurn(t *testing.T) {
 
 			// setup position for this test
 			posKey := positionGetKey(mockCaller, tt.tickLower, tt.tickUpper)
-			mockPool.positions[posKey] = mockPosition
+			mockPool.positions.Set(posKey, mockPosition)
 
 			if tt.expectPanic {
 				defer func() {
@@ -128,7 +130,8 @@ func TestBurn(t *testing.T) {
 					t.Errorf("expected amount1 %s, got %s", tt.expectedAmount1, amount1)
 				}
 
-				newPosition := mockPool.positions[posKey]
+				iNewPosition, _ := mockPool.positions.Get(posKey)
+				newPosition := iNewPosition.(PositionInfo)
 				if newPosition.tokensOwed0.IsZero() {
 					t.Error("expected tokensOwed0 to be updated")
 				}
@@ -475,14 +478,13 @@ func TestComputeSwap(t *testing.T) {
 		},
 		feeGrowthGlobal0X128: u256.Zero(),
 		feeGrowthGlobal1X128: u256.Zero(),
-		tickBitmaps:          make(TickBitmaps),
-		ticks:                make(Ticks),
-		positions:            make(Positions),
+		tickBitmaps:          avl.NewTree(),
+		ticks:                avl.NewTree(),
+		positions:            avl.NewTree(),
 	}
 
 	wordPos, _ := tickBitmapPosition(0)
-	// TODO: use avl
-	mockPool.tickBitmaps[wordPos] = u256.NewUint(1)
+	mockPool.tickBitmaps.Set(strconv.FormatInt(int64(wordPos), 10), u256.NewUint(1))
 
 	t.Run("basic swap", func(t *testing.T) {
 		comp := SwapComputation{
