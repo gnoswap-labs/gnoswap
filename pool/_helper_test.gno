@@ -183,8 +183,7 @@ func InitialisePoolTest(t *testing.T) {
 	std.TestSetOrigCaller(users.Resolve(admin))
 	TokenApprove(t, gnsPath, admin, pool, maxApprove)
 	poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-	_, exist := pools[poolPath]
-	if !exist {
+	if !DoesPoolPathExist(poolPath) {
 		CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
 	}
 
