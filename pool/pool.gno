@@ -151,12 +151,10 @@ func Collect(
 
 	var amount0, amount1 *u256.Uint
 
-	var amount0, amount1 *u256.Uint
-
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
 	amount0Req := u256.MustFromDecimal(amount0Requested)
 	amount0, position.tokensOwed0, pool.balances.token0 = collectToken(amount0Req, position.tokensOwed0, pool.balances.token0)
-	token0 := common.GetToken(pool.token0Path)
+	token0 := common.GetTokenTeller(pool.token0Path)
 	checkTransferError(token0.Transfer(recipient, amount0.Uint64()))
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
@@ -166,7 +164,7 @@ func Collect(
 	// Update state first then transfer
 	position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
 	pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
-	token1 := common.GetToken(pool.token1Path)
+	token1 := common.GetTokenTeller(pool.token1Path)
 	checkTransferError(token1.Transfer(recipient, amount1.Uint64()))
 
 	pool.positions[positionKey] = position
@@ -739,8 +737,8 @@ func CollectProtocolByAdmin(
 	token1Path string,
 	fee uint32,
 	recipient std.Address,
-	_amount0Requested string, // uint128
-	_amount1Requested string, // uint128
+	amount0Requested string, // uint128
+	amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
 	common.MustRegistered(token0Path)
 	common.MustRegistered(token1Path)
@@ -784,8 +782,8 @@ func CollectProtocol(
 	token1Path string,
 	fee uint32,
 	recipient std.Address,
-	_amount0Requested string, // uint128
-	_amount1Requested string, // uint128
+	amount0Requested string, // uint128
+	amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
 	common.MustRegistered(token0Path)
 	common.MustRegistered(token1Path)
@@ -897,7 +895,8 @@ func (pool *Pool) transferAndVerify(
 		panic(err)
 	}
 
-	transferByRegisterCall(tokenPath, to, amountUint64)
+	token := common.GetTokenTeller(tokenPath)
+	checkTransferError(token.Transfer(to, amountUint64))
 
 	newBalance, err := updatePoolBalance(token0, token1, absAmount, isToken0)
 	if err != nil {
