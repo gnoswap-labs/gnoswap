@@ -14,24 +14,31 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX96 *u256.Uint) *u256.Uint {
+	if !sqrtPriceLimitX96.IsZero() {
+		return sqrtPriceLimitX96
+	}
+
+	if zeroForOne {
+		minTick := getMinTick(fee)
+		sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(minTick)
+		return sqrtPriceLimitX96.Add(sqrtPriceLimitX96, u256.One())
+	}
+
+	maxTick := getMaxTick(fee)
+	sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(maxTick)
+	return sqrtPriceLimitX96.Sub(sqrtPriceLimitX96, u256.One())
+}
+
 func _swap(
 	amountSpecified *i256.Int,
 	recipient std.Address,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
 ) (*u256.Uint, *u256.Uint) { // poolRecv, poolOut
-	// prepare
 	zeroForOne := data.tokenIn < data.tokenOut
 
-	if sqrtPriceLimitX96.IsZero() {
-		if zeroForOne {
-			sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(getMinTick(data.fee))
-			sqrtPriceLimitX96 = new(u256.Uint).Add(sqrtPriceLimitX96, u256.One())
-		} else {
-			sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(getMaxTick(data.fee))
-			sqrtPriceLimitX96 = new(u256.Uint).Sub(sqrtPriceLimitX96, u256.One())
-		}
-	}
+	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
 	// ROUTER approves POOL as spender
 	approveByRegisterCall(data.tokenIn, consts.POOL_ADDR, consts.UINT64_MAX)
@@ -49,14 +56,9 @@ func _swap(
 
 		data.payer,
 	)
-	amount0, err := i256.FromDecimal(amount0Str)
-	if err != nil {
-		panic(err.Error())
-	}
-	amount1, err := i256.FromDecimal(amount1Str)
-	if err != nil {
-		panic(err.Error())
-	}
+
+	amount0 := i256.MustFromDecimal(amount0Str)
+	amount1 := i256.MustFromDecimal(amount1Str)
 
 	poolRecv := i256Max(amount0, amount1)
 	poolOut := i256Min(amount0, amount1)
@@ -93,14 +95,8 @@ func _swapDry(
 		return u256.Zero(), u256.Zero()
 	}
 
-	amount0, err := i256.FromDecimal(amount0Str)
-	if err != nil {
-		panic(err.Error())
-	}
-	amount1, err := i256.FromDecimal(amount1Str)
-	if err != nil {
-		panic(err.Error())
-	}
+	amount0 := i256.MustFromDecimal(amount0Str)
+	amount1 := i256.MustFromDecimal(amount1Str)
 
 	poolRecv := i256Max(amount0, amount1)
 	poolOut := i256Min(amount0, amount1)
@@ -135,7 +131,7 @@ func getMinTick(fee uint32) int32 {
 	default:
 		panic(addDetailToError(
 			errInvalidPoolFeeTier,
-			ufmt.Sprintf("swap_inner.gno__getMinTick() || unknown fee(%d)", fee),
+			ufmt.Sprintf("swap_inner.gno__getMaxTick() || unknown fee(%d)", fee),
 		))
 	}
 }

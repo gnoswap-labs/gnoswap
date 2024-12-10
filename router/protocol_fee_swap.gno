@@ -11,6 +11,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+// TODO: should be global?
 var (
 	swapFee = uint64(15) // 0.15%
 )
@@ -58,7 +59,9 @@ func SetSwapFeeByAdmin(fee uint64) {
 		panic(err)
 	}
 
-	setSwapFee(fee)
+	if err := setSwapFee(fee); err != nil {
+		panic(err)
+	}
 
 	prevAddr, prevRealm := getPrev()
 
@@ -79,7 +82,9 @@ func SetSwapFee(fee uint64) {
 		panic(err)
 	}
 
-	setSwapFee(fee)
+	if err := setSwapFee(fee); err != nil {
+		panic(err)
+	}
 
 	prevAddr, prevRealm := getPrev()
 
@@ -91,16 +96,17 @@ func SetSwapFee(fee uint64) {
 	)
 }
 
-func setSwapFee(fee uint64) {
+func setSwapFee(fee uint64) error {
 	common.IsHalted()
 
 	// 10000 (bps) = 100%
 	if fee > 10000 {
-		panic(addDetailToError(
-			errInvalidSwapFee,
-			ufmt.Sprintf("protocol_fee_swap.gno__setSwapFee() || fee(%d) must be in range 0 ~ 10000", fee),
-		))
+		return ufmt.Errorf(
+			"%s: fee must be in range 0 to 10000. got %d",
+			errInvalidSwapFee.Error(), fee,
+		)
 	}
 
 	swapFee = fee
+	return nil
 }

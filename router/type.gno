@@ -39,19 +39,18 @@ type SwapParams struct {
 
 func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient std.Address, amountSpecified *i256.Int) *SwapParams {
 	return &SwapParams{
-		tokenIn:        tokenIn,
-		tokenOut:       tokenOut,
-		fee:            fee,
-		recipient:      recipient,
+		tokenIn:         tokenIn,
+		tokenOut:        tokenOut,
+		fee:             fee,
+		recipient:       recipient,
 		amountSpecified: amountSpecified,
 	}
 }
 
 // SWAP DATA
 type SwapCallbackData struct {
-	tokenIn  string // token to spend
-	tokenOut string // token to receive
-	fee      uint32 // fee of the pool used to swap
-
-	payer std.Address // address to spend the token
+	tokenIn  string      // token to spend
+	tokenOut string      // token to receive
+	fee      uint32      // fee of the pool used to swap
+	payer    std.Address // address to spend the token
 }

@@ -36,7 +36,9 @@ func DrySwapRoute(
 	routes := strings.Split(strRouteArr, ",")
 	quotes := strings.Split(quoteArr, ",")
 
-	validateInput(amountSpecified, swapType, routes, quotes)
+	if err := validateInput(amountSpecified, swapType, routes, quotes); err != nil {
+		panic(err)
+	}
 
 	if swapType == "EXACT_OUT" {
 		amountSpecified = i256.Zero().Neg(amountSpecified)
