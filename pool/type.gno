@@ -4,8 +4,8 @@ import (
 	"std"
 
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 
-	"gno.land/p/demo/avl"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -67,6 +67,20 @@ type ModifyPositionParams struct {
 	liquidityDelta *i256.Int // any change in liquidity
 }
 
+func newModifyPositionParams(
+	owner std.Address,
+	tickLower int32,
+	tickUpper int32,
+	liquidityDelta *i256.Int,
+) ModifyPositionParams {
+	return ModifyPositionParams{
+		owner:          owner,
+		tickLower:      tickLower,
+		tickUpper:      tickUpper,
+		liquidityDelta: liquidityDelta,
+	}
+}
+
 type SwapCache struct {
 	feeProtocol    uint8      // protocol fee for the input token
 	liquidityStart *u256.Uint // liquidity at the beginning of the swap
@@ -92,13 +106,12 @@ type SwapState struct {
 	liquidity                *u256.Uint // current liquidity in range
 }
 
-func (pool *Pool) newSwapState(
+func newSwapState(
 	amountSpecifiedRemaining *i256.Int,
 	feeGrowthGlobalX128 *u256.Uint,
 	liquidity *u256.Uint,
+	slot0 Slot0,
 ) SwapState {
-	slot0 := pool.slot0
-
 	return SwapState{
 		amountSpecifiedRemaining: amountSpecifiedRemaining,
 		amountCalculated:         i256.Zero(),
@@ -110,6 +123,22 @@ func (pool *Pool) newSwapState(
 	}
 }
 
+func (s *SwapState) SetSqrtPriceX96(sqrtPriceX96 string) {
+	s.sqrtPriceX96 = u256.MustFromDecimal(sqrtPriceX96)
+}
+
+func (s *SwapState) SetTick(tick int32) {
+	s.tick = tick
+}
+
+func (s *SwapState) SetFeeGrowthGlobalX128(feeGrowthGlobalX128 *u256.Uint) {
+	s.feeGrowthGlobalX128 = feeGrowthGlobalX128
+}
+
+func (s *SwapState) SetProtocolFee(fee *u256.Uint) {
+	s.protocolFee = fee
+}
+
 type StepComputations struct {
 	sqrtPriceStartX96 *u256.Uint // price at the beginning of the step
 	tickNext          int32      // next tick to swap to from the current tick in the swap direction
@@ -118,6 +147,32 @@ type StepComputations struct {
 	amountIn          *u256.Uint // how much being swapped in this step
 	amountOut         *u256.Uint // how much is being swapped out in this step
 	feeAmount         *u256.Uint // how much fee is being paid in this step
+}
+
+// init initializes the computation for a single swap step
+func (step *StepComputations) initSwapStep(state SwapState, pool *Pool, zeroForOne bool) {
+	step.sqrtPriceStartX96 = state.sqrtPriceX96
+	step.tickNext, step.initialized = pool.tickBitmapNextInitializedTickWithInOneWord(
+		state.tick,
+		pool.tickSpacing, 
+		zeroForOne,
+	)
+
+	// prevent overshoot the min/max tick
+	step.clampTickNext()
+
+	// get the price for the next tick 
+	step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
+}
+
+// clampTickNext ensures that `tickNext` stays within the min, max tick boundaries
+// as the tick bitmap is not aware of these bounds
+func (step *StepComputations) clampTickNext() {
+	if step.tickNext < consts.MIN_TICK {
+		step.tickNext = consts.MIN_TICK
+	} else if step.tickNext > consts.MAX_TICK {
+		step.tickNext = consts.MAX_TICK
+	}
 }
 
 type PositionInfo struct {
@@ -172,7 +227,7 @@ func (t *TickInfo) init() {
 
 type Ticks map[int32]TickInfo          // tick => TickInfo
 type TickBitmaps map[int16]*u256.Uint  // tick(wordPos) => bitmap(tickWord ^ mask)
-type Positions map[string]PositionInfo // positionKey => PositionInfo 
+type Positions map[string]PositionInfo // positionKey => PositionInfo
 
 // type Pool describes a single Pool's state
 // A pool is identificed with a unique key (token0, token1, fee), where token0 < token1
@@ -206,7 +261,7 @@ type Pool struct {
 }
 
 func newPool(poolInfo *createPoolParams) *Pool {
-	maxLiquidityPerTick := tickTickSpacingToMaxLiquidityPerTick(poolInfo.tickSpacing)
+	maxLiquidityPerTick := calculateMaxLiquidityPerTick(poolInfo.tickSpacing)
 	tick := common.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())
 	slot0 := newSlot0(poolInfo.SqrtPriceX96(), tick, slot0FeeProtocol, true)
 
