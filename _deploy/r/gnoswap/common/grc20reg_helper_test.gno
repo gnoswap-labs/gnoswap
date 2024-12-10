@@ -16,20 +16,20 @@ var (
 )
 
 func TestGetToken(t *testing.T) {
-	t.Run("registered(by default)", func(t *testing.T) {
+	t.Run("get regsitered token", func(t *testing.T) {
 		token := GetToken(tokenPath)
 		if token == nil {
-			t.Error("Expected non-nil teller for foo20")
+			t.Error("Expected non-nil token for foo20")
 		}
 	})
 
-	t.Run("not registered", func(t *testing.T) {
+	t.Run("get non registered token", func(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("Expected panic for non-registered token")
 			}
 		}()
-		GetToken("not_registered")
+		GetToken("not_registered_token")
 	})
 }
 
@@ -75,20 +75,20 @@ func TestTokenMethod(t *testing.T) {
 }
 
 func TestGetTokenTeller(t *testing.T) {
-	t.Run("registered(by default)", func(t *testing.T) {
+	t.Run("get registered token teller", func(t *testing.T) {
 		teller := GetTokenTeller(tokenPath)
 		if teller == nil {
 			t.Error("Expected non-nil teller for foo20")
 		}
 	})
 
-	t.Run("not registered", func(t *testing.T) {
+	t.Run("get non registered token teller", func(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("Expected panic for non-registered token")
 			}
 		}()
-		GetTokenTeller("not_registered")
+		GetTokenTeller("not_registered_teller")
 	})
 }
 
@@ -129,21 +129,21 @@ func TestTellerMethod(t *testing.T) {
 }
 
 func TestIsRegistered(t *testing.T) {
-	t.Run("registered(by default)", func(t *testing.T) {
+	t.Run("check if token is registered", func(t *testing.T) {
 		uassert.NoError(t, IsRegistered(tokenPath))
 	})
 
-	t.Run("not registered", func(t *testing.T) {
-		uassert.Error(t, IsRegistered("not_registered"))
+	t.Run("check if token is not registered", func(t *testing.T) {
+		uassert.Error(t, IsRegistered("not_registered_token"))
 	})
 }
 
 func TestMustRegistered(t *testing.T) {
-	t.Run("registered(by default)", func(t *testing.T) {
+	t.Run("must be registered", func(t *testing.T) {
 		MustRegistered(tokenPath)
 	})
 
-	t.Run("not registered", func(t *testing.T) {
+	t.Run("panic for non registered token", func(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
 				t.Errorf("Expected panic for non-registered token")
