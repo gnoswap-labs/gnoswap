@@ -34,3 +34,12 @@ func getPrev() (string, string) {
 	prev := std.PrevRealm()
 	return prev.Addr().String(), prev.PkgPath()
 }
+
+func checkTransferError(err error) {
+	if err != nil {
+		panic(addDetailToError(
+			errTransferFailed,
+			err.Error(),
+		))
+	}
+}

@@ -6,8 +6,10 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -576,7 +578,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 			},
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
-			tokenPath:    "token0_path",
+			tokenPath:    "gno.land/r/onbloc/bar",
 			amount:       i256.NewInt(500),
 			isToken0:     true,
 			expectedBal0: u256.NewUint(1500), // 1000 + 500
@@ -592,7 +594,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 			},
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
-			tokenPath:    "token1_path",
+			tokenPath:    "gno.land/r/onbloc/foo",
 			amount:       i256.NewInt(800),
 			isToken0:     false,
 			expectedBal0: u256.NewUint(1000), // unchanged
@@ -608,7 +610,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 			},
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
-			tokenPath:    "token0_path",
+			tokenPath:    "gno.land/r/onbloc/bar",
 			amount:       i256.NewInt(0),
 			isToken0:     true,
 			expectedBal0: u256.NewUint(1000), // unchanged
@@ -618,13 +620,14 @@ func TestTransferFromAndVerify(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// mock transferFromByRegisterCall
-			oldTransferFromByRegisterCall := transferFromByRegisterCall
-			defer func() { transferFromByRegisterCall = oldTransferFromByRegisterCall }()
 
-			transferFromByRegisterCall = func(tokenPath string, from, to std.Address, amount uint64) bool {
-				// mock the transfer (just return true)
-				return true
+			oldCheckTransferError := checkTransferError
+			defer func() {
+				checkTransferError = oldCheckTransferError
+			}()
+
+			checkTransferError = func(err error) {
+				return
 			}
 
 			tt.pool.transferFromAndVerify(tt.from, tt.to, tt.tokenPath, u256.MustFromDecimal(tt.amount.ToString()), tt.isToken0)
@@ -651,18 +654,18 @@ func TestTransferFromAndVerify(t *testing.T) {
 			},
 		}
 
-		oldTransferFromByRegisterCall := transferFromByRegisterCall
-		defer func() { transferFromByRegisterCall = oldTransferFromByRegisterCall }()
+		oldCheckTransferError := checkTransferError
+		defer func() { checkTransferError = oldCheckTransferError }()
 
-		transferFromByRegisterCall = func(tokenPath string, from, to std.Address, amount uint64) bool {
-			return true
+		checkTransferError = func(err error) {
+			return
 		}
 
 		negativeAmount := i256.NewInt(-500)
 		pool.transferFromAndVerify(
 			testutils.TestAddress("from_addr"),
 			testutils.TestAddress("to_addr"),
-			"token0_path",
+			"gno.land/r/onbloc/qux",
 			u256.MustFromDecimal(negativeAmount.Abs().ToString()),
 			true,
 		)
@@ -694,7 +697,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 		pool.transferFromAndVerify(
 			testutils.TestAddress("from_addr"),
 			testutils.TestAddress("to_addr"),
-			"token0_path",
+			"gno.land/r/onbloc/qux",
 			u256.MustFromDecimal(hugeAmount.ToString()),
 			true,
 		)

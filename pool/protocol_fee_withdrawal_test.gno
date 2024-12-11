@@ -1,16 +1,17 @@
 package pool
 
 import (
+	"std"
+	"strconv"
+	"strings"
+	"testing"
+
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
 	"gno.land/r/demo/users"
 	"gno.land/r/gnoswap/v1/consts"
 	pn "gno.land/r/gnoswap/v1/position"
-	"std"
-	"strconv"
-	"strings"
-	"testing"
 )
 
 func TestHandleWithdrawalFee(t *testing.T) {
@@ -32,7 +33,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 			name: "Panic if caller is not position contract",
 			action: func(t *testing.T) {
 				std.TestSetOrigCaller(users.Resolve(admin))
-				HandleWithdrawalFee(0, "", "0", "", "0", "", users.Resolve(admin))
+				HandleWithdrawalFee(0, "gno.land/r/onbloc/foo", "0", "gno.land/r/onbloc/foo", "0", "", users.Resolve(admin))
 			},
 			verify:      nil,
 			expected:    "[GNOSWAP-POOL-001] caller has no permission || withdrawal_fee.gno__HandleWithdrawalFee() || only position(g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) can call this function, called from g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
@@ -45,7 +46,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				HandleWithdrawalFee(0, "pkgPath", "1000", "pkgPath", "1000", "poolPath", users.Resolve(admin))
 			},
 			verify:      nil,
-			expected:    "[GNOSWAP-POOL-002] not registered token || token_register.gno__transferFromByRegisterCall() || token(pkgPath) not registered",
+			expected:    "[GNOSWAP-COMMON-004] token is not registered || token(pkgPath) is not registered",
 			shouldPanic: true,
 		},
 		{
@@ -63,7 +64,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				HandleWithdrawalFee(1, wugnotPath, "1000", gnsPath, "1000", poolPath, users.Resolve(alice))
 			},
 			verify:      nil,
-			expected:    "insufficient allowance",
+			expected:    "[GNOSWAP-POOL-021] token transfer failed || insufficient allowance",
 			shouldPanic: true,
 		},
 		{
