@@ -7,6 +7,7 @@ import (
     "testing"
 
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/testutils"
 
 	"gno.land/r/gnoswap/v1/consts"
     i256 "gno.land/p/gnoswap/int256"
@@ -14,6 +15,7 @@ import (
 
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
+	"gno.land/r/demo/wugnot"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/qux"
@@ -147,6 +149,130 @@ func TestValidateRouteParams(t *testing.T) {
             }
         })
     }
+}
+
+func TestValidateSlippageLimit(t *testing.T) {
+    tests := []struct {
+        name            string
+        swapType        string
+        tokenAmountLimit string
+        afterFee        string
+        resultAmountIn  string
+        expectError     bool
+    }{
+        {
+            name:            "ExactIn - Ok",
+            swapType:        ExactIn,
+            tokenAmountLimit: "100",
+            afterFee:        "150",
+            resultAmountIn:  "100",
+            expectError:     false,
+        },
+        {
+            name:            "ExactIn - exceed slippage",
+            swapType:        ExactIn,
+            tokenAmountLimit: "150",
+            afterFee:        "100",
+            resultAmountIn:  "100",
+            expectError:     true,
+        },
+        {
+            name:            "ExactOut - Ok",
+            swapType:        ExactOut,
+            tokenAmountLimit: "150",
+            afterFee:        "100",
+            resultAmountIn:  "100",
+            expectError:     false,
+        },
+        {
+            name:            "ExactOut - exceed slippage",
+            swapType:        ExactOut,
+            tokenAmountLimit: "100",
+            afterFee:        "100",
+            resultAmountIn:  "150",
+            expectError:     true,
+        },
+        {
+            name:            "Invalid swap type",
+            swapType:        "INVALID",
+            tokenAmountLimit: "100",
+            afterFee:        "100",
+            resultAmountIn:  "100",
+            expectError:     true,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            limit := u256.MustFromDecimal(tt.tokenAmountLimit)
+            afterFee := u256.MustFromDecimal(tt.afterFee)
+            resultAmountIn := u256.MustFromDecimal(tt.resultAmountIn)
+
+            err := validateSlippageLimit(tt.swapType, limit, afterFee, resultAmountIn)
+
+            if tt.expectError && err == nil {
+                t.Error("expected error but got nil")
+            }
+            if !tt.expectError && err != nil {
+                t.Errorf("expected no error but got: %v", err)
+            }
+        })
+    }
+}
+
+func TestHandleWugnotPreSwap(t *testing.T) {
+    testAddr := testutils.TestAddress("test")
+    std.TestSetOrigCaller(testAddr)
+
+	t.Run("Swap with non-GNOT tokens", func(t *testing.T) {
+        params := &RouteParams{
+            inputToken:  barPath,
+            outputToken: bazPath,
+            swapType:    ExactIn,
+        }
+        
+        balance, wrapped, err := handleWugnotPreSwap(barPath, bazPath, params)
+		if err != nil {
+            t.Errorf("unexpected error: %v", err)
+        }
+
+        uassert.Equal(t, uint64(0), balance)
+        uassert.Equal(t, uint64(0), wrapped)
+    })
+
+	t.Run("Swap with different amount of GNOT", func(t *testing.T) {
+        amount := uint64(1000)
+        wrongAmount := uint64(500)
+        
+        params := &RouteParams{
+            inputToken:      consts.GNOT,
+            outputToken:     barPath,
+            swapType:       ExactIn,
+            amountSpecified: i256.NewInt(int64(amount)),
+        }
+
+        std.TestSetOrigSend(std.Coins{{"ugnot", int64(wrongAmount)}}, nil)
+
+        _, _, err := handleWugnotPreSwap(consts.GNOT, barPath, params)
+        if err == nil {
+			t.Errorf("expected error, got nil")
+		}
+    })
+
+	t.Run("Swap for GNOT output", func(t *testing.T) {
+        params := &RouteParams{
+            inputToken:  barPath,
+            outputToken: consts.GNOT,
+            swapType:    ExactIn,
+        }
+        
+        balance, wrapped, err := handleWugnotPreSwap(barPath, consts.GNOT, params)
+        if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+        uassert.Equal(t, ugnotBalanceOf(t, testAddr), balance)
+        uassert.Equal(t, uint64(0), wrapped)
+    })
 }
 
 func TestProcessResult(t *testing.T) {

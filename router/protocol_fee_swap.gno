@@ -11,9 +11,12 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// TODO: should be global?
+const (
+	defaultSwapFee = uint64(15) // 0.15%
+)
+
 var (
-	swapFee = uint64(15) // 0.15%
+	swapFee = defaultSwapFee
 )
 
 func handleSwapFee(
