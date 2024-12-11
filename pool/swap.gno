@@ -4,13 +4,11 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
-	plp "gno.land/p/gnoswap/pool" // pool package
-
 	i256 "gno.land/p/gnoswap/int256"
+	plp "gno.land/p/gnoswap/pool" // pool package
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -371,12 +369,12 @@ func computeSwapStep(
 	// handling tick transitions
 	if newState.sqrtPriceX96.Eq(step.sqrtPriceNextX96) {
 		newState = tickTransition(step, zeroForOne, newState, pool)
-	}
-
-	if newState.sqrtPriceX96.Neq(step.sqrtPriceStartX96) {
+	} else if newState.sqrtPriceX96.Neq(step.sqrtPriceStartX96) {
 		newState.SetTick(common.TickMathGetTickAtSqrtRatio(newState.sqrtPriceX96))
 	}
 
+	// TODO:
+	// - find usage of swapFee
 	newSwapFee := new(u256.Uint).Add(swapFee, step.feeAmount)
 
 	return newState, newSwapFee, nil
@@ -464,7 +462,15 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 //   - Increments remaining output amount by amountOut
 //   - Increments calculated amount by (amountIn + feeAmount)
 func updateAmounts(step StepComputations, state SwapState, exactInput bool) SwapState {
-	amountInWithFee := i256.FromUint256(new(u256.Uint).Add(step.amountIn, step.feeAmount))
+	amountInWithFeeU256 := new(u256.Uint).Add(step.amountIn, step.feeAmount)
+	if amountInWithFeeU256.Lt(u256.MustFromDecimal(consts.MAX_INT256)) {
+		panic("amountIn + feeAmount overflows int256")
+	}
+	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
+	if step.amountOut.Lt(u256.MustFromDecimal(consts.MAX_INT256)) {
+		panic("amountOut overflows int256")
+	}
+
 	if exactInput {
 		state.amountSpecifiedRemaining = i256.Zero().Sub(state.amountSpecifiedRemaining, amountInWithFee)
 		state.amountCalculated = i256.Zero().Sub(state.amountCalculated, i256.FromUint256(step.amountOut))
@@ -510,19 +516,19 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 	return newState
 }
 
-func (pool *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
+func (p *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
 	var targetTokenPath string
 	var amount *i256.Int
 
 	if zeroForOne {
-		targetTokenPath = pool.token0Path
+		targetTokenPath = p.token0Path
 		amount = amount0
 	} else {
-		targetTokenPath = pool.token1Path
+		targetTokenPath = p.token1Path
 		amount = amount1
 	}
 
 	// payer -> POOL -> recipient
-	pool.transferFromAndVerify(payer, consts.POOL_ADDR, targetTokenPath, amount.Abs(), zeroForOne)
-	pool.transferAndVerify(recipient, targetTokenPath, amount, !zeroForOne)
+	p.transferFromAndVerify(payer, consts.POOL_ADDR, targetTokenPath, amount.Abs(), zeroForOne)
+	p.transferAndVerify(recipient, targetTokenPath, amount, !zeroForOne)
 }
