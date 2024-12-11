@@ -76,8 +76,8 @@ func Swap(
 		panic(errLockedPool)
 	}
 
-	slot0Start.unlocked = false
-	defer func() { slot0Start.unlocked = true }()
+	pool.slot0.unlocked = false
+	defer func() { pool.slot0.unlocked = true }()
 
 	amounts := i256.MustFromDecimal(amountSpecified)
 	sqrtPriceLimit := u256.MustFromDecimal(sqrtPriceLimitX96)
