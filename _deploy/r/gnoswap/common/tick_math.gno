@@ -70,7 +70,7 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 		ratio = _tmp.Clone()
 	}
 
-	shifted := ratio.Rsh(ratio, 32).Clone()       // ratio >> 32
+	shifted := new(u256.Uint).Rsh(ratio, 32)      // ratio >> 32
 	remainder := ratio.Mod(ratio, shift1By32Left) // ratio % (1 << 32)
 
 	var adj *u256.Uint

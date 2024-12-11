@@ -17,15 +17,15 @@ import (
 // SwapResult encapsulates all state changes that occur as a result of a swap
 // This type ensure all state transitions are atomic and can be applied at once.
 type SwapResult struct {
-	Amount0          *i256.Int
-	Amount1          *i256.Int
-	NewSqrtPrice     *u256.Uint
-	NewTick          int32
-	NewLiquidity     *u256.Uint
-	NewProtocolFees  ProtocolFees
+	Amount0              *i256.Int
+	Amount1              *i256.Int
+	NewSqrtPrice         *u256.Uint
+	NewTick              int32
+	NewLiquidity         *u256.Uint
+	NewProtocolFees      ProtocolFees
 	FeeGrowthGlobal0X128 *u256.Uint
 	FeeGrowthGlobal1X128 *u256.Uint
-	SwapFee          *u256.Uint
+	SwapFee              *u256.Uint
 }
 
 // SwapComputation encapsulates pure computation logic for swap
@@ -157,8 +157,6 @@ func DrySwap(
 	feeGrowthGlobalX128 := getFeeGrowthGlobal(pool, zeroForOne)
 	cache := newSwapCache(feeProtocol, pool.liquidity)
 
-	println("pass here")
-
 	slot0 := pool.slot0
 	slot0.unlocked = false
 	defer func() {
@@ -201,10 +199,11 @@ func DrySwap(
 // The function follows these state transitions:
 // 1. Initial State: Provided by `SwapComputation.InitialState`
 // 2. Stepping State: For each step:
-//    - Compute next tick and price target
-//    - Calculate amounts and fees
-//    - Update state (remaining amount, fees, liquidity)
-//    - Handle tick transitions if necessary
+//   - Compute next tick and price target
+//   - Calculate amounts and fees
+//   - Update state (remaining amount, fees, liquidity)
+//   - Handle tick transitions if necessary
+//
 // 3. Final State: Aggregated in SwapResult
 //
 // The computation continues until either:
@@ -215,7 +214,6 @@ func DrySwap(
 func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 	state := comp.InitialState
 	swapFee := u256.Zero()
-
 
 	var newFee *u256.Uint
 	var err error
@@ -249,7 +247,7 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 		},
 		FeeGrowthGlobal0X128: pool.feeGrowthGlobal0X128,
 		FeeGrowthGlobal1X128: pool.feeGrowthGlobal1X128,
-		SwapFee:          swapFee,
+		SwapFee:              swapFee,
 	}
 
 	// Update protocol fees if necessary
@@ -284,6 +282,7 @@ func applySwapResult(pool *Pool, result *SwapResult) {
 // For zeroForOne (selling token0):
 //   - Price limit must be below current price
 //   - Price limit must be above MIN_SQRT_RATIO
+//
 // For !zeroForOne (selling token1):
 //   - Price limit must be above current price
 //   - Price limit must be below MAX_SQRT_RATIO
@@ -469,6 +468,7 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 // For exact input swaps:
 //   - Decrements remaining input amount by (amountIn + feeAmount)
 //   - Decrements calculated amount by amountOut
+//
 // For exact output swaps:
 //   - Increments remaining output amount by amountOut
 //   - Increments calculated amount by (amountIn + feeAmount)

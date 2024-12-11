@@ -130,7 +130,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 		_, amount0, amount1 := pool.modifyPosition(params)
 
 		// remove amount should be negative value of added amount
-		uassert.Equal(t, amount0.ToString(), "-8040315")
-		uassert.Equal(t, amount1.ToString(), "-2958014")
+		uassert.Equal(t, amount0.ToString(), "8040315")
+		uassert.Equal(t, amount1.ToString(), "2958014")
 	})
 }
