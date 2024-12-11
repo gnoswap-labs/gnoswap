@@ -43,21 +43,28 @@ var binaryLogConsts = [8]*u256.Uint{
 
 var (
 	shift1By32Left = u256.MustFromDecimal("4294967296") // (1 << 32)
+	maxTick        = int32(887272)
 )
 
 func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	absTick := abs(tick)
-	if absTick > 887272 { // MAX_TICK
+	if absTick > maxTick { // MAX_TICK
 		panic(addDetailToError(
 			errOutOfRange,
 			ufmt.Sprintf("tick_math.gno__TickMathGetSqrtRatioAtTick() || tick is out of range (larger than 887272), tick: %d", tick),
 		))
 	}
 
-	ratio := u256.MustFromDecimal("340282366920938463463374607431768211456") // consts.Q128
+	var initialBit int32 = 0x1
+	var ratio *u256.Uint
+	if (absTick & initialBit) != 0 {
+		ratio = tickRatioMap[initialBit]
+	} else {
+		ratio = u256.MustFromDecimal("340282366920938463463374607431768211456") // consts.Q128
+	}
 
 	for mask, value := range tickRatioMap {
-		if absTick&mask != 0 {
+		if (mask != initialBit) && absTick&mask != 0 {
 			// ratio = (ratio * value) >> 128
 			ratio = ratio.Mul(ratio, value)
 			ratio = ratio.Rsh(ratio, 128)
@@ -65,9 +72,8 @@ func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	}
 
 	if tick > 0 {
-		_maxUint256 := u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935") // consts.MAX_UINT256
-		_tmp := new(u256.Uint).Div(_maxUint256, ratio)
-		ratio = _tmp.Clone()
+		maxUint256 := u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935") // consts.MAX_UINT256
+		ratio = new(u256.Uint).Div(maxUint256, ratio)
 	}
 
 	shifted := new(u256.Uint).Rsh(ratio, 32)      // ratio >> 32
