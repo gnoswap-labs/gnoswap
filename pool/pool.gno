@@ -28,9 +28,6 @@ func Mint(
 	positionCaller std.Address,
 ) (string, string) {
 	common.IsHalted()
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
-
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
 		if err := common.PositionOnly(caller); err != nil {
@@ -77,9 +74,6 @@ func Burn(
 	liquidityAmount string, // uint128
 ) (string, string) { // uint256 x2
 	common.IsHalted()
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
-
 	caller := std.PrevRealm().Addr()
 	if common.GetLimitCaller() {
 		if err := common.PositionOnly(caller); err != nil {
@@ -125,9 +119,6 @@ func Collect(
 	amount1Requested string,
 ) (string, string) {
 	common.IsHalted()
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
-
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
 		if err := common.PositionOnly(caller); err != nil {
@@ -225,9 +216,6 @@ func Swap(
 	payer std.Address, // router
 ) (string, string) {
 	common.IsHalted()
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
-
 	if common.GetLimitCaller() {
 		caller := std.PrevRealm().Addr()
 		if err := common.RouterOnly(caller); err != nil {

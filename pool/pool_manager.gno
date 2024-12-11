@@ -150,8 +150,7 @@ func CreatePool(
 	// wrap first
 	token0Path, token1Path = poolInfo.wrap()
 
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
+	poolPath := GetPoolPath(token0Path, token1Path, fee)
 
 	// reinitialize poolInfo with wrapped tokens
 	poolInfo = newPoolParams(token0Path, token1Path, fee, _sqrtPriceX96)
@@ -173,8 +172,6 @@ func CreatePool(
 			ufmt.Sprintf("pool_manager.gno__CreatePool() || expected token0Path(%s) < token1Path(%s)", token0Path, token1Path),
 		))
 	}
-
-	poolPath := GetPoolPath(token0Path, token1Path, fee)
 
 	// TODO: make this as a parameter
 	prevAddr, prevRealm := getPrev()
@@ -255,6 +252,9 @@ func GetPoolFromPoolPath(poolPath string) *Pool {
 // GetPoolPath generates a poolPath from the given token paths and fee.
 // The poolPath is constructed by joining the token paths and fee with colons.
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
+
 	// TODO: this check is not unnecessary, if we are sure that
 	// all the token paths in the pool are sorted in alphabetical order.
 	if strings.Compare(token1Path, token0Path) < 0 {
