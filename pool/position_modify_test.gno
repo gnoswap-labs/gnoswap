@@ -129,7 +129,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 		params.liquidityDelta = i256.MustFromDecimal("-100000000")
 		_, amount0, amount1 := pool.modifyPosition(params)
 
-		// remove amount should be negative value of added amount
+		// remove amount should be same as added amount
 		uassert.Equal(t, amount0.ToString(), "8040315")
 		uassert.Equal(t, amount1.ToString(), "2958014")
 	})

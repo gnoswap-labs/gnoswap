@@ -143,12 +143,18 @@ func Collect(
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
 	amount0Req := u256.MustFromDecimal(amount0Requested)
 	amount0, position.tokensOwed0, pool.balances.token0 = collectToken(amount0Req, position.tokensOwed0, pool.balances.token0)
-	transferByRegisterCall(pool.token0Path, recipient, amount0.Uint64())
+	token0 := common.GetTokenTeller(pool.token0Path)
+	checkTransferError(token0.Transfer(recipient, amount0.Uint64()))
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
 	amount1Req := u256.MustFromDecimal(amount1Requested)
 	amount1, position.tokensOwed1, pool.balances.token1 = collectToken(amount1Req, position.tokensOwed1, pool.balances.token1)
-	transferByRegisterCall(pool.token1Path, recipient, amount1.Uint64())
+
+	// Update state first then transfer
+	position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
+	pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
+	token1 := common.GetTokenTeller(pool.token1Path)
+	checkTransferError(token1.Transfer(recipient, amount1.Uint64()))
 
 	pool.positions[positionKey] = position
 
@@ -258,9 +264,12 @@ func CollectProtocolByAdmin(
 	token1Path string,
 	fee uint32,
 	recipient std.Address,
-	amount0Requested string,
-	amount1Requested string,
-) (string, string) {
+	amount0Requested string, // uint128
+	amount1Requested string, // uint128
+) (string, string) { // uint128 x2
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
+
 	caller := std.PrevRealm().Addr()
 	if err := common.AdminOnly(caller); err != nil {
 		panic(err)
@@ -300,9 +309,12 @@ func CollectProtocol(
 	token1Path string,
 	fee uint32,
 	recipient std.Address,
-	amount0Requested string,
-	amount1Requested string,
-) (string, string) {
+	amount0Requested string, // uint128
+	amount1Requested string, // uint128
+) (string, string) { // uint128 x2
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
+
 	caller := std.PrevRealm().Addr()
 	if err := common.GovernanceOnly(caller); err != nil {
 		panic(err)
@@ -355,8 +367,11 @@ func collectProtocol(
 	uAmount0 := amount0.Uint64()
 	uAmount1 := amount1.Uint64()
 
-	transferByRegisterCall(pool.token0Path, recipient, uAmount0)
-	transferByRegisterCall(pool.token1Path, recipient, uAmount1)
+	token0Teller := common.GetTokenTeller(pool.token0Path)
+	checkTransferError(token0Teller.Transfer(recipient, uAmount0))
+
+	token1Teller := common.GetTokenTeller(pool.token1Path)
+	checkTransferError(token1Teller.Transfer(recipient, uAmount1))
 
 	return amount0.ToString(), amount1.ToString()
 }
@@ -407,7 +422,8 @@ func (pool *Pool) transferAndVerify(
 		panic(err)
 	}
 
-	transferByRegisterCall(tokenPath, to, amountUint64)
+	token := common.GetTokenTeller(tokenPath)
+	checkTransferError(token.Transfer(to, amountUint64))
 
 	newBalance, err := updatePoolBalance(token0, token1, absAmount, isToken0)
 	if err != nil {
@@ -484,12 +500,8 @@ func (pool *Pool) transferFromAndVerify(
 		panic(err)
 	}
 
-	// try sending
-	// will panic if following conditions are met:
-	// - POOL does not have enough approved amount
-	// - from does not have enough balance
-	// - token is not registered
-	transferFromByRegisterCall(tokenPath, from, to, amountUint64)
+	token := common.GetTokenTeller(tokenPath)
+	checkTransferError(token.TransferFrom(from, to, amountUint64))
 
 	// update pool balances
 	if isToken0 {
