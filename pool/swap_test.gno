@@ -7,8 +7,11 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
+	pusers "gno.land/p/demo/users"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 func TestSaveProtocolFees(t *testing.T) {
@@ -449,7 +452,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 			},
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
-			tokenPath:    "token0_path",
+			tokenPath:    fooPath,
 			amount:       i256.NewInt(500),
 			isToken0:     true,
 			expectedBal0: u256.NewUint(1500), // 1000 + 500
@@ -465,7 +468,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 			},
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
-			tokenPath:    "token1_path",
+			tokenPath:    fooPath,
 			amount:       i256.NewInt(800),
 			isToken0:     false,
 			expectedBal0: u256.NewUint(1000), // unchanged
@@ -481,7 +484,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 			},
 			from:         testutils.TestAddress("from_addr"),
 			to:           testutils.TestAddress("to_addr"),
-			tokenPath:    "token0_path",
+			tokenPath:    fooPath,
 			amount:       i256.NewInt(0),
 			isToken0:     true,
 			expectedBal0: u256.NewUint(1000), // unchanged
@@ -491,14 +494,8 @@ func TestTransferFromAndVerify(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// mock transferFromByRegisterCall
-			oldTransferFromByRegisterCall := transferFromByRegisterCall
-			defer func() { transferFromByRegisterCall = oldTransferFromByRegisterCall }()
-
-			transferFromByRegisterCall = func(tokenPath string, from, to std.Address, amount uint64) bool {
-				// mock the transfer (just return true)
-				return true
-			}
+			TokenFaucet(t, fooPath, pusers.AddressOrName(tt.from))
+			TokenApprove(t, fooPath, pusers.AddressOrName(tt.from), pool, u256.MustFromDecimal(tt.amount.ToString()).Uint64())
 
 			tt.pool.transferFromAndVerify(tt.from, tt.to, tt.tokenPath, u256.MustFromDecimal(tt.amount.ToString()), tt.isToken0)
 
@@ -524,18 +521,14 @@ func TestTransferFromAndVerify(t *testing.T) {
 			},
 		}
 
-		oldTransferFromByRegisterCall := transferFromByRegisterCall
-		defer func() { transferFromByRegisterCall = oldTransferFromByRegisterCall }()
-
-		transferFromByRegisterCall = func(tokenPath string, from, to std.Address, amount uint64) bool {
-			return true
-		}
-
 		negativeAmount := i256.NewInt(-500)
+
+		TokenFaucet(t, fooPath, pusers.AddressOrName(testutils.TestAddress("from_addr")))
+		TokenApprove(t, fooPath, pusers.AddressOrName(testutils.TestAddress("from_addr")), pusers.AddressOrName(consts.POOL_ADDR), u256.MustFromDecimal(negativeAmount.Abs().ToString()).Uint64())
 		pool.transferFromAndVerify(
 			testutils.TestAddress("from_addr"),
 			testutils.TestAddress("to_addr"),
-			"token0_path",
+			fooPath,
 			u256.MustFromDecimal(negativeAmount.Abs().ToString()),
 			true,
 		)
@@ -567,7 +560,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 		pool.transferFromAndVerify(
 			testutils.TestAddress("from_addr"),
 			testutils.TestAddress("to_addr"),
-			"token0_path",
+			fooPath,
 			u256.MustFromDecimal(hugeAmount.ToString()),
 			true,
 		)
