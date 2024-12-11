@@ -14,6 +14,7 @@ import (
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
+	sr "gno.land/r/gnoswap/v1/staker"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
@@ -37,6 +38,10 @@ const (
 	fee3000     uint32 = 3000
 	maxApprove  uint64 = 18446744073709551615
 	max_timeout int64  = 9999999999
+
+	TIER_1 uint64 = 1
+	TIER_2 uint64 = 2
+	TIER_3 uint64 = 3
 )
 
 const (
@@ -165,6 +170,7 @@ func init() {
 var (
 	admin       = pusers.AddressOrName(consts.ADMIN)
 	alice       = pusers.AddressOrName(testutils.TestAddress("alice"))
+	bob         = pusers.AddressOrName(testutils.TestAddress("bob"))
 	pool        = pusers.AddressOrName(consts.POOL_ADDR)
 	protocolFee = pusers.AddressOrName(consts.PROTOCOL_FEE_ADDR)
 	adminRealm  = std.NewUserRealm(users.Resolve(admin))
@@ -182,10 +188,7 @@ func InitialisePoolTest(t *testing.T) {
 
 	std.TestSetOrigCaller(users.Resolve(admin))
 	TokenApprove(t, gnsPath, admin, pool, maxApprove)
-	poolPath := pl.GetPoolPath(wugnotPath, gnsPath, fee3000)
-	if !pl.DoesPoolPathExist(poolPath) {
-		pl.CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
-	}
+	CreatePool(t, wugnotPath, gnsPath, fee3000, "79228162514264337593543950336", users.Resolve(admin))
 
 	//2. create position
 	std.TestSetOrigCaller(users.Resolve(alice))
@@ -300,6 +303,22 @@ func TokenApprove(t *testing.T, tokenPath string, owner, spender pusers.AddressO
 	}
 }
 
+func CreatePool(t *testing.T,
+	token0 string,
+	token1 string,
+	fee uint32,
+	sqrtPriceX96 string,
+	caller std.Address) {
+	t.Helper()
+
+	std.TestSetRealm(std.NewUserRealm(caller))
+	poolPath := pl.GetPoolPath(token0, token1, fee)
+	if !pl.DoesPoolPathExist(poolPath) {
+		pl.CreatePool(token0, token1, fee, sqrtPriceX96)
+		sr.SetPoolTierByAdmin(poolPath, TIER_1)
+	}
+}
+
 func MintPosition(t *testing.T,
 	token0 string,
 	token1 string,
@@ -330,6 +349,54 @@ func MintPosition(t *testing.T,
 		deadline,
 		mintTo,
 		caller)
+}
+
+func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
+	t.Helper()
+
+	// make actual data to test resetting not only position's state but also pool's state
+	std.TestSetRealm(adminRealm)
+
+	// set pool create fee to 0 for testing
+	pl.SetPoolCreationFeeByAdmin(0)
+	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), users.Resolve(admin))
+
+	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
+	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
+
+	// mint position
+	return Mint(
+		barPath,
+		fooPath,
+		fee500,
+		-887270,
+		887270,
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+		users.Resolve(admin),
+		users.Resolve(admin),
+	)
+}
+
+func LPTokenApprove(t *testing.T, owner, operator pusers.AddressOrName, tokenId uint64) {
+	t.Helper()
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(owner)))
+	gnft.Approve(operator, tokenIdFrom(tokenId))
+}
+
+func LPTokenStake(t *testing.T, owner pusers.AddressOrName, tokenId uint64) {
+	t.Helper()
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(owner)))
+	sr.StakeToken(tokenId)
+}
+
+func LPTokenUnStake(t *testing.T, owner pusers.AddressOrName, tokenId uint64, unwrap bool) {
+	t.Helper()
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(owner)))
+	sr.UnstakeToken(tokenId, unwrap)
 }
 
 func wugnotApprove(t *testing.T, owner, spender pusers.AddressOrName, amount uint64) {
@@ -487,7 +554,7 @@ func burnAllNFT(t *testing.T) {
 
 	std.TestSetRealm(std.NewCodeRealm(consts.POSITION_PATH))
 	for i := uint64(1); i <= gnft.TotalSupply(); i++ {
-		gnft.Burn(tid(i))
+		gnft.Burn(tokenIdFrom(i))
 	}
 }
 
@@ -495,29 +562,7 @@ func TestBeforeResetObject(t *testing.T) {
 	// make actual data to test resetting not only position's state but also pool's state
 	std.TestSetRealm(adminRealm)
 
-	// set pool create fee to 0 for testing
-	pl.SetPoolCreationFeeByAdmin(0)
-	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
-
-	// mint position
-	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-
-	tokenId, liquidity, amount0, amount1 := Mint(
-		barPath,
-		fooPath,
-		fee500,
-		-887270,
-		887270,
-		"50000",
-		"50000",
-		"0",
-		"0",
-		max_timeout,
-		users.Resolve(admin),
-		users.Resolve(admin),
-	)
-
+	tokenId, liquidity, amount0, amount1 := MakeMintPositionWithoutFee(t)
 	uassert.Equal(t, tokenId, uint64(1), "tokenId should be 1")
 	uassert.Equal(t, liquidity, "50000", "liquidity should be 50000")
 	uassert.Equal(t, amount0, "50000", "amount0 should be 50000")
