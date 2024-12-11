@@ -463,11 +463,11 @@ func computeAmounts(state SwapState, sqrtRatioTargetX96 *u256.Uint, pool *Pool, 
 //   - Increments calculated amount by (amountIn + feeAmount)
 func updateAmounts(step StepComputations, state SwapState, exactInput bool) SwapState {
 	amountInWithFeeU256 := new(u256.Uint).Add(step.amountIn, step.feeAmount)
-	if amountInWithFeeU256.Lt(u256.MustFromDecimal(consts.MAX_INT256)) {
+	if amountInWithFeeU256.Gt(u256.MustFromDecimal(consts.MAX_INT256)) {
 		panic("amountIn + feeAmount overflows int256")
 	}
 	amountInWithFee := i256.FromUint256(amountInWithFeeU256)
-	if step.amountOut.Lt(u256.MustFromDecimal(consts.MAX_INT256)) {
+	if step.amountOut.Gt(u256.MustFromDecimal(consts.MAX_INT256)) {
 		panic("amountOut overflows int256")
 	}
 

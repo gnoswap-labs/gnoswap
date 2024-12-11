@@ -5,7 +5,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-const Q96_RESOLUTION = uint64(96)
+const Q96_RESOLUTION = uint(96)
 
 func sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
 	sqrtPX96 *u256.Uint, // uint160
