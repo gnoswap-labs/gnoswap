@@ -153,7 +153,7 @@ func setAvgBlockTimeInMs(ms int64) {
 	blockLeft := timeLeftMs / avgBlockTimeMs
 
 	// how many reward left to next halving
-	minted := TotalMinted()
+	minted := MintedEmissionAmount()
 	amountLeft := halvingYearAccuAmount[year] - minted
 
 	// how much reward per block
@@ -174,6 +174,18 @@ func setAvgBlockTimeInMs(ms int64) {
 		numBlock := diff * consts.SECOND_IN_MILLISECOND / avgBlockTimeMs
 		halvingYearBlock[keyYear] = height + numBlock
 	}
+}
+
+func GetHalvingYearAmount(year int64) uint64 {
+	return halvingYearAmount[year]
+}
+
+func GetHalvingYearMintAmount(year int64) uint64 {
+	return halvingYearMintAmount[year]
+}
+
+func SetHalvingYearMintAmount(year int64, amount uint64) {
+	halvingYearMintAmount[year] = amount
 }
 
 func GetAmountByHeight(height int64) uint64 {
