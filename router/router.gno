@@ -21,7 +21,10 @@ import (
 )
 
 
-const POOL_SEP = "*POOL*"
+const (
+	POOL_SEP = "*POOL*"
+	FULL_QUOTE_SUM = 100
+)
 
 type RouteParams struct {
 	inputToken string
@@ -87,7 +90,7 @@ func (rp *RouteParams) validate() error {
 		quoteSum += quote
 	}
 
-	if quoteSum != 100 {
+	if quoteSum != FULL_QUOTE_SUM {
 		return ufmt.Errorf("quote sum must be 100, got %d", quoteSum)
 	}
 
@@ -215,8 +218,7 @@ func DrySwapRoute(
 }
 
 func processRoutes(params *RouteParams, isDry bool) (*u256.Uint, *u256.Uint, error) {
-	resultAmountIn := u256.Zero()
-	resultAmountOut := u256.Zero()
+	resultAmountIn, resultAmountOut := u256.Zero(), u256.Zero()
 
 	for i, route := range params.routes {
 		numHops := strings.Count(route, POOL_SEP) + 1
@@ -264,7 +266,7 @@ func finalizeSwap(
 	userBeforeWugnotBalance, userWrappedWugnot uint64,
 	amountSpecified *u256.Uint,
 ) (string, string, error) {
-	if swapType == ExactOut && resultAmountOut.Lt(amountSpecified) {
+	if isExactOutAmountInsufficient(swapType, resultAmountOut, amountSpecified) {
 		return "", "", ufmt.Errorf(
 			"%s: not enough amounts received. minimum: %s, actual: %s",
 			errSlippage, amountSpecified.ToString(), resultAmountOut.ToString(),
@@ -293,25 +295,43 @@ func finalizeSwap(
 		unwrap(userRecvWugnot)
 	}
 
-	// TODO: create separate error code
-	if swapType == ExactIn {
-		if !tokenAmountLimit.Lte(afterFee) {
-			return "", "", ufmt.Errorf(
-				"%s: minimum amount not received (minimim: %s, actual: %s, swapType: %s)",
-				errSlippage, tokenAmountLimit.ToString(), afterFee.ToString(), swapType,
-			)
-		}
-	} else {
-		if !resultAmountIn.Lte(tokenAmountLimit) {
-			return "", "", ufmt.Errorf(
-				"%s: maximum amount exceeded (maximum: %s, actual: %s, swapType: %s)",
-				errSlippage, tokenAmountLimit.ToString(), resultAmountIn.ToString(), swapType,
-			)
-		}
+	if err := validateSlippageLimit(swapType, tokenAmountLimit, afterFee, resultAmountIn); err != nil {
+		return "", "", err
 	}
 
 	intAmountOut := i256.FromUint256(afterFee)
 	return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString(), nil
+}
+
+func isExactOutAmountInsufficient(swapType string, resultAmountOut, amountSpecified *u256.Uint) bool {
+    return swapType == ExactOut && resultAmountOut.Lt(amountSpecified)
+}
+
+func validateSlippageLimit(
+	swapType string,
+	tokenAmountLimit, afterFee *u256.Uint,
+	resultAmountIn *u256.Uint,
+) error {
+	switch swapType {
+	case ExactIn:
+		if tokenAmountLimit.Gt(afterFee) {
+			return ufmt.Errorf(
+				"%s: minimum amount not received (minimim: %s, actual: %s, swapType: %s)",
+				errSlippage, tokenAmountLimit.ToString(), afterFee.ToString(), swapType,
+			)
+		}
+	case ExactOut:
+		if resultAmountIn.Gt(tokenAmountLimit) {
+			return ufmt.Errorf(
+				"%s: maximum amount exceeded (maximum: %s, actual: %s, swapType: %s)",
+				errSlippage, tokenAmountLimit.ToString(), resultAmountIn.ToString(), swapType,
+			)
+		}
+	default:
+		return ufmt.Errorf("invalid swap type: %s", swapType)
+	}
+
+	return nil
 }
 
 func handleMultiSwap(
@@ -397,7 +417,7 @@ func processResult(
 ) (string, error) {
 	switch swapType {
 	case ExactIn:
-		if !i256.FromUint256(resultAmountIn).Eq(amountSpecified) {
+		if i256.FromUint256(resultAmountIn).Neq(amountSpecified) {
 			return "-1", errors.New("amount mismatch in ExactIn")
 		}
 		return resultAmountOut.ToString(), nil
