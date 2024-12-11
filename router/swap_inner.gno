@@ -30,7 +30,7 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 	return sqrtPriceLimitX96.Sub(sqrtPriceLimitX96, u256.One())
 }
 
-func _swap(
+func swapInner(
 	amountSpecified *i256.Int,
 	recipient std.Address,
 	sqrtPriceLimitX96 *u256.Uint,
@@ -66,7 +66,7 @@ func _swap(
 	return poolRecv.Abs(), poolOut.Abs()
 }
 
-func _swapDry(
+func swapDryInner(
 	amountSpecified *i256.Int,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
@@ -117,7 +117,7 @@ func getMinTick(fee uint32) int32 {
 	default:
 		panic(addDetailToError(
 			errInvalidPoolFeeTier,
-			ufmt.Sprintf("swap_inner.gno__getMaxTick() || unknown fee(%d)", fee),
+			ufmt.Sprintf("swapInner.gno__getMaxTick() || unknown fee(%d)", fee),
 		))
 	}
 }
@@ -135,7 +135,7 @@ func getMaxTick(fee uint32) int32 {
 	default:
 		panic(addDetailToError(
 			errInvalidPoolFeeTier,
-			ufmt.Sprintf("swap_inner.gno__getMaxTick() || unknown fee(%d)", fee),
+			ufmt.Sprintf("swapInner.gno__getMaxTick() || unknown fee(%d)", fee),
 		))
 	}
 }

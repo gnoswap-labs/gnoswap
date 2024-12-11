@@ -24,7 +24,7 @@ func multiSwap(params SwapParams, currentPoolIndex, numPools int, swapPath strin
 			recipient = params.recipient
 		}
 
-		amountIn, amountOut := _swap(
+		amountIn, amountOut := swapInner(
 			params.amountSpecified,
 			recipient,
 			u256.Zero(),
@@ -109,7 +109,7 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 			recipient = consts.ROUTER_ADDR
 		}
 
-		amountIn, amountOut := _swap(
+		amountIn, amountOut := swapInner(
 			swapInfo[currentPoolIndex].amountSpecified,
 			recipient,
 			u256.Zero(),
@@ -143,7 +143,7 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 	for {
 		currentPoolIndex++
 
-		amountIn, amountOut := _swapDry(
+		amountIn, amountOut := swapDryInner(
 			params.amountSpecified,
 			u256.Zero(),
 			SwapCallbackData{
@@ -178,7 +178,7 @@ func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath stri
 	payer := consts.ROUTER_ADDR
 
 	for {
-		amountIn, amountOut := _swapDry(
+		amountIn, amountOut := swapDryInner(
 			params.amountSpecified,
 			u256.Zero(),
 			SwapCallbackData{

@@ -2,6 +2,7 @@ package router
 
 import (
 	"std"
+	"strconv"
 	"strings"
     "testing"
 
@@ -168,7 +169,7 @@ func TestProcessResult(t *testing.T) {
 			expectError:     false,
 		},
 		{
-			name:            "ExactIn amount mismatch",
+			name:            "ExactIn amount mismatt.",
 			swapType:        ExactIn,
 			resultAmountIn:  u256.MustFromDecimal("90"),
 			resultAmountOut: u256.MustFromDecimal("85"),
@@ -366,6 +367,7 @@ type MockGRC20 struct {
 	TransferFromFn  func(from, to pusers.AddressOrName, amount uint64)
 	BalanceOfFn     func(owner pusers.AddressOrName) uint64
 	ApproveFn       func(spender pusers.AddressOrName, amount uint64)
+	AllowanceFn     func(owner, spender pusers.AddressOrName) uint64
 }
 
 func (m MockGRC20) Transfer() func(to pusers.AddressOrName, amount uint64) {
@@ -382,4 +384,31 @@ func (m MockGRC20) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 
 func (m MockGRC20) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return m.ApproveFn
+}
+
+func (m MockGRC20) Allowance() func(owner, spender pusers.AddressOrName) uint64 {
+	if m.AllowanceFn != nil {
+		return m.AllowanceFn
+	}
+	return func(owner, spender pusers.AddressOrName) uint64 {
+		return 1000000000000
+	}
+}
+
+func setupTestPool(
+	t *testing.T,
+	token0Path, token1Path string,
+	fee uint32,
+	sqrtPriceX96 string,
+) {
+	t.Helper()
+
+	std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
+	pl.SetPoolCreationFeeByAdmin(1)
+
+	if token0Path > token1Path {
+		t.Fatalf("tokens are not sorted: %s > %s", token0Path, token1Path)
+	}
+
+	pl.CreatePool(token0Path, token1Path, fee, sqrtPriceX96)
 }
