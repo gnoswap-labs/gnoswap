@@ -6,8 +6,10 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -137,3 +139,4 @@ func TestBurn(t *testing.T) {
 		})
 	}
 }
+
