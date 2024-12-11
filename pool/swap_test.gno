@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/ufmt"
 	"gno.land/p/demo/uassert"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -627,9 +626,9 @@ func TestDrySwap(t *testing.T) {
 			name:              "trying to swap 0 amount",
 			token0Path:        "token0",
 			token1Path:        "token1",
-			fee:              3000,
-			zeroForOne:       true,
-			amountSpecified:  "0",
+			fee:               3000,
+			zeroForOne:        true,
+			amountSpecified:   "0",
 			sqrtPriceLimitX96: "900000000000000000",
 			expectAmount0:     "0",
 			expectAmount1:     "0",
@@ -639,9 +638,9 @@ func TestDrySwap(t *testing.T) {
 			name:              "insufficient balance",
 			token0Path:        "token0",
 			token1Path:        "token1",
-			fee:              3000,
-			zeroForOne:       false,
-			amountSpecified:  "2000000000",
+			fee:               3000,
+			zeroForOne:        false,
+			amountSpecified:   "2000000000",
 			sqrtPriceLimitX96: "1100000000000000000", // zeroForOne이 false일 때는 현재 가격보다 높아야 함
 			expectAmount0:     "0",
 			expectAmount1:     "0",
