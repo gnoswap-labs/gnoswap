@@ -14,6 +14,30 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+// SwapResult encapsulates all state changes that occur as a result of a swap
+// This type ensure all state transitions are atomic and can be applied at once.
+type SwapResult struct {
+	Amount0          *i256.Int
+	Amount1          *i256.Int
+	NewSqrtPrice     *u256.Uint
+	NewTick          int32
+	NewLiquidity     *u256.Uint
+	NewProtocolFees  ProtocolFees
+	FeeGrowthGlobal0X128 *u256.Uint
+	FeeGrowthGlobal1X128 *u256.Uint
+	SwapFee          *u256.Uint
+}
+
+// SwapComputation encapsulates pure computation logic for swap
+type SwapComputation struct {
+	AmountSpecified   *i256.Int
+	SqrtPriceLimitX96 *u256.Uint
+	ZeroForOne        bool
+	ExactInput        bool
+	InitialState      SwapState
+	Cache             SwapCache
+}
+
 // Swap swaps token0 for token1, or token1 for token0
 // Returns swapped amount0, amount1 in string
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#swap
