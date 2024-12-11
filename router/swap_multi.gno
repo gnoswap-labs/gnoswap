@@ -86,14 +86,13 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 		} else {
 			currentPoolIndex--
 
-			// TODO: duplicated with `multiSwap` function L49
 			nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
-			_intAmountIn := i256.FromUint256(amountIn)
+			intAmountIn := i256.FromUint256(amountIn)
 
 			params.tokenIn = nextInput
 			params.tokenOut = nextOutput
 			params.fee = nextFee
-			params.amountSpecified = i256.Zero().Neg(_intAmountIn)
+			params.amountSpecified = i256.Zero().Neg(intAmountIn)
 		}
 	}
 
@@ -163,7 +162,6 @@ func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath str
 		}
 
 		payer = consts.ROUTER_ADDR
-		// TODO: duplicated with `multiSwap` L49
 		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
 
 		params.tokenIn = nextInput
@@ -200,11 +198,10 @@ func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath stri
 			return firstAmountIn, amountOut
 		}
 
-		// TODO: duplicated with `multiSwap` function L49
 		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
-		_intAmountIn := i256.FromUint256(amountIn)
+		intAmountIn := i256.FromUint256(amountIn)
 
-		params.amountSpecified = i256.Zero().Neg(_intAmountIn)
+		params.amountSpecified = i256.Zero().Neg(intAmountIn)
 		params.tokenIn = nextInput
 		params.tokenOut = nextOutput
 		params.fee = nextFee
