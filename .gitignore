@@ -349,3 +349,6 @@ pyrightconfig.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,go,goland+all,visualstudiocode,dotenv,python,jupyternotebooks
+
+.scannerwork
+

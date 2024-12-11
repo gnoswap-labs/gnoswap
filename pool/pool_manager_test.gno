@@ -74,13 +74,13 @@ func TestNewPoolParams(t *testing.T) {
 }
 
 func TestGetPoolPath(t *testing.T) {
-	path := GetPoolPath("tokenA", "tokenB", 500)
-	expected := "tokenA:tokenB:500"
+	path := GetPoolPath("gno.land/r/onbloc/bar", "gno.land/r/onbloc/foo", 500)
+	expected := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"
 	if path != expected {
 		t.Errorf("Expected path %s, got %s", expected, path)
 	}
 
-	path = GetPoolPath("tokenB", "tokenA", 500)
+	path = GetPoolPath("gno.land/r/onbloc/foo", "gno.land/r/onbloc/bar", 500)
 	if path != expected {
 		t.Errorf("Expected tokens to be sorted, expected %s, got %s", expected, path)
 	}
@@ -118,37 +118,37 @@ func TestCreatePool(t *testing.T) {
 	}{
 		{
 			name:       "success - normal token pair",
-			token0Path: "test/token0",
-			token1Path: "test/token1",
+			token0Path: barPath,
+			token1Path: fooPath,
 			fee:        3000,
 			sqrtPrice:  "4295128740",
 		},
 		{
 			name:        "fail - same tokens",
-			token0Path:  "test/token0",
-			token1Path:  "test/token0",
+			token0Path:  barPath,
+			token1Path:  barPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-011] same token used in single pool || pool_manager.gno__CreatePool() || expected token0Path(test/token0) != token1Path(test/token0",
+			panicMsg:    "[GNOSWAP-POOL-011] same token used in single pool || pool_manager.gno__CreatePool() || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar",
 		},
 		{
 			name:        "fail - tokens not in order",
-			token0Path:  "test/tokenB",
-			token1Path:  "test/tokenA",
+			token0Path:  fooPath,
+			token1Path:  barPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-012] tokens must be in lexicographical order || pool_manager.gno__CreatePool() || expected token0Path(test/tokenB) < token1Path(test/tokenA)",
+			panicMsg:    "[GNOSWAP-POOL-012] tokens must be in lexicographical order || pool_manager.gno__CreatePool() || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)",
 		},
 		{
 			name:        "fail - pool already exists",
-			token0Path:  "test/token0",
-			token1Path:  "test/token1",
+			token0Path:  barPath,
+			token1Path:  fooPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-013] pool already created || pool_manager.gno__CreatePool() || expected poolPath(test/token0:test/token1:3000) not to exist",
+			panicMsg:    "[GNOSWAP-POOL-013] pool already created || pool_manager.gno__CreatePool() || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
 		},
 	}
 
@@ -199,4 +199,6 @@ func TestCreatePool(t *testing.T) {
 			}
 		})
 	}
+
+	resetObject(t)
 }

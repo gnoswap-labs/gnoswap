@@ -44,3 +44,14 @@ func IsRegistered(path string) error {
 	}
 	return nil
 }
+
+// MustRegistered is a helper function to check if token is registered to grc20reg
+// if token is not registered, it will panic
+func MustRegistered(path string) {
+	if err := IsRegistered(path); err != nil {
+		panic(addDetailToError(
+			errNotRegistered,
+			ufmt.Sprintf("token(%s) is not registered", path),
+		))
+	}
+}
