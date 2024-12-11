@@ -119,7 +119,7 @@ func TestCreatePool(t *testing.T) {
 		{
 			name:       "success - normal token pair",
 			token0Path: barPath,
-			token1Path: GetPoolFromPoolPath,
+			token1Path: fooPath,
 			fee:        3000,
 			sqrtPrice:  "4295128740",
 		},
@@ -134,7 +134,7 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:        "fail - tokens not in order",
-			token0Path:  GetPoolFromPoolPath,
+			token0Path:  fooPath,
 			token1Path:  barPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740",
@@ -144,7 +144,7 @@ func TestCreatePool(t *testing.T) {
 		{
 			name:        "fail - pool already exists",
 			token0Path:  barPath,
-			token1Path:  GetPoolFromPoolPath,
+			token1Path:  fooPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
