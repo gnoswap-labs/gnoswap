@@ -7,7 +7,7 @@ import (
 )
 
 func singleSwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn, amountOut
-	amountIn, amountOut := _swap(
+	amountIn, amountOut := swapInner(
 		params.amountSpecified,
 		std.PrevRealm().Addr(), // if single swap => user will recieve
 		u256.Zero(),            // sqrtPriceLimitX96
@@ -23,7 +23,7 @@ func singleSwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn,
 }
 
 func singleSwapDry(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn, amountOut
-	amountIn, amountOut := _swapDry(
+	amountIn, amountOut := swapDryInner(
 		params.amountSpecified,
 		u256.Zero(), // sqrtPriceLimitX96
 		SwapCallbackData{
