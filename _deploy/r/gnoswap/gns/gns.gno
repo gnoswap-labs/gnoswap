@@ -194,12 +194,14 @@ func handleLeftEmissionAmount(year int64, amount uint64) uint64 {
 	return GetHalvingYearAmount(year) - GetHalvingYearMintAmount(year) - amount
 }
 
-func setLeftEmissionAmount(amount uint64) {
-	leftEmissionAmount = amount
-}
+// skipIfSameHeight returns true if the current block height is the same as the last minted height.
+// This prevents multiple gns minting inside the same block.
+func skipIfSameHeight(lastMintedHeight, currentHeight int64) bool {
+	if lastMintedHeight == currentHeight {
+		return true
+	}
 
-func isInitialized() bool {
-	return initialized
+	return false
 }
 
 func GetLastMintedHeight() int64 {
@@ -214,12 +216,6 @@ func GetLeftEmissionAmount() uint64 {
 	return leftEmissionAmount
 }
 
-// skipIfSameHeight returns true if the current block height is the same as the last minted height.
-// This prevents multiple gns minting inside the same block.
-func skipIfSameHeight(lastMintedHeight, currentHeight int64) bool {
-	if lastMintedHeight == currentHeight {
-		return true
-	}
-
-	return false
+func setLeftEmissionAmount(amount uint64) {
+	leftEmissionAmount = amount
 }
