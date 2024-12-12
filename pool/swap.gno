@@ -23,7 +23,6 @@ type SwapResult struct {
 	NewProtocolFees      ProtocolFees
 	FeeGrowthGlobal0X128 *u256.Uint
 	FeeGrowthGlobal1X128 *u256.Uint
-	SwapFee              *u256.Uint
 }
 
 // SwapComputation encapsulates pure computation logic for swap
@@ -35,6 +34,10 @@ type SwapComputation struct {
 	InitialState      SwapState
 	Cache             SwapCache
 }
+
+var (
+	fixedPointQ128 = u256.MustFromDecimal(consts.Q128)
+)
 
 // Swap swaps token0 for token1, or token1 for token0
 // Returns swapped amount0, amount1 in string
@@ -120,7 +123,6 @@ func Swap(
 		"internal_amount1", result.Amount1.ToString(),
 		"internal_protocolFee0", pool.protocolFees.token0.ToString(),
 		"internal_protocolFee1", pool.protocolFees.token1.ToString(),
-		"internal_swapFee", result.SwapFee.ToString(),
 		"internal_sqrtPriceX96", pool.slot0.sqrtPriceX96.ToString(),
 	)
 
@@ -202,18 +204,14 @@ func DrySwap(
 // Returns an error if the computation fails at any step
 func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 	state := comp.InitialState
-	swapFee := u256.Zero()
-
-	newFee := u256.Zero()
 	var err error
 
 	// Compute swap steps until completion
 	for shouldContinueSwap(state, comp.SqrtPriceLimitX96) {
-		state, newFee, err = computeSwapStep(state, pool, comp.ZeroForOne, comp.SqrtPriceLimitX96, comp.ExactInput, comp.Cache, swapFee)
+		state, err = computeSwapStep(state, pool, comp.ZeroForOne, comp.SqrtPriceLimitX96, comp.ExactInput, comp.Cache)
 		if err != nil {
 			return nil, err
 		}
-		swapFee = newFee.Clone()
 	}
 
 	// Calculate final amounts
@@ -236,7 +234,6 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 		},
 		FeeGrowthGlobal0X128: pool.feeGrowthGlobal0X128,
 		FeeGrowthGlobal1X128: pool.feeGrowthGlobal1X128,
-		SwapFee:              swapFee,
 	}
 
 	// Update protocol fees if necessary
@@ -337,8 +334,7 @@ func computeSwapStep(
 	sqrtPriceLimitX96 *u256.Uint,
 	exactInput bool,
 	cache SwapCache,
-	swapFee *u256.Uint,
-) (SwapState, *u256.Uint, error) {
+) (SwapState, error) {
 	step := computeSwapStepInit(state, pool, zeroForOne)
 
 	// determining the price target for this step
@@ -354,15 +350,15 @@ func computeSwapStep(
 	// if the protocol fee is on, calculate how much is owed,
 	// decrement fee amount, and increment protocol fee
 	if cache.feeProtocol > 0 {
-		newState, err = updateFeeProtocol(step, cache.feeProtocol, newState)
+		newState, step, err = updateFeeProtocol(step, cache.feeProtocol, newState)
 		if err != nil {
-			return state, nil, err
+			return state, err
 		}
 	}
 
 	// update global fee tracker
 	if newState.liquidity.Gt(u256.Zero()) {
-		update := u256.MulDiv(step.feeAmount, u256.MustFromDecimal(consts.Q128), newState.liquidity)
+		update := u256.MulDiv(step.feeAmount, fixedPointQ128, newState.liquidity)
 		newState.SetFeeGrowthGlobalX128(new(u256.Uint).Add(newState.feeGrowthGlobalX128, update))
 	}
 
@@ -373,26 +369,22 @@ func computeSwapStep(
 		newState.SetTick(common.TickMathGetTickAtSqrtRatio(newState.sqrtPriceX96))
 	}
 
-	// TODO:
-	// - find usage of swapFee
-	newSwapFee := new(u256.Uint).Add(swapFee, step.feeAmount)
-
-	return newState, newSwapFee, nil
+	return newState, nil
 }
 
 // updateFeeProtocol calculates and updates protocol fees for the current step.
-func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState) (SwapState, error) {
+func updateFeeProtocol(step StepComputations, feeProtocol uint8, state SwapState) (SwapState, StepComputations, error) {
 	delta := step.feeAmount
 	delta.Div(delta, u256.NewUint(uint64(feeProtocol)))
 
 	newFeeAmount, overflow := new(u256.Uint).SubOverflow(step.feeAmount, delta)
 	if overflow {
-		return state, errUnderflow
+		return state, step, errUnderflow
 	}
 	step.feeAmount = newFeeAmount
 	state.protocolFee.Add(state.protocolFee, delta)
 
-	return state, nil
+	return state, step, nil
 }
 
 // computeSwapStepInit initializes the computation for a single swap step.
@@ -475,9 +467,10 @@ func updateAmounts(step StepComputations, state SwapState, exactInput bool) Swap
 		state.amountSpecifiedRemaining = i256.Zero().Sub(state.amountSpecifiedRemaining, amountInWithFee)
 		state.amountCalculated = i256.Zero().Sub(state.amountCalculated, i256.FromUint256(step.amountOut))
 		return state
+	} else {
+		state.amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
+		state.amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
 	}
-	state.amountSpecifiedRemaining = i256.Zero().Add(state.amountSpecifiedRemaining, i256.FromUint256(step.amountOut))
-	state.amountCalculated = i256.Zero().Add(state.amountCalculated, amountInWithFee)
 
 	return state
 }
@@ -517,15 +510,15 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 }
 
 func (p *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
-    if zeroForOne {
-        // payer > POOL
-        p.transferFromAndVerify(payer, consts.POOL_ADDR, p.token0Path, amount0.Abs(), true)
-        // POOL > recipient
-        p.transferAndVerify(recipient, p.token1Path, amount1, false)
-    } else {
-        // payer > POOL
-        p.transferFromAndVerify(payer, consts.POOL_ADDR, p.token1Path, amount1.Abs(), false)
-        // POOL > recipient
+	if zeroForOne {
+		// payer > POOL
+		p.transferFromAndVerify(payer, consts.POOL_ADDR, p.token0Path, amount0.Abs(), true)
+		// POOL > recipient
+		p.transferAndVerify(recipient, p.token1Path, amount1, false)
+	} else {
+		// payer > POOL
+		p.transferFromAndVerify(payer, consts.POOL_ADDR, p.token1Path, amount1.Abs(), false)
+		// POOL > recipient
 		p.transferAndVerify(recipient, p.token0Path, amount0, true)
 	}
 }

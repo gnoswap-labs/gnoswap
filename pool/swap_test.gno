@@ -391,9 +391,6 @@ func TestComputeSwap(t *testing.T) {
 		if result.Amount1.IsZero() {
 			t.Error("expected non-zero amount1")
 		}
-		if result.SwapFee.IsZero() {
-			t.Error("expected non-zero swap fee")
-		}
 	})
 
 	t.Run("swap with zero liquidity", func(t *testing.T) {
