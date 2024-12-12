@@ -1,6 +1,8 @@
 package pool
 
 import (
+	"strconv"
+
 	"gno.land/p/demo/ufmt"
 
 	plp "gno.land/p/gnoswap/pool"
@@ -59,16 +61,20 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 // getTickBitmap gets the tick bitmap for the given word position
 // if the tick bitmap is not initialized, initialize it to zero
 func (pool *Pool) getTickBitmap(wordPos int16) *u256.Uint {
-	if pool.tickBitmaps[wordPos] == nil {
-		pool.tickBitmaps[wordPos] = u256.Zero()
+	wordPosStr := strconv.FormatInt(int64(wordPos), 10)
+
+	bitmap, exist := pool.tickBitmaps.Get(wordPosStr)
+	if !exist {
+		pool.tickBitmaps.Set(wordPosStr, u256.Zero())
+		return u256.Zero()
 	}
 
-	return pool.tickBitmaps[wordPos]
+	return bitmap.(*u256.Uint)
 }
 
 // setTickBitmap sets the tick bitmap for the given word position
 func (pool *Pool) setTickBitmap(wordPos int16, bitmap *u256.Uint) {
-	pool.tickBitmaps[wordPos] = bitmap
+	pool.tickBitmaps.Set(strconv.FormatInt(int64(wordPos), 10), bitmap)
 }
 
 // getWordAndBitPos gets tick's wordPos and bitPos depending on the swap direction
@@ -81,20 +87,18 @@ func getWordAndBitPos(tick int32, lte bool) (int16, uint8) {
 	return tickBitmapPosition(tick)
 }
 
-// bMap is a map that maps boolean values to uint values.
-// true maps to 1, and false maps to 0.
-var bMap = map[bool]uint{
-	true:  1,
-	false: 0,
-}
-
 // getMaskBit generates a mask based on the provided bit position (bitPos) and a boolean flag (lte).
 // The function constructs a bitmask with a shift depending on the bit position and the boolean value.
 // It either returns the mask or its negation, based on the value of 'lte' (swap direction).
 func getMaskBit(bitPos uint, lte bool) *u256.Uint {
-	// Shift the number 1 to the left by (bitPos + bMap[lte]) positions.
+	// Shift the number 1 to the left by (bitPos + bitPosAdjust) positions.
 	// If lte is true, the shift will be bitPos + 1; if false, it will be just bitPos.
-	shifted := new(u256.Uint).Lsh(u256.One(), bitPos+bMap[lte])
+	var bitPosAdjust uint
+	if lte {
+		bitPosAdjust = 1
+	}
+
+	shifted := new(u256.Uint).Lsh(u256.One(), bitPos+bitPosAdjust)
 
 	// Subtract 1 from the shifted value to create a mask.
 	mask := new(u256.Uint).Sub(shifted, u256.One())

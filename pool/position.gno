@@ -53,9 +53,14 @@ func (pool *Pool) positionUpdateWithKey(
 	feeGrowthInside0X128 = feeGrowthInside0X128.NilToZero()
 	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
 
-	positionToUpdate := pool.positions[positionKey]
+	positionToUpdate := PositionInfo{}
+	ipositionToUpdate, exist := pool.positions.Get(positionKey)
+	if exist {
+		positionToUpdate = ipositionToUpdate.(PositionInfo)
+	}
+
 	positionAfterUpdate := positionUpdate(positionToUpdate, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
-	pool.positions[positionKey] = positionAfterUpdate
+	pool.positions.Set(positionKey, positionAfterUpdate)
 
 	return positionAfterUpdate
 }
@@ -128,7 +133,7 @@ func (p *Pool) PoolGetPositionTokensOwed1(key string) *u256.Uint {
 }
 
 func (p *Pool) mustGetPosition(key string) PositionInfo {
-	position, exist := p.positions[key]
+	iposition, exist := p.positions.Get(key)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -136,5 +141,5 @@ func (p *Pool) mustGetPosition(key string) PositionInfo {
 		))
 	}
 
-	return position
+	return iposition.(PositionInfo)
 }

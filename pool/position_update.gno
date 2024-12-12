@@ -1,6 +1,8 @@
 package pool
 
 import (
+	"strconv"
+
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -58,11 +60,11 @@ func (pool *Pool) updatePosition(positionParams ModifyPositionParams) PositionIn
 
 	if positionParams.liquidityDelta.IsNeg() {
 		if flippedLower {
-			delete(pool.ticks, positionParams.tickLower)
+			pool.ticks.Remove(strconv.FormatInt(int64(positionParams.tickLower), 10))
 		}
 
 		if flippedUpper {
-			delete(pool.ticks, positionParams.tickUpper)
+			pool.ticks.Remove(strconv.FormatInt(int64(positionParams.tickUpper), 10))
 		}
 	}
 

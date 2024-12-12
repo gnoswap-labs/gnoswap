@@ -1,6 +1,8 @@
 package pool
 
 import (
+	"strconv"
+
 	"gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -85,7 +87,7 @@ func (pool *Pool) tickUpdate(
 		thisTick.liquidityNet = i256.Zero().Add(thisTick.liquidityNet, liquidityDelta)
 	}
 
-	pool.ticks[tick] = thisTick
+	pool.ticks.Set(strconv.FormatInt(int64(tick), 10), thisTick)
 
 	return flipped
 }
@@ -101,13 +103,19 @@ func (pool *Pool) tickCross(
 	thisTick.feeGrowthOutside0X128 = new(u256.Uint).Sub(feeGrowthGlobal0X128, thisTick.feeGrowthOutside0X128)
 	thisTick.feeGrowthOutside1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, thisTick.feeGrowthOutside1X128)
 
-	pool.ticks[tick] = thisTick
+	pool.ticks.Set(strconv.FormatInt(int64(tick), 10), thisTick)
 
 	return thisTick.liquidityNet
 }
 
 func (pool *Pool) getTick(tick int32) TickInfo {
-	tickInfo := pool.ticks[tick]
+	iTickInfo, exist := pool.ticks.Get(strconv.FormatInt(int64(tick), 10))
+	if !exist {
+		res := TickInfo{}
+		res.init()
+		return res
+	}
+	tickInfo := iTickInfo.(TickInfo)
 	tickInfo.init()
 
 	return tickInfo
@@ -177,7 +185,7 @@ func (p *Pool) PoolGetTickInitialized(tick int32) bool {
 }
 
 func (p *Pool) mustGetTick(tick int32) TickInfo {
-	tickInfo, exist := p.ticks[tick]
+	tickInfo, exist := p.ticks.Get(strconv.FormatInt(int64(tick), 10))
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -185,5 +193,5 @@ func (p *Pool) mustGetTick(tick int32) TickInfo {
 		))
 	}
 
-	return tickInfo
+	return tickInfo.(TickInfo)
 }

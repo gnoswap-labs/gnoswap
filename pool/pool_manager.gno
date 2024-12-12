@@ -2,53 +2,33 @@ package pool
 
 import (
 	"std"
+	"strconv"
 	"strings"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
-
-	en "gno.land/r/gnoswap/v1/emission"
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/gns"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
+	en "gno.land/r/gnoswap/v1/emission"
 )
 
-type poolMap map[string]*Pool
-
-func (pm *poolMap) Get(poolPath string) (*Pool, bool) {
-	pool, exist := (*pm)[poolPath]
-	if !exist {
-		return nil, false
-	}
-
-	return pool, true
-}
-
-func (pm *poolMap) Set(poolPath string, pool *Pool) {
-	(*pm)[poolPath] = pool
-}
-
-type tickSpacingMap map[uint32]int32
-
-func (t *tickSpacingMap) Get(fee uint32) int32 {
-	return (*t)[fee]
-}
-
 var (
-	feeAmountTickSpacing tickSpacingMap = make(tickSpacingMap) // maps fee to tickSpacing || map[feeAmount]tick_spacing
-	pools                poolMap        = make(poolMap)        // maps poolPath to pool || map[poolPath]*Pool
+	feeAmountTickSpacing = avl.NewTree() // feeBps(uint32) -> tickSpacing(int32)
+	pools                = avl.NewTree() // poolPath -> *Pool
 
 	slot0FeeProtocol uint8 = 0
 )
 
 func init() {
-	feeAmountTickSpacing[100] = 1     // 0.01%
-	feeAmountTickSpacing[500] = 10    // 0.05%
-	feeAmountTickSpacing[3000] = 60   // 0.3%
-	feeAmountTickSpacing[10000] = 200 // 1%
+	feeAmountTickSpacing.Set("100", int32(1))     // 0.01%
+	feeAmountTickSpacing.Set("500", int32(10))    // 0.05%
+	feeAmountTickSpacing.Set("3000", int32(60))   // 0.3%
+	feeAmountTickSpacing.Set("10000", int32(200)) // 1%
 }
 
 // createPoolParams holds the essential parameters for creating a new pool.
@@ -67,13 +47,20 @@ func newPoolParams(
 	sqrtPriceX96 string,
 ) *createPoolParams {
 	price := u256.MustFromDecimal(sqrtPriceX96)
-	tickSpacing := feeAmountTickSpacing.Get(fee)
+	tickSpacing, exist := feeAmountTickSpacing.Get(strconv.FormatUint(uint64(fee), 10))
+	if !exist {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("pool_manager.gno__newPoolParams() || expected tickSpacing to exist for fee(%d)", fee),
+		))
+	}
+
 	return &createPoolParams{
 		token0Path:   token0Path,
 		token1Path:   token1Path,
 		fee:          fee,
 		sqrtPriceX96: price,
-		tickSpacing:  tickSpacing,
+		tickSpacing:  tickSpacing.(int32),
 	}
 }
 
@@ -216,8 +203,11 @@ func CreatePool(
 // DoesPoolPathExist checks if a pool exists for the given poolPath.
 // The poolPath is a unique identifier for a pool, combining token paths and fee.
 func DoesPoolPathExist(poolPath string) bool {
-	_, exist := pools[poolPath]
-	return exist
+	if _, exist := pools.Get(poolPath); exist {
+		return true
+	}
+
+	return false
 }
 
 // GetPool retrieves the pool for the given token paths and fee.
@@ -225,20 +215,12 @@ func DoesPoolPathExist(poolPath string) bool {
 // Returns pool struct
 func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
-	pool, exist := pools[poolPath]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("pool_manager.gno__GetPool() || expected poolPath(%s) to exist", poolPath),
-		))
-	}
-
-	return pool
+	return GetPoolFromPoolPath(poolPath)
 }
 
 // GetPoolFromPoolPath retrieves the pool for the given poolPath.
 func GetPoolFromPoolPath(poolPath string) *Pool {
-	pool, exist := pools[poolPath]
+	pool, exist := pools.Get(poolPath)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -246,7 +228,7 @@ func GetPoolFromPoolPath(poolPath string) *Pool {
 		))
 	}
 
-	return pool
+	return pool.(*Pool)
 }
 
 // GetPoolPath generates a poolPath from the given token paths and fee.

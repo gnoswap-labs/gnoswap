@@ -98,7 +98,7 @@ func Burn(
 	}
 
 	positionKey := positionGetKey(caller, tickLower, tickUpper)
-	pool.positions[positionKey] = position
+	pool.positions.Set(positionKey, position)
 
 	// actual token transfer happens in Collect()
 	return amount0.ToString(), amount1.ToString()
@@ -132,13 +132,14 @@ func Collect(
 	pool := GetPool(token0Path, token1Path, fee)
 
 	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
-	position, exist := pool.positions[positionKey]
+	iposition, exist := pool.positions.Get(positionKey)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
 			ufmt.Sprintf("pool.gno__Collect() || positionKey(%s) does not exist", positionKey),
 		))
 	}
+	position := iposition.(PositionInfo)
 
 	var amount0, amount1 *u256.Uint
 
@@ -158,7 +159,7 @@ func Collect(
 	token1 := common.GetTokenTeller(pool.token1Path)
 	checkTransferError(token1.Transfer(recipient, amount1.Uint64()))
 
-	pool.positions[positionKey] = position
+	pool.positions.Set(positionKey, position)
 
 	return amount0.ToString(), amount1.ToString()
 }
@@ -697,9 +698,11 @@ func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) uint8 {
 	newFee := feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
 
 	// iterate all pool
-	for _, pool := range pools {
+	pools.Iterate("", "", func(poolPath string, value interface{}) bool {
+		pool := value.(*Pool)
 		pool.slot0.feeProtocol = newFee
-	}
+		return false
+	})
 
 	// update slot0
 	slot0FeeProtocol = newFee
@@ -1054,10 +1057,20 @@ func (p *Pool) PoolGetLiquidity() *u256.Uint {
 }
 
 func mustGetPool(poolPath string) *Pool {
-	pool, exist := pools[poolPath]
-	if !exist {
-		panic(addDetailToError(errDataNotFound,
-			ufmt.Sprintf("poolPath(%s) does not exist", poolPath)))
+	pool := getPoolFromPoolPath(poolPath)
+	if pool == nil {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("pool.gno__mustGetPool() || expected poolPath(%s) to exist", poolPath),
+		))
 	}
 	return pool
+}
+
+func getPoolFromPoolPath(poolPath string) *Pool {
+	pool, exist := pools.Get(poolPath)
+	if !exist {
+		return nil
+	}
+	return pool.(*Pool)
 }

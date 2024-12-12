@@ -21,7 +21,7 @@ func TestInitTwoPools(t *testing.T) {
 	// bar:baz
 	CreatePool(barPath, bazPath, fee500, "130621891405341611593710811006") // tick 10000
 
-	uassert.Equal(t, len(pools), 2)
+	uassert.Equal(t, pools.Size(), 2)
 }
 
 func TestApiGetPools(t *testing.T) {

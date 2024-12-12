@@ -1,8 +1,10 @@
 package pool
 
 import (
+	"strconv"
 	"testing"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -60,24 +62,24 @@ func TestcalculateMaxLiquidityPerTick(t *testing.T) {
 func TestCalculateFeeGrowthInside(t *testing.T) {
 	// Create a mock pool
 	pool := &Pool{
-		ticks: make(map[int32]TickInfo),
+		ticks: avl.NewTree(),
 	}
 
 	// Setup test ticks
-	pool.ticks[0] = TickInfo{
+	pool.ticks.Set("0", TickInfo{
 		liquidityGross:        u256.NewUint(1000),
 		liquidityNet:          i256.NewInt(100),
 		feeGrowthOutside0X128: u256.NewUint(5),
 		feeGrowthOutside1X128: u256.NewUint(7),
 		initialized:           true,
-	}
-	pool.ticks[100] = TickInfo{
+	})
+	pool.ticks.Set("100", TickInfo{
 		liquidityGross:        u256.NewUint(2000),
 		liquidityNet:          i256.NewInt(-100),
 		feeGrowthOutside0X128: u256.NewUint(10),
 		feeGrowthOutside1X128: u256.NewUint(15),
 		initialized:           true,
-	}
+	})
 
 	tests := []struct {
 		name                 string
@@ -256,7 +258,7 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 
 func TestTickUpdate(t *testing.T) {
 	pool := &Pool{
-		ticks: make(map[int32]TickInfo),
+		ticks: avl.NewTree(),
 	}
 
 	tests := []struct {
@@ -398,7 +400,8 @@ func TestTickUpdate(t *testing.T) {
 			wantFlipped:          false,
 			shouldPanic:          false,
 			verify: func() {
-				info := pool.ticks[1]
+				iInfo, _ := pool.ticks.Get(strconv.FormatInt(int64(1), 10))
+				info := iInfo.(TickInfo)
 				uassert.Equal(t, info.feeGrowthOutside0X128.ToString(), "1")
 				uassert.Equal(t, info.feeGrowthOutside1X128.ToString(), "2")
 			},
@@ -419,7 +422,8 @@ func TestTickUpdate(t *testing.T) {
 			wantFlipped:          false,
 			shouldPanic:          false,
 			verify: func() {
-				info := pool.ticks[1]
+				iInfo, _ := pool.ticks.Get(strconv.FormatInt(int64(1), 10))
+				info := iInfo.(TickInfo)
 				uassert.Equal(t, info.feeGrowthOutside0X128.ToString(), "1")
 				uassert.Equal(t, info.feeGrowthOutside1X128.ToString(), "2")
 			},
@@ -436,9 +440,13 @@ func TestTickUpdate(t *testing.T) {
 			wantFlipped:          false,
 			shouldPanic:          false,
 			verify: func() {
-				info := pool.ticks[2]
-				uassert.Equal(t, info.feeGrowthOutside0X128.ToString(), "")
-				uassert.Equal(t, info.feeGrowthOutside1X128.ToString(), "")
+				var tick TickInfo
+				iTick, exist := pool.ticks.Get(strconv.FormatInt(int64(2), 10))
+				if exist {
+					tick = iTick.(TickInfo)
+				}
+				uassert.Equal(t, tick.feeGrowthOutside0X128.ToString(), "")
+				uassert.Equal(t, tick.feeGrowthOutside1X128.ToString(), "")
 			},
 		},
 	}
@@ -489,17 +497,17 @@ func TestTickUpdate(t *testing.T) {
 
 func TestTickCross(t *testing.T) {
 	pool := &Pool{
-		ticks: make(map[int32]TickInfo),
+		ticks: avl.NewTree(),
 	}
 
 	// Setup initial tick state
-	pool.ticks[100] = TickInfo{
+	pool.ticks.Set("100", TickInfo{
 		liquidityGross:        u256.NewUint(1000),
 		liquidityNet:          i256.NewInt(500),
 		feeGrowthOutside0X128: u256.NewUint(10),
 		feeGrowthOutside1X128: u256.NewUint(15),
 		initialized:           true,
-	}
+	})
 
 	tests := []struct {
 		name                 string
@@ -534,7 +542,7 @@ func TestTickCross(t *testing.T) {
 
 func TestGetTick(t *testing.T) {
 	pool := &Pool{
-		ticks: make(map[int32]TickInfo),
+		ticks: avl.NewTree(),
 	}
 
 	// Setup a tick
@@ -545,7 +553,7 @@ func TestGetTick(t *testing.T) {
 		feeGrowthOutside1X128: u256.NewUint(15),
 		initialized:           true,
 	}
-	pool.ticks[50] = expectedTick
+	pool.ticks.Set("50", expectedTick)
 
 	tests := []struct {
 		name     string
@@ -588,8 +596,14 @@ func (pool *Pool) setTick(
 ) {
 	t.Helper()
 
-	info := pool.ticks[tick]
-	info.init()
+	var info TickInfo
+	iInfo, exist := pool.ticks.Get(strconv.FormatInt(int64(tick), 10))
+	if !exist {
+		info = TickInfo{}
+		info.init()
+	} else {
+		info = iInfo.(TickInfo)
+	}
 
 	info.feeGrowthOutside0X128 = feeGrowthOutside0X128
 	info.feeGrowthOutside1X128 = feeGrowthOutside1X128
@@ -600,11 +614,10 @@ func (pool *Pool) setTick(
 	info.secondsOutside = secondsOutside
 	info.initialized = initialized
 
-	pool.ticks[tick] = info
+	pool.ticks.Set(strconv.FormatInt(int64(tick), 10), info)
 }
 
 func (pool *Pool) deleteTick(t *testing.T, tick int32) {
 	t.Helper()
-
-	delete(pool.ticks, tick)
+	pool.ticks.Remove(strconv.FormatInt(int64(tick), 10))
 }

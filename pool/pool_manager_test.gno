@@ -8,29 +8,6 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 )
 
-func TestPoolMapOperations(t *testing.T) {
-	pm := make(poolMap)
-
-	poolPath := "token0:token1:500"
-	params := newPoolParams("token0", "token1", 500, "4295128740")
-	pool := newPool(params)
-
-	pm.Set(poolPath, pool)
-
-	retrieved, exists := pm.Get(poolPath)
-	if !exists {
-		t.Error("Expected pool to exist")
-	}
-	if retrieved != pool {
-		t.Error("Retrieved pool doesn't match original")
-	}
-
-	_, exists = pm.Get("nonexistent")
-	if exists {
-		t.Error("Expected pool to not exist")
-	}
-}
-
 func TestNewPoolParams(t *testing.T) {
 	params := newPoolParams(
 		"token0",
@@ -88,19 +65,19 @@ func TestGetPoolPath(t *testing.T) {
 
 func TestTickSpacingMap(t *testing.T) {
 	tests := []struct {
-		fee         uint32
+		fee         string
 		tickSpacing int32
 	}{
-		{100, 1},     // 0.01%
-		{500, 10},    // 0.05%
-		{3000, 60},   // 0.3%
-		{10000, 200}, // 1%
+		{"100", 1},     // 0.01%
+		{"500", 10},    // 0.05%
+		{"3000", 60},   // 0.3%
+		{"10000", 200}, // 1%
 	}
 
 	for _, tt := range tests {
-		spacing := feeAmountTickSpacing.Get(tt.fee)
-		if spacing != tt.tickSpacing {
-			t.Errorf("For fee %d, expected tick spacing %d, got %d",
+		spacing, _ := feeAmountTickSpacing.Get(tt.fee)
+		if spacing.(int32) != tt.tickSpacing {
+			t.Errorf("For fee %s, expected tick spacing %d, got %d",
 				tt.fee, tt.tickSpacing, spacing)
 		}
 	}
@@ -176,11 +153,7 @@ func TestCreatePool(t *testing.T) {
 			if !tt.shouldPanic {
 				// verify pool was created correctly
 				poolPath := GetPoolPath(tt.token0Path, tt.token1Path, tt.fee)
-				pool, exists := pools.Get(poolPath)
-				if !exists {
-					t.Errorf("pool was not created")
-					return
-				}
+				pool := GetPoolFromPoolPath(poolPath)
 
 				// check if GNOT was properly wrapped
 				expectedToken0 := tt.token0Path

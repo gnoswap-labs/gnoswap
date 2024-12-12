@@ -3,11 +3,13 @@ package pool
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/p/demo/avl"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 type Slot0 struct {
@@ -154,14 +156,14 @@ func (step *StepComputations) initSwapStep(state SwapState, pool *Pool, zeroForO
 	step.sqrtPriceStartX96 = state.sqrtPriceX96
 	step.tickNext, step.initialized = pool.tickBitmapNextInitializedTickWithInOneWord(
 		state.tick,
-		pool.tickSpacing, 
+		pool.tickSpacing,
 		zeroForOne,
 	)
 
 	// prevent overshoot the min/max tick
 	step.clampTickNext()
 
-	// get the price for the next tick 
+	// get the price for the next tick
 	step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
 }
 
@@ -225,10 +227,6 @@ func (t *TickInfo) init() {
 	t.secondsPerLiquidityOutsideX128 = t.secondsPerLiquidityOutsideX128.NilToZero()
 }
 
-type Ticks map[int32]TickInfo          // tick => TickInfo
-type TickBitmaps map[int16]*u256.Uint  // tick(wordPos) => bitmap(tickWord ^ mask)
-type Positions map[string]PositionInfo // positionKey => PositionInfo
-
 // type Pool describes a single Pool's state
 // A pool is identificed with a unique key (token0, token1, fee), where token0 < token1
 type Pool struct {
@@ -253,11 +251,11 @@ type Pool struct {
 
 	liquidity *u256.Uint // total amount of liquidity in the pool
 
-	ticks Ticks // maps tick index to tick
+	ticks *avl.Tree // tick(int32) -> TickInfo
 
-	tickBitmaps TickBitmaps // maps tick index to tick bitmap
+	tickBitmaps *avl.Tree // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
 
-	positions Positions // maps the key (caller, lower tick, upper tick) to a unique position
+	positions *avl.Tree // positionKey -> PositionInfo
 }
 
 func newPool(poolInfo *createPoolParams) *Pool {
@@ -277,8 +275,8 @@ func newPool(poolInfo *createPoolParams) *Pool {
 		feeGrowthGlobal1X128: u256.Zero(),
 		protocolFees:         newProtocolFees(),
 		liquidity:            u256.Zero(),
-		ticks:                Ticks{},
-		tickBitmaps:          TickBitmaps{},
-		positions:            Positions{},
+		ticks:                avl.NewTree(),
+		tickBitmaps:          avl.NewTree(),
+		positions:            avl.NewTree(),
 	}
 }
