@@ -204,7 +204,7 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 	state := comp.InitialState
 	swapFee := u256.Zero()
 
-	var newFee *u256.Uint
+	newFee := u256.Zero()
 	var err error
 
 	// Compute swap steps until completion
@@ -213,7 +213,7 @@ func computeSwap(pool *Pool, comp SwapComputation) (*SwapResult, error) {
 		if err != nil {
 			return nil, err
 		}
-		swapFee = newFee
+		swapFee = newFee.Clone()
 	}
 
 	// Calculate final amounts
@@ -488,7 +488,7 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 	newState := state
 
 	if step.initialized {
-		var fee0, fee1 *u256.Uint
+		fee0, fee1 := u256.Zero(), u256.Zero()
 
 		if zeroForOne {
 			fee0 = state.feeGrowthGlobalX128
@@ -518,7 +518,7 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 
 func (p *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
 	var targetTokenPath string
-	var amount *i256.Int
+	amount := i256.Zero()
 
 	if zeroForOne {
 		targetTokenPath = p.token0Path
