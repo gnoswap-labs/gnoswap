@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/r/demo/users"
 
 	pusers "gno.land/p/demo/users"
 	i256 "gno.land/p/gnoswap/int256"
@@ -567,7 +568,117 @@ func TestTransferFromAndVerify(t *testing.T) {
 	})
 }
 
-func TestDrySwap(t *testing.T) {
+func TestSwap_Failures(t *testing.T) {
+	t.Skip()
+	const addr = pusers.AddressOrName(consts.ROUTER_ADDR)
+
+	tests := []struct {
+		name              string
+		setupFn           func(t *testing.T)
+		token0Path        string
+		token1Path        string
+		fee               uint32
+		recipient         std.Address
+		zeroForOne        bool
+		amountSpecified   string
+		sqrtPriceLimitX96 string
+		payer             std.Address
+		expectedAmount0   string
+		expectedAmount1   string
+		expectError       bool
+	}{
+		{
+			name: "locked pool",
+			setupFn: func(t *testing.T) {
+				InitialisePoolTest(t)
+				pool := GetPool(wugnotPath, gnsPath, fee3000)
+				pool.slot0.unlocked = false
+			},
+			token0Path:        wugnotPath,
+			token1Path:        gnsPath,
+			fee:               fee3000,
+			recipient:         users.Resolve(addr),
+			zeroForOne:        true,
+			amountSpecified:   "100",
+			sqrtPriceLimitX96: "79228162514264337593543950336",
+			payer:             users.Resolve(addr),
+			expectError:       true,
+		},
+		{
+			name: "zero amount",
+			setupFn: func(t *testing.T) {
+				InitialisePoolTest(t)
+			},
+			token0Path:        wugnotPath,
+			token1Path:        gnsPath,
+			fee:               fee3000,
+			recipient:         users.Resolve(alice),
+			zeroForOne:        true,
+			amountSpecified:   "0",
+			sqrtPriceLimitX96: "79228162514264337593543950336",
+			payer:             users.Resolve(alice),
+			expectError:       true,
+		},
+		{
+			name: "zero liquidity",
+			setupFn: func(t *testing.T) {
+				InitialisePoolTest(t)
+				pool := GetPool(wugnotPath, gnsPath, fee3000)
+				pool.liquidity = u256.Zero()
+			},
+			token0Path:        wugnotPath,
+			token1Path:        gnsPath,
+			fee:               fee3000,
+			recipient:         users.Resolve(alice),
+			zeroForOne:        true,
+			amountSpecified:   "100",
+			sqrtPriceLimitX96: "79228162514264337593543950336",
+			payer:             users.Resolve(alice),
+			expectedAmount0:   "0",
+			expectedAmount1:   "0",
+			expectError:       true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+			burnTokens(t)
+
+			if tt.setupFn != nil {
+				tt.setupFn(t)
+			}
+
+			std.TestSetOrigCaller(tt.payer)
+
+			if tt.expectError {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("error should be occurred but not occurred")
+					}
+				}()
+			}
+
+			amount0, amount1 := Swap(
+				tt.token0Path,
+				tt.token1Path,
+				tt.fee,
+				tt.recipient,
+				tt.zeroForOne,
+				tt.amountSpecified,
+				tt.sqrtPriceLimitX96,
+				tt.payer,
+			)
+
+			if !tt.expectError {
+				uassert.Equal(t, amount0, tt.expectedAmount0)
+				uassert.Equal(t, amount1, tt.expectedAmount1)
+			}
+		})
+	}
+}
+
+func TestDrySwap_Failures(t *testing.T) {
 	mockPool := &Pool{
 		token0Path:  "token0",
 		token1Path:  "token1",
@@ -616,7 +727,7 @@ func TestDrySwap(t *testing.T) {
 		expectSuccess     bool
 	}{
 		{
-			name:              "trying to swap 0 amount",
+			name:              "zero amount token0 to token1",
 			token0Path:        "token0",
 			token1Path:        "token1",
 			fee:               3000,
@@ -634,7 +745,19 @@ func TestDrySwap(t *testing.T) {
 			fee:               3000,
 			zeroForOne:        false,
 			amountSpecified:   "2000000000",
-			sqrtPriceLimitX96: "1100000000000000000", // zeroForOne이 false일 때는 현재 가격보다 높아야 함
+			sqrtPriceLimitX96: "1100000000000000000",
+			expectAmount0:     "0",
+			expectAmount1:     "0",
+			expectSuccess:     false,
+		},
+		{
+			name:              "insufficient balance token1 to token0",
+			token0Path:        "token0",
+			token1Path:        "token1",
+			fee:               3000,
+			zeroForOne:        false,
+			amountSpecified:   "3000000000",
+			sqrtPriceLimitX96: "1100000000000000000",
 			expectAmount0:     "0",
 			expectAmount1:     "0",
 			expectSuccess:     false,
@@ -652,17 +775,85 @@ func TestDrySwap(t *testing.T) {
 				tt.sqrtPriceLimitX96,
 			)
 
-			if success != tt.expectSuccess {
-				t.Errorf("success mismatch: expected %v, got %v", tt.expectSuccess, success)
+			uassert.Equal(t, success, tt.expectSuccess)
+			uassert.Equal(t, amount0, tt.expectAmount0)
+			uassert.Equal(t, amount1, tt.expectAmount1)
+		})
+	}
+}
+
+func TestSwapAndDrySwapComparison(t *testing.T) {
+	const addr = pusers.AddressOrName(consts.ROUTER_ADDR)
+
+	tests := []struct {
+		name              string
+		setupFn           func(t *testing.T)
+		token0Path        string
+		token1Path        string
+		fee               uint32
+		zeroForOne        bool
+		amountSpecified   string
+		sqrtPriceLimitX96 string
+	}{
+		{
+			name: "normal swap",
+			setupFn: func(t *testing.T) {
+				InitialisePoolTest(t)
+				TokenFaucet(t, gnsPath, addr)
+				TokenApprove(t, gnsPath, addr, pool, uint64(1000))
+			},
+			token0Path:        wugnotPath,
+			token1Path:        gnsPath,
+			fee:               fee3000,
+			zeroForOne:        false,
+			amountSpecified:   "100",
+			sqrtPriceLimitX96: "1461446703485210103287273052203988822378723970341",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetObject(t)
+			burnTokens(t)
+
+			if tt.setupFn != nil {
+				tt.setupFn(t)
 			}
 
-			if amount0 != tt.expectAmount0 {
-				t.Errorf("amount0 mismatch: expected %s, got %s", tt.expectAmount0, amount0)
+			dryAmount0, dryAmount1, drySuccess := DrySwap(
+				tt.token0Path,
+				tt.token1Path,
+				tt.fee,
+				tt.zeroForOne,
+				tt.amountSpecified,
+				tt.sqrtPriceLimitX96,
+			)
+
+			std.TestSetOrigCaller(consts.ROUTER_ADDR)
+			actualAmount0, actualAmount1 := Swap(
+				tt.token0Path,
+				tt.token1Path,
+				tt.fee,
+				users.Resolve(addr),
+				tt.zeroForOne,
+				tt.amountSpecified,
+				tt.sqrtPriceLimitX96,
+				users.Resolve(addr),
+			)
+
+			println("Swap", actualAmount0, actualAmount1)
+
+			if !drySuccess {
+				t.Error("DrySwap failed but actual Swap succeeded")
 			}
 
-			if amount1 != tt.expectAmount1 {
-				t.Errorf("amount1 mismatch: expected %s, got %s", tt.expectAmount1, amount1)
-			}
+			uassert.NotEqual(t, dryAmount0, "0", "amount0 should not be zero")
+			uassert.NotEqual(t, dryAmount1, "0", "amount1 should not be zero")
+
+			uassert.Equal(t, dryAmount0, actualAmount0,
+				"Amount0 mismatch between DrySwap and actual Swap")
+			uassert.Equal(t, dryAmount1, actualAmount1,
+				"Amount1 mismatch between DrySwap and actual Swap")
 		})
 	}
 }
