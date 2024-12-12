@@ -22,7 +22,6 @@ var (
 func handleSwapFee(
 	outputToken string,
 	amount *u256.Uint,
-	isDry bool,
 ) *u256.Uint {
 	if swapFee <= 0 {
 		return amount
@@ -32,19 +31,17 @@ func handleSwapFee(
 	feeAmount.Div(feeAmount, u256.NewUint(10000))
 	feeAmountUint64 := feeAmount.Uint64()
 
-	if !isDry {
-		transferFromByRegisterCall(outputToken, std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
+	transferFromByRegisterCall(outputToken, std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
 
-		prevAddr, prevRealm := getPrev()
+	prevAddr, prevRealm := getPrev()
 
-		std.Emit(
-			"SwapRouteFee",
-			"prevAddr", prevAddr,
-			"prevRealm", prevRealm,
-			"internal_tokenPath", outputToken,
-			"internal_amount", ufmt.Sprintf("%d", feeAmountUint64),
-		)
-	}
+	std.Emit(
+		"SwapRouteFee",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"internal_tokenPath", outputToken,
+		"internal_amount", ufmt.Sprintf("%d", feeAmountUint64),
+	)
 
 	toUserAfterProtocol := new(u256.Uint).Sub(amount, feeAmount)
 	return toUserAfterProtocol

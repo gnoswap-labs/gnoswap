@@ -63,7 +63,7 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 
 	// CALCULATE BACKWARD INFO
 	for {
-		amountIn, _ := singleSwapDry(
+		amountIn, _ := singleSwap(
 			SingleSwapParams{
 				tokenIn:         params.tokenIn,
 				tokenOut:        params.tokenOut,
@@ -131,79 +131,5 @@ func multiSwapNegative(params SwapParams, numPools int, swapPath string) (*u256.
 
 		payer = consts.ROUTER_ADDR
 		swapInfo[currentPoolIndex-1].amountSpecified = i256.FromUint256(amountOut)
-	}
-}
-
-func multiSwapDry(params SwapParams, currentPoolIndex, numPool int, swapPath string) (*u256.Uint, *u256.Uint) { // firstAmountIn, lastAmountOut
-	firstAmountIn := u256.Zero()
-
-	payer := std.PrevRealm().Addr() // user
-
-	for {
-		currentPoolIndex++
-
-		amountIn, amountOut := swapDryInner(
-			params.amountSpecified,
-			u256.Zero(),
-			SwapCallbackData{
-				params.tokenIn,
-				params.tokenOut,
-				params.fee,
-				payer,
-			},
-		)
-
-		if currentPoolIndex == 1 {
-			firstAmountIn = amountIn
-		}
-
-		if currentPoolIndex >= numPool {
-			return firstAmountIn, amountOut
-		}
-
-		payer = consts.ROUTER_ADDR
-		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
-
-		params.tokenIn = nextInput
-		params.tokenOut = nextOutput
-		params.fee = nextFee
-		params.amountSpecified = i256.FromUint256(amountOut)
-	}
-}
-
-func multiSwapNegativeDry(params SwapParams, currentPoolIndex int, swapPath string) (*u256.Uint, *u256.Uint) { // firstAmountIn, lastAmountOut
-	firstAmountIn := u256.Zero()
-	payer := consts.ROUTER_ADDR
-
-	for {
-		amountIn, amountOut := swapDryInner(
-			params.amountSpecified,
-			u256.Zero(),
-			SwapCallbackData{
-				params.tokenIn,
-				params.tokenOut,
-				params.fee,
-				payer,
-			},
-		)
-
-		if currentPoolIndex == 0 {
-			// save for return
-			firstAmountIn = amountIn
-		}
-
-		currentPoolIndex--
-
-		if currentPoolIndex == -1 {
-			return firstAmountIn, amountOut
-		}
-
-		nextInput, nextOutput, nextFee := getDataForMultiPath(swapPath, currentPoolIndex)
-		intAmountIn := i256.FromUint256(amountIn)
-
-		params.amountSpecified = i256.Zero().Neg(intAmountIn)
-		params.tokenIn = nextInput
-		params.tokenOut = nextOutput
-		params.fee = nextFee
 	}
 }

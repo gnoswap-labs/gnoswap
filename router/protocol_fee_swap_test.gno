@@ -29,35 +29,30 @@ func TestHandleSwapFee(t *testing.T) {
 		name           string
 		amount         *u256.Uint
 		swapFeeValue   uint64
-		isDry          bool
 		expectedAmount *u256.Uint
 	}{
 		{
 			name:           "zero swap fee",
 			amount:         u256.NewUint(1000),
 			swapFeeValue:   0,
-			isDry:          false,
 			expectedAmount: u256.NewUint(1000),
 		},
 		{
 			name:           "normal swap fee calculation (0.15%)",
 			amount:         u256.NewUint(10000),
 			swapFeeValue:   15,
-			isDry:          false,
 			expectedAmount: u256.NewUint(9985), // 10000 - (10000 * 0.15%)
 		},
 		{
 			name:           "Dry Run test",
 			amount:         u256.NewUint(10000),
 			swapFeeValue:   15,
-			isDry:          true,
 			expectedAmount: u256.NewUint(9985),
 		},
 		{
 			name:           "large amount swap fee calculation",
 			amount:         u256.NewUint(1000000),
 			swapFeeValue:   15,
-			isDry:          false,
 			expectedAmount: u256.NewUint(998500), // 1000000 - (1000000 * 0.15%)
 		},
 	}
@@ -70,7 +65,7 @@ func TestHandleSwapFee(t *testing.T) {
 				swapFee = originalSwapFee
 			}()
 
-			result := handleSwapFee(token0, tt.amount, tt.isDry)
+			result := handleSwapFee(token0, tt.amount)
 
 			if !result.Eq(tt.expectedAmount) {
 				t.Errorf("handleSwapFee() = %v, want %v", result, tt.expectedAmount)
