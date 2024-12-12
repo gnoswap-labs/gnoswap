@@ -174,7 +174,7 @@ func SwapRoute(
 	}
 
     // Process routes
-    resultAmountIn, resultAmountOut, err := processRoutes(params, false)
+    resultAmountIn, resultAmountOut, err := processRoutes(params)
     if err != nil {
         panic(err)
     }
@@ -246,7 +246,7 @@ func DrySwapRoute(
 		panic(err)
 	}
 
-	resultAmountIn, resultAmountOut, err := processRoutes(params, true)
+	resultAmountIn, resultAmountOut, err := processRoutes(params)
 	if err != nil {
 		panic(err)
 	}
@@ -266,13 +266,12 @@ func DrySwapRoute(
 //
 // Parameters:
 //  - params: Pointer to `RouteParams` containing swap configration
-//  - isDry: Boolean indicating if this is a dry run simulation
 //
 // Returns:
 //  - *u256.Uint: Total amount of input tokens used
 //  - *u256.Uint: Total amount of output tokens received
 //  - error: Error if any occurred during processing
-func processRoutes(params *RouteParams, isDry bool) (*u256.Uint, *u256.Uint, error) {
+func processRoutes(params *RouteParams) (*u256.Uint, *u256.Uint, error) {
 	resultAmountIn, resultAmountOut := u256.Zero(), u256.Zero()
 
 	for i, route := range params.routes {
@@ -286,9 +285,9 @@ func processRoutes(params *RouteParams, isDry bool) (*u256.Uint, *u256.Uint, err
 
 		var amountIn, amountOut *u256.Uint
 		if numHops == 1 {
-			amountIn, amountOut = handleSingleSwap(route, toSwap, isDry)
+			amountIn, amountOut = handleSingleSwap(route, toSwap)
 		} else {
-			amountIn, amountOut = handleMultiSwap(params.swapType, route, numHops, toSwap, isDry)
+			amountIn, amountOut = handleMultiSwap(params.swapType, route, numHops, toSwap)
 		}
 
 		resultAmountIn = resultAmountIn.Add(resultAmountIn, amountIn)
@@ -325,7 +324,7 @@ func validateSlippageLimit(
 	return nil
 }
 
-func handleSingleSwap(route string, amountSpecified *i256.Int, isDry bool) (*u256.Uint, *u256.Uint) {
+func handleSingleSwap(route string, amountSpecified *i256.Int) (*u256.Uint, *u256.Uint) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
 		tokenIn:         input,
@@ -334,9 +333,6 @@ func handleSingleSwap(route string, amountSpecified *i256.Int, isDry bool) (*u25
 		amountSpecified: amountSpecified,
 	}
 
-	if isDry {
-		return singleSwapDry(singleParams)
-	}
 	return singleSwap(singleParams)
 }
 
@@ -345,7 +341,6 @@ func handleMultiSwap(
 	route string,
 	numHops int,
 	amountSpecified *i256.Int,
-	isDry bool,
 ) (*u256.Uint, *u256.Uint) {
 	switch swapType {
 	case ExactIn:
@@ -356,10 +351,6 @@ func handleMultiSwap(
 			fee:             fee,
 			recipient:       std.PrevRealm().Addr(),
 			amountSpecified: amountSpecified,
-		}
-
-		if isDry {
-			return multiSwapDry(swapParams, 0, numHops, route)
 		}
 		return multiSwap(swapParams, 0, numHops, route)
 
@@ -373,9 +364,6 @@ func handleMultiSwap(
 			amountSpecified: amountSpecified,
 		}
 
-		if isDry {
-			return multiSwapNegativeDry(swapParams, numHops-1, route)
-		}
 		return multiSwapNegative(swapParams, numHops-1, route)
 
 	default:
@@ -469,7 +457,7 @@ func finalizeSwap(
 		)
 	}
 
-	afterFee := handleSwapFee(outputToken, resultAmountOut, false)
+	afterFee := handleSwapFee(outputToken, resultAmountOut)
 
 	userNewWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
 	if inputToken == consts.GNOT {

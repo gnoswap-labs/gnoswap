@@ -38,21 +38,3 @@ func singleSwap(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn,
 
 	return amountIn, amountOut
 }
-
-// singleSwapDry simulates a single pool swap without executing it.
-// It calculates the expected amounts for a swap operation without modifying any state
-// or transferring any tokens.
-func singleSwapDry(params SingleSwapParams) (*u256.Uint, *u256.Uint) { // amountIn, amountOut
-	amountIn, amountOut := swapDryInner(
-		params.amountSpecified,
-		u256.Zero(), // sqrtPriceLimitX96
-		SwapCallbackData{
-			params.tokenIn,
-			params.tokenOut,
-			params.fee,
-			std.PrevRealm().Addr(), // payer ==> msg.sender,
-		},
-	)
-
-	return amountIn, amountOut
-}
