@@ -3,13 +3,17 @@ package staker
 import (
 	"std"
 	"strconv"
-	"strings"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 )
+
+func GetOrigPkgAddr() std.Address {
+	return consts.STAKER_ADDR
+}
 
 func poolPathAlign(poolPath string) string {
 	res, err := common.Split(poolPath, ":", 3)
