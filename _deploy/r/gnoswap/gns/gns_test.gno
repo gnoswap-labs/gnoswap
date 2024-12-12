@@ -41,7 +41,7 @@ func TestIsLastBlockOfHalvingYear(t *testing.T) {
 			want   bool
 		}{
 			name:   fmt.Sprintf("last block of halving year %d", i),
-			height: halvingYearBlock[i],
+			height: GetHalvingYearBlock(i),
 			want:   true,
 		})
 
@@ -51,7 +51,7 @@ func TestIsLastBlockOfHalvingYear(t *testing.T) {
 			want   bool
 		}{
 			name:   fmt.Sprintf("not last block of halving year %d", i),
-			height: halvingYearBlock[i] - 1,
+			height: GetHalvingYearBlock(i) - 1,
 			want:   false,
 		})
 	}
@@ -81,7 +81,7 @@ func TestHandleLeftEmissionAmount(t *testing.T) {
 			name:   fmt.Sprintf("handle left emission amount for year %d, non minted", i),
 			year:   i,
 			amount: 0,
-			want:   halvingYearAmount[i],
+			want:   GetHalvingYearMaxAmount(i),
 		})
 
 		tests = append(tests, struct {
@@ -93,7 +93,7 @@ func TestHandleLeftEmissionAmount(t *testing.T) {
 			name:   fmt.Sprintf("handle left emission amount for year %d, minted", i),
 			year:   i,
 			amount: uint64(123456),
-			want:   halvingYearAmount[i] - uint64(123456),
+			want:   GetHalvingYearMaxAmount(i) - uint64(123456),
 		})
 	}
 }
