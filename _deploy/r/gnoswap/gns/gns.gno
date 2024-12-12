@@ -48,7 +48,7 @@ func MintedEmissionAmount() uint64 {
 	return TotalSupply() - INITIAL_MINT_AMOUNT
 }
 
-func Mint(address pusers.AddressOrName) uint64 {
+func MintGns(address pusers.AddressOrName) uint64 {
 	common.IsHalted()
 
 	caller := std.PrevRealm().Addr()
