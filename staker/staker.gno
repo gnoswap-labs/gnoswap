@@ -51,15 +51,6 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		CalcPoolPosition()
 	}
 
-	// check whether tokenId already staked or not
-	_, exist := deposits[tokenId]
-	if exist {
-		panic(addDetailToError(
-			errAlreadyStaked,
-			ufmt.Sprintf("staker.gno__StakeToken() || tokenId(%d) already staked", tokenId),
-		))
-	}
-
 	owner := gnft.OwnerOf(tid(tokenId))
 	caller := std.PrevRealm().Addr()
 	if err := requireTokenOwnership(owner, caller); err != nil {
@@ -75,15 +66,23 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		panic(err)
 	}
 
+	// check whether tokenId already staked or not
+	deposit, exist := deposits.Get(tokenId)
+	if exist {
+		panic(addDetailToError(
+			errAlreadyStaked,
+			ufmt.Sprintf("staker.gno__StakeToken() || tokenId(%d) already staked", tokenId),
+		))
+	}
+
 	// TODO: extract as function
 	// staked status
-	deposit := deposits[tokenId]
-	deposit.owner = std.PrevRealm().Addr()
-	deposit.numberOfStakes++
-	deposit.stakeTimestamp = time.Now().Unix()
-	deposit.stakeHeight = std.GetHeight()
-	deposit.targetPoolPath = poolPath
-	deposits[tokenId] = deposit
+	deposit.SetOwner(std.PrevRealm().Addr())
+	deposit.SetNumberOfStakes(deposit.NumberOfStakes() + 1)
+	deposit.SetStakeTimestamp(time.Now().Unix())
+	deposit.SetStakeHeight(std.GetHeight())
+	deposit.SetTargetPoolPath(poolPath)
+	deposits.Set(tokenId, deposit)
 
 	// if caller is owner, transfer NFT ownership to staker contract
 	if owner == caller {
@@ -140,7 +139,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 		CalcPoolPosition()
 	}
 
-	deposit, exist := deposits[tokenId]
+	deposit, exist := deposits.Get(tokenId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -153,7 +152,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 		panic(ufmt.Sprintf("%v: caller is not owner of tokenId(%d)", errNoPermission, tokenId))
 	}
 
-	poolPath := deposits[tokenId].targetPoolPath
+	poolPath := deposit.TargetPoolPath()
 
 	prevAddr, prevRealm := getPrev()
 
@@ -296,7 +295,7 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	}
 
 	// unstaked status
-	deposit, exist := deposits[tokenId]
+	deposit, exist := deposits.Get(tokenId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -308,8 +307,8 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	CollectReward(tokenId, unwrapResult)
 
 	delete(positionGns, tokenId)
-	delete(deposits, tokenId)
 	delete(positionsInternalWarmUpAmount, tokenId)
+	deposits.Remove(tokenId)
 
 	rewardManger := getRewardManager()
 	internalEmission := rewardManger.GetInternalEmissionReward()

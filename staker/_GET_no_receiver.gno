@@ -262,7 +262,7 @@ func StakerDepositOwner(lpTokenId uint64) std.Address {
 		CalcPoolPosition()
 	}
 
-	deposit, exist := deposits[lpTokenId]
+	deposit, exist := deposits.Get(lpTokenId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -291,7 +291,7 @@ func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
 		CalcPoolPosition()
 	}
 
-	deposit, exist := deposits[lpTokenId]
+	deposit, exist := deposits.Get(lpTokenId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -320,7 +320,7 @@ func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
 		CalcPoolPosition()
 	}
 
-	deposit, exist := deposits[lpTokenId]
+	deposit, exist := deposits.Get(lpTokenId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -349,7 +349,7 @@ func StakerDepositTargetPoolPath(lpTokenId uint64) string {
 		CalcPoolPosition()
 	}
 
-	deposit, exist := deposits[lpTokenId]
+	deposit, exist := deposits.Get(lpTokenId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,

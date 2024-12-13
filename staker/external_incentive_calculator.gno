@@ -81,8 +81,11 @@ func (ec *ExternalCalculator) must(tokId uint64, ictvId string, ictv ExternalInc
 //
 // TOO MANY SIDE-EFFECTS: use block height instead of timestamp
 func (ec *ExternalCalculator) getBlockPassed(tokId uint64, ictvId string, ictv ExternalIncentive) int64 {
-	deposit := deposits[tokId]
-	last := max(ictv.startTimestamp, deposit.stakeTimestamp)
+	deposit, exist := deposits.Get(tokId)
+	if !exist {
+		return 0
+	}
+	last := max(ictv.startTimestamp, deposit.StakeTimestamp())
 	last = max(last, externalLastCalculatedTimestamp[ictvId])
 
 	// WARNING: error prone. need to use block height instead of timestamp

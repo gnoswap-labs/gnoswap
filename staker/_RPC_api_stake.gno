@@ -74,13 +74,14 @@ func ApiGetRewards() string {
 
 	lpTokenRewards := []LpTokenReward{}
 
-	for tokenId, deposit := range deposits {
+	// TODO: extract as function
+	deposits.Iter(func(tokenId uint64, deposit Deposit) {
 		rewards := []Reward{}
 
 		// get internal gns reward
 		internalWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
 		if !exist {
-			continue
+			return
 		}
 		internalGNS := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.full100
 
@@ -100,24 +101,24 @@ func ApiGetRewards() string {
 		// find all external reward list for poolPath which lpTokenId is staked
 		ictvList, exists := poolIncentives.Get(deposit.targetPoolPath)
 		if !exists {
-			continue
+			return
 		}
 
 		for _, ictvId := range ictvList {
 			ictv, exists := incentives.Get(ictvId)
 			if !exists {
-				continue
+				return
 			}
 
 			stakedOrCreatedAt := max(deposit.stakeTimestamp, ictv.startTimestamp)
 			now := time.Now().Unix()
 			if now < stakedOrCreatedAt {
-				continue
+				return
 			}
 
 			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][ictvId]
 			if !exist {
-				continue
+				return
 			}
 			externalReward := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
 			if externalReward >= 0 {
@@ -142,7 +143,7 @@ func ApiGetRewards() string {
 			}
 			lpTokenRewards = append(lpTokenRewards, lpTokenReward)
 		}
-	}
+	})
 
 	qb := ResponseQueryBase{
 		Height:    std.GetHeight(),
@@ -194,9 +195,9 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 
 	lpTokenRewards := []LpTokenReward{}
 
-	for tokenId, deposit := range deposits {
+	deposits.Iter(func(tokenId uint64, deposit Deposit) {
 		if tokenId != targetLpTokenId {
-			continue
+			return
 		}
 
 		rewards := []Reward{}
@@ -204,7 +205,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 		// get internal gns reward
 		internalWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
 		if !exist {
-			continue
+			return
 		}
 		internalGNS := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.full100
 
@@ -224,24 +225,24 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 		// find all external reward list for poolPath which lpTokenId is staked
 		ictvList, exists := poolIncentives.Get(deposit.targetPoolPath)
 		if !exists {
-			continue
+			return
 		}
 
 		for _, ictvId := range ictvList {
 			ictv, exists := incentives.Get(ictvId)
 			if !exists {
-				continue
+				return
 			}
 
 			stakedOrCreatedAt := max(deposit.stakeTimestamp, ictv.startTimestamp)
 			now := time.Now().Unix()
 			if now < stakedOrCreatedAt {
-				continue
+				return
 			}
 
 			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][ictvId]
 			if !exist {
-				continue
+				return
 			}
 			externalReward := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
 			if externalReward > 0 {
@@ -264,7 +265,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			Rewards:   rewards,
 		}
 		lpTokenRewards = append(lpTokenRewards, lpTokenReward)
-	}
+	})
 
 	qb := ResponseQueryBase{
 		Height:    std.GetHeight(),
@@ -316,9 +317,9 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 
 	lpTokenRewards := []LpTokenReward{}
 
-	for tokenId, deposit := range deposits {
+	deposits.Iter(func(tokenId uint64, deposit Deposit) {
 		if deposit.owner.String() != targetAddress {
-			continue
+			return
 		}
 
 		rewards := []Reward{}
@@ -326,7 +327,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 		// get internal gns reward
 		internalWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
 		if !exist {
-			continue
+			return
 		}
 		internalGNS := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.full100
 
@@ -346,24 +347,24 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 		// find all external reward list for poolPath which lpTokenId is staked
 		ictvList, exists := poolIncentives.Get(deposit.targetPoolPath)
 		if !exists {
-			continue
+			return
 		}
 
 		for _, ictvId := range ictvList {
 			ictv, exists := incentives.Get(ictvId)
 			if !exists {
-				continue
+				return
 			}
 
 			stakedOrCreatedAt := max(deposit.stakeTimestamp, ictv.startTimestamp)
 			now := time.Now().Unix()
 			if now < stakedOrCreatedAt {
-				continue
+				return
 			}
 
 			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][ictvId]
 			if !exist {
-				continue
+				return
 			}
 			externalReward := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
 			rewards = append(rewards, Reward{
@@ -383,7 +384,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 			Rewards:   rewards,
 		}
 		lpTokenRewards = append(lpTokenRewards, lpTokenReward)
-	}
+	})
 
 	qb := ResponseQueryBase{
 		Height:    std.GetHeight(),
@@ -434,7 +435,7 @@ func ApiGetStakes() string {
 	}
 
 	stakes := []Stake{}
-	for tokenId, deposit := range deposits {
+	deposits.Iter(func(tokenId uint64, deposit Deposit) {
 		stakes = append(stakes, Stake{
 			TokenId:        tokenId,
 			Owner:          deposit.owner,
@@ -443,7 +444,7 @@ func ApiGetStakes() string {
 			StakeHeight:    deposit.stakeHeight,
 			TargetPoolPath: deposit.targetPoolPath,
 		})
-	}
+	})
 
 	qb := ResponseQueryBase{
 		Height:    std.GetHeight(),
@@ -498,9 +499,9 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 
 	stakes := []Stake{}
 
-	for tokenId, deposit := range deposits {
+	deposits.Iter(func(tokenId uint64, deposit Deposit) {
 		if tokenId != targetLpTokenId {
-			continue
+			return
 		}
 
 		stakes = append(stakes, Stake{
@@ -511,7 +512,7 @@ func ApiGetStakesByLpTokenId(targetLpTokenId uint64) string {
 			StakeHeight:    deposit.stakeHeight,
 			TargetPoolPath: deposit.targetPoolPath,
 		})
-	}
+	})
 
 	qb := ResponseQueryBase{
 		Height:    std.GetHeight(),
@@ -566,9 +567,9 @@ func ApiGetStakesByAddress(targetAddress string) string {
 
 	stakes := []Stake{}
 
-	for tokenId, deposit := range deposits {
+	deposits.Iter(func(tokenId uint64, deposit Deposit) {
 		if deposit.owner.String() != targetAddress {
-			continue
+			return
 		}
 
 		stakes = append(stakes, Stake{
@@ -579,7 +580,7 @@ func ApiGetStakesByAddress(targetAddress string) string {
 			StakeHeight:    deposit.stakeHeight,
 			TargetPoolPath: deposit.targetPoolPath,
 		})
-	}
+	})
 
 	qb := ResponseQueryBase{
 		Height:    std.GetHeight(),

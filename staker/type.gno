@@ -11,8 +11,13 @@ type InternalTier struct {
 	startTimestamp int64  // start time for internal reward
 }
 
-func (i InternalTier) Tier() uint64          { return i.tier }
-func (i InternalTier) StartTimestamp() int64 { return i.startTimestamp }
+func (i InternalTier) Tier() uint64 {
+	return i.tier
+}
+
+func (i InternalTier) StartTimestamp() int64 {
+	return i.startTimestamp
+}
 
 // newInternalTier creates a new internal tier
 func newInternalTier(tier uint64, startTimestamp int64) InternalTier {
@@ -33,6 +38,18 @@ type ExternalIncentive struct {
 	rewardLeft        *u256.Uint  // remaining reward amount
 	rewardPerBlockX96 *u256.Uint  // reward per block in Q96 notation
 	refundee          std.Address // refundee address
+}
+
+func (e ExternalIncentive) StartTimestamp() int64 {
+	return e.startTimestamp
+}
+
+func (e ExternalIncentive) EndTimestamp() int64 {
+	return e.endTimestamp
+}
+
+func (e ExternalIncentive) RewardToken() string {
+	return e.rewardToken
 }
 
 // newExternalIncentive creates a new external incentive
@@ -68,4 +85,36 @@ type Deposit struct {
 	stakeTimestamp int64       // staked time
 	stakeHeight    int64       // staked block height
 	targetPoolPath string      // staked position's pool path
+}
+
+func (d Deposit) NumberOfStakes() uint64 {
+	return d.numberOfStakes
+}
+
+func (d Deposit) StakeTimestamp() int64 {
+	return d.stakeTimestamp
+}
+
+func (d Deposit) TargetPoolPath() string {
+	return d.targetPoolPath
+}
+
+func (d Deposit) SetOwner(owner std.Address) {
+	d.owner = owner
+}
+
+func (d Deposit) SetNumberOfStakes(numberOfStakes uint64) {
+	d.numberOfStakes = numberOfStakes
+}
+
+func (d Deposit) SetStakeTimestamp(stakeTimestamp int64) {
+	d.stakeTimestamp = stakeTimestamp
+}
+
+func (d Deposit) SetStakeHeight(stakeHeight int64) {
+	d.stakeHeight = stakeHeight
+}
+
+func (d Deposit) SetTargetPoolPath(targetPoolPath string) {
+	d.targetPoolPath = targetPoolPath
 }
