@@ -5,8 +5,104 @@ import (
 
 	"gno.land/p/demo/uassert"
 
+	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
+
+func TestSqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(t *testing.T) {
+	t.Run("zero amount returns same price", func(t *testing.T) {
+		sqrtPX96 := u256.MustFromDecimal("1000000")
+		liquidity := u256.MustFromDecimal("2000000")
+		amount := u256.Zero()
+
+		result := sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
+			sqrtPX96,
+			liquidity,
+			amount,
+			true,
+		)
+
+		if !result.Eq(sqrtPX96) {
+			t.Errorf("Expected %s, got %s", sqrtPX96.ToString(), result.ToString())
+		}
+	})
+
+	t.Run("remove token0", func(t *testing.T) {
+		sqrtPX96 := u256.MustFromDecimal("1000000")
+		liquidity := u256.MustFromDecimal("2000000")
+		amount := u256.MustFromDecimal("500000")
+
+		result := sqrtPriceMathGetNextSqrtPriceFromAmount0RoundingUp(
+			sqrtPX96,
+			liquidity,
+			amount,
+			false,
+		)
+
+		if result.Lte(sqrtPX96) {
+			t.Error("Price should increase when removing token0")
+		}
+	})
+}
+
+func TestSqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(t *testing.T) {
+	t.Run("add token1 small amount", func(t *testing.T) {
+		sqrtPX96 := u256.MustFromDecimal("1000000")
+		liquidity := u256.MustFromDecimal("2000000")
+		amount := u256.MustFromDecimal("100000")
+
+		result := sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
+			sqrtPX96,
+			liquidity,
+			amount,
+			true,
+		)
+
+		if result.Lte(sqrtPX96) {
+			t.Error("Price should increase when adding token1")
+		}
+	})
+}
+
+func TestSqrtPriceMathGetAmount0DeltaStr(t *testing.T) {
+	t.Run("positive liquidity", func(t *testing.T) {
+		ratioA := u256.MustFromDecimal("1000000")
+		ratioB := u256.MustFromDecimal("2000000")
+		liquidity := i256.FromUint256(u256.MustFromDecimal("5000000"))
+
+		result := SqrtPriceMathGetAmount0DeltaStr(ratioA, ratioB, liquidity)
+
+		if result[0] == '-' {
+			t.Error("Result should be positive for positive liquidity")
+		}
+	})
+
+	t.Run("negative liquidity", func(t *testing.T) {
+		ratioA := u256.MustFromDecimal("1000000")
+		ratioB := u256.MustFromDecimal("2000000")
+		liquidity := i256.Zero().Neg(i256.FromUint256(u256.MustFromDecimal("5000000")))
+
+		result := SqrtPriceMathGetAmount0DeltaStr(ratioA, ratioB, liquidity)
+
+		if result[0] != '-' {
+			t.Error("Result should be negative for negative liquidity")
+		}
+	})
+}
+
+func TestSqrtPriceMathGetAmount1DeltaStr(t *testing.T) {
+	t.Run("positive liquidity", func(t *testing.T) {
+		ratioA := u256.MustFromDecimal("1000000")
+		ratioB := u256.MustFromDecimal("2000000")
+		liquidity := i256.FromUint256(u256.MustFromDecimal("5000000"))
+
+		result := SqrtPriceMathGetAmount1DeltaStr(ratioA, ratioB, liquidity)
+
+		if result[0] == '-' {
+			t.Error("Result should be positive for positive liquidity")
+		}
+	})
+}
 
 func TestSqrtPriceMathGetNextSqrtPriceFromInput(t *testing.T) {
 	tests := []struct {
@@ -44,7 +140,7 @@ func TestSqrtPriceMathGetNextSqrtPriceFromInput(t *testing.T) {
 			amountIn:     u256.MustFromDecimal("1024"),
 			zeroForOne:   false,
 			shouldPanic:  true,
-			panicMsg:     "sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown sqrtPx96 + quotient overflow uint160",
+			panicMsg:     "sqrtPx96 + quotient overflow uint160",
 		},
 		{
 			name:                 "any input amount cannot underflow the price",
@@ -124,6 +220,38 @@ func TestSqrtPriceMathGetNextSqrtPriceFromInput(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSqrtPriceMathGetNextSqrtPriceFromInput2(t *testing.T) {
+	t.Run("zero sqrtPX96 should panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for zero sqrtPX96")
+			}
+		}()
+
+		sqrtPriceMathGetNextSqrtPriceFromInput(
+			u256.Zero(),
+			u256.MustFromDecimal("1000000"),
+			u256.MustFromDecimal("500000"),
+			true,
+		)
+	})
+
+	t.Run("zero liquidity should panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for zero liquidity")
+			}
+		}()
+
+		sqrtPriceMathGetNextSqrtPriceFromInput(
+			u256.MustFromDecimal("1000000"),
+			u256.Zero(),
+			u256.MustFromDecimal("500000"),
+			true,
+		)
+	})
 }
 
 func TestSqrtPriceMathGetNextSqrtPriceFromOutput(t *testing.T) {
