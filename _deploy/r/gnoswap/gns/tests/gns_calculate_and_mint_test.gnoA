@@ -1,0 +1,99 @@
+package gns
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/uassert"
+
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
+)
+
+var (
+	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)
+	adminRealm    = std.NewUserRealm(consts.ADMIN)
+)
+
+func TestCalculateAmountToMint(t *testing.T) {
+	t.Run("1 block for same year 01", func(t *testing.T) {
+		amount := calculateAmountToMint(GetLastMintedHeight()+1, GetLastMintedHeight()+1)
+		uassert.Equal(t, amountPerBlockPerHalvingYear[1], amount)
+	})
+
+	t.Run("2 block for same year 01", func(t *testing.T) {
+		amount := calculateAmountToMint(GetLastMintedHeight()+1, GetLastMintedHeight()+2)
+		uassert.Equal(t, amountPerBlockPerHalvingYear[2]*2, amount)
+	})
+
+	t.Run("entire block for year 01 + 1 block for year 02", func(t *testing.T) {
+		calculateAmountToMint(halvingYearBlock[1], halvingYearBlock[1]+1)
+
+		// minted all amount for year 01
+		uassert.Equal(t, GetHalvingYearAmount(1), GetHalvingYearMintAmount(1))
+
+		// minted 1 block for year 02
+		uassert.Equal(t, amountPerBlockPerHalvingYear[2], GetHalvingYearMintAmount(2))
+	})
+
+	t.Run("entire block for 12 years", func(t *testing.T) {
+		calculateAmountToMint(halvingYearBlock[1], halvingYearBlock[12])
+
+		for year := int64(1); year <= 12; year++ {
+			uassert.Equal(t, GetHalvingYearAmount(year), GetHalvingYearMintAmount(year))
+		}
+	})
+
+	t.Run("no emission amount for after 12 years", func(t *testing.T) {
+		amount := calculateAmountToMint(halvingYearBlock[12], halvingYearBlock[12]+1)
+		uassert.Equal(t, uint64(0), amount)
+	})
+
+	// clear for further test
+	halvingYearMintAmount = make(map[int64]uint64)
+}
+
+func TestMintGns(t *testing.T) {
+	t.Run("panic for swap is halted", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		common.SetHaltByAdmin(true) // set halt
+		uassert.PanicsWithMessage(t, "[GNOSWAP-COMMON-002] halted || gnoswap halted", func() {
+			MintGns(a2u(consts.ADMIN))
+		})
+
+		common.SetHaltByAdmin(false) // unset halt
+	})
+
+	t.Run("panic if caller is not emission contract", func(t *testing.T) {
+		uassert.PanicsWithMessage(t, "caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission", func() {
+			MintGns(a2u(consts.ADMIN))
+		})
+	})
+
+	t.Run("do not mint for same block", func(t *testing.T) {
+		std.TestSetRealm(emissionRealm)
+		mintedAmount := MintGns(a2u(consts.ADMIN))
+		uassert.Equal(t, uint64(0), mintedAmount)
+	})
+
+	t.Run("mint by year, until emission ends", func(t *testing.T) {
+		for year := int64(1); year <= 12; year++ {
+			std.TestSkipHeights(BLOCK_PER_YEAR)
+
+			std.TestSetRealm(emissionRealm)
+			mintedAmount := MintGns(a2u(consts.ADMIN))
+
+			uassert.Equal(t, halvingYearAmount[year], mintedAmount)
+			uassert.Equal(t, halvingYearAmount[year], halvingYearMintAmount[year])
+			uassert.Equal(t, halvingYearAccuAmount[year], MintedEmissionAmount())
+		}
+	})
+
+	t.Run("no more emission after it ends", func(t *testing.T) {
+		std.TestSkipHeights(BLOCK_PER_YEAR)
+
+		std.TestSetRealm(emissionRealm)
+		mintedAmount := MintGns(a2u(consts.ADMIN))
+		uassert.Equal(t, uint64(0), mintedAmount)
+	})
+}
