@@ -371,7 +371,7 @@ func StakerDepositTargetPoolPath(lpTokenId uint64) string {
 // Panics:
 //   - If the pool tier does not exist for the given poolPath
 func StakerPoolTier(poolPath string) uint64 {
-	internal, exist := poolTiers[poolPath]
+	internalTier, exist := poolTiers.Get(poolPath)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -379,5 +379,5 @@ func StakerPoolTier(poolPath string) uint64 {
 		))
 	}
 
-	return internal.tier
+	return internalTier.Tier()
 }

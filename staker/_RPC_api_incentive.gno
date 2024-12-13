@@ -58,8 +58,7 @@ func ApiGetRewardTokens() string {
 		thisPoolRewardTokens := []string{}
 
 		// HANDLE INTERNAL
-		_, ok := poolTiers[poolPath]
-		if ok {
+		if isExistPoolTiers(poolPath) {
 			thisPoolRewardTokens = append(thisPoolRewardTokens, consts.GNS_PATH)
 		}
 
@@ -129,8 +128,7 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 		thisPoolRewardTokens := []string{}
 
 		// HANDLE INTERNAL
-		_, ok := poolTiers[poolPath]
-		if ok {
+		if isExistPoolTiers(poolPath) {
 			thisPoolRewardTokens = append(thisPoolRewardTokens, consts.GNS_PATH)
 		}
 
@@ -660,7 +658,12 @@ func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(stakerGns)
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
 
-	tier := poolTiers[poolPath].tier
+	internalTier, exist := poolTiers.Get(poolPath)
+	if !exist {
+		return "0"
+	}
+
+	tier := internalTier.Tier()
 
 	if tier == 1 {
 		return ufmt.Sprintf("%d", tier1Amount/tier1Num)

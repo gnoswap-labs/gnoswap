@@ -7,10 +7,6 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 )
 
-// region *****refactor******
-
-type ExternalIncentiveMap map[string]ExternalIncentive
-
 // ExternalCalculator manages the calculation of external incentive rewards.
 //
 // This maintains its own timestamp to ensure consistent time-based calculations
@@ -33,7 +29,7 @@ func NewExternalCalculator(height int64) *ExternalCalculator {
 // and processes rewards only for active ones to optimize computation.
 //
 // To maintain the functional purity, it passes the [ExternalIncentiveMap] as an argument.
-func (ec *ExternalCalculator) calculate(ictvs ExternalIncentiveMap) {
+func (ec *ExternalCalculator) calculate(ictvs Incentives) {
 	for id, ictv := range ictvs {
 		if !ec.active(ictv) {
 			continue

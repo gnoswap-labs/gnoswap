@@ -18,23 +18,6 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-var (
-	/* internal */
-	// poolTiers stores internal tier information for each pool
-	poolTiers map[string]InternalTier = make(map[string]InternalTier)
-
-	/* external */
-	// poolIncentives maps pool paths to their associated incentive IDs
-	poolIncentives map[string][]string = make(map[string][]string)
-
-	// incentives stores external incentive for each incentive ID
-	incentives map[string]ExternalIncentive = make(map[string]ExternalIncentive)
-
-	/* common */
-	// deposits stores deposit information for each tokenId
-	deposits map[uint64]Deposit = make(map[uint64]Deposit)
-)
-
 const (
 	TIMESTAMP_90DAYS  = 7776000
 	TIMESTAMP_180DAYS = 15552000
@@ -49,10 +32,10 @@ func init() {
 	// init pool tiers
 	// tier 1
 	// ONLY GNOT:GNS 0.3%
-	poolTiers[MUST_EXISTS_IN_TIER_1] = InternalTier{
+	poolTiers.Set(MUST_EXISTS_IN_TIER_1, InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
-	}
+	})
 }
 
 // StakeToken stakes the LP token to the staker contract
@@ -394,7 +377,7 @@ func tokenHasLiquidity(tokenId uint64) error {
 }
 
 func poolHasInternal(poolPath string) bool {
-	_, exist := poolTiers[poolPath]
+	_, exist := poolTiers.Get(poolPath)
 	return exist
 }
 
