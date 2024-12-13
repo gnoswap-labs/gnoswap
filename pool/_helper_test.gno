@@ -50,6 +50,7 @@ var (
 	alice       = pusers.AddressOrName(testutils.TestAddress("alice"))
 	pool        = pusers.AddressOrName(consts.POOL_ADDR)
 	protocolFee = pusers.AddressOrName(consts.PROTOCOL_FEE_ADDR)
+	router      = pusers.AddressOrName(consts.ROUTER_ADDR)
 	adminRealm  = std.NewUserRealm(users.Resolve(admin))
 	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
 
@@ -213,6 +214,160 @@ func MintPosition(t *testing.T,
 		deadline,
 		mintTo,
 		caller)
+}
+
+func MintPositionAll(t *testing.T, caller std.Address) {
+	t.Helper()
+	std.TestSetRealm(std.NewUserRealm(caller))
+	TokenApprove(t, gnsPath, pusers.AddressOrName(caller), pool, maxApprove)
+	TokenApprove(t, gnsPath, pusers.AddressOrName(caller), router, maxApprove)
+	TokenApprove(t, wugnotPath, pusers.AddressOrName(caller), pool, maxApprove)
+	TokenApprove(t, wugnotPath, pusers.AddressOrName(caller), router, maxApprove)
+
+	params := []struct {
+		tickLower int32
+		tickUpper int32
+		liquidity uint64
+		zeroToOne bool
+	}{
+		{
+			tickLower: -300,
+			tickUpper: -240,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -240,
+			tickUpper: -180,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -180,
+			tickUpper: -120,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -120,
+			tickUpper: -60,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -60,
+			tickUpper: 0,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: 0,
+			tickUpper: 60,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 60,
+			tickUpper: 120,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 120,
+			tickUpper: 180,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 180,
+			tickUpper: 240,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 240,
+			tickUpper: 300,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: -360,
+			tickUpper: -300,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -420,
+			tickUpper: -360,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -480,
+			tickUpper: -420,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -540,
+			tickUpper: -480,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -600,
+			tickUpper: -540,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: 300,
+			tickUpper: 360,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 360,
+			tickUpper: 420,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 420,
+			tickUpper: 480,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 480,
+			tickUpper: 540,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 540,
+			tickUpper: 600,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+	}
+
+	for _, p := range params {
+		MintPosition(t,
+			wugnotPath,
+			gnsPath,
+			fee3000,
+			p.tickLower,
+			p.tickUpper,
+			"100",
+			"100",
+			"0",
+			"0",
+			max_timeout,
+			caller,
+			caller)
+	}
+
 }
 
 func wugnotApprove(t *testing.T, owner, spender pusers.AddressOrName, amount uint64) {
