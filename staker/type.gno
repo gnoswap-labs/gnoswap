@@ -31,3 +31,24 @@ type Deposit struct {
 	stakeHeight    int64       // staked block height
 	targetPoolPath string      // staked position's pool path
 }
+
+type DepositOperationType uint64
+
+const (
+	DEPOSIT_OPERATION_TYPE_STAKE     DepositOperationType = 1
+	DEPOSIT_OPERATION_TYPE_FILL_30   DepositOperationType = 2
+	DEPOSIT_OPERATION_TYPE_FILL_50   DepositOperationType = 3
+	DEPOSIT_OPERATION_TYPE_FILL_70   DepositOperationType = 4
+	DEPOSIT_OPERATION_TYPE_FILL_100  DepositOperationType = 5
+)
+
+type DepositOperation struct {
+	tokenId uint64 // token id
+	operationType DepositOperationType // operation type
+}
+
+type DepositPrediction struct {
+	totalAmount uint64 // total amount
+
+	operations []DepositOperation // operations
+}

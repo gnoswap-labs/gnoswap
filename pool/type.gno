@@ -258,6 +258,8 @@ type Pool struct {
 	tickBitmaps TickBitmaps // maps tick index to tick bitmap
 
 	positions Positions // maps the key (caller, lower tick, upper tick) to a unique position
+
+	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
 }
 
 func newPool(poolInfo *createPoolParams) *Pool {

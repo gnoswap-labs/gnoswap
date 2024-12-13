@@ -238,20 +238,10 @@ func CalcPoolPosition() {
 
 	// calculate each pool's total staked liquidity
 	poolTotalStakedLiquidity = make(map[string]*u256.Uint) // clear
-	for tokenId, deposit := range deposits {
-		poolPath := deposit.targetPoolPath
-		if _, exist := poolTotalStakedLiquidity[poolPath]; !exist {
-			poolTotalStakedLiquidity[poolPath] = u256.Zero()
-		}
-
-		isInRange := pn.PositionIsInRange(tokenId)
-		if isInRange == false {
-			continue
-		}
-
-		liqStr := pn.PositionGetPositionLiquidityStr(tokenId)
-		positionLiquidity := u256.MustFromDecimal(liqStr)
-		poolTotalStakedLiquidity[poolPath] = poolTotalStakedLiquidity[poolPath].Add(poolTotalStakedLiquidity[poolPath], positionLiquidity)
+	// FIXME: temporarily iterate all pools.
+	// after refactoring is complete, it will be removed
+	for poolPath, info := range stakerPoolInfo {
+		poolTotalStakedLiquidity[poolPath] = info.totalStakedLiquidityInRange
 	}
 
 	// calculate each position's liquidity ratio

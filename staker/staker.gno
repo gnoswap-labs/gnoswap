@@ -36,6 +36,8 @@ var (
 	/* common */
 	// deposits stores deposit information for each tokenId
 	deposits map[uint64]Deposit = make(map[uint64]Deposit)
+
+	// depositOperations map[uint64][]DepositOperation = make(map[uint64][]DepositOperation)
 )
 
 const (
@@ -134,6 +136,8 @@ func StakeToken(tokenId uint64) (string, string, string) {
 
 	// after transfer, set caller(user) as position operator (to collect fee and reward)
 	pn.SetPositionOperator(tokenId, caller)
+
+	modifyStakerPoolInfo(poolPath, tokenId, liquidity)
 
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
 
@@ -348,6 +352,8 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 
 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
+
+	modifyStakerPoolInfo(poolPath, tokenId, i256.Zero().Neg(liquidity))
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -743,4 +749,79 @@ func getIncentives() map[string]ExternalIncentive {
 
 func getPoolIncentives() map[string][]string {
 	return poolIncentives
+}
+
+
+// TODO: separate into different file
+
+type StakerPoolInfo struct {
+	//totalStakedLiquidity *u256.Uint
+	totalStakedLiquidityInRange *u256.Uint
+}
+
+type StakerTickInfo struct {
+	liquidityInRangeDelta *u256.Uint
+}
+
+var (
+	stakerPoolInfo = make(map[string]StakerPoolInfo)
+	stakerTickInfo = make(map[int32]StakerTickInfo)
+)
+
+func modifyStakerPoolInfo(poolPath string, tokenId uint64, liquidity *u256.Uint) {
+	// update staker side pool info
+	pool, ok := stakerPoolInfo[poolPath]
+	if !ok {
+		pool = StakerPoolInfo{
+			totalStakedLiquidity: u256.Zero(),
+			totalStakedLiquidityInRange: u256.Zero(),
+		}
+	}
+	//pool.totalStakedLiquidity = liquidityMathAddDelta(pool.totalStakedLiquidity, liquidity)
+	if pn.PositionIsInRange(tokenId) {
+		pool.totalStakedLiquidityInRange = liquidityMathAddDelta(pool.totalStakedLiquidityInRange, liquidity)
+	}
+	stakerPoolInfo[poolPath] = pool
+
+	// update staker side tick info
+	lowerTick, ok := stakerTickInfo[pn.PositionGetPositionTickLower(tokenId)]
+	if !ok {
+		lowerTick = StakerTickInfo{
+			liquidityInRangeDelta: u256.Zero(),
+		}
+	}
+	lowerTick.liquidityInRangeDelta = liquidityMathAddDelta(lowerTick.liquidityInRangeDelta, liquidity)
+	stakerTickInfo[pn.PositionGetPositionTickLower(tokenId)] = lowerTick
+
+	upperTick, ok := stakerTickInfo[pn.PositionGetPositionTickUpper(tokenId)]
+	if !ok {
+		upperTick = StakerTickInfo{
+			liquidityInRangeDelta: u256.Zero(),
+		}
+	}
+	upperTick.liquidityInRangeDelta = liquidityMathAddDelta(upperTick.liquidityInRangeDelta, i256.Zero().Neg(liquidity))
+	stakerTickInfo[pn.PositionGetPositionTickUpper(tokenId)] = upperTick
+}
+
+func tickCrossHook(poolPath string, tickId int32, zeroForOne bool) {
+	tick, ok := stakerTickInfo[tickId]
+	if !ok {
+		return
+	}
+
+	pool, ok := stakerPoolInfo[poolPath]
+	if !ok {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("staker.gno__tickCrossHook() || poolPath(%s) not found", poolPath),
+		))
+	}
+
+	liquidityInRangeDelta := tick.liquidityInRangeDelta
+	if zeroForOne {
+		liquidityInRangeDelta = i256.Zero().Neg(liquidityInRangeDelta)
+	}
+	pool.totalStakedLiquidityInRange = liquidityMathAddDelta(pool.totalStakedLiquidityInRange, liquidityInRangeDelta)
+
+	stakerPoolInfo[poolPath] = pool
 }
