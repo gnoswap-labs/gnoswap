@@ -518,3 +518,13 @@ func externalDepositGnsAmount() uint64 {
 
 	return amount
 }
+
+
+func getPoolTiers() map[string]InternalTier {
+	return poolTiers
+}
+
+// getDeposits returns deposit information for all tokenIds
+func getDeposits() map[uint64]Deposit {
+	return deposits
+}
