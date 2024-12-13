@@ -98,7 +98,12 @@ func ApiGetRewards() string {
 		}
 
 		// find all external reward list for poolPath which lpTokenId is staked
-		for _, incentiveId := range poolIncentives[deposit.targetPoolPath] {
+		ictvList, exists := poolIncentives.Get(deposit.targetPoolPath)
+		if !exists {
+			continue
+		}
+
+		for _, incentiveId := range ictvList {
 			incentive := incentives[incentiveId]
 
 			stakedOrCreatedAt := max(deposit.stakeTimestamp, incentive.startTimestamp)
@@ -214,7 +219,12 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 		}
 
 		// find all external reward list for poolPath which lpTokenId is staked
-		for _, incentiveId := range poolIncentives[deposit.targetPoolPath] {
+		ictvList, exists := poolIncentives.Get(deposit.targetPoolPath)
+		if !exists {
+			continue
+		}
+
+		for _, incentiveId := range ictvList {
 			incentive := incentives[incentiveId]
 
 			stakedOrCreatedAt := max(deposit.stakeTimestamp, incentive.startTimestamp)
@@ -328,7 +338,12 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 		}
 
 		// find all external reward list for poolPath which lpTokenId is staked
-		for _, incentiveId := range poolIncentives[deposit.targetPoolPath] {
+		ictvList, exists := poolIncentives.Get(deposit.targetPoolPath)
+		if !exists {
+			continue
+		}
+
+		for _, incentiveId := range ictvList {
 			incentive := incentives[incentiveId]
 
 			stakedOrCreatedAt := max(deposit.stakeTimestamp, incentive.startTimestamp)

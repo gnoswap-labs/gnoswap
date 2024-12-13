@@ -174,7 +174,12 @@ func CreateExternalIncentive(
 		depositGnsAmount:  depositGnsAmount,
 	}
 
-	poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath], incentiveId)
+	existingIctv, exists := poolIncentives.Get(targetPoolPath)
+	if exists {
+		poolIncentives.Set(targetPoolPath, append(existingIctv, incentiveId))
+	} else {
+		poolIncentives.Set(targetPoolPath, []string{incentiveId})
+	}
 
 	externalLastCalculatedTimestamp[incentiveId] = time.Now().Unix()
 
@@ -203,21 +208,21 @@ func CreateExternalIncentive(
 func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken string, startTimestamp, endTimestamp, height int64) {
 	common.IsHalted()
 
-	incentiveId := incentiveIdCompute(refundee, targetPoolPath, rewardToken, startTimestamp, endTimestamp, height)
+	ictvId := incentiveIdCompute(refundee, targetPoolPath, rewardToken, startTimestamp, endTimestamp, height)
 
-	incentive, exist := incentives[incentiveId]
-	if !exist {
+	ictv, exists := incentives.Get(ictvId)
+	if !exists {
 		panic(addDetailToError(
 			errCannotEndIncentive,
-			ufmt.Sprintf("staker.gno__EndExternalIncentive() || cannot end non existent incentive(%s)", incentiveId),
+			ufmt.Sprintf("staker.gno__EndExternalIncentive() || cannot end non existent incentive(%s)", ictvId),
 		))
 	}
 
 	now := time.Now().Unix()
-	if now < incentive.endTimestamp {
+	if now < ictv.endTimestamp {
 		panic(addDetailToError(
 			errCannotEndIncentive,
-			ufmt.Sprintf("staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(%d), current(%d)", incentive.endTimestamp, now),
+			ufmt.Sprintf("staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(%d), current(%d)", ictv.endTimestamp, now),
 		))
 	}
 
@@ -232,28 +237,33 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	}
 
 	// when incentive ended, refund remaining reward
-	refund := incentive.rewardLeft
+	refund := ictv.rewardLeft
 	refundUint64 := refund.Uint64()
 
-	poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
+	poolLeftExternalRewardAmount := balanceOfByRegisterCall(ictv.rewardToken, GetOrigPkgAddr())
 	if poolLeftExternalRewardAmount < refundUint64 {
 		refundUint64 = poolLeftExternalRewardAmount
 	}
 
-	transferByRegisterCall(incentive.rewardToken, incentive.refundee, refundUint64)
+	transferByRegisterCall(ictv.rewardToken, ictv.refundee, refundUint64)
 	// unwrap if wugnot
-	if incentive.rewardToken == consts.WUGNOT_PATH {
+	if ictv.rewardToken == consts.WUGNOT_PATH {
 		unwrap(refundUint64)
 	}
 
 	// also refund deposit gns amount
-	gns.Transfer(a2u(incentive.refundee), incentive.depositGnsAmount)
+	gns.Transfer(a2u(ictv.refundee), ictv.depositGnsAmount)
 
-	delete(incentives, incentiveId)
-	for i, v := range poolIncentives[targetPoolPath] {
-		if v == incentiveId {
-			poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
+	incentives.Remove(ictvId)
+
+	if ictvList, exists := poolIncentives.Get(targetPoolPath); exists {
+		newIctvs := make([]string, 0, len(ictvList)-1)
+		for _, v := range ictvList {
+			if v != ictvId {
+				newIctvs = append(newIctvs, v)
+			}
 		}
+		poolIncentives.Set(targetPoolPath, newIctvs)
 	}
 
 	prevAddr, prevRealm := getPrev()
@@ -264,10 +274,10 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 		"poolPath", targetPoolPath,
 		"rewardToken", rewardToken,
 		"refundee", refundee.String(),
-		"internal_endBy", incentive.refundee.String(),
+		"internal_endBy", ictv.refundee.String(),
 		"internal_refundAmount", refund.ToString(),
-		"internal_refundGnsAmount", ufmt.Sprintf("%d", incentive.depositGnsAmount),
-		"internal_incentiveId", incentiveId,
+		"internal_refundGnsAmount", ufmt.Sprintf("%d", ictv.depositGnsAmount),
+		"internal_incentiveId", ictvId,
 	)
 }
 
@@ -283,6 +293,9 @@ func isValidIncentiveDuration(dur uint64) error {
 	)
 }
 
+// checkStartTime checks whether the current time meets the conditions for generating an
+// external rewards. Since the earliest time this reward can be generated is from
+// midnight of the next day, it uses a timestamp to verify this timing.
 func checkStartTime(startTimestamp int64) error {
 	// must be in seconds format, not milliseconds
 	// REF: https://stackoverflow.com/a/23982005

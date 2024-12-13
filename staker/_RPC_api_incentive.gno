@@ -63,7 +63,12 @@ func ApiGetRewardTokens() string {
 		}
 
 		// HANDLE EXTERNAL
-		for _, incentiveId := range poolIncentives[poolPath] {
+		ictvList, exists := poolIncentives.Get(poolPath)
+		if !exists {
+			continue
+		}
+
+		for _, incentiveId := range ictvList {
 			if incentives[incentiveId].rewardToken == "" {
 				continue
 			}
@@ -133,7 +138,12 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 		}
 
 		// HANDLE EXTERNAL
-		for _, incentiveId := range poolIncentives[poolPath] {
+		ictvList, exists := poolIncentives.Get(poolPath)
+		if !exists {
+			continue
+		}
+
+		for _, incentiveId := range ictvList {
 			thisPoolRewardTokens = append(thisPoolRewardTokens, incentives[incentiveId].rewardToken)
 		}
 

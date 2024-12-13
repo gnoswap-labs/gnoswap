@@ -382,6 +382,6 @@ func poolHasInternal(poolPath string) bool {
 }
 
 func poolHasExternal(poolPath string) bool {
-	_, exist := poolIncentives[poolPath]
+	_, exist := poolIncentives.Get(poolPath)
 	return exist
 }

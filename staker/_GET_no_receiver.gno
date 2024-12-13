@@ -30,7 +30,7 @@ func StakerPoolIncentives(poolPath string) []string {
 		CalcPoolPosition()
 	}
 
-	incentives, exist := poolIncentives[poolPath]
+	ictvList, exist := poolIncentives.Get(poolPath)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -38,7 +38,7 @@ func StakerPoolIncentives(poolPath string) []string {
 		))
 	}
 
-	return incentives
+	return ictvList
 }
 
 // StakerIncentiveTargetPoolPath returns the target pool path for a given incentive
