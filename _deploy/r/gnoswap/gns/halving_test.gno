@@ -4,559 +4,145 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/json"
+
 	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v1/consts"
 )
 
-func TestGetHalvingYearByHeight(t *testing.T) {
-	tests := []struct {
-		name   string
-		height int64
-		want   int64
-	}{
-		{
-			name:   "year 1, begin",
-			height: startHeight + 1,
-			want:   1,
-		},
-		{
-			name:   "year 1, middle",
-			height: startHeight + BLOCK_PER_YEAR/2,
-			want:   1,
-		},
-		{
-			name:   "year 1, end",
-			height: startHeight + BLOCK_PER_YEAR*1,
-			want:   1,
-		},
+var (
+	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
+)
 
-		{
-			name:   "year 2, begin",
-			height: startHeight + BLOCK_PER_YEAR*1 + 1,
-			want:   2,
-		},
-		{
-			name:   "year 2, middle",
-			height: startHeight + BLOCK_PER_YEAR*2 - 1,
-			want:   2,
-		},
-		{
-			name:   "year 2, end",
-			height: startHeight + BLOCK_PER_YEAR*2,
-			want:   2,
-		},
+var LAST_BLOCK_OF_YEAR = []int64{
+	0,
+	startHeight + BLOCK_PER_YEAR*1,
+	startHeight + BLOCK_PER_YEAR*2,
+	startHeight + BLOCK_PER_YEAR*3,
+	startHeight + BLOCK_PER_YEAR*4,
+	startHeight + BLOCK_PER_YEAR*5,
+	startHeight + BLOCK_PER_YEAR*6,
+	startHeight + BLOCK_PER_YEAR*7,
+	startHeight + BLOCK_PER_YEAR*8,
+	startHeight + BLOCK_PER_YEAR*9,
+	startHeight + BLOCK_PER_YEAR*10,
+	startHeight + BLOCK_PER_YEAR*11,
+	startHeight + BLOCK_PER_YEAR*12,
+}
 
-		{
-			name:   "year 3, begin",
-			height: startHeight + BLOCK_PER_YEAR*2 + 1,
-			want:   3,
-		},
-		{
-			name:   "year 3, middle",
-			height: startHeight + BLOCK_PER_YEAR*3 - 1,
-			want:   3,
-		},
-		{
-			name:   "year 3, end",
-			height: startHeight + BLOCK_PER_YEAR*3,
-			want:   3,
-		},
+var LAST_TIMESTAMP_OF_YEAR = []int64{
+	0,
+	startTimestamp + consts.TIMESTAMP_YEAR*1,
+	startTimestamp + consts.TIMESTAMP_YEAR*2,
+	startTimestamp + consts.TIMESTAMP_YEAR*3,
+	startTimestamp + consts.TIMESTAMP_YEAR*4,
+	startTimestamp + consts.TIMESTAMP_YEAR*5,
+	startTimestamp + consts.TIMESTAMP_YEAR*6,
+	startTimestamp + consts.TIMESTAMP_YEAR*7,
+	startTimestamp + consts.TIMESTAMP_YEAR*8,
+	startTimestamp + consts.TIMESTAMP_YEAR*9,
+	startTimestamp + consts.TIMESTAMP_YEAR*10,
+	startTimestamp + consts.TIMESTAMP_YEAR*11,
+	startTimestamp + consts.TIMESTAMP_YEAR*12,
+}
 
-		{
-			name:   "year 4, begin",
-			height: startHeight + BLOCK_PER_YEAR*3 + 1,
-			want:   4,
-		},
-		{
-			name:   "year 4, middle",
-			height: startHeight + BLOCK_PER_YEAR*4 - 1,
-			want:   4,
-		},
-		{
-			name:   "year 4, end",
-			height: startHeight + BLOCK_PER_YEAR*4,
-			want:   4,
-		},
+func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
+	t.Run("panic if caller is not admin", func(t *testing.T) {
+		uassert.PanicsWithMessage(t,
+			"caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission",
+			func() {
+				SetAvgBlockTimeInMsByAdmin(1)
+			},
+		)
+	})
 
-		{
-			name:   "year 5, begin",
-			height: startHeight + BLOCK_PER_YEAR*4 + 1,
-			want:   5,
-		},
-		{
-			name:   "year 5, middle",
-			height: startHeight + BLOCK_PER_YEAR*5 - 1,
-			want:   5,
-		},
-		{
-			name:   "year 5, end",
-			height: startHeight + BLOCK_PER_YEAR*5,
-			want:   5,
-		},
+	t.Run("success if caller is admin", func(t *testing.T) {
+		std.TestSkipHeights(1)
+		std.TestSetRealm(adminRealm)
+		SetAvgBlockTimeInMsByAdmin(2)
+		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(2))
+	})
+}
 
-		{name: "year 6, begin", height: startHeight + BLOCK_PER_YEAR*5 + 1, want: 6},
-		{
-			name:   "year 6, middle",
-			height: startHeight + BLOCK_PER_YEAR*6 - 1,
-			want:   6,
-		},
-		{
-			name:   "year 6, end",
-			height: startHeight + BLOCK_PER_YEAR*6,
-			want:   6,
-		},
+func TestSetAvgBlockTimeInMs(t *testing.T) {
+	t.Run("panic if caller is not governance contract", func(t *testing.T) {
+		uassert.PanicsWithMessage(t,
+			"caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission",
+			func() {
+				SetAvgBlockTimeInMs(3)
+			},
+		)
+	})
 
-		{
-			name:   "year 7, begin",
-			height: startHeight + BLOCK_PER_YEAR*6 + 1,
-			want:   7,
-		},
-		{
-			name:   "year 7, middle",
-			height: startHeight + BLOCK_PER_YEAR*7 - 1,
-			want:   7,
-		},
-		{
-			name:   "year 7, end",
-			height: startHeight + BLOCK_PER_YEAR*7,
-			want:   7,
-		},
+	t.Run("success if caller is governance contract", func(t *testing.T) {
+		std.TestSkipHeights(3)
+		std.TestSetRealm(govRealm)
+		SetAvgBlockTimeInMs(4)
+		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(4))
+	})
 
-		{
-			name:   "year 8, begin",
-			height: startHeight + BLOCK_PER_YEAR*7 + 1,
-			want:   8,
-		},
-		{
-			name:   "year 8, middle",
-			height: startHeight + BLOCK_PER_YEAR*8 - 1,
-			want:   8,
-		},
-		{
-			name:   "year 8, end",
-			height: startHeight + BLOCK_PER_YEAR*8,
-			want:   8,
-		},
+	// reset to default for further test
+	setAvgBlockTimeInMs(consts.SECOND_IN_MILLISECOND * consts.BLOCK_GENERATION_INTERVAL)
+}
 
-		{
-			name:   "year 9, begin",
-			height: startHeight + BLOCK_PER_YEAR*8 + 1,
-			want:   9,
-		},
-		{
-			name:   "year 9, middle",
-			height: startHeight + BLOCK_PER_YEAR*9 - 1,
-			want:   9,
-		},
-		{
-			name:   "year 9, end",
-			height: startHeight + BLOCK_PER_YEAR*9,
-			want:   9,
-		},
-
-		{
-			name:   "year 10, begin",
-			height: startHeight + BLOCK_PER_YEAR*9 + 1,
-			want:   10,
-		},
-		{
-			name:   "year 10, middle",
-			height: startHeight + BLOCK_PER_YEAR*10 - 1,
-			want:   10,
-		},
-		{
-			name:   "year 10, end",
-			height: startHeight + BLOCK_PER_YEAR*10,
-			want:   10,
-		},
-
-		{
-			name:   "year 11, begin",
-			height: startHeight + BLOCK_PER_YEAR*10 + 1,
-			want:   11,
-		},
-		{
-			name:   "year 11, middle",
-			height: startHeight + BLOCK_PER_YEAR*11 - 1,
-			want:   11,
-		},
-		{
-			name:   "year 11, end",
-			height: startHeight + BLOCK_PER_YEAR*11,
-			want:   11,
-		},
-
-		{
-			name:   "year 12, begin",
-			height: startHeight + BLOCK_PER_YEAR*11 + 1,
-			want:   12,
-		},
-		{
-			name:   "year 12, middle",
-			height: startHeight + BLOCK_PER_YEAR*12 - 1,
-			want:   12,
-		},
-		{
-			name:   "year 12, end",
-			height: startHeight + BLOCK_PER_YEAR*12,
-			want:   12,
-		},
-
-		{
-			name:   "after year 12",
-			height: startHeight + BLOCK_PER_YEAR*12 + 1,
-			want:   0,
-		},
+func TestGetAmountByHeight(t *testing.T) {
+	for year := int64(1); year <= MAX_HALVING_YEAR; year++ {
+		lastBlockOfYear := LAST_BLOCK_OF_YEAR[year]
+		uassert.Equal(t, GetAmountPerBlockPerHalvingYear(year), GetAmountByHeight(lastBlockOfYear))
 	}
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			uassert.Equal(t, tt.want, GetHalvingYearByHeight(tt.height))
-		})
+func TestGetHalvingYearByHeight(t *testing.T) {
+	for year := int64(1); year <= MAX_HALVING_YEAR; year++ {
+		lastBlockOfYear := LAST_BLOCK_OF_YEAR[year]
+		uassert.Equal(t, year, GetHalvingYearByHeight(lastBlockOfYear))
 	}
 }
 
 func TestGetHalvingYearAndEndTimestamp(t *testing.T) {
-	tests := []struct {
-		name             string
-		timestamp        int64
-		wantYear         int64
-		wantEndTimestamp int64
-	}{
-		{
-			name:             "year 1, begin",
-			timestamp:        startTimestamp + 1,
-			wantYear:         1,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR,
-		},
-		{
-			name:             "year 1, middle",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR/2,
-			wantYear:         1,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR,
-		},
-		{
-			name:             "year 1, end",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*1,
-			wantYear:         1,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR,
-		},
-
-		{
-			name:             "year 2, begin",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*1 + 1,
-			wantYear:         2,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*2,
-		},
-
-		{
-			name:             "year 2, middle",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*2 - 1,
-			wantYear:         2,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*2,
-		},
-
-		{
-			name:             "year 2, end",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*2,
-			wantYear:         2,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*2,
-		},
-
-		{
-			name:             "year 3, begin",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*2 + 1,
-			wantYear:         3,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*3,
-		},
-
-		{
-			name:             "year 3, middle",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*3 - 1,
-			wantYear:         3,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*3,
-		},
-
-		{
-			name:             "year 3, end",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*3,
-			wantYear:         3,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*3,
-		},
-
-		{
-			name:             "year 4, begin",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*3 + 1,
-			wantYear:         4,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*4,
-		},
-
-		{
-			name:             "year 4, middle",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*4 - 1,
-			wantYear:         4,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*4,
-		},
-
-		{
-			name:             "year 4, end",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*4,
-			wantYear:         4,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*4,
-		},
-
-		{
-			name:             "year 5, begin",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*4 + 1,
-			wantYear:         5,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*5,
-		},
-
-		{
-			name:             "year 5, middle",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*5 - 1,
-			wantYear:         5,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*5,
-		},
-
-		{
-			name:             "year 5, end",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*5,
-			wantYear:         5,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*5,
-		},
-
-		{
-			name:             "year 6, begin",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*5 + 1,
-			wantYear:         6,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*6,
-		},
-
-		{
-			name:             "year 6, middle",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*6 - 1,
-			wantYear:         6,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*6,
-		},
-
-		{
-			name:             "year 6, end",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*6,
-			wantYear:         6,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*6,
-		},
-
-		{
-			name:             "year 7, begin",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*6 + 1,
-			wantYear:         7,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*7,
-		},
-
-		{
-			name:             "year 7, middle",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*7 - 1,
-			wantYear:         7,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*7,
-		},
-
-		{
-			name:             "year 7, end",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*7,
-			wantYear:         7,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*7,
-		},
-
-		{
-			name:             "year 8, begin",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*7 + 1,
-			wantYear:         8,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*8,
-		},
-
-		{
-			name:             "year 8, middle",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*8 - 1,
-			wantYear:         8,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*8,
-		},
-
-		{
-			name:             "year 8, end",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*8,
-			wantYear:         8,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*8,
-		},
-
-		{
-			name:             "year 9, begin",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*8 + 1,
-			wantYear:         9,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*9,
-		},
-
-		{
-			name:             "year 9, middle",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*9 - 1,
-			wantYear:         9,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*9,
-		},
-
-		{
-			name:             "year 9, end",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*9,
-			wantYear:         9,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*9,
-		},
-
-		{
-			name:             "year 10, begin",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*9 + 1,
-			wantYear:         10,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*10,
-		},
-
-		{
-			name:             "year 10, middle",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*10 - 1,
-			wantYear:         10,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*10,
-		},
-
-		{
-			name:             "year 10, end",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*10,
-			wantYear:         10,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*10,
-		},
-
-		{
-			name:             "year 11, begin",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*10 + 1,
-			wantYear:         11,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*11,
-		},
-
-		{
-			name:             "year 11, middle",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*11 - 1,
-			wantYear:         11,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*11,
-		},
-
-		{
-			name:             "year 11, end",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*11,
-			wantYear:         11,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*11,
-		},
-
-		{
-			name:             "year 12, begin",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*11 + 1,
-			wantYear:         12,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*12,
-		},
-
-		{
-			name:             "year 12, middle",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*12 - 1,
-			wantYear:         12,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*12,
-		},
-
-		{
-			name:             "year 12, end",
-			timestamp:        startTimestamp + consts.TIMESTAMP_YEAR*12,
-			wantYear:         12,
-			wantEndTimestamp: startTimestamp + consts.TIMESTAMP_YEAR*12,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotYear, gotEndTimestamp := getHalvingYearAndEndTimestamp(tt.timestamp)
-			uassert.Equal(t, tt.wantYear, gotYear)
-			uassert.Equal(t, tt.wantEndTimestamp, gotEndTimestamp)
-		})
+	for year := int64(1); year <= MAX_HALVING_YEAR; year++ {
+		lastTimestampOfYear := LAST_TIMESTAMP_OF_YEAR[year]
+		gotYear, gotEndTimestamp := getHalvingYearAndEndTimestamp(lastTimestampOfYear)
+		uassert.Equal(t, year, gotYear)
+		uassert.Equal(t, LAST_TIMESTAMP_OF_YEAR[year], gotEndTimestamp)
 	}
 }
 
-func TestSetAvgBlockTimeInMs(t *testing.T) {
-	// reset state
-	resetObject(t)
+func TestHalvingYearBlock(t *testing.T) {
+	setHalvingYearBlock(1, 100)
+	uassert.Equal(t, GetHalvingYearBlock(1), int64(100))
+}
 
-	var (
-		user01Addr  = testutils.TestAddress("user01Addr")
-		user01Realm = std.NewUserRealm(user01Addr)
-	)
+func TestHalvingYearTimestamp(t *testing.T) {
+	setHalvingYearTimestamp(2, 200)
+	uassert.Equal(t, GetHalvingYearTimestamp(2), int64(200))
+}
 
-	t.Run("skip 50 blocks", func(t *testing.T) {
-		std.TestSkipHeights(50)
-		uassert.Equal(t, int64(173), std.GetHeight())
+func TestHalvingYearMaxAmount(t *testing.T) {
+	setHalvingYearMaxAmount(3, 300)
+	uassert.Equal(t, GetHalvingYearMaxAmount(3), uint64(300))
+}
 
-		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-		mintedAmount := Mint(a2u(user01Addr))
-		uassert.Equal(t, mintedAmount, uint64(14269406*50))
-		uassert.Equal(t, MintedEmissionAmount(), uint64(713470300))
-	})
+func TestHalvingYearMintAmount(t *testing.T) {
+	setHalvingYearMintAmount(4, 400)
+	uassert.Equal(t, GetHalvingYearMintAmount(4), uint64(400))
+}
 
-	t.Run("set avg block time in ms", func(t *testing.T) {
-		std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
-		setAvgBlockTimeInMs(2500)
+func TestHalvingYearAccuAmount(t *testing.T) {
+	setHalvingYearAccuAmount(5, 500)
+	uassert.Equal(t, GetHalvingYearAccuAmount(5), uint64(500))
+}
 
-		// for block time 2.5s
-		// amount per block is 17836757
-		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-		std.TestSkipHeights(1)
-		mintedAmount := Mint(a2u(user01Addr))
-		uassert.Equal(t, mintedAmount, uint64(17836757))
-		uassert.Equal(t, MintedEmissionAmount(), uint64(713470300+17836757)) // 731307057
-	})
+func TestAmountPerBlockPerHalvingYear(t *testing.T) {
+	setAmountPerBlockPerHalvingYear(6, 600)
+	uassert.Equal(t, GetAmountPerBlockPerHalvingYear(6), uint64(600))
+}
 
-	t.Run("reach almost first halving", func(t *testing.T) {
-		// current height = 174
-		// next halving = 12614533
-		// 12614533 - 174 = 12614359
+func TestGetHalvingInfo(t *testing.T) {
+	jsonStr, err := json.Unmarshal([]byte(GetHalvingInfo()))
+	uassert.NoError(t, err)
 
-		std.TestSkipHeights(12614358)
-		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-		Mint(a2u(user01Addr))
-
-		uassert.Equal(t, MintedEmissionAmount(), uint64(224999969664063))
-		// 224999969664063 - 731307057 = 224999238357006
-		// 224999238357006 / 12614358 = 17836757
-	})
-
-	t.Run("reach exact first halving", func(t *testing.T) {
-		std.TestSkipHeights(1)
-		uassert.Equal(t, std.GetHeight(), int64(12614533))
-
-		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-		Mint(a2u(user01Addr))
-
-		// minted all amount for first halving year
-		uassert.Equal(t, MintedEmissionAmount(), uint64(225000000000000))
-
-		year := GetHalvingYearByHeight(std.GetHeight())
-		uassert.Equal(t, int64(1), year) // year 1 ends
-
-	})
-
-	t.Run("start second halving", func(t *testing.T) {
-		std.TestSkipHeights(1)
-
-		year := GetHalvingYearByHeight(std.GetHeight())
-		uassert.Equal(t, int64(2), year) // year 2 starts
-
-		year2AmountPerBlock := GetAmountPerBlockPerHalvingYear(2)
-		uassert.Equal(t, uint64(14269406), year2AmountPerBlock)
-
-		std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
-		Mint(a2u(user01Addr))
-		uassert.Equal(t, MintedEmissionAmount(), uint64(225000000000000+14269406))
-	})
+	halving := jsonStr.MustKey("halvings").MustArray()
+	uassert.Equal(t, len(halving), 12)
 }
