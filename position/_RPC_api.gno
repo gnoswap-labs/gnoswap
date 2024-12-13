@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
 	"gno.land/r/gnoswap/v1/common"
@@ -52,8 +51,9 @@ type ResponseApiGetPositions struct {
 
 func ApiGetPositions() string {
 	rpcPositions := []RpcPosition{}
-	for lpTokenId, _ := range positions {
-		rpcPosition := rpcMakePosition(lpTokenId)
+
+	for tokenId := uint64(1); tokenId < nextId; tokenId++ {
+		rpcPosition := rpcMakePosition(tokenId)
 		rpcPositions = append(rpcPositions, rpcPosition)
 	}
 
@@ -111,11 +111,13 @@ func ApiGetPositions() string {
 func ApiGetPosition(lpTokenId uint64) string {
 	rpcPositions := []RpcPosition{}
 
-	_, ok := positions[lpTokenId]
-	if ok {
-		rpcPosition := rpcMakePosition(lpTokenId)
-		rpcPositions = append(rpcPositions, rpcPosition)
+	position, exist := GetPosition(lpTokenId)
+	if !exist {
+		return ""
 	}
+
+	rpcPosition := rpcMakePosition(lpTokenId)
+	rpcPositions = append(rpcPositions, rpcPosition)
 
 	r := ResponseApiGetPositions{
 		Stat: ResponseQueryBase{
@@ -170,8 +172,9 @@ func ApiGetPosition(lpTokenId uint64) string {
 
 func ApiGetPositionsByPoolPath(poolPath string) string {
 	rpcPositions := []RpcPosition{}
-	for lpTokenId, position := range positions {
 
+	for lpTokenId := uint64(1); lpTokenId < nextId; lpTokenId++ {
+		position := MustGetPosition(lpTokenId)
 		if position.poolKey != poolPath {
 			continue
 		}
@@ -233,8 +236,8 @@ func ApiGetPositionsByPoolPath(poolPath string) string {
 
 func ApiGetPositionsByAddress(address std.Address) string {
 	rpcPositions := []RpcPosition{}
-	for lpTokenId, position := range positions {
-
+	for lpTokenId := uint64(1); lpTokenId < nextId; lpTokenId++ {
+		position := MustGetPosition(lpTokenId)
 		if !(position.operator == address || gnft.OwnerOf(tokenIdFrom(lpTokenId)) == address) {
 			continue
 		}
@@ -296,7 +299,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 
 func ApiGetPositionsUnclaimedFee() string {
 	rpcUnclaimedFee := []RpcUnclaimedFee{}
-	for lpTokenId, _ := range positions {
+	for lpTokenId := uint64(1); lpTokenId < nextId; lpTokenId++ {
 		unclaimedFee0, unclaimedFee1 := unclaimedFee(lpTokenId)
 		rpcUnclaimedFee = append(rpcUnclaimedFee, RpcUnclaimedFee{
 			LpTokenId: lpTokenId,
@@ -376,13 +379,7 @@ func ApiGetPositionUnclaimedFeeByLpTokenId(lpTokenId uint64) string {
 }
 
 func rpcMakePosition(lpTokenId uint64) RpcPosition {
-	position, exist := positions[lpTokenId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("_RPC_api.gno__rpcMakePosition() || lpTokenId(%d) not found", lpTokenId),
-		))
-	}
+	position := MustGetPosition(lpTokenId)
 
 	burned := isBurned(lpTokenId)
 
@@ -427,13 +424,15 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 func unclaimedFee(tokenId uint64) (*i256.Int, *i256.Int) {
 	// ref: https://blog.uniswap.org/uniswap-v3-math-primer-2#calculating-uncollected-fees
 
-	_liquidity := positions[tokenId].liquidity // u256
-	liquidity := i256.FromUint256(_liquidity)  // i256
+	position := MustGetPosition(tokenId)
 
-	tickLower := positions[tokenId].tickLower
-	tickUpper := positions[tokenId].tickUpper
+	_liquidity := position.liquidity          // u256
+	liquidity := i256.FromUint256(_liquidity) // i256
 
-	poolKey := positions[tokenId].poolKey
+	tickLower := position.tickLower
+	tickUpper := position.tickUpper
+
+	poolKey := position.poolKey
 	pool := pl.GetPoolFromPoolPath(poolKey)
 
 	currentTick := pool.Slot0Tick()
@@ -456,11 +455,11 @@ func unclaimedFee(tokenId uint64) (*i256.Int, *i256.Int) {
 	_tickLowerFeeGrowthOutside1X128 := pool.GetTickFeeGrowthOutside1X128(tickLower)     // u256
 	tickLowerFeeGrowthOutside1X128 := i256.FromUint256(_tickLowerFeeGrowthOutside1X128) // i256
 
-	_feeGrowthInside0LastX128 := positions[tokenId].feeGrowthInside0LastX128 // u256
-	feeGrowthInside0LastX128 := i256.FromUint256(_feeGrowthInside0LastX128)  // i256
+	_feeGrowthInside0LastX128 := position.feeGrowthInside0LastX128          // u256
+	feeGrowthInside0LastX128 := i256.FromUint256(_feeGrowthInside0LastX128) // i256
 
-	_feeGrowthInside1LastX128 := positions[tokenId].feeGrowthInside1LastX128 // u256
-	feeGrowthInside1LastX128 := i256.FromUint256(_feeGrowthInside1LastX128)  // i256
+	_feeGrowthInside1LastX128 := position.feeGrowthInside1LastX128          // u256
+	feeGrowthInside1LastX128 := i256.FromUint256(_feeGrowthInside1LastX128) // i256
 
 	var tickLowerFeeGrowthBelow0, tickLowerFeeGrowthBelow1, tickUpperFeeGrowthAbove0, tickUpperFeeGrowthAbove1 *i256.Int
 
@@ -510,5 +509,6 @@ func subIn256(x, y *i256.Int) *i256.Int {
 }
 
 func isBurned(tokenId uint64) bool {
-	return positions[tokenId].burned
+	position := MustGetPosition(tokenId)
+	return position.burned
 }

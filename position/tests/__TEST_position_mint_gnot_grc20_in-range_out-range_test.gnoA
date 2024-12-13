@@ -110,6 +110,7 @@ func TestOneSideOnlyUgnot(t *testing.T) {
 	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // POSITION FOR WRAP
 
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100_000_000}}, nil)
+	std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 100_000_000}})
 	uassert.Equal(t, ugnotBalanceOf(fresh01), uint64(0))
 
 	std.TestSetRealm(fresh01Realm)
@@ -144,6 +145,7 @@ func TestBothWithFresh(t *testing.T) {
 
 	wugnot.Approve(a2u(consts.POSITION_ADDR), consts.UINT64_MAX) // POSITION FOR WRAP
 
+	std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 100_000_000}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 100_000_000}}, nil)
 	uassert.Equal(t, ugnotBalanceOf(fresh02), uint64(0))
 
@@ -184,7 +186,7 @@ func TestBothWithFreshButNoSend(t *testing.T) {
 	std.TestSetRealm(fresh02Realm)
 	uassert.PanicsWithMessage(
 		t,
-		`WUGNOT:insufficient balance`,
+		`insufficient balance`,
 		func() {
 			Mint(consts.GNS_PATH, consts.GNOT, fee500, 6000, 16000, "70000000", "70000000", "0", "0", max_timeout, fresh02, fresh02)
 		},

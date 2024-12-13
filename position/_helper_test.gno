@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
@@ -544,7 +545,7 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 
 // resetObject resets the object state(clear or make it default values)
 func resetObject(t *testing.T) {
-	positions = make(map[uint64]Position)
+	positions = avl.NewTree()
 	nextId = 1
 }
 
