@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/avl"
-	"gno.land/p/demo/seqid"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -25,21 +24,25 @@ import (
 	(365 days) 1 year = 31536000 block
 */
 
-const HALVING_AMOUNTS = []uint64{
-	// MAX_EMISSION_AMOUNT = 225000000000000
-	18_750_000_000_000 * 12, // Year 1:  225000000000000
-	18_750_000_000_000 * 12, // Year 2:  225000000000000
-	9_375_000_000_000 * 12,  // Year 3:  112500000000000
-	9_375_000_000_000 * 12,  // Year 4:  112500000000000
-	4_687_500_000_000 * 12,  // Year 5:  56250000000000
-	4_687_500_000_000 * 12,  // Year 6:  56250000000000
-	2_343_750_000_000 * 12,  // Year 7:  28125000000000
-	2_343_750_000_000 * 12,  // Year 8:  28125000000000
-	1_171_875_000_000 * 12,  // Year 9:  14062500000000
-	1_171_875_000_000 * 12,  // Year 10: 14062500000000
-	1_171_875_000_000 * 12,  // Year 11: 14062500000000
-	1_171_875_000_000 * 12,  // Year 12: 14062500000000
-}
+const (
+	MONTH_PER_YEAR  = uint64(12)
+	HALVING_AMOUNTS = []uint64{
+		18_750_000_000_000 * 12, // Year 1:  225000000000000
+		18_750_000_000_000 * 12, // Year 2:  225000000000000
+		9_375_000_000_000 * 12,  // Year 3:  112500000000000
+		9_375_000_000_000 * 12,  // Year 4:  112500000000000
+		4_687_500_000_000 * 12,  // Year 5:  56250000000000
+		4_687_500_000_000 * 12,  // Year 6:  56250000000000
+		2_343_750_000_000 * 12,  // Year 7:  28125000000000
+		2_343_750_000_000 * 12,  // Year 8:  28125000000000
+		1_171_875_000_000 * 12,  // Year 9:  14062500000000
+		1_171_875_000_000 * 12,  // Year 10: 14062500000000
+		1_171_875_000_000 * 12,  // Year 11: 14062500000000
+		1_171_875_000_000 * 12,  // Year 12: 14062500000000
+	}
+
+	MAX_HALVING_YEAR = int64(12)
+)
 
 var (
 	BLOCK_PER_YEAR = consts.TIMESTAMP_YEAR / consts.BLOCK_GENERATION_INTERVAL
@@ -167,6 +170,7 @@ func setAvgBlockTimeInMs(ms int64) {
 	}
 }
 
+// GetAmountByHeight returns the amount of gns to mint by height
 func GetAmountByHeight(height int64) uint64 {
 	halvingYear := GetHalvingYearByHeight(height)
 	return GetAmountPerBlockPerHalvingYear(halvingYear)
@@ -184,6 +188,8 @@ func GetHalvingYearByHeight(height int64) int64 {
 	return 0
 }
 
+// getHalvingYearAndEndTimestamp returns the halving year and end timestamp of the given timestamp
+// if the timestamp is not in any halving year, it returns 0, 0
 func getHalvingYearAndEndTimestamp(timestamp int64) (int64, int64) {
 	timestamp -= startTimestamp
 
@@ -205,56 +211,6 @@ func getHalvingYearAndEndTimestamp(timestamp int64) (int64, int64) {
 	return divValue + 1, startTimestamp + (consts.TIMESTAMP_YEAR * (divValue + 1))
 }
 
-func GetHalvingInfo() string {
-	height := std.GetHeight()
-	now := time.Now().Unix()
-
-	halvings := make([]*json.Node, 0)
-	// for year, block := range halvingYearBlock {
-	halvingYearBlock.Iterate("", "", func(yearStr string, value interface{}) bool {
-		yearInt, _ := strconv.ParseInt(yearStr, 10, 64)
-		block := value.(int64)
-		halvings = append(halvings, json.ObjectNode("", map[string]*json.Node{
-			"year":   json.StringNode("year", yearStr),
-			"block":  json.NumberNode("block", float64(block)),
-			"amount": json.NumberNode("amount", float64(GetAmountPerBlockPerHalvingYear(yearInt))),
-		}))
-
-		return true
-	})
-
-	node := json.ObjectNode("", map[string]*json.Node{
-		"height":         json.NumberNode("height", float64(height)),
-		"timestamp":      json.NumberNode("timestamp", float64(now)),
-		"avgBlockTimeMs": json.NumberNode("avgBlockTimeMs", float64(avgBlockTimeMs)),
-		"halvings":       json.ArrayNode("", halvings),
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
-}
-
-func getYearlyBlockForTimestampMs(ms int64) int64 {
-	yearMs := consts.TIMESTAMP_YEAR * consts.SECOND_IN_MILLISECOND // how much millisecond in a year
-	return int64(yearMs) / ms                                      // how many block in a year
-}
-
-func prevRealm() string {
-	return std.PrevRealm().PkgPath()
-}
-
-func callType() string {
-	if prevRealm() == "" {
-		return "DIRECT"
-	}
-
-	return "INDIRECT"
-}
-
 func GetHalvingYearBlock(year int64) int64 {
 	iBlock, exist := halvingYearBlock.Get(strconv.FormatInt(year, 10))
 	if !exist {
@@ -266,7 +222,6 @@ func GetHalvingYearBlock(year int64) int64 {
 
 func setHalvingYearBlock(year int64, block int64) {
 	halvingYearBlock.Set(strconv.FormatInt(year, 10), block)
-
 }
 
 func GetHalvingYearTimestamp(year int64) int64 {
@@ -334,6 +289,31 @@ func setAmountPerBlockPerHalvingYear(year int64, amount uint64) {
 	amountPerBlockPerHalvingYear.Set(strconv.FormatInt(year, 10), amount)
 }
 
-func getSeqID(num int64) string {
-	return seqid.ID(uint64(num)).Binary()
+func GetHalvingInfo() string {
+	height := std.GetHeight()
+	now := time.Now().Unix()
+
+	halvings := make([]*json.Node, 0)
+
+	for year := int64(1); year <= MAX_HALVING_YEAR; year++ {
+		halvings = append(halvings, json.ObjectNode("", map[string]*json.Node{
+			"year":   json.StringNode("year", strconv.FormatInt(year, 10)),
+			"block":  json.NumberNode("block", float64(GetHalvingYearBlock(year))),
+			"amount": json.NumberNode("amount", float64(GetAmountPerBlockPerHalvingYear(year))),
+		}))
+	}
+
+	node := json.ObjectNode("", map[string]*json.Node{
+		"height":         json.NumberNode("height", float64(height)),
+		"timestamp":      json.NumberNode("timestamp", float64(now)),
+		"avgBlockTimeMs": json.NumberNode("avgBlockTimeMs", float64(avgBlockTimeMs)),
+		"halvings":       json.ArrayNode("", halvings),
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return string(b)
 }
