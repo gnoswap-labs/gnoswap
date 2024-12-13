@@ -48,7 +48,7 @@ func TestMintPosition01InRange(t *testing.T) {
 	uassert.Equal(t, amount0, "18394892")
 	uassert.Equal(t, amount1, "50000000")
 
-	position := positions[tokenId]
+	position := MustGetPosition(tokenId)
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -81,7 +81,7 @@ func TestSwap1(t *testing.T) {
 	uassert.Equal(t, amount0, "1234567")
 	uassert.Equal(t, amount1, "-3332779")
 
-	position := positions[uint64(1)]
+	position := MustGetPosition(uint64(1))
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -120,7 +120,7 @@ func TestMintPosition02InRange(t *testing.T) {
 	uassert.Equal(t, amount0, "21030652")
 	uassert.Equal(t, amount1, "50000000")
 
-	position := positions[tokenId]
+	position := MustGetPosition(tokenId)
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -169,7 +169,7 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 	ownerOfPosition = gnft.OwnerOf(tid(_lpTokenId))
 	uassert.Equal(t, ownerOfPosition, admin)
 
-	position := positions[_lpTokenId]
+	position := MustGetPosition(_lpTokenId)
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -208,7 +208,7 @@ func TestMintPosition03InRange(t *testing.T) {
 	uassert.Equal(t, amount0, "21030652")
 	uassert.Equal(t, amount1, "50000000")
 
-	position := positions[tokenId]
+	position := MustGetPosition(tokenId)
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -258,7 +258,7 @@ func TestReposition(t *testing.T) {
 	_lpTokenId := uint64(1)
 
 	// check current state
-	position := positions[_lpTokenId]
+	position := MustGetPosition(_lpTokenId)
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -281,7 +281,7 @@ func TestReposition(t *testing.T) {
 		"100",      // amount1Min
 	)
 
-	position = positions[_lpTokenId]
+	position = MustGetPosition(_lpTokenId)
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")

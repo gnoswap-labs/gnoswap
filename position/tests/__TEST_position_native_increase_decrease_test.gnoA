@@ -44,6 +44,8 @@ func testMintPosition(t *testing.T) {
 		// prepare 50000005ugnot (5 for refund test)
 		std.TestIssueCoins(admin, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(admin), uint64(50000005))
+
+		std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 200000000}})
 		uassert.Equal(t, ugnotBalanceOf(consts.POSITION_ADDR), uint64(200000000))
 
 		// send & set orig send
@@ -76,7 +78,7 @@ func testMintPosition(t *testing.T) {
 		uassert.Equal(t, amount0, "50000000")
 		uassert.Equal(t, amount1, "18394892")
 
-		position := positions[tokenId]
+		position := MustGetPosition(tokenId)
 		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
 
 		// SPEND ALL WUGNOT

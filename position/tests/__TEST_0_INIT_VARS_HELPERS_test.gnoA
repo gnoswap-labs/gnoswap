@@ -63,7 +63,6 @@ func isOwner(t *testing.T, tokenId uint64, addr std.Address) bool {
 }
 
 func getPoolFromLpTokenId(lpTokenId uint64) *pl.Pool {
-	position := positions[lpTokenId]
-
+	position := MustGetPosition(lpTokenId)
 	return pl.GetPoolFromPoolPath(position.poolKey)
 }

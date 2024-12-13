@@ -50,7 +50,7 @@ func TestMintPosition01InRange(t *testing.T) {
 	uassert.Equal(t, amount0, "18394892")
 	uassert.Equal(t, amount1, "50000000")
 
-	position := positions[uint64(1)]
+	position := MustGetPosition(uint64(1))
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -85,7 +85,7 @@ func TestSwap1(t *testing.T) {
 	uassert.Equal(t, amount1, "-3332779")
 
 	// pool.swap really doesn't update the position
-	position := positions[uint64(1)]
+	position := MustGetPosition(uint64(1))
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -130,7 +130,7 @@ func TestMintPosition02InRange(t *testing.T) {
 	uassert.Equal(t, amount0, "2767688")
 	uassert.Equal(t, amount1, "50000000")
 
-	position := positions[uint64(2)]
+	position := MustGetPosition(uint64(2))
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -164,7 +164,7 @@ func TestSwap2(t *testing.T) {
 	uassert.Equal(t, amount1, "-3305175")
 
 	// pool.swap really doesn't update the position
-	position := positions[uint64(1)]
+	position := MustGetPosition(uint64(1))
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -199,7 +199,7 @@ func TestSwap3(t *testing.T) {
 
 	// pool.swap really doesn't update the position
 	{
-		position := positions[uint64(1)]
+		position := MustGetPosition(uint64(1))
 		uassert.Equal(t, position.nonce.ToString(), "0")
 		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 		uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -214,7 +214,7 @@ func TestSwap3(t *testing.T) {
 	}
 
 	{
-		position := positions[uint64(2)]
+		position := MustGetPosition(uint64(2))
 		uassert.Equal(t, position.nonce.ToString(), "0")
 		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 		uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -290,7 +290,7 @@ func TestDecreaseLiquidityPosition02(t *testing.T) {
 	uassert.Equal(t, unclaimedFee0.ToString(), "0")
 	uassert.Equal(t, unclaimedFee1.ToString(), "0")
 
-	position := positions[_lpTokenId]
+	position := MustGetPosition(_lpTokenId)
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
