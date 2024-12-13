@@ -51,6 +51,15 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		CalcPoolPosition()
 	}
 
+	// check whether tokenId already staked or not
+	deposit, exist := deposits.Get(tokenId)
+	if exist {
+		panic(addDetailToError(
+			errAlreadyStaked,
+			ufmt.Sprintf("staker.gno__StakeToken() || tokenId(%d) already staked", tokenId),
+		))
+	}
+
 	owner := gnft.OwnerOf(tid(tokenId))
 	caller := std.PrevRealm().Addr()
 	if err := requireTokenOwnership(owner, caller); err != nil {
@@ -66,22 +75,13 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		panic(err)
 	}
 
-	// check whether tokenId already staked or not
-	deposit, exist := deposits.Get(tokenId)
-	if exist {
-		panic(addDetailToError(
-			errAlreadyStaked,
-			ufmt.Sprintf("staker.gno__StakeToken() || tokenId(%d) already staked", tokenId),
-		))
-	}
-
-	// TODO: extract as function
-	// staked status
-	deposit.SetOwner(std.PrevRealm().Addr())
-	deposit.SetNumberOfStakes(deposit.NumberOfStakes() + 1)
-	deposit.SetStakeTimestamp(time.Now().Unix())
-	deposit.SetStakeHeight(std.GetHeight())
-	deposit.SetTargetPoolPath(poolPath)
+	deposit = newDeposit(
+		owner,
+		deposit.NumberOfStakes() + 1,
+		time.Now().Unix(),
+		std.GetHeight(),
+		poolPath,
+	)
 	deposits.Set(tokenId, deposit)
 
 	// if caller is owner, transfer NFT ownership to staker contract

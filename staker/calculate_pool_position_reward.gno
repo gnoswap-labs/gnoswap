@@ -311,8 +311,8 @@ func CalcPoolPosition() {
 	}
 
 	// Repeat for the number of internal emission target pools
-	for poolPath, internal := range poolTiers {
-		tier := internal.tier
+	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
+		tier := internalTier.tier
 
 		tierAmount := uint64(0)
 		if tier == 1 {
@@ -356,7 +356,7 @@ func CalcPoolPosition() {
 			lastCalculatedBalance = _stakerGnsBalance - totalExternalGns
 
 		}
-	}
+	})
 
 	for tokenId, deposit := range deposits {
 		poolPath := deposit.targetPoolPath
@@ -389,7 +389,7 @@ func CalcPoolPosition() {
 	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - totalExternalGns // latest balance
 
 	// Repeat for the number of internal emission target pools (clean up)
-	for poolPath, _ := range poolTiers {
+	poolTiers.Iter(func(poolPath string, _ InternalTier) {
 		amount := poolLastTmpGns[poolPath]
 		if amount > 0 {
 			if poolCurrentBlockGns[poolPath] >= amount {
@@ -397,9 +397,8 @@ func CalcPoolPosition() {
 			} else {
 				poolCurrentBlockGns[poolPath] = 0
 			}
-		} else {
 		}
-	}
+	})
 
 	// clear(poolCurrentBlockGns) // gno doesn't support `clear` keyword yet
 	poolCurrentBlockGns = make(map[string]uint64)

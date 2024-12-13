@@ -32,6 +32,12 @@ func (p PoolTiers) Remove(poolPath string) {
 	delete(p, poolPath)
 }
 
+func (p PoolTiers) Iter(fn func(poolPath string, internalTier InternalTier)) {
+	for poolPath, internalTier := range p {
+		fn(poolPath, internalTier)
+	}
+}
+
 // poolIncentives maps pool paths to their associated incentive IDs
 type PoolIncentives map[string][]string
 

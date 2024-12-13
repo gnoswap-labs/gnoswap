@@ -87,6 +87,22 @@ type Deposit struct {
 	targetPoolPath string      // staked position's pool path
 }
 
+func newDeposit(
+	owner std.Address,
+	numberOfStakes uint64,
+	stakeTimestamp int64,
+	stakeHeight int64,
+	targetPoolPath string,
+) Deposit {
+	return Deposit{
+		owner:          owner,
+		numberOfStakes: numberOfStakes,
+		stakeTimestamp: stakeTimestamp,
+		stakeHeight:    stakeHeight,
+		targetPoolPath: targetPoolPath,
+	}
+}
+
 func (d Deposit) NumberOfStakes() uint64 {
 	return d.numberOfStakes
 }
@@ -97,24 +113,4 @@ func (d Deposit) StakeTimestamp() int64 {
 
 func (d Deposit) TargetPoolPath() string {
 	return d.targetPoolPath
-}
-
-func (d Deposit) SetOwner(owner std.Address) {
-	d.owner = owner
-}
-
-func (d Deposit) SetNumberOfStakes(numberOfStakes uint64) {
-	d.numberOfStakes = numberOfStakes
-}
-
-func (d Deposit) SetStakeTimestamp(stakeTimestamp int64) {
-	d.stakeTimestamp = stakeTimestamp
-}
-
-func (d Deposit) SetStakeHeight(stakeHeight int64) {
-	d.stakeHeight = stakeHeight
-}
-
-func (d Deposit) SetTargetPoolPath(targetPoolPath string) {
-	d.targetPoolPath = targetPoolPath
 }

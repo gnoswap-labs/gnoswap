@@ -498,14 +498,14 @@ func ApiGetInternalIncentives() string {
 
 	apiInternalIncentives := []ApiInternalIncentive{}
 
-	for poolPath, internal := range poolTiers {
+	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
 		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
 			PoolPath:       poolPath,
-			Tier:           internal.tier,
-			StartTimestamp: internal.startTimestamp,
+			Tier:           internalTier.tier,
+			StartTimestamp: internalTier.startTimestamp,
 			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
 		})
-	}
+	})
 
 	// STAT NODE
 	_stat := json.ObjectNode("", map[string]*json.Node{
@@ -551,18 +551,18 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 
 	apiInternalIncentives := []ApiInternalIncentive{}
 
-	for poolPath, internal := range poolTiers {
+	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
 		if poolPath != targetPoolPath {
-			continue
+			return
 		}
 
 		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
 			PoolPath:       poolPath,
-			Tier:           internal.tier,
-			StartTimestamp: internal.startTimestamp,
+			Tier:           internalTier.tier,
+			StartTimestamp: internalTier.startTimestamp,
 			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
 		})
-	}
+	})
 
 	// STAT NODE
 	_stat := json.ObjectNode("", map[string]*json.Node{
@@ -608,18 +608,18 @@ func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 
 	apiInternalIncentives := []ApiInternalIncentive{}
 
-	for poolPath, internal := range poolTiers {
-		if internal.tier != targetTier {
-			continue
+	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
+		if internalTier.tier != targetTier {
+			return
 		}
 
 		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
 			PoolPath:       poolPath,
-			Tier:           internal.tier,
-			StartTimestamp: internal.startTimestamp,
+			Tier:           internalTier.tier,
+			StartTimestamp: internalTier.startTimestamp,
 			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
 		})
-	}
+	})
 
 	// STAT NODE
 	_stat := json.ObjectNode("", map[string]*json.Node{

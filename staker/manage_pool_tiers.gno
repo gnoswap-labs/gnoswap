@@ -24,9 +24,9 @@ type ApiPoolWithEmissionGnsAmount struct {
 // GetPoolsWithTier returns a list of string that consists of pool path and tier
 func GetPoolsWithTier() []string {
 	var pools []string
-	for pool, tier := range poolTiers {
-		pools = append(pools, ufmt.Sprintf("%s_%d", pool, tier.tier))
-	}
+	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
+		pools = append(pools, ufmt.Sprintf("%s_%d", poolPath, internalTier.tier))
+	})
 	return pools
 }
 
@@ -45,8 +45,8 @@ func GetPoolsWithEmissionGnsAmount() string {
 
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
 
-	for poolPath, internal := range poolTiers {
-		tier := internal.tier
+	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
+		tier := internalTier.tier
 		tierAmount := uint64(0)
 
 		if tier == 1 {
@@ -61,10 +61,10 @@ func GetPoolsWithEmissionGnsAmount() string {
 		internalIncentive.PoolPath = poolPath
 		internalIncentive.Tier = tier
 		internalIncentive.Amount = tierAmount
-		internalIncentive.StartTimestamp = internal.startTimestamp
+		internalIncentive.StartTimestamp = internalTier.startTimestamp
 
 		internals = append(internals, internalIncentive)
-	}
+	})
 
 	// STAT NODE
 	_stat := json.ObjectNode("", map[string]*json.Node{

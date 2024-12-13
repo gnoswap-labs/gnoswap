@@ -124,8 +124,8 @@ func GetPrintInfo() string {
 	emissionDebug.GnsProtocolFee = gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR))
 	emissionDebug.GnsADMIN = gns.BalanceOf(a2u(consts.ADMIN))
 
-	for poolPath, internal := range poolTiers {
-		tier := internal.tier
+	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
+		tier := internalTier.tier
 		pool := ApiEmissionDebugPool{}
 		pool.PoolPath = poolPath
 		pool.Tier = tier
@@ -158,7 +158,7 @@ func GetPrintInfo() string {
 		}
 
 		emissionDebug.Pool = append(emissionDebug.Pool, pool)
-	}
+	})
 
 	node := json.ObjectNode("", map[string]*json.Node{
 		"height": json.NumberNode("", float64(emissionDebug.Height)),
@@ -185,10 +185,10 @@ func GetPrintInfo() string {
 func makePoolsNode(emissionPool []ApiEmissionDebugPool) []*json.Node {
 	pools := make([]*json.Node, 0)
 
-	for poolPath, internal := range poolTiers {
+	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
 		numTier1, numTier2, numTier3 := getNumPoolTiers()
 		numPoolSameTier := uint64(0)
-		tier := internal.tier
+		tier := internalTier.tier
 		if tier == 1 {
 			numPoolSameTier = numTier1
 		} else if tier == 2 {
@@ -199,13 +199,13 @@ func makePoolsNode(emissionPool []ApiEmissionDebugPool) []*json.Node {
 
 		pools = append(pools, json.ObjectNode("", map[string]*json.Node{
 			"poolPath":        json.StringNode("poolPath", poolPath),
-			"startTimestamp":  json.NumberNode("startTimestamp", float64(internal.startTimestamp)),
+			"startTimestamp":  json.NumberNode("startTimestamp", float64(internalTier.startTimestamp)),
 			"tier":            json.NumberNode("tier", float64(tier)),
 			"numPoolSameTier": json.NumberNode("numPoolSameTier", float64(numPoolSameTier)),
 			"poolReward":      json.NumberNode("poolReward", float64(poolGns[poolPath])),
 			"position":        json.ArrayNode("", makePositionsNode(poolPath)),
 		}))
-	}
+	})
 
 	return pools
 }
