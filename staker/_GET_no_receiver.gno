@@ -34,7 +34,7 @@ func StakerPoolIncentives(poolPath string) []string {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno__StakerPoolIncentives() || poolPath(%s) incentives does not exist", poolPath),
+			ufmt.Sprintf("poolPath(%s) incentives does not exist", poolPath),
 		))
 	}
 
@@ -59,15 +59,15 @@ func StakerIncentiveTargetPoolPath(incentiveId string) string {
 		CalcPoolPosition()
 	}
 
-	incentive, exist := incentives[incentiveId]
+	ictv, exist := incentives.Get(incentiveId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno__StakerIncentiveTargetPoolPath() || incentiveId(%s) incentive does not exist", incentiveId),
+			ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId),
 		))
 	}
 
-	return incentive.targetPoolPath
+	return ictv.targetPoolPath
 }
 
 // StakerIncentiveRewardToken returns the reward token for a given incentive
@@ -88,15 +88,15 @@ func StakerIncentiveRewardToken(incentiveId string) string {
 		CalcPoolPosition()
 	}
 
-	incentive, exist := incentives[incentiveId]
+	ictv, exist := incentives.Get(incentiveId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno__StakerIncentiveRewardToken() || incentiveId(%s) incentive does not exist", incentiveId),
+			ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId),
 		))
 	}
 
-	return incentive.rewardToken
+	return ictv.rewardToken
 }
 
 // StakerIncentiveRewardAmount returns the reward amount for a given incentive as a Uint256
@@ -117,15 +117,15 @@ func StakerIncentiveRewardAmount(incentiveId string) *u256.Uint {
 		CalcPoolPosition()
 	}
 
-	incentive, exist := incentives[incentiveId]
+	ictv, exist := incentives.Get(incentiveId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno__StakerIncentiveRewardAmount() || incentiveId(%s) incentive does not exist", incentiveId),
+			ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId),
 		))
 	}
 
-	return incentive.rewardAmount
+	return ictv.rewardAmount
 }
 
 // StakerIncentiveRewardAmountStr returns the reward amount for a given incentive as a string
@@ -146,15 +146,15 @@ func StakerIncentiveRewardAmountStr(incentiveId string) string {
 		CalcPoolPosition()
 	}
 
-	incentive, exist := incentives[incentiveId]
+	ictv, exist := incentives.Get(incentiveId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno__StakerIncentiveRewardAmount() || incentiveId(%s) incentive does not exist", incentiveId),
+			ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId),
 		))
 	}
 
-	return incentive.rewardAmount.ToString()
+	return ictv.rewardAmount.ToString()
 }
 
 // StakerIncentiveStartTimestamp returns the start timestamp for a given incentive
@@ -175,15 +175,15 @@ func StakerIncentiveStartTimestamp(incentiveId string) int64 {
 		CalcPoolPosition()
 	}
 
-	incentive, exist := incentives[incentiveId]
+	ictv, exist := incentives.Get(incentiveId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno__StakerIncentiveStartTimestamp() || incentiveId(%s) incentive does not exist", incentiveId),
+			ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId),
 		))
 	}
 
-	return incentive.startTimestamp
+	return ictv.startTimestamp
 }
 
 // StakerIncentiveEndTimestamp returns the end timestamp for a given incentive
@@ -204,15 +204,15 @@ func StakerIncentiveEndTimestamp(incentiveId string) int64 {
 		CalcPoolPosition()
 	}
 
-	incentive, exist := incentives[incentiveId]
+	ictv, exist := incentives.Get(incentiveId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno__StakerIncentiveEndTimestamp() || incentiveId(%s) incentive does not exist", incentiveId),
+			ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId),
 		))
 	}
 
-	return incentive.endTimestamp
+	return ictv.endTimestamp
 }
 
 // StakerIncentiveRefundee returns the refundee address for a given incentive
@@ -233,15 +233,15 @@ func StakerIncentiveRefundee(incentiveId string) std.Address {
 		CalcPoolPosition()
 	}
 
-	incentive, exist := incentives[incentiveId]
+	ictv, exist := incentives.Get(incentiveId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno__StakerIncentiveRefundee() || incentiveId(%s) incentive does not exist", incentiveId),
+			ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId),
 		))
 	}
 
-	return incentive.refundee
+	return ictv.refundee
 }
 
 // StakerDepositOwner returns the owner address of a deposit for a given LP token ID
@@ -266,7 +266,7 @@ func StakerDepositOwner(lpTokenId uint64) std.Address {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno__StakerDepositOwner() || tokenId(%d) deposit does not exist", lpTokenId),
+			ufmt.Sprintf("tokenId(%d) deposit does not exist", lpTokenId),
 		))
 	}
 
@@ -295,7 +295,7 @@ func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno__StakerDepositNumberOfStakes() || tokenId(%d) deposit does not exist", lpTokenId),
+			ufmt.Sprintf("tokenId(%d) deposit does not exist", lpTokenId),
 		))
 	}
 
@@ -324,7 +324,7 @@ func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno__StakerDepositStakeTimestamp() || tokenId(%d) deposit does not exist", lpTokenId),
+			ufmt.Sprintf("tokenId(%d) deposit does not exist", lpTokenId),
 		))
 	}
 
@@ -353,7 +353,7 @@ func StakerDepositTargetPoolPath(lpTokenId uint64) string {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno__StakerDepositTargetPoolPath() || tokenId(%d) deposit does not exist", lpTokenId),
+			ufmt.Sprintf("tokenId(%d) deposit does not exist", lpTokenId),
 		))
 	}
 
@@ -375,7 +375,7 @@ func StakerPoolTier(poolPath string) uint64 {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_no_receiver.gno__StakerPoolTier() || poolPath(%s) poolTier does not exist", poolPath),
+			ufmt.Sprintf("poolPath(%s) poolTier does not exist", poolPath),
 		))
 	}
 

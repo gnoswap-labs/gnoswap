@@ -69,10 +69,14 @@ func ApiGetRewardTokens() string {
 		}
 
 		for _, incentiveId := range ictvList {
-			if incentives[incentiveId].rewardToken == "" {
+			ictv, exist := incentives.Get(incentiveId)
+			if !exist {
 				continue
 			}
-			thisPoolRewardTokens = append(thisPoolRewardTokens, incentives[incentiveId].rewardToken)
+			if ictv.RewardToken() == "" {
+				continue
+			}
+			thisPoolRewardTokens = append(thisPoolRewardTokens, ictv.RewardToken())
 		}
 
 		if len(thisPoolRewardTokens) == 0 {
@@ -144,7 +148,11 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 		}
 
 		for _, incentiveId := range ictvList {
-			thisPoolRewardTokens = append(thisPoolRewardTokens, incentives[incentiveId].rewardToken)
+			ictv, exist := incentives.Get(incentiveId)
+			if !exist {
+				continue
+			}
+			thisPoolRewardTokens = append(thisPoolRewardTokens, ictv.RewardToken())
 		}
 
 		rewardTokens = append(rewardTokens, RewardToken{
@@ -265,7 +273,7 @@ func ApiGetExternalIncentiveById(incentiveId string) string {
 
 	apiExternalIncentives := []ApiExternalIncentive{}
 
-	incentive, exist := incentives[incentiveId]
+	incentive, exist := incentives.Get(incentiveId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -693,9 +701,12 @@ func updateExternalIncentiveLeftAmount() {
 
 			full := warmUpAmount.full100 + warmUpAmount.full70 + warmUpAmount.full50 + warmUpAmount.full30
 
-			incentive := incentives[incentiveId]
-			incentive.rewardLeft = new(u256.Uint).Sub(incentive.rewardLeft, u256.NewUint(full))
-			incentives[incentiveId] = incentive
+			ictv, exist := incentives.Get(incentiveId)
+			if !exist {
+				continue
+			}
+			ictv.rewardLeft = new(u256.Uint).Sub(ictv.rewardLeft, u256.NewUint(full))
+			incentives.Set(incentiveId, ictv)
 		}
 	}
 }

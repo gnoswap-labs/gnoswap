@@ -103,16 +103,19 @@ func ApiGetRewards() string {
 			continue
 		}
 
-		for _, incentiveId := range ictvList {
-			incentive := incentives[incentiveId]
+		for _, ictvId := range ictvList {
+			ictv, exists := incentives.Get(ictvId)
+			if !exists {
+				continue
+			}
 
-			stakedOrCreatedAt := max(deposit.stakeTimestamp, incentive.startTimestamp)
+			stakedOrCreatedAt := max(deposit.stakeTimestamp, ictv.startTimestamp)
 			now := time.Now().Unix()
 			if now < stakedOrCreatedAt {
 				continue
 			}
 
-			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
+			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][ictvId]
 			if !exist {
 				continue
 			}
@@ -120,13 +123,13 @@ func ApiGetRewards() string {
 			if externalReward >= 0 {
 				rewards = append(rewards, Reward{
 					IncentiveType:     "EXTERNAL",
-					IncentiveId:       incentiveId,
+					IncentiveId:       ictvId,
 					TargetPoolPath:    deposit.targetPoolPath,
-					RewardTokenPath:   incentives[incentiveId].rewardToken,
+					RewardTokenPath:   ictv.rewardToken,
 					RewardTokenAmount: externalReward,
 					StakeTimestamp:    deposit.stakeTimestamp,
 					StakeHeight:       deposit.stakeHeight,
-					IncentiveStart:    incentive.startTimestamp,
+					IncentiveStart:    ictv.startTimestamp,
 				})
 			}
 		}
@@ -224,16 +227,19 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			continue
 		}
 
-		for _, incentiveId := range ictvList {
-			incentive := incentives[incentiveId]
+		for _, ictvId := range ictvList {
+			ictv, exists := incentives.Get(ictvId)
+			if !exists {
+				continue
+			}
 
-			stakedOrCreatedAt := max(deposit.stakeTimestamp, incentive.startTimestamp)
+			stakedOrCreatedAt := max(deposit.stakeTimestamp, ictv.startTimestamp)
 			now := time.Now().Unix()
 			if now < stakedOrCreatedAt {
 				continue
 			}
 
-			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
+			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][ictvId]
 			if !exist {
 				continue
 			}
@@ -241,13 +247,13 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 			if externalReward > 0 {
 				rewards = append(rewards, Reward{
 					IncentiveType:     "EXTERNAL",
-					IncentiveId:       incentiveId,
+					IncentiveId:       ictvId,
 					TargetPoolPath:    deposit.targetPoolPath,
-					RewardTokenPath:   incentives[incentiveId].rewardToken,
+					RewardTokenPath:   ictv.rewardToken,
 					RewardTokenAmount: externalReward,
 					StakeTimestamp:    deposit.stakeTimestamp,
 					StakeHeight:       deposit.stakeHeight,
-					IncentiveStart:    incentive.startTimestamp,
+					IncentiveStart:    ictv.startTimestamp,
 				})
 			}
 		}
@@ -343,29 +349,32 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 			continue
 		}
 
-		for _, incentiveId := range ictvList {
-			incentive := incentives[incentiveId]
+		for _, ictvId := range ictvList {
+			ictv, exists := incentives.Get(ictvId)
+			if !exists {
+				continue
+			}
 
-			stakedOrCreatedAt := max(deposit.stakeTimestamp, incentive.startTimestamp)
+			stakedOrCreatedAt := max(deposit.stakeTimestamp, ictv.startTimestamp)
 			now := time.Now().Unix()
 			if now < stakedOrCreatedAt {
 				continue
 			}
 
-			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
+			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][ictvId]
 			if !exist {
 				continue
 			}
 			externalReward := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
 			rewards = append(rewards, Reward{
 				IncentiveType:     "EXTERNAL",
-				IncentiveId:       incentiveId,
+				IncentiveId:       ictvId,
 				TargetPoolPath:    deposit.targetPoolPath,
-				RewardTokenPath:   incentives[incentiveId].rewardToken,
+				RewardTokenPath:   ictv.rewardToken,
 				RewardTokenAmount: externalReward,
 				StakeTimestamp:    deposit.stakeTimestamp,
 				StakeHeight:       deposit.stakeHeight,
-				IncentiveStart:    incentive.startTimestamp,
+				IncentiveStart:    ictv.startTimestamp,
 			})
 		}
 		lpTokenReward := LpTokenReward{

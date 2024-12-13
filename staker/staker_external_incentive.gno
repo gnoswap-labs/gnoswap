@@ -108,27 +108,28 @@ func CreateExternalIncentive(
 			// external reward amount
 			transferFromByRegisterCall(rewardToken, std.PrevRealm().Addr(), GetOrigPkgAddr(), rewardAmount.Uint64())
 
-			incentive, ok := incentives[v]
-			if !ok {
+			// incentive, ok := incentives[v]
+			ictv, exists := incentives.Get(v)
+			if !exists {
 				return
 			}
 
 			incentiveDuration := endTimestamp - startTimestamp
 			incentiveBlock := incentiveDuration / consts.BLOCK_GENERATION_INTERVAL
 
-			incentive.rewardAmount = new(u256.Uint).Add(incentive.rewardAmount, rewardAmount)
-			incentive.rewardLeft = new(u256.Uint).Add(incentive.rewardLeft, rewardAmount)
+			ictv.rewardAmount = new(u256.Uint).Add(ictv.rewardAmount, rewardAmount)
+			ictv.rewardLeft = new(u256.Uint).Add(ictv.rewardLeft, rewardAmount)
 
-			rewardAmountX96 := new(u256.Uint).Mul(incentive.rewardAmount, u256.MustFromDecimal(consts.Q96))
+			rewardAmountX96 := new(u256.Uint).Mul(ictv.rewardAmount, u256.MustFromDecimal(consts.Q96))
 			rewardPerBlockX96 := new(u256.Uint).Div(rewardAmountX96, u256.NewUint(uint64(incentiveBlock)))
 
-			incentive.rewardPerBlockX96 = rewardPerBlockX96
+			ictv.rewardPerBlockX96 = rewardPerBlockX96
 
-			incentive.depositGnsAmount += depositGnsAmount
-			incentives[v] = incentive
+			ictv.depositGnsAmount += depositGnsAmount
+			incentives.Set(v, ictv)
 
 			if rewardToken == consts.GNS_PATH {
-				externalGns[incentiveId] = incentive.rewardAmount.Uint64()
+				externalGns[incentiveId] = ictv.rewardAmount.Uint64()
 			}
 
 			prevAddr, prevRealm := getPrev()
@@ -138,11 +139,11 @@ func CreateExternalIncentive(
 				"prevRealm", prevRealm,
 				"poolPath", targetPoolPath,
 				"rewardToken", rewardToken,
-				"rewardAmount", incentive.rewardAmount.ToString(),
+				"rewardAmount", ictv.rewardAmount.ToString(),
 				"startTimestamp", ufmt.Sprintf("%d", startTimestamp),
 				"endTimestamp", ufmt.Sprintf("%d", endTimestamp),
 				"internal_incentiveId", incentiveId,
-				"internal_depositGnsAmount", ufmt.Sprintf("%d", incentive.depositGnsAmount),
+				"internal_depositGnsAmount", ufmt.Sprintf("%d", ictv.depositGnsAmount),
 				"internal_external", "updated",
 			)
 
@@ -161,7 +162,7 @@ func CreateExternalIncentive(
 	rewardAmountX96 := new(u256.Uint).Mul(rewardAmount, u256.MustFromDecimal(consts.Q96))
 	rewardPerBlockX96 := new(u256.Uint).Div(rewardAmountX96, u256.NewUint(uint64(incentiveBlock)))
 
-	incentives[incentiveId] = ExternalIncentive{
+	newExternalIctv := ExternalIncentive{
 		targetPoolPath:    targetPoolPath,
 		rewardToken:       rewardToken,
 		rewardAmount:      rewardAmount,
@@ -173,6 +174,8 @@ func CreateExternalIncentive(
 		createdHeight:     std.GetHeight(),
 		depositGnsAmount:  depositGnsAmount,
 	}
+
+	incentives.Set(incentiveId, newExternalIctv)
 
 	existingIctv, exists := poolIncentives.Get(targetPoolPath)
 	if exists {

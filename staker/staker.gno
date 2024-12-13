@@ -160,7 +160,10 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 	_, exist = positionExternal[tokenId]
 	if exist {
 		for _, external := range positionExternal[tokenId] {
-			incentive := incentives[external.incentiveId]
+			incentive, exists := incentives.Get(external.incentiveId)
+			if !exists {
+				continue
+			}
 			incentiveId := external.incentiveId
 
 			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
@@ -205,7 +208,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 			)
 
 			incentive.rewardLeft = new(u256.Uint).Sub(incentive.rewardLeft, u256.NewUint(fullAmount))
-			incentives[incentiveId] = incentive
+			incentives.Set(incentiveId, incentive)
 
 			if external.tokenPath == consts.GNS_PATH {
 				externalGns[incentiveId] -= fullAmount
