@@ -145,6 +145,10 @@ func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
 	fromYear := GetHalvingYearByHeight(fromHeight)
 	toYear := GetHalvingYearByHeight(toHeight)
 
+	if isEmissionEnded(fromYear) || isEmissionEnded(toYear) {
+		return 0
+	}
+
 	totalAmountToMint := uint64(0)
 
 	for i := fromYear; i <= toYear; i++ {
@@ -202,6 +206,16 @@ func skipIfSameHeight(lastMintedHeight, currentHeight int64) bool {
 	}
 
 	return false
+}
+
+// isEmissionEnded returns true if the emission is ended.
+// It returns false if the emission is not ended.
+func isEmissionEnded(year int64) bool {
+	if 1 <= year && year <= 12 {
+		return false
+	}
+
+	return true
 }
 
 func GetLastMintedHeight() int64 {
