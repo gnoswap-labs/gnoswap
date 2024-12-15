@@ -4,8 +4,8 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
 	plp "gno.land/p/gnoswap/pool"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // modifyPosition updates a position in the pool and calculates the amount of tokens
@@ -24,9 +24,9 @@ import (
 //   - PositionInfo: updated position information
 //   - *u256.Uint: amount of token0 needed/returned
 //   - *u256.Uint: amount of token1 needed/returned
-func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.Uint, *u256.Uint) {
+func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.Uint, *u256.Uint) {
 	// update position state
-	position := pool.updatePosition(params)
+	position := p.updatePosition(params)
 	liqDelta := params.liquidityDelta
 
 	if liqDelta.IsZero() {
@@ -36,12 +36,12 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u2
 	amount0, amount1 := i256.Zero(), i256.Zero()
 
 	// get current state and price bounds
-	tick := pool.slot0.tick
+	tick := p.slot0.tick
 	// covert ticks to sqrt price to use in amount calculations
 	// price = 1.0001^tick, but we use sqrtPriceX96
 	sqrtRatioLower := common.TickMathGetSqrtRatioAtTick(params.tickLower)
 	sqrtRatioUpper := common.TickMathGetSqrtRatioAtTick(params.tickUpper)
-	sqrtPriceX96 := pool.slot0.sqrtPriceX96
+	sqrtPriceX96 := p.slot0.sqrtPriceX96
 
 	// calculate token amounts based on current price position relative to range
 	switch {
@@ -52,7 +52,7 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u2
 
 	case tick < params.tickUpper:
 		// case 2
-		liquidityBefore := pool.liquidity
+		liquidityBefore := p.liquidity
 
 		// token0 used from current price to upper tick
 		amount0 = calculateToken0Amount(sqrtPriceX96, sqrtRatioUpper, liqDelta)
@@ -60,7 +60,7 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u2
 		amount1 = calculateToken1Amount(sqrtRatioLower, sqrtPriceX96, liqDelta)
 
 		// update pool's active liquidity since price is in range
-		pool.liquidity = liquidityMathAddDelta(liquidityBefore, liqDelta)
+		p.liquidity = liquidityMathAddDelta(liquidityBefore, liqDelta)
 
 	default:
 		// case 3

@@ -7,13 +7,26 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// liquidityMathAddDelta Calculate the new liquidity with delta liquidity.
-// If delta liquidity is negative, it will subtract the absolute value of delta liquidity from the current liquidity.
-// If delta liquidity is positive, it will add the absolute value of delta liquidity to the current liquidity.
-// inputs:
-// - x: current liquidity
-// - y: delta liquidity
-// Returns the new liquidity.
+// liquidityMathAddDelta calculates the new liquidity by applying the delta liquidity to the current liquidity.
+// If delta liquidity is negative, it subtracts the absolute value of delta liquidity from the current liquidity.
+// If delta liquidity is positive, it adds the absolute value of delta liquidity to the current liquidity.
+//
+// Parameters:
+// - x: The current liquidity as a uint256 value.
+// - y: The delta liquidity as a signed int256 value.
+//
+// Returns:
+// - The new liquidity as a uint256 value.
+//
+// Notes:
+// - If `x` or `y` is nil, the function panics with an appropriate error message.
+// - If `y` is negative, its absolute value is subtracted from `x`.
+//   - The result must be less than `x`. Otherwise, the function panics to prevent underflow.
+//
+// - If `y` is positive, it is added to `x`.
+//   - The result must be greater than or equal to `x`. Otherwise, the function panics to prevent overflow.
+//
+// - The function ensures correctness by validating the results of the arithmetic operations.
 func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 	if x == nil || y == nil {
 		panic(addDetailToError(
@@ -22,11 +35,11 @@ func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 		))
 	}
 
-	absDelta := y.Abs()
 	var z *u256.Uint
 
 	// Subtract or add based on the sign of y
 	if y.Lt(i256.Zero()) {
+		absDelta := y.Abs()
 		z = new(u256.Uint).Sub(x, absDelta)
 		if z.Gte(x) { // z must be < x
 			panic(addDetailToError(
@@ -35,7 +48,7 @@ func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 			))
 		}
 	} else {
-		z = new(u256.Uint).Add(x, absDelta)
+		z = new(u256.Uint).Add(x, y.Abs())
 		if z.Lt(x) { // z must be >= x
 			panic(addDetailToError(
 				errLiquidityCalculation,

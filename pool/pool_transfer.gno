@@ -16,9 +16,9 @@ import (
 // This function is typically used during swaps and liquidity removals.
 //
 // Important requirements:
-//  - The amount must be negative (representing an outflow from the pool)
-//  - The pool must have sufficient balance for the transfer
-//  - The transfer amount must fit within uint64 range
+//   - The amount must be negative (representing an outflow from the pool)
+//   - The pool must have sufficient balance for the transfer
+//   - The transfer amount must fit within uint64 range
 //
 // Parameters:
 //   - to: destination address for the transfer
@@ -33,7 +33,7 @@ import (
 //  4. Update pool's internal balance
 //
 // Panics if any validation fails or if the transfer fails
-func (pool *Pool) transferAndVerify(
+func (p *Pool) transferAndVerify(
 	to std.Address,
 	tokenPath string,
 	amount *i256.Int,
@@ -47,8 +47,8 @@ func (pool *Pool) transferAndVerify(
 
 	absAmount := amount.Abs()
 
-	token0 := pool.balances.token0
-	token1 := pool.balances.token1
+	token0 := p.balances.token0
+	token1 := p.balances.token1
 
 	if err := validatePoolBalance(token0, token1, absAmount, isToken0); err != nil {
 		panic(err)
@@ -67,9 +67,9 @@ func (pool *Pool) transferAndVerify(
 	}
 
 	if isToken0 {
-		pool.balances.token0 = newBalance
+		p.balances.token0 = newBalance
 	} else {
-		pool.balances.token1 = newBalance
+		p.balances.token1 = newBalance
 	}
 }
 
@@ -92,7 +92,7 @@ func (pool *Pool) transferAndVerify(
 // 3. Update pool's internal balance
 //
 // Panics if the amount conversion fails or if the transfer fails
-func (pool *Pool) transferFromAndVerify(
+func (p *Pool) transferFromAndVerify(
 	from, to std.Address,
 	tokenPath string,
 	amount *u256.Uint,
@@ -109,9 +109,9 @@ func (pool *Pool) transferFromAndVerify(
 
 	// update pool balances
 	if isToken0 {
-		pool.balances.token0 = new(u256.Uint).Add(pool.balances.token0, absAmount)
+		p.balances.token0 = new(u256.Uint).Add(p.balances.token0, absAmount)
 	} else {
-		pool.balances.token1 = new(u256.Uint).Add(pool.balances.token1, absAmount)
+		p.balances.token1 = new(u256.Uint).Add(p.balances.token1, absAmount)
 	}
 }
 

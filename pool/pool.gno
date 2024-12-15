@@ -237,25 +237,26 @@ func SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
 // protocol fee management functions.
 //
 // The protocol fee is stored as a single `uint8` value where:
-//  - Lower 4 bits store feeProtocol0 (for token0)
-//  - Upper 4 bits store feeProtocol1 (for token1)
+//   - Lower 4 bits store feeProtocol0 (for token0)
+//   - Upper 4 bits store feeProtocol1 (for token1)
 //
 // This compact representation allows storing both fee values in a single byte.
 //
 // Parameters (must be 0 or between 4 and 10 inclusive):
-//  - feeProtocol0: protocol fee for token0
-//  - feeProtocol1: protocol fee for token1
+//   - feeProtocol0: protocol fee for token0
+//   - feeProtocol1: protocol fee for token1
 //
 // Returns:
-//  - newFee (uint8): the combined fee protocol value
+//   - newFee (uint8): the combined fee protocol value
 //
 // Example:
 // If feeProtocol0 = 4 and feeProtocol1 = 5:
-//  newFee = 4 + (5 << 4)
-//  // Results in: 0x54 (84 in decimal)
-//  // Binary: 0101 0100
-//  //         ^^^^ ^^^^
-//  //       fee1=5  fee0=4
+//
+//	newFee = 4 + (5 << 4)
+//	// Results in: 0x54 (84 in decimal)
+//	// Binary: 0101 0100
+//	//         ^^^^ ^^^^
+//	//       fee1=5  fee0=4
 func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) uint8 {
 	common.IsHalted()
 
@@ -417,25 +418,25 @@ func collectProtocol(
 // saveProtocolFees updates the protocol fee balances after collection.
 //
 // Parameters:
-//  - amount0: amount of token0 fees to collect
-//  - amount1: amount of token1 fees to collect
+//   - amount0: amount of token0 fees to collect
+//   - amount1: amount of token1 fees to collect
 //
 // Returns the adjusted amounts that will actually be collected for both tokens.
-func (pool *Pool) saveProtocolFees(amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
+func (p *Pool) saveProtocolFees(amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
 	cond01 := amount0.Gt(u256.Zero())
-	cond02 := amount0.Eq(pool.protocolFees.token0)
+	cond02 := amount0.Eq(p.protocolFees.token0)
 	if cond01 && cond02 {
 		amount0 = new(u256.Uint).Sub(amount0, u256.One())
 	}
 
 	cond11 := amount1.Gt(u256.Zero())
-	cond12 := amount1.Eq(pool.protocolFees.token1)
+	cond12 := amount1.Eq(p.protocolFees.token1)
 	if cond11 && cond12 {
 		amount1 = new(u256.Uint).Sub(amount1, u256.One())
 	}
 
-	pool.protocolFees.token0 = new(u256.Uint).Sub(pool.protocolFees.token0, amount0)
-	pool.protocolFees.token1 = new(u256.Uint).Sub(pool.protocolFees.token1, amount1)
+	p.protocolFees.token0 = new(u256.Uint).Sub(p.protocolFees.token0, amount0)
+	p.protocolFees.token1 = new(u256.Uint).Sub(p.protocolFees.token1, amount1)
 
 	// return rest fee
 	return amount0, amount1
