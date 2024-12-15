@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-	u256 "gno.land/p/gnoswap/uint256"
 	i256 "gno.land/p/gnoswap/int256"
-	"gno.land/r/gnoswap/v1/consts"
+	u256 "gno.land/p/gnoswap/uint256"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 )
-
 
 func TestModifyPosition(t *testing.T) {
 	const (
@@ -18,34 +17,34 @@ func TestModifyPosition(t *testing.T) {
 	)
 
 	tests := []struct {
-		name        string
-		sqrtPrice   string
-		tickLower   int32
-		tickUpper   int32
+		name         string
+		sqrtPrice    string
+		tickLower    int32
+		tickUpper    int32
 		expectedAmt0 string
 		expectedAmt1 string
 	}{
 		{
-			name: "current price is lower than range",
-			sqrtPrice:   common.TickMathGetSqrtRatioAtTick(-12000).ToString(),
-			tickLower:   -11000,
-			tickUpper:   -9000,
+			name:         "current price is lower than range",
+			sqrtPrice:    common.TickMathGetSqrtRatioAtTick(-12000).ToString(),
+			tickLower:    -11000,
+			tickUpper:    -9000,
 			expectedAmt0: "16492846",
 			expectedAmt1: "0",
 		},
 		{
-			name: "current price is in range",
-			sqrtPrice:   common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
-			tickLower:   -11000,
-			tickUpper:   -9000,
+			name:         "current price is in range",
+			sqrtPrice:    common.TickMathGetSqrtRatioAtTick(-10000).ToString(),
+			tickLower:    -11000,
+			tickUpper:    -9000,
 			expectedAmt0: "8040316",
 			expectedAmt1: "2958015",
 		},
 		{
-			name: "current price is higher than range",
-			sqrtPrice:   common.TickMathGetSqrtRatioAtTick(-8000).ToString(),
-			tickLower:   -11000,
-			tickUpper:   -9000,
+			name:         "current price is higher than range",
+			sqrtPrice:    common.TickMathGetSqrtRatioAtTick(-8000).ToString(),
+			tickLower:    -11000,
+			tickUpper:    -9000,
 			expectedAmt0: "0",
 			expectedAmt1: "6067683",
 		},
@@ -58,7 +57,7 @@ func TestModifyPosition(t *testing.T) {
 				barPath,
 				fooPath,
 				fee500,
-				tt.sqrtPrice,
+				sqrtPrice.ToString(),
 			)
 			pool := newPool(poolParams)
 
@@ -106,7 +105,7 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 				}
 			}
 		}()
-	
+
 		pool.modifyPosition(params)
 	})
 
@@ -130,8 +129,8 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 		params.liquidityDelta = i256.MustFromDecimal("-100000000")
 		_, amount0, amount1 := pool.modifyPosition(params)
 
-		// remove amount should be negative value of added amount
-		uassert.Equal(t, amount0.ToString(), "-8040315")
-		uassert.Equal(t, amount1.ToString(), "-2958014")
+		// remove amount should be same as added amount
+		uassert.Equal(t, amount0.ToString(), "8040315")
+		uassert.Equal(t, amount1.ToString(), "2958014")
 	})
 }

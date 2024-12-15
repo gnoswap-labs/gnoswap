@@ -103,7 +103,7 @@ func Mint(
 
 	handleLeftoverNativeToken(token0IsNative, token1IsNative, userWugnotBalance, caller)
 
-	poolSqrtPriceX96 := pl.PoolGetSqrtPriceX96(poolPath)
+	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
 
 	prevAddr, prevRealm := getPrev()
 
@@ -120,7 +120,7 @@ func Mint(
 		"internal_liquidity", liquidity.ToString(),
 		"internal_amount0", amount0.ToString(),
 		"internal_amount1", amount1.ToString(),
-		"internal_sqrtPriceX96", poolSqrtPriceX96.ToString(),
+		"internal_sqrtPriceX96", poolSqrtPriceX96,
 	)
 
 	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString()
@@ -189,7 +189,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	nextId++
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
-	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.GetPositionFeeGrowthInside0LastX128(positionKey), pool.GetPositionFeeGrowthInside1LastX128(positionKey)
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
@@ -263,7 +263,7 @@ func IncreaseLiquidity(
 		unwrap(leftOver, std.PrevRealm().Addr())
 	}
 
-	poolSqrtPriceX96 := pl.PoolGetSqrtPriceX96(poolPath)
+	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
 
 	prevAddr, prevRealm := getPrev()
 
@@ -276,7 +276,7 @@ func IncreaseLiquidity(
 		"internal_liquidity", liquidity.ToString(),
 		"internal_amount0", amount0.ToString(),
 		"internal_amount1", amount1.ToString(),
-		"internal_sqrtPriceX96", poolSqrtPriceX96.ToString(),
+		"internal_sqrtPriceX96", poolSqrtPriceX96,
 	)
 
 	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -320,7 +320,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.GetPositionFeeGrowthInside0LastX128(positionKey), pool.GetPositionFeeGrowthInside1LastX128(positionKey)
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
@@ -384,7 +384,7 @@ func DecreaseLiquidity(
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
 
-	poolSqrtPriceX96 := pl.PoolGetSqrtPriceX96(poolPath)
+	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
 
 	prevAddr, prevRealm := getPrev()
 
@@ -401,7 +401,7 @@ func DecreaseLiquidity(
 		"internal_amount0", amount0.ToString(),
 		"internal_amount1", amount1.ToString(),
 		"internal_unwrapResult", ufmt.Sprintf("%t", unwrapResult),
-		"internal_sqrtPriceX96", poolSqrtPriceX96.ToString(),
+		"internal_sqrtPriceX96", poolSqrtPriceX96,
 	)
 
 	return tokenId, liquidity.ToString(), fee0.ToString(), fee1.ToString(), amount0.ToString(), amount1.ToString(), poolPath
@@ -446,7 +446,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	verifyBurnedAmounts(burnedAmount0, burnedAmount1, params.amount0Min, params.amount1Min)
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.GetPositionFeeGrowthInside0LastX128(positionKey), pool.GetPositionFeeGrowthInside1LastX128(positionKey)
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
@@ -592,7 +592,7 @@ func Reposition(
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), tickLower, tickUpper)
-	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.GetPositionFeeGrowthInside0LastX128(positionKey), pool.GetPositionFeeGrowthInside1LastX128(positionKey)
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
@@ -613,7 +613,7 @@ func Reposition(
 
 	positions[tokenId] = position
 
-	poolSqrtPriceX96 := pl.PoolGetSqrtPriceX96(position.poolKey)
+	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(position.poolKey)
 
 	prevAddr, prevRealm := getPrev()
 
@@ -630,7 +630,7 @@ func Reposition(
 		"internal_oldTickLower", ufmt.Sprintf("%d", oldTickLower),
 		"internal_oldTickUpper", ufmt.Sprintf("%d", oldTickUpper),
 		"internal_poolPath", position.poolKey,
-		"internal_sqrtPriceX96", poolSqrtPriceX96.ToString(),
+		"internal_sqrtPriceX96", poolSqrtPriceX96,
 	)
 
 	return tokenId, liquidity.ToString(), tickLower, tickUpper, amount0.ToString(), amount1.ToString()
@@ -676,7 +676,7 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
-	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.GetPositionFeeGrowthInside0LastX128(positionKey), pool.GetPositionFeeGrowthInside1LastX128(positionKey)
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 

@@ -1,24 +1,24 @@
-package pool
+package position
 
 import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
+	pusers "gno.land/p/demo/users"
+	"gno.land/r/demo/users"
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
+	pl "gno.land/r/gnoswap/v1/pool"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
-	"gno.land/r/onbloc/usdc"
-
-	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
-	"gno.land/r/demo/users"
-	"gno.land/r/gnoswap/v1/consts"
-	pn "gno.land/r/gnoswap/v1/position"
 )
 
 const (
@@ -45,6 +45,123 @@ const (
 	addr02 = testutils.TestAddress("addr02")
 )
 
+type WugnotToken struct{}
+
+func (WugnotToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return wugnot.Transfer
+}
+func (WugnotToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return wugnot.TransferFrom
+}
+func (WugnotToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return wugnot.BalanceOf
+}
+func (WugnotToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return wugnot.Approve
+}
+
+type GNSToken struct{}
+
+func (GNSToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return gns.Transfer
+}
+func (GNSToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return gns.TransferFrom
+}
+func (GNSToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return gns.BalanceOf
+}
+func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return gns.Approve
+}
+
+type BarToken struct{}
+
+func (BarToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return bar.Transfer
+}
+func (BarToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return bar.TransferFrom
+}
+func (BarToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return bar.BalanceOf
+}
+func (BarToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return bar.Approve
+}
+
+type BazToken struct{}
+
+func (BazToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return baz.Transfer
+}
+func (BazToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return baz.TransferFrom
+}
+func (BazToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return baz.BalanceOf
+}
+func (BazToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return baz.Approve
+}
+
+type FooToken struct{}
+
+func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return foo.Transfer
+}
+func (FooToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return foo.TransferFrom
+}
+func (FooToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return foo.BalanceOf
+}
+func (FooToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return foo.Approve
+}
+
+type OBLToken struct{}
+
+func (OBLToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return obl.Transfer
+}
+func (OBLToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return obl.TransferFrom
+}
+func (OBLToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return obl.BalanceOf
+}
+func (OBLToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return obl.Approve
+}
+
+type QuxToken struct{}
+
+func (QuxToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
+	return qux.Transfer
+}
+func (QuxToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
+	return qux.TransferFrom
+}
+func (QuxToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
+	return qux.BalanceOf
+}
+func (QuxToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
+	return qux.Approve
+}
+
+func init() {
+	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
+
+	pl.RegisterGRC20Interface(wugnotPath, WugnotToken{})
+	pl.RegisterGRC20Interface(gnsPath, GNSToken{})
+	pl.RegisterGRC20Interface(barPath, BarToken{})
+	pl.RegisterGRC20Interface(bazPath, BazToken{})
+	pl.RegisterGRC20Interface(fooPath, FooToken{})
+	pl.RegisterGRC20Interface(oblPath, OBLToken{})
+	pl.RegisterGRC20Interface(quxPath, QuxToken{})
+}
+
 var (
 	admin       = pusers.AddressOrName(consts.ADMIN)
 	alice       = pusers.AddressOrName(testutils.TestAddress("alice"))
@@ -65,9 +182,9 @@ func InitialisePoolTest(t *testing.T) {
 
 	std.TestSetOrigCaller(users.Resolve(admin))
 	TokenApprove(t, gnsPath, admin, pool, maxApprove)
-	poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-	if !DoesPoolPathExist(poolPath) {
-		CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
+	poolPath := pl.GetPoolPath(wugnotPath, gnsPath, fee3000)
+	if !pl.DoesPoolPathExist(poolPath) {
+		pl.CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
 	}
 
 	//2. create position
@@ -200,7 +317,7 @@ func MintPosition(t *testing.T,
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(caller))
 
-	return pn.Mint(
+	return Mint(
 		token0,
 		token1,
 		fee,
@@ -360,89 +477,65 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 
 // resetObject resets the object state(clear or make it default values)
 func resetObject(t *testing.T) {
-	pools = make(poolMap)
-	slot0FeeProtocol = 0
-	poolCreationFee = 100_000_000
-	withdrawalFeeBPS = 100
+	positions = make(map[uint64]Position)
+	nextId = 1
 }
 
-func burnTokens(t *testing.T) {
+// burnAllNFT burns all NFTs
+func burnAllNFT(t *testing.T) {
 	t.Helper()
 
-	// burn tokens
-	for _, addr := range addrUsedInTest {
-		uAddr := a2u(addr)
-		burnFoo(uAddr)
-		burnBar(uAddr)
-		burnBaz(uAddr)
-		burnQux(uAddr)
-		burnObl(uAddr)
-		burnUsdc(uAddr)
+	std.TestSetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+	for i := uint64(1); i <= gnft.TotalSupply(); i++ {
+		gnft.Burn(tid(i))
 	}
-}
-
-func burnFoo(addr pusers.AddressOrName) {
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
-	foo.Burn(addr, foo.BalanceOf(addr))
-}
-
-func burnBar(addr pusers.AddressOrName) {
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
-	bar.Burn(addr, bar.BalanceOf(addr))
-}
-
-func burnBaz(addr pusers.AddressOrName) {
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
-	baz.Burn(addr, baz.BalanceOf(addr))
-}
-
-func burnQux(addr pusers.AddressOrName) {
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
-	qux.Burn(addr, qux.BalanceOf(addr))
-}
-
-func burnObl(addr pusers.AddressOrName) {
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
-	obl.Burn(addr, obl.BalanceOf(addr))
-}
-
-func burnUsdc(addr pusers.AddressOrName) {
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
-	usdc.Burn(addr, usdc.BalanceOf(addr))
 }
 
 func TestBeforeResetObject(t *testing.T) {
-	// make some data
-	pools = make(poolMap)
-	pools["gno.land/r/gnoswap/v1/gns:gno.land/r/onbloc/usdc"] = &Pool{
-		token0Path: "gno.land/r/gnoswap/v1/gns",
-		token1Path: "gno.land/r/onbloc/usdc",
-	}
+	// make actual data to test resetting not only position's state but also pool's state
+	std.TestSetRealm(adminRealm)
 
-	slot0FeeProtocol = 1
-	poolCreationFee = 100_000_000
-	withdrawalFeeBPS = 100
+	// set pool create fee to 0 for testing
+	pl.SetPoolCreationFeeByAdmin(0)
+	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-	// transfer some tokens
-	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
-	foo.Transfer(a2u(addr01), 100_000_000)
-	bar.Transfer(a2u(addr01), 100_000_000)
+	// mint position
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	uassert.Equal(t, foo.BalanceOf(a2u(addr01)), uint64(100_000_000))
-	uassert.Equal(t, bar.BalanceOf(a2u(addr01)), uint64(100_000_000))
+	tokenId, liquidity, amount0, amount1 := Mint(
+		barPath,
+		fooPath,
+		fee500,
+		-887270,
+		887270,
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+		users.Resolve(admin),
+		users.Resolve(admin),
+	)
+
+	uassert.Equal(t, tokenId, uint64(1), "tokenId should be 1")
+	uassert.Equal(t, liquidity, "50000", "liquidity should be 50000")
+	uassert.Equal(t, amount0, "50000", "amount0 should be 50000")
+	uassert.Equal(t, amount1, "50000", "amount1 should be 50000")
+	uassert.Equal(t, len(positions), 1, "positions should have 1 position")
+	uassert.Equal(t, nextId, uint64(2), "nextId should be 2")
+	uassert.Equal(t, gnft.TotalSupply(), uint64(1), "gnft total supply should be 1")
+	uassert.Equal(t, pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"), "50000", "pool liquidity should be 50000")
 }
 
 func TestResetObject(t *testing.T) {
 	resetObject(t)
-	uassert.Equal(t, len(pools), 0)
-	uassert.Equal(t, slot0FeeProtocol, uint8(0))
-	uassert.Equal(t, poolCreationFee, uint64(100_000_000))
-	uassert.Equal(t, withdrawalFeeBPS, uint64(100))
+
+	uassert.Equal(t, len(positions), 0, "positions should be empty")
+	uassert.Equal(t, nextId, uint64(1), "nextId should be 1")
 }
 
-func TestBurnTokens(t *testing.T) {
-	burnTokens(t)
-
-	uassert.Equal(t, foo.BalanceOf(a2u(addr01)), uint64(0)) // 100_000_000 -> 0
-	uassert.Equal(t, bar.BalanceOf(a2u(addr01)), uint64(0)) // 100_000_000 -> 0
+func TestBurnAllNFT(t *testing.T) {
+	burnAllNFT(t)
+	uassert.Equal(t, gnft.TotalSupply(), uint64(0), "gnft total supply should be 0")
 }
