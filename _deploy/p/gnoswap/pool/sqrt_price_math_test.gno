@@ -88,6 +88,41 @@ func TestSqrtPriceMathGetAmount0DeltaStr(t *testing.T) {
 			t.Error("Result should be negative for negative liquidity")
 		}
 	})
+
+	t.Run("panic overflow when getting amount0 with positive liquidity", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for overflow amount0")
+			} else {
+				uassert.Equal(t, "SqrtPriceMathGetAmount0DeltaStr: overflow", r)
+			}
+		}()
+
+		// Inputs to trigger panic
+		sqrtRatioAX96 := u256.MustFromDecimal("1")                                       // very low value
+		sqrtRatioBX96 := u256.MustFromDecimal("340282366920938463463374607431768211455") // very high value(2^128-1)
+		liquidity := i256.FromUint256(u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935"))
+
+		SqrtPriceMathGetAmount0DeltaStr(sqrtRatioAX96, sqrtRatioBX96, liquidity)
+	})
+
+	t.Run("panic overflow when getting amount0 with negative liquidity", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for overflow amount0")
+			} else {
+				uassert.Equal(t, "SqrtPriceMathGetAmount0DeltaStr: overflow", r)
+			}
+		}()
+
+		// Inputs to trigger panic
+		sqrtRatioAX96 := u256.MustFromDecimal("1")                                       // very low value
+		sqrtRatioBX96 := u256.MustFromDecimal("340282366920938463463374607431768211455") // very high value(2^128-1)
+		liquidity := i256.FromUint256(u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935"))
+		liquidity = liquidity.Neg(liquidity) // Make liquidity negative
+
+		SqrtPriceMathGetAmount0DeltaStr(sqrtRatioAX96, sqrtRatioBX96, liquidity)
+	})
 }
 
 func TestSqrtPriceMathGetAmount1DeltaStr(t *testing.T) {
@@ -101,6 +136,53 @@ func TestSqrtPriceMathGetAmount1DeltaStr(t *testing.T) {
 		if result[0] == '-' {
 			t.Error("Result should be positive for positive liquidity")
 		}
+	})
+
+	t.Run("negative liquidity", func(t *testing.T) {
+		ratioA := u256.MustFromDecimal("1000000")
+		ratioB := u256.MustFromDecimal("2000000")
+		liquidity := i256.Zero().Neg(i256.FromUint256(u256.MustFromDecimal("5000000")))
+
+		result := SqrtPriceMathGetAmount0DeltaStr(ratioA, ratioB, liquidity)
+
+		if result[0] != '-' {
+			t.Error("Result should be negative for negative liquidity")
+		}
+	})
+
+	t.Run("panic overflow when getting amount1 with positive liquidity", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for overflow amount1")
+			} else {
+				uassert.Equal(t, "SqrtPriceMathGetAmount1DeltaStr: overflow", r)
+			}
+		}()
+
+		// Inputs to trigger panic
+		sqrtRatioAX96 := u256.MustFromDecimal("1")                             // very low value
+		sqrtRatioBX96 := u256.MustFromDecimal("79228162514264337593543950335") // slightly below Q96
+		liquidity := i256.FromUint256(u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935"))
+
+		SqrtPriceMathGetAmount1DeltaStr(sqrtRatioAX96, sqrtRatioBX96, liquidity)
+	})
+
+	t.Run("panic overflow when getting amount1 with negative liquidity", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic for overflow amount1")
+			} else {
+				uassert.Equal(t, "SqrtPriceMathGetAmount1DeltaStr: overflow", r)
+			}
+		}()
+
+		// Inputs to trigger panic
+		sqrtRatioAX96 := u256.MustFromDecimal("1")                             // very low value
+		sqrtRatioBX96 := u256.MustFromDecimal("79228162514264337593543950335") // slightly below Q96
+		liquidity := i256.FromUint256(u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935"))
+		liquidity = liquidity.Neg(liquidity) // Make liquidity negative
+
+		SqrtPriceMathGetAmount1DeltaStr(sqrtRatioAX96, sqrtRatioBX96, liquidity)
 	})
 }
 

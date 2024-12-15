@@ -325,7 +325,10 @@ func sqrtPriceMathGetAmount1DeltaHelper(
 //
 // Notes:
 // - This function relies on the helper function `sqrtPriceMathGetAmount0DeltaHelper` to perform the core calculation.
-// - The rounding behavior of the result is controlled by the `roundUp` parameter passed to the helper function:
+//   - The helper function calculates the absolute difference between token0 amounts within the range.
+//   - If the computed result exceeds the maximum allowable value for int256 (2**255 - 1), the function will panic
+//     with an appropriate overflow error.
+//   - The rounding behavior of the result is controlled by the `roundUp` parameter passed to the helper function:
 //   - For negative liquidity, rounding is always down.
 //   - For positive liquidity, rounding is always up.
 func SqrtPriceMathGetAmount0DeltaStr(
@@ -335,12 +338,20 @@ func SqrtPriceMathGetAmount0DeltaStr(
 ) string {
 	if liquidity.IsNeg() {
 		u := sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), false)
+		if u.Gt(u256.MustFromDecimal(MAX_INT256)) {
+			// if u > (2**255 - 1), cannot cast to int256
+			panic("SqrtPriceMathGetAmount0DeltaStr: overflow")
+		}
 		i := i256.FromUint256(u)
 		return i256.Zero().Neg(i).ToString()
+	} else {
+		u := sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
+		if u.Gt(u256.MustFromDecimal(MAX_INT256)) {
+			// if u > (2**255 - 1), cannot cast to int256
+			panic("SqrtPriceMathGetAmount0DeltaStr: overflow")
+		}
+		return i256.FromUint256(u).ToString()
 	}
-
-	u := sqrtPriceMathGetAmount0DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
-	return i256.FromUint256(u).ToString()
 }
 
 // SqrtPriceMathGetAmount1DeltaStr calculates the difference in the amount of token1
@@ -370,10 +381,18 @@ func SqrtPriceMathGetAmount1DeltaStr(
 ) string {
 	if liquidity.IsNeg() {
 		u := sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), false)
+		if u.Gt(u256.MustFromDecimal(MAX_INT256)) {
+			// if u > (2**255 - 1), cannot cast to int256
+			panic("SqrtPriceMathGetAmount1DeltaStr: overflow")
+		}
 		i := i256.FromUint256(u)
 		return i256.Zero().Neg(i).ToString()
+	} else {
+		u := sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
+		if u.Gt(u256.MustFromDecimal(MAX_INT256)) {
+			// if u > (2**255 - 1), cannot cast to int256
+			panic("SqrtPriceMathGetAmount1DeltaStr: overflow")
+		}
+		return i256.FromUint256(u).ToString()
 	}
-
-	u := sqrtPriceMathGetAmount1DeltaHelper(sqrtRatioAX96, sqrtRatioBX96, liquidity.Abs(), true)
-	return i256.FromUint256(u).ToString()
 }
