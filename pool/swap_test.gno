@@ -518,7 +518,7 @@ func TestSwapAndDrySwapComparison(t *testing.T) {
 			fee:               fee3000,
 			zeroForOne:        false,
 			amountSpecified:   "100",
-			sqrtPriceLimitX96: "1461446703485210103287273052203988822378723970341",
+			sqrtPriceLimitX96: maxSqrtPriceLimitX96,
 		},
 		{
 			name: "swap - request to swap amount over total liquidty",
@@ -533,7 +533,7 @@ func TestSwapAndDrySwapComparison(t *testing.T) {
 			fee:               fee3000,
 			zeroForOne:        false,
 			amountSpecified:   "2000000000",
-			sqrtPriceLimitX96: "1461446703485210103287273052203988822378723970341",
+			sqrtPriceLimitX96: maxSqrtPriceLimitX96,
 		},
 	}
 
@@ -611,7 +611,7 @@ func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
 					fee3000,
 					false,
 					"0",
-					"1461446703485210103287273052203988822378723970341",
+					maxSqrtPriceLimitX96,
 				)
 				println("DrySwap", dryAmount0, dryAmount1, drySuccess)
 				uassert.Equal(t, "0", dryAmount0)
@@ -637,7 +637,7 @@ func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
 					users.Resolve(addr),
 					true,
 					"0",
-					"1461446703485210103287273052203988822378723970341",
+					maxSqrtPriceLimitX96,
 					users.Resolve(addr),
 				)
 				println("Swap", actualAmount0, actualAmount1)
@@ -965,115 +965,3 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 		})
 	}
 }
-
-// TODO:
-// 1. swap test case add
-//
-//func TestSwapAndDrySwapComparison(t *testing.T) {
-//	const addr = pusers.AddressOrName(consts.ROUTER_ADDR)
-//
-//	tests := []struct {
-//		name              string
-//		setupFn           func(t *testing.T)
-//		token0Path        string
-//		token1Path        string
-//		fee               uint32
-//		zeroForOne        bool
-//		amountSpecified   string
-//		sqrtPriceLimitX96 string
-//	}{
-//		{
-//			name: "normal swap",
-//			setupFn: func(t *testing.T) {
-//				InitialisePoolTest(t)
-//				TokenFaucet(t, gnsPath, addr)
-//				TokenApprove(t, gnsPath, addr, pool, uint64(1000))
-//			},
-//			token0Path:        wugnotPath,
-//			token1Path:        gnsPath,
-//			fee:               fee3000,
-//			zeroForOne:        false,
-//			amountSpecified:   "100",
-//			sqrtPriceLimitX96: "1461446703485210103287273052203988822378723970341",
-//		},
-//		{
-//			name: "swap - request to swap amount over total liquidty",
-//			setupFn: func(t *testing.T) {
-//				InitialisePoolTest(t)
-//				MintPositionAll(t, users.Resolve(admin))
-//				TokenFaucet(t, gnsPath, addr)
-//				TokenApprove(t, gnsPath, addr, pool, maxApprove)
-//			},
-//			token0Path:        wugnotPath,
-//			token1Path:        gnsPath,
-//			fee:               fee3000,
-//			zeroForOne:        false,
-//			amountSpecified:   "2000000000",
-//			sqrtPriceLimitX96: "1461446703485210103287273052203988822378723970341",
-//		},
-//		{
-//			name: "swap - request to swap amount zero",
-//			setupFn: func(t *testing.T) {
-//				InitialisePoolTest(t)
-//				MintPositionAll(t, users.Resolve(admin))
-//				TokenFaucet(t, gnsPath, addr)
-//				TokenApprove(t, gnsPath, addr, pool, maxApprove)
-//			},
-//			token0Path:        wugnotPath,
-//			token1Path:        gnsPath,
-//			fee:               fee3000,
-//			zeroForOne:        false,
-//			amountSpecified:   "0",
-//			sqrtPriceLimitX96: "1461446703485210103287273052203988822378723970341",
-//		},
-//	}
-//
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			resetObject(t)
-//			burnTokens(t)
-//
-//			if tt.setupFn != nil {
-//				tt.setupFn(t)
-//			}
-//
-//			dryAmount0, dryAmount1, drySuccess := DrySwap(
-//				tt.token0Path,
-//				tt.token1Path,
-//				tt.fee,
-//				tt.zeroForOne,
-//				tt.amountSpecified,
-//				tt.sqrtPriceLimitX96,
-//			)
-//			println("Swap", dryAmount0, dryAmount1)
-//
-//			std.TestSetOrigCaller(consts.ROUTER_ADDR)
-//			actualAmount0, actualAmount1 := Swap(
-//				tt.token0Path,
-//				tt.token1Path,
-//				tt.fee,
-//				users.Resolve(addr),
-//				tt.zeroForOne,
-//				tt.amountSpecified,
-//				tt.sqrtPriceLimitX96,
-//				users.Resolve(addr),
-//			)
-//
-//			println("Swap", actualAmount0, actualAmount1)
-//
-//			if !drySuccess {
-//				t.Error("DrySwap failed but actual Swap succeeded")
-//			}
-//
-//			uassert.NotEqual(t, dryAmount0, "0", "amount0 should not be zero")
-//			uassert.NotEqual(t, dryAmount1, "0", "amount1 should not be zero")
-//			uassert.NotEqual(t, actualAmount0, "0", "amount0 should not be zero")
-//			uassert.NotEqual(t, actualAmount1, "0", "amount1 should not be zero")
-//
-//			uassert.Equal(t, dryAmount0, actualAmount0,
-//				"Amount0 mismatch between DrySwap and actual Swap")
-//			uassert.Equal(t, dryAmount1, actualAmount1,
-//				"Amount1 mismatch between DrySwap and actual Swap")
-//		})
-//	}
-//}

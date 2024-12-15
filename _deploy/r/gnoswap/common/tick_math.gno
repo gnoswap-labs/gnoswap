@@ -48,7 +48,7 @@ var (
 
 func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	absTick := abs(tick)
-	if absTick > maxTick { // MAX_TICK
+	if absTick > maxTick {
 		panic(addDetailToError(
 			errOutOfRange,
 			ufmt.Sprintf("tick_math.gno__TickMathGetSqrtRatioAtTick() || tick is out of range (larger than 887272), tick: %d", tick),
