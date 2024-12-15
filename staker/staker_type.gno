@@ -1,12 +1,16 @@
 package staker
 
+import (
+	"gno.land/p/demo/ufmt"
+)
+
 var (
 	/* internal */
 	poolTiers = newPoolTiers()
 
 	/* external */
 	poolIncentives = newPoolIncentives()
-	incentives = newIncentives()
+	incentives     = newIncentives()
 
 	/* common */
 	deposits = newDeposits()
@@ -83,6 +87,14 @@ func newDeposits() Deposits {
 func (d Deposits) Get(tokenId uint64) (Deposit, bool) {
 	deposit, exist := d[tokenId]
 	return deposit, exist
+}
+
+func (d Deposits) MustGet(tokenId uint64) Deposit {
+	deposit, exist := d.Get(tokenId)
+	if !exist {
+		panic(ufmt.Sprintf("deposit not found for tokenId: %d", tokenId))
+	}
+	return deposit
 }
 
 func (d Deposits) Set(tokenId uint64, deposit Deposit) {
