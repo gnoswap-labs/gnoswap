@@ -168,6 +168,68 @@ func TestSwapMathComputeSwapStepStr(t *testing.T) {
 	}
 }
 
+func TestSwapMathComputeSwapStepStrFail(t *testing.T) {
+	tests := []struct {
+		name                           string
+		currentX96, targetX96          *u256.Uint
+		liquidity                      *u256.Uint
+		amountRemaining                *i256.Int
+		feePips                        uint64
+		sqrtNextX96                    *u256.Uint
+		chkSqrtNextX96                 func(sqrtRatioNextX96, priceTarget *u256.Uint)
+		amountIn, amountOut, feeAmount string
+		shouldPanic                    bool
+		expectedMessage                string
+	}{
+		{
+			name:            "input parameter is nil",
+			currentX96:      nil,
+			targetX96:       nil,
+			liquidity:       nil,
+			amountRemaining: nil,
+			feePips:         600,
+			sqrtNextX96:     encodePriceSqrt(t, "101", "100"),
+			chkSqrtNextX96: func(sqrtRatioNextX96, priceTarget *u256.Uint) {
+				uassert.True(t, sqrtRatioNextX96.Eq(priceTarget))
+			},
+			amountIn:        "9975124224178055",
+			amountOut:       "9925619580021728",
+			feeAmount:       "5988667735148",
+			shouldPanic:     true,
+			expectedMessage: "SwapMathComputeSwapStepStr: invalid input",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if test.shouldPanic {
+						if errMsg, ok := r.(string); ok {
+							uassert.Equal(t, test.expectedMessage, errMsg)
+						} else {
+							t.Errorf("expected a panic with message, got: %v", r)
+						}
+					} else {
+						t.Errorf("unexpected panic: %v", r)
+					}
+				} else {
+					if test.shouldPanic {
+						t.Errorf("expected a panic, but none occurred")
+					}
+				}
+			}()
+
+			SwapMathComputeSwapStepStr(
+				test.currentX96,
+				test.targetX96,
+				test.liquidity,
+				test.amountRemaining,
+				test.feePips)
+		})
+	}
+}
+
 // encodePriceSqrt calculates the sqrt((reserve1 << 192) / reserve0)
 func encodePriceSqrt(t *testing.T, reserve1, reserve0 string) *u256.Uint {
 	t.Helper()
