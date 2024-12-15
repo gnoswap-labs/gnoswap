@@ -107,23 +107,23 @@ func positionUpdate(
 
 // receiver getters
 
-func (p *Pool) PoolGetPositionLiquidity(key string) *u256.Uint {
+func (p *Pool) GetPositionLiquidity(key string) *u256.Uint {
 	return p.mustGetPosition(key).liquidity
 }
 
-func (p *Pool) PoolGetPositionFeeGrowthInside0LastX128(key string) *u256.Uint {
+func (p *Pool) GetPositionFeeGrowthInside0LastX128(key string) *u256.Uint {
 	return p.mustGetPosition(key).feeGrowthInside0LastX128
 }
 
-func (p *Pool) PoolGetPositionFeeGrowthInside1LastX128(key string) *u256.Uint {
+func (p *Pool) GetPositionFeeGrowthInside1LastX128(key string) *u256.Uint {
 	return p.mustGetPosition(key).feeGrowthInside1LastX128
 }
 
-func (p *Pool) PoolGetPositionTokensOwed0(key string) *u256.Uint {
+func (p *Pool) GetPositionTokensOwed0(key string) *u256.Uint {
 	return p.mustGetPosition(key).tokensOwed0
 }
 
-func (p *Pool) PoolGetPositionTokensOwed1(key string) *u256.Uint {
+func (p *Pool) GetPositionTokensOwed1(key string) *u256.Uint {
 	return p.mustGetPosition(key).tokensOwed1
 }
 

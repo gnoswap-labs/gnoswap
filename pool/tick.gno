@@ -145,35 +145,35 @@ func (p *Pool) getTick(tick int32) TickInfo {
 }
 
 // receiver getters
-func (p *Pool) PoolGetTickLiquidityGross(tick int32) *u256.Uint {
+func (p *Pool) GetTickLiquidityGross(tick int32) *u256.Uint {
 	return p.mustGetTick(tick).liquidityGross
 }
 
-func (p *Pool) PoolGetTickLiquidityNet(tick int32) *i256.Int {
+func (p *Pool) GetTickLiquidityNet(tick int32) *i256.Int {
 	return p.mustGetTick(tick).liquidityNet
 }
 
-func (p *Pool) PoolGetTickFeeGrowthOutside0X128(tick int32) *u256.Uint {
+func (p *Pool) GetTickFeeGrowthOutside0X128(tick int32) *u256.Uint {
 	return p.mustGetTick(tick).feeGrowthOutside0X128
 }
 
-func (p *Pool) PoolGetTickFeeGrowthOutside1X128(tick int32) *u256.Uint {
+func (p *Pool) GetTickFeeGrowthOutside1X128(tick int32) *u256.Uint {
 	return p.mustGetTick(tick).feeGrowthOutside1X128
 }
 
-func (p *Pool) PoolGetTickCumulativeOutside(tick int32) int64 {
+func (p *Pool) GetTickCumulativeOutside(tick int32) int64 {
 	return p.mustGetTick(tick).tickCumulativeOutside
 }
 
-func (p *Pool) PoolGetTickSecondsPerLiquidityOutsideX128(tick int32) *u256.Uint {
+func (p *Pool) GetTickSecondsPerLiquidityOutsideX128(tick int32) *u256.Uint {
 	return p.mustGetTick(tick).secondsPerLiquidityOutsideX128
 }
 
-func (p *Pool) PoolGetTickSecondsOutside(tick int32) uint32 {
+func (p *Pool) GetTickSecondsOutside(tick int32) uint32 {
 	return p.mustGetTick(tick).secondsOutside
 }
 
-func (p *Pool) PoolGetTickInitialized(tick int32) bool {
+func (p *Pool) GetTickInitialized(tick int32) bool {
 	return p.mustGetTick(tick).initialized
 }
 
