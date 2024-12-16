@@ -105,12 +105,12 @@ func Mint(
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
 		"Mint",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"tickLower", ufmt.Sprintf("%d", tickLower),
 		"tickUpper", ufmt.Sprintf("%d", tickUpper),
 		"poolPath", poolPath,
@@ -185,11 +185,11 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	)
 
 	tokenId := nextId
-	gnft.Mint(a2u(params.mintTo), tid(tokenId)) // owner, tokenId
+	gnft.Mint(a2u(params.mintTo), tokenIdFrom(tokenId)) // owner, tokenId
 	nextId++
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
-	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.GetPositionFeeGrowthInside0LastX128(positionKey), pool.GetPositionFeeGrowthInside1LastX128(positionKey)
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
@@ -240,7 +240,7 @@ func IncreaseLiquidity(
 
 	// wrap if target pool has wugnot
 	position := positions[tokenId]
-	pToken0, pToken1, _ := poolKeyDivide(position.poolKey)
+	pToken0, pToken1, _ := splitOf(position.poolKey)
 
 	isToken0Wugnot := pToken0 == consts.WRAPPED_WUGNOT
 	isToken1Wugnot := pToken1 == consts.WRAPPED_WUGNOT
@@ -265,12 +265,12 @@ func IncreaseLiquidity(
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
 		"IncreaseLiquidity",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"internal_poolPath", poolPath,
 		"internal_liquidity", liquidity.ToString(),
@@ -293,7 +293,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	// MUST BE OWNER TO INCREASE LIQUIDITY
 	// can not be approved address ≈ staked position can't be modified
-	owner := gnft.OwnerOf(tid(params.tokenId))
+	owner := gnft.OwnerOf(tokenIdFrom(params.tokenId))
 	caller := std.PrevRealm().Addr()
 	if owner != caller {
 		panic(addDetailToError(
@@ -320,7 +320,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.GetPositionFeeGrowthInside0LastX128(positionKey), pool.GetPositionFeeGrowthInside1LastX128(positionKey)
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
@@ -386,12 +386,12 @@ func DecreaseLiquidity(
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
 		"DecreaseLiquidity",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"liquidityRatio", ufmt.Sprintf("%d", liquidityRatio),
 		"internal_poolPath", poolPath,
@@ -434,7 +434,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	liquidityToRemove := calculateLiquidityToRemove(positionLiquidity, params.liquidityRatio)
 
-	pToken0, pToken1, pFee := poolKeyDivide(position.poolKey)
+	pToken0, pToken1, pFee := splitOf(position.poolKey)
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 
 	// BURN HERE
@@ -446,7 +446,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	verifyBurnedAmounts(burnedAmount0, burnedAmount1, params.amount0Min, params.amount1Min)
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.GetPositionFeeGrowthInside0LastX128(positionKey), pool.GetPositionFeeGrowthInside1LastX128(positionKey)
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
@@ -537,7 +537,7 @@ func Reposition(
 
 	// MUST BE OWNER TO REPOSITION
 	// can not be approved address > staked position can't be modified
-	owner := gnft.OwnerOf(tid(tokenId))
+	owner := gnft.OwnerOf(tokenIdFrom(tokenId))
 	caller := std.PrevRealm().Addr()
 	if owner != caller {
 		panic(addDetailToError(
@@ -558,7 +558,7 @@ func Reposition(
 		))
 	}
 
-	token0, token1, _ := poolKeyDivide(position.poolKey)
+	token0, token1, _ := splitOf(position.poolKey)
 	// check if gnot pool
 	token0IsNative := false
 	token1IsNative := false
@@ -592,7 +592,7 @@ func Reposition(
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), tickLower, tickUpper)
-	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.GetPositionFeeGrowthInside0LastX128(positionKey), pool.GetPositionFeeGrowthInside1LastX128(positionKey)
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
@@ -615,12 +615,12 @@ func Reposition(
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(position.poolKey)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
 		"Reposition",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"tickLower", ufmt.Sprintf("%d", tickLower),
 		"tickUpper", ufmt.Sprintf("%d", tickUpper),
@@ -663,7 +663,7 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 		))
 	}
 
-	token0, token1, fee := poolKeyDivide(position.poolKey)
+	token0, token1, fee := splitOf(position.poolKey)
 
 	pl.Burn(
 		token0,
@@ -676,7 +676,7 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
-	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.PoolGetPositionFeeGrowthInside0LastX128(positionKey), pool.PoolGetPositionFeeGrowthInside1LastX128(positionKey)
+	_feeGrowthInside0LastX128, _feeGrowthInside1LastX128 := pool.GetPositionFeeGrowthInside0LastX128(positionKey), pool.GetPositionFeeGrowthInside1LastX128(positionKey)
 	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
 	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
 
@@ -726,7 +726,7 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(tokenId, token0, amount0, token1, amount1, position.poolKey, std.PrevRealm().Addr())
 
 	// UNWRAP
-	pToken0, pToken1, _ := poolKeyDivide(position.poolKey)
+	pToken0, pToken1, _ := splitOf(position.poolKey)
 	if (pToken0 == consts.WUGNOT_PATH || pToken1 == consts.WUGNOT_PATH) && unwrapResult {
 		userNewWugnot := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
 		unwrapAmount := userNewWugnot - userWugnot
@@ -736,12 +736,12 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 		}
 	}
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
 		"CollectSwapFee",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"internal_fee0", withoutFee0,
 		"internal_fee1", withoutFee1,
@@ -785,7 +785,7 @@ func burnNFT(tokenId uint64) {
 		))
 	}
 	delete(positions, tokenId)
-	gnft.Burn(tid(tokenId))
+	gnft.Burn(tokenIdFrom(tokenId))
 }
 
 func burnPosition(tokenId uint64) {
@@ -802,7 +802,7 @@ func burnPosition(tokenId uint64) {
 }
 
 func isAuthorizedForToken(tokenId uint64) {
-	if !(isApprovedOrOwner(std.PrevRealm().Addr(), tokenId)) {
+	if !(isOwnerOrOperator(std.PrevRealm().Addr(), tokenId)) {
 		panic(addDetailToError(
 			errNoPermission,
 			ufmt.Sprintf("position.gno__isAuthorizedForToken() || caller(%s) is not approved or owner of tokenId(%d)", std.PrevRealm().Addr(), tokenId),
@@ -818,7 +818,7 @@ func verifyTokenIdAndOwnership(tokenId uint64) {
 		))
 	}
 
-	owner := gnft.OwnerOf(tid(tokenId))
+	owner := gnft.OwnerOf(tokenIdFrom(tokenId))
 	caller := std.PrevRealm().Addr()
 	if owner != caller {
 		panic(addDetailToError(

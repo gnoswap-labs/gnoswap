@@ -80,7 +80,7 @@ func ApiGetPositions() string {
 		_positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
-			"owner":                    json.StringNode("owner", gnft.OwnerOf(tid(position.LpTokenId)).String()),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -140,7 +140,7 @@ func ApiGetPosition(lpTokenId uint64) string {
 		_positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
-			"owner":                    json.StringNode("owner", gnft.OwnerOf(tid(position.LpTokenId)).String()),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -203,7 +203,7 @@ func ApiGetPositionsByPoolPath(poolPath string) string {
 		_positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
-			"owner":                    json.StringNode("owner", gnft.OwnerOf(tid(position.LpTokenId)).String()),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -238,7 +238,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 	rpcPositions := []RpcPosition{}
 	for lpTokenId, position := range positions {
 
-		if !(position.operator == address || gnft.OwnerOf(tid(lpTokenId)) == address) {
+		if !(position.operator == address || gnft.OwnerOf(tokenIdFrom(lpTokenId)) == address) {
 			continue
 		}
 
@@ -266,7 +266,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 		_positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
-			"owner":                    json.StringNode("owner", gnft.OwnerOf(tid(position.LpTokenId)).String()),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
 			"operator":                 json.StringNode("operator", position.Operator),
 			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
 			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
@@ -390,7 +390,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 	burned := isBurned(lpTokenId)
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
-	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
+	currentX96 := pool.GetSlot0SqrtPriceX96()
 	lowerX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
 	upperX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)
 
@@ -410,7 +410,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 	return RpcPosition{
 		LpTokenId:                lpTokenId,
 		Burned:                   burned,
-		Owner:                    gnft.OwnerOf(tid(lpTokenId)).String(),
+		Owner:                    gnft.OwnerOf(tokenIdFrom(lpTokenId)).String(),
 		Operator:                 position.operator.String(),
 		PoolKey:                  position.poolKey,
 		TickLower:                position.tickLower,
@@ -439,24 +439,24 @@ func unclaimedFee(tokenId uint64) (*i256.Int, *i256.Int) {
 	poolKey := positions[tokenId].poolKey
 	pool := pl.GetPoolFromPoolPath(poolKey)
 
-	currentTick := pool.PoolGetSlot0Tick()
+	currentTick := pool.GetSlot0Tick()
 
-	_feeGrowthGlobal0X128 := pool.PoolGetFeeGrowthGlobal0X128()     // u256
+	_feeGrowthGlobal0X128 := pool.GetFeeGrowthGlobal0X128()         // u256
 	feeGrowthGlobal0X128 := i256.FromUint256(_feeGrowthGlobal0X128) // i256
 
-	_feeGrowthGlobal1X128 := pool.PoolGetFeeGrowthGlobal1X128()     // u256
+	_feeGrowthGlobal1X128 := pool.GetFeeGrowthGlobal1X128()         // u256
 	feeGrowthGlobal1X128 := i256.FromUint256(_feeGrowthGlobal1X128) // i256
 
-	_tickUpperFeeGrowthOutside0X128 := pool.PoolGetTickFeeGrowthOutside0X128(tickUpper) // u256
+	_tickUpperFeeGrowthOutside0X128 := pool.GetTickFeeGrowthOutside0X128(tickUpper)     // u256
 	tickUpperFeeGrowthOutside0X128 := i256.FromUint256(_tickUpperFeeGrowthOutside0X128) // i256
 
-	_tickUpperFeeGrowthOutside1X128 := pool.PoolGetTickFeeGrowthOutside1X128(tickUpper) // u256
+	_tickUpperFeeGrowthOutside1X128 := pool.GetTickFeeGrowthOutside1X128(tickUpper)     // u256
 	tickUpperFeeGrowthOutside1X128 := i256.FromUint256(_tickUpperFeeGrowthOutside1X128) // i256
 
-	_tickLowerFeeGrowthOutside0X128 := pool.PoolGetTickFeeGrowthOutside0X128(tickLower) // u256
+	_tickLowerFeeGrowthOutside0X128 := pool.GetTickFeeGrowthOutside0X128(tickLower)     // u256
 	tickLowerFeeGrowthOutside0X128 := i256.FromUint256(_tickLowerFeeGrowthOutside0X128) // i256
 
-	_tickLowerFeeGrowthOutside1X128 := pool.PoolGetTickFeeGrowthOutside1X128(tickLower) // u256
+	_tickLowerFeeGrowthOutside1X128 := pool.GetTickFeeGrowthOutside1X128(tickLower)     // u256
 	tickLowerFeeGrowthOutside1X128 := i256.FromUint256(_tickLowerFeeGrowthOutside1X128) // i256
 
 	_feeGrowthInside0LastX128 := positions[tokenId].feeGrowthInside0LastX128 // u256
