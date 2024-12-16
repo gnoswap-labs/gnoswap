@@ -18,7 +18,7 @@ func tickBitmapPosition(tick int32) (int16, uint8) {
 
 // tickBitmapFlipTick flips tthe bit corresponding to the given tick
 // in the pool's tick bitmap.
-func (pool *Pool) tickBitmapFlipTick(
+func (p *Pool) tickBitmapFlipTick(
 	tick int32,
 	tickSpacing int32,
 ) {
@@ -32,12 +32,12 @@ func (pool *Pool) tickBitmapFlipTick(
 	wordPos, bitPos := tickBitmapPosition(tick / tickSpacing)
 
 	mask := new(u256.Uint).Lsh(u256.One(), uint(bitPos))
-	pool.setTickBitmap(wordPos, new(u256.Uint).Xor(pool.getTickBitmap(wordPos), mask))
+	p.setTickBitmap(wordPos, new(u256.Uint).Xor(p.getTickBitmap(wordPos), mask))
 }
 
 // tickBitmapNextInitializedTickWithInOneWord finds the next initialized tick within
 // one word of the bitmap.
-func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
+func (p *Pool) tickBitmapNextInitializedTickWithInOneWord(
 	tick int32,
 	tickSpacing int32,
 	lte bool,
@@ -49,7 +49,7 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 
 	wordPos, bitPos := getWordAndBitPos(compress, lte)
 	mask := getMaskBit(uint(bitPos), lte)
-	masked := new(u256.Uint).And(pool.getTickBitmap(wordPos), mask)
+	masked := new(u256.Uint).And(p.getTickBitmap(wordPos), mask)
 	initialized := !(masked.IsZero())
 
 	nextTick := getNextTick(lte, initialized, compress, bitPos, tickSpacing, masked)
@@ -58,17 +58,17 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 
 // getTickBitmap gets the tick bitmap for the given word position
 // if the tick bitmap is not initialized, initialize it to zero
-func (pool *Pool) getTickBitmap(wordPos int16) *u256.Uint {
-	if pool.tickBitmaps[wordPos] == nil {
-		pool.tickBitmaps[wordPos] = u256.Zero()
+func (p *Pool) getTickBitmap(wordPos int16) *u256.Uint {
+	if p.tickBitmaps[wordPos] == nil {
+		p.tickBitmaps[wordPos] = u256.Zero()
 	}
 
-	return pool.tickBitmaps[wordPos]
+	return p.tickBitmaps[wordPos]
 }
 
 // setTickBitmap sets the tick bitmap for the given word position
-func (pool *Pool) setTickBitmap(wordPos int16, bitmap *u256.Uint) {
-	pool.tickBitmaps[wordPos] = bitmap
+func (p *Pool) setTickBitmap(wordPos int16, bitmap *u256.Uint) {
+	p.tickBitmaps[wordPos] = bitmap
 }
 
 // getWordAndBitPos gets tick's wordPos and bitPos depending on the swap direction
