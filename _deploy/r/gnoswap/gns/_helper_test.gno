@@ -36,12 +36,12 @@ func resetHalvingRelatedObject(t *testing.T) {
 	t.Helper()
 
 	for year := int64(1); year < 13; year++ {
-		setHalvingYearMaxAmount(year, HALVING_AMOUNTS[year-1])
+		setHalvingYearMaxAmount(year, HALVING_AMOUNTS_PER_YEAR[year-1])
 
 		if year == 1 {
-			setHalvingYearAccuAmount(year, HALVING_AMOUNTS[year-1])
+			setHalvingYearAccuAmount(year, HALVING_AMOUNTS_PER_YEAR[year-1])
 		} else {
-			setHalvingYearAccuAmount(year, GetHalvingYearAccuAmount(year-1)+HALVING_AMOUNTS[year-1])
+			setHalvingYearAccuAmount(year, GetHalvingYearAccuAmount(year-1)+HALVING_AMOUNTS_PER_YEAR[year-1])
 		}
 
 		setHalvingYearBlock(year, startHeight+BLOCK_PER_YEAR*year)
