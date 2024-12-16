@@ -137,12 +137,12 @@ func calculateStakeData(tokenId uint64, owner, caller std.Address) (*stakeResult
 		return nil, err
 	}
 
-	poolPath := pn.PositionGetPositionPoolKey(tokenId)
-	if err := poolHasIncentives(poolPath); err != nil {
+	if err := tokenHasLiquidity(tokenId); err != nil {
 		return nil, err
 	}
 
-	if err := tokenHasLiquidity(tokenId); err != nil {
+	poolPath := pn.PositionGetPositionPoolKey(tokenId)
+	if err := poolHasIncentives(poolPath); err != nil {
 		return nil, err
 	}
 
