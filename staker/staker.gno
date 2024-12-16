@@ -27,6 +27,9 @@ const (
 	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
 
 	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
+
+	INTERNAL = true
+	EXTERNAL = false
 )
 
 func init() {
@@ -161,6 +164,7 @@ func transferDeposit(tokenId uint64, owner, caller, to std.Address) error {
 
 ////////////////////////////////////////////////////////////
 
+// collectResult represents the result of a reward collection operation.
 type collectResult struct {
 	tokenId         uint64
 	owner           std.Address
@@ -169,13 +173,7 @@ type collectResult struct {
 	externalRewards *avl.Tree
 }
 
-type externalRewardInfo struct {
-	ictvId     string
-	tokenPath  string
-	fullAmount uint64
-	toGive     uint64
-}
-
+// newCollectResult creates a new `collectResult` instance with the given parameters.
 func newCollectResult(tokenId uint64, owner std.Address, poolPath string) *collectResult {
 	return &collectResult{
 		tokenId:         tokenId,
@@ -186,41 +184,109 @@ func newCollectResult(tokenId uint64, owner std.Address, poolPath string) *colle
 	}
 }
 
+// externalRewardInfo represents the information for a single external reward.
+type externalRewardInfo struct {
+	ictvId     string
+	tokenPath  string
+	fullAmount uint64
+	toGive     uint64
+}
+
+// calculateCollectReward calculates both external and internal rewards for a given token ID.
+//
+// It processes the rewards based on the deposit information [`Deposit`] and current state of both reward types.
+//
+// Parameters:
+//  - tokenId: The ID of the token for which to calculate rewards
+//  - deposit: The deposit information for the token
+//
+// Returns:
+//  - A `collectResult` containing all reward information and any error encountered during the calculation.
 func calculateCollectReward(tokenId uint64, deposit Deposit) (*collectResult, error) {
 	result := newCollectResult(tokenId, deposit.owner, deposit.TargetPoolPath())
 
-	// calculate external rewards
-	if positions, exist := positionExternal[tokenId]; exist {
-		for ictvId, external := range positions {
-			_, exists := incentives.Get(ictvId)
-			if !exists {
-				continue
-			}
-
-			warmUpAmount, exists := positionsExternalWarmUpAmount[tokenId][ictvId]
-			if !exists {
-				continue
-			}
-
-			fullAmount := warmUpAmount.totalFull()
-			toGive := warmUpAmount.totalGive()
-
-			if toGive == 0 {
-				continue
-			}
-
-			result.externalRewards.Set(ictvId, externalRewardInfo{
-				ictvId:     ictvId,
-				tokenPath:  external.tokenPath,
-				fullAmount: fullAmount,
-				toGive:     toGive,
-			})
-		}
+	if err := calculateExternalRewards(tokenId, result); err != nil {
+		return nil, err
 	}
 
 	result.internalRewards = positionsInternalWarmUpAmount[tokenId]
 
 	return result, nil
+}
+
+// calculateExternalRewards pricesses all external rewards for a given token ID.
+//
+// It iterates through all external positions associated with the token and calculates
+// their respective rewards, storing them in the provided `collectResult` instance.
+//
+// Parameters:
+//  - tokenId: The ID of the token for which to calculate rewards
+//  - result: The `collectResult` instance to store the calculated rewards.
+//
+// Returns:
+//  - An error if any issues arise during the calculation process.
+func calculateExternalRewards(tokenId uint64, result *collectResult) error {
+	positions, exist := positionExternal[tokenId]
+	if !exist {
+		return nil
+	}
+
+	for ictvId, external := range positions {
+		tokenPath := external.tokenPath
+		reward, err := calculateSingleExternalReward(tokenId, tokenPath, ictvId)
+		if err != nil {
+			return err
+		}
+		if reward != nil {
+			result.externalRewards.Set(ictvId, reward)
+		}
+	}
+	return nil
+}
+
+// calculateSingleExternalReward calculates the reward for a single external incentive.
+// It verifies the existence of the incentive and its warm-up amount, then calculates
+// the reward based on the warm-up amount.
+//
+// Parameters:
+//   - tokenId: The ID of the token for which to calculate rewards
+//   - tokenPath: The path of the reward token
+//   - ictvId: The ID of the incentive
+//
+// Returns:
+//   - *externalRewardResult: Contains the calculated reward information if successful
+//   - error: Returns errIncentiveNotFound if the incentive doesn't exist,
+//     errWarmUpAmountNotFound if warm-up amount is missing, or nil if successful
+//
+// If there are no rewards to give (toGive = 0), it returns (nil, nil).
+func calculateSingleExternalReward(tokenId uint64, tokenPath, ictvId string) (*externalRewardResult, error) {
+	ictv, exists := incentives.Get(ictvId)
+	if !exists {
+		return nil, ufmt.Errorf("%v: incentive ID=%s", errIncentiveNotFound, ictvId)
+	}
+
+	// get warm up amount
+	// TODO: change type
+	warmUp, exists := positionsExternalWarmUpAmount[tokenId][ictvId]
+	if !exists {
+		return nil, ufmt.Errorf("%v: incentive ID=%s", errWarmUpAmountNotFound, ictvId)
+	}
+
+	fullAmount := warmUp.totalFull()
+	toGive := warmUp.totalGive()
+
+	// skip if there's nothing to give
+	if toGive == 0 {
+		return nil, nil
+	}
+
+	return &externalRewardResult{
+		ictvId:     ictvId,
+		tokenPath:  tokenPath,
+		poolPath:   ictv.targetPoolPath,
+		fullAmount: fullAmount,
+		toGive:     toGive,
+	}, nil
 }
 
 // externalRewardResult contains all the data needed to emit the event
@@ -251,13 +317,14 @@ func applyExternalReward(
 	external.tokenAmountToGive += reward.toGive
 	positionExternal[tokenId][reward.ictvId] = external
 
-	toUser := handleUnstakingFee(reward.tokenPath, reward.toGive, false, tokenId, ictv.targetPoolPath)
+	toUser := handleUnstakingFee(reward.tokenPath, reward.toGive, EXTERNAL, tokenId, ictv.targetPoolPath)
 
 	transferByRegisterCall(reward.tokenPath, owner, toUser)
 	if reward.tokenPath == consts.WUGNOT_PATH && unwrapResult {
 		unwrap(toUser)
 	}
 
+	// TODO: change type
 	positionsExternalWarmUpAmount[tokenId][reward.ictvId] = warmUpAmount{}
 	positionLastExternal[tokenId][reward.ictvId] = u256.Zero()
 
@@ -298,7 +365,7 @@ func applyInternalReward(
 	}
 
 	poolPath := deposits.MustGet(tokenId).TargetPoolPath()
-	toUser := handleUnstakingFee(consts.GNS_PATH, toGive, true, tokenId, poolPath)
+	toUser := handleUnstakingFee(consts.GNS_PATH, toGive, INTERNAL, tokenId, poolPath)
 	gns.Transfer(a2u(owner), toUser)
 
 	positionsInternalWarmUpAmount[tokenId] = warmUpAmount{} // just clear
@@ -429,13 +496,19 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 	return result.poolPath
 }
 
+// unstakeInput represents the input data required for unstaking operation.
 type unstakeInput struct {
 	tokenId uint64
 	unwrap  bool
 	deposit Deposit
 }
 
-func newUnstakeInput(tokenId uint64, unwrap bool, deposit Deposit) unstakeInput {
+// newUnstakeInput creates a new `unstakeInput` instance with the given parameters.
+func newUnstakeInput(
+	tokenId uint64,
+	unwrap bool,
+	deposit Deposit,
+) unstakeInput {
 	return unstakeInput{
 		tokenId: tokenId,
 		unwrap:  unwrap,
@@ -443,6 +516,7 @@ func newUnstakeInput(tokenId uint64, unwrap bool, deposit Deposit) unstakeInput 
 	}
 }
 
+// unstakeOutput represents the output data generated during the unstaking process.
 type unstakeOutput struct {
 	tokenId      uint64
 	owner        std.Address
@@ -453,7 +527,13 @@ type unstakeOutput struct {
 	to           std.Address
 }
 
-func newUnstakeOutput(poolPath string, token0Amount, token1Amount string, input unstakeInput) *unstakeOutput {
+// newUnstakeOutput creates a new `unstakeOutput` instance with the given parameters.
+func newUnstakeOutput(
+	poolPath string,
+	token0Amount,
+	token1Amount string,
+	input unstakeInput,
+) *unstakeOutput {
 	return &unstakeOutput{
 		tokenId:      input.tokenId,
 		owner:        input.deposit.owner,
