@@ -33,10 +33,10 @@ func Mint(
 	fee uint32,
 	tickLower int32,
 	tickUpper int32,
-	_amount0Desired string, // *u256.Uint
-	_amount1Desired string, // *u256.Uint
-	_amount0Min string, // *u256.Uint
-	_amount1Min string, // *u256.Uint
+	amount0DesiredStr string, 
+	amount1DesiredStr string, 
+	amount0MinStr string, 
+	amount1MinStr string, 
 	deadline int64,
 	mintTo std.Address,
 	caller std.Address,
@@ -69,16 +69,16 @@ func Mint(
 
 	if token1 < token0 {
 		token0, token1 = token1, token0
-		_amount0Desired, _amount1Desired = _amount1Desired, _amount0Desired
-		_amount0Min, _amount1Min = _amount1Min, _amount0Min
+		amount0DesiredStr, amount1DesiredStr = amount1DesiredStr, amount0DesiredStr
+		amount0MinStr, amount1MinStr = amount1MinStr, amount0MinStr
 		tickLower, tickUpper = -tickUpper, -tickLower
 		token0IsNative, token1IsNative = token1IsNative, token0IsNative
 	}
 
-	amount0Desired := u256.MustFromDecimal(_amount0Desired)
-	amount1Desired := u256.MustFromDecimal(_amount1Desired)
-	amount0Min := u256.MustFromDecimal(_amount0Min)
-	amount1Min := u256.MustFromDecimal(_amount1Min)
+	amount0Desired := u256.MustFromDecimal(amount0DesiredStr)
+	amount1Desired := u256.MustFromDecimal(amount1DesiredStr)
+	amount0Min := u256.MustFromDecimal(amount0MinStr)
+	amount1Min := u256.MustFromDecimal(amount1MinStr)
 
 	// one of token amount can be 0 if position is out of range
 	// check this condition by using DryMint()
@@ -211,8 +211,10 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	}
 	updated := setPosition(tokenId, position)
 	if updated {
-		// TODO:
-		panic("position with same tokenId already exists")
+		panic(addDetailToError(
+			errPositionExist,
+			ufmt.Sprintf("tokenId(%d) already exists", tokenId),
+		))
 	}
 
 	return tokenId, liquidity, amount0, amount1
@@ -223,19 +225,19 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#increaseliquidity
 func IncreaseLiquidity(
 	tokenId uint64,
-	_amount0Desired string, // uint256
-	_amount1Desired string, // uint256
-	_amount0Min string, // uint256
-	_amount1Min string, // uint256
+	amount0DesiredStr string, 
+	amount1DesiredStr string, 
+	amount0MinStr string, 
+	amount1MinStr string, 
 	deadline int64,
 ) (uint64, string, string, string, string) {
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
-	amount0Desired := u256.MustFromDecimal(_amount0Desired)
-	amount1Desired := u256.MustFromDecimal(_amount1Desired)
-	amount0Min := u256.MustFromDecimal(_amount0Min)
-	amount1Min := u256.MustFromDecimal(_amount1Min)
+	amount0Desired := u256.MustFromDecimal(amount0DesiredStr)
+	amount1Desired := u256.MustFromDecimal(amount1DesiredStr)
+	amount0Min := u256.MustFromDecimal(amount0MinStr)
+	amount1Min := u256.MustFromDecimal(amount1MinStr)
 	increaseLiquidityParams := IncreaseLiquidityParams{
 		tokenId:        tokenId,
 		amount0Desired: amount0Desired,
@@ -367,8 +369,8 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 func DecreaseLiquidity(
 	tokenId uint64,
 	liquidityRatio uint64,
-	_amount0Min string, // uint256
-	_amount1Min string, // uint256
+	amount0MinStr string, 
+	amount1MinStr string, 
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
@@ -383,8 +385,8 @@ func DecreaseLiquidity(
 		))
 	}
 
-	amount0Min := u256.MustFromDecimal(_amount0Min)
-	amount1Min := u256.MustFromDecimal(_amount1Min)
+	amount0Min := u256.MustFromDecimal(amount0MinStr)
+	amount1Min := u256.MustFromDecimal(amount1MinStr)
 	decreaseLiquidityParams := DecreaseLiquidityParams{
 		tokenId:        tokenId,
 		liquidityRatio: liquidityRatio,
@@ -540,10 +542,10 @@ func Reposition(
 	tokenId uint64,
 	tickLower int32,
 	tickUpper int32,
-	_amount0Desired string, // uint256
-	_amount1Desired string, // uint256
-	_amount0Min string, // *u256.Uint
-	_amount1Min string, // *u256.Uint
+	amount0Desired string, // uint25Str6
+	amount1DesiredStr string, // uint256
+	amount0MinStr string, // *u256.Uint
+	amount1MinStr string, // *u256.Uint
 ) (uint64, string, int32, int32, string, string) {
 	common.IsHalted()
 	en.MintAndDistributeGns()
@@ -603,10 +605,10 @@ func Reposition(
 			poolKey:        position.poolKey,
 			tickLower:      tickLower,
 			tickUpper:      tickUpper,
-			amount0Desired: u256.MustFromDecimal(_amount0Desired),
-			amount1Desired: u256.MustFromDecimal(_amount1Desired),
-			amount0Min:     u256.MustFromDecimal(_amount0Min),
-			amount1Min:     u256.MustFromDecimal(_amount1Min),
+			amount0Desired: u256.MustFromDecimal(amount0Desired)Str,
+			amount1Desired: u256.MustFromDecimal(amount1DesiredStr),
+			amount0Min:     u256.MustFromDecimal(amount0MinStr),
+			amount1Min:     u256.MustFromDecimal(amount1MinStr),
 			caller:         std.PrevRealm().Addr(),
 		},
 	)
