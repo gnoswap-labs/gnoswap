@@ -5,18 +5,18 @@ import (
 	"testing"
 
 	"gno.land/p/demo/json"
-
 	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v1/consts"
 )
 
 var (
-	govRealm = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
+	govRealm   = std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
+	adminRealm = std.NewUserRealm(consts.ADMIN)
 )
 
-var LAST_BLOCK_OF_YEAR = []int64{
-	0,
+var FIRST_BLOCK_OF_YEAR = []int64{
+	startHeight,
 	startHeight + BLOCK_PER_YEAR*1,
 	startHeight + BLOCK_PER_YEAR*2,
 	startHeight + BLOCK_PER_YEAR*3,
@@ -28,11 +28,24 @@ var LAST_BLOCK_OF_YEAR = []int64{
 	startHeight + BLOCK_PER_YEAR*9,
 	startHeight + BLOCK_PER_YEAR*10,
 	startHeight + BLOCK_PER_YEAR*11,
-	startHeight + BLOCK_PER_YEAR*12,
 }
 
-var LAST_TIMESTAMP_OF_YEAR = []int64{
-	0,
+var FIRST_TIMESTAMP_OF_YEAR = []int64{
+	startTimestamp,
+	startTimestamp + consts.TIMESTAMP_YEAR*1,
+	startTimestamp + consts.TIMESTAMP_YEAR*2,
+	startTimestamp + consts.TIMESTAMP_YEAR*3,
+	startTimestamp + consts.TIMESTAMP_YEAR*4,
+	startTimestamp + consts.TIMESTAMP_YEAR*5,
+	startTimestamp + consts.TIMESTAMP_YEAR*6,
+	startTimestamp + consts.TIMESTAMP_YEAR*7,
+	startTimestamp + consts.TIMESTAMP_YEAR*8,
+	startTimestamp + consts.TIMESTAMP_YEAR*9,
+	startTimestamp + consts.TIMESTAMP_YEAR*10,
+	startTimestamp + consts.TIMESTAMP_YEAR*11,
+}
+
+var END_TIMESTAMP_OF_YEAR = []int64{
 	startTimestamp + consts.TIMESTAMP_YEAR*1,
 	startTimestamp + consts.TIMESTAMP_YEAR*2,
 	startTimestamp + consts.TIMESTAMP_YEAR*3,
@@ -87,26 +100,40 @@ func TestSetAvgBlockTimeInMs(t *testing.T) {
 }
 
 func TestGetAmountByHeight(t *testing.T) {
-	for year := int64(1); year <= MAX_HALVING_YEAR; year++ {
-		lastBlockOfYear := LAST_BLOCK_OF_YEAR[year]
-		uassert.Equal(t, GetAmountPerBlockPerHalvingYear(year), GetAmountByHeight(lastBlockOfYear))
+	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
+		firstBlockOfYear := FIRST_BLOCK_OF_YEAR[year-1]
+		uassert.Equal(t, GetAmountPerBlockPerHalvingYear(year), GetAmountByHeight(firstBlockOfYear))
 	}
 }
 
 func TestGetHalvingYearByHeight(t *testing.T) {
-	for year := int64(1); year <= MAX_HALVING_YEAR; year++ {
-		lastBlockOfYear := LAST_BLOCK_OF_YEAR[year]
-		uassert.Equal(t, year, GetHalvingYearByHeight(lastBlockOfYear))
-	}
+	t.Run("during halving years", func(t *testing.T) {
+		for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
+			firstBlockOfYear := FIRST_BLOCK_OF_YEAR[year-1]
+			uassert.Equal(t, year, GetHalvingYearByHeight(firstBlockOfYear))
+		}
+	})
+
+	t.Run("no year after 12 years", func(t *testing.T) {
+		uassert.Equal(t, int64(0), GetHalvingYearByHeight(GetEndHeight()+1))
+	})
 }
 
 func TestGetHalvingYearAndEndTimestamp(t *testing.T) {
-	for year := int64(1); year <= MAX_HALVING_YEAR; year++ {
-		lastTimestampOfYear := LAST_TIMESTAMP_OF_YEAR[year]
-		gotYear, gotEndTimestamp := getHalvingYearAndEndTimestamp(lastTimestampOfYear)
-		uassert.Equal(t, year, gotYear)
-		uassert.Equal(t, LAST_TIMESTAMP_OF_YEAR[year], gotEndTimestamp)
-	}
+	t.Run("bit of extra timestamp for each year", func(t *testing.T) {
+		for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
+			firstTimestampOfYear := FIRST_TIMESTAMP_OF_YEAR[year-1]
+			gotYear, gotEndTimestamp := getHalvingYearAndEndTimestamp(firstTimestampOfYear + 5) // after 5s
+			uassert.Equal(t, year, gotYear)
+			uassert.Equal(t, gotEndTimestamp, END_TIMESTAMP_OF_YEAR[year-1])
+		}
+	})
+
+	t.Run("after 12 years", func(t *testing.T) {
+		year, endTimestamp := getHalvingYearAndEndTimestamp(GetEndTimestamp() + 1)
+		uassert.Equal(t, int64(0), year)
+		uassert.Equal(t, int64(0), endTimestamp)
+	})
 }
 
 func TestHalvingYearBlock(t *testing.T) {
