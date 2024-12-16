@@ -31,7 +31,7 @@ func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
 	if x == nil || y == nil {
 		panic(addDetailToError(
 			errInvalidInput,
-			ufmt.Sprintf("x or y is nil"),
+			"x or y is nil",
 		))
 	}
 
