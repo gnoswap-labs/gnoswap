@@ -323,7 +323,7 @@ func TestAssertOnlyValidAddressWith(t *testing.T) {
 		{
 			name:     "Failure - two address is different",
 			addr:     "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8",
-			other:    "invalidAddress",
+			other:    "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
 			expected: false,
 			errorMsg: "[GNOSWAP-POSITION-011] invalid address || (g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8)",
 		},
