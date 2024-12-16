@@ -568,7 +568,7 @@ func TestBeforeResetObject(t *testing.T) {
 	uassert.Equal(t, liquidity, "50000", "liquidity should be 50000")
 	uassert.Equal(t, amount0, "50000", "amount0 should be 50000")
 	uassert.Equal(t, amount1, "50000", "amount1 should be 50000")
-	uassert.Equal(t, len(positions), 1, "positions should have 1 position")
+	uassert.Equal(t, positions.Size(), 1, "positions should have 1 position")
 	uassert.Equal(t, nextId, uint64(2), "nextId should be 2")
 	uassert.Equal(t, gnft.TotalSupply(), uint64(1), "gnft total supply should be 1")
 	uassert.Equal(t, pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"), "50000", "pool liquidity should be 50000")
@@ -577,7 +577,7 @@ func TestBeforeResetObject(t *testing.T) {
 func TestResetObject(t *testing.T) {
 	resetObject(t)
 
-	uassert.Equal(t, len(positions), 0, "positions should be empty")
+	uassert.Equal(t, positions.Size(), 0, "positions should be empty")
 	uassert.Equal(t, nextId, uint64(1), "nextId should be 1")
 }
 
