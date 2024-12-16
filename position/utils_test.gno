@@ -286,7 +286,7 @@ func TestAssertOnlyValidAddress(t *testing.T) {
 		},
 		{
 			name:     "Failure - invalid address",
-			addr:     "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8",
+			addr:     "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8", // invalid length
 			expected: false,
 			errorMsg: "[GNOSWAP-POSITION-011] invalid address || (g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8)",
 		},
