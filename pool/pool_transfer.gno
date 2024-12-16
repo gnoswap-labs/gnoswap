@@ -53,10 +53,7 @@ func (p *Pool) transferAndVerify(
 	if err := validatePoolBalance(token0, token1, absAmount, isToken0); err != nil {
 		panic(err)
 	}
-	amountUint64, err := safeConvertToUint64(absAmount)
-	if err != nil {
-		panic(err)
-	}
+	amountUint64 := safeConvertToUint64(absAmount)
 
 	token := common.GetTokenTeller(tokenPath)
 	checkTransferError(token.Transfer(to, amountUint64))
@@ -98,20 +95,41 @@ func (p *Pool) transferFromAndVerify(
 	amount *u256.Uint,
 	isToken0 bool,
 ) {
-	absAmount := amount
-	amountUint64, err := safeConvertToUint64(absAmount)
-	if err != nil {
-		panic(err)
-	}
+	amountUint64 := safeConvertToUint64(amount)
 
-	token := common.GetTokenTeller(tokenPath)
-	checkTransferError(token.TransferFrom(from, to, amountUint64))
+	token := common.GetToken(tokenPath)
+	beforeBalance := token.BalanceOf(to)
+
+	teller := common.GetTokenTeller(tokenPath)
+	checkTransferError(teller.TransferFrom(from, to, amountUint64))
+
+	afterBalance := token.BalanceOf(to)
+	if (beforeBalance + amountUint64) != afterBalance {
+		panic(ufmt.Sprintf(
+			"%v. beforeBalance(%d) + amount(%d) != afterBalance(%d)",
+			errTransferFailed, beforeBalance, amountUint64, afterBalance,
+		))
+	}
 
 	// update pool balances
 	if isToken0 {
-		p.balances.token0 = new(u256.Uint).Add(p.balances.token0, absAmount)
+		beforeToken0 := p.balances.token0.Clone()
+		p.balances.token0 = new(u256.Uint).Add(p.balances.token0, amount)
+		if p.balances.token0.Lt(beforeToken0) {
+			panic(ufmt.Sprintf(
+				"%v. token0(%s) < beforeToken0(%s)",
+				errBalanceUpdateFailed, p.balances.token0.ToString(), beforeToken0.ToString(),
+			))
+		}
 	} else {
-		p.balances.token1 = new(u256.Uint).Add(p.balances.token1, absAmount)
+		beforeToken1 := p.balances.token1.Clone()
+		p.balances.token1 = new(u256.Uint).Add(p.balances.token1, amount)
+		if p.balances.token1.Lt(beforeToken1) {
+			panic(ufmt.Sprintf(
+				"%v. token1(%s) < beforeToken1(%s)",
+				errBalanceUpdateFailed, p.balances.token1.ToString(), beforeToken1.ToString(),
+			))
+		}
 	}
 }
 

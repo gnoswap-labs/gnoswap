@@ -22,7 +22,7 @@ func Mint(
 	recipient std.Address,
 	tickLower int32,
 	tickUpper int32,
-	_liquidityAmount string,
+	liquidityAmount string,
 	positionCaller std.Address,
 ) (string, string) {
 	common.IsHalted()
@@ -36,13 +36,14 @@ func Mint(
 		}
 	}
 
-	liquidityAmount := u256.MustFromDecimal(_liquidityAmount)
-	if liquidityAmount.IsZero() {
+	liquidity := u256.MustFromDecimal(liquidityAmount)
+	if liquidity.IsZero() {
 		panic(errZeroLiquidity)
 	}
 
 	pool := GetPool(token0Path, token1Path, fee)
-	position := newModifyPositionParams(recipient, tickLower, tickUpper, i256.FromUint256(liquidityAmount))
+	liquidityDelta := safeConvertToInt128(liquidity)
+	position := newModifyPositionParams(recipient, tickLower, tickUpper, liquidityDelta)
 	_, amount0, amount1 := pool.modifyPosition(position)
 
 	if amount0.Gt(u256.Zero()) {
@@ -198,7 +199,7 @@ func SetFeeProtocolByAdmin(
 
 	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevRealm := getPrevAsString()
 	std.Emit(
 		"SetFeeProtocolByAdmin",
 		"prevAddr", prevAddr,
@@ -221,7 +222,7 @@ func SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
 
 	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevRealm := getPrevAsString()
 	std.Emit(
 		"SetFeeProtocol",
 		"prevAddr", prevAddr,
@@ -323,7 +324,7 @@ func CollectProtocolByAdmin(
 		amount1Requested,
 	)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevRealm := getPrevAsString()
 	std.Emit(
 		"CollectProtocolByAdmin",
 		"prevAddr", prevAddr,
@@ -368,7 +369,7 @@ func CollectProtocol(
 		amount1Requested,
 	)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevRealm := getPrevAsString()
 	std.Emit(
 		"CollectProtocol",
 		"prevAddr", prevAddr,

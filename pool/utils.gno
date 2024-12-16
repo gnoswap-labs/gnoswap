@@ -4,24 +4,102 @@ import (
 	"std"
 
 	"gno.land/p/demo/ufmt"
-
 	pusers "gno.land/p/demo/users"
-
+	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/consts"
 )
 
-func safeConvertToUint64(value *u256.Uint) (uint64, error) {
+// safeConvertToUint64 safely converts a *u256.Uint value to a uint64, ensuring no overflow.
+//
+// This function attempts to convert the given *u256.Uint value to a uint64. If the value exceeds
+// the maximum allowable range for uint64 (`2^64 - 1`), it triggers a panic with a descriptive error message.
+//
+// Parameters:
+// - value (*u256.Uint): The unsigned 256-bit integer to be converted.
+//
+// Returns:
+// - uint64: The converted value if it falls within the uint64 range.
+//
+// Panics:
+//   - If the `value` exceeds the range of uint64, the function will panic with an error indicating
+//     the overflow and the original value.
+//
+// Notes:
+// - This function uses the `Uint64WithOverflow` method to detect overflow during the conversion.
+// - It is essential to validate large values before calling this function to avoid unexpected panics.
+//
+// Example:
+// safeValue := safeConvertToUint64(u256.MustFromDecimal("18446744073709551615")) // Valid conversion
+// safeConvertToUint64(u256.MustFromDecimal("18446744073709551616")) // Panics due to overflow
+func safeConvertToUint64(value *u256.Uint) uint64 {
 	res, overflow := value.Uint64WithOverflow()
 	if overflow {
-		return 0, ufmt.Errorf(
+		panic(ufmt.Sprintf(
 			"%v: amount(%s) overflows uint64 range",
-			errOutOfRange, value.ToString(),
-		)
+			errOutOfRange, value.ToString()))
 	}
-
-	return res, nil
+	return res
 }
 
+// safeConvertToInt128 safely converts a *u256.Uint value to an *i256.Int, ensuring it does not exceed the int128 range.
+//
+// This function converts an unsigned 256-bit integer (*u256.Uint) into a signed 256-bit integer (*i256.Int).
+// It checks whether the resulting value falls within the valid range of int128 (`-2^127` to `2^127 - 1`).
+// If the value exceeds the maximum allowable int128 range, it triggers a panic with a descriptive error message.
+//
+// Parameters:
+// - value (*u256.Uint): The unsigned 256-bit integer to be converted.
+//
+// Returns:
+// - *i256.Int: The converted value if it falls within the int128 range.
+//
+// Panics:
+//   - If the converted value exceeds the maximum int128 value (`2^127 - 1`), the function will panic with an
+//     error message indicating the overflow and the original value.
+//
+// Notes:
+// - The function uses `i256.FromUint256` to perform the conversion.
+// - The constant `MAX_INT128` is used to define the upper bound of the int128 range (`170141183460469231731687303715884105727`).
+//
+// Example:
+// validInt128 := safeConvertToInt128(u256.MustFromDecimal("170141183460469231731687303715884105727")) // Valid conversion
+// safeConvertToInt128(u256.MustFromDecimal("170141183460469231731687303715884105728")) // Panics due to overflow
+func safeConvertToInt128(value *u256.Uint) *i256.Int {
+	liquidityDelta := i256.FromUint256(value)
+	if liquidityDelta.Gt(i256.MustFromDecimal(consts.MAX_INT128)) {
+		panic(ufmt.Sprintf(
+			"%v: amount(%s) overflows int128 range",
+			errOverFlow, value.ToString()))
+	}
+	return liquidityDelta
+}
+
+// a2u converts a std.Address to a pusers.AddressOrName, ensuring the input address is valid.
+//
+// This function takes a `std.Address` and verifies its validity. If the address is invalid,
+// the function triggers a panic with an appropriate error message. For valid addresses,
+// it performs the conversion to `pusers.AddressOrName`.
+//
+// Parameters:
+// - addr (std.Address): The input address to be converted.
+//
+// Returns:
+// - pusers.AddressOrName: The converted address, wrapped as a `pusers.AddressOrName` type.
+//
+// Panics:
+//   - If the provided `addr` is invalid, the function will panic with an error indicating
+//     the invalid address.
+//
+// Notes:
+//   - The function relies on the `addr.IsValid()` method to determine the validity of the input address.
+//   - It uses `addDetailToError` to provide additional context for the error message when an invalid
+//     address is encountered.
+//
+// Example:
+// converted := a2u(std.Address("validAddress")) // Successful conversion
+// a2u(std.Address("")) // Panics due to invalid address
 func a2u(addr std.Address) pusers.AddressOrName {
 	if !addr.IsValid() {
 		panic(addDetailToError(
@@ -32,23 +110,60 @@ func a2u(addr std.Address) pusers.AddressOrName {
 	return pusers.AddressOrName(addr)
 }
 
+// u256Min returns the smaller of two *u256.Uint values.
+//
+// This function compares two unsigned 256-bit integers and returns the smaller of the two.
+// If `num1` is less than `num2`, it returns `num1`; otherwise, it returns `num2`.
+//
+// Parameters:
+// - num1 (*u256.Uint): The first unsigned 256-bit integer.
+// - num2 (*u256.Uint): The second unsigned 256-bit integer.
+//
+// Returns:
+// - *u256.Uint: The smaller of `num1` and `num2`.
+//
+// Notes:
+//   - This function uses the `Lt` (less than) method of `*u256.Uint` to perform the comparison.
+//   - The function assumes both input values are non-nil. If nil inputs are possible in the usage context,
+//     additional validation may be needed.
+//
+// Example:
+// smaller := u256Min(u256.MustFromDecimal("10"), u256.MustFromDecimal("20")) // Returns 10
+// smaller := u256Min(u256.MustFromDecimal("30"), u256.MustFromDecimal("20")) // Returns 20
 func u256Min(num1, num2 *u256.Uint) *u256.Uint {
 	if num1.Lt(num2) {
 		return num1
 	}
-
 	return num2
 }
 
+// derivePkgAddr derives the Realm address from it's pkgPath parameter
+func derivePkgAddr(pkgPath string) std.Address {
+	return std.DerivePkgAddr(pkgPath)
+}
+
+// getPrevRealm returns object of the previous realm.
+func getPrevRealm() std.Realm {
+	return std.PrevRealm()
+}
+
+// getPrevAddr returns the address of the previous realm.
+func getPrevAddr() std.Address {
+	return std.PrevRealm().Addr()
+}
+
+// getPrevAsString returns the address and package path of the previous realm.
+func getPrevAsString() (string, string) {
+	prev := getPrevRealm()
+	return prev.Addr().String(), prev.PkgPath()
+}
+
+// isUserCall returns true if the caller is a user.
 func isUserCall() bool {
 	return std.PrevRealm().IsUser()
 }
 
-func getPrev() (string, string) {
-	prev := std.PrevRealm()
-	return prev.Addr().String(), prev.PkgPath()
-}
-
+// checkTransferError checks transfer error.
 func checkTransferError(err error) {
 	if err != nil {
 		panic(addDetailToError(

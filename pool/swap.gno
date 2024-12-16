@@ -107,7 +107,7 @@ func Swap(
 	// actual swap
 	pool.swapTransfers(zeroForOne, payer, recipient, result.Amount0, result.Amount1)
 
-	prevAddr, prevPkgPath := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
 		"Swap",

@@ -134,8 +134,8 @@ func TestTransferFromAndVerify(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			TokenFaucet(t, fooPath, pusers.AddressOrName(tt.from))
-			TokenApprove(t, fooPath, pusers.AddressOrName(tt.from), pool, u256.MustFromDecimal(tt.amount.ToString()).Uint64())
+			TokenFaucet(t, tt.tokenPath, pusers.AddressOrName(tt.from))
+			TokenApprove(t, tt.tokenPath, pusers.AddressOrName(tt.from), pool, u256.MustFromDecimal(tt.amount.ToString()).Uint64())
 
 			tt.pool.transferFromAndVerify(tt.from, tt.to, tt.tokenPath, u256.MustFromDecimal(tt.amount.ToString()), tt.isToken0)
 
