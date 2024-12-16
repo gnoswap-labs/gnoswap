@@ -28,7 +28,7 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 		params.amount1Desired,
 	)
 
-	pToken0, pToken1, pFee := poolKeyDivide(params.poolKey)
+	pToken0, pToken1, pFee := splitOf(params.poolKey)
 	amount0, amount1 := pl.Mint(
 		pToken0,
 		pToken1,
