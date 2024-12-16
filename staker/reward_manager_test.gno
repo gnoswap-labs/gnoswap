@@ -158,7 +158,7 @@ func TestRewardManager_External(t *testing.T) {
 			},
 			testFunc: func(rm *RewardManager) {
 				externalReward := rm.GetExternalIncentiveReward()
-				calculator := externalReward.GetOrCreateExternalCalculator(200) // 높이 200으로 설정
+				calculator := externalReward.GetOrCreateExternalCalculator(200)
 				if calculator == nil {
 					t.Error("calculator should not be nil")
 				}
