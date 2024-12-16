@@ -554,7 +554,6 @@ func TestSwapAndDrySwapComparison(t *testing.T) {
 				tt.amountSpecified,
 				tt.sqrtPriceLimitX96,
 			)
-			println("DrySwap", dryAmount0, dryAmount1, drySuccess)
 
 			std.TestSetOrigCaller(consts.ROUTER_ADDR)
 			actualAmount0, actualAmount1 := Swap(
@@ -567,8 +566,6 @@ func TestSwapAndDrySwapComparison(t *testing.T) {
 				tt.sqrtPriceLimitX96,
 				users.Resolve(addr),
 			)
-
-			println("Swap", actualAmount0, actualAmount1)
 
 			if !drySuccess {
 				t.Error("DrySwap failed but actual Swap succeeded")
@@ -613,7 +610,6 @@ func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
 					"0",
 					maxSqrtPriceLimitX96,
 				)
-				println("DrySwap", dryAmount0, dryAmount1, drySuccess)
 				uassert.Equal(t, "0", dryAmount0)
 				uassert.Equal(t, "0", dryAmount1)
 				uassert.Equal(t, false, drySuccess)
@@ -640,7 +636,6 @@ func TestSwapAndDrySwapComparison_amount_zero(t *testing.T) {
 					maxSqrtPriceLimitX96,
 					users.Resolve(addr),
 				)
-				println("Swap", actualAmount0, actualAmount1)
 			},
 			shouldPanic: true,
 			expected:    "[GNOSWAP-POOL-014] invalid swap amount || amountSpecified == 0",
@@ -718,7 +713,6 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 					consts.MAX_PRICE,
 					users.Resolve(addr),
 				)
-				println("Swap", actualAmount0, actualAmount1)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
@@ -744,7 +738,6 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 					consts.MAX_PRICE,
 					users.Resolve(addr),
 				)
-				println("Swap", actualAmount0, actualAmount1)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
@@ -771,7 +764,6 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 					consts.MIN_PRICE,
 					users.Resolve(addr),
 				)
-				println("Swap", actualAmount0, actualAmount1)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
@@ -799,7 +791,6 @@ func TestSwap_amount_over_liquidity(t *testing.T) {
 					consts.MIN_PRICE,
 					users.Resolve(addr),
 				)
-				println("Swap", actualAmount0, actualAmount1)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
@@ -857,7 +848,6 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 					consts.MAX_PRICE,
 					users.Resolve(addr),
 				)
-				println("Swap", actualAmount0, actualAmount1)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
@@ -883,7 +873,6 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 					consts.MAX_PRICE,
 					users.Resolve(addr),
 				)
-				println("Swap", actualAmount0, actualAmount1)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
@@ -910,7 +899,6 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 					consts.MIN_PRICE,
 					users.Resolve(addr),
 				)
-				println("Swap", actualAmount0, actualAmount1)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
@@ -938,7 +926,6 @@ func TestSwap_EXACTIN_OUT(t *testing.T) {
 					consts.MIN_PRICE,
 					users.Resolve(addr),
 				)
-				println("Swap", actualAmount0, actualAmount1)
 				return actualAmount0, actualAmount1
 			},
 			shouldPanic: false,
