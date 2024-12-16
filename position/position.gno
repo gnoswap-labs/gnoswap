@@ -33,10 +33,10 @@ func Mint(
 	fee uint32,
 	tickLower int32,
 	tickUpper int32,
-	amount0DesiredStr string, 
-	amount1DesiredStr string, 
-	amount0MinStr string, 
-	amount1MinStr string, 
+	amount0DesiredStr string,
+	amount1DesiredStr string,
+	amount0MinStr string,
+	amount1MinStr string,
 	deadline int64,
 	mintTo std.Address,
 	caller std.Address,
@@ -225,10 +225,10 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#increaseliquidity
 func IncreaseLiquidity(
 	tokenId uint64,
-	amount0DesiredStr string, 
-	amount1DesiredStr string, 
-	amount0MinStr string, 
-	amount1MinStr string, 
+	amount0DesiredStr string,
+	amount1DesiredStr string,
+	amount0MinStr string,
+	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string) {
 	common.IsHalted()
@@ -369,8 +369,8 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 func DecreaseLiquidity(
 	tokenId uint64,
 	liquidityRatio uint64,
-	amount0MinStr string, 
-	amount1MinStr string, 
+	amount0MinStr string,
+	amount1MinStr string,
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
@@ -605,7 +605,7 @@ func Reposition(
 			poolKey:        position.poolKey,
 			tickLower:      tickLower,
 			tickUpper:      tickUpper,
-			amount0Desired: u256.MustFromDecimal(amount0Desired)Str,
+			amount0Desired: u256.MustFromDecimal(amount0DesiredStr),
 			amount1Desired: u256.MustFromDecimal(amount1DesiredStr),
 			amount0Min:     u256.MustFromDecimal(amount0MinStr),
 			amount1Min:     u256.MustFromDecimal(amount1MinStr),
