@@ -41,7 +41,7 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	if !(prevAddr == consts.TOKEN_REGISTER || prevPath == consts.INIT_REGISTER_PATH || strings.HasPrefix(prevPath, "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5")) {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("token_register.gno__RegisterGRC20Interface() || only register(%s) can register token, called from %s", consts.TOKEN_REGISTER, prevAddr),
+			ufmt.Sprintf("only register(%s) can register token, called from %s", consts.TOKEN_REGISTER, prevAddr),
 		))
 	}
 
@@ -51,7 +51,7 @@ func RegisterGRC20Interface(pkgPath string, igrc20 GRC20Interface) {
 	if found {
 		panic(addDetailToError(
 			errAlreadyRegistered,
-			ufmt.Sprintf("token_register.gno__RegisterGRC20Interface() || token(%s) already registered", pkgPath),
+			ufmt.Sprintf("token(%s) already registered", pkgPath),
 		))
 	}
 
@@ -82,10 +82,7 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 
 	_, found := registered[pkgPath]
 	if !found {
-		panic(addDetailToError(
-			errNotRegistered,
-			ufmt.Sprintf("token_register.gno__transferByRegisterCall() || token(%s) not registered", pkgPath),
-		))
+		panic(ufmt.Sprintf("%v: token(%s) not registered", errNotRegistered, pkgPath))
 	}
 
 	if !locked {
@@ -98,7 +95,7 @@ func transferByRegisterCall(pkgPath string, to std.Address, amount uint64) bool 
 	} else {
 		panic(addDetailToError(
 			errLocked,
-			ufmt.Sprintf("token_register.gno__transferByRegisterCall() || expected locked(%t) to be false", locked),
+			ufmt.Sprintf("expected locked(%t) to be false", locked),
 		))
 	}
 
@@ -112,7 +109,7 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 	if !found {
 		panic(addDetailToError(
 			errNotRegistered,
-			ufmt.Sprintf("token_register.gno__transferFromByRegisterCall() || token(%s) not registered", pkgPath),
+			ufmt.Sprintf("token(%s) not registered", pkgPath),
 		))
 	}
 
@@ -126,7 +123,7 @@ func transferFromByRegisterCall(pkgPath string, from, to std.Address, amount uin
 	} else {
 		panic(addDetailToError(
 			errLocked,
-			ufmt.Sprintf("token_register.gno__transferFromByRegisterCall() || expected locked(%t) to be false", locked),
+			ufmt.Sprintf("expected locked(%t) to be false", locked),
 		))
 	}
 	return true
@@ -139,7 +136,7 @@ func balanceOfByRegisterCall(pkgPath string, owner std.Address) uint64 {
 	if !found {
 		panic(addDetailToError(
 			errNotRegistered,
-			ufmt.Sprintf("token_register.gno__balanceOfByRegisterCall() || token(%s) not registered", pkgPath),
+			ufmt.Sprintf("token(%s) not registered", pkgPath),
 		))
 	}
 
@@ -154,7 +151,7 @@ func approveByRegisterCall(pkgPath string, spender std.Address, amount uint64) b
 	if !found {
 		panic(addDetailToError(
 			errNotRegistered,
-			ufmt.Sprintf("token_register.gno__approveByRegisterCall() || token(%s) not registered", pkgPath),
+			ufmt.Sprintf("token(%s) not registered", pkgPath),
 		))
 	}
 
