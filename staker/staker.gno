@@ -62,6 +62,8 @@ func calculateStakeData(tokenId uint64, owner, caller std.Address) (*stakeResult
 		return nil, err
 	}
 
+	println("pass requireTokenOwnership")
+
 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 	if err := poolHasIncentives(poolPath); err != nil {
 		return nil, err
@@ -197,11 +199,11 @@ type externalRewardInfo struct {
 // It processes the rewards based on the deposit information [`Deposit`] and current state of both reward types.
 //
 // Parameters:
-//  - tokenId: The ID of the token for which to calculate rewards
-//  - deposit: The deposit information for the token
+//   - tokenId: The ID of the token for which to calculate rewards
+//   - deposit: The deposit information for the token
 //
 // Returns:
-//  - A `collectResult` containing all reward information and any error encountered during the calculation.
+//   - A `collectResult` containing all reward information and any error encountered during the calculation.
 func calculateCollectReward(tokenId uint64, deposit Deposit) (*collectResult, error) {
 	result := newCollectResult(tokenId, deposit.owner, deposit.TargetPoolPath())
 
@@ -220,11 +222,11 @@ func calculateCollectReward(tokenId uint64, deposit Deposit) (*collectResult, er
 // their respective rewards, storing them in the provided `collectResult` instance.
 //
 // Parameters:
-//  - tokenId: The ID of the token for which to calculate rewards
-//  - result: The `collectResult` instance to store the calculated rewards.
+//   - tokenId: The ID of the token for which to calculate rewards
+//   - result: The `collectResult` instance to store the calculated rewards.
 //
 // Returns:
-//  - An error if any issues arise during the calculation process.
+//   - An error if any issues arise during the calculation process.
 func calculateExternalRewards(tokenId uint64, result *collectResult) error {
 	positions, exist := positionExternal[tokenId]
 	if !exist {
@@ -241,6 +243,7 @@ func calculateExternalRewards(tokenId uint64, result *collectResult) error {
 			result.externalRewards.Set(ictvId, reward)
 		}
 	}
+
 	return nil
 }
 
