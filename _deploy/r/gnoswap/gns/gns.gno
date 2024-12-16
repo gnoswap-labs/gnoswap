@@ -12,14 +12,13 @@ import (
 	"gno.land/r/demo/grc20reg"
 	"gno.land/r/demo/users"
 
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
 const (
 	MAXIMUM_SUPPLY      = uint64(1_000_000_000_000_000)
 	INITIAL_MINT_AMOUNT = uint64(100_000_000_000_000)
-	MAX_EMISSION_AMOUNT = MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT
+	MAX_EMISSION_AMOUNT = uint64(900_000_000_000_000) // MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT
 )
 
 var (
@@ -27,7 +26,8 @@ var (
 )
 
 var (
-	leftEmissionAmount = MAX_EMISSION_AMOUNT
+	leftEmissionAmount   = MAX_EMISSION_AMOUNT
+	mintedEmissionAmount = uint64(0)
 )
 
 var (
@@ -49,13 +49,6 @@ func MintedEmissionAmount() uint64 {
 }
 
 func MintGns(address pusers.AddressOrName) uint64 {
-	common.IsHalted()
-
-	caller := std.PrevRealm().Addr()
-	if err := common.EmissionOnly(caller); err != nil {
-		panic(err)
-	}
-
 	lastMintedHeight := GetLastMintedHeight()
 	currentHeight := std.GetHeight()
 
@@ -63,6 +56,9 @@ func MintGns(address pusers.AddressOrName) uint64 {
 	if skipIfSameHeight(lastMintedHeight, currentHeight) {
 		return 0
 	}
+
+	assertShouldNotBeHalted()
+	assertCallerIsEmission()
 
 	// calculate gns amount to mint, and the mint to the target address
 	amountToMint := calculateAmountToMint(lastMintedHeight+1, currentHeight)
@@ -73,7 +69,8 @@ func MintGns(address pusers.AddressOrName) uint64 {
 
 	// update
 	setLastMintedHeight(currentHeight)
-	setLeftEmissionAmount(leftEmissionAmount - amountToMint)
+	setMintedEmissionAmount(GetMintedEmissionAmount() + amountToMint)
+	setLeftEmissionAmount(GetLeftEmissionAmount() - amountToMint)
 
 	return amountToMint
 }
@@ -232,4 +229,12 @@ func GetLeftEmissionAmount() uint64 {
 
 func setLeftEmissionAmount(amount uint64) {
 	leftEmissionAmount = amount
+}
+
+func GetMintedEmissionAmount() uint64 {
+	return mintedEmissionAmount
+}
+
+func setMintedEmissionAmount(amount uint64) {
+	mintedEmissionAmount = amount
 }
