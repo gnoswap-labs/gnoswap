@@ -23,16 +23,16 @@ func DryMint(
 	tickCurrent int32,
 	tickLower int32,
 	tickUpper int32,
-	_amount0Desired string,
-	_amount1Desired string,
+	amount0DesiredStr string,
+	amount1DesiredStr string,
 ) (string, string) {
 	// FROM: position__liquidity_management.gno
 	sqrtRatioX96 := common.TickMathGetSqrtRatioAtTick(tickCurrent)
 	sqrtLowerX96 := common.TickMathGetSqrtRatioAtTick(tickLower)
 	sqrtUpperX96 := common.TickMathGetSqrtRatioAtTick(tickUpper)
 
-	amount0Desired := u256.MustFromDecimal(_amount0Desired)
-	amount1Desired := u256.MustFromDecimal(_amount1Desired)
+	amount0Desired := u256.MustFromDecimal(amount0DesiredStr)
+	amount1Desired := u256.MustFromDecimal(amount1DesiredStr)
 
 	liquidity := common.GetLiquidityForAmounts(
 		sqrtRatioX96,
