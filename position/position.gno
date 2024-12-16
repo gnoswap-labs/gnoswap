@@ -2,6 +2,7 @@ package position
 
 import (
 	"std"
+	"strconv"
 
 	"gno.land/p/demo/avl"
 
@@ -542,7 +543,7 @@ func Reposition(
 	tokenId uint64,
 	tickLower int32,
 	tickUpper int32,
-	amount0Desired string, // uint25Str6
+	amount0DesiredStr string, // uint25Str6
 	amount1DesiredStr string, // uint256
 	amount0MinStr string, // *u256.Uint
 	amount1MinStr string, // *u256.Uint
@@ -811,7 +812,7 @@ func burnNFT(tokenId uint64) {
 			ufmt.Sprintf("position.gno__burnNFT() || position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
 		))
 	}
-	positions.Remove(tokenIdToStr(tokenId))
+	removePosition(tokenId)
 	gnft.Burn(tokenIdFrom(tokenId))
 }
 
@@ -919,7 +920,8 @@ func MustGetPosition(tokenId uint64) Position {
 // GetPosition returns a position for a given tokenId
 // Returns false if position doesn't exist
 func GetPosition(tokenId uint64) (Position, bool) {
-	iPosition, exist := positions.Get(tokenIdToStr(tokenId))
+	tokenIdStr := strconv.FormatUint(tokenId, 10)
+	iPosition, exist := positions.Get(tokenIdStr)
 	if !exist {
 		return Position{}, false
 	}
@@ -930,5 +932,12 @@ func GetPosition(tokenId uint64) (Position, bool) {
 // setPosition sets a position for a given tokenId
 // Returns true if position is newly created, false if position already exists and just updated.
 func setPosition(tokenId uint64, position Position) bool {
-	return positions.Set(tokenIdToStr(tokenId), position)
+	tokenIdStr := strconv.FormatUint(tokenId, 10)
+	return positions.Set(tokenIdStr, position)
+}
+
+// removePosition removes a position for a given tokenId
+func removePosition(tokenId uint64) {
+	tokenIdStr := strconv.FormatUint(tokenId, 10)
+	positions.Remove(tokenIdStr)
 }
