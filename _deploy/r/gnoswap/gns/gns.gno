@@ -54,8 +54,10 @@ func MintGns(address pusers.AddressOrName) uint64 {
 	lastMintedHeight := GetLastMintedHeight()
 	currentHeight := std.GetHeight()
 
-	// skip minting process if gns for current block is already minted
-	if skipIfSameHeight(lastMintedHeight, currentHeight) {
+	// skip minting process if following conditions are met
+	// - if gns for current block is already minted
+	// - if emission has ended
+	if skipIfSameHeight(lastMintedHeight, currentHeight) || skipIfEmissionEnded(currentHeight) {
 		return 0
 	}
 
@@ -146,10 +148,6 @@ func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
 	fromYear := GetHalvingYearByHeight(fromHeight)
 	toYear := GetHalvingYearByHeight(toHeight)
 
-	if isEmissionEnded(fromYear) || isEmissionEnded(toYear) {
-		return 0
-	}
-
 	totalAmountToMint := uint64(0)
 
 	for i := fromYear; i <= toYear; i++ {
@@ -199,14 +197,13 @@ func skipIfSameHeight(lastMintedHeight, currentHeight int64) bool {
 	return lastMintedHeight == currentHeight
 }
 
-// isEmissionEnded returns true if the emission is ended.
-// It returns false if the emission is not ended.
-func isEmissionEnded(year int64) bool {
-	if 1 <= year && year <= 12 {
-		return false
+// skipIfEmissionEnded returns true if the emission has ended.
+func skipIfEmissionEnded(height int64) bool {
+	if isEmissionEnded(height) {
+		return true
 	}
 
-	return true
+	return false
 }
 
 // Getter
