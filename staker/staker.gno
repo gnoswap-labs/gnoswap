@@ -98,12 +98,12 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		panic(err)
 	}
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPackagePath := getPrev()
 
 	std.Emit(
 		"StakeToken",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPackagePath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"internal_poolPath", result.poolPath,
 		"internal_amount0", result.token0Amount,
@@ -616,11 +616,11 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	gnft.TransferFrom(a2u(consts.STAKER_ADDR), a2u(deposit.owner), tid(tokenId))
 	pn.SetPositionOperator(tokenId, consts.ZERO_ADDRESS)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"UnstakeToken",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"unwrapResult", ufmt.Sprintf("%t", unwrapResult),
 		"internal_poolPath", output.poolPath,
