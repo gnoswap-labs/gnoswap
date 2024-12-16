@@ -118,7 +118,7 @@ func sqrtPriceMathGetNextSqrtPriceFromAmount1RoundingDown(
 
 		res := new(u256.Uint).Add(sqrtPX96, quotient)
 		if res.Gt(max160) {
-			panic("sqrtPx96 + quotient overflow uint160")
+			panic("GetNextSqrtPriceFromAmount1RoundingDown sqrtPx96 + quotient overflow uint160")
 		}
 		return res
 	} else {
