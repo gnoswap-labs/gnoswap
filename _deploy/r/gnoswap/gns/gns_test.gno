@@ -163,6 +163,7 @@ func TestGrc20Methods(t *testing.T) {
 		{
 			name: "MintGns without permission should panic",
 			fn: func() {
+				std.TestSkipHeights(1)
 				MintGns(a2u(consts.ADMIN))
 			},
 			shouldPanic: true,
