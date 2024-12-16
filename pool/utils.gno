@@ -3,10 +3,24 @@ package pool
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
+
 	pusers "gno.land/p/demo/users"
 
 	u256 "gno.land/p/gnoswap/uint256"
 )
+
+func safeConvertToUint64(value *u256.Uint) (uint64, error) {
+	res, overflow := value.Uint64WithOverflow()
+	if overflow {
+		return 0, ufmt.Errorf(
+			"%v: amount(%s) overflows uint64 range",
+			errOutOfRange, value.ToString(),
+		)
+	}
+
+	return res, nil
+}
 
 func a2u(addr std.Address) pusers.AddressOrName {
 	if !addr.IsValid() {
@@ -33,4 +47,13 @@ func isUserCall() bool {
 func getPrev() (string, string) {
 	prev := std.PrevRealm()
 	return prev.Addr().String(), prev.PkgPath()
+}
+
+func checkTransferError(err error) {
+	if err != nil {
+		panic(addDetailToError(
+			errTransferFailed,
+			err.Error(),
+		))
+	}
 }

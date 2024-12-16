@@ -46,6 +46,8 @@ func HandleWithdrawalFee(
 	positionCaller std.Address,
 ) (string, string) { // uint256 x2
 	common.IsHalted()
+	common.MustRegistered(token0Path)
+	common.MustRegistered(token1Path)
 
 	// only position contract can call this function
 	caller := std.PrevRealm().Addr()
@@ -64,8 +66,11 @@ func HandleWithdrawalFee(
 	feeAmount0, afterAmount0 := calculateAmountWithFee(u256.MustFromDecimal(_amount0), u256.NewUint(fee))
 	feeAmount1, afterAmount1 := calculateAmountWithFee(u256.MustFromDecimal(_amount1), u256.NewUint(fee))
 
-	transferFromByRegisterCall(token0Path, positionCaller, consts.PROTOCOL_FEE_ADDR, feeAmount0.Uint64())
-	transferFromByRegisterCall(token1Path, positionCaller, consts.PROTOCOL_FEE_ADDR, feeAmount1.Uint64())
+	token0Teller := common.GetTokenTeller(token0Path)
+	checkTransferError(token0Teller.TransferFrom(positionCaller, consts.PROTOCOL_FEE_ADDR, feeAmount0.Uint64()))
+
+	token1Teller := common.GetTokenTeller(token1Path)
+	checkTransferError(token1Teller.TransferFrom(positionCaller, consts.PROTOCOL_FEE_ADDR, feeAmount1.Uint64()))
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

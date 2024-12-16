@@ -37,6 +37,8 @@ const (
 	fee3000     uint32 = 3000
 	maxApprove  uint64 = 18446744073709551615
 	max_timeout int64  = 9999999999
+
+	maxSqrtPriceLimitX96 string = "1461446703485210103287273052203988822378723970341"
 )
 
 const (
@@ -45,128 +47,12 @@ const (
 	addr02 = testutils.TestAddress("addr02")
 )
 
-type WugnotToken struct{}
-
-func (WugnotToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
-	return wugnot.Transfer
-}
-func (WugnotToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
-	return wugnot.TransferFrom
-}
-func (WugnotToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
-	return wugnot.BalanceOf
-}
-func (WugnotToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
-	return wugnot.Approve
-}
-
-type GNSToken struct{}
-
-func (GNSToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
-	return gns.Transfer
-}
-func (GNSToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
-	return gns.TransferFrom
-}
-func (GNSToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
-	return gns.BalanceOf
-}
-func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
-	return gns.Approve
-}
-
-type BarToken struct{}
-
-func (BarToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
-	return bar.Transfer
-}
-func (BarToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
-	return bar.TransferFrom
-}
-func (BarToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
-	return bar.BalanceOf
-}
-func (BarToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
-	return bar.Approve
-}
-
-type BazToken struct{}
-
-func (BazToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
-	return baz.Transfer
-}
-func (BazToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
-	return baz.TransferFrom
-}
-func (BazToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
-	return baz.BalanceOf
-}
-func (BazToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
-	return baz.Approve
-}
-
-type FooToken struct{}
-
-func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
-	return foo.Transfer
-}
-func (FooToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
-	return foo.TransferFrom
-}
-func (FooToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
-	return foo.BalanceOf
-}
-func (FooToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
-	return foo.Approve
-}
-
-type OBLToken struct{}
-
-func (OBLToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
-	return obl.Transfer
-}
-func (OBLToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
-	return obl.TransferFrom
-}
-func (OBLToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
-	return obl.BalanceOf
-}
-func (OBLToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
-	return obl.Approve
-}
-
-type QuxToken struct{}
-
-func (QuxToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
-	return qux.Transfer
-}
-func (QuxToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
-	return qux.TransferFrom
-}
-func (QuxToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
-	return qux.BalanceOf
-}
-func (QuxToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
-	return qux.Approve
-}
-
-func init() {
-	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
-
-	RegisterGRC20Interface(wugnotPath, WugnotToken{})
-	RegisterGRC20Interface(gnsPath, GNSToken{})
-	RegisterGRC20Interface(barPath, BarToken{})
-	RegisterGRC20Interface(bazPath, BazToken{})
-	RegisterGRC20Interface(fooPath, FooToken{})
-	RegisterGRC20Interface(oblPath, OBLToken{})
-	RegisterGRC20Interface(quxPath, QuxToken{})
-}
-
 var (
 	admin       = pusers.AddressOrName(consts.ADMIN)
 	alice       = pusers.AddressOrName(testutils.TestAddress("alice"))
 	pool        = pusers.AddressOrName(consts.POOL_ADDR)
 	protocolFee = pusers.AddressOrName(consts.PROTOCOL_FEE_ADDR)
+	router      = pusers.AddressOrName(consts.ROUTER_ADDR)
 	adminRealm  = std.NewUserRealm(users.Resolve(admin))
 	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
 
@@ -330,6 +216,160 @@ func MintPosition(t *testing.T,
 		deadline,
 		mintTo,
 		caller)
+}
+
+func MintPositionAll(t *testing.T, caller std.Address) {
+	t.Helper()
+	std.TestSetRealm(std.NewUserRealm(caller))
+	TokenApprove(t, gnsPath, pusers.AddressOrName(caller), pool, maxApprove)
+	TokenApprove(t, gnsPath, pusers.AddressOrName(caller), router, maxApprove)
+	TokenApprove(t, wugnotPath, pusers.AddressOrName(caller), pool, maxApprove)
+	TokenApprove(t, wugnotPath, pusers.AddressOrName(caller), router, maxApprove)
+
+	params := []struct {
+		tickLower int32
+		tickUpper int32
+		liquidity uint64
+		zeroToOne bool
+	}{
+		{
+			tickLower: -300,
+			tickUpper: -240,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -240,
+			tickUpper: -180,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -180,
+			tickUpper: -120,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -120,
+			tickUpper: -60,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -60,
+			tickUpper: 0,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: 0,
+			tickUpper: 60,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 60,
+			tickUpper: 120,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 120,
+			tickUpper: 180,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 180,
+			tickUpper: 240,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 240,
+			tickUpper: 300,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: -360,
+			tickUpper: -300,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -420,
+			tickUpper: -360,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -480,
+			tickUpper: -420,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -540,
+			tickUpper: -480,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -600,
+			tickUpper: -540,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: 300,
+			tickUpper: 360,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 360,
+			tickUpper: 420,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 420,
+			tickUpper: 480,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 480,
+			tickUpper: 540,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 540,
+			tickUpper: 600,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+	}
+
+	for _, p := range params {
+		MintPosition(t,
+			wugnotPath,
+			gnsPath,
+			fee3000,
+			p.tickLower,
+			p.tickUpper,
+			"100",
+			"100",
+			"0",
+			"0",
+			max_timeout,
+			caller,
+			caller)
+	}
+
 }
 
 func wugnotApprove(t *testing.T, owner, spender pusers.AddressOrName, amount uint64) {

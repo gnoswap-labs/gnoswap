@@ -109,3 +109,13 @@ func assertOnlyValidAddressWith(prevAddr, otherAddr std.Address) {
 		))
 	}
 }
+
+// assertOnlyValidAddress panics if the address is invalid.
+func assertOnlyValidAddress(addr std.Address) {
+	if !addr.IsValid() {
+		panic(newErrorWithDetail(
+			errInvalidAddress,
+			ufmt.Sprintf("(%s)", addr),
+		))
+	}
+}

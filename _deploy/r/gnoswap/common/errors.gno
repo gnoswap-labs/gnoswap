@@ -7,9 +7,10 @@ import (
 )
 
 var (
-	errNoPermission = errors.New("[GNOSWAP-COMMON-001] caller has no permission")
-	errHalted       = errors.New("[GNOSWAP-COMMON-002] halted")
-	errOutOfRange   = errors.New("[GNOSWAP-COMMON-003] value out of range")
+	errNoPermission  = errors.New("[GNOSWAP-COMMON-001] caller has no permission")
+	errHalted        = errors.New("[GNOSWAP-COMMON-002] halted")
+	errOutOfRange    = errors.New("[GNOSWAP-COMMON-003] value out of range")
+	errNotRegistered = errors.New("[GNOSWAP-COMMON-004] token is not registered")
 )
 
 func addDetailToError(err error, detail string) string {
