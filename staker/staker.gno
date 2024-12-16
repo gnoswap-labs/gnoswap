@@ -62,8 +62,6 @@ func calculateStakeData(tokenId uint64, owner, caller std.Address) (*stakeResult
 		return nil, err
 	}
 
-	println("pass requireTokenOwnership")
-
 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 	if err := poolHasIncentives(poolPath); err != nil {
 		return nil, err
@@ -81,7 +79,7 @@ func calculateStakeData(tokenId uint64, owner, caller std.Address) (*stakeResult
 		poolPath,
 	)
 
-	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
+	token0Amount, token1Amount := getTokenPairBalanceFromPosition(poolPath, tokenId)
 
 	return &stakeResult{
 		tokenId:      tokenId,
@@ -590,7 +588,7 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	CollectReward(tokenId, unwrapResult)
 
 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
-	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
+	token0Amount, token1Amount := getTokenPairBalanceFromPosition(poolPath, tokenId)
 
 	input := newUnstakeInput(tokenId, unwrapResult, deposit)
 	output := newUnstakeOutput(poolPath, token0Amount, token1Amount, input)

@@ -339,10 +339,9 @@ func isMidnight(startTime time.Time) bool {
 	return hour == 0 && minute == 0 && second == 0
 }
 
-func getTokenPairBalanceFromPosition(tokenId uint64) (string, string) {
-	poolKey := pn.PositionGetPositionPoolKey(tokenId)
+func getTokenPairBalanceFromPosition(poolPath string, tokenId uint64) (string, string) {
+	pool := pl.GetPoolFromPoolPath(poolPath)
 
-	pool := pl.GetPoolFromPoolPath(poolKey)
 	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
 	lowerX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickLower(tokenId))
 	upperX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickUpper(tokenId))
