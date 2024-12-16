@@ -105,12 +105,12 @@ func Mint(
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
 		"Mint",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"tickLower", ufmt.Sprintf("%d", tickLower),
 		"tickUpper", ufmt.Sprintf("%d", tickUpper),
 		"poolPath", poolPath,
@@ -265,12 +265,12 @@ func IncreaseLiquidity(
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
 		"IncreaseLiquidity",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"internal_poolPath", poolPath,
 		"internal_liquidity", liquidity.ToString(),
@@ -386,12 +386,12 @@ func DecreaseLiquidity(
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
 		"DecreaseLiquidity",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"liquidityRatio", ufmt.Sprintf("%d", liquidityRatio),
 		"internal_poolPath", poolPath,
@@ -615,12 +615,12 @@ func Reposition(
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(position.poolKey)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
 		"Reposition",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"tickLower", ufmt.Sprintf("%d", tickLower),
 		"tickUpper", ufmt.Sprintf("%d", tickUpper),
@@ -736,12 +736,12 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 		}
 	}
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
 		"CollectSwapFee",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"internal_fee0", withoutFee0,
 		"internal_fee1", withoutFee1,
