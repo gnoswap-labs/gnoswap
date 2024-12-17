@@ -458,8 +458,8 @@ func unclaimedFee(tokenId uint64) (*i256.Int, *i256.Int) {
 	_feeGrowthInside0LastX128 := position.feeGrowthInside0LastX128          // u256
 	feeGrowthInside0LastX128 := i256.FromUint256(_feeGrowthInside0LastX128) // i256
 
-	_feeGrowthInside1LastX128 := position.feeGrowthInside1LastX128          // u256
-	feeGrowthInside1LastX128 := i256.FromUint256(_feeGrowthInside1LastX128) // i256
+	_feeGrowthInside1LastX128 := position.feeGrowthInside1LastX128
+	feeGrowthInside1LastX128 := i256.FromUint256(_feeGrowthInside1LastX128)
 
 	var tickLowerFeeGrowthBelow0, tickLowerFeeGrowthBelow1, tickUpperFeeGrowthAbove0, tickUpperFeeGrowthAbove1 *i256.Int
 
