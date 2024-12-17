@@ -215,24 +215,26 @@ func isEmissionEnded(year int64) bool {
 	return true
 }
 
+// Getter
 func GetLastMintedHeight() int64 {
 	return lastMintedHeight
-}
-
-func setLastMintedHeight(height int64) {
-	lastMintedHeight = height
 }
 
 func GetLeftEmissionAmount() uint64 {
 	return leftEmissionAmount
 }
 
-func setLeftEmissionAmount(amount uint64) {
-	leftEmissionAmount = amount
-}
-
 func GetMintedEmissionAmount() uint64 {
 	return mintedEmissionAmount
+}
+
+// Setter
+func setLastMintedHeight(height int64) {
+	lastMintedHeight = height
+}
+
+func setLeftEmissionAmount(amount uint64) {
+	leftEmissionAmount = amount
 }
 
 func setMintedEmissionAmount(amount uint64) {
