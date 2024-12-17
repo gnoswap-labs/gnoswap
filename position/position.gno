@@ -543,10 +543,10 @@ func Reposition(
 	tokenId uint64,
 	tickLower int32,
 	tickUpper int32,
-	amount0DesiredStr string, // uint25Str6
-	amount1DesiredStr string, // uint256
-	amount0MinStr string, // *u256.Uint
-	amount1MinStr string, // *u256.Uint
+	amount0DesiredStr string,
+	amount1DesiredStr string,
+	amount0MinStr string,
+	amount1MinStr string,
 ) (uint64, string, int32, int32, string, string) {
 	common.IsHalted()
 	en.MintAndDistributeGns()
