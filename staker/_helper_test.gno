@@ -14,6 +14,7 @@ import (
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
@@ -193,20 +194,20 @@ func InitialisePoolTest(t *testing.T) {
 	TokenFaucet(t, gnsPath, alice)
 	TokenApprove(t, wugnotPath, alice, pool, uint64(1000))
 	TokenApprove(t, gnsPath, alice, pool, uint64(1000))
-	// MintPosition(t,
-	// 	wugnotPath,
-	// 	gnsPath,
-	// 	fee3000,
-	// 	int32(1020),
-	// 	int32(5040),
-	// 	"1000",
-	// 	"1000",
-	// 	"0",
-	// 	"0",
-	// 	max_timeout,
-	// 	users.Resolve(alice),
-	// 	users.Resolve(alice),
-	// )
+	MintPosition(t,
+		wugnotPath,
+		gnsPath,
+		fee3000,
+		int32(1020),
+		int32(5040),
+		"1000",
+		"1000",
+		"0",
+		"0",
+		max_timeout,
+		users.Resolve(alice),
+		users.Resolve(alice),
+	)
 }
 
 func TokenFaucet(t *testing.T, tokenPath string, to pusers.AddressOrName) {
@@ -300,37 +301,37 @@ func TokenApprove(t *testing.T, tokenPath string, owner, spender pusers.AddressO
 	}
 }
 
-// func MintPosition(t *testing.T,
-// 	token0 string,
-// 	token1 string,
-// 	fee uint32,
-// 	tickLower int32,
-// 	tickUpper int32,
-// 	amount0Desired string, // *u256.Uint
-// 	amount1Desired string, // *u256.Uint
-// 	amount0Min string, // *u256.Uint
-// 	amount1Min string, // *u256.Uint
-// 	deadline int64,
-// 	mintTo std.Address,
-// 	caller std.Address,
-// ) (uint64, string, string, string) {
-// 	t.Helper()
-// 	std.TestSetRealm(std.NewUserRealm(caller))
+func MintPosition(t *testing.T,
+	token0 string,
+	token1 string,
+	fee uint32,
+	tickLower int32,
+	tickUpper int32,
+	amount0Desired string, // *u256.Uint
+	amount1Desired string, // *u256.Uint
+	amount0Min string, // *u256.Uint
+	amount1Min string, // *u256.Uint
+	deadline int64,
+	mintTo std.Address,
+	caller std.Address,
+) (uint64, string, string, string) {
+	t.Helper()
+	std.TestSetRealm(std.NewUserRealm(caller))
 
-// 	return pl.Mint(
-// 		token0,
-// 		token1,
-// 		fee,
-// 		tickLower,
-// 		tickUpper,
-// 		amount0Desired,
-// 		amount1Desired,
-// 		amount0Min,
-// 		amount1Min,
-// 		deadline,
-// 		mintTo,
-// 		caller)
-// }
+	return pn.Mint(
+		token0,
+		token1,
+		fee,
+		tickLower,
+		tickUpper,
+		amount0Desired,
+		amount1Desired,
+		amount0Min,
+		amount1Min,
+		deadline,
+		mintTo,
+		caller)
+}
 
 func wugnotApprove(t *testing.T, owner, spender pusers.AddressOrName, amount uint64) {
 	t.Helper()
@@ -491,42 +492,42 @@ func burnAllNFT(t *testing.T) {
 	}
 }
 
-// func TestBeforeResetObject(t *testing.T) {
-// 	// make actual data to test resetting not only position's state but also pool's state
-// 	std.TestSetRealm(adminRealm)
+func TestBeforeResetObject(t *testing.T) {
+	// make actual data to test resetting not only position's state but also pool's state
+	std.TestSetRealm(adminRealm)
 
-// 	// set pool create fee to 0 for testing
-// 	pl.SetPoolCreationFeeByAdmin(0)
-// 	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
+	// set pool create fee to 0 for testing
+	pl.SetPoolCreationFeeByAdmin(0)
+	pl.CreatePool(barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString())
 
-// 	// mint position
-// 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
-// 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	// mint position
+	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-// 	tokenId, liquidity, amount0, amount1 := Mint(
-// 		barPath,
-// 		fooPath,
-// 		fee500,
-// 		-887270,
-// 		887270,
-// 		"50000",
-// 		"50000",
-// 		"0",
-// 		"0",
-// 		max_timeout,
-// 		users.Resolve(admin),
-// 		users.Resolve(admin),
-// 	)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(
+		barPath,
+		fooPath,
+		fee500,
+		-887270,
+		887270,
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+		users.Resolve(admin),
+		users.Resolve(admin),
+	)
 
-// 	uassert.Equal(t, tokenId, uint64(1), "tokenId should be 1")
-// 	uassert.Equal(t, liquidity, "50000", "liquidity should be 50000")
-// 	uassert.Equal(t, amount0, "50000", "amount0 should be 50000")
-// 	uassert.Equal(t, amount1, "50000", "amount1 should be 50000")
-// 	uassert.Equal(t, len(positions), 1, "positions should have 1 position")
-// 	uassert.Equal(t, nextId, uint64(2), "nextId should be 2")
-// 	uassert.Equal(t, gnft.TotalSupply(), uint64(1), "gnft total supply should be 1")
-// 	uassert.Equal(t, pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"), "50000", "pool liquidity should be 50000")
-// }
+	uassert.Equal(t, tokenId, uint64(1), "tokenId should be 1")
+	uassert.Equal(t, liquidity, "50000", "liquidity should be 50000")
+	uassert.Equal(t, amount0, "50000", "amount0 should be 50000")
+	uassert.Equal(t, amount1, "50000", "amount1 should be 50000")
+	// uassert.Equal(t, len(positions), 1, "positions should have 1 position")
+	// uassert.Equal(t, nextId, uint64(2), "nextId should be 2")
+	uassert.Equal(t, gnft.TotalSupply(), uint64(1), "gnft total supply should be 1")
+	uassert.Equal(t, pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"), "50000", "pool liquidity should be 50000")
+}
 
 // func TestResetObject(t *testing.T) {
 // 	resetObject(t)
