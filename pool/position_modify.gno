@@ -1,11 +1,12 @@
 package pool
 
 import (
-	"gno.land/r/gnoswap/v1/common"
-
+	"gno.land/p/demo/ufmt"
 	i256 "gno.land/p/gnoswap/int256"
 	plp "gno.land/p/gnoswap/pool"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 // modifyPosition updates a position in the pool and calculates the amount of tokens
@@ -25,6 +26,8 @@ import (
 //   - *u256.Uint: amount of token0 needed/returned
 //   - *u256.Uint: amount of token1 needed/returned
 func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.Uint, *u256.Uint) {
+	checkTicks(params.tickLower, params.tickUpper)
+
 	// update position state
 	position := p.updatePosition(params)
 	liqDelta := params.liquidityDelta
@@ -79,4 +82,37 @@ func calculateToken0Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityD
 func calculateToken1Amount(sqrtPriceLower, sqrtPriceUpper *u256.Uint, liquidityDelta *i256.Int) *i256.Int {
 	res := plp.SqrtPriceMathGetAmount1DeltaStr(sqrtPriceLower, sqrtPriceUpper, liquidityDelta)
 	return i256.MustFromDecimal(res)
+}
+
+func checkTicks(tickLower, tickUpper int32) {
+	assertTickLowerLessThanUpper(tickLower, tickUpper)
+	assertValidTickLower(tickLower)
+	assertValidTickUpper(tickUpper)
+}
+
+func assertTickLowerLessThanUpper(tickLower, tickUpper int32) {
+	if tickLower >= tickUpper {
+		panic(ufmt.Sprintf(
+			"%v. tickLower(%d) >= tickUpper(%d)",
+			errTickLowerGtTickUpper, tickLower, tickUpper,
+		))
+	}
+}
+
+func assertValidTickLower(tickLower int32) {
+	if tickLower < consts.MIN_TICK {
+		panic(ufmt.Sprintf(
+			"%v. tickLower(%d) < MIN_TICK(%d)",
+			errTickLowerInvalid, tickLower, consts.MIN_TICK,
+		))
+	}
+}
+
+func assertValidTickUpper(tickUpper int32) {
+	if tickUpper > consts.MAX_TICK {
+		panic(ufmt.Sprintf(
+			"%v. tickUpper(%d) > MAX_TICK(%d)",
+			errTickUpperInvalid, tickUpper, consts.MAX_TICK,
+		))
+	}
 }

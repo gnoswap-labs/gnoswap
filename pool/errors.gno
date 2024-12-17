@@ -35,6 +35,9 @@ var (
 	errUnderflow                 = errors.New("[GNOSWAP-POOL-025] underflow")
 	errOverFlow                  = errors.New("[GNOSWAP-POOL-026] overflow")
 	errBalanceUpdateFailed       = errors.New("[GNOSWAP-POOL-027] balance update failed")
+	errTickLowerInvalid          = errors.New("[GNOSWAP-POOL-028] tickLower is invalid")
+	errTickUpperInvalid          = errors.New("[GNOSWAP-POOL-029] tickUpper is invalid")
+	errTickLowerGtTickUpper      = errors.New("[GNOSWAP-POOL-030] tickLower is greater than tickUpper")
 )
 
 // addDetailToError adds detail to an error message
