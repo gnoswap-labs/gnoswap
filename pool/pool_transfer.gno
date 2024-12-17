@@ -70,26 +70,39 @@ func (p *Pool) transferAndVerify(
 	}
 }
 
-// transferFromAndVerify performs a token transfer into the pool using transferFrom
-// while updating the pool's internal accounting. This function is typically used
-// during swaps and liquidity additions.
+// safeTransferFrom securely transfers tokens into the pool while ensuring balance consistency.
 //
-// The function assumes the sender has approved the pool to spend their tokens.
+// This function performs the following steps:
+// 1. Validates and converts the transfer amount to `uint64` using `safeConvertToUint64`.
+// 2. Executes the token transfer using `TransferFrom` via the token teller contract.
+// 3. Verifies that the destination balance reflects the correct amount after transfer.
+// 4. Updates the pool's internal balances (`token0` or `token1`) and validates the updated state.
 //
 // Parameters:
-//   - from: source address for the transfer
-//   - to: destination address (typically the pool)
-//   - tokenPath: path identifier of the token to transfer
-//   - amount: amount to transfer (must be positive)
-//   - isToken0: true if transferring token0, false for token1
+// - from (std.Address): Source address for the token transfer.
+// - to (std.Address): Destination address, typically the pool address.
+// - tokenPath (string): Path identifier for the token being transferred.
+// - amount (*u256.Uint): The amount of tokens to transfer (must be a positive value).
+// - isToken0 (bool): A flag indicating whether the token being transferred is token0 (`true`) or token1 (`false`).
 //
-// The function will:
-// 1. Convert amount to uint64 (must fit)
-// 2. Execute the transferFrom
-// 3. Update pool's internal balance
+// Panics:
+// - If the `amount` exceeds the uint64 range during conversion.
+// - If the token transfer (`TransferFrom`) fails.
+// - If the destination balance after the transfer does not match the expected amount.
+// - If the pool's internal balances (`token0` or `token1`) overflow or become inconsistent.
 //
-// Panics if the amount conversion fails or if the transfer fails
-func (p *Pool) transferFromAndVerify(
+// Notes:
+// - The function assumes that the sender (`from`) has approved the pool to spend the specified tokens.
+// - The balance consistency check ensures that no tokens are lost or double-counted during the transfer.
+// - Pool balance updates are performed atomically to ensure internal consistency.
+//
+// Example:
+// p.safeTransferFrom(
+//
+//	sender, poolAddress, "path/to/token0", u256.MustFromDecimal("1000"), true
+//
+// )
+func (p *Pool) safeTransferFrom(
 	from, to std.Address,
 	tokenPath string,
 	amount *u256.Uint,

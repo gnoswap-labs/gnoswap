@@ -47,11 +47,11 @@ func Mint(
 	_, amount0, amount1 := pool.modifyPosition(position)
 
 	if amount0.Gt(u256.Zero()) {
-		pool.transferFromAndVerify(positionCaller, consts.POOL_ADDR, pool.token0Path, amount0, true)
+		pool.safeTransferFrom(positionCaller, consts.POOL_ADDR, pool.token0Path, amount0, true)
 	}
 
 	if amount1.Gt(u256.Zero()) {
-		pool.transferFromAndVerify(positionCaller, consts.POOL_ADDR, pool.token1Path, amount1, false)
+		pool.safeTransferFrom(positionCaller, consts.POOL_ADDR, pool.token1Path, amount1, false)
 	}
 
 	return amount0.ToString(), amount1.ToString()
