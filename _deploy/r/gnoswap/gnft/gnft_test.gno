@@ -7,8 +7,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
-	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/gnoswap/v1/consts"
 )
@@ -221,7 +219,6 @@ func TestSetTokenURILast(t *testing.T) {
 		uassert.NotEmpty(t, TokenURI(tid(2)))
 	})
 }
-
 
 func resetObject(t *testing.T) {
 	t.Helper()
