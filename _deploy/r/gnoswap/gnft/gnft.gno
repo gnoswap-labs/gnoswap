@@ -5,6 +5,7 @@ import (
 	"std"
 	"time"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
@@ -19,7 +20,9 @@ var (
 	gnft              = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
 )
 
-var userMinted = make(map[std.Address][]grc721.TokenID)
+var (
+	userMinted = avl.NewTree()
+)
 
 // Getters
 func Name() string {
@@ -74,7 +77,6 @@ func GetApproved(tid grc721.TokenID) (std.Address, bool) {
 }
 
 // Setters
-
 func Approve(user pusers.AddressOrName, tid grc721.TokenID) {
 	common.IsHalted()
 
@@ -114,7 +116,8 @@ func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
 		panic(err.Error())
 	}
 
-	userMinted[users.Resolve(to)] = append(userMinted[users.Resolve(to)], tid)
+	toAddr := users.Resolve(to)
+	appendUserMinted(toAddr, tid)
 	return tid
 }
 
@@ -137,8 +140,6 @@ func SetAdmin(newAdmin pusers.AddressOrName) {
 	admin = users.Resolve(newAdmin)
 }
 
-// Render
-
 func Render(path string) string {
 	switch {
 	case path == "":
@@ -146,25 +147,6 @@ func Render(path string) string {
 	default:
 		return "404\n"
 	}
-}
-
-// Util
-func assertIsAdmin(address std.Address) {
-	if address != admin {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("gnft.gno__assertIsAdmin() || only admin(%s) can call this function, called from %s", admin.String(), address.String()),
-		))
-	}
-}
-
-func Exists(tid grc721.TokenID) bool {
-	_, err := gnft.OwnerOf(tid)
-	if err != nil {
-		return false
-	}
-
-	return true
 }
 
 func SetTokenURI(tid grc721.TokenID) {
@@ -201,7 +183,7 @@ func SetTokenURILast() {
 
 	prev := std.PrevRealm()
 	prevAddr := prev.Addr()
-	usersNFT := userMinted[prevAddr]
+	usersNFT, _ := getUserMinted(prevAddr)
 	for _, tid := range usersNFT {
 		tokenURI := genImageURI(r)
 
@@ -218,5 +200,33 @@ func SetTokenURILast() {
 		}
 	}
 
-	delete(userMinted, prevAddr)
+	removeUserMinted(prevAddr)
+}
+
+func getUserMinted(addr std.Address) ([]grc721.TokenID, bool) {
+	iListOfTokens, exists := userMinted.Get(addr.String())
+	if !exists {
+		return []grc721.TokenID{}, false
+	}
+
+	return iListOfTokens.([]grc721.TokenID), true
+}
+
+func mustGetUserMinted(addr std.Address) []grc721.TokenID {
+	listOfTokens, exists := getUserMinted(addr)
+	if !exists {
+		panic(ufmt.Sprintf("user %s has no minted nft tokens", addr.String()))
+	}
+
+	return listOfTokens
+}
+
+func appendUserMinted(addr std.Address, tid grc721.TokenID) {
+	prevList, _ := getUserMinted(addr)
+	prevList = append(prevList, tid)
+	userMinted.Set(addr.String(), prevList)
+}
+
+func removeUserMinted(addr std.Address) {
+	userMinted.Remove(addr.String())
 }

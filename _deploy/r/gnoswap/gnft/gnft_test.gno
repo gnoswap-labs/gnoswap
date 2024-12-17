@@ -45,9 +45,9 @@ func TestMint(t *testing.T) {
 
 func TestSetTokenURILast(t *testing.T) {
 	t.Run("inital check", func(t *testing.T) {
-		uassert.Equal(t, 2, len(userMinted))
-		uassert.Equal(t, 2, len(userMinted[dummyOneAddr]))
-		uassert.Equal(t, 1, len(userMinted[dummyTwoAddr]))
+		uassert.Equal(t, 2, userMinted.Size())
+		uassert.Equal(t, 2, len(mustGetUserMinted(dummyOneAddr)))
+		uassert.Equal(t, 1, len(mustGetUserMinted(dummyTwoAddr)))
 	})
 
 	t.Run("get token uri (nil should panic)", func(t *testing.T) {
