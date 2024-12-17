@@ -4,6 +4,8 @@ import (
 	"std"
 	"time"
 
+	"gno.land/p/demo/avl"
+
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -34,6 +36,38 @@ var (
 	startHeight    int64
 	startTimestamp int64
 )
+
+var perBlockMint *avl.Tree // height => uint64
+
+// endHeight MUST be equal or before the current height(must not be future)
+// setAvgBlockTimeInMsByAdmin does not change past emissions, safe
+func LastPerBlockMintUpdate(endHeight uint64) (uint64, uint64) {
+	height := uint64(0)
+	amount := uint64(0)
+	perBlockMint.ReverseIterate(0, endHeight, func(key string, value interface{}) bool {
+		height = std.MustParseUint(key, 10)
+		amount = value.(uint64)
+		return false
+	})
+
+	return height, amount
+}
+
+func PerBlockMintUpdates(startHeight, endHeight uint64) ([]uint64, []uint64) {
+	heights := make([]uint64, 0)
+	updates := make([]uint64, 0)
+	perBlockMint.Iterate(startHeight, endHeight, func(key string, value interface{}) bool {
+		heights = append(heights, std.MustParseUint(key, 10))
+		updates = append(updates, value.(uint64))
+		return false
+	})
+
+	return heights, updates
+}
+
+func addPerBlockMintUpdate(height uint64, amount uint64) {
+	perBlockMint.Insert(ufmt.Sprintf("%d", height), amount)
+}
 
 var halvingYearBlock = make(map[int64]int64)     // year => block
 var halvingYearTimestamp = make(map[int64]int64) // year => timestamp
@@ -91,6 +125,8 @@ func init() {
 
 		amountPerBlockPerHalvingYear[i] = uint64(amountPerBlock)
 	}
+
+	addPerBlockMintUpdate(height, amountPerBlockPerHalvingYear[1])
 }
 
 func GetAvgBlockTimeInMs() int64 {
@@ -161,6 +197,7 @@ func setAvgBlockTimeInMs(ms int64) {
 
 	// update it
 	amountPerBlockPerHalvingYear[year] = adjustedAmountPerBlock
+	addPerBlockMintUpdate(height, adjustedAmountPerBlock)
 
 	// adjust halving block
 	for keyYear, _ := range halvingYearBlock {

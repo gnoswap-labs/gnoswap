@@ -141,6 +141,11 @@ func Mint(address pusers.AddressOrName) uint64 {
 			halvingYearMintAmount[year] += amount
 			amountToMint += amount
 		}
+		for i := fromYear; i < toYear; i++ {
+			amount := GetAmountByYear(i+1)
+			halvingHeight := halvingYearBlock[i]
+			addPerBlockMintUpdate(halvingHeight, amount)
+		}
 	}
 
 	err := privateLedger.Mint(users.Resolve(address), amountToMint)
@@ -165,6 +170,8 @@ func checkAndHandleIfLastBlockOfHalvingYear(height int64, amount uint64) uint64 
 	if height == lastBlock {
 		leftForThisYear := halvingYearAmount[year] - halvingYearMintAmount[year]
 		amount = leftForThisYear
+		addPerBlockMintUpdate(height, amount)
+		addPerBlockMintUpdate(height+1, amountPerBlockPerHalvingYear(year+1))
 		return amount
 	}
 

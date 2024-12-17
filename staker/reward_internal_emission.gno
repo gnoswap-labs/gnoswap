@@ -316,8 +316,10 @@ func (r *InternalEmissionReward) distributeRewardToStakers(poolPath string, pool
 		poolLiquidity.SetInRangePositionReward(tokenId, inRangePositionReward)
 		// TODO:
 		// 1. positionRewardAmount 는 position에 부여되는 Reward
-		positionLastGns[tokenId] = positionGns[tokenId]
-		positionGns[tokenId] += positionRewardAmount
+		reward := depositReward[tokenId]
+		reward.prepareDistribution(positionRewardAmount)
+		depositReward[tokenId] = reward
+
 		poolLastTmpGns[poolPath] += positionRewardAmount
 	}
 
