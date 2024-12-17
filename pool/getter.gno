@@ -55,11 +55,11 @@ func PoolGetSlot0Unlocked(poolPath string) bool {
 }
 
 func PoolGetFeeGrowthGlobal0X128(poolPath string) string {
-	return mustGetPool(poolPath).GetFeeGrowthGlobal0X128().ToString()
+	return mustGetPool(poolPath).FeeGrowthGlobal0X128().ToString()
 }
 
 func PoolGetFeeGrowthGlobal1X128(poolPath string) string {
-	return mustGetPool(poolPath).GetFeeGrowthGlobal1X128().ToString()
+	return mustGetPool(poolPath).FeeGrowthGlobal1X128().ToString()
 }
 
 func PoolGetProtocolFeesToken0(poolPath string) string {

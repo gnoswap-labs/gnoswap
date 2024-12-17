@@ -28,18 +28,17 @@ import (
 func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.Uint, *u256.Uint) {
 	checkTicks(params.tickLower, params.tickUpper)
 
+	// get current state and price bounds
+	tick := p.GetSlot0Tick()
 	// update position state
-	position := p.updatePosition(params)
+	position := p.updatePosition(params, tick)
 	liqDelta := params.liquidityDelta
-
 	if liqDelta.IsZero() {
 		return position, u256.Zero(), u256.Zero()
 	}
 
 	amount0, amount1 := i256.Zero(), i256.Zero()
 
-	// get current state and price bounds
-	tick := p.slot0.tick
 	// covert ticks to sqrt price to use in amount calculations
 	// price = 1.0001^tick, but we use sqrtPriceX96
 	sqrtRatioLower := common.TickMathGetSqrtRatioAtTick(params.tickLower)

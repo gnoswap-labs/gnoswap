@@ -4,65 +4,64 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func (pool *Pool) updatePosition(positionParams ModifyPositionParams) PositionInfo {
-	feeGrowthGlobal0X128 := pool.feeGrowthGlobal0X128.Clone()
-	feeGrowthGlobal1X128 := pool.feeGrowthGlobal1X128.Clone()
+func (p *Pool) updatePosition(positionParams ModifyPositionParams, tick int32) PositionInfo {
+	feeGrowthGlobal0X128 := p.FeeGrowthGlobal0X128().Clone()
+	feeGrowthGlobal1X128 := p.FeeGrowthGlobal1X128().Clone()
 
 	var flippedLower, flippedUpper bool
 	if !(positionParams.liquidityDelta.IsZero()) {
-		flippedLower = pool.tickUpdate(
+		flippedLower = p.tickUpdate(
 			positionParams.tickLower,
-			pool.slot0.tick,
+			tick,
 			positionParams.liquidityDelta,
 			feeGrowthGlobal0X128,
 			feeGrowthGlobal1X128,
 			false,
-			pool.maxLiquidityPerTick,
+			p.maxLiquidityPerTick,
 		)
 
-		flippedUpper = pool.tickUpdate(
+		flippedUpper = p.tickUpdate(
 			positionParams.tickUpper,
-			pool.slot0.tick,
+			tick,
 			positionParams.liquidityDelta,
 			feeGrowthGlobal0X128,
 			feeGrowthGlobal1X128,
 			true,
-			pool.maxLiquidityPerTick,
+			p.maxLiquidityPerTick,
 		)
 
 		if flippedLower {
-			pool.tickBitmapFlipTick(positionParams.tickLower, pool.tickSpacing)
+			p.tickBitmapFlipTick(positionParams.tickLower, p.tickSpacing)
 		}
 
 		if flippedUpper {
-			pool.tickBitmapFlipTick(positionParams.tickUpper, pool.tickSpacing)
+			p.tickBitmapFlipTick(positionParams.tickUpper, p.tickSpacing)
 		}
 	}
 
-	feeGrowthInside0X128, feeGrowthInside1X128 := pool.calculateFeeGrowthInside(
+	feeGrowthInside0X128, feeGrowthInside1X128 := p.calculateFeeGrowthInside(
 		positionParams.tickLower,
 		positionParams.tickUpper,
-		pool.slot0.tick,
+		tick,
 		feeGrowthGlobal0X128,
 		feeGrowthGlobal1X128,
 	)
 
 	positionKey := positionGetKey(positionParams.owner, positionParams.tickLower, positionParams.tickUpper)
-
-	position := pool.positionUpdateWithKey(
+	position := p.positionUpdateWithKey(
 		positionKey,
 		positionParams.liquidityDelta,
 		u256.MustFromDecimal(feeGrowthInside0X128.ToString()),
 		u256.MustFromDecimal(feeGrowthInside1X128.ToString()),
 	)
 
+	// clear any tick data that is no longer needed
 	if positionParams.liquidityDelta.IsNeg() {
 		if flippedLower {
-			delete(pool.ticks, positionParams.tickLower)
+			delete(p.ticks, positionParams.tickLower)
 		}
-
 		if flippedUpper {
-			delete(pool.ticks, positionParams.tickUpper)
+			delete(p.ticks, positionParams.tickUpper)
 		}
 	}
 

@@ -7,6 +7,7 @@ import (
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
+	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/demo/users"
@@ -319,6 +320,100 @@ func TestGetPrevAddr(t *testing.T) {
 			std.TestSetOrigCaller(std.Address(tc.originCaller))
 			got := getPrevAddr()
 			uassert.Equal(t, got.String(), tc.expected.String())
+		})
+	}
+}
+
+func TestCheckOverFlowInt128(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       *i256.Int
+		shouldPanic bool
+		expected    string
+	}{
+		{
+			name:        "Valid value within int128 range",
+			input:       i256.MustFromDecimal("1"),
+			shouldPanic: false,
+		},
+		{
+			name:        "Edge case - MAX_INT128",
+			input:       i256.MustFromDecimal(consts.MAX_INT128),
+			shouldPanic: false,
+		},
+		{
+			name:        "Overflow case - exceeds MAX_INT128",
+			input:       i256.MustFromDecimal(consts.MAX_INT256), // 최대값 + 1
+			shouldPanic: true,
+			expected:    "[GNOSWAP-POOL-026] overflow: amount(170141183460469231731687303715884105728) overflows int128 range",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if !tt.shouldPanic {
+						t.Errorf("Unexpected panic: %v", r)
+					}
+				} else if tt.shouldPanic {
+					uassert.Equal(t, tt.expected, r)
+					t.Errorf("Expected panic but none occurred")
+				}
+			}()
+			checkOverFlowInt128(tt.input)
+		})
+	}
+}
+
+func TestCheckTickSpacing(t *testing.T) {
+	tests := []struct {
+		name        string
+		tick        int32
+		tickSpacing int32
+		shouldPanic bool
+		expected    string
+	}{
+		{
+			name:        "Valid tick - divisible by tickSpacing",
+			tick:        120,
+			tickSpacing: 60,
+			shouldPanic: false,
+		},
+		{
+			name:        "Valid tick - zero tick",
+			tick:        0,
+			tickSpacing: 10,
+			shouldPanic: false,
+		},
+		{
+			name:        "Invalid tick - not divisible",
+			tick:        15,
+			tickSpacing: 10,
+			shouldPanic: true,
+			expected:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(15) MOD tickSpacing(10) != 0(5)",
+		},
+		{
+			name:        "Invalid tick - negative tick",
+			tick:        -35,
+			tickSpacing: 20,
+			shouldPanic: true,
+			expected:    "[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick(-35) MOD tickSpacing(20) != 0(-15)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					if !tt.shouldPanic {
+						t.Errorf("Unexpected panic: %v", r)
+					}
+				} else if tt.shouldPanic {
+					uassert.Equal(t, tt.expected, r)
+				}
+			}()
+			checkTickSpacing(tt.tick, tt.tickSpacing)
 		})
 	}
 }

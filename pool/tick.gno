@@ -70,11 +70,53 @@ func (p *Pool) calculateFeeGrowthInside(
 	return feeGrowthInside0X128, feeGrowthInside1X128
 }
 
-// tickUpdate updates a tick's state and returns whether the tick was flipped.
+// tickUpdate updates the state of a specific tick.
+//
+// This function applies a given liquidity change (liquidityDelta) to the specified tick, updates
+// the fee growth values if necessary, and adjusts the net liquidity based on whether the tick
+// is an upper or lower boundary. It also verifies that the total liquidity does not exceed the
+// maximum allowed value and ensures the net liquidity stays within the valid int128 range.
+//
+// Parameters:
+//   - tick:          int32, the index of the tick to update.
+//   - tickCurrent:   int32, the current active tick index.
+//   - liquidityDelta: *i256.Int, the amount of liquidity to add or remove.
+//   - feeGrowthGlobal0X128: *u256.Uint, the global fee growth value for token 0.
+//   - feeGrowthGlobal1X128: *u256.Uint, the global fee growth value for token 1.
+//   - upper:         bool, indicates if this is the upper boundary (true for upper, false for lower).
+//   - maxLiquidity:  *u256.Uint, the maximum allowed liquidity.
+//
+// Returns:
+//   - flipped: bool, indicates if the tick's initialization state has changed.
+//     (e.g., liquidity transitioning from zero to non-zero, or vice versa)
+//
+// Workflow:
+// 1. Nil input values are replaced with zero.
+// 2. The function retrieves the tick information for the specified tick index.
+// 3. Applies the liquidityDelta to compute the new total liquidity (liquidityGross).
+//   - If the total liquidity exceeds the maximum allowed value, the function panics.
+//     4. Checks whether the tick's initialized state has changed and sets the `flipped` flag.
+//     5. If the tick was previously uninitialized and its index is less than or equal to the current tick,
+//     the fee growth values are initialized to the current global values.
+//     6. Updates the tick's net liquidity:
+//   - For an upper boundary, it subtracts liquidityDelta.
+//   - For a lower boundary, it adds liquidityDelta.
+//   - Ensures the net liquidity remains within the int128 range using `checkOverFlowInt128`.
+//     7. Updates the tick's state with the new values.
+//     8. Returns whether the tick's initialized state has flipped.
+//
+// Panic Conditions:
+// - The total liquidity (liquidityGross) exceeds the maximum allowed liquidity (maxLiquidity).
+// - The net liquidity (liquidityNet) exceeds the int128 range.
+//
+// Example:
+//
+//	flipped := pool.tickUpdate(10, 5, liquidityDelta, feeGrowth0, feeGrowth1, true, maxLiquidity)
+//	fmt.Println("Tick flipped:", flipped)
 func (p *Pool) tickUpdate(
 	tick int32,
 	tickCurrent int32,
-	liquidityDelta *i256.Int, // int128
+	liquidityDelta *i256.Int,
 	feeGrowthGlobal0X128 *u256.Uint,
 	feeGrowthGlobal1X128 *u256.Uint,
 	upper bool,
@@ -84,15 +126,15 @@ func (p *Pool) tickUpdate(
 	feeGrowthGlobal0X128 = feeGrowthGlobal0X128.NilToZero()
 	feeGrowthGlobal1X128 = feeGrowthGlobal1X128.NilToZero()
 
-	thisTick := p.getTick(tick)
+	tickInfo := p.getTick(tick)
 
-	liquidityGrossBefore := thisTick.liquidityGross
+	liquidityGrossBefore := tickInfo.liquidityGross.Clone()
 	liquidityGrossAfter := liquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
 
 	if !(liquidityGrossAfter.Lte(maxLiquidity)) {
 		panic(addDetailToError(
 			errLiquidityCalculation,
-			ufmt.Sprintf("tick.gno__tickUpdate() || liquidityGrossAfter(%s) overflows maxLiquidity(%s)", liquidityGrossAfter.ToString(), maxLiquidity.ToString()),
+			ufmt.Sprintf("liquidityGrossAfter(%s) overflows maxLiquidity(%s)", liquidityGrossAfter.ToString(), maxLiquidity.ToString()),
 		))
 	}
 
@@ -100,22 +142,23 @@ func (p *Pool) tickUpdate(
 
 	if liquidityGrossBefore.IsZero() {
 		if tick <= tickCurrent {
-			thisTick.feeGrowthOutside0X128 = feeGrowthGlobal0X128
-			thisTick.feeGrowthOutside1X128 = feeGrowthGlobal1X128
+			tickInfo.feeGrowthOutside0X128 = feeGrowthGlobal0X128.Clone()
+			tickInfo.feeGrowthOutside1X128 = feeGrowthGlobal1X128.Clone()
 		}
-
-		thisTick.initialized = true
+		tickInfo.initialized = true
 	}
 
-	thisTick.liquidityGross = liquidityGrossAfter
+	tickInfo.liquidityGross = liquidityGrossAfter.Clone()
 
 	if upper {
-		thisTick.liquidityNet = i256.Zero().Sub(thisTick.liquidityNet, liquidityDelta)
+		tickInfo.liquidityNet = i256.Zero().Sub(tickInfo.liquidityNet, liquidityDelta)
+		checkOverFlowInt128(tickInfo.liquidityNet)
 	} else {
-		thisTick.liquidityNet = i256.Zero().Add(thisTick.liquidityNet, liquidityDelta)
+		tickInfo.liquidityNet = i256.Zero().Add(tickInfo.liquidityNet, liquidityDelta)
+		checkOverFlowInt128(tickInfo.liquidityNet)
 	}
 
-	p.ticks[tick] = thisTick
+	p.setTick(tick, tickInfo)
 
 	return flipped
 }
@@ -136,47 +179,97 @@ func (p *Pool) tickCross(
 	return thisTick.liquidityNet.Clone()
 }
 
-// getTick returns a tick's state.
+// setTick updates the tick data for the specified tick index in the pool.
+func (p *Pool) setTick(tick int32, newTickInfo TickInfo) {
+	p.ticks[tick] = newTickInfo
+}
+
+// getTick retrieves the TickInfo associated with the specified tick index from the pool.
+// If the TickInfo contains any nil fields, they are replaced with zero values using valueOrZero.
+//
+// Parameters:
+// - tick: The tick index (int32) for which the TickInfo is to be retrieved.
+//
+// Behavior:
+// - Retrieves the TickInfo for the given tick from the pool's tick map.
+// - Ensures that all fields of TickInfo are non-nil by calling valueOrZero, which replaces nil values with zero.
+// - Returns the updated TickInfo.
+//
+// Returns:
+// - TickInfo: The tick data with all fields guaranteed to have valid values (nil fields are set to zero).
+//
+// Use Case:
+// This function ensures the retrieved tick data is always valid and safe for further operations,
+// such as calculations or updates, by sanitizing nil fields in the TickInfo structure.
 func (p *Pool) getTick(tick int32) TickInfo {
 	tickInfo := p.ticks[tick]
-	tickInfo.init()
-
+	tickInfo.valueOrZero()
 	return tickInfo
 }
 
-// receiver getters
+// GetTickLiquidityGross returns the gross liquidity for the specified tick.
 func (p *Pool) GetTickLiquidityGross(tick int32) *u256.Uint {
 	return p.mustGetTick(tick).liquidityGross
 }
 
+// GetTickLiquidityNet returns the net liquidity for the specified tick.
 func (p *Pool) GetTickLiquidityNet(tick int32) *i256.Int {
 	return p.mustGetTick(tick).liquidityNet
 }
 
+// GetTickFeeGrowthOutside0X128 returns the fee growth outside the tick for token 0.
 func (p *Pool) GetTickFeeGrowthOutside0X128(tick int32) *u256.Uint {
 	return p.mustGetTick(tick).feeGrowthOutside0X128
 }
 
+// GetTickFeeGrowthOutside1X128 returns the fee growth outside the tick for token 1.
 func (p *Pool) GetTickFeeGrowthOutside1X128(tick int32) *u256.Uint {
 	return p.mustGetTick(tick).feeGrowthOutside1X128
 }
 
+// GetTickCumulativeOutside returns the cumulative liquidity outside the tick.
 func (p *Pool) GetTickCumulativeOutside(tick int32) int64 {
 	return p.mustGetTick(tick).tickCumulativeOutside
 }
 
+// GetTickSecondsPerLiquidityOutsideX128 returns the seconds per liquidity outside the tick.
 func (p *Pool) GetTickSecondsPerLiquidityOutsideX128(tick int32) *u256.Uint {
 	return p.mustGetTick(tick).secondsPerLiquidityOutsideX128
 }
 
+// GetTickSecondsOutside returns the seconds outside the tick.
 func (p *Pool) GetTickSecondsOutside(tick int32) uint32 {
 	return p.mustGetTick(tick).secondsOutside
 }
 
+// GetTickInitialized returns whether the tick is initialized.
 func (p *Pool) GetTickInitialized(tick int32) bool {
 	return p.mustGetTick(tick).initialized
 }
 
+// mustGetTick retrieves the TickInfo for a specific tick, panicking if the tick does not exist.
+//
+// This function ensures that the requested tick data exists in the pool's tick mapping.
+// If the tick does not exist, it panics with an appropriate error message.
+//
+// Parameters:
+//   - tick: int32, the index of the tick to retrieve.
+//
+// Returns:
+//   - TickInfo: The information associated with the specified tick.
+//
+// Behavior:
+//   - Checks if the tick exists in the pool's tick mapping (`p.ticks`).
+//   - If the tick exists, it returns the corresponding `TickInfo`.
+//   - If the tick does not exist, the function panics with a descriptive error.
+//
+// Panic Conditions:
+//   - The specified tick does not exist in the pool's mapping.
+//
+// Example:
+//
+//	tickInfo := pool.mustGetTick(10)
+//	fmt.Println("Tick Info:", tickInfo)
 func (p *Pool) mustGetTick(tick int32) TickInfo {
 	tickInfo, exist := p.ticks[tick]
 	if !exist {

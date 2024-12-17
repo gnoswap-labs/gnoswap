@@ -130,8 +130,9 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 			want0:                "13",
 			want1:                "12",
 			preconditions: func() {
-				pool.setTick(
+				setTick(
 					t,
+					pool,
 					2,
 					u256.NewUint(2),
 					u256.NewUint(3),
@@ -154,9 +155,10 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 			want0:                "13",
 			want1:                "12",
 			preconditions: func() {
-				pool.deleteTick(t, 2) // delete tick from previous test
-				pool.setTick(
+				deleteTick(t, pool, 2) // delete tick from previous test
+				setTick(
 					t,
+					pool,
 					-2,
 					u256.NewUint(2),
 					u256.NewUint(3),
@@ -180,8 +182,9 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 			want1:                "11",
 			preconditions: func() {
 				// we already have tick -2
-				pool.setTick(
+				setTick(
 					t,
+					pool,
 					2,
 					u256.NewUint(4),
 					u256.NewUint(1),
@@ -204,10 +207,11 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 			want0:                "16",
 			want1:                "13",
 			preconditions: func() {
-				pool.deleteTick(t, 2)
-				pool.deleteTick(t, -2)
-				pool.setTick(
+				deleteTick(t, pool, 2)
+				deleteTick(t, pool, -2)
+				setTick(
 					t,
+					pool,
 					-2,
 					u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639932"), // max uint256 - 3
 					u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639933"), // max uint256 - 2
@@ -218,8 +222,9 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 					0,
 					true,
 				)
-				pool.setTick(
+				setTick(
 					t,
+					pool,
 					2,
 					u256.NewUint(3),
 					u256.NewUint(5),
@@ -287,7 +292,7 @@ func TestTickUpdate(t *testing.T) {
 		{
 			name: "does not flip from nonzero to greater nonzero",
 			preconditions: func() {
-				pool.deleteTick(t, 0)
+				deleteTick(t, pool, 0)
 				pool.tickUpdate(0, 0, i256.One(), u256.Zero(), u256.Zero(), false, u256.NewUint(3))
 			},
 			tick:                 0,
@@ -302,7 +307,7 @@ func TestTickUpdate(t *testing.T) {
 		{
 			name: "flips from nonzero to zero",
 			preconditions: func() {
-				pool.deleteTick(t, 0)
+				deleteTick(t, pool, 0)
 				pool.tickUpdate(0, 0, i256.One(), u256.Zero(), u256.Zero(), false, u256.NewUint(3))
 			},
 			tick:                 0,
@@ -317,7 +322,7 @@ func TestTickUpdate(t *testing.T) {
 		{
 			name: "does not flip from nonzero to lesser nonzero",
 			preconditions: func() {
-				pool.deleteTick(t, 0)
+				deleteTick(t, pool, 0)
 				pool.tickUpdate(0, 0, i256.NewInt(2), u256.Zero(), u256.Zero(), false, u256.NewUint(3))
 			},
 			tick:                 0,
@@ -332,7 +337,7 @@ func TestTickUpdate(t *testing.T) {
 		{
 			name: "reverts if total liquidity gross is greater than max",
 			preconditions: func() {
-				pool.deleteTick(t, 0)
+				deleteTick(t, pool, 0)
 				pool.tickUpdate(0, 0, i256.NewInt(2), u256.Zero(), u256.Zero(), false, u256.NewUint(3))
 				pool.tickUpdate(0, 0, i256.One(), u256.Zero(), u256.Zero(), true, u256.NewUint(3))
 
@@ -384,8 +389,8 @@ func TestTickUpdate(t *testing.T) {
 		{
 			name: "assumes all growth happens below ticks lte current tick",
 			preconditions: func() {
-				pool.deleteTick(t, 0)
-				pool.deleteTick(t, 1)
+				deleteTick(t, pool, 0)
+				deleteTick(t, pool, 1)
 				pool.tickUpdate(1, 1, i256.One(), u256.One(), u256.NewUint(2), false, u256.MustFromDecimal("340282366920938463463374607431768211455"))
 			},
 			tick:                 0,
@@ -574,8 +579,9 @@ func TestGetTick(t *testing.T) {
 	}
 }
 
-func (pool *Pool) setTick(
+func setTick(
 	t *testing.T,
+	pool *Pool,
 	tick int32,
 	feeGrowthOutside0X128 *u256.Uint,
 	feeGrowthOutside1X128 *u256.Uint,
@@ -589,7 +595,7 @@ func (pool *Pool) setTick(
 	t.Helper()
 
 	info := pool.ticks[tick]
-	info.init()
+	info.valueOrZero()
 
 	info.feeGrowthOutside0X128 = feeGrowthOutside0X128
 	info.feeGrowthOutside1X128 = feeGrowthOutside1X128
@@ -603,8 +609,7 @@ func (pool *Pool) setTick(
 	pool.ticks[tick] = info
 }
 
-func (pool *Pool) deleteTick(t *testing.T, tick int32) {
+func deleteTick(t *testing.T, pool *Pool, tick int32) {
 	t.Helper()
-
 	delete(pool.ticks, tick)
 }

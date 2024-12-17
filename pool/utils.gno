@@ -172,3 +172,22 @@ func checkTransferError(err error) {
 		))
 	}
 }
+
+// checkOverFlowInt128 checks if the value overflows the int128 range.
+func checkOverFlowInt128(value *i256.Int) {
+	if value.Gt(i256.MustFromDecimal(consts.MAX_INT128)) {
+		panic(ufmt.Sprintf(
+			"%v: amount(%s) overflows int128 range",
+			errOverFlow, value.ToString()))
+	}
+}
+
+// checkTickSpacing checks if the tick is divisible by the tickSpacing.
+func checkTickSpacing(tick, tickSpacing int32) {
+	if tick%tickSpacing != 0 {
+		panic(addDetailToError(
+			errInvalidTickAndTickSpacing,
+			ufmt.Sprintf("tick(%d) MOD tickSpacing(%d) != 0(%d)", tick, tickSpacing, tick%tickSpacing),
+		))
+	}
+}

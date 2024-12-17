@@ -259,7 +259,26 @@ type TickInfo struct {
 	initialized bool // whether the tick is initialized
 }
 
-func (t *TickInfo) init() {
+// valueOrZero ensures that all fields of TickInfo are valid by setting nil fields to zero,
+// while retaining existing values if they are not nil.
+// This function updates the TickInfo struct to replace any nil values in its fields
+// with their respective zero values, ensuring data consistency.
+//
+// Behavior:
+// - If a field is nil, it is replaced with its zero value.
+// - If a field already has a valid value, the value remains unchanged.
+//
+// Fields:
+// - liquidityGross: Gross liquidity for the tick, set to zero if nil, otherwise retains its value.
+// - liquidityNet: Net liquidity for the tick, set to zero if nil, otherwise retains its value.
+// - feeGrowthOutside0X128: Accumulated fee growth for token0 outside the tick, set to zero if nil, otherwise retains its value.
+// - feeGrowthOutside1X128: Accumulated fee growth for token1 outside the tick, set to zero if nil, otherwise retains its value.
+// - secondsPerLiquidityOutsideX128: Time per liquidity outside the tick, set to zero if nil, otherwise retains its value.
+//
+// Use Case:
+// This function ensures all numeric fields in TickInfo are non-nil and have valid values,
+// preventing potential runtime errors caused by nil values during operations like arithmetic or comparisons.
+func (t *TickInfo) valueOrZero() {
 	t.liquidityGross = t.liquidityGross.NilToZero()
 	t.liquidityNet = t.liquidityNet.NilToZero()
 	t.feeGrowthOutside0X128 = t.feeGrowthOutside0X128.NilToZero()
@@ -375,11 +394,11 @@ func (p *Pool) GetSlot0Unlocked() bool {
 	return p.slot0.unlocked
 }
 
-func (p *Pool) GetFeeGrowthGlobal0X128() *u256.Uint {
+func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint {
 	return p.feeGrowthGlobal0X128
 }
 
-func (p *Pool) GetFeeGrowthGlobal1X128() *u256.Uint {
+func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint {
 	return p.feeGrowthGlobal1X128
 }
 
