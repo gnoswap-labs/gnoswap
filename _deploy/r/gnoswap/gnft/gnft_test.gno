@@ -222,13 +222,6 @@ func TestSetTokenURILast(t *testing.T) {
 	})
 }
 
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
-}
-
-func tid(id uint64) grc721.TokenID {
-	return grc721.TokenID(ufmt.Sprintf("%d", id))
-}
 
 func resetObject(t *testing.T) {
 	t.Helper()
