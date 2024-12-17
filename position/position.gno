@@ -356,8 +356,10 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	updated := setPosition(params.tokenId, position)
 	if !updated {
-		// TODO:
-		panic("position should be updated, not newly created")
+		panic(addDetailToError(
+			errPositionDoesNotExist,
+			ufmt.Sprintf("position(%d) doesn't exist", params.tokenId),
+		))
 	}
 
 	return params.tokenId, liquidity, amount0, amount1, position.poolKey
