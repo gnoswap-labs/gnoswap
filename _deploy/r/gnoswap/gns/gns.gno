@@ -135,6 +135,8 @@ func checkErr(err error) {
 	}
 }
 
+// helper functions
+
 // calculateAmountToMint calculates the amount of gns to mint
 // It calculates the amount of gns to mint for each halving year for block range.
 // It also handles the left emission amount if the current block range includes halving year end block.
