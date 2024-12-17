@@ -17,7 +17,7 @@ func wrap(ugnotAmount uint64, to std.Address) {
 	if ugnotAmount < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
 		panic(addDetailToError(
 			errWugnotMinimum,
-			ufmt.Sprintf("wrap.gno__wrap() || amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
+			ufmt.Sprintf("amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
 		))
 	}
 
