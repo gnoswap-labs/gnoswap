@@ -305,7 +305,7 @@ func TestBurn(t *testing.T) {
 			callerRealm:   std.NewCodeRealm(consts.POSITION_PATH),
 			tokenIdToBurn: 99,
 			shouldPanic:   true,
-			panicMsg:      "invalid token id",
+			panicMsg:      errInvalidTokenId,
 		},
 		{
 			name:          "burn token id(2)",
@@ -350,7 +350,7 @@ func TestSetTokenURI(t *testing.T) {
 			name:      "set token uri of non-minted token id",
 			tokenId:   99,
 			shouldErr: true,
-			errMsg:    "invalid token id",
+			errMsg:    errInvalidTokenId,
 		},
 		{
 			name:        "set token uri of token id(1)",
@@ -387,7 +387,7 @@ func TestTokenURI(t *testing.T) {
 			name:        "get token uri of non-minted token id",
 			tokenId:     99,
 			shouldPanic: true,
-			panicMsg:    "invalid token id",
+			panicMsg:    errInvalidTokenId,
 		},
 		{
 			name: "get token uri of minted token but not set token uri",
@@ -397,7 +397,7 @@ func TestTokenURI(t *testing.T) {
 			},
 			tokenId:     1,
 			shouldPanic: true,
-			panicMsg:    "invalid token id",
+			panicMsg:    errInvalidTokenId,
 		},
 		{
 			name: "get token uri of minted token after setting token uri",
