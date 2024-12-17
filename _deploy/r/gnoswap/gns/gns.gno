@@ -170,10 +170,8 @@ func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
 		// if last block of halving year, handle left emission amount
 		if isLastBlockOfHalvingYear(mintUntilHeight) {
 			yearAmountToMint += handleLeftEmissionAmount(i, yearAmountToMint)
-			totalAmountToMint += yearAmountToMint
-		} else {
-			totalAmountToMint += yearAmountToMint
 		}
+		totalAmountToMint += yearAmountToMint
 		SetHalvingYearMintAmount(i, GetHalvingYearMintAmount(i)+yearAmountToMint)
 
 		// update fromHeight for next year (if necessary)
