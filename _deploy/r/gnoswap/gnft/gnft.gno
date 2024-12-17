@@ -17,9 +17,7 @@ import (
 )
 
 var (
-	admin std.Address = "g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5" // deployed position contract
-	gnft              = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
-
+	gnft  = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
 	owner = ownable.NewWithAddress("g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5") // deployed position contract
 )
 
