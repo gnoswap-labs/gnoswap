@@ -29,25 +29,25 @@ func TestMint(t *testing.T) {
 
 	t.Run("first nft to dummyOne", func(t *testing.T) {
 		tid := Mint(a2u(dummyOneAddr), tid(1))
-		uassert.Equal(t, string(tid), "1")
+		uassert.Equal(t, "1", string(tid))
 	})
 
 	t.Run("second nft to dummyOne", func(t *testing.T) {
 		tid := Mint(a2u(dummyOneAddr), tid(2))
-		uassert.Equal(t, string(tid), "2")
+		uassert.Equal(t, "2", string(tid))
 	})
 
 	t.Run("third nft to dummyTwo", func(t *testing.T) {
 		tid := Mint(a2u(dummyTwoAddr), tid(3))
-		uassert.Equal(t, string(tid), "3")
+		uassert.Equal(t, "3", string(tid))
 	})
 }
 
 func TestSetTokenURILast(t *testing.T) {
 	t.Run("inital check", func(t *testing.T) {
-		uassert.Equal(t, len(userMinted), 2)
-		uassert.Equal(t, len(userMinted[dummyOneAddr]), 2)
-		uassert.Equal(t, len(userMinted[dummyTwoAddr]), 1)
+		uassert.Equal(t, 2, len(userMinted))
+		uassert.Equal(t, 2, len(userMinted[dummyOneAddr]))
+		uassert.Equal(t, 1, len(userMinted[dummyTwoAddr]))
 	})
 
 	t.Run("get token uri (nil should panic)", func(t *testing.T) {
@@ -75,7 +75,7 @@ func TestTransferFrom(t *testing.T) {
 	std.TestSetRealm(dummyTwoRealm)
 
 	t.Run("before transfer, check owner", func(t *testing.T) {
-		uassert.Equal(t, OwnerOf(tid(3)), dummyTwoAddr)
+		uassert.Equal(t, dummyTwoAddr, OwnerOf(tid(3)))
 	})
 
 	t.Run("transfer from `two` to `one`", func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestTransferFrom(t *testing.T) {
 	})
 
 	t.Run("after transfer, check owner", func(t *testing.T) {
-		uassert.Equal(t, OwnerOf(tid(3)), dummyOneAddr)
+		uassert.Equal(t, dummyOneAddr, OwnerOf(tid(3)))
 	})
 
 	t.Run("dummyOne can call SetTokenURI", func(t *testing.T) {
@@ -94,11 +94,11 @@ func TestTransferFrom(t *testing.T) {
 
 func TestMetaGetter(t *testing.T) {
 	t.Run("name", func(t *testing.T) {
-		uassert.Equal(t, Name(), "GNOSWAP NFT")
+		uassert.Equal(t, "GNOSWAP NFT", Name())
 	})
 
 	t.Run("symbol", func(t *testing.T) {
-		uassert.Equal(t, Symbol(), "GNFT")
+		uassert.Equal(t, "GNFT", Symbol())
 	})
 }
 
