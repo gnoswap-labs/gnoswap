@@ -56,9 +56,7 @@ func BalanceOf(user pusers.AddressOrName) uint64 {
 
 func OwnerOf(tid grc721.TokenID) std.Address {
 	owner, err := gnft.OwnerOf(tid)
-	if err != nil {
-		panic(err.Error())
-	}
+	checkErr(err)
 
 	return owner
 }
@@ -80,28 +78,19 @@ func GetApproved(tid grc721.TokenID) (std.Address, bool) {
 func Approve(user pusers.AddressOrName, tid grc721.TokenID) {
 	common.IsHalted()
 
-	err := gnft.Approve(users.Resolve(user), tid)
-	if err != nil {
-		panic(err.Error())
-	}
+	checkErr(gnft.Approve(users.Resolve(user), tid))
 }
 
 func SetApprovalForAll(user pusers.AddressOrName, approved bool) {
 	common.IsHalted()
 
-	err := gnft.SetApprovalForAll(users.Resolve(user), approved)
-	if err != nil {
-		panic(err.Error())
-	}
+	checkErr(gnft.SetApprovalForAll(users.Resolve(user), approved))
 }
 
 func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
 	common.IsHalted()
 
-	err := gnft.TransferFrom(users.Resolve(from), users.Resolve(to), tid)
-	if err != nil {
-		panic(err.Error())
-	}
+	checkErr(gnft.TransferFrom(users.Resolve(from), users.Resolve(to), tid))
 }
 
 // Admin
@@ -111,10 +100,7 @@ func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
 
-	err := gnft.Mint(users.Resolve(to), tid)
-	if err != nil {
-		panic(err.Error())
-	}
+	checkErr(gnft.Mint(users.Resolve(to), tid))
 
 	toAddr := users.Resolve(to)
 	appendUserMinted(toAddr, tid)
@@ -126,10 +112,7 @@ func Burn(tid grc721.TokenID) {
 
 	caller := std.PrevRealm().Addr()
 	assertIsAdmin(caller)
-	err := gnft.Burn(tid)
-	if err != nil {
-		panic(err.Error())
-	}
+	checkErr(gnft.Burn(tid))
 }
 
 func SetAdmin(newAdmin pusers.AddressOrName) {
@@ -229,4 +212,10 @@ func appendUserMinted(addr std.Address, tid grc721.TokenID) {
 
 func removeUserMinted(addr std.Address) {
 	userMinted.Remove(addr.String())
+}
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err.Error())
+	}
 }
