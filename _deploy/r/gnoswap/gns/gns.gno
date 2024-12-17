@@ -152,20 +152,16 @@ func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
 
 	for i := fromYear; i <= toYear; i++ {
 		yearEndHeight := GetHalvingYearBlock(i)
-		mintUntilHeight := yearEndHeight
-
-		if toHeight < mintUntilHeight {
-			mintUntilHeight = toHeight
-		}
+		mintUntilHeight := i64Min(yearEndHeight, toHeight)
 
 		// how many blocks to calculate
-		numBlock := uint64(mintUntilHeight-fromHeight) + 1
+		blocks := uint64(mintUntilHeight-fromHeight) + 1
 
 		// amount of gns to mint for each block for current year
 		singleBlockAmount := GetAmountByHeight(yearEndHeight)
 
 		// amount of gns to mint for current year
-		yearAmountToMint := singleBlockAmount * numBlock
+		yearAmountToMint := singleBlockAmount * blocks
 
 		// if last block of halving year, handle left emission amount
 		if isLastBlockOfHalvingYear(mintUntilHeight) {
