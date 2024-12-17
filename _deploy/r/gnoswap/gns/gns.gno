@@ -194,7 +194,7 @@ func handleLeftEmissionAmount(year int64, amount uint64) uint64 {
 // skipIfSameHeight returns true if the current block height is the same as the last minted height.
 // This prevents multiple gns minting inside the same block.
 func skipIfSameHeight(lastMintedHeight, currentHeight int64) bool {
-	return lastMintedHeight == currentHeight {
+	return lastMintedHeight == currentHeight
 }
 
 // isEmissionEnded returns true if the emission is ended.
