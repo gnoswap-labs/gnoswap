@@ -7,6 +7,7 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc721"
+	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
@@ -18,6 +19,8 @@ import (
 var (
 	admin std.Address = "g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5" // deployed position contract
 	gnft              = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
+
+	owner = ownable.NewWithAddress("g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5") // deployed position contract
 )
 
 var (
@@ -78,27 +81,26 @@ func GetApproved(tid grc721.TokenID) (std.Address, bool) {
 func Approve(user pusers.AddressOrName, tid grc721.TokenID) {
 	common.IsHalted()
 
-	checkErr(gnft.Approve(users.Resolve(user), tid))
+	err := gnft.Approve(users.Resolve(user), tid)
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 func SetApprovalForAll(user pusers.AddressOrName, approved bool) {
 	common.IsHalted()
-
 	checkErr(gnft.SetApprovalForAll(users.Resolve(user), approved))
 }
 
 func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
 	common.IsHalted()
-
 	checkErr(gnft.TransferFrom(users.Resolve(from), users.Resolve(to), tid))
 }
 
 // Admin
 func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
+	owner.AssertCallerIsOwner()
 	common.IsHalted()
-
-	caller := std.PrevRealm().Addr()
-	assertIsAdmin(caller)
 
 	checkErr(gnft.Mint(users.Resolve(to), tid))
 
@@ -108,19 +110,10 @@ func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
 }
 
 func Burn(tid grc721.TokenID) {
+	owner.AssertCallerIsOwner()
 	common.IsHalted()
 
-	caller := std.PrevRealm().Addr()
-	assertIsAdmin(caller)
 	checkErr(gnft.Burn(tid))
-}
-
-func SetAdmin(newAdmin pusers.AddressOrName) {
-	common.IsHalted()
-
-	caller := std.PrevRealm().Addr()
-	assertIsAdmin(caller)
-	admin = users.Resolve(newAdmin)
 }
 
 func Render(path string) string {
