@@ -29,7 +29,7 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 	checkTicks(params.tickLower, params.tickUpper)
 
 	// get current state and price bounds
-	tick := p.GetSlot0Tick()
+	tick := p.Slot0Tick()
 	// update position state
 	position := p.updatePosition(params, tick)
 	liqDelta := params.liquidityDelta
@@ -43,30 +43,32 @@ func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.
 	// price = 1.0001^tick, but we use sqrtPriceX96
 	sqrtRatioLower := common.TickMathGetSqrtRatioAtTick(params.tickLower)
 	sqrtRatioUpper := common.TickMathGetSqrtRatioAtTick(params.tickUpper)
-	sqrtPriceX96 := p.slot0.sqrtPriceX96
+	sqrtPriceX96 := p.Slot0SqrtPriceX96()
 
 	// calculate token amounts based on current price position relative to range
 	switch {
 	case tick < params.tickLower:
 		// case 1
 		// full range between lower and upper tick is used for token0
+		// current tick is below the passed range; liquidity can only become in range by crossing from left to
+		// right, when we'll need _more_ token0 (it's becoming more valuable) so user must provide it
 		amount0 = calculateToken0Amount(sqrtRatioLower, sqrtRatioUpper, liqDelta)
 
 	case tick < params.tickUpper:
 		// case 2
 		liquidityBefore := p.liquidity
-
 		// token0 used from current price to upper tick
 		amount0 = calculateToken0Amount(sqrtPriceX96, sqrtRatioUpper, liqDelta)
 		// token1 used from lower tick to current price
 		amount1 = calculateToken1Amount(sqrtRatioLower, sqrtPriceX96, liqDelta)
-
 		// update pool's active liquidity since price is in range
 		p.liquidity = liquidityMathAddDelta(liquidityBefore, liqDelta)
 
 	default:
 		// case 3
 		// full range between lower and upper tick is used for token1
+		// current tick is above the passed range; liquidity can only become in range by crossing from right to
+		// left, when we'll need _more_ token1 (it's becoming more valuable) so user must provide it
 		amount1 = calculateToken1Amount(sqrtRatioLower, sqrtRatioUpper, liqDelta)
 	}
 

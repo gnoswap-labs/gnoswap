@@ -75,9 +75,25 @@ func Mint(
 	return amount0.ToString(), amount1.ToString()
 }
 
-// Burn removes liquidity from the caller and account tokens owed for the liquidity to the position
-// If liquidity of 0 is burned, it recalculates fees owed to a position
-// Returns burned amount0, amount1 in string
+// Burn removes liquidity from a position in the pool.
+//
+// This function allows the caller to burn (remove) a specified amount of liquidity from a position.
+// It calculates the amounts of token0 and token1 released when liquidity is removed and updates
+// the position's owed token amounts. The actual transfer of tokens back to the caller happens
+// during a separate `Collect()` operation.
+//
+// Parameters:
+//   - token0Path: string, the path or identifier for token 0.
+//   - token1Path: string, the path or identifier for token 1.
+//   - fee: uint32, the fee tier of the pool.
+//   - tickLower: int32, the lower tick boundary of the position.
+//   - tickUpper: int32, the upper tick boundary of the position.
+//   - liquidityAmount: string, the amount of liquidity to remove, provided as a decimal string (uint128).
+//
+// Returns:
+//   - string: The amount of token0 owed after removing liquidity, as a string.
+//   - string: The amount of token1 owed after removing liquidity, as a string.
+//
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#burn
 func Burn(
 	token0Path string,
@@ -87,26 +103,22 @@ func Burn(
 	tickUpper int32,
 	liquidityAmount string, // uint128
 ) (string, string) { // uint256 x2
-	common.IsHalted()
-	caller := std.PrevRealm().Addr()
+	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
-		if err := common.PositionOnly(caller); err != nil {
-			panic(addDetailToError(
-				errNoPermission,
-				ufmt.Sprintf("only position(%s) can call pool burn(), called from %s", consts.POSITION_ADDR, caller.String()),
-			))
-		}
+		assertOnlyPositionContract()
 	}
-
-	liqAmount := u256.MustFromDecimal(liquidityAmount)
-
 	pool := GetPool(token0Path, token1Path, fee)
 
-	liqDelta := i256.Zero().Neg(i256.FromUint256(liqAmount))
+	caller := getPrevAddr()
+	liqAmount := u256.MustFromDecimal(liquidityAmount)
+	liqAmountInt256 := safeConvertToInt128(liqAmount)
+	liqDelta := i256.Zero().Neg(liqAmountInt256)
 	posParams := newModifyPositionParams(caller, tickLower, tickUpper, liqDelta)
 	position, amount0, amount1 := pool.modifyPosition(posParams)
 
 	if amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()) {
+		amount0 = toUint128(amount0)
+		amount1 = toUint128(amount1)
 		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, amount0)
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, amount1)
 	}
@@ -118,9 +130,27 @@ func Burn(
 	return amount0.ToString(), amount1.ToString()
 }
 
-// Collect collects tokens owed to a position
-// Burned amounts, and swap fees will be transferred to the caller
-// Returns collected amount0, amount1 in string
+// Collect handles the collection of tokens (token0 and token1) from a liquidity position.
+//
+// This function allows the caller to collect a specified amount of tokens owed to a position
+// in a liquidity pool. It calculates the collectible amount based on three constraints:
+// the requested amount, the tokens owed to the position, and the pool's available balance.
+// The collected tokens are transferred to the specified recipient.
+//
+// Parameters:
+//   - token0Path: string, the path or identifier for token 0.
+//   - token1Path: string, the path or identifier for token 1.
+//   - fee: uint32, the fee tier of the pool.
+//   - recipient: std.Address, the address to receive the collected tokens.
+//   - tickLower: int32, the lower tick boundary of the position.
+//   - tickUpper: int32, the upper tick boundary of the position.
+//   - amount0Requested: string, the requested amount of token 0 to collect (decimal string).
+//   - amount1Requested: string, the requested amount of token 1 to collect (decimal string).
+//
+// Returns:
+//   - string: The actual amount of token 0 collected, as a string.
+//   - string: The actual amount of token 1 collected, as a string.
+//
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collect
 func Collect(
 	token0Path string,
@@ -132,76 +162,61 @@ func Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	common.IsHalted()
+	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
-		caller := std.PrevRealm().Addr()
-		if err := common.PositionOnly(caller); err != nil {
-			panic(addDetailToError(
-				errNoPermission,
-				ufmt.Sprintf("only position(%s) can call pool collect(), called from %s", consts.POSITION_ADDR, caller.String()),
-			))
-		}
+		assertOnlyPositionContract()
 	}
 
 	pool := GetPool(token0Path, token1Path, fee)
-
-	positionKey := getPositionKey(std.PrevRealm().Addr(), tickLower, tickUpper)
-	position, exist := pool.positions[positionKey]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("positionKey(%s) does not exist", positionKey),
-		))
-	}
+	positionKey := getPositionKey(getPrevAddr(), tickLower, tickUpper)
+	position := pool.mustGetPosition(positionKey)
 
 	var amount0, amount1 *u256.Uint
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
 	amount0Req := u256.MustFromDecimal(amount0Requested)
-	amount0, position.tokensOwed0, pool.balances.token0 = collectToken(amount0Req, position.tokensOwed0, pool.balances.token0)
-	token0 := common.GetTokenTeller(pool.token0Path)
-	checkTransferError(token0.Transfer(recipient, amount0.Uint64()))
-
-	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
+	amount0 = collectToken(amount0Req, position.tokensOwed0, pool.BalanceToken0())
 	amount1Req := u256.MustFromDecimal(amount1Requested)
-	amount1, position.tokensOwed1, pool.balances.token1 = collectToken(amount1Req, position.tokensOwed1, pool.balances.token1)
+	amount1 = collectToken(amount1Req, position.tokensOwed1, pool.BalanceToken1())
 
-	// Update state first then transfer
-	position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
-	pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
-	token1 := common.GetTokenTeller(pool.token1Path)
-	checkTransferError(token1.Transfer(recipient, amount1.Uint64()))
+	if amount0.Gt(u256.Zero()) {
+		position.tokensOwed0 = new(u256.Uint).Sub(position.tokensOwed0, amount0)
+		pool.balances.token0 = new(u256.Uint).Sub(pool.balances.token0, amount0)
+		token0 := common.GetTokenTeller(pool.token0Path)
+		checkTransferError(token0.Transfer(recipient, amount0.Uint64()))
+	}
+	if amount1.Gt(u256.Zero()) {
+		position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
+		pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
+		token1 := common.GetTokenTeller(pool.token1Path)
+		checkTransferError(token1.Transfer(recipient, amount1.Uint64()))
+	}
 
 	pool.positions[positionKey] = position
 
 	return amount0.ToString(), amount1.ToString()
 }
 
-// collectToken handles the collection of tokens (either token0 or token1) from a position.
-// It calculates the actual amount that can be collected based on three constraints:
-// the requested amount, tokens owed, and available pool balance.
+// collectToken calculates the actual amount of tokens that can be collected.
+//
+// This function determines the smallest possible value among the requested amount (`amountReq`),
+// the tokens owed (`tokensOwed`), and the pool's available balance (`poolBalance`). It ensures
+// the collected amount does not exceed any of these constraints.
 //
 // Parameters:
-//   - amountReq: amount requested to collect
-//   - tokensOwed: amount of tokens owed to the position
-//   - poolBalance: current balance of tokens in the pool
+//   - amountReq: *u256.Uint, the amount of tokens requested for collection.
+//   - tokensOwed: *u256.Uint, the total amount of tokens owed to the position.
+//   - poolBalance: *u256.Uint, the current balance of tokens available in the pool.
 //
 // Returns:
-//   - amount: actual amount that will be collected (minimum of the three inputs)
-//   - newTokensOwed: remaining tokens owed after collection
-//   - newPoolBalance: remaining pool balance after collection
+//   - amount: *u256.Uint, the actual amount that can be collected (minimum of the three inputs).
 func collectToken(
 	amountReq, tokensOwed, poolBalance *u256.Uint,
-) (amount, newTokensOwed, newPoolBalance *u256.Uint) {
+) (amount *u256.Uint) {
 	// find smallest of three amounts
 	amount = u256Min(amountReq, tokensOwed)
 	amount = u256Min(amount, poolBalance)
-
-	// value for update state
-	newTokensOwed = new(u256.Uint).Sub(tokensOwed, amount)
-	newPoolBalance = new(u256.Uint).Sub(poolBalance, amount)
-
-	return amount, newTokensOwed, newPoolBalance
+	return amount.Clone()
 }
 
 // SetFeeProtocolByAdmin sets the fee protocol for all pools

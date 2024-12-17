@@ -373,51 +373,51 @@ func newPool(poolInfo *createPoolParams) *Pool {
 	}
 }
 
-func (p *Pool) GetToken0Path() string {
+func (p *Pool) Token0Path() string {
 	return p.token0Path
 }
 
-func (p *Pool) GetToken1Path() string {
+func (p *Pool) Token1Path() string {
 	return p.token1Path
 }
 
-func (p *Pool) GetFee() uint32 {
+func (p *Pool) Fee() uint32 {
 	return p.fee
 }
 
-func (p *Pool) GetBalanceToken0() *u256.Uint {
+func (p *Pool) BalanceToken0() *u256.Uint {
 	return p.balances.token0
 }
 
-func (p *Pool) GetBalanceToken1() *u256.Uint {
+func (p *Pool) BalanceToken1() *u256.Uint {
 	return p.balances.token1
 }
 
-func (p *Pool) GetTickSpacing() int32 {
+func (p *Pool) TickSpacing() int32 {
 	return p.tickSpacing
 }
 
-func (p *Pool) GetMaxLiquidityPerTick() *u256.Uint {
+func (p *Pool) MaxLiquidityPerTick() *u256.Uint {
 	return p.maxLiquidityPerTick
 }
 
-func (p *Pool) GetSlot0() Slot0 {
+func (p *Pool) Slot0() Slot0 {
 	return p.slot0
 }
 
-func (p *Pool) GetSlot0SqrtPriceX96() *u256.Uint {
+func (p *Pool) Slot0SqrtPriceX96() *u256.Uint {
 	return p.slot0.sqrtPriceX96
 }
 
-func (p *Pool) GetSlot0Tick() int32 {
+func (p *Pool) Slot0Tick() int32 {
 	return p.slot0.tick
 }
 
-func (p *Pool) GetSlot0FeeProtocol() uint8 {
+func (p *Pool) Slot0FeeProtocol() uint8 {
 	return p.slot0.feeProtocol
 }
 
-func (p *Pool) GetSlot0Unlocked() bool {
+func (p *Pool) Slot0Unlocked() bool {
 	return p.slot0.unlocked
 }
 
@@ -429,15 +429,15 @@ func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint {
 	return p.feeGrowthGlobal1X128
 }
 
-func (p *Pool) GetProtocolFeesToken0() *u256.Uint {
+func (p *Pool) ProtocolFeesToken0() *u256.Uint {
 	return p.protocolFees.token0
 }
 
-func (p *Pool) GetProtocolFeesToken1() *u256.Uint {
+func (p *Pool) ProtocolFeesToken1() *u256.Uint {
 	return p.protocolFees.token1
 }
 
-func (p *Pool) GetLiquidity() *u256.Uint {
+func (p *Pool) Liquidity() *u256.Uint {
 	return p.liquidity
 }
 

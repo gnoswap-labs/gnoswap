@@ -57,7 +57,7 @@ func TestUpdatePosition(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tick := p.GetSlot0Tick()
+			tick := p.Slot0Tick()
 			position := p.updatePosition(tt.positionParams, tick)
 
 			if !position.liquidity.Eq(tt.expectLiquidity) {

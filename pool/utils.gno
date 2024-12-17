@@ -77,6 +77,32 @@ func safeConvertToInt128(value *u256.Uint) *i256.Int {
 	return liquidityDelta
 }
 
+// toUint128 ensures a *u256.Uint value fits within the uint128 range.
+//
+// This function validates that the given `value` is properly initialized and checks whether
+// it exceeds the maximum value of uint128. If the value exceeds the uint128 range,
+// it applies a masking operation to truncate the value to fit within the uint128 limit.
+//
+// Parameters:
+//   - value: *u256.Uint, the value to be checked and possibly truncated.
+//
+// Returns:
+//   - *u256.Uint: A value guaranteed to fit within the uint128 range.
+//
+// Notes:
+//   - The mask ensures that only the lower 128 bits of the value are retained.
+//   - If the input value is already within the uint128 range, it remains unchanged.
+//   - MAX_UINT128 is a constant representing `2^128 - 1`.
+func toUint128(value *u256.Uint) *u256.Uint {
+	assertOnlyInitializedUint256(value)
+	if value.Gt(u256.MustFromDecimal(consts.MAX_UINT128)) {
+		mask := new(u256.Uint).Lsh(u256.One(), consts.Q128_RESOLUTION)
+		mask = mask.Sub(mask, u256.One())
+		value = value.And(value, mask)
+	}
+	return value
+}
+
 // a2u converts a std.Address to a pusers.AddressOrName, ensuring the input address is valid.
 //
 // This function takes a `std.Address` and verifies its validity. If the address is invalid,
@@ -208,12 +234,23 @@ func assertOnlyNotHalted() {
 	common.IsHalted()
 }
 
+// assertOnlyPositionContract panics if the caller is not the position contract.
 func assertOnlyPositionContract() {
 	caller := getPrevAddr()
 	if err := common.PositionOnly(caller); err != nil {
 		panic(addDetailToError(
 			errNoPermission,
 			ufmt.Sprintf("only position(%s) can call, called from %s", consts.POSITION_ADDR, caller.String()),
+		))
+	}
+}
+
+// assertOnlyInitializedUint256 panics if the value is nil.
+func assertOnlyInitializedUint256(value *u256.Uint) {
+	if value == nil {
+		panic(addDetailToError(
+			errInvalidInput,
+			"value is nil",
 		))
 	}
 }

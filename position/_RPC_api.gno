@@ -387,7 +387,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 	burned := isBurned(lpTokenId)
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
-	currentX96 := pool.GetSlot0SqrtPriceX96()
+	currentX96 := pool.Slot0SqrtPriceX96()
 	lowerX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
 	upperX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)
 
@@ -436,7 +436,7 @@ func unclaimedFee(tokenId uint64) (*i256.Int, *i256.Int) {
 	poolKey := positions[tokenId].poolKey
 	pool := pl.GetPoolFromPoolPath(poolKey)
 
-	currentTick := pool.GetSlot0Tick()
+	currentTick := pool.Slot0Tick()
 
 	_feeGrowthGlobal0X128 := pool.FeeGrowthGlobal0X128()            // u256
 	feeGrowthGlobal0X128 := i256.FromUint256(_feeGrowthGlobal0X128) // i256

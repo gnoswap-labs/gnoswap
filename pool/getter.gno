@@ -11,47 +11,47 @@ func PoolGetPoolList() []string {
 }
 
 func PoolGetToken0Path(poolPath string) string {
-	return mustGetPool(poolPath).GetToken0Path()
+	return mustGetPool(poolPath).Token0Path()
 }
 
 func PoolGetToken1Path(poolPath string) string {
-	return mustGetPool(poolPath).GetToken1Path()
+	return mustGetPool(poolPath).Token1Path()
 }
 
 func PoolGetFee(poolPath string) uint32 {
-	return mustGetPool(poolPath).GetFee()
+	return mustGetPool(poolPath).Fee()
 }
 
 func PoolGetBalanceToken0(poolPath string) string {
-	return mustGetPool(poolPath).GetBalanceToken0().ToString()
+	return mustGetPool(poolPath).BalanceToken0().ToString()
 }
 
 func PoolGetBalanceToken1(poolPath string) string {
-	return mustGetPool(poolPath).GetBalanceToken1().ToString()
+	return mustGetPool(poolPath).BalanceToken1().ToString()
 }
 
 func PoolGetTickSpacing(poolPath string) int32 {
-	return mustGetPool(poolPath).GetTickSpacing()
+	return mustGetPool(poolPath).TickSpacing()
 }
 
 func PoolGetMaxLiquidityPerTick(poolPath string) string {
-	return mustGetPool(poolPath).GetMaxLiquidityPerTick().ToString()
+	return mustGetPool(poolPath).MaxLiquidityPerTick().ToString()
 }
 
 func PoolGetSlot0SqrtPriceX96(poolPath string) string {
-	return mustGetPool(poolPath).GetSlot0SqrtPriceX96().ToString()
+	return mustGetPool(poolPath).Slot0SqrtPriceX96().ToString()
 }
 
 func PoolGetSlot0Tick(poolPath string) int32 {
-	return mustGetPool(poolPath).GetSlot0Tick()
+	return mustGetPool(poolPath).Slot0Tick()
 }
 
 func PoolGetSlot0FeeProtocol(poolPath string) uint8 {
-	return mustGetPool(poolPath).GetSlot0FeeProtocol()
+	return mustGetPool(poolPath).Slot0FeeProtocol()
 }
 
 func PoolGetSlot0Unlocked(poolPath string) bool {
-	return mustGetPool(poolPath).GetSlot0Unlocked()
+	return mustGetPool(poolPath).Slot0Unlocked()
 }
 
 func PoolGetFeeGrowthGlobal0X128(poolPath string) string {
@@ -63,15 +63,15 @@ func PoolGetFeeGrowthGlobal1X128(poolPath string) string {
 }
 
 func PoolGetProtocolFeesToken0(poolPath string) string {
-	return mustGetPool(poolPath).GetProtocolFeesToken0().ToString()
+	return mustGetPool(poolPath).ProtocolFeesToken0().ToString()
 }
 
 func PoolGetProtocolFeesToken1(poolPath string) string {
-	return mustGetPool(poolPath).GetProtocolFeesToken1().ToString()
+	return mustGetPool(poolPath).ProtocolFeesToken1().ToString()
 }
 
 func PoolGetLiquidity(poolPath string) string {
-	return mustGetPool(poolPath).GetLiquidity().ToString()
+	return mustGetPool(poolPath).Liquidity().ToString()
 }
 
 // position
