@@ -12,8 +12,32 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// Mint creates a new position and mints liquidity tokens.
-// Returns minted amount0, amount1 in string
+// Mint adds liquidity to a pool by minting a new position.
+//
+// This function mints a liquidity position within the specified tick range in a pool.
+// It verifies caller permissions, validates inputs, and updates the pool's state. Additionally,
+// it transfers the required amounts of token0 and token1 from the caller to the pool.
+//
+// Parameters:
+//   - token0Path: string, the path or identifier for token 0.
+//   - token1Path: string, the path or identifier for token 1.
+//   - fee: uint32, the fee tier of the pool.
+//   - recipient: std.Address, the address to receive the newly created position.
+//   - tickLower: int32, the lower tick boundary of the position.
+//   - tickUpper: int32, the upper tick boundary of the position.
+//   - liquidityAmount: string, the amount of liquidity to add, provided as a decimal string.
+//   - positionCaller: std.Address, the address of the entity calling the function (e.g., the position owner).
+//
+// Returns:
+//   - string: The amount of token 0 transferred to the pool as a string.
+//   - string: The amount of token 1 transferred to the pool as a string.
+//
+// Panic Conditions:
+//   - The system is halted (`common.IsHalted()`).
+//   - Caller lacks permission to mint a position when `common.GetLimitCaller()` is enforced.
+//   - The provided `liquidityAmount` is zero.
+//   - Any failure during token transfers or position modifications.
+//
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#mint
 func Mint(
 	token0Path string,
@@ -25,15 +49,9 @@ func Mint(
 	liquidityAmount string,
 	positionCaller std.Address,
 ) (string, string) {
-	common.IsHalted()
+	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
-		caller := std.PrevRealm().Addr()
-		if err := common.PositionOnly(caller); err != nil {
-			panic(addDetailToError(
-				errNoPermission,
-				ufmt.Sprintf("only position(%s) can call pool mint(), called from %s", consts.POSITION_ADDR, caller.String()),
-			))
-		}
+		assertOnlyPositionContract()
 	}
 
 	liquidity := u256.MustFromDecimal(liquidityAmount)
@@ -93,7 +111,7 @@ func Burn(
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, amount1)
 	}
 
-	positionKey := positionGetKey(caller, tickLower, tickUpper)
+	positionKey := getPositionKey(caller, tickLower, tickUpper)
 	pool.positions[positionKey] = position
 
 	// actual token transfer happens in Collect()
@@ -127,7 +145,7 @@ func Collect(
 
 	pool := GetPool(token0Path, token1Path, fee)
 
-	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
+	positionKey := getPositionKey(std.PrevRealm().Addr(), tickLower, tickUpper)
 	position, exist := pool.positions[positionKey]
 	if !exist {
 		panic(addDetailToError(

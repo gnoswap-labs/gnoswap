@@ -417,3 +417,37 @@ func TestCheckTickSpacing(t *testing.T) {
 		})
 	}
 }
+
+func TestAssertOnlyValidAddress(t *testing.T) {
+	tests := []struct {
+		name     string
+		addr     std.Address
+		expected bool
+		errorMsg string
+	}{
+		{
+			name:     "Success - valid address",
+			addr:     consts.ADMIN,
+			expected: true,
+		},
+		{
+			name:     "Failure - invalid address",
+			addr:     "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8", // invalid length
+			expected: false,
+			errorMsg: "[GNOSWAP-POOL-023] invalid address || (g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8)",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.expected {
+				uassert.NotPanics(t, func() {
+					assertOnlyValidAddress(tc.addr)
+				})
+			} else {
+				uassert.PanicsWithMessage(t, tc.errorMsg, func() {
+					assertOnlyValidAddress(tc.addr)
+				})
+			}
+		})
+	}
+}

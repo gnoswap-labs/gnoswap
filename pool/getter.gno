@@ -76,23 +76,23 @@ func PoolGetLiquidity(poolPath string) string {
 
 // position
 func PoolGetPositionLiquidity(poolPath, key string) string {
-	return mustGetPool(poolPath).GetPositionLiquidity(key).ToString()
+	return mustGetPool(poolPath).PositionLiquidity(key).ToString()
 }
 
 func PoolGetPositionFeeGrowthInside0LastX128(poolPath, key string) string {
-	return mustGetPool(poolPath).GetPositionFeeGrowthInside0LastX128(key).ToString()
+	return mustGetPool(poolPath).PositionFeeGrowthInside0LastX128(key).ToString()
 }
 
 func PoolGetPositionFeeGrowthInside1LastX128(poolPath, key string) string {
-	return mustGetPool(poolPath).GetPositionFeeGrowthInside1LastX128(key).ToString()
+	return mustGetPool(poolPath).PositionFeeGrowthInside1LastX128(key).ToString()
 }
 
 func PoolGetPositionTokensOwed0(poolPath, key string) string {
-	return mustGetPool(poolPath).GetPositionTokensOwed0(key).ToString()
+	return mustGetPool(poolPath).PositionTokensOwed0(key).ToString()
 }
 
 func PoolGetPositionTokensOwed1(poolPath, key string) string {
-	return mustGetPool(poolPath).GetPositionTokensOwed1(key).ToString()
+	return mustGetPool(poolPath).PositionTokensOwed1(key).ToString()
 }
 
 // tick

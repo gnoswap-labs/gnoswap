@@ -15,49 +15,52 @@ var (
 	Q128 = u256.MustFromDecimal(consts.Q128)
 )
 
-// positionGetKey generates a unique key for a position based on the owner's address and the tick range.
-func positionGetKey(
+// getPositionKey generates a unique, encoded key for a liquidity position.
+//
+// This function creates a unique key for identifying a liquidity position in a pool. The key is based
+// on the position's owner address, lower tick, and upper tick values. The generated key is then encoded
+// as a base64 string to ensure compatibility and uniqueness.
+//
+// Parameters:
+//   - owner: std.Address, the address of the position's owner.
+//   - tickLower: int32, the lower tick boundary for the position.
+//   - tickUpper: int32, the upper tick boundary for the position.
+//
+// Returns:
+//   - string: A base64-encoded string representing the unique position key.
+//
+// Workflow:
+//  1. Validates that the `owner` address is valid using `assertOnlyValidAddress`.
+//  2. Ensures `tickLower` is less than `tickUpper` using `assertTickLowerLessThanUpper`.
+//  3. Constructs the position key as a formatted string:
+//     "<owner>__<tickLower>__<tickUpper>"
+//  4. Encodes the generated position key into a base64 string for safety and uniqueness.
+//  5. Returns the encoded position key.
+//
+// Example:
+//
+//	owner := std.Address("0x123456789")
+//	positionKey := getPositionKey(owner, 100, 200)
+//	fmt.Println("Position Key:", positionKey)
+//	// Output: base64-encoded string representing "0x123456789__100__200"
+//
+// Notes:
+//   - The base64 encoding ensures that the position key can be safely used as an identifier
+//     across different systems or data stores.
+//   - The function will panic if:
+//   - The `owner` address is invalid.
+//   - `tickLower` is greater than or equal to `tickUpper`.
+func getPositionKey(
 	owner std.Address,
 	tickLower int32,
 	tickUpper int32,
 ) string {
-	if !owner.IsValid() {
-		panic(addDetailToError(
-			errInvalidAddress,
-			ufmt.Sprintf("position.gno__positionGetKey() || invalid owner address %s", owner.String()),
-		))
-	}
-
-	if tickLower > tickUpper {
-		panic(addDetailToError(
-			errInvalidTickRange,
-			ufmt.Sprintf("position.gno__positionGetKey() || tickLower(%d) is greater than tickUpper(%d)", tickLower, tickUpper),
-		))
-	}
+	assertOnlyValidAddress(owner)
+	assertTickLowerLessThanUpper(tickLower, tickUpper)
 
 	positionKey := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
-
-	encoded := base64.StdEncoding.EncodeToString([]byte(positionKey))
-	return encoded
-}
-
-// positionUpdateWithKey updates a position in the pool and returns the updated position.
-func (pool *Pool) positionUpdateWithKey(
-	positionKey string,
-	liquidityDelta *i256.Int,
-	feeGrowthInside0X128 *u256.Uint,
-	feeGrowthInside1X128 *u256.Uint,
-) PositionInfo {
-	// if pointer is nil, set to zero for calculation
-	liquidityDelta = liquidityDelta.NilToZero()
-	feeGrowthInside0X128 = feeGrowthInside0X128.NilToZero()
-	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
-
-	positionToUpdate := pool.positions[positionKey]
-	positionAfterUpdate := positionUpdate(positionToUpdate, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
-	pool.positions[positionKey] = positionAfterUpdate
-
-	return positionAfterUpdate
+	encodedPositionKey := base64.StdEncoding.EncodeToString([]byte(positionKey))
+	return encodedPositionKey
 }
 
 // positionUpdate calculates and returns an updated PositionInfo.
@@ -67,7 +70,7 @@ func positionUpdate(
 	feeGrowthInside0X128 *u256.Uint,
 	feeGrowthInside1X128 *u256.Uint,
 ) PositionInfo {
-	position.init()
+	position.valueOrZero()
 
 	var liquidityNext *u256.Uint
 	if liquidityDelta.IsZero() {
@@ -105,25 +108,48 @@ func positionUpdate(
 	return position
 }
 
-// receiver getters
+// positionUpdateWithKey updates a position in the pool and returns the updated position.
+func (p *Pool) positionUpdateWithKey(
+	positionKey string,
+	liquidityDelta *i256.Int,
+	feeGrowthInside0X128 *u256.Uint,
+	feeGrowthInside1X128 *u256.Uint,
+) PositionInfo {
+	// if pointer is nil, set to zero for calculation
+	liquidityDelta = liquidityDelta.NilToZero()
+	feeGrowthInside0X128 = feeGrowthInside0X128.NilToZero()
+	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
 
-func (p *Pool) GetPositionLiquidity(key string) *u256.Uint {
+	positionToUpdate := p.GetPosition(positionKey)
+	positionAfterUpdate := positionUpdate(positionToUpdate, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
+
+	p.positions[positionKey] = positionAfterUpdate
+
+	return positionAfterUpdate
+}
+
+// PositionLiquidity returns the liquidity of a position.
+func (p *Pool) PositionLiquidity(key string) *u256.Uint {
 	return p.mustGetPosition(key).liquidity
 }
 
-func (p *Pool) GetPositionFeeGrowthInside0LastX128(key string) *u256.Uint {
+// PositionFeeGrowthInside0LastX128 returns the fee growth of token0 inside a position.
+func (p *Pool) PositionFeeGrowthInside0LastX128(key string) *u256.Uint {
 	return p.mustGetPosition(key).feeGrowthInside0LastX128
 }
 
-func (p *Pool) GetPositionFeeGrowthInside1LastX128(key string) *u256.Uint {
+// PositionFeeGrowthInside1LastX128 returns the fee growth of token1 inside a position.
+func (p *Pool) PositionFeeGrowthInside1LastX128(key string) *u256.Uint {
 	return p.mustGetPosition(key).feeGrowthInside1LastX128
 }
 
-func (p *Pool) GetPositionTokensOwed0(key string) *u256.Uint {
+// PositionTokensOwed0 returns the amount of token0 owed by a position.
+func (p *Pool) PositionTokensOwed0(key string) *u256.Uint {
 	return p.mustGetPosition(key).tokensOwed0
 }
 
-func (p *Pool) GetPositionTokensOwed1(key string) *u256.Uint {
+// PositionTokensOwed1 returns the amount of token1 owed by a position.
+func (p *Pool) PositionTokensOwed1(key string) *u256.Uint {
 	return p.mustGetPosition(key).tokensOwed1
 }
 
@@ -135,6 +161,15 @@ func (p *Pool) mustGetPosition(key string) PositionInfo {
 			ufmt.Sprintf("position(%s) does not exist", key),
 		))
 	}
+	return position
+}
 
+func (p *Pool) GetPosition(key string) PositionInfo {
+	position, exist := p.positions[key]
+	if !exist {
+		newPosition := PositionInfo{}
+		newPosition.valueOrZero()
+		return newPosition
+	}
 	return position
 }

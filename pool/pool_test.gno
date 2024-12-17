@@ -1,13 +1,9 @@
 package pool
 
 import (
-	"std"
 	"testing"
 
 	"gno.land/p/demo/testutils"
-	"gno.land/p/demo/uassert"
-
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/consts"
@@ -100,7 +96,7 @@ func TestBurn(t *testing.T) {
 			}
 
 			// setup position for this test
-			posKey := positionGetKey(mockCaller, tt.tickLower, tt.tickUpper)
+			posKey := getPositionKey(mockCaller, tt.tickLower, tt.tickUpper)
 			mockPool.positions[posKey] = mockPosition
 
 			if tt.expectPanic {
@@ -139,4 +135,3 @@ func TestBurn(t *testing.T) {
 		})
 	}
 }
-

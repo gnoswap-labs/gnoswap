@@ -244,7 +244,7 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 			if tt.preconditions != nil {
 				tt.preconditions()
 			}
-			got0, got1 := pool.calculateFeeGrowthInside(
+			got0, got1 := pool.getFeeGrowthInside(
 				tt.tickLower,
 				tt.tickUpper,
 				tt.tickCurrent,
@@ -252,7 +252,7 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 				tt.feeGrowthGlobal1X128,
 			)
 			if got0.ToString() != tt.want0 || got1.ToString() != tt.want1 {
-				t.Errorf("calculateFeeGrowthInside() = (%v, %v), want (%v, %v)",
+				t.Errorf("getFeeGrowthInside() = (%v, %v), want (%v, %v)",
 					got0.ToString(), got1.ToString(), tt.want0, tt.want1)
 			}
 		})
@@ -575,6 +575,122 @@ func TestGetTick(t *testing.T) {
 			if got.initialized != tt.wantInit {
 				t.Errorf("getTick() initialized = %v, want %v", got.initialized, tt.wantInit)
 			}
+		})
+	}
+}
+
+func TestGetFeeGrowthBelowX128(t *testing.T) {
+	// Setup test data
+	globalFeeGrowth0 := u256.NewUint(1000) // Global fee growth for token 0
+	globalFeeGrowth1 := u256.NewUint(2000) // Global fee growth for token 1
+
+	lowerTick := TickInfo{
+		feeGrowthOutside0X128: u256.NewUint(300), // fee growth outside for token 0
+		feeGrowthOutside1X128: u256.NewUint(500), // fee growth outside for token 1
+	}
+
+	tests := []struct {
+		name               string
+		tickLower          int32
+		tickCurrent        int32
+		expectedFeeGrowth0 *u256.Uint
+		expectedFeeGrowth1 *u256.Uint
+	}{
+		{
+			name:               "tickCurrent >= tickLower - Return feeGrowthOutside directly",
+			tickLower:          100,
+			tickCurrent:        100,
+			expectedFeeGrowth0: lowerTick.feeGrowthOutside0X128,
+			expectedFeeGrowth1: lowerTick.feeGrowthOutside1X128,
+		},
+		{
+			name:               "tickCurrent > tickLower - Return feeGrowthOutside directly",
+			tickLower:          50,
+			tickCurrent:        100,
+			expectedFeeGrowth0: lowerTick.feeGrowthOutside0X128,
+			expectedFeeGrowth1: lowerTick.feeGrowthOutside1X128,
+		},
+		{
+			name:               "tickCurrent < tickLower - Subtract feeGrowthOutside from global",
+			tickLower:          100,
+			tickCurrent:        50,
+			expectedFeeGrowth0: u256.NewUint(700),  // 1000 - 300
+			expectedFeeGrowth1: u256.NewUint(1500), // 2000 - 500
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Call the function
+			feeGrowth0, feeGrowth1 := getFeeGrowthBelowX128(
+				tt.tickLower, tt.tickCurrent,
+				globalFeeGrowth0, globalFeeGrowth1,
+				lowerTick,
+			)
+
+			// Assertions
+			uassert.True(t, feeGrowth0.Eq(tt.expectedFeeGrowth0),
+				"Expected feeGrowth0: %s, got: %s", tt.expectedFeeGrowth0.ToString(), feeGrowth0.ToString())
+			uassert.True(t, feeGrowth1.Eq(tt.expectedFeeGrowth1),
+				"Expected feeGrowth1: %s, got: %s", tt.expectedFeeGrowth1.ToString(), feeGrowth1.ToString())
+		})
+	}
+}
+
+func TestGetFeeGrowthAboveX128(t *testing.T) {
+	// Setup test data
+	globalFeeGrowth0 := u256.NewUint(1000) // Global fee growth for token 0
+	globalFeeGrowth1 := u256.NewUint(2000) // Global fee growth for token 1
+
+	upperTick := TickInfo{
+		feeGrowthOutside0X128: u256.NewUint(300), // Fee growth outside for token 0
+		feeGrowthOutside1X128: u256.NewUint(500), // Fee growth outside for token 1
+	}
+
+	tests := []struct {
+		name               string
+		tickUpper          int32
+		tickCurrent        int32
+		expectedFeeGrowth0 *u256.Uint
+		expectedFeeGrowth1 *u256.Uint
+	}{
+		{
+			name:               "tickCurrent < tickUpper - Return feeGrowthOutside directly",
+			tickUpper:          100,
+			tickCurrent:        50,
+			expectedFeeGrowth0: upperTick.feeGrowthOutside0X128, // 300
+			expectedFeeGrowth1: upperTick.feeGrowthOutside1X128, // 500
+		},
+		{
+			name:               "tickCurrent >= tickUpper - Subtract feeGrowthOutside from global",
+			tickUpper:          100,
+			tickCurrent:        150,
+			expectedFeeGrowth0: u256.NewUint(700),  // 1000 - 300
+			expectedFeeGrowth1: u256.NewUint(1500), // 2000 - 500
+		},
+		{
+			name:               "tickCurrent == tickUpper - Subtract feeGrowthOutside from global",
+			tickUpper:          100,
+			tickCurrent:        100,
+			expectedFeeGrowth0: u256.NewUint(700),  // 1000 - 300
+			expectedFeeGrowth1: u256.NewUint(1500), // 2000 - 500
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Call the function
+			feeGrowth0, feeGrowth1 := getFeeGrowthAboveX128(
+				tt.tickUpper, tt.tickCurrent,
+				globalFeeGrowth0, globalFeeGrowth1,
+				upperTick,
+			)
+
+			// Assertions
+			uassert.True(t, feeGrowth0.Eq(tt.expectedFeeGrowth0),
+				"Expected feeGrowth0: %s, got: %s", tt.expectedFeeGrowth0.ToString(), feeGrowth0.ToString())
+			uassert.True(t, feeGrowth1.Eq(tt.expectedFeeGrowth1),
+				"Expected feeGrowth1: %s, got: %s", tt.expectedFeeGrowth1.ToString(), feeGrowth1.ToString())
 		})
 	}
 }

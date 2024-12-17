@@ -91,9 +91,9 @@ func checkTicks(tickLower, tickUpper int32) {
 
 func assertTickLowerLessThanUpper(tickLower, tickUpper int32) {
 	if tickLower >= tickUpper {
-		panic(ufmt.Sprintf(
-			"%v. tickLower(%d) >= tickUpper(%d)",
-			errTickLowerGtTickUpper, tickLower, tickUpper,
+		panic(addDetailToError(
+			errInvalidTickRange,
+			ufmt.Sprintf("tickLower(%d), tickUpper(%d)", tickLower, tickUpper),
 		))
 	}
 }

@@ -227,7 +227,34 @@ type PositionInfo struct {
 	tokensOwed1 *u256.Uint
 }
 
-func (p *PositionInfo) init() {
+// valueOrZero initializes nil fields in PositionInfo to zero.
+//
+// This function ensures that all numeric fields in the PositionInfo struct are not nil.
+// If a field is nil, it is replaced with a zero value, maintaining consistency and preventing
+// potential null pointer issues during calculations.
+//
+// Fields affected:
+//   - liquidity: The liquidity amount associated with the position.
+//   - feeGrowthInside0LastX128: Fee growth for token 0 inside the tick range, last recorded value.
+//   - feeGrowthInside1LastX128: Fee growth for token 1 inside the tick range, last recorded value.
+//   - tokensOwed0: The amount of token 0 owed to the position owner.
+//   - tokensOwed1: The amount of token 1 owed to the position owner.
+//
+// Behavior:
+//   - If a field is nil, it is set to its equivalent zero value.
+//   - If a field already has a value, it remains unchanged.
+//
+// Example:
+//
+//	position := &PositionInfo{}
+//	position.valueOrZero()
+//	fmt.Println(position.liquidity) // Output: 0
+//
+// Notes:
+//   - This function is useful for ensuring numeric fields are properly initialized
+//     before performing operations or calculations.
+//   - Prevents runtime errors caused by nil values.
+func (p *PositionInfo) valueOrZero() {
 	p.liquidity = p.liquidity.NilToZero()
 	p.feeGrowthInside0LastX128 = p.feeGrowthInside0LastX128.NilToZero()
 	p.feeGrowthInside1LastX128 = p.feeGrowthInside1LastX128.NilToZero()

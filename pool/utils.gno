@@ -8,6 +8,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 )
 
@@ -188,6 +189,31 @@ func checkTickSpacing(tick, tickSpacing int32) {
 		panic(addDetailToError(
 			errInvalidTickAndTickSpacing,
 			ufmt.Sprintf("tick(%d) MOD tickSpacing(%d) != 0(%d)", tick, tickSpacing, tick%tickSpacing),
+		))
+	}
+}
+
+// assertOnlyValidAddress panics if the address is invalid.
+func assertOnlyValidAddress(addr std.Address) {
+	if !addr.IsValid() {
+		panic(addDetailToError(
+			errInvalidAddress,
+			ufmt.Sprintf("(%s)", addr),
+		))
+	}
+}
+
+// assertOnlyNotHalted panics if the contract is halted.
+func assertOnlyNotHalted() {
+	common.IsHalted()
+}
+
+func assertOnlyPositionContract() {
+	caller := getPrevAddr()
+	if err := common.PositionOnly(caller); err != nil {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("only position(%s) can call, called from %s", consts.POSITION_ADDR, caller.String()),
 		))
 	}
 }
