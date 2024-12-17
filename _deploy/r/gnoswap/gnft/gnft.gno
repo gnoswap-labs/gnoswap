@@ -26,18 +26,33 @@ var (
 	tokensToSetUri = avl.NewTree()
 )
 
+// Name returns the full name of the NFT
+// Returns:
+//   - string: The name of the NFT collection
 func Name() string {
 	return gnft.Name()
 }
 
+// Symbol returns the token symbol of the NFT
+// Returns:
+//   - string: The symbol of the NFT collection
 func Symbol() string {
 	return gnft.Symbol()
 }
 
+// TotalSupply returns the total number of NFTs minted
+// Returns:
+//   - uint64: The total number of tokens that have been minted
 func TotalSupply() uint64 {
 	return gnft.TokenCount()
 }
 
+// TokenURI retrieves the metadata URI for a specific token ID
+// Parameters:
+//   - tid: The unique identifier of the token
+//
+// Returns:
+//   - string: The metadata URI associated with the token
 func TokenURI(tid grc721.TokenID) string {
 	uri, err := gnft.TokenURI(tid)
 	if err != nil {
@@ -47,6 +62,12 @@ func TokenURI(tid grc721.TokenID) string {
 	return string(uri)
 }
 
+// BalanceOf returns how many NFTs are owned by the specified address
+// Parameters:
+//   - user: The address or username to check the balance for
+//
+// Returns:
+//   - uint64: The number of tokens owned by the address
 func BalanceOf(user pusers.AddressOrName) uint64 {
 	balance, err := gnft.BalanceOf(users.Resolve(user))
 	if err != nil {
@@ -56,6 +77,12 @@ func BalanceOf(user pusers.AddressOrName) uint64 {
 	return balance
 }
 
+// OwnerOf returns the current owner's address of a specific token ID
+// Parameters:
+//   - tid: The token ID to check ownership of
+//
+// Returns:
+//   - std.Address: The address of the token owner
 func OwnerOf(tid grc721.TokenID) std.Address {
 	owner, err := gnft.OwnerOf(tid)
 	checkErr(err)
@@ -63,10 +90,24 @@ func OwnerOf(tid grc721.TokenID) std.Address {
 	return owner
 }
 
+// IsApprovedForAll checks if an operator is approved to manage all tokens of an owner
+// Parameters:
+//   - owner: The address or username of the token owner
+//   - user: The address or username to check approval for
+//
+// Returns:
+//   - bool: true if the user is approved to manage all tokens, false otherwise
 func IsApprovedForAll(owner, user pusers.AddressOrName) bool {
 	return gnft.IsApprovedForAll(users.Resolve(owner), users.Resolve(user))
 }
 
+// GetApproved returns the approved address for a specific token ID
+// Parameters:
+//   - tid: The token ID to check approval for
+//
+// Returns:
+//   - std.Address: The approved address for the token
+//   - bool: true if an address is approved, false otherwise
 func GetApproved(tid grc721.TokenID) (std.Address, bool) {
 	addr, err := gnft.GetApproved(tid)
 	if err != nil {
@@ -76,6 +117,10 @@ func GetApproved(tid grc721.TokenID) (std.Address, bool) {
 	return addr, true
 }
 
+// Approve grants permission to transfer a specific token ID to another address
+// Parameters:
+//   - user: The address or username to grant approval to
+//   - tid: The token ID to approve
 func Approve(user pusers.AddressOrName, tid grc721.TokenID) {
 	common.IsHalted()
 
@@ -85,16 +130,32 @@ func Approve(user pusers.AddressOrName, tid grc721.TokenID) {
 	}
 }
 
+// SetApprovalForAll enables or disables approval for a third party to manage all tokens
+// Parameters:
+//   - user: The address or username to set approval for
+//   - approved: true to approve, false to revoke approval
 func SetApprovalForAll(user pusers.AddressOrName, approved bool) {
 	common.IsHalted()
 	checkErr(gnft.SetApprovalForAll(users.Resolve(user), approved))
 }
 
+// TransferFrom transfers ownership of a token from one address to another
+// Parameters:
+//   - from: The current owner's address or username
+//   - to: The recipient's address or username
+//   - tid: The token ID to transfer
 func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
 	common.IsHalted()
 	checkErr(gnft.TransferFrom(users.Resolve(from), users.Resolve(to), tid))
 }
 
+// Mint creates a new NFT and assigns it to the specified address (only callable by owner)
+// Parameters:
+//   - to: The address or username to mint the token to
+//   - tid: The token ID to assign to the new NFT
+//
+// Returns:
+//   - grc721.TokenID: The ID of the newly minted token
 func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
 	owner.AssertCallerIsOwner()
 	common.IsHalted()
@@ -106,6 +167,9 @@ func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
 	return tid
 }
 
+// Burn removes a specific token ID (only callable by owner)
+// Parameters:
+//   - tid: The token ID to burn
 func Burn(tid grc721.TokenID) {
 	owner.AssertCallerIsOwner()
 	common.IsHalted()
@@ -113,6 +177,12 @@ func Burn(tid grc721.TokenID) {
 	checkErr(gnft.Burn(tid))
 }
 
+// Render returns the HTML representation of the NFT
+// Parameters:
+//   - path: The path to render
+//
+// Returns:
+//   - string: HTML representation of the NFT or 404 if path is invalid
 func Render(path string) string {
 	switch {
 	case path == "":
@@ -122,6 +192,12 @@ func Render(path string) string {
 	}
 }
 
+// SetTokenURI sets the metadata URI for a specific token using random generation svg image
+// Parameters:
+//   - tid: The token ID to set the URI for
+//
+// Returns:
+//   - error: Returns an error if the URI setting fails, nil otherwise
 func SetTokenURI(tid grc721.TokenID) error {
 	common.IsHalted()
 
@@ -149,6 +225,9 @@ func SetTokenURI(tid grc721.TokenID) error {
 	return nil
 }
 
+// SetTokenURILast sets metadata URIs for all pending tokens from the caller
+// Returns:
+//   - error: Returns an error if the URI setting fails, nil otherwise
 func SetTokenURILast() error {
 	common.IsHalted()
 
@@ -158,9 +237,8 @@ func SetTokenURILast() error {
 	pcg := rand.NewPCG(seed1, seed2)
 	r := rand.New(pcg)
 
-	prev := std.PrevRealm()
-	prevAddr := prev.Addr()
-	tokensToSetUri, _ := getTokensToSetUri(prevAddr)
+	caller := std.PrevRealm().Addr()
+	tokensToSetUri, _ := getTokensToSetUri(caller)
 	for _, tid := range tokensToSetUri {
 		tokenURI := genImageURI(r)
 
@@ -169,7 +247,7 @@ func SetTokenURILast() error {
 			return err
 		}
 
-		deleteTokenFromTokensToSetUri(prevAddr, tid)
+		deleteTokenFromTokensToSetUri(caller, tid)
 
 		prevAddr, prevRealm := getPrev()
 		std.Emit(
@@ -184,6 +262,13 @@ func SetTokenURILast() error {
 	return nil
 }
 
+// getTokensToSetUri retrieves the list of tokens pending URI assignment for an address
+// Parameters:
+//   - addr: The address to check for pending tokens
+//
+// Returns:
+//   - []grc721.TokenID: Array of token IDs pending URI assignment
+//   - bool: true if tokens exist for the address, false otherwise
 func getTokensToSetUri(addr std.Address) ([]grc721.TokenID, bool) {
 	iTokens, exists := tokensToSetUri.Get(addr.String())
 	if !exists {
@@ -193,6 +278,12 @@ func getTokensToSetUri(addr std.Address) ([]grc721.TokenID, bool) {
 	return iTokens.([]grc721.TokenID), true
 }
 
+// mustGetTokensToSetUri same as getTokensToSetUri but panics if tokens don't exist
+// Parameters:
+//   - addr: The address to get tokens for
+//
+// Returns:
+//   - []grc721.TokenID: Array of token IDs pending URI assignment
 func mustGetTokensToSetUri(addr std.Address) []grc721.TokenID {
 	tokens, exists := getTokensToSetUri(addr)
 	if !exists {
@@ -202,12 +293,20 @@ func mustGetTokensToSetUri(addr std.Address) []grc721.TokenID {
 	return tokens
 }
 
+// appendTokensToSetUri adds a token ID to the list of tokens pending URI assignment
+// Parameters:
+//   - addr: The address to append the token for
+//   - tid: The token ID to append
 func appendTokensToSetUri(addr std.Address, tid grc721.TokenID) {
 	prevTokenList, _ := getTokensToSetUri(addr)
 	prevTokenList = append(prevTokenList, tid)
 	tokensToSetUri.Set(addr.String(), prevTokenList)
 }
 
+// deleteTokenFromTokensToSetUri removes a token ID from the pending URI assignment list
+// Parameters:
+//   - addr: The address to remove the token from
+//   - tid: The token ID to remove
 func deleteTokenFromTokensToSetUri(addr std.Address, tid grc721.TokenID) {
 	tokens := mustGetTokensToSetUri(addr)
 	for i, token := range tokens {
@@ -218,6 +317,9 @@ func deleteTokenFromTokensToSetUri(addr std.Address, tid grc721.TokenID) {
 	}
 }
 
+// checkErr helper function to panic if an error occurs
+// Parameters:
+//   - err: The error to check
 func checkErr(err error) {
 	if err != nil {
 		panic(err.Error())
