@@ -426,8 +426,8 @@ func unclaimedFee(tokenId uint64) (*i256.Int, *i256.Int) {
 
 	position := MustGetPosition(tokenId)
 
-	_liquidity := position.liquidity          // u256
-	liquidity := i256.FromUint256(_liquidity) // i256
+	_liquidity := position.liquidity
+	liquidity := i256.FromUint256(_liquidity)
 
 	tickLower := position.tickLower
 	tickUpper := position.tickUpper
