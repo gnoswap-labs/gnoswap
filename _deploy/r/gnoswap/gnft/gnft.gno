@@ -14,18 +14,18 @@ import (
 	"gno.land/r/demo/users"
 
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 var (
 	gnft  = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
-	owner = ownable.NewWithAddress("g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5") // deployed position contract
+	owner = ownable.NewWithAddress(consts.POSITION_ADDR) // deployed position contract
 )
 
 var (
-	userMinted = avl.NewTree()
+	tokensToSetUri = avl.NewTree()
 )
 
-// Getters
 func Name() string {
 	return gnft.Name()
 }
@@ -33,6 +33,7 @@ func Name() string {
 func Symbol() string {
 	return gnft.Symbol()
 }
+
 func TotalSupply() uint64 {
 	return gnft.TokenCount()
 }
@@ -75,7 +76,6 @@ func GetApproved(tid grc721.TokenID) (std.Address, bool) {
 	return addr, true
 }
 
-// Setters
 func Approve(user pusers.AddressOrName, tid grc721.TokenID) {
 	common.IsHalted()
 
@@ -95,7 +95,6 @@ func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
 	checkErr(gnft.TransferFrom(users.Resolve(from), users.Resolve(to), tid))
 }
 
-// Admin
 func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
 	owner.AssertCallerIsOwner()
 	common.IsHalted()
@@ -103,7 +102,7 @@ func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
 	checkErr(gnft.Mint(users.Resolve(to), tid))
 
 	toAddr := users.Resolve(to)
-	appendUserMinted(toAddr, tid)
+	appendTokensToSetUri(toAddr, tid)
 	return tid
 }
 
@@ -123,7 +122,7 @@ func Render(path string) string {
 	}
 }
 
-func SetTokenURI(tid grc721.TokenID) {
+func SetTokenURI(tid grc721.TokenID) error {
 	common.IsHalted()
 
 	// rand instance
@@ -133,20 +132,24 @@ func SetTokenURI(tid grc721.TokenID) {
 	r := rand.New(pcg)
 
 	tokenURI := genImageURI(r)
-	ok, _ := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
-	if ok {
-		prevAddr, prevRealm := getPrev()
-		std.Emit(
-			"SetTokenURI",
-			"prevAddr", prevAddr,
-			"prevRealm", prevRealm,
-			"lpTokenId", string(tid),
-			"internal_tokenURI", tokenURI,
-		)
+	ok, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
+	if err != nil {
+		return err
 	}
+
+	prevAddr, prevRealm := getPrev()
+	std.Emit(
+		"SetTokenURI",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"lpTokenId", string(tid),
+		"internal_tokenURI", tokenURI,
+	)
+
+	return nil
 }
 
-func SetTokenURILast() {
+func SetTokenURILast() error {
 	common.IsHalted()
 
 	// rand instance
@@ -157,52 +160,62 @@ func SetTokenURILast() {
 
 	prev := std.PrevRealm()
 	prevAddr := prev.Addr()
-	usersNFT, _ := getUserMinted(prevAddr)
-	for _, tid := range usersNFT {
+	tokensToSetUri, _ := getTokensToSetUri(prevAddr)
+	for _, tid := range tokensToSetUri {
 		tokenURI := genImageURI(r)
 
-		ok, _ := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
-		if ok {
-			prevAddr, prevRealm := getPrev()
-			std.Emit(
-				"SetTokenURI",
-				"prevAddr", prevAddr,
-				"prevRealm", prevRealm,
-				"lpTokenId", string(tid),
-				"internal_tokenURI", tokenURI,
-			)
+		ok, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
+		if err != nil {
+			return err
 		}
+
+		deleteTokenFromTokensToSetUri(prevAddr, tid)
+
+		prevAddr, prevRealm := getPrev()
+		std.Emit(
+			"SetTokenURI",
+			"prevAddr", prevAddr,
+			"prevRealm", prevRealm,
+			"lpTokenId", string(tid),
+			"internal_tokenURI", tokenURI,
+		)
 	}
 
-	removeUserMinted(prevAddr)
+	return nil
 }
 
-func getUserMinted(addr std.Address) ([]grc721.TokenID, bool) {
-	iListOfTokens, exists := userMinted.Get(addr.String())
+func getTokensToSetUri(addr std.Address) ([]grc721.TokenID, bool) {
+	iTokens, exists := tokensToSetUri.Get(addr.String())
 	if !exists {
 		return []grc721.TokenID{}, false
 	}
 
-	return iListOfTokens.([]grc721.TokenID), true
+	return iTokens.([]grc721.TokenID), true
 }
 
-func mustGetUserMinted(addr std.Address) []grc721.TokenID {
-	listOfTokens, exists := getUserMinted(addr)
+func mustGetTokensToSetUri(addr std.Address) []grc721.TokenID {
+	tokens, exists := getTokensToSetUri(addr)
 	if !exists {
 		panic(ufmt.Sprintf("user %s has no minted nft tokens", addr.String()))
 	}
 
-	return listOfTokens
+	return tokens
 }
 
-func appendUserMinted(addr std.Address, tid grc721.TokenID) {
-	prevList, _ := getUserMinted(addr)
-	prevList = append(prevList, tid)
-	userMinted.Set(addr.String(), prevList)
+func appendTokensToSetUri(addr std.Address, tid grc721.TokenID) {
+	prevTokenList, _ := getTokensToSetUri(addr)
+	prevTokenList = append(prevTokenList, tid)
+	tokensToSetUri.Set(addr.String(), prevTokenList)
 }
 
-func removeUserMinted(addr std.Address) {
-	userMinted.Remove(addr.String())
+func deleteTokenFromTokensToSetUri(addr std.Address, tid grc721.TokenID) {
+	tokens := mustGetTokensToSetUri(addr)
+	for i, token := range tokens {
+		if token == tid {
+			tokens = append(tokens[:i], tokens[i+1:]...)
+			break
+		}
+	}
 }
 
 func checkErr(err error) {
