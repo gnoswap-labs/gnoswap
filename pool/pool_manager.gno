@@ -6,7 +6,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
 	en "gno.land/r/gnoswap/v1/emission"
@@ -132,11 +131,8 @@ func CreatePool(
 	fee uint32,
 	sqrtPriceX96 string,
 ) {
-	common.IsHalted()
-	en.MintAndDistributeGns()
-
+	assertOnlyNotHalted()
 	poolInfo := newPoolParams(token0Path, token1Path, fee, sqrtPriceX96)
-
 	if poolInfo.isSameTokenPath() {
 		panic(addDetailToError(
 			errDuplicateTokenInPool,
@@ -146,10 +142,10 @@ func CreatePool(
 			),
 		))
 	}
+	en.MintAndDistributeGns()
 
 	// wrap first
 	token0Path, token1Path = poolInfo.wrap()
-
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 
 	// reinitialize poolInfo with wrapped tokens
@@ -299,8 +295,8 @@ func GetPoolFromPoolPath(poolPath string) *Pool {
 // poolPath := GetPoolPath("path/to/token0", "path/to/token1", 3000)
 // // Output: "path/to/token0:path/to/token1:3000"
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
+	assertOnlyRegistered(token0Path)
+	assertOnlyRegistered(token1Path)
 
 	// all the token paths in the pool are sorted in alphabetical order.
 	if strings.Compare(token1Path, token0Path) < 0 {
