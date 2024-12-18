@@ -764,12 +764,7 @@ func Reposition(
 	oldTickLower := position.tickLower
 	oldTickUpper := position.tickUpper
 
-	if !(position.isClear()) {
-		panic(addDetailToError(
-			errNotClear,
-			ufmt.Sprintf("position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
-		))
-	}
+	checkPositionHasClear(position)
 
 	token0, token1, _ := splitOf(position.poolKey)
 	// check if gnot pool
@@ -1008,14 +1003,6 @@ func isAuthorizedForToken(tokenId uint64) {
 	}
 }
 
-func verifyTokenIdAndOwnership(tokenId uint64) {
-	assertTokenExists(tokenId)
-
-	owner := gnft.OwnerOf(tokenIdFrom(tokenId))
-	caller := std.PrevRealm().Addr()
-	assertCallerIsOwner(tokenId, owner, caller)
-}
-
 func calculateLiquidityToRemove(positionLiquidity *u256.Uint, liquidityRatio uint64) *u256.Uint {
 	liquidityToRemove := new(u256.Uint).Mul(positionLiquidity, u256.NewUint(liquidityRatio))
 	liquidityToRemove = new(u256.Uint).Div(liquidityToRemove, u256.NewUint(100))
@@ -1024,15 +1011,6 @@ func calculateLiquidityToRemove(positionLiquidity *u256.Uint, liquidityRatio uin
 		return positionLiquidity
 	}
 	return liquidityToRemove
-}
-
-func verifyBurnedAmounts(burnedAmount0, burnedAmount1, amount0Min, amount1Min *u256.Uint) {
-	if !(burnedAmount0.Gte(amount0Min) && burnedAmount1.Gte(amount1Min)) {
-		panic(addDetailToError(
-			errSlippage,
-			ufmt.Sprintf("burnedAmount0(%s) >= amount0Min(%s) && burnedAmount1(%s) >= amount1Min(%s)", burnedAmount0.ToString(), amount0Min.ToString(), burnedAmount1.ToString(), amount1Min.ToString()),
-		))
-	}
 }
 
 func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalance uint64, to std.Address) {
