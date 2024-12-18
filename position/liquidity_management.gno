@@ -13,7 +13,7 @@ import (
 
 // addLiquidity adds liquidity to the pool and checks for slippage.
 // Returns liquidity, amount0, amount1
-func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint) {
+func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint, error) {
 	pool := pl.GetPoolFromPoolPath(params.poolKey)
 
 	sqrtPriceX96 := pool.Slot0SqrtPriceX96()
@@ -46,12 +46,17 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 	amount0Cond := amount0Uint.Gte(params.amount0Min)
 	amount1Cond := amount1Uint.Gte(params.amount1Min)
 
-	if !(amount0Cond && amount1Cond) {
-		panic(addDetailToError(
-			errSlippage,
-			ufmt.Sprintf("liquidity_management.gno__addLiquidity() || LM_Price Slippage Check(amount0(%s) >= params.amount0Min(%s), amount1(%s) >= params.amount1Min(%s))", amount0Uint.ToString(), params.amount0Min.ToString(), amount1Uint.ToString(), params.amount1Min.ToString()),
-		))
+	if amount0Cond && amount1Cond {
+		return liquidity, amount0Uint, amount1Uint, nil
 	}
 
-	return liquidity, amount0Uint, amount1Uint
+	errMsg := ufmt.Errorf(
+		"slippage limit exceeded: Token0: %s (min required: %s), Token1: %s (min required: %s)",
+		amount0Uint.ToString(),
+		params.amount0Min.ToString(),
+		amount1Uint.ToString(),
+		params.amount1Min.ToString(),
+	)
+
+	return nil, nil, nil, errMsg
 }
