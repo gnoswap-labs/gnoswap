@@ -155,28 +155,31 @@ func TestAssertTickLowerLessThanUpper(t *testing.T) {
 			tickLower:   50,
 			tickUpper:   50,
 			shouldPanic: true,
-			expected:    "",
+			expected:    "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(50), tickUpper(50)",
 		},
 		{
 			name:        "tickLower greater than tickUpper",
 			tickLower:   200,
 			tickUpper:   100,
 			shouldPanic: true,
-			expected:    "",
+			expected:    "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			defer func() {
-				if r := recover(); r != nil {
-					if !tt.shouldPanic {
+				if r := recover(); r == nil {
+					if tt.shouldPanic {
 						t.Errorf("unexpected panic: %v", r)
 					}
 					return
-				}
-				if tt.shouldPanic {
-					t.Errorf("expected panic, but none occurred")
+				} else {
+					if tt.shouldPanic {
+						uassert.Equal(t, tt.expected, r.(string))
+					} else {
+						t.Errorf("expected no panic, but got: %v", r)
+					}
 				}
 			}()
 			assertTickLowerLessThanUpper(tt.tickLower, tt.tickUpper)
@@ -211,21 +214,24 @@ func TestAssertValidTickLower(t *testing.T) {
 			tickLower:   consts.MIN_TICK - 1,
 			tickUpper:   100,
 			shouldPanic: true,
-			expected:    "",
+			expected:    "[GNOSWAP-POOL-028] tickLower is invalid || tickLower(-887273) < MIN_TICK(-887272)",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			defer func() {
-				if r := recover(); r != nil {
-					if !tt.shouldPanic {
+				if r := recover(); r == nil {
+					if tt.shouldPanic {
 						t.Errorf("unexpected panic: %v", r)
 					}
 					return
-				}
-				if tt.shouldPanic {
-					t.Errorf("expected panic, but none occurred")
+				} else {
+					if tt.shouldPanic {
+						uassert.Equal(t, tt.expected, r.(string))
+					} else {
+						t.Errorf("expected no panic, but got: %v", r)
+					}
 				}
 			}()
 			assertValidTickLower(tt.tickLower)
@@ -260,21 +266,24 @@ func TestAssertValidTickUpper(t *testing.T) {
 			tickLower:   consts.MIN_TICK - 1,
 			tickUpper:   consts.MAX_TICK + 1,
 			shouldPanic: true,
-			expected:    "",
+			expected:    "[GNOSWAP-POOL-029] tickUpper is invalid || tickUpper(887273) > MAX_TICK(887272)",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			defer func() {
-				if r := recover(); r != nil {
-					if !tt.shouldPanic {
+				if r := recover(); r == nil {
+					if tt.shouldPanic {
 						t.Errorf("unexpected panic: %v", r)
 					}
 					return
-				}
-				if tt.shouldPanic {
-					t.Errorf("expected panic, but none occurred")
+				} else {
+					if tt.shouldPanic {
+						uassert.Equal(t, tt.expected, r.(string))
+					} else {
+						t.Errorf("expected no panic, but got: %v", r)
+					}
 				}
 			}()
 			assertValidTickUpper(tt.tickUpper)

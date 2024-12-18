@@ -102,18 +102,18 @@ func assertTickLowerLessThanUpper(tickLower, tickUpper int32) {
 
 func assertValidTickLower(tickLower int32) {
 	if tickLower < consts.MIN_TICK {
-		panic(ufmt.Sprintf(
-			"%v. tickLower(%d) < MIN_TICK(%d)",
-			errTickLowerInvalid, tickLower, consts.MIN_TICK,
+		panic(addDetailToError(
+			errTickLowerInvalid,
+			ufmt.Sprintf("tickLower(%d) < MIN_TICK(%d)", tickLower, consts.MIN_TICK),
 		))
 	}
 }
 
 func assertValidTickUpper(tickUpper int32) {
 	if tickUpper > consts.MAX_TICK {
-		panic(ufmt.Sprintf(
-			"%v. tickUpper(%d) > MAX_TICK(%d)",
-			errTickUpperInvalid, tickUpper, consts.MAX_TICK,
+		panic(addDetailToError(
+			errTickUpperInvalid,
+			ufmt.Sprintf("tickUpper(%d) > MAX_TICK(%d)", tickUpper, consts.MAX_TICK),
 		))
 	}
 }

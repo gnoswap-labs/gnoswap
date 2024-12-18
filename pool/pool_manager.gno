@@ -169,7 +169,6 @@ func CreatePool(
 		))
 	}
 
-	// TODO: make this as a parameter
 	prevAddr, prevRealm := getPrevAsString()
 
 	// check whether the pool already exist
@@ -222,8 +221,8 @@ func DoesPoolPathExist(poolPath string) bool {
 // and then retrieves the corresponding pool instance using that path.
 //
 // Parameters:
-// - token0Path (string): The unique identifier or path for token0.
-// - token1Path (string): The unique identifier or path for token1.
+// - token0Path (string): The unique path for token0.
+// - token1Path (string): The unique path for token1.
 // - fee (uint32): The fee tier for the pool, expressed in basis points (e.g., 3000 for 0.3%).
 //
 // Returns:
@@ -234,7 +233,7 @@ func DoesPoolPathExist(poolPath string) bool {
 // - Ensure that the tokens and fee tier provided are valid and registered in the system.
 //
 // Example:
-// pool := GetPool("path/to/token0", "path/to/token1", 3000)
+// pool := GetPool("gno.land/r/demo/wugnot", "gno.land/r/gnoswap/v1/gns", 3000)
 func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 	poolPath := GetPoolPath(token0Path, token1Path, fee)
 	return GetPoolFromPoolPath(poolPath)

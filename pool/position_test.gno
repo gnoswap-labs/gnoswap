@@ -25,11 +25,11 @@ func TestPositionGetKey(t *testing.T) {
 		panicMsg    string
 		expectedKey string
 	}{
-		{invalidAddr, 100, 200, true, `[GNOSWAP-POOL-023] invalid address || (invalidAddr)`, ""},                                        // invalid address
-		{validAddr, 200, 100, true, `[GNOSWAP-POOL-024] tickLower is greater than tickUpper || tickLower(200), tickUpper(100)`, ""},     // tickLower > tickUpper
-		{validAddr, -100, -200, true, `[GNOSWAP-POOL-024] tickLower is greater than tickUpper || tickLower(-100), tickUpper(-200)`, ""}, // tickLower > tickUpper
-		{validAddr, 100, 100, true, "[GNOSWAP-POOL-024] tickLower is greater than tickUpper || tickLower(100), tickUpper(100)", ""},     // tickLower == tickUpper
-		{validAddr, 100, 200, false, "", "ZzF3ZXNrYzZ0eWc5anhndWpsdGEwNDdoNmx0YTA0N2g2bGRqbHVkdV9fMTAwX18yMDA="},                        // tickLower < tickUpper
+		{invalidAddr, 100, 200, true, `[GNOSWAP-POOL-023] invalid address || (invalidAddr)`, ""},                                                    // invalid address
+		{validAddr, 200, 100, true, `[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)`, ""},     // tickLower > tickUpper
+		{validAddr, -100, -200, true, `[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(-100), tickUpper(-200)`, ""}, // tickLower > tickUpper
+		{validAddr, 100, 100, true, "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(100), tickUpper(100)", ""},     // tickLower == tickUpper
+		{validAddr, 100, 200, false, "", "ZzF3ZXNrYzZ0eWc5anhndWpsdGEwNDdoNmx0YTA0N2g2bGRqbHVkdV9fMTAwX18yMDA="},                                    // tickLower < tickUpper
 	}
 
 	for _, tc := range tests {
