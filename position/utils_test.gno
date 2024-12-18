@@ -12,6 +12,19 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 )
 
+func assertPanic(t *testing.T, expectedMsg string, fn func()) {
+	t.Helper()
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Errorf("expected panic but got none")
+		} else if r != expectedMsg {
+			t.Errorf("expected panic %v, got %v", expectedMsg, r)
+		}
+	}()
+	fn()
+}
+
 func TestA2u(t *testing.T) {
 	addr := std.Address("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
 
@@ -188,6 +201,12 @@ func TestCheckDeadline(t *testing.T) {
 			deadline: 1234567890 - 100,
 			now:      1234567890,
 			expected: "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234567790)",
+		},
+		{
+			name:     "Success - deadline equals now",
+			deadline: 1234567890,
+			now:      1234567890,
+			expected: "",
 		},
 	}
 	for _, tc := range tests {
@@ -689,6 +708,12 @@ func TestPoolKeyDivide(t *testing.T) {
 			expectedFee:   fee500,
 			shouldPanic:   false,
 		},
+		{
+			name:          "Fail -empty poolKey",
+			poolKey:       "",
+			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid poolKey()",
+			shouldPanic:   true,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -722,6 +747,54 @@ func TestPoolKeyDivide(t *testing.T) {
 				uassert.Equal(t, tc.expectedFee, gotFee)
 			} else {
 				splitOf(tc.poolKey)
+			}
+		})
+	}
+}
+
+func TestSplitOf_Improved(t *testing.T) {
+	tests := []struct {
+		name          string
+		poolKey       string
+		expectedPath0 string
+		expectedPath1 string
+		expectedFee   uint32
+		expectedError string
+		shouldPanic   bool
+	}{
+		{
+			name:          "Fail - empty poolKey",
+			poolKey:       "",
+			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid poolKey()",
+			shouldPanic:   true,
+		},
+		{
+			name:          "Fail - invalid delimiter",
+			poolKey:       "gno.land/r/gnoswap:v1/gns:gno.land/r/demo/wugnot-500",
+			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid fee(gno.land/r/demo/wugnot-500)",
+			shouldPanic:   true,
+		},
+		{
+			name:          "Success - valid poolKey",
+			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:500",
+			expectedPath0: "gno.land/r/gnoswap/v1/gns",
+			expectedPath1: "gno.land/r/demo/wugnot",
+			expectedFee:   500,
+			shouldPanic:   false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.shouldPanic {
+				assertPanic(t, tc.expectedError, func() {
+					splitOf(tc.poolKey)
+				})
+			} else {
+				gotToken0, gotToken1, gotFee := splitOf(tc.poolKey)
+				uassert.Equal(t, tc.expectedPath0, gotToken0)
+				uassert.Equal(t, tc.expectedPath1, gotToken1)
+				uassert.Equal(t, tc.expectedFee, gotFee)
 			}
 		})
 	}
