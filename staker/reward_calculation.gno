@@ -98,8 +98,8 @@ func (self *poolTier) lastCount(tier uint64, endHeight uint64) uint64 {
 
 func (self *poolTier) lastRatio(tier uint64, endHeight uint64) uint64 {
 	ratio := uint64(0)
-	tree := self.of(tier)
-	tree.ReverseIterate(0, endHeight, func(key string, value interface{}) bool {
+	countTree := self.countOf(tier)
+	countT	ree.ReverseIterate(0, endHeight, func(key string, value interface{}) bool {
 		ratio = value.(TierRatio).get(tier)
 		return true
 	})

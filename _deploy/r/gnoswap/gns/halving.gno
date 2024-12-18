@@ -44,8 +44,8 @@ var perBlockMint *avl.Tree // height => uint64
 func LastPerBlockMintUpdate(endHeight uint64) (uint64, uint64) {
 	height := uint64(0)
 	amount := uint64(0)
-	perBlockMint.ReverseIterate(0, endHeight, func(key string, value interface{}) bool {
-		height = std.MustParseUint(key, 10)
+	perBlockMint.ReverseIterate("", EncodeUint(endHeight), func(key string, value interface{}) bool {
+		height = DecodeUint(key)
 		amount = value.(uint64)
 		return false
 	})
@@ -56,8 +56,8 @@ func LastPerBlockMintUpdate(endHeight uint64) (uint64, uint64) {
 func PerBlockMintUpdates(startHeight, endHeight uint64) ([]uint64, []uint64) {
 	heights := make([]uint64, 0)
 	updates := make([]uint64, 0)
-	perBlockMint.Iterate(startHeight, endHeight, func(key string, value interface{}) bool {
-		heights = append(heights, std.MustParseUint(key, 10))
+	perBlockMint.Iterate(EncodeUint(startHeight), EncodeUint(endHeight), func(key string, value interface{}) bool {
+		heights = append(heights, DecodeUint(key))
 		updates = append(updates, value.(uint64))
 		return false
 	})
@@ -66,7 +66,7 @@ func PerBlockMintUpdates(startHeight, endHeight uint64) ([]uint64, []uint64) {
 }
 
 func addPerBlockMintUpdate(height uint64, amount uint64) {
-	perBlockMint.Insert(ufmt.Sprintf("%d", height), amount)
+	perBlockMint.Set(EncodeUint(height), amount)
 }
 
 var halvingYearBlock = make(map[int64]int64)     // year => block
@@ -126,7 +126,7 @@ func init() {
 		amountPerBlockPerHalvingYear[i] = uint64(amountPerBlock)
 	}
 
-	addPerBlockMintUpdate(height, amountPerBlockPerHalvingYear[1])
+	addPerBlockMintUpdate(uint64(height), amountPerBlockPerHalvingYear[1])
 }
 
 func GetAvgBlockTimeInMs() int64 {
@@ -197,7 +197,7 @@ func setAvgBlockTimeInMs(ms int64) {
 
 	// update it
 	amountPerBlockPerHalvingYear[year] = adjustedAmountPerBlock
-	addPerBlockMintUpdate(height, adjustedAmountPerBlock)
+	addPerBlockMintUpdate(uint64(height), adjustedAmountPerBlock)
 
 	// adjust halving block
 	for keyYear, _ := range halvingYearBlock {

@@ -144,7 +144,7 @@ func Mint(address pusers.AddressOrName) uint64 {
 		for i := fromYear; i < toYear; i++ {
 			amount := GetAmountByYear(i+1)
 			halvingHeight := halvingYearBlock[i]
-			addPerBlockMintUpdate(halvingHeight, amount)
+			addPerBlockMintUpdate(uint64(halvingHeight), amount)
 		}
 	}
 
@@ -170,8 +170,8 @@ func checkAndHandleIfLastBlockOfHalvingYear(height int64, amount uint64) uint64 
 	if height == lastBlock {
 		leftForThisYear := halvingYearAmount[year] - halvingYearMintAmount[year]
 		amount = leftForThisYear
-		addPerBlockMintUpdate(height, amount)
-		addPerBlockMintUpdate(height+1, amountPerBlockPerHalvingYear(year+1))
+		addPerBlockMintUpdate(uint64(height), amount)
+		addPerBlockMintUpdate(uint64(height+1), amountPerBlockPerHalvingYear[year+1])
 		return amount
 	}
 
