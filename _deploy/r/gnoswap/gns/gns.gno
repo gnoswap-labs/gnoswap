@@ -26,6 +26,8 @@ var (
 )
 
 var (
+	// Initial amount set to 900_000_000_000_000 (MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT).
+	// leftEmissionAmount will decrease as tokens are minted.
 	leftEmissionAmount   = MAX_EMISSION_AMOUNT
 	mintedEmissionAmount = uint64(0)
 )
