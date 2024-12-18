@@ -24,14 +24,14 @@ func positionGetKey(
 	if !owner.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
-			ufmt.Sprintf("position.gno__positionGetKey() || invalid owner address %s", owner.String()),
+			ufmt.Sprintf("invalid owner address %s", owner.String()),
 		))
 	}
 
 	if tickLower > tickUpper {
 		panic(addDetailToError(
 			errInvalidTickRange,
-			ufmt.Sprintf("position.gno__positionGetKey() || tickLower(%d) is greater than tickUpper(%d)", tickLower, tickUpper),
+			ufmt.Sprintf("tickLower(%d) is greater than tickUpper(%d)", tickLower, tickUpper),
 		))
 	}
 
@@ -74,7 +74,7 @@ func positionUpdate(
 		if position.liquidity.IsZero() {
 			panic(addDetailToError(
 				errZeroLiquidity,
-				"position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero",
+				"both liquidityDelta and current position's liquidity are zero",
 			))
 		}
 

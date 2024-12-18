@@ -25,9 +25,9 @@ func TestPositionGetKey(t *testing.T) {
 		panicMsg    string
 		expectedKey string
 	}{
-		{invalidAddr, 100, 200, true, `[GNOSWAP-POOL-023] invalid address || position.gno__positionGetKey() || invalid owner address invalidAddr`, ""},                                   // invalid address
-		{validAddr, 200, 100, true, `[GNOSWAP-POOL-024] tickLower is greater than tickUpper || position.gno__positionGetKey() || tickLower(200) is greater than tickUpper(100)`, ""},     // tickLower > tickUpper
-		{validAddr, -100, -200, true, `[GNOSWAP-POOL-024] tickLower is greater than tickUpper || position.gno__positionGetKey() || tickLower(-100) is greater than tickUpper(-200)`, ""}, // tickLower > tickUpper
+		{invalidAddr, 100, 200, true, `[GNOSWAP-POOL-023] invalid address || invalid owner address invalidAddr`, ""},                                   // invalid address
+		{validAddr, 200, 100, true, `[GNOSWAP-POOL-024] tickLower is greater than tickUpper || tickLower(200) is greater than tickUpper(100)`, ""},     // tickLower > tickUpper
+		{validAddr, -100, -200, true, `[GNOSWAP-POOL-024] tickLower is greater than tickUpper || tickLower(-100) is greater than tickUpper(-200)`, ""}, // tickLower > tickUpper
 		{validAddr, 100, 100, false, "", "ZzF3ZXNrYzZ0eWc5anhndWpsdGEwNDdoNmx0YTA0N2g2bGRqbHVkdV9fMTAwX18xMDA="},                                                                         // tickLower == tickUpper
 		{validAddr, 100, 200, false, "", "ZzF3ZXNrYzZ0eWc5anhndWpsdGEwNDdoNmx0YTA0N2g2bGRqbHVkdV9fMTAwX18yMDA="},                                                                         // tickLower < tickUpper
 	}
@@ -70,7 +70,7 @@ func TestPositionUpdateWithKey(t *testing.T) {
 		panicMsg          string
 		expectedLiquidity string
 	}{
-		{i256.MustFromDecimal("0"), u256.Zero(), u256.Zero(), true, `[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero`, ""},
+		{i256.MustFromDecimal("0"), u256.Zero(), u256.Zero(), true, `[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero`, ""},
 		{i256.MustFromDecimal("100000"), u256.Zero(), u256.Zero(), false, "", "100000"},
 	}
 
@@ -104,7 +104,7 @@ func TestPositionUpdate(t *testing.T) {
 			feeGrowthInside0X128: u256.Zero(),
 			feeGrowthInside1X128: u256.Zero(),
 			shouldPanic:          true,
-			panicMsg:             `[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero`,
+			panicMsg:             `[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero`,
 		},
 		{
 			initialLiquidity:             u256.Zero(),
