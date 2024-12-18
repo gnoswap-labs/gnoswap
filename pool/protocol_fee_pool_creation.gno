@@ -32,7 +32,7 @@ func SetPoolCreationFee(fee uint64) {
 	}
 	setPoolCreationFee(fee)
 
-	prevAddr, prevPkgPath := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"SetPoolCreationFee",
 		"prevAddr", prevAddr,
@@ -54,7 +54,7 @@ func SetPoolCreationFeeByAdmin(fee uint64) {
 	}
 	setPoolCreationFee(fee)
 
-	prevAddr, prevPkgPath := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"SetPoolCreationFeeByAdmin",
 		"prevAddr", prevAddr,

@@ -25,18 +25,23 @@ func TestPositionGetKey(t *testing.T) {
 		panicMsg    string
 		expectedKey string
 	}{
-		{invalidAddr, 100, 200, true, `[GNOSWAP-POOL-023] invalid address || position.gno__positionGetKey() || invalid owner address invalidAddr`, ""},                                   // invalid address
-		{validAddr, 200, 100, true, `[GNOSWAP-POOL-024] tickLower is greater than tickUpper || position.gno__positionGetKey() || tickLower(200) is greater than tickUpper(100)`, ""},     // tickLower > tickUpper
-		{validAddr, -100, -200, true, `[GNOSWAP-POOL-024] tickLower is greater than tickUpper || position.gno__positionGetKey() || tickLower(-100) is greater than tickUpper(-200)`, ""}, // tickLower > tickUpper
-		{validAddr, 100, 100, false, "", "ZzF3ZXNrYzZ0eWc5anhndWpsdGEwNDdoNmx0YTA0N2g2bGRqbHVkdV9fMTAwX18xMDA="},                                                                         // tickLower == tickUpper
-		{validAddr, 100, 200, false, "", "ZzF3ZXNrYzZ0eWc5anhndWpsdGEwNDdoNmx0YTA0N2g2bGRqbHVkdV9fMTAwX18yMDA="},                                                                         // tickLower < tickUpper
+		{invalidAddr, 100, 200, true, `[GNOSWAP-POOL-023] invalid address || (invalidAddr)`, ""},                                                    // invalid address
+		{validAddr, 200, 100, true, `[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)`, ""},     // tickLower > tickUpper
+		{validAddr, -100, -200, true, `[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(-100), tickUpper(-200)`, ""}, // tickLower > tickUpper
+		{validAddr, 100, 100, true, "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(100), tickUpper(100)", ""},     // tickLower == tickUpper
+		{validAddr, 100, 200, false, "", "ZzF3ZXNrYzZ0eWc5anhndWpsdGEwNDdoNmx0YTA0N2g2bGRqbHVkdV9fMTAwX18yMDA="},                                    // tickLower < tickUpper
 	}
 
 	for _, tc := range tests {
+		defer func() {
+			if r := recover(); r != nil {
+				uassert.Equal(t, tc.panicMsg, r.(string))
+			}
+		}()
 		if tc.shouldPanic {
-			uassert.PanicsWithMessage(t, tc.panicMsg, func() { positionGetKey(tc.owner, tc.tickLower, tc.tickUpper) })
+			uassert.PanicsWithMessage(t, tc.panicMsg, func() { getPositionKey(tc.owner, tc.tickLower, tc.tickUpper) })
 		} else {
-			key := positionGetKey(tc.owner, tc.tickLower, tc.tickUpper)
+			key := getPositionKey(tc.owner, tc.tickLower, tc.tickUpper)
 			uassert.Equal(t, tc.expectedKey, key)
 		}
 	}
@@ -55,7 +60,7 @@ func TestPositionUpdateWithKey(t *testing.T) {
 		)
 		dummyPool = newPool(poolParams)
 
-		positionKey = positionGetKey(
+		positionKey = getPositionKey(
 			testutils.TestAddress("dummyAddr"),
 			100,
 			200,

@@ -134,10 +134,10 @@ func TestTransferFromAndVerify(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			TokenFaucet(t, fooPath, pusers.AddressOrName(tt.from))
-			TokenApprove(t, fooPath, pusers.AddressOrName(tt.from), pool, u256.MustFromDecimal(tt.amount.ToString()).Uint64())
+			TokenFaucet(t, tt.tokenPath, pusers.AddressOrName(tt.from))
+			TokenApprove(t, tt.tokenPath, pusers.AddressOrName(tt.from), pool, u256.MustFromDecimal(tt.amount.ToString()).Uint64())
 
-			tt.pool.transferFromAndVerify(tt.from, tt.to, tt.tokenPath, u256.MustFromDecimal(tt.amount.ToString()), tt.isToken0)
+			tt.pool.safeTransferFrom(tt.from, tt.to, tt.tokenPath, u256.MustFromDecimal(tt.amount.ToString()), tt.isToken0)
 
 			if !tt.pool.balances.token0.Eq(tt.expectedBal0) {
 				t.Errorf("token0 balance mismatch: expected %s, got %s",
@@ -165,7 +165,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 
 		TokenFaucet(t, fooPath, pusers.AddressOrName(testutils.TestAddress("from_addr")))
 		TokenApprove(t, fooPath, pusers.AddressOrName(testutils.TestAddress("from_addr")), pusers.AddressOrName(consts.POOL_ADDR), u256.MustFromDecimal(negativeAmount.Abs().ToString()).Uint64())
-		pool.transferFromAndVerify(
+		pool.safeTransferFrom(
 			testutils.TestAddress("from_addr"),
 			testutils.TestAddress("to_addr"),
 			fooPath,
@@ -197,7 +197,7 @@ func TestTransferFromAndVerify(t *testing.T) {
 			}
 		}()
 
-		pool.transferFromAndVerify(
+		pool.safeTransferFrom(
 			testutils.TestAddress("from_addr"),
 			testutils.TestAddress("to_addr"),
 			fooPath,

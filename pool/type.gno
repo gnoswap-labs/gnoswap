@@ -227,7 +227,34 @@ type PositionInfo struct {
 	tokensOwed1 *u256.Uint
 }
 
-func (p *PositionInfo) init() {
+// valueOrZero initializes nil fields in PositionInfo to zero.
+//
+// This function ensures that all numeric fields in the PositionInfo struct are not nil.
+// If a field is nil, it is replaced with a zero value, maintaining consistency and preventing
+// potential null pointer issues during calculations.
+//
+// Fields affected:
+//   - liquidity: The liquidity amount associated with the position.
+//   - feeGrowthInside0LastX128: Fee growth for token 0 inside the tick range, last recorded value.
+//   - feeGrowthInside1LastX128: Fee growth for token 1 inside the tick range, last recorded value.
+//   - tokensOwed0: The amount of token 0 owed to the position owner.
+//   - tokensOwed1: The amount of token 1 owed to the position owner.
+//
+// Behavior:
+//   - If a field is nil, it is set to its equivalent zero value.
+//   - If a field already has a value, it remains unchanged.
+//
+// Example:
+//
+//	position := &PositionInfo{}
+//	position.valueOrZero()
+//	fmt.Println(position.liquidity) // Output: 0
+//
+// Notes:
+//   - This function is useful for ensuring numeric fields are properly initialized
+//     before performing operations or calculations.
+//   - Prevents runtime errors caused by nil values.
+func (p *PositionInfo) valueOrZero() {
 	p.liquidity = p.liquidity.NilToZero()
 	p.feeGrowthInside0LastX128 = p.feeGrowthInside0LastX128.NilToZero()
 	p.feeGrowthInside1LastX128 = p.feeGrowthInside1LastX128.NilToZero()
@@ -259,7 +286,26 @@ type TickInfo struct {
 	initialized bool // whether the tick is initialized
 }
 
-func (t *TickInfo) init() {
+// valueOrZero ensures that all fields of TickInfo are valid by setting nil fields to zero,
+// while retaining existing values if they are not nil.
+// This function updates the TickInfo struct to replace any nil values in its fields
+// with their respective zero values, ensuring data consistency.
+//
+// Behavior:
+// - If a field is nil, it is replaced with its zero value.
+// - If a field already has a valid value, the value remains unchanged.
+//
+// Fields:
+// - liquidityGross: Gross liquidity for the tick, set to zero if nil, otherwise retains its value.
+// - liquidityNet: Net liquidity for the tick, set to zero if nil, otherwise retains its value.
+// - feeGrowthOutside0X128: Accumulated fee growth for token0 outside the tick, set to zero if nil, otherwise retains its value.
+// - feeGrowthOutside1X128: Accumulated fee growth for token1 outside the tick, set to zero if nil, otherwise retains its value.
+// - secondsPerLiquidityOutsideX128: Time per liquidity outside the tick, set to zero if nil, otherwise retains its value.
+//
+// Use Case:
+// This function ensures all numeric fields in TickInfo are non-nil and have valid values,
+// preventing potential runtime errors caused by nil values during operations like arithmetic or comparisons.
+func (t *TickInfo) valueOrZero() {
 	t.liquidityGross = t.liquidityGross.NilToZero()
 	t.liquidityNet = t.liquidityNet.NilToZero()
 	t.feeGrowthOutside0X128 = t.feeGrowthOutside0X128.NilToZero()
@@ -327,71 +373,71 @@ func newPool(poolInfo *createPoolParams) *Pool {
 	}
 }
 
-func (p *Pool) GetToken0Path() string {
+func (p *Pool) Token0Path() string {
 	return p.token0Path
 }
 
-func (p *Pool) GetToken1Path() string {
+func (p *Pool) Token1Path() string {
 	return p.token1Path
 }
 
-func (p *Pool) GetFee() uint32 {
+func (p *Pool) Fee() uint32 {
 	return p.fee
 }
 
-func (p *Pool) GetBalanceToken0() *u256.Uint {
+func (p *Pool) BalanceToken0() *u256.Uint {
 	return p.balances.token0
 }
 
-func (p *Pool) GetBalanceToken1() *u256.Uint {
+func (p *Pool) BalanceToken1() *u256.Uint {
 	return p.balances.token1
 }
 
-func (p *Pool) GetTickSpacing() int32 {
+func (p *Pool) TickSpacing() int32 {
 	return p.tickSpacing
 }
 
-func (p *Pool) GetMaxLiquidityPerTick() *u256.Uint {
+func (p *Pool) MaxLiquidityPerTick() *u256.Uint {
 	return p.maxLiquidityPerTick
 }
 
-func (p *Pool) GetSlot0() Slot0 {
+func (p *Pool) Slot0() Slot0 {
 	return p.slot0
 }
 
-func (p *Pool) GetSlot0SqrtPriceX96() *u256.Uint {
+func (p *Pool) Slot0SqrtPriceX96() *u256.Uint {
 	return p.slot0.sqrtPriceX96
 }
 
-func (p *Pool) GetSlot0Tick() int32 {
+func (p *Pool) Slot0Tick() int32 {
 	return p.slot0.tick
 }
 
-func (p *Pool) GetSlot0FeeProtocol() uint8 {
+func (p *Pool) Slot0FeeProtocol() uint8 {
 	return p.slot0.feeProtocol
 }
 
-func (p *Pool) GetSlot0Unlocked() bool {
+func (p *Pool) Slot0Unlocked() bool {
 	return p.slot0.unlocked
 }
 
-func (p *Pool) GetFeeGrowthGlobal0X128() *u256.Uint {
+func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint {
 	return p.feeGrowthGlobal0X128
 }
 
-func (p *Pool) GetFeeGrowthGlobal1X128() *u256.Uint {
+func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint {
 	return p.feeGrowthGlobal1X128
 }
 
-func (p *Pool) GetProtocolFeesToken0() *u256.Uint {
+func (p *Pool) ProtocolFeesToken0() *u256.Uint {
 	return p.protocolFees.token0
 }
 
-func (p *Pool) GetProtocolFeesToken1() *u256.Uint {
+func (p *Pool) ProtocolFeesToken1() *u256.Uint {
 	return p.protocolFees.token1
 }
 
-func (p *Pool) GetLiquidity() *u256.Uint {
+func (p *Pool) Liquidity() *u256.Uint {
 	return p.liquidity
 }
 
