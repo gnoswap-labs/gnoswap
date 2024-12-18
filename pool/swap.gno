@@ -107,7 +107,7 @@ func Swap(
 	// actual swap
 	pool.swapTransfers(zeroForOne, payer, recipient, result.Amount0, result.Amount1)
 
-	prevAddr, prevPkgPath := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
 		"Swap",
@@ -512,13 +512,13 @@ func tickTransition(step StepComputations, zeroForOne bool, state SwapState, poo
 func (p *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amount0, amount1 *i256.Int) {
 	if zeroForOne {
 		// payer > POOL
-		p.transferFromAndVerify(payer, consts.POOL_ADDR, p.token0Path, amount0.Abs(), true)
+		p.safeTransferFrom(payer, consts.POOL_ADDR, p.token0Path, amount0.Abs(), true)
 		// POOL > recipient
-		p.transferAndVerify(recipient, p.token1Path, amount1, false)
+		p.safeTransfer(recipient, p.token1Path, amount1, false)
 	} else {
 		// payer > POOL
-		p.transferFromAndVerify(payer, consts.POOL_ADDR, p.token1Path, amount1.Abs(), false)
+		p.safeTransferFrom(payer, consts.POOL_ADDR, p.token1Path, amount1.Abs(), false)
 		// POOL > recipient
-		p.transferAndVerify(recipient, p.token0Path, amount0, true)
+		p.safeTransfer(recipient, p.token0Path, amount0, true)
 	}
 }

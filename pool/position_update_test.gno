@@ -3,19 +3,15 @@ package pool
 import (
 	"testing"
 
-	"std"
-
-	"gno.land/p/demo/uassert"
-
-	"gno.land/r/gnoswap/v1/consts"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+	"gno.land/r/gnoswap/v1/consts"
 )
 
 func TestUpdatePosition(t *testing.T) {
 	poolParams := &createPoolParams{
-		token0Path:    "token0",
-		token1Path:    "token1",
+		token0Path:   "token0",
+		token1Path:   "token1",
 		fee:          500,
 		tickSpacing:  10,
 		sqrtPriceX96: u256.MustFromDecimal("1000000000000000000"), // 1.0
@@ -23,8 +19,8 @@ func TestUpdatePosition(t *testing.T) {
 	p := newPool(poolParams)
 
 	tests := []struct {
-		name           string
-		positionParams ModifyPositionParams
+		name            string
+		positionParams  ModifyPositionParams
 		expectLiquidity *u256.Uint
 	}{
 		{
@@ -61,11 +57,12 @@ func TestUpdatePosition(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			position := p.updatePosition(tt.positionParams)
-			
+			tick := p.Slot0Tick()
+			position := p.updatePosition(tt.positionParams, tick)
+
 			if !position.liquidity.Eq(tt.expectLiquidity) {
-				t.Errorf("liquidity mismatch: expected %s, got %s", 
-					tt.expectLiquidity.ToString(), 
+				t.Errorf("liquidity mismatch: expected %s, got %s",
+					tt.expectLiquidity.ToString(),
 					position.liquidity.ToString())
 			}
 

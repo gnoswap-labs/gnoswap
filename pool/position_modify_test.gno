@@ -134,3 +134,159 @@ func TestModifyPositionEdgeCases(t *testing.T) {
 		uassert.Equal(t, amount1.ToString(), "2958014")
 	})
 }
+
+func TestAssertTickLowerLessThanUpper(t *testing.T) {
+	tests := []struct {
+		name        string
+		tickLower   int32
+		tickUpper   int32
+		shouldPanic bool
+		expected    string
+	}{
+		{
+			name:        "tickLower is less than tickUpper",
+			tickLower:   -100,
+			tickUpper:   100,
+			shouldPanic: false,
+			expected:    "",
+		},
+		{
+			name:        "tickLower equals tickUpper",
+			tickLower:   50,
+			tickUpper:   50,
+			shouldPanic: true,
+			expected:    "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(50), tickUpper(50)",
+		},
+		{
+			name:        "tickLower greater than tickUpper",
+			tickLower:   200,
+			tickUpper:   100,
+			shouldPanic: true,
+			expected:    "[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(200), tickUpper(100)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r == nil {
+					if tt.shouldPanic {
+						t.Errorf("unexpected panic: %v", r)
+					}
+					return
+				} else {
+					if tt.shouldPanic {
+						uassert.Equal(t, tt.expected, r.(string))
+					} else {
+						t.Errorf("expected no panic, but got: %v", r)
+					}
+				}
+			}()
+			assertTickLowerLessThanUpper(tt.tickLower, tt.tickUpper)
+		})
+	}
+}
+
+func TestAssertValidTickLower(t *testing.T) {
+	tests := []struct {
+		name        string
+		tickLower   int32
+		tickUpper   int32
+		shouldPanic bool
+		expected    string
+	}{
+		{
+			name:        "tickLower equals MIN_TICK",
+			tickLower:   consts.MIN_TICK,
+			tickUpper:   100,
+			shouldPanic: false,
+			expected:    "",
+		},
+		{
+			name:        "tickLower greater than MIN_TICK",
+			tickLower:   consts.MIN_TICK + 1,
+			tickUpper:   50,
+			shouldPanic: false,
+			expected:    "",
+		},
+		{
+			name:        "tickLower less than MIN_TICK (panic)",
+			tickLower:   consts.MIN_TICK - 1,
+			tickUpper:   100,
+			shouldPanic: true,
+			expected:    "[GNOSWAP-POOL-028] tickLower is invalid || tickLower(-887273) < MIN_TICK(-887272)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r == nil {
+					if tt.shouldPanic {
+						t.Errorf("unexpected panic: %v", r)
+					}
+					return
+				} else {
+					if tt.shouldPanic {
+						uassert.Equal(t, tt.expected, r.(string))
+					} else {
+						t.Errorf("expected no panic, but got: %v", r)
+					}
+				}
+			}()
+			assertValidTickLower(tt.tickLower)
+		})
+	}
+}
+
+func TestAssertValidTickUpper(t *testing.T) {
+	tests := []struct {
+		name        string
+		tickLower   int32
+		tickUpper   int32
+		shouldPanic bool
+		expected    string
+	}{
+		{
+			name:        "tickUpper equals MAX_TICK",
+			tickLower:   consts.MIN_TICK,
+			tickUpper:   consts.MAX_TICK,
+			shouldPanic: false,
+			expected:    "",
+		},
+		{
+			name:        "tickUpper less than MAX_TICK",
+			tickLower:   consts.MIN_TICK + 1,
+			tickUpper:   consts.MAX_TICK - 1,
+			shouldPanic: false,
+			expected:    "",
+		},
+		{
+			name:        "tickUpper greater than MAX_TICK (panic)",
+			tickLower:   consts.MIN_TICK - 1,
+			tickUpper:   consts.MAX_TICK + 1,
+			shouldPanic: true,
+			expected:    "[GNOSWAP-POOL-029] tickUpper is invalid || tickUpper(887273) > MAX_TICK(887272)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r == nil {
+					if tt.shouldPanic {
+						t.Errorf("unexpected panic: %v", r)
+					}
+					return
+				} else {
+					if tt.shouldPanic {
+						uassert.Equal(t, tt.expected, r.(string))
+					} else {
+						t.Errorf("expected no panic, but got: %v", r)
+					}
+				}
+			}()
+			assertValidTickUpper(tt.tickUpper)
+		})
+	}
+}

@@ -7,14 +7,11 @@ import (
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 
+	i256 "gno.land/p/gnoswap/int256"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
-
-	pl "gno.land/r/gnoswap/v1/pool"
-
-	i256 "gno.land/p/gnoswap/int256"
-
 	"gno.land/r/gnoswap/v1/gnft"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 type RpcPosition struct {
@@ -69,7 +66,7 @@ func ApiGetPositions() string {
 	}
 
 	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
+	stat := json.ObjectNode("", map[string]*json.Node{
 		"height":    json.NumberNode("height", float64(std.GetHeight())),
 		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
 	})
@@ -99,7 +96,7 @@ func ApiGetPositions() string {
 	}
 
 	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
+		"stat":     stat,
 		"response": responses,
 	})
 
@@ -390,7 +387,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 	burned := isBurned(lpTokenId)
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
-	currentX96 := pool.GetSlot0SqrtPriceX96()
+	currentX96 := pool.Slot0SqrtPriceX96()
 	lowerX96 := common.TickMathGetSqrtRatioAtTick(position.tickLower)
 	upperX96 := common.TickMathGetSqrtRatioAtTick(position.tickUpper)
 
@@ -439,12 +436,12 @@ func unclaimedFee(tokenId uint64) (*i256.Int, *i256.Int) {
 	poolKey := positions[tokenId].poolKey
 	pool := pl.GetPoolFromPoolPath(poolKey)
 
-	currentTick := pool.GetSlot0Tick()
+	currentTick := pool.Slot0Tick()
 
-	_feeGrowthGlobal0X128 := pool.GetFeeGrowthGlobal0X128()         // u256
+	_feeGrowthGlobal0X128 := pool.FeeGrowthGlobal0X128()            // u256
 	feeGrowthGlobal0X128 := i256.FromUint256(_feeGrowthGlobal0X128) // i256
 
-	_feeGrowthGlobal1X128 := pool.GetFeeGrowthGlobal1X128()         // u256
+	_feeGrowthGlobal1X128 := pool.FeeGrowthGlobal1X128()            // u256
 	feeGrowthGlobal1X128 := i256.FromUint256(_feeGrowthGlobal1X128) // i256
 
 	_tickUpperFeeGrowthOutside0X128 := pool.GetTickFeeGrowthOutside0X128(tickUpper)     // u256
