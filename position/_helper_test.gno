@@ -158,13 +158,13 @@ func (QuxToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 func init() {
 	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
 
-	pl.RegisterGRC20Interface(wugnotPath, WugnotToken{})
-	pl.RegisterGRC20Interface(gnsPath, GNSToken{})
-	pl.RegisterGRC20Interface(barPath, BarToken{})
-	pl.RegisterGRC20Interface(bazPath, BazToken{})
-	pl.RegisterGRC20Interface(fooPath, FooToken{})
-	pl.RegisterGRC20Interface(oblPath, OBLToken{})
-	pl.RegisterGRC20Interface(quxPath, QuxToken{})
+	// pl.RegisterGRC20Interface(wugnotPath, WugnotToken{})
+	// pl.RegisterGRC20Interface(gnsPath, GNSToken{})
+	// pl.RegisterGRC20Interface(barPath, BarToken{})
+	// pl.RegisterGRC20Interface(bazPath, BazToken{})
+	// pl.RegisterGRC20Interface(fooPath, FooToken{})
+	// pl.RegisterGRC20Interface(oblPath, OBLToken{})
+	// pl.RegisterGRC20Interface(quxPath, QuxToken{})
 }
 
 var (
