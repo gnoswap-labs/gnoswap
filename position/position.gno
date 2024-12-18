@@ -28,6 +28,8 @@ func getNextId() uint64 {
 	return nextId
 }
 
+// region: Mint
+
 // Mint creates a new liquidity position and mints liquidity tokens.
 // It also handles the conversion between GNOT and WUGNOT transparently for the user.
 // Returns minted tokenId, liquidity, amount0, amount1
@@ -89,7 +91,10 @@ func Mint(
 	// check this condition by using DryMint()
 	poolPath := ufmt.Sprintf("%s:%s:%d", token0, token1, fee)
 
-	handleNativeToken(token0IsNative, token1IsNative, caller)
+	err := handleNativeToken(token0IsNative, token1IsNative, caller)
+	if err != nil {
+		panic(addDetailToError(errWrapUnwrap, err.Error()))
+	}
 
 	mintParams := MintParams{
 		token0:         token0,
@@ -146,31 +151,45 @@ func processTokens(token0, token1 string) (string, string, bool, bool) {
 	return token0, token1, token0IsNative, token1IsNative
 }
 
-func handleNativeToken(token0IsNative, token1IsNative bool, caller std.Address) {
-	if token0IsNative || token1IsNative {
-		oldUserWugnotBalance := wugnot.BalanceOf(a2u(caller))
-		sent := std.GetOrigSend()
-		ugnotSent := uint64(sent.AmountOf("ugnot"))
-		if ugnotSent > 0 {
-			wrap(ugnotSent, caller)
-			newUserWugnotBalance := wugnot.BalanceOf(a2u(caller))
-			if (newUserWugnotBalance - oldUserWugnotBalance) != ugnotSent {
-				panic(addDetailToError(
-					errWrapUnwrap,
-					ufmt.Sprintf("ugnot sent(%d) != wugnot received(%d)", ugnotSent, newUserWugnotBalance-oldUserWugnotBalance),
-				))
-			}
-		}
+func hasNativeToken(token0IsNative, token1IsNative bool) bool {
+	return token0IsNative || token1IsNative
+}
+
+func handleNativeToken(token0IsNative, token1IsNative bool, caller std.Address) error {
+	if !hasNativeToken(token0IsNative, token1IsNative) {
+		return nil
 	}
+
+	oldUserWugnotBalance := wugnot.BalanceOf(a2u(caller))
+	sent := std.GetOrigSend()
+	ugnotSent := uint64(sent.AmountOf("ugnot"))
+
+	if ugnotSent <= 0 {
+		return nil
+	}
+
+	wrap(ugnotSent, caller)
+
+	newUserWugnotBalance := wugnot.BalanceOf(a2u(caller))
+	diff := newUserWugnotBalance - oldUserWugnotBalance
+
+	if diff != ugnotSent {
+		return ufmt.Errorf("amount of ugnot (%d) is not equal to amount of wugnot. (diff: %d)", ugnotSent, diff)
+	}
+
+	return nil
 }
 
 func handleLeftoverNativeToken(token0IsNative, token1IsNative bool, userWugnotBalance uint64, caller std.Address) {
-	if token0IsNative || token1IsNative {
-		userWugnotAfterMint := wugnot.BalanceOf(a2u(caller))
-		leftOver := userWugnotAfterMint - userWugnotBalance
-		if leftOver > 0 {
-			unwrap(leftOver, caller)
-		}
+	if !hasNativeToken(token0IsNative, token1IsNative) {
+		return
+	}
+
+	userWugnotAfterMint := wugnot.BalanceOf(a2u(caller))
+
+	leftOver := userWugnotAfterMint - userWugnotBalance
+	if leftOver > 0 {
+		unwrap(leftOver, caller)
 	}
 }
 
@@ -218,6 +237,10 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 
 	return tokenId, liquidity, amount0, amount1
 }
+
+////////////////////////////
+
+// region: IncreaseLiquidity
 
 // IncreaseLiquidity increases liquidity of the existing position
 // Returns tokenId, liquidity, amount0, amount1, poolPath
