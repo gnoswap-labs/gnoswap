@@ -73,6 +73,34 @@ func checkDeadline(deadline int64) {
 	}
 }
 
+func assertTokenOwnership(tokenId uint64) {
+	assertTokenExists(tokenId)
+
+	// MUST BE OWNER TO INCREASE LIQUIDITY
+	// can not be approved address ≈ staked position can't be modified
+	owner := gnft.OwnerOf(tokenIdFrom(tokenId))
+	caller := std.PrevRealm().Addr()
+	assertCallerIsOwner(tokenId, owner, caller)
+}
+
+func assertTokenExists(tokenId uint64) {
+	if !exists(tokenId) {
+		panic(newErrorWithDetail(
+			errDataNotFound,
+			ufmt.Sprintf("tokenId(%d) doesn't exist", tokenId),
+		))
+	}
+}
+
+func assertCallerIsOwner(tokenId uint64, owner, caller std.Address) {
+	if owner != caller {
+		panic(newErrorWithDetail(
+			errNoPermission,
+			ufmt.Sprintf("only owner(%s) can increase liquidity for tokenId(%d), but called from %s", owner, tokenId, caller),
+		))
+	}
+}
+
 // assertOnlyUserOrStaker panics if the caller is not a user or staker.
 func assertOnlyUserOrStaker(caller std.Realm) {
 	if !caller.IsUser() {
@@ -96,6 +124,15 @@ func assertOnlyValidAddress(addr std.Address) {
 		panic(newErrorWithDetail(
 			errInvalidAddress,
 			ufmt.Sprintf("(%s)", addr),
+		))
+	}
+}
+
+func assertWrapNativeToken(ugnotSent uint64, prevRealm std.Address) {
+	if err := wrap(ugnotSent, prevRealm); err != nil {
+		panic(addDetailToError(
+			errWrapUnwrap,
+			ufmt.Sprintf("wrap error: %s", err.Error()),
 		))
 	}
 }
