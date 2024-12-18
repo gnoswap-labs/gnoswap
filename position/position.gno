@@ -170,7 +170,9 @@ func handleNativeToken(token0IsNative, token1IsNative bool, caller std.Address) 
 		return nil
 	}
 
-	wrap(ugnotSent, caller)
+	if err := wrap(ugnotSent, caller); err != nil {
+		return err
+	}
 
 	newUserWugnotBalance := wugnot.BalanceOf(a2u(caller))
 	diff := newUserWugnotBalance - oldUserWugnotBalance
@@ -288,7 +290,12 @@ func IncreaseLiquidity(
 	if isToken0Wugnot || isToken1Wugnot {
 		sent := std.GetOrigSend()
 		ugnotSent := uint64(sent.AmountOf("ugnot"))
-		wrap(ugnotSent, std.PrevRealm().Addr())
+		if err := wrap(ugnotSent, std.PrevRealm().Addr()); err != nil {
+			panic(addDetailToError(
+				errWrapUnwrap,
+				ufmt.Sprintf("wrap error: %s", err.Error()),
+			))
+		}
 	}
 
 	// increase liquidity
@@ -627,7 +634,12 @@ func Reposition(
 		sent := std.GetOrigSend()
 		ugnotSent = uint64(sent.AmountOf("ugnot"))
 
-		wrap(ugnotSent, std.PrevRealm().Addr())
+		if err := wrap(ugnotSent, std.PrevRealm().Addr()); err != nil {
+			panic(addDetailToError(
+				errWrapUnwrap,
+				ufmt.Sprintf("wrap error: %s", err.Error()),
+			))
+		}
 	}
 
 	liquidity, amount0, amount1 := addLiquidity(

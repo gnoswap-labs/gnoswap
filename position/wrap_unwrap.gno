@@ -9,27 +9,28 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 )
 
-func wrap(ugnotAmount uint64, to std.Address) {
+func wrap(ugnotAmount uint64, to std.Address) error {
 	if ugnotAmount == 0 {
-		return
+		return nil
 	}
 
 	if ugnotAmount < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
-		panic(addDetailToError(
-			errWugnotMinimum,
-			ufmt.Sprintf("amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP),
-		))
+		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP)
 	}
 
 	// WRAP IT
 	wugnotAddr := std.DerivePkgAddr(consts.WRAPPED_WUGNOT)
 	banker := std.GetBanker(std.BankerTypeRealmSend)
 
-	banker.SendCoins(consts.POSITION_ADDR, wugnotAddr, std.Coins{{"ugnot", int64(ugnotAmount)}})
+	banker.SendCoins(consts.POSITION_ADDR, wugnotAddr, std.Coins{
+		{Denom: "ugnot", Amount: int64(ugnotAmount)},
+	})
 	wugnot.Deposit() // POSITION HAS WUGNOT
 
 	// SEND WUGNOT: POSITION -> USER
 	wugnot.Transfer(a2u(to), ugnotAmount)
+
+	return nil
 }
 
 func unwrap(wugnotAmount uint64, to std.Address) {
@@ -45,5 +46,7 @@ func unwrap(wugnotAmount uint64, to std.Address) {
 
 	// SEND GNOT: POSITION -> USER
 	banker := std.GetBanker(std.BankerTypeRealmSend)
-	banker.SendCoins(consts.POSITION_ADDR, to, std.Coins{{"ugnot", int64(wugnotAmount)}})
+	banker.SendCoins(consts.POSITION_ADDR, to, std.Coins{
+		{Denom: "ugnot", Amount: int64(wugnotAmount)},
+	})
 }
