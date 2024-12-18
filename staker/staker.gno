@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"gno.land/p/demo/avl"
+
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -21,11 +23,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-var (
-	/* internal */
-	// poolTiers stores internal tier information for each pool
-	poolTiers map[string]InternalTier = make(map[string]InternalTier)
 
+var (
 	/* external */
 	// poolIncentives maps pool paths to their associated incentive IDs
 	poolIncentives map[string][]string = make(map[string][]string)
@@ -36,6 +35,8 @@ var (
 	/* common */
 	// deposits stores deposit information for each tokenId
 	deposits map[uint64]Deposit = make(map[uint64]Deposit)
+
+	// depositOperations map[uint64][]DepositOperation = make(map[uint64][]DepositOperation)
 )
 
 const (
@@ -135,6 +136,8 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	// after transfer, set caller(user) as position operator (to collect fee and reward)
 	pn.SetPositionOperator(tokenId, caller)
 
+	modifyPosition(poolPath, tokenId, liquidity)
+
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
 
 	prevAddr, prevRealm := getPrev()
@@ -163,7 +166,42 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 	if consts.EMISSION_REFACTORED {
 		CalcPoolPositionRefactor()
 	} else {
-		CalcPoolPosition()
+		// cache per-tier and per-pool reward
+		currentHeight := uint64(std.GetHeight())
+		poolTier.cacheTierReward(currentHeight)
+		poolPath := deposits[tokenId].targetPoolPath
+		pool, ok := pools.get(poolPath)
+		if !ok {
+			panic(addDetailToError(
+				errDataNotFound,
+				ufmt.Sprintf("staker.gno__CollectReward() || poolPath(%s) does not exist", poolPath),
+			))
+		}
+		poolTier.cachePoolReward(pool.rewardCache, poolPath, pool.lastRewardCacheHeight, currentHeight)
+
+		// eligible(in-range) intervals for a position
+		upperTickId := pn.PositionGetPositionUpperTickId(tokenId)
+		upperTick := ticks.get(upperTickId)
+		lowerTickId := pn.PositionGetPositionLowerTickId(tokenId)
+		lowerTick := ticks.get(lowerTickId)
+
+		deposit := deposits[tokenId]
+		position := positions.get(tokenId)
+		lastCollectHeight := position.lastCollectHeight
+
+		tickUpperCrossHeights, tickUpperCrossZeroForOnes := upperTick.crossInfo(lastCollectHeight, currentHeight)
+		tickLowerCrossHeights, tickLowerCrossZeroForOnes := lowerTick.crossInfo(lastCollectHeight, currentHeight)
+
+		initialUpperCross := upperTick.lastCross(lastCollectHeight)
+		initialLowerCross := lowerTick.lastCross(lastCollectHeight)
+		currentlyInRange := initialUpperCross && !initialLowerCross
+
+		intervals := pool.tickCrossesToEligibleIntervals(tickUpperCrossHeights, tickUpperCrossZeroForOnes, tickLowerCrossHeights, tickLowerCrossZeroForOnes, currentlyInRange, lastCollectHeight, currentHeight)
+
+		totalReward, totalPenalty := position.eligibleIntervalsToReward(intervals, pool, currentHeight)
+
+		gns.Transfer(a2u(deposit.owner), totalReward.Uint64())
+		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), totalPenalty.Uint64())
 	}
 
 	deposit, exist := deposits[tokenId]
@@ -348,6 +386,8 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 
 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
+
+	modifyPosition(poolPath, tokenId, i256.Zero().Neg(liquidity))
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(

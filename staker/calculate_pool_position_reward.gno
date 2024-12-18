@@ -29,10 +29,10 @@ var poolLastTmpGns map[string]uint64 = make(map[string]uint64)
 var poolAccuGns map[string]uint64 = make(map[string]uint64)
 
 // tokenId -> gnsAmount
-var positionGns map[uint64]uint64 = make(map[uint64]uint64)
+//var positionGns map[uint64]uint64 = make(map[uint64]uint64)
 
 // tokenId -> lastGnsAmount
-var positionLastGns map[uint64]uint64 = make(map[uint64]uint64)
+//var positionLastGns map[uint64]uint64 = make(map[uint64]uint64)
 
 // tokenId -> incentiveId -> lastRewardAmount
 var positionLastExternal map[uint64]map[string]*u256.Uint = make(map[uint64]map[string]*u256.Uint)
@@ -213,6 +213,28 @@ func CalcPoolPositionRefactor() bool {
 	return true
 }
 
+
+
+
+func CalcPoolPositionPerDeposit(tokenId uint64, startHeight, endHeight uint64) {
+	deposit := deposits[tokenId]
+	tickUpper := pn.PositionGetPositionTickUpper(tokenId)
+	tickLower := pn.PositionGetPositionTickLower(tokenId)
+
+	// Filtering intervals where the staked position is in range
+
+	tickUpperCrosses := stakerTickInfo.Get(tickUpper).crossInfo()
+	tickLowerCrosses := stakerTickInfo.Get(tickLower).crossInfo()
+
+	pool := stakerPoolInfo.Get(deposit.targetPoolPath)
+	initialStakedLiquidity := pool.lastStakedLiquidity()
+	eligibleIntervals := pool.tickCrossesToEligibleIntervals(tickUpperCrosses, tickLowerCrosses, startHeight, endHeight, initialStakedLiquidity)
+
+	// Calculate internal reward
+
+	
+}
+
 // XXX: need to improve nested iteration
 // CalcPoolPosition calculates and updates the position of pools and rewards for stakers.
 //
@@ -238,20 +260,10 @@ func CalcPoolPosition() {
 
 	// calculate each pool's total staked liquidity
 	poolTotalStakedLiquidity = make(map[string]*u256.Uint) // clear
-	for tokenId, deposit := range deposits {
-		poolPath := deposit.targetPoolPath
-		if _, exist := poolTotalStakedLiquidity[poolPath]; !exist {
-			poolTotalStakedLiquidity[poolPath] = u256.Zero()
-		}
-
-		isInRange := pn.PositionIsInRange(tokenId)
-		if isInRange == false {
-			continue
-		}
-
-		liqStr := pn.PositionGetPositionLiquidityStr(tokenId)
-		positionLiquidity := u256.MustFromDecimal(liqStr)
-		poolTotalStakedLiquidity[poolPath] = poolTotalStakedLiquidity[poolPath].Add(poolTotalStakedLiquidity[poolPath], positionLiquidity)
+	// FIXME: temporarily iterate all pools.
+	// after refactoring is complete, it will be removed
+	for poolPath, info := range stakerPoolInfo {
+		poolTotalStakedLiquidity[poolPath] = info.totalStakedLiquidityInRange
 	}
 
 	// calculate each position's liquidity ratio
@@ -374,8 +386,10 @@ func CalcPoolPosition() {
 			positionAmountX := u256.Zero().Div(positionAmountX96, _q96)
 			positionAmount := positionAmountX.Uint64()
 
-			positionLastGns[tokenId] = positionGns[tokenId]
-			positionGns[tokenId] += positionAmount
+			reward := depositReward[tokenId]
+			reward.prepareDistribution(positionAmount)
+			depositReward[tokenId] = reward
+
 			poolLastTmpGns[poolPath] += positionAmount
 
 			// calculate internal amount from previous to now

@@ -179,8 +179,7 @@ func setPoolTier(pool string, tier uint64) {
 	}
 
 	// panic if pool exists in poolTiers
-	_, exist := poolTiers[pool]
-	if exist {
+	if poolTier.hasPool(pool) {
 		panic(addDetailToError(
 			errAlreadyHasTier,
 			ufmt.Sprintf("manage_pool_tiers.gno__SetPoolTier() || pool(%s) already exists in poolTiers", pool),
@@ -190,10 +189,10 @@ func setPoolTier(pool string, tier uint64) {
 	// check if tier is valid
 	mustValidTier(tier)
 
-	poolTiers[pool] = InternalTier{
+	poolTier.of(tier).Set(pool, InternalTier{
 		tier:           tier,
 		startTimestamp: time.Now().Unix(),
-	}
+	})
 }
 
 func ChangePoolTierByAdmin(poolPath string, tier uint64) {

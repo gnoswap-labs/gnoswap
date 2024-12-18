@@ -106,7 +106,7 @@ func computeRewardByRatio(amount uint64, ratioX96 *u256.Uint) uint64 {
 	return rewardAmount
 }
 
-func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
+func rewardMathComputeInternalRewardAmount(tokenId uint64, reward *DepositReward) (uint64, uint64) {
 	deposit := deposits[tokenId]
 
 	// using block
@@ -117,7 +117,7 @@ func rewardMathComputeInternalRewardAmount(tokenId uint64) (uint64, uint64) {
 	durationRatio := getRewardRatio(stakedDuration)
 
 	// Distribute the accumulated rewards from the last calculation point to the current block according to each weight
-	toDistribute := positionGns[tokenId] - positionLastGns[tokenId]
+	toDistribute := reward.toDistribute()
 
 	until30 := uint64(stakeHeight + warmUp[50] - 1)  // 150
 	until50 := uint64(stakeHeight + warmUp[70] - 1)  // 300
