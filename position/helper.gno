@@ -102,7 +102,7 @@ func isOwnerOrOperator(addr std.Address, tokenId uint64) bool {
 		return true
 	}
 	if isStaked(tokenIdFrom(tokenId)) {
-		position, exist := positions[tokenId]
+		position, exist := GetPosition(tokenId)
 		if exist && addr == position.operator {
 			return true
 		}

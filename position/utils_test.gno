@@ -288,7 +288,7 @@ func TestAssertOnlyValidAddress(t *testing.T) {
 			name:     "Failure - invalid address",
 			addr:     "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8", // invalid length
 			expected: false,
-			errorMsg: "[GNOSWAP-POSITION-011] invalid address || (g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8)",
+			errorMsg: "[GNOSWAP-POSITION-012] invalid address || (g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8)",
 		},
 	}
 	for _, tc := range tests {
@@ -325,7 +325,7 @@ func TestAssertOnlyValidAddressWith(t *testing.T) {
 			addr:     "g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8",
 			other:    "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d",
 			expected: false,
-			errorMsg: "[GNOSWAP-POSITION-011] invalid address || (g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8)",
+			errorMsg: "[GNOSWAP-POSITION-012] invalid address || (g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8)",
 		},
 	}
 	for _, tc := range tests {

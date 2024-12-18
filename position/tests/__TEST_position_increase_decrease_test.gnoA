@@ -200,7 +200,7 @@ func TestDecreaseLiquidityAllThenAgainShouldPanic(t *testing.T) {
 	// decreasing position(with 0 liquidity) should panic
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and (self)liquidity are zero`,
+		`[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero`,
 		func() {
 			DecreaseLiquidity(
 				uint64(1),   // tokenId
