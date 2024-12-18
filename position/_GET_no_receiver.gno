@@ -68,5 +68,5 @@ func PositionIsInRange(tokenId uint64) bool {
 }
 
 func PositionGetPositionOwner(tokenId uint64) std.Address {
-	return gnft.OwnerOf(tid(tokenId))
+	return gnft.OwnerOf(tokenIdFrom(tokenId))
 }

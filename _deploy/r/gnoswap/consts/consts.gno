@@ -6,9 +6,8 @@ import (
 
 // GNOSWAP SERVICE
 const (
-	ADMIN   std.Address = "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d" // Admin
-	DEV_OPS std.Address = "g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9" // DevOps
-
+	ADMIN          std.Address = "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d"
+	DEV_OPS        std.Address = "g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9"
 	TOKEN_REGISTER std.Address = "g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5"
 
 	TOKEN_REGISTER_NAMESPACE string = "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5"
@@ -21,7 +20,8 @@ const (
 	GNOT           string = "gnot"
 	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
 
-	UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000 // defined in https://github.com/gnolang/gno/blob/81a88a2976ba9f2f9127ebbe7fb7d1e1f7fa4bd4/examples/gno.land/r/demo/wugnot/wugnot.gno#L19
+	// defined in https://github.com/gnolang/gno/blob/81a88a2976ba9f2f9127ebbe7fb7d1e1f7fa4bd4/examples/gno.land/r/demo/wugnot/wugnot.gno#L19
+	UGNOT_MIN_DEPOSIT_TO_WRAP uint64 = 1000
 )
 
 // CONTRACT PATH & ADDRESS
@@ -90,10 +90,11 @@ const (
 	UINT64_MAX uint64 = 18446744073709551615
 
 	MAX_UINT128 string = "340282366920938463463374607431768211455"
-
 	MAX_UINT160 string = "1461501637330902918203684832716283019655932542975"
-
 	MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+
+	MAX_INT128 string = "170141183460469231731687303715884105727"
+	MAX_INT256 string = "57896044618658097711785492504343953926634992332820282019728792003956564819968"
 
 	// Tick Related
 	MIN_TICK int32 = -887272
@@ -109,6 +110,8 @@ const (
 	Q64  string = "18446744073709551616"                    // 2 ** 64
 	Q96  string = "79228162514264337593543950336"           // 2 ** 96
 	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
+
+	Q128_RESOLUTION uint = 128
 )
 
 // TIMESTAMP & DAY

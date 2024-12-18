@@ -3,6 +3,8 @@ package pool
 import (
 	"std"
 
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -57,16 +59,41 @@ func newProtocolFees() ProtocolFees {
 	}
 }
 
+// ModifyPositionParams repersents the parameters for modifying a liquidity position.
+// This structure is used internally both `Mint` and `Burn` operation to manage
+// the liquidity positions.
 type ModifyPositionParams struct {
-	owner std.Address // address that owns the position
+	// owner is the address that owns the position
+	owner std.Address
 
-	// the tick range of the position, bounds are included
-	tickLower int32
-	tickUpper int32
+	// tickLower and atickUpper define the price range
+	// The actual price range is calculated as 1.0001^tick
+	// This allows for precision in price range while using integer math.
 
-	liquidityDelta *i256.Int // any change in liquidity
+	tickLower int32 // lower tick of the position
+	tickUpper int32 // upper tick of the position
+
+	// liquidityDelta represents the change in liquidity
+	// Positive for minting, negative for burning
+	liquidityDelta *i256.Int
 }
 
+// newModifyPositionParams creates a new `ModifyPositionParams` instance.
+// This is used to preare parameters for the `modifyPosition` function,
+// which handles both minting and burning of liquidity positions.
+//
+// Parameters:
+//   - owner: address that will own (or owns) the position
+//   - tickLower: lower tick bound of the position
+//   - tickUpper: upper tick bound of the position
+//   - liquidityDelta: amount of liquidity to add (positive) or remove (negative)
+//
+// The tick parameters represent prices as powers of 1.0001:
+// - actual_price = 1.0001^tick
+// - For example, tick = 100 means price = 1.0001^100
+//
+// Returns:
+//   - ModifyPositionParams: a new instance of ModifyPositionParams
 func newModifyPositionParams(
 	owner std.Address,
 	tickLower int32,
@@ -81,6 +108,7 @@ func newModifyPositionParams(
 	}
 }
 
+// SwapCache holds data that remains constant throughout a swap.
 type SwapCache struct {
 	feeProtocol    uint8      // protocol fee for the input token
 	liquidityStart *u256.Uint // liquidity at the beginning of the swap
@@ -96,6 +124,9 @@ func newSwapCache(
 	}
 }
 
+// SwapState tracks the changing values during a swap.
+// This type helps manage the state transiktions that occur as the swap progresses
+// accross different price ranges.
 type SwapState struct {
 	amountSpecifiedRemaining *i256.Int  // amount remaining to be swapped in/out of the input/output token
 	amountCalculated         *i256.Int  // amount already swapped out/in of the output/input token
@@ -139,6 +170,9 @@ func (s *SwapState) SetProtocolFee(fee *u256.Uint) {
 	s.protocolFee = fee
 }
 
+// StepComputations holds intermediate values used during a single step of a swap.
+// Each step represents movement from the current tick to the next initialized tick
+// or the target price, whichever comes first.
 type StepComputations struct {
 	sqrtPriceStartX96 *u256.Uint // price at the beginning of the step
 	tickNext          int32      // next tick to swap to from the current tick in the swap direction
@@ -154,14 +188,14 @@ func (step *StepComputations) initSwapStep(state SwapState, pool *Pool, zeroForO
 	step.sqrtPriceStartX96 = state.sqrtPriceX96
 	step.tickNext, step.initialized = pool.tickBitmapNextInitializedTickWithInOneWord(
 		state.tick,
-		pool.tickSpacing, 
+		pool.tickSpacing,
 		zeroForOne,
 	)
 
 	// prevent overshoot the min/max tick
 	step.clampTickNext()
 
-	// get the price for the next tick 
+	// get the price for the next tick
 	step.sqrtPriceNextX96 = common.TickMathGetSqrtRatioAtTick(step.tickNext)
 }
 
@@ -178,16 +212,49 @@ func (step *StepComputations) clampTickNext() {
 type PositionInfo struct {
 	liquidity *u256.Uint // amount of liquidity owned by this position
 
-	// fee growth per unit of liquidity as of the last update to liquidity or fees owed
+	// Fee growth per unit of liquidity as of the last update
+	// Used to calculate uncollected fees for token0
 	feeGrowthInside0LastX128 *u256.Uint
+
+	// Fee growth per unit of liquidity as of the last update
+	// Used to calculate uncollected fees for token1
 	feeGrowthInside1LastX128 *u256.Uint
 
-	// fees owed to the position owner in token0/token1
+	// accumulated fees in token0 waiting to be collected
 	tokensOwed0 *u256.Uint
+
+	// accumulated fees in token1 waiting to be collected
 	tokensOwed1 *u256.Uint
 }
 
-func (p *PositionInfo) init() {
+// valueOrZero initializes nil fields in PositionInfo to zero.
+//
+// This function ensures that all numeric fields in the PositionInfo struct are not nil.
+// If a field is nil, it is replaced with a zero value, maintaining consistency and preventing
+// potential null pointer issues during calculations.
+//
+// Fields affected:
+//   - liquidity: The liquidity amount associated with the position.
+//   - feeGrowthInside0LastX128: Fee growth for token 0 inside the tick range, last recorded value.
+//   - feeGrowthInside1LastX128: Fee growth for token 1 inside the tick range, last recorded value.
+//   - tokensOwed0: The amount of token 0 owed to the position owner.
+//   - tokensOwed1: The amount of token 1 owed to the position owner.
+//
+// Behavior:
+//   - If a field is nil, it is set to its equivalent zero value.
+//   - If a field already has a value, it remains unchanged.
+//
+// Example:
+//
+//	position := &PositionInfo{}
+//	position.valueOrZero()
+//	fmt.Println(position.liquidity) // Output: 0
+//
+// Notes:
+//   - This function is useful for ensuring numeric fields are properly initialized
+//     before performing operations or calculations.
+//   - Prevents runtime errors caused by nil values.
+func (p *PositionInfo) valueOrZero() {
 	p.liquidity = p.liquidity.NilToZero()
 	p.feeGrowthInside0LastX128 = p.feeGrowthInside0LastX128.NilToZero()
 	p.feeGrowthInside1LastX128 = p.feeGrowthInside1LastX128.NilToZero()
@@ -195,6 +262,8 @@ func (p *PositionInfo) init() {
 	p.tokensOwed1 = p.tokensOwed1.NilToZero()
 }
 
+// TickInfo stores information about a specific tick in the pool.
+// TIcks represent discrete price points that can be used as boundaries for positions.
 type TickInfo struct {
 	liquidityGross *u256.Uint // total position liquidity that references this tick
 	liquidityNet   *i256.Int  // amount of net liquidity added (subtracted) when tick is crossed from left to right (right to left)
@@ -217,7 +286,26 @@ type TickInfo struct {
 	initialized bool // whether the tick is initialized
 }
 
-func (t *TickInfo) init() {
+// valueOrZero ensures that all fields of TickInfo are valid by setting nil fields to zero,
+// while retaining existing values if they are not nil.
+// This function updates the TickInfo struct to replace any nil values in its fields
+// with their respective zero values, ensuring data consistency.
+//
+// Behavior:
+// - If a field is nil, it is replaced with its zero value.
+// - If a field already has a valid value, the value remains unchanged.
+//
+// Fields:
+// - liquidityGross: Gross liquidity for the tick, set to zero if nil, otherwise retains its value.
+// - liquidityNet: Net liquidity for the tick, set to zero if nil, otherwise retains its value.
+// - feeGrowthOutside0X128: Accumulated fee growth for token0 outside the tick, set to zero if nil, otherwise retains its value.
+// - feeGrowthOutside1X128: Accumulated fee growth for token1 outside the tick, set to zero if nil, otherwise retains its value.
+// - secondsPerLiquidityOutsideX128: Time per liquidity outside the tick, set to zero if nil, otherwise retains its value.
+//
+// Use Case:
+// This function ensures all numeric fields in TickInfo are non-nil and have valid values,
+// preventing potential runtime errors caused by nil values during operations like arithmetic or comparisons.
+func (t *TickInfo) valueOrZero() {
 	t.liquidityGross = t.liquidityGross.NilToZero()
 	t.liquidityNet = t.liquidityNet.NilToZero()
 	t.feeGrowthOutside0X128 = t.feeGrowthOutside0X128.NilToZero()
@@ -225,9 +313,11 @@ func (t *TickInfo) init() {
 	t.secondsPerLiquidityOutsideX128 = t.secondsPerLiquidityOutsideX128.NilToZero()
 }
 
-type Ticks map[int32]TickInfo          // tick => TickInfo
-type TickBitmaps map[int16]*u256.Uint  // tick(wordPos) => bitmap(tickWord ^ mask)
-type Positions map[string]PositionInfo // positionKey => PositionInfo
+type (
+	Ticks       map[int32]TickInfo      // tick => TickInfo
+	TickBitmaps map[int16]*u256.Uint    // tick(wordPos) => bitmap(tickWord ^ mask)
+	Positions   map[string]PositionInfo // positionKey => PositionInfo
+)
 
 // type Pool describes a single Pool's state
 // A pool is identificed with a unique key (token0, token1, fee), where token0 < token1
@@ -283,4 +373,81 @@ func newPool(poolInfo *createPoolParams) *Pool {
 		tickBitmaps:          TickBitmaps{},
 		positions:            Positions{},
 	}
+}
+
+func (p *Pool) Token0Path() string {
+	return p.token0Path
+}
+
+func (p *Pool) Token1Path() string {
+	return p.token1Path
+}
+
+func (p *Pool) Fee() uint32 {
+	return p.fee
+}
+
+func (p *Pool) BalanceToken0() *u256.Uint {
+	return p.balances.token0
+}
+
+func (p *Pool) BalanceToken1() *u256.Uint {
+	return p.balances.token1
+}
+
+func (p *Pool) TickSpacing() int32 {
+	return p.tickSpacing
+}
+
+func (p *Pool) MaxLiquidityPerTick() *u256.Uint {
+	return p.maxLiquidityPerTick
+}
+
+func (p *Pool) Slot0() Slot0 {
+	return p.slot0
+}
+
+func (p *Pool) Slot0SqrtPriceX96() *u256.Uint {
+	return p.slot0.sqrtPriceX96
+}
+
+func (p *Pool) Slot0Tick() int32 {
+	return p.slot0.tick
+}
+
+func (p *Pool) Slot0FeeProtocol() uint8 {
+	return p.slot0.feeProtocol
+}
+
+func (p *Pool) Slot0Unlocked() bool {
+	return p.slot0.unlocked
+}
+
+func (p *Pool) FeeGrowthGlobal0X128() *u256.Uint {
+	return p.feeGrowthGlobal0X128
+}
+
+func (p *Pool) FeeGrowthGlobal1X128() *u256.Uint {
+	return p.feeGrowthGlobal1X128
+}
+
+func (p *Pool) ProtocolFeesToken0() *u256.Uint {
+	return p.protocolFees.token0
+}
+
+func (p *Pool) ProtocolFeesToken1() *u256.Uint {
+	return p.protocolFees.token1
+}
+
+func (p *Pool) Liquidity() *u256.Uint {
+	return p.liquidity
+}
+
+func mustGetPool(poolPath string) *Pool {
+	pool, exist := pools[poolPath]
+	if !exist {
+		panic(addDetailToError(errDataNotFound,
+			ufmt.Sprintf("poolPath(%s) does not exist", poolPath)))
+	}
+	return pool
 }

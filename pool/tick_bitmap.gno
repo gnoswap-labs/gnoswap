@@ -1,8 +1,6 @@
 package pool
 
 import (
-	"gno.land/p/demo/ufmt"
-
 	plp "gno.land/p/gnoswap/pool"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -12,32 +10,54 @@ import (
 func tickBitmapPosition(tick int32) (int16, uint8) {
 	wordPos := int16(tick >> 8) // tick / 256
 	bitPos := uint8(tick % 256)
-
 	return wordPos, bitPos
 }
 
-// tickBitmapFlipTick flips tthe bit corresponding to the given tick
-// in the pool's tick bitmap.
-func (pool *Pool) tickBitmapFlipTick(
+// tickBitmapFlipTick flips the state of a tick in the tick bitmap.
+//
+// This function toggles the "initialized" state of a tick in the tick bitmap.
+// It ensures that the tick aligns with the specified tick spacing and then
+// flips the corresponding bit in the bitmap representation.
+//
+// Parameters:
+//   - tick: int32, the tick index to toggle.
+//   - tickSpacing: int32, the spacing between valid ticks.
+//     The tick must align with this spacing.
+//
+// Workflow:
+//  1. Validates that the `tick` aligns with `tickSpacing` using `checkTickSpacing`.
+//  2. Computes the position of the bit in the tick bitmap:
+//     - `wordPos`: Determines which word in the bitmap contains the bit.
+//     - `bitPos`: Identifies the position of the bit within the word.
+//  3. Creates a bitmask using `Lsh` (Left Shift) to target the bit at `bitPos`.
+//  4. Toggles (flips) the bit using XOR with the current value of the tick bitmap.
+//  5. Updates the tick bitmap with the modified word.
+//
+// Behavior:
+//   - If the bit is `0` (uninitialized), it will be flipped to `1` (initialized).
+//   - If the bit is `1` (initialized), it will be flipped to `0` (uninitialized).
+//
+// Example:
+//
+//	pool.tickBitmapFlipTick(120, 60)
+//	// This flips the bit for tick 120 with a tick spacing of 60.
+//
+// Notes:
+//   - The `tick` must be divisible by `tickSpacing`. If not, the function will panic.
+func (p *Pool) tickBitmapFlipTick(
 	tick int32,
 	tickSpacing int32,
 ) {
-	if tick%tickSpacing != 0 {
-		panic(addDetailToError(
-			errInvalidTickAndTickSpacing,
-			ufmt.Sprintf("tick_bitmap.gno__tickBitmapFlipTick() || tick(%d) MOD tickSpacing(%d) != 0(%d)", tick, tickSpacing, tick%tickSpacing),
-		))
-	}
-
+	checkTickSpacing(tick, tickSpacing)
 	wordPos, bitPos := tickBitmapPosition(tick / tickSpacing)
 
 	mask := new(u256.Uint).Lsh(u256.One(), uint(bitPos))
-	pool.setTickBitmap(wordPos, new(u256.Uint).Xor(pool.getTickBitmap(wordPos), mask))
+	p.setTickBitmap(wordPos, new(u256.Uint).Xor(p.getTickBitmap(wordPos), mask))
 }
 
 // tickBitmapNextInitializedTickWithInOneWord finds the next initialized tick within
 // one word of the bitmap.
-func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
+func (p *Pool) tickBitmapNextInitializedTickWithInOneWord(
 	tick int32,
 	tickSpacing int32,
 	lte bool,
@@ -49,7 +69,7 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 
 	wordPos, bitPos := getWordAndBitPos(compress, lte)
 	mask := getMaskBit(uint(bitPos), lte)
-	masked := new(u256.Uint).And(pool.getTickBitmap(wordPos), mask)
+	masked := new(u256.Uint).And(p.getTickBitmap(wordPos), mask)
 	initialized := !(masked.IsZero())
 
 	nextTick := getNextTick(lte, initialized, compress, bitPos, tickSpacing, masked)
@@ -58,17 +78,17 @@ func (pool *Pool) tickBitmapNextInitializedTickWithInOneWord(
 
 // getTickBitmap gets the tick bitmap for the given word position
 // if the tick bitmap is not initialized, initialize it to zero
-func (pool *Pool) getTickBitmap(wordPos int16) *u256.Uint {
-	if pool.tickBitmaps[wordPos] == nil {
-		pool.tickBitmaps[wordPos] = u256.Zero()
+func (p *Pool) getTickBitmap(wordPos int16) *u256.Uint {
+	if p.tickBitmaps[wordPos] == nil {
+		p.tickBitmaps[wordPos] = u256.Zero()
 	}
 
-	return pool.tickBitmaps[wordPos]
+	return p.tickBitmaps[wordPos]
 }
 
 // setTickBitmap sets the tick bitmap for the given word position
-func (pool *Pool) setTickBitmap(wordPos int16, bitmap *u256.Uint) {
-	pool.tickBitmaps[wordPos] = bitmap
+func (p *Pool) setTickBitmap(wordPos int16, bitmap *u256.Uint) {
+	p.tickBitmaps[wordPos] = bitmap
 }
 
 // getWordAndBitPos gets tick's wordPos and bitPos depending on the swap direction

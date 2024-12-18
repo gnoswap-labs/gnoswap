@@ -72,7 +72,7 @@ func HandleWithdrawalFee(
 	token1Teller := common.GetTokenTeller(token1Path)
 	checkTransferError(token1Teller.TransferFrom(positionCaller, consts.PROTOCOL_FEE_ADDR, feeAmount1.Uint64()))
 
-	prevAddr, prevPkgPath := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"WithdrawalFee",
 		"prevAddr", prevAddr,
@@ -106,7 +106,7 @@ func SetWithdrawalFee(fee uint64) {
 
 	setWithdrawalFee(fee)
 
-	prevAddr, prevPkgPath := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"SetWithdrawalFee",
 		"prevAddr", prevAddr,
@@ -126,7 +126,7 @@ func SetWithdrawalFeeByAdmin(fee uint64) {
 
 	setWithdrawalFee(fee)
 
-	prevAddr, prevPkgPath := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"SetWithdrawalFeeByAdmin",
 		"prevAddr", prevAddr,
