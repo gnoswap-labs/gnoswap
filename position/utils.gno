@@ -73,6 +73,18 @@ func checkDeadline(deadline int64) {
 	}
 }
 
+func checkPositionHasClear(position Position) {
+	if !position.isClear() {
+		panic(newErrorWithDetail(
+			errNotClear,
+			ufmt.Sprintf(
+				"position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)",
+				position.poolKey, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString(),
+			),
+		))
+	}
+}
+
 func assertTokenOwnership(tokenId uint64) {
 	assertTokenExists(tokenId)
 

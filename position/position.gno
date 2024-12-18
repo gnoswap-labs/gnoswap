@@ -437,13 +437,13 @@ func calculatePositionFeeUpdate(
 	position Position,
 	currentFeeGrowth FeeGrowthInside,
 ) PositionFeeUpdate {
-	tokensOwed0 := calculateTokenOwed(
+	tokensOwed0 := calculateTokensOwed(
 		currentFeeGrowth.feeGrowthInside0LastX128,
 		position.feeGrowthInside0LastX128,
 		position.liquidity,
 	)
 
-	tokensOwed1 := calculateTokenOwed(
+	tokensOwed1 := calculateTokensOwed(
 		currentFeeGrowth.feeGrowthInside1LastX128,
 		position.feeGrowthInside1LastX128,
 		position.liquidity,
@@ -517,7 +517,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	return params.tokenId, liquidity, amount0, amount1, position.poolKey
 }
 
-func calculateTokenOwed(
+func calculateTokensOwed(
 	currentFeeGrowth *u256.Uint,
 	lastFeeGrowth *u256.Uint,
 	liquidity *u256.Uint,
@@ -525,6 +525,8 @@ func calculateTokenOwed(
 	diff := new(u256.Uint).Sub(currentFeeGrowth, lastFeeGrowth)
 	return u256.MulDiv(diff, liquidity, u256.MustFromDecimal(consts.Q128))
 }
+
+// region: DecreaseLiquidity
 
 // DecreaseLiquidity decreases liquidity of the existing position
 // It also handles the conversion between GNOT and WUGNOT transparently for the user.
@@ -910,15 +912,6 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 	return tokenId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
 }
 
-func calculateTokensOwed(
-	feeGrowthInsideLastX128 *u256.Uint,
-	positionFeeGrowthInsideLastX128 *u256.Uint,
-	positionLiquidity *u256.Uint,
-) *u256.Uint {
-	diff := new(u256.Uint).Sub(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128)
-	return u256.MulDiv(diff, positionLiquidity, u256.MustFromDecimal(consts.Q128))
-}
-
 func updateTokensOwed(
 	feeGrowthInsideLastX128 *u256.Uint,
 	positionFeeGrowthInsideLastX128 *u256.Uint,
@@ -934,26 +927,15 @@ func updateTokensOwed(
 func burnNFT(tokenId uint64) {
 	isAuthorizedForToken(tokenId)
 
-	position := positions[tokenId]
+	checkPositionHasClear(positions[tokenId])
 
-	if !(position.isClear()) {
-		panic(addDetailToError(
-			errNotClear,
-			ufmt.Sprintf("position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
-		))
-	}
 	delete(positions, tokenId)
 	gnft.Burn(tokenIdFrom(tokenId))
 }
 
 func burnPosition(tokenId uint64) {
 	position := positions[tokenId]
-	if !(position.isClear()) {
-		panic(addDetailToError(
-			errNotClear,
-			ufmt.Sprintf("position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
-		))
-	}
+	checkPositionHasClear(position)
 
 	position.burned = true
 	positions[tokenId] = position
@@ -973,12 +955,7 @@ func verifyTokenIdAndOwnership(tokenId uint64) {
 
 	owner := gnft.OwnerOf(tokenIdFrom(tokenId))
 	caller := std.PrevRealm().Addr()
-	if owner != caller {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only owner(%s) can decrease liquidity(tokenId:%d), but called from %s", owner, tokenId, caller),
-		))
-	}
+	assertCallerIsOwner(tokenId, owner, caller)
 }
 
 func calculateLiquidityToRemove(positionLiquidity *u256.Uint, liquidityRatio uint64) *u256.Uint {
