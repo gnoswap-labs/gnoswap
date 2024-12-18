@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
 
 	"gno.land/r/gnoswap/v1/consts"
@@ -132,6 +133,32 @@ func TestBurn(t *testing.T) {
 					t.Error("expected tokensOwed1 to be updated")
 				}
 			}
+		})
+	}
+}
+
+func TestSetFeeProtocolInternal(t *testing.T) {
+	tests := []struct {
+		name         string
+		feeProtocol0 uint8
+		feeProtocol1 uint8
+		eventName    string
+	}{
+		{
+			name:         "set fee protocol by admin",
+			feeProtocol0: 4,
+			feeProtocol1: 5,
+			eventName:    "SetFeeProtocolByAdmin",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run("set fee protocol by admin", func(t *testing.T) {
+			InitialisePoolTest(t)
+			pool := GetPool(wugnotPath, gnsPath, fee3000)
+			SetFeeProtocolByAdmin(tt.feeProtocol0, tt.feeProtocol1)
+			uassert.Equal(t, tt.feeProtocol0, pool.Slot0FeeProtocol()%16)
+			uassert.Equal(t, tt.feeProtocol1, pool.Slot0FeeProtocol()>>4)
 		})
 	}
 }
