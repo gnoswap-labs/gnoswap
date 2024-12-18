@@ -163,6 +163,23 @@ func assertOnlyValidAddressWith(prevAddr, otherAddr std.Address) {
 	}
 }
 
+func verifyTokenIdAndOwnership(tokenId uint64) {
+	assertTokenExists(tokenId)
+
+	owner := gnft.OwnerOf(tokenIdFrom(tokenId))
+	caller := std.PrevRealm().Addr()
+	assertCallerIsOwner(tokenId, owner, caller)
+}
+
+func verifyBurnedAmounts(burnedAmount0, burnedAmount1, amount0Min, amount1Min *u256.Uint) {
+	if !(burnedAmount0.Gte(amount0Min) && burnedAmount1.Gte(amount1Min)) {
+		panic(addDetailToError(
+			errSlippage,
+			ufmt.Sprintf("burnedAmount0(%s) >= amount0Min(%s) && burnedAmount1(%s) >= amount1Min(%s)", burnedAmount0.ToString(), amount0Min.ToString(), burnedAmount1.ToString(), amount1Min.ToString()),
+		))
+	}
+}
+
 // region: helper
 
 func GetOrigPkgAddr() std.Address {
