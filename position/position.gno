@@ -32,6 +32,39 @@ func getNextId() uint64 {
 
 // region: Mint
 
+type MintInput struct {
+	token0         string
+	token1         string
+	fee            uint32
+	tickLower      int32
+	tickUpper      int32
+	amount0Desired string
+	amount1Desired string
+	amount0Min     string
+	amount1Min     string
+	deadline       int64
+	mintTo         std.Address
+	caller         std.Address
+}
+
+type TokenPair struct {
+	token0         string
+	token1         string
+	token0IsNative bool
+	token1IsNative bool
+}
+
+type ProcessedMintInput struct {
+	tokenPair      TokenPair
+	amount0Desired *u256.Uint
+	amount1Desired *u256.Uint
+	amount0Min     *u256.Uint
+	amount1Min     *u256.Uint
+	tickLower      int32
+	tickUpper      int32
+	poolPath       string
+}
+
 // Mint creates a new liquidity position and mints liquidity tokens.
 // It also handles the conversion between GNOT and WUGNOT transparently for the user.
 // Returns minted tokenId, liquidity, amount0, amount1
@@ -54,24 +87,11 @@ func Mint(
 	en.MintAndDistributeGns()
 
 	prev := std.PrevRealm()
-	isUserCalled := prev.PkgPath() == ""
-	isStakerCalled := prev.Addr() == consts.STAKER_ADDR
-
-	if common.GetLimitCaller() {
-		// only user or staker can call
-		if !(isUserCalled || isStakerCalled) {
-			panic(addDetailToError(
-				errNoPermission,
-				ufmt.Sprintf("only user or staker can call isUserCalled(%t) || isStakerCalled(%t), but called from %s", isUserCalled, isStakerCalled, prev.Addr().String()),
-			))
-		}
+	if err := assertCallerPermission(prev); err != nil {
+		panic(addDetailToError(errNoPermission, err.Error()))
 	}
 
-	// if user called, set caller & mintTo to user address
-	if isUserCalled {
-		caller = prev.Addr()
-		mintTo = prev.Addr()
-	}
+	caller, mintTo = upgradeCallerIfUserCalled(caller, mintTo, prev)
 
 	token0, token1, token0IsNative, token1IsNative := processTokens(token0, token1)
 	userWugnotBalance := wugnot.BalanceOf(a2u(caller))
@@ -113,11 +133,34 @@ func Mint(
 		caller:         caller,
 	}
 
+	processedInput, err := processMintInput(mintInput)
+	if err != nil {
+		panic(addDetailToError(errInvalidInput, err.Error()))
+	}
+
+	// XXX (@notJoon): This seems has a dependency in the execution order
+	userWugnotBalance := wugnot.BalanceOf(a2u(caller))
+
+	if err := handleNativeToken(
+		processedInput.tokenPair.token0IsNative,
+		processedInput.tokenPair.token1IsNative,
+		caller,
+	); err != nil {
+		panic(addDetailToError(errWrapUnwrap, err.Error()))
+	}
+
+	// perform mint operation
+	mintParams := newMintParams(processedInput, mintInput)
 	tokenId, liquidity, amount0, amount1 := mint(mintParams)
 
-	handleLeftoverNativeToken(token0IsNative, token1IsNative, userWugnotBalance, caller)
+	handleLeftoverNativeToken(
+		processedInput.tokenPair.token0IsNative,
+		processedInput.tokenPair.token1IsNative,
+		userWugnotBalance,
+		caller,
+	)
 
-	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(poolPath)
+	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(processedInput.poolPath)
 
 	prevAddr, prevPkgPath := getPrevAsString()
 
@@ -125,9 +168,9 @@ func Mint(
 		"Mint",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"tickLower", ufmt.Sprintf("%d", tickLower),
-		"tickUpper", ufmt.Sprintf("%d", tickUpper),
-		"poolPath", poolPath,
+		"tickLower", ufmt.Sprintf("%d", processedInput.tickLower),
+		"tickUpper", ufmt.Sprintf("%d", processedInput.tickUpper),
+		"poolPath", processedInput.poolPath,
 		"mintTo", mintTo.String(),
 		"caller", caller.String(),
 		"internal_lpTokenId", ufmt.Sprintf("%d", tokenId),
@@ -138,6 +181,83 @@ func Mint(
 	)
 
 	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString()
+}
+
+func assertCallerPermission(prev std.Realm) error {
+	isUserCalled := prev.PkgPath() == ""
+	isStakerCalled := prev.Addr() == consts.STAKER_ADDR
+
+	if !common.GetLimitCaller() {
+		return nil
+	}
+
+	if !(isUserCalled || isStakerCalled) {
+		return ufmt.Errorf(
+			"only user or staker can call, but called from %s", prev.Addr().String(),
+		)
+	}
+
+	return nil
+}
+
+func upgradeCallerIfUserCalled(caller, mintTo std.Address, prev std.Realm) (std.Address, std.Address) {
+	// user called
+	if prev.PkgPath() == "" {
+		caller = prev.Addr()
+		mintTo = prev.Addr()
+	}
+
+	return caller, mintTo
+}
+
+func processMintInput(input MintInput) (ProcessedMintInput, error) {
+	var result ProcessedMintInput
+
+	// process tokens
+	token0, token1, token0IsNative, token1IsNative := processTokens(input.token0, input.token1)
+	pair := TokenPair{
+		token0:         token0,
+		token1:         token1,
+		token0IsNative: token0IsNative,
+		token1IsNative: token1IsNative,
+	}
+
+	// parse amounts
+	amount0Desired, amount1Desired, amount0Min, amount1Min := parseAmounts(input.amount0Desired, input.amount1Desired, input.amount0Min, input.amount1Min)
+
+	tickLower, tickUpper := input.tickLower, input.tickUpper
+
+	// swap if token1 < token0
+	if token1 < token0 {
+		pair.token0, pair.token1 = pair.token1, pair.token0
+		amount0Desired, amount1Desired = amount1Desired, amount0Desired
+		amount0Min, amount1Min = amount1Min, amount0Min
+		tickLower, tickUpper = -tickUpper, -tickLower
+		pair.token0IsNative, pair.token1IsNative = pair.token1IsNative, pair.token0IsNative
+	}
+
+	poolPath := renderPoolPath(pair.token0, pair.token1, input.fee)
+
+	result = ProcessedMintInput{
+		tokenPair:      pair,
+		amount0Desired: amount0Desired.Clone(),
+		amount1Desired: amount1Desired.Clone(),
+		amount0Min:     amount0Min.Clone(),
+		amount1Min:     amount1Min.Clone(),
+		tickLower:      tickLower,
+		tickUpper:      tickUpper,
+		poolPath:       poolPath,
+	}
+
+	return result, nil
+}
+
+func parseAmounts(amount0Desired, amount1Desired, amount0Min, amount1Min string) (*u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint) {
+	return u256.MustFromDecimal(amount0Desired), u256.MustFromDecimal(amount1Desired), u256.MustFromDecimal(amount0Min), u256.MustFromDecimal(amount1Min)
+}
+
+func renderPoolPath(token0, token1 string, fee uint32) string {
+	return ufmt.Sprintf("%s:%s:%d", token0, token1, fee)
 }
 
 func processTokens(token0, token1 string) (string, string, bool, bool) {
