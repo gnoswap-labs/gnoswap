@@ -1,6 +1,7 @@
 package position
 
 import (
+	"encoding/base64"
 	"std"
 
 	"gno.land/p/demo/ufmt"
