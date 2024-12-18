@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
 	"gno.land/r/demo/users"
@@ -12,9 +13,7 @@ import (
 )
 
 func TestA2u(t *testing.T) {
-	var (
-		addr = std.Address("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
-	)
+	addr := std.Address("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
 
 	tests := []struct {
 		name     string
@@ -37,9 +36,7 @@ func TestA2u(t *testing.T) {
 }
 
 func TestDerivePkgAddr(t *testing.T) {
-	var (
-		pkgPath = "gno.land/r/gnoswap/v1/position"
-	)
+	pkgPath := "gno.land/r/gnoswap/v1/position"
 	tests := []struct {
 		name     string
 		input    string
@@ -374,7 +371,6 @@ func TestGetNextId(t *testing.T) {
 }
 
 func TestTokenIdFrom(t *testing.T) {
-
 	tests := []struct {
 		name        string
 		input       interface{}
