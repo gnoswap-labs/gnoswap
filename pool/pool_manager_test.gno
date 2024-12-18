@@ -202,3 +202,59 @@ func TestCreatePool(t *testing.T) {
 
 	resetObject(t)
 }
+
+func TestGetPool(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupFn     func(t *testing.T)
+		action      func(t *testing.T)
+		shouldPanic bool
+		expected    string
+	}{
+		{
+			name: "Panic - unregisterd poolPath ",
+			setupFn: func(t *testing.T) {
+				InitialisePoolTest(t)
+			},
+			action: func(t *testing.T) {
+				GetPool(barPath, fooPath, fee500)
+			},
+			shouldPanic: true,
+			expected:    "[GNOSWAP-POOL-008] requested data not found || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500) to exist",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r == nil {
+					if tt.shouldPanic {
+						t.Errorf(">>> %s: expected panic but got none", tt.name)
+						return
+					}
+				} else {
+					switch r.(type) {
+					case string:
+						if r.(string) != tt.expected {
+							t.Errorf(">>> %s: got panic %v, want %v", tt.name, r, tt.expected)
+						}
+					case error:
+						if r.(error).Error() != tt.expected {
+							t.Errorf(">>> %s: got panic %v, want %v", tt.name, r.(error).Error(), tt.expected)
+						}
+					default:
+						t.Errorf(">>> %s: got panic %v, want %v", tt.name, r, tt.expected)
+					}
+				}
+			}()
+			if tt.setupFn != nil {
+				tt.setupFn(t)
+			}
+
+			if tt.shouldPanic {
+				tt.action(t)
+			} else {
+			}
+		})
+	}
+}

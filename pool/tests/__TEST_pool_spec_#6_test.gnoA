@@ -133,7 +133,7 @@ func TestWorkAccross(t *testing.T) {
 	)
 
 	// tokensOwed
-	thisPositionKey := positionGetKey(consts.POSITION_ADDR, -887270, 887270)
+	thisPositionKey := getPositionKey(consts.POSITION_ADDR, -887270, 887270)
 	thisPosition := thisPool.positions[thisPositionKey]
 
 	tokensOwed0 := thisPosition.tokensOwed0

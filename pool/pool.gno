@@ -12,8 +12,32 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// Mint creates a new position and mints liquidity tokens.
-// Returns minted amount0, amount1 in string
+// Mint adds liquidity to a pool by minting a new position.
+//
+// This function mints a liquidity position within the specified tick range in a pool.
+// It verifies caller permissions, validates inputs, and updates the pool's state. Additionally,
+// it transfers the required amounts of token0 and token1 from the caller to the pool.
+//
+// Parameters:
+//   - token0Path: string, the path or identifier for token 0.
+//   - token1Path: string, the path or identifier for token 1.
+//   - fee: uint32, the fee tier of the pool.
+//   - recipient: std.Address, the address to receive the newly created position.
+//   - tickLower: int32, the lower tick boundary of the position.
+//   - tickUpper: int32, the upper tick boundary of the position.
+//   - liquidityAmount: string, the amount of liquidity to add, provided as a decimal string.
+//   - positionCaller: std.Address, the address of the entity calling the function (e.g., the position owner).
+//
+// Returns:
+//   - string: The amount of token 0 transferred to the pool as a string.
+//   - string: The amount of token 1 transferred to the pool as a string.
+//
+// Panic Conditions:
+//   - The system is halted (`common.IsHalted()`).
+//   - Caller lacks permission to mint a position when `common.GetLimitCaller()` is enforced.
+//   - The provided `liquidityAmount` is zero.
+//   - Any failure during token transfers or position modifications.
+//
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#mint
 func Mint(
 	token0Path string,
@@ -22,43 +46,54 @@ func Mint(
 	recipient std.Address,
 	tickLower int32,
 	tickUpper int32,
-	_liquidityAmount string,
+	liquidityAmount string,
 	positionCaller std.Address,
 ) (string, string) {
-	common.IsHalted()
+	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
-		caller := std.PrevRealm().Addr()
-		if err := common.PositionOnly(caller); err != nil {
-			panic(addDetailToError(
-				errNoPermission,
-				ufmt.Sprintf("only position(%s) can call pool mint(), called from %s", consts.POSITION_ADDR, caller.String()),
-			))
-		}
+		assertOnlyPositionContract()
 	}
 
-	liquidityAmount := u256.MustFromDecimal(_liquidityAmount)
-	if liquidityAmount.IsZero() {
+	liquidity := u256.MustFromDecimal(liquidityAmount)
+	if liquidity.IsZero() {
 		panic(errZeroLiquidity)
 	}
 
 	pool := GetPool(token0Path, token1Path, fee)
-	position := newModifyPositionParams(recipient, tickLower, tickUpper, i256.FromUint256(liquidityAmount))
+	liquidityDelta := safeConvertToInt128(liquidity)
+	position := newModifyPositionParams(recipient, tickLower, tickUpper, liquidityDelta)
 	_, amount0, amount1 := pool.modifyPosition(position)
 
 	if amount0.Gt(u256.Zero()) {
-		pool.transferFromAndVerify(positionCaller, consts.POOL_ADDR, pool.token0Path, amount0, true)
+		pool.safeTransferFrom(positionCaller, consts.POOL_ADDR, pool.token0Path, amount0, true)
 	}
 
 	if amount1.Gt(u256.Zero()) {
-		pool.transferFromAndVerify(positionCaller, consts.POOL_ADDR, pool.token1Path, amount1, false)
+		pool.safeTransferFrom(positionCaller, consts.POOL_ADDR, pool.token1Path, amount1, false)
 	}
 
 	return amount0.ToString(), amount1.ToString()
 }
 
-// Burn removes liquidity from the caller and account tokens owed for the liquidity to the position
-// If liquidity of 0 is burned, it recalculates fees owed to a position
-// Returns burned amount0, amount1 in string
+// Burn removes liquidity from a position in the pool.
+//
+// This function allows the caller to burn (remove) a specified amount of liquidity from a position.
+// It calculates the amounts of token0 and token1 released when liquidity is removed and updates
+// the position's owed token amounts. The actual transfer of tokens back to the caller happens
+// during a separate `Collect()` operation.
+//
+// Parameters:
+//   - token0Path: string, the path or identifier for token 0.
+//   - token1Path: string, the path or identifier for token 1.
+//   - fee: uint32, the fee tier of the pool.
+//   - tickLower: int32, the lower tick boundary of the position.
+//   - tickUpper: int32, the upper tick boundary of the position.
+//   - liquidityAmount: string, the amount of liquidity to remove, provided as a decimal string (uint128).
+//
+// Returns:
+//   - string: The amount of token0 owed after removing liquidity, as a string.
+//   - string: The amount of token1 owed after removing liquidity, as a string.
+//
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#burn
 func Burn(
 	token0Path string,
@@ -68,40 +103,54 @@ func Burn(
 	tickUpper int32,
 	liquidityAmount string, // uint128
 ) (string, string) { // uint256 x2
-	common.IsHalted()
-	caller := std.PrevRealm().Addr()
+	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
-		if err := common.PositionOnly(caller); err != nil {
-			panic(addDetailToError(
-				errNoPermission,
-				ufmt.Sprintf("only position(%s) can call pool burn(), called from %s", consts.POSITION_ADDR, caller.String()),
-			))
-		}
+		assertOnlyPositionContract()
 	}
-
-	liqAmount := u256.MustFromDecimal(liquidityAmount)
-
 	pool := GetPool(token0Path, token1Path, fee)
 
-	liqDelta := i256.Zero().Neg(i256.FromUint256(liqAmount))
+	caller := getPrevAddr()
+	liqAmount := u256.MustFromDecimal(liquidityAmount)
+	liqAmountInt256 := safeConvertToInt128(liqAmount)
+	liqDelta := i256.Zero().Neg(liqAmountInt256)
 	posParams := newModifyPositionParams(caller, tickLower, tickUpper, liqDelta)
 	position, amount0, amount1 := pool.modifyPosition(posParams)
 
 	if amount0.Gt(u256.Zero()) || amount1.Gt(u256.Zero()) {
+		amount0 = toUint128(amount0)
+		amount1 = toUint128(amount1)
 		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, amount0)
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, amount1)
 	}
 
-	positionKey := positionGetKey(caller, tickLower, tickUpper)
+	positionKey := getPositionKey(caller, tickLower, tickUpper)
 	pool.positions[positionKey] = position
 
 	// actual token transfer happens in Collect()
 	return amount0.ToString(), amount1.ToString()
 }
 
-// Collect collects tokens owed to a position
-// Burned amounts, and swap fees will be transferred to the caller
-// Returns collected amount0, amount1 in string
+// Collect handles the collection of tokens (token0 and token1) from a liquidity position.
+//
+// This function allows the caller to collect a specified amount of tokens owed to a position
+// in a liquidity pool. It calculates the collectible amount based on three constraints:
+// the requested amount, the tokens owed to the position, and the pool's available balance.
+// The collected tokens are transferred to the specified recipient.
+//
+// Parameters:
+//   - token0Path: string, the path or identifier for token 0.
+//   - token1Path: string, the path or identifier for token 1.
+//   - fee: uint32, the fee tier of the pool.
+//   - recipient: std.Address, the address to receive the collected tokens.
+//   - tickLower: int32, the lower tick boundary of the position.
+//   - tickUpper: int32, the upper tick boundary of the position.
+//   - amount0Requested: string, the requested amount of token 0 to collect (decimal string).
+//   - amount1Requested: string, the requested amount of token 1 to collect (decimal string).
+//
+// Returns:
+//   - string: The actual amount of token 0 collected, as a string.
+//   - string: The actual amount of token 1 collected, as a string.
+//
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#collect
 func Collect(
 	token0Path string,
@@ -113,76 +162,61 @@ func Collect(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	common.IsHalted()
+	assertOnlyNotHalted()
 	if common.GetLimitCaller() {
-		caller := std.PrevRealm().Addr()
-		if err := common.PositionOnly(caller); err != nil {
-			panic(addDetailToError(
-				errNoPermission,
-				ufmt.Sprintf("only position(%s) can call pool collect(), called from %s", consts.POSITION_ADDR, caller.String()),
-			))
-		}
+		assertOnlyPositionContract()
 	}
 
 	pool := GetPool(token0Path, token1Path, fee)
-
-	positionKey := positionGetKey(std.PrevRealm().Addr(), tickLower, tickUpper)
-	position, exist := pool.positions[positionKey]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("positionKey(%s) does not exist", positionKey),
-		))
-	}
+	positionKey := getPositionKey(getPrevAddr(), tickLower, tickUpper)
+	position := pool.mustGetPosition(positionKey)
 
 	var amount0, amount1 *u256.Uint
 
 	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
 	amount0Req := u256.MustFromDecimal(amount0Requested)
-	amount0, position.tokensOwed0, pool.balances.token0 = collectToken(amount0Req, position.tokensOwed0, pool.balances.token0)
-	token0 := common.GetTokenTeller(pool.token0Path)
-	checkTransferError(token0.Transfer(recipient, amount0.Uint64()))
-
-	// Smallest of three: amount0Requested, position.tokensOwed0, pool.balances.token0
+	amount0 = collectToken(amount0Req, position.tokensOwed0, pool.BalanceToken0())
 	amount1Req := u256.MustFromDecimal(amount1Requested)
-	amount1, position.tokensOwed1, pool.balances.token1 = collectToken(amount1Req, position.tokensOwed1, pool.balances.token1)
+	amount1 = collectToken(amount1Req, position.tokensOwed1, pool.BalanceToken1())
 
-	// Update state first then transfer
-	position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
-	pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
-	token1 := common.GetTokenTeller(pool.token1Path)
-	checkTransferError(token1.Transfer(recipient, amount1.Uint64()))
+	if amount0.Gt(u256.Zero()) {
+		position.tokensOwed0 = new(u256.Uint).Sub(position.tokensOwed0, amount0)
+		pool.balances.token0 = new(u256.Uint).Sub(pool.balances.token0, amount0)
+		token0 := common.GetTokenTeller(pool.token0Path)
+		checkTransferError(token0.Transfer(recipient, amount0.Uint64()))
+	}
+	if amount1.Gt(u256.Zero()) {
+		position.tokensOwed1 = new(u256.Uint).Sub(position.tokensOwed1, amount1)
+		pool.balances.token1 = new(u256.Uint).Sub(pool.balances.token1, amount1)
+		token1 := common.GetTokenTeller(pool.token1Path)
+		checkTransferError(token1.Transfer(recipient, amount1.Uint64()))
+	}
 
 	pool.positions[positionKey] = position
 
 	return amount0.ToString(), amount1.ToString()
 }
 
-// collectToken handles the collection of tokens (either token0 or token1) from a position.
-// It calculates the actual amount that can be collected based on three constraints:
-// the requested amount, tokens owed, and available pool balance.
+// collectToken calculates the actual amount of tokens that can be collected.
+//
+// This function determines the smallest possible value among the requested amount (`amountReq`),
+// the tokens owed (`tokensOwed`), and the pool's available balance (`poolBalance`). It ensures
+// the collected amount does not exceed any of these constraints.
 //
 // Parameters:
-//   - amountReq: amount requested to collect
-//   - tokensOwed: amount of tokens owed to the position
-//   - poolBalance: current balance of tokens in the pool
+//   - amountReq: *u256.Uint, the amount of tokens requested for collection.
+//   - tokensOwed: *u256.Uint, the total amount of tokens owed to the position.
+//   - poolBalance: *u256.Uint, the current balance of tokens available in the pool.
 //
 // Returns:
-//   - amount: actual amount that will be collected (minimum of the three inputs)
-//   - newTokensOwed: remaining tokens owed after collection
-//   - newPoolBalance: remaining pool balance after collection
+//   - amount: *u256.Uint, the actual amount that can be collected (minimum of the three inputs).
 func collectToken(
 	amountReq, tokensOwed, poolBalance *u256.Uint,
-) (amount, newTokensOwed, newPoolBalance *u256.Uint) {
+) (amount *u256.Uint) {
 	// find smallest of three amounts
 	amount = u256Min(amountReq, tokensOwed)
 	amount = u256Min(amount, poolBalance)
-
-	// value for update state
-	newTokensOwed = new(u256.Uint).Sub(tokensOwed, amount)
-	newPoolBalance = new(u256.Uint).Sub(poolBalance, amount)
-
-	return amount, newTokensOwed, newPoolBalance
+	return amount.Clone()
 }
 
 // SetFeeProtocolByAdmin sets the fee protocol for all pools
@@ -191,22 +225,8 @@ func SetFeeProtocolByAdmin(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
 ) {
-	caller := std.PrevRealm().Addr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
-
-	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
-
-	prevAddr, prevRealm := getPrev()
-	std.Emit(
-		"SetFeeProtocolByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"feeProtocol0", ufmt.Sprintf("%d", feeProtocol0),
-		"feeProtocol1", ufmt.Sprintf("%d", feeProtocol1),
-		"internal_newFee", ufmt.Sprintf("%d", newFee),
-	)
+	assertOnlyAdmin()
+	setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocolByAdmin")
 }
 
 // SetFeeProtocol sets the fee protocol for all pools
@@ -214,40 +234,62 @@ func SetFeeProtocolByAdmin(
 // Also it will be applied to new created pools
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#setfeeprotocol
 func SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
-	caller := std.PrevRealm().Addr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
+	assertOnlyGovernance()
+	setFeeProtocolInternal(feeProtocol0, feeProtocol1, "SetFeeProtocol")
+}
 
+// setFeeProtocolInternal updates the protocol fee for all pools and emits an event.
+//
+// This function is an internal utility used to set the protocol fee for token0 and token1 in a compact
+// format. The fee values are stored as a single `uint8` byte where:
+//   - Lower 4 bits represent the fee for token0 (feeProtocol0).
+//   - Upper 4 bits represent the fee for token1 (feeProtocol1).
+//
+// It also emits an event to log the changes, including the previous and new fee protocol values.
+//
+// Parameters:
+//   - feeProtocol0: uint8, protocol fee for token0 (must be 0 or between 4 and 10 inclusive).
+//   - feeProtocol1: uint8, protocol fee for token1 (must be 0 or between 4 and 10 inclusive).
+//   - eventName: string, the name of the event to emit (e.g., "SetFeeProtocolByAdmin").
+//
+// Notes:
+//   - This function is called by higher-level functions like `SetFeeProtocolByAdmin` or `SetFeeProtocol`.
+//   - It does not validate caller permissions; validation must be performed by the calling function.
+func setFeeProtocolInternal(feeProtocol0, feeProtocol1 uint8, eventName string) {
+	oldFee := slot0FeeProtocol
 	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
 
-	prevAddr, prevRealm := getPrev()
+	feeProtocol0Old := oldFee % 16
+	feeProtocol1Old := oldFee >> 4
+
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
-		"SetFeeProtocol",
+		eventName,
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
+		"feeProtocol0Old", ufmt.Sprintf("%d", feeProtocol0Old),
+		"feeProtocol1Old", ufmt.Sprintf("%d", feeProtocol1Old),
 		"feeProtocol0", ufmt.Sprintf("%d", feeProtocol0),
 		"feeProtocol1", ufmt.Sprintf("%d", feeProtocol1),
 		"internal_newFee", ufmt.Sprintf("%d", newFee),
 	)
 }
 
-// setFeeProtocol updates the protocol fee configuration for all existing pools and sets
-// the default for new pools. This is an internal function called by both `admin` and `governance`
-// protocol fee management functions.
+// setFeeProtocol updates the protocol fee configuration for all managed pools.
 //
-// The protocol fee is stored as a single `uint8` value where:
-//   - Lower 4 bits store feeProtocol0 (for token0)
-//   - Upper 4 bits store feeProtocol1 (for token1)
+// This function combines the protocol fee values for token0 and token1 into a single `uint8` value,
+// where:
+//   - Lower 4 bits store feeProtocol0 (for token0).
+//   - Upper 4 bits store feeProtocol1 (for token1).
 //
-// This compact representation allows storing both fee values in a single byte.
+// The updated fee protocol is applied uniformly to all pools managed by the system.
 //
-// Parameters (must be 0 or between 4 and 10 inclusive):
-//   - feeProtocol0: protocol fee for token0
-//   - feeProtocol1: protocol fee for token1
+// Parameters:
+//   - feeProtocol0: protocol fee for token0 (must be 0 or between 4 and 10 inclusive).
+//   - feeProtocol1: protocol fee for token1 (must be 0 or between 4 and 10 inclusive).
 //
 // Returns:
-//   - newFee (uint8): the combined fee protocol value
+//   - newFee (uint8): the combined fee protocol value.
 //
 // Example:
 // If feeProtocol0 = 4 and feeProtocol1 = 5:
@@ -257,32 +299,47 @@ func SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
 //	// Binary: 0101 0100
 //	//         ^^^^ ^^^^
 //	//       fee1=5  fee0=4
+//
+// Notes:
+//   - This function ensures that all pools under management are updated to use the same fee protocol.
+//   - Caller restrictions (e.g., admin or governance) are not enforced in this function.
+//   - Ensure the system is not halted before updating fees.
 func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) uint8 {
-	common.IsHalted()
-
+	assertOnlyNotHalted()
 	if err := validateFeeProtocol(feeProtocol0, feeProtocol1); err != nil {
 		panic(addDetailToError(
 			err,
 			ufmt.Sprintf("expected (feeProtocol0(%d) == 0 || (feeProtocol0(%d) >= 4 && feeProtocol0(%d) <= 10)) && (feeProtocol1(%d) == 0 || (feeProtocol1(%d) >= 4 && feeProtocol1(%d) <= 10))", feeProtocol0, feeProtocol0, feeProtocol0, feeProtocol1, feeProtocol1, feeProtocol1),
 		))
 	}
-
 	// combine both protocol fee into a single byte:
 	// - feePrtocol0 occupies the lower 4 bits
 	// - feeProtocol1 is shifted the lower 4 positions to occupy the upper 4 bits
 	newFee := feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
-
-	// iterate all pool
+	// Update slot0 for each pool
 	for _, pool := range pools {
-		pool.slot0.feeProtocol = newFee
+		if pool != nil {
+			pool.slot0.feeProtocol = newFee
+		}
 	}
-
 	// update slot0
 	slot0FeeProtocol = newFee
-
 	return newFee
 }
 
+// validateFeeProtocol validates the fee protocol values for token0 and token1.
+//
+// This function checks whether the provided fee protocol values (`feeProtocol0` and `feeProtocol1`)
+// are valid using the `isValidFeeProtocolValue` function. If either value is invalid, it returns
+// an error indicating that the protocol fee percentage is invalid.
+//
+// Parameters:
+//   - feeProtocol0: uint8, the fee protocol value for token0.
+//   - feeProtocol1: uint8, the fee protocol value for token1.
+//
+// Returns:
+//   - error: Returns `errInvalidProtocolFeePct` if either `feeProtocol0` or `feeProtocol1` is invalid.
+//     Returns `nil` if both values are valid.
 func validateFeeProtocol(feeProtocol0, feeProtocol1 uint8) error {
 	if !isValidFeeProtocolValue(feeProtocol0) || !isValidFeeProtocolValue(feeProtocol1) {
 		return errInvalidProtocolFeePct
@@ -303,17 +360,10 @@ func CollectProtocolByAdmin(
 	token1Path string,
 	fee uint32,
 	recipient std.Address,
-	amount0Requested string, // uint128
-	amount1Requested string, // uint128
-) (string, string) { // uint128 x2
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
-
-	caller := std.PrevRealm().Addr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
-
+	amount0Requested string,
+	amount1Requested string,
+) (string, string) {
+	assertOnlyAdmin()
 	amount0, amount1 := collectProtocol(
 		token0Path,
 		token1Path,
@@ -323,11 +373,11 @@ func CollectProtocolByAdmin(
 		amount1Requested,
 	)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"CollectProtocolByAdmin",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"token0Path", token0Path,
 		"token1Path", token1Path,
 		"fee", ufmt.Sprintf("%d", fee),
@@ -351,14 +401,7 @@ func CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
-
-	caller := std.PrevRealm().Addr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
-
+	assertOnlyGovernance()
 	amount0, amount1 := collectProtocol(
 		token0Path,
 		token1Path,
@@ -368,11 +411,11 @@ func CollectProtocol(
 		amount1Requested,
 	)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"CollectProtocol",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"token0Path", token0Path,
 		"token1Path", token1Path,
 		"fee", ufmt.Sprintf("%d", fee),
@@ -384,6 +427,23 @@ func CollectProtocol(
 	return amount0, amount1
 }
 
+// collectProtocol collects protocol fees for token0 and token1 from the specified pool.
+//
+// This function allows the collection of accumulated protocol fees for token0 and token1. It ensures
+// the requested amounts do not exceed the available protocol fees in the pool and transfers the
+// collected amounts to the specified recipient.
+//
+// Parameters:
+//   - token0Path: string, the path or identifier for token0.
+//   - token1Path: string, the path or identifier for token1.
+//   - fee: uint32, the fee tier of the pool.
+//   - recipient: std.Address, the address to receive the collected protocol fees.
+//   - amount0Requested: string, the requested amount of token0 to collect (decimal string).
+//   - amount1Requested: string, the requested amount of token1 to collect (decimal string).
+//
+// Returns:
+//   - string: The actual amount of token0 collected, as a string.
+//   - string: The actual amount of token1 collected, as a string.
 func collectProtocol(
 	token0Path string,
 	token1Path string,
@@ -392,25 +452,37 @@ func collectProtocol(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	common.IsHalted()
+	assertOnlyRegistered(token0Path)
+	assertOnlyRegistered(token1Path)
+	assertOnlyNotHalted()
 
 	pool := GetPool(token0Path, token1Path, fee)
 
 	amount0Req := u256.MustFromDecimal(amount0Requested)
 	amount1Req := u256.MustFromDecimal(amount1Requested)
 
-	amount0 := u256Min(amount0Req, pool.protocolFees.token0)
-	amount1 := u256Min(amount1Req, pool.protocolFees.token1)
+	amount0 := u256Min(amount0Req, pool.ProtocolFeesToken0())
+	amount1 := u256Min(amount1Req, pool.ProtocolFeesToken1())
 
-	amount0, amount1 = pool.saveProtocolFees(amount0, amount1)
+	amount0, amount1 = pool.saveProtocolFees(amount0.Clone(), amount1.Clone())
 	uAmount0 := amount0.Uint64()
 	uAmount1 := amount1.Uint64()
 
 	token0Teller := common.GetTokenTeller(pool.token0Path)
 	checkTransferError(token0Teller.Transfer(recipient, uAmount0))
+	newBalanceToken0, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
+	if err != nil {
+		panic(err)
+	}
+	pool.balances.token0 = newBalanceToken0
 
 	token1Teller := common.GetTokenTeller(pool.token1Path)
 	checkTransferError(token1Teller.Transfer(recipient, uAmount1))
+	newBalanceToken1, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
+	if err != nil {
+		panic(err)
+	}
+	pool.balances.token1 = newBalanceToken1
 
 	return amount0.ToString(), amount1.ToString()
 }
@@ -424,19 +496,19 @@ func collectProtocol(
 // Returns the adjusted amounts that will actually be collected for both tokens.
 func (p *Pool) saveProtocolFees(amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
 	cond01 := amount0.Gt(u256.Zero())
-	cond02 := amount0.Eq(p.protocolFees.token0)
+	cond02 := amount0.Eq(p.ProtocolFeesToken0())
 	if cond01 && cond02 {
 		amount0 = new(u256.Uint).Sub(amount0, u256.One())
 	}
 
 	cond11 := amount1.Gt(u256.Zero())
-	cond12 := amount1.Eq(p.protocolFees.token1)
+	cond12 := amount1.Eq(p.ProtocolFeesToken1())
 	if cond11 && cond12 {
 		amount1 = new(u256.Uint).Sub(amount1, u256.One())
 	}
 
-	p.protocolFees.token0 = new(u256.Uint).Sub(p.protocolFees.token0, amount0)
-	p.protocolFees.token1 = new(u256.Uint).Sub(p.protocolFees.token1, amount1)
+	p.protocolFees.token0 = new(u256.Uint).Sub(p.ProtocolFeesToken0(), amount0)
+	p.protocolFees.token1 = new(u256.Uint).Sub(p.ProtocolFeesToken1(), amount1)
 
 	// return rest fee
 	return amount0, amount1

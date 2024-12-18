@@ -42,7 +42,7 @@ func TestLiquidityMathAddDelta(t *testing.T) {
 			},
 			wantPanic: addDetailToError(
 				errLiquidityCalculation,
-				ufmt.Sprintf("Less than Condition(z must be < x) (x: 0, y: -100, z:115792089237316195423570985008687907853269984665640564039457584007913129639836)")),
+				ufmt.Sprintf("Condition failed: (z must be < x) (x: 0, y: -100, z:115792089237316195423570985008687907853269984665640564039457584007913129639836)")),
 		},
 		{
 			name: "overflow panic with add delta",
@@ -53,7 +53,7 @@ func TestLiquidityMathAddDelta(t *testing.T) {
 			},
 			wantPanic: addDetailToError(
 				errLiquidityCalculation,
-				ufmt.Sprintf("Less than or Equal Condition(z must be >= x) (x: 115792089237316195423570985008687907853269984665640564039457584007913129639935, y: 100, z:99)")),
+				ufmt.Sprintf("Condition failed: (z must be >= x) (x: 115792089237316195423570985008687907853269984665640564039457584007913129639935, y: 100, z:99)")),
 		},
 	}
 

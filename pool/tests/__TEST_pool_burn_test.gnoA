@@ -81,7 +81,7 @@ func TestDoesNotClear(t *testing.T) {
 	uassert.Equal(t, liq.ToString(), "0")
 
 	// tokensOwed
-	thisPositionKey := positionGetKey(consts.POSITION_ADDR, -887160, 887160)
+	thisPositionKey := getPositionKey(consts.POSITION_ADDR, -887160, 887160)
 	thisPosition := thisPool.positions[thisPositionKey]
 
 	tokensOwed0 := thisPosition.tokensOwed0

@@ -11,7 +11,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// transferAndVerify performs a token transfer out of the pool while ensuring
+// safeTransfer performs a token transfer out of the pool while ensuring
 // the pool has sufficient balance and updating internal accounting.
 // This function is typically used during swaps and liquidity removals.
 //
@@ -33,7 +33,7 @@ import (
 //  4. Update pool's internal balance
 //
 // Panics if any validation fails or if the transfer fails
-func (p *Pool) transferAndVerify(
+func (p *Pool) safeTransfer(
 	to std.Address,
 	tokenPath string,
 	amount *i256.Int,
@@ -47,16 +47,13 @@ func (p *Pool) transferAndVerify(
 
 	absAmount := amount.Abs()
 
-	token0 := p.balances.token0
-	token1 := p.balances.token1
+	token0 := p.BalanceToken0()
+	token1 := p.BalanceToken1()
 
 	if err := validatePoolBalance(token0, token1, absAmount, isToken0); err != nil {
 		panic(err)
 	}
-	amountUint64, err := safeConvertToUint64(absAmount)
-	if err != nil {
-		panic(err)
-	}
+	amountUint64 := safeConvertToUint64(absAmount)
 
 	token := common.GetTokenTeller(tokenPath)
 	checkTransferError(token.Transfer(to, amountUint64))
@@ -73,45 +70,79 @@ func (p *Pool) transferAndVerify(
 	}
 }
 
-// transferFromAndVerify performs a token transfer into the pool using transferFrom
-// while updating the pool's internal accounting. This function is typically used
-// during swaps and liquidity additions.
+// safeTransferFrom securely transfers tokens into the pool while ensuring balance consistency.
 //
-// The function assumes the sender has approved the pool to spend their tokens.
+// This function performs the following steps:
+// 1. Validates and converts the transfer amount to `uint64` using `safeConvertToUint64`.
+// 2. Executes the token transfer using `TransferFrom` via the token teller contract.
+// 3. Verifies that the destination balance reflects the correct amount after transfer.
+// 4. Updates the pool's internal balances (`token0` or `token1`) and validates the updated state.
 //
 // Parameters:
-//   - from: source address for the transfer
-//   - to: destination address (typically the pool)
-//   - tokenPath: path identifier of the token to transfer
-//   - amount: amount to transfer (must be positive)
-//   - isToken0: true if transferring token0, false for token1
+// - from (std.Address): Source address for the token transfer.
+// - to (std.Address): Destination address, typically the pool address.
+// - tokenPath (string): Path identifier for the token being transferred.
+// - amount (*u256.Uint): The amount of tokens to transfer (must be a positive value).
+// - isToken0 (bool): A flag indicating whether the token being transferred is token0 (`true`) or token1 (`false`).
 //
-// The function will:
-// 1. Convert amount to uint64 (must fit)
-// 2. Execute the transferFrom
-// 3. Update pool's internal balance
+// Panics:
+// - If the `amount` exceeds the uint64 range during conversion.
+// - If the token transfer (`TransferFrom`) fails.
+// - If the destination balance after the transfer does not match the expected amount.
+// - If the pool's internal balances (`token0` or `token1`) overflow or become inconsistent.
 //
-// Panics if the amount conversion fails or if the transfer fails
-func (p *Pool) transferFromAndVerify(
+// Notes:
+// - The function assumes that the sender (`from`) has approved the pool to spend the specified tokens.
+// - The balance consistency check ensures that no tokens are lost or double-counted during the transfer.
+// - Pool balance updates are performed atomically to ensure internal consistency.
+//
+// Example:
+// p.safeTransferFrom(
+//
+//	sender, poolAddress, "path/to/token0", u256.MustFromDecimal("1000"), true
+//
+// )
+func (p *Pool) safeTransferFrom(
 	from, to std.Address,
 	tokenPath string,
 	amount *u256.Uint,
 	isToken0 bool,
 ) {
-	absAmount := amount
-	amountUint64, err := safeConvertToUint64(absAmount)
-	if err != nil {
-		panic(err)
-	}
+	amountUint64 := safeConvertToUint64(amount)
 
-	token := common.GetTokenTeller(tokenPath)
-	checkTransferError(token.TransferFrom(from, to, amountUint64))
+	token := common.GetToken(tokenPath)
+	beforeBalance := token.BalanceOf(to)
+
+	teller := common.GetTokenTeller(tokenPath)
+	checkTransferError(teller.TransferFrom(from, to, amountUint64))
+
+	afterBalance := token.BalanceOf(to)
+	if (beforeBalance + amountUint64) != afterBalance {
+		panic(ufmt.Sprintf(
+			"%v. beforeBalance(%d) + amount(%d) != afterBalance(%d)",
+			errTransferFailed, beforeBalance, amountUint64, afterBalance,
+		))
+	}
 
 	// update pool balances
 	if isToken0 {
-		p.balances.token0 = new(u256.Uint).Add(p.balances.token0, absAmount)
+		beforeToken0 := p.balances.token0.Clone()
+		p.balances.token0 = new(u256.Uint).Add(p.balances.token0, amount)
+		if p.balances.token0.Lt(beforeToken0) {
+			panic(ufmt.Sprintf(
+				"%v. token0(%s) < beforeToken0(%s)",
+				errBalanceUpdateFailed, p.balances.token0.ToString(), beforeToken0.ToString(),
+			))
+		}
 	} else {
-		p.balances.token1 = new(u256.Uint).Add(p.balances.token1, absAmount)
+		beforeToken1 := p.balances.token1.Clone()
+		p.balances.token1 = new(u256.Uint).Add(p.balances.token1, amount)
+		if p.balances.token1.Lt(beforeToken1) {
+			panic(ufmt.Sprintf(
+				"%v. token1(%s) < beforeToken1(%s)",
+				errBalanceUpdateFailed, p.balances.token1.ToString(), beforeToken1.ToString(),
+			))
+		}
 	}
 }
 
@@ -150,7 +181,7 @@ func updatePoolBalance(
 		if isBalanceOverflowOrNegative(overflow, newBalance) {
 			return nil, ufmt.Errorf(
 				"%v. cannot decrease, token0(%s) - amount(%s)",
-				errTransferFailed, token0.ToString(), amount.ToString(),
+				errBalanceUpdateFailed, token0.ToString(), amount.ToString(),
 			)
 		}
 		return newBalance, nil
@@ -160,12 +191,13 @@ func updatePoolBalance(
 	if isBalanceOverflowOrNegative(overflow, newBalance) {
 		return nil, ufmt.Errorf(
 			"%v. cannot decrease, token1(%s) - amount(%s)",
-			errTransferFailed, token1.ToString(), amount.ToString(),
+			errBalanceUpdateFailed, token1.ToString(), amount.ToString(),
 		)
 	}
 	return newBalance, nil
 }
 
+// isBalanceOverflowOrNegative checks if the balance calculation resulted in an overflow or negative value.
 func isBalanceOverflowOrNegative(overflow bool, newBalance *u256.Uint) bool {
 	return overflow || newBalance.Lt(u256.Zero())
 }
