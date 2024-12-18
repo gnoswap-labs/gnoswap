@@ -4,14 +4,29 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 
 	i256 "gno.land/p/gnoswap/int256"
-	u256 "gno.land/p/gnoswap/uint256"
 	plp "gno.land/p/gnoswap/pool"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// modifyPosition updates a position in the pool and calculates the amount of tokens to be added or removed.
-// Returns positionInfo, amount0, amount1
-func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.Uint, *u256.Uint) {
-	position := pool.updatePosition(params)
+// modifyPosition updates a position in the pool and calculates the amount of tokens
+// needed (for minting) or returned (for burning). The calculation depends on the current
+// price (tick) relative to the position's price range.
+//
+// The function handles three cases:
+//  1. Current price below range (tick < tickLower): only token0 is used/returned
+//  2. Current price in range (tickLower <= tick < tickUpper): both tokens are used/returned
+//  3. Current price above range (tick >= tickUpper): only token1 is used/returned
+//
+// Parameters:
+//   - params: ModifyPositionParams containing owner, tickLower, tickUpper, and liquidityDelta
+//
+// Returns:
+//   - PositionInfo: updated position information
+//   - *u256.Uint: amount of token0 needed/returned
+//   - *u256.Uint: amount of token1 needed/returned
+func (p *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u256.Uint, *u256.Uint) {
+	// update position state
+	position := p.updatePosition(params)
 	liqDelta := params.liquidityDelta
 
 	if liqDelta.IsZero() {
@@ -20,25 +35,36 @@ func (pool *Pool) modifyPosition(params ModifyPositionParams) (PositionInfo, *u2
 
 	amount0, amount1 := i256.Zero(), i256.Zero()
 
-	tick := pool.slot0.tick
+	// get current state and price bounds
+	tick := p.slot0.tick
+	// covert ticks to sqrt price to use in amount calculations
+	// price = 1.0001^tick, but we use sqrtPriceX96
 	sqrtRatioLower := common.TickMathGetSqrtRatioAtTick(params.tickLower)
 	sqrtRatioUpper := common.TickMathGetSqrtRatioAtTick(params.tickUpper)
-	sqrtPriceX96 := pool.slot0.sqrtPriceX96
+	sqrtPriceX96 := p.slot0.sqrtPriceX96
 
-	// calculate amount0, amount1 based on the current tick position
+	// calculate token amounts based on current price position relative to range
 	switch {
 	case tick < params.tickLower:
+		// case 1
+		// full range between lower and upper tick is used for token0
 		amount0 = calculateToken0Amount(sqrtRatioLower, sqrtRatioUpper, liqDelta)
 
 	case tick < params.tickUpper:
-		liquidityBefore := pool.liquidity
+		// case 2
+		liquidityBefore := p.liquidity
 
+		// token0 used from current price to upper tick
 		amount0 = calculateToken0Amount(sqrtPriceX96, sqrtRatioUpper, liqDelta)
+		// token1 used from lower tick to current price
 		amount1 = calculateToken1Amount(sqrtRatioLower, sqrtPriceX96, liqDelta)
 
-		pool.liquidity = liquidityMathAddDelta(liquidityBefore, liqDelta)
+		// update pool's active liquidity since price is in range
+		p.liquidity = liquidityMathAddDelta(liquidityBefore, liqDelta)
 
 	default:
+		// case 3
+		// full range between lower and upper tick is used for token1
 		amount1 = calculateToken1Amount(sqrtRatioLower, sqrtRatioUpper, liqDelta)
 	}
 
