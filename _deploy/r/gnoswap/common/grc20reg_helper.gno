@@ -1,6 +1,8 @@
 package common
 
 import (
+	"std"
+
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/grc20reg"
@@ -51,7 +53,22 @@ func MustRegistered(path string) {
 	if err := IsRegistered(path); err != nil {
 		panic(addDetailToError(
 			errNotRegistered,
-			ufmt.Sprintf("token(%s) is not registered", path),
+			ufmt.Sprintf("token(%s)", path),
 		))
 	}
+}
+
+// TotalSupply returns the total supply of the token
+func TotalSupply(path string) uint64 {
+	return GetToken(path).TotalSupply()
+}
+
+// BalanceOf returns the balance of the token for the given address
+func BalanceOf(path string, addr std.Address) uint64 {
+	return GetToken(path).BalanceOf(addr)
+}
+
+// Allowance returns the allowance of the token for the given owner and spender
+func Allowance(path string, owner, spender std.Address) uint64 {
+	return GetToken(path).Allowance(owner, spender)
 }
