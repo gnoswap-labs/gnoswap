@@ -1,6 +1,8 @@
 package pool
 
 import (
+	"strconv"
+
 	"gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -282,14 +284,21 @@ func (p *Pool) tickCross(
 	thisTick.feeGrowthOutside0X128 = new(u256.Uint).Sub(feeGrowthGlobal0X128, thisTick.feeGrowthOutside0X128)
 	thisTick.feeGrowthOutside1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, thisTick.feeGrowthOutside1X128)
 
-	p.ticks[tick] = thisTick
+	p.setTick(tick, thisTick)
 
 	return thisTick.liquidityNet.Clone()
 }
 
 // setTick updates the tick data for the specified tick index in the pool.
 func (p *Pool) setTick(tick int32, newTickInfo TickInfo) {
-	p.ticks[tick] = newTickInfo
+	tickStr := strconv.Itoa(int(tick))
+	p.ticks.Set(tickStr, newTickInfo)
+}
+
+// deleteTick deletes the tick data for the specified tick index in the pool.
+func (p *Pool) deleteTick(tick int32) {
+	tickStr := strconv.Itoa(int(tick))
+	p.ticks.Remove(tickStr)
 }
 
 // getTick retrieves the TickInfo associated with the specified tick index from the pool.
@@ -310,9 +319,15 @@ func (p *Pool) setTick(tick int32, newTickInfo TickInfo) {
 // This function ensures the retrieved tick data is always valid and safe for further operations,
 // such as calculations or updates, by sanitizing nil fields in the TickInfo structure.
 func (p *Pool) getTick(tick int32) TickInfo {
-	tickInfo := p.ticks[tick]
-	tickInfo.valueOrZero()
-	return tickInfo
+	tickStr := strconv.Itoa(int(tick))
+	iTickInfo, exist := p.ticks.Get(tickStr)
+	if !exist {
+		tickInfo := TickInfo{}
+		tickInfo.valueOrZero()
+		return tickInfo
+	}
+
+	return iTickInfo.(TickInfo)
 }
 
 // GetTickLiquidityGross returns the gross liquidity for the specified tick.
@@ -379,7 +394,8 @@ func (p *Pool) GetTickInitialized(tick int32) bool {
 //	tickInfo := pool.mustGetTick(10)
 //	fmt.Println("Tick Info:", tickInfo)
 func (p *Pool) mustGetTick(tick int32) TickInfo {
-	tickInfo, exist := p.ticks[tick]
+	tickStr := strconv.Itoa(int(tick))
+	iTickInfo, exist := p.ticks.Get(tickStr)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -387,5 +403,5 @@ func (p *Pool) mustGetTick(tick int32) TickInfo {
 		))
 	}
 
-	return tickInfo
+	return iTickInfo.(TickInfo)
 }

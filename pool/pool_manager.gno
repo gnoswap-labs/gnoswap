@@ -2,8 +2,10 @@ package pool
 
 import (
 	"std"
+	"strconv"
 	"strings"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/consts"
@@ -15,39 +17,18 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-type poolMap map[string]*Pool
-
-func (pm *poolMap) Get(poolPath string) (*Pool, bool) {
-	pool, exist := (*pm)[poolPath]
-	if !exist {
-		return nil, false
-	}
-
-	return pool, true
-}
-
-func (pm *poolMap) Set(poolPath string, pool *Pool) {
-	(*pm)[poolPath] = pool
-}
-
-type tickSpacingMap map[uint32]int32
-
-func (t *tickSpacingMap) Get(fee uint32) int32 {
-	return (*t)[fee]
-}
-
 var (
-	feeAmountTickSpacing tickSpacingMap = make(tickSpacingMap) // maps fee to tickSpacing || map[feeAmount]tick_spacing
-	pools                poolMap        = make(poolMap)        // maps poolPath to pool || map[poolPath]*Pool
+	feeAmountTickSpacing = avl.NewTree() // feeBps(uint32) -> tickSpacing(int32)
+	pools                = avl.NewTree() // poolPath -> *Pool
 
 	slot0FeeProtocol uint8 = 0
 )
 
 func init() {
-	feeAmountTickSpacing[100] = 1     // 0.01%
-	feeAmountTickSpacing[500] = 10    // 0.05%
-	feeAmountTickSpacing[3000] = 60   // 0.3%
-	feeAmountTickSpacing[10000] = 200 // 1%
+	setFeeAmountTickSpacing(100, 1)     // 0.01%
+	setFeeAmountTickSpacing(500, 10)    // 0.05%
+	setFeeAmountTickSpacing(3000, 60)   // 0.3%
+	setFeeAmountTickSpacing(10000, 200) // 1%
 }
 
 // createPoolParams holds the essential parameters for creating a new pool.
@@ -66,7 +47,7 @@ func newPoolParams(
 	sqrtPriceX96 string,
 ) *createPoolParams {
 	price := u256.MustFromDecimal(sqrtPriceX96)
-	tickSpacing := feeAmountTickSpacing.Get(fee)
+	tickSpacing := GetFeeAmountTickSpacing(fee)
 	return &createPoolParams{
 		token0Path:   token0Path,
 		token1Path:   token1Path,
@@ -211,8 +192,7 @@ func CreatePool(
 // DoesPoolPathExist checks if a pool exists for the given poolPath.
 // The poolPath is a unique identifier for a pool, combining token paths and fee.
 func DoesPoolPathExist(poolPath string) bool {
-	_, exist := pools[poolPath]
-	return exist
+	return pools.Has(poolPath)
 }
 
 // GetPool retrieves a pool instance based on the provided token paths and fee tier.
@@ -260,14 +240,14 @@ func GetPool(token0Path, token1Path string, fee uint32) *Pool {
 // Example:
 // pool := GetPoolFromPoolPath("path/to/pool")
 func GetPoolFromPoolPath(poolPath string) *Pool {
-	pool, exist := pools[poolPath]
+	iPool, exist := pools.Get(poolPath)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
 			ufmt.Sprintf("expected poolPath(%s) to exist", poolPath),
 		))
 	}
-	return pool
+	return iPool.(*Pool)
 }
 
 // GetPoolPath generates a unique pool path string based on the token paths and fee tier.
@@ -302,4 +282,42 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 		token0Path, token1Path = token1Path, token0Path
 	}
 	return ufmt.Sprintf("%s:%s:%d", token0Path, token1Path, fee)
+}
+
+// GetFeeAmountTickSpacing retrieves the tick spacing associated with a given fee amount.
+// The tick spacing determines the minimum distance between ticks in the pool.
+//
+// Parameters:
+//   - fee (uint32): The fee tier in basis points (e.g., 3000 for 0.3%)
+//
+// Returns:
+//   - int32: The tick spacing value for the given fee tier
+//
+// Panics:
+//   - If the fee amount is not registered in feeAmountTickSpacing
+func GetFeeAmountTickSpacing(fee uint32) int32 {
+	feeStr := strconv.FormatUint(uint64(fee), 10)
+	iTickSpacing, exist := feeAmountTickSpacing.Get(feeStr)
+	if !exist {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("expected feeAmountTickSpacing(%s) to exist", feeStr),
+		))
+	}
+
+	return iTickSpacing.(int32)
+}
+
+// setFeeAmountTickSpacing associates a tick spacing value with a fee amount.
+// This is typically called during initialization to set up supported fee tiers.
+//
+// Parameters:
+//   - fee (uint32): The fee tier in basis points (e.g., 3000 for 0.3%)
+//   - tickSpacing (int32): The minimum tick spacing for this fee tier
+//
+// Note: Smaller tick spacing allows for more granular price points but increases
+// computational overhead. Higher fee tiers typically use larger tick spacing.
+func setFeeAmountTickSpacing(fee uint32, tickSpacing int32) {
+	feeStr := strconv.FormatUint(uint64(fee), 10)
+	feeAmountTickSpacing.Set(feeStr, tickSpacing)
 }
