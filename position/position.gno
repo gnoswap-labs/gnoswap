@@ -22,6 +22,11 @@ var (
 	nextId    uint64              = 1                         // lp token id
 )
 
+// nextId is the next tokenId to be minted
+func getNextId() uint64 {
+	return nextId
+}
+
 // Mint creates a new liquidity position and mints liquidity tokens.
 // It also handles the conversion between GNOT and WUGNOT transparently for the user.
 // Returns minted tokenId, liquidity, amount0, amount1
@@ -874,4 +879,15 @@ func SetPositionOperator(tokenId uint64, operator std.Address) {
 
 	position.operator = operator
 	positions[tokenId] = position
+}
+
+func positionKeyCompute(
+	owner std.Address,
+	tickLower int32,
+	tickUpper int32,
+) string {
+	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
+
+	encoded := base64.StdEncoding.EncodeToString([]byte(key))
+	return encoded
 }
