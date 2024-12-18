@@ -33,36 +33,36 @@ func getNextId() uint64 {
 // region: Mint
 
 type MintInput struct {
-	token0         string
-	token1         string
-	fee            uint32
-	tickLower      int32
-	tickUpper      int32
-	amount0Desired string
-	amount1Desired string
-	amount0Min     string
-	amount1Min     string
-	deadline       int64
-	mintTo         std.Address
-	caller         std.Address
+    token0         string
+    token1         string
+    fee            uint32
+    tickLower      int32
+    tickUpper      int32
+    amount0Desired string
+    amount1Desired string
+    amount0Min     string
+    amount1Min     string
+    deadline       int64
+    mintTo         std.Address
+    caller         std.Address
 }
 
 type TokenPair struct {
-	token0         string
-	token1         string
-	token0IsNative bool
-	token1IsNative bool
+    token0         string
+    token1         string
+    token0IsNative bool
+    token1IsNative bool
 }
 
 type ProcessedMintInput struct {
-	tokenPair      TokenPair
-	amount0Desired *u256.Uint
-	amount1Desired *u256.Uint
-	amount0Min     *u256.Uint
-	amount1Min     *u256.Uint
-	tickLower      int32
-	tickUpper      int32
-	poolPath       string
+    tokenPair      TokenPair
+    amount0Desired *u256.Uint
+    amount1Desired *u256.Uint
+    amount0Min     *u256.Uint
+    amount1Min     *u256.Uint
+    tickLower      int32
+    tickUpper      int32
+    poolPath       string
 }
 
 // Mint creates a new liquidity position and mints liquidity tokens.
@@ -321,7 +321,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	checkDeadline(params.deadline)
 
 	pool := pl.GetPool(params.token0, params.token1, params.fee)
-	liquidity, amount0, amount1 := addLiquidity(
+	liquidity, amount0, amount1, err := addLiquidity(
 		AddLiquidityParams{
 			poolKey:        pl.GetPoolPath(params.token0, params.token1, params.fee),
 			tickLower:      params.tickLower,
@@ -333,6 +333,9 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 			caller:         params.caller,
 		},
 	)
+	if err != nil {
+		panic(addDetailToError(errSlippage, err.Error()))
+	}
 
 	tokenId := nextId
 	gnft.Mint(a2u(params.mintTo), tokenIdFrom(tokenId)) // owner, tokenId
@@ -483,6 +486,9 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 			caller:         std.PrevRealm().Addr(),
 		},
 	)
+	if err != nil {
+		panic(addDetailToError(errSlippage, err.Error()))
+	}
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
@@ -762,7 +768,7 @@ func Reposition(
 		}
 	}
 
-	liquidity, amount0, amount1 := addLiquidity(
+	liquidity, amount0, amount1, err := addLiquidity(
 		AddLiquidityParams{
 			poolKey:        position.poolKey,
 			tickLower:      tickLower,
@@ -774,6 +780,9 @@ func Reposition(
 			caller:         std.PrevRealm().Addr(),
 		},
 	)
+	if err != nil {
+		panic(addDetailToError(errSlippage, err.Error()))
+	}
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), tickLower, tickUpper)
