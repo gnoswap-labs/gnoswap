@@ -167,10 +167,17 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 		CalcPoolPositionRefactor()
 	} else {
 		// cache per-tier and per-pool reward
-		poolTier.cacheTierReward(tier, std.GetHeight())
+		currentHeight := uint64(std.GetHeight())
+		poolTier.cacheTierReward(currentHeight)
 		poolPath := deposits[tokenId].targetPoolPath
-		pool := pools.get(poolPath)
-		poolTier.cachePoolReward(pool.rewardCache, poolPath, pool.lastRewardCacheHeight, std.GetHeight())
+		pool, ok := pools.get(poolPath)
+		if !ok {
+			panic(addDetailToError(
+				errDataNotFound,
+				ufmt.Sprintf("staker.gno__CollectReward() || poolPath(%s) does not exist", poolPath),
+			))
+		}
+		poolTier.cachePoolReward(pool.rewardCache, poolPath, pool.lastRewardCacheHeight, currentHeight)
 
 		// eligible(in-range) intervals for a position
 		upperTickId := pn.PositionGetPositionUpperTickId(tokenId)
@@ -178,22 +185,23 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 		lowerTickId := pn.PositionGetPositionLowerTickId(tokenId)
 		lowerTick := ticks.get(lowerTickId)
 
+		deposit := deposits[tokenId]
 		position := positions.get(tokenId)
-
-		tickUpperCrossHeights, tickUpperCrossZeroForOnes := upperTick.crossInfo(deposit.lastCollectHeight, std.GetHeight())
-		tickLowerCrossHeights, tickLowerCrossZeroForOnes := lowerTick.crossInfo(deposit.lastCollectHeight, std.GetHeight())
-
 		lastCollectHeight := position.lastCollectHeight
+
+		tickUpperCrossHeights, tickUpperCrossZeroForOnes := upperTick.crossInfo(lastCollectHeight, currentHeight)
+		tickLowerCrossHeights, tickLowerCrossZeroForOnes := lowerTick.crossInfo(lastCollectHeight, currentHeight)
+
 		initialUpperCross := upperTick.lastCross(lastCollectHeight)
 		initialLowerCross := lowerTick.lastCross(lastCollectHeight)
 		currentlyInRange := initialUpperCross && !initialLowerCross
 
-		intervals := tickCrossesToEligibleIntervals(tickUpperCrossHeights, tickUpperCrossZeroForOnes, tickLowerCrossHeights, tickLowerCrossZeroForOnes, currentlyInRange, lastCollectHeight, std.GetHeight())
+		intervals := pool.tickCrossesToEligibleIntervals(tickUpperCrossHeights, tickUpperCrossZeroForOnes, tickLowerCrossHeights, tickLowerCrossZeroForOnes, currentlyInRange, lastCollectHeight, currentHeight)
 
-		totalReward, totalPenalty := position.eligibleIntervalsToReward(intervals, pool, std.GetHeight())
+		totalReward, totalPenalty := position.eligibleIntervalsToReward(intervals, pool, currentHeight)
 
-		gns.Transfer(a2u(deposit.owner), totalReward)
-		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), totalPenalty)
+		gns.Transfer(a2u(deposit.owner), totalReward.Uint64())
+		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), totalPenalty.Uint64())
 	}
 
 	deposit, exist := deposits[tokenId]

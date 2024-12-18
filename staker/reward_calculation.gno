@@ -3,25 +3,76 @@ package staker
 import (
 	"std"
 	"strconv"
-	"time"
+	"strings"
+	"math"
 
 	"gno.land/p/demo/avl"
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
-
-	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 
-	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
+
+func EncodeUint(num uint64) string {
+	// Convert the value to a decimal string.
+	s := strconv.FormatUint(num, 10)
+
+	// Zero-pad to a total length of 20 characters.
+	zerosNeeded := 20 - len(s)
+	return strings.Repeat("0", zerosNeeded) + s
+}
+
+func DecodeUint(s string) uint64 {
+	num, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return num
+}
+
+type UintTree struct {
+	tree *avl.Tree
+}
+
+func NewUintTree() *UintTree {
+	return &UintTree{
+		tree: avl.NewTree(),
+	}
+}
+
+func (self *UintTree) Get(key uint64) (interface{}, bool) {
+	v, ok := self.tree.Get(EncodeUint(key))
+	if !ok {
+		return nil, false
+	}
+	return v, true
+}
+
+func (self *UintTree) Set(key uint64, value interface{}) {
+	self.tree.Set(EncodeUint(key), value)
+}
+
+func (self *UintTree) Remove(key uint64) {
+	self.tree.Remove(EncodeUint(key))
+}
+
+func (self *UintTree) Iterate(start, end uint64, fn func(key uint64, value interface{}) bool) {
+	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(key string, value interface{}) bool {
+		return fn(DecodeUint(key), value)
+	})
+}
+
+func (self *UintTree) ReverseIterate(start, end uint64, fn func(key uint64, value interface{}) bool) {
+	self.tree.ReverseIterate(EncodeUint(start), EncodeUint(end), func(key string, value interface{}) bool {
+		return fn(DecodeUint(key), value)
+	})
+}
 
 // 100, 0, 0 if no tier2 and tier3
 // 80, 0, 20 if no tier2
@@ -43,101 +94,104 @@ func (self *TierRatio) get(tier uint64) uint64 {
 		return self.tier3
 	default:
 		panic(addDetailToError(
-			errInvalidTier,
+			errInvalidPoolTier,
 			ufmt.Sprintf("staker.gno__tierRatio() || tier(%d) is not valid", tier),
 		))
 	}
 }
 
-type poolTier struct {
-	tier1 *avl.Tree // blockNumber -> uint64 poolCount
-	tier2 *avl.Tree // blockNumber -> uint64 poolCount
-	tier3 *avl.Tree // blockNumber -> uint64 poolCount
+type PoolTier struct {
+	tier1 *UintTree // blockNumber -> uint64 poolCount
+	tier2 *UintTree // blockNumber -> uint64 poolCount
+	tier3 *UintTree // blockNumber -> uint64 poolCount
 
-	tierRatio *avl.Tree // blockNumber -> TierRatio
+	tierRatio *UintTree // blockNumber -> TierRatio
 
 	tierMembership *avl.Tree // poolPath -> blockNumber -> tier(0(deleted), 1, 2, 3)
 
 	// rewardCache is used to calculate internal reward for each tier
 	// reward = emission / (number of pools in tier) * (tier's ratio)
-	tier1RewardCache *avl.Tree // blockNumber -> *u256.Uint
-	lastTier1RewardCacheHeight uint64
-
-	tier2RewardCache *avl.Tree // blockNumber -> *u256.Uint
-	lastTier2RewardCacheHeight uint64
-
-	tier3RewardCache *avl.Tree // blockNumber -> *u256.Uint
-	lastTier3RewardCacheHeight uint64
+	tier1RewardCache *UintTree // blockNumber -> *u256.Uint
+	tier2RewardCache *UintTree // blockNumber -> *u256.Uint
+	tier3RewardCache *UintTree // blockNumber -> *u256.Uint
+	lastRewardCacheHeight uint64
 }
 
 var (
-	poolTier poolTier = poolTier{
-		tier1: avl.NewTree(),
-		tier2: avl.NewTree(),
-		tier3: avl.NewTree(),
-		tierRatio: avl.NewTree(),
+	poolTier *PoolTier = &PoolTier{
+		tier1: NewUintTree(),
+		tier2: NewUintTree(),
+		tier3: NewUintTree(),
+		tierRatio: NewUintTree(),
 		tierMembership: avl.NewTree(),
-		tier1RewardCache: avl.NewTree(),
-		lastTier1RewardCacheHeight: 0,
-		tier2RewardCache: avl.NewTree(),
-		lastTier2RewardCacheHeight: 0,
-		tier3RewardCache: avl.NewTree(),
-		lastTier3RewardCacheHeight: 0,
+		tier1RewardCache: NewUintTree(),
+		tier2RewardCache: NewUintTree(),
+		tier3RewardCache: NewUintTree(),
+		lastRewardCacheHeight: 0,
 	}
 )
 
-func (self *poolTier) lastCount(tier uint64, endHeight uint64) uint64 {
-	tree := self.of(tier)
+func (self *PoolTier) membershipOf(poolPath string) *UintTree {
+	v, ok := self.tierMembership.Get(poolPath)
+	if !ok {
+		tree := NewUintTree()
+		self.tierMembership.Set(poolPath, tree)
+		return tree
+	}
+	return v.(*UintTree)
+}
+
+func (self *PoolTier) lastCount(tier uint64, endHeight uint64) uint64 {
+	tree := self.countOf(tier)
 	count := uint64(0)
-	tree.ReverseIterate(0, endHeight, func(key string, value interface{}) bool {
+	tree.ReverseIterate(0, endHeight, func(key uint64, value interface{}) bool {
 		count = value.(uint64)
 		return true
 	})
 	return count
 }
 
-func (self *poolTier) lastRatio(tier uint64, endHeight uint64) uint64 {
+func (self *PoolTier) lastRatio(tier uint64, endHeight uint64) uint64 {
 	ratio := uint64(0)
-	countTree := self.countOf(tier)
-	countT	ree.ReverseIterate(0, endHeight, func(key string, value interface{}) bool {
-		ratio = value.(TierRatio).get(tier)
+	self.tierRatio.ReverseIterate(0, endHeight, func(key uint64, value interface{}) bool {
+		ratio = value.(*TierRatio).get(tier)
 		return true
 	})
 	return ratio
 }
 
-func (self *poolTier) lastTier(poolPath string, endHeight uint64) uint64 {
+func (self *PoolTier) lastTier(poolPath string, endHeight uint64) uint64 {
 	tier := uint64(0)
 	poolTierMembershipI, ok := self.tierMembership.Get(poolPath)
 	if !ok {
 		return tier
 	}
-	poolTierMembership := poolTierMembershipI.(*avl.Tree)
-	poolTierMembership.ReverseIterate(0, endHeight, func(key string, value interface{}) bool {
+	poolTierMembership := poolTierMembershipI.(*UintTree)
+	poolTierMembership.ReverseIterate(0, endHeight, func(key uint64, value interface{}) bool {
 		tier = value.(uint64)
 		return true
 	})
 	return tier
 }
 
-func (self *poolTier) lastReward(tier uint64, endHeight uint64) *u256.Uint {
+func (self *PoolTier) lastReward(tier uint64, endHeight uint64) *u256.Uint {
 	reward := u256.Zero()
 	tree := self.rewardCacheOf(tier)
-	tree.ReverseIterate(0, endHeight, func(key string, value interface{}) bool {
+	tree.ReverseIterate(0, endHeight, func(key uint64, value interface{}) bool {
 		reward = value.(*u256.Uint)
 		return true
 	})
 	return reward
 }
 
-func (self *poolTier) hasPool(poolPath string) bool {
+func (self *PoolTier) hasPool(poolPath string) bool {
 	if _, ok := self.tierMembership.Get(poolPath); ok {
 		return true
 	}
 	return false
 }
 
-func (self *poolTier) countOf(tier uint64) *avl.Tree {
+func (self *PoolTier) countOf(tier uint64) *UintTree {
 	switch tier {
 	case 1:
 		return self.tier1
@@ -147,7 +201,7 @@ func (self *poolTier) countOf(tier uint64) *avl.Tree {
 		return self.tier3
 	default:
 		panic(addDetailToError(
-			errInvalidTier,
+			errInvalidPoolTier,
 			ufmt.Sprintf("staker.gno__tier() || tier(%d) is not valid", tier),
 		))
 	}
@@ -160,13 +214,13 @@ func calcReward(emission *u256.Uint, denominator uint64) *u256.Uint {
 	return result
 }
 
-func (self *poolTier) tierMembershipUpdates(poolPath string, startHeight, endHeight uint64) ([]uint64, []uint64) {
+func (self *PoolTier) tierMembershipUpdates(poolPath string, startHeight, endHeight uint64) ([]uint64, []uint64) {
 	heights := make([]uint64, 0)
 	updates := make([]uint64, 0)
 
-	poolTierMembership := self.tierMembership.Get(poolPath)
-	poolTierMembership.Iterate(startHeight, endHeight, func(key string, value interface{}) bool {
-		height := std.MustParseUint(key, 10)
+	poolTierMembership := self.membershipOf(poolPath)
+	poolTierMembership.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
+		height := key
 		heights = append(heights, height)
 		updates = append(updates, value.(uint64))
 		return false
@@ -175,7 +229,7 @@ func (self *poolTier) tierMembershipUpdates(poolPath string, startHeight, endHei
 	return heights, updates
 }
 
-func (self *poolTier) tierDenominatorUpdates(tier uint64, startHeight, endHeight uint64) ([]uint64, []uint64) {
+func (self *PoolTier) tierDenominatorUpdates(tier uint64, startHeight, endHeight uint64) ([]uint64, []uint64) {
 	// count * (ratio * 100) updates
 	currentCount := self.lastCount(tier, startHeight)
 	currentRatio := self.lastRatio(tier, startHeight)
@@ -184,11 +238,8 @@ func (self *poolTier) tierDenominatorUpdates(tier uint64, startHeight, endHeight
 
 	tierCountTree := self.countOf(tier)
 	lastHeight := startHeight
-	tierCountTree.Iterate(startHeight, endHeight, func(key string, value interface{}) bool {
-		height := std.MustParseUint(key, 10)
-
-		self.tierRatio.Iterate(lastHeight, height, func(key string, value interface{}) bool {
-			ratioHeight := std.MustParseUint(key, 10)
+	tierCountTree.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
+		self.tierRatio.Iterate(lastHeight, height, func(ratioHeight uint64, value interface{}) bool {
 			currentRatio = value.(TierRatio).get(tier)
 			update := currentCount * currentRatio
 			if ratioHeight == lastHeight {
@@ -211,8 +262,8 @@ func (self *poolTier) tierDenominatorUpdates(tier uint64, startHeight, endHeight
 	})
 
 	// take account of ratio changes after the last count change
-	self.tierRatio.Iterate(lastHeight, endHeight, func(key string, value interface{}) bool {
-		ratioHeight := std.MustParseUint(key, 10)
+	self.tierRatio.Iterate(lastHeight, endHeight, func(key uint64, value interface{}) bool {
+		ratioHeight := key
 		currentRatio = value.(TierRatio).get(tier)
 		update := currentCount * currentRatio
 		if ratioHeight == lastHeight {
@@ -228,7 +279,7 @@ func (self *poolTier) tierDenominatorUpdates(tier uint64, startHeight, endHeight
 	return heights, updates
 }
 
-func (self *poolTier) rewardCacheOf(tier uint64) *avl.Tree {
+func (self *PoolTier) rewardCacheOf(tier uint64) *UintTree {
 	switch tier {
 	case 1:
 		return self.tier1RewardCache
@@ -238,14 +289,14 @@ func (self *poolTier) rewardCacheOf(tier uint64) *avl.Tree {
 		return self.tier3RewardCache
 	default:
 		panic(addDetailToError(
-			errInvalidTier,
+			errInvalidPoolTier,
 			ufmt.Sprintf("staker.gno__rewardCacheOf() || tier(%d) is not valid", tier),
 		))
 	}
 }
 
-func (self *poolTier) cacheTierReward(tier uint64, endHeight uint64) {
-	startHeight := self.lastRewardCacheHeight
+func (self *PoolTier) cacheTierReward(tier uint64, endHeight uint64) {
+	startHeight := self.lastRewardCacheHeight(tier, endHeight)
 	emissionUpdateHeights, emissionUpdates := gns.PerBlockMintUpdates(startHeight, endHeight)
 	currentEmissionUpdateHeight, currentEmissionUpdate := gns.LastPerBlockMintUpdate(startHeight)
 	rewardCache := self.rewardCacheOf(tier)
@@ -261,39 +312,38 @@ func (self *poolTier) cacheTierReward(tier uint64, endHeight uint64) {
 	}
 }
 
-type pool struct {
+type Pool struct {
 	// conceptually equal with Pool.liquidity but only for the staked positions
 	// updated each time when the pool crosses a staked tick
-	stakedLiquidity *avl.Tree // blockNumber -> *u256.Uint
+	stakedLiquidity *UintTree // blockNumber -> *u256.Uint
 
 	// cache of the internal reward for each pool in tier
-	rewardCache *avl.Tree // blockNumber -> *u256.Uint
+	rewardCache *UintTree // blockNumber -> *u256.Uint
 	lastRewardCacheHeight uint64
 }
 
-func (self *pool) lastStakedLiquidity(end uint64) *u256.Uint {
+func (self *Pool) lastStakedLiquidity(end uint64) *u256.Uint {
 	stakedLiquidity := u256.Zero()
-	self.totalStakedLiquidityInRange.ReverseIterate(0, end, func(key string, value interface{}) bool {
+	self.stakedLiquidity.ReverseIterate(0, end, func(key uint64, value interface{}) bool {
 		stakedLiquidity = value.(*u256.Uint)
 		return true
 	})
 	return stakedLiquidity
 }
 
-func (self *pool) lastReward(endHeight uint64) *u256.Uint {
+func (self *Pool) lastReward(endHeight uint64) *u256.Uint {
 	reward := u256.Zero()
-	self.rewardCache.ReverseIterate(0, endHeight, func(key string, value interface{}) bool {
+	self.rewardCache.ReverseIterate(0, endHeight, func(key uint64, value interface{}) bool {
 		reward = value.(*u256.Uint)
 		return true
 	})
 	return reward
 }
 
-func (self *pool) stakedLiquidityUpdates(startHeight, endHeight uint64) ([]uint64, []*u256.Uint) {
+func (self *Pool) stakedLiquidityUpdates(startHeight, endHeight uint64) ([]uint64, []*u256.Uint) {
 	heights := make([]uint64, 0)
 	updates := make([]*u256.Uint, 0)
-	self.stakedLiquidity.Iterate(startHeight, endHeight, func(key string, value interface{}) bool {
-		height := std.MustParseUint(key, 10)
+	self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
 		heights = append(heights, height)
 		updates = append(updates, value.(*u256.Uint))
 		return false
@@ -302,17 +352,15 @@ func (self *pool) stakedLiquidityUpdates(startHeight, endHeight uint64) ([]uint6
 }
 
 // startHeight should be pool.lastRewardCacheHeight
-func (self *poolTier) cachePoolReward(poolRewardCache *avl.Tree, poolPath string, startHeight, endHeight uint64, currentTier uint64) {
+func (self *PoolTier) cachePoolReward(poolRewardCache *UintTree, poolPath string, startHeight, endHeight uint64) {
 	currentTier := self.lastTier(poolPath, startHeight)
-	tier.tierMembership.Iterate(startHeight, endHeight, func(key string, value interface{}) bool {
-		membershipUpdateHeight := std.MustParseUint(key, 10)
+	self.membershipOf(poolPath).Iterate(startHeight, endHeight, func(membershipUpdateHeight uint64, value interface{}) bool {
 		if currentTier == 0 {
 			// ignore reward updates
 			currentTier = value.(uint64)
 			return false
 		}
-		self.rewardCacheOf(currentTier).Iterate(startHeight, membershipUpdateHeight, func(key string, value interface{}) bool {
-			height := std.MustParseUint(key, 10)
+		self.rewardCacheOf(currentTier).Iterate(startHeight, membershipUpdateHeight, func(height uint64, value interface{}) bool {
 			reward := value.(*u256.Uint)
 			poolRewardCache.Set(height, reward)
 			return false
@@ -327,8 +375,7 @@ func (self *poolTier) cachePoolReward(poolRewardCache *avl.Tree, poolPath string
 	})
 
 	// take account of tier reward changes after the last tier membership change
-	self.rewardCacheOf(currentTier).Iterate(lastHeight, endHeight, func(key string, value interface{}) bool {
-		height := std.MustParseUint(key, 10)
+	self.rewardCacheOf(currentTier).Iterate(lastHeight, endHeight, func(height uint64, value interface{}) bool {
 		reward := value.(*u256.Uint)
 		poolRewardCache.Set(height, reward)
 		return false
@@ -351,7 +398,7 @@ func setInRange(currentlyInRange bool, targetInRange bool) bool {
 	))
 }
 
-func (pool *pool) tickCrossesToEligibleIntervals(
+func (pool *Pool) tickCrossesToEligibleIntervals(
 	tickUpperCrossHeights []uint64,
 	tickUpperCrossZeroForOnes []bool,
 	tickLowerCrossHeights []uint64,
@@ -430,7 +477,6 @@ func (pool *pool) tickCrossesToEligibleIntervals(
 	if currentlyInRange {
 		// position remains in range, add the last interval
 		stakedLiquidity := pool.lastStakedLiquidity(startHeight)
-		endHeight := std.GetHeight()
 		intervals = appendIntervals(intervals, pool.stakedLiquidityUpdates, stakedLiquidity, startHeight, finalHeight)
 	}
 
@@ -445,14 +491,14 @@ func appendIntervals(intervals []interval, updatesFn func(uint64, uint64) ([]uin
 			startHeight,
 			endHeight,
 			value,
-		}), value
+		})
 	}
 
 	if heights[0] != startHeight {
 		intervals = append(intervals, interval{
-			startHeight,
+			startHeight: startHeight,
 			endHeight: heights[0],
-			value,
+			value: value,
 		})
 		startHeight = heights[0]
 		value = updates[0]
@@ -461,9 +507,9 @@ func appendIntervals(intervals []interval, updatesFn func(uint64, uint64) ([]uin
 	}
 	for i := 0; i < len(updates); i++ {
 		intervals = append(intervals, interval{
-			startHeight,
+			startHeight: startHeight,
 			endHeight: heights[i],
-			value,
+			value: value,
 		})
 		startHeight = heights[i]
 		value = updates[i]
@@ -477,7 +523,7 @@ func appendIntervals(intervals []interval, updatesFn func(uint64, uint64) ([]uin
 	return intervals
 }
 
-type tick struct {
+type Tick struct {
 	stakedLiquidityGross *i256.Int
 
 	stakedLiquidityDelta *i256.Int
@@ -494,96 +540,91 @@ type tick struct {
 	// The value can be a 64-bit integer, where each 2-bit represents 00(no-update), 01(backward-cross), 10(forward-cross), 11(no-update).
 
 	// block number -> zeroForOne
-	cross *avl.Tree
+	cross *UintTree
 }
 
-func (self *tick) crossInfo(startHeight, endHeight uint64) ([]uint64, []bool) {
+func (self *Tick) crossInfo(startHeight, endHeight uint64) ([]uint64, []bool) {
 	tickCrossHeights := make([]uint64, 0)
 	tickCrossZeroForOnes := make([]bool, 0)
 
-	self.cross.Iterate(startHeight, endHeight, func(key string, zeroForOne bool) bool {
-		blockNumber := std.MustParseUint(key, 10)
-		tickCrossHeights = append(tickCrossHeights, blockNumber)
-		tickCrossZeroForOnes = append(tickCrossZeroForOnes, zeroForOne)
+	self.cross.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
+		tickCrossHeights = append(tickCrossHeights, key)
+		tickCrossZeroForOnes = append(tickCrossZeroForOnes, value.(bool))
 		return false
 	})
 
 	return tickCrossHeights, tickCrossZeroForOnes
 }
 
-func (self *tick) updateCross(blockNumber uint64, zeroForOne bool) {
-	cross := self.cross.Get(blockNumber)
-	if cross == nil {
-		self.cross.Insert(blockNumber, zeroForOne)
+func (self *Tick) updateCross(blockNumber uint64, zeroForOne bool) {
+	cross, ok := self.cross.Get(blockNumber)
+	if !ok {
+		self.cross.Set(blockNumber, zeroForOne)
 	} else if cross != zeroForOne {
-		self.cross.Delete(blockNumber)
+		self.cross.Remove(blockNumber)
 	}
 }
 
-func (self *tick) lastCross(endHeight uint64) bool {
+func (self *Tick) lastCross(endHeight uint64) bool {
 	// There MUST be at least one cross, set when the position is staked
 	cross := false	
-	self.cross.ReverseIterate(0, endHeight, func(key string, value interface{}) bool {
+	self.cross.ReverseIterate(0, endHeight, func(key uint64, value interface{}) bool {
 		cross = value.(bool)
 		return true
 	})
 	return cross
 }
 
-type pools struct {
+type Pools struct {
 	tree *avl.Tree // string poolPath -> pool
 }
 
-func (self *pools) get(poolPath string) pool {
+func (self *Pools) get(poolPath string) (*Pool, bool) {
 	v, ok := self.tree.Get(poolPath)
 	if !ok {
-		return pool{
-			stakedLiquidity: avl.NewTree(),
-			tier:            avl.NewTree(),
-			reward:          avl.NewTree(),
-		}
+		return nil, false
 	}
-	return v.(pool)
+	return v.(*Pool), true
 }
 
-func (self *pools) set(poolPath string, pool pool) {
+func (self *Pools) set(poolPath string, pool *Pool) {
 	self.tree.Set(poolPath, pool)
 }
 
-type ticks struct {
-	tree *avl.Tree // int32 tickId -> tick
+type Ticks struct {
+	tree *UintTree // int32 tickId -> tick
 }
 
-func (self *ticks) get(tickId int32) tick {
-	tickIdStr := strconv.Itoa(int(tickId))
-	v, ok := self.tree.Get(tickIdStr)
+func (self *Ticks) get(tickId int32) *Tick {
+	v, ok := self.tree.Get(uint64(tickId))
 	if !ok {
-		return tick{
+		tick := Tick{
 			stakedLiquidityGross: i256.Zero(),
 			stakedLiquidityDelta: i256.Zero(),
-			cross:                avl.NewTree(),
+			cross:                NewUintTree(),
 		}
+		self.tree.Set(uint64(tickId), tick)
+		return tick
 	}
-	return v.(tick)
+	return v.(*Tick)
 }
 
-func (self *ticks) set(tickId int32, tick tick) {
-	tickIdStr := strconv.Itoa(int(tickId))
+func (self *Ticks) set(tickId int32, tick *Tick) {
 	if tick.stakedLiquidityGross.IsZero() {
 		// TODO: check if this could cause memory leak of GC halt
 		// because tick.cross being dropped may overload the VM GC
-		self.tree.Delete(tickIdStr)
+		self.tree.Delete(uint64(tickId))
 		return
 	}
-	self.tree.Set(tickIdStr, tick)
+	self.tree.Set(uint64(tickId), tick)
 }
 
 
-type positions struct {
-	tree *avl.Tree // uint64 positionId -> position
+type Positions struct {
+	tree *UintTree // uint64 positionId -> position
 }
 
-func (self *positions) get(positionId uint64) position {
+func (self *Positions) get(positionId uint64) Position {
 	v, ok := self.tree.Get(positionId)
 	if !ok {
 		panic(addDetailToError(
@@ -591,34 +632,34 @@ func (self *positions) get(positionId uint64) position {
 			ufmt.Sprintf("staker.gno__positions.get() || positionId(%d) not found", positionId),
 		))
 	}
-	return v.(position)
+	return v.(Position)
 }
 
-func (self *positions) set(positionId uint64, position position) {
+func (self *Positions) set(positionId uint64, position *Position) {
 	self.tree.Set(positionId, position)
 }
 
-type warmup struct {
+type Warmup struct {
 	nextWarmupHeight uint64
 	warmupRatio uint64
 }
 
-type position struct {
+type Position struct {
 	lastCollectHeight uint64 // last collect block height
 
-	warmups []warmup
+	warmups []Warmup
 }
 
-func NewPosition(currentHeight uint64, avgBlockTimeInMs int64) *position {
+func NewPosition(currentHeight uint64, avgBlockTimeInMs int64) *Position {
 	msInDay := uint64(86400000)
 	blocksInDay := msInDay / uint64(avgBlockTimeInMs)
 	blocksIn5Days := uint64(5 * blocksInDay)
 	blocksIn10Days := uint64(10 * blocksInDay)
 	blocksIn30Days := uint64(30 * blocksInDay)
 
-	return &position{
+	return &Position{
 		lastCollectHeight: currentHeight,
-		warmups: []warmup{
+		warmups: []Warmup{
 			{
 				nextWarmupHeight: currentHeight + blocksIn5Days,
 				warmupRatio: 30,
@@ -639,7 +680,7 @@ func NewPosition(currentHeight uint64, avgBlockTimeInMs int64) *position {
 	}
 }
 
-func (self *position) findWarmup(height uint64) warmup {
+func (self *Position) findWarmup(height uint64) Warmup {
 	for _, warmup := range self.warmups {
 		if height < warmup.nextWarmupHeight {
 			return warmup
@@ -648,77 +689,83 @@ func (self *position) findWarmup(height uint64) warmup {
 	return self.warmups[len(self.warmups) - 1]
 }
 
-func (self warmup) calculateReward(rewardAcc, penaltyAcc, blockNumber uint64, perBlockReward *u256.Uint) {
-	rewardRatio := u256.NewUint(self.warmupRatio)
-	penaltyRatio := u256.NewUint(100 - self.warmupRatio)
-	totalReward := blockNumber.Mul(blockNumber, perBlockReward)
-	rewardAcc.Add(rewardAcc, rewardRatio.Mul(rewardRatio, totalReward))
-	penaltyAcc.Add(penaltyAcc, penaltyRatio.Mul(penaltyRatio, totalReward))
+func (self Warmup) calculateReward(blockNumber uint64, perBlockReward uint64) (uint64, uint64) {
+	rewardRatio := self.warmupRatio
+	penaltyRatio := 100 - self.warmupRatio
+	totalReward := blockNumber * perBlockReward // TODO: check overflow
+	return totalReward * rewardRatio / 100, totalReward * penaltyRatio / 100
 }
 
-func (self *position) calculateReward(rewardAcc, penaltyAcc, perBlockReward *u256.Uint, startHeight, endHeight uint64) {
+func (self *Position) calculateReward(perBlockReward uint64, startHeight, endHeight uint64) (uint64, uint64) {
 	if startHeight >= endHeight {
-		return
+		return 0, 0
 	}
 
-	warmup := findWarmup(self.warmups, startHeight)
+	warmup := self.findWarmup(startHeight)
 	if endHeight < warmup.nextWarmupHeight {
-		warmup.calculateReward(rewardAcc, penaltyAcc, endHeight - startHeight, perBlockReward)
-		return
+		return warmup.calculateReward(endHeight - startHeight, perBlockReward)
 	}
 
-	warmup.calculateReward(rewardAcc, penaltyAcc, warmup.nextWarmupHeight - startHeight, perBlockReward)
-	self.calculateReward(rewardAcc, penaltyAcc, perBlockReward, warmup.nextWarmupHeight, endHeight)
+	warmupReward, warmupPenalty := warmup.calculateReward(warmup.nextWarmupHeight - startHeight, perBlockReward)
+	reward, penalty := self.calculateReward(perBlockReward, warmup.nextWarmupHeight, endHeight)
+	return warmupReward + reward, warmupPenalty + penalty
 }
 
-func (self *position) eligibleIntervalsToReward(intervals []interval, pool *pool, endHeight uint64) (*u256.Uint, *u256.Uint) {
-	startHeight := self.lastCollectHeight
-	
-	totalReward := u256.Zero()
-	totalPenalty := u256.Zero()
+func (self *Position) eligibleIntervalsToReward(intervals []interval, pool *Pool, positionLiquidity *u256.Uint, endHeight uint64) (uint64, uint64) {
+	totalReward := uint64(0)
+	totalPenalty := uint64(0)
 
 	for _, interval := range intervals {
-		totalStakedLiquidity := interval.value
-		currentReward := pool.lastReward(interval.startHeight)
+		poolStakedLiquidity := interval.value
+		poolReward := pool.lastReward(interval.startHeight)
 		currentHeight := interval.startHeight
-		pool.rewardCache.Iterate(interval.startHeight, interval.endHeight, func(key string, value interface{}) bool {
-			height := std.MustParseUint(key, 10)
-		
-			self.calculateReward(totalReward, totalPenalty, currentReward, currentHeight, height)
-
+		pool.rewardCache.Iterate(interval.startHeight, interval.endHeight, func(height uint64, value interface{}) bool {
+			perPositionReward := u256.Zero().Mul(poolReward, positionLiquidity)
+			perPositionReward = perPositionReward.Div(perPositionReward, poolStakedLiquidity)
+			currentReward, currentPenalty := self.calculateReward(perPositionReward.Uint64(), currentHeight, height)
+			
+			totalReward += currentReward
+			totalPenalty += currentPenalty
+			
 			currentHeight = height
-			currentReward = value.(*u256.Uint)
+			poolReward = value.(*u256.Uint)
 			return false
 		})
-		self.calculateReward(totalReward, totalPenalty, currentReward, currentHeight, interval.endHeight)
+		perPositionReward := u256.Zero().Mul(poolReward, positionLiquidity)
+		perPositionReward = perPositionReward.Div(perPositionReward, poolStakedLiquidity)
+		currentReward, currentPenalty := self.calculateReward(perPositionReward.Uint64(), currentHeight, interval.endHeight)
+		totalReward += currentReward
+		totalPenalty += currentPenalty
 	}	
-
-	u100 := u256.NewUint(100)
-	totalReward = totalReward.Div(totalReward, u100)
-	totalPenalty = totalPenalty.Div(totalPenalty, u100)
 
 	return totalReward, totalPenalty
 }
 
 
 var (
-	pools = pools{
+	pools = &Pools{
 		tree: avl.NewTree(),
 	}
 
-	ticks = ticks{
-		tree: avl.NewTree(),
+	ticks = &Ticks{
+		tree: NewUintTree(),
 	}
 
-	positions = positions{
-		tree: avl.NewTree(),
+	positions = &Positions{
+		tree: NewUintTree(),
 	}
 )
 
 func modifyPosition(poolPath string, tokenId uint64, liquidity *u256.Uint) {
 	// update staker side pool info
 	if pn.PositionIsInRange(tokenId) {
-		pool := pools.get(poolPath)
+		pool, ok := pools.get(poolPath)
+		if !ok {
+			panic(addDetailToError(
+				errDataNotFound,
+				ufmt.Sprintf("staker.gno__modifyPosition() || poolPath(%s) not found", poolPath),
+			))
+		}
 		pool.stakedLiquidity = liquidityMathAddDelta(pool.stakedLiquidity, liquidity)
 		pools.set(poolPath, pool)
 	}
@@ -730,7 +777,7 @@ func modifyPosition(poolPath string, tokenId uint64, liquidity *u256.Uint) {
 	lowerTick.stakedLiquidityDelta = liquidityMathAddDelta(lowerTick.stakedLiquidityDelta, liquidity)
 
 	currentTick := pl.PoolGetSlot0Tick(poolPath)
-	lowerTick.updateCross(std.GetHeight(), currentTick < lowerTickId)
+	lowerTick.updateCross(uint64(std.GetHeight()), currentTick < lowerTickId)
 	ticks.set(lowerTickId, lowerTick)
 
 	upperTickId := pn.PositionGetPositionTickUpper(tokenId)
@@ -748,10 +795,7 @@ func tickCrossHook(poolPath string, tickId int32, zeroForOne bool) {
 		return
 	}
 
-	tick, ok := ticks.get(tickId)
-	if !ok {
-		return
-	}
+	tick := ticks.get(tickId)
 
 	pool, ok := pools.get(poolPath)
 	if !ok {
@@ -761,10 +805,10 @@ func tickCrossHook(poolPath string, tickId int32, zeroForOne bool) {
 		))
 	}
 
-	blockNumber := std.GetHeight()
+	blockNumber := uint64(std.GetHeight())
 	tick.updateCross(blockNumber, zeroForOne)
 
-	liquidityInRangeDelta := tick.liquidityInRangeDelta
+	liquidityInRangeDelta := tick.stakedLiquidityDelta
 	if zeroForOne {
 		liquidityInRangeDelta = i256.Zero().Neg(liquidityInRangeDelta)
 	}
@@ -773,4 +817,57 @@ func tickCrossHook(poolPath string, tickId int32, zeroForOne bool) {
 
 	// I'm not sure if this is needed. We may not need to update the pool info because the stakedLiquidity pointer itself has not changed.
 	pools.set(poolPath, pool)
+}
+
+// liquidityMathAddDelta calculates the new liquidity by applying the delta liquidity to the current liquidity.
+// If delta liquidity is negative, it subtracts the absolute value of delta liquidity from the current liquidity.
+// If delta liquidity is positive, it adds the absolute value of delta liquidity to the current liquidity.
+//
+// Parameters:
+// - x: The current liquidity as a uint256 value.
+// - y: The delta liquidity as a signed int256 value.
+//
+// Returns:
+// - The new liquidity as a uint256 value.
+//
+// Notes:
+// - If `x` or `y` is nil, the function panics with an appropriate error message.
+// - If `y` is negative, its absolute value is subtracted from `x`.
+//   - The result must be less than `x`. Otherwise, the function panics to prevent underflow.
+//
+// - If `y` is positive, it is added to `x`.
+//   - The result must be greater than or equal to `x`. Otherwise, the function panics to prevent overflow.
+//
+// - The function ensures correctness by validating the results of the arithmetic operations.
+func liquidityMathAddDelta(x *u256.Uint, y *i256.Int) *u256.Uint {
+	if x == nil || y == nil {
+		panic(addDetailToError(
+			errInvalidInput,
+			"x or y is nil",
+		))
+	}
+
+	var z *u256.Uint
+
+	// Subtract or add based on the sign of y
+	if y.Lt(i256.Zero()) {
+		absDelta := y.Abs()
+		z = new(u256.Uint).Sub(x, absDelta)
+		if z.Gte(x) {
+			panic(addDetailToError(
+				errLiquidityCalculation,
+				ufmt.Sprintf("Condition failed: (z must be < x) (x: %s, y: %s, z:%s)", x.ToString(), y.ToString(), z.ToString()),
+			))
+		}
+	} else {
+		z = new(u256.Uint).Add(x, y.Abs())
+		if z.Lt(x) {
+			panic(addDetailToError(
+				errLiquidityCalculation,
+				ufmt.Sprintf("Condition failed: (z must be >= x) (x: %s, y: %s, z:%s)", x.ToString(), y.ToString(), z.ToString()),
+			))
+		}
+	}
+
+	return z
 }
