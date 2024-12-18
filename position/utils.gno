@@ -227,9 +227,11 @@ func splitOf(poolKey string) (string, string, uint32) {
 	if err != nil {
 		panic(newErrorWithDetail(errInvalidInput, ufmt.Sprintf("invalid poolKey(%s)", poolKey)))
 	}
-
 	pToken0, pToken1, pFeeStr := res[0], res[1], res[2]
 
-	pFee, _ := strconv.Atoi(pFeeStr)
+	pFee, err := strconv.Atoi(pFeeStr)
+	if err != nil {
+		panic(newErrorWithDetail(errInvalidInput, ufmt.Sprintf("invalid fee(%s)", pFeeStr)))
+	}
 	return pToken0, pToken1, uint32(pFee)
 }
