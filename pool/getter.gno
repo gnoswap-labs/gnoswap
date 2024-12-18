@@ -1,6 +1,5 @@
 package pool
 
-// pool
 func PoolGetPoolList() []string {
 	poolPaths := []string{}
 	for poolPath, _ := range pools {
@@ -74,7 +73,6 @@ func PoolGetLiquidity(poolPath string) string {
 	return mustGetPool(poolPath).Liquidity().ToString()
 }
 
-// position
 func PoolGetPositionLiquidity(poolPath, key string) string {
 	return mustGetPool(poolPath).PositionLiquidity(key).ToString()
 }
@@ -95,7 +93,6 @@ func PoolGetPositionTokensOwed1(poolPath, key string) string {
 	return mustGetPool(poolPath).PositionTokensOwed1(key).ToString()
 }
 
-// tick
 func PoolGetTickLiquidityGross(poolPath string, tick int32) string {
 	return mustGetPool(poolPath).GetTickLiquidityGross(tick).ToString()
 }

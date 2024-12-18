@@ -225,18 +225,16 @@ func SetFeeProtocolByAdmin(
 	feeProtocol0 uint8,
 	feeProtocol1 uint8,
 ) {
-	caller := std.PrevRealm().Addr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
+	assertOnlyAdmin()
+	newFee, oldFee := setFeeProtocol(feeProtocol0, feeProtocol1)
 
-	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
-
-	prevAddr, prevRealm := getPrevAsString()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"SetFeeProtocolByAdmin",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
+		"feeProtocol0Old", ufmt.Sprintf("%d", oldFee%16),
+		"feeProtocol1Old", ufmt.Sprintf("%d", oldFee>>4),
 		"feeProtocol0", ufmt.Sprintf("%d", feeProtocol0),
 		"feeProtocol1", ufmt.Sprintf("%d", feeProtocol1),
 		"internal_newFee", ufmt.Sprintf("%d", newFee),
@@ -248,18 +246,16 @@ func SetFeeProtocolByAdmin(
 // Also it will be applied to new created pools
 // ref: https://docs.gnoswap.io/contracts/pool/pool.gno#setfeeprotocol
 func SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
-	caller := std.PrevRealm().Addr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
+	assertOnlyGovernance()
+	newFee, oldFee := setFeeProtocol(feeProtocol0, feeProtocol1)
 
-	newFee := setFeeProtocol(feeProtocol0, feeProtocol1)
-
-	prevAddr, prevRealm := getPrevAsString()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"SetFeeProtocol",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
+		"feeProtocol0Old", ufmt.Sprintf("%d", oldFee%16),
+		"feeProtocol1Old", ufmt.Sprintf("%d", oldFee>>4),
 		"feeProtocol0", ufmt.Sprintf("%d", feeProtocol0),
 		"feeProtocol1", ufmt.Sprintf("%d", feeProtocol1),
 		"internal_newFee", ufmt.Sprintf("%d", newFee),
@@ -291,9 +287,8 @@ func SetFeeProtocol(feeProtocol0, feeProtocol1 uint8) {
 //	// Binary: 0101 0100
 //	//         ^^^^ ^^^^
 //	//       fee1=5  fee0=4
-func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) uint8 {
-	common.IsHalted()
-
+func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) (uint8, uint8) {
+	assertOnlyNotHalted()
 	if err := validateFeeProtocol(feeProtocol0, feeProtocol1); err != nil {
 		panic(addDetailToError(
 			err,
@@ -301,22 +296,39 @@ func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) uint8 {
 		))
 	}
 
+	oldFee := slot0FeeProtocol
 	// combine both protocol fee into a single byte:
 	// - feePrtocol0 occupies the lower 4 bits
 	// - feeProtocol1 is shifted the lower 4 positions to occupy the upper 4 bits
 	newFee := feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
 
-	// iterate all pool
+	// Update slot0 for each pool
 	for _, pool := range pools {
-		pool.slot0.feeProtocol = newFee
+		if pool != nil {
+			oldFee = pool.slot0.feeProtocol
+			pool.slot0.feeProtocol = newFee
+		}
 	}
 
 	// update slot0
 	slot0FeeProtocol = newFee
 
-	return newFee
+	return newFee, oldFee
 }
 
+// validateFeeProtocol validates the fee protocol values for token0 and token1.
+//
+// This function checks whether the provided fee protocol values (`feeProtocol0` and `feeProtocol1`)
+// are valid using the `isValidFeeProtocolValue` function. If either value is invalid, it returns
+// an error indicating that the protocol fee percentage is invalid.
+//
+// Parameters:
+//   - feeProtocol0: uint8, the fee protocol value for token0.
+//   - feeProtocol1: uint8, the fee protocol value for token1.
+//
+// Returns:
+//   - error: Returns `errInvalidProtocolFeePct` if either `feeProtocol0` or `feeProtocol1` is invalid.
+//     Returns `nil` if both values are valid.
 func validateFeeProtocol(feeProtocol0, feeProtocol1 uint8) error {
 	if !isValidFeeProtocolValue(feeProtocol0) || !isValidFeeProtocolValue(feeProtocol1) {
 		return errInvalidProtocolFeePct
@@ -337,17 +349,10 @@ func CollectProtocolByAdmin(
 	token1Path string,
 	fee uint32,
 	recipient std.Address,
-	amount0Requested string, // uint128
-	amount1Requested string, // uint128
-) (string, string) { // uint128 x2
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
-
-	caller := std.PrevRealm().Addr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
-
+	amount0Requested string,
+	amount1Requested string,
+) (string, string) {
+	assertOnlyAdmin()
 	amount0, amount1 := collectProtocol(
 		token0Path,
 		token1Path,
@@ -357,11 +362,11 @@ func CollectProtocolByAdmin(
 		amount1Requested,
 	)
 
-	prevAddr, prevRealm := getPrevAsString()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"CollectProtocolByAdmin",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"token0Path", token0Path,
 		"token1Path", token1Path,
 		"fee", ufmt.Sprintf("%d", fee),
@@ -385,14 +390,7 @@ func CollectProtocol(
 	amount0Requested string, // uint128
 	amount1Requested string, // uint128
 ) (string, string) { // uint128 x2
-	common.MustRegistered(token0Path)
-	common.MustRegistered(token1Path)
-
-	caller := std.PrevRealm().Addr()
-	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
-	}
-
+	assertOnlyGovernance()
 	amount0, amount1 := collectProtocol(
 		token0Path,
 		token1Path,
@@ -402,11 +400,11 @@ func CollectProtocol(
 		amount1Requested,
 	)
 
-	prevAddr, prevRealm := getPrevAsString()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"CollectProtocol",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"token0Path", token0Path,
 		"token1Path", token1Path,
 		"fee", ufmt.Sprintf("%d", fee),
@@ -418,6 +416,23 @@ func CollectProtocol(
 	return amount0, amount1
 }
 
+// collectProtocol collects protocol fees for token0 and token1 from the specified pool.
+//
+// This function allows the collection of accumulated protocol fees for token0 and token1. It ensures
+// the requested amounts do not exceed the available protocol fees in the pool and transfers the
+// collected amounts to the specified recipient.
+//
+// Parameters:
+//   - token0Path: string, the path or identifier for token0.
+//   - token1Path: string, the path or identifier for token1.
+//   - fee: uint32, the fee tier of the pool.
+//   - recipient: std.Address, the address to receive the collected protocol fees.
+//   - amount0Requested: string, the requested amount of token0 to collect (decimal string).
+//   - amount1Requested: string, the requested amount of token1 to collect (decimal string).
+//
+// Returns:
+//   - string: The actual amount of token0 collected, as a string.
+//   - string: The actual amount of token1 collected, as a string.
 func collectProtocol(
 	token0Path string,
 	token1Path string,
@@ -426,25 +441,37 @@ func collectProtocol(
 	amount0Requested string,
 	amount1Requested string,
 ) (string, string) {
-	common.IsHalted()
+	assertOnlyRegistered(token0Path)
+	assertOnlyRegistered(token1Path)
+	assertOnlyNotHalted()
 
 	pool := GetPool(token0Path, token1Path, fee)
 
 	amount0Req := u256.MustFromDecimal(amount0Requested)
 	amount1Req := u256.MustFromDecimal(amount1Requested)
 
-	amount0 := u256Min(amount0Req, pool.protocolFees.token0)
-	amount1 := u256Min(amount1Req, pool.protocolFees.token1)
+	amount0 := u256Min(amount0Req, pool.ProtocolFeesToken0())
+	amount1 := u256Min(amount1Req, pool.ProtocolFeesToken1())
 
-	amount0, amount1 = pool.saveProtocolFees(amount0, amount1)
+	amount0, amount1 = pool.saveProtocolFees(amount0.Clone(), amount1.Clone())
 	uAmount0 := amount0.Uint64()
 	uAmount1 := amount1.Uint64()
 
 	token0Teller := common.GetTokenTeller(pool.token0Path)
 	checkTransferError(token0Teller.Transfer(recipient, uAmount0))
+	newBalanceToken0, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount0, true)
+	if err != nil {
+		panic(err)
+	}
+	pool.balances.token0 = newBalanceToken0
 
 	token1Teller := common.GetTokenTeller(pool.token1Path)
 	checkTransferError(token1Teller.Transfer(recipient, uAmount1))
+	newBalanceToken1, err := updatePoolBalance(pool.BalanceToken0(), pool.BalanceToken1(), amount1, false)
+	if err != nil {
+		panic(err)
+	}
+	pool.balances.token1 = newBalanceToken1
 
 	return amount0.ToString(), amount1.ToString()
 }
@@ -458,19 +485,19 @@ func collectProtocol(
 // Returns the adjusted amounts that will actually be collected for both tokens.
 func (p *Pool) saveProtocolFees(amount0, amount1 *u256.Uint) (*u256.Uint, *u256.Uint) {
 	cond01 := amount0.Gt(u256.Zero())
-	cond02 := amount0.Eq(p.protocolFees.token0)
+	cond02 := amount0.Eq(p.ProtocolFeesToken0())
 	if cond01 && cond02 {
 		amount0 = new(u256.Uint).Sub(amount0, u256.One())
 	}
 
 	cond11 := amount1.Gt(u256.Zero())
-	cond12 := amount1.Eq(p.protocolFees.token1)
+	cond12 := amount1.Eq(p.ProtocolFeesToken1())
 	if cond11 && cond12 {
 		amount1 = new(u256.Uint).Sub(amount1, u256.One())
 	}
 
-	p.protocolFees.token0 = new(u256.Uint).Sub(p.protocolFees.token0, amount0)
-	p.protocolFees.token1 = new(u256.Uint).Sub(p.protocolFees.token1, amount1)
+	p.protocolFees.token0 = new(u256.Uint).Sub(p.ProtocolFeesToken0(), amount0)
+	p.protocolFees.token1 = new(u256.Uint).Sub(p.ProtocolFeesToken1(), amount1)
 
 	// return rest fee
 	return amount0, amount1

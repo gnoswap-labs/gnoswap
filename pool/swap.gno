@@ -514,11 +514,11 @@ func (p *Pool) swapTransfers(zeroForOne bool, payer, recipient std.Address, amou
 		// payer > POOL
 		p.safeTransferFrom(payer, consts.POOL_ADDR, p.token0Path, amount0.Abs(), true)
 		// POOL > recipient
-		p.transferAndVerify(recipient, p.token1Path, amount1, false)
+		p.safeTransfer(recipient, p.token1Path, amount1, false)
 	} else {
 		// payer > POOL
 		p.safeTransferFrom(payer, consts.POOL_ADDR, p.token1Path, amount1.Abs(), false)
 		// POOL > recipient
-		p.transferAndVerify(recipient, p.token0Path, amount0, true)
+		p.safeTransfer(recipient, p.token0Path, amount0, true)
 	}
 }

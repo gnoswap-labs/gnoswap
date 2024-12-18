@@ -254,3 +254,24 @@ func assertOnlyInitializedUint256(value *u256.Uint) {
 		))
 	}
 }
+
+// assertOnlyAdmin panics if the caller is not the admin.
+func assertOnlyAdmin() {
+	caller := getPrevAddr()
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err)
+	}
+}
+
+// assertOnlyGovernance panics if the caller is not the governance.
+func assertOnlyGovernance() {
+	caller := getPrevAddr()
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err)
+	}
+}
+
+// assertOnlyRegistered panics if the token is not registered.
+func assertOnlyRegistered(tokenPath string) {
+	common.MustRegistered(tokenPath)
+}

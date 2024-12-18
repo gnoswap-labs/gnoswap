@@ -11,7 +11,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-// transferAndVerify performs a token transfer out of the pool while ensuring
+// safeTransfer performs a token transfer out of the pool while ensuring
 // the pool has sufficient balance and updating internal accounting.
 // This function is typically used during swaps and liquidity removals.
 //
@@ -33,7 +33,7 @@ import (
 //  4. Update pool's internal balance
 //
 // Panics if any validation fails or if the transfer fails
-func (p *Pool) transferAndVerify(
+func (p *Pool) safeTransfer(
 	to std.Address,
 	tokenPath string,
 	amount *i256.Int,
@@ -47,8 +47,8 @@ func (p *Pool) transferAndVerify(
 
 	absAmount := amount.Abs()
 
-	token0 := p.balances.token0
-	token1 := p.balances.token1
+	token0 := p.BalanceToken0()
+	token1 := p.BalanceToken1()
 
 	if err := validatePoolBalance(token0, token1, absAmount, isToken0); err != nil {
 		panic(err)
@@ -181,7 +181,7 @@ func updatePoolBalance(
 		if isBalanceOverflowOrNegative(overflow, newBalance) {
 			return nil, ufmt.Errorf(
 				"%v. cannot decrease, token0(%s) - amount(%s)",
-				errTransferFailed, token0.ToString(), amount.ToString(),
+				errBalanceUpdateFailed, token0.ToString(), amount.ToString(),
 			)
 		}
 		return newBalance, nil
@@ -191,12 +191,13 @@ func updatePoolBalance(
 	if isBalanceOverflowOrNegative(overflow, newBalance) {
 		return nil, ufmt.Errorf(
 			"%v. cannot decrease, token1(%s) - amount(%s)",
-			errTransferFailed, token1.ToString(), amount.ToString(),
+			errBalanceUpdateFailed, token1.ToString(), amount.ToString(),
 		)
 	}
 	return newBalance, nil
 }
 
+// isBalanceOverflowOrNegative checks if the balance calculation resulted in an overflow or negative value.
 func isBalanceOverflowOrNegative(overflow bool, newBalance *u256.Uint) bool {
 	return overflow || newBalance.Lt(u256.Zero())
 }
