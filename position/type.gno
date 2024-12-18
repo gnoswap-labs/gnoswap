@@ -50,6 +50,24 @@ type MintParams struct {
 	caller         std.Address // address to call the function
 }
 
+// newMintParams creates `MintParams` from processed input data.
+func newMintParams(input ProcessedMintInput, mintInput MintInput) MintParams {
+	return MintParams{
+		token0:         input.tokenPair.token0,
+		token1:         input.tokenPair.token1,
+		fee:            mintInput.fee,
+		tickLower:      mintInput.tickLower,
+		tickUpper:      mintInput.tickUpper,
+		amount0Desired: input.amount0Desired,
+		amount1Desired: input.amount1Desired,
+		amount0Min:     input.amount0Min,
+		amount1Min:     input.amount1Min,
+		deadline:       mintInput.deadline,
+		mintTo:         mintInput.mintTo,
+		caller:         mintInput.caller,
+	}
+}
+
 type AddLiquidityParams struct {
 	poolKey        string      // poolPath of the pool which has the position
 	tickLower      int32       // lower end of the tick range for the position
