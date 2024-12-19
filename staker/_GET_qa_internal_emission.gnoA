@@ -9,7 +9,7 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 
-	en "gno.land/r/gnoswap/v1/emission"
+	// en "gno.land/r/gnoswap/v1/emission"
 )
 
 // DEBUG INTERNAL (GNS EMISSION)
@@ -39,7 +39,7 @@ func getCurrentInfo() currentInfo {
 
 func printInfo(prev currentInfo) currentInfo {
 	curr := getCurrentInfo()
-
+	/*
 	println("***********************")
 	println("> height:", curr.height)
 	println("> height inc by:", curr.height-prev.height)
@@ -63,6 +63,7 @@ func printInfo(prev currentInfo) currentInfo {
 		println("> poolPath:", k, "amount:", v)
 	}
 
+
 	println("GNS POSITION")
 	for k, v := range positionGns {
 		posWarmCalc := positionsInternalWarmUpAmount[k]
@@ -72,6 +73,8 @@ func printInfo(prev currentInfo) currentInfo {
 		println("> 50%", "full", posWarmCalc.full50, "give", posWarmCalc.give50)
 		println("> 30%", "full", posWarmCalc.full30, "give", posWarmCalc.give30)
 	}
+	*/
+	panic("SHOULD BE REIMPLEMENTED BEFORE MERGING")
 
 	return curr
 }
@@ -107,13 +110,7 @@ type ApiEmissionDebugPosition struct {
 }
 
 func GetPrintInfo() string {
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
+	/*
 	emissionDebug := ApiEmissionDebugInfo{}
 	emissionDebug.Height = std.GetHeight()
 	emissionDebug.Time = time.Now().Unix()
@@ -180,9 +177,12 @@ func GetPrintInfo() string {
 	}
 
 	return string(b)
+	*/
+	panic("SHOULD BE REIMPLEMENTED BEFORE MERGING")
 }
 
 func makePoolsNode(emissionPool []ApiEmissionDebugPool) []*json.Node {
+	/*
 	pools := make([]*json.Node, 0)
 
 	for poolPath, internal := range poolTiers {
@@ -208,9 +208,12 @@ func makePoolsNode(emissionPool []ApiEmissionDebugPool) []*json.Node {
 	}
 
 	return pools
+	*/
+	panic("SHOULD BE REIMPLEMENTED BEFORE MERGING")
 }
 
 func makePositionsNode(poolPath string) []*json.Node {
+	/*
 	positions := make([]*json.Node, 0)
 
 	for lpTokenId, deposit := range deposits {
@@ -245,4 +248,6 @@ func makePositionsNode(poolPath string) []*json.Node {
 	}
 
 	return positions
+	*/
+	panic("SHOULD BE REIMPLEMENTED BEFORE MERGING")
 }

@@ -360,7 +360,7 @@ func removePoolTier(pool string) {
 
 	delete(poolTiers, pool)
 }
-
+/*
 // mustValidTier checks if the provided tier is valid (between 1 and 3)
 func mustValidTier(tier uint64) {
 	if tier < 1 || tier > 3 {
@@ -376,3 +376,4 @@ func isExistPoolTiers(poolPath string) bool {
 	_, exist := poolTiers[poolPath]
 	return exist
 }
+*/

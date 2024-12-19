@@ -23,13 +23,6 @@ import (
 // Panics:
 //   - If the pool incentives do not exist for the given pool path
 func StakerPoolIncentives(poolPath string) []string {
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
 	incentives, exist := poolIncentives[poolPath]
 	if !exist {
 		panic(addDetailToError(
@@ -52,13 +45,6 @@ func StakerPoolIncentives(poolPath string) []string {
 // Panics:
 //   - If the incentive does nor exist for the given incentive ID
 func StakerIncentiveTargetPoolPath(incentiveId string) string {
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(addDetailToError(
@@ -81,13 +67,6 @@ func StakerIncentiveTargetPoolPath(incentiveId string) string {
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
 func StakerIncentiveRewardToken(incentiveId string) string {
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(addDetailToError(
@@ -110,13 +89,6 @@ func StakerIncentiveRewardToken(incentiveId string) string {
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
 func StakerIncentiveRewardAmount(incentiveId string) *u256.Uint {
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(addDetailToError(
@@ -139,13 +111,6 @@ func StakerIncentiveRewardAmount(incentiveId string) *u256.Uint {
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
 func StakerIncentiveRewardAmountStr(incentiveId string) string {
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(addDetailToError(
@@ -168,13 +133,6 @@ func StakerIncentiveRewardAmountStr(incentiveId string) string {
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
 func StakerIncentiveStartTimestamp(incentiveId string) int64 {
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(addDetailToError(
@@ -197,13 +155,6 @@ func StakerIncentiveStartTimestamp(incentiveId string) int64 {
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
 func StakerIncentiveEndTimestamp(incentiveId string) int64 {
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(addDetailToError(
@@ -226,13 +177,6 @@ func StakerIncentiveEndTimestamp(incentiveId string) int64 {
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
 func StakerIncentiveRefundee(incentiveId string) std.Address {
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
 	incentive, exist := incentives[incentiveId]
 	if !exist {
 		panic(addDetailToError(
@@ -255,14 +199,7 @@ func StakerIncentiveRefundee(incentiveId string) std.Address {
 // Panics:
 //   - If the deposit does not exist for the given lpTokenId
 func StakerDepositOwner(lpTokenId uint64) std.Address {
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
-	deposit, exist := deposits[lpTokenId]
+	deposit, exist := deposits.get(lpTokenId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -315,14 +252,7 @@ func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
 // Panics:
 //   - If the deposit does not exist for the given lpTokenId
 func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
-	deposit, exist := deposits[lpTokenId]
+	deposit, exist := deposits.get(lpTokenId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -344,14 +274,7 @@ func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
 // Panics:
 //   - If the deposit does not exist for the given lpTokenId
 func StakerDepositTargetPoolPath(lpTokenId uint64) string {
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
-	deposit, exist := deposits[lpTokenId]
+	deposit, exist := deposits.get(lpTokenId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,

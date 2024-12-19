@@ -85,13 +85,7 @@ type ApiExternalDebugIncentive struct {
 
 func GetPrintExternalInfo() string {
 	// TODO: LIMIT ONLY ABCI_QUERY CAN CALL THIS
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
+	/*
 	updateExternalIncentiveLeftAmount()
 
 	externalDebug := ApiExternalDebugInfo{}
@@ -102,8 +96,9 @@ func GetPrintExternalInfo() string {
 	for lpTokenId, externals := range positionExternal {
 		externalPosition := ApiExternalDebugPosition{}
 		externalPosition.LpTokenId = lpTokenId
-		externalPosition.StakedHeight = deposits[lpTokenId].stakeHeight
-		externalPosition.StakedTimestamp = deposits[lpTokenId].stakeTimestamp
+		deposit, _ := deposits.get(lpTokenId)
+		externalPosition.StakedHeight = deposit.stakeHeight
+		externalPosition.StakedTimestamp = deposit.stakeTimestamp
 
 		externalIncentives := []ApiExternalDebugIncentive{}
 		for incentiveId, external := range externals {
@@ -164,6 +159,9 @@ func GetPrintExternalInfo() string {
 	}
 
 	return string(b)
+	*/
+
+	panic("SHOULD BE REIMPLEMENTED BEFORE MERGING")
 }
 
 func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Node {
@@ -172,8 +170,8 @@ func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Nod
 	for _, externalPosition := range positions {
 		incentives := make([]*json.Node, 0)
 		for _, incentive := range externalPosition.Incentive {
-
-			_max := max(incentive.StartTimestamp, deposits[externalPosition.LpTokenId].stakeTimestamp)
+			deposit, _ := deposits.get(externalPosition.LpTokenId)
+			_max := max(incentive.StartTimestamp, deposit.stakeTimestamp)
 			stakedOrExternalDuration := (time.Now().Unix() - _max) / consts.BLOCK_GENERATION_INTERVAL
 
 			incentives = append(incentives, json.ObjectNode("", map[string]*json.Node{

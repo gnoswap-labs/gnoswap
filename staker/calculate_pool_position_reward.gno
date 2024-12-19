@@ -4,7 +4,7 @@ import (
 	"std"
 	//"time"
 
-	"gno.land/p/demo/ufmt"
+	//"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -13,7 +13,7 @@ import (
 	//pn "gno.land/r/gnoswap/v1/position"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	en "gno.land/r/gnoswap/v1/emission"
+	//en "gno.land/r/gnoswap/v1/emission"
 )
 
 // poolPath -> gnsAmount [accu]
@@ -208,14 +208,18 @@ func CalcPoolPositionRefactor() bool {
 	return true
 }
 */
-func CalcPositionReward(tokenId uint64) (uint64, uint64) {
+func CalcPositionReward(tokenId uint64) ([]uint64, []uint64) {
 	// cache per-tier and per-pool reward
 	currentHeight := uint64(std.GetHeight())
 	poolTier.cacheReward(currentHeight)
 	deposit := deposits.Get(tokenId)
 	poolPath := deposit.targetPoolPath
-	pool := pools.Get(poolPath)
-	poolTier.cachePoolReward(pool.rewardCache, poolPath, currentHeight)
+	pool, ok := pools.Get(poolPath)
+	if !ok {
+		pool = NewPool(poolPath, currentHeight)
+		pools.Set(poolPath, pool)
+	}
+	pool.cacheReward(poolTier, currentHeight)
 
 	// eligible(in-range) intervals for a position
 	upperTick := ticks.Get(deposit.tickUpper)
@@ -232,9 +236,9 @@ func CalcPositionReward(tokenId uint64) (uint64, uint64) {
 
 	intervals := pool.TickCrossesToEligibleIntervals(tickUpperCrossHeights, tickUpperCrossZeroForOnes, tickLowerCrossHeights, tickLowerCrossZeroForOnes, currentlyInRange, lastCollectHeight, currentHeight)
 
-	totalReward, totalPenalty := deposit.EligibleIntervalsToReward(intervals, pool, currentHeight)
+	rewards, penalties := pool.EligibleIntervalsToInternalReward(intervals, deposit)
 
-	return totalReward, totalPenalty
+	return rewards, penalties
 }
 
 // XXX: need to improve nested iteration

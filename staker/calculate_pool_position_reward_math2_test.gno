@@ -52,17 +52,18 @@ func newTestFixture(t *testing.T) *TestFixture {
 
 func (tf *TestFixture) setup() {
 	// Initialize global state
+	/*
 	incentives = map[string]ExternalIncentive{
 		tf.IncentiveId: {
 			startTimestamp: tf.StartTime,
 		},
 	}
-
+*/
 	deposits = NewDeposits()
 	deposits.Set(tf.TokenId, &Deposit{
 		stakeTimestamp: tf.StakeTime,
 	})
-
+/*
 	positionExternal = map[uint64]map[string]externalRewards{
 		tf.TokenId: {
 			tf.IncentiveId: externalRewards{
@@ -89,9 +90,11 @@ func (tf *TestFixture) setup() {
 			tf.IncentiveId: {},
 		},
 	}
+		*/
 }
 
 func TestRewardMathComputeExternalRewardAmount(t *testing.T) {
+	/*
 	milion := new(u256.Uint).Mul(u256.NewUint(1000000), _q96)
 	zero := new(u256.Uint).SetUint64(0)
 
@@ -294,9 +297,14 @@ func TestRewardMathComputeExternalRewardAmount(t *testing.T) {
 			uassert.Equal(t, tt.wantGive, give)
 		})
 	}
+
+	*/
+
+	panic("MUST BE REIMPLEMENTED BEFORE MERGING")
 }
 
 func TestValidateAndGetExternals(t *testing.T) {
+	/*
 	positionExternal = map[uint64]map[string]externalRewards{
 		1: {
 			"test-incentive": {
@@ -334,9 +342,14 @@ func TestValidateAndGetExternals(t *testing.T) {
 			}
 		})
 	}
+
+	*/
+
+	panic("MUST BE REIMPLEMENTED BEFORE MERGING")
 }
 
 func TestFindExternalByIncentiveId(t *testing.T) {
+	/*
 	externals := map[string]externalRewards{
 		"test-incentive": {
 			incentiveId:    "test-incentive",
@@ -356,9 +369,13 @@ func TestFindExternalByIncentiveId(t *testing.T) {
 	if found {
 		t.Error("Expected not to find external")
 	}
+		*/
+
+	panic("MUST BE REIMPLEMENTED BEFORE MERGING")
 }
 
 func TestWarmUpAmountAdd(t *testing.T) {
+	/*
 	w := &warmUpAmount{}
 
 	w.add(30, 100, 30)
@@ -378,9 +395,13 @@ func TestWarmUpAmountAdd(t *testing.T) {
 
 	w.add(100, 400, 400)
 	uassert.Equal(t, uint64(400), w.full100)
+	*/
+
+	panic("MUST BE REIMPLEMENTED BEFORE MERGING")
 }
 
 func TestWarmUpAmountTotalFullAndGive(t *testing.T) {
+	/*
 	w := warmUpAmount{
 		full30:  100,
 		full50:  200,
@@ -396,9 +417,14 @@ func TestWarmUpAmountTotalFullAndGive(t *testing.T) {
 
 	uassert.Equal(t, uint64(1000), totalFull)
 	uassert.Equal(t, uint64(740), totalGive) // 30 + 100 + 210 + 400
+
+	*/
+
+	panic("MUST BE REIMPLEMENTED BEFORE MERGING")
 }
 
 func TestRewardMathComputeExternalRewardAmount_NoDuplicateRewards(t *testing.T) {
+	/*
     tf := newTestFixture(t)
     tf.setup()
     baseHeight := int64(1000)
@@ -431,4 +457,8 @@ func TestRewardMathComputeExternalRewardAmount_NoDuplicateRewards(t *testing.T) 
 
     uassert.Equal(t, uint64(0), full2-full1)
     uassert.Equal(t, uint64(0), give2-give1)
+
+	*/
+
+	panic("MUST BE REIMPLEMENTED BEFORE MERGING")
 }

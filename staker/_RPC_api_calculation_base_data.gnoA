@@ -5,6 +5,8 @@ import (
 	"std"
 	"time"
 
+	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/gnoswap/v1/consts"
 
 	en "gno.land/r/gnoswap/v1/emission"
@@ -14,232 +16,47 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// GETTERs ===
-// poolGNS
-func GetPoolGns() string {
-	en.MintAndDistributeGns()
+func GetPoolStakedLiquidityUpdates(poolPath string, startHeight, endHeight uint64) string {
+	arrNode := json.ArrayNode("", []*json.Node{})
 
-	if len(poolGns) == 0 {
+	pool, ok := pools.get(poolPath)
+	if !ok {
 		return ""
 	}
 
-	arrNode := json.ArrayNode("", []*json.Node{})
-	for poolPath, gnsAmount := range poolGns {
+	pool.stakedLiquidity.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
 		objNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath":  json.StringNode("poolPath", poolPath),
-			"gnsAmount": json.StringNode("gnsAmount", ufmt.Sprintf("%d", gnsAmount)),
+			"blockNumber": json.StringNode("blockNumber", ufmt.Sprintf("%d", key)),
+			"liquidity":   json.StringNode("liquidity", value.(*u256.Uint).ToString()),
 		})
 		arrNode.AppendArray(objNode)
-	}
+		return false
+	})
 
 	return marshal(arrNode)
 }
 
-// poolCurrentBlockGns
-func GetPoolCurrentBlockGns() string {
-	en.MintAndDistributeGns()
+func GetPoolRewardUpdates(poolPath string, startHeight, endHeight uint64) string {
+	arrNode := json.ArrayNode("", []*json.Node{})
 
-	if len(poolCurrentBlockGns) == 0 {
+	pool, ok := pools.get(poolPath)
+	if !ok {
 		return ""
 	}
 
-	arrNode := json.ArrayNode("", []*json.Node{})
-	for poolPath, gnsAmount := range poolCurrentBlockGns {
+	if endHeight > pool.lastRewardCacheHeight {
+		poolTier.cacheReward(endHeight)
+		poolTier.cachePoolReward(pool.rewardCache, poolPath, endHeight)
+	}
+
+	pool.rewardCache.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
 		objNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath":  json.StringNode("poolPath", poolPath),
-			"gnsAmount": json.StringNode("gnsAmount", ufmt.Sprintf("%d", gnsAmount)),
+			"blockNumber": json.StringNode("blockNumber", ufmt.Sprintf("%d", key)),
+			"reward":      json.StringNode("reward", value.(*u256.Uint).ToString()),
 		})
 		arrNode.AppendArray(objNode)
-	}
-
-	return marshal(arrNode)
-}
-
-// poolLastTmpGns
-func GetPoolLastTmpGns() string {
-	en.MintAndDistributeGns()
-
-	if len(poolLastTmpGns) == 0 {
-		return ""
-	}
-
-	arrNode := json.ArrayNode("", []*json.Node{})
-	for poolPath, gnsAmount := range poolLastTmpGns {
-		objNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath":  json.StringNode("poolPath", poolPath),
-			"gnsAmount": json.StringNode("gnsAmount", ufmt.Sprintf("%d", gnsAmount)),
-		})
-		arrNode.AppendArray(objNode)
-	}
-
-	return marshal(arrNode)
-}
-
-// poolAccuGns
-func GetPoolAccuGns() string {
-	en.MintAndDistributeGns()
-
-	if len(poolAccuGns) == 0 {
-		return ""
-	}
-
-	arrNode := json.ArrayNode("", []*json.Node{})
-	for poolPath, gnsAmount := range poolAccuGns {
-		objNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath":  json.StringNode("poolPath", poolPath),
-			"gnsAmount": json.StringNode("gnsAmount", ufmt.Sprintf("%d", gnsAmount)),
-		})
-		arrNode.AppendArray(objNode)
-	}
-
-	return marshal(arrNode)
-}
-
-// positionGns
-func GetPositionGns() string {
-	en.MintAndDistributeGns()
-
-	if len(positionGns) == 0 {
-		return ""
-	}
-
-	arrNode := json.ArrayNode("", []*json.Node{})
-	for tokenId, gnsAmount := range positionGns {
-		objNode := json.ObjectNode("", map[string]*json.Node{
-			"tokenId":   json.StringNode("tokenId", ufmt.Sprintf("%d", tokenId)),
-			"gnsAmount": json.StringNode("gnsAmount", ufmt.Sprintf("%d", gnsAmount)),
-		})
-		arrNode.AppendArray(objNode)
-	}
-
-	return marshal(arrNode)
-}
-
-// positionLastGns
-func GetPositionLastGns() string {
-	en.MintAndDistributeGns()
-
-	if len(positionLastGns) == 0 {
-		return ""
-	}
-
-	arrNode := json.ArrayNode("", []*json.Node{})
-	for tokenId, gnsAmount := range positionLastGns {
-		objNode := json.ObjectNode("", map[string]*json.Node{
-			"tokenId":   json.StringNode("tokenId", ufmt.Sprintf("%d", tokenId)),
-			"gnsAmount": json.StringNode("gnsAmount", ufmt.Sprintf("%d", gnsAmount)),
-		})
-		arrNode.AppendArray(objNode)
-	}
-
-	return marshal(arrNode)
-}
-
-// positionLastExternal
-func GetPositionLastExternal() string {
-	en.MintAndDistributeGns()
-
-	if len(positionLastExternal) == 0 {
-		return ""
-	}
-
-	arrNode := json.ArrayNode("", []*json.Node{})
-	for tokenId, lastExternals := range positionLastExternal {
-		arr2Node := json.ArrayNode("", []*json.Node{})
-		for incentiveId, lastRewardAmount := range lastExternals {
-			obj2Node := json.ObjectNode("", map[string]*json.Node{
-				"incentiveId":      json.StringNode("incentiveId", incentiveId),
-				"lastRewardAmount": json.StringNode("lastRewardAmount", lastRewardAmount.ToString()),
-			})
-			arr2Node.AppendArray(obj2Node)
-		}
-
-		objNode := json.ObjectNode("", map[string]*json.Node{
-			"tokenId":       json.StringNode("tokenId", ufmt.Sprintf("%d", tokenId)),
-			"lastExternals": arr2Node,
-		})
-		arrNode.AppendArray(objNode)
-	}
-
-	return marshal(arrNode)
-}
-
-// externalLastCalculatedTimestamp
-func GetExternalLastCalculatedTimestamp() string {
-	en.MintAndDistributeGns()
-
-	if len(externalLastCalculatedTimestamp) == 0 {
-		return ""
-	}
-
-	arrNode := json.ArrayNode("", []*json.Node{})
-	for incentiveId, lastCalculatedTimestamp := range externalLastCalculatedTimestamp {
-		objNode := json.ObjectNode("", map[string]*json.Node{
-			"incentiveId":             json.StringNode("incentiveId", incentiveId),
-			"lastCalculatedTimestamp": json.StringNode("lastCalculatedTimestamp", ufmt.Sprintf("%d", lastCalculatedTimestamp)),
-		})
-		arrNode.AppendArray(objNode)
-	}
-
-	return marshal(arrNode)
-}
-
-// externalGns
-func GetExternalGns() string {
-	en.MintAndDistributeGns()
-
-	if len(externalGns) == 0 {
-		return ""
-	}
-
-	arrNode := json.ArrayNode("", []*json.Node{})
-	for incentiveId, gnsAmount := range externalGns {
-		objNode := json.ObjectNode("", map[string]*json.Node{
-			"incentiveId": json.StringNode("incentiveId", incentiveId),
-			"gnsAmount":   json.StringNode("gnsAmount", ufmt.Sprintf("%d", gnsAmount)),
-		})
-		arrNode.AppendArray(objNode)
-	}
-
-	return marshal(arrNode)
-}
-
-// poolTotalStakedLiquidity
-func GetPoolTotalStakedLiquidity() string {
-	en.MintAndDistributeGns()
-
-	if len(poolTotalStakedLiquidity) == 0 {
-		return ""
-	}
-
-	arrNode := json.ArrayNode("", []*json.Node{})
-	for poolPath, totalStakedLiquidity := range poolTotalStakedLiquidity {
-		objNode := json.ObjectNode("", map[string]*json.Node{
-			"poolPath":             json.StringNode("poolPath", poolPath),
-			"totalStakedLiquidity": json.StringNode("totalStakedLiquidity", totalStakedLiquidity.ToString()),
-		})
-		arrNode.AppendArray(objNode)
-	}
-
-	return marshal(arrNode)
-}
-
-// positionsLiquidityRatio
-func GetPositionsLiquidityRatio() string {
-	en.MintAndDistributeGns()
-
-	if len(positionsLiquidityRatio) == 0 {
-		return ""
-	}
-
-	arrNode := json.ArrayNode("", []*json.Node{})
-	for tokenId, positionRatio := range positionsLiquidityRatio {
-		objNode := json.ObjectNode("", map[string]*json.Node{
-			"tokenId":       json.StringNode("tokenId", ufmt.Sprintf("%d", tokenId)),
-			"positionRatio": json.StringNode("positionRatio", positionRatio.ToString()),
-		})
-		arrNode.AppendArray(objNode)
-	}
+		return false
+	})
 
 	return marshal(arrNode)
 }
