@@ -41,7 +41,7 @@ func TestIsLastBlockOfHalvingYear(t *testing.T) {
 			want   bool
 		}{
 			name:   fmt.Sprintf("last block of halving year %d", i),
-			height: halvingYearBlock[i],
+			height: GetHalvingYearBlock(i),
 			want:   true,
 		})
 
@@ -51,7 +51,7 @@ func TestIsLastBlockOfHalvingYear(t *testing.T) {
 			want   bool
 		}{
 			name:   fmt.Sprintf("not last block of halving year %d", i),
-			height: halvingYearBlock[i] - 1,
+			height: GetHalvingYearBlock(i) - 1,
 			want:   false,
 		})
 	}
@@ -81,7 +81,7 @@ func TestHandleLeftEmissionAmount(t *testing.T) {
 			name:   fmt.Sprintf("handle left emission amount for year %d, non minted", i),
 			year:   i,
 			amount: 0,
-			want:   halvingYearAmount[i],
+			want:   GetHalvingYearMaxAmount(i),
 		})
 
 		tests = append(tests, struct {
@@ -93,7 +93,7 @@ func TestHandleLeftEmissionAmount(t *testing.T) {
 			name:   fmt.Sprintf("handle left emission amount for year %d, minted", i),
 			year:   i,
 			amount: uint64(123456),
-			want:   halvingYearAmount[i] - uint64(123456),
+			want:   GetHalvingYearMaxAmount(i) - uint64(123456),
 		})
 	}
 }
@@ -105,6 +105,16 @@ func TestSkipIfSameHeight(t *testing.T) {
 
 	t.Run("should not skip if height is different", func(t *testing.T) {
 		uassert.False(t, skipIfSameHeight(1, 2))
+	})
+}
+
+func TestSkipIfEmissionEnded(t *testing.T) {
+	t.Run("should skip if emission has ended", func(t *testing.T) {
+		uassert.True(t, skipIfEmissionEnded(GetEndHeight()+1))
+	})
+
+	t.Run("should not skip if emission has not ended", func(t *testing.T) {
+		uassert.False(t, skipIfEmissionEnded(std.GetHeight()))
 	})
 }
 
@@ -237,7 +247,7 @@ func TestGrc20Methods(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testResetGnsTokenObject(t)
+			resetGnsTokenObject(t)
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, tt.fn)
