@@ -207,7 +207,7 @@ func Render(path string) string {
 func SetTokenURI(tid grc721.TokenID) (string, error) {
 	common.IsHalted()
 
-	tokenURI := genImageURI(generateRandInstnace())
+	tokenURI := genImageURI(generateRandInstance())
 	ok, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
 	if err != nil {
 		return "", err
