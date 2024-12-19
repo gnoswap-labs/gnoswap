@@ -4,6 +4,7 @@ import (
 	b64 "encoding/base64"
 
 	"gno.land/p/demo/json"
+	u256 "gno.land/p/gnoswap/uint256"
 
 	"std"
 	"strconv"
@@ -81,14 +82,16 @@ type RpcPosition struct {
 
 func ApiGetPools() string {
 	rpcPools := []RpcPool{}
-	for poolPath, _ := range pools {
+	pools.Iterate("", "", func(poolPath string, value interface{}) bool {
 		rpcPool := rpcMakePool(poolPath)
 		rpcPools = append(rpcPools, rpcPool)
-	}
+
+		return false
+	})
 
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, pool := range rpcPools {
-		_poolNode := json.ObjectNode("", map[string]*json.Node{
+		poolNode := json.ObjectNode("", map[string]*json.Node{
 			"poolPath":             json.StringNode("poolPath", pool.PoolPath),
 			"token0Path":           json.StringNode("token0Path", pool.Token0Path),
 			"token1Path":           json.StringNode("token1Path", pool.Token1Path),
@@ -110,7 +113,7 @@ func ApiGetPools() string {
 			"tickBitmaps":          json.ObjectNode("tickBitmaps", makeRpcTickBitmapsJson(pool.TickBitmaps)),
 			"positions":            json.ArrayNode("positions", makeRpcPositionsArray(pool.Positions)),
 		})
-		responses.AppendArray(_poolNode)
+		responses.AppendArray(poolNode)
 	}
 
 	node := json.ObjectNode("", map[string]*json.Node{
@@ -122,8 +125,7 @@ func ApiGetPools() string {
 }
 
 func ApiGetPool(poolPath string) string {
-	_, exist := pools[poolPath]
-	if !exist {
+	if !pools.Has(poolPath) {
 		return ""
 	}
 	rpcPool := rpcMakePool(poolPath)
@@ -198,8 +200,11 @@ func rpcMakePool(poolPath string) RpcPool {
 	rpcPool.Liquidity = pool.liquidity.ToString()
 
 	rpcPool.Ticks = RpcTicks{}
-	for tick, tickInfo := range pool.ticks {
-		rpcPool.Ticks[tick] = RpcTickInfo{
+	pool.ticks.Iterate("", "", func(tickStr string, iTickInfo interface{}) bool {
+		tick, _ := strconv.Atoi(tickStr)
+		tickInfo := iTickInfo.(TickInfo)
+
+		rpcPool.Ticks[int32(tick)] = RpcTickInfo{
 			LiquidityGross:              tickInfo.liquidityGross.ToString(),
 			LiquidityNet:                tickInfo.liquidityNet.ToString(),
 			FeeGrowthOutside0X128:       tickInfo.feeGrowthOutside0X128.ToString(),
@@ -209,17 +214,22 @@ func rpcMakePool(poolPath string) RpcPool {
 			SecondsOutside:              tickInfo.secondsOutside,
 			Initialized:                 tickInfo.initialized,
 		}
-	}
+
+		return false
+	})
 
 	rpcPool.TickBitmaps = RpcTickBitmaps{}
-	for tick, tickBitmap := range pool.tickBitmaps {
-		rpcPool.TickBitmaps[tick] = tickBitmap.ToString()
-	}
+	pool.tickBitmaps.Iterate("", "", func(tickStr string, iTickBitmap interface{}) bool {
+		tick, _ := strconv.Atoi(tickStr)
+		pool.setTickBitmap(int16(tick), iTickBitmap.(*u256.Uint))
 
-	Positions := pool.positions
+		return false
+	})
+
 	rpcPositions := []RpcPosition{}
-	for posKey, posInfo := range Positions {
+	pool.positions.Iterate("", "", func(posKey string, iPositionInfo interface{}) bool {
 		owner, tickLower, tickUpper := posKeyDivide(posKey)
+		posInfo := iPositionInfo.(PositionInfo)
 
 		rpcPositions = append(rpcPositions, RpcPosition{
 			Owner:      owner,
@@ -229,7 +239,10 @@ func rpcMakePool(poolPath string) RpcPool {
 			Token0Owed: posInfo.tokensOwed0.ToString(),
 			Token1Owed: posInfo.tokensOwed1.ToString(),
 		})
-	}
+
+		return false
+	})
+
 	rpcPool.Positions = rpcPositions
 
 	return rpcPool

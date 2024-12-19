@@ -67,8 +67,8 @@ func TestUpdatePosition(t *testing.T) {
 			}
 
 			if !tt.positionParams.liquidityDelta.IsZero() {
-				lowerTick := p.ticks[tt.positionParams.tickLower]
-				upperTick := p.ticks[tt.positionParams.tickUpper]
+				lowerTick := p.mustGetTick(tt.positionParams.tickLower)
+				upperTick := p.mustGetTick(tt.positionParams.tickUpper)
 
 				if !lowerTick.initialized {
 					t.Error("lower tick not initialized")

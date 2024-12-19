@@ -3,6 +3,8 @@ package pool
 import (
 	"testing"
 
+	"gno.land/p/demo/avl"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -35,8 +37,8 @@ func TestInitData(t *testing.T) {
 		liquidity: u256.NewUint(1000000),
 	}
 
-	mockTicks := Ticks{}
-	mockTicks[0] = TickInfo{
+	mockTicks := avl.NewTree()
+	mockTicks.Set("0", TickInfo{
 		liquidityGross:                 u256.NewUint(1000000),
 		liquidityNet:                   i256.NewInt(2000000),
 		feeGrowthOutside0X128:          u256.NewUint(3000000),
@@ -45,20 +47,20 @@ func TestInitData(t *testing.T) {
 		secondsPerLiquidityOutsideX128: u256.NewUint(6000000),
 		secondsOutside:                 7,
 		initialized:                    true,
-	}
+	})
 	mockPool.ticks = mockTicks
 
-	mockPositions := Positions{}
-	mockPositions["test_position"] = PositionInfo{
+	mockPositions := avl.NewTree()
+	mockPositions.Set("test_position", PositionInfo{
 		liquidity:                u256.NewUint(1000000),
 		feeGrowthInside0LastX128: u256.NewUint(2000000),
 		feeGrowthInside1LastX128: u256.NewUint(3000000),
 		tokensOwed0:              u256.NewUint(4000000),
 		tokensOwed1:              u256.NewUint(5000000),
-	}
+	})
 	mockPool.positions = mockPositions
 
-	pools["token0:token1:3000"] = mockPool
+	pools.Set("token0:token1:3000", mockPool)
 }
 
 func TestPoolGetters(t *testing.T) {

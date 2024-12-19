@@ -3,6 +3,7 @@ package pool
 import (
 	"testing"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -57,7 +58,7 @@ func TestBurn(t *testing.T) {
 		tokensOwed1: u256.NewUint(0),
 	}
 	mockPool := &Pool{
-		positions: make(map[string]PositionInfo),
+		positions: avl.NewTree(),
 	}
 
 	GetPool = func(token0Path, token1Path string, fee uint32) *Pool {
@@ -98,7 +99,7 @@ func TestBurn(t *testing.T) {
 
 			// setup position for this test
 			posKey := getPositionKey(mockCaller, tt.tickLower, tt.tickUpper)
-			mockPool.positions[posKey] = mockPosition
+			mockPool.positions.Set(posKey, mockPosition)
 
 			if tt.expectPanic {
 				defer func() {
@@ -125,7 +126,7 @@ func TestBurn(t *testing.T) {
 					t.Errorf("expected amount1 %s, got %s", tt.expectedAmount1, amount1)
 				}
 
-				newPosition := mockPool.positions[posKey]
+				newPosition := mockPool.mustGetPosition(posKey)
 				if newPosition.tokensOwed0.IsZero() {
 					t.Error("expected tokensOwed0 to be updated")
 				}

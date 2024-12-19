@@ -2,9 +2,11 @@ package pool
 
 func PoolGetPoolList() []string {
 	poolPaths := []string{}
-	for poolPath, _ := range pools {
+	pools.Iterate("", "", func(poolPath string, _ interface{}) bool {
 		poolPaths = append(poolPaths, poolPath)
-	}
+
+		return false
+	})
 
 	return poolPaths
 }
