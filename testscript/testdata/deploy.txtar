@@ -1,0 +1,16 @@
+loadpkg gno.land/p/demo/avl
+loadpkg gno.land/p/demo/ufmt
+
+
+## start a new node
+gnoland start
+
+## deploy uint256
+gnokey maketx addpkg -pkgdir ../_deploy/p/gnoswap/uint256 -pkgpath gno.land/p/gnoswap/uint256 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+## deploy int256
+gnokey maketx addpkg -pkgdir ../_deploy/p/gnoswap/int256 -pkgpath gno.land/p/gnoswap/int256 -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
+## deploy const
+gnokey maketx addpkg -pkgdir ../_deploy/r/gnoswap/consts -pkgpath gno.land/r/gnoswap/v1/consts -gas-fee 1000000ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+
