@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/uassert"
 )
 
-func Test_genImageURI(t *testing.T) {
+func TestGenImageURI(t *testing.T) {
 	seed1 := uint64(time.Now().Unix())
 	seed2 := uint64(time.Now().UnixNano())
 	pcg := rand.NewPCG(seed1, seed2)
