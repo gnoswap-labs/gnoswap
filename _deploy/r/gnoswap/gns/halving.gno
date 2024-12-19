@@ -27,7 +27,7 @@ const (
 	HALVING_START_YEAR = int64(1)
 	HALVING_END_YEAR   = int64(12)
 
-	HALVING_AMOUNTS_PER_YEAR = []uint64{
+	HALVING_AMOUNTS_PER_YEAR = [12]uint64{
 		18_750_000_000_000 * 12, // Year 1:  225000000000000
 		18_750_000_000_000 * 12, // Year 2:  225000000000000
 		9_375_000_000_000 * 12,  // Year 3:  112500000000000
@@ -154,7 +154,7 @@ func setAvgBlockTimeInMs(ms int64) {
 	timeLeftMs := timeLeft * consts.SECOND_IN_MILLISECOND
 	blockLeft := timeLeftMs / avgBlockTimeMs
 	// how many reward left to next halving
-	minted := MintedEmissionAmount()
+	minted := GetMintedEmissionAmount()
 	amountLeft := GetHalvingYearAccuAmount(year) - minted
 
 	// how much reward per block
@@ -163,7 +163,7 @@ func setAvgBlockTimeInMs(ms int64) {
 	// update it
 	setAmountPerBlockPerHalvingYear(year, adjustedAmountPerBlock)
 
-	for year := int64(1); year < 13; year++ {
+	for year := int64(1); year < HALVING_END_YEAR+1; year++ {
 		yearEndTimestamp := GetHalvingYearTimestamp(year)
 
 		if now >= yearEndTimestamp {
