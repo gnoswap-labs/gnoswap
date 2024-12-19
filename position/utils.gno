@@ -12,6 +12,8 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gnft"
+
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // a2u converts std.Address to pusers.AddressOrName.
