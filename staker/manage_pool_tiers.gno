@@ -24,9 +24,9 @@ type ApiPoolWithEmissionGnsAmount struct {
 // GetPoolsWithTier returns a list of string that consists of pool path and tier
 func GetPoolsWithTier() []string {
 	var pools []string
-	for pool, tier := range poolTiers {
-		pools = append(pools, ufmt.Sprintf("%s_%d", pool, tier.tier))
-	}
+	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
+		pools = append(pools, ufmt.Sprintf("%s_%d", poolPath, internalTier.tier))
+	})
 	return pools
 }
 
@@ -45,8 +45,8 @@ func GetPoolsWithEmissionGnsAmount() string {
 
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
 
-	for poolPath, internal := range poolTiers {
-		tier := internal.tier
+	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
+		tier := internalTier.tier
 		tierAmount := uint64(0)
 
 		if tier == 1 {
@@ -61,10 +61,10 @@ func GetPoolsWithEmissionGnsAmount() string {
 		internalIncentive.PoolPath = poolPath
 		internalIncentive.Tier = tier
 		internalIncentive.Amount = tierAmount
-		internalIncentive.StartTimestamp = internal.startTimestamp
+		internalIncentive.StartTimestamp = internalTier.startTimestamp
 
 		internals = append(internals, internalIncentive)
-	}
+	})
 
 	// STAT NODE
 	_stat := json.ObjectNode("", map[string]*json.Node{
@@ -171,29 +171,25 @@ func setPoolTier(pool string, tier uint64) {
 	}
 
 	// panic if pool does not exist
-	if !(pl.DoesPoolPathExist(pool)) {
+	if !pl.DoesPoolPathExist(pool) {
 		panic(addDetailToError(
 			errInvalidPoolPath,
-			ufmt.Sprintf("manage_pool_tiers.gno__SetPoolTier() || pool(%s) does not exist", pool),
+			ufmt.Sprintf("pool(%s) does not exist", pool),
 		))
 	}
 
-	// panic if pool exists in poolTiers
-	_, exist := poolTiers[pool]
-	if exist {
+	if isExistPoolTiers(pool) {
 		panic(addDetailToError(
 			errAlreadyHasTier,
-			ufmt.Sprintf("manage_pool_tiers.gno__SetPoolTier() || pool(%s) already exists in poolTiers", pool),
+			ufmt.Sprintf("pool(%s) already exists in poolTiers", pool),
 		))
 	}
 
 	// check if tier is valid
 	mustValidTier(tier)
 
-	poolTiers[pool] = InternalTier{
-		tier:           tier,
-		startTimestamp: time.Now().Unix(),
-	}
+	newTier := newInternalTier(tier, time.Now().Unix())
+	poolTiers.Set(pool, newTier)
 }
 
 func ChangePoolTierByAdmin(poolPath string, tier uint64) {
@@ -262,7 +258,7 @@ func changePoolTier(pool string, tier uint64) {
 	}
 
 	// panic if pool does not exist in poolTiers
-	internal, exist := poolTiers[pool]
+	internal, exist := poolTiers.Get(pool)
 	if !exist {
 		panic(addDetailToError(
 			errInvalidPoolPath,
@@ -282,7 +278,7 @@ func changePoolTier(pool string, tier uint64) {
 	}
 
 	internal.tier = tier
-	poolTiers[pool] = internal
+	poolTiers.Set(pool, internal)
 }
 
 func RemovePoolTierByAdmin(poolPath string) {
@@ -359,7 +355,7 @@ func removePoolTier(pool string) {
 		))
 	}
 
-	delete(poolTiers, pool)
+	poolTiers.Remove(pool)
 }
 
 // mustValidTier checks if the provided tier is valid (between 1 and 3)
@@ -374,6 +370,6 @@ func mustValidTier(tier uint64) {
 
 // isExistPoolTier checks if the pool exists in poolTiers
 func isExistPoolTiers(poolPath string) bool {
-	_, exist := poolTiers[poolPath]
+	_, exist := poolTiers.Get(poolPath)
 	return exist
 }

@@ -11,17 +11,72 @@ type InternalTier struct {
 	startTimestamp int64  // start time for internal reward
 }
 
+func (i InternalTier) Tier() uint64 {
+	return i.tier
+}
+
+func (i InternalTier) StartTimestamp() int64 {
+	return i.startTimestamp
+}
+
+// newInternalTier creates a new internal tier
+func newInternalTier(tier uint64, startTimestamp int64) InternalTier {
+	return InternalTier{
+		tier:           tier,
+		startTimestamp: startTimestamp,
+	}
+}
+
 type ExternalIncentive struct {
+	startTimestamp    int64       // start time for external reward
+	endTimestamp      int64       // end time for external reward
+	createdHeight     int64       // block height when the incentive was created
+	depositGnsAmount  uint64      // deposited gns amount
 	targetPoolPath    string      // external reward target pool path
 	rewardToken       string      // external reward token path
 	rewardAmount      *u256.Uint  // total reward amount
 	rewardLeft        *u256.Uint  // remaining reward amount
-	startTimestamp    int64       // start time for external reward
-	endTimestamp      int64       // end time for external reward
 	rewardPerBlockX96 *u256.Uint  // reward per block in Q96 notation
 	refundee          std.Address // refundee address
-	createdHeight     int64       // block height when the incentive was created
-	depositGnsAmount  uint64      // deposited gns amount
+}
+
+func (e ExternalIncentive) StartTimestamp() int64 {
+	return e.startTimestamp
+}
+
+func (e ExternalIncentive) EndTimestamp() int64 {
+	return e.endTimestamp
+}
+
+func (e ExternalIncentive) RewardToken() string {
+	return e.rewardToken
+}
+
+// newExternalIncentive creates a new external incentive
+func newExternalIncentive(
+	startTimestamp int64,
+	endTimestamp int64,
+	createdHeight int64,
+	depositGnsAmount uint64,
+	targetPoolPath string,
+	rewardToken string,
+	rewardAmount *u256.Uint,
+	rewardLeft *u256.Uint,
+	rewardPerBlockX96 *u256.Uint,
+	refundee std.Address,
+) ExternalIncentive {
+	return ExternalIncentive{
+		startTimestamp:    startTimestamp,
+		endTimestamp:      endTimestamp,
+		createdHeight:     createdHeight,
+		depositGnsAmount:  depositGnsAmount,
+		targetPoolPath:    targetPoolPath,
+		rewardToken:       rewardToken,
+		rewardAmount:      rewardAmount,
+		rewardLeft:        rewardLeft,
+		rewardPerBlockX96: rewardPerBlockX96,
+		refundee:          refundee,
+	}
 }
 
 type Deposit struct {
@@ -30,4 +85,32 @@ type Deposit struct {
 	stakeTimestamp int64       // staked time
 	stakeHeight    int64       // staked block height
 	targetPoolPath string      // staked position's pool path
+}
+
+func newDeposit(
+	owner std.Address,
+	numberOfStakes uint64,
+	stakeTimestamp int64,
+	stakeHeight int64,
+	targetPoolPath string,
+) Deposit {
+	return Deposit{
+		owner:          owner,
+		numberOfStakes: numberOfStakes,
+		stakeTimestamp: stakeTimestamp,
+		stakeHeight:    stakeHeight,
+		targetPoolPath: targetPoolPath,
+	}
+}
+
+func (d Deposit) NumberOfStakes() uint64 {
+	return d.numberOfStakes
+}
+
+func (d Deposit) StakeTimestamp() int64 {
+	return d.stakeTimestamp
+}
+
+func (d Deposit) TargetPoolPath() string {
+	return d.targetPoolPath
 }
