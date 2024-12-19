@@ -49,7 +49,7 @@ func MintAndDistributeGns() {
 		return
 	}
 
-	mintedEmissionRewardAmount := mintGns()
+	mintedEmissionRewardAmount := gns.MintGns(a2u(consts.EMISSION_ADDR))
 	if hasLeftGNSAmount() {
 		mintedEmissionRewardAmount += GetLeftGNSAmount()
 		SetLeftGNSAmount(0)
