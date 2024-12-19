@@ -168,7 +168,7 @@ func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
 			yearAmountToMint += handleLeftEmissionAmount(i, yearAmountToMint)
 		}
 		totalAmountToMint += yearAmountToMint
-		SetHalvingYearMintAmount(i, GetHalvingYearMintAmount(i)+yearAmountToMint)
+		setHalvingYearMintAmount(i, GetHalvingYearMintAmount(i)+yearAmountToMint)
 
 		// update fromHeight for next year (if necessary)
 		fromHeight = mintUntilHeight + 1
