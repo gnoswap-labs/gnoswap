@@ -22,32 +22,32 @@ const (
 )
 
 var (
-	lastMintedHeight = std.GetHeight()
-)
+	owner *ownable.Ownable
 
-var (
-	// Initial amount set to 900_000_000_000_000 (MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT).
-	// leftEmissionAmount will decrease as tokens are minted.
-	leftEmissionAmount   = MAX_EMISSION_AMOUNT
-	mintedEmissionAmount = uint64(0)
-)
+	Token         *grc20.Token
+	privateLedger *grc20.PrivateLedger
+	UserTeller    grc20.Teller
 
-var (
-	Token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
-	UserTeller           = Token.CallerTeller()
-	owner                = ownable.NewWithAddress(consts.ADMIN)
+	leftEmissionAmount   uint64
+	mintedEmissionAmount uint64
+	lastMintedHeight     int64
 )
 
 func init() {
+	owner = ownable.NewWithAddress(consts.ADMIN)
+
+	Token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
+	UserTeller = Token.CallerTeller()
+
 	privateLedger.Mint(owner.Owner(), INITIAL_MINT_AMOUNT)
 	getter := func() *grc20.Token { return Token }
 	grc20reg.Register(getter, "")
-}
 
-// MintedEmissionAmount returns the amount of GNS that has been minted by the emission contract.
-// It does not include initial minted amount.
-func MintedEmissionAmount() uint64 {
-	return TotalSupply() - INITIAL_MINT_AMOUNT
+	// Initial amount set to 900_000_000_000_000 (MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT).
+	// leftEmissionAmount will decrease as tokens are minted.
+	leftEmissionAmount = MAX_EMISSION_AMOUNT
+
+	lastMintedHeight = std.GetHeight()
 }
 
 func MintGns(address pusers.AddressOrName) uint64 {
@@ -56,8 +56,12 @@ func MintGns(address pusers.AddressOrName) uint64 {
 
 	// skip minting process if following conditions are met
 	// - if gns for current block is already minted
-	// - if emission has ended
-	if skipIfSameHeight(lastMintedHeight, currentHeight) || skipIfEmissionEnded(currentHeight) {
+	// - if last minted height is last block to mint ( 12 years passed )
+
+	// WIP
+	// if lastMintedHeight == currentHeight ||
+	// }
+	if skipIfSameHeight(lastMintedHeight, currentHeight) || skipIfEmissionEnded(lastMintedHeight+1) {
 		return 0
 	}
 
@@ -66,15 +70,16 @@ func MintGns(address pusers.AddressOrName) uint64 {
 
 	// calculate gns amount to mint, and the mint to the target address
 	amountToMint := calculateAmountToMint(lastMintedHeight+1, currentHeight)
-	err := privateLedger.Mint(users.Resolve(address), amountToMint)
-	if err != nil {
-		panic(err.Error())
-	}
 
 	// update
 	setLastMintedHeight(currentHeight)
 	setMintedEmissionAmount(GetMintedEmissionAmount() + amountToMint)
 	setLeftEmissionAmount(GetLeftEmissionAmount() - amountToMint)
+
+	err := privateLedger.Mint(users.Resolve(address), amountToMint)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	return amountToMint
 }
@@ -206,20 +211,22 @@ func skipIfEmissionEnded(height int64) bool {
 	return false
 }
 
-// Getter
+// GetLastMintedHeight returns the last block height that gns was minted.
 func GetLastMintedHeight() int64 {
 	return lastMintedHeight
 }
 
+// GetLeftEmissionAmount returns the amount of GNS can be minted.
 func GetLeftEmissionAmount() uint64 {
 	return leftEmissionAmount
 }
 
+// GetMintedEmissionAmount returns the amount of GNS that has been minted by the emission contract.
+// It does not include initial minted amount.
 func GetMintedEmissionAmount() uint64 {
 	return mintedEmissionAmount
 }
 
-// Setter
 func setLastMintedHeight(height int64) {
 	lastMintedHeight = height
 }
