@@ -211,24 +211,17 @@ func CalcPoolPositionRefactor() bool {
 func CalcPositionReward(tokenId uint64) (uint64, uint64) {
 	// cache per-tier and per-pool reward
 	currentHeight := uint64(std.GetHeight())
-	poolTier.cacheTierReward(currentHeight)
-	deposit := deposits[tokenId]
+	poolTier.cacheReward(currentHeight)
+	deposit := deposits.Get(tokenId)
 	poolPath := deposit.targetPoolPath
-	pool, ok := pools.get(poolPath)
-	if !ok {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("staker.gno__CollectReward() || poolPath(%s) does not exist", poolPath),
-		))
-	}
-	poolTier.cachePoolReward(pool.rewardCache, poolPath, pool.lastRewardCacheHeight, currentHeight)
+	pool := pools.Get(poolPath)
+	poolTier.cachePoolReward(pool.rewardCache, poolPath, currentHeight)
 
 	// eligible(in-range) intervals for a position
-	upperTick := ticks.get(deposit.tickUpper)
-	lowerTick := ticks.get(deposit.tickLower)
+	upperTick := ticks.Get(deposit.tickUpper)
+	lowerTick := ticks.Get(deposit.tickLower)
 
-	position := positions.get(tokenId)
-	lastCollectHeight := position.lastCollectHeight
+	lastCollectHeight := deposit.lastCollectHeight
 
 	tickUpperCrossHeights, tickUpperCrossZeroForOnes := upperTick.crossInfo(lastCollectHeight, currentHeight)
 	tickLowerCrossHeights, tickLowerCrossZeroForOnes := lowerTick.crossInfo(lastCollectHeight, currentHeight)
@@ -237,11 +230,11 @@ func CalcPositionReward(tokenId uint64) (uint64, uint64) {
 	initialLowerCross := lowerTick.lastCross(lastCollectHeight)
 	currentlyInRange := initialUpperCross && !initialLowerCross
 
-	intervals := pool.tickCrossesToEligibleIntervals(tickUpperCrossHeights, tickUpperCrossZeroForOnes, tickLowerCrossHeights, tickLowerCrossZeroForOnes, currentlyInRange, lastCollectHeight, currentHeight)
+	intervals := pool.TickCrossesToEligibleIntervals(tickUpperCrossHeights, tickUpperCrossZeroForOnes, tickLowerCrossHeights, tickLowerCrossZeroForOnes, currentlyInRange, lastCollectHeight, currentHeight)
 
-	totalReward, totalPenalty := position.eligibleIntervalsToReward(intervals, pool, currentHeight)
+	totalReward, totalPenalty := deposit.EligibleIntervalsToReward(intervals, pool, currentHeight)
 
-	return totalReward.Uint64(), totalPenalty.Uint64()
+	return totalReward, totalPenalty
 }
 
 // XXX: need to improve nested iteration

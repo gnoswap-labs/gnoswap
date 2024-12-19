@@ -17,7 +17,7 @@ type TestData struct {
 	externalLastCalculatedTimestamp       map[string]int64
 	positionLastExternal                  map[uint64]map[string]*u256.Uint
 	positionsExternalLastCalculatedHeight map[uint64]map[string]int64
-	positionsExternalWarmUpAmount         map[uint64]map[string]warmUpAmount
+	// positionsExternalWarmUpAmount         map[uint64]map[string]warmUpAmount
 	positionExternal                      map[uint64]map[string]externalRewards
 }
 
@@ -30,7 +30,7 @@ func setup(t *testing.T) TestData {
 		externalLastCalculatedTimestamp:       make(map[string]int64),
 		positionLastExternal:                  make(map[uint64]map[string]*u256.Uint),
 		positionsExternalLastCalculatedHeight: make(map[uint64]map[string]int64),
-		positionsExternalWarmUpAmount:         make(map[uint64]map[string]warmUpAmount),
+		// positionsExternalWarmUpAmount:         make(map[uint64]map[string]warmUpAmount),
 		positionExternal:                      make(map[uint64]map[string]externalRewards),
 	}
 }

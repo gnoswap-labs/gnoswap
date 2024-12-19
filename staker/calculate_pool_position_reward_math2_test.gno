@@ -58,17 +58,10 @@ func (tf *TestFixture) setup() {
 		},
 	}
 
-	deposits = map[uint64]Deposit{
-		tf.TokenId: {
-			stakeTimestamp: tf.StakeTime,
-		},
-	}
-
-	warmUp = map[int64]int64{
-		50:  150,
-		70:  300,
-		100: 900,
-	}
+	deposits = NewDeposits()
+	deposits.Set(tf.TokenId, &Deposit{
+		stakeTimestamp: tf.StakeTime,
+	})
 
 	positionExternal = map[uint64]map[string]externalRewards{
 		tf.TokenId: {

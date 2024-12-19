@@ -1,14 +1,15 @@
 package staker
 
 import (
-	"std"
+	//"std"
 
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
+	//"gno.land/r/gnoswap/v1/common"
+	//"gno.land/r/gnoswap/v1/consts"
 
-	"gno.land/p/demo/ufmt"
+	//"gno.land/p/demo/ufmt"
 )
 
+/*
 const (
 	WarmUpFor30Ratio  int64 = int64(30)
 	WarmUpFor50Ratio  int64 = int64(50)
@@ -310,3 +311,4 @@ func (wc *WarmUpCalculator) CalculateWarmUp(currentHeight int64, rewardAmount ui
 
 	return reward, penalty
 }
+*/

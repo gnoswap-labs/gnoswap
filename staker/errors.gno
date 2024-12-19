@@ -34,6 +34,7 @@ var (
 	errInvalidIncentiveDuration    = errors.New("[GNOSWAP-STAKER-025] invalid incentive duration")
 	errNotAllowedForExternalReward = errors.New("[GNOSWAP-STAKER-026] not allowed for external reward")
 	errInvalidWarmUpPercent        = errors.New("[GNOSWAP-STAKER-027] invalid warm-up duration")
+	errInvalidTickCross            = errors.New("[GNOSWAP-STAKER-028] invalid tick cross")
 )
 
 func addDetailToError(err error, detail string) string {

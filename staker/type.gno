@@ -32,6 +32,7 @@ type Deposit struct {
 	targetPoolPath string      // staked position's pool path
 	tickLower      int32       // tick lower
 	tickUpper      int32       // tick upper
+	liquidity      *u256.Uint  // liquidity
 	
 	warmups        []Warmup    // warmup information
 
