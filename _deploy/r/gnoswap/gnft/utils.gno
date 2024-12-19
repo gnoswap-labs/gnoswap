@@ -8,7 +8,7 @@ import (
 	pusers "gno.land/p/demo/users"
 )
 
-func getPrev() (string, string) {
+func getPrevAsString() (string, string) {
 	prev := std.PrevRealm()
 	return prev.Addr().String(), prev.PkgPath()
 }
