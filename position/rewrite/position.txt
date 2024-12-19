@@ -1,0 +1,1171 @@
+package position
+
+import (
+	"encoding/base64"
+	"std"
+
+	"gno.land/p/demo/ufmt"
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/gnft"
+
+	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
+
+	en "gno.land/r/gnoswap/v1/emission"
+	pl "gno.land/r/gnoswap/v1/pool"
+)
+
+const (
+	ZERO_LIQUIDITY_FOR_FEE_COLLECTION = "0"
+)
+
+var (
+	// TODO: use avl
+	positions map[uint64]Position = make(map[uint64]Position) // tokenId -> Position
+	nextId    uint64              = 1                         // lp token id
+)
+
+// nextId is the next tokenId to be minted
+func getNextId() uint64 {
+	return nextId
+}
+
+type PositionOperation interface {
+	Validate() error
+	Process() (*OperationResult, error)
+}
+
+type OperationResult struct {
+	TokenId   uint64
+	Liquidity *u256.Uint
+	Amount0   *u256.Uint
+	Amount1   *u256.Uint
+	Fee0      *u256.Uint
+	Fee1      *u256.Uint
+	PoolPath  string
+	TickLower int32
+	TickUpper int32
+}
+
+// baseOperation handler
+func executeOperation(op PositionOperation) (*OperationResult, error) {
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
+	// validate operation
+	if err := op.Validate(); err != nil {
+		return nil, err
+	}
+
+	result, err := op.Process()
+	if err != nil {
+		return nil, err
+	}
+
+	// emiot event after execution
+	return result, nil
+}
+
+///////////////// MINT ///////////////////
+// region: mint
+
+// Mint creates a new liquidity position and mints liquidity tokens.
+// It also handles the conversion between GNOT and WUGNOT transparently for the user.
+// Returns minted tokenId, liquidity, amount0, amount1
+// ref: https://docs.gnoswap.io/contracts/position/position.gno#mint
+func Mint(
+	token0, token1 string,
+	fee uint32,
+	tickLower, tickUpper int32,
+	amount0Desired, amount1Desired string,
+	amount0Min, amount1Min string,
+	deadline int64,
+	mintTo, caller std.Address,
+) (uint64, string, string, string) {
+	input := MintInput{
+		token0:         token0,
+		token1:         token1,
+		fee:            fee,
+		tickLower:      tickLower,
+		tickUpper:      tickUpper,
+		amount0Desired: amount0Desired,
+		amount1Desired: amount1Desired,
+		amount0Min:     amount0Min,
+		amount1Min:     amount1Min,
+		deadline:       deadline,
+		mintTo:         mintTo,
+		caller:         caller,
+	}
+
+	op := NewMintOperation(input)
+	result, err := executeOperation(op)
+	if err != nil {
+		panic(err)
+	}
+
+	prevAddr, prevPkgPath := getPrevAsString()
+	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(result.PoolPath)
+
+	std.Emit(
+		"Mint",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"tickLower", ufmt.Sprintf("%d", result.TickLower),
+		"tickUpper", ufmt.Sprintf("%d", result.TickUpper),
+		"poolPath", result.PoolPath,
+		"caller", op.input.caller.String(),
+		"internal_lpTokenId", ufmt.Sprintf("%d", result.TokenId),
+		"internal_liquidity", result.Liquidity.ToString(),
+		"internal_amount0", result.Amount0.ToString(),
+		"internal_amount1", result.Amount1.ToString(),
+		"internal_sqrtPriceX96", poolSqrtPriceX96,
+	)
+
+	return result.TokenId, result.Liquidity.ToString(), result.Amount0.ToString(), result.Amount1.ToString()
+}
+
+type MintOperation struct {
+	input          MintInput
+	processedInput *ProcessedMintInput
+}
+
+func NewMintOperation(input MintInput) *MintOperation {
+	return &MintOperation{input: input}
+}
+
+type MintInput struct {
+	token0         string
+	token1         string
+	fee            uint32
+	tickLower      int32
+	tickUpper      int32
+	amount0Desired string
+	amount1Desired string
+	amount0Min     string
+	amount1Min     string
+	deadline       int64
+	mintTo         std.Address
+	caller         std.Address
+}
+
+type TokenPair struct {
+	token0         string
+	token1         string
+	token0IsNative bool
+	token1IsNative bool
+}
+
+type ProcessedMintInput struct {
+	tokenPair      TokenPair
+	amount0Desired *u256.Uint
+	amount1Desired *u256.Uint
+	amount0Min     *u256.Uint
+	amount1Min     *u256.Uint
+	tickLower      int32
+	tickUpper      int32
+	poolPath       string
+}
+
+func (op *MintOperation) Validate() error {
+	assertCallerPermission(std.PrevRealm())
+
+	processedInput, err := processMintInput(op.input)
+	if err != nil {
+		return err
+	}
+
+	op.processedInput = &processedInput
+
+	return nil
+}
+
+func (op *MintOperation) Process() (*OperationResult, error) {
+	usrWugnotBalance := wugnot.BalanceOf(a2u(op.input.caller))
+
+	if err := handleNativeToken(
+		op.processedInput.tokenPair.token0IsNative,
+		op.processedInput.tokenPair.token1IsNative,
+		op.input.caller,
+	); err != nil {
+		return nil, err
+	}
+
+	mintParams := newMintParams(*op.processedInput, op.input)
+	tokenId, liquidity, amount0, amount1 := mint(mintParams)
+
+	handleLeftoverNativeToken(
+		op.processedInput.tokenPair.token0IsNative,
+		op.processedInput.tokenPair.token1IsNative,
+		usrWugnotBalance,
+		op.input.caller,
+	)
+
+	return &OperationResult{
+		TokenId:   tokenId,
+		Liquidity: liquidity,
+		Amount0:   amount0,
+		Amount1:   amount1,
+		PoolPath:  op.processedInput.poolPath,
+		TickLower: op.processedInput.tickLower,
+		TickUpper: op.processedInput.tickUpper,
+	}, nil
+}
+
+func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
+	checkDeadline(params.deadline)
+
+	pool := pl.GetPool(params.token0, params.token1, params.fee)
+	liquidity, amount0, amount1, err := addLiquidity(
+		AddLiquidityParams{
+			poolKey:        pl.GetPoolPath(params.token0, params.token1, params.fee),
+			tickLower:      params.tickLower,
+			tickUpper:      params.tickUpper,
+			amount0Desired: params.amount0Desired,
+			amount1Desired: params.amount1Desired,
+			amount0Min:     params.amount0Min,
+			amount1Min:     params.amount1Min,
+			caller:         params.caller,
+		},
+	)
+	if err != nil {
+		panic(addDetailToError(errSlippage, err.Error()))
+	}
+
+	tokenId := nextId
+	gnft.Mint(a2u(params.mintTo), tokenIdFrom(tokenId)) // owner, tokenId
+	nextId++
+
+	positionKey := positionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
+	feeGrowthInside0LastX128 := pool.PositionFeeGrowthInside0LastX128(positionKey)
+	feeGrowthInside1LastX128 := pool.PositionFeeGrowthInside1LastX128(positionKey)
+
+	position := Position{
+		nonce:                    u256.Zero(),
+		operator:                 consts.ZERO_ADDRESS,
+		poolKey:                  pl.GetPoolPath(params.token0, params.token1, params.fee),
+		tickLower:                params.tickLower,
+		tickUpper:                params.tickUpper,
+		liquidity:                liquidity,
+		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
+		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+		tokensOwed0:              u256.Zero(),
+		tokensOwed1:              u256.Zero(),
+		burned:                   false,
+	}
+	positions[tokenId] = position
+
+	return tokenId, liquidity, amount0, amount1
+}
+
+///////////////// INCREASE LIQUIDITY ///////////////////
+// region: increaseLiquidity
+
+// IncreaseLiquidity Types and Operation
+type IncreaseLiquidityInput struct {
+    TokenId        uint64
+    Amount0Desired *u256.Uint
+    Amount1Desired *u256.Uint
+    Amount0Min     *u256.Uint
+    Amount1Min     *u256.Uint
+    Deadline       int64
+}
+
+type IncreaseLiquidityResult struct {
+	TokenId    uint64
+	Liquidity  *u256.Uint
+	Amount0    *u256.Uint
+	Amount1    *u256.Uint
+	PoolPath   string
+}
+
+type IncreaseLiquidityOperation struct {
+    input     IncreaseLiquidityInput
+    position  Position
+}
+
+func NewIncreaseLiquidityOperation(input IncreaseLiquidityInput) *IncreaseLiquidityOperation {
+    return &IncreaseLiquidityOperation{input: input}
+}
+
+func (op *IncreaseLiquidityOperation) Validate() error {
+	position, exists := positions[op.input.TokenId]
+	if !exists {
+		return ufmt.Errorf("position %d not found", op.input.TokenId)
+	}
+	op.position = position
+
+	assertTokenOwnership(op.input.TokenId)
+
+	return nil
+}
+
+func (op *IncreaseLiquidityOperation) Process() (*IncreaseLiquidityResult, error) {
+	// get initial WUGNOT balance
+	userOldWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
+
+	// handle native token if needed
+	// TODO: Extract this logic to a separate function
+	pToken0, pToken1, _ := splitOf(op.position.poolKey)
+	isToken0Wugnot := pToken0 == consts.WRAPPED_WUGNOT
+	isToken1Wugnot := pToken1 == consts.WRAPPED_WUGNOT
+
+	if hasWugnotToken(isToken0Wugnot, isToken1Wugnot) {
+		sent := std.GetOrigSend()
+		ugnotSent := uint64(sent.AmountOf("ugnot"))
+
+		if err := assertWrapNativeToken(ugnotSent, std.PrevRealm().Addr()); err != nil {
+			return nil, err
+		}
+	}
+	////////////////////////////////////////////////////////
+
+	liqParams := AddLiquidityParams{
+        poolKey:        op.position.poolKey,
+        tickLower:      op.position.tickLower,
+        tickUpper:      op.position.tickUpper,
+        amount0Desired: op.input.Amount0Desired,
+        amount1Desired: op.input.Amount1Desired,
+        amount0Min:     op.input.Amount0Min,
+        amount1Min:     op.input.Amount1Min,
+        caller:         std.PrevRealm().Addr(),
+    }
+
+	liquidity, amount0, amount1, err := addLiquidity(liqParams)
+	if err != nil {
+		return nil, err
+	}
+
+	pool := pl.GetPoolFromPoolPath(op.position.poolKey)
+	positionKey := positionKeyCompute(GetOrigPkgAddr(), op.position.tickLower, op.position.tickUpper)
+
+	currentFeeGrowth := FeeGrowthInside{
+		feeGrowthInside0LastX128: pool.PositionFeeGrowthInside0LastX128(positionKey),
+		feeGrowthInside1LastX128: pool.PositionFeeGrowthInside1LastX128(positionKey),
+	}
+
+	feeUpdate := calculatePositionFeeUpdate(op.position, currentFeeGrowth)
+	updatedPosition := updatePosition(op.position, feeUpdate, liquidity)
+
+	positions[op.input.TokenId] = updatedPosition
+
+	if hasWugnotToken(isToken0Wugnot, isToken1Wugnot) {
+		usrNewWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
+		leftover := usrNewWugnotBalance - userOldWugnotBalance
+		unwrap(leftover, std.PrevRealm().Addr())
+	}
+
+	return &IncreaseLiquidityResult{
+		TokenId: op.input.TokenId,
+		Liquidity: liquidity,
+		Amount0: amount0,
+		Amount1: amount1,
+		PoolPath: op.position.poolKey,
+	}, nil
+}
+
+// FeeGrowthInside represents fee growth inside ticks
+type FeeGrowthInside struct {
+	feeGrowthInside0LastX128 *u256.Uint
+	feeGrowthInside1LastX128 *u256.Uint
+}
+
+// PositionFeeUpdate represents fee update calculation result
+type PositionFeeUpdate struct {
+	tokensOwed0 *u256.Uint
+	tokensOwed1 *u256.Uint
+	feeGrowthInside0LastX128 *u256.Uint
+	feeGrowthInside1LastX128 *u256.Uint
+}
+
+func calculatePositionFeeUpdate(
+	position Position,
+	currentFeeGrowth FeeGrowthInside,
+) PositionFeeUpdate {
+	tokensOwed0 := calculateTokensOwed(
+		currentFeeGrowth.feeGrowthInside0LastX128,
+		position.feeGrowthInside0LastX128,
+		position.liquidity,
+	)
+
+	tokensOwed1 := calculateTokensOwed(
+		currentFeeGrowth.feeGrowthInside1LastX128,
+		position.feeGrowthInside1LastX128,
+		position.liquidity,
+	)
+
+	return PositionFeeUpdate{
+		tokensOwed0:              new(u256.Uint).Add(position.tokensOwed0, tokensOwed0),
+		tokensOwed1:              new(u256.Uint).Add(position.tokensOwed1, tokensOwed1),
+		feeGrowthInside0LastX128: currentFeeGrowth.feeGrowthInside0LastX128.Clone(),
+		feeGrowthInside1LastX128: currentFeeGrowth.feeGrowthInside1LastX128.Clone(),
+	}
+}
+
+func calculateTokensOwed(
+	currentFeeGrowth *u256.Uint,
+	lastFeeGrowth *u256.Uint,
+	liquidity *u256.Uint,
+) *u256.Uint {
+	diff := new(u256.Uint).Sub(currentFeeGrowth, lastFeeGrowth)
+	return u256.MulDiv(diff, liquidity, u256.MustFromDecimal(consts.Q128))
+}
+
+func updateTokensOwed(
+	feeGrowthInsideLastX128 *u256.Uint,
+	positionFeeGrowthInsideLastX128 *u256.Uint,
+	positionLiquidity *u256.Uint,
+	burnedAmount *u256.Uint,
+	tokensOwed *u256.Uint,
+) *u256.Uint {
+	additionalTokensOwed := calculateTokensOwed(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128, positionLiquidity)
+	add := new(u256.Uint).Add(burnedAmount, additionalTokensOwed)
+	return new(u256.Uint).Add(tokensOwed, add)
+}
+
+// updatePosition updates the position with new liquidity and fee data
+func updatePosition(
+	position Position,
+	feeUpdate PositionFeeUpdate,
+	newLiquidity *u256.Uint,
+) Position {
+	position.tokensOwed0 = feeUpdate.tokensOwed0
+	position.tokensOwed1 = feeUpdate.tokensOwed1
+	position.feeGrowthInside0LastX128 = feeUpdate.feeGrowthInside0LastX128
+	position.feeGrowthInside1LastX128 = feeUpdate.feeGrowthInside1LastX128
+	position.liquidity = new(u256.Uint).Add(position.liquidity, newLiquidity)
+	position.burned = false
+
+	return position
+}
+
+///////////////// DECREASE LIQUIDITY ///////////////////
+// region: decreaseLiquidity
+
+func DecreaseLiquidity(
+    tokenId uint64,
+    liquidityRatio uint64,
+    amount0Min string,
+    amount1Min string,
+    deadline int64,
+    unwrapResult bool,
+) (uint64, string, string, string, string, string, string) {
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
+	input := DecreaseLiquidityInput{
+		TokenId: tokenId,
+		LiquidityRatio: liquidityRatio,
+		Amount0Min: u256.MustFromDecimal(amount0Min),
+		Amount1Min: u256.MustFromDecimal(amount1Min),
+		Deadline: deadline,
+		UnwrapResult: unwrapResult,
+	}
+
+	op := NewDecreaseLiquidityOperation(input)
+
+	if err := op.Validate(); err != nil {
+		panic(addDetailToError(errInvalidInput, err.Error()))
+	}
+
+	result, err := op.Process()
+	if err != nil {
+		panic(err)
+	}
+
+	prevAddr, prevPkgPath := getPrevAsString()
+
+	std.Emit(
+        "IncreaseLiquidity",
+        "prevAddr", prevAddr,
+        "prevRealm", prevPkgPath,
+        "lpTokenId", ufmt.Sprintf("%d", result.TokenId),
+        "internal_poolPath", result.PoolPath,
+        "internal_liquidity", result.Liquidity.ToString(),
+        "internal_amount0", result.Amount0.ToString(),
+        "internal_amount1", result.Amount1.ToString(),
+        "internal_sqrtPriceX96", pl.PoolGetSlot0SqrtPriceX96(result.PoolPath),
+    )
+
+	return result.TokenId, result.Liquidity.ToString(), result.Fee0.ToString(), result.Fee1.ToString(), result.Amount0.ToString(), result.Amount1.ToString(), result.PoolPath
+}
+
+// DecreaseLiquidity Types and Operation
+type DecreaseLiquidityInput struct {
+    TokenId         uint64
+    LiquidityRatio  uint64
+    Amount0Min      *u256.Uint
+    Amount1Min      *u256.Uint
+    Deadline        int64
+    UnwrapResult    bool
+}
+
+type DecreaseLiquidityResult struct {
+    TokenId    uint64
+    Liquidity  *u256.Uint
+    Fee0       *u256.Uint
+    Fee1       *u256.Uint
+    Amount0    *u256.Uint
+    Amount1    *u256.Uint
+    PoolPath   string
+}
+
+type DecreaseLiquidityOperation struct {
+    input     DecreaseLiquidityInput
+    position  Position
+}
+
+func NewDecreaseLiquidityOperation(input DecreaseLiquidityInput) *DecreaseLiquidityOperation {
+    return &DecreaseLiquidityOperation{input: input}
+}
+
+func (op *DecreaseLiquidityOperation) Validate() error {
+	// check range
+	if op.input.LiquidityRatio < 1 || op.input.LiquidityRatio > 100 {
+		return ufmt.Errorf("liquidity ratio must be between 1 and 100")
+	}
+
+	tokenId := op.input.TokenId
+
+	position, exists := positions[tokenId]
+	if !exists {
+		return ufmt.Errorf("position %d not found", tokenId)
+	}
+	op.position = position
+
+	if op.position.liquidity.IsZero() {
+		return ufmt.Errorf("position(tokenId: %d) has no liquidity", op.input.TokenId)
+	}
+
+	verifyTokenIdAndOwnership(tokenId)
+
+	return nil
+}
+
+func (op *DecreaseLiquidityOperation) Process() (*DecreaseLiquidityResult, error) {
+	userOldWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
+
+	_, fee0Str, fee1Str, _, _, _ := CollectFee(op.input.TokenId, op.input.UnwrapResult)
+	fee0 := u256.MustFromDecimal(fee0Str)
+	fee1 := u256.MustFromDecimal(fee1Str)
+
+	liquidityToRemove := calculateLiquidityToRemove(op.position.liquidity, op.input.LiquidityRatio)
+
+	pToken0, pToken1, pFee := splitOf(op.position.poolKey)
+	burned0, burned1 := pl.Burn(pToken0, pToken1, pFee, op.position.tickLower, op.position.tickUpper, liquidityToRemove.ToString())
+
+	burnedAmount0 := u256.MustFromDecimal(burned0)
+	burnedAmount1 := u256.MustFromDecimal(burned1)
+
+	verifyBurnedAmounts(burnedAmount0, burnedAmount1, op.input.Amount0Min, op.input.Amount1Min)
+
+	pool := pl.GetPoolFromPoolPath(op.position.poolKey)
+	positionKey := positionKeyCompute(GetOrigPkgAddr(), op.position.tickLower, op.position.tickUpper)
+
+	// TODO: create New function
+	currentFeeGrowth := FeeGrowthInside{
+		feeGrowthInside0LastX128: pool.PositionFeeGrowthInside0LastX128(positionKey),
+		feeGrowthInside1LastX128: pool.PositionFeeGrowthInside1LastX128(positionKey),
+	}
+
+	op.position.tokensOwed0 = updateTokensOwed(
+		currentFeeGrowth.feeGrowthInside0LastX128,
+		op.position.feeGrowthInside0LastX128,
+		op.position.liquidity,
+		burnedAmount0,
+		op.position.tokensOwed0,
+	)
+
+	op.position.tokensOwed1 = updateTokensOwed(
+		currentFeeGrowth.feeGrowthInside1LastX128,
+		op.position.feeGrowthInside1LastX128,
+		op.position.liquidity,
+		burnedAmount1,
+		op.position.tokensOwed1,
+	)
+
+	// update position fields
+	op.position.liquidity = new(u256.Uint).Sub(op.position.liquidity, liquidityToRemove)
+    op.position.feeGrowthInside0LastX128 = currentFeeGrowth.feeGrowthInside0LastX128
+    op.position.feeGrowthInside1LastX128 = currentFeeGrowth.feeGrowthInside1LastX128
+
+	collectedAmount0, collectedAmount1 := pl.Collect(
+		pToken0, pToken1, pFee,
+		std.PrevRealm().Addr(),
+		op.position.tickLower, op.position.tickUpper,
+		burned0, burned1,
+	)
+
+	amount0 := u256.MustFromDecimal(collectedAmount0)
+	amount1 := u256.MustFromDecimal(collectedAmount1)
+
+	// Update tokens owed
+    op.position.tokensOwed0, _ = new(u256.Uint).SubOverflow(op.position.tokensOwed0, amount0)
+    op.position.tokensOwed1, _ = new(u256.Uint).SubOverflow(op.position.tokensOwed1, amount1)
+
+	positions[op.input.TokenId] = op.position
+
+	if op.position.isClear() {
+		burnPosition(op.input.TokenId)
+	}
+
+	if op.input.UnwrapResult {
+		handleUnwrap(pToken0, pToken1, op.input.UnwrapResult, userOldWugnotBalance, std.PrevRealm().Addr())
+	}
+
+	return &DecreaseLiquidityResult{
+		TokenId: op.input.TokenId,
+		Liquidity: liquidityToRemove,
+		Fee0: fee0,
+		Fee1: fee1,
+		Amount0: amount0,
+		Amount1: amount1,
+		PoolPath: op.position.poolKey,
+	}, nil
+}
+
+func calculateLiquidityToRemove(positionLiquidity *u256.Uint, liquidityRatio uint64) *u256.Uint {
+	liquidityToRemove := new(u256.Uint).Mul(positionLiquidity, u256.NewUint(liquidityRatio))
+	liquidityToRemove = new(u256.Uint).Div(liquidityToRemove, u256.NewUint(100))
+
+	if positionLiquidity.Lt(liquidityToRemove) || liquidityRatio == 100 {
+		return positionLiquidity
+	}
+	return liquidityToRemove
+}
+
+func burnPosition(tokenId uint64) {
+	position := positions[tokenId]
+	checkPositionHasClear(position)
+
+	position.burned = true
+	positions[tokenId] = position
+}
+
+func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalance uint64, to std.Address) {
+	if (pToken0 == consts.WRAPPED_WUGNOT || pToken1 == consts.WRAPPED_WUGNOT) && unwrapResult {
+		userNewWugnotBalance := wugnot.BalanceOf(a2u(to))
+		leftOver := userNewWugnotBalance - userOldWugnotBalance
+		unwrap(leftOver, to)
+	}
+}
+
+///////////////// CollectFee ///////////////////
+// region: collectFee
+
+func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
+	input := CollectFeeInput{
+		TokenId: tokenId,
+		UnwrapResult: unwrapResult,
+	}
+
+	op := NewCollectFeeOperation(input)
+
+	if err := op.Validate(); err != nil {
+		panic(addDetailToError(errInvalidInput, err.Error()))
+	}
+
+	result, err := op.Process()
+	if err != nil {
+		panic(err)
+	}
+
+	prevAddr, prevPkgPath := getPrevAsString()
+
+	std.Emit(
+        "CollectSwapFee",
+        "prevAddr", prevAddr,
+        "prevRealm", prevPkgPath,
+        "lpTokenId", ufmt.Sprintf("%d", result.TokenId),
+        "internal_fee0", result.Fee0.ToString(),
+        "internal_fee1", result.Fee1.ToString(),
+        "internal_poolPath", result.PoolPath,
+        "internal_unwrapResult", ufmt.Sprintf("%t", op.input.UnwrapResult),
+    )
+
+	return result.TokenId, result.Fee0.ToString(), result.Fee1.ToString(), result.PoolPath, result.OrigFee0, result.OrigFee1
+}
+
+// CollectFee Types and Operation
+type CollectFeeInput struct {
+    TokenId       uint64
+    UnwrapResult  bool
+}
+
+type CollectFeeResult struct {
+    TokenId    uint64
+    Fee0       *u256.Uint
+    Fee1       *u256.Uint
+    PoolPath   string
+    OrigFee0   string
+    OrigFee1   string
+}
+
+type CollectFeeOperation struct {
+    input     CollectFeeInput
+    position  Position
+}
+
+func NewCollectFeeOperation(input CollectFeeInput) *CollectFeeOperation {
+    return &CollectFeeOperation{ input: input }
+}
+
+func (op *CollectFeeOperation) Validate() error {
+	assertTokenExists(op.input.TokenId)
+	isAuthorizedForToken(op.input.TokenId)
+
+	// get and verify position
+	position, exists := positions[op.input.TokenId]
+	if !exists {
+		return ufmt.Errorf("position(tokenId: %d) not found", op.input.TokenId)
+	}
+	op.position = position
+
+	return nil
+}
+
+func (op *CollectFeeOperation) Process() (*CollectFeeResult, error) {
+	token0, token1, fee := splitOf(op.position.poolKey)
+
+	prevRealmAddr := std.PrevRealm().Addr()
+
+	// check initial WUGNOT balance for potential unwrap
+	userWugnot := wugnot.BalanceOf(a2u(prevRealmAddr))
+
+	// burn with zero liquidity to update fees
+	pl.Burn(
+		token0, token1, fee,
+		op.position.tickLower, op.position.tickUpper,
+		ZERO_LIQUIDITY_FOR_FEE_COLLECTION,
+	)
+
+	// get current fee growth
+	currentFeeGrowth, err := getCurrentFeeGrowth(op.position, token0, token1, fee)
+	if err != nil {
+		return nil, err
+	}
+
+	tokensOwed0, tokensOwed1 := calculateFees(op.position, currentFeeGrowth)
+
+	amount0, amount1 := pl.Collect(
+		token0, token1, fee,
+		prevRealmAddr,
+		op.position.tickLower, op.position.tickUpper,
+		tokensOwed0.ToString(), tokensOwed1.ToString(),
+	)
+
+	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
+	// instead of the actual amount so we can burn the token
+	op.position.tokensOwed0 = new(u256.Uint).Sub(tokensOwed0, u256.MustFromDecimal(amount0))
+    op.position.tokensOwed1 = new(u256.Uint).Sub(tokensOwed1, u256.MustFromDecimal(amount1))
+    positions[op.input.TokenId] = op.position
+
+	// handle withdrawal fee
+	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(
+		op.input.TokenId,
+		token0, amount0,
+		token1, amount1,
+		op.position.poolKey,
+		prevRealmAddr,
+	)
+
+	// handle WUGNOT unwrap if needed
+	if op.input.UnwrapResult {
+		pToken0, pToken1, _ := splitOf(op.position.poolKey)
+		if pToken0 == consts.WUGNOT_PATH || pToken1 == consts.WUGNOT_PATH {
+            userNewWugnot := wugnot.BalanceOf(a2u(prevRealmAddr))
+            unwrapAmount := userNewWugnot - userWugnot
+
+            if unwrapAmount > 0 {
+                unwrap(unwrapAmount, std.PrevRealm().Addr())
+            }
+        }
+	}
+
+	return &CollectFeeResult{
+        TokenId:   op.input.TokenId,
+        Fee0:      u256.MustFromDecimal(withoutFee0),
+        Fee1:      u256.MustFromDecimal(withoutFee1),
+        PoolPath:  op.position.poolKey,
+        OrigFee0:  amount0,
+        OrigFee1:  amount1,
+    }, nil
+}
+
+func getCurrentFeeGrowth(postion Position, token0, token1 string, fee uint32) (FeeGrowthInside, error) {
+	pool := pl.GetPoolFromPoolPath(postion.poolKey)
+	positionKey := positionKeyCompute(GetOrigPkgAddr(), postion.tickLower, postion.tickUpper)
+
+	feeGrowthInside0 := pool.PositionFeeGrowthInside0LastX128(positionKey)
+	feeGrowthInside1 := pool.PositionFeeGrowthInside1LastX128(positionKey)
+
+	feeGrowthInside := FeeGrowthInside{
+		feeGrowthInside0LastX128: feeGrowthInside0,
+		feeGrowthInside1LastX128: feeGrowthInside1,
+	}
+
+	return feeGrowthInside, nil
+}
+
+// calculateFees calculates the fees for the current position.
+func calculateFees(position Position, currentFeeGrowth FeeGrowthInside) (*u256.Uint, *u256.Uint) {
+	fee0 := calculateTokensOwed(
+		currentFeeGrowth.feeGrowthInside0LastX128,
+		position.feeGrowthInside0LastX128,
+		position.liquidity,
+	)
+
+	fee1 := calculateTokensOwed(
+		currentFeeGrowth.feeGrowthInside1LastX128,
+		position.feeGrowthInside1LastX128,
+		position.liquidity,
+	)
+
+	tokensOwed0 := new(u256.Uint).Add(position.tokensOwed0.Clone(), fee0)
+	tokensOwed1 := new(u256.Uint).Add(position.tokensOwed1.Clone(), fee1)
+
+	return tokensOwed0, tokensOwed1
+}
+
+///////////////// Reposition ///////////////////
+// region: reposition
+
+// Reposition Types and Operation
+type RepositionInput struct {
+    TokenId        uint64
+    TickLower      int32
+    TickUpper      int32
+    Amount0Desired *u256.Uint
+    Amount1Desired *u256.Uint
+    Amount0Min     *u256.Uint
+    Amount1Min     *u256.Uint
+}
+
+type RepositionResult struct {
+    TokenId        uint64
+    Liquidity      *u256.Uint
+    TickLower      int32
+    TickUpper      int32
+    Amount0        *u256.Uint
+    Amount1        *u256.Uint
+    OldTickLower   int32
+    OldTickUpper   int32
+    PoolPath       string
+}
+
+type RepositionOperation struct {
+    input     RepositionInput
+    position  Position
+}
+
+func NewRepositionOperation(input RepositionInput) *RepositionOperation {
+    return &RepositionOperation{ input: input }
+}
+
+func (op *RepositionOperation) Validate() error {
+	tokenId := op.input.TokenId
+	assertTokenOwnership(tokenId)
+
+	position, exists := positions[tokenId]
+	if !exists {
+		return ufmt.Errorf("position(tokenId: %d) not found", tokenId)
+	}
+	op.position = position
+
+	checkPositionHasClear(op.position)
+
+	return nil
+}
+
+func (op *RepositionOperation) Process() (*RepositionResult, error) {
+	poolKey := op.position.poolKey
+	token0, token1, _ := splitOf(poolKey)
+
+	// Check if GNOT pool
+	// TODO: extract this to a helper function
+    token0IsNative := token0 == consts.WRAPPED_WUGNOT
+    token1IsNative := token1 == consts.WRAPPED_WUGNOT
+
+	// Handle native token if needed
+	if token0IsNative || token1IsNative {
+		sent := std.GetOrigSend()
+		ugnotSent := uint64(sent.AmountOf("ugnot"))
+
+        if err := assertWrapNativeToken(ugnotSent, std.PrevRealm().Addr()); err != nil {
+            return nil, ufmt.Errorf("native token wrap failed: %w", err)
+        }
+    }
+	// ------
+
+	liqParams := AddLiquidityParams{
+        poolKey:        op.position.poolKey,
+        tickLower:      op.input.TickLower,
+        tickUpper:      op.input.TickUpper,
+        amount0Desired: op.input.Amount0Desired,
+        amount1Desired: op.input.Amount1Desired,
+        amount0Min:     op.input.Amount0Min,
+        amount1Min:     op.input.Amount1Min,
+        caller:         std.PrevRealm().Addr(),
+    }
+
+	liquidity, amount0, amount1, err := addLiquidity(liqParams)
+	if err != nil {
+		return nil, ufmt.Errorf("%v: add liquidity failed", errSlippage)
+	}
+
+	pool := pl.GetPoolFromPoolPath(poolKey)
+	positionKey := positionKeyCompute(GetOrigPkgAddr(), op.input.TickLower, op.input.TickUpper)
+
+	feeGrowthInside0LastX128 := pool.PositionFeeGrowthInside0LastX128(positionKey)
+    feeGrowthInside1LastX128 := pool.PositionFeeGrowthInside1LastX128(positionKey)
+
+    // Store old ticks for event emission
+    oldTickLower := op.position.tickLower
+    oldTickUpper := op.position.tickUpper
+
+    // Update position
+    op.position.tickLower = op.input.TickLower
+    op.position.tickUpper = op.input.TickUpper
+    op.position.liquidity = liquidity
+    op.position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
+    op.position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
+    op.position.tokensOwed0 = u256.Zero()
+    op.position.tokensOwed1 = u256.Zero()
+    op.position.burned = false
+
+	positions[op.input.TokenId] = op.position
+
+	return &RepositionResult{
+        TokenId:      op.input.TokenId,
+        Liquidity:    liquidity,
+        TickLower:    op.input.TickLower,
+        TickUpper:    op.input.TickUpper,
+        Amount0:      amount0,
+        Amount1:      amount1,
+        OldTickLower: oldTickLower,
+        OldTickUpper: oldTickUpper,
+        PoolPath:     op.position.poolKey,
+    }, nil
+}
+
+func Reposition(
+    tokenId uint64,
+    tickLower int32,
+    tickUpper int32,
+    amount0Desired string,
+    amount1Desired string,
+    amount0Min string,
+    amount1Min string,
+) (uint64, string, int32, int32, string, string) {
+	common.IsHalted()
+	en.MintAndDistributeGns()
+
+	input := RepositionInput{
+		TokenId: tokenId,
+		TickLower: tickLower,
+		TickUpper: tickUpper,
+		Amount0Desired: u256.MustFromDecimal(amount0Desired),
+		Amount1Desired: u256.MustFromDecimal(amount1Desired),
+		Amount0Min: u256.MustFromDecimal(amount0Min),
+		Amount1Min: u256.MustFromDecimal(amount1Min),
+	}
+
+	op := NewRepositionOperation(input)
+
+	if err := op.Validate(); err != nil {
+		panic(addDetailToError(errInvalidInput, err.Error()))
+	}
+
+	result, err := op.Process()
+	if err != nil {
+		panic(err)
+	}
+
+	prevAddr, prevPkgPath := getPrevAsString()
+	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(result.PoolPath)
+
+	std.Emit(
+        "Reposition",
+        "prevAddr", prevAddr,
+        "prevRealm", prevPkgPath,
+        "lpTokenId", ufmt.Sprintf("%d", result.TokenId),
+        "tickLower", ufmt.Sprintf("%d", result.TickLower),
+        "tickUpper", ufmt.Sprintf("%d", result.TickUpper),
+        "liquidity", result.Liquidity.ToString(),
+        "internal_amount0", result.Amount0.ToString(),
+        "internal_amount1", result.Amount1.ToString(),
+        "internal_oldTickLower", ufmt.Sprintf("%d", result.OldTickLower),
+        "internal_oldTickUpper", ufmt.Sprintf("%d", result.OldTickUpper),
+        "internal_poolPath", result.PoolPath,
+        "internal_sqrtPriceX96", poolSqrtPriceX96,
+    )
+
+	return result.TokenId, result.Liquidity.ToString(), result.TickLower, result.TickUpper, result.Amount0.ToString(), result.Amount1.ToString()
+}
+
+///////////////// HELPER ///////////////////
+// region: helper
+
+func assertCallerPermission(prev std.Realm) {
+	isUserCalled := prev.PkgPath() == ""
+	isStakerCalled := prev.Addr() == consts.STAKER_ADDR
+
+	if !common.GetLimitCaller() {
+		return
+	}
+
+	if !(isUserCalled || isStakerCalled) {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("only user or staker can call, but called from %s", prev.Addr().String()),
+		))
+	}
+}
+
+func processMintInput(input MintInput) (ProcessedMintInput, error) {
+	var result ProcessedMintInput
+
+	// process tokens
+	token0, token1, token0IsNative, token1IsNative := processTokens(input.token0, input.token1)
+	pair := TokenPair{
+		token0:         token0,
+		token1:         token1,
+		token0IsNative: token0IsNative,
+		token1IsNative: token1IsNative,
+	}
+
+	// parse amounts
+	amount0Desired, amount1Desired, amount0Min, amount1Min := parseAmounts(input.amount0Desired, input.amount1Desired, input.amount0Min, input.amount1Min)
+
+	tickLower, tickUpper := input.tickLower, input.tickUpper
+
+	// swap if token1 < token0
+	if token1 < token0 {
+		pair.token0, pair.token1 = pair.token1, pair.token0
+		amount0Desired, amount1Desired = amount1Desired, amount0Desired
+		amount0Min, amount1Min = amount1Min, amount0Min
+		tickLower, tickUpper = -tickUpper, -tickLower
+		pair.token0IsNative, pair.token1IsNative = pair.token1IsNative, pair.token0IsNative
+	}
+
+	poolPath := renderPoolPath(pair.token0, pair.token1, input.fee)
+
+	result = ProcessedMintInput{
+		tokenPair:      pair,
+		amount0Desired: amount0Desired.Clone(),
+		amount1Desired: amount1Desired.Clone(),
+		amount0Min:     amount0Min.Clone(),
+		amount1Min:     amount1Min.Clone(),
+		tickLower:      tickLower,
+		tickUpper:      tickUpper,
+		poolPath:       poolPath,
+	}
+
+	return result, nil
+}
+
+func processTokens(token0, token1 string) (string, string, bool, bool) {
+	token0IsNative := false
+	token1IsNative := false
+	if token0 == consts.GNOT {
+		token0 = consts.WRAPPED_WUGNOT
+		token0IsNative = true
+	} else if token1 == consts.GNOT {
+		token1 = consts.WRAPPED_WUGNOT
+		token1IsNative = true
+	}
+	return token0, token1, token0IsNative, token1IsNative
+}
+
+func parseAmounts(amount0Desired, amount1Desired, amount0Min, amount1Min string) (*u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint) {
+	return u256.MustFromDecimal(amount0Desired), u256.MustFromDecimal(amount1Desired), u256.MustFromDecimal(amount0Min), u256.MustFromDecimal(amount1Min)
+}
+
+func renderPoolPath(token0, token1 string, fee uint32) string {
+	return ufmt.Sprintf("%s:%s:%d", token0, token1, fee)
+}
+
+func hasNativeToken(token0IsNative, token1IsNative bool) bool {
+	return token0IsNative || token1IsNative
+}
+
+func handleNativeToken(token0IsNative, token1IsNative bool, caller std.Address) error {
+	if !hasNativeToken(token0IsNative, token1IsNative) {
+		return nil
+	}
+
+	oldUserWugnotBalance := wugnot.BalanceOf(a2u(caller))
+	sent := std.GetOrigSend()
+	ugnotSent := uint64(sent.AmountOf("ugnot"))
+
+	if ugnotSent <= 0 {
+		return nil
+	}
+
+	if err := wrap(ugnotSent, caller); err != nil {
+		return err
+	}
+
+	newUserWugnotBalance := wugnot.BalanceOf(a2u(caller))
+	diff := newUserWugnotBalance - oldUserWugnotBalance
+
+	if diff != ugnotSent {
+		return ufmt.Errorf("amount of ugnot (%d) is not equal to amount of wugnot. (diff: %d)", ugnotSent, diff)
+	}
+
+	return nil
+}
+
+func positionKeyCompute(
+	owner std.Address,
+	tickLower int32,
+	tickUpper int32,
+) string {
+	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
+
+	encoded := base64.StdEncoding.EncodeToString([]byte(key))
+	return encoded
+}
+
+func handleLeftoverNativeToken(token0IsNative, token1IsNative bool, userWugnotBalance uint64, caller std.Address) {
+	if !hasNativeToken(token0IsNative, token1IsNative) {
+		return
+	}
+
+	userWugnotAfterMint := wugnot.BalanceOf(a2u(caller))
+
+	leftOver := userWugnotAfterMint - userWugnotBalance
+	if leftOver > 0 {
+		unwrap(leftOver, caller)
+	}
+}
+
+
+func hasWugnotToken(isToken0Wugnot, isToken1Wugnot bool) bool {
+	return isToken0Wugnot || isToken1Wugnot
+}
+
+func SetPositionOperator(tokenId uint64, operator std.Address) {
+	caller := std.PrevRealm().PkgPath()
+	if caller != consts.STAKER_PATH {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("caller(%s) is not staker", caller),
+		))
+	}
+
+	position, exist := positions[tokenId]
+	if !exist {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("position(%d) doesn't exist", tokenId),
+		))
+	}
+
+	position.operator = operator
+	positions[tokenId] = position
+}
