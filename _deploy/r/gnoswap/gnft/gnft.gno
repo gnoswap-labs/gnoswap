@@ -197,7 +197,7 @@ func Render(path string) string {
 	}
 }
 
-// SetTokenURI sets the metadata URI for a specific token using random generation svg image
+// SetTokenURI sets the metadata URI using a randomly generated SVG image
 // Parameters:
 //   - tid: The token ID to set the URI for
 //
