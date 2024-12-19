@@ -1,9 +1,7 @@
 package gnft
 
 import (
-	"math/rand"
 	"std"
-	"time"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc721"
@@ -22,7 +20,7 @@ var (
 	owner = ownable.NewWithAddress(consts.POSITION_ADDR) // deployed position contract
 )
 
-var (tokenList
+var (
 	tokenList *avl.Tree // addr -> []grc721.TokenID
 )
 
@@ -197,67 +195,56 @@ func Render(path string) string {
 //   - tid: The token ID to set the URI for
 //
 // Returns:
+//   - string: The token URI
 //   - error: Returns an error if the URI setting fails, nil otherwise
-func SetTokenURI(tid grc721.TokenID) error {
+func SetTokenURI(tid grc721.TokenID) (string, error) {
 	common.IsHalted()
 
-	// rand instance
-	seed1 := uint64(time.Now().Unix() + int64(TotalSupply()))
-	seed2 := uint64(time.Now().UnixNano() + int64(TotalSupply()))
-	pcg := rand.NewPCG(seed1, seed2)
-	r := rand.New(pcg)
-
-	tokenURI := genImageURI(r)
+	tokenURI := genImageURI(generateRandInstnace())
 	ok, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"SetTokenURI",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"lpTokenId", string(tid),
 		"internal_tokenURI", tokenURI,
 	)
 
-	return nil
+	return tokenURI, nil
 }
 
-// SetTokenURILast sets metadata URIs for all pending tokens from the caller
+// SetTokenURILast sets metadata URI for last minted nft token
 // Returns:
 //   - error: Returns an error if the URI setting fails, nil otherwise
 func SetTokenURILast() error {
 	common.IsHalted()
 
-	// rand instance
-	seed1 := uint64(time.Now().Unix())
-	seed2 := uint64(time.Now().UnixNano())
-	pcg := rand.NewPCG(seed1, seed2)
-	r := rand.New(pcg)
-
 	caller := std.PrevRealm().Addr()
-	tokensToSetUri, _ := getTokensToSetUri(caller)
-	for _, tid := range tokensToSetUri {
-		tokenURI := genImageURI(r)
-
-		ok, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
-		if err != nil {
-			return err
-		}
-
-		deleteTokenFromTokensToSetUri(caller, tid)
-
-		prevAddr, prevRealm := getPrev()
-		std.Emit(
-			"SetTokenURI",
-			"prevAddr", prevAddr,
-			"prevRealm", prevRealm,
-			"lpTokenId", string(tid),
-			"internal_tokenURI", tokenURI,
-		)
+	tokenListByCaller, _ := getTokenList(caller)
+	lenTokenListByCaller := len(tokenListByCaller)
+	if lenTokenListByCaller == 0 {
+		return nil
 	}
+
+	lastToken := tokenListByCaller[lenTokenListByCaller-1]
+	tokenURI, err := SetTokenURI(lastToken)
+	if err != nil {
+		return err
+	}
+
+	prevAddr, prevPkgPath := getPrevAsString()
+	std.Emit(
+		"SetTokenURILast",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"lpTokenId", string(lastToken),
+		"internal_tokenURI", tokenURI,
+	)
 
 	return nil
 }
