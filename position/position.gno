@@ -37,36 +37,36 @@ func getNextId() uint64 {
 // region: Mint
 
 type MintInput struct {
-    token0         string
-    token1         string
-    fee            uint32
-    tickLower      int32
-    tickUpper      int32
-    amount0Desired string
-    amount1Desired string
-    amount0Min     string
-    amount1Min     string
-    deadline       int64
-    mintTo         std.Address
-    caller         std.Address
+	token0         string
+	token1         string
+	fee            uint32
+	tickLower      int32
+	tickUpper      int32
+	amount0Desired string
+	amount1Desired string
+	amount0Min     string
+	amount1Min     string
+	deadline       int64
+	mintTo         std.Address
+	caller         std.Address
 }
 
 type TokenPair struct {
-    token0         string
-    token1         string
-    token0IsNative bool
-    token1IsNative bool
+	token0         string
+	token1         string
+	token0IsNative bool
+	token1IsNative bool
 }
 
 type ProcessedMintInput struct {
-    tokenPair      TokenPair
-    amount0Desired *u256.Uint
-    amount1Desired *u256.Uint
-    amount0Min     *u256.Uint
-    amount1Min     *u256.Uint
-    tickLower      int32
-    tickUpper      int32
-    poolPath       string
+	tokenPair      TokenPair
+	amount0Desired *u256.Uint
+	amount1Desired *u256.Uint
+	amount0Min     *u256.Uint
+	amount1Min     *u256.Uint
+	tickLower      int32
+	tickUpper      int32
+	poolPath       string
 }
 
 // Mint creates a new liquidity position and mints liquidity tokens.
@@ -87,15 +87,17 @@ func Mint(
 	mintTo std.Address,
 	caller std.Address,
 ) (uint64, string, string, string) {
-	common.IsHalted()
-	en.MintAndDistributeGns()
-
-	prev := std.PrevRealm()
-	if err := assertCallerPermission(prev); err != nil {
-		panic(addDetailToError(errNoPermission, err.Error()))
+	assertOnlyNotHalted()
+	prevCaller := getPrevRealm()
+	assertOnlyUserOrStaker(prevCaller)
+	if isUserCall() {
+		// if user called, validate the prev address and input addresses(mintTo, caller)
+		assertOnlyValidAddressWith(prevCaller.Addr(), mintTo)
+		assertOnlyValidAddressWith(prevCaller.Addr(), caller)
 	}
+	checkDeadline(deadline)
 
-	caller, mintTo = upgradeCallerIfUserCalled(caller, mintTo, prev)
+	en.MintAndDistributeGns()
 
 	token0, token1, token0IsNative, token1IsNative := processTokens(token0, token1)
 	userWugnotBalance := wugnot.BalanceOf(a2u(caller))
@@ -463,8 +465,8 @@ type FeeGrowthInside struct {
 
 // PositionFeeUpdate represents fee update calculation result
 type PositionFeeUpdate struct {
-	tokensOwed0 *u256.Uint
-	tokensOwed1 *u256.Uint
+	tokensOwed0              *u256.Uint
+	tokensOwed1              *u256.Uint
 	feeGrowthInside0LastX128 *u256.Uint
 	feeGrowthInside1LastX128 *u256.Uint
 }
