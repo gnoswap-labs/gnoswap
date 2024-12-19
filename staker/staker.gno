@@ -23,6 +23,26 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+type Deposits struct {
+	tree *UintTree
+}
+
+func (self *Deposits) get(tokenId uint64) (*Deposit, bool) {
+	depositI, ok := self.tree.Get(tokenId)
+	if !ok {
+		return nil, false
+	}
+	deposit := depositI.(*Deposit)
+	return deposit, true
+}
+
+func (self *Deposits) set(tokenId uint64, deposit *Deposit) {
+	self.tree.Set(tokenId, deposit)
+}
+
+func (self *Deposits) has(tokenId uint64) bool {
+	return self.tree.Has(tokenId)
+}
 
 var (
 	/* external */
@@ -34,7 +54,9 @@ var (
 
 	/* common */
 	// deposits stores deposit information for each tokenId
-	deposits map[uint64]Deposit = make(map[uint64]Deposit)
+	deposits *Deposits = &Deposits{
+		tree: NewUintTree(),
+	}
 
 	// depositOperations map[uint64][]DepositOperation = make(map[uint64][]DepositOperation)
 )
@@ -53,10 +75,8 @@ func init() {
 	// init pool tiers
 	// tier 1
 	// ONLY GNOT:GNS 0.3%
-	poolTiers[MUST_EXISTS_IN_TIER_1] = InternalTier{
-		tier:           1,
-		startTimestamp: time.Now().Unix(),
-	}
+
+	poolTier.changeTier(MUST_EXISTS_IN_TIER_1, 1)
 }
 
 // StakeToken stakes the LP token to the staker contract
@@ -73,8 +93,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	}
 
 	// check whether tokenId already staked or not
-	_, exist := deposits[tokenId]
-	if exist {
+	if deposits.has(tokenId) {
 		panic(addDetailToError(
 			errAlreadyStaked,
 			ufmt.Sprintf("staker.gno__StakeToken() || tokenId(%d) already staked", tokenId),
@@ -121,13 +140,20 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	}
 
 	// staked status
-	deposit := deposits[tokenId]
-	deposit.owner = std.PrevRealm().Addr()
-	deposit.numberOfStakes++
-	deposit.stakeTimestamp = time.Now().Unix()
-	deposit.stakeHeight = std.GetHeight()
-	deposit.targetPoolPath = poolPath
-	deposits[tokenId] = deposit
+	deposit := &Deposit{
+		owner:          std.PrevRealm().Addr(),
+		stakeTimestamp: time.Now().Unix(),
+		stakeHeight:    std.GetHeight(),
+
+		targetPoolPath: poolPath,
+		tickLower:      pn.PositionGetPositionTickLower(tokenId),
+		tickUpper:      pn.PositionGetPositionTickUpper(tokenId),
+
+		warmups: DefaultWarmups(uint64(std.GetHeight())),
+
+		lastCollectHeight: uint64(std.GetHeight()),
+	}
+	deposits.set(tokenId, deposit)
 
 	if callerIsOwner { // if caller is owner, transfer NFT ownership to staker contract
 		transferDeposit(tokenId, consts.STAKER_ADDR)
@@ -152,7 +178,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		"internal_amount1", token1Amount,
 	)
 
-	positionsInternalWarmUpAmount[tokenId] = warmUpAmount{}
+	// positionsInternalWarmUpAmount[tokenId] = warmUpAmount{}
 	return poolPath, token0Amount, token1Amount
 }
 
@@ -166,42 +192,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 	if consts.EMISSION_REFACTORED {
 		CalcPoolPositionRefactor()
 	} else {
-		// cache per-tier and per-pool reward
-		currentHeight := uint64(std.GetHeight())
-		poolTier.cacheTierReward(currentHeight)
-		poolPath := deposits[tokenId].targetPoolPath
-		pool, ok := pools.get(poolPath)
-		if !ok {
-			panic(addDetailToError(
-				errDataNotFound,
-				ufmt.Sprintf("staker.gno__CollectReward() || poolPath(%s) does not exist", poolPath),
-			))
-		}
-		poolTier.cachePoolReward(pool.rewardCache, poolPath, pool.lastRewardCacheHeight, currentHeight)
-
-		// eligible(in-range) intervals for a position
-		upperTickId := pn.PositionGetPositionUpperTickId(tokenId)
-		upperTick := ticks.get(upperTickId)
-		lowerTickId := pn.PositionGetPositionLowerTickId(tokenId)
-		lowerTick := ticks.get(lowerTickId)
-
-		deposit := deposits[tokenId]
-		position := positions.get(tokenId)
-		lastCollectHeight := position.lastCollectHeight
-
-		tickUpperCrossHeights, tickUpperCrossZeroForOnes := upperTick.crossInfo(lastCollectHeight, currentHeight)
-		tickLowerCrossHeights, tickLowerCrossZeroForOnes := lowerTick.crossInfo(lastCollectHeight, currentHeight)
-
-		initialUpperCross := upperTick.lastCross(lastCollectHeight)
-		initialLowerCross := lowerTick.lastCross(lastCollectHeight)
-		currentlyInRange := initialUpperCross && !initialLowerCross
-
-		intervals := pool.tickCrossesToEligibleIntervals(tickUpperCrossHeights, tickUpperCrossZeroForOnes, tickLowerCrossHeights, tickLowerCrossZeroForOnes, currentlyInRange, lastCollectHeight, currentHeight)
-
-		totalReward, totalPenalty := position.eligibleIntervalsToReward(intervals, pool, currentHeight)
-
-		gns.Transfer(a2u(deposit.owner), totalReward.Uint64())
-		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), totalPenalty.Uint64())
+		
 	}
 
 	deposit, exist := deposits[tokenId]

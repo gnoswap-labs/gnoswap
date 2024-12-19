@@ -1,5 +1,6 @@
 package staker
 
+/*
 type RewardManager struct {
 	internalReward *InternalEmissionReward  // Internal Reward by Emission
 	externalReward *ExternalIncentiveReward // External Reward by Incentive
@@ -27,3 +28,4 @@ func (rm *RewardManager) SetExternalIncentiveReward(externalReward *ExternalInce
 func (rm *RewardManager) GetExternalIncentiveReward() *ExternalIncentiveReward {
 	return rm.externalReward
 }
+*/

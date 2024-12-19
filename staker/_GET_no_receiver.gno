@@ -283,6 +283,7 @@ func StakerDepositOwner(lpTokenId uint64) std.Address {
 //
 // Panics:
 //   - If the deposit does not exist for the given lpTokenId
+/*
 func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
 	en.MintAndDistributeGns()
 	if consts.EMISSION_REFACTORED {
@@ -301,6 +302,7 @@ func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
 
 	return deposit.numberOfStakes
 }
+*/
 
 // StakerDepositStakeTimestamp returns the stake timestamp for a given LP token ID
 //
@@ -371,13 +373,13 @@ func StakerDepositTargetPoolPath(lpTokenId uint64) string {
 // Panics:
 //   - If the pool tier does not exist for the given poolPath
 func StakerPoolTier(poolPath string) uint64 {
-	internal, exist := poolTiers[poolPath]
-	if !exist {
+	tier := poolTier.lastTier(poolPath, uint64(std.GetHeight())) 
+	if tier == 0 {
 		panic(addDetailToError(
 			errDataNotFound,
 			ufmt.Sprintf("_GET_no_receiver.gno__StakerPoolTier() || poolPath(%s) poolTier does not exist", poolPath),
 		))
 	}
 
-	return internal.tier
+	return tier
 }

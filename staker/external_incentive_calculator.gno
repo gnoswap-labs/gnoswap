@@ -1,14 +1,14 @@
 package staker
 
 import (
-	"time"
+	//"time"
 
-	u256 "gno.land/p/gnoswap/uint256"
-	"gno.land/r/gnoswap/v1/consts"
+	//u256 "gno.land/p/gnoswap/uint256"
+	//"gno.land/r/gnoswap/v1/consts"
 )
 
 // region *****refactor******
-
+/*
 type ExternalIncentiveMap map[string]ExternalIncentive
 
 // ExternalCalculator manages the calculation of external incentive rewards.
@@ -232,3 +232,4 @@ func (ex *ExternalCalculator) updatePositionRewards(
 }
 
 // 남는 수량 어떻게?
+*/

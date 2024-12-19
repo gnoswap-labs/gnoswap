@@ -3,7 +3,6 @@ package staker
 import (
 	"std"
 	"strconv"
-	"strings"
 
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ufmt"

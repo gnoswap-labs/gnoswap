@@ -1,12 +1,14 @@
 package staker
 
 import (
-	"std"
+	//"std"
 
-	"gno.land/p/demo/ufmt"
-	"gno.land/r/gnoswap/v1/consts"
-	"gno.land/r/gnoswap/v1/gns"
+	//"gno.land/p/demo/ufmt"
+	//"gno.land/r/gnoswap/v1/consts"
+	//"gno.land/r/gnoswap/v1/gns"
 )
+
+/*
 
 // InternalEmissionReward ...
 // Internal emission reward 분배를 위한 구조체
@@ -349,3 +351,5 @@ func (r *InternalEmissionReward) DistributeRewardToStakers() {
 	}
 	r.SetRewardPoolsMap(poolMap)
 }
+
+*/

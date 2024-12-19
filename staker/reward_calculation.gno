@@ -1,10 +1,10 @@
 package staker
 
 import (
+	"math"
 	"std"
 	"strconv"
 	"strings"
-	"math"
 
 	"gno.land/p/demo/avl"
 
@@ -84,6 +84,36 @@ type TierRatio struct {
 	tier3 uint64
 }
 
+func TierRatioFromCounts(tier1Count, tier2Count, tier3Count uint64) *TierRatio {
+	// tier1 always exists
+	if tier2Count == 0 && tier3Count == 0 {
+		return &TierRatio{
+			tier1: 100,
+			tier2: 0,
+			tier3: 0,
+		}
+	}
+	if tier2Count == 0 {
+		return &TierRatio{
+			tier1: 80,
+			tier2: 0,
+			tier3: 20,
+		}
+	}
+	if tier3Count == 0 {
+		return &TierRatio{
+			tier1: 70,
+			tier2: 30,
+			tier3: 0,
+		}
+	}
+	return &TierRatio{
+		tier1: 50,
+		tier2: 30,
+		tier3: 20,
+	}
+}
+
 func (self *TierRatio) get(tier uint64) uint64 {
 	switch tier {
 	case 1:
@@ -111,25 +141,23 @@ type PoolTier struct {
 
 	// rewardCache is used to calculate internal reward for each tier
 	// reward = emission / (number of pools in tier) * (tier's ratio)
-	tier1RewardCache *UintTree // blockNumber -> *u256.Uint
-	tier2RewardCache *UintTree // blockNumber -> *u256.Uint
-	tier3RewardCache *UintTree // blockNumber -> *u256.Uint
-	lastRewardCacheHeight uint64
+	tier1RewardCache      *UintTree // blockNumber -> *u256.Uint
+	tier2RewardCache      *UintTree // blockNumber -> *u256.Uint
+	tier3RewardCache      *UintTree // blockNumber -> *u256.Uint
+	lastRewardCacheHeight *uint64
 }
 
-var (
-	poolTier *PoolTier = &PoolTier{
-		tier1: NewUintTree(),
-		tier2: NewUintTree(),
-		tier3: NewUintTree(),
-		tierRatio: NewUintTree(),
-		tierMembership: avl.NewTree(),
-		tier1RewardCache: NewUintTree(),
-		tier2RewardCache: NewUintTree(),
-		tier3RewardCache: NewUintTree(),
-		lastRewardCacheHeight: 0,
-	}
-)
+var poolTier *PoolTier = &PoolTier{
+	tier1:                 NewUintTree(),
+	tier2:                 NewUintTree(),
+	tier3:                 NewUintTree(),
+	tierRatio:             NewUintTree(),
+	tierMembership:        avl.NewTree(),
+	tier1RewardCache:      NewUintTree(),
+	tier2RewardCache:      NewUintTree(),
+	tier3RewardCache:      NewUintTree(),
+	lastRewardCacheHeight: nil,
+}
 
 func (self *PoolTier) membershipOf(poolPath string) *UintTree {
 	v, ok := self.tierMembership.Get(poolPath)
@@ -184,11 +212,32 @@ func (self *PoolTier) lastReward(tier uint64, endHeight uint64) *u256.Uint {
 	return reward
 }
 
-func (self *PoolTier) hasPool(poolPath string) bool {
-	if _, ok := self.tierMembership.Get(poolPath); ok {
-		return true
+func (self *PoolTier) changeTier(poolPath string, nextTier uint64) {
+	height := uint64(std.GetHeight())
+	currentTier := self.lastTier(poolPath, height)
+	if currentTier == nextTier {
+		return
 	}
-	return false
+
+	currentTierCount := uint64(0)
+	if currentTier != 0 {
+		currentTierCount = self.lastCount(currentTier, height) - 1
+		self.countOf(currentTier).Set(height, currentTierCount)
+	}
+
+	nextTierLastCount := uint64(0)
+	if nextTier != 0 {
+		nextTierLastCount = self.lastCount(nextTier, height)
+		self.countOf(nextTier).Set(height, nextTierLastCount+1)
+	}
+
+	self.membershipOf(poolPath).Set(height, nextTier)
+
+	if currentTierCount == 0 || nextTierLastCount == 0 {
+		// ratio changed
+		newRatio := TierRatioFromCounts(self.lastCount(1, height), self.lastCount(2, height), self.lastCount(3, height))
+		self.tierRatio.Set(height, newRatio)
+	}
 }
 
 func (self *PoolTier) countOf(tier uint64) *UintTree {
@@ -240,11 +289,11 @@ func (self *PoolTier) tierDenominatorUpdates(tier uint64, startHeight, endHeight
 	lastHeight := startHeight
 	tierCountTree.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
 		self.tierRatio.Iterate(lastHeight, height, func(ratioHeight uint64, value interface{}) bool {
-			currentRatio = value.(TierRatio).get(tier)
+			currentRatio = value.(*TierRatio).get(tier)
 			update := currentCount * currentRatio
 			if ratioHeight == lastHeight {
-				heights[len(heights) - 1] = ratioHeight
-				updates[len(updates) - 1] = update
+				heights[len(heights)-1] = ratioHeight
+				updates[len(updates)-1] = update
 			} else {
 				heights = append(heights, ratioHeight)
 				updates = append(updates, update)
@@ -254,7 +303,7 @@ func (self *PoolTier) tierDenominatorUpdates(tier uint64, startHeight, endHeight
 
 		currentCount = value.(uint64)
 		heights = append(heights, height)
-		updates = append(updates, currentCount * currentRatio)
+		updates = append(updates, currentCount*currentRatio)
 
 		lastHeight = height
 
@@ -264,11 +313,11 @@ func (self *PoolTier) tierDenominatorUpdates(tier uint64, startHeight, endHeight
 	// take account of ratio changes after the last count change
 	self.tierRatio.Iterate(lastHeight, endHeight, func(key uint64, value interface{}) bool {
 		ratioHeight := key
-		currentRatio = value.(TierRatio).get(tier)
+		currentRatio = value.(*TierRatio).get(tier)
 		update := currentCount * currentRatio
 		if ratioHeight == lastHeight {
-			heights[len(heights) - 1] = ratioHeight
-			updates[len(updates) - 1] = update
+			heights[len(heights)-1] = ratioHeight
+			updates[len(updates)-1] = update
 		} else {
 			heights = append(heights, ratioHeight)
 			updates = append(updates, update)
@@ -296,12 +345,11 @@ func (self *PoolTier) rewardCacheOf(tier uint64) *UintTree {
 }
 
 func (self *PoolTier) cacheTierReward(tier uint64, endHeight uint64) {
-	startHeight := self.lastRewardCacheHeight(tier, endHeight)
+	startHeight := *self.lastRewardCacheHeight
 	emissionUpdateHeights, emissionUpdates := gns.PerBlockMintUpdates(startHeight, endHeight)
 	currentEmissionUpdateHeight, currentEmissionUpdate := gns.LastPerBlockMintUpdate(startHeight)
 	rewardCache := self.rewardCacheOf(tier)
 	for i := 0; i < len(emissionUpdateHeights); i++ {
-		emission := emissionUpdates[i]
 		heights, updates := self.tierDenominatorUpdates(tier, currentEmissionUpdateHeight, emissionUpdateHeights[i])
 		for j := 0; j < len(heights); j++ {
 			reward := calcReward(currentEmissionUpdate, updates[j])
@@ -318,8 +366,10 @@ type Pool struct {
 	stakedLiquidity *UintTree // blockNumber -> *u256.Uint
 
 	// cache of the internal reward for each pool in tier
-	rewardCache *UintTree // blockNumber -> *u256.Uint
+	rewardCache           *UintTree // blockNumber -> *u256.Uint
 	lastRewardCacheHeight uint64
+
+	externalIncentiveUpdate *UintTree // blockNumber -> *u256.Uint
 }
 
 func (self *Pool) lastStakedLiquidity(end uint64) *u256.Uint {
@@ -407,7 +457,7 @@ func (pool *Pool) tickCrossesToEligibleIntervals(
 	startHeight,
 	finalHeight uint64,
 ) []interval {
-	intervals := make([]interval, 0, len(tickUpperCrossHeights) + len(tickLowerCrossHeights))
+	intervals := make([]interval, 0, len(tickUpperCrossHeights)+len(tickLowerCrossHeights))
 
 	// enter/exit event MUST appear alternatively
 	// note that zeroForOne is true when backward(from upper to lower)
@@ -483,7 +533,7 @@ func (pool *Pool) tickCrossesToEligibleIntervals(
 	return intervals
 }
 
-func appendIntervals(intervals []interval, updatesFn func(uint64, uint64) ([]uint64, []*u256.Uint), value *u256.Uint, startHeight, endHeight uint64) ([]interval) {
+func appendIntervals(intervals []interval, updatesFn func(uint64, uint64) ([]uint64, []*u256.Uint), value *u256.Uint, startHeight, endHeight uint64) []interval {
 	heights, updates := updatesFn(startHeight, endHeight)
 
 	if len(updates) == 0 {
@@ -497,8 +547,8 @@ func appendIntervals(intervals []interval, updatesFn func(uint64, uint64) ([]uin
 	if heights[0] != startHeight {
 		intervals = append(intervals, interval{
 			startHeight: startHeight,
-			endHeight: heights[0],
-			value: value,
+			endHeight:   heights[0],
+			value:       value,
 		})
 		startHeight = heights[0]
 		value = updates[0]
@@ -508,8 +558,8 @@ func appendIntervals(intervals []interval, updatesFn func(uint64, uint64) ([]uin
 	for i := 0; i < len(updates); i++ {
 		intervals = append(intervals, interval{
 			startHeight: startHeight,
-			endHeight: heights[i],
-			value: value,
+			endHeight:   heights[i],
+			value:       value,
 		})
 		startHeight = heights[i]
 		value = updates[i]
@@ -567,7 +617,7 @@ func (self *Tick) updateCross(blockNumber uint64, zeroForOne bool) {
 
 func (self *Tick) lastCross(endHeight uint64) bool {
 	// There MUST be at least one cross, set when the position is staked
-	cross := false	
+	cross := false
 	self.cross.ReverseIterate(0, endHeight, func(key uint64, value interface{}) bool {
 		cross = value.(bool)
 		return true
@@ -598,7 +648,7 @@ type Ticks struct {
 func (self *Ticks) get(tickId int32) *Tick {
 	v, ok := self.tree.Get(uint64(tickId))
 	if !ok {
-		tick := Tick{
+		tick := &Tick{
 			stakedLiquidityGross: i256.Zero(),
 			stakedLiquidityDelta: i256.Zero(),
 			cross:                NewUintTree(),
@@ -613,105 +663,76 @@ func (self *Ticks) set(tickId int32, tick *Tick) {
 	if tick.stakedLiquidityGross.IsZero() {
 		// TODO: check if this could cause memory leak of GC halt
 		// because tick.cross being dropped may overload the VM GC
-		self.tree.Delete(uint64(tickId))
+		self.tree.Remove(uint64(tickId))
 		return
 	}
 	self.tree.Set(uint64(tickId), tick)
 }
 
-
-type Positions struct {
-	tree *UintTree // uint64 positionId -> position
-}
-
-func (self *Positions) get(positionId uint64) Position {
-	v, ok := self.tree.Get(positionId)
-	if !ok {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("staker.gno__positions.get() || positionId(%d) not found", positionId),
-		))
-	}
-	return v.(Position)
-}
-
-func (self *Positions) set(positionId uint64, position *Position) {
-	self.tree.Set(positionId, position)
-}
-
 type Warmup struct {
 	nextWarmupHeight uint64
-	warmupRatio uint64
+	warmupRatio      uint64
 }
 
-type Position struct {
-	lastCollectHeight uint64 // last collect block height
-
-	warmups []Warmup
-}
-
-func NewPosition(currentHeight uint64, avgBlockTimeInMs int64) *Position {
+func DefaultWarmups(currentHeight uint64) []Warmup {
 	msInDay := uint64(86400000)
 	blocksInDay := msInDay / uint64(avgBlockTimeInMs)
 	blocksIn5Days := uint64(5 * blocksInDay)
 	blocksIn10Days := uint64(10 * blocksInDay)
 	blocksIn30Days := uint64(30 * blocksInDay)
 
-	return &Position{
-		lastCollectHeight: currentHeight,
-		warmups: []Warmup{
-			{
-				nextWarmupHeight: currentHeight + blocksIn5Days,
-				warmupRatio: 30,
-			},
-			{
-				nextWarmupHeight: currentHeight + blocksIn10Days,
-				warmupRatio: 50,
-			},
-			{
-				nextWarmupHeight: currentHeight + blocksIn30Days,
-				warmupRatio: 70,
-			},
-			{
-				nextWarmupHeight: math.MaxUint64,
-				warmupRatio: 100,
-			},
+	return []Warmup{
+		{
+			nextWarmupHeight: currentHeight + blocksIn5Days,
+			warmupRatio:      30,
+		},
+		{
+			nextWarmupHeight: currentHeight + blocksIn10Days,
+			warmupRatio:      50,
+		},
+		{
+			nextWarmupHeight: currentHeight + blocksIn30Days,
+			warmupRatio:      70,
+		},
+		{
+			nextWarmupHeight: math.MaxUint64,
+			warmupRatio:      100,
 		},
 	}
 }
 
-func (self *Position) findWarmup(height uint64) Warmup {
+func (self *Deposit) findWarmup(height uint64) Warmup {
 	for _, warmup := range self.warmups {
 		if height < warmup.nextWarmupHeight {
 			return warmup
 		}
 	}
-	return self.warmups[len(self.warmups) - 1]
+	return self.warmups[len(self.warmups)-1]
 }
 
-func (self Warmup) calculateReward(blockNumber uint64, perBlockReward uint64) (uint64, uint64) {
+func (self *Warmup) calculateReward(blockNumber uint64, perBlockReward uint64) (uint64, uint64) {
 	rewardRatio := self.warmupRatio
 	penaltyRatio := 100 - self.warmupRatio
 	totalReward := blockNumber * perBlockReward // TODO: check overflow
 	return totalReward * rewardRatio / 100, totalReward * penaltyRatio / 100
 }
 
-func (self *Position) calculateReward(perBlockReward uint64, startHeight, endHeight uint64) (uint64, uint64) {
+func (self *Deposit) calculateReward(perBlockReward uint64, startHeight, endHeight uint64) (uint64, uint64) {
 	if startHeight >= endHeight {
 		return 0, 0
 	}
 
 	warmup := self.findWarmup(startHeight)
 	if endHeight < warmup.nextWarmupHeight {
-		return warmup.calculateReward(endHeight - startHeight, perBlockReward)
+		return warmup.calculateReward(endHeight-startHeight, perBlockReward)
 	}
 
-	warmupReward, warmupPenalty := warmup.calculateReward(warmup.nextWarmupHeight - startHeight, perBlockReward)
+	warmupReward, warmupPenalty := warmup.calculateReward(warmup.nextWarmupHeight-startHeight, perBlockReward)
 	reward, penalty := self.calculateReward(perBlockReward, warmup.nextWarmupHeight, endHeight)
 	return warmupReward + reward, warmupPenalty + penalty
 }
 
-func (self *Position) eligibleIntervalsToReward(intervals []interval, pool *Pool, positionLiquidity *u256.Uint, endHeight uint64) (uint64, uint64) {
+func (self *Deposit) eligibleIntervalsToReward(intervals []interval, pool *Pool, positionLiquidity *u256.Uint, endHeight uint64) (uint64, uint64) {
 	totalReward := uint64(0)
 	totalPenalty := uint64(0)
 
@@ -723,10 +744,10 @@ func (self *Position) eligibleIntervalsToReward(intervals []interval, pool *Pool
 			perPositionReward := u256.Zero().Mul(poolReward, positionLiquidity)
 			perPositionReward = perPositionReward.Div(perPositionReward, poolStakedLiquidity)
 			currentReward, currentPenalty := self.calculateReward(perPositionReward.Uint64(), currentHeight, height)
-			
+
 			totalReward += currentReward
 			totalPenalty += currentPenalty
-			
+
 			currentHeight = height
 			poolReward = value.(*u256.Uint)
 			return false
@@ -736,11 +757,10 @@ func (self *Position) eligibleIntervalsToReward(intervals []interval, pool *Pool
 		currentReward, currentPenalty := self.calculateReward(perPositionReward.Uint64(), currentHeight, interval.endHeight)
 		totalReward += currentReward
 		totalPenalty += currentPenalty
-	}	
+	}
 
 	return totalReward, totalPenalty
 }
-
 
 var (
 	pools = &Pools{
@@ -748,10 +768,6 @@ var (
 	}
 
 	ticks = &Ticks{
-		tree: NewUintTree(),
-	}
-
-	positions = &Positions{
 		tree: NewUintTree(),
 	}
 )
@@ -785,7 +801,7 @@ func modifyPosition(poolPath string, tokenId uint64, liquidity *u256.Uint) {
 	upperTick.stakedLiquidityGross = liquidityMathAddDelta(upperTick.stakedLiquidityGross, liquidity)
 	upperTick.stakedLiquidityDelta = liquidityMathAddDelta(upperTick.stakedLiquidityDelta, i256.Zero().Neg(liquidity))
 
-	upperTick.updateCross(std.GetHeight(), currentTick < upperTickId)
+	upperTick.updateCross(uint64(std.GetHeight()), currentTick < upperTickId)
 	ticks.set(upperTickId, upperTick)
 }
 

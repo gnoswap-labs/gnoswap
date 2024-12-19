@@ -37,7 +37,9 @@ var (
 	startTimestamp int64
 )
 
-var perBlockMint *avl.Tree // height => uint64
+var (
+	perBlockMint = avl.NewTree() // height => uint64
+) 
 
 // endHeight MUST be equal or before the current height(must not be future)
 // setAvgBlockTimeInMsByAdmin does not change past emissions, safe

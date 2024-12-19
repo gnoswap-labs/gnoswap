@@ -26,8 +26,14 @@ type ExternalIncentive struct {
 
 type Deposit struct {
 	owner          std.Address // owner address
-	numberOfStakes uint64      // number of stakes
 	stakeTimestamp int64       // staked time
 	stakeHeight    int64       // staked block height
+
 	targetPoolPath string      // staked position's pool path
+	tickLower      int32       // tick lower
+	tickUpper      int32       // tick upper
+	
+	warmups        []Warmup    // warmup information
+
+	lastCollectHeight uint64 // last collect block height
 }

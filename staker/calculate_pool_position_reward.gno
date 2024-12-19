@@ -2,31 +2,31 @@ package staker
 
 import (
 	"std"
-	"time"
+	//"time"
 
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/consts"
 
-	"gno.land/r/gnoswap/v1/gns"
+	//"gno.land/r/gnoswap/v1/gns"
 
-	pn "gno.land/r/gnoswap/v1/position"
+	//pn "gno.land/r/gnoswap/v1/position"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	en "gno.land/r/gnoswap/v1/emission"
 )
 
 // poolPath -> gnsAmount [accu]
-var poolGns map[string]uint64 = make(map[string]uint64)
+//var poolGns map[string]uint64 = make(map[string]uint64)
 
 // poolPath -> gnsAmount [current block]
-var poolCurrentBlockGns map[string]uint64 = make(map[string]uint64)
+//var poolCurrentBlockGns map[string]uint64 = make(map[string]uint64)
 
 // poolPath -> gnsAmount [how much left from last block]
-var poolLastTmpGns map[string]uint64 = make(map[string]uint64)
+//var poolLastTmpGns map[string]uint64 = make(map[string]uint64)
 
 // poolPath -> accumulatedGns ( API VAR )
-var poolAccuGns map[string]uint64 = make(map[string]uint64)
+//var poolAccuGns map[string]uint64 = make(map[string]uint64)
 
 // tokenId -> gnsAmount
 //var positionGns map[uint64]uint64 = make(map[uint64]uint64)
@@ -35,28 +35,20 @@ var poolAccuGns map[string]uint64 = make(map[string]uint64)
 //var positionLastGns map[uint64]uint64 = make(map[uint64]uint64)
 
 // tokenId -> incentiveId -> lastRewardAmount
-var positionLastExternal map[uint64]map[string]*u256.Uint = make(map[uint64]map[string]*u256.Uint)
+//var positionLastExternal map[uint64]map[string]*u256.Uint = make(map[uint64]map[string]*u256.Uint)
 
 // incentiveId -> lastCalculatedTimestamp
-var externalLastCalculatedTimestamp map[string]int64 = make(map[string]int64)
+//var externalLastCalculatedTimestamp map[string]int64 = make(map[string]int64)
 
 // incentiveId -> gnsAmount
-var externalGns map[string]uint64 = make(map[string]uint64)
-
-// poolPath -> totalStakedLiquidity(inRange)
-var poolTotalStakedLiquidity map[string]*u256.Uint = make(map[string]*u256.Uint)
-
-// tokenId -> positionRatio
-var positionsLiquidityRatio map[uint64]*u256.Uint = make(map[uint64]*u256.Uint)
+//var externalGns map[string]uint64 = make(map[string]uint64)
 
 // poolPath -> []tokenId
-var poolsPositions map[string][]uint64 = make(map[string][]uint64)
+//var poolsPositions map[string][]uint64 = make(map[string][]uint64)
 
 // Q96
 var _q96 = u256.MustFromDecimal(consts.Q96)
 
-// warmUp
-var warmUpReward warmUpAmount
 
 type externalRewards struct {
 	incentiveId    string
@@ -76,11 +68,11 @@ var (
 	lastCalculatedBalance         uint64                // Last balance of distributed GNS to stakers
 	lastLeftInternalReward        uint64                // total left
 	lastLeftInternalRewardForTier [TIER_TYPE_NUM]uint64 // left for each tier
-	totalRewardManager            *RewardManager        // RewardManager instance (internal, external)
+	//totalRewardManager            *RewardManager        // RewardManager instance (internal, external)
 )
 
 func init() {
-	totalRewardManager = NewRewardManager()
+	//totalRewardManager = NewRewardManager()
 }
 
 func getLastCalculatedHeight() int64 {
@@ -107,9 +99,11 @@ func setLastLeftInternalRewardForTier(tierIndex int, amount uint64) {
 	lastLeftInternalRewardForTier[tierIndex] = amount
 }
 
+/*
 func getRewardManager() *RewardManager {
 	return totalRewardManager
 }
+*/
 
 func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 	if prev >= current {
@@ -128,6 +122,7 @@ func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 // It uses the current block height and its timestamp to determine the calculation period.
 // TODO: only use block height to calculate reward and distribute them
 // Returns true if the calculation is successful, false otherwise.
+/*
 func CalcPoolPositionRefactor() bool {
 	distributableAmount := en.GetAccuDistributedAmountForStaker()
 	en.ClearAccuDistributedAmountForStaker()
@@ -212,27 +207,41 @@ func CalcPoolPositionRefactor() bool {
 
 	return true
 }
-
-
-
-
-func CalcPoolPositionPerDeposit(tokenId uint64, startHeight, endHeight uint64) {
+*/
+func CalcPositionReward(tokenId uint64) (uint64, uint64) {
+	// cache per-tier and per-pool reward
+	currentHeight := uint64(std.GetHeight())
+	poolTier.cacheTierReward(currentHeight)
 	deposit := deposits[tokenId]
-	tickUpper := pn.PositionGetPositionTickUpper(tokenId)
-	tickLower := pn.PositionGetPositionTickLower(tokenId)
+	poolPath := deposit.targetPoolPath
+	pool, ok := pools.get(poolPath)
+	if !ok {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("staker.gno__CollectReward() || poolPath(%s) does not exist", poolPath),
+		))
+	}
+	poolTier.cachePoolReward(pool.rewardCache, poolPath, pool.lastRewardCacheHeight, currentHeight)
 
-	// Filtering intervals where the staked position is in range
+	// eligible(in-range) intervals for a position
+	upperTick := ticks.get(deposit.tickUpper)
+	lowerTick := ticks.get(deposit.tickLower)
 
-	tickUpperCrosses := stakerTickInfo.Get(tickUpper).crossInfo()
-	tickLowerCrosses := stakerTickInfo.Get(tickLower).crossInfo()
+	position := positions.get(tokenId)
+	lastCollectHeight := position.lastCollectHeight
 
-	pool := stakerPoolInfo.Get(deposit.targetPoolPath)
-	initialStakedLiquidity := pool.lastStakedLiquidity()
-	eligibleIntervals := pool.tickCrossesToEligibleIntervals(tickUpperCrosses, tickLowerCrosses, startHeight, endHeight, initialStakedLiquidity)
+	tickUpperCrossHeights, tickUpperCrossZeroForOnes := upperTick.crossInfo(lastCollectHeight, currentHeight)
+	tickLowerCrossHeights, tickLowerCrossZeroForOnes := lowerTick.crossInfo(lastCollectHeight, currentHeight)
 
-	// Calculate internal reward
+	initialUpperCross := upperTick.lastCross(lastCollectHeight)
+	initialLowerCross := lowerTick.lastCross(lastCollectHeight)
+	currentlyInRange := initialUpperCross && !initialLowerCross
 
-	
+	intervals := pool.tickCrossesToEligibleIntervals(tickUpperCrossHeights, tickUpperCrossZeroForOnes, tickLowerCrossHeights, tickLowerCrossZeroForOnes, currentlyInRange, lastCollectHeight, currentHeight)
+
+	totalReward, totalPenalty := position.eligibleIntervalsToReward(intervals, pool, currentHeight)
+
+	return totalReward.Uint64(), totalPenalty.Uint64()
 }
 
 // XXX: need to improve nested iteration
@@ -250,6 +259,7 @@ func CalcPoolPositionPerDeposit(tokenId uint64, startHeight, endHeight uint64) {
 //
 // It uses the current block height and its timestamp to determine the calculation period.
 func CalcPoolPosition() {
+	/*
 	height := std.GetHeight()
 
 	if height <= lastCalculatedHeight {
@@ -393,7 +403,7 @@ func CalcPoolPosition() {
 			poolLastTmpGns[poolPath] += positionAmount
 
 			// calculate internal amount from previous to now
-			rewardMathComputeInternalRewardAmount(tokenId)
+			// rewardMathComputeInternalRewardAmount(tokenId)
 		}
 
 	}
@@ -513,8 +523,10 @@ func CalcPoolPosition() {
 		}
 		externalLastCalculatedTimestamp[incentiveId] = now
 	}
+	*/
 }
 
+/*
 func externalGnsAmount() uint64 {
 	amount := uint64(0)
 	for _, v := range externalGns {
@@ -532,3 +544,5 @@ func externalDepositGnsAmount() uint64 {
 
 	return amount
 }
+
+*/

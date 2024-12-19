@@ -1,11 +1,11 @@
 package staker
 
 import (
-	"gno.land/p/demo/ufmt"
+	//"gno.land/p/demo/ufmt"
 
-	u256 "gno.land/p/gnoswap/uint256"
+	//u256 "gno.land/p/gnoswap/uint256"
 )
-
+/*
 // getPoolTierAndRatio returns current pool's tier and ratio
 // Returns tier, ratio
 func getPoolTierAndRatio(poolPath string) (uint64, *u256.Uint) {
@@ -160,4 +160,4 @@ func calcAmount(avgBlockAmountX96 *u256.Uint, dur, pct uint64) (uint64, uint64) 
 
 	durAmount := new(u256.Uint).Div(durAmountX96, _q96).Uint64()
 	return fullAmount, durAmount
-}
+}*/
