@@ -14,24 +14,32 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func _swap(
+// swapInner executes the core swap logic by interacting with the pool contract.
+// This is the main implementation of token swapping that handles both exact input and output swaps.
+//
+// Expected behavior:
+//  - Forexact input swaps: First return value is the exact input amount
+//  - For exact output swaps: Second return value is the exact output amount
+//  - Both return values are always positive, regardless of swap direction
+//
+// Parameters:
+//  - amountSpecified: Amount specified for the swap (positive for exact input, negative for exact output)
+//  - recipient: Address that will receive the output tokens
+//  - sqrtPriceLimitX96: Optional price limit for the swap operation
+//  - data: SwapCallbackData containing additional swap information
+//
+// Returns:
+//  - *u256.Uint: Total amount of input tokens used
+//  - *u256.Uint: Total amount of output tokens received
+func swapInner(
 	amountSpecified *i256.Int,
 	recipient std.Address,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
 ) (*u256.Uint, *u256.Uint) { // poolRecv, poolOut
-	// prepare
 	zeroForOne := data.tokenIn < data.tokenOut
 
-	if sqrtPriceLimitX96.IsZero() {
-		if zeroForOne {
-			sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(getMinTick(data.fee))
-			sqrtPriceLimitX96 = new(u256.Uint).Add(sqrtPriceLimitX96, u256.One())
-		} else {
-			sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(getMaxTick(data.fee))
-			sqrtPriceLimitX96 = new(u256.Uint).Sub(sqrtPriceLimitX96, u256.One())
-		}
-	}
+	sqrtPriceLimitX96 = calculateSqrtPriceLimitForSwap(zeroForOne, data.fee, sqrtPriceLimitX96)
 
 	// ROUTER approves POOL as spender
 	approveByRegisterCall(data.tokenIn, consts.POOL_ADDR, consts.UINT64_MAX)
@@ -49,14 +57,9 @@ func _swap(
 
 		data.payer,
 	)
-	amount0, err := i256.FromDecimal(amount0Str)
-	if err != nil {
-		panic(err.Error())
-	}
-	amount1, err := i256.FromDecimal(amount1Str)
-	if err != nil {
-		panic(err.Error())
-	}
+
+	amount0 := i256.MustFromDecimal(amount0Str)
+	amount1 := i256.MustFromDecimal(amount1Str)
 
 	poolRecv := i256Max(amount0, amount1)
 	poolOut := i256Min(amount0, amount1)
@@ -64,7 +67,8 @@ func _swap(
 	return poolRecv.Abs(), poolOut.Abs()
 }
 
-func _swapDry(
+// swapDryInner simulates a swap operation without executing it.
+func swapDryInner(
 	amountSpecified *i256.Int,
 	sqrtPriceLimitX96 *u256.Uint,
 	data SwapCallbackData,
@@ -93,14 +97,8 @@ func _swapDry(
 		return u256.Zero(), u256.Zero()
 	}
 
-	amount0, err := i256.FromDecimal(amount0Str)
-	if err != nil {
-		panic(err.Error())
-	}
-	amount1, err := i256.FromDecimal(amount1Str)
-	if err != nil {
-		panic(err.Error())
-	}
+	amount0 := i256.MustFromDecimal(amount0Str)
+	amount1 := i256.MustFromDecimal(amount1Str)
 
 	poolRecv := i256Max(amount0, amount1)
 	poolOut := i256Min(amount0, amount1)
@@ -108,20 +106,98 @@ func _swapDry(
 	return poolRecv.Abs(), poolOut.Abs()
 }
 
-func i256Min(x, y *i256.Int) *i256.Int {
-	if x.Lt(y) {
-		return x
+// calculateSqrtPriceLimitForSwap calculates the price limit for a swap operation.
+// This function uses the tick ranges defined by `getMinTick` and `getMaxTick` to set price boundaries.
+//
+// Price Boundary Visualization:
+// ```
+//   MIN_TICK                    MAX_TICK
+//      v                           v
+//   <--|---------------------------|-->
+//      ^                           ^
+//   zeroForOne               oneForZero
+//   limit + 1                limit - 1
+// ```
+//
+// Implementation details:
+//   - If a non-zero sqrtPriceLimitX96 is provided, it's used as-is
+//   - For zeroForOne swaps (tokenIn < tokenOut):
+//     * Uses the minimum tick for the fee tier
+//     * Adds 1 to avoid hitting the exact boundary
+//   - For oneForZero swaps (tokenIn > tokenOut):
+//     * Uses the maximum tick for the fee tier
+//     * Subtracts 1 to avoid hitting the exact boundary
+//
+// Parameters:
+//   - zeroForOne: Boolean indicating the swap direction (true for zeroForOne, false for oneForZero)
+//   - fee: Fee tier of the pool in basis points
+//   - sqrtPriceLimitX96: Optional price limit for the swap operation
+//
+// Returns:
+//   - *u256.Uint: Calculated price limit for the swap operation
+func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX96 *u256.Uint) *u256.Uint {
+	if !sqrtPriceLimitX96.IsZero() {
+		return sqrtPriceLimitX96
 	}
-	return y
+
+	if zeroForOne {
+		minTick := getMinTick(fee)
+		sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(minTick)
+		return sqrtPriceLimitX96.Add(sqrtPriceLimitX96, u256.One())
+	}
+
+	maxTick := getMaxTick(fee)
+	sqrtPriceLimitX96 = common.TickMathGetSqrtRatioAtTick(maxTick)
+	return sqrtPriceLimitX96.Sub(sqrtPriceLimitX96, u256.One())
 }
 
-func i256Max(x, y *i256.Int) *i256.Int {
-	if x.Gt(y) {
-		return x
-	}
-	return y
-}
-
+// getMinTick returns the minimum tick value for a given fee tier.
+// The implementation follows Uniswap V3's tick spacing rules where
+// lower fee tiers allows for finer price granularity.
+//
+// Fee tier to min tick mapping demonstrates varying levels of price granularity:
+//
+// Tick Range Visualization:
+// ```
+//                        0
+//   Fee Tier   Min Tick  |  Max Tick   Tick Spacing
+// 0.01% (100)  -887272   |   887272         1       finest
+//                        |
+// 0.05% (500)  -887270   |   887270        10
+//                        |
+// 0.3% (3000)  -887220   |   887220        60
+//                        |
+// 1% (10000)   -887200   |   887200        200     coarsest
+//                        |
+// Price Range:           |
+// <cheaper            Price            more expensive>
+// ```
+//
+// Tick spacing determines the granularity of price points:
+//  - Smaller tick spacing (1) = More precise price points
+//    Example for 0.01% fee tier:
+//    ```
+//    Tick: -887272 [...] -2, -1, 0, 1, 2 [...] 887272
+//    Steps:   1           1   1  1  1  1         1
+//    ```
+//
+//  - Larger tick spacing (200) = Fewer, more spread out price points
+//    Example for 1% fee tier:
+//   ```
+//   Tick: -887200 [...] -400, -200, 0, 200, 400 [...] 887200
+//   Steps:  200          200   200 200 200  200        200
+//   ```
+//
+// This function returns the minimum tick value for a given fee tier.
+//
+// Parameters:
+//   - fee: Fee tier in basis points
+//
+// Returns:
+//   - int32: Minimum tick value for the given fee tier
+//
+// Panic:
+//  - If the fee tier is not supported
 func getMinTick(fee uint32) int32 {
 	switch fee {
 	case 100:
@@ -135,11 +211,21 @@ func getMinTick(fee uint32) int32 {
 	default:
 		panic(addDetailToError(
 			errInvalidPoolFeeTier,
-			ufmt.Sprintf("swap_inner.gno__getMinTick() || unknown fee(%d)", fee),
+			ufmt.Sprintf("swapInner.gno__getMaxTick() || unknown fee(%d)", fee),
 		))
 	}
 }
 
+// getMaxTick returns the maximum tick value for a given fee tier.
+//
+// Parameters:
+//   - fee: Fee tier in basis points
+//
+// Returns:
+//   - int32: Maximum tick value for the given fee tier
+//
+// Panic:
+//  - If the fee tier is not supported
 func getMaxTick(fee uint32) int32 {
 	switch fee {
 	case 100:
@@ -153,7 +239,7 @@ func getMaxTick(fee uint32) int32 {
 	default:
 		panic(addDetailToError(
 			errInvalidPoolFeeTier,
-			ufmt.Sprintf("swap_inner.gno__getMaxTick() || unknown fee(%d)", fee),
+			ufmt.Sprintf("swapInner.gno__getMaxTick() || unknown fee(%d)", fee),
 		))
 	}
 }

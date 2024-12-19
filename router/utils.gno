@@ -8,6 +8,8 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 	"gno.land/r/gnoswap/v1/common"
+
+	i256 "gno.land/p/gnoswap/int256"
 )
 
 func poolPathWithFeeDivide(poolPath string) (string, string, int) {
@@ -90,6 +92,20 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func i256Min(x, y *i256.Int) *i256.Int {
+	if x.Lt(y) {
+		return x
+	}
+	return y
+}
+
+func i256Max(x, y *i256.Int) *i256.Int {
+	if x.Gt(y) {
+		return x
+	}
+	return y
 }
 
 func prevRealm() string {

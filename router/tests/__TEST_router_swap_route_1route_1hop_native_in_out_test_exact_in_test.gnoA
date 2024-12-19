@@ -100,18 +100,6 @@ func testPositionMint(t *testing.T) {
 }
 
 func testBuyNative(t *testing.T) {
-	t.Run("dry swap, buy native, bar > gnot", func(t *testing.T) {
-		dryResult := DrySwapRoute(
-			barPath,     // inputToken
-			consts.GNOT, // outputToken
-			"1000",      // amountSpecified
-			"EXACT_IN",  // swapType
-			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/demo/wugnot:500", // strRouteArr
-			"100", // quoteArr
-		)
-		uassert.Equal(t, dryResult, "19740")
-	})
-
 	t.Run("swap, buy native, bar > gnot", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 
@@ -154,18 +142,6 @@ func testBuyNative(t *testing.T) {
 }
 
 func testSellNative(t *testing.T) {
-	t.Run("dry swap, sell native, gnot > bar", func(t *testing.T) {
-		dryResult := DrySwapRoute(
-			consts.GNOT, // inputToken
-			barPath,     // outputToken
-			"5000",      // amountSpecified
-			"EXACT_IN",  // swapType
-			"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:500*POOL*gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
-			"100", // quoteArr
-		)
-		uassert.Equal(t, dryResult, "254")
-	})
-
 	t.Run("swap, sell native, gnot > bar", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
 

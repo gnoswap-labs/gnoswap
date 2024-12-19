@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"std"
 	"strconv"
 	"strings"
@@ -19,96 +20,184 @@ import (
 	sr "gno.land/r/gnoswap/v1/staker"
 )
 
-// SwapRoute swaps the input token to the output token and returns the result amount
-// If swapType is EXACT_IN, it returns the amount of output token ≈ amount of user to receive
-// If swapType is EXACT_OUT, it returns the amount of input token ≈ amount of user to pay
-// Returns amountIn, amountOut
-// ref: https://docs.gnoswap.io/contracts/router/router.gno#swaproute
-func SwapRoute(
-	inputToken string,
-	outputToken string,
-	_amountSpecified string, // int256
+
+const (
+	POOL_SEP = "*POOL*"
+	FULL_QUOTE_SUM = 100
+)
+
+// RouteParams contains the parameters required for routing a swap transaction.
+type RouteParams struct {
+	inputToken string // address of the input token
+	outputToken string // address of the output token
+	amountSpecified *i256.Int // amount of the input token to swap
+	swapType string // type of the swap (ExactIn or ExactOut)
+	routes []string // array of pool addresses
+	quotes []int // array of quotes for each pool
+}
+
+// NewRouteParams creates a new RouteParams instance with the provided parameters.
+// It converts string inputs into proper types and validate the basic structure
+// of the routing information.
+//
+// Parameters:
+//  - inputToken: address of the input token
+//  - outputToken: address of the output token
+//  - amountSpecified: amount of the input token to swap
+//  - swapType: type of the swap (ExactIn or ExactOut)
+//  - strRouteArr: string representation of the route array
+//  - quoteArr: string representation of the quote array
+//
+// Returns:
+//  - *RouteParams: a new RouteParams instance
+//  - error: an error if the input is invalid or conversion fails
+func newRouteParams(
+	inputToken, outputToken, amountSpecified string,
 	swapType string,
-	strRouteArr string, // []string
-	quoteArr string, // []int
-	_tokenAmountLimit string, // uint256
-) (string, string) { // tokneIn, tokenOut
-	common.IsHalted()
+	strRouteArr string,
+	quoteArr string,
+) (*RouteParams, error) {
+    amount, err := i256.FromDecimal(amountSpecified)
+    if err != nil {
+        return nil, err
+    }
 
-	if swapType != "EXACT_IN" && swapType != "EXACT_OUT" {
-		panic(addDetailToError(
-			errInvalidSwapType,
-			ufmt.Sprintf("router.gno__SwapRoute() || unknown swapType(%s)", swapType),
-		))
-	}
+    routes := strings.Split(strRouteArr, ",")
+    quotes := make([]int, len(strings.Split(quoteArr, ",")))
 
-	if common.GetLimitCaller() && std.PrevRealm().PkgPath() != "" {
-		panic(addDetailToError(
-			errNoPermission,
-			"router.gno__SwapRoute() || only user can call this function",
-		))
-	}
-
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		sr.CalcPoolPositionRefactor()
-	} else {
-		sr.CalcPoolPosition()
-	}
-
-	amountSpecified := i256.MustFromDecimal(_amountSpecified)
-	tokenAmountLimit := u256.MustFromDecimal(_tokenAmountLimit)
-
-	routes := strings.Split(strRouteArr, ",")
-	quotes := strings.Split(quoteArr, ",")
-
-	validateInput(amountSpecified, swapType, routes, quotes)
-
-	if swapType == "EXACT_OUT" {
-		amountSpecified = i256.Zero().Neg(amountSpecified)
-	}
-
-	var userBeforeWugnotBalance uint64
-	var userWrappedWugnot uint64
-	if inputToken == consts.GNOT || outputToken == consts.GNOT {
-		userBeforeWugnotBalance = wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
-
-		if swapType == "EXACT_IN" && inputToken == consts.GNOT {
-			sent := std.GetOrigSend()
-			ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
-			i256AmountSpecified := i256.MustFromDecimal(_amountSpecified)
-			u64AmountSpecified := i256AmountSpecified.Uint64()
-
-			if ugnotSentByUser != u64AmountSpecified {
-				panic(addDetailToError(
-					errInvalidInput,
-					ufmt.Sprintf("router.gno__SwapRoute() || ugnot sent by user(%d) is not equal to amountSpecified(%d)", ugnotSentByUser, u64AmountSpecified),
-				))
-			}
-
-			if ugnotSentByUser > 0 {
-				wrap(ugnotSentByUser)
-			}
-			userWrappedWugnot = ugnotSentByUser
+    for i, q := range strings.Split(quoteArr, ",") {
+        quote, err := strconv.Atoi(q)
+		if err != nil {
+			return nil, errors.New("invalid quote")
 		}
+        quotes[i] = quote
+    }
+
+    return &RouteParams{
+        inputToken:      inputToken,
+        outputToken:     outputToken,
+        amountSpecified: amount,
+        swapType:        swapType,
+        routes:          routes,
+        quotes:          quotes,
+    }, nil
+}
+
+// validate checks the validity of the RouteParams instance.
+func (rp *RouteParams) validate() error {
+	if rp.swapType != ExactIn && rp.swapType != ExactOut {
+		return ufmt.Errorf("invalid swap type: %s", rp.swapType)
 	}
 
-	resultAmountIn, resultAmountOut := processRoutes(routes, quotes, amountSpecified, swapType)
+	if rp.amountSpecified.IsZero() || rp.amountSpecified.IsNeg() {
+		return ufmt.Errorf("invalid amount specified: %s", rp.amountSpecified)
+	}
 
-	amountIn, amountOut := finalizeSwap(
-		inputToken,
-		outputToken,
-		resultAmountIn,
-		resultAmountOut,
-		swapType,
-		tokenAmountLimit,
-		userBeforeWugnotBalance,
-		userWrappedWugnot,
-		amountSpecified.Abs(), // if swap type is EXACT_OUT, compare with this value to see user can actually receive this amount
-	)
+	if len(rp.routes) < 1 || len(rp.routes) > 7 {
+		return ufmt.Errorf("route length must be between 1~7, got %d", len(rp.routes))
+	}
+
+	if len(rp.routes) != len(rp.quotes) {
+		return ufmt.Errorf("length mismatch: routes(%d) != quotes(%d)", len(rp.routes), len(rp.quotes))
+	}
+
+	var quoteSum int
+	for _, quote := range rp.quotes {
+		quoteSum += quote
+	}
+
+	if quoteSum != FULL_QUOTE_SUM {
+		return ufmt.Errorf("quote sum must be 100, got %d", quoteSum)
+	}
+
+	return nil
+}
+
+// SwapRoute performs a token swap according to the specified route parameters.
+// It handles the entire swap process including WUGNOT wrapping/unwrapping,
+// emission calculations, and multi-route swaps.
+//
+// Parameters:
+//   - inputToken: Address of the input token
+//   - outputToken: Address of the output token
+//   - amountSpecified: Amount to swap as a decimal string
+//   - swapType: Type of swap (ExactIn or ExactOut)
+//   - strRouteArr: Comma-separated string of route paths
+//   - quoteArr: Comma-separated string of percentage splits
+//   - tokenAmountLimit: Slippage limit amount as a decimal string
+//
+// Returns:
+//   - string: Amount of input tokens used
+//   - string: Amount of output tokens received
+//
+// For more details, see: https://docs.gnoswap.io/contracts/router/router.gno#swaproute
+func SwapRoute(
+    inputToken string,
+    outputToken string,
+    amountSpecified string,
+    swapType string,
+    strRouteArr string,
+    quoteArr string,
+    tokenAmountLimit string,
+) (string, string) {
+    common.IsHalted()
+
+    if common.GetLimitCaller() && std.PrevRealm().PkgPath() != "" {
+        panic(addDetailToError(
+            errNoPermission,
+            "router.gno__SwapRoute() || only user can call this function",
+        ))
+    }
+
+    // Initialize emission and staking calculations
+    en.MintAndDistributeGns()
+    if consts.EMISSION_REFACTORED {
+        sr.CalcPoolPositionRefactor()
+    } else {
+        sr.CalcPoolPosition()
+    }
+
+    // Parse and validate route parameters
+    params, err := newRouteParams(inputToken, outputToken, amountSpecified, swapType, strRouteArr, quoteArr)
+    if err != nil {
+        panic(err)
+    }
+
+	if err := params.validate(); err != nil {
+		panic(err)
+	}
+
+    // Handle WUGNOT wrapping if necessary
+    userBeforeWugnotBalance, userWrappedWugnot, err := handleWugnotPreSwap(inputToken, outputToken, params)
+	if err != nil {
+		panic(err)
+	}
+
+    // Process routes
+    resultAmountIn, resultAmountOut, err := processRoutes(params)
+    if err != nil {
+        panic(err)
+    }
+
+	limit := u256.MustFromDecimal(tokenAmountLimit)
+
+    // Finalize swap and handle WUGNOT unwrapping
+    amountIn, amountOut, err := finalizeSwap(
+        inputToken,
+        outputToken,
+        resultAmountIn,
+        resultAmountOut,
+        swapType,
+        limit,
+        userBeforeWugnotBalance,
+        userWrappedWugnot,
+        params.amountSpecified.Abs(),
+    )
+	if err != nil {
+		panic(err)
+	}
 
 	prevAddr, prevRealm := getPrev()
-
 	std.Emit(
 		"SwapRoute",
 		"prevAddr", prevAddr,
@@ -116,7 +205,7 @@ func SwapRoute(
 		"input", inputToken,
 		"output", outputToken,
 		"swapType", swapType,
-		"amountSpecified", _amountSpecified,
+		"amountSpecified", params.amountSpecified.ToString(),
 		"route", strRouteArr,
 		"quote", quoteArr,
 		"internal_amountIn", amountIn,
@@ -127,75 +216,115 @@ func SwapRoute(
 	return amountIn, amountOut
 }
 
-func validateInput(amountSpecified *i256.Int, swapType string, routes, quotes []string) {
-	if amountSpecified.IsZero() || amountSpecified.IsNeg() {
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("router.gno__validateInput() || invalid amountSpecified(%s), must be positive", amountSpecified.ToString()),
-		))
+// DrySwapRoute simulates a swap without executing it. It calculates the expected
+// output amount for the given input parameters.
+//
+// Parameters:
+//   - inputToken: Address of the input token
+//   - outputToken: Address of the output token
+//   - amountSpecified: Amount to swap as a decimal string
+//   - swapType: Type of swap (ExactIn or ExactOut)
+//   - strRouteArr: Comma-separated string of route paths
+//   - quoteArr: Comma-separated string of percentage splits
+//
+// Returns:
+//   - string: Expected output amount for the swap
+func DrySwapRoute(
+    inputToken string,
+    outputToken string,
+    amountSpecified string,
+    swapType string,
+    strRouteArr string,
+    quoteArr string,
+) string {
+	params, err := newRouteParams(inputToken, outputToken, amountSpecified, swapType, strRouteArr, quoteArr)
+	if err != nil {
+		panic(err)
 	}
 
-	if len(routes) < 1 || len(routes) > 7 {
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("router.gno__validateInput() || route length(%d) must be 1~7", len(routes)),
-		))
+	if err := params.validate(); err != nil {
+		panic(err)
 	}
 
-	if len(routes) != len(quotes) {
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("router.gno__validateInput() || mismatch between routes(%d) and quotes(%d) length", len(routes), len(quotes)),
-		))
+	resultAmountIn, resultAmountOut, err := processRoutes(params)
+	if err != nil {
+		panic(err)
 	}
 
-	var quotesSum int64
-	for _, quote := range quotes {
-		intQuote, _ := strconv.Atoi(quote)
-		quotesSum += int64(intQuote)
+	result, err := processResult(params.swapType, resultAmountIn, resultAmountOut, params.amountSpecified)
+	if err != nil {
+		panic(err)
 	}
 
-	if quotesSum != 100 {
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("router.gno__validateInput() || quote sum(%d) must be 100", quotesSum),
-		))
-	}
+	return result
 }
 
-func processRoutes(routes, quotes []string, amountSpecified *i256.Int, swapType string) (*u256.Uint, *u256.Uint) {
-	resultAmountIn := u256.Zero()
-	resultAmountOut := u256.Zero()
+// processRoutes processes multiple routes for a swap operation.
+//
+// It handles use distribution of the swap amount across different routes
+// according to the provided quotes.
+//
+// Parameters:
+//  - params: Pointer to `RouteParams` containing swap configration
+//
+// Returns:
+//  - *u256.Uint: Total amount of input tokens used
+//  - *u256.Uint: Total amount of output tokens received
+//  - error: Error if any occurred during processing
+func processRoutes(params *RouteParams) (*u256.Uint, *u256.Uint, error) {
+	resultAmountIn, resultAmountOut := u256.Zero(), u256.Zero()
 
-	for i, route := range routes {
-		numHops := strings.Count(route, "*POOL*") + 1
-		quote, _ := strconv.Atoi(quotes[i])
-
+	for i, route := range params.routes {
+		numHops := strings.Count(route, POOL_SEP) + 1
 		if numHops < 1 || numHops > 3 {
-			panic(addDetailToError(
-				errInvalidInput,
-				ufmt.Sprintf("router.gno__processRoutes() || number of hops(%d) must be 1~3", numHops),
-			))
+			return nil, nil, ufmt.Errorf("invalid numHops: %d", numHops)
 		}
 
-		toSwap := i256.Zero().Mul(amountSpecified, i256.NewInt(int64(quote)))
-		toSwap = toSwap.Div(toSwap, i256.NewInt(100))
+		toSwap := i256.Zero().Mul(params.amountSpecified, i256.NewInt(int64(params.quotes[i])))
+		toSwap = toSwap.Div(toSwap, i256.NewInt(int64(100)))
 
 		var amountIn, amountOut *u256.Uint
 		if numHops == 1 {
-			amountIn, amountOut = handleSingleSwap(route, toSwap, false)
+			amountIn, amountOut = handleSingleSwap(route, toSwap)
 		} else {
-			amountIn, amountOut = handleMultiSwap(swapType, route, numHops, toSwap, false)
+			amountIn, amountOut = handleMultiSwap(params.swapType, route, numHops, toSwap)
 		}
 
-		resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
-		resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
+		resultAmountIn = resultAmountIn.Add(resultAmountIn, amountIn)
+		resultAmountOut = resultAmountOut.Add(resultAmountOut, amountOut)
 	}
 
-	return resultAmountIn, resultAmountOut
+	return resultAmountIn, resultAmountOut, nil
 }
 
-func handleSingleSwap(route string, amountSpecified *i256.Int, isDry bool) (*u256.Uint, *u256.Uint) {
+func validateSlippageLimit(
+	swapType string,
+	tokenAmountLimit, afterFee *u256.Uint,
+	resultAmountIn *u256.Uint,
+) error {
+	switch swapType {
+	case ExactIn:
+		if tokenAmountLimit.Gt(afterFee) {
+			return ufmt.Errorf(
+				"%s: minimum amount not received (minimim: %s, actual: %s, swapType: %s)",
+				errSlippage, tokenAmountLimit.ToString(), afterFee.ToString(), swapType,
+			)
+		}
+	case ExactOut:
+		if resultAmountIn.Gt(tokenAmountLimit) {
+			return ufmt.Errorf(
+				"%s: maximum amount exceeded (maximum: %s, actual: %s, swapType: %s)",
+				errSlippage, tokenAmountLimit.ToString(), resultAmountIn.ToString(), swapType,
+			)
+		}
+	default:
+		return ufmt.Errorf("invalid swap type: %s", swapType)
+	}
+
+	return nil
+}
+
+func handleSingleSwap(route string, amountSpecified *i256.Int) (*u256.Uint, *u256.Uint) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
 		tokenIn:         input,
@@ -204,67 +333,17 @@ func handleSingleSwap(route string, amountSpecified *i256.Int, isDry bool) (*u25
 		amountSpecified: amountSpecified,
 	}
 
-	if isDry {
-		return singleSwapDry(singleParams)
-	}
 	return singleSwap(singleParams)
 }
 
-func finalizeSwap(inputToken, outputToken string, resultAmountIn, resultAmountOut *u256.Uint, swapType string, tokenAmountLimit *u256.Uint, userBeforeWugnotBalance, userWrappedWugnot uint64, amountSpecified *u256.Uint) (string, string) {
-	if swapType == "EXACT_OUT" && resultAmountOut.Lt(amountSpecified) {
-		panic(addDetailToError(
-			errSlippage,
-			ufmt.Sprintf("router.gno__finalizeSwap() || too few received for user (expected minimum: %s, actual: %s, swapType: %s)", amountSpecified.ToString(), resultAmountOut.ToString(), swapType),
-		))
-	}
-
-	afterFee := handleSwapFee(outputToken, resultAmountOut, false)
-
-	userNewWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
-	if inputToken == consts.GNOT {
-		totalBefore := userBeforeWugnotBalance + userWrappedWugnot
-		spend := totalBefore - userNewWugnotBalance
-
-		if spend > userWrappedWugnot {
-			// used existing wugnot
-			panic(addDetailToError(
-				errSlippage,
-				ufmt.Sprintf("router.gno__finalizeSwap() || too much wugnot spent (wrapped: %d, spend: %d)", userWrappedWugnot, spend),
-			))
-		}
-
-		// unwrap left amount
-		toUnwrap := userWrappedWugnot - spend
-		unwrap(toUnwrap)
-
-	} else if outputToken == consts.GNOT {
-		userRecvWugnot := uint64(userNewWugnotBalance - userBeforeWugnotBalance - userWrappedWugnot)
-		unwrap(userRecvWugnot)
-	}
-
-	if swapType == "EXACT_IN" {
-		if !tokenAmountLimit.Lte(afterFee) {
-			panic(addDetailToError(
-				errSlippage,
-				ufmt.Sprintf("router.gno__finalizeSwap() || too few received for user (expected minimum: %s, actual: %s, swapType: %s)", tokenAmountLimit.ToString(), afterFee.ToString(), swapType),
-			))
-		}
-	} else {
-		if !resultAmountIn.Lte(tokenAmountLimit) {
-			panic(addDetailToError(
-				errSlippage,
-				ufmt.Sprintf("router.gno__finalizeSwap() || too much spent for user (expected maximum: %s, actual: %s, swapType: %s)", tokenAmountLimit.ToString(), resultAmountIn.ToString(), swapType),
-			))
-		}
-	}
-
-	intAmountOut := i256.FromUint256(afterFee)
-	return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString()
-}
-
-func handleMultiSwap(swapType string, route string, numHops int, amountSpecified *i256.Int, isDry bool) (*u256.Uint, *u256.Uint) {
+func handleMultiSwap(
+	swapType string,
+	route string,
+	numHops int,
+	amountSpecified *i256.Int,
+) (*u256.Uint, *u256.Uint) {
 	switch swapType {
-	case "EXACT_IN":
+	case ExactIn:
 		input, output, fee := getDataForMultiPath(route, 0) // first data
 		swapParams := SwapParams{
 			tokenIn:         input,
@@ -273,13 +352,9 @@ func handleMultiSwap(swapType string, route string, numHops int, amountSpecified
 			recipient:       std.PrevRealm().Addr(),
 			amountSpecified: amountSpecified,
 		}
+		return multiSwap(swapParams, 0, numHops, route)
 
-		if isDry {
-			return multiSwapDry(swapParams, 0, numHops, route) // iterate here
-		}
-		return multiSwap(swapParams, 0, numHops, route) // iterate here
-
-	case "EXACT_OUT":
+	case ExactOut:
 		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
 		swapParams := SwapParams{
 			tokenIn:         input,
@@ -289,10 +364,7 @@ func handleMultiSwap(swapType string, route string, numHops int, amountSpecified
 			amountSpecified: amountSpecified,
 		}
 
-		if isDry {
-			return multiSwapNegativeDry(swapParams, numHops-1, route) // iterate here
-		}
-		return multiSwapNegative(swapParams, numHops-1, route) // iterate here
+		return multiSwapNegative(swapParams, numHops-1, route)
 
 	default:
 		panic(addDetailToError(
@@ -300,4 +372,121 @@ func handleMultiSwap(swapType string, route string, numHops int, amountSpecified
 			ufmt.Sprintf("router.gno__handleMultiSwap() || unknown swapType(%s)", swapType),
 		))
 	}
+}
+
+// handleWugnotPreSwap manages `WUGNOT` wrapping operation before a swap.
+// It handles the conversion betwwen `GNOT` and `WUGNOT` when needed.
+func handleWugnotPreSwap(inputToken, outputToken string, params *RouteParams) (uint64, uint64, error) {
+    if inputToken != consts.GNOT && outputToken != consts.GNOT {
+        return 0, 0, nil
+    }
+
+    userBeforeWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
+    var userWrappedWugnot uint64
+
+    if params.swapType == ExactIn && inputToken == consts.GNOT {
+        sent := std.GetOrigSend()
+        ugnotSentByUser := uint64(sent.AmountOf("ugnot"))
+        u64AmountSpecified := params.amountSpecified.Uint64()
+
+        if ugnotSentByUser != u64AmountSpecified {
+			return 0, 0, ufmt.Errorf(
+				"%s: ugnot sent by user(%d) is not equal to amountSpecified(%d)",
+				errInvalidInput, ugnotSentByUser, u64AmountSpecified,
+			)
+        }
+
+        if ugnotSentByUser > 0 {
+            wrap(ugnotSentByUser)
+        }
+        userWrappedWugnot = ugnotSentByUser
+    }
+
+    return userBeforeWugnotBalance, userWrappedWugnot, nil
+}
+
+// processResult processes the final swap results based on the swap type.
+//
+// It validates the swap outcomes against the specified amounts and returns
+// the appropriate resule values.
+//
+// Parameters:
+//  - swapType: Type of swap (`ExactIn` or `ExactOut`)
+//  - resultAmountIn: Amount of input tokens used
+//  - resultAmountOut: Amount of output tokens received
+//  - amountSpecified: Amount specified for the swap
+//
+// Returns:
+//  - string: Result of the swap
+//  - error: Error if any occurred during processing
+func processResult(
+	swapType string,
+	resultAmountIn, resultAmountOut *u256.Uint,
+	amountSpecified *i256.Int,
+) (string, error) {
+	switch swapType {
+	case ExactIn:
+		if i256.FromUint256(resultAmountIn).Neq(amountSpecified) {
+			return "-1", errors.New("amount mismatch in ExactIn")
+		}
+		return resultAmountOut.ToString(), nil
+	case ExactOut:
+		if i256.FromUint256(resultAmountOut).Lt(amountSpecified) {
+			return "-1", errors.New("insufficient output amount in ExactOut")
+		}
+		return resultAmountIn.ToString(), nil
+	default:
+		return "", ufmt.Errorf("%s: unknown swapType(%s)", errInvalidSwapType, swapType)
+	}
+}
+
+// finalizeSwap computes the swap operation by handling final validations,
+// fee calculations, and WUGNOT wrapping/unwrapping.
+func finalizeSwap(
+	inputToken, outputToken string,
+	resultAmountIn, resultAmountOut *u256.Uint,
+	swapType string,
+	tokenAmountLimit *u256.Uint,
+	userBeforeWugnotBalance, userWrappedWugnot uint64,
+	amountSpecified *u256.Uint,
+) (string, string, error) {
+	if isExactOutAmountInsufficient(swapType, resultAmountOut, amountSpecified) {
+		return "", "", ufmt.Errorf(
+			"%s: not enough amounts received. minimum: %s, actual: %s",
+			errSlippage, amountSpecified.ToString(), resultAmountOut.ToString(),
+		)
+	}
+
+	afterFee := handleSwapFee(outputToken, resultAmountOut)
+
+	userNewWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
+	if inputToken == consts.GNOT {
+		totalBefore := userBeforeWugnotBalance + userWrappedWugnot
+		spend := totalBefore - userNewWugnotBalance
+
+		if spend > userWrappedWugnot {
+			return "", "", ufmt.Errorf(
+				"%s: too much wugnot spent. wrapped: %d, spend: %d",
+				errSlippage, userWrappedWugnot, spend,
+			)
+		}
+
+		// unwrap left amount
+		toUnwrap := userWrappedWugnot - spend
+		unwrap(toUnwrap)
+	} else if outputToken == consts.GNOT {
+		userRecvWugnot := uint64(userNewWugnotBalance - userBeforeWugnotBalance - userWrappedWugnot)
+		unwrap(userRecvWugnot)
+	}
+
+	if err := validateSlippageLimit(swapType, tokenAmountLimit, afterFee, resultAmountIn); err != nil {
+		return "", "", err
+	}
+
+	intAmountOut := i256.FromUint256(afterFee)
+	return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString(), nil
+}
+
+func isExactOutAmountInsufficient(swapType string, resultAmountOut, amountSpecified *u256.Uint) bool {
+    return swapType == ExactOut && resultAmountOut.Lt(amountSpecified)
 }
