@@ -34,14 +34,14 @@ func TestIsLastBlockOfHalvingYear(t *testing.T) {
 		want   bool
 	}, 0, 24)
 
-	for i := int64(1); i <= 12; i++ {
+	for i := HALVING_START_YEAR; i <= HALVING_END_YEAR; i++ {
 		tests = append(tests, struct {
 			name   string
 			height int64
 			want   bool
 		}{
 			name:   fmt.Sprintf("last block of halving year %d", i),
-			height: GetHalvingYearBlock(i),
+			height: GetHalvingYearEndBlock(i),
 			want:   true,
 		})
 
@@ -51,7 +51,7 @@ func TestIsLastBlockOfHalvingYear(t *testing.T) {
 			want   bool
 		}{
 			name:   fmt.Sprintf("not last block of halving year %d", i),
-			height: GetHalvingYearBlock(i) - 1,
+			height: GetHalvingYearEndBlock(i) - 1,
 			want:   false,
 		})
 	}
@@ -120,13 +120,13 @@ func TestSkipIfEmissionEnded(t *testing.T) {
 
 func TestGetterSetter(t *testing.T) {
 	t.Run("last minted height", func(t *testing.T) {
-		value := int64(1234)
+		value := int64(123)
 		setLastMintedHeight(value)
 		uassert.Equal(t, value, GetLastMintedHeight())
 	})
 
 	t.Run("left emission amount", func(t *testing.T) {
-		value := uint64(123456)
+		value := uint64(0)
 		setLeftEmissionAmount(value)
 		uassert.Equal(t, value, GetLeftEmissionAmount())
 	})

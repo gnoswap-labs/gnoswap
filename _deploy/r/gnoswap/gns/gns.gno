@@ -31,6 +31,8 @@ var (
 	leftEmissionAmount   uint64
 	mintedEmissionAmount uint64
 	lastMintedHeight     int64
+
+	burnAmount uint64
 )
 
 func init() {
@@ -56,15 +58,15 @@ func MintGns(address pusers.AddressOrName) uint64 {
 
 	// skip minting process if following conditions are met
 	// - if gns for current block is already minted
-	// - if last minted height is same as last height to mint ( 12 years passed )
-	if lastMintedHeight == currentHeight || lastMintedHeight == GetEndHeight() {
+	// - if last minted height is same or later than emission end height
+	if lastMintedHeight == currentHeight || lastMintedHeight >= GetEndHeight() {
 		return 0
 	}
 
 	assertShouldNotBeHalted()
 	assertCallerIsEmission()
 
-	// calculate gns amount to mint, and the mint to the target address
+	// calculate gns amount to mint
 	amountToMint := calculateAmountToMint(lastMintedHeight+1, currentHeight)
 
 	// update
@@ -84,6 +86,8 @@ func Burn(from pusers.AddressOrName, amount uint64) {
 	owner.AssertCallerIsOwner()
 	fromAddr := users.Resolve(from)
 	checkErr(privateLedger.Burn(fromAddr, amount))
+
+	burnAmount += amount
 }
 
 func TotalSupply() uint64 {
@@ -153,37 +157,38 @@ func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
 
 	totalAmountToMint := uint64(0)
 
-	for i := fromYear; i <= toYear; i++ {
-		yearEndHeight := GetHalvingYearBlock(i)
+	for year := fromYear; year <= toYear; year++ {
+		yearEndHeight := GetHalvingYearEndBlock(year)
 		mintUntilHeight := i64Min(yearEndHeight, toHeight)
 
 		// how many blocks to calculate
 		blocks := uint64(mintUntilHeight-fromHeight) + 1
 
 		// amount of gns to mint for each block for current year
-		singleBlockAmount := GetAmountPerBlockPerHalvingYear(i)
+		singleBlockAmount := GetAmountPerBlockPerHalvingYear(year)
 
 		// amount of gns to mint for current year
 		yearAmountToMint := singleBlockAmount * blocks
 
 		// if last block of halving year, handle left emission amount
 		if isLastBlockOfHalvingYear(mintUntilHeight) {
-			yearAmountToMint += handleLeftEmissionAmount(i, yearAmountToMint)
+			yearAmountToMint += handleLeftEmissionAmount(year, yearAmountToMint)
 		}
 		totalAmountToMint += yearAmountToMint
-		setHalvingYearMintAmount(i, GetHalvingYearMintAmount(i)+yearAmountToMint)
+		setHalvingYearMintAmount(year, GetHalvingYearMintAmount(year)+yearAmountToMint)
 
 		// update fromHeight for next year (if necessary)
 		fromHeight = mintUntilHeight + 1
 	}
 
+	assertTooManyEmission(totalAmountToMint)
 	return totalAmountToMint
 }
 
 // isLastBlockOfHalvingYear returns true if the current block is the last block of a halving year.
 func isLastBlockOfHalvingYear(height int64) bool {
 	year := GetHalvingYearByHeight(height)
-	lastBlock := GetHalvingYearBlock(year)
+	lastBlock := GetHalvingYearEndBlock(year)
 
 	return height == lastBlock
 }
@@ -219,6 +224,11 @@ func GetLeftEmissionAmount() uint64 {
 	return leftEmissionAmount
 }
 
+// GetBurnAmount returns the amount of GNS that has been burned.
+func GetBurnAmount() uint64 {
+	return burnAmount
+}
+
 // GetMintedEmissionAmount returns the amount of GNS that has been minted by the emission contract.
 // It does not include initial minted amount.
 func GetMintedEmissionAmount() uint64 {
@@ -235,4 +245,15 @@ func setLeftEmissionAmount(amount uint64) {
 
 func setMintedEmissionAmount(amount uint64) {
 	mintedEmissionAmount = amount
+}
+
+// assertTooManyEmission asserts if the amount of gns to mint is too many.
+// It checks if the amount of gns to mint is greater than the left emission amount or the total emission amount.
+func assertTooManyEmission(amount uint64) {
+	if amount > GetLeftEmissionAmount() || (amount+GetMintedEmissionAmount()) > MAX_EMISSION_AMOUNT {
+		panic(addDetailToError(
+			errTooManyEmission,
+			ufmt.Sprintf("amount: %d", amount),
+		))
+	}
 }
