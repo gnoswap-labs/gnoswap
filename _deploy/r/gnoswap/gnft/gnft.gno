@@ -259,7 +259,7 @@ func SetTokenURILast() error {
 // generateRandInstnace generates a new random instance
 // Returns:
 //   - *rand.Rand: A new random instance
-func generateRandInstnace() *rand.Rand {
+func generateRandInstance() *rand.Rand {
 	seed1 := uint64(time.Now().Unix())
 	seed2 := uint64(time.Now().UnixNano())
 	pcg := rand.NewPCG(seed1, seed2)
