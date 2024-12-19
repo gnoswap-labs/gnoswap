@@ -1,5 +1,8 @@
 package position
 
+// postion/position.gno implements liquidity position manangement for the Gnoswap protocol.
+// It handles the creation, modification, and fee collection od liquidity positions.
+
 import (
 	"encoding/base64"
 	"std"
@@ -18,11 +21,12 @@ import (
 )
 
 const (
+	MAX_RATIO uint64 = 100
 	ZERO_LIQUIDITY_FOR_FEE_COLLECTION = "0"
 )
 
 var (
-	// TODO: use avl
+	// TODO (@notJoon): use avl tree, after #440 is merged
 	positions map[uint64]Position = make(map[uint64]Position) // tokenId -> Position
 	nextId    uint64              = 1                         // lp token id
 )
@@ -32,11 +36,22 @@ func getNextId() uint64 {
 	return nextId
 }
 
+// PositionOperation defines the interface fort all position-related operations.
+// Each operation must implement `Validate()` and `Process()` methods.
 type PositionOperation interface {
+	// Validate checks if the operation parameters are valid (wrapper for assert functions).
+	// Returns an error/panic if validation fails.
 	Validate() error
+
+	// Process executes the core logic of the operation.
+	// Returns an `OperationResult` containing all relevant data from the operation.
 	Process() (*OperationResult, error)
 }
 
+// OperationResult encapsulates the outcomes of a successful mint operation.
+// it includes all relavant position details and amounts.
+//
+// TODO (@notJoon): change type name to `MintResult`
 type OperationResult struct {
 	TokenId   uint64
 	Liquidity *u256.Uint
@@ -71,10 +86,30 @@ func executeOperation(op PositionOperation) (*OperationResult, error) {
 ///////////////// MINT ///////////////////
 // region: mint
 
-// Mint creates a new liquidity position and mints liquidity tokens.
-// It also handles the conversion between GNOT and WUGNOT transparently for the user.
-// Returns minted tokenId, liquidity, amount0, amount1
-// ref: https://docs.gnoswap.io/contracts/position/position.gno#mint
+// Mint creates a new liquidity position with the specified parameters.
+// This is the main public interface for creating positions.
+// It handles both normal token pairs and pairs involving the native token.
+//
+// Parameters:
+//   - token0, token1: Addresses of the tokens in the pair
+//   - fee: The fee tier for the pool
+//   - tickLower, tickUpper: Price range boundaries in tick form
+//   - amount0Desired, amount1Desired: Desired token amounts to deposit
+//   - amount0Min, amount1Min: Minimum acceptable amounts (slippage protection)
+//   - deadline: Transaction timeout timestamp
+//   - mintTo: Recipient address for the position token
+//   - caller: Transaction initiator address
+//
+// Returns:
+//   - tokenId: Unique identifier for the minted position
+//   - liquidity: Amount of liquidity tokens minted
+//   - amount0, amount1: Actual amounts of tokens deposited
+//
+// May panic with:
+//   - errInvalidInput: If input validation fails
+//   - errProcessing: If the mint operation fails
+//
+// for more details, see: https://docs.gnoswap.io/contracts/position/position.gno#mint
 func Mint(
 	token0, token1 string,
 	fee uint32,
@@ -126,27 +161,48 @@ func Mint(
 	return result.TokenId, result.Liquidity.ToString(), result.Amount0.ToString(), result.Amount1.ToString()
 }
 
+// MintOperation encasulates the logic for creating a new liquidity position.
+// it handles input validation, position creation, and token transfers.
 type MintOperation struct {
 	input          MintInput
 	processedInput *ProcessedMintInput
 }
 
+// NewMintOperation creates a new instance of MintOperation with the given input parameters.
+// It initializes the operation without processing the input data.
 func NewMintOperation(input MintInput) *MintOperation {
 	return &MintOperation{input: input}
 }
 
+// MintInput represents all necessary parameters for creating a new liquidity position.
+// All values are passes are as strings to eradiacate original value pollution (especially large amounts)..
 type MintInput struct {
+	// Token addresses for the pool pair
 	token0         string
 	token1         string
+
+	// fee tier for the pool (e.g., 0.3% = 3000)
 	fee            uint32
+
+	// Price range boundaries in tick form
 	tickLower      int32
 	tickUpper      int32
+
+	// Desired amounts of tokens to deposit
 	amount0Desired string
 	amount1Desired string
+
+	// Minimum amounts to prevent excessive slippage
 	amount0Min     string
 	amount1Min     string
+
+	// Transaction deadline timestamp
 	deadline       int64
+
+	// Address to receive the LP token
 	mintTo         std.Address
+
+	// Transaction initiator (or, caller) address
 	caller         std.Address
 }
 
@@ -168,6 +224,15 @@ type ProcessedMintInput struct {
 	poolPath       string
 }
 
+// Validate performs all necessary checks on the mint input parameters.
+//
+// It verifies:
+//  - Caller permission
+//  - Token pair validity
+//  - Price range validity
+//  - Amounts validity
+//
+// Returns an error or panic if any of the checks fail.
 func (op *MintOperation) Validate() error {
 	assertCallerPermission(std.PrevRealm())
 
@@ -181,9 +246,19 @@ func (op *MintOperation) Validate() error {
 	return nil
 }
 
+// Process executes the mint operation after validation.
+//
+// It handles:
+//  - Token transfers and wrapping/unwrapping of native tokens
+//  - Liquidity position creation
+//  - Position token minting
+//
+// Returns the operation result or an error if the process fails.
 func (op *MintOperation) Process() (*OperationResult, error) {
+	// Track initial WUGNOT balance
 	usrWugnotBalance := wugnot.BalanceOf(a2u(op.input.caller))
 
+	// handle native token conversion if needed
 	if err := handleNativeToken(
 		op.processedInput.tokenPair.token0IsNative,
 		op.processedInput.tokenPair.token1IsNative,
@@ -192,9 +267,12 @@ func (op *MintOperation) Process() (*OperationResult, error) {
 		return nil, err
 	}
 
+	// create mint params and execute mint
 	mintParams := newMintParams(*op.processedInput, op.input)
 	tokenId, liquidity, amount0, amount1 := mint(mintParams)
 
+	// handle leftover native token
+	// TODO (@notJoon): Are there any cases where this function shouldn't be called?
 	handleLeftoverNativeToken(
 		op.processedInput.tokenPair.token0IsNative,
 		op.processedInput.tokenPair.token1IsNative,
@@ -237,6 +315,8 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	gnft.Mint(a2u(params.mintTo), tokenIdFrom(tokenId)) // owner, tokenId
 	nextId++
 
+	/* State Update */
+
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
 	feeGrowthInside0LastX128 := pool.PositionFeeGrowthInside0LastX128(positionKey)
 	feeGrowthInside1LastX128 := pool.PositionFeeGrowthInside1LastX128(positionKey)
@@ -262,33 +342,119 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 ///////////////// INCREASE LIQUIDITY ///////////////////
 // region: increaseLiquidity
 
-// IncreaseLiquidity Types and Operation
+// IncreaseLiquidity represents the parameters needed to add liquidity to an existing position.
 type IncreaseLiquidityInput struct {
-    TokenId        uint64
-    Amount0Desired *u256.Uint
-    Amount1Desired *u256.Uint
+	// Unique identifier of the existing position.
+	// this data comes from the `position` type.
+	TokenId        uint64
+
+	// Additional amounts to deposit
+	Amount0Desired *u256.Uint
+	Amount1Desired *u256.Uint
+
+	// Minimum acceptable amounts (slippage protection)
     Amount0Min     *u256.Uint
     Amount1Min     *u256.Uint
+
+	// Transaction deadline timestamp
     Deadline       int64
 }
 
+// IncreaseLiquidityResult encapsulates the outcome of a liquidity increase operation.
+func IncreaseLiquidity(
+    tokenId uint64,
+    amount0Desired string,
+    amount1Desired string,
+    amount0Min string,
+    amount1Min string,
+    deadline int64,
+) (uint64, string, string, string, string) {
+	input := IncreaseLiquidityInput{
+		TokenId: tokenId,
+		Amount0Desired: u256.MustFromDecimal(amount0Desired),
+		Amount1Desired: u256.MustFromDecimal(amount1Desired),
+		Amount0Min: u256.MustFromDecimal(amount0Min),
+		Amount1Min: u256.MustFromDecimal(amount1Min),
+		Deadline: deadline,
+	}
+
+	op := NewIncreaseLiquidityOperation(input)
+
+	if err := op.Validate(); err != nil {
+		panic(addDetailToError(errInvalidInput, err.Error()))
+	}
+
+	result, err := op.Process()
+	if err != nil {
+		panic(err)
+	}
+
+	prevAddr, prevPkgPath := getPrevAsString()
+
+	std.Emit(
+        "IncreaseLiquidity",
+        "prevAddr", prevAddr,
+        "prevRealm", prevPkgPath,
+        "lpTokenId", ufmt.Sprintf("%d", result.TokenId),
+        "internal_poolPath", result.PoolPath,
+        "internal_liquidity", result.Liquidity.ToString(),
+        "internal_amount0", result.Amount0.ToString(),
+        "internal_amount1", result.Amount1.ToString(),
+        "internal_sqrtPriceX96", pl.PoolGetSlot0SqrtPriceX96(result.PoolPath),
+    )
+
+	return result.TokenId, result.Liquidity.ToString(), result.Amount0.ToString(), result.Amount1.ToString(), result.PoolPath
+}
+
+// IncreaseLiquidityResult contains the outcome of an increase liquidity operation.
+// It provides detailed information about the liquidity added and tokens used.
 type IncreaseLiquidityResult struct {
-	TokenId    uint64
-	Liquidity  *u256.Uint
-	Amount0    *u256.Uint
-	Amount1    *u256.Uint
-	PoolPath   string
+	// Position identifier
+	TokenId    		uint64
+
+	// Additional liquidity minted
+	Liquidity  		*u256.Uint
+
+	// Actual amounts of tokens deposited
+	Amount0    		*u256.Uint
+	Amount1    		*u256.Uint
+
+	// pool path
+	PoolPath  		string
 }
 
+// IncreaseLiquidityOperation represents the increase liquidity operation.
+// It handles the validation and execution of adding liquidity to an existing position.
 type IncreaseLiquidityOperation struct {
-    input     IncreaseLiquidityInput
-    position  Position
+	// input contains the parameters for the increase operation
+    input     		IncreaseLiquidityInput
+
+	// position holds the current state of the position being modified
+    position  		Position
 }
 
+// NewIncreaseLiquidityOperation creates a new instance of IncreaseLiquidityOperation.
+// It initializes the operation with the provided input parameters.
+//
+// Parameters:
+//   - input: The increase liquidity parameters
+//
+// Returns:
+//   - *IncreaseLiquidityOperation: A new operation instance
 func NewIncreaseLiquidityOperation(input IncreaseLiquidityInput) *IncreaseLiquidityOperation {
     return &IncreaseLiquidityOperation{input: input}
 }
 
+// Validate performs validation checks on the increase liquidity operation.
+// It ensures the operation can be executed safely and the caller has proper permissions.
+//
+// Checks performed:
+//   - Position exists
+//   - Caller owns the position token
+//   - Position is not burned
+//
+// Returns:
+//   - error: nil if validation passes, error otherwise
 func (op *IncreaseLiquidityOperation) Validate() error {
 	position, exists := positions[op.input.TokenId]
 	if !exists {
@@ -301,12 +467,25 @@ func (op *IncreaseLiquidityOperation) Validate() error {
 	return nil
 }
 
+// Process executes the increase liquidity operation after validation.
+// It handles the core logic of adding liquidity and updating the position state.
+//
+// Steps performed:
+//   1. Tracks initial WUGNOT balance if native token is involved
+//   2. Adds the new liquidity to the pool
+//   3. Calculates and updates fee growth tracking
+//   4. Updates position state with new liquidity and fee data
+//   5. Handles native token unwrapping if needed
+//
+// Returns:
+//   - *IncreaseLiquidityResult: The operation results
+//   - error: Any errors that occurred during processing
 func (op *IncreaseLiquidityOperation) Process() (*IncreaseLiquidityResult, error) {
 	// get initial WUGNOT balance
 	userOldWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
 
 	// handle native token if needed
-	// TODO: Extract this logic to a separate function
+	// TODO (@notJoon): Extract this logic to a separate function
 	pToken0, pToken1, _ := splitOf(op.position.poolKey)
 	isToken0Wugnot := pToken0 == consts.WRAPPED_WUGNOT
 	isToken1Wugnot := pToken1 == consts.WRAPPED_WUGNOT
@@ -315,11 +494,8 @@ func (op *IncreaseLiquidityOperation) Process() (*IncreaseLiquidityResult, error
 		sent := std.GetOrigSend()
 		ugnotSent := uint64(sent.AmountOf("ugnot"))
 
-		if err := assertWrapNativeToken(ugnotSent, std.PrevRealm().Addr()); err != nil {
-			return nil, err
-		}
+		assertWrapNativeToken(ugnotSent, std.PrevRealm().Addr())
 	}
-	////////////////////////////////////////////////////////
 
 	liqParams := AddLiquidityParams{
         poolKey:        op.position.poolKey,
@@ -379,6 +555,15 @@ type PositionFeeUpdate struct {
 	feeGrowthInside1LastX128 *u256.Uint
 }
 
+// calculateTokensOwed determines the amount of fees owed based on fee growth and liquidity.
+//
+// Parameters:
+//   - currentFeeGrowth: Current cumulative fee growth
+//   - lastFeeGrowth: Last recorded fee growth for the position
+//   - liquidity: Amount of liquidity for fee calculation
+//
+// Returns:
+//   - *u256.Uint: Amount of tokens owed as fees
 func calculatePositionFeeUpdate(
 	position Position,
 	currentFeeGrowth FeeGrowthInside,
@@ -424,7 +609,18 @@ func updateTokensOwed(
 	return new(u256.Uint).Add(tokensOwed, add)
 }
 
-// updatePosition updates the position with new liquidity and fee data
+// updatePosition updates the position state with new liquidity and fee data.
+//
+// Parameters:
+//   - position: Current position state
+//   - feeUpdate: New fee data to apply
+//   - newLiquidity: Additional liquidity being added
+//
+// Returns:
+//   - Position: Updated position state
+//
+// The function applies the fee updates and adds the new liquidity while maintaining
+// the position's other properties.
 func updatePosition(
 	position Position,
 	feeUpdate PositionFeeUpdate,
@@ -443,6 +639,7 @@ func updatePosition(
 ///////////////// DECREASE LIQUIDITY ///////////////////
 // region: decreaseLiquidity
 
+// DecreaseLiquidity represents the parameters needed to reduce liquidity from an existing position.
 func DecreaseLiquidity(
     tokenId uint64,
     liquidityRatio uint64,
@@ -460,7 +657,7 @@ func DecreaseLiquidity(
 		Amount0Min: u256.MustFromDecimal(amount0Min),
 		Amount1Min: u256.MustFromDecimal(amount1Min),
 		Deadline: deadline,
-		UnwrapResult: unwrapResult,
+		Unwrap: unwrapResult,
 	}
 
 	op := NewDecreaseLiquidityOperation(input)
@@ -477,7 +674,7 @@ func DecreaseLiquidity(
 	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(
-        "IncreaseLiquidity",
+        "decreaseLiquidity",
         "prevAddr", prevAddr,
         "prevRealm", prevPkgPath,
         "lpTokenId", ufmt.Sprintf("%d", result.TokenId),
@@ -491,38 +688,84 @@ func DecreaseLiquidity(
 	return result.TokenId, result.Liquidity.ToString(), result.Fee0.ToString(), result.Fee1.ToString(), result.Amount0.ToString(), result.Amount1.ToString(), result.PoolPath
 }
 
-// DecreaseLiquidity Types and Operation
+// DecreaseLiquidityInput encapsulates the parameters required for reducing a position's liquidity.
+// It contains all necessary information to safely remove liquidity from an existing position.
 type DecreaseLiquidityInput struct {
+	// TokenId uniquely identifies the position to be decrease liquidity from
     TokenId         uint64
+
+	// LiquidityRatio represents the percentage (1-100) of liquidity 
     LiquidityRatio  uint64
+
+	// Amount0Min and Amount1Min specify the minimum acceptable token amounts
+    // to protect against price slippage during the decrease operation
     Amount0Min      *u256.Uint
     Amount1Min      *u256.Uint
+
+	// Deadline specifies the timestamp by which the transaction must be executed
     Deadline        int64
-    UnwrapResult    bool
+
+	// Unwrap determines whether native tokens should be unwrapped after
+    // the liquidity decrease operation
+    Unwrap          bool
 }
 
+// DecreaseLiquidityResult contains the outcome of a decrease liquidity operation.
+// It provides comprehensive information about the amounts of tokens and fees involved.
 type DecreaseLiquidityResult struct {
-    TokenId    uint64
-    Liquidity  *u256.Uint
-    Fee0       *u256.Uint
-    Fee1       *u256.Uint
-    Amount0    *u256.Uint
-    Amount1    *u256.Uint
-    PoolPath   string
+	// TokenId identifies the affected position
+    TokenId         uint64
+
+	// Liquidity represents the amount of liquidity removed from the position
+    Liquidity       *u256.Uint
+
+	// Fee0 and Fee1 represent the accumulated fees collected during the operation
+    Fee0       		*u256.Uint
+    Fee1      		*u256.Uint
+
+	// Amount0 and Amount1 represent the actual amounts of tokens withdrawn
+    Amount0    		*u256.Uint
+    Amount1    		*u256.Uint
+
+	// PoolPath identifies the pool where the operation occurred
+    PoolPath  		string
 }
 
+// DecreaseLiquidityOperation represents the decrease liquidity operation.
+// It handles the validation and execution of liquidity removal from a position.
 type DecreaseLiquidityOperation struct {
-    input     DecreaseLiquidityInput
-    position  Position
+	// input contains the parameters for the decrease operation
+    input     		DecreaseLiquidityInput
+
+	// position holds the current state of the position being modified
+    position  		Position
 }
 
+// NewDecreaseLiquidityOperation creates a new instance of DecreaseLiquidityOperation.
+// It initializes the operation with the provided input parameters.
+//
+// Parameters:
+//   - input: The decrease liquidity parameters
+//
+// Returns:
+//   - *DecreaseLiquidityOperation: A new operation instance
 func NewDecreaseLiquidityOperation(input DecreaseLiquidityInput) *DecreaseLiquidityOperation {
     return &DecreaseLiquidityOperation{input: input}
 }
 
+// Validate performs validation checks on the decrease liquidity operation.
+// It ensures all parameters are valid and the operation can be executed safely.
+//
+// Checks performed:
+//   - LiquidityRatio is between 1 and 100
+//   - Position exists and has liquidity
+//   - Caller has permission to modify the position
+//
+// Returns:
+//   - error: nil if validation passes, error otherwise
 func (op *DecreaseLiquidityOperation) Validate() error {
 	// check range
-	if op.input.LiquidityRatio < 1 || op.input.LiquidityRatio > 100 {
+	if op.input.LiquidityRatio < 1 || op.input.LiquidityRatio > MAX_RATIO {
 		return ufmt.Errorf("liquidity ratio must be between 1 and 100")
 	}
 
@@ -543,10 +786,23 @@ func (op *DecreaseLiquidityOperation) Validate() error {
 	return nil
 }
 
+// Process executes the decrease liquidity operation after validation.
+// It handles the core logic of removing liquidity and collecting fees.
+//
+// Steps performed:
+//   1. Collects any accumulated fees
+//   2. Calculates the amount of liquidity to remove
+//   3. Burns the specified amount of liquidity
+//   4. Updates position state
+//   5. Handles native token unwrapping if requested
+//
+// Returns:
+//   - *DecreaseLiquidityResult: The operation results
+//   - error: Any errors that occurred during processing
 func (op *DecreaseLiquidityOperation) Process() (*DecreaseLiquidityResult, error) {
 	userOldWugnotBalance := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
 
-	_, fee0Str, fee1Str, _, _, _ := CollectFee(op.input.TokenId, op.input.UnwrapResult)
+	_, fee0Str, fee1Str, _, _, _ := CollectFee(op.input.TokenId, op.input.Unwrap)
 	fee0 := u256.MustFromDecimal(fee0Str)
 	fee1 := u256.MustFromDecimal(fee1Str)
 
@@ -601,8 +857,16 @@ func (op *DecreaseLiquidityOperation) Process() (*DecreaseLiquidityResult, error
 	amount1 := u256.MustFromDecimal(collectedAmount1)
 
 	// Update tokens owed
-    op.position.tokensOwed0, _ = new(u256.Uint).SubOverflow(op.position.tokensOwed0, amount0)
-    op.position.tokensOwed1, _ = new(u256.Uint).SubOverflow(op.position.tokensOwed1, amount1)
+	overflow := false
+    op.position.tokensOwed0, overflow = new(u256.Uint).SubOverflow(op.position.tokensOwed0, amount0)
+	if overflow {
+		op.position.tokensOwed0 = u256.Zero()
+	}
+
+    op.position.tokensOwed1, overflow = new(u256.Uint).SubOverflow(op.position.tokensOwed1, amount1)
+	if overflow {
+		op.position.tokensOwed1 = u256.Zero()
+	}
 
 	positions[op.input.TokenId] = op.position
 
@@ -610,8 +874,8 @@ func (op *DecreaseLiquidityOperation) Process() (*DecreaseLiquidityResult, error
 		burnPosition(op.input.TokenId)
 	}
 
-	if op.input.UnwrapResult {
-		handleUnwrap(pToken0, pToken1, op.input.UnwrapResult, userOldWugnotBalance, std.PrevRealm().Addr())
+	if op.input.Unwrap {
+		handleUnwrap(pToken0, pToken1, op.input.Unwrap, userOldWugnotBalance, std.PrevRealm().Addr())
 	}
 
 	return &DecreaseLiquidityResult{
@@ -625,16 +889,31 @@ func (op *DecreaseLiquidityOperation) Process() (*DecreaseLiquidityResult, error
 	}, nil
 }
 
+// calculateLiquidityToRemove determines the amount of liquidity to remove based on
+// the current position liquidity and the requested ratio.
+//
+// Parameters:
+//   - positionLiquidity: Current liquidity in the position
+//   - liquidityRatio: Percentage of liquidity to remove (1-100)
+//
+// Returns:
+//   - *u256.Uint: Amount of liquidity to remove
+//
+// Note: If liquidityRatio is 100 or the calculated amount exceeds position liquidity,
+// the entire position liquidity is removed.
 func calculateLiquidityToRemove(positionLiquidity *u256.Uint, liquidityRatio uint64) *u256.Uint {
 	liquidityToRemove := new(u256.Uint).Mul(positionLiquidity, u256.NewUint(liquidityRatio))
-	liquidityToRemove = new(u256.Uint).Div(liquidityToRemove, u256.NewUint(100))
+	liquidityToRemove = new(u256.Uint).Div(liquidityToRemove, u256.NewUint(MAX_RATIO))
 
-	if positionLiquidity.Lt(liquidityToRemove) || liquidityRatio == 100 {
+	if positionLiquidity.Lt(liquidityToRemove) || liquidityRatio == MAX_RATIO {
 		return positionLiquidity
 	}
+
 	return liquidityToRemove
 }
 
+// burnPosition marks a position as burned when it no longer has any remaining liquidity
+// or uncollected fees.
 func burnPosition(tokenId uint64) {
 	position := positions[tokenId]
 	checkPositionHasClear(position)
@@ -643,6 +922,10 @@ func burnPosition(tokenId uint64) {
 	positions[tokenId] = position
 }
 
+// handleUnwrap manages the unwrapping of native tokens after a decrease liquidity operation.
+//
+// The function calculates the difference in WUGNOT balance and unwraps any excess
+// back to native tokens if requested.
 func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalance uint64, to std.Address) {
 	if (pToken0 == consts.WRAPPED_WUGNOT || pToken1 == consts.WRAPPED_WUGNOT) && unwrapResult {
 		userNewWugnotBalance := wugnot.BalanceOf(a2u(to))
@@ -654,13 +937,31 @@ func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalan
 ///////////////// CollectFee ///////////////////
 // region: collectFee
 
+// CollectFee collects accumulated fees from a liquidity position.
+// This is the main entry point for fee collection in the protocol.
+//
+// Parameters:
+//   - tokenId: The ID of the position to collect fees from
+//   - unwrapResult: Whether to unwrap native tokens after collection
+//
+// Returns:
+//   - tokenId: Position identifier
+//   - fee0, fee1: Collected fee amounts after protocol fee
+//   - poolPath: Pool identifier
+//   - origFee0, origFee1: Original fee amounts before protocol fee
+//
+// Events emitted:
+//   - CollectSwapFee: When fees are successfully collected
+//
+// The function handles both standard ERC20 fees and wrapped native token fees.
+// It ensures proper calculation and distribution of protocol fees.
 func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, string, string, string) {
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
 	input := CollectFeeInput{
 		TokenId: tokenId,
-		UnwrapResult: unwrapResult,
+		Unwrap: unwrapResult,
 	}
 
 	op := NewCollectFeeOperation(input)
@@ -684,36 +985,78 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
         "internal_fee0", result.Fee0.ToString(),
         "internal_fee1", result.Fee1.ToString(),
         "internal_poolPath", result.PoolPath,
-        "internal_unwrapResult", ufmt.Sprintf("%t", op.input.UnwrapResult),
+        "internal_unwrapResult", ufmt.Sprintf("%t", op.input.Unwrap),
     )
 
 	return result.TokenId, result.Fee0.ToString(), result.Fee1.ToString(), result.PoolPath, result.OrigFee0, result.OrigFee1
 }
 
-// CollectFee Types and Operation
+// CollectFeeInput encapsulates the parameters needed to collect accumulated fees
+// from a liquidity position. It provides the necessary information to identify
+// the position and handle native token unwrapping.
 type CollectFeeInput struct {
+	// TokenId uniquely identifies the position to collect fees from
     TokenId       uint64
-    UnwrapResult  bool
+
+	// Unwrap determines whether native tokens should be unwrapped
+    // after fee collection. This is relevant when one of the tokens
+    // in the pool is the wrapped native token (WUGNOT).
+    Unwrap  bool
 }
 
+// CollectFeeResult contains the outcome of a fee collection operation.
+// It provides detailed information about the collected fees and their origin.
 type CollectFeeResult struct {
+	// TokenId identifies the position fees were collected from
     TokenId    uint64
+
+	// Fee0 and Fee1 represent the amounts of collected fees for each token
+    // after protocol fee deduction
     Fee0       *u256.Uint
     Fee1       *u256.Uint
+
+	// PoolPath identifies the pool where the fees were collected
     PoolPath   string
+
+	// OrigFee0 and OrigFee1 represent the original amounts of fees before
+    // protocol fee deduction
     OrigFee0   string
     OrigFee1   string
 }
 
+// CollectFeeOperation represents the fee collection operation.
+// It handles the validation and execution of collecting accumulated fees
+// from a liquidity position.
 type CollectFeeOperation struct {
-    input     CollectFeeInput
-    position  Position
+	// input contains the parameters for the fee collection.
+    input     	CollectFeeInput
+
+	// position holds the current state of the position being modified
+    position  	Position
 }
 
+// NewCollectFeeOperation creates a new instance of CollectFeeOperation.
+// It initializes the operation with the provided input parameters.
+//
+// Parameters:
+//   - input: The fee collection parameters
+//
+// Returns:
+//   - *CollectFeeOperation: A new operation instance
 func NewCollectFeeOperation(input CollectFeeInput) *CollectFeeOperation {
     return &CollectFeeOperation{ input: input }
 }
 
+// Validate performs validation checks on the fee collection operation.
+// It ensures the operation can be executed safely and the caller has proper permissions.
+//
+// Checks performed:
+//   - Position exists
+//   - Caller is authorized to collect fees
+//   - Position is not burned
+//
+// Returns:
+//   - error: nil if validation passes, error otherwise
 func (op *CollectFeeOperation) Validate() error {
 	assertTokenExists(op.input.TokenId)
 	isAuthorizedForToken(op.input.TokenId)
@@ -728,6 +1071,21 @@ func (op *CollectFeeOperation) Validate() error {
 	return nil
 }
 
+// Process executes the fee collection operation after validation.
+// It handles the core logic of collecting fees and updating position state.
+//
+// Steps performed:
+//   1. Tracks initial WUGNOT balance if native token unwrap is requested
+//   2. Updates fees by performing a zero-liquidity burn
+//   3. Calculates current fee growth and collectable amounts
+//   4. Collects fees from the pool
+//   5. Updates position state
+//   6. Handles protocol fee deduction
+//   7. Unwraps native tokens if requested
+//
+// Returns:
+//   - *CollectFeeResult: The operation results
+//   - error: Any errors that occurred during processing
 func (op *CollectFeeOperation) Process() (*CollectFeeResult, error) {
 	token0, token1, fee := splitOf(op.position.poolKey)
 
@@ -774,7 +1132,7 @@ func (op *CollectFeeOperation) Process() (*CollectFeeResult, error) {
 	)
 
 	// handle WUGNOT unwrap if needed
-	if op.input.UnwrapResult {
+	if op.input.Unwrap {
 		pToken0, pToken1, _ := splitOf(op.position.poolKey)
 		if pToken0 == consts.WUGNOT_PATH || pToken1 == consts.WUGNOT_PATH {
             userNewWugnot := wugnot.BalanceOf(a2u(prevRealmAddr))
@@ -796,6 +1154,19 @@ func (op *CollectFeeOperation) Process() (*CollectFeeResult, error) {
     }, nil
 }
 
+// getCurrentFeeGrowth retrieves the current fee growth values from the pool
+// for a specific position.
+//
+// Parameters:
+//   - position: The position to get fee growth for
+//   - token0, token1: Pool token addresses
+//   - fee: Pool fee tier
+//
+// Returns:
+//   - FeeGrowthInside: Current fee growth values
+//   - error: Any errors during retrieval
+//
+// This function is used to calculate the fees accumulated since the last collection.
 func getCurrentFeeGrowth(postion Position, token0, token1 string, fee uint32) (FeeGrowthInside, error) {
 	pool := pl.GetPoolFromPoolPath(postion.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), postion.tickLower, postion.tickUpper)
@@ -811,7 +1182,19 @@ func getCurrentFeeGrowth(postion Position, token0, token1 string, fee uint32) (F
 	return feeGrowthInside, nil
 }
 
-// calculateFees calculates the fees for the current position.
+// calculateFees computes the amount of fees that can be collected from a position.
+// It uses the difference between current and last fee growth to determine uncollected fees.
+//
+// Parameters:
+//   - position: Current position state
+//   - currentFeeGrowth: Current fee growth values from the pool
+//
+// Returns:
+//   - *u256.Uint: Token0 fees to collect
+//   - *u256.Uint: Token1 fees to collect
+//
+// The calculation accounts for the position's liquidity and the fee growth
+// inside the position's tick range.
 func calculateFees(position Position, currentFeeGrowth FeeGrowthInside) (*u256.Uint, *u256.Uint) {
 	fee0 := calculateTokensOwed(
 		currentFeeGrowth.feeGrowthInside0LastX128,
@@ -834,124 +1217,31 @@ func calculateFees(position Position, currentFeeGrowth FeeGrowthInside) (*u256.U
 ///////////////// Reposition ///////////////////
 // region: reposition
 
-// Reposition Types and Operation
-type RepositionInput struct {
-    TokenId        uint64
-    TickLower      int32
-    TickUpper      int32
-    Amount0Desired *u256.Uint
-    Amount1Desired *u256.Uint
-    Amount0Min     *u256.Uint
-    Amount1Min     *u256.Uint
-}
-
-type RepositionResult struct {
-    TokenId        uint64
-    Liquidity      *u256.Uint
-    TickLower      int32
-    TickUpper      int32
-    Amount0        *u256.Uint
-    Amount1        *u256.Uint
-    OldTickLower   int32
-    OldTickUpper   int32
-    PoolPath       string
-}
-
-type RepositionOperation struct {
-    input     RepositionInput
-    position  Position
-}
-
-func NewRepositionOperation(input RepositionInput) *RepositionOperation {
-    return &RepositionOperation{ input: input }
-}
-
-func (op *RepositionOperation) Validate() error {
-	tokenId := op.input.TokenId
-	assertTokenOwnership(tokenId)
-
-	position, exists := positions[tokenId]
-	if !exists {
-		return ufmt.Errorf("position(tokenId: %d) not found", tokenId)
-	}
-	op.position = position
-
-	checkPositionHasClear(op.position)
-
-	return nil
-}
-
-func (op *RepositionOperation) Process() (*RepositionResult, error) {
-	poolKey := op.position.poolKey
-	token0, token1, _ := splitOf(poolKey)
-
-	// Check if GNOT pool
-	// TODO: extract this to a helper function
-    token0IsNative := token0 == consts.WRAPPED_WUGNOT
-    token1IsNative := token1 == consts.WRAPPED_WUGNOT
-
-	// Handle native token if needed
-	if token0IsNative || token1IsNative {
-		sent := std.GetOrigSend()
-		ugnotSent := uint64(sent.AmountOf("ugnot"))
-
-        if err := assertWrapNativeToken(ugnotSent, std.PrevRealm().Addr()); err != nil {
-            return nil, ufmt.Errorf("native token wrap failed: %w", err)
-        }
-    }
-	// ------
-
-	liqParams := AddLiquidityParams{
-        poolKey:        op.position.poolKey,
-        tickLower:      op.input.TickLower,
-        tickUpper:      op.input.TickUpper,
-        amount0Desired: op.input.Amount0Desired,
-        amount1Desired: op.input.Amount1Desired,
-        amount0Min:     op.input.Amount0Min,
-        amount1Min:     op.input.Amount1Min,
-        caller:         std.PrevRealm().Addr(),
-    }
-
-	liquidity, amount0, amount1, err := addLiquidity(liqParams)
-	if err != nil {
-		return nil, ufmt.Errorf("%v: add liquidity failed", errSlippage)
-	}
-
-	pool := pl.GetPoolFromPoolPath(poolKey)
-	positionKey := positionKeyCompute(GetOrigPkgAddr(), op.input.TickLower, op.input.TickUpper)
-
-	feeGrowthInside0LastX128 := pool.PositionFeeGrowthInside0LastX128(positionKey)
-    feeGrowthInside1LastX128 := pool.PositionFeeGrowthInside1LastX128(positionKey)
-
-    // Store old ticks for event emission
-    oldTickLower := op.position.tickLower
-    oldTickUpper := op.position.tickUpper
-
-    // Update position
-    op.position.tickLower = op.input.TickLower
-    op.position.tickUpper = op.input.TickUpper
-    op.position.liquidity = liquidity
-    op.position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
-    op.position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
-    op.position.tokensOwed0 = u256.Zero()
-    op.position.tokensOwed1 = u256.Zero()
-    op.position.burned = false
-
-	positions[op.input.TokenId] = op.position
-
-	return &RepositionResult{
-        TokenId:      op.input.TokenId,
-        Liquidity:    liquidity,
-        TickLower:    op.input.TickLower,
-        TickUpper:    op.input.TickUpper,
-        Amount0:      amount0,
-        Amount1:      amount1,
-        OldTickLower: oldTickLower,
-        OldTickUpper: oldTickUpper,
-        PoolPath:     op.position.poolKey,
-    }, nil
-}
-
+// Reposition adjusts a position's price range by moving liquidity to a new range.
+// This is the main entry point for repositioning liquidity in the protocol.
+//
+// Parameters:
+//   - tokenId: The ID of the position to reposition
+//   - tickLower, tickUpper: New price range boundaries
+//   - amount0Desired, amount1Desired: Desired token amounts for the new position
+//   - amount0Min, amount1Min: Minimum acceptable amounts for slippage protection
+//
+// Returns:
+//   - tokenId: Position identifier
+//   - liquidity: New liquidity amount
+//   - tickLower, tickUpper: New price range boundaries
+//   - amount0, amount1: Actual token amounts used
+//
+// Events emitted:
+//   - Reposition: When liquidity is successfully repositioned
+//
+// The function ensures atomic execution of the reposition operation:
+//   1. Validates the caller's ownership and position state
+//   2. Moves liquidity to the new price range
+//   3. Updates position state
+//   4. Handles any native token conversions
+//
+// TODO (@notJoon): need to validate this function.
 func Reposition(
     tokenId uint64,
     tickLower int32,
@@ -1005,6 +1295,180 @@ func Reposition(
     )
 
 	return result.TokenId, result.Liquidity.ToString(), result.TickLower, result.TickUpper, result.Amount0.ToString(), result.Amount1.ToString()
+}
+
+// RepositionInput encapsulates the parameters required for repositioning a liquidity position.
+// It contains all necessary information to safely move liquidity to a new price range.
+type RepositionInput struct {
+	// TokenId uniquely identifies the position to be repositioned
+    TokenId        uint64
+
+	// TickLower and TickUpper define the new price range for the position
+    TickLower      int32
+    TickUpper      int32
+
+	// Amount0Desired and Amount1Desired specify the desired amounts of tokens to add
+    Amount0Desired *u256.Uint
+    Amount1Desired *u256.Uint
+
+	// Amount0Min and Amount1Min ensure the minimum amounts of tokens are met
+    Amount0Min     *u256.Uint
+    Amount1Min     *u256.Uint
+}
+
+// RepositionResult contains the outcome of a reposition operation.
+// It provides comprehensive information about both the old and new position states.
+type RepositionResult struct {
+	// TokenId identifies the position being repositioned
+    TokenId        uint64
+
+	// Liquidity represents the new liquidity added to the position
+    Liquidity      *u256.Uint
+
+	// TickLower and TickUpper define the new price range for the position
+    TickLower      int32
+    TickUpper      int32
+
+	// Amount0 and Amount1 represent the amounts of tokens added to the position
+    Amount0        *u256.Uint
+    Amount1        *u256.Uint
+
+	// OldTickLower and OldTickUpper represent the old tick range of the position
+    OldTickLower   int32
+    OldTickUpper   int32
+
+	// PoolPath identifies the pool where the reposition occurred
+    PoolPath       string
+}
+
+// RepositionOperation represents the reposition operation.
+// It handles the validation and execution of moving liquidity to a new price range.
+type RepositionOperation struct {
+	// input contains the parameters for the reposition operation
+    input     RepositionInput
+
+	// position holds the current state of the position being modified
+    position  Position
+}
+
+// NewRepositionOperation creates a new instance of RepositionOperation.
+// It initializes the operation with the provided input parameters.
+//
+// Parameters:
+//   - input: The reposition parameters
+//
+// Returns:
+//   - *RepositionOperation: A new operation instance
+func NewRepositionOperation(input RepositionInput) *RepositionOperation {
+    return &RepositionOperation{ input: input }
+}
+
+// Validate performs validation checks on the reposition operation.
+// It ensures the operation can be executed safely and the caller has proper permissions.
+//
+// Checks performed:
+//   - Caller owns the position token
+//   - Position exists and is not burned
+//   - Position has cleared any existing fees
+//
+// Returns:
+//   - error: nil if validation passes, error otherwise
+func (op *RepositionOperation) Validate() error {
+	tokenId := op.input.TokenId
+	assertTokenOwnership(tokenId)
+
+	position, exists := positions[tokenId]
+	if !exists {
+		return ufmt.Errorf("position(tokenId: %d) not found", tokenId)
+	}
+	op.position = position
+
+	checkPositionHasClear(op.position)
+
+	return nil
+}
+
+// Process executes the reposition operation after validation.
+// It handles the core logic of moving liquidity to a new price range.
+//
+// Steps performed:
+//   1. Handles native token wrapping if needed
+//   2. Adds liquidity to the new position range
+//   3. Updates fee growth tracking
+//   4. Updates position state with new price range and liquidity
+//   5. Clears accumulated fees
+//
+// Returns:
+//   - *RepositionResult: The operation results
+//   - error: Any errors that occurred during processing
+func (op *RepositionOperation) Process() (*RepositionResult, error) {
+	poolKey := op.position.poolKey
+	token0, token1, _ := splitOf(poolKey)
+
+	// Check if GNOT pool
+	// TODO (@notJoon): extract this to a helper function
+    token0IsNative := token0 == consts.WRAPPED_WUGNOT
+    token1IsNative := token1 == consts.WRAPPED_WUGNOT
+
+	// Handle native token if needed
+	if token0IsNative || token1IsNative {
+		sent := std.GetOrigSend()
+		ugnotSent := uint64(sent.AmountOf("ugnot"))
+
+		assertWrapNativeToken(ugnotSent, std.PrevRealm().Addr())
+    }
+
+	liqParams := AddLiquidityParams{
+        poolKey:        op.position.poolKey,
+        tickLower:      op.input.TickLower,
+        tickUpper:      op.input.TickUpper,
+        amount0Desired: op.input.Amount0Desired,
+        amount1Desired: op.input.Amount1Desired,
+        amount0Min:     op.input.Amount0Min,
+        amount1Min:     op.input.Amount1Min,
+        caller:         std.PrevRealm().Addr(),
+    }
+
+	liquidity, amount0, amount1, err := addLiquidity(liqParams)
+	if err != nil {
+		return nil, ufmt.Errorf("%v: add liquidity failed", errSlippage)
+	}
+
+	pool := pl.GetPoolFromPoolPath(poolKey)
+	positionKey := positionKeyCompute(GetOrigPkgAddr(), op.input.TickLower, op.input.TickUpper)
+
+	feeGrowthInside0LastX128 := pool.PositionFeeGrowthInside0LastX128(positionKey)
+    feeGrowthInside1LastX128 := pool.PositionFeeGrowthInside1LastX128(positionKey)
+
+	/* Update State */
+
+    // Store old ticks for event emission
+    oldTickLower := op.position.tickLower
+    oldTickUpper := op.position.tickUpper
+
+    // Update position
+    op.position.tickLower = op.input.TickLower
+    op.position.tickUpper = op.input.TickUpper
+    op.position.liquidity = liquidity
+    op.position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
+    op.position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
+    op.position.tokensOwed0 = u256.Zero()
+    op.position.tokensOwed1 = u256.Zero()
+    op.position.burned = false
+
+	positions[op.input.TokenId] = op.position
+
+	return &RepositionResult{
+        TokenId:      op.input.TokenId,
+        Liquidity:    liquidity,
+        TickLower:    op.input.TickLower,
+        TickUpper:    op.input.TickUpper,
+        Amount0:      amount0,
+        Amount1:      amount1,
+        OldTickLower: oldTickLower,
+        OldTickUpper: oldTickUpper,
+        PoolPath:     op.position.poolKey,
+    }, nil
 }
 
 ///////////////// HELPER ///////////////////
