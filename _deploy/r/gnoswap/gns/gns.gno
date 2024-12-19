@@ -22,26 +22,32 @@ const (
 )
 
 var (
-	lastMintedHeight = std.GetHeight()
-)
+	owner *ownable.Ownable
 
-var (
-	// Initial amount set to 900_000_000_000_000 (MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT).
-	// leftEmissionAmount will decrease as tokens are minted.
-	leftEmissionAmount   = MAX_EMISSION_AMOUNT
-	mintedEmissionAmount = uint64(0)
-)
+	Token         *grc20.Token
+	privateLedger *grc20.PrivateLedger
+	UserTeller    grc20.Teller
 
-var (
-	Token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
-	UserTeller           = Token.CallerTeller()
-	owner                = ownable.NewWithAddress(consts.ADMIN)
+	leftEmissionAmount   uint64
+	mintedEmissionAmount uint64
+	lastMintedHeight     int64
 )
 
 func init() {
+	owner = ownable.NewWithAddress(consts.ADMIN)
+
+	Token, privateLedger = grc20.NewToken("Gnoswap", "GNS", 6)
+	UserTeller = Token.CallerTeller()
+
 	privateLedger.Mint(owner.Owner(), INITIAL_MINT_AMOUNT)
 	getter := func() *grc20.Token { return Token }
 	grc20reg.Register(getter, "")
+
+	// Initial amount set to 900_000_000_000_000 (MAXIMUM_SUPPLY - INITIAL_MINT_AMOUNT).
+	// leftEmissionAmount will decrease as tokens are minted.
+	leftEmissionAmount = MAX_EMISSION_AMOUNT
+
+	lastMintedHeight = std.GetHeight()
 }
 
 // MintedEmissionAmount returns the amount of GNS that has been minted by the emission contract.
@@ -56,8 +62,12 @@ func MintGns(address pusers.AddressOrName) uint64 {
 
 	// skip minting process if following conditions are met
 	// - if gns for current block is already minted
-	// - if emission has ended
-	if skipIfSameHeight(lastMintedHeight, currentHeight) || skipIfEmissionEnded(currentHeight) {
+	// - if last minted height is last block to mint ( 12 years passed )
+
+	// WIP
+	// if lastMintedHeight == currentHeight ||
+	// }
+	if skipIfSameHeight(lastMintedHeight, currentHeight) || skipIfEmissionEnded(lastMintedHeight+1) {
 		return 0
 	}
 
