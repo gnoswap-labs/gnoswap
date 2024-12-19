@@ -22,8 +22,8 @@ var (
 	owner = ownable.NewWithAddress(consts.POSITION_ADDR) // deployed position contract
 )
 
-var (
-	tokensToSetUri = avl.NewTree()
+var (tokenList
+	tokenList *avl.Tree // addr -> []grc721.TokenID
 )
 
 // Name returns the full name of the NFT
@@ -262,15 +262,15 @@ func SetTokenURILast() error {
 	return nil
 }
 
-// getTokensToSetUri retrieves the list of tokens pending URI assignment for an address
+// getTokenList retrieves the list of nft tokens for an address
 // Parameters:
-//   - addr: The address to check for pending tokens
+//   - addr: The address to check for nft tokens
 //
 // Returns:
-//   - []grc721.TokenID: Array of token IDs pending URI assignment
+//   - []grc721.TokenID: Array of token IDs
 //   - bool: true if tokens exist for the address, false otherwise
-func getTokensToSetUri(addr std.Address) ([]grc721.TokenID, bool) {
-	iTokens, exists := tokensToSetUri.Get(addr.String())
+func getTokenList(addr std.Address) ([]grc721.TokenID, bool) {
+	iTokens, exists := tokenList.Get(addr.String())
 	if !exists {
 		return []grc721.TokenID{}, false
 	}
@@ -278,14 +278,14 @@ func getTokensToSetUri(addr std.Address) ([]grc721.TokenID, bool) {
 	return iTokens.([]grc721.TokenID), true
 }
 
-// mustGetTokensToSetUri same as getTokensToSetUri but panics if tokens don't exist
+// mustGetTokenList same as getTokenList but panics if tokens don't exist
 // Parameters:
-//   - addr: The address to get tokens for
+//   - addr: The address to check for nft tokens
 //
 // Returns:
-//   - []grc721.TokenID: Array of token IDs pending URI assignment
-func mustGetTokensToSetUri(addr std.Address) []grc721.TokenID {
-	tokens, exists := getTokensToSetUri(addr)
+//   - []grc721.TokenID: Array of token IDs
+func mustGetTokenList(addr std.Address) []grc721.TokenID {
+	tokens, exists := getTokenList(addr)
 	if !exists {
 		panic(ufmt.Sprintf("user %s has no minted nft tokens", addr.String()))
 	}
@@ -293,28 +293,14 @@ func mustGetTokensToSetUri(addr std.Address) []grc721.TokenID {
 	return tokens
 }
 
-// appendTokensToSetUri adds a token ID to the list of tokens pending URI assignment
+// appendTokenList adds a token ID to the list of nft tokens
 // Parameters:
 //   - addr: The address to append the token for
 //   - tid: The token ID to append
-func appendTokensToSetUri(addr std.Address, tid grc721.TokenID) {
-	prevTokenList, _ := getTokensToSetUri(addr)
+func appendTokenList(addr std.Address, tid grc721.TokenID) {
+	prevTokenList, _ := getTokenList(addr)
 	prevTokenList = append(prevTokenList, tid)
-	tokensToSetUri.Set(addr.String(), prevTokenList)
-}
-
-// deleteTokenFromTokensToSetUri removes a token ID from the pending URI assignment list
-// Parameters:
-//   - addr: The address to remove the token from
-//   - tid: The token ID to remove
-func deleteTokenFromTokensToSetUri(addr std.Address, tid grc721.TokenID) {
-	tokens := mustGetTokensToSetUri(addr)
-	for i, token := range tokens {
-		if token == tid {
-			tokens = append(tokens[:i], tokens[i+1:]...)
-			break
-		}
-	}
+	tokenList.Set(addr.String(), prevTokenList)
 }
 
 // checkErr helper function to panic if an error occurs
