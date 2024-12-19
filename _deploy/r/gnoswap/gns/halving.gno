@@ -163,7 +163,7 @@ func setAvgBlockTimeInMs(ms int64) {
 	// update it
 	setAmountPerBlockPerHalvingYear(year, adjustedAmountPerBlock)
 
-	for year := int64(1); year < 13; year++ {
+	for year := int64(1); year < HALVING_END_YEAR + 1; year++ {
 		yearEndTimestamp := GetHalvingYearTimestamp(year)
 
 		if now >= yearEndTimestamp {
