@@ -144,7 +144,7 @@ func assertOnlyValidAddress(addr std.Address) {
 
 func assertWrapNativeToken(ugnotSent uint64, prevRealm std.Address) {
 	if err := wrap(ugnotSent, prevRealm); err != nil {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errWrapUnwrap,
 			ufmt.Sprintf("wrap error: %s", err.Error()),
 		))
@@ -161,6 +161,15 @@ func assertOnlyValidAddressWith(prevAddr, otherAddr std.Address) {
 		panic(newErrorWithDetail(
 			errInvalidAddress,
 			ufmt.Sprintf("(%s, %s)", prevAddr, otherAddr),
+		))
+	}
+}
+
+func isAuthorizedForToken(tokenId uint64) {
+	if !(isOwnerOrOperator(std.PrevRealm().Addr(), tokenId)) {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("caller(%s) is not approved or owner of tokenId(%d)", std.PrevRealm().Addr(), tokenId),
 		))
 	}
 }

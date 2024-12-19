@@ -77,7 +77,7 @@ func positionUpdate(
 		if position.liquidity.IsZero() {
 			panic(addDetailToError(
 				errZeroLiquidity,
-				"position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero",
+				"both liquidityDelta and current position's liquidity are zero",
 			))
 		}
 

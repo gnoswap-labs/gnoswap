@@ -6,6 +6,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+// Position represents a liquidity position in a pool.
+// Each position tracks the amount of liquidity, fee growth, and tokens owed to the position owner.
 type Position struct {
 	nonce *u256.Uint // nonce for permits
 
@@ -48,6 +50,24 @@ type MintParams struct {
 	deadline       int64       // time by which the transaction must be included to effect the change
 	mintTo         std.Address // address to mint lpToken
 	caller         std.Address // address to call the function
+}
+
+// newMintParams creates `MintParams` from processed input data.
+func newMintParams(input ProcessedMintInput, mintInput MintInput) MintParams {
+	return MintParams{
+		token0:         input.tokenPair.token0,
+		token1:         input.tokenPair.token1,
+		fee:            mintInput.fee,
+		tickLower:      mintInput.tickLower,
+		tickUpper:      mintInput.tickUpper,
+		amount0Desired: input.amount0Desired,
+		amount1Desired: input.amount1Desired,
+		amount0Min:     input.amount0Min,
+		amount1Min:     input.amount1Min,
+		deadline:       mintInput.deadline,
+		mintTo:         mintInput.mintTo,
+		caller:         mintInput.caller,
+	}
 }
 
 type AddLiquidityParams struct {

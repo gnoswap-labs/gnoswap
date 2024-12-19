@@ -75,7 +75,7 @@ func TestPositionUpdateWithKey(t *testing.T) {
 		panicMsg          string
 		expectedLiquidity string
 	}{
-		{i256.MustFromDecimal("0"), u256.Zero(), u256.Zero(), true, `[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero`, ""},
+		{i256.MustFromDecimal("0"), u256.Zero(), u256.Zero(), true, `[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero`, ""},
 		{i256.MustFromDecimal("100000"), u256.Zero(), u256.Zero(), false, "", "100000"},
 	}
 
@@ -109,7 +109,7 @@ func TestPositionUpdate(t *testing.T) {
 			feeGrowthInside0X128: u256.Zero(),
 			feeGrowthInside1X128: u256.Zero(),
 			shouldPanic:          true,
-			panicMsg:             `[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero`,
+			panicMsg:             `[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero`,
 		},
 		{
 			initialLiquidity:             u256.Zero(),
