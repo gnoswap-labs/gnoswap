@@ -37,24 +37,24 @@ stdout 'GAS USED:   27944943'
 
 ### deploy tokens
 #### gns
-gnokey maketx addpkg -pkgdir ../_deploy/r/gnoswap/gns -pkgpath gno.land/r/gnoswap/v1/gnoswap/gns -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:   39262112'
+gnokey maketx addpkg -pkgdir ../_deploy/r/gnoswap/gns -pkgpath gno.land/r/gnoswap/v1/gns -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   39210448'
 
 #### usdc
 gnokey maketx addpkg -pkgdir ../__local/grc20_tokens/onbloc/usdc -pkgpath gno.land/r/onbloc/usdc -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:   19218989'
+stdout 'GAS USED:   19218605'
 
 #### foo
 gnokey maketx addpkg -pkgdir ../__local/grc20_tokens/onbloc/foo -pkgpath gno.land/r/onbloc/foo -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:   19285014'
+stdout 'GAS USED:   19284630'
 
 #### bar
 gnokey maketx addpkg -pkgdir ../__local/grc20_tokens/onbloc/bar -pkgpath gno.land/r/onbloc/bar -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:   19359395'
+stdout 'GAS USED:   19359011'
 
 #### baz
 gnokey maketx addpkg -pkgdir ../__local/grc20_tokens/onbloc/baz -pkgpath gno.land/r/onbloc/baz -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
-stdout 'GAS USED:   19433731'
+stdout 'GAS USED:   19433347'
 
 #### qux
 gnokey maketx addpkg -pkgdir ../__local/grc20_tokens/onbloc/qux -pkgpath gno.land/r/onbloc/qux -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
