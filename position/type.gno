@@ -6,6 +6,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+// Position represents a liquidity position in a pool.
+// Each position tracks the amount of liquidity, fee growth, and tokens owed to the position owner.
 type Position struct {
 	nonce *u256.Uint // nonce for permits
 

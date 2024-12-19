@@ -142,11 +142,13 @@ func assertOnlyValidAddress(addr std.Address) {
 	}
 }
 
-func assertWrapNativeToken(ugnotSent uint64, prevRealm std.Address) error {
+func assertWrapNativeToken(ugnotSent uint64, prevRealm std.Address) {
 	if err := wrap(ugnotSent, prevRealm); err != nil {
-		return ufmt.Errorf("%v || wrap error: %s", errWrapUnwrap, err.Error())
+		panic(newErrorWithDetail(
+			errWrapUnwrap,
+			ufmt.Sprintf("wrap error: %s", err.Error()),
+		))
 	}
-	return nil
 }
 
 // assertOnlyValidAddress panics if the address is invalid or previous address is not
