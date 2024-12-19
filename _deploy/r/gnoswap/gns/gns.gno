@@ -76,15 +76,16 @@ func MintGns(address pusers.AddressOrName) uint64 {
 
 	// calculate gns amount to mint, and the mint to the target address
 	amountToMint := calculateAmountToMint(lastMintedHeight+1, currentHeight)
-	err := privateLedger.Mint(users.Resolve(address), amountToMint)
-	if err != nil {
-		panic(err.Error())
-	}
 
 	// update
 	setLastMintedHeight(currentHeight)
 	setMintedEmissionAmount(GetMintedEmissionAmount() + amountToMint)
 	setLeftEmissionAmount(GetLeftEmissionAmount() - amountToMint)
+
+	err := privateLedger.Mint(users.Resolve(address), amountToMint)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	return amountToMint
 }
