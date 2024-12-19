@@ -1,7 +1,9 @@
 package gnft
 
 import (
+	"math/rand"
 	"std"
+	"time"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc721"
@@ -16,13 +18,18 @@ import (
 )
 
 var (
-	gnft  = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
-	owner = ownable.NewWithAddress(consts.POSITION_ADDR) // deployed position contract
+	gnft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
 )
 
 var (
+	owner     *ownable.Ownable
 	tokenList *avl.Tree // addr -> []grc721.TokenID
 )
+
+func init() {
+	owner = ownable.NewWithAddress(consts.POSITION_ADDR) // deployed position contract
+	tokenList = avl.NewTree()
+}
 
 // Name returns the full name of the NFT
 // Returns:
@@ -161,7 +168,7 @@ func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
 	checkErr(gnft.Mint(users.Resolve(to), tid))
 
 	toAddr := users.Resolve(to)
-	appendTokensToSetUri(toAddr, tid)
+	appendTokenList(toAddr, tid)
 	return tid
 }
 
@@ -247,6 +254,16 @@ func SetTokenURILast() error {
 	)
 
 	return nil
+}
+
+// generateRandInstnace generates a new random instance
+// Returns:
+//   - *rand.Rand: A new random instance
+func generateRandInstnace() *rand.Rand {
+	seed1 := uint64(time.Now().Unix())
+	seed2 := uint64(time.Now().UnixNano())
+	pcg := rand.NewPCG(seed1, seed2)
+	return rand.New(pcg)
 }
 
 // getTokenList retrieves the list of nft tokens for an address
