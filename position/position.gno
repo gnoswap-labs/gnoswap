@@ -17,6 +17,10 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
+const (
+	ZERO_LIQUIDITY_FOR_FEE_COLLECTION = "0"
+)
+
 var (
 	// TODO: use avl
 	positions map[uint64]Position = make(map[uint64]Position) // tokenId -> Position
@@ -526,6 +530,18 @@ func calculateTokensOwed(
 	return u256.MulDiv(diff, liquidity, u256.MustFromDecimal(consts.Q128))
 }
 
+func updateTokensOwed(
+	feeGrowthInsideLastX128 *u256.Uint,
+	positionFeeGrowthInsideLastX128 *u256.Uint,
+	positionLiquidity *u256.Uint,
+	burnedAmount *u256.Uint,
+	tokensOwed *u256.Uint,
+) *u256.Uint {
+	additionalTokensOwed := calculateTokensOwed(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128, positionLiquidity)
+	add := new(u256.Uint).Add(burnedAmount, additionalTokensOwed)
+	return new(u256.Uint).Add(tokensOwed, add)
+}
+
 // region: DecreaseLiquidity
 
 // DecreaseLiquidity decreases liquidity of the existing position
@@ -820,54 +836,28 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 	token0, token1, fee := splitOf(position.poolKey)
 
 	pl.Burn(
-		token0,
-		token1,
-		fee,
-		position.tickLower,
-		position.tickUpper,
-		"0", // burn '0' liquidity to collect fee
+		token0, token1, fee,
+		position.tickLower, position.tickUpper,
+		ZERO_LIQUIDITY_FOR_FEE_COLLECTION,
 	)
 
-	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	pool := pl.GetPoolFromPoolPath(position.poolKey)
-	_feeGrowthInside0LastX128 := pool.PositionFeeGrowthInside0LastX128(positionKey)
-	_feeGrowthInside1LastX128 := pool.PositionFeeGrowthInside1LastX128(positionKey)
-	feeGrowthInside0LastX128 := u256.MustFromDecimal(_feeGrowthInside0LastX128.ToString())
-	feeGrowthInside1LastX128 := u256.MustFromDecimal(_feeGrowthInside1LastX128.ToString())
-
-	tokensOwed0 := position.tokensOwed0
-	tokensOwed1 := position.tokensOwed1
-
-	{
-		diff := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
-		mulDiv := u256.MulDiv(diff, position.liquidity, u256.MustFromDecimal(consts.Q128))
-
-		tokensOwed0 = new(u256.Uint).Add(tokensOwed0, mulDiv)
+	currentFeeGrowth, err := getCurrentFeeGrowth(position, token0, token1, fee)
+	if err != nil {
+		panic(addDetailToError(err, "failed to get current fee growth"))
 	}
 
-	{
-		diff := new(u256.Uint).Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
-		mulDiv := u256.MulDiv(diff, position.liquidity, u256.MustFromDecimal(consts.Q128))
-
-		tokensOwed1 = new(u256.Uint).Add(tokensOwed1, mulDiv)
-	}
-
-	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
-	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
+	tokensOwed0, tokensOwed1 := calculateFees(position, currentFeeGrowth)
 
 	// check user wugnot amount
 	// need this value to unwrap fee
 	userWugnot := wugnot.BalanceOf(a2u(std.PrevRealm().Addr()))
 
+	// collect fee
 	amount0, amount1 := pl.Collect(
-		token0,
-		token1,
-		fee,
+		token0, token1, fee,
 		std.PrevRealm().Addr(),
-		position.tickLower,
-		position.tickUpper,
-		tokensOwed0.ToString(),
-		tokensOwed1.ToString(),
+		position.tickLower, position.tickUpper,
+		tokensOwed0.ToString(), tokensOwed1.ToString(),
 	)
 
 	// sometimes there will be a few less uBase amount than expected due to rounding down in core, but we just subtract the full amount expected
@@ -907,16 +897,39 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 	return tokenId, withoutFee0, withoutFee1, position.poolKey, amount0, amount1
 }
 
-func updateTokensOwed(
-	feeGrowthInsideLastX128 *u256.Uint,
-	positionFeeGrowthInsideLastX128 *u256.Uint,
-	positionLiquidity *u256.Uint,
-	burnedAmount *u256.Uint,
-	tokensOwed *u256.Uint,
-) *u256.Uint {
-	additionalTokensOwed := calculateTokensOwed(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128, positionLiquidity)
-	add := new(u256.Uint).Add(burnedAmount, additionalTokensOwed)
-	return new(u256.Uint).Add(tokensOwed, add)
+// calculateFees calculates the fees for the current position.
+func calculateFees(position Position, currentFeeGrowth FeeGrowthInside) (*u256.Uint, *u256.Uint) {
+	fee0 := calculateTokensOwed(
+		currentFeeGrowth.feeGrowthInside0LastX128,
+		position.feeGrowthInside0LastX128,
+		position.liquidity,
+	)
+
+	fee1 := calculateTokensOwed(
+		currentFeeGrowth.feeGrowthInside1LastX128,
+		position.feeGrowthInside1LastX128,
+		position.liquidity,
+	)
+
+	tokensOwed0 := new(u256.Uint).Add(position.tokensOwed0.Clone(), fee0)
+	tokensOwed1 := new(u256.Uint).Add(position.tokensOwed1.Clone(), fee1)
+
+	return tokensOwed0, tokensOwed1
+}
+
+func getCurrentFeeGrowth(postion Position, token0, token1 string, fee uint32) (FeeGrowthInside, error) {
+	pool := pl.GetPoolFromPoolPath(postion.poolKey)
+	positionKey := positionKeyCompute(GetOrigPkgAddr(), postion.tickLower, postion.tickUpper)
+
+	feeGrowthInside0 := pool.PositionFeeGrowthInside0LastX128(positionKey)
+	feeGrowthInside1 := pool.PositionFeeGrowthInside1LastX128(positionKey)
+
+	feeGrowthInside := FeeGrowthInside{
+		feeGrowthInside0LastX128: feeGrowthInside0,
+		feeGrowthInside1LastX128: feeGrowthInside1,
+	}
+
+	return feeGrowthInside, nil
 }
 
 func burnNFT(tokenId uint64) {
