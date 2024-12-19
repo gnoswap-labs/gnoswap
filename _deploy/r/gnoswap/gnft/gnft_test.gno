@@ -363,11 +363,12 @@ func TestSetTokenURI(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			std.TestSetRealm(tt.callerRealm)
+			_, err := SetTokenURI(tid(tt.tokenId))
 
 			if tt.shouldErr {
-				uassert.ErrorContains(t, SetTokenURI(tid(tt.tokenId)), tt.errMsg)
+				uassert.ErrorContains(t, err, tt.errMsg)
 			} else {
-				uassert.NoError(t, SetTokenURI(tid(tt.tokenId)))
+				uassert.NoError(t, err)
 			}
 		})
 	}
@@ -430,15 +431,11 @@ func TestSetTokenURILast(t *testing.T) {
 	resetObject(t)
 	std.TestSetRealm(positionRealm)
 	Mint(a2u(addr01), tid(1))
-	Mint(a2u(addr01), tid(2))
+	Mint(a2u(addr01), tid(2)) // last minted
 
 	t.Run("set token uri last", func(t *testing.T) {
 		std.TestSetRealm(addr01Realm)
 		SetTokenURILast()
-	})
-
-	t.Run("token uri(1)", func(t *testing.T) {
-		uassert.NotEmpty(t, TokenURI(tid(1)))
 	})
 
 	t.Run("token uri(2)", func(t *testing.T) {
