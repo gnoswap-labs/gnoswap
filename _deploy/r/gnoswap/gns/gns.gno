@@ -50,12 +50,6 @@ func init() {
 	lastMintedHeight = std.GetHeight()
 }
 
-// MintedEmissionAmount returns the amount of GNS that has been minted by the emission contract.
-// It does not include initial minted amount.
-func MintedEmissionAmount() uint64 {
-	return TotalSupply() - INITIAL_MINT_AMOUNT
-}
-
 func MintGns(address pusers.AddressOrName) uint64 {
 	lastMintedHeight := GetLastMintedHeight()
 	currentHeight := std.GetHeight()
@@ -217,20 +211,22 @@ func skipIfEmissionEnded(height int64) bool {
 	return false
 }
 
-// Getter
+// GetLastMintedHeight returns the last block height that gns was minted.
 func GetLastMintedHeight() int64 {
 	return lastMintedHeight
 }
 
+// GetLeftEmissionAmount returns the amount of GNS can be minted.
 func GetLeftEmissionAmount() uint64 {
 	return leftEmissionAmount
 }
 
+// GetMintedEmissionAmount returns the amount of GNS that has been minted by the emission contract.
+// It does not include initial minted amount.
 func GetMintedEmissionAmount() uint64 {
 	return mintedEmissionAmount
 }
 
-// Setter
 func setLastMintedHeight(height int64) {
 	lastMintedHeight = height
 }
