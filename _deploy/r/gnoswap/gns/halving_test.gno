@@ -16,22 +16,22 @@ var (
 )
 
 var FIRST_BLOCK_OF_YEAR = []int64{
-	startHeight,
-	startHeight + BLOCK_PER_YEAR*1,
-	startHeight + BLOCK_PER_YEAR*2,
-	startHeight + BLOCK_PER_YEAR*3,
-	startHeight + BLOCK_PER_YEAR*4,
-	startHeight + BLOCK_PER_YEAR*5,
-	startHeight + BLOCK_PER_YEAR*6,
-	startHeight + BLOCK_PER_YEAR*7,
-	startHeight + BLOCK_PER_YEAR*8,
-	startHeight + BLOCK_PER_YEAR*9,
-	startHeight + BLOCK_PER_YEAR*10,
-	startHeight + BLOCK_PER_YEAR*11,
+	startHeight + (BLOCK_PER_YEAR * 0) + 1,
+	startHeight + (BLOCK_PER_YEAR * 1) + 2,
+	startHeight + (BLOCK_PER_YEAR * 2) + 3,
+	startHeight + (BLOCK_PER_YEAR * 3) + 4,
+	startHeight + (BLOCK_PER_YEAR * 4) + 5,
+	startHeight + (BLOCK_PER_YEAR * 5) + 6,
+	startHeight + (BLOCK_PER_YEAR * 6) + 7,
+	startHeight + (BLOCK_PER_YEAR * 7) + 8,
+	startHeight + (BLOCK_PER_YEAR * 8) + 9,
+	startHeight + (BLOCK_PER_YEAR * 9) + 10,
+	startHeight + (BLOCK_PER_YEAR * 10) + 11,
+	startHeight + (BLOCK_PER_YEAR * 11) + 12,
 }
 
 var FIRST_TIMESTAMP_OF_YEAR = []int64{
-	startTimestamp,
+	startTimestamp + consts.TIMESTAMP_YEAR*0,
 	startTimestamp + consts.TIMESTAMP_YEAR*1,
 	startTimestamp + consts.TIMESTAMP_YEAR*2,
 	startTimestamp + consts.TIMESTAMP_YEAR*3,
@@ -58,45 +58,6 @@ var END_TIMESTAMP_OF_YEAR = []int64{
 	startTimestamp + consts.TIMESTAMP_YEAR*10,
 	startTimestamp + consts.TIMESTAMP_YEAR*11,
 	startTimestamp + consts.TIMESTAMP_YEAR*12,
-}
-
-func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
-	t.Run("panic if caller is not admin", func(t *testing.T) {
-		uassert.PanicsWithMessage(t,
-			"caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission",
-			func() {
-				SetAvgBlockTimeInMsByAdmin(1)
-			},
-		)
-	})
-
-	t.Run("success if caller is admin", func(t *testing.T) {
-		std.TestSkipHeights(1)
-		std.TestSetRealm(adminRealm)
-		SetAvgBlockTimeInMsByAdmin(2)
-		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(2))
-	})
-}
-
-func TestSetAvgBlockTimeInMs(t *testing.T) {
-	t.Run("panic if caller is not governance contract", func(t *testing.T) {
-		uassert.PanicsWithMessage(t,
-			"caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission",
-			func() {
-				SetAvgBlockTimeInMs(3)
-			},
-		)
-	})
-
-	t.Run("success if caller is governance contract", func(t *testing.T) {
-		std.TestSkipHeights(3)
-		std.TestSetRealm(govRealm)
-		SetAvgBlockTimeInMs(4)
-		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(4))
-	})
-
-	// reset to default for further test
-	setAvgBlockTimeInMs(consts.SECOND_IN_MILLISECOND * consts.BLOCK_GENERATION_INTERVAL)
 }
 
 func TestGetAmountByHeight(t *testing.T) {
@@ -172,4 +133,40 @@ func TestGetHalvingInfo(t *testing.T) {
 
 	halving := jsonStr.MustKey("halvings").MustArray()
 	uassert.Equal(t, len(halving), 12)
+}
+
+func TestSetAvgBlockTimeInMsByAdmin(t *testing.T) {
+	t.Run("panic if caller is not admin", func(t *testing.T) {
+		uassert.PanicsWithMessage(t,
+			"caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission",
+			func() {
+				SetAvgBlockTimeInMsByAdmin(1)
+			},
+		)
+	})
+
+	t.Run("success if caller is admin", func(t *testing.T) {
+		std.TestSkipHeights(1)
+		std.TestSetRealm(adminRealm)
+		SetAvgBlockTimeInMsByAdmin(2)
+		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(2))
+	})
+}
+
+func TestSetAvgBlockTimeInMs(t *testing.T) {
+	t.Run("panic if caller is not governance contract", func(t *testing.T) {
+		uassert.PanicsWithMessage(t,
+			"caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission",
+			func() {
+				SetAvgBlockTimeInMs(3)
+			},
+		)
+	})
+
+	t.Run("success if caller is governance contract", func(t *testing.T) {
+		std.TestSkipHeights(3)
+		std.TestSetRealm(govRealm)
+		SetAvgBlockTimeInMs(4)
+		uassert.Equal(t, GetAvgBlockTimeInMs(), int64(4))
+	})
 }
