@@ -3,6 +3,7 @@ package pool
 import (
 	"std"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -313,12 +314,6 @@ func (t *TickInfo) valueOrZero() {
 	t.secondsPerLiquidityOutsideX128 = t.secondsPerLiquidityOutsideX128.NilToZero()
 }
 
-type (
-	Ticks       map[int32]TickInfo      // tick => TickInfo
-	TickBitmaps map[int16]*u256.Uint    // tick(wordPos) => bitmap(tickWord ^ mask)
-	Positions   map[string]PositionInfo // positionKey => PositionInfo
-)
-
 // type Pool describes a single Pool's state
 // A pool is identificed with a unique key (token0, token1, fee), where token0 < token1
 type Pool struct {
@@ -343,11 +338,11 @@ type Pool struct {
 
 	liquidity *u256.Uint // total amount of liquidity in the pool
 
-	ticks Ticks // maps tick index to tick
+	ticks *avl.Tree // tick(int32) -> TickInfo
 
-	tickBitmaps TickBitmaps // maps tick index to tick bitmap
+	tickBitmaps *avl.Tree // tick(wordPos)(int16) -> bitMap(tickWord ^ mask)(*u256.Uint)
 
-	positions Positions // maps the key (caller, lower tick, upper tick) to a unique position
+	positions *avl.Tree // maps the key (caller, lower tick, upper tick) to a unique position
 }
 
 func newPool(poolInfo *createPoolParams) *Pool {
@@ -367,9 +362,9 @@ func newPool(poolInfo *createPoolParams) *Pool {
 		feeGrowthGlobal1X128: u256.Zero(),
 		protocolFees:         newProtocolFees(),
 		liquidity:            u256.Zero(),
-		ticks:                Ticks{},
-		tickBitmaps:          TickBitmaps{},
-		positions:            Positions{},
+		ticks:                avl.NewTree(),
+		tickBitmaps:          avl.NewTree(),
+		positions:            avl.NewTree(),
 	}
 }
 
@@ -442,10 +437,12 @@ func (p *Pool) Liquidity() *u256.Uint {
 }
 
 func mustGetPool(poolPath string) *Pool {
-	pool, exist := pools[poolPath]
-	if !exist {
-		panic(addDetailToError(errDataNotFound,
-			ufmt.Sprintf("poolPath(%s) does not exist", poolPath)))
+	pool := GetPoolFromPoolPath(poolPath)
+	if pool == nil {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("expected poolPath(%s) to exist", poolPath),
+		))
 	}
 	return pool
 }

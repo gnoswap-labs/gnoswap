@@ -13,6 +13,7 @@ import (
 	"gno.land/r/onbloc/qux"
 	"gno.land/r/onbloc/usdc"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
@@ -23,7 +24,7 @@ import (
 
 const (
 	ugnotDenom string = "ugnot"
-	ugnotPath  string = "gno.land/r/gnoswap/v1/pool:ugnot"
+	ugnotPath  string = "ugnot"
 	wugnotPath string = "gno.land/r/demo/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
@@ -32,13 +33,17 @@ const (
 	oblPath    string = "gno.land/r/onbloc/obl"
 	quxPath    string = "gno.land/r/onbloc/qux"
 
-	fee100      uint32 = 100
-	fee500      uint32 = 500
-	fee3000     uint32 = 3000
-	maxApprove  uint64 = 18446744073709551615
-	max_timeout int64  = 9999999999
-
+	fee100               uint32 = 100
+	fee500               uint32 = 500
+	fee3000              uint32 = 3000
+	fee10000             uint32 = 10000
+	maxApprove           uint64 = 18446744073709551615
+	max_timeout          int64  = 9999999999
 	maxSqrtPriceLimitX96 string = "1461446703485210103287273052203988822378723970341"
+
+	TIER_1 uint64 = 1
+	TIER_2 uint64 = 2
+	TIER_3 uint64 = 3
 )
 
 const (
@@ -51,6 +56,7 @@ var (
 	admin       = pusers.AddressOrName(consts.ADMIN)
 	alice       = pusers.AddressOrName(testutils.TestAddress("alice"))
 	pool        = pusers.AddressOrName(consts.POOL_ADDR)
+	bob         = pusers.AddressOrName(testutils.TestAddress("bob"))
 	protocolFee = pusers.AddressOrName(consts.PROTOCOL_FEE_ADDR)
 	router      = pusers.AddressOrName(consts.ROUTER_ADDR)
 	adminRealm  = std.NewUserRealm(users.Resolve(admin))
@@ -183,6 +189,22 @@ func TokenApprove(t *testing.T, tokenPath string, owner, spender pusers.AddressO
 		quxApprove(t, owner, spender, amount)
 	default:
 		panic("token not found")
+	}
+}
+
+func CreatePool(t *testing.T,
+	token0 string,
+	token1 string,
+	fee uint32,
+	sqrtPriceX96 string,
+	caller std.Address) {
+	t.Helper()
+
+	std.TestSetRealm(std.NewUserRealm(caller))
+	poolPath := pl.GetPoolPath(token0, token1, fee)
+	if !pl.DoesPoolPathExist(poolPath) {
+		pl.CreatePool(token0, token1, fee, sqrtPriceX96)
+		sr.SetPoolTierByAdmin(poolPath, TIER_1)
 	}
 }
 
@@ -372,6 +394,54 @@ func MintPositionAll(t *testing.T, caller std.Address) {
 
 }
 
+func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
+	t.Helper()
+
+	// make actual data to test resetting not only position's state but also pool's state
+	std.TestSetRealm(adminRealm)
+
+	// set pool create fee to 0 for testing
+	pl.SetPoolCreationFeeByAdmin(0)
+	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), users.Resolve(admin))
+
+	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
+	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
+
+	// mint position
+	return Mint(
+		barPath,
+		fooPath,
+		fee500,
+		-887270,
+		887270,
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+		users.Resolve(admin),
+		users.Resolve(admin),
+	)
+}
+
+func LPTokenApprove(t *testing.T, owner, operator pusers.AddressOrName, tokenId uint64) {
+	t.Helper()
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(owner)))
+	gnft.Approve(operator, tokenIdFrom(tokenId))
+}
+
+func LPTokenStake(t *testing.T, owner pusers.AddressOrName, tokenId uint64) {
+	t.Helper()
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(owner)))
+	sr.StakeToken(tokenId)
+}
+
+func LPTokenUnStake(t *testing.T, owner pusers.AddressOrName, tokenId uint64, unwrap bool) {
+	t.Helper()
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(owner)))
+	sr.UnstakeToken(tokenId, unwrap)
+}
+
 func wugnotApprove(t *testing.T, owner, spender pusers.AddressOrName, amount uint64) {
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(users.Resolve(owner)))
@@ -517,7 +587,7 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 
 // resetObject resets the object state(clear or make it default values)
 func resetObject(t *testing.T) {
-	pools = make(poolMap)
+	pools = avl.NewTree()
 	slot0FeeProtocol = 0
 	poolCreationFee = 100_000_000
 	withdrawalFeeBPS = 100
@@ -568,13 +638,23 @@ func burnUsdc(addr pusers.AddressOrName) {
 	usdc.Burn(addr, usdc.BalanceOf(addr))
 }
 
-func TestBeforeResetObject(t *testing.T) {
+// burnAllNFT burns all NFTs
+func burnAllNFT(t *testing.T) {
+	t.Helper()
+
+	std.TestSetRealm(std.NewCodeRealm(consts.POSITION_PATH))
+	for i := uint64(1); i <= gnft.TotalSupply(); i++ {
+		gnft.Burn(tokenIdFrom(i))
+	}
+}
+
+func TestBeforeResetPoolObject(t *testing.T) {
 	// make some data
-	pools = make(poolMap)
-	pools["gno.land/r/gnoswap/v1/gns:gno.land/r/onbloc/usdc"] = &Pool{
+	pools = avl.NewTree()
+	pools.Set("gno.land/r/gnoswap/v1/gns:gno.land/r/onbloc/usdc", &Pool{
 		token0Path: "gno.land/r/gnoswap/v1/gns",
 		token1Path: "gno.land/r/onbloc/usdc",
-	}
+	})
 
 	slot0FeeProtocol = 1
 	poolCreationFee = 100_000_000
@@ -591,7 +671,7 @@ func TestBeforeResetObject(t *testing.T) {
 
 func TestResetObject(t *testing.T) {
 	resetObject(t)
-	uassert.Equal(t, len(pools), 0)
+	uassert.Equal(t, pools.Size(), 0)
 	uassert.Equal(t, slot0FeeProtocol, uint8(0))
 	uassert.Equal(t, poolCreationFee, uint64(100_000_000))
 	uassert.Equal(t, withdrawalFeeBPS, uint64(100))
@@ -602,4 +682,9 @@ func TestBurnTokens(t *testing.T) {
 
 	uassert.Equal(t, foo.BalanceOf(a2u(addr01)), uint64(0)) // 100_000_000 -> 0
 	uassert.Equal(t, bar.BalanceOf(a2u(addr01)), uint64(0)) // 100_000_000 -> 0
+}
+
+func TestBurnAllNFT(t *testing.T) {
+	burnAllNFT(t)
+	uassert.Equal(t, gnft.TotalSupply(), uint64(0), "gnft total supply should be 0")
 }

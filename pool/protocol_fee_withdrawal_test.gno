@@ -55,8 +55,7 @@ func TestHandleWithdrawalFee(t *testing.T) {
 				InitialisePoolTest(t)
 				std.TestSetRealm(std.NewUserRealm(users.Resolve(position)))
 				poolPath := GetPoolPath(wugnotPath, gnsPath, fee3000)
-				_, found := pools[poolPath]
-				if !found {
+				if !pools.Has(poolPath) {
 					panic("pool not found")
 				}
 				TokenApprove(t, wugnotPath, alice, protocolFee, uint64(0))

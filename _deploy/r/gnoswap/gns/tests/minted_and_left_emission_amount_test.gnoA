@@ -1,0 +1,89 @@
+package gns
+
+import (
+	"std"
+	"testing"
+
+	"gno.land/p/demo/uassert"
+
+	"gno.land/r/gnoswap/v1/consts"
+)
+
+var (
+	emissionRealm = std.NewCodeRealm(consts.EMISSION_PATH)
+	adminRealm    = std.NewUserRealm(consts.ADMIN)
+)
+
+func TestCheckInitialData(t *testing.T) {
+	t.Run("totalSupply", func(t *testing.T) {
+		uassert.Equal(t, INITIAL_MINT_AMOUNT, TotalSupply())
+	})
+
+	t.Run("mintedAmount", func(t *testing.T) {
+		uassert.Equal(t, uint64(0), MintedEmissionAmount())
+	})
+
+	t.Run("leftEmissionAmount", func(t *testing.T) {
+		uassert.Equal(t, MAX_EMISSION_AMOUNT, GetLeftEmissionAmount())
+	})
+}
+
+func TestMintAndCheckRelativeData(t *testing.T) {
+	// before mint
+	oldTotalSupply := TotalSupply()
+	oldMintedAmount := MintedEmissionAmount()
+	oldLeftEmissionAmount := GetLeftEmissionAmount()
+
+	// mint
+	mintAmountFor10Blocks := uint64(142694060)
+	t.Run("mint for 10 blocks", func(t *testing.T) {
+		std.TestSetRealm(emissionRealm)
+		std.TestSkipHeights(10)
+		mintedAmount := MintGns(a2u(consts.ADMIN))
+		uassert.Equal(t, mintAmountFor10Blocks, mintedAmount)
+	})
+
+	// after mint
+	t.Run("increment of totalSupply", func(t *testing.T) {
+		uassert.Equal(t, oldTotalSupply+mintAmountFor10Blocks, TotalSupply())
+	})
+
+	t.Run("increment of mintedAmount", func(t *testing.T) {
+		uassert.Equal(t, oldMintedAmount+mintAmountFor10Blocks, MintedEmissionAmount())
+	})
+
+	t.Run("decrement of leftEmissionAmount", func(t *testing.T) {
+		uassert.Equal(t, oldLeftEmissionAmount-mintAmountFor10Blocks, GetLeftEmissionAmount())
+	})
+}
+
+func TestBurnAndCheckRelativeData(t *testing.T) {
+	// before burn
+	oldTotalSupply := TotalSupply()
+	oldMintedAmount := MintedEmissionAmount()
+	oldLeftEmissionAmount := GetLeftEmissionAmount()
+
+	// burn
+	burnAmount := uint64(100000000)
+	t.Run("burn amount", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+		Burn(a2u(consts.ADMIN), burnAmount)
+	})
+
+	// after burn
+	t.Run("decrement of totalSupply", func(t *testing.T) {
+		uassert.Equal(t, oldTotalSupply-burnAmount, TotalSupply())
+	})
+
+	t.Run("decrement of mintedAmount", func(t *testing.T) {
+		uassert.Equal(t, oldMintedAmount-burnAmount, MintedEmissionAmount())
+	})
+
+	t.Run("totalSupply should be same with (INITIAL_MINT_AMOUNT) + (mintedEmissionAmount)", func(t *testing.T) {
+		uassert.Equal(t, TotalSupply(), INITIAL_MINT_AMOUNT+MintedEmissionAmount())
+	})
+
+	t.Run("same for leftEmissionAmount", func(t *testing.T) {
+		uassert.Equal(t, oldLeftEmissionAmount, GetLeftEmissionAmount())
+	})
+}
