@@ -56,12 +56,8 @@ func MintGns(address pusers.AddressOrName) uint64 {
 
 	// skip minting process if following conditions are met
 	// - if gns for current block is already minted
-	// - if last minted height is last block to mint ( 12 years passed )
-
-	// WIP
-	// if lastMintedHeight == currentHeight ||
-	// }
-	if skipIfSameHeight(lastMintedHeight, currentHeight) || skipIfEmissionEnded(lastMintedHeight+1) {
+	// - if last minted height is same as last height to mint ( 12 years passed )
+	if lastMintedHeight == currentHeight || lastMintedHeight == GetEndHeight() {
 		return 0
 	}
 
@@ -144,13 +140,15 @@ func checkErr(err error) {
 	}
 }
 
-// helper functions
-
 // calculateAmountToMint calculates the amount of gns to mint
 // It calculates the amount of gns to mint for each halving year for block range.
 // It also handles the left emission amount if the current block range includes halving year end block.
 func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
 	fromYear := GetHalvingYearByHeight(fromHeight)
+
+	if toHeight > GetEndHeight() {
+		toHeight = GetEndHeight()
+	}
 	toYear := GetHalvingYearByHeight(toHeight)
 
 	totalAmountToMint := uint64(0)

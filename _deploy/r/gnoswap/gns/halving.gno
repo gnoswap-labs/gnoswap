@@ -54,8 +54,9 @@ var (
 	startHeight    int64
 	startTimestamp int64
 
-	endHeight    int64 // (approximately) after 12 years, block height which gns emission will be ended
-	endTimestamp int64 // (exactly) after 12 years, timestamp which gns emission will be ended
+	// (exactly) after 12 years, timestamp which gns emission will be ended
+	// can not be changed
+	endTimestamp int64
 )
 
 var (
@@ -82,7 +83,7 @@ func init() {
 		}
 
 		setHalvingYearBlock(year, startHeight+BLOCK_PER_YEAR*(year-1))
-		setHalvingYearTimestamp(year, startTimestamp+(consts.TIMESTAMP_YEAR*year-1))
+		setHalvingYearTimestamp(year, startTimestamp+(consts.TIMESTAMP_YEAR*(year-1)))
 		setHalvingYearMintAmount(year, uint64(0))
 
 		amountPerYear := GetHalvingYearMaxAmount(year)         // amount per year
@@ -91,7 +92,6 @@ func init() {
 		setAmountPerBlockPerHalvingYear(year, uint64(amountPerBlock))
 	}
 
-	setEndHeight(startHeight + BLOCK_PER_YEAR*HALVING_END_YEAR)
 	setEndTimestamp(startTimestamp + consts.TIMESTAMP_YEAR*HALVING_END_YEAR)
 }
 
@@ -139,41 +139,40 @@ func SetAvgBlockTimeInMs(ms int64) {
 func setAvgBlockTimeInMs(ms int64) {
 	common.IsHalted()
 
-	// set it
-	avgBlockTimeMs = ms
-
-	// which year current time is in
 	now := time.Now().Unix()
 	height := std.GetHeight()
-	year, endTimestamp := getHalvingYearAndEndTimestamp(now)
 
-	// how much time left to next halving
+	// get the halving year and end timestamp of current time
+	currentYear, endTimestamp := getHalvingYearAndEndTimestamp(now)
+
+	// how much time left for current halving year
 	timeLeft := endTimestamp - now
-
-	// how many block left to next halving
 	timeLeftMs := timeLeft * consts.SECOND_IN_MILLISECOND
-	blockLeft := timeLeftMs / avgBlockTimeMs
-	// how many reward left to next halving
+
+	// how many block left for current halving year
+	blockLeft := timeLeftMs / ms
+
+	// how many reward left for current halving year
 	minted := GetMintedEmissionAmount()
-	amountLeft := GetHalvingYearAccuAmount(year) - minted
+	amountLeft := GetHalvingYearAccuAmount(currentYear) - minted
 
-	// how much reward per block
+	// how much reward should be minted per block for current halving year
 	adjustedAmountPerBlock := amountLeft / uint64(blockLeft)
+	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
 
-	// update it
-	setAmountPerBlockPerHalvingYear(year, adjustedAmountPerBlock)
-
-	for year := int64(1); year < HALVING_END_YEAR+1; year++ {
-		yearEndTimestamp := GetHalvingYearTimestamp(year)
-
-		if now >= yearEndTimestamp {
+	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
+		if year < currentYear {
+			// pass past halving years
 			continue
 		}
 
-		diff := yearEndTimestamp - now
-		numBlock := diff * consts.SECOND_IN_MILLISECOND / avgBlockTimeMs
+		yearEndTimestamp := GetHalvingYearTimestamp(year) + consts.TIMESTAMP_YEAR
+		timeLeftForYear := yearEndTimestamp - now
+		numBlock := (timeLeftForYear * consts.SECOND_IN_MILLISECOND) / ms
 		setHalvingYearBlock(year, height+numBlock)
 	}
+
+	avgBlockTimeMs = ms
 }
 
 // GetAmountByHeight returns the amount of gns to mint by height
@@ -266,11 +265,9 @@ func setAmountPerBlockPerHalvingYear(year int64, amount uint64) {
 }
 
 func GetEndHeight() int64 {
-	return endHeight
-}
-
-func setEndHeight(height int64) {
-	endHeight = height
+	// last block of last halving year(12) is last block of emission
+	// later than this block, no more gns will be minted
+	return GetHalvingYearBlock(HALVING_END_YEAR)
 }
 
 func GetEndTimestamp() int64 {
@@ -311,5 +308,5 @@ func GetHalvingInfo() string {
 }
 
 func isEmissionEnded(height int64) bool {
-	return height > endHeight
+	return height > GetEndHeight()
 }
