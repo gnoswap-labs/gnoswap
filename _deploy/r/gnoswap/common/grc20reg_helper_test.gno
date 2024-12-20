@@ -8,7 +8,7 @@ import (
 	"gno.land/p/demo/uassert"
 	"gno.land/p/demo/ufmt"
 
-	_ "gno.land/r/demo/foo20"
+	"gno.land/r/demo/foo20"
 )
 
 var (
@@ -151,4 +151,24 @@ func TestMustRegistered(t *testing.T) {
 		}()
 		MustRegistered("not_registered")
 	})
+}
+
+func TestTotalSupply(t *testing.T) {
+	// result from grc2reg and (direct import/call) should be the same
+	uassert.Equal(t, foo20.TotalSupply(), TotalSupply(tokenPath))
+}
+
+func TestBalanceOf(t *testing.T) {
+	defaultHolder := std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
+
+	// result from grc2reg and (direct import/call) should be the same
+	uassert.Equal(t, foo20.BalanceOf(AddrToUser(defaultHolder)), BalanceOf(tokenPath, defaultHolder))
+}
+
+func TestAllowance(t *testing.T) {
+	owner := std.Address("g1manfred47kzduec920z88wfr64ylksmdcedlf5")
+	spender := std.Address("g1pf6dv9fjk3rn0m4jjcne306ga4he3mzmupfjl6")
+
+	// result from grc2reg and (direct import/call) should be the same
+	uassert.Equal(t, foo20.Allowance(AddrToUser(owner), AddrToUser(spender)), Allowance(tokenPath, owner, spender))
 }
