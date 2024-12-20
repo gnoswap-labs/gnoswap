@@ -144,7 +144,7 @@ func assertOnlyValidAddress(addr std.Address) {
 
 func assertWrapNativeToken(ugnotSent uint64, prevRealm std.Address) {
 	if err := wrap(ugnotSent, prevRealm); err != nil {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errWrapUnwrap,
 			ufmt.Sprintf("wrap error: %s", err.Error()),
 		))
@@ -175,7 +175,7 @@ func verifyTokenIdAndOwnership(tokenId uint64) {
 
 func verifyBurnedAmounts(burnedAmount0, burnedAmount1, amount0Min, amount1Min *u256.Uint) {
 	if !(burnedAmount0.Gte(amount0Min) && burnedAmount1.Gte(amount1Min)) {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errSlippage,
 			ufmt.Sprintf("burnedAmount0(%s) >= amount0Min(%s) && burnedAmount1(%s) >= amount1Min(%s)", burnedAmount0.ToString(), amount0Min.ToString(), burnedAmount1.ToString(), amount1Min.ToString()),
 		))

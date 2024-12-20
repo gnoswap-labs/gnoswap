@@ -47,7 +47,7 @@ func addLiquidity(params AddLiquidityParams) (*u256.Uint, *u256.Uint, *u256.Uint
 	amount1Cond := amount1Uint.Gte(params.amount1Min)
 
 	if !(amount0Cond && amount1Cond) {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errSlippage,
 			ufmt.Sprintf("LM_Price Slippage Check(amount0(%s) >= params.amount0Min(%s), amount1(%s) >= params.amount1Min(%s))", amount0Uint.ToString(), params.amount0Min.ToString(), amount1Uint.ToString(), params.amount1Min.ToString()),
 		))

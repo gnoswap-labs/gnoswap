@@ -20,21 +20,19 @@ var (
 	errPositionExist        = errors.New("[GNOSWAP-POSITION-011] position with same tokenId already exists")
 	errInvalidAddress       = errors.New("[GNOSWAP-POSITION-012] invalid address")
 	errPositionDoesNotExist = errors.New("[GNOSWAP-POSITION-013] position does not exist")
-	errZeroUGNOT         = errors.New("[GNOSWAP-POSITION-013] No UGNOTs were sent")
-	errInsufficientUGNOT = errors.New("[GNOSWAP-POSITION-014] Insufficient UGNOT provided")
-	errInvalidTokenPath  = errors.New("[GNOSWAP-POSITION-012] invalid token address")
+	errZeroUGNOT            = errors.New("[GNOSWAP-POSITION-014] No UGNOTs were sent")
+	errInsufficientUGNOT    = errors.New("[GNOSWAP-POSITION-015] Insufficient UGNOT provided")
+	errInvalidTokenPath     = errors.New("[GNOSWAP-POSITION-016] invalid token address")
 )
 
-func addDetailToError(err error, detail string) string {
-	finalErr := ufmt.Errorf("%s || %s", err.Error(), detail)
-	return finalErr.Error()
-}
-
-// newErrorWithDetail returns a new error with the given detail
-// e.g. newErrorWithDetail(err, "detail")
+// newErrorWithDetail appends additional context or details to an existing error message.
 //
-// input: err error, detail string
-// output: "err.Error() || detail"
+// Parameters:
+//   - err: The original error (error).
+//   - detail: Additional context or detail to append to the error message (string).
+//
+// Returns:
+//   - string: The combined error message in the format "<original_error> || <detail>".
 func newErrorWithDetail(err error, detail string) string {
 	return ufmt.Errorf("%s || %s", err.Error(), detail).Error()
 }

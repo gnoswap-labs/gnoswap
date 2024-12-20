@@ -159,7 +159,7 @@ func Mint(
 
 	processedInput, err := processMintInput(mintInput)
 	if err != nil {
-		panic(addDetailToError(errInvalidInput, err.Error()))
+		panic(newErrorWithDetail(errInvalidInput, err.Error()))
 	}
 
 	// perform mint operation
@@ -170,14 +170,14 @@ func Mint(
 		// unwrap leftover wugnot
 		err = unwrap(processedInput.tokenPair.wrappedAmount-amount0.Uint64(), caller)
 		if err != nil {
-			panic(addDetailToError(errWrapUnwrap, err.Error()))
+			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 		}
 	}
 	if processedInput.tokenPair.token1IsNative && processedInput.tokenPair.wrappedAmount > amount1.Uint64() {
 		// unwrap leftover wugnot
 		err = unwrap(processedInput.tokenPair.wrappedAmount-amount1.Uint64(), caller)
 		if err != nil {
-			panic(addDetailToError(errWrapUnwrap, err.Error()))
+			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 		}
 	}
 
@@ -281,7 +281,7 @@ func processTokens(
 ) (string, string, bool, bool, uint64) {
 	err := validateTokenPath(token0, token1)
 	if err != nil {
-		panic(addDetailToError(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
+		panic(newErrorWithDetail(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
 	}
 
 	token0IsNative := false
@@ -380,16 +380,16 @@ func safeWrapNativeToken(amountDesired string, userAddress std.Address) (uint64,
 	sentUgnotAmount := uint64(sentNative.AmountOf(consts.UGNOT))
 
 	if sentUgnotAmount <= 0 {
-		panic(addDetailToError(errZeroUGNOT, "amount of ugnot is zero"))
+		panic(newErrorWithDetail(errZeroUGNOT, "amount of ugnot is zero"))
 	}
 
 	amount, err := strconv.ParseUint(amountDesired, 10, 64)
 	if err != nil {
-		panic(addDetailToError(errWrapUnwrap, err.Error()))
+		panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 	}
 
 	if sentUgnotAmount < amount {
-		panic(addDetailToError(errInsufficientUGNOT, "amount of ugnot is less than desired amount"))
+		panic(newErrorWithDetail(errInsufficientUGNOT, "amount of ugnot is less than desired amount"))
 	}
 
 	if sentUgnotAmount > amount {
@@ -400,14 +400,14 @@ func safeWrapNativeToken(amountDesired string, userAddress std.Address) (uint64,
 	}
 
 	if err = wrap(sentUgnotAmount, userAddress); err != nil {
-		panic(addDetailToError(errWugnotMinimum, err.Error()))
+		panic(newErrorWithDetail(errWugnotMinimum, err.Error()))
 	}
 
 	afterWugnotBalance := wugnot.BalanceOf(a2u(userAddress))
 	diff := afterWugnotBalance - beforeWugnotBalance
 
 	if diff != sentUgnotAmount {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errWrapUnwrap,
 			ufmt.Sprintf("amount of ugnot (%d) is not equal to amount of wugnot. (diff: %d)", sentUgnotAmount, diff),
 		))
@@ -507,7 +507,7 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	}
 	updated := setPosition(tokenId, position)
 	if updated {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errPositionExist,
 			ufmt.Sprintf("tokenId(%d) already exists", tokenId),
 		))
@@ -687,7 +687,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	updatedPosition := updatePosition(position, feeUpdate, liquidity)
 	updated := setPosition(params.tokenId, updatedPosition)
 	if !updated {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errPositionDoesNotExist,
 			ufmt.Sprintf("can not increase liquidity for non-existent position(%d)", params.tokenId),
 		))
@@ -736,7 +736,7 @@ func DecreaseLiquidity(
 
 	isNormalRange := liquidityRatio >= 1 && liquidityRatio <= 100
 	if !isNormalRange {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errOutOfRange,
 			ufmt.Sprintf("liquidityRatio(%d) should be in range 1 ~ 100", liquidityRatio),
 		))
@@ -797,7 +797,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	positionLiquidity := position.liquidity
 
 	if positionLiquidity.IsZero() {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errZeroLiquidity,
 			ufmt.Sprintf("position(tokenId:%d) has 0 liquidity", params.tokenId),
 		))
@@ -843,7 +843,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position.liquidity = new(u256.Uint).Sub(positionLiquidity, liquidityToRemove)
 	updated := setPosition(params.tokenId, position)
 	if !updated {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errPositionDoesNotExist,
 			ufmt.Sprintf("can not decrease liquidity for non-existent position(%d)", params.tokenId),
 		))
@@ -969,7 +969,7 @@ func Reposition(
 
 	updated := setPosition(tokenId, position)
 	if !updated {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errPositionDoesNotExist,
 			ufmt.Sprintf("can not reposition non-existent position(%d)", tokenId),
 		))
@@ -1021,7 +1021,7 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 
 	currentFeeGrowth, err := getCurrentFeeGrowth(position, token0, token1, fee)
 	if err != nil {
-		panic(addDetailToError(err, "failed to get current fee growth"))
+		panic(newErrorWithDetail(err, "failed to get current fee growth"))
 	}
 
 	tokensOwed0, tokensOwed1 := calculateFees(position, currentFeeGrowth)
@@ -1045,7 +1045,7 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 
 	updated := setPosition(tokenId, position)
 	if !updated {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errPositionDoesNotExist,
 			ufmt.Sprintf("can not collect fee for non-existent position(%d)", tokenId),
 		))
@@ -1119,7 +1119,7 @@ func getCurrentFeeGrowth(postion Position, token0, token1 string, fee uint32) (F
 func burnPosition(tokenId uint64) {
 	position := MustGetPosition(tokenId)
 	if !(position.isClear()) {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errNotClear,
 			ufmt.Sprintf("position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
 		))
@@ -1128,7 +1128,7 @@ func burnPosition(tokenId uint64) {
 	position.burned = true
 	updated := setPosition(tokenId, position)
 	if !updated {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("can not burn non-existent position(%d)", tokenId),
 		))
@@ -1137,7 +1137,7 @@ func burnPosition(tokenId uint64) {
 
 func isAuthorizedForToken(tokenId uint64) {
 	if !(isOwnerOrOperator(std.PrevRealm().Addr(), tokenId)) {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errNoPermission,
 			ufmt.Sprintf("caller(%s) is not approved or owner of tokenId(%d)", std.PrevRealm().Addr(), tokenId),
 		))
@@ -1165,7 +1165,7 @@ func handleUnwrap(pToken0, pToken1 string, unwrapResult bool, userOldWugnotBalan
 func SetPositionOperator(tokenId uint64, operator std.Address) {
 	caller := std.PrevRealm().PkgPath()
 	if caller != consts.STAKER_PATH {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errNoPermission,
 			ufmt.Sprintf("caller(%s) is not staker", caller),
 		))
@@ -1175,7 +1175,7 @@ func SetPositionOperator(tokenId uint64, operator std.Address) {
 	position.operator = operator
 	updated := setPosition(tokenId, position)
 	if !updated {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errPositionDoesNotExist,
 			ufmt.Sprintf("can not set operator for non-existent position(%d)", tokenId),
 		))
@@ -1187,7 +1187,7 @@ func SetPositionOperator(tokenId uint64, operator std.Address) {
 func MustGetPosition(tokenId uint64) Position {
 	position, exist := GetPosition(tokenId)
 	if !exist {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errDataNotFound,
 			ufmt.Sprintf("position with tokenId(%d) doesn't exist", tokenId),
 		))
