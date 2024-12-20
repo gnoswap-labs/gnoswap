@@ -3,6 +3,7 @@ package pool
 import (
 	"testing"
 
+	"gno.land/p/demo/avl"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -76,7 +77,7 @@ func TestTickBitmapFlipTick(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := &Pool{
-				tickBitmaps: make(map[int16]*u256.Uint),
+				tickBitmaps: avl.NewTree(),
 			}
 
 			if tt.shouldPanic {
@@ -92,7 +93,7 @@ func TestTickBitmapFlipTick(t *testing.T) {
 			if !tt.shouldPanic {
 				wordPos, bitPos := tickBitmapPosition(tt.tick / tt.tickSpacing)
 				expected := new(u256.Uint).Lsh(u256.NewUint(1), uint(bitPos))
-				if pool.tickBitmaps[wordPos].Cmp(expected) != 0 {
+				if pool.getTickBitmap(wordPos).Cmp(expected) != 0 {
 					t.Errorf("bitmap not set correctly")
 				}
 			}
@@ -137,7 +138,7 @@ func TestTickBitmapNextInitializedTickWithInOneWord(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pool := &Pool{
-				tickBitmaps: make(map[int16]*u256.Uint),
+				tickBitmaps: avl.NewTree(),
 			}
 			if tt.setupBitmap != nil {
 				tt.setupBitmap(pool)

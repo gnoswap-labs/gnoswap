@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
 	"gno.land/r/demo/users"
 
@@ -201,14 +202,13 @@ func TestComputeSwap(t *testing.T) {
 		},
 		feeGrowthGlobal0X128: u256.Zero(),
 		feeGrowthGlobal1X128: u256.Zero(),
-		tickBitmaps:          make(TickBitmaps),
-		ticks:                make(Ticks),
-		positions:            make(Positions),
+		tickBitmaps:          avl.NewTree(),
+		ticks:                avl.NewTree(),
+		positions:            avl.NewTree(),
 	}
 
 	wordPos, _ := tickBitmapPosition(0)
-	// TODO: use avl
-	mockPool.tickBitmaps[wordPos] = u256.NewUint(1)
+	mockPool.setTickBitmap(wordPos, u256.NewUint(1))
 
 	t.Run("basic swap", func(t *testing.T) {
 		comp := SwapComputation{
@@ -280,7 +280,6 @@ func TestComputeSwap(t *testing.T) {
 }
 
 func TestSwap_Failures(t *testing.T) {
-	t.Skip()
 	const addr = pusers.AddressOrName(consts.ROUTER_ADDR)
 
 	tests := []struct {
@@ -412,9 +411,9 @@ func TestDrySwap_Failures(t *testing.T) {
 		},
 		feeGrowthGlobal0X128: u256.Zero(),
 		feeGrowthGlobal1X128: u256.Zero(),
-		tickBitmaps:          make(TickBitmaps),
-		ticks:                make(Ticks),
-		positions:            make(Positions),
+		tickBitmaps:          avl.NewTree(),
+		ticks:                avl.NewTree(),
+		positions:            avl.NewTree(),
 	}
 
 	originalGetPool := GetPool
