@@ -128,6 +128,7 @@ func GetApproved(tid grc721.TokenID) (std.Address, bool) {
 //   - tid: The token ID to approve
 func Approve(user pusers.AddressOrName, tid grc721.TokenID) {
 	common.IsHalted()
+	assertCallerIsOwnerOfToken(tid)
 
 	err := gnft.Approve(users.Resolve(user), tid)
 	if err != nil {
@@ -151,10 +152,22 @@ func SetApprovalForAll(user pusers.AddressOrName, approved bool) {
 //   - tid: The token ID to transfer
 func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
 	common.IsHalted()
-	checkErr(gnft.TransferFrom(users.Resolve(from), users.Resolve(to), tid))
+
+	caller := getPrevAddr()
+	ownerOf := OwnerOf(tid)
+	_, approved := GetApproved(tid)
+
+	if caller != ownerOf && !approved {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("caller (%s) is not the owner or operator of token (%s)", caller, string(tid)),
+		))
+	}
 
 	removeTokenList(users.Resolve(from), tid)
 	appendTokenList(users.Resolve(to), tid)
+
+	checkErr(gnft.TransferFrom(users.Resolve(from), users.Resolve(to), tid))
 }
 
 // Mint creates a new NFT and assigns it to the specified address (only callable by owner)
@@ -168,9 +181,9 @@ func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
 	owner.AssertCallerIsOwner()
 	common.IsHalted()
 
-	checkErr(gnft.Mint(users.Resolve(to), tid))
-
 	toAddr := users.Resolve(to)
+	checkErr(gnft.Mint(toAddr, tid))
+
 	appendTokenList(toAddr, tid)
 	return tid
 }
@@ -182,9 +195,8 @@ func Burn(tid grc721.TokenID) {
 	owner.AssertCallerIsOwner()
 	common.IsHalted()
 
+	removeTokenList(OwnerOf(tid), tid)
 	checkErr(gnft.Burn(tid))
-
-	removeTokenList(getPrevAddr(), tid)
 }
 
 // Render returns the HTML representation of the NFT
@@ -223,7 +235,7 @@ func SetTokenURI(tid grc721.TokenID) {
 func SetTokenURILast() {
 	common.IsHalted()
 
-	caller := std.PrevRealm().Addr()
+	caller := getPrevAddr()
 	tokenListByCaller, _ := getTokenList(caller)
 	lenTokenListByCaller := len(tokenListByCaller)
 	if lenTokenListByCaller == 0 {
