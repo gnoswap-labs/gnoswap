@@ -44,8 +44,8 @@ const (
 )
 
 var (
-	BLOCK_PER_YEAR = consts.TIMESTAMP_YEAR / consts.BLOCK_GENERATION_INTERVAL
-	BLOCK_PER_DAY  = consts.TIMESTAMP_DAY / consts.BLOCK_GENERATION_INTERVAL
+	blockPerYear = consts.TIMESTAMP_YEAR / consts.BLOCK_GENERATION_INTERVAL
+	blockPerDay  = consts.TIMESTAMP_DAY / consts.BLOCK_GENERATION_INTERVAL
 
 	avgBlockTimeMs int64 = consts.SECOND_IN_MILLISECOND * consts.BLOCK_GENERATION_INTERVAL
 )
@@ -53,46 +53,65 @@ var (
 var (
 	startHeight    int64
 	startTimestamp int64
-
-	// (exactly) after 12 years, timestamp which gns emission will be ended
-	// can not be changed
-	endTimestamp int64
+	endTimestamp   int64
 )
 
 var (
-	halvingYearBlock     = make([]int64, HALVING_END_YEAR) // start block of each halving year
-	halvingYearTimestamp = make([]int64, HALVING_END_YEAR) // start timestamp of each halving year
+	halvingYearStartBlock = make([]int64, HALVING_END_YEAR) // start block of each halving year
+	halvingYearEndBlock   = make([]int64, HALVING_END_YEAR) // end block of each halving year
+	halvingYearTimestamp  = make([]int64, HALVING_END_YEAR) // start timestamp of each halving year
 
-	halvingYearMaxAmount         = make([]uint64, HALVING_END_YEAR)
-	halvingYearMintAmount        = make([]uint64, HALVING_END_YEAR)
-	halvingYearAccuAmount        = make([]uint64, HALVING_END_YEAR)
-	amountPerBlockPerHalvingYear = make([]uint64, HALVING_END_YEAR)
+	halvingYearMaxAmount         = make([]uint64, HALVING_END_YEAR) // max amount per year can be minted
+	halvingYearMintAmount        = make([]uint64, HALVING_END_YEAR) // actual minted amount per year
+	halvingYearAccuAmount        = make([]uint64, HALVING_END_YEAR) // accumulated minted amount per year
+	amountPerBlockPerHalvingYear = make([]uint64, HALVING_END_YEAR) // amount per block per year to mint
 )
 
 func init() {
 	startHeight = std.GetHeight()
 	startTimestamp = time.Now().Unix()
 
-	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-		setHalvingYearMaxAmount(year, HALVING_AMOUNTS_PER_YEAR[year-1])
+	// initialize halving data
+	initializeHalvingData()
 
-		if year == 1 {
-			setHalvingYearAccuAmount(year, HALVING_AMOUNTS_PER_YEAR[year-1])
+	// set end timestamp
+	// after 12 years, timestamp which gns emission will be ended
+	// it can not be changed
+	setEndTimestamp(startTimestamp + consts.TIMESTAMP_YEAR*HALVING_END_YEAR)
+}
+
+// initializeHalvingData initializes the halving data
+// it should be called only once, so we call this in init()
+func initializeHalvingData() {
+	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
+		// set max emission amount per year
+		// each year can not mint more than this amount
+		currentYearMaxAmount := GetHalvingAmountsPerYear(year)
+		setHalvingYearMaxAmount(year, currentYearMaxAmount)
+
+		if year == HALVING_START_YEAR {
+			setHalvingYearAccuAmount(year, currentYearMaxAmount)
+			setHalvingYearStartBlock(year, startHeight)
+			setHalvingYearEndBlock(year, startHeight+(blockPerYear*year))
 		} else {
-			setHalvingYearAccuAmount(year, GetHalvingYearAccuAmount(year-1)+HALVING_AMOUNTS_PER_YEAR[year-1])
+			// accumulate amount until current year, is the sum of current year max amount and accumulated amount until previous year
+			setHalvingYearAccuAmount(year, currentYearMaxAmount+GetHalvingYearAccuAmount(year-1))
+
+			// start block of current year, is the next block of previous year end block
+			setHalvingYearStartBlock(year, GetHalvingYearEndBlock(year-1)+1)
+
+			// end block of current year, is sum of start block and block per year
+			setHalvingYearEndBlock(year, GetHalvingYearStartBlock(year)+blockPerYear)
 		}
 
-		setHalvingYearBlock(year, startHeight+BLOCK_PER_YEAR*(year-1))
 		setHalvingYearTimestamp(year, startTimestamp+(consts.TIMESTAMP_YEAR*(year-1)))
-		setHalvingYearMintAmount(year, uint64(0))
 
-		amountPerYear := GetHalvingYearMaxAmount(year)         // amount per year
-		amountPerDay := amountPerYear / consts.DAY_PER_YEAR    // amount per day
-		amountPerBlock := amountPerDay / uint64(BLOCK_PER_DAY) // amount per block
+		amountPerDay := currentYearMaxAmount / consts.DAY_PER_YEAR
+		amountPerBlock := amountPerDay / uint64(blockPerDay)
 		setAmountPerBlockPerHalvingYear(year, uint64(amountPerBlock))
-	}
 
-	setEndTimestamp(startTimestamp + consts.TIMESTAMP_YEAR*HALVING_END_YEAR)
+		setHalvingYearMintAmount(year, uint64(0))
+	}
 }
 
 func GetAvgBlockTimeInMs() int64 {
@@ -139,6 +158,11 @@ func SetAvgBlockTimeInMs(ms int64) {
 func setAvgBlockTimeInMs(ms int64) {
 	common.IsHalted()
 
+	// update block per year
+	value1 := int64(consts.TIMESTAMP_YEAR * consts.SECOND_IN_MILLISECOND)
+	value2 := int64(value1 / ms)
+	blockPerYear = value2
+
 	now := time.Now().Unix()
 	height := std.GetHeight()
 
@@ -150,8 +174,7 @@ func setAvgBlockTimeInMs(ms int64) {
 	timeLeftMs := timeLeft * consts.SECOND_IN_MILLISECOND
 
 	// how many block left for current halving year
-	blockLeft := timeLeftMs / ms
-
+	blockLeft := (timeLeftMs / ms)
 	// how many reward left for current halving year
 	minted := GetMintedEmissionAmount()
 	amountLeft := GetHalvingYearAccuAmount(currentYear) - minted
@@ -160,6 +183,8 @@ func setAvgBlockTimeInMs(ms int64) {
 	adjustedAmountPerBlock := amountLeft / uint64(blockLeft)
 	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
 
+	yearEndHeight := int64(0)
+	nextYearStartHeight := int64(0)
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		if year < currentYear {
 			// pass past halving years
@@ -169,7 +194,20 @@ func setAvgBlockTimeInMs(ms int64) {
 		yearEndTimestamp := GetHalvingYearTimestamp(year) + consts.TIMESTAMP_YEAR
 		timeLeftForYear := yearEndTimestamp - now
 		numBlock := (timeLeftForYear * consts.SECOND_IN_MILLISECOND) / ms
-		setHalvingYearBlock(year, height+numBlock)
+		yearEndHeight := height + numBlock
+
+		if year == currentYear {
+			// for current year, update only end block
+			setHalvingYearEndBlock(year, yearEndHeight)
+		} else {
+			// update start block
+			prevYearEnd := GetHalvingYearEndBlock(year - 1)
+			nextYearStart := prevYearEnd + 1
+			nextYearEnd := nextYearStart + blockPerYear
+
+			setHalvingYearStartBlock(year, nextYearStart)
+			setHalvingYearEndBlock(year, nextYearEnd)
+		}
 	}
 
 	avgBlockTimeMs = ms
@@ -192,8 +230,8 @@ func GetHalvingYearByHeight(height int64) int64 {
 	}
 
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
-		block := GetHalvingYearBlock(year)
-		if height <= block {
+		endBlock := GetHalvingYearEndBlock(year)
+		if height <= endBlock {
 			return year
 		}
 	}
@@ -216,12 +254,20 @@ func getHalvingYearAndEndTimestamp(timestamp int64) (int64, int64) {
 	return year, startTimestamp + (consts.TIMESTAMP_YEAR * year)
 }
 
-func GetHalvingYearBlock(year int64) int64 {
-	return halvingYearBlock[year-1]
+func GetHalvingYearStartBlock(year int64) int64 {
+	return halvingYearStartBlock[year-1]
 }
 
-func setHalvingYearBlock(year int64, block int64) {
-	halvingYearBlock[year-1] = block
+func setHalvingYearStartBlock(year int64, block int64) {
+	halvingYearStartBlock[year-1] = block
+}
+
+func GetHalvingYearEndBlock(year int64) int64 {
+	return halvingYearEndBlock[year-1]
+}
+
+func setHalvingYearEndBlock(year int64, block int64) {
+	halvingYearEndBlock[year-1] = block
 }
 
 func GetHalvingYearTimestamp(year int64) int64 {
@@ -264,10 +310,14 @@ func setAmountPerBlockPerHalvingYear(year int64, amount uint64) {
 	amountPerBlockPerHalvingYear[year-1] = amount
 }
 
+func GetHalvingAmountsPerYear(year int64) uint64 {
+	return HALVING_AMOUNTS_PER_YEAR[year-1]
+}
+
 func GetEndHeight() int64 {
 	// last block of last halving year(12) is last block of emission
 	// later than this block, no more gns will be minted
-	return GetHalvingYearBlock(HALVING_END_YEAR)
+	return GetHalvingYearEndBlock(HALVING_END_YEAR)
 }
 
 func GetEndTimestamp() int64 {
@@ -287,7 +337,7 @@ func GetHalvingInfo() string {
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		halvings = append(halvings, json.ObjectNode("", map[string]*json.Node{
 			"year":   json.StringNode("year", strconv.FormatInt(year, 10)),
-			"block":  json.NumberNode("block", float64(GetHalvingYearBlock(year))),
+			"block":  json.NumberNode("block", float64(GetHalvingYearStartBlock(year))),
 			"amount": json.NumberNode("amount", float64(GetAmountPerBlockPerHalvingYear(year))),
 		}))
 	}

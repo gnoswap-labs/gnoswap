@@ -16,18 +16,18 @@ var (
 )
 
 var FIRST_BLOCK_OF_YEAR = []int64{
-	startHeight + (BLOCK_PER_YEAR * 0) + 1,
-	startHeight + (BLOCK_PER_YEAR * 1) + 2,
-	startHeight + (BLOCK_PER_YEAR * 2) + 3,
-	startHeight + (BLOCK_PER_YEAR * 3) + 4,
-	startHeight + (BLOCK_PER_YEAR * 4) + 5,
-	startHeight + (BLOCK_PER_YEAR * 5) + 6,
-	startHeight + (BLOCK_PER_YEAR * 6) + 7,
-	startHeight + (BLOCK_PER_YEAR * 7) + 8,
-	startHeight + (BLOCK_PER_YEAR * 8) + 9,
-	startHeight + (BLOCK_PER_YEAR * 9) + 10,
-	startHeight + (BLOCK_PER_YEAR * 10) + 11,
-	startHeight + (BLOCK_PER_YEAR * 11) + 12,
+	startHeight + (blockPerYear * 0) + 1,
+	startHeight + (blockPerYear * 1) + 2,
+	startHeight + (blockPerYear * 2) + 3,
+	startHeight + (blockPerYear * 3) + 4,
+	startHeight + (blockPerYear * 4) + 5,
+	startHeight + (blockPerYear * 5) + 6,
+	startHeight + (blockPerYear * 6) + 7,
+	startHeight + (blockPerYear * 7) + 8,
+	startHeight + (blockPerYear * 8) + 9,
+	startHeight + (blockPerYear * 9) + 10,
+	startHeight + (blockPerYear * 10) + 11,
+	startHeight + (blockPerYear * 11) + 12,
 }
 
 var FIRST_TIMESTAMP_OF_YEAR = []int64{
@@ -97,9 +97,9 @@ func TestGetHalvingYearAndEndTimestamp(t *testing.T) {
 	})
 }
 
-func TestHalvingYearBlock(t *testing.T) {
-	setHalvingYearBlock(1, 100)
-	uassert.Equal(t, GetHalvingYearBlock(1), int64(100))
+func TestHalvingYearStartBlock(t *testing.T) {
+	setHalvingYearStartBlock(1, 100)
+	uassert.Equal(t, GetHalvingYearStartBlock(1), int64(100))
 }
 
 func TestHalvingYearTimestamp(t *testing.T) {

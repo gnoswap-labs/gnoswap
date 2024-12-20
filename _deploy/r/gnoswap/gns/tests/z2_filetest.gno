@@ -53,7 +53,7 @@ func blockTime4000ms() {
 	uassert.Equal(t, uint64(28538812), firstYearAmountPerBlock)
 
 	// next halving year start/end block
-	uassert.Equal(t, int64(7884149), gns.GetHalvingYearBlock(2))
+	uassert.Equal(t, int64(7884149), gns.GetHalvingYearStartBlock(2))
 	uassert.Equal(t, int64(15768149), gns.GetHalvingYearEndBlock(2))
 
 	// orig year01 start block = 123

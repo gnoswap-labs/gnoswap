@@ -51,7 +51,7 @@ func blockTime4000ms() {
 	uassert.Equal(t, uint64(713470300+28538812), gns.GetMintedEmissionAmount()) // 742009112
 
 	// next halving year start/end block
-	uassert.Equal(t, int64(7884149), gns.GetHalvingYearBlock(2))
+	uassert.Equal(t, int64(7884149), gns.GetHalvingYearStartBlock(2))
 	uassert.Equal(t, int64(15768149), gns.GetHalvingYearEndBlock(2))
 }
 
