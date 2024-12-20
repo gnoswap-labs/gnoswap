@@ -152,6 +152,9 @@ func SetApprovalForAll(user pusers.AddressOrName, approved bool) {
 func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
 	common.IsHalted()
 	checkErr(gnft.TransferFrom(users.Resolve(from), users.Resolve(to), tid))
+
+	removeTokenList(users.Resolve(from), tid)
+	appendTokenList(users.Resolve(to), tid)
 }
 
 // Mint creates a new NFT and assigns it to the specified address (only callable by owner)
@@ -180,6 +183,8 @@ func Burn(tid grc721.TokenID) {
 	common.IsHalted()
 
 	checkErr(gnft.Burn(tid))
+
+	removeTokenList(getPrevAddr(), tid)
 }
 
 // Render returns the HTML representation of the NFT
