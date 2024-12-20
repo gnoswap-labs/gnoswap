@@ -43,7 +43,6 @@ func skip50Blocks() {
 func blockTime4000ms() {
 	std.TestSetRealm(std.NewUserRealm(consts.ADMIN))
 	gns.SetAvgBlockTimeInMsByAdmin(4000)
-	// for block time 4s,  amount per block is 28538812
 
 	std.TestSkipHeights(1)
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
@@ -57,10 +56,10 @@ func blockTime4000ms() {
 
 func reachAboutHalfOfFirstHalving() {
 	// current block = 174
-	// next halving year start block = 7884148
+	// end block of first halving year = 7884148
 	// 7884148 - 174 = 7883974 // block left to next halving
 
-	std.TestSkipHeights(3941987) // 7883974 / 2
+	std.TestSkipHeights(3941987)
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	gns.MintGns(a2u(user01Addr))
 

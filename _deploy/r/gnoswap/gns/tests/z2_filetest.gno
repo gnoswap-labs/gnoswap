@@ -44,6 +44,22 @@ func blockTime4000ms() {
 	gns.SetAvgBlockTimeInMsByAdmin(4000)
 	// for block time 4s, amount per block is 28538812
 
+	// first halving year end block = 15768122
+	// first halving year end timestamp = 1234567990
+
+	// 50 block minted from L#38
+	// > current height = 173
+	// > current timestamp = 1234568140
+
+	// 1266103890 - 1234567990 = 31535900 // timestamp left for current halving year
+	// 31535900000 / 4000(new block avg time/ms) = 7883975 // number of block left for current halving year
+
+	// 713470300 // already minted amount
+
+	// first halving year should mint 225000000000000
+	// 225000000000000 - 713470300 = 224999286529700
+	// 224999286529700 / 7883975 ≈ 28538812
+
 	std.TestSetRealm(std.NewCodeRealm(consts.EMISSION_PATH))
 	std.TestSkipHeights(1)
 	mintedAmount := gns.MintGns(a2u(user01Addr))                                // 28538812
