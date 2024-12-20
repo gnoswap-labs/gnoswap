@@ -35,22 +35,9 @@ func resetGnsTokenObject(t *testing.T) {
 func resetHalvingRelatedObject(t *testing.T) {
 	t.Helper()
 
-	for year := int64(1); year < 13; year++ {
-		setHalvingYearMaxAmount(year, HALVING_AMOUNTS_PER_YEAR[year-1])
+	startHeight = std.GetHeight()
+	startTimestamp = time.Now().Unix()
 
-		if year == 1 {
-			setHalvingYearAccuAmount(year, HALVING_AMOUNTS_PER_YEAR[year-1])
-		} else {
-			setHalvingYearAccuAmount(year, GetHalvingYearAccuAmount(year-1)+HALVING_AMOUNTS_PER_YEAR[year-1])
-		}
-
-		setHalvingYearBlock(year, startHeight+BLOCK_PER_YEAR*year)
-		setHalvingYearTimestamp(year, startTimestamp+(consts.TIMESTAMP_YEAR*year))
-		setHalvingYearMintAmount(year, uint64(0))
-
-		amountPerYear := GetHalvingYearMaxAmount(year)         // amount per year
-		amountPerDay := amountPerYear / consts.DAY_PER_YEAR    // amount per day
-		amountPerBlock := amountPerDay / uint64(BLOCK_PER_DAY) // amount per block
-		setAmountPerBlockPerHalvingYear(year, uint64(amountPerBlock))
-	}
+	initializeHalvingData()
+	setEndTimestamp(startTimestamp + consts.TIMESTAMP_YEAR*HALVING_END_YEAR)
 }
