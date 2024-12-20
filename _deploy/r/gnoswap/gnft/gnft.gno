@@ -267,8 +267,8 @@ func setTokenURI(tid grc721.TokenID) error {
 // Returns:
 //   - *rand.Rand: A new random instance
 func generateRandInstance() *rand.Rand {
-	seed1 := uint64(time.Now().Unix() + TotalSupply())
-	seed2 := uint64(time.Now().UnixNano() + TotalSupply())
+	seed1 := uint64(time.Now().Unix()) + TotalSupply()
+	seed2 := uint64(time.Now().UnixNano()) + TotalSupply()
 	pcg := rand.NewPCG(seed1, seed2)
 	return rand.New(pcg)
 }
