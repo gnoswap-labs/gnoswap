@@ -103,7 +103,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 	uassert.Equal(t, fee0, "0")
 	uassert.Equal(t, fee1, "0")
 
-	position := positions[uint64(1)]
+	position := MustGetPosition(uint64(1))
 	uassert.Equal(t, position.burned, false) // not burned yet
 }
 
@@ -119,7 +119,7 @@ func TestDecreaseLiquidityToBurnPosition(t *testing.T) {
 		max_timeout, // deadline
 		true,        // unwrapResult
 	)
-	position := positions[uint64(1)]
+	position := MustGetPosition(uint64(1))
 	uassert.Equal(t, position.burned, true)              // it is burned
 	uassert.Equal(t, position.liquidity.ToString(), "0") // and liquidity is 0
 }
@@ -132,7 +132,7 @@ func TestIncreaseLiquidityBurnedPosition(t *testing.T) {
 	pool := getPoolFromLpTokenId(uint64(1))
 	oldLiquidity := pool.PoolGetLiquidity()
 
-	position := positions[uint64(1)]
+	position := MustGetPosition(uint64(1))
 	uassert.Equal(t, position.burned, true) // it is burned
 
 	_, _, m0, m1, _ := IncreaseLiquidity(
@@ -150,6 +150,6 @@ func TestIncreaseLiquidityBurnedPosition(t *testing.T) {
 	newLiquidity := pool.PoolGetLiquidity()
 	uassert.Equal(t, newLiquidity.Gt(oldLiquidity), true)
 
-	position = positions[uint64(1)]
+	position = MustGetPosition(uint64(1))
 	uassert.Equal(t, position.burned, false)
 }

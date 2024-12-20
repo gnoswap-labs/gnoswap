@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
@@ -153,18 +154,6 @@ func (QuxToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 }
 func (QuxToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return qux.Approve
-}
-
-func init() {
-	std.TestSetRealm(std.NewUserRealm(consts.TOKEN_REGISTER))
-
-	pl.RegisterGRC20Interface(wugnotPath, WugnotToken{})
-	pl.RegisterGRC20Interface(gnsPath, GNSToken{})
-	pl.RegisterGRC20Interface(barPath, BarToken{})
-	pl.RegisterGRC20Interface(bazPath, BazToken{})
-	pl.RegisterGRC20Interface(fooPath, FooToken{})
-	pl.RegisterGRC20Interface(oblPath, OBLToken{})
-	pl.RegisterGRC20Interface(quxPath, QuxToken{})
 }
 
 var (
@@ -544,7 +533,7 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 
 // resetObject resets the object state(clear or make it default values)
 func resetObject(t *testing.T) {
-	positions = make(map[uint64]Position)
+	positions = avl.NewTree()
 	nextId = 1
 }
 
@@ -567,7 +556,7 @@ func TestBeforeResetObject(t *testing.T) {
 	uassert.Equal(t, liquidity, "50000", "liquidity should be 50000")
 	uassert.Equal(t, amount0, "50000", "amount0 should be 50000")
 	uassert.Equal(t, amount1, "50000", "amount1 should be 50000")
-	uassert.Equal(t, len(positions), 1, "positions should have 1 position")
+	uassert.Equal(t, positions.Size(), 1, "positions should have 1 position")
 	uassert.Equal(t, nextId, uint64(2), "nextId should be 2")
 	uassert.Equal(t, gnft.TotalSupply(), uint64(1), "gnft total supply should be 1")
 	uassert.Equal(t, pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500"), "50000", "pool liquidity should be 50000")
@@ -576,7 +565,7 @@ func TestBeforeResetObject(t *testing.T) {
 func TestResetObject(t *testing.T) {
 	resetObject(t)
 
-	uassert.Equal(t, len(positions), 0, "positions should be empty")
+	uassert.Equal(t, positions.Size(), 0, "positions should be empty")
 	uassert.Equal(t, nextId, uint64(1), "nextId should be 1")
 }
 

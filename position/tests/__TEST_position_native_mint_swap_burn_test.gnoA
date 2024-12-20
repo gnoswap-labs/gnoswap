@@ -47,6 +47,8 @@ func testMintPosition(t *testing.T) {
 
 		std.TestIssueCoins(admin, std.Coins{{"ugnot", 50000005}})
 		uassert.Equal(t, ugnotBalanceOf(admin), uint64(50000005))
+
+		std.TestIssueCoins(consts.POSITION_ADDR, std.Coins{{"ugnot", 200000000}})
 		uassert.Equal(t, ugnotBalanceOf(consts.POSITION_ADDR), uint64(200000000))
 
 		banker := std.GetBanker(std.BankerTypeRealmIssue)
@@ -78,7 +80,7 @@ func testMintPosition(t *testing.T) {
 		uassert.Equal(t, amount0, "49984837")
 		uassert.Equal(t, amount1, "50000000")
 
-		position := positions[tokenId]
+		position := MustGetPosition(tokenId)
 		uassert.Equal(t, position.nonce.ToString(), "0")
 		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")
@@ -133,7 +135,7 @@ func testSwap(t *testing.T) {
 		uassert.Equal(t, amount0, "1234567")
 		uassert.Equal(t, amount1, "-1224110")
 
-		position := positions[uint64(1)]
+		position := MustGetPosition(uint64(1))
 		uassert.Equal(t, position.nonce.ToString(), "0")
 		uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 		uassert.Equal(t, position.poolKey, "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:500")

@@ -12,51 +12,62 @@ import (
 
 // type Position
 func PositionGetPosition(tokenId uint64) Position {
-	return positions[tokenId]
+	position, _ := GetPosition(tokenId)
+	return position
 }
 
 func PositionGetPositionNonce(tokenId uint64) *u256.Uint {
-	return positions[tokenId].nonce
+	position := MustGetPosition(tokenId)
+	return position.nonce
 }
 
 func PositionGetPositionOperator(tokenId uint64) std.Address {
-	return positions[tokenId].operator
+	position := MustGetPosition(tokenId)
+	return position.operator
 }
 
 func PositionGetPositionPoolKey(tokenId uint64) string {
-	return positions[tokenId].poolKey
+	position := MustGetPosition(tokenId)
+	return position.poolKey
 }
 
 func PositionGetPositionTickLower(tokenId uint64) int32 {
-	return positions[tokenId].tickLower
+	position := MustGetPosition(tokenId)
+	return position.tickLower
 }
 
 func PositionGetPositionTickUpper(tokenId uint64) int32 {
-	return positions[tokenId].tickUpper
+	position := MustGetPosition(tokenId)
+	return position.tickUpper
 }
 
 func PositionGetPositionLiquidity(tokenId uint64) *u256.Uint {
-	return positions[tokenId].liquidity
+	position := MustGetPosition(tokenId)
+	return position.liquidity
 }
 
 func PositionGetPositionFeeGrowthInside0LastX128(tokenId uint64) *u256.Uint {
-	return positions[tokenId].feeGrowthInside0LastX128
+	position := MustGetPosition(tokenId)
+	return position.feeGrowthInside0LastX128
 }
 
 func PositionGetPositionFeeGrowthInside1LastX128(tokenId uint64) *u256.Uint {
-	return positions[tokenId].feeGrowthInside1LastX128
+	position := MustGetPosition(tokenId)
+	return position.feeGrowthInside1LastX128
 }
 
 func PositionGetPositionTokensOwed0(tokenId uint64) *u256.Uint {
-	return positions[tokenId].tokensOwed0
+	position := MustGetPosition(tokenId)
+	return position.tokensOwed0
 }
 
 func PositionGetPositionTokensOwed1(tokenId uint64) *u256.Uint {
-	return positions[tokenId].tokensOwed1
+	position := MustGetPosition(tokenId)
+	return position.tokensOwed1
 }
 
 func PositionIsInRange(tokenId uint64) bool {
-	position := positions[tokenId]
+	position := MustGetPosition(tokenId)
 	poolPath := position.poolKey
 	poolCurrentTick := pl.PoolGetSlot0Tick(poolPath)
 

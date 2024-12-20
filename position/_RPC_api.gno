@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
 	"gno.land/r/gnoswap/v1/common"
@@ -52,7 +51,134 @@ type ResponseApiGetPositions struct {
 
 func ApiGetPositions() string {
 	rpcPositions := []RpcPosition{}
-	for lpTokenId, _ := range positions {
+
+	for tokenId := uint64(1); tokenId < nextId; tokenId++ {
+		rpcPosition := rpcMakePosition(tokenId)
+		rpcPositions = append(rpcPositions, rpcPosition)
+	}
+
+	r := ResponseApiGetPositions{
+		Stat: ResponseQueryBase{
+			Height:    std.GetHeight(),
+			Timestamp: time.Now().Unix(),
+		},
+		Response: rpcPositions,
+	}
+
+	// STAT NODE
+	stat := json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
+
+	// RESPONSE (ARRAY) NODE
+	responses := json.ArrayNode("", []*json.Node{})
+	for _, position := range r.Response {
+		positionNode := json.ObjectNode("", map[string]*json.Node{
+			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
+			"burned":                   json.BoolNode("burned", position.Burned),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
+			"operator":                 json.StringNode("operator", position.Operator),
+			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
+			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
+			"tickUpper":                json.NumberNode("tickUpper", float64(position.TickUpper)),
+			"liquidity":                json.StringNode("liquidity", position.Liquidity),
+			"feeGrowthInside0LastX128": json.StringNode("feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128),
+			"feeGrowthInside1LastX128": json.StringNode("feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128),
+			"token0Owed":               json.StringNode("token0Owed", position.TokensOwed0),
+			"token1Owed":               json.StringNode("token1Owed", position.TokensOwed1),
+			"token0Balance":            json.StringNode("token0Balance", position.Token0Balance),
+			"token1Balance":            json.StringNode("token1Balance", position.Token1Balance),
+			"fee0Unclaimed":            json.StringNode("fee0Unclaimed", position.FeeUnclaimed0),
+			"fee1Unclaimed":            json.StringNode("fee1Unclaimed", position.FeeUnclaimed1),
+		})
+		responses.AppendArray(positionNode)
+	}
+
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     stat,
+		"response": responses,
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return string(b)
+}
+
+func ApiGetPosition(lpTokenId uint64) string {
+	rpcPositions := []RpcPosition{}
+
+	position, exist := GetPosition(lpTokenId)
+	if !exist {
+		return ""
+	}
+
+	rpcPosition := rpcMakePosition(lpTokenId)
+	rpcPositions = append(rpcPositions, rpcPosition)
+
+	r := ResponseApiGetPositions{
+		Stat: ResponseQueryBase{
+			Height:    std.GetHeight(),
+			Timestamp: time.Now().Unix(),
+		},
+		Response: rpcPositions,
+	}
+
+	// STAT NODE
+	stat := json.ObjectNode("", map[string]*json.Node{
+		"height":    json.NumberNode("height", float64(std.GetHeight())),
+		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
+	})
+
+	// RESPONSE (ARRAY) NODE
+	responses := json.ArrayNode("", []*json.Node{})
+	for _, position := range r.Response {
+		positionNode := json.ObjectNode("", map[string]*json.Node{
+			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
+			"burned":                   json.BoolNode("burned", position.Burned),
+			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
+			"operator":                 json.StringNode("operator", position.Operator),
+			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
+			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
+			"tickUpper":                json.NumberNode("tickUpper", float64(position.TickUpper)),
+			"liquidity":                json.StringNode("liquidity", position.Liquidity),
+			"feeGrowthInside0LastX128": json.StringNode("feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128),
+			"feeGrowthInside1LastX128": json.StringNode("feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128),
+			"token0Owed":               json.StringNode("token0Owed", position.TokensOwed0),
+			"token1Owed":               json.StringNode("token1Owed", position.TokensOwed1),
+			"token0Balance":            json.StringNode("token0Balance", position.Token0Balance),
+			"token1Balance":            json.StringNode("token1Balance", position.Token1Balance),
+			"fee0Unclaimed":            json.StringNode("fee0Unclaimed", position.FeeUnclaimed0),
+			"fee1Unclaimed":            json.StringNode("fee1Unclaimed", position.FeeUnclaimed1),
+		})
+		responses.AppendArray(positionNode)
+	}
+
+	node := json.ObjectNode("", map[string]*json.Node{
+		"stat":     stat,
+		"response": responses,
+	})
+
+	b, err := json.Marshal(node)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return string(b)
+}
+
+func ApiGetPositionsByPoolPath(poolPath string) string {
+	rpcPositions := []RpcPosition{}
+
+	for lpTokenId := uint64(1); lpTokenId < nextId; lpTokenId++ {
+		position := MustGetPosition(lpTokenId)
+		if position.poolKey != poolPath {
+			continue
+		}
+
 		rpcPosition := rpcMakePosition(lpTokenId)
 		rpcPositions = append(rpcPositions, rpcPosition)
 	}
@@ -74,7 +200,7 @@ func ApiGetPositions() string {
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, position := range r.Response {
-		_positionNode := json.ObjectNode("", map[string]*json.Node{
+		positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
 			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
@@ -92,7 +218,7 @@ func ApiGetPositions() string {
 			"fee0Unclaimed":            json.StringNode("fee0Unclaimed", position.FeeUnclaimed0),
 			"fee1Unclaimed":            json.StringNode("fee1Unclaimed", position.FeeUnclaimed1),
 		})
-		responses.AppendArray(_positionNode)
+		responses.AppendArray(positionNode)
 	}
 
 	node := json.ObjectNode("", map[string]*json.Node{
@@ -108,133 +234,10 @@ func ApiGetPositions() string {
 	return string(b)
 }
 
-func ApiGetPosition(lpTokenId uint64) string {
-	rpcPositions := []RpcPosition{}
-
-	_, ok := positions[lpTokenId]
-	if ok {
-		rpcPosition := rpcMakePosition(lpTokenId)
-		rpcPositions = append(rpcPositions, rpcPosition)
-	}
-
-	r := ResponseApiGetPositions{
-		Stat: ResponseQueryBase{
-			Height:    std.GetHeight(),
-			Timestamp: time.Now().Unix(),
-		},
-		Response: rpcPositions,
-	}
-
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, position := range r.Response {
-		_positionNode := json.ObjectNode("", map[string]*json.Node{
-			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
-			"burned":                   json.BoolNode("burned", position.Burned),
-			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
-			"operator":                 json.StringNode("operator", position.Operator),
-			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
-			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
-			"tickUpper":                json.NumberNode("tickUpper", float64(position.TickUpper)),
-			"liquidity":                json.StringNode("liquidity", position.Liquidity),
-			"feeGrowthInside0LastX128": json.StringNode("feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128),
-			"feeGrowthInside1LastX128": json.StringNode("feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128),
-			"token0Owed":               json.StringNode("token0Owed", position.TokensOwed0),
-			"token1Owed":               json.StringNode("token1Owed", position.TokensOwed1),
-			"token0Balance":            json.StringNode("token0Balance", position.Token0Balance),
-			"token1Balance":            json.StringNode("token1Balance", position.Token1Balance),
-			"fee0Unclaimed":            json.StringNode("fee0Unclaimed", position.FeeUnclaimed0),
-			"fee1Unclaimed":            json.StringNode("fee1Unclaimed", position.FeeUnclaimed1),
-		})
-		responses.AppendArray(_positionNode)
-	}
-
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
-}
-
-func ApiGetPositionsByPoolPath(poolPath string) string {
-	rpcPositions := []RpcPosition{}
-	for lpTokenId, position := range positions {
-
-		if position.poolKey != poolPath {
-			continue
-		}
-
-		rpcPosition := rpcMakePosition(lpTokenId)
-		rpcPositions = append(rpcPositions, rpcPosition)
-	}
-
-	r := ResponseApiGetPositions{
-		Stat: ResponseQueryBase{
-			Height:    std.GetHeight(),
-			Timestamp: time.Now().Unix(),
-		},
-		Response: rpcPositions,
-	}
-
-	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
-		"height":    json.NumberNode("height", float64(std.GetHeight())),
-		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
-	})
-
-	// RESPONSE (ARRAY) NODE
-	responses := json.ArrayNode("", []*json.Node{})
-	for _, position := range r.Response {
-		_positionNode := json.ObjectNode("", map[string]*json.Node{
-			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
-			"burned":                   json.BoolNode("burned", position.Burned),
-			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
-			"operator":                 json.StringNode("operator", position.Operator),
-			"poolKey":                  json.StringNode("poolKey", position.PoolKey),
-			"tickLower":                json.NumberNode("tickLower", float64(position.TickLower)),
-			"tickUpper":                json.NumberNode("tickUpper", float64(position.TickUpper)),
-			"liquidity":                json.StringNode("liquidity", position.Liquidity),
-			"feeGrowthInside0LastX128": json.StringNode("feeGrowthInside0LastX128", position.FeeGrowthInside0LastX128),
-			"feeGrowthInside1LastX128": json.StringNode("feeGrowthInside1LastX128", position.FeeGrowthInside1LastX128),
-			"token0Owed":               json.StringNode("token0Owed", position.TokensOwed0),
-			"token1Owed":               json.StringNode("token1Owed", position.TokensOwed1),
-			"token0Balance":            json.StringNode("token0Balance", position.Token0Balance),
-			"token1Balance":            json.StringNode("token1Balance", position.Token1Balance),
-			"fee0Unclaimed":            json.StringNode("fee0Unclaimed", position.FeeUnclaimed0),
-			"fee1Unclaimed":            json.StringNode("fee1Unclaimed", position.FeeUnclaimed1),
-		})
-		responses.AppendArray(_positionNode)
-	}
-
-	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
-		"response": responses,
-	})
-
-	b, err := json.Marshal(node)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(b)
-}
-
 func ApiGetPositionsByAddress(address std.Address) string {
 	rpcPositions := []RpcPosition{}
-	for lpTokenId, position := range positions {
-
+	for lpTokenId := uint64(1); lpTokenId < nextId; lpTokenId++ {
+		position := MustGetPosition(lpTokenId)
 		if !(position.operator == address || gnft.OwnerOf(tokenIdFrom(lpTokenId)) == address) {
 			continue
 		}
@@ -252,7 +255,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 	}
 
 	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
+	stat := json.ObjectNode("", map[string]*json.Node{
 		"height":    json.NumberNode("height", float64(std.GetHeight())),
 		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
 	})
@@ -260,7 +263,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, position := range r.Response {
-		_positionNode := json.ObjectNode("", map[string]*json.Node{
+		positionNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId":                json.NumberNode("lpTokenId", float64(position.LpTokenId)),
 			"burned":                   json.BoolNode("burned", position.Burned),
 			"owner":                    json.StringNode("owner", gnft.OwnerOf(tokenIdFrom(position.LpTokenId)).String()),
@@ -278,11 +281,11 @@ func ApiGetPositionsByAddress(address std.Address) string {
 			"fee0Unclaimed":            json.StringNode("fee0Unclaimed", position.FeeUnclaimed0),
 			"fee1Unclaimed":            json.StringNode("fee1Unclaimed", position.FeeUnclaimed1),
 		})
-		responses.AppendArray(_positionNode)
+		responses.AppendArray(positionNode)
 	}
 
 	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
+		"stat":     stat,
 		"response": responses,
 	})
 
@@ -296,7 +299,7 @@ func ApiGetPositionsByAddress(address std.Address) string {
 
 func ApiGetPositionsUnclaimedFee() string {
 	rpcUnclaimedFee := []RpcUnclaimedFee{}
-	for lpTokenId, _ := range positions {
+	for lpTokenId := uint64(1); lpTokenId < nextId; lpTokenId++ {
 		unclaimedFee0, unclaimedFee1 := unclaimedFee(lpTokenId)
 		rpcUnclaimedFee = append(rpcUnclaimedFee, RpcUnclaimedFee{
 			LpTokenId: lpTokenId,
@@ -306,7 +309,7 @@ func ApiGetPositionsUnclaimedFee() string {
 	}
 
 	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
+	stat := json.ObjectNode("", map[string]*json.Node{
 		"height":    json.NumberNode("height", float64(std.GetHeight())),
 		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
 	})
@@ -314,16 +317,16 @@ func ApiGetPositionsUnclaimedFee() string {
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, unclaimedFee := range rpcUnclaimedFee {
-		_unclaimedFeeNode := json.ObjectNode("", map[string]*json.Node{
+		unclaimedFeeNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId": json.NumberNode("lpTokenId", float64(unclaimedFee.LpTokenId)),
 			"fee0":      json.StringNode("fee0", unclaimedFee.Fee0),
 			"fee1":      json.StringNode("fee1", unclaimedFee.Fee1),
 		})
-		responses.AppendArray(_unclaimedFeeNode)
+		responses.AppendArray(unclaimedFeeNode)
 	}
 
 	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
+		"stat":     stat,
 		"response": responses,
 	})
 
@@ -346,7 +349,7 @@ func ApiGetPositionUnclaimedFeeByLpTokenId(lpTokenId uint64) string {
 	})
 
 	// STAT NODE
-	_stat := json.ObjectNode("", map[string]*json.Node{
+	stat := json.ObjectNode("", map[string]*json.Node{
 		"height":    json.NumberNode("height", float64(std.GetHeight())),
 		"timestamp": json.NumberNode("timestamp", float64(time.Now().Unix())),
 	})
@@ -354,16 +357,16 @@ func ApiGetPositionUnclaimedFeeByLpTokenId(lpTokenId uint64) string {
 	// RESPONSE (ARRAY) NODE
 	responses := json.ArrayNode("", []*json.Node{})
 	for _, unclaimedFee := range rpcUnclaimedFee {
-		_unclaimedFeeNode := json.ObjectNode("", map[string]*json.Node{
+		unclaimedFeeNode := json.ObjectNode("", map[string]*json.Node{
 			"lpTokenId": json.NumberNode("lpTokenId", float64(unclaimedFee.LpTokenId)),
 			"fee0":      json.StringNode("fee0", unclaimedFee.Fee0),
 			"fee1":      json.StringNode("fee1", unclaimedFee.Fee1),
 		})
-		responses.AppendArray(_unclaimedFeeNode)
+		responses.AppendArray(unclaimedFeeNode)
 	}
 
 	node := json.ObjectNode("", map[string]*json.Node{
-		"stat":     _stat,
+		"stat":     stat,
 		"response": responses,
 	})
 
@@ -376,13 +379,7 @@ func ApiGetPositionUnclaimedFeeByLpTokenId(lpTokenId uint64) string {
 }
 
 func rpcMakePosition(lpTokenId uint64) RpcPosition {
-	position, exist := positions[lpTokenId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("_RPC_api.gno__rpcMakePosition() || lpTokenId(%d) not found", lpTokenId),
-		))
-	}
+	position := MustGetPosition(lpTokenId)
 
 	burned := isBurned(lpTokenId)
 
@@ -427,40 +424,30 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 func unclaimedFee(tokenId uint64) (*i256.Int, *i256.Int) {
 	// ref: https://blog.uniswap.org/uniswap-v3-math-primer-2#calculating-uncollected-fees
 
-	_liquidity := positions[tokenId].liquidity // u256
-	liquidity := i256.FromUint256(_liquidity)  // i256
+	position := MustGetPosition(tokenId)
 
-	tickLower := positions[tokenId].tickLower
-	tickUpper := positions[tokenId].tickUpper
+	liquidityU256 := position.liquidity
+	liquidity := i256.FromUint256(liquidityU256)
 
-	poolKey := positions[tokenId].poolKey
+	tickLower := position.tickLower
+	tickUpper := position.tickUpper
+
+	poolKey := position.poolKey
 	pool := pl.GetPoolFromPoolPath(poolKey)
 
 	currentTick := pool.Slot0Tick()
 
-	_feeGrowthGlobal0X128 := pool.FeeGrowthGlobal0X128()            // u256
-	feeGrowthGlobal0X128 := i256.FromUint256(_feeGrowthGlobal0X128) // i256
+	feeGrowthGlobal0X128 := i256.FromUint256(pool.FeeGrowthGlobal0X128())
+	feeGrowthGlobal1X128 := i256.FromUint256(pool.FeeGrowthGlobal1X128())
 
-	_feeGrowthGlobal1X128 := pool.FeeGrowthGlobal1X128()            // u256
-	feeGrowthGlobal1X128 := i256.FromUint256(_feeGrowthGlobal1X128) // i256
+	tickUpperFeeGrowthOutside0X128 := i256.FromUint256(pool.GetTickFeeGrowthOutside0X128(tickUpper))
+	tickUpperFeeGrowthOutside1X128 := i256.FromUint256(pool.GetTickFeeGrowthOutside1X128(tickUpper))
 
-	_tickUpperFeeGrowthOutside0X128 := pool.GetTickFeeGrowthOutside0X128(tickUpper)     // u256
-	tickUpperFeeGrowthOutside0X128 := i256.FromUint256(_tickUpperFeeGrowthOutside0X128) // i256
+	tickLowerFeeGrowthOutside0X128 := i256.FromUint256(pool.GetTickFeeGrowthOutside0X128(tickLower))
+	tickLowerFeeGrowthOutside1X128 := i256.FromUint256(pool.GetTickFeeGrowthOutside1X128(tickLower))
 
-	_tickUpperFeeGrowthOutside1X128 := pool.GetTickFeeGrowthOutside1X128(tickUpper)     // u256
-	tickUpperFeeGrowthOutside1X128 := i256.FromUint256(_tickUpperFeeGrowthOutside1X128) // i256
-
-	_tickLowerFeeGrowthOutside0X128 := pool.GetTickFeeGrowthOutside0X128(tickLower)     // u256
-	tickLowerFeeGrowthOutside0X128 := i256.FromUint256(_tickLowerFeeGrowthOutside0X128) // i256
-
-	_tickLowerFeeGrowthOutside1X128 := pool.GetTickFeeGrowthOutside1X128(tickLower)     // u256
-	tickLowerFeeGrowthOutside1X128 := i256.FromUint256(_tickLowerFeeGrowthOutside1X128) // i256
-
-	_feeGrowthInside0LastX128 := positions[tokenId].feeGrowthInside0LastX128 // u256
-	feeGrowthInside0LastX128 := i256.FromUint256(_feeGrowthInside0LastX128)  // i256
-
-	_feeGrowthInside1LastX128 := positions[tokenId].feeGrowthInside1LastX128 // u256
-	feeGrowthInside1LastX128 := i256.FromUint256(_feeGrowthInside1LastX128)  // i256
+	feeGrowthInside0LastX128 := i256.FromUint256(position.feeGrowthInside0LastX128)
+	feeGrowthInside1LastX128 := i256.FromUint256(position.feeGrowthInside1LastX128)
 
 	var tickLowerFeeGrowthBelow0, tickLowerFeeGrowthBelow1, tickUpperFeeGrowthAbove0, tickUpperFeeGrowthAbove1 *i256.Int
 
@@ -510,5 +497,6 @@ func subIn256(x, y *i256.Int) *i256.Int {
 }
 
 func isBurned(tokenId uint64) bool {
-	return positions[tokenId].burned
+	position := MustGetPosition(tokenId)
+	return position.burned
 }

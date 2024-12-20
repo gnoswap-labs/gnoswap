@@ -2,6 +2,9 @@ package position
 
 import (
 	"std"
+	"strconv"
+
+	"gno.land/p/demo/avl"
 
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/wugnot"
@@ -17,8 +20,8 @@ import (
 )
 
 var (
-	positions map[uint64]Position = make(map[uint64]Position) // tokenId -> Position
-	nextId    uint64              = 1                         // lp token id
+	positions = avl.NewTree() // tokenId[uint64] -> Position
+	nextId    = uint64(1)
 )
 
 // Mint creates a new liquidity position and mints liquidity tokens.
@@ -31,10 +34,10 @@ func Mint(
 	fee uint32,
 	tickLower int32,
 	tickUpper int32,
-	_amount0Desired string, // *u256.Uint
-	_amount1Desired string, // *u256.Uint
-	_amount0Min string, // *u256.Uint
-	_amount1Min string, // *u256.Uint
+	amount0DesiredStr string,
+	amount1DesiredStr string,
+	amount0MinStr string,
+	amount1MinStr string,
 	deadline int64,
 	mintTo std.Address,
 	caller std.Address,
@@ -51,7 +54,7 @@ func Mint(
 		if !(isUserCalled || isStakerCalled) {
 			panic(addDetailToError(
 				errNoPermission,
-				ufmt.Sprintf("position.gno__Mint() || only user or staker can call isUserCalled(%t) || isStakerCalled(%t), but called from %s", isUserCalled, isStakerCalled, prev.Addr().String()),
+				ufmt.Sprintf("only user or staker can call isUserCalled(%t) || isStakerCalled(%t), but called from %s", isUserCalled, isStakerCalled, prev.Addr().String()),
 			))
 		}
 	}
@@ -67,16 +70,16 @@ func Mint(
 
 	if token1 < token0 {
 		token0, token1 = token1, token0
-		_amount0Desired, _amount1Desired = _amount1Desired, _amount0Desired
-		_amount0Min, _amount1Min = _amount1Min, _amount0Min
+		amount0DesiredStr, amount1DesiredStr = amount1DesiredStr, amount0DesiredStr
+		amount0MinStr, amount1MinStr = amount1MinStr, amount0MinStr
 		tickLower, tickUpper = -tickUpper, -tickLower
 		token0IsNative, token1IsNative = token1IsNative, token0IsNative
 	}
 
-	amount0Desired := u256.MustFromDecimal(_amount0Desired)
-	amount1Desired := u256.MustFromDecimal(_amount1Desired)
-	amount0Min := u256.MustFromDecimal(_amount0Min)
-	amount1Min := u256.MustFromDecimal(_amount1Min)
+	amount0Desired := u256.MustFromDecimal(amount0DesiredStr)
+	amount1Desired := u256.MustFromDecimal(amount1DesiredStr)
+	amount0Min := u256.MustFromDecimal(amount0MinStr)
+	amount1Min := u256.MustFromDecimal(amount1MinStr)
 
 	// one of token amount can be 0 if position is out of range
 	// check this condition by using DryMint()
@@ -150,7 +153,7 @@ func handleNativeToken(token0IsNative, token1IsNative bool, caller std.Address) 
 			if (newUserWugnotBalance - oldUserWugnotBalance) != ugnotSent {
 				panic(addDetailToError(
 					errWrapUnwrap,
-					ufmt.Sprintf("position.gno__Mint() || ugnot sent(%d) != wugnot received(%d)", ugnotSent, newUserWugnotBalance-oldUserWugnotBalance),
+					ufmt.Sprintf("ugnot sent(%d) != wugnot received(%d)", ugnotSent, newUserWugnotBalance-oldUserWugnotBalance),
 				))
 			}
 		}
@@ -207,7 +210,13 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 		tokensOwed1:              u256.Zero(),
 		burned:                   false,
 	}
-	positions[tokenId] = position
+	updated := setPosition(tokenId, position)
+	if updated {
+		panic(addDetailToError(
+			errPositionExist,
+			ufmt.Sprintf("tokenId(%d) already exists", tokenId),
+		))
+	}
 
 	return tokenId, liquidity, amount0, amount1
 }
@@ -217,19 +226,19 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#increaseliquidity
 func IncreaseLiquidity(
 	tokenId uint64,
-	_amount0Desired string, // uint256
-	_amount1Desired string, // uint256
-	_amount0Min string, // uint256
-	_amount1Min string, // uint256
+	amount0DesiredStr string,
+	amount1DesiredStr string,
+	amount0MinStr string,
+	amount1MinStr string,
 	deadline int64,
 ) (uint64, string, string, string, string) {
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
-	amount0Desired := u256.MustFromDecimal(_amount0Desired)
-	amount1Desired := u256.MustFromDecimal(_amount1Desired)
-	amount0Min := u256.MustFromDecimal(_amount0Min)
-	amount1Min := u256.MustFromDecimal(_amount1Min)
+	amount0Desired := u256.MustFromDecimal(amount0DesiredStr)
+	amount1Desired := u256.MustFromDecimal(amount1DesiredStr)
+	amount0Min := u256.MustFromDecimal(amount0MinStr)
+	amount1Min := u256.MustFromDecimal(amount1MinStr)
 	increaseLiquidityParams := IncreaseLiquidityParams{
 		tokenId:        tokenId,
 		amount0Desired: amount0Desired,
@@ -240,7 +249,7 @@ func IncreaseLiquidity(
 	}
 
 	// wrap if target pool has wugnot
-	position := positions[tokenId]
+	position := MustGetPosition(tokenId)
 	pToken0, pToken1, _ := splitOf(position.poolKey)
 
 	isToken0Wugnot := pToken0 == consts.WRAPPED_WUGNOT
@@ -288,7 +297,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	if !exists(params.tokenId) {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("position.gno__increaseLiquidity() || tokenId(%d) doesn't exist", params.tokenId),
+			ufmt.Sprintf("tokenId(%d) doesn't exist", params.tokenId),
 		))
 	}
 
@@ -299,13 +308,13 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	if owner != caller {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("position.gno__increaseLiquidity() || only owner(%s) can increase liquidity for tokenId(%d), but called from %s", owner, params.tokenId, caller),
+			ufmt.Sprintf("only owner(%s) can increase liquidity for tokenId(%d), but called from %s", owner, params.tokenId, caller),
 		))
 	}
 
 	checkDeadline(params.deadline)
 
-	position := positions[params.tokenId]
+	position := MustGetPosition(params.tokenId)
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
 			poolKey:        position.poolKey,
@@ -345,7 +354,13 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position.liquidity = new(u256.Uint).Add(position.liquidity, liquidity)
 	position.burned = false
 
-	positions[params.tokenId] = position
+	updated := setPosition(params.tokenId, position)
+	if !updated {
+		panic(addDetailToError(
+			errPositionDoesNotExist,
+			ufmt.Sprintf("can not increase liquidity for non-existent position(%d)", params.tokenId),
+		))
+	}
 
 	return params.tokenId, liquidity, amount0, amount1, position.poolKey
 }
@@ -357,8 +372,8 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 func DecreaseLiquidity(
 	tokenId uint64,
 	liquidityRatio uint64,
-	_amount0Min string, // uint256
-	_amount1Min string, // uint256
+	amount0MinStr string,
+	amount1MinStr string,
 	deadline int64,
 	unwrapResult bool,
 ) (uint64, string, string, string, string, string, string) {
@@ -369,12 +384,12 @@ func DecreaseLiquidity(
 	if !isNormalRange {
 		panic(addDetailToError(
 			errOutOfRange,
-			ufmt.Sprintf("position.gno__decreaseLiquidity() || liquidityRatio(%d) should be in range 1 ~ 100", liquidityRatio),
+			ufmt.Sprintf("liquidityRatio(%d) should be in range 1 ~ 100", liquidityRatio),
 		))
 	}
 
-	amount0Min := u256.MustFromDecimal(_amount0Min)
-	amount1Min := u256.MustFromDecimal(_amount1Min)
+	amount0Min := u256.MustFromDecimal(amount0MinStr)
+	amount1Min := u256.MustFromDecimal(amount1MinStr)
 	decreaseLiquidityParams := DecreaseLiquidityParams{
 		tokenId:        tokenId,
 		liquidityRatio: liquidityRatio,
@@ -424,13 +439,13 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	fee0 := u256.MustFromDecimal(fee0Str)
 	fee1 := u256.MustFromDecimal(fee1Str)
 
-	position := positions[params.tokenId]
+	position := MustGetPosition(params.tokenId)
 	positionLiquidity := position.liquidity
 
 	if positionLiquidity.IsZero() {
 		panic(addDetailToError(
 			errZeroLiquidity,
-			ufmt.Sprintf("position.gno__decreaseLiquidity() || position(tokenId:%d) has 0 liquidity", params.tokenId),
+			ufmt.Sprintf("position(tokenId:%d) has 0 liquidity", params.tokenId),
 		))
 	}
 
@@ -472,7 +487,13 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
 	position.liquidity = new(u256.Uint).Sub(positionLiquidity, liquidityToRemove)
-	positions[params.tokenId] = position
+	updated := setPosition(params.tokenId, position)
+	if !updated {
+		panic(addDetailToError(
+			errPositionDoesNotExist,
+			ufmt.Sprintf("can not decrease liquidity for non-existent position(%d)", params.tokenId),
+		))
+	}
 
 	// GIVE BACK TO USER
 	_amount0, _amount1 := pl.Collect(
@@ -498,7 +519,7 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	if overflow {
 		position.tokensOwed1 = u256.Zero()
 	}
-	positions[params.tokenId] = position
+	setPosition(params.tokenId, position)
 
 	if position.isClear() {
 		burnPosition(params.tokenId) // just update flag (we don't want to burn actual position)
@@ -522,10 +543,10 @@ func Reposition(
 	tokenId uint64,
 	tickLower int32,
 	tickUpper int32,
-	_amount0Desired string, // uint256
-	_amount1Desired string, // uint256
-	_amount0Min string, // *u256.Uint
-	_amount1Min string, // *u256.Uint
+	amount0DesiredStr string,
+	amount1DesiredStr string,
+	amount0MinStr string,
+	amount1MinStr string,
 ) (uint64, string, int32, int32, string, string) {
 	common.IsHalted()
 	en.MintAndDistributeGns()
@@ -534,7 +555,7 @@ func Reposition(
 	if !exists(tokenId) {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("position.gno__Reposition() || tokenId(%d) doesn't exist", tokenId),
+			ufmt.Sprintf("tokenId(%d) doesn't exist", tokenId),
 		))
 	}
 
@@ -545,19 +566,19 @@ func Reposition(
 	if owner != caller {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("position.gno__Reposition() || only owner(%s) can reposition for tokenId(%d), but called from %s", owner, tokenId, caller),
+			ufmt.Sprintf("only owner(%s) can reposition for tokenId(%d), but called from %s", owner, tokenId, caller),
 		))
 	}
 
 	// position should be burned to reposition
-	position := positions[tokenId]
+	position := MustGetPosition(tokenId)
 	oldTickLower := position.tickLower
 	oldTickUpper := position.tickUpper
 
 	if !(position.isClear()) {
 		panic(addDetailToError(
 			errNotClear,
-			ufmt.Sprintf("position.gno__Reposition() || position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
+			ufmt.Sprintf("position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
 		))
 	}
 
@@ -585,10 +606,10 @@ func Reposition(
 			poolKey:        position.poolKey,
 			tickLower:      tickLower,
 			tickUpper:      tickUpper,
-			amount0Desired: u256.MustFromDecimal(_amount0Desired),
-			amount1Desired: u256.MustFromDecimal(_amount1Desired),
-			amount0Min:     u256.MustFromDecimal(_amount0Min),
-			amount1Min:     u256.MustFromDecimal(_amount1Min),
+			amount0Desired: u256.MustFromDecimal(amount0DesiredStr),
+			amount1Desired: u256.MustFromDecimal(amount1DesiredStr),
+			amount0Min:     u256.MustFromDecimal(amount0MinStr),
+			amount1Min:     u256.MustFromDecimal(amount1MinStr),
 			caller:         std.PrevRealm().Addr(),
 		},
 	)
@@ -615,7 +636,13 @@ func Reposition(
 	position.tokensOwed1 = u256.Zero()
 	position.burned = false
 
-	positions[tokenId] = position
+	updated := setPosition(tokenId, position)
+	if !updated {
+		panic(addDetailToError(
+			errPositionDoesNotExist,
+			ufmt.Sprintf("can not reposition non-existent position(%d)", tokenId),
+		))
+	}
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(position.poolKey)
 
@@ -651,7 +678,7 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 	if !exists(tokenId) {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("position.gno__CollectFee() || tokenId(%d) doesn't exist", tokenId),
+			ufmt.Sprintf("tokenId(%d) doesn't exist", tokenId),
 		))
 	}
 
@@ -659,13 +686,7 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 	isAuthorizedForToken(tokenId)
 
 	// verify position
-	position, exist := positions[tokenId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("position.gno__CollectFee() || position(%d) doesn't exist", tokenId),
-		))
-	}
+	position := MustGetPosition(tokenId)
 
 	token0, token1, fee := splitOf(position.poolKey)
 
@@ -725,7 +746,13 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 	position.tokensOwed0 = new(u256.Uint).Sub(tokensOwed0, u256.MustFromDecimal(amount0))
 	position.tokensOwed1 = new(u256.Uint).Sub(tokensOwed1, u256.MustFromDecimal(amount1))
 
-	positions[tokenId] = position
+	updated := setPosition(tokenId, position)
+	if !updated {
+		panic(addDetailToError(
+			errPositionDoesNotExist,
+			ufmt.Sprintf("can not collect fee for non-existent position(%d)", tokenId),
+		))
+	}
 
 	// handle withdrawal fee
 	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(tokenId, token0, amount0, token1, amount1, position.poolKey, std.PrevRealm().Addr())
@@ -778,39 +805,30 @@ func updateTokensOwed(
 	return new(u256.Uint).Add(tokensOwed, add)
 }
 
-func burnNFT(tokenId uint64) {
-	isAuthorizedForToken(tokenId)
-
-	position := positions[tokenId]
-
-	if !(position.isClear()) {
-		panic(addDetailToError(
-			errNotClear,
-			ufmt.Sprintf("position.gno__burnNFT() || position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
-		))
-	}
-	delete(positions, tokenId)
-	gnft.Burn(tokenIdFrom(tokenId))
-}
-
 func burnPosition(tokenId uint64) {
-	position := positions[tokenId]
+	position := MustGetPosition(tokenId)
 	if !(position.isClear()) {
 		panic(addDetailToError(
 			errNotClear,
-			ufmt.Sprintf("position.gno__burnPosition() || position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
+			ufmt.Sprintf("position(%d) isn't clear(liquidity:%s, tokensOwed0:%s, tokensOwed1:%s)", tokenId, position.liquidity.ToString(), position.tokensOwed0.ToString(), position.tokensOwed1.ToString()),
 		))
 	}
 
 	position.burned = true
-	positions[tokenId] = position
+	updated := setPosition(tokenId, position)
+	if !updated {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("can not burn non-existent position(%d)", tokenId),
+		))
+	}
 }
 
 func isAuthorizedForToken(tokenId uint64) {
 	if !(isOwnerOrOperator(std.PrevRealm().Addr(), tokenId)) {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("position.gno__isAuthorizedForToken() || caller(%s) is not approved or owner of tokenId(%d)", std.PrevRealm().Addr(), tokenId),
+			ufmt.Sprintf("caller(%s) is not approved or owner of tokenId(%d)", std.PrevRealm().Addr(), tokenId),
 		))
 	}
 }
@@ -819,7 +837,7 @@ func verifyTokenIdAndOwnership(tokenId uint64) {
 	if !exists(tokenId) {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("position.gno__verifyTokenIdAndOwnership() || tokenId(%d) doesn't exist", tokenId),
+			ufmt.Sprintf("tokenId(%d) doesn't exist", tokenId),
 		))
 	}
 
@@ -828,7 +846,7 @@ func verifyTokenIdAndOwnership(tokenId uint64) {
 	if owner != caller {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("position.gno__verifyTokenIdAndOwnership() || only owner(%s) can decrease liquidity(tokenId:%d), but called from %s", owner, tokenId, caller),
+			ufmt.Sprintf("only owner(%s) can decrease liquidity(tokenId:%d), but called from %s", owner, tokenId, caller),
 		))
 	}
 }
@@ -846,7 +864,7 @@ func verifyBurnedAmounts(burnedAmount0, burnedAmount1, amount0Min, amount1Min *u
 	if !(burnedAmount0.Gte(amount0Min) && burnedAmount1.Gte(amount1Min)) {
 		panic(addDetailToError(
 			errSlippage,
-			ufmt.Sprintf("position.gno__verifyBurnedAmounts() || burnedAmount0(%s) >= amount0Min(%s) && burnedAmount1(%s) >= amount1Min(%s)", burnedAmount0.ToString(), amount0Min.ToString(), burnedAmount1.ToString(), amount1Min.ToString()),
+			ufmt.Sprintf("burnedAmount0(%s) >= amount0Min(%s) && burnedAmount1(%s) >= amount1Min(%s)", burnedAmount0.ToString(), amount0Min.ToString(), burnedAmount1.ToString(), amount1Min.ToString()),
 		))
 	}
 }
@@ -864,18 +882,55 @@ func SetPositionOperator(tokenId uint64, operator std.Address) {
 	if caller != consts.STAKER_PATH {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("position.gno__SetPositionOperator() || caller(%s) is not staker", caller),
+			ufmt.Sprintf("caller(%s) is not staker", caller),
 		))
 	}
 
-	position, exist := positions[tokenId]
+	position := MustGetPosition(tokenId)
+	position.operator = operator
+	updated := setPosition(tokenId, position)
+	if !updated {
+		panic(addDetailToError(
+			errPositionDoesNotExist,
+			ufmt.Sprintf("can not set operator for non-existent position(%d)", tokenId),
+		))
+	}
+}
+
+// MustGetPosition returns a position for a given tokenId
+// panics if position doesn't exist
+func MustGetPosition(tokenId uint64) Position {
+	position, exist := GetPosition(tokenId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("position.gno__SetPositionOperator() || position(%d) doesn't exist", tokenId),
+			ufmt.Sprintf("position with tokenId(%d) doesn't exist", tokenId),
 		))
 	}
+	return position
+}
 
-	position.operator = operator
-	positions[tokenId] = position
+// GetPosition returns a position for a given tokenId
+// Returns false if position doesn't exist
+func GetPosition(tokenId uint64) (Position, bool) {
+	tokenIdStr := strconv.FormatUint(tokenId, 10)
+	iPosition, exist := positions.Get(tokenIdStr)
+	if !exist {
+		return Position{}, false
+	}
+
+	return iPosition.(Position), true
+}
+
+// setPosition sets a position for a given tokenId
+// Returns true if position is newly created, false if position already exists and just updated.
+func setPosition(tokenId uint64, position Position) bool {
+	tokenIdStr := strconv.FormatUint(tokenId, 10)
+	return positions.Set(tokenIdStr, position)
+}
+
+// removePosition removes a position for a given tokenId
+func removePosition(tokenId uint64) {
+	tokenIdStr := strconv.FormatUint(tokenId, 10)
+	positions.Remove(tokenIdStr)
 }
