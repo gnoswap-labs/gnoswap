@@ -74,6 +74,7 @@ func MintGns(address pusers.AddressOrName) uint64 {
 	setMintedEmissionAmount(GetMintedEmissionAmount() + amountToMint)
 	setLeftEmissionAmount(GetLeftEmissionAmount() - amountToMint)
 
+	// mint calculated amount to address
 	err := privateLedger.Mint(users.Resolve(address), amountToMint)
 	if err != nil {
 		panic(err.Error())
@@ -150,6 +151,7 @@ func checkErr(err error) {
 func calculateAmountToMint(fromHeight, toHeight int64) uint64 {
 	fromYear := GetHalvingYearByHeight(fromHeight)
 
+	// if toHeight is greater than emission end height, set toHeight to emission end height
 	if toHeight > GetEndHeight() {
 		toHeight = GetEndHeight()
 	}

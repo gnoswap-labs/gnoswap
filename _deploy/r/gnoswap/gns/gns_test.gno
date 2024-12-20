@@ -27,6 +27,38 @@ var (
 	bob   = testutils.TestAddress("bob")
 )
 
+func TestAssertTooManyEmission(t *testing.T) {
+	tests := []struct {
+		name        string
+		amount      uint64
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "should panic if emission amount is too large",
+			amount:      MAXIMUM_SUPPLY,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-GNS-002] too many emission reward || amount: 1000000000000000",
+		},
+		{
+			name:   "should not panic if emission amount is not too large",
+			amount: 123,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					assertTooManyEmission(tt.amount)
+				})
+			} else {
+				uassert.NotPanics(t, func() { assertTooManyEmission(tt.amount) })
+			}
+		})
+	}
+}
+
 func TestIsLastBlockOfHalvingYear(t *testing.T) {
 	tests := make([]struct {
 		name   string
