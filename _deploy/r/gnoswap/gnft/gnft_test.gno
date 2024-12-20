@@ -4,6 +4,7 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
@@ -58,6 +59,15 @@ func TestTotalSupply(t *testing.T) {
 			setup: func() {
 				std.TestSetRealm(positionRealm)
 				Mint(a2u(addr01), tid(1))
+				Mint(a2u(addr01), tid(2))
+			},
+			expected: uint64(2),
+		},
+		{
+			name: "total supply after burning",
+			setup: func() {
+				std.TestSetRealm(positionRealm)
+				Burn(tid(2))
 			},
 			expected: uint64(1),
 		},
@@ -183,37 +193,64 @@ func TestGetApproved(t *testing.T) {
 
 func TestTransferFrom(t *testing.T) {
 	resetObject(t)
+	std.TestSetRealm(positionRealm)
+	Mint(a2u(addr01), tid(1))
 
 	tests := []struct {
-		name        string
-		setup       func()
-		callerRealm std.Realm
-		shouldPanic bool
-		panicMsg    string
-		expected    std.Address
+		name              string
+		setup             func()
+		callerRealm       std.Realm
+		fromAddr          std.Address
+		toAddr            std.Address
+		tokenIdToTransfer uint64
+		shouldPanic       bool
+		panicMsg          string
+		expected          std.Address
+		verifyTokenList   func()
 	}{
 		{
-			name:        "transfer non-existent token id",
-			callerRealm: std.NewUserRealm(addr01),
-			shouldPanic: true,
-			panicMsg:    "caller is not token owner or approved",
-			expected:    std.Address(""),
+			name:              "transfer non-existent token id",
+			callerRealm:       std.NewUserRealm(addr01),
+			fromAddr:          addr01,
+			toAddr:            addr02,
+			tokenIdToTransfer: 99,
+			shouldPanic:       true,
+			panicMsg:          "invalid token id",
 		},
 		{
-			name: "transfer token owned by other user",
+			name:              "transfer token owned by other user without approval",
+			callerRealm:       std.NewUserRealm(addr02),
+			fromAddr:          addr01,
+			toAddr:            addr02,
+			tokenIdToTransfer: 1,
+			shouldPanic:       true,
+			panicMsg:          "[GNOSWAP-GNFT-001] caller has no permission || caller (g1q646ctzhvn60v492x8ucvyqnrj2w30cwh6efk5) is not the owner or operator of token (1)",
+		},
+		{
+			name: "transfer token owned by other user with approval",
 			setup: func() {
-				std.TestSetRealm(positionRealm)
-				Mint(a2u(addr01), tid(1))
+				std.TestSetRealm(addr01Realm)
+				Approve(a2u(addr02), tid(1))
 			},
-			callerRealm: std.NewUserRealm(addr02),
-			shouldPanic: true,
-			panicMsg:    "caller is not token owner or approved",
-			expected:    std.Address(""),
+			callerRealm:       std.NewUserRealm(addr02),
+			fromAddr:          addr01,
+			toAddr:            addr02,
+			tokenIdToTransfer: 1,
+			verifyTokenList: func() {
+				uassert.Equal(t, 0, len(mustGetTokenList(addr01)))
+				uassert.Equal(t, 1, len(mustGetTokenList(addr02)))
+			},
 		},
 		{
-			name:        "transfer token owned by caller",
-			callerRealm: std.NewUserRealm(addr01),
-			shouldPanic: false,
+			name:              "transfer token owned by caller",
+			callerRealm:       std.NewUserRealm(addr02),
+			fromAddr:          addr02,
+			toAddr:            addr01,
+			tokenIdToTransfer: 1,
+			verifyTokenList: func() {
+				uassert.Equal(t, 1, len(mustGetTokenList(addr01)))
+				uassert.Equal(t, 0, len(mustGetTokenList(addr02)))
+			},
 		},
 	}
 
@@ -225,13 +262,12 @@ func TestTransferFrom(t *testing.T) {
 
 			if tt.shouldPanic {
 				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
-					TransferFrom(a2u(addr01), a2u(addr02), tid(1))
+					TransferFrom(a2u(tt.fromAddr), a2u(tt.toAddr), tid(tt.tokenIdToTransfer))
 				})
 			} else {
 				std.TestSetRealm(tt.callerRealm)
-				uassert.NotPanics(t, func() {
-					TransferFrom(a2u(addr01), a2u(addr02), tid(1))
-				})
+				TransferFrom(a2u(tt.fromAddr), a2u(tt.toAddr), tid(tt.tokenIdToTransfer))
+				tt.verifyTokenList()
 			}
 		})
 	}
@@ -241,13 +277,14 @@ func TestMint(t *testing.T) {
 	resetObject(t)
 
 	tests := []struct {
-		name          string
-		callerRealm   std.Realm
-		tokenIdToMint uint64
-		addressToMint std.Address
-		shouldPanic   bool
-		panicMsg      string
-		expected      string
+		name            string
+		callerRealm     std.Realm
+		tokenIdToMint   uint64
+		addressToMint   std.Address
+		shouldPanic     bool
+		panicMsg        string
+		expected        string
+		verifyTokenList func()
 	}{
 		{
 			name:        "mint without permission",
@@ -260,6 +297,9 @@ func TestMint(t *testing.T) {
 			tokenIdToMint: 1,
 			addressToMint: addr01,
 			expected:      "1",
+			verifyTokenList: func() {
+				uassert.Equal(t, 1, len(mustGetTokenList(addr01)))
+			},
 		},
 		{
 			name:          "mint second nft to addr02",
@@ -267,6 +307,9 @@ func TestMint(t *testing.T) {
 			tokenIdToMint: 2,
 			addressToMint: addr02,
 			expected:      "2",
+			verifyTokenList: func() {
+				uassert.Equal(t, 1, len(mustGetTokenList(addr02)))
+			},
 		},
 	}
 
@@ -281,6 +324,7 @@ func TestMint(t *testing.T) {
 				std.TestSetRealm(tt.callerRealm)
 				mintedTokenId := Mint(a2u(tt.addressToMint), tid(tt.tokenIdToMint))
 				uassert.Equal(t, tt.expected, string(mintedTokenId))
+				tt.verifyTokenList()
 			}
 		})
 	}
@@ -288,11 +332,12 @@ func TestMint(t *testing.T) {
 
 func TestBurn(t *testing.T) {
 	tests := []struct {
-		name          string
-		callerRealm   std.Realm
-		tokenIdToBurn uint64
-		shouldPanic   bool
-		panicMsg      string
+		name            string
+		callerRealm     std.Realm
+		tokenIdToBurn   uint64
+		shouldPanic     bool
+		panicMsg        string
+		verifyTokenList func()
 	}{
 		{
 			name:          "burn without permission",
@@ -312,6 +357,9 @@ func TestBurn(t *testing.T) {
 			callerRealm:   std.NewCodeRealm(consts.POSITION_PATH),
 			tokenIdToBurn: 2,
 			shouldPanic:   false,
+			verifyTokenList: func() {
+				uassert.Equal(t, 0, len(mustGetTokenList(addr02)))
+			},
 		},
 	}
 
@@ -327,6 +375,7 @@ func TestBurn(t *testing.T) {
 				uassert.NotPanics(t, func() {
 					Burn(tid(tt.tokenIdToBurn))
 				})
+				tt.verifyTokenList()
 			}
 		})
 	}
@@ -449,4 +498,5 @@ func resetObject(t *testing.T) {
 	t.Helper()
 
 	gnft = grc721.NewBasicNFT("GNOSWAP NFT", "GNFT")
+	tokenList = avl.NewTree()
 }
