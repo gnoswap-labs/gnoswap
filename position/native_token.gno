@@ -9,6 +9,22 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 )
 
+// wrap wraps the specified amount of the native token `ugnot` into the wrapped token `wugnot`.
+//
+// Parameters:
+//   - ugnotAmount (uint64): The amount of `ugnot` tokens to wrap into `wugnot`.
+//   - to (std.Address): The recipient's address to receive the wrapped tokens.
+//
+// Returns:
+//   - error: An error if the `ugnot` amount is zero, below the minimum wrapping threshold, or any other issue occurs.
+//
+// Example:
+//
+//	wrap(1000, userAddress)
+//	- Wraps 1000 UGNOT into WUGNOT and transfers the WUGNOT to `userAddress`.
+//
+// Errors:
+//   - Returns an error if `ugnotAmount` is zero or less than the minimum deposit threshold.
 func wrap(ugnotAmount uint64, to std.Address) error {
 	if ugnotAmount == 0 || ugnotAmount < consts.UGNOT_MIN_DEPOSIT_TO_WRAP {
 		return ufmt.Errorf("amount(%d) < minimum(%d)", ugnotAmount, consts.UGNOT_MIN_DEPOSIT_TO_WRAP)
