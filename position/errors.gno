@@ -20,6 +20,9 @@ var (
 	errPositionExist        = errors.New("[GNOSWAP-POSITION-011] position with same tokenId already exists")
 	errInvalidAddress       = errors.New("[GNOSWAP-POSITION-012] invalid address")
 	errPositionDoesNotExist = errors.New("[GNOSWAP-POSITION-013] position does not exist")
+	errZeroUGNOT         = errors.New("[GNOSWAP-POSITION-013] No UGNOTs were sent")
+	errInsufficientUGNOT = errors.New("[GNOSWAP-POSITION-014] Insufficient UGNOT provided")
+	errInvalidTokenPath  = errors.New("[GNOSWAP-POSITION-012] invalid token address")
 )
 
 func addDetailToError(err error, detail string) string {
