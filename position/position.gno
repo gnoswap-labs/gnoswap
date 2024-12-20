@@ -2,11 +2,11 @@ package position
 
 import (
 	"encoding/base64"
-	"std"
-
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gnft"
+	"std"
+	"strconv"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -54,6 +54,7 @@ type TokenPair struct {
 	token1         string
 	token0IsNative bool
 	token1IsNative bool
+	wrappedAmount  uint64
 }
 
 type ProcessedMintInput struct {
@@ -67,9 +68,53 @@ type ProcessedMintInput struct {
 	poolPath       string
 }
 
-// Mint creates a new liquidity position and mints liquidity tokens.
-// It also handles the conversion between GNOT and WUGNOT transparently for the user.
-// Returns minted tokenId, liquidity, amount0, amount1
+// Mint creates a new liquidity position by depositing token pairs into the pool and minting a new LP token.
+//
+// Parameters:
+//   - token0: The address of token0.
+//   - token1: The address of token1.
+//   - fee: The fee tier of the pool, in basis points.
+//   - tickLower: The lower tick boundary of the position.
+//   - tickUpper: The upper tick boundary of the position.
+//   - amount0Desired: Desired amount of token0 to add as liquidity, as a string.
+//   - amount1Desired: Desired amount of token1 to add as liquidity, as a string.
+//   - amount0Min: Minimum acceptable amount of token0 to add as liquidity, as a string.
+//   - amount1Min: Minimum acceptable amount of token1 to add as liquidity, as a string.
+//   - deadline: Expiration timestamp for the transaction.
+//   - mintTo: Address to receive the minted LP token.
+//   - caller: The address of the entity (contract or user) providing liquidity; assets will be withdrawn from this address.
+//
+// Returns:
+//   - uint64: The ID of the newly minted liquidity position.
+//   - string: The amount of liquidity provided to the position.
+//   - string: The amount of token0 used in the mint.
+//   - string: The amount of token1 used in the mint.
+//
+// Behavior:
+//  1. **Validation**:
+//     - Ensures the contract is not halted.
+//     - Validates that the caller is either a user or a staker contract.
+//     - If the caller is a user, validates the `mintTo` and `caller` addresses to ensure they match.
+//     - Checks the transaction's deadline to prevent expired transactions.
+//  2. **Pre-Mint Setup**:
+//     - Calls `MintAndDistributeGns` to handle GNS emissions.
+//     - Processes the input parameters for minting (`processMintInput`) to standardize and validate the inputs.
+//  3. **Mint Execution**:
+//     - Executes the mint operation using the processed parameters.
+//     - Withdraws the required token amounts (`token0` and `token1`) from the `caller` address.
+//     - Mints a new LP token, and the resulting LP token is sent to the `mintTo` address.
+//  4. **Post-Mint Cleanup**:
+//     - If native tokens were used (e.g., `ugnot`), unwraps any leftover wrapped tokens (`wugnot`) and refunds them to the `caller` address.
+//  5. **Event Emission**:
+//     - Emits a "Mint" event containing detailed information about the mint operation.
+//
+// Panics:
+//   - If the contract is halted.
+//   - If the caller is not authorized.
+//   - If the transaction deadline has passed.
+//   - If input validation fails.
+//   - If errors occur during the minting process or leftover token unwrapping.
+//
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#mint
 func Mint(
 	token0 string,
@@ -117,27 +162,24 @@ func Mint(
 		panic(addDetailToError(errInvalidInput, err.Error()))
 	}
 
-	// XXX (@notJoon): This seems has a dependency in the execution order
-	userWugnotBalance := wugnot.BalanceOf(a2u(caller))
-
-	if err := handleNativeToken(
-		processedInput.tokenPair.token0IsNative,
-		processedInput.tokenPair.token1IsNative,
-		caller,
-	); err != nil {
-		panic(addDetailToError(errWrapUnwrap, err.Error()))
-	}
-
 	// perform mint operation
 	mintParams := newMintParams(processedInput, mintInput)
 	tokenId, liquidity, amount0, amount1 := mint(mintParams)
 
-	handleLeftoverNativeToken(
-		processedInput.tokenPair.token0IsNative,
-		processedInput.tokenPair.token1IsNative,
-		userWugnotBalance,
-		caller,
-	)
+	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > amount0.Uint64() {
+		// unwrap leftover wugnot
+		err = unwrap(processedInput.tokenPair.wrappedAmount-amount0.Uint64(), caller)
+		if err != nil {
+			panic(addDetailToError(errWrapUnwrap, err.Error()))
+		}
+	}
+	if processedInput.tokenPair.token1IsNative && processedInput.tokenPair.wrappedAmount > amount1.Uint64() {
+		// unwrap leftover wugnot
+		err = unwrap(processedInput.tokenPair.wrappedAmount-amount1.Uint64(), caller)
+		if err != nil {
+			panic(addDetailToError(errWrapUnwrap, err.Error()))
+		}
+	}
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(processedInput.poolPath)
 
@@ -162,43 +204,17 @@ func Mint(
 	return tokenId, liquidity.ToString(), amount0.ToString(), amount1.ToString()
 }
 
-func assertCallerPermission(prev std.Realm) error {
-	isUserCalled := prev.PkgPath() == ""
-	isStakerCalled := prev.Addr() == consts.STAKER_ADDR
-
-	if !common.GetLimitCaller() {
-		return nil
-	}
-
-	if !(isUserCalled || isStakerCalled) {
-		return ufmt.Errorf(
-			"only user or staker can call, but called from %s", prev.Addr().String(),
-		)
-	}
-
-	return nil
-}
-
-func upgradeCallerIfUserCalled(caller, mintTo std.Address, prev std.Realm) (std.Address, std.Address) {
-	// user called
-	if prev.PkgPath() == "" {
-		caller = prev.Addr()
-		mintTo = prev.Addr()
-	}
-
-	return caller, mintTo
-}
-
 func processMintInput(input MintInput) (ProcessedMintInput, error) {
 	var result ProcessedMintInput
 
 	// process tokens
-	token0, token1, token0IsNative, token1IsNative := processTokens(input.token0, input.token1)
+	token0, token1, token0IsNative, token1IsNative, wrappedAmount := processTokens(input.token0, input.token1, input.amount0Desired, input.amount1Desired, input.caller)
 	pair := TokenPair{
 		token0:         token0,
 		token1:         token1,
 		token0IsNative: token0IsNative,
 		token1IsNative: token1IsNative,
+		wrappedAmount:  wrappedAmount,
 	}
 
 	// parse amounts
@@ -231,25 +247,180 @@ func processMintInput(input MintInput) (ProcessedMintInput, error) {
 	return result, nil
 }
 
+// processTokens processes two token paths, validates them, and handles the wrapping of native tokens into wrapped tokens if applicable.
+//
+// Parameters:
+//   - token0: The first token path to process.
+//   - token1: The second token path to process.
+//   - caller: The address of the user initiating the token processing.
+//
+// Returns:
+//   - string: Processed token0 path (potentially modified if it was a native token).
+//   - string: Processed token1 path (potentially modified if it was a native token).
+//   - bool: Indicates whether token0 was a native token (`true` if native, `false` otherwise).
+//   - bool: Indicates whether token1 was a native token (`true` if native, `false` otherwise).
+//   - uint64: The amount of the native token that was wrapped into the wrapped token.
+//
+// Behavior:
+//  1. Validates the token paths using `validateTokenPath`.
+//     - Panics with a detailed error if validation fails.
+//  2. Checks if `token0` or `token1` is a native token using `isNative`.
+//     - If a token is native, it is replaced with the wrapped token path (`WRAPPED_WUGNOT`).
+//     - The native token is then wrapped into the wrapped token using `safeWrapNativeToken`.
+//  3. Returns the processed token paths, flags indicating if the tokens were native, and the wrapped amount.
+//
+// Panics:
+//   - If `validateTokenPath` fails validation.
+//   - If wrapping the native token using `safeWrapNativeToken` encounters an issue.
+func processTokens(
+	token0 string,
+	token1 string,
+	amount0Desired string,
+	amount1Desired string,
+	caller std.Address,
+) (string, string, bool, bool, uint64) {
+	err := validateTokenPath(token0, token1)
+	if err != nil {
+		panic(addDetailToError(err, ufmt.Sprintf("token0(%s), token1(%s)", token0, token1)))
+	}
+
+	token0IsNative := false
+	token1IsNative := false
+	wrappedAmount := uint64(0)
+
+	if isNative(token0) {
+		token0 = consts.WRAPPED_WUGNOT
+		token0IsNative = true
+
+		wrappedAmount, _ = safeWrapNativeToken(amount0Desired, caller)
+	} else if isNative(token1) {
+		token1 = consts.WRAPPED_WUGNOT
+		token1IsNative = true
+
+		wrappedAmount, _ = safeWrapNativeToken(amount1Desired, caller)
+	}
+
+	return token0, token1, token0IsNative, token1IsNative, wrappedAmount
+}
+
+// validateTokenPath validates the relationship and format of token paths.
+// Ensures that token paths are not identical, not conflicting (e.g., GNOT and WUGNOT),
+// and each token path is in a valid format.
+//
+// Parameters:
+//   - token0: The first token path to validate.
+//   - token1: The second token path to validate.
+//
+// Returns:
+//   - error: Returns `errInvalidTokenPath` or nil
+//
+// Example:
+//
+//	validateTokenPath("tokenA", "tokenB") -> nil
+//	validateTokenPath("tokenA", "tokenA") -> errInvalidTokenPath
+//	validateTokenPath(GNOT, WUGNOT) -> errInvalidTokenPath
+func validateTokenPath(token0, token1 string) error {
+	if token0 == token1 {
+		return errInvalidTokenPath
+	}
+	if (token0 == consts.GNOT && token1 == consts.WRAPPED_WUGNOT) ||
+		(token0 == consts.WRAPPED_WUGNOT && token1 == consts.GNOT) {
+		return errInvalidTokenPath
+	}
+	if !isValidTokenPath(token0) || !isValidTokenPath(token1) {
+		return errInvalidTokenPath
+	}
+	return nil
+}
+
+// isValidTokenPath checks whether the given token path is valid and registered.
+//
+// Parameters:
+//   - tokenPath: The token path to validate.
+//
+// Returns:
+//   - bool: Returns `true` if the token path is valid and registered; otherwise, `false`.
+func isValidTokenPath(tokenPath string) bool {
+	err := common.IsRegistered(tokenPath)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+// isNative checks whether the given token is a native token.
+func isNative(token string) bool {
+	return token == consts.GNOT
+}
+
+// safeWrapNativeToken safely wraps the native token `ugnot` into the wrapped token `wugnot` for a user.
+//
+// Parameters:
+//   - amountDesired: The desired amount of `ugnot` to be wrapped, provided as a string.
+//   - userAddress: The address of the user initiating the wrapping process.
+//
+// Returns:
+//   - uint64: The amount of `ugnot` that was successfully wrapped into `wugnot`.
+//   - error: Returns an error if the wrapping process encounters an issue.
+//
+// Panics:
+//   - If the sent `ugnot` amount is zero.
+//   - If the `amountDesired` is invalid.
+//   - If the sent `ugnot` amount is insufficient to meet the `amountDesired`.
+//   - If the `wrap` function fails.
+//   - If there is a mismatch between the sent `ugnot` and the resulting `wugnot` balance.
+//
+// Example:
+// safeWrapNativeToken("100", userAddress)
+// - Wraps 100 UGNOT into WUGNOT for the `userAddress`.
+// - If the user sends more than 100 UGNOT, the excess is refunded.
+func safeWrapNativeToken(amountDesired string, userAddress std.Address) (uint64, error) {
+	beforeWugnotBalance := wugnot.BalanceOf(a2u(userAddress))
+	sentNative := std.GetOrigSend()
+	sentUgnotAmount := uint64(sentNative.AmountOf(consts.UGNOT))
+
+	if sentUgnotAmount <= 0 {
+		panic(addDetailToError(errZeroUGNOT, "amount of ugnot is zero"))
+	}
+
+	amount, err := strconv.ParseUint(amountDesired, 10, 64)
+	if err != nil {
+		panic(addDetailToError(errWrapUnwrap, err.Error()))
+	}
+
+	if sentUgnotAmount < amount {
+		panic(addDetailToError(errInsufficientUGNOT, "amount of ugnot is less than desired amount"))
+	}
+
+	if sentUgnotAmount > amount {
+		exceed := sentUgnotAmount - amount
+		refundUGNOT(userAddress, exceed)
+		transferUGNOT(consts.POSITION_ADDR, userAddress, amount)
+		sentUgnotAmount = amount
+	}
+
+	if err = wrap(sentUgnotAmount, userAddress); err != nil {
+		panic(addDetailToError(errWugnotMinimum, err.Error()))
+	}
+
+	afterWugnotBalance := wugnot.BalanceOf(a2u(userAddress))
+	diff := afterWugnotBalance - beforeWugnotBalance
+
+	if diff != sentUgnotAmount {
+		panic(addDetailToError(
+			errWrapUnwrap,
+			ufmt.Sprintf("amount of ugnot (%d) is not equal to amount of wugnot. (diff: %d)", sentUgnotAmount, diff),
+		))
+	}
+	return sentUgnotAmount, nil
+}
+
 func parseAmounts(amount0Desired, amount1Desired, amount0Min, amount1Min string) (*u256.Uint, *u256.Uint, *u256.Uint, *u256.Uint) {
 	return u256.MustFromDecimal(amount0Desired), u256.MustFromDecimal(amount1Desired), u256.MustFromDecimal(amount0Min), u256.MustFromDecimal(amount1Min)
 }
 
 func renderPoolPath(token0, token1 string, fee uint32) string {
 	return ufmt.Sprintf("%s:%s:%d", token0, token1, fee)
-}
-
-func processTokens(token0, token1 string) (string, string, bool, bool) {
-	token0IsNative := false
-	token1IsNative := false
-	if token0 == consts.GNOT {
-		token0 = consts.WRAPPED_WUGNOT
-		token0IsNative = true
-	} else if token1 == consts.GNOT {
-		token1 = consts.WRAPPED_WUGNOT
-		token1IsNative = true
-	}
-	return token0, token1, token0IsNative, token1IsNative
 }
 
 func hasNativeToken(token0IsNative, token1IsNative bool) bool {
@@ -297,8 +468,6 @@ func handleLeftoverNativeToken(token0IsNative, token1IsNative bool, userWugnotBa
 }
 
 func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
-	checkDeadline(params.deadline)
-
 	pool := pl.GetPool(params.token0, params.token1, params.fee)
 	liquidity, amount0, amount1, err := addLiquidity(
 		AddLiquidityParams{
