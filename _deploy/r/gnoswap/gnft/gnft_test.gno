@@ -337,38 +337,40 @@ func TestSetTokenURI(t *testing.T) {
 		name        string
 		callerRealm std.Realm
 		tokenId     uint64
-		shouldErr   bool
-		errMsg      string
+		shouldPanic bool
+		panicMsg    string
 	}{
 		{
-			name:      "set token uri without permission",
-			tokenId:   1,
-			shouldErr: true,
-			errMsg:    "caller is not token owner",
+			name:        "set token uri without permission",
+			tokenId:     1,
+			shouldPanic: true,
+			panicMsg:    `[GNOSWAP-GNFT-001] caller has no permission || caller () is not the owner of token (1)`,
 		},
 		{
-			name:      "set token uri of non-minted token id",
-			tokenId:   99,
-			shouldErr: true,
-			errMsg:    errInvalidTokenId,
+			name:        "set token uri of non-minted token id",
+			tokenId:     99,
+			shouldPanic: true,
+			panicMsg:    `invalid token id`,
 		},
 		{
 			name:        "set token uri of token id(1)",
 			callerRealm: addr01Realm,
 			tokenId:     1,
-			shouldErr:   false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			std.TestSetRealm(tt.callerRealm)
-			_, err := SetTokenURI(tid(tt.tokenId))
 
-			if tt.shouldErr {
-				uassert.ErrorContains(t, err, tt.errMsg)
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					SetTokenURI(tid(tt.tokenId))
+				})
 			} else {
-				uassert.NoError(t, err)
+				uassert.NotPanics(t, func() {
+					SetTokenURI(tid(tt.tokenId))
+				})
 			}
 		})
 	}
