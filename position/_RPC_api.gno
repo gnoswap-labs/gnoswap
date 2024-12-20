@@ -437,8 +437,8 @@ func unclaimedFee(tokenId uint64) (*i256.Int, *i256.Int) {
 
 	currentTick := pool.Slot0Tick()
 
-	feeGrowthGlobal0X128 := i256.FromUint256(pool.GetFeeGrowthGlobal0X128())
-	feeGrowthGlobal1X128 := i256.FromUint256(pool.GetFeeGrowthGlobal1X128())
+	feeGrowthGlobal0X128 := i256.FromUint256(pool.FeeGrowthGlobal0X128())
+	feeGrowthGlobal1X128 := i256.FromUint256(pool.FeeGrowthGlobal1X128())
 
 	tickUpperFeeGrowthOutside0X128 := i256.FromUint256(pool.GetTickFeeGrowthOutside0X128(tickUpper))
 	tickUpperFeeGrowthOutside1X128 := i256.FromUint256(pool.GetTickFeeGrowthOutside1X128(tickUpper))
