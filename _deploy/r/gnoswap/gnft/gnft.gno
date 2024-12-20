@@ -205,7 +205,7 @@ func SetTokenURI(tid grc721.TokenID) {
 
 	assertCallerIsOwnerOfToken(tid)
 
-	err := setTokenUri(tid)
+	err := setTokenURI(tid)
 	if err != nil {
 		panic(addDetailToError(
 			errCannotSetURI,
@@ -229,7 +229,7 @@ func SetTokenURILast() {
 	}
 
 	lastTokenId := tokenListByCaller[lenTokenListByCaller-1]
-	err := setTokenUri(lastTokenId)
+	err := setTokenURI(lastTokenId)
 	if err != nil {
 		panic(addDetailToError(
 			errCannotSetURI,
@@ -238,7 +238,7 @@ func SetTokenURILast() {
 	}
 }
 
-func setTokenUri(tid grc721.TokenID) error {
+func setTokenURI(tid grc721.TokenID) error {
 	tokenURI := genImageURI(generateRandInstance())
 
 	_, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
@@ -306,6 +306,26 @@ func mustGetTokenList(addr std.Address) []grc721.TokenID {
 func appendTokenList(addr std.Address, tid grc721.TokenID) {
 	prevTokenList, _ := getTokenList(addr)
 	prevTokenList = append(prevTokenList, tid)
+	tokenList.Set(addr.String(), prevTokenList)
+}
+
+// removeTokenList removes a token ID from the list of nft tokens
+// Parameters:
+//   - addr: The address to remove the token for
+//   - tid: The token ID to remove
+func removeTokenList(addr std.Address, tid grc721.TokenID) {
+	prevTokenList, exist := getTokenList(addr)
+	if !exist {
+		return
+	}
+
+	for i, token := range prevTokenList {
+		if token == tid {
+			prevTokenList = append(prevTokenList[:i], prevTokenList[i+1:]...)
+			break
+		}
+	}
+
 	tokenList.Set(addr.String(), prevTokenList)
 }
 
