@@ -200,17 +200,50 @@ func Render(path string) string {
 // SetTokenURI sets the metadata URI using a randomly generated SVG image
 // Parameters:
 //   - tid: The token ID to set the URI for
-//
-// Returns:
-//   - string: The token URI
-//   - error: Returns an error if the URI setting fails, nil otherwise
-func SetTokenURI(tid grc721.TokenID) (string, error) {
+func SetTokenURI(tid grc721.TokenID) {
 	common.IsHalted()
 
-	tokenURI := genImageURI(generateRandInstance())
-	ok, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
+	assertCallerIsOwnerOfToken(tid)
+
+	err := setTokenUri(tid)
 	if err != nil {
-		return "", err
+		panic(addDetailToError(
+			errCannotSetURI,
+			ufmt.Sprintf("token id (%s)", tid),
+		))
+	}
+}
+
+// SetTokenURILast sets metadata URI for last minted nft token
+func SetTokenURILast() {
+	common.IsHalted()
+
+	caller := std.PrevRealm().Addr()
+	tokenListByCaller, _ := getTokenList(caller)
+	lenTokenListByCaller := len(tokenListByCaller)
+	if lenTokenListByCaller == 0 {
+		panic(addDetailToError(
+			errNoTokenForCaller,
+			ufmt.Sprintf("caller (%s)", caller),
+		))
+	}
+
+	lastTokenId := tokenListByCaller[lenTokenListByCaller-1]
+	err := setTokenUri(lastTokenId)
+	if err != nil {
+		panic(addDetailToError(
+			errCannotSetURI,
+			ufmt.Sprintf("token id (%s)", lastTokenId),
+		))
+	}
+}
+
+func setTokenUri(tid grc721.TokenID) error {
+	tokenURI := genImageURI(generateRandInstance())
+
+	_, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
+	if err != nil {
+		return err
 	}
 
 	prevAddr, prevPkgPath := getPrevAsString()
@@ -222,37 +255,6 @@ func SetTokenURI(tid grc721.TokenID) (string, error) {
 		"internal_tokenURI", tokenURI,
 	)
 
-	return tokenURI, nil
-}
-
-// SetTokenURILast sets metadata URI for last minted nft token
-// Returns:
-//   - error: Returns an error if the URI setting fails, nil otherwise
-func SetTokenURILast() error {
-	common.IsHalted()
-
-	caller := std.PrevRealm().Addr()
-	tokenListByCaller, _ := getTokenList(caller)
-	lenTokenListByCaller := len(tokenListByCaller)
-	if lenTokenListByCaller == 0 {
-		return nil
-	}
-
-	lastToken := tokenListByCaller[lenTokenListByCaller-1]
-	tokenURI, err := SetTokenURI(lastToken)
-	if err != nil {
-		return err
-	}
-
-	prevAddr, prevPkgPath := getPrevAsString()
-	std.Emit(
-		"SetTokenURILast",
-		"prevAddr", prevAddr,
-		"prevRealm", prevPkgPath,
-		"lpTokenId", string(lastToken),
-		"internal_tokenURI", tokenURI,
-	)
-
 	return nil
 }
 
@@ -260,8 +262,8 @@ func SetTokenURILast() error {
 // Returns:
 //   - *rand.Rand: A new random instance
 func generateRandInstance() *rand.Rand {
-	seed1 := uint64(time.Now().Unix()+TotalSupply())
-	seed2 := uint64(time.Now().UnixNano()+TotalSupply())
+	seed1 := uint64(time.Now().Unix() + TotalSupply())
+	seed2 := uint64(time.Now().UnixNano() + TotalSupply())
 	pcg := rand.NewPCG(seed1, seed2)
 	return rand.New(pcg)
 }
@@ -313,5 +315,16 @@ func appendTokenList(addr std.Address, tid grc721.TokenID) {
 func checkErr(err error) {
 	if err != nil {
 		panic(err.Error())
+	}
+}
+
+func assertCallerIsOwnerOfToken(tid grc721.TokenID) {
+	caller := getPrevAddr()
+	owner := OwnerOf(tid)
+	if caller != owner {
+		panic(addDetailToError(
+			errNoPermission,
+			ufmt.Sprintf("caller (%s) is not the owner of token (%s)", caller, string(tid)),
+		))
 	}
 }
