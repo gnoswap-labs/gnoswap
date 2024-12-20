@@ -722,10 +722,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	updatedPosition := updatePosition(position, feeUpdate, liquidity)
 	positions[params.tokenId] = updatedPosition
 
-	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
-	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
-	position.liquidity = new(u256.Uint).Add(position.liquidity, liquidity)
-	position.burned = false
+	feeUpdate := calculatePositionFeeUpdate(position, currentFeeGrowth)
 
 	updated := setPosition(params.tokenId, position)
 	if !updated {
@@ -737,6 +734,29 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	return params.tokenId, liquidity, amount0, amount1, position.poolKey
 }
+
+func calculateTokensOwed(
+	currentFeeGrowth *u256.Uint,
+	lastFeeGrowth *u256.Uint,
+	liquidity *u256.Uint,
+) *u256.Uint {
+	diff := new(u256.Uint).Sub(currentFeeGrowth, lastFeeGrowth)
+	return u256.MulDiv(diff, liquidity, u256.MustFromDecimal(consts.Q128))
+}
+
+func updateTokensOwed(
+	feeGrowthInsideLastX128 *u256.Uint,
+	positionFeeGrowthInsideLastX128 *u256.Uint,
+	positionLiquidity *u256.Uint,
+	burnedAmount *u256.Uint,
+	tokensOwed *u256.Uint,
+) *u256.Uint {
+	additionalTokensOwed := calculateTokensOwed(feeGrowthInsideLastX128, positionFeeGrowthInsideLastX128, positionLiquidity)
+	add := new(u256.Uint).Add(burnedAmount, additionalTokensOwed)
+	return new(u256.Uint).Add(tokensOwed, add)
+}
+
+// region: DecreaseLiquidity
 
 // DecreaseLiquidity decreases liquidity of the existing position
 // It also handles the conversion between GNOT and WUGNOT transparently for the user.
@@ -963,6 +983,11 @@ func Reposition(
 			caller:         std.PrevRealm().Addr(),
 		},
 	)
+	if err != nil {
+		panic(addDetailToError(errSlippage, err.Error()))
+	}
+
+	liquidity, amount0, amount1, err := addLiquidity(liqParams)
 	if err != nil {
 		panic(addDetailToError(errSlippage, err.Error()))
 	}
