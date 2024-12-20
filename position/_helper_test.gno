@@ -12,6 +12,19 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gnft"
+
+	pl "gno.land/r/gnoswap/v1/pool"
+
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
+	"gno.land/r/onbloc/foo"
+	"gno.land/r/onbloc/obl"
+	"gno.land/r/onbloc/qux"
+	"gno.land/r/onbloc/usdc"
+
+	sr "gno.land/r/gnoswap/v1/staker"
 )
 
 const (

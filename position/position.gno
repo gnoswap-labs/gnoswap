@@ -6,17 +6,13 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/avl"
-
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/wugnot"
-	"gno.land/r/gnoswap/v1/gnft"
-	"std"
-	"strconv"
-
 	u256 "gno.land/p/gnoswap/uint256"
 
+	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gnft"
 
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -126,10 +122,10 @@ func Mint(
 	fee uint32,
 	tickLower int32,
 	tickUpper int32,
-	amount0DesiredStr string,
-	amount1DesiredStr string,
-	amount0MinStr string,
-	amount1MinStr string,
+	amount0Desired string,
+	amount1Desired string,
+	amount0Min string,
+	amount1Min string,
 	deadline int64,
 	mintTo std.Address,
 	caller std.Address,
@@ -146,32 +142,7 @@ func Mint(
 
 	en.MintAndDistributeGns()
 
-	token0, token1, token0IsNative, token1IsNative := processTokens(token0, token1)
-	userWugnotBalance := wugnot.BalanceOf(a2u(caller))
-
-	if token1 < token0 {
-		token0, token1 = token1, token0
-		amount0DesiredStr, amount1DesiredStr = amount1DesiredStr, amount0DesiredStr
-		amount0MinStr, amount1MinStr = amount1MinStr, amount0MinStr
-		tickLower, tickUpper = -tickUpper, -tickLower
-		token0IsNative, token1IsNative = token1IsNative, token0IsNative
-	}
-
-	amount0Desired := u256.MustFromDecimal(amount0DesiredStr)
-	amount1Desired := u256.MustFromDecimal(amount1DesiredStr)
-	amount0Min := u256.MustFromDecimal(amount0MinStr)
-	amount1Min := u256.MustFromDecimal(amount1MinStr)
-
-	// one of token amount can be 0 if position is out of range
-	// check this condition by using DryMint()
-	poolPath := ufmt.Sprintf("%s:%s:%d", token0, token1, fee)
-
-	err := handleNativeToken(token0IsNative, token1IsNative, caller)
-	if err != nil {
-		panic(addDetailToError(errWrapUnwrap, err.Error()))
-	}
-
-	mintParams := MintParams{
+	mintInput := MintInput{
 		token0:         token0,
 		token1:         token1,
 		fee:            fee,
@@ -498,7 +469,7 @@ func handleLeftoverNativeToken(token0IsNative, token1IsNative bool, userWugnotBa
 
 func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 	pool := pl.GetPool(params.token0, params.token1, params.fee)
-	liquidity, amount0, amount1, err := addLiquidity(
+	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
 			poolKey:        pl.GetPoolPath(params.token0, params.token1, params.fee),
 			tickLower:      params.tickLower,
@@ -510,9 +481,6 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 			caller:         params.caller,
 		},
 	)
-	if err != nil {
-		panic(addDetailToError(errSlippage, err.Error()))
-	}
 
 	tokenId := nextId
 	gnft.Mint(a2u(params.mintTo), tokenIdFrom(tokenId)) // owner, tokenId
@@ -700,9 +668,6 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 			caller:         std.PrevRealm().Addr(),
 		},
 	)
-	if err != nil {
-		panic(addDetailToError(errSlippage, err.Error()))
-	}
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
@@ -720,11 +685,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 	feeUpdate := calculatePositionFeeUpdate(position, currentFeeGrowth)
 
 	updatedPosition := updatePosition(position, feeUpdate, liquidity)
-	positions[params.tokenId] = updatedPosition
-
-	feeUpdate := calculatePositionFeeUpdate(position, currentFeeGrowth)
-
-	updated := setPosition(params.tokenId, position)
+	updated := setPosition(params.tokenId, updatedPosition)
 	if !updated {
 		panic(addDetailToError(
 			errPositionDoesNotExist,
@@ -971,7 +932,7 @@ func Reposition(
 		assertWrapNativeToken(ugnotSent, std.PrevRealm().Addr())
 	}
 
-	liquidity, amount0, amount1, err := addLiquidity(
+	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
 			poolKey:        position.poolKey,
 			tickLower:      tickLower,
@@ -983,14 +944,6 @@ func Reposition(
 			caller:         std.PrevRealm().Addr(),
 		},
 	)
-	if err != nil {
-		panic(addDetailToError(errSlippage, err.Error()))
-	}
-
-	liquidity, amount0, amount1, err := addLiquidity(liqParams)
-	if err != nil {
-		panic(addDetailToError(errSlippage, err.Error()))
-	}
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := positionKeyCompute(GetOrigPkgAddr(), tickLower, tickUpper)
@@ -1265,17 +1218,6 @@ func setPosition(tokenId uint64, position Position) bool {
 func removePosition(tokenId uint64) {
 	tokenIdStr := strconv.FormatUint(tokenId, 10)
 	positions.Remove(tokenIdStr)
-}
-
-func positionKeyCompute(
-	owner std.Address,
-	tickLower int32,
-	tickUpper int32,
-) string {
-	key := ufmt.Sprintf("%s__%d__%d", owner.String(), tickLower, tickUpper)
-
-	encoded := base64.StdEncoding.EncodeToString([]byte(key))
-	return encoded
 }
 
 func positionKeyCompute(
