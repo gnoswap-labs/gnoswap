@@ -7,6 +7,23 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+const (
+	MAX_UINT8   string = "255"
+	MAX_UINT16  string = "65535"
+	MAX_UINT32  string = "4294967295"
+	MAX_UINT64  string = "18446744073709551615"
+	MAX_UINT128 string = "340282366920938463463374607431768211455"
+	MAX_UINT160 string = "1461501637330902918203684832716283019655932542975"
+	MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+	MAX_INT256  string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
+
+	Q64  string = "18446744073709551616"                    // 2 ** 64
+	Q96  string = "79228162514264337593543950336"           // 2 ** 96
+	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
+)
+
+// TODO:
+// 1. change avl.Tree
 var tickRatioMap = map[int32]*u256.Uint{
 	0x1:     u256.MustFromDecimal("340265354078544963557816517032075149313"), // 0xfffcb933bd6fad37aa2d162d1a594001,
 	0x2:     u256.MustFromDecimal("340248342086729790484326174814286782778"), // 0xfff97272373d413259a46990580e213a,
@@ -46,54 +63,85 @@ var (
 	maxTick        = int32(887272)
 )
 
+// TickMathGetSqrtRatioAtTick calculates the square root price ratio for a given tick.
+//
+// This function computes the square root ratio (sqrt(price)) at a specific tick,
+// using a precomputed mapping of ratios. The result is returned as a 160-bit
+// fixed-point value (Q64.96 format).
+//
+// Parameters:
+//   - tick (int32): The tick index for which the square root ratio is calculated.
+//
+// Returns:
+//   - *u256.Uint: The square root price ratio at the given tick, represented as a 160-bit unsigned integer.
+//
+// Behavior:
+//  1. Validates that the tick is within the acceptable range by asserting its absolute value.
+//  2. Initializes the ratio based on whether the least significant bit of the tick is set, using a lookup table (`tickRatioMap`).
+//  3. Iteratively adjusts the ratio by multiplying and right-shifting with precomputed values for each relevant bit set in the tick value.
+//  4. If the tick is positive, the ratio is inverted by dividing a maximum uint256 value by the computed ratio.
+//  5. The result is split into upper 128 bits and lower 32 bits for precision handling.
+//  6. If the lower 32 bits are non-zero, the upper 128 bits are incremented by 1 to ensure rounding up.
+//
+// Example:
+//   - For a tick of `0`, the ratio represents `1.0000` in Q64.96 format.
+//   - For a tick of `-887272` (minimum tick), the ratio represents the smallest possible price.
+//   - For a tick of `887272` (maximum tick), the ratio represents the highest possible price.
+//
+// Panics:
+//   - If the absolute tick value exceeds the maximum allowed tick range.
+//
+// Notes:
+//   - The function relies on a precomputed map `tickRatioMap` to optimize calculations.
+//   - Handles rounding by adding 1 if the remainder of the division is non-zero.
 func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	absTick := abs(tick)
-	if absTick > maxTick {
-		panic(addDetailToError(
-			errOutOfRange,
-			ufmt.Sprintf("tick is out of range (larger than 887272), tick: %d", tick),
-		))
-	}
+	assertValidTickRange(absTick)
 
-	var initialBit int32 = 0x1
-	var ratio *u256.Uint
-	if (absTick & initialBit) != 0 {
-		ratio = tickRatioMap[initialBit]
-	} else {
-		ratio = u256.MustFromDecimal("340282366920938463463374607431768211456") // consts.Q128
+	ratio := u256.MustFromDecimal("340282366920938463463374607431768211456") // consts.Q128
+	initialBit := int32(0x1)
+	if val, exists := tickRatioMap[initialBit]; (absTick&initialBit) != 0 && exists {
+		ratio = val
 	}
 
 	for mask, value := range tickRatioMap {
-		if (mask != initialBit) && absTick&mask != 0 {
+		if mask == initialBit {
+			continue
+		}
+
+		if absTick&mask != 0 {
 			// ratio = (ratio * value) >> 128
-			ratio = ratio.Mul(ratio, value)
+			ratio = new(u256.Uint).Mul(ratio, value)
 			ratio = ratio.Rsh(ratio, 128)
 		}
 	}
 
 	if tick > 0 {
-		maxUint256 := u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935") // consts.MAX_UINT256
+		maxUint256 := u256.MustFromDecimal(MAX_UINT256) // consts.MAX_UINT256
+		if ratio.IsZero() {
+			return u256.Zero()
+		}
 		ratio = new(u256.Uint).Div(maxUint256, ratio)
 	}
 
-	shifted := new(u256.Uint).Rsh(ratio, 32)      // ratio >> 32
-	remainder := ratio.Mod(ratio, shift1By32Left) // ratio % (1 << 32)
+	upper128Bits := new(u256.Uint).Rsh(ratio, 32)   // ratio >> 32
+	lower32Bits := ratio.Mod(ratio, shift1By32Left) // ratio % (1 << 32)
 
-	var adj *u256.Uint
-	if remainder.IsZero() {
-		adj = u256.Zero()
+	var roundUp *u256.Uint
+	if lower32Bits.IsZero() {
+		roundUp = u256.Zero()
 	} else {
-		adj = u256.One()
+		roundUp = u256.One()
 	}
 
-	return new(u256.Uint).Add(shifted, adj)
+	return new(u256.Uint).Add(upper128Bits, roundUp)
 }
 
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	cond1 := sqrtPriceX96.Gte(u256.MustFromDecimal("4295128739"))                                       // MIN_SQRT_RATIO
 	cond2 := sqrtPriceX96.Lt(u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")) // MAX_SQRT_RATIO
 	if !(cond1 && cond2) {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errOutOfRange,
 			ufmt.Sprintf("tick_math.gno__TickMathGetTickAtSqrtRatio() || sqrtPriceX96 is out of range, sqrtPriceX96: %s", sqrtPriceX96.ToString()),
 		))
@@ -219,10 +267,21 @@ func gt(x, y *u256.Uint) *u256.Uint {
 	return u256.Zero()
 }
 
+// abs returns the absolute value of the given integer.
 func abs(x int32) int32 {
 	if x < 0 {
 		return -x
 	}
 
 	return x
+}
+
+// assertValidTickRange validates that the absolute tick value is within the acceptable range.
+func assertValidTickRange(absTick int32) {
+	if absTick > maxTick {
+		panic(newErrorWithDetail(
+			errOutOfRange,
+			ufmt.Sprintf("abs tick is out of range (larger than 887272), abs tick: %d", absTick),
+		))
+	}
 }

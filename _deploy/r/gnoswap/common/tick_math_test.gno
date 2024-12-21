@@ -22,7 +22,7 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 
 		uassert.PanicsWithMessage(
 			t,
-			"[GNOSWAP-COMMON-003] value out of range || tick_math.gno__TickMathGetSqrtRatioAtTick() || tick is out of range (larger than 887272), tick: -887273",
+			"[GNOSWAP-COMMON-003] value out of range || abs tick is out of range (larger than 887272), abs tick: 887273",
 			func() {
 				TickMathGetSqrtRatioAtTick(tick)
 			},
@@ -34,7 +34,7 @@ func TestTickMathGetSqrtRatioAtTick(t *testing.T) {
 
 		uassert.PanicsWithMessage(
 			t,
-			"[GNOSWAP-COMMON-003] value out of range || tick_math.gno__TickMathGetSqrtRatioAtTick() || tick is out of range (larger than 887272), tick: 887273",
+			"[GNOSWAP-COMMON-003] value out of range || abs tick is out of range (larger than 887272), abs tick: 887273",
 			func() {
 				TickMathGetSqrtRatioAtTick(tick)
 			},
