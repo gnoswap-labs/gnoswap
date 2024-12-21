@@ -27,11 +27,6 @@ const (
 	SINGLE_HOP_ROUTE int = 1
 )
 
-// type Router interface {
-// 	ExactInSwapRoute(ExactInParams) (string, string)
-// 	ExactOutSwapRoute(ExactOutParams) (string, string)
-// }
-
 // SwapRoute swaps the input token to the output token and returns the result amount
 // If swapType is EXACT_IN, it returns the amount of output token ≈ amount of user to receive
 // If swapType is EXACT_OUT, it returns the amount of input token ≈ amount of user to pay
@@ -510,33 +505,6 @@ func validateRoutesAndQuotes(routes, quotes []string) error {
 	return nil
 }
 
-func processRoutes(routes, quotes []string, amountSpecified *i256.Int, swapType string) (*u256.Uint, *u256.Uint) {
-	resultAmountIn := u256.Zero()
-	resultAmountOut := u256.Zero()
-
-	for i, route := range routes {
-		numHops := strings.Count(route, POOL_SEPARATOR) + 1
-		quote, _ := strconv.Atoi(quotes[i])
-
-		assertHopsInRange(numHops)
-
-		toSwap := i256.Zero().Mul(amountSpecified, i256.NewInt(int64(quote)))
-		toSwap = toSwap.Div(toSwap, i256.NewInt(100))
-
-		var amountIn, amountOut *u256.Uint
-		if numHops == 1 {
-			amountIn, amountOut = handleSingleSwap(route, toSwap)
-		} else {
-			amountIn, amountOut = handleMultiSwap(swapType, route, numHops, toSwap)
-		}
-
-		resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
-		resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
-	}
-
-	return resultAmountIn, resultAmountOut
-}
-
 func handleSingleSwap(route string, amountSpecified *i256.Int) (*u256.Uint, *u256.Uint) {
 	input, output, fee := getDataForSinglePath(route)
 	singleParams := SingleSwapParams{
@@ -547,6 +515,40 @@ func handleSingleSwap(route string, amountSpecified *i256.Int) (*u256.Uint, *u25
 	}
 
 	return singleSwap(singleParams)
+}
+
+func handleMultiSwap(swapType string, route string, numHops int, amountSpecified *i256.Int) (*u256.Uint, *u256.Uint) {
+	switch swapType {
+	case ExactIn:
+		input, output, fee := getDataForMultiPath(route, 0) // first data
+		swapParams := SwapParams{
+			tokenIn:         input,
+			tokenOut:        output,
+			fee:             fee,
+			recipient:       std.PrevRealm().Addr(),
+			amountSpecified: amountSpecified,
+		}
+
+		return multiSwap(swapParams, 0, numHops, route) // iterate here
+
+	case ExactOut:
+		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
+		swapParams := SwapParams{
+			tokenIn:         input,
+			tokenOut:        output,
+			fee:             fee,
+			recipient:       std.PrevRealm().Addr(),
+			amountSpecified: amountSpecified,
+		}
+
+		return multiSwapNegative(swapParams, numHops-1, route) // iterate here
+
+	default:
+		panic(addDetailToError(
+			errInvalidSwapType,
+			ufmt.Sprintf("unknown swapType(%s)", swapType),
+		))
+	}
 }
 
 func finalizeSwap(inputToken, outputToken string, resultAmountIn, resultAmountOut *u256.Uint, swapType string, tokenAmountLimit *u256.Uint, userBeforeWugnotBalance, userWrappedWugnot uint64, amountSpecified *u256.Uint) (string, string) {
@@ -601,38 +603,4 @@ func finalizeSwap(inputToken, outputToken string, resultAmountIn, resultAmountOu
 
 	intAmountOut := i256.FromUint256(afterFee)
 	return resultAmountIn.ToString(), i256.Zero().Neg(intAmountOut).ToString()
-}
-
-func handleMultiSwap(swapType string, route string, numHops int, amountSpecified *i256.Int) (*u256.Uint, *u256.Uint) {
-	switch swapType {
-	case ExactIn:
-		input, output, fee := getDataForMultiPath(route, 0) // first data
-		swapParams := SwapParams{
-			tokenIn:         input,
-			tokenOut:        output,
-			fee:             fee,
-			recipient:       std.PrevRealm().Addr(),
-			amountSpecified: amountSpecified,
-		}
-
-		return multiSwap(swapParams, 0, numHops, route) // iterate here
-
-	case ExactOut:
-		input, output, fee := getDataForMultiPath(route, numHops-1) // last data
-		swapParams := SwapParams{
-			tokenIn:         input,
-			tokenOut:        output,
-			fee:             fee,
-			recipient:       std.PrevRealm().Addr(),
-			amountSpecified: amountSpecified,
-		}
-
-		return multiSwapNegative(swapParams, numHops-1, route) // iterate here
-
-	default:
-		panic(addDetailToError(
-			errInvalidSwapType,
-			ufmt.Sprintf("unknown swapType(%s)", swapType),
-		))
-	}
 }
