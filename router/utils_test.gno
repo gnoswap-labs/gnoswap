@@ -3,6 +3,8 @@ package router
 import (
 	"strings"
 	"testing"
+
+	"gno.land/p/demo/uassert"
 )
 
 type poolPathWithFeeDivideTestCases struct {
@@ -218,6 +220,36 @@ func TestSplitSingleChar(t *testing.T) {
 			input:    "a b c",
 			sep:      ' ',
 			expected: []string{"a", "b", "c"},
+		},
+		{
+            name:     "single character string",
+            input:    "a",
+            sep:      ',',
+            expected: []string{"a"},
+        },
+        {
+            name:     "only separators",
+            input:    ",,,,",
+            sep:      ',',
+            expected: []string{"", "", "", "", ""},
+        },
+        {
+            name:     "unicode characters",
+            input:    "한글,English,日本語",
+            sep:      ',',
+            expected: []string{"한글", "English", "日本語"},
+        },
+        {
+            name:     "special characters",
+            input:    "!@#$,%^&*,()_+",
+            sep:      ',',
+            expected: []string{"!@#$", "%^&*", "()_+"},
+        },
+		{
+			name: "routes path",
+			input: "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
+			sep:      ',',
+			expected: []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500"},
 		},
 	}
 
