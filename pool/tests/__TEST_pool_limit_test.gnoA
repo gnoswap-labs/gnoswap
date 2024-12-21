@@ -40,10 +40,8 @@ func TestLimitOrderThru_Positive_1(t *testing.T) {
 			0,
 			120,
 			test_liquidityExpectStr,
-			admin,
+			adminAddr,
 		)
-		// println("mint0", mint0) // 59817378
-		// println("mint1", mint1) // 0
 
 		// SWAP 1 -> 0
 		std.TestSetRealm(rouRealm)
@@ -51,14 +49,12 @@ func TestLimitOrderThru_Positive_1(t *testing.T) {
 			barPath,
 			fooPath,
 			fee100,
-			admin,
+			adminAddr,
 			false,
 			"60183363",
 			consts.MAX_PRICE,
-			admin,
+			adminAddr,
 		)
-		// println("swap0", swap0) // -59817378
-		// println("swap1", swap1) // 60183363
 
 		// BURN
 		std.TestSetRealm(posRealm)
@@ -70,8 +66,6 @@ func TestLimitOrderThru_Positive_1(t *testing.T) {
 			120,
 			test_liquidityExpectStr,
 		)
-		// println("burn0", burn0) // 0
-		// println("burn1", burn1) // 60177342
 
 		// COLLECT
 		std.TestSetRealm(posRealm)
@@ -79,14 +73,12 @@ func TestLimitOrderThru_Positive_1(t *testing.T) {
 			barPath,
 			fooPath,
 			fee100,
-			admin,
+			adminAddr,
 			0,
 			120,
 			consts.MAX_UINT128,
 			consts.MAX_UINT128,
 		)
-		// println("collect0", collect0) // 0
-		// println("collect1", collect1) // 60177342
 
 		slotTick := thisPool.slot0.tick
 		if slotTick < 120 {
@@ -116,10 +108,8 @@ func TestLimitOrderThru_Negative_1(t *testing.T) {
 			-120,
 			0,
 			test_liquidityExpectStr,
-			admin,
+			adminAddr,
 		)
-		// println("mint0", mint0) // 0
-		// println("mint1", mint1) // 59817378
 
 		// SWAP 0 -> 1
 		std.TestSetRealm(rouRealm)
@@ -127,14 +117,12 @@ func TestLimitOrderThru_Negative_1(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			admin,
+			adminAddr,
 			true,
 			"60283363",
 			consts.MIN_PRICE,
-			admin,
+			adminAddr,
 		)
-		// println("swap0", swap0) // 60207447
-		// println("swap1", swap1) // -59817377
 
 		// BURN
 		std.TestSetRealm(posRealm)
@@ -146,8 +134,6 @@ func TestLimitOrderThru_Negative_1(t *testing.T) {
 			0,
 			test_liquidityExpectStr,
 		)
-		// println("burn0", burn0) // 60177342
-		// println("burn1", burn1) // 0
 
 		// COLLECT
 		std.TestSetRealm(posRealm)
@@ -155,14 +141,12 @@ func TestLimitOrderThru_Negative_1(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			admin,
+			adminAddr,
 			-120,
 			0,
 			consts.MAX_UINT128,
 			consts.MAX_UINT128,
 		)
-		// println("collect0", collect0) // 60207445
-		// println("collect1", collect1) // 0
 
 		slotTick := thisPool.slot0.tick
 		if slotTick >= -120 {
