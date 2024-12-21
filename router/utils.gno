@@ -33,7 +33,7 @@ func poolPathWithFeeDivide(poolPath string) (string, string, int) {
 	if err != nil {
 		panic(addDetailToError(
 			errInvalidPoolPath,
-			ufmt.Sprintf("utils.gno__poolPathWithFeeDivide() || invalid poolPath(%s)", poolPath),
+			ufmt.Sprintf("invalid poolPath(%s)", poolPath),
 		))
 	}
 
@@ -50,7 +50,7 @@ func getDataForSinglePath(poolPath string) (string, string, uint32) {
 	if err != nil {
 		panic(addDetailToError(
 			errInvalidPoolPath,
-			ufmt.Sprintf("utils.gno__getDataForSinglePath() || len(poolPathSplit) != 3, poolPath: %s", poolPath),
+			ufmt.Sprintf("len(poolPathSplit) != 3, poolPath: %s", poolPath),
 		))
 	}
 
@@ -153,13 +153,13 @@ func getPrev() (string, string) {
 // Performance:
 //   - Up to 5x faster than `strings.Split` for small strings (in Go)
 //   - For gno (run test with `-print-runtime-metrics` option):
-// //   |     Function     |     Cycles       | Allocations
-// //   |-----------------|------------------|--------------|
-// //   | strings.Split   |      1.1M        | 808.1K       |
-// //   | splitSingleChar |      1.0M        | 730.4K       |
+//     |     Function     |     Cycles       | Allocations
+//     |------------------|------------------|--------------|
+//     | strings.Split    |      1.1M        | 808.1K       |
+//     | splitSingleChar  |      1.0M        | 730.4K       |
 //   - Uses zero allocations except for the initial result slice
 //   - Most effective for strings under 1KB with simple single-byte delimiters
-//   (* This test result was measured without the `uassert` package)
+//     (* This test result was measured without the `uassert` package)
 //
 // Parameters:
 //

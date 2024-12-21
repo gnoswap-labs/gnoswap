@@ -4,6 +4,8 @@ import (
 	"std"
 
 	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/p/demo/ufmt"
 )
 
@@ -12,7 +14,7 @@ type SwapType string
 const (
 	// ExactIn represents a swap type where the input amount is exact and the output amount may vary.
 	// Used when a user wants to swap a specific amount of input tokens.
-	ExactIn  SwapType = "EXACT_IN"
+	ExactIn SwapType = "EXACT_IN"
 
 	// ExactOut represents a swap type where the output amount is exact and the input amount may vary.
 	// Used when a user wants to swap a specific amount of output tokens.
@@ -65,14 +67,14 @@ type SwapParams struct {
 // newSwapParams creates a new `SwapParams` instance with the provided parameters.
 //
 // Parameters:
-//  - tokenIn: Address of the token being spent
-//  - tokenOut: Address of the token being received
-//  - fee: Fee tier of the pool in basis points
-//  - recipient: Address that will receive the output tokens
-//  - amountSpecified: Amount specified for the swap (positive for exact input, negative for exact output)
+//   - tokenIn: Address of the token being spent
+//   - tokenOut: Address of the token being received
+//   - fee: Fee tier of the pool in basis points
+//   - recipient: Address that will receive the output tokens
+//   - amountSpecified: Amount specified for the swap (positive for exact input, negative for exact output)
 //
 // Returns:
-//  - *SwapParams: new `SwapParams` instance
+//   - *SwapParams: new `SwapParams` instance
 func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient std.Address, amountSpecified *i256.Int) *SwapParams {
 	return &SwapParams{
 		tokenIn:         tokenIn,
@@ -83,6 +85,15 @@ func newSwapParams(tokenIn, tokenOut string, fee uint32, recipient std.Address, 
 	}
 }
 
+// SwapResult encapsulates the outcome of a swap operation
+type SwapResult struct {
+	AmountIn        *u256.Uint
+	AmountOut       *u256.Uint
+	Routes          []string
+	Quotes          []string
+	AmountSpecified *i256.Int
+}
+
 // SwapCallbackData contains the callback data required for swap execution.
 // This type is used to pass necessary information during the swap callback process,
 // ensuring proper token transfers and pool data updates.
@@ -91,4 +102,40 @@ type SwapCallbackData struct {
 	tokenOut string      // token to receive
 	fee      uint32      // fee of the pool used to swap
 	payer    std.Address // address to spend the token
+}
+
+type ExactInParams struct {
+	BaseSwapParams
+	AmountIn     string
+	AmountOutMin string
+}
+
+func NewExactInParams(
+	baseParams BaseSwapParams,
+	amountIn string,
+	amountOutMin string,
+) ExactInParams {
+	return ExactInParams{
+		BaseSwapParams: baseParams,
+		AmountIn:       amountIn,
+		AmountOutMin:   amountOutMin,
+	}
+}
+
+type ExactOutParams struct {
+	BaseSwapParams
+	AmountOut   string
+	AmountInMax string
+}
+
+func NewExactOutParams(
+	baseParams BaseSwapParams,
+	amountOut string,
+	amountInMax string,
+) ExactOutParams {
+	return ExactOutParams{
+		BaseSwapParams: baseParams,
+		AmountOut:      amountOut,
+		AmountInMax:    amountInMax,
+	}
 }
