@@ -47,6 +47,12 @@ const (
 	addr02 = testutils.TestAddress("addr02")
 )
 
+var (
+	user1Addr      std.Address = "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec"
+	singlePoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
+	singlePoolPath2 = "gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000"
+)
+
 type WugnotToken struct{}
 
 func (WugnotToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
