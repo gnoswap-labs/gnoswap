@@ -13,18 +13,6 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 )
 
-func assertNotASwapType(swapType string) {
-	switch swapType {
-	case ExactIn, ExactOut:
-		return
-	default:
-		panic(addDetailToError(
-			errInvalidSwapType,
-			ufmt.Sprintf("unknown swapType: expected ExactIn or ExactOut, got %s", swapType),
-		))
-	}
-}
-
 func assertDirectCallOnly() {
 	if common.GetLimitCaller() && std.PrevRealm().PkgPath() != "" {
 		panic(addDetailToError(errNoPermission, "only user can call this function"))

@@ -4,17 +4,35 @@ import (
 	"std"
 
 	i256 "gno.land/p/gnoswap/int256"
+	"gno.land/p/demo/ufmt"
 )
+
+type SwapType string
 
 const (
 	// ExactIn represents a swap type where the input amount is exact and the output amount may vary.
 	// Used when a user wants to swap a specific amount of input tokens.
-	ExactIn  string = "EXACT_IN"
+	ExactIn  SwapType = "EXACT_IN"
 
 	// ExactOut represents a swap type where the output amount is exact and the input amount may vary.
 	// Used when a user wants to swap a specific amount of output tokens.
-	ExactOut string = "EXACT_OUT"
+	ExactOut SwapType = "EXACT_OUT"
 )
+
+// trySwapTypeFromStr attempts to convert a string into a `SwapType`.
+//
+// This function validates and converts string representations of swap types
+// into their corresponding `SwapType` enum values.
+func trySwapTypeFromStr(swapType string) (SwapType, error) {
+	switch swapType {
+	case "EXACT_IN":
+		return ExactIn, nil
+	case "EXACT_OUT":
+		return ExactOut, nil
+	default:
+		return "", ufmt.Errorf("unknown swapType: expected ExactIn or ExactOut, got %s", swapType)
+	}
+}
 
 // SingleSwapParams contains parameters for executing a single pool swap.
 // It represents the simplest form of swap that occurs within a single liquidity pool.

@@ -36,13 +36,19 @@ func SwapRoute(
 	inputToken string,
 	outputToken string,
 	amountSpecified string,
-	swapType string,
+	swapKind string,
 	RouteArr string,
 	quoteArr string,
 	tokenAmountLimit string,
 ) (string, string) {
 	common.IsHalted()
-	assertNotASwapType(swapType)
+	swapType, err := trySwapTypeFromStr(swapKind)
+	if err != nil {
+		panic(addDetailToError(
+			errInvalidSwapType,
+			ufmt.Sprintf("unknown swapType: %s", swapKind),
+		))
+	}
 	assertDirectCallOnly()
 
 	en.MintAndDistributeGns()
@@ -80,7 +86,7 @@ func SwapRoute(
 		// but included for completeness
 		panic(addDetailToError(
 			errInvalidSwapType,
-			ufmt.Sprintf("unknown swap type: %s", swapType),
+			ufmt.Sprintf("unknown swap type: %s", swapKind),
 		))
 	}
 }
@@ -117,7 +123,7 @@ type baseSwapOperation struct {
 func (op *baseSwapOperation) handleNativeTokenWrapping(
 	inputToken string,
 	outputToken string,
-	swapType string,
+	swapType SwapType,
 	specifiedAmount *i256.Int,
 ) error {
 	// no native token
@@ -165,7 +171,7 @@ func (op *baseSwapOperation) validateRouteQuote(quote string, i int) (*i256.Int,
 func (op *baseSwapOperation) processRoute(
 	route string,
 	toSwap *i256.Int,
-	swapType string,
+	swapType SwapType,
 ) (*u256.Uint, *u256.Uint, error) {
 	numHops := strings.Count(route, POOL_SEPARATOR) + 1
 	assertHopsInRange(numHops)
@@ -517,7 +523,12 @@ func handleSingleSwap(route string, amountSpecified *i256.Int) (*u256.Uint, *u25
 	return singleSwap(singleParams)
 }
 
-func handleMultiSwap(swapType string, route string, numHops int, amountSpecified *i256.Int) (*u256.Uint, *u256.Uint) {
+func handleMultiSwap(
+	swapType SwapType,
+	route string,
+	numHops int,
+	amountSpecified *i256.Int,
+) (*u256.Uint, *u256.Uint) {
 	switch swapType {
 	case ExactIn:
 		input, output, fee := getDataForMultiPath(route, 0) // first data
@@ -551,7 +562,14 @@ func handleMultiSwap(swapType string, route string, numHops int, amountSpecified
 	}
 }
 
-func finalizeSwap(inputToken, outputToken string, resultAmountIn, resultAmountOut *u256.Uint, swapType string, tokenAmountLimit *u256.Uint, userBeforeWugnotBalance, userWrappedWugnot uint64, amountSpecified *u256.Uint) (string, string) {
+func finalizeSwap(
+	inputToken, outputToken string,
+	resultAmountIn, resultAmountOut *u256.Uint,
+	swapType SwapType,
+	tokenAmountLimit *u256.Uint,
+	userBeforeWugnotBalance, userWrappedWugnot uint64,
+	amountSpecified *u256.Uint,
+) (string, string) {
 	if swapType == ExactOut && resultAmountOut.Lt(amountSpecified) {
 		panic(addDetailToError(
 			errSlippage,
