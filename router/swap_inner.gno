@@ -157,7 +157,26 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 //
 // Fee tier to min tick mapping demonstrates varying levels of price granularity:
 //
-// Tick Range Visualization:
+// ## How these values are calculated?
+//
+// The Tick bounds in Uniswap V3 are derived from the desired price range and precisions:
+//  1. Price Range: Uniswap V3 uses the formula price = 1.0001^tick
+//  2. The minimum tick is calculated to represent a very small but non-zero price:
+//     - Let min_tick = log(minimum_price) / log(1.0001)
+//     - The minimum price is chosen to be 2^-128 ≈ 2.9387e-39
+//     - Therefor, min_tick = log(2^-128) / log(1.0001) ≈ -887272
+//
+// ### Tick Spacing Adjustment
+//
+//  - Each fee tier has different tick spacing for efficiency
+//  - The actual minimum tick is rounded to the nearest tick spacing:
+//    * 0.01% fee -> spacing of 1   -> -887272
+//    * 0.05% fee -> spacing of 10  -> -887270
+//    * 0.30% fee -> spacing of 60  -> -887220
+//    * 1.00% fee -> spacing of 200 -> -887200
+//
+// ## Tick Range Visualization:
+//
 // ```
 //                        0
 //   Fee Tier   Min Tick  |  Max Tick   Tick Spacing
@@ -174,6 +193,7 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 // ```
 //
 // Tick spacing determines the granularity of price points:
+//
 //  - Smaller tick spacing (1) = More precise price points
 //    Example for 0.01% fee tier:
 //    ```
@@ -198,6 +218,9 @@ func calculateSqrtPriceLimitForSwap(zeroForOne bool, fee uint32, sqrtPriceLimitX
 //
 // Panic:
 //  - If the fee tier is not supported
+//
+// Reference:
+//  - https://blog.uniswap.org/uniswap-v3-math-primer
 func getMinTick(fee uint32) int32 {
 	switch fee {
 	case 100:
@@ -211,12 +234,26 @@ func getMinTick(fee uint32) int32 {
 	default:
 		panic(addDetailToError(
 			errInvalidPoolFeeTier,
-			ufmt.Sprintf("swapInner.gno__getMaxTick() || unknown fee(%d)", fee),
+			ufmt.Sprintf("unknown fee(%d)", fee),
 		))
 	}
 }
 
 // getMaxTick returns the maximum tick value for a given fee tier.
+//
+// ## How these values are calculated?
+//
+// The max tick values are the exact negatives of min tick values because:
+//  1. Price symmetry: If min_price = 2^-128, then max_price = 2^128
+//  2. Using the same formula: max_tick = log(2^128) / log(1.0001) ≈ 887272
+//
+// ### Tick Spacing Relationship:
+//
+// The max ticks follow the same spacing rules as min ticks:
+//   * 0.01% fee -> +887272 (finest granularity)
+//   * 0.05% fee -> +887270 (10-tick spacing)
+//   * 0.30% fee -> +887220 (60-tick spacing)
+//   * 1.00% fee -> +887200 (coarsest granularity)
 //
 // Parameters:
 //   - fee: Fee tier in basis points
@@ -226,6 +263,9 @@ func getMinTick(fee uint32) int32 {
 //
 // Panic:
 //  - If the fee tier is not supported
+//
+// Reference:
+//  - https://blog.uniswap.org/uniswap-v3-math-primer
 func getMaxTick(fee uint32) int32 {
 	switch fee {
 	case 100:
@@ -239,7 +279,7 @@ func getMaxTick(fee uint32) int32 {
 	default:
 		panic(addDetailToError(
 			errInvalidPoolFeeTier,
-			ufmt.Sprintf("swapInner.gno__getMaxTick() || unknown fee(%d)", fee),
+			ufmt.Sprintf("unknown fee(%d)", fee),
 		))
 	}
 }
