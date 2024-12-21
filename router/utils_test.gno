@@ -175,3 +175,61 @@ func TestGetDataForMultiPath(t *testing.T) {
 		})
 	}
 }
+
+func TestSplitSingleChar(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		sep      byte
+		expected []string
+	}{
+		{
+			name:     "plain split",
+			input:    "a,b,c",
+			sep:      ',',
+			expected: []string{"a", "b", "c"},
+		},
+		{
+			name:     "empty string",
+			input:    "",
+			sep:      ',',
+			expected: []string{""},
+		},
+		{
+			name:     "no separator",
+			input:    "abc",
+			sep:      ',',
+			expected: []string{"abc"},
+		},
+		{
+			name:     "consecutive separators",
+			input:    "a,,b,,c",
+			sep:      ',',
+			expected: []string{"a", "", "b", "", "c"},
+		},
+		{
+			name:     "separator at the beginning and end",
+			input:    ",a,b,c,",
+			sep:      ',',
+			expected: []string{"", "a", "b", "c", ""},
+		},
+		{
+			name:     "space separator",
+			input:    "a b c",
+			sep:      ' ',
+			expected: []string{"a", "b", "c"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := splitSingleChar(tc.input, tc.sep)
+
+			uassert.Equal(t, len(result), len(tc.expected))
+
+			for i := 0; i < len(tc.expected); i++ {
+				uassert.Equal(t, result[i], tc.expected[i])
+			}
+		})
+	}
+}
