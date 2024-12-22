@@ -19,7 +19,7 @@ func TestMintAndDistributeGns(t *testing.T) {
 		uassert.Equal(t, uint64(0), gnsBalance(consts.DEV_OPS))
 		uassert.Equal(t, uint64(0), gnsBalance(consts.COMMUNITY_POOL_ADDR))
 		uassert.Equal(t, uint64(0), gnsBalance(consts.GOV_STAKER_ADDR))
-		uassert.Equal(t, uint64(0), gnsBalance(emissionAddr))
+		uassert.Equal(t, uint64(0), gnsBalance(consts.EMISSION_ADDR))
 
 		adminRealm := std.NewUserRealm(consts.ADMIN)
 		std.TestSetRealm(adminRealm)
@@ -42,7 +42,7 @@ func TestMintAndDistributeGns(t *testing.T) {
 		uassert.Equal(t, uint64(351027387), gnsBalance(consts.DEV_OPS))            // 20% of 1755136938
 		uassert.Equal(t, uint64(87756846), gnsBalance(consts.COMMUNITY_POOL_ADDR)) // 5% of 1755136938
 		uassert.Equal(t, uint64(0), gnsBalance(consts.GOV_STAKER_ADDR))            // 0% of 1755136938
-		uassert.Equal(t, uint64(2), gnsBalance(emissionAddr))                      // 1755136938 - (1316352703 + 351027387 + 87756846) = 2
+		uassert.Equal(t, uint64(2), gnsBalance(consts.EMISSION_ADDR))              // 1755136938 - (1316352703 + 351027387 + 87756846) = 2
 	})
 
 	t.Run("same block", func(t *testing.T) {
@@ -55,7 +55,7 @@ func TestMintAndDistributeGns(t *testing.T) {
 		uassert.Equal(t, uint64(351027387), gnsBalance(consts.DEV_OPS))
 		uassert.Equal(t, uint64(87756846), gnsBalance(consts.COMMUNITY_POOL_ADDR))
 		uassert.Equal(t, uint64(0), gnsBalance(consts.GOV_STAKER_ADDR))
-		uassert.Equal(t, uint64(2), gnsBalance(emissionAddr))
+		uassert.Equal(t, uint64(2), gnsBalance(consts.EMISSION_ADDR))
 	})
 
 	t.Run("after 5 blocks", func(t *testing.T) {

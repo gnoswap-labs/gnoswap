@@ -13,7 +13,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 	t.Run("panic if not admin", func(t *testing.T) {
 		uassert.PanicsWithMessage(
 			t,
-			`[GNOSWAP-EMISSION-001] caller has no permission || emission.gno__ChangeDistributionPctByAdmin() || only admin(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can change distribution percentages, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
+			`caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
 			func() {
 				ChangeDistributionPctByAdmin(0, 0, 0, 0, 0, 0, 0, 0)
 			},
