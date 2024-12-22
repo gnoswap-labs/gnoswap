@@ -45,9 +45,6 @@ func MintAndDistributeGns() {
 	lastMintedHeight := gns.GetLastMintedHeight()
 	if lastMintedHeight >= currentHeight {
 		// do not panic here, we don't want to panic entire transaction that calls this function
-		// TODO:
-		// 1. will be removed after testing, do not use panic here
-		println(ufmt.Sprintf("[EMISSION] emission.gno__MintAndDistributeGns() || lastMintedHeight(%d) >= currentHeight(%d)", lastMintedHeight, currentHeight))
 		return
 	}
 
