@@ -17,26 +17,6 @@ var (
 	lastExecutedHeight int64
 )
 
-func SetLeftGNSAmount(amount uint64) {
-	leftGNSAmount = amount
-}
-
-func GetLeftGNSAmount() uint64 {
-	return leftGNSAmount
-}
-
-func hasLeftGNSAmount() bool {
-	return leftGNSAmount > 0
-}
-
-func SetLastExecutedHeight(height int64) {
-	lastExecutedHeight = height
-}
-
-func GetLastExecutedHeight() int64 {
-	return lastExecutedHeight
-}
-
 // MintAndDistributeGns mints GNS and distributes to target
 func MintAndDistributeGns() {
 	common.IsHalted()
@@ -51,11 +31,12 @@ func MintAndDistributeGns() {
 	mintedEmissionRewardAmount := gns.MintGns(a2u(consts.EMISSION_ADDR))
 	if hasLeftGNSAmount() {
 		mintedEmissionRewardAmount += GetLeftGNSAmount()
-		SetLeftGNSAmount(0)
+		setLeftGNSAmount(0)
 	}
+
 	distributedGNSAmount := distributeToTarget(mintedEmissionRewardAmount)
 	if mintedEmissionRewardAmount != distributedGNSAmount {
-		SetLeftGNSAmount(mintedEmissionRewardAmount - distributedGNSAmount)
+		setLeftGNSAmount(mintedEmissionRewardAmount - distributedGNSAmount)
 	}
 
 	prevAddr, prevPkgPath := getPrev()
@@ -70,5 +51,25 @@ func MintAndDistributeGns() {
 		"internal_totalSupply", ufmt.Sprintf("%d", gns.TotalSupply()),
 	)
 
-	SetLastExecutedHeight(currentHeight)
+	setLastExecutedHeight(currentHeight)
+}
+
+func GetLeftGNSAmount() uint64 {
+	return leftGNSAmount
+}
+
+func setLeftGNSAmount(amount uint64) {
+	leftGNSAmount = amount
+}
+
+func GetLastExecutedHeight() int64 {
+	return lastExecutedHeight
+}
+
+func setLastExecutedHeight(height int64) {
+	lastExecutedHeight = height
+}
+
+func hasLeftGNSAmount() bool {
+	return leftGNSAmount > 0
 }
