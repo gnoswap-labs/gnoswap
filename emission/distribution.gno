@@ -17,8 +17,6 @@ type emissionTarget int
 // distributionPctMap maps emission targets to their respective distribution percentages.
 type distributionPctMap map[emissionTarget]uint64
 
-// TODO:
-// 1. change more clear name from LIQUIDITY_STAKING to LIQUIDITY_STAKER
 const (
 	LIQUIDITY_STAKER emissionTarget = iota + 1
 	DEVOPS
@@ -158,13 +156,12 @@ func distributeToTarget(amount uint64) uint64 {
 		transferToTarget(target, distAmount)
 	}
 
-	// TODO:
-	// 1. Check amount - totalSent is 0
-	// 2. if not 0, save it to leftGNSAmount and distribute it next time
-	// 3. this job is processed in emission.gno
+	leftGNSAmount := amount - totalSent
+	if leftGNSAmount > 0 {
+		setLeftGNSAmount(leftGNSAmount)
+	}
+
 	return totalSent
-	// `amount-totalSent` can be left due to rounding
-	// it will be distributed next time
 }
 
 // calculateAmount calculates the amount based on the given percentage in basis points.
@@ -174,8 +171,6 @@ func calculateAmount(amount, bptPct uint64) uint64 {
 
 // transferToTarget transfers the specified amount to the given addresses.
 func transferToTarget(target emissionTarget, amount uint64) {
-	// TODO:
-	// 1. add more clear name from LIQUIDITY_STAKING to LIQUIDITY_STAKER
 	switch target {
 	case LIQUIDITY_STAKER:
 		// transfer to staker contract
@@ -205,9 +200,6 @@ func transferToTarget(target emissionTarget, amount uint64) {
 
 // changeDistributionPct changes the distribution percentage for the given target.
 func changeDistributionPct(target emissionTarget, pct uint64) {
-	// cannot add new target
-	// TODO:
-	// 1. add more clear name from LIQUIDITY_STAKING to LIQUIDITY_STAKER
 	if target != LIQUIDITY_STAKER && target != DEVOPS && target != COMMUNITY_POOL && target != GOV_STAKER {
 		panic(addDetailToError(
 			errInvalidEmissionTarget,
