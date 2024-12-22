@@ -145,8 +145,6 @@ func changeDistributionPcts(
 }
 
 // distributeToTarget distributes the specified amount to different targets based on their percentages.
-// TOCO:
-// 1. should return amount of sent GNS for distribution
 func distributeToTarget(amount uint64) uint64 {
 	totalSent := uint64(0)
 	for target, pct := range distributionPct {
