@@ -39,7 +39,7 @@ func TestChangeDistributionPctByAdmin(t *testing.T) {
 
 		uassert.PanicsWithMessage(
 			t,
-			"[GNOSWAP-EMISSION-002] invalid emission target || emission.gno__changeDistributionPct() || invalid target(%!d((unhandled)))",
+			"[GNOSWAP-EMISSION-002] invalid emission target || invalid target(9)",
 			func() {
 				ChangeDistributionPctByAdmin(9, 10000, 2, 0, 3, 0, 4, 0)
 			},

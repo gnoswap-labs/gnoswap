@@ -2,34 +2,32 @@ package emission
 
 import (
 	"std"
+	"strconv"
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/gnoswap/v1/gns"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 )
 
-// emissionTarget represents different targets for token emission.
-type emissionTarget int
-
-// distributionPctMap maps emission targets to their respective distribution percentages.
-type distributionPctMap map[emissionTarget]uint64
-
 const (
-	LIQUIDITY_STAKER emissionTarget = iota + 1
+	LIQUIDITY_STAKER int = iota + 1
 	DEVOPS
 	COMMUNITY_POOL
 	GOV_STAKER
 )
 
-// distributionPct defines the distribution percentages.
-var distributionPct distributionPctMap = distributionPctMap{
-	LIQUIDITY_STAKER: 7500, // 75%
-	DEVOPS:           2000, // 20%
-	COMMUNITY_POOL:   500,  // 5%
-	GOV_STAKER:       0,    // 0%
+var distributionBpsPct *avl.Tree
+
+func init() {
+	distributionBpsPct = avl.NewTree()
+	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), 7500)
+	distributionBpsPct.Set(strconv.Itoa(DEVOPS), 2000)
+	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), 500)
+	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), 0)
 }
 
 var (
@@ -43,11 +41,6 @@ var (
 	toCommunityPoolAccu uint64
 	toGovStakerAccu     uint64
 )
-
-// GetDistributionPct returns the distribution percentage for the given target.
-func GetDistributionPct(target int) uint64 {
-	return distributionPct[emissionTarget(target)]
-}
 
 // ChangeDistributionPctByAdmin changes the distribution percentage for the given targets.
 // Panics if the caller is not the admin.
@@ -136,23 +129,38 @@ func changeDistributionPcts(
 ) {
 	common.IsHalted()
 
+	assertDistributionTarget(target01)
+	assertDistributionTarget(target02)
+	assertDistributionTarget(target03)
+	assertDistributionTarget(target04)
+
 	checkSumDistributionPct(pct01, pct02, pct03, pct04)
 
-	changeDistributionPct(emissionTarget(target01), pct01)
-	changeDistributionPct(emissionTarget(target02), pct02)
-	changeDistributionPct(emissionTarget(target03), pct03)
-	changeDistributionPct(emissionTarget(target04), pct04)
+	setDistributionPct(target01, pct01)
+	setDistributionPct(target02, pct02)
+	setDistributionPct(target03, pct03)
+	setDistributionPct(target04, pct04)
 }
 
 // distributeToTarget distributes the specified amount to different targets based on their percentages.
 func distributeToTarget(amount uint64) uint64 {
 	totalSent := uint64(0)
-	for target, pct := range distributionPct {
+
+	distributionBpsPct.Iterate("", "", func(targetStr string, iPct interface{}) bool {
+		targetInt, err := strconv.Atoi(targetStr)
+		if err != nil {
+			panic(addDetailToError(
+				errInvalidEmissionTarget,
+				ufmt.Sprintf("emission.gno__distributeToTarget() || invalid target(%s)", targetStr),
+			))
+		}
+
+		pct := uint64(iPct)
 		distAmount := calculateAmount(amount, pct)
 		totalSent += distAmount
 
-		transferToTarget(target, distAmount)
-	}
+		transferToTarget(targetInt, distAmount)
+	})
 
 	leftGNSAmount := amount - totalSent
 	if leftGNSAmount > 0 {
@@ -168,7 +176,7 @@ func calculateAmount(amount, bptPct uint64) uint64 {
 }
 
 // transferToTarget transfers the specified amount to the given addresses.
-func transferToTarget(target emissionTarget, amount uint64) {
+func transferToTarget(target int, amount uint64) {
 	switch target {
 	case LIQUIDITY_STAKER:
 		// transfer to staker contract
@@ -197,15 +205,10 @@ func transferToTarget(target emissionTarget, amount uint64) {
 }
 
 // changeDistributionPct changes the distribution percentage for the given target.
-func changeDistributionPct(target emissionTarget, pct uint64) {
-	if target != LIQUIDITY_STAKER && target != DEVOPS && target != COMMUNITY_POOL && target != GOV_STAKER {
-		panic(addDetailToError(
-			errInvalidEmissionTarget,
-			ufmt.Sprintf("emission.gno__changeDistributionPct() || invalid target(%d)", target),
-		))
-	}
+func changeDistributionPct(target int, pct uint64) {
+	assertDistributionTarget(target)
 
-	distributionPct[target] = pct
+	setDistributionPct(target, pct)
 }
 
 // checkSumDistributionPct ensures the sum of all distribution percentages is 100%
@@ -286,4 +289,44 @@ func ClearAccuDistributedAmountForStaker() {
 
 func GetLastDistributedGNSAmount() (uint64, uint64, uint64, uint64) {
 	return toStaker, toDevOps, toCommunityPool, toGovStaker
+}
+
+/*
+
+var distributionBpsPct *avl.Tree
+
+func init() {
+	distributionBpsPct = avl.NewTree()
+	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), 7500)
+	distributionBpsPct.Set(strconv.Itoa(DEVOPS), 2000)
+	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), 500)
+	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), 0)
+}
+
+*/
+
+func GetDistributionPct(target int) uint64 {
+	assertDistributionTarget(target)
+	iUint64, exist := distributionBpsPct.Get(strconv.Itoa(target))
+	if !exist {
+		panic(addDetailToError(
+			errInvalidEmissionTarget,
+			ufmt.Sprintf("invalid target(%d)", target),
+		))
+	}
+
+	return uint64(iUint64)
+}
+
+func setDistributionPct(target int, pct uint64) {
+	distributionBpsPct.Set(strconv.Itoa(target), pct)
+}
+
+func assertDistributionTarget(target int) {
+	if target != LIQUIDITY_STAKER && target != DEVOPS && target != COMMUNITY_POOL && target != GOV_STAKER {
+		panic(addDetailToError(
+			errInvalidEmissionTarget,
+			ufmt.Sprintf("invalid target(%d)", target),
+		))
+	}
 }
