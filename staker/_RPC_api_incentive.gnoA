@@ -261,7 +261,7 @@ func ApiGetExternalIncentiveById(incentiveId string) string {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_RPC_api_incentive.gno__ApiGetExternalIncentiveById() || incentive(%s) not found", incentiveId),
+			ufmt.Sprintf("incentive(%s) not found", incentiveId),
 		))
 	}
 
