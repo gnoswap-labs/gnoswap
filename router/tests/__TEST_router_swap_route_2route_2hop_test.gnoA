@@ -44,6 +44,21 @@ func TestPositionMint(t *testing.T) {
 	pn.Mint(bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
 }
 
+func TestDrySwapRouteBarQuxExactIn(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+
+	dryResult := DrySwapRoute(
+		barPath,    // inputToken
+		quxPath,    // outputToken
+		"1000",     // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+		"50,50", // quoteArr
+	)
+
+	uassert.Equal(t, dryResult, "7346")
+}
+
 func TestSwapRouteBarQuxExactIn(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 

@@ -56,6 +56,21 @@ func TestPositionMint(t *testing.T) {
 	uassert.Equal(t, pl.PoolGetLiquidity("gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500"), "637408")
 }
 
+func TestDrySwapRouteBazBarExactIn(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+
+	dryResult := DrySwapRoute(
+		bazPath,    // inputToken
+		barPath,    // outputToken
+		"1000",     // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+		"100", // quoteArr
+	)
+
+	uassert.Equal(t, dryResult, "367")
+}
+
 func TestSwapRouteBazBarExactIn(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 

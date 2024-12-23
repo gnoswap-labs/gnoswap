@@ -42,6 +42,21 @@ func TestPositionMint(t *testing.T) {
 	uassert.Equal(t, amount1, "100000")
 }
 
+func TestDrySwapRouteBarBazExactIn(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+
+	dryResult := DrySwapRoute(
+		barPath,    // inputToken
+		bazPath,    // outputToken
+		"1000",     // amountSpecified
+		"EXACT_IN", // swapType
+		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", // strRouteArr
+		"100", // quoteArr
+	)
+
+	uassert.Equal(t, dryResult, "2711")
+}
+
 func TestSwapRouteBarBazExactIn(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
