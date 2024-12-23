@@ -127,7 +127,7 @@ func GetApproved(tid grc721.TokenID) (std.Address, bool) {
 //   - user: The address or username to grant approval to
 //   - tid: The token ID to approve
 func Approve(user pusers.AddressOrName, tid grc721.TokenID) {
-	common.IsHalted()
+	assertOnlyNotHalted()
 	assertCallerIsOwnerOfToken(tid)
 
 	err := gnft.Approve(users.Resolve(user), tid)
@@ -141,7 +141,7 @@ func Approve(user pusers.AddressOrName, tid grc721.TokenID) {
 //   - user: The address or username to set approval for
 //   - approved: true to approve, false to revoke approval
 func SetApprovalForAll(user pusers.AddressOrName, approved bool) {
-	common.IsHalted()
+	assertOnlyNotHalted()
 	checkErr(gnft.SetApprovalForAll(users.Resolve(user), approved))
 }
 
@@ -151,7 +151,12 @@ func SetApprovalForAll(user pusers.AddressOrName, approved bool) {
 //   - to: The recipient's address or username
 //   - tid: The token ID to transfer
 func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
-	common.IsHalted()
+	assertOnlyNotHalted()
+
+	fromAddr := users.Resolve(from)
+	toAddr := users.Resolve(to)
+	assertValidAddr(fromAddr)
+	assertValidAddr(toAddr)
 
 	caller := getPrevAddr()
 	ownerOf := OwnerOf(tid)
@@ -164,10 +169,10 @@ func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
 		))
 	}
 
-	removeTokenList(users.Resolve(from), tid)
-	appendTokenList(users.Resolve(to), tid)
+	removeTokenList(fromAddr, tid)
+	appendTokenList(toAddr, tid)
 
-	checkErr(gnft.TransferFrom(users.Resolve(from), users.Resolve(to), tid))
+	checkErr(gnft.TransferFrom(fromAddr, toAddr, tid))
 }
 
 // Mint creates a new NFT and assigns it to the specified address (only callable by owner)
@@ -359,6 +364,9 @@ func checkErr(err error) {
 	}
 }
 
+// assertCallerIsOwnerOfToken asserts that the caller is the owner of the token
+// Parameters:
+//   - tid: The token ID to check ownership of
 func assertCallerIsOwnerOfToken(tid grc721.TokenID) {
 	caller := getPrevAddr()
 	owner := OwnerOf(tid)
@@ -366,6 +374,21 @@ func assertCallerIsOwnerOfToken(tid grc721.TokenID) {
 		panic(addDetailToError(
 			errNoPermission,
 			ufmt.Sprintf("caller (%s) is not the owner of token (%s)", caller, string(tid)),
+		))
+	}
+}
+
+// assertOnlyNotHalted panics if the contract is halted.
+func assertOnlyNotHalted() {
+	common.IsHalted()
+}
+
+// assertValidAddr panics if the address is invalid.s
+func assertValidAddr(addr std.Address) {
+	if !addr.IsValid() {
+		panic(addDetailToError(
+			errInvalidAddress,
+			addr.String(),
 		))
 	}
 }
