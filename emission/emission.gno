@@ -6,60 +6,44 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
 var (
-	leftGNSAmount      uint64
+	// leftGNSAmount tracks undistributed GNS tokens from previous distributions
+	leftGNSAmount uint64
+	// lastExecutedHeight stores the last block height when distribution was executed
 	lastExecutedHeight int64
 )
 
-func SetLeftGNSAmount(amount uint64) {
-	leftGNSAmount = amount
-}
-
-func GetLeftGNSAmount() uint64 {
-	return leftGNSAmount
-}
-
-func hasLeftGNSAmount() bool {
-	return leftGNSAmount > 0
-}
-
-func SetLastExecutedHeight(height int64) {
-	lastExecutedHeight = height
-}
-
-func GetLastExecutedHeight() int64 {
-	return lastExecutedHeight
-}
-
-// MintAndDistributeGns mints GNS and distributes to target
-func MintAndDistributeGns() {
-	common.IsHalted()
+// MintAndDistributeGns mints new GNS tokens and distributes them to targets
+// Returns the total amount of GNS distributed
+func MintAndDistributeGns() uint64 {
+	assertOnlyNotHalted()
 
 	currentHeight := std.GetHeight()
 	lastMintedHeight := gns.GetLastMintedHeight()
 	if lastMintedHeight >= currentHeight {
-		// do not panic here, we don't want to panic entire transaction that calls this function
-		// TODO:
-		// 1. will be removed after testing, do not use panic here
-		println(ufmt.Sprintf("[EMISSION] emission.gno__MintAndDistributeGns() || lastMintedHeight(%d) >= currentHeight(%d)", lastMintedHeight, currentHeight))
-		return
+		// Skip if we've already minted tokens at this height
+		return 0
 	}
 
+	// Mint new tokens and add any leftover amounts from previous distribution
 	mintedEmissionRewardAmount := gns.MintGns(a2u(consts.EMISSION_ADDR))
 	if hasLeftGNSAmount() {
 		mintedEmissionRewardAmount += GetLeftGNSAmount()
-		SetLeftGNSAmount(0)
-	}
-	distributedGNSAmount := distributeToTarget(mintedEmissionRewardAmount)
-	if mintedEmissionRewardAmount != distributedGNSAmount {
-		SetLeftGNSAmount(mintedEmissionRewardAmount - distributedGNSAmount)
+		setLeftGNSAmount(0)
 	}
 
-	prevAddr, prevPkgPath := getPrev()
+	// Distribute tokens and track any undistributed amount
+	distributedGNSAmount := distributeToTarget(mintedEmissionRewardAmount)
+	if mintedEmissionRewardAmount != distributedGNSAmount {
+		setLeftGNSAmount(mintedEmissionRewardAmount - distributedGNSAmount)
+	}
+
+	// Emit event with distribution details
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"MintAndDistributeGns",
 		"prevAddr", prevAddr,
@@ -71,5 +55,32 @@ func MintAndDistributeGns() {
 		"internal_totalSupply", ufmt.Sprintf("%d", gns.TotalSupply()),
 	)
 
-	SetLastExecutedHeight(currentHeight)
+	setLastExecutedHeight(currentHeight)
+
+	return distributedGNSAmount
+}
+
+// GetLeftGNSAmount returns the amount of undistributed GNS tokens
+func GetLeftGNSAmount() uint64 {
+	return leftGNSAmount
+}
+
+// setLeftGNSAmount updates the undistributed GNS token amount
+func setLeftGNSAmount(amount uint64) {
+	leftGNSAmount = amount
+}
+
+// GetLastExecutedHeight returns the last block height when distribution was executed
+func GetLastExecutedHeight() int64 {
+	return lastExecutedHeight
+}
+
+// setLastExecutedHeight updates the last executed block height
+func setLastExecutedHeight(height int64) {
+	lastExecutedHeight = height
+}
+
+// hasLeftGNSAmount checks if there are any undistributed GNS tokens
+func hasLeftGNSAmount() bool {
+	return leftGNSAmount > 0
 }
