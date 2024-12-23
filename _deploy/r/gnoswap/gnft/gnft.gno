@@ -255,6 +255,10 @@ func SetTokenURILast() {
 	}
 }
 
+func SafeTransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
+	panic("not implemented")
+}
+
 func setTokenURI(tid grc721.TokenID) error {
 	tokenURI := genImageURI(generateRandInstance())
 
