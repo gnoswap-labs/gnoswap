@@ -175,7 +175,7 @@ func findCandidatePools() []PoolWithMeta {
 		token0Path, token1Path, pFee := poolPathWithFeeDivide(poolPath)
 
 		pool := pl.GetPoolFromPoolPath(poolPath)
-		liquidity := pool.PoolGetLiquidity()
+		liquidity := pool.Liquidity()
 		poolWithMetas = append(poolWithMetas, PoolWithMeta{
 			poolPath,
 			token0Path,
