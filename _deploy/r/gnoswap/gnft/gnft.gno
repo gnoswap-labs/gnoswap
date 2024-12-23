@@ -265,6 +265,8 @@ func SafeTransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
 }
 
 func setTokenURI(tid grc721.TokenID) error {
+	assertOnlyEmptyTokenURI(tid)
+
 	tokenURI := genImageURI(generateRandInstance())
 
 	_, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
@@ -389,6 +391,17 @@ func assertValidAddr(addr std.Address) {
 		panic(addDetailToError(
 			errInvalidAddress,
 			addr.String(),
+		))
+	}
+}
+
+// assertOnlyEmptyTokenURI panics if the token URI is not empty.
+func assertOnlyEmptyTokenURI(tid grc721.TokenID) {
+	uri, _ := gnft.TokenURI(tid)
+	if string(uri) != "" {
+		panic(addDetailToError(
+			errCannotSetURI,
+			ufmt.Sprintf("token id (%s) has already set URI", string(tid)),
 		))
 	}
 }

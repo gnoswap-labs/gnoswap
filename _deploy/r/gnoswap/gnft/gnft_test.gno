@@ -424,6 +424,13 @@ func TestSetTokenURI(t *testing.T) {
 			callerRealm: addr01Realm,
 			tokenId:     1,
 		},
+		{
+			name:        "set token uri of token id(1) - twice",
+			callerRealm: addr01Realm,
+			tokenId:     1,
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-GNFT-002] cannot set URI || token id (1) has already set URI",
+		},
 	}
 
 	for _, tt := range tests {
