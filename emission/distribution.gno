@@ -20,22 +20,27 @@ const (
 )
 
 var (
-	// distributionBpsPct stores the distribution percentages for each target
+	// Stores the percentage (in basis points) for each distribution target
+	// 1 basis point = 0.01%
 	distributionBpsPct *avl.Tree
 
-	// amount of GNS distributed to each target
-	distributedToStaker        uint64 // can be cleared by staker
+	distributedToStaker        uint64 // can be cleared by staker contract
 	distributedToDevOps        uint64
 	distributedToCommunityPool uint64
-	distributedToGovStaker     uint64 // can be cleared by gov staker
+	distributedToGovStaker     uint64 // can be cleared by governance staker
 
-	// accumulated amount of GNS distributed to each target
+	// Historical total distributions (never reset)
 	accuDistributedToStaker        uint64
 	accuDistributedToDevOps        uint64
 	accuDistributedToCommunityPool uint64
 	accuDistributedToGovStaker     uint64
 )
 
+// Initialize default distribution percentages:
+// - Liquidity Stakers: 75%
+// - DevOps: 20%
+// - Community Pool: 5%
+// - Governance Stakers: 0%
 func init() {
 	distributionBpsPct = avl.NewTree()
 	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), 7500)
@@ -45,7 +50,11 @@ func init() {
 }
 
 // ChangeDistributionPctByAdmin changes the distribution percentage for the given targets.
-// Panics if the caller is not the admin.
+// Panics if following conditions are not met:
+// - caller is not admin
+// - invalid target
+// - sum of percentages is not 10000
+// - swap is halted
 func ChangeDistributionPctByAdmin(
 	target01 int, pct01 uint64,
 	target02 int, pct02 uint64,
@@ -69,7 +78,11 @@ func ChangeDistributionPctByAdmin(
 }
 
 // ChangeDistributionPct changes the distribution percentage for the given targets.
-// Panics if the caller is not the governance contract.
+// Panics if following conditions are not met:
+// - caller is not governance
+// - invalid target
+// - sum of percentages is not 10000
+// - swap is halted
 func ChangeDistributionPct(
 	target01 int, pct01 uint64,
 	target02 int, pct02 uint64,
@@ -119,7 +132,8 @@ func changeDistributionPcts(
 	)
 }
 
-// distributeToTarget distributes the specified amount to different targets based on their percentages.
+// distributeToTarget splits an amount according to the configured percentages
+// and sends tokens to each target address. Returns the total amount distributed.
 func distributeToTarget(amount uint64) uint64 {
 	totalSent := uint64(0)
 
@@ -147,22 +161,23 @@ func distributeToTarget(amount uint64) uint64 {
 	return totalSent
 }
 
-// calculateAmount calculates the amount based on the given percentage in basis points.
+// calculateAmount converts a basis point percentage to actual token amount
+// bptPct is in basis points (1/100th of 1%)
+// Example: 7500 basis points = 75%
 func calculateAmount(amount, bptPct uint64) uint64 {
 	return amount * bptPct / 10000
 }
 
-// transferToTarget transfers the specified amount to the given addresses.
+// transferToTarget sends tokens to the appropriate address based on target type
+// and updates both current and accumulated distribution tracking
 func transferToTarget(target int, amount uint64) {
 	switch target {
 	case LIQUIDITY_STAKER:
-		// transfer to staker contract
 		gns.Transfer(a2u(consts.STAKER_ADDR), amount)
 		distributedToStaker += amount
 		accuDistributedToStaker += amount
 
 	case DEVOPS:
-		// transfer to devops
 		gns.Transfer(a2u(consts.DEV_OPS), amount)
 		distributedToDevOps += amount
 		accuDistributedToDevOps += amount
