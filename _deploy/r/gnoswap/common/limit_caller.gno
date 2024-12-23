@@ -47,6 +47,6 @@ func SetLimitCaller(v bool) {
 		"SetLimitCaller",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"halt", ufmt.Sprintf("%t", v),
+		"limitCaller", ufmt.Sprintf("%t", v),
 	)
 }

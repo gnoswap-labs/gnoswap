@@ -7,24 +7,24 @@ import (
 	"gno.land/r/gnoswap/v1/consts"
 )
 
-// halted is a global flag that indicates whether the system is currently halted.
+// halted is a global flag that indicates whether the GnoSwap is currently halted.
 // When true, most operations are disabled to prevent further actions.
-// Default value is false, meaning the system is active by default.
+// Default value is false, meaning the GnoSwap is active by default.
 var halted bool = false
 
-// GetHalt returns the current halted status of the system.
+// GetHalt returns the current halted status of the GnoSwap.
 //
 // Returns:
-// - bool: true if the system is halted, false otherwise.
+// - bool: true if the GnoSwap is halted, false otherwise.
 func GetHalt() bool {
 	return halted
 }
 
-// IsHalted checks if the system is currently halted.
-// If the system is halted, the function panics with an errHalted error.
+// IsHalted checks if the GnoSwap is currently halted.
+// If the GnoSwap is halted, the function panics with an errHalted error.
 //
 // Panics:
-// - If the halted flag is true, indicating that the system is inactive.
+// - If the halted flag is true, indicating that the GnoSwap is inactive.
 func IsHalted() {
 	if halted {
 		panic(newErrorWithDetail(
@@ -34,7 +34,7 @@ func IsHalted() {
 	}
 }
 
-// SetHaltByAdmin allows an admin to set the halt status of the system.
+// SetHaltByAdmin allows an admin to set the halt status of the GnoSwap.
 // Only an admin can execute this function. If a non-admin attempts to call this function,
 // the function panics with an errNoPermission error.
 //
@@ -58,9 +58,8 @@ func SetHaltByAdmin(halt bool) {
 	setHalt(halt)
 }
 
-// SetHalt allows the governance contract to set the halt status of the system.
+// SetHalt allows the governance contract to set the halt status of the GnoSwap.
 // Only the governance contract can execute this function through a proposal process.
-// If the caller is not the governance contract, the function panics with an errNoPermission error.
 //
 // Parameters:
 // - halt (bool): The new halt status to set (true to halt, false to unhalt).
