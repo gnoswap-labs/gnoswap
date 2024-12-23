@@ -35,9 +35,9 @@ func AfterTest(t *testing.T) {
 	std.TestSetRealm(poolRealm)
 	barBal := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBal := foo.BalanceOf(a2u(consts.POOL_ADDR))
-	bar.Transfer(a2u(admin), barBal)
-	foo.Transfer(a2u(admin), fooBal)
-	delete(pools, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
+	bar.Transfer(a2u(adminAddr), barBal)
+	foo.Transfer(a2u(adminAddr), fooBal)
+	pools.Remove("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
 }
 
 func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed(t *testing.T) {
@@ -54,7 +54,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed(t *testing.T
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", admin)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", adminAddr)
 
 	// ===================== clears tick lower if last position is removed =====================
 
@@ -62,7 +62,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed(t *testing.T
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -240, 0, "100", admin)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -240, 0, "100", adminAddr)
 	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(-240)
 	uassert.Equal(t, liquidityGross.ToString(), "0")
@@ -86,7 +86,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed2(t *testing.
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", admin)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", adminAddr)
 
 	// ===================== clears tick lower if last position is removed =====================
 
@@ -94,7 +94,7 @@ func TestSuccess_case_clear_tick_lowers_if_last_poistion_is_removed2(t *testing.
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -240, 0, "100", admin)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -240, 0, "100", adminAddr)
 	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")
 
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(0)
@@ -119,7 +119,7 @@ func TestSuccess_case_only_clears_the_tick_that_is_not_used_at_all(t *testing.T)
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
+	pl.Mint(token0Path, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", adminAddr)
 
 	// ===================== only clears the tick that is not used at all =====================
 
@@ -127,8 +127,8 @@ func TestSuccess_case_only_clears_the_tick_that_is_not_used_at_all(t *testing.T)
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -240, 0, "100", admin)
-	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -240, 0, "250", admin)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -240, 0, "100", adminAddr)
+	pl.Mint(token0Path, barPath, 3000, consts.POSITION_ADDR, -240, 0, "250", adminAddr)
 	pl.Burn(token0Path, barPath, 3000, -240, 0, "100")
 	feeGrowthOutside0X128, feeGrowthOutside1X128, liquidityGross, _, _, _, _, _ := pool.GetTicks(-240)
 	// liquidityGrossStr := liquidityGross.ToString()
@@ -153,8 +153,7 @@ func gnsBalance(addr std.Address) uint64 {
 func (pool *Pool) GetTicks(
 	tick int32,
 ) (feeGrowthOutside0X128 *u256.Uint, feeGrowthOutside1X128 *u256.Uint, liquidityGross *u256.Uint, liquidityNet *i256.Int, secondsPerLiquidityOutsideX128 *u256.Uint, tickCumulativeOutside int64, secondsOutside uint32, initialized bool) {
-	info := pool.ticks[tick]
-	info.init()
+	info := pool.getTick(tick)
 
 	return info.feeGrowthOutside0X128, info.feeGrowthOutside1X128, info.liquidityGross, info.liquidityNet, info.secondsPerLiquidityOutsideX128, info.tickCumulativeOutside, info.secondsOutside, info.initialized
 }

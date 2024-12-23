@@ -41,7 +41,7 @@ func TestMintPostInit(t *testing.T) {
 			-1000,
 			1000,
 			test_liquidityExpectStr,
-			admin,
+			adminAddr,
 		)
 	})
 	currentLiq := thisPool.liquidity.ToString()
@@ -56,7 +56,7 @@ func TestMintPostInit(t *testing.T) {
 			-2000,
 			-1000,
 			test_liquidityExpectStr,
-			admin,
+			adminAddr,
 		)
 
 		nowLiq := thisPool.liquidity.ToString()
@@ -73,7 +73,7 @@ func TestMintPostInit(t *testing.T) {
 			1000,
 			2000,
 			test_liquidityExpectStr,
-			admin,
+			adminAddr,
 		)
 
 		nowLiq := thisPool.liquidity.ToString()
@@ -92,7 +92,7 @@ func TestMintPostInit(t *testing.T) {
 			0,
 			10,
 			test_liquidityExpectStr,
-			admin,
+			adminAddr,
 		)
 		nowLiq := thisPool.liquidity.ToString()
 
@@ -101,11 +101,11 @@ func TestMintPostInit(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			admin,
+			adminAddr,
 			true,
 			"1",
 			consts.MIN_PRICE,
-			admin,
+			adminAddr,
 		)
 
 		poolTick := thisPool.slot0.tick
@@ -124,7 +124,7 @@ func TestMintPostInit(t *testing.T) {
 			-10,
 			0,
 			test_liquidityExpectStr,
-			admin,
+			adminAddr,
 		)
 		nowLiq := thisPool.liquidity.ToString()
 
@@ -133,11 +133,11 @@ func TestMintPostInit(t *testing.T) {
 			barPath,
 			fooPath,
 			fee500,
-			admin,
+			adminAddr,
 			true,
 			"1",
 			consts.MIN_PRICE,
-			admin,
+			adminAddr,
 		)
 
 		poolTick := thisPool.slot0.tick
