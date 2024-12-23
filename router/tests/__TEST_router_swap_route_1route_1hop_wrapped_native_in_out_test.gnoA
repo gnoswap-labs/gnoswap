@@ -29,7 +29,7 @@ func TestPositionMintQuxGnot(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
 	// send
-	std.TestIssueCoins(admin, std.Coins{{"ugnot", 1000009}})
+	std.TestIssueCoins(adminAddr, std.Coins{{"ugnot", 1000009}})
 	std.TestSetOrigSend(std.Coins{{"ugnot", 1000009}}, nil)
 
 	// Deposit(wrap)
@@ -39,7 +39,7 @@ func TestPositionMintQuxGnot(t *testing.T) {
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	wugnot.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(quxPath, consts.WRAPPED_WUGNOT, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
 
 	uassert.Equal(t, tokenId, uint64(1))
 	uassert.Equal(t, amount0, "100000")

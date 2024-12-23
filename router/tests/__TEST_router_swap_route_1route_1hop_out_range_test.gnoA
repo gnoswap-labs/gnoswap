@@ -45,7 +45,7 @@ func TestPositionMint(t *testing.T) {
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// Mint
-	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, admin, admin)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(8000), int32(12000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
 
 	uassert.Equal(t, tokenId, uint64(1))
 	uassert.Equal(t, liquidity, "637408")
@@ -78,11 +78,10 @@ func TestSwapRouteBazBarExactIn(t *testing.T) {
 		t,
 		`[GNOSWAP-ROUTER-012] slippage || router.gno__finalizeSwap() || too few received for user (expected minimum: 2710, actual: 367, swapType: EXACT_IN)`,
 		func() {
-			SwapRoute(
+			ExactInSwapRoute(
 				bazPath,    // inputToken
 				barPath,    // outputToken
 				"1000",     // amountSpecified
-				"EXACT_IN", // swapType
 				"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 				"100",  // quoteArr
 				"2710", // tokenAmountLimit ( too few recieved (expected 2710, got 300))
