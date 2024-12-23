@@ -7,8 +7,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	pn "gno.land/r/gnoswap/v1/position"
-
 	u256 "gno.land/p/gnoswap/uint256"
 	i256 "gno.land/p/gnoswap/int256"
 )
@@ -17,11 +15,13 @@ type Pools struct {
 	tree *avl.Tree // string poolPath -> pool
 }
 
-var (
-	pools = &Pools{
+func NewPools() *Pools {
+	return &Pools{
 		tree: avl.NewTree(),
 	}
-)
+}
+
+var pools = NewPools()
 
 func (self *Pools) Get(poolPath string) (*Pool, bool) {
 	v, ok := self.tree.Get(poolPath)
@@ -132,6 +132,9 @@ func (self *Pool) cacheReward(poolTier *PoolTier, endHeight uint64) {
 	})
 
 	// take account of tier reward changes after the last tier membership change
+	if currentTier == 0 {
+		return
+	}
 	poolTier.rewardCacheOf(currentTier).Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
 		reward := value.(uint64)
 		self.rewardCache.Set(height, reward)
@@ -235,6 +238,10 @@ func (self *Pool) TickCrossesToEligibleIntervals(
 }
 
 func (self *Pool) EligibleIntervalsToInternalReward(intervals []Interval, deposit *Deposit) ([]uint64, []uint64) {
+	if len(intervals) == 0 {
+		return nil, nil
+	}
+
 	rewards := make([]uint64, len(deposit.warmups))
 	penalties := make([]uint64, len(deposit.warmups))
 	for i := 0; i < len(deposit.warmups); i++ {
@@ -254,8 +261,6 @@ func (self *Pool) EligibleIntervalsToInternalReward(intervals []Interval, deposi
 
 func (self *Pool) modifyDeposit(tokenId uint64, liquidity *i256.Int, currentHeight uint64) {
 	// update staker side pool info
-	if pn.PositionIsInRange(tokenId) {
-		lastStakedLiquidity := self.LastStakedLiquidity(currentHeight)
-		self.stakedLiquidity.Set(currentHeight, liquidityMathAddDelta(lastStakedLiquidity, liquidity))
-	}
+	lastStakedLiquidity := self.LastStakedLiquidity(currentHeight)
+	self.stakedLiquidity.Set(currentHeight, liquidityMathAddDelta(lastStakedLiquidity, liquidity))
 }

@@ -6,8 +6,6 @@ import (
 	"gno.land/p/demo/avl"
 
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/r/gnoswap/v1/gns"
 )
 
 // 100, 0, 0 if no tier2 and tier3
@@ -67,7 +65,7 @@ func (self *TierRatio) Get(tier uint64) uint64 {
 }
 
 type PoolTier struct {
-	count [3]*UintTree // blockNumber -> uint64 poolCount
+	count [4]*UintTree // blockNumber -> uint64 poolCount
 
 	tierRatio *UintTree // blockNumber -> TierRatio
 
@@ -75,24 +73,30 @@ type PoolTier struct {
 
 	// rewardCache is used to calculate internal reward for each tier
 	// rewardCache = (per block emission) / (number of pools in tier) * (tier's ratio)
-	rewardCache           [3]*RewardCacheTree // blockNumber -> uint64
+	rewardCache           [4]*RewardCacheTree // blockNumber -> uint64
 	lastRewardCacheHeight *uint64
 }
 
-var poolTier *PoolTier = &PoolTier{
-	count: [3]*UintTree{
-		NewUintTree(),
-		NewUintTree(),
-		NewUintTree(),
-	},
-	tierRatio:  NewUintTree(),
-	membership: avl.NewTree(),
-	rewardCache: [3]*RewardCacheTree{
-		NewRewardCacheTree(),
-		NewRewardCacheTree(),
-		NewRewardCacheTree(),
-	},
-	lastRewardCacheHeight: nil,
+var poolTier *PoolTier = NewPoolTier(uint64(std.GetHeight()))
+
+func NewPoolTier(currentHeight uint64) *PoolTier {
+	return &PoolTier{
+		count: [4]*UintTree{
+			nil,
+			NewUintTree(),
+			NewUintTree(),
+			NewUintTree(),
+		},
+		tierRatio:  NewUintTree(),
+		membership: avl.NewTree(),
+		rewardCache: [4]*RewardCacheTree{
+			nil, 
+			NewRewardCacheTree(),
+			NewRewardCacheTree(),
+			NewRewardCacheTree(),
+		},
+		lastRewardCacheHeight: &currentHeight,
+	}
 }
 
 func (self *PoolTier) membershipOf(poolPath string) *UintTree {
@@ -177,11 +181,11 @@ func (self *PoolTier) changeTier(poolPath string, nextTier uint64) {
 func (self *PoolTier) countOf(tier uint64) *UintTree {
 	switch tier {
 	case 1:
-		return self.count[0]
-	case 2:
 		return self.count[1]
-	case 3:
+	case 2:
 		return self.count[2]
+	case 3:
+		return self.count[3]
 	default:
 		panic(addDetailToError(
 			errInvalidPoolTier,
@@ -262,11 +266,11 @@ func (self *PoolTier) TierDenominatorUpdates(tier uint64, startHeight, endHeight
 func (self *PoolTier) rewardCacheOf(tier uint64) *RewardCacheTree {
 	switch tier {
 	case 1:
-		return self.rewardCache[0]
-	case 2:
 		return self.rewardCache[1]
-	case 3:
+	case 2:
 		return self.rewardCache[2]
+	case 3:
+		return self.rewardCache[3]
 	default:
 		panic(addDetailToError(
 			errInvalidPoolTier,
@@ -275,7 +279,7 @@ func (self *PoolTier) rewardCacheOf(tier uint64) *RewardCacheTree {
 	}
 }
 
-func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64, emissionUpdateHeights []uint64, emissionUpdates []uint64, currentEmissionUpdateHeight uint64, currentEmissionUpdate uint64) {
+func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64, currentEmissionUpdateHeight uint64, currentEmissionUpdate uint64, emissionUpdateHeights []uint64, emissionUpdates []uint64) {
 	rewardCache := self.rewardCacheOf(tier)
 	for i := 0; i < len(emissionUpdateHeights); i++ {
 		heights, updates := self.TierDenominatorUpdates(tier, currentEmissionUpdateHeight, emissionUpdateHeights[i])
@@ -289,12 +293,10 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 	}
 }
 
-func (self *PoolTier) cacheReward(endHeight uint64) {
+func (self *PoolTier) cacheReward(endHeight uint64, emissionUpdateHeights []uint64, emissionUpdates []uint64) {
 	startHeight := *self.lastRewardCacheHeight
-	emissionUpdateHeights, emissionUpdates := gns.PerBlockMintUpdates(startHeight, endHeight)
-	currentEmissionUpdateHeight, currentEmissionUpdate := gns.LastPerBlockMintUpdate(startHeight)
 
 	for tier := uint64(1); tier <= 3; tier++ {
-		self.cacheTierReward(tier, startHeight, endHeight, emissionUpdateHeights, emissionUpdates, currentEmissionUpdateHeight, currentEmissionUpdate)
+		self.cacheTierReward(tier, startHeight, endHeight, emissionUpdateHeights[0], emissionUpdates[0], emissionUpdateHeights[1:], emissionUpdates[1:])
 	}
 }

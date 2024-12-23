@@ -3,8 +3,6 @@ package staker
 import (
 	"std"
 
-	pl "gno.land/r/gnoswap/v1/pool"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -13,11 +11,13 @@ type Ticks struct {
 	tree *UintTree // int32 tickId -> tick
 }
 
-var (
-	ticks = &Ticks{
+var ticks = NewTicks()
+
+func NewTicks() *Ticks {
+	return &Ticks{
 		tree: NewUintTree(),
 	}
-)
+}
 
 func (self *Ticks) Get(tickId int32) *Tick {
 	v, ok := self.tree.Get(uint64(tickId))
@@ -119,11 +119,6 @@ func TickCrossHook(pools *Pools, ticks *Ticks) func(poolPath string, tickId int3
 	return func(poolPath string, tickId int32, zeroForOne bool) {
 		pool, ok := pools.Get(poolPath)
 		if !ok {
-			return
-		}
-
-		initialized := pl.PoolGetTickInitialized(poolPath, tickId)
-		if !initialized {
 			return
 		}
 	

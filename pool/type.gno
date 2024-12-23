@@ -375,6 +375,10 @@ func newPool(poolInfo *createPoolParams) *Pool {
 	}
 }
 
+func (p *Pool) PoolPath() string {
+	return GetPoolPath(p.token0Path, p.token1Path, p.fee)
+}
+
 func (p *Pool) Token0Path() string {
 	return p.token0Path
 }

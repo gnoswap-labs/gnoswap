@@ -49,7 +49,7 @@ func LastPerBlockMintUpdate(endHeight uint64) (uint64, uint64) {
 	perBlockMint.ReverseIterate("", EncodeUint(endHeight), func(key string, value interface{}) bool {
 		height = DecodeUint(key)
 		amount = value.(uint64)
-		return false
+		return true
 	})
 
 	return height, amount
@@ -58,6 +58,24 @@ func LastPerBlockMintUpdate(endHeight uint64) (uint64, uint64) {
 func PerBlockMintUpdates(startHeight, endHeight uint64) ([]uint64, []uint64) {
 	heights := make([]uint64, 0)
 	updates := make([]uint64, 0)
+	perBlockMint.Iterate(EncodeUint(startHeight), EncodeUint(endHeight), func(key string, value interface{}) bool {
+		heights = append(heights, DecodeUint(key))
+		updates = append(updates, value.(uint64))
+		return false
+	})
+
+	return heights, updates
+}
+
+func EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
+	heights := make([]uint64, 0)
+	updates := make([]uint64, 0)
+	perBlockMint.ReverseIterate("", EncodeUint(endHeight), func(key string, value interface{}) bool {
+		heights = append(heights, DecodeUint(key))
+		updates = append(updates, value.(uint64))
+		return true
+	})
+
 	perBlockMint.Iterate(EncodeUint(startHeight), EncodeUint(endHeight), func(key string, value interface{}) bool {
 		heights = append(heights, DecodeUint(key))
 		updates = append(updates, value.(uint64))

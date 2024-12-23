@@ -208,17 +208,22 @@ func CalcPoolPositionRefactor() bool {
 	return true
 }
 */
-func CalcPositionReward(tokenId uint64) ([]uint64, []uint64) {
-	// cache per-tier and per-pool reward
-	currentHeight := uint64(std.GetHeight())
-	poolTier.cacheReward(currentHeight)
+
+func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits, pools *Pools, ticks *Ticks, poolTier *PoolTier, emissionUpdateHeights []uint64, emissionUpdates []uint64) ([]uint64, []uint64) {
+	// cache per-tier and per-pool rewards
+	
+	poolTier.cacheReward(currentHeight, emissionUpdateHeights, emissionUpdates)
+
+	/*
 	deposit := deposits.Get(tokenId)
 	poolPath := deposit.targetPoolPath
+
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		pool = NewPool(poolPath, currentHeight)
 		pools.Set(poolPath, pool)
 	}
+
 	pool.cacheReward(poolTier, currentHeight)
 
 	// eligible(in-range) intervals for a position
@@ -238,7 +243,9 @@ func CalcPositionReward(tokenId uint64) ([]uint64, []uint64) {
 
 	rewards, penalties := pool.EligibleIntervalsToInternalReward(intervals, deposit)
 
-	return rewards, penalties
+	return rewards, penalties 
+	*/
+	return nil, nil
 }
 
 // XXX: need to improve nested iteration

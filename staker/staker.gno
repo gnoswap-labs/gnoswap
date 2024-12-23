@@ -7,6 +7,8 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
+	"gno.land/p/demo/avl"
+
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -21,17 +23,17 @@ import (
 )
 
 type Deposits struct {
-	tree *UintTree
+	tree *avl.Tree
 }
 
 func NewDeposits() *Deposits {
 	return &Deposits{
-		tree: NewUintTree(),
+		tree: avl.NewTree(),
 	}
 }
 
 func (self *Deposits) Get(tokenId uint64) *Deposit {
-	depositI, ok := self.tree.Get(tokenId)
+	depositI, ok := self.tree.Get(EncodeUint(tokenId))
 	if !ok {
 		panic(addDetailToError(	
 			errDataNotFound,
@@ -43,22 +45,32 @@ func (self *Deposits) Get(tokenId uint64) *Deposit {
 }
 
 func (self *Deposits) Set(tokenId uint64, deposit *Deposit) {
-	self.tree.Set(tokenId, deposit)
+	self.tree.Set(EncodeUint(tokenId), deposit)
 }
 
 func (self *Deposits) Has(tokenId uint64) bool {
-	return self.tree.Has(tokenId)
+	return self.tree.Has(EncodeUint(tokenId))
 }
 
 func (self *Deposits) Remove(tokenId uint64) {
-	self.tree.Remove(tokenId)
+	self.tree.Remove(EncodeUint(tokenId))
+}
+
+func (self *Deposits) Iterate(start uint64, end uint64, fn func(tokenId uint64, deposit *Deposit) bool) {
+	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(tokenId string, depositI interface{}) bool {
+		return fn(DecodeUint(tokenId), depositI.(*Deposit))
+	})
+}
+
+func (self *Deposits) Size() int {
+	return self.tree.Size()
 }
 
 var (
 	/* common */
 	// deposits stores deposit information for each tokenId
 	deposits *Deposits = &Deposits{
-		tree: NewUintTree(),
+		tree: avl.NewTree(),
 	}
 )
 
@@ -162,6 +174,10 @@ func StakeToken(tokenId uint64) (string, string, string) {
 
 	signedLiquidity := i256.FromUint256(liquidity)
 	currentTick := pl.PoolGetSlot0Tick(poolPath)
+
+	if pn.PositionIsInRange(tokenId) {
+		pool.modifyDeposit(tokenId, signedLiquidity, uint64(std.GetHeight()))
+	}
 
 	ticks.Get(deposit.tickLower).modifyDepositLower(currentTick, signedLiquidity)
 	ticks.Get(deposit.tickUpper).modifyDepositUpper(currentTick, signedLiquidity)
@@ -359,8 +375,9 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 			ufmt.Sprintf("staker.gno__UnstakeToken() || pool(%s) does not exist", poolPath),
 		))
 	}
-	pool.modifyDeposit(tokenId, signedLiquidity, uint64(std.GetHeight()))
-
+	if pn.PositionIsInRange(tokenId) {
+		pool.modifyDeposit(tokenId, signedLiquidity, uint64(std.GetHeight()))
+	}
 	ticks.Get(deposit.tickLower).modifyDepositLower(currentTick, signedLiquidity)
 	ticks.Get(deposit.tickUpper).modifyDepositUpper(currentTick, signedLiquidity)
 
