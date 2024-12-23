@@ -1,0 +1,86 @@
+loadpkg gno.land/p/demo/avl
+loadpkg gno.land/p/demo/ufmt
+loadpkg gno.land/p/demo/json
+loadpkg gno.land/p/demo/ownable
+loadpkg gno.land/p/demo/grc/grc20
+
+loadpkg gno.land/r/demo/users
+loadpkg gno.land/r/demo/grc20reg
+
+
+## add admin user
+### TODO
+
+
+## start a new node
+gnoland start 
+
+
+## deploy packages
+### deploy uint256
+gnokey maketx addpkg -pkgdir ../_deploy/p/gnoswap/uint256 -pkgpath gno.land/p/gnoswap/uint256 -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+## deploy int256
+gnokey maketx addpkg -pkgdir ../_deploy/p/gnoswap/int256 -pkgpath gno.land/p/gnoswap/int256 -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+## deploy pool
+gnokey maketx addpkg -pkgdir ../_deploy/p/gnoswap/pool -pkgpath gno.land/p/gnoswap/pool -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+
+## deploy realm
+### deploy consts
+gnokey maketx addpkg -pkgdir ../_deploy/r/gnoswap/consts -pkgpath gno.land/r/gnoswap/v1/consts -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+### deploy common
+gnokey maketx addpkg -pkgdir ../_deploy/r/gnoswap/common -pkgpath gno.land/r/gnoswap/v1/common -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+### deploy tokens
+#### gns
+gnokey maketx addpkg -pkgdir ../_deploy/r/gnoswap/gns -pkgpath gno.land/r/gnoswap/v1/gns -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+#### usdc
+gnokey maketx addpkg -pkgdir ../__local/grc20_tokens/onbloc/usdc -pkgpath gno.land/r/onbloc/usdc -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+#### foo
+gnokey maketx addpkg -pkgdir ../__local/grc20_tokens/onbloc/foo -pkgpath gno.land/r/onbloc/foo -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+#### bar
+gnokey maketx addpkg -pkgdir ../__local/grc20_tokens/onbloc/bar -pkgpath gno.land/r/onbloc/bar -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+#### baz
+gnokey maketx addpkg -pkgdir ../__local/grc20_tokens/onbloc/baz -pkgpath gno.land/r/onbloc/baz -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+#### qux
+gnokey maketx addpkg -pkgdir ../__local/grc20_tokens/onbloc/qux -pkgpath gno.land/r/onbloc/qux -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+#### obl
+gnokey maketx addpkg -pkgdir ../__local/grc20_tokens/onbloc/obl -pkgpath gno.land/r/onbloc/obl -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+## emission (needed for pool)
+gnokey maketx addpkg -pkgdir ../emission -pkgpath gno.land/r/gnoswap/v1/emission -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+## pool deploy
+gnokey maketx addpkg -pkgdir ../pool -pkgpath gno.land/r/gnoswap/v1/pool -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test test1
+stdout 'GAS USED:   \d+'
+
+
+## pool - CreatePool
+
+### allow pool creation fee to pool
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/gns -func Approve -args "g148tjamj80yyrm309z7rk690an22thd2l3z8ank" -args "200000000" -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test admin
+
+### create pool
+gnokey maketx call -pkgpath gno.land/r/gnoswap/v1/pool -func CreatePool -args "gno.land/r/onbloc/bar" -args "gno.land/r/onbloc/baz" -args "3000" -args "79228162514264337593543950337" -gas-fee 1ugnot -gas-wanted 100000000 -broadcast -chainid=tendermint_test admin
