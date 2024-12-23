@@ -18,12 +18,15 @@ import (
 )
 
 func TestRouterAll2Route2HopWithEmission(t *testing.T) {
-	t.Skip("TODO: fix this test")
 	testCreatePool(t)
 	testPositionMint(t)
+	testDrySwapRouteBarQuxExactIn(t)
 	testSwapRouteBarQuxExactIn(t)
+	testDrySwapRouteBarQuxExactOut(t)
 	testSwapRouteBarQuxExactOut(t)
+	testDrySwapRouteQuxBarExactIn(t)
 	testSwapRouteQuxBarExactIn(t)
+	testDrySwapRouteQuxBarExactOut(t)
 	testSwapRouteQuxBarExactOut(t)
 }
 
@@ -71,6 +74,21 @@ func testPositionMint(t *testing.T) {
 	})
 }
 
+func testDrySwapRouteBarQuxExactIn(t *testing.T) {
+	t.Run("dry swap route bar qux exact in", func(t *testing.T) {
+		dryResult := DrySwapRoute(
+			barPath,    // inputToken
+			quxPath,    // outputToken
+			"1000",     // amountSpecified
+			"EXACT_IN", // swapType
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+			"50,50", // quoteArr
+		)
+
+		uassert.Equal(t, dryResult, "7346")
+	})
+}
+
 func testSwapRouteBarQuxExactIn(t *testing.T) {
 	t.Run("swap route bar qux exact in", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
@@ -98,6 +116,23 @@ func testSwapRouteBarQuxExactIn(t *testing.T) {
 	})
 }
 
+func testDrySwapRouteBarQuxExactOut(t *testing.T) {
+	t.Run("dry swap route bar qux exact out", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		dryResult := DrySwapRoute(
+			barPath,     // inputToken
+			quxPath,     // outputToken
+			"1000",      // amountSpecified
+			"EXACT_OUT", // swapType
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
+			"50,50", // quoteArr
+		)
+
+		uassert.Equal(t, dryResult, "140")
+	})
+}
+
 func testSwapRouteBarQuxExactOut(t *testing.T) {
 	t.Run("swap route bar qux exact out", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
@@ -122,6 +157,23 @@ func testSwapRouteBarQuxExactOut(t *testing.T) {
 	})
 }
 
+func testDrySwapRouteQuxBarExactIn(t *testing.T) {
+	t.Run("dry swap route qux bar exact in", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		dryResult := DrySwapRoute(
+			quxPath,    // inputToken
+			barPath,    // outputToken
+			"1000",     // amountSpecified
+			"EXACT_IN", // swapType
+			"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"30,70", // quoteArr
+		)
+
+		uassert.Equal(t, dryResult, "135")
+	})
+}
+
 func testSwapRouteQuxBarExactIn(t *testing.T) {
 	t.Run("swap route qux bar exact in", func(t *testing.T) {
 		std.TestSetRealm(adminRealm)
@@ -143,6 +195,23 @@ func testSwapRouteQuxBarExactIn(t *testing.T) {
 
 		uassert.Equal(t, amountIn, "1000")
 		uassert.Equal(t, amountOut, "-135")
+	})
+}
+
+func testDrySwapRouteQuxBarExactOut(t *testing.T) {
+	t.Run("dry swap route qux bar exact out", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		dryResult := DrySwapRoute(
+			quxPath,     // inputToken
+			barPath,     // outputToken
+			"1000",      // amountSpecified
+			"EXACT_OUT", // swapType
+			"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
+			"30,70", // quoteArr
+		)
+
+		uassert.Equal(t, dryResult, "7351")
 	})
 }
 
