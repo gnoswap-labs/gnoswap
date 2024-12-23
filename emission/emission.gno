@@ -7,8 +7,6 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/consts"
-	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -18,14 +16,15 @@ var (
 )
 
 // MintAndDistributeGns mints GNS and distributes to target
-func MintAndDistributeGns() {
-	common.IsHalted()
+// Returns the amount of GNS distributed
+func MintAndDistributeGns() uint64 {
+	assertOnlyNotHalted()
 
 	currentHeight := std.GetHeight()
 	lastMintedHeight := gns.GetLastMintedHeight()
 	if lastMintedHeight >= currentHeight {
 		// do not panic here, we don't want to panic entire transaction that calls this function
-		return
+		return 0
 	}
 
 	mintedEmissionRewardAmount := gns.MintGns(a2u(consts.EMISSION_ADDR))
@@ -39,7 +38,7 @@ func MintAndDistributeGns() {
 		setLeftGNSAmount(mintedEmissionRewardAmount - distributedGNSAmount)
 	}
 
-	prevAddr, prevPkgPath := getPrev()
+	prevAddr, prevPkgPath := getPrevAsString()
 	std.Emit(
 		"MintAndDistributeGns",
 		"prevAddr", prevAddr,
@@ -52,6 +51,8 @@ func MintAndDistributeGns() {
 	)
 
 	setLastExecutedHeight(currentHeight)
+
+	return distributedGNSAmount
 }
 
 func GetLeftGNSAmount() uint64 {
