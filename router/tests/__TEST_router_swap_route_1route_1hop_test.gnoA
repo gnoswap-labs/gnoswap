@@ -35,7 +35,7 @@ func TestPositionMint(t *testing.T) {
 	baz.Approve(a2u(consts.POOL_ADDR), 100000)
 
 	// Mint
-	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
+	tokenId, liquidity, amount0, amount1 := pn.Mint(barPath, bazPath, fee500, int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
 
 	uassert.Equal(t, tokenId, uint64(1))
 	uassert.Equal(t, amount0, "36790")
@@ -48,11 +48,10 @@ func TestSwapRouteBarBazExactIn(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), uint64(1000))
 	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
 
-	amountIn, amountOut := SwapRoute(
+	amountIn, amountOut := ExactInSwapRoute(
 		barPath,    // inputToken
 		bazPath,    // outputToken
 		"1000",     // amountSpecified
-		"EXACT_IN", // swapType
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", // strRouteArr
 		"100",  // quoteArr
 		"2700", // tokenAmountLimit
@@ -68,11 +67,10 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), uint64(1000))
 	baz.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
 
-	amountIn, amountOut := SwapRoute(
+	amountIn, amountOut := ExactOutSwapRoute(
 		barPath,     // inputToken
 		bazPath,     // outputToken
 		"1000",      // amountSpecified
-		"EXACT_OUT", // swapType
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500", // strRouteArr
 		"100", // quoteArr
 		"371", // tokenAmountLimit
@@ -88,11 +86,10 @@ func TestSwapRouteBazBarExactIn(t *testing.T) {
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX) // ITS FOR 0.15% fee
 
-	amountIn, amountOut := SwapRoute(
+	amountIn, amountOut := ExactInSwapRoute(
 		bazPath,    // inputToken
 		barPath,    // outputToken
 		"1000",     // amountSpecified
-		"EXACT_IN", // swapType
 		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 		"100", // quoteArr
 		"360", // tokenAmountLimit
@@ -106,11 +103,10 @@ func TestSwapRouteBazBarExactOut(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	bar.Approve(a2u(consts.ROUTER_ADDR), consts.UINT64_MAX)
 
-	amountIn, amountOut := SwapRoute(
+	amountIn, amountOut := ExactOutSwapRoute(
 		bazPath,     // inputToken
 		barPath,     // outputToken
 		"3000",      // amountSpecified
-		"EXACT_OUT", // swapType
 		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 		"100",  // quoteArr
 		"8200", // tokenAmountLimit

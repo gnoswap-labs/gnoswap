@@ -39,9 +39,9 @@ func TestPositionMint(t *testing.T) {
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// Mint
-	pn.Mint(barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
+	pn.Mint(barPath, bazPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
 
-	pn.Mint(bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, admin, admin)
+	pn.Mint(bazPath, quxPath, uint32(500), int32(9000), int32(11000), "100000", "100000", "0", "0", max_timeout, adminAddr, adminAddr)
 }
 
 func TestSwapRouteBarQuxExactIn(t *testing.T) {
@@ -50,11 +50,10 @@ func TestSwapRouteBarQuxExactIn(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), 10000)
 	qux.Approve(a2u(consts.ROUTER_ADDR), 10000)
 
-	amountIn, amountOut := SwapRoute(
+	amountIn, amountOut := ExactInSwapRoute(
 		barPath,    // inputToken
 		quxPath,    // outputToken
 		"1000",     // amountSpecified
-		"EXACT_IN", // swapType
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
 		"50,50", // quoteArr
 		"1",     // tokenAmountLimit
@@ -67,11 +66,10 @@ func TestSwapRouteBarQuxExactIn(t *testing.T) {
 func TestSwapRouteBarQuxExactOut(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	amountIn, amountOut := SwapRoute(
+	amountIn, amountOut := ExactOutSwapRoute(
 		barPath,     // inputToken
 		quxPath,     // outputToken
 		"1000",      // amountSpecified
-		"EXACT_OUT", // swapType
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", // strRouteArr
 		"50,50", // quoteArr
 		"99999", // tokenAmountLimit
@@ -84,11 +82,10 @@ func TestSwapRouteBarQuxExactOut(t *testing.T) {
 func TestSwapRouteQuxBarExactIn(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	amountIn, amountOut := SwapRoute(
+	amountIn, amountOut := ExactInSwapRoute(
 		quxPath,    // inputToken
 		barPath,    // outputToken
 		"1000",     // amountSpecified
-		"EXACT_IN", // swapType
 		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 		"30,70", // quoteArr
 		"1",     // tokenAmountLimit
@@ -104,11 +101,10 @@ func TestwapRouteQuxBarExactOut(t *testing.T) {
 	qux.Approve(a2u(consts.POOL_ADDR), 10000)
 	bar.Approve(a2u(consts.ROUTER_ADDR), 10000)
 
-	amountIn, amountOut := SwapRoute(
+	amountIn, amountOut := ExactOutSwapRoute(
 		quxPath,     // inputToken
 		barPath,     // outputToken
 		"1000",      // amountSpecified
-		"EXACT_OUT", // swapType
 		"gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500,gno.land/r/onbloc/qux:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:500", // strRouteArr
 		"30,70", // quoteArr
 		"99999", // tokenAmountLimit
