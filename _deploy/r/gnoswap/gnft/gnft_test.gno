@@ -252,6 +252,24 @@ func TestTransferFrom(t *testing.T) {
 				uassert.Equal(t, 0, len(mustGetTokenList(addr02)))
 			},
 		},
+		{
+			name:              "transfer from is invalid address",
+			callerRealm:       std.NewUserRealm(addr01),
+			fromAddr:          std.Address(""),
+			toAddr:            addr02,
+			tokenIdToTransfer: 1,
+			shouldPanic:       true,
+			panicMsg:          "[GNOSWAP-GNFT-004] invalid addresss || ",
+		},
+		{
+			name:              "transfer to is invalid address",
+			callerRealm:       std.NewUserRealm(addr01),
+			fromAddr:          addr01,
+			toAddr:            std.Address("this_is_invalid_address"),
+			tokenIdToTransfer: 1,
+			shouldPanic:       true,
+			panicMsg:          "[GNOSWAP-GNFT-004] invalid addresss || this_is_invalid_address",
+		},
 	}
 
 	for _, tt := range tests {
