@@ -39,8 +39,8 @@ func TestMintPosition01InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 	)
 
 	uassert.Equal(t, tokenId, uint64(1))
@@ -71,11 +71,11 @@ func TestSwap1(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		admin,
+		adminAddr,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		admin,
+		adminAddr,
 	)
 
 	uassert.Equal(t, amount0, "1234567")
@@ -111,8 +111,8 @@ func TestMintPosition02InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 	)
 
 	uassert.Equal(t, tokenId, uint64(2))
@@ -153,8 +153,8 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 
 	_lpTokenId := uint64(1)
 
-	ownerOfPosition := gnft.OwnerOf(tid(_lpTokenId))
-	uassert.Equal(t, ownerOfPosition, admin)
+	ownerOfPosition := gnft.OwnerOf(tokenIdFrom(_lpTokenId))
+	uassert.Equal(t, ownerOfPosition, adminAddr)
 
 	// approve fee0, fee_lpTokenId to pool
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
@@ -166,8 +166,8 @@ func TestDecreaseLiquidityInPosition(t *testing.T) {
 	uassert.Equal(t, amount0, "19628840")
 	uassert.Equal(t, amount1, "46667220")
 
-	ownerOfPosition = gnft.OwnerOf(tid(_lpTokenId))
-	uassert.Equal(t, ownerOfPosition, admin)
+	ownerOfPosition = gnft.OwnerOf(tokenIdFrom(_lpTokenId))
+	uassert.Equal(t, ownerOfPosition, adminAddr)
 
 	position := MustGetPosition(_lpTokenId)
 	uassert.Equal(t, position.nonce.ToString(), "0")
@@ -199,8 +199,8 @@ func TestMintPosition03InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 	)
 
 	uassert.Equal(t, tokenId, uint64(3))
@@ -223,10 +223,10 @@ func TestMintPosition03InRange(t *testing.T) {
 }
 
 func TestRepositionNotOwner(t *testing.T) {
-	std.TestSetRealm(std.NewUserRealm(test1))
+	std.TestSetRealm(std.NewUserRealm(addr02))
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POSITION-001] caller has no permission || only owner(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) can reposition for tokenId(1), but called from g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5`,
+		`[GNOSWAP-POSITION-001] caller has no permission || caller(g1v9jxgu3sxf047h6lta047h6lta047h6l8tv5at) is not owner(g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d) for tokenId(1)`,
 		func() {
 			Reposition(uint64(1), -1000, 1000, "500", "500", "0", "0")
 		})
@@ -246,7 +246,7 @@ func TestRepositionSlippageTooLarge(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POSITION-002] slippage failed || LM_Price Slippage Check(amount0(0) >= params.amount0Min(100000000000), amount1(500) >= params.amount1Min(100000000000))`,
+		`[GNOSWAP-POSITION-002] slippage failed || Price Slippage Check(amount0(0) >= amount0Min(100000000000), amount1(500) >= amount1Min(100000000000))`,
 		func() {
 			Reposition(uint64(1), -1000, 1000, "500", "500", "100000000000", "100000000000")
 		})
@@ -288,7 +288,7 @@ func TestReposition(t *testing.T) {
 	uassert.Equal(t, position.tickLower, int32(-1000))
 	uassert.Equal(t, position.tickUpper, int32(1000))
 	uassert.Equal(t, position.liquidity.ToString(), "4998")
-	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "0")
+	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "659841872392960215058365142934185")
 	uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
 	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
 	uassert.Equal(t, position.tokensOwed1.ToString(), "0")

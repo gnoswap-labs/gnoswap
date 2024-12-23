@@ -17,7 +17,6 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
-	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -678,7 +677,7 @@ func getTokenPairBalanceFromPosition(tokenId uint64) (string, string) {
 		currentX96,
 		lowerX96,
 		upperX96,
-		i256.FromUint256(pn.PositionGetPositionLiquidity(tokenId)),
+		pn.PositionGetPositionLiquidity(tokenId),
 	)
 
 	if token0Balance == "" {

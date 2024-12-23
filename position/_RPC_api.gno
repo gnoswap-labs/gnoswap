@@ -392,7 +392,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 		currentX96,
 		lowerX96,
 		upperX96,
-		i256.FromUint256(position.liquidity),
+		position.liquidity,
 	)
 
 	unclaimedFee0 := i256.Zero()

@@ -39,10 +39,10 @@ func TestMintFooBar(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// admin mints => will get tid 1 nft
-	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, admin, admin)
+	Mint(fooPath, barPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, adminAddr, admin)
 
 	// admin mints => will get tid 2 nft
-	Mint(fooPath, barPath, fee500, int32(4000), int32(6000), "1000000", "1000000", "0", "0", max_timeout, admin, admin)
+	Mint(fooPath, barPath, fee500, int32(4000), int32(6000), "1000000", "1000000", "0", "0", max_timeout, adminAddr, admin)
 }
 
 func TestMintBazQux(t *testing.T) {
@@ -51,7 +51,7 @@ func TestMintBazQux(t *testing.T) {
 	qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// admin mints => will get tid 3 nft
-	Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, admin, admin)
+	Mint(bazPath, quxPath, fee500, int32(9000), int32(11000), "1000000", "1000000", "1", "1", max_timeout, adminAddr, admin)
 }
 
 func TestApiGetPositionsUnclaimedFee(t *testing.T) {
@@ -82,11 +82,11 @@ func TestSwap(t *testing.T) {
 		fooPath,
 		barPath,
 		fee500,
-		admin,
+		adminAddr,
 		true,
 		"123456",
 		consts.MIN_PRICE,
-		admin,
+		adminAddr,
 	)
 }
 

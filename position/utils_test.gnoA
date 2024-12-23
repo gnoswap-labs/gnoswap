@@ -170,7 +170,7 @@ func TestAssertOnlyNotHalted(t *testing.T) {
 		{
 			name:     "Failure - Halted",
 			expected: false,
-			panicMsg: "[GNOSWAP-COMMON-002] halted || gnoswap halted",
+			panicMsg: "[GNOSWAP-COMMON-002] halted || GnoSwap is halted",
 		},
 		{
 			name:     "Success - Not Halted",

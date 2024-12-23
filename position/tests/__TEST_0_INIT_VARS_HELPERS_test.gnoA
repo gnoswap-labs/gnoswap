@@ -52,7 +52,7 @@ func ugnotBalanceOf(addr std.Address) uint64 {
 }
 
 func isOwner(t *testing.T, tokenId uint64, addr std.Address) bool {
-	owner := gnft.OwnerOf(tid(tokenId))
+	owner := gnft.OwnerOf(tokenIdFrom(tokenId))
 
 	if owner == addr {
 		return true
