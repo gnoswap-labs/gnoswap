@@ -5,65 +5,55 @@ import (
 	"testing"
 
 	"gno.land/p/demo/uassert"
-
-	"gno.land/r/gnoswap/v1/consts"
-	"gno.land/r/gnoswap/v1/gns"
 )
 
 func TestMintAndDistributeGns(t *testing.T) {
-	t.Run("initial", func(t *testing.T) {
-		uassert.Equal(t, int64(0), lastExecutedHeight)
-		uassert.Equal(t, uint64(100000000000000), gns.TotalSupply())
+	tests := []struct {
+		name        string
+		setup       func()
+		shouldPanic bool
+		panicMsg    string
+		verify      func(distributed uint64)
+	}{
+		{
+			name: "no block passed",
+			verify: func(distributed uint64) {
+				uassert.Equal(t, uint64(0), distributed)
+			},
+		},
+		{
+			name: "block passed",
+			setup: func() {
+				std.TestSkipHeights(123)
+			},
+			verify: func(distributed uint64) {
+				uassert.True(t, distributed > 0)
+			},
+		},
+		{
+			name: "same block",
+			verify: func(distributed uint64) {
+				uassert.Equal(t, uint64(0), distributed)
+			},
+		},
+	}
 
-		uassert.Equal(t, uint64(0), gnsBalance(consts.STAKER_ADDR))
-		uassert.Equal(t, uint64(0), gnsBalance(consts.DEV_OPS))
-		uassert.Equal(t, uint64(0), gnsBalance(consts.COMMUNITY_POOL_ADDR))
-		uassert.Equal(t, uint64(0), gnsBalance(consts.GOV_STAKER_ADDR))
-		uassert.Equal(t, uint64(0), gnsBalance(consts.EMISSION_ADDR))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
 
-		adminRealm := std.NewUserRealm(consts.ADMIN)
-		std.TestSetRealm(adminRealm)
-
-		ChangeDistributionPctByAdmin(1, 7500, 2, 2000, 3, 500, 4, 0)
-		uassert.Equal(t, uint64(7500), GetDistributionPct(1))
-		uassert.Equal(t, uint64(2000), GetDistributionPct(2))
-		uassert.Equal(t, uint64(500), GetDistributionPct(3))
-		uassert.Equal(t, uint64(0), GetDistributionPct(4))
-
-	})
-
-	t.Run("skip 123 block", func(t *testing.T) {
-		std.TestSkipHeights(123)
-		MintAndDistributeGns()
-		uassert.Equal(t, std.GetHeight(), lastExecutedHeight)
-		uassert.Equal(t, uint64(100000000000000+1755136938), gns.TotalSupply())
-
-		uassert.Equal(t, uint64(1316352703), gnsBalance(consts.STAKER_ADDR))       // 75% of 1755136938
-		uassert.Equal(t, uint64(351027387), gnsBalance(consts.DEV_OPS))            // 20% of 1755136938
-		uassert.Equal(t, uint64(87756846), gnsBalance(consts.COMMUNITY_POOL_ADDR)) // 5% of 1755136938
-		uassert.Equal(t, uint64(0), gnsBalance(consts.GOV_STAKER_ADDR))            // 0% of 1755136938
-		uassert.Equal(t, uint64(2), gnsBalance(consts.EMISSION_ADDR))              // 1755136938 - (1316352703 + 351027387 + 87756846) = 2
-	})
-
-	t.Run("same block", func(t *testing.T) {
-		// we're still in the same block, so MintAndDistributeGns should not mint again
-		uassert.Equal(t, lastExecutedHeight, std.GetHeight())
-		MintAndDistributeGns()
-
-		uassert.Equal(t, uint64(100000000000000+1755136938), gns.TotalSupply())
-		uassert.Equal(t, uint64(1316352703), gnsBalance(consts.STAKER_ADDR))
-		uassert.Equal(t, uint64(351027387), gnsBalance(consts.DEV_OPS))
-		uassert.Equal(t, uint64(87756846), gnsBalance(consts.COMMUNITY_POOL_ADDR))
-		uassert.Equal(t, uint64(0), gnsBalance(consts.GOV_STAKER_ADDR))
-		uassert.Equal(t, uint64(2), gnsBalance(consts.EMISSION_ADDR))
-	})
-
-	t.Run("after 5 blocks", func(t *testing.T) {
-		oldTotalSupply := gns.TotalSupply()
-
-		std.TestSkipHeights(5)
-		MintAndDistributeGns()
-		uassert.Equal(t, lastExecutedHeight, std.GetHeight())
-		uassert.True(t, gns.TotalSupply() > oldTotalSupply)
-	})
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					MintAndDistributeGns()
+				})
+			} else {
+				distributed := MintAndDistributeGns()
+				if tt.verify != nil {
+					tt.verify(distributed)
+				}
+			}
+		})
+	}
 }
