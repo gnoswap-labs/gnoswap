@@ -128,10 +128,10 @@ func TestValidateProposalState(t *testing.T) {
 			proposal: &ProposalInfo{
 				ProposalType: "TEXT",
 				ExecutionState: ExecutionState{
-					Executed: false,
-					Canceled: false,
-					Rejected: false,
-					Passed:   true,
+					Executed:  false,
+					Canceled:  false,
+					Rejected:  false,
+					Passed:    true,
 				},
 			},
 			want: ExecutionValidator{
@@ -147,10 +147,10 @@ func TestValidateProposalState(t *testing.T) {
 			proposal: &ProposalInfo{
 				ProposalType: "PARAMETER_CHANGE",
 				ExecutionState: ExecutionState{
-					Executed: true,
-					Canceled: false,
-					Rejected: false,
-					Passed:   true,
+					Executed:  true,
+					Canceled:  false,
+					Rejected:  false,
+					Passed:    true,
 				},
 			},
 			want: ExecutionValidator{
@@ -166,10 +166,10 @@ func TestValidateProposalState(t *testing.T) {
 			proposal: &ProposalInfo{
 				ProposalType: "PARAMETER_CHANGE",
 				ExecutionState: ExecutionState{
-					Executed: false,
-					Canceled: true,
-					Rejected: false,
-					Passed:   false,
+					Executed:  false,
+					Canceled:  true,
+					Rejected:  false,
+					Passed:    false,
 				},
 			},
 			want: ExecutionValidator{

@@ -72,7 +72,11 @@ type ExecutionContext struct {
 }
 
 func Execute2(proposalId uint64) error {
-	panic("todo")
+	// ctx, err := prepareExecution(proposalId)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	return nil
 }
 
 func executeProposal(ctx *ExecutionContext, registry *ParameterRegistry) error {
@@ -175,7 +179,22 @@ type ExecutionValidator struct {
 func prepareExecution(proposalId uint64) (*ExecutionContext, error) {
 	validateInitialState()
 
-	panic("todo")
+	proposal, err := getProposal(proposalId)
+	if err != nil {
+		return nil, err
+	}
+
+	validator := validateProposalState(proposal)
+	if err := checkProposalValidation(validator); err != nil {
+		return nil, err
+	}
+
+	ctx, err := createExecutionContext(proposalId, proposal)
+	if err != nil {
+		return nil, err
+	}
+
+	return ctx, nil
 }
 
 func validateInitialState() {
