@@ -261,7 +261,7 @@ func SetTokenURILast() {
 }
 
 func SafeTransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
-	panic("not implemented")
+	TransferFrom(from, to, tid)
 }
 
 func setTokenURI(tid grc721.TokenID) error {
