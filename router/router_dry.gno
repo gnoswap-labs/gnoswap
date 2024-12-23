@@ -16,27 +16,21 @@ import (
 func DrySwapRoute(
 	inputToken string,
 	outputToken string,
-	_amountSpecified string, // int256
-	swapType string,
-	strRouteArr string, // []string
-	quoteArr string, // []int
-) string { // uint256
-	if swapType != "EXACT_IN" && swapType != "EXACT_OUT" {
+	specifiedAmount string,
+	swapKind string,
+	strRouteArr string,
+	quoteArr string,
+) string {
+	swapType, err := trySwapTypeFromStr(swapKind)
+	if err != nil {
 		panic(addDetailToError(
 			errInvalidSwapType,
-			ufmt.Sprintf("unknown swapType(%s)", swapType),
+			ufmt.Sprintf("unknown swapType(%s)", swapKind),
 		))
 	}
 
-	amountSpecified, err := i256.FromDecimal(_amountSpecified)
-	if err != nil {
-		panic(err.Error())
-	}
+	amountSpecified := i256.MustFromDecimal(specifiedAmount)
 
-	routes := strings.Split(strRouteArr, ",")
-	quotes := strings.Split(quoteArr, ",")
-
-	// validateInput(amountSpecified, swapType, routes, quotes)
 	if amountSpecified.IsZero() || amountSpecified.IsNeg() {
 		panic(addDetailToError(
 			errInvalidInput,
@@ -44,34 +38,12 @@ func DrySwapRoute(
 		))
 	}
 
-	if len(routes) < 1 || len(routes) > 7 {
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("route length(%d) must be 1~7", len(routes)),
-		))
+	routes, quotes, err := tryParseRoutes(strRouteArr, quoteArr)
+	if err != nil {
+		panic(err.Error())
 	}
 
-	if len(routes) != len(quotes) {
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("mismatch between routes(%d) and quotes(%d) length", len(routes), len(quotes)),
-		))
-	}
-
-	var quotesSum int64
-	for _, quote := range quotes {
-		intQuote, _ := strconv.Atoi(quote)
-		quotesSum += int64(intQuote)
-	}
-
-	if quotesSum != 100 {
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("quote sum(%d) must be 100", quotesSum),
-		))
-	}
-
-	if swapType == "EXACT_OUT" {
+	if swapType == ExactOut {
 		amountSpecified = i256.Zero().Neg(amountSpecified)
 	}
 
@@ -79,15 +51,11 @@ func DrySwapRoute(
 	resultAmountOut := u256.Zero()
 
 	for i, route := range routes {
-		numHops := strings.Count(route, "*POOL*") + 1
+		numHops := strings.Count(route, POOL_SEPARATOR) + 1
+		// don't need to check error here
 		quote, _ := strconv.Atoi(quotes[i])
 
-		if numHops < 1 || numHops > 3 {
-			panic(addDetailToError(
-				errInvalidInput,
-				ufmt.Sprintf("number of hops(%d) must be 1~3", numHops),
-			))
-		}
+		assertHopsInRange(numHops)
 
 		toSwap := i256.Zero().Mul(amountSpecified, i256.NewInt(int64(quote)))
 		toSwap = toSwap.Div(toSwap, i256.NewInt(100))
@@ -97,32 +65,29 @@ func DrySwapRoute(
 			resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
 			resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
 		} else {
-			amountIn, amountOut := handleMultiSwap(SwapType(swapType), route, numHops, toSwap)
+			amountIn, amountOut := handleMultiSwap(swapType, route, numHops, toSwap)
 			resultAmountIn = new(u256.Uint).Add(resultAmountIn, amountIn)
 			resultAmountOut = new(u256.Uint).Add(resultAmountOut, amountOut)
 		}
-
 	}
 
 	return processResult(swapType, resultAmountIn, resultAmountOut, amountSpecified)
 }
 
-func processResult(swapType string, resultAmountIn, resultAmountOut *u256.Uint, amountSpecified *i256.Int) string {
+func processResult(swapType SwapType, resultAmountIn, resultAmountOut *u256.Uint, amountSpecified *i256.Int) string {
 	switch swapType {
-	case "EXACT_IN":
+	case ExactIn:
 		if !i256.FromUint256(resultAmountIn).Eq(amountSpecified) {
 			return "-1"
 		}
 		return resultAmountOut.ToString()
-	case "EXACT_OUT":
+	case ExactOut:
 		if i256.FromUint256(resultAmountOut).Lt(amountSpecified) {
 			return "-1"
 		}
 		return resultAmountIn.ToString()
 	default:
-		panic(addDetailToError(
-			errInvalidSwapType,
-			ufmt.Sprintf("unknown swapType(%s)", swapType),
-		))
+		// redundant case
+		panic("should not reach here")
 	}
 }
