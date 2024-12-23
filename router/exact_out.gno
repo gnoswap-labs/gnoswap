@@ -27,7 +27,7 @@ func ExactOutSwapRoute(
 	inputToken string,
 	outputToken string,
 	amountOut string,
-	RouteArr string,
+	routeArr string,
 	quoteArr string,
 	amountInMax string,
 ) (string, string) {
@@ -36,7 +36,7 @@ func ExactOutSwapRoute(
 	baseParams := BaseSwapParams{
 		InputToken:  inputToken,
 		OutputToken: outputToken,
-		RouteArr:    RouteArr,
+		RouteArr:    routeArr,
 		QuoteArr:    quoteArr,
 	}
 
