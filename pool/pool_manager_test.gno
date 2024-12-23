@@ -141,7 +141,7 @@ func TestCreatePool(t *testing.T) {
 						t.Errorf("expected panic but got none")
 						return
 					}
-					errMsg := string(r)
+					errMsg := r.(string)
 					if !strings.Contains(errMsg, tt.panicMsg) {
 						t.Errorf("expected panic message containing %q but got %q", tt.panicMsg, errMsg)
 					}

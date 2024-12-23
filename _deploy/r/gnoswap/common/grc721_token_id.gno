@@ -16,7 +16,7 @@ import (
 // output: grc721.TokenID
 func TokenIdFrom(tokenId interface{}) grc721.TokenID {
 	if tokenId == nil {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errInvalidTokenId,
 			"can not be nil",
 		))
@@ -33,7 +33,7 @@ func TokenIdFrom(tokenId interface{}) grc721.TokenID {
 		return tokenId.(grc721.TokenID)
 	default:
 		estimatedType := ufmt.Sprintf("%T", tokenId)
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errInvalidTokenId,
 			ufmt.Sprintf("unsupported tokenId type: %s", estimatedType),
 		))

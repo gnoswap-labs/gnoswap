@@ -77,7 +77,7 @@ func U256Max(x, y *u256.Uint) *u256.Uint {
 // If the value is greater than the maximum int256 value, it panics.
 func SafeConvertUint256ToInt256(x *u256.Uint) *i256.Int {
 	if x.Gt(u256.MustFromDecimal(consts.MAX_INT256)) {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errOverflow,
 			ufmt.Sprintf("can not convert %s to int256", x.ToString()),
 		))
@@ -90,7 +90,7 @@ func SafeConvertUint256ToInt256(x *u256.Uint) *i256.Int {
 func SafeConvertUint256ToUint64(x *u256.Uint) uint64 {
 	value, overflow := x.Uint64WithOverflow()
 	if overflow {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errOverflow,
 			ufmt.Sprintf("can not convert %s to uint64", x.ToString()),
 		))
