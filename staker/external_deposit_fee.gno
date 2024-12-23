@@ -5,7 +5,6 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/common"
 )
 
