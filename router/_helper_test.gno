@@ -42,6 +42,12 @@ const (
 )
 
 const (
+	FEE_LOW    uint32 = 500
+	FEE_MEDIUM uint32 = 3000
+	FEE_HIGH   uint32 = 10000
+)
+
+const (
 	// define addresses to use in tests
 	addr01 = testutils.TestAddress("addr01")
 	addr02 = testutils.TestAddress("addr02")
@@ -51,6 +57,11 @@ var (
 	user1Addr      std.Address = "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec"
 	singlePoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
 	singlePoolPath2 = "gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000"
+)
+
+var (
+	minTick int32 = -887220
+	maxTick int32 = 887220
 )
 
 type WugnotToken struct{}
@@ -164,6 +175,7 @@ func init() {
 
 var (
 	admin       = pusers.AddressOrName(consts.ADMIN)
+	adminAddr   = users.Resolve(admin)
 	alice       = pusers.AddressOrName(testutils.TestAddress("alice"))
 	bob         = pusers.AddressOrName(testutils.TestAddress("bob"))
 	pool        = pusers.AddressOrName(consts.POOL_ADDR)
