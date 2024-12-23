@@ -18,7 +18,7 @@ func GetPossibleVotingAddressWithWeight(endTimestamp uint64) (uint64, map[std.Ad
 	if endTimestamp > uint64(time.Now().Unix()) {
 		panic(addDetailToError(
 			errFutureTime,
-			ufmt.Sprintf("_RPC_api_history.gno__GetPossibleVotingAddressWithWeight() || endTimestamp(%d) > now(%d)", endTimestamp, time.Now().Unix()),
+			ufmt.Sprintf("endTimestamp(%d) > now(%d)", endTimestamp, time.Now().Unix()),
 		))
 	}
 
@@ -52,7 +52,7 @@ func GetPossibleVotingAddressWithWeightJSON(endTimestamp uint64) (uint64, string
 	if endTimestamp > uint64(time.Now().Unix()) {
 		panic(addDetailToError(
 			errFutureTime,
-			ufmt.Sprintf("_RPC_api_history.gno__GetPossibleVotingAddressWithWeightJSON() || endTimestamp(%d) > now(%d)", endTimestamp, time.Now().Unix()),
+			ufmt.Sprintf("endTimestamp(%d) > now(%d)", endTimestamp, time.Now().Unix()),
 		))
 	}
 

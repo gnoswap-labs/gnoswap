@@ -35,28 +35,28 @@ func Execute(proposalId uint64) {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("execute.gno__Execute() || proposalId(%d) does not exist, failed to execute", proposalId),
+			ufmt.Sprintf("proposalId(%d) does not exist, failed to execute", proposalId),
 		))
 	}
 
 	if proposal.ProposalType == "TEXT" {
 		panic(addDetailToError(
 			errTextProposalNotExecutable,
-			ufmt.Sprintf("execute.gno__Execute() || proposalId(%d) is a TEXT proposal, not executable", proposalId),
+			ufmt.Sprintf("proposalId(%d) is a TEXT proposal, not executable", proposalId),
 		))
 	}
 
 	if proposal.ExecutionState.Executed || proposal.ExecutionState.Canceled || proposal.ExecutionState.Rejected {
 		panic(addDetailToError(
 			errUnableToExecuteProposal,
-			ufmt.Sprintf("execute.gno__Execute() || proposalId(%d) has already executed(%t) or canceled(%t) or rejected(%t), failed to execute", proposalId, proposal.ExecutionState.Executed, proposal.ExecutionState.Canceled, proposal.ExecutionState.Rejected),
+			ufmt.Sprintf("proposalId(%d) has already executed(%t) or canceled(%t) or rejected(%t), failed to execute", proposalId, proposal.ExecutionState.Executed, proposal.ExecutionState.Canceled, proposal.ExecutionState.Rejected),
 		))
 	}
 
 	if !proposal.ExecutionState.Passed {
 		panic(addDetailToError(
 			errUnableToExecuteProposal,
-			ufmt.Sprintf("execute.gno__Execute() || proposalId(%d) has not passed, failed to execute", proposalId),
+			ufmt.Sprintf("proposalId(%d) has not passed, failed to execute", proposalId),
 		))
 	}
 
@@ -68,7 +68,7 @@ func Execute(proposalId uint64) {
 	if now < windowStart {
 		panic(addDetailToError(
 			errBeforeProposalExecutionTime,
-			ufmt.Sprintf("execute.gno__Execute() || EXECUTION_WINDOW_NOT_STARTED (now(%d) < windowStart(%d))", now, windowStart),
+			ufmt.Sprintf("EXECUTION_WINDOW_NOT_STARTED (now(%d) < windowStart(%d))", now, windowStart),
 		))
 	}
 
@@ -76,7 +76,7 @@ func Execute(proposalId uint64) {
 	if now >= windowEnd {
 		panic(addDetailToError(
 			errProposalExecutionTimeExpired,
-			ufmt.Sprintf("execute.gno__Execute() || EXECUTION_WINDOW_OVER (now(%d) >= windowEnd(%d))", now, windowEnd),
+			ufmt.Sprintf("EXECUTION_WINDOW_OVER (now(%d) >= windowEnd(%d))", now, windowEnd),
 		))
 	}
 
@@ -87,14 +87,14 @@ func Execute(proposalId uint64) {
 	if yeaUint < quorumUint {
 		panic(addDetailToError(
 			errProposalQuorumNotSatisfied,
-			ufmt.Sprintf("execute.gno__Execute() || QUORUM_NOT_MET (yes(%d) < quorum(%d))", yeaUint, quorumUint),
+			ufmt.Sprintf("QUORUM_NOT_MET (yes(%d) < quorum(%d))", yeaUint, quorumUint),
 		))
 	}
 
 	if yeaUint < nayUint {
 		panic(addDetailToError(
 			errMoreNoVotesThanYesVotes,
-			ufmt.Sprintf("execute.gno__Execute() || NO_MAJORITY (yes(%d) < no(%d))", yeaUint, nayUint),
+			ufmt.Sprintf("NO_MAJORITY (yes(%d) < no(%d))", yeaUint, nayUint),
 		))
 	}
 
@@ -104,7 +104,7 @@ func Execute(proposalId uint64) {
 		if !contains(registered, proposal.CommunityPoolSpend.TokenPath) {
 			panic(addDetailToError(
 				errNotRegisteredToCommunityPool,
-				ufmt.Sprintf("execute.gno__Execute() || token(%s) is not registered to community_pool", proposal.CommunityPoolSpend.TokenPath),
+				ufmt.Sprintf("token(%s) is not registered to community_pool", proposal.CommunityPoolSpend.TokenPath),
 			))
 		}
 
@@ -143,14 +143,14 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 8 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 8 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 8 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
 		default:
 			panic(addDetailToError(
 				errNonExecutableFunction,
-				ufmt.Sprintf("execute.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
 			))
 		}
 
@@ -160,14 +160,14 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 1 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
 		default:
 			panic(addDetailToError(
 				errNonExecutableFunction,
-				ufmt.Sprintf("execute.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
 			))
 		}
 
@@ -177,14 +177,14 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 7 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 7 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 7 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
 		default:
 			panic(addDetailToError(
 				errNonExecutableFunction,
-				ufmt.Sprintf("execute.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
 			))
 		}
 
@@ -194,7 +194,7 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 2 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
@@ -203,7 +203,7 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 1 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
@@ -212,7 +212,7 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 1 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
@@ -220,7 +220,7 @@ func callableMsg(pkgPath, function, params string) bool {
 		default:
 			panic(addDetailToError(
 				errNonExecutableFunction,
-				ufmt.Sprintf("execute.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
 			))
 		}
 
@@ -230,14 +230,14 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 1 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
 		default:
 			panic(addDetailToError(
 				errNonExecutableFunction,
-				ufmt.Sprintf("execute.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
 			))
 		}
 
@@ -247,14 +247,14 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 1 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
 		default:
 			panic(addDetailToError(
 				errNonExecutableFunction,
-				ufmt.Sprintf("execute.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
 			))
 		}
 
@@ -264,7 +264,7 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 1 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
@@ -273,7 +273,7 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 2 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
@@ -282,7 +282,7 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 2 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
@@ -291,7 +291,7 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 1 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
@@ -300,7 +300,7 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 1 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
@@ -309,7 +309,7 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 2 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
@@ -317,7 +317,7 @@ func callableMsg(pkgPath, function, params string) bool {
 		default:
 			panic(addDetailToError(
 				errNonExecutableFunction,
-				ufmt.Sprintf("execute.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
 			))
 		}
 
@@ -327,14 +327,14 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 1 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
 		default:
 			panic(addDetailToError(
 				errNonExecutableFunction,
-				ufmt.Sprintf("execute.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
 			))
 		}
 
@@ -344,21 +344,21 @@ func callableMsg(pkgPath, function, params string) bool {
 			if len(param) != 3 {
 				panic(addDetailToError(
 					errInvalidFunctionParameters,
-					ufmt.Sprintf("execute.gno__callableMsg() || len(param) should be 3 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
+					ufmt.Sprintf("len(param) should be 3 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
 				))
 			}
 			return true
 		default:
 			panic(addDetailToError(
 				errNonExecutableFunction,
-				ufmt.Sprintf("execute.gno__callableMsg() || invalid function %s for pkgPath %s", function, pkgPath),
+				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
 			))
 		}
 
 	default:
 		panic(addDetailToError(
 			errNonExecutableFunction,
-			ufmt.Sprintf("execute.gno__callableMsg() || invalid pkgPath(%s)", pkgPath),
+			ufmt.Sprintf("invalid pkgPath(%s)", pkgPath),
 		))
 	}
 }
@@ -369,7 +369,7 @@ func executeParameterChange(msgs []string) {
 		if len(splitExe) != 3 {
 			panic(addDetailToError(
 				errInvalidInput,
-				ufmt.Sprintf("execute.gno__executeParameterChange() || invalid execution(%s) to split by *EXE*, seems like param didn't inputed", msg),
+				ufmt.Sprintf("invalid execution(%s) to split by *EXE*, seems like param didn't inputed", msg),
 			))
 		}
 
@@ -465,7 +465,7 @@ func executeParameterChange(msgs []string) {
 		default:
 			panic(addDetailToError(
 				errNonExecutableFunction,
-				ufmt.Sprintf("execute.gno__executeParameterChange() || invalid package path(%s) and function name(%s)", pkgPath, funcName),
+				ufmt.Sprintf("invalid package path(%s) and function name(%s)", pkgPath, funcName),
 			))
 		}
 
@@ -616,7 +616,7 @@ func handleSingleBool(params []string) bool {
 	default:
 		panic(addDetailToError(
 			errInvalidInput,
-			ufmt.Sprintf("execute.gno__handleSingleBool() || invalid bool(%s)", params[0]),
+			ufmt.Sprintf("invalid bool(%s)", params[0]),
 		))
 	}
 }

@@ -38,7 +38,7 @@ func Vote(proposalId uint64, yes bool) string {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("vote.gno__Vote() || proposalId(%d) does not exist", proposalId),
+			ufmt.Sprintf("proposalId(%d) does not exist", proposalId),
 		))
 	}
 
@@ -51,7 +51,7 @@ func Vote(proposalId uint64, yes bool) string {
 	if now < votingStartTime {
 		panic(addDetailToError(
 			errUnableToVoteBeforeStarting,
-			ufmt.Sprintf("vote.gno__Vote() || voting has not started yet. now(%d) < votingStart(%d)", now, votingStartTime),
+			ufmt.Sprintf("voting has not started yet. now(%d) < votingStart(%d)", now, votingStartTime),
 		))
 	}
 
@@ -59,7 +59,7 @@ func Vote(proposalId uint64, yes bool) string {
 	if now >= votingEndTime {
 		panic(addDetailToError(
 			errUnableToVoteAfterEnding,
-			ufmt.Sprintf("vote.gno__Vote() || voting has ended. now(%d) >= votingEnd(%d)", now, votingEndTime),
+			ufmt.Sprintf("voting has ended. now(%d) >= votingEnd(%d)", now, votingEndTime),
 		))
 	}
 
@@ -67,7 +67,7 @@ func Vote(proposalId uint64, yes bool) string {
 	if proposal.ExecutionState.Canceled {
 		panic(addDetailToError(
 			errUnableToVoteCanceledProposal,
-			ufmt.Sprintf("vote.gno__Vote() || proposalId(%d) has canceled(%t)", proposalId, proposal.ExecutionState.Canceled),
+			ufmt.Sprintf("proposalId(%d) has canceled(%t)", proposalId, proposal.ExecutionState.Canceled),
 		))
 	}
 
@@ -76,7 +76,7 @@ func Vote(proposalId uint64, yes bool) string {
 	if voted {
 		panic(addDetailToError(
 			errAlreadyVoted,
-			ufmt.Sprintf("vote.gno__Vote() || user(%s) has already voted on proposalId(%d)", voter.String(), proposalId),
+			ufmt.Sprintf("user(%s) has already voted on proposalId(%d)", voter.String(), proposalId),
 		))
 	}
 
@@ -84,7 +84,7 @@ func Vote(proposalId uint64, yes bool) string {
 	if !exist || weight == 0 {
 		panic(addDetailToError(
 			errNotEnoughVotingWeight,
-			ufmt.Sprintf("vote.gno__Vote() || no voting weight found for voter(%s)", voter.String()),
+			ufmt.Sprintf("no voting weight found for voter(%s)", voter.String()),
 		))
 	}
 
@@ -94,7 +94,7 @@ func Vote(proposalId uint64, yes bool) string {
 		if overflow {
 			panic(addDetailToError(
 				errOutOfRange,
-				"vote.gno__Vote() || VOTE YES OVERFLOW",
+				"VOTE YES OVERFLOW",
 			))
 		}
 	} else {
@@ -102,7 +102,7 @@ func Vote(proposalId uint64, yes bool) string {
 		if overflow {
 			panic(addDetailToError(
 				errOutOfRange,
-				"vote.gno__Vote() || VOTE NO OVERFLOW",
+				"VOTE NO OVERFLOW",
 			))
 		}
 	}
@@ -146,14 +146,14 @@ func Cancel(proposalId uint64) {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("vote.gno__Cancel() || proposalId(%d) does not exist", proposalId),
+			ufmt.Sprintf("proposalId(%d) does not exist", proposalId),
 		))
 	}
 
 	if proposal.ExecutionState.Canceled {
 		panic(addDetailToError(
 			errAlreadyCanceledProposal,
-			ufmt.Sprintf("vote.gno__Cancel() || proposalId(%d) has already canceled", proposalId),
+			ufmt.Sprintf("proposalId(%d) has already canceled", proposalId),
 		))
 	}
 
@@ -162,7 +162,7 @@ func Cancel(proposalId uint64) {
 	if now >= (proposal.ExecutionState.CreatedAt + config.VotingStartDelay) {
 		panic(addDetailToError(
 			errUnableToCancleVotingProposal,
-			ufmt.Sprintf("vote.gno__Cancel() || voting has already started for proposalId(%d)", proposalId),
+			ufmt.Sprintf("voting has already started for proposalId(%d)", proposalId),
 		))
 	}
 

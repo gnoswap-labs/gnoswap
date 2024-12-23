@@ -40,7 +40,7 @@ func ProposeText(
 	if !enough {
 		panic(addDetailToError(
 			errNotEnoughBalance,
-			ufmt.Sprintf("governance.gno__ProposeText() || proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
+			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
 		))
 	}
 
@@ -104,7 +104,7 @@ func ProposeCommunityPoolSpend(
 	if !enough {
 		panic(addDetailToError(
 			errNotEnoughBalance,
-			ufmt.Sprintf("governance.gno__ProposeCommunityPoolSpend() || proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
+			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
 		))
 	}
 
@@ -175,14 +175,14 @@ func ProposeParameterChange(
 	if !enough {
 		panic(addDetailToError(
 			errNotEnoughBalance,
-			ufmt.Sprintf("governance.gno__ProposeParameterChange() || proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
+			ufmt.Sprintf("proposer(%s) has not enough xGNS, balance(%d), wanted(%d)", proposer.String(), balance, wanted),
 		))
 	}
 
 	if numToExecute == 0 {
 		panic(addDetailToError(
 			errInvalidInput,
-			ufmt.Sprintf("governance.gno__ProposeParameterChange() || numToExecute is 0"),
+			ufmt.Sprintf("numToExecute is 0"),
 		))
 	}
 
@@ -191,7 +191,7 @@ func ProposeParameterChange(
 	if uint64(len(splitGov)) != numToExecute {
 		panic(addDetailToError(
 			errInvalidInput,
-			ufmt.Sprintf("governance.gno__ProposeParameterChange() || numToExecute(%d) does not match the number of executions(%d)", numToExecute, len(splitGov)),
+			ufmt.Sprintf("numToExecute(%d) does not match the number of executions(%d)", numToExecute, len(splitGov)),
 		))
 	}
 
@@ -201,7 +201,7 @@ func ProposeParameterChange(
 		if len(splitExe) != 3 {
 			panic(addDetailToError(
 				errInvalidInput,
-				ufmt.Sprintf("governance.gno__ProposeParameterChange() || invalid execution(%s) to split by *EXE*, seems like param didn't passed", gov),
+				ufmt.Sprintf("invalid execution(%s) to split by *EXE*, seems like param didn't passed", gov),
 			))
 		}
 

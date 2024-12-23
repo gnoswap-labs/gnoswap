@@ -46,14 +46,14 @@ func Delegate(to std.Address, amount uint64) {
 	if !to.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
-			ufmt.Sprintf("staker.gno__Delegate() || invalid address %s to delegate", to.String()),
+			ufmt.Sprintf("invalid address %s to delegate", to.String()),
 		))
 	}
 
 	if amount < minimumAmount {
 		panic(addDetailToError(
 			errLessThanMinimum,
-			ufmt.Sprintf("staker.gno__Delegate() || minimum amount to delegate is %d (requested:%d)", minimumAmount, amount),
+			ufmt.Sprintf("minimum amount to delegate is %d (requested:%d)", minimumAmount, amount),
 		))
 	}
 
@@ -90,21 +90,21 @@ func Redelegate(from, to std.Address, amount uint64) {
 	if !from.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
-			ufmt.Sprintf("staker.gno__Redelegate() || invalid from address %s to redelegate", to.String()),
+			ufmt.Sprintf("invalid from address %s to redelegate", to.String()),
 		))
 	}
 
 	if !to.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
-			ufmt.Sprintf("staker.gno__Redelegate() || invalid to address %s to redelegate", to.String()),
+			ufmt.Sprintf("invalid to address %s to redelegate", to.String()),
 		))
 	}
 
 	if amount < minimumAmount {
 		panic(addDetailToError(
 			errLessThanMinimum,
-			ufmt.Sprintf("staker.gno__Redelegate() || minimum amount to redelegate is %d (requested:%d)", minimumAmount, amount),
+			ufmt.Sprintf("minimum amount to redelegate is %d (requested:%d)", minimumAmount, amount),
 		))
 	}
 
@@ -114,7 +114,7 @@ func Redelegate(from, to std.Address, amount uint64) {
 	if delegated < amount {
 		panic(addDetailToError(
 			errNotEnoughBalance,
-			ufmt.Sprintf("staker.gno__Redelegate() || not enough xGNS delegated(%d) to redelegate(%d)", delegated, amount),
+			ufmt.Sprintf("not enough xGNS delegated(%d) to redelegate(%d)", delegated, amount),
 		))
 	}
 
@@ -144,14 +144,14 @@ func Undelegate(from std.Address, amount uint64) {
 	if !from.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
-			ufmt.Sprintf("staker.gno__Undelegate() || invalid address %s to undelegate", from.String()),
+			ufmt.Sprintf("invalid address %s to undelegate", from.String()),
 		))
 	}
 
 	if amount < minimumAmount {
 		panic(addDetailToError(
 			errLessThanMinimum,
-			ufmt.Sprintf("staker.gno__Undelegate() || minimum amount to undelegate is %d (requested:%d)", minimumAmount, amount),
+			ufmt.Sprintf("minimum amount to undelegate is %d (requested:%d)", minimumAmount, amount),
 		))
 	}
 
@@ -161,7 +161,7 @@ func Undelegate(from std.Address, amount uint64) {
 	if delegated < amount {
 		panic(addDetailToError(
 			errNotEnoughBalance,
-			ufmt.Sprintf("staker.gno__Undelegate() || not enough xGNS delegated(%d) to undelegate(%d)", delegated, amount),
+			ufmt.Sprintf("not enough xGNS delegated(%d) to undelegate(%d)", delegated, amount),
 		))
 	}
 
@@ -248,7 +248,7 @@ func CollectReward() {
 		if govStakerGnsBalance < emissionReward {
 			panic(addDetailToError(
 				errNotEnoughBalance,
-				ufmt.Sprintf("staker.gno__CollectReward() || not enough GNS(%d) in the realm to send emission reward(%d) for user %s", govStakerGnsBalance, emissionReward, caller.String()),
+				ufmt.Sprintf("ot enough GNS(%d) in the realm to send emission reward(%d) for user %s", govStakerGnsBalance, emissionReward, caller.String()),
 			))
 		}
 
@@ -307,7 +307,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 	if caller != consts.LAUNCHPAD_ADDR {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("staker.gno__CollectRewardFromLaunchPad() || only launchpad can call CollectRewardFromLaunchPad(), called from %s", caller.String()),
+			ufmt.Sprintf("only launchpad can call CollectRewardFromLaunchPad(), called from %s", caller.String()),
 		))
 	}
 
@@ -325,7 +325,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 		if govStakerGnsBalance < emissionReward {
 			panic(addDetailToError(
 				errNotEnoughBalance,
-				ufmt.Sprintf("staker.gno__CollectRewardFromLaunchPad() || not enough GNS(%d) in the realm to send emission reward(%d) for user %s", govStakerGnsBalance, emissionReward, to.String()),
+				ufmt.Sprintf("not enough GNS(%d) in the realm to send emission reward(%d) for user %s", govStakerGnsBalance, emissionReward, to.String()),
 			))
 		}
 

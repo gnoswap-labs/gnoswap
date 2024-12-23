@@ -9,7 +9,7 @@ func GetProposerByProposalId(proposalId uint64) string {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_proposal.gno__GetProposerByProposalId() || proposalId(%d) not found", proposalId),
+			ufmt.Sprintf("proposalId(%d) not found", proposalId),
 		))
 	}
 
@@ -21,7 +21,7 @@ func GetProposalTypeByProposalId(proposalId uint64) string {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_proposal.gno__GetProposalTypeByProposalId() || proposalId(%d) not found", proposalId),
+			ufmt.Sprintf("proposalId(%d) not found", proposalId),
 		))
 	}
 
@@ -33,7 +33,7 @@ func GetYeaByProposalId(proposalId uint64) string {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_proposal.gno__GetYeaByProposalId() || proposalId(%d) not found", proposalId),
+			ufmt.Sprintf("proposalId(%d) not found", proposalId),
 		))
 	}
 
@@ -45,7 +45,7 @@ func GetNayByProposalId(proposalId uint64) string {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_proposal.gno__GetNayByProposalId() || proposalId(%d) not found", proposalId),
+			ufmt.Sprintf("proposalId(%d) not found", proposalId),
 		))
 	}
 
@@ -57,7 +57,7 @@ func GetConfigVersionByProposalId(proposalId uint64) uint64 {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_proposal.gno__GetConfigVersionByProposalId() || proposalId(%d) not found", proposalId),
+			ufmt.Sprintf("proposalId(%d) not found", proposalId),
 		))
 	}
 
@@ -69,7 +69,7 @@ func GetQuorumAmountByProposalId(proposalId uint64) uint64 {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_proposal.gno__GetQuorumAmountByProposalId() || proposalId(%d) not found", proposalId),
+			ufmt.Sprintf("proposalId(%d) not found", proposalId),
 		))
 	}
 
@@ -81,7 +81,7 @@ func GetTitleByProposalId(proposalId uint64) string {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_proposal.gno__GetTitleByProposalId() || proposalId(%d) not found", proposalId),
+			ufmt.Sprintf("proposalId(%d) not found", proposalId),
 		))
 	}
 
@@ -93,7 +93,7 @@ func GetDescriptionByProposalId(proposalId uint64) string {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_proposal.gno__GetDescriptionByProposalId() || proposalId(%d) not found", proposalId),
+			ufmt.Sprintf("proposalId(%d) not found", proposalId),
 		))
 	}
 
@@ -105,7 +105,7 @@ func GetExecutionStateByProposalId(proposalId uint64) ExecutionState {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("_GET_proposal.gno__GetExecutionStateByProposalId() || proposalId(%d) not found", proposalId),
+			ufmt.Sprintf("proposalId(%d) not found", proposalId),
 		))
 	}
 
