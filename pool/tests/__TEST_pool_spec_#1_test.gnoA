@@ -34,9 +34,9 @@ func AfterTest(t *testing.T) {
 	std.TestSetRealm(poolRealm)
 	barBal := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBal := foo.BalanceOf(a2u(consts.POOL_ADDR))
-	bar.Transfer(a2u(admin), barBal)
-	foo.Transfer(a2u(admin), fooBal)
-	delete(pools, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
+	bar.Transfer(a2u(adminAddr), barBal)
+	foo.Transfer(a2u(adminAddr), fooBal)
+	pools.Remove("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
 }
 
 func TestCreateFooBarPool_Should_be_failed_if_price_is_too_low(t *testing.T) {
@@ -126,14 +126,14 @@ func TestMint_fail_if_tickLower_greater_than_tickUpper(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
+	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", adminAddr)
 
 	// =====================fails if tickLower greater than tickUpper==========================
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick_bitmap.gno__tickBitmapFlipTick() || tick(1) MOD tickSpacing(60) != 0(1)`,
+		`[GNOSWAP-POOL-024] tickLower is greater than or equal to tickUpper || tickLower(1), tickUpper(0)`,
 		func() {
-			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", 1, 0, "1", admin)
+			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", 1, 0, "1", adminAddr)
 		},
 	)
 	AfterTest(t)
@@ -151,14 +151,14 @@ func TestMint_fail_if_tickLower_less_than_min_tick(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
+	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", adminAddr)
 
 	// =====================fails if tickLower less than min tick==========================
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick_bitmap.gno__tickBitmapFlipTick() || tick(-887273) MOD tickSpacing(60) != 0(-53)`,
+		`[GNOSWAP-POOL-028] tickLower is invalid || tickLower(-887273) < MIN_TICK(-887272)`,
 		func() {
-			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", -887273, 0, "1", admin)
+			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", -887273, 0, "1", adminAddr)
 		},
 	)
 	AfterTest(t)
@@ -175,14 +175,14 @@ func TestMint_fail_if_tickUpper_greater_than_max_tick(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
+	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", adminAddr)
 
 	// =====================fails if tickUpper greater than max tick==========================
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-022] invalid tick and tick spacing requested || tick_bitmap.gno__tickBitmapFlipTick() || tick(887273) MOD tickSpacing(60) != 0(53)`,
+		`[GNOSWAP-POOL-029] tickUpper is invalid || tickUpper(887273) > MAX_TICK(887272)`,
 		func() {
-			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", 0, 887273, "1", admin)
+			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", 0, 887273, "1", adminAddr)
 		},
 	)
 	AfterTest(t)
@@ -200,7 +200,7 @@ func TestMint_fail_if_amount_exceeds_the_max(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
+	pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", adminAddr)
 
 	// =====================fails if amount exceeds the max ==========================
 	pool := GetPool(barPath, fooPath, 3000)
@@ -209,9 +209,9 @@ func TestMint_fail_if_amount_exceeds_the_max(t *testing.T) {
 	tickSpacing := pool.tickSpacing
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-009] invalid liquidity calculated || tick.gno__tickUpdate() || liquidityGrossAfter(11505743598341114571880798222544995) overflows maxLiquidity(11505743598341114571880798222544994)`,
+		`[GNOSWAP-POOL-009] invalid liquidity calculated || liquidityGrossAfter(11505743598341114571880798222544995) overflows maxLiquidity(11505743598341114571880798222544994)`,
 		func() {
-			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), admin)
+			pl.Mint(barPath, fooPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), adminAddr)
 		},
 	)
 	AfterTest(t)
@@ -229,7 +229,7 @@ func TestMint_fail_if_total_amount_at_tick_exceeds_the_max(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
+	pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", adminAddr)
 
 	// =====================fails if total amount at tick exceeds the max========================
 	pool := GetPool(fooPath, barPath, 3000)
@@ -243,25 +243,25 @@ func TestMint_fail_if_total_amount_at_tick_exceeds_the_max(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-005] out of range for numeric value || pool.gno__checkAmountRange() || amountAbs(36384355944659449090771081304848911) overflows uint64 range`,
+		`[GNOSWAP-POOL-005] out of range for numeric value: amount(36384355944659449090771081304848911) overflows uint64 range`,
 		func() {
-			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), admin)
+			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), adminAddr)
 		},
 	)
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-009] invalid liquidity calculated || tick.gno__tickUpdate() || liquidityGrossAfter(23011487196682229143761596445087990) overflows maxLiquidity(11505743598341114571880798222544994)`,
+		`[GNOSWAP-POOL-009] invalid liquidity calculated || liquidityGrossAfter(23011487196682229143761596445087990) overflows maxLiquidity(11505743598341114571880798222544994)`,
 		func() {
-			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing*2, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), admin)
+			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing*2, maxTick-tickSpacing, maxLiquidityPerTick.ToString(), adminAddr)
 		},
 	)
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-009] invalid liquidity calculated || tick.gno__tickUpdate() || liquidityGrossAfter(23011487196682229143761596445087990) overflows maxLiquidity(11505743598341114571880798222544994)`,
+		`[GNOSWAP-POOL-009] invalid liquidity calculated || liquidityGrossAfter(23011487196682229143761596445087990) overflows maxLiquidity(11505743598341114571880798222544994)`,
 		func() {
-			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing*2, maxLiquidityPerTick.ToString(), admin)
+			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing*2, maxLiquidityPerTick.ToString(), adminAddr)
 		},
 	)
 	AfterTest(t)
@@ -281,7 +281,7 @@ func TestMint_fail_if_amount_is_0(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", admin)
+	pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick, maxTick, "3161", adminAddr)
 
 	// =====================fails if total amount at tick exceeds the max========================
 
@@ -289,9 +289,9 @@ func TestMint_fail_if_amount_is_0(t *testing.T) {
 	tickSpacing := pool.tickSpacing
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-010] zero liquidity || pool.gno__Mint() || liquidityAmount == 0`,
+		`[GNOSWAP-POOL-010] zero liquidity`,
 		func() {
-			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, "0", admin)
+			pl.Mint(fooPath, barPath, 3000, "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec", minTick+tickSpacing, maxTick-tickSpacing, "0", adminAddr)
 		},
 	)
 }

@@ -40,7 +40,7 @@ func TestPositionsProtected(t *testing.T) {
 		-887160,
 		887160,
 		test_liquidityExpectStr,
-		admin,
+		adminAddr,
 	)
 
 	std.TestSetRealm(rouRealm)
@@ -48,22 +48,22 @@ func TestPositionsProtected(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		admin,
+		adminAddr,
 		true,
 		"10000",
 		consts.MIN_PRICE,
-		admin,
+		adminAddr,
 	)
 
 	Swap(
 		barPath,
 		fooPath,
 		fee500,
-		admin,
+		adminAddr,
 		false,
 		"10000",
 		consts.MAX_PRICE,
-		admin,
+		adminAddr,
 	)
 	// did swap t0 => t1 and t1 => t0
 
@@ -81,7 +81,7 @@ func TestPokeIsNotAllowedOnUninitilaizedPosition(t *testing.T) {
 	std.TestSetRealm(posRealm)
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-010] zero liquidity || position.gno__positionUpdate() || both liquidityDelta and (self)liquidity are zero`,
+		`[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero`,
 		func() {
 			Burn(
 				barPath,
@@ -113,7 +113,7 @@ func TestWorkAccross(t *testing.T) {
 		-887270,
 		887270,
 		"100000000000",
-		admin,
+		adminAddr,
 	)
 
 	// type(uint128).max * 2**128 / 1e18
@@ -134,7 +134,7 @@ func TestWorkAccross(t *testing.T) {
 
 	// tokensOwed
 	thisPositionKey := getPositionKey(consts.POSITION_ADDR, -887270, 887270)
-	thisPosition := thisPool.positions[thisPositionKey]
+	thisPosition := thisPool.mustGetPosition(thisPositionKey)
 
 	tokensOwed0 := thisPosition.tokensOwed0
 	tokensOwed1 := thisPosition.tokensOwed1

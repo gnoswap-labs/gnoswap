@@ -18,6 +18,7 @@ import (
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
 	"gno.land/r/demo/users"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 	pn "gno.land/r/gnoswap/v1/position"
 )
@@ -49,13 +50,21 @@ const (
 )
 
 var (
-	admin       = pusers.AddressOrName(consts.ADMIN)
+	fooToken = common.GetToken(fooPath)
+	barToken = common.GetToken(barPath)
+	bazToken = common.GetToken(bazPath)
+)
+
+var (
+	adminAddr   = consts.ADMIN
+	admin       = pusers.AddressOrName(adminAddr)
 	alice       = pusers.AddressOrName(testutils.TestAddress("alice"))
 	pool        = pusers.AddressOrName(consts.POOL_ADDR)
 	protocolFee = pusers.AddressOrName(consts.PROTOCOL_FEE_ADDR)
 	router      = pusers.AddressOrName(consts.ROUTER_ADDR)
 	adminRealm  = std.NewUserRealm(users.Resolve(admin))
 	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm    = std.NewCodeRealm(consts.ROUTER_PATH)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}

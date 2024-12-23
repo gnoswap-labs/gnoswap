@@ -45,7 +45,7 @@ func TestTickTransaction(t *testing.T) {
 		-24082,
 		-24080,
 		liqToMint,
-		admin,
+		adminAddr,
 	)
 	uassert.Equal(t, thisPool.liquidity.ToString(), "10000000000")
 
@@ -58,7 +58,7 @@ func TestTickTransaction(t *testing.T) {
 		-24082,
 		-24081,
 		liqToMint,
-		admin,
+		adminAddr,
 	)
 	uassert.Equal(t, thisPool.liquidity.ToString(), "10000000000")
 
@@ -83,15 +83,14 @@ func TestTickTransaction(t *testing.T) {
 		barPath,
 		fooPath,
 		fee100,
-		admin,
+		adminAddr,
 		true,
 		"3",
 		consts.MIN_PRICE,
-		admin,
+		adminAddr,
 	)
 
 	uassert.Equal(t, thisPool.slot0.tick, int32(-24082))
 	uassert.Equal(t, thisPool.slot0.sqrtPriceX96.ToString(), testSqrtSubOne.ToString())
 	uassert.Equal(t, thisPool.liquidity.ToString(), "20000000000")
 }
-
