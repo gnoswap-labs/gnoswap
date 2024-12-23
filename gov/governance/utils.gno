@@ -82,3 +82,30 @@ func getPrev() (string, string) {
 	prev := std.PrevRealm()
 	return prev.Addr().String(), prev.PkgPath()
 }
+
+func parseInt(s string) int {
+	num, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		panic(ufmt.Sprintf("invalid int value: %s", s))
+	}
+	return int(num)
+}
+
+func parseUint64(s string) uint64 {
+	num, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		panic(ufmt.Sprintf("invalid uint64 value: %s", s))
+	}
+	return num
+}
+
+func parseBool(s string) bool {
+	switch s {
+	case "true":
+		return true
+	case "false":
+		return false
+	default:
+		panic(ufmt.Sprintf("invalid bool value: %s", s))
+	}
+}

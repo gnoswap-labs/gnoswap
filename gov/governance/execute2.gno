@@ -10,8 +10,8 @@ import (
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/common"
-	cp "gno.land/r/gnoswap/v1/community_pool"
 	"gno.land/r/gnoswap/v1/consts"
+	cp "gno.land/r/gnoswap/v1/community_pool"
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 )
@@ -267,33 +267,4 @@ func validateExecutionWindow(now, windowStart, windowEnd uint64) error {
 	}
 
 	return nil
-}
-
-///////////////////// UTILS /////////////////////
-
-func parseInt(s string) int {
-	num, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		panic(ufmt.Sprintf("invalid int value: %s", s))
-	}
-	return int(num)
-}
-
-func parseUint64(s string) uint64 {
-	num, err := strconv.ParseUint(s, 10, 64)
-	if err != nil {
-		panic(ufmt.Sprintf("invalid uint64 value: %s", s))
-	}
-	return num
-}
-
-func parseBool(s string) bool {
-	switch s {
-	case "true":
-		return true
-	case "false":
-		return false
-	default:
-		panic(ufmt.Sprintf("invalid bool value: %s", s))
-	}
 }
