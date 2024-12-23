@@ -6,6 +6,8 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+// Position represents a liquidity position in a pool.
+// Each position tracks the amount of liquidity, fee growth, and tokens owed to the position owner.
 type Position struct {
 	nonce *u256.Uint // nonce for permits
 
@@ -50,15 +52,22 @@ type MintParams struct {
 	caller         std.Address // address to call the function
 }
 
-type AddLiquidityParams struct {
-	poolKey        string      // poolPath of the pool which has the position
-	tickLower      int32       // lower end of the tick range for the position
-	tickUpper      int32       // upper end of the tick range for the position
-	amount0Desired *u256.Uint  // desired amount of token0 to be minted
-	amount1Desired *u256.Uint  // desired amount of token1 to be minted
-	amount0Min     *u256.Uint  // minimum amount of token0 to be minted
-	amount1Min     *u256.Uint  // minimum amount of token1 to be minted
-	caller         std.Address // address to call the function
+// newMintParams creates `MintParams` from processed input data.
+func newMintParams(input ProcessedMintInput, mintInput MintInput) MintParams {
+	return MintParams{
+		token0:         input.tokenPair.token0,
+		token1:         input.tokenPair.token1,
+		fee:            mintInput.fee,
+		tickLower:      mintInput.tickLower,
+		tickUpper:      mintInput.tickUpper,
+		amount0Desired: input.amount0Desired,
+		amount1Desired: input.amount1Desired,
+		amount0Min:     input.amount0Min,
+		amount1Min:     input.amount1Min,
+		deadline:       mintInput.deadline,
+		mintTo:         mintInput.mintTo,
+		caller:         mintInput.caller,
+	}
 }
 
 type IncreaseLiquidityParams struct {
@@ -77,4 +86,38 @@ type DecreaseLiquidityParams struct {
 	amount1Min     *u256.Uint // minimum amount of token1 to be minted
 	deadline       int64      // time by which the transaction must be included to effect the change
 	unwrapResult   bool       // whether to unwrap the token if it's wrapped native token
+}
+
+type MintInput struct {
+	token0         string
+	token1         string
+	fee            uint32
+	tickLower      int32
+	tickUpper      int32
+	amount0Desired string
+	amount1Desired string
+	amount0Min     string
+	amount1Min     string
+	deadline       int64
+	mintTo         std.Address
+	caller         std.Address
+}
+
+type TokenPair struct {
+	token0         string
+	token1         string
+	token0IsNative bool
+	token1IsNative bool
+	wrappedAmount  uint64
+}
+
+type ProcessedMintInput struct {
+	tokenPair      TokenPair
+	amount0Desired *u256.Uint
+	amount1Desired *u256.Uint
+	amount0Min     *u256.Uint
+	amount1Min     *u256.Uint
+	tickLower      int32
+	tickUpper      int32
+	poolPath       string
 }

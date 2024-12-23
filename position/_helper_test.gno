@@ -9,18 +9,22 @@ import (
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
 	"gno.land/r/demo/users"
-	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gnft"
-	"gno.land/r/gnoswap/v1/gns"
+
 	pl "gno.land/r/gnoswap/v1/pool"
-	sr "gno.land/r/gnoswap/v1/staker"
+
+	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/gns"
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
 	"gno.land/r/onbloc/foo"
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
+	"gno.land/r/onbloc/usdc"
+
+	sr "gno.land/r/gnoswap/v1/staker"
 )
 
 const (
@@ -34,11 +38,13 @@ const (
 	oblPath    string = "gno.land/r/onbloc/obl"
 	quxPath    string = "gno.land/r/onbloc/qux"
 
-	fee100      uint32 = 100
-	fee500      uint32 = 500
-	fee3000     uint32 = 3000
-	maxApprove  uint64 = 18446744073709551615
-	max_timeout int64  = 9999999999
+	fee100               uint32 = 100
+	fee500               uint32 = 500
+	fee3000              uint32 = 3000
+	fee10000             uint32 = 10000
+	maxApprove           uint64 = 18446744073709551615
+	max_timeout          int64  = 9999999999
+	maxSqrtPriceLimitX96 string = "1461446703485210103287273052203988822378723970341"
 
 	TIER_1 uint64 = 1
 	TIER_2 uint64 = 2
@@ -162,6 +168,7 @@ var (
 	bob         = pusers.AddressOrName(testutils.TestAddress("bob"))
 	pool        = pusers.AddressOrName(consts.POOL_ADDR)
 	protocolFee = pusers.AddressOrName(consts.PROTOCOL_FEE_ADDR)
+	router      = pusers.AddressOrName(consts.ROUTER_ADDR)
 	adminRealm  = std.NewUserRealm(users.Resolve(admin))
 	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
 
@@ -177,7 +184,10 @@ func InitialisePoolTest(t *testing.T) {
 
 	std.TestSetOrigCaller(users.Resolve(admin))
 	TokenApprove(t, gnsPath, admin, pool, maxApprove)
-	CreatePool(t, wugnotPath, gnsPath, fee3000, "79228162514264337593543950336", users.Resolve(admin))
+	poolPath := pl.GetPoolPath(wugnotPath, gnsPath, fee3000)
+	if !pl.DoesPoolPathExist(poolPath) {
+		pl.CreatePool(wugnotPath, gnsPath, fee3000, "79228162514264337593543950336")
+	}
 
 	//2. create position
 	std.TestSetOrigCaller(users.Resolve(alice))
@@ -338,6 +348,160 @@ func MintPosition(t *testing.T,
 		deadline,
 		mintTo,
 		caller)
+}
+
+func MintPositionAll(t *testing.T, caller std.Address) {
+	t.Helper()
+	std.TestSetRealm(std.NewUserRealm(caller))
+	TokenApprove(t, gnsPath, pusers.AddressOrName(caller), pool, maxApprove)
+	TokenApprove(t, gnsPath, pusers.AddressOrName(caller), router, maxApprove)
+	TokenApprove(t, wugnotPath, pusers.AddressOrName(caller), pool, maxApprove)
+	TokenApprove(t, wugnotPath, pusers.AddressOrName(caller), router, maxApprove)
+
+	params := []struct {
+		tickLower int32
+		tickUpper int32
+		liquidity uint64
+		zeroToOne bool
+	}{
+		{
+			tickLower: -300,
+			tickUpper: -240,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -240,
+			tickUpper: -180,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -180,
+			tickUpper: -120,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -120,
+			tickUpper: -60,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -60,
+			tickUpper: 0,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: 0,
+			tickUpper: 60,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 60,
+			tickUpper: 120,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 120,
+			tickUpper: 180,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 180,
+			tickUpper: 240,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 240,
+			tickUpper: 300,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: -360,
+			tickUpper: -300,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -420,
+			tickUpper: -360,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -480,
+			tickUpper: -420,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -540,
+			tickUpper: -480,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: -600,
+			tickUpper: -540,
+			liquidity: 10,
+			zeroToOne: true,
+		},
+		{
+			tickLower: 300,
+			tickUpper: 360,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 360,
+			tickUpper: 420,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 420,
+			tickUpper: 480,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 480,
+			tickUpper: 540,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+		{
+			tickLower: 540,
+			tickUpper: 600,
+			liquidity: 10,
+			zeroToOne: false,
+		},
+	}
+
+	for _, p := range params {
+		MintPosition(t,
+			wugnotPath,
+			gnsPath,
+			fee3000,
+			p.tickLower,
+			p.tickUpper,
+			"100",
+			"100",
+			"0",
+			"0",
+			max_timeout,
+			caller,
+			caller)
+	}
+
 }
 
 func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
@@ -537,6 +701,51 @@ func resetObject(t *testing.T) {
 	nextId = 1
 }
 
+func burnTokens(t *testing.T) {
+	t.Helper()
+
+	// burn tokens
+	for _, addr := range addrUsedInTest {
+		uAddr := a2u(addr)
+		burnFoo(uAddr)
+		burnBar(uAddr)
+		burnBaz(uAddr)
+		burnQux(uAddr)
+		burnObl(uAddr)
+		burnUsdc(uAddr)
+	}
+}
+
+func burnFoo(addr pusers.AddressOrName) {
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+	foo.Burn(addr, foo.BalanceOf(addr))
+}
+
+func burnBar(addr pusers.AddressOrName) {
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+	bar.Burn(addr, bar.BalanceOf(addr))
+}
+
+func burnBaz(addr pusers.AddressOrName) {
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+	baz.Burn(addr, baz.BalanceOf(addr))
+}
+
+func burnQux(addr pusers.AddressOrName) {
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+	qux.Burn(addr, qux.BalanceOf(addr))
+}
+
+func burnObl(addr pusers.AddressOrName) {
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+	obl.Burn(addr, obl.BalanceOf(addr))
+}
+
+func burnUsdc(addr pusers.AddressOrName) {
+	std.TestSetRealm(std.NewUserRealm(users.Resolve(admin)))
+	usdc.Burn(addr, usdc.BalanceOf(addr))
+}
+
 // burnAllNFT burns all NFTs
 func burnAllNFT(t *testing.T) {
 	t.Helper()
@@ -547,7 +756,7 @@ func burnAllNFT(t *testing.T) {
 	}
 }
 
-func TestBeforeResetObject(t *testing.T) {
+func TestBeforeResetPositionObject(t *testing.T) {
 	// make actual data to test resetting not only position's state but also pool's state
 	std.TestSetRealm(adminRealm)
 
@@ -567,6 +776,13 @@ func TestResetObject(t *testing.T) {
 
 	uassert.Equal(t, positions.Size(), 0, "positions should be empty")
 	uassert.Equal(t, nextId, uint64(1), "nextId should be 1")
+}
+
+func TestBurnTokens(t *testing.T) {
+	burnTokens(t)
+
+	uassert.Equal(t, foo.BalanceOf(a2u(addr01)), uint64(0)) // 100_000_000 -> 0
+	uassert.Equal(t, bar.BalanceOf(a2u(addr01)), uint64(0)) // 100_000_000 -> 0
 }
 
 func TestBurnAllNFT(t *testing.T) {

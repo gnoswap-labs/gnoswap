@@ -63,11 +63,11 @@ func (p *createPoolParams) isSameTokenPath() bool {
 
 // isInOrder checks if token paths are in lexicographical (or, alphabetical) order
 func (p *createPoolParams) isInOrder() bool {
-	if strings.Compare(p.token0Path, p.token1Path) > 0 {
-		return false
+	if strings.Compare(p.token0Path, p.token1Path) < 0 {
+		return true
 	}
 
-	return true
+	return false
 }
 
 func (p *createPoolParams) wrap() (string, string) {
