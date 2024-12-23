@@ -2,13 +2,18 @@ package governance
 
 import (
 	"errors"
+	"std"
+	"strconv"
 	"strings"
 	"time"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/gnoswap/v1/common"
+	cp "gno.land/r/gnoswap/v1/community_pool"
+	"gno.land/r/gnoswap/v1/consts"
 	en "gno.land/r/gnoswap/v1/emission"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 var (
@@ -105,6 +110,56 @@ func parseMessage(msg string) (pkgPath string, function string, params []string,
 	}
 
 	return parts[0], parts[1], strings.Split(parts[2], ","), nil
+}
+
+func createParameterHandlers() *ParameterRegistry {
+	registry := NewParameterRegistry()
+
+	// Community pool
+	registry.Register(consts.COMMUNITY_POOL_PATH, "TransferToken", func(params []string) error {
+		if len(params) != 3 {
+			return ufmt.Errorf("invalid parameters for TransferToken. expected 3 but got %d", len(params))
+		}
+		cp.TransferToken(params[0], std.Address(params[1]), parseUint64(params[2]))
+		return nil
+	})
+
+	// Emission
+	registry.Register(consts.EMISSION_PATH, "ChangeDistributionPct", func(params []string) error {
+		if len(params) != 8 {
+			return ufmt.Errorf("invalid parameters for ChangeDistributionPct. expected 8 but got %d", len(params))
+		}
+		en.ChangeDistributionPct(
+			parseInt(params[0]),
+			parseUint64(params[1]),
+			parseInt(params[2]),
+			parseUint64(params[3]),
+			parseInt(params[4]),
+			parseUint64(params[5]),
+			parseInt(params[6]),
+			parseUint64(params[7]),
+		)
+		return nil
+	})
+
+	// Pool
+	registry.Register(consts.POOL_PATH, "SetFeeProtocol", func(params []string) error {
+		if len(params) != 2 {
+			return ufmt.Errorf("invalid parameters for SetFeeProtocol. expected 2 but got %d", len(params))
+		}
+		pl.SetFeeProtocol(uint8(parseUint64(params[0])), uint8(parseUint64(params[1])))
+		return nil
+	})
+
+	registry.Register(consts.POOL_PATH, "SetPoolCreationFee", func(params []string) error {
+		if len(params) != 1 {
+			return ufmt.Errorf("invalid parameters for SetPoolCreationFee. expected 1 but got %d", len(params))
+		}
+		pl.SetPoolCreationFee(parseUint64(params[0]))
+		return nil
+	})
+
+	return registry
 }
 
 ///////////////////// VALIDATION /////////////////////
@@ -212,4 +267,33 @@ func validateExecutionWindow(now, windowStart, windowEnd uint64) error {
 	}
 
 	return nil
+}
+
+///////////////////// UTILS /////////////////////
+
+func parseInt(s string) int {
+	num, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		panic(ufmt.Sprintf("invalid int value: %s", s))
+	}
+	return int(num)
+}
+
+func parseUint64(s string) uint64 {
+	num, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		panic(ufmt.Sprintf("invalid uint64 value: %s", s))
+	}
+	return num
+}
+
+func parseBool(s string) bool {
+	switch s {
+	case "true":
+		return true
+	case "false":
+		return false
+	default:
+		panic(ufmt.Sprintf("invalid bool value: %s", s))
+	}
 }

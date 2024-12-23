@@ -1,7 +1,11 @@
 package governance
 
 import (
+	"errors"
+	"std"
 	"testing"
+
+	"gno.land/p/demo/uassert"
 )
 
 func TestParameterRegistry(t *testing.T) {
@@ -46,19 +50,213 @@ func TestParameterRegistry(t *testing.T) {
 			handler, err := registry.Handler(tt.pkgPath, tt.function)
 
 			if tt.wantErr {
-				if err == nil {
-					t.Errorf("expected error but got nil")
-				}
-				if err.Error() != tt.errMessage {
-					t.Errorf("expected error message %q but got %q", tt.errMessage, err.Error())
-				}
+				uassert.Error(t, err, tt.errMessage)
+				uassert.Equal(t, err.Error(), tt.errMessage)
 			} else {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
+				uassert.NoError(t, err)
 				if handler == nil {
 					t.Error("expected handler to be non-nil")
 				}
+			}
+		})
+	}
+}
+
+func TestExecuteParameterChange2(t *testing.T) {
+	registry := NewParameterRegistry()
+
+	registry.Register("test/pkg", "TestFunc", func(params []string) error {
+		if len(params) != 2 {
+			return errors.New("invalid params length")
+		}
+		return nil
+	})
+
+	tests := []struct {
+		name    string
+		msgs    []string
+		wantErr bool
+	}{
+		{
+			name: "Pass: Valid message",
+			msgs: []string{
+				"test/pkg*EXE*TestFunc*EXE*param1,param2",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Fail: Missing separator",
+			msgs: []string{
+				"test/pkg*EXE*TestFunc",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Fail: Non-existent handler",
+			msgs: []string{
+				"unknown/pkg*EXE*UnknownFunc*EXE*param1",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Fail: Not enough parameters",
+			msgs: []string{
+				"test/pkg*EXE*TestFunc*EXE*param1",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := executeParameterChange2(tt.msgs, registry)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("executeParameterChange2() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateProposalState(t *testing.T) {
+	tests := []struct {
+		name     string
+		proposal *ProposalInfo
+		want     ExecutionValidator
+	}{
+		{
+			name: "Pass: Text proposal",
+			proposal: &ProposalInfo{
+				ProposalType: "TEXT",
+				ExecutionState: ExecutionState{
+					Executed: false,
+					Canceled: false,
+					Rejected: false,
+					Passed:   true,
+				},
+			},
+			want: ExecutionValidator{
+				isTextProposal:    true,
+				isAlreadyExecuted: false,
+				isAlreadyCanceled: false,
+				isAlreadyRejected: false,
+				hasPassed:         true,
+			},
+		},
+		{
+			name: "Pass: Already executed",
+			proposal: &ProposalInfo{
+				ProposalType: "PARAMETER_CHANGE",
+				ExecutionState: ExecutionState{
+					Executed: true,
+					Canceled: false,
+					Rejected: false,
+					Passed:   true,
+				},
+			},
+			want: ExecutionValidator{
+				isTextProposal:    false,
+				isAlreadyExecuted: true,
+				isAlreadyCanceled: false,
+				isAlreadyRejected: false,
+				hasPassed:         true,
+			},
+		},
+		{
+			name: "Pass: Canceled",
+			proposal: &ProposalInfo{
+				ProposalType: "PARAMETER_CHANGE",
+				ExecutionState: ExecutionState{
+					Executed: false,
+					Canceled: true,
+					Rejected: false,
+					Passed:   false,
+				},
+			},
+			want: ExecutionValidator{
+				isTextProposal:    false,
+				isAlreadyExecuted: false,
+				isAlreadyCanceled: true,
+				isAlreadyRejected: false,
+				hasPassed:         false,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := validateProposalState(tt.proposal)
+			if got != tt.want {
+				t.Errorf("validateProposalState() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCheckProposalValidation(t *testing.T) {
+	// TODO: change error message after error code is defined
+	tests := []struct {
+		name      string
+		validator ExecutionValidator
+		wantErr   bool
+		errMsg    string
+	}{
+		{
+			name: "Pass: Valid proposal",
+			validator: ExecutionValidator{
+				isTextProposal:    false,
+				isAlreadyExecuted: false,
+				isAlreadyCanceled: false,
+				isAlreadyRejected: false,
+				hasPassed:         true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Fail: Text proposal is not executable",
+			validator: ExecutionValidator{
+				isTextProposal:    true,
+				isAlreadyExecuted: false,
+				isAlreadyCanceled: false,
+				isAlreadyRejected: false,
+				hasPassed:         true,
+			},
+			wantErr: true,
+			errMsg:  "[GNOSWAP-GOVERNANCE-014] can not execute text proposal",
+		},
+		{
+			name: "Fail: Already executed, canceled, or rejected",
+			validator: ExecutionValidator{
+				isTextProposal:    false,
+				isAlreadyExecuted: true,
+				isAlreadyCanceled: false,
+				isAlreadyRejected: false,
+				hasPassed:         true,
+			},
+			wantErr: true,
+			errMsg:  "proposal already executed, canceled, or rejected",
+		},
+		{
+			name: "Fail: Proposal has not passed",
+			validator: ExecutionValidator{
+				isTextProposal:    false,
+				isAlreadyExecuted: false,
+				isAlreadyCanceled: false,
+				isAlreadyRejected: false,
+				hasPassed:         false,
+			},
+			wantErr: true,
+			errMsg:  "proposal has not passed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := checkProposalValidation(tt.validator)
+			if tt.wantErr {
+				uassert.Error(t, err, tt.errMsg)
+				uassert.Equal(t, err.Error(), tt.errMsg)
+			} else {
+				uassert.NoError(t, err)
 			}
 		})
 	}
