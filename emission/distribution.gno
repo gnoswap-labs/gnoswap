@@ -4,7 +4,6 @@ import (
 	"std"
 	"strconv"
 
-	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/gnoswap/v1/gns"
@@ -20,7 +19,22 @@ const (
 	GOV_STAKER
 )
 
-var distributionBpsPct *avl.Tree
+var (
+	// distributionBpsPct stores the distribution percentages for each target
+	distributionBpsPct *avl.Tree
+
+	// amount of GNS distributed to each target
+	distributedToStaker        uint64 // can be cleared by staker
+	distributedToDevOps        uint64
+	distributedToCommunityPool uint64
+	distributedToGovStaker     uint64 // can be cleared by gov staker
+
+	// accumulated amount of GNS distributed to each target
+	accuDistributedToStaker        uint64
+	accuDistributedToDevOps        uint64
+	accuDistributedToCommunityPool uint64
+	accuDistributedToGovStaker     uint64
+)
 
 func init() {
 	distributionBpsPct = avl.NewTree()
@@ -30,18 +44,6 @@ func init() {
 	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), 0)
 }
 
-var (
-	toStaker        uint64
-	toDevOps        uint64
-	toCommunityPool uint64
-	toGovStaker     uint64
-
-	toStakerAccu        uint64
-	toDevOpsAccu        uint64
-	toCommunityPoolAccu uint64
-	toGovStakerAccu     uint64
-)
-
 // ChangeDistributionPctByAdmin changes the distribution percentage for the given targets.
 // Panics if the caller is not the admin.
 func ChangeDistributionPctByAdmin(
@@ -50,33 +52,19 @@ func ChangeDistributionPctByAdmin(
 	target03 int, pct03 uint64,
 	target04 int, pct04 uint64,
 ) {
-	caller := std.PrevRealm().Addr()
-	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
-	}
-
-	checkSumDistributionPct(pct01, pct02, pct03, pct04)
+	assertOnlyAdmin()
+	assertDistributionTarget(target01)
+	assertDistributionTarget(target02)
+	assertDistributionTarget(target03)
+	assertDistributionTarget(target04)
+	assertSumDistributionPct(pct01, pct02, pct03, pct04)
+	assertOnlyNotHalted()
 
 	changeDistributionPcts(
 		target01, pct01,
 		target02, pct02,
 		target03, pct03,
 		target04, pct04,
-	)
-
-	prevAddr, prevRealm := getPrev()
-	std.Emit(
-		"ChangeDistributionPctByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"target01", ufmt.Sprintf("%d", target01),
-		"pct01", ufmt.Sprintf("%d", pct01),
-		"target02", ufmt.Sprintf("%d", target02),
-		"pct02", ufmt.Sprintf("%d", pct02),
-		"target03", ufmt.Sprintf("%d", target03),
-		"pct03", ufmt.Sprintf("%d", pct03),
-		"target04", ufmt.Sprintf("%d", target04),
-		"pct04", ufmt.Sprintf("%d", pct04),
 	)
 }
 
@@ -88,36 +76,19 @@ func ChangeDistributionPct(
 	target03 int, pct03 uint64,
 	target04 int, pct04 uint64,
 ) {
-	caller := std.PrevRealm().Addr()
-	if caller != consts.GOV_GOVERNANCE_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("emission.gno__ChangeDistributionPct() || only governance(%s) can change distribution percentages, called from %s", consts.GOV_GOVERNANCE_ADDR, caller.String()),
-		))
-	}
-
-	checkSumDistributionPct(pct01, pct02, pct03, pct04)
+	assertOnlyGovernance()
+	assertDistributionTarget(target01)
+	assertDistributionTarget(target02)
+	assertDistributionTarget(target03)
+	assertDistributionTarget(target04)
+	assertSumDistributionPct(pct01, pct02, pct03, pct04)
+	assertOnlyNotHalted()
 
 	changeDistributionPcts(
 		target01, pct01,
 		target02, pct02,
 		target03, pct03,
 		target04, pct04,
-	)
-
-	prevAddr, prevRealm := getPrev()
-	std.Emit(
-		"ChangeDistributionPct",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"target01", ufmt.Sprintf("%d", target01),
-		"pct01", ufmt.Sprintf("%d", pct01),
-		"target02", ufmt.Sprintf("%d", target02),
-		"pct02", ufmt.Sprintf("%d", pct02),
-		"target03", ufmt.Sprintf("%d", target03),
-		"pct03", ufmt.Sprintf("%d", pct03),
-		"target04", ufmt.Sprintf("%d", target04),
-		"pct04", ufmt.Sprintf("%d", pct04),
 	)
 }
 
@@ -127,19 +98,25 @@ func changeDistributionPcts(
 	target03 int, pct03 uint64,
 	target04 int, pct04 uint64,
 ) {
-	common.IsHalted()
+	setDistributionBpsPct(target01, pct01)
+	setDistributionBpsPct(target02, pct02)
+	setDistributionBpsPct(target03, pct03)
+	setDistributionBpsPct(target04, pct04)
 
-	assertDistributionTarget(target01)
-	assertDistributionTarget(target02)
-	assertDistributionTarget(target03)
-	assertDistributionTarget(target04)
-
-	checkSumDistributionPct(pct01, pct02, pct03, pct04)
-
-	setDistributionPct(target01, pct01)
-	setDistributionPct(target02, pct02)
-	setDistributionPct(target03, pct03)
-	setDistributionPct(target04, pct04)
+	prevAddr, prevPkgPath := getPrevAsString()
+	std.Emit(
+		"ChangeDistributionPct",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"target01", strconv.Itoa(target01),
+		"pct01", strconv.FormatUint(pct01, 10),
+		"target02", strconv.Itoa(target02),
+		"pct02", strconv.FormatUint(pct02, 10),
+		"target03", strconv.Itoa(target03),
+		"pct03", strconv.FormatUint(pct03, 10),
+		"target04", strconv.Itoa(target04),
+		"pct04", strconv.FormatUint(pct04, 10),
+	)
 }
 
 // distributeToTarget distributes the specified amount to different targets based on their percentages.
@@ -151,7 +128,7 @@ func distributeToTarget(amount uint64) uint64 {
 		if err != nil {
 			panic(addDetailToError(
 				errInvalidEmissionTarget,
-				ufmt.Sprintf("emission.gno__distributeToTarget() || invalid target(%s)", targetStr),
+				ufmt.Sprintf("invalid target(%s)", targetStr),
 			))
 		}
 
@@ -181,131 +158,34 @@ func transferToTarget(target int, amount uint64) {
 	case LIQUIDITY_STAKER:
 		// transfer to staker contract
 		gns.Transfer(a2u(consts.STAKER_ADDR), amount)
-		toStaker = amount
-		toStakerAccu += amount
+		distributedToStaker += amount
+		accuDistributedToStaker += amount
+
 	case DEVOPS:
 		// transfer to devops
 		gns.Transfer(a2u(consts.DEV_OPS), amount)
-		toDevOps = amount
-		toDevOpsAccu += amount
+		distributedToDevOps += amount
+		accuDistributedToDevOps += amount
+
 	case COMMUNITY_POOL:
 		gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), amount)
-		toCommunityPool = amount
-		toCommunityPoolAccu += amount
+		distributedToCommunityPool += amount
+		accuDistributedToCommunityPool += amount
+
 	case GOV_STAKER:
 		gns.Transfer(a2u(consts.GOV_STAKER_ADDR), amount)
-		toGovStaker = amount
-		toGovStakerAccu += amount
+		distributedToGovStaker += amount
+		accuDistributedToGovStaker += amount
+
 	default:
 		panic(addDetailToError(
 			errInvalidEmissionTarget,
-			ufmt.Sprintf("emission.gno__transferToTarget() || invalid target(%d)", target),
+			ufmt.Sprintf("invalid target(%d)", target),
 		))
 	}
 }
 
-// changeDistributionPct changes the distribution percentage for the given target.
-func changeDistributionPct(target int, pct uint64) {
-	assertDistributionTarget(target)
-
-	setDistributionPct(target, pct)
-}
-
-// checkSumDistributionPct ensures the sum of all distribution percentages is 100%
-func checkSumDistributionPct(pct01, pct02, pct03, pct04 uint64) {
-	sum := pct01 + pct02 + pct03 + pct04
-
-	if sum != 10000 {
-		panic(addDetailToError(
-			errInvalidEmissionPct,
-			ufmt.Sprintf("sum of all pct should be 100%% (10000 bps), got %d", sum),
-		))
-	}
-}
-
-func GetAccuDistributedAmount() (uint64, uint64, uint64, uint64) {
-	return toStakerAccu, toDevOpsAccu, toCommunityPoolAccu, toGovStakerAccu
-}
-
-func ClearAccuDistributedAmount() {
-	common.IsHalted()
-
-	prevAddr := std.PrevRealm().Addr()
-
-	if !(prevAddr == consts.STAKER_ADDR || prevAddr == consts.GOV_STAKER_ADDR) {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only staker(%s) or gov/staker(%s) can clear accumulated distributed amount, called from %s",
-				consts.STAKER_ADDR, consts.GOV_STAKER_ADDR, prevAddr.String(),
-			),
-		))
-	}
-
-	toStakerAccu = 0
-	toDevOpsAccu = 0
-	toCommunityPoolAccu = 0
-	toGovStakerAccu = 0
-}
-
-func GetAccuDistributedAmountForGovStaker() uint64 {
-	return toGovStakerAccu
-}
-
-func ClearAccuDistributedAmountForGovStaker() {
-	common.IsHalted()
-
-	prevAddr := std.PrevRealm().Addr()
-	if prevAddr != consts.GOV_STAKER_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only gov/staker(%s) can clear accumulated distributed amount, called from %s",
-				consts.GOV_STAKER_ADDR, prevAddr.String(),
-			),
-		))
-	}
-
-	toGovStakerAccu = 0
-}
-
-func GetAccuDistributedAmountForStaker() uint64 {
-	return toStakerAccu
-}
-
-func ClearAccuDistributedAmountForStaker() {
-	common.IsHalted()
-
-	prevAddr := std.PrevRealm().Addr()
-	if prevAddr != consts.STAKER_ADDR {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("only staker(%s) can clear accumulated distributed amount, called from %s",
-				consts.STAKER_ADDR, prevAddr.String(),
-			),
-		))
-	}
-
-	toStakerAccu = 0
-}
-
-func GetLastDistributedGNSAmount() (uint64, uint64, uint64, uint64) {
-	return toStaker, toDevOps, toCommunityPool, toGovStaker
-}
-
-/*
-
-var distributionBpsPct *avl.Tree
-
-func init() {
-	distributionBpsPct = avl.NewTree()
-	distributionBpsPct.Set(strconv.Itoa(LIQUIDITY_STAKER), 7500)
-	distributionBpsPct.Set(strconv.Itoa(DEVOPS), 2000)
-	distributionBpsPct.Set(strconv.Itoa(COMMUNITY_POOL), 500)
-	distributionBpsPct.Set(strconv.Itoa(GOV_STAKER), 0)
-}
-
-*/
-
-func GetDistributionPct(target int) uint64 {
+func GetDistributionBpsPct(target int) uint64 {
 	assertDistributionTarget(target)
 	iUint64, exist := distributionBpsPct.Get(strconv.Itoa(target))
 	if !exist {
@@ -318,15 +198,48 @@ func GetDistributionPct(target int) uint64 {
 	return uint64(iUint64)
 }
 
-func setDistributionPct(target int, pct uint64) {
-	distributionBpsPct.Set(strconv.Itoa(target), pct)
+func GetDistributedToStaker() uint64 {
+	return distributedToStaker
 }
 
-func assertDistributionTarget(target int) {
-	if target != LIQUIDITY_STAKER && target != DEVOPS && target != COMMUNITY_POOL && target != GOV_STAKER {
-		panic(addDetailToError(
-			errInvalidEmissionTarget,
-			ufmt.Sprintf("invalid target(%d)", target),
-		))
-	}
+func GetDistributedToDevOps() uint64 {
+	return distributedToDevOps
+}
+
+func GetDistributedToCommunityPool() uint64 {
+	return distributedToCommunityPool
+}
+
+func GetDistributedToGovStaker() uint64 {
+	return distributedToGovStaker
+}
+
+func GetAccuDistributedToStaker() uint64 {
+	return accuDistributedToStaker
+}
+
+func GetAccuDistributedToDevOps() uint64 {
+	return accuDistributedToDevOps
+}
+
+func GetAccuDistributedToCommunityPool() uint64 {
+	return accuDistributedToCommunityPool
+}
+
+func GetAccuDistributedToGovStaker() uint64 {
+	return accuDistributedToGovStaker
+}
+
+func SetDistributedToStaker(amount uint64) {
+	assertStakerOnly()
+	distributedToStaker = amount
+}
+
+func SetDistributedToGovStaker(amount uint64) {
+	assertOnlyGovStaker()
+	distributedToGovStaker = amount
+}
+
+func setDistributionBpsPct(target int, pct uint64) {
+	distributionBpsPct.Set(strconv.Itoa(target), pct)
 }

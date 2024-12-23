@@ -7,73 +7,369 @@ import (
 	"gno.land/p/demo/uassert"
 
 	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 func TestChangeDistributionPctByAdmin(t *testing.T) {
-	t.Run("panic if not admin", func(t *testing.T) {
-		uassert.PanicsWithMessage(
-			t,
-			`caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
-			func() {
-				ChangeDistributionPctByAdmin(0, 0, 0, 0, 0, 0, 0, 0)
+	resetObject(t)
+
+	tests := []struct {
+		name        string
+		shouldPanic bool
+		panicMsg    string
+		setup       func()
+		callerRealm std.Realm
+		targets     []int
+		pcts        []uint64
+		verify      func()
+	}{
+		{
+			name:        "panic if caller is not admin",
+			shouldPanic: true,
+			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
+			targets:     []int{1, 2, 3, 4},
+			pcts:        []uint64{1000, 2000, 3000, 4000},
+		},
+		{
+			name:        "panic if target is invalid",
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(9)",
+			callerRealm: adminRealm,
+			targets:     []int{1, 2, 3, 9},
+			pcts:        []uint64{1000, 2000, 3000, 4000},
+		},
+		{
+			name:        "panic if sum of percentages is not 100%",
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-003] invalid emission percentage || sum of all pct should be 100% (10000 bps), got 10001",
+			callerRealm: adminRealm,
+			targets:     []int{1, 2, 3, 4},
+			pcts:        []uint64{1000, 2000, 3000, 4001},
+		},
+		{
+			name:        "success if admin",
+			shouldPanic: false,
+			callerRealm: adminRealm,
+			targets:     []int{1, 2, 3, 4},
+			pcts:        []uint64{1000, 2000, 3000, 4000},
+			verify: func() {
+				uassert.Equal(t, uint64(1000), GetDistributionBpsPct(1))
+				uassert.Equal(t, uint64(2000), GetDistributionBpsPct(2))
+				uassert.Equal(t, uint64(3000), GetDistributionBpsPct(3))
+				uassert.Equal(t, uint64(4000), GetDistributionBpsPct(4))
 			},
-		)
-	})
+		},
+	}
 
-	t.Run("panic if sum of percentages is not 100%", func(t *testing.T) {
-		adminRealm := std.NewUserRealm(consts.ADMIN)
-		std.TestSetRealm(adminRealm)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
 
-		uassert.PanicsWithMessage(
-			t,
-			"[GNOSWAP-EMISSION-003] invalid emission percentage || sum of all pct should be 100% (10000 bps), got 9999",
-			func() {
-				ChangeDistributionPctByAdmin(1, 0, 2, 0, 3, 0, 4, 9999)
-			},
-		)
-	})
+			if tt.callerRealm != (std.Realm{}) {
+				std.TestSetRealm(tt.callerRealm)
+			}
 
-	t.Run("panic if target is invliad", func(t *testing.T) {
-		adminRealm := std.NewUserRealm(consts.ADMIN)
-		std.TestSetRealm(adminRealm)
+			target01, target02, target03, target04 := sliceToFourInt(t, tt.targets)
+			pct01, pct02, pct03, pct04 := sliceToFourUint64(t, tt.pcts)
 
-		uassert.PanicsWithMessage(
-			t,
-			"[GNOSWAP-EMISSION-002] invalid emission target || invalid target(9)",
-			func() {
-				ChangeDistributionPctByAdmin(9, 10000, 2, 0, 3, 0, 4, 0)
-			},
-		)
-	})
-
-	t.Run("success if admin", func(t *testing.T) {
-		adminRealm := std.NewUserRealm(consts.ADMIN)
-		std.TestSetRealm(adminRealm)
-
-		uassert.Equal(t, uint64(7500), GetDistributionPct(1))
-		uassert.Equal(t, uint64(2000), GetDistributionPct(2))
-		uassert.Equal(t, uint64(500), GetDistributionPct(3))
-		uassert.Equal(t, uint64(0), GetDistributionPct(4))
-
-		ChangeDistributionPctByAdmin(1, 5000, 2, 3000, 3, 1000, 4, 1000)
-	})
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					ChangeDistributionPctByAdmin(
+						target01, pct01,
+						target02, pct02,
+						target03, pct03,
+						target04, pct04,
+					)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					ChangeDistributionPctByAdmin(
+						target01, pct01,
+						target02, pct02,
+						target03, pct03,
+						target04, pct04,
+					)
+				})
+				tt.verify()
+			}
+		})
+	}
 }
 
 func TestChangeDistributionPct(t *testing.T) {
-	t.Run("panic if not governance", func(t *testing.T) {
-		uassert.PanicsWithMessage(
-			t,
-			`[GNOSWAP-EMISSION-001] caller has no permission || emission.gno__ChangeDistributionPct() || only governance(g17s8w2ve7k85fwfnrk59lmlhthkjdted8whvqxd) can change distribution percentages, called from g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm`,
-			func() {
-				ChangeDistributionPct(1, 0, 2, 0, 3, 0, 4, 0)
+	resetObject(t)
+
+	tests := []struct {
+		name        string
+		shouldPanic bool
+		panicMsg    string
+		setup       func()
+		callerRealm std.Realm
+		targets     []int
+		pcts        []uint64
+		verify      func()
+	}{
+		{
+			name:        "panic if caller is not governance",
+			shouldPanic: true,
+			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
+			targets:     []int{1, 2, 3, 4},
+			pcts:        []uint64{1000, 2000, 3000, 4000},
+		},
+		{
+			name:        "panic if target is invalid",
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(9)",
+			callerRealm: govRealm,
+			targets:     []int{1, 2, 3, 9},
+			pcts:        []uint64{1000, 2000, 3000, 4000},
+		},
+		{
+			name:        "panic if sum of percentages is not 100%",
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-003] invalid emission percentage || sum of all pct should be 100% (10000 bps), got 10001",
+			callerRealm: govRealm,
+			targets:     []int{1, 2, 3, 4},
+			pcts:        []uint64{1000, 2000, 3000, 4001},
+		},
+		{
+			name:        "success if governance",
+			shouldPanic: false,
+			callerRealm: govRealm,
+			targets:     []int{1, 2, 3, 4},
+			pcts:        []uint64{1000, 2000, 3000, 4000},
+			verify: func() {
+				uassert.Equal(t, uint64(1000), GetDistributionBpsPct(1))
+				uassert.Equal(t, uint64(2000), GetDistributionBpsPct(2))
+				uassert.Equal(t, uint64(3000), GetDistributionBpsPct(3))
+				uassert.Equal(t, uint64(4000), GetDistributionBpsPct(4))
 			},
-		)
-	})
+		},
+	}
 
-	t.Run("success if governance", func(t *testing.T) {
-		govRealm := std.NewCodeRealm(consts.GOV_GOVERNANCE_PATH)
-		std.TestSetRealm(govRealm)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
 
-		ChangeDistributionPct(1, 5000, 2, 3000, 3, 1000, 4, 1000)
-	})
+			if tt.callerRealm != (std.Realm{}) {
+				std.TestSetRealm(tt.callerRealm)
+			}
+
+			target01, target02, target03, target04 := sliceToFourInt(t, tt.targets)
+			pct01, pct02, pct03, pct04 := sliceToFourUint64(t, tt.pcts)
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					ChangeDistributionPct(
+						target01, pct01,
+						target02, pct02,
+						target03, pct03,
+						target04, pct04,
+					)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					ChangeDistributionPct(
+						target01, pct01,
+						target02, pct02,
+						target03, pct03,
+						target04, pct04,
+					)
+				})
+				tt.verify()
+			}
+		})
+	}
+}
+
+func TestChangeDistributionPcts(t *testing.T) {
+	resetObject(t)
+
+	changeDistributionPcts(
+		1, 1000,
+		2, 2000,
+		3, 3000,
+		4, 4000,
+	)
+	uassert.Equal(t, uint64(1000), GetDistributionBpsPct(1))
+	uassert.Equal(t, uint64(2000), GetDistributionBpsPct(2))
+	uassert.Equal(t, uint64(3000), GetDistributionBpsPct(3))
+	uassert.Equal(t, uint64(4000), GetDistributionBpsPct(4))
+}
+
+func TestCalculateAmount(t *testing.T) {
+	tests := []struct {
+		name     string
+		pct      uint64
+		expected uint64
+	}{
+		{name: "5% of 1_000", pct: 500, expected: 50},
+		{name: "10% of 1_000", pct: 1000, expected: 100},
+		{name: "55% of 1_000", pct: 5500, expected: 550},
+		{name: "100% of 1_000", pct: 10000, expected: 1000},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			uassert.Equal(t, tt.expected, calculateAmount(uint64(1000), tt.pct))
+		})
+	}
+}
+
+func TestTransferToTarget(t *testing.T) {
+	resetObject(t)
+
+	tests := []struct {
+		name        string
+		shouldPanic bool
+		panicMsg    string
+		setup       func()
+		target      int
+		amount      uint64
+		verify      func()
+	}{
+		{
+			name:        "invalid target",
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(9)",
+			target:      9,
+			amount:      100,
+		},
+		{
+			name:        "not enough balance for emission",
+			shouldPanic: true,
+			panicMsg:    "insufficient balance",
+			target:      LIQUIDITY_STAKER,
+			amount:      1,
+		},
+		{
+			name:   "transfer to LIQUIDITY_STAKER",
+			target: LIQUIDITY_STAKER,
+			setup: func() {
+				std.TestSetRealm(adminRealm)
+				gns.Transfer(a2u(consts.EMISSION_ADDR), 100000) // give enough balance for emission
+			},
+			amount: 100,
+			verify: func() {
+				uassert.Equal(t, uint64(100), distributedToStaker)
+				uassert.Equal(t, uint64(100), accuDistributedToStaker)
+			},
+		},
+		{
+			name:   "transfer to DEVOPS",
+			target: DEVOPS,
+			amount: 200,
+			verify: func() {
+				uassert.Equal(t, uint64(200), distributedToDevOps)
+				uassert.Equal(t, uint64(200), accuDistributedToDevOps)
+			},
+		},
+		{
+			name:   "transfer to COMMUNITY_POOL",
+			target: COMMUNITY_POOL,
+			amount: 300,
+			verify: func() {
+				uassert.Equal(t, uint64(300), distributedToCommunityPool)
+				uassert.Equal(t, uint64(300), accuDistributedToCommunityPool)
+			},
+		},
+		{
+			name:   "transfer to GOV_STAKER",
+			target: GOV_STAKER,
+			amount: 400,
+			verify: func() {
+				uassert.Equal(t, uint64(400), distributedToGovStaker)
+				uassert.Equal(t, uint64(400), accuDistributedToGovStaker)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					transferToTarget(tt.target, tt.amount)
+				})
+			} else {
+				uassert.NotPanics(t, func() {
+					transferToTarget(tt.target, tt.amount)
+				})
+				tt.verify()
+			}
+		})
+	}
+}
+
+func TestDistributeToTarget(t *testing.T) {
+	resetObject(t)
+
+	tests := []struct {
+		name         string
+		shouldPanic  bool
+		panicMsg     string
+		setup        func()
+		amount       uint64
+		expectedLeft uint64
+	}{
+		{
+			name:        "invalid target",
+			shouldPanic: true,
+			panicMsg:    "[GNOSWAP-EMISSION-002] invalid emission target || invalid target(a)",
+			setup: func() {
+				distributionBpsPct.Set("a", 1000)
+			},
+			amount: 100,
+		},
+		{
+			name: "distributed all amount",
+			setup: func() {
+				distributionBpsPct.Remove("a")
+			},
+			amount:       1000,
+			expectedLeft: 0,
+		},
+		{
+			name:         "distributed partial amount",
+			amount:       1001,
+			expectedLeft: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					distributeToTarget(tt.amount)
+				})
+			} else {
+				distributed := distributeToTarget(tt.amount)
+				left := tt.amount - distributed
+				uassert.Equal(t, tt.expectedLeft, left)
+			}
+		})
+	}
+}
+
+func sliceToFourInt(t *testing.T, slice []int) (int, int, int, int) {
+	t.Helper()
+
+	return slice[0], slice[1], slice[2], slice[3]
+}
+
+func sliceToFourUint64(t *testing.T, slice []uint64) (uint64, uint64, uint64, uint64) {
+	t.Helper()
+
+	return slice[0], slice[1], slice[2], slice[3]
 }
