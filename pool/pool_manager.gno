@@ -7,14 +7,12 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-
-	"gno.land/r/gnoswap/v1/consts"
-
-	en "gno.land/r/gnoswap/v1/emission"
-
-	"gno.land/r/gnoswap/v1/gns"
-
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
+	en "gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 var (
@@ -55,6 +53,32 @@ func newPoolParams(
 		sqrtPriceX96: price,
 		tickSpacing:  tickSpacing,
 	}
+}
+
+func (p *createPoolParams) updateWithWrapping() *createPoolParams {
+	token0Path, token1Path := p.wrap()
+
+	if !p.isInOrder() {
+		token0Path, token1Path = token1Path, token0Path
+
+		oldTick := common.TickMathGetTickAtSqrtRatio(p.sqrtPriceX96)
+		if oldTick > consts.MAX_TICK || oldTick < consts.MIN_TICK {
+			panic(addDetailToError(
+				errInvalidTickRange,
+				ufmt.Sprintf("expected tick(%d) to be within range", oldTick),
+			))
+		}
+		newPrice := common.TickMathGetSqrtRatioAtTick(oldTick * int32(-1))
+		if newPrice.IsZero() {
+			panic(addDetailToError(
+				errOverFlow,
+				ufmt.Sprintf("expected newPrice(%s) to be non-zero", newPrice.ToString()),
+			))
+		}
+		p.sqrtPriceX96 = new(u256.Uint).Set(newPrice)
+	}
+
+	return newPoolParams(token0Path, token1Path, p.fee, p.sqrtPriceX96.ToString())
 }
 
 func (p *createPoolParams) isSameTokenPath() bool {
@@ -113,12 +137,16 @@ func CreatePool(
 	sqrtPriceX96 string,
 ) {
 	assertOnlyNotHalted()
+	assertOnlyRegistered(token0Path)
+	assertOnlyRegistered(token1Path)
+
 	poolInfo := newPoolParams(token0Path, token1Path, fee, sqrtPriceX96)
+	poolInfo = poolInfo.updateWithWrapping()
 	if poolInfo.isSameTokenPath() {
 		panic(addDetailToError(
 			errDuplicateTokenInPool,
 			ufmt.Sprintf(
-				"pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)",
+				"expected token0Path(%s) != token1Path(%s)",
 				poolInfo.token0Path, poolInfo.token1Path,
 			),
 		))
@@ -137,7 +165,7 @@ func CreatePool(
 		panic(addDetailToError(
 			errDuplicateTokenInPool,
 			ufmt.Sprintf(
-				"pool_manager.gno__CreatePool() || expected token0Path(%s) != token1Path(%s)",
+				"expected token0Path(%s) != token1Path(%s)",
 				token0Path, token1Path,
 			),
 		))
@@ -146,7 +174,7 @@ func CreatePool(
 	if !poolInfo.isInOrder() {
 		panic(addDetailToError(
 			errTokenSortOrder,
-			ufmt.Sprintf("pool_manager.gno__CreatePool() || expected token0Path(%s) < token1Path(%s)", token0Path, token1Path),
+			ufmt.Sprintf("expected token0Path(%s) < token1Path(%s)", token0Path, token1Path),
 		))
 	}
 
@@ -157,7 +185,7 @@ func CreatePool(
 	if exist {
 		panic(addDetailToError(
 			errPoolAlreadyExists,
-			ufmt.Sprintf("pool_manager.gno__CreatePool() || expected poolPath(%s) not to exist", poolPath),
+			ufmt.Sprintf("expected poolPath(%s) not to exist", poolPath),
 		))
 	}
 
