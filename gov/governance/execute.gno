@@ -78,7 +78,7 @@ type ExecutionContext struct {
 	WindowEnd   uint64
 }
 
-func Execute2(proposalId uint64) error {
+func Execute(proposalId uint64) error {
 	ctx, err := prepareExecution(proposalId)
 	if err != nil {
 		panic(err)
@@ -113,13 +113,13 @@ func Execute2(proposalId uint64) error {
 func executeProposal(ctx *ExecutionContext, registry *ParameterRegistry) error {
 	switch ctx.Proposal.ProposalType {
 	case ParameterChange:
-		return executeParameterChange2(ctx.Proposal.Execution.Msgs, registry)
+		return executeParameterChange(ctx.Proposal.Execution.Msgs, registry)
 	default:
 		return nil
 	}
 }
 
-func executeParameterChange2(msgs []string, registry *ParameterRegistry) error {
+func executeParameterChange(msgs []string, registry *ParameterRegistry) error {
 	for _, msg := range msgs {
 		pkgPath, function, params, err := parseMessage(msg)
 		if err != nil {
