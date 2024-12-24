@@ -1,19 +1,19 @@
 package governance
 
 import (
+	"errors"
 	"std"
 	"strconv"
 	"strings"
 	"time"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/gnoswap/v1/gns"
 
-	cn "gno.land/r/gnoswap/v1/common"
 	cp "gno.land/r/gnoswap/v1/community_pool"
 	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -22,601 +22,473 @@ import (
 	sr "gno.land/r/gnoswap/v1/staker"
 )
 
-// Execute executes the given proposal.
-// It checks various conditions such as voting period, execution window, quorum, and majority.
-// ref: https://docs.gnoswap.io/contracts/governance/execute.gno#execute
-func Execute(proposalId uint64) {
+var (
+	errInvalidMessageFormat = errors.New("invalid message format")
+	errProposalNotPassed    = errors.New("proposal has not passed")
+)
+
+const (
+	EXECUTE_SEPARATOR = "*EXE*"
+)
+
+// Function signature for different parameter handlers
+type ParameterHandler func([]string) error
+
+// Registry for parameter handlers
+type ParameterRegistry struct {
+	handlers *avl.Tree
+}
+
+func NewParameterRegistry() *ParameterRegistry {
+	return &ParameterRegistry{
+		handlers: avl.NewTree(),
+	}
+}
+
+func (r *ParameterRegistry) Register(
+	pkgPath, function string,
+	handler ParameterHandler,
+) {
+	key := makeHandlerKey(pkgPath, function)
+	r.handlers.Set(key, handler)
+}
+
+func (r *ParameterRegistry) Handler(pkgPath, function string) (ParameterHandler, error) {
+	key := makeHandlerKey(pkgPath, function)
+	hdlr, exists := r.handlers.Get(key)
+	if !exists {
+		return nil, ufmt.Errorf("handler not found for %s", key)
+	}
+	return hdlr.(ParameterHandler), nil
+}
+
+func makeHandlerKey(pkgPath, function string) string {
+	return ufmt.Sprintf("%s:%s", pkgPath, function)
+}
+
+///////////////////// EXECUTION /////////////////////
+// region: Execute
+
+type ExecutionContext struct {
+	ProposalId  uint64
+	Now         uint64
+	Config      *Config
+	Proposal    *ProposalInfo
+	WindowStart uint64
+	WindowEnd   uint64
+}
+
+func Execute2(proposalId uint64) error {
+	ctx, err := prepareExecution(proposalId)
+	if err != nil {
+		panic(err)
+	}
+
+	if err := validateVotes(ctx.Proposal); err != nil {
+		panic(err)
+	}
+
+	if err := validateCommunityPoolToken(ctx.Proposal); err != nil {
+		panic(err)
+	}
+
+	registry := createParameterHandlers()
+	if err := executeProposal(ctx, registry); err != nil {
+		panic(err)
+	}
+
+	updateProposalState(ctx)
+
+	prevAddr, prevPkgPath := getPrev()
+	std.Emit(
+		"Execute",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"proposalId", strconv.Itoa(int(proposalId)),
+	)
+
+	return nil
+}
+
+func executeProposal(ctx *ExecutionContext, registry *ParameterRegistry) error {
+	switch ctx.Proposal.ProposalType {
+	case ParameterChange:
+		return executeParameterChange2(ctx.Proposal.Execution.Msgs, registry)
+	default:
+		return nil
+	}
+}
+
+func executeParameterChange2(msgs []string, registry *ParameterRegistry) error {
+	for _, msg := range msgs {
+		pkgPath, function, params, err := parseMessage(msg)
+		if err != nil {
+			return err
+		}
+
+		handler, err := registry.Handler(pkgPath, function)
+		if err != nil {
+			return err
+		}
+
+		if err := handler(params); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func parseMessage(msg string) (pkgPath string, function string, params []string, err error) {
+	parts := strings.Split(msg, EXECUTE_SEPARATOR)
+	if len(parts) != 3 {
+		return "", "", nil, errInvalidMessageFormat
+	}
+
+	return parts[0], parts[1], strings.Split(parts[2], ","), nil
+}
+
+func createParameterHandlers() *ParameterRegistry {
+	registry := NewParameterRegistry()
+
+	// region: Common path
+	registry.Register(consts.COMMON_PATH, "SetHalt", func(params []string) error {
+		if err := hasDesiredParams(params, 1); err != nil {
+			return err
+		}
+		common.SetHalt(parseBool(params[0])) // halt
+		return nil
+	})
+
+	// region: Community pool
+	registry.Register(consts.COMMUNITY_POOL_PATH, "TransferToken", func(params []string) error {
+		if err := hasDesiredParams(params, 3); err != nil {
+			return err
+		}
+		cp.TransferToken(
+			params[0],              // pkgPath
+			std.Address(params[1]), // to
+			parseUint64(params[2]), // amount
+		)
+		return nil
+	})
+
+	// region: Emission
+	registry.Register(consts.EMISSION_PATH, "ChangeDistributionPct", func(params []string) error {
+		if err := hasDesiredParams(params, 8); err != nil {
+			return err
+		}
+		en.ChangeDistributionPct(
+			parseInt(params[0]),    // target01
+			parseUint64(params[1]), // pct01
+			parseInt(params[2]),    // target02
+			parseUint64(params[3]), // pct02
+			parseInt(params[4]),    // target03
+			parseUint64(params[5]), // pct03
+			parseInt(params[6]),    // target04
+			parseUint64(params[7]), // pct04
+		)
+		return nil
+	})
+
+	// region: GNS Path
+	registry.Register(consts.GNS_PATH, "SetAvgBlockTimeInMs", func(params []string) error {
+		if err := hasDesiredParams(params, 1); err != nil {
+			return err
+		}
+		gns.SetAvgBlockTimeInMs(int64(parseInt(params[0]))) // ms
+		return nil
+	})
+
+	// region: Governance Path
+	registry.Register(consts.GOV_GOVERNANCE_PATH, "Reconfigure", func(params []string) error {
+		if err := hasDesiredParams(params, 7); err != nil {
+			return err
+		}
+		reconfigure(
+			parseUint64(params[0]), // votingStartDelay
+			parseUint64(params[1]), // votingPeriod
+			parseUint64(params[2]), // votingWeightSmoothingDuration
+			parseUint64(params[3]), // quorum
+			parseUint64(params[4]), // proposalCreationhold
+			parseUint64(params[5]), // executionDelay
+			parseUint64(params[6]), // executionWindow
+		)
+		return nil
+	})
+
+	// region: Pool Path
+	registry.Register(consts.POOL_PATH, "SetFeeProtocol", func(params []string) error {
+		if err := hasDesiredParams(params, 2); err != nil {
+			return err
+		}
+		pl.SetFeeProtocol(
+			uint8(parseUint64(params[0])), // feeProtocol0
+			uint8(parseUint64(params[1])), // feeProtocol1
+		)
+		return nil
+	})
+
+	registry.Register(consts.POOL_PATH, "SetPoolCreationFee", func(params []string) error {
+		if err := hasDesiredParams(params, 1); err != nil {
+			return err
+		}
+		pl.SetPoolCreationFee(parseUint64(params[0])) // fee
+		return nil
+	})
+
+	registry.Register(consts.POOL_PATH, "SetWithdrawalFee", func(params []string) error {
+		if err := hasDesiredParams(params, 1); err != nil {
+			return err
+		}
+		pl.SetWithdrawalFee(parseUint64(params[0])) // fee
+		return nil
+	})
+
+	// region: Protocol fee
+	registry.Register(consts.PROTOCOL_FEE_PATH, "SetDevOpsPct", func(params []string) error {
+		if err := hasDesiredParams(params, 1); err != nil {
+			return err
+		}
+		pf.SetDevOpsPct(parseUint64(params[0])) // pct
+		return nil
+	})
+
+	// region: Router
+	registry.Register(consts.ROUTER_PATH, "SetSwapFee", func(params []string) error {
+		if err := hasDesiredParams(params, 1); err != nil {
+			return err
+		}
+		rr.SetSwapFee(parseUint64(params[0])) // fee
+		return nil
+	})
+
+	// region: Staker
+	registry.Register(consts.STAKER_PATH, "SetDepositGnsAmount", func(params []string) error {
+		if err := hasDesiredParams(params, 1); err != nil {
+			return err
+		}
+		sr.SetDepositGnsAmount(parseUint64(params[0])) // amount
+		return nil
+	})
+
+	registry.Register(consts.STAKER_PATH, "SetPoolTier", func(params []string) error {
+		if err := hasDesiredParams(params, 2); err != nil {
+			return err
+		}
+		sr.SetPoolTier(
+			params[0],              // pool
+			parseUint64(params[1]), // tier
+		)
+		return nil
+	})
+
+	registry.Register(consts.STAKER_PATH, "ChangePoolTier", func(params []string) error {
+		if err := hasDesiredParams(params, 2); err != nil {
+			return err
+		}
+		sr.ChangePoolTier(
+			params[0],              // pool
+			parseUint64(params[1]), // tier
+		)
+		return nil
+	})
+
+	registry.Register(consts.STAKER_PATH, "RemovePoolTier", func(params []string) error {
+		if err := hasDesiredParams(params, 1); err != nil {
+			return err
+		}
+		sr.RemovePoolTier(params[0]) // pool
+		return nil
+	})
+
+	registry.Register(consts.STAKER_PATH, "SetUnstakingFee", func(params []string) error {
+		if err := hasDesiredParams(params, 1); err != nil {
+			return err
+		}
+		sr.SetUnstakingFee(parseUint64(params[0]))
+		return nil
+	})
+
+	registry.Register(consts.STAKER_PATH, "SetWarmUp", func(params []string) error {
+		if err := hasDesiredParams(params, 2); err != nil {
+			return err
+		}
+		sr.SetWarmUp(
+			int64(parseInt(params[0])), // percent
+			int64(parseInt(params[1])), // block
+		)
+		return nil
+	})
+
+	return registry
+}
+
+///////////////////// VALIDATION /////////////////////
+
+type ExecutionValidator struct {
+	isTextProposal    bool
+	isAlreadyExecuted bool
+	isAlreadyCanceled bool
+	isAlreadyRejected bool
+	hasPassed         bool
+}
+
+func prepareExecution(proposalId uint64) (*ExecutionContext, error) {
+	validateInitialState()
+
+	proposal, err := getProposal(proposalId)
+	if err != nil {
+		return nil, err
+	}
+
+	validator := validateProposalState(proposal)
+	if err := checkProposalValidation(validator); err != nil {
+		return nil, err
+	}
+
+	ctx, err := createExecutionContext(proposalId, proposal)
+	if err != nil {
+		return nil, err
+	}
+
+	return ctx, nil
+}
+
+func validateInitialState() {
 	common.IsHalted()
 
 	en.MintAndDistributeGns()
 	updateProposalsState()
+}
 
-	proposal, exist := proposals[proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("proposalId(%d) does not exist, failed to execute", proposalId),
-		))
+func getProposal(proposalId uint64) (*ProposalInfo, error) {
+	// TODO: change to avl API
+	proposal, exists := proposals[proposalId]
+	if !exists {
+		return nil, ufmt.Errorf("proposal %d not found", proposalId)
 	}
 
-	if proposal.ProposalType == Text {
-		panic(addDetailToError(
-			errTextProposalNotExecutable,
-			ufmt.Sprintf("proposalId(%d) is a TEXT proposal, not executable", proposalId),
-		))
+	return &proposal, nil
+}
+
+func validateProposalState(proposal *ProposalInfo) ExecutionValidator {
+	return ExecutionValidator{
+		isTextProposal:    proposal.ProposalType == Text,
+		isAlreadyExecuted: proposal.ExecutionState.Executed,
+		isAlreadyCanceled: proposal.ExecutionState.Canceled,
+		isAlreadyRejected: proposal.ExecutionState.Rejected,
+		hasPassed:         proposal.ExecutionState.Passed,
+	}
+}
+
+func checkProposalValidation(v ExecutionValidator) error {
+	if v.isTextProposal {
+		return errTextProposalNotExecutable
 	}
 
-	if proposal.ExecutionState.Executed || proposal.ExecutionState.Canceled || proposal.ExecutionState.Rejected {
-		panic(addDetailToError(
-			errUnableToExecuteProposal,
-			ufmt.Sprintf("proposalId(%d) has already executed(%t) or canceled(%t) or rejected(%t), failed to execute", proposalId, proposal.ExecutionState.Executed, proposal.ExecutionState.Canceled, proposal.ExecutionState.Rejected),
-		))
+	if v.isAlreadyExecuted || v.isAlreadyCanceled || v.isAlreadyRejected {
+		return errors.New("proposal already executed, canceled, or rejected")
 	}
 
-	if !proposal.ExecutionState.Passed {
-		panic(addDetailToError(
-			errUnableToExecuteProposal,
-			ufmt.Sprintf("proposalId(%d) has not passed, failed to execute", proposalId),
-		))
+	if !v.hasPassed {
+		return errProposalNotPassed
 	}
 
+	return nil
+}
+
+func createExecutionContext(proposalId uint64, proposal *ProposalInfo) (*ExecutionContext, error) {
 	now := uint64(time.Now().Unix())
-
 	config := GetConfigVersion(proposal.ConfigVersion)
-	votingEnd := proposal.ExecutionState.CreatedAt + config.VotingStartDelay + config.VotingPeriod
-	windowStart := votingEnd + config.ExecutionDelay
+
+	votingEnd := calculateVotingEnd(proposal, &config)
+	windowStart := calculateWindowStart(votingEnd, &config)
+	windowEnd := calculateWindowEnd(windowStart, &config)
+
+	if err := validateExecutionWindow(now, windowStart, windowEnd); err != nil {
+		return nil, err
+	}
+
+	return &ExecutionContext{
+		ProposalId:  proposalId,
+		Now:         now,
+		Config:      &config,
+		Proposal:    proposal,
+		WindowStart: windowStart,
+		WindowEnd:   windowEnd,
+	}, nil
+}
+
+func calculateVotingEnd(proposal *ProposalInfo, config *Config) uint64 {
+	return proposal.ExecutionState.CreatedAt +
+		config.VotingStartDelay +
+		config.VotingPeriod
+}
+
+func calculateWindowStart(votingEnd uint64, config *Config) uint64 {
+	return votingEnd + config.ExecutionDelay
+}
+
+func calculateWindowEnd(windowStart uint64, config *Config) uint64 {
+	return windowStart + config.ExecutionWindow
+}
+
+func validateExecutionWindow(now, windowStart, windowEnd uint64) error {
 	if now < windowStart {
-		panic(addDetailToError(
-			errBeforeProposalExecutionTime,
-			ufmt.Sprintf("EXECUTION_WINDOW_NOT_STARTED (now(%d) < windowStart(%d))", now, windowStart),
-		))
+		return ufmt.Errorf("execution window not started (now(%d) < windowStart(%d))", now, windowStart)
 	}
 
-	windowEnd := windowStart + config.ExecutionWindow
 	if now >= windowEnd {
-		panic(addDetailToError(
-			errProposalExecutionTimeExpired,
-			ufmt.Sprintf("EXECUTION_WINDOW_OVER (now(%d) >= windowEnd(%d))", now, windowEnd),
-		))
+		return ufmt.Errorf("execution window over (now(%d) >= windowEnd(%d))", now, windowEnd)
 	}
 
-	yeaUint := proposal.Yea.Uint64()
-	nayUint := proposal.Nay.Uint64()
-	quorumUint := proposal.QuorumAmount
-
-	if yeaUint < quorumUint {
-		panic(addDetailToError(
-			errProposalQuorumNotSatisfied,
-			ufmt.Sprintf("QUORUM_NOT_MET (yes(%d) < quorum(%d))", yeaUint, quorumUint),
-		))
-	}
-
-	if yeaUint < nayUint {
-		panic(addDetailToError(
-			errMoreNoVotesThanYesVotes,
-			ufmt.Sprintf("NO_MAJORITY (yes(%d) < no(%d))", yeaUint, nayUint),
-		))
-	}
-
-	if proposal.ProposalType == CommunityPoolSpend {
-		// check if the token is registered to community pool
-		registered := cp.GetRegisteredTokens()
-		if !contains(registered, proposal.CommunityPoolSpend.TokenPath) {
-			panic(addDetailToError(
-				errNotRegisteredToCommunityPool,
-				ufmt.Sprintf("token(%s) is not registered to community_pool", proposal.CommunityPoolSpend.TokenPath),
-			))
-		}
-
-		// trigger community pool spend
-		cp.TransferToken(proposal.CommunityPoolSpend.TokenPath, proposal.CommunityPoolSpend.To, proposal.CommunityPoolSpend.Amount)
-	}
-
-	if proposal.ProposalType == ParameterChange {
-		// trigger parameter change
-		executeParameterChange(proposal.Execution.Msgs)
-	}
-
-	proposal.ExecutionState.Executed = true
-	proposal.ExecutionState.ExecutedAt = now
-	proposal.ExecutionState.Upcoming = false
-	proposal.ExecutionState.Active = false
-	proposals[proposalId] = proposal
-
-	prevAddr, prevRealm := getPrev()
-	std.Emit(
-		"Execute",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"proposalId", ufmt.Sprintf("%d", proposalId),
-	)
+	return nil
 }
 
-func callableMsg(pkgPath, function, params string) bool {
-	param := strings.Split(params, ",")
+func validateVotes(pp *ProposalInfo) error {
+	yea := pp.Yea.Unit64()
+	nea := pp.Nay.Unit64()
+	quorum := pp.QuorumAmount
 
-	switch pkgPath {
-
-	case consts.EMISSION_PATH:
-		switch function {
-		case "ChangeDistributionPct":
-			if len(param) != 8 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 8 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-		default:
-			panic(addDetailToError(
-				errNonExecutableFunction,
-				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
-			))
-		}
-
-	case consts.GNS_PATH:
-		switch function {
-		case "SetAvgBlockTimeInMs":
-			if len(param) != 1 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-		default:
-			panic(addDetailToError(
-				errNonExecutableFunction,
-				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
-			))
-		}
-
-	case consts.GOV_GOVERNANCE_PATH:
-		switch function {
-		case "Reconfigure":
-			if len(param) != 7 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 7 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-		default:
-			panic(addDetailToError(
-				errNonExecutableFunction,
-				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
-			))
-		}
-
-	case consts.POOL_PATH:
-		switch function {
-		case "SetFeeProtocol":
-			if len(param) != 2 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-
-		case "SetPoolCreationFee":
-			if len(param) != 1 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-
-		case "SetWithdrawalFee":
-			if len(param) != 1 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-
-		default:
-			panic(addDetailToError(
-				errNonExecutableFunction,
-				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
-			))
-		}
-
-	case consts.PROTOCOL_FEE_PATH:
-		switch function {
-		case "SetDevOpsPct":
-			if len(param) != 1 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-		default:
-			panic(addDetailToError(
-				errNonExecutableFunction,
-				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
-			))
-		}
-
-	case consts.ROUTER_PATH:
-		switch function {
-		case "SetSwapFee":
-			if len(param) != 1 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-		default:
-			panic(addDetailToError(
-				errNonExecutableFunction,
-				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
-			))
-		}
-
-	case consts.STAKER_PATH:
-		switch function {
-		case "SetDepositGnsAmount":
-			if len(param) != 1 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-
-		case "SetPoolTier":
-			if len(param) != 2 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-
-		case "ChangePoolTier":
-			if len(param) != 2 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-
-		case "RemovePoolTier":
-			if len(param) != 1 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-
-		case "SetUnstakingFee":
-			if len(param) != 1 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-
-		case "SetWarmUp":
-			if len(param) != 2 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 2 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-
-		default:
-			panic(addDetailToError(
-				errNonExecutableFunction,
-				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
-			))
-		}
-
-	case consts.COMMON_PATH:
-		switch function {
-		case "SetHalt":
-			if len(param) != 1 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 1 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-		default:
-			panic(addDetailToError(
-				errNonExecutableFunction,
-				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
-			))
-		}
-
-	case consts.COMMUNITY_POOL_PATH:
-		switch function {
-		case "TransferToken":
-			if len(param) != 3 {
-				panic(addDetailToError(
-					errInvalidFunctionParameters,
-					ufmt.Sprintf("len(param) should be 3 but got %d, for param %s (pkgPath %s and function %s)", len(param), params, pkgPath, function),
-				))
-			}
-			return true
-		default:
-			panic(addDetailToError(
-				errNonExecutableFunction,
-				ufmt.Sprintf("invalid function %s for pkgPath %s", function, pkgPath),
-			))
-		}
-
-	default:
-		panic(addDetailToError(
-			errNonExecutableFunction,
-			ufmt.Sprintf("invalid pkgPath(%s)", pkgPath),
-		))
+	if yea < quorum {
+		return ufmt.Errorf("quorum not met (yes(%d) < quorum(%d))", yea, quorum)
 	}
+
+	if yea < nea {
+		return ufmt.Errorf("no majority (yes(%d) < no(%d))", yea, nea)
+	}
+
+	return nil
 }
 
-func executeParameterChange(msgs []string) {
-	for _, msg := range msgs {
-		splitExe := strings.Split(msg, "*EXE*")
-		if len(splitExe) != 3 {
-			panic(addDetailToError(
-				errInvalidInput,
-				ufmt.Sprintf("invalid execution(%s) to split by *EXE*, seems like param didn't inputed", msg),
-			))
-		}
-
-		pkgPath := splitExe[0]
-		funcName := splitExe[1]
-		paramsStr := splitExe[2]
-		params := strings.Split(paramsStr, ",")
-
-		switch pkgPath {
-		case consts.COMMUNITY_POOL_PATH:
-			switch funcName {
-			case "TransferToken":
-				pkgPath, to, amount := handleCommunityPoolTransferToken(params)
-				cp.TransferToken(pkgPath, to, amount)
-			}
-
-		case consts.EMISSION_PATH:
-			switch funcName {
-			case "ChangeDistributionPct":
-				target01, pct01, target02, pct02, target03, pct03, target04, pct04 := handleEmissionChangeDistributionPct(params)
-				en.ChangeDistributionPct(target01, pct01, target02, pct02, target03, pct03, target04, pct04)
-			}
-
-		case consts.GNS_PATH:
-			switch funcName {
-			case "SetAvgBlockTimeInMs":
-				ms := handleSetAvgBlockTimeInMs(params)
-				gns.SetAvgBlockTimeInMs(ms)
-			}
-
-		case consts.GOV_GOVERNANCE_PATH:
-			switch funcName {
-			case "Reconfigure":
-				votingStartDelay, votingPeriod, votingWeightSmoothingDuration, quorum, proposalCreationThreshold, executionDelay, executionWindow := handleGovernanceReconfigure(params)
-				reconfigure(votingStartDelay, votingPeriod, votingWeightSmoothingDuration, quorum, proposalCreationThreshold, executionDelay, executionWindow)
-			}
-
-		case consts.POOL_PATH:
-			switch funcName {
-			case "SetFeeProtocol":
-				feeProtocol0, feeProtocol1 := handlePoolSetFeeProtocol(params)
-				pl.SetFeeProtocol(feeProtocol0, feeProtocol1)
-			case "SetPoolCreationFee":
-				fee := handleSingleUint64(params)
-				pl.SetPoolCreationFee(fee)
-			case "SetWithdrawalFee":
-				fee := handleSingleUint64(params)
-				pl.SetWithdrawalFee(fee)
-			}
-
-		case consts.PROTOCOL_FEE_PATH:
-			switch funcName {
-			case "SetDevOpsPct":
-				pct := handleSingleUint64(params)
-				pf.SetDevOpsPct(pct)
-			}
-
-		case consts.ROUTER_PATH:
-			switch funcName {
-			case "SetSwapFee":
-				fee := handleSingleUint64(params)
-				rr.SetSwapFee(fee)
-			}
-
-		case consts.STAKER_PATH:
-			switch funcName {
-			case "SetDepositGnsAmount":
-				amount := handleSingleUint64(params)
-				sr.SetDepositGnsAmount(amount)
-			case "SetPoolTier":
-				poolPath, tier := handlePoolPathTier(params)
-				sr.SetPoolTier(poolPath, tier)
-			case "ChangePoolTier":
-				poolPath, tier := handlePoolPathTier(params)
-				sr.ChangePoolTier(poolPath, tier)
-			case "RemovePoolTier":
-				sr.RemovePoolTier(params[0]) // poolPath
-			case "SetUnstakingFee":
-				fee := handleSingleUint64(params)
-				sr.SetUnstakingFee(fee)
-			case "SetWarmUp":
-				percent, block := handleTwoInt64(params)
-				sr.SetWarmUp(percent, block)
-			}
-
-		case consts.COMMON_PATH:
-			switch funcName {
-			case "SetHalt":
-				halt := handleSingleBool(params)
-				cn.SetHalt(halt)
-			}
-
-		default:
-			panic(addDetailToError(
-				errNonExecutableFunction,
-				ufmt.Sprintf("invalid package path(%s) and function name(%s)", pkgPath, funcName),
-			))
-		}
-
-	}
+func updateProposalState(ctx *ExecutionContext) {
+	ctx.Proposal.ExecutionState.Executed = true
+	ctx.Proposal.ExecutionState.ExecutedAt = ctx.Now
+	ctx.Proposal.ExecutionState.Upcoming = false
+	ctx.Proposal.ExecutionState.Active = false
+	proposals[ctx.ProposalId] = *ctx.Proposal
 }
 
-func handleCommunityPoolTransferToken(params []string) (string, std.Address, uint64) {
-	p2, err := strconv.ParseUint(params[2], 10, 64)
-	if err != nil {
-		panic(err)
+func validateCommunityPoolToken(pp *ProposalInfo) error {
+	if pp.ProposalType != CommunityPoolSpend {
+		return nil
 	}
-	return params[0], std.Address(params[1]), p2
+
+	registered := cp.GetRegisteredTokens()
+	commPath := pp.CommunityPoolSpend.TokenPath
+	if !contains(registered, commPath) {
+		return ufmt.Errorf("token(%s) is not registered to community pool",
+			commPath,
+		)
+	}
+
+	return nil
 }
 
-func handleEmissionChangeDistributionPct(params []string) (
-	int, uint64,
-	int, uint64,
-	int, uint64,
-	int, uint64,
-) {
-	target01, err := strconv.ParseInt(params[0], 10, 64)
-	if err != nil {
-		panic(err)
+func hasDesiredParams(params []string, expected int) error {
+	if len(params) != expected {
+		return ufmt.Errorf("invalid parameters for %s. expected %d but got %d", params, expected, len(params))
 	}
-	pct01, err := strconv.ParseUint(params[1], 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	target02 := strToInt(params[2])
-	pct02, err := strconv.ParseUint(params[3], 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	target03 := strToInt(params[4])
-	pct03, err := strconv.ParseUint(params[5], 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	target04 := strToInt(params[6])
-	pct04, err := strconv.ParseUint(params[7], 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	return int(target01), pct01, target02, pct02, target03, pct03, target04, pct04
-}
-
-func handleSetAvgBlockTimeInMs(params []string) int64 {
-	res, err := strconv.ParseInt(params[0], 10, 64)
-	if err != nil {
-		panic(err)
-	}
-	return res
-}
-
-func handleGovernanceReconfigure(params []string) (
-	uint64, uint64, uint64, uint64, uint64, uint64, uint64,
-) {
-	votingStartDelay, err := strconv.ParseUint(params[0], 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	votingPeriod, err := strconv.ParseUint(params[1], 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	votingWeightSmoothingDuration, err := strconv.ParseUint(params[2], 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	quorum, err := strconv.ParseUint(params[3], 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	proposalCreationThreshold, err := strconv.ParseUint(params[4], 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	executionDelay, err := strconv.ParseUint(params[5], 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	executionWindow, err := strconv.ParseUint(params[6], 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return votingStartDelay, votingPeriod, votingWeightSmoothingDuration, quorum, proposalCreationThreshold, executionDelay, executionWindow
-}
-
-func handlePoolSetFeeProtocol(params []string) (uint8, uint8) {
-	feeProtocol0, err := strconv.ParseUint(params[0], 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	feeProtocol1, err := strconv.ParseUint(params[1], 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return uint8(feeProtocol0), uint8(feeProtocol1)
-}
-
-func handleSingleUint64(params []string) uint64 {
-	res, err := strconv.ParseUint(params[0], 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-	return res
-}
-
-func handlePoolPathTier(params []string) (string, uint64) {
-	res, err := strconv.ParseUint(params[1], 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-	return params[0], res
-}
-
-func handleTwoInt64(params []string) (int64, int64) {
-	res0, err := strconv.ParseInt(params[0], 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-	res1, err := strconv.ParseInt(params[1], 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-	return res0, res1
-}
-
-func handleSingleBool(params []string) bool {
-	switch params[0] {
-	case "true":
-		return true
-	case "false":
-		return false
-	default:
-		panic(addDetailToError(
-			errInvalidInput,
-			ufmt.Sprintf("invalid bool(%s)", params[0]),
-		))
-	}
+	return nil
 }
