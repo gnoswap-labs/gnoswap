@@ -11,7 +11,7 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-func TestVote2(t *testing.T) {
+func TestVote(t *testing.T) {
 	baseTime := uint64(time.Now().Unix())
 	voter := testutils.TestAddress("voter")
 
