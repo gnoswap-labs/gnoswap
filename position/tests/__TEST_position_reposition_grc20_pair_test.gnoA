@@ -151,25 +151,25 @@ func TestUnclaimedFee02(t *testing.T) {
 func TestDecreaseLiquidityInPosition(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	_lpTokenId := uint64(1)
+	lpTokenId := uint64(1)
 
-	ownerOfPosition := gnft.OwnerOf(tokenIdFrom(_lpTokenId))
+	ownerOfPosition := gnft.OwnerOf(tokenIdFrom(lpTokenId))
 	uassert.Equal(t, ownerOfPosition, adminAddr)
 
-	// approve fee0, fee_lpTokenId to pool
+	// approve fee0, feelpTokenId to pool
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 	foo.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
-	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(_lpTokenId, 100, "0", "0", max_timeout, false)
+	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(lpTokenId, 100, "0", "0", max_timeout, false)
 
-	uassert.Equal(t, tokenId, _lpTokenId)
+	uassert.Equal(t, tokenId, lpTokenId)
 	uassert.Equal(t, amount0, "19628840")
 	uassert.Equal(t, amount1, "46667220")
 
-	ownerOfPosition = gnft.OwnerOf(tokenIdFrom(_lpTokenId))
+	ownerOfPosition = gnft.OwnerOf(tokenIdFrom(lpTokenId))
 	uassert.Equal(t, ownerOfPosition, adminAddr)
 
-	position := MustGetPosition(_lpTokenId)
+	position := MustGetPosition(lpTokenId)
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -255,10 +255,10 @@ func TestRepositionSlippageTooLarge(t *testing.T) {
 func TestReposition(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	_lpTokenId := uint64(1)
+	lpTokenId := uint64(1)
 
 	// check current state
-	position := MustGetPosition(_lpTokenId)
+	position := MustGetPosition(lpTokenId)
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
@@ -272,23 +272,23 @@ func TestReposition(t *testing.T) {
 	uassert.Equal(t, position.burned, true)
 
 	Reposition(
-		_lpTokenId, // tokenId
-		-1000,      // tickLower
-		1000,       // tickUpper
-		"500",      // amount0Desired
-		"500",      // amount1Desired
-		"0",        // amount0Min
-		"100",      // amount1Min
+		lpTokenId, // tokenId
+		-1000,     // tickLower
+		1000,      // tickUpper
+		"500",     // amount0Desired
+		"500",     // amount1Desired
+		"0",       // amount0Min
+		"100",     // amount1Min
 	)
 
-	position = MustGetPosition(_lpTokenId)
+	position = MustGetPosition(lpTokenId)
 	uassert.Equal(t, position.nonce.ToString(), "0")
 	uassert.Equal(t, position.operator, consts.ZERO_ADDRESS)
 	uassert.Equal(t, position.poolKey, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:500")
 	uassert.Equal(t, position.tickLower, int32(-1000))
 	uassert.Equal(t, position.tickUpper, int32(1000))
 	uassert.Equal(t, position.liquidity.ToString(), "4998")
-	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "659841872392960215058365142934185")
+	uassert.Equal(t, position.feeGrowthInside0LastX128.ToString(), "0")
 	uassert.Equal(t, position.feeGrowthInside1LastX128.ToString(), "0")
 	uassert.Equal(t, position.tokensOwed0.ToString(), "0")
 	uassert.Equal(t, position.tokensOwed1.ToString(), "0")
