@@ -749,7 +749,7 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#decreaseliquidity
 func DecreaseLiquidity(
 	tokenId uint64,
-	liquidityRatio uint64,
+	liquidityStr string,
 	amount0MinStr string,
 	amount1MinStr string,
 	deadline int64,
@@ -758,19 +758,19 @@ func DecreaseLiquidity(
 	assertOnlyNotHalted()
 	isAuthorizedForToken(tokenId)
 	checkDeadline(deadline)
-	assertValidLiquidityRatio(liquidityRatio)
+	assertValidLiquidityAmount(liquidityStr)
 
 	en.MintAndDistributeGns()
 
 	amount0Min := u256.MustFromDecimal(amount0MinStr)
 	amount1Min := u256.MustFromDecimal(amount1MinStr)
 	decreaseLiquidityParams := DecreaseLiquidityParams{
-		tokenId:        tokenId,
-		liquidityRatio: liquidityRatio,
-		amount0Min:     amount0Min,
-		amount1Min:     amount1Min,
-		deadline:       deadline,
-		unwrapResult:   unwrapResult,
+		tokenId:      tokenId,
+		liquidity:    liquidityStr,
+		amount0Min:   amount0Min,
+		amount1Min:   amount1Min,
+		deadline:     deadline,
+		unwrapResult: unwrapResult,
 	}
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
@@ -784,7 +784,7 @@ func DecreaseLiquidity(
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
-		"liquidityRatio", ufmt.Sprintf("%d", liquidityRatio),
+		"removeLiquidity", liquidityStr,
 		"internal_poolPath", poolPath,
 		"internal_liquidity", liquidity.ToString(),
 		"internal_fee0", fee0.ToString(),
@@ -819,12 +819,18 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		))
 	}
 
+	liquidityToRemove := u256.MustFromDecimal(params.liquidity)
+	if liquidityToRemove.Gt(positionLiquidity) {
+		panic(newErrorWithDetail(
+			errInvalidLiquidity,
+			ufmt.Sprintf("Liquidity requested(%s) is greater than liquidity held(%s)", liquidityToRemove.ToString(), positionLiquidity.ToString()),
+		))
+	}
+
 	caller := getPrevAddr()
 	beforeWugnotBalance := wugnot.BalanceOf(a2u(caller)) // before unwrap
 
-	liquidityToRemove := calculateLiquidityToRemove(positionLiquidity, params.liquidityRatio)
 	pToken0, pToken1, pFee := splitOf(position.poolKey)
-
 	burn0, burn1 := pl.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, liquidityToRemove.ToString())
 
 	burnedAmount0 := u256.MustFromDecimal(burn0)

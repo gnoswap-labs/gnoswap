@@ -1018,7 +1018,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 		beforeIncrease    bool
 		increaseAmount0   string
 		increaseAmount1   string
-		liquidityRatio    uint64
+		liquidityToRemove string
 		amount0Min        string
 		amount1Min        string
 		deadlineOffset    time.Duration
@@ -1031,71 +1031,71 @@ func TestDecreaseLiquidity(t *testing.T) {
 	}{
 		{
 			name:              "Success - Decrease 50% Liquidity",
-			liquidityRatio:    50, // 50%
+			liquidityToRemove: "400000",
 			amount0Min:        "8000",
 			amount1Min:        "15000",
 			deadlineOffset:    time.Hour,
 			unwrapResult:      false,
 			expectPanic:       false,
-			expectedLiquidity: "1270796",
+			expectedLiquidity: "400000",
 			expectedFee0:      "0",
 			expectedFee1:      "0",
 		},
 		{
 			name:              "Success - Decrease 100% Liquidity",
-			liquidityRatio:    100, // 100%
+			liquidityToRemove: "600000",
 			amount0Min:        "10000",
 			amount1Min:        "20000",
 			deadlineOffset:    time.Hour,
 			unwrapResult:      false,
 			expectPanic:       false,
-			expectedLiquidity: "1270796",
+			expectedLiquidity: "600000",
 			expectedFee0:      "0",
 			expectedFee1:      "0",
-			expectedErrorMsg:  "[GNOSWAP-POSITION-017] invalid liquidity ratio || liquidity ratio must in range 1 ~ 100(contain)",
+			expectedErrorMsg:  "",
 		},
 		{
-			name:             "Fail - Zero Liquidity",
-			liquidityRatio:   0, // 0%
-			amount0Min:       "10000",
-			amount1Min:       "20000",
-			deadlineOffset:   time.Hour,
-			unwrapResult:     false,
-			expectPanic:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-017] invalid liquidity ratio || liquidity ratio must in range 1 ~ 100(contain), got 0",
+			name:              "Fail - Zero Liquidity",
+			liquidityToRemove: "0",
+			amount0Min:        "10000",
+			amount1Min:        "20000",
+			deadlineOffset:    time.Hour,
+			unwrapResult:      false,
+			expectPanic:       true,
+			expectedErrorMsg:  "[GNOSWAP-POSITION-010] zero liquidity || liquidity amount must be greater than 0, got 0",
 		},
 		{
-			name:             "Fail - Underflow",
-			liquidityRatio:   50, // 50%
-			amount0Min:       "200000",
-			amount1Min:       "400000",
-			deadlineOffset:   time.Hour,
-			unwrapResult:     false,
-			expectPanic:      true,
-			expectedErrorMsg: "[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero",
+			name:              "Fail - Underflow",
+			liquidityToRemove: "1200000",
+			amount0Min:        "200000",
+			amount1Min:        "400000",
+			deadlineOffset:    time.Hour,
+			unwrapResult:      false,
+			expectPanic:       true,
+			expectedErrorMsg:  "[GNOSWAP-POOL-010] zero liquidity || both liquidityDelta and current position's liquidity are zero",
 		},
 		{
-			name:             "Fail - Deadline Exceeded",
-			liquidityRatio:   50,
-			amount0Min:       "10000",
-			amount1Min:       "20000",
-			deadlineOffset:   -time.Hour,
-			unwrapResult:     false,
-			expectPanic:      true,
-			expectedErrorMsg: "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)",
+			name:              "Fail - Deadline Exceeded",
+			liquidityToRemove: "50",
+			amount0Min:        "10000",
+			amount1Min:        "20000",
+			deadlineOffset:    -time.Hour,
+			unwrapResult:      false,
+			expectPanic:       true,
+			expectedErrorMsg:  "[GNOSWAP-POSITION-007] transaction expired || transaction too old, now(1234567890) > deadline(1234564290)",
 		},
 		{
 			name:              "Success - Increase and Decrease",
 			beforeIncrease:    true,
 			increaseAmount0:   "500000",
 			increaseAmount1:   "1000000",
-			liquidityRatio:    50,
+			liquidityToRemove: "1500000",
 			amount0Min:        "12000",
 			amount1Min:        "25000",
 			deadlineOffset:    time.Hour,
 			unwrapResult:      false,
 			expectPanic:       false,
-			expectedLiquidity: "635398", // 50% 감소, 증가 후
+			expectedLiquidity: "1500000",
 			expectedFee0:      "0",
 			expectedFee1:      "0",
 		},
@@ -1147,7 +1147,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 				uassert.PanicsWithMessage(t, tc.expectedErrorMsg, func() {
 					_, liquidity, fee0, fee1, _, _, _ := DecreaseLiquidity(
 						tokenId,
-						tc.liquidityRatio,
+						tc.liquidityToRemove,
 						tc.amount0Min,
 						tc.amount1Min,
 						deadline,
@@ -1157,7 +1157,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 			} else {
 				_, liquidity, fee0, fee1, _, _, _ := DecreaseLiquidity(
 					tokenId,
-					tc.liquidityRatio,
+					tc.liquidityToRemove,
 					tc.amount0Min,
 					tc.amount1Min,
 					deadline,
@@ -1179,7 +1179,7 @@ func TestCollectFees(t *testing.T) {
 		increaseAmount0    string
 		increaseAmount1    string
 		unwrapResult       bool
-		liquidityRatio     uint64
+		liquidityToRemove  string
 		expectedFee0       string
 		expectedFee1       string
 		expectedAmount0    string
@@ -1188,39 +1188,39 @@ func TestCollectFees(t *testing.T) {
 		expectedPanicError string
 	}{
 		{
-			name:            "Success - Collect fee after multiple mints",
-			mintAmount0:     "1000000",
-			mintAmount1:     "2000000",
-			increaseAmount0: "500000",
-			increaseAmount1: "1000000",
-			liquidityRatio:  50,
-			unwrapResult:    false,
-			expectedFee0:    "0",
-			expectedFee1:    "0",
-			expectedAmount0: "0",
-			expectedAmount1: "0",
-			expectPanic:     false,
+			name:              "Success - Collect fee after multiple mints",
+			mintAmount0:       "1000000",
+			mintAmount1:       "2000000",
+			increaseAmount0:   "500000",
+			increaseAmount1:   "1000000",
+			liquidityToRemove: "50",
+			unwrapResult:      false,
+			expectedFee0:      "0",
+			expectedFee1:      "0",
+			expectedAmount0:   "0",
+			expectedAmount1:   "0",
+			expectPanic:       false,
 		},
 		{
-			name:            "Success - Collect fee after full liquidity removal",
-			mintAmount0:     "1000000",
-			mintAmount1:     "2000000",
-			liquidityRatio:  100,
-			unwrapResult:    true,
-			expectedFee0:    "0",
-			expectedFee1:    "0",
-			expectedAmount0: "0",
-			expectedAmount1: "0",
-			expectPanic:     false,
+			name:              "Success - Collect fee after full liquidity removal",
+			mintAmount0:       "1000000",
+			mintAmount1:       "2000000",
+			liquidityToRemove: "100",
+			unwrapResult:      true,
+			expectedFee0:      "0",
+			expectedFee1:      "0",
+			expectedAmount0:   "0",
+			expectedAmount1:   "0",
+			expectPanic:       false,
 		},
 		{
 			name:               "Fail - No liquidity to collect",
 			mintAmount0:        "100000",
 			mintAmount1:        "200000",
-			liquidityRatio:     0,
+			liquidityToRemove:  "0",
 			unwrapResult:       false,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-017] invalid liquidity ratio || liquidity ratio must in range 1 ~ 100(contain), got 0",
+			expectedPanicError: "[GNOSWAP-POSITION-010] zero liquidity || liquidity amount must be greater than 0, got 0",
 		},
 	}
 
@@ -1272,7 +1272,7 @@ func TestCollectFees(t *testing.T) {
 			// Decrease liquidity
 			_, _, _, _, _, _, _ = DecreaseLiquidity(
 				tokenId,
-				tt.liquidityRatio,
+				tt.liquidityToRemove,
 				"0",
 				"0",
 				time.Now().Add(time.Hour).Unix(),
@@ -1301,22 +1301,23 @@ func TestReposition(t *testing.T) {
 		mintAmount1        string
 		increaseAmount0    string
 		increaseAmount1    string
-		decreaseRatio      uint64
+		liquidityToRemove  string
 		tickLower          int32
 		tickUpper          int32
 		expectPanic        bool
 		expectedPanicError string
 	}{
 		{
-			name:            "Success - Reposition after full liquidity removal",
-			mintAmount0:     "1000000",
-			mintAmount1:     "2000000",
-			increaseAmount0: "500000",
-			increaseAmount1: "1000000",
-			decreaseRatio:   100,
-			tickLower:       -5000,
-			tickUpper:       5000,
-			expectPanic:     false,
+			name:               "Fail - Reposition after full liquidity removal",
+			mintAmount0:        "1000000",
+			mintAmount1:        "2000000",
+			increaseAmount0:    "500000",
+			increaseAmount1:    "1000000",
+			liquidityToRemove:  "100",
+			tickLower:          -5000,
+			tickUpper:          5000,
+			expectPanic:        true,
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:               "Fail - Reposition with partial liquidity removal",
@@ -1324,21 +1325,21 @@ func TestReposition(t *testing.T) {
 			mintAmount1:        "2000000",
 			increaseAmount0:    "500000",
 			increaseAmount1:    "1000000",
-			decreaseRatio:      50,
+			liquidityToRemove:  "50",
 			tickLower:          -3000,
 			tickUpper:          3000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(8) isn't clear(liquidity:3390758, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:5083034, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:               "Fail - Reposition on non-existent tokenId",
 			mintAmount0:        "1000000",
 			mintAmount1:        "2000000",
-			decreaseRatio:      10,
+			liquidityToRemove:  "10",
 			tickLower:          -4000,
 			tickUpper:          4000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(8) isn't clear(liquidity:3051683, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:5083024, tokensOwed0:0, tokensOwed1:0)",
 		},
 	}
 
@@ -1381,7 +1382,7 @@ func TestReposition(t *testing.T) {
 			// Step 3: Decrease liquidity to clear the position
 			_, _, _, _, _, _, _ = DecreaseLiquidity(
 				tokenId,
-				tt.decreaseRatio,
+				tt.liquidityToRemove,
 				"0",
 				"0",
 				time.Now().Add(time.Hour).Unix(),
