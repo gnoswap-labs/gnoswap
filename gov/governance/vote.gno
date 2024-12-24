@@ -28,109 +28,134 @@ var (
 // Vote allows a user to vote on a given proposal.
 // The user's voting weight is determined by their accumulated delegated stake until proposal creation time.
 // ref: https://docs.gnoswap.io/contracts/governance/vote.gno#vote
-func Vote(proposalId uint64, yes bool) string {
+func Vote(pid uint64, yes bool) string {
 	common.IsHalted()
-
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	proposal, exist := proposals[proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("proposalId(%d) does not exist", proposalId),
-		))
+	proposal, exists := proposals[pid]
+	if !exists {
+		panic(addDetailToError(errDataNotFound, ufmt.Sprintf("proposalId(%d) does not exist", pid)))
 	}
-
-	config := GetConfigVersion(proposal.ConfigVersion)
-	now := uint64(time.Now().Unix())
-	votingStartTime := proposal.ExecutionState.CreatedAt + config.VotingStartDelay
 
 	voter := std.PrevRealm().Addr()
+	now := uint64(time.Now().Unix())
 
-	if now < votingStartTime {
-		panic(addDetailToError(
-			errUnableToVoteBeforeStarting,
-			ufmt.Sprintf("voting has not started yet. now(%d) < votingStart(%d)", now, votingStartTime),
-		))
+	voteKey := createVoteKey(pid, voter.String())
+
+	state, err := newVoteState(proposal, voteKey, voter, now)
+	if err != nil {
+		panic(err)
 	}
 
-	votingEndTime := votingStartTime + config.VotingPeriod
-	if now >= votingEndTime {
-		panic(addDetailToError(
-			errUnableToVoteAfterEnding,
-			ufmt.Sprintf("voting has ended. now(%d) >= votingEnd(%d)", now, votingEndTime),
-		))
+	if err := state.validate(); err != nil {
+		panic(err)
 	}
 
-	// check proposal state
-	if proposal.ExecutionState.Canceled {
-		panic(addDetailToError(
-			errUnableToVoteCanceledProposal,
-			ufmt.Sprintf("proposalId(%d) has canceled(%t)", proposalId, proposal.ExecutionState.Canceled),
-		))
+	executor := newVoteExecutor(&proposal, voter, state.userWeight)
+	if err := executor.execute(yes); err != nil {
+		panic(err)
 	}
 
-	voteKey := ufmt.Sprintf("%d:%s", proposalId, voter.String())
-	_, voted := votes[voteKey]
-	if voted {
-		panic(addDetailToError(
-			errAlreadyVoted,
-			ufmt.Sprintf("user(%s) has already voted on proposalId(%d)", voter.String(), proposalId),
-		))
-	}
-
-	weight, exist := proposal.PossibleAddressWithWeight[voter]
-	if !exist || weight == 0 {
-		panic(addDetailToError(
-			errNotEnoughVotingWeight,
-			ufmt.Sprintf("no voting weight found for voter(%s)", voter.String()),
-		))
-	}
-
-	var overflow bool
-	if yes {
-		proposal.Yea, overflow = new(u256.Uint).AddOverflow(proposal.Yea, u256.NewUint(weight))
-		if overflow {
-			panic(addDetailToError(
-				errOutOfRange,
-				"VOTE YES OVERFLOW",
-			))
-		}
-	} else {
-		proposal.Nay, overflow = new(u256.Uint).AddOverflow(proposal.Nay, u256.NewUint(weight))
-		if overflow {
-			panic(addDetailToError(
-				errOutOfRange,
-				"VOTE NO OVERFLOW",
-			))
-		}
-	}
-
-	proposals[proposalId] = proposal // update Yea, Nay
+	proposals[pid] = proposal
 	votes[voteKey] = yes
 
 	if userVotes[voter] == nil {
 		userVotes[voter] = make(map[uint64]voteWithWeight)
 	}
-	userVotes[voter][proposalId] = voteWithWeight{
+	userVotes[voter][pid] = voteWithWeight{
 		Yes:         yes,
-		Weight:      weight,
+		Weight:      state.userWeight,
 		VotedHeight: uint64(std.GetHeight()),
 		VotedAt:     now,
 	}
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"Vote",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"proposalId", ufmt.Sprintf("%d", proposalId),
+		"prevPkgPath", prevPkgPath,
+		"proposalId", ufmt.Sprintf("%d", pid),
 		"yes", voteToString(yes),
-		"internal_weight", ufmt.Sprintf("%d", weight),
+		"internal_weight", ufmt.Sprintf("%d", state.userWeight),
 	)
 
 	return voteKey
+}
+
+///////////////////// Vote State /////////////////////
+
+type VoteState struct {
+	isVotingPeriod  bool
+	isProposalValid bool
+	hasUserVoted    bool
+	userWeight      uint64
+}
+
+func newVoteState(proposal ProposalInfo, voteKey string, voter std.Address, now uint64) (*VoteState, error) {
+	cfg := GetConfigVersion(proposal.ConfigVersion)
+	votingStartTime := proposal.ExecutionState.CreatedAt + cfg.VotingStartDelay
+	votingEndTime := votingStartTime + cfg.VotingPeriod
+
+	return &VoteState{
+		isVotingPeriod:  now >= votingStartTime && now < votingEndTime,
+		isProposalValid: !proposal.ExecutionState.Canceled,
+		hasUserVoted:    votes[voteKey],
+		userWeight:      proposal.PossibleAddressWithWeight[voter],
+	}, nil
+}
+
+func (s *VoteState) validate() error {
+	if !s.isVotingPeriod {
+		return errUnableToVoteOutOfPeriod
+	}
+	if !s.isProposalValid {
+		return errUnableToVoteCanceledProposal
+	}
+	if s.hasUserVoted {
+		return errAlreadyVoted
+	}
+	if s.userWeight == 0 {
+		return errNotEnoughVotingWeight
+	}
+	return nil
+}
+
+func createVoteKey(pid uint64, voter string) string {
+	return ufmt.Sprintf("%d:%s", pid, voter)
+}
+
+///////////////////// Vote Execution /////////////////////
+
+type VoteExecutor struct {
+	proposal *ProposalInfo
+	voter    std.Address
+	weight   uint64
+}
+
+func newVoteExecutor(proposal *ProposalInfo, voter std.Address, weight uint64) *VoteExecutor {
+	return &VoteExecutor{
+		proposal: proposal,
+		voter:    voter,
+		weight:   weight,
+	}
+}
+
+func (e *VoteExecutor) execute(yes bool) error {
+	if yes {
+		e.proposal.Yea = safeVoteSum(e.proposal.Yea, e.weight)
+	} else {
+		e.proposal.Nay = safeVoteSum(e.proposal.Nay, e.weight)
+	}
+	return nil
+}
+
+func safeVoteSum(collected *u256.Uint, weight uint64) *u256.Uint {
+	newSum, overflow := new(u256.Uint).AddOverflow(collected, u256.NewUint(weight))
+	if overflow {
+		panic(errOutOfRange)
+	}
+	return newSum
 }
 
 // Cancel cancels the proposal with the given ID.
