@@ -262,6 +262,15 @@ func ProposeParameterChange(
 	return proposalId
 }
 
+// proposalStateUpdater handles the state transitions of a proposal.
+type proposalStateUpdater struct {
+	proposal *ProposalInfo
+	config   Config
+	now      uint64
+}
+
+// updateProposalsState updates the state of all proposals based on current time.
+// It processes voting periods, results, and execution windows for each proposal.
 func updateProposalsState() {
 	now := uint64(time.Now().Unix())
 
@@ -276,12 +285,7 @@ func updateProposalsState() {
 	}
 }
 
-type proposalStateUpdater struct {
-	proposal *ProposalInfo
-	config   Config
-	now      uint64
-}
-
+// newProposalStateUpdater creates a new proposalStateUpdater.
 func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateUpdater {
 	return &proposalStateUpdater{
 		proposal: proposal,
@@ -290,18 +294,26 @@ func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateU
 	}
 }
 
+// shouldUpdate determines if the proposal state should be updated.
+// Returns true if the proposal is created, not canceled, and not executed.
 func (u *proposalStateUpdater) shouldUpdate() bool {
 	return u.proposal.ExecutionState.Created &&
 		!u.proposal.ExecutionState.Canceled &&
 		!u.proposal.ExecutionState.Executed
 }
 
+// getVotingTimes returns the start and end timestamps of the voting period.
+// The start time is CreatedAt + VotingStartDelay.
+// The end time is start time + VotingPeriod.
 func (u *proposalStateUpdater) getVotingTimes() (start, end uint64) {
 	start = u.proposal.ExecutionState.CreatedAt + u.config.VotingStartDelay
 	end = start + u.config.VotingPeriod
 	return
 }
 
+// getExecutionTimes returns the start and end timestamps of the execution window.
+// The start time is after voting end + ExecutionDelay.
+// The end time is start time + ExecutionWindow.
 func (u *proposalStateUpdater) getExecutionTimes() (start, end uint64) {
 	_, votingEnd := u.getVotingTimes()
 	start = votingEnd + u.config.ExecutionDelay
@@ -309,6 +321,8 @@ func (u *proposalStateUpdater) getExecutionTimes() (start, end uint64) {
 	return
 }
 
+// updateVotingState updates the voting state of the proposal.
+// It transitions from upcoming to active state when voting period starts.
 func (u *proposalStateUpdater) updateVotingState() {
 	if !u.shouldUpdate() {
 		return
@@ -323,6 +337,9 @@ func (u *proposalStateUpdater) updateVotingState() {
 	}
 }
 
+// updateVotingResult determines the outcome of voting when voting period ends.
+// It sets the proposal as passed if it meets quorum and has more yes votes than no votes.
+// Otherwise, it marks the proposal as rejected.
 func (u *proposalStateUpdater) updateVotingResult() {
 	_, votingEnd := u.getVotingTimes()
 
@@ -349,6 +366,8 @@ func (u *proposalStateUpdater) updateVotingResult() {
 	u.proposal.ExecutionState.Active = false
 }
 
+// updateExecutionState checks if a non-text proposal should expire.
+// It marks the proposal as expired if execution window has ended.
 func (u *proposalStateUpdater) updateExecutionState() {
 	if u.proposal.ProposalType == Text ||
 		!u.proposal.ExecutionState.Passed ||
