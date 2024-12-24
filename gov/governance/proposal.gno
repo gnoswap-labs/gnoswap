@@ -21,6 +21,11 @@ var (
 	latestProposalByProposer = make(map[std.Address]uint64)  // proposer -> proposalId
 )
 
+const (
+	GOV_SPLIT = "*GOV*"
+	EXE_SPLIT = "*EXE*"
+)
+
 // ProposeText creates a new text proposal with the given data
 // It checks if the proposer is eligible to create a proposal and if they don't have an active proposal.
 // Returns the proposal ID
@@ -187,7 +192,7 @@ func ProposeParameterChange(
 	}
 
 	// check if numToExecute is a valid number
-	splitGov := strings.Split(executions, "*GOV*")
+	splitGov := strings.Split(executions, GOV_SPLIT)
 	if uint64(len(splitGov)) != numToExecute {
 		panic(addDetailToError(
 			errInvalidInput,
@@ -197,7 +202,7 @@ func ProposeParameterChange(
 
 	// check if each execution is valid
 	for _, gov := range splitGov {
-		splitExe := strings.Split(gov, "*EXE*")
+		splitExe := strings.Split(gov, EXE_SPLIT)
 		if len(splitExe) != 3 {
 			panic(addDetailToError(
 				errInvalidInput,
@@ -259,63 +264,104 @@ func ProposeParameterChange(
 
 func updateProposalsState() {
 	now := uint64(time.Now().Unix())
+
 	for id, proposal := range proposals {
-		config := GetConfigVersion(proposal.ConfigVersion)
+		updater := newProposalStateUpdater(&proposal, now)
 
-		// check if proposal is in a state that needs to be updated
-		// - created
-		// - not canceled
-		// - not executed
+		updater.updateVotingState()
+		updater.updateVotingResult()
+		updater.updateExecutionState()
 
-		// proposal is in voting period
-		if proposal.ExecutionState.Created &&
-			!proposal.ExecutionState.Canceled &&
-			!proposal.ExecutionState.Executed {
+		proposals[id] = *updater.proposal
+	}
+}
 
-			if proposal.ExecutionState.Upcoming && // was upcoming
-				now >= (proposal.ExecutionState.CreatedAt+config.VotingStartDelay) && // voting started
-				now <= (proposal.ExecutionState.CreatedAt+config.VotingStartDelay+config.VotingPeriod) { // voting not ended
-				proposal.ExecutionState.Upcoming = false
-				proposal.ExecutionState.Active = true
-			}
-		}
+type proposalStateUpdater struct {
+	proposal *ProposalInfo
+	config   Config
+	now      uint64
+}
 
-		// proposal voting ended, check if passed or rejected
-		if now > (proposal.ExecutionState.CreatedAt+config.VotingStartDelay+config.VotingPeriod) &&
-			(proposal.ExecutionState.Passed == false && proposal.ExecutionState.Rejected == false && proposal.ExecutionState.Canceled == false) {
-			yeaUint := proposal.Yea.Uint64()
-			nayUint := proposal.Nay.Uint64()
-			quorumUint := proposal.QuorumAmount
+func newProposalStateUpdater(proposal *ProposalInfo, now uint64) *proposalStateUpdater {
+	return &proposalStateUpdater{
+		proposal: proposal,
+		config:   GetConfigVersion(proposal.ConfigVersion),
+		now:      now,
+	}
+}
 
-			if yeaUint >= quorumUint && yeaUint > nayUint {
-				proposal.ExecutionState.Passed = true
-				proposal.ExecutionState.PassedAt = now
-			} else {
-				proposal.ExecutionState.Rejected = true
-				proposal.ExecutionState.RejectedAt = now
-			}
-			proposal.ExecutionState.Upcoming = false
-			proposal.ExecutionState.Active = false
-		}
+func (u *proposalStateUpdater) shouldUpdate() bool {
+	return u.proposal.ExecutionState.Created &&
+		!u.proposal.ExecutionState.Canceled &&
+		!u.proposal.ExecutionState.Executed
+}
 
-		// TODO (@notJoon): refactor this.
-		// (non text) proposal passed but not executed until executing window ends
-		if proposal.ProposalType != Text && // isn't text type ≈ can be executed
-			proposal.ExecutionState.Passed && // passed
-			!proposal.ExecutionState.Executed && // not executed
-			!proposal.ExecutionState.Expired { // not expired
+func (u *proposalStateUpdater) getVotingTimes() (start, end uint64) {
+	start = u.proposal.ExecutionState.CreatedAt + u.config.VotingStartDelay
+	end = start + u.config.VotingPeriod
+	return
+}
 
-			votingEnd := proposal.ExecutionState.CreatedAt + config.VotingStartDelay + config.VotingPeriod
-			windowStart := votingEnd + config.ExecutionDelay
-			windowEnd := windowStart + config.ExecutionWindow
+func (u *proposalStateUpdater) getExecutionTimes() (start, end uint64) {
+	_, votingEnd := u.getVotingTimes()
+	start = votingEnd + u.config.ExecutionDelay
+	end = start + u.config.ExecutionWindow
+	return
+}
 
-			if now >= windowEnd { // execution window ended
-				proposal.ExecutionState.Expired = true
-				proposal.ExecutionState.ExpiredAt = now
-			}
-		}
+func (u *proposalStateUpdater) updateVotingState() {
+	if !u.shouldUpdate() {
+		return
+	}
 
-		proposals[id] = proposal
+	votingStart, votingEnd := u.getVotingTimes()
+	isVotingPeriod := u.now >= votingStart && u.now <= votingEnd
+
+	if u.proposal.ExecutionState.Upcoming && isVotingPeriod {
+		u.proposal.ExecutionState.Upcoming = false
+		u.proposal.ExecutionState.Active = true
+	}
+}
+
+func (u *proposalStateUpdater) updateVotingResult() {
+	_, votingEnd := u.getVotingTimes()
+
+	hasNoResult := !u.proposal.ExecutionState.Passed &&
+		!u.proposal.ExecutionState.Rejected &&
+		!u.proposal.ExecutionState.Canceled
+
+	if u.now <= votingEnd || !hasNoResult {
+		return
+	}
+
+	yeaUint := u.proposal.Yea.Uint64()
+	nayUint := u.proposal.Nay.Uint64()
+
+	if yeaUint >= u.proposal.QuorumAmount && yeaUint > nayUint {
+		u.proposal.ExecutionState.Passed = true
+		u.proposal.ExecutionState.PassedAt = u.now
+	} else {
+		u.proposal.ExecutionState.Rejected = true
+		u.proposal.ExecutionState.RejectedAt = u.now
+	}
+
+	u.proposal.ExecutionState.Upcoming = false
+	u.proposal.ExecutionState.Active = false
+}
+
+func (u *proposalStateUpdater) updateExecutionState() {
+	if u.proposal.ProposalType == Text ||
+		!u.proposal.ExecutionState.Passed ||
+		u.proposal.ExecutionState.Executed ||
+		u.proposal.ExecutionState.Expired {
+		return
+	}
+
+	_, executionEnd := u.getExecutionTimes()
+
+	if u.now >= executionEnd {
+		u.proposal.ExecutionState.Expired = true
+		u.proposal.ExecutionState.ExpiredAt = u.now
 	}
 }
 
