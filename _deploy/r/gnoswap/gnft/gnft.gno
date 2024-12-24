@@ -9,10 +9,6 @@ import (
 	"gno.land/p/demo/grc/grc721"
 	"gno.land/p/demo/ownable"
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
-
-	"gno.land/r/demo/users"
-
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 )
@@ -67,19 +63,19 @@ func TokenURI(tid grc721.TokenID) string {
 	return string(uri)
 }
 
-// BalanceOf returns how many NFTs are owned by the specified address
+// BalanceOf returns the number of NFTs owned by the specified address.
 // Parameters:
-//   - user: The address or username to check the balance for
+//   - owner (std.Address): The address to check the NFT balance for.
 //
 // Returns:
-//   - uint64: The number of tokens owned by the address
-func BalanceOf(user pusers.AddressOrName) uint64 {
-	balance, err := gnft.BalanceOf(users.Resolve(user))
+//   - uint64: The number of NFTs owned by the address.
+//   - error: Returns an error if the balance retrieval fails.
+func BalanceOf(owner std.Address) (uint64, error) {
+	balance, err := gnft.BalanceOf(owner)
 	if err != nil {
 		panic(err.Error())
 	}
-
-	return balance
+	return balance, nil
 }
 
 // OwnerOf returns the current owner's address of a specific token ID
@@ -88,91 +84,220 @@ func BalanceOf(user pusers.AddressOrName) uint64 {
 //
 // Returns:
 //   - std.Address: The address of the token owner
-func OwnerOf(tid grc721.TokenID) std.Address {
-	owner, err := gnft.OwnerOf(tid)
-	checkErr(err)
-
-	return owner
-}
-
-// IsApprovedForAll checks if an operator is approved to manage all tokens of an owner
-// Parameters:
-//   - owner: The address or username of the token owner
-//   - user: The address or username to check approval for
-//
-// Returns:
-//   - bool: true if the user is approved to manage all tokens, false otherwise
-func IsApprovedForAll(owner, user pusers.AddressOrName) bool {
-	return gnft.IsApprovedForAll(users.Resolve(owner), users.Resolve(user))
-}
-
-// GetApproved returns the approved address for a specific token ID
-// Parameters:
-//   - tid: The token ID to check approval for
-//
-// Returns:
-//   - std.Address: The approved address for the token
-//   - bool: true if an address is approved, false otherwise
-func GetApproved(tid grc721.TokenID) (std.Address, bool) {
-	addr, err := gnft.GetApproved(tid)
+func OwnerOf(tid grc721.TokenID) (std.Address, error) {
+	ownerAddr, err := gnft.OwnerOf(tid)
 	if err != nil {
-		return "", false
+		return "", err
 	}
 
-	return addr, true
+	return ownerAddr, nil
 }
 
-// Approve grants permission to transfer a specific token ID to another address
+// SetTokenURI sets the metadata URI using a randomly generated SVG image
 // Parameters:
-//   - user: The address or username to grant approval to
-//   - tid: The token ID to approve
-func Approve(user pusers.AddressOrName, tid grc721.TokenID) {
+//   - tid (grc721.TokenID): The token ID for which the URI will be updated.
+//   - tURI (grc721.TokenURI): The new metadata URI to associate with the token.
+//
+// Returns:
+//   - bool: Returns `true` if the operation is successful.
+//   - error: Returns an error if the operation fails or the caller is not authorized.
+//
+// Panics:
+//   - If the caller is not the token owner, the function panics.
+//   - If the URI update fails, the function panics with the associated error.
+func SetTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) (bool, error) {
 	assertOnlyNotHalted()
 	assertCallerIsOwnerOfToken(tid)
 
-	err := gnft.Approve(users.Resolve(user), tid)
+	err := setTokenURI(tid, tURI)
 	if err != nil {
-		panic(err.Error())
+		panic(addDetailToError(
+			errCannotSetURI,
+			ufmt.Sprintf("token id (%s)", tid),
+		))
 	}
+	return true, nil
 }
 
-// SetApprovalForAll enables or disables approval for a third party to manage all tokens
+// SafeTransferFrom securely transfers ownership of a token from one address to another.
+//
+// This function enforces several checks to ensure the transfer is valid and authorized:
+//   - Ensures the contract is not halted.
+//   - Validates the addresses involved in the transfer.
+//   - Checks that the caller is the token owner or has been approved to transfer the token.
+//
+// After validation, the function updates the internal token lists by removing the token from the sender's list
+// and appending it to the recipient's list. It then calls the underlying transfer logic through `gnft.TransferFrom`.
+//
 // Parameters:
-//   - user: The address or username to set approval for
-//   - approved: true to approve, false to revoke approval
-func SetApprovalForAll(user pusers.AddressOrName, approved bool) {
+//   - from (std.Address): The current owner's address of the token being transferred.
+//   - to (std.Address): The recipient's address to receive the token.
+//   - tid (grc721.TokenID): The ID of the token to be transferred.
+//
+// Returns:
+//   - error: Returns `nil` if the transfer is successful; otherwise, it raises an error.
+//
+// Panics:
+//   - If the contract is halted.
+//   - If either `from` or `to` addresses are invalid.
+//   - If the caller is not the owner or approved operator of the token.
+//   - If the internal transfer (`gnft.TransferFrom`) fails.
+func SafeTransferFrom(from, to std.Address, tid grc721.TokenID) error {
 	assertOnlyNotHalted()
-	checkErr(gnft.SetApprovalForAll(users.Resolve(user), approved))
-}
 
-// TransferFrom transfers ownership of a token from one address to another
-// Parameters:
-//   - from: The current owner's address or username
-//   - to: The recipient's address or username
-//   - tid: The token ID to transfer
-func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
-	assertOnlyNotHalted()
-
-	fromAddr := users.Resolve(from)
-	toAddr := users.Resolve(to)
-	assertValidAddr(fromAddr)
-	assertValidAddr(toAddr)
+	assertValidAddr(from)
+	assertValidAddr(to)
 
 	caller := getPrevAddr()
-	ownerOf := OwnerOf(tid)
-	_, approved := GetApproved(tid)
-
-	if caller != ownerOf && !approved {
+	ownerAddr, _ := OwnerOf(tid)
+	approved, _ := GetApproved(tid)
+	if (caller != ownerAddr) && (caller != approved) {
 		panic(addDetailToError(
 			errNoPermission,
 			ufmt.Sprintf("caller (%s) is not the owner or operator of token (%s)", caller, string(tid)),
 		))
 	}
 
-	removeTokenList(fromAddr, tid)
-	appendTokenList(toAddr, tid)
+	removeTokenList(from, tid)
+	appendTokenList(to, tid)
 
-	checkErr(gnft.TransferFrom(fromAddr, toAddr, tid))
+	checkErr(gnft.TransferFrom(from, to, tid))
+	return nil
+}
+
+// TransferFrom transfers a token from one address to another
+// This function is a direct wrapper around `SafeTransferFrom`, which performs the actual transfer.
+//
+// Parameters:
+//   - from (std.Address): The current owner's address of the token being transferred.
+//   - to (std.Address): The recipient's address to receive the token.
+//   - tid (grc721.TokenID): The ID of the token to be transferred.
+//
+// Returns:
+//   - error: Returns `nil` if the transfer is successful; otherwise, returns an error.
+func TransferFrom(from, to std.Address, tid grc721.TokenID) error {
+	return SafeTransferFrom(from, to, tid)
+}
+
+// Approve grants permission to transfer a specific token ID to another address.
+//
+// Parameters:
+//   - approved (std.Address): The address to grant transfer approval to.
+//   - tid (grc721.TokenID): The token ID to approve for transfer.
+//
+// Returns:
+//   - error: Returns `nil` if the approval is successful, otherwise returns an error.
+//
+// Panics:
+//   - If the contract is halted.
+//   - If the caller is not the token owner.
+//   - If the `Approve` call fails.
+func Approve(approved std.Address, tid grc721.TokenID) error {
+	assertOnlyNotHalted()
+	assertCallerIsOwnerOfToken(tid)
+
+	err := gnft.Approve(approved, tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	return nil
+}
+
+// SetApprovalForAll enables or disables approval for a third party (`operator`) to manage all tokens owned by the caller.
+//
+// Parameters:
+//   - operator (std.Address): The address to grant or revoke operator permissions for.
+//   - approved (bool): `true` to enable approval, `false` to revoke approval.
+//
+// Returns:
+//   - error: Returns `nil` if the operation is successful, otherwise returns an error.
+//
+// Panics:
+//   - If the contract is halted.
+//   - If the `SetApprovalForAll` operation fails.
+func SetApprovalForAll(operator std.Address, approved bool) error {
+	assertOnlyNotHalted()
+	checkErr(gnft.SetApprovalForAll(operator, approved))
+	return nil
+}
+
+// GetApproved returns the approved address for a specific token ID.
+//
+// Parameters:
+//   - tid (grc721.TokenID): The token ID to check for approval.
+//
+// Returns:
+//   - std.Address: The address approved to manage the token. Returns an empty address if no approval exists.
+//   - error: Returns an error if the lookup fails or the token ID is invalid.
+func GetApproved(tid grc721.TokenID) (std.Address, error) {
+	addr, err := gnft.GetApproved(tid)
+	if err != nil {
+		return "", err
+	}
+
+	return addr, nil
+}
+
+// IsApprovedForAll checks if an operator is approved to manage all tokens of an owner.
+//
+// Parameters:
+//   - owner (std.Address): The address of the token owner.
+//   - operator (std.Address): The address to check if it has approval to manage the owner's tokens.
+//
+// Returns:
+//   - bool: true if the operator is approved to manage all tokens of the owner, false otherwise.
+func IsApprovedForAll(owner, operator std.Address) bool {
+	return gnft.IsApprovedForAll(owner, operator)
+}
+
+// SetTokenURIByImageURI generates and sets a new token URI for a specified token ID using a random image URI.
+//
+// Parameters:
+//   - tid (grc721.TokenID): The ID of the token for which the URI will be set.
+//
+// Panics:
+//   - If the contract is halted.
+//   - If the caller is not the owner of the token.
+//   - If the token URI cannot be set.
+func SetTokenURIByImageURI(tid grc721.TokenID) {
+	assertOnlyNotHalted()
+	assertCallerIsOwnerOfToken(tid)
+
+	tokenURI := genImageURI(generateRandInstance())
+
+	err := setTokenURI(tid, grc721.TokenURI(tokenURI))
+	if err != nil {
+		panic(addDetailToError(
+			errCannotSetURI,
+			ufmt.Sprintf("%s (%s)", err.Error(), string(tid)),
+		))
+	}
+}
+
+// SetTokenURILast sets the token URI for the last token owned by the caller using a randomly generated image URI.
+//
+// This function ensures the contract is active and the caller owns at least one token.
+// It retrieves the list of tokens owned by the caller and applies a new token URI to the most recently minted token.
+//
+// Panics:
+//   - If the contract is halted.
+//   - If the caller does not own any tokens (empty token list).
+//   - If URI generation or assignment fails.
+func SetTokenURILast() {
+	assertOnlyNotHalted()
+
+	caller := getPrevAddr()
+	tokenListByCaller, _ := getTokenList(caller)
+	lenTokenListByCaller := len(tokenListByCaller)
+	if lenTokenListByCaller == 0 {
+		panic(addDetailToError(
+			errNoTokenForCaller,
+			ufmt.Sprintf("caller (%s)", caller),
+		))
+	}
+
+	lastTokenId := tokenListByCaller[lenTokenListByCaller-1]
+	SetTokenURIByImageURI(lastTokenId)
 }
 
 // Mint creates a new NFT and assigns it to the specified address (only callable by owner)
@@ -182,14 +307,13 @@ func TransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
 //
 // Returns:
 //   - grc721.TokenID: The ID of the newly minted token
-func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
+func Mint(to std.Address, tid grc721.TokenID) grc721.TokenID {
 	owner.AssertCallerIsOwner()
-	common.IsHalted()
+	assertOnlyNotHalted()
 
-	toAddr := users.Resolve(to)
-	checkErr(gnft.Mint(toAddr, tid))
+	checkErr(gnft.Mint(to, tid))
 
-	appendTokenList(toAddr, tid)
+	appendTokenList(to, tid)
 	return tid
 }
 
@@ -198,9 +322,14 @@ func Mint(to pusers.AddressOrName, tid grc721.TokenID) grc721.TokenID {
 //   - tid: The token ID to burn
 func Burn(tid grc721.TokenID) {
 	owner.AssertCallerIsOwner()
-	common.IsHalted()
+	assertOnlyNotHalted()
 
-	removeTokenList(OwnerOf(tid), tid)
+	ownerAddr, err := OwnerOf(tid)
+	if err != nil {
+		panic(err.Error())
+	}
+	removeTokenList(ownerAddr, tid)
+
 	checkErr(gnft.Burn(tid))
 }
 
@@ -219,57 +348,10 @@ func Render(path string) string {
 	}
 }
 
-// SetTokenURI sets the metadata URI using a randomly generated SVG image
-// Parameters:
-//   - tid: The token ID to set the URI for
-func SetTokenURI(tid grc721.TokenID) {
-	common.IsHalted()
-
-	assertCallerIsOwnerOfToken(tid)
-
-	err := setTokenURI(tid)
-	if err != nil {
-		panic(addDetailToError(
-			errCannotSetURI,
-			ufmt.Sprintf("token id (%s)", tid),
-		))
-	}
-}
-
-// SetTokenURILast sets metadata URI for last minted nft token
-func SetTokenURILast() {
-	common.IsHalted()
-
-	caller := getPrevAddr()
-	tokenListByCaller, _ := getTokenList(caller)
-	lenTokenListByCaller := len(tokenListByCaller)
-	if lenTokenListByCaller == 0 {
-		panic(addDetailToError(
-			errNoTokenForCaller,
-			ufmt.Sprintf("caller (%s)", caller),
-		))
-	}
-
-	lastTokenId := tokenListByCaller[lenTokenListByCaller-1]
-	err := setTokenURI(lastTokenId)
-	if err != nil {
-		panic(addDetailToError(
-			errCannotSetURI,
-			ufmt.Sprintf("token id (%s)", lastTokenId),
-		))
-	}
-}
-
-func SafeTransferFrom(from, to pusers.AddressOrName, tid grc721.TokenID) {
-	TransferFrom(from, to, tid)
-}
-
-func setTokenURI(tid grc721.TokenID) error {
+// setTokenURI sets the metadata URI for a specific token ID
+func setTokenURI(tid grc721.TokenID, tURI grc721.TokenURI) error {
 	assertOnlyEmptyTokenURI(tid)
-
-	tokenURI := genImageURI(generateRandInstance())
-
-	_, err := gnft.SetTokenURI(tid, grc721.TokenURI(tokenURI))
+	_, err := gnft.SetTokenURI(tid, tURI)
 	if err != nil {
 		return err
 	}
@@ -279,8 +361,8 @@ func setTokenURI(tid grc721.TokenID) error {
 		"SetTokenURI",
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
-		"lpTokenId", string(tid),
-		"internal_tokenURI", tokenURI,
+		"lpTokenId", "tid",
+		"tokenURI", "tURI",
 	)
 
 	return nil
@@ -371,7 +453,7 @@ func checkErr(err error) {
 //   - tid: The token ID to check ownership of
 func assertCallerIsOwnerOfToken(tid grc721.TokenID) {
 	caller := getPrevAddr()
-	owner := OwnerOf(tid)
+	owner, _ := OwnerOf(tid)
 	if caller != owner {
 		panic(addDetailToError(
 			errNoPermission,
