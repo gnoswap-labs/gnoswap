@@ -85,8 +85,8 @@ func (self *Incentives) GetDelta(height uint64) map[string]int64 {
 }
 
 // cacheReward() MUST be called before this function
-func (self *Incentives) LastReward(height uint64) map[string]int64 {
-	value := self.rewardCache.Last(height)
+func (self *Incentives) CurrentReward(currentHeight uint64) map[string]int64 {
+	value := self.rewardCache.CurrentReward(currentHeight)
 	if value == nil {
 		return make(map[string]int64)
 	}
@@ -125,7 +125,7 @@ func (self *Incentives) add(
 // endHeight MUST be less than or equal to the current block height
 func (self *Incentives) cacheReward(endHeight uint64) {
 	startHeight := *self.lastRewardCacheHeight
-	currentReward := self.LastReward(startHeight)
+	currentReward := self.CurrentReward(startHeight)
 	self.delta.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
 		delta := value.(map[string]int64)
 		reward := make(map[string]int64)

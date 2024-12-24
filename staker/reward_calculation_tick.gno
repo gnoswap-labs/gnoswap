@@ -1,7 +1,7 @@
 package staker
 
 import (
-	"std"
+	ufmt "gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -23,6 +23,7 @@ func (self *Ticks) Get(tickId int32) *Tick {
 	v, ok := self.tree.Get(uint64(tickId))
 	if !ok {
 		tick := &Tick{
+			id: tickId,
 			stakedLiquidityGross: u256.Zero(),
 			stakedLiquidityDelta: i256.Zero(),
 			cross:                NewUintTree(),
@@ -87,10 +88,14 @@ func (self *Tick) updateCross(blockNumber uint64, zeroForOne bool) {
 	}
 }
 
-func (self *Tick) lastCross(endHeight uint64) bool {
+func (self *Tick) currentCross(currentHeight uint64) bool {
 	// There MUST be at least one cross, set when the position is staked
+	crossI, ok := self.cross.Get(currentHeight)
+	if ok {
+		return crossI.(bool)
+	}
 	cross := false
-	self.cross.ReverseIterate(0, endHeight, func(key uint64, value interface{}) bool {
+	self.cross.ReverseIterate(0, currentHeight, func(key uint64, value interface{}) bool {
 		cross = value.(bool)
 		return true
 	})
@@ -98,24 +103,24 @@ func (self *Tick) lastCross(endHeight uint64) bool {
 }
 
 
-func (self *Tick) modifyDepositLower(currentTick int32, liquidity *i256.Int) {
+func (self *Tick) modifyDepositLower(currentHeight uint64, currentTick int32, liquidity *i256.Int) {
 	// update staker side tick info
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
 	self.stakedLiquidityDelta = self.stakedLiquidityDelta.Add(self.stakedLiquidityDelta, liquidity)
 
-	self.updateCross(uint64(std.GetHeight()), currentTick < self.id)
+	self.updateCross(currentHeight, currentTick < self.id)
 	// ticks.Set(self.id, self)
 }
 
-func (self *Tick) modifyDepositUpper(currentTick int32, liquidity *i256.Int) {
+func (self *Tick) modifyDepositUpper(currentHeight uint64, currentTick int32, liquidity *i256.Int) {
 	self.stakedLiquidityGross = liquidityMathAddDelta(self.stakedLiquidityGross, liquidity)
 	self.stakedLiquidityDelta = self.stakedLiquidityDelta.Sub(self.stakedLiquidityDelta, liquidity)
 
-	self.updateCross(uint64(std.GetHeight()), currentTick < self.id)
+	self.updateCross(currentHeight, currentTick < self.id)
 	// ticks.Set(self.id, self)
 }
 
-func TickCrossHook(pools *Pools, ticks *Ticks) func(poolPath string, tickId int32, zeroForOne bool) {
+func TickCrossHook(pools *Pools, ticks *Ticks, height func() int64) func(poolPath string, tickId int32, zeroForOne bool) {
 	return func(poolPath string, tickId int32, zeroForOne bool) {
 		pool, ok := pools.Get(poolPath)
 		if !ok {
@@ -124,17 +129,17 @@ func TickCrossHook(pools *Pools, ticks *Ticks) func(poolPath string, tickId int3
 	
 		tick := ticks.Get(tickId)
 
-		blockNumber := uint64(std.GetHeight())
+		blockNumber := uint64(height())
 		tick.updateCross(blockNumber, zeroForOne)
 	
 		liquidityInRangeDelta := tick.stakedLiquidityDelta
 		if zeroForOne {
 			liquidityInRangeDelta = i256.Zero().Neg(liquidityInRangeDelta)
 		}
-		stakedLiquidity := pool.LastStakedLiquidity(blockNumber)
+		stakedLiquidity := pool.CurrentStakedLiquidity(blockNumber)
 		pool.stakedLiquidity.Set(blockNumber, liquidityMathAddDelta(stakedLiquidity, liquidityInRangeDelta))
 	
 		// I'm not sure if this is needed. We may not need to update the pool info because the stakedLiquidity pointer itself has not changed.
-		pools.Set(poolPath, pool)
+		// pools.Set(poolPath, pool)
 	}
 }

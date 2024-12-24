@@ -89,7 +89,7 @@ func init() {
 	// tier 1
 	// ONLY GNOT:GNS 0.3%
 
-	poolTier.changeTier(MUST_EXISTS_IN_TIER_1, 1)
+	poolTier.changeTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, 1)
 }
 
 // StakeToken stakes the LP token to the staker contract
@@ -122,9 +122,9 @@ func StakeToken(tokenId uint64) (string, string, string) {
 
 	// check pool path from tokenid
 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
-
+	currentHeight := uint64(std.GetHeight())
 	// check if target pool doesn't have internal or external incentive then panic
-	hasInternal := poolTier.IsInternallyIncentivizedPool(poolPath)
+	hasInternal := poolTier.IsInternallyIncentivizedPool(currentHeight, poolPath)
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		panic(addDetailToError(
@@ -150,6 +150,8 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		))
 	}
 
+
+
 	// staked status
 	deposit := &Deposit{
 		owner:          std.PrevRealm().Addr(),
@@ -161,7 +163,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		tickUpper:      pn.PositionGetPositionTickUpper(tokenId),
 		liquidity:      liquidity,
 
-		lastCollectHeight: uint64(std.GetHeight()),
+		lastCollectHeight: currentHeight,
 	}
 	deposits.Set(tokenId, deposit)
 
@@ -179,8 +181,8 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		pool.modifyDeposit(tokenId, signedLiquidity, uint64(std.GetHeight()))
 	}
 
-	ticks.Get(deposit.tickLower).modifyDepositLower(currentTick, signedLiquidity)
-	ticks.Get(deposit.tickUpper).modifyDepositUpper(currentTick, signedLiquidity)
+	ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, currentTick, signedLiquidity)
+	ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
 
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
 
@@ -366,6 +368,7 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
 
+	currentHeight := uint64(std.GetHeight())
 	currentTick := pl.PoolGetSlot0Tick(poolPath)
 
 	pool, ok := pools.Get(poolPath)
@@ -376,10 +379,10 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 		))
 	}
 	if pn.PositionIsInRange(tokenId) {
-		pool.modifyDeposit(tokenId, signedLiquidity, uint64(std.GetHeight()))
+		pool.modifyDeposit(tokenId, signedLiquidity, currentHeight)
 	}
-	ticks.Get(deposit.tickLower).modifyDepositLower(currentTick, signedLiquidity)
-	ticks.Get(deposit.tickUpper).modifyDepositUpper(currentTick, signedLiquidity)
+	ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, currentTick, signedLiquidity)
+	ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(

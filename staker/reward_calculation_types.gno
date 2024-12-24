@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"strings"
 
+	"gno.land/p/demo/ufmt"
+
 	"gno.land/p/demo/avl"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -100,9 +102,12 @@ func (self *RewardCacheTree) Iterate(start, end uint64, fn func(key uint64, valu
 	})
 }
 
-func (self *RewardCacheTree) Last(height uint64) interface{} {
-	result := interface{}(nil)
-	self.tree.ReverseIterate("", EncodeUint(height), func(key string, value interface{}) bool {
+func (self *RewardCacheTree) CurrentReward(currentHeight uint64) interface{} {
+	result, ok := self.tree.Get(EncodeUint(currentHeight))
+	if ok {
+		return result
+	}
+	self.tree.ReverseIterate("", EncodeUint(currentHeight), func(key string, value interface{}) bool {
 		result = value
 		return true
 	})
@@ -110,9 +115,10 @@ func (self *RewardCacheTree) Last(height uint64) interface{} {
 }
 
 func (self *RewardCacheTree) EligibleIntervalToReward(interval Interval, warmupIndex int, warmup Warmup, f func(int, Warmup, uint64, *u256.Uint, interface{})) {
-	poolReward := self.Last(interval.StartHeight)
+	poolReward := self.CurrentReward(interval.StartHeight)
 	currentHeight := interval.StartHeight
 	self.Iterate(interval.StartHeight, interval.EndHeight, func(height uint64, value interface{}) bool {
+
 		f(warmupIndex, warmup, height-currentHeight, interval.Value, poolReward)
 		currentHeight = height
 		poolReward = value
@@ -132,7 +138,7 @@ func (self *RewardCacheTree) EligibleIntervalsToReward(intervals []Interval, dep
 			currentWarmup = deposit.GetWarmup(currentWarmupIndex)
 		}
 		if interval.EndHeight < currentWarmup.NextWarmupHeight {
-			// fully merged in current warmup
+			// fully submerged in the current warmup
 			self.EligibleIntervalToReward(interval, currentWarmupIndex, currentWarmup, f)
 			continue
 		}
@@ -173,6 +179,10 @@ func (self Interval) IsEmpty() bool {
 }
 
 func appendIntervals(intervals []Interval, updatesFn func(uint64, uint64) ([]uint64, []*u256.Uint), value *u256.Uint, startHeight, endHeight uint64) []Interval {
+	if startHeight == endHeight {
+		return intervals
+	}
+
 	heights, updates := updatesFn(startHeight, endHeight)
 
 	if len(updates) == 0 {
@@ -194,7 +204,7 @@ func appendIntervals(intervals []Interval, updatesFn func(uint64, uint64) ([]uin
 		heights = heights[1:]
 		updates = updates[1:]
 	}
-	for i := 0; i < len(updates); i++ {
+	for i := 1; i < len(updates); i++ {
 		intervals = append(intervals, Interval{
 			StartHeight: startHeight,
 			EndHeight:   heights[i],

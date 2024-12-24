@@ -17,9 +17,8 @@ func Setup() *canonicalRewardState {
 	pools := NewPools()
 	ticks := NewTicks()
 	deposits := NewDeposits()
-	tickCrossHook := TickCrossHook(pools, ticks)
 
-	return NewCanonicalRewardState(poolTier, pools, ticks, deposits, tickCrossHook)
+	return NewCanonicalRewardState(poolTier, pools, ticks, deposits, TickCrossHook)
 }
 
 func TestCanonicalRewardState(t *testing.T) {
@@ -43,12 +42,20 @@ func TestCanonicalRewardState(t *testing.T) {
 
 	canonical.CalculateReward()
 
+	// gnousdc takes the entire emission
+	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, canonical.perBlockEmission)
+	
 	reward := canonical.EmulatedRewardOf(0)
-	/*
-	if reward.internal != 1000 {
-		t.Errorf("RewardOf failed, expected %d, got %d", 1000, reward.internal)
+	if reward.internal != canonical.perBlockEmission * 30 / 100 {
+		t.Errorf("RewardOf failed, expected %d, got %d", canonical.perBlockEmission * 30 / 100, reward.internal)
 	}
 
+	reward = canonical.CanonicalRewardOf(0)
+	if reward.internal != canonical.perBlockEmission * 30 / 100 {
+		t.Errorf("RewardOf failed, expected %d, got %d", canonical.perBlockEmission * 30 / 100, reward.internal)
+	}
+
+	/*
 	if len(reward.external) != 0 {
 		t.Errorf("RewardOf failed, expected %d, got %d", 0, len(reward.external))
 	}

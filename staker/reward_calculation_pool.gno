@@ -72,17 +72,21 @@ func NewPool(poolPath string, currentHeight uint64) *Pool {
 	}
 }
 
-func (self *Pool) LastStakedLiquidity(end uint64) *u256.Uint {
+func (self *Pool) CurrentStakedLiquidity(currentHeight uint64) *u256.Uint {
+	stakedLiquidityI, ok := self.stakedLiquidity.Get(currentHeight)
+	if ok {
+		return stakedLiquidityI.(*u256.Uint)
+	}
 	stakedLiquidity := u256.Zero()
-	self.stakedLiquidity.ReverseIterate(0, end, func(key uint64, value interface{}) bool {
+	self.stakedLiquidity.ReverseIterate(0, currentHeight, func(key uint64, value interface{}) bool {
 		stakedLiquidity = value.(*u256.Uint)
 		return true
 	})
 	return stakedLiquidity
 }
 
-func (self *Pool) LastReward(endHeight uint64) uint64 {
-	reward := self.rewardCache.Last(endHeight)
+func (self *Pool) CurrentReward(currentHeight uint64) uint64 {
+	reward := self.rewardCache.CurrentReward(currentHeight)
 	if reward == nil {
 		return uint64(0)
 	}
@@ -90,8 +94,8 @@ func (self *Pool) LastReward(endHeight uint64) uint64 {
 } 
 
 // cacheReward() MUST be called before this function
-func (self *Pool) IsExternallyIncentivizedPool(height uint64) bool {
-	return len(self.incentives.LastReward(height)) > 0
+func (self *Pool) IsExternallyIncentivizedPool(currentHeight uint64) bool {
+	return len(self.incentives.CurrentReward(currentHeight)) > 0
 }
 
 func (self *Pool) StakedLiquidityUpdates(startHeight, endHeight uint64) ([]uint64, []*u256.Uint) {
@@ -107,7 +111,7 @@ func (self *Pool) StakedLiquidityUpdates(startHeight, endHeight uint64) ([]uint6
 
 func (self *Pool) cacheReward(poolTier *PoolTier, endHeight uint64) {
 	startHeight := *self.lastRewardCacheHeight
-	currentTier := poolTier.LastTier(self.poolPath, startHeight)
+	currentTier := poolTier.CurrentTier(self.poolPath, startHeight)
 	poolTier.membershipOf(self.poolPath).Iterate(startHeight, endHeight, func(membershipUpdateHeight uint64, value interface{}) bool {
 		if currentTier == 0 {
 			// ignore reward updates
@@ -124,7 +128,7 @@ func (self *Pool) cacheReward(poolTier *PoolTier, endHeight uint64) {
 		if currentTier == 0 {
 			self.rewardCache.Set(membershipUpdateHeight, uint64(0))
 		} else {
-			self.rewardCache.Set(membershipUpdateHeight, poolTier.LastReward(currentTier, membershipUpdateHeight))
+			self.rewardCache.Set(membershipUpdateHeight, poolTier.CurrentReward(currentTier, membershipUpdateHeight))
 		}
 		startHeight = membershipUpdateHeight
 		currentTier = value.(uint64)
@@ -183,7 +187,7 @@ func (self *Pool) TickCrossesToEligibleIntervals(
 				} else {
 					// exit range, forward transition at the upper tick.
 					currentlyInRange = setInRange(currentlyInRange, false)
-					stakedLiquidity := self.LastStakedLiquidity(startHeight)
+					stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
 					endHeight := currentUpperTickCrossHeight
 
 					intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, stakedLiquidity, startHeight, endHeight)
@@ -204,7 +208,7 @@ func (self *Pool) TickCrossesToEligibleIntervals(
 				if tickLowerCrossZeroForOnes[0] {
 					// exit range, backward transition at the lower tick.
 					currentlyInRange = setInRange(currentlyInRange, false)
-					stakedLiquidity := self.LastStakedLiquidity(startHeight)
+					stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
 					endHeight := currentLowerTickCrossHeight
 
 					intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, stakedLiquidity, startHeight, endHeight)
@@ -230,7 +234,7 @@ func (self *Pool) TickCrossesToEligibleIntervals(
 
 	if currentlyInRange {
 		// position remains in range, add the last interval
-		stakedLiquidity := self.LastStakedLiquidity(startHeight)
+		stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
 		intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, stakedLiquidity, startHeight, finalHeight)
 	}
 
@@ -248,6 +252,7 @@ func (self *Pool) EligibleIntervalsToInternalReward(intervals []Interval, deposi
 		rewards[i] = 0
 		penalties[i] = 0
 	}
+	
 	positionLiquidity := deposit.liquidity
 	self.rewardCache.EligibleIntervalsToReward(intervals, deposit, func(warmupIndex int, warmup Warmup, blockNumber uint64, stakedLiquidity *u256.Uint, poolRewardI interface{}) {
 		poolReward := poolRewardI.(uint64)
@@ -261,6 +266,6 @@ func (self *Pool) EligibleIntervalsToInternalReward(intervals []Interval, deposi
 
 func (self *Pool) modifyDeposit(tokenId uint64, liquidity *i256.Int, currentHeight uint64) {
 	// update staker side pool info
-	lastStakedLiquidity := self.LastStakedLiquidity(currentHeight)
+	lastStakedLiquidity := self.CurrentStakedLiquidity(currentHeight)
 	self.stakedLiquidity.Set(currentHeight, liquidityMathAddDelta(lastStakedLiquidity, liquidity))
 }

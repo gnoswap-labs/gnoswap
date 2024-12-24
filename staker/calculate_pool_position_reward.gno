@@ -1,10 +1,10 @@
 package staker
 
 import (
-	"std"
 	//"time"
+	"math"
 
-	//"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/consts"
 
@@ -210,11 +210,9 @@ func CalcPoolPositionRefactor() bool {
 */
 
 func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits, pools *Pools, ticks *Ticks, poolTier *PoolTier, emissionUpdateHeights []uint64, emissionUpdates []uint64) ([]uint64, []uint64) {
-	// cache per-tier and per-pool rewards
-	
+	// cache per-tier and per-pool rewards	
 	poolTier.cacheReward(currentHeight, emissionUpdateHeights, emissionUpdates)
 
-	/*
 	deposit := deposits.Get(tokenId)
 	poolPath := deposit.targetPoolPath
 
@@ -235,17 +233,16 @@ func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits
 	tickUpperCrossHeights, tickUpperCrossZeroForOnes := upperTick.crossInfo(lastCollectHeight, currentHeight)
 	tickLowerCrossHeights, tickLowerCrossZeroForOnes := lowerTick.crossInfo(lastCollectHeight, currentHeight)
 
-	initialUpperCross := upperTick.lastCross(lastCollectHeight)
-	initialLowerCross := lowerTick.lastCross(lastCollectHeight)
+	initialUpperCross := upperTick.currentCross(lastCollectHeight)
+	initialLowerCross := lowerTick.currentCross(lastCollectHeight)
 	currentlyInRange := initialUpperCross && !initialLowerCross
 
 	intervals := pool.TickCrossesToEligibleIntervals(tickUpperCrossHeights, tickUpperCrossZeroForOnes, tickLowerCrossHeights, tickLowerCrossZeroForOnes, currentlyInRange, lastCollectHeight, currentHeight)
 
+
 	rewards, penalties := pool.EligibleIntervalsToInternalReward(intervals, deposit)
 
 	return rewards, penalties 
-	*/
-	return nil, nil
 }
 
 // XXX: need to improve nested iteration

@@ -7,6 +7,8 @@ import (
 	"math"
 	"std"
 	"errors"
+	
+	ufmt "gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	i256 "gno.land/p/gnoswap/int256"
@@ -90,7 +92,7 @@ type canonicalRewardState struct {
 	perBlockEmission uint64
 }
 
-func NewCanonicalRewardState(poolTier *PoolTier, pools *Pools, ticks *Ticks, deposits *Deposits, tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)) *canonicalRewardState {
+func NewCanonicalRewardState(poolTier *PoolTier, pools *Pools, ticks *Ticks, deposits *Deposits, tickCrossHook func(pools *Pools, ticks *Ticks, height func() int64) func(poolPath string, tickId int32, zeroForOne bool)) *canonicalRewardState {
 	result := &canonicalRewardState{
 		global: &emulatedGlobalState{
 			poolTier: poolTier,
@@ -99,12 +101,16 @@ func NewCanonicalRewardState(poolTier *PoolTier, pools *Pools, ticks *Ticks, dep
 			deposits: deposits,
 		},
 		pool: make(map[string]*canonicalPool),
-		tickCrossHook: tickCrossHook,
 		reward: make([][]reward, 0),
 		emissionUpdates: NewUintTree(),
 		msPerBlock: 1000,
 		perBlockEmission: 1000000000,
 	}
+	result.tickCrossHook = tickCrossHook(pools, ticks, func() int64 {
+		return int64(result.CurrentHeight())
+	})
+
+	result.SetEmissionUpdate(1000000000)
 
 	return result
 }
@@ -127,6 +133,9 @@ func (self *canonicalRewardState) EmissionUpdates(startHeight uint64, endHeight 
 	self.emissionUpdates.ReverseIterate(0, startHeight, func(key uint64, value interface{}) bool {
 		heights = append(heights, key)
 		updates = append(updates, value.(uint64))
+		if key == startHeight {
+			startHeight = key + 1
+		}
 		return true
 	})
 
@@ -137,6 +146,11 @@ func (self *canonicalRewardState) EmissionUpdates(startHeight uint64, endHeight 
 	})
 
 	return heights, updates
+}
+
+func (self *canonicalRewardState) SetEmissionUpdate(emission uint64) {
+	self.emissionUpdates.Set(uint64(self.CurrentHeight()), emission)
+	self.perBlockEmission = emission
 }
 
 func (self *canonicalRewardState) LiquidityPerPool() (map[string]*u256.Uint) {
@@ -238,7 +252,9 @@ func (self *canonicalRewardState) CanonicalRewardOf(depositId uint64) reward {
 
 func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) reward {
 	emissionUpdateHeights, emissionUpdates := self.EmissionUpdates(*self.global.poolTier.lastRewardCacheHeight, uint64(self.CurrentHeight()))
+
 	rewards, penalties := CalcPositionReward(uint64(self.CurrentHeight()), depositId, self.global.deposits, self.global.pools, self.global.ticks, self.global.poolTier, emissionUpdateHeights, emissionUpdates)
+
 	internal := uint64(0)
 	for _, reward := range rewards {
 		internal += reward
@@ -253,6 +269,7 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) reward {
 		external: nil,
 		externalPenalty: nil,
 	}
+
 }
 
 // Emulation of gns.gno emission changes
@@ -266,7 +283,7 @@ func (self *canonicalRewardState) SetPerBlockEmission(perBlockEmission uint64) (
 
 // Emulation of staker.gno public entrypoints
 func (self *canonicalRewardState) StakeToken(tokenId uint64, targetPoolPath string, owner std.Address, tickLower int32, tickUpper int32, liquidity *u256.Uint) error {
-	currentHeight := self.CurrentHeight()
+	currentHeight := uint64(self.CurrentHeight())
 	deposit := &Deposit{
 		owner: owner,
 		stakeHeight: int64(currentHeight),
@@ -293,10 +310,10 @@ func (self *canonicalRewardState) StakeToken(tokenId uint64, targetPoolPath stri
 	}
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	if self.isInRange(deposit) {
-		pool.modifyDeposit(tokenId, signedLiquidity, uint64(currentHeight))
+		pool.modifyDeposit(tokenId, signedLiquidity, currentHeight)
 	}
-	self.global.ticks.Get(deposit.tickLower).modifyDepositLower(canonicalPool.tick, signedLiquidity)
-	self.global.ticks.Get(deposit.tickUpper).modifyDepositUpper(canonicalPool.tick, signedLiquidity)
+	self.global.ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, canonicalPool.tick, signedLiquidity)
+	self.global.ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, canonicalPool.tick, signedLiquidity)
 
 	return nil
 }
@@ -305,8 +322,10 @@ func (self *canonicalRewardState) CollectReward(tokenId uint64) {
 	// TODO: implement
 }
 
-func (self *canonicalRewardState) UnstakeToken(currentHeight int, tokenId uint64) {
+func (self *canonicalRewardState) UnstakeToken(tokenId uint64) {
 	deposit := self.global.deposits.Get(tokenId)
+
+	currentHeight := uint64(self.CurrentHeight())
 
 	canonicalPool, ok := self.pool[deposit.targetPoolPath]
 	if !ok {
@@ -326,10 +345,10 @@ func (self *canonicalRewardState) UnstakeToken(currentHeight int, tokenId uint64
 	signedLiquidity := i256.FromUint256(deposit.liquidity)
 	signedLiquidity = signedLiquidity.Neg(signedLiquidity)
 	if self.isInRange(deposit) {
-		pool.modifyDeposit(tokenId, signedLiquidity, uint64(currentHeight))
+		pool.modifyDeposit(tokenId, signedLiquidity, currentHeight)
 	}
-	self.global.ticks.Get(deposit.tickLower).modifyDepositLower(canonicalPool.tick, signedLiquidity)
-	self.global.ticks.Get(deposit.tickUpper).modifyDepositUpper(canonicalPool.tick, signedLiquidity)
+	self.global.ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, canonicalPool.tick, signedLiquidity)
+	self.global.ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, canonicalPool.tick, signedLiquidity)
 }
 
 func (self *canonicalRewardState) CreateExternalIncentive(targetPoolPath string, rewardToken string, rewardAmount uint64, startTimestamp int64, endTimestamp int64, refundee std.Address, createdHeight int, depositGnsAmount uint64, currentTime int64) {
@@ -375,7 +394,7 @@ func (self *canonicalRewardState) ChangePoolTier(poolPath string, tier uint64) {
 	if !self.global.pools.Has(poolPath) {
 		self.global.pools.Set(poolPath, NewPool(poolPath, uint64(self.CurrentHeight())))
 	}
-	self.global.poolTier.changeTier(poolPath, tier)
+	self.global.poolTier.changeTier(uint64(self.CurrentHeight()), poolPath, tier)
 }
 
 func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64, initialTick int32) {
@@ -387,4 +406,19 @@ func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64
 		tickCrossHook: self.tickCrossHook,
 	}
 	self.global.pools.Set(poolPath, NewPool(poolPath, uint64(self.CurrentHeight())))
+	self.global.poolTier.changeTier(uint64(self.CurrentHeight()), poolPath, initialTier)
+}
+
+// Testing helpers
+
+func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(poolPath string, expected uint64) {
+	internalRewardPerPool := self.InternalRewardPerPool(self.perBlockEmission)
+	actual := internalRewardPerPool[poolPath]
+	if actual != expected {
+		panic(ufmt.Sprintf("internal reward per pool mismatch: expected %d, got %d", expected, actual))
+	}
+}
+
+func (self *canonicalRewardState) AssertEmulatedInternalRewardPerPool(poolPath string, expected uint64) {
+
 }
