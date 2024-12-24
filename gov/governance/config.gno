@@ -6,8 +6,6 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
-
 	en "gno.land/r/gnoswap/v1/emission"
 )
 
@@ -147,7 +145,7 @@ func GetConfigVersion(version uint64) Config {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("config.gno__GetConfigVersion() || config version(%d) does not exist", version),
+			ufmt.Sprintf("config version(%d) does not exist", version),
 		))
 	}
 

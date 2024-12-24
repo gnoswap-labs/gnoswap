@@ -670,7 +670,7 @@ func getTokenPairBalanceFromPosition(tokenId uint64) (string, string) {
 	poolKey := pn.PositionGetPositionPoolKey(tokenId)
 
 	pool := pl.GetPoolFromPoolPath(poolKey)
-	currentX96 := pool.PoolGetSlot0SqrtPriceX96()
+	currentX96 := pool.Slot0SqrtPriceX96()
 	lowerX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickLower(tokenId))
 	upperX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickUpper(tokenId))
 

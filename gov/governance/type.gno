@@ -72,13 +72,38 @@ type ParameterChangeInfo struct {
 	Params   string
 }
 
+type ProposalType string
+
+const (
+	Text               ProposalType = "TEXT"
+	CommunityPoolSpend ProposalType = "COMMUNITY_POOL_SPEND"
+	ParameterChange    ProposalType = "PARAMETER_CHANGE"
+)
+
+func tryParseProposalType(v string) (ProposalType, error) {
+	switch v {
+	case "TEXT":
+		return Text, nil
+	case "COMMUNITY_POOL_SPEND":
+		return CommunityPoolSpend, nil
+	case "PARAMETER_CHANGE":
+		return ParameterChange, nil
+	default:
+		return "", errInvalidProposalType
+	}
+}
+
+func (p ProposalType) String() string {
+	return string(p)
+}
+
 // ProposalInfo represents all the information about a proposal
 type ProposalInfo struct {
 	// The address of the proposer
 	Proposer std.Address
 
 	// Text, CommunityPoolSpend, ParameterChange
-	ProposalType string
+	ProposalType ProposalType
 
 	// The execution state of the proposal
 	ExecutionState ExecutionState

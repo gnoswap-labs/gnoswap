@@ -21,22 +21,6 @@ func strToInt(str string) int {
 	return res
 }
 
-func strToU256U64(str string) uint64 {
-	strValue := u256.MustFromDecimal(str)
-	return strValue.Uint64()
-}
-
-func checkProposalType(proposalType string) {
-	if proposalType != "TEXT" &&
-		proposalType != "COMMUNITY_POOL_SPEND" &&
-		proposalType != "PARAMETER_CHANGE" {
-		panic(addDetailToError(
-			errUnsupportedProposalType,
-			ufmt.Sprintf("util.gno__checkProposalType() || invalid proposal type(%s)", proposalType),
-		))
-	}
-}
-
 func voteToString(b bool) string {
 	if b {
 		return "yes"
@@ -74,11 +58,34 @@ func a2u(addr std.Address) pusers.AddressOrName {
 	return pusers.AddressOrName(addr)
 }
 
-func isUserCall() bool {
-	return std.PrevRealm().IsUser()
-}
-
 func getPrev() (string, string) {
 	prev := std.PrevRealm()
 	return prev.Addr().String(), prev.PkgPath()
+}
+
+func parseInt(s string) int {
+	num, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		panic(ufmt.Sprintf("invalid int value: %s", s))
+	}
+	return int(num)
+}
+
+func parseUint64(s string) uint64 {
+	num, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		panic(ufmt.Sprintf("invalid uint64 value: %s", s))
+	}
+	return num
+}
+
+func parseBool(s string) bool {
+	switch s {
+	case "true":
+		return true
+	case "false":
+		return false
+	default:
+		panic(ufmt.Sprintf("invalid bool value: %s", s))
+	}
 }
