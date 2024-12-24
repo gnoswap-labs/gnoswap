@@ -4,8 +4,13 @@ import (
 	"errors"
 	"std"
 	"testing"
+	"time"
 
+	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+
+	"gno.land/r/gnoswap/v1/consts"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func TestParameterRegistry(t *testing.T) {
@@ -126,7 +131,7 @@ func TestValidateProposalState(t *testing.T) {
 		{
 			name: "Pass: Text proposal",
 			proposal: &ProposalInfo{
-				ProposalType: "TEXT",
+				ProposalType: Text,
 				ExecutionState: ExecutionState{
 					Executed:  false,
 					Canceled:  false,
@@ -145,7 +150,7 @@ func TestValidateProposalState(t *testing.T) {
 		{
 			name: "Pass: Already executed",
 			proposal: &ProposalInfo{
-				ProposalType: "PARAMETER_CHANGE",
+				ProposalType: ParameterChange,
 				ExecutionState: ExecutionState{
 					Executed:  true,
 					Canceled:  false,
@@ -164,7 +169,7 @@ func TestValidateProposalState(t *testing.T) {
 		{
 			name: "Pass: Canceled",
 			proposal: &ProposalInfo{
-				ProposalType: "PARAMETER_CHANGE",
+				ProposalType: ParameterChange,
 				ExecutionState: ExecutionState{
 					Executed:  false,
 					Canceled:  true,
@@ -257,6 +262,56 @@ func TestCheckProposalValidation(t *testing.T) {
 				uassert.Equal(t, err.Error(), tt.errMsg)
 			} else {
 				uassert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestParameterRegistry2(t *testing.T) {
+	tests := []struct {
+		name        string
+		pkgPath     string
+		function    string
+		params      []string
+		setupMock   func(*ParameterRegistry)
+		expectError bool
+	}{
+		{
+			name:     "valid handler",
+			pkgPath:  consts.POOL_PATH,
+			function: "SetFeeProtocol",
+			params:   []string{"1", "2"},
+			setupMock: func(r *ParameterRegistry) {
+				r.Register(consts.POOL_PATH, "SetFeeProtocol", func(p []string) error {
+					return nil
+				})
+			},
+			expectError: false,
+		},
+		{
+			name:     "invalid handler",
+			pkgPath:  "invalid",
+			function: "invalid",
+			params:   []string{},
+			setupMock: func(r *ParameterRegistry) {},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			registry := NewParameterRegistry()
+			tt.setupMock(registry)
+
+			handler, err := registry.Handler(tt.pkgPath, tt.function)
+			if tt.expectError {
+				uassert.Error(t, err)
+				return
+			}
+
+			err = handler(tt.params)
+			if err != nil {
+				t.Errorf("handler returned error: %v", err)
 			}
 		})
 	}
