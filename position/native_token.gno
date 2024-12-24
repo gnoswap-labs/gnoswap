@@ -140,7 +140,7 @@ func safeWrapNativeToken(amountDesired string, userAddress std.Address) uint64 {
 	if sentUgnotAmount > amount {
 		exceed := sentUgnotAmount - amount
 		refundUGNOT(userAddress, exceed)
-		transferUGNOT(consts.POSITION_ADDR, userAddress, amount)
+
 		sentUgnotAmount = amount
 	}
 

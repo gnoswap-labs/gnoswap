@@ -42,8 +42,8 @@ func TestMintPosition01InRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 	)
 
 	uassert.Equal(t, tokenId, uint64(1))
@@ -68,8 +68,8 @@ func TestMintPosition02LowerRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 	)
 
 	uassert.Equal(t, tokenId, uint64(2))
@@ -94,8 +94,8 @@ func TestMintPosition03UpperRange(t *testing.T) {
 		"0",
 		"0",
 		max_timeout,
-		admin,
-		admin,
+		adminAddr,
+		adminAddr,
 	)
 
 	uassert.Equal(t, tokenId, uint64(3))
@@ -130,11 +130,11 @@ func TestSwap1(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		admin,
+		adminAddr,
 		true,
 		"1234567",
 		consts.MIN_PRICE,
-		admin,
+		adminAddr,
 	)
 
 	uassert.Equal(t, amount0, "1234567")
@@ -157,11 +157,11 @@ func TestSwap2(t *testing.T) {
 		barPath,
 		fooPath,
 		fee500,
-		admin,
+		adminAddr,
 		true,
 		"20000000", //
 		consts.MIN_PRICE,
-		admin,
+		adminAddr,
 	)
 
 	uassert.Equal(t, amount0, "20000000")
@@ -184,11 +184,11 @@ func TestSwap3(t *testing.T) {
 		fooPath,
 		barPath,
 		fee500,
-		admin,
+		adminAddr,
 		false,
 		"20000000", //
 		consts.MAX_PRICE,
-		admin,
+		adminAddr,
 	)
 
 	uassert.Equal(t, amount0, "-8692001")
@@ -218,8 +218,8 @@ func TestCollectFeeAfterSwap(t *testing.T) {
 func TestDecreaseLiquidityUpperPosition(t *testing.T) {
 	std.TestSetRealm(adminRealm)
 
-	ownerOfPosition := gnft.OwnerOf(tid(3))
-	uassert.Equal(t, ownerOfPosition, admin)
+	ownerOfPosition := gnft.OwnerOf(tokenIdFrom(3))
+	uassert.Equal(t, ownerOfPosition, adminAddr)
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := DecreaseLiquidity(uint64(3), 100, "0", "0", max_timeout, false)
 
@@ -227,8 +227,8 @@ func TestDecreaseLiquidityUpperPosition(t *testing.T) {
 	uassert.Equal(t, amount0, "49999999")
 	uassert.Equal(t, amount1, "0")
 
-	ownerOfPosition = gnft.OwnerOf(tid(3))
-	uassert.Equal(t, ownerOfPosition, admin)
+	ownerOfPosition = gnft.OwnerOf(tokenIdFrom(3))
+	uassert.Equal(t, ownerOfPosition, adminAddr)
 }
 
 func TestSubIn256(t *testing.T) {

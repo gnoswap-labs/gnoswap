@@ -25,6 +25,7 @@ var (
 	errInvalidTokenPath      = errors.New("[GNOSWAP-POSITION-016] invalid token address")
 	errInvalidLiquidityRatio = errors.New("[GNOSWAP-POSITION-017] invalid liquidity ratio")
 	errUnderflow             = errors.New("[GNOSWAP-POSITION-018] underflow")
+	errInvalidLiquidity      = errors.New("[GNOSWAP-POSITION-019] invalid liquidity")
 )
 
 // newErrorWithDetail appends additional context or details to an existing error message.
