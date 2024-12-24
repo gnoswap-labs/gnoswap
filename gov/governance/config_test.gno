@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
 )
 
 var (
@@ -35,6 +36,18 @@ func resetGlobalConfig(t *testing.T) {
 	configVersions = make(map[uint64]Config)
 }
 
+func newConfigObj(t *testing.T) Config {
+	return Config{
+		VotingStartDelay:              100000,
+		VotingPeriod:                  700000,
+		VotingWeightSmoothingDuration: 90000,
+		Quorum:                        60,
+		ProposalCreationThreshold:     2_000_000_000,
+		ExecutionDelay:                90000,
+		ExecutionWindow:               3000000,
+	}
+}
+
 func TestInitialConfig(t *testing.T) {
 	resetGlobalConfig(t)
 	mockInit(t)
@@ -55,16 +68,11 @@ func TestInitialConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.got != tt.expected {
-				t.Errorf("Incorrect initial %s: got %d, want %d",
-					tt.name, tt.got, tt.expected)
-			}
+			uassert.Equal(t, tt.got, tt.expected)
 		})
 	}
 
-	if len(configVersions) != 1 {
-		t.Errorf("Expected 1 config version, got %d", len(configVersions))
-	}
+	uassert.Equal(t, len(configVersions), 1)
 }
 
 func TestReconfigureByAdmin(t *testing.T) {
@@ -125,16 +133,9 @@ func TestReconfigureByAdmin(t *testing.T) {
 			}()
 
 			if tt.expectError {
-				if err == nil {
-					t.Errorf("Expected error containing '%s', got none", tt.errorContains)
-				}
-				return
+				uassert.Error(t, err)
 			}
-
-			if config.VotingStartDelay != tt.newConfig.VotingStartDelay {
-				t.Errorf("VotingStartDelay not updated correctly: got %d, want %d",
-					config.VotingStartDelay, tt.newConfig.VotingStartDelay)
-			}
+			uassert.Equal(t, config.VotingStartDelay, tt.newConfig.VotingStartDelay)
 		})
 	}
 }
@@ -182,11 +183,7 @@ func TestGetConfigVersion(t *testing.T) {
 			if tt.version != 0 {
 				expectedConfig = configVersions[tt.version]
 			}
-
-			if result.VotingStartDelay != expectedConfig.VotingStartDelay {
-				t.Errorf("Config mismatch: got %+v, want %+v",
-					result, expectedConfig)
-			}
+			uassert.Equal(t, result.VotingStartDelay, expectedConfig.VotingStartDelay)
 		})
 	}
 }
@@ -195,15 +192,7 @@ func TestReconfigure(t *testing.T) {
 	resetGlobalConfig(t)
 	mockInit(t)
 
-	newConfig := Config{
-		VotingStartDelay:              100000,
-		VotingPeriod:                  700000,
-		VotingWeightSmoothingDuration: 90000,
-		Quorum:                        60,
-		ProposalCreationThreshold:     2_000_000_000,
-		ExecutionDelay:                90000,
-		ExecutionWindow:               3000000,
-	}
+	newConfig := newConfigObj(t)
 
 	initialVersion := GetLatestConfigVersion()
 
@@ -217,16 +206,9 @@ func TestReconfigure(t *testing.T) {
 		newConfig.ExecutionWindow,
 	)
 
-	if version != initialVersion+1 {
-		t.Errorf("Expected version %d, got %d", initialVersion+1, version)
-	}
-
-	if config.VotingStartDelay != newConfig.VotingStartDelay {
-		t.Errorf("Config not updated correctly")
-	}
+	uassert.Equal(t, version, initialVersion+1)
+	uassert.Equal(t, config.VotingStartDelay, newConfig.VotingStartDelay)
 
 	storedConfig := configVersions[version]
-	if storedConfig.VotingStartDelay != newConfig.VotingStartDelay {
-		t.Errorf("Config version not stored correctly")
-	}
+	uassert.Equal(t, storedConfig.VotingStartDelay, newConfig.VotingStartDelay)
 }
