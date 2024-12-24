@@ -3,8 +3,8 @@ package router
 import (
 	"sort"
 
-	pl "gno.land/r/gnoswap/v1/pool"
 	u256 "gno.land/p/gnoswap/uint256"
+	pl "gno.land/r/gnoswap/v1/pool"
 
 	"gno.land/p/demo/ufmt"
 )
@@ -175,7 +175,7 @@ func findCandidatePools() []PoolWithMeta {
 		token0Path, token1Path, pFee := poolPathWithFeeDivide(poolPath)
 
 		pool := pl.GetPoolFromPoolPath(poolPath)
-		liquidity := pool.PoolGetLiquidity()
+		liquidity := pool.Liquidity()
 		poolWithMetas = append(poolWithMetas, PoolWithMeta{
 			poolPath,
 			token0Path,
