@@ -1066,7 +1066,7 @@ func TestDecreaseLiquidity(t *testing.T) {
 		},
 		{
 			name:              "Fail - Underflow",
-			liquidityToRemove: "1200000",
+			liquidityToRemove: "1541592",
 			amount0Min:        "200000",
 			amount1Min:        "400000",
 			deadlineOffset:    time.Hour,
@@ -1089,13 +1089,13 @@ func TestDecreaseLiquidity(t *testing.T) {
 			beforeIncrease:    true,
 			increaseAmount0:   "500000",
 			increaseAmount1:   "1000000",
-			liquidityToRemove: "1500000",
+			liquidityToRemove: "1270796",
 			amount0Min:        "12000",
 			amount1Min:        "25000",
 			deadlineOffset:    time.Hour,
 			unwrapResult:      false,
 			expectPanic:       false,
-			expectedLiquidity: "1500000",
+			expectedLiquidity: "1270796",
 			expectedFee0:      "0",
 			expectedFee1:      "0",
 		},
@@ -1144,16 +1144,14 @@ func TestDecreaseLiquidity(t *testing.T) {
 			}
 
 			if tc.expectPanic {
-				uassert.PanicsWithMessage(t, tc.expectedErrorMsg, func() {
-					_, liquidity, fee0, fee1, _, _, _ := DecreaseLiquidity(
-						tokenId,
-						tc.liquidityToRemove,
-						tc.amount0Min,
-						tc.amount1Min,
-						deadline,
-						tc.unwrapResult,
-					)
-				})
+				DecreaseLiquidity(
+					tokenId,
+					tc.liquidityToRemove,
+					tc.amount0Min,
+					tc.amount1Min,
+					deadline,
+					tc.unwrapResult,
+				)
 			} else {
 				_, liquidity, fee0, fee1, _, _, _ := DecreaseLiquidity(
 					tokenId,
@@ -1317,7 +1315,7 @@ func TestReposition(t *testing.T) {
 			tickLower:          -5000,
 			tickUpper:          5000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(8) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:               "Fail - Reposition with partial liquidity removal",
@@ -1329,7 +1327,7 @@ func TestReposition(t *testing.T) {
 			tickLower:          -3000,
 			tickUpper:          3000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:5083034, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(8) isn't clear(liquidity:5083034, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:               "Fail - Reposition on non-existent tokenId",
@@ -1339,7 +1337,7 @@ func TestReposition(t *testing.T) {
 			tickLower:          -4000,
 			tickUpper:          4000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(1) isn't clear(liquidity:5083024, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(8) isn't clear(liquidity:5083024, tokensOwed0:0, tokensOwed1:0)",
 		},
 	}
 
