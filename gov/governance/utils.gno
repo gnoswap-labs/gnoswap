@@ -21,22 +21,6 @@ func strToInt(str string) int {
 	return res
 }
 
-func strToU256U64(str string) uint64 {
-	strValue := u256.MustFromDecimal(str)
-	return strValue.Uint64()
-}
-
-func checkProposalType(proposalType string) {
-	if proposalType != "TEXT" &&
-		proposalType != "COMMUNITY_POOL_SPEND" &&
-		proposalType != "PARAMETER_CHANGE" {
-		panic(addDetailToError(
-			errUnsupportedProposalType,
-			ufmt.Sprintf("util.gno__checkProposalType() || invalid proposal type(%s)", proposalType),
-		))
-	}
-}
-
 func voteToString(b bool) string {
 	if b {
 		return "yes"
@@ -72,10 +56,6 @@ func prevRealm() string {
 
 func a2u(addr std.Address) pusers.AddressOrName {
 	return pusers.AddressOrName(addr)
-}
-
-func isUserCall() bool {
-	return std.PrevRealm().IsUser()
 }
 
 func getPrev() (string, string) {
