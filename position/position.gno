@@ -216,7 +216,6 @@ func Mint(
 
 	mintParams := newMintParams(processedInput, mintInput)
 	tokenId, liquidity, amount0, amount1 := mint(mintParams)
-
 	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > amount0.Uint64() {
 		// unwrap leftover wugnot
 		err = unwrap(processedInput.tokenPair.wrappedAmount-amount0.Uint64(), caller)
@@ -231,11 +230,9 @@ func Mint(
 			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 		}
 	}
-
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(processedInput.poolPath)
 
 	prevAddr, prevPkgPath := getPrevAsString()
-
 	std.Emit(
 		"Mint",
 		"prevAddr", prevAddr,
@@ -1090,24 +1087,6 @@ func Reposition(
 	position.tokensOwed1 = u256.Zero()
 	position.burned = false
 	mustUpdatePosition(tokenId, position)
-
-	// // WIP
-	// pl.Burn(
-	// 	token0,
-	// 	token1,
-	// 	fee,
-	// 	tickLower,
-	// 	tickUpper,
-	// 	ZERO_LIQUIDITY_FOR_FEE_COLLECTION,
-	// )
-	// currentFeeGrowth, err = getCurrentFeeGrowth(position, token0, token1, fee)
-	// if err != nil {
-	// 	panic(newErrorWithDetail(err, "failed to get current fee growth"))
-	// }
-	// tokensOwed0, tokensOwed1 := calculateFees(position, currentFeeGrowth)
-	// position.feeGrowthInside0LastX128 = new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside0LastX128)
-	// position.feeGrowthInside1LastX128 = new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside1LastX128)
-	// mustUpdatePosition(tokenId, position)
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(position.poolKey)
 	prevAddr, prevPkgPath := getPrevAsString()

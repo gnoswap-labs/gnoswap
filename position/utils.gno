@@ -157,16 +157,6 @@ func assertValidLiquidityRatio(ratio uint64) {
 	}
 }
 
-// [DEPRECATED] assertOnlyValidAddress panics if the address is invalid.
-func assertWrapNativeToken(ugnotSent uint64, prevRealm std.Address) {
-	if err := wrap(ugnotSent, prevRealm); err != nil {
-		panic(newErrorWithDetail(
-			errWrapUnwrap,
-			ufmt.Sprintf("wrap error: %s", err.Error()),
-		))
-	}
-}
-
 // a2u converts std.Address to pusers.AddressOrName.
 // pusers is a package that contains the user-related functions.
 //

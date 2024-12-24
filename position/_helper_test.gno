@@ -518,6 +518,13 @@ func MintPositionAll(t *testing.T, caller std.Address) {
 
 }
 
+func CreatePoolWithoutFee(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+	// set pool create fee to 0 for testing
+	pl.SetPoolCreationFeeByAdmin(0)
+	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), users.Resolve(admin))
+}
+
 func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	t.Helper()
 
