@@ -49,7 +49,7 @@ func ProposeText(
 
 	proposal := ProposalInfo{
 		Proposer:     proposer,
-		ProposalType: "TEXT",
+		ProposalType: Text,
 		ExecutionState: ExecutionState{
 			Created:   true,
 			CreatedAt: now,
@@ -113,7 +113,7 @@ func ProposeCommunityPoolSpend(
 
 	proposal := ProposalInfo{
 		Proposer:     proposer,
-		ProposalType: "COMMUNITY_POOL_SPEND",
+		ProposalType: CommunityPoolSpend,
 		ExecutionState: ExecutionState{
 			Created:   true,
 			CreatedAt: now,
@@ -218,7 +218,7 @@ func ProposeParameterChange(
 
 	proposal := ProposalInfo{
 		Proposer:     proposer,
-		ProposalType: "PARAMETER_CHANGE",
+		ProposalType: ParameterChange,
 		ExecutionState: ExecutionState{
 			Created:   true,
 			CreatedAt: now,
@@ -298,8 +298,9 @@ func updateProposalsState() {
 			proposal.ExecutionState.Active = false
 		}
 
+		// TODO (@notJoon): refactor this.
 		// (non text) proposal passed but not executed until executing window ends
-		if proposal.ProposalType != "TEXT" && // isn't text type ≈ can be executed
+		if proposal.ProposalType != Text && // isn't text type ≈ can be executed
 			proposal.ExecutionState.Passed && // passed
 			!proposal.ExecutionState.Executed && // not executed
 			!proposal.ExecutionState.Expired { // not expired

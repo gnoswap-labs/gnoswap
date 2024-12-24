@@ -6,8 +6,6 @@ import (
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
-
 	en "gno.land/r/gnoswap/v1/emission"
 )
 

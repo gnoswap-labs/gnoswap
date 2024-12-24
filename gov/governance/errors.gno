@@ -31,6 +31,7 @@ var (
 	errParseUintFailed                                = errors.New("[GNOSWAP-GOVERNANCE-022] parseUint internal failed")
 	errUnsupportedProposalType                        = errors.New("[GNOSWAP-GOVERNANCE-023] unsupported proposal type")
 	errNotRegisteredToCommunityPool                   = errors.New("[GNOSWAP-GOVERNANCE-024] token not registered to community pool")
+	errInvalidProposalType                            = errors.New("[GNOSWAP-GOVERNANCE-025] invalid proposal type")
 )
 
 func addDetailToError(err error, detail string) string {

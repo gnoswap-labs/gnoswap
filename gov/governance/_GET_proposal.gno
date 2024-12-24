@@ -25,7 +25,7 @@ func GetProposalTypeByProposalId(proposalId uint64) string {
 		))
 	}
 
-	return proposal.ProposalType
+	return proposal.ProposalType.String()
 }
 
 func GetYeaByProposalId(proposalId uint64) string {

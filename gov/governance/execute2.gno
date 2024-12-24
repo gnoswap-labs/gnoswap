@@ -81,7 +81,7 @@ func Execute2(proposalId uint64) error {
 
 func executeProposal(ctx *ExecutionContext, registry *ParameterRegistry) error {
 	// TODO: change hard-code string value to enum
-	if ctx.Proposal.ProposalType == "PARAMETER_CHANGE" {
+	if ctx.Proposal.ProposalType == ParameterChange {
 		return executeParameterChange2(ctx.Proposal.Execution.Msgs, registry)
 	}
 	return nil
@@ -216,7 +216,7 @@ func getProposal(proposalId uint64) (*ProposalInfo, error) {
 
 func validateProposalState(proposal *ProposalInfo) ExecutionValidator {
 	return ExecutionValidator{
-		isTextProposal:    proposal.ProposalType == "TEXT",
+		isTextProposal:    proposal.ProposalType == Text,
 		isAlreadyExecuted: proposal.ExecutionState.Executed,
 		isAlreadyCanceled: proposal.ExecutionState.Canceled,
 		isAlreadyRejected: proposal.ExecutionState.Rejected,

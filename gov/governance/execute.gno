@@ -39,7 +39,7 @@ func Execute(proposalId uint64) {
 		))
 	}
 
-	if proposal.ProposalType == "TEXT" {
+	if proposal.ProposalType == Text {
 		panic(addDetailToError(
 			errTextProposalNotExecutable,
 			ufmt.Sprintf("proposalId(%d) is a TEXT proposal, not executable", proposalId),
@@ -98,7 +98,7 @@ func Execute(proposalId uint64) {
 		))
 	}
 
-	if proposal.ProposalType == "COMMUNITY_POOL_SPEND" {
+	if proposal.ProposalType == CommunityPoolSpend {
 		// check if the token is registered to community pool
 		registered := cp.GetRegisteredTokens()
 		if !contains(registered, proposal.CommunityPoolSpend.TokenPath) {
@@ -112,7 +112,7 @@ func Execute(proposalId uint64) {
 		cp.TransferToken(proposal.CommunityPoolSpend.TokenPath, proposal.CommunityPoolSpend.To, proposal.CommunityPoolSpend.Amount)
 	}
 
-	if proposal.ProposalType == "PARAMETER_CHANGE" {
+	if proposal.ProposalType == ParameterChange {
 		// trigger parameter change
 		executeParameterChange(proposal.Execution.Msgs)
 	}
