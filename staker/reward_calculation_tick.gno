@@ -80,12 +80,12 @@ func (self *Tick) crossInfo(startHeight, endHeight uint64) ([]uint64, []bool) {
 }
 
 func (self *Tick) updateCross(blockNumber uint64, zeroForOne bool) {
-	cross, ok := self.cross.Get(blockNumber)
-	if !ok {
+	// cross, ok := self.cross.Get(blockNumber)
+	// if !ok {
 		self.cross.Set(blockNumber, zeroForOne)
-	} else if cross != zeroForOne {
-		self.cross.Remove(blockNumber)
-	}
+	// } else if cross != zeroForOne {
+	// 	self.cross.Remove(blockNumber)
+	// }
 }
 
 func (self *Tick) currentCross(currentHeight uint64) bool {

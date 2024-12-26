@@ -168,6 +168,7 @@ func (self *canonicalRewardState) LiquidityPerPool() (map[string]*u256.Uint) {
 		if !ok {
 			poolLiquidity = u256.Zero()
 		}
+
 		poolLiquidity = poolLiquidity.Add(poolLiquidity, deposit.liquidity)
 		liquidity[deposit.targetPoolPath] = poolLiquidity
 		return false
@@ -224,22 +225,22 @@ func (self *canonicalRewardState) CalculateReward() {
 			continue
 		}
 
-		ratio := liquidityPerPool[deposit.targetPoolPath]
-		ratio = ratio.Div(ratio, deposit.liquidity)
-
-		internal := u256.NewUint(internalRewardPerPool[deposit.targetPoolPath])
-		internal = internal.Mul(internal, deposit.liquidity)
-		internal = internal.Div(internal, liquidityPerPool[deposit.targetPoolPath])
-		externals := externalRewardPerPool[deposit.targetPoolPath]
-		for key, value := range externals {
-			external := u256.NewUint(value)
-			external = external.Mul(external, deposit.liquidity)
-			external = external.Div(external, liquidityPerPool[deposit.targetPoolPath])
-			externals[key] = external.Uint64()
+		warmup := deposit.warmups[deposit.FindWarmup(uint64(currentHeight))]
+		
+		internal, internalPenalty := warmup.CalculateReward(uint64(currentHeight), internalRewardPerPool[deposit.targetPoolPath], deposit.liquidity, liquidityPerPool[deposit.targetPoolPath])
+		poolExternals := externalRewardPerPool[deposit.targetPoolPath]
+		externals := make(map[string]uint64)
+		externalPenalties := make(map[string]uint64)
+		for key, value := range poolExternals {
+			external, externalPenalty := warmup.CalculateReward(uint64(currentHeight), value, deposit.liquidity, liquidityPerPool[deposit.targetPoolPath])
+			externals[key] = external
+			externalPenalties[key] = externalPenalty
 		}
 		rewards[i] = reward {
-			internal: internal.Uint64(), 
+			internal: internal, 
 			external: externals,
+			internalPenalty: internalPenalty,
+			externalPenalty: externalPenalties,
 		}
 	}
 
@@ -269,7 +270,6 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) reward {
 		external: nil,
 		externalPenalty: nil,
 	}
-
 }
 
 // Emulation of gns.gno emission changes
@@ -409,6 +409,14 @@ func (self *canonicalRewardState) CreatePool(poolPath string, initialTier uint64
 	self.global.poolTier.changeTier(uint64(self.CurrentHeight()), poolPath, initialTier)
 }
 
+func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
+	pool, ok := self.pool[poolPath]
+	if !ok {
+		panic("should not happen")
+	}
+	pool.MoveTick(tick)
+}
+
 // Testing helpers
 
 func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(poolPath string, expected uint64) {
@@ -417,8 +425,4 @@ func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(poolPath 
 	if actual != expected {
 		panic(ufmt.Sprintf("internal reward per pool mismatch: expected %d, got %d", expected, actual))
 	}
-}
-
-func (self *canonicalRewardState) AssertEmulatedInternalRewardPerPool(poolPath string, expected uint64) {
-
 }

@@ -167,6 +167,39 @@ func (self *Pool) TickCrossesToEligibleIntervals(
 ) []Interval {
 	intervals := make([]Interval, 0, len(tickUpperCrossHeights)+len(tickLowerCrossHeights))
 
+	var currentUpperTickCrossHeight uint64
+	var currentLowerTickCrossHeight uint64
+
+	processUpper := func() {
+		if tickUpperCrossZeroForOnes[0] {
+			// enter range, backward transition at the upper tick.
+			currentlyInRange = setInRange(currentlyInRange, true)
+			startHeight = currentUpperTickCrossHeight
+		} else {
+			// exit range, forward transition at the upper tick.
+			currentlyInRange = setInRange(currentlyInRange, false)
+			stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
+			endHeight := currentUpperTickCrossHeight
+
+			intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, stakedLiquidity, startHeight, endHeight)
+		}
+	}
+
+	processLower := func() {
+		if tickLowerCrossZeroForOnes[0] {
+			// exit range, backward transition at the lower tick.
+			currentlyInRange = setInRange(currentlyInRange, false)
+			stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
+			endHeight := currentLowerTickCrossHeight
+
+			intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, stakedLiquidity, startHeight, endHeight)
+		} else {
+			// enter range, forward transition at the lower tick.
+			currentlyInRange = setInRange(currentlyInRange, true)
+			startHeight = currentLowerTickCrossHeight
+		}
+	}
+
 	// enter/exit event MUST appear alternatively
 	// note that zeroForOne is true when backward(from upper to lower)
 	for len(tickUpperCrossHeights) != 0 || len(tickLowerCrossHeights) != 0 {
@@ -180,18 +213,7 @@ func (self *Pool) TickCrossesToEligibleIntervals(
 				doUpper = currentUpperTickCrossHeight < tickLowerCrossHeights[0]
 			}
 			if doUpper {
-				if tickUpperCrossZeroForOnes[0] {
-					// enter range, backward transition at the upper tick.
-					currentlyInRange = setInRange(currentlyInRange, true)
-					startHeight = currentUpperTickCrossHeight
-				} else {
-					// exit range, forward transition at the upper tick.
-					currentlyInRange = setInRange(currentlyInRange, false)
-					stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
-					endHeight := currentUpperTickCrossHeight
-
-					intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, stakedLiquidity, startHeight, endHeight)
-				}
+				processUpper()
 				tickUpperCrossHeights = tickUpperCrossHeights[1:]
 				tickUpperCrossZeroForOnes = tickUpperCrossZeroForOnes[1:]
 				continue
@@ -205,31 +227,38 @@ func (self *Pool) TickCrossesToEligibleIntervals(
 				doLower = currentLowerTickCrossHeight < tickUpperCrossHeights[0]
 			}
 			if doLower {
-				if tickLowerCrossZeroForOnes[0] {
-					// exit range, backward transition at the lower tick.
-					currentlyInRange = setInRange(currentlyInRange, false)
-					stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
-					endHeight := currentLowerTickCrossHeight
-
-					intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, stakedLiquidity, startHeight, endHeight)
-				} else {
-					// enter range, forward transition at the lower tick.
-					currentlyInRange = setInRange(currentlyInRange, true)
-					startHeight = currentLowerTickCrossHeight
-				}
+				processLower()
 				tickLowerCrossHeights = tickLowerCrossHeights[1:]
 				tickLowerCrossZeroForOnes = tickLowerCrossZeroForOnes[1:]
 				continue
 			}
 		}
 
-		// The price has been passed through the whole position range
+		// Either:
+		// 1. The price has been passed through the whole position range
 		// canceles each other, remaining outrange, skip.
+		// Or:
+		// 2. The price has been staying inside the position range, 
+		// "bounce" back and forth between the upper and lower tick,
+		// Or:
+		// 3. The only other case is that the price has been overflowed.
+		// Going through the max tick, appearing at the lower tick,
+		// This code assumes that this case is not happening.
+		// 
+		// In case 1 or 2, we can keep the currentlyInRange as is.
 		tickUpperCrossHeights = tickUpperCrossHeights[1:]
 		tickLowerCrossHeights = tickLowerCrossHeights[1:]
 		tickUpperCrossZeroForOnes = tickUpperCrossZeroForOnes[1:]
 		tickLowerCrossZeroForOnes = tickLowerCrossZeroForOnes[1:]
 		continue
+	}
+
+	if len(tickUpperCrossHeights) != 0 {
+		processUpper()
+	}
+
+	if len(tickLowerCrossHeights) != 0 {
+		processLower()
 	}
 
 	if currentlyInRange {
