@@ -8,6 +8,7 @@ import (
 	pusers "gno.land/p/demo/users"
 	"gno.land/r/demo/users"
 	"gno.land/r/demo/wugnot"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -18,6 +19,17 @@ import (
 	"gno.land/r/onbloc/obl"
 	"gno.land/r/onbloc/qux"
 )
+
+func init() {
+	std.TestSetRealm(std.NewUserRealm("g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5"))
+	RegisterGRC20Interface(wugnotPath, WugnotToken{})
+	RegisterGRC20Interface(gnsPath, GNSToken{})
+	RegisterGRC20Interface(barPath, BarToken{})
+	RegisterGRC20Interface(bazPath, BazToken{})
+	RegisterGRC20Interface(fooPath, FooToken{})
+	RegisterGRC20Interface(oblPath, OBLToken{})
+	RegisterGRC20Interface(quxPath, QuxToken{})
+}
 
 const (
 	ugnotDenom string = "ugnot"
@@ -39,6 +51,8 @@ const (
 	TIER_1 uint64 = 1
 	TIER_2 uint64 = 2
 	TIER_3 uint64 = 3
+
+	poolCreationFee = 100_000_000
 )
 
 const (
@@ -54,9 +68,9 @@ const (
 )
 
 var (
-	user1Addr      std.Address = "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec"
-	singlePoolPath = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
-	singlePoolPath2 = "gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000"
+	user1Addr       std.Address = "g1ecely4gjy0yl6s9kt409ll330q9hk2lj9ls3ec"
+	singlePoolPath              = "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000"
+	singlePoolPath2             = "gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000"
 )
 
 var (
@@ -69,12 +83,15 @@ type WugnotToken struct{}
 func (WugnotToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return wugnot.Transfer
 }
+
 func (WugnotToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return wugnot.TransferFrom
 }
+
 func (WugnotToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return wugnot.BalanceOf
 }
+
 func (WugnotToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return wugnot.Approve
 }
@@ -84,12 +101,15 @@ type GNSToken struct{}
 func (GNSToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return gns.Transfer
 }
+
 func (GNSToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return gns.TransferFrom
 }
+
 func (GNSToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return gns.BalanceOf
 }
+
 func (GNSToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return gns.Approve
 }
@@ -99,12 +119,15 @@ type BarToken struct{}
 func (BarToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return bar.Transfer
 }
+
 func (BarToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return bar.TransferFrom
 }
+
 func (BarToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return bar.BalanceOf
 }
+
 func (BarToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return bar.Approve
 }
@@ -114,12 +137,15 @@ type BazToken struct{}
 func (BazToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return baz.Transfer
 }
+
 func (BazToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return baz.TransferFrom
 }
+
 func (BazToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return baz.BalanceOf
 }
+
 func (BazToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return baz.Approve
 }
@@ -129,12 +155,15 @@ type FooToken struct{}
 func (FooToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return foo.Transfer
 }
+
 func (FooToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return foo.TransferFrom
 }
+
 func (FooToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return foo.BalanceOf
 }
+
 func (FooToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return foo.Approve
 }
@@ -144,12 +173,15 @@ type OBLToken struct{}
 func (OBLToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return obl.Transfer
 }
+
 func (OBLToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return obl.TransferFrom
 }
+
 func (OBLToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return obl.BalanceOf
 }
+
 func (OBLToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return obl.Approve
 }
@@ -159,12 +191,15 @@ type QuxToken struct{}
 func (QuxToken) Transfer() func(to pusers.AddressOrName, amount uint64) {
 	return qux.Transfer
 }
+
 func (QuxToken) TransferFrom() func(from, to pusers.AddressOrName, amount uint64) {
 	return qux.TransferFrom
 }
+
 func (QuxToken) BalanceOf() func(owner pusers.AddressOrName) uint64 {
 	return qux.BalanceOf
 }
+
 func (QuxToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return qux.Approve
 }
@@ -179,6 +214,7 @@ var (
 	alice       = pusers.AddressOrName(testutils.TestAddress("alice"))
 	bob         = pusers.AddressOrName(testutils.TestAddress("bob"))
 	pool        = pusers.AddressOrName(consts.POOL_ADDR)
+	router      = pusers.AddressOrName(consts.ROUTER_ADDR)
 	protocolFee = pusers.AddressOrName(consts.PROTOCOL_FEE_ADDR)
 	adminRealm  = std.NewUserRealm(users.Resolve(admin))
 	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
@@ -197,7 +233,7 @@ func InitialisePoolTest(t *testing.T) {
 	TokenApprove(t, gnsPath, admin, pool, maxApprove)
 	CreatePool(t, wugnotPath, gnsPath, fee3000, "79228162514264337593543950336", users.Resolve(admin))
 
-	//2. create position
+	// 2. create position
 	std.TestSetOrigCaller(users.Resolve(alice))
 	TokenFaucet(t, wugnotPath, alice)
 	TokenFaucet(t, gnsPath, alice)
@@ -301,7 +337,8 @@ func CreatePool(t *testing.T,
 	token1 string,
 	fee uint32,
 	sqrtPriceX96 string,
-	caller std.Address) {
+	caller std.Address,
+) {
 	t.Helper()
 
 	std.TestSetRealm(std.NewUserRealm(caller))
@@ -465,4 +502,13 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 	banker := std.GetBanker(std.BankerTypeRealmSend)
 	banker.SendCoins(addr, wugnotAddr, std.Coins{{ugnotDenom, int64(amount)}})
 	wugnot.Deposit()
+}
+
+func CreatePoolWithoutFee(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+	// set pool create fee to 0 for testing
+	pl.SetPoolCreationFeeByAdmin(0)
+	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), users.Resolve(admin))
+	CreatePool(t, bazPath, fooPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), users.Resolve(admin))
+	CreatePool(t, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), users.Resolve(admin))
 }
