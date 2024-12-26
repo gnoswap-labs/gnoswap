@@ -264,8 +264,8 @@ func validateExecutionWindow(now, windowStart, windowEnd uint64) error {
 }
 
 func validateVotes(pp *ProposalInfo) error {
-	yea := pp.Yea.Unit64()
-	nea := pp.Nay.Unit64()
+	yea := pp.Yea.Uint64()
+	nea := pp.Nay.Uint64()
 	quorum := pp.QuorumAmount
 
 	if yea < quorum {

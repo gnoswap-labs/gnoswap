@@ -200,24 +200,6 @@ func ProposeParameterChange(
 		))
 	}
 
-	// check if each execution is valid
-	for _, gov := range splitGov {
-		splitExe := strings.Split(gov, EXE_SPLIT)
-		if len(splitExe) != 3 {
-			panic(addDetailToError(
-				errInvalidInput,
-				ufmt.Sprintf("invalid execution(%s) to split by *EXE*, seems like param didn't passed", gov),
-			))
-		}
-
-		pkgPath := splitExe[0]
-		funcName := splitExe[1]
-		params := splitExe[2]
-
-		// check if msg is callable
-		callableMsg(pkgPath, funcName, params)
-	}
-
 	now := uint64(time.Now().Unix())
 	votingMax, possibleAddressWithWeight := gs.GetPossibleVotingAddressWithWeight(now - config.VotingWeightSmoothingDuration)
 

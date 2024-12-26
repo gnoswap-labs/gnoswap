@@ -67,7 +67,7 @@ func TestParameterRegistry(t *testing.T) {
 	}
 }
 
-func TestExecuteParameterChange2(t *testing.T) {
+func TestExecuteParameterChange(t *testing.T) {
 	registry := NewParameterRegistry()
 
 	registry.Register("test/pkg", "TestFunc", func(params []string) error {
@@ -114,7 +114,7 @@ func TestExecuteParameterChange2(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := executeParameterChange2(tt.msgs, registry)
+			err := executeParameterChange(tt.msgs, registry)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("executeParameterChange2() error = %v, wantErr %v", err, tt.wantErr)
 			}
