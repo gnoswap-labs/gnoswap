@@ -10,6 +10,10 @@ import (
 	"gno.land/r/demo/grc20reg"
 )
 
+var (
+	re = regexp.MustCompile(`\[gno\.land/r/[^\]]+\]`)
+)
+
 // GetToken returns a grc20.Token instance
 // if token is not registered, it will panic
 // token instance supports following methods:
@@ -70,10 +74,9 @@ func ListRegisteredTokens() []string {
 }
 
 func extractTokenPathsFromRender(render string) []string {
-	re := regexp.MustCompile(`\[gno\.land/r/[^\]]+\]`)
 	matches := re.FindAllString(render, -1)
 
-	tokenPaths := []string{}
+	tokenPaths := make([]string, 0, len(matches))
 	for _, match := range matches {
 		tokenPath := strings.Trim(match, "[]") // Remove the brackets
 		tokenPaths = append(tokenPaths, tokenPath)
