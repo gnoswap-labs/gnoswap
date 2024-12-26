@@ -2,7 +2,6 @@ package launchpad
 
 import (
 	"std"
-	"strings"
 	"time"
 
 	"gno.land/p/demo/ufmt"
@@ -479,6 +478,7 @@ func checkDepositConditions(project Project) {
 		return
 	}
 
+	caller := std.PrevRealm().Addr()
 	for _, condition := range project.conditions {
 		if condition.minAmount == 0 {
 			continue
@@ -486,9 +486,9 @@ func checkDepositConditions(project Project) {
 			// check balance
 			var balance uint64
 			if condition.tokenPath == consts.GOV_XGNS_PATH {
-				balance = xgns.BalanceOf(a2u(std.PrevRealm().Addr()))
+				balance = xgns.BalanceOf(a2u(caller))
 			} else {
-				balance = balanceOfByRegisterCall(condition.tokenPath, std.PrevRealm().Addr())
+				balance = common.BalanceOf(condition.tokenPath, caller)
 			}
 			if balance < condition.minAmount {
 				panic(addDetailToError(
