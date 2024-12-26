@@ -3,9 +3,11 @@ package router
 import (
 	"std"
 	"testing"
-	"time"
 
 	"gno.land/r/gnoswap/v1/consts"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
 )
 
 func TestExactInSwapRouteOperation_Validate(t *testing.T) {
@@ -96,9 +98,6 @@ func TestExactInSwapRoute(t *testing.T) {
 	user1Realm := std.NewUserRealm(user1Addr)
 	std.TestSetRealm(user1Realm)
 
-	bar := BarToken{}
-	baz := BazToken{}
-
 	tests := []struct {
 		name         string
 		setup        func()
@@ -113,8 +112,8 @@ func TestExactInSwapRoute(t *testing.T) {
 		{
 			name: "BAR -> BAZ",
 			setup: func() {
-				bar.Approve()(a2u(consts.ROUTER_ADDR), maxApprove)
-				baz.Approve()(a2u(consts.ROUTER_ADDR), maxApprove)
+				bar.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
+				baz.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
 				TokenFaucet(t, barPath, a2u(user1Addr))
 			},
 			inputToken:   barPath,
