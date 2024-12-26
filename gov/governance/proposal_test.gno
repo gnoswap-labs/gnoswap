@@ -1,13 +1,17 @@
 package governance
 
 import (
+	"errors"
 	"std"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
+	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	gs "gno.land/r/gnoswap/v1/gov/staker"
@@ -66,8 +70,8 @@ func TestProposeText(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			var pid uint64
 			var err error
 			func() {
@@ -76,7 +80,7 @@ func TestProposeText(t *testing.T) {
 						err = r.(error)
 					}
 				}()
-				pid = ProposeText(tc.title, tc.description)
+				pid = ProposeText(tt.title, tt.description)
 			}()
 
 			if err != nil {
@@ -92,27 +96,11 @@ func TestProposeText(t *testing.T) {
 
 			proposal := prop.(ProposalInfo)
 
-			if proposal.Title != tc.title {
-				t.Errorf("Title mismatch: got %s, want %s", proposal.Title, tc.title)
-			}
-
-			if proposal.Description != tc.description {
-				t.Errorf("Description mismatch: got %s, want %s",
-					proposal.Description, tc.description)
-			}
-
-			if proposal.ProposalType != Text {
-				t.Errorf("Incorrect proposal type: got %s, want Text",
-					proposal.ProposalType)
-			}
-
-			if !proposal.ExecutionState.Created {
-				t.Error("Proposal should be marked as created")
-			}
-
-			if !proposal.ExecutionState.Upcoming {
-				t.Error("Proposal should be marked as upcoming")
-			}
+			uassert.Equal(t, proposal.Title, tt.title)
+			uassert.Equal(t, proposal.Description, tt.description)
+			uassert.Equal(t, proposal.ProposalType.String(), Text.String())
+			uassert.True(t, proposal.ExecutionState.Created)
+			uassert.True(t, proposal.ExecutionState.Upcoming)
 		})
 	}
 }
@@ -154,8 +142,8 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			var pid uint64
 			var err error
 			func() {
@@ -165,7 +153,7 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 					}
 				}()
 				pid = ProposeCommunityPoolSpend(
-					tc.title, tc.description, tc.to, tc.tokenPath, tc.amount)
+					tt.title, tt.description, tt.to, tt.tokenPath, tt.amount)
 			}()
 
 			if err != nil {
@@ -181,20 +169,9 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 
 			proposal := prop.(ProposalInfo)
 
-			if proposal.ProposalType != CommunityPoolSpend {
-				t.Errorf("Incorrect proposal type: got %s, want CommunityPoolSpend",
-					proposal.ProposalType)
-			}
-
-			if proposal.CommunityPoolSpend.To != tc.to {
-				t.Errorf("Recipient mismatch: got %s, want %s",
-					proposal.CommunityPoolSpend.To, tc.to)
-			}
-
-			if proposal.CommunityPoolSpend.Amount != tc.amount {
-				t.Errorf("Amount mismatch: got %d, want %d",
-					proposal.CommunityPoolSpend.Amount, tc.amount)
-			}
+			uassert.Equal(t, proposal.ProposalType.String(), CommunityPoolSpend.String())
+			uassert.Equal(t, proposal.CommunityPoolSpend.To, tt.to)
+			uassert.Equal(t, proposal.CommunityPoolSpend.Amount, tt.amount)
 		})
 	}
 }
@@ -344,11 +321,11 @@ func TestUpdateProposalsState(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
 			proposals = avl.NewTree()
 
-			proposal := tc.setupProposal(tc.currentTime)
+			proposal := tt.setupProposal(tt.currentTime)
 			proposals.Set(strconv.Itoa(int(1)), proposal)
 
 			updateProposalsState()
@@ -358,7 +335,78 @@ func TestUpdateProposalsState(t *testing.T) {
 				t.Error("Proposal was not stored")
 				return
 			}
-			tc.validate(t, updatedProposal.(ProposalInfo))
+			tt.validate(t, updatedProposal.(ProposalInfo))
+		})
+	}
+}
+
+func TestProposeParameterChange(t *testing.T) {
+	resetGlobalStateProposal(t)
+
+	tests := []struct {
+		name          string
+		proposer      std.Address
+		title         string
+		description   string
+		numToExecute  uint64
+		executions    string
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name:         "Valid parameter change proposal",
+			proposer:     proposalAddr,
+			title:        "Change Voting Period",
+			description:  "Update voting period to 14 days",
+			numToExecute: 2,
+			executions:   "gno.land/r/gnoswap/v1/gns*EXE*SetAvgBlockTimeInMs*EXE*123*GOV*gno.land/r/gnoswap/v1/community_pool*EXE*TransferToken*EXE*gno.land/r/gnoswap/v1/gns,g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d,905",
+			expectError:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resetGlobalStateProposal(t)
+
+			var pid uint64
+			var err error
+			defer func() {
+				if r := recover(); r != nil {
+					t.Errorf("Unexpected error: %v", r)
+				}
+			}()
+			pid = ProposeParameterChange(
+				tt.title,
+				tt.description,
+				tt.numToExecute,
+				tt.executions,
+			)
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			prop, exists := proposals.Get(strconv.Itoa(int(pid)))
+			if !exists {
+				t.Error("Proposal was not stored")
+				return
+			}
+
+			proposal := prop.(ProposalInfo)
+
+			uassert.Equal(t, proposal.Title, tt.title)
+			uassert.Equal(t, proposal.Description, tt.description)
+			uassert.Equal(t, proposal.ProposalType.String(), ParameterChange.String())
+
+			uassert.Equal(t, proposal.Execution.Num, tt.numToExecute)
+			uassert.Equal(t, len(proposal.Execution.Msgs), int(tt.numToExecute))
+
+			uassert.True(t, proposal.ExecutionState.Created)
+			uassert.True(t, proposal.ExecutionState.Upcoming)
+			uassert.False(t, proposal.ExecutionState.Active)
+			uassert.True(t, proposal.Yea.IsZero())
+			uassert.True(t, proposal.Nay.IsZero())
 		})
 	}
 }
