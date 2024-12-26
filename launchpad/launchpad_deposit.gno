@@ -3,6 +3,7 @@ package launchpad
 import (
 	"std"
 	"strings"
+	"strconv"
 	"time"
 
 	"gno.land/p/demo/ufmt"
@@ -45,7 +46,7 @@ func DepositGns(
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("launchpad_deposit.gno__DepositGns() || projectTierId(%s) not found", targetProjectTierId),
+			ufmt.Sprintf("projectTierId(%s) not found", targetProjectTierId),
 		))
 	}
 
@@ -56,7 +57,7 @@ func DepositGns(
 	if !checkProjectActive(project) {
 		panic(addDetailToError(
 			errInactiveProject,
-			ufmt.Sprintf("launchpad_deposit.gno__DepositGns() || projectTierId(%s) > project is not active", targetProjectTierId),
+			ufmt.Sprintf("projectTierId(%s) > project is not active", targetProjectTierId),
 		))
 	}
 
@@ -65,7 +66,7 @@ func DepositGns(
 	if !checkTierActive(project, tier) {
 		panic(addDetailToError(
 			errInactiveTier,
-			ufmt.Sprintf("launchpad_deposit.gno__DepositGns() || projectTierId(%s) > tier is not active", targetProjectTierId),
+			ufmt.Sprintf("projectTierId(%s) > tier is not active", targetProjectTierId),
 		))
 	}
 
@@ -228,7 +229,7 @@ func CollectDepositGns() uint64 {
 		if !exist {
 			panic(addDetailToError(
 				errDataNotFound,
-				ufmt.Sprintf("launchpad_deposit.gno__CollectDepositGns() || depositId(%s) > projectId(%s) not found", depositId, deposit.projectId),
+				ufmt.Sprintf("depositId(%s) > projectId(%s) not found", depositId, deposit.projectId),
 			))
 		}
 
@@ -318,7 +319,7 @@ func CollectDepositGnsByProjectId(projectId string) uint64 {
 		if !exist {
 			panic(addDetailToError(
 				errDataNotFound,
-				ufmt.Sprintf("launchpad_deposit.gno__CollectDepositGnsByProjectId() || depositId(%s) > projectId(%s) not found", depositId, deposit.projectId),
+				ufmt.Sprintf("depositId(%s) > projectId(%s) not found", depositId, deposit.projectId),
 			))
 		}
 
@@ -441,7 +442,7 @@ func CollectDepositGnsByDepositId(depositId string) uint64 {
 		xgns.Burn(a2u(consts.LAUNCHPAD_ADDR), deposit.amount)
 		gns.Transfer(a2u(caller), deposit.amount)
 
-		return deposit.amount //
+		return deposit.amount
 	}
 
 	return 0
@@ -455,7 +456,7 @@ func getProjectIdFromTierId(tierId string) string {
 	if err != nil {
 		panic(addDetailToError(
 			errInvalidTier,
-			ufmt.Sprintf("launchpad_deposit.gno__getProjectIdFromTierId() || invalid tierId: %s", tierId),
+			ufmt.Sprintf("invalid tierId: %s", tierId),
 		))
 	}
 
@@ -467,7 +468,7 @@ func getProjectIdAndTierFromTierId(tierId string) (string, string) {
 	if err != nil {
 		panic(addDetailToError(
 			errInvalidTier,
-			ufmt.Sprintf("launchpad_deposit.gno__getProjectIdAndTierFromTierId() || invalid tierId: %s", tierId),
+			ufmt.Sprintf("invalid tierId: %s", tierId),
 		))
 	}
 
@@ -493,7 +494,7 @@ func checkDepositConditions(project Project) {
 			if balance < condition.minAmount {
 				panic(addDetailToError(
 					errNotEnoughBalance,
-					ufmt.Sprintf("launchpad_deposit.gno__checkDepositConditions() || insufficient balance(%d) for token(%s)", balance, condition.tokenPath),
+					ufmt.Sprintf("insufficient balance(%d) for token(%s)", balance, condition.tokenPath),
 				))
 			}
 		}
@@ -533,7 +534,7 @@ func getTier(project Project, tierStr string) Tier {
 	default:
 		panic(addDetailToError(
 			errInvalidTier,
-			ufmt.Sprintf("launchpad_deposit.gno__getTier() || invalid tierStr: %s", tierStr),
+			ufmt.Sprintf("invalid tierStr: %s", tierStr),
 		))
 	}
 }
@@ -549,7 +550,7 @@ func setTier(project Project, tierStr string, tier Tier) Project {
 	default:
 		panic(addDetailToError(
 			errInvalidTier,
-			ufmt.Sprintf("launchpad_deposit.gno__setTier() || invalid tierStr: %s", tierStr),
+			ufmt.Sprintf("invalid tierStr: %s", tierStr),
 		))
 	}
 

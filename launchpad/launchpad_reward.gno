@@ -132,7 +132,7 @@ func CollectRewardByDepositId(depositId string) uint64 {
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("launchpad_reward.gno__CollectRewardByDepositId() || depositId(%s) not found", depositId),
+			ufmt.Sprintf("depositId(%s) not found", depositId),
 		))
 	}
 
@@ -323,7 +323,7 @@ func calculateDepositReward() {
 				default:
 					panic(addDetailToError(
 						errInvalidTier,
-						ufmt.Sprintf("launchpad_reward.gno__calculateDepositReward() || invalid tier(%s)", deposit.tier),
+						ufmt.Sprintf("invalid tier(%s)", deposit.tier),
 					))
 				}
 				if sinceLast == 0 {
