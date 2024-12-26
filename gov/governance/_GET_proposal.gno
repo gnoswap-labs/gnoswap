@@ -1,113 +1,37 @@
 package governance
 
-import (
-	"gno.land/p/demo/ufmt"
-)
-
 func GetProposerByProposalId(proposalId uint64) string {
-	proposal, exist := proposals[proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("proposalId(%d) not found", proposalId),
-		))
-	}
-
-	return proposal.Proposer.String()
+	return mustGetProposal(proposalId).Proposer.String()
 }
 
 func GetProposalTypeByProposalId(proposalId uint64) string {
-	proposal, exist := proposals[proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("proposalId(%d) not found", proposalId),
-		))
-	}
-
-	return proposal.ProposalType.String()
+	return mustGetProposal(proposalId).ProposalType.String()
 }
 
 func GetYeaByProposalId(proposalId uint64) string {
-	proposal, exist := proposals[proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("proposalId(%d) not found", proposalId),
-		))
-	}
-
-	return proposal.Yea.ToString()
+	return mustGetProposal(proposalId).Yea.ToString()
 }
 
 func GetNayByProposalId(proposalId uint64) string {
-	proposal, exist := proposals[proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("proposalId(%d) not found", proposalId),
-		))
-	}
-
-	return proposal.Nay.ToString()
+	return mustGetProposal(proposalId).Nay.ToString()
 }
 
 func GetConfigVersionByProposalId(proposalId uint64) uint64 {
-	proposal, exist := proposals[proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("proposalId(%d) not found", proposalId),
-		))
-	}
-
-	return proposal.ConfigVersion
+	return mustGetProposal(proposalId).ConfigVersion
 }
 
 func GetQuorumAmountByProposalId(proposalId uint64) uint64 {
-	proposal, exist := proposals[proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("proposalId(%d) not found", proposalId),
-		))
-	}
-
-	return proposal.QuorumAmount
+	return mustGetProposal(proposalId).QuorumAmount
 }
 
 func GetTitleByProposalId(proposalId uint64) string {
-	proposal, exist := proposals[proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("proposalId(%d) not found", proposalId),
-		))
-	}
-
-	return proposal.Title
+	return mustGetProposal(proposalId).Title
 }
 
 func GetDescriptionByProposalId(proposalId uint64) string {
-	proposal, exist := proposals[proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("proposalId(%d) not found", proposalId),
-		))
-	}
-
-	return proposal.Description
+	return mustGetProposal(proposalId).Description
 }
 
 func GetExecutionStateByProposalId(proposalId uint64) ExecutionState {
-	proposal, exist := proposals[proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("proposalId(%d) not found", proposalId),
-		))
-	}
-
-	return proposal.ExecutionState
+	return mustGetProposal(proposalId).ExecutionState
 }

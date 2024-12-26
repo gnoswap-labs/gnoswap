@@ -2,9 +2,11 @@ package governance
 
 import (
 	"std"
+	"strconv"
 	"strings"
 	"time"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -17,8 +19,10 @@ import (
 
 var (
 	proposalId               uint64
-	proposals                = make(map[uint64]ProposalInfo) // proposalId -> ProposalInfo
-	latestProposalByProposer = make(map[std.Address]uint64)  // proposer -> proposalId
+	// proposals                = make(map[uint64]ProposalInfo) // proposalId -> ProposalInfo
+	// latestProposalByProposer = make(map[std.Address]uint64)  // proposer -> proposalId
+	proposals                = avl.NewTree()
+	latestProposalByProposer = avl.NewTree()
 )
 
 const (
@@ -71,8 +75,10 @@ func ProposeText(
 	}
 
 	proposalId++
-	proposals[proposalId] = proposal
-	latestProposalByProposer[proposer] = proposalId
+	// proposals[proposalId] = proposal
+	// latestProposalByProposer[proposer] = proposalId
+	proposals.Set(strconv.Itoa(int(proposalId)), proposal)
+	latestProposalByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -140,8 +146,10 @@ func ProposeCommunityPoolSpend(
 	}
 
 	proposalId++
-	proposals[proposalId] = proposal
-	latestProposalByProposer[proposer] = proposalId
+	// proposals[proposalId] = proposal
+	// latestProposalByProposer[proposer] = proposalId
+	proposals.Set(strconv.Itoa(int(proposalId)), proposal)
+	latestProposalByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -226,8 +234,10 @@ func ProposeParameterChange(
 	}
 
 	proposalId++
-	proposals[proposalId] = proposal
-	latestProposalByProposer[proposer] = proposalId
+	// proposals[proposalId] = proposal
+	// latestProposalByProposer[proposer] = proposalId
+	proposals.Set(strconv.Itoa(int(proposalId)), proposal)
+	latestProposalByProposer.Set(proposer.String(), proposalId)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -256,15 +266,17 @@ type proposalStateUpdater struct {
 func updateProposalsState() {
 	now := uint64(time.Now().Unix())
 
-	for id, proposal := range proposals {
+	proposals.Iterate("", "", func(key string, value interface{}) bool {
+		proposal := value.(ProposalInfo)
 		updater := newProposalStateUpdater(&proposal, now)
 
 		updater.updateVotingState()
 		updater.updateVotingResult()
 		updater.updateExecutionState()
 
-		proposals[id] = *updater.proposal
-	}
+		proposals.Set(key, *updater.proposal)
+		return false
+	})
 }
 
 // newProposalStateUpdater creates a new proposalStateUpdater.

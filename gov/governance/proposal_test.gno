@@ -2,9 +2,11 @@ package governance
 
 import (
 	"std"
+	"strconv"
 	"testing"
 	"time"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -24,8 +26,8 @@ var (
 func resetGlobalStateProposal(t *testing.T) {
 	t.Helper()
 	proposalId = 0
-	proposals = make(map[uint64]ProposalInfo)
-	latestProposalByProposer = make(map[std.Address]uint64)
+	proposals = avl.NewTree()
+	latestProposalByProposer = avl.NewTree()
 }
 
 func mockCheckEnoughXGnsToPropose(proposer std.Address) (bool, uint64, uint64) {
@@ -82,11 +84,13 @@ func TestProposeText(t *testing.T) {
 				return
 			}
 
-			proposal, exists := proposals[pid]
+			prop, exists := proposals.Get(strconv.Itoa(int(pid)))
 			if !exists {
 				t.Error("Proposal was not stored")
 				return
 			}
+
+			proposal := prop.(ProposalInfo)
 
 			if proposal.Title != tc.title {
 				t.Errorf("Title mismatch: got %s, want %s", proposal.Title, tc.title)
@@ -169,11 +173,13 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 				return
 			}
 
-			proposal, exists := proposals[pid]
+			prop, exists := proposals.Get(strconv.Itoa(int(pid)))
 			if !exists {
 				t.Error("Proposal was not stored")
 				return
 			}
+
+			proposal := prop.(ProposalInfo)
 
 			if proposal.ProposalType != CommunityPoolSpend {
 				t.Errorf("Incorrect proposal type: got %s, want CommunityPoolSpend",
@@ -341,15 +347,19 @@ func TestUpdateProposalsState(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			proposals = make(map[uint64]ProposalInfo)
+			proposals = avl.NewTree()
 
 			proposal := tc.setupProposal(tc.currentTime)
-			proposals[1] = proposal
+			proposals.Set(strconv.Itoa(int(1)), proposal)
 
 			updateProposalsState()
 
-			updatedProposal := proposals[1]
-			tc.validate(t, updatedProposal)
+			updatedProposal, exists := proposals.Get(strconv.Itoa(int(1)))
+			if !exists {
+				t.Error("Proposal was not stored")
+				return
+			}
+			tc.validate(t, updatedProposal.(ProposalInfo))
 		})
 	}
 }

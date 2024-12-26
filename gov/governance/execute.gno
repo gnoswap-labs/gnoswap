@@ -181,10 +181,15 @@ func validateInitialState() {
 
 func getProposal(proposalId uint64) (*ProposalInfo, error) {
 	// TODO: change to avl API
-	proposal, exists := proposals[proposalId]
+	// proposal, exists := proposals[proposalId]
+	// if !exists {
+	// 	return nil, ufmt.Errorf("proposal %d not found", proposalId)
+	// }
+	result, exists := proposals.Get(strconv.Itoa(int(proposalId)))
 	if !exists {
 		return nil, ufmt.Errorf("proposal %d not found", proposalId)
 	}
+	proposal := result.(ProposalInfo)
 
 	return &proposal, nil
 }
@@ -284,7 +289,8 @@ func updateProposalState(ctx *ExecutionContext) {
 	ctx.Proposal.ExecutionState.ExecutedAt = ctx.Now
 	ctx.Proposal.ExecutionState.Upcoming = false
 	ctx.Proposal.ExecutionState.Active = false
-	proposals[ctx.ProposalId] = *ctx.Proposal
+	// proposals[ctx.ProposalId] = *ctx.Proposal
+	proposals.Set(strconv.Itoa(int(ctx.ProposalId)), *ctx.Proposal)
 }
 
 func validateCommunityPoolToken(pp *ProposalInfo) error {

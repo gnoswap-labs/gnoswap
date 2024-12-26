@@ -2,6 +2,7 @@ package governance
 
 import (
 	"std"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,21 +12,38 @@ import (
 	en "gno.land/r/gnoswap/v1/emission"
 )
 
+func createProposalJsonNode(id uint64, proposal ProposalInfo) *json.Node {
+	proposalObj := json.ObjectNode("", nil)
+	proposalObj.AppendObject("id", json.StringNode("id", ufmt.Sprintf("%d", id)))
+	proposalObj.AppendObject("configVersion", json.StringNode("configVersion", ufmt.Sprintf("%d", proposal.ConfigVersion)))
+	proposalObj.AppendObject("proposer", json.StringNode("proposer", proposal.Proposer.String()))
+	proposalObj.AppendObject("status", json.StringNode("status", b64Encode(getProposalStatus(id))))
+	proposalObj.AppendObject("type", json.StringNode("type", proposal.ProposalType.String()))
+	proposalObj.AppendObject("title", json.StringNode("title", proposal.Title))
+	proposalObj.AppendObject("description", json.StringNode("description", proposal.Description))
+	proposalObj.AppendObject("vote", json.StringNode("vote", b64Encode(getProposalVotes(id))))
+	proposalObj.AppendObject("extra", json.StringNode("extra", b64Encode(getProposalExtraData(id))))
+	return proposalObj
+}
+
 // GetProposals returns all proposals with necessary information.
 func GetProposals() string {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	if len(proposals) == 0 {
+	if proposals.Size() == 0 {
 		return ""
 	}
 
 	proposalsObj := metaNode()
 	proposalArr := json.ArrayNode("", nil)
-	for proposalId, _ := range proposals {
+
+	proposals.Iterate("", "", func(key string, value interface{}) bool {
 		proposalObj := getProposalById(proposalId)
 		proposalArr.AppendArray(proposalObj)
-	}
+		return true
+	})
+
 	proposalsObj.AppendObject("proposals", proposalArr)
 
 	return marshal(proposalsObj)
@@ -36,8 +54,8 @@ func GetProposalById(id uint64) string {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	_, exist := proposals[id]
-	if !exist {
+	_, exists := proposals.Get(strconv.Itoa(int(id)))
+	if !exists {
 		return ""
 	}
 
@@ -52,23 +70,8 @@ func GetProposalById(id uint64) string {
 
 // helper function for GetProposals and GetProposalById
 func getProposalById(id uint64) *json.Node {
-	proposal, exist := proposals[id]
-	if !exist {
-		return nil
-	}
-
-	proposalObj := json.ObjectNode("", nil)
-	proposalObj.AppendObject("id", json.StringNode("id", ufmt.Sprintf("%d", id)))
-	proposalObj.AppendObject("configVersion", json.StringNode("configVersion", ufmt.Sprintf("%d", proposal.ConfigVersion)))
-	proposalObj.AppendObject("proposer", json.StringNode("proposer", proposal.Proposer.String()))
-	proposalObj.AppendObject("status", json.StringNode("status", b64Encode(getProposalStatus(id))))
-	proposalObj.AppendObject("type", json.StringNode("type", proposal.ProposalType.String()))
-	proposalObj.AppendObject("title", json.StringNode("title", proposal.Title))
-	proposalObj.AppendObject("description", json.StringNode("description", proposal.Description))
-	proposalObj.AppendObject("vote", json.StringNode("vote", b64Encode(getProposalVotes(id))))
-	proposalObj.AppendObject("extra", json.StringNode("extra", b64Encode(getProposalExtraData(id))))
-
-	return proposalObj
+	proposal := mustGetProposal(id)
+	return createProposalJsonNode(id, proposal)
 }
 
 // GetVoteStatusFromProposalById returns the vote status(max, yes, no) of a proposal.
@@ -76,8 +79,8 @@ func GetVoteStatusFromProposalById(id uint64) string {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	_, exist := proposals[id]
-	if !exist {
+	_, exists := proposals.Get(strconv.Itoa(int(id)))
+	if !exists {
 		return ""
 	}
 
@@ -99,17 +102,18 @@ func GetVotesByAddress(addr std.Address) string {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	if _, exist := userVotes[addr]; !exist {
+	if _, exist := userVotes.Get(addr.String()); !exist {
 		return ""
 	}
 
 	votesObj := metaNode()
-
 	votesArr := json.ArrayNode("", nil)
-	for proposalId, _ := range userVotes[addr] {
-		voteObj := getVoteByAddressFromProposalById(addr, proposalId)
+
+	userVotes.Iterate(addr.String(), "", func(key string, value interface{}) bool {
+		voteObj := createVoteJsonNode(addr, proposalId, value.(voteWithWeight))
 		votesArr.AppendArray(voteObj)
-	}
+		return true
+	})
 	votesObj.AppendObject("votes", votesArr)
 
 	return marshal(votesObj)
@@ -120,56 +124,44 @@ func GetVoteByAddressFromProposalById(addr std.Address, id uint64) string {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	if _, exist := userVotes[addr]; !exist {
-		return ""
-	}
-
-	if _, exist := userVotes[addr][id]; !exist {
+	vote, exists := getUserVote(addr, id)
+	if !exists {
 		return ""
 	}
 
 	votesObj := metaNode()
 	voteArr := json.ArrayNode("", nil)
-	voteObj := getVoteByAddressFromProposalById(addr, id)
+	voteObj := createVoteJsonNode(addr, id, vote)
 	voteArr.AppendArray(voteObj)
 	votesObj.AppendObject("votes", voteArr)
 
 	return marshal(votesObj)
 }
 
-// helper function for GetVotesByAddress and GetVoteByAddressFromProposalById
-func getVoteByAddressFromProposalById(addr std.Address, id uint64) *json.Node {
-	if _, exist := userVotes[addr]; !exist {
-		return nil
-	}
 
-	if _, exist := userVotes[addr][id]; !exist {
-		return nil
-	}
-
+func createVoteJsonNode(addr std.Address, id uint64, vote voteWithWeight) *json.Node {
 	voteObj := json.ObjectNode("", nil)
 	voteObj.AppendObject("proposalId", json.StringNode("proposalId", ufmt.Sprintf("%d", id)))
-	voteObj.AppendObject("voteYes", json.StringNode("yes", ufmt.Sprintf("%t", userVotes[addr][id].Yes)))
-	voteObj.AppendObject("voteWeight", json.StringNode("weight", ufmt.Sprintf("%d", userVotes[addr][id].Weight)))
-	voteObj.AppendObject("voteHeight", json.StringNode("height", ufmt.Sprintf("%d", userVotes[addr][id].VotedHeight)))
-	voteObj.AppendObject("voteTimestamp", json.StringNode("timestamp", ufmt.Sprintf("%d", userVotes[addr][id].VotedAt)))
-
+	voteObj.AppendObject("voteYes", json.StringNode("yes", ufmt.Sprintf("%t", vote.Yes)))
+	voteObj.AppendObject("voteWeight", json.StringNode("weight", ufmt.Sprintf("%d", vote.Weight)))
+	voteObj.AppendObject("voteHeight", json.StringNode("height", ufmt.Sprintf("%d", vote.VotedHeight)))
+	voteObj.AppendObject("voteTimestamp", json.StringNode("timestamp", ufmt.Sprintf("%d", vote.VotedAt)))
 	return voteObj
 }
 
 // getProposalExtraData returns the extra data of a proposal based on its type.
 func getProposalExtraData(proposalId uint64) string {
-	proposal, exist := proposals[proposalId]
+	proposal, exist := proposals.Get(strconv.Itoa(int(proposalId)))
 	if !exist {
 		return ""
 	}
 
-	switch proposal.ProposalType {
-	case "TEXT":
+	switch proposal.(ProposalInfo).ProposalType {
+	case Text:
 		return ""
-	case "COMMUNITY_POOL_SPEND":
+	case CommunityPoolSpend:
 		return getCommunityPoolSpendProposalData(proposalId)
-	case "PARAMETER_CHANGE":
+	case ParameterChange:
 		return getParameterChangeProposalData(proposalId)
 	}
 
@@ -181,7 +173,7 @@ func getProposalExtraData(proposalId uint64) string {
 // 2. tokenPath
 // 3. amount
 func getCommunityPoolSpendProposalData(proposalId uint64) string {
-	proposal := proposals[proposalId]
+	proposal := mustGetProposal(proposalId)
 
 	proposalObj := json.ObjectNode("", nil)
 	proposalObj.AppendObject("to", json.StringNode("to", proposal.CommunityPoolSpend.To.String()))
@@ -193,7 +185,7 @@ func getCommunityPoolSpendProposalData(proposalId uint64) string {
 
 // parameter change proposal has three extra data
 func getParameterChangeProposalData(proposalId uint64) string {
-	proposal := proposals[proposalId]
+	proposal := mustGetProposal(proposalId)
 
 	msgs := proposal.Execution.Msgs
 	msgsStr := strings.Join(msgs, "*GOV*")
@@ -203,10 +195,12 @@ func getParameterChangeProposalData(proposalId uint64) string {
 
 // getProposalStatus returns the status of a proposal.
 func getProposalStatus(id uint64) string {
-	proposal, exist := proposals[id]
+	prop, exist := proposals.Get(strconv.Itoa(int(id)))
 	if !exist {
 		return ""
 	}
+
+	proposal := prop.(ProposalInfo)
 
 	proposalObj := json.ObjectNode("", nil)
 	proposalObj.AppendObject("CreatedAt", json.StringNode("CreatedAt", ufmt.Sprintf("%d", proposal.ExecutionState.CreatedAt)))
@@ -240,10 +234,12 @@ func getProposalStatus(id uint64) string {
 
 // getProposalVotes returns the votes of a proposal.
 func getProposalVotes(id uint64) string {
-	proposal, exist := proposals[id]
+	prop, exist := proposals.Get(strconv.Itoa(int(id)))
 	if !exist {
 		return ""
 	}
+
+	proposal := prop.(ProposalInfo)
 
 	proposalObj := json.ObjectNode("", nil)
 

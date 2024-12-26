@@ -2,9 +2,11 @@ package governance
 
 import (
 	"std"
+	"strconv"
 	"testing"
 	"time"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 
@@ -34,7 +36,7 @@ func TestVote(t *testing.T) {
 			name: "Successful YES vote",
 			setup: func() uint64 {
 				pid := uint64(1)
-				proposals[pid] = ProposalInfo{
+				proposals.Set(strconv.Itoa(int(pid)), ProposalInfo{
 					ConfigVersion: 1,
 					ExecutionState: ExecutionState{
 						Created:   true,
@@ -45,14 +47,18 @@ func TestVote(t *testing.T) {
 					PossibleAddressWithWeight: map[std.Address]uint64{
 						voter: 100,
 					},
-				}
+				})
 				return pid
 			},
 			yes:         true,
 			expectError: false,
 			validate: func(t *testing.T, voteKey string) {
-				// Verify proposal state
-				proposal := proposals[1]
+				prop, exists := proposals.Get(strconv.Itoa(int(1)))
+				if !exists {
+					t.Error("Proposal was not stored")
+					return
+				}
+				proposal := prop.(ProposalInfo)
 				if proposal.Yea.Cmp(u256.NewUint(100)) != 0 {
 					t.Errorf("Expected Yea votes to be 100, got %v", proposal.Yea)
 				}
@@ -60,26 +66,27 @@ func TestVote(t *testing.T) {
 					t.Errorf("Expected Nay votes to be 0, got %v", proposal.Nay)
 				}
 
-				// Verify vote record
-				if !votes[voteKey] {
+				value, exists := votes.Get(voteKey)
+				if !exists || !value.(bool) {
 					t.Error("Vote record not properly stored")
 				}
 
 				// Verify user vote record
-				userVote := userVotes[voter][1]
-				if !userVote.Yes {
-					t.Error("User vote record YES flag not properly stored")
+				userVote, exists := userVotes.Get(voter.String())
+				if !exists {
+					t.Error("User vote record not properly stored")
 				}
-				if userVote.Weight != 100 {
-					t.Errorf("User vote weight mismatch: got %v, want 100", userVote.Weight)
-				}
+
+				weight := userVote.(voteWithWeight)
+				uassert.True(t, weight.Yes)
+				uassert.Equal(t, weight.Weight, uint64(100))
 			},
 		},
 		{
 			name: "Successful NO vote",
 			setup: func() uint64 {
 				pid := uint64(2)
-				proposals[pid] = ProposalInfo{
+				proposals.Set(strconv.Itoa(int(pid)), ProposalInfo{
 					ConfigVersion: 1,
 					ExecutionState: ExecutionState{
 						Created:   true,
@@ -90,26 +97,27 @@ func TestVote(t *testing.T) {
 					PossibleAddressWithWeight: map[std.Address]uint64{
 						voter: 100,
 					},
-				}
+				})
 				return pid
 			},
 			yes:         false,
 			expectError: false,
 			validate: func(t *testing.T, voteKey string) {
-				proposal := proposals[2]
-				if proposal.Yea.Cmp(u256.NewUint(0)) != 0 {
-					t.Errorf("Expected Yea votes to be 0, got %v", proposal.Yea)
+				prop, exists := proposals.Get(strconv.Itoa(int(2)))
+				if !exists {
+					t.Error("Proposal was not stored")
+					return
 				}
-				if proposal.Nay.Cmp(u256.NewUint(100)) != 0 {
-					t.Errorf("Expected Nay votes to be 100, got %v", proposal.Nay)
-				}
+				proposal := prop.(ProposalInfo)
+				uassert.Equal(t, proposal.Yea.ToString(), "0")
+				uassert.Equal(t, proposal.Nay.ToString(), "100")
 			},
 		},
 		{
 			name: "Vote before voting period starts",
 			setup: func() uint64 {
 				pid := uint64(3)
-				proposals[pid] = ProposalInfo{
+				proposals.Set(strconv.Itoa(int(pid)), ProposalInfo{
 					ConfigVersion: 1,
 					ExecutionState: ExecutionState{
 						Created:   true,
@@ -118,7 +126,7 @@ func TestVote(t *testing.T) {
 					PossibleAddressWithWeight: map[std.Address]uint64{
 						voter: 100,
 					},
-				}
+				})
 				return pid
 			},
 			expectError: true,
@@ -127,7 +135,7 @@ func TestVote(t *testing.T) {
 			name: "Vote on canceled proposal",
 			setup: func() uint64 {
 				pid := uint64(5)
-				proposals[pid] = ProposalInfo{
+				proposals.Set(strconv.Itoa(int(pid)), ProposalInfo{
 					ConfigVersion: 1,
 					ExecutionState: ExecutionState{
 						Created:   true,
@@ -137,7 +145,7 @@ func TestVote(t *testing.T) {
 					PossibleAddressWithWeight: map[std.Address]uint64{
 						voter: 100,
 					},
-				}
+				})
 				return pid
 			},
 			expectError: true,
@@ -146,7 +154,7 @@ func TestVote(t *testing.T) {
 			name: "Double voting attempt",
 			setup: func() uint64 {
 				pid := uint64(6)
-				proposals[pid] = ProposalInfo{
+				proposals.Set(strconv.Itoa(int(pid)), ProposalInfo{
 					ConfigVersion: 1,
 					ExecutionState: ExecutionState{
 						Created:   true,
@@ -155,10 +163,10 @@ func TestVote(t *testing.T) {
 					PossibleAddressWithWeight: map[std.Address]uint64{
 						voter: 100,
 					},
-				}
+				})
 				// Pre-existing vote
 				voteKey := createVoteKey(pid, voter.String())
-				votes[voteKey] = true
+				votes.Set(voteKey, true)
 				return pid
 			},
 			expectError: true,
@@ -167,14 +175,10 @@ func TestVote(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Reset state for each test
-			votes = make(map[string]bool)
-			userVotes = make(map[std.Address]map[uint64]voteWithWeight)
+			resetVoteEnv(t)
 
-			// Setup test case
 			pid := tc.setup()
 
-			// Execute test
 			var voteKey string
 			var err error
 			func() {
@@ -187,9 +191,7 @@ func TestVote(t *testing.T) {
 			}()
 
 			if tc.expectError {
-				if err == nil {
-					t.Fatal("Expected error but got none")
-				}
+				uassert.Error(t, err)
 				return
 			}
 		})
@@ -346,9 +348,9 @@ func TestNewVoteState(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.expectedState.hasUserVoted {
-				votes[voteKey] = true
+				votes.Set(voteKey, true)
 			} else {
-				delete(votes, voteKey)
+				votes.Remove(voteKey)
 			}
 
 			state, err := newVoteState(tt.proposal, voteKey, voter, tt.now)
@@ -497,4 +499,10 @@ func TestVoteExecutor_Execute(t *testing.T) {
 			}
 		})
 	}
+}
+
+func resetVoteEnv(t *testing.T) {
+	t.Helper()
+	votes = avl.NewTree()
+	userVotes = avl.NewTree()
 }

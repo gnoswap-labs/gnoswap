@@ -9,8 +9,31 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 )
 
+// Helper function to validate and get vote information
+func getVoteInfoFromKey(voteKey string) (voteWithWeight, bool) {
+	_, exists := votes.Get(voteKey)
+	if !exists {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("voteKey(%s) not found", voteKey),
+		))
+	}
+
+	pid, addr := divideVoteKeyToProposalIdAndUser(voteKey)
+
+	voteInfo, exists := getUserVote(addr, pid)
+	if !exists {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("voteKey(%s) not found", voteKey),
+		))
+	}
+
+	return voteInfo, true
+}
+
 func GetVoteByVoteKey(voteKey string) bool {
-	vote, exist := votes[voteKey]
+	vote, exist := votes.Get(voteKey)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -18,95 +41,27 @@ func GetVoteByVoteKey(voteKey string) bool {
 		))
 	}
 
-	return vote
+	return vote.(bool)
 }
 
 func GetVoteYesByVoteKey(voteKey string) bool {
-	_, exist := votes[voteKey]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("voteKey(%s) not found", voteKey),
-		))
-	}
-
-	proposalId, address := divideVoteKeyToProposalIdAndUser(voteKey)
-
-	vote, exist := userVotes[address][proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("voteKey(%s) not found", voteKey),
-		))
-	}
-
-	return vote.Yes
+	voteInfo, _ := getVoteInfoFromKey(voteKey)
+	return voteInfo.Yes
 }
 
 func GetVoteWeightByVoteKey(voteKey string) uint64 {
-	_, exist := votes[voteKey]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("voteKey(%s) not found", voteKey),
-		))
-	}
-
-	proposalId, address := divideVoteKeyToProposalIdAndUser(voteKey)
-
-	vote, exist := userVotes[address][proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("voteKey(%s) not found", voteKey),
-		))
-	}
-
-	return vote.Weight
+	voteInfo, _ := getVoteInfoFromKey(voteKey)
+	return voteInfo.Weight
 }
 
 func GetVotedHeightByVoteKey(voteKey string) uint64 {
-	_, exist := votes[voteKey]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("voteKey(%s) not found", voteKey),
-		))
-	}
-
-	proposalId, address := divideVoteKeyToProposalIdAndUser(voteKey)
-
-	vote, exist := userVotes[address][proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("voteKey(%s) not found", voteKey),
-		))
-	}
-
-	return vote.VotedHeight
+	voteInfo, _ := getVoteInfoFromKey(voteKey)
+	return voteInfo.VotedHeight
 }
 
 func GetVotedAtByVoteKey(voteKey string) uint64 {
-	_, exist := votes[voteKey]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("voteKey(%s) not found", voteKey),
-		))
-	}
-
-	proposalId, address := divideVoteKeyToProposalIdAndUser(voteKey)
-
-	vote, exist := userVotes[address][proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("voteKey(%s) not found", voteKey),
-		))
-	}
-
-	return vote.VotedAt
+	voteInfo, _ := getVoteInfoFromKey(voteKey)
+	return voteInfo.VotedAt
 }
 
 func divideVoteKeyToProposalIdAndUser(voteKey string) (uint64, std.Address) {

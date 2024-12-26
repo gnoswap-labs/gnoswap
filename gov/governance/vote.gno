@@ -2,9 +2,12 @@ package governance
 
 import (
 	"std"
+	"strconv"
 	"time"
 
 	u256 "gno.land/p/gnoswap/uint256"
+
+	"gno.land/p/demo/avl"
 
 	en "gno.land/r/gnoswap/v1/emission"
 
@@ -21,9 +24,44 @@ type voteWithWeight struct {
 }
 
 var (
-	votes     = make(map[string]bool)                           // voteKey(proposalId:user) -> yes/no
-	userVotes = make(map[std.Address]map[uint64]voteWithWeight) // user -> proposalId -> voteWithWeight
+	votes     = avl.NewTree() // voteKey(proposalId:user) -> yes/no
+	userVotes = avl.NewTree() // user -> proposalId -> voteWithWeight
 )
+
+func createVoteKey(pid uint64, voter string) string {
+	return ufmt.Sprintf("%d:%s", pid, voter)
+}
+
+func getVote(pid uint64, voter string) (bool, bool) {
+	value, exists := votes.Get(createVoteKey(pid, voter))
+	if !exists {
+		return false, false
+	}
+	return value.(bool), true
+}
+
+func setVote(pid uint64, voter string, vote bool) {
+	votes.Set(createVoteKey(pid, voter), vote)
+}
+
+func createUserVoteKey(voter std.Address, pid uint64) string {
+	return ufmt.Sprintf("%s:%d", voter.String(), pid)
+}
+
+func getUserVote(voter std.Address, pid uint64) (voteWithWeight, bool) {
+	value, exists := userVotes.Get(createUserVoteKey(voter, pid))
+	if !exists {
+		return voteWithWeight{}, false
+	}
+	return value.(voteWithWeight), true
+}
+
+func setUserVote(voter std.Address, pid uint64, vote voteWithWeight) {
+	userVotes.Set(createUserVoteKey(voter, pid), vote)
+}
+
+
+///////////////////// Vote /////////////////////
 
 // Vote allows a user to vote on a given proposal.
 // The user's voting weight is determined by their accumulated delegated stake until proposal creation time.
@@ -33,10 +71,7 @@ func Vote(pid uint64, yes bool) string {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	proposal, exists := proposals[pid]
-	if !exists {
-		panic(addDetailToError(errDataNotFound, ufmt.Sprintf("proposalId(%d) does not exist", pid)))
-	}
+	proposal := mustGetProposal(pid)
 
 	voter := std.PrevRealm().Addr()
 	now := uint64(time.Now().Unix())
@@ -57,18 +92,15 @@ func Vote(pid uint64, yes bool) string {
 		panic(err)
 	}
 
-	proposals[pid] = proposal
-	votes[voteKey] = yes
+	proposals.Set(strconv.Itoa(int(pid)), proposal)
 
-	if userVotes[voter] == nil {
-		userVotes[voter] = make(map[uint64]voteWithWeight)
-	}
-	userVotes[voter][pid] = voteWithWeight{
+	setVote(pid, voter.String(), yes)
+	setUserVote(voter, pid, voteWithWeight{
 		Yes:         yes,
 		Weight:      state.userWeight,
 		VotedHeight: uint64(std.GetHeight()),
 		VotedAt:     now,
-	}
+	})
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
@@ -97,10 +129,16 @@ func newVoteState(proposal ProposalInfo, voteKey string, voter std.Address, now 
 	votingStartTime := proposal.ExecutionState.CreatedAt + cfg.VotingStartDelay
 	votingEndTime := votingStartTime + cfg.VotingPeriod
 
+	hasUserVoted := false
+	voted, exists := votes.Get(voteKey)
+	if exists {
+		hasUserVoted = voted.(bool)
+	}
+
 	return &VoteState{
 		isVotingPeriod:  now >= votingStartTime && now < votingEndTime,
 		isProposalValid: !proposal.ExecutionState.Canceled,
-		hasUserVoted:    votes[voteKey],
+		hasUserVoted:    hasUserVoted,
 		userWeight:      proposal.PossibleAddressWithWeight[voter],
 	}, nil
 }
@@ -119,10 +157,6 @@ func (s *VoteState) validate() error {
 		return errNotEnoughVotingWeight
 	}
 	return nil
-}
-
-func createVoteKey(pid uint64, voter string) string {
-	return ufmt.Sprintf("%d:%s", pid, voter)
 }
 
 ///////////////////// Vote Execution /////////////////////
@@ -167,14 +201,7 @@ func Cancel(proposalId uint64) {
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	proposal, exist := proposals[proposalId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("proposalId(%d) does not exist", proposalId),
-		))
-	}
-
+	proposal := mustGetProposal(proposalId)
 	if proposal.ExecutionState.Canceled {
 		panic(addDetailToError(
 			errAlreadyCanceledProposal,
@@ -212,7 +239,7 @@ func Cancel(proposalId uint64) {
 	proposal.ExecutionState.Upcoming = false
 	proposal.ExecutionState.Active = false
 
-	proposals[proposalId] = proposal
+	proposals.Set(strconv.Itoa(int(proposalId)), proposal)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(

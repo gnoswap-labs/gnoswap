@@ -1,7 +1,8 @@
 package governance
 
 import (
-	b64 "encoding/base64"
+	"gno.land/p/demo/avl"
+	"encoding/base64"
 	"std"
 	"strconv"
 
@@ -9,6 +10,22 @@ import (
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 )
+
+func mustGetProposal(proposalId uint64) ProposalInfo {
+	result, exists := proposals.Get(strconv.Itoa(int(proposalId)))
+	if !exists {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("proposalId(%d) not found", proposalId),
+		))
+	}
+
+	return result.(ProposalInfo)
+}
+
+func iterTree(tree *avl.Tree, cb func(key string, value interface{}) bool) {
+	tree.Iterate("", "", cb)
+}
 
 func strToInt(str string) int {
 	res, err := strconv.Atoi(str)
@@ -45,7 +62,7 @@ func marshal(data *json.Node) string {
 }
 
 func b64Encode(data string) string {
-	return string(b64.StdEncoding.EncodeToString([]byte(data)))
+	return string(base64.StdEncoding.EncodeToString([]byte(data)))
 }
 
 func prevRealm() string {
