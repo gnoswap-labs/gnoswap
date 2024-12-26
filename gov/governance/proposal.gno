@@ -19,10 +19,8 @@ import (
 
 var (
 	proposalId               uint64
-	// proposals                = make(map[uint64]ProposalInfo) // proposalId -> ProposalInfo
-	// latestProposalByProposer = make(map[std.Address]uint64)  // proposer -> proposalId
-	proposals                = avl.NewTree()
-	latestProposalByProposer = avl.NewTree()
+	proposals                = avl.NewTree() // proposalId -> ProposalInfo
+	latestProposalByProposer = avl.NewTree() // proposer -> proposalId
 )
 
 const (
@@ -68,15 +66,13 @@ func ProposeText(
 		Nay:                       u256.Zero(),
 		MaxVotingWeight:           u256.NewUint(votingMax),
 		PossibleAddressWithWeight: possibleAddressWithWeight,
-		ConfigVersion:             uint64(len(configVersions)), // use latest config version
+		ConfigVersion:             uint64(configVersions.Size()), // use latest config version
 		QuorumAmount:              xgns.VotingSupply() * config.Quorum / 100,
 		Title:                     title,
 		Description:               description,
 	}
 
 	proposalId++
-	// proposals[proposalId] = proposal
-	// latestProposalByProposer[proposer] = proposalId
 	proposals.Set(strconv.Itoa(int(proposalId)), proposal)
 	latestProposalByProposer.Set(proposer.String(), proposalId)
 
@@ -134,7 +130,7 @@ func ProposeCommunityPoolSpend(
 		Nay:                       u256.Zero(),
 		MaxVotingWeight:           u256.NewUint(votingMax),
 		PossibleAddressWithWeight: possibleAddressWithWeight,
-		ConfigVersion:             uint64(len(configVersions)),
+		ConfigVersion:             uint64(configVersions.Size()),
 		QuorumAmount:              xgns.VotingSupply() * config.Quorum / 100,
 		Title:                     title,
 		Description:               description,
@@ -146,8 +142,6 @@ func ProposeCommunityPoolSpend(
 	}
 
 	proposalId++
-	// proposals[proposalId] = proposal
-	// latestProposalByProposer[proposer] = proposalId
 	proposals.Set(strconv.Itoa(int(proposalId)), proposal)
 	latestProposalByProposer.Set(proposer.String(), proposalId)
 
@@ -223,7 +217,7 @@ func ProposeParameterChange(
 		Nay:                       u256.Zero(),
 		MaxVotingWeight:           u256.NewUint(votingMax),
 		PossibleAddressWithWeight: possibleAddressWithWeight,
-		ConfigVersion:             uint64(len(configVersions)),
+		ConfigVersion:             uint64(configVersions.Size()),
 		QuorumAmount:              xgns.VotingSupply() * config.Quorum / 100,
 		Title:                     title,
 		Description:               description,
@@ -234,8 +228,6 @@ func ProposeParameterChange(
 	}
 
 	proposalId++
-	// proposals[proposalId] = proposal
-	// latestProposalByProposer[proposer] = proposalId
 	proposals.Set(strconv.Itoa(int(proposalId)), proposal)
 	latestProposalByProposer.Set(proposer.String(), proposalId)
 

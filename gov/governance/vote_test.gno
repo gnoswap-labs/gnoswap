@@ -17,12 +17,11 @@ func TestVote(t *testing.T) {
 	baseTime := uint64(time.Now().Unix())
 	voter := testutils.TestAddress("voter")
 
-	configVersions = map[uint64]Config{
-		1: {
-			VotingStartDelay: 50,
-			VotingPeriod:     100,
-		},
+	newConfig := Config{
+		VotingStartDelay: 50,
+		VotingPeriod:     100,
 	}
+	setConfigVersion(1, newConfig)
 
 	testCases := []struct {
 		name        string
@@ -203,12 +202,17 @@ func TestNewVoteState(t *testing.T) {
 	voteKey := createVoteKey(1, voter.String())
 
 	// test config
-	configVersions = map[uint64]Config{
-		1: {
-			VotingStartDelay: 50,
-			VotingPeriod:     100,
-		},
+	// configVersions = map[uint64]Config{
+	// 	1: {
+	// 		VotingStartDelay: 50,
+	// 		VotingPeriod:     100,
+	// 	},
+	// }
+	newConfig := Config{
+		VotingStartDelay: 50,
+		VotingPeriod:     100,
 	}
+	setConfigVersion(1, newConfig)
 
 	tests := []struct {
 		name          string

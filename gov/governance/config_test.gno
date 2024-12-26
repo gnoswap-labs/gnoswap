@@ -4,8 +4,10 @@ import (
 	"std"
 	"testing"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
+	"gno.land/p/demo/ufmt"
 )
 
 var (
@@ -27,13 +29,16 @@ func mockInit(t *testing.T) {
 		ExecutionWindow:               uint64(2592000),
 	}
 
-	configVersions[uint64(len(configVersions)+1)] = config
+	// configVersions[uint64(len(configVersions)+1)] = config
+	configVersions = avl.NewTree()
+	setConfigVersion(1, config)
 }
 
 func resetGlobalConfig(t *testing.T) {
 	t.Helper()
 	config = Config{}
-	configVersions = make(map[uint64]Config)
+	// configVersions = make(map[uint64]Config)
+	configVersions = avl.NewTree()
 }
 
 func newConfigObj(t *testing.T) Config {
@@ -72,7 +77,7 @@ func TestInitialConfig(t *testing.T) {
 		})
 	}
 
-	uassert.Equal(t, len(configVersions), 1)
+	uassert.Equal(t, configVersions.Size(), 1)
 }
 
 func TestReconfigureByAdmin(t *testing.T) {
@@ -181,7 +186,8 @@ func TestGetConfigVersion(t *testing.T) {
 
 			expectedConfig := config
 			if tt.version != 0 {
-				expectedConfig = configVersions[tt.version]
+				// expectedConfig, _ = configVersions.Get(tt.version)
+				expectedConfig, _ = getConfigByVersion(tt.version)
 			}
 			uassert.Equal(t, result.VotingStartDelay, expectedConfig.VotingStartDelay)
 		})
@@ -209,6 +215,6 @@ func TestReconfigure(t *testing.T) {
 	uassert.Equal(t, version, initialVersion+1)
 	uassert.Equal(t, config.VotingStartDelay, newConfig.VotingStartDelay)
 
-	storedConfig := configVersions[version]
+	storedConfig, _ := getConfigByVersion(version)
 	uassert.Equal(t, storedConfig.VotingStartDelay, newConfig.VotingStartDelay)
 }

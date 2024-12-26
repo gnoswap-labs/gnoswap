@@ -2,7 +2,9 @@ package governance
 
 import (
 	"std"
+	"strconv"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -11,7 +13,8 @@ import (
 
 var (
 	config         Config
-	configVersions = make(map[uint64]Config)
+	// configVersions = make(map[uint64]Config)
+	configVersions = avl.NewTree() // version -> Config
 )
 
 func init() {
@@ -28,7 +31,29 @@ func init() {
 
 	// config version 0 should return the current config
 	// therefore we set initial config version to 1
-	configVersions[uint64(len(configVersions)+1)] = config
+	setConfigVersion(1, config)
+}
+
+func setConfigVersion(v uint64, cfg Config) {
+	configVersions.Set(strconv.Itoa(int(v)), cfg)
+}
+
+func getConfigByVersion(v uint64) (Config, bool) {
+	value, exists := configVersions.Get(strconv.Itoa(int(v)))
+	if !exists {
+		return Config{}, false
+	}
+	return value.(Config), true
+}
+
+func getLatestVersion() uint64 {
+	var maxVersion uint64
+	configVersions.ReverseIterate("", "", func(key string, value interface{}) bool {
+		version, _ := strconv.ParseUint(key, 10, 64)
+		maxVersion = version
+		return true
+	})
+	return maxVersion
 }
 
 // ReconfigureByAdmin updates the proposal realted configuration.
@@ -52,7 +77,7 @@ func ReconfigureByAdmin(
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	newVersion := uint64(len(configVersions) + 1)
+	newVersion := getLatestVersion() + 1
 
 	config = Config{
 		VotingStartDelay:              votingStartDelay,
@@ -63,7 +88,7 @@ func ReconfigureByAdmin(
 		ExecutionDelay:                executionDelay,
 		ExecutionWindow:               executionWindow,
 	}
-	configVersions[newVersion] = config
+	setConfigVersion(newVersion, config)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -100,7 +125,7 @@ func reconfigure(
 	en.MintAndDistributeGns()
 	updateProposalsState()
 
-	newVersion := uint64(len(configVersions) + 1)
+	newVersion := getLatestVersion() + 1
 
 	config = Config{
 		VotingStartDelay:              votingStartDelay,
@@ -111,7 +136,7 @@ func reconfigure(
 		ExecutionDelay:                executionDelay,
 		ExecutionWindow:               executionWindow,
 	}
-	configVersions[newVersion] = config
+	setConfigVersion(newVersion, config)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -141,15 +166,15 @@ func GetConfigVersion(version uint64) Config {
 		return config
 	}
 
-	configValue, exist := configVersions[version]
-	if !exist {
+	cfg, exists := getConfigByVersion(version)
+	if !exists {
 		panic(addDetailToError(
 			errDataNotFound,
 			ufmt.Sprintf("config version(%d) does not exist", version),
 		))
 	}
 
-	return configValue
+	return cfg
 }
 
 // GetLatestConfig() returns the latest configuration.
@@ -159,7 +184,7 @@ func GetLatestConfig() Config {
 
 // GetLatestConfigVersion() returns the latest configuration version.
 func GetLatestConfigVersion() uint64 {
-	return uint64(len(configVersions))
+	return getLatestVersion()
 }
 
 // GetProposalCreationThreshold() returns the current proposal creation threshold.

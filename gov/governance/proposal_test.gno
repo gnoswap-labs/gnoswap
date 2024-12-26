@@ -201,14 +201,13 @@ func TestProposeCommunityPoolSpend(t *testing.T) {
 
 func TestUpdateProposalsState(t *testing.T) {
 	baseTime := uint64(1000)
-	configVersions = map[uint64]Config{
-		1: {
-			VotingStartDelay: 50,
-			VotingPeriod:     100,
-			ExecutionDelay:   50,
-			ExecutionWindow:  100,
-		},
+	newConfig := Config{
+		VotingStartDelay: 50,
+		VotingPeriod:     100,
+		ExecutionDelay:   50,
+		ExecutionWindow:  100,
 	}
+	setConfigVersion(1, newConfig)
 
 	testCases := []struct {
 		name          string
