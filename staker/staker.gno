@@ -181,8 +181,8 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		pool.modifyDeposit(tokenId, signedLiquidity, uint64(std.GetHeight()))
 	}
 
-	ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, currentTick, signedLiquidity)
-	ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
+	pool.ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, currentTick, signedLiquidity)
+	pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
 
 	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
 
@@ -381,8 +381,8 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	if pn.PositionIsInRange(tokenId) {
 		pool.modifyDeposit(tokenId, signedLiquidity, currentHeight)
 	}
-	ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, currentTick, signedLiquidity)
-	ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
+	pool.ticks.Get(deposit.tickLower).modifyDepositLower(currentHeight, currentTick, signedLiquidity)
+	pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, currentTick, signedLiquidity)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(

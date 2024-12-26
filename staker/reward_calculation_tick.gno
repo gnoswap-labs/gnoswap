@@ -1,8 +1,6 @@
 package staker
 
 import (
-	ufmt "gno.land/p/demo/ufmt"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -10,8 +8,6 @@ import (
 type Ticks struct {
 	tree *UintTree // int32 tickId -> tick
 }
-
-var ticks = NewTicks()
 
 func NewTicks() *Ticks {
 	return &Ticks{
@@ -42,6 +38,10 @@ func (self *Ticks) Set(tickId int32, tick *Tick) {
 		return
 	}
 	self.tree.Set(uint64(tickId), tick)
+}
+
+func (self *Ticks) Has(tickId int32) bool {
+	return self.tree.Has(uint64(tickId))
 }
 
 type Tick struct {
@@ -120,14 +120,74 @@ func (self *Tick) modifyDepositUpper(currentHeight uint64, currentTick int32, li
 	// ticks.Set(self.id, self)
 }
 
-func TickCrossHook(pools *Pools, ticks *Ticks, height func() int64) func(poolPath string, tickId int32, zeroForOne bool) {
+type TickCrossEvent struct {
+	Height uint64
+	InRange bool
+}
+
+func TickCrossEventsFrom(tickUpperCrossHeights []uint64, tickUpperCrossZeroForOnes []bool, tickLowerCrossHeights []uint64, tickLowerCrossZeroForOnes []bool) []TickCrossEvent {
+	events := make([]TickCrossEvent, 0, len(tickUpperCrossHeights)+len(tickLowerCrossHeights))
+
+	for len(tickUpperCrossHeights) != 0 && len(tickLowerCrossHeights) != 0 {
+		if tickUpperCrossHeights[0] == tickLowerCrossHeights[0] {
+			// - If the zeroForOne is same, the tick has passed through the whole position range(outrange)
+			// - If the zeroForOne is different, the tick has entered the position and then "bounced" back(inrange)
+			events = append(events, TickCrossEvent{ 
+				Height: tickUpperCrossHeights[0],
+				InRange: tickUpperCrossZeroForOnes[0] != tickLowerCrossZeroForOnes[0],
+			})
+			tickUpperCrossHeights = tickUpperCrossHeights[1:]	
+			tickUpperCrossZeroForOnes = tickUpperCrossZeroForOnes[1:]
+			tickLowerCrossHeights = tickLowerCrossHeights[1:]
+			tickLowerCrossZeroForOnes = tickLowerCrossZeroForOnes[1:]
+			continue
+		}
+
+		if tickUpperCrossHeights[0] < tickLowerCrossHeights[0] {
+			events = append(events, TickCrossEvent{ 
+				Height: tickUpperCrossHeights[0],
+				InRange: tickUpperCrossZeroForOnes[0],
+			})
+			tickUpperCrossHeights = tickUpperCrossHeights[1:]	
+			tickUpperCrossZeroForOnes = tickUpperCrossZeroForOnes[1:]
+		} else {
+			events = append(events, TickCrossEvent{ 
+				Height: tickLowerCrossHeights[0],
+				InRange: !tickLowerCrossZeroForOnes[0],
+			})
+			tickLowerCrossHeights = tickLowerCrossHeights[1:]
+			tickLowerCrossZeroForOnes = tickLowerCrossZeroForOnes[1:]
+		}
+	}
+
+	if len(tickUpperCrossHeights) != 0 {
+		for i, height := range tickUpperCrossHeights {
+			events = append(events, TickCrossEvent{ 
+				Height: height,
+				InRange: tickUpperCrossZeroForOnes[i],
+			})
+		}
+	}
+	if len(tickLowerCrossHeights) != 0 {
+		for i, height := range tickLowerCrossHeights {
+			events = append(events, TickCrossEvent{ 
+				Height: height,
+				InRange: !tickLowerCrossZeroForOnes[i],
+			})
+		}
+	}
+
+	return events
+}
+
+func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool) {
 	return func(poolPath string, tickId int32, zeroForOne bool) {
 		pool, ok := pools.Get(poolPath)
 		if !ok {
 			return
 		}
 	
-		tick := ticks.Get(tickId)
+		tick := pool.ticks.Get(tickId)
 
 		blockNumber := uint64(height())
 		tick.updateCross(blockNumber, zeroForOne)

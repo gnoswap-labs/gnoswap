@@ -162,6 +162,10 @@ type Interval struct {
 	Value       *u256.Uint
 }
 
+func (self Interval) String() string {
+	return ufmt.Sprintf("Interval{StartHeight: %d, EndHeight: %d, Value: %s}", self.StartHeight, self.EndHeight, self.Value.ToString())
+}
+
 func (self Interval) Split(height uint64) (Interval, Interval) {
 	return Interval{
 		StartHeight: self.StartHeight,

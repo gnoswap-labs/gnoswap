@@ -233,11 +233,13 @@ func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits
 	tickUpperCrossHeights, tickUpperCrossZeroForOnes := upperTick.crossInfo(lastCollectHeight, currentHeight)
 	tickLowerCrossHeights, tickLowerCrossZeroForOnes := lowerTick.crossInfo(lastCollectHeight, currentHeight)
 
+	tickCrossEvents := TickCrossEventsFrom(tickUpperCrossHeights, tickUpperCrossZeroForOnes, tickLowerCrossHeights, tickLowerCrossZeroForOnes)
+
 	initialUpperCross := upperTick.currentCross(lastCollectHeight)
 	initialLowerCross := lowerTick.currentCross(lastCollectHeight)
 	currentlyInRange := initialUpperCross && !initialLowerCross
 
-	intervals := pool.TickCrossesToEligibleIntervals(tickUpperCrossHeights, tickUpperCrossZeroForOnes, tickLowerCrossHeights, tickLowerCrossZeroForOnes, currentlyInRange, lastCollectHeight, currentHeight)
+	intervals := pool.TickCrossesToEligibleIntervals(tickCrossEvents, currentlyInRange, lastCollectHeight, currentHeight)
 
 
 	rewards, penalties := pool.EligibleIntervalsToInternalReward(intervals, deposit)

@@ -13,6 +13,7 @@ import (
 
 type Pools struct {
 	tree *avl.Tree // string poolPath -> pool
+
 }
 
 func NewPools() *Pools {
@@ -60,6 +61,8 @@ type Pool struct {
 	lastRewardCacheHeight *uint64
 
 	incentives Incentives
+
+	ticks *Ticks
 }
 		
 func NewPool(poolPath string, currentHeight uint64) *Pool {
@@ -69,6 +72,7 @@ func NewPool(poolPath string, currentHeight uint64) *Pool {
 		rewardCache: NewRewardCacheTree(),
 		lastRewardCacheHeight: &currentHeight,
 		incentives: NewIncentives(currentHeight),
+		ticks: NewTicks(),
 	}
 }
 
@@ -157,114 +161,30 @@ func setInRange(currentlyInRange bool, targetInRange bool) bool {
 }
 
 func (self *Pool) TickCrossesToEligibleIntervals(
-	tickUpperCrossHeights []uint64,
-	tickUpperCrossZeroForOnes []bool,
-	tickLowerCrossHeights []uint64,
-	tickLowerCrossZeroForOnes []bool,
+	events []TickCrossEvent,
 	currentlyInRange bool,
 	startHeight,
 	finalHeight uint64,
 ) []Interval {
-	intervals := make([]Interval, 0, len(tickUpperCrossHeights)+len(tickLowerCrossHeights))
+	intervals := make([]Interval, 0, len(events)+2)
 
-	var currentUpperTickCrossHeight uint64
-	var currentLowerTickCrossHeight uint64
-
-	processUpper := func() {
-		if tickUpperCrossZeroForOnes[0] {
-			// enter range, backward transition at the upper tick.
-			currentlyInRange = setInRange(currentlyInRange, true)
-			startHeight = currentUpperTickCrossHeight
+	for _, event := range events {
+		if currentlyInRange == event.InRange {
+			continue
+		}
+		if event.InRange {
+			// enter range
+			startHeight = event.Height
+			currentlyInRange = true
 		} else {
-			// exit range, forward transition at the upper tick.
-			currentlyInRange = setInRange(currentlyInRange, false)
-			stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
-			endHeight := currentUpperTickCrossHeight
-
-			intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, stakedLiquidity, startHeight, endHeight)
+			// exit range
+			intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, self.CurrentStakedLiquidity(startHeight), startHeight, event.Height)
+			currentlyInRange = false
 		}
-	}
-
-	processLower := func() {
-		if tickLowerCrossZeroForOnes[0] {
-			// exit range, backward transition at the lower tick.
-			currentlyInRange = setInRange(currentlyInRange, false)
-			stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
-			endHeight := currentLowerTickCrossHeight
-
-			intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, stakedLiquidity, startHeight, endHeight)
-		} else {
-			// enter range, forward transition at the lower tick.
-			currentlyInRange = setInRange(currentlyInRange, true)
-			startHeight = currentLowerTickCrossHeight
-		}
-	}
-
-	// enter/exit event MUST appear alternatively
-	// note that zeroForOne is true when backward(from upper to lower)
-	for len(tickUpperCrossHeights) != 0 || len(tickLowerCrossHeights) != 0 {
-		upperRemains := len(tickUpperCrossHeights) != 0
-		lowerRemains := len(tickLowerCrossHeights) != 0
-
-		if upperRemains {
-			currentUpperTickCrossHeight := tickUpperCrossHeights[0]
-			doUpper := !lowerRemains
-			if lowerRemains {
-				doUpper = currentUpperTickCrossHeight < tickLowerCrossHeights[0]
-			}
-			if doUpper {
-				processUpper()
-				tickUpperCrossHeights = tickUpperCrossHeights[1:]
-				tickUpperCrossZeroForOnes = tickUpperCrossZeroForOnes[1:]
-				continue
-			}
-		}
-
-		if lowerRemains {
-			currentLowerTickCrossHeight := tickLowerCrossHeights[0]
-			doLower := !upperRemains
-			if upperRemains {
-				doLower = currentLowerTickCrossHeight < tickUpperCrossHeights[0]
-			}
-			if doLower {
-				processLower()
-				tickLowerCrossHeights = tickLowerCrossHeights[1:]
-				tickLowerCrossZeroForOnes = tickLowerCrossZeroForOnes[1:]
-				continue
-			}
-		}
-
-		// Either:
-		// 1. The price has been passed through the whole position range
-		// canceles each other, remaining outrange, skip.
-		// Or:
-		// 2. The price has been staying inside the position range, 
-		// "bounce" back and forth between the upper and lower tick,
-		// Or:
-		// 3. The only other case is that the price has been overflowed.
-		// Going through the max tick, appearing at the lower tick,
-		// This code assumes that this case is not happening.
-		// 
-		// In case 1 or 2, we can keep the currentlyInRange as is.
-		tickUpperCrossHeights = tickUpperCrossHeights[1:]
-		tickLowerCrossHeights = tickLowerCrossHeights[1:]
-		tickUpperCrossZeroForOnes = tickUpperCrossZeroForOnes[1:]
-		tickLowerCrossZeroForOnes = tickLowerCrossZeroForOnes[1:]
-		continue
-	}
-
-	if len(tickUpperCrossHeights) != 0 {
-		processUpper()
-	}
-
-	if len(tickLowerCrossHeights) != 0 {
-		processLower()
 	}
 
 	if currentlyInRange {
-		// position remains in range, add the last interval
-		stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
-		intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, stakedLiquidity, startHeight, finalHeight)
+		intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, self.CurrentStakedLiquidity(startHeight), startHeight, finalHeight)
 	}
 
 	return intervals
