@@ -215,7 +215,11 @@ func (p *PoolLiquidity) AddInRangePosition(tokenID uint64, position *InRangeLiqu
 	// Add position's liquidity to total liquidity
 	positionLiquidity := position.GetLiquidity()
 	if positionLiquidity != nil {
-		p.totalLiquidity.Add(p.totalLiquidity, positionLiquidity)
+		totoalLiquidity, overflow := new(u256.Uint).AddOverflow(p.totalLiquidity, positionLiquidity)
+		if overflow {
+			panic(errOverflow)
+		}
+		p.totalLiquidity = totoalLiquidity
 	}
 
 	// Store the position
