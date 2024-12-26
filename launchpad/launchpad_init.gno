@@ -29,6 +29,10 @@ var (
 	q96 = u256.Zero()
 )
 
+const (
+	PAD_SEP = "*PAD*"
+)
+
 func init() {
 	q96 = u256.MustFromDecimal(consts.Q96)
 }
@@ -63,26 +67,26 @@ func CreateProject(
 	if err := common.IsRegistered(tokenPath); err != nil {
 		panic(addDetailToError(
 			errNotRegistered,
-			ufmt.Sprintf("launchpad_init.gno__CreateProject() || token(%s) not registered", tokenPath),
+			ufmt.Sprintf("token(%s) not registered", tokenPath),
 		))
 	}
 
 	if !(recipient.IsValid()) {
 		panic(addDetailToError(
 			errInvalidAddress,
-			ufmt.Sprintf("launchpad_init.gno__CreateProject() || invalid recipient address(%s)", recipient.String()),
+			ufmt.Sprintf("invalid recipient address(%s)", recipient.String()),
 		))
 	}
 
 	if depositAmount == 0 {
 		panic(addDetailToError(
 			errInvalidInput,
-			"launchpad_init.gno__CreateProject() || can not deposit 0",
+			"can not deposit 0",
 		))
 	}
 
-	if strings.Contains(conditionsToken, "*PAD*") {
-		tokensToCheck := strings.Split(conditionsToken, "*PAD*")
+	if strings.Contains(conditionsToken, PAD_SEP) {
+		tokensToCheck := strings.Split(conditionsToken, PAD_SEP)
 		for _, token := range tokensToCheck {
 			if token == consts.GOV_XGNS_PATH {
 				continue
@@ -108,7 +112,7 @@ func CreateProject(
 	if tier30Ratio+tier90Ratio+tier180Ratio != 100 {
 		panic(addDetailToError(
 			errInvalidTierRatio,
-			ufmt.Sprintf("launchpad_init.gno__CreateProject() || invalid ratio, sum of all tiers(30:%d, 90:%d, 180:%d) should be 100", tier30Ratio, tier90Ratio, tier180Ratio),
+			ufmt.Sprintf("invalid ratio, sum of all tiers(30:%d, 90:%d, 180:%d) should be 100", tier30Ratio, tier90Ratio, tier180Ratio),
 		))
 	}
 
@@ -116,7 +120,7 @@ func CreateProject(
 	if startTime <= now {
 		panic(addDetailToError(
 			errPastStartTime,
-			ufmt.Sprintf("launchpad_init.gno__CreateProject() || invalid start time(%d), can not start project in past(now:%d)", startTime, now),
+			ufmt.Sprintf("invalid start time(%d), can not start project in past(now:%d)", startTime, now),
 		))
 	}
 
@@ -256,14 +260,14 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || projectId(%s) not found", projectId),
+			ufmt.Sprintf("projectId(%s) not found", projectId),
 		))
 	}
 
 	if !recipient.IsValid() {
 		panic(addDetailToError(
 			errInvalidAddress,
-			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || invalid recipient address(%s)", recipient.String()),
+			ufmt.Sprintf("invalid recipient address(%s)", recipient.String()),
 		))
 	}
 
@@ -271,14 +275,14 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	if height < project.endHeight {
 		panic(addDetailToError(
 			errActiveProject,
-			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || projectId(%s) not ended yet(current:%d, endHeight: %d)", projectId, height, project.endHeight),
+			ufmt.Sprintf("projectId(%s) not ended yet(current:%d, endHeight: %d)", projectId, height, project.endHeight),
 		))
 	}
 
 	if project.refundedHeight != 0 {
 		panic(addDetailToError(
 			errAlreadyRefunded,
-			ufmt.Sprintf("launchpad_init.gno__TransferLeftFromProjectByAdmin() || projectId(%s) already refunded(height:%d)", projectId, project.refundedHeight),
+			ufmt.Sprintf("projectId(%s) already refunded(height:%d)", projectId, project.refundedHeight),
 		))
 	}
 
@@ -345,12 +349,12 @@ func makeConditions(conditionsToken string, conditionsAmount string) map[string]
 	}
 
 	conditions := make(map[string]Condition)
-	tokens := strings.Split(conditionsToken, "*PAD*")
-	amounts := strings.Split(conditionsAmount, "*PAD*")
+	tokens := strings.Split(conditionsToken, PAD_SEP)
+	amounts := strings.Split(conditionsAmount, PAD_SEP)
 	if len(tokens) != len(amounts) {
 		panic(addDetailToError(
 			errInvalidInput,
-			ufmt.Sprintf("launchpad_init.gno__makeConditions() || invalid conditions(numTokens(%d) != numAmounts(%d))", len(tokens), len(amounts)),
+			ufmt.Sprintf("invalid conditions(numTokens(%d) != numAmounts(%d))", len(tokens), len(amounts)),
 		))
 	}
 

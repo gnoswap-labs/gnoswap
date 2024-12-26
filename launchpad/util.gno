@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
 
 	u256 "gno.land/p/gnoswap/uint256"
