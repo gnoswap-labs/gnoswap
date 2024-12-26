@@ -31,7 +31,8 @@ func handleSwapFee(
 	feeAmount.Div(feeAmount, u256.NewUint(10000))
 	feeAmountUint64 := feeAmount.Uint64()
 
-	transferFromByRegisterCall(outputToken, std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
+	outputTeller := common.GetTokenTeller(outputToken)
+	outputTeller.TransferFrom(std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
 
 	prevAddr, prevRealm := getPrev()
 
