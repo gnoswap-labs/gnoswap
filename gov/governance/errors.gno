@@ -33,6 +33,8 @@ var (
 	errNotRegisteredToCommunityPool                   = errors.New("[GNOSWAP-GOVERNANCE-024] token not registered to community pool")
 	errInvalidProposalType                            = errors.New("[GNOSWAP-GOVERNANCE-025] invalid proposal type")
 	errUnableToVoteOutOfPeriod                        = errors.New("[GNOSWAP-GOVERNANCE-026] unable to vote out of voting period")
+	errInvalidMessageFormat                           = errors.New("[GNOSWAP-GOVERNANCE-027] invalid message format")
+	errProposalNotPassed                              = errors.New("[GNOSWAP-GOVERNANCE-028] proposal not passed")
 )
 
 func addDetailToError(err error, detail string) string {

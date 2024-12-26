@@ -15,11 +15,6 @@ import (
 	en "gno.land/r/gnoswap/v1/emission"
 )
 
-var (
-	errInvalidMessageFormat = errors.New("invalid message format")
-	errProposalNotPassed    = errors.New("proposal has not passed")
-)
-
 const (
 	EXECUTE_SEPARATOR = "*EXE*"
 )
