@@ -3,28 +3,10 @@ package router
 import (
 	"testing"
 
-	pusers "gno.land/p/demo/users"
-
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func TestHandleSwapFee(t *testing.T) {
-	token0 := "token0"
-
-	mockToken := &struct {
-		GRC20Interface
-	}{
-		GRC20Interface: MockGRC20{
-			TransferFn:     func(to pusers.AddressOrName, amount uint64) {},
-			TransferFromFn: func(from, to pusers.AddressOrName, amount uint64) {},
-			BalanceOfFn:    func(owner pusers.AddressOrName) uint64 { return 1000000 },
-			ApproveFn:      func(spender pusers.AddressOrName, amount uint64) {},
-		},
-	}
-
-	registerGRC20ForTest(t, token0, mockToken)
-	defer unregisterGRC20ForTest(t, token0)
-
 	tests := []struct {
 		name           string
 		amount         *u256.Uint
@@ -65,7 +47,7 @@ func TestHandleSwapFee(t *testing.T) {
 				swapFee = originalSwapFee
 			}()
 
-			result := handleSwapFee(token0, tt.amount)
+			result := handleSwapFee(barPath, tt.amount)
 
 			if !result.Eq(tt.expectedAmount) {
 				t.Errorf("handleSwapFee() = %v, want %v", result, tt.expectedAmount)
