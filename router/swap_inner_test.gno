@@ -13,6 +13,8 @@ import (
 
 	"gno.land/r/onbloc/bar"
 	"gno.land/r/onbloc/baz"
+
+    "gno.land/p/demo/uassert"
 )
 
 func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
@@ -82,8 +84,8 @@ func TestSwapInner(t *testing.T) {
 		recipient         std.Address
 		sqrtPriceLimitX96 *u256.Uint
 		data              SwapCallbackData
-		expectedRecv      *u256.Uint
-		expectedOut       *u256.Uint
+		expectedRecv      string
+		expectedOut       string
 		expectError       bool
 	}{
 		{
@@ -98,7 +100,7 @@ func TestSwapInner(t *testing.T) {
 				TokenFaucet(t, barPath, a2u(user1Addr))
 				TokenFaucet(t, bazPath, a2u(user1Addr))
 			},
-			amountSpecified:   i256.MustFromDecimal("100"), // exact input
+			amountSpecified:   i256.MustFromDecimal("100"),
 			recipient:         users.Resolve(alice),
 			sqrtPriceLimitX96: u256.NewUint(4295128740),
 			data: SwapCallbackData{
@@ -107,8 +109,8 @@ func TestSwapInner(t *testing.T) {
 				fee:      3000,
 				payer:    consts.ROUTER_ADDR,
 			},
-			expectedRecv: u256.MustFromDecimal("100"),
-			expectedOut:  u256.MustFromDecimal("95"),
+			expectedRecv: "100",
+			expectedOut:  "98",
 			expectError:  false,
 		},
 	}
@@ -132,12 +134,7 @@ func TestSwapInner(t *testing.T) {
 			tt.data,
 		)
 
-		// TODO:
-
-		//if tt.expectError {
-		//	uassert.Error(t, poolRecv, "expected error")
-		//	uassert.Error(t, poolOut, "expected error")
-		//	continue
-		//}
+		uassert.Equal(t, poolRecv.ToString(), tt.expectedRecv)
+		uassert.Equal(t, poolOut.ToString(), tt.expectedOut)
 	}
 }
