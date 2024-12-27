@@ -475,6 +475,7 @@ func getProjectIdAndTierFromTierId(tierId string) (string, string) {
 	return ufmt.Sprintf("%s:%s", res[0], res[1]), res[2]
 }
 
+// Deprecated: use satisfyDepositConditions instead
 func checkDepositConditions(project Project) {
 	if project.conditions == nil {
 		return
@@ -501,6 +502,7 @@ func checkDepositConditions(project Project) {
 	}
 }
 
+// Deprecated: use isProjectActive instead
 func checkProjectActive(project Project) bool {
 	if project.startHeight > uint64(std.GetHeight()) {
 		// not started yet
@@ -515,6 +517,7 @@ func checkProjectActive(project Project) bool {
 	return true
 }
 
+// Deprecated: use isTierActive instead
 func checkTierActive(project Project, tier Tier) bool {
 	if tier.endHeight < uint64(std.GetHeight()) {
 		return false
