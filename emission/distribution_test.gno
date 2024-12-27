@@ -362,6 +362,88 @@ func TestDistributeToTarget(t *testing.T) {
 	}
 }
 
+func TestClearDistributedToStaker(t *testing.T) {
+	distributedToStaker = 100
+
+	tests := []struct {
+		name        string
+		expected    uint64
+		callerRealm std.Realm
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "can not clear is caller is not staker",
+			shouldPanic: true,
+			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
+		},
+		{
+			name:        "can clear if caller is staker",
+			callerRealm: stakerRealm,
+			expected:    0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.callerRealm != (std.Realm{}) {
+				std.TestSetRealm(tt.callerRealm)
+			}
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					ClearDistributedToStaker()
+				})
+			} else {
+				ClearDistributedToStaker()
+				uassert.Equal(t, uint64(0), distributedToStaker)
+			}
+		})
+	}
+
+}
+
+func TestClearClearDistributedToGovStaker(t *testing.T) {
+	distributedToGovStaker = 100
+
+	tests := []struct {
+		name        string
+		expected    uint64
+		callerRealm std.Realm
+		shouldPanic bool
+		panicMsg    string
+	}{
+		{
+			name:        "can not clear is caller is not gov/staker",
+			shouldPanic: true,
+			panicMsg:    `caller(g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm) has no permission`,
+		},
+		{
+			name:        "can clear if caller is gov/taker",
+			callerRealm: govStakerRealm,
+			expected:    0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.callerRealm != (std.Realm{}) {
+				std.TestSetRealm(tt.callerRealm)
+			}
+
+			if tt.shouldPanic {
+				uassert.PanicsWithMessage(t, tt.panicMsg, func() {
+					ClearDistributedToGovStaker()
+				})
+			} else {
+				ClearDistributedToGovStaker()
+				uassert.Equal(t, uint64(0), distributedToGovStaker)
+			}
+		})
+	}
+
+}
+
 func sliceToFourInt(t *testing.T, slice []int) (int, int, int, int) {
 	t.Helper()
 

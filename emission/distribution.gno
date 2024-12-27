@@ -151,11 +151,13 @@ func distributeToTarget(amount uint64) uint64 {
 		totalSent += distAmount
 
 		transferToTarget(targetInt, distAmount)
+
+		return false
 	})
 
-	leftGNSAmount := amount - totalSent
+	leftAmount := amount - totalSent
 	if leftGNSAmount > 0 {
-		setLeftGNSAmount(leftGNSAmount)
+		setLeftGNSAmount(leftAmount)
 	}
 
 	return totalSent
@@ -245,14 +247,14 @@ func GetAccuDistributedToGovStaker() uint64 {
 	return accuDistributedToGovStaker
 }
 
-func SetDistributedToStaker(amount uint64) {
+func ClearDistributedToStaker() {
 	assertStakerOnly()
-	distributedToStaker = amount
+	distributedToStaker = 0
 }
 
-func SetDistributedToGovStaker(amount uint64) {
+func ClearDistributedToGovStaker() {
 	assertOnlyGovStaker()
-	distributedToGovStaker = amount
+	distributedToGovStaker = 0
 }
 
 func setDistributionBpsPct(target int, pct uint64) {
