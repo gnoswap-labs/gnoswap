@@ -82,7 +82,7 @@ func safeConvertToInt128(value *u256.Uint) *i256.Int {
 // This function validates that the given `value` is properly initialized and checks whether
 // it exceeds the maximum value of uint128. If the value exceeds the uint128 range,
 // it applies a masking operation to truncate the value to fit within the uint128 limit.
-//q
+//
 // Parameters:
 //   - value: *u256.Uint, the value to be checked and possibly truncated.
 //
