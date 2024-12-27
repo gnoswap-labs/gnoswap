@@ -28,23 +28,6 @@ func assertHopsInRange(hops int) {
 	}
 }
 
-func poolPathWithFeeDivide(poolPath string) (string, string, int) {
-	poolPathSplit, err := common.Split(poolPath, ":", 3)
-	if err != nil {
-		panic(addDetailToError(
-			errInvalidPoolPath,
-			ufmt.Sprintf("invalid poolPath(%s)", poolPath),
-		))
-	}
-
-	feeInt, err := strconv.Atoi(poolPathSplit[2])
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return poolPathSplit[0], poolPathSplit[1], feeInt
-}
-
 func getDataForSinglePath(poolPath string) (string, string, uint32) {
 	poolPathSplit, err := common.Split(poolPath, ":", 3)
 	if err != nil {

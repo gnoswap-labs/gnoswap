@@ -7,77 +7,15 @@ import (
 	"gno.land/p/demo/uassert"
 )
 
-type poolPathWithFeeDivideTestCases struct {
-	name        string
-	input       string
-	wantToken0  string
-	wantToken1  string
-	wantFee     int
-	shouldPanic bool
-}
-
-func TestPoolPathWithFeeDivide(t *testing.T) {
-	tests := []poolPathWithFeeDivideTestCases{
-		{
-			name:        "valid path",
-			input:       "token0:token1:500",
-			wantToken0:  "token0",
-			wantToken1:  "token1",
-			wantFee:     500,
-			shouldPanic: false,
-		},
-		{
-			name:        "valid path with special characters",
-			input:       "r/token_a:r/token_b:3000",
-			wantToken0:  "r/token_a",
-			wantToken1:  "r/token_b",
-			wantFee:     3000,
-			shouldPanic: false,
-		},
-		{
-			name:        "invalid fee format",
-			input:       "token0:token1:abc",
-			shouldPanic: true,
-		},
-		{
-			name:        "missing parts",
-			input:       "token0:token1",
-			shouldPanic: true,
-		},
-		{
-			name:        "empty string",
-			input:       "",
-			shouldPanic: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				r := recover()
-				if (r != nil) != tt.shouldPanic {
-					t.Errorf("poolPathWithFeeDivide() panic = %v, shouldPanic = %v", r != nil, tt.shouldPanic)
-				}
-			}()
-
-			token0, token1, fee := poolPathWithFeeDivide(tt.input)
-			if !tt.shouldPanic {
-				if token0 != tt.wantToken0 {
-					t.Errorf("token0 = %v, want %v", token0, tt.wantToken0)
-				}
-				if token1 != tt.wantToken1 {
-					t.Errorf("token1 = %v, want %v", token1, tt.wantToken1)
-				}
-				if fee != tt.wantFee {
-					t.Errorf("fee = %v, want %v", fee, tt.wantFee)
-				}
-			}
-		})
-	}
-}
-
 func TestGetDataForSinglePath(t *testing.T) {
-	tests := []poolPathWithFeeDivideTestCases{
+	tests := []struct {
+		name        string
+		input       string
+		wantToken0  string
+		wantToken1  string
+		wantFee     int
+		shouldPanic bool
+	}{
 		{
 			name:        "valid path",
 			input:       "tokenA:tokenB:500",
@@ -222,32 +160,32 @@ func TestSplitSingleChar(t *testing.T) {
 			expected: []string{"a", "b", "c"},
 		},
 		{
-            name:     "single character string",
-            input:    "a",
-            sep:      ',',
-            expected: []string{"a"},
-        },
-        {
-            name:     "only separators",
-            input:    ",,,,",
-            sep:      ',',
-            expected: []string{"", "", "", "", ""},
-        },
-        {
-            name:     "unicode characters",
-            input:    "한글,English,日本語",
-            sep:      ',',
-            expected: []string{"한글", "English", "日本語"},
-        },
-        {
-            name:     "special characters",
-            input:    "!@#$,%^&*,()_+",
-            sep:      ',',
-            expected: []string{"!@#$", "%^&*", "()_+"},
-        },
+			name:     "single character string",
+			input:    "a",
+			sep:      ',',
+			expected: []string{"a"},
+		},
 		{
-			name: "routes path",
-			input: "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
+			name:     "only separators",
+			input:    ",,,,",
+			sep:      ',',
+			expected: []string{"", "", "", "", ""},
+		},
+		{
+			name:     "unicode characters",
+			input:    "한글,English,日本語",
+			sep:      ',',
+			expected: []string{"한글", "English", "日本語"},
+		},
+		{
+			name:     "special characters",
+			input:    "!@#$,%^&*,()_+",
+			sep:      ',',
+			expected: []string{"!@#$", "%^&*", "()_+"},
+		},
+		{
+			name:     "routes path",
+			input:    "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500,gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500",
 			sep:      ',',
 			expected: []string{"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500", "gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:500*POOL*gno.land/r/onbloc/baz:gno.land/r/onbloc/qux:500"},
 		},
