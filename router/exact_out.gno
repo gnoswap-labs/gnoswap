@@ -87,7 +87,7 @@ func (op *ExactOutSwapOperation) Validate() error {
 
 	// assign a signed reversed `amountOut` to `amountSpecified`
 	// when it's an ExactOut
-	op.amountSpecified = new(i256.Int).Neg(amountOut)
+	op.amountSpecified = i256.Zero().Neg(amountOut)
 
 	routes, quotes, err := tryParseRoutes(op.params.RouteArr, op.params.QuoteArr)
 	if err != nil {

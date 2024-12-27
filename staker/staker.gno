@@ -9,11 +9,9 @@ import (
 
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
-
+	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
-
-	en "gno.land/r/gnoswap/v1/emission"
 	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
@@ -79,7 +77,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		))
 	}
 
-	owner := gnft.OwnerOf(tid(tokenId))
+	owner, _ := gnft.OwnerOf(tid(tokenId))
 
 	// if caller is owner
 	caller := std.PrevRealm().Addr()
@@ -342,7 +340,7 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	rewardManger.SetInternalEmissionReward(internalEmission)
 
 	// transfer NFT ownership to origin owner
-	gnft.TransferFrom(a2u(consts.STAKER_ADDR), a2u(deposit.owner), tid(tokenId))
+	gnft.TransferFrom(consts.STAKER_ADDR, deposit.owner, tid(tokenId))
 	pn.SetPositionOperator(tokenId, consts.ZERO_ADDRESS)
 
 	poolPath := pn.PositionGetPositionPoolKey(tokenId)
@@ -652,7 +650,7 @@ func checkStartTime(startTimestamp int64) {
 }
 
 func transferDeposit(tokenId uint64, to std.Address) {
-	owner := gnft.OwnerOf(tid(tokenId))
+	owner, _ := gnft.OwnerOf(tid(tokenId))
 	caller := std.PrevRealm().Addr()
 	if caller == to {
 		panic(addDetailToError(
@@ -662,7 +660,7 @@ func transferDeposit(tokenId uint64, to std.Address) {
 	}
 
 	// transfer NFT ownership
-	gnft.TransferFrom(a2u(owner), a2u(to), tid(tokenId))
+	gnft.TransferFrom(owner, to, tid(tokenId))
 }
 
 func getTokenPairBalanceFromPosition(tokenId uint64) (string, string) {

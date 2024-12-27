@@ -85,10 +85,10 @@ func finalizeSwap(
 	userBeforeWugnotBalance, userWrappedWugnot uint64,
 	amountSpecified *u256.Uint,
 ) (string, string) {
-	if swapType == ExactOut && resultAmountOut.Lt(amountSpecified) {
+	if swapType == ExactOut && resultAmountOut.Gt(amountSpecified) {
 		panic(addDetailToError(
 			errSlippage,
-			ufmt.Sprintf("too few received for user (expected minimum: %s, actual: %s, swapType: %s)", amountSpecified.ToString(), resultAmountOut.ToString(), swapType.String()),
+			ufmt.Sprintf("too few received for user (expected maximum: %s, actual: %s, swapType: %s)", amountSpecified.ToString(), resultAmountOut.ToString(), swapType.String()),
 		))
 	}
 

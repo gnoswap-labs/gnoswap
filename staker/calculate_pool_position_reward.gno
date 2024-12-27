@@ -129,8 +129,8 @@ func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 // TODO: only use block height to calculate reward and distribute them
 // Returns true if the calculation is successful, false otherwise.
 func CalcPoolPositionRefactor() bool {
-	distributableAmount := en.GetAccuDistributedAmountForStaker()
-	en.ClearAccuDistributedAmountForStaker()
+	distributableAmount := en.GetDistributedToStaker()
+	en.ClearDistributedToStaker()
 	currentHeight := std.GetHeight()
 	prevHeight := getLastCalculatedHeight()
 	if !isAbleToCalculateEmissionReward(prevHeight, currentHeight) || distributableAmount == 0 {
