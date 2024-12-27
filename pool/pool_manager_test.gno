@@ -92,6 +92,7 @@ func TestCreatePool(t *testing.T) {
 		sqrtPrice   string
 		shouldPanic bool
 		panicMsg    string
+		inOrder     bool
 	}{
 		{
 			name:       "success - normal token pair",
@@ -107,16 +108,17 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-011] same token used in single pool || pool_manager.gno__CreatePool() || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar",
+			panicMsg:    "[GNOSWAP-POOL-011] same token used in single pool || expected token0Path(gno.land/r/onbloc/bar) != token1Path(gno.land/r/onbloc/bar",
 		},
 		{
-			name:        "fail - tokens not in order",
+			name:        "success - when tokens not in order, reverse order and create pool",
 			token0Path:  fooPath,
-			token1Path:  barPath,
+			token1Path:  bazPath,
 			fee:         3000,
 			sqrtPrice:   "4295128740",
-			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-012] tokens must be in lexicographical order || pool_manager.gno__CreatePool() || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/bar)",
+			shouldPanic: false,
+			panicMsg:    "[GNOSWAP-POOL-012] tokens must be in lexicographical order || expected token0Path(gno.land/r/onbloc/foo) < token1Path(gno.land/r/onbloc/baz)",
+			inOrder:     true,
 		},
 		{
 			name:        "fail - pool already exists",
@@ -125,7 +127,7 @@ func TestCreatePool(t *testing.T) {
 			fee:         3000,
 			sqrtPrice:   "4295128740",
 			shouldPanic: true,
-			panicMsg:    "[GNOSWAP-POOL-013] pool already created || pool_manager.gno__CreatePool() || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
+			panicMsg:    "[GNOSWAP-POOL-013] pool already created || expected poolPath(gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000) not to exist",
 		},
 	}
 
@@ -158,6 +160,10 @@ func TestCreatePool(t *testing.T) {
 				// check if GNOT was properly wrapped
 				expectedToken0 := tt.token0Path
 				expectedToken1 := tt.token1Path
+				if tt.inOrder {
+					expectedToken0, expectedToken1 = expectedToken1, expectedToken0
+				}
+
 				if expectedToken0 == consts.GNOT {
 					expectedToken0 = consts.WRAPPED_WUGNOT
 				}

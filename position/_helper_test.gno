@@ -24,6 +24,7 @@ import (
 	"gno.land/r/onbloc/qux"
 	"gno.land/r/onbloc/usdc"
 
+	rr "gno.land/r/gnoswap/v1/router"
 	sr "gno.land/r/gnoswap/v1/staker"
 )
 
@@ -162,8 +163,20 @@ func (QuxToken) Approve() func(spender pusers.AddressOrName, amount uint64) {
 	return qux.Approve
 }
 
+func init() {
+	std.TestSetRealm(std.NewUserRealm("g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5"))
+	rr.RegisterGRC20Interface(wugnotPath, WugnotToken{})
+	rr.RegisterGRC20Interface(gnsPath, GNSToken{})
+	rr.RegisterGRC20Interface(barPath, BarToken{})
+	rr.RegisterGRC20Interface(bazPath, BazToken{})
+	rr.RegisterGRC20Interface(fooPath, FooToken{})
+	rr.RegisterGRC20Interface(oblPath, OBLToken{})
+	rr.RegisterGRC20Interface(quxPath, QuxToken{})
+}
+
 var (
-	admin       = pusers.AddressOrName(consts.ADMIN)
+	adminAddr   = std.Address(consts.ADMIN)
+	admin       = pusers.AddressOrName(adminAddr)
 	alice       = pusers.AddressOrName(testutils.TestAddress("alice"))
 	bob         = pusers.AddressOrName(testutils.TestAddress("bob"))
 	pool        = pusers.AddressOrName(consts.POOL_ADDR)
@@ -171,6 +184,7 @@ var (
 	router      = pusers.AddressOrName(consts.ROUTER_ADDR)
 	adminRealm  = std.NewUserRealm(users.Resolve(admin))
 	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm    = std.NewCodeRealm(consts.ROUTER_PATH)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
@@ -504,6 +518,13 @@ func MintPositionAll(t *testing.T, caller std.Address) {
 
 }
 
+func CreatePoolWithoutFee(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+	// set pool create fee to 0 for testing
+	pl.SetPoolCreationFeeByAdmin(0)
+	CreatePool(t, barPath, fooPath, fee500, common.TickMathGetSqrtRatioAtTick(0).ToString(), users.Resolve(admin))
+}
+
 func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	t.Helper()
 
@@ -550,6 +571,13 @@ func LPTokenUnStake(t *testing.T, owner pusers.AddressOrName, tokenId uint64, un
 	t.Helper()
 	std.TestSetRealm(std.NewUserRealm(users.Resolve(owner)))
 	sr.UnstakeToken(tokenId, unwrap)
+}
+
+func getPoolFromLpTokenId(t *testing.T, lpTokenId uint64) *pl.Pool {
+	t.Helper()
+
+	position := MustGetPosition(lpTokenId)
+	return pl.GetPoolFromPoolPath(position.poolKey)
 }
 
 func wugnotApprove(t *testing.T, owner, spender pusers.AddressOrName, amount uint64) {
@@ -757,6 +785,7 @@ func burnAllNFT(t *testing.T) {
 }
 
 func TestBeforeResetPositionObject(t *testing.T) {
+	t.Skip("only available for single file(current file) test")
 	// make actual data to test resetting not only position's state but also pool's state
 	std.TestSetRealm(adminRealm)
 
@@ -772,6 +801,7 @@ func TestBeforeResetPositionObject(t *testing.T) {
 }
 
 func TestResetObject(t *testing.T) {
+	t.Skip("only available for single file(current file) test")
 	resetObject(t)
 
 	uassert.Equal(t, positions.Size(), 0, "positions should be empty")
@@ -779,6 +809,7 @@ func TestResetObject(t *testing.T) {
 }
 
 func TestBurnTokens(t *testing.T) {
+	t.Skip("only available for single file(current file) test")
 	burnTokens(t)
 
 	uassert.Equal(t, foo.BalanceOf(a2u(addr01)), uint64(0)) // 100_000_000 -> 0
@@ -786,6 +817,7 @@ func TestBurnTokens(t *testing.T) {
 }
 
 func TestBurnAllNFT(t *testing.T) {
+	t.Skip("only available for single file(current file) test")
 	burnAllNFT(t)
 	uassert.Equal(t, gnft.TotalSupply(), uint64(0), "gnft total supply should be 0")
 }

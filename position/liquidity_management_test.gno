@@ -108,8 +108,3 @@ func TestAddLiquidity(t *testing.T) {
 		})
 	}
 }
-
-func TestSplitOf(t *testing.T) {
-	// TODO:
-
-}

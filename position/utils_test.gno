@@ -170,7 +170,7 @@ func TestAssertOnlyNotHalted(t *testing.T) {
 		{
 			name:     "Failure - Halted",
 			expected: false,
-			panicMsg: "[GNOSWAP-COMMON-002] halted || gnoswap halted",
+			panicMsg: "[GNOSWAP-COMMON-002] halted || GnoSwap is halted",
 		},
 		{
 			name:     "Success - Not Halted",
@@ -345,15 +345,6 @@ func TestAssertValidNumberString(t *testing.T) {
 			assertValidNumberString(tt.input)
 		})
 	}
-}
-
-func TestAssertValidLiquidityRatio(t *testing.T) {
-	t.Skip("TODO: Implement TestAssertValidLiquidityRatio")
-}
-
-func TestAssertWrapNativeToken(t *testing.T) {
-	// TODO:
-
 }
 
 func TestA2u(t *testing.T) {
@@ -624,20 +615,17 @@ func TestExists(t *testing.T) {
 	}{
 		{
 			name:     "Fail - not exists",
-			tokenId:  2,
+			tokenId:  300000,
 			expected: false,
 		},
 		{
 			name:     "Success - exists",
-			tokenId:  2,
-			expected: false,
+			tokenId:  1,
+			expected: true,
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.expected {
-
-			}
 			got := exists(tc.tokenId)
 			uassert.Equal(t, tc.expected, got)
 		})
@@ -730,13 +718,15 @@ func TestIsStaked(t *testing.T) {
 			name:     "Success - is staked",
 			owner:    admin,
 			operator: admin,
-			tokenId:  1,
+			tokenId:  11,
 			expected: true,
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.expected && tc.owner == tc.operator {
+				MakeMintPositionWithoutFee(t)
+				LPTokenApprove(t, tc.owner, pusers.AddressOrName(consts.STAKER_ADDR), tc.tokenId)
 				LPTokenStake(t, tc.owner, tc.tokenId)
 			}
 			got := isStaked(tokenIdFrom(tc.tokenId))
@@ -807,7 +797,7 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 			name:     "Fail - is not token staked",
 			owner:    admin,
 			operator: alice,
-			tokenId:  1,
+			tokenId:  10,
 			isStake:  false,
 			expected: false,
 		},
@@ -815,7 +805,7 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 			name:     "Success - is token staked (position operator)",
 			owner:    admin,
 			operator: admin,
-			tokenId:  1,
+			tokenId:  10,
 			isStake:  true,
 			expected: true,
 		},
@@ -823,6 +813,7 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.isStake {
+				tokenId, _, _, _ := MakeMintPositionWithoutFee(t)
 				LPTokenApprove(t, pusers.AddressOrName(tc.owner), pusers.AddressOrName(consts.STAKER_ADDR), tc.tokenId)
 				LPTokenStake(t, tc.owner, tc.tokenId)
 			}
@@ -830,10 +821,6 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 			uassert.Equal(t, tc.expected, got)
 		})
 	}
-}
-
-func TestIsAuthorizedForToken(t *testing.T) {
-	t.Skip("TODO - Implement TestIsAuthorizedForToken")
 }
 
 func TestPoolKeyDivide(t *testing.T) {
@@ -904,7 +891,7 @@ func TestPoolKeyDivide(t *testing.T) {
 	}
 }
 
-func TestSplitOf_Improved(t *testing.T) {
+func TestSplitOf(t *testing.T) {
 	tests := []struct {
 		name          string
 		poolKey       string
@@ -927,11 +914,46 @@ func TestSplitOf_Improved(t *testing.T) {
 			shouldPanic:   true,
 		},
 		{
+			name:          "Fail - non-numeric fee",
+			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:fee",
+			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid fee(fee)",
+			shouldPanic:   true,
+		},
+		{
+			name:          "Fail - missing fee part",
+			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:",
+			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid fee()",
+			shouldPanic:   true,
+		},
+		{
+			name:          "Fail - insufficient parts",
+			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo",
+			expectedError: "[GNOSWAP-POSITION-005] invalid input data || invalid poolKey(gno.land/r/gnoswap/v1/gns:gno.land/r/demo)",
+			shouldPanic:   true,
+		},
+		// 정상 케이스
+		{
 			name:          "Success - valid poolKey",
 			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:500",
 			expectedPath0: "gno.land/r/gnoswap/v1/gns",
 			expectedPath1: "gno.land/r/demo/wugnot",
 			expectedFee:   500,
+			shouldPanic:   false,
+		},
+		{
+			name:          "Success - poolKey with large fee",
+			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:10000",
+			expectedPath0: "gno.land/r/gnoswap/v1/gns",
+			expectedPath1: "gno.land/r/demo/wugnot",
+			expectedFee:   10000,
+			shouldPanic:   false,
+		},
+		{
+			name:          "Success - poolKey with minimal fee",
+			poolKey:       "gno.land/r/gnoswap/v1/gns:gno.land/r/demo/wugnot:1",
+			expectedPath0: "gno.land/r/gnoswap/v1/gns",
+			expectedPath1: "gno.land/r/demo/wugnot",
+			expectedFee:   1,
 			shouldPanic:   false,
 		},
 	}
@@ -944,9 +966,9 @@ func TestSplitOf_Improved(t *testing.T) {
 				})
 			} else {
 				gotToken0, gotToken1, gotFee := splitOf(tc.poolKey)
-				uassert.Equal(t, tc.expectedPath0, gotToken0)
-				uassert.Equal(t, tc.expectedPath1, gotToken1)
-				uassert.Equal(t, tc.expectedFee, gotFee)
+				uassert.Equal(t, tc.expectedPath0, gotToken0, "Token0 mismatch")
+				uassert.Equal(t, tc.expectedPath1, gotToken1, "Token1 mismatch")
+				uassert.Equal(t, tc.expectedFee, gotFee, "Fee mismatch")
 			}
 		})
 	}
