@@ -5,12 +5,10 @@ import (
 
 	u256 "gno.land/p/gnoswap/uint256"
 
-	pl "gno.land/r/gnoswap/v1/pool"
-
 	"gno.land/r/gnoswap/v1/gnft"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
-// type Position
 func PositionGetPosition(tokenId uint64) Position {
 	position, _ := GetPosition(tokenId)
 	return position
@@ -66,6 +64,11 @@ func PositionGetPositionTokensOwed1(tokenId uint64) *u256.Uint {
 	return position.tokensOwed1
 }
 
+func PositionGetPositionIsBurned(tokenId uint64) bool {
+	position := MustGetPosition(tokenId)
+	return position.burned
+}
+
 func PositionIsInRange(tokenId uint64) bool {
 	position := MustGetPosition(tokenId)
 	poolPath := position.poolKey
@@ -74,10 +77,37 @@ func PositionIsInRange(tokenId uint64) bool {
 	if position.tickLower <= poolCurrentTick && poolCurrentTick <= position.tickUpper {
 		return true
 	}
-
 	return false
 }
 
 func PositionGetPositionOwner(tokenId uint64) std.Address {
 	return gnft.OwnerOf(tokenIdFrom(tokenId))
+}
+
+func PositionGetPositionNonceStr(tokenId uint64) string {
+	return MustGetPosition(tokenId).nonce.ToString()
+}
+
+func PositionGetPositionOperatorStr(tokenId uint64) string {
+	return MustGetPosition(tokenId).operator.String()
+}
+
+func PositionGetPositionLiquidityStr(tokenId uint64) string {
+	return MustGetPosition(tokenId).liquidity.ToString()
+}
+
+func PositionGetPositionFeeGrowthInside0LastX128Str(tokenId uint64) string {
+	return MustGetPosition(tokenId).feeGrowthInside0LastX128.ToString()
+}
+
+func PositionGetPositionFeeGrowthInside1LastX128Str(tokenId uint64) string {
+	return MustGetPosition(tokenId).feeGrowthInside1LastX128.ToString()
+}
+
+func PositionGetPositionTokensOwed0Str(tokenId uint64) string {
+	return MustGetPosition(tokenId).tokensOwed0.ToString()
+}
+
+func PositionGetPositionTokensOwed1Str(tokenId uint64) string {
+	return MustGetPosition(tokenId).tokensOwed1.ToString()
 }

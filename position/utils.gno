@@ -148,21 +148,20 @@ func assertValidNumberString(input string) {
 	}
 }
 
+func assertValidLiquidityAmount(liquidity string) {
+	if u256.MustFromDecimal(liquidity).IsZero() {
+		panic(newErrorWithDetail(
+			errZeroLiquidity,
+			ufmt.Sprintf("liquidity amount must be greater than 0, got %s", liquidity),
+		))
+	}
+}
+
 func assertValidLiquidityRatio(ratio uint64) {
 	if !(ratio >= 1 && ratio <= 100) {
 		panic(newErrorWithDetail(
 			errInvalidLiquidityRatio,
 			ufmt.Sprintf("liquidity ratio must in range 1 ~ 100(contain), got %d", ratio),
-		))
-	}
-}
-
-// [DEPRECATED] assertOnlyValidAddress panics if the address is invalid.
-func assertWrapNativeToken(ugnotSent uint64, prevRealm std.Address) {
-	if err := wrap(ugnotSent, prevRealm); err != nil {
-		panic(newErrorWithDetail(
-			errWrapUnwrap,
-			ufmt.Sprintf("wrap error: %s", err.Error()),
 		))
 	}
 }

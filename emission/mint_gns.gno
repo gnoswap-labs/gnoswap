@@ -11,5 +11,5 @@ var emissionAddr std.Address = consts.EMISSION_ADDR
 
 // mintGns mints GNS to emission address
 func mintGns() uint64 {
-	return gns.Mint(a2u(emissionAddr))
+	return gns.MintGns(a2u(emissionAddr))
 }

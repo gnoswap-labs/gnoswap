@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/json"
-
 	i256 "gno.land/p/gnoswap/int256"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
@@ -111,7 +110,7 @@ func ApiGetPositions() string {
 func ApiGetPosition(lpTokenId uint64) string {
 	rpcPositions := []RpcPosition{}
 
-	position, exist := GetPosition(lpTokenId)
+	_, exist := GetPosition(lpTokenId)
 	if !exist {
 		return ""
 	}
@@ -392,7 +391,7 @@ func rpcMakePosition(lpTokenId uint64) RpcPosition {
 		currentX96,
 		lowerX96,
 		upperX96,
-		i256.FromUint256(position.liquidity),
+		position.liquidity,
 	)
 
 	unclaimedFee0 := i256.Zero()

@@ -2,12 +2,13 @@ package position
 
 import (
 	"encoding/base64"
+	"std"
+	"strconv"
+
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/gnft"
-	"std"
-	"strconv"
 
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -215,7 +216,6 @@ func Mint(
 
 	mintParams := newMintParams(processedInput, mintInput)
 	tokenId, liquidity, amount0, amount1 := mint(mintParams)
-
 	if processedInput.tokenPair.token0IsNative && processedInput.tokenPair.wrappedAmount > amount0.Uint64() {
 		// unwrap leftover wugnot
 		err = unwrap(processedInput.tokenPair.wrappedAmount-amount0.Uint64(), caller)
@@ -230,11 +230,9 @@ func Mint(
 			panic(newErrorWithDetail(errWrapUnwrap, err.Error()))
 		}
 	}
-
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(processedInput.poolPath)
 
 	prevAddr, prevPkgPath := getPrevAsString()
-
 	std.Emit(
 		"Mint",
 		"prevAddr", prevAddr,
@@ -334,10 +332,10 @@ func processMintInput(input MintInput) (ProcessedMintInput, error) {
 
 	result = ProcessedMintInput{
 		tokenPair:      pair,
-		amount0Desired: amount0Desired.Clone(),
-		amount1Desired: amount1Desired.Clone(),
-		amount0Min:     amount0Min.Clone(),
-		amount1Min:     amount1Min.Clone(),
+		amount0Desired: new(u256.Uint).Set(amount0Desired),
+		amount1Desired: new(u256.Uint).Set(amount1Desired),
+		amount0Min:     new(u256.Uint).Set(amount0Min),
+		amount1Min:     new(u256.Uint).Set(amount1Min),
 		tickLower:      tickLower,
 		tickUpper:      tickUpper,
 		poolPath:       poolPath,
@@ -526,8 +524,6 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 
 	pool := pl.GetPoolFromPoolPath(poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), params.tickLower, params.tickUpper)
-	feeGrowthInside0LastX128 := pool.PositionFeeGrowthInside0LastX128(positionKey).Clone()
-	feeGrowthInside1LastX128 := pool.PositionFeeGrowthInside1LastX128(positionKey).Clone()
 
 	position := Position{
 		nonce:                    u256.Zero(),
@@ -536,8 +532,8 @@ func mint(params MintParams) (uint64, *u256.Uint, *u256.Uint, *u256.Uint) {
 		tickLower:                params.tickLower,
 		tickUpper:                params.tickUpper,
 		liquidity:                liquidity,
-		feeGrowthInside0LastX128: feeGrowthInside0LastX128,
-		feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+		feeGrowthInside0LastX128: new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey)),
+		feeGrowthInside1LastX128: new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey)),
 		tokensOwed0:              u256.Zero(),
 		tokensOwed1:              u256.Zero(),
 		burned:                   false,
@@ -671,8 +667,8 @@ func calculatePositionFeeUpdate(
 	return PositionFeeUpdate{
 		tokensOwed0:              new(u256.Uint).Add(position.tokensOwed0, tokensOwed0),
 		tokensOwed1:              new(u256.Uint).Add(position.tokensOwed1, tokensOwed1),
-		feeGrowthInside0LastX128: currentFeeGrowth.feeGrowthInside0LastX128.Clone(),
-		feeGrowthInside1LastX128: currentFeeGrowth.feeGrowthInside1LastX128.Clone(),
+		feeGrowthInside0LastX128: new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside0LastX128),
+		feeGrowthInside1LastX128: new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside1LastX128),
 	}
 }
 
@@ -714,26 +710,26 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
-	feeGrowthInside0LastX128 := pool.PositionFeeGrowthInside0LastX128(positionKey).Clone()
-	feeGrowthInside1LastX128 := pool.PositionFeeGrowthInside1LastX128(positionKey).Clone()
+	feeGrowthInside0LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
+	feeGrowthInside1LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
 
 	{
 		diff := new(u256.Uint).Sub(feeGrowthInside0LastX128, position.feeGrowthInside0LastX128)
-		mulDiv := u256.MulDiv(diff, position.liquidity.Clone(), u256.MustFromDecimal(consts.Q128))
+		mulDiv := u256.MulDiv(diff, new(u256.Uint).Set(position.liquidity), u256.MustFromDecimal(consts.Q128))
 
 		position.tokensOwed0 = new(u256.Uint).Add(position.tokensOwed0, mulDiv)
 	}
 
 	{
 		diff := new(u256.Uint).Sub(feeGrowthInside1LastX128, position.feeGrowthInside1LastX128)
-		mulDiv := u256.MulDiv(diff, position.liquidity.Clone(), u256.MustFromDecimal(consts.Q128))
+		mulDiv := u256.MulDiv(diff, new(u256.Uint).Set(position.liquidity), u256.MustFromDecimal(consts.Q128))
 
 		position.tokensOwed1 = new(u256.Uint).Add(position.tokensOwed1, mulDiv)
 	}
 
 	position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128
-	position.liquidity = new(u256.Uint).Add(position.liquidity.Clone(), liquidity)
+	position.liquidity = new(u256.Uint).Add(new(u256.Uint).Set(position.liquidity), liquidity)
 	position.burned = false
 
 	updated := setPosition(params.tokenId, position)
@@ -751,11 +747,9 @@ func increaseLiquidity(params IncreaseLiquidityParams) (uint64, *u256.Uint, *u25
 // It also handles the conversion between GNOT and WUGNOT transparently for the user.
 // Returns tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath
 // ref: https://docs.gnoswap.io/contracts/position/position.gno#decreaseliquidity
-// TODO:
-// 1. liquidityRatio가 맞는지 검토
 func DecreaseLiquidity(
 	tokenId uint64,
-	liquidityRatio uint64,
+	liquidityStr string,
 	amount0MinStr string,
 	amount1MinStr string,
 	deadline int64,
@@ -764,19 +758,19 @@ func DecreaseLiquidity(
 	assertOnlyNotHalted()
 	isAuthorizedForToken(tokenId)
 	checkDeadline(deadline)
-	assertValidLiquidityRatio(liquidityRatio)
+	assertValidLiquidityAmount(liquidityStr)
 
 	en.MintAndDistributeGns()
 
 	amount0Min := u256.MustFromDecimal(amount0MinStr)
 	amount1Min := u256.MustFromDecimal(amount1MinStr)
 	decreaseLiquidityParams := DecreaseLiquidityParams{
-		tokenId:        tokenId,
-		liquidityRatio: liquidityRatio,
-		amount0Min:     amount0Min,
-		amount1Min:     amount1Min,
-		deadline:       deadline,
-		unwrapResult:   unwrapResult,
+		tokenId:      tokenId,
+		liquidity:    liquidityStr,
+		amount0Min:   amount0Min,
+		amount1Min:   amount1Min,
+		deadline:     deadline,
+		unwrapResult: unwrapResult,
 	}
 
 	tokenId, liquidity, fee0, fee1, amount0, amount1, poolPath := decreaseLiquidity(decreaseLiquidityParams)
@@ -790,7 +784,7 @@ func DecreaseLiquidity(
 		"prevAddr", prevAddr,
 		"prevRealm", prevPkgPath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
-		"liquidityRatio", ufmt.Sprintf("%d", liquidityRatio),
+		"removeLiquidity", liquidityStr,
 		"internal_poolPath", poolPath,
 		"internal_liquidity", liquidity.ToString(),
 		"internal_fee0", fee0.ToString(),
@@ -825,12 +819,18 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 		))
 	}
 
+	liquidityToRemove := u256.MustFromDecimal(params.liquidity)
+	if liquidityToRemove.Gt(positionLiquidity) {
+		panic(newErrorWithDetail(
+			errInvalidLiquidity,
+			ufmt.Sprintf("Liquidity requested(%s) is greater than liquidity held(%s)", liquidityToRemove.ToString(), positionLiquidity.ToString()),
+		))
+	}
+
 	caller := getPrevAddr()
 	beforeWugnotBalance := wugnot.BalanceOf(a2u(caller)) // before unwrap
 
-	liquidityToRemove := calculateLiquidityToRemove(positionLiquidity, params.liquidityRatio)
 	pToken0, pToken1, pFee := splitOf(position.poolKey)
-
 	burn0, burn1 := pl.Burn(pToken0, pToken1, pFee, position.tickLower, position.tickUpper, liquidityToRemove.ToString())
 
 	burnedAmount0 := u256.MustFromDecimal(burn0)
@@ -839,8 +839,8 @@ func decreaseLiquidity(params DecreaseLiquidityParams) (uint64, *u256.Uint, *u25
 
 	positionKey := computePositionKey(GetOrigPkgAddr(), position.tickLower, position.tickUpper)
 	pool := pl.GetPoolFromPoolPath(position.poolKey)
-	feeGrowthInside0LastX128 := pool.PositionFeeGrowthInside0LastX128(positionKey).Clone()
-	feeGrowthInside1LastX128 := pool.PositionFeeGrowthInside1LastX128(positionKey).Clone()
+	feeGrowthInside0LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
+	feeGrowthInside1LastX128 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
 
 	position.tokensOwed0 = updateTokensOwed(
 		feeGrowthInside0LastX128,
@@ -931,7 +931,6 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 		ZERO_LIQUIDITY_FOR_FEE_COLLECTION, // burn '0' liquidity to collect fee
 	)
 
-	//////////////
 	currentFeeGrowth, err := getCurrentFeeGrowth(position, token0, token1, fee)
 	if err != nil {
 		panic(newErrorWithDetail(err, "failed to get current fee growth"))
@@ -939,8 +938,8 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 
 	tokensOwed0, tokensOwed1 := calculateFees(position, currentFeeGrowth)
 
-	position.feeGrowthInside0LastX128 = currentFeeGrowth.feeGrowthInside0LastX128
-	position.feeGrowthInside1LastX128 = currentFeeGrowth.feeGrowthInside1LastX128
+	position.feeGrowthInside0LastX128 = new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside0LastX128)
+	position.feeGrowthInside1LastX128 = new(u256.Uint).Set(currentFeeGrowth.feeGrowthInside1LastX128)
 
 	// check user wugnot amount
 	// need this value to unwrap fee
@@ -962,7 +961,15 @@ func CollectFee(tokenId uint64, unwrapResult bool) (uint64, string, string, stri
 	mustUpdatePosition(tokenId, position)
 
 	// handle withdrawal fee
-	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(tokenId, token0, amount0, token1, amount1, position.poolKey, std.PrevRealm().Addr())
+	withoutFee0, withoutFee1 := pl.HandleWithdrawalFee(
+		tokenId,
+		token0,
+		amount0,
+		token1,
+		amount1,
+		position.poolKey,
+		std.PrevRealm().Addr(),
+	)
 
 	// UNWRAP
 	pToken0, pToken1, _ := splitOf(position.poolKey)
@@ -998,8 +1005,8 @@ func calculateFees(position Position, currentFeeGrowth FeeGrowthInside) (*u256.U
 		position.liquidity,
 	)
 
-	tokensOwed0 := new(u256.Uint).Add(position.tokensOwed0.Clone(), fee0)
-	tokensOwed1 := new(u256.Uint).Add(position.tokensOwed1.Clone(), fee1)
+	tokensOwed0 := new(u256.Uint).Add(new(u256.Uint).Set(position.tokensOwed0), fee0)
+	tokensOwed1 := new(u256.Uint).Add(new(u256.Uint).Set(position.tokensOwed1), fee1)
 
 	return tokensOwed0, tokensOwed1
 }
@@ -1008,8 +1015,8 @@ func getCurrentFeeGrowth(postion Position, token0, token1 string, fee uint32) (F
 	pool := pl.GetPoolFromPoolPath(postion.poolKey)
 	positionKey := computePositionKey(GetOrigPkgAddr(), postion.tickLower, postion.tickUpper)
 
-	feeGrowthInside0 := pool.PositionFeeGrowthInside0LastX128(positionKey).Clone()
-	feeGrowthInside1 := pool.PositionFeeGrowthInside1LastX128(positionKey).Clone()
+	feeGrowthInside0 := new(u256.Uint).Set(pool.PositionFeeGrowthInside0LastX128(positionKey))
+	feeGrowthInside1 := new(u256.Uint).Set(pool.PositionFeeGrowthInside1LastX128(positionKey))
 
 	feeGrowthInside := FeeGrowthInside{
 		feeGrowthInside0LastX128: feeGrowthInside0,
@@ -1055,7 +1062,7 @@ func Reposition(
 
 	liquidity, amount0, amount1 := addLiquidity(
 		AddLiquidityParams{
-			poolKey:        position.poolKey,
+			poolKey:        position.poolKey, // TOOD: FIX: 신규 틱 범위로 생성핵서 필요해야 함
 			tickLower:      tickLower,
 			tickUpper:      tickUpper,
 			amount0Desired: u256.MustFromDecimal(amount0DesiredStr),
@@ -1066,14 +1073,18 @@ func Reposition(
 		},
 	)
 
+	// update position tickLower, tickUpper to new value
+	// because getCurrentFeeGrowth() uses tickLower, tickUpper
+	position.tickLower = tickLower
+	position.tickUpper = tickUpper
+
 	currentFeeGrowth, err := getCurrentFeeGrowth(position, token0, token1, fee)
 	if err != nil {
 		panic(newErrorWithDetail(err, "failed to get current fee growth"))
 	}
 	position.feeGrowthInside0LastX128 = currentFeeGrowth.feeGrowthInside0LastX128
 	position.feeGrowthInside1LastX128 = currentFeeGrowth.feeGrowthInside1LastX128
-	position.tickLower = tickLower
-	position.tickUpper = tickUpper
+
 	position.liquidity = liquidity
 	// OBS: do not reset feeGrowthInside1LastX128 and feeGrowthInside1LastX128 to zero
 	// if so, ( decrease 100% -> reposition )
@@ -1081,11 +1092,9 @@ func Reposition(
 	position.tokensOwed0 = u256.Zero()
 	position.tokensOwed1 = u256.Zero()
 	position.burned = false
-
 	mustUpdatePosition(tokenId, position)
 
 	poolSqrtPriceX96 := pl.PoolGetSlot0SqrtPriceX96(position.poolKey)
-
 	prevAddr, prevPkgPath := getPrevAsString()
 
 	std.Emit(

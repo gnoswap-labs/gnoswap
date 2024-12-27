@@ -289,7 +289,45 @@ func TestIsNative(t *testing.T) {
 }
 
 func TestIsWrappedToken(t *testing.T) {
-	// TODO:
+	tests := []struct {
+		name      string
+		tokenPath string
+		expected  bool
+	}{
+		{
+			name:      "Success - Token is Wrapped WUGNOT",
+			tokenPath: consts.WRAPPED_WUGNOT,
+			expected:  true,
+		},
+		{
+			name:      "Fail - Token is not Wrapped WUGNOT",
+			tokenPath: "gno.land/r/demo/ugnot",
+			expected:  false,
+		},
+		{
+			name:      "Fail - Empty tokenPath",
+			tokenPath: "",
+			expected:  false,
+		},
+		{
+			name:      "Fail - Similar but Different Token Path",
+			tokenPath: "gno.land/r/demo/Wugnot",
+			expected:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isWrappedToken(tt.tokenPath)
+			if result != tt.expected {
+				t.Errorf(
+					"expected %s but got %s",
+					strconv.FormatBool(tt.expected),
+					strconv.FormatBool(result),
+				)
+			}
+		})
+	}
 }
 
 func TestSafeWrapNativeToken(t *testing.T) {

@@ -58,8 +58,8 @@ func newMintParams(input ProcessedMintInput, mintInput MintInput) MintParams {
 		token0:         input.tokenPair.token0,
 		token1:         input.tokenPair.token1,
 		fee:            mintInput.fee,
-		tickLower:      mintInput.tickLower,
-		tickUpper:      mintInput.tickUpper,
+		tickLower:      input.tickLower,
+		tickUpper:      input.tickUpper,
 		amount0Desired: input.amount0Desired,
 		amount1Desired: input.amount1Desired,
 		amount0Min:     input.amount0Min,
@@ -80,12 +80,12 @@ type IncreaseLiquidityParams struct {
 }
 
 type DecreaseLiquidityParams struct {
-	tokenId        uint64     // tokenId of the position to decrease liquidity
-	liquidityRatio uint64     // percent of liquidity to decrease, i.e '25' ≈ remove 25% of liquidity
-	amount0Min     *u256.Uint // minimum amount of token0 to be minted
-	amount1Min     *u256.Uint // minimum amount of token1 to be minted
-	deadline       int64      // time by which the transaction must be included to effect the change
-	unwrapResult   bool       // whether to unwrap the token if it's wrapped native token
+	tokenId      uint64     // tokenId of the position to decrease liquidity
+	liquidity    string     // amount of liquidity to decrease
+	amount0Min   *u256.Uint // minimum amount of token0 to be minted
+	amount1Min   *u256.Uint // minimum amount of token1 to be minted
+	deadline     int64      // time by which the transaction must be included to effect the change
+	unwrapResult bool       // whether to unwrap the token if it's wrapped native token
 }
 
 type MintInput struct {
