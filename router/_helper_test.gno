@@ -374,6 +374,19 @@ func CreatePoolWithoutFee(t *testing.T) {
 	CreatePool(t, barPath, bazPath, fee3000, common.TickMathGetSqrtRatioAtTick(0).ToString(), users.Resolve(admin))
 }
 
+func CreateSecondPoolWithoutFee(t *testing.T) {
+	std.TestSetRealm(adminRealm)
+	pl.SetPoolCreationFeeByAdmin(0)
+
+	CreatePool(t,
+		bazPath,
+		quxPath,
+		fee3000,
+		common.TickMathGetSqrtRatioAtTick(0).ToString(),
+		users.Resolve(admin),
+	)
+}
+
 func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	t.Helper()
 
@@ -387,6 +400,30 @@ func MakeMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
 	return pn.Mint(
 		barPath,
 		bazPath,
+		fee3000,
+		-887220,
+		887220,
+		"50000",
+		"50000",
+		"0",
+		"0",
+		max_timeout,
+		users.Resolve(admin),
+		users.Resolve(admin),
+	)
+}
+
+func MakeSecondMintPositionWithoutFee(t *testing.T) (uint64, string, string, string) {
+	t.Helper()
+
+	std.TestSetRealm(adminRealm)
+
+	TokenApprove(t, bazPath, admin, pool, consts.UINT64_MAX)
+	TokenApprove(t, quxPath, admin, pool, consts.UINT64_MAX)
+
+	return pn.Mint(
+		bazPath,
+		quxPath,
 		fee3000,
 		-887220,
 		887220,
