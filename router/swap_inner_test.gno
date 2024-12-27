@@ -61,15 +61,7 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 				tt.fee,
 				tt.sqrtPriceLimitX96,
 			)
-
-			if !result.Eq(tt.expected) {
-				t.Errorf(
-					"case '%s': expected %s, actual %s",
-					tt.name,
-					tt.expected.ToString(),
-					result.ToString(),
-				)
-			}
+			uassert.Equal(t, result.ToString(), tt.expected.ToString())
 		})
 	}
 }
