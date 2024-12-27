@@ -33,7 +33,7 @@ func TestPositionMint(t *testing.T) {
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// Mint
-	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, admin, admin)
+	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr)
 }
 
 func TestSwapRouteBazBarExactOut(t *testing.T) {
@@ -45,11 +45,10 @@ func TestSwapRouteBazBarExactOut(t *testing.T) {
 	token0Before := bar.BalanceOf(a2u(consts.ADMIN))
 	token1Before := baz.BalanceOf(a2u(consts.ADMIN))
 
-	amountIn, amountOut := SwapRoute(
+	amountIn, amountOut := ExactOutSwapRoute(
 		bazPath,     // inputToken
 		barPath,     // outputToken
 		"1",         // amountSpecified
-		"EXACT_OUT", // swapType
 		"gno.land/r/onbloc/baz:gno.land/r/onbloc/bar:3000", // strRouteArr
 		"100", // quoteArr
 		"3",   // tokenAmountLimit
