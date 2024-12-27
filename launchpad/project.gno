@@ -18,12 +18,12 @@ type ProjectStore struct {
 	projectsByStatus *avl.Tree // key: status, value: []string(projectIds)
 }
 
-type ProjectManager interface {
-	CreateProject(name string, tokenPath string, recipient std.Address, params ProjectParams) (string, error)
-	GetProject(projectId string) (*Project, error)
-	UpdateProject(projectId string, params ProjectParams) error
-	GetProjectTiers(projectId string) (map[string]*Tier, error) // TODO: change type
-	IsProjectActive(projectId string) bool
-	GetProjectsByTier(tier string) ([]*Project, error)
-	GetProjectsByStatus(status ProjectStatus) ([]*Project, error)
-}
+// type ProjectManager interface {
+// 	CreateProject(name string, tokenPath string, recipient std.Address, params ProjectParams) (string, error)
+// 	GetProject(projectId string) (*Project, error)
+// 	UpdateProject(projectId string, params ProjectParams) error
+// 	GetProjectTiers(projectId string) (map[string]*Tier, error) // TODO: change type
+// 	IsProjectActive(projectId string) bool
+// 	GetProjectsByTier(tier string) ([]*Project, error)
+// 	GetProjectsByStatus(status ProjectStatus) ([]*Project, error)
+// }

@@ -110,7 +110,7 @@ func Mint(to pusers.AddressOrName, amount uint64) {
 		))
 	}
 
-	mint(users.Resolve(to), amount)
+	checkErr(ledger.Mint(users.Resolve(to), amount))
 }
 
 // MintByLaunchPad increases the balance of a specified address by a given amount.
@@ -186,7 +186,6 @@ func BurnByLaunchPad(from pusers.AddressOrName, amount uint64) {
 			ufmt.Sprintf("only launchpad(%s) contract can call BurnByLaunchPad, called from %s", consts.LAUNCHPAD_ADDR.String(), caller.String()),
 		))
 	}
-
 	burn(users.Resolve(from), amount)
 }
 
