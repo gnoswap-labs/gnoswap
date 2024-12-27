@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	defaultSwapFee = uint64(15) // 0.15%
+	defaultSwapFeeBPS = uint64(15) // 0.15%
 )
 
 var (
-	swapFee = defaultSwapFee
+	swapFee = defaultSwapFeeBPS
 )
 
 func handleSwapFee(
