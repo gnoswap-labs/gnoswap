@@ -58,17 +58,25 @@ func ApiGetRewardTokens() string {
 		thisPoolRewardTokens := []string{}
 
 		// HANDLE INTERNAL
-		_, ok := poolTiers[poolPath]
-		if ok {
+		if isExistPoolTiers(poolPath) {
 			thisPoolRewardTokens = append(thisPoolRewardTokens, consts.GNS_PATH)
 		}
 
 		// HANDLE EXTERNAL
-		for _, incentiveId := range poolIncentives[poolPath] {
-			if incentives[incentiveId].rewardToken == "" {
+		ictvList, exists := poolIncentives.Get(poolPath)
+		if !exists {
+			continue
+		}
+
+		for _, incentiveId := range ictvList {
+			ictv, exist := incentives.Get(incentiveId)
+			if !exist {
 				continue
 			}
-			thisPoolRewardTokens = append(thisPoolRewardTokens, incentives[incentiveId].rewardToken)
+			if ictv.RewardToken() == "" {
+				continue
+			}
+			thisPoolRewardTokens = append(thisPoolRewardTokens, ictv.RewardToken())
 		}
 
 		if len(thisPoolRewardTokens) == 0 {
@@ -129,14 +137,22 @@ func ApiGetRewardTokensByPoolPath(targetPoolPath string) string {
 		thisPoolRewardTokens := []string{}
 
 		// HANDLE INTERNAL
-		_, ok := poolTiers[poolPath]
-		if ok {
+		if isExistPoolTiers(poolPath) {
 			thisPoolRewardTokens = append(thisPoolRewardTokens, consts.GNS_PATH)
 		}
 
 		// HANDLE EXTERNAL
-		for _, incentiveId := range poolIncentives[poolPath] {
-			thisPoolRewardTokens = append(thisPoolRewardTokens, incentives[incentiveId].rewardToken)
+		ictvList, exists := poolIncentives.Get(poolPath)
+		if !exists {
+			continue
+		}
+
+		for _, incentiveId := range ictvList {
+			ictv, exist := incentives.Get(incentiveId)
+			if !exist {
+				continue
+			}
+			thisPoolRewardTokens = append(thisPoolRewardTokens, ictv.RewardToken())
 		}
 
 		rewardTokens = append(rewardTokens, RewardToken{
@@ -257,7 +273,7 @@ func ApiGetExternalIncentiveById(incentiveId string) string {
 
 	apiExternalIncentives := []ApiExternalIncentive{}
 
-	incentive, exist := incentives[incentiveId]
+	incentive, exist := incentives.Get(incentiveId)
 	if !exist {
 		panic(addDetailToError(
 			errDataNotFound,
@@ -482,14 +498,14 @@ func ApiGetInternalIncentives() string {
 
 	apiInternalIncentives := []ApiInternalIncentive{}
 
-	for poolPath, internal := range poolTiers {
+	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
 		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
 			PoolPath:       poolPath,
-			Tier:           internal.tier,
-			StartTimestamp: internal.startTimestamp,
+			Tier:           internalTier.tier,
+			StartTimestamp: internalTier.startTimestamp,
 			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
 		})
-	}
+	})
 
 	// STAT NODE
 	_stat := json.ObjectNode("", map[string]*json.Node{
@@ -535,18 +551,18 @@ func ApiGetInternalIncentivesByPoolPath(targetPoolPath string) string {
 
 	apiInternalIncentives := []ApiInternalIncentive{}
 
-	for poolPath, internal := range poolTiers {
+	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
 		if poolPath != targetPoolPath {
-			continue
+			return
 		}
 
 		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
 			PoolPath:       poolPath,
-			Tier:           internal.tier,
-			StartTimestamp: internal.startTimestamp,
+			Tier:           internalTier.tier,
+			StartTimestamp: internalTier.startTimestamp,
 			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
 		})
-	}
+	})
 
 	// STAT NODE
 	_stat := json.ObjectNode("", map[string]*json.Node{
@@ -592,18 +608,18 @@ func ApiGetInternalIncentivesByTiers(targetTier uint64) string {
 
 	apiInternalIncentives := []ApiInternalIncentive{}
 
-	for poolPath, internal := range poolTiers {
-		if internal.tier != targetTier {
-			continue
+	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
+		if internalTier.tier != targetTier {
+			return
 		}
 
 		apiInternalIncentives = append(apiInternalIncentives, ApiInternalIncentive{
 			PoolPath:       poolPath,
-			Tier:           internal.tier,
-			StartTimestamp: internal.startTimestamp,
+			Tier:           internalTier.tier,
+			StartTimestamp: internalTier.startTimestamp,
 			RewardPerBlock: calculateInternalRewardPerBlockByPoolPath(poolPath),
 		})
-	}
+	})
 
 	// STAT NODE
 	_stat := json.ObjectNode("", map[string]*json.Node{
@@ -660,7 +676,12 @@ func calculateInternalRewardPerBlockByPoolPath(poolPath string) string {
 	tier1Amount, tier2Amount, tier3Amount := getTiersAmount(stakerGns)
 	tier1Num, tier2Num, tier3Num := getNumPoolTiers()
 
-	tier := poolTiers[poolPath].tier
+	internalTier, exist := poolTiers.Get(poolPath)
+	if !exist {
+		return "0"
+	}
+
+	tier := internalTier.Tier()
 
 	if tier == 1 {
 		return ufmt.Sprintf("%d", tier1Amount/tier1Num)
@@ -680,9 +701,12 @@ func updateExternalIncentiveLeftAmount() {
 
 			full := warmUpAmount.full100 + warmUpAmount.full70 + warmUpAmount.full50 + warmUpAmount.full30
 
-			incentive := incentives[incentiveId]
-			incentive.rewardLeft = new(u256.Uint).Sub(incentive.rewardLeft, u256.NewUint(full))
-			incentives[incentiveId] = incentive
+			ictv, exist := incentives.Get(incentiveId)
+			if !exist {
+				continue
+			}
+			ictv.rewardLeft = new(u256.Uint).Sub(ictv.rewardLeft, u256.NewUint(full))
+			incentives.Set(incentiveId, ictv)
 		}
 	}
 }

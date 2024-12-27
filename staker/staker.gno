@@ -2,9 +2,9 @@ package staker
 
 import (
 	"std"
-	"strconv"
 	"time"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -14,27 +14,9 @@ import (
 	"gno.land/r/gnoswap/v1/gns"
 
 	en "gno.land/r/gnoswap/v1/emission"
-	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
 	u256 "gno.land/p/gnoswap/uint256"
-)
-
-var (
-	/* internal */
-	// poolTiers stores internal tier information for each pool
-	poolTiers map[string]InternalTier = make(map[string]InternalTier)
-
-	/* external */
-	// poolIncentives maps pool paths to their associated incentive IDs
-	poolIncentives map[string][]string = make(map[string][]string)
-
-	// incentives stores external incentive for each incentive ID
-	incentives map[string]ExternalIncentive = make(map[string]ExternalIncentive)
-
-	/* common */
-	// deposits stores deposit information for each tokenId
-	deposits map[uint64]Deposit = make(map[uint64]Deposit)
 )
 
 const (
@@ -45,20 +27,54 @@ const (
 	MAX_UNIX_EPOCH_TIME = 253402300799 // 9999-12-31 23:59:59
 
 	MUST_EXISTS_IN_TIER_1 = "gno.land/r/demo/wugnot:gno.land/r/gnoswap/v1/gns:3000"
+
+	INTERNAL = true
+	EXTERNAL = false
 )
 
 func init() {
 	// init pool tiers
 	// tier 1
 	// ONLY GNOT:GNS 0.3%
-	poolTiers[MUST_EXISTS_IN_TIER_1] = InternalTier{
+	poolTiers.Set(MUST_EXISTS_IN_TIER_1, InternalTier{
 		tier:           1,
 		startTimestamp: time.Now().Unix(),
-	}
+	})
 }
 
-// StakeToken stakes the LP token to the staker contract
-// Returns poolPath, token0Amount, token1Amount
+// stakeResult holds the data needed to process a staking operation.
+type stakeResult struct {
+	tokenId      uint64
+	owner        std.Address
+	caller       std.Address
+	poolPath     string
+	token0Amount string
+	token1Amount string
+	deposit      Deposit
+}
+
+// StakeToken stakes an LP token into the staker contract. It transfer the LP token
+// ownership to the staker contract.
+//
+// State Transition:
+//  1. Token ownership transfers from user -> staker contract
+//  2. Position operator changes to caller
+//  3. Deposit record is created and stored
+//  4. Internal warm up amount is set to 0
+//
+// Requirements:
+//  1. Token must have non-zero liquidity
+//  2. Pool must have either internal or external incentives
+//  3. Caller must be token owner or approved operator
+//
+// Parameters:
+//   - tokenId (uint64): The ID of the LP token to stake
+//
+// Returns:
+//   - poolPath (string): The path of the pool to which the LP token is staked
+//   - token0Amount (string): The amount of token0 in the LP token
+//   - token1Amount (string): The amount of token1 in the LP token
+//
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#staketoken
 func StakeToken(tokenId uint64) (string, string, string) {
 	common.IsHalted()
@@ -70,90 +86,140 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		CalcPoolPosition()
 	}
 
-	// check whether tokenId already staked or not
-	_, exist := deposits[tokenId]
-	if exist {
-		panic(addDetailToError(
-			errAlreadyStaked,
-			ufmt.Sprintf("staker.gno__StakeToken() || tokenId(%d) already staked", tokenId),
-		))
-	}
-
 	owner := gnft.OwnerOf(tid(tokenId))
-
-	// if caller is owner
 	caller := std.PrevRealm().Addr()
-	callerIsOwner := owner == caller
 
-	// stakerIsOwner
-	stakerIsOwner := owner == consts.STAKER_ADDR
-
-	if !(callerIsOwner || stakerIsOwner) {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("staker.gno__StakeToken() || caller(%s) or staker(%s) is not owner(%s) of tokenId(%d)", caller, consts.STAKER_ADDR, owner, tokenId),
-		))
+	result, err := calculateStakeData(tokenId, owner, caller)
+	if err != nil {
+		panic(err)
 	}
 
-	// check pool path from tokenid
-	poolPath := pn.PositionGetPositionPoolKey(tokenId)
-
-	// check if target pool doesn't have internal or external incentive then panic
-	hasInternal := poolHasInternal(poolPath)
-	hasExternal := poolHasExternal(poolPath)
-	if hasInternal == false && hasExternal == false {
-		panic(addDetailToError(
-			errNonIncentivizedPool,
-			ufmt.Sprintf("staker.gno__StakeToken() || can not stake position to non incentivized pool(%s)", poolPath),
-		))
+	if err := applyStake(result); err != nil {
+		panic(err)
 	}
 
-	// check tokenId has liquidity or not
-	liqStr := pn.PositionGetPositionLiquidityStr(tokenId)
-	liquidity := u256.MustFromDecimal(liqStr)
-	if liquidity.Lte(u256.Zero()) {
-		panic(addDetailToError(
-			errZeroLiquidity,
-			ufmt.Sprintf("staker.gno__StakeToken() || tokenId(%d) has no liquidity", tokenId),
-		))
-	}
-
-	// staked status
-	deposit := deposits[tokenId]
-	deposit.owner = std.PrevRealm().Addr()
-	deposit.numberOfStakes++
-	deposit.stakeTimestamp = time.Now().Unix()
-	deposit.stakeHeight = std.GetHeight()
-	deposit.targetPoolPath = poolPath
-	deposits[tokenId] = deposit
-
-	if callerIsOwner { // if caller is owner, transfer NFT ownership to staker contract
-		transferDeposit(tokenId, consts.STAKER_ADDR)
-	}
-
-	// after transfer, set caller(user) as position operator (to collect fee and reward)
-	pn.SetPositionOperator(tokenId, caller)
-
-	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
-
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPackagePath := getPrev()
 
 	std.Emit(
 		"StakeToken",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPackagePath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
-		"internal_poolPath", poolPath,
-		"internal_amount0", token0Amount,
-		"internal_amount1", token1Amount,
+		"internal_poolPath", result.poolPath,
+		"internal_amount0", result.token0Amount,
+		"internal_amount1", result.token1Amount,
 	)
 
 	positionsInternalWarmUpAmount[tokenId] = warmUpAmount{}
-	return poolPath, token0Amount, token1Amount
+	return result.poolPath, result.token0Amount, result.token1Amount
 }
 
-// CollectReward collects staked rewards for the given tokenId
-// Returns poolPath
+// calculateStakeData validates staking requirements and prepares staking data.
+//
+// It checks if the token is already staked, verifies ownership, and ensures the pool has incentives.
+// If successful, it returns the staking data; otherwise, it returns an error.
+//
+// Parameters:
+//   - tokenId: The ID of the LP token to stake
+//   - owner: The owner of the LP token
+//   - caller: The caller of the staking operation
+//
+// Returns:
+//   - *stakeResult: The staking data if successful
+//   - error: An error if any validation fails
+func calculateStakeData(tokenId uint64, owner, caller std.Address) (*stakeResult, error) {
+	deposit, exist := deposits.Get(tokenId)
+	if !exist {
+		return nil, errAlreadyStaked
+	}
+
+	if err := requireTokenOwnership(owner, caller); err != nil {
+		return nil, err
+	}
+
+	if err := tokenHasLiquidity(tokenId); err != nil {
+		return nil, err
+	}
+
+	poolPath := pn.PositionGetPositionPoolKey(tokenId)
+	if err := poolHasIncentives(poolPath); err != nil {
+		return nil, err
+	}
+
+	newDeposit := newDeposit(
+		owner,
+		deposit.NumberOfStakes()+1,
+		time.Now().Unix(),
+		std.GetHeight(),
+		poolPath,
+	)
+
+	token0Amount, token1Amount := getTokenPairBalanceFromPosition(poolPath, tokenId)
+
+	return &stakeResult{
+		tokenId:      tokenId,
+		owner:        owner,
+		caller:       caller,
+		poolPath:     poolPath,
+		token0Amount: token0Amount,
+		token1Amount: token1Amount,
+		deposit:      newDeposit,
+	}, nil
+}
+
+// applyStake performs the actual staking operation by updating contract state.
+func applyStake(s *stakeResult) error {
+	deposits.Set(s.tokenId, s.deposit)
+
+	if s.owner == s.caller {
+		if err := transferDeposit(s.tokenId, s.owner, s.caller, consts.STAKER_ADDR); err != nil {
+			return err
+		}
+	}
+
+	pn.SetPositionOperator(s.tokenId, s.caller)
+	positionsInternalWarmUpAmount[s.tokenId] = warmUpAmount{}
+
+	return nil
+}
+
+func transferDeposit(tokenId uint64, owner, caller, to std.Address) error {
+	if caller == to {
+		return ufmt.Errorf(
+			"%v: only owner(%s) can transfer tokenId(%d), called from %s",
+			errNoPermission, owner, tokenId, caller,
+		)
+	}
+
+	// transfer NFT ownership
+	gnft.TransferFrom(a2u(owner), a2u(to), tid(tokenId))
+
+	return nil
+}
+
+////////////////////////////////////////////////////////////
+
+// CollectReward harvests accumulated rewards for a staked position. This includes both
+// inernal GNS emission and external incentive rewards.
+//
+// State Transition:
+//  1. Warm-up amounts are cleares for both internal and external rewards
+//  2. Reward tokens are transferred to the owner
+//  3. Penalty fees are transferred to protocol/community addresses
+//  4. GNS balance is recalculated
+//
+// Requirements:
+//   - Contract must not be halted
+//   - Caller must be the position owner
+//   - Position must be staked (have a deposit record)
+//
+// Parameters:
+//   - tokenId (uint64): The ID of the LP token to collect rewards from
+//   - unwrapResult (bool): Whether to unwrap WUGNOT to GNOT
+//
+// Returns:
+//   - poolPath (string): The path of the pool to which the LP token is staked
+//
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
 func CollectReward(tokenId uint64, unwrapResult bool) string {
 	common.IsHalted()
@@ -165,150 +231,355 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 		CalcPoolPosition()
 	}
 
-	deposit, exist := deposits[tokenId]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("staker.gno__CollectReward() || tokenId(%d) not staked", tokenId),
-		))
-	}
-
+	deposit := deposits.MustGet(tokenId)
 	caller := std.PrevRealm().Addr()
-	if caller != deposit.owner {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("staker.gno__CollectReward() || only owner(%s) can collect reward from tokenId(%d), called from %s", deposit.owner, tokenId, caller),
-		))
+	if err := common.SatisfyCond(caller == deposit.owner); err != nil {
+		panic(ufmt.Sprintf("%v: caller is not owner of tokenId(%d)", errNoPermission, tokenId))
 	}
 
-	poolPath := deposits[tokenId].targetPoolPath
+	result, err := calculateCollectReward(tokenId, deposit)
+	if err != nil {
+		panic(err)
+	}
 
-	prevAddr, prevRealm := getPrev()
+	external, internal := applyCollectReaward(result, unwrapResult)
 
-	_, exist = positionExternal[tokenId]
-	if exist {
-		for _, external := range positionExternal[tokenId] {
-			incentive := incentives[external.incentiveId]
-			incentiveId := external.incentiveId
+	prevAddr, prevPkgPath := getPrev()
 
-			externalWarmUpAmount, exist := positionsExternalWarmUpAmount[tokenId][incentiveId]
-			if !exist {
-				continue
-			}
-			fullAmount := externalWarmUpAmount.full30 + externalWarmUpAmount.full50 + externalWarmUpAmount.full70 + externalWarmUpAmount.full100
-			toGive := externalWarmUpAmount.give30 + externalWarmUpAmount.give50 + externalWarmUpAmount.give70 + externalWarmUpAmount.full100
+	for _, reward := range external {
+		std.Emit(
+			"ProtocolFeeExternalPenalty",
+			"prevAddr", prevAddr,
+			"prevRealm", prevPkgPath,
+			"lpTokenId", ufmt.Sprintf("%d", tokenId),
+			"internal_poolPath", reward.poolPath,
+			"internal_incentiveId", reward.ictvId,
+			"internal_tokenPath", reward.tokenPath,
+			"internal_amount", ufmt.Sprintf("%d", reward.left),
+		)
 
-			if toGive == 0 {
-				continue
-			}
+		std.Emit(
+			"CollectRewardExternal",
+			"prevAddr", prevAddr,
+			"prevRealm", prevPkgPath,
+			"lpTokenId", ufmt.Sprintf("%d", tokenId),
+			"internal_poolPath", reward.poolPath,
+			"internal_incentiveId", reward.ictvId,
+			"internal_rewardToken", reward.tokenPath,
+			"internal_recipient", result.owner.String(),
+			"internal_amount", ufmt.Sprintf("%d", reward.toUser),
+			"internal_unwrapResult", ufmt.Sprintf("%t", unwrapResult),
+		)
+	}
 
-			_this := positionExternal[tokenId][incentiveId]
-			_this.tokenAmountX96 = u256.Zero()
-			_this.tokenAmountFull += fullAmount
-			_this.tokenAmountToGive += toGive
-			positionExternal[tokenId][incentiveId] = _this
+	if internal.toGive > 0 {
+		std.Emit(
+			"CommunityPoolEmissionPenalty",
+			"prevAddr", prevAddr,
+			"prevRealm", prevPkgPath,
+			"lpTokenId", ufmt.Sprintf("%d", tokenId),
+			"internal_poolPath", result.poolPath,
+			"internal_incentiveId", "INTERNAL",
+			"internal_tokenPath", consts.GNS_PATH,
+			"internal_amount", ufmt.Sprintf("%d", internal.left),
+		)
 
-			toUser := handleUnstakingFee(external.tokenPath, toGive, false, tokenId, incentive.targetPoolPath)
+		std.Emit(
+			"CollectRewardEmission",
+			"prevAddr", prevAddr,
+			"prevRealm", prevPkgPath,
+			"lpTokenId", ufmt.Sprintf("%d", tokenId),
+			"internal_poolPath", result.poolPath,
+			"internal_incentiveId", "INTERNAL",
+			"internal_rewardToken", consts.GNS_PATH,
+			"internal_recipient", result.owner.String(),
+			"internal_fullAmount", ufmt.Sprintf("%d", internal.fullAmount),
+			"internal_toGive", ufmt.Sprintf("%d", internal.toGive),
+			"internal_amount", ufmt.Sprintf("%d", internal.toUser),
+			"internal_unstakingFee", ufmt.Sprintf("%d", internal.toGive-internal.toUser),
+			"internal_left", ufmt.Sprintf("%d", internal.left),
+		)
+	}
 
-			transferByRegisterCall(external.tokenPath, deposit.owner, toUser)
-			if external.tokenPath == consts.WUGNOT_PATH && unwrapResult {
-				unwrap(toUser)
-			}
+	return result.poolPath
+}
 
-			positionsExternalWarmUpAmount[tokenId][incentiveId] = warmUpAmount{} // JUST CLEAR
-			positionLastExternal[tokenId][incentiveId] = u256.Zero()             // JUST CLEAR
+// collectResult represents the result of a reward collection operation.
+type collectResult struct {
+	tokenId         uint64
+	owner           std.Address
+	poolPath        string
+	internalRewards warmUpAmount
+	externalRewards *avl.Tree
+}
 
-			left := fullAmount - toGive
-			transferByRegisterCall(external.tokenPath, consts.PROTOCOL_FEE_ADDR, left)
+// newCollectResult contains all reward information for a position.
+func newCollectResult(tokenId uint64, owner std.Address, poolPath string) *collectResult {
+	return &collectResult{
+		tokenId:         tokenId,
+		owner:           owner,
+		poolPath:        poolPath,
+		internalRewards: warmUpAmount{},
+		externalRewards: avl.NewTree(),
+	}
+}
 
-			std.Emit(
-				"ProtocolFeeExternalPenalty",
-				"prevAddr", prevAddr,
-				"prevRealm", prevRealm,
-				"lpTokenId", ufmt.Sprintf("%d", tokenId),
-				"internal_poolPath", poolPath,
-				"internal_incentiveId", incentiveId,
-				"internal_tokenPath", external.tokenPath,
-				"internal_amount", ufmt.Sprintf("%d", left),
-			)
+// externalRewardInfo holds data for a single external reward calculation.
+type externalRewardInfo struct {
+	ictvId     string
+	tokenPath  string
+	fullAmount uint64
+	toGive     uint64
+}
 
-			incentive.rewardLeft = new(u256.Uint).Sub(incentive.rewardLeft, u256.NewUint(fullAmount))
-			incentives[incentiveId] = incentive
+// calculateCollectReward calculates both external and internal rewards for a given token ID.
+//
+// It processes the rewards based on the deposit information [`Deposit`] and current state of both reward types.
+//
+// Parameters:
+//   - tokenId: The ID of the token for which to calculate rewards
+//   - deposit: The deposit information for the token
+//
+// Returns:
+//   - A `collectResult` containing all reward information and any error encountered during the calculation.
+func calculateCollectReward(tokenId uint64, deposit Deposit) (*collectResult, error) {
+	result := newCollectResult(tokenId, deposit.owner, deposit.TargetPoolPath())
 
-			if external.tokenPath == consts.GNS_PATH {
-				externalGns[incentiveId] -= fullAmount
-			}
+	if err := calculateExternalRewards(tokenId, result); err != nil {
+		return nil, err
+	}
 
-			std.Emit(
-				"CollectRewardExternal",
-				"prevAddr", prevAddr,
-				"prevRealm", prevRealm,
-				"lpTokenId", ufmt.Sprintf("%d", tokenId),
-				"internal_poolPath", poolPath,
-				"internal_incentiveId", incentiveId,
-				"internal_rewardToken", external.tokenPath,
-				"internal_recipient", deposit.owner.String(),
-				"internal_amount", ufmt.Sprintf("%d", toUser),
-				"internal_unwrapResult", ufmt.Sprintf("%t", unwrapResult),
-			)
+	result.internalRewards = positionsInternalWarmUpAmount[tokenId]
+
+	return result, nil
+}
+
+// calculateExternalRewards pricesses all external rewards for a given token ID.
+//
+// It iterates through all external positions associated with the token and calculates
+// their respective rewards, storing them in the provided `collectResult` instance.
+//
+// Parameters:
+//   - tokenId: The ID of the token for which to calculate rewards
+//   - result: The `collectResult` instance to store the calculated rewards.
+//
+// Returns:
+//   - An error if any issues arise during the calculation process.
+func calculateExternalRewards(tokenId uint64, result *collectResult) error {
+	positions, exist := positionExternal[tokenId]
+	if !exist {
+		return nil
+	}
+
+	for ictvId, external := range positions {
+		tokenPath := external.tokenPath
+		reward, err := calculateSingleExternalReward(tokenId, tokenPath, ictvId)
+		if err != nil {
+			return err
+		}
+		if reward != nil {
+			result.externalRewards.Set(ictvId, reward)
 		}
 	}
 
-	// INTERNAL gns emission
-	internalWarmUpAmount, exist := positionsInternalWarmUpAmount[tokenId]
-	if !exist {
-		return poolPath
-	}
-	fullAmount := internalWarmUpAmount.full30 + internalWarmUpAmount.full50 + internalWarmUpAmount.full70 + internalWarmUpAmount.full100
-	toGive := internalWarmUpAmount.give30 + internalWarmUpAmount.give50 + internalWarmUpAmount.give70 + internalWarmUpAmount.full100
+	return nil
+}
 
+// calculateSingleExternalReward calculates the reward for a single external incentive.
+// It verifies the existence of the incentive and its warm-up amount, then calculates
+// the reward based on the warm-up amount.
+//
+// Parameters:
+//   - tokenId: The ID of the token for which to calculate rewards
+//   - tokenPath: The path of the reward token
+//   - ictvId: The ID of the incentive
+//
+// Returns:
+//   - *externalRewardResult: Contains the calculated reward information if successful
+//   - error: Returns errIncentiveNotFound if the incentive doesn't exist,
+//     errWarmUpAmountNotFound if warm-up amount is missing, or nil if successful
+//
+// If there are no rewards to give (toGive = 0), it returns (nil, nil).
+func calculateSingleExternalReward(tokenId uint64, tokenPath, ictvId string) (*externalRewardResult, error) {
+	ictv, exists := incentives.Get(ictvId)
+	if !exists {
+		return nil, ufmt.Errorf("%v: incentive ID=%s", errIncentiveNotFound, ictvId)
+	}
+
+	// get warm up amount
+	// TODO: change type
+	warmUp, exists := positionsExternalWarmUpAmount[tokenId][ictvId]
+	if !exists {
+		return nil, ufmt.Errorf("%v: incentive ID=%s", errWarmUpAmountNotFound, ictvId)
+	}
+
+	fullAmount := warmUp.totalFull()
+	toGive := warmUp.totalGive()
+
+	// skip if there's nothing to give
 	if toGive == 0 {
-		return poolPath
+		return nil, nil
 	}
-	toUser := handleUnstakingFee(consts.GNS_PATH, toGive, true, tokenId, poolPath)
-	gns.Transfer(a2u(deposit.owner), toUser)
 
-	// delete(positionsInternalWarmUpAmount, tokenId) // DO NOT DELETE
-	positionsInternalWarmUpAmount[tokenId] = warmUpAmount{} // JUST CLEAR
+	return &externalRewardResult{
+		ictvId:     ictvId,
+		tokenPath:  tokenPath,
+		poolPath:   ictv.targetPoolPath,
+		fullAmount: fullAmount,
+		toGive:     toGive,
+	}, nil
+}
+
+// externalRewardResult contains all the data needed to emit the event
+type externalRewardResult struct {
+	ictvId     string
+	tokenPath  string
+	poolPath   string
+	fullAmount uint64
+	toGive     uint64
+	toUser     uint64
+	left       uint64
+}
+
+func applyExternalReward(
+	tokenId uint64,
+	reward externalRewardInfo,
+	owner std.Address,
+	unwrapResult bool,
+) externalRewardResult {
+	ictv, exists := incentives.Get(reward.ictvId)
+	if !exists {
+		return externalRewardResult{}
+	}
+
+	external := positionExternal[tokenId][reward.ictvId]
+	external.tokenAmountX96 = u256.Zero()
+	external.tokenAmountFull += reward.fullAmount
+	external.tokenAmountToGive += reward.toGive
+	positionExternal[tokenId][reward.ictvId] = external
+
+	toUser := handleUnstakingFee(reward.tokenPath, reward.toGive, EXTERNAL, tokenId, ictv.targetPoolPath)
+
+	transferByRegisterCall(reward.tokenPath, owner, toUser)
+	if reward.tokenPath == consts.WUGNOT_PATH && unwrapResult {
+		unwrap(toUser)
+	}
+
+	// TODO: change type
+	positionsExternalWarmUpAmount[tokenId][reward.ictvId] = warmUpAmount{}
+	positionLastExternal[tokenId][reward.ictvId] = u256.Zero()
+
+	remaining := reward.fullAmount - reward.toGive
+	transferByRegisterCall(reward.tokenPath, consts.PROTOCOL_FEE_ADDR, remaining)
+
+	ictv.rewardLeft = new(u256.Uint).Sub(ictv.rewardLeft, u256.NewUint(reward.fullAmount))
+	incentives.Set(reward.ictvId, ictv)
+
+	return externalRewardResult{
+		ictvId:     reward.ictvId,
+		tokenPath:  reward.tokenPath,
+		poolPath:   ictv.targetPoolPath,
+		fullAmount: reward.fullAmount,
+		toGive:     reward.toGive,
+		toUser:     toUser,
+		left:       remaining,
+	}
+}
+
+// internalRewardResult contains all the data needed to emit the event
+type internalRewardResult struct {
+	fullAmount uint64
+	toGive     uint64
+	toUser     uint64
+	left       uint64
+}
+
+func applyInternalReward(
+	tokenId uint64,
+	internalRewards warmUpAmount,
+	owner std.Address,
+) internalRewardResult {
+	fullAmount := internalRewards.totalFull()
+	toGive := internalRewards.totalGive()
+	if toGive == 0 {
+		return internalRewardResult{}
+	}
+
+	poolPath := deposits.MustGet(tokenId).TargetPoolPath()
+	toUser := handleUnstakingFee(consts.GNS_PATH, toGive, INTERNAL, tokenId, poolPath)
+	gns.Transfer(a2u(owner), toUser)
+
+	positionsInternalWarmUpAmount[tokenId] = warmUpAmount{} // just clear
 
 	poolGns[poolPath] -= fullAmount
 
 	left := fullAmount - toGive
 	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), left)
-	std.Emit(
-		"CommunityPoolEmissionPenalty",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"lpTokenId", ufmt.Sprintf("%d", tokenId),
-		"internal_poolPath", poolPath,
-		"internal_incentiveId", "INTERNAL",
-		"internal_tokenPath", consts.GNS_PATH,
-		"internal_amount", ufmt.Sprintf("%d", left),
-	)
 
-	std.Emit(
-		"CollectRewardEmission",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"lpTokenId", ufmt.Sprintf("%d", tokenId),
-		"internal_poolPath", poolPath,
-		"internal_incentiveId", "INTERNAL",
-		"internal_rewardToken", consts.GNS_PATH,
-		"internal_recipient", deposit.owner.String(),
-		"internal_fullAmount", ufmt.Sprintf("%d", fullAmount),
-		"internal_toGive", ufmt.Sprintf("%d", toGive),
-		"internal_amount", ufmt.Sprintf("%d", toUser),
-		"internal_unstakingFee", ufmt.Sprintf("%d", toGive-toUser),
-		"internal_left", ufmt.Sprintf("%d", left),
-	)
-
-	// UPDATE stakerGns Balance for calculate_pool_position_reward
-	lastCalculatedBalance = gnsBalance(consts.STAKER_ADDR) - externalGnsAmount() - externalDepositGnsAmount()
-
-	return poolPath
+	return internalRewardResult{
+		fullAmount: fullAmount,
+		toGive:     toGive,
+		toUser:     toUser,
+		left:       left,
+	}
 }
 
-// UnstakeToken unstakes the LP token from the staker and collects all reward from tokenId
+func applyCollectReaward(
+	result *collectResult,
+	unwrap bool,
+) ([]externalRewardResult, internalRewardResult) {
+	rewardResults := make([]externalRewardResult, 0)
+
+	// apply external rewards
+	result.externalRewards.Iterate("", "", func(ictvId string, value interface{}) bool {
+		reward := value.(externalRewardInfo)
+		rewardResult := applyExternalReward(result.tokenId, reward, result.owner, unwrap)
+		rewardResults = append(rewardResults, rewardResult)
+		return false // continue to iterate
+	})
+
+	// apply internal rewards
+	internalRewardResult := applyInternalReward(result.tokenId, result.internalRewards, result.owner)
+
+	// update staker GNS balance
+	lastCalculatedBalance = calculateGnsBalance()
+
+	return rewardResults, internalRewardResult
+}
+
+func calculateGnsBalance() uint64 {
+	return gnsBalance(consts.STAKER_ADDR) - externalGnsAmount() - externalDepositGnsAmount()
+}
+
+////////////////////////////////////////////////////////////
+
+// UnstakeToken withdraws an LP token from staking, collecting all pending rewards
+// and returning the token to its original owner.
+//
+// State transitions:
+//  1. All pending rewards are collected (calls CollectReward)
+//  2. Token ownership transfers back to original owner
+//  3. Position operator is cleared
+//  4. All staking state is cleaned up:
+//     - Deposit record removed
+//     - Position GNS balances cleared
+//     - Warm-up amounts cleared
+//     - Position removed from reward tracking
+//
+// Requirements:
+// - Contract must not be halted
+// - Position must be staked (have deposit record)
+// - Rewards are automatically collected before unstaking
+//
+// Params:
+// - tokenId (uint64): ID of the staked LP token
+// - unwrapResult (bool): If true, unwraps any WUGNOT rewards to GNOT
+//
+// Returns:
+// - poolPath (string): The pool path associated with the unstaked position
+// - token0Amount (string): Final amount of token0 in the position
+// - token1Amount (string): Final amount of token1 in the position
+//
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#unstaketoken
 func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { // poolPath, token0Amount, token1Amount
 	common.IsHalted()
@@ -321,425 +592,163 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	}
 
 	// unstaked status
-	deposit, exist := deposits[tokenId]
+	deposit, exist := deposits.Get(tokenId)
 	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("staker.gno__UnstakeToken() || tokenId(%d) not staked", tokenId),
-		))
+		msg := ufmt.Sprintf("%v: tokenId(%d) not staked", errDataNotFound, tokenId)
+		panic(msg)
 	}
 
 	// Claim All Rewards
 	CollectReward(tokenId, unwrapResult)
 
-	delete(positionGns, tokenId)
-	delete(deposits, tokenId)
-	delete(positionsInternalWarmUpAmount, tokenId)
+	poolPath := pn.PositionGetPositionPoolKey(tokenId)
+	token0Amount, token1Amount := getTokenPairBalanceFromPosition(poolPath, tokenId)
 
-	rewardManger := getRewardManager()
-	internalEmission := rewardManger.GetInternalEmissionReward()
-	internalEmission.RemoveInRangePosition(deposit.targetPoolPath, tokenId)
-	rewardManger.SetInternalEmissionReward(internalEmission)
+	input := newUnstakeInput(tokenId, unwrapResult, deposit)
+	output := newUnstakeOutput(poolPath, token0Amount, token1Amount, input)
+
+	cleanupStakeData(input.tokenId, positionGns, positionsInternalWarmUpAmount)
+
+	manager := getRewardManager()
+	applyUnstake(manager, input)
 
 	// transfer NFT ownership to origin owner
 	gnft.TransferFrom(a2u(consts.STAKER_ADDR), a2u(deposit.owner), tid(tokenId))
 	pn.SetPositionOperator(tokenId, consts.ZERO_ADDRESS)
 
-	poolPath := pn.PositionGetPositionPoolKey(tokenId)
-	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
-
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"UnstakeToken",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"lpTokenId", ufmt.Sprintf("%d", tokenId),
 		"unwrapResult", ufmt.Sprintf("%t", unwrapResult),
-		"internal_poolPath", poolPath,
-		"internal_from", GetOrigPkgAddr().String(),
-		"internal_to", deposit.owner.String(),
-		"internal_amount0", token0Amount,
-		"internal_amount1", token1Amount,
+		"internal_poolPath", output.poolPath,
+		"internal_from", output.from.String(),
+		"internal_to", output.to.String(),
+		"internal_amount0", output.token0Amount,
+		"internal_amount1", output.token1Amount,
 	)
 
-	return poolPath, token0Amount, token1Amount
+	return output.poolPath, output.token0Amount, output.token1Amount
 }
 
-// CreateExternalIncentive creates an incentive program for a pool.
-// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#createexternalincentive
-func CreateExternalIncentive(
-	targetPoolPath string,
-	rewardToken string, // token path should be registered
-	_rewardAmount string,
-	startTimestamp int64,
-	endTimestamp int64,
+// unstakeInput holds the necessary data for unstaking a position.
+type unstakeInput struct {
+	tokenId uint64
+	unwrap  bool
+	deposit Deposit
+}
+
+// newUnstakeInput creates a new `unstakeInput` instance with the given parameters.
+func newUnstakeInput(
+	tokenId uint64,
+	unwrap bool,
+	deposit Deposit,
+) unstakeInput {
+	return unstakeInput{
+		tokenId: tokenId,
+		unwrap:  unwrap,
+		deposit: deposit,
+	}
+}
+
+// unstakeOutput represents the output data generated during the unstaking process.
+type unstakeOutput struct {
+	tokenId      uint64
+	owner        std.Address
+	poolPath     string
+	token0Amount string
+	token1Amount string
+	from         std.Address
+	to           std.Address
+}
+
+// newUnstakeOutput creates a new `unstakeOutput` instance with the given parameters.
+func newUnstakeOutput(
+	poolPath string,
+	token0Amount,
+	token1Amount string,
+	input unstakeInput,
+) *unstakeOutput {
+	return &unstakeOutput{
+		tokenId:      input.tokenId,
+		owner:        input.deposit.owner,
+		poolPath:     poolPath,
+		token0Amount: token0Amount,
+		token1Amount: token1Amount,
+		from:         consts.STAKER_ADDR,
+		to:           input.deposit.owner,
+	}
+}
+
+// Terminal state
+// TODO: change type of positionInternalWarmUpAmount if needed.
+func cleanupStakeData(
+	tokenId uint64,
+	positionGns map[uint64]uint64,
+	positionsInternalWarmUpAmount map[uint64]warmUpAmount,
 ) {
-	common.IsHalted()
-
-	en.MintAndDistributeGns()
-	if consts.EMISSION_REFACTORED {
-		CalcPoolPositionRefactor()
-	} else {
-		CalcPoolPosition()
-	}
-
-	if common.GetLimitCaller() {
-		prev := std.PrevRealm()
-		if !prev.IsUser() {
-			panic(addDetailToError(
-				errNoPermission,
-				ufmt.Sprintf("staker.gno__CreateExternalIncentive() || only user can call this function, but called from %s", prev.PkgPath()),
-			))
-		}
-	}
-
-	// panic if pool does not exist
-	if !(pl.DoesPoolPathExist(targetPoolPath)) {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("staker.gno__CreateExternalIncentive() || targetPoolPath(%s) does not exist", targetPoolPath),
-		))
-	}
-
-	// check token can be used as reward
-	isAllowedForExternalReward(targetPoolPath, rewardToken)
-
-	rewardAmount := u256.MustFromDecimal(_rewardAmount)
-
-	// native ugnot check
-	if rewardToken == consts.GNOT {
-		sent := std.GetOrigSend()
-		ugnotSent := uint64(sent.AmountOf("ugnot"))
-
-		if ugnotSent != rewardAmount.Uint64() {
-			panic(addDetailToError(
-				errInvalidInput,
-				ufmt.Sprintf("staker.gno__CreateExternalIncentive() || user(%s) sent ugnot(%d) amount not equal to rewardAmount(%d)", std.PrevRealm().Addr(), ugnotSent, rewardAmount.Uint64()),
-			))
-		}
-
-		wrap(ugnotSent)
-
-		rewardToken = consts.WUGNOT_PATH
-	}
-
-	// must be in seconds format, not milliseconds
-	// must be at least +1 day midnight
-	// must be midnight of the day
-	checkStartTime(startTimestamp)
-
-	// endTimestamp cannot be later than 253402300799 (9999-12-31 23:59:59)
-	if endTimestamp >= MAX_UNIX_EPOCH_TIME {
-		panic(addDetailToError(
-			errInvalidIncentiveEndTime,
-			ufmt.Sprintf("staker.gno__CreateExternalIncentive() || endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp),
-		))
-	}
-
-	externalDuration := uint64(endTimestamp - startTimestamp)
-	if !(externalDuration == TIMESTAMP_90DAYS || externalDuration == TIMESTAMP_180DAYS || externalDuration == TIMESTAMP_365DAYS) {
-		panic(addDetailToError(
-			errInvalidIncentiveDuration,
-			ufmt.Sprintf("staker.gno__CreateExternalIncentive() || externalDuration(%d) must be 90, 180, 365 days", externalDuration),
-		))
-	}
-
-	incentiveId := incentiveIdCompute(std.PrevRealm().Addr(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
-
-	// if same incentiveId exists => increase rewardTokenAmount
-	for _, v := range poolIncentives[targetPoolPath] {
-		if v == incentiveId {
-			// external deposit amount
-			gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(GetOrigPkgAddr()), depositGnsAmount)
-
-			// external reward amount
-			transferFromByRegisterCall(rewardToken, std.PrevRealm().Addr(), GetOrigPkgAddr(), rewardAmount.Uint64())
-
-			incentive, ok := incentives[v]
-			if !ok {
-				return
-			}
-
-			incentiveDuration := endTimestamp - startTimestamp
-			incentiveBlock := incentiveDuration / consts.BLOCK_GENERATION_INTERVAL
-
-			incentive.rewardAmount = new(u256.Uint).Add(incentive.rewardAmount, rewardAmount)
-			incentive.rewardLeft = new(u256.Uint).Add(incentive.rewardLeft, rewardAmount)
-
-			rewardAmountX96 := new(u256.Uint).Mul(incentive.rewardAmount, u256.MustFromDecimal(consts.Q96))
-			rewardPerBlockX96 := new(u256.Uint).Div(rewardAmountX96, u256.NewUint(uint64(incentiveBlock)))
-
-			incentive.rewardPerBlockX96 = rewardPerBlockX96
-
-			incentive.depositGnsAmount += depositGnsAmount
-			incentives[v] = incentive
-
-			if rewardToken == consts.GNS_PATH {
-				externalGns[incentiveId] = incentive.rewardAmount.Uint64()
-			}
-
-			prevAddr, prevRealm := getPrev()
-			std.Emit(
-				"CreateExternalIncentive",
-				"prevAddr", prevAddr,
-				"prevRealm", prevRealm,
-				"poolPath", targetPoolPath,
-				"rewardToken", rewardToken,
-				"rewardAmount", incentive.rewardAmount.ToString(),
-				"startTimestamp", ufmt.Sprintf("%d", startTimestamp),
-				"endTimestamp", ufmt.Sprintf("%d", endTimestamp),
-				"internal_incentiveId", incentiveId,
-				"internal_depositGnsAmount", ufmt.Sprintf("%d", incentive.depositGnsAmount),
-				"internal_external", "updated",
-			)
-
-			return
-		}
-	}
-
-	// external deposit amount
-	gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(GetOrigPkgAddr()), depositGnsAmount)
-
-	// external reward amount
-	transferFromByRegisterCall(rewardToken, std.PrevRealm().Addr(), GetOrigPkgAddr(), rewardAmount.Uint64())
-
-	incentiveDuration := endTimestamp - startTimestamp
-	incentiveBlock := incentiveDuration / consts.BLOCK_GENERATION_INTERVAL
-	rewardAmountX96 := new(u256.Uint).Mul(rewardAmount, u256.MustFromDecimal(consts.Q96))
-	rewardPerBlockX96 := new(u256.Uint).Div(rewardAmountX96, u256.NewUint(uint64(incentiveBlock)))
-
-	incentives[incentiveId] = ExternalIncentive{
-		targetPoolPath:    targetPoolPath,
-		rewardToken:       rewardToken,
-		rewardAmount:      rewardAmount,
-		rewardLeft:        rewardAmount,
-		startTimestamp:    startTimestamp,
-		endTimestamp:      endTimestamp,
-		rewardPerBlockX96: rewardPerBlockX96,
-		refundee:          std.PrevRealm().Addr(),
-		createdHeight:     std.GetHeight(),
-		depositGnsAmount:  depositGnsAmount,
-	}
-
-	poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath], incentiveId)
-
-	externalLastCalculatedTimestamp[incentiveId] = time.Now().Unix()
-
-	if rewardToken == consts.GNS_PATH {
-		externalGns[incentiveId] = rewardAmount.Uint64()
-	}
-
-	prevAddr, prevRealm := getPrev()
-	std.Emit(
-		"CreateExternalIncentive",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"poolPath", targetPoolPath,
-		"rewardToken", rewardToken,
-		"rewardAmount", _rewardAmount,
-		"startTimestamp", ufmt.Sprintf("%d", startTimestamp),
-		"endTimestamp", ufmt.Sprintf("%d", endTimestamp),
-		"internal_incentiveId", incentiveId,
-		"internal_depositGnsAmount", ufmt.Sprintf("%d", depositGnsAmount),
-		"internal_external", "created",
-	)
+	delete(positionGns, tokenId)
+	delete(positionsInternalWarmUpAmount, tokenId)
+	deposits.Remove(tokenId)
 }
 
-// EndExternalIncentive ends the external incentive and refunds the remaining reward
-// ref: https://docs.gnoswap.io/contracts/staker/staker.gno#endexternalincentive
-func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken string, startTimestamp, endTimestamp, height int64) {
-	common.IsHalted()
+func applyUnstake(manager *RewardManager, input unstakeInput) *RewardManager {
+	internalEmission := manager.GetInternalEmissionReward()
+	internalEmission.RemoveInRangePosition(input.deposit.targetPoolPath, input.tokenId)
+	manager.SetInternalEmissionReward(internalEmission)
 
-	incentiveId := incentiveIdCompute(refundee, targetPoolPath, rewardToken, startTimestamp, endTimestamp, height)
-
-	incentive, exist := incentives[incentiveId]
-	if !exist {
-		panic(addDetailToError(
-			errCannotEndIncentive,
-			ufmt.Sprintf("staker.gno__EndExternalIncentive() || cannot end non existent incentive(%s)", incentiveId),
-		))
-	}
-
-	now := time.Now().Unix()
-	if now < incentive.endTimestamp {
-		panic(addDetailToError(
-			errCannotEndIncentive,
-			ufmt.Sprintf("staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(%d), current(%d)", incentive.endTimestamp, now),
-		))
-	}
-
-	// when incentive end time is over
-	// admin or refundee can end incentive ( left amount will be refunded )
-	caller := std.PrevRealm().Addr()
-	if caller != consts.ADMIN && caller != refundee {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("staker.gno__EndExternalIncentive() || only refundee(%s) or admin(%s) can end incentive, but called from %s", refundee, consts.ADMIN, caller),
-		))
-	}
-
-	// when incentive ended, refund remaining reward
-	refund := incentive.rewardLeft
-	refundUint64 := refund.Uint64()
-
-	poolLeftExternalRewardAmount := balanceOfByRegisterCall(incentive.rewardToken, GetOrigPkgAddr())
-	if poolLeftExternalRewardAmount < refundUint64 {
-		refundUint64 = poolLeftExternalRewardAmount
-	}
-
-	transferByRegisterCall(incentive.rewardToken, incentive.refundee, refundUint64)
-	// unwrap if wugnot
-	if incentive.rewardToken == consts.WUGNOT_PATH {
-		unwrap(refundUint64)
-	}
-
-	// also refund deposit gns amount
-	gns.Transfer(a2u(incentive.refundee), incentive.depositGnsAmount)
-
-	delete(incentives, incentiveId)
-	for i, v := range poolIncentives[targetPoolPath] {
-		if v == incentiveId {
-			poolIncentives[targetPoolPath] = append(poolIncentives[targetPoolPath][:i], poolIncentives[targetPoolPath][i+1:]...)
-		}
-	}
-
-	prevAddr, prevRealm := getPrev()
-	std.Emit(
-		"EndExternalIncentive",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"poolPath", targetPoolPath,
-		"rewardToken", rewardToken,
-		"refundee", refundee.String(),
-		"internal_endBy", incentive.refundee.String(),
-		"internal_refundAmount", refund.ToString(),
-		"internal_refundGnsAmount", ufmt.Sprintf("%d", incentive.depositGnsAmount),
-		"internal_incentiveId", incentiveId,
-	)
+	return manager
 }
 
-func checkStartTime(startTimestamp int64) {
-	// must be in seconds format, not milliseconds
-	// REF: https://stackoverflow.com/a/23982005
-	numStr := strconv.Itoa(int(startTimestamp))
-	if len(numStr) >= 13 {
-		panic(addDetailToError(
-			errInvalidIncentiveStartTime,
-			ufmt.Sprintf("staker.gno__checkStartTime() || startTimestamp(%d) must be in seconds format, not milliseconds", startTimestamp),
-		))
+// requireTokenOwnership validates that the caller has permission to operate the token.
+func requireTokenOwnership(owner, caller std.Address) error {
+	callerIsOwner := owner == caller
+	stakerIsOwner := owner == consts.STAKER_ADDR
+
+	if err := common.SatisfyCond(callerIsOwner || stakerIsOwner); err != nil {
+		return errNoPermission
 	}
 
-	// must be at least +1 day midnight
-	tomorrowMidnight := time.Now().AddDate(0, 0, 1).Truncate(24 * time.Hour).Unix()
-	if startTimestamp < tomorrowMidnight {
-		panic(addDetailToError(
-			errInvalidIncentiveStartTime,
-			ufmt.Sprintf("staker.gno__checkStartTime() || startTimestamp(%d) must be at least +1 day midnight(%d)", startTimestamp, tomorrowMidnight),
-		))
-	}
-
-	// must be midnight of the day
-	startTime := time.Unix(startTimestamp, 0)
-	hour, minute, second := startTime.Hour(), startTime.Minute(), startTime.Second()
-
-	isMidnight := hour == 0 && minute == 0 && second == 0
-	if !isMidnight {
-		panic(addDetailToError(
-			errInvalidIncentiveStartTime,
-			ufmt.Sprintf("staker.gno__checkStartTime() || startTime(%d = %s) must be midnight of the day", startTimestamp, startTime.String()),
-		))
-	}
+	return nil
 }
 
-func transferDeposit(tokenId uint64, to std.Address) {
-	owner := gnft.OwnerOf(tid(tokenId))
-	caller := std.PrevRealm().Addr()
-	if caller == to {
-		panic(addDetailToError(
-			errNoPermission,
-			ufmt.Sprintf("staker.gno__transferDeposit() || only owner(%s) can transfer tokenId(%d), called from %s", owner, tokenId, caller),
-		))
+// poolHasIncentives checks if the pool has any active incentives (internal or external).
+func poolHasIncentives(poolPath string) error {
+	hasInternal := poolHasInternal(poolPath)
+	hasExternal := poolHasExternal(poolPath)
+	if hasInternal == false && hasExternal == false {
+		return ufmt.Errorf(
+			"%v: can not stake position to non incentivized pool(%s)",
+			errNonIncentivizedPool, poolPath,
+		)
 	}
-
-	// transfer NFT ownership
-	gnft.TransferFrom(a2u(owner), a2u(to), tid(tokenId))
+	return nil
 }
 
-func getTokenPairBalanceFromPosition(tokenId uint64) (string, string) {
-	poolKey := pn.PositionGetPositionPoolKey(tokenId)
+// tokenHasLiquidity checks if the target tokenId has non-zero liquidity
+func tokenHasLiquidity(tokenId uint64) error {
+	liq := pn.PositionGetPositionLiquidityStr(tokenId)
+	liquidity := u256.MustFromDecimal(liq)
 
-	pool := pl.GetPoolFromPoolPath(poolKey)
-	currentX96 := pool.Slot0SqrtPriceX96()
-	lowerX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickLower(tokenId))
-	upperX96 := common.TickMathGetSqrtRatioAtTick(pn.PositionGetPositionTickUpper(tokenId))
-
-	token0Balance, token1Balance := common.GetAmountsForLiquidity(
-		currentX96,
-		lowerX96,
-		upperX96,
-		pn.PositionGetPositionLiquidity(tokenId),
-	)
-
-	if token0Balance == "" {
-		token0Balance = "0"
+	if liquidity.Lte(u256.Zero()) {
+		return ufmt.Errorf(
+			"%v: tokenId(%d) has no liquidity",
+			errZeroLiquidity, tokenId,
+		)
 	}
-	if token1Balance == "" {
-		token1Balance = "0"
-	}
-
-	return token0Balance, token1Balance
+	return nil
 }
 
-func gnsBalance(addr std.Address) uint64 {
-	return gns.BalanceOf(a2u(addr))
-}
-
-func isAllowedForExternalReward(poolPath, tokenPath string) {
-	token0, token1, _ := poolPathDivide(poolPath)
-
-	if tokenPath == token0 || tokenPath == token1 {
-		return
-	}
-
-	allowed := contains(allowedTokens, tokenPath)
-	if allowed {
-		return
-	}
-
-	panic(addDetailToError(
-		errNotAllowedForExternalReward,
-		ufmt.Sprintf("staker.gno__isAllowedForExternalReward() || tokenPath(%s) is not allowed for external reward for poolPath(%s)", tokenPath, poolPath),
-	))
-}
-
+// poolHasInternal checks if te pool has internal GNS incentives
 func poolHasInternal(poolPath string) bool {
-	_, exist := poolTiers[poolPath]
+	_, exist := poolTiers.Get(poolPath)
 	return exist
 }
 
+// poolHasExternal checks if the pool has any external incentives
 func poolHasExternal(poolPath string) bool {
-	_, exist := poolIncentives[poolPath]
+	_, exist := poolIncentives.Get(poolPath)
 	return exist
-}
-
-func getPoolTiers() map[string]InternalTier {
-	return poolTiers
-}
-
-// getDeposits returns deposit information for the given tokenId
-func getDepositsByTokenId(tokenId uint64) Deposit {
-	return deposits[tokenId]
-}
-
-// getDeposits returns deposit information for all tokenIds
-func getDeposits() map[uint64]Deposit {
-	return deposits
-}
-
-func getIncentives() map[string]ExternalIncentive {
-	return incentives
-}
-
-func getPoolIncentives() map[string][]string {
-	return poolIncentives
 }
