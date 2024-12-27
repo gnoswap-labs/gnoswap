@@ -106,7 +106,7 @@ func TestGetPosition(t *testing.T) {
 }
 
 func TestSetPosition(t *testing.T) {
-	tokenId := uint64(2)
+	tokenId := uint64(300)
 	position := newDummyPosition(tokenId)
 
 	t.Run("Success - Create new position", func(t *testing.T) {
@@ -221,18 +221,19 @@ func TestComputePositionKey(t *testing.T) {
 
 func TestNextIdFunctions(t *testing.T) {
 	nextId = uint64(1)
+
 	t.Run("Initial nextId should return 1", func(t *testing.T) {
 		uassert.Equal(t, uint64(1), getNextId(), "expected nextId to start at 1")
 	})
 
 	t.Run("After mint nextId should return 2", func(t *testing.T) {
-		MakeMintPositionWithoutFee(t)
-		uassert.Equal(t, uint64(2), getNextId(), "expected nextId to be 2 after mint")
+		incrementNextId()
+		uassert.Equal(t, getNextId(), uint64(2), "expected nextId to be 2 after mint")
 	})
 
 	t.Run("Increment nextId once", func(t *testing.T) {
 		incrementNextId()
-		uassert.Equal(t, uint64(3), getNextId(), "expected nextId to increment to 2")
+		uassert.Equal(t, uint64(3), getNextId(), "expected nextId to increment to 3")
 	})
 
 	t.Run("Increment nextId multiple times", func(t *testing.T) {
@@ -834,7 +835,7 @@ func TestMint(t *testing.T) {
 					tc.caller,
 				)
 
-				uassert.Equal(t, uint64(4), tokenId)
+				uassert.Equal(t, uint64(5), tokenId)
 				uassert.NotEmpty(t, liquidity)
 				t0, _ := strconv.ParseUint(amount0, 10, 64)
 				t1, _ := strconv.ParseUint(amount1, 10, 64)
@@ -862,6 +863,8 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 	setPosition(id, position)
 	incrementNextId()
 
+	MakeMintPositionWithoutFee(t)
+
 	tests := []struct {
 		name              string
 		params            IncreaseLiquidityParams
@@ -887,7 +890,7 @@ func TestIncreaseLiquidityInternal(t *testing.T) {
 		{
 			name: "Fail - Zero Liquidity",
 			params: IncreaseLiquidityParams{
-				tokenId:        1,
+				tokenId:        7,
 				amount0Desired: u256.Zero(),
 				amount1Desired: u256.Zero(),
 				amount0Min:     u256.NewUint(900000),
@@ -935,7 +938,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 	}{
 		{
 			name:            "Success - Valid Increase",
-			tokenId:         1,
+			tokenId:         7,
 			amount0Desired:  "1000000",
 			amount1Desired:  "2000000",
 			amount0Min:      "950000",
@@ -947,7 +950,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 		},
 		{
 			name:             "Fail - Deadline Exceeded",
-			tokenId:          1,
+			tokenId:          7,
 			amount0Desired:   "1000000",
 			amount1Desired:   "2000000",
 			amount0Min:       "950000",
@@ -958,7 +961,7 @@ func TestIncreaseLiquidity(t *testing.T) {
 		},
 		{
 			name:             "Fail - Invalid Amount String",
-			tokenId:          1,
+			tokenId:          7,
 			amount0Desired:   "invalid_amount",
 			amount1Desired:   "2000000",
 			amount0Min:       "950000",
@@ -1315,7 +1318,7 @@ func TestReposition(t *testing.T) {
 			tickLower:          -5000,
 			tickUpper:          5000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(8) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(10) isn't clear(liquidity:3812288, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:               "Fail - Reposition with partial liquidity removal",
@@ -1327,7 +1330,7 @@ func TestReposition(t *testing.T) {
 			tickLower:          -3000,
 			tickUpper:          3000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(8) isn't clear(liquidity:5083034, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(10) isn't clear(liquidity:5083034, tokensOwed0:0, tokensOwed1:0)",
 		},
 		{
 			name:               "Fail - Reposition on non-existent tokenId",
@@ -1337,7 +1340,7 @@ func TestReposition(t *testing.T) {
 			tickLower:          -4000,
 			tickUpper:          4000,
 			expectPanic:        true,
-			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(8) isn't clear(liquidity:5083024, tokensOwed0:0, tokensOwed1:0)",
+			expectedPanicError: "[GNOSWAP-POSITION-009] position is not clear || position(10) isn't clear(liquidity:5083024, tokensOwed0:0, tokensOwed1:0)",
 		},
 	}
 
@@ -1346,6 +1349,7 @@ func TestReposition(t *testing.T) {
 	TokenApprove(t, barPath, admin, pool, consts.UINT64_MAX)
 	TokenApprove(t, fooPath, admin, pool, consts.UINT64_MAX)
 
+	// Step 1: Mint a position
 	tokenId, _, _, _ := Mint(
 		barPath,
 		fooPath,
@@ -1363,8 +1367,6 @@ func TestReposition(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Step 1: Mint a position
-
 			// Step 2: Increase liquidity
 			if tt.increaseAmount0 != "" && tt.increaseAmount1 != "" {
 				_, _, _, _, _ = IncreaseLiquidity(

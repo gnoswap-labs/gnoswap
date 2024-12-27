@@ -347,10 +347,6 @@ func TestAssertValidNumberString(t *testing.T) {
 	}
 }
 
-func TestAssertValidLiquidityRatio(t *testing.T) {
-	t.Skip("TODO: Implement TestAssertValidLiquidityRatio")
-}
-
 func TestA2u(t *testing.T) {
 	addr := std.Address("g1lmvrrrr4er2us84h2732sru76c9zl2nvknha8c")
 
@@ -722,13 +718,15 @@ func TestIsStaked(t *testing.T) {
 			name:     "Success - is staked",
 			owner:    admin,
 			operator: admin,
-			tokenId:  1,
+			tokenId:  11,
 			expected: true,
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.expected && tc.owner == tc.operator {
+				MakeMintPositionWithoutFee(t)
+				LPTokenApprove(t, tc.owner, pusers.AddressOrName(consts.STAKER_ADDR), tc.tokenId)
 				LPTokenStake(t, tc.owner, tc.tokenId)
 			}
 			got := isStaked(tokenIdFrom(tc.tokenId))
@@ -799,7 +797,7 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 			name:     "Fail - is not token staked",
 			owner:    admin,
 			operator: alice,
-			tokenId:  1,
+			tokenId:  10,
 			isStake:  false,
 			expected: false,
 		},
@@ -807,7 +805,7 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 			name:     "Success - is token staked (position operator)",
 			owner:    admin,
 			operator: admin,
-			tokenId:  1,
+			tokenId:  10,
 			isStake:  true,
 			expected: true,
 		},
@@ -815,6 +813,7 @@ func TestIsOwnerOrOperatorWithStake(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.isStake {
+				tokenId, _, _, _ := MakeMintPositionWithoutFee(t)
 				LPTokenApprove(t, pusers.AddressOrName(tc.owner), pusers.AddressOrName(consts.STAKER_ADDR), tc.tokenId)
 				LPTokenStake(t, tc.owner, tc.tokenId)
 			}
