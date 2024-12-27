@@ -35,7 +35,7 @@ func TestPositionMint(t *testing.T) {
 	baz.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	// Mint
-	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, admin, admin)
+	pn.Mint(barPath, bazPath, uint32(3000), int32(-887220), int32(887220), "1000000", "1000000", "0", "0", max_timeout, adminAddr, adminAddr)
 }
 
 func TestSwapRouteBarBazExactOut(t *testing.T) {
@@ -47,11 +47,10 @@ func TestSwapRouteBarBazExactOut(t *testing.T) {
 	token0Before := bar.BalanceOf(a2u(consts.ADMIN))
 	token1Before := baz.BalanceOf(a2u(consts.ADMIN))
 
-	amountIn, amountOut := SwapRoute(
+	amountIn, amountOut := ExactOutSwapRoute(
 		barPath,     // inputToken
 		bazPath,     // outputToken
 		"1",         // amountSpecified
-		"EXACT_OUT", // swapType
 		"gno.land/r/onbloc/bar:gno.land/r/onbloc/baz:3000", // strRouteArr
 		"100", // quoteArr
 		"3",   // tokenAmountLimit
@@ -92,11 +91,10 @@ func TestSwapRouteWugnotquxExactInDifferentAmountCoinShouldPanic(t *testing.T) {
 		t,
 		`[GNOSWAP-ROUTER-005] invalid input || router.gno__SwapRoute() || ugnot sent by user(12345) is not equal to amountSpecified(3)`,
 		func() {
-			SwapRoute(
+			ExactOutSwapRoute(
 				consts.GNOT, // inputToken
 				quxPath,     // outputToken
 				"3",         // amountSpecified
-				"EXACT_IN",  // swapType
 				"gno.land/r/demo/wugnot:gno.land/r/onbloc/qux:3000", // strRouteArr
 				"100", // quoteArr
 				"1",   // tokenAmountLimit

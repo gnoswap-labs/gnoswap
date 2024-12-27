@@ -119,7 +119,11 @@ func CollectRewardByProjectId(projectId string) uint64 {
 	}
 
 	// transfer reward to user
-	transferByRegisterCall(project.tokenPath, std.PrevRealm().Addr(), toUser)
+	tokenTeller := common.GetTokenTeller(project.tokenPath)
+	tokenTeller.Transfer(
+		std.PrevRealm().Addr(),
+		toUser,
+	)
 
 	return toUser
 }
@@ -198,7 +202,11 @@ func CollectRewardByDepositId(depositId string) uint64 {
 	}
 
 	// transfer reward to user
-	transferByRegisterCall(project.tokenPath, std.PrevRealm().Addr(), toUser)
+	tokenTeller := common.GetTokenTeller(project.tokenPath)
+	tokenTeller.Transfer(
+		std.PrevRealm().Addr(),
+		toUser,
+	)
 
 	return toUser
 }

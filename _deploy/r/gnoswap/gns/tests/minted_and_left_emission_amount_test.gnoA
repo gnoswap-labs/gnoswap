@@ -20,7 +20,7 @@ func TestCheckInitialData(t *testing.T) {
 	})
 
 	t.Run("mintedAmount", func(t *testing.T) {
-		uassert.Equal(t, uint64(0), MintedEmissionAmount())
+		uassert.Equal(t, uint64(0), GetMintedEmissionAmount())
 	})
 
 	t.Run("leftEmissionAmount", func(t *testing.T) {
@@ -31,7 +31,7 @@ func TestCheckInitialData(t *testing.T) {
 func TestMintAndCheckRelativeData(t *testing.T) {
 	// before mint
 	oldTotalSupply := TotalSupply()
-	oldMintedAmount := MintedEmissionAmount()
+	oldMintedAmount := GetMintedEmissionAmount()
 	oldLeftEmissionAmount := GetLeftEmissionAmount()
 
 	// mint
@@ -49,7 +49,7 @@ func TestMintAndCheckRelativeData(t *testing.T) {
 	})
 
 	t.Run("increment of mintedAmount", func(t *testing.T) {
-		uassert.Equal(t, oldMintedAmount+mintAmountFor10Blocks, MintedEmissionAmount())
+		uassert.Equal(t, oldMintedAmount+mintAmountFor10Blocks, GetMintedEmissionAmount())
 	})
 
 	t.Run("decrement of leftEmissionAmount", func(t *testing.T) {
@@ -60,8 +60,9 @@ func TestMintAndCheckRelativeData(t *testing.T) {
 func TestBurnAndCheckRelativeData(t *testing.T) {
 	// before burn
 	oldTotalSupply := TotalSupply()
-	oldMintedAmount := MintedEmissionAmount()
+	oldMintedAmount := GetMintedEmissionAmount()
 	oldLeftEmissionAmount := GetLeftEmissionAmount()
+	oldBurnAmount := GetBurnAmount()
 
 	// burn
 	burnAmount := uint64(100000000)
@@ -75,15 +76,23 @@ func TestBurnAndCheckRelativeData(t *testing.T) {
 		uassert.Equal(t, oldTotalSupply-burnAmount, TotalSupply())
 	})
 
-	t.Run("decrement of mintedAmount", func(t *testing.T) {
-		uassert.Equal(t, oldMintedAmount-burnAmount, MintedEmissionAmount())
+	t.Run("same for mintedAmount", func(t *testing.T) {
+		// it is already `minted` amount, therefore it is not affected by burn
+		uassert.Equal(t, oldMintedAmount, GetMintedEmissionAmount())
 	})
 
-	t.Run("totalSupply should be same with (INITIAL_MINT_AMOUNT) + (mintedEmissionAmount)", func(t *testing.T) {
-		uassert.Equal(t, TotalSupply(), INITIAL_MINT_AMOUNT+MintedEmissionAmount())
+	t.Run("totalSupply should be same or less than inital mint + acutal mint amount", func(t *testing.T) {
+		// burn does affect totalSupply
+		uassert.True(t, TotalSupply() <= INITIAL_MINT_AMOUNT+GetMintedEmissionAmount())
 	})
 
 	t.Run("same for leftEmissionAmount", func(t *testing.T) {
+		// leftEmissionAmount gets affected by only mint
 		uassert.Equal(t, oldLeftEmissionAmount, GetLeftEmissionAmount())
+	})
+
+	t.Run("increment of burnAmount", func(t *testing.T) {
+		// `burn` only increments burnAmount
+		uassert.Equal(t, oldBurnAmount+burnAmount, GetBurnAmount())
 	})
 }

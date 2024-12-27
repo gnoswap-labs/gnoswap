@@ -12,7 +12,7 @@ const (
 
 	TOKEN_REGISTER_NAMESPACE string = "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5"
 
-	BLOCK_GENERATION_INTERVAL int64 = 1 // seconds
+	BLOCK_GENERATION_INTERVAL int64 = 2 // seconds
 )
 
 // WRAP & UNWRAP

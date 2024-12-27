@@ -11,14 +11,17 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+const (
+	defaultSwapFeeBPS = uint64(15) // 0.15%
+)
+
 var (
-	swapFee = uint64(15) // 0.15%
+	swapFee = defaultSwapFeeBPS
 )
 
 func handleSwapFee(
 	outputToken string,
 	amount *u256.Uint,
-	isDry bool,
 ) *u256.Uint {
 	if swapFee <= 0 {
 		return amount
@@ -28,19 +31,18 @@ func handleSwapFee(
 	feeAmount.Div(feeAmount, u256.NewUint(10000))
 	feeAmountUint64 := feeAmount.Uint64()
 
-	if !isDry {
-		transferFromByRegisterCall(outputToken, std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
+	outputTeller := common.GetTokenTeller(outputToken)
+	outputTeller.TransferFrom(std.PrevRealm().Addr(), consts.PROTOCOL_FEE_ADDR, feeAmountUint64)
 
-		prevAddr, prevRealm := getPrev()
+	prevAddr, prevRealm := getPrev()
 
-		std.Emit(
-			"SwapRouteFee",
-			"prevAddr", prevAddr,
-			"prevRealm", prevRealm,
-			"internal_tokenPath", outputToken,
-			"internal_amount", ufmt.Sprintf("%d", feeAmountUint64),
-		)
-	}
+	std.Emit(
+		"SwapRouteFee",
+		"prevAddr", prevAddr,
+		"prevRealm", prevRealm,
+		"internal_tokenPath", outputToken,
+		"internal_amount", ufmt.Sprintf("%d", feeAmountUint64),
+	)
 
 	toUserAfterProtocol := new(u256.Uint).Sub(amount, feeAmount)
 	return toUserAfterProtocol
@@ -58,7 +60,9 @@ func SetSwapFeeByAdmin(fee uint64) {
 		panic(err)
 	}
 
-	setSwapFee(fee)
+	if err := setSwapFee(fee); err != nil {
+		panic(err)
+	}
 
 	prevAddr, prevRealm := getPrev()
 
@@ -79,7 +83,9 @@ func SetSwapFee(fee uint64) {
 		panic(err)
 	}
 
-	setSwapFee(fee)
+	if err := setSwapFee(fee); err != nil {
+		panic(err)
+	}
 
 	prevAddr, prevRealm := getPrev()
 
@@ -91,16 +97,17 @@ func SetSwapFee(fee uint64) {
 	)
 }
 
-func setSwapFee(fee uint64) {
+func setSwapFee(fee uint64) error {
 	common.IsHalted()
 
 	// 10000 (bps) = 100%
 	if fee > 10000 {
-		panic(addDetailToError(
-			errInvalidSwapFee,
-			ufmt.Sprintf("protocol_fee_swap.gno__setSwapFee() || fee(%d) must be in range 0 ~ 10000", fee),
-		))
+		return ufmt.Errorf(
+			"%s: fee must be in range 0 to 10000. got %d",
+			errInvalidSwapFee.Error(), fee,
+		)
 	}
 
 	swapFee = fee
+	return nil
 }

@@ -3,6 +3,7 @@ package protocol_fee
 import (
 	"std"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/gnoswap/v1/common"
@@ -14,19 +15,24 @@ var (
 	gnsToDevOps    uint64
 	gnsToGovStaker uint64
 
-	accuToGovStaker = make(map[string]uint64) // tokenPath -> amount
+	accuToGovStaker = avl.NewTree()
 )
 
+// DistributeProtocolFee distributes the protocol fee to devOps and gov/staker.
 func DistributeProtocolFee() {
-	common.IsHalted()
+	assertOnlyNotHalted()
 
-	tokens := GetRegisteredTokens()
+	tokens := common.ListRegisteredTokens()
+	if len(tokens) == 0 {
+		return
+	}
+
 	for _, token := range tokens {
 		// default distribute protocol fee percent
 		// govStaker 100%
 		// ...
 
-		balance := balanceOfByRegisterCall(token, consts.PROTOCOL_FEE_ADDR)
+		balance := common.BalanceOf(token, consts.PROTOCOL_FEE_ADDR)
 		if balance > 0 {
 			toDevOps := balance * devOpsPct / 10000 // default 0%
 			toGovStaker := balance - toDevOps       // default 100%
@@ -36,14 +42,15 @@ func DistributeProtocolFee() {
 				gnsToGovStaker = toGovStaker
 			}
 
-			accuToGovStaker[token] += toGovStaker
+			addAccuToGovStaker(token, toGovStaker)
 
+			tokenTeller := common.GetTokenTeller(token)
 			if toDevOps > 0 {
-				transferByRegisterCall(token, consts.DEV_OPS, toDevOps)
+				tokenTeller.Transfer(consts.DEV_OPS, toDevOps)
 			}
 
 			if toGovStaker > 0 {
-				transferByRegisterCall(token, consts.GOV_STAKER_ADDR, toGovStaker)
+				tokenTeller.Transfer(consts.GOV_STAKER_ADDR, toGovStaker)
 			}
 		}
 	}
@@ -61,15 +68,6 @@ func SetDevOpsPctByAdmin(pct uint64) {
 	}
 
 	setDevOpsPct(pct)
-
-	prevAddr, prevRealm := getPrev()
-
-	std.Emit(
-		"SetDevOpsPctByAdmin",
-		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
-		"pct", ufmt.Sprintf("%d", pct),
-	)
 }
 
 // SetDevOpsPct sets the devOpsPct.
@@ -81,9 +79,20 @@ func SetDevOpsPct(pct uint64) {
 	}
 
 	setDevOpsPct(pct)
+}
+
+// setDevOpsPct sets the devOpsPct.
+func setDevOpsPct(pct uint64) {
+	if pct > 10000 {
+		panic(addDetailToError(
+			errInvalidPct,
+			ufmt.Sprintf("pct(%d) should not be bigger than 10000", pct),
+		))
+	}
+
+	devOpsPct = pct
 
 	prevAddr, prevRealm := getPrev()
-
 	std.Emit(
 		"SetDevOpsPct",
 		"prevAddr", prevAddr,
@@ -92,34 +101,47 @@ func SetDevOpsPct(pct uint64) {
 	)
 }
 
-func setDevOpsPct(pct uint64) {
-	common.IsHalted()
-
-	if pct > 10000 {
-		panic(addDetailToError(
-			errInvalidPct,
-			ufmt.Sprintf("protocol_fee.gno__setDevOpsPct() || pct(%d) should not be bigger than 10000", pct),
-		))
-	}
-
-	devOpsPct = pct
-}
-
+// GetLastTransferToDevOps returns the last transfer to devOps.
 func GetLastTransferToDevOps() uint64 {
 	return gnsToDevOps
 }
 
-func GetAccuTransferToGovStaker() map[string]uint64 {
+// GetAccuTransferToGovStaker returns the accuToGovStaker.
+func GetAccuTransferToGovStaker() *avl.Tree {
 	return accuToGovStaker
 }
 
+// GetAccuTransferToGovStakerByTokenPath returns the accumulated transfer to gov/staker by token path.
+func GetAccuTransferToGovStakerByTokenPath(path string) uint64 {
+	amountI, exists := accuToGovStaker.Get(path)
+	if !exists {
+		return 0
+	}
+
+	return amountI.(uint64)
+}
+
+// ClearAccuTransferToGovStaker clears the accuToGovStaker.
+// Only gov/staker can execute this function.
 func ClearAccuTransferToGovStaker() {
-	common.IsHalted()
+	assertOnlyNotHalted()
 
 	caller := std.PrevRealm().Addr()
 	if err := common.GovStakerOnly(caller); err != nil {
 		panic(err)
 	}
 
-	accuToGovStaker = make(map[string]uint64)
+	accuToGovStaker = avl.NewTree()
+}
+
+// assertOnlyNotHalted panics if the contract is halted.
+func assertOnlyNotHalted() {
+	common.IsHalted()
+}
+
+// addAccuToGovStaker adds the amount to the accuToGovStaker by token path.
+func addAccuToGovStaker(path string, amount uint64) {
+	before := GetAccuTransferToGovStakerByTokenPath(path)
+	after := before + amount
+	accuToGovStaker.Set(path, after)
 }

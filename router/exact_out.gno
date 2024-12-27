@@ -1,0 +1,129 @@
+package router
+
+import (
+	"std"
+
+	"gno.land/p/demo/ufmt"
+
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
+)
+
+type ExactOutSwapOperation struct {
+	baseSwapOperation
+	params ExactOutParams
+}
+
+func NewExactOutSwapOperation(pp ExactOutParams) *ExactOutSwapOperation {
+	return &ExactOutSwapOperation{
+		params: pp,
+		baseSwapOperation: baseSwapOperation{
+			userWrappedWugnot: INITIAL_WUGNOT_BALANCE,
+		},
+	}
+}
+
+func ExactOutSwapRoute(
+	inputToken string,
+	outputToken string,
+	amountOut string,
+	routeArr string,
+	quoteArr string,
+	amountInMax string,
+) (string, string) {
+	commonSwapSetup()
+
+	baseParams := BaseSwapParams{
+		InputToken:  inputToken,
+		OutputToken: outputToken,
+		RouteArr:    routeArr,
+		QuoteArr:    quoteArr,
+	}
+
+	pp := NewExactOutParams(baseParams, amountOut, amountInMax)
+	op := NewExactOutSwapOperation(pp)
+
+	result, err := executeSwapOperation(op)
+	if err != nil {
+		panic(addDetailToError(errInvalidInput, err.Error()))
+	}
+
+	finalAmountIn, finalAmountOut := finalizeSwap(
+		pp.InputToken,
+		pp.OutputToken,
+		result.AmountIn,
+		result.AmountOut,
+		ExactOut,
+		u256.MustFromDecimal(pp.AmountInMax),
+		op.userBeforeWugnotBalance,
+		op.userWrappedWugnot,
+		result.AmountSpecified.Abs(),
+	)
+
+	prevAddr, prevPkgPath := getPrev()
+
+	std.Emit(
+		"ExactOutSwap",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"input", pp.InputToken,
+		"output", pp.OutputToken,
+		"amountOut", pp.AmountOut,
+		"route", pp.RouteArr,
+		"quote", pp.QuoteArr,
+		"internal_amountIn", result.AmountIn.ToString(),
+		"internal_amountOut", result.AmountOut.ToString(),
+		"internal_amountOutWithoutFee", result.AmountOut.ToString(),
+	)
+
+	return finalAmountIn, finalAmountOut
+}
+
+func (op *ExactOutSwapOperation) Validate() error {
+	amountOut := i256.MustFromDecimal(op.params.AmountOut)
+	if amountOut.IsZero() || amountOut.IsNeg() {
+		return ufmt.Errorf("invalid amountOut(%s), must be positive", amountOut.ToString())
+	}
+
+	// assign a signed reversed `amountOut` to `amountSpecified`
+	// when it's an ExactOut
+	op.amountSpecified = new(i256.Int).Neg(amountOut)
+
+	routes, quotes, err := tryParseRoutes(op.params.RouteArr, op.params.QuoteArr)
+	if err != nil {
+		return err
+	}
+
+	op.routes = routes
+	op.quotes = quotes
+
+	return nil
+}
+
+func (op *ExactOutSwapOperation) Process() (*SwapResult, error) {
+	if err := op.handleNativeTokenWrapping(); err != nil {
+		return nil, err
+	}
+
+	resultAmountIn, resultAmountOut, err := op.processRoutes(ExactOut)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SwapResult{
+		AmountIn:        resultAmountIn,
+		AmountOut:       resultAmountOut,
+		Routes:          op.routes,
+		Quotes:          op.quotes,
+		AmountSpecified: op.amountSpecified,
+	}, nil
+}
+
+func (op *ExactOutSwapOperation) handleNativeTokenWrapping() error {
+	return op.baseSwapOperation.handleNativeTokenWrapping(
+		op.params.InputToken,
+		op.params.OutputToken,
+		ExactOut,
+		op.amountSpecified,
+	)
+}
