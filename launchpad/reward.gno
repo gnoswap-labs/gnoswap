@@ -10,7 +10,11 @@ import (
 	"gno.land/r/gnoswap/common"
 )
 
-var rewardStore = NewRewardStore() // TODO: init?
+var rewardStore *RewardStore
+
+func init() {
+	rewardStore = NewRewardStore()
+}
 
 // Calculator is an interface responsible for calculating project rewards.
 type Calculator interface {
@@ -112,7 +116,7 @@ func calculateProjectReward(proj *Project, startHeight, endHeight uint64) *u256.
 
 		blocks := calcEnd - calcStart // +1?
 		tierReward := new(u256.Uint).Mul(blockReward, u256.NewUint(blocks))
-		totalReward = new(u256.Uint).Add(totalReward, tierReward)
+		totalReward = new(u256.Uint).Add(totalReward, tierReward) // TODO: need to check overflow?
 	}
 
 	return totalReward
