@@ -416,7 +416,7 @@ func checkProtocolFeeBalance() {
 	println("[START] checkProtocolFeeBalance")
 	pfRegistered := pf.GetRegisteredTokens()
 	for _, token := range pfRegistered {
-		balance := balanceOfByRegisterCall(token, consts.PROTOCOL_FEE_ADDR)
+		balance := common.BalanceOf(token, consts.PROTOCOL_FEE_ADDR)
 		if balance != 0 {
 			println("token", token)
 			println("balance", balance)

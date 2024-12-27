@@ -285,7 +285,8 @@ func CollectReward() {
 				banker.SendCoins(consts.GOV_STAKER_ADDR, caller, std.Coins{{"ugnot", int64(amount)}})
 			}
 		} else {
-			transferByRegisterCall(tokenPath, caller, amount)
+			tokenTeller := common.GetTokenTeller(tokenPath)
+			tokenTeller.Transfer(caller, amount)
 		}
 		userProtocolFeeReward[caller][tokenPath] = 0
 
@@ -353,9 +354,8 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			continue
 		}
 
-		// transfer token to to
-		// token.Transfer(a2u(to), amount)
-		transferByRegisterCall(tokenPath, to, amount)
+		tokenTeller := common.GetTokenTeller(tokenPath)
+		tokenTeller.Transfer(to, amount)
 		userProtocolFeeReward[to][tokenPath] = 0
 
 		prevAddr, prevRealm := getPrev()

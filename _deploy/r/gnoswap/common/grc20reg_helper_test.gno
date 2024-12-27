@@ -153,6 +153,74 @@ func TestMustRegistered(t *testing.T) {
 	})
 }
 
+func TestListRegisteredTokens(t *testing.T) {
+	t.Skip("skipping tests -> can not mock grc20reg.Render() || testing extractTokenPathsFromRender() does cover this")
+}
+
+func TestExtractTokenPathsFromRender(t *testing.T) {
+	var (
+		wugnotPath = "gno.land/r/demo/wugnot"
+		gnsPath    = "gno.land/r/gnoswap/v1/gns"
+		fooPath    = "gno.land/r/onbloc/foo"
+		quxPath    = "gno.land/r/onbloc/qux"
+	)
+
+	// NOTE: following strings are return from grc20reg.Render()
+	renderList := []string{
+		// no registered token
+		`No registered token.`,
+
+		// 1 token
+		`- **wrapped GNOT** - [gno.land/r/demo/wugnot](/r/demo/wugnot) - [info](/r/demo/grc20reg:gno.land/r/demo/wugnot)`,
+
+		// 2 tokens
+		`- **wrapped GNOT** - [gno.land/r/demo/wugnot](/r/demo/wugnot) - [info](/r/demo/grc20reg:gno.land/r/demo/wugnot)
+- **Gnoswap** - [gno.land/r/gnoswap/v1/gns](/r/gnoswap/v1/gns) - [info](/r/demo/grc20reg:gno.land/r/gnoswap/v1/gns)
+`,
+
+		// 4 tokens
+		`- **wrapped GNOT** - [gno.land/r/demo/wugnot](/r/demo/wugnot) - [info](/r/demo/grc20reg:gno.land/r/demo/wugnot)
+- **Gnoswap** - [gno.land/r/gnoswap/v1/gns](/r/gnoswap/v1/gns) - [info](/r/demo/grc20reg:gno.land/r/gnoswap/v1/gns)
+- **Baz** - [gno.land/r/onbloc/foo](/r/onbloc/foo) - [info](/r/demo/grc20reg:gno.land/r/onbloc/foo)
+- **Qux** - [gno.land/r/onbloc/qux](/r/onbloc/qux) - [info](/r/demo/grc20reg:gno.land/r/onbloc/qux)
+`,
+	}
+
+	tests := []struct {
+		name     string
+		render   string
+		expected []string
+	}{
+		{
+			name:     "no registered token",
+			render:   renderList[0],
+			expected: []string{},
+		},
+		{
+			name:     "1 registered token",
+			render:   renderList[1],
+			expected: []string{wugnotPath},
+		},
+		{
+			name:     "2 registered tokens",
+			render:   renderList[2],
+			expected: []string{wugnotPath, gnsPath},
+		},
+		{
+			name:     "4 registered tokens",
+			render:   renderList[3],
+			expected: []string{wugnotPath, gnsPath, fooPath, quxPath},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			extracted := extractTokenPathsFromRender(tt.render)
+			uassert.True(t, areSlicesEqual(t, tt.expected, extracted))
+		})
+	}
+}
+
 func TestTotalSupply(t *testing.T) {
 	// result from grc2reg and (direct import/call) should be the same
 	uassert.Equal(t, foo20.TotalSupply(), TotalSupply(tokenPath))
@@ -171,4 +239,23 @@ func TestAllowance(t *testing.T) {
 
 	// result from grc2reg and (direct import/call) should be the same
 	uassert.Equal(t, foo20.Allowance(AddrToUser(owner), AddrToUser(spender)), Allowance(tokenPath, owner, spender))
+}
+
+// areSlicesEqual compares two slices of strings
+func areSlicesEqual(t *testing.T, a, b []string) bool {
+	t.Helper()
+
+	// Check if lengths are different
+	if len(a) != len(b) {
+		return false
+	}
+
+	// Compare each element
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
 }

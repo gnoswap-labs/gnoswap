@@ -1,11 +1,17 @@
 package common
 
 import (
+	"regexp"
 	"std"
+	"strings"
 
 	"gno.land/p/demo/grc/grc20"
 	"gno.land/p/demo/ufmt"
 	"gno.land/r/demo/grc20reg"
+)
+
+var (
+	re = regexp.MustCompile(`\[gno\.land/r/[^\]]+\]`)
 )
 
 // GetToken returns a grc20.Token instance
@@ -56,6 +62,26 @@ func MustRegistered(path string) {
 			ufmt.Sprintf("token(%s)", path),
 		))
 	}
+}
+
+// ListRegisteredTokens returns the list of registered tokens
+// NOTE:
+// - Unfortunate, grc20reg doesn't support this.
+// - We need to parse the rendered grc20reg page to get the list of registered tokens.
+func ListRegisteredTokens() []string {
+	render := grc20reg.Render("")
+	return extractTokenPathsFromRender(render)
+}
+
+func extractTokenPathsFromRender(render string) []string {
+	matches := re.FindAllString(render, -1)
+
+	tokenPaths := make([]string, 0, len(matches))
+	for _, match := range matches {
+		tokenPath := strings.Trim(match, "[]") // Remove the brackets
+		tokenPaths = append(tokenPaths, tokenPath)
+	}
+	return tokenPaths
 }
 
 // TotalSupply returns the total supply of the token
