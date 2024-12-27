@@ -88,7 +88,7 @@ func finalizeSwap(
 	if swapType == ExactOut && resultAmountOut.Lt(amountSpecified) {
 		panic(addDetailToError(
 			errSlippage,
-			ufmt.Sprintf("too few received for user (expected minimum: %s, actual: %s, swapType: %s)", amountSpecified.ToString(), resultAmountOut.ToString(), swapType),
+			ufmt.Sprintf("too few received for user (expected minimum: %s, actual: %s, swapType: %s)", amountSpecified.ToString(), resultAmountOut.ToString(), swapType.String()),
 		))
 	}
 
@@ -119,14 +119,14 @@ func finalizeSwap(
 		if !tokenAmountLimit.Lte(afterFee) {
 			panic(addDetailToError(
 				errSlippage,
-				ufmt.Sprintf("too few received for user (expected minimum: %s, actual: %s, swapType: %s)", tokenAmountLimit.ToString(), afterFee.ToString(), swapType),
+				ufmt.Sprintf("too few received for user (expected minimum: %s, actual: %s, swapType: %s)", tokenAmountLimit.ToString(), afterFee.ToString(), swapType.String()),
 			))
 		}
 	} else {
 		if !resultAmountIn.Lte(tokenAmountLimit) {
 			panic(addDetailToError(
 				errSlippage,
-				ufmt.Sprintf("too much spent for user (expected maximum: %s, actual: %s, swapType: %s)", tokenAmountLimit.ToString(), resultAmountIn.ToString(), swapType),
+				ufmt.Sprintf("too much spent for user (expected maximum: %s, actual: %s, swapType: %s)", tokenAmountLimit.ToString(), resultAmountIn.ToString(), swapType.String()),
 			))
 		}
 	}

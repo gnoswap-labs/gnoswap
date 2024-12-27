@@ -36,6 +36,17 @@ func trySwapTypeFromStr(swapType string) (SwapType, error) {
 	}
 }
 
+func (s SwapType) String() string {
+	switch s {
+	case ExactIn:
+		return "EXACT_IN"
+	case ExactOut:
+		return "EXACT_OUT"
+	default:
+		return ""
+	}
+}
+
 // SingleSwapParams contains parameters for executing a single pool swap.
 // It represents the simplest form of swap that occurs within a single liquidity pool.
 type SingleSwapParams struct {

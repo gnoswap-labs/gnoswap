@@ -88,9 +88,9 @@ func ExactInSwapRoute(
 }
 
 func (op *ExactInSwapOperation) Validate() error {
-	amountIn := i256.MustFromDecimal(op.params.AmountOutMin)
+	amountIn := i256.MustFromDecimal(op.params.AmountIn)
 	if amountIn.IsZero() || amountIn.IsNeg() {
-		return ufmt.Errorf("invalid amountInMin(%s), must be positive", amountIn.ToString())
+		return ufmt.Errorf("invalid amountIn(%s), must be positive", amountIn.ToString())
 	}
 
 	// when `SwapType` is `ExactIn`, assign `amountSpecified` the `amountIn`

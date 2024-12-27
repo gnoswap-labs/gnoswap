@@ -33,26 +33,26 @@ func TestExactInSwapRouteOperation_Validate(t *testing.T) {
 			wantErr:      false,
 		},
 		{
-			name:         "Fail: amountOutMin is 0",
+			name:         "Fail: amountIn is 0",
 			inputToken:   barPath,
 			outputToken:  bazPath,
-			amountIn:     "100",
-			amountOutMin: "0",
+			amountIn:     "0",
+			amountOutMin: "100",
 			routeArr:     singlePoolPath,
 			quoteArr:     "100",
 			wantErr:      true,
-			errMsg:       "invalid amountInMin(0), must be positive",
+			errMsg:       "invalid amountIn(0), must be positive",
 		},
 		{
-			name:         "Fail: amountOutMin is negative",
+			name:         "Fail: amountIn is negative",
 			inputToken:   barPath,
 			outputToken:  bazPath,
-			amountIn:     "100",
-			amountOutMin: "-10",
+			amountIn:     "-100",
+			amountOutMin: "10",
 			routeArr:     singlePoolPath,
 			quoteArr:     "100",
 			wantErr:      true,
-			errMsg:       "invalid amountInMin(-10), must be positive",
+			errMsg:       "invalid amountIn(-100), must be positive",
 		},
 	}
 
@@ -92,7 +92,8 @@ func TestExactInSwapRouteOperation_Validate(t *testing.T) {
 }
 
 func TestExactInSwapRoute(t *testing.T) {
-	t.Skip("TODO: fix this test")
+	CreatePoolWithoutFee(t)
+	MakeMintPositionWithoutFee(t)
 
 	std.TestSkipHeights(100)
 	user1Realm := std.NewUserRealm(user1Addr)
@@ -120,7 +121,7 @@ func TestExactInSwapRoute(t *testing.T) {
 			outputToken:  bazPath,
 			amountIn:     "100",
 			routeArr:     singlePoolPath,
-			quoteArr:     "90",
+			quoteArr:     "100",
 			amountOutMin: "85",
 			wantErr:      false,
 		},
@@ -128,6 +129,11 @@ func TestExactInSwapRoute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			std.TestSetRealm(user1Realm)
+			bar.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
+			baz.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
+			bar.Approve(a2u(consts.POOL_ADDR), maxApprove)
+			baz.Approve(a2u(consts.POOL_ADDR), maxApprove)
 			if tt.setup != nil {
 				tt.setup()
 			}

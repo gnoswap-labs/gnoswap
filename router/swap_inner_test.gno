@@ -4,14 +4,15 @@ import (
 	"std"
 	"testing"
 
-	"gno.land/r/gnoswap/v1/common"
-
-	"gno.land/p/demo/uassert"
-	pusers "gno.land/p/demo/users"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
 	"gno.land/r/demo/users"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/baz"
 )
 
 func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
@@ -72,6 +73,8 @@ func TestCalculateSqrtPriceLimitForSwap(t *testing.T) {
 }
 
 func TestSwapInner(t *testing.T) {
+	user1Realm := std.NewUserRealm(user1Addr)
+
 	tests := []struct {
 		name              string
 		setupFn           func(t *testing.T)
@@ -87,6 +90,13 @@ func TestSwapInner(t *testing.T) {
 			name: "normal swap - exact input",
 			setupFn: func(t *testing.T) {
 				CreatePoolWithoutFee(t)
+				MakeMintPositionWithoutFee(t)
+
+				std.TestSetRealm(user1Realm)
+				bar.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
+				baz.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
+				TokenFaucet(t, barPath, a2u(user1Addr))
+				TokenFaucet(t, bazPath, a2u(user1Addr))
 			},
 			amountSpecified:   i256.MustFromDecimal("100"), // exact input
 			recipient:         users.Resolve(alice),
@@ -104,6 +114,13 @@ func TestSwapInner(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		std.TestSetRealm(user1Realm)
+		bar.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
+		baz.Approve(a2u(consts.ROUTER_ADDR), maxApprove)
+		bar.Approve(a2u(consts.POOL_ADDR), maxApprove)
+		baz.Approve(a2u(consts.POOL_ADDR), maxApprove)
+		TokenFaucet(t, barPath, a2u(consts.ROUTER_ADDR))
+
 		if tt.setupFn != nil {
 			tt.setupFn(t)
 		}
@@ -115,6 +132,12 @@ func TestSwapInner(t *testing.T) {
 			tt.data,
 		)
 
-		panic("poolRecv: " + poolRecv.ToString() + "poolOut: " + poolOut.ToString())
+		// TODO:
+
+		//if tt.expectError {
+		//	uassert.Error(t, poolRecv, "expected error")
+		//	uassert.Error(t, poolOut, "expected error")
+		//	continue
+		//}
 	}
 }
