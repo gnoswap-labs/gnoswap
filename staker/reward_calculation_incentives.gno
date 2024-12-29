@@ -57,13 +57,13 @@ func (self *Incentives) Exists(startTime, endTime int64, creator std.Address, re
 	return self.byTime.Has(byTimeId)
 }
 
-func (self *Incentives) Get(startTime, endTime int64, creator std.Address, rewardToken string) *ExternalIncentive {
+func (self *Incentives) Get(startTime, endTime int64, creator std.Address, rewardToken string) (*ExternalIncentive, bool) {
 	byTimeId := incentiveIdByTime(uint64(startTime), uint64(endTime), creator, rewardToken)
 	value, ok := self.byTime.Get(byTimeId)
 	if !ok {
-		return nil
+		return nil, false
 	}
-	return value.(*ExternalIncentive)
+	return value.(*ExternalIncentive), true	
 }
 
 // MUST be called after std.GetHeight() > endHeight
@@ -93,7 +93,7 @@ func (self *Incentives) CurrentReward(currentHeight uint64) map[string]int64 {
 	return value.(map[string]int64)
 }
 
-func (self *Incentives) add(
+func (self *Incentives) create(
 	creator std.Address, 
 	incentive *ExternalIncentive,
 ) {
@@ -158,6 +158,8 @@ func (self *Incentives) EligibleIntervalToExternalReward(interval Interval, warm
 	return totalReward, totalPenalty
 }
 */
+
+/*
 func (self *Incentives) EligibleIntervalsToExternalReward(intervals []Interval, deposit *Deposit) ([]map[string]uint64, []map[string]uint64) {
 	rewards := make([]map[string]uint64, len(deposit.warmups))
 	penalties := make([]map[string]uint64, len(deposit.warmups))
@@ -176,3 +178,4 @@ func (self *Incentives) EligibleIntervalsToExternalReward(intervals []Interval, 
 	})
 	return rewards, penalties
 }
+	*/

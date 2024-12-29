@@ -4,11 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/demo/ufmt"
-
 	"gno.land/p/demo/avl"
-
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func EncodeUint(num uint64) string {
@@ -29,7 +25,7 @@ func DecodeUint(s string) uint64 {
 }
 
 type UintTree struct {
-	tree *avl.Tree
+	tree *avl.Tree // blockNumber -> interface{}
 }
 
 func NewUintTree() *UintTree {
@@ -114,49 +110,50 @@ func (self *RewardCacheTree) CurrentReward(currentHeight uint64) interface{} {
 	return result
 }
 
-func (self *RewardCacheTree) EligibleIntervalToReward(interval Interval, warmupIndex int, warmup Warmup, f func(int, Warmup, uint64, *u256.Uint, interface{})) {
-	poolReward := self.CurrentReward(interval.StartHeight)
-	currentHeight := interval.StartHeight
-	self.Iterate(interval.StartHeight, interval.EndHeight, func(height uint64, value interface{}) bool {
+type RewardCalculationFunc = func(blockNumbers uint64, poolReward interface{})
 
-		f(warmupIndex, warmup, height-currentHeight, interval.Value, poolReward)
+func (self *RewardCacheTree) RewardPerInterval(startHeight, endHeight uint64, f RewardCalculationFunc) {
+	currentPoolReward := self.CurrentReward(startHeight)
+	currentHeight := startHeight
+	self.Iterate(startHeight, endHeight, func(height uint64, poolReward interface{}) bool {
+		f(height-currentHeight, poolReward)
 		currentHeight = height
-		poolReward = value
+		currentPoolReward = poolReward
 		return false
 	})
-	f(warmupIndex, warmup, interval.EndHeight-currentHeight, interval.Value, poolReward)
+	f(endHeight-currentHeight, currentPoolReward)
 }
 
-
-func (self *RewardCacheTree) RewardPerInterval(startHeight, endHeight uint64, stakedLiquidity *u256.Uint) uint64 {
-	
+/*
+func (self *RewardCalculationState) RewardPerInterval(startHeight, endHeight int64) {
+	for startHeight >= self.warmups[0].NextWarmupHeight {
+		self.warmups = self.warmups[1:]
+	}
+	if endHeight < self.warmups[0].NextWarmupHeight {
+		// fully submerged in the current warmup
+		self.EligibleIntervalToReward(interval, currentWarmupIndex, currentWarmup, f)
+		continue
+	}
+	// split
+	for self.warmups[0].NextWarmupHeight < endHeight {
+		currentInterval, nextInterval := interval.Split(self.warmups[0].NextWarmupHeight)
+		self.EligibleIntervalToReward(currentInterval, currentWarmupIndex, currentWarmup, f)
+		interval = nextInterval
+		currentWarmupIndex++
+		currentWarmup = deposit.GetWarmup(currentWarmupIndex)
+	}
+	if !interval.IsEmpty() {
+		self.EligibleIntervalToReward(interval, currentWarmupIndex, currentWarmup, f)
+	}
 }
-
-func (self *RewardCacheTree) EligibleIntervalsToReward(intervals []Interval, deposit *Deposit, f func(int, Warmup, uint64, *u256.Uint, interface{})) {
+*/
+/*
+func (self *RewardCacheTree) EligibleIntervalsToReward(deposit *Deposit, f func(int, Warmup, uint64, *u256.Uint, interface{})) {
 	currentWarmupIndex := deposit.FindWarmup(intervals[0].StartHeight)
 	currentWarmup := deposit.GetWarmup(currentWarmupIndex)
 
 	for _, interval := range intervals {
-		for interval.StartHeight >= currentWarmup.NextWarmupHeight {
-			currentWarmupIndex++
-			currentWarmup = deposit.GetWarmup(currentWarmupIndex)
-		}
-		if interval.EndHeight < currentWarmup.NextWarmupHeight {
-			// fully submerged in the current warmup
-			self.EligibleIntervalToReward(interval, currentWarmupIndex, currentWarmup, f)
-			continue
-		}
-		// split
-		for currentWarmup.NextWarmupHeight < interval.EndHeight {
-			currentInterval, nextInterval := interval.Split(currentWarmup.NextWarmupHeight)
-			self.EligibleIntervalToReward(currentInterval, currentWarmupIndex, currentWarmup, f)
-			interval = nextInterval
-			currentWarmupIndex++
-			currentWarmup = deposit.GetWarmup(currentWarmupIndex)
-		}
-		if !interval.IsEmpty() {
-			self.EligibleIntervalToReward(interval, currentWarmupIndex, currentWarmup, f)
-		}
+		
 	}
 }
 
@@ -185,3 +182,4 @@ func (self Interval) Split(height uint64) (Interval, Interval) {
 func (self Interval) IsEmpty() bool {
 	return self.StartHeight == self.EndHeight
 }
+*/

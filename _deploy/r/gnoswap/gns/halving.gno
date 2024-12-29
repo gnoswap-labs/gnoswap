@@ -62,44 +62,18 @@ var (
 	perBlockMint = avl.NewTree() // height => uint64
 ) 
 
-// endHeight MUST be equal or before the current height(must not be future)
-// setAvgBlockTimeInMsByAdmin does not change past emissions, safe
-func LastPerBlockMintUpdate(endHeight uint64) (uint64, uint64) {
-	height := uint64(0)
-	amount := uint64(0)
-	perBlockMint.ReverseIterate("", EncodeUint(endHeight), func(key string, value interface{}) bool {
-		height = DecodeUint(key)
-		amount = value.(uint64)
-		return true
-	})
-
-	return height, amount
-}
-
-func PerBlockMintUpdates(startHeight, endHeight uint64) ([]uint64, []uint64) {
-	heights := make([]uint64, 0)
-	updates := make([]uint64, 0)
-	perBlockMint.Iterate(EncodeUint(startHeight), EncodeUint(endHeight), func(key string, value interface{}) bool {
-		heights = append(heights, DecodeUint(key))
-		updates = append(updates, value.(uint64))
-		return false
-	})
-
-	return heights, updates
-}
-
 func EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
 	heights := make([]uint64, 0)
 	updates := make([]uint64, 0)
 	perBlockMint.ReverseIterate("", EncodeUint(endHeight), func(key string, value interface{}) bool {
 		heights = append(heights, DecodeUint(key))
-		updates = append(updates, value.(uint64))
+		updates = append(updates, value.(uint64) * 75 / 100) // FIXME!!!
 		return true
 	})
 
 	perBlockMint.Iterate(EncodeUint(startHeight), EncodeUint(endHeight), func(key string, value interface{}) bool {
 		heights = append(heights, DecodeUint(key))
-		updates = append(updates, value.(uint64))
+		updates = append(updates, value.(uint64) * 75 / 100) // FIXME!!!
 		return false
 	})
 

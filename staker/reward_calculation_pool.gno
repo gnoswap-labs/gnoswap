@@ -3,13 +3,15 @@ package staker
 import (
 	"std"
 
-	"gno.land/p/demo/avl"
+	"gno.land/r/gnoswap/v1/consts"
 
-	"gno.land/p/demo/ufmt"
+	"gno.land/p/demo/avl"
 
 	u256 "gno.land/p/gnoswap/uint256"
 	i256 "gno.land/p/gnoswap/int256"
 )
+
+var q96 = u256.MustFromDecimal(consts.Q96)
 
 type Pools struct {
 	tree *avl.Tree // string poolPath -> pool
@@ -55,8 +57,9 @@ type Pool struct {
 	// updated each time when the pool crosses a staked tick
 	stakedLiquidity *UintTree // blockNumber -> *u256.Uint
 
-	// cache of the internal reward for each pool in tier
-	rewardCache           *RewardCacheTree // blockNumber -> uint64 
+	// cache of the internal reward per liquidity for each pool in tier
+	// value: (internal reward / total staked liquidity) * Q96
+	rewardCache           *RewardCacheTree // blockNumber -> *u256.Uint
 	lastRewardCacheHeight *uint64
 
 	incentives Incentives
@@ -113,29 +116,44 @@ func (self *Pool) StakedLiquidityUpdates(startHeight, endHeight uint64) ([]uint6
 }
 */
 
+func (self *Pool) cacheRewardPerLiquidityUnit(poolTier *PoolTier, startHeight, endHeight uint64, currentTierReward uint64) {
+	self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
+		stakedLiquidity := value.(*u256.Uint)
+		ratio := u256.NewUint(currentTierReward)
+		ratio = ratio.Mul(ratio, q96)
+		ratio = ratio.Div(ratio, stakedLiquidity)
+		self.rewardCache.Set(height, ratio)
+		return false
+	})
+}
+
 func (self *Pool) cacheReward(poolTier *PoolTier, endHeight uint64) {
 	startHeight := *self.lastRewardCacheHeight
 	currentTier := poolTier.CurrentTier(self.poolPath, startHeight)
+	currentTierReward := uint64(0)
 	poolTier.membershipOf(self.poolPath).Iterate(startHeight, endHeight, func(membershipUpdateHeight uint64, value interface{}) bool {
 		if currentTier == 0 {
 			// ignore reward updates
 			startHeight = membershipUpdateHeight
 			currentTier = value.(uint64)
 			return false
-		}
-		poolTier.rewardCacheOf(currentTier).Iterate(startHeight, membershipUpdateHeight, func(height uint64, value interface{}) bool {
-			reward := value.(uint64)
-			self.rewardCache.Set(height, reward)
+		} 
+
+		currentTierReward = poolTier.CurrentReward(currentTier, startHeight)
+
+		poolTier.rewardCacheOf(currentTier).Iterate(startHeight, membershipUpdateHeight, func(rewardUpdateHeight uint64, value interface{}) bool {
+			self.cacheRewardPerLiquidityUnit(poolTier, startHeight, rewardUpdateHeight, currentTierReward)
+			currentTierReward = value.(uint64)
+			startHeight = rewardUpdateHeight
 			return false
 		})
 		currentTier = value.(uint64)
 		if currentTier == 0 {
 			self.rewardCache.Set(membershipUpdateHeight, uint64(0))
 		} else {
-			self.rewardCache.Set(membershipUpdateHeight, poolTier.CurrentReward(currentTier, membershipUpdateHeight))
+			self.cacheRewardPerLiquidityUnit(poolTier, startHeight, membershipUpdateHeight, currentTierReward)
 		}
 		startHeight = membershipUpdateHeight
-		currentTier = value.(uint64)
 		return false
 	})
 
@@ -144,12 +162,14 @@ func (self *Pool) cacheReward(poolTier *PoolTier, endHeight uint64) {
 		return
 	}
 	poolTier.rewardCacheOf(currentTier).Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
-		reward := value.(uint64)
-		self.rewardCache.Set(height, reward)
+		self.cacheRewardPerLiquidityUnit(poolTier, startHeight, height, currentTierReward)
+		currentTierReward = value.(uint64)
+		startHeight = height
 		return false
 	})
 }
 
+/*
 func setInRange(currentlyInRange bool, targetInRange bool) bool {
 	if currentlyInRange != targetInRange {
 		return targetInRange
@@ -159,8 +179,9 @@ func setInRange(currentlyInRange bool, targetInRange bool) bool {
 		ufmt.Sprintf("staker.gno__tickCrossesToEligibleIntervals() || currentlyInRange(%t) is already equal with targetInRange(%t)", currentlyInRange, targetInRange),
 	))
 }
-
-func (self *Pool) TickCrossesToEligibleIntervals(
+*/
+/*
+func (self *Pool) TickCrossesToInternalReward(
 	tickUpperCrosses []int64,
 	tickLowerCrosses []int64,
 	currentlyInRange bool,
@@ -183,28 +204,115 @@ func (self *Pool) TickCrossesToEligibleIntervals(
 		self.stakedLiquidityForInterval(self.CurrentStakedLiquidity(startHeight), startHeight, finalHeight, f)
 	}
 }
+*/
+type InternalRewardState struct {
+	pool *Pool
+	deposit *Deposit
+	currentWarmup Warmup
+	rewards []*u256.Uint
+	penalties []*u256.Uint
+}
 
-func (self *Pool) TickCrossesToInternalReward(tickUpperCrosses []int64, tickLowerCrosses []int64, currentlyInRange bool, deposit *Deposit) ([]uint64, []uint64) {
-	if len(intervals) == 0 {
-		return nil, nil
+func (self *Pool) InternalRewardOf(deposit *Deposit) *InternalRewardState {
+	result := &InternalRewardState{
+		pool: self,
+		deposit: deposit,
+		currentWarmup: deposit.warmups[0],
+		rewards: make([]*u256.Uint, len(deposit.warmups)),
+		penalties: make([]*u256.Uint, len(deposit.warmups)),
 	}
 
-	rewards := make([]uint64, len(deposit.warmups))
-	penalties := make([]uint64, len(deposit.warmups))
-	for i := 0; i < len(deposit.warmups); i++ {
-		rewards[i] = 0
-		penalties[i] = 0
+	for i := range result.rewards {
+		result.rewards[i] = u256.Zero()
+		result.penalties[i] = u256.Zero()
 	}
-	
-	positionLiquidity := deposit.liquidity
-	self.rewardCache.EligibleIntervalsToReward(intervals, deposit, func(warmupIndex int, warmup Warmup, blockNumber uint64, stakedLiquidity *u256.Uint, poolRewardI interface{}) {
-		poolReward := poolRewardI.(uint64)
-		currentReward, currentPenalty := warmup.CalculateReward(blockNumber, poolReward, positionLiquidity, stakedLiquidity)
-		rewards[warmupIndex] += currentReward
-		penalties[warmupIndex] += currentPenalty
-	})
+
+	return result
+}
+
+func (self *InternalRewardState) Calculate(startHeight, endHeight int64, currentlyInRange bool, tickUpperCrosses []int64, tickLowerCrosses []int64) ([]uint64, []uint64) {
+	self.TickCrossesToInternalReward(startHeight, endHeight, currentlyInRange, tickUpperCrosses, tickLowerCrosses)
+
+	rewards := make([]uint64, len(self.deposit.warmups))
+	penalties := make([]uint64, len(self.deposit.warmups))
+
+	for i, reward := range self.rewards {
+		rewards[i] = reward.Uint64()
+		penalties[i] = self.penalties[i].Uint64()
+	}
 
 	return rewards, penalties
+}
+
+func (self *InternalRewardState) AccumulateReward(startHeight, endHeight uint64) {
+	self.pool.rewardCache.RewardPerInterval(startHeight, endHeight, func(blockNumber uint64, poolRewardI interface{}) {
+		positionLiquidity := self.deposit.liquidity.Clone()
+		poolRewardRatio := poolRewardI.(*u256.Uint)
+		positionReward := positionLiquidity.Mul(positionLiquidity, poolRewardRatio)
+		positionReward = positionReward.Mul(positionReward, u256.NewUint(blockNumber))
+
+		acc := self.rewards[self.currentWarmup.Index]
+		acc.Add(acc, positionReward)
+	})
+}
+
+func (self *InternalRewardState) ApplyWarmup() {
+	for i, warmup := range self.deposit.warmups {
+		if self.rewards[i].IsZero() {
+			continue
+		}
+		reward := u256.Zero()
+		reward = reward.Mul(self.rewards[i], u256.NewUint(warmup.WarmupRatio))
+		reward = reward.Div(reward, u256.NewUint(100))
+		reward = reward.Div(reward, q96)
+
+		penalty := u256.Zero()
+		penalty = penalty.Mul(self.rewards[i], u256.NewUint(100 - warmup.WarmupRatio))
+		penalty = penalty.Div(penalty, u256.NewUint(100))
+		penalty = penalty.Div(penalty, q96)
+
+		self.rewards[i] = reward
+		self.penalties[i] = penalty
+	}
+}
+
+func (self *InternalRewardState) TickCrossesToInternalReward(startHeight, endHeight int64, currentlyInRange bool, tickUpperCrosses []int64, tickLowerCrosses []int64) {
+	for _, warmup := range self.deposit.warmups {
+		self.currentWarmup = warmup
+
+		if startHeight >= warmup.NextWarmupHeight {
+			// passed the warmup
+			continue
+		}
+
+		if endHeight < warmup.NextWarmupHeight {
+			// fully submerged in the current warmup
+			tickUpperCrosses, tickLowerCrosses = ForEachEligibleInterval(
+				startHeight,
+				endHeight,
+				currentlyInRange,
+				tickUpperCrosses,
+				tickLowerCrosses,
+				self.AccumulateReward,
+			)
+
+			// done
+			break
+		}
+
+		// partially included in the current warmup
+		tickUpperCrosses, tickLowerCrosses = ForEachEligibleInterval(
+			startHeight,
+			warmup.NextWarmupHeight,
+			currentlyInRange,
+			tickUpperCrosses,
+			tickLowerCrosses,
+			self.AccumulateReward,
+		)
+		startHeight = warmup.NextWarmupHeight
+	}
+
+	self.ApplyWarmup()
 }
 
 func (self *Pool) modifyDeposit(tokenId uint64, liquidity *i256.Int, currentHeight uint64) {
@@ -214,6 +322,7 @@ func (self *Pool) modifyDeposit(tokenId uint64, liquidity *i256.Int, currentHeig
 }
 
 
+/*
 func (self *Pool) stakedLiquidityForInterval(currentStakedLiquidity *u256.Uint, startHeight, endHeight uint64, f func(startHeight, endHeight uint64, stakedLiquidity *u256.Uint)) {
 	if startHeight == endHeight {
 		return
@@ -232,3 +341,4 @@ func (self *Pool) stakedLiquidityForInterval(currentStakedLiquidity *u256.Uint, 
 
 	f(startHeight, endHeight, currentStakedLiquidity)
 }
+	*/

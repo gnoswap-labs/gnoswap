@@ -1,12 +1,12 @@
 package staker
 
 import ( 
-	// "std"
+	"std"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
-	// pl "gno.land/r/gnoswap/v1/pool"
+	pl "gno.land/r/gnoswap/v1/pool"
 )
 
 type Ticks struct {
@@ -128,9 +128,11 @@ func (self *Tick) modifyDepositUpper(currentHeight uint64, currentTick int32, li
 	// ticks.Set(self.id, self)
 }
 
+type PerIntervalFunc = func(startHeight, endHeight uint64)
+
 // Gas optimization: encoding { height: int64, inRange: bool } as int64.
 // height will be negative if inRange is false.
-func TickCrossesToInRanges(currentInRange bool, tickUpperCross []int64, tickLowerCross []int64, f func(int64, bool)) {
+func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, tickUpperCross []int64, tickLowerCross []int64, f PerIntervalFunc) ([]int64, []int64) {
 	tickUpperCrossI := 0
 	tickLowerCrossI := 0
 	tickUpperCrossLen := len(tickUpperCross)
@@ -149,11 +151,17 @@ func TickCrossesToInRanges(currentInRange bool, tickUpperCross []int64, tickLowe
 		if upperHeight < 0 {
 			upperHeight = -upperHeight
 		}
+
+		// reached the end height
+		if lowerHeight >= endHeight || upperHeight >= endHeight {
+			break
+		}
 		
 		// If the heights are the same, and they have the same zeroForOne, the tick has passed through the whole position range(outrange)
 		if upperCross == lowerCross {
 			if currentInRange {
-				f(lowerHeight, false)
+				// exit range
+				f(uint64(startHeight), uint64(lowerHeight))
 				currentInRange = false
 			}
 			tickUpperCrossI++
@@ -164,7 +172,8 @@ func TickCrossesToInRanges(currentInRange bool, tickUpperCross []int64, tickLowe
 		// If the height is the same, and zeroForOne is different, the tick has entered the position and then "bounced" back(inrange)
 		if upperCross == -lowerCross {
 			if !currentInRange {
-				f(lowerHeight, true)
+				// enter range
+				startHeight = lowerHeight
 				currentInRange = true
 			}
 			tickUpperCrossI++
@@ -177,9 +186,18 @@ func TickCrossesToInRanges(currentInRange bool, tickUpperCross []int64, tickLowe
 		// - If !zeroForOne, forward cross, positive height, outrange
 		// => inRange == upperCross < 0
 		if upperHeight < lowerHeight {
-			if currentInRange != (upperCross < 0) {
-				f(upperHeight, upperCross < 0) 
-				currentInRange = !currentInRange
+			if upperCross < 0 {
+				// enter range
+				if !currentInRange {
+					startHeight = upperHeight
+					currentInRange = true
+				}
+			} else {
+				// exit range
+				if currentInRange {
+					f(uint64(startHeight), uint64(upperHeight))
+					currentInRange = false
+				}
 			}
 			tickUpperCrossI++
 			continue
@@ -190,9 +208,18 @@ func TickCrossesToInRanges(currentInRange bool, tickUpperCross []int64, tickLowe
 		// - If !zeroForOne, forward cross, positive height, inrange
 		// => inRange == lowerCross > 0
 		if lowerHeight < upperHeight {
-			if currentInRange != (lowerCross > 0) {
-				f(lowerHeight, lowerCross > 0)
-				currentInRange = !currentInRange
+			if lowerCross > 0 {
+				// enter range
+				if !currentInRange {
+					startHeight = lowerHeight
+					currentInRange = true
+				}
+			} else {
+				// exit range
+				if currentInRange {
+					f(uint64(startHeight), uint64(lowerHeight))
+					currentInRange = false
+				}
 			}
 			tickLowerCrossI++
 			continue
@@ -201,19 +228,53 @@ func TickCrossesToInRanges(currentInRange bool, tickUpperCross []int64, tickLowe
 		panic("unreachable")
 	}
 
-	for _, cross := range tickUpperCross[tickUpperCrossI:] {
-		if currentInRange != (cross < 0) {
-			f(cross, cross < 0)
-			currentInRange = !currentInRange
+	for ; tickUpperCrossI < len(tickUpperCross); tickUpperCrossI++ {
+		cross := tickUpperCross[tickUpperCrossI]
+		// reached the end height
+		if cross >= endHeight || -cross >= endHeight {
+			break
+		}
+		if cross < 0 {
+			// enter range
+			if !currentInRange {
+				startHeight = -cross
+				currentInRange = true
+			} 
+		} else {
+			// exit range
+			if currentInRange {
+				f(uint64(startHeight), uint64(cross))
+				currentInRange = false
+			}
 		}
 	}
 
-	for _, cross := range tickLowerCross[tickLowerCrossI:] {
-		if currentInRange != (cross > 0) {
-			f(cross, cross > 0)
-			currentInRange = !currentInRange
+	for ; tickLowerCrossI < len(tickLowerCross); tickLowerCrossI++ {
+		cross := tickLowerCross[tickLowerCrossI]
+		// reached the end height
+		if cross >= endHeight || -cross >= endHeight {
+			break
+		}
+		if cross > 0 {
+			// enter range
+			if !currentInRange {
+				startHeight = cross
+				currentInRange = true
+			}
+		} else {
+			// exit range
+			if currentInRange {
+				f(uint64(startHeight), uint64(-cross))
+				currentInRange = false
+			}
 		}
 	}
+
+	if currentInRange {
+		f(uint64(startHeight), uint64(endHeight))
+	}
+
+	return tickUpperCross[tickUpperCrossI:], tickLowerCross[tickLowerCrossI:]
 }
 
 func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool) {
@@ -240,8 +301,6 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 	}
 }
 
-/*
 func init() {
 	pl.SetTickCrossHook(TickCrossHook(pools, std.GetHeight))
 }
-*/

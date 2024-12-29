@@ -5,7 +5,7 @@ import (
 
 	"gno.land/r/gnoswap/v1/consts"
 
-	//"gno.land/r/gnoswap/v1/gns"
+	"gno.land/r/gnoswap/v1/gns"
 
 	//pn "gno.land/r/gnoswap/v1/position"
 
@@ -23,7 +23,13 @@ func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 	return true
 }
 
-func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits, pools *Pools, ticks *Ticks, poolTier *PoolTier, emissionUpdateHeights []uint64, emissionUpdates []uint64) ([]uint64, []uint64) {
+func calcPositionReward(currentHeight uint64, tokenId uint64) ([]uint64, []uint64) {
+	deposit := deposits.Get(tokenId)
+	emissionUpdateHeights, emissionUpdates := gns.EmissionUpdates(deposit.lastCollectHeight, currentHeight)
+	return CalcPositionReward(currentHeight, tokenId, deposits, pools, poolTier, emissionUpdateHeights, emissionUpdates)
+}
+
+func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits, pools *Pools, poolTier *PoolTier, emissionUpdateHeights []uint64, emissionUpdates []uint64) ([]uint64, []uint64) {
 	// cache per-tier and per-pool rewards
 	poolTier.cacheReward(currentHeight, emissionUpdateHeights, emissionUpdates)
 
@@ -39,8 +45,8 @@ func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits
 	pool.cacheReward(poolTier, currentHeight)
 
 	// eligible(in-range) intervals for a position
-	upperTick := ticks.Get(deposit.tickUpper)
-	lowerTick := ticks.Get(deposit.tickLower)
+	upperTick := pool.ticks.Get(deposit.tickUpper)
+	lowerTick := pool.ticks.Get(deposit.tickLower)
 
 	lastCollectHeight := deposit.lastCollectHeight
 
@@ -51,9 +57,7 @@ func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits
 	tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, currentHeight)
 	tickLowerCrosses := lowerTick.crossInfo(lastCollectHeight, currentHeight)
 
-	intervals := pool.TickCrossesToEligibleIntervals(tickUpperCrosses, tickLowerCrosses, currentlyInRange, lastCollectHeight, currentHeight)
+	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
 
-	rewards, penalties := pool.EligibleIntervalsToInternalReward(intervals, deposit)
-
-	return rewards, penalties
+	return internalRewards, internalPenalties
 }
