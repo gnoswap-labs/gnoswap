@@ -1,10 +1,7 @@
 package staker
 
 import (
-	"std"
-
 	"gno.land/r/gnoswap/v1/common"
-	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/p/demo/ufmt"
 )
@@ -82,23 +79,38 @@ func GetWarmUp(percent int64) int64 {
 	return value
 }
 
+// SetWarmUpByAdmin sets the warm-up period for the given percent.
+// Only admin can execute this function.
+func SetWarmUpByAdmin(percent int64, block int64) {
+	assertHalted()
+	assertOnlyAdmin()
+	assertValidWarmUpPercent(percent)
+
+	setWramUp(percent, block)
+}
+
+// SetWarmUp sets the warm-up period for the given percent.
+// Only governance contract can execute this function via proposal.
 func SetWarmUp(percent int64, block int64) {
-	common.IsHalted()
+	assertHalted()
+	assertOnlyGovernance()
+	assertValidWarmUpPercent(percent)
 
-	if _, exist := warmUp[percent]; !exist {
-		panic(addDetailToError(
-			errInvalidWarmUpPercent,
-			ufmt.Sprintf("warm_up.gno__SetWarmUp() || percent(%d) must be 30, 50, 70, 100", percent),
-		))
-	}
+	setWramUp(percent, block)
+}
 
-	caller := std.PrevRealm().Addr()
-	cond := !(caller == consts.ADMIN || caller == consts.GOV_GOVERNANCE_ADDR)
-	if err := common.SatisfyCond(cond); err != nil {
-		panic(err)
-	}
-
+func setWramUp(percent int64, block int64) {
 	warmUp[percent] = block
+
+	prevAddr, prevPkgPath := getPrev()
+
+	std.Emit(
+		"SetWarmUp",
+		"prevAddr", prevAddr,
+		"prevRealm", prevPkgPath,
+		"percent", ufmt.Sprintf("%d", percent),
+		"block", ufmt.Sprintf("%d", block),
+	)
 }
 
 func GetWarmUpMap() map[int64]int64 {
@@ -309,4 +321,31 @@ func (wc *WarmUpCalculator) CalculateWarmUp(currentHeight int64, rewardAmount ui
 	reward, penalty = wc.compute(normCurrHeight, normLastHeight, rewardAmount)
 
 	return reward, penalty
+}
+
+func assertValidWarmUpPercent(percent int64) {
+	if percent != WarmUpFor30Ratio && percent != WarmUpFor50Ratio && percent != WarmUpFor70Ratio && percent != WarmUpFor100Ratio {
+		panic(addDetailToError(
+			errInvalidWarmUpPercent,
+			ufmt.Sprintf("percent(%d) must be 30, 50, 70 or 100", percent),
+		))
+	}
+}
+
+func assertOnlyAdmin() {
+	caller := std.PrevRealm().Addr()
+	if err := common.AdminOnly(caller); err != nil {
+		panic(err.Error())
+	}
+}
+
+func assertOnlyGovernance() {
+	caller := std.PrevRealm().Addr()
+	if err := common.GovernanceOnly(caller); err != nil {
+		panic(err.Error())
+	}
+}
+
+func assertHalted() {
+	common.IsHalted()
 }
