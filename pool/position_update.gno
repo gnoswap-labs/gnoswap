@@ -88,10 +88,10 @@ func (p *Pool) updatePosition(positionParams ModifyPositionParams, tick int32) P
 	// clear any tick data that is no longer needed
 	if positionParams.liquidityDelta.IsNeg() {
 		if flippedLower {
-			delete(p.ticks, positionParams.tickLower)
+			p.deleteTick(positionParams.tickLower)
 		}
 		if flippedUpper {
-			delete(p.ticks, positionParams.tickUpper)
+			p.deleteTick(positionParams.tickUpper)
 		}
 	}
 

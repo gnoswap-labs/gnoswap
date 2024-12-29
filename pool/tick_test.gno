@@ -3,6 +3,7 @@ package pool
 import (
 	"testing"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
 
 	i256 "gno.land/p/gnoswap/int256"
@@ -60,24 +61,24 @@ func TestcalculateMaxLiquidityPerTick(t *testing.T) {
 func TestCalculateFeeGrowthInside(t *testing.T) {
 	// Create a mock pool
 	pool := &Pool{
-		ticks: make(map[int32]TickInfo),
+		ticks: avl.NewTree(),
 	}
 
 	// Setup test ticks
-	pool.ticks[0] = TickInfo{
+	pool.ticks.Set("0", TickInfo{
 		liquidityGross:        u256.NewUint(1000),
 		liquidityNet:          i256.NewInt(100),
 		feeGrowthOutside0X128: u256.NewUint(5),
 		feeGrowthOutside1X128: u256.NewUint(7),
 		initialized:           true,
-	}
-	pool.ticks[100] = TickInfo{
+	})
+	pool.ticks.Set("100", TickInfo{
 		liquidityGross:        u256.NewUint(2000),
 		liquidityNet:          i256.NewInt(-100),
 		feeGrowthOutside0X128: u256.NewUint(10),
 		feeGrowthOutside1X128: u256.NewUint(15),
 		initialized:           true,
-	}
+	})
 
 	tests := []struct {
 		name                 string
@@ -261,7 +262,7 @@ func TestCalculateFeeGrowthInside(t *testing.T) {
 
 func TestTickUpdate(t *testing.T) {
 	pool := &Pool{
-		ticks: make(map[int32]TickInfo),
+		ticks: avl.NewTree(),
 	}
 
 	tests := []struct {
@@ -403,7 +404,7 @@ func TestTickUpdate(t *testing.T) {
 			wantFlipped:          false,
 			shouldPanic:          false,
 			verify: func() {
-				info := pool.ticks[1]
+				info := pool.mustGetTick(1)
 				uassert.Equal(t, info.feeGrowthOutside0X128.ToString(), "1")
 				uassert.Equal(t, info.feeGrowthOutside1X128.ToString(), "2")
 			},
@@ -424,7 +425,7 @@ func TestTickUpdate(t *testing.T) {
 			wantFlipped:          false,
 			shouldPanic:          false,
 			verify: func() {
-				info := pool.ticks[1]
+				info := pool.mustGetTick(1)
 				uassert.Equal(t, info.feeGrowthOutside0X128.ToString(), "1")
 				uassert.Equal(t, info.feeGrowthOutside1X128.ToString(), "2")
 			},
@@ -441,9 +442,9 @@ func TestTickUpdate(t *testing.T) {
 			wantFlipped:          false,
 			shouldPanic:          false,
 			verify: func() {
-				info := pool.ticks[2]
-				uassert.Equal(t, info.feeGrowthOutside0X128.ToString(), "")
-				uassert.Equal(t, info.feeGrowthOutside1X128.ToString(), "")
+				info := pool.getTick(2)
+				uassert.Equal(t, info.feeGrowthOutside0X128.ToString(), "0")
+				uassert.Equal(t, info.feeGrowthOutside1X128.ToString(), "0")
 			},
 		},
 	}
@@ -494,17 +495,17 @@ func TestTickUpdate(t *testing.T) {
 
 func TestTickCross(t *testing.T) {
 	pool := &Pool{
-		ticks: make(map[int32]TickInfo),
+		ticks: avl.NewTree(),
 	}
 
 	// Setup initial tick state
-	pool.ticks[100] = TickInfo{
+	pool.ticks.Set("100", TickInfo{
 		liquidityGross:        u256.NewUint(1000),
 		liquidityNet:          i256.NewInt(500),
 		feeGrowthOutside0X128: u256.NewUint(10),
 		feeGrowthOutside1X128: u256.NewUint(15),
 		initialized:           true,
-	}
+	})
 
 	tests := []struct {
 		name                 string
@@ -539,7 +540,7 @@ func TestTickCross(t *testing.T) {
 
 func TestGetTick(t *testing.T) {
 	pool := &Pool{
-		ticks: make(map[int32]TickInfo),
+		ticks: avl.NewTree(),
 	}
 
 	// Setup a tick
@@ -550,7 +551,7 @@ func TestGetTick(t *testing.T) {
 		feeGrowthOutside1X128: u256.NewUint(15),
 		initialized:           true,
 	}
-	pool.ticks[50] = expectedTick
+	pool.setTick(50, expectedTick)
 
 	tests := []struct {
 		name     string
@@ -710,9 +711,7 @@ func setTick(
 ) {
 	t.Helper()
 
-	info := pool.ticks[tick]
-	info.valueOrZero()
-
+	info := pool.getTick(tick)
 	info.feeGrowthOutside0X128 = feeGrowthOutside0X128
 	info.feeGrowthOutside1X128 = feeGrowthOutside1X128
 	info.liquidityGross = liquidityGross
@@ -722,10 +721,10 @@ func setTick(
 	info.secondsOutside = secondsOutside
 	info.initialized = initialized
 
-	pool.ticks[tick] = info
+	pool.setTick(tick, info)
 }
 
 func deleteTick(t *testing.T, pool *Pool, tick int32) {
 	t.Helper()
-	delete(pool.ticks, tick)
+	pool.deleteTick(tick)
 }

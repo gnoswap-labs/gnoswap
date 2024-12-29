@@ -7,10 +7,6 @@ import (
 	//"gno.land/r/gnoswap/v1/consts"
 )
 
-// region *****refactor******
-/*
-type ExternalIncentiveMap map[string]ExternalIncentive
-
 // ExternalCalculator manages the calculation of external incentive rewards.
 //
 // This maintains its own timestamp to ensure consistent time-based calculations
@@ -33,7 +29,7 @@ func NewExternalCalculator(height int64) *ExternalCalculator {
 // and processes rewards only for active ones to optimize computation.
 //
 // To maintain the functional purity, it passes the [ExternalIncentiveMap] as an argument.
-func (ec *ExternalCalculator) calculate(ictvs ExternalIncentiveMap) {
+func (ec *ExternalCalculator) calculate(ictvs Incentives) {
 	for id, ictv := range ictvs {
 		if !ec.active(ictv) {
 			continue
@@ -85,8 +81,11 @@ func (ec *ExternalCalculator) must(tokId uint64, ictvId string, ictv ExternalInc
 //
 // TOO MANY SIDE-EFFECTS: use block height instead of timestamp
 func (ec *ExternalCalculator) getBlockPassed(tokId uint64, ictvId string, ictv ExternalIncentive) int64 {
-	deposit := deposits[tokId]
-	last := max(ictv.startTimestamp, deposit.stakeTimestamp)
+	deposit, exist := deposits.Get(tokId)
+	if !exist {
+		return 0
+	}
+	last := max(ictv.startTimestamp, deposit.StakeTimestamp())
 	last = max(last, externalLastCalculatedTimestamp[ictvId])
 
 	// WARNING: error prone. need to use block height instead of timestamp
@@ -232,4 +231,3 @@ func (ex *ExternalCalculator) updatePositionRewards(
 }
 
 // 남는 수량 어떻게?
-*/

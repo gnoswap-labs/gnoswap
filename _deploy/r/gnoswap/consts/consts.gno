@@ -12,12 +12,13 @@ const (
 
 	TOKEN_REGISTER_NAMESPACE string = "gno.land/r/g1er355fkjksqpdtwmhf5penwa82p0rhqxkkyhk5"
 
-	BLOCK_GENERATION_INTERVAL int64 = 1 // seconds
+	BLOCK_GENERATION_INTERVAL int64 = 2 // seconds
 )
 
 // WRAP & UNWRAP
 const (
 	GNOT           string = "gnot"
+	UGNOT          string = "ugnot"
 	WRAPPED_WUGNOT string = "gno.land/r/demo/wugnot"
 
 	// defined in https://github.com/gnolang/gno/blob/81a88a2976ba9f2f9127ebbe7fb7d1e1f7fa4bd4/examples/gno.land/r/demo/wugnot/wugnot.gno#L19
@@ -111,7 +112,9 @@ const (
 	Q96  string = "79228162514264337593543950336"           // 2 ** 96
 	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
 
+	Q96_RESOLUTION  uint = 96
 	Q128_RESOLUTION uint = 128
+	Q160_RESOLUTION uint = 160
 )
 
 // TIMESTAMP & DAY

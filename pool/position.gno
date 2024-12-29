@@ -77,7 +77,7 @@ func positionUpdate(
 		if position.liquidity.IsZero() {
 			panic(addDetailToError(
 				errZeroLiquidity,
-				"position.gno__positionUpdate() || both liquidityDelta and current position's liquidity are zero",
+				"both liquidityDelta and current position's liquidity are zero",
 			))
 		}
 
@@ -120,10 +120,10 @@ func (p *Pool) positionUpdateWithKey(
 	feeGrowthInside0X128 = feeGrowthInside0X128.NilToZero()
 	feeGrowthInside1X128 = feeGrowthInside1X128.NilToZero()
 
-	positionToUpdate := p.GetPosition(positionKey)
+	positionToUpdate, _ := p.GetPosition(positionKey)
 	positionAfterUpdate := positionUpdate(positionToUpdate, liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128)
 
-	p.positions[positionKey] = positionAfterUpdate
+	p.setPosition(positionKey, positionAfterUpdate)
 
 	return positionAfterUpdate
 }
@@ -153,23 +153,31 @@ func (p *Pool) PositionTokensOwed1(key string) *u256.Uint {
 	return p.mustGetPosition(key).tokensOwed1
 }
 
-func (p *Pool) mustGetPosition(key string) PositionInfo {
-	position, exist := p.positions[key]
-	if !exist {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("position(%s) does not exist", key),
-		))
-	}
-	return position
-}
-
-func (p *Pool) GetPosition(key string) PositionInfo {
-	position, exist := p.positions[key]
+// GetPosition returns the position info for a given key.
+func (p *Pool) GetPosition(key string) (PositionInfo, bool) {
+	iPositionInfo, exist := p.positions.Get(key)
 	if !exist {
 		newPosition := PositionInfo{}
 		newPosition.valueOrZero()
-		return newPosition
+		return newPosition, false
 	}
-	return position
+
+	return iPositionInfo.(PositionInfo), true
+}
+
+// setPosition sets the position info for a given key.
+func (p *Pool) setPosition(posKey string, positionInfo PositionInfo) {
+	p.positions.Set(posKey, positionInfo)
+}
+
+// mustGetPosition returns the position info for a given key.
+func (p *Pool) mustGetPosition(positionKey string) PositionInfo {
+	positionInfo, exist := p.GetPosition(positionKey)
+	if !exist {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("positionKey(%s) does not exist", positionKey),
+		))
+	}
+	return positionInfo
 }

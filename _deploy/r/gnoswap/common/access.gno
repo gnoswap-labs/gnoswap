@@ -11,6 +11,7 @@ const (
 	ErrNoPermission = "caller(%s) has no permission"
 )
 
+// AssertCaller checks if the caller is the given address.
 func AssertCaller(caller, addr std.Address) error {
 	if caller != addr {
 		return ufmt.Errorf(ErrNoPermission, caller.String())
@@ -25,6 +26,7 @@ func SatisfyCond(cond bool) error {
 	return nil
 }
 
+// AdminOnly checks if the caller is the admin.
 func AdminOnly(caller std.Address) error {
 	if caller != consts.ADMIN {
 		return ufmt.Errorf(ErrNoPermission, caller.String())
@@ -32,6 +34,7 @@ func AdminOnly(caller std.Address) error {
 	return nil
 }
 
+// GovernanceOnly checks if the caller is the gov governance contract.
 func GovernanceOnly(caller std.Address) error {
 	if caller != consts.GOV_GOVERNANCE_ADDR {
 		return ufmt.Errorf(ErrNoPermission, caller.String())
@@ -39,6 +42,7 @@ func GovernanceOnly(caller std.Address) error {
 	return nil
 }
 
+// GovStakerOnly checks if the caller is the gov staker contract.
 func GovStakerOnly(caller std.Address) error {
 	if caller != consts.GOV_STAKER_ADDR {
 		return ufmt.Errorf(ErrNoPermission, caller.String())
@@ -46,6 +50,7 @@ func GovStakerOnly(caller std.Address) error {
 	return nil
 }
 
+// RouterOnly checks if the caller is the router contract.
 func RouterOnly(caller std.Address) error {
 	if caller != consts.ROUTER_ADDR {
 		return ufmt.Errorf(ErrNoPermission, caller.String())
@@ -53,6 +58,7 @@ func RouterOnly(caller std.Address) error {
 	return nil
 }
 
+// PositionOnly checks if the caller is the position contract.
 func PositionOnly(caller std.Address) error {
 	if caller != consts.POSITION_ADDR {
 		return ufmt.Errorf(ErrNoPermission, caller.String())
@@ -60,6 +66,7 @@ func PositionOnly(caller std.Address) error {
 	return nil
 }
 
+// StakerOnly checks if the caller is the staker contract.
 func StakerOnly(caller std.Address) error {
 	if caller != consts.STAKER_ADDR {
 		return ufmt.Errorf(ErrNoPermission, caller.String())
@@ -67,6 +74,7 @@ func StakerOnly(caller std.Address) error {
 	return nil
 }
 
+// LaunchpadOnly checks if the caller is the launchpad contract.
 func LaunchpadOnly(caller std.Address) error {
 	if caller != consts.LAUNCHPAD_ADDR {
 		return ufmt.Errorf(ErrNoPermission, caller.String())
@@ -74,6 +82,7 @@ func LaunchpadOnly(caller std.Address) error {
 	return nil
 }
 
+// EmissionOnly checks if the caller is the emission contract.
 func EmissionOnly(caller std.Address) error {
 	if caller != consts.EMISSION_ADDR {
 		return ufmt.Errorf(ErrNoPermission, caller.String())
@@ -90,8 +99,7 @@ func TokenRegisterOnly(caller std.Address) error {
 	return nil
 }
 
-// realm assertion
-
+// UserOnly checks if the caller is a user.
 func UserOnly(prev std.Realm) error {
 	if !prev.IsUser() {
 		return ufmt.Errorf("caller(%s) is not a user", prev.PkgPath())

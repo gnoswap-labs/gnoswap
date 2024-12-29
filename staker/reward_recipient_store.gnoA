@@ -172,7 +172,7 @@ func (r *RewardRecipientsMap) CalculateLiquidityRatioAndGetTokenIdMap() map[stri
 	// 2. calculate the liquidity ratio for each position
 	for poolPath, poolLiquidity := range poolLiquidityMap {
 		inRangePosition := poolLiquidity.GetInRangeLiquidityMap()
-		for tokenId, _ := range inRangePosition {
+		for tokenId := range inRangePosition {
 			r.UpdateInRangeLiquidityRatio(poolPath, tokenId)
 			tokenIdMap[poolPath] = append(tokenIdMap[poolPath], tokenId)
 		}
@@ -193,6 +193,37 @@ func NewPoolLiquidity() *PoolLiquidity {
 		inRangeLiquidityMap: make(map[uint64]*InRangeLiquidity),
 		inRangeRewardMap:    make(map[uint64]*InRangePositionReward),
 	}
+}
+
+// AddInRangePosition adds a new in-range position to the pool
+func (p *PoolLiquidity) AddInRangePosition(tokenID uint64, position *InRangeLiquidity) {
+	// nil check for map
+	if p.inRangeLiquidityMap == nil {
+		p.inRangeLiquidityMap = make(map[uint64]*InRangeLiquidity)
+	}
+
+	// nil check for position
+	if position == nil {
+		position = NewInRangeLiquidity()
+	}
+
+	// nil check for totalLiquidity
+	if p.totalLiquidity == nil {
+		p.totalLiquidity = u256.Zero()
+	}
+
+	// Add position's liquidity to total liquidity
+	positionLiquidity := position.GetLiquidity()
+	if positionLiquidity != nil {
+		totoalLiquidity, overflow := new(u256.Uint).AddOverflow(p.totalLiquidity, positionLiquidity)
+		if overflow {
+			panic(errOverflow)
+		}
+		p.totalLiquidity = totoalLiquidity
+	}
+
+	// Store the position
+	p.inRangeLiquidityMap[tokenID] = position
 }
 
 func (p *PoolLiquidity) SetTotalLiquidity(totalLiquidity *u256.Uint) {

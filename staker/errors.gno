@@ -36,6 +36,9 @@ var (
 	errInvalidWarmUpPercent        = errors.New("[GNOSWAP-STAKER-027] invalid warm-up duration")
 	errInvalidTickCross            = errors.New("[GNOSWAP-STAKER-028] invalid tick cross")
 	errIncentiveAlreadyExists      = errors.New("[GNOSWAP-STAKER-029] incentive already exists")
+	errIncentiveNotFound           = errors.New("[GNOSWAP-STAKER-030] incentive not found")
+	errWarmUpAmountNotFound        = errors.New("[GNOSWAP-STAKER-031] warm-up amount not found")
+	errOverflow                    = errors.New("[GNOSWAP-STAKER-032] overflow")
 )
 
 func addDetailToError(err error, detail string) string {

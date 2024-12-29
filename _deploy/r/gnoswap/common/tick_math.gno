@@ -1,101 +1,233 @@
 package common
 
 import (
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
-var tickRatioMap = map[int32]*u256.Uint{
-	0x1:     u256.MustFromDecimal("340265354078544963557816517032075149313"), // 0xfffcb933bd6fad37aa2d162d1a594001,
-	0x2:     u256.MustFromDecimal("340248342086729790484326174814286782778"), // 0xfff97272373d413259a46990580e213a,
-	0x4:     u256.MustFromDecimal("340214320654664324051920982716015181260"), // 0xfff2e50f5f656932ef12357cf3c7fdcc,
-	0x8:     u256.MustFromDecimal("340146287995602323631171512101879684304"), // 0xffe5caca7e10e4e61c3624eaa0941cd0,
-	0x10:    u256.MustFromDecimal("340010263488231146823593991679159461444"), // 0xffcb9843d60f6159c9db58835c926644,
-	0x20:    u256.MustFromDecimal("339738377640345403697157401104375502016"), // 0xff973b41fa98c081472e6896dfb254c0,
-	0x40:    u256.MustFromDecimal("339195258003219555707034227454543997025"), // 0xff2ea16466c96a3843ec78b326b52861,
-	0x80:    u256.MustFromDecimal("338111622100601834656805679988414885971"), // 0xfe5dee046a99a2a811c461f1969c3053,
-	0x100:   u256.MustFromDecimal("335954724994790223023589805789778977700"), // 0xfcbe86c7900a88aedcffc83b479aa3a4,
-	0x200:   u256.MustFromDecimal("331682121138379247127172139078559817300"), // 0xf987a7253ac413176f2b074cf7815e54,
-	0x400:   u256.MustFromDecimal("323299236684853023288211250268160618739"), // 0xf3392b0822b70005940c7a398e4b70f3,
-	0x800:   u256.MustFromDecimal("307163716377032989948697243942600083929"), // 0xe7159475a2c29b7443b29c7fa6e889d9,
-	0x1000:  u256.MustFromDecimal("277268403626896220162999269216087595045"), // 0xd097f3bdfd2022b8845ad8f792aa5825,
-	0x2000:  u256.MustFromDecimal("225923453940442621947126027127485391333"), // 0xa9f746462d870fdf8a65dc1f90e061e5,
-	0x4000:  u256.MustFromDecimal("149997214084966997727330242082538205943"), // 0x70d869a156d2a1b890bb3df62baf32f7,
-	0x8000:  u256.MustFromDecimal("66119101136024775622716233608466517926"),  // 0x31be135f97d08fd981231505542fcfa6,
-	0x10000: u256.MustFromDecimal("12847376061809297530290974190478138313"),  // 0x9aa508b5b7a84e1c677de54f3e99bc9,
-	0x20000: u256.MustFromDecimal("485053260817066172746253684029974020"),    // 0x5d6af8dedb81196699c329225ee604,
-	0x40000: u256.MustFromDecimal("691415978906521570653435304214168"),       // 0x2216e584f5fa1ea926041bedfe98,
-	0x80000: u256.MustFromDecimal("1404880482679654955896180642"),            // 0x48a170391f7dc42444e8fa2,
-}
+const (
+	MAX_UINT8   string = "255"
+	MAX_UINT16  string = "65535"
+	MAX_UINT32  string = "4294967295"
+	MAX_UINT64  string = "18446744073709551615"
+	MAX_UINT128 string = "340282366920938463463374607431768211455"
+	MAX_UINT160 string = "1461501637330902918203684832716283019655932542975"
+	MAX_UINT256 string = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+	MAX_INT256  string = "57896044618658097711785492504343953926634992332820282019728792003956564819967"
 
-var binaryLogConsts = [8]*u256.Uint{
-	u256.MustFromDecimal("0"),                                       // 0x0,
-	u256.MustFromDecimal("3"),                                       // 0x3,
-	u256.MustFromDecimal("15"),                                      // 0xF,
-	u256.MustFromDecimal("255"),                                     // 0xFF,
-	u256.MustFromDecimal("65535"),                                   // 0xFFFF,
-	u256.MustFromDecimal("4294967295"),                              // 0xFFFFFFFF,
-	u256.MustFromDecimal("18446744073709551615"),                    // 0xFFFFFFFFFFFFFFFF,
-	u256.MustFromDecimal("340282366920938463463374607431768211455"), // 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,
-}
+	Q64  string = "18446744073709551616"                    // 2 ** 64
+	Q96  string = "79228162514264337593543950336"           // 2 ** 96
+	Q128 string = "340282366920938463463374607431768211456" // 2 ** 128
+)
 
 var (
+	tickRatioTree = NewTickRatioTree()
+	binaryLogTree = NewBinaryLogTree()
+
 	shift1By32Left = u256.MustFromDecimal("4294967296") // (1 << 32)
 	maxTick        = int32(887272)
 )
 
+// TreeValue wraps u256.Uint to implement custom value type for avl.Tree
+type TreeValue struct {
+	value *u256.Uint
+}
+
+func (tv TreeValue) String() string {
+	return tv.value.ToString()
+}
+
+// TickRatioTree manages tick ratios
+type TickRatioTree struct {
+	tree *avl.Tree
+}
+
+// NewTickRatioTree initializes a new TickRatioTree with predefined values
+func NewTickRatioTree() *TickRatioTree {
+	tree := avl.NewTree()
+
+	ratios := []struct {
+		key   int32
+		value string
+	}{
+		{0x1, "340265354078544963557816517032075149313"},
+		{0x2, "340248342086729790484326174814286782778"},
+		{0x4, "340214320654664324051920982716015181260"},
+		{0x8, "340146287995602323631171512101879684304"},
+		{0x10, "340010263488231146823593991679159461444"},
+		{0x20, "339738377640345403697157401104375502016"},
+		{0x40, "339195258003219555707034227454543997025"},
+		{0x80, "338111622100601834656805679988414885971"},
+		{0x100, "335954724994790223023589805789778977700"},
+		{0x200, "331682121138379247127172139078559817300"},
+		{0x400, "323299236684853023288211250268160618739"},
+		{0x800, "307163716377032989948697243942600083929"},
+		{0x1000, "277268403626896220162999269216087595045"},
+		{0x2000, "225923453940442621947126027127485391333"},
+		{0x4000, "149997214084966997727330242082538205943"},
+		{0x8000, "66119101136024775622716233608466517926"},
+		{0x10000, "12847376061809297530290974190478138313"},
+		{0x20000, "485053260817066172746253684029974020"},
+		{0x40000, "691415978906521570653435304214168"},
+		{0x80000, "1404880482679654955896180642"},
+	}
+
+	for _, ratio := range ratios {
+		tick := ufmt.Sprintf("%d", ratio.key)
+		value := TreeValue{u256.MustFromDecimal(ratio.value)}
+		tree.Set(tick, value)
+	}
+
+	return &TickRatioTree{tree}
+}
+
+// GetRatio retrieves the ratio for a given tick
+func (t *TickRatioTree) GetRatio(key int32) (*u256.Uint, bool) {
+	strKey := ufmt.Sprintf("%d", key)
+	value, exists := t.tree.Get(strKey)
+
+	if !exists {
+		return nil, false
+	}
+
+	if tv, ok := value.(TreeValue); ok {
+		return tv.value, true
+	}
+
+	return nil, false
+}
+
+// BinaryLogTree manages binary log constants
+type BinaryLogTree struct {
+	tree *avl.Tree
+}
+
+// NewBinaryLogTree initializes a new BinaryLogTree
+func NewBinaryLogTree() *BinaryLogTree {
+	tree := avl.NewTree()
+
+	logs := [8]string{
+		"0",
+		"3",
+		"15",
+		"255",
+		"65535",
+		"4294967295",
+		"18446744073709551615",
+		"340282366920938463463374607431768211455",
+	}
+
+	for i, value := range logs {
+		key := ufmt.Sprintf("%d", i)
+		tree.Set(key, TreeValue{u256.MustFromDecimal(value)})
+	}
+
+	return &BinaryLogTree{tree}
+}
+
+// GetLog retrieves the binary log constant at given index
+func (t *BinaryLogTree) GetLog(idx int) (*u256.Uint, bool) {
+	strKey := ufmt.Sprintf("%d", idx)
+	value, exists := t.tree.Get(strKey)
+
+	if !exists {
+		return nil, false
+	}
+
+	if tv, ok := value.(TreeValue); ok {
+		return tv.value, true
+	}
+
+	return nil, false
+}
+
+// TickMathGetSqrtRatioAtTick calculates the square root price ratio for a given tick.
+//
+// This function computes the square root ratio (sqrt(price)) at a specific tick,
+// using a precomputed mapping of ratios. The result is returned as a 160-bit
+// fixed-point value (Q64.96 format).
+//
+// Parameters:
+//   - tick (int32): The tick index for which the square root ratio is calculated.
+//
+// Returns:
+//   - *u256.Uint: The square root price ratio at the given tick, represented as a 160-bit unsigned integer.
+//
+// Behavior:
+//  1. Validates that the tick is within the acceptable range by asserting its absolute value.
+//  2. Initializes the ratio based on whether the least significant bit of the tick is set, using a lookup table (`tickRatioMap`).
+//  3. Iteratively adjusts the ratio by multiplying and right-shifting with precomputed values for each relevant bit set in the tick value.
+//  4. If the tick is positive, the ratio is inverted by dividing a maximum uint256 value by the computed ratio.
+//  5. The result is split into upper 128 bits and lower 32 bits for precision handling.
+//  6. If the lower 32 bits are non-zero, the upper 128 bits are incremented by 1 to ensure rounding up.
+//
+// Example:
+//   - For a tick of `0`, the ratio represents `1.0000` in Q64.96 format.
+//   - For a tick of `-887272` (minimum tick), the ratio represents the smallest possible price.
+//   - For a tick of `887272` (maximum tick), the ratio represents the highest possible price.
+//
+// Panics:
+//   - If the absolute tick value exceeds the maximum allowed tick range.
+//
+// Notes:
+//   - The function relies on a precomputed map `tickRatioMap` to optimize calculations.
+//   - Handles rounding by adding 1 if the remainder of the division is non-zero.
 func TickMathGetSqrtRatioAtTick(tick int32) *u256.Uint { // uint160 sqrtPriceX96
 	absTick := abs(tick)
-	if absTick > maxTick {
-		panic(addDetailToError(
-			errOutOfRange,
-			ufmt.Sprintf("tick is out of range (larger than 887272), tick: %d", tick),
-		))
+	assertValidTickRange(absTick)
+
+	ratio := u256.MustFromDecimal("340282366920938463463374607431768211456") // consts.Q128
+	initialBit := int32(0x1)
+
+	if val, exists := tickRatioTree.GetRatio(initialBit); exists && (absTick&initialBit) != 0 {
+		ratio = val
 	}
 
-	var initialBit int32 = 0x1
-	var ratio *u256.Uint
-	if (absTick & initialBit) != 0 {
-		ratio = tickRatioMap[initialBit]
-	} else {
-		ratio = u256.MustFromDecimal("340282366920938463463374607431768211456") // consts.Q128
-	}
-
-	for mask, value := range tickRatioMap {
-		if (mask != initialBit) && absTick&mask != 0 {
-			// ratio = (ratio * value) >> 128
-			ratio = ratio.Mul(ratio, value)
-			ratio = ratio.Rsh(ratio, 128)
+	calculateRatio := func(mask int32) *u256.Uint {
+		if value, exists := tickRatioTree.GetRatio(mask); exists && absTick&mask != 0 {
+			return new(u256.Uint).Rsh(
+				new(u256.Uint).Mul(ratio, value),
+				128,
+			)
 		}
+		return ratio
+	}
+
+	for mask := int32(0x2); mask <= 0x80000; mask *= 2 {
+		ratio = calculateRatio(mask)
 	}
 
 	if tick > 0 {
-		maxUint256 := u256.MustFromDecimal("115792089237316195423570985008687907853269984665640564039457584007913129639935") // consts.MAX_UINT256
+		maxUint256 := u256.MustFromDecimal(MAX_UINT256) // consts.MAX_UINT256
+		if ratio.IsZero() {
+			return u256.Zero()
+		}
 		ratio = new(u256.Uint).Div(maxUint256, ratio)
 	}
 
-	shifted := new(u256.Uint).Rsh(ratio, 32)      // ratio >> 32
-	remainder := ratio.Mod(ratio, shift1By32Left) // ratio % (1 << 32)
+	upper128Bits := new(u256.Uint).Rsh(ratio, 32)   // ratio >> 32
+	lower32Bits := ratio.Mod(ratio, shift1By32Left) // ratio % (1 << 32)
 
-	var adj *u256.Uint
-	if remainder.IsZero() {
-		adj = u256.Zero()
+	var roundUp *u256.Uint
+	if lower32Bits.IsZero() {
+		roundUp = u256.Zero()
 	} else {
-		adj = u256.One()
+		roundUp = u256.One()
 	}
 
-	return new(u256.Uint).Add(shifted, adj)
+	return new(u256.Uint).Add(upper128Bits, roundUp)
 }
 
 func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 	cond1 := sqrtPriceX96.Gte(u256.MustFromDecimal("4295128739"))                                       // MIN_SQRT_RATIO
 	cond2 := sqrtPriceX96.Lt(u256.MustFromDecimal("1461446703485210103287273052203988822378723970342")) // MAX_SQRT_RATIO
 	if !(cond1 && cond2) {
-		panic(addDetailToError(
+		panic(newErrorWithDetail(
 			errOutOfRange,
-			ufmt.Sprintf("tick_math.gno__TickMathGetTickAtSqrtRatio() || sqrtPriceX96 is out of range, sqrtPriceX96: %s", sqrtPriceX96.ToString()),
+			ufmt.Sprintf("sqrtPriceX96 is out of range, sqrtPriceX96: %s", sqrtPriceX96.ToString()),
 		))
 	}
 
@@ -114,10 +246,17 @@ func TickMathGetTickAtSqrtRatio(sqrtPriceX96 *u256.Uint) int32 {
 func findMSB(ratio *u256.Uint) (*u256.Uint, *u256.Uint) {
 	msb := u256.Zero()
 
+	calculateMSB := func(i int) (*u256.Uint, *u256.Uint) {
+		if logConst, exists := binaryLogTree.GetLog(i); exists {
+			f := new(u256.Uint).Lsh(gt(ratio, logConst), uint(i))
+			msb = new(u256.Uint).Or(msb, f)
+			ratio = new(u256.Uint).Rsh(ratio, uint(f.Uint64()))
+		}
+		return msb, ratio
+	}
+
 	for i := 7; i >= 1; i-- {
-		f := new(u256.Uint).Lsh(gt(ratio, binaryLogConsts[i]), uint(i))
-		msb = new(u256.Uint).Or(msb, f)
-		ratio = new(u256.Uint).Rsh(ratio, uint(f.Uint64()))
+		msb, ratio = calculateMSB(i)
 	}
 
 	// handle the remaining bits
@@ -219,10 +358,21 @@ func gt(x, y *u256.Uint) *u256.Uint {
 	return u256.Zero()
 }
 
+// abs returns the absolute value of the given integer.
 func abs(x int32) int32 {
 	if x < 0 {
 		return -x
 	}
 
 	return x
+}
+
+// assertValidTickRange validates that the absolute tick value is within the acceptable range.
+func assertValidTickRange(absTick int32) {
+	if absTick > maxTick {
+		panic(newErrorWithDetail(
+			errOutOfRange,
+			ufmt.Sprintf("abs tick is out of range (larger than 887272), abs tick: %d", absTick),
+		))
+	}
 }

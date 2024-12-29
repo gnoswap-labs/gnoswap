@@ -122,8 +122,8 @@ func CreateProject(
 	common.IsHalted()
 	en.MintAndDistributeGns()
 
-	transferFromByRegisterCall(
-		tokenPath,
+	tokenTeller := common.GetTokenTeller(tokenPath)
+	tokenTeller.TransferFrom(
 		std.PrevRealm().Addr(),
 		std.Address(consts.LAUNCHPAD_ADDR),
 		depositAmount,
@@ -294,8 +294,8 @@ func TransferLeftFromProjectByAdmin(projectId string, recipient std.Address) uin
 	leftReward := left30 + left90 + left180
 
 	if leftReward > 0 {
-		transferByRegisterCall(
-			project.tokenPath,
+		tokenTeller := common.GetTokenTeller(tokenPath)
+		tokenTeller.Transfer(
 			recipient,
 			leftReward,
 		)

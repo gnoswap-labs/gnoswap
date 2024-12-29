@@ -124,7 +124,7 @@ func Burn(
 	}
 
 	positionKey := getPositionKey(caller, tickLower, tickUpper)
-	pool.positions[positionKey] = position
+	pool.setPosition(positionKey, position)
 
 	// actual token transfer happens in Collect()
 	return amount0.ToString(), amount1.ToString()
@@ -192,7 +192,7 @@ func Collect(
 		checkTransferError(token1.Transfer(recipient, amount1.Uint64()))
 	}
 
-	pool.positions[positionKey] = position
+	pool.setPosition(positionKey, position)
 
 	return amount0.ToString(), amount1.ToString()
 }
@@ -316,12 +316,15 @@ func setFeeProtocol(feeProtocol0, feeProtocol1 uint8) uint8 {
 	// - feePrtocol0 occupies the lower 4 bits
 	// - feeProtocol1 is shifted the lower 4 positions to occupy the upper 4 bits
 	newFee := feeProtocol0 + (feeProtocol1 << 4) // ( << 4 ) = ( * 16 )
+
 	// Update slot0 for each pool
-	for _, pool := range pools {
-		if pool != nil {
-			pool.slot0.feeProtocol = newFee
-		}
-	}
+	pools.Iterate("", "", func(poolPath string, iPool interface{}) bool {
+		pool := iPool.(*Pool)
+		pool.slot0.feeProtocol = newFee
+
+		return false
+	})
+
 	// update slot0
 	slot0FeeProtocol = newFee
 	return newFee

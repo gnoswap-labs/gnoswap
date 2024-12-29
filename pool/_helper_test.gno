@@ -13,17 +13,19 @@ import (
 	"gno.land/r/onbloc/qux"
 	"gno.land/r/onbloc/usdc"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/testutils"
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
 	"gno.land/r/demo/users"
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 	pn "gno.land/r/gnoswap/v1/position"
 )
 
 const (
 	ugnotDenom string = "ugnot"
-	ugnotPath  string = "gno.land/r/gnoswap/v1/pool:ugnot"
+	ugnotPath  string = "ugnot"
 	wugnotPath string = "gno.land/r/demo/wugnot"
 	gnsPath    string = "gno.land/r/gnoswap/v1/gns"
 	barPath    string = "gno.land/r/onbloc/bar"
@@ -48,13 +50,21 @@ const (
 )
 
 var (
-	admin       = pusers.AddressOrName(consts.ADMIN)
+	fooToken = common.GetToken(fooPath)
+	barToken = common.GetToken(barPath)
+	bazToken = common.GetToken(bazPath)
+)
+
+var (
+	adminAddr   = consts.ADMIN
+	admin       = pusers.AddressOrName(adminAddr)
 	alice       = pusers.AddressOrName(testutils.TestAddress("alice"))
 	pool        = pusers.AddressOrName(consts.POOL_ADDR)
 	protocolFee = pusers.AddressOrName(consts.PROTOCOL_FEE_ADDR)
 	router      = pusers.AddressOrName(consts.ROUTER_ADDR)
 	adminRealm  = std.NewUserRealm(users.Resolve(admin))
 	posRealm    = std.NewCodeRealm(consts.POSITION_PATH)
+	rouRealm    = std.NewCodeRealm(consts.ROUTER_PATH)
 
 	// addresses used in tests
 	addrUsedInTest = []std.Address{addr01, addr02}
@@ -517,7 +527,7 @@ func ugnotDeposit(t *testing.T, addr std.Address, amount uint64) {
 
 // resetObject resets the object state(clear or make it default values)
 func resetObject(t *testing.T) {
-	pools = make(poolMap)
+	pools = avl.NewTree()
 	slot0FeeProtocol = 0
 	poolCreationFee = 100_000_000
 	withdrawalFeeBPS = 100
@@ -570,11 +580,11 @@ func burnUsdc(addr pusers.AddressOrName) {
 
 func TestBeforeResetObject(t *testing.T) {
 	// make some data
-	pools = make(poolMap)
-	pools["gno.land/r/gnoswap/v1/gns:gno.land/r/onbloc/usdc"] = &Pool{
+	pools = avl.NewTree()
+	pools.Set("gno.land/r/gnoswap/v1/gns:gno.land/r/onbloc/usdc", &Pool{
 		token0Path: "gno.land/r/gnoswap/v1/gns",
 		token1Path: "gno.land/r/onbloc/usdc",
-	}
+	})
 
 	slot0FeeProtocol = 1
 	poolCreationFee = 100_000_000
@@ -591,7 +601,7 @@ func TestBeforeResetObject(t *testing.T) {
 
 func TestResetObject(t *testing.T) {
 	resetObject(t)
-	uassert.Equal(t, len(pools), 0)
+	uassert.Equal(t, pools.Size(), 0)
 	uassert.Equal(t, slot0FeeProtocol, uint8(0))
 	uassert.Equal(t, poolCreationFee, uint64(100_000_000))
 	uassert.Equal(t, withdrawalFeeBPS, uint64(100))

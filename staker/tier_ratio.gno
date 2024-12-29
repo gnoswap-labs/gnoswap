@@ -5,40 +5,6 @@ import (
 
 	//u256 "gno.land/p/gnoswap/uint256"
 )
-/*
-// getPoolTierAndRatio returns current pool's tier and ratio
-// Returns tier, ratio
-func getPoolTierAndRatio(poolPath string) (uint64, *u256.Uint) {
-	internal, exist := poolTiers[poolPath]
-	if !exist {
-		return 0, u256.Zero()
-	}
-	tier := internal.tier
-
-	// that tier's ratio
-	ratio := getTierRatio(tier)
-	ratioX96 := new(u256.Uint).Mul(u256.NewUint(ratio), _q96)
-
-	// finally current pools ratio
-	numTier1, numTier2, numTier3 := getNumPoolTiers()
-
-	var weight *u256.Uint
-	switch tier {
-	case 1:
-		weight = new(u256.Uint).Div(ratioX96, u256.NewUint(numTier1))
-	case 2:
-		weight = new(u256.Uint).Div(ratioX96, u256.NewUint(numTier2))
-	case 3:
-		weight = new(u256.Uint).Div(ratioX96, u256.NewUint(numTier3))
-	default:
-		panic(addDetailToError(
-			errInvalidPoolTier,
-			ufmt.Sprintf("tier_ratio.gno__getPoolTierAndRatio() || invalid tier(%d) for poolPath(%s)", tier, poolPath),
-		))
-	}
-
-	return tier, weight
-}
 
 // getTierRatio returns ratio for given tier
 // Returns ratio

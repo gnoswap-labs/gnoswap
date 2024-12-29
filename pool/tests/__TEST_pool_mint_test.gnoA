@@ -47,7 +47,7 @@ func TestMintMiscellaneous(t *testing.T) {
 			1000,
 			2000,
 			test_liquidityExpectStr,
-			admin,
+			adminAddr,
 		)
 
 		liqAfter := thisPool.liquidity.ToString()
@@ -69,7 +69,7 @@ func TestMintMiscellaneous(t *testing.T) {
 			-2000,
 			-1000,
 			test_liquidityExpectStr,
-			admin,
+			adminAddr,
 		)
 
 		liqAfter := thisPool.liquidity.ToString()
@@ -83,7 +83,7 @@ func TestMintMiscellaneous(t *testing.T) {
 		std.TestSetRealm(posRealm)
 		uassert.PanicsWithMessage(
 			t,
-			`[GNOSWAP-POOL-009] invalid liquidity calculated || liquidity_math.gno__liquidityMathAddDelta() || LS(z must be < x) (x: 0, y: -1001, z:115792089237316195423570985008687907853269984665640564039457584007913129638935)`,
+			`[GNOSWAP-POOL-009] invalid liquidity calculated || Condition failed: (z must be < x) (x: 0, y: -1001, z:115792089237316195423570985008687907853269984665640564039457584007913129638935)`,
 			func() {
 				Burn(
 					barPath,

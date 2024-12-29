@@ -11,18 +11,75 @@ type InternalTier struct {
 	startTimestamp int64  // start time for internal reward
 }
 
+func (i InternalTier) Tier() uint64 {
+	return i.tier
+}
+
+func (i InternalTier) StartTimestamp() int64 {
+	return i.startTimestamp
+}
+
+// newInternalTier creates a new internal tier
+func newInternalTier(tier uint64, startTimestamp int64) InternalTier {
+	return InternalTier{
+		tier:           tier,
+		startTimestamp: startTimestamp,
+	}
+}
+
 type ExternalIncentive struct {
+	incentiveId       string      // incentive id
+	startTimestamp    int64       // start time for external reward
+	endTimestamp      int64       // end time for external reward
+	createdHeight     int64       // block height when the incentive was created
+	depositGnsAmount  uint64      // deposited gns amount
 	targetPoolPath    string      // external reward target pool path
 	rewardToken       string      // external reward token path
 	rewardAmount      uint64  	  // total reward amount
-	startTimestamp    int64       // start time for external reward
-	endTimestamp      int64       // end time for external reward
+	rewardLeft        uint64      // remaining reward amount
 	startHeight       int64       // start height for external reward
 	endHeight         int64       // end height for external reward
 	rewardPerBlock    uint64      // reward per block
 	refundee          std.Address // refundee address
-	createdHeight     int64       // block height when the incentive was created
-	depositGnsAmount  uint64      // deposited gns amount
+}
+
+func (e ExternalIncentive) StartTimestamp() int64 {
+	return e.startTimestamp
+}
+
+func (e ExternalIncentive) EndTimestamp() int64 {
+	return e.endTimestamp
+}
+
+func (e ExternalIncentive) RewardToken() string {
+	return e.rewardToken
+}
+
+// newExternalIncentive creates a new external incentive
+func newExternalIncentive(
+	startTimestamp int64,
+	endTimestamp int64,
+	createdHeight int64,
+	depositGnsAmount uint64,
+	targetPoolPath string,
+	rewardToken string,
+	rewardAmount *u256.Uint,
+	rewardLeft *u256.Uint,
+	rewardPerBlockX96 *u256.Uint,
+	refundee std.Address,
+) ExternalIncentive {
+	return ExternalIncentive{
+		startTimestamp:    startTimestamp,
+		endTimestamp:      endTimestamp,
+		createdHeight:     createdHeight,
+		depositGnsAmount:  depositGnsAmount,
+		targetPoolPath:    targetPoolPath,
+		rewardToken:       rewardToken,
+		rewardAmount:      rewardAmount,
+		rewardLeft:        rewardLeft,
+		rewardPerBlockX96: rewardPerBlockX96,
+		refundee:          refundee,
+	}
 }
 
 func NewExternalIncentive(

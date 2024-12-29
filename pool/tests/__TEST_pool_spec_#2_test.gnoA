@@ -35,9 +35,9 @@ func AfterTest(t *testing.T) {
 	std.TestSetRealm(poolRealm)
 	barBal := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBal := foo.BalanceOf(a2u(consts.POOL_ADDR))
-	bar.Transfer(a2u(admin), barBal)
-	foo.Transfer(a2u(admin), fooBal)
-	delete(pools, "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
+	bar.Transfer(a2u(adminAddr), barBal)
+	foo.Transfer(a2u(adminAddr), fooBal)
+	pools.Remove("gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000")
 }
 
 func TestSuccess_case_init_balance(t *testing.T) {
@@ -54,7 +54,7 @@ func TestSuccess_case_init_balance(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", admin)
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", adminAddr)
 
 	// ===================== initial balance ========================
 
@@ -81,7 +81,7 @@ func TestSuccess_case_init_tick(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", admin)
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", adminAddr)
 
 	// ===================== initial tick ========================
 
@@ -106,12 +106,12 @@ func TestSuccess_case_transfer_token0_only(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", admin)
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", adminAddr)
 
 	// ===================== transfer token0 only ========================
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", -22980, 0, "10000", admin)
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", -22980, 0, "10000", adminAddr)
 
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
@@ -135,7 +135,7 @@ func TestSuccess_case_max_tick_with_max_leverage(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", admin)
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", adminAddr)
 
 	// ===================== max tick with max leverage ========================
 
@@ -143,7 +143,7 @@ func TestSuccess_case_max_tick_with_max_leverage(t *testing.T) {
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", maxTick-tickSpacing, maxTick, "5070602400912917605986812821504", admin) // 2**102
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", maxTick-tickSpacing, maxTick, "5070602400912917605986812821504", adminAddr) // 2**102
 
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
@@ -167,7 +167,7 @@ func TestSuccess_case_work_for_max_tick(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", admin)
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", adminAddr)
 
 	// ===================== work for max tick ========================
 
@@ -175,7 +175,7 @@ func TestSuccess_case_work_for_max_tick(t *testing.T) {
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", -22980, maxTick, "10000", admin)
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", -22980, maxTick, "10000", adminAddr)
 
 	barBalance := bar.BalanceOf(a2u(consts.POOL_ADDR))
 	fooBalance := foo.BalanceOf(a2u(consts.POOL_ADDR))
@@ -199,7 +199,7 @@ func TestSuccess_case_removing_works(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", admin)
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", adminAddr)
 
 	// ===================== removing works ========================
 
@@ -207,11 +207,11 @@ func TestSuccess_case_removing_works(t *testing.T) {
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", -240, 0, "10000", admin)
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", -240, 0, "10000", adminAddr)
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-009] invalid liquidity calculated || liquidity_math.gno__liquidityMathAddDelta() || LS(z must be < x) (x: 0, y: -10000, z:115792089237316195423570985008687907853269984665640564039457584007913129629936)`,
+		`[GNOSWAP-POOL-009] invalid liquidity calculated || Condition failed: (z must be < x) (x: 0, y: -10000, z:115792089237316195423570985008687907853269984665640564039457584007913129629936)`,
 		func() {
 			pl.Burn(token0Path, barPath, 3000, -240, 0, "10000") // LS panic
 		},
@@ -234,7 +234,7 @@ func TestSuccess_case_adds_liquidity_to_liquidityGross(t *testing.T) {
 	poolPath := "gno.land/r/onbloc/bar:gno.land/r/onbloc/foo:3000"
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", admin)
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", minTick, maxTick, "3161", adminAddr)
 
 	// ===================== adds liquidity to liquiditygross ========================
 
@@ -242,7 +242,7 @@ func TestSuccess_case_adds_liquidity_to_liquidityGross(t *testing.T) {
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", -240, 0, "100", admin)
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", -240, 0, "100", adminAddr)
 	_, _, liquidityGross, _, _, _, _, _ := pool.GetTicks(-240)
 	uassert.Equal(t, liquidityGross.ToString(), "100")
 	_, _, liquidityGross, _, _, _, _, _ = pool.GetTicks(0)
@@ -253,7 +253,7 @@ func TestSuccess_case_adds_liquidity_to_liquidityGross(t *testing.T) {
 	uassert.Equal(t, liquidityGross.ToString(), "0")
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", -240, tickSpacing, "150", admin)
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", -240, tickSpacing, "150", adminAddr)
 	_, _, liquidityGross, _, _, _, _, _ = pool.GetTicks(-240)
 	uassert.Equal(t, liquidityGross.ToString(), "250")
 	_, _, liquidityGross, _, _, _, _, _ = pool.GetTicks(0)
@@ -264,7 +264,7 @@ func TestSuccess_case_adds_liquidity_to_liquidityGross(t *testing.T) {
 	uassert.Equal(t, liquidityGross.ToString(), "0")
 
 	std.TestSetRealm(posRealm)
-	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", 0, tickSpacing*2, "60", admin)
+	pl.Mint(token0Path, barPath, 3000, "g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d", 0, tickSpacing*2, "60", adminAddr)
 	_, _, liquidityGross, _, _, _, _, _ = pool.GetTicks(-240)
 	uassert.Equal(t, liquidityGross.ToString(), "250")
 	_, _, liquidityGross, _, _, _, _, _ = pool.GetTicks(0)
@@ -289,17 +289,17 @@ func TestSuccess_case_removes_liquidity_from_liquidityGross(t *testing.T) {
 	bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
 
 	std.TestSetRealm(posRealm)
-	mint0, mint1 := pl.Mint(barPath, fooPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", admin)
+	mint0, mint1 := pl.Mint(barPath, fooPath, 3000, consts.POSITION_ADDR, minTick, maxTick, "3161", adminAddr)
 
 	// ===================== removes liquidity from liquidityGross ========================
 	pool := GetPool(barPath, fooPath, 3000)
 	tickSpacing := pool.tickSpacing
 
 	std.TestSetRealm(posRealm)
-	mint0, mint1 = pl.Mint(barPath, fooPath, 3000, consts.POSITION_ADDR, -240, 0, "100", admin)
+	mint0, mint1 = pl.Mint(barPath, fooPath, 3000, consts.POSITION_ADDR, -240, 0, "100", adminAddr)
 
 	std.TestSetRealm(posRealm)
-	mint0, mint1 = pl.Mint(barPath, fooPath, 3000, consts.POSITION_ADDR, -240, 0, "40", admin)
+	mint0, mint1 = pl.Mint(barPath, fooPath, 3000, consts.POSITION_ADDR, -240, 0, "40", adminAddr)
 
 	pl.Burn(barPath, fooPath, 3000, -240, 0, "90")
 
@@ -317,8 +317,7 @@ func gnsBalance(addr std.Address) uint64 {
 func (pool *Pool) GetTicks(
 	tick int32,
 ) (feeGrowthOutside0X128 *u256.Uint, feeGrowthOutside1X128 *u256.Uint, liquidityGross *u256.Uint, liquidityNet *i256.Int, secondsPerLiquidityOutsideX128 *u256.Uint, tickCumulativeOutside int64, secondsOutside uint32, initialized bool) {
-	info := pool.ticks[tick]
-	info.init()
+	info := pool.getTick(tick)
 
 	return info.feeGrowthOutside0X128, info.feeGrowthOutside1X128, info.liquidityGross, info.liquidityNet, info.secondsPerLiquidityOutsideX128, info.tickCumulativeOutside, info.secondsOutside, info.initialized
 }

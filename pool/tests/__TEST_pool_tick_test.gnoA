@@ -2,8 +2,10 @@ package pool
 
 import (
 	"std"
+	"strconv"
 	"testing"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/uassert"
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
@@ -18,7 +20,7 @@ import (
 var (
 	tickSpacing         int32
 	maxLiquidityPerTick *u256.Uint
-	pool                *Pool
+	singlePool          *Pool
 )
 
 const (
@@ -42,6 +44,7 @@ func TestInitCreatePool(t *testing.T) {
 }
 
 func DeployPool(token0 string, token1 string) {
+	pools = avl.NewTree()
 	std.TestSetRealm(adminRealm)
 	gns.Approve(a2u(consts.POOL_ADDR), poolCreationFee)
 	std.TestSetRealm(adminRealm)
@@ -196,8 +199,8 @@ func TestTickGetFeeGrowthInside_4(t *testing.T) {
 }
 
 func TestTickGetFeeGrowthInside_5(t *testing.T) {
-	var token0 string = "gno.land/r/onbloc/bar1"
-	var token1 string = "gno.land/r/onbloc/foo1"
+	var token0 string = "gno.land/r/onbloc/bar"
+	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 	pool := GetPool(token0, token1, 500)
 	// subtracts lower tick if above
@@ -326,8 +329,8 @@ func TestTickGetFeeGrowthInside_7(t *testing.T) {
 }
 
 func TestTickUpdate_1(t *testing.T) {
-	var token0 string = "gno.land/r/onbloc/bar2"
-	var token1 string = "gno.land/r/onbloc/foo2"
+	var token0 string = "gno.land/r/onbloc/bar"
+	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 	pool := GetPool(token0, token1, 500)
 	// flips from zero to non zero
@@ -347,8 +350,8 @@ func TestTickUpdate_1(t *testing.T) {
 }
 
 func TestTickUpdate_2(t *testing.T) {
-	var token0 string = "gno.land/r/onbloc/bar3"
-	var token1 string = "gno.land/r/onbloc/foo3"
+	var token0 string = "gno.land/r/onbloc/bar"
+	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 	pool := GetPool(token0, token1, 500)
 	// does not flip from nonzero to greater nonzero
@@ -371,8 +374,8 @@ func TestTickUpdate_2(t *testing.T) {
 }
 
 func TestTickUpdate_3(t *testing.T) {
-	var token0 string = "gno.land/r/onbloc/bar4"
-	var token1 string = "gno.land/r/onbloc/foo3"
+	var token0 string = "gno.land/r/onbloc/bar"
+	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 	pool := GetPool(token0, token1, 500)
 
@@ -398,7 +401,7 @@ func TestTickUpdate_3(t *testing.T) {
 }
 
 func TestTickUpdate_4(t *testing.T) {
-	var token0 string = "gno.land/r/onbloc/bar4"
+	var token0 string = "gno.land/r/onbloc/bar"
 	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 	pool := GetPool(token0, token1, 500)
@@ -425,7 +428,7 @@ func TestTickUpdate_4(t *testing.T) {
 }
 
 func TestTickUpdate_5(t *testing.T) {
-	var token0 string = "gno.land/r/onbloc/bar5"
+	var token0 string = "gno.land/r/onbloc/bar"
 	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 	pool := GetPool(token0, token1, 500)
@@ -450,7 +453,7 @@ func TestTickUpdate_5(t *testing.T) {
 
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-009] invalid liquidity calculated || tick.gno__tickUpdate() || liquidityGrossAfter(4) overflows maxLiquidity(3)`,
+		`[GNOSWAP-POOL-009] invalid liquidity calculated || liquidityGrossAfter(4) overflows maxLiquidity(3)`,
 		func() {
 			pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidity)
 		},
@@ -461,7 +464,7 @@ func TestTickUpdate_6(t *testing.T) {
 	var liquidityGross *u256.Uint
 	var liquidityNet *i256.Int
 
-	var token0 string = "gno.land/r/onbloc/bar6"
+	var token0 string = "gno.land/r/onbloc/bar"
 	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 	pool := GetPool(token0, token1, 500)
@@ -497,7 +500,7 @@ func TestTickUpdate_6(t *testing.T) {
 }
 
 func TestTickUpdate_7(t *testing.T) {
-	var token0 string = "gno.land/r/onbloc/bar7"
+	var token0 string = "gno.land/r/onbloc/bar"
 	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 	pool := GetPool(token0, token1, 500)
@@ -519,7 +522,7 @@ func TestTickUpdate_7(t *testing.T) {
 	flipped = pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
 	uassert.PanicsWithMessage(
 		t,
-		`[GNOSWAP-POOL-009] invalid liquidity calculated || tick.gno__tickUpdate() || liquidityGrossAfter(1917569901783203986719870431555992) overflows maxLiquidity(1917569901783203986719870431555990)`,
+		`[GNOSWAP-POOL-009] invalid liquidity calculated || liquidityGrossAfter(1917569901783203986719870431555992) overflows maxLiquidity(1917569901783203986719870431555990)`,
 		func() {
 			pool.tickUpdate(tick, tickCurrent, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, upper, maxLiquidityPerTick)
 		},
@@ -536,7 +539,7 @@ func TestTickUpdate_8(t *testing.T) {
 	var secondsOutside uint32
 	var initialized bool
 
-	var token0 string = "gno.land/r/onbloc/bar8"
+	var token0 string = "gno.land/r/onbloc/bar"
 	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 	pool := GetPool(token0, token1, 500)
@@ -574,7 +577,7 @@ func TestTickUpdate_9(t *testing.T) {
 	var secondsOutside uint32
 	var initialized bool
 
-	var token0 string = "gno.land/r/onbloc/bar9"
+	var token0 string = "gno.land/r/onbloc/bar"
 	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 	pool := GetPool(token0, token1, 500)
@@ -614,7 +617,7 @@ func TestTickUpdate_10(t *testing.T) {
 	var secondsOutside uint32
 	var initialized bool
 
-	var token0 string = "gno.land/r/onbloc/bar10"
+	var token0 string = "gno.land/r/onbloc/bar"
 	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 	pool := GetPool(token0, token1, 500)
@@ -654,7 +657,7 @@ func TestClear_1(t *testing.T) {
 	var secondsOutside uint32
 	var initialized bool
 
-	var token0 string = "gno.land/r/onbloc/clear1"
+	var token0 string = "gno.land/r/onbloc/bar"
 	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 
@@ -693,7 +696,7 @@ func TestTickCross_1(t *testing.T) {
 	var secondsOutside uint32
 	var initialized bool
 
-	var token0 string = "gno.land/r/onbloc/cross1"
+	var token0 string = "gno.land/r/onbloc/bar"
 	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 
@@ -730,7 +733,7 @@ func TestTickCross_2(t *testing.T) {
 	var secondsOutside uint32
 	var initialized bool
 
-	var token0 string = "gno.land/r/onbloc/cross2"
+	var token0 string = "gno.land/r/onbloc/bar"
 	var token1 string = "gno.land/r/onbloc/foo"
 	DeployPool(token0, token1)
 
@@ -776,11 +779,8 @@ func (pool *Pool) TickGetFeeGrowthInside(
 	feeGrowthGlobal0X128 *u256.Uint, // uint256
 	feeGrowthGlobal1X128 *u256.Uint, // uint256
 ) (*u256.Uint, *u256.Uint) { // uint256
-	lower := pool.ticks[tickLower]
-	lower.init()
-
-	upper := pool.ticks[tickUpper]
-	upper.init()
+	lower := pool.getTick(tickLower)
+	upper := pool.getTick(tickUpper)
 
 	var feeGrowthBelow0X128, feeGrowthBelow1X128 *u256.Uint
 	if tickCurrent >= tickLower {
@@ -817,8 +817,7 @@ func (pool *Pool) SetTick(
 	secondsOutside uint32,
 	initialized bool,
 ) {
-	info := pool.ticks[tick]
-	info.init()
+	info := pool.getTick(tick)
 
 	info.feeGrowthOutside0X128 = feeGrowthOutside0X128
 	info.feeGrowthOutside1X128 = feeGrowthOutside1X128
@@ -829,7 +828,7 @@ func (pool *Pool) SetTick(
 	info.secondsOutside = secondsOutside
 	info.initialized = initialized
 
-	pool.ticks[tick] = info
+	pool.setTick(tick, info)
 }
 
 func (pool *Pool) TickUpdate(
@@ -846,8 +845,7 @@ func (pool *Pool) TickUpdate(
 	feeGrowthGlobal0X128 = feeGrowthGlobal0X128.NilToZero()
 	feeGrowthGlobal1X128 = feeGrowthGlobal1X128.NilToZero()
 
-	info := pool.ticks[tick]
-	info.init()
+	info := pool.getTick(tick)
 
 	liquidityGrossBefore := info.liquidityGross
 	liquidityGrossAfter := liquidityMathAddDelta(liquidityGrossBefore, liquidityDelta)
@@ -875,7 +873,7 @@ func (pool *Pool) TickUpdate(
 		info.liquidityNet = i256.Zero().Add(info.liquidityNet, liquidityDelta)
 	}
 
-	pool.ticks[tick] = info
+	pool.setTick(tick, info)
 
 	return flipped
 }
@@ -883,8 +881,7 @@ func (pool *Pool) TickUpdate(
 func (pool *Pool) GetTicks(
 	tick int32,
 ) (feeGrowthOutside0X128 *u256.Uint, feeGrowthOutside1X128 *u256.Uint, liquidityGross *u256.Uint, liquidityNet *i256.Int, secondsPerLiquidityOutsideX128 *u256.Uint, tickCumulativeOutside int64, secondsOutside uint32, initialized bool) {
-	info := pool.ticks[tick]
-	info.init()
+	info := pool.getTick(tick)
 
 	return info.feeGrowthOutside0X128, info.feeGrowthOutside1X128, info.liquidityGross, info.liquidityNet, info.secondsPerLiquidityOutsideX128, info.tickCumulativeOutside, info.secondsOutside, info.initialized
 }
@@ -892,7 +889,8 @@ func (pool *Pool) GetTicks(
 func (pool *Pool) Clear(
 	tick int32,
 ) {
-	delete(pool.ticks, tick)
+	tickStr := strconv.Itoa(int(tick))
+	pool.ticks.Remove(tickStr)
 }
 
 func (pool *Pool) TickCross(
@@ -900,13 +898,12 @@ func (pool *Pool) TickCross(
 	feeGrowthGlobal0X128 *u256.Uint, // uint256
 	feeGrowthGlobal1X128 *u256.Uint, // uint256
 ) *i256.Int {
-	info := pool.ticks[tick]
-	info.init()
+	info := pool.getTick(tick)
 
 	info.feeGrowthOutside0X128 = new(u256.Uint).Sub(feeGrowthGlobal0X128, info.feeGrowthOutside0X128)
 	info.feeGrowthOutside1X128 = new(u256.Uint).Sub(feeGrowthGlobal1X128, info.feeGrowthOutside1X128)
 
-	pool.ticks[tick] = info
+	pool.setTick(tick, info)
 
 	liquidityNet := info.liquidityNet
 	return liquidityNet
