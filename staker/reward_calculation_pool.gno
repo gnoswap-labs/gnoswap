@@ -166,7 +166,7 @@ func (self *Pool) TickCrossesToEligibleIntervals(
 	currentlyInRange bool,
 	startHeight,
 	finalHeight uint64,
-	f func(startHeight, endHeight uint64, stakedLiquidity *u256.Uint)
+	f func(startHeight, endHeight uint64, stakedLiquidity *u256.Uint),
 ) {
 	TickCrossesToInRanges(currentlyInRange, tickUpperCrosses, tickLowerCrosses, func(height int64, inRange bool) {
 		if inRange {

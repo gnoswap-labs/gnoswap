@@ -111,7 +111,7 @@ func addPerBlockMintUpdate(height uint64, amount uint64) {
 }
 
 var halvingYearBlock = make(map[int64]int64)     // year => block
-var halvingYearTimestamp = make(map[int64]int64) // year => timestamp
+//var halvingYearTimestamp = make(map[int64]int64) // year => timestamp
 var (
 	halvingYearStartBlock = make([]int64, HALVING_END_YEAR) // start block of each halving year
 	halvingYearEndBlock   = make([]int64, HALVING_END_YEAR) // end block of each halving year
@@ -169,7 +169,7 @@ func initializeHalvingData() {
 		setHalvingYearMintAmount(year, uint64(0))
 	}
 
-	addPerBlockMintUpdate(uint64(height), amountPerBlockPerHalvingYear[1])
+	addPerBlockMintUpdate(uint64(std.GetHeight()), amountPerBlockPerHalvingYear[1])
 }
 
 func GetAvgBlockTimeInMs() int64 {
@@ -242,11 +242,9 @@ func setAvgBlockTimeInMs(ms int64) {
 	setAmountPerBlockPerHalvingYear(currentYear, adjustedAmountPerBlock)
 
 	// update it
-	amountPerBlockPerHalvingYear[year] = adjustedAmountPerBlock
-	addPerBlockMintUpdate(uint64(height), adjustedAmountPerBlock)
+	amountPerBlockPerHalvingYear[currentYear] = adjustedAmountPerBlock
+	addPerBlockMintUpdate(uint64(std.GetHeight()), adjustedAmountPerBlock)
 
-	yearEndHeight := int64(0)
-	nextYearStartHeight := int64(0)
 	for year := HALVING_START_YEAR; year <= HALVING_END_YEAR; year++ {
 		if year < currentYear {
 			// pass past halving years

@@ -69,9 +69,7 @@ func (self *Deposits) Size() int {
 var (
 	/* common */
 	// deposits stores deposit information for each tokenId
-	deposits *Deposits = &Deposits{
-		tree: avl.NewTree(),
-	}
+	deposits *Deposits = NewDeposits()
 )
 
 const (
@@ -393,8 +391,6 @@ func UnstakeToken(tokenId uint64, unwrapResult bool) (string, string, string) { 
 	// transfer NFT ownership to origin owner
 	gnft.TransferFrom(a2u(consts.STAKER_ADDR), a2u(deposit.owner), tid(tokenId))
 	pn.SetPositionOperator(tokenId, consts.ZERO_ADDRESS)
-
-	token0Amount, token1Amount := getTokenPairBalanceFromPosition(tokenId)
 
 	prevAddr, prevPkgPath := getPrev()
 	std.Emit(

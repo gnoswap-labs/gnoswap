@@ -6,6 +6,7 @@ import (
 	//u256 "gno.land/p/gnoswap/uint256"
 )
 
+/*
 // getTierRatio returns ratio for given tier
 // Returns ratio
 func getTierRatio(tier uint64) uint64 {
@@ -126,4 +127,5 @@ func calcAmount(avgBlockAmountX96 *u256.Uint, dur, pct uint64) (uint64, uint64) 
 
 	durAmount := new(u256.Uint).Div(durAmountX96, _q96).Uint64()
 	return fullAmount, durAmount
-}*/
+}
+*/

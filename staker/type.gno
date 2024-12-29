@@ -63,9 +63,9 @@ func newExternalIncentive(
 	depositGnsAmount uint64,
 	targetPoolPath string,
 	rewardToken string,
-	rewardAmount *u256.Uint,
-	rewardLeft *u256.Uint,
-	rewardPerBlockX96 *u256.Uint,
+	rewardAmount uint64,
+	rewardLeft uint64,
+	rewardPerBlock uint64,
 	refundee std.Address,
 ) ExternalIncentive {
 	return ExternalIncentive{
@@ -77,7 +77,7 @@ func newExternalIncentive(
 		rewardToken:       rewardToken,
 		rewardAmount:      rewardAmount,
 		rewardLeft:        rewardLeft,
-		rewardPerBlockX96: rewardPerBlockX96,
+		rewardPerBlock:    rewardPerBlock,
 		refundee:          refundee,
 	}
 }
