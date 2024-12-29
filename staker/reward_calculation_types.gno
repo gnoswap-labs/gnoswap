@@ -128,6 +128,10 @@ func (self *RewardCacheTree) EligibleIntervalToReward(interval Interval, warmupI
 }
 
 
+func (self *RewardCacheTree) RewardPerInterval(startHeight, endHeight uint64, stakedLiquidity *u256.Uint) uint64 {
+	
+}
+
 func (self *RewardCacheTree) EligibleIntervalsToReward(intervals []Interval, deposit *Deposit, f func(int, Warmup, uint64, *u256.Uint, interface{})) {
 	currentWarmupIndex := deposit.FindWarmup(intervals[0].StartHeight)
 	currentWarmup := deposit.GetWarmup(currentWarmupIndex)
@@ -180,48 +184,4 @@ func (self Interval) Split(height uint64) (Interval, Interval) {
 
 func (self Interval) IsEmpty() bool {
 	return self.StartHeight == self.EndHeight
-}
-
-func appendIntervals(intervals []Interval, updatesFn func(uint64, uint64) ([]uint64, []*u256.Uint), value *u256.Uint, startHeight, endHeight uint64) []Interval {
-	if startHeight == endHeight {
-		return intervals
-	}
-
-	heights, updates := updatesFn(startHeight, endHeight)
-
-	if len(updates) == 0 {
-		return append(intervals, Interval{
-			StartHeight: startHeight,
-			EndHeight:   endHeight,
-			Value:       value,
-		})
-	}
-
-	if heights[0] != startHeight {
-		intervals = append(intervals, Interval{
-			StartHeight: startHeight,
-			EndHeight:   heights[0],
-			Value:       value,
-		})
-		startHeight = heights[0]
-		value = updates[0]
-		heights = heights[1:]
-		updates = updates[1:]
-	}
-	for i := 1; i < len(updates); i++ {
-		intervals = append(intervals, Interval{
-			StartHeight: startHeight,
-			EndHeight:   heights[i],
-			Value:       value,
-		})
-		startHeight = heights[i]
-		value = updates[i]
-	}
-	intervals = append(intervals, Interval{
-		StartHeight: startHeight,
-		EndHeight:   endHeight,
-		Value:       value,
-	})
-
-	return intervals
 }

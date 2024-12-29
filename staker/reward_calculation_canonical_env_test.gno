@@ -97,6 +97,8 @@ func NewCanonicalRewardState(t *testing.T, poolTier *PoolTier, pools *Pools, dep
 
 	result.SetEmissionUpdate(1000000000)
 
+	result.NextBlock()
+
 	return result
 }
 
@@ -242,13 +244,16 @@ func (self *canonicalRewardState) CanonicalRewardOf(depositId uint64) reward {
 	return self.Reward[self.CurrentHeight() - 1][depositId]
 }
 
+func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, height uint64) reward {
+	return self.Reward[height][depositId]
+}
+
 func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]uint64, []uint64) {
 	currentHeight := uint64(self.CurrentHeight())
 	emissionUpdateHeights, emissionUpdates := self.EmissionUpdates(*self.global.poolTier.lastRewardCacheHeight, currentHeight)
 	deposits := self.global.deposits
 	pools := self.global.pools
 	poolTier := self.global.poolTier
-
 
 	// cache per-tier and per-pool rewards	
 	poolTier.cacheReward(currentHeight, emissionUpdateHeights, emissionUpdates)
@@ -270,16 +275,21 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 
 	lastCollectHeight := deposit.lastCollectHeight
 
-	tickUpperCrossHeights, tickUpperCrossZeroForOnes := upperTick.crossInfo(lastCollectHeight, currentHeight)
-	tickLowerCrossHeights, tickLowerCrossZeroForOnes := lowerTick.crossInfo(lastCollectHeight, currentHeight)
-
-	tickCrossEvents := TickCrossEventsFrom(tickUpperCrossHeights, tickUpperCrossZeroForOnes, tickLowerCrossHeights, tickLowerCrossZeroForOnes)
-
 	initialUpperCross := upperTick.currentCross(lastCollectHeight)
 	initialLowerCross := lowerTick.currentCross(lastCollectHeight)
 	currentlyInRange := initialUpperCross && !initialLowerCross
+	
+	tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, currentHeight)
+	tickLowerCrosses := lowerTick.crossInfo(lastCollectHeight, currentHeight)
 
-	intervals := pool.TickCrossesToEligibleIntervals(tickCrossEvents, currentlyInRange, lastCollectHeight, currentHeight)
+	//self.t.Logf("tickUpperCrosses: %v", tickUpperCrosses)
+	//self.t.Logf("tickLowerCrosses: %v", tickLowerCrosses)
+
+	tickCrosses := TickCrossesFrom(currentlyInRange, tickUpperCrosses, tickLowerCrosses)
+
+	//self.t.Logf("tickCrosses: %v", tickCrosses)
+
+	intervals := pool.TickCrossesToEligibleIntervals(tickCrosses, currentlyInRange, lastCollectHeight, currentHeight)
 
 	rewards, penalties := pool.EligibleIntervalsToInternalReward(intervals, deposit)
 
@@ -490,8 +500,6 @@ func (self *canonicalRewardState) MoveTick(poolPath string, tick int32) {
 
 	// update canonical state
 	pool.tick = tick
-
-	self.t.Logf("tick: %d, moved to %d", pool.tick, tick)
 }
 
 // Testing helpers
@@ -523,5 +531,11 @@ func (self *canonicalRewardState) AssertEquivalence(depositId uint64) {
 	emulatedReward := self.EmulatedRewardOf(depositId)
 	if reward.internal != emulatedReward.internal {
 		self.t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, reward.internal, emulatedReward.internal)
+	}
+}
+
+func (self *canonicalRewardState) AssertEmulatedRewardMap(expected map[uint64]uint64) {
+	for key, value := range expected {
+		self.AssertEmulatedRewardOf(key, value)
 	}
 }

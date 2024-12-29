@@ -352,6 +352,15 @@ type Pool struct {
 	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
 }
 
+var tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
+
+func SetTickCrossHook(hook func(poolPath string, tickId int32, zeroForOne bool)) {
+	if tickCrossHook != nil {
+		panic("tickCrossHook already set")
+	}
+	tickCrossHook = hook
+}
+
 func newPool(poolInfo *createPoolParams) *Pool {
 	maxLiquidityPerTick := calculateMaxLiquidityPerTick(poolInfo.tickSpacing)
 	tick := common.TickMathGetTickAtSqrtRatio(poolInfo.SqrtPriceX96())

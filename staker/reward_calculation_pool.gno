@@ -13,7 +13,6 @@ import (
 
 type Pools struct {
 	tree *avl.Tree // string poolPath -> pool
-
 }
 
 func NewPools() *Pools {
@@ -101,7 +100,7 @@ func (self *Pool) CurrentReward(currentHeight uint64) uint64 {
 func (self *Pool) IsExternallyIncentivizedPool(currentHeight uint64) bool {
 	return len(self.incentives.CurrentReward(currentHeight)) > 0
 }
-
+/*
 func (self *Pool) StakedLiquidityUpdates(startHeight, endHeight uint64) ([]uint64, []*u256.Uint) {
 	heights := make([]uint64, 0)
 	updates := make([]*u256.Uint, 0)
@@ -112,6 +111,7 @@ func (self *Pool) StakedLiquidityUpdates(startHeight, endHeight uint64) ([]uint6
 	})
 	return heights, updates
 }
+*/
 
 func (self *Pool) cacheReward(poolTier *PoolTier, endHeight uint64) {
 	startHeight := *self.lastRewardCacheHeight
@@ -161,36 +161,30 @@ func setInRange(currentlyInRange bool, targetInRange bool) bool {
 }
 
 func (self *Pool) TickCrossesToEligibleIntervals(
-	events []TickCrossEvent,
+	tickUpperCrosses []int64,
+	tickLowerCrosses []int64,
 	currentlyInRange bool,
 	startHeight,
 	finalHeight uint64,
-) []Interval {
-	intervals := make([]Interval, 0, len(events)+2)
-
-	for _, event := range events {
-		if currentlyInRange == event.InRange {
-			continue
-		}
-		if event.InRange {
+	f func(startHeight, endHeight uint64, stakedLiquidity *u256.Uint)
+) {
+	TickCrossesToInRanges(currentlyInRange, tickUpperCrosses, tickLowerCrosses, func(height int64, inRange bool) {
+		if inRange {
 			// enter range
-			startHeight = event.Height
-			currentlyInRange = true
+			startHeight = uint64(height)
 		} else {
 			// exit range
-			intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, self.CurrentStakedLiquidity(startHeight), startHeight, event.Height)
-			currentlyInRange = false
+			self.stakedLiquidityForInterval(self.CurrentStakedLiquidity(startHeight), startHeight, uint64(height), f)
 		}
-	}
+		currentlyInRange = inRange
+	})
 
 	if currentlyInRange {
-		intervals = appendIntervals(intervals, self.StakedLiquidityUpdates, self.CurrentStakedLiquidity(startHeight), startHeight, finalHeight)
+		self.stakedLiquidityForInterval(self.CurrentStakedLiquidity(startHeight), startHeight, finalHeight, f)
 	}
-
-	return intervals
 }
 
-func (self *Pool) EligibleIntervalsToInternalReward(intervals []Interval, deposit *Deposit) ([]uint64, []uint64) {
+func (self *Pool) TickCrossesToInternalReward(tickUpperCrosses []int64, tickLowerCrosses []int64, currentlyInRange bool, deposit *Deposit) ([]uint64, []uint64) {
 	if len(intervals) == 0 {
 		return nil, nil
 	}
@@ -217,4 +211,24 @@ func (self *Pool) modifyDeposit(tokenId uint64, liquidity *i256.Int, currentHeig
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentHeight)
 	self.stakedLiquidity.Set(currentHeight, liquidityMathAddDelta(lastStakedLiquidity, liquidity))
+}
+
+
+func (self *Pool) stakedLiquidityForInterval(currentStakedLiquidity *u256.Uint, startHeight, endHeight uint64, f func(startHeight, endHeight uint64, stakedLiquidity *u256.Uint)) {
+	if startHeight == endHeight {
+		return
+	}
+
+	self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
+		update := value.(*u256.Uint)
+
+		f(startHeight, height, currentStakedLiquidity)
+
+		startHeight = height
+		currentStakedLiquidity = update
+
+		return false
+	})
+
+	f(startHeight, endHeight, currentStakedLiquidity)
 }

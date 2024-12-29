@@ -1,8 +1,12 @@
 package staker
 
-import (
+import ( 
+	// "std"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	// pl "gno.land/r/gnoswap/v1/pool"
 )
 
 type Ticks struct {
@@ -66,17 +70,21 @@ type Tick struct {
 	cross *UintTree
 }
 
-func (self *Tick) crossInfo(startHeight, endHeight uint64) ([]uint64, []bool) {
-	tickCrossHeights := make([]uint64, 0)
-	tickCrossZeroForOnes := make([]bool, 0)
+// TickCrosses are encoded as int64, where negative value is backward cross(zeroForOne=true), positive value is forward cross(zeroForOne=false).
+func (self *Tick) crossInfo(startHeight, endHeight uint64) []int64 {
+	tickCrosses := make([]int64, 0)
 
 	self.cross.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
-		tickCrossHeights = append(tickCrossHeights, key)
-		tickCrossZeroForOnes = append(tickCrossZeroForOnes, value.(bool))
+		zeroForOne := value.(bool)
+		if zeroForOne {
+			tickCrosses = append(tickCrosses, -int64(key))
+		} else {
+			tickCrosses = append(tickCrosses, int64(key))
+		}
 		return false
 	})
 
-	return tickCrossHeights, tickCrossZeroForOnes
+	return tickCrosses
 }
 
 func (self *Tick) updateCross(blockNumber uint64, zeroForOne bool) {
@@ -120,64 +128,92 @@ func (self *Tick) modifyDepositUpper(currentHeight uint64, currentTick int32, li
 	// ticks.Set(self.id, self)
 }
 
-type TickCrossEvent struct {
-	Height uint64
-	InRange bool
-}
+// Gas optimization: encoding { height: int64, inRange: bool } as int64.
+// height will be negative if inRange is false.
+func TickCrossesToInRanges(currentInRange bool, tickUpperCross []int64, tickLowerCross []int64, f func(int64, bool)) {
+	tickUpperCrossI := 0
+	tickLowerCrossI := 0
+	tickUpperCrossLen := len(tickUpperCross)
+	tickLowerCrossLen := len(tickLowerCross)
 
-func TickCrossEventsFrom(tickUpperCrossHeights []uint64, tickUpperCrossZeroForOnes []bool, tickLowerCrossHeights []uint64, tickLowerCrossZeroForOnes []bool) []TickCrossEvent {
-	events := make([]TickCrossEvent, 0, len(tickUpperCrossHeights)+len(tickLowerCrossHeights))
+	for tickUpperCrossI < tickUpperCrossLen && tickLowerCrossI < tickLowerCrossLen {
+		upperCross := tickUpperCross[tickUpperCrossI]
+		lowerCross := tickLowerCross[tickLowerCrossI]
 
-	for len(tickUpperCrossHeights) != 0 && len(tickLowerCrossHeights) != 0 {
-		if tickUpperCrossHeights[0] == tickLowerCrossHeights[0] {
-			// - If the zeroForOne is same, the tick has passed through the whole position range(outrange)
-			// - If the zeroForOne is different, the tick has entered the position and then "bounced" back(inrange)
-			events = append(events, TickCrossEvent{ 
-				Height: tickUpperCrossHeights[0],
-				InRange: tickUpperCrossZeroForOnes[0] != tickLowerCrossZeroForOnes[0],
-			})
-			tickUpperCrossHeights = tickUpperCrossHeights[1:]	
-			tickUpperCrossZeroForOnes = tickUpperCrossZeroForOnes[1:]
-			tickLowerCrossHeights = tickLowerCrossHeights[1:]
-			tickLowerCrossZeroForOnes = tickLowerCrossZeroForOnes[1:]
+		lowerHeight := lowerCross
+		if lowerHeight < 0 {
+			lowerHeight = -lowerHeight
+		}
+
+		upperHeight := upperCross
+		if upperHeight < 0 {
+			upperHeight = -upperHeight
+		}
+		
+		// If the heights are the same, and they have the same zeroForOne, the tick has passed through the whole position range(outrange)
+		if upperCross == lowerCross {
+			if currentInRange {
+				f(lowerHeight, false)
+				currentInRange = false
+			}
+			tickUpperCrossI++
+			tickLowerCrossI++
 			continue
 		}
 
-		if tickUpperCrossHeights[0] < tickLowerCrossHeights[0] {
-			events = append(events, TickCrossEvent{ 
-				Height: tickUpperCrossHeights[0],
-				InRange: tickUpperCrossZeroForOnes[0],
-			})
-			tickUpperCrossHeights = tickUpperCrossHeights[1:]	
-			tickUpperCrossZeroForOnes = tickUpperCrossZeroForOnes[1:]
-		} else {
-			events = append(events, TickCrossEvent{ 
-				Height: tickLowerCrossHeights[0],
-				InRange: !tickLowerCrossZeroForOnes[0],
-			})
-			tickLowerCrossHeights = tickLowerCrossHeights[1:]
-			tickLowerCrossZeroForOnes = tickLowerCrossZeroForOnes[1:]
+		// If the height is the same, and zeroForOne is different, the tick has entered the position and then "bounced" back(inrange)
+		if upperCross == -lowerCross {
+			if !currentInRange {
+				f(lowerHeight, true)
+				currentInRange = true
+			}
+			tickUpperCrossI++
+			tickLowerCrossI++
+			continue
+		}
+
+		// Upper tick passed, 
+		// - if zeroForOne, backward cross, negative height, inrange
+		// - If !zeroForOne, forward cross, positive height, outrange
+		// => inRange == upperCross < 0
+		if upperHeight < lowerHeight {
+			if currentInRange != (upperCross < 0) {
+				f(upperHeight, upperCross < 0) 
+				currentInRange = !currentInRange
+			}
+			tickUpperCrossI++
+			continue
+		}
+
+		// Lower tick passed,
+		// - if zeroForOne, backward cross, negative height, outrange
+		// - If !zeroForOne, forward cross, positive height, inrange
+		// => inRange == lowerCross > 0
+		if lowerHeight < upperHeight {
+			if currentInRange != (lowerCross > 0) {
+				f(lowerHeight, lowerCross > 0)
+				currentInRange = !currentInRange
+			}
+			tickLowerCrossI++
+			continue
+		}
+
+		panic("unreachable")
+	}
+
+	for _, cross := range tickUpperCross[tickUpperCrossI:] {
+		if currentInRange != (cross < 0) {
+			f(cross, cross < 0)
+			currentInRange = !currentInRange
 		}
 	}
 
-	if len(tickUpperCrossHeights) != 0 {
-		for i, height := range tickUpperCrossHeights {
-			events = append(events, TickCrossEvent{ 
-				Height: height,
-				InRange: tickUpperCrossZeroForOnes[i],
-			})
+	for _, cross := range tickLowerCross[tickLowerCrossI:] {
+		if currentInRange != (cross > 0) {
+			f(cross, cross > 0)
+			currentInRange = !currentInRange
 		}
 	}
-	if len(tickLowerCrossHeights) != 0 {
-		for i, height := range tickLowerCrossHeights {
-			events = append(events, TickCrossEvent{ 
-				Height: height,
-				InRange: !tickLowerCrossZeroForOnes[i],
-			})
-		}
-	}
-
-	return events
 }
 
 func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool) {
@@ -203,3 +239,9 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 		// pools.Set(poolPath, pool)
 	}
 }
+
+/*
+func init() {
+	pl.SetTickCrossHook(TickCrossHook(pools, std.GetHeight))
+}
+*/
