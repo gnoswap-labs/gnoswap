@@ -100,13 +100,14 @@ func CreateExternalIncentive(
 	}
 
 	// if same incentiveId exists => increase rewardTokenAmount
+	tokenTeller := common.GetTokenTeller(rewardToken)
 	for _, v := range poolIncentives[targetPoolPath] {
 		if v == incentiveId {
 			// external deposit amount
 			gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(GetOrigPkgAddr()), depositGnsAmount)
 
 			// external reward amount
-			transferFromByRegisterCall(rewardToken, std.PrevRealm().Addr(), GetOrigPkgAddr(), rewardAmount.Uint64())
+			tokenTeller.TransferFrom(std.PrevRealm().Addr(), GetOrigPkgAddr(), rewardAmount.Uint64())
 
 			// incentive, ok := incentives[v]
 			ictv, exists := incentives.Get(v)
@@ -155,7 +156,7 @@ func CreateExternalIncentive(
 	gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(GetOrigPkgAddr()), depositGnsAmount)
 
 	// external reward amount
-	transferFromByRegisterCall(rewardToken, std.PrevRealm().Addr(), GetOrigPkgAddr(), rewardAmount.Uint64())
+	tokenTeller.TransferFrom(std.PrevRealm().Addr(), GetOrigPkgAddr(), rewardAmount.Uint64())
 
 	incentiveDuration := endTimestamp - startTimestamp
 	incentiveBlock := incentiveDuration / consts.BLOCK_GENERATION_INTERVAL
@@ -243,12 +244,14 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	refund := ictv.rewardLeft
 	refundUint64 := refund.Uint64()
 
-	poolLeftExternalRewardAmount := balanceOfByRegisterCall(ictv.rewardToken, GetOrigPkgAddr())
+	poolLeftExternalRewardAmount := common.BalanceOf(ictv.rewardToken, GetOrigPkgAddr())
 	if poolLeftExternalRewardAmount < refundUint64 {
 		refundUint64 = poolLeftExternalRewardAmount
 	}
 
-	transferByRegisterCall(ictv.rewardToken, ictv.refundee, refundUint64)
+	tokenTeller := common.GetTokenTeller(ictv.rewardToken)
+	tokenTeller.Transfer(ictv.refundee, refundUint64)
+
 	// unwrap if wugnot
 	if ictv.rewardToken == consts.WUGNOT_PATH {
 		unwrap(refundUint64)

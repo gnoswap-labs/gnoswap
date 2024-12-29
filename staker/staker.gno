@@ -460,7 +460,8 @@ func applyExternalReward(
 
 	toUser := handleUnstakingFee(reward.tokenPath, reward.toGive, EXTERNAL, tokenId, ictv.targetPoolPath)
 
-	transferByRegisterCall(reward.tokenPath, owner, toUser)
+	tokenTeller := common.GetTokenTeller(reward.tokenPath)
+	tokenTeller.Transfer(owner, toUesr)
 	if reward.tokenPath == consts.WUGNOT_PATH && unwrapResult {
 		unwrap(toUser)
 	}
@@ -470,7 +471,7 @@ func applyExternalReward(
 	positionLastExternal[tokenId][reward.ictvId] = u256.Zero()
 
 	remaining := reward.fullAmount - reward.toGive
-	transferByRegisterCall(reward.tokenPath, consts.PROTOCOL_FEE_ADDR, remaining)
+	tokenTeller.Transfer(consts.PROTOCOL_FEE_ADDR, remaining)
 
 	ictv.rewardLeft = new(u256.Uint).Sub(ictv.rewardLeft, u256.NewUint(reward.fullAmount))
 	incentives.Set(reward.ictvId, ictv)
