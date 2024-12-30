@@ -7,8 +7,8 @@ import (
 
 	"gno.land/p/demo/avl"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 var q128 = u256.MustFromDecimal(consts.Q128)
@@ -66,15 +66,15 @@ type Pool struct {
 
 	ticks *Ticks
 }
-		
+
 func NewPool(poolPath string, currentHeight uint64) *Pool {
 	return &Pool{
-		poolPath: poolPath,
-		stakedLiquidity: NewUintTree(),
-		rewardCache: NewRewardCacheTree(),
+		poolPath:              poolPath,
+		stakedLiquidity:       NewUintTree(),
+		rewardCache:           NewRewardCacheTree(),
 		lastRewardCacheHeight: &currentHeight,
-		incentives: NewIncentives(currentHeight),
-		ticks: NewTicks(),
+		incentives:            NewIncentives(currentHeight),
+		ticks:                 NewTicks(),
 	}
 }
 
@@ -97,7 +97,7 @@ func (self *Pool) CurrentReward(currentHeight uint64) *u256.Uint {
 		return u256.Zero()
 	}
 	return reward.(*u256.Uint)
-} 
+}
 
 // cacheReward() MUST be called before this function
 func (self *Pool) IsExternallyIncentivizedPool(currentHeight uint64) bool {
@@ -132,7 +132,7 @@ func (self *Pool) cacheInternalReward(poolTier *PoolTier, endHeight uint64) {
 			startHeight = membershipUpdateHeight
 			currentTier = value.(uint64)
 			return false
-		} 
+		}
 
 		currentTierReward = poolTier.CurrentReward(currentTier, startHeight)
 
@@ -162,7 +162,7 @@ func (self *Pool) cacheInternalReward(poolTier *PoolTier, endHeight uint64) {
 		startHeight = height
 		return false
 	})
-	
+
 	self.cacheRewardPerLiquidityUnit(startHeight, endHeight, currentTierReward)
 }
 
@@ -181,20 +181,20 @@ func (self *Pool) cacheExternalReward(endHeight uint64) {
 }
 
 type ExternalRewardState struct {
-	pool *Pool
-	deposit *Deposit
+	pool          *Pool
+	deposit       *Deposit
 	currentWarmup Warmup
-	rewards []map[string]*u256.Uint
-	penalties []map[string]*u256.Uint
+	rewards       []map[string]*u256.Uint
+	penalties     []map[string]*u256.Uint
 }
 
 func (self *Pool) ExternalRewardOf(deposit *Deposit) *ExternalRewardState {
 	result := &ExternalRewardState{
-		pool: self,
-		deposit: deposit,
+		pool:          self,
+		deposit:       deposit,
 		currentWarmup: deposit.warmups[0],
-		rewards: make([]map[string]*u256.Uint, len(deposit.warmups)),
-		penalties: make([]map[string]*u256.Uint, len(deposit.warmups)),
+		rewards:       make([]map[string]*u256.Uint, len(deposit.warmups)),
+		penalties:     make([]map[string]*u256.Uint, len(deposit.warmups)),
 	}
 
 	for i := range result.rewards {
@@ -230,7 +230,7 @@ func (self *ExternalRewardState) Calculate(startHeight, endHeight int64, current
 }
 
 func (self *ExternalRewardState) AccumulateReward(startHeight, endHeight uint64) {
-	self.pool.incentives.rewardCache.RewardPerInterval(startHeight, endHeight, func(blockNumber uint64, poolRewardI interface{}) {	
+	self.pool.incentives.rewardCache.RewardPerInterval(startHeight, endHeight, func(blockNumber uint64, poolRewardI interface{}) {
 		poolRewardRatios := poolRewardI.(map[string]*u256.Uint)
 		for incentiveId, rewardRatio := range poolRewardRatios {
 			positionReward := u256.Zero().Mul(self.deposit.liquidity, rewardRatio)
@@ -307,20 +307,20 @@ func (self *ExternalRewardState) TickCrossesToExternalReward(startHeight, endHei
 }
 
 type InternalRewardState struct {
-	pool *Pool
-	deposit *Deposit
+	pool          *Pool
+	deposit       *Deposit
 	currentWarmup Warmup
-	rewards []*u256.Uint
-	penalties []*u256.Uint
+	rewards       []*u256.Uint
+	penalties     []*u256.Uint
 }
 
 func (self *Pool) InternalRewardOf(deposit *Deposit) *InternalRewardState {
 	result := &InternalRewardState{
-		pool: self,
-		deposit: deposit,
+		pool:          self,
+		deposit:       deposit,
 		currentWarmup: deposit.warmups[0],
-		rewards: make([]*u256.Uint, len(deposit.warmups)),
-		penalties: make([]*u256.Uint, len(deposit.warmups)),
+		rewards:       make([]*u256.Uint, len(deposit.warmups)),
+		penalties:     make([]*u256.Uint, len(deposit.warmups)),
 	}
 
 	for i := range result.rewards {
@@ -346,7 +346,7 @@ func (self *InternalRewardState) Calculate(startHeight, endHeight int64, current
 }
 
 func (self *InternalRewardState) AccumulateReward(startHeight, endHeight uint64) {
-	self.pool.rewardCache.RewardPerInterval(startHeight, endHeight, func(blockNumber uint64, poolRewardI interface{}) {	
+	self.pool.rewardCache.RewardPerInterval(startHeight, endHeight, func(blockNumber uint64, poolRewardI interface{}) {
 		poolRewardRatio := poolRewardI.(*u256.Uint)
 		positionReward := u256.Zero().Mul(self.deposit.liquidity, poolRewardRatio)
 		positionReward = u256.Zero().Mul(positionReward, u256.NewUint(blockNumber))
@@ -365,7 +365,7 @@ func (self *InternalRewardState) ApplyWarmup() {
 		reward := u256.Zero()
 		reward = reward.Mul(self.rewards[i], u256.NewUint(warmup.WarmupRatio))
 		reward = reward.Div(reward, u256.NewUint(100))
-		
+
 		penalty := u256.Zero().Sub(self.rewards[i], reward)
 
 		reward = reward.Div(reward, q128)
@@ -415,8 +415,6 @@ func (self *InternalRewardState) TickCrossesToInternalReward(startHeight, endHei
 	self.ApplyWarmup()
 }
 
-
-
 func (self *Pool) modifyDeposit(tokenId uint64, liquidity *i256.Int, currentHeight uint64) {
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentHeight)
@@ -426,17 +424,16 @@ func (self *Pool) modifyDeposit(tokenId uint64, liquidity *i256.Int, currentHeig
 // ============================================
 // API/helpers
 // ============================================
-
-func (self *Pool) RewardTokens(height uint64) []string {
-	reward := self.CurrentReward(height)
-	rewardTokens := []string{}
-	if 
-	for incentiveId := range reward {
-		ictv, exist := self.GetByIncentiveId(incentiveId)
-		if !exist {
-			continue
-		}
-		rewardTokens = append(rewardTokens, ictv.RewardToken())
-	}
-	return rewardTokens
-}
+// func (self *Pool) RewardTokens(height uint64) []string {
+// 	reward := self.CurrentReward(height)
+// 	rewardTokens := []string{}
+// 	if
+// 	for incentiveId := range reward {
+// 		ictv, exist := self.GetByIncentiveId(incentiveId)
+// 		if !exist {
+// 			continue
+// 		}
+// 		rewardTokens = append(rewardTokens, ictv.RewardToken())
+// 	}
+// 	return rewardTokens
+// }
