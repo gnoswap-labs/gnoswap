@@ -38,11 +38,12 @@ func calcPositionRewardByWarmups(currentHeight uint64, tokenId uint64) []Reward 
 
 	rewards := make([]Reward, len(internalRewards))
 	for i := range internalRewards {
-		rewards[i] = Reward{
-			Internal: internalRewards[i],
-			InternalPenalty: internalPenalties[i],
-			External: externalRewards[i],
-			ExternalPenalty: externalPenalties[i],
+		rewards[i] = Reward{}
+		rewards[i].Internal = internalRewards[i]
+		rewards[i].InternalPenalty = internalPenalties[i]
+		if len(externalRewards) > i {
+			rewards[i].External = externalRewards[i]
+			rewards[i].ExternalPenalty = externalPenalties[i]
 		}
 	}
 	return rewards
