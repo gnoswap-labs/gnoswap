@@ -270,7 +270,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 
 	self.t.Logf("pool.cacheReward")
 	pool.cacheReward(poolTier, currentHeight)
-
+	
 	// eligible(in-range) intervals for a position
 	upperTick := pool.ticks.Get(deposit.tickUpper)
 	lowerTick := pool.ticks.Get(deposit.tickLower)

@@ -7,6 +7,8 @@ import (
 
 	"gno.land/p/demo/avl"
 
+	ufmt "gno.land/p/demo/ufmt"
+
 	u256 "gno.land/p/gnoswap/uint256"
 	i256 "gno.land/p/gnoswap/int256"
 )
@@ -117,6 +119,12 @@ func (self *Pool) StakedLiquidityUpdates(startHeight, endHeight uint64) ([]uint6
 */
 
 func (self *Pool) cacheRewardPerLiquidityUnit(poolTier *PoolTier, startHeight, endHeight uint64, currentTierReward uint64) {
+	stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
+	ratio := u256.NewUint(currentTierReward)
+	ratio = ratio.Mul(ratio, q96)
+	ratio = ratio.Div(ratio, stakedLiquidity)
+	self.rewardCache.Set(startHeight, ratio)
+
 	self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
 		stakedLiquidity := value.(*u256.Uint)
 		ratio := u256.NewUint(currentTierReward)
