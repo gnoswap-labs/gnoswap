@@ -26,8 +26,6 @@ func DefaultWarmupTemplate(currentHeight int64) []Warmup {
 	blocksIn10Days := int64(10 * blocksInDay)
 	blocksIn30Days := int64(30 * blocksInDay)
 
-	println(blocksIn5Days, blocksIn10Days, blocksIn30Days)
-
 	return []Warmup{
 		{
 			Index: 0,

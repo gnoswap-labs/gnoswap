@@ -160,6 +160,12 @@ func (self *PoolTier) CurrentReward(tier uint64, currentHeight uint64) uint64 {
 	return reward.(uint64)
 }
 
+func (self *PoolTier) createPool(pools *Pools, poolPath string, initialTier uint64, currentHeight uint64) {
+	_ = pools.GetOrCreate(poolPath)
+
+	self.changeTier(currentHeight, poolPath, initialTier)
+}
+
 func (self *PoolTier) changeTier(currentHeight uint64, poolPath string, nextTier uint64) {
 	currentTier := self.CurrentTier(poolPath, currentHeight)
 	if currentTier == nextTier {

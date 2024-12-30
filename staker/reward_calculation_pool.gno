@@ -218,11 +218,11 @@ func (self *ExternalRewardState) Calculate(startHeight, endHeight int64, current
 	for i := range self.rewards {
 		rewards[i] = make(map[string]uint64)
 		penalties[i] = make(map[string]uint64)
-		for tokenId, reward := range self.rewards[i] {
-			rewards[i][tokenId] = reward.Uint64()
+		for incentiveId, reward := range self.rewards[i] {
+			rewards[i][incentiveId] = reward.Uint64()
 		}
-		for tokenId, penalty := range self.penalties[i] {
-			penalties[i][tokenId] = penalty.Uint64()
+		for incentiveId, penalty := range self.penalties[i] {
+			penalties[i][incentiveId] = penalty.Uint64()
 		}
 	}
 
@@ -232,23 +232,23 @@ func (self *ExternalRewardState) Calculate(startHeight, endHeight int64, current
 func (self *ExternalRewardState) AccumulateReward(startHeight, endHeight uint64) {
 	self.pool.incentives.rewardCache.RewardPerInterval(startHeight, endHeight, func(blockNumber uint64, poolRewardI interface{}) {	
 		poolRewardRatios := poolRewardI.(map[string]*u256.Uint)
-		for tokenId, poolRewardRatio := range poolRewardRatios {
-			positionReward := u256.Zero().Mul(self.deposit.liquidity, poolRewardRatio)
+		for incentiveId, rewardRatio := range poolRewardRatios {
+			positionReward := u256.Zero().Mul(self.deposit.liquidity, rewardRatio)
 			positionReward = u256.Zero().Mul(positionReward, u256.NewUint(blockNumber))
-			println("AccumulateReward", blockNumber, tokenId, poolRewardRatio.ToString(), positionReward.ToString())
-			acc, ok := self.rewards[self.currentWarmup.Index][tokenId]
+			println("AccumulateReward", blockNumber, incentiveId, rewardRatio.ToString(), positionReward.ToString())
+			acc, ok := self.rewards[self.currentWarmup.Index][incentiveId]
 			if !ok {
 				acc = u256.Zero()
 			}
 			acc.Add(acc, positionReward)
-			self.rewards[self.currentWarmup.Index][tokenId] = acc
+			self.rewards[self.currentWarmup.Index][incentiveId] = acc
 		}
 	})
 }
 
 func (self *ExternalRewardState) ApplyWarmup() {
 	for i, warmup := range self.deposit.warmups {
-		for tokenId, rewardRatio := range self.rewards[i] {
+		for incentiveId, rewardRatio := range self.rewards[i] {
 			if rewardRatio.IsZero() {
 				continue
 			}
@@ -262,8 +262,8 @@ func (self *ExternalRewardState) ApplyWarmup() {
 			penalty = penalty.Div(penalty, u256.NewUint(100))
 			penalty = penalty.Div(penalty, q96)
 
-			self.rewards[i][tokenId] = reward
-			self.penalties[i][tokenId] = penalty
+			self.rewards[i][incentiveId] = reward
+			self.penalties[i][incentiveId] = penalty
 		}
 	}
 }

@@ -673,7 +673,7 @@ func TestExternalReward_1(t *testing.T) {
 	gnousdc := GetPoolPath("gno", "usdc", 3000)
 	canonical.CreatePool(gnousdc, 1, 200)
 
-	canonical.CreateExternalIncentive(gnousdc, "gno", 100000000, 1, 5, 1, 5, std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"))
+	incentiveId := canonical.CreateExternalIncentive(gnousdc, "gno", 100000000, 1, 5, 1, 5, std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"))
 
 	err := canonical.StakeToken(
 		0, 
@@ -692,7 +692,7 @@ func TestExternalReward_1(t *testing.T) {
 
 	expected := uint64(100000000 / 4) * 30 / 100
 
-	canonical.AssertEmulatedExternalRewardOf(uint64(0), "gno", expected)
+	canonical.AssertEmulatedExternalRewardOf(uint64(0), incentiveId, expected)
 }
 
 func TestMultiplePool_1(t *testing.T) {
@@ -830,17 +830,15 @@ func TestMultiplePool_2(t *testing.T) {
 	canonical.AssertEmulatedRewardOf(0, 0)
 	canonical.AssertEmulatedRewardOf(1, 0)
 	canonical.AssertEmulatedRewardOf(2, expected * 20 / 100)
-}
-
-func TestMultiplePool_3(t *testing.T) {
-	canonical := Setup(t)
-
-	gnousdc := GetPoolPath("gno", "usdc", 3000)
-	gnousdc2 := GetPoolPath("gno", "usdc", 10000)
-	gnousdc3 := GetPoolPath("gno", "usdc", 30000)
-	canonical.CreatePool(gnousdc, 1, 200)
-	canonical.CreatePool(gnousdc2, 2, 200)
-	canonical.CreatePool(gnousdc3, 3, 200)
+	canonical.ChangePoolTier(gnousdc2, 1)
+	canonical.MoveTick(gnousdc, 200)
+	canonical.MoveTick(gnousdc2, 300)
+	canonical.MoveTick(gnousdc3, 400)
+	
+	canonical.NextBlock()
+	canonical.AssertEmulatedRewardOf(0, expected * 40 / 100)
+	canonical.AssertEmulatedRewardOf(1, expected * 40 / 100)
+	canonical.AssertEmulatedRewardOf(2, expected * 20 / 100)
 }
 
 // Large number of blocks passed

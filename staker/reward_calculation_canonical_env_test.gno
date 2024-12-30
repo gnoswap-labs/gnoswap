@@ -440,7 +440,7 @@ func newExternalIncentiveByHeight(
 	}
 }
 
-func (self *canonicalRewardState) CreateExternalIncentive(targetPoolPath string, rewardToken string, rewardAmount uint64, startTimestamp, endTimestamp, startHeight, endHeight int64, refundee std.Address) {
+func (self *canonicalRewardState) CreateExternalIncentive(targetPoolPath string, rewardToken string, rewardAmount uint64, startTimestamp, endTimestamp, startHeight, endHeight int64, refundee std.Address) string {
 	incentive := newExternalIncentiveByHeight(targetPoolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp, startHeight, endHeight, refundee)
 
 	// update canonical state
@@ -458,6 +458,8 @@ func (self *canonicalRewardState) CreateExternalIncentive(targetPoolPath string,
 
 	// update global state
 	self.global.pools.GetOrCreate(targetPoolPath).incentives.create(refundee, incentive)
+
+	return incentive.incentiveId
 }
 
 func (self *canonicalRewardState) EndExternalIncentive(targetPoolPath string, rewardToken string) {

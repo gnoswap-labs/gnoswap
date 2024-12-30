@@ -11,46 +11,34 @@ import (
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
+type IncentiveBound struct {
+	Incentive ExternalIncentive
+	IsEnter bool
+}
+
 // per-pool incentives
 type Incentives struct {
 	byTime *avl.Tree // (startTime, endTime, creator, rewardToken) => ExternalIncentive
 	byHeight *avl.Tree // (startHeight, endHeight, creator, rewardToken) => ExternalIncentive
 	byCreator *avl.Tree // (creator, startHeight, endHeight, rewardToken) => ExternalIncentive
 
-	// the value map denotes delta of the external incentive per block for the token
-	delta *UintTree // blockNumber -> map[string]int64
+	incentiveBound *UintTree // blockNumber -> []IncentiveBound
 
 	rewardCache *RewardCacheTree // blockNumber -> map[string]*u256.Uint
 	lastRewardCacheHeight *uint64
-	
-	// refund to the refundee
-	totalPenalty *uint64
-	claimedPenalty *uint64
 }
 
 func NewIncentives(currentHeight uint64) Incentives {
-	totalPenalty := uint64(0)
-	claimedPenalty := uint64(0)
-
 	return Incentives{
 		byTime: avl.NewTree(),
 		byHeight: avl.NewTree(),
 		byCreator: avl.NewTree(),
 
-		delta: NewUintTree(),
+		incentiveBound: NewUintTree(),
 
 		rewardCache: NewRewardCacheTree(),
 		lastRewardCacheHeight: &currentHeight,
-
-		totalPenalty: &totalPenalty,
-		claimedPenalty: &claimedPenalty,
 	}
-}
-
-func (self *Incentives) claimPenalty() uint64 {
-	amount := *self.totalPenalty - *self.claimedPenalty
-	*self.claimedPenalty += amount
-	return amount
 }
 
 func (self *Incentives) Exists(startTime, endTime int64, creator std.Address, rewardToken string) bool {
@@ -77,12 +65,12 @@ func (self *Incentives) remove(incentive *ExternalIncentive) {
 	self.byCreator.Remove(byCreatorId)
 }
 
-func (self *Incentives) GetDelta(height uint64) map[string]int64 {
-	delta, ok := self.delta.Get(height)
+func (self *Incentives) GetBound(height uint64) []IncentiveBound {
+	value, ok := self.incentiveBound.Get(height)
 	if !ok {
-		return make(map[string]int64)
+		return []IncentiveBound{}
 	}
-	return delta.(map[string]int64)
+	return value.([]IncentiveBound)
 }
 
 // cacheReward() MUST be called before this function
@@ -112,30 +100,31 @@ func (self *Incentives) create(
 	self.byHeight.Set(byHeightId, incentive)
 	self.byCreator.Set(byCreatorId, incentive)
 
-	startIncentiveDelta := self.GetDelta(uint64(incentive.startHeight))
-	startIncentiveDelta[incentive.rewardToken] += int64(incentive.rewardPerBlock)
-	startHeight := uint64(incentive.startHeight)
-	self.delta.Set(startHeight, startIncentiveDelta)
-
-	println("startIncentiveDelta")
-	for tokenId, deltaAmount := range startIncentiveDelta {
-		println(startHeight, tokenId, deltaAmount)
-	}
+	startIncentiveBound := self.GetBound(uint64(incentive.startHeight))
+	startIncentiveBound = append(startIncentiveBound, IncentiveBound{
+		Incentive: *incentive,
+		IsEnter: true,
+	})
+	self.incentiveBound.Set(uint64(incentive.startHeight), startIncentiveBound)
 
 	endHeight := uint64(incentive.endHeight)
-	endIncentiveDelta := self.GetDelta(endHeight)
-	endIncentiveDelta[incentive.rewardToken] -= int64(incentive.rewardPerBlock)
-	self.delta.Set(endHeight, endIncentiveDelta)
+	endIncentiveBound := self.GetBound(endHeight)
+	endIncentiveBound = append(endIncentiveBound, IncentiveBound{
+		Incentive: *incentive,
+		IsEnter: false,
+	})
+	self.incentiveBound.Set(endHeight, endIncentiveBound)
 
-	println("endIncentiveDelta")
-	for tokenId, deltaAmount := range endIncentiveDelta {
-		println(endHeight, tokenId, deltaAmount)
+	println("endIncentiveBound")
+	for _, bound := range endIncentiveBound {
+		println(bound.Incentive.rewardToken, bound.IsEnter)
 	}
 }
 
 // endHeight MUST be less than or equal to the current block height
 func (self *Incentives) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, stakedLiquidity *u256.Uint) {
 	currentReward := self.CurrentReward(startHeight)
+
 /*
 	delta := self.GetDelta(startHeight)
 	reward := make(map[string]*u256.Uint)
@@ -156,25 +145,24 @@ func (self *Incentives) cacheRewardPerLiquidityUnit(startHeight, endHeight uint6
 
 	self.rewardCache.Set(startHeight, reward)
 */
-	self.delta.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
-		delta := value.(map[string]int64)
+
+	self.incentiveBound.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
+		bound := value.([]IncentiveBound)
 		reward := make(map[string]*u256.Uint)
-		for token, deltaAmount := range delta {
-			delta := i256.NewInt(deltaAmount)
-			deltaQ96 := i256.Zero().Mul(delta, _iQ96)
-			ratio := i256.Zero().Div(deltaQ96, i256.FromUint256(stakedLiquidity))
-			currentRewardToken, ok := currentReward[token]
-			if !ok {
-				currentRewardToken = u256.Zero()
+		for incentiveId, ratio := range currentReward {
+			reward[incentiveId] = ratio
+		}
+		for _, bound := range bound {
+			if bound.IsEnter {
+				delta := u256.NewUint(bound.Incentive.rewardPerBlock)
+				deltaQ96 := delta.Mul(delta, q96)
+				ratio := u256.Zero().Div(deltaQ96, stakedLiquidity)
+				reward[bound.Incentive.incentiveId] = ratio
+			} else {
+				delete(reward, bound.Incentive.incentiveId)
 			}
-			deltaApplied := liquidityMathAddDelta(currentRewardToken, ratio)
-			if deltaApplied.IsZero() {
-				continue
-			}
-			reward[token] = deltaApplied
 		}
 		self.rewardCache.Set(key, reward)
-		currentReward = reward
 		return false
 	})
 	*self.lastRewardCacheHeight = endHeight
