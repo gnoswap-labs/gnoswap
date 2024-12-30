@@ -72,20 +72,6 @@ func tid(tokenId interface{}) grc721.TokenID {
 	}
 }
 
-func max(x, y int64) int64 {
-	if x > y {
-		return x
-	}
-	return y
-}
-
-func min(x, y uint64) uint64 {
-	if x < y {
-		return x
-	}
-	return y
-}
-
 func prevRealm() string {
 	return std.PrevRealm().PkgPath()
 }

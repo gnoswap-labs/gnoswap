@@ -7,6 +7,7 @@ import (
 	"gno.land/p/demo/json"
 
 	"gno.land/r/gnoswap/v1/consts"
+	"gno.land/r/gnoswap/v1/common"
 
 	en "gno.land/r/gnoswap/v1/emission"
 )
@@ -110,7 +111,7 @@ func ApiGetRewards() string {
 				return
 			}
 
-			stakedOrCreatedAt := max(deposit.stakeTimestamp, ictv.startTimestamp)
+			stakedOrCreatedAt := common.I64Max(deposit.stakeTimestamp, ictv.startTimestamp)
 			now := time.Now().Unix()
 			if now < stakedOrCreatedAt {
 				return
@@ -234,7 +235,7 @@ func ApiGetRewardsByLpTokenId(targetLpTokenId uint64) string {
 				return
 			}
 
-			stakedOrCreatedAt := max(deposit.stakeTimestamp, ictv.startTimestamp)
+			stakedOrCreatedAt := common.I64Max(deposit.stakeTimestamp, ictv.startTimestamp)
 			now := time.Now().Unix()
 			if now < stakedOrCreatedAt {
 				return
@@ -356,7 +357,7 @@ func ApiGetRewardsByAddress(targetAddress string) string {
 				return
 			}
 
-			stakedOrCreatedAt := max(deposit.stakeTimestamp, ictv.startTimestamp)
+			stakedOrCreatedAt := common.I64Max(deposit.stakeTimestamp, ictv.startTimestamp)
 			now := time.Now().Unix()
 			if now < stakedOrCreatedAt {
 				return
