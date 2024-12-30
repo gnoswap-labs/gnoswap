@@ -342,42 +342,35 @@ func TestTickCross_4(t *testing.T) {
 	canonical.NextBlock()
 	canonical.AssertCanonicalRewardOf(0, expected)
 	canonical.AssertCanonicalRewardOf(1, 0)
-/*
 	// 0 eligible, 1 not eligible (100:0)
 	canonical.MoveTick(gnousdc, 101)
 	canonical.NextBlock()
 	canonical.AssertCanonicalRewardOf(0, expected)
 	canonical.AssertCanonicalRewardOf(1, 0)
 
-	*/
 	// 0 eligible, 1 eligible (50:50)
 	canonical.MoveTick(gnousdc, 201)
 	canonical.NextBlock()
 	canonical.AssertCanonicalRewardOf(0, expected / 2)
 	canonical.AssertCanonicalRewardOf(1, expected / 2)
-	/*
+
 	// 0 not eligible, 1 not eligible (0:0)
 	canonical.MoveTick(gnousdc, 401)
 	canonical.NextBlock()
 	canonical.AssertCanonicalRewardOf(0, 0)
 	canonical.AssertCanonicalRewardOf(1, 0)
 
-
 	// 0 not eligible, 1 eligible (0:100)
 	canonical.MoveTick(gnousdc, 301)
 	canonical.NextBlock()
 	canonical.AssertCanonicalRewardOf(0, 0)
 	canonical.AssertCanonicalRewardOf(1, expected)
-*/
 	
 	// 0 total ratio: 250
 	// 1 total ratio: 150
 
-	//canonical.AssertEmulatedRewardOf(0, expected * 4 * 250 / 400)
-	//canonical.AssertEmulatedRewardOf(1, expected * 4 * 150 / 400)
-
-	canonical.AssertEmulatedRewardOf(0, expected * 2 * 150 / 200)
-	// canonical.AssertEmulatedRewardOf(1, expected * 2 * 50 / 200)
+	canonical.AssertEmulatedRewardOf(0, expected * 4 * 250 / 400)
+	canonical.AssertEmulatedRewardOf(1, expected * 4 * 150 / 400)
 }
 
 // Test tick crossing at tick boundaries, forward direction

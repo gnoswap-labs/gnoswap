@@ -120,17 +120,16 @@ func (self *RewardCacheTree) RewardPerInterval(startHeight, endHeight uint64, f 
 	currentPoolReward := self.CurrentReward(startHeight)
 	currentHeight := startHeight
 	self.Iterate(startHeight, endHeight, func(height uint64, poolReward interface{}) bool {
-		println(ufmt.Sprintf("RewardPerInterval: height: %d, currentHeight: %d, poolReward: %s", height, currentHeight, poolReward.(*u256.Uint).ToString()))
-		f(height-currentHeight, poolReward)
+		f(height-currentHeight, currentPoolReward)
 		currentHeight = height
 		currentPoolReward = poolReward
 		return false
 	})
 	if endHeight > currentHeight {
-		println(ufmt.Sprintf("RewardPerInterval: endHeight: %d, currentHeight: %d, poolReward: %s", endHeight, currentHeight, currentPoolReward.(*u256.Uint).ToString()))
 		f(endHeight-currentHeight, currentPoolReward)
 	}
 }
+
 
 
 /*
