@@ -36,7 +36,7 @@ func getPrevAsString() (string, string) {
 func assertOnlyAdmin() {
 	caller := getPrevAddr()
 	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
@@ -44,7 +44,7 @@ func assertOnlyAdmin() {
 func assertStakerOnly() {
 	caller := getPrevAddr()
 	if err := common.StakerOnly(caller); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
@@ -52,7 +52,7 @@ func assertStakerOnly() {
 func assertOnlyGovernance() {
 	caller := getPrevAddr()
 	if err := common.GovernanceOnly(caller); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
@@ -60,7 +60,7 @@ func assertOnlyGovernance() {
 func assertOnlyGovStaker() {
 	caller := getPrevAddr()
 	if err := common.GovStakerOnly(caller); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
