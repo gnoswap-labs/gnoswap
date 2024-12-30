@@ -306,8 +306,13 @@ func (self *PoolTier) rewardCacheOf(tier uint64) *RewardCacheTree {
 func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64, currentEmissionUpdateHeight uint64, currentEmissionUpdate uint64, emissionUpdateHeights []uint64, emissionUpdates []uint64) {
 	rewardCache := self.rewardCacheOf(tier)
 
+
 	heights, updates := self.TierDenominatorUpdates(tier, startHeight, currentEmissionUpdateHeight)
 	for j := 0; j < len(heights); j++ {
+		if updates[j] == 0 {
+			rewardCache.Set(heights[j], uint64(0))
+			continue
+		}
 		denominator := updates[j] * 100
 		reward := (currentEmissionUpdate * TierRatioLCM) / denominator
 		rewardCache.Set(heights[j], reward)
@@ -316,6 +321,10 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 	for i := 0; i < len(emissionUpdateHeights); i++ {
 		heights, updates := self.TierDenominatorUpdates(tier, currentEmissionUpdateHeight, emissionUpdateHeights[i])
 		for j := 0; j < len(heights); j++ {
+			if updates[j] == 0 {
+				rewardCache.Set(heights[j], uint64(0))
+				continue
+			}
 			denominator := updates[j] * 100
 			reward := (currentEmissionUpdate * TierRatioLCM) / denominator
 			rewardCache.Set(heights[j], reward)
@@ -327,10 +336,15 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 
 	heights, updates = self.TierDenominatorUpdates(tier, currentEmissionUpdateHeight, endHeight)
 	for j := 0; j < len(heights); j++ {
+		if updates[j] == 0 {
+			rewardCache.Set(heights[j], uint64(0))
+			continue
+		}
 		denominator := updates[j] * 100
 		reward := (currentEmissionUpdate * TierRatioLCM) / denominator
 		rewardCache.Set(heights[j], reward)
 	}
+
 }
 
 

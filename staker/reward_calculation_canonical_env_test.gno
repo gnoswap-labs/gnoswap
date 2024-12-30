@@ -290,6 +290,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 	tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, currentHeight)
 	tickLowerCrosses := lowerTick.crossInfo(lastCollectHeight, currentHeight)
 
+
 	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
 
 	externalRewards, externalPenalties := pool.ExternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)

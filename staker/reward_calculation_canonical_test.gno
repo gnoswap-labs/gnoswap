@@ -834,11 +834,12 @@ func TestMultiplePool_2(t *testing.T) {
 	canonical.MoveTick(gnousdc, 200)
 	canonical.MoveTick(gnousdc2, 300)
 	canonical.MoveTick(gnousdc3, 400)
-	
+
 	canonical.NextBlock()
 	canonical.AssertEmulatedRewardOf(0, expected * 40 / 100)
 	canonical.AssertEmulatedRewardOf(1, expected * 40 / 100)
 	canonical.AssertEmulatedRewardOf(2, expected * 20 / 100)
+
 }
 
 // Large number of blocks passed

@@ -3,6 +3,11 @@ package staker
 import (
 	"std"
 
+	"strconv"
+	"strings"
+
+	avl "gno.land/p/demo/avl"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 
@@ -11,19 +16,49 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
+// EncodeInt takes an int32 and returns a zero-padded decimal string
+// with up to 10 digits for the absolute value.
+// If the number is negative, the '-' sign comes first, followed by zeros, then digits.
+func EncodeInt(num int32) string {
+	// Convert the absolute value to a decimal string.
+	absValue := int64(num)
+	isNegative := false
+	if num < 0 {
+		isNegative = true
+		absValue = -absValue // Safely negate into int64 to avoid overflow.
+	}
+
+	s := strconv.FormatInt(absValue, 10)
+
+	// Zero-pad to a total of 10 digits for the absolute value.
+	// (The '-' sign will be added later if needed.)
+	zerosNeeded := 10 - len(s)
+	if zerosNeeded < 0 {
+		zerosNeeded = 0
+	}
+
+	padded := strings.Repeat("0", zerosNeeded) + s
+
+	// If the original number was negative, prepend '-'.
+	if isNegative {
+		return "-" + padded
+	}
+	return padded
+}
+
 // Tick mapping for each pool
 type Ticks struct {
-	tree *UintTree // int32 tickId -> tick
+	tree *avl.Tree // int32 tickId -> tick
 }
 
 func NewTicks() *Ticks {
 	return &Ticks{
-		tree: NewUintTree(),
+		tree: avl.NewTree(),
 	}
 }
 
 func (self *Ticks) Get(tickId int32) *Tick {
-	v, ok := self.tree.Get(uint64(tickId))
+	v, ok := self.tree.Get(EncodeInt(tickId))
 	if !ok {
 		tick := &Tick{
 			id:                   tickId,
@@ -31,7 +66,7 @@ func (self *Ticks) Get(tickId int32) *Tick {
 			stakedLiquidityDelta: i256.Zero(),
 			cross:                NewUintTree(),
 		}
-		self.tree.Set(uint64(tickId), tick)
+		self.tree.Set(EncodeInt(tickId), tick)
 		return tick
 	}
 	return v.(*Tick)
@@ -41,14 +76,14 @@ func (self *Ticks) Set(tickId int32, tick *Tick) {
 	if tick.stakedLiquidityGross.IsZero() {
 		// TODO: check if this could cause memory leak of GC halt
 		// because tick.cross being dropped may overload the VM GC
-		self.tree.Remove(uint64(tickId))
+		self.tree.Remove(EncodeInt(tickId))
 		return
 	}
-	self.tree.Set(uint64(tickId), tick)
+	self.tree.Set(EncodeInt(tickId), tick)
 }
 
 func (self *Ticks) Has(tickId int32) bool {
-	return self.tree.Has(uint64(tickId))
+	return self.tree.Has(EncodeInt(tickId))
 }
 
 type Tick struct {
