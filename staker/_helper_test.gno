@@ -563,3 +563,17 @@ func getNumPoolTiers(t *testing.T) (uint64, uint64, uint64) {
 
 	return tier1Num, tier2Num, tier3Num
 }
+
+func getRewardRatio(t *testing.T, height int64) uint64 {
+	t.Helper()
+	warmups := InstantiateWarmup(height)
+
+	for _, warmup := range warmups {
+		if height < warmup.NextWarmupHeight {
+			return warmup.WarmupRatio
+		}
+	}
+
+	// passed all warmup-periods
+	return 100
+}
