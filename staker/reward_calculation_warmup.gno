@@ -45,14 +45,14 @@ func DefaultWarmups(currentHeight, avgBlockTimeInMs int64) []Warmup {
 
 func (warmup *Warmup) Apply(poolReward uint64, positionLiquidity, stakedLiquidity *u256.Uint) (uint64, uint64) {
 	poolRewardUint := u256.NewUint(poolReward)
-	perPositionReward := poolRewardUint.Mul(poolRewardUint, positionLiquidity)
-	perPositionReward = perPositionReward.Div(perPositionReward, stakedLiquidity)
+	perPositionReward := u256.Zero().Mul(poolRewardUint, positionLiquidity)
+	perPositionReward = u256.Zero().Div(perPositionReward, stakedLiquidity)
 	rewardRatio := u256.NewUint(warmup.WarmupRatio)
 	penaltyRatio := u256.NewUint(100 - warmup.WarmupRatio)
-	totalReward := perPositionReward.Mul(perPositionReward, rewardRatio)
-	totalReward = totalReward.Div(totalReward, u256.NewUint(100))
-	totalPenalty := perPositionReward.Mul(perPositionReward, penaltyRatio)
-	totalPenalty = totalPenalty.Div(totalPenalty, u256.NewUint(100))
+	totalReward := u256.Zero().Mul(perPositionReward, rewardRatio)
+	totalReward = u256.Zero().Div(totalReward, u256.NewUint(100))
+	totalPenalty := u256.Zero().Mul(perPositionReward, penaltyRatio)
+	totalPenalty = u256.Zero().Div(totalPenalty, u256.NewUint(100))
 	return totalReward.Uint64(), totalPenalty.Uint64()
 }
 

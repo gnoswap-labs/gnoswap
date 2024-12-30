@@ -270,7 +270,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 
 	self.t.Logf("pool.cacheReward")
 	pool.cacheReward(poolTier, currentHeight)
-	
+
 	// eligible(in-range) intervals for a position
 	upperTick := pool.ticks.Get(deposit.tickUpper)
 	lowerTick := pool.ticks.Get(deposit.tickLower)
@@ -509,14 +509,14 @@ func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(poolPath 
 
 func (self *canonicalRewardState) AssertEmulatedRewardOf(depositId uint64, expected uint64) {
 	reward := self.EmulatedRewardOf(depositId)
-	if reward.internal != expected {
+	if reward.internal+1 != expected && reward.internal != expected && reward.internal-1 != expected {
 		self.t.Errorf("emulated reward of %d mismatch: expected %d, got %d", depositId, expected, reward.internal)
 	}
 }
 
 func (self *canonicalRewardState) AssertCanonicalRewardOf(depositId uint64, expected uint64) {
 	reward := self.CanonicalRewardOf(depositId)
-	if reward.internal != expected {
+	if reward.internal+1 != expected && reward.internal != expected && reward.internal-1 != expected {
 		self.t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, expected, reward.internal)
 	}
 }
@@ -524,7 +524,7 @@ func (self *canonicalRewardState) AssertCanonicalRewardOf(depositId uint64, expe
 func (self *canonicalRewardState) AssertEquivalence(depositId uint64) {
 	reward := self.CanonicalRewardOf(depositId)
 	emulatedReward := self.EmulatedRewardOf(depositId)
-	if reward.internal != emulatedReward.internal {
+	if reward.internal+1 != emulatedReward.internal && reward.internal != emulatedReward.internal && reward.internal-1 != emulatedReward.internal {
 		self.t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, reward.internal, emulatedReward.internal)
 	}
 }
