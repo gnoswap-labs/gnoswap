@@ -31,6 +31,23 @@ type Reward struct {
 	ExternalPenalty map[string]uint64
 }
 
+func calcPositionRewardByWarmups(currentHeight uint64, tokenId uint64) []Reward {
+	deposit := deposits.Get(tokenId)
+	emissionUpdateHeights, emissionUpdates := gns.EmissionUpdates(deposit.lastCollectHeight, currentHeight)
+	internalRewards, internalPenalties, externalRewards, externalPenalties := CalcPositionReward(currentHeight, tokenId, deposits, pools, poolTier, emissionUpdateHeights, emissionUpdates)
+
+	rewards := make([]Reward, len(internalRewards))
+	for i := range internalRewards {
+		rewards[i] = Reward{
+			Internal: internalRewards[i],
+			InternalPenalty: internalPenalties[i],
+			External: externalRewards[i],
+			ExternalPenalty: externalPenalties[i],
+		}
+	}
+	return rewards
+}
+
 func calcPositionReward(currentHeight uint64, tokenId uint64) Reward {
 	deposit := deposits.Get(tokenId)
 	emissionUpdateHeights, emissionUpdates := gns.EmissionUpdates(deposit.lastCollectHeight, currentHeight)
