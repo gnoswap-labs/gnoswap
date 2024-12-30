@@ -6,6 +6,7 @@ import (
 
 	"gno.land/p/demo/json"
 
+	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
 	en "gno.land/r/gnoswap/v1/emission"
@@ -171,7 +172,7 @@ func makeExternalPositionsNode(positions []ApiExternalDebugPosition) []*json.Nod
 		incentives := make([]*json.Node, 0)
 		for _, incentive := range externalPosition.Incentive {
 			deposit, _ := deposits.get(externalPosition.LpTokenId)
-			_max := max(incentive.StartTimestamp, deposit.stakeTimestamp)
+			_max := common.I64Max(incentive.StartTimestamp, deposit.stakeTimestamp)
 			stakedOrExternalDuration := (time.Now().Unix() - _max) / consts.BLOCK_GENERATION_INTERVAL
 
 			incentives = append(incentives, json.ObjectNode("", map[string]*json.Node{

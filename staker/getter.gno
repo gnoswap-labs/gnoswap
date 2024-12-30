@@ -45,14 +45,14 @@ func StakerPoolIncentives(poolPath string) []string {
 //
 // Panics:
 //   - If the incentive does nor exist for the given incentive ID
-func StakerIncentiveTargetPoolPath(incentiveId string) string {
+func StakerIncentiveTargetPoolPath(incentiveId string, poolPath string) string {
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
 	}
 
-	incentive := pool.incentives.byTime.Get(incentiveId)
-	if incentive == nil {
+	incentive, exist := pool.incentives.byTime.Get(incentiveId)
+	if !exist {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
 
@@ -69,14 +69,14 @@ func StakerIncentiveTargetPoolPath(incentiveId string) string {
 //
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
-func StakerIncentiveRewardToken(incentiveId string) string {
+func StakerIncentiveRewardToken(incentiveId string, poolPath string) string {
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
 	}
 
-	incentive := pool.incentives.byTime.Get(incentiveId)
-	if incentive == nil {
+	incentive, exist := pool.incentives.byTime.Get(incentiveId)
+	if !exist {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
 
@@ -93,16 +93,18 @@ func StakerIncentiveRewardToken(incentiveId string) string {
 //
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
-func StakerIncentiveRewardAmount(incentiveId string) *u256.Uint {
+func StakerIncentiveRewardAmount(incentiveId string, poolPath string) *u256.Uint {
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
 	}
 
-	incentive := pool.incentives.byTime.Get(incentiveId)
-	if incentive == nil {
+	incentive, exist := pool.incentives.byTime.Get(incentiveId)
+	if !exist {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
+
+	return u256.NewUint(incentive.(*ExternalIncentive).rewardAmount)
 }
 
 // StakerIncentiveRewardAmountStr returns the reward amount for a given incentive as a string
@@ -115,14 +117,14 @@ func StakerIncentiveRewardAmount(incentiveId string) *u256.Uint {
 //
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
-func StakerIncentiveRewardAmountStr(incentiveId string) string {
+func StakerIncentiveRewardAmountStr(incentiveId string, poolPath string) string {
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
 	}
 
-	incentive := pool.incentives.byTime.Get(incentiveId)
-	if incentive == nil {
+	incentive, exist := pool.incentives.byTime.Get(incentiveId)
+	if !exist {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
 
@@ -139,14 +141,14 @@ func StakerIncentiveRewardAmountStr(incentiveId string) string {
 //
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
-func StakerIncentiveStartTimestamp(incentiveId string) int64 {
+func StakerIncentiveStartTimestamp(incentiveId string, poolPath string) int64 {
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
 	}
 
-	incentive := pool.incentives.byTime.Get(incentiveId)
-	if incentive == nil {
+	incentive, exist := pool.incentives.byTime.Get(incentiveId)
+	if !exist {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
 
@@ -163,14 +165,14 @@ func StakerIncentiveStartTimestamp(incentiveId string) int64 {
 //
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
-func StakerIncentiveEndTimestamp(incentiveId string) int64 {
+func StakerIncentiveEndTimestamp(incentiveId string, poolPath string) int64 {
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
 	}
 
-	incentive := pool.incentives.byTime.Get(incentiveId)
-	if incentive == nil {
+	incentive, exist := pool.incentives.byTime.Get(incentiveId)
+	if !exist {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
 
@@ -187,14 +189,14 @@ func StakerIncentiveEndTimestamp(incentiveId string) int64 {
 //
 // Panics:
 //   - If the incentive does not exist for the given incentiveId
-func StakerIncentiveRefundee(incentiveId string) std.Address {
+func StakerIncentiveRefundee(incentiveId string, poolPath string) std.Address {
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
 	}
 
-	incentive := pool.incentives.byTime.Get(incentiveId)
-	if incentive == nil {
+	incentive, exist := pool.incentives.byTime.Get(incentiveId)
+	if !exist {
 		panic(ufmt.Sprintf("incentiveId(%s) incentive does not exist", incentiveId))
 	}
 
@@ -212,12 +214,7 @@ func StakerIncentiveRefundee(incentiveId string) std.Address {
 // Panics:
 //   - If the deposit does not exist for the given lpTokenId
 func StakerDepositOwner(lpTokenId uint64) std.Address {
-	pool, ok := pools.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
-	}
-
-	deposit := pool.deposits.Get(lpTokenId)
+	deposit := deposits.Get(lpTokenId)
 	if deposit == nil {
 		panic(ufmt.Sprintf("lpTokenId(%d) deposit does not exist", lpTokenId))
 	}
@@ -267,12 +264,7 @@ func StakerDepositNumberOfStakes(lpTokenId uint64) uint64 {
 // Panics:
 //   - If the deposit does not exist for the given lpTokenId
 func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
-	pool, ok := pools.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
-	}
-
-	deposit := pool.deposits.Get(lpTokenId)
+	deposit := deposits.Get(lpTokenId)
 	if deposit == nil {
 		panic(ufmt.Sprintf("lpTokenId(%d) deposit does not exist", lpTokenId))
 	}
@@ -291,12 +283,7 @@ func StakerDepositStakeTimestamp(lpTokenId uint64) int64 {
 // Panics:
 //   - If the deposit does not exist for the given lpTokenId
 func StakerDepositTargetPoolPath(lpTokenId uint64) string {
-	pool, ok := pools.Get(poolPath)
-	if !ok {
-		panic(ufmt.Sprintf("poolPath(%s) pool does not exist", poolPath))
-	}
-
-	deposit := pool.deposits.Get(lpTokenId)
+	deposit := deposits.Get(lpTokenId)
 	if deposit == nil {
 		panic(ufmt.Sprintf("lpTokenId(%d) deposit does not exist", lpTokenId))
 	}
@@ -315,5 +302,5 @@ func StakerDepositTargetPoolPath(lpTokenId uint64) string {
 // Panics:
 //   - If the pool tier does not exist for the given poolPath
 func StakerPoolTier(poolPath string) uint64 {
-	return poolTier.CurrentTier(poolPath, std.GetHeight())
+	return poolTier.CurrentTier(poolPath, uint64(std.GetHeight()))
 }
