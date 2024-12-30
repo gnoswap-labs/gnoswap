@@ -91,12 +91,12 @@ func (self *Pool) CurrentStakedLiquidity(currentHeight uint64) *u256.Uint {
 	return stakedLiquidity
 }
 
-func (self *Pool) CurrentReward(currentHeight uint64) uint64 {
+func (self *Pool) CurrentReward(currentHeight uint64) *u256.Uint {
 	reward := self.rewardCache.CurrentReward(currentHeight)
 	if reward == nil {
-		return uint64(0)
+		return u256.Zero()
 	}
-	return reward.(uint64)
+	return reward.(*u256.Uint)
 } 
 
 // cacheReward() MUST be called before this function
@@ -123,6 +123,7 @@ func (self *Pool) cacheRewardPerLiquidityUnit(poolTier *PoolTier, startHeight, e
 		ratio = ratio.Mul(ratio, q96)
 		ratio = ratio.Div(ratio, stakedLiquidity)
 		self.rewardCache.Set(height, ratio)
+
 		return false
 	})
 }
@@ -149,7 +150,7 @@ func (self *Pool) cacheReward(poolTier *PoolTier, endHeight uint64) {
 		})
 		currentTier = value.(uint64)
 		if currentTier == 0 {
-			self.rewardCache.Set(membershipUpdateHeight, uint64(0))
+			self.rewardCache.Set(membershipUpdateHeight, u256.Zero())
 		} else {
 			self.cacheRewardPerLiquidityUnit(poolTier, startHeight, membershipUpdateHeight, currentTierReward)
 		}

@@ -1,19 +1,7 @@
 package staker
-
+/*
 import (
 	"gno.land/p/demo/ufmt"
-)
-
-var (
-	/* internal */
-	poolTiers = newPoolTiers()
-
-	/* external */
-	poolIncentives = newPoolIncentives()
-	incentives     = newIncentives()
-
-	/* common */
-	deposits = newDeposits()
 )
 
 // poolTiers stores internal tier information for each pool
@@ -110,3 +98,5 @@ func (d Deposits) Iter(fn func(tokenId uint64, deposit Deposit)) {
 		fn(tokenId, deposit)
 	}
 }
+
+*/

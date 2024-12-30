@@ -33,7 +33,7 @@ func TestQueryPoolData(t *testing.T) {
 		refundee:       testAddr,
 	}
 
-	pool.incentives.add(testAddr, incentive)
+	pool.incentives.create(testAddr, incentive)
 
 	data, err := QueryPoolData(poolPath)
 	if err != nil {
@@ -78,5 +78,5 @@ func TestQueryDepositData(t *testing.T) {
 	uassert.Equal(t, data.WarmupCount, 2)
 
 	// reset
-	deposits.tree.Remove(lpTokenId)
+	deposits.Remove(lpTokenId)
 }

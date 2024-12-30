@@ -211,13 +211,13 @@ func (self *canonicalRewardState) CalculateCanonicalReward() []reward {
 			continue
 		}
 
-		warmup := deposit.warmups[deposit.FindWarmup(uint64(currentHeight))]
-		internal, internalPenalty := warmup.CalculateReward(1, internalRewardPerPool[deposit.targetPoolPath], deposit.liquidity, liquidityPerPool[deposit.targetPoolPath])
+		warmup := deposit.warmups[deposit.FindWarmup(int64(currentHeight))]
+		internal, internalPenalty := warmup.Apply(internalRewardPerPool[deposit.targetPoolPath], deposit.liquidity, liquidityPerPool[deposit.targetPoolPath])
 		poolExternals := externalRewardPerPool[deposit.targetPoolPath]
 		externals := make(map[string]uint64)
 		externalPenalties := make(map[string]uint64)
 		for key, value := range poolExternals {
-			external, externalPenalty := warmup.CalculateReward(1, value, deposit.liquidity, liquidityPerPool[deposit.targetPoolPath])
+			external, externalPenalty := warmup.Apply(value, deposit.liquidity, liquidityPerPool[deposit.targetPoolPath])
 			externals[key] = external
 			externalPenalties[key] = externalPenalty
 		}
@@ -256,6 +256,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 	poolTier := self.global.poolTier
 
 	// cache per-tier and per-pool rewards	
+	self.t.Logf("poolTier.cacheReward")
 	poolTier.cacheReward(currentHeight, emissionUpdateHeights, emissionUpdates)
 
 	deposit := deposits.Get(tokenId)
@@ -267,6 +268,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 		pools.Set(poolPath, pool)
 	}
 
+	self.t.Logf("pool.cacheReward")
 	pool.cacheReward(poolTier, currentHeight)
 
 	// eligible(in-range) intervals for a position
@@ -282,18 +284,11 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 	tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, currentHeight)
 	tickLowerCrosses := lowerTick.crossInfo(lastCollectHeight, currentHeight)
 
-	//self.t.Logf("tickUpperCrosses: %v", tickUpperCrosses)
-	//self.t.Logf("tickLowerCrosses: %v", tickLowerCrosses)
+	self.t.Logf("pool.InternalRewardOf")
+	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
 
-	tickCrosses := TickCrossesFrom(currentlyInRange, tickUpperCrosses, tickLowerCrosses)
 
-	//self.t.Logf("tickCrosses: %v", tickCrosses)
-
-	intervals := pool.TickCrossesToEligibleIntervals(tickCrosses, currentlyInRange, lastCollectHeight, currentHeight)
-
-	rewards, penalties := pool.EligibleIntervalsToInternalReward(intervals, deposit)
-
-	return rewards, penalties 
+	return internalRewards, internalPenalties 
 }
 
 func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) reward {
@@ -340,7 +335,7 @@ func (self *canonicalRewardState) StakeToken(tokenId uint64, targetPoolPath stri
 		tickUpper: tickUpper,
 		liquidity: liquidity,
 		lastCollectHeight: uint64(currentHeight),
-		warmups: DefaultWarmups(uint64(currentHeight), uint64(self.MsPerBlock)),
+		warmups: DefaultWarmups(int64(currentHeight), int64(self.MsPerBlock)),
 	}
 	canonicalPool, ok := self.Pool[deposit.targetPoolPath]
 	if !ok {
@@ -416,7 +411,7 @@ func (self *canonicalRewardState) CreateExternalIncentive(targetPoolPath string,
 	pool.incentive = append(pool.incentive, incentive)
 
 	// update global state
-	self.global.pools.GetOrCreate(targetPoolPath).incentives.add(refundee, incentive)
+	self.global.pools.GetOrCreate(targetPoolPath).incentives.create(refundee, incentive)
 }
 
 func (self *canonicalRewardState) EndExternalIncentive(targetPoolPath string, rewardToken string) {

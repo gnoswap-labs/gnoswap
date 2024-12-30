@@ -6,8 +6,6 @@ import (
 	"gno.land/p/demo/avl"
 
 	"gno.land/p/demo/ufmt"
-
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // per-pool incentives
