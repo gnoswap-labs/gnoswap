@@ -10,7 +10,6 @@ import (
 	//pn "gno.land/r/gnoswap/v1/position"
 
 	u256 "gno.land/p/gnoswap/uint256"
-	i256 "gno.land/p/gnoswap/int256"
 	//en "gno.land/r/gnoswap/v1/emission"
 )
 
@@ -25,9 +24,9 @@ func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 }
 
 type Reward struct {
-	Internal uint64
+	Internal        uint64
 	InternalPenalty uint64
-	External map[string]uint64
+	External        map[string]uint64
 	ExternalPenalty map[string]uint64
 }
 
@@ -38,22 +37,21 @@ func calcPositionRewardByWarmups(currentHeight uint64, tokenId uint64) []Reward 
 
 	rewards := make([]Reward, len(internalRewards))
 	for i := range internalRewards {
-		rewards[i] = Reward{
-			Internal: internalRewards[i],
-			InternalPenalty: internalPenalties[i],
-			External: externalRewards[i],
-			ExternalPenalty: externalPenalties[i],
+		rewards[i] = Reward{}
+		rewards[i].Internal = internalRewards[i]
+		rewards[i].InternalPenalty = internalPenalties[i]
+		if len(externalRewards) > i {
+			rewards[i].External = externalRewards[i]
+			rewards[i].ExternalPenalty = externalPenalties[i]
 		}
 	}
 	return rewards
 }
-
 func calcPositionReward(currentHeight uint64, tokenId uint64) Reward {
 	deposit := deposits.Get(tokenId)
 	emissionUpdateHeights, emissionUpdates := gns.EmissionUpdates(deposit.lastCollectHeight, currentHeight)
 	internalRewards, internalPenalties, externalRewards, externalPenalties := CalcPositionReward(currentHeight, tokenId, deposits, pools, poolTier, emissionUpdateHeights, emissionUpdates)
 
-	
 	internal := uint64(0)
 	for _, reward := range internalRewards {
 		internal += reward
@@ -79,9 +77,9 @@ func calcPositionReward(currentHeight uint64, tokenId uint64) Reward {
 	}
 
 	return Reward{
-		Internal: internal,
+		Internal:        internal,
 		InternalPenalty: internalPenalty,
-		External: externalReward,
+		External:        externalReward,
 		ExternalPenalty: externalPenalty,
 	}
 }

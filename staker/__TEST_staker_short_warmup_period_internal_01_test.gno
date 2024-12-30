@@ -158,23 +158,35 @@ func testStakeToken_1(t *testing.T) {
 		testGnsBalanceTracker = gnsBalanceCheck(t, testGnsBalanceTracker, true)
 
 		// 1 block passed
-		positionRewards := calcPositionReward(uint64(std.GetHeight()), 1)
-		rewardPerWarmUp, penaltyPerWarmUp, rewardPerIncentivePerWarmUp, penaltyPertIncentivePerWarmUp := positionRewards.Internal, positionRewards.InternalPenalty, positionRewards.External, positionRewards.ExternalPenalty
 
-		// uassert.Equal(t, uint64(6421232), rewardPerWarmUp[0])
+		// accu all warm up periods
+		// positionRewards := calcPositionReward(uint64(std.GetHeight()), 1)
+		// rewardPerWarmUp, penaltyPerWarmUp, rewardPerIncentivePerWarmUp, penaltyPertIncentivePerWarmUp := positionRewards.Internal, positionRewards.InternalPenalty, positionRewards.External, positionRewards.ExternalPenalty
 
-		println("rewardPerWarmUp")
-		println(rewardPerWarmUp)
-		println()
-		println("penaltyPerWarmUp")
-		println(penaltyPerWarmUp)
-		println()
-		println("rewardPerIncentivePerWarmUp")
-		println(rewardPerIncentivePerWarmUp)
-		println()
-		println("penaltyPertIncentivePerWarmUp")
-		println(penaltyPertIncentivePerWarmUp)
-		println()
+		positionRewards := calcPositionRewardByWarmups(uint64(std.GetHeight()), 1)
+		for _, reward := range positionRewards {
+			// println(reward.Internal)
+			// println(reward.InternalPenalty)
+			// println(reward.External)
+			// println(reward.ExternalPenalty)
+		}
+
+		// staker minted ≈ 10702054
+		// uassert.Equal(t, uint64(6421232), rewardPerWarmUp[0]) // reward for 30%
+
+		// println("rewardPerWarmUp")
+		// println(rewardPerWarmUp)
+		// println()
+		// println("penaltyPerWarmUp")
+		// println(penaltyPerWarmUp)
+		// println(" >> sum", rewardPerWarmUp+penaltyPerWarmUp)
+		// println()
+		// println("rewardPerIncentivePerWarmUp")
+		// println(rewardPerIncentivePerWarmUp)
+		// println()
+		// println("penaltyPertIncentivePerWarmUp")
+		// println(penaltyPertIncentivePerWarmUp)
+		// println()
 	})
 }
 
