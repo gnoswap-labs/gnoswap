@@ -155,8 +155,8 @@ func (self *Incentives) cacheRewardPerLiquidityUnit(startHeight, endHeight uint6
 		for _, bound := range bound {
 			if bound.IsEnter {
 				delta := u256.NewUint(bound.Incentive.rewardPerBlock)
-				deltaQ96 := delta.Mul(delta, q96)
-				ratio := u256.Zero().Div(deltaQ96, stakedLiquidity)
+				deltaQ128 := delta.Mul(delta, q128)
+				ratio := u256.Zero().Div(deltaQ128, stakedLiquidity)
 				reward[bound.Incentive.incentiveId] = ratio
 			} else {
 				delete(reward, bound.Incentive.incentiveId)

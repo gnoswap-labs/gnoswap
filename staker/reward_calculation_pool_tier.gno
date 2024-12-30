@@ -306,9 +306,9 @@ func (self *PoolTier) rewardCacheOf(tier uint64) *RewardCacheTree {
 func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64, currentEmissionUpdateHeight uint64, currentEmissionUpdate uint64, emissionUpdateHeights []uint64, emissionUpdates []uint64) {
 	rewardCache := self.rewardCacheOf(tier)
 
-
 	heights, updates := self.TierDenominatorUpdates(tier, startHeight, currentEmissionUpdateHeight)
 	for j := 0; j < len(heights); j++ {
+		// denominator becomes 0 when pool is not incentivized
 		if updates[j] == 0 {
 			rewardCache.Set(heights[j], uint64(0))
 			continue
@@ -344,7 +344,6 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 		reward := (currentEmissionUpdate * TierRatioLCM) / denominator
 		rewardCache.Set(heights[j], reward)
 	}
-
 }
 
 

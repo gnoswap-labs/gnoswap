@@ -658,9 +658,9 @@ func TestTickCross_9(t *testing.T) {
 			tick = (tick + 10007) % 700
 			canonical.MoveTick(gnousdc, tick)
 			canonical.NextBlock()
-			canonicalRewardMap[0] += canonical.CanonicalRewardOf(0).internal
-			canonicalRewardMap[1] += canonical.CanonicalRewardOf(1).internal
-			canonicalRewardMap[2] += canonical.CanonicalRewardOf(2).internal
+			canonicalRewardMap[0] += canonical.CanonicalRewardOf(0).Internal
+			canonicalRewardMap[1] += canonical.CanonicalRewardOf(1).Internal
+			canonicalRewardMap[2] += canonical.CanonicalRewardOf(2).Internal
 		}
 		canonical.AssertEmulatedRewardMap(canonicalRewardMap)
 	}

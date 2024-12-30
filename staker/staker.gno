@@ -309,35 +309,12 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 		panic(ufmt.Sprintf("%v: caller is not owner of tokenId(%d)", errNoPermission, tokenId))
 	}
 
-	rewards, penalties, externalRewards, externalPenalties := calcPositionReward(uint64(std.GetHeight()), tokenId)
-	totalReward := uint64(0)
-	for _, reward := range rewards {
-		totalReward += reward
-	}
+	reward := calcPositionReward(uint64(std.GetHeight()), tokenId)
 
-	totalPenalty := uint64(0)
-	for _, penalty := range penalties {
-		totalPenalty += penalty
-	}
-
-	totalExternalReward := make(map[string]uint64)
-	for _, external := range externalRewards {
-		for tokenId, reward := range external {
-			totalExternalReward[tokenId] += reward
-		}
-	}
-
-	totalExternalPenalty := make(map[string]uint64)
-	for _, external := range externalPenalties {
-		for tokenId, penalty := range external {
-			totalExternalPenalty[tokenId] += penalty
-		}
-	}
-
-	toUser := handleUnstakingFee(consts.GNS_PATH, totalReward, true, tokenId, deposit.targetPoolPath)
+	toUser := handleUnstakingFee(consts.GNS_PATH, reward.Internal, true, tokenId, deposit.targetPoolPath)
 	gns.Transfer(a2u(deposit.owner), toUser)
 
-	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), totalPenalty)
+	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), reward.InternalPenalty)
 
 	panic("SEND EXTERNAL REWARD")
 
@@ -351,10 +328,10 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 		"internal_incentiveId", "INTERNAL",
 		"internal_rewardToken", consts.GNS_PATH,
 		"internal_recipient", deposit.owner.String(),
-		"internal_toGive", ufmt.Sprintf("%d", totalReward),
+		"internal_toGive", ufmt.Sprintf("%d", reward.Internal),
 		"internal_amount", ufmt.Sprintf("%d", toUser),
-		"internal_unstakingFee", ufmt.Sprintf("%d", totalReward-toUser),
-		"internal_left", ufmt.Sprintf("%d", totalPenalty),
+		"internal_unstakingFee", ufmt.Sprintf("%d", reward.Internal-toUser),
+		"internal_left", ufmt.Sprintf("%d", reward.InternalPenalty),
 	)
 
 	return ""

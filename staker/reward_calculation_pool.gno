@@ -11,7 +11,7 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 )
 
-var q96 = u256.MustFromDecimal(consts.Q96)
+var q128 = u256.MustFromDecimal(consts.Q128)
 
 type Pools struct {
 	tree *avl.Tree // string poolPath -> pool
@@ -58,7 +58,7 @@ type Pool struct {
 	stakedLiquidity *UintTree // blockNumber -> *u256.Uint
 
 	// cache of the internal reward per liquidity for each pool in tier
-	// value: (internal reward / total staked liquidity) * Q96
+	// value: (internal reward / total staked liquidity) * Q128
 	rewardCache           *RewardCacheTree // blockNumber -> *u256.Uint
 	lastRewardCacheHeight *uint64
 
@@ -107,14 +107,14 @@ func (self *Pool) IsExternallyIncentivizedPool(currentHeight uint64) bool {
 func (self *Pool) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, currentTierReward uint64) {
 	stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
 	ratio := u256.NewUint(currentTierReward)
-	ratio = u256.Zero().Mul(ratio, q96)
+	ratio = u256.Zero().Mul(ratio, q128)
 	ratio = u256.Zero().Div(ratio, stakedLiquidity)
 	self.rewardCache.Set(startHeight, ratio)
 
 	self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
 		stakedLiquidity := value.(*u256.Uint)
 		ratio := u256.NewUint(currentTierReward)
-		ratio = u256.Zero().Mul(ratio, q96)
+		ratio = u256.Zero().Mul(ratio, q128)
 		ratio = u256.Zero().Div(ratio, stakedLiquidity)
 		self.rewardCache.Set(height, ratio)
 
@@ -248,22 +248,23 @@ func (self *ExternalRewardState) AccumulateReward(startHeight, endHeight uint64)
 
 func (self *ExternalRewardState) ApplyWarmup() {
 	for i, warmup := range self.deposit.warmups {
-		for incentiveId, rewardRatio := range self.rewards[i] {
-			if rewardRatio.IsZero() {
+		for incentiveId, reward := range self.rewards[i] {
+			if reward.IsZero() {
 				continue
 			}
-			reward := u256.Zero()
-			reward = reward.Mul(rewardRatio, u256.NewUint(warmup.WarmupRatio))
-			reward = reward.Div(reward, u256.NewUint(100))
-			reward = reward.Div(reward, q96)
+			warmupReward := u256.Zero()
+			warmupReward = warmupReward.Mul(reward, u256.NewUint(warmup.WarmupRatio))
 
-			penalty := u256.Zero()
-			penalty = penalty.Mul(rewardRatio, u256.NewUint(100 - warmup.WarmupRatio))
-			penalty = penalty.Div(penalty, u256.NewUint(100))
-			penalty = penalty.Div(penalty, q96)
+			warmupPenalty := u256.Zero().Sub(reward, warmupReward)
 
-			self.rewards[i][incentiveId] = reward
-			self.penalties[i][incentiveId] = penalty
+			warmupReward = warmupReward.Div(warmupReward, u256.NewUint(100))
+			warmupReward = warmupReward.Div(warmupReward, q128)
+
+			warmupPenalty = warmupPenalty.Div(warmupPenalty, u256.NewUint(100))
+			warmupPenalty = warmupPenalty.Div(warmupPenalty, q128)
+
+			self.rewards[i][incentiveId] = warmupReward
+			self.penalties[i][incentiveId] = warmupPenalty
 		}
 	}
 }
@@ -365,13 +366,14 @@ func (self *InternalRewardState) ApplyWarmup() {
 		}
 		reward := u256.Zero()
 		reward = reward.Mul(self.rewards[i], u256.NewUint(warmup.WarmupRatio))
-		reward = reward.Div(reward, u256.NewUint(100))
-		reward = reward.Div(reward, q96)
+		
+		penalty := u256.Zero().Sub(self.rewards[i], reward)
 
-		penalty := u256.Zero()
-		penalty = penalty.Mul(self.rewards[i], u256.NewUint(100 - warmup.WarmupRatio))
+		reward = reward.Div(reward, u256.NewUint(100))
+		reward = reward.Div(reward, q128)
+
 		penalty = penalty.Div(penalty, u256.NewUint(100))
-		penalty = penalty.Div(penalty, q96)
+		penalty = penalty.Div(penalty, q128)
 
 		self.rewards[i] = reward
 		self.penalties[i] = penalty

@@ -16,7 +16,6 @@ import (
 
 // Q96
 var _q96 = u256.MustFromDecimal(consts.Q96)
-var _iQ96 = i256.MustFromDecimal(consts.Q96)
 
 func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 	if prev >= current {
@@ -25,10 +24,49 @@ func isAbleToCalculateEmissionReward(prev int64, current int64) bool {
 	return true
 }
 
-func calcPositionReward(currentHeight uint64, tokenId uint64) ([]uint64, []uint64, []map[string]uint64, []map[string]uint64) {
+type Reward struct {
+	Internal uint64
+	InternalPenalty uint64
+	External map[string]uint64
+	ExternalPenalty map[string]uint64
+}
+
+func calcPositionReward(currentHeight uint64, tokenId uint64) Reward {
 	deposit := deposits.Get(tokenId)
 	emissionUpdateHeights, emissionUpdates := gns.EmissionUpdates(deposit.lastCollectHeight, currentHeight)
-	return CalcPositionReward(currentHeight, tokenId, deposits, pools, poolTier, emissionUpdateHeights, emissionUpdates)
+	internalRewards, internalPenalties, externalRewards, externalPenalties := CalcPositionReward(currentHeight, tokenId, deposits, pools, poolTier, emissionUpdateHeights, emissionUpdates)
+
+	
+	internal := uint64(0)
+	for _, reward := range internalRewards {
+		internal += reward
+	}
+
+	internalPenalty := uint64(0)
+	for _, penalty := range internalPenalties {
+		internalPenalty += penalty
+	}
+
+	externalReward := make(map[string]uint64)
+	for _, external := range externalRewards {
+		for incentive, reward := range external {
+			externalReward[incentive] += reward
+		}
+	}
+
+	externalPenalty := make(map[string]uint64)
+	for _, external := range externalPenalties {
+		for incentive, penalty := range external {
+			externalPenalty[incentive] += penalty
+		}
+	}
+
+	return Reward{
+		Internal: internal,
+		InternalPenalty: internalPenalty,
+		External: externalReward,
+		ExternalPenalty: externalPenalty,
+	}
 }
 
 func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits, pools *Pools, poolTier *PoolTier, emissionUpdateHeights []uint64, emissionUpdates []uint64) ([]uint64, []uint64, []map[string]uint64, []map[string]uint64) {

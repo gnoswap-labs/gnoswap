@@ -15,13 +15,6 @@ import (
 	i256 "gno.land/p/gnoswap/int256"
 )
 
-type reward struct {
-	internal uint64
-	internalPenalty uint64
-	external map[string]uint64
-	externalPenalty map[string]uint64
-}
-
 type canonicalPool struct {
 	poolPath string
 	tier uint64
@@ -69,7 +62,7 @@ type canonicalRewardState struct {
 	Pool map[string]*canonicalPool
 	tickCrossHook func(poolPath string, tickId int32, zeroForOne bool)
 
-	Reward [][]reward // blockNumber -> depositId -> reward
+	Reward [][]Reward // blockNumber -> depositId -> reward
 
 	emissionUpdates *UintTree
 
@@ -88,7 +81,7 @@ func NewCanonicalRewardState(t *testing.T, poolTier *PoolTier, pools *Pools, dep
 			deposits: deposits,
 		},
 		Pool: make(map[string]*canonicalPool),
-		Reward: make([][]reward, 0),
+		Reward: make([][]Reward, 0),
 		emissionUpdates: NewUintTree(),
 		MsPerBlock: 1000,
 		PerBlockEmission: 1000000000,
@@ -199,9 +192,9 @@ func (self *canonicalRewardState) CurrentHeight() int {
 }
 
 // Process block with canonical reward calculation
-func (self *canonicalRewardState) CalculateCanonicalReward() []reward {
+func (self *canonicalRewardState) CalculateCanonicalReward() []Reward {
 	currentHeight := self.CurrentHeight() + 1
-	rewards := make([]reward, self.global.deposits.Size())
+	rewards := make([]Reward, self.global.deposits.Size())
 	
 	liquidityPerPool := self.LiquidityPerPool()
 	internalRewardPerPool := self.InternalRewardPerPool(self.PerBlockEmission)
@@ -226,11 +219,11 @@ func (self *canonicalRewardState) CalculateCanonicalReward() []reward {
 			externals[key] = external
 			externalPenalties[key] = externalPenalty
 		}
-		rewards[i] = reward {
-			internal: internal, 
-			external: externals,
-			internalPenalty: internalPenalty,
-			externalPenalty: externalPenalties,
+		rewards[i] = Reward {
+			Internal: internal, 
+			External: externals,
+			InternalPenalty: internalPenalty,
+			ExternalPenalty: externalPenalties,
 		}
 	}
 
@@ -246,11 +239,11 @@ func (self *canonicalRewardState) NextBlockNoCanonical() {
 	self.Reward = append(self.Reward, nil) // just placeholder
 }
 
-func (self *canonicalRewardState) CanonicalRewardOf(depositId uint64) reward {
+func (self *canonicalRewardState) CanonicalRewardOf(depositId uint64) Reward {
 	return self.Reward[self.CurrentHeight() - 1][depositId]
 }
 
-func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, height uint64) reward {
+func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, height uint64) Reward {
 	return self.Reward[height][depositId]
 }
 
@@ -298,7 +291,7 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 	return internalRewards, internalPenalties, externalRewards, externalPenalties
 }
 
-func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) reward {
+func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) Reward {
 	// emissionUpdateHeights, emissionUpdates := self.EmissionUpdates(*self.global.poolTier.lastRewardCacheHeight, uint64(self.CurrentHeight()))
 
 	rewards, penalties, externalRewards, externalPenalties := self.EmulateCalcPositionReward(depositId)
@@ -327,11 +320,11 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) reward {
 		}
 	}
 	
-	return reward {
-		internal: internal,
-		internalPenalty: internalPenalty,
-		external: external,
-		externalPenalty: externalPenalty,
+	return Reward {
+		Internal: internal,
+		InternalPenalty: internalPenalty,
+		External: external,
+		ExternalPenalty: externalPenalty,
 	}
 }
 
@@ -557,37 +550,37 @@ func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(poolPath 
 }
 
 func isInErrorRange(expected uint64, actual uint64) bool {
-	lowerBound := expected * 99999 / 100000
-	upperBound := expected * 100001 / 100000
+	lowerBound := expected * 999999 / 1000000
+	upperBound := expected * 1000001 / 1000000
 	return actual >= lowerBound && actual <= upperBound
 }
 
 func (self *canonicalRewardState) AssertEmulatedRewardOf(depositId uint64, expected uint64) {
 	reward := self.EmulatedRewardOf(depositId)
-	if !isInErrorRange(expected, reward.internal) {
-		self.t.Errorf("emulated reward of %d mismatch: expected %d, got %d(%s@%d)", depositId, expected, reward.internal, self.Pool[self.global.deposits.Get(depositId).targetPoolPath].poolPath, self.Pool[self.global.deposits.Get(depositId).targetPoolPath].tick)
+	if !isInErrorRange(expected, reward.Internal) {
+		self.t.Errorf("emulated reward of %d mismatch: expected %d, got %d(%s@%d)", depositId, expected, reward.Internal, self.Pool[self.global.deposits.Get(depositId).targetPoolPath].poolPath, self.Pool[self.global.deposits.Get(depositId).targetPoolPath].tick)
 	}
 }
 
 func (self *canonicalRewardState) AssertEmulatedExternalRewardOf(depositId uint64, tokenId string, expected uint64) {
 	reward := self.EmulatedRewardOf(depositId)
-	if !isInErrorRange(expected, reward.external[tokenId]) {
-		self.t.Errorf("emulated external reward of %d mismatch: expected %d, got %d", depositId, expected, reward.external[tokenId])
+	if !isInErrorRange(expected, reward.External[tokenId]) {
+		self.t.Errorf("emulated external reward of %d mismatch: expected %d, got %d", depositId, expected, reward.External[tokenId])
 	}
 }
 
 func (self *canonicalRewardState) AssertCanonicalRewardOf(depositId uint64, expected uint64) {
 	reward := self.CanonicalRewardOf(depositId)	
-	if reward.internal != expected {
-		self.t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, expected, reward.internal)
+	if reward.Internal != expected {
+		self.t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, expected, reward.Internal)
 	}
 }
 
 func (self *canonicalRewardState) AssertEquivalence(depositId uint64) {
 	reward := self.CanonicalRewardOf(depositId)
 	emulatedReward := self.EmulatedRewardOf(depositId)
-	if !isInErrorRange(reward.internal, emulatedReward.internal) {
-		self.t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, reward.internal, emulatedReward.internal)
+	if !isInErrorRange(reward.Internal, emulatedReward.Internal) {
+		self.t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, reward.Internal, emulatedReward.Internal)
 	}
 }
 
