@@ -502,170 +502,6 @@ func TestTickCross_6(t *testing.T) {
 	canonical.AssertEmulatedRewardOf(0, 0)
 }
 
-// Test tick crossing at tick boundaries, random direction
-func TestTickCross_7(t *testing.T) {
-	canonical := Setup(t)
-
-	gnousdc := GetPoolPath("gno", "usdc", 3000)
-	canonical.CreatePool(gnousdc, 1, 200)
-
-	err := canonical.StakeToken(
-		0, 
-		gnousdc, 
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"), 
-		100, 
-		300, 
-		u256.NewUint(1000000000000000000),
-	)
-
-	if err != nil {
-		t.Errorf("StakeToken failed: %s", err.Error())
-	}
-
-	expected := canonical.PerBlockEmission * 30 / 100
-
-	tcs := []struct {
-		tick int32
-		expected uint64
-	}{
-		{99, 0},
-		{100, expected},
-		{101, expected},
-		{299, expected},
-		{300, 0},
-		{301, 0},
-	}
-
-	index := 0
-	for i := 0; i < 100; i++ {
-		index = (index + 10007) % len(tcs)
-		canonical.MoveTick(gnousdc, tcs[index].tick)
-		canonical.NextBlockNoCanonical()
-		canonical.AssertEmulatedRewardOf(0, tcs[index].expected)
-	}
-}
-
-// Test tick crossing with multiple positions with different tick, different liquidity
-// Equivalence test
-func TestTickCross_8(t *testing.T) {
-	canonical := Setup(t)
-
-	gnousdc := GetPoolPath("gno", "usdc", 3000)
-	canonical.CreatePool(gnousdc, 1, 200)
-
-	err := canonical.StakeToken(
-		0, 
-		gnousdc, 
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"), 
-		100, 
-		300, 
-		u256.NewUint(1000000000000000000),
-	)
-
-	if err != nil {
-		t.Errorf("StakeToken failed: %s", err.Error())
-	}
-
-	err = canonical.StakeToken(
-		1, 
-		gnousdc, 
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"), 
-		200, 
-		400, 
-		u256.NewUint(2000000000000000000),
-	)
-
-	if err != nil {
-		t.Errorf("StakeToken failed: %s", err.Error())
-	}
-
-	err = canonical.StakeToken(
-		2, 
-		gnousdc, 
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"), 
-		300, 
-		500, 
-		u256.NewUint(3000000000000000000),
-	)
-
-	if err != nil {
-		t.Errorf("StakeToken failed: %s", err.Error())
-	}
-
-	tick := int32(0)
-
-	for i := 0; i < 500; i++ {
-		tick = (tick + 10007) % 700
-		canonical.MoveTick(gnousdc, tick)
-		canonical.NextBlock()
-		canonical.AssertEquivalence(0)
-		canonical.AssertEquivalence(1)
-		canonical.AssertEquivalence(2)
-	}
-}
-
-// Test tick crossing with multiple positions with different tick, different liquidity, emulated reward flushed for every 100 blocks
-// Equivalence test
-func TestTickCross_9(t *testing.T) {
-	canonical := Setup(t)
-
-	gnousdc := GetPoolPath("gno", "usdc", 3000)
-	canonical.CreatePool(gnousdc, 1, 200)
-
-	err := canonical.StakeToken(
-		0, 
-		gnousdc, 
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"), 
-		100, 
-		300, 
-		u256.NewUint(1000000000000000000),
-	)
-
-	if err != nil {
-		t.Errorf("StakeToken failed: %s", err.Error())
-	}
-	
-	err = canonical.StakeToken(
-		1, 
-		gnousdc, 
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"), 
-		200, 
-		400, 
-		u256.NewUint(2000000000000000000),
-	)
-
-	if err != nil {
-		t.Errorf("StakeToken failed: %s", err.Error())
-	}
-
-	err = canonical.StakeToken(
-		2, 
-		gnousdc, 
-		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"), 
-		300, 
-		500, 
-		u256.NewUint(3000000000000000000),
-	)
-
-	if err != nil {
-		t.Errorf("StakeToken failed: %s", err.Error())
-	}
-
-	tick := int32(0)
-	for i := 0; i < 20; i++ {
-		canonicalRewardMap := make(map[uint64]uint64)
-		for j := 0; j < 20; j++ {
-			tick = (tick + 10007) % 700
-			canonical.MoveTick(gnousdc, tick)
-			canonical.NextBlock()
-			canonicalRewardMap[0] += canonical.CanonicalRewardOf(0).Internal
-			canonicalRewardMap[1] += canonical.CanonicalRewardOf(1).Internal
-			canonicalRewardMap[2] += canonical.CanonicalRewardOf(2).Internal
-		}
-		canonical.AssertEmulatedRewardMap(canonicalRewardMap)
-	}
-
-}
 
 func TestExternalReward_1(t *testing.T) {
 	canonical := Setup(t)
@@ -875,4 +711,332 @@ func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 		token0Path, token1Path = token1Path, token0Path
 	}
 	return ufmt.Sprintf("%s:%s:%d", token0Path, token1Path, fee)
+}
+
+func TestWarmup_1(t *testing.T) {
+	modifyWarmup(0, 10)
+	modifyWarmup(1, 10)
+	modifyWarmup(2, 10)
+
+	canonical := Setup(t)	
+
+	gnousdc := GetPoolPath("gno", "usdc", 3000)
+	canonical.CreatePool(gnousdc, 1, 150)
+
+	err := canonical.StakeToken(
+		0, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"), 
+		100, 
+		200, 
+		u256.NewUint(1000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	expected := canonical.PerBlockEmission * 30 / 100
+
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.AssertEmulatedRewardOf(0, expected * 10)
+
+	expected = canonical.PerBlockEmission * 50 / 100
+
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.AssertEmulatedRewardOf(0, expected * 10)
+
+	expected = canonical.PerBlockEmission * 70 / 100
+
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.AssertEmulatedRewardOf(0, expected * 10)
+
+	expected = canonical.PerBlockEmission * 100 / 100
+
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.AssertEmulatedRewardOf(0, expected * 10)
+}
+/*
+func TestWarmup_2(t *testing.T) {
+	modifyWarmup(0, 10)
+	modifyWarmup(1, 10)
+	modifyWarmup(2, 10)
+
+	canonical := Setup(t)	
+
+	gnousdc := GetPoolPath("gno", "usdc", 3000)
+	canonical.CreatePool(gnousdc, 1, 150)
+
+	err := canonical.StakeToken(
+		0, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"), 
+		100, 
+		200, 
+		u256.NewUint(1000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	expected0 := canonical.PerBlockEmission * 30 / 100
+
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+
+	expected1 := canonical.PerBlockEmission * 50 / 100
+
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+
+	canonical.AssertEmulatedRewardOf(0, expected0*10+expected1*10)
+
+	expected2 := canonical.PerBlockEmission * 70 / 100
+
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+
+	expected3 := canonical.PerBlockEmission * 100 / 100
+
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+	canonical.NextBlock()
+
+
+}
+	*/
+// ================
+// randomized
+
+// Test tick crossing at tick boundaries, random direction
+func TestTickCross_7(t *testing.T) {
+	canonical := Setup(t)
+
+	gnousdc := GetPoolPath("gno", "usdc", 3000)
+	canonical.CreatePool(gnousdc, 1, 200)
+
+	err := canonical.StakeToken(
+		0, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"), 
+		100, 
+		300, 
+		u256.NewUint(1000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	expected := canonical.PerBlockEmission * 30 / 100
+
+	tcs := []struct {
+		tick int32
+		expected uint64
+	}{
+		{99, 0},
+		{100, expected},
+		{101, expected},
+		{299, expected},
+		{300, 0},
+		{301, 0},
+	}
+
+	index := 0
+	for i := 0; i < 100; i++ {
+		index = (index + 10007) % len(tcs)
+		canonical.MoveTick(gnousdc, tcs[index].tick)
+		canonical.NextBlockNoCanonical()
+		canonical.AssertEmulatedRewardOf(0, tcs[index].expected)
+	}
+}
+
+// Test tick crossing with multiple positions with different tick, different liquidity
+// Equivalence test
+func TestTickCross_8(t *testing.T) {
+	canonical := Setup(t)
+
+	gnousdc := GetPoolPath("gno", "usdc", 3000)
+	canonical.CreatePool(gnousdc, 1, 200)
+
+	err := canonical.StakeToken(
+		0, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"), 
+		100, 
+		300, 
+		u256.NewUint(1000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	err = canonical.StakeToken(
+		1, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"), 
+		200, 
+		400, 
+		u256.NewUint(2000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	err = canonical.StakeToken(
+		2, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"), 
+		300, 
+		500, 
+		u256.NewUint(3000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	tick := int32(0)
+
+	for i := 0; i < 500; i++ {
+		tick = (tick + 10007) % 700
+		canonical.MoveTick(gnousdc, tick)
+		canonical.NextBlock()
+		canonical.AssertEquivalence(0)
+		canonical.AssertEquivalence(1)
+		canonical.AssertEquivalence(2)
+	}
+}
+
+// Test tick crossing with multiple positions with different tick, different liquidity, emulated reward flushed for every 100 blocks
+// Equivalence test
+func TestTickCross_9(t *testing.T) {
+	canonical := Setup(t)
+
+	gnousdc := GetPoolPath("gno", "usdc", 3000)
+	canonical.CreatePool(gnousdc, 1, 200)
+
+	err := canonical.StakeToken(
+		0, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"), 
+		100, 
+		300, 
+		u256.NewUint(1000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+	
+	err = canonical.StakeToken(
+		1, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"), 
+		200, 
+		400, 
+		u256.NewUint(2000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	err = canonical.StakeToken(
+		2, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"), 
+		300, 
+		500, 
+		u256.NewUint(3000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	tick := int32(0)
+	for i := 0; i < 20; i++ {
+		canonicalRewardMap := make(map[uint64]uint64)
+		for j := 0; j < 20; j++ {
+			tick = (tick + 10007) % 700
+			canonical.MoveTick(gnousdc, tick)
+			canonical.NextBlock()
+			canonicalRewardMap[0] += canonical.CanonicalRewardOf(0).Internal
+			canonicalRewardMap[1] += canonical.CanonicalRewardOf(1).Internal
+			canonicalRewardMap[2] += canonical.CanonicalRewardOf(2).Internal
+		}
+		canonical.AssertEmulatedRewardMap(canonicalRewardMap)
+	}
+
 }

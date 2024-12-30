@@ -363,13 +363,13 @@ func (self *InternalRewardState) ApplyWarmup() {
 			continue
 		}
 		reward := u256.Zero()
+		totalReward := u256.Zero().Div(self.rewards[i], q128)
+
 		reward = reward.Mul(self.rewards[i], u256.NewUint(warmup.WarmupRatio))
 		reward = reward.Div(reward, u256.NewUint(100))
-
-		penalty := u256.Zero().Sub(self.rewards[i], reward)
-
 		reward = reward.Div(reward, q128)
-		penalty = penalty.Div(penalty, q128)
+
+		penalty := u256.Zero().Sub(totalReward, reward)
 
 		self.rewards[i] = reward
 		self.penalties[i] = penalty

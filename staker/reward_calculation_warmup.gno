@@ -66,10 +66,15 @@ func modifyWarmup(index int, blockDuration int64) {
 func InstantiateWarmup(currentHeight int64) []Warmup {
 	warmups := make([]Warmup, 0)
 	for _, warmup := range warmupTemplate {
+		nextWarmupHeight := currentHeight + warmup.BlockDuration
+		if nextWarmupHeight < 0 {
+			nextWarmupHeight = math.MaxInt64
+		}
+
 		warmups = append(warmups, Warmup{
 			Index:            warmup.Index,
 			BlockDuration:    warmup.BlockDuration,
-			NextWarmupHeight: currentHeight + warmup.BlockDuration,
+			NextWarmupHeight: nextWarmupHeight,
 			WarmupRatio:      warmup.WarmupRatio,
 		})
 		currentHeight += warmup.BlockDuration

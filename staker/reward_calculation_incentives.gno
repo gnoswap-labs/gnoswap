@@ -55,6 +55,14 @@ func (self *Incentives) Get(startTime, endTime int64, creator std.Address, rewar
 	return value.(*ExternalIncentive), true	
 }
 
+func (self *Incentives) GetByIncentiveId(incentiveId string) (*ExternalIncentive, bool) {
+	value, ok := self.byTime.Get(incentiveId)
+	if !ok {
+		return nil, false
+	}
+	return value.(*ExternalIncentive), true
+}
+
 // MUST be called after std.GetHeight() > endHeight
 func (self *Incentives) remove(incentive *ExternalIncentive) {
 	byTimeId := incentiveIdByTime(uint64(incentive.startTimestamp), uint64(incentive.endTimestamp), incentive.refundee, incentive.rewardToken)
