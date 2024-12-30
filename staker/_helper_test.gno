@@ -164,6 +164,7 @@ func init() {
 }
 
 var (
+	adminAddr   = consts.ADMIN
 	admin       = pusers.AddressOrName(consts.ADMIN)
 	alice       = pusers.AddressOrName(testutils.TestAddress("alice"))
 	pool        = pusers.AddressOrName(consts.POOL_ADDR)
@@ -493,6 +494,7 @@ func burnAllNFT(t *testing.T) {
 }
 
 func TestBeforeResetObject(t *testing.T) {
+	t.Skip("can not be run with other tests")
 	// make actual data to test resetting not only position's state but also pool's state
 	std.TestSetRealm(adminRealm)
 
@@ -540,3 +542,24 @@ func TestBeforeResetObject(t *testing.T) {
 // 	burnAllNFT(t)
 // 	uassert.Equal(t, gnft.TotalSupply(), uint64(0), "gnft total supply should be 0")
 // }
+
+func deletePoolTier(t *testing.T, poolPath string) {
+	poolTier.changeTier(uint64(std.GetHeight()), poolPath, 0)
+}
+
+func addPoolTier(t *testing.T, poolPath string, tier uint64) {
+	poolTier.changeTier(uint64(std.GetHeight()), poolPath, tier)
+	pools.GetOrCreate(poolPath)
+}
+
+func changeWarmup(t *testing.T, index int, blockDuration int64) {
+	modifyWarmup(index, blockDuration)
+}
+
+func getNumPoolTiers(t *testing.T) (uint64, uint64, uint64) {
+	tier1Num := poolTier.count[1].tree.Size()
+	tier2Num := poolTier.count[2].tree.Size()
+	tier3Num := poolTier.count[3].tree.Size()
+
+	return tier1Num, tier2Num, tier3Num
+}
