@@ -136,6 +136,14 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, 
 	tickUpperCrossLen := len(tickUpperCross)
 	tickLowerCrossLen := len(tickLowerCross)
 
+	println(ufmt.Sprintf("currentInRange: %v, tickUpperCrossLen: %d, tickLowerCrossLen: %d", currentInRange, tickUpperCrossLen, tickLowerCrossLen))
+	for _, tickUpperCross := range tickUpperCross {
+		println(ufmt.Sprintf("tickUpperCross: %d", tickUpperCross))
+	}
+	for _, tickLowerCross := range tickLowerCross {
+		println(ufmt.Sprintf("tickLowerCross: %d", tickLowerCross))
+	}
+
 	for tickUpperCrossI < tickUpperCrossLen && tickLowerCrossI < tickLowerCrossLen {
 		upperCross := tickUpperCross[tickUpperCrossI]
 		lowerCross := tickLowerCross[tickLowerCrossI]
@@ -159,6 +167,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, 
 		if upperCross == lowerCross {
 			if currentInRange {
 				// exit range
+				println(ufmt.Sprintf("same zeroForOne exit range: startHeight: %d, endHeight: %d", startHeight, lowerHeight))
 				f(uint64(startHeight), uint64(lowerHeight))
 				currentInRange = false
 			}
@@ -193,6 +202,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, 
 			} else {
 				// exit range
 				if currentInRange {
+					println(ufmt.Sprintf("upper tick passed exit range: startHeight: %d, endHeight: %d", startHeight, upperHeight))
 					f(uint64(startHeight), uint64(upperHeight))
 					currentInRange = false
 				}
@@ -215,6 +225,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, 
 			} else {
 				// exit range
 				if currentInRange {
+					println(ufmt.Sprintf("lower tick passed exit range: startHeight: %d, endHeight: %d", startHeight, lowerHeight))
 					f(uint64(startHeight), uint64(lowerHeight))
 					currentInRange = false
 				}
@@ -241,6 +252,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, 
 		} else {
 			// exit range
 			if currentInRange {
+				println(ufmt.Sprintf("upper tick passed exit range: startHeight: %d, endHeight: %d", startHeight, cross))
 				f(uint64(startHeight), uint64(cross))
 				currentInRange = false
 			}
@@ -262,6 +274,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, 
 		} else {
 			// exit range
 			if currentInRange {
+				println(ufmt.Sprintf("lower tick passed exit range: startHeight: %d, endHeight: %d", startHeight, cross))
 				f(uint64(startHeight), uint64(-cross))
 				currentInRange = false
 			}
@@ -269,6 +282,8 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, 
 	}
 
 	if currentInRange {
+		println("residual currentInRange")
+		println(ufmt.Sprintf("startHeight: %d, endHeight: %d", startHeight, endHeight))
 		f(uint64(startHeight), uint64(endHeight))
 	}
 

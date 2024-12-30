@@ -256,10 +256,15 @@ func (self *InternalRewardState) Calculate(startHeight, endHeight int64, current
 }
 
 func (self *InternalRewardState) AccumulateReward(startHeight, endHeight uint64) {
+	println(ufmt.Sprintf("AccumulateReward: startHeight: %d, endHeight: %d", startHeight, endHeight))
 	self.pool.rewardCache.RewardPerInterval(startHeight, endHeight, func(blockNumber uint64, poolRewardI interface{}) {
+		
 		poolRewardRatio := poolRewardI.(*u256.Uint)
+		println(ufmt.Sprintf("AccumulateReward: blockNumber: %d, poolRewardRatio: %s", blockNumber, poolRewardRatio.ToString()))
 		positionReward := u256.Zero().Mul(self.deposit.liquidity, poolRewardRatio)
 		positionReward = u256.Zero().Mul(positionReward, u256.NewUint(blockNumber))
+
+		println(ufmt.Sprintf("AccumulateReward: positionReward: %d", positionReward.Uint64()))
 
 		acc := self.rewards[self.currentWarmup.Index]
 		acc.Add(acc, positionReward)

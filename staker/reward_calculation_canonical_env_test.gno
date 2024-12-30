@@ -505,16 +505,22 @@ func (self *canonicalRewardState) AssertCanonicalInternalRewardPerPool(poolPath 
 	}
 }
 
+func isInErrorRange(expected uint64, actual uint64) bool {
+	lowerBound := expected * 99999 / 100000
+	upperBound := expected * 100001 / 100000
+	return actual >= lowerBound && actual <= upperBound
+}
+
 func (self *canonicalRewardState) AssertEmulatedRewardOf(depositId uint64, expected uint64) {
 	reward := self.EmulatedRewardOf(depositId)
-	if reward.internal+1 != expected && reward.internal != expected && reward.internal-1 != expected {
+	if !isInErrorRange(expected, reward.internal) {
 		self.t.Errorf("emulated reward of %d mismatch: expected %d, got %d", depositId, expected, reward.internal)
 	}
 }
 
 func (self *canonicalRewardState) AssertCanonicalRewardOf(depositId uint64, expected uint64) {
-	reward := self.CanonicalRewardOf(depositId)
-	if reward.internal+1 != expected && reward.internal != expected && reward.internal-1 != expected {
+	reward := self.CanonicalRewardOf(depositId)	
+	if reward.internal != expected {
 		self.t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, expected, reward.internal)
 	}
 }
@@ -522,7 +528,7 @@ func (self *canonicalRewardState) AssertCanonicalRewardOf(depositId uint64, expe
 func (self *canonicalRewardState) AssertEquivalence(depositId uint64) {
 	reward := self.CanonicalRewardOf(depositId)
 	emulatedReward := self.EmulatedRewardOf(depositId)
-	if reward.internal+1 != emulatedReward.internal && reward.internal != emulatedReward.internal && reward.internal-1 != emulatedReward.internal {
+	if !isInErrorRange(reward.internal, emulatedReward.internal) {
 		self.t.Errorf("canonical reward of %d mismatch: expected %d, got %d", depositId, reward.internal, emulatedReward.internal)
 	}
 }

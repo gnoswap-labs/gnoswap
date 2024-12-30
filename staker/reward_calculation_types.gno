@@ -5,6 +5,10 @@ import (
 	"strings"
 
 	"gno.land/p/demo/avl"
+
+	ufmt "gno.land/p/demo/ufmt"
+
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func EncodeUint(num uint64) string {
@@ -116,12 +120,16 @@ func (self *RewardCacheTree) RewardPerInterval(startHeight, endHeight uint64, f 
 	currentPoolReward := self.CurrentReward(startHeight)
 	currentHeight := startHeight
 	self.Iterate(startHeight, endHeight, func(height uint64, poolReward interface{}) bool {
+		println(ufmt.Sprintf("RewardPerInterval: height: %d, currentHeight: %d, poolReward: %s", height, currentHeight, poolReward.(*u256.Uint).ToString()))
 		f(height-currentHeight, poolReward)
 		currentHeight = height
 		currentPoolReward = poolReward
 		return false
 	})
-	f(endHeight-currentHeight, currentPoolReward)
+	if endHeight > currentHeight {
+		println(ufmt.Sprintf("RewardPerInterval: endHeight: %d, currentHeight: %d, poolReward: %s", endHeight, currentHeight, currentPoolReward.(*u256.Uint).ToString()))
+		f(endHeight-currentHeight, currentPoolReward)
+	}
 }
 
 
