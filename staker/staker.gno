@@ -124,7 +124,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	if deposits.Has(tokenId) {
 		panic(addDetailToError(
 			errAlreadyStaked,
-			ufmt.Sprintf("staker.gno__StakeToken() || tokenId(%d) already staked", tokenId),
+			ufmt.Sprintf("tokenId(%d) already staked", tokenId),
 		))
 	}
 
@@ -149,14 +149,14 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	if !ok {
 		panic(addDetailToError(
 			errNonIncentivizedPool,
-			ufmt.Sprintf("staker.gno__StakeToken() || can not stake position to non incentivized pool(%s)", poolPath),
+			ufmt.Sprintf("can not stake position to non incentivized pool(%s)", poolPath),
 		))
 	}
 	hasExternal := pool.IsExternallyIncentivizedPool(uint64(std.GetHeight()))
 	if hasInternal == false && hasExternal == false {
 		panic(addDetailToError(
 			errNonIncentivizedPool,
-			ufmt.Sprintf("staker.gno__StakeToken() || can not stake position to non incentivized pool(%s)", poolPath),
+			ufmt.Sprintf("can not stake position to non incentivized pool(%s)", poolPath),
 		))
 	}
 
@@ -166,7 +166,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	if liquidity.Lte(u256.Zero()) {
 		panic(addDetailToError(
 			errZeroLiquidity,
-			ufmt.Sprintf("staker.gno__StakeToken() || tokenId(%d) has no liquidity", tokenId),
+			ufmt.Sprintf("tokenId(%d) has no liquidity", tokenId),
 		))
 	}
 
@@ -441,7 +441,7 @@ func applyUnstake(tokenId uint64) {
 	if !ok {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("staker.gno__EndExternalIncentive() || pool(%s) does not exist", deposit.targetPoolPath),
+			ufmt.Sprintf("pool(%s) does not exist", deposit.targetPoolPath),
 		))
 	}
 
@@ -461,7 +461,7 @@ func applyUnstake(tokenId uint64) {
 	if err != nil {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("staker.gno__UnstakeToken() || tokenId(%d) does not exist", tokenId),
+			ufmt.Sprintf("tokenId(%d) does not exist", tokenId),
 		))
 	}
 	caller := std.PrevRealm().Addr()

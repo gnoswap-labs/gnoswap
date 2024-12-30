@@ -20,7 +20,7 @@ func poolPathAlign(poolPath string) string {
 	if err != nil {
 		panic(addDetailToError(
 			errInvalidPoolPath,
-			ufmt.Sprintf("utils.gno__poolPathAlign() || invalid poolPath(%s)", poolPath),
+			ufmt.Sprintf("invalid poolPath(%s)", poolPath),
 		))
 	}
 
@@ -51,7 +51,7 @@ func tid(tokenId interface{}) grc721.TokenID {
 	if tokenId == nil {
 		panic(addDetailToError(
 			errDataNotFound,
-			"utils.gno__tid() || tokenId is nil",
+			"tokenId is nil",
 		))
 	}
 
@@ -67,7 +67,7 @@ func tid(tokenId interface{}) grc721.TokenID {
 	default:
 		panic(addDetailToError(
 			errInvalidInput,
-			ufmt.Sprintf("utils.gno__tid() || unsupported tokenId type(%T)", tokenId),
+			ufmt.Sprintf("unsupported tokenId type(%T)", tokenId),
 		))
 	}
 }
