@@ -35,30 +35,30 @@ func GetPoolStakedLiquidityUpdates(poolPath string, startHeight, endHeight uint6
 	return marshal(builder.Node())
 }
 
-func GetPoolRewardUpdates(poolPath string, startHeight, endHeight uint64) string {
-	pool, ok := pools.Get(poolPath)
-	if !ok {
-		return ""
-	}
+// func GetPoolRewardUpdates(poolPath string, startHeight, endHeight uint64) string {
+// 	pool, ok := pools.Get(poolPath)
+// 	if !ok {
+// 		return ""
+// 	}
 
-	// TODO: remove comment
-	// if endHeight > pool.lastRewardCacheHeight {
-	// 	poolTier.cacheReward(endHeight)
-	// 	poolTier.cachePoolReward(pool.rewardCache, poolPath, endHeight)
-	// }
+// 	// TODO: remove comment
+// 	// if endHeight > pool.lastRewardCacheHeight {
+// 	// 	poolTier.cacheReward(endHeight)
+// 	// 	poolTier.cachePoolReward(pool.rewardCache, poolPath, endHeight)
+// 	// }
 
-	builder := json.Builder().WriteArray("", func(ab *json.ArrayBuilder) {
-		pool.rewardCache.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
-			ab.WriteObject(func(ob *json.NodeBuilder) {
-				ob.WriteString("blockNumber", ufmt.Sprintf("%d", key))
-				ob.WriteString("reward", value.(*u256.Uint).ToString())
-			})
-			return false
-		})
-	})
+// 	builder := json.Builder().WriteArray("", func(ab *json.ArrayBuilder) {
+// 		pool.rewardCache.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
+// 			ab.WriteObject(func(ob *json.NodeBuilder) {
+// 				ob.WriteString("blockNumber", ufmt.Sprintf("%d", key))
+// 				ob.WriteString("reward", value.(*u256.Uint).ToString())
+// 			})
+// 			return false
+// 		})
+// 	})
 
-	return marshal(builder.Node())
-}
+// 	return marshal(builder.Node())
+// }
 
 // poolsPositions
 // func GetPoolsPositions() string {
@@ -94,50 +94,50 @@ func GetPoolRewardUpdates(poolPath string, startHeight, endHeight uint64) string
 // }
 
 // consts.Q96
-func GetQ96() string {
-	en.MintAndDistributeGns()
+// func GetQ96() string {
+// 	en.MintAndDistributeGns()
 
-	return "79228162514264337593543950336"
-}
+// 	return "79228162514264337593543950336"
+// }
 
-// positionExternal
-func GetPositionExternal() string {
-	en.MintAndDistributeGns()
+// // positionExternal
+// func GetPositionExternal() string {
+// 	en.MintAndDistributeGns()
 
-	if len(positionExternal) == 0 {
-		return ""
-	}
+// 	if len(positionExternal) == 0 {
+// 		return ""
+// 	}
 
-	builder := json.Builder().WriteArray("", func(ab *json.ArrayBuilder) {
-		for tokenId, externals := range positionExternal {
-			ab.WriteObject(func(ob *json.NodeBuilder) {
-				ob.WriteString("tokenId", ufmt.Sprintf("%d", tokenId))
-				ob.WriteArray("externals", func(extAb *json.ArrayBuilder) {
-					buildPositionExternals(externals, extAb)
-				})
-			})
-		}
-	})
+// 	builder := json.Builder().WriteArray("", func(ab *json.ArrayBuilder) {
+// 		for tokenId, externals := range positionExternal {
+// 			ab.WriteObject(func(ob *json.NodeBuilder) {
+// 				ob.WriteString("tokenId", ufmt.Sprintf("%d", tokenId))
+// 				ob.WriteArray("externals", func(extAb *json.ArrayBuilder) {
+// 					buildPositionExternals(externals, extAb)
+// 				})
+// 			})
+// 		}
+// 	})
 
-	return marshal(builder.Node())
-}
+// 	return marshal(builder.Node())
+// }
 
-func buildExternalReward(incentiveId string, reward *externalRewards, ob *json.NodeBuilder) {
-	ob.WriteString("incentiveId", incentiveId)
-	ob.WriteString("poolPath", reward.poolPath)
-	ob.WriteString("tokenPath", reward.tokenPath)
-	ob.WriteString("tokenAmountX96", reward.tokenAmountX96.ToString())
-	ob.WriteString("tokenAmountFull", ufmt.Sprintf("%d", reward.tokenAmountFull))
-	ob.WriteString("tokenAmountToGive", ufmt.Sprintf("%d", reward.tokenAmountToGive))
-}
+// func buildExternalReward(incentiveId string, reward *externalRewards, ob *json.NodeBuilder) {
+// 	ob.WriteString("incentiveId", incentiveId)
+// 	ob.WriteString("poolPath", reward.poolPath)
+// 	ob.WriteString("tokenPath", reward.tokenPath)
+// 	ob.WriteString("tokenAmountX96", reward.tokenAmountX96.ToString())
+// 	ob.WriteString("tokenAmountFull", ufmt.Sprintf("%d", reward.tokenAmountFull))
+// 	ob.WriteString("tokenAmountToGive", ufmt.Sprintf("%d", reward.tokenAmountToGive))
+// }
 
-func buildPositionExternals(externals map[string]externalRewards, ab *json.ArrayBuilder) {
-	for incentiveId, externalRewards := range externals {
-		ab.WriteObject(func(ob *json.NodeBuilder) {
-			buildExternalReward(incentiveId, &externalRewards, ob)
-		})
-	}
-}
+// func buildPositionExternals(externals map[string]externalRewards, ab *json.ArrayBuilder) {
+// 	for incentiveId, externalRewards := range externals {
+// 		ab.WriteObject(func(ob *json.NodeBuilder) {
+// 			buildExternalReward(incentiveId, &externalRewards, ob)
+// 		})
+// 	}
+// }
 
 // positionsInternalWarmUpAmount
 // func GetPositionsInternalWarmUpAmount() string {
