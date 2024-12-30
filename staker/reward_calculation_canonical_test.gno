@@ -346,7 +346,6 @@ func TestTickCross_4(t *testing.T) {
 	// 0 eligible, 1 eligible (50:50)
 	canonical.MoveTick(gnousdc, 201)
 	canonical.NextBlockNoCanonical()
-
 	*/
 	// 0 not eligible, 1 not eligible (0:0)
 	canonical.MoveTick(gnousdc, 401)
@@ -387,16 +386,20 @@ func TestTickCross_5(t *testing.T) {
 	expected := canonical.PerBlockEmission * 30 / 100
 
 	// not eligible
+	// block 1
 	canonical.MoveTick(gnousdc, 99)
 	canonical.NextBlock()
 
+	// block 2
 	canonical.AssertCanonicalRewardOf(0, 0)
 	canonical.AssertEmulatedRewardOf(0, 0)
 
 	// eligible
+	// entered range
 	canonical.MoveTick(gnousdc, 100)
 	canonical.NextBlock()
 
+	// block 3
 	canonical.AssertCanonicalRewardOf(0, expected)
 	canonical.AssertEmulatedRewardOf(0, expected)
 
@@ -404,6 +407,7 @@ func TestTickCross_5(t *testing.T) {
 	canonical.MoveTick(gnousdc, 101)
 	canonical.NextBlock()
 
+	// block 4
 	canonical.AssertCanonicalRewardOf(0, expected)
 	canonical.AssertEmulatedRewardOf(0, expected)
 
@@ -487,7 +491,7 @@ func TestTickCross_6(t *testing.T) {
 
 	canonical.AssertEmulatedRewardOf(0, 0)
 }
-/*
+
 // Test tick crossing at tick boundaries, random direction
 func TestTickCross_7(t *testing.T) {
 	canonical := Setup(t)
@@ -682,7 +686,7 @@ func TestLargeBlocksPassed(t *testing.T) {
 	expected := canonical.PerBlockEmission * 30 / 100
 	canonical.AssertEmulatedRewardOf(0, expected * 10000)
 }
-*/
+
 func GetPoolPath(token0Path, token1Path string, fee uint32) string {
 	if strings.Compare(token1Path, token0Path) < 0 {
 		token0Path, token1Path = token1Path, token0Path

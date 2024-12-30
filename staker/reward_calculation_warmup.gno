@@ -22,17 +22,17 @@ func DefaultWarmups(currentHeight, avgBlockTimeInMs int64) []Warmup {
 	return []Warmup{
 		{
 			Index: 0,
-			NextWarmupHeight: currentHeight + blocksIn5Days,
+			NextWarmupHeight: currentHeight + blocksIn5Days - 1,
 			WarmupRatio:      30,
 		},
 		{
 			Index: 1,
-			NextWarmupHeight: currentHeight + blocksIn10Days,
+			NextWarmupHeight: currentHeight + blocksIn10Days - 1,
 			WarmupRatio:      50,
 		},
 		{
 			Index: 2,
-			NextWarmupHeight: currentHeight + blocksIn30Days,
+			NextWarmupHeight: currentHeight + blocksIn30Days - 1,
 			WarmupRatio:      70,
 		},
 		{

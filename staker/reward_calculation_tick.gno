@@ -1,10 +1,12 @@
 package staker
 
-import ( 
+import (
 	"std"
 
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	ufmt "gno.land/p/demo/ufmt"
 
 	pl "gno.land/r/gnoswap/v1/pool"
 )
@@ -23,7 +25,7 @@ func (self *Ticks) Get(tickId int32) *Tick {
 	v, ok := self.tree.Get(uint64(tickId))
 	if !ok {
 		tick := &Tick{
-			id: tickId,
+			id:                   tickId,
 			stakedLiquidityGross: u256.Zero(),
 			stakedLiquidityDelta: i256.Zero(),
 			cross:                NewUintTree(),
@@ -50,7 +52,7 @@ func (self *Ticks) Has(tickId int32) bool {
 
 type Tick struct {
 	id int32
-	
+
 	stakedLiquidityGross *u256.Uint
 
 	stakedLiquidityDelta *i256.Int
@@ -90,26 +92,22 @@ func (self *Tick) crossInfo(startHeight, endHeight uint64) []int64 {
 func (self *Tick) updateCross(blockNumber uint64, zeroForOne bool) {
 	// cross, ok := self.cross.Get(blockNumber)
 	// if !ok {
-		self.cross.Set(blockNumber, zeroForOne)
+	self.cross.Set(blockNumber, zeroForOne)
 	// } else if cross != zeroForOne {
 	// 	self.cross.Remove(blockNumber)
 	// }
 }
 
-func (self *Tick) currentCross(currentHeight uint64) bool {
+func (self *Tick) previousCross(currentHeight uint64) bool {
 	// There MUST be at least one cross, set when the position is staked
-	crossI, ok := self.cross.Get(currentHeight)
-	if ok {
-		return crossI.(bool)
-	}
 	cross := false
-	self.cross.ReverseIterate(0, currentHeight, func(key uint64, value interface{}) bool {
+	self.cross.ReverseIterate(0, currentHeight-1, func(key uint64, value interface{}) bool {
 		cross = value.(bool)
+		//println(ufmt.Sprintf("key: %d, value: %v\n", key, value))
 		return true
 	})
 	return cross
 }
-
 
 func (self *Tick) modifyDepositLower(currentHeight uint64, currentTick int32, liquidity *i256.Int) {
 	// update staker side tick info
@@ -156,7 +154,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, 
 		if lowerHeight >= endHeight || upperHeight >= endHeight {
 			break
 		}
-		
+
 		// If the heights are the same, and they have the same zeroForOne, the tick has passed through the whole position range(outrange)
 		if upperCross == lowerCross {
 			if currentInRange {
@@ -181,7 +179,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, 
 			continue
 		}
 
-		// Upper tick passed, 
+		// Upper tick passed,
 		// - if zeroForOne, backward cross, negative height, inrange
 		// - If !zeroForOne, forward cross, positive height, outrange
 		// => inRange == upperCross < 0
@@ -239,7 +237,7 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, 
 			if !currentInRange {
 				startHeight = -cross
 				currentInRange = true
-			} 
+			}
 		} else {
 			// exit range
 			if currentInRange {
@@ -283,19 +281,19 @@ func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tick
 		if !ok {
 			return
 		}
-	
+
 		tick := pool.ticks.Get(tickId)
 
 		blockNumber := uint64(height())
 		tick.updateCross(blockNumber, zeroForOne)
-	
+
 		liquidityInRangeDelta := tick.stakedLiquidityDelta
 		if zeroForOne {
 			liquidityInRangeDelta = i256.Zero().Neg(liquidityInRangeDelta)
 		}
 		stakedLiquidity := pool.CurrentStakedLiquidity(blockNumber)
 		pool.stakedLiquidity.Set(blockNumber, liquidityMathAddDelta(stakedLiquidity, liquidityInRangeDelta))
-	
+
 		// I'm not sure if this is needed. We may not need to update the pool info because the stakedLiquidity pointer itself has not changed.
 		// pools.Set(poolPath, pool)
 	}

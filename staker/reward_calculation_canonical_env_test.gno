@@ -256,7 +256,6 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 	poolTier := self.global.poolTier
 
 	// cache per-tier and per-pool rewards	
-	self.t.Logf("poolTier.cacheReward")
 	poolTier.cacheReward(currentHeight, emissionUpdateHeights, emissionUpdates)
 
 	deposit := deposits.Get(tokenId)
@@ -268,7 +267,6 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 		pools.Set(poolPath, pool)
 	}
 
-	self.t.Logf("pool.cacheReward")
 	pool.cacheReward(poolTier, currentHeight)
 
 	// eligible(in-range) intervals for a position
@@ -277,14 +275,14 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 
 	lastCollectHeight := deposit.lastCollectHeight
 
-	initialUpperCross := upperTick.currentCross(lastCollectHeight)
-	initialLowerCross := lowerTick.currentCross(lastCollectHeight)
+	initialUpperCross := upperTick.previousCross(lastCollectHeight)
+	initialLowerCross := lowerTick.previousCross(lastCollectHeight)
+
 	currentlyInRange := initialUpperCross && !initialLowerCross
-	
+
 	tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, currentHeight)
 	tickLowerCrosses := lowerTick.crossInfo(lastCollectHeight, currentHeight)
 
-	self.t.Logf("pool.InternalRewardOf")
 	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
 
 

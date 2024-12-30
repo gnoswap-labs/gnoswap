@@ -50,8 +50,8 @@ func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits
 
 	lastCollectHeight := deposit.lastCollectHeight
 
-	initialUpperCross := upperTick.currentCross(lastCollectHeight)
-	initialLowerCross := lowerTick.currentCross(lastCollectHeight)
+	initialUpperCross := upperTick.previousCross(lastCollectHeight)
+	initialLowerCross := lowerTick.previousCross(lastCollectHeight)
 	currentlyInRange := initialUpperCross && !initialLowerCross
 
 	tickUpperCrosses := upperTick.crossInfo(lastCollectHeight, currentHeight)

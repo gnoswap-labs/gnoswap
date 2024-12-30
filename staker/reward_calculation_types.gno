@@ -124,6 +124,7 @@ func (self *RewardCacheTree) RewardPerInterval(startHeight, endHeight uint64, f 
 	f(endHeight-currentHeight, currentPoolReward)
 }
 
+
 /*
 func (self *RewardCalculationState) RewardPerInterval(startHeight, endHeight int64) {
 	for startHeight >= self.warmups[0].NextWarmupHeight {

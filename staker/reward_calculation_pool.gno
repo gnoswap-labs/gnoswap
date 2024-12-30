@@ -121,15 +121,15 @@ func (self *Pool) StakedLiquidityUpdates(startHeight, endHeight uint64) ([]uint6
 func (self *Pool) cacheRewardPerLiquidityUnit(poolTier *PoolTier, startHeight, endHeight uint64, currentTierReward uint64) {
 	stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
 	ratio := u256.NewUint(currentTierReward)
-	ratio = ratio.Mul(ratio, q96)
-	ratio = ratio.Div(ratio, stakedLiquidity)
+	ratio = u256.Zero().Mul(ratio, q96)
+	ratio = u256.Zero().Div(ratio, stakedLiquidity)
 	self.rewardCache.Set(startHeight, ratio)
 
 	self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
 		stakedLiquidity := value.(*u256.Uint)
 		ratio := u256.NewUint(currentTierReward)
-		ratio = ratio.Mul(ratio, q96)
-		ratio = ratio.Div(ratio, stakedLiquidity)
+		ratio = u256.Zero().Mul(ratio, q96)
+		ratio = u256.Zero().Div(ratio, stakedLiquidity)
 		self.rewardCache.Set(height, ratio)
 
 		return false
@@ -176,6 +176,8 @@ func (self *Pool) cacheReward(poolTier *PoolTier, endHeight uint64) {
 		startHeight = height
 		return false
 	})
+	
+	self.cacheRewardPerLiquidityUnit(poolTier, startHeight, endHeight, currentTierReward)
 }
 
 /*
@@ -255,13 +257,13 @@ func (self *InternalRewardState) Calculate(startHeight, endHeight int64, current
 
 func (self *InternalRewardState) AccumulateReward(startHeight, endHeight uint64) {
 	self.pool.rewardCache.RewardPerInterval(startHeight, endHeight, func(blockNumber uint64, poolRewardI interface{}) {
-		positionLiquidity := self.deposit.liquidity.Clone()
 		poolRewardRatio := poolRewardI.(*u256.Uint)
-		positionReward := positionLiquidity.Mul(positionLiquidity, poolRewardRatio)
-		positionReward = positionReward.Mul(positionReward, u256.NewUint(blockNumber))
+		positionReward := u256.Zero().Mul(self.deposit.liquidity, poolRewardRatio)
+		positionReward = u256.Zero().Mul(positionReward, u256.NewUint(blockNumber))
 
 		acc := self.rewards[self.currentWarmup.Index]
 		acc.Add(acc, positionReward)
+		self.rewards[self.currentWarmup.Index] = acc
 	})
 }
 
