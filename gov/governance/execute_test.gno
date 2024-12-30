@@ -250,7 +250,7 @@ func TestCheckProposalValidation(t *testing.T) {
 				hasPassed:         false,
 			},
 			wantErr: true,
-			errMsg:  "proposal has not passed",
+			errMsg:  "[GNOSWAP-GOVERNANCE-028] proposal not passed",
 		},
 	}
 
