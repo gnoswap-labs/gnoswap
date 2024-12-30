@@ -254,13 +254,11 @@ func (self *ExternalRewardState) ApplyWarmup() {
 			}
 			warmupReward := u256.Zero()
 			warmupReward = warmupReward.Mul(reward, u256.NewUint(warmup.WarmupRatio))
+			warmupReward = warmupReward.Div(warmupReward, u256.NewUint(100))
 
 			warmupPenalty := u256.Zero().Sub(reward, warmupReward)
 
-			warmupReward = warmupReward.Div(warmupReward, u256.NewUint(100))
 			warmupReward = warmupReward.Div(warmupReward, q128)
-
-			warmupPenalty = warmupPenalty.Div(warmupPenalty, u256.NewUint(100))
 			warmupPenalty = warmupPenalty.Div(warmupPenalty, q128)
 
 			self.rewards[i][incentiveId] = warmupReward
@@ -366,13 +364,11 @@ func (self *InternalRewardState) ApplyWarmup() {
 		}
 		reward := u256.Zero()
 		reward = reward.Mul(self.rewards[i], u256.NewUint(warmup.WarmupRatio))
+		reward = reward.Div(reward, u256.NewUint(100))
 		
 		penalty := u256.Zero().Sub(self.rewards[i], reward)
 
-		reward = reward.Div(reward, u256.NewUint(100))
 		reward = reward.Div(reward, q128)
-
-		penalty = penalty.Div(penalty, u256.NewUint(100))
 		penalty = penalty.Div(penalty, q128)
 
 		self.rewards[i] = reward
@@ -425,4 +421,22 @@ func (self *Pool) modifyDeposit(tokenId uint64, liquidity *i256.Int, currentHeig
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentHeight)
 	self.stakedLiquidity.Set(currentHeight, liquidityMathAddDelta(lastStakedLiquidity, liquidity))
+}
+
+// ============================================
+// API/helpers
+// ============================================
+
+func (self *Pool) RewardTokens(height uint64) []string {
+	reward := self.CurrentReward(height)
+	rewardTokens := []string{}
+	if 
+	for incentiveId := range reward {
+		ictv, exist := self.GetByIncentiveId(incentiveId)
+		if !exist {
+			continue
+		}
+		rewardTokens = append(rewardTokens, ictv.RewardToken())
+	}
+	return rewardTokens
 }
