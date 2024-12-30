@@ -2,6 +2,7 @@ package staker
 
 import (
 	"std"
+	"strconv"
 	"time"
 
 	"gno.land/p/demo/json"
@@ -46,11 +47,12 @@ func GetLockedInfoByAddress(addr std.Address) string {
 		}
 	}
 
-	lockedObj := json.ObjectNode("", nil)
-	lockedObj.AppendObject("height", json.StringNode("height", ufmt.Sprintf("%d", std.GetHeight())))
-	lockedObj.AppendObject("now", json.StringNode("now", ufmt.Sprintf("%d", time.Now().Unix())))
-	lockedObj.AppendObject("totalLocked", json.StringNode("totalLocked", ufmt.Sprintf("%d", totalLocked)))
-	lockedObj.AppendObject("claimableAmount", json.StringNode("claimableAmount", ufmt.Sprintf("%d", claimableAmount)))
+	data := json.Builder().
+		WriteString("height", ufmt.Sprintf("%d", std.GetHeight())).
+		WriteString("now", formatUint(time.Now().Unix())).
+		WriteString("totalLocked", formatUint(totalLocked)).
+		WriteString("claimableAmount", formatUint(claimableAmount)).
+		Node()
 
 	return marshal(lockedObj)
 }
@@ -61,10 +63,10 @@ func GetClaimableRewardByAddress(addr std.Address) string {
 
 	emissionReward := userEmissionReward[addr]
 
-	rewardObj := json.ObjectNode("", nil)
-	rewardObj.AppendObject("height", json.StringNode("height", ufmt.Sprintf("%d", std.GetHeight())))
-	rewardObj.AppendObject("now", json.StringNode("now", ufmt.Sprintf("%d", time.Now().Unix())))
-	rewardObj.AppendObject("emissionReward", json.StringNode("emissionReward", ufmt.Sprintf("%d", emissionReward)))
+	data := json.Builder().
+		WriteString("height", formatUint(std.GetHeight())).
+		WriteString("now", formatUint(time.Now().Unix())).
+		WriteString("emissionReward", formatUint(emissionReward)).
 
 	protocolFees, exist := userProtocolFeeReward[addr]
 	if exist {

@@ -13,7 +13,7 @@ func GetTotalStaked() uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
 
-	return gns.BalanceOf(a2u(std.CurrentRealm().Addr()))
+	return getRealmGnsBalance()
 }
 
 // GetTotalStaked returns the total amount of GNS staked.
@@ -21,7 +21,7 @@ func GetTotalStakedWithoutLockedAmount() uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
 
-	return gns.BalanceOf(a2u(std.CurrentRealm().Addr())) - lockedAmount
+	return getRealmGnsBalance() - lockedAmount
 }
 
 // GetTotalDelegated returns the total amount of xGNS delegated.
@@ -72,4 +72,8 @@ func GetDelegationAmountFromTo(from, to std.Address) uint64 {
 	}
 
 	return amount
+}
+
+func getRealmGnsBalance() uint64 {
+	return gns.BalanceOf(a2u(std.CurrentRealm().Addr()))
 }

@@ -3,16 +3,11 @@ package staker
 import (
 	b64 "encoding/base64"
 	"std"
+	"strconv"
 
 	"gno.land/p/demo/json"
+	pusers "gno.land/p/demo/users"
 )
-
-func maxUint64(a, b uint64) uint64 {
-	if a > b {
-		return a
-	}
-	return b
-}
 
 func marshal(data *json.Node) string {
 	b, err := json.Marshal(data)
@@ -40,13 +35,10 @@ func getPrev() (string, string) {
 	return prev.Addr().String(), prev.PkgPath()
 }
 
-func ugnotBalanceOf(addr std.Address) uint64 {
-	testBanker := std.GetBanker(std.BankerTypeRealmIssue)
+func a2u(addr std.Address) pusers.AddressOrName {
+	return pusers.AddressOrName(addr)
+}
 
-	coins := testBanker.GetCoins(addr)
-	if len(coins) == 0 {
-		return 0
-	}
-
-	return uint64(coins.AmountOf("ugnot"))
+func formatUint(v uint64) string {
+	return strconv.FormatUint(v, 10)
 }

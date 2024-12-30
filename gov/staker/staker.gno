@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/ufmt"
-	pusers "gno.land/p/demo/users"
 
 	"gno.land/r/demo/wugnot"
 
@@ -74,7 +73,7 @@ func Delegate(to std.Address, amount uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"to", to.String(),
-		"amount", ufmt.Sprintf("%d", amount),
+		"amount", formatUint(amount),
 	)
 }
 
@@ -128,7 +127,7 @@ func Redelegate(from, to std.Address, amount uint64) {
 		"prevRealm", prevRealm,
 		"from", from.String(),
 		"to", to.String(),
-		"amount", ufmt.Sprintf("%d", amount),
+		"amount", formatUint(amount),
 	)
 }
 
@@ -185,7 +184,7 @@ func Undelegate(from std.Address, amount uint64) {
 		"prevAddr", prevAddr,
 		"prevRealm", prevRealm,
 		"from", from.String(),
-		"amount", ufmt.Sprintf("%d", amount),
+		"amount", formatUint(amount),
 	)
 }
 
@@ -216,7 +215,7 @@ func CollectUndelegatedGns() uint64 {
 				"CollectUndelegatedGns",
 				"prevAddr", prevAddr,
 				"prevRealm", prevRealm,
-				"internal_amount", ufmt.Sprintf("%d", locked.amount),
+				"internal_amount", formatUint(locked.amount),
 			)
 
 			// remove from locked list
@@ -260,7 +259,7 @@ func CollectReward() {
 			"CollectEmissionReward",
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
-			"internal_amount", ufmt.Sprintf("%d", emissionReward),
+			"internal_amount", formatUint(emissionReward),
 		)
 	}
 
@@ -294,7 +293,7 @@ func CollectReward() {
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
 			"internal_tokenPath", tokenPath,
-			"internal_amount", ufmt.Sprintf("%d", amount),
+			"internal_amount", formatUint(amount),
 		)
 	}
 }
@@ -338,7 +337,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"prevAddr", prevAddr,
 			"prevRealm", prevRealm,
 			"to", to.String(),
-			"internal_amount", ufmt.Sprintf("%d", emissionReward),
+			"internal_amount", formatUint(emissionReward),
 		)
 	}
 
@@ -365,17 +364,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			"prevRealm", prevRealm,
 			"to", to.String(),
 			"internal_tokenPath", tokenPath,
-			"internal_amount", ufmt.Sprintf("%d", amount),
+			"internal_amount", formatUint(amount),
 		)
-	}
-}
-
-func a2u(addr std.Address) pusers.AddressOrName {
-	return pusers.AddressOrName(addr)
-}
-
-func checkErr(err error) {
-	if err != nil {
-		panic(err.Error())
 	}
 }
