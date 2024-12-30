@@ -110,7 +110,6 @@ type ApiEmissionDebugPosition struct {
 }
 
 func GetPrintInfo() string {
-	/*
 	emissionDebug := ApiEmissionDebugInfo{}
 	emissionDebug.Height = std.GetHeight()
 	emissionDebug.Time = time.Now().Unix()
@@ -127,7 +126,7 @@ func GetPrintInfo() string {
 		pool.PoolPath = poolPath
 		pool.Tier = tier
 
-		numTier1, numTier2, numTier3 := getNumPoolTiers()
+		numTier1, numTier2, numTier3 := getNumPoolTiers(t)
 		if tier == 1 {
 			pool.NumPoolInSameTier = numTier1
 		} else if tier == 2 {
@@ -135,8 +134,6 @@ func GetPrintInfo() string {
 		} else if tier == 3 {
 			pool.NumPoolInSameTier = numTier3
 		}
-
-		pool.PoolReward = poolGns[poolPath]
 
 		for lpTokenId, deposit := range deposits {
 			if deposit.targetPoolPath == poolPath {
@@ -146,10 +143,7 @@ func GetPrintInfo() string {
 				position.StakedTimestamp = deposit.stakeTimestamp
 				position.StakedDuration = emissionDebug.Height - deposit.stakeHeight
 
-				position.FullAmount = positionGns[lpTokenId]
-				position.Ratio = getRewardRatio(position.StakedDuration)
-				position.RatioAmount = (position.FullAmount * position.Ratio) / 100
-
+				position.Ratio = getRewardRatio(t, position.StakedDuration)
 				pool.Position = append(pool.Position, position)
 			}
 		}
@@ -177,16 +171,13 @@ func GetPrintInfo() string {
 	}
 
 	return string(b)
-	*/
-	panic("SHOULD BE REIMPLEMENTED BEFORE MERGING")
 }
 
 func makePoolsNode(emissionPool []ApiEmissionDebugPool) []*json.Node {
-	/*
 	pools := make([]*json.Node, 0)
 
 	poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
-		numTier1, numTier2, numTier3 := getNumPoolTiers()
+		numTier1, numTier2, numTier3 := getNumPoolTiers(t)
 		numPoolSameTier := uint64(0)
 		tier := internalTier.tier
 		if tier == 1 {
@@ -202,14 +193,11 @@ func makePoolsNode(emissionPool []ApiEmissionDebugPool) []*json.Node {
 			"startTimestamp":  json.NumberNode("startTimestamp", float64(internalTier.startTimestamp)),
 			"tier":            json.NumberNode("tier", float64(tier)),
 			"numPoolSameTier": json.NumberNode("numPoolSameTier", float64(numPoolSameTier)),
-			"poolReward":      json.NumberNode("poolReward", float64(poolGns[poolPath])),
 			"position":        json.ArrayNode("", makePositionsNode(poolPath)),
 		}))
 	})
 
 	return pools
-	*/
-	panic("SHOULD BE REIMPLEMENTED BEFORE MERGING")
 }
 
 func makePositionsNode(poolPath string) []*json.Node {
