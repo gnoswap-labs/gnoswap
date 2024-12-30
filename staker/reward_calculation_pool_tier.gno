@@ -254,6 +254,10 @@ func (self *PoolTier) TierDenominatorUpdates(tier uint64, startHeight, endHeight
 			return false
 		})
 
+		if currentRatio == 0 {
+			lastHeight = height
+			return false
+		}
 		currentCount = value.(uint64)
 		heights = append(heights, height)
 		updates = append(updates, currentCount*(TierRatioLCM/currentRatio))
@@ -333,6 +337,7 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 	}
 
 	heights, updates = self.TierDenominatorUpdates(tier, currentEmissionUpdateHeight, endHeight)
+
 	for j := 0; j < len(heights); j++ {
 		if updates[j] == 0 {
 			rewardCache.Set(heights[j], uint64(0))
@@ -342,6 +347,7 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 		reward := (currentEmissionUpdate * TierRatioLCM) / denominator
 		rewardCache.Set(heights[j], reward)
 	}
+
 }
 
 func (self *PoolTier) cacheReward(endHeight uint64, emissionUpdateHeights []uint64, emissionUpdates []uint64) {
