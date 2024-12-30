@@ -792,7 +792,7 @@ func TestWarmup_1(t *testing.T) {
 	canonical.NextBlock()
 	canonical.AssertEmulatedRewardOf(0, expected * 10)
 }
-/*
+
 func TestWarmup_2(t *testing.T) {
 	modifyWarmup(0, 10)
 	modifyWarmup(1, 10)
@@ -842,8 +842,6 @@ func TestWarmup_2(t *testing.T) {
 	canonical.NextBlock()
 	canonical.NextBlock()
 
-	canonical.AssertEmulatedRewardOf(0, expected0*10+expected1*10)
-
 	expected2 := canonical.PerBlockEmission * 70 / 100
 
 	canonical.NextBlock()
@@ -870,9 +868,9 @@ func TestWarmup_2(t *testing.T) {
 	canonical.NextBlock()
 	canonical.NextBlock()
 
+	canonical.AssertEmulatedRewardOf(0, expected0*10+expected1*10+expected2*10+expected3*10)
 
 }
-	*/
 // ================
 // randomized
 
