@@ -11,6 +11,7 @@ import (
 	pl "gno.land/r/gnoswap/v1/pool"
 )
 
+// Tick mapping for each pool
 type Ticks struct {
 	tree *UintTree // int32 tickId -> tick
 }
@@ -53,8 +54,10 @@ func (self *Ticks) Has(tickId int32) bool {
 type Tick struct {
 	id int32
 
+	// conceptually equal with Pool.liquidityGross but only for the staked positions
 	stakedLiquidityGross *u256.Uint
 
+	// conceptually equal with Pool.liquidityNet but only for the staked positions
 	stakedLiquidityDelta *i256.Int
 
 	// Notes for future optimizations.
@@ -103,7 +106,6 @@ func (self *Tick) previousCross(currentHeight uint64) bool {
 	cross := false
 	self.cross.ReverseIterate(0, currentHeight-1, func(key uint64, value interface{}) bool {
 		cross = value.(bool)
-		//println(ufmt.Sprintf("key: %d, value: %v\n", key, value))
 		return true
 	})
 	return cross

@@ -5,10 +5,6 @@ import (
 	"strings"
 
 	"gno.land/p/demo/avl"
-
-	ufmt "gno.land/p/demo/ufmt"
-
-	u256 "gno.land/p/gnoswap/uint256"
 )
 
 func EncodeUint(num uint64) string {
@@ -129,65 +125,3 @@ func (self *RewardCacheTree) RewardPerInterval(startHeight, endHeight uint64, f 
 		f(endHeight-currentHeight, currentPoolReward)
 	}
 }
-
-
-
-/*
-func (self *RewardCalculationState) RewardPerInterval(startHeight, endHeight int64) {
-	for startHeight >= self.warmups[0].NextWarmupHeight {
-		self.warmups = self.warmups[1:]
-	}
-	if endHeight < self.warmups[0].NextWarmupHeight {
-		// fully submerged in the current warmup
-		self.EligibleIntervalToReward(interval, currentWarmupIndex, currentWarmup, f)
-		continue
-	}
-	// split
-	for self.warmups[0].NextWarmupHeight < endHeight {
-		currentInterval, nextInterval := interval.Split(self.warmups[0].NextWarmupHeight)
-		self.EligibleIntervalToReward(currentInterval, currentWarmupIndex, currentWarmup, f)
-		interval = nextInterval
-		currentWarmupIndex++
-		currentWarmup = deposit.GetWarmup(currentWarmupIndex)
-	}
-	if !interval.IsEmpty() {
-		self.EligibleIntervalToReward(interval, currentWarmupIndex, currentWarmup, f)
-	}
-}
-*/
-/*
-func (self *RewardCacheTree) EligibleIntervalsToReward(deposit *Deposit, f func(int, Warmup, uint64, *u256.Uint, interface{})) {
-	currentWarmupIndex := deposit.FindWarmup(intervals[0].StartHeight)
-	currentWarmup := deposit.GetWarmup(currentWarmupIndex)
-
-	for _, interval := range intervals {
-		
-	}
-}
-
-type Interval struct {
-	StartHeight uint64
-	EndHeight   uint64
-	Value       *u256.Uint
-}
-
-func (self Interval) String() string {
-	return ufmt.Sprintf("Interval{StartHeight: %d, EndHeight: %d, Value: %s}", self.StartHeight, self.EndHeight, self.Value.ToString())
-}
-
-func (self Interval) Split(height uint64) (Interval, Interval) {
-	return Interval{
-		StartHeight: self.StartHeight,
-		EndHeight:   height,
-		Value:       self.Value,
-	}, Interval{
-		StartHeight: height,
-		EndHeight:   self.EndHeight,
-		Value:       self.Value,
-	}
-}
-
-func (self Interval) IsEmpty() bool {
-	return self.StartHeight == self.EndHeight
-}
-*/

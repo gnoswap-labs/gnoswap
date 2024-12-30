@@ -6,6 +6,9 @@ import (
 	"gno.land/p/demo/avl"
 
 	"gno.land/p/demo/ufmt"
+
+	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 // per-pool incentives
@@ -17,7 +20,7 @@ type Incentives struct {
 	// the value map denotes delta of the external incentive per block for the token
 	delta *UintTree // blockNumber -> map[string]int64
 
-	rewardCache *RewardCacheTree // blockNumber -> map[string]int64
+	rewardCache *RewardCacheTree // blockNumber -> map[string]*u256.Uint
 	lastRewardCacheHeight *uint64
 	
 	// refund to the refundee
@@ -83,12 +86,12 @@ func (self *Incentives) GetDelta(height uint64) map[string]int64 {
 }
 
 // cacheReward() MUST be called before this function
-func (self *Incentives) CurrentReward(currentHeight uint64) map[string]int64 {
+func (self *Incentives) CurrentReward(currentHeight uint64) map[string]*u256.Uint {
 	value := self.rewardCache.CurrentReward(currentHeight)
 	if value == nil {
-		return make(map[string]int64)
+		return make(map[string]*u256.Uint)
 	}
-	return value.(map[string]int64)
+	return value.(map[string]*u256.Uint)
 }
 
 func (self *Incentives) create(
@@ -114,66 +117,65 @@ func (self *Incentives) create(
 	startHeight := uint64(incentive.startHeight)
 	self.delta.Set(startHeight, startIncentiveDelta)
 
+	println("startIncentiveDelta")
+	for tokenId, deltaAmount := range startIncentiveDelta {
+		println(startHeight, tokenId, deltaAmount)
+	}
+
 	endHeight := uint64(incentive.endHeight)
 	endIncentiveDelta := self.GetDelta(endHeight)
 	endIncentiveDelta[incentive.rewardToken] -= int64(incentive.rewardPerBlock)
 	self.delta.Set(endHeight, endIncentiveDelta)
+
+	println("endIncentiveDelta")
+	for tokenId, deltaAmount := range endIncentiveDelta {
+		println(endHeight, tokenId, deltaAmount)
+	}
 }
 
 // endHeight MUST be less than or equal to the current block height
-func (self *Incentives) cacheReward(endHeight uint64) {
-	startHeight := *self.lastRewardCacheHeight
+func (self *Incentives) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, stakedLiquidity *u256.Uint) {
 	currentReward := self.CurrentReward(startHeight)
+/*
+	delta := self.GetDelta(startHeight)
+	reward := make(map[string]*u256.Uint)
+	for token, deltaAmount := range delta {
+		delta := i256.NewInt(deltaAmount)
+		deltaQ96 := delta.Mul(delta, _iQ96)
+		currentRewardToken, ok := currentReward[token]
+		if !ok {
+			currentRewardToken = u256.Zero()
+		}
+		deltaApplied := liquidityMathAddDelta(currentRewardToken, deltaQ96)
+		if deltaApplied.IsZero() {
+			continue
+		}
+		reward[token] = deltaApplied
+		println(startHeight, token, deltaAmount, deltaQ96.ToString(), currentRewardToken.ToString(), deltaApplied.ToString())
+	}
+
+	self.rewardCache.Set(startHeight, reward)
+*/
 	self.delta.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
 		delta := value.(map[string]int64)
-		reward := make(map[string]int64)
+		reward := make(map[string]*u256.Uint)
 		for token, deltaAmount := range delta {
-			result := currentReward[token] + deltaAmount
-			if result == 0 {
+			delta := i256.NewInt(deltaAmount)
+			deltaQ96 := i256.Zero().Mul(delta, _iQ96)
+			ratio := i256.Zero().Div(deltaQ96, i256.FromUint256(stakedLiquidity))
+			currentRewardToken, ok := currentReward[token]
+			if !ok {
+				currentRewardToken = u256.Zero()
+			}
+			deltaApplied := liquidityMathAddDelta(currentRewardToken, ratio)
+			if deltaApplied.IsZero() {
 				continue
 			}
-			reward[token] = result
+			reward[token] = deltaApplied
 		}
 		self.rewardCache.Set(key, reward)
+		currentReward = reward
 		return false
 	})
 	*self.lastRewardCacheHeight = endHeight
 }
-/*
-func (self *Incentives) EligibleIntervalToExternalReward(interval Interval, warmup Warmup, positionLiquidity *u256.Uint) (map[string]uint64, map[string]uint64) {
-	totalReward := make(map[string]uint64)
-	totalPenalty := make(map[string]uint64)
-	stakedLiquidity := interval.Value
-
-	self.rewardCache.EligibleIntervalToReward(interval, warmupIndex, warmup, func(blockNumber uint64, poolRewardI interface{}) {
-		poolReward := poolRewardI.(map[string]uint64)
-		for token, poolReward := range poolReward {
-			currentReward, currentPenalty := warmup.CalculateReward(blockNumber, poolReward, positionLiquidity, stakedLiquidity)
-			totalReward[token] += currentReward
-			totalPenalty[token] += currentPenalty
-		}
-	})
-	return totalReward, totalPenalty
-}
-*/
-
-/*
-func (self *Incentives) EligibleIntervalsToExternalReward(intervals []Interval, deposit *Deposit) ([]map[string]uint64, []map[string]uint64) {
-	rewards := make([]map[string]uint64, len(deposit.warmups))
-	penalties := make([]map[string]uint64, len(deposit.warmups))
-	for i := 0; i < len(deposit.warmups); i++ {
-		rewards[i] = make(map[string]uint64)
-		penalties[i] = make(map[string]uint64)
-	}
-	positionLiquidity := deposit.liquidity
-	self.rewardCache.EligibleIntervalsToReward(intervals, deposit, func(warmupIndex int, warmup Warmup, blockNumber uint64, stakedLiquidity *u256.Uint, poolRewardI interface{}) {
-		poolRewards := poolRewardI.(map[string]uint64)
-		for token, poolReward := range poolRewards {
-			currentReward, currentPenalty := warmup.CalculateReward(blockNumber, poolReward, positionLiquidity, stakedLiquidity)
-			rewards[warmupIndex][token] += currentReward
-			penalties[warmupIndex][token] += currentPenalty
-		}
-	})
-	return rewards, penalties
-}
-	*/

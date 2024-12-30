@@ -75,6 +75,8 @@ type canonicalRewardState struct {
 
 	MsPerBlock int64
 	PerBlockEmission uint64
+
+	CurrentTimestamp int64
 }
 
 func NewCanonicalRewardState(t *testing.T, poolTier *PoolTier, pools *Pools, deposits *Deposits, tickCrossHook func(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool)) *canonicalRewardState {
@@ -90,6 +92,7 @@ func NewCanonicalRewardState(t *testing.T, poolTier *PoolTier, pools *Pools, dep
 		emissionUpdates: NewUintTree(),
 		MsPerBlock: 1000,
 		PerBlockEmission: 1000000000,
+		CurrentTimestamp: 0,
 	}
 	result.tickCrossHook = tickCrossHook(pools, func() int64 {
 		return int64(result.CurrentHeight())
@@ -234,6 +237,7 @@ func (self *canonicalRewardState) CalculateCanonicalReward() []reward {
 
 func (self *canonicalRewardState) NextBlock() {
 	self.Reward = append(self.Reward, self.CalculateCanonicalReward())
+	self.CurrentTimestamp += self.MsPerBlock
 }
 
 func (self *canonicalRewardState) NextBlockNoCanonical() {
@@ -248,7 +252,7 @@ func (self *canonicalRewardState) CanonicalRewardOfHeight(depositId uint64, heig
 	return self.Reward[height][depositId]
 }
 
-func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]uint64, []uint64) {
+func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]uint64, []uint64, []map[string]uint64, []map[string]uint64) {
 	currentHeight := uint64(self.CurrentHeight())
 	emissionUpdateHeights, emissionUpdates := self.EmissionUpdates(*self.global.poolTier.lastRewardCacheHeight, currentHeight)
 	deposits := self.global.deposits
@@ -267,7 +271,8 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 		pools.Set(poolPath, pool)
 	}
 
-	pool.cacheReward(poolTier, currentHeight)
+	pool.cacheInternalReward(poolTier, currentHeight)
+	pool.cacheExternalReward(currentHeight)
 
 	// eligible(in-range) intervals for a position
 	upperTick := pool.ticks.Get(deposit.tickUpper)
@@ -285,14 +290,15 @@ func (self *canonicalRewardState) EmulateCalcPositionReward(tokenId uint64) ([]u
 
 	internalRewards, internalPenalties := pool.InternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
 
+	externalRewards, externalPenalties := pool.ExternalRewardOf(deposit).Calculate(int64(lastCollectHeight), int64(currentHeight), currentlyInRange, tickUpperCrosses, tickLowerCrosses)
 
-	return internalRewards, internalPenalties 
+	return internalRewards, internalPenalties, externalRewards, externalPenalties
 }
 
 func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) reward {
 	// emissionUpdateHeights, emissionUpdates := self.EmissionUpdates(*self.global.poolTier.lastRewardCacheHeight, uint64(self.CurrentHeight()))
 
-	rewards, penalties := self.EmulateCalcPositionReward(depositId)
+	rewards, penalties, externalRewards, externalPenalties := self.EmulateCalcPositionReward(depositId)
 
 	deposit := self.global.deposits.Get(depositId)
 	deposit.lastCollectHeight = uint64(self.CurrentHeight())
@@ -305,11 +311,24 @@ func (self *canonicalRewardState) EmulatedRewardOf(depositId uint64) reward {
 	for _, penalty := range penalties {
 		internalPenalty += penalty
 	}
+	external := make(map[string]uint64)
+	for _, er := range externalRewards {
+		for tokenId, reward := range er {
+			external[tokenId] += reward
+		}
+	}
+	externalPenalty := make(map[string]uint64)
+	for _, ep := range externalPenalties {
+		for tokenId, penalty := range ep {
+			externalPenalty[tokenId] += penalty
+		}
+	}
+	
 	return reward {
 		internal: internal,
 		internalPenalty: internalPenalty,
-		external: nil,
-		externalPenalty: nil,
+		external: external,
+		externalPenalty: externalPenalty,
 	}
 }
 
@@ -392,8 +411,35 @@ func (self *canonicalRewardState) UnstakeToken(tokenId uint64) {
 	pool.ticks.Get(deposit.tickUpper).modifyDepositUpper(currentHeight, canonicalPool.tick, signedLiquidity)
 }
 
-func (self *canonicalRewardState) CreateExternalIncentive(targetPoolPath string, rewardToken string, rewardAmount uint64, startTimestamp int64, endTimestamp int64, refundee std.Address, createdHeight int, depositGnsAmount uint64, currentTime int64) {
-	incentive := NewExternalIncentive(targetPoolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp, refundee, int64(createdHeight), depositGnsAmount, self.MsPerBlock, currentTime)
+func newExternalIncentiveByHeight(
+	targetPoolPath string,
+	rewardToken string,
+	rewardAmount uint64,
+	startTimestamp int64,
+	endTimestamp int64,
+	startHeight int64,
+	endHeight int64,
+	refundee std.Address,
+) *ExternalIncentive {
+	rewardPerBlock := rewardAmount / uint64(endHeight - startHeight)
+
+	return &ExternalIncentive{
+		targetPoolPath: targetPoolPath,
+		rewardToken: rewardToken,
+		rewardAmount: rewardAmount,
+		startTimestamp: startTimestamp,
+		endTimestamp: endTimestamp,
+		startHeight: startHeight,
+		endHeight: endHeight,
+		rewardPerBlock: rewardPerBlock,
+		refundee: refundee,
+		createdHeight: startHeight,
+		depositGnsAmount: 0,
+	}
+}
+
+func (self *canonicalRewardState) CreateExternalIncentive(targetPoolPath string, rewardToken string, rewardAmount uint64, startTimestamp, endTimestamp, startHeight, endHeight int64, refundee std.Address) {
+	incentive := newExternalIncentiveByHeight(targetPoolPath, rewardToken, rewardAmount, startTimestamp, endTimestamp, startHeight, endHeight, refundee)
 
 	// update canonical state
 	pool, ok := self.Pool[targetPoolPath]
@@ -515,6 +561,13 @@ func (self *canonicalRewardState) AssertEmulatedRewardOf(depositId uint64, expec
 	reward := self.EmulatedRewardOf(depositId)
 	if !isInErrorRange(expected, reward.internal) {
 		self.t.Errorf("emulated reward of %d mismatch: expected %d, got %d", depositId, expected, reward.internal)
+	}
+}
+
+func (self *canonicalRewardState) AssertEmulatedExternalRewardOf(depositId uint64, tokenId string, expected uint64) {
+	reward := self.EmulatedRewardOf(depositId)
+	if !isInErrorRange(expected, reward.external[tokenId]) {
+		self.t.Errorf("emulated external reward of %d mismatch: expected %d, got %d", depositId, expected, reward.external[tokenId])
 	}
 }
 

@@ -307,7 +307,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 		panic(ufmt.Sprintf("%v: caller is not owner of tokenId(%d)", errNoPermission, tokenId))
 	}
 
-	rewards, penalties := calcPositionReward(uint64(std.GetHeight()), tokenId)
+	rewards, penalties, externalRewards, externalPenalties := calcPositionReward(uint64(std.GetHeight()), tokenId)
 	totalReward := uint64(0)
 	for _, reward := range rewards {
 		totalReward += reward
@@ -318,10 +318,26 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 		totalPenalty += penalty
 	}
 
+	totalExternalReward := make(map[string]uint64)
+	for _, external := range externalRewards {
+		for tokenId, reward := range external {
+			totalExternalReward[tokenId] += reward
+		}
+	}
+
+	totalExternalPenalty := make(map[string]uint64)
+	for _, external := range externalPenalties {
+		for tokenId, penalty := range external {
+			totalExternalPenalty[tokenId] += penalty
+		}
+	}
+
 	toUser := handleUnstakingFee(consts.GNS_PATH, totalReward, true, tokenId, deposit.targetPoolPath)
 	gns.Transfer(a2u(deposit.owner), toUser)
 
 	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), totalPenalty)
+
+	panic("SEND EXTERNAL REWARD")
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(

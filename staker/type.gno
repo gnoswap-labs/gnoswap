@@ -82,6 +82,7 @@ func newExternalIncentive(
 	}
 }
 
+
 func NewExternalIncentive(
 	targetPoolPath string,
 	rewardToken string,

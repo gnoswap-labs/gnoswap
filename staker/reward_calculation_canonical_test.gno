@@ -667,8 +667,99 @@ func TestTickCross_9(t *testing.T) {
 
 }
 
+func TestExternalReward_1(t *testing.T) {
+	canonical := Setup(t)
 
-// Large number of blocks passed
+	gnousdc := GetPoolPath("gno", "usdc", 3000)
+	canonical.CreatePool(gnousdc, 1, 200)
+
+	canonical.CreateExternalIncentive(gnousdc, "gno", 100000000, 1, 5, 1, 5, std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"))
+
+	err := canonical.StakeToken(
+		0, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgg"), 
+		100, 
+		300, 
+		u256.NewUint(1000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+	
+	canonical.NextBlock()
+
+	expected := uint64(100000000 / 4) * 30 / 100
+
+	canonical.AssertEmulatedExternalRewardOf(uint64(0), "gno", expected)
+}
+
+func TestMultiplePool_1(t *testing.T) {
+	canonical := Setup(t)
+
+	gnousdc := GetPoolPath("gno", "usdc", 3000)
+	gnousdc2 := GetPoolPath("gno", "usdc", 10000)
+	canonical.CreatePool(gnousdc, 1, 200)
+	canonical.CreatePool(gnousdc2, 1, 200)
+
+	err := canonical.StakeToken(
+		0, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"), 
+		100, 
+		300, 
+		u256.NewUint(1000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	err = canonical.StakeToken(
+		1, 
+		gnousdc2, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"), 
+		200, 
+		400, 
+		u256.NewUint(2000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	canonical.NextBlock()
+
+	expected := canonical.PerBlockEmission * 30 / 100
+
+	canonical.AssertEmulatedRewardOf(0, expected / 2)
+	canonical.AssertEmulatedRewardOf(1, expected / 2)
+
+	/*
+	canonical.MoveTick(gnousdc, 100)
+	canonical.NextBlock()
+	canonical.AssertEmulatedRewardOf(0, expected / 2)
+	canonical.AssertEmulatedRewardOf(1, expected / 2)
+
+	canonical.MoveTick(gnousdc2, 100)
+	canonical.NextBlock()
+	canonical.AssertEmulatedRewardOf(0, expected / 2)
+	canonical.AssertEmulatedRewardOf(1, 0)
+
+	canonical.MoveTick(gnousdc, 100)
+	canonical.NextBlock()
+	canonical.AssertEmulatedRewardOf(0, 0)
+	canonical.AssertEmulatedRewardOf(1, 0)
+
+	canonical.MoveTick(gnousdc, 300)
+	canonical.MoveTick(gnousdc2, 300)
+	canonical.NextBlock()
+	canonical.AssertEmulatedRewardOf(0, 0)
+	canonical.AssertEmulatedRewardOf(1, expected / 2)
+	*/
+}
+
 // Large number of blocks passed
 func TestLargeBlocksPassed(t *testing.T) {
 	canonical := Setup(t)
