@@ -60,7 +60,7 @@ func CreateExternalIncentive(
 		if ugnotSent != rewardAmount {
 			panic(addDetailToError(
 				errInvalidInput,
-				ufmt.Sprintf("user(%s) sent ugnot(%d) amount not equal to rewardAmount(%d)", std.PrevRealm().Addr(), ugnotSent, rewardAmount),
+				ufmt.Sprintf("staker.gno__CreateExternalIncentive() || user(%s) sent ugnot(%d) amount not equal to rewardAmount(%d)", std.PrevRealm().Addr(), ugnotSent, rewardAmount),
 			))
 		}
 
@@ -80,7 +80,7 @@ func CreateExternalIncentive(
 	if endTimestamp >= MAX_UNIX_EPOCH_TIME {
 		panic(addDetailToError(
 			errInvalidIncentiveEndTime,
-			ufmt.Sprintf("endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp),
+			ufmt.Sprintf("staker.gno__CreateExternalIncentive() || endTimestamp(%d) cannot be later than 253402300799 (9999-12-31 23:59:59)", endTimestamp),
 		))
 	}
 
@@ -140,7 +140,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	if !exists {
 		panic(addDetailToError(
 			errDataNotFound,
-			ufmt.Sprintf("targetPoolPath(%s) does not exist", targetPoolPath),
+			ufmt.Sprintf("staker.gno__EndExternalIncentive() || targetPoolPath(%s) does not exist", targetPoolPath),
 		))
 	}
 
@@ -148,7 +148,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	if !exists {
 		panic(addDetailToError(
 			errCannotEndIncentive,
-			ufmt.Sprintf("cannot end non existent incentive(%d:%d:%s:%s)", startTimestamp, endTimestamp, refundee, rewardToken),
+			ufmt.Sprintf("staker.gno__EndExternalIncentive() || cannot end non existent incentive(%d:%d:%s:%s)", startTimestamp, endTimestamp, refundee, rewardToken),
 		))
 	}
 
@@ -156,7 +156,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	if now < ictv.endTimestamp {
 		panic(addDetailToError(
 			errCannotEndIncentive,
-			ufmt.Sprintf("cannot end incentive before endTimestamp(%d), current(%d)", ictv.endTimestamp, now),
+			ufmt.Sprintf("staker.gno__EndExternalIncentive() || cannot end incentive before endTimestamp(%d), current(%d)", ictv.endTimestamp, now),
 		))
 	}
 
@@ -166,7 +166,7 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	if caller != consts.ADMIN && caller != refundee {
 		panic(addDetailToError(
 			errNoPermission,
-			ufmt.Sprintf("only refundee(%s) or admin(%s) can end incentive, but called from %s", refundee, consts.ADMIN, caller),
+			ufmt.Sprintf("staker.gno__EndExternalIncentive() || only refundee(%s) or admin(%s) can end incentive, but called from %s", refundee, consts.ADMIN, caller),
 		))
 	}
 

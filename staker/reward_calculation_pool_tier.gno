@@ -8,10 +8,12 @@ import (
 	"gno.land/p/demo/ufmt"
 )
 
-// 100, 0, 0 if no tier2 and tier3
-// 80, 0, 20 if no tier2
-// 70, 30, 0 if no tier3
-// 50, 30, 20 if has tier2 and tier3
+const TierRatioLCM = 8400
+
+// 100%, 0%, 0% if no tier2 and tier3
+// 80%, 0%, 20% if no tier2
+// 70%, 30%, 0% if no tier3
+// 50%, 30%, 20% if has tier2 and tier3
 type TierRatio struct {
 	Tier1 uint64
 	Tier2 uint64
@@ -196,7 +198,7 @@ func (self *PoolTier) countOf(tier uint64) *UintTree {
 	default:
 		panic(addDetailToError(
 			errInvalidPoolTier,
-			ufmt.Sprintf("tier(%d) is not valid", tier),
+			ufmt.Sprintf("staker.gno__tier() || tier(%d) is not valid", tier),
 		))
 	}
 }
@@ -221,7 +223,7 @@ func (self *PoolTier) TierMembershipUpdates(poolPath string, startHeight, endHei
 }
 
 func (self *PoolTier) TierDenominatorUpdates(tier uint64, startHeight, endHeight uint64) ([]uint64, []uint64) {
-	// count * (ratio * 100) updates
+	// count * (8400 / tierRatio) updates
 	currentCount := self.CurrentCount(tier, startHeight)
 	currentRatio := self.CurrentRatio(tier, startHeight)
 	heights := make([]uint64, 0)
@@ -235,7 +237,7 @@ func (self *PoolTier) TierDenominatorUpdates(tier uint64, startHeight, endHeight
 			if currentRatio == 0 {
 				return false
 			}
-			update := currentCount * currentRatio
+			update := currentCount * (TierRatioLCM / currentRatio)
 			if ratioHeight == lastHeight && len(heights) > 0 {
 				heights[len(heights)-1] = ratioHeight
 				updates[len(updates)-1] = update
@@ -248,12 +250,12 @@ func (self *PoolTier) TierDenominatorUpdates(tier uint64, startHeight, endHeight
 
 		currentCount = value.(uint64)
 		heights = append(heights, height)
-		updates = append(updates, currentCount*currentRatio)
-
+		updates = append(updates, currentCount*(TierRatioLCM/currentRatio))
 		lastHeight = height
 
 		return false
 	})
+
 
 	// take account of ratio changes after the last count change
 	self.tierRatio.Iterate(lastHeight, endHeight, func(key uint64, value interface{}) bool {
@@ -262,7 +264,7 @@ func (self *PoolTier) TierDenominatorUpdates(tier uint64, startHeight, endHeight
 		if currentRatio == 0 {
 			return false
 		}
-		update := currentCount * currentRatio
+		update := currentCount * (TierRatioLCM / currentRatio)
 		if ratioHeight == lastHeight && len(heights) > 0 {
 			heights[len(heights)-1] = ratioHeight
 			updates[len(updates)-1] = update
@@ -287,7 +289,7 @@ func (self *PoolTier) rewardCacheOf(tier uint64) *RewardCacheTree {
 	default:
 		panic(addDetailToError(
 			errInvalidPoolTier,
-			ufmt.Sprintf("tier(%d) is not valid", tier),
+			ufmt.Sprintf("staker.gno__rewardCacheOf() || tier(%d) is not valid", tier),
 		))
 	}
 }
@@ -300,26 +302,27 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 
 	heights, updates := self.TierDenominatorUpdates(tier, startHeight, currentEmissionUpdateHeight)
 	for j := 0; j < len(heights); j++ {
-		denominator := updates[j]
-		reward := (currentEmissionUpdate * 100) / denominator
+		denominator := updates[j] * 100
+		reward := (currentEmissionUpdate * TierRatioLCM) / denominator
 		rewardCache.Set(heights[j], reward)
 	}
 
 	for i := 0; i < len(emissionUpdateHeights); i++ {
 		heights, updates := self.TierDenominatorUpdates(tier, currentEmissionUpdateHeight, emissionUpdateHeights[i])
 		for j := 0; j < len(heights); j++ {
-			denominator := updates[j]
-			reward := (currentEmissionUpdate * 100) / denominator
+			denominator := updates[j] * 100
+			reward := (currentEmissionUpdate * TierRatioLCM) / denominator
 			rewardCache.Set(heights[j], reward)
 		}
 		currentEmissionUpdateHeight = emissionUpdateHeights[i]
 		currentEmissionUpdate = emissionUpdates[i]
 	}
 	
+
 	heights, updates = self.TierDenominatorUpdates(tier, currentEmissionUpdateHeight, endHeight)
 	for j := 0; j < len(heights); j++ {
-		denominator := updates[j]
-		reward := (currentEmissionUpdate * 100) / denominator
+		denominator := updates[j] * 100
+		reward := (currentEmissionUpdate * TierRatioLCM) / denominator
 		rewardCache.Set(heights[j], reward)
 	}
 }

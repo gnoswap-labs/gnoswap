@@ -13,7 +13,7 @@ import (
 )
 
 func Setup(t *testing.T) *canonicalRewardState {
-	poolTier := NewPoolTier(0)
+	poolTier := NewPoolTier(1)
 	pools := NewPools()
 	deposits := NewDeposits()
 
@@ -736,7 +736,6 @@ func TestMultiplePool_1(t *testing.T) {
 	canonical.AssertEmulatedRewardOf(0, expected / 2)
 	canonical.AssertEmulatedRewardOf(1, expected / 2)
 
-	/*
 	canonical.MoveTick(gnousdc, 100)
 	canonical.NextBlock()
 	canonical.AssertEmulatedRewardOf(0, expected / 2)
@@ -749,7 +748,7 @@ func TestMultiplePool_1(t *testing.T) {
 
 	canonical.MoveTick(gnousdc, 100)
 	canonical.NextBlock()
-	canonical.AssertEmulatedRewardOf(0, 0)
+	canonical.AssertEmulatedRewardOf(0, expected / 2)
 	canonical.AssertEmulatedRewardOf(1, 0)
 
 	canonical.MoveTick(gnousdc, 300)
@@ -757,7 +756,80 @@ func TestMultiplePool_1(t *testing.T) {
 	canonical.NextBlock()
 	canonical.AssertEmulatedRewardOf(0, 0)
 	canonical.AssertEmulatedRewardOf(1, expected / 2)
-	*/
+}
+
+func TestMultiplePool_2(t *testing.T) {
+	canonical := Setup(t)
+
+	gnousdc := GetPoolPath("gno", "usdc", 3000)
+	gnousdc2 := GetPoolPath("gno", "usdc", 10000)
+	gnousdc3 := GetPoolPath("gno", "usdc", 30000)
+	canonical.CreatePool(gnousdc, 1, 200)
+	canonical.CreatePool(gnousdc2, 2, 200)
+	canonical.CreatePool(gnousdc3, 3, 200)
+
+
+	err := canonical.StakeToken(
+		0, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"), 
+		100, 
+		300, 
+		u256.NewUint(1000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	err = canonical.StakeToken(
+		1, 
+		gnousdc2, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"), 
+		200, 
+		400, 
+		u256.NewUint(2000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	err = canonical.StakeToken(
+		2, 
+		gnousdc3, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgz"), 
+		300, 
+		500, 
+		u256.NewUint(3000000000000000000),
+	)
+
+	if err != nil {
+		t.Errorf("StakeToken failed: %s", err.Error())
+	}
+
+	expected := canonical.PerBlockEmission * 30 / 100
+
+	canonical.NextBlock()
+	canonical.AssertEmulatedRewardOf(0, expected * 50 / 100)
+	canonical.AssertEmulatedRewardOf(1, expected * 30 / 100)
+	canonical.AssertEmulatedRewardOf(2, 0)
+	canonical.MoveTick(gnousdc, 100)
+	canonical.MoveTick(gnousdc2, 100)
+	canonical.MoveTick(gnousdc3, 100)
+
+	canonical.NextBlock()
+	canonical.AssertEmulatedRewardOf(0, expected * 50 / 100)
+	canonical.AssertEmulatedRewardOf(1, 0)
+	canonical.AssertEmulatedRewardOf(2, 0)
+	canonical.MoveTick(gnousdc, 400)
+	canonical.MoveTick(gnousdc2, 400)
+	canonical.MoveTick(gnousdc3, 400)
+
+	canonical.NextBlock()
+	canonical.AssertEmulatedRewardOf(0, 0)
+	canonical.AssertEmulatedRewardOf(1, 0)
+	canonical.AssertEmulatedRewardOf(2, expected * 20 / 100)
 }
 
 // Large number of blocks passed

@@ -20,7 +20,7 @@ func poolPathAlign(poolPath string) string {
 	if err != nil {
 		panic(addDetailToError(
 			errInvalidPoolPath,
-			ufmt.Sprintf("invalid poolPath(%s)", poolPath),
+			ufmt.Sprintf("utils.gno__poolPathAlign() || invalid poolPath(%s)", poolPath),
 		))
 	}
 
@@ -51,7 +51,7 @@ func tid(tokenId interface{}) grc721.TokenID {
 	if tokenId == nil {
 		panic(addDetailToError(
 			errDataNotFound,
-			"tokenId is nil",
+			"utils.gno__tid() || tokenId is nil",
 		))
 	}
 
@@ -67,9 +67,23 @@ func tid(tokenId interface{}) grc721.TokenID {
 	default:
 		panic(addDetailToError(
 			errInvalidInput,
-			ufmt.Sprintf("unsupported tokenId type(%T)", tokenId),
+			ufmt.Sprintf("utils.gno__tid() || unsupported tokenId type(%T)", tokenId),
 		))
 	}
+}
+
+func max(x, y int64) int64 {
+	if x > y {
+		return x
+	}
+	return y
+}
+
+func min(x, y uint64) uint64 {
+	if x < y {
+		return x
+	}
+	return y
 }
 
 func prevRealm() string {

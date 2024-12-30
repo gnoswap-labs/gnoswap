@@ -98,9 +98,10 @@ func NewCanonicalRewardState(t *testing.T, poolTier *PoolTier, pools *Pools, dep
 		return int64(result.CurrentHeight())
 	})
 
-	result.SetEmissionUpdate(1000000000)
 
-	result.NextBlock()
+	result.NextBlock() // must skip height 0
+
+	result.SetEmissionUpdate(1000000000)
 
 	return result
 }
@@ -119,6 +120,7 @@ func (self *canonicalRewardState) isInRange(deposit *Deposit) bool {
 func (self *canonicalRewardState) EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
 	heights := make([]uint64, 0)
 	updates := make([]uint64, 0)
+	/*
 	self.emissionUpdates.ReverseIterate(0, startHeight, func(key uint64, value interface{}) bool {
 		heights = append(heights, key)
 		updates = append(updates, value.(uint64))
@@ -127,7 +129,7 @@ func (self *canonicalRewardState) EmissionUpdates(startHeight uint64, endHeight 
 		}
 		return true
 	})
-
+*/
 	self.emissionUpdates.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
 		heights = append(heights, key)
 		updates = append(updates, value.(uint64))
@@ -560,7 +562,7 @@ func isInErrorRange(expected uint64, actual uint64) bool {
 func (self *canonicalRewardState) AssertEmulatedRewardOf(depositId uint64, expected uint64) {
 	reward := self.EmulatedRewardOf(depositId)
 	if !isInErrorRange(expected, reward.internal) {
-		self.t.Errorf("emulated reward of %d mismatch: expected %d, got %d", depositId, expected, reward.internal)
+		self.t.Errorf("emulated reward of %d mismatch: expected %d, got %d(%s@%d)", depositId, expected, reward.internal, self.Pool[self.global.deposits.Get(depositId).targetPoolPath].poolPath, self.Pool[self.global.deposits.Get(depositId).targetPoolPath].tick)
 	}
 }
 

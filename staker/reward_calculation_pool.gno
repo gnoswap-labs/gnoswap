@@ -206,6 +206,10 @@ func (self *Pool) ExternalRewardOf(deposit *Deposit) *ExternalRewardState {
 }
 
 func (self *ExternalRewardState) Calculate(startHeight, endHeight int64, currentlyInRange bool, tickUpperCrosses []int64, tickLowerCrosses []int64) ([]map[string]uint64, []map[string]uint64) {
+	if !self.pool.IsExternallyIncentivizedPool(uint64(startHeight)) {
+		return nil, nil
+	}
+
 	self.TickCrossesToExternalReward(startHeight, endHeight, currentlyInRange, tickUpperCrosses, tickLowerCrosses)
 
 	rewards := make([]map[string]uint64, len(self.deposit.warmups))
