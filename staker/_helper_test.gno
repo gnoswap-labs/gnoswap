@@ -561,7 +561,7 @@ func getNumPoolTiers(t *testing.T) (uint64, uint64, uint64) {
 	tier2Num := poolTier.count[2].tree.Size()
 	tier3Num := poolTier.count[3].tree.Size()
 
-	return tier1Num, tier2Num, tier3Num
+	return uint64(tier1Num), uint64(tier2Num), uint64(tier3Num)
 }
 
 func getRewardRatio(t *testing.T, height int64) uint64 {
