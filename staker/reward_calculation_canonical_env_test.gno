@@ -354,7 +354,7 @@ func (self *canonicalRewardState) StakeToken(tokenId uint64, targetPoolPath stri
 		tickUpper: tickUpper,
 		liquidity: liquidity,
 		lastCollectHeight: uint64(currentHeight),
-		warmups: DefaultWarmups(int64(currentHeight), int64(self.MsPerBlock)),
+		warmups: InstantiateWarmup(int64(currentHeight)),
 	}
 	canonicalPool, ok := self.Pool[deposit.targetPoolPath]
 	if !ok {

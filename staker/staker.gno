@@ -182,6 +182,8 @@ func StakeToken(tokenId uint64) (string, string, string) {
 		liquidity:      liquidity,
 
 		lastCollectHeight: currentHeight,
+
+		warmups: InstantiateWarmup(int64(currentHeight)),
 	}
 	deposits.Set(tokenId, deposit)
 

@@ -832,6 +832,17 @@ func TestMultiplePool_2(t *testing.T) {
 	canonical.AssertEmulatedRewardOf(2, expected * 20 / 100)
 }
 
+func TestMultiplePool_3(t *testing.T) {
+	canonical := Setup(t)
+
+	gnousdc := GetPoolPath("gno", "usdc", 3000)
+	gnousdc2 := GetPoolPath("gno", "usdc", 10000)
+	gnousdc3 := GetPoolPath("gno", "usdc", 30000)
+	canonical.CreatePool(gnousdc, 1, 200)
+	canonical.CreatePool(gnousdc2, 2, 200)
+	canonical.CreatePool(gnousdc3, 3, 200)
+}
+
 // Large number of blocks passed
 func TestLargeBlocksPassed(t *testing.T) {
 	canonical := Setup(t)

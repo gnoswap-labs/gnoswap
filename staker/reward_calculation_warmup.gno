@@ -2,46 +2,102 @@ package staker
 
 import (
 	"math"
+	"std"
 
+	"gno.land/p/demo/ufmt"
 	u256 "gno.land/p/gnoswap/uint256"
+
+	gns "gno.land/r/gnoswap/v1/gns"
 )
 
 type Warmup struct {
 	Index int
-	NextWarmupHeight int64
+	BlockDuration   int64
+	NextWarmupHeight int64 // set to 0 for template
 	WarmupRatio      uint64
 }
 
-func DefaultWarmups(currentHeight, avgBlockTimeInMs int64) []Warmup {
+var warmupTemplate []Warmup = DefaultWarmupTemplate(std.GetHeight())
+
+func DefaultWarmupTemplate(currentHeight int64) []Warmup {
 	msInDay := int64(86400000)
-	blocksInDay := msInDay / int64(avgBlockTimeInMs)
+	blocksInDay := msInDay / int64(gns.GetAvgBlockTimeInMs())
 	blocksIn5Days := int64(5 * blocksInDay)
 	blocksIn10Days := int64(10 * blocksInDay)
 	blocksIn30Days := int64(30 * blocksInDay)
 
+	println(blocksIn5Days, blocksIn10Days, blocksIn30Days)
+
 	return []Warmup{
 		{
 			Index: 0,
-			NextWarmupHeight: currentHeight + blocksIn5Days - 1,
+			BlockDuration: blocksIn5Days,
+			//NextWarmupHeight: currentHeight + blocksIn5Days,
 			WarmupRatio:      30,
 		},
 		{
 			Index: 1,
-			NextWarmupHeight: currentHeight + blocksIn10Days - 1,
+			BlockDuration: blocksIn10Days,
+			//NextWarmupHeight: currentHeight + blocksIn10Days,
 			WarmupRatio:      50,
 		},
 		{
 			Index: 2,
-			NextWarmupHeight: currentHeight + blocksIn30Days - 1,
+			BlockDuration: blocksIn30Days,
+			//NextWarmupHeight: currentHeight + blocksIn30Days,
 			WarmupRatio:      70,
 		},
 		{
 			Index: 3,
-			NextWarmupHeight: math.MaxInt64,
+			BlockDuration: math.MaxInt64,
+			//NextWarmupHeight: math.MaxInt64,
 			WarmupRatio:      100,
 		},
 	}
 }
+
+// expected to be called by governance
+func modifyWarmup(index int, blockDuration int64) {
+	if index >= len(warmupTemplate) {
+		panic(ufmt.Sprintf("index(%d) is out of range", index))
+	}
+
+	warmupTemplate[index].BlockDuration = blockDuration
+}
+
+func InstantiateWarmup(currentHeight int64) []Warmup {
+	warmups := make([]Warmup, 0)
+	for _, warmup := range warmupTemplate {
+		warmups = append(warmups, Warmup {
+			Index: warmup.Index,
+			BlockDuration: warmup.BlockDuration,
+			NextWarmupHeight: currentHeight + warmup.BlockDuration,
+			WarmupRatio: warmup.WarmupRatio,
+		})
+		currentHeight += warmup.BlockDuration
+	}
+	return warmups
+}
+
+/*
+func NewWarmups(currentHeight int64, blockDurations []int64, blockRatios []uint64) []Warmup {
+	warmups := make([]Warmup, 0)
+	for i, duration := range blockDurations {
+		warmups = append(warmups, NewWarmup(currentHeight, i, duration, blockRatios[i]))
+		currentHeight += duration
+	}
+	return warmups
+}
+
+func NewWarmup(currentHeight int64, index int, blockDuration int64, ratio uint64) Warmup {
+	return Warmup{
+		Index: index,
+		BlockDuration: blockDuration,
+		NextWarmupHeight: currentHeight + blockDuration,
+		WarmupRatio: ratio,
+	}
+}
+*/
 
 func (warmup *Warmup) Apply(poolReward uint64, positionLiquidity, stakedLiquidity *u256.Uint) (uint64, uint64) {
 	poolRewardUint := u256.NewUint(poolReward)
