@@ -7,6 +7,8 @@ import (
 
 	"gno.land/p/demo/avl"
 
+	ufmt "gno.land/p/demo/ufmt"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -235,7 +237,6 @@ func (self *ExternalRewardState) AccumulateReward(startHeight, endHeight uint64)
 		for incentiveId, rewardRatio := range poolRewardRatios {
 			positionReward := u256.Zero().Mul(self.deposit.liquidity, rewardRatio)
 			positionReward = u256.Zero().Mul(positionReward, u256.NewUint(blockNumber))
-			println("AccumulateReward", blockNumber, incentiveId, rewardRatio.ToString(), positionReward.ToString())
 			acc, ok := self.rewards[self.currentWarmup.Index][incentiveId]
 			if !ok {
 				acc = u256.Zero()
@@ -278,7 +279,7 @@ func (self *ExternalRewardState) TickCrossesToExternalReward(startHeight, endHei
 
 		if endHeight < warmup.NextWarmupHeight {
 			// fully submerged in the current warmup
-			tickUpperCrosses, tickLowerCrosses = ForEachEligibleInterval(
+			currentlyInRange, tickUpperCrosses, tickLowerCrosses = ForEachEligibleInterval(
 				startHeight,
 				endHeight,
 				currentlyInRange,
@@ -292,7 +293,7 @@ func (self *ExternalRewardState) TickCrossesToExternalReward(startHeight, endHei
 		}
 
 		// partially included in the current warmup
-		tickUpperCrosses, tickLowerCrosses = ForEachEligibleInterval(
+		currentlyInRange, tickUpperCrosses, tickLowerCrosses = ForEachEligibleInterval(
 			startHeight,
 			warmup.NextWarmupHeight,
 			currentlyInRange,
@@ -377,6 +378,7 @@ func (self *InternalRewardState) ApplyWarmup() {
 }
 
 func (self *InternalRewardState) TickCrossesToInternalReward(startHeight, endHeight int64, currentlyInRange bool, tickUpperCrosses []int64, tickLowerCrosses []int64) {
+
 	for _, warmup := range self.deposit.warmups {
 		self.currentWarmup = warmup
 
@@ -387,7 +389,7 @@ func (self *InternalRewardState) TickCrossesToInternalReward(startHeight, endHei
 
 		if endHeight < warmup.NextWarmupHeight {
 			// fully submerged in the current warmup
-			tickUpperCrosses, tickLowerCrosses = ForEachEligibleInterval(
+			currentlyInRange, tickUpperCrosses, tickLowerCrosses = ForEachEligibleInterval(
 				startHeight,
 				endHeight,
 				currentlyInRange,
@@ -401,7 +403,7 @@ func (self *InternalRewardState) TickCrossesToInternalReward(startHeight, endHei
 		}
 
 		// partially included in the current warmup
-		tickUpperCrosses, tickLowerCrosses = ForEachEligibleInterval(
+		currentlyInRange, tickUpperCrosses, tickLowerCrosses = ForEachEligibleInterval(
 			startHeight,
 			warmup.NextWarmupHeight,
 			currentlyInRange,

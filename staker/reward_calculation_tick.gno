@@ -165,7 +165,7 @@ type PerIntervalFunc = func(startHeight, endHeight uint64)
 
 // Gas optimization: encoding { height: int64, inRange: bool } as int64.
 // height will be negative if inRange is false.
-func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, tickUpperCross []int64, tickLowerCross []int64, f PerIntervalFunc) ([]int64, []int64) {
+func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, tickUpperCross []int64, tickLowerCross []int64, f PerIntervalFunc) (bool, []int64, []int64) {
 	tickUpperCrossI := 0
 	tickLowerCrossI := 0
 	tickUpperCrossLen := len(tickUpperCross)
@@ -317,12 +317,10 @@ func ForEachEligibleInterval(startHeight, endHeight int64, currentInRange bool, 
 	}
 
 	if currentInRange {
-		// println("residual currentInRange")
-		// println(ufmt.Sprintf("startHeight: %d, endHeight: %d", startHeight, endHeight))
 		f(uint64(startHeight), uint64(endHeight))
 	}
 
-	return tickUpperCross[tickUpperCrossI:], tickLowerCross[tickLowerCrossI:]
+	return currentInRange, tickUpperCross[tickUpperCrossI:], tickLowerCross[tickLowerCrossI:]
 }
 
 func TickCrossHook(pools *Pools, height func() int64) func(poolPath string, tickId int32, zeroForOne bool) {
