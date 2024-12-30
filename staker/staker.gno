@@ -13,12 +13,12 @@ import (
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 
-	pl "gno.land/r/gnoswap/v1/pool"
 	en "gno.land/r/gnoswap/v1/emission"
+	pl "gno.land/r/gnoswap/v1/pool"
 	pn "gno.land/r/gnoswap/v1/position"
 
-	u256 "gno.land/p/gnoswap/uint256"
 	i256 "gno.land/p/gnoswap/int256"
+	u256 "gno.land/p/gnoswap/uint256"
 )
 
 type Deposits struct {
@@ -34,7 +34,7 @@ func NewDeposits() *Deposits {
 func (self *Deposits) Get(tokenId uint64) *Deposit {
 	depositI, ok := self.tree.Get(EncodeUint(tokenId))
 	if !ok {
-		panic(addDetailToError(	
+		panic(addDetailToError(
 			errDataNotFound,
 			ufmt.Sprintf("staker.gno__Deposits.Get() || tokenId(%d) not found", tokenId),
 		))
@@ -124,20 +124,19 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	if deposits.Has(tokenId) {
 		panic(addDetailToError(
 			errAlreadyStaked,
-			ufmt.Sprintf("staker.gno__StakeToken() || tokenId(%d) already staked", tokenId),
+			ufmt.Sprintf("tokenId(%d) already staked", tokenId),
 		))
 	}
 
-	
 	owner, err := gnft.OwnerOf(tid(tokenId))
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	caller := std.PrevRealm().Addr()
 
 	token0Amount, token1Amount, err := calculateStakeTokenAmount(tokenId, owner, caller)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	// check pool path from tokenid
@@ -149,14 +148,14 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	if !ok {
 		panic(addDetailToError(
 			errNonIncentivizedPool,
-			ufmt.Sprintf("staker.gno__StakeToken() || can not stake position to non incentivized pool(%s)", poolPath),
+			ufmt.Sprintf("can not stake position to non existing pool(%s)", poolPath),
 		))
 	}
 	hasExternal := pool.IsExternallyIncentivizedPool(uint64(std.GetHeight()))
 	if hasInternal == false && hasExternal == false {
 		panic(addDetailToError(
 			errNonIncentivizedPool,
-			ufmt.Sprintf("staker.gno__StakeToken() || can not stake position to non incentivized pool(%s)", poolPath),
+			ufmt.Sprintf("can not stake position to non incentivized pool(%s)", poolPath),
 		))
 	}
 
@@ -166,7 +165,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 	if liquidity.Lte(u256.Zero()) {
 		panic(addDetailToError(
 			errZeroLiquidity,
-			ufmt.Sprintf("staker.gno__StakeToken() || tokenId(%d) has no liquidity", tokenId),
+			ufmt.Sprintf("tokenId(%d) has no liquidity", tokenId),
 		))
 	}
 
@@ -189,7 +188,7 @@ func StakeToken(tokenId uint64) (string, string, string) {
 
 	if caller == owner { // if caller is owner, transfer NFT ownership to staker contract
 		if err := transferDeposit(tokenId, owner, caller, consts.STAKER_ADDR); err != nil {
-			panic(err)
+			panic(err.Error())
 		}
 	}
 
@@ -299,7 +298,7 @@ func transferDeposit(tokenId uint64, owner, caller, to std.Address) error {
 // ref: https://docs.gnoswap.io/contracts/staker/staker.gno#collectreward
 func CollectReward(tokenId uint64, unwrapResult bool) string {
 	common.IsHalted()
-	
+
 	en.MintAndDistributeGns()
 
 	deposit := deposits.Get(tokenId)
@@ -316,7 +315,9 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 
 	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), reward.InternalPenalty)
 
-	panic("SEND EXTERNAL REWARD")
+	// panic("SEND EXTERNAL REWARD")
+	// totalExternalReward
+	// totalExternalPenalty
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -336,6 +337,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 
 	return ""
 }
+
 /*
 func applyCollectReward(
 	result *collectResult,
@@ -463,7 +465,7 @@ func applyUnstake(tokenId uint64) {
 
 	token0Amount, token1Amount, err := calculateStakeTokenAmount(tokenId, owner, caller)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	prevAddr, prevRealm := getPrev()
@@ -494,6 +496,10 @@ func requireTokenOwnership(owner, caller std.Address) error {
 
 // poolHasIncentives checks if the pool has any active incentives (internal or external).
 func poolHasIncentives(poolPath string) error {
+	pools.tree.Iterate("", "", func(poolPath string, value interface{}) bool {
+		return false
+	})
+	//
 	pool, ok := pools.Get(poolPath)
 	if !ok {
 		return ufmt.Errorf(

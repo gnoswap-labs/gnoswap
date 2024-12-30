@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gno.land/p/demo/testutils"
+
 	"gno.land/p/demo/uassert"
 	pusers "gno.land/p/demo/users"
 	"gno.land/r/demo/users"
@@ -164,6 +165,7 @@ func init() {
 }
 
 var (
+	adminAddr   = consts.ADMIN
 	admin       = pusers.AddressOrName(consts.ADMIN)
 	alice       = pusers.AddressOrName(testutils.TestAddress("alice"))
 	pool        = pusers.AddressOrName(consts.POOL_ADDR)
@@ -493,6 +495,7 @@ func burnAllNFT(t *testing.T) {
 }
 
 func TestBeforeResetObject(t *testing.T) {
+	t.Skip("can not be run with other tests")
 	// make actual data to test resetting not only position's state but also pool's state
 	std.TestSetRealm(adminRealm)
 
@@ -540,3 +543,141 @@ func TestBeforeResetObject(t *testing.T) {
 // 	burnAllNFT(t)
 // 	uassert.Equal(t, gnft.TotalSupply(), uint64(0), "gnft total supply should be 0")
 // }
+
+func deletePoolTier(t *testing.T, poolPath string) {
+	poolTier.changeTier(uint64(std.GetHeight()), poolPath, 0)
+}
+
+func addPoolTier(t *testing.T, poolPath string, tier uint64) {
+	poolTier.changeTier(uint64(std.GetHeight()), poolPath, tier)
+	pools.GetOrCreate(poolPath)
+}
+
+func changeWarmup(t *testing.T, index int, blockDuration int64) {
+	modifyWarmup(index, blockDuration)
+}
+
+func getNumPoolTiers(t *testing.T) (uint64, uint64, uint64) {
+	tier1Num := poolTier.count[1].tree.Size()
+	tier2Num := poolTier.count[2].tree.Size()
+	tier3Num := poolTier.count[3].tree.Size()
+
+	return uint64(tier1Num), uint64(tier2Num), uint64(tier3Num)
+}
+
+func GetPrintInfo() string {
+	// emissionDebug := ApiEmissionDebugInfo{}
+	// emissionDebug.Height = std.GetHeight()
+	// emissionDebug.Time = time.Now().Unix()
+	// emissionDebug.GnsStaker = gns.BalanceOf(a2u(consts.STAKER_ADDR))
+	// emissionDebug.GnsDevOps = gns.BalanceOf(a2u(consts.DEV_OPS))
+	// emissionDebug.GnsCommunityPool = gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR))
+	// emissionDebug.GnsGovStaker = gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
+	// emissionDebug.GnsProtocolFee = gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR))
+	// emissionDebug.GnsADMIN = gns.BalanceOf(a2u(consts.ADMIN))
+
+	// poolTiers.Iter(func(poolPath string, internalTier InternalTier) {
+	// 	tier := internalTier.tier
+	// 	pool := ApiEmissionDebugPool{}
+	// 	pool.PoolPath = poolPath
+	// 	pool.Tier = tier
+
+	// 	numTier1, numTier2, numTier3 := getNumPoolTiers() // FIX
+	// 	if tier == 1 {
+	// 		pool.NumPoolInSameTier = numTier1
+	// 	} else if tier == 2 {
+	// 		pool.NumPoolInSameTier = numTier2
+	// 	} else if tier == 3 {
+	// 		pool.NumPoolInSameTier = numTier3
+	// 	}
+
+	// 	pool.PoolReward = poolGns[poolPath] // FIX
+
+	// 	for lpTokenId, deposit := range deposits {
+	// 		if deposit.targetPoolPath == poolPath {
+	// 			position := ApiEmissionDebugPosition{}
+	// 			position.LpTokenId = lpTokenId
+	// 			position.StakedHeight = deposit.stakeHeight
+	// 			position.StakedTimestamp = deposit.stakeTimestamp
+	// 			position.StakedDuration = emissionDebug.Height - deposit.stakeHeight
+
+	// 			position.FullAmount = positionGns[lpTokenId]             // FIX
+	// 			position.Ratio = getRewardRatio(position.StakedDuration) // FIX
+	// 			position.RatioAmount = (position.FullAmount * position.Ratio) / 100
+
+	// 			pool.Position = append(pool.Position, position)
+	// 		}
+	// 	}
+
+	// 	emissionDebug.Pool = append(emissionDebug.Pool, pool)
+	// })
+
+	// node := json.ObjectNode("", map[string]*json.Node{
+	// 	"height": json.NumberNode("", float64(emissionDebug.Height)),
+	// 	"time":   json.NumberNode("", float64(emissionDebug.Time)),
+	// 	"gns": json.ObjectNode("", map[string]*json.Node{
+	// 		"staker":        json.NumberNode("", float64(emissionDebug.GnsStaker)),
+	// 		"devOps":        json.NumberNode("", float64(emissionDebug.GnsDevOps)),
+	// 		"communityPool": json.NumberNode("", float64(emissionDebug.GnsCommunityPool)),
+	// 		"govStaker":     json.NumberNode("", float64(emissionDebug.GnsGovStaker)),
+	// 		"protocolFee":   json.NumberNode("", float64(emissionDebug.GnsProtocolFee)),
+	// 		"GnoswapAdmin":  json.NumberNode("", float64(emissionDebug.GnsADMIN)),
+	// 	}),
+	// 	"pool": json.ArrayNode("", makePoolsNode(emissionDebug.Pool)),
+	// })
+
+	// b, err := json.Marshal(node)
+	// if err != nil {
+	// 	return "JSON MARSHAL ERROR"
+	// }
+
+	// return string(b)
+
+	return ""
+}
+
+type gnsBalanceTracker struct {
+	height               uint64
+	stakerBalance        uint64
+	devOpsBalance        uint64
+	communityPoolBalance uint64
+	govStakerBalance     uint64
+	protocolFeeBalance   uint64
+	callerBalance        uint64
+}
+
+func gnsBalanceCheck(t *testing.T, beforeBalance gnsBalanceTracker, printChange bool) gnsBalanceTracker {
+	t.Helper()
+
+	caller := std.PrevRealm().Addr()
+	height := uint64(std.GetHeight())
+	stakerBalance := gns.BalanceOf(a2u(consts.STAKER_ADDR))
+	devOpsBalance := gns.BalanceOf(a2u(consts.DEV_OPS))
+	communityPoolBalance := gns.BalanceOf(a2u(consts.COMMUNITY_POOL_ADDR))
+	govStakerBalance := gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
+	protocolFeeBalance := gns.BalanceOf(a2u(consts.PROTOCOL_FEE_ADDR))
+	callerBalance := gns.BalanceOf(a2u(caller))
+
+	if printChange {
+		println("[START] gnsBalanceCheck")
+		println("height", beforeBalance.height, "->", height, "|| diff", height-beforeBalance.height)
+		println("stakerBalance", beforeBalance.stakerBalance, "->", stakerBalance, "|| diff", stakerBalance-beforeBalance.stakerBalance)
+		println("devOpsBalance", beforeBalance.devOpsBalance, "->", devOpsBalance, "|| diff", devOpsBalance-beforeBalance.devOpsBalance)
+		println("communityPoolBalance", beforeBalance.communityPoolBalance, "->", communityPoolBalance, "|| diff", communityPoolBalance-beforeBalance.communityPoolBalance)
+		println("govStakerBalance", beforeBalance.govStakerBalance, "->", govStakerBalance, "|| diff", govStakerBalance-beforeBalance.govStakerBalance)
+		println("protocolFeeBalance", beforeBalance.protocolFeeBalance, "->", protocolFeeBalance, "|| diff", protocolFeeBalance-beforeBalance.protocolFeeBalance)
+		println("callerBalance", beforeBalance.callerBalance, "->", callerBalance, "|| diff", callerBalance-beforeBalance.callerBalance)
+		println("[END] gnsBalanceCheck")
+		println()
+	}
+
+	return gnsBalanceTracker{
+		height:               height,
+		stakerBalance:        stakerBalance,
+		devOpsBalance:        devOpsBalance,
+		communityPoolBalance: communityPoolBalance,
+		govStakerBalance:     govStakerBalance,
+		protocolFeeBalance:   protocolFeeBalance,
+		callerBalance:        callerBalance,
+	}
+}

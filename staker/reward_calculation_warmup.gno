@@ -11,8 +11,8 @@ import (
 )
 
 type Warmup struct {
-	Index int
-	BlockDuration   int64
+	Index            int
+	BlockDuration    int64
 	NextWarmupHeight int64 // set to 0 for template
 	WarmupRatio      uint64
 }
@@ -28,28 +28,28 @@ func DefaultWarmupTemplate(currentHeight int64) []Warmup {
 
 	return []Warmup{
 		{
-			Index: 0,
+			Index:         0,
 			BlockDuration: blocksIn5Days,
 			//NextWarmupHeight: currentHeight + blocksIn5Days,
-			WarmupRatio:      30,
+			WarmupRatio: 30,
 		},
 		{
-			Index: 1,
+			Index:         1,
 			BlockDuration: blocksIn10Days,
 			//NextWarmupHeight: currentHeight + blocksIn10Days,
-			WarmupRatio:      50,
+			WarmupRatio: 50,
 		},
 		{
-			Index: 2,
+			Index:         2,
 			BlockDuration: blocksIn30Days,
 			//NextWarmupHeight: currentHeight + blocksIn30Days,
-			WarmupRatio:      70,
+			WarmupRatio: 70,
 		},
 		{
-			Index: 3,
+			Index:         3,
 			BlockDuration: math.MaxInt64,
 			//NextWarmupHeight: math.MaxInt64,
-			WarmupRatio:      100,
+			WarmupRatio: 100,
 		},
 	}
 }
@@ -66,11 +66,11 @@ func modifyWarmup(index int, blockDuration int64) {
 func InstantiateWarmup(currentHeight int64) []Warmup {
 	warmups := make([]Warmup, 0)
 	for _, warmup := range warmupTemplate {
-		warmups = append(warmups, Warmup {
-			Index: warmup.Index,
-			BlockDuration: warmup.BlockDuration,
+		warmups = append(warmups, Warmup{
+			Index:            warmup.Index,
+			BlockDuration:    warmup.BlockDuration,
 			NextWarmupHeight: currentHeight + warmup.BlockDuration,
-			WarmupRatio: warmup.WarmupRatio,
+			WarmupRatio:      warmup.WarmupRatio,
 		})
 		currentHeight += warmup.BlockDuration
 	}
@@ -109,7 +109,6 @@ func (warmup *Warmup) Apply(poolReward uint64, positionLiquidity, stakedLiquidit
 	totalPenalty = u256.Zero().Div(totalPenalty, u256.NewUint(100))
 	return totalReward.Uint64(), totalPenalty.Uint64()
 }
-
 
 func (self *Deposit) FindWarmup(currentHeight int64) int {
 	for i, warmup := range self.warmups {

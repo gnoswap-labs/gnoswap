@@ -53,7 +53,7 @@ func TierRatioFromCounts(tier1Count, tier2Count, tier3Count uint64) *TierRatio {
 func (self *TierRatio) Get(tier uint64) uint64 {
 	switch tier {
 	case 1:
-		return self.Tier1	
+		return self.Tier1
 	case 2:
 		return self.Tier2
 	case 3:
@@ -92,7 +92,7 @@ func NewPoolTier(currentHeight uint64) *PoolTier {
 		tierRatio:  NewUintTree(),
 		membership: avl.NewTree(),
 		rewardCache: [4]*RewardCacheTree{
-			nil, 
+			nil,
 			NewRewardCacheTree(),
 			NewRewardCacheTree(),
 			NewRewardCacheTree(),
@@ -262,7 +262,6 @@ func (self *PoolTier) TierDenominatorUpdates(tier uint64, startHeight, endHeight
 		return false
 	})
 
-
 	// take account of ratio changes after the last count change
 	self.tierRatio.Iterate(lastHeight, endHeight, func(key uint64, value interface{}) bool {
 		ratioHeight := key
@@ -300,7 +299,7 @@ func (self *PoolTier) rewardCacheOf(tier uint64) *RewardCacheTree {
 	}
 }
 
-// emission update and tier membership update happens rarely. 
+// emission update and tier membership update happens rarely.
 // for each emission update(halving or ms per block change),
 // iterate over denominator updates and cache reward for each block
 func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64, currentEmissionUpdateHeight uint64, currentEmissionUpdate uint64, emissionUpdateHeights []uint64, emissionUpdates []uint64) {
@@ -332,7 +331,6 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 		currentEmissionUpdateHeight = emissionUpdateHeights[i]
 		currentEmissionUpdate = emissionUpdates[i]
 	}
-	
 
 	heights, updates = self.TierDenominatorUpdates(tier, currentEmissionUpdateHeight, endHeight)
 	for j := 0; j < len(heights); j++ {
@@ -345,7 +343,6 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 		rewardCache.Set(heights[j], reward)
 	}
 }
-
 
 func (self *PoolTier) cacheReward(endHeight uint64, emissionUpdateHeights []uint64, emissionUpdates []uint64) {
 	startHeight := *self.lastRewardCacheHeight
