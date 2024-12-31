@@ -89,7 +89,8 @@ func init() {
 	// tier 1
 	// ONLY GNOT:GNS 0.3%
 
-	poolTier.changeTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, 1)
+	// poolTier.changeTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1, 1)
+	poolTier = NewPoolTier(uint64(std.GetHeight()), MUST_EXISTS_IN_TIER_1)
 }
 
 // StakeToken stakes an LP token into the staker contract. It transfer the LP token

@@ -7,6 +7,8 @@ import (
 
 	"gno.land/r/gnoswap/v1/gns"
 
+	ufmt "gno.land/p/demo/ufmt"
+
 	//pn "gno.land/r/gnoswap/v1/position"
 
 	u256 "gno.land/p/gnoswap/uint256"
@@ -98,6 +100,9 @@ func CalcPositionReward(currentHeight uint64, tokenId uint64, deposits *Deposits
 	}
 
 	pool.cacheInternalReward(poolTier, currentHeight)
+
+	println(ufmt.Sprintf("pool.currentInternalReward || poolPath(%s), poolTier(%d), currentHeight(%d), currentReward(%s)", poolPath, poolTier.CurrentTier(poolPath, currentHeight), currentHeight, pool.rewardCache.CurrentReward(currentHeight).(*u256.Uint).ToString()))
+
 	pool.cacheExternalReward(currentHeight)
 
 	// eligible(in-range) intervals for a position

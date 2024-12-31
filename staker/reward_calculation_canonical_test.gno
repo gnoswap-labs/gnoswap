@@ -13,7 +13,7 @@ import (
 )
 
 func Setup(t *testing.T) *canonicalRewardState {
-	poolTier := NewPoolTier(1)
+	poolTier := NewPoolTier(1, test_gnousdc)
 	pools := NewPools()
 	deposits := NewDeposits()
 
@@ -23,7 +23,7 @@ func Setup(t *testing.T) *canonicalRewardState {
 func TestSimple(t *testing.T) {
 	canonical := Setup(t)
 
-	gnousdc := GetPoolPath("gno", "usdc", 3000)
+	gnousdc := test_gnousdc
 	canonical.CreatePool(gnousdc, 1, 150)
 
 	err := canonical.StakeToken(
