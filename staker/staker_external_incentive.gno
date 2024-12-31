@@ -102,8 +102,9 @@ func CreateExternalIncentive(
 		std.PrevRealm().Addr(),
 		std.GetHeight(),
 		depositGnsAmount,
-		gns.GetAvgBlockTimeInMs(),
+
 		time.Now().Unix(),
+		gns.GetAvgBlockTimeInMs(),
 	)
 
 	// deposit gns amount
