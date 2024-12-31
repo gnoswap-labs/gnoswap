@@ -7,8 +7,6 @@ import (
 
 	"gno.land/p/demo/avl"
 
-	ufmt "gno.land/p/demo/ufmt"
-
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -103,7 +101,7 @@ func (self *Pool) CurrentReward(currentHeight uint64) *u256.Uint {
 
 // cacheReward() MUST be called before this function
 func (self *Pool) IsExternallyIncentivizedPool(currentHeight uint64) bool {
-	return len(self.incentives.CurrentReward(currentHeight)) > 0
+	return self.incentives.byTime.Size() != 0
 }
 
 func (self *Pool) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, currentTierReward uint64) {
