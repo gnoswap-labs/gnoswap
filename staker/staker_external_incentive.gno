@@ -49,7 +49,7 @@ func CreateExternalIncentive(
 
 	// check token can be used as reward
 	if err := isAllowedForExternalReward(targetPoolPath, rewardToken); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	// native ugnot check
@@ -73,7 +73,7 @@ func CreateExternalIncentive(
 	// must be at least +1 day midnight
 	// must be midnight of the day
 	if err := checkStartTime(startTimestamp); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	// endTimestamp cannot be later than 253402300799 (9999-12-31 23:59:59)
@@ -91,7 +91,7 @@ func CreateExternalIncentive(
 
 	externalDuration := uint64(endTimestamp - startTimestamp)
 	if err := isValidIncentiveDuration(externalDuration); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	pool := pools.GetOrCreate(targetPoolPath)

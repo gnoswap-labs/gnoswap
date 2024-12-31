@@ -73,7 +73,7 @@ func GetUnstakingFee() uint64 {
 func SetUnstakingFeeByAdmin(fee uint64) {
 	caller := std.PrevRealm().Addr()
 	if err := common.AdminOnly(caller); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
 	setUnstakingFee(fee)
