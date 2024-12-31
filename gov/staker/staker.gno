@@ -328,7 +328,7 @@ func CollectRewardFromLaunchPad(to std.Address) {
 			))
 		}
 
-		// transfer GNS to `to``
+		// transfer GNS to `to`
 		gns.Transfer(a2u(to), emissionReward)
 		userEmissionReward[to] = 0
 

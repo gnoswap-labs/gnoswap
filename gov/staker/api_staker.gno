@@ -2,11 +2,9 @@ package staker
 
 import (
 	"std"
-	"strconv"
 	"time"
 
 	"gno.land/p/demo/json"
-	"gno.land/p/demo/ufmt"
 
 	en "gno.land/r/gnoswap/v1/emission"
 )
@@ -48,13 +46,13 @@ func GetLockedInfoByAddress(addr std.Address) string {
 	}
 
 	data := json.Builder().
-		WriteString("height", ufmt.Sprintf("%d", std.GetHeight())).
-		WriteString("now", formatUint(time.Now().Unix())).
-		WriteString("totalLocked", formatUint(totalLocked)).
-		WriteString("claimableAmount", formatUint(claimableAmount)).
+		WriteNumber("height", std.GetHeight()).
+		WriteNumber("now", time.Now().Unix()).
+		WriteNumber("totalLocked", totalLocked).
+		WriteNumber("claimableAmount", claimableAmount).
 		Node()
 
-	return marshal(lockedObj)
+	return marshal(data)
 }
 
 func GetClaimableRewardByAddress(addr std.Address) string {
@@ -64,24 +62,26 @@ func GetClaimableRewardByAddress(addr std.Address) string {
 	emissionReward := userEmissionReward[addr]
 
 	data := json.Builder().
-		WriteString("height", formatUint(std.GetHeight())).
-		WriteString("now", formatUint(time.Now().Unix())).
-		WriteString("emissionReward", formatUint(emissionReward)).
+		WriteNumber("height", std.GetHeight()).
+		WriteNumber("now", time.Now().Unix()).
+		WriteNumber("emissionReward", emissionReward).
+		Node()
 
 	protocolFees, exist := userProtocolFeeReward[addr]
 	if exist {
 		pfArr := json.ArrayNode("", nil)
 		for tokenPath, amount := range protocolFees {
 			if amount > 0 {
-				pfObj := json.ObjectNode("", nil)
-				pfObj.AppendObject("tokenPath", json.StringNode("tokenPath", tokenPath))
-				pfObj.AppendObject("amount", json.StringNode("amount", ufmt.Sprintf("%d", amount)))
+				pfObj := json.Builder().
+					WriteString("tokenPath", tokenPath).
+					WriteNumber("amount", amount).
+					Node()
 				pfArr.AppendArray(pfObj)
 			}
 		}
 
-		rewardObj.AppendObject("protocolFees", pfArr)
+		data.AppendObject("protocolFees", pfArr)
 	}
 
-	return marshal(rewardObj)
+	return marshal(data)
 }
