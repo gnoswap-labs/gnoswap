@@ -3,6 +3,7 @@ package staker
 // Evaluate against the canonical implementation
 
 import (
+	"math"
 	"std"
 	"testing"
 	"strings"
@@ -47,6 +48,73 @@ func TestSimple(t *testing.T) {
 	expected := canonical.PerBlockEmission * 30 / 100
 	canonical.AssertEmulatedRewardOf(0, expected)
 	canonical.AssertCanonicalRewardOf(0, expected)
+}
+
+// To check precision error
+func TestLargeStakedLiquidity(t *testing.T) {
+	canonical := Setup(t)
+
+	gnousdc := test_gnousdc
+	canonical.CreatePool(gnousdc, 1, 150)
+
+	canonical.StakeToken(
+		0, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"), 
+		100, 
+		200, 
+		q128,
+	)
+
+	canonical.NextBlock()
+
+	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, canonical.PerBlockEmission)
+
+	expected := canonical.PerBlockEmission * 30 / 100
+	canonical.AssertEmulatedRewardOf(0, expected)
+	canonical.AssertCanonicalRewardOf(0, expected)
+}
+
+// To check precision error
+func TestLargeStakedLiquidity_2(t *testing.T) {
+	canonical := Setup(t)
+
+	gnousdc := test_gnousdc
+	canonical.CreatePool(gnousdc, 1, 150)
+
+	u2_30 := uint64(1073741824)	
+	u2_33 := uint64(17179869184/2)
+
+	canonical.SetEmissionUpdate(math.MaxUint64/100)
+
+	canonical.StakeToken(
+		0, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgp"), 
+		100, 
+		200, 
+		u256.NewUint(u2_30),
+	)
+
+	canonical.StakeToken(
+		1, 
+		gnousdc, 
+		std.Address("gno1qyqszqgpqyqszqgpqyqszqgpqyqszqgq"), 
+		100, 
+		200, 
+		u256.NewUint(u2_33),
+	)
+
+	canonical.NextBlock()
+
+	canonical.AssertCanonicalInternalRewardPerPool(gnousdc, canonical.PerBlockEmission)
+
+	expected := canonical.PerBlockEmission / 100 * 30
+	canonical.AssertEmulatedRewardOf(0, expected/9)
+	canonical.AssertCanonicalRewardOf(0, expected/9)
+
+	canonical.AssertEmulatedRewardOf(1, expected/9*8)
+	canonical.AssertCanonicalRewardOf(1, expected/9*8)
 }
 
 // Tests simple case with tick crossing
@@ -1036,5 +1104,4 @@ func TestTickCross_9(t *testing.T) {
 		}
 		canonical.AssertEmulatedRewardMap(canonicalRewardMap)
 	}
-
 }

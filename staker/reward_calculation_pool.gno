@@ -12,6 +12,7 @@ import (
 )
 
 var q128 = u256.MustFromDecimal(consts.Q128)
+var q192 = u256.MustFromDecimal("6277101735386680763835789423207666416102355444464034512895")
 
 type Pools struct {
 	tree *avl.Tree // string poolPath -> pool
@@ -58,7 +59,7 @@ type Pool struct {
 	stakedLiquidity *UintTree // blockNumber -> *u256.Uint
 
 	// cache of the internal reward per liquidity for each pool in tier
-	// value: (internal reward / total staked liquidity) * Q128
+	// value: (internal reward / total staked liquidity) * Q192
 	rewardCache           *RewardCacheTree // blockNumber -> *u256.Uint
 	lastRewardCacheHeight *uint64
 
@@ -78,6 +79,7 @@ func NewPool(poolPath string, currentHeight uint64) *Pool {
 	}
 }
 
+// Returns the latest staked liquidity at the height equal or before the current height
 func (self *Pool) CurrentStakedLiquidity(currentHeight uint64) *u256.Uint {
 	stakedLiquidityI, ok := self.stakedLiquidity.Get(currentHeight)
 	if ok {
@@ -105,16 +107,21 @@ func (self *Pool) IsExternallyIncentivizedPool(currentHeight uint64) bool {
 }
 
 func (self *Pool) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, currentTierReward uint64) {
+	if currentTierReward == 0 {
+		self.rewardCache.Set(startHeight, u256.Zero())
+		return
+	}
+
 	stakedLiquidity := self.CurrentStakedLiquidity(startHeight)
 	ratio := u256.NewUint(currentTierReward)
-	ratio = u256.Zero().Mul(ratio, q128)
+	ratio = u256.Zero().Mul(ratio, q192)
 	ratio = u256.Zero().Div(ratio, stakedLiquidity)
 	self.rewardCache.Set(startHeight, ratio)
 
 	self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
 		stakedLiquidity := value.(*u256.Uint)
 		ratio := u256.NewUint(currentTierReward)
-		ratio = u256.Zero().Mul(ratio, q128)
+		ratio = u256.Zero().Mul(ratio, q192)
 		ratio = u256.Zero().Div(ratio, stakedLiquidity)
 		self.rewardCache.Set(height, ratio)
 
@@ -124,44 +131,15 @@ func (self *Pool) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, cur
 
 func (self *Pool) cacheInternalReward(poolTier *PoolTier, endHeight uint64) {
 	startHeight := *self.lastRewardCacheHeight
-	currentTier := poolTier.CurrentTier(self.poolPath, startHeight)
-	currentTierReward := uint64(0)
-	poolTier.membershipOf(self.poolPath).Iterate(startHeight, endHeight, func(membershipUpdateHeight uint64, value interface{}) bool {
-		if currentTier == 0 {
-			// ignore reward updates
-			startHeight = membershipUpdateHeight
-			currentTier = value.(uint64)
-			return false
-		}
+	currentTierReward := poolTier.CurrentReward(poolTier.CurrentTier(self.poolPath, startHeight), startHeight)
 
-		currentTierReward = poolTier.CurrentReward(currentTier, startHeight)
+	tierMembershipHeights, tierMembershipUpdates := poolTier.TierRewardUpdates(self.poolPath, startHeight, endHeight)
 
-		poolTier.rewardCacheOf(currentTier).Iterate(startHeight, membershipUpdateHeight, func(rewardUpdateHeight uint64, value interface{}) bool {
-			self.cacheRewardPerLiquidityUnit(startHeight, rewardUpdateHeight, currentTierReward)
-			currentTierReward = value.(uint64)
-			startHeight = rewardUpdateHeight
-			return false
-		})
-		currentTier = value.(uint64)
-		if currentTier == 0 {
-			self.rewardCache.Set(membershipUpdateHeight, u256.Zero())
-		} else {
-			self.cacheRewardPerLiquidityUnit(startHeight, membershipUpdateHeight, currentTierReward)
-		}
-		startHeight = membershipUpdateHeight
-		return false
-	})
-
-	// take account of tier reward changes after the last tier membership change
-	if currentTier == 0 {
-		return
-	}
-	poolTier.rewardCacheOf(currentTier).Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
+	for i, height := range tierMembershipHeights {
 		self.cacheRewardPerLiquidityUnit(startHeight, height, currentTierReward)
-		currentTierReward = value.(uint64)
+		currentTierReward = tierMembershipUpdates[i]
 		startHeight = height
-		return false
-	})
+	}
 
 	self.cacheRewardPerLiquidityUnit(startHeight, endHeight, currentTierReward)
 }
@@ -225,17 +203,16 @@ func (self *ExternalRewardState) Calculate(startHeight, endHeight int64, current
 			penalties[i][incentiveId] = penalty.Uint64()
 		}
 	}
+
 	return rewards, penalties
 }
 
 func (self *ExternalRewardState) AccumulateReward(startHeight, endHeight uint64) {
 	self.pool.incentives.rewardCache.RewardPerInterval(startHeight, endHeight, func(blockNumber uint64, poolRewardI interface{}) {
-
 		poolRewardRatios := map[string]*u256.Uint{}
 		if poolRewardI != nil {
 			poolRewardRatios = poolRewardI.(map[string]*u256.Uint)
 		}
-
 		for incentiveId, rewardRatio := range poolRewardRatios {
 			positionReward := u256.Zero().Mul(self.deposit.liquidity, rewardRatio)
 			positionReward = u256.Zero().Mul(positionReward, u256.NewUint(blockNumber))
@@ -261,8 +238,8 @@ func (self *ExternalRewardState) ApplyWarmup() {
 
 			warmupPenalty := u256.Zero().Sub(reward, warmupReward)
 
-			warmupReward = warmupReward.Div(warmupReward, q128)
-			warmupPenalty = warmupPenalty.Div(warmupPenalty, q128)
+			warmupReward = warmupReward.Div(warmupReward, q192)
+			warmupPenalty = warmupPenalty.Div(warmupPenalty, q192)
 
 			self.rewards[i][incentiveId] = warmupReward
 			self.penalties[i][incentiveId] = warmupPenalty
@@ -271,7 +248,7 @@ func (self *ExternalRewardState) ApplyWarmup() {
 }
 
 func (self *ExternalRewardState) TickCrossesToExternalReward(startHeight, endHeight int64, currentlyInRange bool, tickUpperCrosses []int64, tickLowerCrosses []int64) {
-	for i, warmup := range self.deposit.warmups {
+	for _, warmup := range self.deposit.warmups {
 		self.currentWarmup = warmup
 
 		if startHeight >= warmup.NextWarmupHeight {
@@ -366,11 +343,11 @@ func (self *InternalRewardState) ApplyWarmup() {
 			continue
 		}
 		reward := u256.Zero()
-		totalReward := u256.Zero().Div(self.rewards[i], q128)
+		totalReward := u256.Zero().Div(self.rewards[i], q192)
 
 		reward = reward.Mul(self.rewards[i], u256.NewUint(warmup.WarmupRatio))
 		reward = reward.Div(reward, u256.NewUint(100))
-		reward = reward.Div(reward, q128)
+		reward = reward.Div(reward, q192)
 
 		penalty := u256.Zero().Sub(totalReward, reward)
 
