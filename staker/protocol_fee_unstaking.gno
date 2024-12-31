@@ -5,8 +5,8 @@ import (
 
 	"gno.land/p/demo/ufmt"
 
-	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/common"
+	"gno.land/r/gnoswap/v1/consts"
 	"gno.land/r/gnoswap/v1/gns"
 )
 
@@ -47,7 +47,8 @@ func handleUnstakingFee(
 
 	} else {
 		// external contract has fee
-		transferByRegisterCall(tokenPath, consts.PROTOCOL_FEE_ADDR, feeAmount)
+		teller := common.GetTokenTeller(tokenPath)
+		teller.Transfer(consts.PROTOCOL_FEE_ADDR, feeAmount)
 
 		std.Emit(
 			"ProtocolFeeExternalReward",

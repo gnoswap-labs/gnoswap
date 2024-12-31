@@ -102,13 +102,17 @@ func CreateExternalIncentive(
 		std.PrevRealm().Addr(),
 		std.GetHeight(),
 		depositGnsAmount,
-	
 		gns.GetAvgBlockTimeInMs(),
 		time.Now().Unix(),
 	)
 
-	gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(GetOrigPkgAddr()), depositGnsAmount)
-	transferFromByRegisterCall(rewardToken, std.PrevRealm().Addr(), GetOrigPkgAddr(), rewardAmount)
+	// deposit gns amount
+	gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(consts.STAKER_ADDR), depositGnsAmount)
+
+	// transfer reward token from user to staker
+	teller := common.GetTokenTeller(rewardToken)
+	teller.TransferFrom(std.PrevRealm().Addr(), consts.STAKER_ADDR, rewardAmount)
+
 	pool.incentives.create(std.PrevRealm().Addr(), incentive)
 
 	incentiveId := incentiveIdByTime(uint64(startTimestamp), uint64(endTimestamp), std.PrevRealm().Addr(), rewardToken)
@@ -173,12 +177,14 @@ func EndExternalIncentive(refundee std.Address, targetPoolPath, rewardToken stri
 	// when incentive ended, refund remaining reward
 	refund := ictv.rewardLeft
 
-	poolLeftExternalRewardAmount := balanceOfByRegisterCall(ictv.rewardToken, GetOrigPkgAddr())
+	poolLeftExternalRewardAmount := common.BalanceOf(ictv.rewardToken, consts.STAKER_ADDR)
 	if poolLeftExternalRewardAmount < refund {
 		refund = poolLeftExternalRewardAmount
 	}
 
-	transferByRegisterCall(ictv.rewardToken, ictv.refundee, refund)
+	teller := common.GetTokenTeller(ictv.rewardToken)
+	teller.Transfer(ictv.refundee, refund)
+
 	// unwrap if wugnot
 	if ictv.rewardToken == consts.WUGNOT_PATH {
 		unwrap(refund)
