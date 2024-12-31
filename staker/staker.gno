@@ -308,16 +308,25 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 		panic(ufmt.Sprintf("%v: caller is not owner of tokenId(%d)", errNoPermission, tokenId))
 	}
 
+	// get all internal and external rewards
 	reward := calcPositionReward(uint64(std.GetHeight()), tokenId)
+	println("COLLECT REWARD")
+	externalReward := reward.External
+	println("externalReward", externalReward)
+	println()
+	externalPenalty := reward.ExternalPenalty
+	println("externalPenalty", externalPenalty)
+	println()
+	// println(reward)
+	// println()
+	// println()
 
+	// internal reward to user
 	toUser := handleUnstakingFee(consts.GNS_PATH, reward.Internal, true, tokenId, deposit.targetPoolPath)
 	gns.Transfer(a2u(deposit.owner), toUser)
 
+	// internal penalty to community pool
 	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), reward.InternalPenalty)
-
-	// panic("SEND EXTERNAL REWARD")
-	// totalExternalReward
-	// totalExternalPenalty
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(

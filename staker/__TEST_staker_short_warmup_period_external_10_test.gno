@@ -1,0 +1,271 @@
+// external incentive + warm up period testing
+
+package staker
+
+import (
+	"math"
+	"std"
+	"testing"
+
+	"gno.land/p/demo/uassert"
+
+	"gno.land/r/gnoswap/v1/consts"
+
+	en "gno.land/r/gnoswap/v1/emission"
+	pl "gno.land/r/gnoswap/v1/pool"
+	pn "gno.land/r/gnoswap/v1/position"
+
+	"gno.land/r/gnoswap/v1/gnft"
+	"gno.land/r/gnoswap/v1/gns"
+
+	"gno.land/r/onbloc/bar"
+	"gno.land/r/onbloc/qux"
+)
+
+func TestShortWarmUpExternal(t *testing.T) {
+	testInit(t)
+	testCreatePool(t)
+	testMintBarQux100_1(t)
+	testCreateExternalIncentive(t)
+	testStakeToken_1(t)
+	testBeforeActive(t)
+	testAfterActive(t)
+	testDuratino200(t)
+	testCollectReward(t)
+	// testMintBarQux100_2(t)
+	// testSkipSingleBlock(t)
+	// testStakeToken_2(t)
+	// testSingleBlock_TwoPosition(t)
+	// testCollectRewardAll(t)
+	// testPrintAfterCollect(t)
+}
+
+func testInit(t *testing.T) {
+	t.Run("initialize", func(t *testing.T) {
+		// override warm-up period for testing
+		changeWarmup(t, 0, 150)
+		changeWarmup(t, 1, 300)
+		changeWarmup(t, 2, 900)
+		changeWarmup(t, 3, math.MaxInt64)
+
+		// set unstaking fee to 0
+		SetUnstakingFeeByAdmin(0)
+	})
+}
+
+func testCreatePool(t *testing.T) {
+	t.Run("create pool", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gns.Approve(a2u(consts.POOL_ADDR), pl.GetPoolCreationFee()*3)
+
+		pl.CreatePool(barPath, quxPath, 100, "79228162514264337593543950337")
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testMintBarQux100_1(t *testing.T) {
+	t.Run("mint position 01, bar:qux:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,      // token0
+			quxPath,      // token1
+			fee100,       // fee
+			int32(-1000), // tickLower
+			int32(1000),  // tickUpper
+			"50",         // amount0Desired
+			"50",         // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,
+			adminAddr,
+			adminAddr,
+		)
+
+		uassert.Equal(t, tokenId, uint64(1))
+		uassert.Equal(t, gnft.MustOwnerOf(tid(tokenId)), adminAddr)
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testCreateExternalIncentive(t *testing.T) {
+	t.Run("create external incentive", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.STAKER_ADDR), consts.UINT64_MAX)
+		gns.Approve(a2u(consts.STAKER_ADDR), depositGnsAmount)
+
+		CreateExternalIncentive(
+			"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100", // targetPoolPath string,
+			barPath,  // rewardToken string, // token path should be registered
+			90000000, // _rewardAmount string,
+			1234569600,
+			1234569600+TIMESTAMP_90DAYS,
+		)
+
+		// after
+		// printExternalInfo()
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testStakeToken_1(t *testing.T) {
+	t.Run("stake token 01", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gnft.Approve(consts.STAKER_ADDR, tid(1))
+		StakeToken(1)
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testBeforeActive(t *testing.T) {
+	t.Run("before active", func(t *testing.T) {
+		en.MintAndDistributeGns()
+		// if consts.EMISSION_REFACTORED {
+		// 	CalcPoolPositionRefactor()
+		// } else {
+		// 	CalcPoolPosition()
+		// }
+		// printExternalInfo()
+
+		std.TestSkipHeights(1)
+
+		// pei := GetPrintExternalInfo()
+		// uassert.Equal(t, pei, `{"height":128,"time":1234567900,"position":[]}`)
+	})
+}
+
+func testAfterActive(t *testing.T) {
+	t.Run("after active", func(t *testing.T) {
+		std.TestSkipHeights(849) // in active
+		std.TestSkipHeights(1)   // active // but no block passed since active
+		std.TestSkipHeights(50)  // skip 50 more block
+
+		// pei := GetPrintExternalInfo()
+		// uassert.Equal(t, pei, `{"height":1028,"time":1234569700,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","stakedOrExternalDuration":50,"rewardPerBlock":"5","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":257,"tokenAmountToGive":77,"full30":257,"give30":77,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
+	})
+}
+
+func testDuratino200(t *testing.T) {
+	t.Run("duration 200", func(t *testing.T) {
+		std.TestSkipHeights(199) // skip 1 + 199 = 200 more block
+
+		// pei := GetPrintExternalInfo()
+		// uassert.Equal(t, pei, `{"height":1227,"time":1234570098,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","stakedOrExternalDuration":249,"rewardPerBlock":"5","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":1280,"tokenAmountToGive":485,"full30":771,"give30":231,"full50":509,"give50":254,"full70":0,"give70":0,"full100":0}]}]}`)
+	})
+}
+
+func testCollectReward(t *testing.T) {
+	t.Run("collect reward", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		oldBar := bar.BalanceOf(admin)
+		CollectReward(1, false)
+		std.TestSkipHeights(1)
+		newBar := bar.BalanceOf(admin)
+
+		println("newBar", newBar)
+		println("oldBar", oldBar)
+		println("newBar-oldBar", newBar-oldBar)
+		// uassert.Equal(t, newBar-oldBar, uint64(481))
+
+		// pei := GetPrintExternalInfo()
+		// uassert.Equal(t, pei, `{"height":1228,"time":1234570100,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","stakedOrExternalDuration":250,"rewardPerBlock":"5","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":5,"tokenAmountToGive":2,"full30":0,"give30":0,"full50":5,"give50":2,"full70":0,"give70":0,"full100":0}]}]}`)
+	})
+}
+
+func testMintBarQux100_2(t *testing.T) {
+	t.Run("mint position 02, bar:qux:100", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		bar.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+		qux.Approve(a2u(consts.POOL_ADDR), consts.UINT64_MAX)
+
+		tokenId, liquidity, amount0, amount1 := pn.Mint(
+			barPath,      // token0
+			quxPath,      // token1
+			fee100,       // fee
+			int32(-1000), // tickLower
+			int32(1000),  // tickUpper
+			"50",         // amount0Desired
+			"50",         // amount1Desired
+			"1",          // amount0Min
+			"1",          // amount1Min
+			max_timeout,
+			adminAddr,
+			adminAddr,
+		)
+
+		uassert.Equal(t, tokenId, uint64(2))
+		uassert.Equal(t, gnft.MustOwnerOf(tid(tokenId)), adminAddr)
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testSkipSingleBlock(t *testing.T) {
+	t.Run("skip single block", func(t *testing.T) {
+		// skipped 1 block from previous test
+		// pei := GetPrintExternalInfo()
+		// uassert.Equal(t, pei, `{"height":1229,"time":1234570102,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","stakedOrExternalDuration":251,"rewardPerBlock":"5","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":10,"tokenAmountToGive":4,"full30":0,"give30":0,"full50":10,"give50":4,"full70":0,"give70":0,"full100":0}]}]}`)
+	})
+}
+
+func testStakeToken_2(t *testing.T) {
+	t.Run("stake token 02", func(t *testing.T) {
+		std.TestSetRealm(adminRealm)
+
+		gnft.Approve(consts.STAKER_ADDR, tid(2))
+		StakeToken(2)
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testSingleBlock_TwoPosition(t *testing.T) {
+	t.Run("single block, two position", func(t *testing.T) {
+		// skipped 1 block from previous test
+
+		// pei := GetPrintExternalInfo()
+		// uassert.Equal(t, pei, `{"height":1230,"time":1234570104,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","stakedOrExternalDuration":252,"rewardPerBlock":"5","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":12,"tokenAmountToGive":5,"full30":0,"give30":0,"full50":12,"give50":5,"full70":0,"give70":0,"full100":0}]},{"lpTokenId":2,"stakedHeight":1229,"stakedTimestamp":1234570102,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","stakedOrExternalDuration":1,"rewardPerBlock":"5","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":2,"tokenAmountToGive":0,"full30":2,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
+
+		std.TestSkipHeights(1)
+	})
+}
+
+func testCollectRewardAll(t *testing.T) {
+	t.Run("collect reward all", func(t *testing.T) {
+		std.TestSkipHeights(10)
+
+		// pei := GetPrintExternalInfo()
+		// uassert.Equal(t, pei, `{"height":1241,"time":1234570126,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","stakedOrExternalDuration":263,"rewardPerBlock":"5","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":40,"tokenAmountToGive":19,"full30":0,"give30":0,"full50":40,"give50":19,"full70":0,"give70":0,"full100":0}]},{"lpTokenId":2,"stakedHeight":1229,"stakedTimestamp":1234570102,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","stakedOrExternalDuration":12,"rewardPerBlock":"5","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":30,"tokenAmountToGive":8,"full30":30,"give30":8,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
+
+		std.TestSetRealm(adminRealm)
+
+		oldBar := bar.BalanceOf(admin)
+		CollectReward(1, false)
+		newBar := bar.BalanceOf(admin)
+		uassert.Equal(t, newBar-oldBar, uint64(19))
+
+		oldBar = newBar
+		CollectReward(2, false)
+		newBar = bar.BalanceOf(admin)
+		uassert.Equal(t, newBar-oldBar, uint64(8))
+	})
+}
+
+func testPrintAfterCollect(t *testing.T) {
+	t.Run("print after collect", func(t *testing.T) {
+		// pei := GetPrintExternalInfo()
+		// uassert.Equal(t, pei, `{"height":1241,"time":1234570126,"position":[{"lpTokenId":1,"stakedHeight":126,"stakedTimestamp":1234567896,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","stakedOrExternalDuration":263,"rewardPerBlock":"5","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":0,"tokenAmountToGive":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]},{"lpTokenId":2,"stakedHeight":1229,"stakedTimestamp":1234570102,"incentive":[{"poolPath":"gno.land/r/onbloc/bar:gno.land/r/onbloc/qux:100","rewardToken":"gno.land/r/onbloc/bar","rewardAmount":"20000000","startTimestamp":1234569600,"endTimestamp":1242345600,"rewardPerBlockX96":"407552276307944123423579991440","stakedOrExternalDuration":12,"rewardPerBlock":"5","refundee":"g17290cwvmrapvp869xfnhhawa8sm9edpufzat7d","tokenAmountFull":0,"tokenAmountToGive":0,"full30":0,"give30":0,"full50":0,"give50":0,"full70":0,"give70":0,"full100":0}]}]}`)
+	})
+}
