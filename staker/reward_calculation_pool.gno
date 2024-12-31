@@ -7,6 +7,8 @@ import (
 
 	"gno.land/p/demo/avl"
 
+	ufmt "gno.land/p/demo/ufmt"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -404,13 +406,6 @@ func (self *Pool) modifyDeposit(tokenId uint64, liquidity *i256.Int, currentHeig
 	self.stakedLiquidity.Set(currentHeight, liquidityMathAddDelta(lastStakedLiquidity, liquidity))
 }
 
-func (self *Pool) processUnclaimableInternalReward(poolTier *PoolTier, endHeight uint64) uint64 {
-	startHeight := *self.lastUnclaimableHeight
-	unclaimable := self.UnclaimableInternalReward(poolTier, startHeight, endHeight)
-	self.lastUnclaimableHeight = &endHeight
-	return unclaimable
-}
-
 func (self *Pool) UnclaimableInternalReward(poolTier *PoolTier, startHeight, endHeight uint64) uint64 {
 	tierRewardHeights, tierRewardUpdates := poolTier.TierRewardUpdates(self.poolPath, startHeight, endHeight)
 
@@ -446,6 +441,57 @@ func (self *Pool) UnclaimableInternalReward(poolTier *PoolTier, startHeight, end
 	}	
 
 	return unclaimable
+}
+
+func (self *Pool) UnclaimableExternalReward(incentiveId string, startHeight, endHeight uint64) uint64 {
+	incentive, ok := self.incentives.GetByIncentiveId(incentiveId)
+	if !ok {
+		return 0
+	}
+
+	if startHeight > uint64(incentive.endHeight) || endHeight < uint64(incentive.startHeight) {
+		return 0
+	}
+
+	if startHeight < uint64(incentive.startHeight) {
+		startHeight = uint64(incentive.startHeight)
+	}
+
+	if endHeight > uint64(incentive.endHeight) {
+		endHeight = uint64(incentive.endHeight)
+	}
+
+	rewardPerBlock := incentive.rewardPerBlock
+
+	unclaimable := uint64(0)
+
+	currentStakedLiquidity := self.CurrentStakedLiquidity(startHeight)
+
+	self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
+		if currentStakedLiquidity.IsZero() {
+			unclaimable += rewardPerBlock * (height - startHeight)
+		}
+		startHeight = height
+		currentStakedLiquidity = value.(*u256.Uint)
+		return false
+	})
+
+	if currentStakedLiquidity.IsZero() {
+		unclaimable += rewardPerBlock * (endHeight - startHeight)
+	}
+
+	return unclaimable
+}
+
+func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endHeight uint64) (uint64, map[string]uint64) {
+	startHeight := *self.lastUnclaimableHeight
+	internalUnclaimable := self.UnclaimableInternalReward(poolTier, startHeight, endHeight)
+	externalUnclaimable := make(map[string]uint64)
+	for incentiveId := range self.incentives.CurrentReward(startHeight) {
+		externalUnclaimable[incentiveId] = self.UnclaimableExternalReward(incentiveId, startHeight, endHeight)
+	}
+	self.lastUnclaimableHeight = &endHeight
+	return internalUnclaimable, externalUnclaimable
 }
 
 // ============================================
