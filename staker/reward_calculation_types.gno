@@ -66,6 +66,10 @@ func (self *UintTree) ReverseIterate(start, end uint64, fn func(key uint64, valu
 	})
 }
 
+func (self *UintTree) Size() uint64 {
+	return uint64(self.tree.Size())
+}
+
 type RewardCacheTree struct {
 	tree *avl.Tree
 }
@@ -96,6 +100,10 @@ func (self *RewardCacheTree) Iterate(start, end uint64, fn func(key uint64, valu
 	self.tree.Iterate(EncodeUint(start), EncodeUint(end), func(key string, value interface{}) bool {
 		return fn(DecodeUint(key), value)
 	})
+}
+
+func (self *RewardCacheTree) Size() uint64 {
+	return uint64(self.tree.Size())
 }
 
 func (self *RewardCacheTree) CurrentReward(currentHeight uint64) interface{} {

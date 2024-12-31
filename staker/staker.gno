@@ -65,10 +65,53 @@ func (self *Deposits) Size() int {
 	return self.tree.Size()
 }
 
+type ExternalIncentives struct {
+	tree *avl.Tree
+}
+
+func NewExternalIncentives() *ExternalIncentives {
+	return &ExternalIncentives{
+		tree: avl.NewTree(),
+	}
+}
+
+func (self *ExternalIncentives) Get(incentiveId string) *ExternalIncentive {
+	incentiveI, ok := self.tree.Get(incentiveId)
+	if !ok {
+		panic(addDetailToError(
+			errDataNotFound,
+			ufmt.Sprintf("incentiveId(%s) not found", incentiveId),
+		))
+	}
+
+	incentive := incentiveI.(*ExternalIncentive)
+	return incentive
+}
+
+func (self *ExternalIncentives) Set(incentiveId string, incentive *ExternalIncentive) {
+	self.tree.Set(incentiveId, incentive)
+}
+
+func (self *ExternalIncentives) Has(incentiveId string) bool {
+	return self.tree.Has(incentiveId)
+}
+
+func (self *ExternalIncentives) Remove(incentiveId string) {
+	self.tree.Remove(incentiveId)
+}
+
+func (self *ExternalIncentives) Size() int {
+	return self.tree.Size()
+}
+
 var (
 	/* common */
+
 	// deposits stores deposit information for each tokenId
 	deposits *Deposits = NewDeposits()
+
+	// externalIncenvies stores external incentive information for each incentiveId
+	externalIncenvies *ExternalIncentives = NewExternalIncentives()
 )
 
 const (
@@ -315,14 +358,23 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 	// update lastCollectHeight to current height
 	deposit.lastCollectHeight = uint64(std.GetHeight())
 
-	println("COLLECT REWARD")
+	// transfer external rewards to user
 	externalReward := reward.External
-	println("externalReward", externalReward)
+	for incentiveId, amount := range externalReward {
+		incentive := externalIncenvies.Get(incentiveId)
+		rewardToken := incentive.rewardToken
+
+		// TODO: handle unstaking fee
+		toUser := handleUnstakingFee(rewardToken, amount, false, tokenId, incentive.targetPoolPath)
+
+		teller := common.GetTokenTeller(rewardToken)
+		teller.Transfer(deposit.owner, toUser)
+	}
+
+	// do nothing for external penalty
+	// it will be stored in staker, and when external ends will be refunded
 	externalPenalty := reward.ExternalPenalty
-	println("externalPenalty", externalPenalty)
-	// println(reward)
-	// println()
-	// println()
+	// println("externalPenalty", externalPenalty)
 
 	// internal reward to user
 	toUser := handleUnstakingFee(consts.GNS_PATH, reward.Internal, true, tokenId, deposit.targetPoolPath)

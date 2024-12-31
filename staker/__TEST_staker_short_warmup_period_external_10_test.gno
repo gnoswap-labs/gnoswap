@@ -172,10 +172,8 @@ func testCollectReward(t *testing.T) {
 		CollectReward(1, false)
 		std.TestSkipHeights(1)
 		newBar := bar.BalanceOf(admin)
+		println("collected bar", newBar-oldBar)
 
-		println("newBar", newBar)
-		println("oldBar", oldBar)
-		println("newBar-oldBar", newBar-oldBar)
 		// uassert.Equal(t, newBar-oldBar, uint64(481))
 
 		// pei := GetPrintExternalInfo()

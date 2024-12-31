@@ -225,13 +225,17 @@ func (self *ExternalRewardState) Calculate(startHeight, endHeight int64, current
 			penalties[i][incentiveId] = penalty.Uint64()
 		}
 	}
-
 	return rewards, penalties
 }
 
 func (self *ExternalRewardState) AccumulateReward(startHeight, endHeight uint64) {
 	self.pool.incentives.rewardCache.RewardPerInterval(startHeight, endHeight, func(blockNumber uint64, poolRewardI interface{}) {
-		poolRewardRatios := poolRewardI.(map[string]*u256.Uint)
+
+		poolRewardRatios := map[string]*u256.Uint{}
+		if poolRewardI != nil {
+			poolRewardRatios = poolRewardI.(map[string]*u256.Uint)
+		}
+
 		for incentiveId, rewardRatio := range poolRewardRatios {
 			positionReward := u256.Zero().Mul(self.deposit.liquidity, rewardRatio)
 			positionReward = u256.Zero().Mul(positionReward, u256.NewUint(blockNumber))
@@ -267,7 +271,7 @@ func (self *ExternalRewardState) ApplyWarmup() {
 }
 
 func (self *ExternalRewardState) TickCrossesToExternalReward(startHeight, endHeight int64, currentlyInRange bool, tickUpperCrosses []int64, tickLowerCrosses []int64) {
-	for _, warmup := range self.deposit.warmups {
+	for i, warmup := range self.deposit.warmups {
 		self.currentWarmup = warmup
 
 		if startHeight >= warmup.NextWarmupHeight {
