@@ -84,7 +84,10 @@ func CreateExternalIncentive(
 		))
 	}
 
+	caller := std.PrevRealm().Addr()
+
 	// incentiveId := incentiveIdCompute(std.PrevRealm().Addr(), targetPoolPath, rewardToken, startTimestamp, endTimestamp, std.GetHeight())
+	incentiveId := incentiveIdByTime(uint64(startTimestamp), uint64(endTimestamp), caller, rewardToken)
 
 	externalDuration := uint64(endTimestamp - startTimestamp)
 	if err := isValidIncentiveDuration(externalDuration); err != nil {
@@ -94,12 +97,13 @@ func CreateExternalIncentive(
 	pool := pools.GetOrCreate(targetPoolPath)
 
 	incentive := NewExternalIncentive(
+		incentiveId,
 		targetPoolPath,
 		rewardToken,
 		rewardAmount,
 		startTimestamp,
 		endTimestamp,
-		std.PrevRealm().Addr(),
+		caller,
 		std.GetHeight(),
 		depositGnsAmount,
 
@@ -107,16 +111,17 @@ func CreateExternalIncentive(
 		gns.GetAvgBlockTimeInMs(),
 	)
 
+	// store external incentive information for each incentiveId
+	externalIncenvies.Set(incentiveId, incentive)
+
 	// deposit gns amount
-	gns.TransferFrom(a2u(std.PrevRealm().Addr()), a2u(consts.STAKER_ADDR), depositGnsAmount)
+	gns.TransferFrom(a2u(caller), a2u(consts.STAKER_ADDR), depositGnsAmount)
 
 	// transfer reward token from user to staker
 	teller := common.GetTokenTeller(rewardToken)
-	teller.TransferFrom(std.PrevRealm().Addr(), consts.STAKER_ADDR, rewardAmount)
+	teller.TransferFrom(caller, consts.STAKER_ADDR, rewardAmount)
 
-	pool.incentives.create(std.PrevRealm().Addr(), incentive)
-
-	incentiveId := incentiveIdByTime(uint64(startTimestamp), uint64(endTimestamp), std.PrevRealm().Addr(), rewardToken)
+	pool.incentives.create(caller, incentive)
 
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
@@ -132,8 +137,6 @@ func CreateExternalIncentive(
 		"internal_depositGnsAmount", ufmt.Sprintf("%d", depositGnsAmount),
 		"internal_external", "created",
 	)
-
-	return
 }
 
 // EndExternalIncentive ends the external incentive and refunds the remaining reward
