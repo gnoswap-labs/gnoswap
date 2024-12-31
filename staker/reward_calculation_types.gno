@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"gno.land/p/demo/avl"
+	
+	ufmt "gno.land/p/demo/ufmt"
 )
 
 func EncodeUint(num uint64) string {
@@ -19,7 +21,7 @@ func EncodeUint(num uint64) string {
 func DecodeUint(s string) uint64 {
 	num, err := strconv.ParseUint(s, 10, 64)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 	return num
 }
@@ -66,10 +68,6 @@ func (self *UintTree) ReverseIterate(start, end uint64, fn func(key uint64, valu
 	})
 }
 
-func (self *UintTree) Size() uint64 {
-	return uint64(self.tree.Size())
-}
-
 type RewardCacheTree struct {
 	tree *avl.Tree
 }
@@ -102,10 +100,6 @@ func (self *RewardCacheTree) Iterate(start, end uint64, fn func(key uint64, valu
 	})
 }
 
-func (self *RewardCacheTree) Size() uint64 {
-	return uint64(self.tree.Size())
-}
-
 func (self *RewardCacheTree) CurrentReward(currentHeight uint64) interface{} {
 	result, ok := self.tree.Get(EncodeUint(currentHeight))
 	if ok {
@@ -116,6 +110,14 @@ func (self *RewardCacheTree) CurrentReward(currentHeight uint64) interface{} {
 		return true
 	})
 	return result
+}
+
+func (self *RewardCacheTree) CurrentRewardAt(currentHeight uint64) interface{} {
+	result, ok := self.tree.Get(EncodeUint(currentHeight))
+	if ok {
+		return result
+	}	
+	panic(ufmt.Sprintf("RewardCacheTree.CurrentRewardAt() || currentHeight: %d, not found", currentHeight))
 }
 
 type RewardCalculationFunc = func(blockNumbers uint64, poolReward interface{})
