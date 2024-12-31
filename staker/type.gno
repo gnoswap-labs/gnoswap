@@ -28,19 +28,19 @@ func newInternalTier(tier uint64, startTimestamp int64) InternalTier {
 }
 
 type ExternalIncentive struct {
-	incentiveId       string      // incentive id
-	startTimestamp    int64       // start time for external reward
-	endTimestamp      int64       // end time for external reward
-	createdHeight     int64       // block height when the incentive was created
-	depositGnsAmount  uint64      // deposited gns amount
-	targetPoolPath    string      // external reward target pool path
-	rewardToken       string      // external reward token path
-	rewardAmount      uint64  	  // total reward amount
-	rewardLeft        uint64      // remaining reward amount
-	startHeight       int64       // start height for external reward
-	endHeight         int64       // end height for external reward
-	rewardPerBlock    uint64      // reward per block
-	refundee          std.Address // refundee address
+	incentiveId      string      // incentive id
+	startTimestamp   int64       // start time for external reward
+	endTimestamp     int64       // end time for external reward
+	createdHeight    int64       // block height when the incentive was created
+	depositGnsAmount uint64      // deposited gns amount
+	targetPoolPath   string      // external reward target pool path
+	rewardToken      string      // external reward token path
+	rewardAmount     uint64      // total reward amount
+	rewardLeft       uint64      // remaining reward amount
+	startHeight      int64       // start height for external reward
+	endHeight        int64       // end height for external reward
+	rewardPerBlock   uint64      // reward per block
+	refundee         std.Address // refundee address
 }
 
 func (e ExternalIncentive) StartTimestamp() int64 {
@@ -69,21 +69,21 @@ func newExternalIncentive(
 	refundee std.Address,
 ) ExternalIncentive {
 	return ExternalIncentive{
-		startTimestamp:    startTimestamp,
-		endTimestamp:      endTimestamp,
-		createdHeight:     createdHeight,
-		depositGnsAmount:  depositGnsAmount,
-		targetPoolPath:    targetPoolPath,
-		rewardToken:       rewardToken,
-		rewardAmount:      rewardAmount,
-		rewardLeft:        rewardLeft,
-		rewardPerBlock:    rewardPerBlock,
-		refundee:          refundee,
+		startTimestamp:   startTimestamp,
+		endTimestamp:     endTimestamp,
+		createdHeight:    createdHeight,
+		depositGnsAmount: depositGnsAmount,
+		targetPoolPath:   targetPoolPath,
+		rewardToken:      rewardToken,
+		rewardAmount:     rewardAmount,
+		rewardLeft:       rewardLeft,
+		rewardPerBlock:   rewardPerBlock,
+		refundee:         refundee,
 	}
 }
 
-
 func NewExternalIncentive(
+	incentiveId string,
 	targetPoolPath string,
 	rewardToken string,
 	rewardAmount uint64,
@@ -107,16 +107,17 @@ func NewExternalIncentive(
 	endHeight := std.GetHeight() + blocksLeftUntilEndHeight
 
 	return &ExternalIncentive{
-		targetPoolPath: targetPoolPath,
-		rewardToken: rewardToken,
-		rewardAmount: rewardAmount,
-		startTimestamp: startTimestamp,
-		endTimestamp: endTimestamp,
-		startHeight: startHeight,
-		endHeight: endHeight,
-		rewardPerBlock: rewardPerBlock,
-		refundee: refundee,
-		createdHeight: createdHeight,
+		incentiveId:      incentiveId,
+		targetPoolPath:   targetPoolPath,
+		rewardToken:      rewardToken,
+		rewardAmount:     rewardAmount,
+		startTimestamp:   startTimestamp,
+		endTimestamp:     endTimestamp,
+		startHeight:      startHeight,
+		endHeight:        endHeight,
+		rewardPerBlock:   rewardPerBlock,
+		refundee:         refundee,
+		createdHeight:    createdHeight,
 		depositGnsAmount: depositGnsAmount,
 	}
 }
@@ -154,12 +155,12 @@ type Deposit struct {
 	stakeTimestamp int64       // staked time
 	stakeHeight    int64       // staked block height
 
-	targetPoolPath string      // staked position's pool path
-	tickLower      int32       // tick lower
-	tickUpper      int32       // tick upper
-	liquidity      *u256.Uint  // liquidity
+	targetPoolPath string     // staked position's pool path
+	tickLower      int32      // tick lower
+	tickUpper      int32      // tick upper
+	liquidity      *u256.Uint // liquidity
 
 	lastCollectHeight uint64 // last collect block height
 
-	warmups []Warmup    // warmup information
+	warmups []Warmup // warmup information
 }
