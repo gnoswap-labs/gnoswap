@@ -19,7 +19,7 @@ func EncodeUint(num uint64) string {
 func DecodeUint(s string) uint64 {
 	num, err := strconv.ParseUint(s, 10, 64)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	return num
 }

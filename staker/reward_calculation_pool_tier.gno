@@ -280,17 +280,47 @@ func (self *PoolTier) TierRatioUpdates(tier uint64, startHeight, endHeight uint6
 }
 
 /*
-func (self *PoolTier) TierDenominatorUpdates(tier uint64, startHeight, endHeight uint64) ([]uint64, []uint64) {
-	// count * (8400 / tierRatio) updates
-	currentCount := self.CurrentCount(tier, startHeight)
-	currentRatio := self.CurrentRatio(tier, startHeight)
-	heights := make([]uint64, 0)
-	updates := make([]uint64, 0)
+	func (self *PoolTier) TierDenominatorUpdates(tier uint64, startHeight, endHeight uint64) ([]uint64, []uint64) {
+		// count * (8400 / tierRatio) updates
+		currentCount := self.CurrentCount(tier, startHeight)
+		currentRatio := self.CurrentRatio(tier, startHeight)
+		heights := make([]uint64, 0)
+		updates := make([]uint64, 0)
 
-	tierCountTree := self.countOf(tier)
-	lastHeight := startHeight
-	tierCountTree.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
-		self.tierRatio.Iterate(lastHeight, height, func(ratioHeight uint64, value interface{}) bool {
+		tierCountTree := self.countOf(tier)
+		lastHeight := startHeight
+		tierCountTree.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
+			self.tierRatio.Iterate(lastHeight, height, func(ratioHeight uint64, value interface{}) bool {
+				currentRatio = value.(*TierRatio).Get(tier)
+				if currentRatio == 0 {
+					return false
+				}
+				update := currentCount * (TierRatioLCM / currentRatio)
+				if ratioHeight == lastHeight && len(heights) > 0 {
+					heights[len(heights)-1] = ratioHeight
+					updates[len(updates)-1] = update
+				} else {
+					heights = append(heights, ratioHeight)
+					updates = append(updates, update)
+				}
+				return false
+			})
+
+			if currentRatio == 0 {
+				lastHeight = height
+				return false
+			}
+			currentCount = value.(uint64)
+			heights = append(heights, height)
+			updates = append(updates, currentCount*(TierRatioLCM/currentRatio))
+			lastHeight = height
+
+			return false
+		})
+
+		// take account of ratio changes after the last count change
+		self.tierRatio.Iterate(lastHeight, endHeight, func(key uint64, value interface{}) bool {
+			ratioHeight := key
 			currentRatio = value.(*TierRatio).Get(tier)
 			if currentRatio == 0 {
 				return false
@@ -306,38 +336,8 @@ func (self *PoolTier) TierDenominatorUpdates(tier uint64, startHeight, endHeight
 			return false
 		})
 
-		if currentRatio == 0 {
-			lastHeight = height
-			return false
-		}
-		currentCount = value.(uint64)
-		heights = append(heights, height)
-		updates = append(updates, currentCount*(TierRatioLCM/currentRatio))
-		lastHeight = height
-
-		return false
-	})
-
-	// take account of ratio changes after the last count change
-	self.tierRatio.Iterate(lastHeight, endHeight, func(key uint64, value interface{}) bool {
-		ratioHeight := key
-		currentRatio = value.(*TierRatio).Get(tier)
-		if currentRatio == 0 {
-			return false
-		}
-		update := currentCount * (TierRatioLCM / currentRatio)
-		if ratioHeight == lastHeight && len(heights) > 0 {
-			heights[len(heights)-1] = ratioHeight
-			updates[len(updates)-1] = update
-		} else {
-			heights = append(heights, ratioHeight)
-			updates = append(updates, update)
-		}
-		return false
-	})
-
-	return heights, updates
-}
+		return heights, updates
+	}
 */
 func (self *PoolTier) rewardCacheOf(tier uint64) *RewardCacheTree {
 	switch tier {
@@ -355,14 +355,14 @@ func (self *PoolTier) rewardCacheOf(tier uint64) *RewardCacheTree {
 	}
 }
 func nextHeightUpdateI(
-	emissionUpdateHeights []uint64, 
+	emissionUpdateHeights []uint64,
 	emissionUpdateI int,
-	countUpdateHeights []uint64, 
+	countUpdateHeights []uint64,
 	countUpdateI int,
-	ratioUpdateHeights []uint64, 
+	ratioUpdateHeights []uint64,
 	ratioUpdateI int,
 ) (
-	nextHeight uint64, 
+	nextHeight uint64,
 	nextEmissionUpdateI, nextCountUpdateI, nextRatioUpdateI int,
 ) {
 	// Use a sentinel so that a “finished” slice does not interfere
@@ -464,22 +464,22 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 	countUpdateHeights, countUpdates := self.TierCountUpdates(tier, startHeight, endHeight)
 	ratioUpdateHeights, ratioUpdates := self.TierRatioUpdates(tier, startHeight, endHeight)
 
-	println(ufmt.Sprintf("cacheTierReward() || tier(%d) || startHeight(%d) || endHeight(%d)", tier, startHeight, endHeight))
+	// println(ufmt.Sprintf("cacheTierReward() || tier(%d) || startHeight(%d) || endHeight(%d)", tier, startHeight, endHeight))
 	emissionUpdateHeightsStr := "emissionUpdateHeights: "
 	for i, height := range emissionUpdateHeights {
 		emissionUpdateHeightsStr += ufmt.Sprintf("{%d, %d}, ", height, emissionUpdates[i])
 	}
-	println(emissionUpdateHeightsStr)
+	// println(emissionUpdateHeightsStr)
 	countUpdateHeightsStr := "countUpdates: "
 	for i, height := range countUpdateHeights {
 		countUpdateHeightsStr += ufmt.Sprintf("{%d, %d}, ", height, countUpdates[i])
 	}
-	println(countUpdateHeightsStr)
+	// println(countUpdateHeightsStr)
 	ratioUpdateHeightsStr := "ratioUpdateHeights: "
 	for i, height := range ratioUpdateHeights {
 		ratioUpdateHeightsStr += ufmt.Sprintf("{%d, %d}, ", height, ratioUpdates[i])
 	}
-	println(ratioUpdateHeightsStr)
+	// println(ratioUpdateHeightsStr)
 
 	emissionUpdateI := 0
 	countUpdateI := 0
@@ -492,13 +492,13 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 	currentRatio := ratioUpdates[ratioUpdateI]
 
 	for emissionUpdateI < len(emissionUpdateHeights) || countUpdateI < len(countUpdateHeights) || ratioUpdateI < len(ratioUpdateHeights) {
-		println(ufmt.Sprintf("0 cacheTierReward() || tier(%d) || currentHeight(%d) || emissionUpdate(%d:%d) || countUpdate(%d:%d) || ratioUpdate(%d:%d)", tier, currentHeight, emissionUpdateI, currentEmission, countUpdateI, currentCount, ratioUpdateI, currentRatio))
+		// println(ufmt.Sprintf("0 cacheTierReward() || tier(%d) || currentHeight(%d) || emissionUpdate(%d:%d) || countUpdate(%d:%d) || ratioUpdate(%d:%d)", tier, currentHeight, emissionUpdateI, currentEmission, countUpdateI, currentCount, ratioUpdateI, currentRatio))
 		currentHeight, emissionUpdateI, countUpdateI, ratioUpdateI = nextHeightUpdateI(
-			emissionUpdateHeights, 
+			emissionUpdateHeights,
 			emissionUpdateI,
-			countUpdateHeights, 
+			countUpdateHeights,
 			countUpdateI,
-			ratioUpdateHeights, 
+			ratioUpdateHeights,
 			ratioUpdateI,
 		)
 
@@ -512,15 +512,15 @@ func (self *PoolTier) cacheTierReward(tier uint64, startHeight, endHeight uint64
 			currentRatio = ratioUpdates[ratioUpdateI]
 		}
 
-		println(ufmt.Sprintf("1 cacheTierReward() || tier(%d) || currentHeight(%d) || emissionUpdate(%d:%d) || countUpdate(%d:%d) || ratioUpdate(%d:%d)", tier, currentHeight, emissionUpdateI, currentEmission, countUpdateI, currentCount, ratioUpdateI, currentRatio))
+		// println(ufmt.Sprintf("1 cacheTierReward() || tier(%d) || currentHeight(%d) || emissionUpdate(%d:%d) || countUpdate(%d:%d) || ratioUpdate(%d:%d)", tier, currentHeight, emissionUpdateI, currentEmission, countUpdateI, currentCount, ratioUpdateI, currentRatio))
 
 		if currentCount == 0 {
 			rewardCache.Set(currentHeight, uint64(0))
-			println(ufmt.Sprintf("cacheTierReward() set || tier(%d) || currentHeight(%d) || count(%d) || ratio(%d) || reward(%d)", tier, currentHeight, currentCount, currentRatio, 0))
+			// println(ufmt.Sprintf("cacheTierReward() set || tier(%d) || currentHeight(%d) || count(%d) || ratio(%d) || reward(%d)", tier, currentHeight, currentCount, currentRatio, 0))
 		} else {
 			reward := currentEmission * currentRatio / currentCount / 100
 			rewardCache.Set(currentHeight, reward)
-			println(ufmt.Sprintf("cacheTierReward() set || tier(%d) || currentHeight(%d) || count(%d) || ratio(%d) || reward(%d)", tier, currentHeight, currentCount, currentRatio, reward))
+			// println(ufmt.Sprintf("cacheTierReward() set || tier(%d) || currentHeight(%d) || count(%d) || ratio(%d) || reward(%d)", tier, currentHeight, currentCount, currentRatio, reward))
 		}
 	}
 }

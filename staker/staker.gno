@@ -364,7 +364,6 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 		incentive := externalIncenvies.Get(incentiveId)
 		rewardToken := incentive.rewardToken
 
-		// TODO: handle unstaking fee
 		toUser := handleUnstakingFee(rewardToken, amount, false, tokenId, incentive.targetPoolPath)
 
 		teller := common.GetTokenTeller(rewardToken)
