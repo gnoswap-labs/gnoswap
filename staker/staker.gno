@@ -310,13 +310,15 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 
 	// get all internal and external rewards
 	reward := calcPositionReward(uint64(std.GetHeight()), tokenId)
+
+	// update lastCollectHeight to current height
+	deposit.lastCollectHeight = uint64(std.GetHeight())
+
 	println("COLLECT REWARD")
 	externalReward := reward.External
 	println("externalReward", externalReward)
-	println()
 	externalPenalty := reward.ExternalPenalty
 	println("externalPenalty", externalPenalty)
-	println()
 	// println(reward)
 	// println()
 	// println()
