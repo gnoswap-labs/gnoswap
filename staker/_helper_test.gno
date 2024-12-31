@@ -15,6 +15,7 @@ import (
 	"gno.land/r/demo/wugnot"
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
+	en "gno.land/r/gnoswap/v1/emission"
 	"gno.land/r/gnoswap/v1/gnft"
 	"gno.land/r/gnoswap/v1/gns"
 	pl "gno.land/r/gnoswap/v1/pool"
@@ -505,6 +506,8 @@ func isInErrorRange(expected uint64, actual uint64) bool {
 }
 
 func getPrintInfo(t *testing.T) string {
+	en.MintAndDistributeGns()
+
 	emissionDebug := ApiEmissionDebugInfo{}
 	emissionDebug.Height = std.GetHeight()
 	emissionDebug.Time = time.Now().Unix()
