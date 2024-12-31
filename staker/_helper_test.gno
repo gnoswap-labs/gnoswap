@@ -440,6 +440,10 @@ func addPoolTier(t *testing.T, poolPath string, tier uint64) {
 	pools.GetOrCreate(poolPath)
 }
 
+func changePoolTier(t *testing.T, poolPath string, tier uint64) {
+	poolTier.changeTier(uint64(std.GetHeight()), poolPath, tier)
+}
+
 func changeWarmup(t *testing.T, index int, blockDuration int64) {
 	modifyWarmup(index, blockDuration)
 }
