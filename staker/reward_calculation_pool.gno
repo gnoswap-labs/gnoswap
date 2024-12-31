@@ -493,20 +493,3 @@ func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endHeight uint64)
 	self.lastUnclaimableHeight = &endHeight
 	return internalUnclaimable, externalUnclaimable
 }
-
-// ============================================
-// API/helpers
-// ============================================
-// func (self *Pool) RewardTokens(height uint64) []string {
-// 	reward := self.CurrentReward(height)
-// 	rewardTokens := []string{}
-// 	if
-// 	for incentiveId := range reward {
-// 		ictv, exist := self.GetByIncentiveId(incentiveId)
-// 		if !exist {
-// 			continue
-// 		}
-// 		rewardTokens = append(rewardTokens, ictv.RewardToken())
-// 	}
-// 	return rewardTokens
-// }

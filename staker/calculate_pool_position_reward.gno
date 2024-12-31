@@ -1,18 +1,13 @@
 package staker
 
 import (
-	//"time"
-
 	"gno.land/r/gnoswap/v1/consts"
 
 	"gno.land/r/gnoswap/v1/gns"
 
 	ufmt "gno.land/p/demo/ufmt"
 
-	//pn "gno.land/r/gnoswap/v1/position"
-
 	u256 "gno.land/p/gnoswap/uint256"
-	//en "gno.land/r/gnoswap/v1/emission"
 )
 
 // Q96

@@ -133,27 +133,6 @@ func (self *Incentives) create(
 func (self *Incentives) cacheRewardPerLiquidityUnit(startHeight, endHeight uint64, stakedLiquidity *u256.Uint) {
 	currentReward := self.CurrentReward(startHeight)
 
-/*
-	delta := self.GetDelta(startHeight)
-	reward := make(map[string]*u256.Uint)
-	for token, deltaAmount := range delta {
-		delta := i256.NewInt(deltaAmount)
-		deltaQ96 := delta.Mul(delta, _iQ96)
-		currentRewardToken, ok := currentReward[token]
-		if !ok {
-			currentRewardToken = u256.Zero()
-		}
-		deltaApplied := liquidityMathAddDelta(currentRewardToken, deltaQ96)
-		if deltaApplied.IsZero() {
-			continue
-		}
-		reward[token] = deltaApplied
-		println(startHeight, token, deltaAmount, deltaQ96.ToString(), currentRewardToken.ToString(), deltaApplied.ToString())
-	}
-
-	self.rewardCache.Set(startHeight, reward)
-*/
-
 	self.incentiveBound.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
 		bound := value.([]IncentiveBound)
 		reward := make(map[string]*u256.Uint)

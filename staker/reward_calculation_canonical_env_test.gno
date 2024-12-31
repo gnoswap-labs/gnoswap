@@ -113,16 +113,7 @@ func (self *canonicalRewardState) isInRange(deposit *Deposit) bool {
 func (self *canonicalRewardState) EmissionUpdates(startHeight uint64, endHeight uint64) ([]uint64, []uint64) {
 	heights := make([]uint64, 0)
 	updates := make([]uint64, 0)
-	/*
-	self.emissionUpdates.ReverseIterate(0, startHeight, func(key uint64, value interface{}) bool {
-		heights = append(heights, key)
-		updates = append(updates, value.(uint64))
-		if key == startHeight {
-			startHeight = key + 1
-		}
-		return true
-	})
-*/
+
 	self.emissionUpdates.Iterate(startHeight, endHeight, func(key uint64, value interface{}) bool {
 		heights = append(heights, key)
 		updates = append(updates, value.(uint64))

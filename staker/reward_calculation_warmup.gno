@@ -19,13 +19,15 @@ type Warmup struct {
 
 var warmupTemplate []Warmup = DefaultWarmupTemplate(std.GetHeight())
 
-func DefaultWarmupTemplate(currentHeight int64) []Warmup {
+func DefaultWarmupTemplate() []Warmup {
 	msInDay := int64(86400000)
 	blocksInDay := msInDay / int64(gns.GetAvgBlockTimeInMs())
 	blocksIn5Days := int64(5 * blocksInDay)
 	blocksIn10Days := int64(10 * blocksInDay)
 	blocksIn30Days := int64(30 * blocksInDay)
 
+	// NextWarmupHeights are set to 0 for template.
+	// It will be set by InstantiateWarmup()
 	return []Warmup{
 		{
 			Index:         0,
@@ -81,26 +83,6 @@ func InstantiateWarmup(currentHeight int64) []Warmup {
 	}
 	return warmups
 }
-
-/*
-func NewWarmups(currentHeight int64, blockDurations []int64, blockRatios []uint64) []Warmup {
-	warmups := make([]Warmup, 0)
-	for i, duration := range blockDurations {
-		warmups = append(warmups, NewWarmup(currentHeight, i, duration, blockRatios[i]))
-		currentHeight += duration
-	}
-	return warmups
-}
-
-func NewWarmup(currentHeight int64, index int, blockDuration int64, ratio uint64) Warmup {
-	return Warmup{
-		Index: index,
-		BlockDuration: blockDuration,
-		NextWarmupHeight: currentHeight + blockDuration,
-		WarmupRatio: ratio,
-	}
-}
-*/
 
 func (warmup *Warmup) Apply(poolReward uint64, positionLiquidity, stakedLiquidity *u256.Uint) (uint64, uint64) {
 	poolRewardUint := u256.NewUint(poolReward)
