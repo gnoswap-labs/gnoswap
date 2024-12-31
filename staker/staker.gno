@@ -382,6 +382,11 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 	// internal penalty to community pool
 	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), reward.InternalPenalty)
 
+	unclaimableInternal, unclaimableExternal := ProcessUnclaimableReward(deposit.targetPoolPath, uint64(std.GetHeight()))
+
+	// internal unclaimable to community pool
+	gns.Transfer(a2u(consts.COMMUNITY_POOL_ADDR), unclaimableInternal)
+
 	prevAddr, prevRealm := getPrev()
 	std.Emit(
 		"CollectRewardEmission",
@@ -396,6 +401,7 @@ func CollectReward(tokenId uint64, unwrapResult bool) string {
 		"internal_amount", ufmt.Sprintf("%d", toUser),
 		"internal_unstakingFee", ufmt.Sprintf("%d", reward.Internal-toUser),
 		"internal_left", ufmt.Sprintf("%d", reward.InternalPenalty),
+		"internal_unclaimable", ufmt.Sprintf("%d", unclaimableInternal),
 	)
 
 	return ""

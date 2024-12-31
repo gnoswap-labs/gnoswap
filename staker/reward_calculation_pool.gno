@@ -7,6 +7,8 @@ import (
 
 	"gno.land/p/demo/avl"
 
+	ufmt "gno.land/p/demo/ufmt"
+
 	i256 "gno.land/p/gnoswap/int256"
 	u256 "gno.land/p/gnoswap/uint256"
 )
@@ -57,6 +59,7 @@ type Pool struct {
 	// conceptually equal with Pool.liquidity but only for the staked positions
 	// updated each time when the pool crosses a staked tick
 	stakedLiquidity *UintTree // blockNumber -> *u256.Uint
+	lastUnclaimableHeight *uint64
 
 	// cache of the internal reward per liquidity for each pool in tier
 	// value: (internal reward / total staked liquidity) * Q192
@@ -72,6 +75,7 @@ func NewPool(poolPath string, currentHeight uint64) *Pool {
 	return &Pool{
 		poolPath:              poolPath,
 		stakedLiquidity:       NewUintTree(),
+		lastUnclaimableHeight: &currentHeight,
 		rewardCache:           NewRewardCacheTree(),
 		lastRewardCacheHeight: &currentHeight,
 		incentives:            NewIncentives(currentHeight),
@@ -400,6 +404,94 @@ func (self *Pool) modifyDeposit(tokenId uint64, liquidity *i256.Int, currentHeig
 	// update staker side pool info
 	lastStakedLiquidity := self.CurrentStakedLiquidity(currentHeight)
 	self.stakedLiquidity.Set(currentHeight, liquidityMathAddDelta(lastStakedLiquidity, liquidity))
+}
+
+func (self *Pool) UnclaimableInternalReward(poolTier *PoolTier, startHeight, endHeight uint64) uint64 {
+	tierRewardHeights, tierRewardUpdates := poolTier.TierRewardUpdates(self.poolPath, startHeight, endHeight)
+
+	currentTierReward := tierRewardUpdates[0]
+
+	unclaimable := uint64(0)
+
+	currentStakedLiquidity := self.CurrentStakedLiquidity(startHeight)
+
+	for i := 1; i < len(tierRewardHeights); i++ {
+		endHeight := tierRewardHeights[i]
+
+		currentStakedLiquidity = self.CurrentStakedLiquidity(startHeight)
+		self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
+			if currentStakedLiquidity.IsZero() {
+				unclaimable += currentTierReward * (height - startHeight)
+			}
+			startHeight = height
+			currentStakedLiquidity = value.(*u256.Uint)
+			return false
+		})
+
+		if currentStakedLiquidity.IsZero() {
+			unclaimable += currentTierReward * (endHeight - startHeight)
+		}
+
+		startHeight = endHeight
+		currentTierReward = tierRewardUpdates[i]
+	}
+
+	if currentStakedLiquidity.IsZero() {
+		unclaimable += currentTierReward * (endHeight - startHeight)
+	}	
+
+	return unclaimable
+}
+
+func (self *Pool) UnclaimableExternalReward(incentiveId string, startHeight, endHeight uint64) uint64 {
+	incentive, ok := self.incentives.GetByIncentiveId(incentiveId)
+	if !ok {
+		return 0
+	}
+
+	if startHeight > uint64(incentive.endHeight) || endHeight < uint64(incentive.startHeight) {
+		return 0
+	}
+
+	if startHeight < uint64(incentive.startHeight) {
+		startHeight = uint64(incentive.startHeight)
+	}
+
+	if endHeight > uint64(incentive.endHeight) {
+		endHeight = uint64(incentive.endHeight)
+	}
+
+	rewardPerBlock := incentive.rewardPerBlock
+
+	unclaimable := uint64(0)
+
+	currentStakedLiquidity := self.CurrentStakedLiquidity(startHeight)
+
+	self.stakedLiquidity.Iterate(startHeight, endHeight, func(height uint64, value interface{}) bool {
+		if currentStakedLiquidity.IsZero() {
+			unclaimable += rewardPerBlock * (height - startHeight)
+		}
+		startHeight = height
+		currentStakedLiquidity = value.(*u256.Uint)
+		return false
+	})
+
+	if currentStakedLiquidity.IsZero() {
+		unclaimable += rewardPerBlock * (endHeight - startHeight)
+	}
+
+	return unclaimable
+}
+
+func (self *Pool) processUnclaimableReward(poolTier *PoolTier, endHeight uint64) (uint64, map[string]uint64) {
+	startHeight := *self.lastUnclaimableHeight
+	internalUnclaimable := self.UnclaimableInternalReward(poolTier, startHeight, endHeight)
+	externalUnclaimable := make(map[string]uint64)
+	for incentiveId := range self.incentives.CurrentReward(startHeight) {
+		externalUnclaimable[incentiveId] = self.UnclaimableExternalReward(incentiveId, startHeight, endHeight)
+	}
+	self.lastUnclaimableHeight = &endHeight
+	return internalUnclaimable, externalUnclaimable
 }
 
 // ============================================
