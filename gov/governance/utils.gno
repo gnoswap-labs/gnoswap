@@ -78,6 +78,14 @@ func getPrev() (string, string) {
 	return prev.Addr().String(), prev.PkgPath()
 }
 
+func formatUint64(v uint64) string {
+	return strconv.FormatUint(v, 10)
+}
+
+func formatInt(v int) string {
+	return strconv.FormatInt(int64(v), 10)
+}
+
 func parseInt(s string) int {
 	num, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
