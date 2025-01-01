@@ -65,6 +65,14 @@ func b64Encode(data string) string {
 	return string(base64.StdEncoding.EncodeToString([]byte(data)))
 }
 
+func b64Decode(data string) string {
+	decoded, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		panic(err.Error())
+	}
+	return string(decoded)
+}
+
 func prevRealm() string {
 	return std.PrevRealm().PkgPath()
 }
