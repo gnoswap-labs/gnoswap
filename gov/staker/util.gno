@@ -5,6 +5,7 @@ import (
 	"std"
 	"strconv"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
 	"gno.land/p/demo/ufmt"
 	pusers "gno.land/p/demo/users"
@@ -66,4 +67,45 @@ func assertCallerIsLaunchpad() {
 			ufmt.Sprintf("only launchpad can call CollectRewardFromLaunchPad(), called from %s", caller.String()),
 		))
 	}
+}
+
+
+func getUint64FromTree(tree *avl.Tree, key string) uint64 {
+	value, exists := tree.Get(key)
+	if !exists {
+		return 0
+	}
+
+	return value.(uint64)
+}
+
+func updateUint64InTree(tree *avl.Tree, key string, delta uint64, add bool) uint64 {
+	current := getUint64FromTree(tree, key)
+	var newValue uint64
+	if add {
+		newValue = current + delta
+	} else {
+		if current < delta {
+			panic(addDetailToError(
+				errNotEnoughBalance,
+				ufmt.Sprintf("not enough balance: current(%d) < requested(%d)", current, delta),
+            ))
+		}
+		newValue = current - delta
+	}
+
+	tree.Set(key, newValue)
+
+	return newValue
+}
+
+func getorCreateInnerTree(tree *avl.Tree, key string) *avl.Tree {
+	value, exists := tree.Get(key)
+	if !exists {
+		innerTree := avl.NewTree()
+		tree.Set(key, innerTree)
+		return innerTree
+	}
+
+	return value.(*avl.Tree)
 }

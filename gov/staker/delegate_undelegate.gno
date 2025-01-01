@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	totalDelegated = uint64(0)
+	totalDelegated  = uint64(0)
 
 	delegatorAmount = avl.NewTree() // caller => amount
 	delegatedFromTo = avl.NewTree() // caller => to => amount
@@ -21,36 +21,18 @@ func delegate(to std.Address, amount uint64) {
 	toStr := to.String()
 
 	// initialize the internal tree for callers to `delegatedFromTo`
-	var innerTree *avl.Tree
-	if value, exists := delegatedFromTo.Get(caller); !exists {
-		innerTree = avl.NewTree()
-		delegatedFromTo.Set(caller, innerTree)
-	} else {
-		innerTree = value.(*avl.Tree)
-	}
+	innerTree := getorCreateInnerTree(delegatedFromTo, caller)
 
 	totalDelegated += amount
 
 	// update delegator amount
-	currentAmount := uint64(0)
-	if value, exists := delegatorAmount.Get(caller); exists {
-		currentAmount = value.(uint64)
-	}
-	delegatorAmount.Set(caller, currentAmount+amount)
+	updateUint64InTree(delegatorAmount, caller, amount, true)
 
 	// update delegatedFromTo's inner tree
-	currentDelegated := uint64(0)
-	if value, exists := innerTree.Get(toStr); exists {
-		currentDelegated = value.(uint64)
-	}
-	innerTree.Set(toStr, currentDelegated+amount)
+	updateUint64InTree(innerTree, toStr, amount, true)
 
 	// update delegatedTo
-	currentToAmount := uint64(0)
-	if value, exists := delegatedTo.Get(toStr); exists {
-		currentToAmount = value.(uint64)
-	}
-	delegatedTo.Set(toStr, currentToAmount+amount)
+	updateUint64InTree(delegatedTo, toStr, amount, true)
 
 	// update delegation history
 	delegation := DelegationHistory{
@@ -95,28 +77,28 @@ func undelegate(to std.Address, amount uint64) {
 	// check caller's delegatedFromTo
 	innerTree, exists := delegatedFromTo.Get(caller)
 	if !exists {
-		panic(addDetailToError(
-			errNoDelegatedAmount,
-			ufmt.Sprintf("caller(%s) has no delegated amount", caller),
-		))
-	}
+        panic(addDetailToError(
+            errNoDelegatedAmount,
+            ufmt.Sprintf("caller(%s) has no delegated amount", caller),
+        ))
+    }
 
 	// check caller's delegatedFromTo's inner tree
 	delegatedAmountValue, exists := innerTree.(*avl.Tree).Get(toStr)
-	if !exists {
-		panic(addDetailToError(
-			errNoDelegatedTarget,
-			ufmt.Sprintf("caller(%s) has no delegated amount to %s", caller, to),
-		))
-	}
-
-	delegatedAmount := delegatedAmountValue.(uint64)
-	if delegatedAmount < amount {
-		panic(addDetailToError(
-			errNotEnoughDelegated,
-			ufmt.Sprintf("caller(%s) has only %d delegated amount(request: %d) to %s", caller, delegatedAmount, amount, to),
-		))
-	}
+    if !exists {
+        panic(addDetailToError(
+            errNoDelegatedTarget,
+            ufmt.Sprintf("caller(%s) has no delegated amount to %s", caller, to),
+        ))
+    }
+    
+    delegatedAmount := delegatedAmountValue.(uint64)
+    if delegatedAmount < amount {
+        panic(addDetailToError(
+            errNotEnoughDelegated,
+            ufmt.Sprintf("caller(%s) has only %d delegated amount(request: %d) to %s", caller, delegatedAmount, amount, to),
+        ))
+    }
 
 	// update total delegated amount
 	totalDelegated -= amount
@@ -125,9 +107,9 @@ func undelegate(to std.Address, amount uint64) {
 	if value, exists := delegatorAmount.Get(caller); exists {
 		currentAmount = value.(uint64)
 	}
-	delegatorAmount.Set(caller, currentAmount-amount)
-
-	innerTree.(*avl.Tree).Set(toStr, delegatedAmount-amount)
+    delegatorAmount.Set(caller, currentAmount-amount)
+    
+    innerTree.(*avl.Tree).Set(toStr, delegatedAmount-amount)
 
 	currentToAmount := uint64(0)
 	if value, exists := delegatedTo.Get(toStr); exists {
@@ -142,37 +124,37 @@ func undelegate(to std.Address, amount uint64) {
 		timestamp: uint64(time.Now().Unix()),
 		height:    uint64(std.GetHeight()),
 		add:       false,
-	}
-	var history []DelegationHistory
-	if value, exists := delegationHistory.Get(caller); exists {
-		history = value.([]DelegationHistory)
-	}
-	history = append(history, delegation)
-	delegationHistory.Set(caller, history)
+    }
+    var history []DelegationHistory
+    if value, exists := delegationHistory.Get(caller); exists {
+        history = value.([]DelegationHistory)
+    }
+    history = append(history, delegation)
+    delegationHistory.Set(caller, history)
 
 	// update delegation stat history
 	statValue, exists := delegationStatHistory.Get(toStr)
-	if !exists {
-		panic(addDetailToError(
-			errDataNotFound,
-			ufmt.Sprintf("caller(%s) has no delegation stat history", caller),
-		))
-	}
+    if !exists {
+        panic(addDetailToError(
+            errDataNotFound,
+            ufmt.Sprintf("caller(%s) has no delegation stat history", caller),
+        ))
+    }
 
-	stat := statValue.([]DelegationStatHistory)
-	remainingAmount := amount
-	for i := 0; i < len(stat); i++ {
-		if stat[i].amount > 0 {
-			if stat[i].amount < remainingAmount {
-				remainingAmount -= stat[i].amount
-				stat = append(stat[:i], stat[i+1:]...)
-				i--
-			} else {
-				stat[i].amount -= remainingAmount
-				stat[i].updatedAt = uint64(time.Now().Unix())
-				break
-			}
-		}
-	}
-	delegationStatHistory.Set(to.String(), stat)
+    stat := statValue.([]DelegationStatHistory)
+    remainingAmount := amount
+    for i := 0; i < len(stat); i++ {
+        if stat[i].amount > 0 {
+            if stat[i].amount < remainingAmount {
+                remainingAmount -= stat[i].amount
+                stat = append(stat[:i], stat[i+1:]...)
+                i--
+            } else {
+                stat[i].amount -= remainingAmount
+                stat[i].updatedAt = uint64(time.Now().Unix())
+                break
+            }
+        }
+    }
+    delegationStatHistory.Set(to.String(), stat)
 }
