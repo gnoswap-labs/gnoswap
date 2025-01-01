@@ -26,7 +26,7 @@ type lockedGNS struct {
 const TIMESTAMP_7_DAYS = uint64(604800) // 7 days in seconds
 
 var (
-	addrLockedGns = make(map[std.Address][]lockedGNS)
+	addrLockedGns = avl.NewTree() // address -> []lockedGNS
 	lockedAmount  = uint64(0)
 )
 
@@ -41,7 +41,7 @@ func Delegate(to std.Address, amount uint64) {
 		cleanDelegationStatHistory()
 	}
 
-	CollectReward() // common.IsHalted() + en.MintAndDistributeGns() + calculateReward()
+	CollectReward()
 
 	if !to.IsValid() {
 		panic(addDetailToError(
@@ -139,7 +139,7 @@ func Undelegate(from std.Address, amount uint64) {
 		cleanDelegationStatHistory()
 	}
 
-	CollectReward() // common.IsHalted() + en.MintAndDistributeGns() + calculateReward()
+	CollectReward()
 
 	if !from.IsValid() {
 		panic(addDetailToError(
@@ -176,7 +176,14 @@ func Undelegate(from std.Address, amount uint64) {
 		amount: amount,
 		unlock: uint64(time.Now().Unix()) + TIMESTAMP_7_DAYS, // after 7 days, call Collect() to receive GNS
 	}
-	addrLockedGns[caller] = append(addrLockedGns[caller], userLocked)
+
+	var lockedList []lockedGNS
+	if value, exists := addrLockedGns.Get(caller.String()); exists {
+		lockedList = value.([]lockedGNS)
+	}
+
+	lockedList = append(lockedList, userLocked)
+	addrLockedGns.Set(caller.String(), lockedList)
 	lockedAmount += amount
 
 	prevAddr, prevPkgPath := getPrev()
@@ -194,21 +201,27 @@ func Undelegate(from std.Address, amount uint64) {
 func CollectUndelegatedGns() uint64 {
 	common.IsHalted()
 	en.MintAndDistributeGns()
-
 	calculateReward()
 
 	caller := std.PrevRealm().Addr()
 
-	if len(addrLockedGns[caller]) == 0 {
+	value, exists := addrLockedGns.Get(caller.String())
+	if !exists {
+		return 0
+	}
+
+	lockedList := value.([]lockedGNS)
+	if len(lockedList) == 0 {
 		return 0
 	}
 
 	prevAddr, prevPkgPath := getPrev()
-
-	// check if caller has any GNS to claim
 	collected := uint64(0)
-	for i, locked := range addrLockedGns[caller] {
-		if uint64(time.Now().Unix()) >= locked.unlock && locked.amount > 0 { // passed 7 days
+	currentTime := uint64(time.Now().Unix())
+
+	newLockedList := make([]lockedGNS, 0)
+	for _, locked := range lockedList {
+		if currentTime >= locked.unlock && locked.amount > 0 { // passed 7 days
 			// transfer GNS to caller
 			gns.Transfer(a2u(caller), locked.amount)
 
@@ -219,11 +232,19 @@ func CollectUndelegatedGns() uint64 {
 				"internal_amount", formatUint(locked.amount),
 			)
 
-			// remove from locked list
-			addrLockedGns[caller] = append(addrLockedGns[caller][:i], addrLockedGns[caller][i+1:]...)
-
 			lockedAmount -= locked.amount
 			collected += locked.amount
+		} else {
+			newLockedList = append(newLockedList, locked)
+		}
+	}
+
+	if len(newLockedList) > 0 {
+		addrLockedGns.Set(caller.String(), newLockedList)
+	} else {
+		_, removed := addrLockedGns.Remove(caller.String())
+		if !removed {
+			panic("failed to remove locked GNS list")
 		}
 	}
 

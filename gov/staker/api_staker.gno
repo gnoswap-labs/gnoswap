@@ -25,7 +25,7 @@ func GetLockedInfoByAddress(addr std.Address) string {
 	en.MintAndDistributeGns()
 	calculateReward()
 
-	lockeds, exist := addrLockedGns[addr]
+	lockeds, exist := addrLockedGns.Get(addr.String())
 	if !exist {
 		return ""
 	}
@@ -35,7 +35,7 @@ func GetLockedInfoByAddress(addr std.Address) string {
 	totalLocked := uint64(0)
 	claimableAmount := uint64(0)
 
-	for _, locked := range lockeds {
+	for _, locked := range lockeds.([]lockedGNS) {
 		amount := locked.amount
 		unlock := locked.unlock
 
