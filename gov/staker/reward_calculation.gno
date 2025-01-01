@@ -11,6 +11,7 @@ import (
 	"gno.land/r/gnoswap/v1/common"
 	"gno.land/r/gnoswap/v1/consts"
 
+	"gno.land/p/demo/avl"
 	u256 "gno.land/p/gnoswap/uint256"
 )
 
@@ -20,30 +21,40 @@ var (
 )
 
 var (
-	gotGnsForEmission uint64
-	//
+	gotGnsForEmission            uint64
 	leftGnsEmissionFromLast      uint64
 	alreadyCalculatedGnsEmission uint64
-	//
-	leftProtocolFeeFromLast      = make(map[string]uint64) // tokenPath -> tokenAmount
-	alreadyCalculatedProtocolFee = make(map[string]uint64) // tokenPath -> tokenAmount
+
+	leftProtocolFeeFromLast      = avl.NewTree() // tokenPath -> tokenAmount
+	alreadyCalculatedProtocolFee = avl.NewTree() // tokenPath -> tokenAmount
 )
 
 var (
-	userXGnsRatio         = make(map[std.Address]*u256.Uint)        // address -> ratioX96
-	userEmissionReward    = make(map[std.Address]uint64)            // address -> gnsAmount
-	userProtocolFeeReward = make(map[std.Address]map[string]uint64) // address -> tokenPath -> tokenAmount
+	userXGnsRatio         = avl.NewTree() // address -> ratioX96
+	userEmissionReward    = avl.NewTree() // address -> gnsAmount
+	userProtocolFeeReward = avl.NewTree() // address -> tokenPath -> tokenAmount
 )
 
 // === LAUNCHPAD DEPOSIT
 var (
-	// totalAmountByLaunchpad == xgns.BalanceOf(consts.LAUNCHPAD_ADDR)
-	amountByProjectWallet = make(map[std.Address]uint64) // (project's) recipient wallet => amount
-	rewardByProjectWallet = make(map[std.Address]uint64) // (project's) recipient wallet => reward
+	amountByProjectWallet = avl.NewTree() // recipient wallet => amount
+	rewardByProjectWallet = avl.NewTree() // recipient wallet => reward
 )
 
 func GetRewardByProjectWallet(addr std.Address) uint64 {
-	return rewardByProjectWallet[addr]
+	value, exists := rewardByProjectWallet.Get(addr.String())
+	if !exists {
+		return 0
+	}
+	return value.(uint64)
+}
+
+func getAmountByProjectWallet(addr std.Address) uint64 {
+	value, exists := amountByProjectWallet.Get(addr.String())
+	if !exists {
+		return 0
+	}
+	return value.(uint64)
 }
 
 func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
@@ -54,15 +65,16 @@ func SetAmountByProjectWallet(addr std.Address, amount uint64, add bool) {
 
 	common.IsHalted()
 	en.MintAndDistributeGns()
-
 	calculateReward()
 
+	currentAmount := getAmountByProjectWallet(addr)
 	if add {
-		amountByProjectWallet[addr] += amount
+		amountByProjectWallet.Set(addr.String(), currentAmount+amount)
 	} else {
-		amountByProjectWallet[addr] -= amount
+		amountByProjectWallet.Set(addr.String(), currentAmount-amount)
 	}
 }
+
 // LAUCNHAPD DEPOSIT ===
 
 func calculateReward() {
@@ -71,16 +83,8 @@ func calculateReward() {
 		return
 	}
 
-	atLeastOneDelegated := false
-	atLeastOneLaunchpadRecipient := false
-
-	if len(delegatedTo) > 0 {
-		atLeastOneDelegated = true
-	}
-
-	if len(amountByProjectWallet) > 0 {
-		atLeastOneLaunchpadRecipient = true
-	}
+	atLeastOneDelegated := delegatedTo.Size() > 0
+	atLeastOneLaunchpadRecipient := amountByProjectWallet.Size() > 0
 
 	if !atLeastOneDelegated && !atLeastOneLaunchpadRecipient {
 		return
@@ -93,27 +97,23 @@ func calculateReward() {
 	xGnsTotalSupply := xgns.TotalSupply()
 	xGnsX96 := new(u256.Uint).Mul(u256.NewUint(xGnsTotalSupply), q96)
 
-	for delegator, amount := range delegatorAmount {
-		xGnsUserX96 := new(u256.Uint).Mul(u256.NewUint(amount), q96)
-		xGnsUserX96 = new(u256.Uint).Mul(xGnsUserX96, u256.NewUint(1_000_000_000))
+	// calculate delegator ratio
+	delegatorAmount.Iterate("", "", func(key string, value interface{}) bool {
+		amount := value.(uint64)
+		ratio := calculateXGnsRatio(amount, xGnsX96)
 
-		ratio := new(u256.Uint).Div(xGnsUserX96, xGnsX96)
-		ratio = ratio.Mul(ratio, q96)
-		ratio = ratio.Div(ratio, u256.NewUint(1_000_000_000))
-
-		userXGnsRatio[delegator] = ratio
-	}
+		userXGnsRatio.Set(key, ratio)
+		return false
+	})
 
 	// calculate project's recipient's xGNS ratio
-	// to calculate protocol fee
-	for recipient, amount := range amountByProjectWallet {
-		xGnsRecipientX96 := new(u256.Uint).Mul(u256.NewUint(amount), q96)
-		xGnsRecipientX96 = new(u256.Uint).Mul(xGnsRecipientX96, u256.NewUint(1_000_000_000))
-		ratio := new(u256.Uint).Div(xGnsRecipientX96, xGnsX96)
-		ratio = ratio.Mul(ratio, q96)
-		ratio = ratio.Div(ratio, u256.NewUint(1_000_000_000))
-		userXGnsRatio[recipient] = ratio
-	}
+	amountByProjectWallet.Iterate("", "", func(key string, value interface{}) bool {
+		amount := value.(uint64)
+		ratio := calculateXGnsRatio(amount, xGnsX96)
+
+		userXGnsRatio.Set(key, ratio)
+		return false
+	})
 
 	calculateGNSEmission()
 	calculateProtocolFee()
@@ -121,10 +121,20 @@ func calculateReward() {
 	lastCalculatedHeight = height
 }
 
+// calculateXGnsRatio calculates the ratio of user's xGNS amount to total xGNS supply
+func calculateXGnsRatio(amount uint64, xGnsX96 *u256.Uint) *u256.Uint {
+	xGnsAmountX96 := new(u256.Uint).Mul(u256.NewUint(amount), q96)
+	xGnsAmountX96 = new(u256.Uint).Mul(xGnsAmountX96, u256.NewUint(1_000_000_000))
+
+	ratio := new(u256.Uint).Div(xGnsAmountX96, xGnsX96)
+	ratio = ratio.Mul(ratio, q96)
+	return ratio.Div(ratio, u256.NewUint(1_000_000_000))
+}
+
 func calculateGNSEmission() {
 	// gov_staker received xgns
 	// but no gns has been staked, left amount will be used next time
-	if len(delegatedTo) == 0 {
+	if delegatedTo.Size() == 0 {
 		return
 	}
 
@@ -137,29 +147,33 @@ func calculateGNSEmission() {
 	}
 
 	calculated := uint64(0)
-	for delegator, ratio := range userXGnsRatio {
+	userXGnsRatio.Iterate("", "", func(key string, value interface{}) bool {
+		ratio := value.(*u256.Uint)
 		emissionRewardX96 := new(u256.Uint).Mul(u256.NewUint(gotGnsForEmission), ratio)
 		emissionRewardX := new(u256.Uint).Div(emissionRewardX96, q96)
 		emissionReward := emissionRewardX.Uint64()
 		if emissionReward == uint64(0) {
-			continue
+			return false
 		}
 
-		userEmissionReward[delegator] += emissionReward
+		currentReward := uint64(0)
+		if val, exists := userEmissionReward.Get(key); exists {
+			currentReward = val.(uint64)
+		}
+		userEmissionReward.Set(key, currentReward+emissionReward)
 
 		calculated += emissionReward
-	}
+		return false
+	})
 
 	alreadyCalculatedGnsEmission += gotGnsForEmission
 	leftGnsEmissionFromLast = gotGnsForEmission - calculated
-
-	return
 }
 
 func calculateProtocolFee() {
 	// gov_staker received protocol_fee
 	// but no gns has been staked, left amount will be used next time
-	if len(userXGnsRatio) == 0 {
+	if userXGnsRatio.Size() == 0 {
 		return
 	}
 
@@ -170,11 +184,14 @@ func calculateProtocolFee() {
 	}
 
 	// get gov staker's grc20 balance
-	for tokenPath, _ := range registered {
-
+	for tokenPath := range registered {
 		tokenBalance := accuProtocolFee[tokenPath]
 
-		leftFromLast := leftProtocolFeeFromLast[tokenPath]
+		leftValue, exists := leftProtocolFeeFromLast.Get(tokenPath)
+		leftFromLast := uint64(0)
+		if exists {
+			leftFromLast = leftValue.(uint64)
+		}
 		tokenBalance += leftFromLast
 
 		if tokenBalance == uint64(0) {
@@ -182,23 +199,38 @@ func calculateProtocolFee() {
 		}
 
 		calculated := uint64(0)
-		for delegator, ratio := range userXGnsRatio {
+		userXGnsRatio.Iterate("", "", func(key string, value interface{}) bool {
+			ratio := value.(*u256.Uint)
 			protocolFeeX96 := new(u256.Uint).Mul(u256.NewUint(tokenBalance), ratio)
 			protocolFeeX := new(u256.Uint).Div(protocolFeeX96, q96)
 			protocolFee := protocolFeeX.Uint64()
 			if protocolFee == uint64(0) {
-				continue
+				return false
 			}
 
-			if userProtocolFeeReward[delegator] == nil {
-				userProtocolFeeReward[delegator] = make(map[string]uint64)
+			var userFees *avl.Tree
+			if val, exists := userProtocolFeeReward.Get(key); exists {
+				userFees = val.(*avl.Tree)
+			} else {
+				userFees = avl.NewTree()
+				userProtocolFeeReward.Set(key, userFees)
 			}
 
-			userProtocolFeeReward[delegator][tokenPath] += protocolFee
+			currentFee := uint64(0)
+			if val, exists := userFees.Get(tokenPath); exists {
+				currentFee = val.(uint64)
+			}
+			userFees.Set(tokenPath, currentFee+protocolFee)
+
 			calculated += protocolFee
-		}
+			return false
+		})
 
-		alreadyCalculatedProtocolFee[tokenPath] += tokenBalance
-		leftProtocolFeeFromLast[tokenPath] = tokenBalance - calculated
+		current := uint64(0)
+		if val, exists := alreadyCalculatedProtocolFee.Get(tokenPath); exists {
+			current = val.(uint64)
+		}
+		alreadyCalculatedProtocolFee.Set(tokenPath, current+tokenBalance)
+		leftProtocolFeeFromLast.Set(tokenPath, tokenBalance-calculated)
 	}
 }

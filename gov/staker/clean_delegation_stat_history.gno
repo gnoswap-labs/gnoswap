@@ -10,10 +10,7 @@ var BLOCK_PER_DAY = consts.TIMESTAMP_DAY / consts.BLOCK_GENERATION_INTERVAL
 
 var (
 	lastCleanedHeight uint64 = 0
-)
-
-var (
-	running bool = true
+	running           bool   = true
 )
 
 func CleanDelegationStatHistoryByAdmin() {
@@ -45,20 +42,20 @@ func cleanDelegationStatHistory() {
 	keepFrom := height - uint64(BLOCK_PER_DAY)
 
 	delegationStatHistory.Iterate("", "", func(key string, value interface{}) bool {
-        history := value.([]DelegationStatHistory)
-        
-        // reverse history
-        for i := len(history) - 1; i >= 0; i-- {
-            if history[i].updatedBlock > keepFrom {
-                continue
-            }
+		history := value.([]DelegationStatHistory)
+
+		// reverse history
+		for i := len(history) - 1; i >= 0; i-- {
+			if history[i].updatedBlock > keepFrom {
+				continue
+			}
 
 			// save truncated history
 			newHistory := history[i:]
 			delegationStatHistory.Set(key, newHistory)
 			break
-        }
-        
-        return false
-    })
+		}
+
+		return false
+	})
 }

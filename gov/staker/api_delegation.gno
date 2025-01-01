@@ -3,9 +3,10 @@ package staker
 import (
 	"std"
 
-	"gno.land/r/gnoswap/v1/gns"
+	"gno.land/p/demo/avl"
 
 	en "gno.land/r/gnoswap/v1/emission"
+	"gno.land/r/gnoswap/v1/gns"
 )
 
 // GetTotalStaked returns the total amount of GNS staked.
@@ -37,11 +38,11 @@ func GetTotalDelegatedFrom(from std.Address) uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
 
-	amount, exist := delegatorAmount[from]
+	amount, exist := delegatorAmount.Get(from.String())
 	if !exist {
 		return 0
 	}
-	return amount
+	return amount.(uint64)
 }
 
 // GetTotalDelegatedTo returns the total amount of xGNS delegated to given address.
@@ -49,11 +50,11 @@ func GetTotalDelegatedTo(to std.Address) uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
 
-	amount, exist := delegatedTo[to]
+	amount, exist := delegatedTo.Get(to.String())
 	if !exist {
 		return 0
 	}
-	return amount
+	return amount.(uint64)
 }
 
 // GetDelegationAmountFromTo returns the amount of xGNS delegated by given address to given address.
@@ -61,17 +62,17 @@ func GetDelegationAmountFromTo(from, to std.Address) uint64 {
 	en.MintAndDistributeGns()
 	calculateReward()
 
-	toAmount, exist := delegatedFromTo[from]
+	toAmount, exist := delegatedFromTo.Get(from.String())
 	if !exist {
 		return 0
 	}
 
-	amount, exist := toAmount[to]
+	amount, exist := toAmount.(*avl.Tree).Get(to.String())
 	if !exist {
 		return 0
 	}
 
-	return amount
+	return amount.(uint64)
 }
 
 func getRealmGnsBalance() uint64 {

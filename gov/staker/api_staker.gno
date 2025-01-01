@@ -4,6 +4,7 @@ import (
 	"std"
 	"time"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/json"
 
 	en "gno.land/r/gnoswap/v1/emission"
@@ -46,10 +47,10 @@ func GetLockedInfoByAddress(addr std.Address) string {
 	}
 
 	data := json.Builder().
-		WriteNumber("height", std.GetHeight()).
-		WriteNumber("now", time.Now().Unix()).
-		WriteNumber("totalLocked", totalLocked).
-		WriteNumber("claimableAmount", claimableAmount).
+		WriteString("height", formatInt(std.GetHeight())).
+		WriteString("now", formatInt(time.Now().Unix())).
+		WriteString("totalLocked", formatUint(totalLocked)).
+		WriteString("claimableAmount", formatUint(claimableAmount)).
 		Node()
 
 	return marshal(data)
@@ -59,26 +60,31 @@ func GetClaimableRewardByAddress(addr std.Address) string {
 	en.MintAndDistributeGns()
 	calculateReward()
 
-	emissionReward := userEmissionReward[addr]
+	emissionReward, exist := userEmissionReward.Get(addr.String())
+	if !exist {
+		return ""
+	}
 
 	data := json.Builder().
-		WriteNumber("height", std.GetHeight()).
-		WriteNumber("now", time.Now().Unix()).
-		WriteNumber("emissionReward", emissionReward).
+		WriteString("height", formatInt(std.GetHeight())).
+		WriteString("now", formatInt(time.Now().Unix())).
+		WriteString("emissionReward", formatUint(emissionReward.(uint64))).
 		Node()
 
-	protocolFees, exist := userProtocolFeeReward[addr]
+	protocolFees, exist := userProtocolFeeReward.Get(addr.String())
 	if exist {
 		pfArr := json.ArrayNode("", nil)
-		for tokenPath, amount := range protocolFees {
+		protocolFees.(*avl.Tree).Iterate("", "", func(key string, value interface{}) bool {
+			amount := value.(uint64)
 			if amount > 0 {
 				pfObj := json.Builder().
-					WriteString("tokenPath", tokenPath).
-					WriteNumber("amount", amount).
+					WriteString("tokenPath", key).
+					WriteString("amount", formatUint(amount)).
 					Node()
 				pfArr.AppendArray(pfObj)
 			}
-		}
+			return false
+		})
 
 		data.AppendObject("protocolFees", pfArr)
 	}

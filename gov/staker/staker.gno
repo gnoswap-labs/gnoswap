@@ -4,6 +4,7 @@ import (
 	"std"
 	"time"
 
+	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
 
 	"gno.land/r/demo/wugnot"
@@ -67,11 +68,11 @@ func Delegate(to std.Address, amount uint64) {
 	// actual delegate
 	delegate(to, amount)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"Delegate",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"to", to.String(),
 		"amount", formatUint(amount),
 	)
@@ -120,11 +121,11 @@ func Redelegate(from, to std.Address, amount uint64) {
 	undelegate(from, amount)
 	delegate(to, amount)
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"Redelegate",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"from", from.String(),
 		"to", to.String(),
 		"amount", formatUint(amount),
@@ -178,11 +179,11 @@ func Undelegate(from std.Address, amount uint64) {
 	addrLockedGns[caller] = append(addrLockedGns[caller], userLocked)
 	lockedAmount += amount
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 	std.Emit(
 		"Undelegate",
 		"prevAddr", prevAddr,
-		"prevRealm", prevRealm,
+		"prevRealm", prevPkgPath,
 		"from", from.String(),
 		"amount", formatUint(amount),
 	)
@@ -202,7 +203,7 @@ func CollectUndelegatedGns() uint64 {
 		return 0
 	}
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 
 	// check if caller has any GNS to claim
 	collected := uint64(0)
@@ -214,7 +215,7 @@ func CollectUndelegatedGns() uint64 {
 			std.Emit(
 				"CollectUndelegatedGns",
 				"prevAddr", prevAddr,
-				"prevRealm", prevRealm,
+				"prevRealm", prevPkgPath,
 				"internal_amount", formatUint(locked.amount),
 			)
 
@@ -237,61 +238,25 @@ func CollectReward() {
 
 	calculateReward()
 
-	prevAddr, prevRealm := getPrev()
-
-	// GNS EMISSION
+	prevAddr, prevPkgPath := getPrev()
 	caller := std.PrevRealm().Addr()
-	emissionReward := userEmissionReward[caller]
+
+	emissionReward := collectEmissionReward(caller)
 	if emissionReward > 0 {
-		govStakerGnsBalance := gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
-		if govStakerGnsBalance < emissionReward {
-			panic(addDetailToError(
-				errNotEnoughBalance,
-				ufmt.Sprintf("ot enough GNS(%d) in the realm to send emission reward(%d) for user %s", govStakerGnsBalance, emissionReward, caller.String()),
-			))
-		}
-
-		// transfer GNS to caller
-		gns.Transfer(a2u(caller), emissionReward)
-		userEmissionReward[caller] = 0
-
 		std.Emit(
 			"CollectEmissionReward",
 			"prevAddr", prevAddr,
-			"prevRealm", prevRealm,
+			"prevRealm", prevPkgPath,
 			"internal_amount", formatUint(emissionReward),
 		)
 	}
 
-	// PROTOCOL FEE
-	protocolFee, exist := userProtocolFeeReward[caller]
-	if !exist || len(protocolFee) == 0 {
-		return
-	}
-
-	for tokenPath, amount := range protocolFee {
-		if amount == 0 {
-			continue
-		}
-
-		// transfer token to caller
-		// token.Transfer(a2u(caller), amount)
-
-		if tokenPath == consts.WUGNOT_PATH {
-			if amount > 0 {
-				wugnot.Withdraw(amount)
-				banker := std.GetBanker(std.BankerTypeRealmSend)
-				banker.SendCoins(consts.GOV_STAKER_ADDR, caller, std.Coins{{"ugnot", int64(amount)}})
-			}
-		} else {
-			transferByRegisterCall(tokenPath, caller, amount)
-		}
-		userProtocolFeeReward[caller][tokenPath] = 0
-
+	collectedFees := collectProtocolFeeReward(caller)
+	for tokenPath, amount := range collectedFees {
 		std.Emit(
 			"CollectProtocolFeeReward",
 			"prevAddr", prevAddr,
-			"prevRealm", prevRealm,
+			"prevRealm", prevPkgPath,
 			"internal_tokenPath", tokenPath,
 			"internal_amount", formatUint(amount),
 		)
@@ -309,56 +274,89 @@ func CollectRewardFromLaunchPad(to std.Address) {
 
 	calculateReward()
 
-	prevAddr, prevRealm := getPrev()
+	prevAddr, prevPkgPath := getPrev()
 
-	// GNS EMISSION
-	emissionReward := userEmissionReward[to]
+	emissionReward := collectEmissionReward(to)
 	if emissionReward > 0 {
-		govStakerGnsBalance := gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
-		if govStakerGnsBalance < emissionReward {
-			panic(addDetailToError(
-				errNotEnoughBalance,
-				ufmt.Sprintf("not enough GNS(%d) in the realm to send emission reward(%d) for user %s", govStakerGnsBalance, emissionReward, to.String()),
-			))
-		}
-
-		// transfer GNS to `to`
-		gns.Transfer(a2u(to), emissionReward)
-		userEmissionReward[to] = 0
-
 		std.Emit(
 			"CollectEmissionFromLaunchPad",
 			"prevAddr", prevAddr,
-			"prevRealm", prevRealm,
+			"prevRealm", prevPkgPath,
 			"to", to.String(),
 			"internal_amount", formatUint(emissionReward),
 		)
 	}
 
-	// PROTOCOL FEE
-	protocolFee, exist := userProtocolFeeReward[to]
-	if !exist || len(protocolFee) == 0 {
-		return
-	}
-
-	for tokenPath, amount := range protocolFee {
-		if amount == 0 {
-			continue
-		}
-
-		// transfer token to to
-		// token.Transfer(a2u(to), amount)
-		transferByRegisterCall(tokenPath, to, amount)
-		userProtocolFeeReward[to][tokenPath] = 0
-
-		prevAddr, prevRealm := getPrev()
+	collectedFees := collectProtocolFeeReward(to)
+	for tokenPath, amount := range collectedFees {
 		std.Emit(
 			"CollectProtocolFeeFromLaunchPad",
 			"prevAddr", prevAddr,
-			"prevRealm", prevRealm,
-			"to", to.String(),
+			"prevRealm", prevPkgPath,
 			"internal_tokenPath", tokenPath,
 			"internal_amount", formatUint(amount),
 		)
 	}
+}
+
+func collectEmissionReward(addr std.Address) uint64 {
+	emissionReward := uint64(0)
+	if value, exists := userEmissionReward.Get(addr.String()); exists {
+		emissionReward = value.(uint64)
+	}
+
+	if emissionReward <= 0 {
+		return 0
+	}
+
+	govStakerGnsBalance := gns.BalanceOf(a2u(consts.GOV_STAKER_ADDR))
+	if govStakerGnsBalance < emissionReward {
+		panic(addDetailToError(
+			errNotEnoughBalance,
+			ufmt.Sprintf("not enough GNS(%d) in the realm to send emission reward(%d) for user %s", govStakerGnsBalance, emissionReward, addr.String()),
+		))
+	}
+
+	// transfer GNS to addr
+	gns.Transfer(a2u(addr), emissionReward)
+	userEmissionReward.Set(addr.String(), uint64(0))
+
+	return emissionReward
+}
+
+func collectProtocolFeeReward(addr std.Address) map[string]uint64 {
+	collectedFees := make(map[string]uint64)
+
+	value, exists := userProtocolFeeReward.Get(addr.String())
+	if !exists {
+		return collectedFees
+	}
+
+	userFees := value.(*avl.Tree)
+	if userFees.Size() == 0 {
+		return collectedFees
+	}
+
+	userFees.Iterate("", "", func(tokenPath string, value interface{}) bool {
+        amount := value.(uint64)
+        if amount == 0 {
+            return false
+        }
+
+        if tokenPath == consts.WUGNOT_PATH {
+            if amount > 0 {
+                wugnot.Withdraw(amount)
+                banker := std.GetBanker(std.BankerTypeRealmSend)
+                banker.SendCoins(consts.GOV_STAKER_ADDR, addr, std.Coins{{"ugnot", int64(amount)}})
+            }
+        } else {
+            transferByRegisterCall(tokenPath, addr, amount)
+        }
+        
+        userFees.Set(tokenPath, uint64(0))
+        collectedFees[tokenPath] = amount
+        return false
+    })
+
+	return collectedFees
 }
